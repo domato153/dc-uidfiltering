@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         DCInside 유저 글+댓글 합산 필터 (자동 가림)
 // @namespace    http://tampermonkey.net/
-// @version      1.3
+// @version      1.2
 // @description  유저의 글+댓글 합이 기준 이하일 경우 해당 유저의 글을 가립니다.
 // @author       domato153
 // @match        https://gall.dcinside.com/*
