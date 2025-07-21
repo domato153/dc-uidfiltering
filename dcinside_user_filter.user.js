@@ -1,7 +1,7 @@
 // ==UserScript==
-// @name         DCInside 유저 글댓합/글댓비 차단 필터
+// @name         DCInside 유저 글댓합/글댓비 차단필터
 // @namespace    http://tampermonkey.net/
-// @version      1.3.1
+// @version      1.3
 // @description  유저의 글+댓글 합과 비율이 기준 이하/이상일 경우 해당 유저의 글을 가립니다.
 // @author       domato153
 // @match        https://gall.dcinside.com/*
@@ -243,84 +243,94 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
         await GM_setValue(BLOCK_UID_KEY, JSON.stringify(BLOCKED_UIDS_CACHE));
     }
 
-    // 1. 차단 여부 판단 함수 (논리 오류 수정)
-    function isUserBlocked(userData) {
-        if (!userData) return false;
-        const { sum, post, comment } = userData;
-
-        // 글+댓글 합계 기준
-        const sumBlocked = threshold > 0 && sum > 0 && sum <= threshold;
-
-        // 비율 기준
-        let ratioBlocked = false;
+    // 차단 여부 판단 헬퍼 함수
+    function isUserBlocked({ sum, post, comment }) {
+        if (masterDisabled) return false;
+        // sum 차단
+        let sumBlocked = threshold > 0 && sum > 0 && sum <= threshold;
+        // ratio 차단
+        let isRatioBlocked = false;
         if (ratioEnabled) {
             const useMin = !isNaN(ratioMin) && ratioMin > 0;
             const useMax = !isNaN(ratioMax) && ratioMax > 0;
-            // 댓글/글 비율 (댓글만 많은 유저)
-            if (useMin && post > 0) {
-                if ((comment / post) >= ratioMin) ratioBlocked = true;
+            // 댓글/글 비율 (comment/post)
+            let ratio = (post > 0) ? (comment / post) : 0;
+            if (useMin && ratio >= ratioMin) {
+                isRatioBlocked = true;
             }
-            // 글/댓글 비율 (글만 많은 유저)
-            if (useMax && comment > 0) { // 0으로 나누는 것 방지
-                if ((post / comment) >= ratioMax) ratioBlocked = true;
+            if (useMax && post > 0 && (post / comment) > ratioMax) {
+                isRatioBlocked = true;
             }
         }
-        return sumBlocked || ratioBlocked;
+        return sumBlocked || isRatioBlocked;
     }
 
-    // 2. 범용 필터링 및 Observer 설정 함수 (로직 통합 및 최적화)
-    async function setupAndRunFilter(itemSelector, writerSelector) {
+    // 범용 필터링 함수: DOM 요소, uid, userData, addBlockedUidFn
+    async function applyBlockFilterToElement(element, uid, userData, addBlockedUidFn) {
+        if (!userData) return;
+        const blocked = isUserBlocked(userData);
+        element.style.display = blocked ? 'none' : '';
+        if (blocked) {
+            let ratioBlocked = false;
+            if (ratioEnabled) {
+                let ratio = (userData.post > 0) ? (userData.comment / userData.post) : 0;
+                if (ratioMin > 0 && ratio >= ratioMin) ratioBlocked = true;
+                if (ratioMax > 0 && userData.post > 0 && (userData.post / userData.comment) > ratioMax) ratioBlocked = true;
+            }
+            await addBlockedUidFn(uid, userData.sum, userData.post, userData.comment, ratioBlocked);
+        }
+    }
+
+    async function filterUsers() {
         if (masterDisabled) return;
-        const elements = Array.from(document.querySelectorAll(itemSelector));
-        // API 호출이 필요한 uid 목록 생성
-        const uidsToFetch = new Set();
-        elements.forEach(el => {
-            const writerEl = el.querySelector(writerSelector);
-            const uid = writerEl?.getAttribute('data-uid');
-            if (uid && uid.length >= 3 && !BLOCKED_UIDS_CACHE[uid]) {
-                uidsToFetch.add(uid);
-            }
-        });
-        // 필요한 API만 병렬로 호출
-        await Promise.all(Array.from(uidsToFetch).map(uid => getUserPostCommentSum(uid)));
-        // 필터 적용
-        elements.forEach(el => {
-            const writerEl = el.querySelector(writerSelector);
-            const uid = writerEl?.getAttribute('data-uid');
-            if (!uid) return;
-            const userData = BLOCKED_UIDS_CACHE[uid] || window._dcinside_user_sum_cache[uid];
-            if (userData && isUserBlocked(userData)) {
-                el.style.display = 'none';
-                if (!BLOCKED_UIDS_CACHE[uid]) {
-                    addBlockedUid(uid, userData.sum, userData.post, userData.comment);
+        const rows = Array.from(document.querySelectorAll('tr.ub-content.us-post'));
+        await Promise.all(rows.map(async (row) => {
+            try {
+                const writerTd = row.querySelector('td.gall_writer.ub-writer');
+                if (!writerTd) return;
+                const uid = writerTd.getAttribute('data-uid');
+                if (!uid || uid.length < 3) return;
+
+                const cachedData = BLOCKED_UIDS_CACHE[uid];
+                if (cachedData) {
+                    await applyBlockFilterToElement(row, uid, cachedData, addBlockedUid);
+                    return;
                 }
+
+                const userData = await getUserPostCommentSum(uid);
+                if (!userData) return;
+                await applyBlockFilterToElement(row, uid, userData, addBlockedUid);
+            } catch (e) {
+                console.warn('[필터] 예외 발생:', e, row);
             }
-        });
+        }));
     }
 
-    // 3. Observer 로직 (효율적으로 변경)
-    function setupObserver(targetSelector, itemSelector, writerSelector) {
-        const targetNode = document.querySelector(targetSelector);
-        if (!targetNode) return;
-        const processNode = async (node) => {
-            if (masterDisabled || node.nodeType !== Node.ELEMENT_NODE || !node.matches(itemSelector)) return;
-            const writerEl = node.querySelector(writerSelector);
-            const uid = writerEl?.getAttribute('data-uid');
-            if (!uid || uid.length < 3) return;
-            const userData = BLOCKED_UIDS_CACHE[uid] || await getUserPostCommentSum(uid);
-            if (userData && isUserBlocked(userData)) {
-                node.style.display = 'none';
-                if (!BLOCKED_UIDS_CACHE[uid]) {
-                    await addBlockedUid(uid, userData.sum, userData.post, userData.comment);
-                }
-            }
-        };
-        const observer = new MutationObserver((mutations) => {
-            mutations.forEach(mutation => mutation.addedNodes.forEach(processNode));
-        });
-        observer.observe(targetNode, { childList: true, subtree: true });
-    }
+    async function filterComments() {
+        if (masterDisabled) return;
+        const comments = Array.from(document.querySelectorAll('div.comment_box ul.cmt_list li.ub-content'));
+        await Promise.all(comments.map(async (commentEl) => {
+            try {
+                const writerSpan = commentEl.querySelector('span.gall_writer.ub-writer');
+                if (!writerSpan) return;
+                const uid = writerSpan.getAttribute('data-uid');
+                if (!uid || uid.length < 3) return;
 
+                const cachedData = BLOCKED_UIDS_CACHE[uid];
+                if (cachedData) {
+                    await applyBlockFilterToElement(commentEl, uid, cachedData, addBlockedUid);
+                    return;
+                }
+
+                const userData = await getUserPostCommentSum(uid);
+                if (!userData) return;
+                await applyBlockFilterToElement(commentEl, uid, userData, addBlockedUid);
+            } catch (e) {
+                console.warn('[필터-댓글] 예외 발생:', e, commentEl);
+            }
+        }));
+    }
+    
     let BLOCKED_UIDS_CACHE = {};
 
     async function refreshBlockedUidsCache(noLog = false) {
@@ -381,7 +391,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
                     if (node.nodeType === Node.ELEMENT_NODE && node.matches('tr.ub-content.us-post')) {
                         // 새로 추가된 행만 필터링
                         (async () => {
-                            await setupAndRunFilter('tr.ub-content.us-post', 'td.gall_writer.ub-writer');
+                            await filterUsers();
                         })();
                     }
                 }
@@ -428,7 +438,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
                 for (const node of mutation.addedNodes) {
                     if (node.nodeType === Node.ELEMENT_NODE && node.matches('li.ub-content')) {
                         (async () => {
-                            await setupAndRunFilter('div.comment_box ul.cmt_list li.ub-content', 'span.gall_writer.ub-writer');
+                            await filterComments();
                         })();
                     }
                 }
@@ -460,18 +470,16 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
         bodyObserver.observe(document.body, { childList: true, subtree: true });
     }
 
-    // 4. 스크립트 시작 함수
     async function startBlocklist() {
         masterDisabled = await GM_getValue('dcinside_master_disabled', false);
         threshold = await GM_getValue('dcinside_threshold', 0);
         ratioEnabled = await GM_getValue('dcinside_ratio_filter_enabled', false);
         ratioMin = parseFloat(await GM_getValue('dcinside_ratio_min', ''));
         ratioMax = parseFloat(await GM_getValue('dcinside_ratio_max', ''));
+
         await refreshBlockedUidsCache();
-        await setupAndRunFilter('tr.ub-content.us-post', 'td.gall_writer.ub-writer');
-        await setupAndRunFilter('div.comment_box ul.cmt_list li.ub-content', 'span.gall_writer.ub-writer');
-        setupObserver('table.gall_list tbody', 'tr.ub-content.us-post', 'td.gall_writer.ub-writer');
-        initCommentObserver(); // 기존 댓글 Observer 로직은 내부에서 setupObserver 호출하도록 수정하면 더 좋음
+        setupBlocklistObserverSync();
+        initCommentObserver();
     }
     
     if (document.readyState === 'loading') {
@@ -481,8 +489,8 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
     }
 
     window.addEventListener('load', () => {
-        setTimeout(setupAndRunFilter, 1000, 'tr.ub-content.us-post', 'td.gall_writer.ub-writer');
-        setTimeout(setupAndRunFilter, 1000, 'div.comment_box ul.cmt_list li.ub-content', 'span.gall_writer.ub-writer');
+        setTimeout(filterUsers, 1000);
+        setTimeout(filterComments, 1000);
     });
 
     if (GM_getValue('dcinside_threshold') === undefined) {
