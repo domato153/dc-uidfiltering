@@ -69,15 +69,15 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
                         <div style="display:flex;flex-direction:column;align-items:center;">
                             <label for="dcinside-ratio-min" style="font-size:14px;">댓글/글 비율 일정 이상 차단 </label>
                             <div style="font-size:12px;color:#888;line-height:1.2;">(댓글만 많은 놈)</div>
-                            <input id="dcinside-ratio-min" type="number" step="any" placeholder="예: 0.5" value="${ratioMin !== '' ? ratioMin : ''}" style="width:100px;font-size:15px;text-align:center;">
+                            <input id="dcinside-ratio-min" type="number" step="any" placeholder="예: 10" value="${ratioMin !== '' ? ratioMin : ''}" style="width:100px;font-size:15px;text-align:center;">
                         </div>
                         <div style="display:flex;flex-direction:column;align-items:center;">
                             <label for="dcinside-ratio-max" style="font-size:14px;">글/댓글 비율 일정 이상 차단 </label>
                             <div style="font-size:12px;color:#888;line-height:1.2;">(글만 많은 놈)</div>
-                            <input id="dcinside-ratio-max" type="number" step="any" placeholder="예: 2" value="${ratioMax !== '' ? ratioMax : ''}" style="width:100px;font-size:15px;text-align:center;">
+                            <input id="dcinside-ratio-max" type="number" step="any" placeholder="예: 1" value="${ratioMax !== '' ? ratioMax : ''}" style="width:100px;font-size:15px;text-align:center;">
                         </div>
                     </div>
-                    <div style="margin-top:8px;font-size:13px;color:#666;text-align:left;">비율이 입력값보다 작거나(이하), 크거나(이상)인 유저를 차단합니다.</div>
+                    <div style="margin-top:8px;font-size:13px;color:#666;text-align:left;">비율이 입력값과 같거나 큰(이상)인 유저를 차단합니다.</div>
                 </div>
             </div>
             <div style="display:flex; justify-content:space-between; align-items:center; margin-top:22px; padding-top:15px; border-top: 2px solid #ccc;">
