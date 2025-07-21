@@ -95,7 +95,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
                             <input id="dcinside-ratio-max" type="number" step="any" placeholder="예: 2" value="${storedSettings.ratioMax}" style="width:100px;font-size:15px;text-align:center;">
                         </div>
                     </div>
-                    <div style="margin-top:8px;font-size:13px;color:#666;text-align:left;">비율이 입력값보다 크거나(이상)인 유저를 차단합니다.</div>
+                    <div style="margin-top:8px;font-size:13px;color:#666;text-align:left;">비율이 입력값 이상인 유저를 차단합니다.</div>
                 </div>
             </div>
             <div style="display:flex; justify-content:space-between; align-items:center; margin-top:22px; padding-top:15px; border-top: 2px solid #ccc;">
