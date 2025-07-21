@@ -1,14 +1,14 @@
 // ==UserScript==
 // @name         DCInside 유저 글댓합/글댓비,유동 차단필터
 // @namespace    http://tampermonkey.net/
-// @version      1.3.2
+// @version      1.3.3
 // @description  유저의 글+댓글 합과 비율이 기준 이하/이상일 경우 해당 유저의 글을 가립니다.유동차단 추가
-// @author       domato153
+// @author       domato153 (수정: Gemini)
 // @match        https://gall.dcinside.com/*
 // @grant        GM_setValue
 // @grant        GM_getValue
 // @grant        GM_registerMenuCommand
-// @license MIT
+// @license      MIT
 // ==/UserScript==
 /*-----------------------------------------------------------------
 DBAD license / Copyright (C) 2025 domato153
@@ -49,11 +49,11 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
             </div>
             <div id="dcinside-settings-container" style="opacity:${masterDisabled ? 0.5 : 1}; pointer-events:${masterDisabled ? 'none' : 'auto'};">
                 <h3 style="cursor: default;margin-top:0;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;">
-                  <span>유저 글+댓글 합 기준값(이 값 이하 차단)</span>
-                  <span style="float:right;display:flex;align-items:center;gap:4px;">
-                    <input id="dcinside-block-guest-checkbox" type="checkbox" ${blockGuestEnabled ? 'checked' : ''} style="vertical-align:middle;">
-                    <label for="dcinside-block-guest-checkbox" style="font-size:13px;vertical-align:middle;cursor:pointer;">유동 차단</label>
-                  </span>
+                    <span>유저 글+댓글 합 기준값(이 값 이하 차단)</span>
+                    <span style="float:right;display:flex;align-items:center;gap:4px;">
+                        <input id="dcinside-block-guest-checkbox" type="checkbox" ${blockGuestEnabled ? 'checked' : ''} style="vertical-align:middle;">
+                        <label for="dcinside-block-guest-checkbox" style="font-size:13px;vertical-align:middle;cursor:pointer;">유동 차단</label>
+                    </span>
                 </h3>
                 <input id="dcinside-threshold-input" type="number" min="0" value="${currentThreshold}" style="width:80px;font-size:16px; cursor: initial;">
                 <div style="font-size:13px;color:#666;margin-top:5px;">0 또는 빈칸으로 두면 비활성화됩니다.</div>
@@ -105,10 +105,6 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
 
         function updateBlockGuestState() {
             const isBlockGuestEnabled = blockGuestCheckbox.checked;
-            // This part needs to be implemented to actually hide/show guest rows
-            // For now, it just updates the checkbox state.
-            // The actual hiding/showing logic would involve MutationObserver
-            // or checking the DOM for span.ip elements.
         }
         blockGuestCheckbox.addEventListener('change', updateBlockGuestState);
         updateBlockGuestState();
@@ -131,7 +127,6 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
             div.remove();
         };
 
-        // ratio 입력칸에서 Enter 누르면 저장 & 실행
         ratioMinInput.addEventListener('keydown', function(e) {
             if (e.key === 'Enter') {
                 document.getElementById('dcinside-threshold-save').click();
@@ -190,7 +185,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
             await GM_setValue('dcinside_ratio_max', ratioMaxInput.value);
             const blockGuestChecked = document.getElementById('dcinside-block-guest-checkbox').checked;
             await GM_setValue('dcinside_block_guest', blockGuestChecked);
-            // 유동 차단 해제: 체크 해제 후 저장 시 차단 목록 삭제
+
             if (!blockGuestChecked) {
                 await clearBlockedGuests();
             }
@@ -207,7 +202,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
 
     window.addEventListener('keydown', async function(e) {
         if (e.shiftKey && (e.key === 's' || e.key === 'S')) {
-            e.preventDefault(); // 브라우저의 기본 동작(키 입력)을 막음
+            e.preventDefault();
             const popup = document.getElementById('dcinside-filter-setting');
             if (popup) {
                 popup.remove();
@@ -218,7 +213,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
     });
 
     GM_registerMenuCommand('글댓합 설정하기', showSettings);
-    
+
     async function getUserPostCommentSum(uid) {
         if (!window._dcinside_user_sum_cache) window._dcinside_user_sum_cache = {};
         if (window._dcinside_user_sum_cache[uid]) return window._dcinside_user_sum_cache[uid];
@@ -259,26 +254,25 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
     }
 
     const BLOCK_UID_KEY = 'dcinside_blocked_uids';
-    const BLOCK_UID_EXPIRE = 1000 * 60 * 60 * 24 * 30; 
+    const BLOCK_UID_EXPIRE = 1000 * 60 * 60 * 24 * 30;
 
     async function addBlockedUid(uid, sum, post, comment, ratioBlocked) {
-        await refreshBlockedUidsCache(true); 
+        await refreshBlockedUidsCache(true);
         BLOCKED_UIDS_CACHE[uid] = { ts: Date.now(), sum: sum, post: post, comment: comment, ratioBlocked: !!ratioBlocked };
         await GM_setValue(BLOCK_UID_KEY, JSON.stringify(BLOCKED_UIDS_CACHE));
     }
 
-    const BLOCK_GUEST_KEY = 'dcinside_blocked_guests'; // 유동 IP 차단 목록
+    const BLOCK_GUEST_KEY = 'dcinside_blocked_guests';
 
-    // 유동 IP 차단 목록 불러오기
     async function getBlockedGuests() {
         let data = await GM_getValue(BLOCK_GUEST_KEY, '[]');
         try { return JSON.parse(data); } catch { return []; }
     }
-    // 유동 IP 차단 목록 저장
+
     async function setBlockedGuests(list) {
         await GM_setValue(BLOCK_GUEST_KEY, JSON.stringify(list));
     }
-    // 유동 IP 차단 추가
+
     async function addBlockedGuest(ip) {
         let list = await getBlockedGuests();
         if (!list.includes(ip)) {
@@ -286,34 +280,34 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
             await setBlockedGuests(list);
         }
     }
-    // 유동 IP 차단 해제(전체)
+
     async function clearBlockedGuests() {
         await setBlockedGuests([]);
     }
 
-    // 차단 여부 판단 헬퍼 함수
     function isUserBlocked({ sum, post, comment }) {
         if (masterDisabled) return false;
-        // sum 차단
+
         let sumBlocked = threshold > 0 && sum > 0 && sum <= threshold;
-        // ratio 차단
+
         let isRatioBlocked = false;
         if (ratioEnabled) {
             const useMin = !isNaN(ratioMin) && ratioMin > 0;
             const useMax = !isNaN(ratioMax) && ratioMax > 0;
-            // 댓글/글 비율 (comment/post)
-            let ratio = (post > 0) ? (comment / post) : 0;
-            if (useMin && ratio >= ratioMin) {
+
+            let ratioCommentPerPost = (post > 0) ? (comment / post) : (comment > 0 ? Infinity : 0);
+            let ratioPostPerComment = (comment > 0) ? (post / comment) : (post > 0 ? Infinity : 0);
+
+            if (useMin && ratioCommentPerPost >= ratioMin) {
                 isRatioBlocked = true;
             }
-            if (useMax && post > 0 && (post / comment) >= ratioMax) {
+            if (useMax && ratioPostPerComment >= ratioMax) {
                 isRatioBlocked = true;
             }
         }
         return sumBlocked || isRatioBlocked;
     }
 
-    // 범용 필터링 함수: DOM 요소, uid, userData, addBlockedUidFn
     async function applyBlockFilterToElement(element, uid, userData, addBlockedUidFn) {
         if (!userData) return;
         const blocked = isUserBlocked(userData);
@@ -321,9 +315,10 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
         if (blocked) {
             let ratioBlocked = false;
             if (ratioEnabled) {
-                let ratio = (userData.post > 0) ? (userData.comment / userData.post) : 0;
-                if (ratioMin > 0 && ratio >= ratioMin) ratioBlocked = true;
-                if (ratioMax > 0 && userData.post > 0 && (userData.post / userData.comment) >= ratioMax) ratioBlocked = true;
+                let ratioCommentPerPost = (userData.post > 0) ? (userData.comment / userData.post) : (userData.comment > 0 ? Infinity : 0);
+                let ratioPostPerComment = (userData.comment > 0) ? (userData.post / userData.comment) : (userData.post > 0 ? Infinity : 0);
+                if (ratioMin > 0 && ratioCommentPerPost >= ratioMin) ratioBlocked = true;
+                if (ratioMax > 0 && ratioPostPerComment >= ratioMax) ratioBlocked = true;
             }
             await addBlockedUidFn(uid, userData.sum, userData.post, userData.comment, ratioBlocked);
         }
@@ -351,7 +346,6 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
                     row.style.display = '';
                     return;
                 }
-                // 새로고침 시 차단 유지
                 if (ip && blockedGuests.includes(ip)) {
                     row.style.display = 'none';
                     return;
@@ -395,7 +389,6 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
                     commentEl.style.display = '';
                     return;
                 }
-                // 새로고침 시 차단 유지
                 if (ip && blockedGuests.includes(ip)) {
                     commentEl.style.display = 'none';
                     return;
@@ -416,13 +409,13 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
             }
         }));
     }
-    
+
     let BLOCKED_UIDS_CACHE = {};
 
     async function refreshBlockedUidsCache(noLog = false) {
         let data = await GM_getValue(BLOCK_UID_KEY, '{}');
         try { BLOCKED_UIDS_CACHE = JSON.parse(data); } catch { BLOCKED_UIDS_CACHE = {}; }
-        
+
         const now = Date.now();
         let changed = false;
         for (const [uid, cacheData] of Object.entries(BLOCKED_UIDS_CACHE)) {
@@ -454,7 +447,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
             const ipSpan = row.querySelector('span.ip');
             const ip = ipSpan ? ipSpan.textContent.trim() : null;
             const isGuest = (!uid || uid.length < 3) && ip;
-            // 유동 차단 즉시 반영
+
             if (blockGuestEnabled && isGuest) {
                 row.style.display = 'none';
                 continue;
@@ -463,7 +456,6 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
                 row.style.display = '';
                 continue;
             }
-            // 새로고침 시 차단 유지
             if (ip && blockedGuests.includes(ip)) {
                 row.style.display = 'none';
                 continue;
@@ -472,10 +464,10 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
             if (cacheData) {
                 let sumBlocked = threshold > 0 && cacheData.sum > 0 && cacheData.sum <= threshold;
                 let isRatioBlocked = false;
-                if (ratioEnabled && cacheData.post !== undefined && cacheData.comment > 0) {
-                    // Fix: ratioMin uses comment/post, ratioMax uses post/comment
-                    const ratioCommentPerPost = (cacheData.post > 0) ? (cacheData.comment / cacheData.post) : 0;
-                    const ratioPostPerComment = (cacheData.comment > 0) ? (cacheData.post / cacheData.comment) : 0;
+                if (ratioEnabled && cacheData.post !== undefined && cacheData.comment !== undefined) {
+                    const ratioCommentPerPost = (cacheData.post > 0) ? (cacheData.comment / cacheData.post) : (cacheData.comment > 0 ? Infinity : 0);
+                    const ratioPostPerComment = (cacheData.comment > 0) ? (cacheData.post / cacheData.comment) : (cacheData.post > 0 ? Infinity : 0);
+
                     if (useMin && ratioCommentPerPost >= ratioMin) {
                         isRatioBlocked = true;
                     }
@@ -497,7 +489,6 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
             for (const mutation of mutations) {
                 for (const node of mutation.addedNodes) {
                     if (node.nodeType === Node.ELEMENT_NODE && node.matches('tr.ub-content.us-post')) {
-                        // 새로 추가된 행만 필터링
                         (async () => {
                             await filterUsers();
                         })();
@@ -524,7 +515,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
             const ipSpan = comment.querySelector('span.ip');
             const ip = ipSpan ? ipSpan.textContent.trim() : null;
             const isGuest = (!uid || uid.length < 3) && ip;
-            // 유동 차단 즉시 반영
+
             if (blockGuestEnabled && isGuest) {
                 comment.style.display = 'none';
                 continue;
@@ -533,7 +524,6 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
                 comment.style.display = '';
                 continue;
             }
-            // 새로고침 시 차단 유지
             if (ip && blockedGuests.includes(ip)) {
                 comment.style.display = 'none';
                 continue;
@@ -542,10 +532,10 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
             if (cacheData) {
                 let sumBlocked = threshold > 0 && cacheData.sum > 0 && cacheData.sum <= threshold;
                 let isRatioBlocked = false;
-                if (ratioEnabled && cacheData.post !== undefined && cacheData.comment > 0) {
-                    // Fix: ratioMin uses comment/post, ratioMax uses post/comment
-                    const ratioCommentPerPost = (cacheData.post > 0) ? (cacheData.comment / cacheData.post) : 0;
-                    const ratioPostPerComment = (cacheData.comment > 0) ? (cacheData.post / cacheData.comment) : 0;
+                if (ratioEnabled && cacheData.post !== undefined && cacheData.comment !== undefined) {
+                    const ratioCommentPerPost = (cacheData.post > 0) ? (cacheData.comment / cacheData.post) : (cacheData.comment > 0 ? Infinity : 0);
+                    const ratioPostPerComment = (cacheData.comment > 0) ? (cacheData.post / cacheData.comment) : (cacheData.post > 0 ? Infinity : 0);
+
                     if (useMin && ratioCommentPerPost >= ratioMin) {
                         isRatioBlocked = true;
                     }
@@ -583,14 +573,14 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
             setupCommentBlocklistObserverSync();
             return;
         }
-        
+
         const bodyObserver = new MutationObserver((mutations, observer) => {
             for (const mutation of mutations) {
                 for (const node of mutation.addedNodes) {
                     if (node.nodeType === Node.ELEMENT_NODE) {
                         if (node.matches('div.comment_box') || node.querySelector('div.comment_box')) {
                             setupCommentBlocklistObserverSync();
-                            observer.disconnect(); 
+                            observer.disconnect();
                             return;
                         }
                     }
@@ -606,7 +596,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
         ratioEnabled = await GM_getValue('dcinside_ratio_filter_enabled', false);
         ratioMin = parseFloat(await GM_getValue('dcinside_ratio_min', ''));
         ratioMax = parseFloat(await GM_getValue('dcinside_ratio_max', ''));
-        // 유동 차단 관련 값 미리 불러오기
+
         window._dcinside_block_guest_enabled = await GM_getValue('dcinside_block_guest', false);
         window._dcinside_blocked_guests = await (async () => { let d = await GM_getValue('dcinside_blocked_guests', '[]'); try { return JSON.parse(d); } catch { return []; } })();
 
@@ -614,7 +604,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
         setupBlocklistObserverSync();
         initCommentObserver();
     }
-    
+
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', startBlocklist);
     } else {
@@ -630,4 +620,4 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
         showSettings();
         GM_setValue('dcinside_threshold', 0);
     }
-})(); 
+})();
