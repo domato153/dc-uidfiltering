@@ -49,7 +49,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
             </div>
             <div id="dcinside-settings-container" style="opacity:${masterDisabled ? 0.5 : 1}; pointer-events:${masterDisabled ? 'none' : 'auto'};">
                 <h3 style="cursor: default;margin-top:0;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;">
-                  <span>유저 글+댓글 합 기준값</span>
+                  <span>유저 글+댓글 합 기준값(이 값 이하 차단)</span>
                   <span style="float:right;display:flex;align-items:center;gap:4px;">
                     <input id="dcinside-block-guest-checkbox" type="checkbox" ${blockGuestEnabled ? 'checked' : ''} style="vertical-align:middle;">
                     <label for="dcinside-block-guest-checkbox" style="font-size:13px;vertical-align:middle;cursor:pointer;">유동 차단</label>
