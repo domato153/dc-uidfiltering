@@ -1,14 +1,14 @@
 // ==UserScript==
-// @name         DCInside 유저 글댓합/글댓비,유동 차단필터 
+// @name         DCInside 유저 글댓합/글댓비,유동 차단필터
 // @namespace    http://tampermonkey.net/
-// @version      1.3.2
-// @description  유저의 글+댓글 합과 비율을 기준으로 글/댓글을 차단. 유동 차단 기능 포함.
-// @author       domato153 (Refactored by Gemini)
+// @version      1.3.1
+// @description  유저의 글+댓글 합과 비율이 기준 이하/이상일 경우 해당 유저의 글을 가립니다.유동차단 추가가
+// @author       domato153
 // @match        https://gall.dcinside.com/*
 // @grant        GM_setValue
 // @grant        GM_getValue
 // @grant        GM_registerMenuCommand
-// @license      MIT
+// @license MIT
 // ==/UserScript==
 /*-----------------------------------------------------------------
 DBAD license / Copyright (C) 2025 domato153
@@ -20,39 +20,21 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
 (function() {
     'use strict';
 
-    // --- 설정 변수 (스크립트 스코프 내에서 관리) ---
-    let settings = {
-        masterDisabled: false,
-        threshold: 0,
-        ratioEnabled: false,
-        ratioMin: 0,
-        ratioMax: 0,
-        blockGuest: false,
-    };
+    let threshold = GM_getValue('dcinside_threshold', 0);
+    let ratioEnabled, ratioMin, ratioMax, masterDisabled;
 
-    // --- 캐시 및 상수 ---
-    const USER_SUM_CACHE = {}; // API 호출 결과를 담는 세션 캐시
-    const BLOCK_UID_KEY = 'dcinside_blocked_uids';
-    const BLOCK_GUEST_KEY = 'dcinside_blocked_guests';
-    const BLOCK_UID_EXPIRE_MS = 1000 * 60 * 60 * 24 * 30; // 30일
-    let BLOCKED_UIDS_CACHE = {}; // 영구 차단 목록 캐시 (GM_storage)
-    let BLOCKED_GUESTS = [];   // 유동 차단 목록
-
-    // --- 설정 UI 표시 ---
     async function showSettings() {
-        // 현재 저장된 값 불러오기
-        const storedSettings = {
-            masterDisabled: await GM_getValue('dcinside_master_disabled', false),
-            threshold: await GM_getValue('dcinside_threshold', 0),
-            ratioEnabled: await GM_getValue('dcinside_ratio_filter_enabled', false),
-            ratioMin: await GM_getValue('dcinside_ratio_min', ''),
-            ratioMax: await GM_getValue('dcinside_ratio_max', ''),
-            blockGuest: await GM_getValue('dcinside_block_guest', false),
-        };
+        masterDisabled = await GM_getValue('dcinside_master_disabled', false);
+        const currentThreshold = await GM_getValue('dcinside_threshold', 0);
+        const ratioEnabled = await GM_getValue('dcinside_ratio_filter_enabled', false);
+        const ratioMin = await GM_getValue('dcinside_ratio_min', '');
+        const ratioMax = await GM_getValue('dcinside_ratio_max', '');
+        const blockGuestEnabled = await GM_getValue('dcinside_block_guest', false);
 
-        // 기존 UI 제거
         const existingDiv = document.getElementById('dcinside-filter-setting');
-        if (existingDiv) existingDiv.remove();
+        if (existingDiv) {
+            existingDiv.remove();
+        }
 
         const div = document.createElement('div');
         div.id = 'dcinside-filter-setting';
@@ -62,330 +44,580 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
                 <button id="dcinside-filter-close" style="background:none;border:none;font-size:20px;cursor:pointer;line-height:1;">✕</button>
             </div>
             <div style="margin-bottom:15px;padding-bottom:12px;border-bottom: 2px solid #ccc; display:flex;align-items:center;">
-                <input id="dcinside-master-disable-checkbox" type="checkbox" style="vertical-align:middle;width:16px;height:16px;" ${storedSettings.masterDisabled ? 'checked' : ''}>
+                <input id="dcinside-master-disable-checkbox" type="checkbox" style="vertical-align:middle;width:16px;height:16px;" ${masterDisabled ? 'checked' : ''}>
                 <label for="dcinside-master-disable-checkbox" style="font-size:16px;vertical-align:middle;cursor:pointer;margin-left:6px;"><b>모든 기능 끄기</b></label>
             </div>
-            <div id="dcinside-settings-container" style="opacity:${storedSettings.masterDisabled ? 0.5 : 1}; pointer-events:${storedSettings.masterDisabled ? 'none' : 'auto'};">
+            <div id="dcinside-settings-container" style="opacity:${masterDisabled ? 0.5 : 1}; pointer-events:${masterDisabled ? 'none' : 'auto'};">
                 <h3 style="cursor: default;margin-top:0;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;">
-                    <span>유저 글+댓글 합 기준값</span>
-                    <span style="float:right;display:flex;align-items:center;gap:4px;">
-                        <input id="dcinside-block-guest-checkbox" type="checkbox" ${storedSettings.blockGuest ? 'checked' : ''} style="vertical-align:middle;">
-                        <label for="dcinside-block-guest-checkbox" style="font-size:13px;vertical-align:middle;cursor:pointer;">유동 차단</label>
-                    </span>
+                  <span>유저 글+댓글 합 기준값</span>
+                  <span style="float:right;display:flex;align-items:center;gap:4px;">
+                    <input id="dcinside-block-guest-checkbox" type="checkbox" ${blockGuestEnabled ? 'checked' : ''} style="vertical-align:middle;">
+                    <label for="dcinside-block-guest-checkbox" style="font-size:13px;vertical-align:middle;cursor:pointer;">유동 차단</label>
+                  </span>
                 </h3>
-                <input id="dcinside-threshold-input" type="number" min="0" value="${storedSettings.threshold}" style="width:80px;font-size:16px; cursor: initial;">
+                <input id="dcinside-threshold-input" type="number" min="0" value="${currentThreshold}" style="width:80px;font-size:16px; cursor: initial;">
                 <div style="font-size:13px;color:#666;margin-top:5px;">0 또는 빈칸으로 두면 비활성화됩니다.</div>
 
                 <hr style="border:0;border-top:2px solid #222;margin:22px 0 12px 0;">
 
                 <div style="margin-bottom:8px;display:flex;align-items:center;">
-                    <input id="dcinside-ratio-enable-checkbox" type="checkbox" style="vertical-align:middle;" ${storedSettings.ratioEnabled ? 'checked' : ''}>
+                    <input id="dcinside-ratio-enable-checkbox" type="checkbox" style="vertical-align:middle;" ${ratioEnabled ? 'checked' : ''}>
                     <label for="dcinside-ratio-enable-checkbox" style="font-size:15px;vertical-align:middle;cursor:pointer;margin-left:4px;">글/댓글 비율 필터 사용</label>
                 </div>
                 <div id="dcinside-ratio-section">
                     <div style="display:flex;gap:10px;align-items:center;">
                         <div style="display:flex;flex-direction:column;align-items:center;">
-                            <label for="dcinside-ratio-min" style="font-size:14px;">댓글/글 비율 이상 차단</label>
-                            <div style="font-size:12px;color:#888;line-height:1.2;">(댓글만 많은 유저)</div>
-                            <input id="dcinside-ratio-min" type="number" step="any" placeholder="예: 0.5" value="${storedSettings.ratioMin}" style="width:100px;font-size:15px;text-align:center;">
+                            <label for="dcinside-ratio-min" style="font-size:14px;">댓글/글 비율 이상 차단 </label>
+                            <div style="font-size:12px;color:#888;line-height:1.2;">(댓글만 많은 놈)</div>
+                            <input id="dcinside-ratio-min" type="number" step="any" placeholder="예: 0.5" value="${ratioMin !== '' ? ratioMin : ''}" style="width:100px;font-size:15px;text-align:center;">
                         </div>
                         <div style="display:flex;flex-direction:column;align-items:center;">
-                            <label for="dcinside-ratio-max" style="font-size:14px;">글/댓글 비율 이상 차단</label>
-                            <div style="font-size:12px;color:#888;line-height:1.2;">(글만 많은 유저)</div>
-                            <input id="dcinside-ratio-max" type="number" step="any" placeholder="예: 2" value="${storedSettings.ratioMax}" style="width:100px;font-size:15px;text-align:center;">
+                            <label for="dcinside-ratio-max" style="font-size:14px;">글/댓글 비율 이상 차단 </label>
+                            <div style="font-size:12px;color:#888;line-height:1.2;">(글만 많은 놈)</div>
+                            <input id="dcinside-ratio-max" type="number" step="any" placeholder="예: 2" value="${ratioMax !== '' ? ratioMax : ''}" style="width:100px;font-size:15px;text-align:center;">
                         </div>
                     </div>
-                    <div style="margin-top:8px;font-size:13px;color:#666;text-align:left;">비율이 입력값 이상인 유저를 차단합니다.</div>
+                    <div style="margin-top:8px;font-size:13px;color:#666;text-align:left;">비율이 입력값보다 작거나(이하), 크거나(이상)인 유저를 차단합니다.</div>
                 </div>
             </div>
             <div style="display:flex; justify-content:space-between; align-items:center; margin-top:22px; padding-top:15px; border-top: 2px solid #ccc;">
-                <div style="font-size:15px;color:#444;text-align:left;">창 여는 단축키: <b>Shift+S</b></div>
+                <div style="font-size:15px;color:#444;text-align:left;">창 여는 단축키: <b>Shift+s</b></div>
                 <button id="dcinside-threshold-save" style="font-size:16px;border:2px solid #000;border-radius:4px;background:#fff; cursor: pointer; padding: 4px 10px;">저장 & 실행</button>
             </div>
         `;
         document.body.appendChild(div);
 
-        // --- UI 이벤트 핸들러 ---
+        const input = document.getElementById('dcinside-threshold-input');
+        input.focus();
+        input.select();
+
         const masterDisableCheckbox = document.getElementById('dcinside-master-disable-checkbox');
         const settingsContainer = document.getElementById('dcinside-settings-container');
-        const ratioEnableCheckbox = document.getElementById('dcinside-ratio-enable-checkbox');
+        const blockGuestCheckbox = document.getElementById('dcinside-block-guest-checkbox');
+
+        function updateMasterState() {
+            const isMasterDisabled = masterDisableCheckbox.checked;
+            settingsContainer.style.opacity = isMasterDisabled ? 0.5 : 1;
+            settingsContainer.style.pointerEvents = isMasterDisabled ? 'none' : 'auto';
+        }
+        masterDisableCheckbox.addEventListener('change', updateMasterState);
+        updateMasterState();
+
+        function updateBlockGuestState() {
+            const isBlockGuestEnabled = blockGuestCheckbox.checked;
+            // This part needs to be implemented to actually hide/show guest rows
+            // For now, it just updates the checkbox state.
+            // The actual hiding/showing logic would involve MutationObserver
+            // or checking the DOM for span.ip elements.
+        }
+        blockGuestCheckbox.addEventListener('change', updateBlockGuestState);
+        updateBlockGuestState();
+
         const ratioSection = document.getElementById('dcinside-ratio-section');
+        const ratioEnableCheckbox = document.getElementById('dcinside-ratio-enable-checkbox');
         const ratioMinInput = document.getElementById('dcinside-ratio-min');
         const ratioMaxInput = document.getElementById('dcinside-ratio-max');
 
-        const updateMasterState = () => {
-            const isDisabled = masterDisableCheckbox.checked;
-            settingsContainer.style.opacity = isDisabled ? 0.5 : 1;
-            settingsContainer.style.pointerEvents = isDisabled ? 'none' : 'auto';
-        };
-        const updateRatioState = () => {
-            const isEnabled = ratioEnableCheckbox.checked;
-            ratioSection.style.opacity = isEnabled ? 1 : 0.5;
-            ratioMinInput.disabled = !isEnabled;
-            ratioMaxInput.disabled = !isEnabled;
-        };
-        masterDisableCheckbox.addEventListener('change', updateMasterState);
-        ratioEnableCheckbox.addEventListener('change', updateRatioState);
-        updateMasterState();
-        updateRatioState();
-        
-        document.getElementById('dcinside-filter-close').onclick = () => div.remove();
-        
-        // 저장 버튼 클릭 시
-        document.getElementById('dcinside-threshold-save').onclick = async () => {
-            const newMasterDisabled = masterDisableCheckbox.checked;
-            const newBlockGuest = document.getElementById('dcinside-block-guest-checkbox').checked;
-            
-            await GM_setValue('dcinside_master_disabled', newMasterDisabled);
-            await GM_setValue('dcinside_threshold', parseInt(document.getElementById('dcinside-threshold-input').value, 10) || 0);
-            await GM_setValue('dcinside_ratio_filter_enabled', ratioEnableCheckbox.checked);
-            await GM_setValue('dcinside_ratio_min', ratioMinInput.value);
-            await GM_setValue('dcinside_ratio_max', ratioMaxInput.value);
-            await GM_setValue('dcinside_block_guest', newBlockGuest);
+        function updateRatioSectionState() {
+            const enabled = ratioEnableCheckbox.checked;
+            ratioSection.style.opacity = enabled ? 1 : 0.5;
+            ratioMinInput.disabled = !enabled;
+            ratioMaxInput.disabled = !enabled;
+        }
+        ratioEnableCheckbox.addEventListener('change', updateRatioSectionState);
+        updateRatioSectionState();
 
-            if (!newBlockGuest) {
-                await GM_setValue(BLOCK_GUEST_KEY, '[]');
-            }
-            
+        document.getElementById('dcinside-filter-close').onclick = function() {
             div.remove();
-            location.reload();
         };
 
-        // Enter 키로 저장
-        const handleEnterKey = (e) => {
-            if (e.key === 'Enter') document.getElementById('dcinside-threshold-save').click();
-        };
-        document.getElementById('dcinside-threshold-input').addEventListener('keydown', handleEnterKey);
-        ratioMinInput.addEventListener('keydown', handleEnterKey);
-        ratioMaxInput.addEventListener('keydown', handleEnterKey);
+        // ratio 입력칸에서 Enter 누르면 저장 & 실행
+        ratioMinInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                document.getElementById('dcinside-threshold-save').click();
+            }
+        });
+        ratioMaxInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                document.getElementById('dcinside-threshold-save').click();
+            }
+        });
 
-        // 창 드래그 로직
-        let isDragging = false, offsetX, offsetY;
-        div.addEventListener('mousedown', (e) => {
-            if (e.target.closest('input, button, label')) return;
+        let isDragging = false;
+        let offsetX, offsetY;
+
+        div.addEventListener('mousedown', function(e) {
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON' || e.target.tagName === 'LABEL') return;
             isDragging = true;
-            offsetX = e.clientX - div.offsetLeft;
-            offsetY = e.clientY - div.offsetTop;
+            const rect = div.getBoundingClientRect();
+            if (div.style.transform !== 'none') {
+                div.style.transform = 'none';
+                div.style.left = `${rect.left}px`;
+                div.style.top = `${rect.top}px`;
+            }
+            offsetX = e.clientX - rect.left;
+            offsetY = e.clientY - rect.top;
             document.addEventListener('mousemove', onMouseMove);
             document.addEventListener('mouseup', onMouseUp, { once: true });
         });
+
         function onMouseMove(e) {
             if (!isDragging) return;
-            div.style.left = `${e.clientX - offsetX}px`;
-            div.style.top = `${e.clientY - offsetY}px`;
+            e.preventDefault();
+            const rect = div.getBoundingClientRect();
+            let newX = e.clientX - offsetX;
+            let newY = e.clientY - offsetY;
+            newX = Math.max(0, Math.min(newX, window.innerWidth - rect.width));
+            newY = Math.max(0, Math.min(newY, window.innerHeight - rect.height));
+            div.style.left = `${newX}px`;
+            div.style.top = `${newY}px`;
         }
+
         function onMouseUp() {
             isDragging = false;
             document.removeEventListener('mousemove', onMouseMove);
         }
+
+        document.getElementById('dcinside-threshold-save').onclick = async function() {
+            await GM_setValue('dcinside_master_disabled', masterDisableCheckbox.checked);
+
+            let val = parseInt(input.value, 10);
+            if (isNaN(val)) val = 0;
+            await GM_setValue('dcinside_threshold', val);
+            threshold = val;
+            await GM_setValue('dcinside_ratio_filter_enabled', ratioEnableCheckbox.checked);
+            await GM_setValue('dcinside_ratio_min', ratioMinInput.value);
+            await GM_setValue('dcinside_ratio_max', ratioMaxInput.value);
+            const blockGuestChecked = document.getElementById('dcinside-block-guest-checkbox').checked;
+            await GM_setValue('dcinside_block_guest', blockGuestChecked);
+            // 유동 차단 해제: 체크 해제 후 저장 시 차단 목록 삭제
+            if (!blockGuestChecked) {
+                await clearBlockedGuests();
+            }
+            div.remove();
+            location.reload();
+        };
+
+        input.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                document.getElementById('dcinside-threshold-save').click();
+            }
+        });
     }
 
-    // --- 핵심 로직 ---
+    window.addEventListener('keydown', async function(e) {
+        if (e.shiftKey && (e.key === 's' || e.key === 'S')) {
+            e.preventDefault(); // 브라우저의 기본 동작(키 입력)을 막음
+            const popup = document.getElementById('dcinside-filter-setting');
+            if (popup) {
+                popup.remove();
+            } else {
+                await showSettings();
+            }
+        }
+    });
 
-    /** 유저의 글/댓글 수를 API로 가져옵니다. */
+    GM_registerMenuCommand('글댓합 설정하기', showSettings);
+    
     async function getUserPostCommentSum(uid) {
-        if (USER_SUM_CACHE[uid]) return USER_SUM_CACHE[uid];
+        if (!window._dcinside_user_sum_cache) window._dcinside_user_sum_cache = {};
+        if (window._dcinside_user_sum_cache[uid]) return window._dcinside_user_sum_cache[uid];
 
         function getCookie(name) {
             const value = `; ${document.cookie}`;
             const parts = value.split(`; ${name}=`);
             if (parts.length === 2) return parts.pop().split(';').shift();
         }
-        const ci = getCookie('ci_t') || getCookie('ci_c');
-        if (!ci) return null;
+        let ci = getCookie('ci_t');
+        if (!ci) ci = getCookie('ci_c');
+        if (!ci) {
+            return null;
+        }
 
         return new Promise((resolve) => {
             const xhr = new XMLHttpRequest();
             xhr.open('POST', '/api/gallog_user_layer/gallog_content_reple/', true);
+            xhr.withCredentials = true;
             xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded; charset=UTF-8');
             xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
-            xhr.onload = () => {
-                const [post, comment] = xhr.responseText.split(',').map(Number);
+
+            xhr.onload = function() {
+                const text = xhr.responseText;
+                const [post, comment] = text.split(',').map(x => parseInt(x, 10));
                 if (!isNaN(post) && !isNaN(comment)) {
-                    const data = { sum: post + comment, post, comment };
-                    USER_SUM_CACHE[uid] = data;
-                    resolve(data);
+                    window._dcinside_user_sum_cache[uid] = { sum: post + comment, post, comment };
+                    resolve({ sum: post + comment, post, comment });
                 } else {
                     resolve(null);
                 }
             };
-            xhr.onerror = () => resolve(null);
+            xhr.onerror = function() {
+                resolve(null);
+            };
             xhr.send(`ci_t=${encodeURIComponent(ci)}&user_id=${encodeURIComponent(uid)}`);
         });
     }
 
-    /** 차단 여부를 판단합니다. */
-    function isUserBlocked(userData) {
-        if (!userData) return false;
-        const { sum, post, comment } = userData;
+    const BLOCK_UID_KEY = 'dcinside_blocked_uids';
+    const BLOCK_UID_EXPIRE = 1000 * 60 * 60 * 24 * 30; 
 
-        // 글댓합 기준
-        if (settings.threshold > 0 && sum > 0 && sum <= settings.threshold) {
-            return true;
-        }
-
-        // 비율 기준
-        if (settings.ratioEnabled) {
-            // 댓글/글 비율 (댓글만 많은 유저)
-            if (settings.ratioMin > 0 && post > 0) {
-                if ((comment / post) >= settings.ratioMin) return true;
-            }
-            // 글/댓글 비율 (글만 많은 유저)
-            if (settings.ratioMax > 0) {
-                if (comment > 0) {
-                    if ((post / comment) >= settings.ratioMax) return true;
-                } else if (post > 0) {
-                    // 댓글 0개, 글 1개 이상 -> 비율 무한대
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
-    /** 차단된 UID를 캐시에 저장합니다. */
-    async function addBlockedUid(uid, userData) {
-        BLOCKED_UIDS_CACHE[uid] = { ts: Date.now(), ...userData };
+    async function addBlockedUid(uid, sum, post, comment, ratioBlocked) {
+        await refreshBlockedUidsCache(true); 
+        BLOCKED_UIDS_CACHE[uid] = { ts: Date.now(), sum: sum, post: post, comment: comment, ratioBlocked: !!ratioBlocked };
         await GM_setValue(BLOCK_UID_KEY, JSON.stringify(BLOCKED_UIDS_CACHE));
     }
-    
-    /** 차단된 유동 IP를 저장합니다. */
+
+    const BLOCK_GUEST_KEY = 'dcinside_blocked_guests'; // 유동 IP 차단 목록
+
+    // 유동 IP 차단 목록 불러오기
+    async function getBlockedGuests() {
+        let data = await GM_getValue(BLOCK_GUEST_KEY, '[]');
+        try { return JSON.parse(data); } catch { return []; }
+    }
+    // 유동 IP 차단 목록 저장
+    async function setBlockedGuests(list) {
+        await GM_setValue(BLOCK_GUEST_KEY, JSON.stringify(list));
+    }
+    // 유동 IP 차단 추가
     async function addBlockedGuest(ip) {
-        if (!BLOCKED_GUESTS.includes(ip)) {
-            BLOCKED_GUESTS.push(ip);
-            await GM_setValue(BLOCK_GUEST_KEY, JSON.stringify(BLOCKED_GUESTS));
+        let list = await getBlockedGuests();
+        if (!list.includes(ip)) {
+            list.push(ip);
+            await setBlockedGuests(list);
+        }
+    }
+    // 유동 IP 차단 해제(전체)
+    async function clearBlockedGuests() {
+        await setBlockedGuests([]);
+    }
+
+    // 차단 여부 판단 헬퍼 함수
+    function isUserBlocked({ sum, post, comment }) {
+        if (masterDisabled) return false;
+        // sum 차단
+        let sumBlocked = threshold > 0 && sum > 0 && sum <= threshold;
+        // ratio 차단
+        let isRatioBlocked = false;
+        if (ratioEnabled) {
+            const useMin = !isNaN(ratioMin) && ratioMin > 0;
+            const useMax = !isNaN(ratioMax) && ratioMax > 0;
+            // 댓글/글 비율 (comment/post)
+            let ratio = (post > 0) ? (comment / post) : 0;
+            if (useMin && ratio >= ratioMin) {
+                isRatioBlocked = true;
+            }
+            if (useMax && post > 0 && (post / comment) > ratioMax) {
+                isRatioBlocked = true;
+            }
+        }
+        return sumBlocked || isRatioBlocked;
+    }
+
+    // 범용 필터링 함수: DOM 요소, uid, userData, addBlockedUidFn
+    async function applyBlockFilterToElement(element, uid, userData, addBlockedUidFn) {
+        if (!userData) return;
+        const blocked = isUserBlocked(userData);
+        element.style.display = blocked ? 'none' : '';
+        if (blocked) {
+            let ratioBlocked = false;
+            if (ratioEnabled) {
+                let ratio = (userData.post > 0) ? (userData.comment / userData.post) : 0;
+                if (ratioMin > 0 && ratio >= ratioMin) ratioBlocked = true;
+                if (ratioMax > 0 && userData.post > 0 && (userData.post / userData.comment) > ratioMax) ratioBlocked = true;
+            }
+            await addBlockedUidFn(uid, userData.sum, userData.post, userData.comment, ratioBlocked);
         }
     }
 
-    /** 게시글/댓글 요소를 필터링하는 핵심 함수 */
-    async function processElement(element) {
-        if (settings.masterDisabled) {
-            element.style.display = '';
-            return;
-        }
-        
-        try {
-            const writerEl = element.querySelector('.gall_writer.ub-writer');
-            const ipSpan = element.querySelector('span.ip');
-            if (!writerEl) return;
-
-            const uid = writerEl.getAttribute('data-uid');
-            const ip = ipSpan ? ipSpan.textContent.trim() : null;
-
-            // 1. 유동(Guest) 유저 처리
-            if (settings.blockGuest && ip && (!uid || uid.length < 3)) {
-                element.style.display = 'none';
-                await addBlockedGuest(ip);
-                return;
-            }
-            if (ip && BLOCKED_GUESTS.includes(ip)) {
-                 element.style.display = 'none';
-                 return;
-            }
-
-            // 2. 고정닉(UID) 유저 처리
-            if (!uid || uid.length < 3) return;
-
-            // 2-1. 영구 차단 캐시 확인
-            let userData = BLOCKED_UIDS_CACHE[uid];
-            if (userData) {
-                if (isUserBlocked(userData)) {
-                    element.style.display = 'none';
+    async function filterUsers() {
+        if (masterDisabled) return;
+        const blockGuestEnabled = await GM_getValue('dcinside_block_guest', false);
+        const blockedGuests = await getBlockedGuests();
+        const rows = Array.from(document.querySelectorAll('tr.ub-content.us-post'));
+        await Promise.all(rows.map(async (row) => {
+            try {
+                const writerTd = row.querySelector('td.gall_writer.ub-writer');
+                if (!writerTd) return;
+                const uid = writerTd.getAttribute('data-uid');
+                const ipSpan = row.querySelector('span.ip');
+                const ip = ipSpan ? ipSpan.textContent.trim() : null;
+                const isGuest = (!uid || uid.length < 3) && ip;
+                if (blockGuestEnabled && isGuest) {
+                    row.style.display = 'none';
+                    if (ip) await addBlockedGuest(ip);
+                    return;
                 }
-                return;
-            }
-            
-            // 2-2. API로 정보 조회
-            userData = await getUserPostCommentSum(uid);
-            if (userData && isUserBlocked(userData)) {
-                element.style.display = 'none';
-                await addBlockedUid(uid, userData);
-            }
+                if (!blockGuestEnabled && isGuest) {
+                    row.style.display = '';
+                    return;
+                }
+                // 새로고침 시 차단 유지
+                if (ip && blockedGuests.includes(ip)) {
+                    row.style.display = 'none';
+                    return;
+                }
+                if (!uid || uid.length < 3) return;
 
-        } catch (e) {
-            console.warn('[DC Filter] Element processing error:', e, element);
+                const cachedData = BLOCKED_UIDS_CACHE[uid];
+                if (cachedData) {
+                    await applyBlockFilterToElement(row, uid, cachedData, addBlockedUid);
+                    return;
+                }
+
+                const userData = await getUserPostCommentSum(uid);
+                if (!userData) return;
+                await applyBlockFilterToElement(row, uid, userData, addBlockedUid);
+            } catch (e) {
+                console.warn('[필터] 예외 발생:', e, row);
+            }
+        }));
+    }
+
+    async function filterComments() {
+        if (masterDisabled) return;
+        const blockGuestEnabled = await GM_getValue('dcinside_block_guest', false);
+        const blockedGuests = await getBlockedGuests();
+        const comments = Array.from(document.querySelectorAll('div.comment_box ul.cmt_list li.ub-content'));
+        await Promise.all(comments.map(async (commentEl) => {
+            try {
+                const writerSpan = commentEl.querySelector('span.gall_writer.ub-writer');
+                if (!writerSpan) return;
+                const uid = writerSpan.getAttribute('data-uid');
+                const ipSpan = commentEl.querySelector('span.ip');
+                const ip = ipSpan ? ipSpan.textContent.trim() : null;
+                const isGuest = (!uid || uid.length < 3) && ip;
+                if (blockGuestEnabled && isGuest) {
+                    commentEl.style.display = 'none';
+                    if (ip) await addBlockedGuest(ip);
+                    return;
+                }
+                if (!blockGuestEnabled && isGuest) {
+                    commentEl.style.display = '';
+                    return;
+                }
+                // 새로고침 시 차단 유지
+                if (ip && blockedGuests.includes(ip)) {
+                    commentEl.style.display = 'none';
+                    return;
+                }
+                if (!uid || uid.length < 3) return;
+
+                const cachedData = BLOCKED_UIDS_CACHE[uid];
+                if (cachedData) {
+                    await applyBlockFilterToElement(commentEl, uid, cachedData, addBlockedUid);
+                    return;
+                }
+
+                const userData = await getUserPostCommentSum(uid);
+                if (!userData) return;
+                await applyBlockFilterToElement(commentEl, uid, userData, addBlockedUid);
+            } catch (e) {
+                console.warn('[필터-댓글] 예외 발생:', e, commentEl);
+            }
+        }));
+    }
+    
+    let BLOCKED_UIDS_CACHE = {};
+
+    async function refreshBlockedUidsCache(noLog = false) {
+        let data = await GM_getValue(BLOCK_UID_KEY, '{}');
+        try { BLOCKED_UIDS_CACHE = JSON.parse(data); } catch { BLOCKED_UIDS_CACHE = {}; }
+        
+        const now = Date.now();
+        let changed = false;
+        for (const [uid, cacheData] of Object.entries(BLOCKED_UIDS_CACHE)) {
+            if (typeof cacheData !== 'object' || cacheData === null || typeof cacheData.ts !== 'number') {
+                delete BLOCKED_UIDS_CACHE[uid];
+                changed = true;
+                continue;
+            }
+            if (now - cacheData.ts > BLOCK_UID_EXPIRE) {
+                delete BLOCKED_UIDS_CACHE[uid]; changed = true;
+            }
+        }
+        if (changed) await GM_setValue(BLOCK_UID_KEY, JSON.stringify(BLOCKED_UIDS_CACHE));
+    }
+
+    function hideBlockedRowsSync() {
+        const useMin = !isNaN(ratioMin) && ratioMin > 0;
+        const useMax = !isNaN(ratioMax) && ratioMax > 0;
+        const blockGuestEnabled = window._dcinside_block_guest_enabled;
+        const blockedGuests = window._dcinside_blocked_guests || [];
+        for (const row of document.querySelectorAll('tr.ub-content.us-post')) {
+            if (masterDisabled) {
+                row.style.display = '';
+                continue;
+            }
+            const writerTd = row.querySelector('td.gall_writer.ub-writer');
+            if (!writerTd) continue;
+            const uid = writerTd.getAttribute('data-uid');
+            const ipSpan = row.querySelector('span.ip');
+            const ip = ipSpan ? ipSpan.textContent.trim() : null;
+            const isGuest = (!uid || uid.length < 3) && ip;
+            // 유동 차단 즉시 반영
+            if (blockGuestEnabled && isGuest) {
+                row.style.display = 'none';
+                continue;
+            }
+            if (!blockGuestEnabled && isGuest) {
+                row.style.display = '';
+                continue;
+            }
+            // 새로고침 시 차단 유지
+            if (ip && blockedGuests.includes(ip)) {
+                row.style.display = 'none';
+                continue;
+            }
+            const cacheData = BLOCKED_UIDS_CACHE[uid];
+            if (cacheData) {
+                let sumBlocked = threshold > 0 && cacheData.sum > 0 && cacheData.sum <= threshold;
+                let isRatioBlocked = false;
+                if (ratioEnabled && cacheData.post !== undefined && cacheData.comment > 0) {
+                    const ratio = cacheData.post / cacheData.comment;
+                    if ((useMin && ratio < ratioMin) || (useMax && ratio > ratioMax)) {
+                        isRatioBlocked = true;
+                    }
+                }
+                row.style.display = (sumBlocked || isRatioBlocked) ? 'none' : '';
+            }
         }
     }
 
-    /** MutationObserver를 설정하여 동적으로 추가되는 콘텐츠를 감시합니다. */
-    function setupObserver(selector, targetNode) {
-        if (!targetNode) return;
+    function setupBlocklistObserverSync() {
+        const table = document.querySelector('table.gall_list');
+        if (!table) return;
+        const hideRows = hideBlockedRowsSync;
+        hideRows();
         const observer = new MutationObserver((mutations) => {
             for (const mutation of mutations) {
                 for (const node of mutation.addedNodes) {
-                    if (node.nodeType === Node.ELEMENT_NODE && node.matches(selector)) {
-                        processElement(node);
+                    if (node.nodeType === Node.ELEMENT_NODE && node.matches('tr.ub-content.us-post')) {
+                        // 새로 추가된 행만 필터링
+                        (async () => {
+                            await filterUsers();
+                        })();
                     }
                 }
             }
         });
-        observer.observe(targetNode, { childList: true, subtree: true });
+        observer.observe(table, { childList: true, subtree: true });
     }
 
-    /** 스크립트 초기화 */
-    async function initialize() {
-        // 1. 설정 불러오기
-        settings.masterDisabled = await GM_getValue('dcinside_master_disabled', false);
-        if (settings.masterDisabled) return; // 기능 꺼져있으면 여기서 중단
-
-        settings.threshold = await GM_getValue('dcinside_threshold', 0);
-        settings.ratioEnabled = await GM_getValue('dcinside_ratio_filter_enabled', false);
-        settings.ratioMin = parseFloat(await GM_getValue('dcinside_ratio_min', '')) || 0;
-        settings.ratioMax = parseFloat(await GM_getValue('dcinside_ratio_max', '')) || 0;
-        settings.blockGuest = await GM_getValue('dcinside_block_guest', false);
-
-        // 2. 차단 목록 캐시 불러오기 및 만료 데이터 정리
-        try { BLOCKED_UIDS_CACHE = JSON.parse(await GM_getValue(BLOCK_UID_KEY, '{}')); } catch { BLOCKED_UIDS_CACHE = {}; }
-        try { BLOCKED_GUESTS = JSON.parse(await GM_getValue(BLOCK_GUEST_KEY, '[]')); } catch { BLOCKED_GUESTS = []; }
-        
-        const now = Date.now();
-        let cacheChanged = false;
-        for (const uid in BLOCKED_UIDS_CACHE) {
-            if (now - BLOCKED_UIDS_CACHE[uid].ts > BLOCK_UID_EXPIRE_MS) {
-                delete BLOCKED_UIDS_CACHE[uid];
-                cacheChanged = true;
+    function hideBlockedCommentsSync() {
+        const useMin = !isNaN(ratioMin) && ratioMin > 0;
+        const useMax = !isNaN(ratioMax) && ratioMax > 0;
+        const blockGuestEnabled = window._dcinside_block_guest_enabled;
+        const blockedGuests = window._dcinside_blocked_guests || [];
+        for (const comment of document.querySelectorAll('div.comment_box ul.cmt_list li.ub-content')) {
+            if (masterDisabled) {
+                comment.style.display = '';
+                continue;
+            }
+            const writerSpan = comment.querySelector('span.gall_writer.ub-writer');
+            if (!writerSpan) continue;
+            const uid = writerSpan.getAttribute('data-uid');
+            const ipSpan = comment.querySelector('span.ip');
+            const ip = ipSpan ? ipSpan.textContent.trim() : null;
+            const isGuest = (!uid || uid.length < 3) && ip;
+            // 유동 차단 즉시 반영
+            if (blockGuestEnabled && isGuest) {
+                comment.style.display = 'none';
+                continue;
+            }
+            if (!blockGuestEnabled && isGuest) {
+                comment.style.display = '';
+                continue;
+            }
+            // 새로고침 시 차단 유지
+            if (ip && blockedGuests.includes(ip)) {
+                comment.style.display = 'none';
+                continue;
+            }
+            const cacheData = BLOCKED_UIDS_CACHE[uid];
+            if (cacheData) {
+                let sumBlocked = threshold > 0 && cacheData.sum > 0 && cacheData.sum <= threshold;
+                let isRatioBlocked = false;
+                if (ratioEnabled && cacheData.post !== undefined && cacheData.comment > 0) {
+                    const ratio = cacheData.post / cacheData.comment;
+                    if ((useMin && ratio < ratioMin) || (useMax && ratio > ratioMax)) {
+                        isRatioBlocked = true;
+                    }
+                }
+                comment.style.display = (sumBlocked || isRatioBlocked) ? 'none' : '';
             }
         }
-        if (cacheChanged) await GM_setValue(BLOCK_UID_KEY, JSON.stringify(BLOCKED_UIDS_CACHE));
-
-        // 3. 현재 페이지의 모든 글과 댓글에 필터 즉시 적용
-        document.querySelectorAll('tr.ub-content.us-post, li.ub-content').forEach(processElement);
-
-        // 4. Observer 설정으로 동적 로딩 콘텐츠 감시
-        setupObserver('tr.ub-content.us-post', document.querySelector('table.gall_list > tbody'));
-        const commentBox = document.querySelector('div.comment_box');
-        if (commentBox) {
-            setupObserver('li.ub-content', commentBox.querySelector('ul.cmt_list'));
-        } else {
-            // 댓글 영역이 나중에 로드될 경우 대비
-            const bodyObserver = new MutationObserver((mutations, observer) => {
-                const newCommentBox = document.querySelector('div.comment_box ul.cmt_list');
-                if (newCommentBox) {
-                    setupObserver('li.ub-content', newCommentBox);
-                    observer.disconnect(); // 찾았으면 더 이상 감시할 필요 없음
-                }
-            });
-            bodyObserver.observe(document.body, { childList: true, subtree: true });
-        }
     }
 
-    // --- 실행 ---
-    GM_registerMenuCommand('글댓합 필터 설정', showSettings);
+    function setupCommentBlocklistObserverSync() {
+        const ul = document.querySelector('div.comment_box ul.cmt_list');
+        if (!ul) return;
+        const hideComments = hideBlockedCommentsSync;
+        hideComments();
+        const observer = new MutationObserver((mutations) => {
+            for (const mutation of mutations) {
+                for (const node of mutation.addedNodes) {
+                    if (node.nodeType === Node.ELEMENT_NODE && node.matches('li.ub-content')) {
+                        (async () => {
+                            await filterComments();
+                        })();
+                    }
+                }
+            }
+        });
+        observer.observe(ul, { childList: true, subtree: true });
+    }
 
-    // 단축키 (Shift+S)로 설정창 열기
-    window.addEventListener('keydown', async (e) => {
-        if (e.shiftKey && e.key.toUpperCase() === 'S') {
-            e.preventDefault();
-            const popup = document.getElementById('dcinside-filter-setting');
-            if (popup) popup.remove();
-            else await showSettings();
+    function initCommentObserver() {
+        const commentBox = document.querySelector('div.comment_box');
+        if (commentBox) {
+            setupCommentBlocklistObserverSync();
+            return;
         }
-    });
+        
+        const bodyObserver = new MutationObserver((mutations, observer) => {
+            for (const mutation of mutations) {
+                for (const node of mutation.addedNodes) {
+                    if (node.nodeType === Node.ELEMENT_NODE) {
+                        if (node.matches('div.comment_box') || node.querySelector('div.comment_box')) {
+                            setupCommentBlocklistObserverSync();
+                            observer.disconnect(); 
+                            return;
+                        }
+                    }
+                }
+            }
+        });
+        bodyObserver.observe(document.body, { childList: true, subtree: true });
+    }
+
+    async function startBlocklist() {
+        masterDisabled = await GM_getValue('dcinside_master_disabled', false);
+        threshold = await GM_getValue('dcinside_threshold', 0);
+        ratioEnabled = await GM_getValue('dcinside_ratio_filter_enabled', false);
+        ratioMin = parseFloat(await GM_getValue('dcinside_ratio_min', ''));
+        ratioMax = parseFloat(await GM_getValue('dcinside_ratio_max', ''));
+        // 유동 차단 관련 값 미리 불러오기
+        window._dcinside_block_guest_enabled = await GM_getValue('dcinside_block_guest', false);
+        window._dcinside_blocked_guests = await (async () => { let d = await GM_getValue('dcinside_blocked_guests', '[]'); try { return JSON.parse(d); } catch { return []; } })();
+
+        await refreshBlockedUidsCache();
+        setupBlocklistObserverSync();
+        initCommentObserver();
+    }
     
-    // 문서 로딩 상태에 따라 초기화 실행
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initialize);
+        document.addEventListener('DOMContentLoaded', startBlocklist);
     } else {
-        initialize();
+        startBlocklist();
+    }
+
+    window.addEventListener('load', () => {
+        setTimeout(filterUsers, 1000);
+        setTimeout(filterComments, 1000);
+    });
+
+    if (GM_getValue('dcinside_threshold') === undefined) {
+        showSettings();
+        GM_setValue('dcinside_threshold', 0);
     }
 })(); 
