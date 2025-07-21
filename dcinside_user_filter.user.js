@@ -67,12 +67,12 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
                 <div id="dcinside-ratio-section">
                     <div style="display:flex;gap:10px;align-items:center;">
                         <div style="display:flex;flex-direction:column;align-items:center;">
-                            <label for="dcinside-ratio-min" style="font-size:14px;">댓글/글 비율 이상 차단 </label>
+                            <label for="dcinside-ratio-min" style="font-size:14px;">댓글/글 비율 일정 이상 차단 </label>
                             <div style="font-size:12px;color:#888;line-height:1.2;">(댓글만 많은 놈)</div>
                             <input id="dcinside-ratio-min" type="number" step="any" placeholder="예: 0.5" value="${ratioMin !== '' ? ratioMin : ''}" style="width:100px;font-size:15px;text-align:center;">
                         </div>
                         <div style="display:flex;flex-direction:column;align-items:center;">
-                            <label for="dcinside-ratio-max" style="font-size:14px;">글/댓글 비율 이상 차단 </label>
+                            <label for="dcinside-ratio-max" style="font-size:14px;">글/댓글 비율 일정 이상 차단 </label>
                             <div style="font-size:12px;color:#888;line-height:1.2;">(글만 많은 놈)</div>
                             <input id="dcinside-ratio-max" type="number" step="any" placeholder="예: 2" value="${ratioMax !== '' ? ratioMax : ''}" style="width:100px;font-size:15px;text-align:center;">
                         </div>
