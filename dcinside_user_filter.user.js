@@ -2,7 +2,7 @@
 // @name         DCInside 유저 글댓합/글댓비,유동 차단필터
 // @namespace    http://tampermonkey.net/
 // @version      1.3.2
-// @description  유저의 글+댓글 합과 비율이 기준 이하/이상일 경우 해당 유저의 글을 가립니다.유동차단 추가가
+// @description  유저의 글+댓글 합과 비율이 기준 이하/이상일 경우 해당 유저의 글을 가립니다.유동차단 추가
 // @author       domato153
 // @match        https://gall.dcinside.com/*
 // @grant        GM_setValue
