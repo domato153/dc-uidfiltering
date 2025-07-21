@@ -1,9 +1,9 @@
 // ==UserScript==
 // @name         DCInside 유저 글댓합/글댓비,유동 차단필터
 // @namespace    http://tampermonkey.net/
-// @version      1.3.3
+// @version      1.4
 // @description  유저의 글+댓글 합과 비율이 기준 이하/이상일 경우 해당 유저의 글을 가립니다.유동차단 추가
-// @author       domato153 (수정: Gemini)
+// @author       domato153 
 // @match        https://gall.dcinside.com/*
 // @grant        GM_setValue
 // @grant        GM_getValue
@@ -285,41 +285,44 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
         await setBlockedGuests([]);
     }
 
+    /**
+     * 사용자의 차단 여부를 판단하는 중앙 함수.
+     * @param {object} userData - { sum, post, comment } 형태의 사용자 데이터
+     * @returns {object} - { sumBlocked: boolean, ratioBlocked: boolean } 형태의 차단 상태 객체
+     */
     function isUserBlocked({ sum, post, comment }) {
-        if (masterDisabled) return false;
+        if (masterDisabled) return { sumBlocked: false, ratioBlocked: false };
 
         let sumBlocked = threshold > 0 && sum > 0 && sum <= threshold;
 
-        let isRatioBlocked = false;
+        let ratioBlocked = false;
         if (ratioEnabled) {
             const useMin = !isNaN(ratioMin) && ratioMin > 0;
             const useMax = !isNaN(ratioMax) && ratioMax > 0;
 
-            let ratioCommentPerPost = (post > 0) ? (comment / post) : (comment > 0 ? Infinity : 0);
-            let ratioPostPerComment = (comment > 0) ? (post / comment) : (post > 0 ? Infinity : 0);
+            if (useMin || useMax) {
+                const ratioCommentPerPost = (post > 0) ? (comment / post) : (comment > 0 ? Infinity : 0);
+                const ratioPostPerComment = (comment > 0) ? (post / comment) : (post > 0 ? Infinity : 0);
 
-            if (useMin && ratioCommentPerPost >= ratioMin) {
-                isRatioBlocked = true;
-            }
-            if (useMax && ratioPostPerComment >= ratioMax) {
-                isRatioBlocked = true;
+                if (useMin && ratioCommentPerPost >= ratioMin) {
+                    ratioBlocked = true;
+                }
+                if (!ratioBlocked && useMax && ratioPostPerComment >= ratioMax) {
+                    ratioBlocked = true;
+                }
             }
         }
-        return sumBlocked || isRatioBlocked;
+        return { sumBlocked, ratioBlocked };
     }
 
     async function applyBlockFilterToElement(element, uid, userData, addBlockedUidFn) {
         if (!userData) return;
-        const blocked = isUserBlocked(userData);
+        const { sumBlocked, ratioBlocked } = isUserBlocked(userData);
+        const blocked = sumBlocked || ratioBlocked;
+
         element.style.display = blocked ? 'none' : '';
+
         if (blocked) {
-            let ratioBlocked = false;
-            if (ratioEnabled) {
-                let ratioCommentPerPost = (userData.post > 0) ? (userData.comment / userData.post) : (userData.comment > 0 ? Infinity : 0);
-                let ratioPostPerComment = (userData.comment > 0) ? (userData.post / userData.comment) : (userData.post > 0 ? Infinity : 0);
-                if (ratioMin > 0 && ratioCommentPerPost >= ratioMin) ratioBlocked = true;
-                if (ratioMax > 0 && ratioPostPerComment >= ratioMax) ratioBlocked = true;
-            }
             await addBlockedUidFn(uid, userData.sum, userData.post, userData.comment, ratioBlocked);
         }
     }
@@ -462,20 +465,8 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
             }
             const cacheData = BLOCKED_UIDS_CACHE[uid];
             if (cacheData) {
-                let sumBlocked = threshold > 0 && cacheData.sum > 0 && cacheData.sum <= threshold;
-                let isRatioBlocked = false;
-                if (ratioEnabled && cacheData.post !== undefined && cacheData.comment !== undefined) {
-                    const ratioCommentPerPost = (cacheData.post > 0) ? (cacheData.comment / cacheData.post) : (cacheData.comment > 0 ? Infinity : 0);
-                    const ratioPostPerComment = (cacheData.comment > 0) ? (cacheData.post / cacheData.comment) : (cacheData.post > 0 ? Infinity : 0);
-
-                    if (useMin && ratioCommentPerPost >= ratioMin) {
-                        isRatioBlocked = true;
-                    }
-                    if (useMax && ratioPostPerComment >= ratioMax) {
-                        isRatioBlocked = true;
-                    }
-                }
-                row.style.display = (sumBlocked || isRatioBlocked) ? 'none' : '';
+                const { sumBlocked, ratioBlocked } = isUserBlocked(cacheData);
+                row.style.display = (sumBlocked || ratioBlocked) ? 'none' : '';
             }
         }
     }
@@ -530,20 +521,8 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
             }
             const cacheData = BLOCKED_UIDS_CACHE[uid];
             if (cacheData) {
-                let sumBlocked = threshold > 0 && cacheData.sum > 0 && cacheData.sum <= threshold;
-                let isRatioBlocked = false;
-                if (ratioEnabled && cacheData.post !== undefined && cacheData.comment !== undefined) {
-                    const ratioCommentPerPost = (cacheData.post > 0) ? (cacheData.comment / cacheData.post) : (cacheData.comment > 0 ? Infinity : 0);
-                    const ratioPostPerComment = (cacheData.comment > 0) ? (cacheData.post / cacheData.comment) : (cacheData.post > 0 ? Infinity : 0);
-
-                    if (useMin && ratioCommentPerPost >= ratioMin) {
-                        isRatioBlocked = true;
-                    }
-                    if (useMax && ratioPostPerComment >= ratioMax) {
-                        isRatioBlocked = true;
-                    }
-                }
-                comment.style.display = (sumBlocked || isRatioBlocked) ? 'none' : '';
+                const { sumBlocked, ratioBlocked } = isUserBlocked(cacheData);
+                comment.style.display = (sumBlocked || ratioBlocked) ? 'none' : '';
             }
         }
     }
