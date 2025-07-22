@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         DCInside 유저 필터
 // @namespace    http://tampermonkey.net/
-// @version      1.4.3
+// @version      1.4.4
 // @description  유저의 글+댓글 합/비율 필터링, 유동/통신사 IP 차단 기능을 제공합니다.
 // @author       domato153
 // @match        https://gall.dcinside.com/*
@@ -129,6 +129,26 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
             await GM_setValue('dcinside_block_config', conf);
             console.log('통신사 IP 차단 목록이 제거되었습니다.');
         }
+    }
+
+    // ❗❗❗ ======== 여기서부터 수정 및 추가된 코드입니다 ======== ❗❗❗
+
+    /**
+     * @description 댓글 등록 버튼 클릭을 감지하여, 댓글 목록이 새로고침된 후 필터링을 다시 적용하는 함수
+     */
+    function setupCommentSubmitListener() {
+        // document 전체에 이벤트 리스너를 설정하여 동적으로 생성되는 버튼에도 대응합니다.
+        document.addEventListener('click', (e) => {
+            // 클릭된 요소가 '등록' 버튼(button.repley_add)인지 확인합니다.
+            if (e.target.matches('button.repley_add')) {
+                // 댓글 목록이 AJAX로 새로고침될 시간을 벌기 위해 약간의 지연(1.5초)을 줍니다.
+                setTimeout(() => {
+                    console.log('댓글 등록으로 인한 필터 재적용');
+                    filterComments(); // 댓글 필터링 함수를 다시 호출합니다.
+                    setupCommentBlocklistObserverSync(); // 새로운 댓글 목록에 대한 감시를 다시 시작합니다.
+                }, 1500);
+            }
+        });
     }
 
     // =================================================================
@@ -722,6 +742,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
         await refreshBlockedUidsCache();
         setupBlocklistObserverSync();
         initCommentObserver();
+        setupCommentSubmitListener(); // ❗ 수정된 부분: 함수 호출 추가
     }
 
     if (document.readyState === 'loading') {
