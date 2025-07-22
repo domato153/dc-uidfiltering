@@ -83,8 +83,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
         [223, [[26,"엘엑스/기타등등","TEL"],[28,"SKB/기타등등","TEL"],[32,"SKT","MOB"],[33,"SKT","MOB"],[34,"SKT","MOB"],[35,"SKT","MOB"],[36,"SKT","MOB"],[37,"SKT","MOB"],[38,"SKT","MOB"],[39,"SKT","MOB"],[40,"SKT","MOB"],[41,"SKT","MOB"],[42,"SKT","MOB"],[43,"SKT","MOB"],[44,"SKT","MOB"],[45,"SKT","MOB"],[46,"SKT","MOB"],[47,"SKT","MOB"],[48,"SKT","MOB"],[49,"SKT","MOB"],[50,"SKT","MOB"],[51,"SKT","MOB"],[52,"SKT","MOB"],[53,"SKT","MOB"],[54,"SKT","MOB"],[55,"SKT","MOB"],[56,"SKT","MOB"],[57,"SKT","MOB"],[58,"SKT","MOB"],[59,"SKT","MOB"],[60,"SKT","MOB"],[61,"SKT","MOB"],[62,"SKT","MOB"],[63,"SKT","MOB"],[130,"네이버클라우드/제이엔디통신/삼정데이타서비스/기타등등","TEL"],[131,"SKB","TEL"],[165,"하이라인닷넷/기타등등","TEL"],[168,"LGT+모바일","MOB"],[169,"LGT+모바일","MOB"],[170,"LGT+모바일","MOB"],[171,"LGT+모바일","MOB"],[172,"LGT+모바일","MOB"],[173,"LGT+모바일","MOB"],[174,"LGT+모바일","MOB"],[175,"LGT+모바일","MOB"],[194,"한국교육전산망협의회","TEL"],[195,"한국교육전산망협의회","TEL"],[222,"SKB","TEL"],[253,"롯데정보통신","TEL"],[255,"NHN/네이버클라우드/네트로피/기타등등","TEL"]]]
     ];
 
-
-// =================================================================
+    // =================================================================
     // =========== 통신사 IP 차단 기능을 위한 함수 (추가된 부분) ===========
     // =================================================================
     async function regblockMobile() {
@@ -111,7 +110,6 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
         conf.ip = conf.ip ? conf.ip + '||' + mobile_ips_string : mobile_ips_string;
 
         await GM_setValue('dcinside_block_config', conf);
-        console.log('통신사 IP 차단 목록이 적용되었습니다.');
     }
 
     async function delblockMobile() {
@@ -127,28 +125,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
             }
 
             await GM_setValue('dcinside_block_config', conf);
-            console.log('통신사 IP 차단 목록이 제거되었습니다.');
         }
-    }
-
-    // ❗❗❗ ======== 여기서부터 수정 및 추가된 코드입니다 ======== ❗❗❗
-
-    /**
-     * @description 댓글 등록 버튼 클릭을 감지하여, 댓글 목록이 새로고침된 후 필터링을 다시 적용하는 함수
-     */
-    function setupCommentSubmitListener() {
-        // document 전체에 이벤트 리스너를 설정하여 동적으로 생성되는 버튼에도 대응합니다.
-        document.addEventListener('click', (e) => {
-            // 클릭된 요소가 '등록' 버튼(button.repley_add)인지 확인합니다.
-            if (e.target.matches('button.repley_add')) {
-                // 댓글 목록이 AJAX로 새로고침될 시간을 벌기 위해 약간의 지연(1.5초)을 줍니다.
-                setTimeout(() => {
-                    console.log('댓글 등록으로 인한 필터 재적용');
-                    filterComments(); // 댓글 필터링 함수를 다시 호출합니다.
-                    setupCommentBlocklistObserverSync(); // 새로운 댓글 목록에 대한 감시를 다시 시작합니다.
-                }, 1500);
-            }
-        });
     }
 
     // =================================================================
@@ -173,10 +150,8 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
 
         const div = document.createElement('div');
         div.id = 'dcinside-filter-setting';
-        // [오류 수정] 누락되었던 스타일 코드를 복원했습니다.
         div.style = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;padding:24px 20px 18px 20px;min-width:280px;z-index:99999;border:2px solid #333;border-radius:10px;box-shadow:0 0 10px #0008; cursor: move; user-select: none;';
 
-        // [UI 수정] 요청하신 레이아웃으로 변경된 부분입니다.
         div.innerHTML = `
             <div style="margin-bottom:15px;padding-bottom:12px;border-bottom: 2px solid #ccc; display:flex;align-items:center; justify-content: space-between;">
                 <div>
@@ -547,15 +522,6 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
         }));
     }
 
-    // ==========================================================
-    // =========== ❗❗❗ 핵심 수정 부분 ❗❗❗ ===========
-    // ==========================================================
-
-    /**
-     * @description 페이지에 있는 모든 게시글 목록(tr.ub-content)을 찾아 필터링을 적용합니다.
-     * 선택자를 'table.gall_list tr.ub-content'로 확장하여
-     * 게시글 보기 페이지 하단의 목록까지 포함합니다.
-     */
     async function filterUsers() {
         const rows = Array.from(document.querySelectorAll('table.gall_list tr.ub-content'));
         await combinedFilter(rows, 'post');
@@ -587,10 +553,6 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
         if (changed) await GM_setValue(BLOCK_UID_KEY, JSON.stringify(BLOCKED_UIDS_CACHE));
     }
 
-    /**
-     * @description 페이지 로딩 시 캐시된 정보를 바탕으로 모든 게시글 목록을 빠르게 숨깁니다.
-     * 선택자를 filterUsers와 동일하게 'table.gall_list tr.ub-content'로 변경했습니다.
-     */
     function hideBlockedRowsSync() {
         const blockGuestEnabled = window._dcinside_block_guest_enabled;
         const telecomBlockEnabled = window._dcinside_telecom_ip_block_enabled;
@@ -629,10 +591,6 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
         }
     }
 
-    /**
-     * @description 페이지의 모든 게시글 목록('table.gall_list')을 찾아 MutationObserver를 설정합니다.
-     * querySelector를 querySelectorAll로 변경하여 페이지 내 여러 목록에 대응합니다.
-     */
     function setupBlocklistObserverSync() {
         const tables = document.querySelectorAll('table.gall_list');
         if (tables.length === 0) return;
@@ -648,77 +606,127 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
         });
     }
 
-    // ==========================================================
-    // =========== 이하 코드는 변경 사항 없음 ===========
-    // ==========================================================
+    // ❗❗❗ ======== 여기서부터 댓글 필터링 핵심 수정 부분입니다 ======== ❗❗❗
 
-    function hideBlockedCommentsSync() {
-       const blockGuestEnabled = window._dcinside_block_guest_enabled;
-       const telecomBlockEnabled = window._dcinside_telecom_ip_block_enabled;
-       const conf = window._dcinside_block_config || {};
-       const telecomBlockRegex = (telecomBlockEnabled && conf.ip) ? new RegExp('^(' + conf.ip.split('||').map(prefix => prefix.replace(/\./g, '\\.')).join('|') + ')') : null;
-       const blockedGuests = window._dcinside_blocked_guests || [];
+    function applySyncCommentBlock(comment) {
+        const blockGuestEnabled = window._dcinside_block_guest_enabled;
+        const telecomBlockEnabled = window._dcinside_telecom_ip_block_enabled;
+        const conf = window._dcinside_block_config || {};
+        const telecomBlockRegex = (telecomBlockEnabled && conf.ip) ? new RegExp('^(' + conf.ip.split('||').map(prefix => prefix.replace(/\./g, '\\.')).join('|') + ')') : null;
+        const blockedGuests = window._dcinside_blocked_guests || [];
 
-        for (const comment of document.querySelectorAll('div.comment_box ul.cmt_list li.ub-content')) {
-            if (masterDisabled) { comment.style.display = ''; continue; }
-
-            const writerSpan = comment.querySelector('span.gall_writer.ub-writer');
-            if (!writerSpan) continue;
-            const uid = writerSpan.getAttribute('data-uid');
-            const ipSpan = comment.querySelector('span.ip');
-            const ip = ipSpan ? ipSpan.textContent.trim().slice(1, -1) : null;
-            const isGuest = (!uid || uid.length < 3) && ip;
-
-            let isBlocked = false;
-
-            if (isGuest) {
-                if (blockGuestEnabled) isBlocked = true;
-                 else if (telecomBlockRegex && ip && telecomBlockRegex.test(ip)) isBlocked = true;
-            } else if(ip && telecomBlockRegex && telecomBlockRegex.test(ip)) {
-                 isBlocked = true;
-            }
-
-            if (!isBlocked && ip && blockedGuests.includes(ip)) isBlocked = true;
-
-            if (!isBlocked && uid && BLOCKED_UIDS_CACHE[uid]) {
-                const { sumBlocked, ratioBlocked } = isUserBlocked(BLOCKED_UIDS_CACHE[uid]);
-                if(sumBlocked || ratioBlocked) isBlocked = true;
-            }
-
-            comment.style.display = isBlocked ? 'none' : '';
-        }
-    }
-
-    function setupCommentBlocklistObserverSync() {
-        const ul = document.querySelector('div.comment_box ul.cmt_list');
-        if (!ul) return;
-        hideBlockedCommentsSync();
-        const observer = new MutationObserver(() => filterComments());
-        observer.observe(ul, { childList: true });
-    }
-
-    function initCommentObserver() {
-        const commentBox = document.querySelector('div.comment_box');
-        if (commentBox) {
-            setupCommentBlocklistObserverSync();
+        if (masterDisabled) {
+            comment.style.display = '';
             return;
         }
 
-        const bodyObserver = new MutationObserver((mutations, observer) => {
+        const writerSpan = comment.querySelector('span.gall_writer.ub-writer');
+        if (!writerSpan) return;
+
+        const uid = writerSpan.getAttribute('data-uid');
+        const ipSpan = comment.querySelector('span.ip');
+        const ip = ipSpan ? ipSpan.textContent.trim().slice(1, -1) : null;
+        const isGuest = (!uid || uid.length < 3) && ip;
+
+        let isBlocked = false;
+
+        if (isGuest) {
+            if (blockGuestEnabled) isBlocked = true;
+             else if (telecomBlockRegex && ip && telecomBlockRegex.test(ip)) isBlocked = true;
+        } else if(ip && telecomBlockRegex && telecomBlockRegex.test(ip)) {
+             isBlocked = true;
+        }
+
+        if (!isBlocked && ip && blockedGuests.includes(ip)) isBlocked = true;
+
+        if (!isBlocked && uid && BLOCKED_UIDS_CACHE[uid]) {
+            const { sumBlocked, ratioBlocked } = isUserBlocked(BLOCKED_UIDS_CACHE[uid]);
+            if(sumBlocked || ratioBlocked) isBlocked = true;
+        }
+
+        if (isBlocked) {
+            comment.style.display = 'none';
+        } else {
+            comment.style.display = '';
+        }
+    }
+
+    /**
+     * @description [수정] commentBox 엘리먼트를 인자로 받도록 변경
+     */
+    function setupCommentBlocklistObserverSync(commentBox) {
+        // 1. 현재 화면에 있는 댓글들을 즉시 필터링
+        const existingComments = commentBox.querySelectorAll('ul.cmt_list li.ub-content');
+        existingComments.forEach(applySyncCommentBlock);
+
+        // 2. DOM 변화 감지 시 실행될 콜백 함수 정의
+        const handleMutations = (mutations) => {
+            let newCommentsFound = false;
+            mutations.forEach(mutation => {
+                mutation.addedNodes.forEach(node => {
+                    if (node.nodeType !== Node.ELEMENT_NODE) return;
+
+                    if (node.matches('li.ub-content')) {
+                        applySyncCommentBlock(node);
+                        newCommentsFound = true;
+                    } else if (node.querySelector('li.ub-content')) {
+                        node.querySelectorAll('li.ub-content').forEach(applySyncCommentBlock);
+                        newCommentsFound = true;
+                    }
+                });
+            });
+
+            if (newCommentsFound) {
+                filterComments();
+            }
+        };
+
+        const observer = new MutationObserver(handleMutations);
+        observer.observe(commentBox, { childList: true, subtree: true });
+    }
+
+
+    /**
+     * @description [구조 변경] 페이지 전체를 감시하여 댓글 영역의 생성/삭제에 대응하는 영구적인 감시자를 설정
+     */
+    function setupPersistentCommentObserver() {
+        // 감시자에게 이미 처리된 댓글 영역임을 알리는 꼬리표
+        const OBSERVER_ATTACHED_TAG = 'data-filter-observer-attached';
+
+        const init = (targetNode) => {
+            // 이미 감시자가 붙은 영역은 중복 실행 방지
+            if (targetNode.matches(`[${OBSERVER_ATTACHED_TAG}]`)) return;
+
+            // 새로운 댓글 영역에 감시자 설정 함수 호출
+            setupCommentBlocklistObserverSync(targetNode);
+            // 처리되었다는 꼬리표 부착
+            targetNode.setAttribute(OBSERVER_ATTACHED_TAG, 'true');
+        };
+
+        // 페이지 로딩 시점에 이미 존재하는 댓글 영역 처리
+        document.querySelectorAll('div.comment_box').forEach(init);
+
+        // 페이지 전체(body)를 대상으로 감시자 설정
+        const bodyObserver = new MutationObserver((mutations) => {
             for (const mutation of mutations) {
                 for (const node of mutation.addedNodes) {
                     if (node.nodeType === Node.ELEMENT_NODE) {
-                        if (node.matches('div.comment_box') || node.querySelector('div.comment_box')) {
-                            setupCommentBlocklistObserverSync();
-                            observer.disconnect();
-                            return;
+                        // 새로 추가된 노드가 댓글 영역 자체일 경우
+                        if (node.matches('div.comment_box')) {
+                            init(node);
+                        }
+                        // 새로 추가된 노드 내부에 댓글 영역이 포함된 경우
+                        else if (node.querySelector) {
+                            node.querySelectorAll('div.comment_box').forEach(init);
                         }
                     }
                 }
             }
         });
+
         bodyObserver.observe(document.body, { childList: true, subtree: true });
     }
+
 
     async function startBlocklist() {
         const telecomBlockEnabled = await GM_getValue('dcinside_telecom_ip_block_enabled', false);
@@ -741,8 +749,9 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
 
         await refreshBlockedUidsCache();
         setupBlocklistObserverSync();
-        initCommentObserver();
-        setupCommentSubmitListener(); // ❗ 수정된 부분: 함수 호출 추가
+
+        // [구조 변경] 새로운 영구 감시자 함수를 호출하도록 변경
+        setupPersistentCommentObserver();
     }
 
     if (document.readyState === 'loading') {
