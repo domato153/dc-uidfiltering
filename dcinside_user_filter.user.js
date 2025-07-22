@@ -132,7 +132,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
     }
 
     // =================================================================
-    // ========= 기존 v1.4 스크립트 코드 (UI 수정 및 기능 복구) ===========
+    // ========= 스크립트 메인 로직 (UI 수정 및 기능 복구) ===========
     // =================================================================
     let threshold = GM_getValue('dcinside_threshold', 0);
     let ratioEnabled, ratioMin, ratioMax, masterDisabled;
@@ -144,9 +144,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
         const ratioMin = await GM_getValue('dcinside_ratio_min', '');
         const ratioMax = await GM_getValue('dcinside_ratio_max', '');
         const blockGuestEnabled = await GM_getValue('dcinside_block_guest', false);
-        // 통신사 IP 차단 설정 불러오기 (추가)
         const telecomBlockEnabled = await GM_getValue('dcinside_telecom_ip_block_enabled', false);
-
 
         const existingDiv = document.getElementById('dcinside-filter-setting');
         if (existingDiv) {
@@ -155,37 +153,48 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
 
         const div = document.createElement('div');
         div.id = 'dcinside-filter-setting';
+        // [오류 수정] 누락되었던 스타일 코드를 복원했습니다.
         div.style = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;padding:24px 20px 18px 20px;min-width:280px;z-index:99999;border:2px solid #333;border-radius:10px;box-shadow:0 0 10px #0008; cursor: move; user-select: none;';
 
-        // --- v1.4 UI 구조를 유지하면서 통신사 IP 차단 체크박스 추가 ---
+        // [UI 수정] 요청하신 레이아웃으로 변경된 부분입니다.
         div.innerHTML = `
-            <div style="position:absolute;top:8px;right:12px;z-index:100000;">
-                <button id="dcinside-filter-close" style="background:none;border:none;font-size:20px;cursor:pointer;line-height:1;">✕</button>
-            </div>
-            <div style="margin-bottom:15px;padding-bottom:12px;border-bottom: 2px solid #ccc; display:flex;align-items:center;">
-                <input id="dcinside-master-disable-checkbox" type="checkbox" style="vertical-align:middle;width:16px;height:16px;" ${masterDisabled ? 'checked' : ''}>
-                <label for="dcinside-master-disable-checkbox" style="font-size:16px;vertical-align:middle;cursor:pointer;margin-left:6px;"><b>모든 기능 끄기</b></label>
+            <div style="margin-bottom:15px;padding-bottom:12px;border-bottom: 2px solid #ccc; display:flex;align-items:center; justify-content: space-between;">
+                <div>
+                    <input id="dcinside-master-disable-checkbox" type="checkbox" style="vertical-align:middle;width:16px;height:16px;" ${masterDisabled ? 'checked' : ''}>
+                    <label for="dcinside-master-disable-checkbox" style="font-size:16px;vertical-align:middle;cursor:pointer;margin-left:6px;"><b>모든 기능 끄기</b></label>
+                </div>
+                <div>
+                    <button id="dcinside-filter-close" style="background:none;border:none;font-size:24px;cursor:pointer;line-height:1;padding:0 4px;color:#555;">✕</button>
+                </div>
             </div>
             <div id="dcinside-settings-container" style="opacity:${masterDisabled ? 0.5 : 1}; pointer-events:${masterDisabled ? 'none' : 'auto'};">
-                <h3 style="cursor: default;margin-top:0;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;">
-                    <span>유저 글+댓글 합 기준값(이 값 이하 차단)</span>
-                    <span style="float:right;display:flex;align-items:center;gap:4px;">
-                        <input id="dcinside-block-guest-checkbox" type="checkbox" ${blockGuestEnabled ? 'checked' : ''} style="vertical-align:middle;">
-                        <label for="dcinside-block-guest-checkbox" style="font-size:13px;vertical-align:middle;cursor:pointer;">유동 전체 차단</label>
-                    </span>
-                </h3>
 
-                <div style="text-align:right; margin-bottom: 8px;">
-                     <span style="display:inline-flex;align-items:center;gap:4px;">
-                        <input id="dcinside-telecom-ip-block-checkbox" type="checkbox" ${telecomBlockEnabled ? 'checked' : ''} style="vertical-align:middle;">
-                        <label for="dcinside-telecom-ip-block-checkbox" style="font-size:13px;vertical-align:middle;cursor:pointer;">통신사 IP 차단</label>
-                     </span>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    
+                    <div style="display: flex; flex-direction: column; align-items: center;">
+                        <h3 style="cursor: default;margin-top:0;margin-bottom:5px;">
+                            유저 글+댓글 합 기준값(이 값 이하 차단)&nbsp;&nbsp;
+                        </h3>
+                        <input id="dcinside-threshold-input" type="number" min="0" value="${currentThreshold}" style="width:80px;font-size:16px; cursor: initial;">
+                        <div style="font-size:13px;color:#666;margin-top:5px;">0 또는 빈칸으로 두면 비활성화됩니다.</div>
+                    </div>
+                    
+                    <div style="border: 2px solid #000; border-radius: 5px; padding: 8px 8px 5px 6px;">
+                        <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 5px;">
+                            <span style="display:inline-flex; align-items:center; gap:4px; padding-bottom: 5px; border-bottom: 1px solid #ddd;">
+                                <input id="dcinside-block-guest-checkbox" type="checkbox" ${blockGuestEnabled ? 'checked' : ''} style="vertical-align:middle;">
+                                <label for="dcinside-block-guest-checkbox" style="font-size:13px;vertical-align:middle;cursor:pointer;">유동 전체 차단</label>
+                            </span>
+                            <span style="display:inline-flex; align-items:center; gap:4px; margin-top: 5px;">
+                                <input id="dcinside-telecom-ip-block-checkbox" type="checkbox" ${telecomBlockEnabled ? 'checked' : ''} style="vertical-align:middle;">
+                                <label for="dcinside-telecom-ip-block-checkbox" style="font-size:13px;vertical-align:middle;cursor:pointer;">통신사 IP 차단</label>
+                            </span>
+                        </div>
+                    </div>
+
                 </div>
 
-                <input id="dcinside-threshold-input" type="number" min="0" value="${currentThreshold}" style="width:80px;font-size:16px; cursor: initial;">
-                <div style="font-size:13px;color:#666;margin-top:5px;">0 또는 빈칸으로 두면 비활성화됩니다.</div>
-
-                <hr style="border:0;border-top:2px solid #222;margin:22px 0 12px 0;">
+                <hr style="border:0;border-top:2px solid #222;margin:16px 0 12px 0;">
 
                 <div style="margin-bottom:8px;display:flex;align-items:center;">
                     <input id="dcinside-ratio-enable-checkbox" type="checkbox" style="vertical-align:middle;" ${ratioEnabled ? 'checked' : ''}>
@@ -196,18 +205,18 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
                         <div style="display:flex;flex-direction:column;align-items:center;">
                             <label for="dcinside-ratio-min" style="font-size:14px;">댓글/글 비율 일정 이상 차단 </label>
                             <div style="font-size:12px;color:#888;line-height:1.2;">(댓글만 많은 놈)</div>
-                            <input id="dcinside-ratio-min" type="number" step="any" placeholder="예: 10" value="${ratioMin !== '' ? ratioMin : ''}" style="width:100px;font-size:15px;text-align:center;">
+                            <input id="dcinside-ratio-min" type="number" step="any" placeholder="예: 10" value="${ratioMin !== '' ? ratioMin : ''}" style="width:100px;font-size:15px;text-align:center; margin-top: 4px;">
                         </div>
                         <div style="display:flex;flex-direction:column;align-items:center;">
                             <label for="dcinside-ratio-max" style="font-size:14px;">글/댓글 비율 일정 이상 차단 </label>
                             <div style="font-size:12px;color:#888;line-height:1.2;">(글만 많은 놈)</div>
-                            <input id="dcinside-ratio-max" type="number" step="any" placeholder="예: 1" value="${ratioMax !== '' ? ratioMax : ''}" style="width:100px;font-size:15px;text-align:center;">
+                            <input id="dcinside-ratio-max" type="number" step="any" placeholder="예: 1" value="${ratioMax !== '' ? ratioMax : ''}" style="width:100px;font-size:15px;text-align:center; margin-top: 4px;">
                         </div>
                     </div>
                     <div style="margin-top:8px;font-size:13px;color:#666;text-align:left;">비율이 입력값과 같거나 큰(이상)인 유저를 차단합니다.</div>
                 </div>
             </div>
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:22px; padding-top:15px; border-top: 2px solid #ccc;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:16px; padding-top:15px; border-top: 2px solid #ccc;">
                 <div style="font-size:15px;color:#444;text-align:left;">창 여는 단축키: <b>Shift+s</b></div>
                 <button id="dcinside-threshold-save" style="font-size:16px;border:2px solid #000;border-radius:4px;background:#fff; cursor: pointer; padding: 4px 10px;">저장 & 실행</button>
             </div>
@@ -218,7 +227,6 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
         input.focus();
         input.select();
 
-        // --- v1.4의 모든 이벤트 리스너 복구 ---
         const masterDisableCheckbox = document.getElementById('dcinside-master-disable-checkbox');
         const settingsContainer = document.getElementById('dcinside-settings-container');
         const blockGuestCheckbox = document.getElementById('dcinside-block-guest-checkbox');
@@ -301,7 +309,6 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
             document.removeEventListener('mousemove', onMouseMove);
         }
 
-        // --- 저장 버튼에 통신사 IP 차단 설정 저장 로직 추가 ---
         document.getElementById('dcinside-threshold-save').onclick = async function() {
             await GM_setValue('dcinside_master_disabled', masterDisableCheckbox.checked);
 
@@ -315,7 +322,6 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
             const blockGuestChecked = document.getElementById('dcinside-block-guest-checkbox').checked;
             await GM_setValue('dcinside_block_guest', blockGuestChecked);
 
-            // 통신사 IP 차단 설정값 저장 (추가)
             const telecomBlockChecked = document.getElementById('dcinside-telecom-ip-block-checkbox').checked;
             await GM_setValue('dcinside_telecom_ip_block_enabled', telecomBlockChecked);
 
@@ -333,7 +339,6 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
         });
     }
 
-    // --- 단축키 기능 (v1.4 버전과 동일하게 복구) ---
     window.addEventListener('keydown', async function(e) {
         if (e.shiftKey && (e.key === 's' || e.key === 'S')) {
             e.preventDefault();
@@ -348,7 +353,6 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
 
     GM_registerMenuCommand('글댓합 설정하기', showSettings);
 
-    // --- 나머지 v1.4 함수들 ---
     async function getUserPostCommentSum(uid) {
         if (!window._dcinside_user_sum_cache) window._dcinside_user_sum_cache = {};
         if (window._dcinside_user_sum_cache[uid]) return window._dcinside_user_sum_cache[uid];
@@ -450,7 +454,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
         const { sumBlocked, ratioBlocked } = isUserBlocked(userData);
         const blocked = sumBlocked || ratioBlocked;
 
-        if (element.style.display !== 'none') { // 이미 다른 이유로 숨겨지지 않았을 때만 처리
+        if (element.style.display !== 'none') {
              element.style.display = blocked ? 'none' : '';
         }
 
@@ -459,16 +463,14 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
         }
     }
 
-    // --- 필터링 함수에 통신사 IP 차단 로직 통합 ---
     async function combinedFilter(elements, type) {
         if (masterDisabled) return;
 
         const blockGuestEnabled = await GM_getValue('dcinside_block_guest', false);
         const telecomBlockEnabled = await GM_getValue('dcinside_telecom_ip_block_enabled', false);
-        const conf = await GM_getValue('dcinside_block_config', {}); // 통신사 IP 목록
+        const conf = await GM_getValue('dcinside_block_config', {});
         const blockedGuests = await getBlockedGuests();
 
-        // [수정 1] IP 대역의 '.'을 '\\.'으로 이스케이프하여 정확한 정규식 생성
         const telecomBlockRegex = (telecomBlockEnabled && conf.ip) ? new RegExp('^(' + conf.ip.split('||').map(prefix => prefix.replace(/\./g, '\\.')).join('|') + ')') : null;
 
         await Promise.all(elements.map(async (element) => {
@@ -479,11 +481,9 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
 
                 const uid = writerInfo.getAttribute('data-uid');
                 const ipSpan = element.querySelector('span.ip');
-                // [수정 2] IP 문자열에서 괄호 제거
                 const ip = ipSpan ? ipSpan.textContent.trim().slice(1, -1) : null;
                 const isGuest = (!uid || uid.length < 3) && ip;
 
-                // 1. 유동 및 통신사 IP 기반 차단
                 if (isGuest) {
                     if (blockGuestEnabled) {
                         element.style.display = 'none';
@@ -500,20 +500,15 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
                     return;
                 }
 
-                // 2. 이전에 차단된 유동 IP 차단
                 if (ip && blockedGuests.includes(ip)) {
                     element.style.display = 'none';
                     return;
                 }
 
-                 // 차단 해제 시 복원 로직
                 if (!isGuest && element.style.display === 'none' && (!telecomBlockRegex || !ip || !telecomBlockRegex.test(ip))) {
-                    // 통신사 IP 차단이 풀렸을 경우, 다른 차단 사유가 없으면 보이게 처리 (캐시 기반 차단 제외)
                 } else if (isGuest && element.style.display === 'none' && !blockGuestEnabled && (!telecomBlockRegex || !ip || !telecomBlockRegex.test(ip))) {
-                    // 유동/통신사 차단이 모두 풀렸을 경우
                 }
 
-                // 3. 글댓합/비율 기반 차단 (고정닉 대상)
                 if (!uid || uid.length < 3) return;
 
                 const cachedData = BLOCKED_UIDS_CACHE[uid];
@@ -542,7 +537,6 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
         await combinedFilter(comments, 'comment');
     }
 
-
     let BLOCKED_UIDS_CACHE = {};
 
     async function refreshBlockedUidsCache(noLog = false) {
@@ -564,12 +558,10 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
         if (changed) await GM_setValue(BLOCK_UID_KEY, JSON.stringify(BLOCKED_UIDS_CACHE));
     }
 
-    // --- 동기적 차단 함수들 (v1.4 버전 유지) ---
     function hideBlockedRowsSync() {
         const blockGuestEnabled = window._dcinside_block_guest_enabled;
         const telecomBlockEnabled = window._dcinside_telecom_ip_block_enabled;
         const conf = window._dcinside_block_config || {};
-        // [수정 1]
         const telecomBlockRegex = (telecomBlockEnabled && conf.ip) ? new RegExp('^(' + conf.ip.split('||').map(prefix => prefix.replace(/\./g, '\\.')).join('|') + ')') : null;
         const blockedGuests = window._dcinside_blocked_guests || [];
 
@@ -581,7 +573,6 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
 
             const uid = writerTd.getAttribute('data-uid');
             const ipSpan = row.querySelector('span.ip');
-            // [수정 2]
             const ip = ipSpan ? ipSpan.textContent.trim().slice(1, -1) : null;
             const isGuest = (!uid || uid.length < 3) && ip;
 
@@ -617,7 +608,6 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
        const blockGuestEnabled = window._dcinside_block_guest_enabled;
        const telecomBlockEnabled = window._dcinside_telecom_ip_block_enabled;
        const conf = window._dcinside_block_config || {};
-       // [수정 1]
        const telecomBlockRegex = (telecomBlockEnabled && conf.ip) ? new RegExp('^(' + conf.ip.split('||').map(prefix => prefix.replace(/\./g, '\\.')).join('|') + ')') : null;
        const blockedGuests = window._dcinside_blocked_guests || [];
 
@@ -628,7 +618,6 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
             if (!writerSpan) continue;
             const uid = writerSpan.getAttribute('data-uid');
             const ipSpan = comment.querySelector('span.ip');
-            // [수정 2]
             const ip = ipSpan ? ipSpan.textContent.trim().slice(1, -1) : null;
             const isGuest = (!uid || uid.length < 3) && ip;
 
@@ -683,9 +672,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
         bodyObserver.observe(document.body, { childList: true, subtree: true });
     }
 
-    // --- 스크립트 시작 함수 (통신사 IP 로직 추가) ---
     async function startBlocklist() {
-        // 통신사 IP 차단 목록 준비
         const telecomBlockEnabled = await GM_getValue('dcinside_telecom_ip_block_enabled', false);
         if (telecomBlockEnabled) {
             await regblockMobile();
@@ -693,7 +680,6 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
             await delblockMobile();
         }
 
-        // v1.4의 기존 시작 로직
         masterDisabled = await GM_getValue('dcinside_master_disabled', false);
         threshold = await GM_getValue('dcinside_threshold', 0);
         ratioEnabled = await GM_getValue('dcinside_ratio_filter_enabled', false);
@@ -701,8 +687,8 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
         ratioMax = parseFloat(await GM_getValue('dcinside_ratio_max', ''));
 
         window._dcinside_block_guest_enabled = await GM_getValue('dcinside_block_guest', false);
-        window._dcinside_telecom_ip_block_enabled = telecomBlockEnabled; // window 객체에 저장
-        window._dcinside_block_config = await GM_getValue('dcinside_block_config', {}); // window 객체에 저장
+        window._dcinside_telecom_ip_block_enabled = telecomBlockEnabled;
+        window._dcinside_block_config = await GM_getValue('dcinside_block_config', {});
         window._dcinside_blocked_guests = await (async () => { let d = await GM_getValue('dcinside_blocked_guests', '[]'); try { return JSON.parse(d); } catch { return []; } })();
 
         await refreshBlockedUidsCache();
@@ -721,7 +707,6 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
         setTimeout(filterComments, 1000);
     });
 
-    // 최초 실행 시 한 번만 팝업을 띄우는 로직 (v1.4 복구)
     (async () => {
         const val = await GM_getValue('dcinside_threshold');
         if (val === undefined) {
