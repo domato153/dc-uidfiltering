@@ -1,7 +1,7 @@
 // ==UserScript==
-// @name         DCInside 유저 필터 v1.4.2
+// @name         DCInside 유저 필터
 // @namespace    http://tampermonkey.net/
-// @version      1.4.2
+// @version      1.4.3
 // @description  유저의 글+댓글 합/비율 필터링, 유동/통신사 IP 차단 기능을 제공합니다.
 // @author       domato153
 // @match        https://gall.dcinside.com/*
@@ -170,7 +170,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
             <div id="dcinside-settings-container" style="opacity:${masterDisabled ? 0.5 : 1}; pointer-events:${masterDisabled ? 'none' : 'auto'};">
 
                 <div style="display: flex; justify-content: space-between; align-items: center;">
-                    
+
                     <div style="display: flex; flex-direction: column; align-items: center;">
                         <h3 style="cursor: default;margin-top:0;margin-bottom:5px;">
                             유저 글+댓글 합 기준값(이 값 이하 차단)&nbsp;&nbsp;
@@ -178,7 +178,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
                         <input id="dcinside-threshold-input" type="number" min="0" value="${currentThreshold}" style="width:80px;font-size:16px; cursor: initial;">
                         <div style="font-size:13px;color:#666;margin-top:5px;">0 또는 빈칸으로 두면 비활성화됩니다.</div>
                     </div>
-                    
+
                     <div style="border: 2px solid #000; border-radius: 5px; padding: 8px 8px 5px 6px;">
                         <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 5px;">
                             <span style="display:inline-flex; align-items:center; gap:4px; padding-bottom: 5px; border-bottom: 1px solid #ddd;">
@@ -527,8 +527,17 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
         }));
     }
 
+    // ==========================================================
+    // =========== ❗❗❗ 핵심 수정 부분 ❗❗❗ ===========
+    // ==========================================================
+
+    /**
+     * @description 페이지에 있는 모든 게시글 목록(tr.ub-content)을 찾아 필터링을 적용합니다.
+     * 선택자를 'table.gall_list tr.ub-content'로 확장하여
+     * 게시글 보기 페이지 하단의 목록까지 포함합니다.
+     */
     async function filterUsers() {
-        const rows = Array.from(document.querySelectorAll('tr.ub-content.us-post'));
+        const rows = Array.from(document.querySelectorAll('table.gall_list tr.ub-content'));
         await combinedFilter(rows, 'post');
     }
 
@@ -558,6 +567,10 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
         if (changed) await GM_setValue(BLOCK_UID_KEY, JSON.stringify(BLOCKED_UIDS_CACHE));
     }
 
+    /**
+     * @description 페이지 로딩 시 캐시된 정보를 바탕으로 모든 게시글 목록을 빠르게 숨깁니다.
+     * 선택자를 filterUsers와 동일하게 'table.gall_list tr.ub-content'로 변경했습니다.
+     */
     function hideBlockedRowsSync() {
         const blockGuestEnabled = window._dcinside_block_guest_enabled;
         const telecomBlockEnabled = window._dcinside_telecom_ip_block_enabled;
@@ -565,7 +578,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
         const telecomBlockRegex = (telecomBlockEnabled && conf.ip) ? new RegExp('^(' + conf.ip.split('||').map(prefix => prefix.replace(/\./g, '\\.')).join('|') + ')') : null;
         const blockedGuests = window._dcinside_blocked_guests || [];
 
-        for (const row of document.querySelectorAll('tr.ub-content.us-post')) {
+        for (const row of document.querySelectorAll('table.gall_list tr.ub-content')) {
             if (masterDisabled) { row.style.display = ''; continue; }
 
             const writerTd = row.querySelector('td.gall_writer.ub-writer');
@@ -596,13 +609,28 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
         }
     }
 
+    /**
+     * @description 페이지의 모든 게시글 목록('table.gall_list')을 찾아 MutationObserver를 설정합니다.
+     * querySelector를 querySelectorAll로 변경하여 페이지 내 여러 목록에 대응합니다.
+     */
     function setupBlocklistObserverSync() {
-        const table = document.querySelector('table.gall_list');
-        if (!table) return;
+        const tables = document.querySelectorAll('table.gall_list');
+        if (tables.length === 0) return;
+
         hideBlockedRowsSync();
+
         const observer = new MutationObserver(() => filterUsers());
-        observer.observe(table.tBodies[0], { childList: true });
+
+        tables.forEach(table => {
+            if (table.tBodies && table.tBodies[0]) {
+                observer.observe(table.tBodies[0], { childList: true });
+            }
+        });
     }
+
+    // ==========================================================
+    // =========== 이하 코드는 변경 사항 없음 ===========
+    // ==========================================================
 
     function hideBlockedCommentsSync() {
        const blockGuestEnabled = window._dcinside_block_guest_enabled;
