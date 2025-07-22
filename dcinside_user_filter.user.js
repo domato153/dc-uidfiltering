@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         DCInside 유저 필터
 // @namespace    http://tampermonkey.net/
-// @version      1.5.0
+// @version      1.5.1
 // @description  유저의 글+댓글 합/비율 필터링, 유동/통신사 IP 차단 기능을 제공합니다.
 // @author       domato153
 // @match        https://gall.dcinside.com/*
@@ -83,9 +83,6 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
         [223, [[26,"엘엑스/기타등등","TEL"],[28,"SKB/기타등등","TEL"],[32,"SKT","MOB"],[33,"SKT","MOB"],[34,"SKT","MOB"],[35,"SKT","MOB"],[36,"SKT","MOB"],[37,"SKT","MOB"],[38,"SKT","MOB"],[39,"SKT","MOB"],[40,"SKT","MOB"],[41,"SKT","MOB"],[42,"SKT","MOB"],[43,"SKT","MOB"],[44,"SKT","MOB"],[45,"SKT","MOB"],[46,"SKT","MOB"],[47,"SKT","MOB"],[48,"SKT","MOB"],[49,"SKT","MOB"],[50,"SKT","MOB"],[51,"SKT","MOB"],[52,"SKT","MOB"],[53,"SKT","MOB"],[54,"SKT","MOB"],[55,"SKT","MOB"],[56,"SKT","MOB"],[57,"SKT","MOB"],[58,"SKT","MOB"],[59,"SKT","MOB"],[60,"SKT","MOB"],[61,"SKT","MOB"],[62,"SKT","MOB"],[63,"SKT","MOB"],[130,"네이버클라우드/제이엔디통신/삼정데이타서비스/기타등등","TEL"],[131,"SKB","TEL"],[165,"하이라인닷넷/기타등등","TEL"],[168,"LGT+모바일","MOB"],[169,"LGT+모바일","MOB"],[170,"LGT+모바일","MOB"],[171,"LGT+모바일","MOB"],[172,"LGT+모바일","MOB"],[173,"LGT+모바일","MOB"],[174,"LGT+모바일","MOB"],[175,"LGT+모바일","MOB"],[194,"한국교육전산망협의회","TEL"],[195,"한국교육전산망협의회","TEL"],[222,"SKB","TEL"],[253,"롯데정보통신","TEL"],[255,"NHN/네이버클라우드/네트로피/기타등등","TEL"]]]
     ];
 
-   // =================================================================
-    // =========== 상수 정의: 매직 스트링 제거 (추가된 부분) ===========
-    // =================================================================
     const CONSTANTS = {
         STORAGE_KEYS: {
             MASTER_DISABLED: 'dcinside_master_disabled',
@@ -100,14 +97,11 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
             BLOCKED_GUESTS: 'dcinside_blocked_guests',
         },
         SELECTORS: {
-            // 컨테이너
             POST_LIST_CONTAINER: 'table.gall_list tbody',
             COMMENT_CONTAINER: 'div.comment_box ul.cmt_list',
             POST_VIEW_LIST_CONTAINER: 'div.gall_exposure_list > ul',
-            // 아이템
             POST_ITEM: 'tr.ub-content',
             COMMENT_ITEM: 'li.ub-content',
-            // 공통
             WRITER_INFO: '.ub-writer',
             IP_SPAN: 'span.ip',
         },
@@ -138,17 +132,13 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
         }
     };
 
-    // =================================================================
-    // =========== 통신사 IP 차단 기능을 위한 함수 (추가된 부분) ===========
-    // =================================================================
     async function regblockMobile() {
         let conf = await GM_getValue(CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG, {});
-        // 이미 모바일 IP가 등록되어 있으면 중복 실행 방지
         if (conf.ip && conf.ip.includes(CONSTANTS.ETC.MOBILE_IP_MARKER)) {
             return;
         }
 
-        let ip_arr = [CONSTANTS.ETC.MOBILE_IP_MARKER]; // 차단 목록에 통신사 IP가 포함되었음을 알리는 마커
+        let ip_arr = [CONSTANTS.ETC.MOBILE_IP_MARKER];
         const len = TELECOM.length;
         for (let i = 0; i < len; i++) {
             const sublen = TELECOM[i][1].length;
@@ -161,7 +151,6 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
         }
 
         const mobile_ips_string = ip_arr.join('||');
-        // 기존 IP 차단 목록 뒤에 통신사 IP 목록 추가
         conf.ip = conf.ip ? conf.ip + '||' + mobile_ips_string : mobile_ips_string;
 
         await GM_setValue(CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG, conf);
@@ -170,33 +159,26 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
     async function delblockMobile() {
         let conf = await GM_getValue(CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG, {});
         if (conf.ip && conf.ip.includes(CONSTANTS.ETC.MOBILE_IP_MARKER)) {
-            // 'mblck' 마커를 기준으로 앞부분(사용자 지정 IP 등)만 남김
             const user_ips = conf.ip.split('||' + CONSTANTS.ETC.MOBILE_IP_MARKER)[0];
-            // 마지막에 남을 수 있는 '||' 제거
             conf.ip = user_ips.endsWith('||') ? user_ips.slice(0, -2) : user_ips;
-
             if (conf.ip === CONSTANTS.ETC.MOBILE_IP_MARKER || !conf.ip) {
                 conf.ip = '';
             }
-
             await GM_setValue(CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG, conf);
         }
     }
 
-    // =================================================================
-    // ========= 스크립트 메인 로직 (UI 수정 및 기능 복구) ===========
-    // =================================================================
-    let threshold = GM_getValue(CONSTANTS.STORAGE_KEYS.THRESHOLD, 0);
-    let ratioEnabled, ratioMin, ratioMax, masterDisabled;
-
     async function showSettings() {
-        masterDisabled = await GM_getValue(CONSTANTS.STORAGE_KEYS.MASTER_DISABLED, false);
-        const currentThreshold = await GM_getValue(CONSTANTS.STORAGE_KEYS.THRESHOLD, 0);
-        const ratioEnabled = await GM_getValue(CONSTANTS.STORAGE_KEYS.RATIO_ENABLED, false);
-        const ratioMin = await GM_getValue(CONSTANTS.STORAGE_KEYS.RATIO_MIN, '');
-        const ratioMax = await GM_getValue(CONSTANTS.STORAGE_KEYS.RATIO_MAX, '');
-        const blockGuestEnabled = await GM_getValue(CONSTANTS.STORAGE_KEYS.BLOCK_GUEST, false);
-        const telecomBlockEnabled = await GM_getValue(CONSTANTS.STORAGE_KEYS.BLOCK_TELECOM, false);
+        const settings = window.dcFilterSettings || {};
+        const {
+            masterDisabled = false,
+            threshold = 0,
+            ratioEnabled = false,
+            ratioMin = '',
+            ratioMax = '',
+            blockGuestEnabled = false,
+            telecomBlockEnabled = false
+        } = settings;
 
         const existingDiv = document.getElementById(CONSTANTS.UI_IDS.SETTINGS_PANEL);
         if (existingDiv) {
@@ -218,17 +200,14 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
                 </div>
             </div>
             <div id="${CONSTANTS.UI_IDS.SETTINGS_CONTAINER}" style="opacity:${masterDisabled ? 0.5 : 1}; pointer-events:${masterDisabled ? 'none' : 'auto'};">
-
                 <div style="display: flex; justify-content: space-between; align-items: center;">
-
                     <div style="display: flex; flex-direction: column; align-items: center;">
                         <h3 style="cursor: default;margin-top:0;margin-bottom:5px;">
                             유저 글+댓글 합 기준값(이 값 이하 차단)&nbsp;&nbsp;
                         </h3>
-                        <input id="${CONSTANTS.UI_IDS.THRESHOLD_INPUT}" type="number" min="0" value="${currentThreshold}" style="width:80px;font-size:16px; cursor: initial;">
+                        <input id="${CONSTANTS.UI_IDS.THRESHOLD_INPUT}" type="number" min="0" value="${threshold}" style="width:80px;font-size:16px; cursor: initial;">
                         <div style="font-size:13px;color:#666;margin-top:5px;">0 또는 빈칸으로 두면 비활성화됩니다.</div>
                     </div>
-
                     <div style="border: 2px solid #000; border-radius: 5px; padding: 8px 8px 5px 6px;">
                         <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 5px;">
                             <span style="display:inline-flex; align-items:center; gap:4px; padding-bottom: 5px; border-bottom: 1px solid #ddd;">
@@ -241,11 +220,8 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
                             </span>
                         </div>
                     </div>
-
                 </div>
-
                 <hr style="border:0;border-top:2px solid #222;margin:16px 0 12px 0;">
-
                 <div style="margin-bottom:8px;display:flex;align-items:center;">
                     <input id="${CONSTANTS.UI_IDS.RATIO_ENABLE_CHECKBOX}" type="checkbox" style="vertical-align:middle;" ${ratioEnabled ? 'checked' : ''}>
                     <label for="${CONSTANTS.UI_IDS.RATIO_ENABLE_CHECKBOX}" style="font-size:15px;vertical-align:middle;cursor:pointer;margin-left:4px;">글/댓글 비율 필터 사용</label>
@@ -279,7 +255,6 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
 
         const masterDisableCheckbox = document.getElementById(CONSTANTS.UI_IDS.MASTER_DISABLE_CHECKBOX);
         const settingsContainer = document.getElementById(CONSTANTS.UI_IDS.SETTINGS_CONTAINER);
-        const blockGuestCheckbox = document.getElementById(CONSTANTS.UI_IDS.BLOCK_GUEST_CHECKBOX);
 
         function updateMasterState() {
             const isMasterDisabled = masterDisableCheckbox.checked;
@@ -288,12 +263,6 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
         }
         masterDisableCheckbox.addEventListener('change', updateMasterState);
         updateMasterState();
-
-        function updateBlockGuestState() {
-            const isBlockGuestEnabled = blockGuestCheckbox.checked;
-        }
-        blockGuestCheckbox.addEventListener('change', updateBlockGuestState);
-        updateBlockGuestState();
 
         const ratioSection = document.getElementById(CONSTANTS.UI_IDS.RATIO_SECTION);
         const ratioEnableCheckbox = document.getElementById(CONSTANTS.UI_IDS.RATIO_ENABLE_CHECKBOX);
@@ -309,22 +278,16 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
         ratioEnableCheckbox.addEventListener('change', updateRatioSectionState);
         updateRatioSectionState();
 
-        document.getElementById(CONSTANTS.UI_IDS.CLOSE_BUTTON).onclick = function() {
-            div.remove();
-        };
+        document.getElementById(CONSTANTS.UI_IDS.CLOSE_BUTTON).onclick = function() { div.remove(); };
 
         const saveButton = document.getElementById(CONSTANTS.UI_IDS.SAVE_BUTTON);
 
-        ratioMinInput.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter') saveButton.click();
-        });
-        ratioMaxInput.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter') saveButton.click();
-        });
+        const enterKeySave = (e) => { if (e.key === 'Enter') saveButton.click(); };
+        input.addEventListener('keydown', enterKeySave);
+        ratioMinInput.addEventListener('keydown', enterKeySave);
+        ratioMaxInput.addEventListener('keydown', enterKeySave);
 
-        let isDragging = false;
-        let offsetX, offsetY;
-
+        let isDragging = false, offsetX, offsetY;
         div.addEventListener('mousedown', function(e) {
             if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON' || e.target.tagName === 'LABEL' || e.target.id === CONSTANTS.UI_IDS.CLOSE_BUTTON) return;
             isDragging = true;
@@ -351,49 +314,50 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
             div.style.left = `${newX}px`;
             div.style.top = `${newY}px`;
         }
-
         function onMouseUp() {
             isDragging = false;
             document.removeEventListener('mousemove', onMouseMove);
         }
 
         saveButton.onclick = async function() {
-            await GM_setValue(CONSTANTS.STORAGE_KEYS.MASTER_DISABLED, masterDisableCheckbox.checked);
+            saveButton.disabled = true;
+            saveButton.textContent = '저장 중...';
 
-            let val = parseInt(input.value, 10);
-            if (isNaN(val)) val = 0;
-            await GM_setValue(CONSTANTS.STORAGE_KEYS.THRESHOLD, val);
-            threshold = val;
-            await GM_setValue(CONSTANTS.STORAGE_KEYS.RATIO_ENABLED, ratioEnableCheckbox.checked);
-            await GM_setValue(CONSTANTS.STORAGE_KEYS.RATIO_MIN, ratioMinInput.value);
-            await GM_setValue(CONSTANTS.STORAGE_KEYS.RATIO_MAX, ratioMaxInput.value);
             const blockGuestChecked = document.getElementById(CONSTANTS.UI_IDS.BLOCK_GUEST_CHECKBOX).checked;
-            await GM_setValue(CONSTANTS.STORAGE_KEYS.BLOCK_GUEST, blockGuestChecked);
+            let val = parseInt(document.getElementById(CONSTANTS.UI_IDS.THRESHOLD_INPUT).value, 10);
+            if (isNaN(val)) val = 0;
 
-            const telecomBlockChecked = document.getElementById(CONSTANTS.UI_IDS.TELECOM_BLOCK_CHECKBOX).checked;
-            await GM_setValue(CONSTANTS.STORAGE_KEYS.BLOCK_TELECOM, telecomBlockChecked);
+            const promises = [
+                GM_setValue(CONSTANTS.STORAGE_KEYS.MASTER_DISABLED, document.getElementById(CONSTANTS.UI_IDS.MASTER_DISABLE_CHECKBOX).checked),
+                GM_setValue(CONSTANTS.STORAGE_KEYS.THRESHOLD, val),
+                GM_setValue(CONSTANTS.STORAGE_KEYS.RATIO_ENABLED, document.getElementById(CONSTANTS.UI_IDS.RATIO_ENABLE_CHECKBOX).checked),
+                GM_setValue(CONSTANTS.STORAGE_KEYS.RATIO_MIN, document.getElementById(CONSTANTS.UI_IDS.RATIO_MIN_INPUT).value),
+                GM_setValue(CONSTANTS.STORAGE_KEYS.RATIO_MAX, document.getElementById(CONSTANTS.UI_IDS.RATIO_MAX_INPUT).value),
+                GM_setValue(CONSTANTS.STORAGE_KEYS.BLOCK_GUEST, blockGuestChecked),
+                GM_setValue(CONSTANTS.STORAGE_KEYS.BLOCK_TELECOM, document.getElementById(CONSTANTS.UI_IDS.TELECOM_BLOCK_CHECKBOX).checked)
+            ];
 
             if (!blockGuestChecked) {
-                await clearBlockedGuests();
+                promises.push(clearBlockedGuests());
             }
-            div.remove();
-            location.reload();
-        };
 
-        input.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter') saveButton.click();
-        });
+            try {
+                await Promise.all(promises);
+                location.reload();
+            } catch (error) {
+                console.error('DCinside User Filter: Settings save failed.', error);
+                saveButton.disabled = false;
+                saveButton.textContent = '저장 & 실행';
+                alert('설정 저장에 실패했습니다. 콘솔을 확인해주세요.');
+            }
+        };
     }
 
     window.addEventListener('keydown', async function(e) {
         if (e.shiftKey && (e.key === 's' || e.key === 'S')) {
             e.preventDefault();
             const popup = document.getElementById(CONSTANTS.UI_IDS.SETTINGS_PANEL);
-            if (popup) {
-                popup.remove();
-            } else {
-                await showSettings();
-            }
+            popup ? popup.remove() : await showSettings();
         }
     });
 
@@ -408,11 +372,8 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
             const parts = value.split(`; ${name}=`);
             if (parts.length === 2) return parts.pop().split(';').shift();
         }
-        let ci = getCookie(CONSTANTS.ETC.COOKIE_NAME_1);
-        if (!ci) ci = getCookie(CONSTANTS.ETC.COOKIE_NAME_2);
-        if (!ci) {
-            return null;
-        }
+        let ci = getCookie(CONSTANTS.ETC.COOKIE_NAME_1) || getCookie(CONSTANTS.ETC.COOKIE_NAME_2);
+        if (!ci) return null;
 
         return new Promise((resolve) => {
             const xhr = new XMLHttpRequest();
@@ -420,29 +381,28 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
             xhr.withCredentials = true;
             xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded; charset=UTF-8');
             xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
-
             xhr.onload = function() {
                 const text = xhr.responseText;
                 const [post, comment] = text.split(',').map(x => parseInt(x, 10));
                 if (!isNaN(post) && !isNaN(comment)) {
-                    window._dcinside_user_sum_cache[uid] = { sum: post + comment, post, comment };
-                    resolve({ sum: post + comment, post, comment });
+                    const userData = { sum: post + comment, post, comment };
+                    window._dcinside_user_sum_cache[uid] = userData;
+                    resolve(userData);
                 } else {
                     resolve(null);
                 }
             };
-            xhr.onerror = function() {
-                resolve(null);
-            };
+            xhr.onerror = () => resolve(null);
             xhr.send(`ci_t=${encodeURIComponent(ci)}&user_id=${encodeURIComponent(uid)}`);
         });
     }
-    
+
     const BLOCK_UID_EXPIRE = 1000 * 60 * 60 * 24 * 7;
+    let BLOCKED_UIDS_CACHE = {};
 
     async function addBlockedUid(uid, sum, post, comment, ratioBlocked) {
         await refreshBlockedUidsCache(true);
-        BLOCKED_UIDS_CACHE[uid] = { ts: Date.now(), sum: sum, post: post, comment: comment, ratioBlocked: !!ratioBlocked };
+        BLOCKED_UIDS_CACHE[uid] = { ts: Date.now(), sum, post, comment, ratioBlocked: !!ratioBlocked };
         await GM_setValue(CONSTANTS.STORAGE_KEYS.BLOCKED_UIDS, JSON.stringify(BLOCKED_UIDS_CACHE));
     }
 
@@ -456,10 +416,10 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
     }
 
     async function addBlockedGuest(ip) {
-        let list = await getBlockedGuests();
-        if (!list.includes(ip)) {
-            list.push(ip);
-            await setBlockedGuests(list);
+        const settings = window.dcFilterSettings || {};
+        if (settings.blockedGuests && !settings.blockedGuests.includes(ip)) {
+             settings.blockedGuests.push(ip);
+             await setBlockedGuests(settings.blockedGuests);
         }
     }
 
@@ -468,25 +428,22 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
     }
 
     function isUserBlocked({ sum, post, comment }) {
-        if (masterDisabled) return { sumBlocked: false, ratioBlocked: false };
+        const settings = window.dcFilterSettings || {};
+        if (settings.masterDisabled) return { sumBlocked: false, ratioBlocked: false };
 
-        let sumBlocked = threshold > 0 && sum > 0 && sum <= threshold;
+        let sumBlocked = settings.threshold > 0 && sum > 0 && sum <= settings.threshold;
 
         let ratioBlocked = false;
-        if (ratioEnabled) {
-            const useMin = !isNaN(ratioMin) && ratioMin > 0;
-            const useMax = !isNaN(ratioMax) && ratioMax > 0;
+        if (settings.ratioEnabled) {
+            const useMin = !isNaN(settings.ratioMin) && settings.ratioMin > 0;
+            const useMax = !isNaN(settings.ratioMax) && settings.ratioMax > 0;
 
             if (useMin || useMax) {
                 const ratioCommentPerPost = (post > 0) ? (comment / post) : (comment > 0 ? Infinity : 0);
                 const ratioPostPerComment = (comment > 0) ? (post / comment) : (post > 0 ? Infinity : 0);
 
-                if (useMin && ratioCommentPerPost >= ratioMin) {
-                    ratioBlocked = true;
-                }
-                if (!ratioBlocked && useMax && ratioPostPerComment >= ratioMax) {
-                    ratioBlocked = true;
-                }
+                if (useMin && ratioCommentPerPost >= settings.ratioMin) ratioBlocked = true;
+                if (!ratioBlocked && useMax && ratioPostPerComment >= settings.ratioMax) ratioBlocked = true;
             }
         }
         return { sumBlocked, ratioBlocked };
@@ -495,41 +452,39 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
     async function applyBlockFilterToElement(element, uid, userData, addBlockedUidFn) {
         if (!userData) return;
         const { sumBlocked, ratioBlocked } = isUserBlocked(userData);
-        const blocked = sumBlocked || ratioBlocked;
+        const shouldBeBlocked = sumBlocked || ratioBlocked;
 
         if (element.style.display !== 'none') {
-             element.style.display = blocked ? 'none' : '';
+             element.style.display = shouldBeBlocked ? 'none' : '';
         }
 
-        if (blocked) {
+        if (shouldBeBlocked) {
             await addBlockedUidFn(uid, userData.sum, userData.post, userData.comment, ratioBlocked);
         }
     }
-    
+
     async function applyAsyncBlock(element) {
         try {
+            if (element.style.display === 'none') return;
+
             const writerInfo = element.querySelector(CONSTANTS.SELECTORS.WRITER_INFO);
             if (!writerInfo) return;
 
             const uid = writerInfo.getAttribute('data-uid');
             if (!uid || uid.length < 3) return;
 
-            if (BLOCKED_UIDS_CACHE[uid] || element.style.display === 'none') {
-                return;
-            }
+            if (BLOCKED_UIDS_CACHE[uid]) return;
 
             const userData = await getUserPostCommentSum(uid);
             if (!userData) return;
             await applyBlockFilterToElement(element, uid, userData, addBlockedUid);
 
         } catch (e) {
-            console.warn(`[비동기 필터] 예외 발생:`, e, element);
+            console.warn(`DCinside User Filter: Async filter exception.`, e, element);
         }
     }
 
-    let BLOCKED_UIDS_CACHE = {};
-
-    async function refreshBlockedUidsCache(noLog = false) {
+    async function refreshBlockedUidsCache() {
         let data = await GM_getValue(CONSTANTS.STORAGE_KEYS.BLOCKED_UIDS, '{}');
         try { BLOCKED_UIDS_CACHE = JSON.parse(data); } catch { BLOCKED_UIDS_CACHE = {}; }
 
@@ -548,14 +503,9 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
         if (changed) await GM_setValue(CONSTANTS.STORAGE_KEYS.BLOCKED_UIDS, JSON.stringify(BLOCKED_UIDS_CACHE));
     }
 
-    // ❗❗❗ ======== 여기서부터 글/댓글 필터링 핵심 개선 부분입니다 ======== ❗❗❗
-
     function applySyncBlock(element) {
-        const blockGuestEnabled = window._dcinside_block_guest_enabled;
-        const telecomBlockEnabled = window._dcinside_telecom_ip_block_enabled;
-        const conf = window._dcinside_block_config || {};
-        const telecomBlockRegex = (telecomBlockEnabled && conf.ip) ? new RegExp('^(' + conf.ip.split('||').map(prefix => prefix.replace(/\./g, '\\.')).join('|') + ')') : null;
-        const blockedGuests = window._dcinside_blocked_guests || [];
+        const settings = window.dcFilterSettings || {};
+        const { masterDisabled, blockGuestEnabled, telecomBlockEnabled, blockConfig = {}, blockedGuests = [] } = settings;
 
         if (masterDisabled) {
             element.style.display = '';
@@ -571,72 +521,57 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
         const isGuest = (!uid || uid.length < 3) && ip;
 
         let isBlocked = false;
+        const telecomBlockRegex = (telecomBlockEnabled && blockConfig.ip) ? new RegExp('^(' + blockConfig.ip.split('||').map(prefix => prefix.replace(/\./g, '\\.')).join('|') + ')') : null;
 
         if (isGuest) {
-            if (blockGuestEnabled) isBlocked = true;
-            else if (telecomBlockRegex && ip && telecomBlockRegex.test(ip)) isBlocked = true;
+            if (blockGuestEnabled) { isBlocked = true; }
+            else if (telecomBlockRegex && ip && telecomBlockRegex.test(ip)) { isBlocked = true; }
         } else if (ip && telecomBlockRegex && telecomBlockRegex.test(ip)) {
             isBlocked = true;
         }
 
-        if (!isBlocked && ip && blockedGuests.includes(ip)) isBlocked = true;
+        if (!isBlocked && ip && blockedGuests.includes(ip)) { isBlocked = true; }
 
         if (!isBlocked && uid && BLOCKED_UIDS_CACHE[uid]) {
             const { sumBlocked, ratioBlocked } = isUserBlocked(BLOCKED_UIDS_CACHE[uid]);
-            if (sumBlocked || ratioBlocked) isBlocked = true;
+            if (sumBlocked || ratioBlocked) {
+                isBlocked = true;
+            }
         }
-
-        if (element.style.display !== 'none') {
-            element.style.display = isBlocked ? 'none' : '';
-        }
+        element.style.display = isBlocked ? 'none' : '';
     }
 
     function initializeUniversalObserver() {
         const targets = [
-            {
-                container: CONSTANTS.SELECTORS.POST_LIST_CONTAINER,
-                item: CONSTANTS.SELECTORS.POST_ITEM,
-                asyncFilter: (items) => items.forEach(applyAsyncBlock)
-            },
-            {
-                container: CONSTANTS.SELECTORS.COMMENT_CONTAINER,
-                item: CONSTANTS.SELECTORS.COMMENT_ITEM,
-                asyncFilter: (items) => items.forEach(applyAsyncBlock)
-            },
-            {
-                container: CONSTANTS.SELECTORS.POST_VIEW_LIST_CONTAINER,
-                item: CONSTANTS.SELECTORS.COMMENT_ITEM, // NOTE: 글 하단 목록도 li.ub-content를 사용
-                asyncFilter: (items) => items.forEach(applyAsyncBlock)
-            }
+            { container: CONSTANTS.SELECTORS.POST_LIST_CONTAINER, item: CONSTANTS.SELECTORS.POST_ITEM },
+            { container: CONSTANTS.SELECTORS.COMMENT_CONTAINER, item: CONSTANTS.SELECTORS.COMMENT_ITEM },
+            { container: CONSTANTS.SELECTORS.POST_VIEW_LIST_CONTAINER, item: CONSTANTS.SELECTORS.COMMENT_ITEM }
         ];
 
-        const attachItemObserver = (container, itemSelector, asyncFilterFn) => {
+        const filterItems = (items) => {
+            items.forEach(item => {
+                applySyncBlock(item);
+                applyAsyncBlock(item);
+            });
+        };
+
+        const attachItemObserver = (container, itemSelector) => {
             if (container.matches(`[${CONSTANTS.CUSTOM_ATTRS.OBSERVER_ATTACHED}]`)) return;
             container.setAttribute(CONSTANTS.CUSTOM_ATTRS.OBSERVER_ATTACHED, 'true');
 
-            const existingItems = Array.from(container.querySelectorAll(itemSelector));
-            existingItems.forEach(applySyncBlock);
-            if (asyncFilterFn) asyncFilterFn(existingItems);
+            filterItems(Array.from(container.querySelectorAll(itemSelector)));
 
             const itemObserver = new MutationObserver((mutations) => {
                 const newItems = [];
                 mutations.forEach(mutation => {
                     mutation.addedNodes.forEach(node => {
                         if (node.nodeType !== Node.ELEMENT_NODE) return;
-                        if (node.matches(itemSelector)) {
-                            newItems.push(node);
-                        } else if (node.querySelectorAll) {
-                            newItems.push(...node.querySelectorAll(itemSelector));
-                        }
+                        if (node.matches(itemSelector)) { newItems.push(node); }
+                        else if (node.querySelectorAll) { newItems.push(...node.querySelectorAll(itemSelector)); }
                     });
                 });
-
-                if (newItems.length > 0) {
-                    newItems.forEach(applySyncBlock);
-                    if (asyncFilterFn) asyncFilterFn(newItems);
-                }
+                if (newItems.length > 0) filterItems(newItems);
             });
-
             itemObserver.observe(container, { childList: true, subtree: true });
         };
 
@@ -646,11 +581,10 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
                     if (node.nodeType === Node.ELEMENT_NODE) {
                         for (const target of targets) {
                             if (node.matches(target.container)) {
-                                attachItemObserver(node, target.item, target.asyncFilter);
-                            }
-                            else if (node.querySelectorAll) {
+                                attachItemObserver(node, target.item);
+                            } else if (node.querySelectorAll) {
                                 node.querySelectorAll(target.container).forEach(container => {
-                                    attachItemObserver(container, target.item, target.asyncFilter);
+                                    attachItemObserver(container, target.item);
                                 });
                             }
                         }
@@ -661,15 +595,51 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
 
         targets.forEach(target => {
             document.querySelectorAll(target.container).forEach(container => {
-                attachItemObserver(container, target.item, target.asyncFilter);
+                attachItemObserver(container, target.item);
             });
         });
 
         bodyObserver.observe(document.body, { childList: true, subtree: true });
     }
 
+    async function reloadSettings() {
+        const blockedGuests = await getBlockedGuests();
+        const blockConfig = await GM_getValue(CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG, {});
 
-    async function startBlocklist() {
+        window.dcFilterSettings = {
+            masterDisabled: await GM_getValue(CONSTANTS.STORAGE_KEYS.MASTER_DISABLED, false),
+            threshold: await GM_getValue(CONSTANTS.STORAGE_KEYS.THRESHOLD, 0),
+            ratioEnabled: await GM_getValue(CONSTANTS.STORAGE_KEYS.RATIO_ENABLED, false),
+            ratioMin: parseFloat(await GM_getValue(CONSTANTS.STORAGE_KEYS.RATIO_MIN, '')),
+            ratioMax: parseFloat(await GM_getValue(CONSTANTS.STORAGE_KEYS.RATIO_MAX, '')),
+            blockGuestEnabled: await GM_getValue(CONSTANTS.STORAGE_KEYS.BLOCK_GUEST, false),
+            telecomBlockEnabled: await GM_getValue(CONSTANTS.STORAGE_KEYS.BLOCK_TELECOM, false),
+            blockedGuests,
+            blockConfig
+        };
+    }
+
+    async function refilterAllContent() {
+        await reloadSettings();
+
+        const allContentItems = document.querySelectorAll(`${CONSTANTS.SELECTORS.POST_ITEM}, ${CONSTANTS.SELECTORS.COMMENT_ITEM}`);
+
+        allContentItems.forEach(element => {
+            if (!window.dcFilterSettings.masterDisabled) {
+                element.style.display = '';
+            }
+            applySyncBlock(element);
+            applyAsyncBlock(element);
+        });
+    }
+
+    function handleVisibilityChange() {
+        if (document.visibilityState === 'visible') {
+            refilterAllContent();
+        }
+    }
+
+    async function start() {
         const telecomBlockEnabled = await GM_getValue(CONSTANTS.STORAGE_KEYS.BLOCK_TELECOM, false);
         if (telecomBlockEnabled) {
             await regblockMobile();
@@ -677,33 +647,24 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
             await delblockMobile();
         }
 
-        masterDisabled = await GM_getValue(CONSTANTS.STORAGE_KEYS.MASTER_DISABLED, false);
-        threshold = await GM_getValue(CONSTANTS.STORAGE_KEYS.THRESHOLD, 0);
-        ratioEnabled = await GM_getValue(CONSTANTS.STORAGE_KEYS.RATIO_ENABLED, false);
-        ratioMin = parseFloat(await GM_getValue(CONSTANTS.STORAGE_KEYS.RATIO_MIN, ''));
-        ratioMax = parseFloat(await GM_getValue(CONSTANTS.STORAGE_KEYS.RATIO_MAX, ''));
-
-        window._dcinside_block_guest_enabled = await GM_getValue(CONSTANTS.STORAGE_KEYS.BLOCK_GUEST, false);
-        window._dcinside_telecom_ip_block_enabled = telecomBlockEnabled;
-        window._dcinside_block_config = await GM_getValue(CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG, {});
-        window._dcinside_blocked_guests = await (async () => { let d = await GM_getValue(CONSTANTS.STORAGE_KEYS.BLOCKED_GUESTS, '[]'); try { return JSON.parse(d); } catch { return []; } })();
-
+        await reloadSettings();
         await refreshBlockedUidsCache();
 
+        document.addEventListener('visibilitychange', handleVisibilityChange);
         initializeUniversalObserver();
-    }
-
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', startBlocklist);
-    } else {
-        startBlocklist();
     }
 
     (async () => {
         const val = await GM_getValue(CONSTANTS.STORAGE_KEYS.THRESHOLD);
         if (val === undefined) {
-            showSettings();
             await GM_setValue(CONSTANTS.STORAGE_KEYS.THRESHOLD, 0);
+            await showSettings();
         }
     })();
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', start);
+    } else {
+        start();
+    }
 })();
