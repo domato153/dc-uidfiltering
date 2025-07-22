@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         DCInside 유저 필터
 // @namespace    http://tampermonkey.net/
-// @version      1.5
+// @version      1.5.0
 // @description  유저의 글+댓글 합/비율 필터링, 유동/통신사 IP 차단 기능을 제공합니다.
 // @author       domato153
 // @match        https://gall.dcinside.com/*
