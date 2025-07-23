@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         DCInside 유저 필터
 // @namespace    http://tampermonkey.net/
-// @version      1.5.1
+// @version      1.5.2
 // @description  유저의 글+댓글 합/비율 필터링, 유동/통신사 IP 차단 기능을 제공합니다.
 // @author       domato153
 // @match        https://gall.dcinside.com/*
@@ -83,9 +83,11 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
         [223, [[26,"엘엑스/기타등등","TEL"],[28,"SKB/기타등등","TEL"],[32,"SKT","MOB"],[33,"SKT","MOB"],[34,"SKT","MOB"],[35,"SKT","MOB"],[36,"SKT","MOB"],[37,"SKT","MOB"],[38,"SKT","MOB"],[39,"SKT","MOB"],[40,"SKT","MOB"],[41,"SKT","MOB"],[42,"SKT","MOB"],[43,"SKT","MOB"],[44,"SKT","MOB"],[45,"SKT","MOB"],[46,"SKT","MOB"],[47,"SKT","MOB"],[48,"SKT","MOB"],[49,"SKT","MOB"],[50,"SKT","MOB"],[51,"SKT","MOB"],[52,"SKT","MOB"],[53,"SKT","MOB"],[54,"SKT","MOB"],[55,"SKT","MOB"],[56,"SKT","MOB"],[57,"SKT","MOB"],[58,"SKT","MOB"],[59,"SKT","MOB"],[60,"SKT","MOB"],[61,"SKT","MOB"],[62,"SKT","MOB"],[63,"SKT","MOB"],[130,"네이버클라우드/제이엔디통신/삼정데이타서비스/기타등등","TEL"],[131,"SKB","TEL"],[165,"하이라인닷넷/기타등등","TEL"],[168,"LGT+모바일","MOB"],[169,"LGT+모바일","MOB"],[170,"LGT+모바일","MOB"],[171,"LGT+모바일","MOB"],[172,"LGT+모바일","MOB"],[173,"LGT+모바일","MOB"],[174,"LGT+모바일","MOB"],[175,"LGT+모바일","MOB"],[194,"한국교육전산망협의회","TEL"],[195,"한국교육전산망협의회","TEL"],[222,"SKB","TEL"],[253,"롯데정보통신","TEL"],[255,"NHN/네이버클라우드/네트로피/기타등등","TEL"]]]
     ];
 
+
     const CONSTANTS = {
         STORAGE_KEYS: {
             MASTER_DISABLED: 'dcinside_master_disabled',
+            EXCLUDE_RECOMMENDED: 'dcinside_exclude_recommended',
             THRESHOLD: 'dcinside_threshold',
             RATIO_ENABLED: 'dcinside_ratio_filter_enabled',
             RATIO_MIN: 'dcinside_ratio_min',
@@ -114,6 +116,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
         UI_IDS: {
             SETTINGS_PANEL: 'dcinside-filter-setting',
             MASTER_DISABLE_CHECKBOX: 'dcinside-master-disable-checkbox',
+            EXCLUDE_RECOMMENDED_CHECKBOX: 'dcinside-exclude-recommended-checkbox',
             SETTINGS_CONTAINER: 'dcinside-settings-container',
             THRESHOLD_INPUT: 'dcinside-threshold-input',
             BLOCK_GUEST_CHECKBOX: 'dcinside-block-guest-checkbox',
@@ -131,6 +134,11 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
             COOKIE_NAME_2: 'ci_c',
         }
     };
+
+    // 개념글 관련 기능용 헬퍼 함수
+    function isRecommendedContext() {
+        return window.location.search.includes('exception_mode=recommend');
+    }
 
     async function regblockMobile() {
         let conf = await GM_getValue(CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG, {});
@@ -169,9 +177,11 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
     }
 
     async function showSettings() {
+        await reloadSettings();
         const settings = window.dcFilterSettings || {};
         const {
             masterDisabled = false,
+            excludeRecommended = false,
             threshold = 0,
             ratioEnabled = false,
             ratioMin = '',
@@ -191,9 +201,15 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
 
         div.innerHTML = `
             <div style="margin-bottom:15px;padding-bottom:12px;border-bottom: 2px solid #ccc; display:flex;align-items:center; justify-content: space-between;">
-                <div>
-                    <input id="${CONSTANTS.UI_IDS.MASTER_DISABLE_CHECKBOX}" type="checkbox" style="vertical-align:middle;width:16px;height:16px;" ${masterDisabled ? 'checked' : ''}>
-                    <label for="${CONSTANTS.UI_IDS.MASTER_DISABLE_CHECKBOX}" style="font-size:16px;vertical-align:middle;cursor:pointer;margin-left:6px;"><b>모든 기능 끄기</b></label>
+                <div style="display:flex; align-items: center;">
+                    <div>
+                        <input id="${CONSTANTS.UI_IDS.MASTER_DISABLE_CHECKBOX}" type="checkbox" style="vertical-align:middle;width:16px;height:16px;" ${masterDisabled ? 'checked' : ''}>
+                        <label for="${CONSTANTS.UI_IDS.MASTER_DISABLE_CHECKBOX}" style="font-size:16px;vertical-align:middle;cursor:pointer;margin-left:6px;"><b>모든 기능 끄기</b></label>
+                    </div>
+                    <div style="margin-left: 15px; border-left: 2px solid #ccc; padding-left: 15px;">
+                        <input id="${CONSTANTS.UI_IDS.EXCLUDE_RECOMMENDED_CHECKBOX}" type="checkbox" style="vertical-align:middle;width:16px;height:16px;" ${excludeRecommended ? 'checked' : ''}>
+                        <label for="${CONSTANTS.UI_IDS.EXCLUDE_RECOMMENDED_CHECKBOX}" style="font-size:14px;vertical-align:middle;cursor:pointer;margin-left:6px;"><b>개념글 제외</b></label>
+                    </div>
                 </div>
                 <div>
                     <button id="${CONSTANTS.UI_IDS.CLOSE_BUTTON}" style="background:none;border:none;font-size:24px;cursor:pointer;line-height:1;padding:0 4px;color:#555;">✕</button>
@@ -203,7 +219,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
                 <div style="display: flex; justify-content: space-between; align-items: center;">
                     <div style="display: flex; flex-direction: column; align-items: center;">
                         <h3 style="cursor: default;margin-top:0;margin-bottom:5px;">
-                            유저 글+댓글 합 기준값(이 값 이하 차단)&nbsp;&nbsp;
+                            유저 글+댓글 합 기준값(이 값 이하 차단)
                         </h3>
                         <input id="${CONSTANTS.UI_IDS.THRESHOLD_INPUT}" type="number" min="0" value="${threshold}" style="width:80px;font-size:16px; cursor: initial;">
                         <div style="font-size:13px;color:#666;margin-top:5px;">0 또는 빈칸으로 두면 비활성화됩니다.</div>
@@ -329,6 +345,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
 
             const promises = [
                 GM_setValue(CONSTANTS.STORAGE_KEYS.MASTER_DISABLED, document.getElementById(CONSTANTS.UI_IDS.MASTER_DISABLE_CHECKBOX).checked),
+                GM_setValue(CONSTANTS.STORAGE_KEYS.EXCLUDE_RECOMMENDED, document.getElementById(CONSTANTS.UI_IDS.EXCLUDE_RECOMMENDED_CHECKBOX).checked),
                 GM_setValue(CONSTANTS.STORAGE_KEYS.THRESHOLD, val),
                 GM_setValue(CONSTANTS.STORAGE_KEYS.RATIO_ENABLED, document.getElementById(CONSTANTS.UI_IDS.RATIO_ENABLE_CHECKBOX).checked),
                 GM_setValue(CONSTANTS.STORAGE_KEYS.RATIO_MIN, document.getElementById(CONSTANTS.UI_IDS.RATIO_MIN_INPUT).value),
@@ -463,7 +480,34 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
         }
     }
 
+    function shouldSkipFiltering(element) {
+        const settings = window.dcFilterSettings || {};
+        if (!settings.excludeRecommended || !isRecommendedContext()) {
+            return false; // 필터 제외 모드가 아니면 항상 필터링을 수행합니다.
+        }
+
+        // '개념글 제외' 모드가 활성화된 상태입니다.
+        // 글 본문 페이지인지 확인합니다.
+        if (window.location.pathname.includes('/view/')) {
+            // 본문 페이지에서는 댓글만 필터링하고 나머지는 건너뜁니다.
+            // 현재 요소가 댓글 컨테이너 내부에 있는지 확인합니다.
+            if (element.closest(CONSTANTS.SELECTORS.COMMENT_CONTAINER)) {
+                return false; // 댓글이므로 필터링을 수행합니다 (건너뛰지 않음).
+            }
+            // 댓글이 아닌 다른 모든 요소(예: 하단 글 목록)는 필터링을 건너뜁니다.
+            return true;
+        }
+
+        // 글 본문 페이지가 아닌 개념글 페이지(예: 개념글 목록)에서는 모든 필터링을 건너뜁니다.
+        return true;
+    }
+
     async function applyAsyncBlock(element) {
+        if (shouldSkipFiltering(element)) {
+            element.style.display = '';
+            return;
+        }
+
         try {
             if (element.style.display === 'none') return;
 
@@ -504,6 +548,11 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
     }
 
     function applySyncBlock(element) {
+        if (shouldSkipFiltering(element)) {
+            element.style.display = '';
+            return;
+        }
+
         const settings = window.dcFilterSettings || {};
         const { masterDisabled, blockGuestEnabled, telecomBlockEnabled, blockConfig = {}, blockedGuests = [] } = settings;
 
@@ -545,7 +594,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
         const targets = [
             { container: CONSTANTS.SELECTORS.POST_LIST_CONTAINER, item: CONSTANTS.SELECTORS.POST_ITEM },
             { container: CONSTANTS.SELECTORS.COMMENT_CONTAINER, item: CONSTANTS.SELECTORS.COMMENT_ITEM },
-            { container: CONSTANTS.SELECTORS.POST_VIEW_LIST_CONTAINER, item: CONSTANTS.SELECTORS.COMMENT_ITEM }
+            { container: CONSTANTS.SELECTORS.POST_VIEW_LIST_CONTAINER, item: 'li' }
         ];
 
         const filterItems = (items) => {
@@ -608,6 +657,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
 
         window.dcFilterSettings = {
             masterDisabled: await GM_getValue(CONSTANTS.STORAGE_KEYS.MASTER_DISABLED, false),
+            excludeRecommended: await GM_getValue(CONSTANTS.STORAGE_KEYS.EXCLUDE_RECOMMENDED, false),
             threshold: await GM_getValue(CONSTANTS.STORAGE_KEYS.THRESHOLD, 0),
             ratioEnabled: await GM_getValue(CONSTANTS.STORAGE_KEYS.RATIO_ENABLED, false),
             ratioMin: parseFloat(await GM_getValue(CONSTANTS.STORAGE_KEYS.RATIO_MIN, '')),
@@ -622,12 +672,21 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
     async function refilterAllContent() {
         await reloadSettings();
 
-        const allContentItems = document.querySelectorAll(`${CONSTANTS.SELECTORS.POST_ITEM}, ${CONSTANTS.SELECTORS.COMMENT_ITEM}`);
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+        // ★ 최종 수정: querySelectorAll이 모든 종류의 컨텐츠를 선택하도록 수정하여 버그 해결 ★
+        // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+        const allContentItems = document.querySelectorAll([
+            CONSTANTS.SELECTORS.POST_ITEM,
+            CONSTANTS.SELECTORS.COMMENT_ITEM,
+            `${CONSTANTS.SELECTORS.POST_VIEW_LIST_CONTAINER} > li` // 개념글 하단 목록 항목 추가
+        ].join(', '));
 
         allContentItems.forEach(element => {
+            // 필터링을 적용하기 전에 항상 기본값으로 되돌림
             if (!window.dcFilterSettings.masterDisabled) {
                 element.style.display = '';
             }
+            // 그 다음, 각 항목에 맞는 필터링 로직을 다시 적용
             applySyncBlock(element);
             applyAsyncBlock(element);
         });
@@ -640,6 +699,13 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
     }
 
     async function start() {
+        await reloadSettings();
+
+        if (window.dcFilterSettings.excludeRecommended && window.location.pathname.includes('/lists/') && isRecommendedContext()) {
+            console.log('DCInside 유저 필터: 개념글 목록 페이지이므로 필터 기능을 비활성화합니다.');
+            return;
+        }
+
         const telecomBlockEnabled = await GM_getValue(CONSTANTS.STORAGE_KEYS.BLOCK_TELECOM, false);
         if (telecomBlockEnabled) {
             await regblockMobile();
@@ -647,7 +713,6 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
             await delblockMobile();
         }
 
-        await reloadSettings();
         await refreshBlockedUidsCache();
 
         document.addEventListener('visibilitychange', handleVisibilityChange);
