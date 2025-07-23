@@ -259,7 +259,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
                 </div>
             </div>
             <div style="display:flex; justify-content:space-between; align-items:center; margin-top:16px; padding-top:15px; border-top: 2px solid #ccc;">
-                <div style="font-size:15px;color:#444;text-align:left;">창 여는 단축키: <b>Shift+s</b></div>
+                <div style="font-size:15px;color:#444;text-align:left;">창 여닫는 단축키: <b>Shift+s</b></div>
                 <button id="${CONSTANTS.UI_IDS.SAVE_BUTTON}" style="font-size:16px;border:2px solid #000;border-radius:4px;background:#fff; cursor: pointer; padding: 4px 10px;">저장 & 실행</button>
             </div>
         `;
