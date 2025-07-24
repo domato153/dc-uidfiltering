@@ -6,7 +6,7 @@
     <title>dc-uidfiltering - 디시인사이드 갤러리 깡계 차단 스크립트-유저 필터</title>
     <style>
         body { font-family: sans-serif; line-height: 1.6; max-width: 800px; margin: 40px auto; padding: 20px; }
-        h1 { color: #333; }
+        h1, h2 { color: #333; }
         .install-button {
             display: inline-block;
             padding: 12px 24px;
@@ -17,8 +17,19 @@
             border-radius: 5px;
             text-align: center;
         }
+        .mobile-install-button {
+            display: inline-block;
+            padding: 12px 24px;
+            background-color: #ff8c00; /* 주황색 */
+            color: white;
+            text-decoration: none;
+            font-size: 1.2em;
+            border-radius: 5px;
+            text-align: center;
+        }
         .description { margin: 20px 0; }
-        img { max-width: 100%; border: 1px solid #ddd; }
+        .warning-header { color: red; font-size: 1.1em; font-weight: bold; }
+        img { max-width: 100%; border: 1px solid #ddd; margin-top: 10px; }
     </style>
 </head>
 <body>
@@ -39,6 +50,31 @@
 
     <h2>주요 기능</h2>
     <img src="setting_popup1.png" alt="dc-uidfiltering 스크립트 설정 창 스크린샷">
+
+    <hr>
+
+    <h2>모바일</h2>
+    <p>모바일 버전은 Kiwi browser 사용 권장. edge도 되나 제대로 지원되지 않음.</p>
+    <p>kiwi brwoser 설치후 <a href="https://www.tampermonkey.net/" target="_blank" rel="noopener noreferrer">https://www.tampermonkey.net/</a>에서 Tempermonkey Legacy버전 추가 후</p>
+
+    <p><strong>방법 1:</strong><br>
+    대시보드 - 도구 - import from URL 에 <code style="color: blue; font-family: monospace;">https://github.com/domato153/dc-uidfiltering/raw/refs/heads/Mobile/Dc_UserFilter_Mobile.user.js</code> 붙여넣기.
+    </p>
+
+    <p><strong>방법 2:</strong><br>
+    탬퍼몽키 레거시(Tampermonkey Legacy) 추가 후 아래 버튼 클릭</p>
+    <a href="https://github.com/domato153/dc-uidfiltering/raw/refs/heads/Mobile/Dc_UserFilter_Mobile.user.js" class="mobile-install-button">
+        깡계차단 모바일 스크립트 추가
+    </a>
+
+    <div class="warning-header">
+        <p>**주의**</p>
+    </div>
+    <img src="https://i.imgur.com/your_image_1.png" alt="데스크톱 사이트 체크" style="max-width: 300px;">
+    <img src="https://i.imgur.com/your_image_2.png" alt="접근성 설정" style="max-width: 300px;">
+    <img src="https://i.imgur.com/your_image_3.png" alt="데스크톱 페이지를 기본으로 설정" style="max-width: 400px;">
+    
+    <p style="font-size: 25px;"><strong>데스크톱 사이트 모드</strong> 필수, kiwibrowser 메뉴에서 접근성 - 데스크톱 페이지를 기본으로 설정 후 dc전용으로 쓰는 것을 추천함</p>
 
 </body>
 </html>
