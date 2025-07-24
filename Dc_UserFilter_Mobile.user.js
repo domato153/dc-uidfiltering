@@ -1,9 +1,9 @@
 // ==UserScript==
-// @name         DC_UserFilter_Mobile
+// @name         DC_UserFilter_Mobile_v1.0.0
 // @namespace    http://tampermonkey.net/
-// @version      0.9
-// @description  유저 필터링 기능과 PC-모바일 UI 개선 기능을 함께 제공합니다.
-// @author       domato153
+// @version      1.0.0
+// @description  유저 필터링 기능과 PC-모바일 UI 개선 기능을 함께 제공합니다. 
+// @author       domato153 
 // @match        https://gall.dcinside.com/*
 // @grant        GM_setValue
 // @grant        GM_getValue
@@ -25,93 +25,68 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
     // ======================== UI Module Style ========================
     // =================================================================
     GM_addStyle(`
-        /* --- 기본 UI 및 목록 스타일 --- */
-        table.gall_list.filter-ui-hidden { visibility: hidden !important; position: absolute !important; top: -9999px !important; left: -9999px !important; height: 0 !important; overflow: hidden !important; }
+        /* --- 숨김 처리 (정교하게 재조정) --- */
+        table.gall_list.filter-ui-hidden { 
+            visibility: hidden !important; position: absolute !important; 
+            top: -9999px !important; left: -9999px !important; 
+            height: 0 !important; overflow: hidden !important; 
+        }
 
-        #dchead, #dc_header, #dc_gnb, .adv_area, .right_content, .dc_all, .dcfoot, .ad_bottom_list, .bottom_paging_box + div, .minor_intro_area, .intro_bg, .dc_ft, .fixed_write_btn, #dchead .tnb_area, #dchead .issue_box, #gnb_bar .gnb_sub, .gall_exposure, .bottom_movebox, h1.dc_logo, .area_links, .zzbang_div, .my_zzal, .my_dccon, .dcheader .dcheader_info > .fl, .dcheader .dcheader_info > .fr,
-        .issue_contentbox, #gall_top_recom.concept_wrap
-        { display: none !important; }
+        #dchead, #dc_header, #dc_gnb, .adv_area, .right_content, .dc_all, .dcfoot, .dc_ft, .info_policy,.copyrigh, .ad_bottom_list, .bottom_paging_box + div, .minor_intro_area, .intro_bg, .fixed_write_btn, .bottom_movebox, h1.dc_logo, .area_links, .zzbang_div, .my_zzal, .my_dccon, .issue_contentbox, #gall_top_recom.concept_wrap,
+/* ... */
+.gall_exposure {
+    display: none !important;
+}
 
-        /* 페이지 전체 배경색을 흰색으로 변경 */
+
+        /* --- 기본 레이아웃 재정의 --- */
         body { background: #fff !important; }
-
-        html, body, #wrap, #top, #dchead, .dcheader, #gnb_bar, .gnb, #container, .wrap_inner, .list_array_option, .newvisit_history, .left_content, .center_box, .view_content_wrap, .gall_content, .gall_comment { width: 100vw !important; min-width: 0 !important; float: none !important; position: relative !important; box-sizing: border-box !important; margin: 0 !important; padding: 0 !important; }
         html, body { overflow-x: hidden !important; }
+
+        /* 모든 주요 컨테이너의 너비/여백 초기화 */
+        html, body, #wrap, #top, .dcheader, #gnb_bar, .gnb, #container, .wrap_inner, 
+        .list_array_option, .newvisit_history, .left_content, .center_box, 
+        .view_content_wrap, .gall_content, .gall_comment { 
+            width: 100vw !important; min-width: 0 !important; float: none !important; 
+            position: relative !important; box-sizing: border-box !important; 
+            margin: 0 !important; padding: 0 !important; 
+        }
         #container { padding-top: 5px; }
-        #dchead, .dcheader.typea, .dcheader.typea .dcheader_info { min-width: 0 !important; width: 100% !important; height: auto !important; }
-        #dchead #search_wrap, .dcheader .dcheader_info { display: flex !important; justify-content: center !important; align-items: center !important; float: none !important; padding: 8px 15px !important; }
-        #dchead .top_search, #dchead .gall_search_form { width: 100% !important; }
+        .dcheader.typea, .dcheader.typea .dcheader_info { min-width: 0 !important; width: 100% !important; height: auto !important; }
+        .dcheader .dcheader_info { display: flex !important; justify-content: center !important; align-items: center !important; float: none !important; padding: 8px 15px !important; }
+        .dcheader .top_search, .dcheader .gall_search_form { width: 100% !important; }
         
         .list_array_option {
-            padding: 10px 15px !important;
-            background: #fff;
-            display: flex !important;
-            align-items: center !important;
-            flex-wrap: wrap !important;
-            gap: 10px !important;
-            margin-bottom: 8px !important;
+            padding: 10px 15px !important; background: #fff; display: flex !important;
+            align-items: center !important; flex-wrap: wrap !important;
+            gap: 10px !important; margin-bottom: 8px !important;
         }
         .list_array_option > div { float: none !important; }
-
         .list_array_option > .left_box { flex: 1 1 200px; }
         .list_array_option > .right_box { display: flex; align-items: center; justify-content: flex-end; flex: 1 1 180px; }
-        
-        /* 하단 검색창 가운데 정렬 */
-        form[name="frmSearch"] {
-            display: flex !important;
-            width: 100%; /* 반응형을 위해 너비 100% 유지 */
-            max-width: 500px; /* 최대 너비를 500px로 제한하여 가운데 정렬 효과 */
-            box-sizing: border-box !important;
-            margin: 15px 0 !important;
-            gap: 5px;
-            flex-wrap: nowrap !important;
-        }
-
-        form[name="frmSearch"] .search_left_box { flex: 0 1 auto; }
-        form[name="frmSearch"] .search_right_box { display: flex; flex: 1 1 0; }
-        form[name="frmSearch"] input[type="text"] { width: 100% !important; min-width: 100px; }
-
-        /* .center_box 위아래로 파란색 구분선 추가 및 여백 조정 */
         .list_array_option > .center_box {
-            flex-basis: 100%;
-            order: -1;
-            border-top: 1px solid #4263eb;    /* 파란색 상단 선 */
-            border-bottom: 1px solid #4263eb; /* 파란색 하단 선 */
-            margin-top: 10px;                 /* 선 위쪽 외부 여백 */
-            margin-bottom: 10px;              /* 선 아래쪽 외부 여백 */
-            padding-top: 18px;                /* 선과 내용물 사이의 위쪽 여백 */
-            padding-bottom: 18px;             /* 선과 내용물 사이의 아래쪽 여백 */
+            flex-basis: 100%; order: -1;
+            border-top: 1px solid #4263eb; border-bottom: 1px solid #4263eb;
+            margin-top: 10px; margin-bottom: 10px;
+            padding-top: 18px; padding-bottom: 18px;
         }
 
-        .center_box { background: #fff; padding: 8px 15px !important; margin-top: 1px !important; display: flex !important; justify-content: center !important; align-items: center !important; flex-wrap: wrap; gap: 5px; }
-
-        @media screen and (min-width: 1161px) {
-            html, body, #wrap, #top { width: 100% !important; overflow-x: auto !important; }
-            #wrap, #top, #dchead, .dcheader, #gnb_bar, .gnb, #container, .wrap_inner, .list_array_option, .newvisit_history, .left_content, .center_box, .view_content_wrap, .gall_content, .gall_comment { width: 1160px !important; margin: 0 auto !important; }
-            #container { margin-top: 10px !important; }
-            .center_box { width: auto !important; margin: 0 !important; padding: 0 !important; border: none !important; background: none !important; display: block !important; flex-wrap: nowrap; }
-            #content, .left_content, .list_wrap { width: 100% !important; min-width: 0 !important; margin: 0 !important; padding: 0 !important; float: none !important; }
-            form[name="frmSearch"] .search_left_box, form[name="frmSearch"] .search_right_box { display: flex !important; flex-grow: 1; }
-            form[name="frmSearch"] select, form[name="frmSearch"] input[type="text"] { flex: 1; min-width: 50px; }
+        .center_box { 
+            background: #fff; padding: 8px 15px !important; margin-top: 1px !important; 
+            display: flex !important; justify-content: center !important; align-items: center !important; 
+            flex-wrap: wrap; gap: 5px; 
         }
 
-        .custom-mobile-list {
-            border-top: 1px solid #ddd;
-            background: #fff;
-        }
-
-        body.is-mgallery .custom-mobile-list {
-            padding-top: 50px !important;
-        }
-
-        /* 공지/개념글 바로 뒤에 오는 첫 일반 게시물 위에 파란색 구분선 추가 */
+        /* --- 커스텀 모바일 리스트 UI --- */
+        .custom-mobile-list { border-top: 1px solid #ddd; background: #fff; }
+        body.is-mgallery .custom-mobile-list { padding-top: 50px !important; }
         .custom-post-item.notice + .custom-post-item:not(.notice):not(.concept),
         .custom-post-item.concept + .custom-post-item:not(.notice):not(.concept) {
             border-top: 1px solid #4263eb !important;
         }
-
         .custom-post-item { display: block; padding: 15px 18px; border-bottom: 1px solid #e6e6e6; text-decoration: none; color: #333; }
         .custom-post-item:hover { background-color: #f8f9fa; }
+        .custom-post-item .post-title, .custom-post-item .author { cursor: pointer; }
         .custom-post-item.notice, .custom-post-item.concept { background-color: #f8f9fa; position: relative; padding-left: 60px; }
         .custom-post-item.notice::before { content: '공지'; background-color: #e03131; position: absolute; left: 18px; top: 50%; transform: translateY(-50%); font-size: 13px; font-weight: bold; color: #fff; padding: 4px 9px; border-radius: 4px; }
         .custom-post-item.concept::before { content: '개념'; background-color: #4263eb; position: absolute; left: 18px; top: 50%; transform: translateY(-50%); font-size: 13px; font-weight: bold; color: #fff; padding: 4px 9px; border-radius: 4px; }
@@ -125,21 +100,24 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
         .post-meta .author .nickname, .post-meta .author .ip { color: #555 !important; }
         .post-meta .stats { display: flex; gap: 10px; }
         
-        /* 목록/글보기 하단 컨트롤 영역 가운데 정렬 */
-        .custom-bottom-controls, .bottom_search_box {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 15px;
-            background: #fff;
+        /* --- 커스텀 하단 컨트롤 UI (원본 이동 방식) --- */
+        .custom-bottom-controls { display: flex; flex-direction: column; align-items: center; padding: 15px; background: #fff; }
+        .custom-bottom-controls form[name="frmSearch"] {
+            display: flex !important; width: 100%; max-width: 500px;
+            box-sizing: border-box !important; margin: 15px 0 !important;
+            gap: 5px; flex-wrap: nowrap !important;
         }
-
+        .custom-bottom-controls form[name="frmSearch"] .search_left_box { flex: 0 1 auto; }
+        .custom-bottom-controls form[name="frmSearch"] .search_right_box { display: flex; flex: 1 1 0; }
+        .custom-bottom-controls form[name="frmSearch"] input[type="text"] { width: 100% !important; min-width: 100px; }
         .custom-button-row { width: 100%; }
         .custom-button-row .list_bottom_btnbox { display: flex !important; align-items: center !important; width: 100% !important; gap: 10px; }
         .custom-button-row .list_bottom_btnbox > .fl { flex-grow: 1; }
         .custom-button-row .list_bottom_btnbox > .fr { flex-shrink: 0; }
         .custom-button-row .list_bottom_btnbox > div { float: none !important; }
         .custom-bottom-controls .page_box { float: none !important; display: inline-block; }
+
+        /* --- 글 보기/댓글 UI --- */
         .gall_content, .gall_tit_box, .gall_writer_info, .gallview_contents, .btn_recommend_box, .view_bottom, .gall_comment, .comment_box { background: #fff !important; padding: 15px !important; border-bottom: 1px solid #ddd; }
         .gallview_contents img { max-width: 100% !important; height: auto !important; box-sizing: border-box; }
         .cmt_write_box { display: flex !important; flex-wrap: wrap !important; gap: 10px !important; padding: 10px !important; }
@@ -157,124 +135,75 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
 
         /* --- 글쓰기 페이지 전용 스타일 --- */
         .is-write-page #container { background: #fff !important; padding: 0 !important; }
-        .is-write-page .center_content { padding: 0 !important; }
-        .is-write-page .gall_write { padding: 0 !important; }
-        .is-write-page .write_box { border: none !important; padding: 15px !important; box-shadow: none !important; margin: 0 !important; }
+        .is-write-page .center_content, .is-write-page .gall_write, .is-write-page .write_box { padding: 0 !important; border: none !important; box-shadow: none !important; margin: 0 !important; }
+        .is-write-page .write_box { padding: 15px !important; }
         .is-write-page .write_box > table { width: 100% !important; }
-        .is-write-page .write_box select,
-        .is-write-page .write_box input[type="text"],
-        .is-write-page .write_box input[type="password"] {
-            width: 100% !important;
-            height: 45px !important;
-            padding: 0 12px !important;
-            font-size: 16px !important;
-            border: 1px solid #ddd !important;
-            border-radius: 4px !important;
-            box-sizing: border-box !important;
+        .is-write-page .write_box select, .is-write-page .write_box input[type="text"], .is-write-page .write_box input[type="password"] {
+            width: 100% !important; height: 45px !important; padding: 0 12px !important; font-size: 16px !important;
+            border: 1px solid #ddd !important; border-radius: 4px !important; box-sizing: border-box !important;
         }
         .is-write-page .write_box .w_top { display: flex; flex-direction: column; gap: 10px; }
         .is-write-page .write_box .w_top > tbody > tr > td { padding: 0 !important; }
         .is-write-page .write_box .w_top .write_subject { display: block; }
         .is-write-page .write_box .tx-editor-container { margin-top: 15px; }
-        .is-write-page .write_box .btn_bottom_box {
-            display: flex !important;
-            gap: 10px;
-            padding: 15px 0 0 0 !important;
-            border-top: 1px solid #eee;
-            margin-top: 15px;
+        .is-write-page .write_box .btn_bottom_box { display: flex !important; gap: 10px; padding: 15px 0 0 0 !important; border-top: 1px solid #eee; margin-top: 15px; }
+        .is-write-page .write_box .btn_bottom_box a, .is-write-page .write_box .btn_bottom_box button {
+            flex: 1; display: inline-block !important; text-align: center !important; padding: 12px 0 !important;
+            font-size: 16px !important; border-radius: 4px !important; text-decoration: none !important;
+            height: auto !important; float: none !important; line-height: normal !important;
         }
-        .is-write-page .write_box .btn_bottom_box a,
-        .is-write-page .write_box .btn_bottom_box button {
-            flex: 1;
-            display: inline-block !important;
-            text-align: center !important;
-            padding: 12px 0 !important;
-            font-size: 16px !important;
-            border-radius: 4px !important;
-            text-decoration: none !important;
-            height: auto !important;
-            float: none !important;
-            line-height: normal !important;
-        }
-        .is-write-page .write_box .btn_bottom_box .btn_blue {
-            background-color: #3b71fd !important;
-            color: #fff !important;
-            border: none !important;
-        }
-        .is-write-page .write_box .btn_bottom_box .btn_lightred {
-            background-color: #e9e9e9 !important;
-            color: #555 !important;
-            border: none !important;
-        }
+        .is-write-page .write_box .btn_bottom_box .btn_blue { background-color: #3b71fd !important; color: #fff !important; border: none !important; }
+        .is-write-page .write_box .btn_bottom_box .btn_lightred { background-color: #e9e9e9 !important; color: #555 !important; border: none !important; }
         .is-write-page .tx-toolbar-basic { border-bottom: 1px solid #ddd !important; }
         .is-write-page .tx-toolbar-advanced, .is-write-page .write_infobox, .is-write-page .file_upload_info { display: none !important; }
+
+        /* 데스크탑 뷰포트 복원 */
+        @media screen and (min-width: 1161px) {
+            html, body, #wrap, #top { width: 100% !important; overflow-x: auto !important; }
+            #wrap, #top, .dcheader, #gnb_bar, .gnb, #container, .wrap_inner, .left_content, .center_content, .center_box, 
+            .view_content_wrap, .gall_content, .gall_comment { 
+                width: 1160px !important; margin: 0 auto !important; 
+            }
+            #container { margin-top: 10px !important; }
+            .center_box { width: auto !important; margin: 0 !important; padding: 0 !important; border: none !important; background: none !important; display: block !important; flex-wrap: nowrap; }
+            .custom-bottom-controls form[name="frmSearch"] .search_left_box, .custom-bottom-controls form[name="frmSearch"] .search_right_box { display: flex !important; flex-grow: 1; }
+            .custom-bottom-controls form[name="frmSearch"] select, .custom-bottom-controls form[name="frmSearch"] input[type="text"] { flex: 1; min-width: 50px; }
+        }
     `);
 
     /**
      * =================================================================
      * ======================== Filter Module ==========================
      * =================================================================
-     * 설명: 유저 글/댓글, IP 기반 필터링 로직을 담당합니다.
+     * 설명: 유저 글/댓글, IP 기반 필터링 로직을 담당합니다. (v1.0.0의 압축된 코드 유지)
      */
     const FilterModule = {
         TELECOM: [
-            [1, [[11,"LG헬로비전","TEL"],[16,"다우기술/기타등등","TEL"],[17,"정보없음","TEL"],[18,"정보없음","TEL"],[19,"정보없음","TEL"],[96,"KT모바일","MOB"],[97,"KT모바일","MOB"],[98,"KT모바일","MOB"],[99,"KT모바일","MOB"],[100,"KT모바일","MOB"],[101,"KT모바일","MOB"],[102,"KT모바일","MOB"],[103,"KT모바일","MOB"],[104,"KT모바일","MOB"],[105,"KT모바일","MOB"],[106,"KT모바일","MOB"],[107,"KT모바일","MOB"],[108,"KT모바일","MOB"],[109,"KT모바일","MOB"],[110,"KT모바일","MOB"],[111,"KT모바일","MOB"],[176,"LG헬로비전","TEL"],[177,"LG헬로비전","TEL"],[201,"KINX","TEL"],[208,"LGU+","TEL"],[209,"LGU+","TEL"],[210,"LGU+","TEL"],[211,"LGU+","TEL"],[212,"LGU+","TEL"],[213,"LGU+","TEL"],[214,"LGU+","TEL"],[215,"LGU+","TEL"],[216,"LGU+","TEL"],[217,"LGU+","TEL"],[218,"LGU+","TEL"],[219,"LGU+","TEL"],[220,"LGU+","TEL"],[221,"LGU+","TEL"],[222,"LGU+","TEL"],[223,"LGU+","TEL"],[224,"SKB","TEL"],[225,"SKB","TEL"],[226,"SKB","TEL"],[227,"SKB","TEL"],[228,"SKB","TEL"],[229,"SKB","TEL"],[230,"SKB","TEL"],[231,"SKB","TEL"],[232,"SKB","TEL"],[233,"SKB/연세대/기타등등","TEL"],[234,"SKB","TEL"],[235,"SKB","TEL"],[236,"SKB","TEL"],[237,"SKB","TEL"],[238,"SKB","TEL"],[239,"SKB","TEL"],[240,"SKB","TEL"],[241,"SKB","TEL"],[242,"SKB","TEL"],[243,"SKB","TEL"],[244,"SKB","TEL"],[245,"SKB","TEL"],[246,"SKB","TEL"],[247,"SKB","TEL"],[248,"SKB","TEL"],[249,"SKB","TEL"],[250,"SKB","TEL"],[251,"SKB","TEL"],[252,"SKB","TEL"],[253,"SKB","TEL"],[254,"SKB","TEL"],[255,"SKB","TEL"]]],
-            [14, [[0,"씨디네트웍스/기타등등","TEL"],[4,"LGU+","TEL"],[5,"LGU+","TEL"],[6,"LGU+","TEL"],[7,"LGU+","TEL"],[32,"KT","TEL"],[33,"KT","TEL"],[34,"KT","TEL"],[35,"KT","TEL"],[36,"KT","TEL"],[37,"KT","TEL"],[38,"KT","TEL"],[39,"KT","TEL"],[40,"KT","TEL"],[41,"KT","TEL"],[42,"KT","TEL"],[43,"KT","TEL"],[44,"KT","TEL"],[45,"KT","TEL"],[46,"KT","TEL"],[47,"KT","TEL"],[48,"KT","TEL"],[49,"KT","TEL"],[50,"KT","TEL"],[51,"KT","TEL"],[52,"KT","TEL"],[53,"KT","TEL"],[54,"KT","TEL"],[55,"KT","TEL"],[56,"KT","TEL"],[57,"KT","TEL"],[58,"KT","TEL"],[59,"KT","TEL"],[60,"KT","TEL"],[61,"KT","TEL"],[62,"KT","TEL"],[63,"KT/쿠팡/기타등등","TEL"],[64,"KT/기타등등","TEL"],[65,"KT/기타등등","TEL"],[66,"KT/기타등등","TEL"],[67,"KT/기타등등","TEL"],[68,"KT/기타등등","TEL"],[69,"KT/기타등등","TEL"],[70,"KT/기타등등","TEL"],[71,"KT/기타등등","TEL"],[72,"KT/기타등등","TEL"],[73,"KT/기타등등","TEL"],[74,"KT/기타등등","TEL"],[75,"KT/기타등등","TEL"],[76,"KT/기타등등","TEL"],[77,"KT/기타등등","TEL"],[78,"KT/기타등등","TEL"],[79,"KT/기타등등","TEL"],[80,"KT/기타등등","TEL"],[81,"KT/기타등등","TEL"],[82,"KT/기타등등","TEL"],[83,"KT/기타등등","TEL"],[84,"KT/기타등등","TEL"],[85,"KT/기타등등","TEL"],[86,"KT/기타등등","TEL"],[87,"KT/기타등등","TEL"],[88,"KT/기타등등","TEL"],[89,"KT/기타등등","TEL"],[90,"KT/기타등등","TEL"],[91,"KT/기타등등","TEL"],[92,"KT/기타등등","TEL"],[93,"KT/기타등등","TEL"],[94,"KT/기타등등","TEL"],[95,"KT/기타등등","TEL"],[128,"카페24/심플렉스인터넷/기타등등","TEL"],[129,"코리아센터닷컴","TEL"],[138,"딜라이브","TEL"],[192,"플렉스넷/기타등등","TEL"],[206,"피란하시스템즈","TEL"]]],
-            [27, [[0,"카카오/기타등등","TEL"],[1,"딜라이브","TEL"],[35,"현대HCN","TEL"],[96,"네이버클라우드/제이엔디통신/기타등등","TEL"],[100,"KCTV제주방송/기타등등","TEL"],[101,"정부통합전산센타","TEL"],[102,"다우기술","TEL"],[111,"파인에셋서비스/기타등등","TEL"],[112,"SKB/기타등등","TEL"],[113,"한국케이블TV푸른방송/기타등등","TEL"],[115,"SKB/기타등등","TEL"],[116,"SKB/아름방송네트워크/기타등등","TEL"],[117,"SKB","TEL"],[118,"SKB/넥스지/기타등등","TEL"],[119,"SKB","TEL"],[120,"SKB/기타등등","TEL"],[122,"엘지씨엔에스/기타등등","TEL"],[124,"SKB/기타등등","TEL"],[125,"유엘네트웍스/기타등등","TEL"],[126,"씨엠비충청방송/기타등등","TEL"],[160,"SKT","MOB"],[161,"SKT","MOB"],[162,"SKT","MOB"],[163,"SKT","MOB"],[164,"SKT","MOB"],[165,"SKT","MOB"],[166,"SKT","MOB"],[167,"SKT","MOB"],[168,"SKT","MOB"],[169,"SKT","MOB"],[170,"SKT","MOB"],[171,"SKT","MOB"],[172,"SKT","MOB"],[173,"SKT","MOB"],[174,"SKT","MOB"],[175,"SKT","MOB"],[176,"SKT","MOB"],[177,"SKT","MOB"],[178,"SKT","MOB"],[179,"SKT","MOB"],[180,"SKT","MOB"],[181,"SKT","MOB"],[182,"SKT","MOB"],[183,"SKT","MOB"],[232,"KT","TEL"],[233,"KT","TEL"],[234,"KT","TEL"],[235,"KT","TEL"],[236,"KT","TEL"],[237,"KT","TEL"],[238,"KT","TEL"],[239,"KT","TEL"],[255,"이호스트데이터센터/한국케이블텔레콤/기타등등","TEL"]]],
-            [36, [[38,"LG헬로비전","TEL"],[39,"LG헬로비전","TEL"]]],
-            [39, [[4,"KT모바일","MOB"],[5,"KT모바일","MOB"],[6,"KT모바일","MOB"],[7,"KT모바일","MOB"],[16,"KT","TEL"],[17,"KT","TEL"],[18,"KT","TEL"],[19,"KT","TEL"],[20,"KT","TEL"],[21,"KT","TEL"],[22,"KT","TEL"],[23,"KT","TEL"],[24,"KT","TEL"],[25,"KT","TEL"],[26,"KT","TEL"],[27,"KT","TEL"],[28,"KT","TEL"],[29,"KT","TEL"],[30,"KT","TEL"],[31,"KT","TEL"],[112,"SKB","TEL"],[113,"SKB","TEL"],[114,"SKB","TEL"],[115,"SKB","TEL"],[116,"SKB","TEL"],[117,"SKB","TEL"],[118,"SKB","TEL"],[119,"SKB","TEL"],[120,"SKB","TEL"],[121,"SKB","TEL"],[122,"SKB","TEL"],[123,"SKB","TEL"],[124,"SKB","TEL"],[125,"SKB","TEL"],[126,"SKB","TEL"],[127,"SKB","TEL"]]],
-            [42, [[8,"삼성SDS","TEL"],[9,"삼성SDS","TEL"],[10,"삼성SDS","TEL"],[11,"삼성SDS","TEL"],[12,"삼성SDS","TEL"],[13,"삼성SDS","TEL"],[14,"삼성SDS","TEL"],[15,"삼성SDS","TEL"],[16,"SKT","MOB"],[17,"SKT","MOB"],[18,"SKT","MOB"],[19,"SKT","MOB"],[20,"SKT","MOB"],[21,"SKT","MOB"],[22,"SKT","MOB"],[23,"SKT","MOB"],[24,"SKT","MOB"],[25,"SKT","MOB"],[26,"SKT","MOB"],[27,"SKT","MOB"],[28,"SKT","MOB"],[29,"SKT","MOB"],[30,"SKT","MOB"],[31,"SKT","MOB"],[32,"SKT","MOB"],[33,"SKT","MOB"],[34,"SKT","MOB"],[35,"SKT","MOB"],[36,"SKT","MOB"],[37,"SKT","MOB"],[38,"SKT","MOB"],[39,"SKT","MOB"],[40,"SKT","MOB"],[41,"SKT","MOB"],[42,"SKT","MOB"],[43,"SKT","MOB"],[44,"SKT","MOB"],[45,"SKT","MOB"],[46,"SKT","MOB"],[47,"SKT","MOB"],[82,"LG헬로비전","TEL"]]],
-            [43, [[224,"LG헬로비전/기타등등","TEL"],[227,"NHN엔터테인먼트/한국케이블TV광주방송/기타등등","TEL"],[228,"하이온넷/기타등등","TEL"],[230,"SKB/LGU+/숭실대/제이엔디통신/기타등등","TEL"],[241,"씨앰비대구동부방송/씨앰비대구수성방송/기타등등","TEL"],[242,"아이네트/기타등등","TEL"],[243,"삼성전자/기타등등","TEL"],[246,"비아웹/기타등등","TEL"],[247,"사단법인워치타워성서책자협회/LG헬로비전/기타등등","TEL"],[250,"네이버클라우드/기타등등","TEL"],[251,"LG헬로비전/기타등등","TEL"],[254,"퍼플스톤즈/기타등등","TEL"],[255,"플렉스넷/스마일서브/기타등등","TEL"]]],
-            [45, [[64,"CMB대전방송/넥스이노/한국데이터통신/더존비즈온/기타등등","TEL"],[112,"SKB/기타등등","TEL"],[113,"한국데이타/아이엔티매니지먼트/기타등등","TEL"],[115,"가비아/기타등등","TEL"],[117,"위드시스템즈/기타등등","TEL"],[119,"네이버클라우드/기타등등","TEL"],[120,"가비아/닷네임코리아/기타등등","TEL"],[121,"대우증권/기타등등","TEL"],[125,"NHN엔터테인먼트플레이허브/기타등등","TEL"],[248,"한국정보화진흥원/기타등등","TEL"],[249,"네트로피/고도소프트/기타등등","TEL"],[250,"라이엇게임즈코리아/아이링크코리아/페이머스워커/기타등등","TEL"]]],
-            [49, [[1,"딜라이브/현대HCN/기타등등","TEL"],[8,"정보없음","TEL"],[9,"정보없음","TEL"],[10,"정보없음","TEL"],[11,"정보없음","TEL"],[16,"KT모바일","MOB"],[17,"KT모바일","MOB"],[18,"KT모바일","MOB"],[19,"KT모바일","MOB"],[20,"KT모바일","MOB"],[21,"KT모바일","MOB"],[22,"KT모바일","MOB"],[23,"KT모바일","MOB"],[24,"KT모바일","MOB"],[25,"KT모바일","MOB"],[26,"KT모바일","MOB"],[27,"KT모바일","MOB"],[28,"KT모바일","MOB"],[29,"KT모바일","MOB"],[30,"KT모바일","MOB"],[31,"KT모바일","MOB"],[50,"네이버클라우드/지오레이넷/제이엔디통신/국립암센터/SK/기타등등","TEL"],[56,"KT모바일","MOB"],[57,"KT모바일","MOB"],[58,"KT모바일","MOB"],[59,"KT모바일","MOB"],[60,"KT모바일","MOB"],[61,"KT모바일","MOB"],[62,"KT모바일","MOB"],[63,"KT모바일","MOB"],[128,"한국데이타/기타등등","TEL"],[142,"현대HCN","TEL"],[143,"씨앰비대구수성방송/씨앰비대구동부방송/CMB대전방송/현대HCN/네이버클라우드/네트로피/기타등등","TEL"],[160,"LGU+","TEL"],[161,"LGU+","TEL"],[162,"LGU+","TEL"],[163,"LGU+","TEL"],[164,"LGU+","TEL"],[165,"LGU+","TEL"],[166,"LGU+","TEL"],[167,"LGU+","TEL"],[168,"LGU+","TEL"],[169,"LGU+","TEL"],[170,"LGU+","TEL"],[171,"LGU+","TEL"],[172,"LGU+","TEL"],[173,"LGU+","TEL"],[174,"LGU+","TEL"],[175,"LGU+","TEL"],[236,"LGU+/네이버클라우드/효성ITX/기타등등","TEL"],[238,"엘엑스/아름방송네트워크/기타등등","TEL"],[239,"엘림넷/기타등등","TEL"],[246,"씨앰비광주방송/기타등등","TEL"],[247,"스마일서브","TEL"],[254,"하이온넷","TEL"]]],
-            [58, [[29,"LGU+","TEL"],[65,"서경방송/기타등등","TEL"],[72,"LGU+","TEL"],[73,"LGU+","TEL"],[74,"LGU+","TEL"],[75,"LGU+","TEL"],[76,"LGU+","TEL"],[77,"LGU+","TEL"],[78,"LGU+","TEL"],[79,"LGU+","TEL"],[84,"삼정데이타서비스/기타등등","TEL"],[87,"오토에버시스템즈/기타등등","TEL"],[102,"SKT","MOB"],[103,"SKT","MOB"],[120,"SKB","TEL"],[121,"SKB","TEL"],[122,"SKB","TEL"],[123,"SKB","TEL"],[124,"SKB","TEL"],[125,"SKB","TEL"],[126,"SKB","TEL"],[127,"SKB","TEL"],[138,"브이토피아/기타등등","TEL"],[140,"딜라이브/현대HCN/기타등등","TEL"],[141,"딜라이브/현대HCN/기타등등","TEL"],[142,"딜라이브/현대HCN/기타등등","TEL"],[143,"딜라이브","TEL"],[145,"SKB/기타등등","TEL"],[146,"LG헬로비전/기타등등","TEL"],[147,"씨앰비대구수성방송/기타등등","TEL"],[148,"LGU+","TEL"],[149,"LGU+","TEL"],[150,"LGU+","TEL"],[151,"LGU+","TEL"],[180,"세종텔레콤","TEL"],[181,"넥스지/기타등등","TEL"],[184,"LGU+","TEL"],[224,"SKB","TEL"],[225,"SKB","TEL"],[226,"SKB","TEL"],[227,"SKB","TEL"],[228,"SKB","TEL"],[229,"SKB","TEL"],[230,"SKB","TEL"],[231,"SKB","TEL"],[232,"SKB","TEL"],[233,"SKB","TEL"],[234,"SKB","TEL"],[235,"SKB","TEL"],[236,"SKB","TEL"],[237,"SKB","TEL"],[238,"SKB","TEL"],[239,"SKB","TEL"]]],
-            [59, [[0,"KT","TEL"],[1,"KT","TEL"],[2,"KT","TEL"],[3,"KT","TEL"],[4,"KT","TEL"],[5,"KT","TEL"],[6,"KT","TEL"],[7,"KT","TEL"],[8,"KT","TEL"],[9,"KT","TEL"],[10,"KT","TEL"],[11,"KT","TEL"],[12,"KT","TEL"],[13,"KT","TEL"],[14,"KT","TEL"],[15,"KT","TEL"],[16,"KT","TEL"],[17,"KT","TEL"],[18,"KT","TEL"],[19,"KT","TEL"],[20,"KT","TEL"],[21,"KT","TEL"],[22,"KT","TEL"],[23,"KT","TEL"],[24,"KT","TEL"],[25,"KT","TEL"],[26,"KT","TEL"],[27,"KT","TEL"],[28,"KT","TEL"],[29,"KT","TEL"],[30,"KT","TEL"],[31,"KT","TEL"],[86,"LG헬로비전/기타등등","TEL"],[150,"드림라인","TEL"],[151,"현대HCN/기타등등","TEL"],[152,"LG헬로비전/기타등등","TEL"],[186,"LGU+","TEL"],[187,"LGU+","TEL"]]],
-            [60, [[196,"LGU+","TEL"],[197,"LGU+","TEL"],[253,"현대HCN/SK컴즈/기타등등","TEL"]]],
-            [61, [[4,"LG헬로비전/기타등등","TEL"],[5,"LGU+/기타등등","TEL"],[14,"이호스트데이터센터/기타등등","TEL"],[32,"LGU+","TEL"],[33,"LGU+","TEL"],[34,"LGU+","TEL"],[35,"LGU+","TEL"],[36,"LGU+","TEL"],[37,"LGU+","TEL"],[38,"LGU+","TEL"],[39,"LGU+","TEL"],[40,"LGU+","TEL"],[41,"LGU+","TEL"],[42,"LGU+","TEL"],[43,"LGU+","TEL"],[47,"SKB/기타등등","TEL"],[72,"KT","TEL"],[73,"KT","TEL"],[74,"KT","TEL"],[75,"KT","TEL"],[76,"KT","TEL"],[77,"KT","TEL"],[78,"KT","TEL"],[79,"KT","TEL"],[80,"KT","TEL"],[81,"KT","TEL"],[82,"KT","TEL"],[83,"KT","TEL"],[84,"KT","TEL"],[85,"KT","TEL"],[96,"드림라인","TEL"],[97,"SKB/LGU+/LG헬로비전/세종텔레콤/SK/아름방송네트워크/한국정보보호진흥원/네이버클라우드/이호스트데이터센터/두루안/제이엔디통신/기타등등","TEL"],[98,"SKB","TEL"],[99,"SKB","TEL"],[100,"SKB/세종텔레콤/신라대/유엘네트웍스/기타등등","TEL"],[101,"SKB/LGU+/기타등등","TEL"],[102,"SKB/LG헬로비전/기타등등","TEL"],[103,"드림라인","TEL"],[104,"SKT","MOB"],[105,"SKB","TEL"],[106,"SKB/KT/LG헬로비전/딜라이브/엘림넷/KINX/KDDI코리아/한국정보보호진흥원/기타등등","TEL"],[107,"드림라인","TEL"],[108,"LGU+","TEL"],[109,"SKB/세종텔레콤/기타등등","TEL"],[110,"LG헬로비전/세종텔레콤/금강방송/씨디네트웍스/기타등등","TEL"],[111,"LGU+/세종텔레콤/기타등등","TEL"],[245,"한국케이블TV광주방송/원광대/기타등등","TEL"],[247,"SKB/딜라이브/네이버클라우드/기타등등","TEL"],[248,"세종텔레콤/한국케이블TV서대구방송/기타등등","TEL"],[249,"세종텔레콤/한국인터넷진흥원/기타등등","TEL"],[250,"SKT/세종텔레콤/하이라인닷넷","MOB"],[251,"SKB/KT/CMB대전방송/KDDI코리아/KINX/NTT코리아/아이링크코리아/기타등등","TEL"],[252,"KT모바일/SKB/딜라이브/엘엑스/세종텔레콤/한국정보화진흥원/한국인터넷진흥원/두루안/기타등등","MOB"],[253,"SKB","TEL"],[254,"SKB/SKT/기타등등","MOB"],[255,"SKB/기타등등","TEL"]]],
-            [101, [[1,"오토에버시스템즈/전주대/기타등등","TEL"],[53,"아이링크코리아/기타등등","TEL"],[55,"한국데이터통신/기타등등","TEL"],[79,"퍼플스톤즈/씨디네트웍스/네이버클라우드/기타등등","TEL"],[101,"네이버클라우드/제이엔디통신/기타등등","TEL"],[202,"드림마크원","TEL"],[235,"딜라이브/현대HCN/기타등등","TEL"],[250,"피란하시스템즈","TEL"]]],
-            [103, [[2,"현대HCN/제이엔디통신/딜라이브/기타등등","TEL"],[3,"LGU+/기타등등","TEL"],[4,"하이온넷/네트로피/삼정데이타서비스/한국조폐공사/기타등등","TEL"],[5,"SKB/한국데이터통신/기타등등","TEL"],[6,"SKB/KINX/네이버클라우드/한국데이타/기타등등","TEL"],[7,"LG헬로비전/한국국토정보공사/한국데이타/기타등등","TEL"],[8,"한국천문연구원/더존비즈온/기타등등","TEL"],[9,"한국암웨이/아이링크코리아/기타등등","TEL"],[10,"씨앰비광주방송/기타등등","TEL"],[11,"남인천방송/JCN울산중앙방송/엘엑스/다날/제이엔디통신/기타등등","TEL"],[12,"드림라인/(사)한국선급/기타등등","TEL"],[13,"대우증권/다우기술/기타등등","TEL"],[19,"에스원/기타등등","TEL"],[20,"케이알쓰리서비스코리아/금강방송/기타등등","TEL"],[21,"LG헬로비전/기타등등","TEL"],[22,"한국정보화진흥원/기타등등","TEL"],[23,"딜라이브/기타등등","TEL"],[24,"호스트웨이아이디씨/기타등등","TEL"],[25,"브이토피아/기타등등","TEL"],[27,"엘엑스/다음커뮤니케이션/기타등등","TEL"],[28,"씨앰비대구동부방송/씨앰비대구수성방송/기타등등","TEL"],[30,"LGU+/서울특별시농수산물공사/아모레퍼시픽/충청남도교육연구정보원/크로스온넷/기타등등","TEL"],[31,"닷네임코리아/기타등등","TEL"],[38,"아이네트/기타등등","TEL"],[39,"삼성전자/기타등등","TEL"],[42,"LG헬로비전/기타등등","TEL"],[43,"LG헬로비전/한국천문연구원/기타등등","TEL"],[49,"숭실대/기타등등","TEL"],[50,"SKB/기타등등","TEL"],[51,"SKB/기타등등","TEL"],[52,"아이엔티매니지먼트/기타등등","TEL"],[53,"수도권매립지관리공사/기타등등","TEL"],[55,"한국통신사업자연합회/가비아/기타등등","TEL"],[57,"위드시스템즈/기타등등","TEL"],[59,"금융보안원/기타등등","TEL"],[60,"대우증권/가비아/기타등등","TEL"],[62,"에스알/기타등등","TEL"],[66,"씨앰비영등포방송/한국카카오은행/기타등등","TEL"],[68,"LGU+/JCN울산중앙방송/기타등등","TEL"],[74,"펄어비스/기타등등","TEL"],[78,"KC인프라/기타등등","TEL"],[79,"효성ITX/기타등등","TEL"],[85,"현대오토에버/기타등등","TEL"],[87,"엔터메이트/기타등등","TEL"],[90,"남양유업/AIA생명보험/기타등등","TEL"],[105,"와이더플래닛/기타등등","TEL"],[106,"비에스아이티씨/기타등등","TEL"],[108,"한국농수산식품유통공사/기타등등","TEL"],[109,"알엑스엔/알라딘브이엠/기타등등","TEL"],[114,"블루홀/강원랜드/기타등등","TEL"],[117,"서경방송/기타등등","TEL"],[124,"에스비코리아/기타등등","TEL"],[129,"KTE정보통신/기타등등","TEL"],[139,"드림마크원/기타등등","TEL"],[194,"NHN엔터테인먼트플레이허브/비아웹/기타등등","TEL"],[198,"블리자드엔터테인먼트코리아/기타등등","TEL"],[206,"건강보험심사평가원/기타등등","TEL"],[209,"엔씨소프트/기타등등","TEL"],[212,"아이네임즈/한국외대/웹젠/기타등등","TEL"],[214,"KCTV제주방송/SK플래닛/기타등등","TEL"],[215,"아이피포네트웍스/엔에이치엔한국사이버결제/기타등등","TEL"],[216,"국립환경과학원/기타등등","TEL"],[218,"건국대/고도소프트/기타등등","TEL"],[219,"라이엇게임즈코리아/페이머스워커/기타등등","TEL"],[226,"LGU+/LG헬로비전/한국케이블TV광주방송/기타등등","TEL"],[229,"사단법인워치타워성서책자협회/기타등등","TEL"],[230,"삼성전자/기타등등","TEL"],[231,"이지오스/기타등등","TEL"],[234,"CMB대전방송/기타등등","TEL"],[235,"롯데정보통신/기타등등","TEL"],[237,"씨앰비충청방송/기타등등","TEL"],[238,"네이버클라우드/기타등등","TEL"],[239,"한국마사회/플렉스넷/스마일서브/기타등등","TEL"],[240,"지디시스/정보통신산업진흥원/기타등등","TEL"],[243,"NHN엔터테인먼트/기타등등","TEL"],[244,"넥스지/코스콤/기타등등","TEL"],[246,"카카오/피란하시스템즈/씨앰비영등포방송/기타등등","TEL"],[247,"KT/티켓몬스터/기타등등","TEL"],[248,"씨디네트웍스/기타등등","TEL"],[249,"이호스트데이터센터/기타등등","TEL"],[251,"넥스이노/기타등등","TEL"],[253,"두산정보통신사업부/기타등등","TEL"],[254,"한국카카오은행/기타등등","TEL"]]],
-            [106, [[10,"엘엑스/네이버클라우드/기타등등","TEL"],[96,"LGU+모바일","MOB"],[97,"LGU+모바일","MOB"],[98,"LGU+모바일","MOB"],[99,"LGU+모바일","MOB"],[100,"LGU+모바일","MOB"],[101,"LGU+모바일","MOB"],[102,"LGU+모바일","MOB"],[103,"LGU+모바일","MOB"],[240,"LGU+","TEL"],[241,"LGU+","TEL"],[242,"LGU+","TEL"],[243,"LGU+","TEL"],[244,"LGU+","TEL"],[245,"LGU+","TEL"],[246,"LGU+","TEL"],[247,"LGU+","TEL"],[248,"LGU+","TEL"],[249,"LGU+","TEL"],[250,"LGU+","TEL"],[251,"LGU+","TEL"],[252,"LGU+","TEL"],[253,"LGU+","TEL"],[254,"LGU+","TEL"],[255,"LGU+","TEL"]]],
-            [110, [[4,"퍼플스톤즈/기타등등","TEL"],[5,"SKB/기타등등","TEL"],[8,"SKB","TEL"],[9,"SKB","TEL"],[10,"SKB","TEL"],[11,"SKB","TEL"],[12,"SKB","TEL"],[13,"SKB","TEL"],[14,"SKB","TEL"],[15,"SKB","TEL"],[34,"씨엠비동대문방송/기타등등","TEL"],[35,"SKB/현대HCN/CMB대전방송/기타등등","TEL"],[44,"LG헬로비전/엘엑스/기타등등","TEL"],[45,"LGU+/LG헬로비전/블리자드엔터테인먼트코리아/기타등등","TEL"],[46,"LG헬로비전","TEL"],[47,"LG헬로비전","TEL"],[68,"KT모바일","MOB"],[69,"KT모바일","MOB"],[70,"KT모바일","MOB"],[71,"KT모바일","MOB"],[76,"한국과학기술원/카카오/기타등등","TEL"],[92,"딜라이브/푸르덴셜투자증권/기타등등","TEL"],[93,"네이버클라우드/경기테크노파크/제이엔디통신/효성ITX/기타등등","TEL"],[165,"네이버클라우드/피란하시스템즈/기타등등","TEL"],[172,"다우기술/기타등등","TEL"],[232,"한국인터넷진흥원/기타등등","TEL"]]],
-            [111, [[65,"SKB/기타등등","TEL"],[67,"플렉스넷/야후코리아/기타등등","TEL"],[91,"한국케이블TV광주방송/네이버클라우드/기타등등","TEL"],[92,"아이네임즈/기타등등","TEL"],[118,"현대HCN/기타등등","TEL"],[171,"SKB/기타등등","TEL"],[218,"SKT","MOB"],[219,"SKT","MOB"],[221,"라임라이트네트웍스코리아/기타등등","TEL"]]],
-            [112, [[72,"현대HCN/기타등등","TEL"],[76,"LGU+","TEL"],[77,"LGU+","TEL"],[106,"삼성SDS","TEL"],[107,"삼성SDS","TEL"],[108,"삼성SDS","TEL"],[109,"JCN울산중앙방송/기타등등","TEL"],[121,"SKB/씨앰비광주방송/기타등등","TEL"],[133,"KCTV제주방송/씨앰비광주방송/기타등등","TEL"],[136,"넥스지/기타등등","TEL"],[137,"대구대/기타등등","TEL"],[140,"SKB/LG헬로비전/전주대/한국케이블텔레콤/기타등등","TEL"],[144,"LGU+","TEL"],[145,"LGU+","TEL"],[146,"LGU+","TEL"],[147,"LGU+","TEL"],[148,"LGU+","TEL"],[149,"LGU+","TEL"],[150,"LGU+","TEL"],[151,"LGU+","TEL"],[152,"LGU+","TEL"],[153,"LGU+","TEL"],[154,"LGU+","TEL"],[155,"LGU+","TEL"],[156,"LGU+","TEL"],[157,"LGU+","TEL"],[158,"LGU+","TEL"],[159,"LGU+","TEL"],[160,"KT","TEL"],[161,"KT","TEL"],[162,"KT","TEL"],[163,"KT","TEL"],[164,"KT","TEL"],[165,"KT","TEL"],[166,"KT","TEL"],[167,"KT","TEL"],[168,"KT","TEL"],[169,"KT","TEL"],[170,"KT","TEL"],[171,"KT","TEL"],[172,"KT","TEL"],[173,"KT","TEL"],[174,"KT","TEL"],[175,"KT/쿠팡/기타등등","TEL"],[176,"KT/기타등등","TEL"],[177,"KT/기타등등","TEL"],[178,"KT/기타등등","TEL"],[179,"KT/기타등등","TEL"],[180,"KT/기타등등","TEL"],[181,"KT/기타등등","TEL"],[182,"KT/기타등등","TEL"],[183,"KT/기타등등","TEL"],[184,"KT/기타등등","TEL"],[185,"KT/기타등등","TEL"],[186,"KT/기타등등","TEL"],[187,"KT/기타등등","TEL"],[188,"KT/기타등등","TEL"],[189,"KT/기타등등","TEL"],[190,"KT/기타등등","TEL"],[191,"KT/기타등등","TEL"],[196,"한국데이타/기타등등","TEL"],[212,"SKB","TEL"],[213,"피란하시스템즈/기타등등","TEL"],[214,"현대HCN/딜라이브/기타등등","TEL"],[216,"LGU+","TEL"],[217,"LGU+","TEL"],[218,"LGU+","TEL"],[219,"LGU+","TEL"],[220,"LGU+","TEL"],[221,"LGU+","TEL"],[222,"LGU+","TEL"],[223,"LGU+","TEL"]]],
-            [113, [[10,"딜라이브/기타등등","TEL"],[21,"브이토피아/기타등등","TEL"],[29,"다우기술/기타등등","TEL"],[30,"SKB/퍼플스톤즈/기타등등","TEL"],[52,"LG헬로비전/아이링크코리아/기타등등","TEL"],[59,"현대HCN/기타등등","TEL"],[60,"SKB","TEL"],[61,"LG헬로비전/다음커뮤니케이션/기타등등","TEL"],[130,"LG헬로비전/세종텔레콤/기타등등","TEL"],[131,"LG헬로비전/기타등등","TEL"],[192,"JCN울산중앙방송/기타등등","TEL"],[197,"유엘네트웍스/기타등등","TEL"],[198,"한국교육전산망협의회","TEL"],[199,"아름방송네트워크/기타등등","TEL"],[216,"SKT","MOB"],[217,"SKT","MOB"]]],
-            [114, [[29,"SKB/LG헬로비전/기타등등","TEL"],[30,"LG헬로비전/현대HCN/딜라이브/기타등등","TEL"],[31,"코스콤/효성ITX/기타등등","TEL"],[52,"SKT","MOB"],[53,"SKT","MOB"],[70,"한국교육전산망협의회","TEL"],[71,"한국교육전산망협의회","TEL"],[108,"SKB/LGU+/기타등등","TEL"],[110,"브이토피아/기타등등","TEL"],[111,"SKB/씨디네트웍스/네이버클라우드/기타등등","TEL"],[129,"LG헬로비전/현대HCN/기타등등","TEL"],[141,"퍼플스톤즈/피란하시스템즈/야후코리아/기타등등","TEL"],[199,"현대HCN/한국케이블TV푸른방송/기타등등","TEL"],[200,"SKB","TEL"],[201,"SKB","TEL"],[202,"SKB","TEL"],[203,"SKB","TEL"],[204,"SKB","TEL"],[205,"SKB","TEL"],[206,"SKB","TEL"],[207,"SKB","TEL"]]],
-            [115, [[0,"KT","TEL"],[1,"KT","TEL"],[2,"KT","TEL"],[3,"KT","TEL"],[4,"KT","TEL"],[5,"KT","TEL"],[6,"KT","TEL"],[7,"KT","TEL"],[8,"KT","TEL"],[9,"KT","TEL"],[10,"KT","TEL"],[11,"KT","TEL"],[12,"KT","TEL"],[13,"KT","TEL"],[14,"KT","TEL"],[15,"KT","TEL"],[16,"KT","TEL"],[17,"KT","TEL"],[18,"KT","TEL"],[19,"KT","TEL"],[20,"KT","TEL"],[21,"KT","TEL"],[22,"KT","TEL"],[23,"KT","TEL"],[31,"LG헬로비전/기타등등","TEL"],[40,"LG헬로비전","TEL"],[41,"LG헬로비전","TEL"],[68,"스마일서브","TEL"],[69,"현대HCN/기타등등","TEL"],[71,"다우기술","TEL"],[84,"서울특별시데이터센터/기타등등","TEL"],[85,"네이버클라우드/제이엔디통신/기타등등","TEL"],[86,"LG헬로비전","TEL"],[88,"LGU+","TEL"],[89,"LGU+","TEL"],[90,"LGU+","TEL"],[91,"LGU+","TEL"],[92,"LGU+","TEL"],[93,"LGU+","TEL"],[94,"LGU+","TEL"],[95,"LGU+","TEL"],[126,"남인천방송/기타등등","TEL"],[136,"LGU+","TEL"],[137,"LGU+","TEL"],[138,"LGU+","TEL"],[139,"LGU+","TEL"],[140,"LGU+","TEL"],[141,"LGU+","TEL"],[142,"LGU+","TEL"],[143,"LGU+","TEL"],[144,"하이온넷","TEL"],[145,"성균관대","TEL"],[160,"서경방송/기타등등","TEL"],[161,"SKB","TEL"],[165,"플렉스넷/기타등등","TEL"],[178,"SKB/한국데이타/기타등등","TEL"],[187,"지에스네오텍/기타등등","TEL"]]],
-            [116, [[32,"LGU+","TEL"],[33,"LGU+","TEL"],[34,"LGU+","TEL"],[35,"LGU+","TEL"],[36,"LGU+","TEL"],[37,"LGU+","TEL"],[38,"LGU+","TEL"],[39,"LGU+","TEL"],[40,"LGU+","TEL"],[41,"LGU+","TEL"],[42,"LGU+","TEL"],[43,"LGU+","TEL"],[44,"LGU+","TEL"],[45,"LGU+","TEL"],[46,"LGU+","TEL"],[47,"LGU+","TEL"],[67,"정부통합전산센타/기타등등","TEL"],[68,"나사렛대/기타등등","TEL"],[84,"인천국제공항공사","TEL"],[89,"한국정보화진흥원/기타등등","TEL"],[90,"대구가톨릭대/기타등등","TEL"],[93,"SKB/한국데이타/기타등등","TEL"],[120,"SKB","TEL"],[121,"SKB","TEL"],[122,"SKB","TEL"],[123,"SKB","TEL"],[124,"SKB","TEL"],[125,"SKB","TEL"],[126,"SKB","TEL"],[127,"SKB","TEL"],[193,"씨디네트웍스/기타등등","TEL"],[199,"SKB/기타등등","TEL"],[200,"KT모바일","MOB"],[201,"KT모바일","MOB"],[212,"JCN울산중앙방송/기타등등","TEL"],[255,"씨앰비영등포방송/기타등등","TEL"]]],
-            [117, [[16,"한국교육전산망협의회","TEL"],[17,"한국교육전산망협의회","TEL"],[20,"SKB/현대HCN/기타등등","TEL"],[52,"LGU+/블리자드엔터테인먼트코리아/기타등등","TEL"],[53,"LG헬로비전/딜라이브/SK컴즈/기타등등","TEL"],[55,"LG헬로비전/기타등등","TEL"],[58,"SKB/기타등등","TEL"],[110,"LGU+모바일","MOB"],[111,"LGT+모바일","MOB"],[123,"SKB","TEL"]]],
-            [118, [[32,"KT","TEL"],[33,"KT","TEL"],[34,"KT","TEL"],[35,"KT","TEL"],[36,"KT","TEL"],[37,"KT","TEL"],[38,"KT","TEL"],[39,"KT","TEL"],[40,"KT","TEL"],[41,"KT","TEL"],[42,"KT","TEL"],[43,"KT","TEL"],[44,"KT","TEL"],[45,"KT","TEL"],[46,"KT","TEL"],[47,"KT","TEL"],[48,"KT","TEL"],[49,"KT","TEL"],[50,"KT","TEL"],[51,"KT","TEL"],[52,"KT","TEL"],[53,"KT","TEL"],[54,"KT","TEL"],[55,"KT","TEL"],[56,"KT","TEL"],[57,"KT","TEL"],[58,"KT","TEL"],[59,"KT","TEL"],[60,"KT","TEL"],[61,"KT","TEL"],[62,"KT","TEL"],[63,"KT","TEL"],[67,"네트로피/네이버클라우드/누리링크시스템/기타등등","TEL"],[91,"SKB/현대HCN/두루안/기타등등","TEL"],[103,"남인천방송/기타등등","TEL"],[107,"씨디네트웍스/기타등등","TEL"],[127,"LG헬로비전/기타등등","TEL"],[128,"LGU+","TEL"],[129,"LGU+","TEL"],[130,"LGU+","TEL"],[131,"LGU+","TEL"],[139,"LG헬로비전/기타등등","TEL"],[176,"현대HCN/딜라이브/기타등등","TEL"],[216,"SKB","TEL"],[217,"SKB","TEL"],[218,"SKB","TEL"],[219,"SKB","TEL"],[220,"SKB","TEL"],[221,"SKB","TEL"],[222,"SKB","TEL"],[223,"SKB","TEL"],[234,"KT모바일","MOB"],[235,"KT모바일","MOB"]]],
-            [119, [[17,"SKB/한국케이블TV푸른방송/기타등등","TEL"],[18,"LG헬로비전/기타등등","TEL"],[30,"아이피포네트웍스/KINX/기타등등","TEL"],[31,"정보통신연구진흥원/씨디네트웍스/기타등등","TEL"],[42,"아이네트/기타등등","TEL"],[56,"현대HCN/기타등등","TEL"],[59,"KDDI코리아/기타등등","TEL"],[63,"LG헬로비전/기타등등","TEL"],[64,"LGU+","TEL"],[65,"LGU+","TEL"],[66,"LGU+","TEL"],[67,"LGU+","TEL"],[68,"LGU+","TEL"],[69,"LGU+","TEL"],[70,"LGU+","TEL"],[71,"LGU+","TEL"],[75,"SKB/LG헬로비전/기타등등","TEL"],[77,"한국케이블TV광주방송/기타등등","TEL"],[82,"SKB/기타등등","TEL"],[148,"SKB/LG헬로비전/기타등등","TEL"],[149,"LG헬로비전","TEL"],[161,"야후코리아/기타등등","TEL"],[192,"KT","TEL"],[193,"KT","TEL"],[194,"KT모바일","MOB"],[195,"KT","TEL"],[196,"KT","TEL"],[197,"KT","TEL"],[198,"KT","TEL"],[199,"KT","TEL"],[200,"KT","TEL"],[201,"KT","TEL"],[202,"KT","TEL"],[203,"KT","TEL"],[204,"KT","TEL"],[205,"KT","TEL"],[206,"KT","TEL"],[207,"KT","TEL"],[208,"KT","TEL"],[209,"KT","TEL"],[210,"KT","TEL"],[211,"KT","TEL"],[212,"KT","TEL"],[213,"KT","TEL"],[214,"KT","TEL"],[215,"KT","TEL"],[216,"KT","TEL"],[217,"KT","TEL"],[218,"KT","TEL"],[219,"KT","TEL"],[220,"KT","TEL"],[221,"KT","TEL"],[222,"KT","TEL"],[223,"KT","TEL"],[235,"씨앰비대구동부방송/기타등등","TEL"]]],
-            [120, [[29,"씨앰비광주방송/기타등등","TEL"],[50,"현대HCN/SK컴즈/기타등등","TEL"],[73,"아시아나IDT","TEL"],[136,"LG헬로비전/기타등등","TEL"],[142,"현대HCN/딜라이브/기타등등","TEL"],[143,"SKB/한국무역정보통신/기타등등","TEL"]]],
-            [121, [[0,"닷네임코리아/두루안/기타등등","TEL"],[1,"서경방송/기타등등","TEL"],[50,"SKB/엘지씨엔에스/KINX/기타등등","TEL"],[53,"드림라인","TEL"],[54,"LG헬로비전/기타등등","TEL"],[55,"한국케이블TV푸른방송/기타등등","TEL"],[64,"LGU+","TEL"],[65,"LGU+","TEL"],[66,"LGU+","TEL"],[67,"LGU+","TEL"],[78,"KINX","TEL"],[88,"딜라이브","TEL"],[100,"딜라이브/기타등등","TEL"],[101,"딜라이브/제이엔디통신/기타등등","TEL"],[124,"SKB","TEL"],[125,"SKB","TEL"],[126,"하이온넷","TEL"],[127,"SKB/기타등등","TEL"],[128,"KT","TEL"],[129,"KT","TEL"],[130,"KT","TEL"],[131,"KT","TEL"],[132,"KT","TEL"],[133,"KT","TEL"],[134,"KT","TEL"],[135,"KT","TEL"],[136,"KT","TEL"],[137,"KT","TEL"],[138,"KT","TEL"],[139,"KT","TEL"],[140,"KT","TEL"],[141,"KT","TEL"],[142,"KT","TEL"],[143,"KT","TEL"],[144,"KT","TEL"],[145,"KT","TEL"],[146,"KT","TEL"],[147,"KT","TEL"],[148,"KT","TEL"],[149,"KT","TEL"],[150,"KT","TEL"],[151,"KT","TEL"],[152,"KT","TEL"],[153,"KT","TEL"],[154,"KT","TEL"],[155,"KT","TEL"],[156,"KT","TEL"],[157,"KT","TEL"],[158,"KT","TEL"],[159,"KT","TEL"],[160,"KT","TEL"],[161,"KT","TEL"],[162,"KT","TEL"],[163,"KT","TEL"],[164,"KT","TEL"],[165,"KT","TEL"],[166,"KT/쿠팡/기타등등","TEL"],[167,"KT/기타등등","TEL"],[168,"KT/기타등등","TEL"],[169,"KT/기타등등","TEL"],[170,"KT/기타등등","TEL"],[171,"KT/기타등등","TEL"],[172,"KT/기타등등","TEL"],[173,"KT/기타등등","TEL"],[174,"KT/기타등등","TEL"],[175,"KT/기타등등","TEL"],[176,"KT/기타등등","TEL"],[177,"KT/기타등등","TEL"],[178,"KT/기타등등","TEL"],[179,"KT/기타등등","TEL"],[180,"KT/기타등등","TEL"],[181,"KT/기타등등","TEL"],[182,"KT/기타등등","TEL"],[183,"KT/기타등등","TEL"],[184,"KT/기타등등","TEL"],[185,"KT/기타등등","TEL"],[186,"KT/기타등등","TEL"],[187,"KT/기타등등","TEL"],[188,"KT/기타등등","TEL"],[189,"KT/기타등등","TEL"],[190,"KT/기타등등","TEL"],[191,"KT/기타등등","TEL"],[200,"SKB/기타등등","TEL"],[252,"삼성SDS","TEL"],[253,"삼성SDS","TEL"],[254,"SKB/LGU+/나무인터넷/블리자드엔터테인먼트코리아/기타등등","TEL"]]],
-            [122, [[0,"KT/금강방송/기타등등","TEL"],[32,"LGU+","TEL"],[33,"LGU+","TEL"],[34,"LGU+","TEL"],[35,"LGU+","TEL"],[36,"LGU+","TEL"],[37,"LGU+","TEL"],[38,"LGU+","TEL"],[39,"LGU+","TEL"],[40,"LGU+","TEL"],[41,"LGU+","TEL"],[42,"LGU+","TEL"],[43,"LGU+","TEL"],[44,"LGU+","TEL"],[45,"LGU+","TEL"],[46,"LGU+","TEL"],[47,"LGU+","TEL"],[49,"피란하시스템즈/KINX/기타등등","TEL"],[99,"엘엑스/기타등등","TEL"],[100,"한국케이블TV서대구방송/기타등등","TEL"],[101,"삼성SDS","TEL"],[128,"LG헬로비전/아름방송네트워크/씨앰비광주방송/씨앰비동대문방송/기타등등","TEL"],[129,"지오레이넷/씨앰비대구수성방송/기타등등","TEL"],[152,"네오위즈게임즈/기타등등","TEL"],[153,"LGU+","TEL"],[199,"넥스지/현대HCN/기타등등","TEL"],[202,"KCTV제주방송/현대HCN/기타등등","TEL"],[203,"LGU+","TEL"],[252,"LG헬로비전/씨앰비충청방송/기타등등","TEL"],[254,"SKB/기타등등","TEL"]]],
-            [123, [[0,"야후코리아/기타등등","TEL"],[32,"삼성SDS","TEL"],[33,"삼성SDS","TEL"],[34,"삼성SDS","TEL"],[35,"삼성SDS","TEL"],[36,"삼성SDS","TEL"],[37,"삼성SDS","TEL"],[38,"삼성SDS","TEL"],[39,"삼성SDS","TEL"],[40,"삼성SDS","TEL"],[41,"삼성SDS","TEL"],[42,"삼성SDS","TEL"],[43,"삼성SDS","TEL"],[44,"삼성SDS","TEL"],[45,"삼성SDS","TEL"],[46,"삼성SDS","TEL"],[47,"삼성SDS","TEL"],[98,"LG헬로비전/딜라이브/기타등등","TEL"],[99,"SKB/기타등등","TEL"],[100,"한국케이블TV광주방송/기타등등","TEL"],[108,"현대HCN/원광대/기타등등","TEL"],[109,"SKB","TEL"],[111,"SKB","TEL"],[140,"LGU+","TEL"],[141,"LGU+","TEL"],[142,"LGU+","TEL"],[143,"LGU+","TEL"],[199,"LG헬로비전/기타등등","TEL"],[200,"LG헬로비전/기타등등","TEL"],[212,"SKB","TEL"],[213,"SKB","TEL"],[214,"SKB","TEL"],[215,"SKB","TEL"],[228,"SKT","MOB"],[229,"SKT","MOB"],[248,"LG헬로비전","TEL"],[250,"한국정보보호진흥원","TEL"],[251,"한국정보보호진흥원","TEL"],[254,"SKB/LG헬로비전/기타등등","TEL"]]],
-            [124, [[0,"SKT","MOB"],[1,"SKT","MOB"],[2,"SKB","TEL"],[3,"SKB","TEL"],[5,"딜라이브","TEL"],[28,"SKB/기타등등","TEL"],[46,"엘지씨엔에스/금강방송/기타등등","TEL"],[48,"LGU+","TEL"],[49,"LGU+","TEL"],[50,"LGU+","TEL"],[51,"LGU+","TEL"],[52,"LGU+","TEL"],[53,"LGU+","TEL"],[54,"LGU+","TEL"],[55,"LGU+","TEL"],[56,"LGU+","TEL"],[57,"LGU+","TEL"],[58,"LGU+","TEL"],[59,"LGU+","TEL"],[60,"LGU+","TEL"],[61,"LGU+","TEL"],[62,"LGU+","TEL"],[63,"LGU+","TEL"],[66,"한국데이타/SK/기타등등","TEL"],[80,"SKB","TEL"],[111,"SKB","TEL"],[136,"SKB","TEL"],[137,"SKB","TEL"],[138,"SKB","TEL"],[139,"SKB","TEL"],[146,"LG헬로비전/기타등등","TEL"],[153,"서경방송/기타등등","TEL"],[194,"LGU+","TEL"],[195,"씨앰비영등포방송/CMB대전방송/기타등등","TEL"],[197,"SKB/기타등등","TEL"],[198,"하이온넷/기타등등","TEL"],[199,"SKB/기타등등","TEL"],[216,"JCN울산중앙방송","TEL"],[217,"퍼플스톤즈/기타등등","TEL"],[243,"롯데정보통신/기타등등","TEL"],[254,"SKB/기타등등","TEL"]]],
-            [125, [[7,"LGU+/하이온넷/기타등등","TEL"],[31,"SKB/기타등등","TEL"],[57,"드림라인","TEL"],[60,"정부통합전산센타/롯데정보통신/기타등등","TEL"],[61,"SKB/기타등등","TEL"],[62,"씨앰비대구동부방송/기타등등","TEL"],[128,"KT","TEL"],[129,"KT","TEL"],[130,"KT","TEL"],[131,"KT/쿠팡/기타등등","TEL"],[132,"KT/기타등등","TEL"],[133,"KT/기타등등","TEL"],[134,"KT/기타등등","TEL"],[135,"KT/기타등등","TEL"],[136,"KT/기타등등","TEL"],[137,"KT/기타등등","TEL"],[138,"KT/기타등등","TEL"],[139,"KT/기타등등","TEL"],[140,"KT/기타등등","TEL"],[141,"KT/기타등등","TEL"],[142,"KT/기타등등","TEL"],[143,"KT/기타등등","TEL"],[144,"KT/기타등등","TEL"],[145,"KT/기타등등","TEL"],[146,"KT/기타등등","TEL"],[147,"KT/기타등등","TEL"],[148,"KT/기타등등","TEL"],[149,"KT/기타등등","TEL"],[150,"KT/기타등등","TEL"],[151,"KT/기타등등","TEL"],[152,"KT/기타등등","TEL"],[153,"KT/기타등등","TEL"],[154,"KT/기타등등","TEL"],[155,"KT/기타등등","TEL"],[156,"KT/기타등등","TEL"],[157,"KT/기타등등","TEL"],[158,"KT/기타등등","TEL"],[159,"KT/기타등등","TEL"],[176,"LGU+","TEL"],[177,"LGU+","TEL"],[178,"LGU+","TEL"],[179,"LGU+","TEL"],[180,"LGU+","TEL"],[181,"LGU+","TEL"],[182,"LGU+","TEL"],[183,"LGU+","TEL"],[184,"LGU+","TEL"],[185,"LGU+","TEL"],[186,"LGU+","TEL"],[187,"LGU+","TEL"],[188,"LGU+","TEL"],[189,"LGU+","TEL"],[190,"LGU+","TEL"],[191,"LGU+","TEL"],[208,"SKB/한국케이블TV푸른방송/기타등등","TEL"],[209,"SKB/네이버클라우드/기타등등","TEL"],[240,"LGU+","TEL"],[241,"LGU+","TEL"],[242,"LGU+","TEL"],[243,"LGU+","TEL"],[244,"LGU+","TEL"],[245,"LGU+","TEL"],[246,"LGU+","TEL"],[247,"LGU+","TEL"],[248,"LGU+","TEL"],[249,"LGU+","TEL"],[250,"LGU+","TEL"],[251,"LGU+","TEL"],[252,"아름방송네트워크/기타등등","TEL"]]],
-            [128, [[134,"KT","TEL"]]],[129, [[254,"한국전자통신연구원","TEL"]]],[134, [[75,"한국과학기술정보연구원","TEL"]]],[137, [[68,"한국과학기술원","TEL"]]],[139, [[5,"웹젠/기타등등","TEL"],[150,"KINX/가비아/기타등등","TEL"]]],[141, [[223,"포항공과대","TEL"]]],[143, [[248,"한국과학기술원","TEL"]]],[144, [[48,"KCTV제주방송/SK플래닛/브이토피아/삼성전자/기타등등","TEL"]]],
-            [147, [[6,"KT","TEL"],[43,"한국원자력연구원","TEL"],[46,"서울대","TEL"],[47,"서울대","TEL"]]],
-            [150, [[107,"LG헬로비전/호스트웨이아이디씨/남인천방송/기타등등","TEL"],[129,"롯데정보통신/기타등등","TEL"],[150,"엘지씨엔에스","TEL"],[183,"한국과학기술정보연구원","TEL"],[197,"한국항공우주연구원","TEL"],[242,"다날/씨앰비광주방송/기타등등","TEL"]]],
-            [152, [[99,"정부통합전산센타","TEL"],[149,"대우정보시스템","TEL"]]],[154, [[10,"한솔피엔에스","TEL"]]],[155, [[230,"경북대정보전산원","TEL"]]],[156, [[147,"엘지씨엔에스","TEL"]]],[157, [[119,"아이피포네트웍스/KINX/엔에이치엔한국사이버결제/기타등등","TEL"],[197,"삼성SDS","TEL"]]],[158, [[44,"삼보컴퓨터","TEL"]]],[160, [[202,"아이네임즈/한국외대/기타등등","TEL"]]],[161, [[122,"한국과학기술연구원","TEL"]]],
-            [163, [[53,"씨앰비충청방송/기타등등","TEL"],[152,"고려대","TEL"],[180,"경희대국제캠퍼스","TEL"],[213,"KT모바일","MOB"],[222,"KT모바일","MOB"],[229,"KT모바일","MOB"],[239,"서강대","TEL"],[255,"KT모바일","MOB"]]],
-            [164, [[124,"LGU+","TEL"],[125,"부산대","TEL"]]],
-            [165, [[132,"연세대","TEL"],[133,"머큐리","TEL"],[141,"아시아나IDT","TEL"],[186,"엘지씨엔에스","TEL"],[194,"중앙대","TEL"],[213,"삼성SDS","TEL"],[229,"영남대","TEL"],[243,"엘지씨엔에스","TEL"],[244,"엘지씨엔에스","TEL"],[246,"인하대","TEL"]]],
-            [166, [[79,"삼성SDS","TEL"],[103,"삼성SDS","TEL"],[104,"한양대","TEL"],[125,"하이닉스반도체","TEL"]]],
-            [168, [[78,"한전전력연구원","TEL"],[115,"동아대","TEL"],[126,"KT","TEL"],[131,"전남대정보전산원","TEL"],[154,"SK","TEL"],[188,"충남대정보통신원","TEL"],[219,"삼성SDS","TEL"],[248,"KT","TEL"],[249,"KT","TEL"]]],
-            [169, [[140,"포스코","TEL"],[208,"KT","TEL"],[209,"KT","TEL"],[210,"KT","TEL"],[211,"KT","TEL"],[212,"KT","TEL"],[213,"KT","TEL"],[214,"KT","TEL"],[215,"KT","TEL"],[216,"KT","TEL"],[217,"KT","TEL"],[218,"KT","TEL"],[219,"KT","TEL"],[220,"KT","TEL"],[221,"KT","TEL"],[222,"KT","TEL"],[223,"KT","TEL"]]],
-            [175, [[28,"딜라이브/기타등등","TEL"],[41,"씨디네트웍스/기타등등","TEL"],[45,"네트로피/신세계아이앤씨/네이버클라우드/기타등등","TEL"],[106,"네이버클라우드/제이엔디통신/기타등등","TEL"],[107,"브이토피아/기타등등","TEL"],[111,"플렉스넷/기타등등","TEL"],[112,"SKB","TEL"],[113,"SKB","TEL"],[114,"SKB","TEL"],[115,"SKB","TEL"],[116,"SKB","TEL"],[117,"SKB","TEL"],[118,"SKB","TEL"],[119,"SKB","TEL"],[120,"SKB","TEL"],[121,"SKB","TEL"],[122,"SKB","TEL"],[123,"SKB","TEL"],[124,"SKB","TEL"],[125,"SKB","TEL"],[126,"SKB","TEL"],[127,"SKB","TEL"],[158,"네이버클라우드/기타등등","TEL"],[176,"아이링크코리아/기타등등","TEL"],[192,"KT","TEL"],[193,"KT","TEL"],[194,"KT","TEL"],[195,"KT","TEL"],[196,"KT","TEL"],[197,"KT","TEL"],[198,"KT","TEL"],[199,"KT","TEL"],[200,"KT","TEL"],[201,"KT","TEL"],[202,"KT","TEL"],[203,"KT","TEL"],[204,"KT","TEL"],[205,"KT","TEL"],[206,"KT","TEL"],[207,"KT","TEL"],[208,"KT","TEL"],[209,"KT","TEL"],[210,"KT","TEL"],[211,"KT","TEL"],[212,"KT","TEL"],[213,"KT","TEL"],[214,"KT","TEL"],[215,"KT","TEL"],[216,"KT모바일","MOB"],[217,"KT모바일","MOB"],[218,"KT모바일","MOB"],[219,"KT모바일","MOB"],[220,"KT모바일","MOB"],[221,"KT모바일","MOB"],[222,"KT모바일","MOB"],[223,"KT모바일","MOB"],[224,"KT","TEL"],[225,"KT","TEL"],[226,"KT","TEL"],[227,"KT","TEL"],[228,"KT","TEL"],[229,"KT","TEL"],[230,"KT","TEL"],[231,"KT","TEL"],[232,"KT","TEL"],[233,"KT","TEL"],[234,"KT","TEL"],[235,"KT","TEL"],[236,"KT","TEL"],[237,"KT","TEL"],[238,"KT","TEL"],[239,"KT","TEL"],[240,"KT","TEL"],[241,"KT","TEL"],[242,"KT","TEL"],[243,"KT","TEL"],[244,"KT","TEL"],[245,"KT","TEL"],[246,"KT","TEL"],[247,"KT","TEL"],[248,"KT","TEL"],[249,"KT","TEL"],[250,"KT","TEL"],[251,"KT","TEL"],[252,"KT","TEL"],[253,"KT","TEL"],[254,"KT","TEL"],[255,"KT","TEL"]]],
-            [180, [[64,"SKB","TEL"],[65,"SKB","TEL"],[66,"SKB","TEL"],[67,"SKB","TEL"],[68,"SKB","TEL"],[69,"SKB","TEL"],[70,"SKB","TEL"],[71,"SKB","TEL"],[80,"LGU+","TEL"],[81,"LGU+","TEL"],[82,"LGU+","TEL"],[83,"LGU+","TEL"],[92,"KT/LG헬로비전/홍익대/기타등등","TEL"],[131,"지디시스/기타등등","TEL"],[132,"SKT","MOB"],[133,"SKT","MOB"],[134,"SKT","MOB"],[135,"SKT","MOB"],[148,"한국도로공사/기타등등","TEL"],[150,"SKB/이호스트데이터센터/기타등등","TEL"],[182,"LG헬로비전","TEL"],[189,"LG헬로비전/하이라인닷넷/기타등등","TEL"],[210,"LGT+모바일/퍼플스톤즈/네이버클라우드/기타등등","MOB"],[211,"JCN울산중앙방송/기타등등","TEL"],[222,"정보없음","TEL"],[224,"LGU+","TEL"],[225,"LGU+","TEL"],[226,"LGU+","TEL"],[227,"LGU+","TEL"],[228,"LGU+","TEL"],[229,"LGU+","TEL"],[230,"LGU+","TEL"],[231,"LGU+","TEL"],[233,"씨앰비영등포방송/기타등등","TEL"],[236,"삼성SDS","TEL"],[237,"삼성SDS","TEL"],[238,"삼성SDS","TEL"],[239,"삼성SDS","TEL"]]],
-            [182, [[31,"서경방송","TEL"],[50,"크로스온넷/SK/기타등등","TEL"],[161,"티켓몬스터/JCN울산중앙방송/KINX/기타등등","TEL"],[162,"티켓몬스터/LGU+/기타등등","TEL"],[163,"피란하시스템즈/기타등등","TEL"],[172,"딜라이브/현대HCN/기타등등","TEL"],[173,"한국데이타/효성ITX/신세계아이앤씨/네이버클라우드/기타등등","TEL"],[192,"삼성SDS","TEL"],[193,"삼성SDS","TEL"],[194,"삼성SDS","TEL"],[195,"삼성SDS","TEL"],[196,"삼성SDS","TEL"],[197,"삼성SDS","TEL"],[198,"삼성SDS","TEL"],[199,"삼성SDS","TEL"],[208,"LGU+","TEL"],[209,"LGU+","TEL"],[210,"LGU+","TEL"],[211,"LGU+","TEL"],[212,"LGU+","TEL"],[213,"LGU+","TEL"],[214,"LGU+","TEL"],[215,"LGU+","TEL"],[216,"LGU+","TEL"],[217,"LGU+","TEL"],[218,"LGU+","TEL"],[219,"LGU+","TEL"],[220,"LGU+","TEL"],[221,"LGU+","TEL"],[222,"LGU+","TEL"],[223,"LGU+","TEL"],[224,"LGU+","TEL"],[225,"LGU+","TEL"],[226,"LGU+","TEL"],[227,"LGU+","TEL"],[228,"LGU+","TEL"],[229,"LGU+","TEL"],[230,"LGU+","TEL"],[231,"LGU+","TEL"],[237,"유엘네트웍스/아이링크코리아/금강방송/기타등등","TEL"],[252,"LGU+/퍼플스톤즈/네이버클라우드/기타등등","TEL"],[255,"브이토피아/기타등등","TEL"]]],
-            [183, [[78,"LG헬로비전/하이온넷/기타등등","TEL"],[86,"지디시스/기타등등","TEL"],[90,"LG헬로비전/기타등등","TEL"],[91,"남인천방송/기타등등","TEL"],[96,"KT","TEL"],[97,"KT","TEL"],[98,"KT","TEL"],[99,"KT","TEL"],[100,"KT","TEL"],[101,"KT","TEL"],[102,"KT","TEL"],[103,"KT","TEL"],[104,"KT","TEL"],[105,"KT","TEL"],[106,"KT","TEL"],[107,"KT","TEL"],[108,"KT","TEL"],[109,"KT","TEL"],[110,"KT","TEL"],[111,"KT","TEL"],[112,"KT","TEL"],[113,"KT","TEL"],[114,"KT","TEL"],[115,"KT","TEL"],[116,"KT","TEL"],[117,"KT","TEL"],[118,"KT","TEL"],[119,"KT","TEL"],[120,"KT","TEL"],[121,"KT","TEL"],[122,"KT","TEL"],[123,"KT","TEL"],[124,"KT","TEL"],[125,"KT","TEL"],[126,"KT","TEL"],[127,"KT","TEL"]]],
-            [192, [[5,"한국인터넷진흥원/기타등등","TEL"],[100,"한국과학기술정보연구원/기타등등","TEL"],[104,"한국원자력연구원/기타등등","TEL"],[132,"정보없음","TEL"],[195,"인하대/기타등등","TEL"],[203,"한국교육전산망협의회/건국대/전북대/제주대/유프레스토/한국인터넷진흥원/기타등등","TEL"],[245,"한국교육전산망협의회/숭실대/한림대/기타등등","TEL"],[249,"한국과학기술원/기타등등","TEL"]]],
-            [202, [[3,"신세계아이앤씨/기타등등","TEL"],[6,"정보없음","TEL"],[8,"신세계아이앤씨/기타등등","TEL"],[14,"서울특별시청/웹젠/기타등등","TEL"],[20,"동덕여대/목포대/싸이버로지텍/삼성SDS/기타등등","TEL"],[21,"엘지씨엔에스/기타등등","TEL"],[22,"정보없음","TEL"],[30,"KT/세종텔레콤/한국교육전산망협의회/강릉대/건국대/금오공과대/엠프론티어/에스비에스/한국인터넷진흥원/한국정보화진흥원/한국전자통신연구원광통신연구센터/한국과학기술정보연구원/기타등등","TEL"],[31,"KT/한국교육전산망협의회/금오공과대/전주대/웹젠/아이네임즈/엠프론티어/KINX/에스비에스/삼성SDS/한국교육개발원/한국인터넷진흥원/체육과학연구원/기타등등","TEL"],[43,"LGU+/기타등등","TEL"],[59,"라임라이트네트웍스코리아/기타등등","TEL"],[68,"아이피포네트웍스/KINX/기타등등","TEL"],[73,"넷피아닷컴/기타등등","TEL"],[86,"하이온넷/기타등등","TEL"],[89,"한솔교육/야후코리아/기타등등","TEL"],[90,"지디시스/기타등등","TEL"],[126,"하이온넷/기타등등","TEL"],[128,"건설공제조합/기타등등","TEL"],[131,"네이버클라우드/기타등등","TEL"],[133,"하이온넷/기타등등","TEL"],[136,"아이네트/딜라이브/기타등등","TEL"],[148,"현대HCN/기타등등","TEL"],[150,"현대HCN/기타등등","TEL"],[158,"엘엑스/기타등등","TEL"],[163,"브이토피아/기타등등","TEL"],[165,"동서대/기타등등","TEL"],[167,"아이네트/더존비즈온/기타등등","TEL"],[171,"서울특별시교육청/기타등등","TEL"],[174,"전주대/기타등등","TEL"],[179,"네이버클라우드/효성ITX/기타등등","TEL"]]],
-            [203, [[17,"한국케이블텔레콤/기타등등","TEL"],[81,"금융결제원/아름방송네트워크/기타등등","TEL"],[82,"LGT+모바일/하이플러스카드/한국케이블텔레콤/기타등등","MOB"],[83,"한국인터넷진흥원/기타등등","TEL"],[84,"KINX/기타등등","TEL"],[90,"SKB/기타등등","TEL"],[100,"LG헬로비전/기타등등","TEL"],[109,"하이온넷/기타등등","TEL"],[123,"SKB/기타등등","TEL"],[128,"아름방송네트워크/남인천방송/서울특별시청/기타등등","TEL"],[129,"한국케이블텔레콤/기타등등","TEL"],[130,"SKB/딜라이브/기타등등","TEL"],[132,"LG헬로비전/기타등등","TEL"],[133,"다우기술/기타등등","TEL"],[142,"아름방송네트워크/서울특별시청/기타등등","TEL"],[149,"SKB/기타등등","TEL"],[152,"딜라이브/기타등등","TEL"],[153,"숙명여대/기타등등","TEL"],[166,"씨앰비대구동부방송/기타등등","TEL"],[169,"포스텍/기타등등","TEL"],[170,"현대HCN/기타등등","TEL"],[171,"LG헬로비전/기타등등","TEL"],[173,"아이링크코리아/기타등등","TEL"],[175,"SKB/금융결제원/기타등등","TEL"],[190,"경상북도교육청/금융결제원/기타등등","TEL"],[207,"대구대/기타등등","TEL"],[210,"SKB/닷네임코리아/기타등등","TEL"],[212,"남인천방송/야후코리아/기타등등","TEL"],[215,"네오위즈게임즈/기타등등","TEL"],[216,"엘엑스/기타등등","TEL"],[217,"다우기술/기타등등","TEL"],[223,"LG헬로비전/울산광역시교육과학연구원/기타등등","TEL"],[224,"쌍용정보통신","TEL"],[225,"코오롱베니트","TEL"],[226,"SKT/SK컴즈/대림아이앤에스/두산중공업/두산정보통신사업부/기타등등","MOB"],[227,"세종텔레콤","TEL"],[228,"KT/세종텔레콤/기타등등","TEL"],[229,"KT/SKB/기타등등","TEL"],[230,"KT/한국교육전산망협의회/한국과학기술정보연구원/기타등등","TEL"],[231,"세종텔레콤","TEL"],[232,"KT/한국교육전산망협의회/기타등등","TEL"],[233,"LGU+한국무역정보통신/한국정보보호진흥원/한국과학기술정보연구원/기타등등","TEL"],[234,"KT/한국교육전산망협의회/한국정보보호진흥원/기타등등","TEL"],[235,"SK/세종텔레콤/SK플래닛/기타등등","TEL"],[236,"SKT/KT/KINX/세종텔레콤","MOB"],[237,"한국과학기술정보연구원/한국교육전산망협의회/기타등등","TEL"],[238,"정부통합전산센타/포스데이타/KINX/세종텔레콤/아프리카티비/문화방송/기타등등","TEL"],[239,"KT/세종텔레콤/포스데이타/엘림넷/현대건설/문화방송/기타등등","TEL"],[240,"세종텔레콤/포스콘/기타등등","TEL"],[241,"KT/한국교육전산망협의회/동서대/인제대/대구대/아크로메이트/포스콘/현대상선/삼성SDS/농촌진흥청/한국기계연구원/한국과학기술정보연구원/기타등등","TEL"],[242,"KT/아크로메이트/한국무역정보통신/현대상선/인제대/SK/삼성SDS/기타등등","TEL"],[243,"KT/세종텔레콤/쌍용정보통신/포스틸/기타등등","TEL"],[244,"대구대/포스코건설/쌍용정보통신/포스틸/제일기획/삼성SDS/지에스칼텍스/기타등등","TEL"],[245,"KT/대구대/포스코건설/한진해운/포스데이타/쌍용정보통신/포스틸/제일기획/한글과컴퓨터/지에스칼텍스/기타등등","TEL"],[246,"한국교육전산망협의회/포스코건설/한진해운/포스데이타/대림아이앤에스/KINX/한글과컴퓨터/삼성SDS/지에스칼텍스/기타등등","TEL"],[247,"한국교육전산망협의회/한진해운/대림아이앤에스/포스데이타/엘지씨엔에스/한글과컴퓨터/한국과학기술정보연구원/기타등등","TEL"],[248,"LGU+/세종텔레콤/기타등등","TEL"],[249,"KT/한국교육전산망협의회/홍익대/중앙일보사/삼성SDS/포항산업과학연구원/기타등등","TEL"],[250,"한국교육전산망협의회/홍익대/대구가톨릭대/중앙일보사/포항산업과학연구원/한국과학기술정보연구원/기타등등","TEL"],[251,"KT/세종텔레콤/기타등등","TEL"],[252,"KT/LGU+/한국교육전산망협의회/한신대/건국대/숙명여대/청주대/덕성여대/공주대/숭실대/한동대/성균관대/한국인터넷진흥원/기타등등","TEL"],[253,"KT/숭실대/한국외대/경남대/한림대/청주대/공주대/제주대/한국항공대/한국기초과학지원연구원/한국정보보호진흥원/재단법인한국연구재단/한국과학기술정보연구원/한국천문연구원/기타등등","TEL"],[254,"KT/경상대/충북대/전북대/삼성SDS/한국과학기술정보연구원/한국콘텐츠진흥원/한국인터넷진흥원/한국정보화진흥원/한국표준과학연구원/기타등등","TEL"],[255,"LGU+/세종텔레콤/한국교육전산망협의회/경상대/경상북도교육연구원/이화여대/충북대/강릉대/연암공업대학/쌍용정보통신/조선일보/한전원자력연료/MJL테크놀러지/삼성SDS/한국정보화진흥원/한국농촌경제연구원/한국인터넷진흥원/기타등등","TEL"]]],
-            [210, [[0,"LG헬로비전/기타등등","TEL"],[2,"SKB/기타등등","TEL"],[4,"퍼플스톤즈/아이링크코리아/기타등등","TEL"],[16,"두루안/기타등등","TEL"],[57,"현대HCN/기타등등","TEL"],[87,"닷네임코리아/기타등등","TEL"],[89,"네이버클라우드/기타등등","TEL"],[90,"KT","TEL"],[91,"KT/기타등등","TEL"],[92,"LGU+/KT/기타등등","TEL"],[93,"한국교육전산망협의회/SK텔링크/롯데정보통신/한국정보보호진흥원/기타등등","TEL"],[94,"SKB/LGU+/삼육대/동국대/삼성SDS/수원공업고등학교/한국정보보호진흥원/기타등등","TEL"],[95,"KT/삼육대/동국대/수원공업고등학교/기타등등","TEL"],[96,"LGU+/KT/기타등등","TEL"],[97,"KT/LGU+/한국교육전산망협의회/아름방송네트워크/KINX/브이토피아/기타등등","TEL"],[98,"LGU+/세종텔레콤/아이즈비전/한국정보보호진흥원/한국과학기술정보연구원/기타등등","TEL"],[99,"KT","TEL"],[100,"KT/기타등등","TEL"],[101,"KT/LGU+/영진전문대/티엠정보통신/기타등등","TEL"],[102,"LGU+/한국교육전산망협의회/엘림넷/한국무역정보통신/한국교육학술정보원/기타등등","TEL"],[103,"KT/세종텔레콤/기타등등","TEL"],[104,"KT","TEL"],[105,"KT","TEL"],[106,"KT/LGU+/LG헬로비전/딜라이브/한국교육전산망협의회/기타등등","TEL"],[107,"LGU+/한국과학기술정보연구원/기타등등","TEL"],[108,"LGU+","TEL"],[109,"세종텔레콤","TEL"],[110,"한국교육전산망협의회/한국과학기술정보연구원/기타등등","TEL"],[111,"세종텔레콤/남인천방송/원광대/SK텔링크/한국무역정보통신/대전시교육청/기타등등","TEL"],[112,"LGU+/세종텔레콤/원광대/엘림넷/엘엑스/대전시교육청/안철수연구소/기타등등","TEL"],[113,"KT","TEL"],[114,"KT/세종텔레콤/한국정보보호진흥원/한국정보화진흥원/한국과학기술정보연구원/기타등등","TEL"],[115,"한국교육전산망협의회/SK텔링크/동아닷컴/충북대학교/한국방송공사/한림대학교/기타등등","TEL"],[116,"세종텔레콤/아이네트호스팅/기타등등","TEL"],[117,"SKB/전북대학교/한국과학기술정보연구원/기타등등","TEL"],[118,"세종텔레콤/엘림넷/삼성SDS/기타등등","TEL"],[119,"KT/한국교육전산망협의회/한국과학기술정보연구원/기타등등","TEL"],[120,"LGU+","TEL"],[121,"KT/세종텔레콤/기타등등","TEL"],[122,"세종텔레콤","TEL"],[123,"KT","TEL"],[124,"LGU+","TEL"],[125,"한국교육전산망협의회/한국과학기술정보연구원/네오위즈게임즈/현대자동차/기타등등","TEL"],[126,"KT/세종텔레콤/기타등등","TEL"],[127,"세종텔레콤/동부씨엔아이/기타등등","TEL"],[178,"KT/기타등등","TEL"],[179,"KT/부산광역시교육연구정보원/기타등등","TEL"],[180,"KT/SKB/LGU+/엘림넷/부산광역시교육연구정보원/기타등등","TEL"],[181,"SKB/LGU+/한국교육전산망협의회/드림라인/엘림넷/한국무역정보통신/부산광역시교육연구정보원/기타등등","TEL"],[182,"LGU+","TEL"],[183,"KT","TEL"],[192,"LG헬로비전/기타등등","TEL"],[204,"KT","TEL"],[205,"SKB/엘엑스/한국무역정보통신/한국정보보호진흥원/기타등등","TEL"],[206,"LGU+","TEL"],[207,"LGU+","TEL"],[210,"SKB/홍익대/기타등등","TEL"],[211,"KT/홍익대/SK/기타등등","TEL"],[216,"LGU+","TEL"],[217,"KT/SKB/LGU+/한국무역정보통신/기타등등","TEL"],[218,"KT/LGU+/SKB/한국과학기술정보연구원/광주광역시교육정보원/기타등등","TEL"],[219,"SKB/SK텔링크/엘림넷/한국정보보호진흥원/한국과학기술정보연구원/기타등등","TEL"],[220,"KT/SKB/LGU+/엘림넷/기타등등","TEL"],[221,"SKB/LGU+/한국정보보호진흥원/기타등등","TEL"],[222,"KT","TEL"],[223,"KT","TEL"]]],
-            [211, [[32,"LGU+","TEL"],[33,"KT/SKB/기타등등","TEL"],[34,"KT/기타등등","TEL"],[35,"KT/LGU+/아이네트/한국정보보호진흥원/한국정보인증/기타등등","TEL"],[36,"LGT+모바일/딜라이브/세종텔레콤/엘림넷/삼성SDS/기타등등","MOB"],[37,"KT/SKB/한국무역정보통신/한국정보보호진흥원/기타등등","TEL"],[38,"KT","TEL"],[39,"KT/세종텔레콤/드림라인/한국교육전산망협의회/SK텔링크/누리링크시스템/네트로피/기타등등","TEL"],[40,"LGU+","TEL"],[41,"KT/SKB/딜라이브/현대HCN/하이라인닷넷/기타등등","TEL"],[42,"KT/LGU+/부산광역시교육연구정보원/기타등등","TEL"],[43,"KT/LGU+/세종텔레콤/SK텔링크/씨디네트웍스/부산광역시교육연구정보원/기타등등","TEL"],[44,"SKB","TEL"],[45,"KT/LGU+/드림라인/삼성SDS/SK/넥스지/기타등등","TEL"],[46,"KT/기타등등","TEL"],[47,"SKB/KT/현대HCN/가비아/넥스지/두루안/하이라인닷넷/이지오스/기타등등","TEL"],[48,"KT","TEL"],[49,"SKB","TEL"],[50,"LGU+","TEL"],[51,"KT","TEL"],[52,"KT/SKB/엘림넷/기타등등","TEL"],[53,"LGU+","TEL"],[54,"KT","TEL"],[55,"KT","TEL"],[56,"KT/세종텔레콤/드림라인/NHN/네이버클라우드/네트로피/누리링크시스템/넥스지/기타등등","TEL"],[57,"KT/기타등등","TEL"],[58,"SKB","TEL"],[59,"SKB","TEL"],[60,"LGU+","TEL"],[61,"LGU+/세종텔레콤/드림라인/기타등등","TEL"],[62,"KT/LGU+/기타등등","TEL"],[63,"KT/SKB/LGU+/두루안/기타등등","TEL"],[104,"KT","TEL"],[105,"KT","TEL"],[106,"KT","TEL"],[107,"KT","TEL"],[108,"SKB","TEL"],[109,"SKB","TEL"],[110,"SKB/기타등등","TEL"],[111,"SKT/아름방송네트워크/드림라인/KDDI코리아/브이토피아/세종텔레콤/지오레이넷/기타등등","MOB"],[112,"LGU+/아름방송네트워크/남인천방송/엘림넷/기타등등","TEL"],[113,"KT/세종텔레콤/기타등등","TEL"],[114,"KT/기타등등","TEL"],[115,"SKB/SKT/반송종합유선방송/한국정보보호진흥원/KT/네오위즈게임즈/세종텔레콤/LGU+/기타등등","MOB"],[116,"SKB/LGU+/세종텔레콤/하이라인닷넷/한국정보보호진흥원/기타등등","TEL"],[117,"SKB","TEL"],[118,"LGU+","TEL"],[119,"LGU+","TEL"],[168,"LGU+","TEL"],[169,"LGU+","TEL"],[170,"LGU+","TEL"],[171,"LGU+","TEL"],[172,"SKB/LGU+/딜라이브/세종텔레콤/퍼플스톤즈/아이오시스템/네이버클라우드/한국정보보호진흥원/기타등등","TEL"],[173,"SKB/LGU+/LG헬로비전/SK텔링크/한국정보보호진흥원/기타등등","TEL"],[174,"KT/SKB/LGU+/한국정보보호진흥원/엘림넷/네트로피/제이엔디통신/기타등등","TEL"],[175,"드림라인","TEL"],[176,"SKB","TEL"],[177,"SKB","TEL"],[178,"SKB","TEL"],[179,"SKB","TEL"],[180,"LGU+","TEL"],[181,"LGU+","TEL"],[182,"부산광역시교육연구정보원","TEL"],[183,"드림라인","TEL"],[184,"KT/기타등등","TEL"],[185,"KT/기타등등","TEL"],[186,"SKB","TEL"],[187,"SKB/누리링크시스템/기타등등","TEL"],[188,"SKT/네트로피/네이버클라우드/NHN/누리링크시스템/기타등등","MOB"],[189,"SKB/LG헬로비전/세종텔레콤/하이라인닷넷/삼성SDS/기타등등","TEL"],[190,"세종텔레콤/기타등등","TEL"],[191,"세종텔레콤/기타등등","TEL"],[192,"KT","TEL"],[193,"KT","TEL"],[194,"KT","TEL"],[195,"KT","TEL"],[196,"KT","TEL"],[197,"KT","TEL"],[198,"KT","TEL"],[199,"KT","TEL"],[200,"SKB","TEL"],[201,"SKB","TEL"],[202,"SKB","TEL"],[203,"SKB","TEL"],[204,"SKB","TEL"],[205,"SKB","TEL"],[206,"SKB","TEL"],[207,"SKB","TEL"],[208,"SKB","TEL"],[209,"SKB","TEL"],[210,"SKB","TEL"],[211,"SKB","TEL"],[212,"SKB","TEL"],[213,"SKB","TEL"],[214,"SKB","TEL"],[215,"SKB","TEL"],[216,"KT","TEL"],[217,"KT","TEL"],[218,"KT","TEL"],[219,"KT","TEL"],[220,"KT","TEL"],[221,"KT","TEL"],[222,"KT","TEL"],[223,"KT","TEL"],[224,"KT","TEL"],[225,"KT","TEL"],[226,"KT","TEL"],[227,"KT","TEL"],[228,"KT","TEL"],[229,"KT","TEL"],[230,"KT","TEL"],[231,"KT","TEL"],[232,"SKB/넥스지/기타등등","TEL"],[233,"LGU+/네이버클라우드/나무인터넷/네트로피/기타등등","TEL"],[234,"LGU+모바일/LGU+/SKT/SK커뮤니케이션즈/기타등등","MOB"],[235,"SKT/남인천방송/유엘네트웍스/하이라인닷넷/기타등등","MOB"],[236,"KT/LGU+/LG헬로비전/세종텔레콤/퍼플스톤즈/기타등등","TEL"],[237,"SKB/LGU+/현대HCN/딜라이브/CMB대전방송/SK텔링크/두루안/하이라인닷넷/KLDP.org/한국정보보호진흥원/한국농림수산정보센터/기타등등","TEL"],[238,"SKB/LGU+/세종텔레콤/남인천방송/CMB대전방송/한국정보보호진흥원/두루안/지오레이넷/기타등등","TEL"],[239,"세종텔레콤","TEL"],[240,"SKT/엘림넷/싸이크로스/기타등등","MOB"],[241,"LGU+/하이라인닷넷/기타등등","TEL"],[242,"드림라인","TEL"],[243,"SKB","TEL"],[244,"SKB","TEL"],[245,"SKB","TEL"],[246,"KT모바일/서경방송/기타등등","MOB"],[247,"SKB/드림라인/기타등등","TEL"],[248,"KT/기타등등","TEL"],[249,"드림라인","TEL"],[250,"KT/기타등등","TEL"],[251,"KT/기타등등","TEL"],[252,"KT/기타등등","TEL"],[253,"KT/기타등등","TEL"],[254,"KT/LGU+/하이라인닷넷/기타등등","TEL"],[255,"KT/SKB/딜라이브/세종텔레콤/네트로피/하이라인닷넷/코스콤/NHN/기타등등","TEL"]]],
-            [218, [[36,"SKB/하이라인닷넷/기타등등","TEL"],[37,"SKB/기타등등","TEL"],[38,"SKB","TEL"],[39,"SKB","TEL"],[48,"SKB","TEL"],[49,"SKB","TEL"],[50,"SKB","TEL"],[51,"SKB","TEL"],[52,"SKB","TEL"],[53,"SKB","TEL"],[54,"SKB","TEL"],[55,"SKB","TEL"],[101,"SKB/기타등등","TEL"],[144,"KT","TEL"],[145,"KT","TEL"],[146,"KT","TEL"],[147,"KT","TEL"],[148,"KT","TEL"],[149,"KT","TEL"],[150,"KT","TEL"],[151,"KT","TEL"],[152,"KT","TEL"],[153,"KT","TEL"],[154,"KT","TEL"],[155,"KT","TEL"],[156,"KT","TEL"],[157,"KT","TEL"],[158,"KT","TEL"],[159,"KT","TEL"],[209,"SKB","TEL"],[232,"SKB","TEL"],[233,"SKB","TEL"],[234,"SKB","TEL"],[235,"SKB","TEL"],[236,"SKB","TEL"],[237,"SKB","TEL"],[238,"SKB","TEL"],[239,"SKB","TEL"]]],
-            [219, [[240,"SKB","TEL"],[241,"SKB","TEL"],[248,"SKB","TEL"],[249,"SKB","TEL"],[250,"SKB","TEL"],[251,"SKB","TEL"],[252,"SKB","TEL"],[253,"SKB","TEL"],[254,"SKB","TEL"],[255,"SKB","TEL"]]],
-            [220, [[64,"드림라인","TEL"],[65,"LGU+","TEL"],[66,"한국교육전산망협의회","TEL"],[67,"한국교육전산망협의회","TEL"],[68,"한국교육전산망협의회","TEL"],[69,"한국교육전산망협의회","TEL"],[70,"KT","TEL"],[71,"KT","TEL"],[72,"KT","TEL"],[73,"KT","TEL"],[74,"KT","TEL"],[75,"KT","TEL"],[76,"KT","TEL"],[77,"KT","TEL"],[78,"KT","TEL"],[79,"KT","TEL"],[80,"KT","TEL"],[81,"KT","TEL"],[82,"KT","TEL"],[83,"KT","TEL"],[84,"KT","TEL"],[85,"KT","TEL"],[86,"KT","TEL"],[87,"KT","TEL"],[88,"KT","TEL"],[89,"KT","TEL"],[90,"KT","TEL"],[91,"KT","TEL"],[92,"KT","TEL"],[93,"KT","TEL"],[94,"KT","TEL"],[95,"KT","TEL"],[103,"SKT","MOB"],[116,"KT","TEL"],[117,"KT","TEL"],[118,"KT","TEL"],[119,"KT","TEL"],[120,"KT","TEL"],[121,"KT","TEL"],[122,"KT","TEL"],[123,"KT","TEL"],[124,"KT","TEL"],[125,"KT","TEL"],[126,"KT","TEL"],[127,"KT","TEL"],[149,"한국교육전산망협의회","TEL"],[230,"드림라인","TEL"]]],
-            [221, [[132,"넥스지/기타등등","TEL"],[133,"SKB/아이네트/더존비즈온/기타등등","TEL"],[138,"SKB","TEL"],[139,"SKB","TEL"],[140,"SKB","TEL"],[141,"SKB","TEL"],[142,"SKB","TEL"],[143,"SKB","TEL"],[144,"KT","TEL"],[145,"KT","TEL"],[146,"KT","TEL"],[147,"KT","TEL"],[148,"KT","TEL"],[149,"KT","TEL"],[150,"KT","TEL"],[151,"KT","TEL"],[152,"KT","TEL"],[153,"KT","TEL"],[154,"KT","TEL"],[155,"KT","TEL"],[156,"KT","TEL"],[157,"KT","TEL"],[158,"KT","TEL"],[159,"KT","TEL"],[160,"KT","TEL"],[161,"KT","TEL"],[162,"KT","TEL"],[163,"KT","TEL"],[164,"KT","TEL"],[165,"KT","TEL"],[166,"KT","TEL"],[167,"KT","TEL"],[168,"KT","TEL"]]],
-            [222, [[96,"KT","TEL"],[97,"KT","TEL"],[98,"KT","TEL"],[99,"KT","TEL"],[100,"KT","TEL"],[101,"KT","TEL"],[102,"KT","TEL"],[103,"KT","TEL"],[104,"KT","TEL"],[105,"KT","TEL"],[106,"KT","TEL"],[107,"KT","TEL"],[108,"KT","TEL"],[109,"KT","TEL"],[110,"KT","TEL"],[111,"KT","TEL"],[112,"KT","TEL"],[113,"KT","TEL"],[114,"KT","TEL"],[115,"KT","TEL"],[116,"KT","TEL"],[117,"KT","TEL"],[118,"KT","TEL"],[119,"KT","TEL"],[120,"KT","TEL"],[121,"KT","TEL"],[122,"KT","TEL"],[231,"LGU+/네오위즈게임즈/기타등등","TEL"],[232,"SKB","TEL"],[233,"SKB","TEL"],[234,"SKB","TEL"],[235,"SKB","TEL"],[236,"SKB","TEL"],[237,"SKB","TEL"],[238,"SKB","TEL"],[239,"SKB","TEL"],[251,"SKB/기타등등","TEL"]]],
-            [223, [[26,"엘엑스/기타등등","TEL"],[28,"SKB/기타등등","TEL"],[32,"SKT","MOB"],[33,"SKT","MOB"],[34,"SKT","MOB"],[35,"SKT","MOB"],[36,"SKT","MOB"],[37,"SKT","MOB"],[38,"SKT","MOB"],[39,"SKT","MOB"],[40,"SKT","MOB"],[41,"SKT","MOB"],[42,"SKT","MOB"],[43,"SKT","MOB"],[44,"SKT","MOB"],[45,"SKT","MOB"],[46,"SKT","MOB"],[47,"SKT","MOB"],[48,"SKT","MOB"],[49,"SKT","MOB"],[50,"SKT","MOB"],[51,"SKT","MOB"],[52,"SKT","MOB"],[53,"SKT","MOB"],[54,"SKT","MOB"],[55,"SKT","MOB"],[56,"SKT","MOB"],[57,"SKT","MOB"],[58,"SKT","MOB"],[59,"SKT","MOB"],[60,"SKT","MOB"],[61,"SKT","MOB"],[62,"SKT","MOB"],[63,"SKT","MOB"],[130,"네이버클라우드/제이엔디통신/삼정데이타서비스/기타등등","TEL"],[131,"SKB","TEL"],[165,"하이라인닷넷/기타등등","TEL"],[168,"LGT+모바일","MOB"],[169,"LGT+모바일","MOB"],[170,"LGT+모바일","MOB"],[171,"LGT+모바일","MOB"],[172,"LGT+모바일","MOB"],[173,"LGT+모바일","MOB"],[174,"LGT+모바일","MOB"],[175,"LGT+모바일","MOB"],[194,"한국교육전산망협의회","TEL"],[195,"한국교육전산망협의회","TEL"],[222,"SKB","TEL"],[253,"롯데정보통신","TEL"],[255,"NHN/네이버클라우드/네트로피/기타등등","TEL"]]]
+            [1, [[96, "KT모바일", "MOB"], [97, "KT모바일", "MOB"], [98, "KT모바일", "MOB"], [99, "KT모바일", "MOB"], [100, "KT모바일", "MOB"], [101, "KT모바일", "MOB"], [102, "KT모바일", "MOB"], [103, "KT모바일", "MOB"], [104, "KT모바일", "MOB"], [105, "KT모바일", "MOB"], [106, "KT모바일", "MOB"], [107, "KT모바일", "MOB"], [108, "KT모바일", "MOB"], [109, "KT모바일", "MOB"], [110, "KT모바일", "MOB"], [111, "KT모바일", "MOB"]]],
+            [27, [[160, "SKT", "MOB"], [161, "SKT", "MOB"], [162, "SKT", "MOB"], [163, "SKT", "MOB"], [164, "SKT", "MOB"], [165, "SKT", "MOB"], [166, "SKT", "MOB"], [167, "SKT", "MOB"], [168, "SKT", "MOB"], [169, "SKT", "MOB"], [170, "SKT", "MOB"], [171, "SKT", "MOB"], [172, "SKT", "MOB"], [173, "SKT", "MOB"], [174, "SKT", "MOB"], [175, "SKT", "MOB"], [176, "SKT", "MOB"], [177, "SKT", "MOB"], [178, "SKT", "MOB"], [179, "SKT", "MOB"], [180, "SKT", "MOB"], [181, "SKT", "MOB"], [182, "SKT", "MOB"], [183, "SKT", "MOB"]]],
+            [39, [[4, "KT모바일", "MOB"], [5, "KT모바일", "MOB"], [6, "KT모바일", "MOB"], [7, "KT모바일", "MOB"]]],
+            [42, [[16, "SKT", "MOB"], [17, "SKT", "MOB"], [18, "SKT", "MOB"], [19, "SKT", "MOB"], [20, "SKT", "MOB"], [21, "SKT", "MOB"], [22, "SKT", "MOB"], [23, "SKT", "MOB"], [24, "SKT", "MOB"], [25, "SKT", "MOB"], [26, "SKT", "MOB"], [27, "SKT", "MOB"], [28, "SKT", "MOB"], [29, "SKT", "MOB"], [30, "SKT", "MOB"], [31, "SKT", "MOB"], [32, "SKT", "MOB"], [33, "SKT", "MOB"], [34, "SKT", "MOB"], [35, "SKT", "MOB"], [36, "SKT", "MOB"], [37, "SKT", "MOB"], [38, "SKT", "MOB"], [39, "SKT", "MOB"], [40, "SKT", "MOB"], [41, "SKT", "MOB"], [42, "SKT", "MOB"], [43, "SKT", "MOB"], [44, "SKT", "MOB"], [45, "SKT", "MOB"], [46, "SKT", "MOB"], [47, "SKT", "MOB"]]],
+            [49, [[16, "KT모바일", "MOB"], [17, "KT모바일", "MOB"], [18, "KT모바일", "MOB"], [19, "KT모바일", "MOB"], [20, "KT모바일", "MOB"], [21, "KT모바일", "MOB"], [22, "KT모바일", "MOB"], [23, "KT모바일", "MOB"], [24, "KT모바일", "MOB"], [25, "KT모바일", "MOB"], [26, "KT모바일", "MOB"], [27, "KT모바일", "MOB"], [28, "KT모바일", "MOB"], [29, "KT모바일", "MOB"], [30, "KT모바일", "MOB"], [31, "KT모바일", "MOB"], [56, "KT모바일", "MOB"], [57, "KT모바일", "MOB"], [58, "KT모바일", "MOB"], [59, "KT모바일", "MOB"], [60, "KT모바일", "MOB"], [61, "KT모바일", "MOB"], [62, "KT모바일", "MOB"], [63, "KT모바일", "MOB"]]],
+            [58, [[102, "SKT", "MOB"], [103, "SKT", "MOB"]]],
+            [61, [[104, "SKT", "MOB"], [250, "SKT/세종텔레콤/하이라인닷넷", "MOB"], [252, "KT모바일/SKB/딜라이브/엘엑스/세종텔레콤/한국정보화진흥원/한국인터넷진흥원/두루안/기타등등", "MOB"], [254, "SKB/SKT/기타등등", "MOB"]]],
+            [106, [[96, "LGU+모바일", "MOB"], [97, "LGU+모바일", "MOB"], [98, "LGU+모바일", "MOB"], [99, "LGU+모바일", "MOB"], [100, "LGU+모바일", "MOB"], [101, "LGU+모바일", "MOB"], [102, "LGU+모바일", "MOB"], [103, "LGU+모바일", "MOB"]]],
+            [110, [[68, "KT모바일", "MOB"], [69, "KT모바일", "MOB"], [70, "KT모바일", "MOB"], [71, "KT모바일", "MOB"]]],
+            [111, [[218, "SKT", "MOB"], [219, "SKT", "MOB"]]],
+            [113, [[216, "SKT", "MOB"], [217, "SKT", "MOB"]]],
+            [114, [[52, "SKT", "MOB"], [53, "SKT", "MOB"]]],
+            [116, [[200, "KT모바일", "MOB"], [201, "KT모바일", "MOB"]]],
+            [117, [[110, "LGU+모바일", "MOB"], [111, "LGT+모바일", "MOB"]]],
+            [118, [[234, "KT모바일", "MOB"], [235, "KT모바일", "MOB"]]],
+            [119, [[194, "KT모바일", "MOB"]]],
+            [123, [[228, "SKT", "MOB"], [229, "SKT", "MOB"]]],
+            [124, [[0, "SKT", "MOB"], [1, "SKT", "MOB"]]],
+            [163, [[213, "KT모바일", "MOB"], [222, "KT모바일", "MOB"], [229, "KT모바일", "MOB"], [255, "KT모바일", "MOB"]]],
+            [175, [[216, "KT모바일", "MOB"], [217, "KT모바일", "MOB"], [218, "KT모바일", "MOB"], [219, "KT모바일", "MOB"], [220, "KT모바일", "MOB"], [221, "KT모바일", "MOB"], [222, "KT모바일", "MOB"], [223, "KT모바일", "MOB"]]],
+            [180, [[132, "SKT", "MOB"], [133, "SKT", "MOB"], [134, "SKT", "MOB"], [135, "SKT", "MOB"], [210, "LGT+모바일/퍼플스톤즈/네이버클라우드/기타등등", "MOB"]]],
+            [203, [[82, "LGT+모바일/하이플러스카드/한국케이블텔레콤/기타등등", "MOB"], [226, "SKT/SK컴즈/대림아이앤에스/두산중공업/두산정보통신사업부/기타등등", "MOB"], [236, "SKT/KT/KINX/세종텔레콤", "MOB"]]],
+            [211, [[36, "LGT+모바일/딜라이브/세종텔레콤/엘림넷/삼성SDS/기타등등", "MOB"], [111, "SKT/아름방송네트워크/드림라인/KDDI코리아/브이토피아/세종텔레콤/지오레이넷/기타등등", "MOB"], [115, "SKB/SKT/반송종합유선방송/한국정보보호진흥원/KT/네오위즈게임즈/세종텔레콤/LGU+/기타등등", "MOB"], [188, "SKT/네트로피/네이버클라우드/NHN/누리링크시스템/기타등등", "MOB"], [234, "LGU+모바일/LGU+/SKT/SK커뮤니케이션즈/기타등등", "MOB"], [235, "SKT/남인천방송/유엘네트웍스/하이라인닷넷/기타등등", "MOB"], [240, "SKT/엘림넷/싸이크로스/기타등등", "MOB"], [246, "KT모바일/서경방송/기타등등", "MOB"]]],
+            [220, [[103, "SKT", "MOB"]]],
+            [223, [[32, "SKT", "MOB"], [33, "SKT", "MOB"], [34, "SKT", "MOB"], [35, "SKT", "MOB"], [36, "SKT", "MOB"], [37, "SKT", "MOB"], [38, "SKT", "MOB"], [39, "SKT", "MOB"], [40, "SKT", "MOB"], [41, "SKT", "MOB"], [42, "SKT", "MOB"], [43, "SKT", "MOB"], [44, "SKT", "MOB"], [45, "SKT", "MOB"], [46, "SKT", "MOB"], [47, "SKT", "MOB"], [48, "SKT", "MOB"], [49, "SKT", "MOB"], [50, "SKT", "MOB"], [51, "SKT", "MOB"], [52, "SKT", "MOB"], [53, "SKT", "MOB"], [54, "SKT", "MOB"], [55, "SKT", "MOB"], [56, "SKT", "MOB"], [57, "SKT", "MOB"], [58, "SKT", "MOB"], [59, "SKT", "MOB"], [60, "SKT", "MOB"], [61, "SKT", "MOB"], [62, "SKT", "MOB"], [63, "SKT", "MOB"], [168, "LGT+모바일", "MOB"], [169, "LGT+모바일", "MOB"], [170, "LGT+모바일", "MOB"], [171, "LGT+모바일", "MOB"], [172, "LGT+모바일", "MOB"], [173, "LGT+모바일", "MOB"], [174, "LGT+모바일", "MOB"], [175, "LGT+모바일", "MOB"]]]
         ],
 
         CONSTANTS: {
@@ -327,241 +256,107 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
                 COOKIE_NAME_2: 'ci_c',
             }
         },
-
         BLOCK_UID_EXPIRE: 1000 * 60 * 60 * 24 * 7,
         BLOCKED_UIDS_CACHE: {},
-
-        isRecommendedContext() {
-            return window.location.search.includes('exception_mode=recommend');
-        },
-
+        isMobile: () => /Mobi/i.test(navigator.userAgent),
+        isRecommendedContext: () => window.location.search.includes('exception_mode=recommend'),
         async regblockMobile() {
             let conf = await GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG, {});
-            if (conf.ip && conf.ip.includes(this.CONSTANTS.ETC.MOBILE_IP_MARKER)) {
-                return;
-            }
-
+            if (conf.ip && conf.ip.includes(this.CONSTANTS.ETC.MOBILE_IP_MARKER)) return;
             let ip_arr = [this.CONSTANTS.ETC.MOBILE_IP_MARKER];
-            const len = this.TELECOM.length;
-            for (let i = 0; i < len; i++) {
-                const sublen = this.TELECOM[i][1].length;
-                for (let j = 0; j < sublen; j++) {
-                    if (this.TELECOM[i][1][j][2] === 'MOB') {
-                        const ip_prefix = this.TELECOM[i][0] + '.' + this.TELECOM[i][1][j][0];
-                        ip_arr.push(ip_prefix);
-                    }
-                }
-            }
-
+            this.TELECOM.forEach(t1 => t1[1].forEach(t2 => {
+                if (t2[2] === 'MOB') ip_arr.push(t1[0] + '.' + t2[0]);
+            }));
             const mobile_ips_string = ip_arr.join('||');
             conf.ip = conf.ip ? conf.ip + '||' + mobile_ips_string : mobile_ips_string;
-
             await GM_setValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG, conf);
         },
-
         async delblockMobile() {
             let conf = await GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG, {});
             if (conf.ip && conf.ip.includes(this.CONSTANTS.ETC.MOBILE_IP_MARKER)) {
                 const user_ips = conf.ip.split('||' + this.CONSTANTS.ETC.MOBILE_IP_MARKER)[0];
                 conf.ip = user_ips.endsWith('||') ? user_ips.slice(0, -2) : user_ips;
-                if (conf.ip === this.CONSTANTS.ETC.MOBILE_IP_MARKER || !conf.ip) {
-                    conf.ip = '';
-                }
+                if (conf.ip === this.CONSTANTS.ETC.MOBILE_IP_MARKER || !conf.ip) conf.ip = '';
                 await GM_setValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG, conf);
             }
         },
-
         async showSettings() {
             await this.reloadSettings();
             const settings = window.dcFilterSettings || {};
-            const {
-                masterDisabled = false,
-                excludeRecommended = false,
-                threshold = 0,
-                ratioEnabled = false,
-                ratioMin = '',
-                ratioMax = '',
-                blockGuestEnabled = false,
-                telecomBlockEnabled = false
-            } = settings;
-
+            const { masterDisabled = false, excludeRecommended = false, threshold = 0, ratioEnabled = false, ratioMin = '', ratioMax = '', blockGuestEnabled = false, telecomBlockEnabled = false } = settings;
             const existingDiv = document.getElementById(this.CONSTANTS.UI_IDS.SETTINGS_PANEL);
-            if (existingDiv) {
-                existingDiv.remove();
-            }
-
+            if (existingDiv) existingDiv.remove();
             const div = document.createElement('div');
             div.id = this.CONSTANTS.UI_IDS.SETTINGS_PANEL;
             div.style = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;padding:24px 20px 18px 20px;min-width:280px;z-index:99999;border:2px solid #333;border-radius:10px;box-shadow:0 0 10px #0008; cursor: move; user-select: none;';
-
             div.innerHTML = `
                 <div style="margin-bottom:15px;padding-bottom:12px;border-bottom: 2px solid #ccc; display:flex;align-items:center; justify-content: space-between;">
                     <div style="display:flex; align-items: center;">
-                        <div>
-                            <input id="${this.CONSTANTS.UI_IDS.MASTER_DISABLE_CHECKBOX}" type="checkbox" style="vertical-align:middle;width:16px;height:16px;" ${masterDisabled ? 'checked' : ''}>
-                            <label for="${this.CONSTANTS.UI_IDS.MASTER_DISABLE_CHECKBOX}" style="font-size:16px;vertical-align:middle;cursor:pointer;margin-left:6px;"><b>모든 기능 끄기</b></label>
-                        </div>
-                        <div style="margin-left: 15px; border-left: 2px solid #ccc; padding-left: 15px;">
-                            <input id="${this.CONSTANTS.UI_IDS.EXCLUDE_RECOMMENDED_CHECKBOX}" type="checkbox" style="vertical-align:middle;width:16px;height:16px;" ${excludeRecommended ? 'checked' : ''}>
-                            <label for="${this.CONSTANTS.UI_IDS.EXCLUDE_RECOMMENDED_CHECKBOX}" style="font-size:14px;vertical-align:middle;cursor:pointer;margin-left:6px;"><b>개념글 제외</b></label>
-                        </div>
+                        <div><input id="${this.CONSTANTS.UI_IDS.MASTER_DISABLE_CHECKBOX}" type="checkbox" style="vertical-align:middle;width:16px;height:16px;" ${masterDisabled ? 'checked' : ''}><label for="${this.CONSTANTS.UI_IDS.MASTER_DISABLE_CHECKBOX}" style="font-size:16px;vertical-align:middle;cursor:pointer;margin-left:6px;"><b>모든 기능 끄기</b></label></div>
+                        <div style="margin-left: 15px; border-left: 2px solid #ccc; padding-left: 15px;"><input id="${this.CONSTANTS.UI_IDS.EXCLUDE_RECOMMENDED_CHECKBOX}" type="checkbox" style="vertical-align:middle;width:16px;height:16px;" ${excludeRecommended ? 'checked' : ''}><label for="${this.CONSTANTS.UI_IDS.EXCLUDE_RECOMMENDED_CHECKBOX}" style="font-size:14px;vertical-align:middle;cursor:pointer;margin-left:6px;"><b>개념글 제외</b></label></div>
                     </div>
-                    <div>
-                        <button id="${this.CONSTANTS.UI_IDS.CLOSE_BUTTON}" style="background:none;border:none;font-size:24px;cursor:pointer;line-height:1;padding:0 4px;color:#555;">✕</button>
-                    </div>
+                    <div><button id="${this.CONSTANTS.UI_IDS.CLOSE_BUTTON}" style="background:none;border:none;font-size:24px;cursor:pointer;line-height:1;padding:0 4px;color:#555;">✕</button></div>
                 </div>
                 <div id="${this.CONSTANTS.UI_IDS.SETTINGS_CONTAINER}" style="opacity:${masterDisabled ? 0.5 : 1}; pointer-events:${masterDisabled ? 'none' : 'auto'};">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <div style="display: flex; flex-direction: column; align-items: center;">
-                            <h3 style="cursor: default;margin-top:0;margin-bottom:5px;">
-                                유저 글+댓글 합 기준값(이 값 이하 차단)
-                            </h3>
-                            <input id="${this.CONSTANTS.UI_IDS.THRESHOLD_INPUT}" type="number" min="0" value="${threshold}" style="width:80px;font-size:16px; cursor: initial;">
-                            <div style="font-size:13px;color:#666;margin-top:5px;">0 또는 빈칸으로 두면 비활성화됩니다.</div>
-                        </div>
-                        <div style="border: 2px solid #000; border-radius: 5px; padding: 8px 8px 5px 6px;">
-                            <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 5px;">
-                                <span style="display:inline-flex; align-items:center; gap:4px; padding-bottom: 5px; border-bottom: 1px solid #ddd;">
-                                    <input id="${this.CONSTANTS.UI_IDS.BLOCK_GUEST_CHECKBOX}" type="checkbox" ${blockGuestEnabled ? 'checked' : ''} style="vertical-align:middle;">
-                                    <label for="${this.CONSTANTS.UI_IDS.BLOCK_GUEST_CHECKBOX}" style="font-size:13px;vertical-align:middle;cursor:pointer;">유동 전체 차단</label>
-                                </span>
-                                <span style="display:inline-flex; align-items:center; gap:4px; margin-top: 5px;">
-                                    <input id="${this.CONSTANTS.UI_IDS.TELECOM_BLOCK_CHECKBOX}" type="checkbox" ${telecomBlockEnabled ? 'checked' : ''} style="vertical-align:middle;">
-                                    <label for="${this.CONSTANTS.UI_IDS.TELECOM_BLOCK_CHECKBOX}" style="font-size:13px;vertical-align:middle;cursor:pointer;">통신사 IP 차단</label>
-                                </span>
-                            </div>
-                        </div>
+                        <div style="display: flex; flex-direction: column; align-items: center;"><h3 style="cursor: default;margin-top:0;margin-bottom:5px;">유저 글+댓글 합 기준값(이 값 이하 차단)</h3><input id="${this.CONSTANTS.UI_IDS.THRESHOLD_INPUT}" type="number" min="0" value="${threshold}" style="width:80px;font-size:16px; cursor: initial;"><div style="font-size:13px;color:#666;margin-top:5px;">0 또는 빈칸으로 두면 비활성화됩니다.</div></div>
+                        <div style="border: 2px solid #000; border-radius: 5px; padding: 8px 8px 5px 6px;"><div style="display: flex; flex-direction: column; align-items: flex-end; gap: 5px;"><span style="display:inline-flex; align-items:center; gap:4px; padding-bottom: 5px; border-bottom: 1px solid #ddd;"><input id="${this.CONSTANTS.UI_IDS.BLOCK_GUEST_CHECKBOX}" type="checkbox" ${blockGuestEnabled ? 'checked' : ''} style="vertical-align:middle;"><label for="${this.CONSTANTS.UI_IDS.BLOCK_GUEST_CHECKBOX}" style="font-size:13px;vertical-align:middle;cursor:pointer;">유동 전체 차단</label></span><span style="display:inline-flex; align-items:center; gap:4px; margin-top: 5px;"><input id="${this.CONSTANTS.UI_IDS.TELECOM_BLOCK_CHECKBOX}" type="checkbox" ${telecomBlockEnabled ? 'checked' : ''} style="vertical-align:middle;"><label for="${this.CONSTANTS.UI_IDS.TELECOM_BLOCK_CHECKBOX}" style="font-size:13px;vertical-align:middle;cursor:pointer;">통신사 IP 차단</label></span></div></div>
                     </div>
                     <hr style="border:0;border-top:2px solid #222;margin:16px 0 12px 0;">
-                    <div style="margin-bottom:8px;display:flex;align-items:center;">
-                        <input id="${this.CONSTANTS.UI_IDS.RATIO_ENABLE_CHECKBOX}" type="checkbox" style="vertical-align:middle;" ${ratioEnabled ? 'checked' : ''}>
-                        <label for="${this.CONSTANTS.UI_IDS.RATIO_ENABLE_CHECKBOX}" style="font-size:15px;vertical-align:middle;cursor:pointer;margin-left:4px;">글/댓글 비율 필터 사용</label>
-                    </div>
+                    <div style="margin-bottom:8px;display:flex;align-items:center;"><input id="${this.CONSTANTS.UI_IDS.RATIO_ENABLE_CHECKBOX}" type="checkbox" style="vertical-align:middle;" ${ratioEnabled ? 'checked' : ''}><label for="${this.CONSTANTS.UI_IDS.RATIO_ENABLE_CHECKBOX}" style="font-size:15px;vertical-align:middle;cursor:pointer;margin-left:4px;">글/댓글 비율 필터 사용</label></div>
                     <div id="${this.CONSTANTS.UI_IDS.RATIO_SECTION}">
                         <div style="display:flex;gap:10px;align-items:center;">
-                            <div style="display:flex;flex-direction:column;align-items:center;">
-                                <label for="${this.CONSTANTS.UI_IDS.RATIO_MIN_INPUT}" style="font-size:14px;">댓글/글 비율 일정 이상 차단 </label>
-                                <div style="font-size:12px;color:#888;line-height:1.2;">(댓글만 많은 놈)</div>
-                                <input id="${this.CONSTANTS.UI_IDS.RATIO_MIN_INPUT}" type="number" step="any" placeholder="예: 10" value="${ratioMin !== '' ? ratioMin : ''}" style="width:100px;font-size:15px;text-align:center; margin-top: 4px;">
-                            </div>
-                            <div style="display:flex;flex-direction:column;align-items:center;">
-                                <label for="${this.CONSTANTS.UI_IDS.RATIO_MAX_INPUT}" style="font-size:14px;">글/댓글 비율 일정 이상 차단 </label>
-                                <div style="font-size:12px;color:#888;line-height:1.2;">(글만 많은 놈)</div>
-                                <input id="${this.CONSTANTS.UI_IDS.RATIO_MAX_INPUT}" type="number" step="any" placeholder="예: 1" value="${ratioMax !== '' ? ratioMax : ''}" style="width:100px;font-size:15px;text-align:center; margin-top: 4px;">
-                            </div>
-                        </div>
-                        <div style="margin-top:8px;font-size:13px;color:#666;text-align:left;">비율이 입력값과 같거나 큰(이상)인 유저를 차단합니다.</div>
+                            <div style="display:flex;flex-direction:column;align-items:center;"><label for="${this.CONSTANTS.UI_IDS.RATIO_MIN_INPUT}" style="font-size:14px;">댓글/글 비율 일정 이상 차단 </label><div style="font-size:12px;color:#888;line-height:1.2;">(댓글만 많은 놈)</div><input id="${this.CONSTANTS.UI_IDS.RATIO_MIN_INPUT}" type="number" step="any" placeholder="예: 10" value="${ratioMin !== '' ? ratioMin : ''}" style="width:100px;font-size:15px;text-align:center; margin-top: 4px;"></div>
+                            <div style="display:flex;flex-direction:column;align-items:center;"><label for="${this.CONSTANTS.UI_IDS.RATIO_MAX_INPUT}" style="font-size:14px;">글/댓글 비율 일정 이상 차단 </label><div style="font-size:12px;color:#888;line-height:1.2;">(글만 많은 놈)</div><input id="${this.CONSTANTS.UI_IDS.RATIO_MAX_INPUT}" type="number" step="any" placeholder="예: 1" value="${ratioMax !== '' ? ratioMax : ''}" style="width:100px;font-size:15px;text-align:center; margin-top: 4px;"></div>
+                        </div><div style="margin-top:8px;font-size:13px;color:#666;text-align:left;">비율이 입력값과 같거나 큰(이상)인 유저를 차단합니다.</div>
                     </div>
                 </div>
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:16px; padding-top:15px; border-top: 2px solid #ccc;">
-                    <div style="font-size:15px;color:#444;text-align:left;">창 여닫는 단축키: <b>Shift+s</b></div>
-                    <button id="${this.CONSTANTS.UI_IDS.SAVE_BUTTON}" style="font-size:16px;border:2px solid #000;border-radius:4px;background:#fff; cursor: pointer; padding: 4px 10px;">저장 & 실행</button>
-                </div>
-            `;
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:16px; padding-top:15px; border-top: 2px solid #ccc;"><div style="font-size:15px;color:#444;text-align:left;">창 여닫는 단축키: <b>Shift+s</b></div><button id="${this.CONSTANTS.UI_IDS.SAVE_BUTTON}" style="font-size:16px;border:2px solid #000;border-radius:4px;background:#fff; cursor: pointer; padding: 4px 10px;">저장 & 실행</button></div>`;
             document.body.appendChild(div);
-
             const input = document.getElementById(this.CONSTANTS.UI_IDS.THRESHOLD_INPUT);
-            input.focus();
-            input.select();
-
+            input.focus(); input.select();
             const masterDisableCheckbox = document.getElementById(this.CONSTANTS.UI_IDS.MASTER_DISABLE_CHECKBOX);
             const settingsContainer = document.getElementById(this.CONSTANTS.UI_IDS.SETTINGS_CONTAINER);
-
-            function updateMasterState() {
-                const isMasterDisabled = masterDisableCheckbox.checked;
-                settingsContainer.style.opacity = isMasterDisabled ? 0.5 : 1;
-                settingsContainer.style.pointerEvents = isMasterDisabled ? 'none' : 'auto';
-            }
-            masterDisableCheckbox.addEventListener('change', updateMasterState);
-            updateMasterState();
-
+            const updateMasterState = () => { const isMasterDisabled = masterDisableCheckbox.checked; settingsContainer.style.opacity = isMasterDisabled ? 0.5 : 1; settingsContainer.style.pointerEvents = isMasterDisabled ? 'none' : 'auto'; };
+            masterDisableCheckbox.addEventListener('change', updateMasterState); updateMasterState();
             const ratioSection = document.getElementById(this.CONSTANTS.UI_IDS.RATIO_SECTION);
             const ratioEnableCheckbox = document.getElementById(this.CONSTANTS.UI_IDS.RATIO_ENABLE_CHECKBOX);
             const ratioMinInput = document.getElementById(this.CONSTANTS.UI_IDS.RATIO_MIN_INPUT);
             const ratioMaxInput = document.getElementById(this.CONSTANTS.UI_IDS.RATIO_MAX_INPUT);
-
-            function updateRatioSectionState() {
-                const enabled = ratioEnableCheckbox.checked;
-                ratioSection.style.opacity = enabled ? 1 : 0.5;
-                ratioMinInput.disabled = !enabled;
-                ratioMaxInput.disabled = !enabled;
-            }
-            ratioEnableCheckbox.addEventListener('change', updateRatioSectionState);
-            updateRatioSectionState();
-
-            document.getElementById(this.CONSTANTS.UI_IDS.CLOSE_BUTTON).onclick = function() { div.remove(); };
-
+            const updateRatioSectionState = () => { const enabled = ratioEnableCheckbox.checked; ratioSection.style.opacity = enabled ? 1 : 0.5; ratioMinInput.disabled = !enabled; ratioMaxInput.disabled = !enabled; };
+            ratioEnableCheckbox.addEventListener('change', updateRatioSectionState); updateRatioSectionState();
+            document.getElementById(this.CONSTANTS.UI_IDS.CLOSE_BUTTON).onclick = () => div.remove();
             const saveButton = document.getElementById(this.CONSTANTS.UI_IDS.SAVE_BUTTON);
-
             const enterKeySave = (e) => { if (e.key === 'Enter') saveButton.click(); };
-            input.addEventListener('keydown', enterKeySave);
-            ratioMinInput.addEventListener('keydown', enterKeySave);
-            ratioMaxInput.addEventListener('keydown', enterKeySave);
-
-        // --- 드래그 이동 로직 (PC 마우스 + 모바일 터치 지원) ---
-        let isDragging = false, offsetX, offsetY;
-
-        const onDragStart = (e) => {
-            if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON' || e.target.tagName === 'LABEL' || e.target.id === FilterModule.CONSTANTS.UI_IDS.CLOSE_BUTTON) return;
-            
-            isDragging = true;
-            
-            const rect = div.getBoundingClientRect();
-            if (div.style.transform !== 'none') {
-                div.style.transform = 'none';
-                div.style.left = `${rect.left}px`;
-                div.style.top = `${rect.top}px`;
-            }
-            
-            const clientX = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
-            const clientY = e.type === 'touchstart' ? e.touches[0].clientY : e.clientY;
-
-            offsetX = clientX - rect.left;
-            offsetY = clientY - rect.top;
-
-            document.addEventListener('mousemove', onDragMove);
-            document.addEventListener('touchmove', onDragMove, { passive: false });
-            document.addEventListener('mouseup', onDragEnd, { once: true });
-            document.addEventListener('touchend', onDragEnd, { once: true });
-        };
-
-        const onDragMove = (e) => {
-            if (!isDragging) return;
-            e.preventDefault(); // 스크롤 방지
-            
-            const rect = div.getBoundingClientRect();
-            const clientX = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
-            const clientY = e.type === 'touchmove' ? e.touches[0].clientY : e.clientY;
-
-            let newX = clientX - offsetX;
-            let newY = clientY - offsetY;
-
-            newX = Math.max(0, Math.min(newX, window.innerWidth - rect.width));
-            newY = Math.max(0, Math.min(newY, window.innerHeight - rect.height));
-            
-            div.style.left = `${newX}px`;
-            div.style.top = `${newY}px`;
-        };
-
-        const onDragEnd = () => {
-            isDragging = false;
-            document.removeEventListener('mousemove', onDragMove);
-            document.removeEventListener('touchmove', onDragMove);
-            // mouseup, touchend는 { once: true } 옵션으로 자동 제거됨
-        };
-
-        div.addEventListener('mousedown', onDragStart);
-        div.addEventListener('touchstart', onDragStart);
-        // --- 드래그 이동 로직 끝 ---
-
+            [input, ratioMinInput, ratioMaxInput].forEach(el => el.addEventListener('keydown', enterKeySave));
+            let isDragging = false, offsetX, offsetY;
+            const onDragStart = (e) => {
+                if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON' || e.target.tagName === 'LABEL' || e.target.id === FilterModule.CONSTANTS.UI_IDS.CLOSE_BUTTON) return;
+                isDragging = true;
+                const rect = div.getBoundingClientRect();
+                if (div.style.transform !== 'none') { div.style.transform = 'none'; div.style.left = `${rect.left}px`; div.style.top = `${rect.top}px`; }
+                const clientX = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
+                const clientY = e.type === 'touchstart' ? e.touches[0].clientY : e.clientY;
+                offsetX = clientX - rect.left; offsetY = clientY - rect.top;
+                document.addEventListener('mousemove', onDragMove); document.addEventListener('touchmove', onDragMove, { passive: false });
+                document.addEventListener('mouseup', onDragEnd, { once: true }); document.addEventListener('touchend', onDragEnd, { once: true });
+            };
+            const onDragMove = (e) => {
+                if (!isDragging) return; e.preventDefault();
+                const rect = div.getBoundingClientRect();
+                const clientX = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
+                const clientY = e.type === 'touchmove' ? e.touches[0].clientY : e.clientY;
+                let newX = clientX - offsetX; let newY = clientY - offsetY;
+                newX = Math.max(0, Math.min(newX, window.innerWidth - rect.width)); newY = Math.max(0, Math.min(newY, window.innerHeight - rect.height));
+                div.style.left = `${newX}px`; div.style.top = `${newY}px`;
+            };
+            const onDragEnd = () => { isDragging = false; document.removeEventListener('mousemove', onDragMove); document.removeEventListener('touchmove', onDragMove); };
+            div.addEventListener('mousedown', onDragStart); div.addEventListener('touchstart', onDragStart);
             saveButton.onclick = async () => {
-                saveButton.disabled = true;
-                saveButton.textContent = '저장 중...';
-
+                saveButton.disabled = true; saveButton.textContent = '저장 중...';
                 const blockGuestChecked = document.getElementById(this.CONSTANTS.UI_IDS.BLOCK_GUEST_CHECKBOX).checked;
                 let val = parseInt(document.getElementById(this.CONSTANTS.UI_IDS.THRESHOLD_INPUT).value, 10);
                 if (isNaN(val)) val = 0;
-
                 const promises = [
                     GM_setValue(this.CONSTANTS.STORAGE_KEYS.MASTER_DISABLED, document.getElementById(this.CONSTANTS.UI_IDS.MASTER_DISABLE_CHECKBOX).checked),
                     GM_setValue(this.CONSTANTS.STORAGE_KEYS.EXCLUDE_RECOMMENDED, document.getElementById(this.CONSTANTS.UI_IDS.EXCLUDE_RECOMMENDED_CHECKBOX).checked),
@@ -572,382 +367,169 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
                     GM_setValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_GUEST, blockGuestChecked),
                     GM_setValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_TELECOM, document.getElementById(this.CONSTANTS.UI_IDS.TELECOM_BLOCK_CHECKBOX).checked)
                 ];
-
-                if (!blockGuestChecked) {
-                    promises.push(this.clearBlockedGuests());
-                }
-
-                try {
-                    await Promise.all(promises);
-                    location.reload();
-                } catch (error) {
-                    console.error('DCinside User Filter: Settings save failed.', error);
-                    saveButton.disabled = false;
-                    saveButton.textContent = '저장 & 실행';
-                    alert('설정 저장에 실패했습니다. 콘솔을 확인해주세요.');
-                }
+                if (!blockGuestChecked) promises.push(this.clearBlockedGuests());
+                try { await Promise.all(promises); location.reload(); } catch (error) { console.error('DCinside User Filter: Settings save failed.', error); saveButton.disabled = false; saveButton.textContent = '저장 & 실행'; alert('설정 저장에 실패했습니다. 콘솔을 확인해주세요.'); }
             };
         },
-
         async getUserPostCommentSum(uid) {
             if (!window._dcinside_user_sum_cache) window._dcinside_user_sum_cache = {};
             if (window._dcinside_user_sum_cache[uid]) return window._dcinside_user_sum_cache[uid];
-
-            function getCookie(name) {
-                const value = `; ${document.cookie}`;
-                const parts = value.split(`; ${name}=`);
-                if (parts.length === 2) return parts.pop().split(';').shift();
-            }
+            const getCookie = (name) => { const v = `; ${document.cookie}`; const p = v.split(`; ${name}=`); if (p.length === 2) return p.pop().split(';').shift(); };
             let ci = getCookie(this.CONSTANTS.ETC.COOKIE_NAME_1) || getCookie(this.CONSTANTS.ETC.COOKIE_NAME_2);
             if (!ci) return null;
-
             return new Promise((resolve) => {
                 const xhr = new XMLHttpRequest();
-                xhr.open('POST', this.CONSTANTS.API.USER_INFO, true);
-                xhr.withCredentials = true;
-                xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded; charset=UTF-8');
-                xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
-                xhr.onload = function() {
-                    const text = xhr.responseText;
-                    const [post, comment] = text.split(',').map(x => parseInt(x, 10));
-                    if (!isNaN(post) && !isNaN(comment)) {
-                        const userData = { sum: post + comment, post, comment };
-                        window._dcinside_user_sum_cache[uid] = userData;
-                        resolve(userData);
-                    } else {
-                        resolve(null);
-                    }
+                xhr.open('POST', this.CONSTANTS.API.USER_INFO, true); xhr.withCredentials = true;
+                xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded; charset=UTF-8'); xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+                xhr.onload = () => {
+                    const [post, comment] = xhr.responseText.split(',').map(x => parseInt(x, 10));
+                    if (!isNaN(post) && !isNaN(comment)) { const d = { sum: post + comment, post, comment }; window._dcinside_user_sum_cache[uid] = d; resolve(d); } else { resolve(null); }
                 };
                 xhr.onerror = () => resolve(null);
                 xhr.send(`ci_t=${encodeURIComponent(ci)}&user_id=${encodeURIComponent(uid)}`);
             });
         },
-
         async addBlockedUid(uid, sum, post, comment, ratioBlocked) {
+            if (this.isMobile()) return;
             await this.refreshBlockedUidsCache(true);
             this.BLOCKED_UIDS_CACHE[uid] = { ts: Date.now(), sum, post, comment, ratioBlocked: !!ratioBlocked };
             await GM_setValue(this.CONSTANTS.STORAGE_KEYS.BLOCKED_UIDS, JSON.stringify(this.BLOCKED_UIDS_CACHE));
         },
-
-        async getBlockedGuests() {
-            let data = await GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCKED_GUESTS, '[]');
-            try { return JSON.parse(data); } catch { return []; }
-        },
-
-        async setBlockedGuests(list) {
-            await GM_setValue(this.CONSTANTS.STORAGE_KEYS.BLOCKED_GUESTS, JSON.stringify(list));
-        },
-
-        async addBlockedGuest(ip) {
-            const settings = window.dcFilterSettings || {};
-            if (settings.blockedGuests && !settings.blockedGuests.includes(ip)) {
-                 settings.blockedGuests.push(ip);
-                 await this.setBlockedGuests(settings.blockedGuests);
-            }
-        },
-
-        async clearBlockedGuests() {
-            await this.setBlockedGuests([]);
-        },
-
+        async getBlockedGuests() { try { return JSON.parse(await GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCKED_GUESTS, '[]')); } catch { return []; } },
+        async setBlockedGuests(list) { await GM_setValue(this.CONSTANTS.STORAGE_KEYS.BLOCKED_GUESTS, JSON.stringify(list)); },
+        async addBlockedGuest(ip) { const s = window.dcFilterSettings || {}; if (s.blockedGuests && !s.blockedGuests.includes(ip)) { s.blockedGuests.push(ip); await this.setBlockedGuests(s.blockedGuests); } },
+        async clearBlockedGuests() { await this.setBlockedGuests([]); },
         isUserBlocked({ sum, post, comment }) {
-            const settings = window.dcFilterSettings || {};
-            if (settings.masterDisabled) return { sumBlocked: false, ratioBlocked: false };
-
-            let sumBlocked = settings.threshold > 0 && sum > 0 && sum <= settings.threshold;
-
-            let ratioBlocked = false;
-            if (settings.ratioEnabled) {
-                const useMin = !isNaN(settings.ratioMin) && settings.ratioMin > 0;
-                const useMax = !isNaN(settings.ratioMax) && settings.ratioMax > 0;
-
+            const s = window.dcFilterSettings || {}; if (s.masterDisabled) return { sumBlocked: false, ratioBlocked: false };
+            let sumBlocked = s.threshold > 0 && sum > 0 && sum <= s.threshold; let ratioBlocked = false;
+            if (s.ratioEnabled) {
+                const useMin = !isNaN(s.ratioMin) && s.ratioMin > 0; const useMax = !isNaN(s.ratioMax) && s.ratioMax > 0;
                 if (useMin || useMax) {
-                    const ratioCommentPerPost = (post > 0) ? (comment / post) : (comment > 0 ? Infinity : 0);
-                    const ratioPostPerComment = (comment > 0) ? (post / comment) : (post > 0 ? Infinity : 0);
-
-                    if (useMin && ratioCommentPerPost >= settings.ratioMin) ratioBlocked = true;
-                    if (!ratioBlocked && useMax && ratioPostPerComment >= settings.ratioMax) ratioBlocked = true;
+                    const r1 = (post > 0) ? (comment / post) : (comment > 0 ? Infinity : 0); const r2 = (comment > 0) ? (post / comment) : (post > 0 ? Infinity : 0);
+                    if (useMin && r1 >= s.ratioMin) ratioBlocked = true; if (!ratioBlocked && useMax && r2 >= s.ratioMax) ratioBlocked = true;
                 }
             }
             return { sumBlocked, ratioBlocked };
         },
-
         async applyBlockFilterToElement(element, uid, userData, addBlockedUidFn) {
             if (!userData) return;
             const { sumBlocked, ratioBlocked } = this.isUserBlocked(userData);
             const shouldBeBlocked = sumBlocked || ratioBlocked;
-
-            if (element.style.display !== 'none') {
-                 element.style.display = shouldBeBlocked ? 'none' : '';
-            }
-
-            if (shouldBeBlocked) {
-                await addBlockedUidFn.call(this, uid, userData.sum, userData.post, userData.comment, ratioBlocked);
-            }
+            if (element.style.display !== 'none') element.style.display = shouldBeBlocked ? 'none' : '';
+            if (shouldBeBlocked) await addBlockedUidFn.call(this, uid, userData.sum, userData.post, userData.comment, ratioBlocked);
         },
-
         shouldSkipFiltering(element) {
-            const settings = window.dcFilterSettings || {};
-            if (!settings.excludeRecommended || !this.isRecommendedContext()) {
-                return false;
-            }
-
-            if (window.location.pathname.includes('/view/')) {
-                if (element.closest(this.CONSTANTS.SELECTORS.COMMENT_CONTAINER)) {
-                    return false;
-                }
-                return true;
-            }
+            const s = window.dcFilterSettings || {}; if (!s.excludeRecommended || !this.isRecommendedContext()) return false;
+            if (window.location.pathname.includes('/view/')) return !element.closest(this.CONSTANTS.SELECTORS.COMMENT_CONTAINER);
             return true;
         },
-
         async applyAsyncBlock(element) {
-            if (this.shouldSkipFiltering(element)) {
-                element.style.display = '';
-                return;
-            }
-
+            if (this.shouldSkipFiltering(element)) { element.style.display = ''; return; }
             try {
                 if (element.style.display === 'none') return;
-
-                const writerInfo = element.querySelector(this.CONSTANTS.SELECTORS.WRITER_INFO);
-                if (!writerInfo) return;
-
-                const uid = writerInfo.getAttribute('data-uid');
-                if (!uid || uid.length < 3) return;
-
+                const writerInfo = element.querySelector(this.CONSTANTS.SELECTORS.WRITER_INFO); if (!writerInfo) return;
+                const uid = writerInfo.getAttribute('data-uid'); if (!uid || uid.length < 3) return;
                 if (this.BLOCKED_UIDS_CACHE[uid]) return;
-
-                const userData = await this.getUserPostCommentSum(uid);
-                if (!userData) return;
+                const userData = await this.getUserPostCommentSum(uid); if (!userData) return;
                 await this.applyBlockFilterToElement(element, uid, userData, this.addBlockedUid);
-
-            } catch (e) {
-                console.warn(`DCinside User Filter: Async filter exception.`, e, element);
-            }
+            } catch (e) { console.warn(`DCinside User Filter: Async filter exception.`, e, element); }
         },
-
         async refreshBlockedUidsCache() {
-            let data = await GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCKED_UIDS, '{}');
-            try { this.BLOCKED_UIDS_CACHE = JSON.parse(data); } catch { this.BLOCKED_UIDS_CACHE = {}; }
-
-            const now = Date.now();
-            let changed = false;
-            for (const [uid, cacheData] of Object.entries(this.BLOCKED_UIDS_CACHE)) {
-                if (typeof cacheData !== 'object' || cacheData === null || typeof cacheData.ts !== 'number') {
-                    delete this.BLOCKED_UIDS_CACHE[uid];
-                    changed = true;
-                    continue;
-                }
-                if (now - cacheData.ts > this.BLOCK_UID_EXPIRE) {
-                    delete this.BLOCKED_UIDS_CACHE[uid]; changed = true;
-                }
+            if (this.isMobile()) { this.BLOCKED_UIDS_CACHE = {}; return; }
+            let data; try { data = JSON.parse(await GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCKED_UIDS, '{}')); } catch { data = {}; }
+            const now = Date.now(); let changed = false;
+            for (const [uid, cacheData] of Object.entries(data)) {
+                if (typeof cacheData !== 'object' || cacheData === null || typeof cacheData.ts !== 'number' || now - cacheData.ts > this.BLOCK_UID_EXPIRE) { delete data[uid]; changed = true; }
             }
+            this.BLOCKED_UIDS_CACHE = data;
             if (changed) await GM_setValue(this.CONSTANTS.STORAGE_KEYS.BLOCKED_UIDS, JSON.stringify(this.BLOCKED_UIDS_CACHE));
         },
-
         applySyncBlock(element) {
-            if (this.shouldSkipFiltering(element)) {
-                element.style.display = '';
-                return;
-            }
-
-            const settings = window.dcFilterSettings || {};
-            const { masterDisabled, blockGuestEnabled, telecomBlockEnabled, blockConfig = {}, blockedGuests = [] } = settings;
-
-            if (masterDisabled) {
-                element.style.display = '';
-                return;
-            }
-
-            const writerInfo = element.querySelector(this.CONSTANTS.SELECTORS.WRITER_INFO);
-            if (!writerInfo) return;
-
-            const uid = writerInfo.getAttribute('data-uid');
-            const ipSpan = element.querySelector(this.CONSTANTS.SELECTORS.IP_SPAN);
-            const ip = ipSpan ? ipSpan.textContent.trim().slice(1, -1) : null;
-            const isGuest = (!uid || uid.length < 3) && ip;
-
-            let isBlocked = false;
-            const telecomBlockRegex = (telecomBlockEnabled && blockConfig.ip) ? new RegExp('^(' + blockConfig.ip.split('||').map(prefix => prefix.replace(/\./g, '\\.')).join('|') + ')') : null;
-
-            if (isGuest) {
-                if (blockGuestEnabled) { isBlocked = true; }
-                else if (telecomBlockRegex && ip && telecomBlockRegex.test(ip)) { isBlocked = true; }
-            } else if (ip && telecomBlockRegex && telecomBlockRegex.test(ip)) {
-                isBlocked = true;
-            }
-
-            if (!isBlocked && ip && blockedGuests.includes(ip)) { isBlocked = true; }
-
+            if (this.shouldSkipFiltering(element)) { element.style.display = ''; return; }
+            const s = window.dcFilterSettings || {}; const { masterDisabled, blockGuestEnabled, telecomBlockEnabled, blockConfig = {}, blockedGuests = [] } = s;
+            if (masterDisabled) { element.style.display = ''; return; }
+            const writerInfo = element.querySelector(this.CONSTANTS.SELECTORS.WRITER_INFO); if (!writerInfo) return;
+            const uid = writerInfo.getAttribute('data-uid'); const ipSpan = element.querySelector(this.CONSTANTS.SELECTORS.IP_SPAN);
+            const ip = ipSpan ? ipSpan.textContent.trim().slice(1, -1) : null; const isGuest = (!uid || uid.length < 3) && ip;
+            let isBlocked = false; const telecomBlockRegex = (telecomBlockEnabled && blockConfig.ip) ? new RegExp('^(' + blockConfig.ip.split('||').map(p => p.replace(/\./g, '\\.')).join('|') + ')') : null;
+            if (isGuest) { if (blockGuestEnabled || (telecomBlockRegex && ip && telecomBlockRegex.test(ip))) isBlocked = true; }
+            else if (ip && telecomBlockRegex && telecomBlockRegex.test(ip)) isBlocked = true;
+            if (!isBlocked && ip && blockedGuests.includes(ip)) isBlocked = true;
             if (!isBlocked && uid && this.BLOCKED_UIDS_CACHE[uid]) {
                 const { sumBlocked, ratioBlocked } = this.isUserBlocked(this.BLOCKED_UIDS_CACHE[uid]);
-                if (sumBlocked || ratioBlocked) {
-                    isBlocked = true;
-                }
+                if (sumBlocked || ratioBlocked) isBlocked = true;
             }
             element.style.display = isBlocked ? 'none' : '';
         },
-
         initializeUniversalObserver() {
-            const targets = [
-                { container: this.CONSTANTS.SELECTORS.POST_LIST_CONTAINER, item: this.CONSTANTS.SELECTORS.POST_ITEM },
-                { container: this.CONSTANTS.SELECTORS.COMMENT_CONTAINER, item: this.CONSTANTS.SELECTORS.COMMENT_ITEM },
-                { container: this.CONSTANTS.SELECTORS.POST_VIEW_LIST_CONTAINER, item: 'li' }
-            ];
-
-            const filterItems = (items) => {
-                items.forEach(item => {
-                    this.applySyncBlock(item);
-                    this.applyAsyncBlock(item);
-                });
-            };
-
-            const attachItemObserver = (container, itemSelector) => {
-                if (container.matches(`[${this.CONSTANTS.CUSTOM_ATTRS.OBSERVER_ATTACHED}]`)) return;
+            const targets = [{ c: this.CONSTANTS.SELECTORS.POST_LIST_CONTAINER, i: this.CONSTANTS.SELECTORS.POST_ITEM }, { c: this.CONSTANTS.SELECTORS.COMMENT_CONTAINER, i: this.CONSTANTS.SELECTORS.COMMENT_ITEM }, { c: this.CONSTANTS.SELECTORS.POST_VIEW_LIST_CONTAINER, i: 'li' }];
+            const filterItems = (items) => items.forEach(item => { this.applySyncBlock(item); this.applyAsyncBlock(item); });
+            const attachObserver = (container, itemSelector) => {
+                if (container.hasAttribute(this.CONSTANTS.CUSTOM_ATTRS.OBSERVER_ATTACHED)) return;
                 container.setAttribute(this.CONSTANTS.CUSTOM_ATTRS.OBSERVER_ATTACHED, 'true');
-
                 filterItems(Array.from(container.querySelectorAll(itemSelector)));
-
-                const itemObserver = new MutationObserver((mutations) => {
+                new MutationObserver(mutations => {
                     const newItems = [];
-                    mutations.forEach(mutation => {
-                        mutation.addedNodes.forEach(node => {
-                            if (node.nodeType !== Node.ELEMENT_NODE) return;
-                            if (node.matches(itemSelector)) { newItems.push(node); }
-                            else if (node.querySelectorAll) { newItems.push(...node.querySelectorAll(itemSelector)); }
-                        });
-                    });
+                    mutations.forEach(m => m.addedNodes.forEach(n => {
+                        if (n.nodeType !== 1) return;
+                        if (n.matches(itemSelector)) newItems.push(n); else if (n.querySelectorAll) newItems.push(...n.querySelectorAll(itemSelector));
+                    }));
                     if (newItems.length > 0) filterItems(newItems);
-                });
-                itemObserver.observe(container, { childList: true, subtree: true });
+                }).observe(container, { childList: true, subtree: true });
             };
-
-            const bodyObserver = new MutationObserver((mutations) => {
-                for (const mutation of mutations) {
-                    for (const node of mutation.addedNodes) {
-                        if (node.nodeType === Node.ELEMENT_NODE) {
-                            for (const target of targets) {
-                                if (node.matches(target.container)) {
-                                    attachItemObserver(node, target.item);
-                                } else if (node.querySelectorAll) {
-                                    node.querySelectorAll(target.container).forEach(container => {
-                                        attachItemObserver(container, target.item);
-                                    });
-                                }
-                            }
-                        }
-                    }
+            const bodyObserver = new MutationObserver(mutations => mutations.forEach(m => m.addedNodes.forEach(n => {
+                if (n.nodeType === 1 && !n.closest('.user_data')) { // 사용자 정보 팝업은 무시
+                    targets.forEach(t => { if (n.matches(t.c)) attachObserver(n, t.i); else if (n.querySelectorAll) n.querySelectorAll(t.c).forEach(c => attachObserver(c, t.i)); });
                 }
-            });
-
-            targets.forEach(target => {
-                document.querySelectorAll(target.container).forEach(container => {
-                    attachItemObserver(container, target.item);
-                });
-            });
-
+            })));
+            targets.forEach(t => document.querySelectorAll(t.c).forEach(c => attachObserver(c, t.i)));
             bodyObserver.observe(document.body, { childList: true, subtree: true });
         },
-
         async reloadSettings() {
-            const blockedGuests = await this.getBlockedGuests();
-            const blockConfig = await GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG, {});
-
             window.dcFilterSettings = {
-                masterDisabled: await GM_getValue(this.CONSTANTS.STORAGE_KEYS.MASTER_DISABLED, false),
-                excludeRecommended: await GM_getValue(this.CONSTANTS.STORAGE_KEYS.EXCLUDE_RECOMMENDED, false),
-                threshold: await GM_getValue(this.CONSTANTS.STORAGE_KEYS.THRESHOLD, 0),
-                ratioEnabled: await GM_getValue(this.CONSTANTS.STORAGE_KEYS.RATIO_ENABLED, false),
-                ratioMin: parseFloat(await GM_getValue(this.CONSTANTS.STORAGE_KEYS.RATIO_MIN, '')),
-                ratioMax: parseFloat(await GM_getValue(this.CONSTANTS.STORAGE_KEYS.RATIO_MAX, '')),
-                blockGuestEnabled: await GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_GUEST, false),
-                telecomBlockEnabled: await GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_TELECOM, false),
-                blockedGuests,
-                blockConfig
+                masterDisabled: await GM_getValue(this.CONSTANTS.STORAGE_KEYS.MASTER_DISABLED, false), excludeRecommended: await GM_getValue(this.CONSTANTS.STORAGE_KEYS.EXCLUDE_RECOMMENDED, false),
+                threshold: await GM_getValue(this.CONSTANTS.STORAGE_KEYS.THRESHOLD, 0), ratioEnabled: await GM_getValue(this.CONSTANTS.STORAGE_KEYS.RATIO_ENABLED, false),
+                ratioMin: parseFloat(await GM_getValue(this.CONSTANTS.STORAGE_KEYS.RATIO_MIN, '')), ratioMax: parseFloat(await GM_getValue(this.CONSTANTS.STORAGE_KEYS.RATIO_MAX, '')),
+                blockGuestEnabled: await GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_GUEST, false), telecomBlockEnabled: await GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_TELECOM, false),
+                blockedGuests: await this.getBlockedGuests(), blockConfig: await GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG, {})
             };
         },
-
         async refilterAllContent() {
             await this.reloadSettings();
-
-            const allContentItems = document.querySelectorAll([
-                this.CONSTANTS.SELECTORS.POST_ITEM,
-                this.CONSTANTS.SELECTORS.COMMENT_ITEM,
-                `${this.CONSTANTS.SELECTORS.POST_VIEW_LIST_CONTAINER} > li`
-            ].join(', '));
-
-            allContentItems.forEach(element => {
-                if (!window.dcFilterSettings.masterDisabled) {
-                    element.style.display = '';
-                }
-                this.applySyncBlock(element);
-                this.applyAsyncBlock(element);
-            });
-
-            const event = new CustomEvent('dcFilterRefiltered');
-            document.dispatchEvent(event);
-            console.log('[Filter Module] Refilter complete. Event dispatched.');
+            const allContentItems = document.querySelectorAll([this.CONSTANTS.SELECTORS.POST_ITEM, this.CONSTANTS.SELECTORS.COMMENT_ITEM, `${this.CONSTANTS.SELECTORS.POST_VIEW_LIST_CONTAINER} > li`].join(', '));
+            allContentItems.forEach(element => { if (!window.dcFilterSettings.masterDisabled) element.style.display = ''; this.applySyncBlock(element); this.applyAsyncBlock(element); });
+            document.dispatchEvent(new CustomEvent('dcFilterRefiltered'));
         },
-
-        handleVisibilityChange() {
-            if (document.visibilityState === 'visible') {
-                this.refilterAllContent();
-            }
-        },
-
+        handleVisibilityChange() { if (document.visibilityState === 'visible') this.refilterAllContent(); },
         async init() {
+            if (window.dcFilterInitialized) return; window.dcFilterInitialized = true;
             await this.reloadSettings();
-
-            if (window.dcFilterSettings.excludeRecommended && window.location.pathname.includes('/lists/') && this.isRecommendedContext()) {
-                console.log('DCInside 유저 필터: 개념글 목록 페이지이므로 필터 기능을 비활성화합니다.');
-                return;
-            }
-
+            if (window.dcFilterSettings.excludeRecommended && window.location.pathname.includes('/lists/') && this.isRecommendedContext()) return;
             const telecomBlockEnabled = await GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_TELECOM, false);
-            if (telecomBlockEnabled) {
-                await this.regblockMobile();
-            } else {
-                await this.delblockMobile();
-            }
-
+            if (telecomBlockEnabled) await this.regblockMobile(); else await this.delblockMobile();
             await this.refreshBlockedUidsCache();
-
             document.addEventListener('visibilitychange', this.handleVisibilityChange.bind(this));
             this.initializeUniversalObserver();
-
-            // 설정 메뉴 및 단축키 등록
             window.addEventListener('keydown', async (e) => {
-                if (e.shiftKey && (e.key === 's' || e.key === 'S')) {
-                    e.preventDefault();
-                    const popup = document.getElementById(this.CONSTANTS.UI_IDS.SETTINGS_PANEL);
-                    popup ? popup.remove() : await this.showSettings();
-                }
+                if (e.shiftKey && (e.key === 's' || e.key === 'S')) { e.preventDefault(); const p = document.getElementById(this.CONSTANTS.UI_IDS.SETTINGS_PANEL); p ? p.remove() : await this.showSettings(); }
             });
-
-            // 최초 실행 시 설정값 확인
-            const val = await GM_getValue(this.CONSTANTS.STORAGE_KEYS.THRESHOLD);
-            if (val === undefined) {
-                await GM_setValue(this.CONSTANTS.STORAGE_KEYS.THRESHOLD, 0);
-                await this.showSettings();
-            }
+            if (await GM_getValue(this.CONSTANTS.STORAGE_KEYS.THRESHOLD) === undefined) { await GM_setValue(this.CONSTANTS.STORAGE_KEYS.THRESHOLD, 0); await this.showSettings(); }
         }
     };
-
 
     /**
      * =================================================================
      * ========================== UI Module ============================
      * =================================================================
      * 설명: PC버전 UI를 모바일 친화적으로 변경하고, FilterModule의
-     *      변경사항을 UI에 동기화하는 역할을 담당합니다.
+     *      변경사항을 UI에 동기화하는 역할을 담당합니다. (v0.9의 안정적인 프록시 클릭 방식 채택)
      */
     const UIModule = {
         DATA_ATTR: 'data-custom-row-id',
         listMutationObserver: null,
 
         SELECTORS: {
-            LIST_WRAP: '.list_wrap',
+            LIST_WRAP: '.gall_list_wrap, .list_wrap',
             ORIGINAL_TABLE: 'table.gall_list',
             ORIGINAL_TBODY: '.gall_list tbody',
             ORIGINAL_POST_ITEM: 'tr.ub-content',
@@ -961,6 +543,37 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
             POST_ITEM: 'custom-post-item',
             BOTTOM_CONTROLS: 'custom-bottom-controls',
             UI_HIDDEN: 'filter-ui-hidden',
+        },
+
+        // UIModule 객체 내부의 proxyClick 함수입니다.
+
+        // UIModule 객체 내부의 proxyClick 함수입니다.
+
+        proxyClick(customItem, targetSelector, originalRow) {
+            customItem.addEventListener('click', (e) => {
+                const clickedElement = e.target;
+                
+                // 제목 링크 클릭 시 게시물로 이동
+                if (clickedElement.closest('a.post-title-link')) {
+                    const originalLink = originalRow.querySelector('.gall_tit a:not(.reply_numbox)'); // 댓글만 보기 링크는 제외하고 찾음
+                    if (originalLink) {
+                        originalLink.click(); 
+                    }
+                }
+                // ★★★ 핵심 수정: 댓글 수 클릭 시, 원본의 '댓글만 보기' 링크를 클릭
+                else if (clickedElement.closest('span.reply_num')) {
+                    e.preventDefault(); // 기본 동작 방지
+                    const originalReplyLink = originalRow.querySelector('a.reply_numbox');
+                    if (originalReplyLink) {
+                        originalReplyLink.click();
+                    }
+                }
+                // 작성자 닉네임 클릭 시 정보 팝업
+                else if (clickedElement.closest('.author')) {
+                    const originalAuthor = originalRow.querySelector('.gall_writer');
+                    if (originalAuthor) originalAuthor.click();
+                }
+            });
         },
 
         updateItemVisibility(originalRow, mirroredItem) {
@@ -982,9 +595,42 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
             if (originalRow.classList.contains('list_notice')) newItem.classList.add('notice');
             if (originalRow.classList.contains('gall_issue')) newItem.classList.add('concept');
 
-            const postTitle = document.createElement('div');
-            postTitle.className = 'post-title';
-            postTitle.innerHTML = titleContainer.innerHTML;
+            const postTitleDiv = document.createElement('div');
+            postTitleDiv.className = 'post-title';
+            
+            // ★★★ 핵심 수정: 제목 요소를 구조적으로 분리
+            const originalLink = titleContainer.querySelector('a');
+            const subjectSpan = titleContainer.querySelector('.gall_subject');
+            const replyNumSpan = titleContainer.querySelector('.reply_num');
+
+            // 말머리 [스포]
+            if (subjectSpan) {
+                postTitleDiv.appendChild(subjectSpan.cloneNode(true));
+            }
+
+            // 실제 제목 링크
+            if (originalLink) {
+                const newLink = document.createElement('a');
+                newLink.href = originalLink.href; // 링크 주소 복사
+                newLink.textContent = originalLink.textContent; // 텍스트만 복사
+                newLink.className = 'post-title-link'; // 클릭 이벤트를 위한 클래스 추가
+                
+                // 새 탭에서 열기 등을 위해 원본 링크의 target 속성도 복사
+                if (originalLink.target) {
+                    newLink.target = originalLink.target;
+                }
+
+                // 클릭 이벤트는 proxyClick에서 처리하므로 여기서는 preventDefault를 걸지 않습니다.
+                postTitleDiv.appendChild(newLink);
+            }
+
+            // 댓글 수 [4]
+            if (replyNumSpan) {
+                postTitleDiv.appendChild(replyNumSpan.cloneNode(true));
+            }
+
+            newItem.appendChild(postTitleDiv);
+
 
             const postMeta = document.createElement('div');
             postMeta.className = 'post-meta';
@@ -1001,7 +647,6 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
 
             postMeta.appendChild(authorSpan);
             postMeta.appendChild(statsSpan);
-            newItem.appendChild(postTitle);
             newItem.appendChild(postMeta);
 
             this.updateItemVisibility(originalRow, newItem);
@@ -1009,16 +654,16 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
             return newItem;
         },
 
-        createBottomControls() {
-            const gallTabs = document.querySelector(this.SELECTORS.GALL_TABS);
-            const pagination = document.querySelector(this.SELECTORS.PAGINATION);
-            const searchForm = document.querySelector(this.SELECTORS.SEARCH_FORM);
+        createBottomControls(listWrap) {
+            const gallTabs = listWrap.querySelector(this.SELECTORS.GALL_TABS);
+            const pagination = listWrap.querySelector(this.SELECTORS.PAGINATION);
+            const searchForm = listWrap.querySelector(this.SELECTORS.SEARCH_FORM);
 
+            // 요소가 하나라도 없으면 컨트롤을 생성하지 않음
             if (!gallTabs && !pagination && !searchForm) return null;
 
             const bottomControls = document.createElement('div');
             bottomControls.className = this.CUSTOM_CLASSES.BOTTOM_CONTROLS;
-            bottomControls.style.gap = '0';
 
             if (gallTabs) {
                 const buttonRow = document.createElement('div');
@@ -1038,14 +683,17 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
         transformList(listWrap) {
             if (this.listMutationObserver) this.listMutationObserver.disconnect();
 
+            // ★★★ 핵심 수정: 기존 커스텀 리스트와 숨겨진 테이블만 제거
             listWrap.querySelector(`.${this.CUSTOM_CLASSES.MOBILE_LIST}`)?.remove();
-            listWrap.querySelector(`.${this.CUSTOM_CLASSES.BOTTOM_CONTROLS}`)?.remove();
+            listWrap.querySelectorAll(`${this.SELECTORS.ORIGINAL_TABLE}.${this.CUSTOM_CLASSES.UI_HIDDEN}`).forEach(t => t.remove());
+            
+            // 현재 화면에 보이는 원본 테이블을 찾음 (페이지 이동 시 새로 생긴 테이블)
+            const originalTable = listWrap.querySelector(`${this.SELECTORS.ORIGINAL_TABLE}:not(.${this.CUSTOM_CLASSES.UI_HIDDEN})`);
+            if (!originalTable) return;
 
-            const originalTable = listWrap.querySelector(this.SELECTORS.ORIGINAL_TABLE);
-            const originalTbody = listWrap.querySelector(this.SELECTORS.ORIGINAL_TBODY);
-            if (!originalTable || !originalTbody) return;
+            const originalTbody = originalTable.querySelector(this.SELECTORS.ORIGINAL_TBODY);
+            if (!originalTbody) return;
 
-            const listFragment = document.createDocumentFragment();
             const newListContainer = document.createElement('div');
             newListContainer.className = this.CUSTOM_CLASSES.MOBILE_LIST;
 
@@ -1054,32 +702,38 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
                 row.setAttribute(this.DATA_ATTR, index);
                 const newItem = this.createMobileListItem(row, index);
                 if (newItem) {
+                    this.proxyClick(newItem, '.gall_tit a, .gall_writer', row);
                     newListContainer.appendChild(newItem);
                 }
             });
 
-            listFragment.appendChild(newListContainer);
-
-            const bottomControls = this.createBottomControls();
+            // ★★★ 핵심 수정: 하단 컨트롤의 존재 여부를 확인
+            let bottomControls = listWrap.querySelector(`.${this.CUSTOM_CLASSES.BOTTOM_CONTROLS}`);
             if (bottomControls) {
-                listFragment.appendChild(bottomControls);
+                // 이미 존재하면, 그 앞에 새 리스트를 삽입
+                listWrap.insertBefore(newListContainer, bottomControls);
+            } else {
+                // 존재하지 않으면 (최초 실행), 새로 만들어서 추가
+                listWrap.appendChild(newListContainer);
+                bottomControls = this.createBottomControls(listWrap);
+                if (bottomControls) {
+                    listWrap.appendChild(bottomControls);
+                }
             }
 
-            listWrap.appendChild(listFragment);
+            // 처리한 원본 테이블 숨기기
             originalTable.classList.add(this.CUSTOM_CLASSES.UI_HIDDEN);
 
+            // MutationObserver 재연결
             this.listMutationObserver = new MutationObserver(mutations => {
                 mutations.forEach(mutation => {
                     if (mutation.type === 'attributes' && (mutation.attributeName === 'style' || mutation.attributeName === 'class')) {
                         const originalRow = mutation.target;
                         if (!originalRow.matches(this.SELECTORS.ORIGINAL_POST_ITEM)) return;
-
                         const rowId = originalRow.getAttribute(this.DATA_ATTR);
                         if (rowId) {
                             const mirroredItem = newListContainer.querySelector(`.${this.CUSTOM_CLASSES.POST_ITEM}[${this.DATA_ATTR}='${rowId}']`);
-                            if (mirroredItem) {
-                                this.updateItemVisibility(originalRow, mirroredItem);
-                            }
+                            if (mirroredItem) this.updateItemVisibility(originalRow, mirroredItem);
                         }
                     }
                 });
@@ -1090,23 +744,16 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
                 attributeFilter: ['style', 'class'],
                 subtree: true
             });
-
-            console.log('[UI Module] List transformed and filter-sync observer attached.');
         },
 
         transformWritePage() {
             document.body.classList.add('is-write-page');
-            console.log('[UI Module] Write page transformed.');
-        },
-
-        refreshUI() {
-            const listWrap = document.querySelector(this.SELECTORS.LIST_WRAP);
-            if (listWrap) {
-                this.transformList(listWrap);
-            }
         },
 
         init() {
+            if (window.dcUiInitialized) return;
+            window.dcUiInitialized = true;
+
             if (!document.querySelector('meta[name="viewport"]')) {
                 const viewportMeta = document.createElement('meta');
                 viewportMeta.name = 'viewport';
@@ -1124,51 +771,50 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
             }
 
             const processAllLists = () => {
-                document.querySelectorAll(this.SELECTORS.LIST_WRAP + ':not([data-ui-transformed])').forEach(lw => {
+                document.querySelectorAll(this.SELECTORS.LIST_WRAP).forEach(lw => {
                     this.transformList(lw);
-                    lw.dataset.uiTransformed = 'true';
                 });
             };
 
             processAllLists();
 
             const observer = new MutationObserver((mutations) => {
+                let needsReprocessing = false;
                 for (const mutation of mutations) {
                     for (const node of mutation.addedNodes) {
                         if (node.nodeType === Node.ELEMENT_NODE) {
+                            if (node.matches(this.SELECTORS.ORIGINAL_TABLE) && node.closest(this.SELECTORS.LIST_WRAP)) {
+                                needsReprocessing = true;
+                                break;
+                            }
                             if (node.matches(this.SELECTORS.LIST_WRAP) || node.querySelector(this.SELECTORS.LIST_WRAP)) {
-                                processAllLists();
-                                return;
+                                needsReprocessing = true;
+                                break;
                             }
                         }
                     }
+                    if (needsReprocessing) break;
+                }
+
+                if (needsReprocessing) {
+                    observer.disconnect();
+                    processAllLists();
+                    observer.observe(document.body, { childList: true, subtree: true });
                 }
             });
             observer.observe(document.body, { childList: true, subtree: true });
-
-            document.addEventListener('dcFilterRefiltered', () => {
-                console.log('[UI Module] Filter script completion signal detected. Refreshing UI.');
-                this.refreshUI();
-            });
         }
     };
 
-// =================================================================
+    // =================================================================
     // ================ Script-Level Initializations ===================
     // =================================================================
-    // 스크립트 최상단에서 메뉴를 등록하여 Tampermonkey 팝업에 즉시 표시되도록 합니다.
     GM_registerMenuCommand('글댓합 설정하기', FilterModule.showSettings.bind(FilterModule));
     
-    /**
-     * =================================================================
-     * ======================= Main Controller =========================
-     * =================================================================
-     * 설명: 모든 모듈을 순서에 맞게 초기화하고 스크립트를 시작합니다.
-     */
     async function main() {
         console.log("[DC Filter+UI] Initializing...");
-        await FilterModule.init(); // 1. 필터 모듈을 먼저 초기화합니다.
-        UIModule.init();          // 2. 필터 준비 후 UI 모듈을 초기화합니다.
+        await FilterModule.init();
+        UIModule.init();
         console.log("[DC Filter+UI] Initialization complete.");
     }
 
@@ -1177,5 +823,14 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
     } else {
         main();
     }
+    
+    window.addEventListener('pageshow', function(event) {
+        if (event.persisted) {
+            console.log("[DC Filter+UI] Page loaded from bfcache. Forcing reload for UI consistency.");
+            // bfcache로 페이지 로드 시 UI 상태가 꼬일 수 있으므로, 안정성을 위해 새로고침
+            location.reload();
+        }
+    });
 
+    
 })();
