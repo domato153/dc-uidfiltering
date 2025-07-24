@@ -498,37 +498,61 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
             ratioMinInput.addEventListener('keydown', enterKeySave);
             ratioMaxInput.addEventListener('keydown', enterKeySave);
 
-            let isDragging = false, offsetX, offsetY;
-            div.addEventListener('mousedown', function(e) {
-                if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON' || e.target.tagName === 'LABEL' || e.target.id === FilterModule.CONSTANTS.UI_IDS.CLOSE_BUTTON) return;
-                isDragging = true;
-                const rect = div.getBoundingClientRect();
-                if (div.style.transform !== 'none') {
-                    div.style.transform = 'none';
-                    div.style.left = `${rect.left}px`;
-                    div.style.top = `${rect.top}px`;
-                }
-                offsetX = e.clientX - rect.left;
-                offsetY = e.clientY - rect.top;
-                document.addEventListener('mousemove', onMouseMove);
-                document.addEventListener('mouseup', onMouseUp, { once: true });
-            });
+        // --- 드래그 이동 로직 (PC 마우스 + 모바일 터치 지원) ---
+        let isDragging = false, offsetX, offsetY;
 
-            function onMouseMove(e) {
-                if (!isDragging) return;
-                e.preventDefault();
-                const rect = div.getBoundingClientRect();
-                let newX = e.clientX - offsetX;
-                let newY = e.clientY - offsetY;
-                newX = Math.max(0, Math.min(newX, window.innerWidth - rect.width));
-                newY = Math.max(0, Math.min(newY, window.innerHeight - rect.height));
-                div.style.left = `${newX}px`;
-                div.style.top = `${newY}px`;
+        const onDragStart = (e) => {
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON' || e.target.tagName === 'LABEL' || e.target.id === FilterModule.CONSTANTS.UI_IDS.CLOSE_BUTTON) return;
+            
+            isDragging = true;
+            
+            const rect = div.getBoundingClientRect();
+            if (div.style.transform !== 'none') {
+                div.style.transform = 'none';
+                div.style.left = `${rect.left}px`;
+                div.style.top = `${rect.top}px`;
             }
-            function onMouseUp() {
-                isDragging = false;
-                document.removeEventListener('mousemove', onMouseMove);
-            }
+            
+            const clientX = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
+            const clientY = e.type === 'touchstart' ? e.touches[0].clientY : e.clientY;
+
+            offsetX = clientX - rect.left;
+            offsetY = clientY - rect.top;
+
+            document.addEventListener('mousemove', onDragMove);
+            document.addEventListener('touchmove', onDragMove, { passive: false });
+            document.addEventListener('mouseup', onDragEnd, { once: true });
+            document.addEventListener('touchend', onDragEnd, { once: true });
+        };
+
+        const onDragMove = (e) => {
+            if (!isDragging) return;
+            e.preventDefault(); // 스크롤 방지
+            
+            const rect = div.getBoundingClientRect();
+            const clientX = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
+            const clientY = e.type === 'touchmove' ? e.touches[0].clientY : e.clientY;
+
+            let newX = clientX - offsetX;
+            let newY = clientY - offsetY;
+
+            newX = Math.max(0, Math.min(newX, window.innerWidth - rect.width));
+            newY = Math.max(0, Math.min(newY, window.innerHeight - rect.height));
+            
+            div.style.left = `${newX}px`;
+            div.style.top = `${newY}px`;
+        };
+
+        const onDragEnd = () => {
+            isDragging = false;
+            document.removeEventListener('mousemove', onDragMove);
+            document.removeEventListener('touchmove', onDragMove);
+            // mouseup, touchend는 { once: true } 옵션으로 자동 제거됨
+        };
+
+        div.addEventListener('mousedown', onDragStart);
+        div.addEventListener('touchstart', onDragStart);
+        // --- 드래그 이동 로직 끝 ---
 
             saveButton.onclick = async () => {
                 saveButton.disabled = true;
