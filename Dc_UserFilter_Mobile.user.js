@@ -1,9 +1,9 @@
 // ==UserScript==
-// @name         DC_UserFilter_Mobile_v1.0.0
+// @name         DC_UserFilter_Mobile_v1.0.1
 // @namespace    http://tampermonkey.net/
-// @version      1.0.0
-// @description  유저 필터링 기능과 PC-모바일 UI 개선 기능을 함께 제공합니다. 
-// @author       domato153 
+// @version      1.0.1
+// @description  유저 필터링 기능과 PC-모바일 UI 개선 기능을 함께 제공합니다. (안정성 개선)
+// @author       domato153
 // @match        https://gall.dcinside.com/*
 // @grant        GM_setValue
 // @grant        GM_getValue
@@ -26,10 +26,10 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
     // =================================================================
     GM_addStyle(`
         /* --- 숨김 처리 (정교하게 재조정) --- */
-        table.gall_list.filter-ui-hidden { 
-            visibility: hidden !important; position: absolute !important; 
-            top: -9999px !important; left: -9999px !important; 
-            height: 0 !important; overflow: hidden !important; 
+        table.gall_list.filter-ui-hidden {
+            visibility: hidden !important; position: absolute !important;
+            top: -9999px !important; left: -9999px !important;
+            height: 0 !important; overflow: hidden !important;
         }
 
         #dchead, #dc_header, #dc_gnb, .adv_area, .right_content, .dc_all, .dcfoot, .dc_ft, .info_policy,.copyrigh, .ad_bottom_list, .bottom_paging_box + div, .minor_intro_area, .intro_bg, .fixed_write_btn, .bottom_movebox, h1.dc_logo, .area_links, .zzbang_div, .my_zzal, .my_dccon, .issue_contentbox, #gall_top_recom.concept_wrap,
@@ -44,18 +44,18 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
         html, body { overflow-x: hidden !important; }
 
         /* 모든 주요 컨테이너의 너비/여백 초기화 */
-        html, body, #wrap, #top, .dcheader, #gnb_bar, .gnb, #container, .wrap_inner, 
-        .list_array_option, .newvisit_history, .left_content, .center_box, 
-        .view_content_wrap, .gall_content, .gall_comment { 
-            width: 100vw !important; min-width: 0 !important; float: none !important; 
-            position: relative !important; box-sizing: border-box !important; 
-            margin: 0 !important; padding: 0 !important; 
+        html, body, #wrap, #top, .dcheader, #gnb_bar, .gnb, #container, .wrap_inner,
+        .list_array_option, .newvisit_history, .left_content, .center_box,
+        .view_content_wrap, .gall_content, .gall_comment {
+            width: 100vw !important; min-width: 0 !important; float: none !important;
+            position: relative !important; box-sizing: border-box !important;
+            margin: 0 !important; padding: 0 !important;
         }
         #container { padding-top: 5px; }
         .dcheader.typea, .dcheader.typea .dcheader_info { min-width: 0 !important; width: 100% !important; height: auto !important; }
         .dcheader .dcheader_info { display: flex !important; justify-content: center !important; align-items: center !important; float: none !important; padding: 8px 15px !important; }
         .dcheader .top_search, .dcheader .gall_search_form { width: 100% !important; }
-        
+
         .list_array_option {
             padding: 10px 15px !important; background: #fff; display: flex !important;
             align-items: center !important; flex-wrap: wrap !important;
@@ -71,10 +71,10 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
             padding-top: 18px; padding-bottom: 18px;
         }
 
-        .center_box { 
-            background: #fff; padding: 8px 15px !important; margin-top: 1px !important; 
-            display: flex !important; justify-content: center !important; align-items: center !important; 
-            flex-wrap: wrap; gap: 5px; 
+        .center_box {
+            background: #fff; padding: 8px 15px !important; margin-top: 1px !important;
+            display: flex !important; justify-content: center !important; align-items: center !important;
+            flex-wrap: wrap; gap: 5px;
         }
 
         /* --- 커스텀 모바일 리스트 UI --- */
@@ -99,7 +99,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
         .post-meta .author .gall_writer { display: inline !important; padding: 0 !important; text-align: left !important; border: none !important; }
         .post-meta .author .nickname, .post-meta .author .ip { color: #555 !important; }
         .post-meta .stats { display: flex; gap: 10px; }
-        
+
         /* --- 커스텀 하단 컨트롤 UI (원본 이동 방식) --- */
         .custom-bottom-controls { display: flex; flex-direction: column; align-items: center; padding: 15px; background: #fff; }
         .custom-bottom-controls form[name="frmSearch"] {
@@ -160,9 +160,9 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
         /* 데스크탑 뷰포트 복원 */
         @media screen and (min-width: 1161px) {
             html, body, #wrap, #top { width: 100% !important; overflow-x: auto !important; }
-            #wrap, #top, .dcheader, #gnb_bar, .gnb, #container, .wrap_inner, .left_content, .center_content, .center_box, 
-            .view_content_wrap, .gall_content, .gall_comment { 
-                width: 1160px !important; margin: 0 auto !important; 
+            #wrap, #top, .dcheader, #gnb_bar, .gnb, #container, .wrap_inner, .left_content, .center_content, .center_box,
+            .view_content_wrap, .gall_content, .gall_comment {
+                width: 1160px !important; margin: 0 auto !important;
             }
             #container { margin-top: 10px !important; }
             .center_box { width: auto !important; margin: 0 !important; padding: 0 !important; border: none !important; background: none !important; display: block !important; flex-wrap: nowrap; }
@@ -175,7 +175,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
      * =================================================================
      * ======================== Filter Module ==========================
      * =================================================================
-     * 설명: 유저 글/댓글, IP 기반 필터링 로직을 담당합니다. (v1.0.0의 압축된 코드 유지)
+     * 설명: 유저 글/댓글, IP 기반 필터링 로직을 담당합니다. (v1.0.1의 압축된 코드 유지)
      */
     const FilterModule = {
         TELECOM: [
@@ -381,9 +381,28 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
                 const xhr = new XMLHttpRequest();
                 xhr.open('POST', this.CONSTANTS.API.USER_INFO, true); xhr.withCredentials = true;
                 xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded; charset=UTF-8'); xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+                
+                // --- 수정된 부분 시작 ---
+                xhr.timeout = 5000; // 5초 타임아웃 설정
+                xhr.ontimeout = () => {
+                    console.warn(`DCinside User Filter: User info request for UID ${uid} timed out.`);
+                    resolve(null);
+                };
+                // --- 수정된 부분 끝 ---
+
                 xhr.onload = () => {
-                    const [post, comment] = xhr.responseText.split(',').map(x => parseInt(x, 10));
-                    if (!isNaN(post) && !isNaN(comment)) { const d = { sum: post + comment, post, comment }; window._dcinside_user_sum_cache[uid] = d; resolve(d); } else { resolve(null); }
+                    if (xhr.status >= 200 && xhr.status < 300) {
+                        const [post, comment] = xhr.responseText.split(',').map(x => parseInt(x, 10));
+                        if (!isNaN(post) && !isNaN(comment)) {
+                            const d = { sum: post + comment, post, comment };
+                            window._dcinside_user_sum_cache[uid] = d;
+                            resolve(d);
+                        } else {
+                            resolve(null);
+                        }
+                    } else {
+                        resolve(null);
+                    }
                 };
                 xhr.onerror = () => resolve(null);
                 xhr.send(`ci_t=${encodeURIComponent(ci)}&user_id=${encodeURIComponent(uid)}`);
@@ -522,7 +541,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
      * ========================== UI Module ============================
      * =================================================================
      * 설명: PC버전 UI를 모바일 친화적으로 변경하고, FilterModule의
-     *      변경사항을 UI에 동기화하는 역할을 담당합니다. (v0.9의 안정적인 프록시 클릭 방식 채택)
+     * 변경사항을 UI에 동기화하는 역할을 담당합니다. (v0.9의 안정적인 프록시 클릭 방식 채택)
      */
     const UIModule = {
         DATA_ATTR: 'data-custom-row-id',
@@ -545,24 +564,20 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
             UI_HIDDEN: 'filter-ui-hidden',
         },
 
-        // UIModule 객체 내부의 proxyClick 함수입니다.
-
-        // UIModule 객체 내부의 proxyClick 함수입니다.
-
         proxyClick(customItem, targetSelector, originalRow) {
             customItem.addEventListener('click', (e) => {
                 const clickedElement = e.target;
-                
+
                 // 제목 링크 클릭 시 게시물로 이동
                 if (clickedElement.closest('a.post-title-link')) {
-                    const originalLink = originalRow.querySelector('.gall_tit a:not(.reply_numbox)'); // 댓글만 보기 링크는 제외하고 찾음
+                    const originalLink = originalRow.querySelector('.gall_tit a:not(.reply_numbox)');
                     if (originalLink) {
-                        originalLink.click(); 
+                        originalLink.click();
                     }
                 }
-                // ★★★ 핵심 수정: 댓글 수 클릭 시, 원본의 '댓글만 보기' 링크를 클릭
+                // 댓글 수 클릭 시, 원본의 '댓글만 보기' 링크를 클릭
                 else if (clickedElement.closest('span.reply_num')) {
-                    e.preventDefault(); // 기본 동작 방지
+                    e.preventDefault();
                     const originalReplyLink = originalRow.querySelector('a.reply_numbox');
                     if (originalReplyLink) {
                         originalReplyLink.click();
@@ -597,40 +612,32 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
 
             const postTitleDiv = document.createElement('div');
             postTitleDiv.className = 'post-title';
-            
-            // ★★★ 핵심 수정: 제목 요소를 구조적으로 분리
+
             const originalLink = titleContainer.querySelector('a');
             const subjectSpan = titleContainer.querySelector('.gall_subject');
             const replyNumSpan = titleContainer.querySelector('.reply_num');
 
-            // 말머리 [스포]
             if (subjectSpan) {
                 postTitleDiv.appendChild(subjectSpan.cloneNode(true));
             }
 
-            // 실제 제목 링크
             if (originalLink) {
                 const newLink = document.createElement('a');
-                newLink.href = originalLink.href; // 링크 주소 복사
-                newLink.textContent = originalLink.textContent; // 텍스트만 복사
-                newLink.className = 'post-title-link'; // 클릭 이벤트를 위한 클래스 추가
-                
-                // 새 탭에서 열기 등을 위해 원본 링크의 target 속성도 복사
+                newLink.href = originalLink.href;
+                newLink.textContent = originalLink.textContent;
+                newLink.className = 'post-title-link';
+
                 if (originalLink.target) {
                     newLink.target = originalLink.target;
                 }
-
-                // 클릭 이벤트는 proxyClick에서 처리하므로 여기서는 preventDefault를 걸지 않습니다.
                 postTitleDiv.appendChild(newLink);
             }
 
-            // 댓글 수 [4]
             if (replyNumSpan) {
                 postTitleDiv.appendChild(replyNumSpan.cloneNode(true));
             }
 
             newItem.appendChild(postTitleDiv);
-
 
             const postMeta = document.createElement('div');
             postMeta.className = 'post-meta';
@@ -659,7 +666,6 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
             const pagination = listWrap.querySelector(this.SELECTORS.PAGINATION);
             const searchForm = listWrap.querySelector(this.SELECTORS.SEARCH_FORM);
 
-            // 요소가 하나라도 없으면 컨트롤을 생성하지 않음
             if (!gallTabs && !pagination && !searchForm) return null;
 
             const bottomControls = document.createElement('div');
@@ -683,11 +689,9 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
         transformList(listWrap) {
             if (this.listMutationObserver) this.listMutationObserver.disconnect();
 
-            // ★★★ 핵심 수정: 기존 커스텀 리스트와 숨겨진 테이블만 제거
             listWrap.querySelector(`.${this.CUSTOM_CLASSES.MOBILE_LIST}`)?.remove();
             listWrap.querySelectorAll(`${this.SELECTORS.ORIGINAL_TABLE}.${this.CUSTOM_CLASSES.UI_HIDDEN}`).forEach(t => t.remove());
-            
-            // 현재 화면에 보이는 원본 테이블을 찾음 (페이지 이동 시 새로 생긴 테이블)
+
             const originalTable = listWrap.querySelector(`${this.SELECTORS.ORIGINAL_TABLE}:not(.${this.CUSTOM_CLASSES.UI_HIDDEN})`);
             if (!originalTable) return;
 
@@ -707,13 +711,10 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
                 }
             });
 
-            // ★★★ 핵심 수정: 하단 컨트롤의 존재 여부를 확인
             let bottomControls = listWrap.querySelector(`.${this.CUSTOM_CLASSES.BOTTOM_CONTROLS}`);
             if (bottomControls) {
-                // 이미 존재하면, 그 앞에 새 리스트를 삽입
                 listWrap.insertBefore(newListContainer, bottomControls);
             } else {
-                // 존재하지 않으면 (최초 실행), 새로 만들어서 추가
                 listWrap.appendChild(newListContainer);
                 bottomControls = this.createBottomControls(listWrap);
                 if (bottomControls) {
@@ -721,10 +722,8 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
                 }
             }
 
-            // 처리한 원본 테이블 숨기기
             originalTable.classList.add(this.CUSTOM_CLASSES.UI_HIDDEN);
 
-            // MutationObserver 재연결
             this.listMutationObserver = new MutationObserver(mutations => {
                 mutations.forEach(mutation => {
                     if (mutation.type === 'attributes' && (mutation.attributeName === 'style' || mutation.attributeName === 'class')) {
@@ -810,7 +809,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
     // ================ Script-Level Initializations ===================
     // =================================================================
     GM_registerMenuCommand('글댓합 설정하기', FilterModule.showSettings.bind(FilterModule));
-    
+
     async function main() {
         console.log("[DC Filter+UI] Initializing...");
         await FilterModule.init();
@@ -823,14 +822,12 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
     } else {
         main();
     }
-    
+
     window.addEventListener('pageshow', function(event) {
         if (event.persisted) {
             console.log("[DC Filter+UI] Page loaded from bfcache. Forcing reload for UI consistency.");
-            // bfcache로 페이지 로드 시 UI 상태가 꼬일 수 있으므로, 안정성을 위해 새로고침
             location.reload();
         }
     });
 
-    
 })();
