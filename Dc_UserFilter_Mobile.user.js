@@ -1,9 +1,9 @@
 // ==UserScript==
 // @name         DC_UserFilter_Mobile
 // @namespace    http://tampermonkey.net/
-// @version      2.2.0
-// @description  유저 필터링, UI 개선 / 모바일(pc도 사용가능 )
-// @author       domato153 (refactored by AI)
+// @version      2.2.1
+// @description  유저 필터링, UI 개선 
+// @author       domato153 (Refactored by Assistant)
 // @match        https://gall.dcinside.com/*
 // @grant        GM_setValue
 // @grant        GM_getValue
@@ -29,19 +29,20 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
     let isUiInitialized = false;
     let activeShortcutObject = null; // [v2.1 추가] 현재 활성화된 단축키 객체
 
+
+     // =================================================================
+    // ======================== UI Module Style ========================
     // =================================================================
-    // ================= FOUC(깜빡임) 방지 로직 (v2.0) ==================
-    // =================================================================
-    // @run-at document-start 로 스크립트가 먼저 실행되게 한 후,
-    // DOM이 로드되기 전에 body를 숨겨 원본 UI가 표시되는 것을 막습니다.
     GM_addStyle(`
-        /* 스크립트 로딩 중에는 body를 완전히 숨겨 깜빡임을 원천 차단 */
-        html.fouc-block body {
+        /* [v2.2.3 최종 수정] JS 의존성을 제거한 선언적 FOUC 방지 (새로고침 깜빡임 완벽 해결) */
+        /* 스크립트 UI 준비가 완료되기 전까지 body를 숨겨 원본 UI 노출을 원천 차단합니다. */
+        body:not(.script-ui-ready) {
             visibility: hidden !important;
         }
-        /* 사용자에게 스크립트가 작동 중임을 알리는 로딩 인디케이터 */
-        html.fouc-block::before {
+        /* body가 숨겨진 상태에서도 로딩 인디케이터는 표시되도록 합니다. */
+        body:not(.script-ui-ready)::before {
             content: '스크립트 UI 적용 중...';
+            visibility: visible !important; /* body가 hidden이어도 로딩 문구는 보이도록 설정 */
             position: fixed;
             top: 50%;
             left: 50%;
@@ -55,15 +56,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             box-shadow: 0 0 15px rgba(0,0,0,0.2);
             z-index: 2147483647; /* Max z-index */
         }
-    `);
-    // 즉시 클래스를 추가하여 위 스타일이 적용되게 함
-    document.documentElement.classList.add('fouc-block');
 
-
-    // =================================================================
-    // ======================== UI Module Style ========================
-    // =================================================================
-    GM_addStyle(`
         /* [수정] FOUC(화면 깜빡임) 방지 및 원본 테이블 숨김 강화 */
         table.gall_list {
             visibility: hidden !important; position: absolute !important;
@@ -241,79 +234,52 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
         .custom-post-item.concept + .custom-post-item:not(.notice):not(.concept) { border-top: 1px solid #4263eb !important; }
         .custom-post-item { display: block; padding: 15px 18px; border-bottom: 1px solid #e6e6e6; text-decoration: none; color: #333; }
         .custom-post-item:hover { background-color: #f8f9fa; }
-        /* [수정됨] .post-title의 cursor:pointer 제거 */
         .custom-post-item .author { cursor: pointer; }
         .custom-post-item.notice, .custom-post-item.concept { background-color: #f8f9fa; position: relative; padding-left: 60px; }
         .custom-post-item.notice::before { content: '공지'; background-color: #e03131; position: absolute; left: 18px; top: 50%; transform: translateY(-50%); font-size: 13px; font-weight: bold; color: #fff; padding: 4px 9px; border-radius: 4px; }
         .custom-post-item.concept::before { content: '개념'; background-color: #4263eb; position: absolute; left: 18px; top: 50%; transform: translateY(-50%); font-size: 13px; font-weight: bold; color: #fff; padding: 4px 9px; border-radius: 4px; }
-        .post-title { font-size: 17px !important; font-weight: 500; line-height: 1.5; color: #333; margin-bottom: 10px; word-break: break-all; }
-        .post-title a { color: inherit; text-decoration: none; display: flex; align-items: center; }
-        .post-title a:visited { color: #770088; }
-        .post-title .gall_subject { color: #9b6b43 !important; font-weight: bold !important; margin-right: 6px; }
-        .post-title .reply_num { color: #4263eb !important; font-weight: bold !important; margin-left: 6px; cursor: pointer; }
-        .post-meta { display: flex; justify-content: space-between; align-items: center; font-size: 13px !important; color: #888; }
-        .post-meta .author { display: flex; align-items: center; }
-        .post-meta .author .gall_writer { display: inline !important; padding: 0 !important; text-align: left !important; border: none !important; }
-        .post-meta .author .nickname, .post-meta .author .ip { color: #555 !important; }
-        .post-meta .stats { display: flex; gap: 10px; }
-
-        /* 게시글 목록: 제목 (2배 크기 조정 및 우선순위 문제 해결) */
-        .custom-post-item .post-title {
-            line-height: 1.5 !important; /* 폰트 크기에 맞춰 줄 간격 조정 */
+        
+        /* [v2.2.0 이식] 게시글 목록: 제목, 말머리, 댓글수 */
+        .post-title { 
+            font-weight: 500; 
+            color: #333; 
+            margin-bottom: 10px; 
+            word-break: break-all;
+            line-height: 1.5 !important;
             display: flex !important;
             align-items: center !important;
         }
-        /* [핵심 수정] 실제 텍스트를 담고 있는 a 태그를 직접 타겟팅하여 폰트 크기를 강제 적용 */
-        .custom-post-item .post-title a {
-            font-size: 24px !important;
+        .post-title a { 
+            color: inherit; 
+            text-decoration: none; 
+            display: flex; 
+            align-items: center; 
+            font-size: 24px !important; /* 폰트 크기 키움 */
         }
-        /* [레이아웃 수정] 댓글 수가 제목 바로 옆에 붙도록 margin 추가 */
-        .custom-post-item .post-title .reply_num {
-            margin-left: 8px !important; /* 제목과의 간격 */
-            flex-shrink: 0 !important;   /* 공간이 좁아져도 줄바꿈 방지 */
-        }
-
-        /* 게시글 목록: 닉네임 (기존 크기 유지) */
-        .custom-post-item .author .nickname {
-            font-size: 15px !important;
-            font-weight: 500 !important;
-        }
-
-        /* 게시글 목록: 조회수, 추천수, 날짜 (1.7배) */
-        .post-meta .stats {
-            font-size: 15px !important;
-        }
-
-        /* [추가] 게시글 본문: 제목 (1.7배) */
-        .view_content_wrap .title_subject {
-            font-size: 21px !important;
-            font-weight: 500 !important;
-        }
-
-        /* 게시글 본문: 내용 (2.5배) */
-        .gallview_contents {
-            font-size: 26px !important; /* 2.5배 효과로 크게 조정 */
-            line-height: 1.9 !important; /* 가독성을 위해 줄 간격도 조정 */
+        .post-title a:visited { color: #770088; }
+        .post-title .gall_subject { color: #9b6b43 !important; font-weight: bold !important; margin-right: 6px; }
+        .post-title .reply_num { 
+            color: #4263eb !important; 
+            font-weight: bold !important; 
+            margin-left: 8px !important; /* 간격 조정 */
+            cursor: pointer; 
+            flex-shrink: 0 !important;
         }
         
-        /* [폰트 크기 상속 강제] 본문 내 자식 요소가 부모의 폰트 스타일을 따르도록 함 */
-        .gallview_contents p,
-        .gallview_contents div,
-        .gallview_contents span {
-            font-size: inherit !important;
-            line-height: inherit !important;
-            color: inherit !important; /* 글자 색상도 상속받도록 추가 */
+        /* [v2.2.0 이식] 게시글 목록: 작성자, 통계 */
+        .post-meta { display: flex; justify-content: space-between; align-items: center; color: #888; }
+        .post-meta .author { display: flex; align-items: center; }
+        .post-meta .author .gall_writer { display: inline !important; padding: 0 !important; text-align: left !important; border: none !important; }
+        .post-meta .author .nickname { 
+            color: #555 !important;
+            font-size: 15px !important; /* 폰트 크기 키움 */
+            font-weight: 500 !important;
         }
-
-        /* 댓글: 내용 (1.7배) */
-        .comment_box .usertxt {
-            font-size: 18px !important;
-            line-height: 1.7 !important;
-        }
-
-        /* 댓글: 작성 시간 (1.7배) */
-        .comment_box .date_time {
-            font-size: 15px !important;
+        .post-meta .author .ip { color: #555 !important; }
+        .post-meta .stats { 
+            display: flex; 
+            gap: 10px;
+            font-size: 15px !important; /* 폰트 크기 키움 */
         }
 
         /* --- 커스텀 하단 컨트롤 UI --- */
@@ -332,44 +298,51 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
         /* --- 글 보기/댓글 UI --- */
         .gall_content, .gall_tit_box, .gall_writer_info, .gallview_contents, .btn_recommend_box, .view_bottom, .gall_comment, .comment_box { background: #fff !important; padding: 15px !important; border-bottom: 1px solid #ddd; }
         .gallview_contents img, .gallview_contents video { max-width: 100% !important; height: auto !important; box-sizing: border-box; }
-        .cmt_write_box { display: flex !important; flex-wrap: wrap !important; gap: 10px !important; padding: 10px !important; }
-        .cmt_write_box .fl { float: none !important; flex-basis: 200px; flex-shrink: 1; min-width: 180px; }
-        .cmt_write_box .fl .usertxt { display: flex; flex-direction: column; gap: 5px; }
-        .cmt_write_box .fl .usertxt input { width: 100% !important; box-sizing: border-box; }
-        .cmt_write_box .cmt_txt_cont { flex: 1; min-width: 250px; padding: 0 !important; }
-        .cmt_write_box .cmt_txt_cont textarea { width: 100% !important; height: 85px !important; box-sizing: border-box !important; resize: vertical; }
-        .cmt_write_box .cmt_cont_bott { width: 100%; padding: 0 !important; }
-        .cmt_write_box .cmt_btn_bot { display: flex; justify-content: flex-end; }
         
-        /* [해결] 글 내용의 추천 버튼 영역에 불필요한 닉콘이 표시되는 문제 수정 */
+        /* [v2.2.0 이식] 글 본문 가독성 개선 */
+        .view_content_wrap .title_subject {
+            font-size: 21px !important;
+            font-weight: 500 !important;
+        }
+        .gallview_contents {
+            font-size: 26px !important;
+            line-height: 1.9 !important;
+        }
+        .gallview_contents p,
+        .gallview_contents div,
+        .gallview_contents span {
+            font-size: inherit !important;
+            line-height: inherit !important;
+            color: inherit !important;
+        }
+
+        /* [v2.2.0 이식] 댓글 가독성 개선 */
+        .comment_box .usertxt {
+            font-size: 18px !important;
+            line-height: 1.7 !important;
+        }
+        .comment_box .date_time {
+            font-size: 15px !important;
+        }
+        
+        /* [v2.2.0 이식] 추천/비추천 버튼 UI 개선 */
         .btn_recommend_box .writer_nikcon,
         .btn_recommend_box .font_blue.smallnum {
             display: none !important;
         }
-
-        @media screen and (max-width: 600px) {
-            .cmt_write_box { flex-direction: column !important; }
-            .cmt_write_box .fl, .cmt_write_box .cmt_txt_cont { flex-basis: auto; width: 100% !important; min-width: 100%; }
-        }
-        
-        /* [최종 해결] Flexbox를 사용하여 추천/비추천 버튼 그룹 전체를 재구성 및 중앙 정렬 */
         .btn_recommend_box {
             display: flex !important;
-            flex-wrap: wrap !important; /* 화면이 좁으면 버튼이 다음 줄로 넘어가도록 설정 */
-            justify-content: center !important; /* 모든 버튼을 중앙 정렬 */
-            align-items: center !important; /* 모든 버튼을 수직 중앙 정렬 */
-            gap: 5px 8px !important; /* 버튼들 사이의 수직/수평 간격 조정 */
-            border: none !important; /* 기존 테두리 제거 */
-            padding: 10px !important; /* 내부 여백 재설정 */
+            flex-wrap: wrap !important; 
+            justify-content: center !important; 
+            align-items: center !important;
+            gap: 5px 8px !important; 
+            border: none !important;
+            padding: 10px !important;
         }
-
-        /* 중간 컨테이너들의 레이아웃 스타일 초기화 */
         .btn_recommend_box .inner_box,
         .btn_recommend_box .recom_bottom_box {
-            display: contents !important; /* [핵심] 자식 요소들을 부모의 flex 컨테이너에 직접 속하게 만듦 */
+            display: contents !important;
         }
-
-        /* 개별 버튼 그룹(추천/비추천)의 스타일 초기화 */
         .btn_recommend_box .inner_box > .inner {
             display: inline-flex !important;
             align-items: center !important;
@@ -379,8 +352,6 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             border-radius: 5px;
             background-color: #f8f9fa;
         }
-
-        /* 모든 버튼과 숫자들의 불필요한 스타일 초기화 */
         .btn_recommend_box button,
         .btn_recommend_box .up_num_box,
         .btn_recommend_box .down_num_box {
@@ -392,14 +363,25 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             height: auto !important;
             background: none !important;
         }
-
-        /* 추천/비추천 숫자 스타일 조정 */
         .btn_recommend_box .up_num,
         .btn_recommend_box .down_num {
             font-size: 16px !important;
             font-weight: bold !important;
             color: #333 !important;
-        }        
+        }
+        
+        .cmt_write_box { display: flex !important; flex-wrap: wrap !important; gap: 10px !important; padding: 10px !important; }
+        .cmt_write_box .fl { float: none !important; flex-basis: 200px; flex-shrink: 1; min-width: 180px; }
+        .cmt_write_box .fl .usertxt { display: flex; flex-direction: column; gap: 5px; }
+        .cmt_write_box .fl .usertxt input { width: 100% !important; box-sizing: border-box; }
+        .cmt_write_box .cmt_txt_cont { flex: 1; min-width: 250px; padding: 0 !important; }
+        .cmt_write_box .cmt_txt_cont textarea { width: 100% !important; height: 85px !important; box-sizing: border-box !important; resize: vertical; }
+        .cmt_write_box .cmt_cont_bott { width: 100%; padding: 0 !important; }
+        .cmt_write_box .cmt_btn_bot { display: flex; justify-content: flex-end; }
+        @media screen and (max-width: 600px) {
+            .cmt_write_box { flex-direction: column !important; }
+            .cmt_write_box .fl, .cmt_write_box .cmt_txt_cont { flex-basis: auto; width: 100% !important; min-width: 100%; }
+        }
 
         /* [개선] --- 글쓰기 페이지 전용 스타일 --- */
         .is-write-page #container { background: #fff !important; padding: 0 !important; }
@@ -987,27 +969,40 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             BOTTOM_CONTROLS: 'custom-bottom-controls',
         },
 
+        // [v2.2.0 수정] 클릭 동작 개선 (사용자 요청 반영)
         proxyClick(customItem, originalRow) {
             customItem.addEventListener('click', (e) => {
                 const clickedElement = e.target;
 
-                if (clickedElement.closest('a.post-title-link')) {
-                    // 글자 링크를 직접 클릭한 경우, 브라우저가 처리하도록 둡니다.
-                    return;
-                } else if (clickedElement.closest('span.reply_num')) {
-                    // 댓글 수를 클릭한 경우
-                    e.preventDefault();
+                // 1. 댓글 수('span.reply_num')를 클릭한 경우
+                // 원본 HTML의 댓글 보기 링크('a.reply_numbox')를 찾아 클릭 이벤트를 실행합니다.
+                if (clickedElement.closest('span.reply_num')) {
+                    e.preventDefault(); // 혹시 모를 기본 동작을 막습니다.
                     const originalReplyLink = originalRow.querySelector('a.reply_numbox');
-                    if (originalReplyLink) originalReplyLink.click();
-                } else if (clickedElement.closest('.author')) {
-                    // 작성자(닉네임)를 클릭한 경우
+                    if (originalReplyLink) {
+                        originalReplyLink.click();
+                    }
+                    return; // 댓글 클릭 처리가 끝났으므로 함수를 종료합니다.
+                }
+
+                // 2. 작성자 영역('.author')을 클릭한 경우
+                // 기존 기능을 유지하여 원본의 작성자(.gall_writer) 클릭을 실행합니다.
+                if (clickedElement.closest('.author')) {
                     e.preventDefault();
                     const originalAuthor = originalRow.querySelector('.gall_writer');
-                    if (originalAuthor) originalAuthor.click();
-                } else {
-                    // 그 외의 빈 공간을 클릭한 경우 아무 동작도 하지 않습니다.
-                    e.preventDefault();
+                    if (originalAuthor) {
+                        originalAuthor.click();
+                    }
+                    return; // 작성자 클릭 처리가 끝났으므로 함수를 종료합니다.
                 }
+
+                // 3. 제목 링크('a.post-title-link')를 클릭한 경우
+                // 이 경우에는 아무런 코드도 실행하지 않습니다.
+                // 브라우저가 <a> 태그의 href 속성을 따라가는 기본 동작을 그대로 수행하도록 둡니다.
+
+                // 4. 그 외의 영역(예: 제목의 빈 공간)을 클릭한 경우
+                // 위 조건들에 해당하지 않으면 아무런 동작도 하지 않고 이벤트가 종료됩니다.
+                // 기존의 '.post-title' 전체를 감지하던 로직을 제거하여 이 동작을 구현했습니다.
             });
         },
 
@@ -1044,8 +1039,8 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
                 newLink.href = originalLink.href;
                 newLink.className = 'post-title-link';
                 if (originalLink.target) newLink.target = originalLink.target;
-
-                // [v2.1.1 수정] innerHTML 대신 자식 노드를 직접 복제하여 아이콘(em) 누락 방지
+                
+                // [v2.2.0 이식] innerHTML 대신 자식 노드를 직접 복제하여 아이콘(em) 누락 방지
                 originalLink.childNodes.forEach(child => {
                     newLink.appendChild(child.cloneNode(true));
                 });
@@ -1187,8 +1182,6 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
                 document.body.classList.add('is-mgallery');
             }
 
-            // [수정] 팝업 닫기 기능은 제거되었습니다.
-
             if (window.location.pathname.includes('/board/write/')) {
                 this.transformWritePage();
                 return;
@@ -1223,7 +1216,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
 
     async function main() {
         if (isInitialized) return;
-        console.log("[DC Filter+UI] Initializing v2.2.0-final-patch-v2...");
+        console.log("[DC Filter+UI] Initializing v2.2.2 (FOUC Fixed)...");
 
         // [v2.1 수정] 단축키 로드 및 이벤트 리스너 설정
         const shortcutString = await GM_getValue(FilterModule.CONSTANTS.STORAGE_KEYS.SHORTCUT_KEY, 'Shift+S');
@@ -1260,8 +1253,10 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
         } catch (error) {
             console.error("[DC Filter+UI] A critical error occurred during main execution:", error);
         } finally {
-            document.documentElement.classList.remove('fouc-block');
-            console.log("[DC Filter+UI] FOUC block removed. UI is now visible.");
+            // [v2.2.2 수정] 모든 UI 처리 및 필터링 적용이 끝난 후,
+            // body에 준비 완료 클래스를 추가하여 화면을 표시합니다.
+            document.body.classList.add('script-ui-ready');
+            console.log("[DC Filter+UI] UI is now visible.");
         }
     };
 
