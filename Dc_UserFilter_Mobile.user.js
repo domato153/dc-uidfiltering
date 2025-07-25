@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         DC_UserFilter_Mobile
 // @namespace    http://tampermonkey.net/
-// @version      2.0.0
-// @description  유저 필터링 기능과 PC-모바일 UI 개선 기능을 함께 제공합니다. 
+// @version      2.1.0
+// @description  유저 필터링 기능과 PC-모바일 UI 개선 기능을 함께 제공합니다. 단축키 변경 기능이 추가되었습니다.
 // @author       domato153
 // @match        https://gall.dcinside.com/*
 // @grant        GM_setValue
@@ -27,6 +27,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
     let userSumCache = {};
     let isInitialized = false;
     let isUiInitialized = false;
+    let activeShortcutObject = null; // [v2.1 추가] 현재 활성화된 단축키 객체
 
     // =================================================================
     // ================= FOUC(깜빡임) 방지 로직 (v2.0) ==================
@@ -352,6 +353,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
                 BLOCK_CONFIG: 'dcinside_block_config',
                 BLOCKED_UIDS: 'dcinside_blocked_uids',
                 BLOCKED_GUESTS: 'dcinside_blocked_guests',
+                SHORTCUT_KEY: 'dcinside_shortcut_key', // [v2.1 추가]
             },
             SELECTORS: {
                 POST_LIST_CONTAINER: 'table.gall_list tbody',
@@ -361,7 +363,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
                 COMMENT_ITEM: 'li.ub-content',
                 WRITER_INFO: '.ub-writer',
                 IP_SPAN: 'span.ip',
-                MAIN_CONTAINER: '#container', // [개선] 옵저버 타겟을 위한 선택자 추가
+                MAIN_CONTAINER: '#container',
             },
             API: {
                 USER_INFO: '/api/gallog_user_layer/gallog_content_reple/',
@@ -383,6 +385,14 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
                 RATIO_MAX_INPUT: 'dcinside-ratio-max',
                 SAVE_BUTTON: 'dcinside-threshold-save',
                 CLOSE_BUTTON: 'dcinside-filter-close',
+                // [v2.1 추가] 단축키 변경 UI ID
+                SHORTCUT_DISPLAY: 'dcinside-shortcut-display',
+                CHANGE_SHORTCUT_BTN: 'dcinside-change-shortcut-btn',
+                SHORTCUT_MODAL_OVERLAY: 'dcinside-shortcut-modal-overlay',
+                SHORTCUT_MODAL: 'dcinside-shortcut-modal',
+                NEW_SHORTCUT_PREVIEW: 'dcinside-new-shortcut-preview',
+                SAVE_SHORTCUT_BTN: 'dcinside-save-shortcut-btn',
+                CANCEL_SHORTCUT_BTN: 'dcinside-cancel-shortcut-btn',
             },
             ETC: {
                 MOBILE_IP_MARKER: 'mblck',
@@ -417,6 +427,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
         async showSettings() {
             await this.reloadSettings();
             const { masterDisabled = false, excludeRecommended = false, threshold = 0, ratioEnabled = false, ratioMin = '', ratioMax = '', blockGuestEnabled = false, telecomBlockEnabled = false } = dcFilterSettings;
+            const currentShortcut = await GM_getValue(this.CONSTANTS.STORAGE_KEYS.SHORTCUT_KEY, 'Shift+S');
             const existingDiv = document.getElementById(this.CONSTANTS.UI_IDS.SETTINGS_PANEL);
             if (existingDiv) existingDiv.remove();
             const div = document.createElement('div');
@@ -444,10 +455,23 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
                         </div><div style="margin-top:8px;font-size:13px;color:#666;text-align:left;">비율이 입력값과 같거나 큰(이상)인 유저를 차단합니다.</div>
                     </div>
                 </div>
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:16px; padding-top:15px; border-top: 2px solid #ccc;"><div style="font-size:15px;color:#444;text-align:left;">창 여닫는 단축키: <b>Shift+s</b></div><button id="${this.CONSTANTS.UI_IDS.SAVE_BUTTON}" style="font-size:16px;border:2px solid #000;border-radius:4px;background:#fff; cursor: pointer; padding: 4px 10px;">저장 & 실행</button></div>`;
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:16px; padding-top:15px; border-top: 2px solid #ccc;">
+                    <div style="font-size:15px;color:#444;text-align:left;">
+                        창 여닫는 단축키: <b id="${this.CONSTANTS.UI_IDS.SHORTCUT_DISPLAY}">${currentShortcut}</b>
+                        <a href="#" id="${this.CONSTANTS.UI_IDS.CHANGE_SHORTCUT_BTN}" style="margin-left: 8px; font-size: 13px; text-decoration: underline; cursor: pointer;">(변경)</a>
+                    </div>
+                    <button id="${this.CONSTANTS.UI_IDS.SAVE_BUTTON}" style="font-size:16px;border:2px solid #000;border-radius:4px;background:#fff; cursor: pointer; padding: 4px 10px;">저장 & 실행</button>
+                </div>`;
             document.body.appendChild(div);
             const input = document.getElementById(this.CONSTANTS.UI_IDS.THRESHOLD_INPUT);
             input.focus(); input.select();
+
+            // [v2.1 추가] 단축키 변경 버튼 이벤트 리스너
+            document.getElementById(this.CONSTANTS.UI_IDS.CHANGE_SHORTCUT_BTN).onclick = (e) => {
+                e.preventDefault();
+                this.showShortcutChanger();
+            };
+
             const masterDisableCheckbox = document.getElementById(this.CONSTANTS.UI_IDS.MASTER_DISABLE_CHECKBOX);
             const settingsContainer = document.getElementById(this.CONSTANTS.UI_IDS.SETTINGS_CONTAINER);
             const updateMasterState = () => { const isMasterDisabled = masterDisableCheckbox.checked; settingsContainer.style.opacity = isMasterDisabled ? 0.5 : 1; settingsContainer.style.pointerEvents = isMasterDisabled ? 'none' : 'auto'; };
@@ -464,7 +488,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             [input, ratioMinInput, ratioMaxInput].forEach(el => el.addEventListener('keydown', enterKeySave));
             let isDragging = false, offsetX, offsetY;
             const onDragStart = (e) => {
-                if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON' || e.target.tagName === 'LABEL' || e.target.id === FilterModule.CONSTANTS.UI_IDS.CLOSE_BUTTON) return;
+                if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON' || e.target.tagName === 'LABEL' || e.target.id === FilterModule.CONSTANTS.UI_IDS.CLOSE_BUTTON || e.target.id === FilterModule.CONSTANTS.UI_IDS.CHANGE_SHORTCUT_BTN) return;
                 isDragging = true;
                 const rect = div.getBoundingClientRect();
                 if (div.style.transform !== 'none') { div.style.transform = 'none'; div.style.left = `${rect.left}px`; div.style.top = `${rect.top}px`; }
@@ -503,6 +527,146 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
                 if (!blockGuestChecked) promises.push(this.clearBlockedGuests());
                 try { await Promise.all(promises); location.reload(); } catch (error) { console.error('DCinside User Filter: Settings save failed.', error); saveButton.disabled = false; saveButton.textContent = '저장 & 실행'; alert('설정 저장에 실패했습니다. 콘솔을 확인해주세요.'); }
             };
+        },
+        // [v2.1.1 수정] 단축키 변경 모달 표시 (실시간 입력 감지 로직 개선)
+        showShortcutChanger() {
+            if (document.getElementById(this.CONSTANTS.UI_IDS.SHORTCUT_MODAL)) return;
+
+            const settingsPanel = document.getElementById(this.CONSTANTS.UI_IDS.SETTINGS_PANEL);
+            settingsPanel.style.pointerEvents = 'none';
+
+            const overlay = document.createElement('div');
+            overlay.id = this.CONSTANTS.UI_IDS.SHORTCUT_MODAL_OVERLAY;
+            overlay.style = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 100000;';
+            document.body.appendChild(overlay);
+
+            const modal = document.createElement('div');
+            modal.id = this.CONSTANTS.UI_IDS.SHORTCUT_MODAL;
+            modal.style = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #fff; padding: 20px; border-radius: 8px; z-index: 100001; text-align: center; box-shadow: 0 0 15px rgba(0,0,0,0.3);';
+            modal.innerHTML = `
+                <h4 style="margin-top: 0; margin-bottom: 15px; font-size: 16px;">새로운 단축키를 입력하세요 (최대 3개)</h4>
+                <div id="${this.CONSTANTS.UI_IDS.NEW_SHORTCUT_PREVIEW}" style="min-width: 200px; height: 40px; line-height: 40px; border: 1px solid #ccc; border-radius: 4px; margin-bottom: 20px; font-size: 18px; font-weight: bold; color: #333;">입력 대기 중...</div>
+                <div>
+                    <button id="${this.CONSTANTS.UI_IDS.SAVE_SHORTCUT_BTN}" style="padding: 8px 16px; margin-right: 10px; border: 1px solid #3b71fd; background: #3b71fd; color: #fff; border-radius: 4px; cursor: pointer;">변경</button>
+                    <button id="${this.CONSTANTS.UI_IDS.CANCEL_SHORTCUT_BTN}" style="padding: 8px 16px; border: 1px solid #ccc; background: #f0f0f0; border-radius: 4px; cursor: pointer;">취소</button>
+                </div>
+            `;
+            document.body.appendChild(modal);
+
+            let pressedKeys = new Set();
+            let combinationTimeout = null;
+            const previewEl = document.getElementById(this.CONSTANTS.UI_IDS.NEW_SHORTCUT_PREVIEW);
+
+            const updatePreview = () => {
+                if (pressedKeys.size > 0) {
+                    previewEl.textContent = this.formatShortcutKeys(pressedKeys);
+                } else {
+                    previewEl.textContent = '입력 대기 중...';
+                }
+            };
+
+            const keydownHandler = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+
+                // 타이머가 있다면, 아직 조합이 진행 중이라는 의미이므로 초기화
+                clearTimeout(combinationTimeout);
+
+                if (pressedKeys.size < 3) {
+                    pressedKeys.add(e.key);
+                    updatePreview();
+                }
+
+                // 키 입력이 0.5초간 없으면 현재 조합을 확정하고 Set을 비움
+                combinationTimeout = setTimeout(() => {
+                    pressedKeys.clear();
+                }, 500);
+            };
+
+            const keyupHandler = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                // 키를 떼는 시점은 조합 확정과 관련 없으므로, pressedKeys를 유지합니다.
+            };
+
+            document.addEventListener('keydown', keydownHandler, true);
+            document.addEventListener('keyup', keyupHandler, true);
+
+
+            const cleanup = () => {
+                document.removeEventListener('keydown', keydownHandler, true);
+                document.removeEventListener('keyup', keyupHandler, true);
+                overlay.remove();
+                modal.remove();
+                settingsPanel.style.pointerEvents = 'auto';
+            };
+
+            document.getElementById(this.CONSTANTS.UI_IDS.SAVE_SHORTCUT_BTN).onclick = async () => {
+                const newShortcut = previewEl.textContent;
+                if (newShortcut && newShortcut !== '입력 대기 중...') {
+                    await GM_setValue(this.CONSTANTS.STORAGE_KEYS.SHORTCUT_KEY, newShortcut);
+                    activeShortcutObject = this.parseShortcutString(newShortcut);
+                    document.getElementById(this.CONSTANTS.UI_IDS.SHORTCUT_DISPLAY).textContent = newShortcut;
+                    cleanup();
+                } else {
+                    alert('유효한 단축키를 입력해주세요.');
+                }
+            };
+
+            document.getElementById(this.CONSTANTS.UI_IDS.CANCEL_SHORTCUT_BTN).onclick = cleanup;
+            overlay.onclick = cleanup;
+        },
+        // [v2.1 추가] 키 Set을 정해진 형식의 문자열로 변환
+        formatShortcutKeys(keySet) {
+            if (keySet.size === 0) return '';
+
+            const priority = ['Control', 'Meta', 'Alt', 'Shift', 'CapsLock', 'Tab'];
+            const keys = Array.from(keySet);
+
+            const modifiers = keys
+                .filter(k => priority.includes(k))
+                .sort((a, b) => priority.indexOf(a) - priority.indexOf(b));
+
+            const others = keys
+                .filter(k => !priority.includes(k) && k.length === 1) // 일반 문자키만
+                .sort();
+
+            return [...modifiers, ...others].map(k => k === 'Control' ? 'Ctrl' : k).join('+');
+        },
+        // [v2.1 추가] 단축키 문자열을 이벤트 비교용 객체로 변환
+        parseShortcutString(shortcutString) {
+            const result = { ctrlKey: false, metaKey: false, altKey: false, shiftKey: false, key: '' };
+            if (!shortcutString) return result;
+
+            const parts = shortcutString.split('+');
+            const nonModifiers = [];
+
+            parts.forEach(part => {
+                switch (part.toLowerCase()) {
+                    case 'ctrl':
+                    case 'control':
+                        result.ctrlKey = true;
+                        break;
+                    case 'meta':
+                    case 'win':
+                        result.metaKey = true;
+                        break;
+                    case 'alt':
+                        result.altKey = true;
+                        break;
+                    case 'shift':
+                        result.shiftKey = true;
+                        break;
+                    default:
+                        nonModifiers.push(part);
+                        break;
+                }
+            });
+
+            if (nonModifiers.length > 0) {
+                result.key = nonModifiers[0].toUpperCase();
+            }
+            return result;
         },
         async getUserPostCommentSum(uid) {
             if (userSumCache[uid]) return userSumCache[uid];
@@ -626,9 +790,8 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
                     if (newItems.length > 0) filterItems(newItems);
                 }).observe(container, { childList: true, subtree: true });
             };
-            // [최적화] MutationObserver의 감시 범위를 body에서 #container로 축소하여 성능 부담 감소
             const mainContainer = document.querySelector(this.CONSTANTS.SELECTORS.MAIN_CONTAINER);
-            const observerTarget = mainContainer || document.body; // #container가 없는 페이지를 위한 안전장치
+            const observerTarget = mainContainer || document.body;
 
             const bodyObserver = new MutationObserver(mutations => mutations.forEach(m => m.addedNodes.forEach(n => {
                 if (n.nodeType === 1 && !n.closest('.user_data')) {
@@ -639,7 +802,6 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             bodyObserver.observe(observerTarget, { childList: true, subtree: true });
         },
         async reloadSettings() {
-            // [최적화] Promise.all을 사용하여 설정을 병렬로 로드하여 초기화 속도 개선
             const [
                 masterDisabled, excludeRecommended, threshold, ratioEnabled,
                 ratioMin, ratioMax, blockGuestEnabled, telecomBlockEnabled,
@@ -694,7 +856,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
         TRANSFORMED_ATTR: 'data-ui-transformed',
 
         SELECTORS: {
-            LIST_WRAP: '.gall_listwrap, .list_wrap', // 목록을 감싸는 컨테이너
+            LIST_WRAP: '.gall_listwrap, .list_wrap',
             ORIGINAL_TABLE: 'table.gall_list',
             ORIGINAL_TBODY: '.gall_list tbody',
             ORIGINAL_POST_ITEM: 'tr.ub-content',
@@ -722,7 +884,6 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
                     const originalAuthor = originalRow.querySelector('.gall_writer');
                     if (originalAuthor) originalAuthor.click();
                 }
-                /* [수정됨] 배경 클릭 시 링크로 이동하는 else 구문 제거 */
             });
         },
 
@@ -758,7 +919,6 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
                 const newLink = document.createElement('a');
                 newLink.href = originalLink.href;
                 newLink.className = 'post-title-link';
-                // 아이콘과 텍스트를 함께 복사
                 newLink.innerHTML = originalLink.innerHTML;
                 if (originalLink.target) newLink.target = originalLink.target;
                 postTitleDiv.appendChild(newLink);
@@ -802,7 +962,6 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
                 bottomControls.appendChild(buttonRow);
             }
 
-            // [수정] cloneNode 대신 원본 요소를 직접 이동하여 이벤트 리스너 유지
             if (searchForm) {
                 bottomControls.appendChild(searchForm);
             }
@@ -813,7 +972,6 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
         },
 
         transformList(listWrap) {
-            // [수정] 중복 실행 방지 로직 강화: 이미 커스텀 리스트가 생성되었으면 함수를 즉시 종료
             if (listWrap.querySelector(`.${this.CUSTOM_CLASSES.MOBILE_LIST}`)) return;
             if (listWrap.hasAttribute(this.TRANSFORMED_ATTR)) return;
             listWrap.setAttribute(this.TRANSFORMED_ATTR, 'true');
@@ -828,7 +986,6 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
 
             const originalRows = Array.from(originalTbody.querySelectorAll(this.SELECTORS.ORIGINAL_POST_ITEM));
             originalRows.forEach((row, index) => {
-                // [안정성 강화] 개별 아이템 처리 중 오류가 발생해도 전체 목록 렌더링이 중단되지 않도록 try-catch로 감쌈
                 try {
                     row.setAttribute(this.DATA_ATTR, index);
                     const newItem = this.createMobileListItem(row, index);
@@ -841,23 +998,18 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
                 }
             });
 
-            // 원본 테이블 바로 뒤에 새 리스트 삽입
             originalTable.parentNode.insertBefore(newListContainer, originalTable.nextSibling);
 
-            // 하단 컨트롤 생성 및 추가
             const bottomControls = this.createBottomControls(listWrap);
             if (bottomControls) {
                 listWrap.appendChild(bottomControls);
             }
 
-            // [수정] 중복 표시 방지: 원본 하단 컨트롤 숨기기
             const originalGallTabs = listWrap.querySelector(this.SELECTORS.GALL_TABS);
             const originalPagination = listWrap.querySelector(this.SELECTORS.PAGINATION);
-            // 검색 폼은 이동시켰으므로 숨길 필요 없음
             if(originalGallTabs) originalGallTabs.style.display = 'none';
             if(originalPagination) originalPagination.style.display = 'none';
 
-            // MutationObserver를 설정하여 원본 테이블의 변경 사항을 새 리스트에 반영
             const observer = new MutationObserver(mutations => {
                 mutations.forEach(mutation => {
                     if (mutation.type === 'attributes' && (mutation.attributeName === 'style' || mutation.attributeName === 'class')) {
@@ -878,7 +1030,6 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             if (document.body.classList.contains('is-write-page')) return;
             document.body.classList.add('is-write-page');
 
-            // 글쓰기 페이지의 테이블 요소들을 Flexbox 레이아웃으로 보이게 하기 위해 클래스 추가
             const writeBox = document.querySelector('.write_box');
             if(writeBox) {
                 const topTable = writeBox.querySelector('.w_top');
@@ -924,7 +1075,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
                         if (node.nodeType === Node.ELEMENT_NODE) {
                             if (node.matches(this.SELECTORS.LIST_WRAP) || node.querySelector(this.SELECTORS.LIST_WRAP)) {
                                 processAllLists();
-                                return; // 한 번만 실행
+                                return;
                             }
                         }
                     }
@@ -940,12 +1091,23 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
     GM_registerMenuCommand('글댓합 설정하기', FilterModule.showSettings.bind(FilterModule));
 
     async function main() {
-        // [개선] 초기화 플래그 통합
         if (isInitialized) return;
-        console.log("[DC Filter+UI] Initializing v1.9.1...");
+        console.log("[DC Filter+UI] Initializing v2.1.0...");
+
+        // [v2.1 수정] 단축키 로드 및 이벤트 리스너 설정
+        const shortcutString = await GM_getValue(FilterModule.CONSTANTS.STORAGE_KEYS.SHORTCUT_KEY, 'Shift+S');
+        activeShortcutObject = FilterModule.parseShortcutString(shortcutString);
 
         window.addEventListener('keydown', async (e) => {
-            if (e.shiftKey && (e.key === 's' || e.key === 'S')) {
+            if (!activeShortcutObject || !activeShortcutObject.key) return;
+
+            const isMatch = e.key.toUpperCase() === activeShortcutObject.key &&
+                            e.ctrlKey === activeShortcutObject.ctrlKey &&
+                            e.shiftKey === activeShortcutObject.shiftKey &&
+                            e.altKey === activeShortcutObject.altKey &&
+                            e.metaKey === activeShortcutObject.metaKey;
+
+            if (isMatch) {
                 e.preventDefault();
                 const settingsPanel = document.getElementById(FilterModule.CONSTANTS.UI_IDS.SETTINGS_PANEL);
                 if (settingsPanel) {
@@ -961,15 +1123,12 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
         console.log("[DC Filter+UI] Initialization complete.");
     }
 
-    // [v2.0 수정] DOM 로드 후 스크립트 실행 및 FOUC 방지 클래스 제거
     const runSafely = async () => {
         try {
             await main();
         } catch (error) {
             console.error("[DC Filter+UI] A critical error occurred during main execution:", error);
-            // 에러 발생 시 사용자에게 알릴 수 있습니다. (예: alert)
         } finally {
-            // 성공하든 실패하든, 화면을 다시 보이게 하여 사용자가 멈춘 화면에 갇히지 않도록 합니다.
             document.documentElement.classList.remove('fouc-block');
             console.log("[DC Filter+UI] FOUC block removed. UI is now visible.");
         }
