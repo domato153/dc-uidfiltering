@@ -257,16 +257,16 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
         .post-meta .author .nickname, .post-meta .author .ip { color: #555 !important; }
         .post-meta .stats { display: flex; gap: 10px; }
 
-        /* [v2.1.1 사용자 요청 반영] 글자 크기 및 레이아웃 재수정 */
-        /* 게시글 목록: 제목 (레이아웃 수정 포함) */
+        /* 게시글 목록: 제목 (2배 크기 조정 및 우선순위 문제 해결) */
         .custom-post-item .post-title {
-            font-size: 18px !important;
-            line-height: 1.6 !important;
-            /* [레이아웃 수정] flex를 사용해 자식 요소들을 수직 중앙 정렬 */
+            line-height: 1.5 !important; /* 폰트 크기에 맞춰 줄 간격 조정 */
             display: flex !important;
             align-items: center !important;
         }
-        
+        /* [핵심 수정] 실제 텍스트를 담고 있는 a 태그를 직접 타겟팅하여 폰트 크기를 강제 적용 */
+        .custom-post-item .post-title a {
+            font-size: 24px !important;
+        }
         /* [레이아웃 수정] 댓글 수가 제목 바로 옆에 붙도록 margin 추가 */
         .custom-post-item .post-title .reply_num {
             margin-left: 8px !important; /* 제목과의 간격 */
