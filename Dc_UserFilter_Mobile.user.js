@@ -3,7 +3,7 @@
 // @namespace    http://tampermonkey.net/
 // @version      2.2.1
 // @description  유저 필터링, UI 개선 
-// @author       domato153 (Refactored by Assistant)
+// @author       domato153
 // @match        https://gall.dcinside.com/*
 // @grant        GM_setValue
 // @grant        GM_getValue
