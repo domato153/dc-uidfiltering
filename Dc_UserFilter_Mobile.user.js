@@ -1,112 +1,263 @@
 // ==UserScript==
-// @name         DC_UserFilter_Mobile_v1.0.1
+// @name         DC_UserFilter_Mobile
 // @namespace    http://tampermonkey.net/
-// @version      1.0.1
-// @description  유저 필터링 기능과 PC-모바일 UI 개선 기능을 함께 제공합니다. (안정성 개선)
+// @version      2.0.0
+// @description  유저 필터링 기능과 PC-모바일 UI 개선 기능을 함께 제공합니다. 
 // @author       domato153
 // @match        https://gall.dcinside.com/*
 // @grant        GM_setValue
 // @grant        GM_getValue
 // @grant        GM_registerMenuCommand
 // @grant        GM_addStyle
+// @run-at       document-start
 // @license      MIT
 // ==/UserScript==
 
 /*-----------------------------------------------------------------
 DBAD license / Copyright (C) 2025 domato153
 https://github.com/philsturgeon/dbad/blob/master/LICENSE.md
-https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
+https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
 ------------------------------------------------------------------*/
 
 (function() {
     'use strict';
 
+    // [개선] 전역 스코프 오염 방지를 위해 스크립트 상태 변수를 IIFE 내부 스코프로 이동
+    let dcFilterSettings = {};
+    let userSumCache = {};
+    let isInitialized = false;
+    let isUiInitialized = false;
+
+    // =================================================================
+    // ================= FOUC(깜빡임) 방지 로직 (v2.0) ==================
+    // =================================================================
+    // @run-at document-start 로 스크립트가 먼저 실행되게 한 후,
+    // DOM이 로드되기 전에 body를 숨겨 원본 UI가 표시되는 것을 막습니다.
+    GM_addStyle(`
+        /* 스크립트 로딩 중에는 body를 완전히 숨겨 깜빡임을 원천 차단 */
+        html.fouc-block body {
+            visibility: hidden !important;
+        }
+        /* 사용자에게 스크립트가 작동 중임을 알리는 로딩 인디케이터 */
+        html.fouc-block::before {
+            content: '스크립트 UI 적용 중...';
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 16px;
+            font-weight: bold;
+            color: #555;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.2);
+            z-index: 2147483647; /* Max z-index */
+        }
+    `);
+    // 즉시 클래스를 추가하여 위 스타일이 적용되게 함
+    document.documentElement.classList.add('fouc-block');
+
+
     // =================================================================
     // ======================== UI Module Style ========================
     // =================================================================
     GM_addStyle(`
-        /* --- 숨김 처리 (정교하게 재조정) --- */
-        table.gall_list.filter-ui-hidden {
+        /* [수정] FOUC(화면 깜빡임) 방지 및 원본 테이블 숨김 강화 */
+        table.gall_list {
             visibility: hidden !important; position: absolute !important;
             top: -9999px !important; left: -9999px !important;
             height: 0 !important; overflow: hidden !important;
         }
 
-        #dchead, #dc_header, #dc_gnb, .adv_area, .right_content, .dc_all, .dcfoot, .dc_ft, .info_policy,.copyrigh, .ad_bottom_list, .bottom_paging_box + div, .minor_intro_area, .intro_bg, .fixed_write_btn, .bottom_movebox, h1.dc_logo, .area_links, .zzbang_div, .my_zzal, .my_dccon, .issue_contentbox, #gall_top_recom.concept_wrap,
-/* ... */
-.gall_exposure {
-    display: none !important;
-}
-
+        /* [수정] 불필요한 PC버전 요소 숨김 */
+        #dc_header, #dc_gnb, .adv_area, .right_content, .dc_all, .dcfoot, .dc_ft, .info_policy, .copyrigh, .ad_bottom_list, .bottom_paging_box + div, .intro_bg, .fixed_write_btn, .bottom_movebox, .zzbang_div, .my_zzal, .my_dccon, .issue_contentbox, #gall_top_recom.concept_wrap,
+        .gall_exposure, .stickyunit {
+            display: none !important;
+        }
 
         /* --- 기본 레이아웃 재정의 --- */
+        /* [개선] 마이너 갤러리 상단 링크 영역 모바일 최적화 */
+        .minor_intro_area {
+            display: block !important; /* 숨김 처리를 확실히 무효화 */
+            padding: 10px 15px !important;
+            background: #f8f9fa !important;
+            border-bottom: 1px solid #e5e5e5;
+            width: 100% !important;
+            box-sizing: border-box !important;
+        }
+        .minor_intro_area .user_wrap {
+            display: flex !important;
+            justify-content: space-around !important;
+            align-items: center !important;
+            gap: 10px;
+            padding: 0 !important;
+            margin: 0 auto !important;
+            max-width: 500px; /* 링크들이 너무 퍼지지 않게 중앙 정렬 효과 */
+        }
+
         body { background: #fff !important; }
         html, body { overflow-x: hidden !important; }
 
-        /* 모든 주요 컨테이너의 너비/여백 초기화 */
-        html, body, #wrap, #top, .dcheader, #gnb_bar, .gnb, #container, .wrap_inner,
-        .list_array_option, .newvisit_history, .left_content, .center_box,
+        html, body, #top, .dcheader, .gnb_bar, #container, .wrap_inner, .visit_bookmark,
+        .list_array_option, .left_content,
         .view_content_wrap, .gall_content, .gall_comment {
-            width: 100vw !important; min-width: 0 !important; float: none !important;
+            width: 100% !important; /* 100vw 대신 100% 사용 */
+            min-width: 0 !important; float: none !important;
             position: relative !important; box-sizing: border-box !important;
             margin: 0 !important; padding: 0 !important;
         }
         #container { padding-top: 5px; }
-        .dcheader.typea, .dcheader.typea .dcheader_info { min-width: 0 !important; width: 100% !important; height: auto !important; }
-        .dcheader .dcheader_info { display: flex !important; justify-content: center !important; align-items: center !important; float: none !important; padding: 8px 15px !important; }
-        .dcheader .top_search, .dcheader .gall_search_form { width: 100% !important; }
 
+        /* [수정] dcheader(상단 전체) 및 dchead(내부 컨테이너) 반응형 스타일 */
+        .dcheader.typea { min-width: 0 !important; width: 100% !important; height: auto !important; background: #fff; border-bottom: 1px solid #e5e5e5; }
+        .dchead {
+            display: flex !important;
+            justify-content: space-between !important;
+            align-items: center !important;
+            padding: 8px 15px !important;
+            gap: 15px !important;
+            min-width: 320px;
+            box-sizing: border-box !important;
+            width: 100% !important;
+        }
+
+        .dchead h1.dc_logo { flex-shrink: 0 !important; margin: 0 !important; display: block !important; }
+        .dchead h1.dc_logo img.logo_img { height: 22px !important; width: auto !important; }
+        .dchead h1.dc_logo img.logo_img2 { display: none !important; }
+
+        .dchead .wrap_search { flex-grow: 1 !important; min-width: 100px !important; max-width: 600px; }
+        .dchead .top_search { width: 100% !important; }
+
+        .dchead .area_links { display: block !important; flex-shrink: 0 !important; white-space: nowrap !important; }
+
+        /* [추가] 갤러리 헤더(제목, 설정 버튼 등) 반응형 스타일 */
+        .page_head {
+            display: flex !important;
+            justify-content: space-between !important;
+            align-items: center !important;
+            padding: 10px 15px !important;
+            box-sizing: border-box !important;
+            width: 100% !important;
+            min-height: 50px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        /* [수정됨] .fr 오른쪽 정렬을 위해 margin-left: auto 사용 */
+        .page_head > .fl { float: none !important; }
+        .page_head > .fr {
+            float: none !important;
+            margin-left: auto; /* 핵심: 이 속성으로 오른쪽 끝으로 밀어냄 */
+            display: flex;
+            align-items: center;
+            gap: 8px; /* 버튼 등 내부 요소간 간격 */
+        }
+
+        /* [추가] Clearfix: float으로 인한 부모 요소의 높이 붕괴 방지 */
+        .page_head::after, .list_array_option::after {
+            content: ""; display: table; clear: both;
+        }
+
+        /* [추가] 일반/마이너 갤러리 글 목록 상단 공통 여백 */
         .list_array_option {
-            padding: 10px 15px !important; background: #fff; display: flex !important;
-            align-items: center !important; flex-wrap: wrap !important;
-            gap: 10px !important; margin-bottom: 8px !important;
-        }
-        .list_array_option > div { float: none !important; }
-        .list_array_option > .left_box { flex: 1 1 200px; }
-        .list_array_option > .right_box { display: flex; align-items: center; justify-content: flex-end; flex: 1 1 180px; }
-        .list_array_option > .center_box {
-            flex-basis: 100%; order: -1;
-            border-top: 1px solid #4263eb; border-bottom: 1px solid #4263eb;
-            margin-top: 10px; margin-bottom: 10px;
-            padding-top: 18px; padding-bottom: 18px;
+            margin-bottom: 10px !important;
         }
 
-        .center_box {
-            background: #fff; padding: 8px 15px !important; margin-top: 1px !important;
-            display: flex !important; justify-content: center !important; align-items: center !important;
-            flex-wrap: wrap; gap: 5px;
+        /* [수정] gnb_bar (메인 GNB) 반응형 스타일 개선 */
+        .gnb_bar { display: block !important; width: 100% !important; min-width: 0 !important; height: auto !important; box-sizing: border-box !important; background: #3b4890 !important; }
+        .gnb_bar nav.gnb { width: auto !important; min-width: 0 !important; padding: 0 15px !important; display: flex !important; justify-content: center !important; }
+        .gnb_bar .gnb_list { display: flex; flex-wrap: wrap; justify-content: space-around; width: 100% !important; }
+
+        /* [개선] newvisit_history (최근 방문 갤러리) 상/하단 선 모두 제거 */
+        .newvisit_history { display: flex !important; align-items: center; width: 100% !important; min-width: 0 !important; height: auto !important; padding: 8px 10px !important; background: #f8f9fa !important; border: none !important; box-sizing: border-box !important; gap: 5px; }
+        .newvisit_history::before { display: none !important; }
+        .newvisit_history > .tit { flex-shrink: 0; margin: 0 !important; padding-right: 5px; font-size: 14px !important; font-weight: bold; color: #333; }
+        .newvisit_history > .newvisit_box { flex: 1; min-width: 0; overflow: hidden; }
+        .newvisit_history .newvisit_list { display: flex; flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+        .newvisit_history .newvisit_list::-webkit-scrollbar { display: none; }
+        .newvisit_history .newvisit_list li { white-space: nowrap; flex-shrink: 0; }
+        .newvisit_history > .bnt_visit_prev, .newvisit_history > .bnt_visit_next, .newvisit_history > .btn_open, .newvisit_history > .bnt_newvisit_more { flex-shrink: 0; position: static !important; transform: none !important; margin: 0 !important; padding: 0 4px; }
+
+        /* [최종 수정] 마이너 갤러리 전용 탭/말머리 레이아웃 (v1.0.5) */
+        .is-mgallery .list_array_option {
+            display: flex !important;
+            align-items: center !important; /* 세로 중앙 정렬 */
+            flex-wrap: nowrap !important; /* 자식 요소들이 줄바꿈되지 않도록 강제 */
+            width: 100% !important;
+            box-sizing: border-box !important;
+            padding: 10px 15px !important;
+            margin-bottom: 10px !important;
+            gap: 10px; /* 요소들 사이의 간격 */
+        }
+
+        /* 모든 자식 div의 float 속성 원천 차단 및 기본 너비 설정 */
+        .is-mgallery .list_array_option > div {
+            float: none !important;
+            width: auto !important; /* [핵심] 원본 CSS의 width: 1% 덮어쓰기 */
+            flex-shrink: 0; /* 기본적으로 내용물 크기 유지 */
+        }
+
+        /* [신규] '전체글/개념글' 탭 컨테이너(.array_tab) 직접 스타일링 */
+        .is-mgallery .list_array_option .array_tab {
+            display: flex !important;
+            white-space: nowrap; /* 버튼 줄바꿈 방지 */
+            gap: 4px; /* 버튼 사이 간격 */
+        }
+
+        /* 중앙 요소 (주로 말머리) - 남는 공간 모두 차지 */
+        .is-mgallery .list_array_option > .center_box {
+            flex-grow: 1; /* 남는 공간을 모두 차지 */
+            flex-shrink: 1; /* 공간 부족 시 줄어들도록 허용 */
+            min-width: 0; /* 내용이 길어도 줄어들 수 있도록 설정 */
+            justify-content: center !important; /* 내부 아이템 중앙 정렬 */
+            display: flex !important;
+            flex-wrap: wrap;
+            gap: 5px;
+            background: none !important;
+            padding: 0 !important;
+            border: none !important;
+            margin: 0 !important;
+        }
+
+        /* 오른쪽 요소 (글쓰기 버튼 등) - 오른쪽 끝으로 정렬 */
+        .is-mgallery .list_array_option > .right_box {
+            margin-left: auto; /* 왼쪽 요소들과 최대한 멀리 떨어지도록 설정 */
+        }
+        /* --- 마이너 갤러리 레이아웃 수정 완료 --- */
+
+        /* [해결] 마이너 갤러리에서 헤더와 글 목록 겹침 현상 방지 */
+        .is-mgallery .gall_listwrap {
+            margin-top: 0 !important; /* 위에서 list_array_option의 margin-bottom으로 간격을 조절하므로 0으로 초기화 */
         }
 
         /* --- 커스텀 모바일 리스트 UI --- */
-        .custom-mobile-list { border-top: 1px solid #ddd; background: #fff; }
-        body.is-mgallery .custom-mobile-list { padding-top: 50px !important; }
-        .custom-post-item.notice + .custom-post-item:not(.notice):not(.concept),
-        .custom-post-item.concept + .custom-post-item:not(.notice):not(.concept) {
-            border-top: 1px solid #4263eb !important;
+        .custom-mobile-list {
+            border-top: 1px solid #ddd;
+            background: #fff;
         }
+
+        .custom-post-item.notice + .custom-post-item:not(.notice):not(.concept),
+        .custom-post-item.concept + .custom-post-item:not(.notice):not(.concept) { border-top: 1px solid #4263eb !important; }
         .custom-post-item { display: block; padding: 15px 18px; border-bottom: 1px solid #e6e6e6; text-decoration: none; color: #333; }
         .custom-post-item:hover { background-color: #f8f9fa; }
-        .custom-post-item .post-title, .custom-post-item .author { cursor: pointer; }
+        /* [수정됨] .post-title의 cursor:pointer 제거 */
+        .custom-post-item .author { cursor: pointer; }
         .custom-post-item.notice, .custom-post-item.concept { background-color: #f8f9fa; position: relative; padding-left: 60px; }
         .custom-post-item.notice::before { content: '공지'; background-color: #e03131; position: absolute; left: 18px; top: 50%; transform: translateY(-50%); font-size: 13px; font-weight: bold; color: #fff; padding: 4px 9px; border-radius: 4px; }
         .custom-post-item.concept::before { content: '개념'; background-color: #4263eb; position: absolute; left: 18px; top: 50%; transform: translateY(-50%); font-size: 13px; font-weight: bold; color: #fff; padding: 4px 9px; border-radius: 4px; }
-        .post-title { font-size: 17px !important; font-weight: 500; line-height: 1.5; color: #333; margin-bottom: 10px; }
+        .post-title { font-size: 17px !important; font-weight: 500; line-height: 1.5; color: #333; margin-bottom: 10px; word-break: break-all; }
         .post-title a { color: inherit; text-decoration: none; }
         .post-title a:visited { color: #770088; }
         .post-title .gall_subject { color: #9b6b43 !important; font-weight: bold !important; margin-right: 6px; }
-        .post-title .reply_num { color: #4263eb !important; font-weight: bold !important; margin-left: 6px; }
+        .post-title .reply_num { color: #4263eb !important; font-weight: bold !important; margin-left: 6px; cursor: pointer; }
         .post-meta { display: flex; justify-content: space-between; align-items: center; font-size: 13px !important; color: #888; }
         .post-meta .author .gall_writer { display: inline !important; padding: 0 !important; text-align: left !important; border: none !important; }
         .post-meta .author .nickname, .post-meta .author .ip { color: #555 !important; }
         .post-meta .stats { display: flex; gap: 10px; }
 
-        /* --- 커스텀 하단 컨트롤 UI (원본 이동 방식) --- */
+        /* --- 커스텀 하단 컨트롤 UI --- */
         .custom-bottom-controls { display: flex; flex-direction: column; align-items: center; padding: 15px; background: #fff; }
-        .custom-bottom-controls form[name="frmSearch"] {
-            display: flex !important; width: 100%; max-width: 500px;
-            box-sizing: border-box !important; margin: 15px 0 !important;
-            gap: 5px; flex-wrap: nowrap !important;
-        }
+        .custom-bottom-controls form[name="frmSearch"] { display: flex !important; width: 100%; max-width: 500px; box-sizing: border-box !important; margin: 15px 0 !important; gap: 5px; flex-wrap: nowrap !important; }
         .custom-bottom-controls form[name="frmSearch"] .search_left_box { flex: 0 1 auto; }
         .custom-bottom-controls form[name="frmSearch"] .search_right_box { display: flex; flex: 1 1 0; }
         .custom-bottom-controls form[name="frmSearch"] input[type="text"] { width: 100% !important; min-width: 100px; }
@@ -119,7 +270,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
 
         /* --- 글 보기/댓글 UI --- */
         .gall_content, .gall_tit_box, .gall_writer_info, .gallview_contents, .btn_recommend_box, .view_bottom, .gall_comment, .comment_box { background: #fff !important; padding: 15px !important; border-bottom: 1px solid #ddd; }
-        .gallview_contents img { max-width: 100% !important; height: auto !important; box-sizing: border-box; }
+        .gallview_contents img, .gallview_contents video { max-width: 100% !important; height: auto !important; box-sizing: border-box; }
         .cmt_write_box { display: flex !important; flex-wrap: wrap !important; gap: 10px !important; padding: 10px !important; }
         .cmt_write_box .fl { float: none !important; flex-basis: 200px; flex-shrink: 1; min-width: 180px; }
         .cmt_write_box .fl .usertxt { display: flex; flex-direction: column; gap: 5px; }
@@ -133,41 +284,24 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
             .cmt_write_box .fl, .cmt_write_box .cmt_txt_cont { flex-basis: auto; width: 100% !important; min-width: 100%; }
         }
 
-        /* --- 글쓰기 페이지 전용 스타일 --- */
+        /* [개선] --- 글쓰기 페이지 전용 스타일 --- */
         .is-write-page #container { background: #fff !important; padding: 0 !important; }
         .is-write-page .center_content, .is-write-page .gall_write, .is-write-page .write_box { padding: 0 !important; border: none !important; box-shadow: none !important; margin: 0 !important; }
         .is-write-page .write_box { padding: 15px !important; }
-        .is-write-page .write_box > table { width: 100% !important; }
-        .is-write-page .write_box select, .is-write-page .write_box input[type="text"], .is-write-page .write_box input[type="password"] {
-            width: 100% !important; height: 45px !important; padding: 0 12px !important; font-size: 16px !important;
-            border: 1px solid #ddd !important; border-radius: 4px !important; box-sizing: border-box !important;
-        }
-        .is-write-page .write_box .w_top { display: flex; flex-direction: column; gap: 10px; }
-        .is-write-page .write_box .w_top > tbody > tr > td { padding: 0 !important; }
-        .is-write-page .write_box .w_top .write_subject { display: block; }
-        .is-write-page .write_box .tx-editor-container { margin-top: 15px; }
+        .is-write-page .write_box > table, .is-write-page .write_box .w_top > tbody, .is-write-page .write_box .w_top > tbody > tr, .is-write-page .write_box .w_top > tbody > tr > th, .is-write-page .write_box .w_top > tbody > tr > td { display: block; width: 100% !important; border: none !important; padding: 0 !important; }
+        .is-write-page .write_box .w_top { display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px; }
+        .is-write-page .write_box .w_top .write_subject, .is-write-page .write_box .w_top .user_info_box { display: flex; flex-direction: column; gap: 10px; }
+        .is-write-page .write_box .user_info_box { flex-direction: row; }
+        .is-write-page .write_box select, .is-write-page .write_box input[type="text"], .is-write-page .write_box input[type="password"] { width: 100% !important; height: 45px !important; padding: 0 12px !important; font-size: 16px !important; border: 1px solid #ddd !important; border-radius: 4px !important; box-sizing: border-box !important; }
+        .is-write-page .write_box .user_info_box .user_info_input { flex: 1; }
         .is-write-page .write_box .btn_bottom_box { display: flex !important; gap: 10px; padding: 15px 0 0 0 !important; border-top: 1px solid #eee; margin-top: 15px; }
-        .is-write-page .write_box .btn_bottom_box a, .is-write-page .write_box .btn_bottom_box button {
-            flex: 1; display: inline-block !important; text-align: center !important; padding: 12px 0 !important;
-            font-size: 16px !important; border-radius: 4px !important; text-decoration: none !important;
-            height: auto !important; float: none !important; line-height: normal !important;
-        }
+        .is-write-page .write_box .btn_bottom_box a, .is-write-page .write_box .btn_bottom_box button { flex: 1; display: inline-block !important; text-align: center !important; padding: 12px 0 !important; font-size: 16px !important; border-radius: 4px !important; text-decoration: none !important; height: auto !important; float: none !important; line-height: normal !important; }
         .is-write-page .write_box .btn_bottom_box .btn_blue { background-color: #3b71fd !important; color: #fff !important; border: none !important; }
         .is-write-page .write_box .btn_bottom_box .btn_lightred { background-color: #e9e9e9 !important; color: #555 !important; border: none !important; }
         .is-write-page .tx-toolbar-basic { border-bottom: 1px solid #ddd !important; }
         .is-write-page .tx-toolbar-advanced, .is-write-page .write_infobox, .is-write-page .file_upload_info { display: none !important; }
-
-        /* 데스크탑 뷰포트 복원 */
-        @media screen and (min-width: 1161px) {
-            html, body, #wrap, #top { width: 100% !important; overflow-x: auto !important; }
-            #wrap, #top, .dcheader, #gnb_bar, .gnb, #container, .wrap_inner, .left_content, .center_content, .center_box,
-            .view_content_wrap, .gall_content, .gall_comment {
-                width: 1160px !important; margin: 0 auto !important;
-            }
-            #container { margin-top: 10px !important; }
-            .center_box { width: auto !important; margin: 0 !important; padding: 0 !important; border: none !important; background: none !important; display: block !important; flex-wrap: nowrap; }
-            .custom-bottom-controls form[name="frmSearch"] .search_left_box, .custom-bottom-controls form[name="frmSearch"] .search_right_box { display: flex !important; flex-grow: 1; }
-            .custom-bottom-controls form[name="frmSearch"] select, .custom-bottom-controls form[name="frmSearch"] input[type="text"] { flex: 1; min-width: 50px; }
+        @media (max-width: 480px) {
+            .is-write-page .write_box .user_info_box { flex-direction: column; }
         }
     `);
 
@@ -175,7 +309,6 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
      * =================================================================
      * ======================== Filter Module ==========================
      * =================================================================
-     * 설명: 유저 글/댓글, IP 기반 필터링 로직을 담당합니다. (v1.0.1의 압축된 코드 유지)
      */
     const FilterModule = {
         TELECOM: [
@@ -228,6 +361,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
                 COMMENT_ITEM: 'li.ub-content',
                 WRITER_INFO: '.ub-writer',
                 IP_SPAN: 'span.ip',
+                MAIN_CONTAINER: '#container', // [개선] 옵저버 타겟을 위한 선택자 추가
             },
             API: {
                 USER_INFO: '/api/gallog_user_layer/gallog_content_reple/',
@@ -282,8 +416,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
         },
         async showSettings() {
             await this.reloadSettings();
-            const settings = window.dcFilterSettings || {};
-            const { masterDisabled = false, excludeRecommended = false, threshold = 0, ratioEnabled = false, ratioMin = '', ratioMax = '', blockGuestEnabled = false, telecomBlockEnabled = false } = settings;
+            const { masterDisabled = false, excludeRecommended = false, threshold = 0, ratioEnabled = false, ratioMin = '', ratioMax = '', blockGuestEnabled = false, telecomBlockEnabled = false } = dcFilterSettings;
             const existingDiv = document.getElementById(this.CONSTANTS.UI_IDS.SETTINGS_PANEL);
             if (existingDiv) existingDiv.remove();
             const div = document.createElement('div');
@@ -372,8 +505,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
             };
         },
         async getUserPostCommentSum(uid) {
-            if (!window._dcinside_user_sum_cache) window._dcinside_user_sum_cache = {};
-            if (window._dcinside_user_sum_cache[uid]) return window._dcinside_user_sum_cache[uid];
+            if (userSumCache[uid]) return userSumCache[uid];
             const getCookie = (name) => { const v = `; ${document.cookie}`; const p = v.split(`; ${name}=`); if (p.length === 2) return p.pop().split(';').shift(); };
             let ci = getCookie(this.CONSTANTS.ETC.COOKIE_NAME_1) || getCookie(this.CONSTANTS.ETC.COOKIE_NAME_2);
             if (!ci) return null;
@@ -381,21 +513,19 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
                 const xhr = new XMLHttpRequest();
                 xhr.open('POST', this.CONSTANTS.API.USER_INFO, true); xhr.withCredentials = true;
                 xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded; charset=UTF-8'); xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
-                
-                // --- 수정된 부분 시작 ---
-                xhr.timeout = 5000; // 5초 타임아웃 설정
+
+                xhr.timeout = 5000;
                 xhr.ontimeout = () => {
                     console.warn(`DCinside User Filter: User info request for UID ${uid} timed out.`);
                     resolve(null);
                 };
-                // --- 수정된 부분 끝 ---
 
                 xhr.onload = () => {
                     if (xhr.status >= 200 && xhr.status < 300) {
                         const [post, comment] = xhr.responseText.split(',').map(x => parseInt(x, 10));
                         if (!isNaN(post) && !isNaN(comment)) {
                             const d = { sum: post + comment, post, comment };
-                            window._dcinside_user_sum_cache[uid] = d;
+                            userSumCache[uid] = d;
                             resolve(d);
                         } else {
                             resolve(null);
@@ -416,10 +546,10 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
         },
         async getBlockedGuests() { try { return JSON.parse(await GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCKED_GUESTS, '[]')); } catch { return []; } },
         async setBlockedGuests(list) { await GM_setValue(this.CONSTANTS.STORAGE_KEYS.BLOCKED_GUESTS, JSON.stringify(list)); },
-        async addBlockedGuest(ip) { const s = window.dcFilterSettings || {}; if (s.blockedGuests && !s.blockedGuests.includes(ip)) { s.blockedGuests.push(ip); await this.setBlockedGuests(s.blockedGuests); } },
+        async addBlockedGuest(ip) { if (dcFilterSettings.blockedGuests && !dcFilterSettings.blockedGuests.includes(ip)) { dcFilterSettings.blockedGuests.push(ip); await this.setBlockedGuests(dcFilterSettings.blockedGuests); } },
         async clearBlockedGuests() { await this.setBlockedGuests([]); },
         isUserBlocked({ sum, post, comment }) {
-            const s = window.dcFilterSettings || {}; if (s.masterDisabled) return { sumBlocked: false, ratioBlocked: false };
+            const s = dcFilterSettings; if (s.masterDisabled) return { sumBlocked: false, ratioBlocked: false };
             let sumBlocked = s.threshold > 0 && sum > 0 && sum <= s.threshold; let ratioBlocked = false;
             if (s.ratioEnabled) {
                 const useMin = !isNaN(s.ratioMin) && s.ratioMin > 0; const useMax = !isNaN(s.ratioMax) && s.ratioMax > 0;
@@ -438,7 +568,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
             if (shouldBeBlocked) await addBlockedUidFn.call(this, uid, userData.sum, userData.post, userData.comment, ratioBlocked);
         },
         shouldSkipFiltering(element) {
-            const s = window.dcFilterSettings || {}; if (!s.excludeRecommended || !this.isRecommendedContext()) return false;
+            const s = dcFilterSettings; if (!s.excludeRecommended || !this.isRecommendedContext()) return false;
             if (window.location.pathname.includes('/view/')) return !element.closest(this.CONSTANTS.SELECTORS.COMMENT_CONTAINER);
             return true;
         },
@@ -465,7 +595,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
         },
         applySyncBlock(element) {
             if (this.shouldSkipFiltering(element)) { element.style.display = ''; return; }
-            const s = window.dcFilterSettings || {}; const { masterDisabled, blockGuestEnabled, telecomBlockEnabled, blockConfig = {}, blockedGuests = [] } = s;
+            const { masterDisabled, blockGuestEnabled, telecomBlockEnabled, blockConfig = {}, blockedGuests = [] } = dcFilterSettings;
             if (masterDisabled) { element.style.display = ''; return; }
             const writerInfo = element.querySelector(this.CONSTANTS.SELECTORS.WRITER_INFO); if (!writerInfo) return;
             const uid = writerInfo.getAttribute('data-uid'); const ipSpan = element.querySelector(this.CONSTANTS.SELECTORS.IP_SPAN);
@@ -496,42 +626,60 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
                     if (newItems.length > 0) filterItems(newItems);
                 }).observe(container, { childList: true, subtree: true });
             };
+            // [최적화] MutationObserver의 감시 범위를 body에서 #container로 축소하여 성능 부담 감소
+            const mainContainer = document.querySelector(this.CONSTANTS.SELECTORS.MAIN_CONTAINER);
+            const observerTarget = mainContainer || document.body; // #container가 없는 페이지를 위한 안전장치
+
             const bodyObserver = new MutationObserver(mutations => mutations.forEach(m => m.addedNodes.forEach(n => {
-                if (n.nodeType === 1 && !n.closest('.user_data')) { // 사용자 정보 팝업은 무시
+                if (n.nodeType === 1 && !n.closest('.user_data')) {
                     targets.forEach(t => { if (n.matches(t.c)) attachObserver(n, t.i); else if (n.querySelectorAll) n.querySelectorAll(t.c).forEach(c => attachObserver(c, t.i)); });
                 }
             })));
             targets.forEach(t => document.querySelectorAll(t.c).forEach(c => attachObserver(c, t.i)));
-            bodyObserver.observe(document.body, { childList: true, subtree: true });
+            bodyObserver.observe(observerTarget, { childList: true, subtree: true });
         },
         async reloadSettings() {
-            window.dcFilterSettings = {
-                masterDisabled: await GM_getValue(this.CONSTANTS.STORAGE_KEYS.MASTER_DISABLED, false), excludeRecommended: await GM_getValue(this.CONSTANTS.STORAGE_KEYS.EXCLUDE_RECOMMENDED, false),
-                threshold: await GM_getValue(this.CONSTANTS.STORAGE_KEYS.THRESHOLD, 0), ratioEnabled: await GM_getValue(this.CONSTANTS.STORAGE_KEYS.RATIO_ENABLED, false),
-                ratioMin: parseFloat(await GM_getValue(this.CONSTANTS.STORAGE_KEYS.RATIO_MIN, '')), ratioMax: parseFloat(await GM_getValue(this.CONSTANTS.STORAGE_KEYS.RATIO_MAX, '')),
-                blockGuestEnabled: await GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_GUEST, false), telecomBlockEnabled: await GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_TELECOM, false),
-                blockedGuests: await this.getBlockedGuests(), blockConfig: await GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG, {})
+            // [최적화] Promise.all을 사용하여 설정을 병렬로 로드하여 초기화 속도 개선
+            const [
+                masterDisabled, excludeRecommended, threshold, ratioEnabled,
+                ratioMin, ratioMax, blockGuestEnabled, telecomBlockEnabled,
+                blockedGuests, blockConfig
+            ] = await Promise.all([
+                GM_getValue(this.CONSTANTS.STORAGE_KEYS.MASTER_DISABLED, false),
+                GM_getValue(this.CONSTANTS.STORAGE_KEYS.EXCLUDE_RECOMMENDED, false),
+                GM_getValue(this.CONSTANTS.STORAGE_KEYS.THRESHOLD, 0),
+                GM_getValue(this.CONSTANTS.STORAGE_KEYS.RATIO_ENABLED, false),
+                GM_getValue(this.CONSTANTS.STORAGE_KEYS.RATIO_MIN, ''),
+                GM_getValue(this.CONSTANTS.STORAGE_KEYS.RATIO_MAX, ''),
+                GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_GUEST, false),
+                GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_TELECOM, false),
+                this.getBlockedGuests(),
+                GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG, {})
+            ]);
+
+            dcFilterSettings = {
+                masterDisabled, excludeRecommended, threshold, ratioEnabled,
+                ratioMin: parseFloat(ratioMin),
+                ratioMax: parseFloat(ratioMax),
+                blockGuestEnabled, telecomBlockEnabled, blockedGuests, blockConfig
             };
         },
         async refilterAllContent() {
             await this.reloadSettings();
             const allContentItems = document.querySelectorAll([this.CONSTANTS.SELECTORS.POST_ITEM, this.CONSTANTS.SELECTORS.COMMENT_ITEM, `${this.CONSTANTS.SELECTORS.POST_VIEW_LIST_CONTAINER} > li`].join(', '));
-            allContentItems.forEach(element => { if (!window.dcFilterSettings.masterDisabled) element.style.display = ''; this.applySyncBlock(element); this.applyAsyncBlock(element); });
+            allContentItems.forEach(element => { if (!dcFilterSettings.masterDisabled) element.style.display = ''; this.applySyncBlock(element); this.applyAsyncBlock(element); });
             document.dispatchEvent(new CustomEvent('dcFilterRefiltered'));
         },
         handleVisibilityChange() { if (document.visibilityState === 'visible') this.refilterAllContent(); },
         async init() {
-            if (window.dcFilterInitialized) return; window.dcFilterInitialized = true;
+            if (isInitialized) return; isInitialized = true;
             await this.reloadSettings();
-            if (window.dcFilterSettings.excludeRecommended && window.location.pathname.includes('/lists/') && this.isRecommendedContext()) return;
+            if (dcFilterSettings.excludeRecommended && window.location.pathname.includes('/lists/') && this.isRecommendedContext()) return;
             const telecomBlockEnabled = await GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_TELECOM, false);
             if (telecomBlockEnabled) await this.regblockMobile(); else await this.delblockMobile();
             await this.refreshBlockedUidsCache();
             document.addEventListener('visibilitychange', this.handleVisibilityChange.bind(this));
             this.initializeUniversalObserver();
-            window.addEventListener('keydown', async (e) => {
-                if (e.shiftKey && (e.key === 's' || e.key === 'S')) { e.preventDefault(); const p = document.getElementById(this.CONSTANTS.UI_IDS.SETTINGS_PANEL); p ? p.remove() : await this.showSettings(); }
-            });
             if (await GM_getValue(this.CONSTANTS.STORAGE_KEYS.THRESHOLD) === undefined) { await GM_setValue(this.CONSTANTS.STORAGE_KEYS.THRESHOLD, 0); await this.showSettings(); }
         }
     };
@@ -540,15 +688,13 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
      * =================================================================
      * ========================== UI Module ============================
      * =================================================================
-     * 설명: PC버전 UI를 모바일 친화적으로 변경하고, FilterModule의
-     * 변경사항을 UI에 동기화하는 역할을 담당합니다. (v0.9의 안정적인 프록시 클릭 방식 채택)
      */
     const UIModule = {
         DATA_ATTR: 'data-custom-row-id',
-        listMutationObserver: null,
+        TRANSFORMED_ATTR: 'data-ui-transformed',
 
         SELECTORS: {
-            LIST_WRAP: '.gall_list_wrap, .list_wrap',
+            LIST_WRAP: '.gall_listwrap, .list_wrap', // 목록을 감싸는 컨테이너
             ORIGINAL_TABLE: 'table.gall_list',
             ORIGINAL_TBODY: '.gall_list tbody',
             ORIGINAL_POST_ITEM: 'tr.ub-content',
@@ -561,40 +707,29 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
             MOBILE_LIST: 'custom-mobile-list',
             POST_ITEM: 'custom-post-item',
             BOTTOM_CONTROLS: 'custom-bottom-controls',
-            UI_HIDDEN: 'filter-ui-hidden',
         },
 
-        proxyClick(customItem, targetSelector, originalRow) {
+        proxyClick(customItem, originalRow) {
             customItem.addEventListener('click', (e) => {
                 const clickedElement = e.target;
-
-                // 제목 링크 클릭 시 게시물로 이동
                 if (clickedElement.closest('a.post-title-link')) {
-                    const originalLink = originalRow.querySelector('.gall_tit a:not(.reply_numbox)');
-                    if (originalLink) {
-                        originalLink.click();
-                    }
-                }
-                // 댓글 수 클릭 시, 원본의 '댓글만 보기' 링크를 클릭
-                else if (clickedElement.closest('span.reply_num')) {
+                    // This click will be handled by the browser's default behavior for 'a' tags.
+                } else if (clickedElement.closest('span.reply_num')) {
                     e.preventDefault();
                     const originalReplyLink = originalRow.querySelector('a.reply_numbox');
-                    if (originalReplyLink) {
-                        originalReplyLink.click();
-                    }
-                }
-                // 작성자 닉네임 클릭 시 정보 팝업
-                else if (clickedElement.closest('.author')) {
+                    if (originalReplyLink) originalReplyLink.click();
+                } else if (clickedElement.closest('.author')) {
                     const originalAuthor = originalRow.querySelector('.gall_writer');
                     if (originalAuthor) originalAuthor.click();
                 }
+                /* [수정됨] 배경 클릭 시 링크로 이동하는 else 구문 제거 */
             });
         },
 
         updateItemVisibility(originalRow, mirroredItem) {
-            const isDibeBlocked = originalRow.classList.contains('block-disable');
+            const isDibsBlocked = originalRow.classList.contains('block-disable');
             const isUserFilterBlocked = originalRow.style.display === 'none';
-            mirroredItem.style.display = (isDibeBlocked || isUserFilterBlocked) ? 'none' : 'block';
+            mirroredItem.style.display = (isDibsBlocked || isUserFilterBlocked) ? 'none' : 'block';
         },
 
         createMobileListItem(originalRow, index) {
@@ -607,8 +742,8 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
             newItem.setAttribute(this.DATA_ATTR, index);
             newItem.className = `${this.CUSTOM_CLASSES.POST_ITEM} ${originalRow.className.replace('ub-content', '').trim()}`;
 
-            if (originalRow.classList.contains('list_notice')) newItem.classList.add('notice');
-            if (originalRow.classList.contains('gall_issue')) newItem.classList.add('concept');
+            if (originalRow.classList.contains('us-post--notice')) newItem.classList.add('notice');
+            if (originalRow.classList.contains('us-post--recommend')) newItem.classList.add('concept');
 
             const postTitleDiv = document.createElement('div');
             postTitleDiv.className = 'post-title';
@@ -617,31 +752,23 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
             const subjectSpan = titleContainer.querySelector('.gall_subject');
             const replyNumSpan = titleContainer.querySelector('.reply_num');
 
-            if (subjectSpan) {
-                postTitleDiv.appendChild(subjectSpan.cloneNode(true));
-            }
+            if (subjectSpan) postTitleDiv.appendChild(subjectSpan.cloneNode(true));
 
             if (originalLink) {
                 const newLink = document.createElement('a');
                 newLink.href = originalLink.href;
-                newLink.textContent = originalLink.textContent;
                 newLink.className = 'post-title-link';
-
-                if (originalLink.target) {
-                    newLink.target = originalLink.target;
-                }
+                // 아이콘과 텍스트를 함께 복사
+                newLink.innerHTML = originalLink.innerHTML;
+                if (originalLink.target) newLink.target = originalLink.target;
                 postTitleDiv.appendChild(newLink);
             }
 
-            if (replyNumSpan) {
-                postTitleDiv.appendChild(replyNumSpan.cloneNode(true));
-            }
-
+            if (replyNumSpan) postTitleDiv.appendChild(replyNumSpan.cloneNode(true));
             newItem.appendChild(postTitleDiv);
 
             const postMeta = document.createElement('div');
             postMeta.className = 'post-meta';
-
             const authorSpan = document.createElement('span');
             authorSpan.className = 'author';
             authorSpan.appendChild(writerEl.cloneNode(true));
@@ -657,7 +784,6 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
             newItem.appendChild(postMeta);
 
             this.updateItemVisibility(originalRow, newItem);
-
             return newItem;
         },
 
@@ -667,34 +793,33 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
             const searchForm = listWrap.querySelector(this.SELECTORS.SEARCH_FORM);
 
             if (!gallTabs && !pagination && !searchForm) return null;
-
             const bottomControls = document.createElement('div');
             bottomControls.className = this.CUSTOM_CLASSES.BOTTOM_CONTROLS;
-
             if (gallTabs) {
                 const buttonRow = document.createElement('div');
                 buttonRow.className = 'custom-button-row';
-                buttonRow.appendChild(gallTabs);
+                buttonRow.appendChild(gallTabs.cloneNode(true));
                 bottomControls.appendChild(buttonRow);
             }
+
+            // [수정] cloneNode 대신 원본 요소를 직접 이동하여 이벤트 리스너 유지
             if (searchForm) {
                 bottomControls.appendChild(searchForm);
             }
-            if (pagination) {
-                bottomControls.appendChild(pagination);
-            }
+
+            if (pagination) bottomControls.appendChild(pagination.cloneNode(true));
+
             return bottomControls;
         },
 
         transformList(listWrap) {
-            if (this.listMutationObserver) this.listMutationObserver.disconnect();
+            // [수정] 중복 실행 방지 로직 강화: 이미 커스텀 리스트가 생성되었으면 함수를 즉시 종료
+            if (listWrap.querySelector(`.${this.CUSTOM_CLASSES.MOBILE_LIST}`)) return;
+            if (listWrap.hasAttribute(this.TRANSFORMED_ATTR)) return;
+            listWrap.setAttribute(this.TRANSFORMED_ATTR, 'true');
 
-            listWrap.querySelector(`.${this.CUSTOM_CLASSES.MOBILE_LIST}`)?.remove();
-            listWrap.querySelectorAll(`${this.SELECTORS.ORIGINAL_TABLE}.${this.CUSTOM_CLASSES.UI_HIDDEN}`).forEach(t => t.remove());
-
-            const originalTable = listWrap.querySelector(`${this.SELECTORS.ORIGINAL_TABLE}:not(.${this.CUSTOM_CLASSES.UI_HIDDEN})`);
+            const originalTable = listWrap.querySelector(this.SELECTORS.ORIGINAL_TABLE);
             if (!originalTable) return;
-
             const originalTbody = originalTable.querySelector(this.SELECTORS.ORIGINAL_TBODY);
             if (!originalTbody) return;
 
@@ -703,28 +828,37 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
 
             const originalRows = Array.from(originalTbody.querySelectorAll(this.SELECTORS.ORIGINAL_POST_ITEM));
             originalRows.forEach((row, index) => {
-                row.setAttribute(this.DATA_ATTR, index);
-                const newItem = this.createMobileListItem(row, index);
-                if (newItem) {
-                    this.proxyClick(newItem, '.gall_tit a, .gall_writer', row);
-                    newListContainer.appendChild(newItem);
+                // [안정성 강화] 개별 아이템 처리 중 오류가 발생해도 전체 목록 렌더링이 중단되지 않도록 try-catch로 감쌈
+                try {
+                    row.setAttribute(this.DATA_ATTR, index);
+                    const newItem = this.createMobileListItem(row, index);
+                    if (newItem) {
+                        this.proxyClick(newItem, row);
+                        newListContainer.appendChild(newItem);
+                    }
+                } catch (error) {
+                    console.error('[DC Filter+UI] Failed to process a post item, skipping:', error, row);
                 }
             });
 
-            let bottomControls = listWrap.querySelector(`.${this.CUSTOM_CLASSES.BOTTOM_CONTROLS}`);
+            // 원본 테이블 바로 뒤에 새 리스트 삽입
+            originalTable.parentNode.insertBefore(newListContainer, originalTable.nextSibling);
+
+            // 하단 컨트롤 생성 및 추가
+            const bottomControls = this.createBottomControls(listWrap);
             if (bottomControls) {
-                listWrap.insertBefore(newListContainer, bottomControls);
-            } else {
-                listWrap.appendChild(newListContainer);
-                bottomControls = this.createBottomControls(listWrap);
-                if (bottomControls) {
-                    listWrap.appendChild(bottomControls);
-                }
+                listWrap.appendChild(bottomControls);
             }
 
-            originalTable.classList.add(this.CUSTOM_CLASSES.UI_HIDDEN);
+            // [수정] 중복 표시 방지: 원본 하단 컨트롤 숨기기
+            const originalGallTabs = listWrap.querySelector(this.SELECTORS.GALL_TABS);
+            const originalPagination = listWrap.querySelector(this.SELECTORS.PAGINATION);
+            // 검색 폼은 이동시켰으므로 숨길 필요 없음
+            if(originalGallTabs) originalGallTabs.style.display = 'none';
+            if(originalPagination) originalPagination.style.display = 'none';
 
-            this.listMutationObserver = new MutationObserver(mutations => {
+            // MutationObserver를 설정하여 원본 테이블의 변경 사항을 새 리스트에 반영
+            const observer = new MutationObserver(mutations => {
                 mutations.forEach(mutation => {
                     if (mutation.type === 'attributes' && (mutation.attributeName === 'style' || mutation.attributeName === 'class')) {
                         const originalRow = mutation.target;
@@ -737,21 +871,30 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
                     }
                 });
             });
-
-            this.listMutationObserver.observe(originalTbody, {
-                attributes: true,
-                attributeFilter: ['style', 'class'],
-                subtree: true
-            });
+            observer.observe(originalTbody, { attributes: true, attributeFilter: ['style', 'class'], subtree: true });
         },
 
         transformWritePage() {
+            if (document.body.classList.contains('is-write-page')) return;
             document.body.classList.add('is-write-page');
+
+            // 글쓰기 페이지의 테이블 요소들을 Flexbox 레이아웃으로 보이게 하기 위해 클래스 추가
+            const writeBox = document.querySelector('.write_box');
+            if(writeBox) {
+                const topTable = writeBox.querySelector('.w_top');
+                if (topTable) {
+                    const userInfoRow = topTable.querySelector('tr:nth-child(2)');
+                    if (userInfoRow) {
+                        userInfoRow.classList.add('user_info_box');
+                        userInfoRow.querySelectorAll('td').forEach(td => td.classList.add('user_info_input'));
+                    }
+                }
+            }
         },
 
         init() {
-            if (window.dcUiInitialized) return;
-            window.dcUiInitialized = true;
+            if (isUiInitialized) return;
+            isUiInitialized = true;
 
             if (!document.querySelector('meta[name="viewport"]')) {
                 const viewportMeta = document.createElement('meta');
@@ -770,35 +913,21 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
             }
 
             const processAllLists = () => {
-                document.querySelectorAll(this.SELECTORS.LIST_WRAP).forEach(lw => {
-                    this.transformList(lw);
-                });
+                document.querySelectorAll(this.SELECTORS.LIST_WRAP).forEach(lw => this.transformList(lw));
             };
 
             processAllLists();
 
             const observer = new MutationObserver((mutations) => {
-                let needsReprocessing = false;
                 for (const mutation of mutations) {
                     for (const node of mutation.addedNodes) {
                         if (node.nodeType === Node.ELEMENT_NODE) {
-                            if (node.matches(this.SELECTORS.ORIGINAL_TABLE) && node.closest(this.SELECTORS.LIST_WRAP)) {
-                                needsReprocessing = true;
-                                break;
-                            }
                             if (node.matches(this.SELECTORS.LIST_WRAP) || node.querySelector(this.SELECTORS.LIST_WRAP)) {
-                                needsReprocessing = true;
-                                break;
+                                processAllLists();
+                                return; // 한 번만 실행
                             }
                         }
                     }
-                    if (needsReprocessing) break;
-                }
-
-                if (needsReprocessing) {
-                    observer.disconnect();
-                    processAllLists();
-                    observer.observe(document.body, { childList: true, subtree: true });
                 }
             });
             observer.observe(document.body, { childList: true, subtree: true });
@@ -811,23 +940,44 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
     GM_registerMenuCommand('글댓합 설정하기', FilterModule.showSettings.bind(FilterModule));
 
     async function main() {
-        console.log("[DC Filter+UI] Initializing...");
+        // [개선] 초기화 플래그 통합
+        if (isInitialized) return;
+        console.log("[DC Filter+UI] Initializing v1.9.1...");
+
+        window.addEventListener('keydown', async (e) => {
+            if (e.shiftKey && (e.key === 's' || e.key === 'S')) {
+                e.preventDefault();
+                const settingsPanel = document.getElementById(FilterModule.CONSTANTS.UI_IDS.SETTINGS_PANEL);
+                if (settingsPanel) {
+                    settingsPanel.remove();
+                } else {
+                    await FilterModule.showSettings();
+                }
+            }
+        });
+
         await FilterModule.init();
         UIModule.init();
         console.log("[DC Filter+UI] Initialization complete.");
     }
 
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', main);
-    } else {
-        main();
-    }
-
-    window.addEventListener('pageshow', function(event) {
-        if (event.persisted) {
-            console.log("[DC Filter+UI] Page loaded from bfcache. Forcing reload for UI consistency.");
-            location.reload();
+    // [v2.0 수정] DOM 로드 후 스크립트 실행 및 FOUC 방지 클래스 제거
+    const runSafely = async () => {
+        try {
+            await main();
+        } catch (error) {
+            console.error("[DC Filter+UI] A critical error occurred during main execution:", error);
+            // 에러 발생 시 사용자에게 알릴 수 있습니다. (예: alert)
+        } finally {
+            // 성공하든 실패하든, 화면을 다시 보이게 하여 사용자가 멈춘 화면에 갇히지 않도록 합니다.
+            document.documentElement.classList.remove('fouc-block');
+            console.log("[DC Filter+UI] FOUC block removed. UI is now visible.");
         }
-    });
+    };
 
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', runSafely);
+    } else {
+        runSafely();
+    }
 })();
