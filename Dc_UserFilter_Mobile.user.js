@@ -1,9 +1,9 @@
 // ==UserScript==
 // @name         DC_UserFilter_Mobile
 // @namespace    http://tampermonkey.net/
-// @version      2.1.0
-// @description  유저 필터링 기능과 PC-모바일 UI 개선 기능을 함께 제공합니다. 단축키 변경 기능이 추가되었습니다.
-// @author       domato153
+// @version      2.2.0
+// @description  유저 필터링, UI 개선 / 모바일(pc도 사용가능 )
+// @author       domato153 (refactored by AI)
 // @match        https://gall.dcinside.com/*
 // @grant        GM_setValue
 // @grant        GM_getValue
@@ -247,14 +247,74 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
         .custom-post-item.notice::before { content: '공지'; background-color: #e03131; position: absolute; left: 18px; top: 50%; transform: translateY(-50%); font-size: 13px; font-weight: bold; color: #fff; padding: 4px 9px; border-radius: 4px; }
         .custom-post-item.concept::before { content: '개념'; background-color: #4263eb; position: absolute; left: 18px; top: 50%; transform: translateY(-50%); font-size: 13px; font-weight: bold; color: #fff; padding: 4px 9px; border-radius: 4px; }
         .post-title { font-size: 17px !important; font-weight: 500; line-height: 1.5; color: #333; margin-bottom: 10px; word-break: break-all; }
-        .post-title a { color: inherit; text-decoration: none; }
+        .post-title a { color: inherit; text-decoration: none; display: flex; align-items: center; }
         .post-title a:visited { color: #770088; }
         .post-title .gall_subject { color: #9b6b43 !important; font-weight: bold !important; margin-right: 6px; }
         .post-title .reply_num { color: #4263eb !important; font-weight: bold !important; margin-left: 6px; cursor: pointer; }
         .post-meta { display: flex; justify-content: space-between; align-items: center; font-size: 13px !important; color: #888; }
+        .post-meta .author { display: flex; align-items: center; }
         .post-meta .author .gall_writer { display: inline !important; padding: 0 !important; text-align: left !important; border: none !important; }
         .post-meta .author .nickname, .post-meta .author .ip { color: #555 !important; }
         .post-meta .stats { display: flex; gap: 10px; }
+
+        /* [v2.1.1 사용자 요청 반영] 글자 크기 및 레이아웃 재수정 */
+        /* 게시글 목록: 제목 (레이아웃 수정 포함) */
+        .custom-post-item .post-title {
+            font-size: 18px !important;
+            line-height: 1.6 !important;
+            /* [레이아웃 수정] flex를 사용해 자식 요소들을 수직 중앙 정렬 */
+            display: flex !important;
+            align-items: center !important;
+        }
+        
+        /* [레이아웃 수정] 댓글 수가 제목 바로 옆에 붙도록 margin 추가 */
+        .custom-post-item .post-title .reply_num {
+            margin-left: 8px !important; /* 제목과의 간격 */
+            flex-shrink: 0 !important;   /* 공간이 좁아져도 줄바꿈 방지 */
+        }
+
+        /* 게시글 목록: 닉네임 (기존 크기 유지) */
+        .custom-post-item .author .nickname {
+            font-size: 15px !important;
+            font-weight: 500 !important;
+        }
+
+        /* 게시글 목록: 조회수, 추천수, 날짜 (1.7배) */
+        .post-meta .stats {
+            font-size: 15px !important;
+        }
+
+        /* [추가] 게시글 본문: 제목 (1.7배) */
+        .view_content_wrap .title_subject {
+            font-size: 21px !important;
+            font-weight: 500 !important;
+        }
+
+        /* 게시글 본문: 내용 (2.5배) */
+        .gallview_contents {
+            font-size: 26px !important; /* 2.5배 효과로 크게 조정 */
+            line-height: 1.9 !important; /* 가독성을 위해 줄 간격도 조정 */
+        }
+        
+        /* [폰트 크기 상속 강제] 본문 내 자식 요소가 부모의 폰트 스타일을 따르도록 함 */
+        .gallview_contents p,
+        .gallview_contents div,
+        .gallview_contents span {
+            font-size: inherit !important;
+            line-height: inherit !important;
+            color: inherit !important; /* 글자 색상도 상속받도록 추가 */
+        }
+
+        /* 댓글: 내용 (1.7배) */
+        .comment_box .usertxt {
+            font-size: 18px !important;
+            line-height: 1.7 !important;
+        }
+
+        /* 댓글: 작성 시간 (1.7배) */
+        .comment_box .date_time {
+            font-size: 15px !important;
+        }
 
         /* --- 커스텀 하단 컨트롤 UI --- */
         .custom-bottom-controls { display: flex; flex-direction: column; align-items: center; padding: 15px; background: #fff; }
@@ -280,10 +340,66 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
         .cmt_write_box .cmt_txt_cont textarea { width: 100% !important; height: 85px !important; box-sizing: border-box !important; resize: vertical; }
         .cmt_write_box .cmt_cont_bott { width: 100%; padding: 0 !important; }
         .cmt_write_box .cmt_btn_bot { display: flex; justify-content: flex-end; }
+        
+        /* [해결] 글 내용의 추천 버튼 영역에 불필요한 닉콘이 표시되는 문제 수정 */
+        .btn_recommend_box .writer_nikcon,
+        .btn_recommend_box .font_blue.smallnum {
+            display: none !important;
+        }
+
         @media screen and (max-width: 600px) {
             .cmt_write_box { flex-direction: column !important; }
             .cmt_write_box .fl, .cmt_write_box .cmt_txt_cont { flex-basis: auto; width: 100% !important; min-width: 100%; }
         }
+        
+        /* [최종 해결] Flexbox를 사용하여 추천/비추천 버튼 그룹 전체를 재구성 및 중앙 정렬 */
+        .btn_recommend_box {
+            display: flex !important;
+            flex-wrap: wrap !important; /* 화면이 좁으면 버튼이 다음 줄로 넘어가도록 설정 */
+            justify-content: center !important; /* 모든 버튼을 중앙 정렬 */
+            align-items: center !important; /* 모든 버튼을 수직 중앙 정렬 */
+            gap: 5px 8px !important; /* 버튼들 사이의 수직/수평 간격 조정 */
+            border: none !important; /* 기존 테두리 제거 */
+            padding: 10px !important; /* 내부 여백 재설정 */
+        }
+
+        /* 중간 컨테이너들의 레이아웃 스타일 초기화 */
+        .btn_recommend_box .inner_box,
+        .btn_recommend_box .recom_bottom_box {
+            display: contents !important; /* [핵심] 자식 요소들을 부모의 flex 컨테이너에 직접 속하게 만듦 */
+        }
+
+        /* 개별 버튼 그룹(추천/비추천)의 스타일 초기화 */
+        .btn_recommend_box .inner_box > .inner {
+            display: inline-flex !important;
+            align-items: center !important;
+            gap: 5px !important;
+            border: 1px solid #ddd;
+            padding: 8px 12px;
+            border-radius: 5px;
+            background-color: #f8f9fa;
+        }
+
+        /* 모든 버튼과 숫자들의 불필요한 스타일 초기화 */
+        .btn_recommend_box button,
+        .btn_recommend_box .up_num_box,
+        .btn_recommend_box .down_num_box {
+            position: static !important;
+            float: none !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            width: auto !important;
+            height: auto !important;
+            background: none !important;
+        }
+
+        /* 추천/비추천 숫자 스타일 조정 */
+        .btn_recommend_box .up_num,
+        .btn_recommend_box .down_num {
+            font-size: 16px !important;
+            font-weight: bold !important;
+            color: #333 !important;
+        }        
 
         /* [개선] --- 글쓰기 페이지 전용 스타일 --- */
         .is-write-page #container { background: #fff !important; padding: 0 !important; }
@@ -874,15 +990,23 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
         proxyClick(customItem, originalRow) {
             customItem.addEventListener('click', (e) => {
                 const clickedElement = e.target;
+
                 if (clickedElement.closest('a.post-title-link')) {
-                    // This click will be handled by the browser's default behavior for 'a' tags.
+                    // 글자 링크를 직접 클릭한 경우, 브라우저가 처리하도록 둡니다.
+                    return;
                 } else if (clickedElement.closest('span.reply_num')) {
+                    // 댓글 수를 클릭한 경우
                     e.preventDefault();
                     const originalReplyLink = originalRow.querySelector('a.reply_numbox');
                     if (originalReplyLink) originalReplyLink.click();
                 } else if (clickedElement.closest('.author')) {
+                    // 작성자(닉네임)를 클릭한 경우
+                    e.preventDefault();
                     const originalAuthor = originalRow.querySelector('.gall_writer');
                     if (originalAuthor) originalAuthor.click();
+                } else {
+                    // 그 외의 빈 공간을 클릭한 경우 아무 동작도 하지 않습니다.
+                    e.preventDefault();
                 }
             });
         },
@@ -919,8 +1043,13 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
                 const newLink = document.createElement('a');
                 newLink.href = originalLink.href;
                 newLink.className = 'post-title-link';
-                newLink.innerHTML = originalLink.innerHTML;
                 if (originalLink.target) newLink.target = originalLink.target;
+
+                // [v2.1.1 수정] innerHTML 대신 자식 노드를 직접 복제하여 아이콘(em) 누락 방지
+                originalLink.childNodes.forEach(child => {
+                    newLink.appendChild(child.cloneNode(true));
+                });
+
                 postTitleDiv.appendChild(newLink);
             }
 
@@ -1058,6 +1187,8 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
                 document.body.classList.add('is-mgallery');
             }
 
+            // [수정] 팝업 닫기 기능은 제거되었습니다.
+
             if (window.location.pathname.includes('/board/write/')) {
                 this.transformWritePage();
                 return;
@@ -1092,7 +1223,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
 
     async function main() {
         if (isInitialized) return;
-        console.log("[DC Filter+UI] Initializing v2.1.0...");
+        console.log("[DC Filter+UI] Initializing v2.2.0-final-patch-v2...");
 
         // [v2.1 수정] 단축키 로드 및 이벤트 리스너 설정
         const shortcutString = await GM_getValue(FilterModule.CONSTANTS.STORAGE_KEYS.SHORTCUT_KEY, 'Shift+S');
