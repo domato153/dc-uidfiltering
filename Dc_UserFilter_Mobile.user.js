@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         DC_UserFilter_Mobile
 // @namespace    http://tampermonkey.net/
-// @version      2.2.2
+// @version      2.2.3
 // @description  유저 필터링, UI 개선
 // @author       domato153
 // @match        https://gall.dcinside.com/*
@@ -34,6 +34,20 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
     // ======================== UI Module Style ========================
     // =================================================================
     GM_addStyle(`
+        /* [v2.2.7 추가] 즉시 나타나는 커스텀 툴팁 스타일 */
+        #custom-instant-tooltip {
+            position: fixed; /* 화면 기준으로 위치 고정 */
+            display: none; /* 평소에는 숨김 */
+            z-index: 2147483647; /* 모든 요소 위에 표시 */
+            background-color: rgba(0, 0, 0, 0.8);
+            color: #fff;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 14px;
+            white-space: nowrap; /* 툴팁 내용이 길어도 줄바꿈 안 함 */
+            pointer-events: none; /* 툴팁이 마우스 이벤트를 방해하지 않도록 설정 (중요!) */
+        }
+
         /* [v2.2.3 최종 수정] JS 의존성을 제거한 선언적 FOUC 방지 (새로고침 깜빡임 완벽 해결) */
         /* 스크립트 UI 준비가 완료되기 전까지 body를 숨겨 원본 UI 노출을 원천 차단합니다. */
         body:not(.script-ui-ready) {
@@ -239,7 +253,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
         .custom-post-item.notice::before { content: '공지'; background-color: #e03131; position: absolute; left: 18px; top: 50%; transform: translateY(-50%); font-size: 13px; font-weight: bold; color: #fff; padding: 4px 9px; border-radius: 4px; }
         .custom-post-item.concept::before { content: '개념'; background-color: #4263eb; position: absolute; left: 18px; top: 50%; transform: translateY(-50%); font-size: 13px; font-weight: bold; color: #fff; padding: 4px 9px; border-radius: 4px; }
         
-        /* [v2.2.0 이식] 게시글 목록: 제목, 말머리, 댓글수 */
+                /* [v2.2.0 이식] 게시글 목록: 제목, 말머리, 댓글수 */
         .post-title { 
             font-weight: 500; 
             color: #333; 
@@ -248,16 +262,21 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             line-height: 1.5 !important;
             display: flex !important;
             align-items: center !important;
+            font-size: 24px !important; /* [핵심 수정] 제목/말머리 크기 기준을 부모로 이동 */
         }
         .post-title a { 
             color: inherit; 
             text-decoration: none; 
             display: flex; 
             align-items: center; 
-            font-size: 24px !important; /* 폰트 크기 키움 */
+            /* [핵심 수정] font-size 제거, 부모 크기를 상속받음 */
         }
         .post-title a:visited { color: #770088; }
-        .post-title .gall_subject { color: #9b6b43 !important; font-weight: bold !important; margin-right: 6px; }
+        .post-title .gall_subject { 
+            font-weight: bold !important; 
+            margin-right: 8px; /* 간격 살짝 조정 */
+            flex-shrink: 0; /* 말머리가 줄어들지 않도록 설정 */
+        }
         .post-title .reply_num { 
             color: #4263eb !important; 
             font-weight: bold !important; 
@@ -969,40 +988,21 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             BOTTOM_CONTROLS: 'custom-bottom-controls',
         },
 
-        // [v2.2.0 수정] 클릭 동작 개선 (사용자 요청 반영)
         proxyClick(customItem, originalRow) {
             customItem.addEventListener('click', (e) => {
                 const clickedElement = e.target;
-
-                // 1. 댓글 수('span.reply_num')를 클릭한 경우
-                // 원본 HTML의 댓글 보기 링크('a.reply_numbox')를 찾아 클릭 이벤트를 실행합니다.
                 if (clickedElement.closest('span.reply_num')) {
-                    e.preventDefault(); // 혹시 모를 기본 동작을 막습니다.
+                    e.preventDefault();
                     const originalReplyLink = originalRow.querySelector('a.reply_numbox');
-                    if (originalReplyLink) {
-                        originalReplyLink.click();
-                    }
-                    return; // 댓글 클릭 처리가 끝났으므로 함수를 종료합니다.
+                    if (originalReplyLink) originalReplyLink.click();
+                    return;
                 }
-
-                // 2. 작성자 영역('.author')을 클릭한 경우
-                // 기존 기능을 유지하여 원본의 작성자(.gall_writer) 클릭을 실행합니다.
                 if (clickedElement.closest('.author')) {
                     e.preventDefault();
                     const originalAuthor = originalRow.querySelector('.gall_writer');
-                    if (originalAuthor) {
-                        originalAuthor.click();
-                    }
-                    return; // 작성자 클릭 처리가 끝났으므로 함수를 종료합니다.
+                    if (originalAuthor) originalAuthor.click();
+                    return;
                 }
-
-                // 3. 제목 링크('a.post-title-link')를 클릭한 경우
-                // 이 경우에는 아무런 코드도 실행하지 않습니다.
-                // 브라우저가 <a> 태그의 href 속성을 따라가는 기본 동작을 그대로 수행하도록 둡니다.
-
-                // 4. 그 외의 영역(예: 제목의 빈 공간)을 클릭한 경우
-                // 위 조건들에 해당하지 않으면 아무런 동작도 하지 않고 이벤트가 종료됩니다.
-                // 기존의 '.post-title' 전체를 감지하던 로직을 제거하여 이 동작을 구현했습니다.
             });
         },
 
@@ -1029,10 +1029,14 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             postTitleDiv.className = 'post-title';
 
             const originalLink = titleContainer.querySelector('a');
-            const subjectSpan = titleContainer.querySelector('.gall_subject');
+            const subjectSpan = originalRow.querySelector('.gall_subject');
             const replyNumSpan = titleContainer.querySelector('.reply_num');
 
-            if (subjectSpan) postTitleDiv.appendChild(subjectSpan.cloneNode(true));
+            if (subjectSpan) {
+                const newSubjectSpan = subjectSpan.cloneNode(true);
+                newSubjectSpan.setAttribute('title', subjectSpan.textContent.trim());
+                postTitleDiv.appendChild(newSubjectSpan);
+            }
 
             if (originalLink) {
                 const newLink = document.createElement('a');
@@ -1040,7 +1044,6 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
                 newLink.className = 'post-title-link';
                 if (originalLink.target) newLink.target = originalLink.target;
                 
-                // [v2.2.0 이식] innerHTML 대신 자식 노드를 직접 복제하여 아이콘(em) 누락 방지
                 originalLink.childNodes.forEach(child => {
                     newLink.appendChild(child.cloneNode(true));
                 });
@@ -1098,32 +1101,26 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
 
             return bottomControls;
         },
-        // [v2.2.3 추가] 페이지네이션/네비게이션 링크 클릭 시 강제 새로고침을 적용하는 재사용 함수
+        
         applyForceRefreshPagination(containerElement) {
             if (!containerElement) return;
-
-            // 이벤트 리스너를 더 안정적인 상위 컨테이너에 연결하여,
-            // DCinside 스크립트에 의해 DOM이 변경되더라도 리스너가 유지되도록 합니다.
             containerElement.addEventListener('click', (e) => {
-                // 컨테이너 내부의 링크(<a>) 클릭만 감지합니다.
                 const link = e.target.closest('a');
-
-                // href 속성이 있는 링크에만 반응합니다.
-                if (link && link.href) {
-                    // 사이트의 모든 기본 동작(AJAX 등)을 원천 차단합니다.
+                if (!link) return;
+                const onclickAttr = link.getAttribute('onclick') || '';
+                const hrefAttr = link.getAttribute('href') || '';
+                if (onclickAttr.includes('goWrite') || onclickAttr.includes('showLayer') || hrefAttr.includes('listDisp') || onclickAttr.includes('listSearchHead')) {
+                    return;
+                }
+                if (link.href) {
                     e.preventDefault();
                     e.stopPropagation();
                     e.stopImmediatePropagation();
-
-                    // 사용자가 주소창에 URL을 입력하고 Enter를 누른 것과 동일하게,
-                    // 페이지 전체를 해당 주소로 새로고침합니다.
-                    // - 일반 URL: 해당 URL로 페이지 이동
-                    // - javascript: URL: 해당 스크립트 실행 (DC의 경우 AJAX 함수가 실행되어 결과적으로 페이지가 갱신됨)
-                    // 이 방식이 글 목록과 글 내용 페이지 모두에서 일관되게 작동합니다.
                     window.location.href = link.href;
                 }
-            }, true); // capture: true 옵션으로 다른 스크립트보다 먼저 이벤트를 가로챕니다.
+            }, true);
         },
+
         transformList(listWrap) {
             if (listWrap.querySelector(`.${this.CUSTOM_CLASSES.MOBILE_LIST}`)) return;
             if (listWrap.hasAttribute(this.TRANSFORMED_ATTR)) return;
@@ -1136,6 +1133,27 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
 
             const newListContainer = document.createElement('div');
             newListContainer.className = this.CUSTOM_CLASSES.MOBILE_LIST;
+
+            // [핵심 수정] 이벤트 위임을 사용하여 툴팁 로직 추가
+            const tooltip = document.getElementById('custom-instant-tooltip');
+            if (tooltip) {
+                newListContainer.addEventListener('mouseover', (e) => {
+                    const subject = e.target.closest('.gall_subject');
+                    if (subject && subject.title) {
+                        tooltip.textContent = subject.title;
+                        tooltip.style.display = 'block';
+                    }
+                });
+                newListContainer.addEventListener('mouseout', () => {
+                    tooltip.style.display = 'none';
+                });
+                newListContainer.addEventListener('mousemove', (e) => {
+                    if (tooltip.style.display === 'block') {
+                        tooltip.style.left = `${e.clientX + 10}px`;
+                        tooltip.style.top = `${e.clientY + 10}px`;
+                    }
+                });
+            }
 
             const originalRows = Array.from(originalTbody.querySelectorAll(this.SELECTORS.ORIGINAL_POST_ITEM));
             originalRows.forEach((row, index) => {
@@ -1158,7 +1176,6 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
                 listWrap.appendChild(bottomControls);
             }
 
-            // [v2.2.3 수정] 페이지네이션 강제 새로고침 로직을 재사용 함수로 호출
             this.applyForceRefreshPagination(listWrap);
 
             const observer = new MutationObserver(mutations => {
@@ -1198,6 +1215,13 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             if (isUiInitialized) return;
             isUiInitialized = true;
 
+            // [핵심 수정] 스크립트 시작 시, 툴팁으로 사용할 div를 미리 한 번만 생성
+            if (!document.getElementById('custom-instant-tooltip')) {
+                const tooltip = document.createElement('div');
+                tooltip.id = 'custom-instant-tooltip';
+                document.body.appendChild(tooltip);
+            }
+
             if (!document.querySelector('meta[name="viewport"]')) {
                 const viewportMeta = document.createElement('meta');
                 viewportMeta.name = 'viewport';
@@ -1209,20 +1233,16 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
                 document.body.classList.add('is-mgallery');
             }
 
-            // [v2.2.3 수정] 페이지 종류에 따라 다른 UI 변환 및 로직 적용
             if (window.location.pathname.includes('/board/write/')) {
                 this.transformWritePage();
-                // 글쓰기 페이지는 여기서 실행 종료
                 return;
             } else if (window.location.pathname.includes('/board/view/')) {
-                // 글 내용 페이지의 경우, 하단 네비게이션(이전/다음글)에 강제 새로고침 적용
                 const viewBottomContainer = document.querySelector('.view_bottom');
                 if (viewBottomContainer) {
                     this.applyForceRefreshPagination(viewBottomContainer);
                 }
             }
 
-            // 글 목록 페이지 처리 (위 조건들에 해당하지 않는 경우 실행됨)
             const processAllLists = () => {
                 document.querySelectorAll(this.SELECTORS.LIST_WRAP).forEach(lw => this.transformList(lw));
             };
