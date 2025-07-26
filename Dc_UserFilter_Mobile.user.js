@@ -276,6 +276,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             font-weight: bold !important; 
             margin-right: 8px; /* 간격 살짝 조정 */
             flex-shrink: 0; /* 말머리가 줄어들지 않도록 설정 */
+            border: none !important; /* [요청 수정] 글머리 테두리 제거 */
         }
         .post-title .reply_num { 
             color: #4263eb !important; 
