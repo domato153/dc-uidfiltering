@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         DC_UserFilter_Mobile
 // @namespace    http://tampermonkey.net/
-// @version      2.2.1
-// @description  유저 필터링, UI 개선 
+// @version      2.2.2
+// @description  유저 필터링, UI 개선
 // @author       domato153
 // @match        https://gall.dcinside.com/*
 // @grant        GM_setValue
@@ -802,7 +802,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
         },
         async addBlockedUid(uid, sum, post, comment, ratioBlocked) {
             if (this.isMobile()) return;
-            await this.refreshBlockedUidsCache(true);
+            await this.refreshBlockedUidsCache();
             this.BLOCKED_UIDS_CACHE[uid] = { ts: Date.now(), sum, post, comment, ratioBlocked: !!ratioBlocked };
             await GM_setValue(this.CONSTANTS.STORAGE_KEYS.BLOCKED_UIDS, JSON.stringify(this.BLOCKED_UIDS_CACHE));
         },
@@ -1077,24 +1077,53 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             const searchForm = listWrap.querySelector(this.SELECTORS.SEARCH_FORM);
 
             if (!gallTabs && !pagination && !searchForm) return null;
+            
             const bottomControls = document.createElement('div');
             bottomControls.className = this.CUSTOM_CLASSES.BOTTOM_CONTROLS;
+
             if (gallTabs) {
                 const buttonRow = document.createElement('div');
                 buttonRow.className = 'custom-button-row';
-                buttonRow.appendChild(gallTabs.cloneNode(true));
+                buttonRow.appendChild(gallTabs);
                 bottomControls.appendChild(buttonRow);
             }
 
-            if (searchForm) {
+            if (searchForm && !bottomControls.contains(searchForm)) {
                 bottomControls.appendChild(searchForm);
             }
 
-            if (pagination) bottomControls.appendChild(pagination.cloneNode(true));
+            if (pagination) {
+                bottomControls.appendChild(pagination);
+            }
 
             return bottomControls;
         },
+        // [v2.2.3 추가] 페이지네이션/네비게이션 링크 클릭 시 강제 새로고침을 적용하는 재사용 함수
+        applyForceRefreshPagination(containerElement) {
+            if (!containerElement) return;
 
+            // 이벤트 리스너를 더 안정적인 상위 컨테이너에 연결하여,
+            // DCinside 스크립트에 의해 DOM이 변경되더라도 리스너가 유지되도록 합니다.
+            containerElement.addEventListener('click', (e) => {
+                // 컨테이너 내부의 링크(<a>) 클릭만 감지합니다.
+                const link = e.target.closest('a');
+
+                // href 속성이 있는 링크에만 반응합니다.
+                if (link && link.href) {
+                    // 사이트의 모든 기본 동작(AJAX 등)을 원천 차단합니다.
+                    e.preventDefault();
+                    e.stopPropagation();
+                    e.stopImmediatePropagation();
+
+                    // 사용자가 주소창에 URL을 입력하고 Enter를 누른 것과 동일하게,
+                    // 페이지 전체를 해당 주소로 새로고침합니다.
+                    // - 일반 URL: 해당 URL로 페이지 이동
+                    // - javascript: URL: 해당 스크립트 실행 (DC의 경우 AJAX 함수가 실행되어 결과적으로 페이지가 갱신됨)
+                    // 이 방식이 글 목록과 글 내용 페이지 모두에서 일관되게 작동합니다.
+                    window.location.href = link.href;
+                }
+            }, true); // capture: true 옵션으로 다른 스크립트보다 먼저 이벤트를 가로챕니다.
+        },
         transformList(listWrap) {
             if (listWrap.querySelector(`.${this.CUSTOM_CLASSES.MOBILE_LIST}`)) return;
             if (listWrap.hasAttribute(this.TRANSFORMED_ATTR)) return;
@@ -1129,10 +1158,8 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
                 listWrap.appendChild(bottomControls);
             }
 
-            const originalGallTabs = listWrap.querySelector(this.SELECTORS.GALL_TABS);
-            const originalPagination = listWrap.querySelector(this.SELECTORS.PAGINATION);
-            if(originalGallTabs) originalGallTabs.style.display = 'none';
-            if(originalPagination) originalPagination.style.display = 'none';
+            // [v2.2.3 수정] 페이지네이션 강제 새로고침 로직을 재사용 함수로 호출
+            this.applyForceRefreshPagination(listWrap);
 
             const observer = new MutationObserver(mutations => {
                 mutations.forEach(mutation => {
@@ -1182,11 +1209,20 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
                 document.body.classList.add('is-mgallery');
             }
 
+            // [v2.2.3 수정] 페이지 종류에 따라 다른 UI 변환 및 로직 적용
             if (window.location.pathname.includes('/board/write/')) {
                 this.transformWritePage();
+                // 글쓰기 페이지는 여기서 실행 종료
                 return;
+            } else if (window.location.pathname.includes('/board/view/')) {
+                // 글 내용 페이지의 경우, 하단 네비게이션(이전/다음글)에 강제 새로고침 적용
+                const viewBottomContainer = document.querySelector('.view_bottom');
+                if (viewBottomContainer) {
+                    this.applyForceRefreshPagination(viewBottomContainer);
+                }
             }
 
+            // 글 목록 페이지 처리 (위 조건들에 해당하지 않는 경우 실행됨)
             const processAllLists = () => {
                 document.querySelectorAll(this.SELECTORS.LIST_WRAP).forEach(lw => this.transformList(lw));
             };
@@ -1216,7 +1252,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
 
     async function main() {
         if (isInitialized) return;
-        console.log("[DC Filter+UI] Initializing v2.2.2 (FOUC Fixed)...");
+        console.log("[DC Filter+UI] Initializing v2.2.5 (Robust Pagination Force-Refresh)...");
 
         // [v2.1 수정] 단축키 로드 및 이벤트 리스너 설정
         const shortcutString = await GM_getValue(FilterModule.CONSTANTS.STORAGE_KEYS.SHORTCUT_KEY, 'Shift+S');
