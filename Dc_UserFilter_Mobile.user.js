@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         DC_UserFilter_Mobile
 // @namespace    http://tampermonkey.net/
-// @version      2.2.3
-// @description  유저 필터링, UI 개선
+// @version      2.3.0
+// @description  유저 필터링, UI 개선 
 // @author       domato153
 // @match        https://gall.dcinside.com/*
 // @grant        GM_setValue
@@ -80,7 +80,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
 
         /* [수정] 불필요한 PC버전 요소 숨김 */
         #dc_header, #dc_gnb, .adv_area, .right_content, .dc_all, .dcfoot, .dc_ft, .info_policy, .copyrigh, .ad_bottom_list, .bottom_paging_box + div, .intro_bg, .fixed_write_btn, .bottom_movebox, .zzbang_div, .my_zzal, .my_dccon, .issue_contentbox, #gall_top_recom.concept_wrap,
-        .gall_exposure, .stickyunit {
+        .gall_exposure, .stickyunit, #kakao_search {
             display: none !important;
         }
 
@@ -1273,7 +1273,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
 
     async function main() {
         if (isInitialized) return;
-        console.log("[DC Filter+UI] Initializing v2.2.5 (Robust Pagination Force-Refresh)...");
+        console.log("[DC Filter+UI] Initializing v2.2.4 (Hide Search Results)...");
 
         // [v2.1 수정] 단축키 로드 및 이벤트 리스너 설정
         const shortcutString = await GM_getValue(FilterModule.CONSTANTS.STORAGE_KEYS.SHORTCUT_KEY, 'Shift+S');
