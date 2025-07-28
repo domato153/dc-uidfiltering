@@ -1291,8 +1291,8 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
 
                 const nick = writerEl.getAttribute('data-nick');
                 const uid = writerEl.getAttribute('data-uid');
-                const ipEl = writerEl.querySelector('.ip');
-                const ip = ipEl ? ipEl.textContent.trim() : null;
+                // 수정된 코드
+                const ip = writerEl.getAttribute('data-ip');
 
                 this.showSelectionPopup({ nick, uid, ip });
             }
