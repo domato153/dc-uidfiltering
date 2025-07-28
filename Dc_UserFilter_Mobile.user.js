@@ -314,10 +314,15 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
         .custom-button-row .list_bottom_btnbox > .fr { flex-shrink: 0; }
         .custom-button-row .list_bottom_btnbox > div { float: none !important; }
         .custom-bottom-controls .page_box { float: none !important; display: inline-block; }
-
+        
+        /* [v2.4.1 핫픽스] 본문 너비 고정 및 overflow 문제 해결 */
+        .writing_view_box .write_div {
+            width: 100% !important;
+            overflow: visible !important;
+        }
         /* --- 글 보기/댓글 UI --- */
-        .gall_content, .gall_tit_box, .gall_writer_info, .gallview_contents, .btn_recommend_box, .view_bottom, .gall_comment, .comment_box { background: #fff !important; padding: 15px !important; border-bottom: 1px solid #ddd; }
-        .gallview_contents img, .gallview_contents video { max-width: 100% !important; height: auto !important; box-sizing: border-box; }
+        .gall_content, .gall_tit_box, .gall_writer_info, .btn_recommend_box, .view_bottom, .gall_comment, .comment_box { background: #fff !important; padding: 15px !important; border-bottom: 1px solid #ddd; }
+        .gallview_contents img, .gallview_contents video { max-width: 100% !important; height: auto !important;  }
 
         /* [v2.2.0 이식] 글 본문 가독성 개선 */
         .view_content_wrap .title_subject {
@@ -327,6 +332,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
         .gallview_contents {
             font-size: 26px !important;
             line-height: 1.9 !important;
+            word-break: break-all !important; /* <-- 이 한 줄을 추가했습니다 */
         }
         .gallview_contents p,
         .gallview_contents div,
