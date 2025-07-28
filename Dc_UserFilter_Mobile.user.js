@@ -1206,25 +1206,13 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
                 fab.style.bottom = 'auto';
             };
 
-            const onDragEnd = async () => {
+            const onDragEnd = () => { // async 키워드 제거
                 if (!isDragging) return;
                 isDragging = false;
                 fab.style.transition = 'transform 0.2s ease-out';
-
-                // [핵심 수정 1] 저장하기 전에 좌표 값의 유효성을 검사
-                const finalLeft = fab.style.left;
-                const finalTop = fab.style.top;
-
-                if (finalLeft && finalTop && !isNaN(parseInt(finalLeft)) && !isNaN(parseInt(finalTop))) {
-                    await GM_setValue(FilterModule.CONSTANTS.STORAGE_KEYS.FAB_POSITION, {
-                        left: finalLeft,
-                        top: finalTop,
-                        right: 'auto', // left/top 사용 시 right/bottom은 auto로 고정
-                        bottom: 'auto'
-                    });
-                } else {
-                    console.warn('[DC Filter+UI] Invalid FAB position detected. Not saving.', { left: finalLeft, top: finalTop });
-                }
+            
+                // GM_setValue 호출을 포함한 위치 저장 로직 전체를 제거하여
+                // 드래그가 끝나도 위치가 저장되지 않도록 합니다.
             };
 
             fab.addEventListener('mousedown', onDragStart);
@@ -1234,23 +1222,12 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             document.addEventListener('touchmove', onDragMove, { passive: false });
             document.addEventListener('touchend', onDragEnd);
 
-            // 저장된 위치 로드
-            (async () => {
+            // 저장된 위치 로드 대신 항상 기본 위치에 생성
+            (() => { // async 키워드 제거
+                // 저장된 위치를 불러오는 대신 항상 기본 위치를 사용하도록 수정
                 const defaultPos = { left: 'auto', top: 'auto', right: '20px', bottom: '20px' };
-                let pos = await GM_getValue(FilterModule.CONSTANTS.STORAGE_KEYS.FAB_POSITION, defaultPos);
-
-                // [핵심 수정 2] 로드한 좌표 값의 유효성을 검사하고, 유효하지 않으면 기본값으로 리셋
-                const isLeftValid = pos.left && pos.left !== 'auto' && !isNaN(parseInt(pos.left));
-                const isTopValid = pos.top && pos.top !== 'auto' && !isNaN(parseInt(pos.top));
-
-                if ((pos.left !== 'auto' && !isLeftValid) || (pos.top !== 'auto' && !isTopValid)) {
-                    console.warn('[DC Filter+UI] Invalid stored FAB position detected. Resetting to default.', pos);
-                    pos = defaultPos;
-                    // 잘못된 값을 스토리지에서 제거
-                    await GM_setValue(FilterModule.CONSTANTS.STORAGE_KEYS.FAB_POSITION, defaultPos);
-                }
-
-                Object.assign(fab.style, pos);
+                // GM_getValue 및 유효성 검사 로직을 제거하고, defaultPos를 바로 적용합니다.
+                Object.assign(fab.style, defaultPos);
             })();
         },
 
@@ -1561,28 +1538,24 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
                 }
             };
 
-            const onDragEnd = async () => {
+            const onDragEnd = () => { // async 키워드 제거
                 isDragging = false;
                 isResizing = false;
                 document.removeEventListener('mousemove', onDragMove);
-                await GM_setValue(FilterModule.CONSTANTS.STORAGE_KEYS.MANAGEMENT_PANEL_GEOMETRY, {
-                    left: panel.style.left,
-                    top: panel.style.top,
-                    width: panel.style.width,
-                    height: panel.style.height
-                });
-            };
+                // GM_setValue 호출을 제거하여 창의 위치/크기 상태를 저장하지 않음
+            }; 
 
             panel.addEventListener('mousedown', onDragStart);
 
-            (async () => {
-                const geo = await GM_getValue(FilterModule.CONSTANTS.STORAGE_KEYS.MANAGEMENT_PANEL_GEOMETRY, {
+            (() => { // async 키워드 제거
+                // 저장된 값을 불러오는 대신 항상 기본값으로 패널 위치와 크기를 설정
+                const defaultGeo = {
                     left: '50%', top: '50%', width: '400px', height: '500px'
-                });
-                if (geo.left.includes('%')) {
-                    panel.style.transform = 'translate(-50%, -50%)';
-                }
-                Object.assign(panel.style, geo);
+                };
+                // 기본값은 항상 % 단위이므로, transform 스타일을 항상 적용하여 정중앙에 배치
+                panel.style.transform = 'translate(-50%, -50%)';
+                Object.assign(panel.style, defaultGeo);
+            
                 renderList('uids'); // 초기 렌더링
             })();
         }
