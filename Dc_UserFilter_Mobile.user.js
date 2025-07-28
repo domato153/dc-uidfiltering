@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         DC_UserFilter_Mobile
 // @namespace    http://tampermonkey.net/
-// @version      2.4.0
+// @version      2.4.1
 // @description  유저 필터링, UI 개선, 개인 차단 기능 추가
 // @author       domato153
 // @match        https://gall.dcinside.com/*
