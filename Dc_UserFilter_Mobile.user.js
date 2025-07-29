@@ -1,9 +1,9 @@
 // ==UserScript==
 // @name         DC_UserFilter_Mobile
 // @namespace    http://tampermonkey.net/
-// @version      2.4.2
-// @description  유저 필터링, UI 개선, 개인 차단 기능 추가
-// @author       domato153
+// @version      2.5.0
+// @description  유저 필터링, UI 개선, 개인 차단 기능 추가 (On/Off 및 백업 기능 포함)
+// @author       domato153 (modified by assistant)
 // @match        https://gall.dcinside.com/*
 // @grant        GM_setValue
 // @grant        GM_getValue
@@ -13,14 +13,17 @@
 // @license      MIT
 // ==/UserScript==
 
+
 /*-----------------------------------------------------------------
 DBAD license / Copyright (C) 2025 domato153
 https://github.com/philsturgeon/dbad/blob/master/LICENSE.md
 https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
 ------------------------------------------------------------------*/
 
+
 (function() {
     'use strict';
+
 
     // [개선] 전역 스코프 오염 방지를 위해 스크립트 상태 변수를 IIFE 내부 스코프로 이동
     let dcFilterSettings = {};
@@ -28,6 +31,8 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
     let isInitialized = false;
     let isUiInitialized = false;
     let activeShortcutObject = null; // [v2.1 추가] 현재 활성화된 단축키 객체
+
+
 
 
      // =================================================================
@@ -47,6 +52,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             white-space: nowrap; /* 툴팁 내용이 길어도 줄바꿈 안 함 */
             pointer-events: none; /* 툴팁이 마우스 이벤트를 방해하지 않도록 설정 (중요!) */
         }
+
 
         /* [v2.2.3 최종 수정] JS 의존성을 제거한 선언적 FOUC 방지 (새로고침 깜빡임 완벽 해결) */
         /* 스크립트 UI 준비가 완료되기 전까지 body를 숨겨 원본 UI 노출을 원천 차단합니다. */
@@ -71,6 +77,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             z-index: 2147483647; /* Max z-index */
         }
 
+
         /* [수정] FOUC(화면 깜빡임) 방지 및 원본 테이블 숨김 강화 */
         table.gall_list {
             visibility: hidden !important; position: absolute !important;
@@ -78,11 +85,13 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             height: 0 !important; overflow: hidden !important;
         }
 
+
         /* [수정] 불필요한 PC버전 요소 숨김 */
         #dc_header, #dc_gnb, .adv_area, .right_content, .dc_all, .dcfoot, .dc_ft, .info_policy, .copyrigh, .ad_bottom_list, .bottom_paging_box + div, .intro_bg, .fixed_write_btn, .bottom_movebox, .zzbang_div, .my_zzal, .my_dccon, .issue_contentbox, #gall_top_recom.concept_wrap,
         .gall_exposure, .stickyunit, #kakao_search {
             display: none !important;
         }
+
 
         /* --- 기본 레이아웃 재정의 --- */
         /* [개선] 마이너 갤러리 상단 링크 영역 모바일 최적화 */
@@ -104,8 +113,10 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             max-width: 500px; /* 링크들이 너무 퍼지지 않게 중앙 정렬 효과 */
         }
 
+
         body { background: #fff !important; }
         html, body { overflow-x: hidden !important; }
+
 
         html, body, #top, .dcheader, .gnb_bar, #container, .wrap_inner, .visit_bookmark,
         .list_array_option, .left_content,
@@ -116,6 +127,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             margin: 0 !important; padding: 0 !important;
         }
         #container { padding-top: 5px; }
+
 
         /* [수정] dcheader(상단 전체) 및 dchead(내부 컨테이너) 반응형 스타일 */
         .dcheader.typea { min-width: 0 !important; width: 100% !important; height: auto !important; background: #fff; border-bottom: 1px solid #e5e5e5; }
@@ -130,14 +142,18 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             width: 100% !important;
         }
 
+
         .dchead h1.dc_logo { flex-shrink: 0 !important; margin: 0 !important; display: block !important; }
         .dchead h1.dc_logo img.logo_img { height: 22px !important; width: auto !important; }
         .dchead h1.dc_logo img.logo_img2 { display: none !important; }
 
+
         .dchead .wrap_search { flex-grow: 1 !important; min-width: 100px !important; max-width: 600px; }
         .dchead .top_search { width: 100% !important; }
 
+
         .dchead .area_links { display: block !important; flex-shrink: 0 !important; white-space: nowrap !important; }
+
 
         /* [추가] 갤러리 헤더(제목, 설정 버튼 등) 반응형 스타일 */
         .page_head {
@@ -161,20 +177,24 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             gap: 8px; /* 버튼 등 내부 요소간 간격 */
         }
 
+
         /* [추가] Clearfix: float으로 인한 부모 요소의 높이 붕괴 방지 */
         .page_head::after, .list_array_option::after {
             content: ""; display: table; clear: both;
         }
+
 
         /* [추가] 일반/마이너 갤러리 글 목록 상단 공통 여백 */
         .list_array_option {
             margin-bottom: 10px !important;
         }
 
+
         /* [수정] gnb_bar (메인 GNB) 반응형 스타일 개선 */
         .gnb_bar { display: block !important; width: 100% !important; min-width: 0 !important; height: auto !important; box-sizing: border-box !important; background: #3b4890 !important; }
         .gnb_bar nav.gnb { width: auto !important; min-width: 0 !important; padding: 0 15px !important; display: flex !important; justify-content: center !important; }
         .gnb_bar .gnb_list { display: flex; flex-wrap: wrap; justify-content: space-around; width: 100% !important; }
+
 
         /* [개선] newvisit_history (최근 방문 갤러리) 상/하단 선 모두 제거 */
         .newvisit_history { display: flex !important; align-items: center; width: 100% !important; min-width: 0 !important; height: auto !important; padding: 8px 10px !important; background: #f8f9fa !important; border: none !important; box-sizing: border-box !important; gap: 5px; }
@@ -185,6 +205,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
         .newvisit_history .newvisit_list::-webkit-scrollbar { display: none; }
         .newvisit_history .newvisit_list li { white-space: nowrap; flex-shrink: 0; }
         .newvisit_history > .bnt_visit_prev, .newvisit_history > .bnt_visit_next, .newvisit_history > .btn_open, .newvisit_history > .bnt_newvisit_more { flex-shrink: 0; position: static !important; transform: none !important; margin: 0 !important; padding: 0 4px; }
+
 
         /* [최종 수정] 마이너 갤러리 전용 탭/말머리 레이아웃 (v1.0.5) */
         .is-mgallery .list_array_option {
@@ -198,6 +219,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             gap: 10px; /* 요소들 사이의 간격 */
         }
 
+
         /* 모든 자식 div의 float 속성 원천 차단 및 기본 너비 설정 */
         .is-mgallery .list_array_option > div {
             float: none !important;
@@ -205,12 +227,14 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             flex-shrink: 0; /* 기본적으로 내용물 크기 유지 */
         }
 
+
         /* [신규] '전체글/개념글' 탭 컨테이너(.array_tab) 직접 스타일링 */
         .is-mgallery .list_array_option .array_tab {
             display: flex !important;
             white-space: nowrap; /* 버튼 줄바꿈 방지 */
             gap: 4px; /* 버튼 사이 간격 */
         }
+
 
         /* 중앙 요소 (주로 말머리) - 남는 공간 모두 차지 */
         .is-mgallery .list_array_option > .center_box {
@@ -227,22 +251,26 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             margin: 0 !important;
         }
 
+
         /* 오른쪽 요소 (글쓰기 버튼 등) - 오른쪽 끝으로 정렬 */
         .is-mgallery .list_array_option > .right_box {
             margin-left: auto; /* 왼쪽 요소들과 최대한 멀리 떨어지도록 설정 */
         }
         /* --- 마이너 갤러리 레이아웃 수정 완료 --- */
 
+
         /* [해결] 마이너 갤러리에서 헤더와 글 목록 겹침 현상 방지 */
         .is-mgallery .gall_listwrap {
             margin-top: 0 !important; /* 위에서 list_array_option의 margin-bottom으로 간격을 조절하므로 0으로 초기화 */
         }
+
 
         /* --- 커스텀 모바일 리스트 UI --- */
         .custom-mobile-list {
             border-top: 1px solid #ddd;
             background: #fff;
         }
+
 
         .custom-post-item.notice + .custom-post-item:not(.notice):not(.concept),
         .custom-post-item.concept + .custom-post-item:not(.notice):not(.concept) { border-top: 1px solid #4263eb !important; }
@@ -252,6 +280,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
         .custom-post-item.notice, .custom-post-item.concept { background-color: #f8f9fa; position: relative; padding-left: 60px; }
         .custom-post-item.notice::before { content: '공지'; background-color: #e03131; position: absolute; left: 18px; top: 50%; transform: translateY(-50%); font-size: 13px; font-weight: bold; color: #fff; padding: 4px 9px; border-radius: 4px; }
         .custom-post-item.concept::before { content: '개념'; background-color: #4263eb; position: absolute; left: 18px; top: 50%; transform: translateY(-50%); font-size: 13px; font-weight: bold; color: #fff; padding: 4px 9px; border-radius: 4px; }
+
 
                 /* [v2.2.0 이식] 게시글 목록: 제목, 말머리, 댓글수 */
         .post-title {
@@ -286,6 +315,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             flex-shrink: 0 !important;
         }
 
+
         /* [v2.2.0 이식] 게시글 목록: 작성자, 통계 */
         .post-meta { display: flex; justify-content: space-between; align-items: center; color: #888; }
         .post-meta .author { display: flex; align-items: center; }
@@ -302,6 +332,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             font-size: 15px !important; /* 폰트 크기 키움 */
         }
 
+
         /* --- 커스텀 하단 컨트롤 UI --- */
         .custom-bottom-controls { display: flex; flex-direction: column; align-items: center; padding: 15px; background: #fff; }
         .custom-bottom-controls form[name="frmSearch"] { display: flex !important; width: 100%; max-width: 500px; box-sizing: border-box !important; margin: 15px 0 !important; gap: 5px; flex-wrap: nowrap !important; }
@@ -314,6 +345,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
         .custom-button-row .list_bottom_btnbox > .fr { flex-shrink: 0; }
         .custom-button-row .list_bottom_btnbox > div { float: none !important; }
         .custom-bottom-controls .page_box { float: none !important; display: inline-block; }
+
 
         /* [v2.4.1 핫픽스] 본문 너비 고정 및 overflow 문제 해결 */
         .writing_view_box .write_div {
@@ -333,6 +365,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
         }
         .gallview_contents img, .gallview_contents video { max-width: 100% !important; height: auto !important;  }
 
+
         /* [v2.2.0 이식] 글 본문 가독성 개선 */
         .view_content_wrap .title_subject {
             font-size: 21px !important;
@@ -351,6 +384,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             color: inherit !important;
         }
 
+
         /* [v2.2.0 이식] 댓글 가독성 개선 */
         .comment_box .usertxt {
             font-size: 18px !important;
@@ -360,6 +394,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
         .comment_box .date_time {
             font-size: 15px !important;
         }
+
 
         /* [v2.2.0 이식] 추천/비추천 버튼 UI 개선 */
         .btn_recommend_box .writer_nikcon,
@@ -406,6 +441,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             color: #333 !important;
         }
 
+
         .cmt_write_box { display: flex !important; flex-wrap: wrap !important; gap: 10px !important; padding: 10px !important; }
         .cmt_write_box .fl { float: none !important; flex-basis: 200px; flex-shrink: 1; min-width: 180px; }
         .cmt_write_box .fl .usertxt { display: flex; flex-direction: column; gap: 5px; }
@@ -418,6 +454,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             .cmt_write_box { flex-direction: column !important; }
             .cmt_write_box .fl, .cmt_write_box .cmt_txt_cont { flex-basis: auto; width: 100% !important; min-width: 100%; }
         }
+
 
         /* [개선] --- 글쓰기 페이지 전용 스타일 --- */
         .is-write-page #container { background: #fff !important; padding: 0 !important; }
@@ -438,6 +475,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
         @media (max-width: 480px) {
             .is-write-page .write_box .user_info_box { flex-direction: column; }
         }
+
 
         /* --- [v2.3.2 수정] 개인 차단 기능 UI --- */
         #dc-personal-block-fab {
@@ -486,6 +524,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             cursor: pointer !important;
         }
 
+
         #dc-block-management-panel-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.5);
@@ -521,9 +560,10 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
         #dc-block-management-panel .panel-body { flex-grow: 1; display: flex; flex-direction: column; overflow: hidden; background: #fff; }
         #dc-block-management-panel .panel-list-controls { padding: 8px 10px; border-bottom: 1px solid #eee; text-align: left; }
         #dc-block-management-panel .select-all-btn,
-        #dc-block-management-panel .select-all-global-btn { /* [추가] 버튼 공통 스타일 */
+        #dc-block-management-panel .select-all-global-btn,
+        #dc-block-management-panel .panel-backup-btn { /* [수정] 백업 버튼 공통 스타일 적용 */
             font-size: 13px; padding: 4px 8px; cursor: pointer;
-            border: 1px solid #ccc; background: #f1f3f5; border-radius: 4px;
+            border: 1px solid #ccc; background: #f1f3f5; border-radius: 4px; margin-left: 5px;
         }
         #dc-block-management-panel .panel-content { flex-grow: 1; overflow-y: auto; }
         #dc-block-management-panel .blocked-list { list-style: none; margin: 0; padding: 10px; }
@@ -539,6 +579,10 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             border-top: 1px solid #ccc;
             background: #f9f9f9;
         }
+        #dc-block-management-panel .panel-footer-left {
+            display: flex;
+            align-items: center;
+        }
         #dc-block-management-panel .panel-save-btn { padding: 8px 16px; font-size: 14px; background: #3b71fd; color: #fff; border: none; border-radius: 4px; cursor: pointer; }
         #dc-block-management-panel .panel-resize-handle {
             position: absolute;
@@ -547,7 +591,41 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             cursor: nwse-resize;
             background: repeating-linear-gradient(135deg, #ccc, #ccc 1px, transparent 1px, transparent 3px);
         }
+
+        /* [신규] 개인 차단 On/Off 스위치 UI */
+        .switch-container { display: flex; align-items: center; margin-left: auto; }
+        .switch { position: relative; display: inline-block; width: 40px; height: 22px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .switch-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 22px; }
+        .switch-slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .switch-slider { background-color: #3b71fd; }
+        input:checked + .switch-slider:before { transform: translateX(18px); }
+
+        /* [신규] 백업/복원 팝업 UI */
+        #dc-backup-popup-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6);
+            z-index: 2147483647;
+        }
+        #dc-backup-popup {
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: #fff; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            z-index: 2147483647; padding: 20px; min-width: 350px;
+        }
+        #dc-backup-popup .popup-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #eee; }
+        #dc-backup-popup .popup-header h4 { margin: 0; font-size: 16px; }
+        #dc-backup-popup .popup-close-btn { font-size: 20px; background: none; border: none; cursor: pointer; color: #888; }
+        #dc-backup-popup .popup-content { display: flex; flex-direction: column; gap: 15px; }
+        #dc-backup-popup .export-section, #dc-backup-popup .import-section { display: flex; flex-direction: column; gap: 8px; }
+        #dc-backup-popup label { font-size: 14px; font-weight: bold; }
+        #dc-backup-popup .description { font-size: 12px; color: #666; }
+        #dc-backup-popup .import-controls { display: flex; gap: 8px; }
+        #dc-backup-popup textarea { flex-grow: 1; height: 100px; resize: vertical; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 12px; font-family: monospace; }
+        #dc-backup-popup button { padding: 8px 12px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        #dc-backup-popup .export-btn { background-color: #28a745; color: white; }
+        #dc-backup-popup .import-btn { background-color: #007bff; color: white; }
     `);
+
 
     /**
      * =================================================================
@@ -583,6 +661,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             [223, [[32, "SKT", "MOB"], [33, "SKT", "MOB"], [34, "SKT", "MOB"], [35, "SKT", "MOB"], [36, "SKT", "MOB"], [37, "SKT", "MOB"], [38, "SKT", "MOB"], [39, "SKT", "MOB"], [40, "SKT", "MOB"], [41, "SKT", "MOB"], [42, "SKT", "MOB"], [43, "SKT", "MOB"], [44, "SKT", "MOB"], [45, "SKT", "MOB"], [46, "SKT", "MOB"], [47, "SKT", "MOB"], [48, "SKT", "MOB"], [49, "SKT", "MOB"], [50, "SKT", "MOB"], [51, "SKT", "MOB"], [52, "SKT", "MOB"], [53, "SKT", "MOB"], [54, "SKT", "MOB"], [55, "SKT", "MOB"], [56, "SKT", "MOB"], [57, "SKT", "MOB"], [58, "SKT", "MOB"], [59, "SKT", "MOB"], [60, "SKT", "MOB"], [61, "SKT", "MOB"], [62, "SKT", "MOB"], [63, "SKT", "MOB"], [168, "LGT+모바일", "MOB"], [169, "LGT+모바일", "MOB"], [170, "LGT+모바일", "MOB"], [171, "LGT+모바일", "MOB"], [172, "LGT+모바일", "MOB"], [173, "LGT+모바일", "MOB"], [174, "LGT+모바일", "MOB"], [175, "LGT+모바일", "MOB"]]]
         ],
 
+
         CONSTANTS: {
             STORAGE_KEYS: {
                 MASTER_DISABLED: 'dcinside_master_disabled',
@@ -599,6 +678,8 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
                 SHORTCUT_KEY: 'dcinside_shortcut_key',
                 // [v2.3.1 추가] 개인 차단 기능용 저장 키
                 PERSONAL_BLOCK_LIST: 'dcinside_personal_block_list',
+                // [신규] 개인 차단 기능 On/Off 저장 키
+                PERSONAL_BLOCK_ENABLED: 'dcinside_personal_block_enabled',
                 FAB_POSITION: 'dcinside_fab_position',
                 MANAGEMENT_PANEL_GEOMETRY: 'dcinside_management_panel_geometry',
             },
@@ -712,11 +793,13 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             const input = document.getElementById(this.CONSTANTS.UI_IDS.THRESHOLD_INPUT);
             input.focus(); input.select();
 
+
             // [v2.1 추가] 단축키 변경 버튼 이벤트 리스너
             document.getElementById(this.CONSTANTS.UI_IDS.CHANGE_SHORTCUT_BTN).onclick = (e) => {
                 e.preventDefault();
                 this.showShortcutChanger();
             };
+
 
             const masterDisableCheckbox = document.getElementById(this.CONSTANTS.UI_IDS.MASTER_DISABLE_CHECKBOX);
             const settingsContainer = document.getElementById(this.CONSTANTS.UI_IDS.SETTINGS_CONTAINER);
@@ -778,13 +861,16 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
         showShortcutChanger() {
             if (document.getElementById(this.CONSTANTS.UI_IDS.SHORTCUT_MODAL)) return;
 
+
             const settingsPanel = document.getElementById(this.CONSTANTS.UI_IDS.SETTINGS_PANEL);
             settingsPanel.style.pointerEvents = 'none';
+
 
             const overlay = document.createElement('div');
             overlay.id = this.CONSTANTS.UI_IDS.SHORTCUT_MODAL_OVERLAY;
             overlay.style = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 100000;';
             document.body.appendChild(overlay);
+
 
             const modal = document.createElement('div');
             modal.id = this.CONSTANTS.UI_IDS.SHORTCUT_MODAL;
@@ -799,9 +885,11 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             `;
             document.body.appendChild(modal);
 
+
             let pressedKeys = new Set();
             let combinationTimeout = null;
             const previewEl = document.getElementById(this.CONSTANTS.UI_IDS.NEW_SHORTCUT_PREVIEW);
+
 
             const updatePreview = () => {
                 if (pressedKeys.size > 0) {
@@ -811,17 +899,21 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
                 }
             };
 
+
             const keydownHandler = (e) => {
                 e.preventDefault();
                 e.stopPropagation();
 
+
                 // 타이머가 있다면, 아직 조합이 진행 중이라는 의미이므로 초기화
                 clearTimeout(combinationTimeout);
+
 
                 if (pressedKeys.size < 3) {
                     pressedKeys.add(e.key);
                     updatePreview();
                 }
+
 
                 // 키 입력이 0.5초간 없으면 현재 조합을 확정하고 Set을 비움
                 combinationTimeout = setTimeout(() => {
@@ -829,14 +921,18 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
                 }, 500);
             };
 
+
             const keyupHandler = (e) => {
                 e.preventDefault();
                 e.stopPropagation();
                 // 키를 떼는 시점은 조합 확정과 관련 없으므로, pressedKeys를 유지합니다.
             };
 
+
             document.addEventListener('keydown', keydownHandler, true);
             document.addEventListener('keyup', keyupHandler, true);
+
+
 
 
             const cleanup = () => {
@@ -846,6 +942,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
                 modal.remove();
                 settingsPanel.style.pointerEvents = 'auto';
             };
+
 
             document.getElementById(this.CONSTANTS.UI_IDS.SAVE_SHORTCUT_BTN).onclick = async () => {
                 const newShortcut = previewEl.textContent;
@@ -859,6 +956,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
                 }
             };
 
+
             document.getElementById(this.CONSTANTS.UI_IDS.CANCEL_SHORTCUT_BTN).onclick = cleanup;
             overlay.onclick = cleanup;
         },
@@ -866,16 +964,20 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
         formatShortcutKeys(keySet) {
             if (keySet.size === 0) return '';
 
+
             const priority = ['Control', 'Meta', 'Alt', 'Shift', 'CapsLock', 'Tab'];
             const keys = Array.from(keySet);
+
 
             const modifiers = keys
                 .filter(k => priority.includes(k))
                 .sort((a, b) => priority.indexOf(a) - priority.indexOf(b));
 
+
             const others = keys
                 .filter(k => !priority.includes(k) && k.length === 1) // 일반 문자키만
                 .sort();
+
 
             return [...modifiers, ...others].map(k => k === 'Control' ? 'Ctrl' : k).join('+');
         },
@@ -884,8 +986,10 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             const result = { ctrlKey: false, metaKey: false, altKey: false, shiftKey: false, key: '' };
             if (!shortcutString) return result;
 
+
             const parts = shortcutString.split('+');
             const nonModifiers = [];
+
 
             parts.forEach(part => {
                 switch (part.toLowerCase()) {
@@ -909,6 +1013,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
                 }
             });
 
+
             if (nonModifiers.length > 0) {
                 result.key = nonModifiers[0].toUpperCase();
             }
@@ -924,11 +1029,13 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
                 xhr.open('POST', this.CONSTANTS.API.USER_INFO, true); xhr.withCredentials = true;
                 xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded; charset=UTF-8'); xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
 
+
                 xhr.timeout = 5000;
                 xhr.ontimeout = () => {
                     console.warn(`DCinside User Filter: User info request for UID ${uid} timed out.`);
                     resolve(null);
                 };
+
 
                 xhr.onload = () => {
                     if (xhr.status >= 200 && xhr.status < 300) {
@@ -1005,8 +1112,9 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
         },
         applySyncBlock(element) {
             if (this.shouldSkipFiltering(element)) { element.style.display = ''; return; }
-            const { masterDisabled, blockGuestEnabled, telecomBlockEnabled, blockConfig = {}, blockedGuests = [], personalBlockList } = dcFilterSettings;
+            const { masterDisabled, blockGuestEnabled, telecomBlockEnabled, blockConfig = {}, blockedGuests = [], personalBlockList, personalBlockEnabled } = dcFilterSettings;
             if (masterDisabled) { element.style.display = ''; return; }
+
 
             const writerInfo = element.querySelector(this.CONSTANTS.SELECTORS.WRITER_INFO); if (!writerInfo) return;
             const uid = writerInfo.getAttribute('data-uid');
@@ -1016,8 +1124,9 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             const isGuest = (!uid || uid.length < 3) && ip;
             let isBlocked = false;
 
-            // [v2.3.1 수정] 개인 차단 목록을 가장 먼저 확인
-            if (personalBlockList) {
+
+            // [수정] 개인 차단 목록을 스위치 상태와 함께 확인
+            if (personalBlockEnabled && personalBlockList) {
                 if (uid && personalBlockList.uids?.some(u => u.id === uid)) isBlocked = true;
                 else if (nickname && personalBlockList.nicknames?.includes(nickname)) isBlocked = true;
                 else if (ip && personalBlockList.ips?.includes(ip)) isBlocked = true;
@@ -1026,6 +1135,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
                 element.style.display = 'none';
                 return;
             }
+
 
             // 기존 필터링 로직
             const telecomBlockRegex = (telecomBlockEnabled && blockConfig.ip) ? new RegExp('^(' + blockConfig.ip.split('||').map(p => p.replace(/\./g, '\\.')).join('|') + ')') : null;
@@ -1057,6 +1167,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             const mainContainer = document.querySelector(this.CONSTANTS.SELECTORS.MAIN_CONTAINER);
             const observerTarget = mainContainer || document.body;
 
+
             const bodyObserver = new MutationObserver(mutations => mutations.forEach(m => m.addedNodes.forEach(n => {
                 if (n.nodeType === 1 && !n.closest('.user_data')) {
                     targets.forEach(t => { if (n.matches(t.c)) attachObserver(n, t.i); else if (n.querySelectorAll) n.querySelectorAll(t.c).forEach(c => attachObserver(c, t.i)); });
@@ -1069,7 +1180,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             const [
                 masterDisabled, excludeRecommended, threshold, ratioEnabled,
                 ratioMin, ratioMax, blockGuestEnabled, telecomBlockEnabled,
-                blockedGuests, blockConfig, personalBlockList
+                blockedGuests, blockConfig, personalBlockList, personalBlockEnabled
             ] = await Promise.all([
                 GM_getValue(this.CONSTANTS.STORAGE_KEYS.MASTER_DISABLED, false),
                 GM_getValue(this.CONSTANTS.STORAGE_KEYS.EXCLUDE_RECOMMENDED, false),
@@ -1081,16 +1192,19 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
                 GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_TELECOM, false),
                 this.getBlockedGuests(),
                 GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG, {}),
-                // [v2.3.1 수정] 개인 차단 목록 로드
-                PersonalBlockModule.loadPersonalBlocks()
+                PersonalBlockModule.loadPersonalBlocks(),
+                // [신규] 개인 차단 기능 활성화 상태 로드 (기본값 true)
+                GM_getValue(this.CONSTANTS.STORAGE_KEYS.PERSONAL_BLOCK_ENABLED, true)
             ]);
+
 
             dcFilterSettings = {
                 masterDisabled, excludeRecommended, threshold, ratioEnabled,
                 ratioMin: parseFloat(ratioMin),
                 ratioMax: parseFloat(ratioMax),
                 blockGuestEnabled, telecomBlockEnabled, blockedGuests, blockConfig,
-                personalBlockList // [v2.3.1 수정] 설정 객체에 추가
+                personalBlockList,
+                personalBlockEnabled // [신규] 설정 객체에 추가
             };
         },
         async refilterAllContent() {
@@ -1119,6 +1233,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
         }
     };
 
+
     /**
      * =================================================================
      * =================== Personal Block Module =======================
@@ -1128,11 +1243,13 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
         isSelectionMode: false,
         personalBlockListCache: { uids: [], nicknames: [], ips: [] },
 
+
         async init() {
             this.personalBlockListCache = await this.loadPersonalBlocks();
             this.createFab();
             document.addEventListener('click', this.handleSelectionClick.bind(this), true);
         },
+
 
         async loadPersonalBlocks() {
             const list = await GM_getValue(FilterModule.CONSTANTS.STORAGE_KEYS.PERSONAL_BLOCK_LIST, { uids: [], nicknames: [], ips: [] });
@@ -1143,13 +1260,16 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             return list;
         },
 
+
         async savePersonalBlocks() {
             await GM_setValue(FilterModule.CONSTANTS.STORAGE_KEYS.PERSONAL_BLOCK_LIST, this.personalBlockListCache);
         },
 
+
         async addBlock(type, value, displayName = null) {
             if (!value) return;
             this.personalBlockListCache = await this.loadPersonalBlocks(); // 최신 데이터로 갱신
+
 
             switch (type) {
                 case 'uid':
@@ -1173,16 +1293,19 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             this.exitSelectionMode();
         },
 
+
         createFab() {
             // [방어 코드 1] 이미 FAB가 존재하면 중복 생성을 방지
             if (document.getElementById('dc-personal-block-fab')) {
                 return;
             }
 
+
             const fab = document.createElement('div');
             fab.id = 'dc-personal-block-fab';
             fab.textContent = '간편차단';
             document.body.appendChild(fab);
+
 
             fab.addEventListener('click', (e) => {
                 if (fab.getAttribute('data-dragged') === 'true') {
@@ -1191,6 +1314,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
                 }
                 this.enterSelectionMode();
             });
+
 
             // 드래그 기능
             let isDragging = false, offsetX, offsetY;
@@ -1204,6 +1328,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
                 offsetY = clientY - rect.top;
                 fab.setAttribute('data-dragged', 'false');
             };
+
 
             const onDragMove = (e) => {
                 if (!isDragging) return;
@@ -1222,14 +1347,16 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
                 fab.style.bottom = 'auto';
             };
 
+
             const onDragEnd = () => { // async 키워드 제거
                 if (!isDragging) return;
                 isDragging = false;
                 fab.style.transition = 'transform 0.2s ease-out';
-            
+
                 // GM_setValue 호출을 포함한 위치 저장 로직 전체를 제거하여
                 // 드래그가 끝나도 위치가 저장되지 않도록 합니다.
             };
+
 
             fab.addEventListener('mousedown', onDragStart);
             document.addEventListener('mousemove', onDragMove);
@@ -1237,6 +1364,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             fab.addEventListener('touchstart', onDragStart, { passive: true });
             document.addEventListener('touchmove', onDragMove, { passive: false });
             document.addEventListener('touchend', onDragEnd);
+
 
             // 저장된 위치 로드 대신 항상 기본 위치에 생성
             (() => { // async 키워드 제거
@@ -1247,10 +1375,12 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             })();
         },
 
+
         enterSelectionMode() {
             if (this.isSelectionMode) return;
             this.isSelectionMode = true;
             document.body.classList.add('selection-mode-active');
+
 
             const popup = document.createElement('div');
             popup.id = 'dc-selection-popup';
@@ -1264,6 +1394,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             popup.querySelector('.cancel-btn').onclick = () => this.exitSelectionMode();
         },
 
+
         exitSelectionMode() {
             if (!this.isSelectionMode) return;
             this.isSelectionMode = false;
@@ -1272,24 +1403,29 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             if (popup) popup.remove();
         },
 
+
         handleSelectionClick(e) {
             if (!this.isSelectionMode) return;
             const popup = document.getElementById('dc-selection-popup');
             if (popup && popup.contains(e.target)) return;
+
 
             const writerEl = e.target.closest('.gall_writer, .ub-writer');
             if (writerEl) {
                 e.preventDefault();
                 e.stopPropagation();
 
+
                 const nick = writerEl.getAttribute('data-nick');
                 const uid = writerEl.getAttribute('data-uid');
                 // 수정된 코드
                 const ip = writerEl.getAttribute('data-ip');
 
+
                 this.showSelectionPopup({ nick, uid, ip });
             }
         },
+
 
         // [v2.3.2 수정] 팝업 UI 개선
         showSelectionPopup(userInfo) {
@@ -1297,8 +1433,10 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             this.isSelectionMode = true; // 모드 유지
             document.body.classList.add('selection-mode-active');
 
+
             const popup = document.createElement('div');
             popup.id = 'dc-selection-popup';
+
 
             let optionsHtml = '';
             if (userInfo.nick) {
@@ -1312,12 +1450,14 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
                 optionsHtml += `<div class="block-option"><span>IP: ${userInfo.ip}</span><button data-type="ip" data-value="${userInfo.ip}">차단</button></div>`;
             }
 
+
             popup.innerHTML = `
                 <h4>어떤 정보를 차단할까요?</h4>
                 <div class="block-options">${optionsHtml}</div>
                 <div class="popup-buttons"><button class="cancel-btn">취소</button></div>
             `;
             document.body.appendChild(popup);
+
 
             popup.querySelector('.cancel-btn').onclick = () => this.exitSelectionMode();
             popup.querySelectorAll('.block-options button').forEach(btn => {
@@ -1328,21 +1468,139 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             });
         },
 
-        // [v2.3.4 수정] 차단 관리 패널 로직 전체 개선
+        // [신규] 차단 목록 병합 헬퍼 함수
+        mergeBlockLists(existing, imported) {
+            // UIDs 병합 (중복 ID 확인)
+            const existingUIDs = new Set(existing.uids.map(u => u.id));
+            const mergedUIDs = [...existing.uids];
+            imported.uids.forEach(importedUser => {
+                if (!existingUIDs.has(importedUser.id)) {
+                    mergedUIDs.push(importedUser);
+                }
+            });
+
+            // Nicknames, IPs 병합 (Set을 사용하여 간단하게 중복 제거)
+            const mergedNicknames = [...new Set([...existing.nicknames, ...imported.nicknames])];
+            const mergedIPs = [...new Set([...existing.ips, ...imported.ips])];
+
+            return { uids: mergedUIDs, nicknames: mergedNicknames, ips: mergedIPs };
+        },
+
+        // [신규] 백업 및 복원 팝업 생성 함수
+        async createBackupPopup() {
+            if (document.getElementById('dc-backup-popup')) return;
+
+            const overlay = document.createElement('div');
+            overlay.id = 'dc-backup-popup-overlay';
+
+            const popup = document.createElement('div');
+            popup.id = 'dc-backup-popup';
+            popup.innerHTML = `
+                <div class="popup-header">
+                    <h4>차단 목록 백업/복원</h4>
+                    <button class="popup-close-btn">×</button>
+                </div>
+                <div class="popup-content">
+                    <div class="export-section">
+                        <label>내보내기</label>
+                        <span class="description">현재 차단 목록 전체를 클립보드에 복사합니다.</span>
+                        <button class="export-btn">클립보드에 복사</button>
+                    </div>
+                    <hr>
+                    <div class="import-section">
+                        <label>불러오기</label>
+                        <span class="description">백업한 데이터를 아래에 붙여넣고 불러오면 기존 목록에 추가됩니다.</span>
+                        <div class="import-controls">
+                           <textarea placeholder="백업 데이터를 여기에 붙여넣으세요..."></textarea>
+                        </div>
+                         <button class="import-btn">불러오기</button>
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(overlay);
+            document.body.appendChild(popup);
+
+            const closePopup = () => {
+                overlay.remove();
+                popup.remove();
+            };
+
+            popup.querySelector('.popup-close-btn').onclick = closePopup;
+            overlay.onclick = closePopup;
+
+            popup.querySelector('.export-btn').onclick = async () => {
+                const data = await this.loadPersonalBlocks();
+                const jsonString = JSON.stringify(data, null, 2);
+                try {
+                    await navigator.clipboard.writeText(jsonString);
+                    alert('차단 목록이 클립보드에 복사되었습니다.');
+                } catch (err) {
+                    alert('클립보드 복사에 실패했습니다. 콘솔을 확인해주세요.');
+                    console.error('클립보드 복사 실패:', err);
+                }
+            };
+
+            popup.querySelector('.import-btn').onclick = async () => {
+                const textarea = popup.querySelector('textarea');
+                const jsonString = textarea.value;
+                if (!jsonString.trim()) {
+                    alert('불러올 데이터를 입력해주세요.');
+                    return;
+                }
+
+                let importedList;
+                try {
+                    importedList = JSON.parse(jsonString);
+                    if (typeof importedList !== 'object' || !importedList.uids || !importedList.nicknames || !importedList.ips) {
+                       throw new Error('Invalid data format');
+                    }
+                } catch (err) {
+                    alert('데이터 형식이 올바르지 않습니다. JSON 형식이 맞는지 확인해주세요.');
+                    return;
+                }
+
+                const currentList = await this.loadPersonalBlocks();
+                const mergedList = this.mergeBlockLists(currentList, importedList);
+
+                this.personalBlockListCache = mergedList;
+                await this.savePersonalBlocks();
+                await FilterModule.refilterAllContent();
+
+                alert('차단 목록을 성공적으로 불러와서 추가했습니다.');
+                closePopup();
+                // 관리 패널도 닫기
+                const managementPanel = document.getElementById('dc-block-management-panel');
+                if (managementPanel) managementPanel.querySelector('.panel-close-btn').click();
+            };
+        },
+
+
+        // [수정] 차단 관리 패널 로직 전체 개선 (On/Off 스위치, 백업 버튼 추가)
         async createManagementPanel() {
             if (document.getElementById('dc-block-management-panel')) return;
 
+
             const originalBlockList = await this.loadPersonalBlocks();
             const itemsToDelete = { uids: new Set(), nicknames: new Set(), ips: new Set() };
+            const isPersonalBlockEnabled = await GM_getValue(FilterModule.CONSTANTS.STORAGE_KEYS.PERSONAL_BLOCK_ENABLED, true);
+
 
             const overlay = document.createElement('div');
             overlay.id = 'dc-block-management-panel-overlay';
+
 
             const panel = document.createElement('div');
             panel.id = 'dc-block-management-panel';
             panel.innerHTML = `
                 <div class="panel-header">
                     <h3>차단 유저 관리</h3>
+                    <div class="switch-container">
+                        <label class="switch">
+                            <input type="checkbox" id="personal-block-toggle" ${isPersonalBlockEnabled ? 'checked' : ''}>
+                            <span class="switch-slider"></span>
+                        </label>
+                    </div>
                     <button class="panel-close-btn">×</button>
                 </div>
                 <div class="panel-tabs">
@@ -1359,7 +1617,10 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
                     </div>
                 </div>
                 <div class="panel-footer">
-                    <button class="select-all-global-btn">전체 선택/해제</button>
+                    <div class="panel-footer-left">
+                        <button class="select-all-global-btn">모든 탭 전체 선택/해제</button>
+                        <button class="panel-backup-btn">백업</button>
+                    </div>
                     <button class="panel-save-btn">저장</button>
                 </div>
                 <div class="panel-resize-handle"></div>
@@ -1367,7 +1628,22 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             document.body.appendChild(overlay);
             document.body.appendChild(panel);
 
+            // [신규] On/Off 스위치 이벤트 리스너
+            const toggleSwitch = panel.querySelector('#personal-block-toggle');
+            toggleSwitch.addEventListener('change', async (e) => {
+                const isEnabled = e.target.checked;
+                await GM_setValue(FilterModule.CONSTANTS.STORAGE_KEYS.PERSONAL_BLOCK_ENABLED, isEnabled);
+                dcFilterSettings.personalBlockEnabled = isEnabled; // 즉시 설정 반영
+                await FilterModule.refilterAllContent(); // 필터 재적용
+            });
+
+            // [신규] 백업 버튼 이벤트 리스너
+            panel.querySelector('.panel-backup-btn').onclick = () => {
+                this.createBackupPopup();
+            };
+
             const globalSelectAllBtn = panel.querySelector('.select-all-global-btn');
+
 
             const isEverythingSelected = () => {
                 const totalItems = originalBlockList.uids.length + originalBlockList.nicknames.length + originalBlockList.ips.length;
@@ -1375,6 +1651,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
                 const totalSelected = itemsToDelete.uids.size + itemsToDelete.nicknames.size + itemsToDelete.ips.size;
                 return totalItems === totalSelected;
             };
+
 
             const updateGlobalSelectAllButtonState = () => {
                 if (isEverythingSelected()) {
@@ -1384,10 +1661,12 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
                 }
             };
 
+
             const renderList = (type) => {
                 const listEl = panel.querySelector('.blocked-list');
                 listEl.innerHTML = '';
                 const data = originalBlockList[type] || [];
+
 
                 data.forEach(item => {
                     const li = document.createElement('li');
@@ -1397,9 +1676,11 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
                     li.dataset.value = value;
                     li.innerHTML = `<span class="item-name">${name}</span><span class="delete-item-btn">X</span>`;
 
+
                     if (itemsToDelete[type].has(value)) {
                         li.classList.add('item-to-delete');
                     }
+
 
                     li.querySelector('.delete-item-btn').onclick = () => {
                         if (li.classList.toggle('item-to-delete')) {
@@ -1416,6 +1697,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
                 updateGlobalSelectAllButtonState(); // [추가] 탭 변경 시 전역 버튼 상태도 업데이트
             };
 
+
             const updateSelectAllButtonState = (type) => {
                 const selectAllBtn = panel.querySelector('.select-all-btn');
                 const currentList = originalBlockList[type] || [];
@@ -1428,10 +1710,12 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
                 }
             };
 
+
             const handleSelectAll = () => {
                 const type = panel.querySelector('.panel-tab.active').dataset.type;
                 const selectAllBtn = panel.querySelector('.select-all-btn');
                 const shouldSelectAll = selectAllBtn.dataset.action === 'select';
+
 
                 const currentList = originalBlockList[type] || [];
                 currentList.forEach(item => {
@@ -1445,10 +1729,13 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
                 renderList(type);
             };
 
+
             panel.querySelector('.select-all-btn').onclick = handleSelectAll;
+
 
             globalSelectAllBtn.onclick = () => {
                 const shouldSelectEverything = !isEverythingSelected();
+
 
                 if (shouldSelectEverything) {
                     originalBlockList.uids.forEach(u => itemsToDelete.uids.add(u.id));
@@ -1464,6 +1751,8 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             };
 
 
+
+
             const tabs = panel.querySelectorAll('.panel-tab');
             tabs.forEach(tab => {
                 tab.onclick = () => {
@@ -1473,13 +1762,16 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
                 };
             });
 
+
             const closePanel = () => {
                 overlay.remove();
                 panel.remove();
             };
 
+
             panel.querySelector('.panel-close-btn').onclick = closePanel;
             overlay.onclick = closePanel;
+
 
             panel.querySelector('.panel-save-btn').onclick = async () => {
                 const finalBlockList = {
@@ -1488,18 +1780,22 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
                     ips: originalBlockList.ips.filter(i => !itemsToDelete.ips.has(i))
                 };
 
+
                 this.personalBlockListCache = finalBlockList;
                 await this.savePersonalBlocks();
                 await FilterModule.refilterAllContent();
                 closePanel();
             };
 
+
             // 드래그 & 리사이즈 로직 전체 개선
             let isDragging = false, isResizing = false;
             let offsetX, offsetY, lastX, lastY; // lastX, lastY는 리사이즈 전용
 
+
             const onDragStart = (e) => {
                 if (e.button !== 0) return;
+
 
                 if (e.target.classList.contains('panel-resize-handle')) {
                     isResizing = true;
@@ -1509,13 +1805,16 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
                     return;
                 }
 
+
                 const rect = panel.getBoundingClientRect();
+
 
                 if (panel.style.transform !== 'none') {
                     panel.style.transform = 'none';
                     panel.style.left = `${rect.left}px`;
                     panel.style.top = `${rect.top}px`;
                 }
+
 
                 if (isDragging) {
                     offsetX = e.clientX - rect.left;
@@ -1525,20 +1824,25 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
                     lastY = e.clientY;
                 }
 
+
                 document.addEventListener('mousemove', onDragMove);
                 document.addEventListener('mouseup', onDragEnd, { once: true });
             };
 
+
             const onDragMove = (e) => {
                 e.preventDefault();
+
 
                 if (isDragging) {
                     const rect = panel.getBoundingClientRect();
                     let newX = e.clientX - offsetX;
                     let newY = e.clientY - offsetY;
 
+
                     newX = Math.max(0, Math.min(newX, window.innerWidth - rect.width));
                     newY = Math.max(0, Math.min(newY, window.innerHeight - rect.height));
+
 
                     panel.style.left = `${newX}px`;
                     panel.style.top = `${newY}px`;
@@ -1548,20 +1852,24 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
                     lastX = e.clientX;
                     lastY = e.clientY;
 
+
                     const rect = panel.getBoundingClientRect();
                     panel.style.width = `${rect.width + dx}px`;
                     panel.style.height = `${rect.height + dy}px`;
                 }
             };
 
+
             const onDragEnd = () => { // async 키워드 제거
                 isDragging = false;
                 isResizing = false;
                 document.removeEventListener('mousemove', onDragMove);
                 // GM_setValue 호출을 제거하여 창의 위치/크기 상태를 저장하지 않음
-            }; 
+            };
+
 
             panel.addEventListener('mousedown', onDragStart);
+
 
             (() => { // async 키워드 제거
                 // 저장된 값을 불러오는 대신 항상 기본값으로 패널 위치와 크기를 설정
@@ -1571,11 +1879,12 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
                 // 기본값은 항상 % 단위이므로, transform 스타일을 항상 적용하여 정중앙에 배치
                 panel.style.transform = 'translate(-50%, -50%)';
                 Object.assign(panel.style, defaultGeo);
-            
+
                 renderList('uids'); // 초기 렌더링
             })();
         }
     };
+
 
     /**
      * =================================================================
@@ -1585,6 +1894,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
     const UIModule = {
         DATA_ATTR: 'data-custom-row-id',
         TRANSFORMED_ATTR: 'data-ui-transformed',
+
 
         SELECTORS: {
             LIST_WRAP: '.gall_listwrap, .list_wrap',
@@ -1596,11 +1906,13 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             SEARCH_FORM: 'form[name="frmSearch"]',
         },
 
+
         CUSTOM_CLASSES: {
             MOBILE_LIST: 'custom-mobile-list',
             POST_ITEM: 'custom-post-item',
             BOTTOM_CONTROLS: 'custom-bottom-controls',
         },
+
 
         proxyClick(customItem, originalRow) {
             customItem.addEventListener('click', (e) => {
@@ -1625,6 +1937,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             });
         },
 
+
         updateItemVisibility(originalRow, mirroredItem) {
             const isDibsBlocked = originalRow.classList.contains('block-disable');
             const isUserFilterBlocked = originalRow.style.display === 'none';
@@ -1633,25 +1946,31 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             mirroredItem.style.display = (isDibsBlocked || isUserFilterBlocked) ? 'none' : 'block';
         },
 
+
         createMobileListItem(originalRow, index) {
             const titleContainer = originalRow.querySelector('.gall_tit');
             const writerEl = originalRow.querySelector('.gall_writer');
             const dateEl = originalRow.querySelector('.gall_date');
             if (!titleContainer || !writerEl || !dateEl) return null;
 
+
             const newItem = document.createElement('div');
             newItem.setAttribute(this.DATA_ATTR, index);
             newItem.className = `${this.CUSTOM_CLASSES.POST_ITEM} ${originalRow.className.replace('ub-content', '').trim()}`;
 
+
             if (originalRow.classList.contains('us-post--notice')) newItem.classList.add('notice');
             if (originalRow.classList.contains('us-post--recommend')) newItem.classList.add('concept');
+
 
             const postTitleDiv = document.createElement('div');
             postTitleDiv.className = 'post-title';
 
+
             const originalLink = titleContainer.querySelector('a');
             const subjectSpan = originalRow.querySelector('.gall_subject');
             const replyNumSpan = titleContainer.querySelector('.reply_num');
+
 
             if (subjectSpan) {
                 const newSubjectSpan = subjectSpan.cloneNode(true);
@@ -1659,21 +1978,26 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
                 postTitleDiv.appendChild(newSubjectSpan);
             }
 
+
             if (originalLink) {
                 const newLink = document.createElement('a');
                 newLink.href = originalLink.href;
                 newLink.className = 'post-title-link';
                 if (originalLink.target) newLink.target = originalLink.target;
 
+
                 originalLink.childNodes.forEach(child => {
                     newLink.appendChild(child.cloneNode(true));
                 });
 
+
                 postTitleDiv.appendChild(newLink);
             }
 
+
             if (replyNumSpan) postTitleDiv.appendChild(replyNumSpan.cloneNode(true));
             newItem.appendChild(postTitleDiv);
+
 
             const postMeta = document.createElement('div');
             postMeta.className = 'post-meta';
@@ -1681,29 +2005,36 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             authorSpan.className = 'author';
             authorSpan.appendChild(writerEl.cloneNode(true));
 
+
             const countEl = originalRow.querySelector('.gall_count');
             const recommendEl = originalRow.querySelector('.gall_recommend');
             const statsSpan = document.createElement('span');
             statsSpan.className = 'stats';
             statsSpan.innerHTML = `조회 ${countEl?.textContent.trim() || '0'} | 추천 ${recommendEl?.textContent.trim() || '0'} | ${dateEl.textContent.trim()}`;
 
+
             postMeta.appendChild(authorSpan);
             postMeta.appendChild(statsSpan);
             newItem.appendChild(postMeta);
 
+
             this.updateItemVisibility(originalRow, newItem);
             return newItem;
         },
+
 
         createBottomControls(listWrap) {
             const gallTabs = listWrap.querySelector(this.SELECTORS.GALL_TABS);
             const pagination = listWrap.querySelector(this.SELECTORS.PAGINATION);
             const searchForm = listWrap.querySelector(this.SELECTORS.SEARCH_FORM);
 
+
             if (!gallTabs && !pagination && !searchForm) return null;
+
 
             const bottomControls = document.createElement('div');
             bottomControls.className = this.CUSTOM_CLASSES.BOTTOM_CONTROLS;
+
 
             if (gallTabs) {
                 const buttonRow = document.createElement('div');
@@ -1712,16 +2043,20 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
                 bottomControls.appendChild(buttonRow);
             }
 
+
             if (searchForm && !bottomControls.contains(searchForm)) {
                 bottomControls.appendChild(searchForm);
             }
+
 
             if (pagination) {
                 bottomControls.appendChild(pagination);
             }
 
+
             return bottomControls;
         },
+
 
         applyForceRefreshPagination(containerElement) {
             if (!containerElement) return;
@@ -1742,18 +2077,22 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             }, true);
         },
 
+
         transformList(listWrap) {
             if (listWrap.querySelector(`.${this.CUSTOM_CLASSES.MOBILE_LIST}`)) return;
             if (listWrap.hasAttribute(this.TRANSFORMED_ATTR)) return;
             listWrap.setAttribute(this.TRANSFORMED_ATTR, 'true');
+
 
             const originalTable = listWrap.querySelector(this.SELECTORS.ORIGINAL_TABLE);
             if (!originalTable) return;
             const originalTbody = originalTable.querySelector(this.SELECTORS.ORIGINAL_TBODY);
             if (!originalTbody) return;
 
+
             const newListContainer = document.createElement('div');
             newListContainer.className = this.CUSTOM_CLASSES.MOBILE_LIST;
+
 
             // [핵심 수정] 이벤트 위임을 사용하여 툴팁 로직 추가
             const tooltip = document.getElementById('custom-instant-tooltip');
@@ -1776,6 +2115,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
                 });
             }
 
+
             const originalRows = Array.from(originalTbody.querySelectorAll(this.SELECTORS.ORIGINAL_POST_ITEM));
             originalRows.forEach((row, index) => {
                 try {
@@ -1790,14 +2130,18 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
                 }
             });
 
+
             originalTable.parentNode.insertBefore(newListContainer, originalTable.nextSibling);
+
 
             const bottomControls = this.createBottomControls(listWrap);
             if (bottomControls) {
                 listWrap.appendChild(bottomControls);
             }
 
+
             this.applyForceRefreshPagination(listWrap);
+
 
             const observer = new MutationObserver(mutations => {
                 mutations.forEach(mutation => {
@@ -1815,9 +2159,11 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             observer.observe(originalTbody, { attributes: true, attributeFilter: ['style', 'class'], subtree: true });
         },
 
+
         transformWritePage() {
             if (document.body.classList.contains('is-write-page')) return;
             document.body.classList.add('is-write-page');
+
 
             const writeBox = document.querySelector('.write_box');
             if(writeBox) {
@@ -1832,9 +2178,11 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             }
         },
 
+
         init() {
             if (isUiInitialized) return;
             isUiInitialized = true;
+
 
             // [핵심 수정] 스크립트 시작 시, 툴팁으로 사용할 div를 미리 한 번만 생성
             if (!document.getElementById('custom-instant-tooltip')) {
@@ -1843,6 +2191,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
                 document.body.appendChild(tooltip);
             }
 
+
             if (!document.querySelector('meta[name="viewport"]')) {
                 const viewportMeta = document.createElement('meta');
                 viewportMeta.name = 'viewport';
@@ -1850,9 +2199,11 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
                 document.head.appendChild(viewportMeta);
             }
 
+
             if (window.location.pathname.includes('/mgallery/')) {
                 document.body.classList.add('is-mgallery');
             }
+
 
             if (window.location.pathname.includes('/board/write/')) {
                 this.transformWritePage();
@@ -1864,11 +2215,14 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
                 }
             }
 
+
             const processAllLists = () => {
                 document.querySelectorAll(this.SELECTORS.LIST_WRAP).forEach(lw => this.transformList(lw));
             };
 
+
             processAllLists();
+
 
             const observer = new MutationObserver((mutations) => {
                 for (const mutation of mutations) {
@@ -1886,11 +2240,13 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
         }
     };
 
+
     // =================================================================
     // ================ Script-Level Initializations ===================
     // =================================================================
     GM_registerMenuCommand('글댓합 설정하기', FilterModule.showSettings.bind(FilterModule));
     GM_registerMenuCommand('차단 유저 관리', PersonalBlockModule.createManagementPanel.bind(PersonalBlockModule));
+
 
     // [신규] 단축키 설정을 다시 로드하는 전용 함수
     async function reloadShortcutKey() {
@@ -1898,21 +2254,26 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
         activeShortcutObject = FilterModule.parseShortcutString(shortcutString);
     }
 
+
     async function main() {
         if (isInitialized) return;
-        console.log("[DC Filter+UI] Initializing v2.4.2 (Layout Hotfix)...");
+        console.log("[DC Filter+UI] Initializing v2.4.3...");
+
 
         // [수정] main 함수에서 reloadShortcutKey 함수를 호출하여 초기화
         await reloadShortcutKey();
 
+
         window.addEventListener('keydown', async (e) => {
             if (!activeShortcutObject || !activeShortcutObject.key) return;
+
 
             const isMatch = e.key.toUpperCase() === activeShortcutObject.key &&
                             e.ctrlKey === activeShortcutObject.ctrlKey &&
                             e.shiftKey === activeShortcutObject.shiftKey &&
                             e.altKey === activeShortcutObject.altKey &&
                             e.metaKey === activeShortcutObject.metaKey;
+
 
             if (isMatch) {
                 e.preventDefault();
@@ -1925,11 +2286,13 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             }
         });
 
+
         await FilterModule.init();
-        await PersonalBlockModule.init(); // [v2.3.1 추가]
+        await PersonalBlockModule.init();
         UIModule.init();
         console.log("[DC Filter+UI] Initialization complete.");
     }
+
 
     const runSafely = async () => {
         try {
@@ -1943,6 +2306,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             console.log("[DC Filter+UI] UI is now visible.");
         }
     };
+
 
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', runSafely);
