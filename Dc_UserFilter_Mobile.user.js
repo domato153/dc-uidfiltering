@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         DC_UserFilter_Mobile
 // @namespace    http://tampermonkey.net/
-// @version      2.4.1
+// @version      2.4.2
 // @description  유저 필터링, UI 개선, 개인 차단 기능 추가
 // @author       domato153
 // @match        https://gall.dcinside.com/*
@@ -109,7 +109,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
 
         html, body, #top, .dcheader, .gnb_bar, #container, .wrap_inner, .visit_bookmark,
         .list_array_option, .left_content,
-        .view_content_wrap, .gall_content, .gall_comment {
+        .view_content_wrap, .gall_content, .gall_comment, .comment_box {
             width: 100% !important; /* 100vw 대신 100% 사용 */
             min-width: 0 !important; float: none !important;
             position: relative !important; box-sizing: border-box !important;
@@ -314,14 +314,23 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
         .custom-button-row .list_bottom_btnbox > .fr { flex-shrink: 0; }
         .custom-button-row .list_bottom_btnbox > div { float: none !important; }
         .custom-bottom-controls .page_box { float: none !important; display: inline-block; }
-        
+
         /* [v2.4.1 핫픽스] 본문 너비 고정 및 overflow 문제 해결 */
         .writing_view_box .write_div {
             width: 100% !important;
             overflow: visible !important;
         }
+        /* [댓글 영역 잘림 방지] overflow 안전장치 추가 */
+        .comment_box {
+            overflow: visible !important;
+        }
         /* --- 글 보기/댓글 UI --- */
-        .gall_content, .gall_tit_box, .gall_writer_info, .btn_recommend_box, .view_bottom, .gall_comment, .comment_box { background: #fff !important; padding: 15px !important; border-bottom: 1px solid #ddd; }
+        /* [수정] .comment_box를 이 규칙에서 제외하여 패딩 중첩 문제 해결 */
+        .gall_content, .gall_tit_box, .gall_writer_info, .btn_recommend_box, .view_bottom, .gall_comment {
+            background: #fff !important;
+            padding: 15px !important;
+            border-bottom: 1px solid #ddd;
+        }
         .gallview_contents img, .gallview_contents video { max-width: 100% !important; height: auto !important;  }
 
         /* [v2.2.0 이식] 글 본문 가독성 개선 */
@@ -332,7 +341,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
         .gallview_contents {
             font-size: 26px !important;
             line-height: 1.9 !important;
-            word-break: break-all !important; /* <-- 이 한 줄을 추가했습니다 */
+            word-break: break-all !important;
         }
         .gallview_contents p,
         .gallview_contents div,
@@ -346,6 +355,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
         .comment_box .usertxt {
             font-size: 18px !important;
             line-height: 1.7 !important;
+            word-break: break-all !important;
         }
         .comment_box .date_time {
             font-size: 15px !important;
@@ -1890,7 +1900,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
 
     async function main() {
         if (isInitialized) return;
-        console.log("[DC Filter+UI] Initializing v2.4.1 (Cross-tab shortcut sync)...");
+        console.log("[DC Filter+UI] Initializing v2.4.2 (Layout Hotfix)...");
 
         // [수정] main 함수에서 reloadShortcutKey 함수를 호출하여 초기화
         await reloadShortcutKey();
