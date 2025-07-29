@@ -544,7 +544,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             overflow: hidden;
         }
         #dc-block-management-panel .panel-header {
-            display: flex; justify-content: space-between; align-items: center;
+            display: flex;  align-items: center;
             padding: 10px 15px;
             background: #eee;
             border-bottom: 1px solid #ccc;
@@ -552,7 +552,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             user-select: none;
         }
         #dc-block-management-panel .panel-header h3 { margin: 0; font-size: 16px; }
-        #dc-block-management-panel .panel-close-btn { font-size: 20px; cursor: pointer; border: none; background: none; }
+        #dc-block-management-panel .panel-close-btn { font-size: 20px; cursor: pointer; border: none; background: none; margin-left: auto;}
         #dc-block-management-panel .panel-tabs { display: flex; border-bottom: 1px solid #ccc; background: #fff; }
         #dc-block-management-panel .panel-tab { flex: 1; padding: 10px; text-align: center; cursor: pointer; border-right: 1px solid #eee; }
         #dc-block-management-panel .panel-tab:last-child { border-right: none; }
@@ -593,7 +593,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
         }
 
         /* [신규] 개인 차단 On/Off 스위치 UI */
-        .switch-container { display: flex; align-items: center; margin-left: auto; }
+        .switch-container { display: flex; align-items: center; margin-left: 15px; }
         .switch { position: relative; display: inline-block; width: 40px; height: 22px; }
         .switch input { opacity: 0; width: 0; height: 0; }
         .switch-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 22px; }
