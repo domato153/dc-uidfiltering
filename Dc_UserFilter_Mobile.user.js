@@ -1,9 +1,9 @@
 // ==UserScript==
 // @name         DC_UserFilter_Mobile
 // @namespace    http://tampermonkey.net/
-// @version      2.5.0
-// @description  유저 필터링, UI 개선, 개인 차단 기능 추가 (On/Off 및 백업 기능 포함)
-// @author       domato153 (modified by assistant)
+// @version      2.5.1
+// @description  유저 필터링, UI 개선, 개인 차단 기능 추가 
+// @author       domato153 
 // @match        https://gall.dcinside.com/*
 // @grant        GM_setValue
 // @grant        GM_getValue
@@ -1056,7 +1056,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             });
         },
         async addBlockedUid(uid, sum, post, comment, ratioBlocked) {
-            if (this.isMobile()) return;
+            // [수정] 모바일에서도 캐시가 저장되도록 `this.isMobile()` 체크를 제거
             await this.refreshBlockedUidsCache();
             this.BLOCKED_UIDS_CACHE[uid] = { ts: Date.now(), sum, post, comment, ratioBlocked: !!ratioBlocked };
             await GM_setValue(this.CONSTANTS.STORAGE_KEYS.BLOCKED_UIDS, JSON.stringify(this.BLOCKED_UIDS_CACHE));
@@ -1101,14 +1101,25 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             } catch (e) { console.warn(`DCinside User Filter: Async filter exception.`, e, element); }
         },
         async refreshBlockedUidsCache() {
-            if (this.isMobile()) { this.BLOCKED_UIDS_CACHE = {}; return; }
-            let data; try { data = JSON.parse(await GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCKED_UIDS, '{}')); } catch { data = {}; }
-            const now = Date.now(); let changed = false;
+            // [수정] 모바일에서도 캐시가 유지되도록 `this.isMobile()` 체크를 제거
+            let data;
+            try {
+                data = JSON.parse(await GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCKED_UIDS, '{}'));
+            } catch {
+                data = {};
+            }
+            const now = Date.now();
+            let changed = false;
             for (const [uid, cacheData] of Object.entries(data)) {
-                if (typeof cacheData !== 'object' || cacheData === null || typeof cacheData.ts !== 'number' || now - cacheData.ts > this.BLOCK_UID_EXPIRE) { delete data[uid]; changed = true; }
+                if (typeof cacheData !== 'object' || cacheData === null || typeof cacheData.ts !== 'number' || now - cacheData.ts > this.BLOCK_UID_EXPIRE) {
+                    delete data[uid];
+                    changed = true;
+                }
             }
             this.BLOCKED_UIDS_CACHE = data;
-            if (changed) await GM_setValue(this.CONSTANTS.STORAGE_KEYS.BLOCKED_UIDS, JSON.stringify(this.BLOCKED_UIDS_CACHE));
+            if (changed) {
+                await GM_setValue(this.CONSTANTS.STORAGE_KEYS.BLOCKED_UIDS, JSON.stringify(this.BLOCKED_UIDS_CACHE));
+            }
         },
         applySyncBlock(element) {
             if (this.shouldSkipFiltering(element)) { element.style.display = ''; return; }
@@ -1210,8 +1221,11 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
         async refilterAllContent() {
             await this.reloadSettings();
             const allContentItems = document.querySelectorAll([this.CONSTANTS.SELECTORS.POST_ITEM, this.CONSTANTS.SELECTORS.COMMENT_ITEM, `${this.CONSTANTS.SELECTORS.POST_VIEW_LIST_CONTAINER} > li`].join(', '));
-            allContentItems.forEach(element => { if (!dcFilterSettings.masterDisabled) element.style.display = ''; this.applySyncBlock(element); this.applyAsyncBlock(element); });
+            allContentItems.forEach(element => { if (!dcFilterSettings.masterDisabled) element.style.display = ''; this.applySyncBlock(element); });
+            // [수정] 비동기 필터링은 백그라운드에서 계속 진행되도록 하고, 동기 필터링이 끝난 후 즉시 이벤트를 발생시켜 UI를 업데이트합니다.
             document.dispatchEvent(new CustomEvent('dcFilterRefiltered'));
+            // 비동기 필터링은 별도로 실행
+            allContentItems.forEach(element => this.applyAsyncBlock(element));
         },
         // [수정] handleVisibilityChange를 async 함수로 변경하고 reloadShortcutKey 호출 추가
         async handleVisibilityChange() {
@@ -1939,10 +1953,9 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
 
 
         updateItemVisibility(originalRow, mirroredItem) {
+            if (!originalRow || !mirroredItem) return;
             const isDibsBlocked = originalRow.classList.contains('block-disable');
             const isUserFilterBlocked = originalRow.style.display === 'none';
-            mirroredItem.style.display = (isDibsBlocked || isUserFilterBlocked) ? 'block' : 'none';
-            // [수정] block/none이 반대로 되어있던 것을 수정
             mirroredItem.style.display = (isDibsBlocked || isUserFilterBlocked) ? 'none' : 'block';
         },
 
@@ -2078,6 +2091,19 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
         },
 
 
+        // [신규] 필터링 결과를 바탕으로 모든 커스텀 UI 아이템의 visibility를 업데이트하는 함수
+        updateAllMirroredItemsVisibility() {
+            const customItems = document.querySelectorAll(`.${this.CUSTOM_CLASSES.POST_ITEM}[${this.DATA_ATTR}]`);
+            customItems.forEach(item => {
+                const rowId = item.getAttribute(this.DATA_ATTR);
+                if (rowId) {
+                    const originalRow = document.querySelector(`${this.SELECTORS.ORIGINAL_POST_ITEM}[${this.DATA_ATTR}='${rowId}']`);
+                    this.updateItemVisibility(originalRow, item);
+                }
+            });
+        },
+
+
         transformList(listWrap) {
             if (listWrap.querySelector(`.${this.CUSTOM_CLASSES.MOBILE_LIST}`)) return;
             if (listWrap.hasAttribute(this.TRANSFORMED_ATTR)) return;
@@ -2151,7 +2177,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
                         const rowId = originalRow.getAttribute(this.DATA_ATTR);
                         if (rowId) {
                             const mirroredItem = newListContainer.querySelector(`.${this.CUSTOM_CLASSES.POST_ITEM}[${this.DATA_ATTR}='${rowId}']`);
-                            if (mirroredItem) this.updateItemVisibility(originalRow, mirroredItem);
+                            this.updateItemVisibility(originalRow, mirroredItem);
                         }
                     }
                 });
@@ -2182,6 +2208,13 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
         init() {
             if (isUiInitialized) return;
             isUiInitialized = true;
+
+
+            // [신규] 필터링이 완료되었다는 신호를 받으면 UI를 업데이트하는 리스너 등록
+            document.addEventListener('dcFilterRefiltered', () => {
+                console.log('[DC Filter+UI] Received refilter event. Updating UI visibility.');
+                this.updateAllMirroredItemsVisibility();
+            });
 
 
             // [핵심 수정] 스크립트 시작 시, 툴팁으로 사용할 div를 미리 한 번만 생성
@@ -2230,6 +2263,8 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
                         if (node.nodeType === Node.ELEMENT_NODE) {
                             if (node.matches(this.SELECTORS.LIST_WRAP) || node.querySelector(this.SELECTORS.LIST_WRAP)) {
                                 processAllLists();
+                                // 새로 목록이 추가되었을 때도 필터링을 다시 적용하고 UI를 업데이트해야 함
+                                FilterModule.refilterAllContent();
                                 return;
                             }
                         }
@@ -2256,8 +2291,10 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
 
 
     async function main() {
+        // [수정] 스크립트의 메인 로직이 여러 번 실행되지 않도록 방지
         if (isInitialized) return;
-        console.log("[DC Filter+UI] Initializing v2.4.3...");
+
+        console.log("[DC Filter+UI] Initializing Filters and background tasks...");
 
 
         // [수정] main 함수에서 reloadShortcutKey 함수를 호출하여 초기화
@@ -2287,23 +2324,39 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
         });
 
 
+        // [수정] UIModule.init()은 runSafely에서 먼저 실행되므로 여기서는 필터 관련 모듈만 초기화
         await FilterModule.init();
         await PersonalBlockModule.init();
-        UIModule.init();
-        console.log("[DC Filter+UI] Initialization complete.");
+
+        // [수정] 최초 로딩 시 필터링을 적용하고 UI에 반영하기 위해 refilterAllContent 호출
+        await FilterModule.refilterAllContent();
+        isInitialized = true; // 모든 초기화가 끝난 후 상태를 true로 설정
+        console.log("[DC Filter+UI] Filter initialization complete.");
     }
 
 
+    // [수정] 로딩 멈춤 문제를 해결하기 위해 실행 순서 변경
     const runSafely = async () => {
         try {
-            await main();
-        } catch (error) {
-            console.error("[DC Filter+UI] A critical error occurred during main execution:", error);
-        } finally {
-            // [v2.2.2 수정] 모든 UI 처리 및 필터링 적용이 끝난 후,
-            // body에 준비 완료 클래스를 추가하여 화면을 표시합니다.
+            // 1단계: UI를 즉시 변환하는 작업을 먼저 실행합니다. (빠름)
+            // 이 작업은 네트워크나 저장소 접근이 거의 없어 멈출 확률이 없습니다.
+            UIModule.init();
+
+            // 2단계: UI가 준비되면 즉시 'script-ui-ready' 클래스를 추가하여 화면을 보여줍니다.
+            // 이 시점에서 사용자는 더 이상 로딩 화면을 보지 않습니다.
             document.body.classList.add('script-ui-ready');
             console.log("[DC Filter+UI] UI is now visible.");
+
+            // 3단계: 시간이 걸릴 수 있는 필터링 및 데이터 로딩 작업을 UI가 표시된 후에 실행합니다.
+            // 이 작업이 느리더라도 페이지는 이미 보여지고 있으므로 멈춤 현상이 발생하지 않습니다.
+            await main();
+
+        } catch (error) {
+            console.error("[DC Filter+UI] A critical error occurred during execution:", error);
+            // 만약의 경우 에러가 발생하더라도 UI는 보이도록 안전장치를 둡니다.
+            if (!document.body.classList.contains('script-ui-ready')) {
+                document.body.classList.add('script-ui-ready');
+            }
         }
     };
 
