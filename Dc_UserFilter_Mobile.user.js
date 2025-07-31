@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         DC_UserFilter_Mobile
 // @namespace    http://tampermonkey.net/
-// @version      2.5.3
+// @version      2.5.4
 // @description  유저 필터링, UI 개선, 개인 차단 기능 추가 
 // @author       domato153 
 // @match        https://gall.dcinside.com/*
@@ -1304,6 +1304,12 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
 
 
         createFab() {
+            // [수정] 글 목록 및 글 내용 페이지에서만 '간편차단' 버튼을 표시합니다.
+            const currentPath = window.location.pathname;
+            if (!currentPath.includes('/board/lists') && !currentPath.includes('/board/view/')) {
+                return; // 대상 페이지가 아니면 버튼을 생성하지 않고 함수를 종료합니다.
+            }
+
             // [방어 코드 1] 이미 FAB가 존재하면 중복 생성을 방지
             if (document.getElementById('dc-personal-block-fab')) {
                 return;
@@ -1383,7 +1389,6 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
                 Object.assign(fab.style, defaultPos);
             })();
         },
-
 
         enterSelectionMode() {
             if (this.isSelectionMode) return;
