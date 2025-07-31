@@ -1,25 +1,164 @@
 // ==UserScript==
 // @name         DCInside 유저 필터
 // @namespace    http://tampermonkey.net/
-// @version      1.6.0
-// @description  유저의 글+댓글 합/비율 필터링, 유동/통신사 IP 차단, 단축키 변경 기능을 제공합니다.
+// @version      1.7.0
+// @description  글/댓글 합/비율 필터링, 유동/통신사 IP 차단 + 개인 차단 기능
 // @author       domato153
 // @match        https://gall.dcinside.com/*
 // @grant        GM_setValue
 // @grant        GM_getValue
 // @grant        GM_registerMenuCommand
+// @grant        GM_addStyle
 // @license      MIT
 // ==/UserScript==
 
 /*-----------------------------------------------------------------
 DBAD license / Copyright (C) 2025 domato153
 https://github.com/philsturgeon/dbad/blob/master/LICENSE.md
-https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
+https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
 ------------------------------------------------------------------*/
 
 (function() {
     'use strict';
 
+    // [v1.7.0 이식] 개인 차단 기능 UI를 위한 스타일 추가
+    GM_addStyle(`
+        /* --- 개인 차단 기능 UI --- */
+        #dc-personal-block-fab {
+            position: fixed;
+            bottom: 20px; right: 20px;
+            z-index: 2147483640;
+            width: 60px; height: 60px;
+            background-color: #3b71fd;
+            color: white;
+            border-radius: 50%;
+            border: 2px solid white;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            user-select: none;
+            transition: transform 0.2s ease-out;
+        }
+        #dc-personal-block-fab:active {
+            transform: scale(0.95);
+        }
+        #dc-selection-popup {
+            position: fixed;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 2147483641;
+            background: #fff;
+            border: 1px solid #ccc;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            min-width: 320px;
+            text-align: center;
+        }
+        #dc-selection-popup h4 { margin: 0 0 20px 0; font-size: 18px; font-weight: 600; }
+        #dc-selection-popup .block-options { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+        #dc-selection-popup .block-option { display: flex; justify-content: space-between; align-items: center; background-color: #f8f9fa; padding: 12px; border-radius: 8px; }
+        #dc-selection-popup .block-option span { font-size: 15px; color: #333; word-break: break-all; margin-right: 15px; text-align: left; }
+        #dc-selection-popup .block-option button { font-size: 14px; padding: 6px 12px; cursor: pointer; border: none; border-radius: 6px; background-color: #4263eb; color: #fff; font-weight: 500; }
+        #dc-selection-popup .popup-buttons button { width: 100%; font-size: 16px; padding: 10px; cursor: pointer; border: none; border-radius: 8px; background-color: #e9ecef; color: #555; }
+        body.selection-mode-active .gall_writer,
+        body.selection-mode-active .ub-writer {
+            cursor: pointer !important;
+            outline: 2px dashed #4263eb;
+        }
+
+
+        #dc-block-management-panel-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 2147483645;
+        }
+        #dc-block-management-panel {
+            position: fixed;
+            top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: #f9f9f9;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            z-index: 2147483646;
+            display: flex;
+            flex-direction: column;
+            width: 400px; height: 500px;
+            min-width: 350px; min-height: 300px;
+            resize: both;
+            overflow: hidden;
+        }
+        #dc-block-management-panel .panel-header {
+            display: flex;  align-items: center;
+            padding: 10px 15px;
+            background: #eee;
+            border-bottom: 1px solid #ccc;
+            cursor: move;
+            user-select: none;
+        }
+        #dc-block-management-panel .panel-header h3 { margin: 0; font-size: 16px; }
+        #dc-block-management-panel .panel-close-btn { font-size: 20px; cursor: pointer; border: none; background: none; margin-left: auto;}
+        #dc-block-management-panel .panel-tabs { display: flex; border-bottom: 1px solid #ccc; background: #fff; }
+        #dc-block-management-panel .panel-tab { flex: 1; padding: 10px; text-align: center; cursor: pointer; border-right: 1px solid #eee; }
+        #dc-block-management-panel .panel-tab:last-child { border-right: none; }
+        #dc-block-management-panel .panel-tab.active { background: #3b71fd; color: #fff; font-weight: bold; }
+        #dc-block-management-panel .panel-body { flex-grow: 1; display: flex; flex-direction: column; overflow: hidden; background: #fff; }
+        #dc-block-management-panel .panel-list-controls { padding: 8px 10px; border-bottom: 1px solid #eee; text-align: left; }
+        #dc-block-management-panel .select-all-btn,
+        #dc-block-management-panel .select-all-global-btn,
+        #dc-block-management-panel .panel-backup-btn {
+            font-size: 13px; padding: 4px 8px; cursor: pointer;
+            border: 1px solid #ccc; background: #f1f3f5; border-radius: 4px; margin-left: 5px;
+        }
+        #dc-block-management-panel .panel-content { flex-grow: 1; overflow-y: auto; }
+        #dc-block-management-panel .blocked-list { list-style: none; margin: 0; padding: 10px; }
+        #dc-block-management-panel .blocked-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 5px; border-bottom: 1px solid #f0f0f0; }
+        #dc-block-management-panel .blocked-item.item-to-delete { text-decoration: line-through; opacity: 0.5; }
+        #dc-block-management-panel .item-name { font-size: 14px; word-break: break-all; }
+        #dc-block-management-panel .delete-item-btn { cursor: pointer; color: #e03131; font-weight: bold; padding: 0 5px; }
+        #dc-block-management-panel .panel-footer {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 10px; border-top: 1px solid #ccc; background: #f9f9f9;
+        }
+        #dc-block-management-panel .panel-footer-left { display: flex; align-items: center; }
+        #dc-block-management-panel .panel-save-btn { padding: 8px 16px; font-size: 14px; background: #3b71fd; color: #fff; border: none; border-radius: 4px; cursor: pointer; }
+        #dc-block-management-panel .panel-resize-handle { position: absolute; right: 0; bottom: 0; width: 15px; height: 15px; cursor: nwse-resize; }
+        .switch-container { display: flex; align-items: center; margin-left: 15px; }
+        .switch { position: relative; display: inline-block; width: 40px; height: 22px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .switch-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 22px; }
+        .switch-slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .switch-slider { background-color: #3b71fd; }
+        input:checked + .switch-slider:before { transform: translateX(18px); }
+        #dc-backup-popup-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6); z-index: 2147483647;
+        }
+        #dc-backup-popup {
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: #fff; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            z-index: 2147483647; padding: 20px; min-width: 350px;
+        }
+        #dc-backup-popup .popup-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #eee; }
+        #dc-backup-popup .popup-header h4 { margin: 0; font-size: 16px; }
+        #dc-backup-popup .popup-close-btn { font-size: 20px; background: none; border: none; cursor: pointer; color: #888; }
+        #dc-backup-popup .popup-content { display: flex; flex-direction: column; gap: 15px; }
+        #dc-backup-popup label { font-size: 14px; font-weight: bold; }
+        #dc-backup-popup .description { font-size: 12px; color: #666; margin-bottom: 5px; }
+        #dc-backup-popup textarea { width: 100%; box-sizing: border-box; height: 100px; resize: vertical; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 12px; font-family: monospace; }
+        #dc-backup-popup button { padding: 8px 12px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        #dc-backup-popup .export-btn { background-color: #28a745; color: white; width: 100%; }
+        /* [v1.7.1 수정] 백업/복원 UI 수정 */
+        #dc-backup-popup .import-controls { display: flex; align-items: stretch; gap: 8px; }
+        #dc-backup-popup .import-controls textarea { flex-grow: 1; }
+        #dc-backup-popup .import-btn { background-color: #007bff; color: white; flex-shrink: 0; }
+    `);
+
+    // ... (이하 코드는 v1.7.0과 동일하므로 생략) ...
     // [이식] 현재 활성화된 단축키 객체를 저장하기 위한 변수
     let activeShortcutObject = null;
 
@@ -68,7 +207,10 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
             BLOCK_CONFIG: 'dcinside_block_config',
             BLOCKED_UIDS: 'dcinside_blocked_uids',
             BLOCKED_GUESTS: 'dcinside_blocked_guests',
-            SHORTCUT_KEY: 'dcinside_shortcut_key', // [이식] 단축키 저장 키
+            SHORTCUT_KEY: 'dcinside_shortcut_key', // 단축키 저장 키
+            // [v1.7.0 이식] 개인 차단 기능용 저장 키
+            PERSONAL_BLOCK_LIST: 'dcinside_personal_block_list',
+            PERSONAL_BLOCK_ENABLED: 'dcinside_personal_block_enabled',
         },
         SELECTORS: {
             POST_LIST_CONTAINER: 'table.gall_list tbody',
@@ -99,7 +241,6 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
             RATIO_MAX_INPUT: 'dcinside-ratio-max',
             SAVE_BUTTON: 'dcinside-threshold-save',
             CLOSE_BUTTON: 'dcinside-filter-close',
-            // [이식] 단축키 변경 UI ID 추가
             SHORTCUT_DISPLAY: 'dcinside-shortcut-display',
             CHANGE_SHORTCUT_BTN: 'dcinside-change-shortcut-btn',
             SHORTCUT_MODAL_OVERLAY: 'dcinside-shortcut-modal-overlay',
@@ -170,7 +311,6 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
             telecomBlockEnabled = false
         } = settings;
 
-        // [이식] 현재 단축키 불러오기
         const currentShortcut = await GM_getValue(CONSTANTS.STORAGE_KEYS.SHORTCUT_KEY, 'Shift+S');
 
         const existingDiv = document.getElementById(CONSTANTS.UI_IDS.SETTINGS_PANEL);
@@ -251,7 +391,6 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
         `;
         document.body.appendChild(div);
 
-        // [이식] 단축키 변경 버튼 이벤트 리스너 추가
         document.getElementById(CONSTANTS.UI_IDS.CHANGE_SHORTCUT_BTN).onclick = (e) => {
             e.preventDefault();
             showShortcutChanger();
@@ -362,7 +501,6 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
         };
     }
 
-    // [이식] 단축키 변경 모달 표시 함수
     function showShortcutChanger() {
         if (document.getElementById(CONSTANTS.UI_IDS.SHORTCUT_MODAL)) return;
 
@@ -444,7 +582,6 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
         overlay.onclick = cleanup;
     }
 
-    // [이식] 키 Set을 정해진 형식의 문자열로 변환하는 헬퍼 함수
     function formatShortcutKeys(keySet) {
         if (keySet.size === 0) return '';
         const priority = ['Control', 'Meta', 'Alt', 'Shift', 'CapsLock', 'Tab'];
@@ -458,7 +595,6 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
         return [...modifiers, ...others].map(k => k === 'Control' ? 'Ctrl' : k).join('+');
     }
 
-    // [이식] 단축키 문자열을 이벤트 비교용 객체로 변환하는 헬퍼 함수
     function parseShortcutString(shortcutString) {
         const result = { ctrlKey: false, metaKey: false, altKey: false, shiftKey: false, key: '' };
         if (!shortcutString) return result;
@@ -496,6 +632,9 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
 
 
     GM_registerMenuCommand('글댓합 설정하기', showSettings);
+    // [v1.7.0 이식] 차단 유저 관리 메뉴 추가
+    GM_registerMenuCommand('차단 유저 관리', () => PersonalBlockModule.createManagementPanel());
+
 
     async function getUserPostCommentSum(uid) {
         if (!window._dcinside_user_sum_cache) window._dcinside_user_sum_cache = {};
@@ -663,7 +802,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
         }
 
         const settings = window.dcFilterSettings || {};
-        const { masterDisabled, blockGuestEnabled, telecomBlockEnabled, blockConfig = {}, blockedGuests = [] } = settings;
+        const { masterDisabled, blockGuestEnabled, telecomBlockEnabled, blockConfig = {}, blockedGuests = [], personalBlockList, personalBlockEnabled } = settings;
 
         if (masterDisabled) {
             element.style.display = '';
@@ -674,11 +813,26 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
         if (!writerInfo) return;
 
         const uid = writerInfo.getAttribute('data-uid');
+        const nickname = writerInfo.getAttribute('data-nick'); // [v1.7.0] 닉네임 정보 가져오기
         const ipSpan = element.querySelector(CONSTANTS.SELECTORS.IP_SPAN);
         const ip = ipSpan ? ipSpan.textContent.trim().slice(1, -1) : null;
         const isGuest = (!uid || uid.length < 3) && ip;
 
         let isBlocked = false;
+
+        // [v1.7.0 이식] 개인 차단 목록을 가장 먼저 확인
+        if (personalBlockEnabled && personalBlockList) {
+            if (uid && personalBlockList.uids?.some(u => u.id === uid)) isBlocked = true;
+            else if (nickname && personalBlockList.nicknames?.includes(nickname)) isBlocked = true;
+            else if (ip && personalBlockList.ips?.includes(ip)) isBlocked = true;
+        }
+
+        if (isBlocked) {
+            element.style.display = 'none';
+            return; // 개인 차단된 경우, 나머지 필터링은 건너뜀
+        }
+
+        // --- 기존 필터링 로직 ---
         const telecomBlockRegex = (telecomBlockEnabled && blockConfig.ip) ? new RegExp('^(' + blockConfig.ip.split('||').map(prefix => prefix.replace(/\./g, '\\.')).join('|') + ')') : null;
 
         if (isGuest) {
@@ -761,20 +915,40 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
     }
 
     async function reloadSettings() {
-        const blockedGuests = await getBlockedGuests();
-        const blockConfig = await GM_getValue(CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG, {});
+        const [
+            masterDisabled, excludeRecommended, threshold, ratioEnabled,
+            ratioMin, ratioMax, blockGuestEnabled, telecomBlockEnabled,
+            blockedGuests, blockConfig, personalBlockList, personalBlockEnabled
+        ] = await Promise.all([
+            GM_getValue(CONSTANTS.STORAGE_KEYS.MASTER_DISABLED, false),
+            GM_getValue(CONSTANTS.STORAGE_KEYS.EXCLUDE_RECOMMENDED, false),
+            GM_getValue(CONSTANTS.STORAGE_KEYS.THRESHOLD, 0),
+            GM_getValue(CONSTANTS.STORAGE_KEYS.RATIO_ENABLED, false),
+            GM_getValue(CONSTANTS.STORAGE_KEYS.RATIO_MIN, ''),
+            GM_getValue(CONSTANTS.STORAGE_KEYS.RATIO_MAX, ''),
+            GM_getValue(CONSTANTS.STORAGE_KEYS.BLOCK_GUEST, false),
+            GM_getValue(CONSTANTS.STORAGE_KEYS.BLOCK_TELECOM, false),
+            getBlockedGuests(),
+            GM_getValue(CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG, {}),
+            // [v1.7.0 이식] 개인 차단 관련 설정 불러오기
+            PersonalBlockModule.loadPersonalBlocks(),
+            GM_getValue(CONSTANTS.STORAGE_KEYS.PERSONAL_BLOCK_ENABLED, true)
+        ]);
 
         window.dcFilterSettings = {
-            masterDisabled: await GM_getValue(CONSTANTS.STORAGE_KEYS.MASTER_DISABLED, false),
-            excludeRecommended: await GM_getValue(CONSTANTS.STORAGE_KEYS.EXCLUDE_RECOMMENDED, false),
-            threshold: await GM_getValue(CONSTANTS.STORAGE_KEYS.THRESHOLD, 0),
-            ratioEnabled: await GM_getValue(CONSTANTS.STORAGE_KEYS.RATIO_ENABLED, false),
-            ratioMin: parseFloat(await GM_getValue(CONSTANTS.STORAGE_KEYS.RATIO_MIN, '')),
-            ratioMax: parseFloat(await GM_getValue(CONSTANTS.STORAGE_KEYS.RATIO_MAX, '')),
-            blockGuestEnabled: await GM_getValue(CONSTANTS.STORAGE_KEYS.BLOCK_GUEST, false),
-            telecomBlockEnabled: await GM_getValue(CONSTANTS.STORAGE_KEYS.BLOCK_TELECOM, false),
+            masterDisabled,
+            excludeRecommended,
+            threshold,
+            ratioEnabled,
+            ratioMin: parseFloat(ratioMin),
+            ratioMax: parseFloat(ratioMax),
+            blockGuestEnabled,
+            telecomBlockEnabled,
             blockedGuests,
-            blockConfig
+            blockConfig,
+            // [v1.7.0 이식] 설정 객체에 추가
+            personalBlockList,
+            personalBlockEnabled
         };
     }
 
@@ -801,6 +975,360 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
         }
     }
 
+    // [v1.7.0 이식된 기능 시작] PersonalBlockModule: 간편 차단 및 관리 기능
+    const PersonalBlockModule = {
+        isSelectionMode: false,
+        personalBlockListCache: { uids: [], nicknames: [], ips: [] },
+
+        async init() {
+            this.personalBlockListCache = await this.loadPersonalBlocks();
+            this.createFab();
+            document.addEventListener('click', this.handleSelectionClick.bind(this), true);
+        },
+
+        async loadPersonalBlocks() {
+            const list = await GM_getValue(CONSTANTS.STORAGE_KEYS.PERSONAL_BLOCK_LIST, { uids: [], nicknames: [], ips: [] });
+            if (!list.uids) list.uids = [];
+            if (!list.nicknames) list.nicknames = [];
+            if (!list.ips) list.ips = [];
+            return list;
+        },
+
+        async savePersonalBlocks() {
+            await GM_setValue(CONSTANTS.STORAGE_KEYS.PERSONAL_BLOCK_LIST, this.personalBlockListCache);
+        },
+
+        async addBlock(type, value, displayName = null) {
+            if (!value) return;
+            this.personalBlockListCache = await this.loadPersonalBlocks();
+
+            switch (type) {
+                case 'uid':
+                    if (!this.personalBlockListCache.uids.some(u => u.id === value)) {
+                        this.personalBlockListCache.uids.push({ id: value, name: displayName || value });
+                    }
+                    break;
+                case 'nickname':
+                    if (!this.personalBlockListCache.nicknames.includes(value)) {
+                        this.personalBlockListCache.nicknames.push(value);
+                    }
+                    break;
+                case 'ip':
+                    if (!this.personalBlockListCache.ips.includes(value)) {
+                        this.personalBlockListCache.ips.push(value);
+                    }
+                    break;
+            }
+            await this.savePersonalBlocks();
+            await refilterAllContent();
+            this.exitSelectionMode();
+        },
+
+        createFab() {
+            const currentPath = window.location.pathname;
+            if (!currentPath.includes('/board/lists') && !currentPath.includes('/board/view/')) {
+                return;
+            }
+            if (document.getElementById('dc-personal-block-fab')) return;
+
+            const fab = document.createElement('div');
+            fab.id = 'dc-personal-block-fab';
+            fab.textContent = '간편차단';
+            document.body.appendChild(fab);
+
+            fab.addEventListener('click', () => this.enterSelectionMode());
+        },
+
+        enterSelectionMode() {
+            if (this.isSelectionMode) return;
+            this.isSelectionMode = true;
+            document.body.classList.add('selection-mode-active');
+
+            const popup = document.createElement('div');
+            popup.id = 'dc-selection-popup';
+            popup.innerHTML = `
+                <h4>차단할 유저를 선택하세요</h4>
+                <div class="popup-buttons">
+                    <button class="cancel-btn">취소</button>
+                </div>
+            `;
+            document.body.appendChild(popup);
+            popup.querySelector('.cancel-btn').onclick = () => this.exitSelectionMode();
+        },
+
+        exitSelectionMode() {
+            if (!this.isSelectionMode) return;
+            this.isSelectionMode = false;
+            document.body.classList.remove('selection-mode-active');
+            const popup = document.getElementById('dc-selection-popup');
+            if (popup) popup.remove();
+        },
+
+        handleSelectionClick(e) {
+            if (!this.isSelectionMode) return;
+            const popup = document.getElementById('dc-selection-popup');
+            if (popup && popup.contains(e.target)) return;
+
+            const writerEl = e.target.closest('.ub-writer');
+            if (writerEl) {
+                e.preventDefault();
+                e.stopPropagation();
+
+                const nick = writerEl.getAttribute('data-nick');
+                const uid = writerEl.getAttribute('data-uid');
+                const parentItem = writerEl.closest('.ub-content');
+                const ipSpan = parentItem ? parentItem.querySelector('span.ip') : null;
+                const ip = ipSpan ? ipSpan.textContent.trim().slice(1, -1) : null;
+
+                this.showSelectionPopup({ nick, uid, ip });
+            }
+        },
+
+        showSelectionPopup(userInfo) {
+            this.exitSelectionMode();
+            this.isSelectionMode = true;
+            document.body.classList.add('selection-mode-active');
+
+            const popup = document.createElement('div');
+            popup.id = 'dc-selection-popup';
+
+            let optionsHtml = '';
+            if (userInfo.nick) {
+                optionsHtml += `<div class="block-option"><span>닉네임: ${userInfo.nick}</span><button data-type="nickname" data-value="${userInfo.nick}">차단</button></div>`;
+            }
+            if (userInfo.uid) {
+                const displayName = `${userInfo.nick || '유저'}(${userInfo.uid})`;
+                optionsHtml += `<div class="block-option"><span>식별번호: ${displayName}</span><button data-type="uid" data-value="${userInfo.uid}" data-display-name="${displayName}">차단</button></div>`;
+            }
+            if (userInfo.ip) {
+                optionsHtml += `<div class="block-option"><span>IP: ${userInfo.ip}</span><button data-type="ip" data-value="${userInfo.ip}">차단</button></div>`;
+            }
+
+            popup.innerHTML = `
+                <h4>어떤 정보를 차단할까요?</h4>
+                <div class="block-options">${optionsHtml}</div>
+                <div class="popup-buttons"><button class="cancel-btn">취소</button></div>
+            `;
+            document.body.appendChild(popup);
+
+            popup.querySelector('.cancel-btn').onclick = () => this.exitSelectionMode();
+            popup.querySelectorAll('.block-options button').forEach(btn => {
+                btn.onclick = () => {
+                    const { type, value, displayName } = btn.dataset;
+                    this.addBlock(type, value, displayName);
+                };
+            });
+        },
+
+        mergeBlockLists(existing, imported) {
+            const existingUIDs = new Set(existing.uids.map(u => u.id));
+            const mergedUIDs = [...existing.uids];
+            imported.uids.forEach(importedUser => {
+                if (!existingUIDs.has(importedUser.id)) {
+                    mergedUIDs.push(importedUser);
+                }
+            });
+            const mergedNicknames = [...new Set([...existing.nicknames, ...imported.nicknames])];
+            const mergedIPs = [...new Set([...existing.ips, ...imported.ips])];
+            return { uids: mergedUIDs, nicknames: mergedNicknames, ips: mergedIPs };
+        },
+
+        async createBackupPopup() {
+            if (document.getElementById('dc-backup-popup')) return;
+            const overlay = document.createElement('div');
+            overlay.id = 'dc-backup-popup-overlay';
+            const popup = document.createElement('div');
+            popup.id = 'dc-backup-popup';
+            // [v1.7.1 수정] 백업/복원 HTML 구조 수정
+            popup.innerHTML = `
+                <div class="popup-header"><h4>차단 목록 백업/복원</h4><button class="popup-close-btn">×</button></div>
+                <div class="popup-content">
+                    <div>
+                        <label>내보내기</label>
+                        <div class="description">현재 차단 목록 전체를 클립보드에 복사합니다.</div>
+                        <button class="export-btn">클립보드에 복사</button>
+                    </div>
+                    <hr>
+                    <div>
+                        <label>불러오기</label>
+                        <div class="description">백업한 데이터를 붙여넣고 불러오면 기존 목록에 추가됩니다.</div>
+                        <div class="import-controls">
+                            <textarea placeholder="백업 데이터를 여기에 붙여넣으세요..."></textarea>
+                            <button class="import-btn">불러오기</button>
+                        </div>
+                    </div>
+                </div>`;
+            document.body.appendChild(overlay);
+            document.body.appendChild(popup);
+            const closePopup = () => { overlay.remove(); popup.remove(); };
+            popup.querySelector('.popup-close-btn').onclick = closePopup;
+            overlay.onclick = closePopup;
+            popup.querySelector('.export-btn').onclick = async () => {
+                const data = await this.loadPersonalBlocks();
+                navigator.clipboard.writeText(JSON.stringify(data, null, 2)).then(() => alert('차단 목록이 클립보드에 복사되었습니다.')).catch(err => alert('클립보드 복사 실패: ' + err));
+            };
+            popup.querySelector('.import-btn').onclick = async () => {
+                const jsonString = popup.querySelector('textarea').value;
+                if (!jsonString.trim()) return alert('불러올 데이터를 입력해주세요.');
+                try {
+                    const importedList = JSON.parse(jsonString);
+                    if (typeof importedList !== 'object' || !importedList.uids || !importedList.nicknames || !importedList.ips) throw new Error('Invalid format');
+                    const currentList = await this.loadPersonalBlocks();
+                    this.personalBlockListCache = this.mergeBlockLists(currentList, importedList);
+                    await this.savePersonalBlocks();
+                    await refilterAllContent();
+                    alert('차단 목록을 성공적으로 불러와 추가했습니다.');
+                    closePopup();
+                    const mgmtPanel = document.getElementById('dc-block-management-panel');
+                    if(mgmtPanel) mgmtPanel.querySelector('.panel-close-btn').click();
+                } catch (err) { alert('데이터 형식이 올바르지 않습니다.'); }
+            };
+        },
+
+        // [v1.7.1 수정] 관리 패널 기능 전체 수정
+        async createManagementPanel() {
+            if (document.getElementById('dc-block-management-panel')) return;
+
+            const originalBlockList = await this.loadPersonalBlocks();
+            const itemsToDelete = { uids: new Set(), nicknames: new Set(), ips: new Set() };
+            const isPersonalBlockEnabled = await GM_getValue(CONSTANTS.STORAGE_KEYS.PERSONAL_BLOCK_ENABLED, true);
+
+            const overlay = document.createElement('div');
+            overlay.id = 'dc-block-management-panel-overlay';
+            const panel = document.createElement('div');
+            panel.id = 'dc-block-management-panel';
+            panel.innerHTML = `
+                <div class="panel-header"><h3>차단 유저 관리</h3><div class="switch-container"><label class="switch"><input type="checkbox" id="personal-block-toggle" ${isPersonalBlockEnabled ? 'checked' : ''}><span class="switch-slider"></span></label></div><button class="panel-close-btn">×</button></div>
+                <div class="panel-tabs"><div class="panel-tab active" data-type="uids">식별 번호</div><div class="panel-tab" data-type="nicknames">닉네임</div><div class="panel-tab" data-type="ips">아이피</div></div>
+                <div class="panel-body"><div class="panel-list-controls"><button class="select-all-btn">해당 탭 전체 선택</button></div><div class="panel-content"><ul class="blocked-list"></ul></div></div>
+                <div class="panel-footer"><div class="panel-footer-left"><button class="select-all-global-btn">모든 탭 전체 선택</button><button class="panel-backup-btn">백업</button></div><button class="panel-save-btn">저장</button></div>
+                <div class="panel-resize-handle"></div>`;
+
+            document.body.appendChild(overlay);
+            document.body.appendChild(panel);
+
+            const listEl = panel.querySelector('.blocked-list');
+            const selectAllBtn = panel.querySelector('.select-all-btn');
+            const globalSelectAllBtn = panel.querySelector('.select-all-global-btn');
+
+            const updateButtonStates = (type) => {
+                const currentList = originalBlockList[type] || [];
+                selectAllBtn.textContent = (currentList.length > 0 && itemsToDelete[type].size === currentList.length) ? '해당 탭 전체 해제' : '해당 탭 전체 선택';
+                selectAllBtn.dataset.action = (currentList.length > 0 && itemsToDelete[type].size === currentList.length) ? 'deselect' : 'select';
+
+                const totalItems = originalBlockList.uids.length + originalBlockList.nicknames.length + originalBlockList.ips.length;
+                const totalSelected = itemsToDelete.uids.size + itemsToDelete.nicknames.size + itemsToDelete.ips.size;
+                globalSelectAllBtn.textContent = (totalItems > 0 && totalSelected === totalItems) ? '모든 탭 전체 해제' : '모든 탭 전체 선택';
+            };
+
+            const renderList = (type) => {
+                listEl.innerHTML = '';
+                const data = originalBlockList[type] || [];
+
+                data.forEach(item => {
+                    const li = document.createElement('li');
+                    li.className = 'blocked-item';
+                    const value = (typeof item === 'object') ? item.id : item;
+                    const name = (typeof item === 'object') ? item.name : item;
+                    li.dataset.value = value;
+                    li.innerHTML = `<span class="item-name">${name}</span><span class="delete-item-btn">X</span>`;
+
+                    if (itemsToDelete[type].has(value)) {
+                        li.classList.add('item-to-delete');
+                    }
+
+                    li.querySelector('.delete-item-btn').onclick = () => {
+                        li.classList.toggle('item-to-delete') ? itemsToDelete[type].add(value) : itemsToDelete[type].delete(value);
+                        updateButtonStates(type);
+                    };
+                    listEl.appendChild(li);
+                });
+                updateButtonStates(type);
+            };
+
+            selectAllBtn.onclick = () => {
+                const type = panel.querySelector('.panel-tab.active').dataset.type;
+                const shouldSelectAll = selectAllBtn.dataset.action === 'select';
+                (originalBlockList[type] || []).forEach(item => {
+                    const value = (typeof item === 'object') ? item.id : item;
+                    shouldSelectAll ? itemsToDelete[type].add(value) : itemsToDelete[type].delete(value);
+                });
+                renderList(type);
+            };
+
+            globalSelectAllBtn.onclick = () => {
+                const totalItems = originalBlockList.uids.length + originalBlockList.nicknames.length + originalBlockList.ips.length;
+                const totalSelected = itemsToDelete.uids.size + itemsToDelete.nicknames.size + itemsToDelete.ips.size;
+                const shouldSelectEverything = totalSelected < totalItems;
+
+                Object.keys(originalBlockList).forEach(type => {
+                    (originalBlockList[type] || []).forEach(item => {
+                        const value = (typeof item === 'object') ? item.id : item;
+                        shouldSelectEverything ? itemsToDelete[type].add(value) : itemsToDelete[type].delete(value);
+                    });
+                });
+                renderList(panel.querySelector('.panel-tab.active').dataset.type);
+            };
+
+
+            panel.querySelector('#personal-block-toggle').addEventListener('change', async (e) => {
+                await GM_setValue(CONSTANTS.STORAGE_KEYS.PERSONAL_BLOCK_ENABLED, e.target.checked);
+                await refilterAllContent();
+            });
+            panel.querySelector('.panel-backup-btn').onclick = () => this.createBackupPopup();
+            panel.querySelectorAll('.panel-tab').forEach(tab => tab.onclick = () => {
+                panel.querySelectorAll('.panel-tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                renderList(tab.dataset.type);
+            });
+            const closePanel = () => { overlay.remove(); panel.remove(); };
+            panel.querySelector('.panel-close-btn').onclick = closePanel;
+            overlay.onclick = closePanel;
+            panel.querySelector('.panel-save-btn').onclick = async () => {
+                this.personalBlockListCache = {
+                    uids: originalBlockList.uids.filter(u => !itemsToDelete.uids.has(u.id)),
+                    nicknames: originalBlockList.nicknames.filter(n => !itemsToDelete.nicknames.has(n)),
+                    ips: originalBlockList.ips.filter(i => !itemsToDelete.ips.has(i))
+                };
+                await this.savePersonalBlocks();
+                await refilterAllContent();
+                closePanel();
+            };
+
+            let isDragging = false, isResizing = false, lastX, lastY, offsetX, offsetY;
+            panel.addEventListener('mousedown', (e) => {
+                if (e.target.classList.contains('panel-resize-handle')) isResizing = true;
+                else if (e.target.closest('.panel-header')) isDragging = true;
+                else return;
+                const rect = panel.getBoundingClientRect();
+                lastX = e.clientX; lastY = e.clientY;
+                offsetX = e.clientX - rect.left; offsetY = e.clientY - rect.top;
+                document.addEventListener('mousemove', onDragMove);
+                document.addEventListener('mouseup', onDragEnd, { once: true });
+            });
+            const onDragMove = (e) => {
+                if (isDragging) {
+                    const rect = panel.getBoundingClientRect();
+                    let newX = e.clientX - offsetX;
+                    let newY = e.clientY - offsetY;
+                    // 드래그 경계 제한
+                    newX = Math.max(0, Math.min(newX, window.innerWidth - rect.width));
+                    newY = Math.max(0, Math.min(newY, window.innerHeight - rect.height));
+                    panel.style.left = `${newX}px`; panel.style.top = `${newY}px`;
+                    panel.style.transform = 'none'; // transform이 있으면 left/top이 제대로 안 먹힘
+                }
+                if (isResizing) {
+                    panel.style.width = `${panel.offsetWidth + e.clientX - lastX}px`;
+                    panel.style.height = `${panel.offsetHeight + e.clientY - lastY}px`;
+                    lastX = e.clientX; lastY = e.clientY;
+                }
+            };
+            const onDragEnd = () => { isDragging = false; isResizing = false; document.removeEventListener('mousemove', onDragMove); };
+            renderList('uids');
+        }
+    };
+    // [v1.7.0 이식된 기능 끝]
+
     async function start() {
         await reloadSettings();
 
@@ -820,10 +1348,11 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
 
         document.addEventListener('visibilitychange', handleVisibilityChange);
         initializeUniversalObserver();
+        // [v1.7.0 이식] 개인 차단 기능 초기화
+        await PersonalBlockModule.init();
     }
 
     (async () => {
-        // [이식] 단축키 로드 및 이벤트 리스너 설정
         const shortcutString = await GM_getValue(CONSTANTS.STORAGE_KEYS.SHORTCUT_KEY, 'Shift+S');
         activeShortcutObject = parseShortcutString(shortcutString);
 
@@ -847,7 +1376,6 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
             }
         });
 
-        // 기존 시작 로직
         const val = await GM_getValue(CONSTANTS.STORAGE_KEYS.THRESHOLD);
         if (val === undefined) {
             await GM_setValue(CONSTANTS.STORAGE_KEYS.THRESHOLD, 0);
