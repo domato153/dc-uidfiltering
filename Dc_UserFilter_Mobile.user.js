@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         DC_UserFilter_Mobile
 // @namespace    http://tampermonkey.net/
-// @version      2.5.0
+// @version      2.5.1
 // @description  유저 필터링, UI 개선, 개인 차단 기능 추가 (On/Off 및 백업 기능 포함)
 // @author       domato153 (modified by assistant)
 // @match        https://gall.dcinside.com/*
@@ -1138,7 +1138,8 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
 
 
             // 기존 필터링 로직
-            const telecomBlockRegex = (telecomBlockEnabled && blockConfig.ip) ? new RegExp('^(' + blockConfig.ip.split('||').map(p => p.replace(/\./g, '\\.')).join('|') + ')') : null;
+            // [수정됨] 정확한 IP 접두어 매치를 위해 정규식 수정
+            const telecomBlockRegex = (telecomBlockEnabled && blockConfig.ip) ? new RegExp('^(' + blockConfig.ip.split('||').map(p => p.replace(/\./g, '\\.') + '(?=\\.|$)').join('|') + ')') : null;
             if (isGuest) { if (blockGuestEnabled || (telecomBlockRegex && ip && telecomBlockRegex.test(ip))) isBlocked = true; }
             else if (ip && telecomBlockRegex && telecomBlockRegex.test(ip)) isBlocked = true;
             if (!isBlocked && ip && blockedGuests.includes(ip)) isBlocked = true;
