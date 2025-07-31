@@ -90,7 +90,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
 
 
         /* [수정] 불필요한 PC버전 요소 숨김 */
-        #dc_header, #dc_gnb, .adv_area, .right_content, .dc_all, .dcfoot, .dc_ft, .info_policy, .copyrigh, .ad_bottom_list, .bottom_paging_box + div, .intro_bg, .fixed_write_btn, .bottom_movebox, .zzbang_ad ,.zzbang_div,#zzbang_div .my_zzal, .my_dccon, .issue_contentbox, #gall_top_recom.concept_wrap,
+        #dc_header, #dc_gnb, .adv_area, .right_content, .dc_all, .dcfoot, .dc_ft, .info_policy, .copyrigh, .ad_bottom_list, .bottom_paging_box + div, .intro_bg, .fixed_write_btn, .bottom_movebox, #zzbang_ad ,#zzbang_div,#zzbang_div .my_zzal, .my_dccon, .issue_contentbox, #gall_top_recom.concept_wrap,
         .gall_exposure, .stickyunit, #kakao_search, .banner_box, #ad-layer,#ad-layer-closer,.__dcNewsWidgetTypeB__, .dctrend_ranking, .cm_ad, .con_banner.writing_banbox, [id^="criteo-"],
         .adv_bottom_write, ins.kakao_ad_area  {
             display: none !important;
@@ -394,6 +394,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             font-size: 18px !important;
             line-height: 1.7 !important;
             word-break: break-all !important;
+            color: #333 !important; /* <-- 이 줄을 추가하세요 */
         }
         .comment_box .date_time {
             font-size: 15px !important;
