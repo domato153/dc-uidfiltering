@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         DC_UserFilter_Mobile
 // @namespace    http://tampermonkey.net/
-// @version      2.5.2
+// @version      2.5.3
 // @description  유저 필터링, UI 개선, 개인 차단 기능 추가 
 // @author       domato153 
 // @match        https://gall.dcinside.com/*
@@ -61,7 +61,10 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
         }
         /* body가 숨겨진 상태에서도 로딩 인디케이터는 표시되도록 합니다. */
         body:not(.script-ui-ready)::before {
-            content: '스크립트 UI 적용 중...';
+            content: '스크립트 UI 적용 중...\\A\\A※ 광고 차단 프로그램과 충돌할 수 있습니다.\\A오작동 시  비활성화해주세요.'; /* <-- 수정된 부분 */
+            white-space: pre-wrap; /* <-- 추가된 부분 (줄바꿈 적용) */
+            text-align: center; /* <-- 추가된 부분 (가운데 정렬) */
+            line-height: 1.6; /* <-- 추가된 부분 (줄 간격 조절) */
             visibility: visible !important; /* body가 hidden이어도 로딩 문구는 보이도록 설정 */
             position: fixed;
             top: 50%;
@@ -88,7 +91,8 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
 
         /* [수정] 불필요한 PC버전 요소 숨김 */
         #dc_header, #dc_gnb, .adv_area, .right_content, .dc_all, .dcfoot, .dc_ft, .info_policy, .copyrigh, .ad_bottom_list, .bottom_paging_box + div, .intro_bg, .fixed_write_btn, .bottom_movebox, .zzbang_ad ,.zzbang_div,#zzbang_div .my_zzal, .my_dccon, .issue_contentbox, #gall_top_recom.concept_wrap,
-        .gall_exposure, .stickyunit, #kakao_search, .banner_box, #ad-layer,#ad-layer-closer,.__dcNewsWidgetTypeB__, .dctrend_ranking, .cm_ad, .con_banner.writing_banbox, [id^="criteo-"] {
+        .gall_exposure, .stickyunit, #kakao_search, .banner_box, #ad-layer,#ad-layer-closer,.__dcNewsWidgetTypeB__, .dctrend_ranking, .cm_ad, .con_banner.writing_banbox, [id^="criteo-"],
+        .adv_bottom_write, ins.kakao_ad_area  {
             display: none !important;
         }
 
