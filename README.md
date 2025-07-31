@@ -19,4 +19,4 @@ https://github.com/domato153/dc-uidfiltering/raw/refs/heads/main/dcinside_user_f
 
 
 
- 모바일 설치법등은 https://domato153.github.io/dc-uidfiltering/ 여기로 
+ 모바일 설치법등 기타 자세한 내용은 https://domato153.github.io/dc-uidfiltering/ 여기로 
