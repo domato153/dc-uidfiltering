@@ -88,7 +88,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
 
         /* [수정] 불필요한 PC버전 요소 숨김 */
         #dc_header, #dc_gnb, .adv_area, .right_content, .dc_all, .dcfoot, .dc_ft, .info_policy, .copyrigh, .ad_bottom_list, .bottom_paging_box + div, .intro_bg, .fixed_write_btn, .bottom_movebox, .zzbang_ad ,.zzbang_div,#zzbang_div .my_zzal, .my_dccon, .issue_contentbox, #gall_top_recom.concept_wrap,
-        .gall_exposure, .stickyunit, #kakao_search, .banner_box, #ad-layer,#ad-layer-closer,.__dcNewsWidgetTypeB__, .dctrend_ranking, .cm_ad, .con_banner.writing_banbox, [id^="criteo-"]   {
+        .gall_exposure, .stickyunit, #kakao_search, .banner_box, #ad-layer,#ad-layer-closer,.__dcNewsWidgetTypeB__, .dctrend_ranking, .cm_ad, .con_banner.writing_banbox, [id^="criteo-"] {
             display: none !important;
         }
 
@@ -472,6 +472,9 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
         .is-write-page .write_box .btn_bottom_box .btn_lightred { background-color: #e9e9e9 !important; color: #555 !important; border: none !important; }
         .is-write-page .tx-toolbar-basic { border-bottom: 1px solid #ddd !important; }
         .is-write-page .tx-toolbar-advanced, .is-write-page .write_infobox, .is-write-page .file_upload_info { display: none !important; }
+        /* [종합 수정] 글쓰기 페이지 광고 및 빈 공간 제거 */
+        .is-write-page .cm_ad,.is-write-page .adv_bottom_write,.is-write-page div[id^="kakao_ad_"] {display: none !important;height: 0 !important;margin: 0 !important;padding: 0 !important;visibility: hidden !important;}
+
         @media (max-width: 480px) {
             .is-write-page .write_box .user_info_box { flex-direction: column; }
         }
@@ -2165,7 +2168,6 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             if (document.body.classList.contains('is-write-page')) return;
             document.body.classList.add('is-write-page');
 
-
             const writeBox = document.querySelector('.write_box');
             if(writeBox) {
                 const topTable = writeBox.querySelector('.w_top');
@@ -2177,9 +2179,28 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
                     }
                 }
             }
+
+            // [최종 완전판] 글쓰기 페이지의 광고 컨테이너를 직접 찾아 제거하는 함수
+            const removeWritePageAds = () => {
+                // "ba.min.js" 스크립트 태그를 찾음
+                const adScript = document.querySelector('script[src*="//t1.daumcdn.net/kas/static/ba.min.js"]');
+
+                // 해당 스크립트가 존재하고, 그 부모가 DIV 태그라면
+                if (adScript && adScript.parentElement.tagName === 'DIV') {
+                    const adContainer = adScript.parentElement; // 바로 그 <div>가 범인
+                    adContainer.remove(); // 컨테이너를 페이지에서 완전히 제거
+                    
+                    console.log('[DC Filter+UI] 글쓰기 페이지 광고 컨테이너 제거 완료.');
+                    clearInterval(adRemovalInterval); // 임무 완수 후 타이머 종료
+                }
+            };
+
+            // 0.1초마다 광고가 있는지 확인하고, 있으면 제거
+            const adRemovalInterval = setInterval(removeWritePageAds, 100);
+
+            // 5초 후에는 검색을 멈춰서 불필요한 부하 방지
+            setTimeout(() => clearInterval(adRemovalInterval), 5000);
         },
-
-
         init() {
             if (isUiInitialized) return;
             isUiInitialized = true;
