@@ -1098,7 +1098,12 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             return true;
         },
         async applyAsyncBlock(element) {
-            if (this.shouldSkipFiltering(element)) { element.style.display = ''; return; }
+            // [최종 검증 후 수정] '개념글 제외' 기능이 비동기 필터(글댓합)에도 적용되도록 검사 로직을 다시 추가합니다.
+            if (this.shouldSkipFiltering(element)) {
+                // '개념글 제외'가 켜져있으면 글댓합/비율 필터를 적용하지 않습니다.
+                // 단, 개인 차단은 이미 applySyncBlock에서 처리되었으므로 여기서는 display 속성을 건드리지 않습니다.
+                return;
+            }
             try {
                 if (element.style.display === 'none') return;
                 const writerInfo = element.querySelector(this.CONSTANTS.SELECTORS.WRITER_INFO); if (!writerInfo) return;
@@ -1119,34 +1124,47 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             if (changed) await GM_setValue(this.CONSTANTS.STORAGE_KEYS.BLOCKED_UIDS, JSON.stringify(this.BLOCKED_UIDS_CACHE));
         },
         applySyncBlock(element) {
-            if (this.shouldSkipFiltering(element)) { element.style.display = ''; return; }
             const { masterDisabled, blockGuestEnabled, telecomBlockEnabled, blockConfig = {}, blockedGuests = [], personalBlockList, personalBlockEnabled } = dcFilterSettings;
-            if (masterDisabled) { element.style.display = ''; return; }
 
+            const writerInfo = element.querySelector(this.CONSTANTS.SELECTORS.WRITER_INFO);
+            if (!writerInfo) return;
 
-            const writerInfo = element.querySelector(this.CONSTANTS.SELECTORS.WRITER_INFO); if (!writerInfo) return;
             const uid = writerInfo.getAttribute('data-uid');
             const nickname = writerInfo.getAttribute('data-nick');
             const ipSpan = element.querySelector(this.CONSTANTS.SELECTORS.IP_SPAN);
             const ip = ipSpan ? ipSpan.textContent.trim().slice(1, -1) : null;
-            const isGuest = (!uid || uid.length < 3) && ip;
-            let isBlocked = false;
 
-
-            // [수정] 개인 차단 목록을 스위치 상태와 함께 확인
+            // 1. 개인 차단 필터 (최고 우선순위)
+            // '개념글 제외'나 '모든 기능 끄기'와 관계없이 무조건 먼저 실행됩니다.
             if (personalBlockEnabled && personalBlockList) {
-                if (uid && personalBlockList.uids?.some(u => u.id === uid)) isBlocked = true;
-                else if (nickname && personalBlockList.nicknames?.includes(nickname)) isBlocked = true;
-                else if (ip && personalBlockList.ips?.includes(ip)) isBlocked = true;
+                let isPersonallyBlocked = false;
+                if (uid && personalBlockList.uids?.some(u => u.id === uid)) isPersonallyBlocked = true;
+                else if (nickname && personalBlockList.nicknames?.includes(nickname)) isPersonallyBlocked = true;
+                else if (ip && personalBlockList.ips?.includes(ip)) isPersonallyBlocked = true;
+
+                if (isPersonallyBlocked) {
+                    element.style.display = 'none';
+                    return; // 개인 차단이므로 다른 필터를 검사하지 않고 즉시 종료
+                }
             }
-            if (isBlocked) {
-                element.style.display = 'none';
+
+            // 2. 개인 차단이 아닌 경우, 나머지 필터 로직 진행
+            // '개념글 제외' 옵션이 켜져있고, 개념글 페이지라면 필터링을 건너뜀
+            if (this.shouldSkipFiltering(element)) {
+                element.style.display = '';
                 return;
             }
 
+            // '모든 기능 끄기' 옵션이 켜져있다면 필터링을 건너뜀
+            if (masterDisabled) {
+                element.style.display = '';
+                return;
+            }
 
-            // 기존 필터링 로직
-            // [수정됨] 정확한 IP 접두어 매치를 위해 정규식 수정
+            // 3. 일반 필터링 (글댓합, 통피, 유동 등)
+            const isGuest = (!uid || uid.length < 3) && ip;
+            let isBlocked = false;
+
             const telecomBlockRegex = (telecomBlockEnabled && blockConfig.ip) ? new RegExp('^(' + blockConfig.ip.split('||').map(p => p.replace(/\./g, '\\.') + '(?=\\.|$)').join('|') + ')') : null;
             if (isGuest) { if (blockGuestEnabled || (telecomBlockRegex && ip && telecomBlockRegex.test(ip))) isBlocked = true; }
             else if (ip && telecomBlockRegex && telecomBlockRegex.test(ip)) isBlocked = true;
@@ -1232,7 +1250,10 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
         async init() {
             if (isInitialized) return; isInitialized = true;
             await this.reloadSettings();
-            if (dcFilterSettings.excludeRecommended && window.location.pathname.includes('/lists/') && this.isRecommendedContext()) return;
+
+            // [수정] 개념글 목록에서 스크립트가 조기 종료되던 문제를 해결하기 위해 아래 라인을 삭제했습니다.
+            // if (dcFilterSettings.excludeRecommended && window.location.pathname.includes('/lists/') && this.isRecommendedContext()) return;
+
             const telecomBlockEnabled = await GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_TELECOM, false);
             if (telecomBlockEnabled) await this.regblockMobile(); else await this.delblockMobile();
             await this.refreshBlockedUidsCache();
