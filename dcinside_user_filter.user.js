@@ -9,6 +9,7 @@
 // @grant        GM_getValue
 // @grant        GM_registerMenuCommand
 // @grant        GM_addStyle
+// @run-at       document-start
 // @license      MIT
 // ==/UserScript==
 
@@ -23,6 +24,28 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
 
     // [v1.7.0 이식] 개인 차단 기능 UI를 위한 스타일 추가
     GM_addStyle(`
+        /* [v1.7.2 수정] FOUC(깜빡임) 방지: 스크립트 준비 완료 전까지 본문 숨김 */
+        body:not(.dc-filter-ready) {
+            visibility: hidden !important;
+        }
+        /* 로딩 중 표시 (선택 사항) */
+        body:not(.dc-filter-ready)::before {
+            content: '유저 필터 적용 중...';
+            visibility: visible !important;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 16px;
+            font-weight: bold;
+            color: #555;
+            background-color: #f0f0f0;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.2);
+            z-index: 2147483647;
+        }
+
         /* --- 개인 차단 기능 UI --- */
         #dc-personal-block-fab {
             position: fixed;
@@ -742,18 +765,20 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             return false;
         }
         if (window.location.pathname.includes('/view/')) {
+            // 본문 영역은 필터링을 건너뛰고, 댓글 영역은 필터링을 수행합니다.
             if (element.closest(CONSTANTS.SELECTORS.COMMENT_CONTAINER)) {
                 return false;
             }
             return true;
         }
+        // 목록 페이지의 경우 필터링을 건너뜁니다.
         return true;
     }
 
     async function applyAsyncBlock(element) {
+        // [리팩토링] 개인 차단은 sync에서 처리되므로, 이 함수에서는 '개념글 제외' 옵션만 확인합니다.
         if (shouldSkipFiltering(element)) {
-            element.style.display = '';
-            return;
+            return; // 글댓합/비율 필터링을 건너뜁니다.
         }
 
         try {
@@ -795,45 +820,54 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
         if (changed) await GM_setValue(CONSTANTS.STORAGE_KEYS.BLOCKED_UIDS, JSON.stringify(BLOCKED_UIDS_CACHE));
     }
 
+    /**
+     * [v1.7.1 리팩토링]
+     * 필터링 로직을 v2.5.4 버전처럼 재구성하여 요구사항을 만족시킵니다.
+     * 1. 개인 차단 필터를 최우선으로, 다른 설정과 독립적으로 실행합니다.
+     * 2. 개인 차단 대상이 아닌 경우에만 '개념글 제외', '모든 기능 끄기' 옵션을 확인합니다.
+     * 3. 모든 조건을 통과한 후에야 글댓합, 통피 등 나머지 필터를 적용합니다.
+     */
     function applySyncBlock(element) {
-        if (shouldSkipFiltering(element)) {
-            element.style.display = '';
-            return;
-        }
-
         const settings = window.dcFilterSettings || {};
         const { masterDisabled, blockGuestEnabled, telecomBlockEnabled, blockConfig = {}, blockedGuests = [], personalBlockList, personalBlockEnabled } = settings;
-
-        if (masterDisabled) {
-            element.style.display = '';
-            return;
-        }
 
         const writerInfo = element.querySelector(CONSTANTS.SELECTORS.WRITER_INFO);
         if (!writerInfo) return;
 
         const uid = writerInfo.getAttribute('data-uid');
-        const nickname = writerInfo.getAttribute('data-nick'); // [v1.7.0] 닉네임 정보 가져오기
+        const nickname = writerInfo.getAttribute('data-nick');
         const ipSpan = element.querySelector(CONSTANTS.SELECTORS.IP_SPAN);
         const ip = ipSpan ? ipSpan.textContent.trim().slice(1, -1) : null;
-        const isGuest = (!uid || uid.length < 3) && ip;
 
-        let isBlocked = false;
-
-        // [v1.7.0 이식] 개인 차단 목록을 가장 먼저 확인
+        // 1. [리팩토링] 개인 차단 필터를 최우선으로 실행합니다.
+        // 이 필터는 '모든 기능 끄기'나 '개념글 제외' 옵션의 영향을 받지 않습니다.
         if (personalBlockEnabled && personalBlockList) {
-            if (uid && personalBlockList.uids?.some(u => u.id === uid)) isBlocked = true;
-            else if (nickname && personalBlockList.nicknames?.includes(nickname)) isBlocked = true;
-            else if (ip && personalBlockList.ips?.includes(ip)) isBlocked = true;
+            let isPersonallyBlocked = false;
+            if (uid && personalBlockList.uids?.some(u => u.id === uid)) isPersonallyBlocked = true;
+            else if (nickname && personalBlockList.nicknames?.includes(nickname)) isPersonallyBlocked = true;
+            else if (ip && personalBlockList.ips?.includes(ip)) isPersonallyBlocked = true;
+
+            if (isPersonallyBlocked) {
+                element.style.display = 'none';
+                return; // 개인 차단이므로 다른 필터를 검사하지 않고 즉시 종료
+            }
         }
 
-        if (isBlocked) {
-            element.style.display = 'none';
-            return; // 개인 차단된 경우, 나머지 필터링은 건너뜀
+        // 2. [리팩토링] 개인 차단 대상이 아닐 경우, 나머지 필터링 조건(개념글, 전체끄기)을 확인합니다.
+        if (shouldSkipFiltering(element)) {
+            element.style.display = ''; // 필터링을 건너뛰므로, 보이도록 설정
+            return;
         }
 
-        // --- 기존 필터링 로직 ---
+        if (masterDisabled) {
+            element.style.display = ''; // 기능이 꺼져있으므로, 보이도록 설정
+            return;
+        }
+
+        // 3. 기존 필터링 로직 (글댓합 캐시, 통피, 유동 등)
+        let isBlocked = false;
         const telecomBlockRegex = (telecomBlockEnabled && blockConfig.ip) ? new RegExp('^(' + blockConfig.ip.split('||').map(prefix => prefix.replace(/\./g, '\\.')).join('|') + ')') : null;
+        const isGuest = (!uid || uid.length < 3) && ip;
 
         if (isGuest) {
             if (blockGuestEnabled) { isBlocked = true; }
@@ -961,9 +995,9 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
         ].join(', '));
 
         allContentItems.forEach(element => {
-            if (!window.dcFilterSettings.masterDisabled) {
-                element.style.display = '';
-            }
+            // 필터링 전 모든 요소를 보이도록 초기화합니다.
+            // 개인 차단은 masterDisabled와 무관하게 작동하므로, 이 초기화는 개인 차단이 아닌 요소에만 적용됩니다.
+            element.style.display = '';
             applySyncBlock(element);
             applyAsyncBlock(element);
         });
@@ -1025,7 +1059,9 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
         },
 
         createFab() {
+            // [v1.7.1 리팩토링] FAB 생성 조건 완화 (항상 생성 시도)
             const currentPath = window.location.pathname;
+            // 글 목록, 글 보기 페이지에서만 FAB를 생성합니다.
             if (!currentPath.includes('/board/lists') && !currentPath.includes('/board/view/')) {
                 return;
             }
@@ -1332,10 +1368,13 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
     async function start() {
         await reloadSettings();
 
-        if (window.dcFilterSettings.excludeRecommended && window.location.pathname.includes('/lists/') && isRecommendedContext()) {
-            console.log('DCInside 유저 필터: 개념글 목록 페이지이므로 필터 기능을 비활성화합니다.');
-            return;
-        }
+        // [v1.7.1 리팩토링] 요구사항 1번 해결.
+        // 개념글 목록 페이지에서 스크립트가 조기 종료되어 '간편차단' 버튼(FAB)이
+        // 생성되지 않는 문제를 해결하기 위해 해당 조건문을 제거합니다.
+        // if (window.dcFilterSettings.excludeRecommended && window.location.pathname.includes('/lists/') && isRecommendedContext()) {
+        //     console.log('DCInside 유저 필터: 개념글 목록 페이지이므로 필터 기능을 비활성화합니다.');
+        //     return;
+        // }
 
         const telecomBlockEnabled = await GM_getValue(CONSTANTS.STORAGE_KEYS.BLOCK_TELECOM, false);
         if (telecomBlockEnabled) {
@@ -1352,40 +1391,55 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
         await PersonalBlockModule.init();
     }
 
-    (async () => {
-        const shortcutString = await GM_getValue(CONSTANTS.STORAGE_KEYS.SHORTCUT_KEY, 'Shift+S');
-        activeShortcutObject = parseShortcutString(shortcutString);
+    const runSafely = async () => {
+        try {
+            // 기존 실행부의 로직을 이곳으로 이동
+            const shortcutString = await GM_getValue(CONSTANTS.STORAGE_KEYS.SHORTCUT_KEY, 'Shift+S');
+            activeShortcutObject = parseShortcutString(shortcutString);
 
-        window.addEventListener('keydown', async (e) => {
-            if (!activeShortcutObject || !activeShortcutObject.key) return;
+            window.addEventListener('keydown', async (e) => {
+                if (!activeShortcutObject || !activeShortcutObject.key) return;
 
-            const isMatch = e.key.toUpperCase() === activeShortcutObject.key &&
-                            e.ctrlKey === activeShortcutObject.ctrlKey &&
-                            e.shiftKey === activeShortcutObject.shiftKey &&
-                            e.altKey === activeShortcutObject.altKey &&
-                            e.metaKey === activeShortcutObject.metaKey;
+                const isMatch = e.key.toUpperCase() === activeShortcutObject.key &&
+                                e.ctrlKey === activeShortcutObject.ctrlKey &&
+                                e.shiftKey === activeShortcutObject.shiftKey &&
+                                e.altKey === activeShortcutObject.altKey &&
+                                e.metaKey === activeShortcutObject.metaKey;
 
-            if (isMatch) {
-                e.preventDefault();
-                const settingsPanel = document.getElementById(CONSTANTS.UI_IDS.SETTINGS_PANEL);
-                if (settingsPanel) {
-                    settingsPanel.remove();
-                } else {
-                    await showSettings();
+                if (isMatch) {
+                    e.preventDefault();
+                    const settingsPanel = document.getElementById(CONSTANTS.UI_IDS.SETTINGS_PANEL);
+                    if (settingsPanel) {
+                        settingsPanel.remove();
+                    } else {
+                        await showSettings();
+                    }
                 }
+            });
+
+            // start() 함수는 DOM 요소에 접근하므로 DOMContentLoaded 이후에 실행되어야 함
+            await start();
+
+            // 최초 실행 시 설정 창 표시 로직
+            const val = await GM_getValue(CONSTANTS.STORAGE_KEYS.THRESHOLD);
+            if (val === undefined) {
+                await GM_setValue(CONSTANTS.STORAGE_KEYS.THRESHOLD, 0);
+                await showSettings();
             }
-        });
 
-        const val = await GM_getValue(CONSTANTS.STORAGE_KEYS.THRESHOLD);
-        if (val === undefined) {
-            await GM_setValue(CONSTANTS.STORAGE_KEYS.THRESHOLD, 0);
-            await showSettings();
+        } catch (error) {
+            console.error("[DCInside User Filter] A critical error occurred:", error);
+        } finally {
+            // 모든 작업이 끝난 후 body에 클래스를 추가하여 화면을 표시
+            document.body.classList.add('dc-filter-ready');
         }
+    };
 
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', start);
-        } else {
-            start();
-        }
-    })();
+    // DOM이 준비되면 스크립트의 메인 로직을 안전하게 실행
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', runSafely);
+    } else {
+        runSafely();
+    }
+
 })();
