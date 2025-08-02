@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         DC_UserFilter_Mobile
 // @namespace    http://tampermonkey.net/
-// @version      2.5.5
+// @version      2.5.6
 // @description  유저 필터링, UI 개선, 개인 차단 기능 추가
 // @author       domato153
 // @match        https://gall.dcinside.com/*
@@ -631,11 +631,24 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
         #dc-backup-popup .export-section, #dc-backup-popup .import-section { display: flex; flex-direction: column; gap: 8px; }
         #dc-backup-popup label { font-size: 14px; font-weight: bold; }
         #dc-backup-popup .description { font-size: 12px; color: #666; }
-        #dc-backup-popup .import-controls { display: flex; gap: 8px; }
-        #dc-backup-popup textarea { flex-grow: 1; height: 100px; resize: vertical; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 12px; font-family: monospace; }
+        /* [수정] import-controls를 세로 정렬로 변경 */
+        #dc-backup-popup .import-controls { display: flex; flex-direction: column; gap: 8px; }
+        /* [추가] 파일 입력(<input type="file">) 스타일 */
+        #dc-backup-popup .import-file-input {
+            font-size: 14px;
+            padding: 5px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background-color: #f8f9fa;
+        }
+        #dc-backup-popup textarea { flex-grow: 1; height: 80px; resize: vertical; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 12px; font-family: monospace; }
         #dc-backup-popup button { padding: 8px 12px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
-        #dc-backup-popup .export-btn { background-color: #28a745; color: white; }
-        #dc-backup-popup .import-btn { background-color: #007bff; color: white; }
+        /* [수정] 기존 버튼들에 flex 속성 추가 */
+        #dc-backup-popup .export-btn { background-color: #28a745; color: white; flex: 1; }
+        /* [추가] '파일로 다운로드' 버튼 전용 스타일 */
+        #dc-backup-popup .export-btn-download { background-color: #17a2b8; color: white; flex: 1; }
+        /* [수정] 불러오기 버튼 스타일 조정 */
+        #dc-backup-popup .import-btn { background-color: #007bff; color: white; width: 100%; margin-top: 8px; }
     `);
 
 
@@ -1552,15 +1565,19 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
                 <div class="popup-content">
                     <div class="export-section">
                         <label>내보내기</label>
-                        <span class="description">현재 차단 목록 전체를 클립보드에 복사합니다.</span>
-                        <button class="export-btn">클립보드에 복사</button>
+                        <span class="description">현재 차단 목록 전체를 파일로 저장하거나 클립보드에 복사합니다.</span>
+                        <div style="display: flex; gap: 8px; margin-top: 5px;">
+                            <button class="export-btn-download">파일로 다운로드</button>
+                            <button class="export-btn">클립보드에 복사</button>
+                        </div>
                     </div>
-                    <hr>
+                    <hr style="border: 0; border-top: 1px solid #eee;">
                     <div class="import-section">
                         <label>불러오기</label>
-                        <span class="description">백업한 데이터를 아래에 붙여넣고 불러오면 기존 목록에 추가됩니다.</span>
+                        <span class="description">백업 파일을 선택하거나, 아래 텍스트 영역에 직접 붙여넣으세요.</span>
                         <div class="import-controls">
-                           <textarea placeholder="백업 데이터를 여기에 붙여넣으세요..."></textarea>
+                           <input type="file" class="import-file-input" accept=".json,.txt">
+                           <textarea placeholder="또는, 백업 데이터를 여기에 붙여넣으세요..."></textarea>
                         </div>
                          <button class="import-btn">불러오기</button>
                     </div>
@@ -1577,7 +1594,27 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
 
             popup.querySelector('.popup-close-btn').onclick = closePopup;
             overlay.onclick = closePopup;
+            // [추가] 파일로 다운로드 버튼 이벤트 핸들러
+            popup.querySelector('.export-btn-download').onclick = async () => {
+                const data = await this.loadPersonalBlocks();
+                const jsonString = JSON.stringify(data, null, 2);
+                const blob = new Blob([jsonString], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
 
+                const a = document.createElement('a');
+                a.href = url;
+
+                const date = new Date();
+                const timestamp = `${date.getFullYear()}${(date.getMonth() + 1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}_${date.getHours().toString().padStart(2, '0')}${date.getMinutes().toString().padStart(2, '0')}`;
+                a.download = `dc_blocklist_backup_${timestamp}.json`;
+
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+
+                alert('백업 파일 다운로드를 시작합니다.');
+            };
             popup.querySelector('.export-btn').onclick = async () => {
                 const data = await this.loadPersonalBlocks();
                 const jsonString = JSON.stringify(data, null, 2);
@@ -1590,11 +1627,12 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
                 }
             };
 
-            popup.querySelector('.import-btn').onclick = async () => {
-                const textarea = popup.querySelector('textarea');
-                const jsonString = textarea.value;
-                if (!jsonString.trim()) {
-                    alert('불러올 데이터를 입력해주세요.');
+            // [수정] 불러오기 기능 (파일/텍스트 모두 처리)
+
+            // 공통 데이터 처리 로직을 별도 함수로 분리
+            const processImportData = async (jsonString) => {
+                if (!jsonString || !jsonString.trim()) {
+                    alert('불러올 데이터가 없습니다.');
                     return;
                 }
 
@@ -1618,9 +1656,34 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
 
                 alert('차단 목록을 성공적으로 불러와서 추가했습니다.');
                 closePopup();
-                // 관리 패널도 닫기
                 const managementPanel = document.getElementById('dc-block-management-panel');
                 if (managementPanel) managementPanel.querySelector('.panel-close-btn').click();
+            };
+
+            // 불러오기 버튼 클릭 이벤트
+            popup.querySelector('.import-btn').onclick = async () => {
+                const fileInput = popup.querySelector('.import-file-input');
+                const textarea = popup.querySelector('textarea');
+
+                // 1순위: 파일이 선택되었는지 확인
+                if (fileInput.files.length > 0) {
+                    const file = fileInput.files[0];
+                    const reader = new FileReader();
+
+                    reader.onload = (e) => {
+                        // 파일 읽기가 완료되면 데이터 처리 함수 호출
+                        processImportData(e.target.result);
+                    };
+                    reader.onerror = () => {
+                        alert('파일을 읽는 중 오류가 발생했습니다.');
+                    };
+
+                    reader.readAsText(file); // 파일 읽기 시작
+                }
+                // 2순위: 파일이 없다면 textarea의 값을 사용
+                else {
+                    processImportData(textarea.value);
+                }
             };
         },
 
