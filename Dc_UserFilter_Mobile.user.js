@@ -1,9 +1,9 @@
 // ==UserScript==
 // @name         DC_UserFilter_Mobile
 // @namespace    http://tampermonkey.net/
-// @version      2.5.4
-// @description  유저 필터링, UI 개선, 개인 차단 기능 추가 
-// @author       domato153 
+// @version      2.5.5
+// @description  유저 필터링, UI 개선, 개인 차단 기능 추가
+// @author       domato153
 // @match        https://gall.dcinside.com/*
 // @grant        GM_setValue
 // @grant        GM_getValue
@@ -89,10 +89,10 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
         }
 
 
-        /* [수정] 불필요한 PC버전 요소 숨김 */
+        /* [수정] 불필요한 PC버전 요소 및 사이트 광고 아이콘 숨김 */
         #dc_header, #dc_gnb, .adv_area, .right_content, .dc_all, .dcfoot, .dc_ft, .info_policy, .copyrigh, .ad_bottom_list, .bottom_paging_box + div, .intro_bg, .fixed_write_btn, .bottom_movebox, #zzbang_ad ,#zzbang_div,#zzbang_div .my_zzal, .my_dccon, .issue_contentbox, #gall_top_recom.concept_wrap,
         .gall_exposure, .stickyunit, #kakao_search, .banner_box, #ad-layer,#ad-layer-closer,.__dcNewsWidgetTypeB__, .dctrend_ranking, .cm_ad, .con_banner.writing_banbox, [id^="criteo-"],
-        .adv_bottom_write, ins.kakao_ad_area  {
+        .adv_bottom_write, ins.kakao_ad_area, em.icon_ad {
             display: none !important;
         }
 
@@ -275,6 +275,10 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             background: #fff;
         }
 
+        /* [이식된 기능] 광고 게시물 기본 숨김 처리 */
+        .custom-post-item.is-ad-post {
+            display: none !important;
+        }
 
         .custom-post-item.notice + .custom-post-item:not(.notice):not(.concept),
         .custom-post-item.concept + .custom-post-item:not(.notice):not(.concept) { border-top: 1px solid #4263eb !important; }
@@ -1098,6 +1102,10 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             return true;
         },
         async applyAsyncBlock(element) {
+            // [이식된 기능] 공지 글인 경우 비동기 필터(글댓합/비율)는 건너뜀
+            if (element.querySelector('em.icon_notice')) {
+                return;
+            }
             // [최종 검증 후 수정] '개념글 제외' 기능이 비동기 필터(글댓합)에도 적용되도록 검사 로직을 다시 추가합니다.
             if (this.shouldSkipFiltering(element)) {
                 // '개념글 제외'가 켜져있으면 글댓합/비율 필터를 적용하지 않습니다.
@@ -1146,6 +1154,12 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
                     element.style.display = 'none';
                     return; // 개인 차단이므로 다른 필터를 검사하지 않고 즉시 종료
                 }
+            }
+
+            // [이식된 기능] 개인 차단 로직 실행 후, 공지 글인 경우 일반 필터는 건너뜀
+            if (element.querySelector('em.icon_notice')) {
+                element.style.display = ''; // 숨겨져 있었다면 다시 표시
+                return; // 일반 필터링(유동, 통피 등)을 건너뛰고 함수 종료
             }
 
             // 2. 개인 차단이 아닌 경우, 나머지 필터 로직 진행
@@ -1993,6 +2007,10 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             newItem.setAttribute(this.DATA_ATTR, index);
             newItem.className = `${this.CUSTOM_CLASSES.POST_ITEM} ${originalRow.className.replace('ub-content', '').trim()}`;
 
+            // [이식된 기능] 광고 글(icon_ad)인 경우 식별 클래스 추가
+            if (originalRow.querySelector('em.icon_ad')) {
+                newItem.classList.add('is-ad-post');
+            }
 
             if (originalRow.classList.contains('us-post--notice')) newItem.classList.add('notice');
             if (originalRow.classList.contains('us-post--recommend')) newItem.classList.add('concept');
@@ -2310,7 +2328,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
 
     async function main() {
         if (isInitialized) return;
-        console.log("[DC Filter+UI] Initializing v2.4.3...");
+        console.log("[DC Filter+UI] Initializing v2.5.5...");
 
 
         // [수정] main 함수에서 reloadShortcutKey 함수를 호출하여 초기화
