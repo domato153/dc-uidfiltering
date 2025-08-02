@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         DC_UserFilter_Mobile
 // @namespace    http://tampermonkey.net/
-// @version      2.5.6
-// @description  유저 필터링, UI 개선, 개인 차단 기능 추가
+// @version      2.5.7
+// @description  유저 필터링, UI 개선, 개인 차단/해제 기능 추가
 // @author       domato153
 // @match        https://gall.dcinside.com/*
 // @grant        GM_setValue
@@ -530,6 +530,8 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
         #dc-selection-popup .block-option { display: flex; justify-content: space-between; align-items: center; background-color: #f8f9fa; padding: 12px; border-radius: 8px; }
         #dc-selection-popup .block-option span { font-size: 15px; color: #333; word-break: break-all; margin-right: 15px; }
         #dc-selection-popup .block-option button { font-size: 14px; padding: 6px 12px; cursor: pointer; border: none; border-radius: 6px; background-color: #4263eb; color: #fff; font-weight: 500; }
+        /* [v2.5.7 추가] 차단 해제 버튼 스타일 */
+        #dc-selection-popup .block-option button.btn-unblock { background-color: #e03131; }
         #dc-selection-popup .popup-buttons button { width: 100%; font-size: 16px; padding: 10px; cursor: pointer; border: none; border-radius: 8px; background-color: #e9ecef; color: #555; }
         body.selection-mode-active .gall_writer,
         body.selection-mode-active .ub-writer {
@@ -1350,6 +1352,37 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             this.exitSelectionMode();
         },
 
+        // [v2.5.7 추가] 사용자의 차단 상태를 확인하는 헬퍼 함수
+        checkBlockStatus(userInfo) {
+            const { nick, uid, ip } = userInfo;
+            const cache = this.personalBlockListCache;
+            return {
+                isNickBlocked: nick ? cache.nicknames.includes(nick) : false,
+                isUidBlocked: uid ? cache.uids.some(u => u.id === uid) : false,
+                isIpBlocked: ip ? cache.ips.includes(ip) : false,
+            };
+        },
+
+        // [v2.5.7 추가] 특정 항목을 차단 목록에서 제거하는 함수
+        async removeBlock(type, value) {
+            if (!value) return;
+            this.personalBlockListCache = await this.loadPersonalBlocks(); // 최신 데이터로 갱신
+
+            switch (type) {
+                case 'uid':
+                    this.personalBlockListCache.uids = this.personalBlockListCache.uids.filter(u => u.id !== value);
+                    break;
+                case 'nickname':
+                    this.personalBlockListCache.nicknames = this.personalBlockListCache.nicknames.filter(n => n !== value);
+                    break;
+                case 'ip':
+                    this.personalBlockListCache.ips = this.personalBlockListCache.ips.filter(i => i !== value);
+                    break;
+            }
+            await this.savePersonalBlocks();
+            await FilterModule.refilterAllContent();
+            this.exitSelectionMode();
+        },
 
         createFab() {
             // [수정] 글 목록 및 글 내용 페이지에서만 '간편차단' 버튼을 표시합니다.
@@ -1480,7 +1513,6 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
 
                 const nick = writerEl.getAttribute('data-nick');
                 const uid = writerEl.getAttribute('data-uid');
-                // 수정된 코드
                 const ip = writerEl.getAttribute('data-ip');
 
 
@@ -1489,46 +1521,69 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
         },
 
 
-        // [v2.3.2 수정] 팝업 UI 개선
+        // [v2.5.7 수정] 차단/차단 해제 버튼을 동적으로 생성
         showSelectionPopup(userInfo) {
-            this.exitSelectionMode(); // 기존 팝업 제거
-            this.isSelectionMode = true; // 모드 유지
+            this.exitSelectionMode();
+            this.isSelectionMode = true;
             document.body.classList.add('selection-mode-active');
-
 
             const popup = document.createElement('div');
             popup.id = 'dc-selection-popup';
 
-
+            // [핵심 변경] 사용자의 차단 상태를 먼저 확인
+            const blockStatus = this.checkBlockStatus(userInfo);
             let optionsHtml = '';
+
+            // 닉네임 처리
             if (userInfo.nick) {
-                optionsHtml += `<div class="block-option"><span>닉네임: ${userInfo.nick}</span><button data-type="nickname" data-value="${userInfo.nick}">차단</button></div>`;
+                if (blockStatus.isNickBlocked) {
+                    optionsHtml += `<div class="block-option"><span>닉네임: ${userInfo.nick}</span><button class="btn-unblock" data-type="nickname" data-value="${userInfo.nick}">차단 해제</button></div>`;
+                } else {
+                    optionsHtml += `<div class="block-option"><span>닉네임: ${userInfo.nick}</span><button data-type="nickname" data-value="${userInfo.nick}">차단</button></div>`;
+                }
             }
+            // UID 처리
             if (userInfo.uid) {
                 const displayName = `${userInfo.nick}(${userInfo.uid})`;
-                optionsHtml += `<div class="block-option"><span>식별번호: ${displayName}</span><button data-type="uid" data-value="${userInfo.uid}" data-display-name="${displayName}">차단</button></div>`;
+                if (blockStatus.isUidBlocked) {
+                    optionsHtml += `<div class="block-option"><span>식별번호: ${displayName}</span><button class="btn-unblock" data-type="uid" data-value="${userInfo.uid}" data-display-name="${displayName}">차단 해제</button></div>`;
+                } else {
+                    optionsHtml += `<div class="block-option"><span>식별번호: ${displayName}</span><button data-type="uid" data-value="${userInfo.uid}" data-display-name="${displayName}">차단</button></div>`;
+                }
             }
+            // IP 처리
             if (userInfo.ip) {
-                optionsHtml += `<div class="block-option"><span>IP: ${userInfo.ip}</span><button data-type="ip" data-value="${userInfo.ip}">차단</button></div>`;
+                if (blockStatus.isIpBlocked) {
+                    optionsHtml += `<div class="block-option"><span>IP: ${userInfo.ip}</span><button class="btn-unblock" data-type="ip" data-value="${userInfo.ip}">차단 해제</button></div>`;
+                } else {
+                    optionsHtml += `<div class="block-option"><span>IP: ${userInfo.ip}</span><button data-type="ip" data-value="${userInfo.ip}">차단</button></div>`;
+                }
             }
-
 
             popup.innerHTML = `
-                <h4>어떤 정보를 차단할까요?</h4>
+                <h4>어떤 정보를 처리할까요?</h4>
                 <div class="block-options">${optionsHtml}</div>
                 <div class="popup-buttons"><button class="cancel-btn">취소</button></div>
             `;
             document.body.appendChild(popup);
 
-
             popup.querySelector('.cancel-btn').onclick = () => this.exitSelectionMode();
+
+            // [핵심 변경] 이벤트 핸들러 통합
             popup.querySelectorAll('.block-options button').forEach(btn => {
                 btn.onclick = () => {
                     const { type, value, displayName } = btn.dataset;
-                    this.addBlock(type, value, displayName);
+                    if (btn.classList.contains('btn-unblock')) {
+                        // '차단 해제' 버튼 클릭 시
+                        this.removeBlock(type, value);
+                    } else {
+                        // '차단' 버튼 클릭 시
+                        this.addBlock(type, value, displayName);
+                    }
                 };
             });
         },
+
 
         // [신규] 차단 목록 병합 헬퍼 함수
         mergeBlockLists(existing, imported) {
@@ -2391,7 +2446,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
 
     async function main() {
         if (isInitialized) return;
-        console.log("[DC Filter+UI] Initializing v2.5.5...");
+        console.log("[DC Filter+UI] Initializing v2.5.7...");
 
 
         // [수정] main 함수에서 reloadShortcutKey 함수를 호출하여 초기화
