@@ -1,11 +1,13 @@
-// --- START OF FILE controls.js (Robust Version) ---
+// --- START OF FILE controls.js (Ultra-Robust Full Code) ---
 
 // 스크립트가 이미 초기화되었는지 확인하는 플래그
 // 중복 실행을 방지하여 안정성을 높입니다.
 if (typeof window.linkkfExtensionInitialized === 'undefined') {
     window.linkkfExtensionInitialized = true;
 
-    let videoId = null;
+    const SAVE_SLOT_COUNT = 3; // 3개의 백업 슬롯 사용
+    let currentSlotIndex = 0;
+    let videoId_base = null;
     let progressSaveInterval = null;
 
     /**
@@ -13,47 +15,103 @@ if (typeof window.linkkfExtensionInitialized === 'undefined') {
      * @param {HTMLVideoElement} videoElement - 설정할 비디오 요소.
      */
     function setupVideoFeatures(videoElement) {
-        // --- 1. 이어보기 기능 설정 ---
         try {
             // videoId는 iframe의 URL에서 고유 키를 추출하여 생성합니다.
             const urlParams = new URLSearchParams(window.location.search);
             const urlKey = urlParams.get('url');
             if (urlKey) {
-                videoId = `linkkf-progress-${urlKey}`;
+                videoId_base = `linkkf-progress-${urlKey}`;
             }
         } catch (e) {
-            console.error("Linkkf Extension: Failed to parse URL for videoId.", e);
+            console.error("Linkkf Extension: Failed to parse URL for videoId base.", e);
         }
 
-        // 저장된 재생 위치를 불러와 적용하는 함수
-        const loadProgress = () => {
-            if (!videoId) return;
+        // --- 1. 이어보기 기능 (안전장치 강화) ---
 
-            const savedTime = localStorage.getItem(videoId);
-            // 유의미한 시간(1초 이상)이 저장되어 있을 때만 실행
-            if (savedTime && parseFloat(savedTime) > 1) {
-                // 모바일 자동재생 정책을 준수하기 위해 'play' 이벤트 후에 시간 이동
-                videoElement.addEventListener('play', () => {
-                    // 영상 시작 직후(2초 이내)에만 저장된 위치로 이동 (사용자가 수동으로 앞으로 돌렸을 때를 위함)
-                    if (videoElement.currentTime < 2) {
-                        setTimeout(() => {
-                            videoElement.currentTime = parseFloat(savedTime);
-                        }, 200); // 약간의 딜레이를 주어 안정성 확보
+        const loadProgress = () => {
+            if (!videoId_base) return;
+
+            let validSaves = [];
+            // 모든 백업 슬롯을 순회하며 유효한 데이터를 찾습니다.
+            for (let i = 0; i < SAVE_SLOT_COUNT; i++) {
+                const slotKey = `${videoId_base}_${i}`;
+                const rawData = localStorage.getItem(slotKey);
+                if (!rawData) continue;
+
+                try {
+                    const data = JSON.parse(rawData);
+                    // 데이터 유효성 검증
+                    // 1. 데이터 객체가 유효한가?
+                    // 2. time 값이 유효한 숫자인가? (NaN, Infinity 방지)
+                    // 3. duration 값이 유효한 숫자인가?
+                    // 4. 저장된 시간이 영상 전체 길이보다 짧은가?
+                    // 5. 1초 이상 재생된 유의미한 데이터인가?
+                    if (data && typeof data.time === 'number' && isFinite(data.time) &&
+                        typeof data.duration === 'number' && isFinite(data.duration) &&
+                        data.time < data.duration && data.time > 1) {
+                        validSaves.push(data);
+                    } else {
+                        // 유효하지 않은 데이터는 정리합니다.
+                        localStorage.removeItem(slotKey);
                     }
-                }, { once: true }); // 이 이벤트는 딱 한 번만 실행됨
+                } catch (e) {
+                    // JSON 파싱 실패 시, 손상된 데이터로 간주하고 해당 슬롯 삭제
+                    console.warn(`Linkkf Extension: Corrupted data found in slot ${i}. Removing.`, e);
+                    localStorage.removeItem(slotKey);
+                }
             }
+
+            if (validSaves.length === 0) {
+                console.log("Linkkf Extension: No valid progress data found.");
+                return; // 유효한 저장 데이터가 없음
+            }
+
+            // 가장 최근에 저장된(timestamp가 가장 큰) 데이터를 선택
+            validSaves.sort((a, b) => b.timestamp - a.timestamp);
+            const latestSave = validSaves[0];
+            const timeToRestore = latestSave.time;
+
+            console.log(`Linkkf Extension: Found valid save data. Restoring to ${timeToRestore.toFixed(2)}s.`);
+
+            // 모바일 자동재생 정책을 준수하기 위해 'play' 이벤트 후에 시간 이동
+            videoElement.addEventListener('play', () => {
+                // 영상 시작 직후(2초 이내)에만 저장된 위치로 이동
+                if (videoElement.currentTime < 2) {
+                    setTimeout(() => {
+                        videoElement.currentTime = timeToRestore;
+                    }, 200); // 약간의 딜레이를 주어 안정성 확보
+                }
+            }, { once: true }); // 이 이벤트는 딱 한 번만 실행됨
         };
 
-        // 현재 재생 위치를 주기적으로 저장하는 함수
         const saveProgress = () => {
             // videoId가 있고, 영상 길이가 유효하며, 재생 중일 때만 저장
-            if (videoId && videoElement.duration > 0 && !videoElement.paused) {
-                // 영상이 거의 끝나면(마지막 15초) 기록을 삭제하여 다음 재생 시 처음부터 시작하도록 함
-                if (videoElement.currentTime > videoElement.duration - 15) {
-                    localStorage.removeItem(videoId);
-                } else {
-                    localStorage.setItem(videoId, videoElement.currentTime.toString());
+            if (videoId_base && videoElement.duration > 0 && !videoElement.paused) {
+                const currentTime = videoElement.currentTime;
+                const duration = videoElement.duration;
+
+                // 영상이 거의 끝나면(마지막 15초) 모든 슬롯의 기록을 삭제
+                if (currentTime > duration - 15) {
+                    for (let i = 0; i < SAVE_SLOT_COUNT; i++) {
+                        localStorage.removeItem(`${videoId_base}_${i}`);
+                    }
+                    console.log("Linkkf Extension: Video finished. All progress data cleared.");
+                    return;
                 }
+
+                // 저장할 데이터 객체 생성
+                const dataToSave = {
+                    time: currentTime,
+                    duration: duration,
+                    timestamp: Date.now()
+                };
+
+                // 현재 슬롯에 데이터 저장
+                const currentSlotKey = `${videoId_base}_${currentSlotIndex}`;
+                localStorage.setItem(currentSlotKey, JSON.stringify(dataToSave));
+                
+                // 다음 저장을 위해 슬롯 인덱스를 순환
+                currentSlotIndex = (currentSlotIndex + 1) % SAVE_SLOT_COUNT;
             }
         };
 
