@@ -321,7 +321,7 @@ if (typeof window.linkkfExtensionInitialized === 'undefined') {
                 };
                 
                 mainBtn.addEventListener('mousedown', onFabInteractionStart);
-                mainBtn.addEventListener('touchstart', onFabInteractionStart, { passive: true });
+                mainBtn.addEventListener('touchstart', onFabInteractionStart, { passive: false });
                 this.fab.querySelectorAll('.kf-fab-sub').forEach(btn => {
                     btn.addEventListener('click', (e) => this.handleFABAction(e.currentTarget.dataset.action));
                 });
