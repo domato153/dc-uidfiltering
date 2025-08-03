@@ -1,23 +1,19 @@
 {
   "manifest_version": 3,
-  "name": "Linkkf 편의기능 확장",
-  "version": "2.5.0",
-  "description": "Linkkf 사이트의 시청 기록, 재생목록, 이어보기 및 단축키 기능을 제공합니다.",
+  "name": "Linkkf 통합 편의기능",
+  "version": "2.6.0",
+  "description": "모든 영상에서 작동하는 시청 기록, 재생목록, 이어보기, 단축키 및 고급 UI 제어 기능을 제공합니다.",
   "host_permissions": [
-    "*://*.linkkf.net/",
-    "*://*.linkkf.app/",
-    "*://*.myani.app/"
+    "<all_urls>"
   ],
   "content_scripts": [
     {
       "matches": [
-        "*://*.linkkf.net/*",
-        "*://*.linkkf.app/*",
-        "*://*.myani.app/*"
+        "<all_urls>"
       ],
       "js": ["controls.js"],
       "all_frames": true,
-      "run_at": "document_idle"
+      "run_at": "document_start"
     }
   ]
 }

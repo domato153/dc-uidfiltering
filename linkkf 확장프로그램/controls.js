@@ -1,10 +1,10 @@
-// --- START OF FILE controls.js (견고함 강화 최종 완성본) ---
+// --- START OF FILE controls.js (모든 기능 및 견고함 통합 최종 완성본) ---
 
 if (typeof window.linkkfExtensionInitialized === 'undefined') {
     window.linkkfExtensionInitialized = true;
 
     // ===================================================================================
-    //  1. 비디오 프레임 기능
+    //  1. 비디오 프레임 기능 (견고함 강화 로직 복원)
     // ===================================================================================
     function runVideoFrameFeatures() {
         console.log('[FRAME] 스크립트 실행됨.');
@@ -92,7 +92,7 @@ if (typeof window.linkkfExtensionInitialized === 'undefined') {
             videoElement.addEventListener('ended', clearProgress);
             window.addEventListener('pagehide', saveProgress);
             
-            // ★★★ 견고함 강화 1: 탭 전환 시 즉시 저장 기능 복원 ★★★
+            // [복원] 견고함 강화 1: 탭 전환 시 즉시 저장 기능
             document.addEventListener('visibilitychange', () => {
                 if (document.visibilityState === 'hidden') {
                     saveProgress();
@@ -110,7 +110,7 @@ if (typeof window.linkkfExtensionInitialized === 'undefined') {
             });
             observer.observe(document.documentElement, { childList: true, subtree: true });
 
-            // ★★★ 견고함 강화 2: Observer 안전장치(타임아웃) 복원 ★★★
+            // [복원] 견고함 강화 2: Observer 안전장치(타임아웃)
             setTimeout(() => observer.disconnect(), 30000);
         }
 
@@ -123,7 +123,7 @@ if (typeof window.linkkfExtensionInitialized === 'undefined') {
 
 
     // ===================================================================================
-    //  2. 최상위 창 기능 (수정 없음)
+    //  2. 최상위 창 기능 (모든 기능 포함)
     // ===================================================================================
     function runTopWindowFeatures() {
         console.log('[TOP] 스크립트 실행됨.');
@@ -233,9 +233,9 @@ if (typeof window.linkkfExtensionInitialized === 'undefined') {
         };
         
         const UIModule = {
-            fab: null, isDragging: false, dragStartPos: { x: 0, y: 0 }, fabStartPos: { left: 0, top: 0 }, 
+            fab: null, isPressed: false, isDragging: false, dragStartPos: { x: 0, y: 0 }, fabStartPos: { left: 0, top: 0 }, 
             currentModal: null, 
-            modalState: { isDragging: false, startX: 0, startY: 0, startLeft: 0, startTop: 0 },
+            modalState: { isDragging: false, isResizing: false, isPinching: false, startX: 0, startY: 0, startLeft: 0, startTop: 0, startWidth: 0, startHeight: 0, initialPinchDistance: 0 },
             modalResizeObserver: null,
             init() { this.injectStyles(); this.createFAB(); }, 
             injectStyles() {
@@ -256,13 +256,15 @@ if (typeof window.linkkfExtensionInitialized === 'undefined') {
                     .kf-modal-title { font-size: 1.2em; font-weight: bold; pointer-events: none; margin-right: auto; } 
                     .kf-modal-close { font-size: 1.5em; cursor: pointer; } 
                     .kf-modal-body { padding: 16px; overflow-y: auto; flex-grow: 1; }
-                    .kf-modal-list-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 8px; border-bottom: 1px solid #444; cursor: pointer; }
+                    .kf-modal-list-item { display: flex; align-items: center; padding: 12px 8px; border-bottom: 1px solid #444; cursor: pointer; }
                     .kf-modal-list-item:hover { background-color: #444; }
                     .kf-item-title { flex-grow: 1; margin-right: 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
                     .kf-item-info { font-size: 0.8em; color: #aaa; margin-left: 10px; white-space: nowrap; }
-                    .kf-item-actions { display: flex; align-items: center; flex-shrink: 0; width: 230px; justify-content: flex-end; }
-                    .kf-item-actions button { background: #6200ee; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; margin-left: 8px; }
+                    .kf-item-actions { display: flex; align-items: center; flex-shrink: 0; justify-content: flex-end; margin-left: auto; }
+                    .kf-item-actions button { background: #6200ee; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; margin-left: 8px; }
                     .kf-item-actions .kf-delete-btn { background: #b00020; }
+                    .kf-modal-resize-handle-nw { position: absolute; top: 0; left: 0; width: 20px; height: 20px; cursor: nwse-resize; z-index: 10; border-top: 3px solid rgba(255,255,255,0.4); border-left: 3px solid rgba(255,255,255,0.4); border-top-left-radius: 8px; }
+                    .kf-modal-resize-handle-se { position: absolute; bottom: 0; right: 0; width: 20px; height: 20px; cursor: nwse-resize; z-index: 10; border-bottom: 3px solid rgba(255,255,255,0.4); border-right: 3px solid rgba(255,255,255,0.4); border-bottom-right-radius: 8px; }
                 `;
                 const style = document.createElement('style');
                 style.textContent = css;
@@ -278,33 +280,55 @@ if (typeof window.linkkfExtensionInitialized === 'undefined') {
                 <div class="kf-fab-main" title="편의기능">편의기능</div>`;
                 document.body.appendChild(this.fab);
                 const mainBtn = this.fab.querySelector('.kf-fab-main');
-                mainBtn.addEventListener('click', (e) => {
-                    const dx = e.clientX - (this.dragStartPos.x || 0), dy = e.clientY - (this.dragStartPos.y || 0);
-                    if (Math.abs(dx) < 5 && Math.abs(dy) < 5) { this.toggleFAB(); }
-                });
+
+                const onFabInteractionStart = (e) => {
+                    if (e.type === 'mousedown' && e.button !== 0) return;
+                    this.isPressed = true; this.isDragging = false;
+                    const event = e.touches ? e.touches[0] : e;
+                    this.dragStartPos = { x: event.clientX, y: event.clientY };
+                    const rect = this.fab.getBoundingClientRect();
+                    this.fabStartPos = { left: rect.left, top: rect.top };
+                    document.addEventListener('mousemove', onFabInteractionMove);
+                    document.addEventListener('touchmove', onFabInteractionMove, { passive: false });
+                    document.addEventListener('mouseup', onFabInteractionEnd, { once: true });
+                    document.addEventListener('touchend', onFabInteractionEnd, { once: true });
+                };
+
+                const onFabInteractionMove = (e) => {
+                    if (!this.isPressed) return;
+                    const event = e.touches ? e.touches[0] : e;
+                    const dx = event.clientX - this.dragStartPos.x; const dy = event.clientY - this.dragStartPos.y;
+                    if (!this.isDragging && (Math.abs(dx) > 5 || Math.abs(dy) > 5)) {
+                        this.isDragging = true;
+                        this.fab.style.transition = 'none'; this.fab.style.right = 'auto'; this.fab.style.bottom = 'auto';
+                    }
+                    if (this.isDragging) {
+                        if (e.cancelable) e.preventDefault();
+                        let newX = this.fabStartPos.left + dx; let newY = this.fabStartPos.top + dy;
+                        newX = Math.max(0, Math.min(newX, window.innerWidth - this.fab.offsetWidth));
+                        newY = Math.max(0, Math.min(newY, window.innerHeight - this.fab.offsetHeight));
+                        this.fab.style.left = `${newX}px`; this.fab.style.top = `${newY}px`;
+                    }
+                };
+                
+                const onFabInteractionEnd = (e) => {
+                    if (!this.isPressed) return;
+                    if (this.isDragging) { this.fab.style.transition = ''; } 
+                    else {
+                        this.toggleFAB();
+                        if (e.type === 'touchend' && e.cancelable) e.preventDefault();
+                    }
+                    this.isPressed = false; this.isDragging = false;
+                    document.removeEventListener('mousemove', onFabInteractionMove);
+                    document.removeEventListener('touchmove', onFabInteractionMove);
+                };
+                
+                mainBtn.addEventListener('mousedown', onFabInteractionStart);
+                mainBtn.addEventListener('touchstart', onFabInteractionStart, { passive: true });
                 this.fab.querySelectorAll('.kf-fab-sub').forEach(btn => {
                     btn.addEventListener('click', (e) => this.handleFABAction(e.currentTarget.dataset.action));
                 });
-                mainBtn.addEventListener('mousedown', (e) => {
-                    e.preventDefault(); this.isDragging = true;
-                    this.dragStartPos = { x: e.clientX, y: e.clientY };
-                    const rect = this.fab.getBoundingClientRect();
-                    this.fabStartPos = { left: rect.left, top: rect.top };
-                    this.fab.style.transition = 'none'; this.fab.style.right = 'auto'; this.fab.style.bottom = 'auto';
-                    this.fab.style.left = `${this.fabStartPos.left}px`; this.fab.style.top = `${this.fabStartPos.top}px`;
-                });
-                document.addEventListener('mousemove', (e) => {
-                    if (!this.isDragging) return;
-                    const dx = e.clientX - this.dragStartPos.x, dy = e.clientY - this.dragStartPos.y;
-                    let newX = this.fabStartPos.left + dx, newY = this.fabStartPos.top + dy;
-                    newX = Math.max(0, Math.min(newX, window.innerWidth - this.fab.offsetWidth));
-                    newY = Math.max(0, Math.min(newY, window.innerHeight - this.fab.offsetHeight));
-                    this.fab.style.left = `${newX}px`; this.fab.style.top = `${newY}px`;
-                });
-                document.addEventListener('mouseup', () => {
-                    if (this.isDragging) { this.isDragging = false; this.fab.style.transition = ''; }
-                });
-            }, 
+            },
             toggleFAB() {
                 const fabRect = this.fab.getBoundingClientRect();
                 if (fabRect.top + fabRect.height > window.innerHeight / 2) {
@@ -331,11 +355,8 @@ if (typeof window.linkkfExtensionInitialized === 'undefined') {
                 if (geometry) {
                     const clampedLeft = Math.max(0, Math.min(geometry.left, window.innerWidth - geometry.width));
                     const clampedTop = Math.max(0, Math.min(geometry.top, window.innerHeight - geometry.height));
-
-                    modal.style.left = `${clampedLeft}px`;
-                    modal.style.top = `${clampedTop}px`;
-                    modal.style.width = `${geometry.width}px`;
-                    modal.style.height = `${geometry.height}px`;
+                    modal.style.left = `${clampedLeft}px`; modal.style.top = `${clampedTop}px`;
+                    modal.style.width = `${geometry.width}px`; modal.style.height = `${geometry.height}px`;
                 }
             },
             handleFABAction(action) { if (action === 'history') this.showHistoryModal(); if (action === 'playlist') this.showPlaylistModal(); }, 
@@ -346,6 +367,8 @@ if (typeof window.linkkfExtensionInitialized === 'undefined') {
                 overlay.className = 'kf-modal-overlay';
                 
                 overlay.innerHTML = `<div class="kf-modal-content">
+                    <div class="kf-modal-resize-handle-nw" title="크기 조절"></div>
+                    <div class="kf-modal-resize-handle-se" title="크기 조절"></div>
                     <div class="kf-modal-header">
                         <span class="kf-modal-title">${title}</span>
                         <div class="kf-modal-header-actions"></div>
@@ -359,13 +382,8 @@ if (typeof window.linkkfExtensionInitialized === 'undefined') {
                 modalContent.querySelector('.kf-modal-body').appendChild(content);
 
                 const actionsContainer = modalContent.querySelector('.kf-modal-header-actions');
-                headerActions.forEach(actionEl => {
-                    actionsContainer.appendChild(actionEl);
-                });
-
-                overlay.addEventListener('click', (e) => {
-                    if (e.target === overlay) this.closeModal();
-                });
+                headerActions.forEach(actionEl => { actionsContainer.appendChild(actionEl); });
+                overlay.addEventListener('click', (e) => { if (e.target === overlay) this.closeModal(); });
                 modalContent.querySelector('.kf-modal-close').addEventListener('click', () => this.closeModal());
                 
                 this.loadModalGeometry(type, modalContent);
@@ -373,67 +391,123 @@ if (typeof window.linkkfExtensionInitialized === 'undefined') {
             },
             addModalEventListeners(type, modal) {
                 const header = modal.querySelector('.kf-modal-header');
-                
-                let dragHandler, moveHandler, endHandler;
+                const resizeHandleNW = modal.querySelector('.kf-modal-resize-handle-nw');
+                const resizeHandleSE = modal.querySelector('.kf-modal-resize-handle-se');
 
                 const onDragStart = (e) => {
+                    if (this.modalState.isPinching) return;
                     this.modalState.isDragging = true;
                     const event = e.touches ? e.touches[0] : e;
-                    this.modalState.startX = event.clientX;
-                    this.modalState.startY = event.clientY;
+                    this.modalState.startX = event.clientX; this.modalState.startY = event.clientY;
+                    this.modalState.startLeft = modal.offsetLeft; this.modalState.startTop = modal.offsetTop;
+                    document.body.style.userSelect = 'none'; document.body.style.cursor = 'move';
+                    document.addEventListener('mousemove', onDragMove); document.addEventListener('mouseup', onDragEnd);
+                    document.addEventListener('touchmove', onDragMove, { passive: false }); document.addEventListener('touchend', onDragEnd);
+                };
+                const onDragMove = (e) => {
+                    if (!this.modalState.isDragging) return; if (e.cancelable) e.preventDefault();
+                    const event = e.touches ? e.touches[0] : e;
+                    const dx = event.clientX - this.modalState.startX; const dy = event.clientY - this.modalState.startY;
+                    let newLeft = this.modalState.startLeft + dx; let newTop = this.modalState.startTop + dy;
+                    const maxLeft = window.innerWidth - modal.offsetWidth; const maxTop = window.innerHeight - modal.offsetHeight;
+                    newLeft = Math.max(0, Math.min(newLeft, maxLeft)); newTop = Math.max(0, Math.min(newTop, maxTop));
+                    modal.style.left = `${newLeft}px`; modal.style.top = `${newTop}px`;
+                };
+                const onDragEnd = () => {
+                    if (!this.modalState.isDragging) return; this.modalState.isDragging = false;
+                    document.body.style.userSelect = ''; document.body.style.cursor = '';
+                    document.removeEventListener('mousemove', onDragMove); document.removeEventListener('mouseup', onDragEnd);
+                    document.removeEventListener('touchmove', onDragMove); document.removeEventListener('touchend', onDragEnd);
+                    this.saveModalGeometry(type, modal);
+                };
+                header.addEventListener('mousedown', onDragStart); header.addEventListener('touchstart', onDragStart, { passive: false });
+                
+                let currentResizeDirection = null;
+                const onResizeStart = (e, direction) => {
+                    if (this.modalState.isPinching) return; e.stopPropagation();
+                    currentResizeDirection = direction; this.modalState.isResizing = true;
+                    const event = e.touches ? e.touches[0] : e;
+                    this.modalState.startX = event.clientX; this.modalState.startY = event.clientY;
+                    this.modalState.startLeft = modal.offsetLeft; this.modalState.startTop = modal.offsetTop;
+                    this.modalState.startWidth = modal.offsetWidth; this.modalState.startHeight = modal.offsetHeight;
+                    document.body.style.userSelect = 'none'; document.body.style.cursor = 'nwse-resize';
+                    document.addEventListener('mousemove', onResizeMove); document.addEventListener('mouseup', onResizeEnd);
+                    document.addEventListener('touchmove', onResizeMove, { passive: false }); document.addEventListener('touchend', onResizeEnd);
+                };
+                const onResizeMove = (e) => {
+                    if (!this.modalState.isResizing) return; if (e.cancelable) e.preventDefault();
+                    const event = e.touches ? e.touches[0] : e;
+                    const dx = event.clientX - this.modalState.startX; const dy = event.clientY - this.modalState.startY;
+                    const minWidth = parseInt(getComputedStyle(modal).minWidth); const minHeight = parseInt(getComputedStyle(modal).minHeight);
+                    if (currentResizeDirection === 'nw') {
+                        let newWidth = this.modalState.startWidth - dx; let newHeight = this.modalState.startHeight - dy;
+                        if (newWidth > minWidth) { modal.style.width = `${newWidth}px`; modal.style.left = `${this.modalState.startLeft + dx}px`; }
+                        if (newHeight > minHeight) { modal.style.height = `${newHeight}px`; modal.style.top = `${this.modalState.startTop + dy}px`; }
+                    } else if (currentResizeDirection === 'se') {
+                        let newWidth = this.modalState.startWidth + dx; let newHeight = this.modalState.startHeight + dy;
+                        if (newWidth > minWidth) { modal.style.width = `${newWidth}px`; }
+                        if (newHeight > minHeight) { modal.style.height = `${newHeight}px`; }
+                    }
+                };
+                const onResizeEnd = () => {
+                    if (!this.modalState.isResizing) return; this.modalState.isResizing = false;
+                    document.body.style.userSelect = ''; document.body.style.cursor = '';
+                    document.removeEventListener('mousemove', onResizeMove); document.removeEventListener('mouseup', onResizeEnd);
+                    document.removeEventListener('touchmove', onResizeMove); document.removeEventListener('touchend', onResizeEnd);
+                };
+                resizeHandleNW.addEventListener('mousedown', (e) => onResizeStart(e, 'nw'));
+                resizeHandleNW.addEventListener('touchstart', (e) => onResizeStart(e, 'nw'), { passive: false });
+                resizeHandleSE.addEventListener('mousedown', (e) => onResizeStart(e, 'se'));
+                resizeHandleSE.addEventListener('touchstart', (e) => onResizeStart(e, 'se'), { passive: false });
+
+                const getDistance = (touches) => Math.hypot(touches[0].clientX - touches[1].clientX, touches[0].clientY - touches[1].clientY);
+                const onPinchStart = (e) => {
+                    if (e.touches.length !== 2) return;
+                    e.preventDefault();
+                    this.modalState.isPinching = true;
+                    this.modalState.isDragging = false; this.modalState.isResizing = false;
+                    this.modalState.initialPinchDistance = getDistance(e.touches);
+                    this.modalState.startWidth = modal.offsetWidth;
+                    this.modalState.startHeight = modal.offsetHeight;
                     this.modalState.startLeft = modal.offsetLeft;
                     this.modalState.startTop = modal.offsetTop;
-                    document.body.style.userSelect = 'none';
-                    document.body.style.cursor = 'move';
-
-                    moveHandler = onDragMove;
-                    endHandler = onDragEnd;
-                    document.addEventListener('mousemove', moveHandler);
-                    document.addEventListener('mouseup', endHandler);
-                    document.addEventListener('touchmove', moveHandler, { passive: false });
-                    document.addEventListener('touchend', endHandler);
+                    document.addEventListener('touchmove', onPinchMove, { passive: false });
+                    document.addEventListener('touchend', onPinchEnd, { once: true });
                 };
-
-                const onDragMove = (e) => {
-                    if (!this.modalState.isDragging) return;
+                const onPinchMove = (e) => {
+                    if (!this.modalState.isPinching || e.touches.length !== 2) return;
                     e.preventDefault();
-                    const event = e.touches ? e.touches[0] : e;
+                    const currentDist = getDistance(e.touches);
+                    const scale = currentDist / this.modalState.initialPinchDistance;
+                    const newWidth = this.modalState.startWidth * scale;
+                    const newHeight = this.modalState.startHeight * scale;
+                    const minWidth = parseInt(getComputedStyle(modal).minWidth);
+                    const minHeight = parseInt(getComputedStyle(modal).minHeight);
+                    if (newWidth < minWidth || newHeight < minHeight) return;
 
-                    const dx = event.clientX - this.modalState.startX;
-                    const dy = event.clientY - this.modalState.startY;
+                    const rect = modal.getBoundingClientRect();
+                    const oldCenterX = rect.left + rect.width / 2;
+                    const oldCenterY = rect.top + rect.height / 2;
+                    const newCenterX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+                    const newCenterY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+                    
+                    const newLeft = this.modalState.startLeft + (newCenterX - oldCenterX);
+                    const newTop = this.modalState.startTop + (newCenterY - oldCenterY);
 
-                    let newLeft = this.modalState.startLeft + dx;
-                    let newTop = this.modalState.startTop + dy;
-
-                    const maxLeft = window.innerWidth - modal.offsetWidth;
-                    const maxTop = window.innerHeight - modal.offsetHeight;
-                    newLeft = Math.max(0, Math.min(newLeft, maxLeft));
-                    newTop = Math.max(0, Math.min(newTop, maxTop));
-
+                    modal.style.width = `${newWidth}px`;
+                    modal.style.height = `${newHeight}px`;
                     modal.style.left = `${newLeft}px`;
                     modal.style.top = `${newTop}px`;
                 };
-
-                const onDragEnd = () => {
-                    this.modalState.isDragging = false;
-                    document.body.style.userSelect = '';
-                    document.body.style.cursor = '';
-                    
-                    document.removeEventListener('mousemove', moveHandler);
-                    document.removeEventListener('mouseup', endHandler);
-                    document.removeEventListener('touchmove', moveHandler);
-                    document.removeEventListener('touchend', endHandler);
-                    
+                const onPinchEnd = () => {
+                    this.modalState.isPinching = false;
+                    document.removeEventListener('touchmove', onPinchMove);
                     this.saveModalGeometry(type, modal);
                 };
-                
-                dragHandler = onDragStart;
-                header.addEventListener('mousedown', dragHandler);
-                header.addEventListener('touchstart', dragHandler, { passive: false });
-                
-                this.modalResizeObserver = new ResizeObserver(() => {
-                    this.saveModalGeometry(type, modal);
-                });
+                modal.addEventListener('touchstart', onPinchStart, { passive: false });
+
+                if (this.modalResizeObserver) this.modalResizeObserver.disconnect();
+                this.modalResizeObserver = new ResizeObserver(() => { this.saveModalGeometry(type, modal); });
                 this.modalResizeObserver.observe(modal);
             },
             refreshModal(type) {
@@ -445,9 +519,8 @@ if (typeof window.linkkfExtensionInitialized === 'undefined') {
             showHistoryModal() {
                 const history = HistoryManager.get();
                 const listContainer = document.createElement('div');
-                if (history.length === 0) {
-                    listContainer.textContent = '시청 기록이 없습니다. 영상을 5초 이상 시청하면 기록이 추가됩니다.';
-                } else {
+                if (history.length === 0) { listContainer.textContent = '시청 기록이 없습니다. 영상을 5초 이상 시청하면 기록이 추가됩니다.'; } 
+                else {
                     history.forEach(item => {
                         const progress = item.duration > 0 ? Math.round((item.time / item.duration) * 100) : 0;
                         const el = document.createElement('div');
@@ -457,20 +530,17 @@ if (typeof window.linkkfExtensionInitialized === 'undefined') {
                         listContainer.appendChild(el);
                     });
                 }
-                
                 const clearButton = document.createElement('button');
                 clearButton.textContent = '전체 기록 삭제';
                 clearButton.className = 'kf-clear-btn';
                 clearButton.addEventListener('click', () => HistoryManager.clearAll());
-                
                 this.showModal('history', '시청 기록 (최근 본 순서)', listContainer, [clearButton]);
             }, 
             showPlaylistModal() {
                 const playlist = PlaylistManager.get();
                 const listContainer = document.createElement('div');
-                if (playlist.length === 0) {
-                    listContainer.textContent = '재생목록이 비어있습니다.';
-                } else {
+                if (playlist.length === 0) { listContainer.textContent = '재생목록이 비어있습니다.'; } 
+                else {
                     playlist.forEach(item => {
                         const el = document.createElement('div');
                         el.className = 'kf-modal-list-item';
@@ -481,29 +551,20 @@ if (typeof window.linkkfExtensionInitialized === 'undefined') {
                         listContainer.appendChild(el);
                     });
                 }
-                
                 const clearButton = document.createElement('button');
                 clearButton.textContent = '전체 삭제';
                 clearButton.className = 'kf-clear-btn';
                 clearButton.addEventListener('click', () => PlaylistManager.clearAll());
-
                 const addButton = document.createElement('button');
                 addButton.textContent = '현재 애니 추가';
                 addButton.title = '현재 애니메이션을 재생목록에 추가';
                 addButton.addEventListener('click', () => PlaylistManager.addCurrent());
-                
                 this.showModal('playlist', '재생목록', listContainer, [clearButton, addButton]);
             }, 
             closeModal() {
-                if (this.modalResizeObserver) {
-                    this.modalResizeObserver.disconnect();
-                    this.modalResizeObserver = null;
-                }
-
+                if (this.modalResizeObserver) { this.modalResizeObserver.disconnect(); this.modalResizeObserver = null; }
                 const overlay = document.querySelector('.kf-modal-overlay');
-                if (overlay) {
-                    overlay.remove();
-                }
+                if (overlay) { overlay.remove(); }
                 this.currentModal = null;
             }, 
         };
@@ -518,24 +579,14 @@ if (typeof window.linkkfExtensionInitialized === 'undefined') {
     // ===================================================================================
     let isVideoFrame = false;
     try {
-        if (window.self !== window.top) {
-            isVideoFrame = true;
-        }
-    } catch (e) {
-        isVideoFrame = true;
-    }
+        if (window.self !== window.top) { isVideoFrame = true; }
+    } catch (e) { isVideoFrame = true; }
 
     if (isVideoFrame) {
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', runVideoFrameFeatures);
-        } else {
-            runVideoFrameFeatures();
-        }
+        if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', runVideoFrameFeatures); } 
+        else { runVideoFrameFeatures(); }
     } else if (window.location.hostname.includes('linkkf')) {
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', runTopWindowFeatures);
-        } else {
-            runTopWindowFeatures();
-        }
+        if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', runTopWindowFeatures); }
+        else { runTopWindowFeatures(); }
     }
 }
