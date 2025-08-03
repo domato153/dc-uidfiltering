@@ -1,4 +1,4 @@
-// --- START OF FILE controls.js (모든 기능 및 견고함 통합 최종 완성본) ---
+// --- START OF FILE controls.js (모든 기능 및 견고함 통합 + 'f'키 기능 추가 최종 완성본) ---
 
 if (typeof window.linkkfExtensionInitialized === 'undefined') {
     window.linkkfExtensionInitialized = true;
@@ -77,7 +77,7 @@ if (typeof window.linkkfExtensionInitialized === 'undefined') {
                     case ' ': videoElement.paused ? videoElement.play() : videoElement.pause(); executed = true; break;
                     case 'arrowleft': videoElement.currentTime -= seekAmount; executed = true; break;
                     case 'arrowright': videoElement.currentTime += seekAmount; executed = true; break;
-                    case 'f': document.querySelector('.vjs-fullscreen-control')?.click(); executed = true; break;
+                    case 'f': document.querySelector('.vjs-fullscreen-control')?.click(); executed = true; break; // [추가]
                     case 'arrowup': videoElement.volume = Math.min(1, videoElement.volume + 0.05); executed = true; break;
                     case 'arrowdown': videoElement.volume = Math.max(0, videoElement.volume - 0.05); executed = true; break;
                 }
@@ -92,7 +92,6 @@ if (typeof window.linkkfExtensionInitialized === 'undefined') {
             videoElement.addEventListener('ended', clearProgress);
             window.addEventListener('pagehide', saveProgress);
             
-            // [복원] 견고함 강화 1: 탭 전환 시 즉시 저장 기능
             document.addEventListener('visibilitychange', () => {
                 if (document.visibilityState === 'hidden') {
                     saveProgress();
@@ -109,8 +108,6 @@ if (typeof window.linkkfExtensionInitialized === 'undefined') {
                 }
             });
             observer.observe(document.documentElement, { childList: true, subtree: true });
-
-            // [복원] 견고함 강화 2: Observer 안전장치(타임아웃)
             setTimeout(() => observer.disconnect(), 30000);
         }
 
