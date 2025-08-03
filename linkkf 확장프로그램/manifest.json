@@ -1,15 +1,15 @@
 {
   "manifest_version": 3,
   "name": "Linkkf 위치 이동 단축키",
-  "version": "1.0",
-  "description": "영상 위치기억, 단축키 설정 확장프로그램",
+  "version": "4.2.0",
+  "description": "영상 위치기억, 단축키 설정 확장프로그램 (최종 안정화)",
   "host_permissions": ["<all_urls>"],
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
       "js": ["controls.js"],
       "all_frames": true,
-      "run_at": "document_idle"
+      "run_at": "document_start"
     }
   ]
 }
