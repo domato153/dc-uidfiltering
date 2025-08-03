@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Linkkf 위치 이동 단축키",
   "version": "1.0",
-  "description": "S키를 눌러 영상의 특정 위치(33%, 66%, 90%)로 이동합니다.",
+  "description": "영상 위치기억, 단축키 설정 확장프로그램",
   "host_permissions": ["<all_urls>"],
   "content_scripts": [
     {
