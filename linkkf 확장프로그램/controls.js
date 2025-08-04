@@ -1,4 +1,4 @@
-// --- START OF FILE controls.js (v3.0.0 - Cross-Origin 백업/복원 최종 완성) ---
+// --- START OF FILE controls.js (v3.0.0 - 동적 Origin 백업/복원 최종 완성) ---
 
 if (typeof window.linkkfExtensionInitialized === 'undefined') {
     window.linkkfExtensionInitialized = true;
@@ -14,8 +14,19 @@ if (typeof window.linkkfExtensionInitialized === 'undefined') {
             const messageType = event.data?.type;
             if (!messageType) return;
     
-            if (window.location.origin.includes('g2.myani.app')) {
-                console.log(`[FRAME][g2.myani.app] >> 최종 타겟 << 메시지("${messageType}") 수신!`);
+            let hasProgressData = false;
+            try {
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    if (key && key.startsWith('linkkf-progress-')) {
+                        hasProgressData = true;
+                        break;
+                    }
+                }
+            } catch (e) {}
+
+            if (hasProgressData) {
+                console.log(`[FRAME][${window.location.origin}] >> 최종 타겟 << 메시지("${messageType}") 수신!`);
     
                 switch (messageType) {
                     case 'LINKKF_REQUEST_PROGRESS_DATA': {
@@ -401,8 +412,8 @@ if (typeof window.linkkfExtensionInitialized === 'undefined') {
                     }
 
                     const listener = (event) => {
-                        if (event.data?.type === 'LINKKF_RESPONSE_PROGRESS_DATA' && event.origin.includes('g2.myani.app')) {
-                            console.log('[Backup] iframe으로부터 progress 데이터 수신 완료.');
+                        if (event.data?.type === 'LINKKF_RESPONSE_PROGRESS_DATA') {
+                            console.log(`[Backup] iframe(${event.origin})으로부터 progress 데이터 수신 완료.`);
                             window.removeEventListener('message', listener);
                             clearTimeout(timeout);
                             resolve(event.data.payload || []);
@@ -429,7 +440,7 @@ if (typeof window.linkkfExtensionInitialized === 'undefined') {
                     if (!iframe) return resolve({ success: false, message: '#magicplayer iframe을 찾을 수 없습니다.' });
 
                     const listener = (event) => {
-                        if (event.data?.type === 'LINKKF_RESTORE_ACK' && event.origin.includes('g2.myani.app')) {
+                        if (event.data?.type === 'LINKKF_RESTORE_ACK') {
                             window.removeEventListener('message', listener);
                             clearTimeout(timeout);
                             resolve({ success: true, message: 'Restore ACK received.' });
@@ -511,7 +522,6 @@ if (typeof window.linkkfExtensionInitialized === 'undefined') {
             },
 
             async mergeData(importedData) {
-                // 1. playlist와 history는 동기적으로 즉시 복원
                 const currentPlaylist = PlaylistManager.get();
                 const importedPlaylistItems = importedData.playlist.length > 0 ? JSON.parse(importedData.playlist[0].value || '[]') : [];
                 const currentPlaylistIds = new Set(currentPlaylist.map(item => item.animeId));
@@ -538,7 +548,6 @@ if (typeof window.linkkfExtensionInitialized === 'undefined') {
                     } catch (e) {}
                 });
         
-                // 2. progress 데이터는 비동기적으로 iframe에 전송하여 복원
                 const result = await this._restoreRemoteProgressData(importedData.progress);
                 if (!result.success) {
                     alert(`재생 위치 데이터 복원에 실패했습니다. (${result.message}) 영상 재생 페이지에서 다시 시도해주세요.`);
