@@ -1,4 +1,4 @@
-// --- START OF FILE controls.js (v3.0.0 - 동적 Origin 백업/복원 최종 완성) ---
+// --- START OF FILE controls.js (v3.0.1 - 재생 중 백업 시 실시간 위치 저장 기능 수정) ---
 
 if (typeof window.linkkfExtensionInitialized === 'undefined') {
     window.linkkfExtensionInitialized = true;
@@ -8,6 +8,17 @@ if (typeof window.linkkfExtensionInitialized === 'undefined') {
     // ===================================================================================
     function runVideoFrameFeatures() {
         console.log(`[FRAME] 스크립트 실행됨. 현재 origin: ${window.location.origin}`);
+
+        const SAVE_SLOT_COUNT = 3;
+        let currentSlotIndex = 0;
+        let videoId_base = null;
+        let progressSaveInterval = null;
+        let isFeatureSetupDone = false;
+        const urlParams = new URLSearchParams(window.location.search);
+
+        // saveProgress 함수를 외부에서 접근할 수 있도록 전역 스코프에 가까운 곳에 정의합니다.
+        // setupVideoFeatures가 실행되어야 실제 동작하는 함수가 할당됩니다.
+        let saveProgress = () => {}; 
 
         window.addEventListener('message', (event) => {
             if (event.source !== window.top && event.source !== window.parent) return;
@@ -28,18 +39,31 @@ if (typeof window.linkkfExtensionInitialized === 'undefined') {
             if (hasProgressData) {
                 console.log(`[FRAME][${window.location.origin}] >> 최종 타겟 << 메시지("${messageType}") 수신!`);
     
-                switch (messageType) {
-                    case 'LINKKF_REQUEST_PROGRESS_DATA': {
-                        let progressData = [];
-                        try {
-                            for (let i = 0; i < localStorage.length; i++) {
-                                const key = localStorage.key(i);
-                                if (key && key.startsWith('linkkf-progress-')) {
-                                    progressData.push({ key, value: localStorage.getItem(key) });
-                                }
+                const sendProgressDataToTop = () => {
+                    let progressData = [];
+                    try {
+                        for (let i = 0; i < localStorage.length; i++) {
+                            const key = localStorage.key(i);
+                            if (key && key.startsWith('linkkf-progress-')) {
+                                progressData.push({ key, value: localStorage.getItem(key) });
                             }
-                        } catch (e) {}
-                        window.top.postMessage({ type: 'LINKKF_RESPONSE_PROGRESS_DATA', payload: progressData }, 'https://linkkf.net');
+                        }
+                    } catch (e) {}
+                    window.top.postMessage({ type: 'LINKKF_RESPONSE_PROGRESS_DATA', payload: progressData }, 'https://linkkf.net');
+                };
+
+                switch (messageType) {
+                    case 'LINKKF_SAVE_AND_REQUEST_PROGRESS_DATA': {
+                        console.log('[FRAME] 즉시 저장 후 데이터 전송 요청 수신.');
+                        if (typeof saveProgress === 'function') {
+                            saveProgress(); // ★★★ 핵심 수정: 현재 재생 위치를 즉시 저장합니다.
+                        }
+                        sendProgressDataToTop(); // 저장 후 데이터를 보냅니다.
+                        break;
+                    }
+                    case 'LINKKF_REQUEST_PROGRESS_DATA': {
+                        // 기존 요청 방식도 호환성을 위해 유지합니다.
+                        sendProgressDataToTop();
                         break;
                     }
                     case 'LINKKF_RESTORE_PROGRESS_DATA': {
@@ -73,13 +97,6 @@ if (typeof window.linkkfExtensionInitialized === 'undefined') {
                 }
             }
         });
-
-        const SAVE_SLOT_COUNT = 3;
-        let currentSlotIndex = 0;
-        let videoId_base = null;
-        let progressSaveInterval = null;
-        let isFeatureSetupDone = false;
-        const urlParams = new URLSearchParams(window.location.search);
 
         function setupVideoFeatures(videoElement) {
             if (isFeatureSetupDone) return;
@@ -116,9 +133,10 @@ if (typeof window.linkkfExtensionInitialized === 'undefined') {
                 }
             };
 
-            const saveProgress = () => {
+            // saveProgress 함수에 실제 로직 할당
+            saveProgress = () => {
                 const isPlaying = document.querySelector('.vjs-play-control')?.classList.contains('vjs-playing');
-                if (videoId_base && isPlaying && videoElement.duration > 0 && videoElement.currentTime > 5) {
+                if (videoId_base && (isPlaying || videoElement.paused) && videoElement.duration > 0 && videoElement.currentTime > 5) {
                     try {
                         const currentTime = videoElement.currentTime;
                         const duration = videoElement.duration;
@@ -427,8 +445,9 @@ if (typeof window.linkkfExtensionInitialized === 'undefined') {
                         resolve([]);
                     }, 2000);
 
-                    console.log('[Backup] #magicplayer iframe에 progress 데이터 요청 전송...');
-                    iframe.contentWindow.postMessage({ type: 'LINKKF_REQUEST_PROGRESS_DATA' }, '*');
+                    // ★★★ 핵심 수정: '저장 후 요청' 메시지를 보냅니다.
+                    console.log('[Backup] #magicplayer iframe에 progress 데이터 저장 후 요청 전송...');
+                    iframe.contentWindow.postMessage({ type: 'LINKKF_SAVE_AND_REQUEST_PROGRESS_DATA' }, '*');
                 });
             },
 
