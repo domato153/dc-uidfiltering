@@ -1,13 +1,68 @@
-// --- START OF FILE controls.js (모든 기능 및 견고함 통합 + 'f'키 기능 추가 + 재생목록 정렬 기능 추가 + 제목 추출 로직 개선 최종 완성본) ---
+// --- START OF FILE controls.js (v3.0.0 - Cross-Origin 백업/복원 최종 완성) ---
 
 if (typeof window.linkkfExtensionInitialized === 'undefined') {
     window.linkkfExtensionInitialized = true;
 
     // ===================================================================================
-    //  1. 비디오 프레임 기능 (견고함 강화 로직 복원)
+    //  1. 비디오 프레임 기능 (통신 허브 역할 추가)
     // ===================================================================================
     function runVideoFrameFeatures() {
-        console.log('[FRAME] 스크립트 실행됨.');
+        console.log(`[FRAME] 스크립트 실행됨. 현재 origin: ${window.location.origin}`);
+
+        window.addEventListener('message', (event) => {
+            if (event.source !== window.top && event.source !== window.parent) return;
+            const messageType = event.data?.type;
+            if (!messageType) return;
+    
+            if (window.location.origin.includes('g2.myani.app')) {
+                console.log(`[FRAME][g2.myani.app] >> 최종 타겟 << 메시지("${messageType}") 수신!`);
+    
+                switch (messageType) {
+                    case 'LINKKF_REQUEST_PROGRESS_DATA': {
+                        let progressData = [];
+                        try {
+                            for (let i = 0; i < localStorage.length; i++) {
+                                const key = localStorage.key(i);
+                                if (key && key.startsWith('linkkf-progress-')) {
+                                    progressData.push({ key, value: localStorage.getItem(key) });
+                                }
+                            }
+                        } catch (e) {}
+                        window.top.postMessage({ type: 'LINKKF_RESPONSE_PROGRESS_DATA', payload: progressData }, 'https://linkkf.net');
+                        break;
+                    }
+                    case 'LINKKF_RESTORE_PROGRESS_DATA': {
+                        const dataToRestore = event.data.payload;
+                        if (Array.isArray(dataToRestore)) {
+                            dataToRestore.forEach(item => {
+                                try {
+                                    const currentDataRaw = localStorage.getItem(item.key);
+                                    const newData = JSON.parse(item.value);
+                                    
+                                    if (currentDataRaw) {
+                                        const currentData = JSON.parse(currentDataRaw);
+                                        if (newData.time > currentData.time) {
+                                            localStorage.setItem(item.key, item.value);
+                                        }
+                                    } else {
+                                        localStorage.setItem(item.key, item.value);
+                                    }
+                                } catch(e) {}
+                            });
+                            window.top.postMessage({ type: 'LINKKF_RESTORE_ACK' }, 'https://linkkf.net');
+                        }
+                        break;
+                    }
+                }
+            }
+            else {
+                console.log(`[FRAME][${window.location.origin}] >> 릴레이 << 메시지("${messageType}") 수신! 자식 프레임에 전달합니다.`);
+                for (let i = 0; i < window.frames.length; i++) {
+                    window.frames[i].postMessage(event.data, '*');
+                }
+            }
+        });
+
         const SAVE_SLOT_COUNT = 3;
         let currentSlotIndex = 0;
         let videoId_base = null;
@@ -19,9 +74,11 @@ if (typeof window.linkkfExtensionInitialized === 'undefined') {
             if (isFeatureSetupDone) return;
             isFeatureSetupDone = true;
 
-            const urlKey = urlParams.get('url');
-            if (!urlKey) return;
-            videoId_base = `linkkf-progress-${urlKey}`;
+            const rawUrlKey = urlParams.get('url');
+            if (!rawUrlKey) return;
+            
+            const normalizedUrlKey = rawUrlKey.split('?')[0].split('#')[0];
+            videoId_base = `linkkf-progress-${normalizedUrlKey}`;
 
             const loadProgress = () => {
                 if (!videoId_base) return;
@@ -58,7 +115,7 @@ if (typeof window.linkkfExtensionInitialized === 'undefined') {
                         const dataToSave = { time: currentTime, duration: duration, timestamp: Date.now() };
                         localStorage.setItem(`${videoId_base}_${currentSlotIndex}`, JSON.stringify(dataToSave));
                         currentSlotIndex = (currentSlotIndex + 1) % SAVE_SLOT_COUNT;
-                        window.top.postMessage({ type: 'LINKKF_PROGRESS_UPDATE', payload: dataToSave }, '*');
+                        window.top.postMessage({ type: 'LINKKF_PROGRESS_UPDATE', payload: { time: currentTime, duration: duration, timestamp: Date.now() } }, 'https://linkkf.net');
                     } catch (e) {}
                 }
             };
@@ -120,12 +177,64 @@ if (typeof window.linkkfExtensionInitialized === 'undefined') {
 
 
     // ===================================================================================
-    //  2. 최상위 창 기능 (모든 기능 포함)
+    //  2. 최상위 창 기능
     // ===================================================================================
     function runTopWindowFeatures() {
         console.log('[TOP] 스크립트 실행됨.');
         let currentTitleInfo = null;
         let pendingProgressData = null;
+
+        function runDataCleanup() {
+            const playlistAnimeIds = new Set(PlaylistManager.get().map(item => item.animeId));
+            const keysToRemove = [];
+            const oneYearAgo = Date.now() - (365 * 24 * 60 * 60 * 1000);
+
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (!key || !key.startsWith('linkkf-history-')) continue;
+
+                try {
+                    const data = JSON.parse(localStorage.getItem(key));
+                    if (!data || typeof data.timestamp !== 'number') {
+                        keysToRemove.push(key);
+                        continue;
+                    }
+
+                    const match = key.match(/^linkkf-history-(\d+)-/);
+                    const animeId = match ? match[1] : null;
+
+                    if (animeId) {
+                        if (!playlistAnimeIds.has(animeId) && data.timestamp < oneYearAgo) {
+                            keysToRemove.push(key);
+                        }
+                    } else if (data.timestamp < oneYearAgo) {
+                        keysToRemove.push(key);
+                    }
+                } catch (e) {
+                    keysToRemove.push(key);
+                }
+            }
+
+            if (keysToRemove.length > 0) {
+                console.log(`[CLEANUP] ${keysToRemove.length}개의 오래된 시청 기록을 삭제합니다.`);
+                keysToRemove.forEach(key => localStorage.removeItem(key));
+            } else {
+                console.log('[CLEANUP] 삭제할 오래된 데이터가 없습니다.');
+            }
+        }
+
+        function scheduleCleanup() {
+            const CLEANUP_KEY = 'linkkf-last-cleanup';
+            const lastCleanup = localStorage.getItem(CLEANUP_KEY);
+            const now = Date.now();
+            const oneDay = 24 * 60 * 60 * 1000;
+
+            if (!lastCleanup || (now - parseInt(lastCleanup, 10)) > oneDay) {
+                console.log('[CLEANUP] 오래된 데이터 정리를 시작합니다.');
+                runDataCleanup();
+                localStorage.setItem(CLEANUP_KEY, now.toString());
+            }
+        }
 
         function createHistoryRecord() {
             if (currentTitleInfo && pendingProgressData) {
@@ -227,7 +336,6 @@ if (typeof window.linkkfExtensionInitialized === 'undefined') {
                     title = currentTitleInfo?.series || document.title.split(' - ')[0].replace(/ BD| 😜/g, '').replace(/\s+\d+$/, '').trim(); 
                 } else if (aniMatch) { 
                     animeId = aniMatch[1]; 
-                    // [수정] h1.detail-info-title 선택자를 우선적으로 사용하도록 개선
                     title = document.querySelector('h1.detail-info-title, h1.page-title')?.textContent.trim() || document.title.split(' - ')[0]; 
                 } else return alert('애니메이션 영상 또는 개요 페이지에서만 추가할 수 있습니다.'); 
                 
@@ -250,12 +358,219 @@ if (typeof window.linkkfExtensionInitialized === 'undefined') {
                     localStorage.setItem(this.key, JSON.stringify(playlist));
                 }
             },
-            findLastWatchedEpisode(animeId) { const history = HistoryManager.get(100); for (const item of history) { if (item.url.includes(`/watch/${animeId}/`)) { return item.url; } } return null; },
+            findLastWatchedEpisode(animeId) {
+                let specificAnimeHistory = [];
+                const searchKeyPrefix = `linkkf-history-${animeId}-`;
+
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    if (key && key.startsWith(searchKeyPrefix)) {
+                        try {
+                            const data = JSON.parse(localStorage.getItem(key));
+                            if (data && data.timestamp && data.url) {
+                                specificAnimeHistory.push(data);
+                            }
+                        } catch (e) {
+                            console.warn(`손상된 시청 기록 데이터 발견, 건너뜁니다: ${key}`);
+                        }
+                    }
+                }
+
+                if (specificAnimeHistory.length === 0) {
+                    return null;
+                }
+
+                specificAnimeHistory.sort((a, b) => b.timestamp - a.timestamp);
+                return specificAnimeHistory[0].url;
+            },
             clearAll() {
                 if (!confirm('정말로 재생목록 전체를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) return;
                 localStorage.removeItem(this.key);
                 alert('재생목록이 모두 삭제되었습니다.');
                 UIModule.refreshModal('playlist');
+            }
+        };
+        
+        const BackupManager = {
+            _getRemoteProgressData() {
+                return new Promise((resolve) => {
+                    const iframe = document.querySelector('#magicplayer');
+                    if (!iframe) {
+                        console.log('[Backup] #magicplayer iframe을 찾을 수 없어 progress 백업을 건너뜁니다.');
+                        return resolve([]);
+                    }
+
+                    const listener = (event) => {
+                        if (event.data?.type === 'LINKKF_RESPONSE_PROGRESS_DATA' && event.origin.includes('g2.myani.app')) {
+                            console.log('[Backup] iframe으로부터 progress 데이터 수신 완료.');
+                            window.removeEventListener('message', listener);
+                            clearTimeout(timeout);
+                            resolve(event.data.payload || []);
+                        }
+                    };
+                    window.addEventListener('message', listener);
+
+                    const timeout = setTimeout(() => {
+                        window.removeEventListener('message', listener);
+                        console.warn('[Backup] iframe 응답 시간 초과.');
+                        resolve([]);
+                    }, 2000);
+
+                    console.log('[Backup] #magicplayer iframe에 progress 데이터 요청 전송...');
+                    iframe.contentWindow.postMessage({ type: 'LINKKF_REQUEST_PROGRESS_DATA' }, '*');
+                });
+            },
+
+            _restoreRemoteProgressData(progressData) {
+                return new Promise((resolve) => {
+                    if (!progressData || progressData.length === 0) return resolve({ success: true, message: 'No progress data to restore.' });
+
+                    const iframe = document.querySelector('#magicplayer');
+                    if (!iframe) return resolve({ success: false, message: '#magicplayer iframe을 찾을 수 없습니다.' });
+
+                    const listener = (event) => {
+                        if (event.data?.type === 'LINKKF_RESTORE_ACK' && event.origin.includes('g2.myani.app')) {
+                            window.removeEventListener('message', listener);
+                            clearTimeout(timeout);
+                            resolve({ success: true, message: 'Restore ACK received.' });
+                        }
+                    };
+                    window.addEventListener('message', listener);
+                    
+                    const timeout = setTimeout(() => {
+                        window.removeEventListener('message', listener);
+                        resolve({ success: false, message: 'Restore ACK timeout.' });
+                    }, 2000);
+
+                    console.log('[Backup] #magicplayer iframe에 progress 데이터 복원 요청 전송...');
+                    iframe.contentWindow.postMessage({ type: 'LINKKF_RESTORE_PROGRESS_DATA', payload: progressData }, '*');
+                });
+            },
+
+            async gatherDataForBackup() {
+                const progressData = await this._getRemoteProgressData();
+                const backupData = { progress: progressData, playlist: [], history: [] };
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    if (key) {
+                        if (key === PlaylistManager.key) {
+                            backupData.playlist.push({ key, value: localStorage.getItem(key) });
+                        } else if (key.startsWith('linkkf-history-')) {
+                            backupData.history.push({ key, value: localStorage.getItem(key) });
+                        }
+                    }
+                }
+                return backupData;
+            },
+
+            async exportToFile(buttonElement) {
+                buttonElement.disabled = true;
+                buttonElement.textContent = '가져오는 중...';
+
+                const data = await this.gatherDataForBackup();
+                
+                buttonElement.disabled = false;
+                buttonElement.textContent = '파일로 다운로드';
+
+                if (data.progress.length === 0 && data.playlist.length === 0 && data.history.length === 0) {
+                    return alert('백업할 데이터가 없습니다.');
+                }
+                const jsonString = JSON.stringify(data, null, 2);
+                const blob = new Blob([jsonString], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `linkkf_backup_${new Date().toISOString().slice(0, 10)}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            },
+
+            async exportToClipboard(buttonElement) {
+                buttonElement.disabled = true;
+                buttonElement.textContent = '복사하는 중...';
+
+                const data = await this.gatherDataForBackup();
+
+                buttonElement.disabled = false;
+                buttonElement.textContent = '클립보드에 복사';
+
+                if (data.progress.length === 0 && data.playlist.length === 0 && data.history.length === 0) {
+                    return alert('백업할 데이터가 없습니다.');
+                }
+                const jsonString = JSON.stringify(data);
+                
+                try {
+                    await navigator.clipboard.writeText(jsonString);
+                    alert('백업 데이터가 클립보드에 복사되었습니다.');
+                } catch (err) {
+                    alert('클립보드 복사에 실패했습니다. 브라우저 설정을 확인해주세요.');
+                    console.error('클립보드 복사 실패:', err);
+                }
+            },
+
+            async mergeData(importedData) {
+                // 1. playlist와 history는 동기적으로 즉시 복원
+                const currentPlaylist = PlaylistManager.get();
+                const importedPlaylistItems = importedData.playlist.length > 0 ? JSON.parse(importedData.playlist[0].value || '[]') : [];
+                const currentPlaylistIds = new Set(currentPlaylist.map(item => item.animeId));
+                importedPlaylistItems.forEach(itemToImport => {
+                    if (itemToImport && itemToImport.animeId && !currentPlaylistIds.has(itemToImport.animeId)) {
+                        currentPlaylist.push(itemToImport);
+                    }
+                });
+                localStorage.setItem(PlaylistManager.key, JSON.stringify(currentPlaylist));
+        
+                importedData.history.forEach(itemToImport => {
+                    try {
+                        const currentRaw = localStorage.getItem(itemToImport.key);
+                        const importedParsed = JSON.parse(itemToImport.value);
+                        if (!importedParsed || typeof importedParsed.time !== 'number') return;
+                        if (currentRaw) {
+                            const currentParsed = JSON.parse(currentRaw);
+                            if (importedParsed.time > currentParsed.time) {
+                                localStorage.setItem(itemToImport.key, itemToImport.value);
+                            }
+                        } else {
+                            localStorage.setItem(itemToImport.key, itemToImport.value);
+                        }
+                    } catch (e) {}
+                });
+        
+                // 2. progress 데이터는 비동기적으로 iframe에 전송하여 복원
+                const result = await this._restoreRemoteProgressData(importedData.progress);
+                if (!result.success) {
+                    alert(`재생 위치 데이터 복원에 실패했습니다. (${result.message}) 영상 재생 페이지에서 다시 시도해주세요.`);
+                }
+            },
+            
+            async importData(jsonString, buttonElement) {
+                buttonElement.disabled = true;
+                buttonElement.textContent = '불러오는 중...';
+
+                if (!jsonString || !jsonString.trim()) {
+                    buttonElement.disabled = false;
+                    buttonElement.textContent = '불러오기';
+                    return alert('붙여넣거나 선택한 데이터가 없습니다.');
+                }
+                try {
+                    const importedData = JSON.parse(jsonString);
+                    if (!importedData || typeof importedData !== 'object' || !importedData.progress || !importedData.playlist || !importedData.history) {
+                        throw new Error('올바르지 않은 백업 파일 형식입니다.');
+                    }
+                    if (confirm('백업 데이터를 불러오시겠습니까? 기존 데이터와 병합되며, 일부는 덮어쓰기 될 수 있습니다.')) {
+                        await this.mergeData(importedData);
+                        alert('데이터 불러오기가 완료되었습니다!');
+                        UIModule.refreshModal('history');
+                        UIModule.refreshModal('playlist');
+                    }
+                } catch (e) {
+                    alert(`데이터를 불러오는 중 오류가 발생했습니다: ${e.message}`);
+                } finally {
+                    buttonElement.disabled = false;
+                    buttonElement.textContent = '불러오기';
+                }
             }
         };
         
@@ -270,7 +585,7 @@ if (typeof window.linkkfExtensionInitialized === 'undefined') {
                     .kf-fab-container { position: fixed; bottom: 30px; right: 30px; z-index: 9998; }
                     .kf-fab-main { position: relative; border-radius: 28px; background-color: #6200ee; color: white; display: flex; justify-content: center; align-items: center; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.2); transition: all 0.2s ease-in-out; user-select: none; z-index: 1; padding: 16px; font-size: 16px; }
                     .kf-fab-sub-wrapper { position: absolute; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; visibility: hidden; opacity: 0; transition: all 0.2s ease-in-out; }
-                    .kf-fab-container.expand-up .kf-fab-sub-wrapper { bottom: 100%; padding-bottom: 12px; }
+                    .kf-fab-container.expand-up .kf-fab-sub-wrapper { bottom: 100%; padding-bottom: 12px; flex-direction: column-reverse; }
                     .kf-fab-container.expand-down .kf-fab-sub-wrapper { top: 100%; padding-top: 12px; }
                     .kf-fab-container.open .kf-fab-sub-wrapper { visibility: visible; opacity: 1; }
                     .kf-fab-sub { background-color: #3700b3; color: white; border-radius: 24px; display: flex; justify-content: center; align-items: center; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.2); user-select: none; margin-bottom: 12px; padding: 12px 16px; white-space: nowrap; }
@@ -303,6 +618,7 @@ if (typeof window.linkkfExtensionInitialized === 'undefined') {
                 this.fab.innerHTML = `<div class="kf-fab-sub-wrapper">
                     <div class="kf-fab-sub" data-action="history" title="시청 기록">시청기록</div>
                     <div class="kf-fab-sub" data-action="playlist" title="재생목록">재생목록</div>
+                    <div class="kf-fab-sub" data-action="backup" title="데이터 백업/복원">백업/복원</div>
                 </div>
                 <div class="kf-fab-main" title="편의기능">편의기능</div>`;
                 document.body.appendChild(this.fab);
@@ -386,7 +702,11 @@ if (typeof window.linkkfExtensionInitialized === 'undefined') {
                     modal.style.width = `${geometry.width}px`; modal.style.height = `${geometry.height}px`;
                 }
             },
-            handleFABAction(action) { if (action === 'history') this.showHistoryModal(); if (action === 'playlist') this.showPlaylistModal(); }, 
+            handleFABAction(action) {
+                if (action === 'history') this.showHistoryModal();
+                if (action === 'playlist') this.showPlaylistModal();
+                if (action === 'backup') this.showBackupModal();
+            },
             showModal(type, title, content, headerActions = []) {
                 this.closeModal();
                 this.currentModal = type;
@@ -481,6 +801,7 @@ if (typeof window.linkkfExtensionInitialized === 'undefined') {
                     document.body.style.userSelect = ''; document.body.style.cursor = '';
                     document.removeEventListener('mousemove', onResizeMove); document.removeEventListener('mouseup', onResizeEnd);
                     document.removeEventListener('touchmove', onResizeMove); document.removeEventListener('touchend', onResizeEnd);
+                    this.saveModalGeometry(type, modal);
                 };
                 resizeHandleNW.addEventListener('mousedown', (e) => onResizeStart(e, 'nw'));
                 resizeHandleNW.addEventListener('touchstart', (e) => onResizeStart(e, 'nw'), { passive: false });
@@ -539,8 +860,10 @@ if (typeof window.linkkfExtensionInitialized === 'undefined') {
             },
             refreshModal(type) {
                 if (this.currentModal === type) {
+                    this.closeModal();
                     if (type === 'history') this.showHistoryModal();
                     if (type === 'playlist') this.showPlaylistModal();
+                    if (type === 'backup') this.showBackupModal();
                 }
             }, 
             showHistoryModal() {
@@ -604,7 +927,48 @@ if (typeof window.linkkfExtensionInitialized === 'undefined') {
                 addButton.title = '현재 애니메이션을 재생목록에 추가';
                 addButton.addEventListener('click', () => PlaylistManager.addCurrent());
                 this.showModal('playlist', '재생목록', listContainer, [clearButton, addButton]);
-            }, 
+            },
+            showBackupModal() {
+                const content = document.createElement('div');
+                content.style.cssText = 'display: flex; flex-direction: column; gap: 24px;';
+                content.innerHTML = `
+                    <div>
+                        <h4 style="margin-top:0; margin-bottom: 8px; font-size: 1.1em;">내보내기</h4>
+                        <p style="font-size: 0.9em; color: #ccc; margin-top:0; margin-bottom: 12px;">현재 모든 데이터를 파일로 저장하거나 클립보드에 복사합니다.</p>
+                        <button id="kf-backup-export-file" style="background: #0d6efd; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; margin-right: 10px; font-size: 0.9em;">파일로 다운로드</button>
+                        <button id="kf-backup-export-clipboard" style="background: #198754; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; font-size: 0.9em;">클립보드에 복사</button>
+                    </div>
+                    <hr style="border: 0; border-top: 1px solid #444;">
+                    <div>
+                        <h4 style="margin-top:0; margin-bottom: 8px; font-size: 1.1em;">불러오기</h4>
+                        <p style="font-size: 0.9em; color: #ccc; margin-top:0; margin-bottom: 12px;">백업 파일을 선택하거나, 백업 데이터를 아래에 붙여넣으세요.</p>
+                        <div style="border: 1px solid #555; padding: 8px; border-radius: 4px; margin-bottom: 10px;">
+                           <input type="file" id="kf-backup-import-file" accept=".json,text/plain" style="font-size: 0.9em;">
+                        </div>
+                        <textarea id="kf-backup-import-text" placeholder="또는, 백업 데이터를 여기에 붙여넣으세요..." style="width: 95%; height: 100px; background: #222; color: #f1f1f1; border: 1px solid #555; border-radius: 4px; padding: 10px; resize: vertical; font-family: monospace;"></textarea>
+                        <button id="kf-backup-import-execute" style="background: #0d6efd; color: white; border: none; padding: 12px 15px; border-radius: 4px; cursor: pointer; margin-top: 12px; width: 100%; font-size: 1em; font-weight: bold;">불러오기</button>
+                    </div>
+                `;
+        
+                content.querySelector('#kf-backup-export-file').addEventListener('click', (e) => BackupManager.exportToFile(e.currentTarget));
+                content.querySelector('#kf-backup-export-clipboard').addEventListener('click', (e) => BackupManager.exportToClipboard(e.currentTarget));
+                content.querySelector('#kf-backup-import-execute').addEventListener('click', (e) => {
+                    const text = content.querySelector('#kf-backup-import-text').value;
+                    BackupManager.importData(text, e.currentTarget);
+                });
+                content.querySelector('#kf-backup-import-file').addEventListener('change', (event) => {
+                    const file = event.target.files[0];
+                    if (file) {
+                        const reader = new FileReader();
+                        reader.onload = (e) => {
+                            content.querySelector('#kf-backup-import-text').value = e.target.result;
+                        };
+                        reader.readAsText(file);
+                    }
+                });
+        
+                this.showModal('backup', '데이터 백업/복원', content);
+            },
             closeModal() {
                 if (this.modalResizeObserver) { this.modalResizeObserver.disconnect(); this.modalResizeObserver = null; }
                 const overlay = document.querySelector('.kf-modal-overlay');
@@ -613,6 +977,7 @@ if (typeof window.linkkfExtensionInitialized === 'undefined') {
             }, 
         };
         
+        scheduleCleanup();
         listenForProgress();
         setupTitleObserver();
         UIModule.init();
