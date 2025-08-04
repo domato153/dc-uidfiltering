@@ -1,4 +1,4 @@
-// --- START OF FILE controls.js (모든 기능 및 견고함 통합 + 'f'키 기능 추가 + 재생목록 정렬 기능 추가 최종 완성본) ---
+// --- START OF FILE controls.js (모든 기능 및 견고함 통합 + 'f'키 기능 추가 + 재생목록 정렬 기능 추가 + 제목 추출 로직 개선 최종 완성본) ---
 
 if (typeof window.linkkfExtensionInitialized === 'undefined') {
     window.linkkfExtensionInitialized = true;
@@ -217,18 +217,37 @@ if (typeof window.linkkfExtensionInitialized === 'undefined') {
         
         const PlaylistManager = {
             key: 'linkkf_playlist',
-            addCurrent() { const url = window.location.href; let animeId = null, title = ''; const watchMatch = url.match(/\/watch\/(\d+)\//); const aniMatch = url.match(/\/ani\/(\d+)\//); if (watchMatch) { animeId = watchMatch[1]; title = currentTitleInfo?.series || document.title.split(' - ')[0].replace(/ BD| 😜/g, '').replace(/\s+\d+$/, '').trim(); } else if (aniMatch) { animeId = aniMatch[1]; title = document.querySelector('h1.page-title')?.textContent.trim() || document.title.split(' - ')[0]; } else return alert('애니메이션 영상 또는 개요 페이지에서만 추가할 수 있습니다.'); let playlist = this.get(); if (playlist.some(item => item.animeId === animeId)) return alert('이미 재생목록에 추가된 애니메이션입니다.'); playlist.unshift({ title, animeId, seriesUrl: `https://linkkf.net/ani/${animeId}/` }); localStorage.setItem(this.key, JSON.stringify(playlist)); alert(`'${title}'이(가) 재생목록에 추가되었습니다.`); UIModule.refreshModal('playlist'); },
+            addCurrent() { 
+                const url = window.location.href; 
+                let animeId = null, title = ''; 
+                const watchMatch = url.match(/\/watch\/(\d+)\//); 
+                const aniMatch = url.match(/\/ani\/(\d+)\//); 
+                if (watchMatch) { 
+                    animeId = watchMatch[1]; 
+                    title = currentTitleInfo?.series || document.title.split(' - ')[0].replace(/ BD| 😜/g, '').replace(/\s+\d+$/, '').trim(); 
+                } else if (aniMatch) { 
+                    animeId = aniMatch[1]; 
+                    // [수정] h1.detail-info-title 선택자를 우선적으로 사용하도록 개선
+                    title = document.querySelector('h1.detail-info-title, h1.page-title')?.textContent.trim() || document.title.split(' - ')[0]; 
+                } else return alert('애니메이션 영상 또는 개요 페이지에서만 추가할 수 있습니다.'); 
+                
+                let playlist = this.get(); 
+                if (playlist.some(item => item.animeId === animeId)) return alert('이미 재생목록에 추가된 애니메이션입니다.'); 
+                
+                playlist.unshift({ title, animeId, seriesUrl: `https://linkkf.net/ani/${animeId}/` }); 
+                localStorage.setItem(this.key, JSON.stringify(playlist)); 
+                alert(`'${title}'이(가) 재생목록에 추가되었습니다.`); 
+                UIModule.refreshModal('playlist'); 
+            },
             get() { return JSON.parse(localStorage.getItem(this.key) || '[]'); },
             remove(animeId) { let playlist = this.get(); playlist = playlist.filter(item => item.animeId !== animeId); localStorage.setItem(this.key, JSON.stringify(playlist)); UIModule.refreshModal('playlist'); },
-            // [추가] 재생목록 항목을 맨 위로 이동시키는 메서드
             moveToTop(animeId) {
                 let playlist = this.get();
                 const itemIndex = playlist.findIndex(item => item.animeId === animeId);
-                // 항목이 존재하고, 이미 맨 위가 아닐 경우에만 실행
                 if (itemIndex > 0) {
-                    const [item] = playlist.splice(itemIndex, 1); // 항목을 제거하고 변수에 저장
-                    playlist.unshift(item); // 배열의 맨 앞에 추가
-                    localStorage.setItem(this.key, JSON.stringify(playlist)); // 변경된 목록 저장
+                    const [item] = playlist.splice(itemIndex, 1);
+                    playlist.unshift(item);
+                    localStorage.setItem(this.key, JSON.stringify(playlist));
                 }
             },
             findLastWatchedEpisode(animeId) { const history = HistoryManager.get(100); for (const item of history) { if (item.url.includes(`/watch/${animeId}/`)) { return item.url; } } return null; },
@@ -554,17 +573,15 @@ if (typeof window.linkkfExtensionInitialized === 'undefined') {
                         el.className = 'kf-modal-list-item';
                         el.innerHTML = `<span class="kf-item-title">${item.title}</span><div class="kf-item-actions"><button class="kf-continue-btn">이어보기</button><button class="kf-ep1-btn">1화부터</button><button class="kf-delete-btn" title="삭제">X</button></div>`;
                         
-                        // [수정] '1화부터' 버튼 클릭 이벤트
                         el.querySelector('.kf-ep1-btn').addEventListener('click', (e) => { 
                             e.stopPropagation(); 
-                            PlaylistManager.moveToTop(item.animeId); // [추가] 클릭된 항목을 최상단으로 이동
+                            PlaylistManager.moveToTop(item.animeId);
                             window.location.href = `https://linkkf.net/watch/${item.animeId}/a1/k1/`; 
                         });
                         
-                        // [수정] '이어보기' 버튼 클릭 이벤트
                         el.querySelector('.kf-continue-btn').addEventListener('click', (e) => { 
                             e.stopPropagation(); 
-                            PlaylistManager.moveToTop(item.animeId); // [추가] 클릭된 항목을 최상단으로 이동
+                            PlaylistManager.moveToTop(item.animeId);
                             const lastWatchedUrl = PlaylistManager.findLastWatchedEpisode(item.animeId); 
                             if (lastWatchedUrl) { 
                                 window.location.href = lastWatchedUrl; 
