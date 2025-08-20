@@ -1287,7 +1287,9 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
                 if (container.hasAttribute(this.CONSTANTS.CUSTOM_ATTRS.OBSERVER_ATTACHED)) return;
                 container.setAttribute(this.CONSTANTS.CUSTOM_ATTRS.OBSERVER_ATTACHED, 'true');
                 filterItems(Array.from(container.querySelectorAll(itemSelector)));
+                // [디버깅 추가]
                 new MutationObserver(mutations => {
+                    console.log(`[디버깅] FilterModule attachObserver 실행됨. (container:`, container, `, mutations: ${mutations.length}개)`); // 디버깅 로그 추가
                     const newItems = [];
                     mutations.forEach(m => m.addedNodes.forEach(n => {
                         if (n.nodeType !== 1) return;
@@ -1300,16 +1302,18 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             const observerTarget = mainContainer || document.body;
 
 
-            const bodyObserver = new MutationObserver(mutations => mutations.forEach(m => m.addedNodes.forEach(n => {
-                // [렉 현상 해결] 스크립트 UI 내부에서의 변화는 즉시 무시합니다.
-                if (n.closest && (n.closest('#dc-backup-popup') || n.closest('#dc-block-management-panel') || n.closest('#dcinside-filter-setting'))) {
-                    return;
-                }
-
-                if (n.nodeType === 1 && !n.closest('.user_data')) {
-                    targets.forEach(t => { if (n.matches(t.c)) attachObserver(n, t.i); else if (n.querySelectorAll) n.querySelectorAll(t.c).forEach(c => attachObserver(c, t.i)); });
-                }
-            })));
+            // [디버깅 추가]
+            const bodyObserver = new MutationObserver(mutations => {
+                console.log(`[디버깅] FilterModule bodyObserver 실행됨. (mutations: ${mutations.length}개)`); // 디버깅 로그 추가
+                mutations.forEach(m => m.addedNodes.forEach(n => {
+                    if (n.parentNode && n.parentNode.closest && (n.parentNode.closest('#dc-backup-popup') || n.parentNode.closest('#dc-block-management-panel') || n.parentNode.closest('#dcinside-filter-setting'))) {
+                        return;
+                    }
+                    if (n.nodeType === 1 && !n.closest('.user_data')) {
+                        targets.forEach(t => { if (n.matches(t.c)) attachObserver(n, t.i); else if (n.querySelectorAll) n.querySelectorAll(t.c).forEach(c => attachObserver(c, t.i)); });
+                    }
+                }));
+            });
             targets.forEach(t => document.querySelectorAll(t.c).forEach(c => attachObserver(c, t.i)));
             bodyObserver.observe(observerTarget, { childList: true, subtree: true });
         },
@@ -2494,14 +2498,18 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             processAllLists();
 
 
+            // [디버깅 추가]
             const observer = new MutationObserver((mutations) => {
+                // console.log(`[디버깅] UIModule observer 실행됨. (mutations: ${mutations.length}개)`); // 디버깅용 로그 (해결 후 제거 가능)
                 for (const mutation of mutations) {
                     for (const node of mutation.addedNodes) {
-                        // [렉 현상 해결] 스크립트 UI 내부에서의 변화는 즉시 무시합니다.
-                        if (node.closest && (node.closest('#dc-backup-popup') || node.closest('#dc-block-management-panel') || node.closest('#dcinside-filter-setting'))) {
-                            continue;
+                        // [최종 수정] 텍스트 노드 자체에는 .closest가 없으므로,
+                        // 반드시 node.parentNode에서 UI 요소를 찾아야 오류가 발생하지 않습니다.
+                        if (node.parentNode && node.parentNode.closest && (node.parentNode.closest('#dc-backup-popup') || node.parentNode.closest('#dc-block-management-panel') || node.parentNode.closest('#dcinside-filter-setting'))) {
+                            continue; // 스크립트 UI 내부 변화이므로 무시
                         }
                         
+                        // Element 노드일 경우에만 UI 변환 로직을 실행합니다.
                         if (node.nodeType === Node.ELEMENT_NODE) {
                             if (node.matches(this.SELECTORS.LIST_WRAP) || node.querySelector(this.SELECTORS.LIST_WRAP)) {
                                 processAllLists();
