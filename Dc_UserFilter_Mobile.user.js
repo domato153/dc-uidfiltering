@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         DC_UserFilter_Mobile
 // @namespace    http://tampermonkey.net/
-// @version      2.5.7
+// @version      2.5.8
 // @description  유저 필터링, UI 개선, 개인 차단/해제 기능 추가
 // @author       domato153
 // @match        https://gall.dcinside.com/*
@@ -39,6 +39,13 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
     // ======================== UI Module Style ========================
     // =================================================================
     GM_addStyle(`
+        /* [최종 해결] 링크 미리보기 텍스트 박스 스타일 재정의 */
+        .thum-txtin {
+            box-sizing: border-box !important;  /* [핵심] 너비 계산 방식을 올바르게 수정 */
+            width: 100% !important;            /* 부모 너비에 꽉 채우도록 설정 */
+            overflow: visible !important;      /* 내용이 잘리는 것을 원천 방지 */
+        }
+
         /* [v2.2.7 추가] 즉시 나타나는 커스텀 툴팁 스타일 */
         #custom-instant-tooltip {
             position: fixed; /* 화면 기준으로 위치 고정 */
@@ -355,22 +362,94 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
         .custom-bottom-controls .page_box { float: none !important; display: inline-block; }
 
 
-        /* [v2.4.1 핫픽스] 본문 너비 고정 및 overflow 문제 해결 */
+        /* [기존 스타일 유지] 본문/댓글 너비 및 잘림 문제 해결 */
         .writing_view_box .write_div {
             width: 100% !important;
             overflow: visible !important;
+            box-sizing: border-box !important;
         }
-        /* [댓글 영역 잘림 방지] overflow 안전장치 추가 */
         .comment_box {
             overflow: visible !important;
         }
+        .comment_box .usertxt {
+            font-size: 18px !important;
+            line-height: 1.7 !important;
+            word-break: break-all !important;
+            color: #333 !important;
+            box-sizing: border-box !important;
+        }
+        
         /* --- 글 보기/댓글 UI --- */
-        /* [수정] .comment_box를 이 규칙에서 제외하여 패딩 중첩 문제 해결 */
         .gall_content, .gall_tit_box, .gall_writer_info, .btn_recommend_box, .view_bottom, .gall_comment {
             background: #fff !important;
             padding: 15px !important;
             border-bottom: 1px solid #ddd;
         }
+
+
+        /* ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼ */
+        /* [최종 수정] 이미지 댓글 UI 가로 배치 및 모든 문제 해결 */
+        
+        /* 1. 부모 컨테이너 너비 100%로 확보 */
+        .writing_view_box .img_area,
+        .writing_view_box .img_comment {
+            width: 100% !important;
+            box-sizing: border-box !important;
+        }
+
+        .writing_view_box .img_comment {
+            padding: 15px !important;
+            border-top: 1px solid #ddd !important;
+            margin-top: 10px !important;
+        }
+
+        /* 2. float-flex 충돌 방지 */
+        .writing_view_box .img_comment .fl {
+            float: none !important;
+        }
+
+        /* 3. 텍스트 컨테이너가 남은 공간을 모두 차지하도록 강제 */
+        .writing_view_box .img_comment .cmt_txt_cont {
+            flex: 1 1 0 !important;
+            min-width: 0 !important;
+            display: flex !important; /* 자식들을 가로(기본값)로 배치 */
+            align-items: stretch !important; /* 자식들의 높이를 통일 */
+        }
+        
+        /* 4. textarea를 감싸는 div가 남은 가로 공간을 모두 차지하도록 설정 (핵심 수정) */
+        .writing_view_box .img_comment .cmt_write {
+            flex-grow: 1 !important; /* 가로 방향으로 남은 공간 차지 */
+            display: flex !important;
+        }
+
+        /* 5. textarea가 부모 공간을 꽉 채우도록 설정 */
+        .writing_view_box .img_comment textarea {
+            width: 100% !important;
+            flex-grow: 1 !important;
+            box-sizing: border-box !important;
+            resize: none !important;
+        }
+
+        /* 6. 등록 버튼 영역이 고정된 크기를 갖도록 설정 */
+        .writing_view_box .img_comment .cmt_cont_bottm {
+            flex-shrink: 0 !important; /* 공간이 부족해도 줄어들지 않음 */
+            padding-left: 5px !important; /* textarea와 간격 추가 */
+            display: flex;
+            align-items: flex-end; /* 버튼을 아래쪽에 정렬 */
+        }
+                    /* ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼ */
+        /* [신규 추가] 이미지 댓글 가독성 개선 (폰트 크기 조정) */
+        .img_comment .cmt_nickbox {
+            font-size: 15px !important; /* 닉네임/IP 폰트 크기 (일반 댓글과 통일) */
+        }
+
+        .img_comment .usertxt {
+            font-size: 18px !important; /* 댓글 내용 폰트 크기 (일반 댓글과 통일) */
+            line-height: 1.6 !important;
+        }
+        /* ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲ */
+        /* ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲ */
+
         .gallview_contents img, .gallview_contents video { max-width: 100% !important; height: auto !important;  }
 
 
@@ -383,6 +462,9 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             font-size: 26px !important;
             line-height: 1.9 !important;
             word-break: break-all !important;
+            /* [최종 해결] 댓글과 동일한 원리로 box-sizing 속성 추가 */
+            width: 100% !important;
+            box-sizing: border-box !important;
         }
         .gallview_contents p,
         .gallview_contents div,
@@ -393,13 +475,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
         }
 
 
-        /* [v2.2.0 이식] 댓글 가독성 개선 */
-        .comment_box .usertxt {
-            font-size: 18px !important;
-            line-height: 1.7 !important;
-            word-break: break-all !important;
-            color: #333 !important; /* <-- 이 줄을 추가하세요 */
-        }
+        /* [v2.2.0 이식] 댓글 가독성 개선 (box-sizing 추가를 위해 위치 이동) */
         .comment_box .date_time {
             font-size: 15px !important;
         }
