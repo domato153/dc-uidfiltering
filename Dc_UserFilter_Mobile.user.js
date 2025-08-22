@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         DC_UserFilter_Mobile
 // @namespace    http://tampermonkey.net/
-// @version      2.5.9
+// @version      2.6.0
 // @description  유저 필터링, UI 개선, 개인 차단/해제 기능 추가
 // @author       domato153
 // @match        https://gall.dcinside.com/*
@@ -727,6 +727,19 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
         #dc-backup-popup .export-btn-download { background-color: #17a2b8; color: white; flex: 1; }
         /* [수정] 불러오기 버튼 스타일 조정 */
         #dc-backup-popup .import-btn { background-color: #007bff; color: white; width: 100%; margin-top: 8px; }
+
+        /* [수정] DCCon 및 각종 팝업 모바일 반응형 중앙 정렬 */
+        #div_con,
+        div.popup_content.dccon_popinfo,
+        div.pop_wrap.type3 {
+            position: fixed !important;      /* 화면(Viewport) 기준 고정 위치 */
+            left: 50% !important;             /* 왼쪽에서 50% 지점으로 이동 */
+            top: 50% !important;              /* 위쪽에서 50% 지점으로 이동 (수직 중앙 정렬도 함께 적용) */
+            transform: translate(-50%, -50%) !important; /* 자신의 크기 절반만큼 왼쪽/위로 이동하여 완벽 중앙 정렬 */
+            margin: 0 !important;             /* 외부 여백 제거 */
+            z-index: 2147483647 !important;   /* 다른 UI 요소들 위에 표시되도록 z-index 최대값 설정 */
+        }
+
     `);
 
 
