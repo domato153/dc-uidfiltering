@@ -1062,7 +1062,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             // [v1.7.1 리팩토링] FAB 생성 조건 완화 (항상 생성 시도)
             const currentPath = window.location.pathname;
             // 글 목록, 글 보기 페이지에서만 FAB를 생성합니다.
-            if (!currentPath.includes('/board/lists') && !currentPath.includes('/board/view/')) {
+            if (!currentPath.includes('/board/lists') && !currentPath.includes('/board/view')) {
                 return;
             }
             if (document.getElementById('dc-personal-block-fab')) return;
