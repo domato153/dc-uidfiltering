@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         DCInside 유저 필터
 // @namespace    http://tampermonkey.net/
-// @version      1.7.0
+// @version      1.7.1
 // @description  글/댓글 합/비율 필터링, 유동/통신사 IP 차단 + 개인 차단 기능
 // @author       domato153
 // @match        https://gall.dcinside.com/*
@@ -179,6 +179,87 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
         #dc-backup-popup .import-controls { display: flex; align-items: stretch; gap: 8px; }
         #dc-backup-popup .import-controls textarea { flex-grow: 1; }
         #dc-backup-popup .import-btn { background-color: #007bff; color: white; flex-shrink: 0; }
+
+        /* --- [최종 수정] 야간 모드 지원 스타일 (JS 연동) --- */
+        body.dc-filter-dark-mode #dcinside-filter-setting,
+        body.dc-filter-dark-mode #dc-selection-popup,
+        body.dc-filter-dark-mode #dc-block-management-panel,
+        body.dc-filter-dark-mode #dc-backup-popup,
+        body.dc-filter-dark-mode #dcinside-shortcut-modal {
+            background-color: #2d2d2d !important;
+            color: #e0e0e0 !important;
+            border-color: #555 !important;
+            box-shadow: 0 0 15px rgba(0,0,0,0.7) !important;
+        }
+        /* 설정창 헤더/푸터/구분선 */
+        body.dc-filter-dark-mode #dcinside-filter-setting > div:first-child,
+        body.dc-filter-dark-mode #dcinside-filter-setting > div:last-child {
+            border-color: #4a4a4a !important;
+        }
+        body.dc-filter-dark-mode #dcinside-filter-setting hr {
+            border-top-color: #4a4a4a !important;
+        }
+        body.dc-filter-dark-mode #dcinside-filter-setting div,
+        body.dc-filter-dark-mode #dcinside-filter-setting label,
+        body.dc-filter-dark-mode #dcinside-filter-setting h3,
+        body.dc-filter-dark-mode #dcinside-filter-setting b,
+        body.dc-filter-dark-mode #dc-selection-popup h4,
+        body.dc-filter-dark-mode #dc-selection-popup .block-option span,
+        body.dc-filter-dark-mode #dc-backup-popup .description,
+        body.dc-filter-dark-mode #dc-backup-popup h4 {
+            color: #e0e0e0 !important;
+        }
+        body.dc-filter-dark-mode #dcinside-filter-setting a {
+            color: #8ab4f8 !important;
+        }
+        /* 입력 필드 */
+        body.dc-filter-dark-mode input[type="number"],
+        body.dc-filter-dark-mode #dc-backup-popup textarea {
+            background-color: #1e1e1e !important;
+            color: #f0f0f0 !important;
+            border: 1px solid #666 !important;
+        }
+        /* 각종 버튼 */
+        body.dc-filter-dark-mode #dcinside-filter-setting #dcinside-threshold-save,
+        body.dc-filter-dark-mode #dc-block-management-panel .select-all-btn,
+        body.dc-filter-dark-mode #dc-block-management-panel .select-all-global-btn,
+        body.dc-filter-dark-mode #dc-block-management-panel .panel-backup-btn {
+            background-color: #555 !important;
+            color: #fff !important;
+            border-color: #777 !important;
+        }
+        body.dc-filter-dark-mode #dc-selection-popup .popup-buttons button,
+        body.dc-filter-dark-mode #dcinside-shortcut-modal button:last-child {
+            background-color: #444 !important;
+            color: #ccc !important;
+        }
+        /* 차단 관리 패널 */
+        body.dc-filter-dark-mode #dc-block-management-panel .panel-header,
+        body.dc-filter-dark-mode #dc-block-management-panel .panel-footer,
+        body.dc-filter-dark-mode #dc-backup-popup .popup-header {
+            background: #252525 !important;
+            border-color: #4a4a4a !important;
+        }
+        body.dc-filter-dark-mode #dc-block-management-panel .panel-tabs,
+        body.dc-filter-dark-mode #dc-block-management-panel .panel-body,
+        body.dc-filter-dark-mode #dc-selection-popup .block-option {
+            background: #3a3a3c !important;
+            border-color: #4a4a4a !important;
+        }
+        body.dc-filter-dark-mode #dc-block-management-panel .panel-tab {
+            border-right-color: #555 !important;
+        }
+        body.dc-filter-dark-mode #dc-block-management-panel .panel-list-controls,
+        body.dc-filter-dark-mode #dc-block-management-panel .blocked-item {
+            background-color: #2d2d2d !important;
+            border-color: #4a4a4a !important;
+        }
+        /* 닫기 버튼 */
+        body.dc-filter-dark-mode #dcinside-filter-setting #dcinside-filter-close,
+        body.dc-filter-dark-mode #dc-block-management-panel .panel-close-btn,
+        body.dc-filter-dark-mode #dc-backup-popup .popup-close-btn {
+            color: #ccc !important;
+        }
     `);
 
     // ... (이하 코드는 v1.7.0과 동일하므로 생략) ...
@@ -1441,5 +1522,36 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
     } else {
         runSafely();
     }
+
+    // ==========================================================
+    // ▼▼▼▼▼▼▼▼▼▼▼ 바로 이 위치에 아래 코드를 추가하세요 ▼▼▼▼▼▼▼▼▼▼▼
+    // ==========================================================
+    const observeDarkMode = () => {
+        const head = document.head;
+        if (!head) {
+            setTimeout(observeDarkMode, 100);
+            return;
+        }
+
+        const checkDarkModeStatus = () => {
+            const darkModeStylesheet = document.getElementById('css-darkmode');
+            if (darkModeStylesheet) {
+                document.body.classList.add('dc-filter-dark-mode');
+            } else {
+                document.body.classList.remove('dc-filter-dark-mode');
+            }
+        };
+
+        const observer = new MutationObserver(checkDarkModeStatus);
+        observer.observe(head, { childList: true });
+
+        // 초기 상태 확인
+        checkDarkModeStatus();
+    };
+    observeDarkMode();
+    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
+
+
 
 })();
