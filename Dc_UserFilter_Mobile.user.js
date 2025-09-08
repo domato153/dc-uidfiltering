@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         DC_UserFilter_Mobile
 // @namespace    http://tampermonkey.net/
-// @version      2.6.1
+// @version      2.6.2
 // @description  유저 필터링, UI 개선, 개인 차단/해제 기능 추가
 // @author       domato153
 // @match        https://gall.dcinside.com/*
@@ -85,6 +85,12 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             border-radius: 10px;
             box-shadow: 0 0 15px rgba(0,0,0,0.2);
             z-index: 2147483647; /* Max z-index */
+        }
+        /* [신규 추가] 야간 모드 전용 로딩 인디케이터 스타일 */
+        body.dc-filter-dark-mode:not(.script-ui-ready)::before {
+            color: #e0e0e0;
+            background-color: #2d2d2d;
+            box-shadow: 0 0 15px rgba(0,0,0,0.7);
         }
 
 
@@ -739,7 +745,162 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             margin: 0 !important;             /* 외부 여백 제거 */
             z-index: 2147483647 !important;   /* 다른 UI 요소들 위에 표시되도록 z-index 최대값 설정 */
         }
+         /* --- [최종 진짜 수정 v9] 야간 모드 완벽 지원 (색상 반전 대응) --- */
 
+        /* 1. 전역 및 기본 레이웃 다크 테마 */
+        body.dc-filter-dark-mode,
+        body.dc-filter-dark-mode #container,
+        body.dc-filter-dark-mode .gall_content,
+        body.dc-filter-dark-mode .gall_comment {
+            background: #121212 !important;
+            color: #e0e0e0 !important;
+        }
+
+        body.dc-filter-dark-mode .dcheader.typea,
+        body.dc-filter-dark-mode .minor_intro_area,
+        body.dc-filter-dark-mode .newvisit_history {
+            background: #1c1c1e !important;
+            border-bottom-color: #3a3a3c !important;
+        }
+
+        body.dc-filter-dark-mode .newvisit_history > .tit {
+            color: #e0e0e0 !important;
+        }
+
+        /* 2. 커스텀 게시글 목록 다크 테마 */
+        body.dc-filter-dark-mode .custom-mobile-list {
+            background: #1c1c1e !important;
+            border-top-color: #3a3a3c !important;
+        }
+        body.dc-filter-dark-mode .custom-post-item {
+            color: #e0e0e0 !important;
+            border-bottom-color: #3a3a3c !important;
+        }
+        body.dc-filter-dark-mode .custom-post-item:hover {
+            background-color: #2a2a2a !important;
+        }
+        body.dc-filter-dark-mode .custom-post-item.notice,
+        body.dc-filter-dark-mode .custom-post-item.concept {
+            background-color: #252525 !important;
+        }
+        body.dc-filter-dark-mode .post-title {
+            color: #e0e0e0 !important;
+        }
+        body.dc-filter-dark-mode .post-title a:visited {
+            color: #a9a9a9 !important; /* 방문한 링크 색상 */
+        }
+        body.dc-filter-dark-mode .post-meta .author .nickname,
+        body.dc-filter-dark-mode .post-meta .author .ip {
+            color: #b0b0b0 !important;
+        }
+        body.dc-filter-dark-mode .post-meta,
+        body.dc-filter-dark-mode .post-meta .stats {
+            color: #888 !important;
+        }
+
+        /* 3. 글 본문 및 댓글 다크 테마 */
+        body.dc-filter-dark-mode .gall_tit_box,
+        body.dc-filter-dark-mode .gall_writer_info,
+        body.dc-filter-dark-mode .btn_recommend_box,
+        body.dc-filter-dark-mode .view_bottom {
+            background: #1c1c1e !important;
+            border-bottom-color: #3a3a3c !important;
+        }
+        
+        /* [최종 해결] 본문 글자색 문제 해결: 반전 필터에 대응하여 검은색으로 설정 */
+        body.dc-filter-dark-mode .gallview_contents p,
+        body.dc-filter-dark-mode .gallview_contents span,
+        body.dc-filter-dark-mode .gallview_contents div {
+            color: #000000 !important; /* 검은색으로 설정해야 반전되어 흰색으로 보임 */
+        }
+        
+        /* 댓글은 반전 필터의 영향을 받지 않으므로 그대로 밝은 색 설정 */
+        body.dc-filter-dark-mode .comment_box .usertxt {
+            color: #e0e0e0 !important;
+        }
+
+        body.dc-filter-dark-mode .btn_recommend_box .inner_box > .inner {
+            background-color: #2a2a2a !important;
+            border-color: #444 !important;
+        }
+        body.dc-filter-dark-mode .btn_recommend_box .up_num,
+        body.dc-filter-dark-mode .btn_recommend_box .down_num {
+            color: #e0e0e0 !important;
+        }
+
+        /* 4. 하단 컨트롤 및 검색창 다크 테마 */
+        body.dc-filter-dark-mode .custom-bottom-controls,
+        body.dc-filter-dark-mode .custom-bottom-controls form[name="frmSearch"] select {
+            background: #1c1c1e !important;
+        }
+        body.dc-filter-dark-mode .custom-bottom-controls form[name="frmSearch"] input[type="text"] {
+            background: #333 !important;
+            color: #fff !important;
+            border-color: #555 !important;
+        }
+
+        /* 5. 스크립트 팝업창 전체 다크 테마 */
+        body.dc-filter-dark-mode #dcinside-filter-setting,
+        body.dc-filter-dark-mode #dc-selection-popup,
+        body.dc-filter-dark-mode #dc-block-management-panel,
+        body.dc-filter-dark-mode #dc-backup-popup,
+        body.dc-filter-dark-mode #dcinside-shortcut-modal {
+            background-color: #2d2d2d !important;
+            color: #e0e0e0 !important;
+            border-color: #555 !important;
+            box-shadow: 0 0 15px rgba(0,0,0,0.7) !important;
+        }
+
+        /* 팝업 내부 요소들 */
+        body.dc-filter-dark-mode #dcinside-filter-setting > div:first-child,
+        body.dc-filter-dark-mode #dcinside-filter-setting > div:last-child,
+        body.dc-filter-dark-mode #dc-block-management-panel .panel-header,
+        body.dc-filter-dark-mode #dc-block-management-panel .panel-footer,
+        body.dc-filter-dark-mode #dc-backup-popup .popup-header,
+        body.dc-filter-dark-mode #dc-block-management-panel .panel-tabs {
+            background: #252525 !important;
+            border-color: #4a4a4a !important;
+        }
+        body.dc-filter-dark-mode #dcinside-filter-setting hr,
+        body.dc-filter-dark-mode #dc-block-management-panel .panel-tab {
+            border-color: #4a4a4a !important;
+        }
+        body.dc-filter-dark-mode #dc-block-management-panel .panel-body,
+        body.dc-filter-dark-mode #dc-selection-popup .block-option {
+            background: #3a3a3c !important;
+        }
+        body.dc-filter-dark-mode #dcinside-filter-setting div,
+        body.dc-filter-dark-mode #dcinside-filter-setting label,
+        body.dc-filter-dark-mode #dcinside-filter-setting h3,
+        body.dc-filter-dark-mode #dc-selection-popup h4,
+        body.dc-filter-dark-mode #dc-selection-popup .block-option span,
+        body.dc-filter-dark-mode #dc-backup-popup .description,
+        body.dc-filter-dark-mode #dc-backup-popup h4,
+        body.dc-filter-dark-mode .item-name {
+            color: #e0e0e0 !important;
+        }
+        body.dc-filter-dark-mode input[type="number"],
+        body.dc-filter-dark-mode #dc-backup-popup textarea {
+            background-color: #1e1e1e !important;
+            color: #f0f0f0 !important;
+            border: 1px solid #666 !important;
+        }
+        body.dc-filter-dark-mode .panel-tab.active {
+            background: #007bff !important; /* 활성 탭은 색상 유지 */
+        }
+
+        /* 버튼 배경 문제 해결 (필요한 버튼만 개별 적용) */
+        body.dc-filter-dark-mode #dcinside-filter-setting button,
+        body.dc-filter-dark-mode #dc-selection-popup button,
+        body.dc-filter-dark-mode #dc-block-management-panel button,
+        body.dc-filter-dark-mode #dc-backup-popup button,
+        body.dc-filter-dark-mode #dcinside-shortcut-modal button,
+        body.dc-filter-dark-mode .list_bottom_btnbox .btn_grey,
+        body.dc-filter-dark-mode .list_bottom_btnbox .btn_blue {
+             background-color: #555 !important;
+             color: #fff !important;
+             border-color: #777 !important;
+        }
     `);
 
 
@@ -2616,4 +2777,34 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
     } else {
         runSafely();
     }
+
+
+
+        // ==========================================================
+    // ▼▼▼▼▼▼▼▼▼▼▼ 바로 이 위치에 아래 코드를 추가하세요 ▼▼▼▼▼▼▼▼▼▼▼
+    // ==========================================================
+    const observeDarkMode = () => {
+        const head = document.head;
+        if (!head) {
+            setTimeout(observeDarkMode, 100);
+            return;
+        }
+
+        const checkDarkModeStatus = () => {
+            const darkModeStylesheet = document.getElementById('css-darkmode');
+            if (darkModeStylesheet) {
+                document.body.classList.add('dc-filter-dark-mode');
+            } else {
+                document.body.classList.remove('dc-filter-dark-mode');
+            }
+        };
+
+        const observer = new MutationObserver(checkDarkModeStatus);
+        observer.observe(head, { childList: true });
+
+        // 초기 상태 확인
+        checkDarkModeStatus();
+    };
+    observeDarkMode();
+    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 })();
