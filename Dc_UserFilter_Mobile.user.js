@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         DC_UserFilter_Mobile
 // @namespace    http://tampermonkey.net/
-// @version      2.6.2
+// @version      2.6.3
 // @description  유저 필터링, UI 개선, 개인 차단/해제 기능 추가
 // @author       domato153
 // @match        https://gall.dcinside.com/*
@@ -252,6 +252,14 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             gap: 4px; /* 버튼 사이 간격 */
         }
 
+        /* [최종 수정] 마이너 갤러리 탭 버튼 크기 및 너비 축소 */
+        .is-mgallery .list_array_option .array_tab button {
+            width: auto !important;        /* 고정 너비 해제 */
+            height: auto !important;       /* 고정 높이 해제 */
+            font-size: 12px !important;    /* 글자 크기 줄이기 */
+            padding: 6px 12px !important;  /* 상하, 좌우 내부 여백 줄이기 */
+            line-height: 1.4 !important;   /* 줄 간격 조정 */
+        }
 
         /* 중앙 요소 (주로 말머리) - 남는 공간 모두 차지 */
         .is-mgallery .list_array_option > .center_box {
