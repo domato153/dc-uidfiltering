@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         DCInside 유저 필터
 // @namespace    http://tampermonkey.net/
-// @version      1.7.1
+// @version      1.7.2
 // @description  글/댓글 합/비율 필터링, 유동/통신사 IP 차단 + 개인 차단 기능
 // @author       domato153
 // @match        https://gall.dcinside.com/*
@@ -932,6 +932,13 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
                 element.style.display = 'none';
                 return; // 개인 차단이므로 다른 필터를 검사하지 않고 즉시 종료
             }
+        }
+        // [추가] 2. DC 사이트 고유 차단 필터
+        // DC 자체 차단 기능(찜 목록) 사용 시 .block-disable 클래스가 추가됩니다.
+        // 이 클래스가 있으면 게시글/댓글을 즉시 숨깁니다.
+        if (element.classList.contains('block-disable')) {
+            element.style.display = 'none';
+            return; // 사이트 고유 차단이므로 다른 필터를 검사하지 않고 즉시 종료
         }
 
         // 2. [리팩토링] 개인 차단 대상이 아닐 경우, 나머지 필터링 조건(개념글, 전체끄기)을 확인합니다.
