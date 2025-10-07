@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         DC_UserFilter_Mobile
 // @namespace    http://tampermonkey.net/
-// @version      2.6.6
+// @version      2.6.7
 // @description  유저 필터링, UI 개선, 개인 차단/해제 기능 추가
 // @author       domato153
 // @match        https://gall.dcinside.com/*
@@ -1428,6 +1428,13 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
                     element.style.display = 'none';
                     return; // 개인 차단이므로 다른 필터를 검사하지 않고 즉시 종료
                 }
+            }
+            // [신규 추가] 2. DC 사이트 고유 차단 필터
+            // DC 자체 차단 기능(찜 목록) 사용 시 .block-disable 클래스가 추가됩니다.
+            // 이 로직을 추가하여 게시글과 댓글 모두에서 사이트 고유 차단을 감지합니다.
+            if (element.classList.contains('block-disable')) {
+                element.style.display = 'none';
+                return; // 사이트 고유 차단이므로 다른 필터를 검사하지 않고 즉시 종료
             }
 
             // [이식된 기능] 개인 차단 로직 실행 후, 공지 글인 경우 일반 필터는 건너뜀
