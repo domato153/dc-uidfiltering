@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         DC_UserFilter_Mobile
 // @namespace    http://tampermonkey.net/
-// @version      2.6.8
+// @version      2.6.9
 // @description  유저 필터링, UI 개선, 개인 차단/해제 기능 추가
 // @author       domato153
 // @match        https://gall.dcinside.com/*
@@ -453,24 +453,25 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             align-items: flex-end; /* 버튼을 아래쪽에 정렬 */
         }
                     /* ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼ */
-        /* [신규 추가] 이미지 댓글 가독성 개선 (폰트 크기 조정) */
-        /* [v2.6.8] 댓글 닉네임/IP 잘림(클리핑) 방지 및 너비 대폭 확보 (8자 이상) */
-        /* [v2.6.8] 댓글 닉네임/IP 잘림(클리핑) 방지 및 너비 대폭 확보 (8자 이상) */
-        /* [v2.6.8 수정] 알림창(팝업) 노출을 위해 부모틀의 overflow를 해제하고 텍스트에만 줄임표 적용 */
-        .cmt_nickbox, .gall_writer {
+        /* [v2.6.8 수정] 댓글창과 게시글 목록 모두 닉네임 팝업이 잘리지 않도록 overflow 해제 */
+        .cmt_nickbox, .author {
             display: inline-flex !important;
             align-items: center !important;
+            position: relative !important; /* 팝업 위치 기준점 */
             width: auto !important;
             max-width: none !important;
-            height: auto !important;
-            overflow: visible !important; /* 팝업이 밖으로 나갈 수 있게 허용 */
+            overflow: visible !important; /* 팝업 노출 허용 */
             white-space: nowrap !important;
             vertical-align: middle !important;
             line-height: normal !important;
+            background: transparent !important;
+            border: none !important;
+            padding: 0 !important;
+            margin: 0 !important;
         }
         .nickname, .ip {
             display: inline-block !important;
-            max-width: 240px !important; /* 닉네임 길이를 여기서 제한 */
+            max-width: 240px !important;
             overflow: hidden !important;
             text-overflow: ellipsis !important;
             white-space: nowrap !important;
@@ -478,6 +479,9 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
         }
         .gall_writer { max-width: none !important; }
         .nickname { max-width: 240px !important; }
+        
+        /* 게시글 목록 내 닉네임 텍스트 크기 조정 */
+        .author .nickname { font-size: 15px !important; }
 
         /* [v2.6.8] 유저 데이터 레이어(작성글 검색 등) 위치 최적화 */
         #user_data_lyr {
@@ -2445,10 +2449,59 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
                     if (originalReplyLink) originalReplyLink.click();
                     return;
                 }
+
+                // [v2.6.8 수정] 댓글창처럼 정상 작동하게끔 이식 (복제 방식 + 위치 보정)
                 if (clickedElement.closest('.author')) {
                     e.preventDefault();
+
                     const originalAuthor = originalRow.querySelector('.gall_writer');
-                    if (originalAuthor) originalAuthor.click();
+                    if (originalAuthor) {
+                        // 클릭 좌표 저장 (경계 검사용)
+                        const clientX = e.clientX;
+                        const clientY = e.clientY;
+
+                        originalAuthor.click();
+
+                        // 팝업 위치 고도화 (댓글창 로직 이식 + 화면 이탈 방지)
+                        setTimeout(() => {
+                            const lyr = document.getElementById('user_data_lyr');
+                            if (lyr) {
+                                // 게시글 목록의 .author 영역에 맞춰 위치 강제 재설정
+                                lyr.style.setProperty('position', 'absolute', 'important');
+                                lyr.style.setProperty('top', '100%', 'important');
+                                lyr.style.setProperty('left', '0', 'important');
+                                lyr.style.setProperty('margin-top', '5px', 'important');
+                                lyr.style.setProperty('z-index', '2147483647', 'important');
+                                lyr.style.setProperty('display', 'block', 'important');
+                                lyr.style.setProperty('visibility', 'visible', 'important');
+
+                                // 화면 이탈 방지 (경계 검사)
+                                const rect = lyr.getBoundingClientRect();
+                                const windowW = window.innerWidth;
+                                const windowH = window.innerHeight;
+
+                                // 우측 끝에 너무 붙어있으면 왼쪽으로 이동
+                                if (rect.right > windowW) {
+                                    lyr.style.setProperty('left', 'auto', 'important');
+                                    lyr.style.setProperty('right', '0', 'important');
+                                }
+
+                                // [v2.6.8 추가] 왼쪽 끝에 너무 붙어있으면 오른쪽으로 이동
+                                if (rect.left < 0) {
+                                    lyr.style.setProperty('left', '0', 'important');
+                                    lyr.style.setProperty('right', 'auto', 'important');
+                                    lyr.style.setProperty('margin-left', '0', 'important');
+                                }
+
+                                // 아래쪽 끝에 너무 붙어있으면 위쪽으로 이동
+                                if (rect.bottom > windowH) {
+                                    lyr.style.setProperty('top', 'auto', 'important');
+                                    lyr.style.setProperty('bottom', '100%', 'important');
+                                    lyr.style.setProperty('margin-bottom', '5px', 'important');
+                                }
+                            }
+                        }, 50);
+                    }
                     return;
                 }
             });
@@ -2458,8 +2511,6 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
         updateItemVisibility(originalRow, mirroredItem) {
             const isDibsBlocked = originalRow.classList.contains('block-disable');
             const isUserFilterBlocked = originalRow.style.display === 'none';
-            mirroredItem.style.display = (isDibsBlocked || isUserFilterBlocked) ? 'block' : 'none';
-            // [수정] block/none이 반대로 되어있던 것을 수정
             mirroredItem.style.display = (isDibsBlocked || isUserFilterBlocked) ? 'none' : 'block';
         },
 
@@ -2524,6 +2575,9 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             postMeta.className = 'post-meta';
             const authorSpan = document.createElement('span');
             authorSpan.className = 'author';
+
+            // [v2.6.8 수정] 다시 복제(cloneNode) 방식으로 원복합니다. (안정성 확보)
+            // 대신 CSS와 proxyClick 로직을 통해 팝업의 위치와 기능을 완벽히 이식합니다.
             authorSpan.appendChild(writerEl.cloneNode(true));
 
 
