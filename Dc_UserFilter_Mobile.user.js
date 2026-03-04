@@ -383,15 +383,23 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             overflow: visible !important;
             box-sizing: border-box !important;
         }
-        .comment_box {
-            overflow: visible !important;
+        .comment_box .all_comment {
+            display: flex !important;
+            align-items: flex-start !important;
+            padding: 8px 15px !important;
+            border-bottom: 1px solid #eee;
+            gap: 15px !important; /* 작성자와 내용 사이 간격 */
         }
         .comment_box .usertxt {
+            flex: 1 !important;
+            min-width: 0 !important;
             /* [v2.6.8] font-size는 JS scaleAllFontSizes()에서 배율 적용으로 설정됩니다 */
             line-height: 1.7 !important;
             word-break: break-all !important;
             color: #333 !important;
             box-sizing: border-box !important;
+            margin: 0 !important;
+            padding: 0 !important;
         }
         
         /* --- 글 보기/댓글 UI --- */
@@ -454,11 +462,13 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
         }
                     /* ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼ */
         /* [v2.6.8 수정] 댓글창과 게시글 목록 모두 닉네임 팝업이 잘리지 않도록 overflow 해제 */
+        /* [v2.6.9] 댓글 리스트 열맞춤을 위해 cmt_nickbox에 최소 너비 및 정렬 설정 */
         .cmt_nickbox, .author {
             display: inline-flex !important;
             align-items: center !important;
             position: relative !important; /* 팝업 위치 기준점 */
             width: auto !important;
+            min-width: 140px !important; /* 작성자 영역 최소 너비 확보로 열맞춤 */
             max-width: none !important;
             overflow: visible !important; /* 팝업 노출 허용 */
             white-space: nowrap !important;
@@ -468,7 +478,11 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             border: none !important;
             padding: 0 !important;
             margin: 0 !important;
+            flex-shrink: 0 !important;
         }
+        /* 게시글 목록(.author)은 고정 너비 불필요하므로 해제 */
+        .author { min-width: 0 !important; }
+
         .nickname, .ip {
             display: inline-block !important;
             max-width: 240px !important;
