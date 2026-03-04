@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         DCInside 유저 필터
 // @namespace    http://tampermonkey.net/
-// @version      1.7.2
+// @version      1.7.3
 // @description  글/댓글 합/비율 필터링, 유동/통신사 IP 차단 + 개인 차단 기능
 // @author       domato153
 // @match        https://gall.dcinside.com/*
@@ -19,7 +19,7 @@ https://github.com/philsturgeon/dbad/blob/master/LICENSE.md
 https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
 ------------------------------------------------------------------*/
 
-(function() {
+(function () {
     'use strict';
 
     // [v1.7.0 이식] 개인 차단 기능 UI를 위한 스타일 추가
@@ -429,12 +429,18 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
         div.innerHTML = `
             <div style="margin-bottom:15px;padding-bottom:12px;border-bottom: 2px solid #ccc; display:flex;align-items:center; justify-content: space-between;">
                 <div style="display:flex; align-items: center;">
-                    <div>
-                        <input id="${CONSTANTS.UI_IDS.MASTER_DISABLE_CHECKBOX}" type="checkbox" style="vertical-align:middle;width:16px;height:16px;" ${masterDisabled ? 'checked' : ''}>
-                        <label for="${CONSTANTS.UI_IDS.MASTER_DISABLE_CHECKBOX}" style="font-size:16px;vertical-align:middle;cursor:pointer;margin-left:6px;"><b>모든 기능 끄기</b></label>
+                    <div class="switch-container" style="margin-left:0;">
+                        <label class="switch">
+                            <input id="${CONSTANTS.UI_IDS.MASTER_DISABLE_CHECKBOX}" type="checkbox" ${masterDisabled ? 'checked' : ''}>
+                            <span class="switch-slider"></span>
+                        </label>
+                        <label for="${CONSTANTS.UI_IDS.MASTER_DISABLE_CHECKBOX}" style="font-size:16px;vertical-align:middle;cursor:pointer;margin-left:8px;"><b>모든 기능 끄기</b></label>
                     </div>
-                    <div style="margin-left: 15px; border-left: 2px solid #ccc; padding-left: 15px;">
-                        <input id="${CONSTANTS.UI_IDS.EXCLUDE_RECOMMENDED_CHECKBOX}" type="checkbox" style="vertical-align:middle;width:16px;height:16px;" ${excludeRecommended ? 'checked' : ''}>
+                    <div class="switch-container" style="margin-left: 15px; border-left: 2px solid #ccc; padding-left: 15px;">
+                        <label class="switch" style="width:34px; height:18px;">
+                            <input id="${CONSTANTS.UI_IDS.EXCLUDE_RECOMMENDED_CHECKBOX}" type="checkbox" ${excludeRecommended ? 'checked' : ''}>
+                            <span class="switch-slider" style="border-radius:18px;"></span>
+                        </label>
                         <label for="${CONSTANTS.UI_IDS.EXCLUDE_RECOMMENDED_CHECKBOX}" style="font-size:14px;vertical-align:middle;cursor:pointer;margin-left:6px;"><b>개념글 제외</b></label>
                     </div>
                 </div>
@@ -452,22 +458,33 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
                         <div style="font-size:13px;color:#666;margin-top:5px;">0 또는 빈칸으로 두면 비활성화됩니다.</div>
                     </div>
                     <div style="border: 2px solid #000; border-radius: 5px; padding: 8px 8px 5px 6px;">
-                        <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 5px;">
-                            <span style="display:inline-flex; align-items:center; gap:4px; padding-bottom: 5px; border-bottom: 1px solid #ddd;">
-                                <input id="${CONSTANTS.UI_IDS.BLOCK_GUEST_CHECKBOX}" type="checkbox" ${blockGuestEnabled ? 'checked' : ''} style="vertical-align:middle;">
-                                <label for="${CONSTANTS.UI_IDS.BLOCK_GUEST_CHECKBOX}" style="font-size:13px;vertical-align:middle;cursor:pointer;">유동 전체 차단</label>
-                            </span>
-                            <span style="display:inline-flex; align-items:center; gap:4px; margin-top: 5px;">
-                                <input id="${CONSTANTS.UI_IDS.TELECOM_BLOCK_CHECKBOX}" type="checkbox" ${telecomBlockEnabled ? 'checked' : ''} style="vertical-align:middle;">
-                                <label for="${CONSTANTS.UI_IDS.TELECOM_BLOCK_CHECKBOX}" style="font-size:13px;vertical-align:middle;cursor:pointer;">통신사 IP 차단</label>
-                            </span>
+                        <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 8px;">
+                            <div class="switch-container" style="margin-left:0;">
+                                <label class="switch" style="width:34px; height:18px;">
+                                    <input id="${CONSTANTS.UI_IDS.BLOCK_GUEST_CHECKBOX}" type="checkbox" ${blockGuestEnabled ? 'checked' : ''}>
+                                    <span class="switch-slider" style="border-radius:18px;"></span>
+                                </label>
+                                <label for="${CONSTANTS.UI_IDS.BLOCK_GUEST_CHECKBOX}" style="font-size:13px;vertical-align:middle;cursor:pointer;margin-left:6px;">유동 전체 차단</label>
+                            </div>
+                            <div class="switch-container" style="margin-left:0;">
+                                <label class="switch" style="width:34px; height:18px;">
+                                    <input id="${CONSTANTS.UI_IDS.TELECOM_BLOCK_CHECKBOX}" type="checkbox" ${telecomBlockEnabled ? 'checked' : ''}>
+                                    <span class="switch-slider" style="border-radius:18px;"></span>
+                                </label>
+                                <label for="${CONSTANTS.UI_IDS.TELECOM_BLOCK_CHECKBOX}" style="font-size:13px;vertical-align:middle;cursor:pointer;margin-left:6px;">통신사 IP 차단</label>
+                            </div>
                         </div>
                     </div>
                 </div>
                 <hr style="border:0;border-top:2px solid #222;margin:16px 0 12px 0;">
                 <div style="margin-bottom:8px;display:flex;align-items:center;">
-                    <input id="${CONSTANTS.UI_IDS.RATIO_ENABLE_CHECKBOX}" type="checkbox" style="vertical-align:middle;" ${ratioEnabled ? 'checked' : ''}>
-                    <label for="${CONSTANTS.UI_IDS.RATIO_ENABLE_CHECKBOX}" style="font-size:15px;vertical-align:middle;cursor:pointer;margin-left:4px;">글/댓글 비율 필터 사용</label>
+                    <div class="switch-container" style="margin-left:0;">
+                        <label class="switch">
+                            <input id="${CONSTANTS.UI_IDS.RATIO_ENABLE_CHECKBOX}" type="checkbox" ${ratioEnabled ? 'checked' : ''}>
+                            <span class="switch-slider"></span>
+                        </label>
+                        <label for="${CONSTANTS.UI_IDS.RATIO_ENABLE_CHECKBOX}" style="font-size:15px;vertical-align:middle;cursor:pointer;margin-left:8px;">글/댓글 비율 필터 사용</label>
+                    </div>
                 </div>
                 <div id="${CONSTANTS.UI_IDS.RATIO_SECTION}">
                     <div style="display:flex;gap:10px;align-items:center;">
@@ -512,8 +529,50 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             settingsContainer.style.opacity = isMasterDisabled ? 0.5 : 1;
             settingsContainer.style.pointerEvents = isMasterDisabled ? 'none' : 'auto';
         }
-        masterDisableCheckbox.addEventListener('change', updateMasterState);
+
+        // [v1.7.3] 실시간 변경 리스너 통합 함수
+        async function applyCheckboxChange(storageKey, checkboxId, filterAction = null) {
+            const isChecked = document.getElementById(checkboxId).checked;
+            await GM_setValue(storageKey, isChecked);
+
+            // 전역 설정 객체 즉시 업데이트 (applySyncBlock 등에서 참조)
+            if (!window.dcFilterSettings) window.dcFilterSettings = {};
+
+            // storageKey를 기반으로 설정 객체 키 매핑 (reloadeSettings 참고)
+            const keyMap = {
+                [CONSTANTS.STORAGE_KEYS.MASTER_DISABLED]: 'masterDisabled',
+                [CONSTANTS.STORAGE_KEYS.EXCLUDE_RECOMMENDED]: 'excludeRecommended',
+                [CONSTANTS.STORAGE_KEYS.BLOCK_GUEST]: 'blockGuestEnabled',
+                [CONSTANTS.STORAGE_KEYS.BLOCK_TELECOM]: 'telecomBlockEnabled',
+                [CONSTANTS.STORAGE_KEYS.RATIO_ENABLED]: 'ratioEnabled'
+            };
+            if (keyMap[storageKey]) window.dcFilterSettings[keyMap[storageKey]] = isChecked;
+
+            if (filterAction) await filterAction(isChecked);
+
+            // 즉시 필터 재적용
+            refilterAllContent();
+        }
+
+        masterDisableCheckbox.addEventListener('change', () => {
+            updateMasterState();
+            applyCheckboxChange(CONSTANTS.STORAGE_KEYS.MASTER_DISABLED, CONSTANTS.UI_IDS.MASTER_DISABLE_CHECKBOX);
+        });
         updateMasterState();
+
+        document.getElementById(CONSTANTS.UI_IDS.EXCLUDE_RECOMMENDED_CHECKBOX).addEventListener('change', () => {
+            applyCheckboxChange(CONSTANTS.STORAGE_KEYS.EXCLUDE_RECOMMENDED, CONSTANTS.UI_IDS.EXCLUDE_RECOMMENDED_CHECKBOX);
+        });
+
+        document.getElementById(CONSTANTS.UI_IDS.BLOCK_GUEST_CHECKBOX).addEventListener('change', () => {
+            applyCheckboxChange(CONSTANTS.STORAGE_KEYS.BLOCK_GUEST, CONSTANTS.UI_IDS.BLOCK_GUEST_CHECKBOX, async (checked) => {
+                if (!checked) await clearBlockedGuests();
+            });
+        });
+
+        document.getElementById(CONSTANTS.UI_IDS.TELECOM_BLOCK_CHECKBOX).addEventListener('change', () => {
+            applyCheckboxChange(CONSTANTS.STORAGE_KEYS.BLOCK_TELECOM, CONSTANTS.UI_IDS.TELECOM_BLOCK_CHECKBOX);
+        });
 
         const ratioSection = document.getElementById(CONSTANTS.UI_IDS.RATIO_SECTION);
         const ratioEnableCheckbox = document.getElementById(CONSTANTS.UI_IDS.RATIO_ENABLE_CHECKBOX);
@@ -526,10 +585,13 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             ratioMinInput.disabled = !enabled;
             ratioMaxInput.disabled = !enabled;
         }
-        ratioEnableCheckbox.addEventListener('change', updateRatioSectionState);
+        ratioEnableCheckbox.addEventListener('change', () => {
+            updateRatioSectionState();
+            applyCheckboxChange(CONSTANTS.STORAGE_KEYS.RATIO_ENABLED, CONSTANTS.UI_IDS.RATIO_ENABLE_CHECKBOX);
+        });
         updateRatioSectionState();
 
-        document.getElementById(CONSTANTS.UI_IDS.CLOSE_BUTTON).onclick = function() { div.remove(); };
+        document.getElementById(CONSTANTS.UI_IDS.CLOSE_BUTTON).onclick = function () { div.remove(); };
 
         const saveButton = document.getElementById(CONSTANTS.UI_IDS.SAVE_BUTTON);
 
@@ -539,8 +601,8 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
         ratioMaxInput.addEventListener('keydown', enterKeySave);
 
         let isDragging = false, offsetX, offsetY;
-        div.addEventListener('mousedown', function(e) {
-            if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON' || e.target.tagName === 'LABEL' || e.target.id === CONSTANTS.UI_IDS.CLOSE_BUTTON || e.target.id === CONSTANTS.UI_IDS.CHANGE_SHORTCUT_BTN) return;
+        div.addEventListener('mousedown', function (e) {
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON' || e.target.tagName === 'LABEL' || e.target.id === CONSTANTS.UI_IDS.CLOSE_BUTTON || e.target.id === CONSTANTS.UI_IDS.CHANGE_SHORTCUT_BTN || e.target.classList.contains('switch-slider')) return;
             isDragging = true;
             const rect = div.getBoundingClientRect();
             if (div.style.transform !== 'none') {
@@ -570,28 +632,19 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             document.removeEventListener('mousemove', onMouseMove);
         }
 
-        saveButton.onclick = async function() {
+        saveButton.onclick = async function () {
             saveButton.disabled = true;
             saveButton.textContent = '저장 중...';
 
-            const blockGuestChecked = document.getElementById(CONSTANTS.UI_IDS.BLOCK_GUEST_CHECKBOX).checked;
             let val = parseInt(document.getElementById(CONSTANTS.UI_IDS.THRESHOLD_INPUT).value, 10);
             if (isNaN(val)) val = 0;
 
             const promises = [
-                GM_setValue(CONSTANTS.STORAGE_KEYS.MASTER_DISABLED, document.getElementById(CONSTANTS.UI_IDS.MASTER_DISABLE_CHECKBOX).checked),
-                GM_setValue(CONSTANTS.STORAGE_KEYS.EXCLUDE_RECOMMENDED, document.getElementById(CONSTANTS.UI_IDS.EXCLUDE_RECOMMENDED_CHECKBOX).checked),
+                // 스위치 항목들은 이미 실시간 저장되므로 수치 입력 부분만 명시적으로 저장
                 GM_setValue(CONSTANTS.STORAGE_KEYS.THRESHOLD, val),
-                GM_setValue(CONSTANTS.STORAGE_KEYS.RATIO_ENABLED, document.getElementById(CONSTANTS.UI_IDS.RATIO_ENABLE_CHECKBOX).checked),
                 GM_setValue(CONSTANTS.STORAGE_KEYS.RATIO_MIN, document.getElementById(CONSTANTS.UI_IDS.RATIO_MIN_INPUT).value),
-                GM_setValue(CONSTANTS.STORAGE_KEYS.RATIO_MAX, document.getElementById(CONSTANTS.UI_IDS.RATIO_MAX_INPUT).value),
-                GM_setValue(CONSTANTS.STORAGE_KEYS.BLOCK_GUEST, blockGuestChecked),
-                GM_setValue(CONSTANTS.STORAGE_KEYS.BLOCK_TELECOM, document.getElementById(CONSTANTS.UI_IDS.TELECOM_BLOCK_CHECKBOX).checked)
+                GM_setValue(CONSTANTS.STORAGE_KEYS.RATIO_MAX, document.getElementById(CONSTANTS.UI_IDS.RATIO_MAX_INPUT).value)
             ];
-
-            if (!blockGuestChecked) {
-                promises.push(clearBlockedGuests());
-            }
 
             try {
                 await Promise.all(promises);
@@ -758,7 +811,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             xhr.withCredentials = true;
             xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded; charset=UTF-8');
             xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
-            xhr.onload = function() {
+            xhr.onload = function () {
                 const text = xhr.responseText;
                 const [post, comment] = text.split(',').map(x => parseInt(x, 10));
                 if (!isNaN(post) && !isNaN(comment)) {
@@ -795,8 +848,8 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
     async function addBlockedGuest(ip) {
         const settings = window.dcFilterSettings || {};
         if (settings.blockedGuests && !settings.blockedGuests.includes(ip)) {
-             settings.blockedGuests.push(ip);
-             await setBlockedGuests(settings.blockedGuests);
+            settings.blockedGuests.push(ip);
+            await setBlockedGuests(settings.blockedGuests);
         }
     }
 
@@ -832,7 +885,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
         const shouldBeBlocked = sumBlocked || ratioBlocked;
 
         if (element.style.display !== 'none') {
-             element.style.display = shouldBeBlocked ? 'none' : '';
+            element.style.display = shouldBeBlocked ? 'none' : '';
         }
 
         if (shouldBeBlocked) {
@@ -1304,7 +1357,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
                     alert('차단 목록을 성공적으로 불러와 추가했습니다.');
                     closePopup();
                     const mgmtPanel = document.getElementById('dc-block-management-panel');
-                    if(mgmtPanel) mgmtPanel.querySelector('.panel-close-btn').click();
+                    if (mgmtPanel) mgmtPanel.querySelector('.panel-close-btn').click();
                 } catch (err) { alert('데이터 형식이 올바르지 않습니다.'); }
             };
         },
@@ -1489,10 +1542,10 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
                 if (!activeShortcutObject || !activeShortcutObject.key) return;
 
                 const isMatch = e.key.toUpperCase() === activeShortcutObject.key &&
-                                e.ctrlKey === activeShortcutObject.ctrlKey &&
-                                e.shiftKey === activeShortcutObject.shiftKey &&
-                                e.altKey === activeShortcutObject.altKey &&
-                                e.metaKey === activeShortcutObject.metaKey;
+                    e.ctrlKey === activeShortcutObject.ctrlKey &&
+                    e.shiftKey === activeShortcutObject.shiftKey &&
+                    e.altKey === activeShortcutObject.altKey &&
+                    e.metaKey === activeShortcutObject.metaKey;
 
                 if (isMatch) {
                     e.preventDefault();
