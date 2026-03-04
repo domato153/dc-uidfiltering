@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         DC_UserFilter_Mobile
 // @namespace    http://tampermonkey.net/
-// @version      2.6.9
-// @description  유저 필터링, UI 개선, 개인 차단/해제 기능 추가
+// @version      2.7.0
+// @description  유저 필터링, UI 개선, 개인 차단/해제 기능
 // @author       domato153
 // @match        https://gall.dcinside.com/*
 // @grant        GM_setValue
@@ -2825,6 +2825,9 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             );
 
             commentTextEls.forEach(el => {
+                // [v2.7.0 수정] 이미지 본문에 달린 댓글은 확대를 제외합니다.
+                if (el.closest('.img_comment')) return;
+
                 // 이미 이 스크립트가 처리한 요소는 중복 처리 방지
                 if (el.dataset.scaledByCmtFilter) return;
                 el.dataset.scaledByCmtFilter = '1';
@@ -2874,6 +2877,9 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             const authorRatio = 1 + (commentRatio - 1) * 0.4; // 요청에 따라 40% 배율로 통일
 
             authorEls.forEach(el => {
+                // [v2.7.0 수정] 이미지 본문 댓글의 닉네임 정보는 확대를 제외합니다.
+                if (el.closest('.img_comment')) return;
+
                 if (el.dataset.scaledByCmtFilter) return;
                 el.dataset.scaledByCmtFilter = '1';
 
