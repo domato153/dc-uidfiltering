@@ -455,27 +455,45 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
                     /* ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼ */
         /* [신규 추가] 이미지 댓글 가독성 개선 (폰트 크기 조정) */
         /* [v2.6.8] 댓글 닉네임/IP 잘림(클리핑) 방지 및 너비 대폭 확보 (8자 이상) */
-        .cmt_nickbox, .gall_writer, .nickname, .ip {
+        /* [v2.6.8] 댓글 닉네임/IP 잘림(클리핑) 방지 및 너비 대폭 확보 (8자 이상) */
+        /* [v2.6.8 수정] 알림창(팝업) 노출을 위해 부모틀의 overflow를 해제하고 텍스트에만 줄임표 적용 */
+        .cmt_nickbox, .gall_writer {
             display: inline-flex !important;
             align-items: center !important;
             width: auto !important;
-            max-width: 250px !important; /* 8~10자 충분히 수용 */
+            max-width: none !important;
             height: auto !important;
+            overflow: visible !important; /* 팝업이 밖으로 나갈 수 있게 허용 */
+            white-space: nowrap !important;
+            vertical-align: middle !important;
+            line-height: normal !important;
+        }
+        .nickname, .ip {
+            display: inline-block !important;
+            max-width: 240px !important; /* 닉네임 길이를 여기서 제한 */
             overflow: hidden !important;
             text-overflow: ellipsis !important;
             white-space: nowrap !important;
-            line-height: normal !important;
             vertical-align: middle !important;
         }
-        .gall_writer { max-width: 260px !important; }
+        .gall_writer { max-width: none !important; }
         .nickname { max-width: 240px !important; }
-        .img_comment .cmt_nickbox {
-            /* [v2.6.8] font-size는 JS scaleAllFontSizes()에서 배율 적용으로 설정됩니다 */
-        }
 
-        .img_comment .usertxt {
-            /* [v2.6.8] font-size는 JS scaleAllFontSizes()에서 배율 적용으로 설정됩니다 */
-            line-height: 1.6 !important;
+        /* [v2.6.8] 유저 데이터 레이어(작성글 검색 등) 위치 최적화 */
+        #user_data_lyr {
+            position: absolute !important;
+            top: 100% !important; /* 닉네임 바로 아래에서 시작 */
+            left: 0 !important;   /* 왼쪽 정렬 */
+            margin-top: 5px !important;
+            z-index: 10001 !important;
+            background: #fff !important;
+            border: 1px solid #ccc !important;
+            box-shadow: 2px 2px 8px rgba(0,0,0,0.2) !important;
+            display: none; /* 기본은 숨김 (JS에서 제어) */
+        }
+        /* 이미지 댓글 내에서의 위치 미세 조정 */
+        .img_comment #user_data_lyr {
+            top: 25px !important;
         }
         /* ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲ */
         /* ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲ */
