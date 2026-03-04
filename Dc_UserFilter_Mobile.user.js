@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         DC_UserFilter_Mobile
 // @namespace    http://tampermonkey.net/
-// @version      2.6.7
+// @version      2.6.8
 // @description  유저 필터링, UI 개선, 개인 차단/해제 기능 추가
 // @author       domato153
 // @match        https://gall.dcinside.com/*
@@ -21,7 +21,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
 ------------------------------------------------------------------*/
 
 
-(function() {
+(function () {
     'use strict';
 
 
@@ -35,7 +35,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
 
 
 
-     // =================================================================
+    // =================================================================
     // ======================== UI Module Style ========================
     // =================================================================
     GM_addStyle(`
@@ -387,7 +387,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             overflow: visible !important;
         }
         .comment_box .usertxt {
-            font-size: 18px !important;
+            /* [v2.6.8] font-size는 JS scaleAllFontSizes()에서 배율 적용으로 설정됩니다 */
             line-height: 1.7 !important;
             word-break: break-all !important;
             color: #333 !important;
@@ -454,12 +454,27 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
         }
                     /* ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼ */
         /* [신규 추가] 이미지 댓글 가독성 개선 (폰트 크기 조정) */
+        /* [v2.6.8] 댓글 닉네임/IP 잘림(클리핑) 방지 및 너비 대폭 확보 (8자 이상) */
+        .cmt_nickbox, .gall_writer, .nickname, .ip {
+            display: inline-flex !important;
+            align-items: center !important;
+            width: auto !important;
+            max-width: 250px !important; /* 8~10자 충분히 수용 */
+            height: auto !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+            white-space: nowrap !important;
+            line-height: normal !important;
+            vertical-align: middle !important;
+        }
+        .gall_writer { max-width: 260px !important; }
+        .nickname { max-width: 240px !important; }
         .img_comment .cmt_nickbox {
-            font-size: 15px !important; /* 닉네임/IP 폰트 크기 (일반 댓글과 통일) */
+            /* [v2.6.8] font-size는 JS scaleAllFontSizes()에서 배율 적용으로 설정됩니다 */
         }
 
         .img_comment .usertxt {
-            font-size: 18px !important; /* 댓글 내용 폰트 크기 (일반 댓글과 통일) */
+            /* [v2.6.8] font-size는 JS scaleAllFontSizes()에서 배율 적용으로 설정됩니다 */
             line-height: 1.6 !important;
         }
         /* ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲ */
@@ -484,7 +499,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
         .gallview_contents p,
         .gallview_contents div,
         .gallview_contents span {
-            font-size: inherit !important;
+            /* [v2.6.8 수정] font-size: inherit 제거 → JS 배율 스케일링으로 대체하여 원본 서식 유지 */
             line-height: inherit !important;
             color: inherit !important;
         }
@@ -497,9 +512,12 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
 
 
         /* [v2.2.0 이식] 추천/비추천 버튼 UI 개선 */
-        .btn_recommend_box .writer_nikcon,
+        /* [v2.6.8] 고정닉 추천수 및 아이콘 노출 (위치 조정) */
+        .btn_recommend_box .writer_nikcon { display: inline-block !important; margin-right: 2px !important; vertical-align: middle !important; }
+        .btn_recommend_box .writer_nikcon img { width: 14px !important; height: 14px !important; vertical-align: middle !important; }
         .btn_recommend_box .font_blue.smallnum {
-            display: none !important;
+            display: inline-block !important; font-size: 11px !important; color: #4263eb !important; vertical-align: middle !important;
+            background: rgba(66, 99, 235, 0.08); padding: 1px 4px; border-radius: 3px; font-weight: normal !important;
         }
         .btn_recommend_box {
             display: flex !important;
@@ -534,11 +552,24 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             height: auto !important;
             background: none !important;
         }
+        .btn_recommend_box .up_num_box {
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: center !important;
+            justify-content: center !important;
+            gap: 2px !important;
+        }
         .btn_recommend_box .up_num,
         .btn_recommend_box .down_num {
             font-size: 16px !important;
             font-weight: bold !important;
             color: #333 !important;
+            line-height: 1 !important;
+        }
+        .btn_recommend_box .sup_num {
+            display: inline-flex !important;
+            align-items: center !important;
+            margin: 0 !important;
         }
 
 
@@ -1048,19 +1079,19 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             div.style = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;padding:24px 20px 18px 20px;min-width:280px;z-index:99999;border:2px solid #333;border-radius:10px;box-shadow:0 0 10px #0008; cursor: move; user-select: none;';
             div.innerHTML = `
                 <div style="margin-bottom:15px;padding-bottom:12px;border-bottom: 2px solid #ccc; display:flex;align-items:center; justify-content: space-between;">
-                    <div style="display:flex; align-items: center;">
-                        <div><input id="${this.CONSTANTS.UI_IDS.MASTER_DISABLE_CHECKBOX}" type="checkbox" style="vertical-align:middle;width:16px;height:16px;" ${masterDisabled ? 'checked' : ''}><label for="${this.CONSTANTS.UI_IDS.MASTER_DISABLE_CHECKBOX}" style="font-size:16px;vertical-align:middle;cursor:pointer;margin-left:6px;"><b>모든 기능 끄기</b></label></div>
-                        <div style="margin-left: 15px; border-left: 2px solid #ccc; padding-left: 15px;"><input id="${this.CONSTANTS.UI_IDS.EXCLUDE_RECOMMENDED_CHECKBOX}" type="checkbox" style="vertical-align:middle;width:16px;height:16px;" ${excludeRecommended ? 'checked' : ''}><label for="${this.CONSTANTS.UI_IDS.EXCLUDE_RECOMMENDED_CHECKBOX}" style="font-size:14px;vertical-align:middle;cursor:pointer;margin-left:6px;"><b>개념글 제외</b></label></div>
+                    <div style="display:flex; align-items: center; gap: 10px;">
+                        <div style="display:flex; align-items:center; gap:7px;"><label class="switch" style="flex-shrink:0;"><input id="${this.CONSTANTS.UI_IDS.MASTER_DISABLE_CHECKBOX}" type="checkbox" ${masterDisabled ? 'checked' : ''}><span class="switch-slider"></span></label><label for="${this.CONSTANTS.UI_IDS.MASTER_DISABLE_CHECKBOX}" style="font-size:15px;cursor:pointer;"><b>모든 기능 끄기</b></label></div>
+                        <div style="border-left: 2px solid #ccc; padding-left: 10px; display:flex; align-items:center; gap:7px;"><label class="switch" style="flex-shrink:0;"><input id="${this.CONSTANTS.UI_IDS.EXCLUDE_RECOMMENDED_CHECKBOX}" type="checkbox" ${excludeRecommended ? 'checked' : ''}><span class="switch-slider"></span></label><label for="${this.CONSTANTS.UI_IDS.EXCLUDE_RECOMMENDED_CHECKBOX}" style="font-size:14px;cursor:pointer;"><b>개념글 제외</b></label></div>
                     </div>
                     <div><button id="${this.CONSTANTS.UI_IDS.CLOSE_BUTTON}" style="background:none;border:none;font-size:24px;cursor:pointer;line-height:1;padding:0 4px;color:#555;">✕</button></div>
                 </div>
                 <div id="${this.CONSTANTS.UI_IDS.SETTINGS_CONTAINER}" style="opacity:${masterDisabled ? 0.5 : 1}; pointer-events:${masterDisabled ? 'none' : 'auto'};">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
                         <div style="display: flex; flex-direction: column; align-items: center;"><h3 style="cursor: default;margin-top:0;margin-bottom:5px;">유저 글+댓글 합 기준값(이 값 이하 차단)</h3><input id="${this.CONSTANTS.UI_IDS.THRESHOLD_INPUT}" type="number" min="0" value="${threshold}" style="width:80px;font-size:16px; cursor: initial;"><div style="font-size:13px;color:#666;margin-top:5px;">0 또는 빈칸으로 두면 비활성화됩니다.</div></div>
-                        <div style="border: 2px solid #000; border-radius: 5px; padding: 8px 8px 5px 6px;"><div style="display: flex; flex-direction: column; align-items: flex-end; gap: 5px;"><span style="display:inline-flex; align-items:center; gap:4px; padding-bottom: 5px; border-bottom: 1px solid #ddd;"><input id="${this.CONSTANTS.UI_IDS.BLOCK_GUEST_CHECKBOX}" type="checkbox" ${blockGuestEnabled ? 'checked' : ''} style="vertical-align:middle;"><label for="${this.CONSTANTS.UI_IDS.BLOCK_GUEST_CHECKBOX}" style="font-size:13px;vertical-align:middle;cursor:pointer;">유동 전체 차단</label></span><span style="display:inline-flex; align-items:center; gap:4px; margin-top: 5px;"><input id="${this.CONSTANTS.UI_IDS.TELECOM_BLOCK_CHECKBOX}" type="checkbox" ${telecomBlockEnabled ? 'checked' : ''} style="vertical-align:middle;"><label for="${this.CONSTANTS.UI_IDS.TELECOM_BLOCK_CHECKBOX}" style="font-size:13px;vertical-align:middle;cursor:pointer;">통신사 IP 차단</label></span></div></div>
+                        <div style="border: 2px solid #000; border-radius: 5px; padding: 8px 8px 5px 6px;"><div style="display: flex; flex-direction: column; align-items: flex-start; gap: 7px;"><div style="display:flex; align-items:center; gap:6px; padding-bottom: 5px; border-bottom: 1px solid #ddd; width:100%;"><label class="switch" style="flex-shrink:0;"><input id="${this.CONSTANTS.UI_IDS.BLOCK_GUEST_CHECKBOX}" type="checkbox" ${blockGuestEnabled ? 'checked' : ''}><span class="switch-slider"></span></label><label for="${this.CONSTANTS.UI_IDS.BLOCK_GUEST_CHECKBOX}" style="font-size:13px;cursor:pointer;">유동 전체 차단</label></div><div style="display:flex; align-items:center; gap:6px;"><label class="switch" style="flex-shrink:0;"><input id="${this.CONSTANTS.UI_IDS.TELECOM_BLOCK_CHECKBOX}" type="checkbox" ${telecomBlockEnabled ? 'checked' : ''}><span class="switch-slider"></span></label><label for="${this.CONSTANTS.UI_IDS.TELECOM_BLOCK_CHECKBOX}" style="font-size:13px;cursor:pointer;">통신사 IP 차단</label></div></div></div>
                     </div>
                     <hr style="border:0;border-top:2px solid #222;margin:16px 0 12px 0;">
-                    <div style="margin-bottom:8px;display:flex;align-items:center;"><input id="${this.CONSTANTS.UI_IDS.RATIO_ENABLE_CHECKBOX}" type="checkbox" style="vertical-align:middle;" ${ratioEnabled ? 'checked' : ''}><label for="${this.CONSTANTS.UI_IDS.RATIO_ENABLE_CHECKBOX}" style="font-size:15px;vertical-align:middle;cursor:pointer;margin-left:4px;">글/댓글 비율 필터 사용</label></div>
+                    <div style="margin-bottom:8px;display:flex;align-items:center;gap:8px;"><label class="switch" style="flex-shrink:0;"><input id="${this.CONSTANTS.UI_IDS.RATIO_ENABLE_CHECKBOX}" type="checkbox" ${ratioEnabled ? 'checked' : ''}><span class="switch-slider"></span></label><label for="${this.CONSTANTS.UI_IDS.RATIO_ENABLE_CHECKBOX}" style="font-size:15px;cursor:pointer;">글/댓글 비율 필터 사용</label></div>
                     <div id="${this.CONSTANTS.UI_IDS.RATIO_SECTION}">
                         <div style="display:flex;gap:10px;align-items:center;">
                             <div style="display:flex;flex-direction:column;align-items:center;"><label for="${this.CONSTANTS.UI_IDS.RATIO_MIN_INPUT}" style="font-size:14px;">댓글/글 비율 일정 이상 차단 </label><div style="font-size:12px;color:#888;line-height:1.2;">(댓글만 많은 놈)</div><input id="${this.CONSTANTS.UI_IDS.RATIO_MIN_INPUT}" type="number" step="any" placeholder="예: 10" value="${ratioMin !== '' ? ratioMin : ''}" style="width:100px;font-size:15px;text-align:center; margin-top: 4px;"></div>
@@ -1097,6 +1128,32 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             const ratioMaxInput = document.getElementById(this.CONSTANTS.UI_IDS.RATIO_MAX_INPUT);
             const updateRatioSectionState = () => { const enabled = ratioEnableCheckbox.checked; ratioSection.style.opacity = enabled ? 1 : 0.5; ratioMinInput.disabled = !enabled; ratioMaxInput.disabled = !enabled; };
             ratioEnableCheckbox.addEventListener('change', updateRatioSectionState); updateRatioSectionState();
+
+            // [v2.6.8 추가] 스위치 실시간 저장 & 필터 재적용
+            const applyCheckboxChange = async (storageKey, value, extraLogic) => {
+                await GM_setValue(storageKey, value);
+                if (extraLogic) await extraLogic();
+                this.refilterAllContent();
+            };
+
+            masterDisableCheckbox.addEventListener('change', () =>
+                applyCheckboxChange(this.CONSTANTS.STORAGE_KEYS.MASTER_DISABLED, masterDisableCheckbox.checked)
+            );
+            document.getElementById(this.CONSTANTS.UI_IDS.EXCLUDE_RECOMMENDED_CHECKBOX).addEventListener('change', (e) =>
+                applyCheckboxChange(this.CONSTANTS.STORAGE_KEYS.EXCLUDE_RECOMMENDED, e.target.checked)
+            );
+            document.getElementById(this.CONSTANTS.UI_IDS.BLOCK_GUEST_CHECKBOX).addEventListener('change', async (e) => {
+                const checked = e.target.checked;
+                await applyCheckboxChange(this.CONSTANTS.STORAGE_KEYS.BLOCK_GUEST, checked,
+                    checked ? null : () => this.clearBlockedGuests()
+                );
+            });
+            document.getElementById(this.CONSTANTS.UI_IDS.TELECOM_BLOCK_CHECKBOX).addEventListener('change', (e) =>
+                applyCheckboxChange(this.CONSTANTS.STORAGE_KEYS.BLOCK_TELECOM, e.target.checked)
+            );
+            ratioEnableCheckbox.addEventListener('change', (e) =>
+                applyCheckboxChange(this.CONSTANTS.STORAGE_KEYS.RATIO_ENABLED, e.target.checked)
+            );
             document.getElementById(this.CONSTANTS.UI_IDS.CLOSE_BUTTON).onclick = () => div.remove();
             const saveButton = document.getElementById(this.CONSTANTS.UI_IDS.SAVE_BUTTON);
             const enterKeySave = (e) => { if (e.key === 'Enter') saveButton.click(); };
@@ -1970,7 +2027,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
                 try {
                     importedList = JSON.parse(jsonString);
                     if (typeof importedList !== 'object' || !importedList.uids || !importedList.nicknames || !importedList.ips) {
-                       throw new Error('Invalid data format');
+                        throw new Error('Invalid data format');
                     }
                 } catch (err) {
                     alert('데이터 형식이 올바르지 않습니다. JSON 형식이 맞는지 확인해주세요.');
@@ -2613,12 +2670,154 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
         },
 
 
+        /**
+         * [v2.6.8 수정] 본문 + 댓글 글자크기 배율 스케일링 통합 함수
+         *
+         * [본문 처리]
+         *   DC 에디터 기본 글자크기(12pt = 16px)를 기준으로 배율을 계산하여,
+         *   .gallview_contents 내 인라인 font-size가 있는 요소들만 비례 확대합니다.
+         *   → 원본 서식(크기 차이)은 그대로 유지됩니다.
+         *
+         * [댓글 처리]
+         *   .comment_box .usertxt 및 .img_comment .usertxt 요소에 대해
+         *   DC 댓글 기본 글자크기(13px)를 기준으로 배율을 계산하여 적용합니다.
+         *   인라인 서식이 지정된 경우에도 해당 크기에 배율을 적용합니다.
+         */
+        scaleAllFontSizes() {
+            // ── pt → px 변환 계수 ──
+            const PT_TO_PX = 4 / 3; // 1pt = 1.333...px
+
+            // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+            // [1] 본문 글자크기 배율 스케일링
+            // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+            const contentEl = document.querySelector('.gallview_contents');
+            if (contentEl) {
+                // CSS로 설정된 .gallview_contents font-size (현재 26px)
+                const targetSize = parseFloat(window.getComputedStyle(contentEl).fontSize);
+                // DC 에디터 기본: 12pt = 16px
+                const contentBasePx = 16;
+                const contentRatio = targetSize / contentBasePx;
+
+                if (contentRatio > 1) {
+                    contentEl.querySelectorAll('*').forEach(el => {
+                        const inlineFontSize = el.style.fontSize;
+                        if (!inlineFontSize) return; // 인라인 없으면 부모 상속
+
+                        let originalPx = 0;
+                        if (inlineFontSize.endsWith('pt')) {
+                            originalPx = parseFloat(inlineFontSize) * PT_TO_PX;
+                        } else if (inlineFontSize.endsWith('px')) {
+                            originalPx = parseFloat(inlineFontSize);
+                        } else {
+                            return; // em, rem 등 무시
+                        }
+                        if (isNaN(originalPx) || originalPx <= 0) return;
+
+                        const scaledPx = Math.round(originalPx * contentRatio * 10) / 10;
+                        el.style.setProperty('font-size', scaledPx + 'px', 'important');
+                    });
+                }
+            }
+
+            // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+            // [2] 댓글 글자크기 배율 스케일링
+            //     대상: .comment_box .usertxt
+            //           .img_comment .usertxt (이미지 댓글)
+            // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+            if (!contentEl) return; // 글 보기 페이지가 아니면 댓글 처리도 불필요
+
+            // CSS로 설정된 .gallview_contents font-size 재사용
+            const postTargetSize = parseFloat(window.getComputedStyle(contentEl).fontSize);
+            // 댓글 기본 글자크기: DC 사이트의 reset.css + .comment_wrap 기준 ≈ 13px
+            const commentBasePx = 13;
+            const commentRatio = postTargetSize / commentBasePx;
+
+            if (commentRatio <= 1) return;
+
+            const commentTextEls = document.querySelectorAll(
+                '.comment_box .usertxt, .img_comment .usertxt'
+            );
+
+            commentTextEls.forEach(el => {
+                // 이미 이 스크립트가 처리한 요소는 중복 처리 방지
+                if (el.dataset.scaledByCmtFilter) return;
+                el.dataset.scaledByCmtFilter = '1';
+
+                // 댓글 요소 자체: 인라인 스타일 있으면 그거 기준, 없으면 기본 13px 기준
+                const inlineFontSize = el.style.fontSize;
+                let basePxForEl = commentBasePx;
+
+                if (inlineFontSize) {
+                    if (inlineFontSize.endsWith('pt')) {
+                        basePxForEl = parseFloat(inlineFontSize) * PT_TO_PX;
+                    } else if (inlineFontSize.endsWith('px')) {
+                        basePxForEl = parseFloat(inlineFontSize);
+                    }
+                }
+
+                if (isNaN(basePxForEl) || basePxForEl <= 0) return;
+
+                const scaledPx = Math.round(basePxForEl * commentRatio * 10) / 10;
+                el.style.setProperty('font-size', scaledPx + 'px', 'important');
+
+                // 댓글 내부 인라인 서식도 동일 배율로 처리
+                el.querySelectorAll('*').forEach(child => {
+                    const childInline = child.style.fontSize;
+                    if (!childInline) return;
+
+                    let childPx = 0;
+                    if (childInline.endsWith('pt')) {
+                        childPx = parseFloat(childInline) * PT_TO_PX;
+                    } else if (childInline.endsWith('px')) {
+                        childPx = parseFloat(childInline);
+                    } else {
+                        return;
+                    }
+                    if (isNaN(childPx) || childPx <= 0) return;
+
+                    const childScaled = Math.round(childPx * commentRatio * 10) / 10;
+                    child.style.setProperty('font-size', childScaled + 'px', 'important');
+                });
+            });
+
+            // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+            // [3] 댓글 작성자 정보(닉네임, 아이콘) 스케일링
+            // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+            // [v2.6.8 수정] 작성자 정보(텍스트+로고) 모두 기존 배율의 40%만 적용하여 밸런스 유지
+            const authorEls = document.querySelectorAll('.cmt_nickbox .nickname, .cmt_nickbox .ip, .cmt_nickbox .writer_nikcon');
+            const authorRatio = 1 + (commentRatio - 1) * 0.4; // 요청에 따라 40% 배율로 통일
+
+            authorEls.forEach(el => {
+                if (el.dataset.scaledByCmtFilter) return;
+                el.dataset.scaledByCmtFilter = '1';
+
+                // 텍스트 요소(닉네임, IP 등) 확대 (40% 배율)
+                const computed = window.getComputedStyle(el);
+                const currentSize = parseFloat(computed.fontSize);
+                if (currentSize > 0) {
+                    const scaledSize = Math.round(currentSize * authorRatio * 10) / 10;
+                    el.style.setProperty('font-size', scaledSize + 'px', 'important');
+                }
+
+                // 고정닉/통피 아이콘(img) 크기 확대 (40% 배율)
+                el.querySelectorAll('img').forEach(img => {
+                    const imgComp = window.getComputedStyle(img);
+                    const w = parseFloat(imgComp.width);
+                    const h = parseFloat(imgComp.height);
+                    if (w > 0 && h > 0) {
+                        img.style.setProperty('width', Math.round(w * authorRatio) + 'px', 'important');
+                        img.style.setProperty('height', Math.round(h * authorRatio) + 'px', 'important');
+                    }
+                });
+            });
+        },
+
         transformWritePage() {
             if (document.body.classList.contains('is-write-page')) return;
             document.body.classList.add('is-write-page');
 
             const writeBox = document.querySelector('.write_box');
-            if(writeBox) {
+            if (writeBox) {
                 const topTable = writeBox.querySelector('.w_top');
                 if (topTable) {
                     const userInfoRow = topTable.querySelector('tr:nth-child(2)');
@@ -2638,7 +2837,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
                 if (adScript && adScript.parentElement.tagName === 'DIV') {
                     const adContainer = adScript.parentElement; // 바로 그 <div>가 범인
                     adContainer.remove(); // 컨테이너를 페이지에서 완전히 제거
-                    
+
                     console.log('[DC Filter+UI] 글쓰기 페이지 광고 컨테이너 제거 완료.');
                     clearInterval(adRemovalInterval); // 임무 완수 후 타이머 종료
                 }
@@ -2684,6 +2883,8 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
                 if (viewBottomContainer) {
                     this.applyForceRefreshPagination(viewBottomContainer);
                 }
+                // [v2.6.8] 본문 + 댓글 글자크기 배율 스케일링 (통합)
+                this.scaleAllFontSizes();
             }
 
 
@@ -2695,26 +2896,37 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             processAllLists();
 
 
-            // [디버깅 추가]
+            // [UI 이벤트 기반 변화 감지 옵저버]
             const observer = new MutationObserver((mutations) => {
-                // console.log(`[디버깅] UIModule observer 실행됨. (mutations: ${mutations.length}개)`); // 디버깅용 로그 (해결 후 제거 가능)
+                let needsListUpdate = false;
+                let needsCommentScale = false;
+
                 for (const mutation of mutations) {
                     for (const node of mutation.addedNodes) {
-                        // [최종 수정] 텍스트 노드 자체에는 .closest가 없으므로,
-                        // 반드시 node.parentNode에서 UI 요소를 찾아야 오류가 발생하지 않습니다.
                         if (node.parentNode && node.parentNode.closest && (node.parentNode.closest('#dc-backup-popup') || node.parentNode.closest('#dc-block-management-panel') || node.parentNode.closest('#dcinside-filter-setting'))) {
-                            continue; // 스크립트 UI 내부 변화이므로 무시
+                            continue; // 스크립트 UI 내부 변화 무시
                         }
-                        
-                        // Element 노드일 경우에만 UI 변환 로직을 실행합니다.
+
                         if (node.nodeType === Node.ELEMENT_NODE) {
+                            // 글 목록 변화 감지
                             if (node.matches(this.SELECTORS.LIST_WRAP) || node.querySelector(this.SELECTORS.LIST_WRAP)) {
-                                processAllLists();
-                                return;
+                                needsListUpdate = true;
+                            }
+                            // [v2.6.8 추가] 댓글 목록 변화 감지 (페이장 전환 등 동적 로딩)
+                            if (
+                                node.matches('ul.cmt_list') ||
+                                node.querySelector('ul.cmt_list') ||
+                                node.matches('li.ub-content') ||
+                                (node.parentNode && node.parentNode.matches && node.parentNode.matches('ul.cmt_list'))
+                            ) {
+                                needsCommentScale = true;
                             }
                         }
                     }
                 }
+
+                if (needsListUpdate) processAllLists();
+                if (needsCommentScale) this.scaleAllFontSizes();
             });
             observer.observe(document.body, { childList: true, subtree: true });
         }
@@ -2749,10 +2961,10 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
 
 
             const isMatch = e.key.toUpperCase() === activeShortcutObject.key &&
-                            e.ctrlKey === activeShortcutObject.ctrlKey &&
-                            e.shiftKey === activeShortcutObject.shiftKey &&
-                            e.altKey === activeShortcutObject.altKey &&
-                            e.metaKey === activeShortcutObject.metaKey;
+                e.ctrlKey === activeShortcutObject.ctrlKey &&
+                e.shiftKey === activeShortcutObject.shiftKey &&
+                e.altKey === activeShortcutObject.altKey &&
+                e.metaKey === activeShortcutObject.metaKey;
 
 
             if (isMatch) {
@@ -2796,9 +3008,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
 
 
 
-        // ==========================================================
-    // ▼▼▼▼▼▼▼▼▼▼▼ 바로 이 위치에 아래 코드를 추가하세요 ▼▼▼▼▼▼▼▼▼▼▼
-    // ==========================================================
+
     const observeDarkMode = () => {
         const head = document.head;
         if (!head) {
@@ -2822,5 +3032,5 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
         checkDarkModeStatus();
     };
     observeDarkMode();
-    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
 })();
