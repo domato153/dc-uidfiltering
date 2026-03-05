@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         DC_UserFilter_Mobile
 // @namespace    http://tampermonkey.net/
-// @version      2.7.0
+// @version      2.7.0.1
 // @description  유저 필터링, UI 개선, 개인 차단/해제 기능
 // @author       domato153
 // @match        https://gall.dcinside.com/*
@@ -2786,7 +2786,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
 
                 if (contentRatio > 1) {
                     contentEl.querySelectorAll('*').forEach(el => {
-                        // [v2.7.1 추가] 이미 스케일링된 요소는 중복 처리 방지
+                        // [v2.7.0.1 추가] 이미 스케일링된 요소는 중복 처리 방지
                         if (el.dataset.scaledByFilter) return;
                         el.dataset.scaledByFilter = '1';
 
