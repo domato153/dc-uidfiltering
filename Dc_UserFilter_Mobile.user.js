@@ -2786,6 +2786,10 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
 
                 if (contentRatio > 1) {
                     contentEl.querySelectorAll('*').forEach(el => {
+                        // [v2.7.1 추가] 이미 스케일링된 요소는 중복 처리 방지
+                        if (el.dataset.scaledByFilter) return;
+                        el.dataset.scaledByFilter = '1';
+
                         const inlineFontSize = el.style.fontSize;
                         if (!inlineFontSize) return; // 인라인 없으면 부모 상속
 
