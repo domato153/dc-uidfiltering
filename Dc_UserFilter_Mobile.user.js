@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         DC_UserFilter_Mobile
 // @namespace    http://tampermonkey.net/
-// @version      2.7.1.2
+// @version      2.7.1.3
 // @description  유저 필터링, UI 개선, 개인 차단/해제 기능
 // @author       domato153
 // @match        https://gall.dcinside.com/*
@@ -5785,7 +5785,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
         #focus_cmt > .cmt_write_box .user_info_input *::after {
             content: none !important;
         }
-        #focus_cmt > .cmt_write_box .user_info_input input {
+        #focus_cmt > .cmt_write_box .user_info_input input:not([readonly]):not([type="hidden"]) {
             position: relative !important;
             z-index: 1 !important;
             display: block !important;
@@ -5912,7 +5912,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             background: transparent !important;
             box-shadow: none !important;
         }
-        #focus_cmt .reply_box .cmt_write_box.small .user_info_input input {
+        #focus_cmt .reply_box .cmt_write_box.small .user_info_input input:not([readonly]):not([type="hidden"]) {
             height: 32px !important;
             min-height: 32px !important;
             margin: 0 !important;
@@ -5921,6 +5921,18 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             border-radius: 10px !important;
             background: #fff !important;
             box-sizing: border-box !important;
+        }
+        #focus_cmt > .cmt_write_box .user_info_input input[readonly],
+        #focus_cmt .reply_box .cmt_write_box.small .user_info_input input[readonly],
+        #focus_cmt > .cmt_write_box .user_info_input input[id^="gall_nick_name_"],
+        #focus_cmt .reply_box .cmt_write_box.small .user_info_input input[id^="gall_nick_name_"] {
+            display: none !important;
+            width: 0 !important;
+            height: 0 !important;
+            min-height: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            border: 0 !important;
         }
         #focus_cmt .reply_box .cmt_write_box.small .cmt_txt_cont {
             grid-column: 2 !important;
