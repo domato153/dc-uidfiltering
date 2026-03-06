@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         DC_UserFilter_Mobile
 // @namespace    http://tampermonkey.net/
-// @version      2.7.1.1
+// @version      2.7.1.2
 // @description  유저 필터링, UI 개선, 개인 차단/해제 기능
 // @author       domato153
 // @match        https://gall.dcinside.com/*
@@ -5522,7 +5522,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             background: #fff !important;
             box-shadow: inset 0 0 0 1px #dde6f1, 0 8px 20px rgba(15, 23, 42, 0.04) !important;
             overflow: visible !important;
-            z-index: 1 !important;
+            z-index: auto !important;
         }
         div[id^="comment_wrap_"] .comment_box .cmt_list > li:first-child,
         div[id^="comment_wrap_"] .comment_box .cmt_list > li + li {
@@ -6102,7 +6102,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
         #focus_cmt > div[id^="comment_wrap_"] .view_comment .reply_info {
             overflow: visible !important;
             position: relative !important;
-            z-index: 2 !important;
+            z-index: auto !important;
             border-top: 0 !important;
             padding-top: 0 !important;
         }
@@ -6198,7 +6198,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
         #focus_cmt > div[id^="comment_wrap_"] .comment_box .gall_writer.ub-writer {
             overflow: visible !important;
             position: relative !important;
-            z-index: 6 !important;
+            z-index: auto !important;
         }
         #focus_cmt #user_data_lyr,
         #focus_cmt .user_data,
@@ -6225,7 +6225,9 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
         .view_content_wrap .recom_bottom_box > button,
         #focus_cmt .reply_box,
         #focus_cmt .reply_box .cmt_write_box.small,
-        #focus_cmt .reply_box .cmt_cont_bottm {
+        #focus_cmt .reply_box .cmt_write_box.small .cmt_txt_cont,
+        #focus_cmt .reply_box .cmt_cont_bottm,
+        #focus_cmt .reply_box .dccon_guidebox {
             overflow: visible !important;
         }
         .view_content_wrap .pop_wrap.type2,
@@ -6264,6 +6266,18 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
         #focus_cmt .comment_box .cmt_list > li:has(.reply_list > li:has(.user_data[style*="display: block"])) {
             position: relative !important;
             z-index: 2147483646 !important;
+            overflow: visible !important;
+        }
+        #focus_cmt .comment_box .cmt_info:has(#user_data_lyr[style*="display:block"]),
+        #focus_cmt .comment_box .cmt_info:has(#user_data_lyr[style*="display: block"]),
+        #focus_cmt .comment_box .cmt_info:has(.user_data[style*="display:block"]),
+        #focus_cmt .comment_box .cmt_info:has(.user_data[style*="display: block"]),
+        #focus_cmt .comment_box .reply_info:has(#user_data_lyr[style*="display:block"]),
+        #focus_cmt .comment_box .reply_info:has(#user_data_lyr[style*="display: block"]),
+        #focus_cmt .comment_box .reply_info:has(.user_data[style*="display:block"]),
+        #focus_cmt .comment_box .reply_info:has(.user_data[style*="display: block"]) {
+            position: relative !important;
+            z-index: 2147483647 !important;
             overflow: visible !important;
         }
         body.dc-filter-dark-mode #focus_cmt > div[id^="comment_wrap_"] .comment_box .cmt_list > li {
@@ -6890,7 +6904,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
 
     const collectActiveLis = () => {
         const active = new Set();
-        document.querySelectorAll('#focus_cmt #user_data_lyr, #focus_cmt .user_data').forEach((popup) => {
+        document.querySelectorAll('#focus_cmt #user_data_lyr, #focus_cmt .user_data, #focus_cmt #dccon_guide_lyr, #focus_cmt .pop_wrap.type2, #focus_cmt .pop_wrap.type3').forEach((popup) => {
             if (!(popup instanceof HTMLElement)) return;
             if (!isVisible(popup)) return;
 
