@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         DC_UserFilter_Mobile
 // @namespace    http://tampermonkey.net/
-// @version      2.7.1
+// @version      2.7.1.1
 // @description  유저 필터링, UI 개선, 개인 차단/해제 기능
 // @author       domato153
 // @match        https://gall.dcinside.com/*
@@ -23,6 +23,13 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
 
 (function () {
     'use strict';
+
+    const __dcufRoot = (typeof unsafeWindow !== 'undefined' && unsafeWindow) ? unsafeWindow : window;
+    if (__dcufRoot.__dcufRuntimeLoaded) {
+        console.warn('DCinside User Filter: duplicate runtime detected, skip init.');
+        return;
+    }
+    __dcufRoot.__dcufRuntimeLoaded = `dcuf-${Date.now()}`;
 
 
     // [개선] 전역 스코프 오염 방지를 위해 스크립트 상태 변수를 IIFE 내부 스코프로 이동
@@ -916,11 +923,424 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
         #dc-backup-popup textarea { flex-grow: 1; height: 80px; resize: vertical; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 12px; font-family: monospace; }
         #dc-backup-popup button { padding: 8px 12px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
         /* [수정] 기존 버튼들에 flex 속성 추가 */
-        #dc-backup-popup .export-btn { background-color: #28a745; color: white; flex: 1; }
+        #dc-backup-popup .export-btn { background-color: #3b71fd; color: #fff; border: 1px solid #3b71fd; flex: 1; }
         /* [추가] '파일로 다운로드' 버튼 전용 스타일 */
-        #dc-backup-popup .export-btn-download { background-color: #17a2b8; color: white; flex: 1; }
+        #dc-backup-popup .export-btn-download { background-color: #ffffff; color: #374151; border: 1px solid #d4dbe8; flex: 1; }
         /* [수정] 불러오기 버튼 스타일 조정 */
-        #dc-backup-popup .import-btn { background-color: #007bff; color: white; width: 100%; margin-top: 8px; }
+        #dc-backup-popup .import-btn { background-color: #3b71fd; color: #fff; border: 1px solid #3b71fd; width: 100%; margin-top: 8px; }
+
+        /* Popup refresh */
+        #dcinside-filter-setting,
+        #dc-selection-popup,
+        #dc-backup-popup,
+        #dc-block-management-panel {
+            border: 1px solid #d9dee7 !important;
+            border-radius: 14px !important;
+            box-shadow: 0 18px 42px rgba(26, 39, 60, 0.18) !important;
+        }
+        #dcinside-filter-setting,
+        #dc-selection-popup,
+        #dc-backup-popup {
+            animation: dcuf-popup-center-in 0.16s ease-out;
+        }
+        #dc-block-management-panel {
+            animation: dcuf-popup-fade-in 0.16s ease-out;
+            min-width: 460px !important;
+            min-height: 340px !important;
+            background: #f7f9fc !important;
+        }
+        #dcinside-filter-setting {
+            min-width: 540px !important;
+            max-width: min(92vw, 680px) !important;
+            padding: 18px !important;
+            cursor: default !important;
+        }
+        #dcinside-filter-setting .dcuf-settings-header {
+            margin-bottom: 12px !important;
+            padding: 0 0 12px !important;
+            border-bottom: 1px solid #e5e9f1 !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            gap: 10px !important;
+        }
+        #dcinside-filter-setting .dcuf-settings-header > div:first-child {
+            display: flex !important;
+            flex-wrap: wrap !important;
+            gap: 10px !important;
+            align-items: center !important;
+        }
+        #dcinside-filter-setting .dcuf-settings-header > div:first-child > div {
+            border-left: 0 !important;
+            padding-left: 0 !important;
+        }
+        #dcinside-filter-setting .dcuf-settings-body {
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 10px !important;
+        }
+        #dcinside-filter-setting .dcuf-settings-body > hr {
+            display: none !important;
+        }
+        #dcinside-filter-setting .dcuf-settings-section {
+            border: 1px solid #e5e9f1 !important;
+            background: #fbfcff !important;
+            border-radius: 10px !important;
+            padding: 12px !important;
+        }
+        #dcinside-filter-setting .dcuf-settings-threshold {
+            display: flex !important;
+            gap: 12px !important;
+            align-items: flex-start !important;
+            justify-content: space-between !important;
+        }
+        #dcinside-filter-setting .dcuf-settings-threshold > div:first-child {
+            flex: 0 1 280px !important;
+            min-width: 0 !important;
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: center !important;
+            text-align: center !important;
+        }
+        #dcinside-filter-setting .dcuf-settings-threshold > div:first-child > h3 {
+            width: 100% !important;
+            text-align: center !important;
+        }
+        #dcinside-filter-setting .dcuf-settings-threshold > div:first-child > input {
+            margin: 0 auto !important;
+        }
+        #dcinside-filter-setting .dcuf-settings-threshold > div:first-child > div {
+            width: auto !important;
+            min-height: 0 !important;
+            max-width: 100% !important;
+            border: 0 !important;
+            background: transparent !important;
+            padding: 0 !important;
+            text-align: center !important;
+        }
+        #dcinside-filter-setting .dcuf-settings-threshold > div:last-child {
+            flex: 0 0 auto !important;
+            border: 0 !important;
+            border-radius: 10px !important;
+            background: #fff !important;
+            padding: 10px !important;
+            box-shadow: none !important;
+        }
+        #dcinside-filter-setting #dcinside-ratio-section > div:first-child {
+            display: grid !important;
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+            gap: 10px !important;
+            align-items: stretch !important;
+        }
+        #dcinside-filter-setting #dcinside-ratio-section > div:last-child {
+            text-align: center !important;
+        }
+        #dcinside-filter-setting #dcinside-threshold-input,
+        #dcinside-filter-setting #dcinside-ratio-min,
+        #dcinside-filter-setting #dcinside-ratio-max {
+            min-height: 40px !important;
+            border: 1px solid #cfd7e6 !important;
+            border-radius: 8px !important;
+            padding: 6px 10px !important;
+            box-sizing: border-box !important;
+            background: #fff !important;
+        }
+        #dcinside-filter-setting .dcuf-settings-footer {
+            margin-top: 12px !important;
+            padding-top: 12px !important;
+            border-top: 1px solid #e5e9f1 !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            gap: 10px !important;
+        }
+        #dcinside-filter-setting #dcinside-threshold-save {
+            background: #3b71fd !important;
+            color: #fff !important;
+            border: 1px solid #3b71fd !important;
+            border-radius: 9px !important;
+            min-height: 42px !important;
+            padding: 0 16px !important;
+            font-weight: 700 !important;
+        }
+        #dcinside-filter-setting #dcinside-filter-close,
+        #dc-backup-popup .popup-close-btn,
+        #dc-block-management-panel .panel-close-btn {
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            text-align: center !important;
+            padding: 0 !important;
+            line-height: 1 !important;
+        }
+        #dcinside-filter-setting #dcinside-filter-close {
+            width: 30px !important;
+            height: 30px !important;
+            border-radius: 999px !important;
+        }
+
+        #dc-block-management-panel .panel-header {
+            background: #f3f6fc !important;
+            border-bottom: 1px solid #e3e8f2 !important;
+            padding: 12px 14px !important;
+        }
+        #dc-block-management-panel .panel-close-btn {
+            width: 28px !important;
+            height: 28px !important;
+            border-radius: 999px !important;
+            color: #4b5563 !important;
+        }
+        #dc-block-management-panel .panel-close-btn:hover {
+            background: #e9eef8 !important;
+        }
+        #dc-block-management-panel .panel-tabs {
+            background: #f8faff !important;
+            border-bottom: 1px solid #e5e9f1 !important;
+            padding: 6px !important;
+            gap: 6px !important;
+        }
+        #dc-block-management-panel .panel-tab {
+            border-right: 0 !important;
+            border-radius: 8px !important;
+            font-weight: 600 !important;
+            color: #4b5563 !important;
+            padding: 10px 8px !important;
+            position: relative !important;
+        }
+        #dc-block-management-panel .panel-tab.active {
+            background: #eaf1ff !important;
+            color: #1d4ed8 !important;
+            font-weight: 700 !important;
+        }
+        #dc-block-management-panel .panel-tab.active::after {
+            content: '';
+            position: absolute;
+            left: 12px;
+            right: 12px;
+            bottom: 6px;
+            height: 2px;
+            border-radius: 999px;
+            background: #3b71fd;
+        }
+        #dc-block-management-panel .select-all-btn,
+        #dc-block-management-panel .select-all-global-btn,
+        #dc-block-management-panel .panel-backup-btn {
+            min-height: 36px !important;
+            border: 1px solid #d4dbe8 !important;
+            border-radius: 8px !important;
+            background: #fff !important;
+            color: #374151 !important;
+            font-weight: 600 !important;
+            transition: background-color 0.14s ease, border-color 0.14s ease;
+        }
+        #dc-block-management-panel .select-all-btn:hover,
+        #dc-block-management-panel .select-all-global-btn:hover,
+        #dc-block-management-panel .panel-backup-btn:hover {
+            background: #f6f9ff !important;
+            border-color: #b8c8ea !important;
+        }
+        #dc-block-management-panel .panel-save-btn {
+            min-height: 38px !important;
+            border-radius: 9px !important;
+            padding: 0 18px !important;
+            font-weight: 700 !important;
+            box-shadow: 0 6px 16px rgba(59, 113, 253, 0.24) !important;
+        }
+        #dc-block-management-panel .blocked-list {
+            padding: 6px 10px 12px !important;
+        }
+        #dc-block-management-panel .blocked-item {
+            min-height: 44px !important;
+            padding: 10px 8px !important;
+            border-bottom: 1px solid #edf1f7 !important;
+            transition: background-color 0.14s ease, opacity 0.14s ease;
+        }
+        #dc-block-management-panel .blocked-item:hover {
+            background: #f6f9ff !important;
+        }
+        #dc-block-management-panel .blocked-item.item-to-delete {
+            background: #fff5f6 !important;
+            opacity: 0.5 !important;
+        }
+        #dc-block-management-panel .delete-item-btn {
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            width: 24px !important;
+            height: 24px !important;
+            border-radius: 999px !important;
+            background: #ffe9ec !important;
+            color: #e03131 !important;
+            font-size: 14px !important;
+            line-height: 1 !important;
+            padding: 0 !important;
+            transition: background-color 0.14s ease;
+        }
+        #dc-block-management-panel .delete-item-btn:hover {
+            background: #ffd4dc !important;
+        }
+
+        #dc-backup-popup {
+            min-width: 420px !important;
+            max-width: min(92vw, 560px) !important;
+            padding: 18px !important;
+        }
+        #dc-backup-popup .popup-header {
+            margin-bottom: 12px !important;
+            padding-bottom: 10px !important;
+            border-bottom: 1px solid #e5e9f1 !important;
+        }
+        #dc-backup-popup .popup-close-btn {
+            width: 28px !important;
+            height: 28px !important;
+            border-radius: 999px !important;
+        }
+        #dc-backup-popup .popup-close-btn:hover {
+            background: #eef3fb !important;
+        }
+        #dc-backup-popup .export-btn,
+        #dc-backup-popup .export-btn-download,
+        #dc-backup-popup .import-btn {
+            min-height: 40px !important;
+            border-radius: 8px !important;
+            font-weight: 700 !important;
+            transition: background-color 0.14s ease, border-color 0.14s ease, color 0.14s ease !important;
+        }
+        #dc-backup-popup .export-btn {
+            background: #3b71fd !important;
+            border: 1px solid #3b71fd !important;
+            color: #fff !important;
+        }
+        #dc-backup-popup .export-btn:hover {
+            background: #2f63ea !important;
+            border-color: #2f63ea !important;
+        }
+        #dc-backup-popup .export-btn-download {
+            background: #eef4ff !important;
+            border: 1px solid #c8d8ff !important;
+            color: #315fc2 !important;
+        }
+        #dc-backup-popup .export-btn-download:hover {
+            background: #e2edff !important;
+            border-color: #b4cbff !important;
+        }
+        #dc-backup-popup .import-btn {
+            background: #3b71fd !important;
+            border: 1px solid #3b71fd !important;
+            color: #fff !important;
+            box-shadow: 0 6px 16px rgba(59, 113, 253, 0.22) !important;
+        }
+        #dc-backup-popup .import-btn:hover {
+            background: #2f63ea !important;
+            border-color: #2f63ea !important;
+        }
+        #dc-backup-popup .import-file-input,
+        #dc-backup-popup textarea {
+            border: 1px solid #d2dae8 !important;
+            border-radius: 8px !important;
+            background: #fff !important;
+        }
+
+        #dcinside-filter-setting,
+        #dc-backup-popup,
+        #dc-block-management-panel {
+            touch-action: pan-x pan-y !important;
+        }
+
+        #dcinside-filter-setting,
+        #dc-backup-popup {
+            overflow: hidden !important;
+            resize: both !important;
+        }
+        #dcinside-filter-setting {
+            min-height: 360px !important;
+        }
+        #dc-backup-popup {
+            min-height: 320px !important;
+        }
+
+        #dcinside-filter-setting .dcuf-settings-body {
+            max-height: calc(92vh - 156px) !important;
+            overflow-y: auto !important;
+            padding-right: 2px !important;
+        }
+
+        #dc-backup-popup .popup-content {
+            max-height: calc(92vh - 96px) !important;
+            overflow-y: auto !important;
+            padding-right: 2px !important;
+        }
+
+
+        #dc-selection-popup {
+            min-width: 360px !important;
+            max-width: min(92vw, 520px) !important;
+            padding: 18px !important;
+        }
+        #dc-selection-popup .block-option {
+            border: 1px solid #e4e9f3 !important;
+            background: #f8fbff !important;
+            border-radius: 9px !important;
+        }
+
+        #dc-block-management-panel-overlay,
+        #dc-backup-popup-overlay {
+            backdrop-filter: blur(2px);
+        }
+
+        @keyframes dcuf-popup-center-in {
+            from { opacity: 0; transform: translate(-50%, -48%) scale(0.985); }
+            to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        }
+        @keyframes dcuf-popup-fade-in {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes dcuf-popup-out {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
+        @keyframes dcuf-overlay-out {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
+        #dcinside-filter-setting.dcuf-pop-leave,
+        #dc-selection-popup.dcuf-pop-leave,
+        #dc-backup-popup.dcuf-pop-leave,
+        #dc-block-management-panel.dcuf-pop-leave {
+            animation: dcuf-popup-out 0.13s ease-in forwards !important;
+            pointer-events: none !important;
+        }
+        #dc-block-management-panel-overlay.dcuf-overlay-leave,
+        #dc-backup-popup-overlay.dcuf-overlay-leave {
+            animation: dcuf-overlay-out 0.13s ease-in forwards !important;
+            pointer-events: none !important;
+        }
+
+        @media (max-width: 640px) {
+            #dcinside-filter-setting { min-width: auto !important; width: min(96vw, 640px) !important; }
+            #dcinside-filter-setting #dcinside-ratio-section > div:first-child {
+                grid-template-columns: 1fr !important;
+            }
+            #dc-block-management-panel { min-width: min(96vw, 520px) !important; }
+            #dc-backup-popup { min-width: auto !important; width: min(96vw, 560px) !important; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            #dcinside-filter-setting,
+            #dc-selection-popup,
+            #dc-backup-popup,
+            #dc-block-management-panel,
+            #dcinside-filter-setting.dcuf-pop-leave,
+            #dc-selection-popup.dcuf-pop-leave,
+            #dc-backup-popup.dcuf-pop-leave,
+            #dc-block-management-panel.dcuf-pop-leave,
+            #dc-block-management-panel-overlay.dcuf-overlay-leave,
+            #dc-backup-popup-overlay.dcuf-overlay-leave {
+                animation: none !important;
+                transition: none !important;
+            }
+        }
 
         /* [수정] DCCon 및 각종 팝업 모바일 반응형 중앙 정렬 */
          /* --- [최종 진짜 수정 v9] 야간 모드 완벽 지원 (색상 반전 대응) --- */
@@ -1079,6 +1499,39 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
              color: #fff !important;
              border-color: #777 !important;
         }
+
+        body.dc-filter-dark-mode #dcinside-filter-setting,
+        body.dc-filter-dark-mode #dc-selection-popup,
+        body.dc-filter-dark-mode #dc-backup-popup,
+        body.dc-filter-dark-mode #dc-block-management-panel {
+            border-color: #445066 !important;
+            box-shadow: 0 18px 44px rgba(0, 0, 0, 0.45) !important;
+        }
+        body.dc-filter-dark-mode #dcinside-filter-setting .dcuf-settings-section,
+        body.dc-filter-dark-mode #dc-selection-popup .block-option {
+            background: #323845 !important;
+            border-color: #434f66 !important;
+        }
+        body.dc-filter-dark-mode #dcinside-filter-setting #dcinside-threshold-input,
+        body.dc-filter-dark-mode #dcinside-filter-setting #dcinside-ratio-min,
+        body.dc-filter-dark-mode #dcinside-filter-setting #dcinside-ratio-max,
+        body.dc-filter-dark-mode #dc-backup-popup .import-file-input,
+        body.dc-filter-dark-mode #dc-backup-popup textarea {
+            background: #252b36 !important;
+            border-color: #47556f !important;
+            color: #eef3ff !important;
+        }
+        body.dc-filter-dark-mode #dc-block-management-panel .panel-tab.active {
+            background: #253556 !important;
+            color: #8db2ff !important;
+        }
+        body.dc-filter-dark-mode #dc-block-management-panel .blocked-item:hover {
+            background: #2f394b !important;
+        }
+        body.dc-filter-dark-mode #dc-block-management-panel .delete-item-btn {
+            background: #53313a !important;
+            color: #ff9fb1 !important;
+        }
     `);
 
 
@@ -1214,7 +1667,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             if (existingDiv) existingDiv.remove();
             const div = document.createElement('div');
             div.id = this.CONSTANTS.UI_IDS.SETTINGS_PANEL;
-            div.style = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;padding:24px 20px 18px 20px;min-width:280px;z-index:99999;border:2px solid #333;border-radius:10px;box-shadow:0 0 10px #0008; cursor: move; user-select: none;';
+            div.style = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;padding:24px 20px 18px 20px;min-width:280px;z-index:99999;border:2px solid #333;border-radius:10px;box-shadow:0 0 10px #0008; cursor: default; user-select: none;';
             div.innerHTML = `
                 <div style="margin-bottom:15px;padding-bottom:12px;border-bottom: 2px solid #ccc; display:flex;align-items:center; justify-content: space-between;">
                     <div style="display:flex; align-items: center; gap: 10px;">
@@ -1245,60 +1698,109 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
                     <button id="${this.CONSTANTS.UI_IDS.SAVE_BUTTON}" style="font-size:16px;border:2px solid #000;border-radius:4px;background:#fff; cursor: pointer; padding: 4px 10px;">저장 & 실행</button>
                 </div>`;
             document.body.appendChild(div);
-            const input = document.getElementById(this.CONSTANTS.UI_IDS.THRESHOLD_INPUT);
-            input.focus(); input.select();
 
 
-            // [v2.1 추가] 단축키 변경 버튼 이벤트 리스너
-            document.getElementById(this.CONSTANTS.UI_IDS.CHANGE_SHORTCUT_BTN).onclick = (e) => {
-                e.preventDefault();
-                this.showShortcutChanger();
+            div.classList.add('dcuf-settings-panel');
+            const settingsHeader = div.firstElementChild;
+            if (settingsHeader) settingsHeader.classList.add('dcuf-settings-header');
+            const settingsFooter = div.lastElementChild;
+            if (settingsFooter) settingsFooter.classList.add('dcuf-settings-footer');
+            const settingsMain = document.getElementById(this.CONSTANTS.UI_IDS.SETTINGS_CONTAINER);
+            if (settingsMain) {
+                settingsMain.classList.add('dcuf-settings-body');
+                const thresholdSection = settingsMain.firstElementChild;
+                if (thresholdSection) thresholdSection.classList.add('dcuf-settings-section', 'dcuf-settings-threshold');
+            }
+            const ratioSectionRoot = document.getElementById(this.CONSTANTS.UI_IDS.RATIO_SECTION);
+            if (ratioSectionRoot) ratioSectionRoot.classList.add('dcuf-settings-section', 'dcuf-settings-ratio');
+
+            try {
+                PersonalBlockModule.attachPopupPinchResize(div, { minWidth: 280, minHeight: 220 });
+            } catch (e) {
+                console.warn('DCinside User Filter: settings pinch init failed.', e);
+            }
+
+            const closeSettingsPanel = () => {
+                div.classList.add('dcuf-pop-leave');
+                window.setTimeout(() => div.remove(), 140);
             };
 
+            const input = div.querySelector(`#${this.CONSTANTS.UI_IDS.THRESHOLD_INPUT}`);
+            const changeShortcutBtn = div.querySelector(`#${this.CONSTANTS.UI_IDS.CHANGE_SHORTCUT_BTN}`);
+            const masterDisableCheckbox = div.querySelector(`#${this.CONSTANTS.UI_IDS.MASTER_DISABLE_CHECKBOX}`);
+            const settingsContainer = div.querySelector(`#${this.CONSTANTS.UI_IDS.SETTINGS_CONTAINER}`);
+            const ratioSection = div.querySelector(`#${this.CONSTANTS.UI_IDS.RATIO_SECTION}`);
+            const ratioEnableCheckbox = div.querySelector(`#${this.CONSTANTS.UI_IDS.RATIO_ENABLE_CHECKBOX}`);
+            const ratioMinInput = div.querySelector(`#${this.CONSTANTS.UI_IDS.RATIO_MIN_INPUT}`);
+            const ratioMaxInput = div.querySelector(`#${this.CONSTANTS.UI_IDS.RATIO_MAX_INPUT}`);
+            const closeButton = div.querySelector(`#${this.CONSTANTS.UI_IDS.CLOSE_BUTTON}`);
+            const saveButton = div.querySelector(`#${this.CONSTANTS.UI_IDS.SAVE_BUTTON}`);
+            const excludeRecommendedCheckbox = div.querySelector(`#${this.CONSTANTS.UI_IDS.EXCLUDE_RECOMMENDED_CHECKBOX}`);
+            const blockGuestCheckbox = div.querySelector(`#${this.CONSTANTS.UI_IDS.BLOCK_GUEST_CHECKBOX}`);
+            const telecomBlockCheckbox = div.querySelector(`#${this.CONSTANTS.UI_IDS.TELECOM_BLOCK_CHECKBOX}`);
 
-            const masterDisableCheckbox = document.getElementById(this.CONSTANTS.UI_IDS.MASTER_DISABLE_CHECKBOX);
-            const settingsContainer = document.getElementById(this.CONSTANTS.UI_IDS.SETTINGS_CONTAINER);
+            if (input) { input.focus(); input.select(); }
+
+            if (changeShortcutBtn) {
+                changeShortcutBtn.onclick = (e) => {
+                    e.preventDefault();
+                    this.showShortcutChanger();
+                };
+            }
+
+            if (closeButton) {
+                closeButton.onclick = closeSettingsPanel;
+                closeButton.addEventListener('touchend', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    closeSettingsPanel();
+                }, { passive: false });
+            }
+
+            if (!masterDisableCheckbox || !settingsContainer || !ratioSection || !ratioEnableCheckbox || !ratioMinInput || !ratioMaxInput || !saveButton || !excludeRecommendedCheckbox || !blockGuestCheckbox || !telecomBlockCheckbox) {
+                console.error('DCinside User Filter: settings popup init failed - required control missing.');
+                return;
+            }
+
             const updateMasterState = () => { const isMasterDisabled = masterDisableCheckbox.checked; settingsContainer.style.opacity = isMasterDisabled ? 0.5 : 1; settingsContainer.style.pointerEvents = isMasterDisabled ? 'none' : 'auto'; };
             masterDisableCheckbox.addEventListener('change', updateMasterState); updateMasterState();
-            const ratioSection = document.getElementById(this.CONSTANTS.UI_IDS.RATIO_SECTION);
-            const ratioEnableCheckbox = document.getElementById(this.CONSTANTS.UI_IDS.RATIO_ENABLE_CHECKBOX);
-            const ratioMinInput = document.getElementById(this.CONSTANTS.UI_IDS.RATIO_MIN_INPUT);
-            const ratioMaxInput = document.getElementById(this.CONSTANTS.UI_IDS.RATIO_MAX_INPUT);
             const updateRatioSectionState = () => { const enabled = ratioEnableCheckbox.checked; ratioSection.style.opacity = enabled ? 1 : 0.5; ratioMinInput.disabled = !enabled; ratioMaxInput.disabled = !enabled; };
             ratioEnableCheckbox.addEventListener('change', updateRatioSectionState); updateRatioSectionState();
 
-            // [v2.6.8 추가] 스위치 실시간 저장 & 필터 재적용
+            // [v2.6.8 추가] 스위치 실시간 저장 & 필터 즉시 적용
             const applyCheckboxChange = async (storageKey, value, extraLogic) => {
                 await GM_setValue(storageKey, value);
                 if (extraLogic) await extraLogic();
-                this.refilterAllContent();
+                await this.refilterAllContent();
             };
 
             masterDisableCheckbox.addEventListener('change', () =>
                 applyCheckboxChange(this.CONSTANTS.STORAGE_KEYS.MASTER_DISABLED, masterDisableCheckbox.checked)
             );
-            document.getElementById(this.CONSTANTS.UI_IDS.EXCLUDE_RECOMMENDED_CHECKBOX).addEventListener('change', (e) =>
+            excludeRecommendedCheckbox.addEventListener('change', (e) =>
                 applyCheckboxChange(this.CONSTANTS.STORAGE_KEYS.EXCLUDE_RECOMMENDED, e.target.checked)
             );
-            document.getElementById(this.CONSTANTS.UI_IDS.BLOCK_GUEST_CHECKBOX).addEventListener('change', async (e) => {
+            blockGuestCheckbox.addEventListener('change', async (e) => {
                 const checked = e.target.checked;
                 await applyCheckboxChange(this.CONSTANTS.STORAGE_KEYS.BLOCK_GUEST, checked,
                     checked ? null : () => this.clearBlockedGuests()
                 );
             });
-            document.getElementById(this.CONSTANTS.UI_IDS.TELECOM_BLOCK_CHECKBOX).addEventListener('change', (e) =>
+            telecomBlockCheckbox.addEventListener('change', (e) =>
                 applyCheckboxChange(this.CONSTANTS.STORAGE_KEYS.BLOCK_TELECOM, e.target.checked)
             );
             ratioEnableCheckbox.addEventListener('change', (e) =>
                 applyCheckboxChange(this.CONSTANTS.STORAGE_KEYS.RATIO_ENABLED, e.target.checked)
             );
-            document.getElementById(this.CONSTANTS.UI_IDS.CLOSE_BUTTON).onclick = () => div.remove();
-            const saveButton = document.getElementById(this.CONSTANTS.UI_IDS.SAVE_BUTTON);
+
             const enterKeySave = (e) => { if (e.key === 'Enter') saveButton.click(); };
-            [input, ratioMinInput, ratioMaxInput].forEach(el => el.addEventListener('keydown', enterKeySave));
+            [input, ratioMinInput, ratioMaxInput].forEach(el => { if (el) el.addEventListener('keydown', enterKeySave); });
             let isDragging = false, offsetX, offsetY;
             const onDragStart = (e) => {
-                if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON' || e.target.tagName === 'LABEL' || e.target.id === FilterModule.CONSTANTS.UI_IDS.CLOSE_BUTTON || e.target.id === FilterModule.CONSTANTS.UI_IDS.CHANGE_SHORTCUT_BTN) return;
+                if (e.type === 'touchstart' && e.touches && e.touches.length > 1) return;
+                const startTarget = (e.target && e.target.nodeType === 1) ? e.target : e.target.parentElement;
+                if (!startTarget || !startTarget.closest('.dcuf-settings-header')) return;
+                if (startTarget.closest('button, input, label, a, .switch') || startTarget.id === FilterModule.CONSTANTS.UI_IDS.CLOSE_BUTTON || startTarget.id === FilterModule.CONSTANTS.UI_IDS.CHANGE_SHORTCUT_BTN) return;
                 isDragging = true;
                 const rect = div.getBoundingClientRect();
                 if (div.style.transform !== 'none') { div.style.transform = 'none'; div.style.left = `${rect.left}px`; div.style.top = `${rect.top}px`; }
@@ -1309,7 +1811,9 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
                 document.addEventListener('mouseup', onDragEnd, { once: true }); document.addEventListener('touchend', onDragEnd, { once: true });
             };
             const onDragMove = (e) => {
-                if (!isDragging) return; e.preventDefault();
+                if (!isDragging) return;
+                if (e.type === 'touchmove' && e.touches && e.touches.length > 1) return;
+                e.preventDefault();
                 const rect = div.getBoundingClientRect();
                 const clientX = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
                 const clientY = e.type === 'touchmove' ? e.touches[0].clientY : e.clientY;
@@ -1318,24 +1822,39 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
                 div.style.left = `${newX}px`; div.style.top = `${newY}px`;
             };
             const onDragEnd = () => { isDragging = false; document.removeEventListener('mousemove', onDragMove); document.removeEventListener('touchmove', onDragMove); };
-            div.addEventListener('mousedown', onDragStart); div.addEventListener('touchstart', onDragStart);
+            const dragHandle = settingsHeader || div;
+            try {
+                dragHandle.addEventListener('mousedown', onDragStart);
+                dragHandle.addEventListener('touchstart', onDragStart, { passive: true });
+            } catch (e) {
+                console.warn('DCinside User Filter: settings drag init failed.', e);
+            }
             saveButton.onclick = async () => {
                 saveButton.disabled = true; saveButton.textContent = '저장 중...';
-                const blockGuestChecked = document.getElementById(this.CONSTANTS.UI_IDS.BLOCK_GUEST_CHECKBOX).checked;
-                let val = parseInt(document.getElementById(this.CONSTANTS.UI_IDS.THRESHOLD_INPUT).value, 10);
+                const blockGuestChecked = blockGuestCheckbox.checked;
+                let val = parseInt(input ? input.value : '0', 10);
                 if (isNaN(val)) val = 0;
                 const promises = [
-                    GM_setValue(this.CONSTANTS.STORAGE_KEYS.MASTER_DISABLED, document.getElementById(this.CONSTANTS.UI_IDS.MASTER_DISABLE_CHECKBOX).checked),
-                    GM_setValue(this.CONSTANTS.STORAGE_KEYS.EXCLUDE_RECOMMENDED, document.getElementById(this.CONSTANTS.UI_IDS.EXCLUDE_RECOMMENDED_CHECKBOX).checked),
+                    GM_setValue(this.CONSTANTS.STORAGE_KEYS.MASTER_DISABLED, masterDisableCheckbox.checked),
+                    GM_setValue(this.CONSTANTS.STORAGE_KEYS.EXCLUDE_RECOMMENDED, excludeRecommendedCheckbox.checked),
                     GM_setValue(this.CONSTANTS.STORAGE_KEYS.THRESHOLD, val),
-                    GM_setValue(this.CONSTANTS.STORAGE_KEYS.RATIO_ENABLED, document.getElementById(this.CONSTANTS.UI_IDS.RATIO_ENABLE_CHECKBOX).checked),
-                    GM_setValue(this.CONSTANTS.STORAGE_KEYS.RATIO_MIN, document.getElementById(this.CONSTANTS.UI_IDS.RATIO_MIN_INPUT).value),
-                    GM_setValue(this.CONSTANTS.STORAGE_KEYS.RATIO_MAX, document.getElementById(this.CONSTANTS.UI_IDS.RATIO_MAX_INPUT).value),
+                    GM_setValue(this.CONSTANTS.STORAGE_KEYS.RATIO_ENABLED, ratioEnableCheckbox.checked),
+                    GM_setValue(this.CONSTANTS.STORAGE_KEYS.RATIO_MIN, ratioMinInput.value),
+                    GM_setValue(this.CONSTANTS.STORAGE_KEYS.RATIO_MAX, ratioMaxInput.value),
                     GM_setValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_GUEST, blockGuestChecked),
-                    GM_setValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_TELECOM, document.getElementById(this.CONSTANTS.UI_IDS.TELECOM_BLOCK_CHECKBOX).checked)
+                    GM_setValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_TELECOM, telecomBlockCheckbox.checked)
                 ];
-                if (!blockGuestChecked) promises.push(this.clearBlockedGuests());
-                try { await Promise.all(promises); location.reload(); } catch (error) { console.error('DCinside User Filter: Settings save failed.', error); saveButton.disabled = false; saveButton.textContent = '저장 & 실행'; alert('설정 저장에 실패했습니다. 콘솔을 확인해주세요.'); }
+                if (!blockGuestChecked) promises.push(this.clearBlockedGuests()); try {
+                    await Promise.all(promises);
+                    await this.reloadSettings();
+                    await this.refilterAllContent();
+                    closeSettingsPanel();
+                } catch (error) {
+                    console.error('DCinside User Filter: Settings save failed.', error);
+                    saveButton.disabled = false;
+                    saveButton.textContent = '저장 & 실행';
+                    alert('설정 저장에 실패했습니다. 콘솔을 확인해 주세요.');
+                }
             };
         },
         // [v2.1.1 수정] 단축키 변경 모달 표시 (실시간 입력 감지 로직 개선)
@@ -1702,7 +2221,6 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
                 filterItems(Array.from(container.querySelectorAll(itemSelector)));
                 // [디버깅 추가]
                 new MutationObserver(mutations => {
-                    console.log(`[디버깅] FilterModule attachObserver 실행됨. (container:`, container, `, mutations: ${mutations.length}개)`); // 디버깅 로그 추가
                     const newItems = [];
                     mutations.forEach(m => m.addedNodes.forEach(n => {
                         if (n.nodeType !== 1) return;
@@ -1717,7 +2235,6 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
 
             // [디버깅 추가]
             const bodyObserver = new MutationObserver(mutations => {
-                console.log(`[디버깅] FilterModule bodyObserver 실행됨. (mutations: ${mutations.length}개)`); // 디버깅 로그 추가
                 mutations.forEach(m => m.addedNodes.forEach(n => {
                     if (n.parentNode && n.parentNode.closest && (n.parentNode.closest('#dc-backup-popup') || n.parentNode.closest('#dc-block-management-panel') || n.parentNode.closest('#dcinside-filter-setting'))) {
                         return;
@@ -1984,6 +2501,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
                 </div>
             `;
             document.body.appendChild(popup);
+
             popup.querySelector('.cancel-btn').onclick = () => this.exitSelectionMode();
         },
 
@@ -1993,7 +2511,10 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             this.isSelectionMode = false;
             document.body.classList.remove('selection-mode-active');
             const popup = document.getElementById('dc-selection-popup');
-            if (popup) popup.remove();
+            if (popup) {
+                popup.classList.add('dcuf-pop-leave');
+                window.setTimeout(() => popup.remove(), 120);
+            }
         },
 
 
@@ -2084,6 +2605,139 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
 
 
         // [신규] 차단 목록 병합 헬퍼 함수
+        attachPopupPinchResize(target, options = {}) {
+            if (!target) return;
+            if (target.getAttribute('data-dcuf-pinch-resize-bound') === '1') return;
+            target.setAttribute('data-dcuf-pinch-resize-bound', '1');
+
+            const baseMinWidth = Number(options.minWidth) || 320;
+            const baseMinHeight = Number(options.minHeight) || 260;
+            const maxWidthOption = Number(options.maxWidth) || 0;
+            const maxHeightOption = Number(options.maxHeight) || 0;
+
+            let isPinching = false;
+            let startDistance = 0;
+            let startWidth = 0;
+            let startHeight = 0;
+            let lastMoveTs = 0;
+            let lastMoveDistance = -1;
+
+            const clamp = (value, min, max) => Math.max(min, Math.min(value, max));
+            const getDistance = (t1, t2) => Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
+            const getMidpoint = (t1, t2) => ({ x: (t1.clientX + t2.clientX) / 2, y: (t1.clientY + t2.clientY) / 2 });
+            const viewportSize = () => ({ width: window.innerWidth, height: window.innerHeight });
+
+            const normalizeFixedPosition = () => {
+                const rect = target.getBoundingClientRect();
+                if (target.style.transform && target.style.transform !== 'none') {
+                    target.style.transform = 'none';
+                    target.style.left = `${rect.left}px`;
+                    target.style.top = `${rect.top}px`;
+                }
+                return target.getBoundingClientRect();
+            };
+
+            const isTouchInsideRect = (touch, rect, padding = 24) => (
+                touch.clientX >= rect.left - padding &&
+                touch.clientX <= rect.right + padding &&
+                touch.clientY >= rect.top - padding &&
+                touch.clientY <= rect.bottom + padding
+            );
+
+            const canStartPinch = (touches, rect) => {
+                if (!touches || touches.length < 2) return false;
+                const t1 = touches[0];
+                const t2 = touches[1];
+                if (!isTouchInsideRect(t1, rect) || !isTouchInsideRect(t2, rect)) return false;
+                const mid = getMidpoint(t1, t2);
+                return isTouchInsideRect({ clientX: mid.x, clientY: mid.y }, rect, 48);
+            };
+
+            const startPinch = (touches) => {
+                const rect = normalizeFixedPosition();
+                if (!canStartPinch(touches, rect)) return;
+
+                const distance = getDistance(touches[0], touches[1]);
+                if (!distance || !isFinite(distance)) return;
+
+                isPinching = true;
+                startDistance = distance;
+                startWidth = rect.width;
+                startHeight = rect.height;
+                lastMoveTs = 0;
+                lastMoveDistance = -1;
+            };
+
+            const onTouchStart = (e) => {
+                if (!target.isConnected) return;
+                if (!e.touches || e.touches.length < 2) return;
+                startPinch(e.touches);
+                if (isPinching) {
+                    if (e.cancelable) e.preventDefault();
+                    e.stopPropagation();
+                }
+            };
+
+            const onTouchMove = (e) => {
+                if (!target.isConnected || !isPinching) return;
+                if (!e.touches || e.touches.length < 2) {
+                    isPinching = false;
+                    return;
+                }
+
+                const distance = getDistance(e.touches[0], e.touches[1]);
+                if (!distance || !isFinite(distance)) return;
+
+                const now = Date.now();
+                if (lastMoveDistance >= 0 && Math.abs(distance - lastMoveDistance) < 0.0001 && (now - lastMoveTs) < 6) {
+                    if (e.cancelable) e.preventDefault();
+                    e.stopPropagation();
+                    return;
+                }
+                lastMoveDistance = distance;
+                lastMoveTs = now;
+
+                const mid = getMidpoint(e.touches[0], e.touches[1]);
+                const vp = viewportSize();
+                const maxViewportWidth = Math.max(120, vp.width - 8);
+                const maxViewportHeight = Math.max(120, vp.height - 8);
+
+                const dynamicMinWidth = Math.max(120, Math.min(baseMinWidth, Math.max(120, vp.width - 12)));
+                const dynamicMinHeight = Math.max(120, Math.min(baseMinHeight, Math.max(120, vp.height - 12)));
+
+                const configuredMaxWidth = maxWidthOption > 0 ? Math.min(maxWidthOption, maxViewportWidth) : maxViewportWidth;
+                const configuredMaxHeight = maxHeightOption > 0 ? Math.min(maxHeightOption, maxViewportHeight) : maxViewportHeight;
+                const maxWidth = Math.max(dynamicMinWidth, configuredMaxWidth);
+                const maxHeight = Math.max(dynamicMinHeight, configuredMaxHeight);
+
+                const scale = distance / startDistance;
+                const nextWidth = clamp(startWidth * scale, dynamicMinWidth, maxWidth);
+                const nextHeight = clamp(startHeight * scale, dynamicMinHeight, maxHeight);
+
+                const rawLeft = mid.x - (nextWidth / 2);
+                const rawTop = mid.y - (nextHeight / 2);
+                const nextLeft = clamp(rawLeft, 0, Math.max(0, vp.width - nextWidth));
+                const nextTop = clamp(rawTop, 0, Math.max(0, vp.height - nextHeight));
+
+                target.style.width = `${nextWidth}px`;
+                target.style.height = `${nextHeight}px`;
+                target.style.left = `${nextLeft}px`;
+                target.style.top = `${nextTop}px`;
+
+                if (e.cancelable) e.preventDefault();
+                e.stopPropagation();
+            };
+
+            const onTouchEnd = () => {
+                if (!target.isConnected) return;
+                isPinching = false;
+            };
+
+            target.addEventListener('touchstart', onTouchStart, { passive: false });
+            target.addEventListener('touchmove', onTouchMove, { passive: false });
+            target.addEventListener('touchend', onTouchEnd, { passive: true });
+            target.addEventListener('touchcancel', onTouchEnd, { passive: true });
+        },
         mergeBlockLists(existing, imported) {
             // UIDs 병합 (중복 ID 확인)
             const existingUIDs = new Set(existing.uids.map(u => u.id));
@@ -2140,13 +2794,22 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             document.body.appendChild(overlay);
             document.body.appendChild(popup);
 
+            this.attachPopupPinchResize(popup, { minWidth: 300, minHeight: 240 });
+
+
             const closePopup = () => {
-                overlay.remove();
-                popup.remove();
+                popup.classList.add('dcuf-pop-leave');
+                overlay.classList.add('dcuf-overlay-leave');
+                window.setTimeout(() => {
+                    overlay.remove();
+                    popup.remove();
+                }, 140);
             };
 
             popup.querySelector('.popup-close-btn').onclick = closePopup;
             overlay.onclick = closePopup;
+
+
             // [추가] 파일로 다운로드 버튼 이벤트 핸들러
             popup.querySelector('.export-btn-download').onclick = async () => {
                 const data = await this.loadPersonalBlocks();
@@ -2293,6 +2956,8 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             document.body.appendChild(overlay);
             document.body.appendChild(panel);
 
+            this.attachPopupPinchResize(panel, { minWidth: 320, minHeight: 260 });
+
             // [신규] On/Off 스위치 이벤트 리스너
             const toggleSwitch = panel.querySelector('#personal-block-toggle');
             toggleSwitch.addEventListener('change', async (e) => {
@@ -2429,8 +3094,12 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
 
 
             const closePanel = () => {
-                overlay.remove();
-                panel.remove();
+                panel.classList.add('dcuf-pop-leave');
+                overlay.classList.add('dcuf-overlay-leave');
+                window.setTimeout(() => {
+                    overlay.remove();
+                    panel.remove();
+                }, 140);
             };
 
 
@@ -3000,11 +3669,16 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             }
 
 
-            if (!document.querySelector('meta[name="viewport"]')) {
-                const viewportMeta = document.createElement('meta');
-                viewportMeta.name = 'viewport';
-                viewportMeta.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no';
-                document.head.appendChild(viewportMeta);
+            const viewportMeta = document.querySelector('meta[name="viewport"]');
+            if (!viewportMeta) {
+                const newViewportMeta = document.createElement('meta');
+                newViewportMeta.name = 'viewport';
+                newViewportMeta.content = 'width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes';
+                document.head.appendChild(newViewportMeta);
+            } else if (/user-scalable\s*=\s*no/i.test(viewportMeta.content) || /maximum-scale\s*=\s*1(\.0+)?/i.test(viewportMeta.content)) {
+                viewportMeta.content = viewportMeta.content
+                    .replace(/user-scalable\s*=\s*no/ig, 'user-scalable=yes')
+                    .replace(/maximum-scale\s*=\s*1(\.0+)?/ig, 'maximum-scale=5.0');
             }
 
 
@@ -3465,7 +4139,6 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
         const payload = { status, detail, ts: new Date().toISOString(), href: location.href };
         window[DEBUG_KEY] = payload;
         document.documentElement.setAttribute('data-dcuf-phase1', status);
-        console.log('[DCUF phase1]', payload);
     };
 
     const injectStyle = () => {
