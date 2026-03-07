@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         DC_UserFilter_Mobile
 // @namespace    http://tampermonkey.net/
-// @version      2.7.1.3
+// @version      2.7.1.4
 // @description  유저 필터링, UI 개선, 개인 차단/해제 기능
 // @author       domato153
 // @match        https://gall.dcinside.com/*
@@ -4633,12 +4633,12 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
         }
         .comment_box .usertxt {
             color: var(--dcuf-view-fg) !important;
-            font-size: 13px !important;
+            font-size: 24px !important;
             line-height: 1.5 !important;
             word-break: keep-all !important;
         }
         .comment_box .reply_box .usertxt {
-            font-size: 13px !important;
+            font-size: 24px !important;
         }
         .comment_box .cmt_txtbox img {
             max-width: 100% !important;
@@ -5641,7 +5641,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
         }
         div[id^="comment_wrap_"] .comment_box .usertxt {
             color: var(--dcuf-view-fg) !important;
-            font-size: 15px !important;
+            font-size: 24px !important;
             line-height: 1.62 !important;
             letter-spacing: -0.01em !important;
             word-break: keep-all !important;
@@ -5677,31 +5677,47 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             background: transparent !important;
             box-shadow: none !important;
         }
-        div[id^="comment_wrap_"] .comment_box .reply_list > li .cmt_nickbox {
-            padding-left: 40px !important;
+        div[id^="comment_wrap_"] .comment_box .reply_list > li::before,
+        div[id^="comment_wrap_"] .comment_box .reply_list > li::after,
+        div[id^="comment_wrap_"] .comment_box .reply_list > li .reply_info::before,
+        div[id^="comment_wrap_"] .comment_box .reply_list > li .reply_info::after,
+        div[id^="comment_wrap_"] .comment_box .reply_list > li .cmt_nickbox::before,
+        div[id^="comment_wrap_"] .comment_box .reply_list > li .cmt_nickbox::after,
+        div[id^="comment_wrap_"] .comment_box .reply_list > li .gall_writer::before,
+        div[id^="comment_wrap_"] .comment_box .reply_list > li .gall_writer::after,
+        div[id^="comment_wrap_"] .comment_box .reply_list > li .comment_dccon::before,
+        div[id^="comment_wrap_"] .comment_box .reply_list > li .comment_dccon::after,
+        div[id^="comment_wrap_"] .comment_box .reply_list > li a.mention::before,
+        div[id^="comment_wrap_"] .comment_box .reply_list > li a.mention::after,
+        div[id^="comment_wrap_"] .comment_box .reply_list > li a.mention.deco::before,
+        div[id^="comment_wrap_"] .comment_box .reply_list > li a.mention.deco::after,
+        div[id^="comment_wrap_"] .comment_box .reply_list > li p.usertxt::before,
+        div[id^="comment_wrap_"] .comment_box .reply_list > li p.usertxt::after,
+        div[id^="comment_wrap_"] .comment_box .reply_list > li p.usertxt.ub-word::before,
+        div[id^="comment_wrap_"] .comment_box .reply_list > li p.usertxt.ub-word::after {
+            content: none !important;
+            display: none !important;
         }
-        div[id^="comment_wrap_"] .comment_box .reply_list > li .cmt_nickbox::before {
-            content: ">>" !important;
+        div[id^="comment_wrap_"] .comment_box .reply_list > li .cmt_nickbox {
+            padding-left: 0 !important;
+            position: relative !important;
+        }
+
+        div[id^="comment_wrap_"] .comment_box .reply_list > li .cmt_txtbox {
+            padding-left: 24px !important;
+            position: relative !important;
+        }
+        div[id^="comment_wrap_"] .comment_box .reply_list > li .cmt_txtbox::before {
+            content: "ㄴ" !important;
             position: absolute !important;
-            left: 0 !important;
-            top: 50% !important;
-            transform: translateY(-50%) !important;
-            display: inline-flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            min-width: 34px !important;
-            height: 18px !important;
-            padding: 0 6px !important;
-            border-radius: 999px !important;
-            border: 1px solid #cfe0ff !important;
-            background: #eaf2ff !important;
-            color: #3d5f93 !important;
-            font-size: 11px !important;
-            font-weight: 800 !important;
-            letter-spacing: 0 !important;
+            left: 4px !important;
+            top: 12px !important;
+            transform: none !important;
+            display: inline-block !important;
+            font-size: 13px !important;
             line-height: 1 !important;
-            box-sizing: border-box !important;
-            z-index: 2 !important;
+            color: #6f83a1 !important;
+            font-weight: 700 !important;
         }
         div[id^="comment_wrap_"] .comment_box .reply_list > li:first-child {
             padding-top: 0 !important;
@@ -5715,15 +5731,8 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
         div[id^="comment_wrap_"] .comment_box .reply_list > li:last-child {
             margin-bottom: 0 !important;
         }
-        div[id^="comment_wrap_"] .comment_box .reply_list > li::before {
-            content: none !important;
-            display: none !important;
-        }
-        div[id^="comment_wrap_"] .comment_box .reply_box p.usertxt.ub-word::before,
-        div[id^="comment_wrap_"] .comment_box .reply_box p.usertxt.ub-word::after {
-            content: none !important;
-            display: none !important;
-        }
+
+
         #focus_cmt > .cmt_write_box {
             margin-top: 16px !important;
             display: grid !important;
@@ -6047,15 +6056,10 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
         body.dc-filter-dark-mode div[id^="comment_wrap_"] .comment_box .reply_list > li + li {
             border-top-color: rgba(120, 144, 175, 0.2) !important;
         }
-        body.dc-filter-dark-mode div[id^="comment_wrap_"] .comment_box .reply_list > li .cmt_nickbox::before {
-            border-color: rgba(113, 150, 212, 0.45) !important;
-            background: rgba(52, 79, 122, 0.35) !important;
+        body.dc-filter-dark-mode div[id^="comment_wrap_"] .comment_box .reply_list > li .cmt_txtbox::before {
             color: #d6e7ff !important;
         }
-        body.dc-filter-dark-mode div[id^="comment_wrap_"] .comment_box .reply_list > li::before {
-            content: none !important;
-            display: none !important;
-        }
+
         body.dc-filter-dark-mode div[id^="comment_wrap_"] .comment_box .cmt_nickbox,
         body.dc-filter-dark-mode div[id^="comment_wrap_"] .comment_box .gall_writer,
         body.dc-filter-dark-mode div[id^="comment_wrap_"] .comment_box .nickname,
@@ -6139,9 +6143,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
         #focus_cmt > div[id^="comment_wrap_"] .comment_box .cmt_info::before,
         #focus_cmt > div[id^="comment_wrap_"] .comment_box .cmt_info::after,
         #focus_cmt > div[id^="comment_wrap_"] .comment_box .reply_info::before,
-        #focus_cmt > div[id^="comment_wrap_"] .comment_box .reply_info::after,
-        #focus_cmt > div[id^="comment_wrap_"] .comment_box .cmt_txtbox::before,
-        #focus_cmt > div[id^="comment_wrap_"] .comment_box .cmt_txtbox::after {
+        #focus_cmt > div[id^="comment_wrap_"] .comment_box .reply_info::after {
             content: none !important;
             display: none !important;
         }
@@ -6180,31 +6182,47 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             padding-top: 8px !important;
             border-top: 1px solid #eef2f7 !important;
         }
-        #focus_cmt > div[id^="comment_wrap_"] .comment_box .reply_list > li .cmt_nickbox {
-            padding-left: 40px !important;
+        #focus_cmt > div[id^="comment_wrap_"] .comment_box .reply_list > li::before,
+        #focus_cmt > div[id^="comment_wrap_"] .comment_box .reply_list > li::after,
+        #focus_cmt > div[id^="comment_wrap_"] .comment_box .reply_list > li .reply_info::before,
+        #focus_cmt > div[id^="comment_wrap_"] .comment_box .reply_list > li .reply_info::after,
+        #focus_cmt > div[id^="comment_wrap_"] .comment_box .reply_list > li .cmt_nickbox::before,
+        #focus_cmt > div[id^="comment_wrap_"] .comment_box .reply_list > li .cmt_nickbox::after,
+        #focus_cmt > div[id^="comment_wrap_"] .comment_box .reply_list > li .gall_writer::before,
+        #focus_cmt > div[id^="comment_wrap_"] .comment_box .reply_list > li .gall_writer::after,
+        #focus_cmt > div[id^="comment_wrap_"] .comment_box .reply_list > li .comment_dccon::before,
+        #focus_cmt > div[id^="comment_wrap_"] .comment_box .reply_list > li .comment_dccon::after,
+        #focus_cmt > div[id^="comment_wrap_"] .comment_box .reply_list > li a.mention::before,
+        #focus_cmt > div[id^="comment_wrap_"] .comment_box .reply_list > li a.mention::after,
+        #focus_cmt > div[id^="comment_wrap_"] .comment_box .reply_list > li a.mention.deco::before,
+        #focus_cmt > div[id^="comment_wrap_"] .comment_box .reply_list > li a.mention.deco::after,
+        #focus_cmt > div[id^="comment_wrap_"] .comment_box .reply_list > li p.usertxt::before,
+        #focus_cmt > div[id^="comment_wrap_"] .comment_box .reply_list > li p.usertxt::after,
+        #focus_cmt > div[id^="comment_wrap_"] .comment_box .reply_list > li p.usertxt.ub-word::before,
+        #focus_cmt > div[id^="comment_wrap_"] .comment_box .reply_list > li p.usertxt.ub-word::after {
+            content: none !important;
+            display: none !important;
         }
-        #focus_cmt > div[id^="comment_wrap_"] .comment_box .reply_list > li .cmt_nickbox::before {
-            content: ">>" !important;
+        #focus_cmt > div[id^="comment_wrap_"] .comment_box .reply_list > li .cmt_nickbox {
+            padding-left: 0 !important;
+            position: relative !important;
+        }
+
+        #focus_cmt > div[id^="comment_wrap_"] .comment_box .reply_list > li .cmt_txtbox {
+            padding-left: 24px !important;
+            position: relative !important;
+        }
+        #focus_cmt > div[id^="comment_wrap_"] .comment_box .reply_list > li .cmt_txtbox::before {
+            content: "ㄴ" !important;
             position: absolute !important;
-            left: 0 !important;
-            top: 50% !important;
-            transform: translateY(-50%) !important;
-            display: inline-flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            min-width: 34px !important;
-            height: 18px !important;
-            padding: 0 6px !important;
-            border-radius: 999px !important;
-            border: 1px solid #cfe0ff !important;
-            background: #eaf2ff !important;
-            color: #3d5f93 !important;
-            font-size: 11px !important;
-            font-weight: 800 !important;
-            letter-spacing: 0 !important;
+            left: 4px !important;
+            top: 12px !important;
+            transform: none !important;
+            display: inline-block !important;
+            font-size: 13px !important;
             line-height: 1 !important;
-            box-sizing: border-box !important;
-            z-index: 2 !important;
+            color: #6f83a1 !important;
+            font-weight: 700 !important;
         }
         #focus_cmt > div[id^="comment_wrap_"] .comment_box .cmt_nickbox,
         #focus_cmt > div[id^="comment_wrap_"] .comment_box .gall_writer.ub-writer {
@@ -6302,9 +6320,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
         body.dc-filter-dark-mode #focus_cmt > div[id^="comment_wrap_"] .comment_box .reply_list > li + li {
             border-top-color: rgba(120, 144, 175, 0.2) !important;
         }
-        body.dc-filter-dark-mode #focus_cmt > div[id^="comment_wrap_"] .comment_box .reply_list > li .cmt_nickbox::before {
-            border-color: rgba(113, 150, 212, 0.45) !important;
-            background: rgba(52, 79, 122, 0.35) !important;
+        body.dc-filter-dark-mode #focus_cmt > div[id^="comment_wrap_"] .comment_box .reply_list > li .cmt_txtbox::before {
             color: #d6e7ff !important;
         }
         body.dc-filter-dark-mode #focus_cmt > div[id^="comment_wrap_"] .comment_box .reply_box {
@@ -6483,7 +6499,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
         if (!document.querySelector('.view_content_wrap .comment_box, #focus_cmt > .cmt_write_box')) return;
 
         document.querySelectorAll('.comment_box .usertxt').forEach((element) => {
-            setImportant(element, 'font-size', '15px');
+            setImportant(element, 'font-size', '24px');
             setImportant(element, 'line-height', '1.58');
         });
 
