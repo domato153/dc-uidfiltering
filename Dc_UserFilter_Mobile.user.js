@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         DC_UserFilter_Mobile
 // @namespace    http://tampermonkey.net/
-// @version      2.7.1.4
+// @version      2.7.2
 // @description  유저 필터링, UI 개선, 개인 차단/해제 기능
 // @author       domato153
 // @match        https://gall.dcinside.com/*
@@ -1046,8 +1046,8 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             background: #fff !important;
         }
         #dcinside-filter-setting .dcuf-settings-footer {
-            margin-top: 12px !important;
-            padding-top: 12px !important;
+            margin-top: 11px !important;
+            padding-top: 11px !important;
             border-top: 1px solid #e5e9f1 !important;
             display: flex !important;
             align-items: center !important;
@@ -4286,7 +4286,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
         .view_content_wrap .gall_writer {
             height: auto !important;
             margin-top: 14px !important;
-            padding-top: 12px !important;
+            padding-top: 11px !important;
             border-top: 1px solid var(--dcuf-view-border) !important;
             background: transparent !important;
             color: var(--dcuf-view-fg-sub) !important;
@@ -4511,8 +4511,8 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             justify-content: center !important;
             gap: 10px !important;
             width: 100% !important;
-            margin-top: 12px !important;
-            padding-top: 12px !important;
+            margin-top: 11px !important;
+            padding-top: 11px !important;
             border-top: 1px solid var(--dcuf-view-border) !important;
         }
         .view_content_wrap .btn_recommend_box .inner_box > .inner {
@@ -4635,7 +4635,12 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             color: var(--dcuf-view-fg) !important;
             font-size: 24px !important;
             line-height: 1.5 !important;
-            word-break: keep-all !important;
+            white-space: pre-wrap !important;
+            word-break: normal !important;
+            overflow-wrap: anywhere !important;
+            max-width: none !important;
+            overflow: visible !important;
+            text-overflow: clip !important;
         }
         .comment_box .reply_box .usertxt {
             font-size: 24px !important;
@@ -4974,7 +4979,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             box-sizing: border-box !important;
         }
         .view_comment.image_comment .comment_box.img_comment_box .cmt_list > li + li {
-            padding-top: 12px !important;
+            padding-top: 11px !important;
             border-top: 1px solid #d8e1ed !important;
             margin-top: 0 !important;
         }
@@ -5090,7 +5095,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             border-top-color: rgba(143, 163, 192, 0.18) !important;
         }
         .view_comment.image_comment .cmt_write_box {
-            margin-top: 12px !important;
+            margin-top: 11px !important;
             display: grid !important;
             grid-template-columns: 124px minmax(0, 1fr) auto !important;
             gap: 10px !important;
@@ -5519,8 +5524,8 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             border: 0 !important;
             border-top: 0 !important;
             border-radius: 16px !important;
-            background: #fff !important;
-            box-shadow: inset 0 0 0 1px #dde6f1, 0 8px 20px rgba(15, 23, 42, 0.04) !important;
+            background: linear-gradient(180deg, #ffffff 0%, #f7f7f8 100%) !important;
+            box-shadow: 0 12px 24px rgba(15, 23, 42, 0.08), 0 2px 6px rgba(15, 23, 42, 0.05) !important;
             overflow: visible !important;
             z-index: auto !important;
         }
@@ -5634,17 +5639,26 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             grid-column: 1 / -1 !important;
             grid-row: 2 !important;
             clear: none !important;
-            width: auto !important;
+            width: 100% !important;
+            max-width: none !important;
             min-width: 0 !important;
             margin: 0 !important;
             padding: 0 0 0 13px !important;
+            overflow: visible !important;
         }
         div[id^="comment_wrap_"] .comment_box .usertxt {
             color: var(--dcuf-view-fg) !important;
             font-size: 24px !important;
             line-height: 1.62 !important;
             letter-spacing: -0.01em !important;
-            word-break: keep-all !important;
+            white-space: pre-wrap !important;
+            word-break: normal !important;
+            overflow-wrap: anywhere !important;
+            display: block !important;
+            width: 100% !important;
+            max-width: none !important;
+            overflow: visible !important;
+            text-overflow: clip !important;
         }
         div[id^="comment_wrap_"] .comment_box .cmt_mdf_del {
             display: inline-flex !important;
@@ -5653,18 +5667,18 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             margin-left: 6px !important;
         }
         div[id^="comment_wrap_"] .comment_box .reply.show {
-            margin-top: 8px !important;
+            margin-top: 10px !important;
             padding-top: 10px !important;
-            border-top: 1px solid #e8eef6 !important;
+            border-top: 1px solid #e3e9f1 !important;
         }
         div[id^="comment_wrap_"] .comment_box .reply_box {
-            margin: 0 0 0 10px !important;
-            padding: 0 0 0 14px !important;
+            margin: 2px 0 0 8px !important;
+            padding: 10px 12px 10px 14px !important;
             border: 0 !important;
-            border-left: 2px solid #d5e0ee !important;
-            border-radius: 0 !important;
-            background: transparent !important;
-            box-shadow: none !important;
+            border-left: 1px solid #d7dee8 !important;
+            border-radius: 12px !important;
+            background: linear-gradient(180deg, rgba(247, 249, 252, 0.96) 0%, rgba(243, 246, 250, 0.96) 100%) !important;
+            box-shadow: inset 0 0 0 1px rgba(211, 220, 232, 0.76) !important;
             overflow: visible !important;
         }
         div[id^="comment_wrap_"] .comment_box .reply_list > li {
@@ -5699,7 +5713,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             display: none !important;
         }
         div[id^="comment_wrap_"] .comment_box .reply_list > li .cmt_nickbox {
-            padding-left: 0 !important;
+            padding-left: 24px !important;
             position: relative !important;
         }
 
@@ -5708,15 +5722,18 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             position: relative !important;
         }
         div[id^="comment_wrap_"] .comment_box .reply_list > li .cmt_txtbox::before {
-            content: "ㄴ" !important;
+            content: none !important;
+            display: none !important;
+        }
+        div[id^="comment_wrap_"] .comment_box .reply_list > li .cmt_nickbox::before {
+            content: "\\3134" !important;
             position: absolute !important;
             left: 4px !important;
-            top: 12px !important;
-            transform: none !important;
-            display: inline-block !important;
+            top: 1px !important;
+            display: block !important;
             font-size: 13px !important;
             line-height: 1 !important;
-            color: #6f83a1 !important;
+            color: #78899f !important;
             font-weight: 700 !important;
         }
         div[id^="comment_wrap_"] .comment_box .reply_list > li:first-child {
@@ -5724,9 +5741,9 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             border-top: 0 !important;
         }
         div[id^="comment_wrap_"] .comment_box .reply_list > li + li {
-            margin-top: 10px !important;
-            padding-top: 10px !important;
-            border-top: 1px solid #e8eef6 !important;
+            margin-top: 8px !important;
+            padding-top: 8px !important;
+            border-top: 1px solid #e1e8f0 !important;
         }
         div[id^="comment_wrap_"] .comment_box .reply_list > li:last-child {
             margin-bottom: 0 !important;
@@ -6042,10 +6059,12 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             display: none !important;
         }
         body.dc-filter-dark-mode div[id^="comment_wrap_"] .comment_box .reply.show {
-            border-top-color: rgba(120, 144, 175, 0.2) !important;
+            border-top-color: rgba(122, 140, 166, 0.28) !important;
         }
         body.dc-filter-dark-mode div[id^="comment_wrap_"] .comment_box .reply_box {
-            border-left-color: rgba(109, 136, 184, 0.42) !important;
+            border-left-color: rgba(116, 136, 164, 0.54) !important;
+            background: linear-gradient(180deg, rgba(32, 42, 56, 0.78) 0%, rgba(28, 37, 50, 0.82) 100%) !important;
+            box-shadow: inset 0 0 0 1px rgba(86, 104, 130, 0.52) !important;
         }
         body.dc-filter-dark-mode div[id^="comment_wrap_"] .comment_box .reply_list > li {
             background: transparent !important;
@@ -6054,10 +6073,10 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             border-top: 0 !important;
         }
         body.dc-filter-dark-mode div[id^="comment_wrap_"] .comment_box .reply_list > li + li {
-            border-top-color: rgba(120, 144, 175, 0.2) !important;
+            border-top-color: rgba(122, 140, 166, 0.24) !important;
         }
-        body.dc-filter-dark-mode div[id^="comment_wrap_"] .comment_box .reply_list > li .cmt_txtbox::before {
-            color: #d6e7ff !important;
+        body.dc-filter-dark-mode div[id^="comment_wrap_"] .comment_box .reply_list > li .cmt_nickbox::before {
+            color: #b9c9dd !important;
         }
 
         body.dc-filter-dark-mode div[id^="comment_wrap_"] .comment_box .cmt_nickbox,
@@ -6127,8 +6146,9 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             padding: 14px 17px 14px 18px !important;
             border: 0 !important;
             border-top: 0 !important;
-            background: #fff !important;
-            box-shadow: 0 10px 20px rgba(15, 23, 42, 0.04) !important;
+            border-radius: 16px !important;
+            background: linear-gradient(180deg, #ffffff 0%, #f7f7f8 100%) !important;
+            box-shadow: 0 12px 24px rgba(15, 23, 42, 0.08), 0 2px 6px rgba(15, 23, 42, 0.05) !important;
         }
         #focus_cmt > div[id^="comment_wrap_"] .comment_box .cmt_list > li::before,
         #focus_cmt > div[id^="comment_wrap_"] .comment_box .cmt_nickbox::before,
@@ -6153,17 +6173,19 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             background: transparent !important;
         }
         #focus_cmt > div[id^="comment_wrap_"] .comment_box .reply.show {
-            margin-top: 8px !important;
-            padding-top: 8px !important;
-            border-top: 1px solid #e8eef6 !important;
+            margin-top: 10px !important;
+            padding-top: 10px !important;
+            border-top: 1px solid #e3e9f1 !important;
             background: transparent !important;
         }
         #focus_cmt > div[id^="comment_wrap_"] .comment_box .reply_box {
-            margin: 0 !important;
-            padding: 0 !important;
+            margin: 2px 0 0 8px !important;
+            padding: 10px 12px 10px 14px !important;
             border: 0 !important;
-            background: transparent !important;
-            box-shadow: none !important;
+            border-left: 1px solid #d7dee8 !important;
+            border-radius: 12px !important;
+            background: linear-gradient(180deg, rgba(247, 249, 252, 0.96) 0%, rgba(243, 246, 250, 0.96) 100%) !important;
+            box-shadow: inset 0 0 0 1px rgba(211, 220, 232, 0.76) !important;
         }
         #focus_cmt > div[id^="comment_wrap_"] .comment_box .reply_list {
             margin: 0 !important;
@@ -6171,16 +6193,16 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
         }
         #focus_cmt > div[id^="comment_wrap_"] .comment_box .reply_list > li {
             margin: 0 !important;
-            padding: 8px 0 0 12px !important;
+            padding: 8px 0 0 0 !important;
             border: 0 !important;
             border-top: 0 !important;
             background: transparent !important;
             box-shadow: none !important;
         }
         #focus_cmt > div[id^="comment_wrap_"] .comment_box .reply_list > li + li {
-            margin-top: 6px !important;
+            margin-top: 8px !important;
             padding-top: 8px !important;
-            border-top: 1px solid #eef2f7 !important;
+            border-top: 1px solid #e1e8f0 !important;
         }
         #focus_cmt > div[id^="comment_wrap_"] .comment_box .reply_list > li::before,
         #focus_cmt > div[id^="comment_wrap_"] .comment_box .reply_list > li::after,
@@ -6204,7 +6226,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             display: none !important;
         }
         #focus_cmt > div[id^="comment_wrap_"] .comment_box .reply_list > li .cmt_nickbox {
-            padding-left: 0 !important;
+            padding-left: 24px !important;
             position: relative !important;
         }
 
@@ -6213,15 +6235,18 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             position: relative !important;
         }
         #focus_cmt > div[id^="comment_wrap_"] .comment_box .reply_list > li .cmt_txtbox::before {
-            content: "ㄴ" !important;
+            content: none !important;
+            display: none !important;
+        }
+        #focus_cmt > div[id^="comment_wrap_"] .comment_box .reply_list > li .cmt_nickbox::before {
+            content: "\\3134" !important;
             position: absolute !important;
             left: 4px !important;
-            top: 12px !important;
-            transform: none !important;
-            display: inline-block !important;
+            top: 1px !important;
+            display: block !important;
             font-size: 13px !important;
             line-height: 1 !important;
-            color: #6f83a1 !important;
+            color: #78899f !important;
             font-weight: 700 !important;
         }
         #focus_cmt > div[id^="comment_wrap_"] .comment_box .cmt_nickbox,
@@ -6315,16 +6340,18 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             box-shadow: 0 1px 0 rgba(90, 112, 145, 0.34), 0 12px 24px rgba(3, 8, 16, 0.28) !important;
         }
         body.dc-filter-dark-mode #focus_cmt > div[id^="comment_wrap_"] .comment_box .reply.show {
-            border-top: 1px solid rgba(120, 144, 175, 0.24) !important;
+            border-top: 1px solid rgba(122, 140, 166, 0.28) !important;
         }
         body.dc-filter-dark-mode #focus_cmt > div[id^="comment_wrap_"] .comment_box .reply_list > li + li {
-            border-top-color: rgba(120, 144, 175, 0.2) !important;
+            border-top-color: rgba(122, 140, 166, 0.24) !important;
         }
-        body.dc-filter-dark-mode #focus_cmt > div[id^="comment_wrap_"] .comment_box .reply_list > li .cmt_txtbox::before {
-            color: #d6e7ff !important;
+        body.dc-filter-dark-mode #focus_cmt > div[id^="comment_wrap_"] .comment_box .reply_list > li .cmt_nickbox::before {
+            color: #b9c9dd !important;
         }
         body.dc-filter-dark-mode #focus_cmt > div[id^="comment_wrap_"] .comment_box .reply_box {
-            border-left-color: transparent !important;
+            border-left-color: rgba(116, 136, 164, 0.54) !important;
+            background: linear-gradient(180deg, rgba(32, 42, 56, 0.78) 0%, rgba(28, 37, 50, 0.82) 100%) !important;
+            box-shadow: inset 0 0 0 1px rgba(86, 104, 130, 0.52) !important;
         }
         @media screen and (max-width: 820px) {
             .cmt_write_box {
