@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         DC_UserFilter_Mobile
 // @namespace    http://tampermonkey.net/
-// @version      2.7.2
+// @version      2.7.3
 // @description  유저 필터링, UI 개선, 개인 차단/해제 기능
 // @author       domato153
 // @match        https://gall.dcinside.com/*
@@ -38,6 +38,141 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
     let isInitialized = false;
     let isUiInitialized = false;
     let activeShortcutObject = null; // [v2.1 추가] 현재 활성화된 단축키 객체
+    const ROOT_READY_CLASS = 'script-ui-ready';
+    const INITIAL_LOCK_STYLE_ID = 'dcuf-initial-lock-style';
+    const BOOT_OVERLAY_ID = 'dcuf-boot-overlay';
+    const BOOT_OVERLAY_STYLE_ID = 'dcuf-boot-overlay-style';
+
+    const isBootOverlayTargetPage = () => true;
+    const removeBootOverlay = (reason = 'unknown') => {
+        const overlay = document.getElementById(BOOT_OVERLAY_ID);
+        if (overlay) overlay.remove();
+    };
+
+    const ensureBootOverlay = () => {
+        if (!isBootOverlayTargetPage()) return;
+
+        const mountPoint = document.head || document.documentElement;
+        if (mountPoint && !document.getElementById(BOOT_OVERLAY_STYLE_ID)) {
+            const style = document.createElement('style');
+            style.id = BOOT_OVERLAY_STYLE_ID;
+            style.textContent = `
+                #${BOOT_OVERLAY_ID} {
+                    position: fixed;
+                    inset: 0;
+                    z-index: 2147483646;
+                    background:
+                        radial-gradient(circle at top, rgba(255,255,255,0.96), rgba(245,247,251,0.98) 45%, rgba(238,241,246,0.99)),
+                        linear-gradient(180deg, #f7f9fc 0%, #eef2f7 100%);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 24px;
+                    pointer-events: auto;
+                }
+                #${BOOT_OVERLAY_ID} .dcuf-boot-card {
+                    width: min(420px, calc(100vw - 32px));
+                    border: 1px solid rgba(197, 206, 218, 0.9);
+                    border-radius: 18px;
+                    background: rgba(255,255,255,0.96);
+                    box-shadow: 0 20px 48px rgba(31, 45, 68, 0.12);
+                    padding: 22px 20px 18px;
+                    color: #2b3340;
+                    text-align: center;
+                }
+                #${BOOT_OVERLAY_ID} .dcuf-boot-title {
+                    font-size: 17px;
+                    font-weight: 700;
+                    letter-spacing: -0.01em;
+                    margin-bottom: 8px;
+                }
+                #${BOOT_OVERLAY_ID} .dcuf-boot-copy {
+                    font-size: 13px;
+                    line-height: 1.55;
+                    color: #5a6575;
+                    margin-bottom: 14px;
+                }
+                #${BOOT_OVERLAY_ID} .dcuf-boot-bar {
+                    height: 4px;
+                    border-radius: 999px;
+                    background: rgba(203, 211, 223, 0.6);
+                    overflow: hidden;
+                }
+                #${BOOT_OVERLAY_ID} .dcuf-boot-bar::before {
+                    content: '';
+                    display: block;
+                    width: 42%;
+                    height: 100%;
+                    border-radius: inherit;
+                    background: linear-gradient(90deg, #245bda 0%, #5d87f0 100%);
+                    animation: dcuf-boot-progress 1s ease-in-out infinite;
+                }
+                html.dc-filter-dark-mode #${BOOT_OVERLAY_ID} {
+                    background:
+                        radial-gradient(circle at top, rgba(34,39,48,0.95), rgba(20,24,31,0.98) 48%, rgba(14,17,22,0.99)),
+                        linear-gradient(180deg, #1d222a 0%, #11151b 100%);
+                }
+                html.dc-filter-dark-mode #${BOOT_OVERLAY_ID} .dcuf-boot-card {
+                    border-color: rgba(71, 81, 96, 0.92);
+                    background: rgba(28, 33, 41, 0.96);
+                    box-shadow: 0 20px 48px rgba(0, 0, 0, 0.34);
+                    color: #e7ebf2;
+                }
+                html.dc-filter-dark-mode #${BOOT_OVERLAY_ID} .dcuf-boot-copy {
+                    color: #adb7c7;
+                }
+                html.dc-filter-dark-mode #${BOOT_OVERLAY_ID} .dcuf-boot-bar {
+                    background: rgba(63, 73, 88, 0.9);
+                }
+                @keyframes dcuf-boot-progress {
+                    0% { transform: translateX(-120%); }
+                    100% { transform: translateX(260%); }
+                }
+            `;
+            mountPoint.appendChild(style);
+        }
+
+        if (document.getElementById(BOOT_OVERLAY_ID)) return;
+        if (!document.documentElement) return;
+
+        const overlay = document.createElement('div');
+        overlay.id = BOOT_OVERLAY_ID;
+        overlay.innerHTML = `
+            <div class="dcuf-boot-card">
+                <div class="dcuf-boot-title">UI 준비 중</div>
+                <div class="dcuf-boot-copy">광고 차단과 충돌하면 로딩이 지연될 수 있습니다.<br>DCInside에서는 광고 차단을 꺼주세요.</div>
+                <div class="dcuf-boot-bar" aria-hidden="true"></div>
+            </div>
+        `;
+        document.documentElement.appendChild(overlay);
+    };
+
+    const markUiReady = () => {
+        const root = document.documentElement;
+        if (root) root.classList.add(ROOT_READY_CLASS);
+
+        const body = document.body;
+        if (body) body.classList.add(ROOT_READY_CLASS);
+
+        removeBootOverlay('mark-ui-ready');
+    };
+
+    const injectInitialLockStyle = () => {
+        const mountPoint = document.head || document.documentElement;
+        if (!mountPoint || document.getElementById(INITIAL_LOCK_STYLE_ID)) return;
+
+        const style = document.createElement('style');
+        style.id = INITIAL_LOCK_STYLE_ID;
+        style.textContent = `
+            html:not(.${ROOT_READY_CLASS}) body {
+                visibility: hidden !important;
+            }
+        `;
+        mountPoint.appendChild(style);
+    };
+
+    injectInitialLockStyle();
+    ensureBootOverlay();
 
 
 
@@ -68,37 +203,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
         }
 
 
-        /* [v2.2.3 최종 수정] JS 의존성을 제거한 선언적 FOUC 방지 (새로고침 깜빡임 완벽 해결) */
-        /* 스크립트 UI 준비가 완료되기 전까지 body를 숨겨 원본 UI 노출을 원천 차단합니다. */
-        body:not(.script-ui-ready) {
-            visibility: hidden !important;
-        }
-        /* body가 숨겨진 상태에서도 로딩 인디케이터는 표시되도록 합니다. */
-        body:not(.script-ui-ready)::before {
-            content: '스크립트 UI 적용 중...\\A\\A※ 광고 차단 프로그램과 충돌할 수 있습니다.\\A오작동 시  비활성화해주세요.'; /* <-- 수정된 부분 */
-            white-space: pre-wrap; /* <-- 추가된 부분 (줄바꿈 적용) */
-            text-align: center; /* <-- 추가된 부분 (가운데 정렬) */
-            line-height: 1.6; /* <-- 추가된 부분 (줄 간격 조절) */
-            visibility: visible !important; /* body가 hidden이어도 로딩 문구는 보이도록 설정 */
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 16px;
-            font-weight: bold;
-            color: #555;
-            background-color: #fff;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 0 15px rgba(0,0,0,0.2);
-            z-index: 2147483647; /* Max z-index */
-        }
-        /* [신규 추가] 야간 모드 전용 로딩 인디케이터 스타일 */
-        body.dc-filter-dark-mode:not(.script-ui-ready)::before {
-            color: #e0e0e0;
-            background-color: #2d2d2d;
-            box-shadow: 0 0 15px rgba(0,0,0,0.7);
-        }
+        /* 초기 로딩 잠금과 로딩 팝업은 상단 injectInitialLockStyle()에서 즉시 주입합니다. */
 
 
         /* [수정] FOUC(화면 깜빡임) 방지 및 원본 테이블 숨김 강화 */
@@ -3473,10 +3578,92 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             }, true);
         },
 
+        processAllLists() {
+            const wraps = document.querySelectorAll(this.SELECTORS.LIST_WRAP);
+            wraps.forEach(lw => this.transformList(lw));
+        },
+
+        isListPage() {
+            return window.location.pathname.includes('/board/lists');
+        },
+
+        isInitialUiReady() {
+            if (window.location.pathname.includes('/board/write/')) return true;
+            if (window.location.pathname.includes('/board/view/')) return true;
+
+            const targetWraps = Array.from(document.querySelectorAll(this.SELECTORS.LIST_WRAP))
+                .filter(listWrap => listWrap.querySelector(this.SELECTORS.ORIGINAL_TABLE));
+
+            let ready;
+            if (this.isListPage()) {
+                ready = targetWraps.length > 0 && targetWraps.every(listWrap => listWrap.querySelector(`.${this.CUSTOM_CLASSES.MOBILE_LIST}`));
+            } else {
+                ready = targetWraps.length === 0 || targetWraps.every(listWrap => listWrap.querySelector(`.${this.CUSTOM_CLASSES.MOBILE_LIST}`));
+            }
+
+            return ready;
+        },
+
+        waitForInitialUiReady(timeoutMs = 4000) {
+            return new Promise((resolve) => {
+                if (this.isInitialUiReady()) {
+                    resolve('ready');
+                    return;
+                }
+
+                let rafId = 0;
+                let timeoutId = 0;
+                let observer = null;
+
+                const cleanup = () => {
+                    if (observer) observer.disconnect();
+                    if (rafId) window.cancelAnimationFrame(rafId);
+                    if (timeoutId) window.clearTimeout(timeoutId);
+                };
+
+                const finish = (reason) => {
+                    cleanup();
+                    resolve(reason);
+                };
+
+                const checkReady = () => {
+                    this.processAllLists();
+                    if (this.isInitialUiReady()) {
+                        finish('ready');
+                    }
+                };
+
+                const scheduleCheck = () => {
+                    if (rafId) return;
+                    rafId = window.requestAnimationFrame(() => {
+                        rafId = 0;
+                        checkReady();
+                    });
+                };
+
+                observer = new MutationObserver(() => {
+                    scheduleCheck();
+                });
+                observer.observe(document.body, { childList: true, subtree: true });
+
+                timeoutId = window.setTimeout(() => {
+                    this.processAllLists();
+                    if (this.isInitialUiReady()) {
+                        finish('ready');
+                        return;
+                    }
+
+                    console.warn('[DC Filter+UI] Initial UI readiness timed out; revealing page with current state.');
+                    finish('timeout');
+                }, timeoutMs);
+
+                scheduleCheck();
+            });
+        },
+
         transformList(listWrap) {
             if (listWrap.querySelector(`.${this.CUSTOM_CLASSES.MOBILE_LIST}`)) return;
             if (listWrap.hasAttribute(this.TRANSFORMED_ATTR)) return;
-
 
             const originalTable = listWrap.querySelector(this.SELECTORS.ORIGINAL_TABLE);
             if (!originalTable) return;
@@ -3484,10 +3671,10 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             if (!originalTbody) return;
             listWrap.setAttribute(this.TRANSFORMED_ATTR, 'true');
 
+            originalTable.style.setProperty('display', 'none', 'important');
 
             const newListContainer = document.createElement('div');
             newListContainer.className = this.CUSTOM_CLASSES.MOBILE_LIST;
-
 
             // [핵심 수정] 이벤트 위임을 사용하여 툴팁 로직 추가
             const tooltip = document.getElementById('custom-instant-tooltip');
@@ -3510,7 +3697,6 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
                 });
             }
 
-
             const originalRows = Array.from(originalTbody.querySelectorAll(this.SELECTORS.ORIGINAL_POST_ITEM));
             originalRows.forEach((row, index) => {
                 try {
@@ -3525,18 +3711,14 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
                 }
             });
 
-
             originalTable.parentNode.insertBefore(newListContainer, originalTable.nextSibling);
-
 
             const bottomControls = this.createBottomControls(listWrap);
             if (bottomControls) {
                 listWrap.appendChild(bottomControls);
             }
 
-
             this.applyForceRefreshPagination(listWrap);
-
 
             const observer = new MutationObserver(mutations => {
                 mutations.forEach(mutation => {
@@ -3656,8 +3838,8 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             // 5초 후에는 검색을 멈춰서 불필요한 부하 방지
             setTimeout(() => clearInterval(adRemovalInterval), 5000);
         },
-        init() {
-            if (isUiInitialized) return;
+        async init() {
+            if (isUiInitialized) return 'already-ready';
             isUiInitialized = true;
 
 
@@ -3700,12 +3882,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             }
 
 
-            const processAllLists = () => {
-                document.querySelectorAll(this.SELECTORS.LIST_WRAP).forEach(lw => this.transformList(lw));
-            };
-
-
-            processAllLists();
+            this.processAllLists();
 
 
             // [UI 이벤트 기반 변화 감지 옵저버]
@@ -3737,12 +3914,14 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
                     }
                 }
 
-                if (needsListUpdate) processAllLists();
+                if (needsListUpdate) this.processAllLists();
                 if (needsCommentScale && typeof window.__dcufScheduleCommentNormalize === 'function') {
                     window.__dcufScheduleCommentNormalize();
                 }
             });
             observer.observe(document.body, { childList: true, subtree: true });
+
+            return this.waitForInitialUiReady();
         }
     };
 
@@ -3795,24 +3974,27 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
 
         await FilterModule.init();
         await PersonalBlockModule.init();
-        UIModule.init();
-        console.log("[DC Filter+UI] Initialization complete.");
+        const uiInitState = await UIModule.init();
+        console.log("[DC Filter+UI] Initialization complete.", uiInitState);
+        return uiInitState;
     }
 
 
     const runSafely = async () => {
+        let uiInitState = 'fallback';
+
         try {
-            await main();
+            uiInitState = await main();
         } catch (error) {
+            uiInitState = 'error';
             console.error("[DC Filter+UI] A critical error occurred during main execution:", error);
         } finally {
             // [v2.2.2 수정] 모든 UI 처리 및 필터링 적용이 끝난 후,
-            // body에 준비 완료 클래스를 추가하여 화면을 표시합니다.
-            document.body.classList.add('script-ui-ready');
-            console.log("[DC Filter+UI] UI is now visible.");
+            // 루트 준비 완료 클래스를 추가하여 화면을 표시합니다.
+            markUiReady();
+            console.log(`[DC Filter+UI] UI is now visible. (${uiInitState})`);
         }
     };
-
 
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', runSafely);
@@ -3833,12 +4015,15 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
         const checkDarkModeStatus = () => {
             const body = document.body;
             if (!body) return;
+            const root = document.documentElement;
 
             const darkModeStylesheet = document.getElementById('css-darkmode');
             if (darkModeStylesheet) {
                 body.classList.add('dc-filter-dark-mode');
+                if (root) root.classList.add('dc-filter-dark-mode');
             } else {
                 body.classList.remove('dc-filter-dark-mode');
+                if (root) root.classList.remove('dc-filter-dark-mode');
             }
         };
 
@@ -4896,22 +5081,50 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             gap: 10px !important;
         }
         .view_content_wrap .btn_recommend_box .inner_box > .inner {
-            gap: 6px !important;
+            display: grid !important;
+            align-items: center !important;
+            justify-content: center !important;
+            column-gap: 10px !important;
+            row-gap: 0 !important;
             flex: 0 1 168px !important;
             padding: 8px 10px !important;
             border-radius: 14px !important;
         }
+        .view_content_wrap .btn_recommend_box .inner_box > .inner:first-child {
+            grid-template-columns: 34px auto !important;
+        }
+        .view_content_wrap .btn_recommend_box .inner_box > .inner:last-child {
+            grid-template-columns: auto 34px !important;
+        }
         .view_content_wrap .btn_recommend_box .up_num_box,
         .view_content_wrap .btn_recommend_box .down_num_box {
             display: inline-flex !important;
+            width: 34px !important;
+            min-width: 34px !important;
             align-items: center !important;
             justify-content: center !important;
-            gap: 4px !important;
-            min-width: 34px !important;
+            justify-self: center !important;
+        }
+        .view_content_wrap .btn_recommend_box .up_num_box {
+            flex-direction: column !important;
+            gap: 1px !important;
+            align-self: center !important;
+        }
+        .view_content_wrap .btn_recommend_box .down_num_box {
+            gap: 0 !important;
+            align-self: center !important;
+        }
+        .view_content_wrap .btn_recommend_box .up_num,
+        .view_content_wrap .btn_recommend_box .down_num {
+            width: 100% !important;
+            text-align: center !important;
+            position: static !important;
+            left: auto !important;
         }
         .view_content_wrap .btn_recommend_box .btn_recom_up,
         .view_content_wrap .btn_recommend_box .btn_recom_down {
             flex: 0 0 auto !important;
+            justify-self: center !important;
             margin: 0 !important;
         }
         .view_content_wrap .btn_recommend_box .font_blue.smallnum {
@@ -4930,7 +5143,9 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
         .view_content_wrap .btn_recommend_box .sup_num {
             display: inline-flex !important;
             align-items: center !important;
-            gap: 2px !important;
+            justify-content: center !important;
+            gap: 1px !important;
+            line-height: 1 !important;
         }
         .view_content_wrap .btn_recommend_box .writer_nikcon {
             margin-right: 0 !important;
