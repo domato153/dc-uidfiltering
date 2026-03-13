@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         DC_UserFilter_Mobile
 // @namespace    http://tampermonkey.net/
-// @version      2.7.3
+// @version      2.7.4
 // @description  유저 필터링, UI 개선, 개인 차단/해제 기능
 // @author       domato153
 // @match        https://gall.dcinside.com/*
@@ -1701,7 +1701,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
                 COMMENT_CONTAINER: 'div.comment_box ul.cmt_list',
                 POST_VIEW_LIST_CONTAINER: 'div.gall_exposure_list > ul',
                 POST_ITEM: 'tr.ub-content',
-                COMMENT_ITEM: 'li.ub-content',
+                COMMENT_ITEM: 'li.ub-content, li[id^="comment_li_"], li[id^="reply_li_"]',
                 WRITER_INFO: '.ub-writer',
                 IP_SPAN: 'span.ip',
                 MAIN_CONTAINER: '#container',
@@ -2383,10 +2383,41 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
                 personalBlockEnabled // [신규] 설정 객체에 추가
             };
         },
+        getRefilterTargets() {
+            const selectors = [
+                this.CONSTANTS.SELECTORS.POST_ITEM,
+                this.CONSTANTS.SELECTORS.COMMENT_ITEM,
+                'li[id^="comment_li_"]',
+                'li[id^="reply_li_"]',
+                `${this.CONSTANTS.SELECTORS.POST_VIEW_LIST_CONTAINER} > li`
+            ];
+            const seen = new Set();
+            return Array.from(document.querySelectorAll(selectors.join(', '))).filter((element) => {
+                if (!(element instanceof HTMLElement)) return false;
+                if (seen.has(element)) return false;
+                seen.add(element);
+                return true;
+            });
+        },
+        runSyncRefilterPass() {
+            this.getRefilterTargets().forEach((element) => {
+                if (!dcFilterSettings.masterDisabled) element.style.display = '';
+                this.applySyncBlock(element);
+            });
+        },
+        scheduleSyncRefilterPasses() {
+            const rerun = () => this.runSyncRefilterPass();
+            requestAnimationFrame(rerun);
+            window.setTimeout(rerun, 90);
+            window.setTimeout(rerun, 220);
+        },
         async refilterAllContent() {
             await this.reloadSettings();
-            const allContentItems = document.querySelectorAll([this.CONSTANTS.SELECTORS.POST_ITEM, this.CONSTANTS.SELECTORS.COMMENT_ITEM, `${this.CONSTANTS.SELECTORS.POST_VIEW_LIST_CONTAINER} > li`].join(', '));
-            allContentItems.forEach(element => { if (!dcFilterSettings.masterDisabled) element.style.display = ''; this.applySyncBlock(element); this.applyAsyncBlock(element); });
+            this.runSyncRefilterPass();
+            this.scheduleSyncRefilterPasses();
+            this.getRefilterTargets().forEach((element) => {
+                this.applyAsyncBlock(element);
+            });
             document.dispatchEvent(new CustomEvent('dcFilterRefiltered'));
         },
         // [수정] handleVisibilityChange를 async 함수로 변경하고 reloadShortcutKey 호출 추가
@@ -3942,7 +3973,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
 
     async function main() {
         if (isInitialized) return;
-        console.log("[DC Filter+UI] Initializing v2.5.7...");
+        console.log("[DC Filter+UI] Initializing v2.7.4...");
 
 
         // [수정] main 함수에서 reloadShortcutKey 함수를 호출하여 초기화
@@ -6917,6 +6948,14 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
         return liMatch ? liMatch[1] : '';
     };
 
+    const shouldSkipReplyMergeTarget = (parentLi) => {
+        if (!(parentLi instanceof HTMLElement)) return true;
+        if (parentLi.getAttribute('data-dcuf-parent-filtered') === '1') return true;
+        if (parentLi.classList.contains('dcuf-parent-comment-filtered')) return true;
+        if (parentLi.style.display === 'none') return true;
+        return false;
+    };
+
     const mergeDetachedRepliesIntoParent = () => {
         document.querySelectorAll(COMMENT_LIST_SELECTOR).forEach((list) => {
             if (!(list instanceof HTMLElement)) return;
@@ -6941,6 +6980,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
 
                 const parentLi = parentMap.get(parentNo) || list.querySelector(':scope > li#comment_li_' + parentNo);
                 if (!(parentLi instanceof HTMLElement) || parentLi === wrapperLi) return;
+                if (shouldSkipReplyMergeTarget(parentLi)) return;
 
                 const alreadyMerged = parentLi.querySelector(':scope > div.reply.show .reply_list[p-no="' + parentNo + '"]');
                 if (alreadyMerged) {
@@ -6953,7 +6993,6 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             });
         });
     };
-
     const scheduleReplyMerge = (() => {
         let rafId = 0;
         let timerId = 0;
