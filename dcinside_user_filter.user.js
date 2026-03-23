@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         DCInside 유저 필터
 // @namespace    http://tampermonkey.net/
-// @version      1.7.3
-// @description  글/댓글 합/비율 필터링, 유동/통신사 IP 차단 + 개인 차단 기능
+// @version      1.7.4
+// @description  글/댓글 합/비율 필터링, 유동/우회/통신사 IP 차단 + 개인 차단 기능
 // @author       domato153
 // @match        https://gall.dcinside.com/*
 // @grant        GM_setValue
@@ -157,6 +157,15 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
         .switch-slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
         input:checked + .switch-slider { background-color: #3b71fd; }
         input:checked + .switch-slider:before { transform: translateX(18px); }
+        .switch[style*="width:34px"][style*="height:18px"] .switch-slider:before {
+            width: 14px;
+            height: 14px;
+            left: 2px;
+            bottom: 2px;
+        }
+        .switch[style*="width:34px"][style*="height:18px"] input:checked + .switch-slider:before {
+            transform: translateX(16px);
+        }
         #dc-backup-popup-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.6); z-index: 2147483647;
@@ -264,6 +273,45 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
 
     // ... (이하 코드는 v1.7.0과 동일하므로 생략) ...
     // [이식] 현재 활성화된 단축키 객체를 저장하기 위한 변수
+    GM_addStyle(`
+        #dc-backup-popup .export-section,
+        #dc-backup-popup .import-section {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        #dc-backup-popup .import-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        #dc-backup-popup .import-file-input {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 12px;
+            background: #fff;
+            color: #333;
+        }
+        #dc-backup-popup .export-btn-download {
+            background-color: #fff;
+            color: #333;
+            border: 1px solid #d0d7de;
+        }
+        body.dc-filter-dark-mode #dc-backup-popup .import-file-input {
+            background-color: #1e1e1e !important;
+            color: #f0f0f0 !important;
+            border-color: #666 !important;
+        }
+        body.dc-filter-dark-mode #dc-backup-popup .export-btn-download {
+            background-color: #3a3a3c !important;
+            color: #e0e0e0 !important;
+            border-color: #555 !important;
+        }
+    `);
+
     let activeShortcutObject = null;
 
     // =================================================================
@@ -298,6 +346,97 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
     ];
 
 
+    let TELECOM_PREFIX_SET = null;
+    let PROXY_STRICT_PREFIX_SET = null;
+    let PROXY_AGGRESSIVE_EXTRA_PREFIX_SET = null;
+    let PROXY_AGGRESSIVE_PREFIX_SET = null;
+    let KR_PREFIX_SET = null;
+
+    const PROXY_MODE = { OFF: 0, STRICT: 1, AGGRESSIVE: 2 };
+    const PROXY_STRICT_PREFIXES = `
+        1.176 1.201 1.215 1.227 1.228 1.229 1.231 1.237 1.245 1.248 1.252 1.254 2.56 2.57 2.58 2.59 3.36 5.22
+        5.44 5.45 5.61 5.79 5.104 5.133 5.157 5.180 5.181 5.182 5.183 5.252 5.253 5.254 13.125 14.32 14.37 14.42
+        14.51 14.56 14.63 14.136 20.194 23.26 23.27 23.29 23.227 23.249 24.235 27.102 31.3 31.13 31.14 31.24 31.25 31.40
+        31.42 31.56 31.57 31.58 31.59 31.130 31.131 31.133 31.135 31.169 31.170 31.186 31.187 31.193 31.204 31.217 31.220 31.222
+        34.22 34.64 36.38 36.50 36.255 37.0 37.19 37.35 37.46 37.49 37.58 37.97 37.120 37.143 37.221 37.235 38.48 38.54
+        38.65 38.95 38.132 38.180 38.200 38.201 38.202 38.203 38.204 38.205 38.206 39.114 39.116 39.118 39.121 39.123 39.126 40.183
+        41.223 43.225 43.226 45.8 45.9 45.10 45.11 45.12 45.13 45.14 45.15 45.33 45.38 45.59 45.66 45.67 45.74 45.80
+        45.81 45.82 45.83 45.84 45.85 45.86 45.87 45.88 45.89 45.90 45.91 45.92 45.93 45.94 45.95 45.128 45.129 45.130
+        45.131 45.132 45.133 45.134 45.135 45.136 45.137 45.139 45.140 45.141 45.142 45.143 45.144 45.145 45.146 45.147 45.148 45.149
+        45.150 45.152 45.153 45.154 45.155 45.156 45.157 45.192 45.251 46.28 46.34 46.37 46.102 46.148 46.183 46.202 46.203 49.161
+        49.246 50.7 50.114 52.78 52.79 52.141 52.144 52.231 58.124 58.226 58.228 58.237 59.4 59.6 59.8 59.10 59.14 59.20
+        59.22 59.24 61.74 61.82 61.84 61.85 61.101 61.254 62.3 62.68 62.112 62.133 62.197 62.204 62.210 62.216 63.141 63.246
+        64.43 64.79 64.224 66.78 66.85 66.90 66.150 66.225 66.249 66.251 67.207 67.210 67.227 69.10 69.168 72.5 72.14 72.18
+        74.49 74.63 74.91 74.118 77.36 77.78 77.81 77.83 77.232 77.237 77.243 77.247 78.31 78.41 79.98 79.110 79.127 79.135
+        80.71 80.76 80.89 80.93 80.96 80.97 80.243 81.17 81.22 81.29 81.92 81.161 81.180 81.181 82.102 82.117 82.140 82.149
+        82.152 82.153 82.180 82.197 83.97 83.136 83.143 83.150 83.171 83.243 84.17 84.21 84.32 84.39 84.46 84.54 84.247 84.252
+        85.8 85.11 85.28 85.31 85.120 85.121 85.122 85.132 85.190 85.203 85.204 85.206 85.208 85.209 85.254 86.38 86.48 86.62
+        86.104 86.105 86.106 86.107 87.101 87.236 87.239 87.249 88.214 88.216 88.218 89.31 89.33 89.36 89.37 89.38 89.40 89.41
+        89.42 89.44 89.45 89.46 89.47 89.116 89.117 89.184 89.185 89.187 89.213 89.238 89.249 91.90 91.92 91.102 91.123 91.132
+        91.190 91.193 91.195 91.196 91.197 91.204 91.205 91.207 91.209 91.214 91.217 91.219 91.220 91.221 91.225 91.226 91.229 91.231
+        91.232 91.233 91.234 91.238 91.239 91.240 91.242 91.245 91.246 92.38 92.50 92.51 92.61 92.62 92.112 92.113 92.114 92.118
+        92.119 92.223 92.240 92.242 92.243 92.249 93.113 93.114 93.115 93.119 93.120 93.152 93.177 93.185 93.189 94.74 94.101 94.137
+        94.140 94.154 94.156 94.176 94.177 94.190 94.198 94.242 95.141 95.153 95.156 95.173 95.174 95.181 95.214 102.38 102.128 102.129
+        102.165 102.218 103.4 103.6 103.10 103.18 103.27 103.44 103.46 103.47 103.69 103.75 103.86 103.99 103.100 103.110 103.111 103.115
+        103.119 103.130 103.149 103.155 103.160 103.209 103.210 103.221 103.225 103.254 104.16 104.17 104.18 104.19 104.20 104.21 104.22 104.23
+        104.24 104.25 104.26 104.27 104.28 104.128 104.131 104.167 104.218 104.222 104.232 104.233 104.234 104.236 104.239 104.243 104.245 104.250
+        104.251 104.252 106.185 106.186 106.187 106.243 107.22 107.155 107.161 107.167 107.170 107.181 107.190 107.191 108.61 108.165 108.181 109.70
+        109.74 109.123 109.160 109.176 109.200 109.203 109.207 109.236 109.238 110.47 112.72 112.152 112.156 112.158 112.160 112.167 112.169 112.171
+        112.172 112.173 112.186 113.52 113.130 113.203 114.199 114.207 115.22 115.23 115.40 115.71 116.120 118.32 118.33 118.37 118.38 118.40
+        118.47 118.99 118.221 118.222 119.194 119.197 119.203 119.205 120.142 121.129 121.130 121.132 121.133 121.135 121.139 121.140 121.141 121.148
+        121.149 121.151 121.155 121.162 121.171 121.172 121.173 121.176 121.183 121.185 121.187 122.42 123.215 124.5 124.54 124.111 125.132 125.138
+        125.140 125.181 125.182 125.186 125.240 128.199 130.185 130.195 134.255 136.0 138.128 138.199 139.28 140.99 140.248 141.0 141.11 141.98
+        141.164 141.193 142.111 142.252 145.14 145.223 146.19 146.56 146.66 146.70 146.75 146.255 147.46 147.47 147.78 147.79 147.136 148.135
+        149.19 149.22 149.34 149.36 149.40 149.50 149.62 149.88 149.102 149.143 149.154 151.101 151.236 152.89 154.7 154.9 154.13 154.16
+        154.17 154.28 154.29 154.30 154.36 154.37 154.47 154.70 154.85 154.92 154.95 154.127 154.194 154.199 154.216 154.218 155.133 156.67
+        156.146 156.225 156.238 156.246 157.254 158.46 158.115 158.179 158.220 158.247 158.255 159.48 159.148 160.20 160.238 162.159 162.213 162.217
+        162.218 162.221 162.243 162.246 162.248 162.252 162.254 163.5 165.231 165.246 166.0 166.88 167.88 167.100 167.253 168.91 168.93 168.199
+        168.235 169.150 171.22 171.25 172.84 172.85 172.94 172.98 172.102 172.103 172.111 172.224 172.225 172.226 173.46 173.211 173.245 173.255
+        174.140 175.110 175.115 175.118 175.127 175.197 175.203 175.205 175.207 175.208 175.210 175.211 176.9 176.10 176.46 176.53 176.58 176.67
+        176.96 176.97 176.98 176.100 176.105 176.110 176.111 176.112 176.113 176.116 176.118 176.121 176.123 176.124 176.125 176.126 176.223 176.227
+        177.67 178.62 178.79 178.132 178.157 178.159 178.162 178.171 178.209 178.211 178.212 178.218 178.249 178.255 179.43 179.61 180.68 180.149
+        180.224 181.41 181.214 181.215 182.161 182.218 182.226 182.229 183.101 183.103 183.104 183.105 183.107 184.174 185.4 185.9 185.12 185.15
+        185.19 185.23 185.25 185.26 185.30 185.34 185.37 185.45 185.46 185.49 185.51 185.52 185.54 185.59 185.75 185.76 185.81 185.82
+        185.87 185.89 185.90 185.91 185.92 185.93 185.94 185.95 185.96 185.100 185.101 185.104 185.105 185.107 185.111 185.114 185.119 185.120
+        185.123 185.126 185.128 185.130 185.132 185.135 185.143 185.144 185.145 185.147 185.151 185.152 185.153 185.154 185.156 185.158 185.159 185.161
+        185.162 185.163 185.164 185.165 185.167 185.169 185.171 185.172 185.173 185.174 185.175 185.177 185.180 185.181 185.182 185.183 185.184 185.185
+        185.187 185.188 185.189 185.192 185.193 185.194 185.195 185.196 185.197 185.198 185.199 185.200 185.201 185.202 185.203 185.204 185.205 185.206
+        185.207 185.208 185.209 185.210 185.211 185.212 185.213 185.215 185.216 185.217 185.218 185.219 185.220 185.221 185.222 185.225 185.226 185.227
+        185.228 185.229 185.230 185.231 185.232 185.233 185.235 185.236 185.237 185.238 185.239 185.240 185.241 185.242 185.243 185.244 185.245 185.246
+        185.247 185.248 185.249 185.250 185.251 185.252 185.253 185.254 185.255 188.66 188.74 188.116 188.119 188.191 188.208 188.209 188.213 188.214
+        188.215 188.226 188.240 188.241 190.2 190.106 191.96 191.101 192.30 192.34 192.36 192.40 192.54 192.55 192.71 192.73 192.81 192.99
+        192.109 192.110 192.119 192.121 192.142 192.145 192.162 192.184 192.211 192.223 192.241 192.253 193.0 193.9 193.22 193.27 193.29 193.30
+        193.31 193.32 193.36 193.37 193.38 193.42 193.43 193.46 193.47 193.56 193.57 193.58 193.105 193.106 193.108 193.111 193.135 193.142
+        193.148 193.149 193.160 193.168 193.176 193.182 193.187 193.189 193.201 193.203 193.223 193.226 193.227 193.231 193.238 193.239 194.5 194.14
+        194.15 194.26 194.31 194.32 194.33 194.34 194.35 194.36 194.37 194.48 194.50 194.53 194.59 194.60 194.61 194.68 194.71 194.79
+        194.93 194.99 194.102 194.104 194.105 194.110 194.114 194.124 194.126 194.135 194.145 194.146 194.147 194.153 194.156 194.169 194.180 194.187
+        194.195 194.233 194.242 195.8 195.12 195.34 195.54 195.58 195.64 195.80 195.88 195.158 195.160 195.179 195.181 195.184 195.189 195.206
+        195.210 195.216 195.242 196.16 196.17 196.18 196.240 196.244 196.245 198.56 198.58 198.60 198.145 198.147 198.190 198.211 198.232 199.84
+        199.96 199.115 199.120 199.241 202.168 203.21 203.32 203.34 204.93 204.124 204.217 205.142 205.143 206.53 206.80 206.123 206.127 206.144
+        206.195 206.220 206.232 207.45 207.230 207.244 208.68 209.58 209.198 209.222 209.235 210.97 210.123 210.222 211.43 211.53 211.55 211.107
+        211.183 211.184 211.222 211.226 211.228 211.230 211.237 211.245 211.251 211.253 212.30 212.60 212.80 212.81 212.90 212.92 212.97 212.102
+        212.103 212.119 212.192 213.109 213.134 213.139 213.152 213.184 213.229 213.230 213.232 216.97 216.131 216.158 216.173 216.189 216.227 216.246
+        216.247 217.9 217.64 217.78 217.138 217.148 217.151 217.156 217.170 217.197 218.55 218.145 218.146 218.150 218.153 218.155 218.158 218.232
+        218.234 218.239 220.67 220.71 220.76 220.78 220.82 220.89 220.90 220.116 220.118 220.123 221.140 221.144 221.147 221.150 221.153 221.158
+        221.160 221.164 221.167 222.102 222.108 222.109 222.110 222.111 222.112 222.118 222.238
+    `.trim().split(/\s+/);
+    const PROXY_AGGRESSIVE_EXTRA_PREFIXES = `
+        1.209 1.224 1.255 14.129 27.96 27.255 38.77 39.115 43.227 43.228 43.250 43.254 45.114 45.119 45.125 45.164 45.225 45.249
+        49.8 49.50 49.128 49.143 49.236 49.238 49.254 58.229 59.150 61.14 61.42 61.97 61.100 61.106 61.109 61.111 61.247 61.250
+        61.251 61.252 61.255 63.105 64.23 66.232 101.79 101.101 103.11 103.24 103.54 103.79 103.87 103.103 103.122 103.124 103.131 103.132
+        103.138 103.140 103.146 103.151 103.193 103.194 103.212 103.215 103.218 103.230 103.237 103.238 103.240 103.243 103.249 106.10 106.249 110.4
+        110.44 110.93 110.165 110.172 110.234 111.91 111.92 113.30 114.110 114.111 114.141 115.85 115.88 115.89 115.92 115.144 115.187 116.121
+        116.122 116.125 117.52 118.67 118.91 118.129 119.30 121.0 121.50 121.78 121.126 121.170 122.49 122.99 124.198 124.217 125.6 125.7
+        125.209 133.186 139.150 150.107 157.119 160.202 162.251 175.45 175.106 175.125 175.126 175.158 180.131 180.150 180.189 180.210 182.162 182.173
+        182.252 182.255 183.78 202.31 202.68 202.86 202.126 202.131 202.133 202.158 202.179 203.84 203.104 203.109 203.216 203.231 203.235 203.236
+        203.238 203.246 203.248 210.4 210.16 210.89 210.92 210.93 210.108 210.109 210.112 210.116 210.121 210.122 210.124 210.205 210.206 210.216
+        210.219 211.32 211.37 211.41 211.47 211.50 211.56 211.60 211.63 211.104 211.110 211.115 211.116 211.118 211.168 211.169 211.170 211.171
+        211.172 211.175 211.180 211.188 211.189 211.233 211.234 211.235 211.236 211.238 211.239 211.241 211.249 211.254 211.255 218.36 220.230 222.239
+        223.26 223.130 223.165 223.255
+    `.trim().split(/\s+/);
+
+    const KR_IP_RANGES = {"1":[[11,11],[16,19],[96,111],[176,177],[201,201],[208,223],[224,255]],"14":[[0,0],[4,7],[32,63],[64,95],[128,128],[129,129],[138,138],[192,192],[206,206]],"27":[[0,0],[1,1],[35,35],[96,96],[100,100],[101,101],[102,102],[111,111],[112,112],[113,113],[115,115],[116,116],[117,117],[118,118],[119,119],[120,120],[122,122],[124,124],[125,125],[126,126],[160,175],[176,183],[232,239],[255,255]],"36":[[38,39]],"39":[[4,7],[16,31],[112,127]],"42":[[8,15],[16,31],[32,47],[82,82]],"43":[[224,224],[227,227],[228,228],[230,230],[230,230],[230,230],[241,241],[242,242],[243,243],[246,246],[247,247],[247,247],[250,250],[251,251],[254,254],[255,255]],"45":[[64,64],[64,64],[64,64],[112,112],[112,112],[113,113],[115,115],[117,117],[119,119],[120,120],[121,121],[125,125],[248,248],[249,249],[249,249],[250,250],[250,250]],"49":[[1,1],[8,11],[16,31],[50,50],[50,50],[50,50],[56,63],[128,128],[142,142],[143,143],[160,175],[236,236],[238,238],[239,239],[246,246],[247,247],[254,254]],"58":[[29,29],[65,65],[72,79],[84,84],[87,87],[102,103],[120,127],[138,138],[140,143],[145,145],[146,146],[147,147],[148,151],[180,180],[181,181],[184,184],[224,239]],"59":[[0,31],[86,86],[150,150],[151,151],[152,152],[186,187]],"60":[[196,197],[253,253]],"61":[[4,4],[5,5],[14,14],[32,39],[40,43],[47,47],[72,77],[78,79],[80,83],[84,85],[96,111],[245,245],[245,245],[247,247],[247,247],[248,255]],"101":[[1,1],[1,1],[53,53],[55,55],[79,79],[101,101],[202,202],[235,235],[250,250]],"103":[[2,2],[2,2],[2,2],[3,3],[4,4],[4,4],[4,4],[5,5],[5,5],[6,6],[6,6],[6,6],[6,6],[7,7],[7,7],[7,7],[8,8],[8,8],[9,9],[9,9],[10,10],[10,10],[11,11],[11,11],[11,11],[11,11],[11,11],[12,12],[13,13],[13,13],[19,19],[20,20],[21,21],[21,21],[22,22],[23,23],[24,24],[25,25],[27,27],[27,27],[28,28],[30,30],[30,30],[30,30],[31,31],[38,38],[39,39],[42,42],[42,42],[43,43],[43,43],[49,49],[50,50],[51,51],[51,51],[51,51],[52,52],[53,53],[55,55],[55,55],[57,57],[59,59],[60,60],[62,62],[66,66],[67,67],[68,68],[68,68],[71,71],[74,74],[77,77],[79,79],[85,85],[87,87],[90,90],[90,90],[104,104],[105,105],[106,106],[108,108],[109,109],[114,114],[114,114],[117,117],[122,122],[122,122],[124,124],[125,125],[126,126],[126,126],[127,127],[129,129],[132,132],[138,138],[139,139],[139,139],[139,139],[140,140],[141,141],[141,141],[143,143],[143,143],[144,144],[145,145],[146,146],[150,150],[150,150],[150,150],[150,150],[153,153],[157,157],[157,157],[159,159],[161,161],[162,162],[162,162],[164,164],[166,166],[171,171],[175,175],[178,178],[182,182],[182,182],[186,186],[187,187],[187,187],[188,188],[194,194],[194,194],[206,206],[212,212],[212,212],[214,214],[214,214],[215,215],[216,216],[218,218],[219,219],[226,226],[226,226],[229,229],[230,230],[231,231],[234,234],[235,235],[237,237],[238,238],[239,239],[239,239],[240,240],[240,240],[243,243],[244,244],[244,244],[246,246],[246,246],[246,246],[247,247],[247,247],[248,248],[249,249],[251,251],[253,253],[254,254]],"106":[[10,10],[96,103],[240,255]],"110":[[4,4],[5,5],[8,15],[34,34],[35,35],[35,35],[44,44],[44,44],[45,45],[46,47],[68,71],[76,76],[76,76],[92,92],[92,92],[93,93],[93,93],[165,165],[165,165],[172,172],[232,232]],"111":[[65,65],[67,67],[91,91],[92,92],[118,118],[171,171],[218,219],[221,221]],"112":[[72,72],[72,72],[76,77],[106,107],[108,108],[109,109],[121,121],[121,121],[133,133],[136,136],[137,137],[140,140],[140,140],[140,140],[144,159],[160,191],[196,196],[212,212],[213,213],[214,214],[216,223]],"113":[[10,10],[21,21],[29,29],[30,30],[52,52],[52,52],[59,59],[60,60],[61,61],[61,61],[130,130],[130,130],[131,131],[192,192],[197,197],[198,198],[199,199],[216,217]],"114":[[29,29],[30,30],[30,30],[30,30],[31,31],[31,31],[52,53],[70,71],[108,108],[110,110],[110,110],[111,111],[111,111],[129,129],[129,129],[141,141],[141,141],[141,141],[199,199],[199,199],[200,207]],"115":[[0,23],[31,31],[40,41],[68,68],[69,69],[71,71],[84,84],[85,85],[86,86],[88,95],[126,126],[136,143],[144,144],[145,145],[160,160],[161,161],[165,165],[178,178],[178,178],[187,187],[187,187]],"116":[[32,47],[67,67],[68,68],[68,68],[84,84],[89,89],[90,90],[93,93],[120,127],[193,193],[199,199],[200,201],[212,212],[255,255]],"117":[[16,17],[20,20],[20,20],[52,52],[53,53],[53,53],[55,55],[58,58],[110,111],[123,123]],"118":[[32,63],[67,67],[91,91],[91,91],[103,103],[107,107],[127,127],[128,131],[139,139],[176,176],[216,223],[234,235]],"119":[[17,17],[17,17],[18,18],[30,30],[31,31],[42,42],[56,56],[59,59],[63,63],[64,71],[75,75],[77,77],[82,82],[148,148],[149,149],[161,161],[192,223],[235,235],[235,235]],"120":[[29,29],[50,50],[73,73],[136,136],[142,142],[143,143]],"121":[[0,0],[1,1],[50,50],[50,50],[50,50],[53,53],[54,54],[55,55],[64,67],[78,78],[88,88],[100,100],[101,101],[101,101],[124,125],[126,126],[127,127],[128,159],[160,191],[200,200],[252,253],[254,254],[254,254]],"122":[[0,0],[0,0],[32,47],[49,49],[99,99],[100,100],[101,101],[128,128],[128,128],[129,129],[129,129],[152,152],[153,153],[199,199],[202,202],[202,202],[203,203],[252,252],[252,252],[254,254]],"123":[[0,0],[32,47],[98,98],[99,99],[100,100],[108,108],[108,108],[109,109],[111,111],[140,143],[199,199],[200,200],[212,215],[228,229],[248,248],[250,251],[253,253],[254,254],[254,254]],"124":[[0,1],[2,2],[3,3],[5,5],[28,28],[46,46],[48,63],[66,66],[66,66],[80,80],[111,111],[136,139],[146,146],[153,153],[194,194],[195,195],[195,195],[197,197],[198,198],[199,199],[199,199],[216,216],[217,217],[243,243],[254,254]],"125":[[7,7],[31,31],[57,57],[60,60],[61,61],[62,62],[128,159],[176,191],[208,208],[208,208],[209,209],[209,209],[240,247],[248,251],[252,252]],"128":[[134,134]],"129":[[254,254]],"134":[[75,75]],"137":[[68,68]],"139":[[5,5],[150,150]],"141":[[223,223]],"143":[[248,248]],"144":[[48,48],[48,48],[48,48]],"147":[[6,6],[43,43],[46,46],[47,47]],"150":[[107,107],[107,107],[129,129],[150,150],[183,183],[197,197],[242,242],[242,242]],"152":[[99,99],[149,149]],"154":[[10,10]],"155":[[230,230]],"156":[[147,147]],"157":[[119,119],[197,197]],"158":[[44,44]],"160":[[202,202]],"161":[[122,122]],"163":[[53,53],[152,152],[180,180],[213,213],[222,222],[229,229],[239,239],[255,255]],"164":[[124,124],[125,125]],"165":[[132,132],[133,133],[141,141],[186,186],[194,194],[213,213],[229,229],[243,243],[244,244],[246,246]],"166":[[79,79],[103,103],[104,104],[125,125]],"168":[[78,78],[115,115],[126,126],[131,131],[154,154],[188,188],[219,219],[248,249]],"169":[[140,140],[208,223]],"175":[[28,28],[41,41],[45,45],[45,45],[106,106],[107,107],[111,111],[112,127],[158,158],[176,176],[192,255]],"180":[[64,71],[80,83],[92,92],[92,92],[94,94],[131,131],[132,135],[148,148],[150,150],[182,182],[189,189],[189,189],[210,210],[210,210],[211,211],[222,222],[224,231],[233,233],[236,239]],"182":[[31,31],[50,50],[161,161],[162,162],[163,163],[172,172],[173,173],[173,173],[192,199],[208,223],[224,231],[237,237],[237,237],[252,252],[252,252],[255,255]],"183":[[78,78],[78,78],[86,86],[90,90],[91,91],[96,127]],"192":[[5,5],[100,100],[104,104],[132,132],[132,132],[195,195],[203,203],[245,245],[249,249]],"202":[[3,3],[6,6],[8,8],[14,14],[14,14],[14,14],[20,20],[20,20],[20,20],[20,20],[21,21],[22,22],[30,31],[43,43],[59,59],[68,68],[73,73],[86,86],[89,89],[89,89],[90,90],[126,126],[128,128],[131,131],[133,133],[136,136],[148,148],[150,150],[158,158],[163,163],[165,165],[167,167],[171,171],[174,174],[179,179],[179,179]],"203":[[17,17],[81,81],[81,81],[82,82],[82,82],[83,83],[84,84],[90,90],[100,100],[109,109],[123,123],[128,128],[128,128],[129,129],[130,130],[130,130],[132,132],[133,133],[142,142],[142,142],[149,149],[152,152],[153,153],[160,160],[166,166],[169,169],[170,170],[171,171],[173,173],[175,175],[175,175],[190,190],[190,190],[191,191],[207,207],[210,210],[212,212],[212,212],[215,215],[216,216],[217,217],[223,223],[223,223],[224,224],[225,225],[226,227],[228,229],[230,231],[232,233],[234,235],[236,239],[240,243],[244,247],[248,251],[252,255]],"210":[[0,0],[2,2],[4,4],[4,4],[16,16],[57,57],[87,87],[89,89],[90,91],[92,95],[96,96],[97,97],[98,98],[99,99],[100,103],[104,107],[108,111],[112,115],[116,119],[120,123],[124,127],[178,179],[180,181],[182,183],[192,192],[204,207],[210,210],[211,211],[211,211],[216,219],[220,223]],"211":[[32,39],[40,51],[52,63],[104,111],[112,119],[168,175],[176,191],[192,199],[200,205],[206,211],[212,215],[216,225],[226,231],[232,255]],"218":[[36,39],[48,49],[50,55],[101,101],[144,159],[209,209],[232,233],[234,239]],"219":[[240,241],[248,255]],"220":[[64,71],[72,91],[92,95],[103,103],[116,127],[149,149],[230,230]],"221":[[132,132],[133,133],[133,133],[138,143],[144,168]],"222":[[96,122],[231,231],[232,239],[251,251]],"223":[[26,26],[28,28],[32,63],[130,130],[131,131],[165,165],[168,175],[194,195],[222,222],[253,253],[255,255]]};
+
     const CONSTANTS = {
         STORAGE_KEYS: {
             MASTER_DISABLED: 'dcinside_master_disabled',
@@ -307,8 +446,11 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             RATIO_MIN: 'dcinside_ratio_min',
             RATIO_MAX: 'dcinside_ratio_max',
             BLOCK_GUEST: 'dcinside_block_guest',
+            BLOCK_PROXY: 'dcinside_proxy_ip_block_enabled',
             BLOCK_TELECOM: 'dcinside_telecom_ip_block_enabled',
             BLOCK_CONFIG: 'dcinside_block_config',
+            BLOCK_CONFIG_MIGRATION_V275_DONE: 'dcinside_block_config_migration_v275_done',
+            BLOCK_CONFIG_MIGRATION_V275_BACKUP: 'dcinside_block_config_migration_v275_backup',
             BLOCKED_UIDS: 'dcinside_blocked_uids',
             BLOCKED_GUESTS: 'dcinside_blocked_guests',
             SHORTCUT_KEY: 'dcinside_shortcut_key', // 단축키 저장 키
@@ -321,7 +463,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             COMMENT_CONTAINER: 'div.comment_box ul.cmt_list',
             POST_VIEW_LIST_CONTAINER: 'div.gall_exposure_list > ul',
             POST_ITEM: 'tr.ub-content',
-            COMMENT_ITEM: 'li.ub-content',
+            COMMENT_ITEM: 'li.ub-content, li[id^="comment_li_"], li[id^="reply_li_"]',
             WRITER_INFO: '.ub-writer',
             IP_SPAN: 'span.ip',
         },
@@ -338,6 +480,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             SETTINGS_CONTAINER: 'dcinside-settings-container',
             THRESHOLD_INPUT: 'dcinside-threshold-input',
             BLOCK_GUEST_CHECKBOX: 'dcinside-block-guest-checkbox',
+            PROXY_BLOCK_MODE_GROUP: 'dcinside-proxy-ip-block-mode-group',
             TELECOM_BLOCK_CHECKBOX: 'dcinside-telecom-ip-block-checkbox',
             RATIO_ENABLE_CHECKBOX: 'dcinside-ratio-enable-checkbox',
             RATIO_SECTION: 'dcinside-ratio-section',
@@ -361,6 +504,151 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
     };
 
     // 개념글 관련 기능용 헬퍼 함수
+    function normalizeProxyBlockMode(value) {
+        if (value === true) return PROXY_MODE.STRICT;
+        if (value === false || value === null || value === undefined || value === '') return PROXY_MODE.OFF;
+        const numeric = typeof value === 'number' ? value : parseInt(value, 10);
+        if (numeric === PROXY_MODE.AGGRESSIVE) return PROXY_MODE.AGGRESSIVE;
+        if (numeric === PROXY_MODE.STRICT) return PROXY_MODE.STRICT;
+        return PROXY_MODE.OFF;
+    }
+
+    function getProxyModeLabel(mode) {
+        switch (normalizeProxyBlockMode(mode)) {
+            case PROXY_MODE.STRICT: return '확실';
+            case PROXY_MODE.AGGRESSIVE: return '공격적';
+            default: return '끔';
+        }
+    }
+
+    function normalizeIpPrefix(value) {
+        if (typeof value !== 'string') return null;
+        const parts = value.trim().split('.');
+        if (parts.length !== 2) return null;
+        const normalizedParts = parts.map((part) => {
+            if (!/^\d{1,3}$/.test(part)) return null;
+            const num = Number(part);
+            return num >= 0 && num <= 255 ? String(num) : null;
+        });
+        return normalizedParts.includes(null) ? null : normalizedParts.join('.');
+    }
+
+    function parseIpPrefixList(value) {
+        if (typeof value !== 'string' || !value) return [];
+        const markerToken = CONSTANTS.ETC.MOBILE_IP_MARKER;
+        let source = value;
+        const markerIndex = source.indexOf(markerToken);
+        if (markerIndex !== -1) {
+            source = source.slice(0, markerIndex);
+            source = source.replace(/\|\|$/, '');
+        }
+        const seen = new Set();
+        return source.split('||').reduce((prefixes, token) => {
+            const normalized = normalizeIpPrefix(token);
+            if (!normalized || seen.has(normalized)) return prefixes;
+            seen.add(normalized);
+            prefixes.push(normalized);
+            return prefixes;
+        }, []);
+    }
+
+    function getIpPrefix(ip) {
+        if (typeof ip !== 'string' || !ip) return null;
+        const match = ip.trim().match(/^(\d{1,3}\.\d{1,3})(?=\.|$)/);
+        return match ? normalizeIpPrefix(match[1]) : null;
+    }
+
+    function getKrPrefixSet() {
+        if (!KR_PREFIX_SET) {
+            const prefixes = [];
+            Object.entries(KR_IP_RANGES).forEach(([first, ranges]) => {
+                ranges.forEach(([start, end]) => {
+                    for (let second = start; second <= end; second += 1) {
+                        prefixes.push(`${first}.${second}`);
+                    }
+                });
+            });
+            KR_PREFIX_SET = new Set(prefixes);
+        }
+        return KR_PREFIX_SET;
+    }
+
+    function isForeignIpPrefix(ipPrefix) {
+        return Boolean(ipPrefix) && !getKrPrefixSet().has(ipPrefix);
+    }
+    function getTelecomPrefixSet() {
+        if (!TELECOM_PREFIX_SET) {
+            const prefixes = [];
+            TELECOM.forEach((group) => group[1].forEach((item) => {
+                if (item[2] === 'MOB') prefixes.push(`${group[0]}.${item[0]}`);
+            }));
+            TELECOM_PREFIX_SET = new Set(prefixes);
+        }
+        return TELECOM_PREFIX_SET;
+    }
+
+    function getProxyStrictPrefixSet() {
+        if (!PROXY_STRICT_PREFIX_SET) PROXY_STRICT_PREFIX_SET = new Set(PROXY_STRICT_PREFIXES);
+        return PROXY_STRICT_PREFIX_SET;
+    }
+
+    function getProxyAggressiveExtraPrefixSet() {
+        if (!PROXY_AGGRESSIVE_EXTRA_PREFIX_SET) PROXY_AGGRESSIVE_EXTRA_PREFIX_SET = new Set(PROXY_AGGRESSIVE_EXTRA_PREFIXES);
+        return PROXY_AGGRESSIVE_EXTRA_PREFIX_SET;
+    }
+
+    function getProxyPrefixSet(mode = PROXY_MODE.STRICT) {
+        const normalizedMode = normalizeProxyBlockMode(mode);
+        if (normalizedMode === PROXY_MODE.AGGRESSIVE) {
+            if (!PROXY_AGGRESSIVE_PREFIX_SET) {
+                PROXY_AGGRESSIVE_PREFIX_SET = new Set(getProxyStrictPrefixSet());
+                getProxyAggressiveExtraPrefixSet().forEach((prefix) => PROXY_AGGRESSIVE_PREFIX_SET.add(prefix));
+            }
+            return PROXY_AGGRESSIVE_PREFIX_SET;
+        }
+        return normalizedMode === PROXY_MODE.STRICT ? getProxyStrictPrefixSet() : null;
+    }
+
+    function getProxyPrefixMatch(ipPrefix, mode) {
+        const normalizedMode = normalizeProxyBlockMode(mode);
+        if (!ipPrefix || normalizedMode === PROXY_MODE.OFF) return { matched: false, tier: null };
+        if (getProxyStrictPrefixSet().has(ipPrefix) || isForeignIpPrefix(ipPrefix)) return { matched: true, tier: 'strict' };
+        if (normalizedMode === PROXY_MODE.AGGRESSIVE && getProxyAggressiveExtraPrefixSet().has(ipPrefix)) {
+            return { matched: true, tier: 'aggressive' };
+        }
+        return { matched: false, tier: null };
+    }
+
+    async function cleanupLegacyManagedBlockConfig() {
+        const migrationDone = await GM_getValue(CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG_MIGRATION_V275_DONE, false);
+        if (migrationDone) return;
+        const conf = await GM_getValue(CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG, {});
+        if (!conf || typeof conf !== 'object') {
+            await GM_setValue(CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG_MIGRATION_V275_DONE, true);
+            return;
+        }
+
+        const currentIp = typeof conf.ip === 'string' ? conf.ip : '';
+        const parsedPrefixes = parseIpPrefixList(currentIp);
+        const normalizedIp = parsedPrefixes.join('||');
+        const markerToken = CONSTANTS.ETC.MOBILE_IP_MARKER;
+        const suspiciousLargeLegacyList = !currentIp.includes(markerToken) && parsedPrefixes.length >= 100;
+
+        if (suspiciousLargeLegacyList) {
+            await GM_setValue(CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG_MIGRATION_V275_BACKUP, currentIp);
+            conf.ip = '';
+            await GM_setValue(CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG, conf);
+            await GM_setValue(CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG_MIGRATION_V275_DONE, true);
+            return;
+        }
+
+        if (normalizedIp !== currentIp) {
+            conf.ip = normalizedIp;
+            await GM_setValue(CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG, conf);
+        }
+        await GM_setValue(CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG_MIGRATION_V275_DONE, true);
+    }
+
     function isRecommendedContext() {
         return window.location.search.includes('exception_mode=recommend');
     }
@@ -412,10 +700,12 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             ratioMin = '',
             ratioMax = '',
             blockGuestEnabled = false,
+            proxyBlockMode = 0,
             telecomBlockEnabled = false
         } = settings;
 
         const currentShortcut = await GM_getValue(CONSTANTS.STORAGE_KEYS.SHORTCUT_KEY, 'Shift+S');
+        const normalizedProxyBlockMode = normalizeProxyBlockMode(proxyBlockMode);
 
         const existingDiv = document.getElementById(CONSTANTS.UI_IDS.SETTINGS_PANEL);
         if (existingDiv) {
@@ -425,6 +715,14 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
         const div = document.createElement('div');
         div.id = CONSTANTS.UI_IDS.SETTINGS_PANEL;
         div.style = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;padding:24px 20px 18px 20px;min-width:280px;z-index:99999;border:2px solid #333;border-radius:10px;box-shadow:0 0 10px #0008; cursor: move; user-select: none;';
+        const proxyModeButtonsHtml = [
+            [PROXY_MODE.OFF, '끔'],
+            [PROXY_MODE.STRICT, '확실'],
+            [PROXY_MODE.AGGRESSIVE, '공격적']
+        ].map(([mode, label]) => {
+            const active = normalizedProxyBlockMode === mode;
+            return `<button type="button" data-proxy-mode="${mode}" aria-pressed="${active}" style="flex:1;min-width:0;border:0;background:${active ? '#3b71fd' : 'transparent'};color:${active ? '#fff' : '#333'};font-size:12px;font-weight:${active ? '700' : '600'};padding:5px 0;border-radius:7px;cursor:pointer;">${label}</button>`;
+        }).join('');
 
         div.innerHTML = `
             <div style="margin-bottom:15px;padding-bottom:12px;border-bottom: 2px solid #ccc; display:flex;align-items:center; justify-content: space-between;">
@@ -449,8 +747,8 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
                 </div>
             </div>
             <div id="${CONSTANTS.UI_IDS.SETTINGS_CONTAINER}" style="opacity:${masterDisabled ? 0.5 : 1}; pointer-events:${masterDisabled ? 'none' : 'auto'};">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <div style="display: flex; flex-direction: column; align-items: center;">
+                <div style="display: flex; justify-content: space-between; align-items: stretch;">
+                    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
                         <h3 style="cursor: default;margin-top:0;margin-bottom:5px;">
                             유저 글+댓글 합 기준값(이 값 이하 차단)
                         </h3>
@@ -458,13 +756,18 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
                         <div style="font-size:13px;color:#666;margin-top:5px;">0 또는 빈칸으로 두면 비활성화됩니다.</div>
                     </div>
                     <div style="border: 2px solid #000; border-radius: 5px; padding: 8px 8px 5px 6px;">
-                        <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 8px;">
+                        <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; text-align:center;">
                             <div class="switch-container" style="margin-left:0;">
                                 <label class="switch" style="width:34px; height:18px;">
                                     <input id="${CONSTANTS.UI_IDS.BLOCK_GUEST_CHECKBOX}" type="checkbox" ${blockGuestEnabled ? 'checked' : ''}>
                                     <span class="switch-slider" style="border-radius:18px;"></span>
                                 </label>
                                 <label for="${CONSTANTS.UI_IDS.BLOCK_GUEST_CHECKBOX}" style="font-size:13px;vertical-align:middle;cursor:pointer;margin-left:6px;">유동 전체 차단</label>
+                            </div>
+                            <div style="display:flex; flex-direction:column; align-items:center; gap:4px; padding-bottom: 5px; border-bottom: 1px solid #ddd; width:100%; text-align:center;">
+                                <div style="font-size:13px;">우회 IP 차단(오탐 위험 있음)</div>
+                                <div id="${CONSTANTS.UI_IDS.PROXY_BLOCK_MODE_GROUP}" style="display:flex; width:100%; max-width:220px; gap:2px; background:#edf1f5; border:1px solid #cfd6dd; border-radius:8px; padding:2px; justify-content:center;">${proxyModeButtonsHtml}</div>
+                                <div style="font-size:11px;color:#666;line-height:1.2;">끔 - 확실한 우회 차단 - 공격적 우회 차단</div>
                             </div>
                             <div class="switch-container" style="margin-left:0;">
                                 <label class="switch" style="width:34px; height:18px;">
@@ -568,6 +871,35 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             applyCheckboxChange(CONSTANTS.STORAGE_KEYS.BLOCK_GUEST, CONSTANTS.UI_IDS.BLOCK_GUEST_CHECKBOX, async (checked) => {
                 if (!checked) await clearBlockedGuests();
             });
+        });
+
+        const proxyBlockModeGroup = document.getElementById(CONSTANTS.UI_IDS.PROXY_BLOCK_MODE_GROUP);
+        let currentProxyBlockMode = normalizedProxyBlockMode;
+
+        function renderProxyModeButtons(mode) {
+            proxyBlockModeGroup.querySelectorAll('button[data-proxy-mode]').forEach((button) => {
+                const buttonMode = normalizeProxyBlockMode(button.getAttribute('data-proxy-mode'));
+                const active = mode === buttonMode;
+                button.setAttribute('aria-pressed', active ? 'true' : 'false');
+                button.style.background = active ? '#3b71fd' : 'transparent';
+                button.style.color = active ? '#fff' : '#333';
+                button.style.fontWeight = active ? '700' : '600';
+            });
+        }
+
+        renderProxyModeButtons(currentProxyBlockMode);
+        proxyBlockModeGroup.addEventListener('click', async (e) => {
+            const button = e.target.closest('button[data-proxy-mode]');
+            if (!button) return;
+            const nextMode = normalizeProxyBlockMode(button.getAttribute('data-proxy-mode'));
+            if (nextMode === currentProxyBlockMode) return;
+            currentProxyBlockMode = nextMode;
+            renderProxyModeButtons(currentProxyBlockMode);
+            await GM_setValue(CONSTANTS.STORAGE_KEYS.BLOCK_PROXY, currentProxyBlockMode);
+            if (!window.dcFilterSettings) window.dcFilterSettings = {};
+            window.dcFilterSettings.proxyBlockMode = currentProxyBlockMode;
+            window.dcFilterSettings.proxyBlockEnabled = currentProxyBlockMode !== PROXY_MODE.OFF;
+            await refilterAllContent();
         });
 
         document.getElementById(CONSTANTS.UI_IDS.TELECOM_BLOCK_CHECKBOX).addEventListener('change', () => {
@@ -963,7 +1295,16 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
      */
     function applySyncBlock(element) {
         const settings = window.dcFilterSettings || {};
-        const { masterDisabled, blockGuestEnabled, telecomBlockEnabled, blockConfig = {}, blockedGuests = [], personalBlockList, personalBlockEnabled } = settings;
+        const {
+            masterDisabled,
+            blockGuestEnabled,
+            proxyBlockMode = 0,
+            telecomBlockEnabled,
+            blockedGuests = [],
+            customIpPrefixSet,
+            personalBlockList,
+            personalBlockEnabled
+        } = settings;
 
         const writerInfo = element.querySelector(CONSTANTS.SELECTORS.WRITER_INFO);
         if (!writerInfo) return;
@@ -971,7 +1312,11 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
         const uid = writerInfo.getAttribute('data-uid');
         const nickname = writerInfo.getAttribute('data-nick');
         const ipSpan = element.querySelector(CONSTANTS.SELECTORS.IP_SPAN);
-        const ip = ipSpan ? ipSpan.textContent.trim().slice(1, -1) : null;
+        const ipText = ipSpan ? ipSpan.textContent.trim() : '';
+        const ip = (ipText.startsWith('(') && ipText.endsWith(')')) ? ipText.slice(1, -1) : (ipText || writerInfo.getAttribute('data-ip') || null);
+        const ipPrefix = getIpPrefix(ip);
+        const normalizedProxyBlockMode = normalizeProxyBlockMode(proxyBlockMode);
+        const isGuest = Boolean((!uid || uid.length < 3) && ip);
 
         // 1. [리팩토링] 개인 차단 필터를 최우선으로 실행합니다.
         // 이 필터는 '모든 기능 끄기'나 '개념글 제외' 옵션의 영향을 받지 않습니다.
@@ -1005,18 +1350,16 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             return;
         }
 
-        // 3. 기존 필터링 로직 (글댓합 캐시, 통피, 유동 등)
+        // 3. 기존 필터링 로직 (글댓합 캐시, 통피, 유동, 우회 IP)
         let isBlocked = false;
-        const telecomBlockRegex = (telecomBlockEnabled && blockConfig.ip) ? new RegExp('^(' + blockConfig.ip.split('||').map(prefix => prefix.replace(/\./g, '\\.')).join('|') + ')') : null;
-        const isGuest = (!uid || uid.length < 3) && ip;
+        const hasCustomIpPrefixBlock = Boolean(customIpPrefixSet && customIpPrefixSet.size > 0 && ipPrefix && customIpPrefixSet.has(ipPrefix));
+        const telecomPrefixMatch = Boolean(telecomBlockEnabled && ipPrefix && getTelecomPrefixSet().has(ipPrefix));
+        const proxyPrefixMatch = getProxyPrefixMatch(ipPrefix, normalizedProxyBlockMode).matched;
 
-        if (isGuest) {
-            if (blockGuestEnabled) { isBlocked = true; }
-            else if (telecomBlockRegex && ip && telecomBlockRegex.test(ip)) { isBlocked = true; }
-        } else if (ip && telecomBlockRegex && telecomBlockRegex.test(ip)) {
-            isBlocked = true;
-        }
-
+        if (isGuest && blockGuestEnabled) { isBlocked = true; }
+        if (!isBlocked && hasCustomIpPrefixBlock) { isBlocked = true; }
+        if (!isBlocked && proxyPrefixMatch) { isBlocked = true; }
+        if (!isBlocked && telecomPrefixMatch) { isBlocked = true; }
         if (!isBlocked && ip && blockedGuests.includes(ip)) { isBlocked = true; }
 
         if (!isBlocked && uid && BLOCKED_UIDS_CACHE[uid]) {
@@ -1092,7 +1435,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
     async function reloadSettings() {
         const [
             masterDisabled, excludeRecommended, threshold, ratioEnabled,
-            ratioMin, ratioMax, blockGuestEnabled, telecomBlockEnabled,
+            ratioMin, ratioMax, blockGuestEnabled, proxyBlockMode, telecomBlockEnabled,
             blockedGuests, blockConfig, personalBlockList, personalBlockEnabled
         ] = await Promise.all([
             GM_getValue(CONSTANTS.STORAGE_KEYS.MASTER_DISABLED, false),
@@ -1102,6 +1445,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             GM_getValue(CONSTANTS.STORAGE_KEYS.RATIO_MIN, ''),
             GM_getValue(CONSTANTS.STORAGE_KEYS.RATIO_MAX, ''),
             GM_getValue(CONSTANTS.STORAGE_KEYS.BLOCK_GUEST, false),
+            GM_getValue(CONSTANTS.STORAGE_KEYS.BLOCK_PROXY, 0),
             GM_getValue(CONSTANTS.STORAGE_KEYS.BLOCK_TELECOM, false),
             getBlockedGuests(),
             GM_getValue(CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG, {}),
@@ -1109,6 +1453,9 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             PersonalBlockModule.loadPersonalBlocks(),
             GM_getValue(CONSTANTS.STORAGE_KEYS.PERSONAL_BLOCK_ENABLED, true)
         ]);
+
+        const normalizedProxyBlockMode = normalizeProxyBlockMode(proxyBlockMode);
+        const customIpPrefixSet = new Set(parseIpPrefixList(blockConfig?.ip || ''));
 
         window.dcFilterSettings = {
             masterDisabled,
@@ -1118,9 +1465,11 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             ratioMin: parseFloat(ratioMin),
             ratioMax: parseFloat(ratioMax),
             blockGuestEnabled,
+            proxyBlockMode: normalizedProxyBlockMode,
+            proxyBlockEnabled: normalizedProxyBlockMode !== PROXY_MODE.OFF,
             telecomBlockEnabled,
             blockedGuests,
-            blockConfig,
+            customIpPrefixSet,
             // [v1.7.0 이식] 설정 객체에 추가
             personalBlockList,
             personalBlockEnabled
@@ -1507,7 +1856,12 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
     // [v1.7.0 이식된 기능 끝]
 
     async function start() {
+        await cleanupLegacyManagedBlockConfig();
         await reloadSettings();
+        getTelecomPrefixSet();
+        getProxyStrictPrefixSet();
+        getProxyAggressiveExtraPrefixSet();
+        getProxyPrefixSet(PROXY_MODE.AGGRESSIVE);
 
         // [v1.7.1 리팩토링] 요구사항 1번 해결.
         // 개념글 목록 페이지에서 스크립트가 조기 종료되어 '간편차단' 버튼(FAB)이
@@ -1516,13 +1870,6 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
         //     console.log('DCInside 유저 필터: 개념글 목록 페이지이므로 필터 기능을 비활성화합니다.');
         //     return;
         // }
-
-        const telecomBlockEnabled = await GM_getValue(CONSTANTS.STORAGE_KEYS.BLOCK_TELECOM, false);
-        if (telecomBlockEnabled) {
-            await regblockMobile();
-        } else {
-            await delblockMobile();
-        }
 
         await refreshBlockedUidsCache();
 
