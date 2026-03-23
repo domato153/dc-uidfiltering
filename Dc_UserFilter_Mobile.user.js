@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         DC_UserFilter_Mobile
 // @namespace    http://tampermonkey.net/
-// @version      2.7.4
+// @version      2.7.5
 // @description  유저 필터링, UI 개선, 개인 차단/해제 기능
 // @author       domato153
 // @match        https://gall.dcinside.com/*
@@ -1684,8 +1684,11 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
                 RATIO_MIN: 'dcinside_ratio_min',
                 RATIO_MAX: 'dcinside_ratio_max',
                 BLOCK_GUEST: 'dcinside_block_guest',
+                BLOCK_PROXY: 'dcinside_proxy_ip_block_enabled',
                 BLOCK_TELECOM: 'dcinside_telecom_ip_block_enabled',
                 BLOCK_CONFIG: 'dcinside_block_config',
+                BLOCK_CONFIG_MIGRATION_V275_DONE: 'dcinside_block_config_migration_v275_done',
+                BLOCK_CONFIG_MIGRATION_V275_BACKUP: 'dcinside_block_config_migration_v275_backup',
                 BLOCKED_UIDS: 'dcinside_blocked_uids',
                 BLOCKED_GUESTS: 'dcinside_blocked_guests',
                 SHORTCUT_KEY: 'dcinside_shortcut_key',
@@ -1719,6 +1722,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
                 SETTINGS_CONTAINER: 'dcinside-settings-container',
                 THRESHOLD_INPUT: 'dcinside-threshold-input',
                 BLOCK_GUEST_CHECKBOX: 'dcinside-block-guest-checkbox',
+                PROXY_BLOCK_MODE_GROUP: 'dcinside-proxy-ip-block-mode-group',
                 TELECOM_BLOCK_CHECKBOX: 'dcinside-telecom-ip-block-checkbox',
                 RATIO_ENABLE_CHECKBOX: 'dcinside-ratio-enable-checkbox',
                 RATIO_SECTION: 'dcinside-ratio-section',
@@ -1742,37 +1746,377 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
         },
         BLOCK_UID_EXPIRE: 1000 * 60 * 60 * 24 * 7,
         BLOCKED_UIDS_CACHE: {},
+        DEBUG_ENABLED: true,
+        DEBUG_MAX_DECISIONS_PER_PASS: 150,
+        DEBUG_PASS_ID: 0,
+        DEBUG_DECISION_LOG_COUNT: 0,
+        DEBUG_DECISION_KEYS: new Set(),
+        _telecomPrefixSet: null,
+        _proxyStrictPrefixSet: null,
+        _proxyAggressiveExtraPrefixSet: null,
+        _proxyAggressivePrefixSet: null,
+        PROXY_MODE: { OFF: 0, STRICT: 1, AGGRESSIVE: 2 },
+        // modtool.txt 기준
+        // strict: VPN_LIST + IP_OWNER_LIST 의 "Mudfish VPN(정확도 낮음)"
+        // aggressive extra: 클라우드/호스팅/IDC 계열 + 일부 인프라 owner
+        PROXY_STRICT_PREFIXES: `
+            1.176 1.201 1.215 1.227 1.228 1.229 1.231 1.237 1.245 1.248 1.252 1.254 2.56 2.57 2.58 2.59 3.36 5.22
+            5.44 5.45 5.61 5.79 5.104 5.133 5.157 5.180 5.181 5.182 5.183 5.252 5.253 5.254 13.125 14.32 14.37 14.42
+            14.51 14.56 14.63 14.136 20.194 23.26 23.27 23.29 23.227 23.249 24.235 27.102 31.3 31.13 31.14 31.24 31.25 31.40
+            31.42 31.56 31.57 31.58 31.59 31.130 31.131 31.133 31.135 31.169 31.170 31.186 31.187 31.193 31.204 31.217 31.220 31.222
+            34.22 34.64 36.38 36.50 36.255 37.0 37.19 37.35 37.46 37.49 37.58 37.97 37.120 37.143 37.221 37.235 38.48 38.54
+            38.65 38.95 38.132 38.180 38.200 38.201 38.202 38.203 38.204 38.205 38.206 39.114 39.116 39.118 39.121 39.123 39.126 40.183
+            41.223 43.225 43.226 45.8 45.9 45.10 45.11 45.12 45.13 45.14 45.15 45.33 45.38 45.59 45.66 45.67 45.74 45.80
+            45.81 45.82 45.83 45.84 45.85 45.86 45.87 45.88 45.89 45.90 45.91 45.92 45.93 45.94 45.95 45.128 45.129 45.130
+            45.131 45.132 45.133 45.134 45.135 45.136 45.137 45.139 45.140 45.141 45.142 45.143 45.144 45.145 45.146 45.147 45.148 45.149
+            45.150 45.152 45.153 45.154 45.155 45.156 45.157 45.192 45.251 46.28 46.34 46.37 46.102 46.148 46.183 46.202 46.203 49.161
+            49.246 50.7 50.114 52.78 52.79 52.141 52.144 52.231 58.124 58.226 58.228 58.237 59.4 59.6 59.8 59.10 59.14 59.20
+            59.22 59.24 61.74 61.82 61.84 61.85 61.101 61.254 62.3 62.68 62.112 62.133 62.197 62.204 62.210 62.216 63.141 63.246
+            64.43 64.79 64.224 66.78 66.85 66.90 66.150 66.225 66.249 66.251 67.207 67.210 67.227 69.10 69.168 72.5 72.14 72.18
+            74.49 74.63 74.91 74.118 77.36 77.78 77.81 77.83 77.232 77.237 77.243 77.247 78.31 78.41 79.98 79.110 79.127 79.135
+            80.71 80.76 80.89 80.93 80.96 80.97 80.243 81.17 81.22 81.29 81.92 81.161 81.180 81.181 82.102 82.117 82.140 82.149
+            82.152 82.153 82.180 82.197 83.97 83.136 83.143 83.150 83.171 83.243 84.17 84.21 84.32 84.39 84.46 84.54 84.247 84.252
+            85.8 85.11 85.28 85.31 85.120 85.121 85.122 85.132 85.190 85.203 85.204 85.206 85.208 85.209 85.254 86.38 86.48 86.62
+            86.104 86.105 86.106 86.107 87.101 87.236 87.239 87.249 88.214 88.216 88.218 89.31 89.33 89.36 89.37 89.38 89.40 89.41
+            89.42 89.44 89.45 89.46 89.47 89.116 89.117 89.184 89.185 89.187 89.213 89.238 89.249 91.90 91.92 91.102 91.123 91.132
+            91.190 91.193 91.195 91.196 91.197 91.204 91.205 91.207 91.209 91.214 91.217 91.219 91.220 91.221 91.225 91.226 91.229 91.231
+            91.232 91.233 91.234 91.238 91.239 91.240 91.242 91.245 91.246 92.38 92.50 92.51 92.61 92.62 92.112 92.113 92.114 92.118
+            92.119 92.223 92.240 92.242 92.243 92.249 93.113 93.114 93.115 93.119 93.120 93.152 93.177 93.185 93.189 94.74 94.101 94.137
+            94.140 94.154 94.156 94.176 94.177 94.190 94.198 94.242 95.141 95.153 95.156 95.173 95.174 95.181 95.214 102.38 102.128 102.129
+            102.165 102.218 103.4 103.6 103.10 103.18 103.27 103.44 103.46 103.47 103.69 103.75 103.86 103.99 103.100 103.110 103.111 103.115
+            103.119 103.130 103.149 103.155 103.160 103.209 103.210 103.221 103.225 103.254 104.16 104.17 104.18 104.19 104.20 104.21 104.22 104.23
+            104.24 104.25 104.26 104.27 104.28 104.128 104.131 104.167 104.218 104.222 104.232 104.233 104.234 104.236 104.239 104.243 104.245 104.250
+            104.251 104.252 106.185 106.186 106.187 106.243 107.22 107.155 107.161 107.167 107.170 107.181 107.190 107.191 108.61 108.165 108.181 109.70
+            109.74 109.123 109.160 109.176 109.200 109.203 109.207 109.236 109.238 110.47 112.72 112.152 112.156 112.158 112.160 112.167 112.169 112.171
+            112.172 112.173 112.186 113.52 113.130 113.203 114.199 114.207 115.22 115.23 115.40 115.71 116.120 118.32 118.33 118.37 118.38 118.40
+            118.47 118.99 118.221 118.222 119.194 119.197 119.203 119.205 120.142 121.129 121.130 121.132 121.133 121.135 121.139 121.140 121.141 121.148
+            121.149 121.151 121.155 121.162 121.171 121.172 121.173 121.176 121.183 121.185 121.187 122.42 123.215 124.5 124.54 124.111 125.132 125.138
+            125.140 125.181 125.182 125.186 125.240 128.199 130.185 130.195 134.255 136.0 138.128 138.199 139.28 140.99 140.248 141.0 141.11 141.98
+            141.164 141.193 142.111 142.252 145.14 145.223 146.19 146.56 146.66 146.70 146.75 146.255 147.46 147.47 147.78 147.79 147.136 148.135
+            149.19 149.22 149.34 149.36 149.40 149.50 149.62 149.88 149.102 149.143 149.154 151.101 151.236 152.89 154.7 154.9 154.13 154.16
+            154.17 154.28 154.29 154.30 154.36 154.37 154.47 154.70 154.85 154.92 154.95 154.127 154.194 154.199 154.216 154.218 155.133 156.67
+            156.146 156.225 156.238 156.246 157.254 158.46 158.115 158.179 158.220 158.247 158.255 159.48 159.148 160.20 160.238 162.159 162.213 162.217
+            162.218 162.221 162.243 162.246 162.248 162.252 162.254 163.5 165.231 165.246 166.0 166.88 167.88 167.100 167.253 168.91 168.93 168.199
+            168.235 169.150 171.22 171.25 172.84 172.85 172.94 172.98 172.102 172.103 172.111 172.224 172.225 172.226 173.46 173.211 173.245 173.255
+            174.140 175.110 175.115 175.118 175.127 175.197 175.203 175.205 175.207 175.208 175.210 175.211 176.9 176.10 176.46 176.53 176.58 176.67
+            176.96 176.97 176.98 176.100 176.105 176.110 176.111 176.112 176.113 176.116 176.118 176.121 176.123 176.124 176.125 176.126 176.223 176.227
+            177.67 178.62 178.79 178.132 178.157 178.159 178.162 178.171 178.209 178.211 178.212 178.218 178.249 178.255 179.43 179.61 180.68 180.149
+            180.224 181.41 181.214 181.215 182.161 182.218 182.226 182.229 183.101 183.103 183.104 183.105 183.107 184.174 185.4 185.9 185.12 185.15
+            185.19 185.23 185.25 185.26 185.30 185.34 185.37 185.45 185.46 185.49 185.51 185.52 185.54 185.59 185.75 185.76 185.81 185.82
+            185.87 185.89 185.90 185.91 185.92 185.93 185.94 185.95 185.96 185.100 185.101 185.104 185.105 185.107 185.111 185.114 185.119 185.120
+            185.123 185.126 185.128 185.130 185.132 185.135 185.143 185.144 185.145 185.147 185.151 185.152 185.153 185.154 185.156 185.158 185.159 185.161
+            185.162 185.163 185.164 185.165 185.167 185.169 185.171 185.172 185.173 185.174 185.175 185.177 185.180 185.181 185.182 185.183 185.184 185.185
+            185.187 185.188 185.189 185.192 185.193 185.194 185.195 185.196 185.197 185.198 185.199 185.200 185.201 185.202 185.203 185.204 185.205 185.206
+            185.207 185.208 185.209 185.210 185.211 185.212 185.213 185.215 185.216 185.217 185.218 185.219 185.220 185.221 185.222 185.225 185.226 185.227
+            185.228 185.229 185.230 185.231 185.232 185.233 185.235 185.236 185.237 185.238 185.239 185.240 185.241 185.242 185.243 185.244 185.245 185.246
+            185.247 185.248 185.249 185.250 185.251 185.252 185.253 185.254 185.255 188.66 188.74 188.116 188.119 188.191 188.208 188.209 188.213 188.214
+            188.215 188.226 188.240 188.241 190.2 190.106 191.96 191.101 192.30 192.34 192.36 192.40 192.54 192.55 192.71 192.73 192.81 192.99
+            192.109 192.110 192.119 192.121 192.142 192.145 192.162 192.184 192.211 192.223 192.241 192.253 193.0 193.9 193.22 193.27 193.29 193.30
+            193.31 193.32 193.36 193.37 193.38 193.42 193.43 193.46 193.47 193.56 193.57 193.58 193.105 193.106 193.108 193.111 193.135 193.142
+            193.148 193.149 193.160 193.168 193.176 193.182 193.187 193.189 193.201 193.203 193.223 193.226 193.227 193.231 193.238 193.239 194.5 194.14
+            194.15 194.26 194.31 194.32 194.33 194.34 194.35 194.36 194.37 194.48 194.50 194.53 194.59 194.60 194.61 194.68 194.71 194.79
+            194.93 194.99 194.102 194.104 194.105 194.110 194.114 194.124 194.126 194.135 194.145 194.146 194.147 194.153 194.156 194.169 194.180 194.187
+            194.195 194.233 194.242 195.8 195.12 195.34 195.54 195.58 195.64 195.80 195.88 195.158 195.160 195.179 195.181 195.184 195.189 195.206
+            195.210 195.216 195.242 196.16 196.17 196.18 196.240 196.244 196.245 198.56 198.58 198.60 198.145 198.147 198.190 198.211 198.232 199.84
+            199.96 199.115 199.120 199.241 202.168 203.21 203.32 203.34 204.93 204.124 204.217 205.142 205.143 206.53 206.80 206.123 206.127 206.144
+            206.195 206.220 206.232 207.45 207.230 207.244 208.68 209.58 209.198 209.222 209.235 210.97 210.123 210.222 211.43 211.53 211.55 211.107
+            211.183 211.184 211.222 211.226 211.228 211.230 211.237 211.245 211.251 211.253 212.30 212.60 212.80 212.81 212.90 212.92 212.97 212.102
+            212.103 212.119 212.192 213.109 213.134 213.139 213.152 213.184 213.229 213.230 213.232 216.97 216.131 216.158 216.173 216.189 216.227 216.246
+            216.247 217.9 217.64 217.78 217.138 217.148 217.151 217.156 217.170 217.197 218.55 218.145 218.146 218.150 218.153 218.155 218.158 218.232
+            218.234 218.239 220.67 220.71 220.76 220.78 220.82 220.89 220.90 220.116 220.118 220.123 221.140 221.144 221.147 221.150 221.153 221.158
+            221.160 221.164 221.167 222.102 222.108 222.109 222.110 222.111 222.112 222.118 222.238
+        `.trim().split(/\s+/),
+        PROXY_AGGRESSIVE_EXTRA_PREFIXES: `
+            1.209 1.224 1.255 14.129 27.96 27.255 38.77 39.115 43.227 43.228 43.250 43.254 45.114 45.119 45.125 45.164 45.225 45.249
+            49.8 49.50 49.128 49.143 49.236 49.238 49.254 58.229 59.150 61.14 61.42 61.97 61.100 61.106 61.109 61.111 61.247 61.250
+            61.251 61.252 61.255 63.105 64.23 66.232 101.79 101.101 103.11 103.24 103.54 103.79 103.87 103.103 103.122 103.124 103.131 103.132
+            103.138 103.140 103.146 103.151 103.193 103.194 103.212 103.215 103.218 103.230 103.237 103.238 103.240 103.243 103.249 106.10 106.249 110.4
+            110.44 110.93 110.165 110.172 110.234 111.91 111.92 113.30 114.110 114.111 114.141 115.85 115.88 115.89 115.92 115.144 115.187 116.121
+            116.122 116.125 117.52 118.67 118.91 118.129 119.30 121.0 121.50 121.78 121.126 121.170 122.49 122.99 124.198 124.217 125.6 125.7
+            125.209 133.186 139.150 150.107 157.119 160.202 162.251 175.45 175.106 175.125 175.126 175.158 180.131 180.150 180.189 180.210 182.162 182.173
+            182.252 182.255 183.78 202.31 202.68 202.86 202.126 202.131 202.133 202.158 202.179 203.84 203.104 203.109 203.216 203.231 203.235 203.236
+            203.238 203.246 203.248 210.4 210.16 210.89 210.92 210.93 210.108 210.109 210.112 210.116 210.121 210.122 210.124 210.205 210.206 210.216
+            210.219 211.32 211.37 211.41 211.47 211.50 211.56 211.60 211.63 211.104 211.110 211.115 211.116 211.118 211.168 211.169 211.170 211.171
+            211.172 211.175 211.180 211.188 211.189 211.233 211.234 211.235 211.236 211.238 211.239 211.241 211.249 211.254 211.255 218.36 220.230 222.239
+            223.26 223.130 223.165 223.255
+        `.trim().split(/\s+/),
         isMobile: () => /Mobi/i.test(navigator.userAgent),
         isRecommendedContext: () => window.location.search.includes('exception_mode=recommend'),
-        async regblockMobile() {
-            let conf = await GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG, {});
-            if (conf.ip && conf.ip.includes(this.CONSTANTS.ETC.MOBILE_IP_MARKER)) return;
-            let ip_arr = [this.CONSTANTS.ETC.MOBILE_IP_MARKER];
-            this.TELECOM.forEach(t1 => t1[1].forEach(t2 => {
-                if (t2[2] === 'MOB') ip_arr.push(t1[0] + '.' + t2[0]);
-            }));
-            const mobile_ips_string = ip_arr.join('||');
-            conf.ip = conf.ip ? conf.ip + '||' + mobile_ips_string : mobile_ips_string;
-            await GM_setValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG, conf);
+        normalizeProxyBlockMode(value) {
+            if (value === true) return this.PROXY_MODE.STRICT;
+            if (value === false || value === null || value === undefined || value === '') return this.PROXY_MODE.OFF;
+            const numeric = typeof value === 'number' ? value : parseInt(value, 10);
+            if (numeric === this.PROXY_MODE.AGGRESSIVE) return this.PROXY_MODE.AGGRESSIVE;
+            if (numeric === this.PROXY_MODE.STRICT) return this.PROXY_MODE.STRICT;
+            return this.PROXY_MODE.OFF;
         },
-        async delblockMobile() {
-            let conf = await GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG, {});
-            if (conf.ip && conf.ip.includes(this.CONSTANTS.ETC.MOBILE_IP_MARKER)) {
-                const user_ips = conf.ip.split('||' + this.CONSTANTS.ETC.MOBILE_IP_MARKER)[0];
-                conf.ip = user_ips.endsWith('||') ? user_ips.slice(0, -2) : user_ips;
-                if (conf.ip === this.CONSTANTS.ETC.MOBILE_IP_MARKER || !conf.ip) conf.ip = '';
+        getProxyModeLabel(mode) {
+            switch (this.normalizeProxyBlockMode(mode)) {
+                case this.PROXY_MODE.STRICT: return '확실한 우회 차단';
+                case this.PROXY_MODE.AGGRESSIVE: return '공격적 우회 차단';
+                default: return '끔';
+            }
+        },
+        normalizeIpPrefix(value) {
+            if (typeof value !== 'string') return null;
+            const parts = value.trim().split('.');
+            if (parts.length !== 2) return null;
+            const normalizedParts = parts.map((part) => {
+                if (!/^\d{1,3}$/.test(part)) return null;
+                const num = Number(part);
+                return num >= 0 && num <= 255 ? String(num) : null;
+            });
+            return normalizedParts.includes(null) ? null : normalizedParts.join('.');
+        },
+        parseIpPrefixList(value) {
+            if (typeof value !== 'string' || !value) return [];
+            const markerToken = this.CONSTANTS.ETC.MOBILE_IP_MARKER;
+            let source = value;
+            const markerIndex = source.indexOf(markerToken);
+            if (markerIndex !== -1) {
+                source = source.slice(0, markerIndex);
+                source = source.replace(/\|\|$/, '');
+            }
+            const seen = new Set();
+            return source.split('||').reduce((prefixes, token) => {
+                const normalized = this.normalizeIpPrefix(token);
+                if (!normalized || seen.has(normalized)) return prefixes;
+                seen.add(normalized);
+                prefixes.push(normalized);
+                return prefixes;
+            }, []);
+        },
+        getIpPrefix(ip) {
+            if (typeof ip !== 'string' || !ip) return null;
+            const match = ip.trim().match(/^(\d{1,3}\.\d{1,3})(?=\.|$)/);
+            return match ? this.normalizeIpPrefix(match[1]) : null;
+        },
+        getTelecomPrefixSet() {
+            if (!this._telecomPrefixSet) {
+                const prefixes = [];
+                this.TELECOM.forEach((group) => group[1].forEach((item) => {
+                    if (item[2] === 'MOB') prefixes.push(`${group[0]}.${item[0]}`);
+                }));
+                this._telecomPrefixSet = new Set(prefixes);
+            }
+            return this._telecomPrefixSet;
+        },
+        getProxyStrictPrefixSet() {
+            if (!this._proxyStrictPrefixSet) this._proxyStrictPrefixSet = new Set(this.PROXY_STRICT_PREFIXES);
+            return this._proxyStrictPrefixSet;
+        },
+        getProxyAggressiveExtraPrefixSet() {
+            if (!this._proxyAggressiveExtraPrefixSet) this._proxyAggressiveExtraPrefixSet = new Set(this.PROXY_AGGRESSIVE_EXTRA_PREFIXES);
+            return this._proxyAggressiveExtraPrefixSet;
+        },
+        getProxyPrefixSet(mode = this.PROXY_MODE.STRICT) {
+            const normalizedMode = this.normalizeProxyBlockMode(mode);
+            if (normalizedMode === this.PROXY_MODE.AGGRESSIVE) {
+                if (!this._proxyAggressivePrefixSet) {
+                    this._proxyAggressivePrefixSet = new Set(this.getProxyStrictPrefixSet());
+                    this.getProxyAggressiveExtraPrefixSet().forEach((prefix) => this._proxyAggressivePrefixSet.add(prefix));
+                }
+                return this._proxyAggressivePrefixSet;
+            }
+            return normalizedMode === this.PROXY_MODE.STRICT ? this.getProxyStrictPrefixSet() : null;
+        },
+        getProxyPrefixMatch(ipPrefix, mode) {
+            const normalizedMode = this.normalizeProxyBlockMode(mode);
+            if (!ipPrefix || normalizedMode === this.PROXY_MODE.OFF) return { matched: false, tier: null };
+            if (this.getProxyStrictPrefixSet().has(ipPrefix)) return { matched: true, tier: 'strict' };
+            if (normalizedMode === this.PROXY_MODE.AGGRESSIVE && this.getProxyAggressiveExtraPrefixSet().has(ipPrefix)) {
+                return { matched: true, tier: 'aggressive' };
+            }
+            return { matched: false, tier: null };
+        },
+        debugLog(scope, message, payload) {
+            if (!this.DEBUG_ENABLED) return;
+            if (payload === undefined) console.log(`[DCUF DEBUG][${scope}] ${message}`);
+            else console.log(`[DCUF DEBUG][${scope}] ${message}`, payload);
+        },
+        debugSettingsSnapshot(extra = {}) {
+            const s = dcFilterSettings || {};
+            const proxyBlockMode = this.normalizeProxyBlockMode(s.proxyBlockMode ?? s.proxyBlockEnabled);
+            return {
+                masterDisabled: !!s.masterDisabled,
+                excludeRecommended: !!s.excludeRecommended,
+                threshold: s.threshold,
+                ratioEnabled: !!s.ratioEnabled,
+                ratioMin: s.ratioMin,
+                ratioMax: s.ratioMax,
+                blockGuestEnabled: !!s.blockGuestEnabled,
+                proxyBlockMode,
+                proxyBlockModeLabel: this.getProxyModeLabel(proxyBlockMode),
+                proxyBlockEnabled: proxyBlockMode !== this.PROXY_MODE.OFF,
+                telecomBlockEnabled: !!s.telecomBlockEnabled,
+                blockedGuestsCount: Array.isArray(s.blockedGuests) ? s.blockedGuests.length : 0,
+                blockedGuestsPreview: Array.isArray(s.blockedGuests) ? s.blockedGuests.slice(0, 10) : [],
+                customIpPrefixCount: s.customIpPrefixSet instanceof Set ? s.customIpPrefixSet.size : 0,
+                customIpPrefixPreview: s.customIpPrefixSet instanceof Set ? Array.from(s.customIpPrefixSet).slice(0, 15) : [],
+                telecomPrefixCount: this.getTelecomPrefixSet().size,
+                proxyStrictPrefixCount: this.getProxyStrictPrefixSet().size,
+                proxyAggressiveExtraPrefixCount: this.getProxyAggressiveExtraPrefixSet().size,
+                proxyAggressivePrefixCount: this.getProxyPrefixSet(this.PROXY_MODE.AGGRESSIVE).size,
+                effectiveProxyPrefixCount: proxyBlockMode === this.PROXY_MODE.AGGRESSIVE ? this.getProxyPrefixSet(this.PROXY_MODE.AGGRESSIVE).size : (proxyBlockMode === this.PROXY_MODE.STRICT ? this.getProxyStrictPrefixSet().size : 0),
+                ...extra
+            };
+        },
+        debugStringifySafe(value) {
+            try {
+                return JSON.stringify(value);
+            } catch (error) {
+                return `[stringify-failed:${error?.message || 'unknown'}]`;
+            }
+        },
+        debugDescribeElement(element) {
+            if (!(element instanceof HTMLElement)) return { tag: null };
+            const titleNode = element.querySelector('.gall_tit a, .post-title-link, .usertxt, .gall_tit, .post-title');
+            return {
+                tag: element.tagName,
+                id: element.id || null,
+                className: typeof element.className === 'string' ? element.className : '',
+                rowId: element.getAttribute('data-custom-row-id'),
+                title: titleNode ? titleNode.textContent.trim().replace(/\s+/g, ' ').slice(0, 80) : null
+            };
+        },
+        startDebugPass(reason, extra = {}) {
+            if (!this.DEBUG_ENABLED) return;
+            this.DEBUG_PASS_ID += 1;
+            this.DEBUG_DECISION_LOG_COUNT = 0;
+            this.DEBUG_DECISION_KEYS.clear();
+            this.debugLog('pass', `start #${this.DEBUG_PASS_ID} ${reason}`, {
+                passId: this.DEBUG_PASS_ID,
+                ...extra,
+                settings: this.debugSettingsSnapshot()
+            });
+        },
+        debugDecision(element, payload) {
+            if (!this.DEBUG_ENABLED) return;
+            const reasons = Array.isArray(payload.reasons) ? payload.reasons.filter(Boolean) : [];
+            const identity = [
+                this.DEBUG_PASS_ID,
+                payload.branch || '',
+                payload.uid || '',
+                payload.ip || '',
+                payload.ipPrefix || '',
+                payload.isBlocked ? 'hide' : 'show',
+                reasons.join(',')
+            ].join('|');
+            if (this.DEBUG_DECISION_KEYS.has(identity)) return;
+            if (this.DEBUG_DECISION_LOG_COUNT >= this.DEBUG_MAX_DECISIONS_PER_PASS) return;
+            this.DEBUG_DECISION_KEYS.add(identity);
+            this.DEBUG_DECISION_LOG_COUNT += 1;
+            this.debugLog('decision', `${payload.branch || 'sync'} #${this.DEBUG_DECISION_LOG_COUNT}`, {
+                passId: this.DEBUG_PASS_ID,
+                element: this.debugDescribeElement(element),
+                ...payload,
+                reasons
+            });
+            console.log(
+                `[DCUF DEBUG][decision-line] pass=${this.DEBUG_PASS_ID} idx=${this.DEBUG_DECISION_LOG_COUNT} branch=${payload.branch || 'sync'} blocked=${payload.isBlocked} ` +
+                `uid=${payload.uid || '(none)'} nick=${payload.nickname || '(none)'} ip=${payload.ip || '(none)'} prefix=${payload.ipPrefix || '(none)'} ` +
+                `guest=${payload.isGuest} custom=${payload.hasCustomIpPrefixBlock} proxyMode=${payload.proxyBlockMode} proxy=${payload.proxyPrefixMatch} proxyTier=${payload.proxyMatchTier || '(none)'} telecom=${payload.telecomPrefixMatch} ` +
+                `blockedGuest=${payload.blockedGuestMatch} reasons=${reasons.join(',') || '(none)'}`
+            );
+        },
+        debugMirrorSync(originalRow, mirroredItem, nextDisplay, source) {
+            if (!this.DEBUG_ENABLED) return;
+            const prevDisplay = mirroredItem.style.display || '';
+            if (prevDisplay === nextDisplay && nextDisplay !== 'none') return;
+            this.debugLog('mirror', source, {
+                original: this.debugDescribeElement(originalRow),
+                mirrored: this.debugDescribeElement(mirroredItem),
+                originalDisplay: originalRow.style.display || '',
+                mirroredBefore: prevDisplay,
+                mirroredAfter: nextDisplay,
+                originalClassName: typeof originalRow.className === 'string' ? originalRow.className : ''
+            });
+        },
+        async debugDumpState(reason = 'manual') {
+            await this.reloadSettings();
+            const rawBlockConfig = await GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG, {});
+            const payload = this.debugSettingsSnapshot({
+                reason,
+                rawBlockConfigIp: typeof rawBlockConfig?.ip === 'string' ? rawBlockConfig.ip : '',
+                rawBlockConfigIpPreview: typeof rawBlockConfig?.ip === 'string' ? rawBlockConfig.ip.split('||').slice(0, 20) : [],
+                rawBlockConfigIpCount: this.parseIpPrefixList(rawBlockConfig?.ip || '').length
+            });
+            this.debugLog('dump', reason, payload);
+            console.log(`[DCUF DEBUG][dump-line] ${this.debugStringifySafe(payload)}`);
+            return payload;
+        },
+        installDebugApi() {
+            if (window.DCUFDebug && window.DCUFDebug.__dcufInstalled) return;
+            window.DCUFDebug = {
+                __dcufInstalled: true,
+                dumpState: (reason = 'manual dumpState') => this.debugDumpState(reason),
+                inspectCurrentPage: async (reason = 'manual inspectCurrentPage') => {
+                    await this.reloadSettings();
+                    this.startDebugPass(reason, { source: 'window.DCUFDebug.inspectCurrentPage' });
+                    this.runSyncRefilterPass();
+                    return this.debugDumpState(`${reason} after runSyncRefilterPass`);
+                },
+                refilter: async (reason = 'manual refilter') => {
+                    await this.refilterAllContent(reason);
+                    return this.debugDumpState(`${reason} after refilter`);
+                }
+            };
+            this.debugLog('api', 'window.DCUFDebug installed', Object.keys(window.DCUFDebug));
+        },
+        async cleanupLegacyManagedBlockConfig() {
+            const migrationDone = await GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG_MIGRATION_V275_DONE, false);
+            if (migrationDone) return;
+            const conf = await GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG, {});
+            if (!conf || typeof conf !== 'object') {
+                await GM_setValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG_MIGRATION_V275_DONE, true);
+                return;
+            }
+            const currentIp = typeof conf.ip === 'string' ? conf.ip : '';
+            const parsedPrefixes = this.parseIpPrefixList(currentIp);
+            const normalizedIp = parsedPrefixes.join('||');
+            const markerToken = this.CONSTANTS.ETC.MOBILE_IP_MARKER;
+            const suspiciousLargeLegacyList = !currentIp.includes(markerToken) && parsedPrefixes.length >= 100;
+
+            if (suspiciousLargeLegacyList) {
+                this.debugLog('migration', 'detected suspicious large legacy blockConfig.ip list, backing up and clearing', {
+                    beforeCount: parsedPrefixes.length,
+                    beforePreview: parsedPrefixes.slice(0, 20)
+                });
+                await GM_setValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG_MIGRATION_V275_BACKUP, currentIp);
+                conf.ip = '';
+                await GM_setValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG, conf);
+                await GM_setValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG_MIGRATION_V275_DONE, true);
+                return;
+            }
+
+            if (normalizedIp !== currentIp) {
+                this.debugLog('migration', 'cleanupLegacyManagedBlockConfig updating blockConfig.ip', {
+                    before: currentIp,
+                    after: normalizedIp
+                });
+                conf.ip = normalizedIp;
                 await GM_setValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG, conf);
             }
+            await GM_setValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG_MIGRATION_V275_DONE, true);
         },
         async showSettings() {
             await this.reloadSettings();
-            const { masterDisabled = false, excludeRecommended = false, threshold = 0, ratioEnabled = false, ratioMin = '', ratioMax = '', blockGuestEnabled = false, telecomBlockEnabled = false } = dcFilterSettings;
+            const { masterDisabled = false, excludeRecommended = false, threshold = 0, ratioEnabled = false, ratioMin = '', ratioMax = '', blockGuestEnabled = false, proxyBlockMode = 0, telecomBlockEnabled = false } = dcFilterSettings;
             const currentShortcut = await GM_getValue(this.CONSTANTS.STORAGE_KEYS.SHORTCUT_KEY, 'Shift+S');
+            const normalizedProxyBlockMode = this.normalizeProxyBlockMode(proxyBlockMode);
             const existingDiv = document.getElementById(this.CONSTANTS.UI_IDS.SETTINGS_PANEL);
             if (existingDiv) existingDiv.remove();
             const div = document.createElement('div');
             div.id = this.CONSTANTS.UI_IDS.SETTINGS_PANEL;
             div.style = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;padding:24px 20px 18px 20px;min-width:280px;z-index:99999;border:2px solid #333;border-radius:10px;box-shadow:0 0 10px #0008; cursor: default; user-select: none;';
+            const proxyModeButtonsHtml = [
+                [this.PROXY_MODE.OFF, '끔'],
+                [this.PROXY_MODE.STRICT, '확실'],
+                [this.PROXY_MODE.AGGRESSIVE, '공격적']
+            ].map(([mode, label]) => {
+                const active = normalizedProxyBlockMode === mode;
+                return `<button type="button" data-proxy-mode="${mode}" aria-pressed="${active}" style="flex:1;min-width:0;border:0;background:${active ? '#3b71fd' : 'transparent'};color:${active ? '#fff' : '#333'};font-size:12px;font-weight:${active ? '700' : '600'};padding:5px 0;border-radius:7px;cursor:pointer;">${label}</button>`;
+            }).join('');
             div.innerHTML = `
                 <div style="margin-bottom:15px;padding-bottom:12px;border-bottom: 2px solid #ccc; display:flex;align-items:center; justify-content: space-between;">
                     <div style="display:flex; align-items: center; gap: 10px;">
@@ -1784,7 +2128,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
                 <div id="${this.CONSTANTS.UI_IDS.SETTINGS_CONTAINER}" style="opacity:${masterDisabled ? 0.5 : 1}; pointer-events:${masterDisabled ? 'none' : 'auto'};">
                     <div style="display: flex; justify-content: space-between; align-items: center;">
                         <div style="display: flex; flex-direction: column; align-items: center;"><h3 style="cursor: default;margin-top:0;margin-bottom:5px;">유저 글+댓글 합 기준값(이 값 이하 차단)</h3><input id="${this.CONSTANTS.UI_IDS.THRESHOLD_INPUT}" type="number" min="0" value="${threshold}" style="width:80px;font-size:16px; cursor: initial;"><div style="font-size:13px;color:#666;margin-top:5px;">0 또는 빈칸으로 두면 비활성화됩니다.</div></div>
-                        <div style="border: 2px solid #000; border-radius: 5px; padding: 8px 8px 5px 6px;"><div style="display: flex; flex-direction: column; align-items: flex-start; gap: 7px;"><div style="display:flex; align-items:center; gap:6px; padding-bottom: 5px; border-bottom: 1px solid #ddd; width:100%;"><label class="switch" style="flex-shrink:0;"><input id="${this.CONSTANTS.UI_IDS.BLOCK_GUEST_CHECKBOX}" type="checkbox" ${blockGuestEnabled ? 'checked' : ''}><span class="switch-slider"></span></label><label for="${this.CONSTANTS.UI_IDS.BLOCK_GUEST_CHECKBOX}" style="font-size:13px;cursor:pointer;">유동 전체 차단</label></div><div style="display:flex; align-items:center; gap:6px;"><label class="switch" style="flex-shrink:0;"><input id="${this.CONSTANTS.UI_IDS.TELECOM_BLOCK_CHECKBOX}" type="checkbox" ${telecomBlockEnabled ? 'checked' : ''}><span class="switch-slider"></span></label><label for="${this.CONSTANTS.UI_IDS.TELECOM_BLOCK_CHECKBOX}" style="font-size:13px;cursor:pointer;">통신사 IP 차단</label></div></div></div>
+                        <div style="border: 2px solid #000; border-radius: 5px; padding: 8px 8px 5px 6px;"><div style="display: flex; flex-direction: column; align-items: flex-start; gap: 7px;"><div style="display:flex; align-items:center; gap:6px; padding-bottom: 5px; border-bottom: 1px solid #ddd; width:100%;"><label class="switch" style="flex-shrink:0;"><input id="${this.CONSTANTS.UI_IDS.BLOCK_GUEST_CHECKBOX}" type="checkbox" ${blockGuestEnabled ? 'checked' : ''}><span class="switch-slider"></span></label><label for="${this.CONSTANTS.UI_IDS.BLOCK_GUEST_CHECKBOX}" style="font-size:13px;cursor:pointer;">유동 전체 차단</label></div><div style="display:flex; flex-direction:column; align-items:flex-start; gap:4px; padding-bottom: 5px; border-bottom: 1px solid #ddd; width:100%;"><div style="font-size:13px;">우회 IP 차단</div><div id="${this.CONSTANTS.UI_IDS.PROXY_BLOCK_MODE_GROUP}" style="display:flex; width:100%; gap:2px; background:#edf1f5; border:1px solid #cfd6dd; border-radius:8px; padding:2px;">${proxyModeButtonsHtml}</div><div style="font-size:11px;color:#666;line-height:1.2;">끔 - 확실한 우회 차단 - 공격적 우회 차단</div></div><div style="display:flex; align-items:center; gap:6px;"><label class="switch" style="flex-shrink:0;"><input id="${this.CONSTANTS.UI_IDS.TELECOM_BLOCK_CHECKBOX}" type="checkbox" ${telecomBlockEnabled ? 'checked' : ''}><span class="switch-slider"></span></label><label for="${this.CONSTANTS.UI_IDS.TELECOM_BLOCK_CHECKBOX}" style="font-size:13px;cursor:pointer;">통신사 IP 차단</label></div></div></div>
                     </div>
                     <hr style="border:0;border-top:2px solid #222;margin:16px 0 12px 0;">
                     <div style="margin-bottom:8px;display:flex;align-items:center;gap:8px;"><label class="switch" style="flex-shrink:0;"><input id="${this.CONSTANTS.UI_IDS.RATIO_ENABLE_CHECKBOX}" type="checkbox" ${ratioEnabled ? 'checked' : ''}><span class="switch-slider"></span></label><label for="${this.CONSTANTS.UI_IDS.RATIO_ENABLE_CHECKBOX}" style="font-size:15px;cursor:pointer;">글/댓글 비율 필터 사용</label></div>
@@ -1842,6 +2186,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             const saveButton = div.querySelector(`#${this.CONSTANTS.UI_IDS.SAVE_BUTTON}`);
             const excludeRecommendedCheckbox = div.querySelector(`#${this.CONSTANTS.UI_IDS.EXCLUDE_RECOMMENDED_CHECKBOX}`);
             const blockGuestCheckbox = div.querySelector(`#${this.CONSTANTS.UI_IDS.BLOCK_GUEST_CHECKBOX}`);
+            const proxyBlockModeGroup = div.querySelector(`#${this.CONSTANTS.UI_IDS.PROXY_BLOCK_MODE_GROUP}`);
             const telecomBlockCheckbox = div.querySelector(`#${this.CONSTANTS.UI_IDS.TELECOM_BLOCK_CHECKBOX}`);
 
             if (input) { input.focus(); input.select(); }
@@ -1862,7 +2207,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
                 }, { passive: false });
             }
 
-            if (!masterDisableCheckbox || !settingsContainer || !ratioSection || !ratioEnableCheckbox || !ratioMinInput || !ratioMaxInput || !saveButton || !excludeRecommendedCheckbox || !blockGuestCheckbox || !telecomBlockCheckbox) {
+            if (!masterDisableCheckbox || !settingsContainer || !ratioSection || !ratioEnableCheckbox || !ratioMinInput || !ratioMaxInput || !saveButton || !excludeRecommendedCheckbox || !blockGuestCheckbox || !proxyBlockModeGroup || !telecomBlockCheckbox) {
                 console.error('DCinside User Filter: settings popup init failed - required control missing.');
                 return;
             }
@@ -1871,12 +2216,29 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             masterDisableCheckbox.addEventListener('change', updateMasterState); updateMasterState();
             const updateRatioSectionState = () => { const enabled = ratioEnableCheckbox.checked; ratioSection.style.opacity = enabled ? 1 : 0.5; ratioMinInput.disabled = !enabled; ratioMaxInput.disabled = !enabled; };
             ratioEnableCheckbox.addEventListener('change', updateRatioSectionState); updateRatioSectionState();
+            let currentProxyBlockMode = normalizedProxyBlockMode;
+            const renderProxyModeButtons = (mode) => {
+                proxyBlockModeGroup.querySelectorAll('button[data-proxy-mode]').forEach((button) => {
+                    const buttonMode = this.normalizeProxyBlockMode(button.getAttribute('data-proxy-mode'));
+                    const active = mode === buttonMode;
+                    button.setAttribute('aria-pressed', active ? 'true' : 'false');
+                    button.style.background = active ? '#3b71fd' : 'transparent';
+                    button.style.color = active ? '#fff' : '#333';
+                    button.style.fontWeight = active ? '700' : '600';
+                });
+            };
+            renderProxyModeButtons(currentProxyBlockMode);
 
             // [v2.6.8 추가] 스위치 실시간 저장 & 필터 즉시 적용
             const applyCheckboxChange = async (storageKey, value, extraLogic) => {
+                this.debugLog('toggle', 'applyCheckboxChange requested', { storageKey, value });
                 await GM_setValue(storageKey, value);
-                if (extraLogic) await extraLogic();
-                await this.refilterAllContent();
+                if (extraLogic) {
+                    this.debugLog('toggle', 'applyCheckboxChange running extraLogic', { storageKey, value });
+                    await extraLogic();
+                }
+                await this.debugDumpState(`after ${storageKey}=${value} before refilter`);
+                await this.refilterAllContent(`toggle ${storageKey}=${value}`);
             };
 
             masterDisableCheckbox.addEventListener('change', () =>
@@ -1890,6 +2252,15 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
                 await applyCheckboxChange(this.CONSTANTS.STORAGE_KEYS.BLOCK_GUEST, checked,
                     checked ? null : () => this.clearBlockedGuests()
                 );
+            });
+            proxyBlockModeGroup.addEventListener('click', (e) => {
+                const targetButton = e.target.closest('button[data-proxy-mode]');
+                if (!targetButton) return;
+                const nextMode = this.normalizeProxyBlockMode(targetButton.getAttribute('data-proxy-mode'));
+                if (nextMode === currentProxyBlockMode) return;
+                currentProxyBlockMode = nextMode;
+                renderProxyModeButtons(currentProxyBlockMode);
+                applyCheckboxChange(this.CONSTANTS.STORAGE_KEYS.BLOCK_PROXY, currentProxyBlockMode);
             });
             telecomBlockCheckbox.addEventListener('change', (e) =>
                 applyCheckboxChange(this.CONSTANTS.STORAGE_KEYS.BLOCK_TELECOM, e.target.checked)
@@ -1947,12 +2318,14 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
                     GM_setValue(this.CONSTANTS.STORAGE_KEYS.RATIO_MIN, ratioMinInput.value),
                     GM_setValue(this.CONSTANTS.STORAGE_KEYS.RATIO_MAX, ratioMaxInput.value),
                     GM_setValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_GUEST, blockGuestChecked),
+                    GM_setValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_PROXY, currentProxyBlockMode),
                     GM_setValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_TELECOM, telecomBlockCheckbox.checked)
                 ];
                 if (!blockGuestChecked) promises.push(this.clearBlockedGuests()); try {
                     await Promise.all(promises);
                     await this.reloadSettings();
-                    await this.refilterAllContent();
+                    await this.debugDumpState('save button before refilter');
+                    await this.refilterAllContent('save button');
                     closeSettingsPanel();
                 } catch (error) {
                     console.error('DCinside User Filter: Settings save failed.', error);
@@ -2263,7 +2636,9 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             if (changed) await GM_setValue(this.CONSTANTS.STORAGE_KEYS.BLOCKED_UIDS, JSON.stringify(this.BLOCKED_UIDS_CACHE));
         },
         applySyncBlock(element) {
-            const { masterDisabled, blockGuestEnabled, telecomBlockEnabled, blockConfig = {}, blockedGuests = [], personalBlockList, personalBlockEnabled } = dcFilterSettings;
+            const { masterDisabled, blockGuestEnabled, proxyBlockMode = 0, telecomBlockEnabled, blockedGuests = [], customIpPrefixSet, personalBlockList, personalBlockEnabled } = dcFilterSettings;
+            const normalizedProxyBlockMode = this.normalizeProxyBlockMode(proxyBlockMode);
+            const proxyBlockEnabled = normalizedProxyBlockMode !== this.PROXY_MODE.OFF;
 
             const writerInfo = element.querySelector(this.CONSTANTS.SELECTORS.WRITER_INFO);
             if (!writerInfo) return;
@@ -2271,7 +2646,25 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             const uid = writerInfo.getAttribute('data-uid');
             const nickname = writerInfo.getAttribute('data-nick');
             const ipSpan = element.querySelector(this.CONSTANTS.SELECTORS.IP_SPAN);
-            const ip = ipSpan ? ipSpan.textContent.trim().slice(1, -1) : null;
+            const ipText = ipSpan ? ipSpan.textContent.trim() : '';
+            const ipFromSpan = (ipText.startsWith('(') && ipText.endsWith(')')) ? ipText.slice(1, -1) : ipText;
+            const ip = ipFromSpan || writerInfo.getAttribute('data-ip') || null;
+            const ipPrefix = this.getIpPrefix(ip);
+            const isGuest = Boolean((!uid || uid.length < 3) && ip);
+            const baseDebug = {
+                branch: 'sync-base',
+                uid,
+                nickname,
+                ip,
+                ipText,
+                writerDataIp: writerInfo.getAttribute('data-ip'),
+                ipPrefix,
+                isGuest,
+                blockGuestEnabled,
+                proxyBlockMode: normalizedProxyBlockMode,
+                proxyBlockEnabled,
+                telecomBlockEnabled
+            };
 
             if (personalBlockEnabled && personalBlockList) {
                 let isPersonallyBlocked = false;
@@ -2280,41 +2673,69 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
                 else if (ip && personalBlockList.ips?.includes(ip)) isPersonallyBlocked = true;
 
                 if (isPersonallyBlocked) {
+                    this.debugDecision(element, { ...baseDebug, branch: 'personal-block', isBlocked: true, reasons: ['personalBlock'] });
                     this.setElementVisibility(element, true);
                     return;
                 }
             }
             if (element.classList.contains('block-disable')) {
+                this.debugDecision(element, { ...baseDebug, branch: 'dibs-block', isBlocked: true, reasons: ['block-disable-class'] });
                 this.setElementVisibility(element, true);
                 return;
             }
 
             if (element.querySelector('em.icon_notice')) {
+                this.debugDecision(element, { ...baseDebug, branch: 'notice-skip', isBlocked: false, reasons: ['notice'] });
                 this.setElementVisibility(element, false);
                 return;
             }
 
             if (this.shouldSkipFiltering(element)) {
+                this.debugDecision(element, { ...baseDebug, branch: 'recommended-skip', isBlocked: false, reasons: ['excludeRecommended-skip'] });
                 this.setElementVisibility(element, false);
                 return;
             }
 
             if (masterDisabled) {
+                this.debugDecision(element, { ...baseDebug, branch: 'master-disabled', isBlocked: false, reasons: ['masterDisabled'] });
                 this.setElementVisibility(element, false);
                 return;
             }
 
-            const isGuest = (!uid || uid.length < 3) && ip;
+            const hasCustomIpPrefixBlock = Boolean(customIpPrefixSet && customIpPrefixSet.size > 0 && ipPrefix && customIpPrefixSet.has(ipPrefix));
+            const telecomPrefixSet = telecomBlockEnabled && ipPrefix ? this.getTelecomPrefixSet() : null;
+            const proxyMatchInfo = this.getProxyPrefixMatch(ipPrefix, normalizedProxyBlockMode);
+            const proxyPrefixMatch = proxyMatchInfo.matched;
+            const telecomPrefixMatch = Boolean(ipPrefix && telecomPrefixSet && telecomPrefixSet.has(ipPrefix));
+            const blockedGuestMatch = Boolean(ip && blockedGuests.includes(ip));
             let isBlocked = false;
+            const reasons = [];
 
-            const telecomBlockRegex = (telecomBlockEnabled && blockConfig.ip) ? new RegExp('^(' + blockConfig.ip.split('||').map(p => p.replace(/\./g, '\\.') + '(?=\\.|$)').join('|') + ')') : null;
-            if (isGuest) { if (blockGuestEnabled || (telecomBlockRegex && ip && telecomBlockRegex.test(ip))) isBlocked = true; }
-            else if (ip && telecomBlockRegex && telecomBlockRegex.test(ip)) isBlocked = true;
-            if (!isBlocked && ip && blockedGuests.includes(ip)) isBlocked = true;
+            if (isGuest && blockGuestEnabled) { isBlocked = true; reasons.push('guest-toggle'); }
+            if (!isBlocked && hasCustomIpPrefixBlock) { isBlocked = true; reasons.push('custom-ip-prefix'); }
+            if (!isBlocked && proxyPrefixMatch) { isBlocked = true; reasons.push(`proxy-prefix-match:${proxyMatchInfo.tier}`); }
+            if (!isBlocked && telecomPrefixMatch) { isBlocked = true; reasons.push('telecom-prefix-match'); }
+            if (!isBlocked && blockedGuestMatch) { isBlocked = true; reasons.push('blockedGuests-list-hit'); }
             if (!isBlocked && uid && this.BLOCKED_UIDS_CACHE[uid]) {
                 const { sumBlocked, ratioBlocked } = this.isUserBlocked(this.BLOCKED_UIDS_CACHE[uid]);
-                if (sumBlocked || ratioBlocked) isBlocked = true;
+                if (sumBlocked || ratioBlocked) {
+                    isBlocked = true;
+                    reasons.push(`uid-cache:${sumBlocked ? 'sum' : ''}${ratioBlocked ? 'ratio' : ''}`);
+                }
             }
+            this.debugDecision(element, {
+                ...baseDebug,
+                branch: 'sync-final',
+                isBlocked,
+                reasons,
+                blockedGuestsCount: blockedGuests.length,
+                customIpPrefixCount: customIpPrefixSet instanceof Set ? customIpPrefixSet.size : 0,
+                hasCustomIpPrefixBlock,
+                proxyPrefixMatch,
+                proxyMatchTier: proxyMatchInfo.tier,
+                telecomPrefixMatch,
+                blockedGuestMatch
+            });
             this.setElementVisibility(element, isBlocked);
         },
         initializeUniversalObserver() {
@@ -2355,7 +2776,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
         async reloadSettings() {
             const [
                 masterDisabled, excludeRecommended, threshold, ratioEnabled,
-                ratioMin, ratioMax, blockGuestEnabled, telecomBlockEnabled,
+                ratioMin, ratioMax, blockGuestEnabled, proxyBlockMode, telecomBlockEnabled,
                 blockedGuests, blockConfig, personalBlockList, personalBlockEnabled
             ] = await Promise.all([
                 GM_getValue(this.CONSTANTS.STORAGE_KEYS.MASTER_DISABLED, false),
@@ -2365,6 +2786,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
                 GM_getValue(this.CONSTANTS.STORAGE_KEYS.RATIO_MIN, ''),
                 GM_getValue(this.CONSTANTS.STORAGE_KEYS.RATIO_MAX, ''),
                 GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_GUEST, false),
+                GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_PROXY, 0),
                 GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_TELECOM, false),
                 this.getBlockedGuests(),
                 GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG, {}),
@@ -2372,16 +2794,27 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
                 // [신규] 개인 차단 기능 활성화 상태 로드 (기본값 true)
                 GM_getValue(this.CONSTANTS.STORAGE_KEYS.PERSONAL_BLOCK_ENABLED, true)
             ]);
+            const customIpPrefixSet = new Set(this.parseIpPrefixList(blockConfig?.ip || ''));
+            const normalizedProxyBlockMode = this.normalizeProxyBlockMode(proxyBlockMode);
 
 
             dcFilterSettings = {
                 masterDisabled, excludeRecommended, threshold, ratioEnabled,
                 ratioMin: parseFloat(ratioMin),
                 ratioMax: parseFloat(ratioMax),
-                blockGuestEnabled, telecomBlockEnabled, blockedGuests, blockConfig,
+                blockGuestEnabled,
+                proxyBlockMode: normalizedProxyBlockMode,
+                proxyBlockEnabled: normalizedProxyBlockMode !== this.PROXY_MODE.OFF,
+                telecomBlockEnabled,
+                blockedGuests,
+                customIpPrefixSet,
                 personalBlockList,
                 personalBlockEnabled // [신규] 설정 객체에 추가
             };
+            this.debugLog('settings', 'reloadSettings complete', this.debugSettingsSnapshot({
+                rawBlockConfigIp: typeof blockConfig?.ip === 'string' ? blockConfig.ip : '',
+                rawBlockConfigPreview: typeof blockConfig?.ip === 'string' ? blockConfig.ip.split('||').slice(0, 20) : []
+            }));
         },
         getRefilterTargets() {
             const selectors = [
@@ -2411,8 +2844,9 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             window.setTimeout(rerun, 90);
             window.setTimeout(rerun, 220);
         },
-        async refilterAllContent() {
+        async refilterAllContent(reason = 'refilterAllContent') {
             await this.reloadSettings();
+            this.startDebugPass(reason, { targetCount: this.getRefilterTargets().length });
             this.runSyncRefilterPass();
             this.scheduleSyncRefilterPasses();
             this.getRefilterTargets().forEach((element) => {
@@ -2429,13 +2863,19 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
         },
         async init() {
             if (isInitialized) return; isInitialized = true;
+            this.installDebugApi();
+            this.debugLog('init', 'FilterModule init start', { version: '2.7.5' });
+            await this.cleanupLegacyManagedBlockConfig();
             await this.reloadSettings();
+            this.getTelecomPrefixSet();
+            this.getProxyStrictPrefixSet();
+            this.getProxyAggressiveExtraPrefixSet();
+            this.getProxyPrefixSet(this.PROXY_MODE.AGGRESSIVE);
+            await this.debugDumpState('after init reload');
 
             // [수정] 개념글 목록에서 스크립트가 조기 종료되던 문제를 해결하기 위해 아래 라인을 삭제했습니다.
             // if (dcFilterSettings.excludeRecommended && window.location.pathname.includes('/lists/') && this.isRecommendedContext()) return;
 
-            const telecomBlockEnabled = await GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_TELECOM, false);
-            if (telecomBlockEnabled) await this.regblockMobile(); else await this.delblockMobile();
             await this.refreshBlockedUidsCache();
             document.addEventListener('visibilitychange', this.handleVisibilityChange.bind(this));
             this.initializeUniversalObserver();
@@ -3460,7 +3900,11 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
         updateItemVisibility(originalRow, mirroredItem) {
             const isDibsBlocked = originalRow.classList.contains('block-disable');
             const isUserFilterBlocked = originalRow.style.display === 'none';
-            mirroredItem.style.display = (isDibsBlocked || isUserFilterBlocked) ? 'none' : 'block';
+            const nextDisplay = (isDibsBlocked || isUserFilterBlocked) ? 'none' : 'block';
+            if (typeof FilterModule?.debugMirrorSync === 'function') {
+                FilterModule.debugMirrorSync(originalRow, mirroredItem, nextDisplay, 'UIModule.updateItemVisibility');
+            }
+            mirroredItem.style.display = nextDisplay;
         },
 
 
@@ -7299,6 +7743,154 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
     }
 
     window.addEventListener('load', scheduleApply, { once: true });
+})();
+(() => {
+    const STYLE_ID = 'dcuf-list-memo-popup-fix';
+    const CENTER_ATTR = 'data-dcuf-list-memo-centered';
+    const POPUP_SELECTOR = '#user_memo_config.pop_wrap.type3, #um_picker_lay.pop_wrap.type3';
+    const css = `
+        .pop_wrap.type3[${CENTER_ATTR}="1"] {
+            position: fixed !important;
+            left: 50% !important;
+            top: 50% !important;
+            right: auto !important;
+            bottom: auto !important;
+            margin: 0 !important;
+            transform: translate(-50%, -50%) !important;
+            z-index: 2147483647 !important;
+        }
+        #user_memo_config.pop_wrap.type3[${CENTER_ATTR}="1"] {
+            width: min(478px, calc(100vw - 16px)) !important;
+            max-width: min(478px, calc(100vw - 16px)) !important;
+            max-height: calc(100vh - 16px) !important;
+        }
+        #user_memo_config.pop_wrap.type3[${CENTER_ATTR}="1"] .pop_content.memo_sel {
+            width: 100% !important;
+            max-width: 100% !important;
+            max-height: calc(100vh - 16px) !important;
+            overflow-y: auto !important;
+            box-sizing: border-box !important;
+        }
+        #user_memo_config.pop_wrap.type3[${CENTER_ATTR}="1"] .pop_head,
+        #user_memo_config.pop_wrap.type3[${CENTER_ATTR}="1"] .inner,
+        #user_memo_config.pop_wrap.type3[${CENTER_ATTR}="1"] .btn_box {
+            box-sizing: border-box !important;
+        }
+    `;
+
+    const injectStyle = () => {
+        if (document.getElementById(STYLE_ID)) return true;
+        const target = document.head || document.documentElement;
+        if (!target) return false;
+        const style = document.createElement('style');
+        style.id = STYLE_ID;
+        style.textContent = css;
+        target.appendChild(style);
+        return true;
+    };
+
+    const isVisible = (element) => {
+        if (!(element instanceof HTMLElement)) return false;
+        const cs = window.getComputedStyle(element);
+        if (cs.display === 'none' || cs.visibility === 'hidden' || Number(cs.opacity || '1') === 0) return false;
+        const rect = element.getBoundingClientRect();
+        return rect.width > 0 && rect.height > 0;
+    };
+
+    const isListMemoContext = (popup) => {
+        if (!(popup instanceof HTMLElement)) return false;
+        if (!isVisible(popup)) return false;
+        if (popup.closest('.view_content_wrap, #focus_cmt')) return false;
+        if (popup.closest('.custom-mobile-list, .custom-post-item')) return true;
+
+        const hasCustomList = !!document.querySelector('.custom-mobile-list, .custom-post-item');
+        const hasViewContent = !!document.querySelector('.view_content_wrap');
+        return hasCustomList && !hasViewContent;
+    };
+
+    const syncPopup = (popup) => {
+        if (!(popup instanceof HTMLElement)) return;
+        if (isListMemoContext(popup)) {
+            popup.setAttribute(CENTER_ATTR, '1');
+        } else {
+            popup.removeAttribute(CENTER_ATTR);
+        }
+    };
+
+    const applyFix = () => {
+        document.querySelectorAll(POPUP_SELECTOR).forEach((popup) => syncPopup(popup));
+    };
+
+    const scheduleApply = (() => {
+        let rafId = 0;
+        return () => {
+            if (rafId) cancelAnimationFrame(rafId);
+            rafId = requestAnimationFrame(() => {
+                rafId = 0;
+                applyFix();
+            });
+        };
+    })();
+
+    const observe = () => {
+        if (!document.body || window.__dcufListMemoPopupObserver) return;
+        const observer = new MutationObserver((mutations) => {
+            for (const mutation of mutations) {
+                if (mutation.type === 'childList') {
+                    if (mutation.addedNodes.length > 0 || mutation.removedNodes.length > 0) {
+                        scheduleApply();
+                        return;
+                    }
+                }
+                if (mutation.type === 'attributes') {
+                    const target = mutation.target;
+                    if (target instanceof Element && target.matches(POPUP_SELECTOR)) {
+                        scheduleApply();
+                        return;
+                    }
+                }
+            }
+        });
+
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true,
+            attributes: true,
+            attributeFilter: ['style', 'class']
+        });
+
+        window.__dcufListMemoPopupObserver = observer;
+    };
+
+    const bindEvents = () => {
+        if (window.__dcufListMemoPopupBound) return;
+        document.addEventListener('click', scheduleApply, true);
+        document.addEventListener('mouseup', scheduleApply, true);
+        document.addEventListener('keyup', scheduleApply, true);
+        window.addEventListener('scroll', scheduleApply, true);
+        window.addEventListener('resize', scheduleApply, true);
+        window.__dcufListMemoPopupBound = true;
+    };
+
+    injectStyle();
+    scheduleApply();
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => {
+            injectStyle();
+            scheduleApply();
+            observe();
+            bindEvents();
+        }, { once: true });
+    } else {
+        observe();
+        bindEvents();
+    }
+
+    window.addEventListener('load', () => {
+        injectStyle();
+        scheduleApply();
+    }, { once: true });
 })();
 (() => {
     const WRITER_SCOPE = '.view_content_wrap .gallview_head .gall_writer.ub-writer';
