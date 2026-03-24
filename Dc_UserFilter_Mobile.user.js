@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         DC_UserFilter_Mobile
 // @namespace    http://tampermonkey.net/
-// @version      2.7.5.3
+// @version      2.7.5.4
 // @description  유저 필터링, UI 개선, 개인 차단/해제 기능
 // @author       domato153
 // @match        https://gall.dcinside.com/*
@@ -5433,6 +5433,14 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             margin: 0 !important;
             padding-top: 6px !important;
         }
+        .comment_box,
+        .comment_box .cmt_txtbox,
+        .comment_box .usertxt,
+        .comment_box .reply_box,
+        .comment_box .reply_list > li {
+            -webkit-text-size-adjust: 100% !important;
+            text-size-adjust: 100% !important;
+        }
         .comment_box .reply_box .cmt_txtbox {
             padding-top: 5px !important;
         }
@@ -7398,6 +7406,8 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
         document.querySelectorAll('.comment_box .usertxt').forEach((element) => {
             setImportant(element, 'font-size', preferredCommentFontSize);
             setImportant(element, 'line-height', '1.58');
+            setImportant(element, '-webkit-text-size-adjust', '100%');
+            setImportant(element, 'text-size-adjust', '100%');
         });
 
         document.querySelectorAll('.comment_box .nickname').forEach((element) => {
@@ -7406,6 +7416,11 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
 
         document.querySelectorAll('.comment_box .nickname .ip').forEach((element) => {
             setImportant(element, 'font-size', '12px');
+        });
+
+        document.querySelectorAll('.comment_box .cmt_txtbox, .comment_box .reply_box, .comment_box .reply_list > li').forEach((element) => {
+            setImportant(element, '-webkit-text-size-adjust', '100%');
+            setImportant(element, 'text-size-adjust', '100%');
         });
 
         document.querySelectorAll('.comment_box .writer_nikcon').forEach((element) => {
