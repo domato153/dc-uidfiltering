@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         DC_UserFilter_Mobile
 // @namespace    http://tampermonkey.net/
-// @version      2.7.5.2
+// @version      2.7.5.3
 // @description  유저 필터링, UI 개선, 개인 차단/해제 기능
 // @author       domato153
 // @match        https://gall.dcinside.com/*
@@ -2983,6 +2983,26 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             window.setTimeout(rerun, 90);
             window.setTimeout(rerun, 220);
         },
+        scheduleCommentStabilizedRefilter(reason = 'comment-stabilized') {
+            if (this._commentRefilterRafId) cancelAnimationFrame(this._commentRefilterRafId);
+            if (!this._commentRefilterTimerIds) this._commentRefilterTimerIds = new Set();
+            this._commentRefilterTimerIds.forEach((timerId) => clearTimeout(timerId));
+            this._commentRefilterTimerIds.clear();
+
+            const rerun = () => this.runSyncRefilterPass();
+            this.debugLog('comment-refilter', 'scheduleCommentStabilizedRefilter', { reason });
+            this._commentRefilterRafId = requestAnimationFrame(() => {
+                this._commentRefilterRafId = 0;
+                rerun();
+                [140, 420, 1100].forEach((delay) => {
+                    const timerId = window.setTimeout(() => {
+                        this._commentRefilterTimerIds.delete(timerId);
+                        rerun();
+                    }, delay);
+                    this._commentRefilterTimerIds.add(timerId);
+                });
+            });
+        },
         async refilterAllContent(reason = 'refilterAllContent') {
             await this.reloadSettings();
             this.startDebugPass(reason, { targetCount: this.getRefilterTargets().length });
@@ -3003,7 +3023,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
         async init() {
             if (isInitialized) return; isInitialized = true;
             this.installDebugApi();
-            this.debugLog('init', 'FilterModule init start', { version: '2.7.5' });
+            this.debugLog('init', 'FilterModule init start', { version: '2.7.5.3' });
             await this.cleanupLegacyManagedBlockConfig();
             await this.reloadSettings();
             this.getKrPrefixSet();
@@ -5433,7 +5453,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
         }
         .comment_box .usertxt {
             color: var(--dcuf-view-fg) !important;
-            font-size: 24px !important;
+            font-size: clamp(16px, 4.2vw, 19px) !important;
             line-height: 1.5 !important;
             white-space: pre-wrap !important;
             word-break: normal !important;
@@ -5443,7 +5463,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             text-overflow: clip !important;
         }
         .comment_box .reply_box .usertxt {
-            font-size: 24px !important;
+            font-size: clamp(16px, 4.2vw, 19px) !important;
         }
         .comment_box .cmt_txtbox img {
             max-width: 100% !important;
@@ -6371,6 +6391,9 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
         div[id^="comment_wrap_"] .comment_box .cmt_list > li.dcuf-parent-comment-filtered > .cmt_txtbox {
             display: none !important;
         }
+        div[id^="comment_wrap_"] .comment_box .cmt_list > li.dcuf-parent-comment-filtered > :not(.reply) {
+            display: none !important;
+        }
         div[id^="comment_wrap_"] .comment_box .cmt_list > li.dcuf-parent-comment-filtered > .reply.show {
             margin-top: 0 !important;
             padding-top: 0 !important;
@@ -6478,7 +6501,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
         }
         div[id^="comment_wrap_"] .comment_box .usertxt {
             color: var(--dcuf-view-fg) !important;
-            font-size: 24px !important;
+            font-size: clamp(16px, 4.2vw, 19px) !important;
             line-height: 1.62 !important;
             letter-spacing: -0.01em !important;
             white-space: pre-wrap !important;
@@ -7347,16 +7370,33 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
 (() => {
     const setImportant = (element, property, value) => {
         if (!element) return;
+        if (element.style.getPropertyValue(property) === value && element.style.getPropertyPriority(property) === 'important') return;
         element.style.setProperty(property, value, 'important');
     };
 
-    const NORMALIZE_DELAYS = [120, 420, 1200, 2600];
+    const NORMALIZE_DELAYS = [120, 420, 1100];
+    const COMMENT_TYPOGRAPHY_SCOPE_SELECTOR = '.view_content_wrap .comment_box, #focus_cmt';
+
+    const getPreferredCommentFontSize = () => {
+        const viewportWidth = Math.max(window.innerWidth || 0, document.documentElement?.clientWidth || 0, 0);
+        if (!viewportWidth) return '18px';
+        const calculated = Math.round(viewportWidth * 0.042);
+        return `${Math.max(16, Math.min(19, calculated))}px`;
+    };
+
+    const isRelevantCommentNode = (node) => {
+        if (!node) return false;
+        if (node.nodeType === Node.TEXT_NODE) return Boolean(node.parentElement?.closest(COMMENT_TYPOGRAPHY_SCOPE_SELECTOR));
+        if (!(node instanceof Element)) return false;
+        return Boolean(node.closest(COMMENT_TYPOGRAPHY_SCOPE_SELECTOR) || node.querySelector?.(COMMENT_TYPOGRAPHY_SCOPE_SELECTOR));
+    };
 
     const normalizeCommentTypography = () => {
-        if (!document.querySelector('.view_content_wrap .comment_box, #focus_cmt > .cmt_write_box')) return;
+        if (!document.querySelector(COMMENT_TYPOGRAPHY_SCOPE_SELECTOR + ', #focus_cmt > .cmt_write_box')) return;
+        const preferredCommentFontSize = getPreferredCommentFontSize();
 
         document.querySelectorAll('.comment_box .usertxt').forEach((element) => {
-            setImportant(element, 'font-size', '24px');
+            setImportant(element, 'font-size', preferredCommentFontSize);
             setImportant(element, 'line-height', '1.58');
         });
 
@@ -7409,14 +7449,24 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
 
         const observer = new MutationObserver((mutations) => {
             for (const mutation of mutations) {
-                if (mutation.type === 'characterData') {
+                if (mutation.type === 'characterData' && isRelevantCommentNode(mutation.target)) {
                     scheduleNormalize();
                     break;
                 }
 
-                if ((mutation.addedNodes && mutation.addedNodes.length > 0) || mutation.type === 'attributes') {
+                if (mutation.type === 'attributes' && isRelevantCommentNode(mutation.target)) {
                     scheduleNormalize();
                     break;
+                }
+
+                if (mutation.type === 'childList') {
+                    const hasRelevantNode = Array.from(mutation.addedNodes || []).some(isRelevantCommentNode)
+                        || Array.from(mutation.removedNodes || []).some(isRelevantCommentNode)
+                        || isRelevantCommentNode(mutation.target);
+                    if (hasRelevantNode) {
+                        scheduleNormalize();
+                        break;
+                    }
                 }
             }
         });
@@ -7588,10 +7638,16 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
             rafId = requestAnimationFrame(() => {
                 rafId = 0;
                 mergeDetachedRepliesIntoParent();
+                if (typeof FilterModule?.scheduleCommentStabilizedRefilter === 'function') {
+                    FilterModule.scheduleCommentStabilizedRefilter('reply-merge-immediate');
+                }
 
                 timerId = window.setTimeout(() => {
                     timerId = 0;
                     mergeDetachedRepliesIntoParent();
+                    if (typeof FilterModule?.scheduleCommentStabilizedRefilter === 'function') {
+                        FilterModule.scheduleCommentStabilizedRefilter('reply-merge-delayed');
+                    }
                 }, 140);
             });
         };
