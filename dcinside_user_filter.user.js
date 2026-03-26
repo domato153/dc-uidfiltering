@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name         DCInside 유저 필터
+// @name         DCInside PC User Filter
 // @namespace    http://tampermonkey.net/
-// @version      1.8.0
-// @description  글/댓글 합/비율 필터링, 유동/우회/통신사 IP 차단 + 개인 차단 기능
+// @version      1.9.0
+// @description  DCInside PC filter port based on the latest mobile filter runtime and shared filter core
 // @author       domato153
 // @match        https://gall.dcinside.com/*
 // @grant        GM_setValue
@@ -22,8 +22,159 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
 (function () {
     'use strict';
 
-    // Shared filter port rail for desktop userscript builds
-    const DCUF_SHARED_SCHEMA = (() => {
+    const __dcufRoot = (typeof unsafeWindow !== 'undefined' && unsafeWindow) ? unsafeWindow : window;
+    if (__dcufRoot.__dcufRuntimeLoaded) {
+        console.warn('DCinside User Filter: duplicate runtime detected, skip init.');
+        return;
+    }
+    __dcufRoot.__dcufRuntimeLoaded = `dcuf-${Date.now()}`;
+
+
+    // [개선] 전역 스코프 오염 방지를 위해 스크립트 상태 변수를 IIFE 내부 스코프로 이동
+    let dcFilterSettings = {};
+    let userSumCache = {};
+    let isInitialized = false;
+    let isUiInitialized = false;
+    let activeShortcutObject = null; // [v2.1 추가] 현재 활성화된 단축키 객체
+    const ROOT_READY_CLASS = 'script-ui-ready';
+    const INITIAL_LOCK_STYLE_ID = 'dcuf-initial-lock-style';
+    const BOOT_OVERLAY_ID = 'dcuf-boot-overlay';
+    const BOOT_OVERLAY_STYLE_ID = 'dcuf-boot-overlay-style';
+
+    const isBootOverlayTargetPage = () => true;
+    const removeBootOverlay = (reason = 'unknown') => {
+        const overlay = document.getElementById(BOOT_OVERLAY_ID);
+        if (overlay) overlay.remove();
+    };
+
+    const ensureBootOverlay = () => {
+        if (!isBootOverlayTargetPage()) return;
+
+        const mountPoint = document.head || document.documentElement;
+        if (mountPoint && !document.getElementById(BOOT_OVERLAY_STYLE_ID)) {
+            const style = document.createElement('style');
+            style.id = BOOT_OVERLAY_STYLE_ID;
+            style.textContent = `
+                #${BOOT_OVERLAY_ID} {
+                    position: fixed;
+                    inset: 0;
+                    z-index: 2147483646;
+                    background:
+                        radial-gradient(circle at top, rgba(255,255,255,0.96), rgba(245,247,251,0.98) 45%, rgba(238,241,246,0.99)),
+                        linear-gradient(180deg, #f7f9fc 0%, #eef2f7 100%);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 24px;
+                    pointer-events: auto;
+                }
+                #${BOOT_OVERLAY_ID} .dcuf-boot-card {
+                    width: min(420px, calc(100vw - 32px));
+                    border: 1px solid rgba(197, 206, 218, 0.9);
+                    border-radius: 18px;
+                    background: rgba(255,255,255,0.96);
+                    box-shadow: 0 20px 48px rgba(31, 45, 68, 0.12);
+                    padding: 22px 20px 18px;
+                    color: #2b3340;
+                    text-align: center;
+                }
+                #${BOOT_OVERLAY_ID} .dcuf-boot-title {
+                    font-size: 17px;
+                    font-weight: 700;
+                    letter-spacing: -0.01em;
+                    margin-bottom: 8px;
+                }
+                #${BOOT_OVERLAY_ID} .dcuf-boot-copy {
+                    font-size: 13px;
+                    line-height: 1.55;
+                    color: #5a6575;
+                    margin-bottom: 14px;
+                }
+                #${BOOT_OVERLAY_ID} .dcuf-boot-bar {
+                    height: 4px;
+                    border-radius: 999px;
+                    background: rgba(203, 211, 223, 0.6);
+                    overflow: hidden;
+                }
+                #${BOOT_OVERLAY_ID} .dcuf-boot-bar::before {
+                    content: '';
+                    display: block;
+                    width: 42%;
+                    height: 100%;
+                    border-radius: inherit;
+                    background: linear-gradient(90deg, #245bda 0%, #5d87f0 100%);
+                    animation: dcuf-boot-progress 1s ease-in-out infinite;
+                }
+                html.dc-filter-dark-mode #${BOOT_OVERLAY_ID} {
+                    background:
+                        radial-gradient(circle at top, rgba(34,39,48,0.95), rgba(20,24,31,0.98) 48%, rgba(14,17,22,0.99)),
+                        linear-gradient(180deg, #1d222a 0%, #11151b 100%);
+                }
+                html.dc-filter-dark-mode #${BOOT_OVERLAY_ID} .dcuf-boot-card {
+                    border-color: rgba(71, 81, 96, 0.92);
+                    background: rgba(28, 33, 41, 0.96);
+                    box-shadow: 0 20px 48px rgba(0, 0, 0, 0.34);
+                    color: #e7ebf2;
+                }
+                html.dc-filter-dark-mode #${BOOT_OVERLAY_ID} .dcuf-boot-copy {
+                    color: #adb7c7;
+                }
+                html.dc-filter-dark-mode #${BOOT_OVERLAY_ID} .dcuf-boot-bar {
+                    background: rgba(63, 73, 88, 0.9);
+                }
+                @keyframes dcuf-boot-progress {
+                    0% { transform: translateX(-120%); }
+                    100% { transform: translateX(260%); }
+                }
+            `;
+            mountPoint.appendChild(style);
+        }
+
+        if (document.getElementById(BOOT_OVERLAY_ID)) return;
+        if (!document.documentElement) return;
+
+        const overlay = document.createElement('div');
+        overlay.id = BOOT_OVERLAY_ID;
+        overlay.innerHTML = `
+            <div class="dcuf-boot-card">
+                <div class="dcuf-boot-title">UI 준비 중</div>
+                <div class="dcuf-boot-copy">광고 차단과 충돌하면 로딩이 지연될 수 있습니다.<br>DCInside에서는 광고 차단을 꺼주세요.</div>
+                <div class="dcuf-boot-bar" aria-hidden="true"></div>
+            </div>
+        `;
+        document.documentElement.appendChild(overlay);
+    };
+
+    const markUiReady = () => {
+        const root = document.documentElement;
+        if (root) root.classList.add(ROOT_READY_CLASS);
+
+        const body = document.body;
+        if (body) body.classList.add(ROOT_READY_CLASS);
+
+        removeBootOverlay('mark-ui-ready');
+    };
+
+    const injectInitialLockStyle = () => {
+        const mountPoint = document.head || document.documentElement;
+        if (!mountPoint || document.getElementById(INITIAL_LOCK_STYLE_ID)) return;
+
+        const style = document.createElement('style');
+        style.id = INITIAL_LOCK_STYLE_ID;
+        style.textContent = `
+            html:not(.${ROOT_READY_CLASS}) body {
+                visibility: hidden !important;
+            }
+        `;
+        mountPoint.appendChild(style);
+    };
+
+    injectInitialLockStyle();
+    ensureBootOverlay();
+
+
+
+    // PC filter port shared prelude
 /**
  * Shared storage/schema constants extracted from v2.7.5.4.
  */
@@ -103,10 +254,9 @@ const API_PATHS = FILTER_CONSTANTS.API;
 const CUSTOM_ATTRS = FILTER_CONSTANTS.CUSTOM_ATTRS;
 const UI_IDS = FILTER_CONSTANTS.UI_IDS;
 const ETC_CONSTANTS = FILTER_CONSTANTS.ETC;
-        return Object.freeze({ FILTER_CONSTANTS, STORAGE_KEYS, SELECTORS, API_PATHS, CUSTOM_ATTRS, UI_IDS, ETC_CONSTANTS });
-    })();
 
-    const DCUF_SHARED_IP = (() => {
+    const DCUF_SHARED_SCHEMA = Object.freeze({ FILTER_CONSTANTS, STORAGE_KEYS, SELECTORS, API_PATHS, CUSTOM_ATTRS, UI_IDS, ETC_CONSTANTS });
+
 /**
  * Shared IP-related datasets extracted from v2.7.5.4 for 3.0 refactoring.
  * This is the planned single source of truth for mobile and PC filter rules.
@@ -229,12 +379,9 @@ const PROXY_AGGRESSIVE_EXTRA_PREFIXES = `
         `.trim().split(/\s+/);
 
 const KR_IP_RANGES = { "1": [[11, 11], [16, 19], [96, 111], [176, 177], [201, 201], [208, 223], [224, 255]], "14": [[0, 0], [4, 7], [32, 63], [64, 95], [128, 128], [129, 129], [138, 138], [192, 192], [206, 206]], "27": [[0, 0], [1, 1], [35, 35], [96, 96], [100, 100], [101, 101], [102, 102], [111, 111], [112, 112], [113, 113], [115, 115], [116, 116], [117, 117], [118, 118], [119, 119], [120, 120], [122, 122], [124, 124], [125, 125], [126, 126], [160, 175], [176, 183], [232, 239], [255, 255]], "36": [[38, 39]], "39": [[4, 7], [16, 31], [112, 127]], "42": [[8, 15], [16, 31], [32, 47], [82, 82]], "43": [[224, 224], [227, 227], [228, 228], [230, 230], [230, 230], [230, 230], [241, 241], [242, 242], [243, 243], [246, 246], [247, 247], [247, 247], [250, 250], [251, 251], [254, 254], [255, 255]], "45": [[64, 64], [64, 64], [64, 64], [112, 112], [112, 112], [113, 113], [115, 115], [117, 117], [119, 119], [120, 120], [121, 121], [125, 125], [248, 248], [249, 249], [249, 249], [250, 250], [250, 250]], "49": [[1, 1], [8, 11], [16, 31], [50, 50], [50, 50], [50, 50], [56, 63], [128, 128], [142, 142], [143, 143], [160, 175], [236, 236], [238, 238], [239, 239], [246, 246], [247, 247], [254, 254]], "58": [[29, 29], [65, 65], [72, 79], [84, 84], [87, 87], [102, 103], [120, 127], [138, 138], [140, 143], [145, 145], [146, 146], [147, 147], [148, 151], [180, 180], [181, 181], [184, 184], [224, 239]], "59": [[0, 31], [86, 86], [150, 150], [151, 151], [152, 152], [186, 187]], "60": [[196, 197], [253, 253]], "61": [[4, 4], [5, 5], [14, 14], [32, 39], [40, 43], [47, 47], [72, 77], [78, 79], [80, 83], [84, 85], [96, 111], [245, 245], [245, 245], [247, 247], [247, 247], [248, 255]], "101": [[1, 1], [1, 1], [53, 53], [55, 55], [79, 79], [101, 101], [202, 202], [235, 235], [250, 250]], "103": [[2, 2], [2, 2], [2, 2], [3, 3], [4, 4], [4, 4], [4, 4], [5, 5], [5, 5], [6, 6], [6, 6], [6, 6], [6, 6], [7, 7], [7, 7], [7, 7], [8, 8], [8, 8], [9, 9], [9, 9], [10, 10], [10, 10], [11, 11], [11, 11], [11, 11], [11, 11], [11, 11], [12, 12], [13, 13], [13, 13], [19, 19], [20, 20], [21, 21], [21, 21], [22, 22], [23, 23], [24, 24], [25, 25], [27, 27], [27, 27], [28, 28], [30, 30], [30, 30], [30, 30], [31, 31], [38, 38], [39, 39], [42, 42], [42, 42], [43, 43], [43, 43], [49, 49], [50, 50], [51, 51], [51, 51], [51, 51], [52, 52], [53, 53], [55, 55], [55, 55], [57, 57], [59, 59], [60, 60], [62, 62], [66, 66], [67, 67], [68, 68], [68, 68], [71, 71], [74, 74], [77, 77], [79, 79], [85, 85], [87, 87], [90, 90], [90, 90], [104, 104], [105, 105], [106, 106], [108, 108], [109, 109], [114, 114], [114, 114], [117, 117], [122, 122], [122, 122], [124, 124], [125, 125], [126, 126], [126, 126], [127, 127], [129, 129], [132, 132], [138, 138], [139, 139], [139, 139], [139, 139], [140, 140], [141, 141], [141, 141], [143, 143], [143, 143], [144, 144], [145, 145], [146, 146], [150, 150], [150, 150], [150, 150], [150, 150], [153, 153], [157, 157], [157, 157], [159, 159], [161, 161], [162, 162], [162, 162], [164, 164], [166, 166], [171, 171], [175, 175], [178, 178], [182, 182], [182, 182], [186, 186], [187, 187], [187, 187], [188, 188], [194, 194], [194, 194], [206, 206], [212, 212], [212, 212], [214, 214], [214, 214], [215, 215], [216, 216], [218, 218], [219, 219], [226, 226], [226, 226], [229, 229], [230, 230], [231, 231], [234, 234], [235, 235], [237, 237], [238, 238], [239, 239], [239, 239], [240, 240], [240, 240], [243, 243], [244, 244], [244, 244], [246, 246], [246, 246], [246, 246], [247, 247], [247, 247], [248, 248], [249, 249], [251, 251], [253, 253], [254, 254]], "106": [[10, 10], [96, 103], [240, 255]], "110": [[4, 4], [5, 5], [8, 15], [34, 34], [35, 35], [35, 35], [44, 44], [44, 44], [45, 45], [46, 47], [68, 71], [76, 76], [76, 76], [92, 92], [92, 92], [93, 93], [93, 93], [165, 165], [165, 165], [172, 172], [232, 232]], "111": [[65, 65], [67, 67], [91, 91], [92, 92], [118, 118], [171, 171], [218, 219], [221, 221]], "112": [[72, 72], [72, 72], [76, 77], [106, 107], [108, 108], [109, 109], [121, 121], [121, 121], [133, 133], [136, 136], [137, 137], [140, 140], [140, 140], [140, 140], [144, 159], [160, 191], [196, 196], [212, 212], [213, 213], [214, 214], [216, 223]], "113": [[10, 10], [21, 21], [29, 29], [30, 30], [52, 52], [52, 52], [59, 59], [60, 60], [61, 61], [61, 61], [130, 130], [130, 130], [131, 131], [192, 192], [197, 197], [198, 198], [199, 199], [216, 217]], "114": [[29, 29], [30, 30], [30, 30], [30, 30], [31, 31], [31, 31], [52, 53], [70, 71], [108, 108], [110, 110], [110, 110], [111, 111], [111, 111], [129, 129], [129, 129], [141, 141], [141, 141], [141, 141], [199, 199], [199, 199], [200, 207]], "115": [[0, 23], [31, 31], [40, 41], [68, 68], [69, 69], [71, 71], [84, 84], [85, 85], [86, 86], [88, 95], [126, 126], [136, 143], [144, 144], [145, 145], [160, 160], [161, 161], [165, 165], [178, 178], [178, 178], [187, 187], [187, 187]], "116": [[32, 47], [67, 67], [68, 68], [68, 68], [84, 84], [89, 89], [90, 90], [93, 93], [120, 127], [193, 193], [199, 199], [200, 201], [212, 212], [255, 255]], "117": [[16, 17], [20, 20], [20, 20], [52, 52], [53, 53], [53, 53], [55, 55], [58, 58], [110, 111], [123, 123]], "118": [[32, 63], [67, 67], [91, 91], [91, 91], [103, 103], [107, 107], [127, 127], [128, 131], [139, 139], [176, 176], [216, 223], [234, 235]], "119": [[17, 17], [17, 17], [18, 18], [30, 30], [31, 31], [42, 42], [56, 56], [59, 59], [63, 63], [64, 71], [75, 75], [77, 77], [82, 82], [148, 148], [149, 149], [161, 161], [192, 223], [235, 235], [235, 235]], "120": [[29, 29], [50, 50], [73, 73], [136, 136], [142, 142], [143, 143]], "121": [[0, 0], [1, 1], [50, 50], [50, 50], [50, 50], [53, 53], [54, 54], [55, 55], [64, 67], [78, 78], [88, 88], [100, 100], [101, 101], [101, 101], [124, 125], [126, 126], [127, 127], [128, 159], [160, 191], [200, 200], [252, 253], [254, 254], [254, 254]], "122": [[0, 0], [0, 0], [32, 47], [49, 49], [99, 99], [100, 100], [101, 101], [128, 128], [128, 128], [129, 129], [129, 129], [152, 152], [153, 153], [199, 199], [202, 202], [202, 202], [203, 203], [252, 252], [252, 252], [254, 254]], "123": [[0, 0], [32, 47], [98, 98], [99, 99], [100, 100], [108, 108], [108, 108], [109, 109], [111, 111], [140, 143], [199, 199], [200, 200], [212, 215], [228, 229], [248, 248], [250, 251], [253, 253], [254, 254], [254, 254]], "124": [[0, 1], [2, 2], [3, 3], [5, 5], [28, 28], [46, 46], [48, 63], [66, 66], [66, 66], [80, 80], [111, 111], [136, 139], [146, 146], [153, 153], [194, 194], [195, 195], [195, 195], [197, 197], [198, 198], [199, 199], [199, 199], [216, 216], [217, 217], [243, 243], [254, 254]], "125": [[7, 7], [31, 31], [57, 57], [60, 60], [61, 61], [62, 62], [128, 159], [176, 191], [208, 208], [208, 208], [209, 209], [209, 209], [240, 247], [248, 251], [252, 252]], "128": [[134, 134]], "129": [[254, 254]], "134": [[75, 75]], "137": [[68, 68]], "139": [[5, 5], [150, 150]], "141": [[223, 223]], "143": [[248, 248]], "144": [[48, 48], [48, 48], [48, 48]], "147": [[6, 6], [43, 43], [46, 46], [47, 47]], "150": [[107, 107], [107, 107], [129, 129], [150, 150], [183, 183], [197, 197], [242, 242], [242, 242]], "152": [[99, 99], [149, 149]], "154": [[10, 10]], "155": [[230, 230]], "156": [[147, 147]], "157": [[119, 119], [197, 197]], "158": [[44, 44]], "160": [[202, 202]], "161": [[122, 122]], "163": [[53, 53], [152, 152], [180, 180], [213, 213], [222, 222], [229, 229], [239, 239], [255, 255]], "164": [[124, 124], [125, 125]], "165": [[132, 132], [133, 133], [141, 141], [186, 186], [194, 194], [213, 213], [229, 229], [243, 243], [244, 244], [246, 246]], "166": [[79, 79], [103, 103], [104, 104], [125, 125]], "168": [[78, 78], [115, 115], [126, 126], [131, 131], [154, 154], [188, 188], [219, 219], [248, 249]], "169": [[140, 140], [208, 223]], "175": [[28, 28], [41, 41], [45, 45], [45, 45], [106, 106], [107, 107], [111, 111], [112, 127], [158, 158], [176, 176], [192, 255]], "180": [[64, 71], [80, 83], [92, 92], [92, 92], [94, 94], [131, 131], [132, 135], [148, 148], [150, 150], [182, 182], [189, 189], [189, 189], [210, 210], [210, 210], [211, 211], [222, 222], [224, 231], [233, 233], [236, 239]], "182": [[31, 31], [50, 50], [161, 161], [162, 162], [163, 163], [172, 172], [173, 173], [173, 173], [192, 199], [208, 223], [224, 231], [237, 237], [237, 237], [252, 252], [252, 252], [255, 255]], "183": [[78, 78], [78, 78], [86, 86], [90, 90], [91, 91], [96, 127]], "192": [[5, 5], [100, 100], [104, 104], [132, 132], [132, 132], [195, 195], [203, 203], [245, 245], [249, 249]], "202": [[3, 3], [6, 6], [8, 8], [14, 14], [14, 14], [14, 14], [20, 20], [20, 20], [20, 20], [20, 20], [21, 21], [22, 22], [30, 31], [43, 43], [59, 59], [68, 68], [73, 73], [86, 86], [89, 89], [89, 89], [90, 90], [126, 126], [128, 128], [131, 131], [133, 133], [136, 136], [148, 148], [150, 150], [158, 158], [163, 163], [165, 165], [167, 167], [171, 171], [174, 174], [179, 179], [179, 179]], "203": [[17, 17], [81, 81], [81, 81], [82, 82], [82, 82], [83, 83], [84, 84], [90, 90], [100, 100], [109, 109], [123, 123], [128, 128], [128, 128], [129, 129], [130, 130], [130, 130], [132, 132], [133, 133], [142, 142], [142, 142], [149, 149], [152, 152], [153, 153], [160, 160], [166, 166], [169, 169], [170, 170], [171, 171], [173, 173], [175, 175], [175, 175], [190, 190], [190, 190], [191, 191], [207, 207], [210, 210], [212, 212], [212, 212], [215, 215], [216, 216], [217, 217], [223, 223], [223, 223], [224, 224], [225, 225], [226, 227], [228, 229], [230, 231], [232, 233], [234, 235], [236, 239], [240, 243], [244, 247], [248, 251], [252, 255]], "210": [[0, 0], [2, 2], [4, 4], [4, 4], [16, 16], [57, 57], [87, 87], [89, 89], [90, 91], [92, 95], [96, 96], [97, 97], [98, 98], [99, 99], [100, 103], [104, 107], [108, 111], [112, 115], [116, 119], [120, 123], [124, 127], [178, 179], [180, 181], [182, 183], [192, 192], [204, 207], [210, 210], [211, 211], [211, 211], [216, 219], [220, 223]], "211": [[32, 39], [40, 51], [52, 63], [104, 111], [112, 119], [168, 175], [176, 191], [192, 199], [200, 205], [206, 211], [212, 215], [216, 225], [226, 231], [232, 255]], "218": [[36, 39], [48, 49], [50, 55], [101, 101], [144, 159], [209, 209], [232, 233], [234, 239]], "219": [[240, 241], [248, 255]], "220": [[64, 71], [72, 91], [92, 95], [103, 103], [116, 127], [149, 149], [230, 230]], "221": [[132, 132], [133, 133], [133, 133], [138, 143], [144, 168]], "222": [[96, 122], [231, 231], [232, 239], [251, 251]], "223": [[26, 26], [28, 28], [32, 63], [130, 130], [131, 131], [165, 165], [168, 175], [194, 195], [222, 222], [253, 253], [255, 255]] };
-        return Object.freeze({ TELECOM, PROXY_MODE, PROXY_STRICT_PREFIXES, PROXY_AGGRESSIVE_EXTRA_PREFIXES, KR_IP_RANGES });
-    })();
 
-    const DCUF_SHARED_STORAGE = (() => {
-        const { ETC_CONSTANTS, STORAGE_KEYS } = DCUF_SHARED_SCHEMA;
-        const { PROXY_MODE } = DCUF_SHARED_IP;
+    const DCUF_SHARED_IP = Object.freeze({ TELECOM, PROXY_MODE, PROXY_STRICT_PREFIXES, PROXY_AGGRESSIVE_EXTRA_PREFIXES, KR_IP_RANGES });
+
 
 const toInteger = (value, fallback) => {
     const parsed = Number.parseInt(String(value), 10);
@@ -428,24 +575,22 @@ function normalizeStoredFilterSettings(rawValues = {}) {
             : defaults.personalBlockList,
     };
 }
-        return Object.freeze({
-            STORAGE_SCHEMA_VERSION,
-            normalizeProxyBlockModeValue,
-            normalizeIpPrefix,
-            stripLegacyMobileIpMarker,
-            parseIpPrefixList,
-            extractIpPrefix,
-            normalizeBlockConfigIp,
-            isSuspiciousLegacyManagedIpList,
-            formatShortcutKeys,
-            parseShortcutString,
-            createDefaultFilterSettings,
-            normalizeStoredFilterSettings,
-        });
-    })();
 
-    const DCUF_SHARED_FILTER_CORE = (() => {
-        const { PROXY_MODE } = DCUF_SHARED_IP;
+    const DCUF_SHARED_STORAGE = Object.freeze({
+        STORAGE_SCHEMA_VERSION,
+        normalizeProxyBlockModeValue,
+        normalizeIpPrefix,
+        stripLegacyMobileIpMarker,
+        parseIpPrefixList,
+        extractIpPrefix,
+        normalizeBlockConfigIp,
+        isSuspiciousLegacyManagedIpList,
+        formatShortcutKeys,
+        parseShortcutString,
+        createDefaultFilterSettings,
+        normalizeStoredFilterSettings,
+    });
+
 
 const modeToTier = (mode) => {
     if (mode === PROXY_MODE.AGGRESSIVE) return 'aggressive';
@@ -453,16 +598,30 @@ const modeToTier = (mode) => {
     return 'off';
 };
 
+const collectionHasValue = (collection, value) => {
+    if (!value || !collection) return false;
+    if (typeof collection.has === 'function') return collection.has(value);
+    if (Array.isArray(collection)) return collection.includes(value);
+    return false;
+};
+
+const uidCollectionHasValue = (collection, value) => {
+    if (!value || !collection) return false;
+    if (typeof collection.has === 'function') return collection.has(value);
+    if (!Array.isArray(collection)) return false;
+    return collection.some((item) => (typeof item === 'string' ? item : item?.id) === value);
+};
+
 const hasPersonalUidBlock = (subject, personalBlockList) =>
-    Boolean(subject?.uid && Array.isArray(personalBlockList?.uids) && personalBlockList.uids.some((item) => item?.id === subject.uid));
+    Boolean(subject?.uid && uidCollectionHasValue(personalBlockList?.uidSet ?? personalBlockList?.uids, subject.uid));
 
 const hasPersonalNicknameBlock = (subject, personalBlockList) =>
-    Boolean(subject?.nickname && Array.isArray(personalBlockList?.nicknames) && personalBlockList.nicknames.includes(subject.nickname));
+    Boolean(subject?.nickname && collectionHasValue(personalBlockList?.nicknameSet ?? personalBlockList?.nicknames, subject.nickname));
 
 const hasPersonalIpBlock = (subject, personalBlockList) =>
-    Boolean(subject?.ip && Array.isArray(personalBlockList?.ips) && personalBlockList.ips.includes(subject.ip));
+    Boolean(subject?.ip && collectionHasValue(personalBlockList?.ipSet ?? personalBlockList?.ips, subject.ip));
 
-const FILTER_CORE_PHASE = '3.0.0';
+const FILTER_CORE_PHASE = '3.1.1';
 
 function createEmptyDecision(proxyBlockMode = PROXY_MODE.OFF) {
     return {
@@ -589,384 +748,344 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
     decision.matchedBy = decision.reasons.slice();
     return decision;
 }
-        return Object.freeze({
-            FILTER_CORE_PHASE,
-            createEmptyDecision,
-            evaluateUserStatsBlock,
-            isPersonalBlockHit,
-            evaluateSyncBlockDecision,
-        });
-    })();
 
-
-    // [v1.7.0 이식] 개인 차단 기능 UI를 위한 스타일 추가
+    const DCUF_SHARED_FILTER_CORE = Object.freeze({
+        FILTER_CORE_PHASE,
+        createEmptyDecision,
+        evaluateUserStatsBlock,
+        isPersonalBlockHit,
+        evaluateSyncBlockDecision,
+    });
     GM_addStyle(`
-        /* [v1.7.2 수정] FOUC(깜빡임) 방지: 스크립트 준비 완료 전까지 본문 숨김 */
-        body:not(.dc-filter-ready) {
-            visibility: hidden !important;
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 40px;
+            height: 22px;
         }
-        /* 로딩 중 표시 (선택 사항) */
-        body:not(.dc-filter-ready)::before {
-            content: '유저 필터 적용 중...';
-            visibility: visible !important;
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 16px;
-            font-weight: bold;
-            color: #555;
-            background-color: #f0f0f0;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.2);
-            z-index: 2147483647;
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+            position: absolute;
         }
-
-        /* --- 개인 차단 기능 UI --- */
-        #dc-personal-block-fab {
-            position: fixed;
-            bottom: 20px; right: 20px;
-            z-index: 2147483640;
-            width: auto !important;
-            min-width: 76px;
-            height: 38px;
-            padding: 0 10px;
-            background: linear-gradient(180deg, #fbfcfe 0%, #f1f4f8 100%) !important;
-            color: #4d5e76;
-            border-radius: 999px;
-            border: 1px solid #c7d2df;
-            box-shadow: 0 6px 16px rgba(36, 49, 72, 0.1);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            font-size: 15px;
-            font-weight: 800;
-            letter-spacing: -0.03em;
-            line-height: 1;
-            white-space: nowrap;
-            word-break: keep-all;
+        .switch-slider {
+            position: absolute;
             cursor: pointer;
-            user-select: none;
-            transition: transform 0.18s ease-out, box-shadow 0.18s ease-out, border-color 0.18s ease-out, background-color 0.18s ease-out;
+            inset: 0;
+            background-color: #c7cfdb;
+            transition: .2s;
+            border-radius: 999px;
         }
-        #dc-personal-block-fab:hover {
-            background: linear-gradient(180deg, #ffffff 0%, #eef2f7 100%) !important;
-            border-color: #b6c2d1;
-            box-shadow: 0 8px 18px rgba(36, 49, 72, 0.14);
+        .switch-slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 3px;
+            bottom: 3px;
+            background-color: #fff;
+            transition: .2s;
+            border-radius: 50%;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.18);
         }
-        #dc-personal-block-fab:active {
-            transform: scale(0.97);
-            box-shadow: 0 4px 10px rgba(36, 49, 72, 0.1);
+        .switch input:checked + .switch-slider {
+            background-color: #3b71fd;
         }
-        #dc-selection-popup {
-            position: fixed;
-            top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            z-index: 2147483641;
-            background: #fff;
-            border: 1px solid #ccc;
-            border-radius: 12px;
-            padding: 20px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-            min-width: 320px;
-            text-align: center;
-        }
-        #dc-selection-popup h4 { margin: 0 0 20px 0; font-size: 18px; font-weight: 600; }
-        #dc-selection-popup .block-options { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
-        #dc-selection-popup .block-option { display: flex; justify-content: space-between; align-items: center; background-color: #f8f9fa; padding: 12px; border-radius: 8px; }
-        #dc-selection-popup .block-option span { font-size: 15px; color: #333; word-break: break-all; margin-right: 15px; text-align: left; }
-        #dc-selection-popup .block-option button { font-size: 14px; padding: 6px 12px; cursor: pointer; border: none; border-radius: 6px; background-color: #4263eb; color: #fff; font-weight: 500; }
-        #dc-selection-popup .popup-buttons button { width: 100%; font-size: 16px; padding: 10px; cursor: pointer; border: none; border-radius: 8px; background-color: #e9ecef; color: #555; }
-        body.selection-mode-active .gall_writer,
-        body.selection-mode-active .ub-writer {
-            cursor: pointer !important;
-            outline: 2px dashed #4263eb;
+        .switch input:checked + .switch-slider:before {
+            transform: translateX(18px);
         }
 
-
-        #dc-block-management-panel-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.5);
-            z-index: 2147483645;
+        #dcinside-filter-setting,
+        #dcinside-shortcut-modal {
+            font-family: "Segoe UI", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif !important;
         }
-        #dc-block-management-panel {
-            position: fixed;
-            top: 50%; left: 50%; transform: translate(-50%, -50%);
-            background: #f9f9f9;
-            border: 1px solid #d7deea;
-            border-radius: 16px;
-            box-shadow: 0 14px 36px rgba(36, 49, 72, 0.18);
-            z-index: 2147483646;
-            display: flex;
-            flex-direction: column;
-            width: 400px; height: 500px;
-            min-width: 350px; min-height: 300px;
-            resize: both;
-            overflow: hidden;
+        #dcinside-filter-setting {
+            min-width: 420px !important;
+            max-width: min(92vw, 760px) !important;
+            max-height: 92vh !important;
+            overflow: hidden !important;
+            border-color: #273142 !important;
+            box-shadow: 0 20px 48px rgba(17, 24, 39, 0.24) !important;
         }
-        #dc-block-management-panel .panel-header {
-            display: flex;  align-items: center;
-            padding: 14px 16px 12px;
-            background: transparent;
-            border-bottom: 1px solid #e5ebf4;
+        #dcinside-filter-setting .dcuf-settings-header {
             cursor: move;
-            user-select: none;
         }
-        #dc-block-management-panel .panel-header h3 { margin: 0; font-size: 16px; }
-        #dc-block-management-panel .panel-close-btn { font-size: 20px; cursor: pointer; border: none; background: none; margin-left: auto;}
-        #dc-block-management-panel .panel-tabs { display: flex; border-bottom: 1px solid #ccc; background: #fff; }
-        #dc-block-management-panel .panel-tab { flex: 1; padding: 10px; text-align: center; cursor: pointer; border-right: 1px solid #eee; }
-        #dc-block-management-panel .panel-tab:last-child { border-right: none; }
-        #dc-block-management-panel .panel-tab.active { background: #3b71fd; color: #fff; font-weight: bold; }
-        #dc-block-management-panel .panel-body { flex-grow: 1; display: flex; flex-direction: column; overflow: hidden; background: transparent; padding: 0 12px 12px; }
-        #dc-block-management-panel .panel-list-controls { padding: 10px 0; border-bottom: none; text-align: left; background: transparent; }
-        #dc-block-management-panel .select-all-btn,
-        #dc-block-management-panel .select-all-global-btn,
-        #dc-block-management-panel .panel-backup-btn {
-            min-height: 36px !important;
-            font-size: 13px; padding: 4px 10px; cursor: pointer;
-            border: 1px solid #d4dbe8 !important; background: #fff !important; border-radius: 8px !important; margin-left: 5px;
-            color: #374151 !important; font-weight: 600 !important;
-            transition: background-color 0.14s ease, border-color 0.14s ease;
+        #dcinside-filter-setting .dcuf-settings-body {
+            max-height: calc(92vh - 158px) !important;
+            overflow-y: auto !important;
+            padding-right: 4px !important;
         }
-        #dc-block-management-panel .select-all-btn:hover,
-        #dc-block-management-panel .select-all-global-btn:hover,
-        #dc-block-management-panel .panel-backup-btn:hover {
-            background: #f6f9ff !important;
-            border-color: #b8c8ea !important;
+        #dcinside-filter-setting .dcuf-settings-section {
+            background: #fbfcfe;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 14px;
         }
-        #dc-block-management-panel .panel-content { flex-grow: 1; overflow-y: auto; border: 1px solid #e3e9f2; border-radius: 12px; background: #fff; }
-        #dc-block-management-panel .blocked-list { list-style: none; margin: 0; padding: 6px 10px 12px; }
-        #dc-block-management-panel .blocked-item { display: flex; justify-content: space-between; align-items: center; min-height: 44px; padding: 10px 8px; border-bottom: 1px solid #edf1f7; transition: background-color 0.14s ease, opacity 0.14s ease; }
-        #dc-block-management-panel .blocked-item:hover { background: #f6f9ff; }
-        #dc-block-management-panel .blocked-item.item-to-delete { text-decoration: line-through; opacity: 0.5; }
-        #dc-block-management-panel .item-name { font-size: 14px; word-break: break-all; }
-        #dc-block-management-panel .delete-item-btn { cursor: pointer; color: #e03131; font-weight: bold; padding: 0 5px; display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 999px; background: #fff0f2; }
-        #dc-block-management-panel .panel-footer {
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 12px; border-top: 1px solid #e5ebf4; background: transparent;
+        #dcinside-filter-setting .dcuf-settings-guest-controls {
+            background: #fff;
+            border: 1px solid #d9e0ea;
+            border-radius: 8px;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.75);
         }
-        #dc-block-management-panel .panel-footer-left { display: flex; align-items: center; }
-        #dc-block-management-panel .panel-save-btn { min-height: 38px; padding: 0 18px; font-size: 14px; font-weight: 700; background: #3b71fd; color: #fff; border: none; border-radius: 9px; cursor: pointer; box-shadow: 0 6px 16px rgba(59, 113, 253, 0.24); }
-        #dc-block-management-panel .panel-resize-handle { position: absolute; right: 0; bottom: 0; width: 15px; height: 15px; cursor: nwse-resize; }
-        .switch-container { display: flex; align-items: center; margin-left: 15px; }
-        .switch { position: relative; display: inline-block; width: 40px; height: 22px; }
-        .switch input { opacity: 0; width: 0; height: 0; }
-        .switch-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 22px; }
-        .switch-slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
-        input:checked + .switch-slider { background-color: #3b71fd; }
-        input:checked + .switch-slider:before { transform: translateX(18px); }
-        .switch[style*="width:34px"][style*="height:18px"] .switch-slider:before {
-            width: 14px;
-            height: 14px;
-            left: 2px;
-            bottom: 2px;
+        #dcinside-filter-setting #dcinside-threshold-input,
+        #dcinside-filter-setting #dcinside-ratio-min,
+        #dcinside-filter-setting #dcinside-ratio-max {
+            border: 1px solid #cbd5e1 !important;
+            border-radius: 8px !important;
+            padding: 8px 10px !important;
+            box-sizing: border-box !important;
         }
-        .switch[style*="width:34px"][style*="height:18px"] input:checked + .switch-slider:before {
-            transform: translateX(16px);
+        #dcinside-filter-setting #dcinside-threshold-save {
+            min-width: 110px;
+            font-weight: 700;
         }
-        #dc-backup-popup-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.6); z-index: 2147483647;
+        #dcinside-filter-setting.dcuf-pop-leave {
+            opacity: 0 !important;
+            transform: translate(-50%, -48%) scale(0.985) !important;
+            transition: opacity 0.13s ease, transform 0.13s ease !important;
+            pointer-events: none !important;
         }
-        #dc-backup-popup {
-            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            background: #fff; border: 1px solid #d7deea; border-radius: 18px; box-shadow: 0 14px 36px rgba(36, 49, 72, 0.18);
-            z-index: 2147483647; padding: 20px; min-width: 350px; width: min(92vw, 480px);
-        }
-        #dc-backup-popup .popup-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; padding: 0 2px 12px; border-bottom: 1px solid #e5ebf4; background: transparent; }
-        #dc-backup-popup .popup-header h4 { margin: 0; font-size: 16px; }
-        #dc-backup-popup .popup-close-btn { font-size: 20px; background: none; border: none; cursor: pointer; color: #888; }
-        #dc-backup-popup .popup-content { display: flex; flex-direction: column; gap: 15px; }
-        #dc-backup-popup label { font-size: 14px; font-weight: bold; }
-        #dc-backup-popup .description { font-size: 12px; color: #667085; margin-bottom: 5px; }
-        #dc-backup-popup textarea { width: 100%; box-sizing: border-box; height: 100px; resize: vertical; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 12px; font-family: monospace; }
-        #dc-backup-popup button { padding: 8px 12px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
-        #dc-backup-popup .export-btn { background-color: #3b71fd; color: #fff; border: 1px solid #3b71fd; flex: 1; }
-        /* [v1.7.1 수정] 백업/복원 UI 수정 */
-        #dc-backup-popup .import-controls { display: flex; flex-direction: column; gap: 8px; }
-        #dc-backup-popup .import-controls textarea { flex-grow: 1; }
-        #dc-backup-popup .import-btn { background-color: #3b71fd; color: #fff; border: 1px solid #3b71fd; width: 100%; margin-top: 8px; }
 
-        /* --- [최종 수정] 야간 모드 지원 스타일 (JS 연동) --- */
         body.dc-filter-dark-mode #dcinside-filter-setting,
-        body.dc-filter-dark-mode #dc-selection-popup,
-        body.dc-filter-dark-mode #dc-block-management-panel,
-        body.dc-filter-dark-mode #dc-backup-popup,
         body.dc-filter-dark-mode #dcinside-shortcut-modal {
-            background-color: #2d2d2d !important;
-            color: #e0e0e0 !important;
-            border-color: #555 !important;
-            box-shadow: 0 0 15px rgba(0,0,0,0.7) !important;
+            background: #232a34 !important;
+            color: #e8edf7 !important;
+            border-color: #4b5b74 !important;
+            box-shadow: 0 24px 58px rgba(0, 0, 0, 0.44) !important;
         }
-        /* 설정창 헤더/푸터/구분선 */
-        body.dc-filter-dark-mode #dcinside-filter-setting > div:first-child,
-        body.dc-filter-dark-mode #dcinside-filter-setting > div:last-child {
-            border-color: #4a4a4a !important;
+        body.dc-filter-dark-mode #dcinside-filter-setting .dcuf-settings-section {
+            background: #2c3440 !important;
+            border-color: #47556f !important;
         }
-        body.dc-filter-dark-mode #dcinside-filter-setting hr {
-            border-top-color: #4a4a4a !important;
+        body.dc-filter-dark-mode #dcinside-filter-setting .dcuf-settings-guest-controls {
+            background: #26303c !important;
+            border-color: #47556f !important;
         }
         body.dc-filter-dark-mode #dcinside-filter-setting div,
         body.dc-filter-dark-mode #dcinside-filter-setting label,
         body.dc-filter-dark-mode #dcinside-filter-setting h3,
         body.dc-filter-dark-mode #dcinside-filter-setting b,
-        body.dc-filter-dark-mode #dc-selection-popup h4,
-        body.dc-filter-dark-mode #dc-selection-popup .block-option span,
-        body.dc-filter-dark-mode #dc-backup-popup .description,
-        body.dc-filter-dark-mode #dc-backup-popup h4 {
-            color: #e0e0e0 !important;
+        body.dc-filter-dark-mode #dcinside-filter-setting a,
+        body.dc-filter-dark-mode #dcinside-shortcut-modal h4,
+        body.dc-filter-dark-mode #dcinside-shortcut-modal div {
+            color: #e8edf7 !important;
         }
-        body.dc-filter-dark-mode #dcinside-filter-setting a {
-            color: #8ab4f8 !important;
+        body.dc-filter-dark-mode #dcinside-filter-setting #dcinside-threshold-input,
+        body.dc-filter-dark-mode #dcinside-filter-setting #dcinside-ratio-min,
+        body.dc-filter-dark-mode #dcinside-filter-setting #dcinside-ratio-max,
+        body.dc-filter-dark-mode #dcinside-shortcut-modal #dcinside-new-shortcut-preview {
+            background: #1d2430 !important;
+            color: #eef3ff !important;
+            border-color: #51617d !important;
         }
-        /* 입력 필드 */
-        body.dc-filter-dark-mode input[type="number"],
-        body.dc-filter-dark-mode #dc-backup-popup textarea {
-            background-color: #1e1e1e !important;
-            color: #f0f0f0 !important;
-            border: 1px solid #666 !important;
+        body.dc-filter-dark-mode #dcinside-filter-setting #dcinside-proxy-ip-block-mode-group {
+            background: #1d2430 !important;
+            border-color: #51617d !important;
         }
-        /* 각종 버튼 */
-        body.dc-filter-dark-mode #dcinside-filter-setting #dcinside-threshold-save,
-        body.dc-filter-dark-mode #dc-block-management-panel .select-all-btn,
-        body.dc-filter-dark-mode #dc-block-management-panel .select-all-global-btn,
-        body.dc-filter-dark-mode #dc-block-management-panel .panel-backup-btn {
-            background-color: #555 !important;
-            color: #fff !important;
-            border-color: #777 !important;
+        body.dc-filter-dark-mode #dcinside-filter-setting button,
+        body.dc-filter-dark-mode #dcinside-shortcut-modal button {
+            border-color: #5f6f89 !important;
         }
-        body.dc-filter-dark-mode #dc-selection-popup .popup-buttons button,
-        body.dc-filter-dark-mode #dcinside-shortcut-modal button:last-child {
-            background-color: #444 !important;
-            color: #ccc !important;
-        }
-        /* 차단 관리 패널 */
-        body.dc-filter-dark-mode #dc-block-management-panel .panel-header,
-        body.dc-filter-dark-mode #dc-block-management-panel .panel-footer,
-        body.dc-filter-dark-mode #dc-backup-popup .popup-header {
-            background: transparent !important;
-            border-color: #4a4a4a !important;
-        }
-        body.dc-filter-dark-mode #dc-block-management-panel .panel-tabs,
-        body.dc-filter-dark-mode #dc-block-management-panel .panel-body,
-        body.dc-filter-dark-mode #dc-selection-popup .block-option {
-            background: #3a3a3c !important;
-            border-color: #4a4a4a !important;
-        }
-        body.dc-filter-dark-mode #dc-block-management-panel .panel-content {
-            background: #252b36 !important;
-            border-color: #46506a !important;
-        }
-        body.dc-filter-dark-mode #dc-block-management-panel .panel-list-controls {
-            background: transparent !important;
-            border-color: transparent !important;
-        }
-        body.dc-filter-dark-mode #dc-block-management-panel .panel-tab {
-            border-right-color: #555 !important;
-        }
-        body.dc-filter-dark-mode #dc-block-management-panel .panel-list-controls,
-        body.dc-filter-dark-mode #dc-block-management-panel .blocked-item {
-            background-color: #2d2d2d !important;
-            border-color: #4a4a4a !important;
-        }
-        /* 닫기 버튼 */
-        body.dc-filter-dark-mode #dcinside-filter-setting #dcinside-filter-close,
-        body.dc-filter-dark-mode #dc-block-management-panel .panel-close-btn,
-        body.dc-filter-dark-mode #dc-backup-popup .popup-close-btn {
-            color: #ccc !important;
-        }
-    `);
 
-    // ... (이하 코드는 v1.7.0과 동일하므로 생략) ...
-    // [이식] 현재 활성화된 단축키 객체를 저장하기 위한 변수
-    GM_addStyle(`
-        #dc-backup-popup .export-section,
-        #dc-backup-popup .import-section {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
+        @media (max-width: 760px) {
+            #dcinside-filter-setting {
+                min-width: auto !important;
+                width: min(96vw, 760px) !important;
+            }
+            #dcinside-filter-setting .dcuf-settings-threshold {
+                flex-direction: column !important;
+                align-items: stretch !important;
+            }
+            #dcinside-filter-setting #dcinside-ratio-section > div:first-child {
+                flex-direction: column !important;
+            }
         }
-        #dc-backup-popup .import-controls {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-        #dc-backup-popup .import-file-input {
-            width: 100%;
-            box-sizing: border-box;
-            padding: 8px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            font-size: 12px;
-            background: #fff;
-            color: #333;
-        }
-        #dc-backup-popup .export-btn-download {
-            background-color: #fff;
-            color: #333;
-            border: 1px solid #d0d7de;
-        }
-        body.dc-filter-dark-mode #dc-backup-popup .import-file-input {
-            background-color: #1e1e1e !important;
-            color: #f0f0f0 !important;
-            border-color: #666 !important;
-        }
-        body.dc-filter-dark-mode #dc-backup-popup .export-btn-download {
-            background-color: #3a3a3c !important;
-            color: #e0e0e0 !important;
-            border-color: #555 !important;
-        }
-    `);
 
-    GM_addStyle(`
-        /* [3.0.0 port rail] Keep PersonalBlock UI visually close to the latest mobile release. */
         #dc-personal-block-fab {
+            position: fixed;
+            right: 20px;
+            bottom: 20px;
+            z-index: 2147483640;
             min-width: 84px !important;
             height: 42px !important;
             padding: 0 14px !important;
             border-radius: 999px !important;
+            background: linear-gradient(180deg, #fbfcfe 0%, #f1f4f8 100%) !important;
+            color: #4d5e76 !important;
+            border: 1px solid #c7d2df !important;
             box-shadow: 0 10px 24px rgba(43, 61, 96, 0.14) !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            text-align: center !important;
+            font-size: 15px !important;
+            font-weight: 800 !important;
+            letter-spacing: -0.03em !important;
+            line-height: 1 !important;
+            white-space: nowrap !important;
+            cursor: pointer !important;
+            user-select: none !important;
+            transition: transform 0.18s ease-out, box-shadow 0.18s ease-out, border-color 0.18s ease-out, background-color 0.18s ease-out !important;
+        }
+        #dc-personal-block-fab:hover {
+            background: linear-gradient(180deg, #ffffff 0%, #eef2f7 100%) !important;
+            border-color: #b6c2d1 !important;
+            box-shadow: 0 8px 18px rgba(36, 49, 72, 0.14) !important;
         }
         #dc-personal-block-fab:active {
+            transform: scale(0.97) !important;
             cursor: grabbing !important;
         }
 
+        #dc-selection-popup {
+            position: fixed !important;
+            top: 50% !important;
+            left: 50% !important;
+            transform: translate(-50%, -50%) !important;
+            z-index: 2147483641 !important;
+            background: #fff !important;
+            border: 1px solid #d7deea !important;
+            border-radius: 12px !important;
+            padding: 20px !important;
+            box-shadow: 0 14px 36px rgba(36, 49, 72, 0.18) !important;
+            min-width: 360px !important;
+            max-width: min(92vw, 520px) !important;
+            text-align: center !important;
+        }
+        #dc-selection-popup h4 {
+            margin: 0 0 20px 0 !important;
+            font-size: 18px !important;
+            font-weight: 600 !important;
+        }
+        #dc-selection-popup .block-options {
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 10px !important;
+            margin-bottom: 20px !important;
+        }
+        #dc-selection-popup .block-option {
+            display: flex !important;
+            justify-content: space-between !important;
+            align-items: center !important;
+            background-color: #f8fbff !important;
+            border: 1px solid #e4e9f3 !important;
+            padding: 12px !important;
+            border-radius: 9px !important;
+            gap: 12px !important;
+        }
+        #dc-selection-popup .block-option span {
+            font-size: 15px !important;
+            color: #333 !important;
+            word-break: break-all !important;
+            margin-right: 15px !important;
+            text-align: left !important;
+        }
+        #dc-selection-popup .block-option button {
+            font-size: 14px !important;
+            padding: 6px 12px !important;
+            cursor: pointer !important;
+            border: none !important;
+            border-radius: 6px !important;
+            background-color: #4263eb !important;
+            color: #fff !important;
+            font-weight: 500 !important;
+        }
+        #dc-selection-popup .block-option button.btn-unblock {
+            background-color: #e03131 !important;
+        }
+        #dc-selection-popup .popup-buttons button {
+            width: 100% !important;
+            font-size: 16px !important;
+            padding: 10px !important;
+            cursor: pointer !important;
+            border: none !important;
+            border-radius: 8px !important;
+            background-color: #e9ecef !important;
+            color: #555 !important;
+        }
+        body.selection-mode-active .gall_writer,
+        body.selection-mode-active .ub-writer {
+            cursor: pointer !important;
+            outline: 2px dashed #4263eb !important;
+        }
+
+        #dc-block-management-panel-overlay,
+        #dc-backup-popup-overlay {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            background: rgba(0, 0, 0, 0.55) !important;
+            z-index: 2147483645 !important;
+            backdrop-filter: blur(2px) !important;
+        }
+        #dc-block-management-panel,
+        #dc-backup-popup {
+            touch-action: pan-x pan-y !important;
+        }
         #dc-block-management-panel {
+            position: fixed !important;
+            top: 50% !important;
+            left: 50% !important;
+            transform: translate(-50%, -50%) !important;
             background: #fff !important;
             border: 1px solid #d9e1ef !important;
             border-radius: 18px !important;
             box-shadow: 0 18px 44px rgba(34, 51, 84, 0.18) !important;
+            z-index: 2147483646 !important;
+            display: flex !important;
+            flex-direction: column !important;
+            width: 400px !important;
+            height: 500px !important;
+            min-width: 350px !important;
+            min-height: 300px !important;
+            resize: both !important;
+            overflow: hidden !important;
         }
         #dc-block-management-panel .panel-header {
-            background: #fff !important;
+            display: flex !important;
+            align-items: center !important;
             padding: 16px 18px 14px !important;
+            background: #fff !important;
             border-bottom: 1px solid #e6ebf4 !important;
+            cursor: move !important;
+            user-select: none !important;
+        }
+        #dc-block-management-panel .panel-header h3 {
+            margin: 0 !important;
+            font-size: 16px !important;
+        }
+        #dc-block-management-panel .panel-close-btn {
+            font-size: 20px !important;
+            cursor: pointer !important;
+            border: none !important;
+            background: none !important;
+            margin-left: auto !important;
         }
         #dc-block-management-panel .panel-tabs {
+            display: flex !important;
             background: #fff !important;
             border-bottom: 1px solid #e6ebf4 !important;
-            padding: 0 !important;
-            gap: 0 !important;
         }
         #dc-block-management-panel .panel-tab {
+            flex: 1 !important;
             padding: 14px 8px !important;
+            text-align: center !important;
+            cursor: pointer !important;
             border-right: 1px solid #e6ebf4 !important;
-            border-radius: 0 !important;
             background: #fff !important;
             color: #4b5563 !important;
             font-weight: 600 !important;
+            position: relative !important;
         }
         #dc-block-management-panel .panel-tab:last-child {
-            border-right: 0 !important;
+            border-right: none !important;
         }
         #dc-block-management-panel .panel-tab.active {
-            background: #fff !important;
             color: #1d4ed8 !important;
             font-weight: 700 !important;
-            position: relative !important;
         }
         #dc-block-management-panel .panel-tab.active::after {
             content: '' !important;
@@ -979,91 +1098,266 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             background: #3b71fd !important;
         }
         #dc-block-management-panel .panel-body {
+            flex-grow: 1 !important;
+            display: flex !important;
+            flex-direction: column !important;
+            overflow: hidden !important;
             background: #fff !important;
             padding: 0 12px 12px !important;
         }
         #dc-block-management-panel .panel-list-controls {
             padding: 10px 0 12px !important;
+            text-align: left !important;
+            background: transparent !important;
+        }
+        #dc-block-management-panel .select-all-btn,
+        #dc-block-management-panel .select-all-global-btn,
+        #dc-block-management-panel .panel-backup-btn {
+            min-height: 36px !important;
+            font-size: 13px !important;
+            padding: 4px 10px !important;
+            cursor: pointer !important;
+            border: 1px solid #d4dbe8 !important;
+            background: #fff !important;
+            border-radius: 8px !important;
+            margin-left: 5px !important;
+            color: #374151 !important;
+            font-weight: 600 !important;
+            transition: background-color 0.14s ease, border-color 0.14s ease !important;
+        }
+        #dc-block-management-panel .select-all-btn:hover,
+        #dc-block-management-panel .select-all-global-btn:hover,
+        #dc-block-management-panel .panel-backup-btn:hover {
+            background: #f6f9ff !important;
+            border-color: #b8c8ea !important;
         }
         #dc-block-management-panel .panel-content {
-            background: #fff !important;
+            flex-grow: 1 !important;
+            overflow-y: auto !important;
             border: 1px solid #e6ebf4 !important;
             border-radius: 14px !important;
-            overflow-y: auto !important;
+            background: #fff !important;
         }
         #dc-block-management-panel .blocked-list {
+            list-style: none !important;
+            margin: 0 !important;
             padding: 6px 12px 12px !important;
         }
         #dc-block-management-panel .blocked-item {
+            display: flex !important;
+            justify-content: space-between !important;
+            align-items: center !important;
             min-height: 52px !important;
             padding: 12px 8px !important;
             border-bottom: 1px solid #eef2f7 !important;
+            transition: background-color 0.14s ease, opacity 0.14s ease !important;
             background: #fff !important;
         }
+        #dc-block-management-panel .blocked-item:hover {
+            background: #f6f9ff !important;
+        }
+        #dc-block-management-panel .blocked-item.item-to-delete {
+            text-decoration: line-through !important;
+            opacity: 0.5 !important;
+        }
+        #dc-block-management-panel .item-name {
+            font-size: 14px !important;
+            word-break: break-all !important;
+        }
+        #dc-block-management-panel .delete-item-btn {
+            cursor: pointer !important;
+            color: #e03131 !important;
+            font-weight: bold !important;
+            padding: 0 5px !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            width: 24px !important;
+            height: 24px !important;
+            border-radius: 999px !important;
+            background: #fff0f2 !important;
+        }
         #dc-block-management-panel .panel-footer {
-            background: #fff !important;
-            border-top: 1px solid #e6ebf4 !important;
+            display: flex !important;
+            justify-content: space-between !important;
+            align-items: center !important;
             padding: 12px 14px !important;
+            border-top: 1px solid #e6ebf4 !important;
+            background: #fff !important;
+        }
+        #dc-block-management-panel .panel-footer-left {
+            display: flex !important;
+            align-items: center !important;
+        }
+        #dc-block-management-panel .panel-save-btn {
+            min-height: 38px !important;
+            padding: 0 18px !important;
+            font-size: 14px !important;
+            font-weight: 700 !important;
+            background: #3b71fd !important;
+            color: #fff !important;
+            border: none !important;
+            border-radius: 9px !important;
+            cursor: pointer !important;
+            box-shadow: 0 6px 16px rgba(59, 113, 253, 0.24) !important;
+        }
+        #dc-block-management-panel .panel-resize-handle {
+            position: absolute !important;
+            right: 0 !important;
+            bottom: 0 !important;
+            width: 15px !important;
+            height: 15px !important;
+            cursor: nwse-resize !important;
         }
 
         #dc-backup-popup {
+            position: fixed !important;
+            top: 50% !important;
+            left: 50% !important;
+            transform: translate(-50%, -50%) !important;
             background: #fff !important;
             border: 1px solid #d9e1ef !important;
             border-radius: 18px !important;
             box-shadow: 0 18px 44px rgba(34, 51, 84, 0.18) !important;
-            min-width: 420px !important;
-            width: min(92vw, 520px) !important;
+            z-index: 2147483647 !important;
             padding: 18px !important;
+            min-width: 420px !important;
+            min-height: 320px !important;
+            width: min(92vw, 520px) !important;
+            overflow: hidden !important;
+            resize: both !important;
         }
         #dc-backup-popup .popup-header {
-            background: #fff !important;
+            display: flex !important;
+            justify-content: space-between !important;
+            align-items: center !important;
             margin-bottom: 16px !important;
             padding: 0 4px 12px !important;
             border-bottom: 1px solid #e6ebf4 !important;
+            background: #fff !important;
+        }
+        #dc-backup-popup .popup-header h4 {
+            margin: 0 !important;
+            font-size: 16px !important;
+        }
+        #dc-backup-popup .popup-close-btn {
+            font-size: 20px !important;
+            background: none !important;
+            border: none !important;
+            cursor: pointer !important;
+            color: #888 !important;
         }
         #dc-backup-popup .popup-content {
+            display: flex !important;
+            flex-direction: column !important;
             gap: 22px !important;
+            max-height: calc(92vh - 96px) !important;
+            overflow-y: auto !important;
+            padding-right: 2px !important;
+        }
+        #dc-backup-popup label {
+            font-size: 14px !important;
+            font-weight: bold !important;
         }
         #dc-backup-popup .description {
+            font-size: 12px !important;
             color: #6b7280 !important;
             line-height: 1.5 !important;
         }
-        #dc-backup-popup .export-actions {
-            display: grid !important;
-            grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+        #dc-backup-popup .import-controls {
+            display: flex !important;
+            flex-direction: column !important;
             gap: 8px !important;
-            margin-top: 6px !important;
         }
-        #dc-backup-popup .export-btn,
-        #dc-backup-popup .export-btn-download,
-        #dc-backup-popup .import-btn {
-            min-height: 40px !important;
+        #dc-backup-popup .import-file-input,
+        #dc-backup-popup textarea {
+            width: 100% !important;
+            box-sizing: border-box !important;
+            padding: 8px !important;
+            border: 1px solid #d2dae8 !important;
             border-radius: 8px !important;
+            background: #fff !important;
+            color: #333 !important;
+        }
+        #dc-backup-popup textarea {
+            height: 100px !important;
+            resize: vertical !important;
+            font-size: 12px !important;
+            font-family: Consolas, "Courier New", monospace !important;
+        }
+        #dc-backup-popup button {
+            padding: 8px 12px !important;
+            border: none !important;
+            border-radius: 8px !important;
+            cursor: pointer !important;
             font-weight: 700 !important;
         }
         #dc-backup-popup .export-btn {
-            background: #3b71fd !important;
-            border: 1px solid #3b71fd !important;
+            background-color: #3b71fd !important;
             color: #fff !important;
+            border: 1px solid #3b71fd !important;
+            flex: 1 !important;
         }
         #dc-backup-popup .export-btn-download {
             background: #eef4ff !important;
             border: 1px solid #c8d8ff !important;
             color: #315fc2 !important;
         }
-        #dc-backup-popup .import-file-input,
-        #dc-backup-popup textarea {
+        #dc-backup-popup .import-btn {
+            background-color: #3b71fd !important;
+            color: #fff !important;
+            border: 1px solid #3b71fd !important;
             width: 100% !important;
-            box-sizing: border-box !important;
-            border: 1px solid #d2dae8 !important;
-            border-radius: 8px !important;
-            background: #fff !important;
+            margin-top: 8px !important;
         }
 
+        @keyframes dcuf-popup-out {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
+        @keyframes dcuf-overlay-out {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
+        #dc-selection-popup.dcuf-pop-leave,
+        #dc-backup-popup.dcuf-pop-leave,
+        #dc-block-management-panel.dcuf-pop-leave {
+            animation: dcuf-popup-out 0.13s ease-in forwards !important;
+            pointer-events: none !important;
+        }
+        #dc-block-management-panel-overlay.dcuf-overlay-leave,
+        #dc-backup-popup-overlay.dcuf-overlay-leave {
+            animation: dcuf-overlay-out 0.13s ease-in forwards !important;
+            pointer-events: none !important;
+        }
+
+        body.dc-filter-dark-mode #dc-personal-block-fab {
+            background: linear-gradient(180deg, #313948 0%, #242b36 100%) !important;
+            color: #e6eefc !important;
+            border-color: #50617d !important;
+            box-shadow: 0 10px 24px rgba(0, 0, 0, 0.32) !important;
+        }
+        body.dc-filter-dark-mode #dc-selection-popup,
         body.dc-filter-dark-mode #dc-block-management-panel,
         body.dc-filter-dark-mode #dc-backup-popup {
-            border-color: #445066 !important;
-            box-shadow: 0 18px 44px rgba(0, 0, 0, 0.45) !important;
+            background-color: #2d2d2d !important;
+            color: #e0e0e0 !important;
+            border-color: #555 !important;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.7) !important;
+        }
+        body.dc-filter-dark-mode #dc-selection-popup .block-option,
+        body.dc-filter-dark-mode #dc-block-management-panel .panel-body,
+        body.dc-filter-dark-mode #dc-block-management-panel .panel-content,
+        body.dc-filter-dark-mode #dc-block-management-panel .blocked-item {
+            background: #252b36 !important;
+            border-color: #46506a !important;
+        }
+        body.dc-filter-dark-mode #dc-selection-popup h4,
+        body.dc-filter-dark-mode #dc-selection-popup .block-option span,
+        body.dc-filter-dark-mode #dc-backup-popup .description,
+        body.dc-filter-dark-mode #dc-backup-popup h4,
+        body.dc-filter-dark-mode #dc-block-management-panel .item-name {
+            color: #e0e0e0 !important;
         }
         body.dc-filter-dark-mode #dc-block-management-panel .panel-header,
         body.dc-filter-dark-mode #dc-block-management-panel .panel-footer,
@@ -1071,12 +1365,6 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         body.dc-filter-dark-mode #dc-backup-popup .popup-header {
             background: transparent !important;
             border-color: #4a556b !important;
-        }
-        body.dc-filter-dark-mode #dc-block-management-panel .panel-body,
-        body.dc-filter-dark-mode #dc-block-management-panel .panel-content,
-        body.dc-filter-dark-mode #dc-block-management-panel .blocked-item {
-            background: #252b36 !important;
-            border-color: #46506a !important;
         }
         body.dc-filter-dark-mode #dc-block-management-panel .panel-tab {
             background: transparent !important;
@@ -1086,8 +1374,12 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         body.dc-filter-dark-mode #dc-block-management-panel .panel-tab.active {
             color: #8db2ff !important;
         }
-        body.dc-filter-dark-mode #dc-backup-popup .description {
-            color: #b9c4d8 !important;
+        body.dc-filter-dark-mode #dc-block-management-panel .select-all-btn,
+        body.dc-filter-dark-mode #dc-block-management-panel .select-all-global-btn,
+        body.dc-filter-dark-mode #dc-block-management-panel .panel-backup-btn {
+            background-color: #555 !important;
+            color: #fff !important;
+            border-color: #777 !important;
         }
         body.dc-filter-dark-mode #dc-backup-popup .export-btn-download {
             background: #2d3950 !important;
@@ -1101,1003 +1393,1318 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             color: #eef3ff !important;
         }
     `);
+const FilterModule = {
+        TELECOM: DCUF_SHARED_IP.TELECOM,
 
-    let activeShortcutObject = null;
-
-    // =================================================================
-    // =========== 통신사 IP 차단 기능을 위한 데이터 (기존 기능) ===========
-    // =================================================================
-    const TELECOM = DCUF_SHARED_IP.TELECOM;
-
-    let TELECOM_PREFIX_SET = null;
-    let PROXY_STRICT_PREFIX_SET = null;
-    let PROXY_AGGRESSIVE_EXTRA_PREFIX_SET = null;
-    let PROXY_AGGRESSIVE_PREFIX_SET = null;
-    let KR_PREFIX_SET = null;
-
-    const PROXY_MODE = DCUF_SHARED_IP.PROXY_MODE;
-    const PROXY_STRICT_PREFIXES = DCUF_SHARED_IP.PROXY_STRICT_PREFIXES;
-    const PROXY_AGGRESSIVE_EXTRA_PREFIXES = DCUF_SHARED_IP.PROXY_AGGRESSIVE_EXTRA_PREFIXES;
-    const KR_IP_RANGES = DCUF_SHARED_IP.KR_IP_RANGES;
-
-    const CONSTANTS = {
-        STORAGE_KEYS: {
-            MASTER_DISABLED: 'dcinside_master_disabled',
-            EXCLUDE_RECOMMENDED: 'dcinside_exclude_recommended',
-            THRESHOLD: 'dcinside_threshold',
-            RATIO_ENABLED: 'dcinside_ratio_filter_enabled',
-            RATIO_MIN: 'dcinside_ratio_min',
-            RATIO_MAX: 'dcinside_ratio_max',
-            BLOCK_GUEST: 'dcinside_block_guest',
-            BLOCK_PROXY: 'dcinside_proxy_ip_block_enabled',
-            BLOCK_TELECOM: 'dcinside_telecom_ip_block_enabled',
-            BLOCK_CONFIG: 'dcinside_block_config',
-            BLOCK_CONFIG_MIGRATION_V275_DONE: 'dcinside_block_config_migration_v275_done',
-            BLOCK_CONFIG_MIGRATION_V275_BACKUP: 'dcinside_block_config_migration_v275_backup',
-            BLOCKED_UIDS: 'dcinside_blocked_uids',
-            BLOCKED_GUESTS: 'dcinside_blocked_guests',
-            SHORTCUT_KEY: 'dcinside_shortcut_key', // 단축키 저장 키
-            // [v1.7.0 이식] 개인 차단 기능용 저장 키
-            PERSONAL_BLOCK_LIST: 'dcinside_personal_block_list',
-            PERSONAL_BLOCK_ENABLED: 'dcinside_personal_block_enabled',
+        CONSTANTS: DCUF_SHARED_SCHEMA.FILTER_CONSTANTS,
+        BLOCK_UID_EXPIRE: 1000 * 60 * 60 * 24 * 7,
+        BLOCKED_UIDS_CACHE: {},
+        ASYNC_UID_REQUEST_CONCURRENCY: 4,
+        INFLIGHT_USER_SUM_REQUESTS: Object.create(null),
+        USER_SUM_NEGATIVE_CACHE: new Map(),
+        USER_SUM_NEGATIVE_TTL: 30000,
+        DEBUG_ENABLED: false,
+        DEBUG_MAX_DECISIONS_PER_PASS: 150,
+        DEBUG_PASS_ID: 0,
+        DEBUG_DECISION_LOG_COUNT: 0,
+        DEBUG_DECISION_KEYS: new Set(),
+        _runtimeMutationUnsubscribe: null,
+        _userSumTaskQueue: null,
+        _queuedObserverFilterItems: null,
+        _queuedObserverFilterRafId: 0,
+        _queuedObserverFilterTimerId: 0,
+        _syncRefilterRafId: 0,
+        _syncRefilterTimerIds: null,
+        _krPrefixSet: null,
+        _telecomPrefixSet: null,
+        _proxyStrictPrefixSet: null,
+        _proxyAggressiveExtraPrefixSet: null,
+        _proxyAggressivePrefixSet: null,
+        PROXY_MODE: DCUF_SHARED_IP.PROXY_MODE,
+        PROXY_STRICT_PREFIXES: DCUF_SHARED_IP.PROXY_STRICT_PREFIXES,
+        PROXY_AGGRESSIVE_EXTRA_PREFIXES: DCUF_SHARED_IP.PROXY_AGGRESSIVE_EXTRA_PREFIXES,
+        KR_IP_RANGES: DCUF_SHARED_IP.KR_IP_RANGES,
+        isMobile: () => /Mobi/i.test(navigator.userAgent),
+        isRecommendedContext: () => window.location.search.includes('exception_mode=recommend'),
+        normalizeProxyBlockMode(value) {
+            return DCUF_SHARED_STORAGE.normalizeProxyBlockModeValue(value);
         },
-        SELECTORS: {
-            POST_LIST_CONTAINER: 'table.gall_list tbody',
-            COMMENT_CONTAINER: 'div.comment_box ul.cmt_list',
-            POST_VIEW_LIST_CONTAINER: 'div.gall_exposure_list > ul',
-            POST_ITEM: 'tr.ub-content',
-            COMMENT_ITEM: 'li.ub-content, li[id^="comment_li_"], li[id^="reply_li_"]',
-            WRITER_INFO: '.ub-writer',
-            IP_SPAN: 'span.ip',
-        },
-        API: {
-            USER_INFO: '/api/gallog_user_layer/gallog_content_reple/',
-        },
-        CUSTOM_ATTRS: {
-            OBSERVER_ATTACHED: 'data-filter-observer-attached',
-        },
-        UI_IDS: {
-            SETTINGS_PANEL: 'dcinside-filter-setting',
-            MASTER_DISABLE_CHECKBOX: 'dcinside-master-disable-checkbox',
-            EXCLUDE_RECOMMENDED_CHECKBOX: 'dcinside-exclude-recommended-checkbox',
-            SETTINGS_CONTAINER: 'dcinside-settings-container',
-            THRESHOLD_INPUT: 'dcinside-threshold-input',
-            BLOCK_GUEST_CHECKBOX: 'dcinside-block-guest-checkbox',
-            PROXY_BLOCK_MODE_GROUP: 'dcinside-proxy-ip-block-mode-group',
-            TELECOM_BLOCK_CHECKBOX: 'dcinside-telecom-ip-block-checkbox',
-            RATIO_ENABLE_CHECKBOX: 'dcinside-ratio-enable-checkbox',
-            RATIO_SECTION: 'dcinside-ratio-section',
-            RATIO_MIN_INPUT: 'dcinside-ratio-min',
-            RATIO_MAX_INPUT: 'dcinside-ratio-max',
-            SAVE_BUTTON: 'dcinside-threshold-save',
-            CLOSE_BUTTON: 'dcinside-filter-close',
-            SHORTCUT_DISPLAY: 'dcinside-shortcut-display',
-            CHANGE_SHORTCUT_BTN: 'dcinside-change-shortcut-btn',
-            SHORTCUT_MODAL_OVERLAY: 'dcinside-shortcut-modal-overlay',
-            SHORTCUT_MODAL: 'dcinside-shortcut-modal',
-            NEW_SHORTCUT_PREVIEW: 'dcinside-new-shortcut-preview',
-            SAVE_SHORTCUT_BTN: 'dcinside-save-shortcut-btn',
-            CANCEL_SHORTCUT_BTN: 'dcinside-cancel-shortcut-btn',
-        },
-        ETC: {
-            MOBILE_IP_MARKER: 'mblck',
-            COOKIE_NAME_1: 'ci_t',
-            COOKIE_NAME_2: 'ci_c',
-        }
-    };
-
-    // 개념글 관련 기능용 헬퍼 함수
-    function normalizeProxyBlockMode(value) {
-        return DCUF_SHARED_STORAGE.normalizeProxyBlockModeValue(value);
-    }
-
-    function getProxyModeLabel(mode) {
-        switch (normalizeProxyBlockMode(mode)) {
-            case PROXY_MODE.STRICT: return '확실';
-            case PROXY_MODE.AGGRESSIVE: return '공격적';
-            default: return '끔';
-        }
-    }
-
-    function normalizeIpPrefix(value) {
-        return DCUF_SHARED_STORAGE.normalizeIpPrefix(value);
-    }
-
-    function parseIpPrefixList(value) {
-        return DCUF_SHARED_STORAGE.parseIpPrefixList(value, CONSTANTS.ETC.MOBILE_IP_MARKER);
-    }
-
-    function getIpPrefix(ip) {
-        return DCUF_SHARED_STORAGE.extractIpPrefix(ip);
-    }
-
-    function getKrPrefixSet() {
-        if (!KR_PREFIX_SET) {
-            const prefixes = [];
-            Object.entries(KR_IP_RANGES).forEach(([first, ranges]) => {
-                ranges.forEach(([start, end]) => {
-                    for (let second = start; second <= end; second += 1) {
-                        prefixes.push(`${first}.${second}`);
-                    }
-                });
-            });
-            KR_PREFIX_SET = new Set(prefixes);
-        }
-        return KR_PREFIX_SET;
-    }
-
-    function isForeignIpPrefix(ipPrefix) {
-        return Boolean(ipPrefix) && !getKrPrefixSet().has(ipPrefix);
-    }
-    function getTelecomPrefixSet() {
-        if (!TELECOM_PREFIX_SET) {
-            const prefixes = [];
-            TELECOM.forEach((group) => group[1].forEach((item) => {
-                if (item[2] === 'MOB') prefixes.push(`${group[0]}.${item[0]}`);
-            }));
-            TELECOM_PREFIX_SET = new Set(prefixes);
-        }
-        return TELECOM_PREFIX_SET;
-    }
-
-    function getProxyStrictPrefixSet() {
-        if (!PROXY_STRICT_PREFIX_SET) PROXY_STRICT_PREFIX_SET = new Set(PROXY_STRICT_PREFIXES);
-        return PROXY_STRICT_PREFIX_SET;
-    }
-
-    function getProxyAggressiveExtraPrefixSet() {
-        if (!PROXY_AGGRESSIVE_EXTRA_PREFIX_SET) PROXY_AGGRESSIVE_EXTRA_PREFIX_SET = new Set(PROXY_AGGRESSIVE_EXTRA_PREFIXES);
-        return PROXY_AGGRESSIVE_EXTRA_PREFIX_SET;
-    }
-
-    function getProxyPrefixSet(mode = PROXY_MODE.STRICT) {
-        const normalizedMode = normalizeProxyBlockMode(mode);
-        if (normalizedMode === PROXY_MODE.AGGRESSIVE) {
-            if (!PROXY_AGGRESSIVE_PREFIX_SET) {
-                PROXY_AGGRESSIVE_PREFIX_SET = new Set(getProxyStrictPrefixSet());
-                getProxyAggressiveExtraPrefixSet().forEach((prefix) => PROXY_AGGRESSIVE_PREFIX_SET.add(prefix));
+        getProxyModeLabel(mode) {
+            switch (this.normalizeProxyBlockMode(mode)) {
+                case this.PROXY_MODE.STRICT: return '확실한 우회 차단';
+                case this.PROXY_MODE.AGGRESSIVE: return '공격적 우회 차단';
+                default: return '끔';
             }
-            return PROXY_AGGRESSIVE_PREFIX_SET;
-        }
-        return normalizedMode === PROXY_MODE.STRICT ? getProxyStrictPrefixSet() : null;
-    }
+        },
+        normalizeIpPrefix(value) {
+            return DCUF_SHARED_STORAGE.normalizeIpPrefix(value);
+        },
+        parseIpPrefixList(value) {
+            return DCUF_SHARED_STORAGE.parseIpPrefixList(value, this.CONSTANTS.ETC.MOBILE_IP_MARKER);
+        },
+        getIpPrefix(ip) {
+            return DCUF_SHARED_STORAGE.extractIpPrefix(ip);
+        },
+        getKrPrefixSet() {
+            if (!this._krPrefixSet) {
+                const prefixes = [];
+                Object.entries(this.KR_IP_RANGES).forEach(([first, ranges]) => {
+                    ranges.forEach(([start, end]) => {
+                        for (let second = start; second <= end; second += 1) {
+                            prefixes.push(`${first}.${second}`);
+                        }
+                    });
+                });
+                this._krPrefixSet = new Set(prefixes);
+            }
+            return this._krPrefixSet;
+        },
+        isForeignIpPrefix(ipPrefix) {
+            return Boolean(ipPrefix) && !this.getKrPrefixSet().has(ipPrefix);
+        },
+        getTelecomPrefixSet() {
+            if (!this._telecomPrefixSet) {
+                const prefixes = [];
+                this.TELECOM.forEach((group) => group[1].forEach((item) => {
+                    if (item[2] === 'MOB') prefixes.push(`${group[0]}.${item[0]}`);
+                }));
+                this._telecomPrefixSet = new Set(prefixes);
+            }
+            return this._telecomPrefixSet;
+        },
+        getProxyStrictPrefixSet() {
+            if (!this._proxyStrictPrefixSet) this._proxyStrictPrefixSet = new Set(this.PROXY_STRICT_PREFIXES);
+            return this._proxyStrictPrefixSet;
+        },
+        getProxyAggressiveExtraPrefixSet() {
+            if (!this._proxyAggressiveExtraPrefixSet) this._proxyAggressiveExtraPrefixSet = new Set(this.PROXY_AGGRESSIVE_EXTRA_PREFIXES);
+            return this._proxyAggressiveExtraPrefixSet;
+        },
+        getProxyPrefixSet(mode = this.PROXY_MODE.STRICT) {
+            const normalizedMode = this.normalizeProxyBlockMode(mode);
+            if (normalizedMode === this.PROXY_MODE.AGGRESSIVE) {
+                if (!this._proxyAggressivePrefixSet) {
+                    this._proxyAggressivePrefixSet = new Set(this.getProxyStrictPrefixSet());
+                    this.getProxyAggressiveExtraPrefixSet().forEach((prefix) => this._proxyAggressivePrefixSet.add(prefix));
+                }
+                return this._proxyAggressivePrefixSet;
+            }
+            return normalizedMode === this.PROXY_MODE.STRICT ? this.getProxyStrictPrefixSet() : null;
+        },
+        getProxyPrefixMatch(ipPrefix, mode) {
+            const normalizedMode = this.normalizeProxyBlockMode(mode);
+            if (!ipPrefix || normalizedMode === this.PROXY_MODE.OFF) return { matched: false, tier: null };
+            if (this.getProxyStrictPrefixSet().has(ipPrefix) || this.isForeignIpPrefix(ipPrefix)) return { matched: true, tier: 'strict' };
+            if (normalizedMode === this.PROXY_MODE.AGGRESSIVE && this.getProxyAggressiveExtraPrefixSet().has(ipPrefix)) {
+                return { matched: true, tier: 'aggressive' };
+            }
+            return { matched: false, tier: null };
+        },
+        debugLog(scope, message, payload) {
+            if (!this.DEBUG_ENABLED) return;
+            if (payload === undefined) console.log(`[DCUF DEBUG][${scope}] ${message}`);
+            else console.log(`[DCUF DEBUG][${scope}] ${message}`, payload);
+        },
+        debugSettingsSnapshot(extra = {}) {
+            const s = dcFilterSettings || {};
+            const proxyBlockMode = this.normalizeProxyBlockMode(s.proxyBlockMode ?? s.proxyBlockEnabled);
+            return {
+                masterDisabled: !!s.masterDisabled,
+                excludeRecommended: !!s.excludeRecommended,
+                threshold: s.threshold,
+                ratioEnabled: !!s.ratioEnabled,
+                ratioMin: s.ratioMin,
+                ratioMax: s.ratioMax,
+                blockGuestEnabled: !!s.blockGuestEnabled,
+                proxyBlockMode,
+                proxyBlockModeLabel: this.getProxyModeLabel(proxyBlockMode),
+                proxyBlockEnabled: proxyBlockMode !== this.PROXY_MODE.OFF,
+                telecomBlockEnabled: !!s.telecomBlockEnabled,
+                blockedGuestsCount: Array.isArray(s.blockedGuests) ? s.blockedGuests.length : 0,
+                blockedGuestsPreview: Array.isArray(s.blockedGuests) ? s.blockedGuests.slice(0, 10) : [],
+                customIpPrefixCount: s.customIpPrefixSet instanceof Set ? s.customIpPrefixSet.size : 0,
+                customIpPrefixPreview: s.customIpPrefixSet instanceof Set ? Array.from(s.customIpPrefixSet).slice(0, 15) : [],
+                telecomPrefixCount: this.getTelecomPrefixSet().size,
+                proxyStrictPrefixCount: this.getProxyStrictPrefixSet().size,
+                proxyAggressiveExtraPrefixCount: this.getProxyAggressiveExtraPrefixSet().size,
+                proxyAggressivePrefixCount: this.getProxyPrefixSet(this.PROXY_MODE.AGGRESSIVE).size,
+                effectiveProxyPrefixCount: proxyBlockMode === this.PROXY_MODE.AGGRESSIVE ? this.getProxyPrefixSet(this.PROXY_MODE.AGGRESSIVE).size : (proxyBlockMode === this.PROXY_MODE.STRICT ? this.getProxyStrictPrefixSet().size : 0),
+                ...extra
+            };
+        },
+        debugStringifySafe(value) {
+            try {
+                return JSON.stringify(value);
+            } catch (error) {
+                return `[stringify-failed:${error?.message || 'unknown'}]`;
+            }
+        },
+        debugDescribeElement(element) {
+            if (!(element instanceof HTMLElement)) return { tag: null };
+            const titleNode = element.querySelector('.gall_tit a, .post-title-link, .usertxt, .gall_tit, .post-title');
+            return {
+                tag: element.tagName,
+                id: element.id || null,
+                className: typeof element.className === 'string' ? element.className : '',
+                rowId: element.getAttribute('data-custom-row-id'),
+                title: titleNode ? titleNode.textContent.trim().replace(/\s+/g, ' ').slice(0, 80) : null
+            };
+        },
+        startDebugPass(reason, extra = {}) {
+            if (!this.DEBUG_ENABLED) return;
+            this.DEBUG_PASS_ID += 1;
+            this.DEBUG_DECISION_LOG_COUNT = 0;
+            this.DEBUG_DECISION_KEYS.clear();
+            this.debugLog('pass', `start #${this.DEBUG_PASS_ID} ${reason}`, {
+                passId: this.DEBUG_PASS_ID,
+                ...extra,
+                settings: this.debugSettingsSnapshot()
+            });
+        },
+        debugDecision(element, payload) {
+            if (!this.DEBUG_ENABLED) return;
+            const reasons = Array.isArray(payload.reasons) ? payload.reasons.filter(Boolean) : [];
+            const identity = [
+                this.DEBUG_PASS_ID,
+                payload.branch || '',
+                payload.uid || '',
+                payload.ip || '',
+                payload.ipPrefix || '',
+                payload.isBlocked ? 'hide' : 'show',
+                reasons.join(',')
+            ].join('|');
+            if (this.DEBUG_DECISION_KEYS.has(identity)) return;
+            if (this.DEBUG_DECISION_LOG_COUNT >= this.DEBUG_MAX_DECISIONS_PER_PASS) return;
+            this.DEBUG_DECISION_KEYS.add(identity);
+            this.DEBUG_DECISION_LOG_COUNT += 1;
+            this.debugLog('decision', `${payload.branch || 'sync'} #${this.DEBUG_DECISION_LOG_COUNT}`, {
+                passId: this.DEBUG_PASS_ID,
+                element: this.debugDescribeElement(element),
+                ...payload,
+                reasons
+            });
+            console.log(
+                `[DCUF DEBUG][decision-line] pass=${this.DEBUG_PASS_ID} idx=${this.DEBUG_DECISION_LOG_COUNT} branch=${payload.branch || 'sync'} blocked=${payload.isBlocked} ` +
+                `uid=${payload.uid || '(none)'} nick=${payload.nickname || '(none)'} ip=${payload.ip || '(none)'} prefix=${payload.ipPrefix || '(none)'} ` +
+                `guest=${payload.isGuest} custom=${payload.hasCustomIpPrefixBlock} proxyMode=${payload.proxyBlockMode} proxy=${payload.proxyPrefixMatch} proxyTier=${payload.proxyMatchTier || '(none)'} telecom=${payload.telecomPrefixMatch} ` +
+                `blockedGuest=${payload.blockedGuestMatch} reasons=${reasons.join(',') || '(none)'}`
+            );
+        },
+        debugMirrorSync(originalRow, mirroredItem, nextDisplay, source) {
+            if (!this.DEBUG_ENABLED) return;
+            const prevDisplay = mirroredItem.style.display || '';
+            if (prevDisplay === nextDisplay && nextDisplay !== 'none') return;
+            this.debugLog('mirror', source, {
+                original: this.debugDescribeElement(originalRow),
+                mirrored: this.debugDescribeElement(mirroredItem),
+                originalDisplay: originalRow.style.display || '',
+                mirroredBefore: prevDisplay,
+                mirroredAfter: nextDisplay,
+                originalClassName: typeof originalRow.className === 'string' ? originalRow.className : ''
+            });
+        },
+        async debugDumpState(reason = 'manual') {
+            await this.reloadSettings();
+            const rawBlockConfig = await GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG, {});
+            const payload = this.debugSettingsSnapshot({
+                reason,
+                rawBlockConfigIp: typeof rawBlockConfig?.ip === 'string' ? rawBlockConfig.ip : '',
+                rawBlockConfigIpPreview: typeof rawBlockConfig?.ip === 'string' ? rawBlockConfig.ip.split('||').slice(0, 20) : [],
+                rawBlockConfigIpCount: this.parseIpPrefixList(rawBlockConfig?.ip || '').length
+            });
+            this.debugLog('dump', reason, payload);
+            console.log(`[DCUF DEBUG][dump-line] ${this.debugStringifySafe(payload)}`);
+            return payload;
+        },
+        installDebugApi() {
+            if (window.DCUFDebug && window.DCUFDebug.__dcufInstalled) return;
+            window.DCUFDebug = {
+                __dcufInstalled: true,
+                dumpState: (reason = 'manual dumpState') => this.debugDumpState(reason),
+                inspectCurrentPage: async (reason = 'manual inspectCurrentPage') => {
+                    await this.reloadSettings();
+                    this.startDebugPass(reason, { source: 'window.DCUFDebug.inspectCurrentPage' });
+                    this.runSyncRefilterPass();
+                    return this.debugDumpState(`${reason} after runSyncRefilterPass`);
+                },
+                refilter: async (reason = 'manual refilter') => {
+                    await this.refilterAllContent(reason);
+                    return this.debugDumpState(`${reason} after refilter`);
+                }
+            };
+            this.debugLog('api', 'window.DCUFDebug installed', Object.keys(window.DCUFDebug));
+        },
+        async cleanupLegacyManagedBlockConfig() {
+            const migrationDone = await GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG_MIGRATION_V275_DONE, false);
+            if (migrationDone) return;
+            const conf = await GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG, {});
+            if (!conf || typeof conf !== 'object') {
+                await GM_setValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG_MIGRATION_V275_DONE, true);
+                return;
+            }
+            const currentIp = typeof conf.ip === 'string' ? conf.ip : '';
+            const parsedPrefixes = DCUF_SHARED_STORAGE.parseIpPrefixList(currentIp, this.CONSTANTS.ETC.MOBILE_IP_MARKER);
+            const normalizedIp = DCUF_SHARED_STORAGE.normalizeBlockConfigIp(currentIp, this.CONSTANTS.ETC.MOBILE_IP_MARKER);
+            const suspiciousLargeLegacyList = DCUF_SHARED_STORAGE.isSuspiciousLegacyManagedIpList(currentIp, this.CONSTANTS.ETC.MOBILE_IP_MARKER);
 
-    function getProxyPrefixMatch(ipPrefix, mode) {
-        const normalizedMode = normalizeProxyBlockMode(mode);
-        if (!ipPrefix || normalizedMode === PROXY_MODE.OFF) return { matched: false, tier: null };
-        if (getProxyStrictPrefixSet().has(ipPrefix) || isForeignIpPrefix(ipPrefix)) return { matched: true, tier: 'strict' };
-        if (normalizedMode === PROXY_MODE.AGGRESSIVE && getProxyAggressiveExtraPrefixSet().has(ipPrefix)) {
-            return { matched: true, tier: 'aggressive' };
-        }
-        return { matched: false, tier: null };
-    }
+            if (suspiciousLargeLegacyList) {
+                this.debugLog('migration', 'detected suspicious large legacy blockConfig.ip list, backing up and clearing', {
+                    beforeCount: parsedPrefixes.length,
+                    beforePreview: parsedPrefixes.slice(0, 20)
+                });
+                await GM_setValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG_MIGRATION_V275_BACKUP, currentIp);
+                conf.ip = '';
+                await GM_setValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG, conf);
+                await GM_setValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG_MIGRATION_V275_DONE, true);
+                return;
+            }
 
-    async function cleanupLegacyManagedBlockConfig() {
-        const migrationDone = await GM_getValue(CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG_MIGRATION_V275_DONE, false);
-        if (migrationDone) return;
+            if (normalizedIp !== currentIp) {
+                this.debugLog('migration', 'cleanupLegacyManagedBlockConfig updating blockConfig.ip', {
+                    before: currentIp,
+                    after: normalizedIp
+                });
+                conf.ip = normalizedIp;
+                await GM_setValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG, conf);
+            }
+            await GM_setValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG_MIGRATION_V275_DONE, true);
+        },
+        async showSettings() {
+            await this.reloadSettings();
+            const { masterDisabled = false, excludeRecommended = false, threshold = 0, ratioEnabled = false, ratioMin = '', ratioMax = '', blockGuestEnabled = false, proxyBlockMode = 0, telecomBlockEnabled = false } = dcFilterSettings;
+            const currentShortcut = await GM_getValue(this.CONSTANTS.STORAGE_KEYS.SHORTCUT_KEY, 'Shift+S');
+            const normalizedProxyBlockMode = this.normalizeProxyBlockMode(proxyBlockMode);
+            const existingDiv = document.getElementById(this.CONSTANTS.UI_IDS.SETTINGS_PANEL);
+            if (existingDiv) existingDiv.remove();
+            const div = document.createElement('div');
+            div.id = this.CONSTANTS.UI_IDS.SETTINGS_PANEL;
+            div.style = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;padding:24px 20px 18px 20px;min-width:280px;z-index:99999;border:2px solid #333;border-radius:10px;box-shadow:0 0 10px #0008; cursor: default; user-select: none;';
+            const proxyModeButtonsHtml = [
+                [this.PROXY_MODE.OFF, '끔'],
+                [this.PROXY_MODE.STRICT, '확실'],
+                [this.PROXY_MODE.AGGRESSIVE, '공격적']
+            ].map(([mode, label]) => {
+                const active = normalizedProxyBlockMode === mode;
+                return `<button type="button" data-proxy-mode="${mode}" aria-pressed="${active}" style="flex:1;min-width:0;border:0;background:${active ? '#3b71fd' : 'transparent'};color:${active ? '#fff' : '#333'};font-size:12px;font-weight:${active ? '700' : '600'};padding:5px 0;border-radius:7px;cursor:pointer;">${label}</button>`;
+            }).join('');
+            div.innerHTML = `
+                <div style="margin-bottom:15px;padding-bottom:12px;border-bottom: 2px solid #ccc; display:flex;align-items:center; justify-content: space-between;">
+                    <div style="display:flex; align-items: center; gap: 10px;">
+                        <div style="display:flex; align-items:center; gap:7px;"><label class="switch" style="flex-shrink:0;"><input id="${this.CONSTANTS.UI_IDS.MASTER_DISABLE_CHECKBOX}" type="checkbox" ${masterDisabled ? 'checked' : ''}><span class="switch-slider"></span></label><label for="${this.CONSTANTS.UI_IDS.MASTER_DISABLE_CHECKBOX}" style="font-size:15px;cursor:pointer;"><b>모든 기능 끄기</b></label></div>
+                        <div style="border-left: 2px solid #ccc; padding-left: 10px; display:flex; align-items:center; gap:7px;"><label class="switch" style="flex-shrink:0;"><input id="${this.CONSTANTS.UI_IDS.EXCLUDE_RECOMMENDED_CHECKBOX}" type="checkbox" ${excludeRecommended ? 'checked' : ''}><span class="switch-slider"></span></label><label for="${this.CONSTANTS.UI_IDS.EXCLUDE_RECOMMENDED_CHECKBOX}" style="font-size:14px;cursor:pointer;"><b>개념글 제외</b></label></div>
+                    </div>
+                    <div><button id="${this.CONSTANTS.UI_IDS.CLOSE_BUTTON}" style="background:none;border:none;font-size:24px;cursor:pointer;line-height:1;padding:0 4px;color:#555;">✕</button></div>
+                </div>
+                <div id="${this.CONSTANTS.UI_IDS.SETTINGS_CONTAINER}" style="opacity:${masterDisabled ? 0.5 : 1}; pointer-events:${masterDisabled ? 'none' : 'auto'};">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div style="display: flex; flex-direction: column; align-items: center;"><h3 style="cursor: default;margin-top:0;margin-bottom:5px;">유저 글+댓글 합 기준값(이 값 이하 차단)</h3><input id="${this.CONSTANTS.UI_IDS.THRESHOLD_INPUT}" type="number" min="0" value="${threshold}" style="width:80px;font-size:16px; cursor: initial;"><div style="font-size:13px;color:#666;margin-top:5px;">0 또는 빈칸으로 두면 비활성화됩니다.</div></div>
+                        <div style="border: 2px solid #000; border-radius: 5px; padding: 8px 8px 5px 6px;"><div style="display: flex; flex-direction: column; align-items: center; gap: 7px; text-align:center;"><div style="display:flex; align-items:center; justify-content:center; gap:6px; padding-bottom: 5px; border-bottom: 1px solid #ddd; width:100%;"><label class="switch" style="flex-shrink:0;"><input id="${this.CONSTANTS.UI_IDS.BLOCK_GUEST_CHECKBOX}" type="checkbox" ${blockGuestEnabled ? 'checked' : ''}><span class="switch-slider"></span></label><label for="${this.CONSTANTS.UI_IDS.BLOCK_GUEST_CHECKBOX}" style="font-size:13px;cursor:pointer;">유동 전체 차단</label></div><div style="display:flex; flex-direction:column; align-items:center; gap:4px; padding-bottom: 5px; border-bottom: 1px solid #ddd; width:100%; text-align:center;"><div style="font-size:13px;">우회 IP 차단(오탐 위험 있음)</div><div id="${this.CONSTANTS.UI_IDS.PROXY_BLOCK_MODE_GROUP}" style="display:flex; width:100%; max-width:220px; gap:2px; background:#edf1f5; border:1px solid #cfd6dd; border-radius:8px; padding:2px; justify-content:center;">${proxyModeButtonsHtml}</div><div class="dcuf-proxy-mode-desc" style="font-size:11px;color:#666;line-height:1.2; text-align:center;">끔 - 확실한 우회 차단 - 공격적 우회 차단</div></div><div style="display:flex; align-items:center; gap:6px;"><label class="switch" style="flex-shrink:0;"><input id="${this.CONSTANTS.UI_IDS.TELECOM_BLOCK_CHECKBOX}" type="checkbox" ${telecomBlockEnabled ? 'checked' : ''}><span class="switch-slider"></span></label><label for="${this.CONSTANTS.UI_IDS.TELECOM_BLOCK_CHECKBOX}" style="font-size:13px;cursor:pointer;">통신사 IP 차단</label></div></div></div>
+                    </div>
+                    <hr style="border:0;border-top:2px solid #222;margin:16px 0 12px 0;">
+                    <div style="margin-bottom:8px;display:flex;align-items:center;gap:8px;"><label class="switch" style="flex-shrink:0;"><input id="${this.CONSTANTS.UI_IDS.RATIO_ENABLE_CHECKBOX}" type="checkbox" ${ratioEnabled ? 'checked' : ''}><span class="switch-slider"></span></label><label for="${this.CONSTANTS.UI_IDS.RATIO_ENABLE_CHECKBOX}" style="font-size:15px;cursor:pointer;">글/댓글 비율 필터 사용</label></div>
+                    <div id="${this.CONSTANTS.UI_IDS.RATIO_SECTION}">
+                        <div style="display:flex;gap:10px;align-items:center;">
+                            <div style="display:flex;flex-direction:column;align-items:center;"><label for="${this.CONSTANTS.UI_IDS.RATIO_MIN_INPUT}" style="font-size:14px;">댓글/글 비율 일정 이상 차단 </label><div style="font-size:12px;color:#888;line-height:1.2;">(댓글만 많은 놈)</div><input id="${this.CONSTANTS.UI_IDS.RATIO_MIN_INPUT}" type="number" step="any" placeholder="예: 10" value="${ratioMin !== '' ? ratioMin : ''}" style="width:100px;font-size:15px;text-align:center; margin-top: 4px;"></div>
+                            <div style="display:flex;flex-direction:column;align-items:center;"><label for="${this.CONSTANTS.UI_IDS.RATIO_MAX_INPUT}" style="font-size:14px;">글/댓글 비율 일정 이상 차단 </label><div style="font-size:12px;color:#888;line-height:1.2;">(글만 많은 놈)</div><input id="${this.CONSTANTS.UI_IDS.RATIO_MAX_INPUT}" type="number" step="any" placeholder="예: 1" value="${ratioMax !== '' ? ratioMax : ''}" style="width:100px;font-size:15px;text-align:center; margin-top: 4px;"></div>
+                        </div><div style="margin-top:8px;font-size:13px;color:#666;text-align:left;">비율이 입력값과 같거나 큰(이상)인 유저를 차단합니다.</div>
+                    </div>
+                </div>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:16px; padding-top:15px; border-top: 2px solid #ccc;">
+                    <div style="font-size:15px;color:#444;text-align:left;">
+                        창 여닫는 단축키: <b id="${this.CONSTANTS.UI_IDS.SHORTCUT_DISPLAY}">${currentShortcut}</b>
+                        <a href="#" id="${this.CONSTANTS.UI_IDS.CHANGE_SHORTCUT_BTN}" style="margin-left: 8px; font-size: 13px; text-decoration: underline; cursor: pointer;">(변경)</a>
+                    </div>
+                    <button id="${this.CONSTANTS.UI_IDS.SAVE_BUTTON}" style="font-size:16px;border:2px solid #000;border-radius:4px;background:#fff; cursor: pointer; padding: 4px 10px;">저장 & 실행</button>
+                </div>`;
+            document.body.appendChild(div);
 
-        const conf = await GM_getValue(CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG, {});
-        if (!conf || typeof conf !== 'object') {
-            await GM_setValue(CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG_MIGRATION_V275_DONE, true);
-            return;
-        }
 
-        const currentIp = typeof conf.ip === 'string' ? conf.ip : '';
-        const normalizedIp = DCUF_SHARED_STORAGE.normalizeBlockConfigIp(currentIp, CONSTANTS.ETC.MOBILE_IP_MARKER);
-        const suspiciousLargeLegacyList = DCUF_SHARED_STORAGE.isSuspiciousLegacyManagedIpList(currentIp, CONSTANTS.ETC.MOBILE_IP_MARKER);
-
-        if (suspiciousLargeLegacyList) {
-            await GM_setValue(CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG_MIGRATION_V275_BACKUP, currentIp);
-            conf.ip = '';
-            await GM_setValue(CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG, conf);
-            await GM_setValue(CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG_MIGRATION_V275_DONE, true);
-            return;
-        }
-
-        if (normalizedIp !== currentIp) {
-            conf.ip = normalizedIp;
-            await GM_setValue(CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG, conf);
-        }
-
-        await GM_setValue(CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG_MIGRATION_V275_DONE, true);
-    }
-
-    function isRecommendedContext() {
-        return window.location.search.includes('exception_mode=recommend');
-    }
-
-    async function regblockMobile() {
-        let conf = await GM_getValue(CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG, {});
-        if (conf.ip && conf.ip.includes(CONSTANTS.ETC.MOBILE_IP_MARKER)) {
-            return;
-        }
-
-        let ip_arr = [CONSTANTS.ETC.MOBILE_IP_MARKER];
-        const len = TELECOM.length;
-        for (let i = 0; i < len; i++) {
-            const sublen = TELECOM[i][1].length;
-            for (let j = 0; j < sublen; j++) {
-                if (TELECOM[i][1][j][2] === 'MOB') {
-                    const ip_prefix = TELECOM[i][0] + '.' + TELECOM[i][1][j][0];
-                    ip_arr.push(ip_prefix);
+            div.classList.add('dcuf-settings-panel');
+            const settingsHeader = div.firstElementChild;
+            if (settingsHeader) settingsHeader.classList.add('dcuf-settings-header');
+            const settingsFooter = div.lastElementChild;
+            if (settingsFooter) settingsFooter.classList.add('dcuf-settings-footer');
+            const settingsMain = document.getElementById(this.CONSTANTS.UI_IDS.SETTINGS_CONTAINER);
+            if (settingsMain) {
+                settingsMain.classList.add('dcuf-settings-body');
+                const thresholdSection = settingsMain.firstElementChild;
+                if (thresholdSection) {
+                    thresholdSection.classList.add('dcuf-settings-section', 'dcuf-settings-threshold');
+                    const guestControls = thresholdSection.lastElementChild;
+                    if (guestControls) guestControls.classList.add('dcuf-settings-guest-controls');
                 }
             }
-        }
-
-        const mobile_ips_string = ip_arr.join('||');
-        conf.ip = conf.ip ? conf.ip + '||' + mobile_ips_string : mobile_ips_string;
-
-        await GM_setValue(CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG, conf);
-    }
-
-    async function delblockMobile() {
-        let conf = await GM_getValue(CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG, {});
-        if (conf.ip && conf.ip.includes(CONSTANTS.ETC.MOBILE_IP_MARKER)) {
-            const user_ips = conf.ip.split('||' + CONSTANTS.ETC.MOBILE_IP_MARKER)[0];
-            conf.ip = user_ips.endsWith('||') ? user_ips.slice(0, -2) : user_ips;
-            if (conf.ip === CONSTANTS.ETC.MOBILE_IP_MARKER || !conf.ip) {
-                conf.ip = '';
-            }
-            await GM_setValue(CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG, conf);
-        }
-    }
-
-    async function showSettings() {
-        await reloadSettings();
-        const settings = window.dcFilterSettings || {};
-        const {
-            masterDisabled = false,
-            excludeRecommended = false,
-            threshold = 0,
-            ratioEnabled = false,
-            ratioMin = '',
-            ratioMax = '',
-            blockGuestEnabled = false,
-            proxyBlockMode = 0,
-            telecomBlockEnabled = false
-        } = settings;
-
-        const currentShortcut = await GM_getValue(CONSTANTS.STORAGE_KEYS.SHORTCUT_KEY, 'Shift+S');
-        const normalizedProxyBlockMode = normalizeProxyBlockMode(proxyBlockMode);
-
-        const existingDiv = document.getElementById(CONSTANTS.UI_IDS.SETTINGS_PANEL);
-        if (existingDiv) {
-            existingDiv.remove();
-        }
-
-        const div = document.createElement('div');
-        div.id = CONSTANTS.UI_IDS.SETTINGS_PANEL;
-        div.style = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;padding:24px 20px 18px 20px;min-width:280px;z-index:99999;border:2px solid #333;border-radius:10px;box-shadow:0 0 10px #0008; cursor: move; user-select: none;';
-        const proxyModeButtonsHtml = [
-            [PROXY_MODE.OFF, '끔'],
-            [PROXY_MODE.STRICT, '확실'],
-            [PROXY_MODE.AGGRESSIVE, '공격적']
-        ].map(([mode, label]) => {
-            const active = normalizedProxyBlockMode === mode;
-            return `<button type="button" data-proxy-mode="${mode}" aria-pressed="${active}" style="flex:1;min-width:0;border:0;background:${active ? '#3b71fd' : 'transparent'};color:${active ? '#fff' : '#333'};font-size:12px;font-weight:${active ? '700' : '600'};padding:5px 0;border-radius:7px;cursor:pointer;">${label}</button>`;
-        }).join('');
-
-        div.innerHTML = `
-            <div style="margin-bottom:15px;padding-bottom:12px;border-bottom: 2px solid #ccc; display:flex;align-items:center; justify-content: space-between;">
-                <div style="display:flex; align-items: center;">
-                    <div class="switch-container" style="margin-left:0;">
-                        <label class="switch">
-                            <input id="${CONSTANTS.UI_IDS.MASTER_DISABLE_CHECKBOX}" type="checkbox" ${masterDisabled ? 'checked' : ''}>
-                            <span class="switch-slider"></span>
-                        </label>
-                        <label for="${CONSTANTS.UI_IDS.MASTER_DISABLE_CHECKBOX}" style="font-size:16px;vertical-align:middle;cursor:pointer;margin-left:8px;"><b>모든 기능 끄기</b></label>
-                    </div>
-                    <div class="switch-container" style="margin-left: 15px; border-left: 2px solid #ccc; padding-left: 15px;">
-                        <label class="switch" style="width:34px; height:18px;">
-                            <input id="${CONSTANTS.UI_IDS.EXCLUDE_RECOMMENDED_CHECKBOX}" type="checkbox" ${excludeRecommended ? 'checked' : ''}>
-                            <span class="switch-slider" style="border-radius:18px;"></span>
-                        </label>
-                        <label for="${CONSTANTS.UI_IDS.EXCLUDE_RECOMMENDED_CHECKBOX}" style="font-size:14px;vertical-align:middle;cursor:pointer;margin-left:6px;"><b>개념글 제외</b></label>
-                    </div>
-                </div>
-                <div>
-                    <button id="${CONSTANTS.UI_IDS.CLOSE_BUTTON}" style="background:none;border:none;font-size:24px;cursor:pointer;line-height:1;padding:0 4px;color:#555;">✕</button>
-                </div>
-            </div>
-            <div id="${CONSTANTS.UI_IDS.SETTINGS_CONTAINER}" style="opacity:${masterDisabled ? 0.5 : 1}; pointer-events:${masterDisabled ? 'none' : 'auto'};">
-                <div style="display: flex; justify-content: space-between; align-items: stretch;">
-                    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
-                        <h3 style="cursor: default;margin-top:0;margin-bottom:5px;">
-                            유저 글+댓글 합 기준값(이 값 이하 차단)
-                        </h3>
-                        <input id="${CONSTANTS.UI_IDS.THRESHOLD_INPUT}" type="number" min="0" value="${threshold}" style="width:80px;font-size:16px; cursor: initial;">
-                        <div style="font-size:13px;color:#666;margin-top:5px;">0 또는 빈칸으로 두면 비활성화됩니다.</div>
-                    </div>
-                    <div style="border: 2px solid #000; border-radius: 5px; padding: 8px 8px 5px 6px;">
-                        <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; text-align:center;">
-                            <div class="switch-container" style="margin-left:0;">
-                                <label class="switch" style="width:34px; height:18px;">
-                                    <input id="${CONSTANTS.UI_IDS.BLOCK_GUEST_CHECKBOX}" type="checkbox" ${blockGuestEnabled ? 'checked' : ''}>
-                                    <span class="switch-slider" style="border-radius:18px;"></span>
-                                </label>
-                                <label for="${CONSTANTS.UI_IDS.BLOCK_GUEST_CHECKBOX}" style="font-size:13px;vertical-align:middle;cursor:pointer;margin-left:6px;">유동 전체 차단</label>
-                            </div>
-                            <div style="display:flex; flex-direction:column; align-items:center; gap:4px; padding-bottom: 5px; border-bottom: 1px solid #ddd; width:100%; text-align:center;">
-                                <div style="font-size:13px;">우회 IP 차단(오탐 위험 있음)</div>
-                                <div id="${CONSTANTS.UI_IDS.PROXY_BLOCK_MODE_GROUP}" style="display:flex; width:100%; max-width:220px; gap:2px; background:#edf1f5; border:1px solid #cfd6dd; border-radius:8px; padding:2px; justify-content:center;">${proxyModeButtonsHtml}</div>
-                                <div style="font-size:11px;color:#666;line-height:1.2;">끔 - 확실한 우회 차단 - 공격적 우회 차단</div>
-                            </div>
-                            <div class="switch-container" style="margin-left:0;">
-                                <label class="switch" style="width:34px; height:18px;">
-                                    <input id="${CONSTANTS.UI_IDS.TELECOM_BLOCK_CHECKBOX}" type="checkbox" ${telecomBlockEnabled ? 'checked' : ''}>
-                                    <span class="switch-slider" style="border-radius:18px;"></span>
-                                </label>
-                                <label for="${CONSTANTS.UI_IDS.TELECOM_BLOCK_CHECKBOX}" style="font-size:13px;vertical-align:middle;cursor:pointer;margin-left:6px;">통신사 IP 차단</label>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <hr style="border:0;border-top:2px solid #222;margin:16px 0 12px 0;">
-                <div style="margin-bottom:8px;display:flex;align-items:center;">
-                    <div class="switch-container" style="margin-left:0;">
-                        <label class="switch">
-                            <input id="${CONSTANTS.UI_IDS.RATIO_ENABLE_CHECKBOX}" type="checkbox" ${ratioEnabled ? 'checked' : ''}>
-                            <span class="switch-slider"></span>
-                        </label>
-                        <label for="${CONSTANTS.UI_IDS.RATIO_ENABLE_CHECKBOX}" style="font-size:15px;vertical-align:middle;cursor:pointer;margin-left:8px;">글/댓글 비율 필터 사용</label>
-                    </div>
-                </div>
-                <div id="${CONSTANTS.UI_IDS.RATIO_SECTION}">
-                    <div style="display:flex;gap:10px;align-items:center;">
-                        <div style="display:flex;flex-direction:column;align-items:center;">
-                            <label for="${CONSTANTS.UI_IDS.RATIO_MIN_INPUT}" style="font-size:14px;">댓글/글 비율 일정 이상 차단 </label>
-                            <div style="font-size:12px;color:#888;line-height:1.2;">(댓글만 많은 놈)</div>
-                            <input id="${CONSTANTS.UI_IDS.RATIO_MIN_INPUT}" type="number" step="any" placeholder="예: 10" value="${ratioMin !== '' ? ratioMin : ''}" style="width:100px;font-size:15px;text-align:center; margin-top: 4px;">
-                        </div>
-                        <div style="display:flex;flex-direction:column;align-items:center;">
-                            <label for="${CONSTANTS.UI_IDS.RATIO_MAX_INPUT}" style="font-size:14px;">글/댓글 비율 일정 이상 차단 </label>
-                            <div style="font-size:12px;color:#888;line-height:1.2;">(글만 많은 놈)</div>
-                            <input id="${CONSTANTS.UI_IDS.RATIO_MAX_INPUT}" type="number" step="any" placeholder="예: 1" value="${ratioMax !== '' ? ratioMax : ''}" style="width:100px;font-size:15px;text-align:center; margin-top: 4px;">
-                        </div>
-                    </div>
-                    <div style="margin-top:8px;font-size:13px;color:#666;text-align:left;">비율이 입력값과 같거나 큰(이상)인 유저를 차단합니다.</div>
-                </div>
-            </div>
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:16px; padding-top:15px; border-top: 2px solid #ccc;">
-                <div style="font-size:15px;color:#444;text-align:left;">
-                    창 여닫는 단축키: <b id="${CONSTANTS.UI_IDS.SHORTCUT_DISPLAY}">${currentShortcut}</b>
-                    <a href="#" id="${CONSTANTS.UI_IDS.CHANGE_SHORTCUT_BTN}" style="margin-left: 8px; font-size: 13px; text-decoration: underline; cursor: pointer;">(변경)</a>
-                </div>
-                <button id="${CONSTANTS.UI_IDS.SAVE_BUTTON}" style="font-size:16px;border:2px solid #000;border-radius:4px;background:#fff; cursor: pointer; padding: 4px 10px;">저장 & 실행</button>
-            </div>
-        `;
-        document.body.appendChild(div);
-
-        document.getElementById(CONSTANTS.UI_IDS.CHANGE_SHORTCUT_BTN).onclick = (e) => {
-            e.preventDefault();
-            showShortcutChanger();
-        };
-
-        const input = document.getElementById(CONSTANTS.UI_IDS.THRESHOLD_INPUT);
-        input.focus();
-        input.select();
-
-        const masterDisableCheckbox = document.getElementById(CONSTANTS.UI_IDS.MASTER_DISABLE_CHECKBOX);
-        const settingsContainer = document.getElementById(CONSTANTS.UI_IDS.SETTINGS_CONTAINER);
-
-        function updateMasterState() {
-            const isMasterDisabled = masterDisableCheckbox.checked;
-            settingsContainer.style.opacity = isMasterDisabled ? 0.5 : 1;
-            settingsContainer.style.pointerEvents = isMasterDisabled ? 'none' : 'auto';
-        }
-
-        // [v1.7.3] 실시간 변경 리스너 통합 함수
-        async function applyCheckboxChange(storageKey, checkboxId, filterAction = null) {
-            const isChecked = document.getElementById(checkboxId).checked;
-            await GM_setValue(storageKey, isChecked);
-
-            // 전역 설정 객체 즉시 업데이트 (applySyncBlock 등에서 참조)
-            if (!window.dcFilterSettings) window.dcFilterSettings = {};
-
-            // storageKey를 기반으로 설정 객체 키 매핑 (reloadeSettings 참고)
-            const keyMap = {
-                [CONSTANTS.STORAGE_KEYS.MASTER_DISABLED]: 'masterDisabled',
-                [CONSTANTS.STORAGE_KEYS.EXCLUDE_RECOMMENDED]: 'excludeRecommended',
-                [CONSTANTS.STORAGE_KEYS.BLOCK_GUEST]: 'blockGuestEnabled',
-                [CONSTANTS.STORAGE_KEYS.BLOCK_TELECOM]: 'telecomBlockEnabled',
-                [CONSTANTS.STORAGE_KEYS.RATIO_ENABLED]: 'ratioEnabled'
-            };
-            if (keyMap[storageKey]) window.dcFilterSettings[keyMap[storageKey]] = isChecked;
-
-            if (filterAction) await filterAction(isChecked);
-
-            // 즉시 필터 재적용
-            refilterAllContent();
-        }
-
-        masterDisableCheckbox.addEventListener('change', () => {
-            updateMasterState();
-            applyCheckboxChange(CONSTANTS.STORAGE_KEYS.MASTER_DISABLED, CONSTANTS.UI_IDS.MASTER_DISABLE_CHECKBOX);
-        });
-        updateMasterState();
-
-        document.getElementById(CONSTANTS.UI_IDS.EXCLUDE_RECOMMENDED_CHECKBOX).addEventListener('change', () => {
-            applyCheckboxChange(CONSTANTS.STORAGE_KEYS.EXCLUDE_RECOMMENDED, CONSTANTS.UI_IDS.EXCLUDE_RECOMMENDED_CHECKBOX);
-        });
-
-        document.getElementById(CONSTANTS.UI_IDS.BLOCK_GUEST_CHECKBOX).addEventListener('change', () => {
-            applyCheckboxChange(CONSTANTS.STORAGE_KEYS.BLOCK_GUEST, CONSTANTS.UI_IDS.BLOCK_GUEST_CHECKBOX, async (checked) => {
-                if (!checked) await clearBlockedGuests();
-            });
-        });
-
-        const proxyBlockModeGroup = document.getElementById(CONSTANTS.UI_IDS.PROXY_BLOCK_MODE_GROUP);
-        let currentProxyBlockMode = normalizedProxyBlockMode;
-
-        function renderProxyModeButtons(mode) {
-            proxyBlockModeGroup.querySelectorAll('button[data-proxy-mode]').forEach((button) => {
-                const buttonMode = normalizeProxyBlockMode(button.getAttribute('data-proxy-mode'));
-                const active = mode === buttonMode;
-                button.setAttribute('aria-pressed', active ? 'true' : 'false');
-                button.style.background = active ? '#3b71fd' : 'transparent';
-                button.style.color = active ? '#fff' : '#333';
-                button.style.fontWeight = active ? '700' : '600';
-            });
-        }
-
-        renderProxyModeButtons(currentProxyBlockMode);
-        proxyBlockModeGroup.addEventListener('click', async (e) => {
-            const button = e.target.closest('button[data-proxy-mode]');
-            if (!button) return;
-            const nextMode = normalizeProxyBlockMode(button.getAttribute('data-proxy-mode'));
-            if (nextMode === currentProxyBlockMode) return;
-            currentProxyBlockMode = nextMode;
-            renderProxyModeButtons(currentProxyBlockMode);
-            await GM_setValue(CONSTANTS.STORAGE_KEYS.BLOCK_PROXY, currentProxyBlockMode);
-            if (!window.dcFilterSettings) window.dcFilterSettings = {};
-            window.dcFilterSettings.proxyBlockMode = currentProxyBlockMode;
-            window.dcFilterSettings.proxyBlockEnabled = currentProxyBlockMode !== PROXY_MODE.OFF;
-            await refilterAllContent();
-        });
-
-        document.getElementById(CONSTANTS.UI_IDS.TELECOM_BLOCK_CHECKBOX).addEventListener('change', () => {
-            applyCheckboxChange(CONSTANTS.STORAGE_KEYS.BLOCK_TELECOM, CONSTANTS.UI_IDS.TELECOM_BLOCK_CHECKBOX);
-        });
-
-        const ratioSection = document.getElementById(CONSTANTS.UI_IDS.RATIO_SECTION);
-        const ratioEnableCheckbox = document.getElementById(CONSTANTS.UI_IDS.RATIO_ENABLE_CHECKBOX);
-        const ratioMinInput = document.getElementById(CONSTANTS.UI_IDS.RATIO_MIN_INPUT);
-        const ratioMaxInput = document.getElementById(CONSTANTS.UI_IDS.RATIO_MAX_INPUT);
-
-        function updateRatioSectionState() {
-            const enabled = ratioEnableCheckbox.checked;
-            ratioSection.style.opacity = enabled ? 1 : 0.5;
-            ratioMinInput.disabled = !enabled;
-            ratioMaxInput.disabled = !enabled;
-        }
-        ratioEnableCheckbox.addEventListener('change', () => {
-            updateRatioSectionState();
-            applyCheckboxChange(CONSTANTS.STORAGE_KEYS.RATIO_ENABLED, CONSTANTS.UI_IDS.RATIO_ENABLE_CHECKBOX);
-        });
-        updateRatioSectionState();
-
-        document.getElementById(CONSTANTS.UI_IDS.CLOSE_BUTTON).onclick = function () { div.remove(); };
-
-        const saveButton = document.getElementById(CONSTANTS.UI_IDS.SAVE_BUTTON);
-
-        const enterKeySave = (e) => { if (e.key === 'Enter') saveButton.click(); };
-        input.addEventListener('keydown', enterKeySave);
-        ratioMinInput.addEventListener('keydown', enterKeySave);
-        ratioMaxInput.addEventListener('keydown', enterKeySave);
-
-        let isDragging = false, offsetX, offsetY;
-        div.addEventListener('mousedown', function (e) {
-            if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON' || e.target.tagName === 'LABEL' || e.target.id === CONSTANTS.UI_IDS.CLOSE_BUTTON || e.target.id === CONSTANTS.UI_IDS.CHANGE_SHORTCUT_BTN || e.target.classList.contains('switch-slider')) return;
-            isDragging = true;
-            const rect = div.getBoundingClientRect();
-            if (div.style.transform !== 'none') {
-                div.style.transform = 'none';
-                div.style.left = `${rect.left}px`;
-                div.style.top = `${rect.top}px`;
-            }
-            offsetX = e.clientX - rect.left;
-            offsetY = e.clientY - rect.top;
-            document.addEventListener('mousemove', onMouseMove);
-            document.addEventListener('mouseup', onMouseUp, { once: true });
-        });
-
-        function onMouseMove(e) {
-            if (!isDragging) return;
-            e.preventDefault();
-            const rect = div.getBoundingClientRect();
-            let newX = e.clientX - offsetX;
-            let newY = e.clientY - offsetY;
-            newX = Math.max(0, Math.min(newX, window.innerWidth - rect.width));
-            newY = Math.max(0, Math.min(newY, window.innerHeight - rect.height));
-            div.style.left = `${newX}px`;
-            div.style.top = `${newY}px`;
-        }
-        function onMouseUp() {
-            isDragging = false;
-            document.removeEventListener('mousemove', onMouseMove);
-        }
-
-        saveButton.onclick = async function () {
-            saveButton.disabled = true;
-            saveButton.textContent = '저장 중...';
-
-            let val = parseInt(document.getElementById(CONSTANTS.UI_IDS.THRESHOLD_INPUT).value, 10);
-            if (isNaN(val)) val = 0;
-
-            const promises = [
-                // 스위치 항목들은 이미 실시간 저장되므로 수치 입력 부분만 명시적으로 저장
-                GM_setValue(CONSTANTS.STORAGE_KEYS.THRESHOLD, val),
-                GM_setValue(CONSTANTS.STORAGE_KEYS.RATIO_MIN, document.getElementById(CONSTANTS.UI_IDS.RATIO_MIN_INPUT).value),
-                GM_setValue(CONSTANTS.STORAGE_KEYS.RATIO_MAX, document.getElementById(CONSTANTS.UI_IDS.RATIO_MAX_INPUT).value)
-            ];
+            const ratioSectionRoot = document.getElementById(this.CONSTANTS.UI_IDS.RATIO_SECTION);
+            if (ratioSectionRoot) ratioSectionRoot.classList.add('dcuf-settings-section', 'dcuf-settings-ratio');
 
             try {
-                await Promise.all(promises);
-                location.reload();
-            } catch (error) {
-                console.error('DCinside User Filter: Settings save failed.', error);
-                saveButton.disabled = false;
-                saveButton.textContent = '저장 & 실행';
-                alert('설정 저장에 실패했습니다. 콘솔을 확인해주세요.');
+                PersonalBlockModule.attachPopupPinchResize(div, { minWidth: 280, minHeight: 220 });
+            } catch (e) {
+                console.warn('DCinside User Filter: settings pinch init failed.', e);
             }
-        };
-    }
 
-    function showShortcutChanger() {
-        if (document.getElementById(CONSTANTS.UI_IDS.SHORTCUT_MODAL)) return;
+            const closeSettingsPanel = () => {
+                div.classList.add('dcuf-pop-leave');
+                window.setTimeout(() => div.remove(), 140);
+            };
 
-        const settingsPanel = document.getElementById(CONSTANTS.UI_IDS.SETTINGS_PANEL);
-        settingsPanel.style.pointerEvents = 'none';
+            const input = div.querySelector(`#${this.CONSTANTS.UI_IDS.THRESHOLD_INPUT}`);
+            const changeShortcutBtn = div.querySelector(`#${this.CONSTANTS.UI_IDS.CHANGE_SHORTCUT_BTN}`);
+            const masterDisableCheckbox = div.querySelector(`#${this.CONSTANTS.UI_IDS.MASTER_DISABLE_CHECKBOX}`);
+            const settingsContainer = div.querySelector(`#${this.CONSTANTS.UI_IDS.SETTINGS_CONTAINER}`);
+            const ratioSection = div.querySelector(`#${this.CONSTANTS.UI_IDS.RATIO_SECTION}`);
+            const ratioEnableCheckbox = div.querySelector(`#${this.CONSTANTS.UI_IDS.RATIO_ENABLE_CHECKBOX}`);
+            const ratioMinInput = div.querySelector(`#${this.CONSTANTS.UI_IDS.RATIO_MIN_INPUT}`);
+            const ratioMaxInput = div.querySelector(`#${this.CONSTANTS.UI_IDS.RATIO_MAX_INPUT}`);
+            const closeButton = div.querySelector(`#${this.CONSTANTS.UI_IDS.CLOSE_BUTTON}`);
+            const saveButton = div.querySelector(`#${this.CONSTANTS.UI_IDS.SAVE_BUTTON}`);
+            const excludeRecommendedCheckbox = div.querySelector(`#${this.CONSTANTS.UI_IDS.EXCLUDE_RECOMMENDED_CHECKBOX}`);
+            const blockGuestCheckbox = div.querySelector(`#${this.CONSTANTS.UI_IDS.BLOCK_GUEST_CHECKBOX}`);
+            const proxyBlockModeGroup = div.querySelector(`#${this.CONSTANTS.UI_IDS.PROXY_BLOCK_MODE_GROUP}`);
+            const telecomBlockCheckbox = div.querySelector(`#${this.CONSTANTS.UI_IDS.TELECOM_BLOCK_CHECKBOX}`);
 
-        const overlay = document.createElement('div');
-        overlay.id = CONSTANTS.UI_IDS.SHORTCUT_MODAL_OVERLAY;
-        overlay.style = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 100000;';
-        document.body.appendChild(overlay);
+            if (input) { input.focus(); input.select(); }
 
-        const modal = document.createElement('div');
-        modal.id = CONSTANTS.UI_IDS.SHORTCUT_MODAL;
-        modal.style = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #fff; padding: 20px; border-radius: 8px; z-index: 100001; text-align: center; box-shadow: 0 0 15px rgba(0,0,0,0.3);';
-        modal.innerHTML = `
-            <h4 style="margin-top: 0; margin-bottom: 15px; font-size: 16px;">새로운 단축키를 입력하세요 (최대 3개)</h4>
-            <div id="${CONSTANTS.UI_IDS.NEW_SHORTCUT_PREVIEW}" style="min-width: 200px; height: 40px; line-height: 40px; border: 1px solid #ccc; border-radius: 4px; margin-bottom: 20px; font-size: 18px; font-weight: bold; color: #333;">입력 대기 중...</div>
-            <div>
-                <button id="${CONSTANTS.UI_IDS.SAVE_SHORTCUT_BTN}" style="padding: 8px 16px; margin-right: 10px; border: 1px solid #3b71fd; background: #3b71fd; color: #fff; border-radius: 4px; cursor: pointer;">변경</button>
-                <button id="${CONSTANTS.UI_IDS.CANCEL_SHORTCUT_BTN}" style="padding: 8px 16px; border: 1px solid #ccc; background: #f0f0f0; border-radius: 4px; cursor: pointer;">취소</button>
-            </div>
-        `;
-        document.body.appendChild(modal);
-
-        let pressedKeys = new Set();
-        let combinationTimeout = null;
-        const previewEl = document.getElementById(CONSTANTS.UI_IDS.NEW_SHORTCUT_PREVIEW);
-
-        const updatePreview = () => {
-            if (pressedKeys.size > 0) {
-                previewEl.textContent = formatShortcutKeys(pressedKeys);
-            } else {
-                previewEl.textContent = '입력 대기 중...';
+            if (changeShortcutBtn) {
+                changeShortcutBtn.onclick = (e) => {
+                    e.preventDefault();
+                    this.showShortcutChanger();
+                };
             }
-        };
 
-        const keydownHandler = (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            clearTimeout(combinationTimeout);
-            if (pressedKeys.size < 3) {
-                pressedKeys.add(e.key);
-                updatePreview();
+            if (closeButton) {
+                closeButton.onclick = closeSettingsPanel;
+                closeButton.addEventListener('touchend', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    closeSettingsPanel();
+                }, { passive: false });
             }
-            combinationTimeout = setTimeout(() => {
-                pressedKeys.clear();
-            }, 500);
-        };
 
-        const keyupHandler = (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-        };
-
-        document.addEventListener('keydown', keydownHandler, true);
-        document.addEventListener('keyup', keyupHandler, true);
-
-        const cleanup = () => {
-            document.removeEventListener('keydown', keydownHandler, true);
-            document.removeEventListener('keyup', keyupHandler, true);
-            overlay.remove();
-            modal.remove();
-            settingsPanel.style.pointerEvents = 'auto';
-        };
-
-        document.getElementById(CONSTANTS.UI_IDS.SAVE_SHORTCUT_BTN).onclick = async () => {
-            const newShortcut = previewEl.textContent;
-            if (newShortcut && newShortcut !== '입력 대기 중...') {
-                await GM_setValue(CONSTANTS.STORAGE_KEYS.SHORTCUT_KEY, newShortcut);
-                activeShortcutObject = parseShortcutString(newShortcut);
-                document.getElementById(CONSTANTS.UI_IDS.SHORTCUT_DISPLAY).textContent = newShortcut;
-                cleanup();
-            } else {
-                alert('유효한 단축키를 입력해주세요.');
+            if (!masterDisableCheckbox || !settingsContainer || !ratioSection || !ratioEnableCheckbox || !ratioMinInput || !ratioMaxInput || !saveButton || !excludeRecommendedCheckbox || !blockGuestCheckbox || !proxyBlockModeGroup || !telecomBlockCheckbox) {
+                console.error('DCinside User Filter: settings popup init failed - required control missing.');
+                return;
             }
-        };
 
-        document.getElementById(CONSTANTS.UI_IDS.CANCEL_SHORTCUT_BTN).onclick = cleanup;
-        overlay.onclick = cleanup;
-    }
+            const updateMasterState = () => { const isMasterDisabled = masterDisableCheckbox.checked; settingsContainer.style.opacity = isMasterDisabled ? 0.5 : 1; settingsContainer.style.pointerEvents = isMasterDisabled ? 'none' : 'auto'; };
+            masterDisableCheckbox.addEventListener('change', updateMasterState); updateMasterState();
+            const updateRatioSectionState = () => { const enabled = ratioEnableCheckbox.checked; ratioSection.style.opacity = enabled ? 1 : 0.5; ratioMinInput.disabled = !enabled; ratioMaxInput.disabled = !enabled; };
+            ratioEnableCheckbox.addEventListener('change', updateRatioSectionState); updateRatioSectionState();
+            let currentProxyBlockMode = normalizedProxyBlockMode;
+            const renderProxyModeButtons = (mode) => {
+                const isDarkMode = document.body.classList.contains('dc-filter-dark-mode');
+                proxyBlockModeGroup.querySelectorAll('button[data-proxy-mode]').forEach((button) => {
+                    const buttonMode = this.normalizeProxyBlockMode(button.getAttribute('data-proxy-mode'));
+                    const active = mode === buttonMode;
+                    button.setAttribute('aria-pressed', active ? 'true' : 'false');
+                    button.style.background = active ? '#3b71fd' : 'transparent';
+                    button.style.color = active ? '#fff' : (isDarkMode ? '#dbe6f5' : '#333');
+                    button.style.fontWeight = active ? '700' : '600';
+                    button.style.border = '0';
+                });
+            };
+            renderProxyModeButtons(currentProxyBlockMode);
 
-    function formatShortcutKeys(keySet) {
-        return DCUF_SHARED_STORAGE.formatShortcutKeys(keySet);
-    }
+            // [v2.6.8 추가] 스위치 실시간 저장 & 필터 즉시 적용
+            const applyCheckboxChange = async (storageKey, value, extraLogic) => {
+                this.debugLog('toggle', 'applyCheckboxChange requested', { storageKey, value });
+                await GM_setValue(storageKey, value);
+                if (extraLogic) {
+                    this.debugLog('toggle', 'applyCheckboxChange running extraLogic', { storageKey, value });
+                    await extraLogic();
+                }
+                await this.debugDumpState(`after ${storageKey}=${value} before refilter`);
+                await this.refilterAllContent(`toggle ${storageKey}=${value}`);
+            };
 
-    function parseShortcutString(shortcutString) {
-        return DCUF_SHARED_STORAGE.parseShortcutString(shortcutString);
-    }
+            masterDisableCheckbox.addEventListener('change', () =>
+                applyCheckboxChange(this.CONSTANTS.STORAGE_KEYS.MASTER_DISABLED, masterDisableCheckbox.checked)
+            );
+            excludeRecommendedCheckbox.addEventListener('change', (e) =>
+                applyCheckboxChange(this.CONSTANTS.STORAGE_KEYS.EXCLUDE_RECOMMENDED, e.target.checked)
+            );
+            blockGuestCheckbox.addEventListener('change', async (e) => {
+                const checked = e.target.checked;
+                await applyCheckboxChange(this.CONSTANTS.STORAGE_KEYS.BLOCK_GUEST, checked,
+                    checked ? null : () => this.clearBlockedGuests()
+                );
+            });
+            proxyBlockModeGroup.addEventListener('click', (e) => {
+                const targetButton = e.target.closest('button[data-proxy-mode]');
+                if (!targetButton) return;
+                const nextMode = this.normalizeProxyBlockMode(targetButton.getAttribute('data-proxy-mode'));
+                if (nextMode === currentProxyBlockMode) return;
+                currentProxyBlockMode = nextMode;
+                renderProxyModeButtons(currentProxyBlockMode);
+                applyCheckboxChange(this.CONSTANTS.STORAGE_KEYS.BLOCK_PROXY, currentProxyBlockMode);
+            });
+            telecomBlockCheckbox.addEventListener('change', (e) =>
+                applyCheckboxChange(this.CONSTANTS.STORAGE_KEYS.BLOCK_TELECOM, e.target.checked)
+            );
+            ratioEnableCheckbox.addEventListener('change', (e) =>
+                applyCheckboxChange(this.CONSTANTS.STORAGE_KEYS.RATIO_ENABLED, e.target.checked)
+            );
 
-    GM_registerMenuCommand('글댓합 설정하기', showSettings);
-    // [v1.7.0 이식] 차단 유저 관리 메뉴 추가
-    GM_registerMenuCommand('차단 유저 관리', () => PersonalBlockModule.createManagementPanel());
-
-
-    async function getUserPostCommentSum(uid) {
-        if (!window._dcinside_user_sum_cache) window._dcinside_user_sum_cache = {};
-        if (window._dcinside_user_sum_cache[uid]) return window._dcinside_user_sum_cache[uid];
-
-        function getCookie(name) {
-            const value = `; ${document.cookie}`;
-            const parts = value.split(`; ${name}=`);
-            if (parts.length === 2) return parts.pop().split(';').shift();
-        }
-        let ci = getCookie(CONSTANTS.ETC.COOKIE_NAME_1) || getCookie(CONSTANTS.ETC.COOKIE_NAME_2);
-        if (!ci) return null;
-
-        return new Promise((resolve) => {
-            const xhr = new XMLHttpRequest();
-            xhr.open('POST', CONSTANTS.API.USER_INFO, true);
-            xhr.withCredentials = true;
-            xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded; charset=UTF-8');
-            xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
-            xhr.onload = function () {
-                const text = xhr.responseText;
-                const [post, comment] = text.split(',').map(x => parseInt(x, 10));
-                if (!isNaN(post) && !isNaN(comment)) {
-                    const userData = { sum: post + comment, post, comment };
-                    window._dcinside_user_sum_cache[uid] = userData;
-                    resolve(userData);
-                } else {
-                    resolve(null);
+            const enterKeySave = (e) => { if (e.key === 'Enter') saveButton.click(); };
+            [input, ratioMinInput, ratioMaxInput].forEach(el => { if (el) el.addEventListener('keydown', enterKeySave); });
+            let isDragging = false, offsetX, offsetY;
+            const onDragStart = (e) => {
+                if (e.type === 'touchstart' && e.touches && e.touches.length > 1) return;
+                const startTarget = (e.target && e.target.nodeType === 1) ? e.target : e.target.parentElement;
+                if (!startTarget || !startTarget.closest('.dcuf-settings-header')) return;
+                if (startTarget.closest('button, input, label, a, .switch') || startTarget.id === FilterModule.CONSTANTS.UI_IDS.CLOSE_BUTTON || startTarget.id === FilterModule.CONSTANTS.UI_IDS.CHANGE_SHORTCUT_BTN) return;
+                isDragging = true;
+                const rect = div.getBoundingClientRect();
+                if (div.style.transform !== 'none') { div.style.transform = 'none'; div.style.left = `${rect.left}px`; div.style.top = `${rect.top}px`; }
+                const clientX = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
+                const clientY = e.type === 'touchstart' ? e.touches[0].clientY : e.clientY;
+                offsetX = clientX - rect.left; offsetY = clientY - rect.top;
+                document.addEventListener('mousemove', onDragMove); document.addEventListener('touchmove', onDragMove, { passive: false });
+                document.addEventListener('mouseup', onDragEnd, { once: true }); document.addEventListener('touchend', onDragEnd, { once: true });
+            };
+            const onDragMove = (e) => {
+                if (!isDragging) return;
+                if (e.type === 'touchmove' && e.touches && e.touches.length > 1) return;
+                e.preventDefault();
+                const rect = div.getBoundingClientRect();
+                const clientX = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
+                const clientY = e.type === 'touchmove' ? e.touches[0].clientY : e.clientY;
+                let newX = clientX - offsetX; let newY = clientY - offsetY;
+                newX = Math.max(0, Math.min(newX, window.innerWidth - rect.width)); newY = Math.max(0, Math.min(newY, window.innerHeight - rect.height));
+                div.style.left = `${newX}px`; div.style.top = `${newY}px`;
+            };
+            const onDragEnd = () => { isDragging = false; document.removeEventListener('mousemove', onDragMove); document.removeEventListener('touchmove', onDragMove); };
+            const dragHandle = settingsHeader || div;
+            try {
+                dragHandle.addEventListener('mousedown', onDragStart);
+                dragHandle.addEventListener('touchstart', onDragStart, { passive: true });
+            } catch (e) {
+                console.warn('DCinside User Filter: settings drag init failed.', e);
+            }
+            saveButton.onclick = async () => {
+                saveButton.disabled = true; saveButton.textContent = '저장 중...';
+                const blockGuestChecked = blockGuestCheckbox.checked;
+                let val = parseInt(input ? input.value : '0', 10);
+                if (isNaN(val)) val = 0;
+                const promises = [
+                    GM_setValue(this.CONSTANTS.STORAGE_KEYS.MASTER_DISABLED, masterDisableCheckbox.checked),
+                    GM_setValue(this.CONSTANTS.STORAGE_KEYS.EXCLUDE_RECOMMENDED, excludeRecommendedCheckbox.checked),
+                    GM_setValue(this.CONSTANTS.STORAGE_KEYS.THRESHOLD, val),
+                    GM_setValue(this.CONSTANTS.STORAGE_KEYS.RATIO_ENABLED, ratioEnableCheckbox.checked),
+                    GM_setValue(this.CONSTANTS.STORAGE_KEYS.RATIO_MIN, ratioMinInput.value),
+                    GM_setValue(this.CONSTANTS.STORAGE_KEYS.RATIO_MAX, ratioMaxInput.value),
+                    GM_setValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_GUEST, blockGuestChecked),
+                    GM_setValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_PROXY, currentProxyBlockMode),
+                    GM_setValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_TELECOM, telecomBlockCheckbox.checked)
+                ];
+                if (!blockGuestChecked) promises.push(this.clearBlockedGuests()); try {
+                    await Promise.all(promises);
+                    await this.reloadSettings();
+                    await this.debugDumpState('save button before refilter');
+                    await this.refilterAllContent('save button');
+                    closeSettingsPanel();
+                } catch (error) {
+                    console.error('DCinside User Filter: Settings save failed.', error);
+                    saveButton.disabled = false;
+                    saveButton.textContent = '저장 & 실행';
+                    alert('설정 저장에 실패했습니다. 콘솔을 확인해 주세요.');
                 }
             };
-            xhr.onerror = () => resolve(null);
-            xhr.send(`ci_t=${encodeURIComponent(ci)}&user_id=${encodeURIComponent(uid)}`);
-        });
-    }
+        },
+        // [v2.1.1 수정] 단축키 변경 모달 표시 (실시간 입력 감지 로직 개선)
+        showShortcutChanger() {
+            if (document.getElementById(this.CONSTANTS.UI_IDS.SHORTCUT_MODAL)) return;
 
-    const BLOCK_UID_EXPIRE = 1000 * 60 * 60 * 24 * 7;
-    let BLOCKED_UIDS_CACHE = {};
 
-    async function addBlockedUid(uid, sum, post, comment, ratioBlocked) {
-        await refreshBlockedUidsCache(true);
-        BLOCKED_UIDS_CACHE[uid] = { ts: Date.now(), sum, post, comment, ratioBlocked: !!ratioBlocked };
-        await GM_setValue(CONSTANTS.STORAGE_KEYS.BLOCKED_UIDS, JSON.stringify(BLOCKED_UIDS_CACHE));
-    }
+            const settingsPanel = document.getElementById(this.CONSTANTS.UI_IDS.SETTINGS_PANEL);
+            settingsPanel.style.pointerEvents = 'none';
 
-    async function getBlockedGuests() {
-        let data = await GM_getValue(CONSTANTS.STORAGE_KEYS.BLOCKED_GUESTS, '[]');
-        try { return JSON.parse(data); } catch { return []; }
-    }
 
-    async function setBlockedGuests(list) {
-        await GM_setValue(CONSTANTS.STORAGE_KEYS.BLOCKED_GUESTS, JSON.stringify(list));
-    }
+            const overlay = document.createElement('div');
+            overlay.id = this.CONSTANTS.UI_IDS.SHORTCUT_MODAL_OVERLAY;
+            overlay.style = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 100000;';
+            document.body.appendChild(overlay);
 
-    async function addBlockedGuest(ip) {
-        const settings = window.dcFilterSettings || {};
-        if (settings.blockedGuests && !settings.blockedGuests.includes(ip)) {
-            settings.blockedGuests.push(ip);
-            await setBlockedGuests(settings.blockedGuests);
-        }
-    }
 
-    async function clearBlockedGuests() {
-        await setBlockedGuests([]);
-    }
+            const modal = document.createElement('div');
+            modal.id = this.CONSTANTS.UI_IDS.SHORTCUT_MODAL;
+            modal.style = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #fff; padding: 20px; border-radius: 8px; z-index: 100001; text-align: center; box-shadow: 0 0 15px rgba(0,0,0,0.3);';
+            modal.innerHTML = `
+                <h4 style="margin-top: 0; margin-bottom: 15px; font-size: 16px;">새로운 단축키를 입력하세요 (최대 3개)</h4>
+                <div id="${this.CONSTANTS.UI_IDS.NEW_SHORTCUT_PREVIEW}" style="min-width: 200px; height: 40px; line-height: 40px; border: 1px solid #ccc; border-radius: 4px; margin-bottom: 20px; font-size: 18px; font-weight: bold; color: #333;">입력 대기 중...</div>
+                <div>
+                    <button id="${this.CONSTANTS.UI_IDS.SAVE_SHORTCUT_BTN}" style="padding: 8px 16px; margin-right: 10px; border: 1px solid #3b71fd; background: #3b71fd; color: #fff; border-radius: 4px; cursor: pointer;">변경</button>
+                    <button id="${this.CONSTANTS.UI_IDS.CANCEL_SHORTCUT_BTN}" style="padding: 8px 16px; border: 1px solid #ccc; background: #f0f0f0; border-radius: 4px; cursor: pointer;">취소</button>
+                </div>
+            `;
+            document.body.appendChild(modal);
 
-    function isUserBlocked({ sum, post, comment }) {
-        return DCUF_SHARED_FILTER_CORE.evaluateUserStatsBlock({ sum, post, comment }, window.dcFilterSettings || {});
-    }
 
-    async function applyBlockFilterToElement(element, uid, userData, addBlockedUidFn) {
-        if (!userData) return;
-        const { sumBlocked, ratioBlocked } = isUserBlocked(userData);
-        const shouldBeBlocked = sumBlocked || ratioBlocked;
+            let pressedKeys = new Set();
+            let combinationTimeout = null;
+            const previewEl = document.getElementById(this.CONSTANTS.UI_IDS.NEW_SHORTCUT_PREVIEW);
 
-        if (element.style.display !== 'none') {
-            element.style.display = shouldBeBlocked ? 'none' : '';
-        }
 
-        if (shouldBeBlocked) {
-            await addBlockedUidFn(uid, userData.sum, userData.post, userData.comment, ratioBlocked);
-        }
-    }
+            const updatePreview = () => {
+                if (pressedKeys.size > 0) {
+                    previewEl.textContent = this.formatShortcutKeys(pressedKeys);
+                } else {
+                    previewEl.textContent = '입력 대기 중...';
+                }
+            };
 
-    function shouldSkipFiltering(element) {
-        const settings = window.dcFilterSettings || {};
-        if (!settings.excludeRecommended || !isRecommendedContext()) {
-            return false;
-        }
-        if (window.location.pathname.includes('/view/')) {
-            // 본문 영역은 필터링을 건너뛰고, 댓글 영역은 필터링을 수행합니다.
-            if (element.closest(CONSTANTS.SELECTORS.COMMENT_CONTAINER)) {
-                return false;
+
+            const keydownHandler = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+
+
+                // 타이머가 있다면, 아직 조합이 진행 중이라는 의미이므로 초기화
+                clearTimeout(combinationTimeout);
+
+
+                if (pressedKeys.size < 3) {
+                    pressedKeys.add(e.key);
+                    updatePreview();
+                }
+
+
+                // 키 입력이 0.5초간 없으면 현재 조합을 확정하고 Set을 비움
+                combinationTimeout = setTimeout(() => {
+                    pressedKeys.clear();
+                }, 500);
+            };
+
+
+            const keyupHandler = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                // 키를 떼는 시점은 조합 확정과 관련 없으므로, pressedKeys를 유지합니다.
+            };
+
+
+            document.addEventListener('keydown', keydownHandler, true);
+            document.addEventListener('keyup', keyupHandler, true);
+
+
+
+
+            const cleanup = () => {
+                document.removeEventListener('keydown', keydownHandler, true);
+                document.removeEventListener('keyup', keyupHandler, true);
+                overlay.remove();
+                modal.remove();
+                settingsPanel.style.pointerEvents = 'auto';
+            };
+
+
+            document.getElementById(this.CONSTANTS.UI_IDS.SAVE_SHORTCUT_BTN).onclick = async () => {
+                const newShortcut = previewEl.textContent;
+                if (newShortcut && newShortcut !== '입력 대기 중...') {
+                    await GM_setValue(this.CONSTANTS.STORAGE_KEYS.SHORTCUT_KEY, newShortcut);
+                    activeShortcutObject = this.parseShortcutString(newShortcut);
+                    document.getElementById(this.CONSTANTS.UI_IDS.SHORTCUT_DISPLAY).textContent = newShortcut;
+                    cleanup();
+                } else {
+                    alert('유효한 단축키를 입력해주세요.');
+                }
+            };
+
+
+            document.getElementById(this.CONSTANTS.UI_IDS.CANCEL_SHORTCUT_BTN).onclick = cleanup;
+            overlay.onclick = cleanup;
+        },
+        // [v2.1 추가] 키 Set을 정해진 형식의 문자열로 변환
+        formatShortcutKeys(keySet) {
+            return DCUF_SHARED_STORAGE.formatShortcutKeys(keySet);
+        },
+        // [v2.1 추가] 단축키 문자열을 이벤트 비교용 객체로 변환
+        parseShortcutString(shortcutString) {
+            return DCUF_SHARED_STORAGE.parseShortcutString(shortcutString);
+        },
+        buildLookupSet(items, mapValue = (item) => item) {
+            const set = new Set();
+            if (!Array.isArray(items)) return set;
+            items.forEach((item) => {
+                const value = mapValue(item);
+                if (value) set.add(value);
+            });
+            return set;
+        },
+        isFilterTargetDescriptor(value) {
+            return Boolean(value && value.element instanceof HTMLElement);
+        },
+        normalizeFilterTarget(target) {
+            if (this.isFilterTargetDescriptor(target)) return target;
+            return this.describeFilterTarget(target);
+        },
+        describeFilterTarget(element) {
+            if (!(element instanceof HTMLElement)) return null;
+
+            const writerInfo = element.querySelector(this.CONSTANTS.SELECTORS.WRITER_INFO);
+            const uid = writerInfo?.getAttribute('data-uid') || null;
+            const nickname = writerInfo?.getAttribute('data-nick') || null;
+            const writerDataIp = writerInfo?.getAttribute('data-ip') || null;
+            const ipSpan = element.querySelector(this.CONSTANTS.SELECTORS.IP_SPAN);
+            const ipText = ipSpan ? ipSpan.textContent.trim() : '';
+            const ipFromSpan = (ipText.startsWith('(') && ipText.endsWith(')')) ? ipText.slice(1, -1) : ipText;
+            const ip = ipFromSpan || writerDataIp || null;
+            const ipPrefix = this.getIpPrefix(ip);
+
+            return {
+                element,
+                writerInfo,
+                uid,
+                nickname,
+                ip,
+                ipText,
+                writerDataIp,
+                ipPrefix,
+                isGuest: Boolean((!uid || uid.length < 3) && ip),
+                isNotice: Boolean(element.querySelector('em.icon_notice')),
+                shouldSkipFiltering: this.shouldSkipFiltering(element),
+                hasBlockDisableClass: element.classList.contains('block-disable')
+            };
+        },
+        describeFilterTargets(items) {
+            if (!Array.isArray(items) || items.length === 0) return [];
+            const seen = new Set();
+            const descriptors = [];
+            items.forEach((item) => {
+                const descriptor = this.normalizeFilterTarget(item);
+                const element = descriptor?.element;
+                if (!(element instanceof HTMLElement) || seen.has(element)) return;
+                seen.add(element);
+                descriptors.push(descriptor);
+            });
+            return descriptors;
+        },
+        applySyncToDescriptors(descriptors, { resetDisplay = false } = {}) {
+            if (!Array.isArray(descriptors) || descriptors.length === 0) return;
+            descriptors.forEach((descriptor) => {
+                const element = descriptor?.element;
+                if (!(element instanceof HTMLElement)) return;
+                if (resetDisplay && !dcFilterSettings.masterDisabled) element.style.display = '';
+                this.applySyncBlock(descriptor);
+            });
+        },
+        applyAsyncToDescriptors(descriptors) {
+            if (!Array.isArray(descriptors) || descriptors.length === 0) return;
+            descriptors.forEach((descriptor) => {
+                void this.applyAsyncBlock(descriptor);
+            });
+        },
+        applyFilterItems(items) {
+            const descriptors = this.describeFilterTargets(items);
+            if (descriptors.length === 0) return;
+            this.applySyncToDescriptors(descriptors);
+            this.applyAsyncToDescriptors(descriptors);
+        },
+        flushQueuedObservedFilterItems() {
+            if (this._queuedObserverFilterRafId) {
+                cancelAnimationFrame(this._queuedObserverFilterRafId);
+                this._queuedObserverFilterRafId = 0;
             }
-            return true;
-        }
-        // 목록 페이지의 경우 필터링을 건너뜁니다.
-        return true;
-    }
+            if (this._queuedObserverFilterTimerId) {
+                clearTimeout(this._queuedObserverFilterTimerId);
+                this._queuedObserverFilterTimerId = 0;
+            }
+            if (!(this._queuedObserverFilterItems instanceof Set) || this._queuedObserverFilterItems.size === 0) return;
+            const items = Array.from(this._queuedObserverFilterItems);
+            this._queuedObserverFilterItems.clear();
+            this.applyFilterItems(items);
+        },
+        queueObservedFilterItems(items) {
+            if (!Array.isArray(items) || items.length === 0) return;
+            if (!(this._queuedObserverFilterItems instanceof Set)) this._queuedObserverFilterItems = new Set();
+            items.forEach((item) => {
+                if (item instanceof HTMLElement) this._queuedObserverFilterItems.add(item);
+            });
+            if (this._queuedObserverFilterItems.size === 0) return;
+            if (this._queuedObserverFilterRafId || this._queuedObserverFilterTimerId) return;
 
-    async function applyAsyncBlock(element) {
-        // [리팩토링] 개인 차단은 sync에서 처리되므로, 이 함수에서는 '개념글 제외' 옵션만 확인합니다.
-        if (shouldSkipFiltering(element)) {
-            return; // 글댓합/비율 필터링을 건너뜁니다.
-        }
+            this._queuedObserverFilterRafId = requestAnimationFrame(() => {
+                this._queuedObserverFilterRafId = 0;
+                this.flushQueuedObservedFilterItems();
+            });
+            this._queuedObserverFilterTimerId = window.setTimeout(() => {
+                this._queuedObserverFilterTimerId = 0;
+                this.flushQueuedObservedFilterItems();
+            }, 80);
+        },
+        getRuntimeCoordinator() {
+            return window.__dcufRuntimeCoordinator || null;
+        },
+        getUserSumTaskQueue() {
+            if (this._userSumTaskQueue) return this._userSumTaskQueue;
+            const runtimeCoordinator = this.getRuntimeCoordinator();
+            if (runtimeCoordinator && typeof runtimeCoordinator.createTaskQueue === 'function') {
+                this._userSumTaskQueue = runtimeCoordinator.createTaskQueue('filter-user-sum', {
+                    concurrency: this.ASYNC_UID_REQUEST_CONCURRENCY
+                });
+                return this._userSumTaskQueue;
+            }
 
-        try {
-            if (element.style.display === 'none') return;
+            this._userSumTaskQueue = {
+                enqueue(run) {
+                    return Promise.resolve().then(run);
+                }
+            };
+            return this._userSumTaskQueue;
+        },
+        getNegativeUserSumCache(uid) {
+            const cached = this.USER_SUM_NEGATIVE_CACHE.get(uid);
+            if (!cached) return null;
+            if (Date.now() - cached.ts > this.USER_SUM_NEGATIVE_TTL) {
+                this.USER_SUM_NEGATIVE_CACHE.delete(uid);
+                return null;
+            }
+            return cached;
+        },
+        setNegativeUserSumCache(uid, reason = 'error') {
+            if (!uid) return null;
+            const cached = { ts: Date.now(), reason };
+            this.USER_SUM_NEGATIVE_CACHE.set(uid, cached);
+            return cached;
+        },
+        async getUserPostCommentSum(uid) {
+            if (userSumCache[uid]) return userSumCache[uid];
+            if (this.getNegativeUserSumCache(uid)) return null;
+            if (this.INFLIGHT_USER_SUM_REQUESTS[uid]) return this.INFLIGHT_USER_SUM_REQUESTS[uid];
+            const getCookie = (name) => { const v = `; ${document.cookie}`; const p = v.split(`; ${name}=`); if (p.length === 2) return p.pop().split(';').shift(); };
+            let ci = getCookie(this.CONSTANTS.ETC.COOKIE_NAME_1) || getCookie(this.CONSTANTS.ETC.COOKIE_NAME_2);
+            if (!ci) return null;
+            const taskQueue = this.getUserSumTaskQueue();
+            const requestPromise = taskQueue.enqueue(() => new Promise((resolve) => {
+                const xhr = new XMLHttpRequest();
+                xhr.open('POST', this.CONSTANTS.API.USER_INFO, true); xhr.withCredentials = true;
+                xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded; charset=UTF-8'); xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
 
-            const writerInfo = element.querySelector(CONSTANTS.SELECTORS.WRITER_INFO);
-            if (!writerInfo) return;
 
-            const uid = writerInfo.getAttribute('data-uid');
-            if (!uid || uid.length < 3) return;
+                xhr.timeout = 5000;
+                xhr.ontimeout = () => {
+                    console.warn(`DCinside User Filter: User info request for UID ${uid} timed out.`);
+                    this.setNegativeUserSumCache(uid, 'timeout');
+                    resolve(null);
+                };
 
-            if (BLOCKED_UIDS_CACHE[uid]) return;
 
-            const userData = await getUserPostCommentSum(uid);
+                xhr.onload = () => {
+                    if (xhr.status >= 200 && xhr.status < 300) {
+                        const [post, comment] = xhr.responseText.split(',').map(x => parseInt(x, 10));
+                        if (!isNaN(post) && !isNaN(comment)) {
+                            const d = { sum: post + comment, post, comment };
+                            userSumCache[uid] = d;
+                            this.USER_SUM_NEGATIVE_CACHE.delete(uid);
+                            resolve(d);
+                        } else {
+                            this.setNegativeUserSumCache(uid, 'parse');
+                            resolve(null);
+                        }
+                    } else {
+                        this.setNegativeUserSumCache(uid, `status:${xhr.status}`);
+                        resolve(null);
+                    }
+                };
+                xhr.onerror = () => {
+                    this.setNegativeUserSumCache(uid, 'network');
+                    resolve(null);
+                };
+                xhr.send(`ci_t=${encodeURIComponent(ci)}&user_id=${encodeURIComponent(uid)}`);
+            }));
+            this.INFLIGHT_USER_SUM_REQUESTS[uid] = requestPromise;
+            try {
+                return await requestPromise;
+            } finally {
+                delete this.INFLIGHT_USER_SUM_REQUESTS[uid];
+            }
+        },
+        async addBlockedUid(uid, sum, post, comment, ratioBlocked) {
+            if (this.isMobile()) return;
+            await this.refreshBlockedUidsCache();
+            this.BLOCKED_UIDS_CACHE[uid] = { ts: Date.now(), sum, post, comment, ratioBlocked: !!ratioBlocked };
+            await GM_setValue(this.CONSTANTS.STORAGE_KEYS.BLOCKED_UIDS, JSON.stringify(this.BLOCKED_UIDS_CACHE));
+        },
+        async getBlockedGuests() { try { return JSON.parse(await GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCKED_GUESTS, '[]')); } catch { return []; } },
+        async setBlockedGuests(list) { await GM_setValue(this.CONSTANTS.STORAGE_KEYS.BLOCKED_GUESTS, JSON.stringify(list)); },
+        async addBlockedGuest(ip) {
+            if (!ip) return;
+            if (!(dcFilterSettings.blockedGuestSet instanceof Set)) {
+                dcFilterSettings.blockedGuestSet = new Set(Array.isArray(dcFilterSettings.blockedGuests) ? dcFilterSettings.blockedGuests : []);
+            }
+            if (dcFilterSettings.blockedGuestSet.has(ip)) return;
+            if (!Array.isArray(dcFilterSettings.blockedGuests)) dcFilterSettings.blockedGuests = [];
+            dcFilterSettings.blockedGuests.push(ip);
+            dcFilterSettings.blockedGuestSet.add(ip);
+            await this.setBlockedGuests(dcFilterSettings.blockedGuests);
+        },
+        async clearBlockedGuests() {
+            dcFilterSettings.blockedGuests = [];
+            dcFilterSettings.blockedGuestSet = new Set();
+            await this.setBlockedGuests([]);
+        },
+        isUserBlocked({ sum, post, comment }) {
+            return DCUF_SHARED_FILTER_CORE.evaluateUserStatsBlock({ sum, post, comment }, dcFilterSettings);
+        },
+        isCommentListItem(element) {
+            return element instanceof HTMLElement && !!element.closest(this.CONSTANTS.SELECTORS.COMMENT_CONTAINER);
+        },
+        isParentCommentListItem(element) {
+            return this.isCommentListItem(element) && /^comment_li_/.test(element.id || '');
+        },
+        isReplyCommentListItem(element) {
+            return this.isCommentListItem(element) && /^reply_li_/.test(element.id || '');
+        },
+        hasReplyChildren(element) {
+            return element instanceof HTMLElement && !!element.querySelector(':scope > div.reply.show .reply_list > li');
+        },
+        syncFilteredParentCommentVisibility(parentElement) {
+            if (!(parentElement instanceof HTMLElement)) return;
+            if (parentElement.getAttribute('data-dcuf-parent-filtered') !== '1') return;
+            const replyItems = parentElement.querySelectorAll(':scope > div.reply.show .reply_list > li');
+            const hasVisibleReply = Array.from(replyItems).some(li => li.style.display !== 'none');
+            const nextDisplay = hasVisibleReply ? '' : 'none';
+            if (parentElement.style.display !== nextDisplay) parentElement.style.display = nextDisplay;
+        },
+        updateParentVisibilityFromReply(replyElement) {
+            if (!this.isReplyCommentListItem(replyElement)) return;
+            const parentElement = replyElement.closest('li[id^="comment_li_"]');
+            this.syncFilteredParentCommentVisibility(parentElement);
+        },
+        setElementVisibility(element, shouldHide) {
+            if (!(element instanceof HTMLElement)) return;
+            const isolateParentOnly = shouldHide && this.isParentCommentListItem(element);
+            if (isolateParentOnly) {
+                if (element.getAttribute('data-dcuf-parent-filtered') !== '1') {
+                    element.setAttribute('data-dcuf-parent-filtered', '1');
+                }
+                if (!element.classList.contains('dcuf-parent-comment-filtered')) {
+                    element.classList.add('dcuf-parent-comment-filtered');
+                }
+                this.syncFilteredParentCommentVisibility(element);
+                return;
+            }
+            if (element.hasAttribute('data-dcuf-parent-filtered')) {
+                element.removeAttribute('data-dcuf-parent-filtered');
+            }
+            if (element.classList.contains('dcuf-parent-comment-filtered')) {
+                element.classList.remove('dcuf-parent-comment-filtered');
+            }
+            const nextDisplay = shouldHide ? 'none' : '';
+            if (element.style.display !== nextDisplay) element.style.display = nextDisplay;
+            this.updateParentVisibilityFromReply(element);
+        },
+        async applyBlockFilterToElement(element, uid, userData, addBlockedUidFn) {
             if (!userData) return;
-            await applyBlockFilterToElement(element, uid, userData, addBlockedUid);
+            const { sumBlocked, ratioBlocked } = this.isUserBlocked(userData);
+            const shouldBeBlocked = sumBlocked || ratioBlocked;
+            this.setElementVisibility(element, shouldBeBlocked);
+            if (shouldBeBlocked) await addBlockedUidFn.call(this, uid, userData.sum, userData.post, userData.comment, ratioBlocked);
+        },
+        shouldSkipFiltering(element) {
+            const s = dcFilterSettings; if (!s.excludeRecommended || !this.isRecommendedContext()) return false;
+            if (window.location.pathname.includes('/view/')) return !element.closest(this.CONSTANTS.SELECTORS.COMMENT_CONTAINER);
+            return true;
+        },
+        async applyAsyncBlock(target) {
+            const descriptor = this.normalizeFilterTarget(target);
+            if (!descriptor) return;
 
-        } catch (e) {
-            console.warn(`DCinside User Filter: Async filter exception.`, e, element);
-        }
-    }
+            const { element, writerInfo, uid, isNotice, shouldSkipFiltering } = descriptor;
+            if (isNotice || shouldSkipFiltering) return;
 
-    async function refreshBlockedUidsCache() {
-        let data = await GM_getValue(CONSTANTS.STORAGE_KEYS.BLOCKED_UIDS, '{}');
-        try { BLOCKED_UIDS_CACHE = JSON.parse(data); } catch { BLOCKED_UIDS_CACHE = {}; }
-
-        const now = Date.now();
-        let changed = false;
-        for (const [uid, cacheData] of Object.entries(BLOCKED_UIDS_CACHE)) {
-            if (typeof cacheData !== 'object' || cacheData === null || typeof cacheData.ts !== 'number') {
-                delete BLOCKED_UIDS_CACHE[uid];
-                changed = true;
-                continue;
+            try {
+                if (element.style.display === 'none') return;
+                if (!(writerInfo instanceof HTMLElement)) return;
+                if (!uid || uid.length < 3) return;
+                if (this.BLOCKED_UIDS_CACHE[uid]) return;
+                const userData = await this.getUserPostCommentSum(uid); if (!userData) return;
+                await this.applyBlockFilterToElement(element, uid, userData, this.addBlockedUid);
+            } catch (e) { console.warn(`DCinside User Filter: Async filter exception.`, e, element); }
+        },
+        async refreshBlockedUidsCache() {
+            if (this.isMobile()) { this.BLOCKED_UIDS_CACHE = {}; return; }
+            let data; try { data = JSON.parse(await GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCKED_UIDS, '{}')); } catch { data = {}; }
+            const now = Date.now(); let changed = false;
+            for (const [uid, cacheData] of Object.entries(data)) {
+                if (typeof cacheData !== 'object' || cacheData === null || typeof cacheData.ts !== 'number' || now - cacheData.ts > this.BLOCK_UID_EXPIRE) { delete data[uid]; changed = true; }
             }
-            if (now - cacheData.ts > BLOCK_UID_EXPIRE) {
-                delete BLOCKED_UIDS_CACHE[uid]; changed = true;
-            }
-        }
-        if (changed) await GM_setValue(CONSTANTS.STORAGE_KEYS.BLOCKED_UIDS, JSON.stringify(BLOCKED_UIDS_CACHE));
-    }
+            this.BLOCKED_UIDS_CACHE = data;
+            if (changed) await GM_setValue(this.CONSTANTS.STORAGE_KEYS.BLOCKED_UIDS, JSON.stringify(this.BLOCKED_UIDS_CACHE));
+        },
+        applySyncBlock(target) {
+            const descriptor = this.normalizeFilterTarget(target);
+            if (!descriptor?.writerInfo) return;
 
-    /**
-     * [v1.7.1 리팩토링]
-     * 필터링 로직을 v2.5.4 버전처럼 재구성하여 요구사항을 만족시킵니다.
-     * 1. 개인 차단 필터를 최우선으로, 다른 설정과 독립적으로 실행합니다.
-     * 2. 개인 차단 대상이 아닌 경우에만 '개념글 제외', '모든 기능 끄기' 옵션을 확인합니다.
-     * 3. 모든 조건을 통과한 후에야 글댓합, 통피 등 나머지 필터를 적용합니다.
-     */
-    function applySyncBlock(element) {
-        const settings = window.dcFilterSettings || {};
-        const {
-            masterDisabled,
-            blockGuestEnabled,
-            proxyBlockMode = 0,
-            telecomBlockEnabled,
-            blockedGuests = [],
-            customIpPrefixSet,
-            personalBlockList,
-            personalBlockEnabled,
-            threshold,
-            ratioEnabled,
-            ratioMin,
-            ratioMax
-        } = settings;
+            const {
+                masterDisabled,
+                blockGuestEnabled,
+                proxyBlockMode = 0,
+                telecomBlockEnabled,
+                blockedGuests = [],
+                blockedGuestSet,
+                customIpPrefixSet,
+                personalBlockEnabled,
+                personalBlockUidSet,
+                personalBlockNicknameSet,
+                personalBlockIpSet
+            } = dcFilterSettings;
+            const normalizedProxyBlockMode = this.normalizeProxyBlockMode(proxyBlockMode);
+            const proxyBlockEnabled = normalizedProxyBlockMode !== this.PROXY_MODE.OFF;
 
-        const writerInfo = element.querySelector(CONSTANTS.SELECTORS.WRITER_INFO);
-        if (!writerInfo) return;
-
-        const uid = writerInfo.getAttribute('data-uid');
-        const nickname = writerInfo.getAttribute('data-nick');
-        const ipSpan = element.querySelector(CONSTANTS.SELECTORS.IP_SPAN);
-        const ipText = ipSpan ? ipSpan.textContent.trim() : '';
-        const ip = (ipText.startsWith('(') && ipText.endsWith(')')) ? ipText.slice(1, -1) : (ipText || writerInfo.getAttribute('data-ip') || null);
-        const ipPrefix = getIpPrefix(ip);
-        const normalizedProxyBlockMode = normalizeProxyBlockMode(proxyBlockMode);
-        const isGuest = Boolean((!uid || uid.length < 3) && ip);
-
-        const decision = DCUF_SHARED_FILTER_CORE.evaluateSyncBlockDecision({
-            subject: {
+            const { element, uid, nickname, ip, ipText, writerDataIp, ipPrefix, isGuest, isNotice, shouldSkipFiltering, hasBlockDisableClass } = descriptor;
+            const subject = {
                 uid,
                 nickname,
                 ip,
                 ipPrefix,
                 isGuest,
-                isNotice: Boolean(element.querySelector('em.icon_notice')),
-                shouldSkipFiltering: shouldSkipFiltering(element),
-                hasBlockDisableClass: element.classList.contains('block-disable')
-            },
-            settings: {
-                masterDisabled,
+                isNotice,
+                shouldSkipFiltering,
+                hasBlockDisableClass
+            };
+            const baseDebug = {
+                branch: 'sync-base',
+                uid,
+                nickname,
+                ip,
+                ipText,
+                writerDataIp,
+                ipPrefix,
+                isGuest,
                 blockGuestEnabled,
                 proxyBlockMode: normalizedProxyBlockMode,
-                telecomBlockEnabled,
-                blockedGuests,
-                customIpPrefixSet,
-                personalBlockEnabled,
-                personalBlockList,
-                threshold,
-                ratioEnabled,
-                ratioMin,
-                ratioMax
-            },
-            matches: {
-                personalBlockHit: personalBlockEnabled && DCUF_SHARED_FILTER_CORE.isPersonalBlockHit({ uid, nickname, ip }, personalBlockList),
-                hasCustomIpPrefixBlock: Boolean(customIpPrefixSet && customIpPrefixSet.size > 0 && ipPrefix && customIpPrefixSet.has(ipPrefix)),
-                proxyMatchInfo: getProxyPrefixMatch(ipPrefix, normalizedProxyBlockMode),
-                telecomPrefixMatch: Boolean(telecomBlockEnabled && ipPrefix && getTelecomPrefixSet().has(ipPrefix)),
-                blockedGuestMatch: Boolean(ip && blockedGuests.includes(ip))
-            },
-            blockedUidEntry: uid ? BLOCKED_UIDS_CACHE[uid] : null
-        });
+                proxyBlockEnabled,
+                telecomBlockEnabled
+            };
 
-        element.style.display = decision.isBlocked ? 'none' : '';
-    }
-
-    function initializeUniversalObserver() {
-        const targets = [
-            { container: CONSTANTS.SELECTORS.POST_LIST_CONTAINER, item: CONSTANTS.SELECTORS.POST_ITEM },
-            { container: CONSTANTS.SELECTORS.COMMENT_CONTAINER, item: CONSTANTS.SELECTORS.COMMENT_ITEM },
-            { container: CONSTANTS.SELECTORS.POST_VIEW_LIST_CONTAINER, item: 'li' }
-        ];
-
-        const filterItems = (items) => {
-            items.forEach(item => {
-                applySyncBlock(item);
-                applyAsyncBlock(item);
+            const proxyMatchInfo = this.getProxyPrefixMatch(ipPrefix, normalizedProxyBlockMode);
+            const telecomPrefixSet = telecomBlockEnabled && ipPrefix ? this.getTelecomPrefixSet() : null;
+            const decision = DCUF_SHARED_FILTER_CORE.evaluateSyncBlockDecision({
+                subject,
+                settings: {
+                    masterDisabled,
+                    blockGuestEnabled,
+                    proxyBlockMode: normalizedProxyBlockMode,
+                    telecomBlockEnabled,
+                    customIpPrefixSet,
+                    personalBlockEnabled,
+                    threshold: dcFilterSettings.threshold,
+                    ratioEnabled: dcFilterSettings.ratioEnabled,
+                    ratioMin: dcFilterSettings.ratioMin,
+                    ratioMax: dcFilterSettings.ratioMax
+                },
+                matches: {
+                    personalBlockHit: personalBlockEnabled && DCUF_SHARED_FILTER_CORE.isPersonalBlockHit(subject, {
+                        uidSet: personalBlockUidSet,
+                        nicknameSet: personalBlockNicknameSet,
+                        ipSet: personalBlockIpSet
+                    }),
+                    hasCustomIpPrefixBlock: Boolean(customIpPrefixSet && customIpPrefixSet.size > 0 && ipPrefix && customIpPrefixSet.has(ipPrefix)),
+                    proxyMatchInfo,
+                    telecomPrefixMatch: Boolean(ipPrefix && telecomPrefixSet && telecomPrefixSet.has(ipPrefix)),
+                    blockedGuestMatch: Boolean(ip && (blockedGuestSet instanceof Set ? blockedGuestSet.has(ip) : blockedGuests.includes(ip)))
+                },
+                blockedUidEntry: uid ? this.BLOCKED_UIDS_CACHE[uid] : null
             });
-        };
 
-        const attachItemObserver = (container, itemSelector) => {
-            if (container.matches(`[${CONSTANTS.CUSTOM_ATTRS.OBSERVER_ATTACHED}]`)) return;
-            container.setAttribute(CONSTANTS.CUSTOM_ATTRS.OBSERVER_ATTACHED, 'true');
+            this.debugDecision(element, {
+                ...baseDebug,
+                branch: decision.path || 'sync-final',
+                isBlocked: decision.isBlocked,
+                reasons: decision.reasons,
+                blockedGuestsCount: blockedGuestSet instanceof Set ? blockedGuestSet.size : blockedGuests.length,
+                customIpPrefixCount: customIpPrefixSet instanceof Set ? customIpPrefixSet.size : 0,
+                hasCustomIpPrefixBlock: decision.hasCustomIpPrefixBlock,
+                proxyPrefixMatch: decision.proxyPrefixMatch,
+                proxyMatchTier: decision.proxyMatchTier,
+                telecomPrefixMatch: decision.telecomPrefixMatch,
+                blockedGuestMatch: decision.blockedGuestMatch
+            });
+            this.setElementVisibility(element, decision.isBlocked);
+        },
+        initializeUniversalObserver() {
+            const targets = [{ c: this.CONSTANTS.SELECTORS.POST_LIST_CONTAINER, i: this.CONSTANTS.SELECTORS.POST_ITEM }, { c: this.CONSTANTS.SELECTORS.COMMENT_CONTAINER, i: this.CONSTANTS.SELECTORS.COMMENT_ITEM }, { c: this.CONSTANTS.SELECTORS.POST_VIEW_LIST_CONTAINER, i: 'li' }];
+            const filterItems = (items) => this.applyFilterItems(items);
+            const queueFilterItems = (items) => this.queueObservedFilterItems(items);
+            const attachObserver = (container, itemSelector) => {
+                if (container.hasAttribute(this.CONSTANTS.CUSTOM_ATTRS.OBSERVER_ATTACHED)) return;
+                container.setAttribute(this.CONSTANTS.CUSTOM_ATTRS.OBSERVER_ATTACHED, 'true');
+                filterItems(Array.from(container.querySelectorAll(itemSelector)));
+                // [디버깅 추가]
+                new MutationObserver(mutations => {
+                    const newItems = [];
+                    mutations.forEach(m => m.addedNodes.forEach(n => {
+                        if (n.nodeType !== 1) return;
+                        if (n.matches(itemSelector)) newItems.push(n); else if (n.querySelectorAll) newItems.push(...n.querySelectorAll(itemSelector));
+                    }));
+                    if (newItems.length > 0) queueFilterItems(newItems);
+                }).observe(container, { childList: true, subtree: true });
+            };
+            targets.forEach(t => document.querySelectorAll(t.c).forEach(c => attachObserver(c, t.i)));
 
-            filterItems(Array.from(container.querySelectorAll(itemSelector)));
-
-            const itemObserver = new MutationObserver((mutations) => {
-                const newItems = [];
-                mutations.forEach(mutation => {
-                    mutation.addedNodes.forEach(node => {
-                        if (node.nodeType !== Node.ELEMENT_NODE) return;
-                        if (node.matches(itemSelector)) { newItems.push(node); }
-                        else if (node.querySelectorAll) { newItems.push(...node.querySelectorAll(itemSelector)); }
+            const runtimeCoordinator = this.getRuntimeCoordinator();
+            if (runtimeCoordinator && typeof runtimeCoordinator.subscribeMutations === 'function') {
+                if (typeof this._runtimeMutationUnsubscribe === 'function') this._runtimeMutationUnsubscribe();
+                this._runtimeMutationUnsubscribe = runtimeCoordinator.subscribeMutations('filter-universal-observer', (payload) => {
+                    targets.forEach((target) => {
+                        payload.collectMatches(target.c).forEach((container) => attachObserver(container, target.i));
                     });
                 });
-                if (newItems.length > 0) filterItems(newItems);
-            });
-            itemObserver.observe(container, { childList: true, subtree: true });
-        };
-
-        const bodyObserver = new MutationObserver((mutations) => {
-            for (const mutation of mutations) {
-                for (const node of mutation.addedNodes) {
-                    if (node.nodeType === Node.ELEMENT_NODE) {
-                        for (const target of targets) {
-                            if (node.matches(target.container)) {
-                                attachItemObserver(node, target.item);
-                            } else if (node.querySelectorAll) {
-                                node.querySelectorAll(target.container).forEach(container => {
-                                    attachItemObserver(container, target.item);
-                                });
-                            }
-                        }
-                    }
-                }
+                return;
             }
-        });
 
-        targets.forEach(target => {
-            document.querySelectorAll(target.container).forEach(container => {
-                attachItemObserver(container, target.item);
+            const mainContainer = document.querySelector(this.CONSTANTS.SELECTORS.MAIN_CONTAINER);
+            const observerTarget = mainContainer || document.body;
+            const bodyObserver = new MutationObserver(mutations => {
+                mutations.forEach(m => m.addedNodes.forEach(n => {
+                    if (n.parentNode && n.parentNode.closest && (n.parentNode.closest('#dc-backup-popup') || n.parentNode.closest('#dc-block-management-panel') || n.parentNode.closest('#dcinside-filter-setting'))) {
+                        return;
+                    }
+                    if (n.nodeType === 1 && !n.closest('.user_data')) {
+                        targets.forEach(t => { if (n.matches(t.c)) attachObserver(n, t.i); else if (n.querySelectorAll) n.querySelectorAll(t.c).forEach(c => attachObserver(c, t.i)); });
+                    }
+                }));
             });
-        });
+            bodyObserver.observe(observerTarget, { childList: true, subtree: true });
+        },
+        async reloadSettings() {
+            const [
+                masterDisabled, excludeRecommended, threshold, ratioEnabled,
+                ratioMin, ratioMax, blockGuestEnabled, proxyBlockMode, telecomBlockEnabled,
+                blockedGuests, blockConfig, personalBlockList, personalBlockEnabled
+            ] = await Promise.all([
+                GM_getValue(this.CONSTANTS.STORAGE_KEYS.MASTER_DISABLED, false),
+                GM_getValue(this.CONSTANTS.STORAGE_KEYS.EXCLUDE_RECOMMENDED, false),
+                GM_getValue(this.CONSTANTS.STORAGE_KEYS.THRESHOLD, 0),
+                GM_getValue(this.CONSTANTS.STORAGE_KEYS.RATIO_ENABLED, false),
+                GM_getValue(this.CONSTANTS.STORAGE_KEYS.RATIO_MIN, ''),
+                GM_getValue(this.CONSTANTS.STORAGE_KEYS.RATIO_MAX, ''),
+                GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_GUEST, false),
+                GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_PROXY, 0),
+                GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_TELECOM, false),
+                this.getBlockedGuests(),
+                GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG, {}),
+                PersonalBlockModule.loadPersonalBlocks(),
+                // [신규] 개인 차단 기능 활성화 상태 로드 (기본값 true)
+                GM_getValue(this.CONSTANTS.STORAGE_KEYS.PERSONAL_BLOCK_ENABLED, true)
+            ]);
+            const normalizedSettings = DCUF_SHARED_STORAGE.normalizeStoredFilterSettings({
+                [this.CONSTANTS.STORAGE_KEYS.MASTER_DISABLED]: masterDisabled,
+                [this.CONSTANTS.STORAGE_KEYS.EXCLUDE_RECOMMENDED]: excludeRecommended,
+                [this.CONSTANTS.STORAGE_KEYS.THRESHOLD]: threshold,
+                [this.CONSTANTS.STORAGE_KEYS.RATIO_ENABLED]: ratioEnabled,
+                [this.CONSTANTS.STORAGE_KEYS.RATIO_MIN]: ratioMin,
+                [this.CONSTANTS.STORAGE_KEYS.RATIO_MAX]: ratioMax,
+                [this.CONSTANTS.STORAGE_KEYS.BLOCK_GUEST]: blockGuestEnabled,
+                [this.CONSTANTS.STORAGE_KEYS.BLOCK_PROXY]: proxyBlockMode,
+                [this.CONSTANTS.STORAGE_KEYS.BLOCK_TELECOM]: telecomBlockEnabled,
+                [this.CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG]: blockConfig,
+                [this.CONSTANTS.STORAGE_KEYS.PERSONAL_BLOCK_LIST]: personalBlockList,
+                [this.CONSTANTS.STORAGE_KEYS.PERSONAL_BLOCK_ENABLED]: personalBlockEnabled
+            });
+            const customIpPrefixSet = new Set(DCUF_SHARED_STORAGE.parseIpPrefixList(blockConfig?.ip || '', this.CONSTANTS.ETC.MOBILE_IP_MARKER));
+            const blockedGuestSet = this.buildLookupSet(blockedGuests);
+            const personalBlockUidSet = this.buildLookupSet(personalBlockList?.uids, (item) => item?.id);
+            const personalBlockNicknameSet = this.buildLookupSet(personalBlockList?.nicknames);
+            const personalBlockIpSet = this.buildLookupSet(personalBlockList?.ips);
 
-        bodyObserver.observe(document.body, { childList: true, subtree: true });
-    }
+            dcFilterSettings = {
+                masterDisabled: normalizedSettings.masterDisabled, excludeRecommended: normalizedSettings.excludeRecommended, threshold: normalizedSettings.threshold, ratioEnabled: normalizedSettings.ratioEnabled,
+                ratioMin: normalizedSettings.ratioMin,
+                ratioMax: normalizedSettings.ratioMax,
+                blockGuestEnabled: normalizedSettings.blockGuest,
+                proxyBlockMode: normalizedSettings.proxyBlockMode,
+                proxyBlockEnabled: normalizedSettings.proxyBlockMode !== this.PROXY_MODE.OFF,
+                telecomBlockEnabled: normalizedSettings.telecomBlockEnabled,
+                blockedGuests,
+                blockedGuestSet,
+                customIpPrefixSet,
+                personalBlockList,
+                personalBlockUidSet,
+                personalBlockNicknameSet,
+                personalBlockIpSet,
+                personalBlockEnabled
+            };
+            this.debugLog('settings', 'reloadSettings complete', this.debugSettingsSnapshot({
+                rawBlockConfigIp: typeof blockConfig?.ip === 'string' ? blockConfig.ip : '',
+                rawBlockConfigPreview: typeof blockConfig?.ip === 'string' ? blockConfig.ip.split('||').slice(0, 20) : []
+            }));
+        },
+        getRefilterTargetSelectors(scope = 'all') {
+            const commentSelectors = [
+                this.CONSTANTS.SELECTORS.COMMENT_ITEM,
+                'li[id^="comment_li_"]',
+                'li[id^="reply_li_"]',
+                'li[id^="img_comment_li_"]',
+                'li[id^="mg_comment_li_"]'
+            ];
+            const postSelectors = [
+                this.CONSTANTS.SELECTORS.POST_ITEM,
+                `${this.CONSTANTS.SELECTORS.POST_VIEW_LIST_CONTAINER} > li`
+            ];
 
-    async function reloadSettings() {
-        const [
-            masterDisabled, excludeRecommended, threshold, ratioEnabled,
-            ratioMin, ratioMax, blockGuestEnabled, proxyBlockMode, telecomBlockEnabled,
-            blockedGuests, blockConfig, personalBlockList, personalBlockEnabled
-        ] = await Promise.all([
-            GM_getValue(CONSTANTS.STORAGE_KEYS.MASTER_DISABLED, false),
-            GM_getValue(CONSTANTS.STORAGE_KEYS.EXCLUDE_RECOMMENDED, false),
-            GM_getValue(CONSTANTS.STORAGE_KEYS.THRESHOLD, 0),
-            GM_getValue(CONSTANTS.STORAGE_KEYS.RATIO_ENABLED, false),
-            GM_getValue(CONSTANTS.STORAGE_KEYS.RATIO_MIN, ''),
-            GM_getValue(CONSTANTS.STORAGE_KEYS.RATIO_MAX, ''),
-            GM_getValue(CONSTANTS.STORAGE_KEYS.BLOCK_GUEST, false),
-            GM_getValue(CONSTANTS.STORAGE_KEYS.BLOCK_PROXY, 0),
-            GM_getValue(CONSTANTS.STORAGE_KEYS.BLOCK_TELECOM, false),
-            getBlockedGuests(),
-            GM_getValue(CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG, {}),
-            PersonalBlockModule.loadPersonalBlocks(),
-            GM_getValue(CONSTANTS.STORAGE_KEYS.PERSONAL_BLOCK_ENABLED, true)
-        ]);
+            if (scope === 'comments') return commentSelectors;
+            if (scope === 'posts') return postSelectors;
+            return [...postSelectors, ...commentSelectors];
+        },
+        resolveRefilterRoot(root = document) {
+            if (root instanceof Document || root instanceof Element || root instanceof DocumentFragment) return root;
+            return document;
+        },
+        getRefilterTargets(scope = 'all', root = document) {
+            const queryRoot = this.resolveRefilterRoot(root);
+            const selectors = this.getRefilterTargetSelectors(scope);
+            const selectorText = selectors.join(', ');
+            const seen = new Set();
+            const candidates = [];
 
-        const normalizedSettings = DCUF_SHARED_STORAGE.normalizeStoredFilterSettings({
-            [CONSTANTS.STORAGE_KEYS.MASTER_DISABLED]: masterDisabled,
-            [CONSTANTS.STORAGE_KEYS.EXCLUDE_RECOMMENDED]: excludeRecommended,
-            [CONSTANTS.STORAGE_KEYS.THRESHOLD]: threshold,
-            [CONSTANTS.STORAGE_KEYS.RATIO_ENABLED]: ratioEnabled,
-            [CONSTANTS.STORAGE_KEYS.RATIO_MIN]: ratioMin,
-            [CONSTANTS.STORAGE_KEYS.RATIO_MAX]: ratioMax,
-            [CONSTANTS.STORAGE_KEYS.BLOCK_GUEST]: blockGuestEnabled,
-            [CONSTANTS.STORAGE_KEYS.BLOCK_PROXY]: proxyBlockMode,
-            [CONSTANTS.STORAGE_KEYS.BLOCK_TELECOM]: telecomBlockEnabled,
-            [CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG]: blockConfig,
-            [CONSTANTS.STORAGE_KEYS.PERSONAL_BLOCK_LIST]: personalBlockList,
-            [CONSTANTS.STORAGE_KEYS.PERSONAL_BLOCK_ENABLED]: personalBlockEnabled,
-        });
+            if (queryRoot instanceof Element && queryRoot.matches(selectorText)) candidates.push(queryRoot);
+            if (typeof queryRoot.querySelectorAll === 'function') {
+                candidates.push(...queryRoot.querySelectorAll(selectorText));
+            }
 
-        const customIpPrefixSet = new Set(DCUF_SHARED_STORAGE.parseIpPrefixList(blockConfig?.ip || '', CONSTANTS.ETC.MOBILE_IP_MARKER));
+            return candidates.reduce((descriptors, element) => {
+                if (!(element instanceof HTMLElement) || seen.has(element)) return descriptors;
+                seen.add(element);
+                const descriptor = this.describeFilterTarget(element);
+                if (descriptor) descriptors.push(descriptor);
+                return descriptors;
+            }, []);
+        },
+        runSyncRefilterPass(scope = 'all', root = document, descriptors = null) {
+            const targetDescriptors = Array.isArray(descriptors) ? descriptors : this.getRefilterTargets(scope, root);
+            this.applySyncToDescriptors(targetDescriptors, { resetDisplay: true });
+            return targetDescriptors;
+        },
+        scheduleSyncRefilterPasses(scope = 'all', root = document) {
+            if (this._syncRefilterRafId) cancelAnimationFrame(this._syncRefilterRafId);
+            if (!this._syncRefilterTimerIds) this._syncRefilterTimerIds = new Set();
+            this._syncRefilterTimerIds.forEach((timerId) => clearTimeout(timerId));
+            this._syncRefilterTimerIds.clear();
 
-        window.dcFilterSettings = {
-            masterDisabled: normalizedSettings.masterDisabled,
-            excludeRecommended: normalizedSettings.excludeRecommended,
-            threshold: normalizedSettings.threshold,
-            ratioEnabled: normalizedSettings.ratioEnabled,
-            ratioMin: normalizedSettings.ratioMin,
-            ratioMax: normalizedSettings.ratioMax,
-            blockGuestEnabled: normalizedSettings.blockGuest,
-            proxyBlockMode: normalizedSettings.proxyBlockMode,
-            proxyBlockEnabled: normalizedSettings.proxyBlockMode !== PROXY_MODE.OFF,
-            telecomBlockEnabled: normalizedSettings.telecomBlockEnabled,
-            blockedGuests,
-            customIpPrefixSet,
-            personalBlockList,
-            personalBlockEnabled: normalizedSettings.personalBlockEnabled
-        };
-    }
+            const rerun = () => this.runSyncRefilterPass(scope, root);
+            this._syncRefilterRafId = requestAnimationFrame(() => {
+                this._syncRefilterRafId = 0;
+                rerun();
+            });
+            [90, 220].forEach((delay) => {
+                const timerId = window.setTimeout(() => {
+                    this._syncRefilterTimerIds.delete(timerId);
+                    rerun();
+                }, delay);
+                this._syncRefilterTimerIds.add(timerId);
+            });
+        },
+        scheduleCommentStabilizedRefilter(reason = 'comment-stabilized', root = null) {
+            if (this._commentRefilterRafId) cancelAnimationFrame(this._commentRefilterRafId);
+            if (!this._commentRefilterTimerIds) this._commentRefilterTimerIds = new Set();
+            this._commentRefilterTimerIds.forEach((timerId) => clearTimeout(timerId));
+            this._commentRefilterTimerIds.clear();
 
-    async function refilterAllContent() {
-        await reloadSettings();
-        const allContentItems = document.querySelectorAll([
-            CONSTANTS.SELECTORS.POST_ITEM,
-            CONSTANTS.SELECTORS.COMMENT_ITEM,
-            `${CONSTANTS.SELECTORS.POST_VIEW_LIST_CONTAINER} > li`
-        ].join(', '));
+            const rerun = () => {
+                const scopeRoot = this.resolveRefilterRoot(root || document);
+                const shouldFallbackToFullPass = root instanceof Element && !document.contains(root);
+                if (shouldFallbackToFullPass) {
+                    this.runSyncRefilterPass('all');
+                    return;
+                }
+                this.runSyncRefilterPass('comments', scopeRoot);
+            };
+            this.debugLog('comment-refilter', 'scheduleCommentStabilizedRefilter', { reason });
+            this._commentRefilterRafId = requestAnimationFrame(() => {
+                this._commentRefilterRafId = 0;
+                rerun();
+                [140, 420, 1100].forEach((delay) => {
+                    const timerId = window.setTimeout(() => {
+                        this._commentRefilterTimerIds.delete(timerId);
+                        rerun();
+                    }, delay);
+                    this._commentRefilterTimerIds.add(timerId);
+                });
+            });
+        },
+        async runFullRefilterPass(reason = 'refilterAllContent') {
+            await this.reloadSettings();
+            const descriptors = this.getRefilterTargets('all');
+            this.startDebugPass(reason, { targetCount: descriptors.length });
+            this.runSyncRefilterPass('all', document, descriptors);
+            this.scheduleSyncRefilterPasses();
+            this.applyAsyncToDescriptors(descriptors);
+            document.dispatchEvent(new CustomEvent('dcFilterRefiltered'));
+        },
+        async refilterAllContent(reason = 'refilterAllContent') {
+            if (!this._pendingFullRefilterReasons) this._pendingFullRefilterReasons = [];
+            this._pendingFullRefilterReasons.push(reason);
 
-        allContentItems.forEach(element => {
-            // 필터링 전 모든 요소를 보이도록 초기화합니다.
-            // 개인 차단은 masterDisabled와 무관하게 작동하므로, 이 초기화는 개인 차단이 아닌 요소에만 적용됩니다.
-            element.style.display = '';
-            applySyncBlock(element);
-            applyAsyncBlock(element);
-        });
-    }
+            if (this._refilterAllContentRunning) {
+                this.debugLog('refilter', 'coalesced full refilter request', {
+                    reason,
+                    pendingCount: this._pendingFullRefilterReasons.length
+                });
+                return this._refilterAllContentPromise;
+            }
 
-    function handleVisibilityChange() {
-        if (document.visibilityState === 'visible') {
-            refilterAllContent();
+            this._refilterAllContentRunning = true;
+            this._refilterAllContentPromise = (async () => {
+                while (this._pendingFullRefilterReasons.length > 0) {
+                    const pendingReasons = this._pendingFullRefilterReasons.splice(0);
+                    const runReason = pendingReasons.length > 1
+                        ? `${pendingReasons[pendingReasons.length - 1]} [coalesced:${pendingReasons.length}]`
+                        : pendingReasons[0];
+                    await this.runFullRefilterPass(runReason);
+                }
+            })();
+
+            try {
+                await this._refilterAllContentPromise;
+            } finally {
+                this._refilterAllContentRunning = false;
+                this._refilterAllContentPromise = null;
+            }
+        },
+        // [수정] handleVisibilityChange를 async 함수로 변경하고 reloadShortcutKey 호출 추가
+        async handleVisibilityChange() {
+            if (document.visibilityState === 'visible') {
+                await reloadShortcutKey(); // 단축키 설정을 다시 로드
+                await this.refilterAllContent('visibilitychange-visible'); // 기존 필터 설정을 다시 로드하고 적용
+            }
+        },
+        async init() {
+            if (isInitialized) return; isInitialized = true;
+            this.installDebugApi();
+            this.debugLog('init', 'FilterModule init start', { version: '1.9.0' });
+            await this.cleanupLegacyManagedBlockConfig();
+            await this.reloadSettings();
+            this.getKrPrefixSet();
+            this.getTelecomPrefixSet();
+            this.getProxyStrictPrefixSet();
+            this.getProxyAggressiveExtraPrefixSet();
+            this.getProxyPrefixSet(this.PROXY_MODE.AGGRESSIVE);
+            await this.debugDumpState('after init reload');
+
+            // [수정] 개념글 목록에서 스크립트가 조기 종료되던 문제를 해결하기 위해 아래 라인을 삭제했습니다.
+            // if (dcFilterSettings.excludeRecommended && window.location.pathname.includes('/lists/') && this.isRecommendedContext()) return;
+
+            await this.refreshBlockedUidsCache();
+            document.addEventListener('visibilitychange', this.handleVisibilityChange.bind(this));
+            this.initializeUniversalObserver();
+            if (await GM_getValue(this.CONSTANTS.STORAGE_KEYS.THRESHOLD) === undefined) { await GM_setValue(this.CONSTANTS.STORAGE_KEYS.THRESHOLD, 0); await this.showSettings(); }
         }
-    }
+    };
 
-    // [v1.7.0 이식된 기능 시작] PersonalBlockModule: 간편 차단 및 관리 기능
+    // post-main-fixes.js는 별도 IIFE 스코프라 FilterModule 심볼을 직접 못 잡을 수 있습니다.
+    // 유지보수 시 후처리 코드가 FilterModule을 참조해야 하면 이 브리지로 접근하세요.
+    window.__dcufFilterModule = FilterModule;
+    /**
+     * =================================================================
+     * =================== Personal Block Module =======================
+     * =================================================================
+     */
     const PersonalBlockModule = {
         isSelectionMode: false,
         personalBlockListCache: { uids: [], nicknames: [], ips: [] },
+
 
         async init() {
             this.personalBlockListCache = await this.loadPersonalBlocks();
@@ -2105,21 +2712,26 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             document.addEventListener('click', this.handleSelectionClick.bind(this), true);
         },
 
+
         async loadPersonalBlocks() {
-            const list = await GM_getValue(CONSTANTS.STORAGE_KEYS.PERSONAL_BLOCK_LIST, { uids: [], nicknames: [], ips: [] });
+            const list = await GM_getValue(FilterModule.CONSTANTS.STORAGE_KEYS.PERSONAL_BLOCK_LIST, { uids: [], nicknames: [], ips: [] });
+            // 데이터 구조 보정
             if (!list.uids) list.uids = [];
             if (!list.nicknames) list.nicknames = [];
             if (!list.ips) list.ips = [];
             return list;
         },
 
+
         async savePersonalBlocks() {
-            await GM_setValue(CONSTANTS.STORAGE_KEYS.PERSONAL_BLOCK_LIST, this.personalBlockListCache);
+            await GM_setValue(FilterModule.CONSTANTS.STORAGE_KEYS.PERSONAL_BLOCK_LIST, this.personalBlockListCache);
         },
+
 
         async addBlock(type, value, displayName = null) {
             if (!value) return;
-            this.personalBlockListCache = await this.loadPersonalBlocks();
+            this.personalBlockListCache = await this.loadPersonalBlocks(); // 최신 데이터로 갱신
+
 
             switch (type) {
                 case 'uid':
@@ -2139,41 +2751,62 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                     break;
             }
             await this.savePersonalBlocks();
-            await refilterAllContent();
+            await FilterModule.refilterAllContent();
+            this.exitSelectionMode();
+        },
+
+        // [v2.5.7 추가] 사용자의 차단 상태를 확인하는 헬퍼 함수
+        checkBlockStatus(userInfo) {
+            const { nick, uid, ip } = userInfo;
+            const cache = this.personalBlockListCache;
+            return {
+                isNickBlocked: nick ? cache.nicknames.includes(nick) : false,
+                isUidBlocked: uid ? cache.uids.some(u => u.id === uid) : false,
+                isIpBlocked: ip ? cache.ips.includes(ip) : false,
+            };
+        },
+
+        // [v2.5.7 추가] 특정 항목을 차단 목록에서 제거하는 함수
+        async removeBlock(type, value) {
+            if (!value) return;
+            this.personalBlockListCache = await this.loadPersonalBlocks(); // 최신 데이터로 갱신
+
+            switch (type) {
+                case 'uid':
+                    this.personalBlockListCache.uids = this.personalBlockListCache.uids.filter(u => u.id !== value);
+                    break;
+                case 'nickname':
+                    this.personalBlockListCache.nicknames = this.personalBlockListCache.nicknames.filter(n => n !== value);
+                    break;
+                case 'ip':
+                    this.personalBlockListCache.ips = this.personalBlockListCache.ips.filter(i => i !== value);
+                    break;
+            }
+            await this.savePersonalBlocks();
+            await FilterModule.refilterAllContent();
             this.exitSelectionMode();
         },
 
         createFab() {
-            // [v1.7.1 리팩토링] FAB 생성 조건 완화 (항상 생성 시도)
+            // [수정] 글 목록 및 글 내용 페이지에서만 '간편차단' 버튼을 표시합니다.
             const currentPath = window.location.pathname;
-            // 글 목록, 글 보기 페이지에서만 FAB를 생성합니다.
             if (!currentPath.includes('/board/lists') && !currentPath.includes('/board/view')) {
+                return; // 대상 페이지가 아니면 버튼을 생성하지 않고 함수를 종료합니다.
+            }
+
+            // [방어 코드 1] 이미 FAB가 존재하면 중복 생성을 방지
+            if (document.getElementById('dc-personal-block-fab')) {
                 return;
             }
-            if (document.getElementById('dc-personal-block-fab')) return;
+
 
             const fab = document.createElement('div');
             fab.id = 'dc-personal-block-fab';
             fab.textContent = '간편차단';
             document.body.appendChild(fab);
 
-            fab.addEventListener('click', () => this.enterSelectionMode());
-        },
 
-        // [3.0.0 port rail] Override legacy FAB creation with the current mobile drag/click behavior.
-        createFab() {
-            const currentPath = window.location.pathname;
-            if (!currentPath.includes('/board/lists') && !currentPath.includes('/board/view')) {
-                return;
-            }
-            if (document.getElementById('dc-personal-block-fab')) return;
-
-            const fab = document.createElement('div');
-            fab.id = 'dc-personal-block-fab';
-            fab.textContent = '간편차단';
-            document.body.appendChild(fab);
-
-            fab.addEventListener('click', () => {
+            fab.addEventListener('click', (e) => {
                 if (fab.getAttribute('data-dragged') === 'true') {
                     fab.removeAttribute('data-dragged');
                     return;
@@ -2181,11 +2814,10 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 this.enterSelectionMode();
             });
 
-            let isDragging = false;
-            let offsetX = 0;
-            let offsetY = 0;
 
-            const onDragStart = (e) => {
+            // 드래그 기능
+            let isDragging = false, offsetX, offsetY;
+            const onDragStart = (e) => { // async 제거 (필요 없음)
                 isDragging = true;
                 fab.style.transition = 'none';
                 const clientX = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
@@ -2195,6 +2827,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 offsetY = clientY - rect.top;
                 fab.setAttribute('data-dragged', 'false');
             };
+
 
             const onDragMove = (e) => {
                 if (!isDragging) return;
@@ -2208,15 +2841,21 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 newY = Math.max(0, Math.min(newY, window.innerHeight - fab.offsetHeight));
                 fab.style.left = `${newX}px`;
                 fab.style.top = `${newY}px`;
+                // [방어 코드 2] right, bottom 속성 제거하여 left/top과 충돌 방지
                 fab.style.right = 'auto';
                 fab.style.bottom = 'auto';
             };
 
-            const onDragEnd = () => {
+
+            const onDragEnd = () => { // async 키워드 제거
                 if (!isDragging) return;
                 isDragging = false;
                 fab.style.transition = 'transform 0.2s ease-out';
+
+                // GM_setValue 호출을 포함한 위치 저장 로직 전체를 제거하여
+                // 드래그가 끝나도 위치가 저장되지 않도록 합니다.
             };
+
 
             fab.addEventListener('mousedown', onDragStart);
             document.addEventListener('mousemove', onDragMove);
@@ -2225,18 +2864,21 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             document.addEventListener('touchmove', onDragMove, { passive: false });
             document.addEventListener('touchend', onDragEnd);
 
-            Object.assign(fab.style, {
-                left: 'auto',
-                top: 'auto',
-                right: '20px',
-                bottom: '20px'
-            });
+
+            // 저장된 위치 로드 대신 항상 기본 위치에 생성
+            (() => { // async 키워드 제거
+                // 저장된 위치를 불러오는 대신 항상 기본 위치를 사용하도록 수정
+                const defaultPos = { left: 'auto', top: 'auto', right: '20px', bottom: '20px' };
+                // GM_getValue 및 유효성 검사 로직을 제거하고, defaultPos를 바로 적용합니다.
+                Object.assign(fab.style, defaultPos);
+            })();
         },
 
         enterSelectionMode() {
             if (this.isSelectionMode) return;
             this.isSelectionMode = true;
             document.body.classList.add('selection-mode-active');
+
 
             const popup = document.createElement('div');
             popup.id = 'dc-selection-popup';
@@ -2247,37 +2889,46 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 </div>
             `;
             document.body.appendChild(popup);
+
             popup.querySelector('.cancel-btn').onclick = () => this.exitSelectionMode();
         },
+
 
         exitSelectionMode() {
             if (!this.isSelectionMode) return;
             this.isSelectionMode = false;
             document.body.classList.remove('selection-mode-active');
             const popup = document.getElementById('dc-selection-popup');
-            if (popup) popup.remove();
+            if (popup) {
+                popup.classList.add('dcuf-pop-leave');
+                window.setTimeout(() => popup.remove(), 120);
+            }
         },
+
 
         handleSelectionClick(e) {
             if (!this.isSelectionMode) return;
             const popup = document.getElementById('dc-selection-popup');
             if (popup && popup.contains(e.target)) return;
 
-            const writerEl = e.target.closest('.ub-writer');
+
+            const writerEl = e.target.closest('.gall_writer, .ub-writer');
             if (writerEl) {
                 e.preventDefault();
                 e.stopPropagation();
 
+
                 const nick = writerEl.getAttribute('data-nick');
                 const uid = writerEl.getAttribute('data-uid');
-                const parentItem = writerEl.closest('.ub-content');
-                const ipSpan = parentItem ? parentItem.querySelector('span.ip') : null;
-                const ip = ipSpan ? ipSpan.textContent.trim().slice(1, -1) : null;
+                const ip = writerEl.getAttribute('data-ip');
+
 
                 this.showSelectionPopup({ nick, uid, ip });
             }
         },
 
+
+        // [v2.5.7 수정] 차단/차단 해제 버튼을 동적으로 생성
         showSelectionPopup(userInfo) {
             this.exitSelectionMode();
             this.isSelectionMode = true;
@@ -2286,35 +2937,197 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             const popup = document.createElement('div');
             popup.id = 'dc-selection-popup';
 
+            // [핵심 변경] 사용자의 차단 상태를 먼저 확인
+            const blockStatus = this.checkBlockStatus(userInfo);
             let optionsHtml = '';
+
+            // 닉네임 처리
             if (userInfo.nick) {
-                optionsHtml += `<div class="block-option"><span>닉네임: ${userInfo.nick}</span><button data-type="nickname" data-value="${userInfo.nick}">차단</button></div>`;
+                if (blockStatus.isNickBlocked) {
+                    optionsHtml += `<div class="block-option"><span>닉네임: ${userInfo.nick}</span><button class="btn-unblock" data-type="nickname" data-value="${userInfo.nick}">차단 해제</button></div>`;
+                } else {
+                    optionsHtml += `<div class="block-option"><span>닉네임: ${userInfo.nick}</span><button data-type="nickname" data-value="${userInfo.nick}">차단</button></div>`;
+                }
             }
+            // UID 처리
             if (userInfo.uid) {
-                const displayName = `${userInfo.nick || '유저'}(${userInfo.uid})`;
-                optionsHtml += `<div class="block-option"><span>식별번호: ${displayName}</span><button data-type="uid" data-value="${userInfo.uid}" data-display-name="${displayName}">차단</button></div>`;
+                const displayName = `${userInfo.nick}(${userInfo.uid})`;
+                if (blockStatus.isUidBlocked) {
+                    optionsHtml += `<div class="block-option"><span>식별번호: ${displayName}</span><button class="btn-unblock" data-type="uid" data-value="${userInfo.uid}" data-display-name="${displayName}">차단 해제</button></div>`;
+                } else {
+                    optionsHtml += `<div class="block-option"><span>식별번호: ${displayName}</span><button data-type="uid" data-value="${userInfo.uid}" data-display-name="${displayName}">차단</button></div>`;
+                }
             }
+            // IP 처리
             if (userInfo.ip) {
-                optionsHtml += `<div class="block-option"><span>IP: ${userInfo.ip}</span><button data-type="ip" data-value="${userInfo.ip}">차단</button></div>`;
+                if (blockStatus.isIpBlocked) {
+                    optionsHtml += `<div class="block-option"><span>IP: ${userInfo.ip}</span><button class="btn-unblock" data-type="ip" data-value="${userInfo.ip}">차단 해제</button></div>`;
+                } else {
+                    optionsHtml += `<div class="block-option"><span>IP: ${userInfo.ip}</span><button data-type="ip" data-value="${userInfo.ip}">차단</button></div>`;
+                }
             }
 
             popup.innerHTML = `
-                <h4>어떤 정보를 차단할까요?</h4>
+                <h4>어떤 정보를 처리할까요?</h4>
                 <div class="block-options">${optionsHtml}</div>
                 <div class="popup-buttons"><button class="cancel-btn">취소</button></div>
             `;
             document.body.appendChild(popup);
 
             popup.querySelector('.cancel-btn').onclick = () => this.exitSelectionMode();
+
+            // [핵심 변경] 이벤트 핸들러 통합
             popup.querySelectorAll('.block-options button').forEach(btn => {
                 btn.onclick = () => {
                     const { type, value, displayName } = btn.dataset;
-                    this.addBlock(type, value, displayName);
+                    if (btn.classList.contains('btn-unblock')) {
+                        // '차단 해제' 버튼 클릭 시
+                        this.removeBlock(type, value);
+                    } else {
+                        // '차단' 버튼 클릭 시
+                        this.addBlock(type, value, displayName);
+                    }
                 };
             });
         },
 
+
+        // [신규] 차단 목록 병합 헬퍼 함수
+        attachPopupPinchResize(target, options = {}) {
+            if (!target) return;
+            if (target.getAttribute('data-dcuf-pinch-resize-bound') === '1') return;
+            target.setAttribute('data-dcuf-pinch-resize-bound', '1');
+
+            const baseMinWidth = Number(options.minWidth) || 320;
+            const baseMinHeight = Number(options.minHeight) || 260;
+            const maxWidthOption = Number(options.maxWidth) || 0;
+            const maxHeightOption = Number(options.maxHeight) || 0;
+
+            let isPinching = false;
+            let startDistance = 0;
+            let startWidth = 0;
+            let startHeight = 0;
+            let lastMoveTs = 0;
+            let lastMoveDistance = -1;
+
+            const clamp = (value, min, max) => Math.max(min, Math.min(value, max));
+            const getDistance = (t1, t2) => Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
+            const getMidpoint = (t1, t2) => ({ x: (t1.clientX + t2.clientX) / 2, y: (t1.clientY + t2.clientY) / 2 });
+            const viewportSize = () => ({ width: window.innerWidth, height: window.innerHeight });
+
+            const normalizeFixedPosition = () => {
+                const rect = target.getBoundingClientRect();
+                if (target.style.transform && target.style.transform !== 'none') {
+                    target.style.transform = 'none';
+                    target.style.left = `${rect.left}px`;
+                    target.style.top = `${rect.top}px`;
+                }
+                return target.getBoundingClientRect();
+            };
+
+            const isTouchInsideRect = (touch, rect, padding = 24) => (
+                touch.clientX >= rect.left - padding &&
+                touch.clientX <= rect.right + padding &&
+                touch.clientY >= rect.top - padding &&
+                touch.clientY <= rect.bottom + padding
+            );
+
+            const canStartPinch = (touches, rect) => {
+                if (!touches || touches.length < 2) return false;
+                const t1 = touches[0];
+                const t2 = touches[1];
+                if (!isTouchInsideRect(t1, rect) || !isTouchInsideRect(t2, rect)) return false;
+                const mid = getMidpoint(t1, t2);
+                return isTouchInsideRect({ clientX: mid.x, clientY: mid.y }, rect, 48);
+            };
+
+            const startPinch = (touches) => {
+                const rect = normalizeFixedPosition();
+                if (!canStartPinch(touches, rect)) return;
+
+                const distance = getDistance(touches[0], touches[1]);
+                if (!distance || !isFinite(distance)) return;
+
+                isPinching = true;
+                startDistance = distance;
+                startWidth = rect.width;
+                startHeight = rect.height;
+                lastMoveTs = 0;
+                lastMoveDistance = -1;
+            };
+
+            const onTouchStart = (e) => {
+                if (!target.isConnected) return;
+                if (!e.touches || e.touches.length < 2) return;
+                startPinch(e.touches);
+                if (isPinching) {
+                    if (e.cancelable) e.preventDefault();
+                    e.stopPropagation();
+                }
+            };
+
+            const onTouchMove = (e) => {
+                if (!target.isConnected || !isPinching) return;
+                if (!e.touches || e.touches.length < 2) {
+                    isPinching = false;
+                    return;
+                }
+
+                const distance = getDistance(e.touches[0], e.touches[1]);
+                if (!distance || !isFinite(distance)) return;
+
+                const now = Date.now();
+                if (lastMoveDistance >= 0 && Math.abs(distance - lastMoveDistance) < 0.0001 && (now - lastMoveTs) < 6) {
+                    if (e.cancelable) e.preventDefault();
+                    e.stopPropagation();
+                    return;
+                }
+                lastMoveDistance = distance;
+                lastMoveTs = now;
+
+                const mid = getMidpoint(e.touches[0], e.touches[1]);
+                const vp = viewportSize();
+                const maxViewportWidth = Math.max(120, vp.width - 8);
+                const maxViewportHeight = Math.max(120, vp.height - 8);
+
+                const dynamicMinWidth = Math.max(120, Math.min(baseMinWidth, Math.max(120, vp.width - 12)));
+                const dynamicMinHeight = Math.max(120, Math.min(baseMinHeight, Math.max(120, vp.height - 12)));
+
+                const configuredMaxWidth = maxWidthOption > 0 ? Math.min(maxWidthOption, maxViewportWidth) : maxViewportWidth;
+                const configuredMaxHeight = maxHeightOption > 0 ? Math.min(maxHeightOption, maxViewportHeight) : maxViewportHeight;
+                const maxWidth = Math.max(dynamicMinWidth, configuredMaxWidth);
+                const maxHeight = Math.max(dynamicMinHeight, configuredMaxHeight);
+
+                const scale = distance / startDistance;
+                const nextWidth = clamp(startWidth * scale, dynamicMinWidth, maxWidth);
+                const nextHeight = clamp(startHeight * scale, dynamicMinHeight, maxHeight);
+
+                const rawLeft = mid.x - (nextWidth / 2);
+                const rawTop = mid.y - (nextHeight / 2);
+                const nextLeft = clamp(rawLeft, 0, Math.max(0, vp.width - nextWidth));
+                const nextTop = clamp(rawTop, 0, Math.max(0, vp.height - nextHeight));
+
+                target.style.width = `${nextWidth}px`;
+                target.style.height = `${nextHeight}px`;
+                target.style.left = `${nextLeft}px`;
+                target.style.top = `${nextTop}px`;
+
+                if (e.cancelable) e.preventDefault();
+                e.stopPropagation();
+            };
+
+            const onTouchEnd = () => {
+                if (!target.isConnected) return;
+                isPinching = false;
+            };
+
+            target.addEventListener('touchstart', onTouchStart, { passive: false });
+            target.addEventListener('touchmove', onTouchMove, { passive: false });
+            target.addEventListener('touchend', onTouchEnd, { passive: true });
+            target.addEventListener('touchcancel', onTouchEnd, { passive: true });
+        },
         mergeBlockLists(existing, imported) {
+            // UIDs 병합 (중복 ID 확인)
             const existingUIDs = new Set(existing.uids.map(u => u.id));
             const mergedUIDs = [...existing.uids];
             imported.uids.forEach(importedUser => {
@@ -2322,66 +3135,15 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                     mergedUIDs.push(importedUser);
                 }
             });
+
+            // Nicknames, IPs 병합 (Set을 사용하여 간단하게 중복 제거)
             const mergedNicknames = [...new Set([...existing.nicknames, ...imported.nicknames])];
             const mergedIPs = [...new Set([...existing.ips, ...imported.ips])];
+
             return { uids: mergedUIDs, nicknames: mergedNicknames, ips: mergedIPs };
         },
 
-        async createBackupPopup() {
-            if (document.getElementById('dc-backup-popup')) return;
-            const overlay = document.createElement('div');
-            overlay.id = 'dc-backup-popup-overlay';
-            const popup = document.createElement('div');
-            popup.id = 'dc-backup-popup';
-            // [v1.7.1 수정] 백업/복원 HTML 구조 수정
-            popup.innerHTML = `
-                <div class="popup-header"><h4>차단 목록 백업/복원</h4><button class="popup-close-btn">×</button></div>
-                <div class="popup-content">
-                    <div>
-                        <label>내보내기</label>
-                        <div class="description">현재 차단 목록 전체를 클립보드에 복사합니다.</div>
-                        <button class="export-btn">클립보드에 복사</button>
-                    </div>
-                    <hr>
-                    <div>
-                        <label>불러오기</label>
-                        <div class="description">백업한 데이터를 붙여넣고 불러오면 기존 목록에 추가됩니다.</div>
-                        <div class="import-controls">
-                            <textarea placeholder="백업 데이터를 여기에 붙여넣으세요..."></textarea>
-                            <button class="import-btn">불러오기</button>
-                        </div>
-                    </div>
-                </div>`;
-            document.body.appendChild(overlay);
-            document.body.appendChild(popup);
-            const closePopup = () => { overlay.remove(); popup.remove(); };
-            popup.querySelector('.popup-close-btn').onclick = closePopup;
-            overlay.onclick = closePopup;
-            popup.querySelector('.export-btn').onclick = async () => {
-                const data = await this.loadPersonalBlocks();
-                navigator.clipboard.writeText(JSON.stringify(data, null, 2)).then(() => alert('차단 목록이 클립보드에 복사되었습니다.')).catch(err => alert('클립보드 복사 실패: ' + err));
-            };
-            popup.querySelector('.import-btn').onclick = async () => {
-                const jsonString = popup.querySelector('textarea').value;
-                if (!jsonString.trim()) return alert('불러올 데이터를 입력해주세요.');
-                try {
-                    const importedList = JSON.parse(jsonString);
-                    if (typeof importedList !== 'object' || !importedList.uids || !importedList.nicknames || !importedList.ips) throw new Error('Invalid format');
-                    const currentList = await this.loadPersonalBlocks();
-                    this.personalBlockListCache = this.mergeBlockLists(currentList, importedList);
-                    await this.savePersonalBlocks();
-                    await refilterAllContent();
-                    alert('차단 목록을 성공적으로 불러와 추가했습니다.');
-                    closePopup();
-                    const mgmtPanel = document.getElementById('dc-block-management-panel');
-                    if (mgmtPanel) mgmtPanel.querySelector('.panel-close-btn').click();
-                } catch (err) { alert('데이터 형식이 올바르지 않습니다.'); }
-            };
-        },
-
-        // [v1.7.1 수정] 관리 패널 기능 전체 수정
-        // [3.0.0 port rail] 모바일 최신 백업/복원 UI를 PC에도 유지합니다.
-        // 레거시 createBackupPopup 위에 덮어쓰는 대신, 같은 객체의 뒤쪽에서 최신 구현으로 재정의합니다.
+        // [신규] 백업 및 복원 팝업 생성 함수
         async createBackupPopup() {
             if (document.getElementById('dc-backup-popup')) return;
 
@@ -2398,48 +3160,65 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 <div class="popup-content">
                     <div class="export-section">
                         <label>내보내기</label>
-                        <div class="description">현재 차단 목록 전체를 파일로 저장하거나 클립보드에 복사합니다.</div>
-                        <div class="export-actions">
+                        <span class="description">현재 차단 목록 전체를 파일로 저장하거나 클립보드에 복사합니다.</span>
+                        <div style="display: flex; gap: 8px; margin-top: 5px;">
                             <button class="export-btn-download">파일로 다운로드</button>
                             <button class="export-btn">클립보드에 복사</button>
                         </div>
                     </div>
-                    <hr style="border:0; border-top:1px solid #eee;">
+                    <hr style="border: 0; border-top: 1px solid #eee;">
                     <div class="import-section">
                         <label>불러오기</label>
-                        <div class="description">백업 파일을 선택하거나, 아래 텍스트 영역에 직접 붙여넣으세요.</div>
+                        <span class="description">백업 파일을 선택하거나, 아래 텍스트 영역에 직접 붙여넣으세요.</span>
                         <div class="import-controls">
-                            <input type="file" class="import-file-input" accept=".json,.txt">
-                            <textarea placeholder="또는, 백업 데이터를 여기에 붙여넣으세요..."></textarea>
+                           <input type="file" class="import-file-input" accept=".json,.txt">
+                           <textarea placeholder="또는, 백업 데이터를 여기에 붙여넣으세요..."></textarea>
                         </div>
-                        <button class="import-btn">불러오기</button>
+                         <button class="import-btn">불러오기</button>
                     </div>
-                </div>`;
+                </div>
+            `;
 
             document.body.appendChild(overlay);
             document.body.appendChild(popup);
 
-            const closePopup = () => { overlay.remove(); popup.remove(); };
+            this.attachPopupPinchResize(popup, { minWidth: 300, minHeight: 240 });
+
+
+            const closePopup = () => {
+                popup.classList.add('dcuf-pop-leave');
+                overlay.classList.add('dcuf-overlay-leave');
+                window.setTimeout(() => {
+                    overlay.remove();
+                    popup.remove();
+                }, 140);
+            };
+
             popup.querySelector('.popup-close-btn').onclick = closePopup;
             overlay.onclick = closePopup;
 
+
+            // [추가] 파일로 다운로드 버튼 이벤트 핸들러
             popup.querySelector('.export-btn-download').onclick = async () => {
                 const data = await this.loadPersonalBlocks();
                 const jsonString = JSON.stringify(data, null, 2);
                 const blob = new Blob([jsonString], { type: 'application/json' });
                 const url = URL.createObjectURL(blob);
+
                 const a = document.createElement('a');
-                const date = new Date();
-                const timestamp = `${date.getFullYear()}${String(date.getMonth() + 1).padStart(2, '0')}${String(date.getDate()).padStart(2, '0')}_${String(date.getHours()).padStart(2, '0')}${String(date.getMinutes()).padStart(2, '0')}`;
                 a.href = url;
+
+                const date = new Date();
+                const timestamp = `${date.getFullYear()}${(date.getMonth() + 1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}_${date.getHours().toString().padStart(2, '0')}${date.getMinutes().toString().padStart(2, '0')}`;
                 a.download = `dc_blocklist_backup_${timestamp}.json`;
+
                 document.body.appendChild(a);
                 a.click();
                 document.body.removeChild(a);
                 URL.revokeObjectURL(url);
+
                 alert('백업 파일 다운로드를 시작합니다.');
             };
-
             popup.querySelector('.export-btn').onclick = async () => {
                 const data = await this.loadPersonalBlocks();
                 const jsonString = JSON.stringify(data, null, 2);
@@ -2452,6 +3231,9 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 }
             };
 
+            // [수정] 불러오기 기능 (파일/텍스트 모두 처리)
+
+            // 공통 데이터 처리 로직을 별도 함수로 분리
             const processImportData = async (jsonString) => {
                 if (!jsonString || !jsonString.trim()) {
                     alert('불러올 데이터가 없습니다.');
@@ -2471,9 +3253,10 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
                 const currentList = await this.loadPersonalBlocks();
                 const mergedList = this.mergeBlockLists(currentList, importedList);
+
                 this.personalBlockListCache = mergedList;
                 await this.savePersonalBlocks();
-                await refilterAllContent();
+                await FilterModule.refilterAllContent();
 
                 alert('차단 목록을 성공적으로 불러와서 추가했습니다.');
                 closePopup();
@@ -2481,65 +3264,127 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 if (managementPanel) managementPanel.querySelector('.panel-close-btn').click();
             };
 
+            // 불러오기 버튼 클릭 이벤트
             popup.querySelector('.import-btn').onclick = async () => {
                 const fileInput = popup.querySelector('.import-file-input');
                 const textarea = popup.querySelector('textarea');
 
+                // 1순위: 파일이 선택되었는지 확인
                 if (fileInput.files.length > 0) {
                     const file = fileInput.files[0];
                     const reader = new FileReader();
+
                     reader.onload = (e) => {
+                        // 파일 읽기가 완료되면 데이터 처리 함수 호출
                         processImportData(e.target.result);
                     };
                     reader.onerror = () => {
                         alert('파일을 읽는 중 오류가 발생했습니다.');
                     };
-                    reader.readAsText(file);
-                    return;
-                }
 
-                await processImportData(textarea.value);
+                    reader.readAsText(file); // 파일 읽기 시작
+                }
+                // 2순위: 파일이 없다면 textarea의 값을 사용
+                else {
+                    processImportData(textarea.value);
+                }
             };
         },
 
+
+        // [수정] 차단 관리 패널 로직 전체 개선 (On/Off 스위치, 백업 버튼 추가)
         async createManagementPanel() {
             if (document.getElementById('dc-block-management-panel')) return;
 
+
             const originalBlockList = await this.loadPersonalBlocks();
             const itemsToDelete = { uids: new Set(), nicknames: new Set(), ips: new Set() };
-            const isPersonalBlockEnabled = await GM_getValue(CONSTANTS.STORAGE_KEYS.PERSONAL_BLOCK_ENABLED, true);
+            const isPersonalBlockEnabled = await GM_getValue(FilterModule.CONSTANTS.STORAGE_KEYS.PERSONAL_BLOCK_ENABLED, true);
+
 
             const overlay = document.createElement('div');
             overlay.id = 'dc-block-management-panel-overlay';
+
+
             const panel = document.createElement('div');
             panel.id = 'dc-block-management-panel';
             panel.innerHTML = `
-                <div class="panel-header"><h3>차단 유저 관리</h3><div class="switch-container"><label class="switch"><input type="checkbox" id="personal-block-toggle" ${isPersonalBlockEnabled ? 'checked' : ''}><span class="switch-slider"></span></label></div><button class="panel-close-btn">×</button></div>
-                <div class="panel-tabs"><div class="panel-tab active" data-type="uids">식별 번호</div><div class="panel-tab" data-type="nicknames">닉네임</div><div class="panel-tab" data-type="ips">아이피</div></div>
-                <div class="panel-body"><div class="panel-list-controls"><button class="select-all-btn">해당 탭 전체 선택</button></div><div class="panel-content"><ul class="blocked-list"></ul></div></div>
-                <div class="panel-footer"><div class="panel-footer-left"><button class="select-all-global-btn">모든 탭 전체 선택</button><button class="panel-backup-btn">백업</button></div><button class="panel-save-btn">저장</button></div>
-                <div class="panel-resize-handle"></div>`;
-
+                <div class="panel-header">
+                    <h3>차단 유저 관리</h3>
+                    <div class="switch-container">
+                        <label class="switch">
+                            <input type="checkbox" id="personal-block-toggle" ${isPersonalBlockEnabled ? 'checked' : ''}>
+                            <span class="switch-slider"></span>
+                        </label>
+                    </div>
+                    <button class="panel-close-btn">×</button>
+                </div>
+                <div class="panel-tabs">
+                    <div class="panel-tab active" data-type="uids">식별 번호</div>
+                    <div class="panel-tab" data-type="nicknames">닉네임</div>
+                    <div class="panel-tab" data-type="ips">아이피</div>
+                </div>
+                <div class="panel-body">
+                    <div class="panel-list-controls">
+                        <button class="select-all-btn">해당 탭 전체 선택/해제</button>
+                    </div>
+                    <div class="panel-content">
+                        <ul class="blocked-list"></ul>
+                    </div>
+                </div>
+                <div class="panel-footer">
+                    <div class="panel-footer-left">
+                        <button class="select-all-global-btn">모든 탭 전체 선택/해제</button>
+                        <button class="panel-backup-btn">백업</button>
+                    </div>
+                    <button class="panel-save-btn">저장</button>
+                </div>
+                <div class="panel-resize-handle"></div>
+            `;
             document.body.appendChild(overlay);
             document.body.appendChild(panel);
 
-            const listEl = panel.querySelector('.blocked-list');
-            const selectAllBtn = panel.querySelector('.select-all-btn');
-            const globalSelectAllBtn = panel.querySelector('.select-all-global-btn');
+            this.attachPopupPinchResize(panel, { minWidth: 320, minHeight: 260 });
 
-            const updateButtonStates = (type) => {
-                const currentList = originalBlockList[type] || [];
-                selectAllBtn.textContent = (currentList.length > 0 && itemsToDelete[type].size === currentList.length) ? '해당 탭 전체 해제' : '해당 탭 전체 선택';
-                selectAllBtn.dataset.action = (currentList.length > 0 && itemsToDelete[type].size === currentList.length) ? 'deselect' : 'select';
+            // [신규] On/Off 스위치 이벤트 리스너
+            const toggleSwitch = panel.querySelector('#personal-block-toggle');
+            toggleSwitch.addEventListener('change', async (e) => {
+                const isEnabled = e.target.checked;
+                await GM_setValue(FilterModule.CONSTANTS.STORAGE_KEYS.PERSONAL_BLOCK_ENABLED, isEnabled);
+                dcFilterSettings.personalBlockEnabled = isEnabled; // 즉시 설정 반영
+                await FilterModule.refilterAllContent(); // 필터 재적용
+            });
 
-                const totalItems = originalBlockList.uids.length + originalBlockList.nicknames.length + originalBlockList.ips.length;
-                const totalSelected = itemsToDelete.uids.size + itemsToDelete.nicknames.size + itemsToDelete.ips.size;
-                globalSelectAllBtn.textContent = (totalItems > 0 && totalSelected === totalItems) ? '모든 탭 전체 해제' : '모든 탭 전체 선택';
+            // [신규] 백업 버튼 이벤트 리스너
+            panel.querySelector('.panel-backup-btn').onclick = () => {
+                this.createBackupPopup();
             };
 
+            const globalSelectAllBtn = panel.querySelector('.select-all-global-btn');
+
+
+            const isEverythingSelected = () => {
+                const totalItems = originalBlockList.uids.length + originalBlockList.nicknames.length + originalBlockList.ips.length;
+                if (totalItems === 0) return false; // 아무것도 없으면 선택된 게 아님
+                const totalSelected = itemsToDelete.uids.size + itemsToDelete.nicknames.size + itemsToDelete.ips.size;
+                return totalItems === totalSelected;
+            };
+
+
+            const updateGlobalSelectAllButtonState = () => {
+                if (isEverythingSelected()) {
+                    globalSelectAllBtn.textContent = '모든 탭 전체 해제';
+                } else {
+                    globalSelectAllBtn.textContent = '모든 탭 전체 선택';
+                }
+            };
+
+
             const renderList = (type) => {
+                const listEl = panel.querySelector('.blocked-list');
                 listEl.innerHTML = '';
                 const data = originalBlockList[type] || [];
+
 
                 data.forEach(item => {
                     const li = document.createElement('li');
@@ -2549,314 +3394,306 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                     li.dataset.value = value;
                     li.innerHTML = `<span class="item-name">${name}</span><span class="delete-item-btn">X</span>`;
 
+
                     if (itemsToDelete[type].has(value)) {
                         li.classList.add('item-to-delete');
                     }
 
+
                     li.querySelector('.delete-item-btn').onclick = () => {
-                        li.classList.toggle('item-to-delete') ? itemsToDelete[type].add(value) : itemsToDelete[type].delete(value);
-                        updateButtonStates(type);
+                        if (li.classList.toggle('item-to-delete')) {
+                            itemsToDelete[type].add(value);
+                        } else {
+                            itemsToDelete[type].delete(value);
+                        }
+                        updateSelectAllButtonState(type);
+                        updateGlobalSelectAllButtonState(); // [추가] 개별 변경 시 전역 버튼 상태도 업데이트
                     };
                     listEl.appendChild(li);
                 });
-                updateButtonStates(type);
+                updateSelectAllButtonState(type);
+                updateGlobalSelectAllButtonState(); // [추가] 탭 변경 시 전역 버튼 상태도 업데이트
             };
 
-            selectAllBtn.onclick = () => {
+
+            const updateSelectAllButtonState = (type) => {
+                const selectAllBtn = panel.querySelector('.select-all-btn');
+                const currentList = originalBlockList[type] || [];
+                if (currentList.length > 0 && itemsToDelete[type].size === currentList.length) {
+                    selectAllBtn.textContent = '해당 탭 전체 해제';
+                    selectAllBtn.dataset.action = 'deselect';
+                } else {
+                    selectAllBtn.textContent = '해당 탭 전체 선택';
+                    selectAllBtn.dataset.action = 'select';
+                }
+            };
+
+
+            const handleSelectAll = () => {
                 const type = panel.querySelector('.panel-tab.active').dataset.type;
+                const selectAllBtn = panel.querySelector('.select-all-btn');
                 const shouldSelectAll = selectAllBtn.dataset.action === 'select';
-                (originalBlockList[type] || []).forEach(item => {
+
+
+                const currentList = originalBlockList[type] || [];
+                currentList.forEach(item => {
                     const value = (typeof item === 'object') ? item.id : item;
-                    shouldSelectAll ? itemsToDelete[type].add(value) : itemsToDelete[type].delete(value);
+                    if (shouldSelectAll) {
+                        itemsToDelete[type].add(value);
+                    } else {
+                        itemsToDelete[type].delete(value);
+                    }
                 });
                 renderList(type);
             };
 
-            globalSelectAllBtn.onclick = () => {
-                const totalItems = originalBlockList.uids.length + originalBlockList.nicknames.length + originalBlockList.ips.length;
-                const totalSelected = itemsToDelete.uids.size + itemsToDelete.nicknames.size + itemsToDelete.ips.size;
-                const shouldSelectEverything = totalSelected < totalItems;
 
-                Object.keys(originalBlockList).forEach(type => {
-                    (originalBlockList[type] || []).forEach(item => {
-                        const value = (typeof item === 'object') ? item.id : item;
-                        shouldSelectEverything ? itemsToDelete[type].add(value) : itemsToDelete[type].delete(value);
-                    });
-                });
-                renderList(panel.querySelector('.panel-tab.active').dataset.type);
+            panel.querySelector('.select-all-btn').onclick = handleSelectAll;
+
+
+            globalSelectAllBtn.onclick = () => {
+                const shouldSelectEverything = !isEverythingSelected();
+
+
+                if (shouldSelectEverything) {
+                    originalBlockList.uids.forEach(u => itemsToDelete.uids.add(u.id));
+                    originalBlockList.nicknames.forEach(n => itemsToDelete.nicknames.add(n));
+                    originalBlockList.ips.forEach(i => itemsToDelete.ips.add(i));
+                } else {
+                    itemsToDelete.uids.clear();
+                    itemsToDelete.nicknames.clear();
+                    itemsToDelete.ips.clear();
+                }
+                const activeTabType = panel.querySelector('.panel-tab.active').dataset.type;
+                renderList(activeTabType);
             };
 
 
-            panel.querySelector('#personal-block-toggle').addEventListener('change', async (e) => {
-                await GM_setValue(CONSTANTS.STORAGE_KEYS.PERSONAL_BLOCK_ENABLED, e.target.checked);
-                await refilterAllContent();
+
+
+            const tabs = panel.querySelectorAll('.panel-tab');
+            tabs.forEach(tab => {
+                tab.onclick = () => {
+                    tabs.forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    renderList(tab.dataset.type);
+                };
             });
-            panel.querySelector('.panel-backup-btn').onclick = () => this.createBackupPopup();
-            panel.querySelectorAll('.panel-tab').forEach(tab => tab.onclick = () => {
-                panel.querySelectorAll('.panel-tab').forEach(t => t.classList.remove('active'));
-                tab.classList.add('active');
-                renderList(tab.dataset.type);
-            });
-            const closePanel = () => { overlay.remove(); panel.remove(); };
+
+
+            const closePanel = () => {
+                panel.classList.add('dcuf-pop-leave');
+                overlay.classList.add('dcuf-overlay-leave');
+                window.setTimeout(() => {
+                    overlay.remove();
+                    panel.remove();
+                }, 140);
+            };
+
+
             panel.querySelector('.panel-close-btn').onclick = closePanel;
             overlay.onclick = closePanel;
+
+
             panel.querySelector('.panel-save-btn').onclick = async () => {
-                this.personalBlockListCache = {
+                const finalBlockList = {
                     uids: originalBlockList.uids.filter(u => !itemsToDelete.uids.has(u.id)),
                     nicknames: originalBlockList.nicknames.filter(n => !itemsToDelete.nicknames.has(n)),
                     ips: originalBlockList.ips.filter(i => !itemsToDelete.ips.has(i))
                 };
+
+
+                this.personalBlockListCache = finalBlockList;
                 await this.savePersonalBlocks();
-                await refilterAllContent();
+                await FilterModule.refilterAllContent();
                 closePanel();
             };
 
-            let isDragging = false, isResizing = false, lastX, lastY, offsetX, offsetY;
-            panel.addEventListener('mousedown', (e) => {
-                if (e.target.classList.contains('panel-resize-handle')) isResizing = true;
-                else if (e.target.closest('.panel-header')) isDragging = true;
-                else return;
+
+            // 드래그 & 리사이즈 로직 전체 개선
+            let isDragging = false, isResizing = false;
+            let offsetX, offsetY, lastX, lastY; // lastX, lastY는 리사이즈 전용
+
+
+            const onDragStart = (e) => {
+                if (e.button !== 0) return;
+
+
+                if (e.target.classList.contains('panel-resize-handle')) {
+                    isResizing = true;
+                } else if (e.target.closest('.panel-header')) {
+                    isDragging = true;
+                } else {
+                    return;
+                }
+
+
                 const rect = panel.getBoundingClientRect();
-                lastX = e.clientX; lastY = e.clientY;
-                offsetX = e.clientX - rect.left; offsetY = e.clientY - rect.top;
+
+
+                if (panel.style.transform !== 'none') {
+                    panel.style.transform = 'none';
+                    panel.style.left = `${rect.left}px`;
+                    panel.style.top = `${rect.top}px`;
+                }
+
+
+                if (isDragging) {
+                    offsetX = e.clientX - rect.left;
+                    offsetY = e.clientY - rect.top;
+                } else if (isResizing) {
+                    lastX = e.clientX;
+                    lastY = e.clientY;
+                }
+
+
                 document.addEventListener('mousemove', onDragMove);
                 document.addEventListener('mouseup', onDragEnd, { once: true });
-            });
+            };
+
+
             const onDragMove = (e) => {
+                e.preventDefault();
+
+
                 if (isDragging) {
                     const rect = panel.getBoundingClientRect();
                     let newX = e.clientX - offsetX;
                     let newY = e.clientY - offsetY;
-                    // 드래그 경계 제한
+
+
                     newX = Math.max(0, Math.min(newX, window.innerWidth - rect.width));
                     newY = Math.max(0, Math.min(newY, window.innerHeight - rect.height));
-                    panel.style.left = `${newX}px`; panel.style.top = `${newY}px`;
-                    panel.style.transform = 'none'; // transform이 있으면 left/top이 제대로 안 먹힘
-                }
-                if (isResizing) {
-                    panel.style.width = `${panel.offsetWidth + e.clientX - lastX}px`;
-                    panel.style.height = `${panel.offsetHeight + e.clientY - lastY}px`;
-                    lastX = e.clientX; lastY = e.clientY;
+
+
+                    panel.style.left = `${newX}px`;
+                    panel.style.top = `${newY}px`;
+                } else if (isResizing) {
+                    const dx = e.clientX - lastX;
+                    const dy = e.clientY - lastY;
+                    lastX = e.clientX;
+                    lastY = e.clientY;
+
+
+                    const rect = panel.getBoundingClientRect();
+                    panel.style.width = `${rect.width + dx}px`;
+                    panel.style.height = `${rect.height + dy}px`;
                 }
             };
-            const onDragEnd = () => { isDragging = false; isResizing = false; document.removeEventListener('mousemove', onDragMove); };
-            renderList('uids');
+
+
+            const onDragEnd = () => { // async 키워드 제거
+                isDragging = false;
+                isResizing = false;
+                document.removeEventListener('mousemove', onDragMove);
+                // GM_setValue 호출을 제거하여 창의 위치/크기 상태를 저장하지 않음
+            };
+
+
+            panel.addEventListener('mousedown', onDragStart);
+
+
+            (() => { // async 키워드 제거
+                // 저장된 값을 불러오는 대신 항상 기본값으로 패널 위치와 크기를 설정
+                const defaultGeo = {
+                    left: '50%', top: '50%', width: '400px', height: '500px'
+                };
+                // 기본값은 항상 % 단위이므로, transform 스타일을 항상 적용하여 정중앙에 배치
+                panel.style.transform = 'translate(-50%, -50%)';
+                Object.assign(panel.style, defaultGeo);
+
+                renderList('uids'); // 초기 렌더링
+            })();
         }
     };
-    // [v1.7.0 이식된 기능 끝]
 
-    Object.assign(PersonalBlockModule, {
-        checkBlockStatus(userInfo) {
-            const { nick, uid, ip } = userInfo;
-            const cache = this.personalBlockListCache;
-            return {
-                isNickBlocked: nick ? cache.nicknames.includes(nick) : false,
-                isUidBlocked: uid ? cache.uids.some(u => u.id === uid) : false,
-                isIpBlocked: ip ? cache.ips.includes(ip) : false,
-            };
-        },
+    GM_registerMenuCommand('글댓합 설정하기', FilterModule.showSettings.bind(FilterModule));
+    GM_registerMenuCommand('차단 유저 관리', PersonalBlockModule.createManagementPanel.bind(PersonalBlockModule));
 
-        async removeBlock(type, value) {
-            if (!value) return;
-            this.personalBlockListCache = await this.loadPersonalBlocks();
+    async function reloadShortcutKey() {
+        const shortcutString = await GM_getValue(FilterModule.CONSTANTS.STORAGE_KEYS.SHORTCUT_KEY, 'Shift+S');
+        activeShortcutObject = FilterModule.parseShortcutString(shortcutString);
+    }
 
-            switch (type) {
-                case 'uid':
-                    this.personalBlockListCache.uids = this.personalBlockListCache.uids.filter(u => u.id !== value);
-                    break;
-                case 'nickname':
-                    this.personalBlockListCache.nicknames = this.personalBlockListCache.nicknames.filter(n => n !== value);
-                    break;
-                case 'ip':
-                    this.personalBlockListCache.ips = this.personalBlockListCache.ips.filter(i => i !== value);
-                    break;
-            }
-            await this.savePersonalBlocks();
-            await refilterAllContent();
-            this.exitSelectionMode();
-        },
+    function observeDarkMode() {
+        if (__dcufRoot.__dcufPcDarkModeObserverAttached) return;
+        __dcufRoot.__dcufPcDarkModeObserverAttached = true;
 
-        handleSelectionClick(e) {
-            if (!this.isSelectionMode) return;
-            const popup = document.getElementById('dc-selection-popup');
-            if (popup && popup.contains(e.target)) return;
+        const applyDarkModeState = () => {
+            const enabled = Boolean(document.getElementById('css-darkmode'));
+            document.documentElement.classList.toggle('dc-filter-dark-mode', enabled);
+            if (document.body) document.body.classList.toggle('dc-filter-dark-mode', enabled);
+        };
 
-            const writerEl = e.target.closest('.gall_writer, .ub-writer');
-            if (!writerEl) return;
+        const mountObserver = () => {
+            const head = document.head || document.documentElement;
+            if (!head) return false;
+            const observer = new MutationObserver(applyDarkModeState);
+            observer.observe(head, { childList: true });
+            applyDarkModeState();
+            return true;
+        };
 
-            e.preventDefault();
-            e.stopPropagation();
-
-            const nick = writerEl.getAttribute('data-nick');
-            const uid = writerEl.getAttribute('data-uid');
-            let ip = writerEl.getAttribute('data-ip');
-            if (!ip) {
-                const parentItem = writerEl.closest('.ub-content');
-                const ipSpan = parentItem ? parentItem.querySelector('span.ip') : null;
-                ip = ipSpan ? ipSpan.textContent.trim().slice(1, -1) : null;
-            }
-
-            this.showSelectionPopup({ nick, uid, ip });
-        },
-
-        showSelectionPopup(userInfo) {
-            this.exitSelectionMode();
-            this.isSelectionMode = true;
-            document.body.classList.add('selection-mode-active');
-
-            const popup = document.createElement('div');
-            popup.id = 'dc-selection-popup';
-            const blockStatus = this.checkBlockStatus(userInfo);
-            let optionsHtml = '';
-
-            if (userInfo.nick) {
-                if (blockStatus.isNickBlocked) {
-                    optionsHtml += `<div class="block-option"><span>닉네임: ${userInfo.nick}</span><button class="btn-unblock" data-type="nickname" data-value="${userInfo.nick}">차단 해제</button></div>`;
-                } else {
-                    optionsHtml += `<div class="block-option"><span>닉네임: ${userInfo.nick}</span><button data-type="nickname" data-value="${userInfo.nick}">차단</button></div>`;
-                }
-            }
-            if (userInfo.uid) {
-                const displayName = `${userInfo.nick}(${userInfo.uid})`;
-                if (blockStatus.isUidBlocked) {
-                    optionsHtml += `<div class="block-option"><span>식별번호: ${displayName}</span><button class="btn-unblock" data-type="uid" data-value="${userInfo.uid}" data-display-name="${displayName}">차단 해제</button></div>`;
-                } else {
-                    optionsHtml += `<div class="block-option"><span>식별번호: ${displayName}</span><button data-type="uid" data-value="${userInfo.uid}" data-display-name="${displayName}">차단</button></div>`;
-                }
-            }
-            if (userInfo.ip) {
-                if (blockStatus.isIpBlocked) {
-                    optionsHtml += `<div class="block-option"><span>IP: ${userInfo.ip}</span><button class="btn-unblock" data-type="ip" data-value="${userInfo.ip}">차단 해제</button></div>`;
-                } else {
-                    optionsHtml += `<div class="block-option"><span>IP: ${userInfo.ip}</span><button data-type="ip" data-value="${userInfo.ip}">차단</button></div>`;
-                }
-            }
-
-            popup.innerHTML = `
-                <h4>어떤 정보를 처리할까요?</h4>
-                <div class="block-options">${optionsHtml}</div>
-                <div class="popup-buttons"><button class="cancel-btn">취소</button></div>
-            `;
-            document.body.appendChild(popup);
-
-            popup.querySelector('.cancel-btn').onclick = () => this.exitSelectionMode();
-            popup.querySelectorAll('.block-options button').forEach(btn => {
-                btn.onclick = () => {
-                    const { type, value, displayName } = btn.dataset;
-                    if (btn.classList.contains('btn-unblock')) {
-                        this.removeBlock(type, value);
-                    } else {
-                        this.addBlock(type, value, displayName);
-                    }
-                };
-            });
+        if (!mountObserver()) {
+            document.addEventListener('DOMContentLoaded', mountObserver, { once: true });
         }
-    });
+    }
 
-    async function start() {
-        await cleanupLegacyManagedBlockConfig();
-        await reloadSettings();
-        getTelecomPrefixSet();
-        getProxyStrictPrefixSet();
-        getProxyAggressiveExtraPrefixSet();
-        getProxyPrefixSet(PROXY_MODE.AGGRESSIVE);
+    function bindSettingsShortcut() {
+        if (__dcufRoot.__dcufPcFilterShortcutBound) return;
+        __dcufRoot.__dcufPcFilterShortcutBound = true;
 
-        // [v1.7.1 리팩토링] 요구사항 1번 해결.
-        // 개념글 목록 페이지에서 스크립트가 조기 종료되어 '간편차단' 버튼(FAB)이
-        // 생성되지 않는 문제를 해결하기 위해 해당 조건문을 제거합니다.
-        // if (window.dcFilterSettings.excludeRecommended && window.location.pathname.includes('/lists/') && isRecommendedContext()) {
-        //     console.log('DCInside 유저 필터: 개념글 목록 페이지이므로 필터 기능을 비활성화합니다.');
-        //     return;
-        // }
+        window.addEventListener('keydown', async (e) => {
+            if (!activeShortcutObject || !activeShortcutObject.key) return;
 
-        await refreshBlockedUidsCache();
+            const isMatch = e.key.toUpperCase() === activeShortcutObject.key &&
+                e.ctrlKey === activeShortcutObject.ctrlKey &&
+                e.shiftKey === activeShortcutObject.shiftKey &&
+                e.altKey === activeShortcutObject.altKey &&
+                e.metaKey === activeShortcutObject.metaKey;
 
-        document.addEventListener('visibilitychange', handleVisibilityChange);
-        initializeUniversalObserver();
-        // [v1.7.0 이식] 개인 차단 기능 초기화
+            if (!isMatch) return;
+            e.preventDefault();
+
+            const settingsPanel = document.getElementById(FilterModule.CONSTANTS.UI_IDS.SETTINGS_PANEL);
+            if (settingsPanel) settingsPanel.remove();
+            else await FilterModule.showSettings();
+        }, true);
+    }
+
+    async function main() {
+        if (__dcufRoot.__dcufPcFilterPortInitialized) return;
+        __dcufRoot.__dcufPcFilterPortInitialized = true;
+
+        console.log('[DCUF PC] Initializing filter port v1.9.0...');
+
+        observeDarkMode();
+        await reloadShortcutKey();
+        bindSettingsShortcut();
         await PersonalBlockModule.init();
+        await FilterModule.init();
+
+        console.log('[DCUF PC] Filter port ready.');
     }
 
     const runSafely = async () => {
+        let initState = 'ok';
+
         try {
-            // 기존 실행부의 로직을 이곳으로 이동
-            const shortcutString = await GM_getValue(CONSTANTS.STORAGE_KEYS.SHORTCUT_KEY, 'Shift+S');
-            activeShortcutObject = parseShortcutString(shortcutString);
-
-            window.addEventListener('keydown', async (e) => {
-                if (!activeShortcutObject || !activeShortcutObject.key) return;
-
-                const isMatch = e.key.toUpperCase() === activeShortcutObject.key &&
-                    e.ctrlKey === activeShortcutObject.ctrlKey &&
-                    e.shiftKey === activeShortcutObject.shiftKey &&
-                    e.altKey === activeShortcutObject.altKey &&
-                    e.metaKey === activeShortcutObject.metaKey;
-
-                if (isMatch) {
-                    e.preventDefault();
-                    const settingsPanel = document.getElementById(CONSTANTS.UI_IDS.SETTINGS_PANEL);
-                    if (settingsPanel) {
-                        settingsPanel.remove();
-                    } else {
-                        await showSettings();
-                    }
-                }
-            });
-
-            // start() 함수는 DOM 요소에 접근하므로 DOMContentLoaded 이후에 실행되어야 함
-            await start();
-
-            // 최초 실행 시 설정 창 표시 로직
-            const val = await GM_getValue(CONSTANTS.STORAGE_KEYS.THRESHOLD);
-            if (val === undefined) {
-                await GM_setValue(CONSTANTS.STORAGE_KEYS.THRESHOLD, 0);
-                await showSettings();
-            }
-
+            await main();
         } catch (error) {
-            console.error("[DCInside User Filter] A critical error occurred:", error);
+            initState = 'error';
+            console.error('[DCUF PC] A critical error occurred during initialization:', error);
         } finally {
-            // 모든 작업이 끝난 후 body에 클래스를 추가하여 화면을 표시
-            document.body.classList.add('dc-filter-ready');
+            markUiReady();
+            console.log(`[DCUF PC] UI is now visible. (${initState})`);
         }
     };
 
-    // DOM이 준비되면 스크립트의 메인 로직을 안전하게 실행
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', runSafely);
+        document.addEventListener('DOMContentLoaded', runSafely, { once: true });
     } else {
         runSafely();
     }
-
-    // ==========================================================
-    // ▼▼▼▼▼▼▼▼▼▼▼ 바로 이 위치에 아래 코드를 추가하세요 ▼▼▼▼▼▼▼▼▼▼▼
-    // ==========================================================
-    const observeDarkMode = () => {
-        const head = document.head;
-        if (!head) {
-            setTimeout(observeDarkMode, 100);
-            return;
-        }
-
-        const checkDarkModeStatus = () => {
-            const darkModeStylesheet = document.getElementById('css-darkmode');
-            if (darkModeStylesheet) {
-                document.body.classList.add('dc-filter-dark-mode');
-            } else {
-                document.body.classList.remove('dc-filter-dark-mode');
-            }
-        };
-
-        const observer = new MutationObserver(checkDarkModeStatus);
-        observer.observe(head, { childList: true });
-
-        // 초기 상태 확인
-        checkDarkModeStatus();
-    };
-    observeDarkMode();
-    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-
-
-
-
 })();
+
