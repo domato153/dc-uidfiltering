@@ -15,8 +15,7 @@ https://github.com/domato153/dc-uidfiltering/raw/refs/heads/main/dcinside_user_f
 
 
 
-<img width="409" height="422" alt="setting_popup1" src="https://github.com/user-attachments/assets/7e09dacc-87ec-445e-bcc3-4d682a0e138e" />
-
+<img width="540" height="488" alt="스크린샷 2026-03-26 204025" src="https://github.com/user-attachments/assets/b9581882-539d-4b42-a623-10fc2486d833" />
 
 
  모바일 설치법등 기타 자세한 내용은 https://domato153.github.io/dc-uidfiltering/ 여기로 
