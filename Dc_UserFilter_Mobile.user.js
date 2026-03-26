@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         DC_UserFilter_Mobile
 // @namespace    http://tampermonkey.net/
-// @version      3.1.1
+// @version      3.1.2
 // @description  유저 필터링, UI 개선, 개인 차단/해제 기능
 // @author       domato153
 // @match        https://gall.dcinside.com/*
@@ -623,7 +623,7 @@ const hasPersonalNicknameBlock = (subject, personalBlockList) =>
 const hasPersonalIpBlock = (subject, personalBlockList) =>
     Boolean(subject?.ip && collectionHasValue(personalBlockList?.ipSet ?? personalBlockList?.ips, subject.ip));
 
-const FILTER_CORE_PHASE = '3.1.1';
+const FILTER_CORE_PHASE = '3.1.2';
 
 function createEmptyDecision(proxyBlockMode = PROXY_MODE.OFF) {
     return {
@@ -4072,7 +4072,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         async init() {
             if (isInitialized) return; isInitialized = true;
             this.installDebugApi();
-            this.debugLog('init', 'FilterModule init start', { version: '3.1.1' });
+            this.debugLog('init', 'FilterModule init start', { version: '3.1.2' });
             await this.cleanupLegacyManagedBlockConfig();
             await this.reloadSettings();
             this.getKrPrefixSet();
@@ -4583,6 +4583,49 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
             this.attachPopupPinchResize(popup, { minWidth: 300, minHeight: 240 });
 
+            const textarea = popup.querySelector('textarea');
+            const fileInput = popup.querySelector('.import-file-input');
+            let bufferedClipboardImport = '';
+            const originalTextareaPlaceholder = textarea ? (textarea.getAttribute('placeholder') || '') : '';
+
+            const formatImportSize = (text) => {
+                const size = new Blob([text]).size;
+                if (size >= 1024 * 1024) return `${(size / (1024 * 1024)).toFixed(2)}MB`;
+                if (size >= 1024) return `${(size / 1024).toFixed(1)}KB`;
+                return `${size}B`;
+            };
+
+            const setBufferedImportPreview = (text) => {
+                if (!textarea) return;
+                textarea.value = '';
+                textarea.placeholder = `클립보드 백업 데이터 붙여넣기 완료 (${formatImportSize(text)})\n불러오기 버튼을 누르면 가져옵니다.`;
+                textarea.dataset.dcufBufferedImport = '1';
+            };
+
+            const clearBufferedImport = () => {
+                bufferedClipboardImport = '';
+                if (!textarea) return;
+                textarea.placeholder = originalTextareaPlaceholder;
+                delete textarea.dataset.dcufBufferedImport;
+            };
+
+            if (textarea) {
+                textarea.addEventListener('paste', (e) => {
+                    const pastedText = e.clipboardData?.getData('text');
+                    if (typeof pastedText !== 'string' || !pastedText.length) return;
+
+                    e.preventDefault();
+                    bufferedClipboardImport = pastedText;
+                    setBufferedImportPreview(pastedText);
+                });
+
+                textarea.addEventListener('input', () => {
+                    if (textarea.dataset.dcufBufferedImport === '1') {
+                        clearBufferedImport();
+                    }
+                });
+            }
+
 
             const closePopup = () => {
                 popup.classList.add('dcuf-pop-leave');
@@ -4620,7 +4663,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             };
             popup.querySelector('.export-btn').onclick = async () => {
                 const data = await this.loadPersonalBlocks();
-                const jsonString = JSON.stringify(data, null, 2);
+                const jsonString = JSON.stringify(data);
                 try {
                     await navigator.clipboard.writeText(jsonString);
                     alert('차단 목록이 클립보드에 복사되었습니다.');
@@ -4665,9 +4708,6 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
             // 불러오기 버튼 클릭 이벤트
             popup.querySelector('.import-btn').onclick = async () => {
-                const fileInput = popup.querySelector('.import-file-input');
-                const textarea = popup.querySelector('textarea');
-
                 // 1순위: 파일이 선택되었는지 확인
                 if (fileInput.files.length > 0) {
                     const file = fileInput.files[0];
@@ -4685,7 +4725,10 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 }
                 // 2순위: 파일이 없다면 textarea의 값을 사용
                 else {
-                    processImportData(textarea.value);
+                    const importText = textarea && textarea.dataset.dcufBufferedImport === '1'
+                        ? bufferedClipboardImport
+                        : (textarea ? textarea.value : '');
+                    processImportData(importText);
                 }
             };
         },
@@ -5973,7 +6016,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
     async function main() {
         if (isInitialized) return;
-        console.log("[DC Filter+UI] Initializing v3.1.1...");
+        console.log("[DC Filter+UI] Initializing v3.1.2...");
 
 
         // [수정] main 함수에서 reloadShortcutKey 함수를 호출하여 초기화
