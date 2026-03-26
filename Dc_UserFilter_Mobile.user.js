@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         DC_UserFilter_Mobile
 // @namespace    http://tampermonkey.net/
-// @version      3.0.0
+// @version      3.0.1
 // @description  유저 필터링, UI 개선, 개인 차단/해제 기능
 // @author       domato153
 // @match        https://gall.dcinside.com/*
@@ -3389,7 +3389,7 @@ parseShortcutString(shortcutString) {
         async init() {
             if (isInitialized) return; isInitialized = true;
             this.installDebugApi();
-            this.debugLog('init', 'FilterModule init start', { version: '3.0.0' });
+            this.debugLog('init', 'FilterModule init start', { version: '3.0.1' });
             await this.cleanupLegacyManagedBlockConfig();
             await this.reloadSettings();
             this.getKrPrefixSet();
@@ -4936,7 +4936,7 @@ parseShortcutString(shortcutString) {
 
     async function main() {
         if (isInitialized) return;
-        console.log("[DC Filter+UI] Initializing v3.0.0...");
+        console.log("[DC Filter+UI] Initializing v3.0.1...");
 
 
         // [수정] main 함수에서 reloadShortcutKey 함수를 호출하여 초기화
@@ -6277,6 +6277,40 @@ parseShortcutString(shortcutString) {
             background-image: none !important;
             box-shadow: none !important;
         }
+        /* [v3.0.1] 이미지댓글 내부 소형 팝업(닉네임/삭제비번)이 카드에 잘리지 않도록 필요한 컨텍스트만 해제 */
+        .view_comment.image_comment,
+        .view_comment.image_comment .comment_wrap,
+        .view_comment.image_comment .comment_box.img_comment_box,
+        .view_comment.image_comment .comment_box.img_comment_box .cmt_list,
+        .view_comment.image_comment .comment_box.img_comment_box .reply_list,
+        .view_comment.image_comment .comment_box.img_comment_box .cmt_list > li,
+        .view_comment.image_comment .comment_box.img_comment_box .reply_list > li,
+        .view_comment.image_comment .comment_box.img_comment_box .cmt_info,
+        .view_comment.image_comment .comment_box.img_comment_box .reply_info,
+        .view_comment.image_comment .comment_box.img_comment_box .cmt_nickbox,
+        .view_comment.image_comment .comment_box.img_comment_box .gall_writer,
+        .view_comment.image_comment .comment_box.img_comment_box .fr.clear {
+            overflow: visible !important;
+        }
+        .view_comment.image_comment .comment_box.img_comment_box .cmt_info,
+        .view_comment.image_comment .comment_box.img_comment_box .reply_info,
+        .view_comment.image_comment .comment_box.img_comment_box .fr.clear {
+            position: relative !important;
+            z-index: auto !important;
+        }
+        .view_comment.image_comment #user_data_lyr,
+        .view_comment.image_comment .user_data,
+        .view_comment.image_comment #dccon_guide_lyr,
+        .view_comment.image_comment .pop_wrap.type2,
+        .view_comment.image_comment .pop_wrap.type3,
+        .view_comment.image_comment .comment_box.img_comment_box .cmt_delpw_box,
+        .view_comment.image_comment .comment_box.img_comment_box [id$="_delpw_box"] {
+            z-index: 2147483647 !important;
+        }
+        .view_comment.image_comment #user_data_lyr,
+        .view_comment.image_comment .user_data {
+            overflow: visible !important;
+        }
         .comment_box {
             border-color: #cfd8e6 !important;
             box-shadow: none !important;
@@ -6448,6 +6482,41 @@ parseShortcutString(shortcutString) {
         }
         body.dc-filter-dark-mode .view_comment.image_comment .comment_box.img_comment_box .cmt_list > li + li {
             border-top-color: rgba(120, 144, 175, 0.28) !important;
+        }
+        body.dc-filter-dark-mode .view_comment.image_comment #user_data_lyr .user_data_list,
+        body.dc-filter-dark-mode .view_comment.image_comment .user_data .user_data_list,
+        body.dc-filter-dark-mode .view_comment.image_comment .comment_box.img_comment_box .cmt_delpw_box,
+        body.dc-filter-dark-mode .view_comment.image_comment .comment_box.img_comment_box [id$="_delpw_box"] {
+            background: #1f2937 !important;
+            border-color: rgba(120, 144, 175, 0.52) !important;
+            box-shadow: 0 18px 32px rgba(2, 7, 15, 0.52) !important;
+            color: #e3ebf8 !important;
+        }
+        body.dc-filter-dark-mode .view_comment.image_comment .comment_box.img_comment_box .cmt_delpw_box input[type="password"],
+        body.dc-filter-dark-mode .view_comment.image_comment .comment_box.img_comment_box [id$="_delpw_box"] input[type="password"] {
+            background: rgba(18, 26, 37, 0.94) !important;
+            color: #e3ebf8 !important;
+            border-color: rgba(120, 144, 175, 0.44) !important;
+        }
+        body.dc-filter-dark-mode .view_comment.image_comment #user_data_lyr .user_data_list > li,
+        body.dc-filter-dark-mode .view_comment.image_comment .user_data .user_data_list > li {
+            background: linear-gradient(180deg, rgba(34, 45, 60, 0.98) 0%, rgba(27, 37, 50, 0.98) 100%) !important;
+            border-top-color: rgba(120, 144, 175, 0.3) !important;
+            color: #e3ebf8 !important;
+        }
+        body.dc-filter-dark-mode .view_comment.image_comment .comment_box.img_comment_box .cmt_delpw_box button,
+        body.dc-filter-dark-mode .view_comment.image_comment .comment_box.img_comment_box [id$="_delpw_box"] button {
+            color: #e3ebf8 !important;
+            -webkit-text-fill-color: #e3ebf8 !important;
+        }
+        body.dc-filter-dark-mode .view_comment.image_comment #user_data_lyr .user_data_list > li > a,
+        body.dc-filter-dark-mode .view_comment.image_comment #user_data_lyr .user_data_list > li > button,
+        body.dc-filter-dark-mode .view_comment.image_comment .user_data .user_data_list > li > a,
+        body.dc-filter-dark-mode .view_comment.image_comment .user_data .user_data_list > li > button,
+        body.dc-filter-dark-mode .view_comment.image_comment #user_data_lyr .user_data_list > li > span,
+        body.dc-filter-dark-mode .view_comment.image_comment .user_data .user_data_list > li > span {
+            color: #e3ebf8 !important;
+            -webkit-text-fill-color: #e3ebf8 !important;
         }
         body.dc-filter-dark-mode .view_comment.image_comment .comment_box.img_comment_box .gall_writer,
         body.dc-filter-dark-mode .view_comment.image_comment .comment_box.img_comment_box .nickname,
@@ -8417,6 +8486,23 @@ parseShortcutString(shortcutString) {
     const ORIG_POS = 'data-dcuf-userpopup-orig-pos';
     const ORIG_OV = 'data-dcuf-userpopup-orig-ov';
     const NONE = '__none__';
+    const POPUP_CONTEXT_SELECTOR = '#focus_cmt, .view_comment.image_comment';
+    const ACTIVE_POPUP_SELECTOR = [
+        '#focus_cmt #user_data_lyr',
+        '#focus_cmt .user_data',
+        '#focus_cmt #dccon_guide_lyr',
+        '#focus_cmt .pop_wrap.type2',
+        '#focus_cmt .pop_wrap.type3',
+        '.view_comment.image_comment #user_data_lyr',
+        '.view_comment.image_comment .user_data',
+        '.view_comment.image_comment #dccon_guide_lyr',
+        '.view_comment.image_comment .pop_wrap.type2',
+        '.view_comment.image_comment .pop_wrap.type3',
+        '.view_comment.image_comment .comment_box.img_comment_box .cmt_delpw_box',
+        '.view_comment.image_comment .comment_box.img_comment_box [id$="_delpw_box"]'
+    ].join(', ');
+    const COMMENT_LI_SELECTOR = 'li[id^="reply_li_"], li[id^="comment_li_"], li[id^="img_comment_li_"], li[id^="mg_comment_li_"]';
+    const IMAGE_COMMENT_LI_SELECTOR = '.view_comment.image_comment .comment_box.img_comment_box .cmt_list > li, .view_comment.image_comment .comment_box.img_comment_box .reply_list > li';
 
     const isVisible = (element) => {
         if (!(element instanceof HTMLElement)) return false;
@@ -8424,6 +8510,11 @@ parseShortcutString(shortcutString) {
         if (cs.display === 'none' || cs.visibility === 'hidden' || Number(cs.opacity || '1') === 0) return false;
         const rect = element.getBoundingClientRect();
         return rect.width > 0 && rect.height > 0;
+    };
+
+    const findPopupOwnerLi = (popup) => {
+        if (!(popup instanceof HTMLElement)) return null;
+        return popup.closest(COMMENT_LI_SELECTOR) || popup.closest(IMAGE_COMMENT_LI_SELECTOR);
     };
 
     const saveStyleIfNeeded = (element, attr, prop) => {
@@ -8471,11 +8562,11 @@ parseShortcutString(shortcutString) {
 
     const collectActiveLis = () => {
         const active = new Set();
-        document.querySelectorAll('#focus_cmt #user_data_lyr, #focus_cmt .user_data, #focus_cmt #dccon_guide_lyr, #focus_cmt .pop_wrap.type2, #focus_cmt .pop_wrap.type3').forEach((popup) => {
+        document.querySelectorAll(ACTIVE_POPUP_SELECTOR).forEach((popup) => {
             if (!(popup instanceof HTMLElement)) return;
             if (!isVisible(popup)) return;
 
-            const li = popup.closest('li[id^="reply_li_"], li[id^="comment_li_"]');
+            const li = findPopupOwnerLi(popup);
             if (!(li instanceof HTMLElement)) return;
             active.add(li);
 
@@ -8516,7 +8607,7 @@ parseShortcutString(shortcutString) {
                 }
                 if (mutation.type === 'attributes') {
                     const target = mutation.target;
-                    if (target instanceof Element && target.closest('#focus_cmt')) {
+                    if (target instanceof Element && target.closest(POPUP_CONTEXT_SELECTOR)) {
                         scheduleApply();
                         return;
                     }
