@@ -9,6 +9,10 @@ dcinside.com 디시인사이드  갤러리 깡계 차단기
 
 확장 프로그램 설정 탭에서 개발자 모드 on
 
+모바일 설치법등 기타 자세한 내용은 https://domato153.github.io/dc-uidfiltering/ 여기로 
+
+pc버전 설치 바로가기는
+ 
 https://github.com/domato153/dc-uidfiltering/raw/refs/heads/main/dcinside_user_filter.user.js
 
 링크 클릭 후 스크립트 설치 
@@ -18,4 +22,4 @@ https://github.com/domato153/dc-uidfiltering/raw/refs/heads/main/dcinside_user_f
 <img width="540" height="488" alt="스크린샷 2026-03-26 204025" src="https://github.com/user-attachments/assets/b9581882-539d-4b42-a623-10fc2486d833" />
 
 
- 모바일 설치법등 기타 자세한 내용은 https://domato153.github.io/dc-uidfiltering/ 여기로 
+
