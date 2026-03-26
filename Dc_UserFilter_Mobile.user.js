@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         DC_UserFilter_Mobile
 // @namespace    http://tampermonkey.net/
-// @version      3.0.1
+// @version      3.1.1
 // @description  유저 필터링, UI 개선, 개인 차단/해제 기능
 // @author       domato153
 // @match        https://gall.dcinside.com/*
@@ -600,16 +600,30 @@ const modeToTier = (mode) => {
     return 'off';
 };
 
+const collectionHasValue = (collection, value) => {
+    if (!value || !collection) return false;
+    if (typeof collection.has === 'function') return collection.has(value);
+    if (Array.isArray(collection)) return collection.includes(value);
+    return false;
+};
+
+const uidCollectionHasValue = (collection, value) => {
+    if (!value || !collection) return false;
+    if (typeof collection.has === 'function') return collection.has(value);
+    if (!Array.isArray(collection)) return false;
+    return collection.some((item) => (typeof item === 'string' ? item : item?.id) === value);
+};
+
 const hasPersonalUidBlock = (subject, personalBlockList) =>
-    Boolean(subject?.uid && Array.isArray(personalBlockList?.uids) && personalBlockList.uids.some((item) => item?.id === subject.uid));
+    Boolean(subject?.uid && uidCollectionHasValue(personalBlockList?.uidSet ?? personalBlockList?.uids, subject.uid));
 
 const hasPersonalNicknameBlock = (subject, personalBlockList) =>
-    Boolean(subject?.nickname && Array.isArray(personalBlockList?.nicknames) && personalBlockList.nicknames.includes(subject.nickname));
+    Boolean(subject?.nickname && collectionHasValue(personalBlockList?.nicknameSet ?? personalBlockList?.nicknames, subject.nickname));
 
 const hasPersonalIpBlock = (subject, personalBlockList) =>
-    Boolean(subject?.ip && Array.isArray(personalBlockList?.ips) && personalBlockList.ips.includes(subject.ip));
+    Boolean(subject?.ip && collectionHasValue(personalBlockList?.ipSet ?? personalBlockList?.ips, subject.ip));
 
-const FILTER_CORE_PHASE = '3.0.0';
+const FILTER_CORE_PHASE = '3.1.1';
 
 function createEmptyDecision(proxyBlockMode = PROXY_MODE.OFF) {
     return {
@@ -747,6 +761,414 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
     // =================================================================
     // ======================== UI Module Style ========================
     // =================================================================
+    const RuntimeCoordinator = {
+        SCRIPT_UI_SELECTOR: [
+            '#dc-backup-popup',
+            '#dc-block-management-panel',
+            '#dcinside-filter-setting',
+            '#dc-selection-popup',
+            '#custom-instant-tooltip',
+            '#dcuf-boot-overlay',
+            '.custom-mobile-list',
+            '.custom-post-item',
+            '.custom-bottom-controls'
+        ].join(', '),
+        _mutationObserver: null,
+        _mutationObserverReady: false,
+        _mutationSubscribers: new Map(),
+        _pendingMutationRecords: [],
+        _pendingMutationRafId: 0,
+        _pendingMutationTimerId: 0,
+        _taskQueues: Object.create(null),
+        _diagnosticsEnabled: false,
+        _diagnosticCounters: Object.create(null),
+        _diagnosticGauges: Object.create(null),
+        _diagnosticEvents: [],
+
+        installDiagnosticsApi() {
+            if (window.__dcufDiagnostics) return window.__dcufDiagnostics;
+
+            const api = {
+                enable: () => {
+                    this._diagnosticsEnabled = true;
+                    return this.snapshotDiagnostics();
+                },
+                disable: () => {
+                    this._diagnosticsEnabled = false;
+                    return this.snapshotDiagnostics();
+                },
+                reset: () => {
+                    this._diagnosticCounters = Object.create(null);
+                    this._diagnosticGauges = Object.create(null);
+                    this._diagnosticEvents = [];
+                    return this.snapshotDiagnostics();
+                },
+                increment: (label, amount = 1) => {
+                    this.incrementDiagnostic(label, amount);
+                },
+                setGauge: (label, value) => {
+                    this.setDiagnosticGauge(label, value);
+                },
+                note: (label, detail = null) => {
+                    this.noteDiagnostic(label, detail);
+                },
+                snapshot: () => this.snapshotDiagnostics()
+            };
+
+            window.__dcufDiagnostics = api;
+            return api;
+        },
+
+        snapshotDiagnostics() {
+            return {
+                enabled: this._diagnosticsEnabled,
+                counters: { ...this._diagnosticCounters },
+                gauges: { ...this._diagnosticGauges },
+                events: this._diagnosticEvents.slice(-50)
+            };
+        },
+
+        incrementDiagnostic(label, amount = 1) {
+            if (!label) return;
+            const nextValue = (this._diagnosticCounters[label] || 0) + amount;
+            this._diagnosticCounters[label] = nextValue;
+            return nextValue;
+        },
+
+        setDiagnosticGauge(label, value) {
+            if (!label) return;
+            this._diagnosticGauges[label] = value;
+        },
+
+        noteDiagnostic(label, detail = null) {
+            if (!label) return;
+            if (!Array.isArray(this._diagnosticEvents)) this._diagnosticEvents = [];
+            this._diagnosticEvents.push({
+                label,
+                detail,
+                ts: Date.now()
+            });
+            if (this._diagnosticEvents.length > 120) {
+                this._diagnosticEvents.splice(0, this._diagnosticEvents.length - 120);
+            }
+            if (this._diagnosticsEnabled) {
+                console.debug('[DCUF diagnostics]', label, detail);
+            }
+        },
+
+        isScriptOwnedElement(element) {
+            return element instanceof Element && !!element.closest(this.SCRIPT_UI_SELECTOR);
+        },
+
+        toRelevantElement(node) {
+            if (node instanceof Element) {
+                if (this.isScriptOwnedElement(node)) return null;
+                return node;
+            }
+            if (node instanceof CharacterData) {
+                const parentElement = node.parentElement || null;
+                if (parentElement && !this.isScriptOwnedElement(parentElement)) return parentElement;
+            }
+            return null;
+        },
+
+        addUniqueElement(targetSet, targetList, node) {
+            const element = this.toRelevantElement(node);
+            if (!(element instanceof Element) || targetSet.has(element)) return;
+            targetSet.add(element);
+            targetList.push(element);
+        },
+
+        normalizeSelectors(selectors) {
+            if (Array.isArray(selectors)) return selectors.filter(Boolean).join(', ');
+            return typeof selectors === 'string' ? selectors : '';
+        },
+
+        collectMatchesFromRoots(roots, selectors, options = {}) {
+            const selectorText = this.normalizeSelectors(selectors);
+            if (!selectorText) return [];
+
+            const includeRoots = options.includeRoots !== false;
+            const includeDescendants = options.includeDescendants !== false;
+            const matches = [];
+            const seen = new Set();
+            const pushMatch = (element) => {
+                if (!(element instanceof Element)) return;
+                if (this.isScriptOwnedElement(element)) return;
+                if (!element.matches(selectorText) || seen.has(element)) return;
+                seen.add(element);
+                matches.push(element);
+            };
+
+            roots.forEach((root) => {
+                if (!(root instanceof Element)) return;
+                if (includeRoots) pushMatch(root);
+                if (includeDescendants && typeof root.querySelectorAll === 'function') {
+                    root.querySelectorAll(selectorText).forEach(pushMatch);
+                }
+            });
+
+            return matches;
+        },
+
+        buildMutationPayload(records) {
+            const addedElements = [];
+            const removedElements = [];
+            const attributeTargets = [];
+            const characterDataTargets = [];
+            const childListTargets = [];
+            const roots = [];
+            const addedSet = new Set();
+            const removedSet = new Set();
+            const attributeSet = new Set();
+            const charDataSet = new Set();
+            const childListSet = new Set();
+            const rootSet = new Set();
+            const addRoot = (node) => this.addUniqueElement(rootSet, roots, node);
+
+            records.forEach((record) => {
+                if (!record) return;
+
+                if (record.type === 'childList') {
+                    this.addUniqueElement(childListSet, childListTargets, record.target);
+                    addRoot(record.target);
+                    record.addedNodes.forEach((node) => {
+                        this.addUniqueElement(addedSet, addedElements, node);
+                        addRoot(node);
+                    });
+                    record.removedNodes.forEach((node) => {
+                        this.addUniqueElement(removedSet, removedElements, node);
+                    });
+                    return;
+                }
+
+                if (record.type === 'attributes') {
+                    this.addUniqueElement(attributeSet, attributeTargets, record.target);
+                    addRoot(record.target);
+                    return;
+                }
+
+                if (record.type === 'characterData') {
+                    this.addUniqueElement(charDataSet, characterDataTargets, record.target);
+                    addRoot(record.target);
+                }
+            });
+
+            return {
+                records,
+                addedElements,
+                removedElements,
+                attributeTargets,
+                characterDataTargets,
+                childListTargets,
+                roots,
+                collectMatches: (selectors, options = {}) => this.collectMatchesFromRoots(roots, selectors, options)
+            };
+        },
+
+        clearPendingMutationDispatch() {
+            if (this._pendingMutationRafId) {
+                cancelAnimationFrame(this._pendingMutationRafId);
+                this._pendingMutationRafId = 0;
+            }
+            if (this._pendingMutationTimerId) {
+                clearTimeout(this._pendingMutationTimerId);
+                this._pendingMutationTimerId = 0;
+            }
+        },
+
+        dispatchQueuedMutations() {
+            this.clearPendingMutationDispatch();
+            if (!Array.isArray(this._pendingMutationRecords) || this._pendingMutationRecords.length === 0) return;
+
+            const records = this._pendingMutationRecords.splice(0);
+            const payload = this.buildMutationPayload(records);
+            this.incrementDiagnostic('mutation.dispatches');
+            this.setDiagnosticGauge('mutation.roots', payload.roots.length);
+            this.setDiagnosticGauge('mutation.subscribers', this._mutationSubscribers.size);
+
+            this._mutationSubscribers.forEach((listener, key) => {
+                try {
+                    listener(payload);
+                } catch (error) {
+                    console.error('[DCUF runtime] mutation subscriber failed:', key, error);
+                }
+            });
+        },
+
+        queueMutationRecords(records) {
+            if (!Array.isArray(records) || records.length === 0) return;
+            this._pendingMutationRecords.push(...records);
+            this.incrementDiagnostic('mutation.bursts');
+            this.incrementDiagnostic('mutation.records', records.length);
+
+            if (this._pendingMutationRafId || this._pendingMutationTimerId) return;
+
+            this._pendingMutationRafId = requestAnimationFrame(() => {
+                this._pendingMutationRafId = 0;
+                this.dispatchQueuedMutations();
+            });
+            this._pendingMutationTimerId = window.setTimeout(() => {
+                this._pendingMutationTimerId = 0;
+                this.dispatchQueuedMutations();
+            }, 50);
+        },
+
+        ensureMutationBus() {
+            this.installDiagnosticsApi();
+            if (this._mutationObserverReady) return true;
+
+            const observerTarget = document.body;
+            if (!observerTarget) {
+                if (!this._awaitingBodyForMutationBus) {
+                    this._awaitingBodyForMutationBus = true;
+                    document.addEventListener('DOMContentLoaded', () => {
+                        this._awaitingBodyForMutationBus = false;
+                        this.ensureMutationBus();
+                    }, { once: true });
+                }
+                return false;
+            }
+
+            this._mutationObserver = new MutationObserver((records) => {
+                this.queueMutationRecords(records);
+            });
+            this._mutationObserver.observe(observerTarget, {
+                childList: true,
+                subtree: true,
+                attributes: true,
+                characterData: true,
+                attributeFilter: ['class', 'style', 'src', 'id']
+            });
+            this._mutationObserverReady = true;
+            this.noteDiagnostic('mutation.bus.ready', { target: 'document.body' });
+            return true;
+        },
+
+        subscribeMutations(key, listener) {
+            if (typeof listener !== 'function') return () => {};
+            this.ensureMutationBus();
+            this._mutationSubscribers.set(key, listener);
+            this.setDiagnosticGauge('mutation.subscribers', this._mutationSubscribers.size);
+            return () => {
+                this._mutationSubscribers.delete(key);
+                this.setDiagnosticGauge('mutation.subscribers', this._mutationSubscribers.size);
+            };
+        },
+
+        createPhaseScheduler(label, run, options = {}) {
+            const delays = Array.isArray(options?.delays) ? options.delays.filter((delay) => Number.isFinite(delay) && delay >= 0) : [];
+            let rafId = 0;
+            let timerIds = new Set();
+            let lastMeta = null;
+
+            const clearTimers = () => {
+                timerIds.forEach((timerId) => clearTimeout(timerId));
+                timerIds.clear();
+            };
+
+            const invoke = (phase, delay = 0) => {
+                this.incrementDiagnostic(`scheduler.${label}.${phase}`);
+                run({
+                    label,
+                    phase,
+                    delay,
+                    meta: lastMeta
+                });
+            };
+
+            return {
+                schedule: (meta = null) => {
+                    lastMeta = meta;
+                    if (rafId) cancelAnimationFrame(rafId);
+                    clearTimers();
+
+                    rafId = requestAnimationFrame(() => {
+                        rafId = 0;
+                        invoke('raf', 0);
+                        delays.forEach((delay) => {
+                            const timerId = window.setTimeout(() => {
+                                timerIds.delete(timerId);
+                                invoke(`delay:${delay}`, delay);
+                            }, delay);
+                            timerIds.add(timerId);
+                        });
+                    });
+                },
+                cancel: () => {
+                    if (rafId) {
+                        cancelAnimationFrame(rafId);
+                        rafId = 0;
+                    }
+                    clearTimers();
+                },
+                flush: (meta = null) => {
+                    lastMeta = meta;
+                    if (rafId) {
+                        cancelAnimationFrame(rafId);
+                        rafId = 0;
+                    }
+                    clearTimers();
+                    invoke('flush', 0);
+                }
+            };
+        },
+
+        createTaskQueue(label, options = {}) {
+            if (this._taskQueues[label]) return this._taskQueues[label];
+
+            const concurrency = Math.max(1, Number(options?.concurrency) || 1);
+            const pending = [];
+            let activeCount = 0;
+
+            const updateGauge = () => {
+                this.setDiagnosticGauge(`queue.${label}.active`, activeCount);
+                this.setDiagnosticGauge(`queue.${label}.pending`, pending.length);
+            };
+
+            const drain = () => {
+                while (activeCount < concurrency && pending.length > 0) {
+                    const nextTask = pending.shift();
+                    if (!nextTask) break;
+                    activeCount += 1;
+                    this.incrementDiagnostic(`queue.${label}.started`);
+                    updateGauge();
+
+                    Promise.resolve()
+                        .then(nextTask.run)
+                        .then(nextTask.resolve, nextTask.reject)
+                        .finally(() => {
+                            activeCount -= 1;
+                            this.incrementDiagnostic(`queue.${label}.finished`);
+                            updateGauge();
+                            drain();
+                        });
+                }
+            };
+
+            const queue = {
+                enqueue: (run) => new Promise((resolve, reject) => {
+                    pending.push({ run, resolve, reject });
+                    this.incrementDiagnostic(`queue.${label}.enqueued`);
+                    updateGauge();
+                    drain();
+                }),
+                snapshot: () => ({
+                    label,
+                    concurrency,
+                    activeCount,
+                    pendingCount: pending.length
+                })
+            };
+
+            this._taskQueues[label] = queue;
+            updateGauge();
+            return queue;
+        }
+    };
+
+    RuntimeCoordinator.installDiagnosticsApi();
+    window.__dcufRuntimeCoordinator = RuntimeCoordinator;
     GM_addStyle(`
         /* [최종 해결] 링크 미리보기 텍스트 박스 스타일 재정의 */
         .thum-txtin {
@@ -2376,11 +2798,22 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         CONSTANTS: DCUF_SHARED_SCHEMA.FILTER_CONSTANTS,
         BLOCK_UID_EXPIRE: 1000 * 60 * 60 * 24 * 7,
         BLOCKED_UIDS_CACHE: {},
+        ASYNC_UID_REQUEST_CONCURRENCY: 4,
+        INFLIGHT_USER_SUM_REQUESTS: Object.create(null),
+        USER_SUM_NEGATIVE_CACHE: new Map(),
+        USER_SUM_NEGATIVE_TTL: 30000,
         DEBUG_ENABLED: false,
         DEBUG_MAX_DECISIONS_PER_PASS: 150,
         DEBUG_PASS_ID: 0,
         DEBUG_DECISION_LOG_COUNT: 0,
         DEBUG_DECISION_KEYS: new Set(),
+        _runtimeMutationUnsubscribe: null,
+        _userSumTaskQueue: null,
+        _queuedObserverFilterItems: null,
+        _queuedObserverFilterRafId: 0,
+        _queuedObserverFilterTimerId: 0,
+        _syncRefilterRafId: 0,
+        _syncRefilterTimerIds: null,
         _krPrefixSet: null,
         _telecomPrefixSet: null,
         _proxyStrictPrefixSet: null,
@@ -2405,7 +2838,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         normalizeIpPrefix(value) {
             return DCUF_SHARED_STORAGE.normalizeIpPrefix(value);
         },
-parseIpPrefixList(value) {
+        parseIpPrefixList(value) {
             return DCUF_SHARED_STORAGE.parseIpPrefixList(value, this.CONSTANTS.ETC.MOBILE_IP_MARKER);
         },
         getIpPrefix(ip) {
@@ -2981,19 +3414,167 @@ parseIpPrefixList(value) {
             overlay.onclick = cleanup;
         },
         // [v2.1 추가] 키 Set을 정해진 형식의 문자열로 변환
-formatShortcutKeys(keySet) {
+        formatShortcutKeys(keySet) {
             return DCUF_SHARED_STORAGE.formatShortcutKeys(keySet);
         },
         // [v2.1 추가] 단축키 문자열을 이벤트 비교용 객체로 변환
-parseShortcutString(shortcutString) {
+        parseShortcutString(shortcutString) {
             return DCUF_SHARED_STORAGE.parseShortcutString(shortcutString);
+        },
+        buildLookupSet(items, mapValue = (item) => item) {
+            const set = new Set();
+            if (!Array.isArray(items)) return set;
+            items.forEach((item) => {
+                const value = mapValue(item);
+                if (value) set.add(value);
+            });
+            return set;
+        },
+        isFilterTargetDescriptor(value) {
+            return Boolean(value && value.element instanceof HTMLElement);
+        },
+        normalizeFilterTarget(target) {
+            if (this.isFilterTargetDescriptor(target)) return target;
+            return this.describeFilterTarget(target);
+        },
+        describeFilterTarget(element) {
+            if (!(element instanceof HTMLElement)) return null;
+
+            const writerInfo = element.querySelector(this.CONSTANTS.SELECTORS.WRITER_INFO);
+            const uid = writerInfo?.getAttribute('data-uid') || null;
+            const nickname = writerInfo?.getAttribute('data-nick') || null;
+            const writerDataIp = writerInfo?.getAttribute('data-ip') || null;
+            const ipSpan = element.querySelector(this.CONSTANTS.SELECTORS.IP_SPAN);
+            const ipText = ipSpan ? ipSpan.textContent.trim() : '';
+            const ipFromSpan = (ipText.startsWith('(') && ipText.endsWith(')')) ? ipText.slice(1, -1) : ipText;
+            const ip = ipFromSpan || writerDataIp || null;
+            const ipPrefix = this.getIpPrefix(ip);
+
+            return {
+                element,
+                writerInfo,
+                uid,
+                nickname,
+                ip,
+                ipText,
+                writerDataIp,
+                ipPrefix,
+                isGuest: Boolean((!uid || uid.length < 3) && ip),
+                isNotice: Boolean(element.querySelector('em.icon_notice')),
+                shouldSkipFiltering: this.shouldSkipFiltering(element),
+                hasBlockDisableClass: element.classList.contains('block-disable')
+            };
+        },
+        describeFilterTargets(items) {
+            if (!Array.isArray(items) || items.length === 0) return [];
+            const seen = new Set();
+            const descriptors = [];
+            items.forEach((item) => {
+                const descriptor = this.normalizeFilterTarget(item);
+                const element = descriptor?.element;
+                if (!(element instanceof HTMLElement) || seen.has(element)) return;
+                seen.add(element);
+                descriptors.push(descriptor);
+            });
+            return descriptors;
+        },
+        applySyncToDescriptors(descriptors, { resetDisplay = false } = {}) {
+            if (!Array.isArray(descriptors) || descriptors.length === 0) return;
+            descriptors.forEach((descriptor) => {
+                const element = descriptor?.element;
+                if (!(element instanceof HTMLElement)) return;
+                if (resetDisplay && !dcFilterSettings.masterDisabled) element.style.display = '';
+                this.applySyncBlock(descriptor);
+            });
+        },
+        applyAsyncToDescriptors(descriptors) {
+            if (!Array.isArray(descriptors) || descriptors.length === 0) return;
+            descriptors.forEach((descriptor) => {
+                void this.applyAsyncBlock(descriptor);
+            });
+        },
+        applyFilterItems(items) {
+            const descriptors = this.describeFilterTargets(items);
+            if (descriptors.length === 0) return;
+            this.applySyncToDescriptors(descriptors);
+            this.applyAsyncToDescriptors(descriptors);
+        },
+        flushQueuedObservedFilterItems() {
+            if (this._queuedObserverFilterRafId) {
+                cancelAnimationFrame(this._queuedObserverFilterRafId);
+                this._queuedObserverFilterRafId = 0;
+            }
+            if (this._queuedObserverFilterTimerId) {
+                clearTimeout(this._queuedObserverFilterTimerId);
+                this._queuedObserverFilterTimerId = 0;
+            }
+            if (!(this._queuedObserverFilterItems instanceof Set) || this._queuedObserverFilterItems.size === 0) return;
+            const items = Array.from(this._queuedObserverFilterItems);
+            this._queuedObserverFilterItems.clear();
+            this.applyFilterItems(items);
+        },
+        queueObservedFilterItems(items) {
+            if (!Array.isArray(items) || items.length === 0) return;
+            if (!(this._queuedObserverFilterItems instanceof Set)) this._queuedObserverFilterItems = new Set();
+            items.forEach((item) => {
+                if (item instanceof HTMLElement) this._queuedObserverFilterItems.add(item);
+            });
+            if (this._queuedObserverFilterItems.size === 0) return;
+            if (this._queuedObserverFilterRafId || this._queuedObserverFilterTimerId) return;
+
+            this._queuedObserverFilterRafId = requestAnimationFrame(() => {
+                this._queuedObserverFilterRafId = 0;
+                this.flushQueuedObservedFilterItems();
+            });
+            this._queuedObserverFilterTimerId = window.setTimeout(() => {
+                this._queuedObserverFilterTimerId = 0;
+                this.flushQueuedObservedFilterItems();
+            }, 80);
+        },
+        getRuntimeCoordinator() {
+            return window.__dcufRuntimeCoordinator || null;
+        },
+        getUserSumTaskQueue() {
+            if (this._userSumTaskQueue) return this._userSumTaskQueue;
+            const runtimeCoordinator = this.getRuntimeCoordinator();
+            if (runtimeCoordinator && typeof runtimeCoordinator.createTaskQueue === 'function') {
+                this._userSumTaskQueue = runtimeCoordinator.createTaskQueue('filter-user-sum', {
+                    concurrency: this.ASYNC_UID_REQUEST_CONCURRENCY
+                });
+                return this._userSumTaskQueue;
+            }
+
+            this._userSumTaskQueue = {
+                enqueue(run) {
+                    return Promise.resolve().then(run);
+                }
+            };
+            return this._userSumTaskQueue;
+        },
+        getNegativeUserSumCache(uid) {
+            const cached = this.USER_SUM_NEGATIVE_CACHE.get(uid);
+            if (!cached) return null;
+            if (Date.now() - cached.ts > this.USER_SUM_NEGATIVE_TTL) {
+                this.USER_SUM_NEGATIVE_CACHE.delete(uid);
+                return null;
+            }
+            return cached;
+        },
+        setNegativeUserSumCache(uid, reason = 'error') {
+            if (!uid) return null;
+            const cached = { ts: Date.now(), reason };
+            this.USER_SUM_NEGATIVE_CACHE.set(uid, cached);
+            return cached;
         },
         async getUserPostCommentSum(uid) {
             if (userSumCache[uid]) return userSumCache[uid];
+            if (this.getNegativeUserSumCache(uid)) return null;
+            if (this.INFLIGHT_USER_SUM_REQUESTS[uid]) return this.INFLIGHT_USER_SUM_REQUESTS[uid];
             const getCookie = (name) => { const v = `; ${document.cookie}`; const p = v.split(`; ${name}=`); if (p.length === 2) return p.pop().split(';').shift(); };
             let ci = getCookie(this.CONSTANTS.ETC.COOKIE_NAME_1) || getCookie(this.CONSTANTS.ETC.COOKIE_NAME_2);
             if (!ci) return null;
-            return new Promise((resolve) => {
+            const taskQueue = this.getUserSumTaskQueue();
+            const requestPromise = taskQueue.enqueue(() => new Promise((resolve) => {
                 const xhr = new XMLHttpRequest();
                 xhr.open('POST', this.CONSTANTS.API.USER_INFO, true); xhr.withCredentials = true;
                 xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded; charset=UTF-8'); xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
@@ -3002,6 +3583,7 @@ parseShortcutString(shortcutString) {
                 xhr.timeout = 5000;
                 xhr.ontimeout = () => {
                     console.warn(`DCinside User Filter: User info request for UID ${uid} timed out.`);
+                    this.setNegativeUserSumCache(uid, 'timeout');
                     resolve(null);
                 };
 
@@ -3012,17 +3594,29 @@ parseShortcutString(shortcutString) {
                         if (!isNaN(post) && !isNaN(comment)) {
                             const d = { sum: post + comment, post, comment };
                             userSumCache[uid] = d;
+                            this.USER_SUM_NEGATIVE_CACHE.delete(uid);
                             resolve(d);
                         } else {
+                            this.setNegativeUserSumCache(uid, 'parse');
                             resolve(null);
                         }
                     } else {
+                        this.setNegativeUserSumCache(uid, `status:${xhr.status}`);
                         resolve(null);
                     }
                 };
-                xhr.onerror = () => resolve(null);
+                xhr.onerror = () => {
+                    this.setNegativeUserSumCache(uid, 'network');
+                    resolve(null);
+                };
                 xhr.send(`ci_t=${encodeURIComponent(ci)}&user_id=${encodeURIComponent(uid)}`);
-            });
+            }));
+            this.INFLIGHT_USER_SUM_REQUESTS[uid] = requestPromise;
+            try {
+                return await requestPromise;
+            } finally {
+                delete this.INFLIGHT_USER_SUM_REQUESTS[uid];
+            }
         },
         async addBlockedUid(uid, sum, post, comment, ratioBlocked) {
             if (this.isMobile()) return;
@@ -3032,8 +3626,22 @@ parseShortcutString(shortcutString) {
         },
         async getBlockedGuests() { try { return JSON.parse(await GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCKED_GUESTS, '[]')); } catch { return []; } },
         async setBlockedGuests(list) { await GM_setValue(this.CONSTANTS.STORAGE_KEYS.BLOCKED_GUESTS, JSON.stringify(list)); },
-        async addBlockedGuest(ip) { if (dcFilterSettings.blockedGuests && !dcFilterSettings.blockedGuests.includes(ip)) { dcFilterSettings.blockedGuests.push(ip); await this.setBlockedGuests(dcFilterSettings.blockedGuests); } },
-        async clearBlockedGuests() { await this.setBlockedGuests([]); },
+        async addBlockedGuest(ip) {
+            if (!ip) return;
+            if (!(dcFilterSettings.blockedGuestSet instanceof Set)) {
+                dcFilterSettings.blockedGuestSet = new Set(Array.isArray(dcFilterSettings.blockedGuests) ? dcFilterSettings.blockedGuests : []);
+            }
+            if (dcFilterSettings.blockedGuestSet.has(ip)) return;
+            if (!Array.isArray(dcFilterSettings.blockedGuests)) dcFilterSettings.blockedGuests = [];
+            dcFilterSettings.blockedGuests.push(ip);
+            dcFilterSettings.blockedGuestSet.add(ip);
+            await this.setBlockedGuests(dcFilterSettings.blockedGuests);
+        },
+        async clearBlockedGuests() {
+            dcFilterSettings.blockedGuests = [];
+            dcFilterSettings.blockedGuestSet = new Set();
+            await this.setBlockedGuests([]);
+        },
         isUserBlocked({ sum, post, comment }) {
             return DCUF_SHARED_FILTER_CORE.evaluateUserStatsBlock({ sum, post, comment }, dcFilterSettings);
         },
@@ -3054,7 +3662,8 @@ parseShortcutString(shortcutString) {
             if (parentElement.getAttribute('data-dcuf-parent-filtered') !== '1') return;
             const replyItems = parentElement.querySelectorAll(':scope > div.reply.show .reply_list > li');
             const hasVisibleReply = Array.from(replyItems).some(li => li.style.display !== 'none');
-            parentElement.style.display = hasVisibleReply ? '' : 'none';
+            const nextDisplay = hasVisibleReply ? '' : 'none';
+            if (parentElement.style.display !== nextDisplay) parentElement.style.display = nextDisplay;
         },
         updateParentVisibilityFromReply(replyElement) {
             if (!this.isReplyCommentListItem(replyElement)) return;
@@ -3065,14 +3674,23 @@ parseShortcutString(shortcutString) {
             if (!(element instanceof HTMLElement)) return;
             const isolateParentOnly = shouldHide && this.isParentCommentListItem(element);
             if (isolateParentOnly) {
-                element.setAttribute('data-dcuf-parent-filtered', '1');
-                element.classList.add('dcuf-parent-comment-filtered');
+                if (element.getAttribute('data-dcuf-parent-filtered') !== '1') {
+                    element.setAttribute('data-dcuf-parent-filtered', '1');
+                }
+                if (!element.classList.contains('dcuf-parent-comment-filtered')) {
+                    element.classList.add('dcuf-parent-comment-filtered');
+                }
                 this.syncFilteredParentCommentVisibility(element);
                 return;
             }
-            element.removeAttribute('data-dcuf-parent-filtered');
-            element.classList.remove('dcuf-parent-comment-filtered');
-            element.style.display = shouldHide ? 'none' : '';
+            if (element.hasAttribute('data-dcuf-parent-filtered')) {
+                element.removeAttribute('data-dcuf-parent-filtered');
+            }
+            if (element.classList.contains('dcuf-parent-comment-filtered')) {
+                element.classList.remove('dcuf-parent-comment-filtered');
+            }
+            const nextDisplay = shouldHide ? 'none' : '';
+            if (element.style.display !== nextDisplay) element.style.display = nextDisplay;
             this.updateParentVisibilityFromReply(element);
         },
         async applyBlockFilterToElement(element, uid, userData, addBlockedUidFn) {
@@ -3087,21 +3705,17 @@ parseShortcutString(shortcutString) {
             if (window.location.pathname.includes('/view/')) return !element.closest(this.CONSTANTS.SELECTORS.COMMENT_CONTAINER);
             return true;
         },
-        async applyAsyncBlock(element) {
-            // [이식된 기능] 공지 글인 경우 비동기 필터(글댓합/비율)는 건너뜀
-            if (element.querySelector('em.icon_notice')) {
-                return;
-            }
-            // [최종 검증 후 수정] '개념글 제외' 기능이 비동기 필터(글댓합)에도 적용되도록 검사 로직을 다시 추가합니다.
-            if (this.shouldSkipFiltering(element)) {
-                // '개념글 제외'가 켜져있으면 글댓합/비율 필터를 적용하지 않습니다.
-                // 단, 개인 차단은 이미 applySyncBlock에서 처리되었으므로 여기서는 display 속성을 건드리지 않습니다.
-                return;
-            }
+        async applyAsyncBlock(target) {
+            const descriptor = this.normalizeFilterTarget(target);
+            if (!descriptor) return;
+
+            const { element, writerInfo, uid, isNotice, shouldSkipFiltering } = descriptor;
+            if (isNotice || shouldSkipFiltering) return;
+
             try {
                 if (element.style.display === 'none') return;
-                const writerInfo = element.querySelector(this.CONSTANTS.SELECTORS.WRITER_INFO); if (!writerInfo) return;
-                const uid = writerInfo.getAttribute('data-uid'); if (!uid || uid.length < 3) return;
+                if (!(writerInfo instanceof HTMLElement)) return;
+                if (!uid || uid.length < 3) return;
                 if (this.BLOCKED_UIDS_CACHE[uid]) return;
                 const userData = await this.getUserPostCommentSum(uid); if (!userData) return;
                 await this.applyBlockFilterToElement(element, uid, userData, this.addBlockedUid);
@@ -3117,31 +3731,36 @@ parseShortcutString(shortcutString) {
             this.BLOCKED_UIDS_CACHE = data;
             if (changed) await GM_setValue(this.CONSTANTS.STORAGE_KEYS.BLOCKED_UIDS, JSON.stringify(this.BLOCKED_UIDS_CACHE));
         },
-        applySyncBlock(element) {
-            const { masterDisabled, blockGuestEnabled, proxyBlockMode = 0, telecomBlockEnabled, blockedGuests = [], customIpPrefixSet, personalBlockList, personalBlockEnabled } = dcFilterSettings;
+        applySyncBlock(target) {
+            const descriptor = this.normalizeFilterTarget(target);
+            if (!descriptor?.writerInfo) return;
+
+            const {
+                masterDisabled,
+                blockGuestEnabled,
+                proxyBlockMode = 0,
+                telecomBlockEnabled,
+                blockedGuests = [],
+                blockedGuestSet,
+                customIpPrefixSet,
+                personalBlockEnabled,
+                personalBlockUidSet,
+                personalBlockNicknameSet,
+                personalBlockIpSet
+            } = dcFilterSettings;
             const normalizedProxyBlockMode = this.normalizeProxyBlockMode(proxyBlockMode);
             const proxyBlockEnabled = normalizedProxyBlockMode !== this.PROXY_MODE.OFF;
 
-            const writerInfo = element.querySelector(this.CONSTANTS.SELECTORS.WRITER_INFO);
-            if (!writerInfo) return;
-
-            const uid = writerInfo.getAttribute('data-uid');
-            const nickname = writerInfo.getAttribute('data-nick');
-            const ipSpan = element.querySelector(this.CONSTANTS.SELECTORS.IP_SPAN);
-            const ipText = ipSpan ? ipSpan.textContent.trim() : '';
-            const ipFromSpan = (ipText.startsWith('(') && ipText.endsWith(')')) ? ipText.slice(1, -1) : ipText;
-            const ip = ipFromSpan || writerInfo.getAttribute('data-ip') || null;
-            const ipPrefix = this.getIpPrefix(ip);
-            const isGuest = Boolean((!uid || uid.length < 3) && ip);
+            const { element, uid, nickname, ip, ipText, writerDataIp, ipPrefix, isGuest, isNotice, shouldSkipFiltering, hasBlockDisableClass } = descriptor;
             const subject = {
                 uid,
                 nickname,
                 ip,
                 ipPrefix,
                 isGuest,
-                isNotice: Boolean(element.querySelector('em.icon_notice')),
-                shouldSkipFiltering: this.shouldSkipFiltering(element),
-                hasBlockDisableClass: element.classList.contains('block-disable')
+                isNotice,
+                shouldSkipFiltering,
+                hasBlockDisableClass
             };
             const baseDebug = {
                 branch: 'sync-base',
@@ -3149,7 +3768,7 @@ parseShortcutString(shortcutString) {
                 nickname,
                 ip,
                 ipText,
-                writerDataIp: writerInfo.getAttribute('data-ip'),
+                writerDataIp,
                 ipPrefix,
                 isGuest,
                 blockGuestEnabled,
@@ -3167,21 +3786,23 @@ parseShortcutString(shortcutString) {
                     blockGuestEnabled,
                     proxyBlockMode: normalizedProxyBlockMode,
                     telecomBlockEnabled,
-                    blockedGuests,
                     customIpPrefixSet,
                     personalBlockEnabled,
-                    personalBlockList,
                     threshold: dcFilterSettings.threshold,
                     ratioEnabled: dcFilterSettings.ratioEnabled,
                     ratioMin: dcFilterSettings.ratioMin,
                     ratioMax: dcFilterSettings.ratioMax
                 },
                 matches: {
-                    personalBlockHit: personalBlockEnabled && DCUF_SHARED_FILTER_CORE.isPersonalBlockHit(subject, personalBlockList),
+                    personalBlockHit: personalBlockEnabled && DCUF_SHARED_FILTER_CORE.isPersonalBlockHit(subject, {
+                        uidSet: personalBlockUidSet,
+                        nicknameSet: personalBlockNicknameSet,
+                        ipSet: personalBlockIpSet
+                    }),
                     hasCustomIpPrefixBlock: Boolean(customIpPrefixSet && customIpPrefixSet.size > 0 && ipPrefix && customIpPrefixSet.has(ipPrefix)),
                     proxyMatchInfo,
                     telecomPrefixMatch: Boolean(ipPrefix && telecomPrefixSet && telecomPrefixSet.has(ipPrefix)),
-                    blockedGuestMatch: Boolean(ip && blockedGuests.includes(ip))
+                    blockedGuestMatch: Boolean(ip && (blockedGuestSet instanceof Set ? blockedGuestSet.has(ip) : blockedGuests.includes(ip)))
                 },
                 blockedUidEntry: uid ? this.BLOCKED_UIDS_CACHE[uid] : null
             });
@@ -3191,7 +3812,7 @@ parseShortcutString(shortcutString) {
                 branch: decision.path || 'sync-final',
                 isBlocked: decision.isBlocked,
                 reasons: decision.reasons,
-                blockedGuestsCount: blockedGuests.length,
+                blockedGuestsCount: blockedGuestSet instanceof Set ? blockedGuestSet.size : blockedGuests.length,
                 customIpPrefixCount: customIpPrefixSet instanceof Set ? customIpPrefixSet.size : 0,
                 hasCustomIpPrefixBlock: decision.hasCustomIpPrefixBlock,
                 proxyPrefixMatch: decision.proxyPrefixMatch,
@@ -3203,7 +3824,8 @@ parseShortcutString(shortcutString) {
         },
         initializeUniversalObserver() {
             const targets = [{ c: this.CONSTANTS.SELECTORS.POST_LIST_CONTAINER, i: this.CONSTANTS.SELECTORS.POST_ITEM }, { c: this.CONSTANTS.SELECTORS.COMMENT_CONTAINER, i: this.CONSTANTS.SELECTORS.COMMENT_ITEM }, { c: this.CONSTANTS.SELECTORS.POST_VIEW_LIST_CONTAINER, i: 'li' }];
-            const filterItems = (items) => items.forEach(item => { this.applySyncBlock(item); this.applyAsyncBlock(item); });
+            const filterItems = (items) => this.applyFilterItems(items);
+            const queueFilterItems = (items) => this.queueObservedFilterItems(items);
             const attachObserver = (container, itemSelector) => {
                 if (container.hasAttribute(this.CONSTANTS.CUSTOM_ATTRS.OBSERVER_ATTACHED)) return;
                 container.setAttribute(this.CONSTANTS.CUSTOM_ATTRS.OBSERVER_ATTACHED, 'true');
@@ -3215,14 +3837,24 @@ parseShortcutString(shortcutString) {
                         if (n.nodeType !== 1) return;
                         if (n.matches(itemSelector)) newItems.push(n); else if (n.querySelectorAll) newItems.push(...n.querySelectorAll(itemSelector));
                     }));
-                    if (newItems.length > 0) filterItems(newItems);
+                    if (newItems.length > 0) queueFilterItems(newItems);
                 }).observe(container, { childList: true, subtree: true });
             };
+            targets.forEach(t => document.querySelectorAll(t.c).forEach(c => attachObserver(c, t.i)));
+
+            const runtimeCoordinator = this.getRuntimeCoordinator();
+            if (runtimeCoordinator && typeof runtimeCoordinator.subscribeMutations === 'function') {
+                if (typeof this._runtimeMutationUnsubscribe === 'function') this._runtimeMutationUnsubscribe();
+                this._runtimeMutationUnsubscribe = runtimeCoordinator.subscribeMutations('filter-universal-observer', (payload) => {
+                    targets.forEach((target) => {
+                        payload.collectMatches(target.c).forEach((container) => attachObserver(container, target.i));
+                    });
+                });
+                return;
+            }
+
             const mainContainer = document.querySelector(this.CONSTANTS.SELECTORS.MAIN_CONTAINER);
             const observerTarget = mainContainer || document.body;
-
-
-            // [디버깅 추가]
             const bodyObserver = new MutationObserver(mutations => {
                 mutations.forEach(m => m.addedNodes.forEach(n => {
                     if (n.parentNode && n.parentNode.closest && (n.parentNode.closest('#dc-backup-popup') || n.parentNode.closest('#dc-block-management-panel') || n.parentNode.closest('#dcinside-filter-setting'))) {
@@ -3233,7 +3865,6 @@ parseShortcutString(shortcutString) {
                     }
                 }));
             });
-            targets.forEach(t => document.querySelectorAll(t.c).forEach(c => attachObserver(c, t.i)));
             bodyObserver.observe(observerTarget, { childList: true, subtree: true });
         },
         async reloadSettings() {
@@ -3272,6 +3903,10 @@ parseShortcutString(shortcutString) {
                 [this.CONSTANTS.STORAGE_KEYS.PERSONAL_BLOCK_ENABLED]: personalBlockEnabled
             });
             const customIpPrefixSet = new Set(DCUF_SHARED_STORAGE.parseIpPrefixList(blockConfig?.ip || '', this.CONSTANTS.ETC.MOBILE_IP_MARKER));
+            const blockedGuestSet = this.buildLookupSet(blockedGuests);
+            const personalBlockUidSet = this.buildLookupSet(personalBlockList?.uids, (item) => item?.id);
+            const personalBlockNicknameSet = this.buildLookupSet(personalBlockList?.nicknames);
+            const personalBlockIpSet = this.buildLookupSet(personalBlockList?.ips);
 
             dcFilterSettings = {
                 masterDisabled: normalizedSettings.masterDisabled, excludeRecommended: normalizedSettings.excludeRecommended, threshold: normalizedSettings.threshold, ratioEnabled: normalizedSettings.ratioEnabled,
@@ -3282,8 +3917,12 @@ parseShortcutString(shortcutString) {
                 proxyBlockEnabled: normalizedSettings.proxyBlockMode !== this.PROXY_MODE.OFF,
                 telecomBlockEnabled: normalizedSettings.telecomBlockEnabled,
                 blockedGuests,
+                blockedGuestSet,
                 customIpPrefixSet,
                 personalBlockList,
+                personalBlockUidSet,
+                personalBlockNicknameSet,
+                personalBlockIpSet,
                 personalBlockEnabled
             };
             this.debugLog('settings', 'reloadSettings complete', this.debugSettingsSnapshot({
@@ -3291,41 +3930,86 @@ parseShortcutString(shortcutString) {
                 rawBlockConfigPreview: typeof blockConfig?.ip === 'string' ? blockConfig.ip.split('||').slice(0, 20) : []
             }));
         },
-        getRefilterTargets() {
-            const selectors = [
-                this.CONSTANTS.SELECTORS.POST_ITEM,
+        getRefilterTargetSelectors(scope = 'all') {
+            const commentSelectors = [
                 this.CONSTANTS.SELECTORS.COMMENT_ITEM,
                 'li[id^="comment_li_"]',
                 'li[id^="reply_li_"]',
+                'li[id^="img_comment_li_"]',
+                'li[id^="mg_comment_li_"]'
+            ];
+            const postSelectors = [
+                this.CONSTANTS.SELECTORS.POST_ITEM,
                 `${this.CONSTANTS.SELECTORS.POST_VIEW_LIST_CONTAINER} > li`
             ];
+
+            if (scope === 'comments') return commentSelectors;
+            if (scope === 'posts') return postSelectors;
+            return [...postSelectors, ...commentSelectors];
+        },
+        resolveRefilterRoot(root = document) {
+            if (root instanceof Document || root instanceof Element || root instanceof DocumentFragment) return root;
+            return document;
+        },
+        getRefilterTargets(scope = 'all', root = document) {
+            const queryRoot = this.resolveRefilterRoot(root);
+            const selectors = this.getRefilterTargetSelectors(scope);
+            const selectorText = selectors.join(', ');
             const seen = new Set();
-            return Array.from(document.querySelectorAll(selectors.join(', '))).filter((element) => {
-                if (!(element instanceof HTMLElement)) return false;
-                if (seen.has(element)) return false;
+            const candidates = [];
+
+            if (queryRoot instanceof Element && queryRoot.matches(selectorText)) candidates.push(queryRoot);
+            if (typeof queryRoot.querySelectorAll === 'function') {
+                candidates.push(...queryRoot.querySelectorAll(selectorText));
+            }
+
+            return candidates.reduce((descriptors, element) => {
+                if (!(element instanceof HTMLElement) || seen.has(element)) return descriptors;
                 seen.add(element);
-                return true;
+                const descriptor = this.describeFilterTarget(element);
+                if (descriptor) descriptors.push(descriptor);
+                return descriptors;
+            }, []);
+        },
+        runSyncRefilterPass(scope = 'all', root = document, descriptors = null) {
+            const targetDescriptors = Array.isArray(descriptors) ? descriptors : this.getRefilterTargets(scope, root);
+            this.applySyncToDescriptors(targetDescriptors, { resetDisplay: true });
+            return targetDescriptors;
+        },
+        scheduleSyncRefilterPasses(scope = 'all', root = document) {
+            if (this._syncRefilterRafId) cancelAnimationFrame(this._syncRefilterRafId);
+            if (!this._syncRefilterTimerIds) this._syncRefilterTimerIds = new Set();
+            this._syncRefilterTimerIds.forEach((timerId) => clearTimeout(timerId));
+            this._syncRefilterTimerIds.clear();
+
+            const rerun = () => this.runSyncRefilterPass(scope, root);
+            this._syncRefilterRafId = requestAnimationFrame(() => {
+                this._syncRefilterRafId = 0;
+                rerun();
+            });
+            [90, 220].forEach((delay) => {
+                const timerId = window.setTimeout(() => {
+                    this._syncRefilterTimerIds.delete(timerId);
+                    rerun();
+                }, delay);
+                this._syncRefilterTimerIds.add(timerId);
             });
         },
-        runSyncRefilterPass() {
-            this.getRefilterTargets().forEach((element) => {
-                if (!dcFilterSettings.masterDisabled) element.style.display = '';
-                this.applySyncBlock(element);
-            });
-        },
-        scheduleSyncRefilterPasses() {
-            const rerun = () => this.runSyncRefilterPass();
-            requestAnimationFrame(rerun);
-            window.setTimeout(rerun, 90);
-            window.setTimeout(rerun, 220);
-        },
-        scheduleCommentStabilizedRefilter(reason = 'comment-stabilized') {
+        scheduleCommentStabilizedRefilter(reason = 'comment-stabilized', root = null) {
             if (this._commentRefilterRafId) cancelAnimationFrame(this._commentRefilterRafId);
             if (!this._commentRefilterTimerIds) this._commentRefilterTimerIds = new Set();
             this._commentRefilterTimerIds.forEach((timerId) => clearTimeout(timerId));
             this._commentRefilterTimerIds.clear();
 
-            const rerun = () => this.runSyncRefilterPass();
+            const rerun = () => {
+                const scopeRoot = this.resolveRefilterRoot(root || document);
+                const shouldFallbackToFullPass = root instanceof Element && !document.contains(root);
+                if (shouldFallbackToFullPass) {
+                    this.runSyncRefilterPass('all');
+                    return;
+                }
+                this.runSyncRefilterPass('comments', scopeRoot);
+            };
             this.debugLog('comment-refilter', 'scheduleCommentStabilizedRefilter', { reason });
             this._commentRefilterRafId = requestAnimationFrame(() => {
                 this._commentRefilterRafId = 0;
@@ -3341,12 +4025,11 @@ parseShortcutString(shortcutString) {
         },
         async runFullRefilterPass(reason = 'refilterAllContent') {
             await this.reloadSettings();
-            this.startDebugPass(reason, { targetCount: this.getRefilterTargets().length });
-            this.runSyncRefilterPass();
+            const descriptors = this.getRefilterTargets('all');
+            this.startDebugPass(reason, { targetCount: descriptors.length });
+            this.runSyncRefilterPass('all', document, descriptors);
             this.scheduleSyncRefilterPasses();
-            this.getRefilterTargets().forEach((element) => {
-                this.applyAsyncBlock(element);
-            });
+            this.applyAsyncToDescriptors(descriptors);
             document.dispatchEvent(new CustomEvent('dcFilterRefiltered'));
         },
         async refilterAllContent(reason = 'refilterAllContent') {
@@ -3389,7 +4072,7 @@ parseShortcutString(shortcutString) {
         async init() {
             if (isInitialized) return; isInitialized = true;
             this.installDebugApi();
-            this.debugLog('init', 'FilterModule init start', { version: '3.0.1' });
+            this.debugLog('init', 'FilterModule init start', { version: '3.1.1' });
             await this.cleanupLegacyManagedBlockConfig();
             await this.reloadSettings();
             this.getKrPrefixSet();
@@ -4351,6 +5034,109 @@ parseShortcutString(shortcutString) {
             BOTTOM_CONTROLS: 'custom-bottom-controls',
         },
 
+        LIST_STATE_MAP: new WeakMap(),
+        PAGINATION_BOUND_ATTR: 'data-dcuf-force-refresh-bound',
+        TOOLTIP_BOUND_ATTR: 'data-dcuf-tooltip-bound',
+        _nextRowId: 1,
+        _nextListRuntimeId: 1,
+        _listMutationUnsubscribe: null,
+
+        getRuntimeCoordinator() {
+            return window.__dcufRuntimeCoordinator || null;
+        },
+
+        resolveOwnedListWrap(candidate) {
+            if (!(candidate instanceof Element)) return null;
+
+            let originalTable = null;
+            if (candidate.matches?.(this.SELECTORS.ORIGINAL_TABLE)) {
+                originalTable = candidate;
+            } else if (candidate.matches?.(this.SELECTORS.LIST_WRAP)) {
+                originalTable = candidate.querySelector(this.SELECTORS.ORIGINAL_TABLE);
+            } else {
+                originalTable = candidate.closest?.(this.SELECTORS.ORIGINAL_TABLE)
+                    || candidate.querySelector?.(this.SELECTORS.ORIGINAL_TABLE)
+                    || candidate.closest?.(this.SELECTORS.LIST_WRAP)?.querySelector?.(this.SELECTORS.ORIGINAL_TABLE);
+            }
+
+            if (!(originalTable instanceof Element)) return null;
+            const ownerWrap = originalTable.closest(this.SELECTORS.LIST_WRAP);
+            return ownerWrap instanceof HTMLElement ? ownerWrap : null;
+        },
+
+        collectOwnedListWraps(root = document) {
+            const queryRoot = (root instanceof Document || root instanceof Element || root instanceof DocumentFragment) ? root : document;
+            const seen = new Set();
+            const results = [];
+            const pushOwned = (candidate) => {
+                const ownerWrap = this.resolveOwnedListWrap(candidate);
+                if (!(ownerWrap instanceof HTMLElement) || seen.has(ownerWrap)) return;
+                seen.add(ownerWrap);
+                results.push(ownerWrap);
+            };
+
+            if (queryRoot instanceof Element) pushOwned(queryRoot);
+            if (queryRoot.querySelectorAll) {
+                queryRoot.querySelectorAll(this.SELECTORS.LIST_WRAP).forEach(pushOwned);
+                queryRoot.querySelectorAll(this.SELECTORS.ORIGINAL_TABLE).forEach(pushOwned);
+            }
+
+            return results;
+        },
+
+        recordDiagnostic(label, amount = 1) {
+            const diagnostics = window.__dcufDiagnostics;
+            if (typeof diagnostics?.increment === 'function') diagnostics.increment(label, amount);
+        },
+
+        createPhaseScheduler(label, run, delays = []) {
+            const runtimeCoordinator = this.getRuntimeCoordinator();
+            if (runtimeCoordinator && typeof runtimeCoordinator.createPhaseScheduler === 'function') {
+                return runtimeCoordinator.createPhaseScheduler(label, run, { delays });
+            }
+
+            let rafId = 0;
+            const timerIds = new Set();
+            const clearTimers = () => {
+                timerIds.forEach((timerId) => clearTimeout(timerId));
+                timerIds.clear();
+            };
+
+            return {
+                schedule: (meta = null) => {
+                    if (rafId) cancelAnimationFrame(rafId);
+                    clearTimers();
+
+                    rafId = requestAnimationFrame(() => {
+                        rafId = 0;
+                        run({ label, phase: 'raf', delay: 0, meta });
+                        delays.forEach((delay) => {
+                            const timerId = window.setTimeout(() => {
+                                timerIds.delete(timerId);
+                                run({ label, phase: `delay:${delay}`, delay, meta });
+                            }, delay);
+                            timerIds.add(timerId);
+                        });
+                    });
+                },
+                cancel: () => {
+                    if (rafId) {
+                        cancelAnimationFrame(rafId);
+                        rafId = 0;
+                    }
+                    clearTimers();
+                },
+                flush: (meta = null) => {
+                    if (rafId) {
+                        cancelAnimationFrame(rafId);
+                        rafId = 0;
+                    }
+                    clearTimers();
+                    run({ label, phase: 'flush', delay: 0, meta });
+                }
+            };
+        },
+
 
         proxyClick(customItem, originalRow) {
             customItem.addEventListener('click', (e) => {
@@ -4432,11 +5218,13 @@ parseShortcutString(shortcutString) {
             if (typeof FilterModule?.debugMirrorSync === 'function') {
                 FilterModule.debugMirrorSync(originalRow, mirroredItem, nextDisplay, 'UIModule.updateItemVisibility');
             }
-            mirroredItem.style.display = nextDisplay;
+            if (mirroredItem.style.display !== nextDisplay) {
+                mirroredItem.style.display = nextDisplay;
+            }
         },
 
 
-        createMobileListItem(originalRow, index) {
+        createMobileListItem(originalRow, rowId) {
             const titleContainer = originalRow.querySelector('.gall_tit');
             const writerEl = originalRow.querySelector('.gall_writer');
             const dateEl = originalRow.querySelector('.gall_date');
@@ -4444,7 +5232,7 @@ parseShortcutString(shortcutString) {
 
 
             const newItem = document.createElement('div');
-            newItem.setAttribute(this.DATA_ATTR, index);
+            newItem.setAttribute(this.DATA_ATTR, rowId);
             newItem.className = `${this.CUSTOM_CLASSES.POST_ITEM} ${originalRow.className.replace('ub-content', '').trim()}`;
 
             // [이식된 기능] 광고 글(icon_ad)인 경우 식별 클래스 추가
@@ -4553,9 +5341,89 @@ parseShortcutString(shortcutString) {
             return bottomControls;
         },
 
+        bindTooltipEvents(listContainer) {
+            if (!(listContainer instanceof HTMLElement)) return;
+            if (listContainer.getAttribute(this.TOOLTIP_BOUND_ATTR) === '1') return;
+            listContainer.setAttribute(this.TOOLTIP_BOUND_ATTR, '1');
+
+            const tooltip = document.getElementById('custom-instant-tooltip');
+            if (!tooltip) return;
+
+            listContainer.addEventListener('mouseover', (e) => {
+                const subject = e.target.closest('.gall_subject');
+                if (subject && subject.title) {
+                    tooltip.textContent = subject.title;
+                    tooltip.style.display = 'block';
+                }
+            });
+            listContainer.addEventListener('mouseout', () => {
+                tooltip.style.display = 'none';
+            });
+            listContainer.addEventListener('mousemove', (e) => {
+                if (tooltip.style.display === 'block') {
+                    tooltip.style.left = `${e.clientX + 10}px`;
+                    tooltip.style.top = `${e.clientY + 10}px`;
+                }
+            });
+        },
+
+        getOrAssignRowId(originalRow) {
+            if (!(originalRow instanceof HTMLElement)) return '';
+            let rowId = originalRow.getAttribute(this.DATA_ATTR);
+            if (rowId) return rowId;
+            rowId = `dcuf-row-${this._nextRowId++}`;
+            originalRow.setAttribute(this.DATA_ATTR, rowId);
+            return rowId;
+        },
+
+        createListState(listWrap, originalTable, originalTbody, newListContainer) {
+            const state = {
+                runtimeId: this._nextListRuntimeId++,
+                listWrap,
+                originalTable,
+                originalTbody,
+                newListContainer,
+                itemByRowId: new Map(),
+                tbodyObserver: null,
+                syncScheduler: null,
+                rebuildAll: false,
+                lastSyncReason: 'init'
+            };
+
+            state.syncScheduler = this.createPhaseScheduler(`ui-list-${state.runtimeId}`, () => {
+                this.syncListState(state, state.lastSyncReason);
+            }, [90]);
+
+            return state;
+        },
+
+        hydrateExistingListItems(state) {
+            if (!(state?.newListContainer instanceof HTMLElement)) return;
+            state.itemByRowId.clear();
+            state.newListContainer.querySelectorAll(`.${this.CUSTOM_CLASSES.POST_ITEM}[${this.DATA_ATTR}]`).forEach((item) => {
+                const rowId = item.getAttribute(this.DATA_ATTR);
+                if (rowId) state.itemByRowId.set(rowId, item);
+            });
+        },
+
+        destroyListState(state, reason = 'destroy') {
+            if (!state) return;
+            if (state.tbodyObserver) state.tbodyObserver.disconnect();
+            if (state.syncScheduler && typeof state.syncScheduler.cancel === 'function') {
+                state.syncScheduler.cancel();
+            }
+            if (state.listWrap instanceof HTMLElement) {
+                state.listWrap.removeAttribute(this.TRANSFORMED_ATTR);
+            }
+            this.LIST_STATE_MAP.delete(state.listWrap);
+            this.recordDiagnostic('ui.listState.destroyed');
+        },
+
 
         applyForceRefreshPagination(containerElement) {
-            if (!containerElement) return;
+            if (!(containerElement instanceof HTMLElement)) return;
+            if (containerElement.getAttribute(this.PAGINATION_BOUND_ATTR) === '1') return;
+            containerElement.setAttribute(this.PAGINATION_BOUND_ATTR, '1');
             containerElement.addEventListener('click', (e) => {
                 const link = e.target.closest('a');
                 if (!link) return;
@@ -4581,9 +5449,230 @@ parseShortcutString(shortcutString) {
             }, true);
         },
 
-        processAllLists() {
-            const wraps = document.querySelectorAll(this.SELECTORS.LIST_WRAP);
-            wraps.forEach(lw => this.transformList(lw));
+        scheduleListSync(state, reason = 'sync', { rebuildAll = false } = {}) {
+            if (!state) return;
+            if (rebuildAll) state.rebuildAll = true;
+            state.lastSyncReason = reason;
+            state.syncScheduler?.schedule({ reason });
+        },
+
+        syncListState(state, reason = 'sync') {
+            if (!state?.listWrap?.isConnected) {
+                this.destroyListState(state, 'list-wrap-detached');
+                return;
+            }
+
+            const originalTable = state.listWrap.querySelector(this.SELECTORS.ORIGINAL_TABLE);
+            const originalTbody = originalTable?.querySelector(this.SELECTORS.ORIGINAL_TBODY);
+            if (!originalTable || !originalTbody) return;
+
+            if (originalTbody !== state.originalTbody) {
+                this.destroyListState(state, 'tbody-replaced');
+                this.ensureListRuntime(state.listWrap, `${reason}:tbody-replaced`);
+                return;
+            }
+
+            state.originalTable = originalTable;
+            state.originalTbody = originalTbody;
+            state.originalTable.style.setProperty('display', 'none', 'important');
+
+            if (!state.newListContainer.isConnected && state.originalTable.parentNode) {
+                state.originalTable.parentNode.insertBefore(state.newListContainer, state.originalTable.nextSibling);
+            }
+
+            const shouldRebuildAll = state.rebuildAll;
+            const originalRows = Array.from(state.originalTbody.querySelectorAll(this.SELECTORS.ORIGINAL_POST_ITEM));
+            const seenRowIds = new Set();
+            let previousItem = null;
+
+            originalRows.forEach((row) => {
+                try {
+                    const rowId = this.getOrAssignRowId(row);
+                    if (!rowId) return;
+                    seenRowIds.add(rowId);
+
+                    let mirroredItem = state.itemByRowId.get(rowId);
+                    if (shouldRebuildAll && mirroredItem instanceof HTMLElement) {
+                        mirroredItem.remove();
+                        state.itemByRowId.delete(rowId);
+                        mirroredItem = null;
+                    }
+
+                    if (!(mirroredItem instanceof HTMLElement)) {
+                        mirroredItem = this.createMobileListItem(row, rowId);
+                        if (!mirroredItem) return;
+                        this.proxyClick(mirroredItem, row);
+                        state.itemByRowId.set(rowId, mirroredItem);
+                    }
+
+                    this.updateItemVisibility(row, mirroredItem);
+
+                    if (previousItem === null) {
+                        if (state.newListContainer.firstElementChild !== mirroredItem) {
+                            state.newListContainer.insertBefore(mirroredItem, state.newListContainer.firstElementChild);
+                        }
+                    } else if (previousItem.nextElementSibling !== mirroredItem) {
+                        state.newListContainer.insertBefore(mirroredItem, previousItem.nextElementSibling);
+                    }
+
+                    previousItem = mirroredItem;
+                } catch (error) {
+                    console.error('[DC Filter+UI] Failed to sync a mirrored post item:', error, row);
+                }
+            });
+
+            Array.from(state.itemByRowId.entries()).forEach(([rowId, mirroredItem]) => {
+                if (seenRowIds.has(rowId)) return;
+                if (mirroredItem instanceof HTMLElement) mirroredItem.remove();
+                state.itemByRowId.delete(rowId);
+            });
+
+            state.rebuildAll = false;
+            this.recordDiagnostic('ui.listState.synced');
+        },
+
+        attachOriginalTbodyObserver(state) {
+            if (!state?.originalTbody || state.tbodyObserver) return;
+
+            state.tbodyObserver = new MutationObserver((mutations) => {
+                const visibilityTargets = new Set();
+                let needsResync = false;
+
+                mutations.forEach((mutation) => {
+                    if (mutation.type === 'attributes' && (mutation.attributeName === 'style' || mutation.attributeName === 'class')) {
+                        const originalRow = mutation.target;
+                        if (originalRow instanceof HTMLElement && originalRow.matches(this.SELECTORS.ORIGINAL_POST_ITEM)) {
+                            visibilityTargets.add(originalRow);
+                        }
+                        return;
+                    }
+
+                    if (mutation.type === 'childList' || mutation.type === 'characterData') {
+                        needsResync = true;
+                    }
+                });
+
+                visibilityTargets.forEach((originalRow) => {
+                    const rowId = originalRow.getAttribute(this.DATA_ATTR);
+                    if (!rowId) return;
+                    const mirroredItem = state.itemByRowId.get(rowId);
+                    if (mirroredItem) this.updateItemVisibility(originalRow, mirroredItem);
+                });
+
+                if (needsResync) {
+                    this.scheduleListSync(state, 'tbody-mutated', { rebuildAll: true });
+                }
+            });
+
+            state.tbodyObserver.observe(state.originalTbody, {
+                childList: true,
+                subtree: true,
+                characterData: true,
+                attributes: true,
+                attributeFilter: ['style', 'class']
+            });
+        },
+
+        ensureListRuntime(listWrap, reason = 'ensure') {
+            if (!(listWrap instanceof HTMLElement)) return null;
+            const ownedListWrap = this.resolveOwnedListWrap(listWrap);
+            if (!(ownedListWrap instanceof HTMLElement) || ownedListWrap !== listWrap) return null;
+
+            const originalTable = listWrap.querySelector(this.SELECTORS.ORIGINAL_TABLE);
+            const originalTbody = originalTable?.querySelector(this.SELECTORS.ORIGINAL_TBODY);
+            if (!originalTable || !originalTbody) return null;
+
+            const existingState = this.LIST_STATE_MAP.get(listWrap);
+            if (existingState && existingState.originalTbody === originalTbody && existingState.newListContainer instanceof HTMLElement) {
+                this.scheduleListSync(existingState, reason);
+                return existingState;
+            }
+
+            if (existingState) this.destroyListState(existingState, 'list-runtime-refresh');
+
+            listWrap.setAttribute(this.TRANSFORMED_ATTR, 'true');
+            originalTable.style.setProperty('display', 'none', 'important');
+
+            let newListContainer = listWrap.querySelector(`.${this.CUSTOM_CLASSES.MOBILE_LIST}`);
+            if (!(newListContainer instanceof HTMLElement)) {
+                newListContainer = document.createElement('div');
+                newListContainer.className = this.CUSTOM_CLASSES.MOBILE_LIST;
+                originalTable.parentNode.insertBefore(newListContainer, originalTable.nextSibling);
+            }
+
+            this.bindTooltipEvents(newListContainer);
+
+            const bottomControls = listWrap.querySelector(`.${this.CUSTOM_CLASSES.BOTTOM_CONTROLS}`) || this.createBottomControls(listWrap);
+            if (bottomControls && bottomControls.parentElement !== listWrap) {
+                listWrap.appendChild(bottomControls);
+            }
+
+            this.applyForceRefreshPagination(listWrap);
+
+            const state = this.createListState(listWrap, originalTable, originalTbody, newListContainer);
+            this.LIST_STATE_MAP.set(listWrap, state);
+            this.hydrateExistingListItems(state);
+            this.attachOriginalTbodyObserver(state);
+            this.scheduleListSync(state, reason, { rebuildAll: true });
+            this.recordDiagnostic('ui.listState.created');
+            return state;
+        },
+
+        ensureKnownListRuntimes(root = document, reason = 'ensure-known') {
+            this.collectOwnedListWraps(root).forEach((listWrap) => this.ensureListRuntime(listWrap, reason));
+        },
+
+        ensureListRuntimesFromCandidates(candidates, reason = 'ensure-candidates') {
+            if (!candidates || typeof candidates[Symbol.iterator] !== 'function') return [];
+            const seen = new Set();
+            const resolved = [];
+            Array.from(candidates).forEach((candidate) => {
+                const listWrap = this.resolveOwnedListWrap(candidate);
+                if (!(listWrap instanceof HTMLElement) || seen.has(listWrap)) return;
+                seen.add(listWrap);
+                resolved.push(listWrap);
+                this.ensureListRuntime(listWrap, reason);
+            });
+            return resolved;
+        },
+
+        subscribeListRuntimeUpdates() {
+            if (typeof this._listMutationUnsubscribe === 'function') return;
+
+            const runtimeCoordinator = this.getRuntimeCoordinator();
+            if (runtimeCoordinator && typeof runtimeCoordinator.subscribeMutations === 'function') {
+                this._listMutationUnsubscribe = runtimeCoordinator.subscribeMutations('ui-list-runtime', (payload) => {
+                    const candidates = payload.collectMatches([
+                        this.SELECTORS.LIST_WRAP,
+                        this.SELECTORS.ORIGINAL_TABLE,
+                        this.SELECTORS.ORIGINAL_TBODY,
+                        this.SELECTORS.ORIGINAL_POST_ITEM
+                    ], { includeRoots: true });
+                    if (candidates.length === 0) return;
+
+                    this.ensureListRuntimesFromCandidates(candidates, 'mutation-bus');
+                });
+                return;
+            }
+
+            if (window.__dcufUiListObserver) return;
+            const observer = new MutationObserver((mutations) => {
+                const candidates = [];
+                mutations.forEach((mutation) => {
+                    mutation.addedNodes.forEach((node) => {
+                        if (!(node instanceof Element)) return;
+                        candidates.push(node);
+                    });
+                });
+                this.ensureListRuntimesFromCandidates(candidates, 'mutation-observer');
+            });
+            observer.observe(document.body, { childList: true, subtree: true });
+            window.__dcufUiListObserver = observer;
+        },
+
+        processAllLists(reason = 'processAllLists') {
+            this.recordDiagnostic('ui.processAllLists');
+            this.ensureKnownListRuntimes(document, `${reason}:full-scan`);
         },
 
         isListPage() {
@@ -4594,8 +5683,7 @@ parseShortcutString(shortcutString) {
             if (window.location.pathname.includes('/board/write/')) return true;
             if (window.location.pathname.includes('/board/view/')) return true;
 
-            const targetWraps = Array.from(document.querySelectorAll(this.SELECTORS.LIST_WRAP))
-                .filter(listWrap => listWrap.querySelector(this.SELECTORS.ORIGINAL_TABLE));
+            const targetWraps = this.collectOwnedListWraps(document);
 
             let ready;
             if (this.isListPage()) {
@@ -4609,6 +5697,7 @@ parseShortcutString(shortcutString) {
 
         waitForInitialUiReady(timeoutMs = 4000) {
             return new Promise((resolve) => {
+                this.ensureKnownListRuntimes(document, 'initial-ready:start');
                 if (this.isInitialUiReady()) {
                     resolve('ready');
                     return;
@@ -4617,8 +5706,10 @@ parseShortcutString(shortcutString) {
                 let rafId = 0;
                 let timeoutId = 0;
                 let observer = null;
+                let unsubscribe = null;
 
                 const cleanup = () => {
+                    if (typeof unsubscribe === 'function') unsubscribe();
                     if (observer) observer.disconnect();
                     if (rafId) window.cancelAnimationFrame(rafId);
                     if (timeoutId) window.clearTimeout(timeoutId);
@@ -4629,28 +5720,50 @@ parseShortcutString(shortcutString) {
                     resolve(reason);
                 };
 
-                const checkReady = () => {
-                    this.processAllLists();
-                    if (this.isInitialUiReady()) {
-                        finish('ready');
+                const checkReady = (reason = 'check', candidates = null) => {
+                    if (candidates && typeof candidates[Symbol.iterator] === 'function') {
+                        this.ensureListRuntimesFromCandidates(candidates, `initial-ready:${reason}`);
+                    } else {
+                        this.ensureKnownListRuntimes(document, `initial-ready:${reason}`);
                     }
+                    if (this.isInitialUiReady()) finish('ready');
                 };
 
-                const scheduleCheck = () => {
+                const scheduleCheck = (reason = 'mutation', candidates = null) => {
                     if (rafId) return;
                     rafId = window.requestAnimationFrame(() => {
                         rafId = 0;
-                        checkReady();
+                        checkReady(reason, candidates);
                     });
                 };
 
-                observer = new MutationObserver(() => {
-                    scheduleCheck();
-                });
-                observer.observe(document.body, { childList: true, subtree: true });
+                const runtimeCoordinator = this.getRuntimeCoordinator();
+                if (runtimeCoordinator && typeof runtimeCoordinator.subscribeMutations === 'function') {
+                    unsubscribe = runtimeCoordinator.subscribeMutations('ui-initial-ready', (payload) => {
+                        const relevantNodes = payload.collectMatches([
+                            this.SELECTORS.LIST_WRAP,
+                            this.SELECTORS.ORIGINAL_TABLE,
+                            this.SELECTORS.ORIGINAL_TBODY,
+                            this.SELECTORS.ORIGINAL_POST_ITEM
+                        ], { includeRoots: true });
+                        if (relevantNodes.length > 0) scheduleCheck('mutation-bus', relevantNodes);
+                    });
+                } else if (document.body) {
+                    observer = new MutationObserver((mutations) => {
+                        const candidates = [];
+                        mutations.forEach((mutation) => {
+                            candidates.push(mutation.target);
+                            mutation.addedNodes.forEach((node) => {
+                                if (node instanceof Element) candidates.push(node);
+                            });
+                        });
+                        scheduleCheck('mutation-observer', candidates);
+                    });
+                    observer.observe(document.body, { childList: true, subtree: true });
+                }
 
                 timeoutId = window.setTimeout(() => {
-                    this.processAllLists();
+                    this.processAllLists('initial-ready-timeout');
                     if (this.isInitialUiReady()) {
                         finish('ready');
                         return;
@@ -4660,83 +5773,8 @@ parseShortcutString(shortcutString) {
                     finish('timeout');
                 }, timeoutMs);
 
-                scheduleCheck();
+                scheduleCheck('initial');
             });
-        },
-
-        transformList(listWrap) {
-            if (listWrap.querySelector(`.${this.CUSTOM_CLASSES.MOBILE_LIST}`)) return;
-            if (listWrap.hasAttribute(this.TRANSFORMED_ATTR)) return;
-
-            const originalTable = listWrap.querySelector(this.SELECTORS.ORIGINAL_TABLE);
-            if (!originalTable) return;
-            const originalTbody = originalTable.querySelector(this.SELECTORS.ORIGINAL_TBODY);
-            if (!originalTbody) return;
-            listWrap.setAttribute(this.TRANSFORMED_ATTR, 'true');
-
-            originalTable.style.setProperty('display', 'none', 'important');
-
-            const newListContainer = document.createElement('div');
-            newListContainer.className = this.CUSTOM_CLASSES.MOBILE_LIST;
-
-            // [핵심 수정] 이벤트 위임을 사용하여 툴팁 로직 추가
-            const tooltip = document.getElementById('custom-instant-tooltip');
-            if (tooltip) {
-                newListContainer.addEventListener('mouseover', (e) => {
-                    const subject = e.target.closest('.gall_subject');
-                    if (subject && subject.title) {
-                        tooltip.textContent = subject.title;
-                        tooltip.style.display = 'block';
-                    }
-                });
-                newListContainer.addEventListener('mouseout', () => {
-                    tooltip.style.display = 'none';
-                });
-                newListContainer.addEventListener('mousemove', (e) => {
-                    if (tooltip.style.display === 'block') {
-                        tooltip.style.left = `${e.clientX + 10}px`;
-                        tooltip.style.top = `${e.clientY + 10}px`;
-                    }
-                });
-            }
-
-            const originalRows = Array.from(originalTbody.querySelectorAll(this.SELECTORS.ORIGINAL_POST_ITEM));
-            originalRows.forEach((row, index) => {
-                try {
-                    row.setAttribute(this.DATA_ATTR, index);
-                    const newItem = this.createMobileListItem(row, index);
-                    if (newItem) {
-                        this.proxyClick(newItem, row);
-                        newListContainer.appendChild(newItem);
-                    }
-                } catch (error) {
-                    console.error('[DC Filter+UI] Failed to process a post item, skipping:', error, row);
-                }
-            });
-
-            originalTable.parentNode.insertBefore(newListContainer, originalTable.nextSibling);
-
-            const bottomControls = this.createBottomControls(listWrap);
-            if (bottomControls) {
-                listWrap.appendChild(bottomControls);
-            }
-
-            this.applyForceRefreshPagination(listWrap);
-
-            const observer = new MutationObserver(mutations => {
-                mutations.forEach(mutation => {
-                    if (mutation.type === 'attributes' && (mutation.attributeName === 'style' || mutation.attributeName === 'class')) {
-                        const originalRow = mutation.target;
-                        if (!originalRow.matches(this.SELECTORS.ORIGINAL_POST_ITEM)) return;
-                        const rowId = originalRow.getAttribute(this.DATA_ATTR);
-                        if (rowId) {
-                            const mirroredItem = newListContainer.querySelector(`.${this.CUSTOM_CLASSES.POST_ITEM}[${this.DATA_ATTR}='${rowId}']`);
-                            if (mirroredItem) this.updateItemVisibility(originalRow, mirroredItem);
-                        }
-                    }
-                });
-            });
-            observer.observe(originalTbody, { attributes: true, attributeFilter: ['style', 'class'], subtree: true });
         },
 
 
@@ -4831,15 +5869,42 @@ parseShortcutString(shortcutString) {
                     adContainer.remove(); // 컨테이너를 페이지에서 완전히 제거
 
                     console.log('[DC Filter+UI] 글쓰기 페이지 광고 컨테이너 제거 완료.');
-                    clearInterval(adRemovalInterval); // 임무 완수 후 타이머 종료
+                    return true;
+                }
+                return false;
+            };
+            const stopAdCleanup = () => {
+                if (adRemovalInterval) {
+                    clearInterval(adRemovalInterval);
+                    adRemovalInterval = 0;
+                }
+                if (adRemovalObserver) {
+                    adRemovalObserver.disconnect();
+                    adRemovalObserver = null;
                 }
             };
+            let adRemovalObserver = null;
+            let adRemovalInterval = 0;
+            let adRemovalAttempts = 0;
 
-            // 0.1초마다 광고가 있는지 확인하고, 있으면 제거
-            const adRemovalInterval = setInterval(removeWritePageAds, 100);
+            if (removeWritePageAds()) return;
 
-            // 5초 후에는 검색을 멈춰서 불필요한 부하 방지
-            setTimeout(() => clearInterval(adRemovalInterval), 5000);
+            const observerTarget = writeBox || document.body;
+            if (observerTarget instanceof Element) {
+                adRemovalObserver = new MutationObserver(() => {
+                    if (removeWritePageAds()) {
+                        stopAdCleanup();
+                    }
+                });
+                adRemovalObserver.observe(observerTarget, { childList: true, subtree: true });
+            }
+
+            adRemovalInterval = window.setInterval(() => {
+                adRemovalAttempts += 1;
+                if (removeWritePageAds() || adRemovalAttempts >= 10) {
+                    stopAdCleanup();
+                }
+            }, 250);
         },
         async init() {
             if (isUiInitialized) return 'already-ready';
@@ -4884,36 +5949,8 @@ parseShortcutString(shortcutString) {
                 this.scaleAllFontSizes();
             }
 
-
-            this.processAllLists();
-
-
-            // [UI 이벤트 기반 변화 감지 옵저버]
-            const observer = new MutationObserver((mutations) => {
-                let needsListUpdate = false;
-                const scriptOwnedSelector = `.${this.CUSTOM_CLASSES.MOBILE_LIST}, .${this.CUSTOM_CLASSES.POST_ITEM}, .${this.CUSTOM_CLASSES.BOTTOM_CONTROLS}, #custom-instant-tooltip`;
-
-                for (const mutation of mutations) {
-                    for (const node of mutation.addedNodes) {
-                        if (node.parentNode && node.parentNode.closest && (node.parentNode.closest('#dc-backup-popup') || node.parentNode.closest('#dc-block-management-panel') || node.parentNode.closest('#dcinside-filter-setting'))) {
-                            continue; // 스크립트 UI 내부 변화 무시
-                        }
-
-                        if (node.nodeType === Node.ELEMENT_NODE) {
-                            if (node.matches(scriptOwnedSelector) || node.closest(scriptOwnedSelector)) {
-                                continue;
-                            }
-                            // 글 목록 변화 감지
-                            if (node.matches(this.SELECTORS.LIST_WRAP) || node.querySelector(this.SELECTORS.LIST_WRAP)) {
-                                needsListUpdate = true;
-                            }
-                        }
-                    }
-                }
-
-                if (needsListUpdate) this.processAllLists();
-            });
-            observer.observe(document.body, { childList: true, subtree: true });
+            this.ensureKnownListRuntimes(document, 'init');
+            this.subscribeListRuntimeUpdates();
 
             return this.waitForInitialUiReady();
         }
@@ -4936,7 +5973,7 @@ parseShortcutString(shortcutString) {
 
     async function main() {
         if (isInitialized) return;
-        console.log("[DC Filter+UI] Initializing v3.0.1...");
+        console.log("[DC Filter+UI] Initializing v3.1.1...");
 
 
         // [수정] main 함수에서 reloadShortcutKey 함수를 호출하여 초기화
@@ -6277,7 +7314,7 @@ parseShortcutString(shortcutString) {
             background-image: none !important;
             box-shadow: none !important;
         }
-        /* [v3.0.1] 이미지댓글 내부 소형 팝업(닉네임/삭제비번)이 카드에 잘리지 않도록 필요한 컨텍스트만 해제 */
+        /* [v3.1.1-beta.1] 이미지댓글 내부 소형 팝업(닉네임/삭제비번)이 카드에 잘리지 않도록 필요한 컨텍스트만 해제 */
         .view_comment.image_comment,
         .view_comment.image_comment .comment_wrap,
         .view_comment.image_comment .comment_box.img_comment_box,
@@ -6483,6 +7520,33 @@ parseShortcutString(shortcutString) {
         body.dc-filter-dark-mode .view_comment.image_comment .comment_box.img_comment_box .cmt_list > li + li {
             border-top-color: rgba(120, 144, 175, 0.28) !important;
         }
+        body.dc-filter-dark-mode .view_comment.image_comment .comment_box.img_comment_box .gall_writer,
+        body.dc-filter-dark-mode .view_comment.image_comment .comment_box.img_comment_box .nickname,
+        body.dc-filter-dark-mode .view_comment.image_comment .comment_box.img_comment_box .nickname em,
+        body.dc-filter-dark-mode .view_comment.image_comment .comment_box.img_comment_box .usertxt {
+            color: #dbe6f5 !important;
+            -webkit-text-fill-color: #dbe6f5 !important;
+        }
+        body.dc-filter-dark-mode .view_comment.image_comment .comment_box.img_comment_box .ip,
+        body.dc-filter-dark-mode .view_comment.image_comment .comment_box.img_comment_box .date_time,
+        body.dc-filter-dark-mode .view_comment.image_comment .comment_box.img_comment_box .txt_del {
+            color: #9fb0c8 !important;
+            -webkit-text-fill-color: #9fb0c8 !important;
+        }
+        body.dc-filter-dark-mode .comment_box.img_comment_box .gall_writer,
+        body.dc-filter-dark-mode .comment_box.img_comment_box .nickname,
+        body.dc-filter-dark-mode .comment_box.img_comment_box .nickname em,
+        body.dc-filter-dark-mode .comment_box.img_comment_box .usertxt {
+            color: #dbe6f5 !important;
+            -webkit-text-fill-color: #dbe6f5 !important;
+        }
+        body.dc-filter-dark-mode .comment_box.img_comment_box .ip,
+        body.dc-filter-dark-mode .comment_box.img_comment_box .date_time,
+        body.dc-filter-dark-mode .comment_box.img_comment_box .txt_del,
+        body.dc-filter-dark-mode .comment_box.img_comment_box .reply_num {
+            color: #9fb0c8 !important;
+            -webkit-text-fill-color: #9fb0c8 !important;
+        }
         body.dc-filter-dark-mode .view_comment.image_comment #user_data_lyr .user_data_list,
         body.dc-filter-dark-mode .view_comment.image_comment .user_data .user_data_list,
         body.dc-filter-dark-mode .view_comment.image_comment .comment_box.img_comment_box .cmt_delpw_box,
@@ -6517,33 +7581,6 @@ parseShortcutString(shortcutString) {
         body.dc-filter-dark-mode .view_comment.image_comment .user_data .user_data_list > li > span {
             color: #e3ebf8 !important;
             -webkit-text-fill-color: #e3ebf8 !important;
-        }
-        body.dc-filter-dark-mode .view_comment.image_comment .comment_box.img_comment_box .gall_writer,
-        body.dc-filter-dark-mode .view_comment.image_comment .comment_box.img_comment_box .nickname,
-        body.dc-filter-dark-mode .view_comment.image_comment .comment_box.img_comment_box .nickname em,
-        body.dc-filter-dark-mode .view_comment.image_comment .comment_box.img_comment_box .usertxt {
-            color: #dbe6f5 !important;
-            -webkit-text-fill-color: #dbe6f5 !important;
-        }
-        body.dc-filter-dark-mode .view_comment.image_comment .comment_box.img_comment_box .ip,
-        body.dc-filter-dark-mode .view_comment.image_comment .comment_box.img_comment_box .date_time,
-        body.dc-filter-dark-mode .view_comment.image_comment .comment_box.img_comment_box .txt_del {
-            color: #9fb0c8 !important;
-            -webkit-text-fill-color: #9fb0c8 !important;
-        }
-        body.dc-filter-dark-mode .comment_box.img_comment_box .gall_writer,
-        body.dc-filter-dark-mode .comment_box.img_comment_box .nickname,
-        body.dc-filter-dark-mode .comment_box.img_comment_box .nickname em,
-        body.dc-filter-dark-mode .comment_box.img_comment_box .usertxt {
-            color: #dbe6f5 !important;
-            -webkit-text-fill-color: #dbe6f5 !important;
-        }
-        body.dc-filter-dark-mode .comment_box.img_comment_box .ip,
-        body.dc-filter-dark-mode .comment_box.img_comment_box .date_time,
-        body.dc-filter-dark-mode .comment_box.img_comment_box .txt_del,
-        body.dc-filter-dark-mode .comment_box.img_comment_box .reply_num {
-            color: #9fb0c8 !important;
-            -webkit-text-fill-color: #9fb0c8 !important;
         }
         body.dc-filter-dark-mode .view_comment.image_comment .cmt_write_box {
             background: rgba(19, 27, 38, 0.92) !important;
@@ -7872,6 +8909,24 @@ parseShortcutString(shortcutString) {
         if (element.style.getPropertyValue(property) === value && element.style.getPropertyPriority(property) === 'important') return;
         element.style.setProperty(property, value, 'important');
     };
+    const setImportantIfChanged = (element, property, value) => {
+        setImportant(element, property, value);
+    };
+    const removeStyleIfPresent = (element, property) => {
+        if (!element) return;
+        if (!element.style.getPropertyValue(property) && !element.style.getPropertyPriority(property)) return;
+        element.style.removeProperty(property);
+    };
+    const restoreInlineStyleIfStored = (element, property, storageKey) => {
+        if (!element || !storageKey) return;
+        const hasStoredValue = Object.prototype.hasOwnProperty.call(element.dataset, storageKey)
+            || Object.prototype.hasOwnProperty.call(element.dataset, `${storageKey}Priority`);
+        if (!hasStoredValue && !element.style.getPropertyValue(property) && !element.style.getPropertyPriority(property)) return;
+        restoreInlineStyle(element, property, storageKey);
+    };
+    const setTextFillIfChanged = (element, value) => {
+        setImportantIfChanged(element, '-webkit-text-fill-color', value);
+    };
     const rememberInlineStyle = (element, property, storageKey) => {
         if (!element || !storageKey) return;
         if (Object.prototype.hasOwnProperty.call(element.dataset, storageKey)) return;
@@ -7898,6 +8953,10 @@ parseShortcutString(shortcutString) {
     const NORMALIZE_DELAYS = [120, 420, 1100, 2400];
     const COMMENT_TYPOGRAPHY_SCOPE_SELECTOR = '.view_content_wrap .comment_box, #focus_cmt';
     const ARTICLE_TYPOGRAPHY_SCOPE_SELECTOR = '.view_content_wrap .gallview_contents, .view_content_wrap .write_div, .view_content_wrap .writing_view_box';
+    const COMMENT_SCOPE_SELECTOR = '.comment_box';
+    const COMMENT_STABLE_ROOT_SELECTOR = ['.comment_box', '#focus_cmt', 'div[id^="comment_wrap_"]', '.view_comment.image_comment'].join(', ');
+    const ARTICLE_SCOPE_SELECTOR = '.gallview_contents, .write_div, .writing_view_box';
+    const ARTICLE_STABLE_ROOT_SELECTOR = '.view_content_wrap, .writing_view_box, .gallview_contents, .write_div';
     // 본문은 글마다 font/span/div/inline style/data-scaled-by-filter 조합이 달라서
     // 좁은 selector로는 검은 글씨가 남는 경우가 있습니다. article scope 안에서만 넓게 잡습니다.
     const ARTICLE_DARK_TEXT_SELECTOR = [
@@ -7970,6 +9029,143 @@ parseShortcutString(shortcutString) {
         const calculated = Math.round(viewportWidth * 0.042);
         return `${Math.max(16, Math.min(19, calculated))}px`;
     };
+    const COMMENT_NORMALIZE_TARGET_SELECTOR = [
+        '.usertxt',
+        '.nickname',
+        '.nickname .ip',
+        '.cmt_txtbox',
+        '.reply_box',
+        '.reply_list > li',
+        '.writer_nikcon',
+        '.writer_nikcon img',
+        'img.gallercon'
+    ].join(', ');
+    const ARTICLE_DARK_TARGET_SELECTOR = [
+        '[style]',
+        '[data-scaled-by-filter]',
+        '[data-scaled-by-filter] *',
+        'p',
+        'div',
+        'span',
+        'font',
+        'b',
+        'strong',
+        'em',
+        'i',
+        'a',
+        'li',
+        'td',
+        'th',
+        'pre',
+        'blockquote'
+    ].join(', ');
+    const IMAGE_COMMENT_DARK_TEXT_TARGET_SELECTOR = '.gall_writer, .nickname, .nickname em, .usertxt';
+    const IMAGE_COMMENT_DARK_META_TARGET_SELECTOR = '.ip, .date_time, .txt_del, .reply_num';
+    const pendingNormalizeRoots = new Set();
+    const pendingNormalizeTargets = new Set();
+    const pendingDarkTextTargets = new Set();
+    const pendingImageCommentDarkTextTargets = new Set();
+    const pendingImageCommentDarkMetaTargets = new Set();
+    let forceNormalizeFullPass = false;
+    const addUniqueElement = (targetSet, element) => {
+        if (!(element instanceof Element)) return;
+        targetSet.add(element);
+    };
+    const takeConnectedElements = (targetSet) => {
+        const items = Array.from(targetSet).filter((element) => element instanceof Element && element.isConnected);
+        targetSet.clear();
+        return items;
+    };
+    const collectScopedRoots = (roots, selector) => {
+        const seen = new Set();
+        const results = [];
+        const push = (element) => {
+            if (!(element instanceof Element) || seen.has(element)) return;
+            seen.add(element);
+            results.push(element);
+        };
+        if (!Array.isArray(roots) || roots.length === 0) {
+            document.querySelectorAll(selector).forEach(push);
+            return results;
+        }
+        roots.forEach((root) => {
+            if (!(root instanceof Element)) return;
+            if (root.matches?.(selector)) push(root);
+            root.querySelectorAll?.(selector).forEach(push);
+        });
+        return results;
+    };
+    const collectMatchesWithinRoots = (roots, selector) => {
+        const seen = new Set();
+        const results = [];
+        const push = (element) => {
+            if (!(element instanceof Element) || seen.has(element)) return;
+            seen.add(element);
+            results.push(element);
+        };
+        roots.forEach((root) => {
+            if (!(root instanceof Element)) return;
+            if (root.matches?.(selector)) push(root);
+            root.querySelectorAll?.(selector).forEach(push);
+        });
+        return results;
+    };
+    const addMatchesFromElement = (targetSet, element, selector) => {
+        if (!(element instanceof Element)) return;
+        if (element.matches?.(selector)) addUniqueElement(targetSet, element);
+        element.querySelectorAll?.(selector).forEach((match) => addUniqueElement(targetSet, match));
+    };
+    const addScopeMatchesFromElement = (targetSet, element, scopeSelector, targetSelector) => {
+        if (!(element instanceof Element)) return;
+        const nearestScope = element.closest?.(scopeSelector);
+        if (nearestScope instanceof Element) {
+            addMatchesFromElement(targetSet, element, targetSelector);
+        }
+        if (element.matches?.(scopeSelector)) {
+            addMatchesFromElement(targetSet, element, targetSelector);
+        }
+        element.querySelectorAll?.(scopeSelector).forEach((scope) => {
+            addMatchesFromElement(targetSet, scope, targetSelector);
+        });
+    };
+    const findStableNormalizeRoot = (element) => {
+        if (!(element instanceof Element)) return null;
+        if (element.matches?.(COMMENT_STABLE_ROOT_SELECTOR) || element.matches?.(ARTICLE_STABLE_ROOT_SELECTOR)) return element;
+        return element.closest(`${COMMENT_STABLE_ROOT_SELECTOR}, ${ARTICLE_STABLE_ROOT_SELECTOR}`);
+    };
+    const queueNormalizeWork = (elements = null, { forceFullPass = false } = {}) => {
+        if (forceFullPass) forceNormalizeFullPass = true;
+        if (!elements || typeof elements[Symbol.iterator] !== 'function') {
+            forceNormalizeFullPass = true;
+            return;
+        }
+        Array.from(elements).forEach((element) => {
+            if (!(element instanceof Element)) return;
+            const nearestRoot = findStableNormalizeRoot(element);
+            if (nearestRoot instanceof Element) {
+                pendingNormalizeRoots.add(nearestRoot);
+            } else {
+                element.querySelectorAll?.(`${COMMENT_STABLE_ROOT_SELECTOR}, ${ARTICLE_STABLE_ROOT_SELECTOR}`).forEach((root) => {
+                    if (root instanceof Element) pendingNormalizeRoots.add(root);
+                });
+            }
+            addScopeMatchesFromElement(pendingNormalizeTargets, element, COMMENT_SCOPE_SELECTOR, COMMENT_NORMALIZE_TARGET_SELECTOR);
+            addScopeMatchesFromElement(pendingDarkTextTargets, element, ARTICLE_SCOPE_SELECTOR, ARTICLE_DARK_TARGET_SELECTOR);
+            addScopeMatchesFromElement(pendingImageCommentDarkTextTargets, element, '.comment_box.img_comment_box', IMAGE_COMMENT_DARK_TEXT_TARGET_SELECTOR);
+            addScopeMatchesFromElement(pendingImageCommentDarkMetaTargets, element, '.comment_box.img_comment_box', IMAGE_COMMENT_DARK_META_TARGET_SELECTOR);
+        });
+    };
+    const resolveViewScope = (roots = null) => {
+        if (Array.isArray(roots) && roots.length > 0) {
+            for (const root of roots) {
+                if (!(root instanceof Element)) continue;
+                if (root.matches?.('.view_content_wrap')) return root;
+                const closestScope = root.closest('.view_content_wrap');
+                if (closestScope instanceof HTMLElement) return closestScope;
+            }
+        }
+        return document.querySelector('.view_content_wrap');
+    };
 
     const isRelevantNormalizeNode = (node) => {
         if (!node) return false;
@@ -7984,42 +9180,90 @@ parseShortcutString(shortcutString) {
         );
     };
 
-    const normalizeCommentTypography = () => {
-        if (!document.querySelector(COMMENT_TYPOGRAPHY_SCOPE_SELECTOR + ', #focus_cmt > .cmt_write_box')) return;
+    const applyNormalizeTarget = (element, preferredCommentFontSize) => {
+        if (!(element instanceof HTMLElement)) return;
+        if (element.matches('.nickname .ip')) {
+            setImportantIfChanged(element, 'font-size', '12px');
+            return;
+        }
+        if (element.matches('.usertxt')) {
+            setImportantIfChanged(element, 'font-size', preferredCommentFontSize);
+            setImportantIfChanged(element, 'line-height', '1.58');
+            setImportantIfChanged(element, '-webkit-text-size-adjust', '100%');
+            setImportantIfChanged(element, 'text-size-adjust', '100%');
+            return;
+        }
+        if (element.matches('.nickname')) {
+            setImportantIfChanged(element, 'font-size', '13px');
+            return;
+        }
+        if (element.matches('.cmt_txtbox, .reply_box, .reply_list > li')) {
+            setImportantIfChanged(element, '-webkit-text-size-adjust', '100%');
+            setImportantIfChanged(element, 'text-size-adjust', '100%');
+            return;
+        }
+        if (element.matches('.writer_nikcon')) {
+            removeStyleIfPresent(element, 'font-size');
+            return;
+        }
+        if (element.matches('.writer_nikcon img, img.gallercon')) {
+            setImportantIfChanged(element, 'width', 'auto');
+            setImportantIfChanged(element, 'height', '13px');
+            setImportantIfChanged(element, 'max-width', 'none');
+        }
+    };
+    const normalizeCommentTypographyForRoots = (roots = null, { targets = null, forceFullScan = false } = {}) => {
         const preferredCommentFontSize = getPreferredCommentFontSize();
+        const scopedTargets = Array.isArray(targets)
+            ? targets.filter((element) => element instanceof HTMLElement && element.closest(COMMENT_SCOPE_SELECTOR))
+            : [];
+        if (!forceFullScan && scopedTargets.length > 0) {
+            scopedTargets.forEach((element) => applyNormalizeTarget(element, preferredCommentFontSize));
+            return;
+        }
 
-        document.querySelectorAll('.comment_box .usertxt').forEach((element) => {
-            setImportant(element, 'font-size', preferredCommentFontSize);
-            setImportant(element, 'line-height', '1.58');
-            setImportant(element, '-webkit-text-size-adjust', '100%');
-            setImportant(element, 'text-size-adjust', '100%');
-        });
+        const commentScopes = collectScopedRoots(Array.isArray(roots) ? roots : null, COMMENT_SCOPE_SELECTOR);
+        if (commentScopes.length === 0 && !document.querySelector('#focus_cmt > .cmt_write_box')) return;
 
-        document.querySelectorAll('.comment_box .nickname').forEach((element) => {
-            setImportant(element, 'font-size', '13px');
-        });
-
-        document.querySelectorAll('.comment_box .nickname .ip').forEach((element) => {
-            setImportant(element, 'font-size', '12px');
-        });
-
-        document.querySelectorAll('.comment_box .cmt_txtbox, .comment_box .reply_box, .comment_box .reply_list > li').forEach((element) => {
-            setImportant(element, '-webkit-text-size-adjust', '100%');
-            setImportant(element, 'text-size-adjust', '100%');
-        });
-
-        document.querySelectorAll('.comment_box .writer_nikcon').forEach((element) => {
-            element.style.removeProperty('font-size');
-        });
-        document.querySelectorAll('.comment_box .writer_nikcon img, .comment_box img.gallercon').forEach((element) => {
-            setImportant(element, 'width', 'auto');
-            setImportant(element, 'height', '13px');
-            setImportant(element, 'max-width', 'none');
+        collectMatchesWithinRoots(commentScopes, COMMENT_NORMALIZE_TARGET_SELECTOR).forEach((element) => {
+            applyNormalizeTarget(element, preferredCommentFontSize);
         });
     };
-    const syncArticleDarkText = () => {
+
+    const applyArticleDarkTarget = (element, darkMode, articleDarkProps) => {
+        if (!(element instanceof HTMLElement)) return;
+        if (darkMode) {
+            articleDarkProps.forEach(([property, value, storageKey]) => {
+                rememberInlineStyle(element, property, storageKey);
+                setImportantIfChanged(element, property, value);
+            });
+            return;
+        }
+        articleDarkProps.forEach(([property, _value, storageKey]) => {
+            restoreInlineStyleIfStored(element, property, storageKey);
+        });
+    };
+    const applyImageCommentDarkTarget = (element, darkMode, colorValue) => {
+        if (!(element instanceof HTMLElement)) return;
+        if (darkMode) {
+            rememberInlineStyle(element, 'color', 'dcufOrigColor');
+            rememberInlineStyle(element, '-webkit-text-fill-color', 'dcufOrigTextFill');
+            setImportantIfChanged(element, 'color', colorValue);
+            setTextFillIfChanged(element, colorValue);
+            return;
+        }
+        restoreInlineStyleIfStored(element, 'color', 'dcufOrigColor');
+        restoreInlineStyleIfStored(element, '-webkit-text-fill-color', 'dcufOrigTextFill');
+    };
+    const syncArticleDarkTextForRoots = (roots = null, {
+        articleTargets = null,
+        imageCommentTextTargets = null,
+        imageCommentMetaTargets = null,
+        forceFullScan = false
+    } = {}) => {
         const darkMode = document.body?.classList.contains('dc-filter-dark-mode');
-        const viewScope = document.querySelector('.view_content_wrap');
+        const scopedRoots = Array.isArray(roots) ? roots : null;
+        const viewScope = resolveViewScope(scopedRoots);
         const resolvedViewFg = (viewScope ? getComputedStyle(viewScope).getPropertyValue('--dcuf-view-fg') : '').trim() || '#edf3ff';
         const resolvedImageCommentFg = '#dbe6f5';
         const resolvedImageCommentMeta = '#9fb0c8';
@@ -8034,89 +9278,116 @@ parseShortcutString(shortcutString) {
             ['text-shadow', 'none', 'dcufOrigTextShadow'],
             ['-webkit-text-stroke', '0px transparent', 'dcufOrigTextStroke'],
         ];
-        document.querySelectorAll(ARTICLE_DARK_TEXT_SELECTOR).forEach((element) => {
-            if (!(element instanceof HTMLElement)) return;
-            if (darkMode) {
-                articleDarkProps.forEach(([property, value, storageKey]) => {
-                    rememberInlineStyle(element, property, storageKey);
-                    setImportant(element, property, value);
-                });
-            } else {
-                articleDarkProps.forEach(([property, _value, storageKey]) => {
-                    restoreInlineStyle(element, property, storageKey);
-                });
-            }
-        });
-        document.querySelectorAll(IMAGE_COMMENT_TEXT_SELECTOR).forEach((element) => {
-            if (!(element instanceof HTMLElement)) return;
-            if (darkMode) {
-                rememberInlineStyle(element, 'color', 'dcufOrigColor');
-                rememberInlineStyle(element, '-webkit-text-fill-color', 'dcufOrigTextFill');
-                setImportant(element, 'color', resolvedImageCommentFg);
-                setImportant(element, '-webkit-text-fill-color', resolvedImageCommentFg);
-            } else {
-                restoreInlineStyle(element, 'color', 'dcufOrigColor');
-                restoreInlineStyle(element, '-webkit-text-fill-color', 'dcufOrigTextFill');
-            }
-        });
-        document.querySelectorAll(IMAGE_COMMENT_META_SELECTOR).forEach((element) => {
-            if (!(element instanceof HTMLElement)) return;
-            if (darkMode) {
-                rememberInlineStyle(element, 'color', 'dcufOrigColor');
-                rememberInlineStyle(element, '-webkit-text-fill-color', 'dcufOrigTextFill');
-                setImportant(element, 'color', resolvedImageCommentMeta);
-                setImportant(element, '-webkit-text-fill-color', resolvedImageCommentMeta);
-            } else {
-                restoreInlineStyle(element, 'color', 'dcufOrigColor');
-                restoreInlineStyle(element, '-webkit-text-fill-color', 'dcufOrigTextFill');
-            }
-        });
-    };
 
-    let rafId = 0;
-    const timerIds = new Set();
-    let bindCommentResizeTargets = null;
-
-    const clearTimers = () => {
-        timerIds.forEach((timerId) => clearTimeout(timerId));
-        timerIds.clear();
-    };
-
-    const scheduleNormalize = () => {
-        if (typeof bindCommentResizeTargets === 'function') {
-            bindCommentResizeTargets();
-        }
-        if (rafId) cancelAnimationFrame(rafId);
-        clearTimers();
-
-        rafId = requestAnimationFrame(() => {
-            rafId = 0;
-            normalizeCommentTypography();
-            syncArticleDarkText();
-
-            NORMALIZE_DELAYS.forEach((delay) => {
-                const timerId = setTimeout(() => {
-                    timerIds.delete(timerId);
-                    normalizeCommentTypography();
-                    syncArticleDarkText();
-                }, delay);
-                timerIds.add(timerId);
+        const scopedArticleTargets = Array.isArray(articleTargets)
+            ? articleTargets.filter((element) => element instanceof HTMLElement && element.closest(ARTICLE_SCOPE_SELECTOR))
+            : [];
+        if (!forceFullScan && scopedArticleTargets.length > 0) {
+            scopedArticleTargets.forEach((element) => applyArticleDarkTarget(element, darkMode, articleDarkProps));
+        } else {
+            const articleScopes = collectScopedRoots(scopedRoots, ARTICLE_SCOPE_SELECTOR);
+            collectMatchesWithinRoots(articleScopes, ARTICLE_DARK_TARGET_SELECTOR).forEach((element) => {
+                applyArticleDarkTarget(element, darkMode, articleDarkProps);
             });
+        }
+
+        const scopedImageCommentTextTargets = Array.isArray(imageCommentTextTargets)
+            ? imageCommentTextTargets.filter((element) => element instanceof HTMLElement && element.closest('.comment_box.img_comment_box'))
+            : [];
+        if (!forceFullScan && scopedImageCommentTextTargets.length > 0) {
+            scopedImageCommentTextTargets.forEach((element) => applyImageCommentDarkTarget(element, darkMode, resolvedImageCommentFg));
+        } else {
+            const imageCommentScopes = collectScopedRoots(scopedRoots, '.comment_box.img_comment_box');
+            collectMatchesWithinRoots(imageCommentScopes, IMAGE_COMMENT_DARK_TEXT_TARGET_SELECTOR).forEach((element) => {
+                applyImageCommentDarkTarget(element, darkMode, resolvedImageCommentFg);
+            });
+        }
+
+        const scopedImageCommentMetaTargets = Array.isArray(imageCommentMetaTargets)
+            ? imageCommentMetaTargets.filter((element) => element instanceof HTMLElement && element.closest('.comment_box.img_comment_box'))
+            : [];
+        if (!forceFullScan && scopedImageCommentMetaTargets.length > 0) {
+            scopedImageCommentMetaTargets.forEach((element) => applyImageCommentDarkTarget(element, darkMode, resolvedImageCommentMeta));
+            return;
+        }
+
+        const imageCommentScopes = collectScopedRoots(scopedRoots, '.comment_box.img_comment_box');
+        collectMatchesWithinRoots(imageCommentScopes, IMAGE_COMMENT_DARK_META_TARGET_SELECTOR).forEach((element) => {
+            applyImageCommentDarkTarget(element, darkMode, resolvedImageCommentMeta);
         });
+    };
+    const normalizeCommentTypography = (roots = null, options = {}) => {
+        normalizeCommentTypographyForRoots(roots, options);
+    };
+    const syncArticleDarkText = (roots = null, options = {}) => {
+        syncArticleDarkTextForRoots(roots, options);
+    };
+
+    let bindCommentResizeTargets = null;
+    const COMMENT_MUTATION_SELECTOR = '.view_content_wrap, .writing_view_box, #focus_cmt, .comment_box, .img_comment, .view_comment.image_comment, div[id^="comment_wrap_"]';
+    const COMMENT_RESIZE_SELECTOR = '.view_content_wrap, .writing_view_box, #focus_cmt';
+    const flushPendingNormalize = ({ forceFullPass = false } = {}) => {
+        const roots = takeConnectedElements(pendingNormalizeRoots);
+        const normalizeTargets = takeConnectedElements(pendingNormalizeTargets);
+        const articleTargets = takeConnectedElements(pendingDarkTextTargets);
+        const imageCommentTextTargets = takeConnectedElements(pendingImageCommentDarkTextTargets);
+        const imageCommentMetaTargets = takeConnectedElements(pendingImageCommentDarkMetaTargets);
+        const hasPendingWork = roots.length > 0
+            || normalizeTargets.length > 0
+            || articleTargets.length > 0
+            || imageCommentTextTargets.length > 0
+            || imageCommentMetaTargets.length > 0;
+        const useFullPass = forceFullPass || forceNormalizeFullPass || !hasPendingWork;
+        forceNormalizeFullPass = false;
+        normalizeCommentTypography(useFullPass ? null : roots, {
+            targets: useFullPass ? null : normalizeTargets,
+            forceFullScan: useFullPass
+        });
+        syncArticleDarkText(useFullPass ? null : roots, {
+            articleTargets: useFullPass ? null : articleTargets,
+            imageCommentTextTargets: useFullPass ? null : imageCommentTextTargets,
+            imageCommentMetaTargets: useFullPass ? null : imageCommentMetaTargets,
+            forceFullScan: useFullPass
+        });
+    };
+    const normalizeScheduler = __dcufCreatePhaseScheduler('comment-normalize', ({ delay }) => {
+        flushPendingNormalize({ forceFullPass: delay > 0 });
+    }, NORMALIZE_DELAYS);
+
+    const scheduleNormalize = ({ elements = null, forceFullPass = false } = {}) => {
+        queueNormalizeWork(elements, { forceFullPass });
+        normalizeScheduler.schedule();
     };
 
     const observeComments = () => {
-        if (!document.body || window.__dcufCommentTypographyObserver) return;
+        if (window.__dcufCommentTypographyMutationUnsubscribe || window.__dcufCommentTypographyObserver) return;
 
+        const unsubscribe = __dcufSubscribeMutationBus('comment-typography', (payload) => {
+            const relevantNodes = __dcufCollectMatches(payload, COMMENT_MUTATION_SELECTOR, { includeRoots: true });
+            if (relevantNodes.length === 0) return;
+            if (typeof bindCommentResizeTargets === 'function') {
+                bindCommentResizeTargets(__dcufCollectMatches(payload, COMMENT_RESIZE_SELECTOR, { includeRoots: true }));
+            }
+            if (relevantNodes.some(isRelevantNormalizeNode)) {
+                const bodyMutated = Array.isArray(payload.attributeTargets) && payload.attributeTargets.includes(document.body);
+                scheduleNormalize({ elements: relevantNodes, forceFullPass: bodyMutated });
+            }
+        });
+        if (typeof unsubscribe === 'function') {
+            window.__dcufCommentTypographyMutationUnsubscribe = unsubscribe;
+            return;
+        }
+
+        if (!document.body) return;
         const observer = new MutationObserver((mutations) => {
             for (const mutation of mutations) {
                 if (mutation.type === 'characterData' && isRelevantNormalizeNode(mutation.target)) {
-                    scheduleNormalize();
+                    scheduleNormalize({ elements: [mutation.target.parentElement].filter(Boolean) });
                     break;
                 }
 
                 if (mutation.type === 'attributes' && isRelevantNormalizeNode(mutation.target)) {
-                    scheduleNormalize();
+                    scheduleNormalize({ elements: [mutation.target], forceFullPass: mutation.target === document.body });
                     break;
                 }
 
@@ -8125,7 +9396,9 @@ parseShortcutString(shortcutString) {
                         || Array.from(mutation.removedNodes || []).some(isRelevantNormalizeNode)
                         || isRelevantNormalizeNode(mutation.target);
                     if (hasRelevantNode) {
-                        scheduleNormalize();
+                        scheduleNormalize({
+                            elements: [mutation.target, ...Array.from(mutation.addedNodes || []), ...Array.from(mutation.removedNodes || [])]
+                        });
                         break;
                     }
                 }
@@ -8151,7 +9424,7 @@ parseShortcutString(shortcutString) {
             if (!(target instanceof Element)) return;
             if (!target.matches('img, video')) return;
             if (!target.closest('.view_content_wrap, #focus_cmt')) return;
-            scheduleNormalize();
+            scheduleNormalize({ elements: [target] });
         }, true);
 
         document.addEventListener('error', (event) => {
@@ -8159,7 +9432,7 @@ parseShortcutString(shortcutString) {
             if (!(target instanceof Element)) return;
             if (!target.matches('img, video')) return;
             if (!target.closest('.view_content_wrap, #focus_cmt')) return;
-            scheduleNormalize();
+            scheduleNormalize({ elements: [target] });
         }, true);
 
         window.__dcufCommentTypographyLoadBound = true;
@@ -8168,12 +9441,15 @@ parseShortcutString(shortcutString) {
     const observeLayoutChanges = () => {
         if (!window.ResizeObserver || window.__dcufCommentTypographyResizeObserver) return;
 
-        const observer = new ResizeObserver(() => {
-            scheduleNormalize();
+        const observer = new ResizeObserver((entries) => {
+            scheduleNormalize({ elements: entries.map((entry) => entry?.target).filter(Boolean) });
         });
 
-        bindCommentResizeTargets = () => {
-            document.querySelectorAll('.view_content_wrap, .writing_view_box, #focus_cmt').forEach((element) => {
+        bindCommentResizeTargets = (elements = null) => {
+            const candidates = elements && typeof elements[Symbol.iterator] === 'function'
+                ? Array.from(elements)
+                : Array.from(document.querySelectorAll(COMMENT_RESIZE_SELECTOR));
+            candidates.forEach((element) => {
                 if (!(element instanceof Element)) return;
                 if (element.dataset.dcufCommentResizeObserved === '1') return;
                 observer.observe(element);
@@ -8234,8 +9510,15 @@ parseShortcutString(shortcutString) {
         observeLayoutChanges();
     }
 
-    window.addEventListener('load', scheduleNormalize, { once: true });
-    window.addEventListener('resize', scheduleNormalize);
+    window.addEventListener('load', () => scheduleNormalize({ forceFullPass: true }), { once: true });
+    window.addEventListener('resize', () => {
+        const resizeTargets = Array.from(document.querySelectorAll(`${COMMENT_RESIZE_SELECTOR}, .view_comment.image_comment`));
+        if (resizeTargets.length === 0) {
+            scheduleNormalize({ forceFullPass: true });
+            return;
+        }
+        scheduleNormalize({ elements: resizeTargets });
+    });
 })();
 
 (() => {
@@ -8316,32 +9599,34 @@ parseShortcutString(shortcutString) {
             });
         });
     };
-    const scheduleReplyMerge = (() => {
-        let rafId = 0;
-        let timerId = 0;
-
-        return () => {
-            if (rafId) cancelAnimationFrame(rafId);
-            if (timerId) clearTimeout(timerId);
-
-            rafId = requestAnimationFrame(() => {
-                rafId = 0;
-                mergeDetachedRepliesIntoParent();
-
-                timerId = window.setTimeout(() => {
-                    timerId = 0;
-                    mergeDetachedRepliesIntoParent();
-                    const filterModule = window.__dcufFilterModule;
-                    if (typeof filterModule?.scheduleCommentStabilizedRefilter === 'function') {
-                        filterModule.scheduleCommentStabilizedRefilter('reply-merge');
-                    }
-                }, 140);
-            });
-        };
-    })();
+    const replyMergeScheduler = __dcufCreatePhaseScheduler('reply-merge', ({ delay }) => {
+        mergeDetachedRepliesIntoParent();
+        if (delay === 140) {
+            const filterModule = window.__dcufFilterModule;
+            if (typeof filterModule?.scheduleCommentStabilizedRefilter === 'function') {
+                filterModule.scheduleCommentStabilizedRefilter('reply-merge');
+            }
+        }
+    }, [140]);
+    const scheduleReplyMerge = () => {
+        replyMergeScheduler.schedule();
+    };
 
     const observeReplyMergeTargets = () => {
-        if (!document.body || window.__dcufReplyMergeObserver) return;
+        if (window.__dcufReplyMergeMutationUnsubscribe || window.__dcufReplyMergeObserver) return;
+
+        const unsubscribe = __dcufSubscribeMutationBus('reply-merge', (payload) => {
+            const relevantNodes = __dcufCollectMatches(payload, 'div[id^="comment_wrap_"] .comment_box, div[id^="comment_wrap_"] .comment_box .cmt_list, div[id^="comment_wrap_"] .comment_box li, #focus_cmt', { includeRoots: true });
+            if (relevantNodes.length > 0) {
+                scheduleReplyMerge();
+            }
+        });
+        if (typeof unsubscribe === 'function') {
+            window.__dcufReplyMergeMutationUnsubscribe = unsubscribe;
+            return;
+        }
+
+        if (!document.body) return;
 
         const observer = new MutationObserver((mutations) => {
             for (const mutation of mutations) {
@@ -8402,8 +9687,69 @@ parseShortcutString(shortcutString) {
 })();
 
 (() => {
-    const applyImageCommentWidths = () => {
-        document.querySelectorAll('.view_comment.image_comment').forEach((section) => {
+    const pendingImageCommentSections = new Set();
+    const imageCommentWidthState = new WeakMap();
+    let forceImageCommentWidthFullPass = false;
+    const IMAGE_COMMENT_SECTION_SELECTOR = '.view_comment.image_comment';
+
+    const setStyleValueIfChanged = (element, property, value) => {
+        if (!(element instanceof HTMLElement)) return;
+        if (element.style.getPropertyValue(property) === value) return;
+        element.style.setProperty(property, value);
+    };
+    const removeStyleIfPresent = (element, property) => {
+        if (!(element instanceof HTMLElement)) return;
+        if (!element.style.getPropertyValue(property) && !element.style.getPropertyPriority(property)) return;
+        element.style.removeProperty(property);
+    };
+
+    const collectImageCommentSections = (elements = null, { forceFullPass = false } = {}) => {
+        if (forceFullPass) forceImageCommentWidthFullPass = true;
+        if (!elements || typeof elements[Symbol.iterator] !== 'function') {
+            document.querySelectorAll(IMAGE_COMMENT_SECTION_SELECTOR).forEach((section) => {
+                if (section instanceof HTMLElement) pendingImageCommentSections.add(section);
+            });
+            return;
+        }
+
+        Array.from(elements).forEach((element) => {
+            if (!(element instanceof Element)) return;
+            const section = element.matches('.view_comment.image_comment')
+                ? element
+                : element.closest('.view_comment.image_comment');
+            if (section instanceof HTMLElement) pendingImageCommentSections.add(section);
+        });
+    };
+
+    const buildImageCommentWidthState = (width) => {
+        if (width > 80) {
+            const widthPx = `${width}px`;
+            return {
+                mode: 'fixed',
+                width: widthPx,
+                maxWidth: widthPx,
+                marginLeft: '0px',
+                marginRight: '0px'
+            };
+        }
+
+        return {
+            mode: 'reset',
+            width: '',
+            maxWidth: '',
+            marginLeft: '',
+            marginRight: ''
+        };
+    };
+    const isSameImageCommentWidthState = (prev, next) => {
+        if (!prev || !next) return false;
+        return prev.mode === next.mode
+            && prev.width === next.width
+            && prev.maxWidth === next.maxWidth
+            && prev.marginLeft === next.marginLeft
+            && prev.marginRight === next.marginRight;
+    };
+    const readImageCommentWidths = (sections) => sections.map((section) => {
             const box = section.querySelector('.comment_box.img_comment_box');
             const imgNo = box?.getAttribute('data-imgno');
             const image = imgNo
@@ -8417,45 +9763,75 @@ parseShortcutString(shortcutString) {
             const imgCommentRoot = section.closest('.img_comment');
             const wrap = section.querySelector('.comment_wrap');
             const list = box?.querySelector('.cmt_list');
+            return {
+                section,
+                targets: [imgCommentRoot, section, wrap, box, list],
+                nextState: buildImageCommentWidthState(width)
+            };
+        });
 
-            if (width > 80) {
-                const widthPx = width + 'px';
-                [imgCommentRoot, section, wrap, box, list].forEach((element) => {
-                    if (!element) return;
-                    element.style.width = widthPx;
-                    element.style.maxWidth = widthPx;
-                    element.style.marginLeft = '0';
-                    element.style.marginRight = '0';
+    const writeImageCommentWidths = (measurements) => {
+        measurements.forEach(({ section, targets, nextState }) => {
+            if (!(section instanceof HTMLElement)) return;
+            const previousState = imageCommentWidthState.get(section);
+            if (isSameImageCommentWidthState(previousState, nextState)) return;
+
+            if (nextState.mode === 'fixed') {
+                targets.forEach((element) => {
+                    if (!(element instanceof HTMLElement)) return;
+                    setStyleValueIfChanged(element, 'width', nextState.width);
+                    setStyleValueIfChanged(element, 'max-width', nextState.maxWidth);
+                    setStyleValueIfChanged(element, 'margin-left', nextState.marginLeft);
+                    setStyleValueIfChanged(element, 'margin-right', nextState.marginRight);
                 });
             } else {
-                [imgCommentRoot, section, wrap, box, list].forEach((element) => {
-                    if (!element) return;
-                    element.style.removeProperty('width');
-                    element.style.removeProperty('max-width');
-                    element.style.removeProperty('margin-left');
-                    element.style.removeProperty('margin-right');
+                targets.forEach((element) => {
+                    if (!(element instanceof HTMLElement)) return;
+                    removeStyleIfPresent(element, 'width');
+                    removeStyleIfPresent(element, 'max-width');
+                    removeStyleIfPresent(element, 'margin-left');
+                    removeStyleIfPresent(element, 'margin-right');
                 });
             }
+
+            imageCommentWidthState.set(section, { ...nextState });
         });
     };
 
-    const scheduleApplyImageCommentWidths = (() => {
-        let rafId = 0;
-        return () => {
-            if (rafId) cancelAnimationFrame(rafId);
-            rafId = requestAnimationFrame(() => {
-                rafId = 0;
-                applyImageCommentWidths();
-            });
-        };
-    })();
+    const imageCommentWidthScheduler = __dcufCreatePhaseScheduler('image-comment-width', () => {
+        if (pendingImageCommentSections.size === 0) {
+            if (!forceImageCommentWidthFullPass) return;
+            collectImageCommentSections(null, { forceFullPass: true });
+        }
+        const sections = Array.from(pendingImageCommentSections);
+        pendingImageCommentSections.clear();
+        forceImageCommentWidthFullPass = false;
+        if (sections.length === 0) return;
+        writeImageCommentWidths(readImageCommentWidths(sections));
+    });
+    const scheduleApplyImageCommentWidths = (elements = null, { forceFullPass = false } = {}) => {
+        collectImageCommentSections(elements, { forceFullPass });
+        imageCommentWidthScheduler.schedule();
+    };
 
     const observeImageComments = () => {
-        if (!document.body || window.__dcufImageCommentWidthObserver) return;
+        if (window.__dcufImageCommentWidthMutationUnsubscribe || window.__dcufImageCommentWidthObserver) return;
+        const unsubscribe = __dcufSubscribeMutationBus('image-comment-width', (payload) => {
+            const relevantNodes = __dcufCollectMatches(payload, '.view_comment.image_comment, .comment_box.img_comment_box, .img_comment, .writing_view_box img[data-fileno]', { includeRoots: true });
+            if (relevantNodes.length > 0) {
+                scheduleApplyImageCommentWidths(relevantNodes);
+            }
+        });
+        if (typeof unsubscribe === 'function') {
+            window.__dcufImageCommentWidthMutationUnsubscribe = unsubscribe;
+            return;
+        }
+
+        if (!document.body) return;
         const observer = new MutationObserver((mutations) => {
             for (const mutation of mutations) {
                 if ((mutation.addedNodes && mutation.addedNodes.length > 0) || mutation.type === 'attributes') {
-                    scheduleApplyImageCommentWidths();
+                    scheduleApplyImageCommentWidths([mutation.target, ...Array.from(mutation.addedNodes || [])]);
                     break;
                 }
             }
@@ -8464,19 +9840,19 @@ parseShortcutString(shortcutString) {
         window.__dcufImageCommentWidthObserver = observer;
     };
 
-    scheduleApplyImageCommentWidths();
+    scheduleApplyImageCommentWidths(null, { forceFullPass: true });
 
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', () => {
-            scheduleApplyImageCommentWidths();
+            scheduleApplyImageCommentWidths(null, { forceFullPass: true });
             observeImageComments();
         }, { once: true });
     } else {
         observeImageComments();
     }
 
-    window.addEventListener('load', scheduleApplyImageCommentWidths, { once: true });
-    window.addEventListener('resize', scheduleApplyImageCommentWidths);
+    window.addEventListener('load', () => scheduleApplyImageCommentWidths(null, { forceFullPass: true }), { once: true });
+    window.addEventListener('resize', () => scheduleApplyImageCommentWidths(null, { forceFullPass: true }));
 })();
 
 
@@ -8503,6 +9879,25 @@ parseShortcutString(shortcutString) {
     ].join(', ');
     const COMMENT_LI_SELECTOR = 'li[id^="reply_li_"], li[id^="comment_li_"], li[id^="img_comment_li_"], li[id^="mg_comment_li_"]';
     const IMAGE_COMMENT_LI_SELECTOR = '.view_comment.image_comment .comment_box.img_comment_box .cmt_list > li, .view_comment.image_comment .comment_box.img_comment_box .reply_list > li';
+    const IMAGE_COMMENT_DELETE_POPUP_SELECTOR = '.view_comment.image_comment .comment_box.img_comment_box .cmt_delpw_box, .view_comment.image_comment .comment_box.img_comment_box [id$="_delpw_box"]';
+    const POPUP_CANDIDATE_SELECTOR = [POPUP_CONTEXT_SELECTOR, ACTIVE_POPUP_SELECTOR, COMMENT_LI_SELECTOR, IMAGE_COMMENT_LI_SELECTOR].join(', ');
+    const POPUP_TRIGGER_SELECTOR = [
+        '.writer_nikcon',
+        '.gall_writer',
+        '.nickname',
+        '.txt_del',
+        '.btn_cmt_delete',
+        '.btn_img_cmt_delete',
+        '.author',
+        '.cmt_mdf_del button'
+    ].join(', ');
+    const pendingPopupCandidates = new Set();
+    const activePopupOwners = new Set();
+    const activePopupElements = new Set();
+    let forcePopupLayerFullPass = false;
+    let lastPopupOwnerStateKey = '';
+    let popupStateIdCounter = 1;
+    const popupStateIds = new WeakMap();
 
     const isVisible = (element) => {
         if (!(element instanceof HTMLElement)) return false;
@@ -8538,16 +9933,65 @@ parseShortcutString(shortcutString) {
         }
         element.removeAttribute(attr);
     };
+    const setImportantStyleIfChanged = (element, property, value) => {
+        if (!(element instanceof HTMLElement)) return;
+        if (element.style.getPropertyValue(property) === value && element.style.getPropertyPriority(property) === 'important') return;
+        element.style.setProperty(property, value, 'important');
+    };
+    const setAttributeIfChanged = (element, name, value) => {
+        if (!(element instanceof HTMLElement)) return;
+        if (element.getAttribute(name) === value) return;
+        element.setAttribute(name, value);
+    };
+    const replaceElementSet = (targetSet, elements) => {
+        targetSet.clear();
+        elements.forEach((element) => {
+            if (element instanceof Element && element.isConnected) targetSet.add(element);
+        });
+    };
+    const takeConnectedPopupCandidates = () => {
+        const candidates = Array.from(pendingPopupCandidates).filter((candidate) => candidate instanceof Element && candidate.isConnected);
+        pendingPopupCandidates.clear();
+        return candidates;
+    };
+    const getPopupElementStateKey = (element) => {
+        if (!(element instanceof Element)) return '';
+        let stateId = popupStateIds.get(element);
+        if (!stateId) {
+            stateId = popupStateIdCounter++;
+            popupStateIds.set(element, stateId);
+        }
+        return `${element.id || element.tagName}:${stateId}`;
+    };
+    const buildPopupOwnerStateKey = (owners) => Array.from(owners)
+        .filter((owner) => owner instanceof Element)
+        .map((owner) => getPopupElementStateKey(owner))
+        .sort()
+        .join('|');
+    const isPopupOwnerElevationIntact = (li) => li instanceof HTMLElement
+        && li.getAttribute(ACTIVE_ATTR) === '1'
+        && li.style.getPropertyValue('position') === 'relative'
+        && li.style.getPropertyPriority('position') === 'important'
+        && li.style.getPropertyValue('z-index') === '2147483646'
+        && li.style.getPropertyPriority('z-index') === 'important'
+        && li.style.getPropertyValue('overflow') === 'visible'
+        && li.style.getPropertyPriority('overflow') === 'important';
+    const getActivePopupCandidates = () => ([
+        ...Array.from(activePopupElements).filter((element) => element instanceof HTMLElement && element.isConnected && isVisible(element)),
+        ...Array.from(activePopupOwners).filter((element) => element instanceof HTMLElement && element.isConnected)
+    ]);
+    const isRelevantPopupEventTarget = (target) => target instanceof Element
+        && Boolean(target.closest(`${POPUP_CANDIDATE_SELECTOR}, ${POPUP_TRIGGER_SELECTOR}, ${ACTIVE_POPUP_SELECTOR}`));
 
     const elevateLi = (li) => {
         if (!(li instanceof HTMLElement)) return;
         saveStyleIfNeeded(li, ORIG_Z, 'z-index');
         saveStyleIfNeeded(li, ORIG_POS, 'position');
         saveStyleIfNeeded(li, ORIG_OV, 'overflow');
-        li.style.setProperty('position', 'relative', 'important');
-        li.style.setProperty('z-index', '2147483646', 'important');
-        li.style.setProperty('overflow', 'visible', 'important');
-        li.setAttribute(ACTIVE_ATTR, '1');
+        setImportantStyleIfChanged(li, 'position', 'relative');
+        setImportantStyleIfChanged(li, 'z-index', '2147483646');
+        setImportantStyleIfChanged(li, 'overflow', 'visible');
+        setAttributeIfChanged(li, ACTIVE_ATTR, '1');
     };
 
     const clearElevated = () => {
@@ -8560,55 +10004,174 @@ parseShortcutString(shortcutString) {
         });
     };
 
+    const collectPopupCandidates = (elements = null, { forceFullPass = false } = {}) => {
+        if (forceFullPass) forcePopupLayerFullPass = true;
+        if (!elements || typeof elements[Symbol.iterator] !== 'function') return;
+        Array.from(elements).forEach((element) => {
+            if (!(element instanceof Element)) return;
+            if (element.matches?.(POPUP_CANDIDATE_SELECTOR)) pendingPopupCandidates.add(element);
+            element.querySelectorAll?.(POPUP_CANDIDATE_SELECTOR).forEach((candidate) => {
+                if (candidate instanceof Element) pendingPopupCandidates.add(candidate);
+            });
+        });
+    };
+    const addPopupOwnerLi = (active, popup) => {
+        if (!(popup instanceof HTMLElement)) return;
+        if (!isVisible(popup)) return;
+
+        const li = findPopupOwnerLi(popup);
+        if (!(li instanceof HTMLElement)) return;
+        active.add(li);
+
+        if ((li.id || '').indexOf('reply_li_') === 0) {
+            const parentCommentLi = li.closest('li[id^="comment_li_"]');
+            if (parentCommentLi instanceof HTMLElement) active.add(parentCommentLi);
+        }
+    };
     const collectActiveLis = () => {
         const active = new Set();
         document.querySelectorAll(ACTIVE_POPUP_SELECTOR).forEach((popup) => {
-            if (!(popup instanceof HTMLElement)) return;
-            if (!isVisible(popup)) return;
-
-            const li = findPopupOwnerLi(popup);
-            if (!(li instanceof HTMLElement)) return;
-            active.add(li);
-
-            if ((li.id || '').indexOf('reply_li_') === 0) {
-                const parentCommentLi = li.closest('li[id^="comment_li_"]');
-                if (parentCommentLi instanceof HTMLElement) active.add(parentCommentLi);
-            }
+            addPopupOwnerLi(active, popup);
         });
         return active;
     };
+    const collectVisiblePopups = () => Array.from(document.querySelectorAll(ACTIVE_POPUP_SELECTOR))
+        .filter((popup) => popup instanceof HTMLElement && isVisible(popup));
+    const collectVisiblePopupsFromCandidates = (candidates) => {
+        const visiblePopups = new Set();
+        candidates.forEach((candidate) => {
+            if (!(candidate instanceof Element)) return;
+            if (candidate.matches?.(ACTIVE_POPUP_SELECTOR) && isVisible(candidate)) {
+                visiblePopups.add(candidate);
+            }
+            candidate.querySelectorAll?.(ACTIVE_POPUP_SELECTOR).forEach((popup) => {
+                if (popup instanceof HTMLElement && isVisible(popup)) visiblePopups.add(popup);
+            });
+        });
+        return Array.from(visiblePopups);
+    };
+    const collectDeletePopupOwners = (candidates = null, { forceFullPass = false } = {}) => {
+        const owners = new Set();
+        const addOwner = (element) => {
+            if (!(element instanceof Element)) return;
+            const ownerLi = element.matches?.(IMAGE_COMMENT_LI_SELECTOR)
+                ? element
+                : findPopupOwnerLi(element) || element.closest?.(IMAGE_COMMENT_LI_SELECTOR);
+            if (ownerLi instanceof HTMLElement) owners.add(ownerLi);
+        };
 
-    const applyFix = () => {
+        if (forceFullPass || !Array.isArray(candidates) || candidates.length === 0) {
+            document.querySelectorAll(IMAGE_COMMENT_DELETE_POPUP_SELECTOR).forEach((popup) => addOwner(popup));
+            return owners;
+        }
+
+        candidates.forEach((candidate) => {
+            if (!(candidate instanceof Element)) return;
+            addOwner(candidate);
+            if (candidate.matches?.(IMAGE_COMMENT_DELETE_POPUP_SELECTOR)) addOwner(candidate);
+            candidate.querySelectorAll?.(IMAGE_COMMENT_DELETE_POPUP_SELECTOR).forEach((popup) => addOwner(popup));
+            candidate.querySelectorAll?.(IMAGE_COMMENT_LI_SELECTOR).forEach((li) => addOwner(li));
+        });
+        return owners;
+    };
+    const cleanupDuplicateImageCommentDeletePopups = (candidates = null, { forceFullPass = false } = {}) => {
+        const owners = collectDeletePopupOwners(candidates, { forceFullPass });
+        owners.forEach((ownerLi) => {
+            if (!(ownerLi instanceof HTMLElement)) return;
+            const popups = Array.from(ownerLi.querySelectorAll('.cmt_delpw_box, [id$="_delpw_box"]'))
+                .filter((popup) => popup instanceof HTMLElement && popup.closest('.view_comment.image_comment'));
+            if (popups.length <= 1) return;
+
+            const keepPopup = [...popups].reverse().find((popup) => isVisible(popup)) || popups[popups.length - 1];
+            popups.forEach((popup) => {
+                if (popup === keepPopup) return;
+                popup.remove();
+            });
+        });
+    };
+    const collectActiveLisFromCandidates = (candidates) => {
+        const active = new Set();
+        candidates.forEach((candidate) => {
+            if (!(candidate instanceof Element)) return;
+            if (candidate.matches?.(ACTIVE_POPUP_SELECTOR)) addPopupOwnerLi(active, candidate);
+            candidate.querySelectorAll?.(ACTIVE_POPUP_SELECTOR).forEach((popup) => addPopupOwnerLi(active, popup));
+        });
+        return active;
+    };
+    const collectActivePopupState = (candidates = null, { forceFullPass = false } = {}) => {
+        const visiblePopups = forceFullPass || !Array.isArray(candidates) || candidates.length === 0
+            ? collectVisiblePopups()
+            : collectVisiblePopupsFromCandidates(candidates);
+        const owners = new Set();
+        visiblePopups.forEach((popup) => addPopupOwnerLi(owners, popup));
+        return { visiblePopups, owners };
+    };
+    const applyPopupFixForCandidates = (candidates = null, { forceFullPass = false } = {}) => {
+        cleanupDuplicateImageCommentDeletePopups(candidates, { forceFullPass });
+        const { visiblePopups, owners } = collectActivePopupState(candidates, { forceFullPass });
+        const nextOwnerStateKey = buildPopupOwnerStateKey(owners);
+        const canReuseState = nextOwnerStateKey === lastPopupOwnerStateKey
+            && document.querySelectorAll('li[' + ACTIVE_ATTR + '="1"]').length === owners.size
+            && Array.from(owners).every((li) => isPopupOwnerElevationIntact(li));
+
+        replaceElementSet(activePopupElements, visiblePopups);
+        replaceElementSet(activePopupOwners, owners);
+
+        if (canReuseState) return;
+
         clearElevated();
-        const activeLis = collectActiveLis();
-        activeLis.forEach((li) => elevateLi(li));
+        owners.forEach((li) => elevateLi(li));
+        lastPopupOwnerStateKey = nextOwnerStateKey;
     };
 
-    const scheduleApply = (() => {
-        let rafId = 0;
-        return () => {
-            if (rafId) cancelAnimationFrame(rafId);
-            rafId = requestAnimationFrame(() => {
-                rafId = 0;
-                applyFix();
-            });
-        };
-    })();
+    const popupLayerScheduler = __dcufCreatePhaseScheduler('user-popup-layer', () => {
+        const candidates = takeConnectedPopupCandidates();
+        const useFullPass = forcePopupLayerFullPass;
+        forcePopupLayerFullPass = false;
+        if (candidates.length === 0 && !useFullPass) {
+            const activeCandidates = getActivePopupCandidates();
+            if (activeCandidates.length === 0) return;
+            applyPopupFixForCandidates(activeCandidates, { forceFullPass: false });
+            return;
+        }
+        applyPopupFixForCandidates(useFullPass ? null : candidates, { forceFullPass: useFullPass });
+    });
+    const scheduleApply = ({ elements = null, forceFullPass = false } = {}) => {
+        collectPopupCandidates(elements, { forceFullPass });
+        popupLayerScheduler.schedule();
+    };
 
     const observe = () => {
-        if (!document.body || window.__dcufUserPopupLayerObserver) return;
+        if (window.__dcufUserPopupLayerMutationUnsubscribe || window.__dcufUserPopupLayerObserver) return;
+        const unsubscribe = __dcufSubscribeMutationBus('user-popup-layer', (payload) => {
+            const relevantNodes = __dcufCollectMatches(payload, [
+                POPUP_CONTEXT_SELECTOR,
+                ACTIVE_POPUP_SELECTOR,
+                COMMENT_LI_SELECTOR,
+                IMAGE_COMMENT_LI_SELECTOR
+            ], { includeRoots: true });
+            if (relevantNodes.length > 0) {
+                scheduleApply({ elements: relevantNodes });
+            }
+        });
+        if (typeof unsubscribe === 'function') {
+            window.__dcufUserPopupLayerMutationUnsubscribe = unsubscribe;
+            return;
+        }
+
+        if (!document.body) return;
         const observer = new MutationObserver((mutations) => {
             for (const mutation of mutations) {
                 if (mutation.type === 'childList') {
                     if (mutation.addedNodes.length > 0 || mutation.removedNodes.length > 0) {
-                        scheduleApply();
+                        scheduleApply({ elements: [mutation.target, ...Array.from(mutation.addedNodes || []), ...Array.from(mutation.removedNodes || [])] });
                         return;
                     }
                 }
                 if (mutation.type === 'attributes') {
                     const target = mutation.target;
                     if (target instanceof Element && target.closest(POPUP_CONTEXT_SELECTOR)) {
-                        scheduleApply();
+                        scheduleApply({ elements: [target] });
                         return;
                     }
                 }
@@ -8627,18 +10190,36 @@ parseShortcutString(shortcutString) {
 
     const bindEvents = () => {
         if (window.__dcufUserPopupLayerBound) return;
-        document.addEventListener('click', scheduleApply, true);
-        document.addEventListener('mouseup', scheduleApply, true);
-        document.addEventListener('keyup', scheduleApply, true);
-        window.addEventListener('scroll', scheduleApply, true);
+        document.addEventListener('click', (event) => {
+            if (!isRelevantPopupEventTarget(event.target)) return;
+            scheduleApply({ elements: [event.target].filter(Boolean) });
+        }, true);
+        document.addEventListener('mouseup', (event) => {
+            if (!isRelevantPopupEventTarget(event.target)) return;
+            scheduleApply({ elements: [event.target].filter(Boolean) });
+        }, true);
+        document.addEventListener('keyup', (event) => {
+            if (!isRelevantPopupEventTarget(event.target)) return;
+            scheduleApply({ elements: [event.target].filter(Boolean) });
+        }, true);
+        window.addEventListener('scroll', () => {
+            const activeCandidates = getActivePopupCandidates();
+            if (activeCandidates.length === 0) return;
+            scheduleApply({ elements: activeCandidates });
+        }, true);
+        window.addEventListener('resize', () => {
+            const activeCandidates = getActivePopupCandidates();
+            if (activeCandidates.length === 0) return;
+            scheduleApply({ elements: activeCandidates });
+        }, true);
         window.__dcufUserPopupLayerBound = true;
     };
 
-    scheduleApply();
+    scheduleApply({ forceFullPass: true });
 
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', () => {
-            scheduleApply();
+            scheduleApply({ forceFullPass: true });
             observe();
             bindEvents();
         }, { once: true });
@@ -8647,13 +10228,32 @@ parseShortcutString(shortcutString) {
         bindEvents();
     }
 
-    window.addEventListener('load', scheduleApply, { once: true });
+    window.addEventListener('load', () => scheduleApply({ forceFullPass: true }), { once: true });
 })();
 (() => {
     const STYLE_ID = 'dcuf-list-memo-popup-fix';
     const CENTER_ATTR = 'data-dcuf-list-memo-centered';
     const POPUP_SELECTOR = '#user_memo_config.pop_wrap.type3, #um_picker_lay.pop_wrap.type3';
+    const MEMO_CONTEXT_SELECTOR = [POPUP_SELECTOR, '.custom-mobile-list', '.custom-post-item', '.view_content_wrap'].join(', ');
+    const MEMO_EVENT_TARGET_SELECTOR = [MEMO_CONTEXT_SELECTOR, '#user_data_lyr', '.user_data', '.pop_wrap.type2', '.pop_wrap.type3'].join(', ');
+    const MEMO_FORCE_FULLPASS_EVENT_SELECTOR = '#user_data_lyr, .user_data, .pop_wrap.type2, .pop_wrap.type3';
+    const pendingMemoPopupCandidates = new Set();
+    const activeMemoPopups = new Set();
+    let forceMemoPopupFullPass = false;
+    let lastMemoPopupStateKey = '';
+    let memoPopupStateIdCounter = 1;
+    const memoPopupStateIds = new WeakMap();
+    const memoPopupStateCache = new WeakMap();
+    let memoPopupOpenFollowupRafId = 0;
+    const memoPopupOpenFollowupTimerIds = new Set();
+    const LIST_MEMO_POPUP_IMMEDIATE_SELECTOR = [
+        '.custom-mobile-list #user_memo_config.pop_wrap.type3',
+        '.custom-post-item #user_memo_config.pop_wrap.type3',
+        '.custom-mobile-list #um_picker_lay.pop_wrap.type3',
+        '.custom-post-item #um_picker_lay.pop_wrap.type3'
+    ].join(', ');
     const css = `
+        ${LIST_MEMO_POPUP_IMMEDIATE_SELECTOR},
         .pop_wrap.type3[${CENTER_ATTR}="1"] {
             position: fixed !important;
             left: 50% !important;
@@ -8664,11 +10264,15 @@ parseShortcutString(shortcutString) {
             transform: translate(-50%, -50%) !important;
             z-index: 2147483647 !important;
         }
+        .custom-mobile-list #user_memo_config.pop_wrap.type3,
+        .custom-post-item #user_memo_config.pop_wrap.type3,
         #user_memo_config.pop_wrap.type3[${CENTER_ATTR}="1"] {
             width: min(478px, calc(100vw - 16px)) !important;
             max-width: min(478px, calc(100vw - 16px)) !important;
             max-height: calc(100vh - 16px) !important;
         }
+        .custom-mobile-list #user_memo_config.pop_wrap.type3 .pop_content.memo_sel,
+        .custom-post-item #user_memo_config.pop_wrap.type3 .pop_content.memo_sel,
         #user_memo_config.pop_wrap.type3[${CENTER_ATTR}="1"] .pop_content.memo_sel {
             width: 100% !important;
             max-width: 100% !important;
@@ -8676,6 +10280,12 @@ parseShortcutString(shortcutString) {
             overflow-y: auto !important;
             box-sizing: border-box !important;
         }
+        .custom-mobile-list #user_memo_config.pop_wrap.type3 .pop_head,
+        .custom-mobile-list #user_memo_config.pop_wrap.type3 .inner,
+        .custom-mobile-list #user_memo_config.pop_wrap.type3 .btn_box,
+        .custom-post-item #user_memo_config.pop_wrap.type3 .pop_head,
+        .custom-post-item #user_memo_config.pop_wrap.type3 .inner,
+        .custom-post-item #user_memo_config.pop_wrap.type3 .btn_box,
         #user_memo_config.pop_wrap.type3[${CENTER_ATTR}="1"] .pop_head,
         #user_memo_config.pop_wrap.type3[${CENTER_ATTR}="1"] .inner,
         #user_memo_config.pop_wrap.type3[${CENTER_ATTR}="1"] .btn_box {
@@ -8712,45 +10322,173 @@ parseShortcutString(shortcutString) {
         const hasViewContent = !!document.querySelector('.view_content_wrap');
         return hasCustomList && !hasViewContent;
     };
+    const setCenteredAttr = (popup, centered) => {
+        if (!(popup instanceof HTMLElement)) return;
+        if (centered) {
+            if (popup.getAttribute(CENTER_ATTR) !== '1') popup.setAttribute(CENTER_ATTR, '1');
+            return;
+        }
+        if (popup.hasAttribute(CENTER_ATTR)) popup.removeAttribute(CENTER_ATTR);
+    };
+    const replaceMemoPopupSet = (elements) => {
+        activeMemoPopups.clear();
+        elements.forEach((element) => {
+            if (element instanceof HTMLElement && element.isConnected && isVisible(element)) {
+                activeMemoPopups.add(element);
+            }
+        });
+    };
+    const getMemoPopupStateId = (popup) => {
+        if (!(popup instanceof HTMLElement)) return '';
+        let stateId = memoPopupStateIds.get(popup);
+        if (!stateId) {
+            stateId = memoPopupStateIdCounter++;
+            memoPopupStateIds.set(popup, stateId);
+        }
+        return `${popup.id || popup.className || popup.tagName}:${stateId}`;
+    };
+    const buildMemoPopupStateKey = (popups) => Array.from(popups)
+        .filter((popup) => popup instanceof HTMLElement && isVisible(popup))
+        .map((popup) => {
+            const cached = memoPopupStateCache.get(popup) || '0';
+            return `${getMemoPopupStateId(popup)}:${cached}`;
+        })
+        .sort()
+        .join('|');
+    const takeConnectedMemoCandidates = () => {
+        const candidates = Array.from(pendingMemoPopupCandidates).filter((candidate) => candidate instanceof Element && candidate.isConnected);
+        pendingMemoPopupCandidates.clear();
+        return candidates;
+    };
+    const getActiveMemoPopupCandidates = () => Array.from(activeMemoPopups)
+        .filter((popup) => popup instanceof HTMLElement && popup.isConnected && isVisible(popup));
+    const isRelevantMemoEventTarget = (target) => target instanceof Element
+        && Boolean(target.closest(MEMO_EVENT_TARGET_SELECTOR));
+    const clearMemoPopupOpenFollowups = () => {
+        if (memoPopupOpenFollowupRafId) {
+            cancelAnimationFrame(memoPopupOpenFollowupRafId);
+            memoPopupOpenFollowupRafId = 0;
+        }
+        memoPopupOpenFollowupTimerIds.forEach((timerId) => clearTimeout(timerId));
+        memoPopupOpenFollowupTimerIds.clear();
+    };
+    const collectMemoPopupCandidates = (elements = null, { forceFullPass = false } = {}) => {
+        if (forceFullPass) forceMemoPopupFullPass = true;
+        if (!elements || typeof elements[Symbol.iterator] !== 'function') return;
+        Array.from(elements).forEach((element) => {
+            if (!(element instanceof Element)) return;
+            if (element.matches?.(MEMO_CONTEXT_SELECTOR)) pendingMemoPopupCandidates.add(element);
+            element.querySelectorAll?.(MEMO_CONTEXT_SELECTOR).forEach((candidate) => {
+                if (candidate instanceof Element) pendingMemoPopupCandidates.add(candidate);
+            });
+        });
+    };
+    const resolveMemoPopupTargets = (candidates = null, { forceFullPass = false } = {}) => {
+        if (forceFullPass || !Array.isArray(candidates) || candidates.length === 0) {
+            return Array.from(document.querySelectorAll(POPUP_SELECTOR));
+        }
+
+        const popups = new Set();
+        let needsGlobalPopupLookup = false;
+        candidates.forEach((candidate) => {
+            if (!(candidate instanceof Element)) return;
+            if (candidate.matches?.(POPUP_SELECTOR)) popups.add(candidate);
+            candidate.querySelectorAll?.(POPUP_SELECTOR).forEach((popup) => {
+                if (popup instanceof HTMLElement) popups.add(popup);
+            });
+            if (candidate.matches?.('.custom-mobile-list, .custom-post-item, .view_content_wrap')
+                || candidate.querySelector?.('.custom-mobile-list, .custom-post-item, .view_content_wrap')) {
+                needsGlobalPopupLookup = true;
+            }
+        });
+
+        if (needsGlobalPopupLookup) {
+            document.querySelectorAll(POPUP_SELECTOR).forEach((popup) => {
+                if (popup instanceof HTMLElement) popups.add(popup);
+            });
+        }
+
+        return Array.from(popups);
+    };
 
     const syncPopup = (popup) => {
         if (!(popup instanceof HTMLElement)) return;
-        if (isListMemoContext(popup)) {
-            popup.setAttribute(CENTER_ATTR, '1');
-        } else {
-            popup.removeAttribute(CENTER_ATTR);
+        const centered = isListMemoContext(popup);
+        const nextState = centered ? '1' : '0';
+        const previousState = memoPopupStateCache.get(popup);
+        if (previousState === nextState && ((centered && popup.getAttribute(CENTER_ATTR) === '1') || (!centered && !popup.hasAttribute(CENTER_ATTR)))) {
+            return;
         }
+        setCenteredAttr(popup, centered);
+        memoPopupStateCache.set(popup, nextState);
     };
 
-    const applyFix = () => {
-        document.querySelectorAll(POPUP_SELECTOR).forEach((popup) => syncPopup(popup));
+    const syncMemoPopups = (candidates = null, { forceFullPass = false } = {}) => {
+        const popups = resolveMemoPopupTargets(candidates, { forceFullPass });
+        popups.forEach((popup) => syncPopup(popup));
+        replaceMemoPopupSet(popups);
+        lastMemoPopupStateKey = buildMemoPopupStateKey(activeMemoPopups);
     };
 
-    const scheduleApply = (() => {
-        let rafId = 0;
-        return () => {
-            if (rafId) cancelAnimationFrame(rafId);
-            rafId = requestAnimationFrame(() => {
-                rafId = 0;
-                applyFix();
-            });
-        };
-    })();
+    const memoPopupScheduler = __dcufCreatePhaseScheduler('list-memo-popup', () => {
+        const candidates = takeConnectedMemoCandidates();
+        const useFullPass = forceMemoPopupFullPass;
+        forceMemoPopupFullPass = false;
+        if (candidates.length === 0 && !useFullPass) {
+            const activeCandidates = getActiveMemoPopupCandidates();
+            if (activeCandidates.length === 0) return;
+            const nextStateKey = buildMemoPopupStateKey(activeCandidates);
+            if (nextStateKey === lastMemoPopupStateKey) return;
+            syncMemoPopups(activeCandidates, { forceFullPass: false });
+            return;
+        }
+        syncMemoPopups(useFullPass ? null : candidates, { forceFullPass: useFullPass });
+    });
+    const scheduleApply = ({ elements = null, forceFullPass = false } = {}) => {
+        collectMemoPopupCandidates(elements, { forceFullPass });
+        memoPopupScheduler.schedule();
+    };
+    const scheduleMemoPopupOpenFollowups = () => {
+        clearMemoPopupOpenFollowups();
+        memoPopupOpenFollowupRafId = requestAnimationFrame(() => {
+            memoPopupOpenFollowupRafId = 0;
+            scheduleApply({ forceFullPass: true });
+        });
+        [70, 180].forEach((delay) => {
+            const timerId = window.setTimeout(() => {
+                memoPopupOpenFollowupTimerIds.delete(timerId);
+                scheduleApply({ forceFullPass: true });
+            }, delay);
+            memoPopupOpenFollowupTimerIds.add(timerId);
+        });
+    };
 
     const observe = () => {
-        if (!document.body || window.__dcufListMemoPopupObserver) return;
+        if (window.__dcufListMemoPopupMutationUnsubscribe || window.__dcufListMemoPopupObserver) return;
+        const unsubscribe = __dcufSubscribeMutationBus('list-memo-popup', (payload) => {
+            const relevantNodes = __dcufCollectMatches(payload, [POPUP_SELECTOR, '.custom-mobile-list', '.custom-post-item', '.view_content_wrap'], { includeRoots: true });
+            if (relevantNodes.length > 0) {
+                scheduleApply({ elements: relevantNodes });
+            }
+        });
+        if (typeof unsubscribe === 'function') {
+            window.__dcufListMemoPopupMutationUnsubscribe = unsubscribe;
+            return;
+        }
+
+        if (!document.body) return;
         const observer = new MutationObserver((mutations) => {
             for (const mutation of mutations) {
                 if (mutation.type === 'childList') {
                     if (mutation.addedNodes.length > 0 || mutation.removedNodes.length > 0) {
-                        scheduleApply();
+                        scheduleApply({ elements: [mutation.target, ...Array.from(mutation.addedNodes || []), ...Array.from(mutation.removedNodes || [])] });
                         return;
                     }
                 }
                 if (mutation.type === 'attributes') {
                     const target = mutation.target;
                     if (target instanceof Element && target.matches(POPUP_SELECTOR)) {
-                        scheduleApply();
+                        scheduleApply({ elements: [target] });
                         return;
                     }
                 }
@@ -8769,21 +10507,50 @@ parseShortcutString(shortcutString) {
 
     const bindEvents = () => {
         if (window.__dcufListMemoPopupBound) return;
-        document.addEventListener('click', scheduleApply, true);
-        document.addEventListener('mouseup', scheduleApply, true);
-        document.addEventListener('keyup', scheduleApply, true);
-        window.addEventListener('scroll', scheduleApply, true);
-        window.addEventListener('resize', scheduleApply, true);
+        document.addEventListener('click', (event) => {
+            if (!isRelevantMemoEventTarget(event.target)) return;
+            const forceFullPass = event.target instanceof Element && Boolean(event.target.closest(MEMO_FORCE_FULLPASS_EVENT_SELECTOR));
+            if (forceFullPass) scheduleMemoPopupOpenFollowups();
+            scheduleApply(forceFullPass
+                ? { forceFullPass: true }
+                : { elements: [event.target].filter(Boolean) });
+        }, true);
+        document.addEventListener('mouseup', (event) => {
+            if (!isRelevantMemoEventTarget(event.target)) return;
+            const forceFullPass = event.target instanceof Element && Boolean(event.target.closest(MEMO_FORCE_FULLPASS_EVENT_SELECTOR));
+            if (forceFullPass) scheduleMemoPopupOpenFollowups();
+            scheduleApply(forceFullPass
+                ? { forceFullPass: true }
+                : { elements: [event.target].filter(Boolean) });
+        }, true);
+        document.addEventListener('keyup', (event) => {
+            if (!isRelevantMemoEventTarget(event.target)) return;
+            const forceFullPass = event.target instanceof Element && Boolean(event.target.closest(MEMO_FORCE_FULLPASS_EVENT_SELECTOR));
+            if (forceFullPass) scheduleMemoPopupOpenFollowups();
+            scheduleApply(forceFullPass
+                ? { forceFullPass: true }
+                : { elements: [event.target].filter(Boolean) });
+        }, true);
+        window.addEventListener('scroll', () => {
+            const activeCandidates = getActiveMemoPopupCandidates();
+            if (activeCandidates.length === 0) return;
+            scheduleApply({ elements: activeCandidates });
+        }, true);
+        window.addEventListener('resize', () => {
+            const activeCandidates = getActiveMemoPopupCandidates();
+            if (activeCandidates.length === 0) return;
+            scheduleApply({ elements: activeCandidates });
+        }, true);
         window.__dcufListMemoPopupBound = true;
     };
 
     injectStyle();
-    scheduleApply();
+    scheduleApply({ forceFullPass: true });
 
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', () => {
             injectStyle();
-            scheduleApply();
+            scheduleApply({ forceFullPass: true });
             observe();
             bindEvents();
         }, { once: true });
@@ -8794,7 +10561,7 @@ parseShortcutString(shortcutString) {
 
     window.addEventListener('load', () => {
         injectStyle();
-        scheduleApply();
+        scheduleApply({ forceFullPass: true });
     }, { once: true });
 })();
 (() => {
@@ -8885,6 +10652,71 @@ parseShortcutString(shortcutString) {
     }
 
     window.addEventListener('load', recoverSelectionModeIfStale, { once: true });
-
 })();
 
+function __dcufGetRuntimeCoordinator() {
+    return window.__dcufRuntimeCoordinator || null;
+}
+
+function __dcufCreatePhaseScheduler(label, run, delays = []) {
+    const runtimeCoordinator = __dcufGetRuntimeCoordinator();
+    if (runtimeCoordinator && typeof runtimeCoordinator.createPhaseScheduler === 'function') {
+        return runtimeCoordinator.createPhaseScheduler(label, run, { delays });
+    }
+
+    let rafId = 0;
+    const timerIds = new Set();
+    const clearTimers = () => {
+        timerIds.forEach((timerId) => clearTimeout(timerId));
+        timerIds.clear();
+    };
+
+    return {
+        schedule(meta = null) {
+            if (rafId) cancelAnimationFrame(rafId);
+            clearTimers();
+
+            rafId = requestAnimationFrame(() => {
+                rafId = 0;
+                run({ label, phase: 'raf', delay: 0, meta });
+                delays.forEach((delay) => {
+                    const timerId = window.setTimeout(() => {
+                        timerIds.delete(timerId);
+                        run({ label, phase: `delay:${delay}`, delay, meta });
+                    }, delay);
+                    timerIds.add(timerId);
+                });
+            });
+        },
+        cancel() {
+            if (rafId) {
+                cancelAnimationFrame(rafId);
+                rafId = 0;
+            }
+            clearTimers();
+        },
+        flush(meta = null) {
+            if (rafId) {
+                cancelAnimationFrame(rafId);
+                rafId = 0;
+            }
+            clearTimers();
+            run({ label, phase: 'flush', delay: 0, meta });
+        }
+    };
+}
+
+function __dcufSubscribeMutationBus(key, listener) {
+    const runtimeCoordinator = __dcufGetRuntimeCoordinator();
+    if (!runtimeCoordinator || typeof runtimeCoordinator.subscribeMutations !== 'function') return null;
+    return runtimeCoordinator.subscribeMutations(key, listener);
+}
+
+function __dcufCollectMatches(payload, selectors, options = {}) {
+    if (payload && typeof payload.collectMatches === 'function') {
+        return payload.collectMatches(selectors, options);
+    }
+    const selectorText = Array.isArray(selectors) ? selectors.filter(Boolean).join(', ') : selectors;
+    if (!selectorText) return [];
+    return Array.from(document.querySelectorAll(selectorText));
+}
