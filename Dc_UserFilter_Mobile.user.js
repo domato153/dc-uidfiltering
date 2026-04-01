@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         DC_UserFilter_Mobile
 // @namespace    http://tampermonkey.net/
-// @version      3.2.1
+// @version      3.2.2
 // @description  유저 필터링, UI 개선, 개인 차단/해제 기능
 // @author       domato153
 // @match        https://gall.dcinside.com/*
@@ -41,8 +41,15 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
     const INITIAL_LOCK_STYLE_ID = 'dcuf-initial-lock-style';
     const BOOT_OVERLAY_ID = 'dcuf-boot-overlay';
     const BOOT_OVERLAY_STYLE_ID = 'dcuf-boot-overlay-style';
+    const BOOT_UI_WATCHDOG_MAX_MS = 8000;
+    const BOOT_UI_WATCHDOG_INTERVAL_MS = 50;
+    let bootUiWatchdogTimerId = 0;
+    let bootUiWatchdogStartedAt = 0;
+    let bootUiWatchdogDomReadyHandler = null;
+    let bootUiWatchdogLoadHandler = null;
 
     const isBootOverlayTargetPage = () => true;
+    const isRootUiReady = () => !!document.documentElement?.classList.contains(ROOT_READY_CLASS);
     const removeBootOverlay = (reason = 'unknown') => {
         const overlay = document.getElementById(BOOT_OVERLAY_ID);
         if (overlay) overlay.remove();
@@ -153,6 +160,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
         const body = document.body;
         if (body) body.classList.add(ROOT_READY_CLASS);
 
+        stopBootUiWatchdog();
         removeBootOverlay('mark-ui-ready');
     };
 
@@ -170,10 +178,56 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
         mountPoint.appendChild(style);
     };
 
+    const ensureBootUi = (reason = 'ensure-boot-ui') => {
+        if (!isBootOverlayTargetPage() || isRootUiReady()) return true;
+        injectInitialLockStyle();
+        ensureBootOverlay();
+        return !!document.getElementById(INITIAL_LOCK_STYLE_ID) && !!document.getElementById(BOOT_OVERLAY_ID);
+    };
+
+    const stopBootUiWatchdog = () => {
+        if (bootUiWatchdogTimerId) {
+            window.clearInterval(bootUiWatchdogTimerId);
+            bootUiWatchdogTimerId = 0;
+        }
+        if (bootUiWatchdogDomReadyHandler) {
+            document.removeEventListener('DOMContentLoaded', bootUiWatchdogDomReadyHandler);
+            bootUiWatchdogDomReadyHandler = null;
+        }
+        if (bootUiWatchdogLoadHandler) {
+            window.removeEventListener('load', bootUiWatchdogLoadHandler);
+            bootUiWatchdogLoadHandler = null;
+        }
+    };
+
+    const startBootUiWatchdog = () => {
+        if (bootUiWatchdogTimerId || isRootUiReady() || !isBootOverlayTargetPage()) return;
+        bootUiWatchdogStartedAt = Date.now();
+
+        const tick = () => {
+            if (isRootUiReady()) {
+                stopBootUiWatchdog();
+                return;
+            }
+
+            ensureBootUi('watchdog');
+            if (Date.now() - bootUiWatchdogStartedAt >= BOOT_UI_WATCHDOG_MAX_MS) {
+                stopBootUiWatchdog();
+            }
+        };
+
+        bootUiWatchdogTimerId = window.setInterval(tick, BOOT_UI_WATCHDOG_INTERVAL_MS);
+        bootUiWatchdogDomReadyHandler = () => tick();
+        bootUiWatchdogLoadHandler = () => tick();
+        document.addEventListener('DOMContentLoaded', bootUiWatchdogDomReadyHandler, { once: true });
+        window.addEventListener('load', bootUiWatchdogLoadHandler, { once: true });
+        tick();
+    };
+
+    __dcufRoot.__dcufEnsureBootUi = ensureBootUi;
     injectInitialLockStyle();
     ensureBootOverlay();
-
-
+    startBootUiWatchdog();
 
     // Phase 2 runtime shared prelude
 /**
@@ -622,7 +676,7 @@ const hasPersonalNicknameBlock = (subject, personalBlockList) =>
 const hasPersonalIpBlock = (subject, personalBlockList) =>
     Boolean(subject?.ip && collectionHasValue(personalBlockList?.ipSet ?? personalBlockList?.ips, subject.ip));
 
-const FILTER_CORE_PHASE = '3.2.1';
+const FILTER_CORE_PHASE = '3.2.2';
 
 function createEmptyDecision(proxyBlockMode = PROXY_MODE.OFF) {
     return {
@@ -4153,7 +4207,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         async init() {
             if (isInitialized) return; isInitialized = true;
             this.installDebugApi();
-            this.debugLog('init', 'FilterModule init start', { version: '3.2.1' });
+            this.debugLog('init', 'FilterModule init start', { version: '3.2.2' });
             await this.cleanupLegacyManagedBlockConfig();
             await this.reloadSettings();
             this.getKrPrefixSet();
@@ -5165,12 +5219,36 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         PAGINATION_BOUND_ATTR: 'data-dcuf-force-refresh-bound',
         TOOLTIP_BOUND_ATTR: 'data-dcuf-tooltip-bound',
         SEARCH_LAYER_BOUND_ATTR: 'data-dcuf-search-layer-bound',
+        PHASE1_DEBUG_KEY: '__DCUF_PHASE1_DEBUG__',
         _nextRowId: 1,
         _nextListRuntimeId: 1,
         _listMutationUnsubscribe: null,
 
         getRuntimeCoordinator() {
             return window.__dcufRuntimeCoordinator || null;
+        },
+
+        getPhase1Theme() {
+            return window.__dcufPhase1Theme || null;
+        },
+
+        getPhase1ViewTheme() {
+            return window.__dcufPhase1ViewTheme || null;
+        },
+
+        getCurrentRevealTheme() {
+            if (window.location.pathname.includes('/board/view/')) return this.getPhase1ViewTheme();
+            return this.getPhase1Theme();
+        },
+
+        ensureBootUi(reason = 'reveal-check') {
+            if (typeof window.__dcufEnsureBootUi === 'function') {
+                try {
+                    window.__dcufEnsureBootUi(reason);
+                } catch (error) {
+                    console.warn('[DC Filter+UI] Failed to ensure boot UI:', error);
+                }
+            }
         },
 
         resolveOwnedListWrap(candidate) {
@@ -6168,32 +6246,239 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             return window.location.pathname.includes('/board/lists');
         },
 
-        isInitialUiReady() {
-            if (window.location.pathname.includes('/board/write/')) return true;
-            if (window.location.pathname.includes('/board/view/')) return true;
+        updateInitialRevealDebug(state, meta = {}) {
+            const payload = (window[this.PHASE1_DEBUG_KEY] && typeof window[this.PHASE1_DEBUG_KEY] === 'object')
+                ? { ...window[this.PHASE1_DEBUG_KEY] }
+                : {};
+            payload.revealReady = !!state?.ready;
+            payload.revealReason = state?.reason || 'unknown';
+            payload.revealDetail = state?.detail || null;
+            payload.revealRefreshAttempted = !!meta.refreshAttempted;
+            payload.revealRefreshTriggered = !!meta.refreshTriggered;
+            payload.revealUpdatedAt = new Date().toISOString();
+            window[this.PHASE1_DEBUG_KEY] = payload;
 
-            const targetWraps = this.collectOwnedListWraps(document);
-
-            let ready;
-            if (this.isListPage()) {
-                ready = targetWraps.length > 0 && targetWraps.every(listWrap => listWrap.querySelector(`.${this.CUSTOM_CLASSES.MOBILE_LIST}`));
-            } else {
-                ready = targetWraps.length === 0 || targetWraps.every(listWrap => listWrap.querySelector(`.${this.CUSTOM_CLASSES.MOBILE_LIST}`));
-            }
-
-            return ready;
+            const root = document.documentElement;
+            if (root) root.setAttribute('data-dcuf-phase1-reveal', payload.revealReason);
         },
 
-        waitForInitialUiReady(timeoutMs = 4000) {
+        evaluateListInitialRevealState(listWrap) {
+            if (!(listWrap instanceof HTMLElement)) {
+                return {
+                    ready: false,
+                    reason: 'waiting-list',
+                    detail: { message: 'list wrap unavailable' }
+                };
+            }
+
+            const originalTable = listWrap.querySelector(this.SELECTORS.ORIGINAL_TABLE);
+            const originalTbody = originalTable?.querySelector(this.SELECTORS.ORIGINAL_TBODY);
+            const newListContainer = listWrap.querySelector(`.${this.CUSTOM_CLASSES.MOBILE_LIST}`);
+            if (!(newListContainer instanceof HTMLElement)) {
+                return {
+                    ready: false,
+                    reason: 'waiting-list',
+                    detail: {
+                        listWrapClass: listWrap.className || null,
+                        hasOriginalTable: !!originalTable,
+                        hasOriginalTbody: !!originalTbody
+                    }
+                };
+            }
+
+            const originalRowCount = originalTbody
+                ? originalTbody.querySelectorAll(this.SELECTORS.ORIGINAL_POST_ITEM).length
+                : 0;
+            const customItemCount = newListContainer.querySelectorAll(`.${this.CUSTOM_CLASSES.POST_ITEM}`).length;
+            if (originalRowCount > 0 && customItemCount === 0) {
+                return {
+                    ready: false,
+                    reason: 'waiting-items',
+                    detail: { originalRowCount, customItemCount }
+                };
+            }
+
+            if (customItemCount === 0) {
+                return {
+                    ready: true,
+                    reason: 'ready',
+                    detail: { originalRowCount, customItemCount }
+                };
+            }
+
+            const themeBridge = this.getPhase1Theme();
+            if (typeof themeBridge?.verify !== 'function') {
+                return {
+                    ready: false,
+                    reason: 'waiting-style',
+                    detail: {
+                        originalRowCount,
+                        customItemCount,
+                        missingThemeBridge: true
+                    }
+                };
+            }
+
+            const verifyResult = themeBridge.verify(newListContainer);
+            if (!verifyResult?.ready) {
+                return {
+                    ready: false,
+                    reason: 'waiting-style',
+                    detail: {
+                        originalRowCount,
+                        customItemCount,
+                        verifyReason: verifyResult?.reason || 'unknown',
+                        verifyDetail: verifyResult?.detail || null
+                    }
+                };
+            }
+
+            return {
+                ready: true,
+                reason: 'ready',
+                detail: {
+                    originalRowCount,
+                    customItemCount,
+                    verifyReason: verifyResult.reason || 'ready',
+                    verifyDetail: verifyResult.detail || null
+                }
+            };
+        },
+
+        evaluateViewInitialRevealState() {
+            const viewWrap = document.querySelector('.view_content_wrap');
+            if (!(viewWrap instanceof HTMLElement)) {
+                return {
+                    ready: false,
+                    reason: 'waiting-view',
+                    detail: { hasViewWrap: false }
+                };
+            }
+
+            const themeBridge = this.getPhase1ViewTheme();
+            if (typeof themeBridge?.verify !== 'function') {
+                return {
+                    ready: false,
+                    reason: 'waiting-style',
+                    detail: {
+                        hasViewWrap: true,
+                        missingThemeBridge: true
+                    }
+                };
+            }
+
+            const verifyResult = themeBridge.verify(viewWrap);
+            if (!verifyResult?.ready) {
+                return {
+                    ready: false,
+                    reason: 'waiting-style',
+                    detail: {
+                        hasViewWrap: true,
+                        verifyReason: verifyResult?.reason || 'unknown',
+                        verifyDetail: verifyResult?.detail || null
+                    }
+                };
+            }
+
+            return {
+                ready: true,
+                reason: 'ready',
+                detail: {
+                    hasViewWrap: true,
+                    verifyReason: verifyResult.reason || 'ready',
+                    verifyDetail: verifyResult.detail || null
+                }
+            };
+        },
+
+        getInitialRevealState() {
+            if (window.location.pathname.includes('/board/write/')) {
+                return { ready: true, reason: 'non-list', detail: { pageType: 'write' } };
+            }
+            if (window.location.pathname.includes('/board/view/')) {
+                return this.evaluateViewInitialRevealState();
+            }
+            if (!this.isListPage()) {
+                return { ready: true, reason: 'non-list', detail: { pageType: 'other' } };
+            }
+
+            const targetWraps = this.collectOwnedListWraps(document);
+            if (targetWraps.length === 0) {
+                return {
+                    ready: false,
+                    reason: 'waiting-list',
+                    detail: { targetWrapCount: 0 }
+                };
+            }
+
+            for (let index = 0; index < targetWraps.length; index += 1) {
+                const wrapState = this.evaluateListInitialRevealState(targetWraps[index]);
+                if (!wrapState.ready) {
+                    return {
+                        ready: false,
+                        reason: wrapState.reason,
+                        detail: {
+                            targetWrapCount: targetWraps.length,
+                            wrapIndex: index,
+                            ...wrapState.detail
+                        }
+                    };
+                }
+            }
+
+            return {
+                ready: true,
+                reason: 'ready',
+                detail: { targetWrapCount: targetWraps.length }
+            };
+        },
+
+        getInitialRevealMutationSelectors() {
+            if (window.location.pathname.includes('/board/view/')) {
+                return [
+                    '.view_content_wrap',
+                    '.gallview_head',
+                    '.gallview_contents',
+                    '.writing_view_box',
+                    '.write_div',
+                    '.comment_box',
+                    '#focus_cmt'
+                ];
+            }
+
+            return [
+                this.SELECTORS.LIST_WRAP,
+                this.SELECTORS.ORIGINAL_TABLE,
+                this.SELECTORS.ORIGINAL_TBODY,
+                this.SELECTORS.ORIGINAL_POST_ITEM
+            ];
+        },
+
+        isInitialUiReady() {
+            return this.getInitialRevealState().ready;
+        },
+
+        waitForInitialRevealReady(timeoutMs = 4000) {
             return new Promise((resolve) => {
-                this.ensureKnownListRuntimes(document, 'initial-ready:start');
-                if (this.isInitialUiReady()) {
-                    resolve('ready');
+                this.ensureBootUi('initial-reveal:start');
+                this.ensureKnownListRuntimes(document, 'initial-reveal:start');
+
+                let lastState = this.getInitialRevealState();
+                let refreshTriggered = false;
+                let timeoutExtended = false;
+                const timeoutDeadline = Date.now() + timeoutMs;
+                this.updateInitialRevealDebug(lastState, {
+                    refreshAttempted: false,
+                    refreshTriggered: false
+                });
+                if (lastState.ready) {
+                    resolve(lastState.reason);
                     return;
                 }
 
                 let rafId = 0;
                 let timeoutId = 0;
+                let refreshTimerId = 0;
                 let observer = null;
                 let unsubscribe = null;
 
@@ -6201,6 +6486,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                     if (typeof unsubscribe === 'function') unsubscribe();
                     if (observer) observer.disconnect();
                     if (rafId) window.cancelAnimationFrame(rafId);
+                    if (refreshTimerId) window.clearTimeout(refreshTimerId);
                     if (timeoutId) window.clearTimeout(timeoutId);
                 };
 
@@ -6209,13 +6495,25 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                     resolve(reason);
                 };
 
-                const checkReady = (reason = 'check', candidates = null) => {
-                    if (candidates && typeof candidates[Symbol.iterator] === 'function') {
-                        this.ensureListRuntimesFromCandidates(candidates, `initial-ready:${reason}`);
-                    } else {
-                        this.ensureKnownListRuntimes(document, `initial-ready:${reason}`);
-                    }
-                    if (this.isInitialUiReady()) finish('ready');
+                const scheduleTimeout = (deadline) => {
+                    if (timeoutId) window.clearTimeout(timeoutId);
+                    const delay = Math.max(0, deadline - Date.now());
+                    timeoutId = window.setTimeout(() => {
+                        this.processAllLists('initial-reveal-timeout');
+                        lastState = this.getInitialRevealState();
+                        this.updateInitialRevealDebug(lastState, {
+                            refreshAttempted: refreshTriggered,
+                            refreshTriggered
+                        });
+                        if (lastState.ready) {
+                            finish(lastState.reason);
+                            return;
+                        }
+
+                        const timeoutReason = `timeout-${lastState.reason || 'unknown'}`;
+                        console.warn('[DC Filter+UI] Initial reveal readiness timed out; revealing page with current state.', lastState);
+                        finish(timeoutReason);
+                    }, delay);
                 };
 
                 const scheduleCheck = (reason = 'mutation', candidates = null) => {
@@ -6226,15 +6524,66 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                     });
                 };
 
+                const maybeRefreshStyle = (state, reason = 'check') => {
+                    if (!state || state.reason !== 'waiting-style' || refreshTriggered) return false;
+                    const themeBridge = this.getCurrentRevealTheme();
+                    if (typeof themeBridge?.ensure !== 'function') return false;
+
+                    refreshTriggered = true;
+                    if (!timeoutExtended) {
+                        timeoutExtended = true;
+                        scheduleTimeout(timeoutDeadline + 600);
+                    }
+
+                    try {
+                        themeBridge.ensure({ refresh: true, reason: `initial-reveal:${reason}` });
+                    } catch (error) {
+                        console.warn('[DC Filter+UI] Initial reveal style refresh failed:', error);
+                        return false;
+                    }
+
+                    this.updateInitialRevealDebug(state, {
+                        refreshAttempted: true,
+                        refreshTriggered: true
+                    });
+                    scheduleCheck(`style-refresh:${reason}`);
+                    refreshTimerId = window.setTimeout(() => {
+                        refreshTimerId = 0;
+                        scheduleCheck(`style-refresh-delay:${reason}`);
+                    }, 120);
+                    return true;
+                };
+
+                const checkReady = (reason = 'check', candidates = null) => {
+                    try {
+                        this.ensureBootUi(`initial-reveal:${reason}`);
+                        if (this.isListPage()) {
+                            if (candidates && typeof candidates[Symbol.iterator] === 'function') {
+                                this.ensureListRuntimesFromCandidates(candidates, `initial-reveal:${reason}`);
+                            } else {
+                                this.ensureKnownListRuntimes(document, `initial-reveal:${reason}`);
+                            }
+                        }
+                        lastState = this.getInitialRevealState();
+                        this.updateInitialRevealDebug(lastState, {
+                            refreshAttempted: refreshTriggered,
+                            refreshTriggered
+                        });
+                        if (lastState.ready) {
+                            finish(lastState.reason);
+                            return;
+                        }
+                        maybeRefreshStyle(lastState, reason);
+                    } catch (error) {
+                        console.error('[DC Filter+UI] Failed while evaluating initial reveal readiness:', error);
+                        finish('error');
+                    }
+                };
+
                 const runtimeCoordinator = this.getRuntimeCoordinator();
                 if (runtimeCoordinator && typeof runtimeCoordinator.subscribeMutations === 'function') {
-                    unsubscribe = runtimeCoordinator.subscribeMutations('ui-initial-ready', (payload) => {
-                        const relevantNodes = payload.collectMatches([
-                            this.SELECTORS.LIST_WRAP,
-                            this.SELECTORS.ORIGINAL_TABLE,
-                            this.SELECTORS.ORIGINAL_TBODY,
-                            this.SELECTORS.ORIGINAL_POST_ITEM
-                        ], { includeRoots: true });
+                    unsubscribe = runtimeCoordinator.subscribeMutations('ui-initial-reveal', (payload) => {
+                        const relevantNodes = payload.collectMatches(this.getInitialRevealMutationSelectors(), { includeRoots: true });
                         if (relevantNodes.length > 0) scheduleCheck('mutation-bus', relevantNodes);
                     });
                 } else if (document.body) {
@@ -6251,19 +6600,14 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                     observer.observe(document.body, { childList: true, subtree: true });
                 }
 
-                timeoutId = window.setTimeout(() => {
-                    this.processAllLists('initial-ready-timeout');
-                    if (this.isInitialUiReady()) {
-                        finish('ready');
-                        return;
-                    }
-
-                    console.warn('[DC Filter+UI] Initial UI readiness timed out; revealing page with current state.');
-                    finish('timeout');
-                }, timeoutMs);
-
+                scheduleTimeout(timeoutDeadline);
+                maybeRefreshStyle(lastState, 'start');
                 scheduleCheck('initial');
             });
+        },
+
+        waitForInitialUiReady(timeoutMs = 4000) {
+            return this.waitForInitialRevealReady(timeoutMs);
         },
 
 
@@ -6428,7 +6772,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
             if (window.location.pathname.includes('/board/write/')) {
                 this.transformWritePage();
-                return;
+                return 'non-list';
             } else if (window.location.pathname.includes('/board/view/')) {
                 const viewBottomContainer = document.querySelector('.view_bottom');
                 if (viewBottomContainer) {
@@ -6441,7 +6785,8 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             this.ensureKnownListRuntimes(document, 'init');
             this.subscribeListRuntimeUpdates();
 
-            return this.waitForInitialUiReady();
+            if (this.isListPage()) return 'list-runtime-ready';
+            return 'non-list';
         }
     };
 
@@ -6477,8 +6822,13 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
 
     async function main() {
-        if (isInitialized) return;
-        console.log("[DC Filter+UI] Initializing v3.2.1...");
+        if (isInitialized) {
+            return {
+                uiInitState: 'already-initialized',
+                commentInitState: { reason: 'already-initialized' }
+            };
+        }
+        console.log("[DC Filter+UI] Initializing v3.2.2...");
 
 
         // [수정] main 함수에서 reloadShortcutKey 함수를 호출하여 초기화
@@ -6515,24 +6865,37 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         // once more after Filter/UI init. Keep the initial body lock until that first
         // stabilization window finishes so personally blocked comments do not flash visible.
         const commentInitState = await awaitInitialCommentStabilization();
-        console.log("[DC Filter+UI] Initialization complete.", { uiInitState, commentInitState });
-        return uiInitState;
+        const initState = { uiInitState, commentInitState };
+        console.log("[DC Filter+UI] Initialization complete.", initState);
+        return initState;
     }
 
 
     const runSafely = async () => {
-        let uiInitState = 'fallback';
+        let initState = {
+            uiInitState: 'fallback',
+            commentInitState: { reason: 'not-started' }
+        };
+        let revealState = 'error';
 
         try {
-            uiInitState = await main();
+            const mainState = await main();
+            if (mainState && typeof mainState === 'object') initState = mainState;
+            if (typeof UIModule?.waitForInitialRevealReady === 'function') {
+                revealState = await UIModule.waitForInitialRevealReady();
+            }
         } catch (error) {
-            uiInitState = 'error';
+            initState = {
+                ...initState,
+                uiInitState: 'error'
+            };
+            revealState = 'error';
             console.error("[DC Filter+UI] A critical error occurred during main execution:", error);
         } finally {
             // [v2.2.2 수정] 모든 UI 처리 및 필터링 적용이 끝난 후,
             // 루트 준비 완료 클래스를 추가하여 화면을 표시합니다.
             markUiReady();
-            console.log(`[DC Filter+UI] UI is now visible. (${uiInitState})`);
+            console.log("[DC Filter+UI] UI is now visible.", { ...initState, revealState });
         }
     };
 
@@ -7126,57 +7489,199 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
     `
         ;
 
-    const setDebug = (status, detail) => {
-        const payload = { status, detail, ts: new Date().toISOString(), href: location.href };
-        window[DEBUG_KEY] = payload;
-        document.documentElement.setAttribute('data-dcuf-phase1', status);
+    const debugState = {
+        status: 'idle',
+        detail: null,
+        ts: null,
+        href: location.href,
+        refreshCount: 0,
+        refreshAttempted: false,
+        lastFailureReason: null,
+        lastVerify: null
     };
 
-    const injectStyle = () => {
-        if (document.getElementById(STYLE_ID)) {
-            setDebug('style-exists', 'style tag already present');
+    const setDebug = (status, detail, extra = {}) => {
+        debugState.status = status;
+        debugState.detail = detail;
+        debugState.ts = new Date().toISOString();
+        debugState.href = location.href;
+        Object.assign(debugState, extra);
+        const previousPayload = (window[DEBUG_KEY] && typeof window[DEBUG_KEY] === 'object')
+            ? window[DEBUG_KEY]
+            : {};
+        const payload = { ...previousPayload, ...debugState };
+        window[DEBUG_KEY] = payload;
+        document.documentElement.setAttribute('data-dcuf-phase1', status);
+        return payload;
+    };
+
+    const toPixelValue = (value) => {
+        const parsed = parseFloat(value);
+        return Number.isFinite(parsed) ? parsed : 0;
+    };
+
+    const isTransparentColor = (value) => {
+        if (!value) return true;
+        const normalized = String(value).trim().toLowerCase();
+        return normalized === 'transparent' || normalized === 'rgba(0, 0, 0, 0)' || normalized === 'rgba(0,0,0,0)';
+    };
+
+    const hasRenderableBorder = (style) => {
+        const edges = ['Top', 'Right', 'Bottom', 'Left'];
+        return edges.some((edge) => {
+            const width = toPixelValue(style[`border${edge}Width`]);
+            const borderStyle = style[`border${edge}Style`];
+            const color = style[`border${edge}Color`];
+            return width > 0 && borderStyle !== 'none' && !isTransparentColor(color);
+        });
+    };
+
+    const resolveScopeRoot = (root = document) => {
+        if (root instanceof Document || root instanceof Element || root instanceof DocumentFragment) return root;
+        return document;
+    };
+
+    const findWithinRoot = (root, selector) => {
+        const scope = resolveScopeRoot(root);
+        if (scope instanceof Element && scope.matches(selector)) return scope;
+        return typeof scope.querySelector === 'function' ? scope.querySelector(selector) : null;
+    };
+
+    const injectStyle = ({ refresh = false, reason = 'ensure' } = {}) => {
+        const target = document.head || document.documentElement;
+        if (!target) {
+            setDebug('no-target', `${reason} / head/documentElement unavailable`);
+            return false;
+        }
+
+        let style = document.getElementById(STYLE_ID);
+        if (style instanceof HTMLStyleElement) {
+            if (refresh) {
+                debugState.refreshAttempted = true;
+                debugState.refreshCount += 1;
+                style.textContent = css;
+                target.appendChild(style);
+                setDebug('style-refreshed', `${reason} / style tag refreshed`, {
+                    refreshAttempted: true,
+                    refreshCount: debugState.refreshCount
+                });
+                return true;
+            }
+
+            setDebug('style-exists', `${reason} / style tag already present`, {
+                refreshAttempted: debugState.refreshAttempted,
+                refreshCount: debugState.refreshCount
+            });
             return true;
         }
 
-        const target = document.head || document.documentElement;
-        if (!target) {
-            setDebug('no-target', 'head/documentElement unavailable');
-            return false;
-        }
-
-        const style = document.createElement('style');
+        style = document.createElement('style');
         style.id = STYLE_ID;
         style.textContent = css;
         target.appendChild(style);
-        setDebug('style-injected', 'style tag appended');
+        if (refresh) {
+            debugState.refreshAttempted = true;
+            debugState.refreshCount += 1;
+        }
+        setDebug(refresh ? 'style-refreshed' : 'style-injected', `${reason} / style tag appended`, {
+            refreshAttempted: debugState.refreshAttempted,
+            refreshCount: debugState.refreshCount
+        });
         return true;
     };
 
-    const verifyApplied = (reason) => {
-        const list = document.querySelector('.custom-mobile-list');
-        const item = document.querySelector('.custom-post-item');
-
-        if (!list || !item) {
-            setDebug('waiting-list', reason + ' / custom list not ready');
-            return false;
+    const verifyApplied = (reason = 'verify', root = document) => {
+        const list = findWithinRoot(root, '.custom-mobile-list');
+        if (!(list instanceof HTMLElement)) {
+            const result = {
+                ready: false,
+                reason: 'waiting-list',
+                detail: { reason, scope: root instanceof Element ? root.className || root.tagName : 'document' }
+            };
+            setDebug('waiting-list', JSON.stringify(result.detail), {
+                lastFailureReason: result.reason,
+                lastVerify: result
+            });
+            return result;
         }
 
+        const items = Array.from(list.querySelectorAll('.custom-post-item'));
+        if (items.length === 0) {
+            const result = {
+                ready: false,
+                reason: 'waiting-items',
+                detail: { reason, itemCount: 0 }
+            };
+            setDebug('waiting-items', JSON.stringify(result.detail), {
+                lastFailureReason: result.reason,
+                lastVerify: result
+            });
+            return result;
+        }
+
+        const item = items[0];
         const listStyle = window.getComputedStyle(list);
         const itemStyle = window.getComputedStyle(item);
-        const applied = itemStyle.borderRadius === '12px' && itemStyle.marginBottom === '8px';
-        const detail = JSON.stringify({
-            reason: reason,
-            listBg: listStyle.backgroundImage || listStyle.backgroundColor,
-            itemRadius: itemStyle.borderRadius,
-            itemMarginBottom: itemStyle.marginBottom,
-            itemBoxShadow: itemStyle.boxShadow
-        });
+        const detail = {
+            reason,
+            itemCount: items.length,
+            listPaddingLeft: toPixelValue(listStyle.paddingLeft),
+            listPaddingRight: toPixelValue(listStyle.paddingRight),
+            listBackgroundColor: listStyle.backgroundColor,
+            listBackgroundImage: listStyle.backgroundImage,
+            itemRadius: toPixelValue(itemStyle.borderRadius),
+            itemMarginBottom: toPixelValue(itemStyle.marginBottom),
+            itemBackgroundColor: itemStyle.backgroundColor,
+            itemBackgroundImage: itemStyle.backgroundImage,
+            itemBoxShadow: itemStyle.boxShadow,
+            hasVisibleBackground: itemStyle.backgroundImage !== 'none' || !isTransparentColor(itemStyle.backgroundColor),
+            hasRenderableBorder: hasRenderableBorder(itemStyle)
+        };
 
-        setDebug(applied ? 'applied' : 'not-applied', detail);
-        return applied;
+        let failureReason = null;
+        if (detail.itemRadius < 10) {
+            failureReason = 'insufficient-radius';
+        } else if (detail.itemCount > 1 && detail.itemMarginBottom < 6) {
+            failureReason = 'insufficient-spacing';
+        } else if (Math.max(detail.listPaddingLeft, detail.listPaddingRight) < 8) {
+            failureReason = 'insufficient-padding';
+        } else if (!detail.hasVisibleBackground) {
+            failureReason = 'transparent-background';
+        } else if (itemStyle.boxShadow === 'none' && !detail.hasRenderableBorder) {
+            failureReason = 'missing-elevation';
+        }
+
+        const result = {
+            ready: !failureReason,
+            reason: failureReason || 'ready',
+            detail
+        };
+        setDebug(result.ready ? 'applied' : 'not-applied', JSON.stringify({
+            ...detail,
+            reason: result.reason
+        }), {
+            lastFailureReason: failureReason,
+            lastVerify: result
+        });
+        return result;
     };
 
-    injectStyle();
+    window.__dcufPhase1Theme = {
+        ensure(options = {}) {
+            return injectStyle(options);
+        },
+        verify(root = document) {
+            return verifyApplied('bridge', root);
+        },
+        getDebugState() {
+            const previousPayload = (window[DEBUG_KEY] && typeof window[DEBUG_KEY] === 'object')
+                ? window[DEBUG_KEY]
+                : {};
+            return { ...previousPayload, ...debugState };
+        }
+    };
+
+    injectStyle({ reason: 'initial' });
     verifyApplied('initial');
 
     const scheduleVerify = (reason, delay) => {
@@ -7189,14 +7694,14 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', () => {
-            injectStyle();
+            injectStyle({ reason: 'domcontentloaded' });
             verifyApplied('domcontentloaded');
             scheduleVerify('domcontentloaded+300ms', 300);
         }, { once: true });
     }
 
     window.addEventListener('load', () => {
-        injectStyle();
+        injectStyle({ reason: 'window-load' });
         verifyApplied('window-load');
         scheduleVerify('window-load+300ms', 300);
     }, { once: true });
@@ -9707,22 +10212,221 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         }
     `;
 
-    const injectStyle = () => {
-        if (document.getElementById(STYLE_ID)) return true;
+    const DEBUG_KEY = '__DCUF_PHASE1_VIEW_DEBUG__';
+    const debugState = {
+        status: 'idle',
+        detail: null,
+        ts: null,
+        href: location.href,
+        refreshCount: 0,
+        refreshAttempted: false,
+        lastFailureReason: null,
+        lastVerify: null
+    };
+
+    const setDebug = (status, detail, extra = {}) => {
+        debugState.status = status;
+        debugState.detail = detail;
+        debugState.ts = new Date().toISOString();
+        debugState.href = location.href;
+        Object.assign(debugState, extra);
+        const previousPayload = (window[DEBUG_KEY] && typeof window[DEBUG_KEY] === 'object')
+            ? window[DEBUG_KEY]
+            : {};
+        const payload = { ...previousPayload, ...debugState };
+        window[DEBUG_KEY] = payload;
+        document.documentElement.setAttribute('data-dcuf-phase1-view', status);
+        return payload;
+    };
+
+    const toPixelValue = (value) => {
+        const parsed = parseFloat(value);
+        return Number.isFinite(parsed) ? parsed : 0;
+    };
+
+    const isTransparentColor = (value) => {
+        if (!value) return true;
+        const normalized = String(value).trim().toLowerCase();
+        return normalized === 'transparent' || normalized === 'rgba(0, 0, 0, 0)' || normalized === 'rgba(0,0,0,0)';
+    };
+
+    const hasRenderableBorder = (style) => {
+        const edges = ['Top', 'Right', 'Bottom', 'Left'];
+        return edges.some((edge) => {
+            const width = toPixelValue(style[`border${edge}Width`]);
+            const borderStyle = style[`border${edge}Style`];
+            const color = style[`border${edge}Color`];
+            return width > 0 && borderStyle !== 'none' && !isTransparentColor(color);
+        });
+    };
+
+    const resolveScopeRoot = (root = document) => {
+        if (root instanceof Document || root instanceof Element || root instanceof DocumentFragment) return root;
+        return document;
+    };
+
+    const findWithinRoot = (root, selector) => {
+        const scope = resolveScopeRoot(root);
+        if (scope instanceof Element && scope.matches(selector)) return scope;
+        return typeof scope.querySelector === 'function' ? scope.querySelector(selector) : null;
+    };
+
+    const injectStyle = ({ refresh = false, reason = 'ensure' } = {}) => {
         const target = document.head || document.documentElement;
-        if (!target) return false;
-        const style = document.createElement('style');
+        if (!target) {
+            setDebug('no-target', `${reason} / head/documentElement unavailable`);
+            return false;
+        }
+
+        let style = document.getElementById(STYLE_ID);
+        if (style instanceof HTMLStyleElement) {
+            if (refresh) {
+                debugState.refreshAttempted = true;
+                debugState.refreshCount += 1;
+                style.textContent = css;
+                target.appendChild(style);
+                setDebug('style-refreshed', `${reason} / style tag refreshed`, {
+                    refreshAttempted: true,
+                    refreshCount: debugState.refreshCount
+                });
+                return true;
+            }
+
+            setDebug('style-exists', `${reason} / style tag already present`, {
+                refreshAttempted: debugState.refreshAttempted,
+                refreshCount: debugState.refreshCount
+            });
+            return true;
+        }
+
+        style = document.createElement('style');
         style.id = STYLE_ID;
         style.textContent = css;
         target.appendChild(style);
+        if (refresh) {
+            debugState.refreshAttempted = true;
+            debugState.refreshCount += 1;
+        }
+        setDebug(refresh ? 'style-refreshed' : 'style-injected', `${reason} / style tag appended`, {
+            refreshAttempted: debugState.refreshAttempted,
+            refreshCount: debugState.refreshCount
+        });
         return true;
     };
 
-    injectStyle();
+    const verifyApplied = (reason = 'verify', root = document) => {
+        const viewWrap = findWithinRoot(root, '.view_content_wrap');
+        if (!(viewWrap instanceof HTMLElement)) {
+            const result = {
+                ready: false,
+                reason: 'waiting-view',
+                detail: { reason, hasViewWrap: false }
+            };
+            setDebug('waiting-view', JSON.stringify(result.detail), {
+                lastFailureReason: result.reason,
+                lastVerify: result
+            });
+            return result;
+        }
+
+        const head = viewWrap.querySelector('.gallview_head');
+        const content = viewWrap.querySelector('.gallview_contents');
+        if (!(head instanceof HTMLElement) || !(content instanceof HTMLElement)) {
+            const result = {
+                ready: false,
+                reason: 'waiting-view',
+                detail: {
+                    reason,
+                    hasViewWrap: true,
+                    hasHead: head instanceof HTMLElement,
+                    hasContent: content instanceof HTMLElement
+                }
+            };
+            setDebug('waiting-view', JSON.stringify(result.detail), {
+                lastFailureReason: result.reason,
+                lastVerify: result
+            });
+            return result;
+        }
+
+        const wrapStyle = window.getComputedStyle(viewWrap);
+        const headStyle = window.getComputedStyle(head);
+        const contentStyle = window.getComputedStyle(content);
+        const detail = {
+            reason,
+            wrapPaddingLeft: toPixelValue(wrapStyle.paddingLeft),
+            wrapPaddingRight: toPixelValue(wrapStyle.paddingRight),
+            headRadius: toPixelValue(headStyle.borderRadius),
+            headBackgroundColor: headStyle.backgroundColor,
+            headBackgroundImage: headStyle.backgroundImage,
+            headBoxShadow: headStyle.boxShadow,
+            headHasRenderableBorder: hasRenderableBorder(headStyle),
+            contentRadius: toPixelValue(contentStyle.borderRadius),
+            contentBackgroundColor: contentStyle.backgroundColor,
+            contentBackgroundImage: contentStyle.backgroundImage,
+            contentBoxShadow: contentStyle.boxShadow,
+            contentHasRenderableBorder: hasRenderableBorder(contentStyle)
+        };
+
+        let failureReason = null;
+        if (Math.max(detail.wrapPaddingLeft, detail.wrapPaddingRight) < 8) {
+            failureReason = 'insufficient-wrap-padding';
+        } else if (detail.headRadius < 16) {
+            failureReason = 'insufficient-head-radius';
+        } else if ((headStyle.boxShadow === 'none') && !detail.headHasRenderableBorder) {
+            failureReason = 'missing-head-elevation';
+        } else if (headStyle.backgroundImage === 'none' && isTransparentColor(detail.headBackgroundColor)) {
+            failureReason = 'transparent-head-background';
+        } else if (detail.contentRadius < 16) {
+            failureReason = 'insufficient-content-radius';
+        } else if ((contentStyle.boxShadow === 'none') && !detail.contentHasRenderableBorder) {
+            failureReason = 'missing-content-elevation';
+        } else if (contentStyle.backgroundImage === 'none' && isTransparentColor(detail.contentBackgroundColor)) {
+            failureReason = 'transparent-content-background';
+        }
+
+        const result = {
+            ready: !failureReason,
+            reason: failureReason || 'ready',
+            detail
+        };
+        setDebug(result.ready ? 'applied' : 'not-applied', JSON.stringify({
+            ...detail,
+            reason: result.reason
+        }), {
+            lastFailureReason: failureReason,
+            lastVerify: result
+        });
+        return result;
+    };
+
+    window.__dcufPhase1ViewTheme = {
+        ensure(options = {}) {
+            return injectStyle(options);
+        },
+        verify(root = document) {
+            return verifyApplied('bridge', root);
+        },
+        getDebugState() {
+            const previousPayload = (window[DEBUG_KEY] && typeof window[DEBUG_KEY] === 'object')
+                ? window[DEBUG_KEY]
+                : {};
+            return { ...previousPayload, ...debugState };
+        }
+    };
+
+    injectStyle({ reason: 'initial' });
+    verifyApplied('initial');
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', injectStyle, { once: true });
+        document.addEventListener('DOMContentLoaded', () => {
+            injectStyle({ reason: 'domcontentloaded' });
+            verifyApplied('domcontentloaded');
+        }, { once: true });
     }
-    window.addEventListener('load', injectStyle, { once: true });
+    window.addEventListener('load', () => {
+        injectStyle({ reason: 'window-load' });
+        verifyApplied('window-load');
+    }, { once: true });
 })();
 (() => {
     const STYLE_ID = 'dcuf-runtime-fixes';
