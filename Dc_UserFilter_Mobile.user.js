@@ -5219,10 +5219,15 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         PAGINATION_BOUND_ATTR: 'data-dcuf-force-refresh-bound',
         TOOLTIP_BOUND_ATTR: 'data-dcuf-tooltip-bound',
         SEARCH_LAYER_BOUND_ATTR: 'data-dcuf-search-layer-bound',
-        PHASE1_DEBUG_KEY: '__DCUF_PHASE1_DEBUG__',
+        POST_REVEAL_RECOVERY_MAX_MS: 4500,
+        POST_REVEAL_RECOVERY_POLL_MS: 280,
+        POST_REVEAL_RECOVERY_STABLE_PASSES: 3,
+        POST_REVEAL_RECOVERY_THEME_REFRESH_LIMIT: 2,
         _nextRowId: 1,
         _nextListRuntimeId: 1,
         _listMutationUnsubscribe: null,
+        _initialRevealStartedAt: 0,
+        _postRevealRecoveryStop: null,
 
         getRuntimeCoordinator() {
             return window.__dcufRuntimeCoordinator || null;
@@ -5239,6 +5244,12 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         getCurrentRevealTheme() {
             if (window.location.pathname.includes('/board/view/')) return this.getPhase1ViewTheme();
             return this.getPhase1Theme();
+        },
+
+        getRevealThemeForState(state = null) {
+            if (state?.detail?.revealTheme === 'list') return this.getPhase1Theme();
+            if (state?.detail?.revealTheme === 'view') return this.getPhase1ViewTheme();
+            return this.getCurrentRevealTheme();
         },
 
         ensureBootUi(reason = 'reveal-check') {
@@ -6246,20 +6257,18 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             return window.location.pathname.includes('/board/lists');
         },
 
-        updateInitialRevealDebug(state, meta = {}) {
-            const payload = (window[this.PHASE1_DEBUG_KEY] && typeof window[this.PHASE1_DEBUG_KEY] === 'object')
-                ? { ...window[this.PHASE1_DEBUG_KEY] }
-                : {};
-            payload.revealReady = !!state?.ready;
-            payload.revealReason = state?.reason || 'unknown';
-            payload.revealDetail = state?.detail || null;
-            payload.revealRefreshAttempted = !!meta.refreshAttempted;
-            payload.revealRefreshTriggered = !!meta.refreshTriggered;
-            payload.revealUpdatedAt = new Date().toISOString();
-            window[this.PHASE1_DEBUG_KEY] = payload;
+        isViewPage() {
+            return window.location.pathname.includes('/board/view/');
+        },
 
-            const root = document.documentElement;
-            if (root) root.setAttribute('data-dcuf-phase1-reveal', payload.revealReason);
+        shouldEnsureListRuntimeForReveal() {
+            return this.isListPage();
+        },
+
+        updateInitialRevealDebug(_state, _meta = {}) {
+        },
+
+        updatePostRevealRecoveryDebug(_state, _meta = {}) {
         },
 
         evaluateListInitialRevealState(listWrap) {
@@ -6355,6 +6364,12 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 };
             }
 
+            const viewBottom = document.querySelector('.view_bottom');
+            const recommendBox = viewWrap.querySelector('.btn_recommend_box');
+            const commentSignal = document.querySelector('#focus_cmt, .view_comment, div[id^="comment_wrap_"]');
+            const commentBox = document.querySelector('#focus_cmt .comment_box, div[id^="comment_wrap_"] .comment_box, .view_comment .comment_box');
+            const commentWriteBox = document.querySelector('#focus_cmt > .cmt_write_box, #focus_cmt .cmt_write_box, .view_comment .cmt_write_box');
+
             const themeBridge = this.getPhase1ViewTheme();
             if (typeof themeBridge?.verify !== 'function') {
                 return {
@@ -6362,18 +6377,27 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                     reason: 'waiting-style',
                     detail: {
                         hasViewWrap: true,
+                        hasViewBottom: viewBottom instanceof HTMLElement,
+                        hasRecommendBox: recommendBox instanceof HTMLElement,
+                        revealTheme: 'view',
                         missingThemeBridge: true
                     }
                 };
             }
 
-            const verifyResult = themeBridge.verify(viewWrap);
+            const verifyResult = themeBridge.verify(document, { mode: 'core' });
             if (!verifyResult?.ready) {
                 return {
                     ready: false,
-                    reason: 'waiting-style',
+                    reason: verifyResult?.reason === 'waiting-comments' ? 'waiting-comments' : 'waiting-style',
                     detail: {
                         hasViewWrap: true,
+                        hasViewBottom: viewBottom instanceof HTMLElement,
+                        hasRecommendBox: recommendBox instanceof HTMLElement,
+                        hasCommentSignal: commentSignal instanceof HTMLElement,
+                        hasCommentBox: commentBox instanceof HTMLElement,
+                        hasCommentWriteBox: commentWriteBox instanceof HTMLElement,
+                        revealTheme: 'view',
                         verifyReason: verifyResult?.reason || 'unknown',
                         verifyDetail: verifyResult?.detail || null
                     }
@@ -6385,8 +6409,184 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 reason: 'ready',
                 detail: {
                     hasViewWrap: true,
+                    hasViewBottom: viewBottom instanceof HTMLElement,
+                    hasRecommendBox: recommendBox instanceof HTMLElement,
+                    hasCommentSignal: commentSignal instanceof HTMLElement,
+                    hasCommentBox: commentBox instanceof HTMLElement,
+                    hasCommentWriteBox: commentWriteBox instanceof HTMLElement,
+                    revealTheme: 'view',
                     verifyReason: verifyResult.reason || 'ready',
                     verifyDetail: verifyResult.detail || null
+                }
+            };
+        },
+
+        evaluateViewPostRevealRecoveryState() {
+            const viewWrap = document.querySelector('.view_content_wrap');
+            if (!(viewWrap instanceof HTMLElement)) {
+                return {
+                    ready: false,
+                    reason: 'waiting-view',
+                    detail: {
+                        phase: 'post-reveal',
+                        hasViewWrap: false,
+                        revealTheme: 'view'
+                    }
+                };
+            }
+
+            const viewBottom = document.querySelector('.view_bottom');
+            const recommendBox = viewWrap.querySelector('.btn_recommend_box');
+            const commentSignal = document.querySelector('#focus_cmt, .view_comment, div[id^="comment_wrap_"]');
+            const commentBox = document.querySelector('#focus_cmt .comment_box, div[id^="comment_wrap_"] .comment_box, .view_comment .comment_box');
+            const commentWriteBox = document.querySelector('#focus_cmt > .cmt_write_box, #focus_cmt .cmt_write_box, .view_comment .cmt_write_box');
+            const hasBottomListSignal = !!document.querySelector('.view_bottom .gall_listwrap, .view_bottom .list_wrap, .view_bottom table.gall_list, .view_bottom tr.ub-content');
+            const embeddedListWraps = this.collectOwnedListWraps(viewBottom || document);
+
+            if (!(recommendBox instanceof HTMLElement)) {
+                return {
+                    ready: false,
+                    reason: 'waiting-view',
+                    detail: {
+                        phase: 'post-reveal',
+                        hasViewWrap: true,
+                        hasViewBottom: viewBottom instanceof HTMLElement,
+                        hasRecommendBox: false,
+                        hasBottomListSignal,
+                        embeddedListCount: embeddedListWraps.length,
+                        revealTheme: 'view'
+                    }
+                };
+            }
+
+            if (!(viewBottom instanceof HTMLElement)) {
+                return {
+                    ready: false,
+                    reason: 'waiting-view',
+                    detail: {
+                        phase: 'post-reveal',
+                        hasViewWrap: true,
+                        hasViewBottom: false,
+                        hasRecommendBox: true,
+                        hasBottomListSignal,
+                        embeddedListCount: embeddedListWraps.length,
+                        revealTheme: 'view'
+                    }
+                };
+            }
+
+            if (commentSignal instanceof HTMLElement && !(commentBox instanceof HTMLElement) && !(commentWriteBox instanceof HTMLElement)) {
+                return {
+                    ready: false,
+                    reason: 'waiting-comments',
+                    detail: {
+                        phase: 'post-reveal',
+                        hasViewWrap: true,
+                        hasViewBottom: true,
+                        hasRecommendBox: true,
+                        hasCommentSignal: true,
+                        hasCommentBox: false,
+                        hasCommentWriteBox: false,
+                        revealTheme: 'view'
+                    }
+                };
+            }
+
+            if (hasBottomListSignal && embeddedListWraps.length === 0) {
+                return {
+                    ready: false,
+                    reason: 'waiting-list',
+                    detail: {
+                        phase: 'post-reveal',
+                        hasViewWrap: true,
+                        hasViewBottom: true,
+                        hasRecommendBox: true,
+                        hasBottomListSignal: true,
+                        embeddedListCount: 0,
+                        revealTheme: 'list'
+                    }
+                };
+            }
+
+            for (let index = 0; index < embeddedListWraps.length; index += 1) {
+                const wrapState = this.evaluateListInitialRevealState(embeddedListWraps[index]);
+                if (!wrapState.ready) {
+                    return {
+                        ready: false,
+                        reason: wrapState.reason,
+                        detail: {
+                            phase: 'post-reveal',
+                            hasViewWrap: true,
+                            hasViewBottom: true,
+                            hasRecommendBox: true,
+                            hasBottomListSignal,
+                            embeddedListCount: embeddedListWraps.length,
+                            embeddedListIndex: index,
+                            revealTheme: wrapState.reason === 'waiting-style' ? 'list' : 'view',
+                            ...wrapState.detail
+                        }
+                    };
+                }
+            }
+
+            const themeBridge = this.getPhase1ViewTheme();
+            if (typeof themeBridge?.verify !== 'function') {
+                return {
+                    ready: false,
+                    reason: 'waiting-style',
+                    detail: {
+                        phase: 'post-reveal',
+                        hasViewWrap: true,
+                        hasViewBottom: true,
+                        hasRecommendBox: true,
+                        hasBottomListSignal,
+                        embeddedListCount: embeddedListWraps.length,
+                        missingThemeBridge: true,
+                        revealTheme: 'view'
+                    }
+                };
+            }
+
+            const verifyResult = themeBridge.verify(document, { mode: 'full' });
+            if (!verifyResult?.ready) {
+                return {
+                    ready: false,
+                    reason: verifyResult?.reason === 'waiting-comments'
+                        ? 'waiting-comments'
+                        : (verifyResult?.reason === 'waiting-view' ? 'waiting-view' : 'waiting-style'),
+                    detail: {
+                        phase: 'post-reveal',
+                        hasViewWrap: true,
+                        hasViewBottom: true,
+                        hasRecommendBox: true,
+                        hasBottomListSignal,
+                        embeddedListCount: embeddedListWraps.length,
+                        hasCommentSignal: commentSignal instanceof HTMLElement,
+                        hasCommentBox: commentBox instanceof HTMLElement,
+                        hasCommentWriteBox: commentWriteBox instanceof HTMLElement,
+                        verifyReason: verifyResult?.reason || 'unknown',
+                        verifyDetail: verifyResult?.detail || null,
+                        revealTheme: 'view'
+                    }
+                };
+            }
+
+            return {
+                ready: true,
+                reason: 'ready',
+                detail: {
+                    phase: 'post-reveal',
+                    hasViewWrap: true,
+                    hasViewBottom: true,
+                    hasRecommendBox: true,
+                    hasBottomListSignal,
+                    embeddedListCount: embeddedListWraps.length,
+                    hasCommentSignal: commentSignal instanceof HTMLElement,
+                    hasCommentBox: commentBox instanceof HTMLElement,
+                    hasCommentWriteBox: commentWriteBox instanceof HTMLElement,
+                    verifyReason: verifyResult.reason || 'ready',
+                    verifyDetail: verifyResult.detail || null,
+                    revealTheme: 'view'
                 }
             };
         },
@@ -6395,7 +6595,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             if (window.location.pathname.includes('/board/write/')) {
                 return { ready: true, reason: 'non-list', detail: { pageType: 'write' } };
             }
-            if (window.location.pathname.includes('/board/view/')) {
+            if (this.isViewPage()) {
                 return this.evaluateViewInitialRevealState();
             }
             if (!this.isListPage()) {
@@ -6434,14 +6634,17 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         },
 
         getInitialRevealMutationSelectors() {
-            if (window.location.pathname.includes('/board/view/')) {
+            if (this.isViewPage()) {
                 return [
                     '.view_content_wrap',
                     '.gallview_head',
                     '.gallview_contents',
+                    '.btn_recommend_box',
                     '.writing_view_box',
                     '.write_div',
+                    '.view_comment',
                     '.comment_box',
+                    '.cmt_write_box',
                     '#focus_cmt'
                 ];
             }
@@ -6461,7 +6664,10 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         waitForInitialRevealReady(timeoutMs = 4000) {
             return new Promise((resolve) => {
                 this.ensureBootUi('initial-reveal:start');
-                this.ensureKnownListRuntimes(document, 'initial-reveal:start');
+                this._initialRevealStartedAt = Date.now();
+                if (this.shouldEnsureListRuntimeForReveal()) {
+                    this.ensureKnownListRuntimes(document, 'initial-reveal:start');
+                }
 
                 let lastState = this.getInitialRevealState();
                 let refreshTriggered = false;
@@ -6472,6 +6678,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                     refreshTriggered: false
                 });
                 if (lastState.ready) {
+                    this._initialRevealStartedAt = 0;
                     resolve(lastState.reason);
                     return;
                 }
@@ -6488,6 +6695,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                     if (rafId) window.cancelAnimationFrame(rafId);
                     if (refreshTimerId) window.clearTimeout(refreshTimerId);
                     if (timeoutId) window.clearTimeout(timeoutId);
+                    this._initialRevealStartedAt = 0;
                 };
 
                 const finish = (reason) => {
@@ -6499,7 +6707,9 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                     if (timeoutId) window.clearTimeout(timeoutId);
                     const delay = Math.max(0, deadline - Date.now());
                     timeoutId = window.setTimeout(() => {
-                        this.processAllLists('initial-reveal-timeout');
+                        if (this.shouldEnsureListRuntimeForReveal()) {
+                            this.processAllLists('initial-reveal-timeout');
+                        }
                         lastState = this.getInitialRevealState();
                         this.updateInitialRevealDebug(lastState, {
                             refreshAttempted: refreshTriggered,
@@ -6526,7 +6736,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
                 const maybeRefreshStyle = (state, reason = 'check') => {
                     if (!state || state.reason !== 'waiting-style' || refreshTriggered) return false;
-                    const themeBridge = this.getCurrentRevealTheme();
+                    const themeBridge = this.getRevealThemeForState(state);
                     if (typeof themeBridge?.ensure !== 'function') return false;
 
                     refreshTriggered = true;
@@ -6557,7 +6767,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 const checkReady = (reason = 'check', candidates = null) => {
                     try {
                         this.ensureBootUi(`initial-reveal:${reason}`);
-                        if (this.isListPage()) {
+                        if (this.shouldEnsureListRuntimeForReveal()) {
                             if (candidates && typeof candidates[Symbol.iterator] === 'function') {
                                 this.ensureListRuntimesFromCandidates(candidates, `initial-reveal:${reason}`);
                             } else {
@@ -6608,6 +6818,227 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
         waitForInitialUiReady(timeoutMs = 4000) {
             return this.waitForInitialRevealReady(timeoutMs);
+        },
+
+        startPostRevealRecoveryWatch(context = {}) {
+            if (!this.isViewPage()) return 'not-view';
+            if (typeof this._postRevealRecoveryStop === 'function') {
+                this._postRevealRecoveryStop('restart');
+            }
+
+            const startedAt = new Date().toISOString();
+            const startedTime = Date.now();
+            let active = true;
+            let lastState = this.evaluateViewPostRevealRecoveryState();
+            let checkCount = 0;
+            let stablePasses = 0;
+            let viewThemeRefreshes = 0;
+            let listThemeRefreshes = 0;
+            let rafId = 0;
+            let pollId = 0;
+            let unsubscribe = null;
+            let observer = null;
+            let resizeObserver = null;
+
+            const cleanup = (status = 'stopped') => {
+                if (!active) return;
+                active = false;
+                if (typeof unsubscribe === 'function') unsubscribe();
+                if (observer) observer.disconnect();
+                if (resizeObserver) resizeObserver.disconnect();
+                if (rafId) window.cancelAnimationFrame(rafId);
+                if (pollId) window.clearInterval(pollId);
+                document.removeEventListener('load', handleMediaEvent, true);
+                document.removeEventListener('error', handleMediaEvent, true);
+                window.removeEventListener('resize', handleWindowResize);
+                this._postRevealRecoveryStop = null;
+                this.updatePostRevealRecoveryDebug(lastState, {
+                    active: false,
+                    status,
+                    checkCount,
+                    stablePasses,
+                    viewThemeRefreshes,
+                    listThemeRefreshes,
+                    startedAt
+                });
+            };
+
+            const runSupportPasses = (reason = 'post-reveal') => {
+                this.ensureKnownListRuntimes(document, `post-reveal:${reason}`);
+
+                const viewBottomContainer = document.querySelector('.view_bottom');
+                if (viewBottomContainer instanceof HTMLElement) {
+                    this.applyForceRefreshPagination(viewBottomContainer);
+                }
+
+                this.scaleAllFontSizes();
+
+                if (typeof window.__dcufSyncArticleDarkText === 'function') {
+                    try {
+                        window.__dcufSyncArticleDarkText(null, { forceFullScan: true });
+                    } catch (error) {
+                        console.warn('[DC Filter+UI] Post-reveal article dark sync failed:', error);
+                    }
+                }
+
+                if (typeof window.__dcufScheduleCommentNormalize === 'function') {
+                    try {
+                        window.__dcufScheduleCommentNormalize({ forceFullPass: true });
+                    } catch (error) {
+                        console.warn('[DC Filter+UI] Post-reveal comment normalize failed:', error);
+                    }
+                }
+            };
+
+            const maybeRefreshThemes = (state, reason = 'post-reveal') => {
+                let refreshed = false;
+                const needsListTheme = state?.detail?.revealTheme === 'list'
+                    || state?.reason === 'waiting-list'
+                    || state?.reason === 'waiting-items';
+                const needsViewTheme = !needsListTheme || state?.reason === 'waiting-style' || state?.reason === 'waiting-view' || state?.reason === 'waiting-comments';
+
+                if (needsViewTheme && viewThemeRefreshes < this.POST_REVEAL_RECOVERY_THEME_REFRESH_LIMIT) {
+                    const viewTheme = this.getPhase1ViewTheme();
+                    if (typeof viewTheme?.ensure === 'function') {
+                        viewThemeRefreshes += 1;
+                        viewTheme.ensure({ refresh: true, reason: `post-reveal:${reason}` });
+                        refreshed = true;
+                    }
+                }
+
+                if ((needsListTheme || state?.detail?.embeddedListCount > 0)
+                    && listThemeRefreshes < this.POST_REVEAL_RECOVERY_THEME_REFRESH_LIMIT) {
+                    const listTheme = this.getPhase1Theme();
+                    if (typeof listTheme?.ensure === 'function') {
+                        listThemeRefreshes += 1;
+                        listTheme.ensure({ refresh: true, reason: `post-reveal:${reason}` });
+                        refreshed = true;
+                    }
+                }
+
+                return refreshed;
+            };
+
+            const requestCheck = (reason = 'event', candidates = null) => {
+                if (!active || rafId) return;
+                rafId = window.requestAnimationFrame(() => {
+                    rafId = 0;
+                    runCheck(reason, candidates);
+                });
+            };
+
+            const runCheck = (reason = 'check', candidates = null) => {
+                if (!active) return;
+                checkCount += 1;
+
+                if (Date.now() - startedTime >= this.POST_REVEAL_RECOVERY_MAX_MS) {
+                    cleanup('timeout');
+                    return;
+                }
+
+                try {
+                    if (candidates && typeof candidates[Symbol.iterator] === 'function') {
+                        this.ensureListRuntimesFromCandidates(candidates, `post-reveal:${reason}`);
+                    } else {
+                        this.ensureKnownListRuntimes(document, `post-reveal:${reason}`);
+                    }
+                } catch (error) {
+                    console.warn('[DC Filter+UI] Post-reveal list runtime ensure failed:', error);
+                }
+
+                lastState = this.evaluateViewPostRevealRecoveryState();
+                if (lastState.ready) {
+                    stablePasses += 1;
+                    this.updatePostRevealRecoveryDebug(lastState, {
+                        active: true,
+                        status: 'ready',
+                        checkCount,
+                        stablePasses,
+                        viewThemeRefreshes,
+                        listThemeRefreshes,
+                        startedAt
+                    });
+                    if (stablePasses >= this.POST_REVEAL_RECOVERY_STABLE_PASSES) {
+                        cleanup('completed');
+                    }
+                    return;
+                }
+
+                stablePasses = 0;
+                runSupportPasses(reason);
+                maybeRefreshThemes(lastState, reason);
+                this.updatePostRevealRecoveryDebug(lastState, {
+                    active: true,
+                    status: 'recovering',
+                    checkCount,
+                    stablePasses,
+                    viewThemeRefreshes,
+                    listThemeRefreshes,
+                    startedAt
+                });
+            };
+
+            const handleMediaEvent = (event) => {
+                const target = event.target;
+                if (!(target instanceof Element)) return;
+                if (!target.matches('img, video')) return;
+                if (!target.closest('.view_content_wrap, #focus_cmt, .view_bottom')) return;
+                requestCheck(`media:${event.type}`, [target]);
+            };
+
+            const handleWindowResize = () => {
+                requestCheck('window-resize');
+            };
+
+            const runtimeCoordinator = this.getRuntimeCoordinator();
+            if (runtimeCoordinator && typeof runtimeCoordinator.subscribeMutations === 'function') {
+                unsubscribe = runtimeCoordinator.subscribeMutations('ui-post-reveal-recovery', (payload) => {
+                    const relevantNodes = payload.collectMatches(this.getInitialRevealMutationSelectors(), { includeRoots: true });
+                    if (relevantNodes.length > 0) requestCheck('mutation-bus', relevantNodes);
+                });
+            } else if (document.body) {
+                observer = new MutationObserver((mutations) => {
+                    const candidates = [];
+                    mutations.forEach((mutation) => {
+                        candidates.push(mutation.target);
+                        mutation.addedNodes.forEach((node) => {
+                            if (node instanceof Element) candidates.push(node);
+                        });
+                    });
+                    requestCheck('mutation-observer', candidates);
+                });
+                observer.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class', 'style'] });
+            }
+
+            if (window.ResizeObserver) {
+                resizeObserver = new ResizeObserver((entries) => {
+                    requestCheck('resize-observer', entries.map((entry) => entry?.target).filter(Boolean));
+                });
+                document.querySelectorAll('.view_content_wrap, .view_bottom, #focus_cmt, .view_comment').forEach((element) => {
+                    if (element instanceof Element) resizeObserver.observe(element);
+                });
+            }
+
+            document.addEventListener('load', handleMediaEvent, true);
+            document.addEventListener('error', handleMediaEvent, true);
+            window.addEventListener('resize', handleWindowResize);
+
+            pollId = window.setInterval(() => {
+                requestCheck('poll');
+            }, this.POST_REVEAL_RECOVERY_POLL_MS);
+
+            this._postRevealRecoveryStop = cleanup;
+            this.updatePostRevealRecoveryDebug(lastState, {
+                active: true,
+                status: 'started',
+                checkCount,
+                stablePasses,
+                viewThemeRefreshes,
+                listThemeRefreshes,
+                startedAt
+            });
+            requestCheck(`start:${context.revealState || 'unknown'}`);
+            return 'started';
         },
 
 
@@ -6895,6 +7326,9 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             // [v2.2.2 수정] 모든 UI 처리 및 필터링 적용이 끝난 후,
             // 루트 준비 완료 클래스를 추가하여 화면을 표시합니다.
             markUiReady();
+            if (typeof UIModule?.startPostRevealRecoveryWatch === 'function') {
+                UIModule.startPostRevealRecoveryWatch({ revealState });
+            }
             console.log("[DC Filter+UI] UI is now visible.", { ...initState, revealState });
         }
     };
@@ -7511,7 +7945,10 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             : {};
         const payload = { ...previousPayload, ...debugState };
         window[DEBUG_KEY] = payload;
-        document.documentElement.setAttribute('data-dcuf-phase1', status);
+        const root = document.documentElement;
+        if (root instanceof HTMLElement) {
+            root.setAttribute('data-dcuf-phase1', status);
+        }
         return payload;
     };
 
@@ -10235,7 +10672,10 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             : {};
         const payload = { ...previousPayload, ...debugState };
         window[DEBUG_KEY] = payload;
-        document.documentElement.setAttribute('data-dcuf-phase1-view', status);
+        const root = document.documentElement;
+        if (root instanceof HTMLElement) {
+            root.setAttribute('data-dcuf-phase1-view', status);
+        }
         return payload;
     };
 
@@ -10314,13 +10754,14 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         return true;
     };
 
-    const verifyApplied = (reason = 'verify', root = document) => {
+    const verifyApplied = (reason = 'verify', root = document, options = {}) => {
+        const mode = options && options.mode === 'core' ? 'core' : 'full';
         const viewWrap = findWithinRoot(root, '.view_content_wrap');
         if (!(viewWrap instanceof HTMLElement)) {
             const result = {
                 ready: false,
                 reason: 'waiting-view',
-                detail: { reason, hasViewWrap: false }
+                detail: { reason, mode, hasViewWrap: false }
             };
             setDebug('waiting-view', JSON.stringify(result.detail), {
                 lastFailureReason: result.reason,
@@ -10337,6 +10778,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 reason: 'waiting-view',
                 detail: {
                     reason,
+                    mode,
                     hasViewWrap: true,
                     hasHead: head instanceof HTMLElement,
                     hasContent: content instanceof HTMLElement
@@ -10352,8 +10794,19 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         const wrapStyle = window.getComputedStyle(viewWrap);
         const headStyle = window.getComputedStyle(head);
         const contentStyle = window.getComputedStyle(content);
+        const recommendBox = viewWrap.querySelector('.btn_recommend_box');
+        const recommendBoxStyle = recommendBox instanceof HTMLElement ? window.getComputedStyle(recommendBox) : null;
+        const commentBox = document.querySelector('#focus_cmt .comment_box, div[id^="comment_wrap_"] .comment_box, .view_comment .comment_box');
+        const commentWriteBox = document.querySelector('#focus_cmt > .cmt_write_box, #focus_cmt .cmt_write_box, .view_comment .cmt_write_box');
+        const commentTextContainer = commentWriteBox instanceof HTMLElement
+            ? commentWriteBox.querySelector('.cmt_txt_cont')
+            : null;
+        const commentBoxStyle = commentBox instanceof HTMLElement ? window.getComputedStyle(commentBox) : null;
+        const commentWriteBoxStyle = commentWriteBox instanceof HTMLElement ? window.getComputedStyle(commentWriteBox) : null;
+        const commentTextContainerStyle = commentTextContainer instanceof HTMLElement ? window.getComputedStyle(commentTextContainer) : null;
         const detail = {
             reason,
+            mode,
             wrapPaddingLeft: toPixelValue(wrapStyle.paddingLeft),
             wrapPaddingRight: toPixelValue(wrapStyle.paddingRight),
             headRadius: toPixelValue(headStyle.borderRadius),
@@ -10365,7 +10818,30 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             contentBackgroundColor: contentStyle.backgroundColor,
             contentBackgroundImage: contentStyle.backgroundImage,
             contentBoxShadow: contentStyle.boxShadow,
-            contentHasRenderableBorder: hasRenderableBorder(contentStyle)
+            contentHasRenderableBorder: hasRenderableBorder(contentStyle),
+            hasRecommendBox: recommendBox instanceof HTMLElement,
+            recommendBoxRadius: recommendBoxStyle ? toPixelValue(recommendBoxStyle.borderRadius) : 0,
+            recommendBoxBackgroundColor: recommendBoxStyle?.backgroundColor || '',
+            recommendBoxBackgroundImage: recommendBoxStyle?.backgroundImage || 'none',
+            recommendBoxBoxShadow: recommendBoxStyle?.boxShadow || 'none',
+            recommendBoxHasRenderableBorder: recommendBoxStyle ? hasRenderableBorder(recommendBoxStyle) : false,
+            hasCommentBox: commentBox instanceof HTMLElement,
+            commentBoxRadius: commentBoxStyle ? toPixelValue(commentBoxStyle.borderRadius) : 0,
+            commentBoxBackgroundColor: commentBoxStyle?.backgroundColor || '',
+            commentBoxBackgroundImage: commentBoxStyle?.backgroundImage || 'none',
+            commentBoxBoxShadow: commentBoxStyle?.boxShadow || 'none',
+            commentBoxHasRenderableBorder: commentBoxStyle ? hasRenderableBorder(commentBoxStyle) : false,
+            hasCommentWriteBox: commentWriteBox instanceof HTMLElement,
+            commentWriteBoxRadius: commentWriteBoxStyle ? toPixelValue(commentWriteBoxStyle.borderRadius) : 0,
+            commentWriteBoxBackgroundColor: commentWriteBoxStyle?.backgroundColor || '',
+            commentWriteBoxBackgroundImage: commentWriteBoxStyle?.backgroundImage || 'none',
+            commentWriteBoxBoxShadow: commentWriteBoxStyle?.boxShadow || 'none',
+            commentWriteBoxHasRenderableBorder: commentWriteBoxStyle ? hasRenderableBorder(commentWriteBoxStyle) : false,
+            hasCommentTextContainer: commentTextContainer instanceof HTMLElement,
+            commentTextContainerRadius: commentTextContainerStyle ? toPixelValue(commentTextContainerStyle.borderRadius) : 0,
+            commentTextContainerBackgroundColor: commentTextContainerStyle?.backgroundColor || '',
+            commentTextContainerBackgroundImage: commentTextContainerStyle?.backgroundImage || 'none',
+            commentTextContainerHasRenderableBorder: commentTextContainerStyle ? hasRenderableBorder(commentTextContainerStyle) : false
         };
 
         let failureReason = null;
@@ -10373,16 +10849,40 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             failureReason = 'insufficient-wrap-padding';
         } else if (detail.headRadius < 16) {
             failureReason = 'insufficient-head-radius';
-        } else if ((headStyle.boxShadow === 'none') && !detail.headHasRenderableBorder) {
+        } else if (headStyle.boxShadow === 'none') {
             failureReason = 'missing-head-elevation';
         } else if (headStyle.backgroundImage === 'none' && isTransparentColor(detail.headBackgroundColor)) {
             failureReason = 'transparent-head-background';
         } else if (detail.contentRadius < 16) {
             failureReason = 'insufficient-content-radius';
-        } else if ((contentStyle.boxShadow === 'none') && !detail.contentHasRenderableBorder) {
+        } else if (contentStyle.boxShadow === 'none') {
             failureReason = 'missing-content-elevation';
         } else if (contentStyle.backgroundImage === 'none' && isTransparentColor(detail.contentBackgroundColor)) {
             failureReason = 'transparent-content-background';
+        } else if (mode !== 'core' && recommendBox instanceof HTMLElement && detail.recommendBoxRadius < 16) {
+            failureReason = 'insufficient-recommend-radius';
+        } else if (mode !== 'core' && recommendBox instanceof HTMLElement && recommendBoxStyle.boxShadow === 'none') {
+            failureReason = 'missing-recommend-elevation';
+        } else if (mode !== 'core' && recommendBox instanceof HTMLElement && recommendBoxStyle.backgroundImage === 'none' && isTransparentColor(detail.recommendBoxBackgroundColor)) {
+            failureReason = 'transparent-recommend-background';
+        } else if (mode !== 'core' && commentBox instanceof HTMLElement && detail.commentBoxRadius < 16) {
+            failureReason = 'insufficient-comment-radius';
+        } else if (mode !== 'core' && commentBox instanceof HTMLElement && commentBoxStyle.boxShadow === 'none') {
+            failureReason = 'missing-comment-elevation';
+        } else if (mode !== 'core' && commentBox instanceof HTMLElement && commentBoxStyle.backgroundImage === 'none' && isTransparentColor(detail.commentBoxBackgroundColor)) {
+            failureReason = 'transparent-comment-background';
+        } else if (mode !== 'core' && commentWriteBox instanceof HTMLElement && detail.commentWriteBoxRadius < 16) {
+            failureReason = 'insufficient-comment-write-radius';
+        } else if (mode !== 'core' && commentWriteBox instanceof HTMLElement && commentWriteBoxStyle.boxShadow === 'none') {
+            failureReason = 'missing-comment-write-elevation';
+        } else if (mode !== 'core' && commentWriteBox instanceof HTMLElement && commentWriteBoxStyle.backgroundImage === 'none' && isTransparentColor(detail.commentWriteBoxBackgroundColor)) {
+            failureReason = 'transparent-comment-write-background';
+        } else if (mode !== 'core' && commentTextContainer instanceof HTMLElement && detail.commentTextContainerRadius < 12) {
+            failureReason = 'insufficient-comment-input-radius';
+        } else if (mode !== 'core' && commentTextContainer instanceof HTMLElement && commentTextContainerStyle.backgroundImage === 'none' && isTransparentColor(detail.commentTextContainerBackgroundColor)) {
+            failureReason = 'transparent-comment-input-background';
+        } else if (mode !== 'core' && commentTextContainer instanceof HTMLElement && !detail.commentTextContainerHasRenderableBorder) {
+            failureReason = 'missing-comment-input-border';
         }
 
         const result = {
@@ -10404,8 +10904,8 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         ensure(options = {}) {
             return injectStyle(options);
         },
-        verify(root = document) {
-            return verifyApplied('bridge', root);
+        verify(root = document, options = {}) {
+            return verifyApplied('bridge', root, options);
         },
         getDebugState() {
             const previousPayload = (window[DEBUG_KEY] && typeof window[DEBUG_KEY] === 'object')
@@ -11056,36 +11556,6 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
     window.__dcufScheduleCommentNormalize = scheduleNormalize;
     window.__dcufSyncArticleDarkText = syncArticleDarkText;
-    // 페이지 콘솔에서 직접 확인할 수 있는 최소 디버그 헬퍼입니다.
-    // Tampermonkey 샌드박스 때문에 항상 노출되는 건 아니지만, 본문/포커스댓글 확인 시 유지보수에 유용합니다.
-    window.__dcufDebugArticleDark = () => {
-        const target = document.querySelector('.view_content_wrap .write_div [data-scaled-by-filter], .view_content_wrap .gallview_contents [data-scaled-by-filter], .view_content_wrap .write_div p, .view_content_wrap .gallview_contents p, .view_content_wrap .write_div div, .view_content_wrap .gallview_contents div, .view_content_wrap .write_div span, .view_content_wrap .gallview_contents span');
-        if (!(target instanceof HTMLElement)) return null;
-        const cs = getComputedStyle(target);
-        const scope = document.querySelector('.view_content_wrap');
-        const scopeStyles = scope ? getComputedStyle(scope) : null;
-        const result = {
-            tag: target.tagName,
-            text: (target.textContent || '').trim().slice(0, 80),
-            inlineStyle: target.getAttribute('style') || '',
-            computedColor: cs.color,
-            computedTextFill: cs.getPropertyValue('-webkit-text-fill-color'),
-            darkClassOnBody: document.body?.classList.contains('dc-filter-dark-mode') || false,
-            viewFgVar: scopeStyles ? scopeStyles.getPropertyValue('--dcuf-view-fg').trim() : ''
-        };
-        console.log('[DCUF DEBUG][article-dark]', result);
-        return result;
-    };
-    window.__dcufDebugFocusComment = () => {
-        const rows = Array.from(document.querySelectorAll('#focus_cmt div[id^="comment_wrap_"] .comment_box .cmt_list > li')).map((li) => ({
-            id: li.id || '',
-            hasCommentInfo: Boolean(li.querySelector(':scope > .cmt_info')),
-            hasDirectReply: Boolean(li.querySelector(':scope > .reply.show')),
-            text: Array.from(li.querySelectorAll(':scope > .cmt_txtbox .usertxt, :scope > .reply.show .reply_list > li .usertxt')).map((el) => (el.textContent || '').trim())
-        }));
-        console.log('[DCUF DEBUG][focus-comment]', rows);
-        return rows;
-    };
 
     scheduleNormalize();
 
