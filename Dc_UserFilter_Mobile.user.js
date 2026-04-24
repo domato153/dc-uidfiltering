@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         DC_UserFilter_Mobile
 // @namespace    http://tampermonkey.net/
-// @version      3.2.2
+// @version      3.2.3
 // @description  유저 필터링, UI 개선, 개인 차단/해제 기능
 // @author       domato153
 // @match        https://gall.dcinside.com/*
@@ -4207,7 +4207,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         async init() {
             if (isInitialized) return; isInitialized = true;
             this.installDebugApi();
-            this.debugLog('init', 'FilterModule init start', { version: '3.2.2' });
+            this.debugLog('init', 'FilterModule init start', { version: '3.2.3' });
             await this.cleanupLegacyManagedBlockConfig();
             await this.reloadSettings();
             this.getKrPrefixSet();
@@ -7124,18 +7124,22 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
             // [최종 완전판] 글쓰기 페이지의 광고 컨테이너를 직접 찾아 제거하는 함수
             const removeWritePageAds = () => {
-                // "ba.min.js" 스크립트 태그를 찾음
-                const adScript = document.querySelector('script[src*="//t1.daumcdn.net/kas/static/ba.min.js"]');
+                const adContainers = new Set();
+                const searchRoot = writeBox instanceof Element ? writeBox : document;
 
-                // 해당 스크립트가 존재하고, 그 부모가 DIV 태그라면
-                if (adScript && adScript.parentElement.tagName === 'DIV') {
-                    const adContainer = adScript.parentElement; // 바로 그 <div>가 범인
-                    adContainer.remove(); // 컨테이너를 페이지에서 완전히 제거
+                searchRoot.querySelectorAll('script[src*="/kas/static/ba.min.js"], ins.kakao_ad_area').forEach((node) => {
+                    const adContainer = node.parentElement;
+                    if (!(adContainer instanceof HTMLDivElement)) return;
+                    adContainers.add(adContainer);
+                });
 
-                    console.log('[DC Filter+UI] 글쓰기 페이지 광고 컨테이너 제거 완료.');
-                    return true;
+                if (adContainers.size === 0) {
+                    return false;
                 }
-                return false;
+
+                adContainers.forEach((adContainer) => adContainer.remove());
+                console.log(`[DC Filter+UI] 글쓰기 페이지 광고 컨테이너 ${adContainers.size}개 제거 완료.`);
+                return true;
             };
             const stopAdCleanup = () => {
                 if (adRemovalInterval) {
@@ -7259,7 +7263,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 commentInitState: { reason: 'already-initialized' }
             };
         }
-        console.log("[DC Filter+UI] Initializing v3.2.2...");
+        console.log("[DC Filter+UI] Initializing v3.2.3...");
 
 
         // [수정] main 함수에서 reloadShortcutKey 함수를 호출하여 초기화
