@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         DC_UserFilter_Mobile
 // @namespace    http://tampermonkey.net/
-// @version      3.2.3
+// @version      3.2.4
 // @description  유저 필터링, UI 개선, 개인 차단/해제 기능
 // @author       domato153
 // @match        https://gall.dcinside.com/*
@@ -4207,7 +4207,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         async init() {
             if (isInitialized) return; isInitialized = true;
             this.installDebugApi();
-            this.debugLog('init', 'FilterModule init start', { version: '3.2.3' });
+            this.debugLog('init', 'FilterModule init start', { version: '3.2.4' });
             await this.cleanupLegacyManagedBlockConfig();
             await this.reloadSettings();
             this.getKrPrefixSet();
@@ -7263,7 +7263,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 commentInitState: { reason: 'already-initialized' }
             };
         }
-        console.log("[DC Filter+UI] Initializing v3.2.3...");
+        console.log("[DC Filter+UI] Initializing v3.2.4...");
 
 
         // [수정] main 함수에서 reloadShortcutKey 함수를 호출하여 초기화
@@ -10934,15 +10934,38 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 })();
 (() => {
     const STYLE_ID = 'dcuf-runtime-fixes';
+    const ARTICLE_AD_SELECTOR = [
+        'div[id^="foin_"]',
+        'iframe[id^="pageid_"]',
+        'iframe[src*="adnmore"]',
+        '.power_link',
+        '.power_link .pwlink_list',
+        '.power_link .pwlink_img_list',
+        '.view_content_wrap .view_ad_wrap',
+        '.gallview_contents .view_ad_wrap',
+        '.writing_view_box .view_ad_wrap',
+        '.write_div .view_ad_wrap',
+        '.view_bottom .view_ad_wrap',
+        '.view_content_wrap ins.kakao_ad_area',
+        '.view_content_wrap div[id^="kakao_ad_"]'
+    ].join(', ');
     const css = `
         div[id^="foin_"],
         div[id^="foin_"] .closebtn,
         div[id^="foin_"] + .closebtn,
+        iframe[id^="pageid_"],
         iframe[id^="pageid_"][src*="adnmore"],
+        iframe[src*="adnmore"],
         .power_link,
         .power_link .pwlink_list,
         .power_link .pwlink_img_list,
-        .view_ad_wrap:has(> .power_link) {
+        .view_content_wrap .view_ad_wrap,
+        .gallview_contents .view_ad_wrap,
+        .writing_view_box .view_ad_wrap,
+        .write_div .view_ad_wrap,
+        .view_bottom .view_ad_wrap,
+        .view_content_wrap ins.kakao_ad_area,
+        .view_content_wrap div[id^="kakao_ad_"] {
             display: none !important;
             width: 0 !important;
             height: 0 !important;
@@ -10992,11 +11015,88 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         return true;
     };
 
+    const collectArticleAdCandidates = (roots = [document]) => {
+        const rootList = Array.isArray(roots) ? roots : [roots];
+        const seen = new Set();
+        const candidates = [];
+        const push = (element) => {
+            if (!(element instanceof Element) || seen.has(element)) return;
+            if (!element.matches(ARTICLE_AD_SELECTOR)) return;
+            seen.add(element);
+            candidates.push(element);
+        };
+
+        rootList.forEach((root) => {
+            if (root instanceof Element) push(root);
+            if (root && typeof root.querySelectorAll === 'function') {
+                root.querySelectorAll(ARTICLE_AD_SELECTOR).forEach(push);
+            }
+        });
+        return candidates;
+    };
+
+    const resolveArticleAdRemovalTarget = (element) => {
+        if (!(element instanceof Element)) return null;
+        if (element.matches('.view_ad_wrap, div[id^="foin_"], div[id^="kakao_ad_"], .power_link')) {
+            return element;
+        }
+        if (element.matches('iframe[id^="pageid_"], iframe[src*="adnmore"], ins.kakao_ad_area')) {
+            return element.closest('.view_ad_wrap, div[id^="foin_"], div[id^="kakao_ad_"], .cm_ad') || element;
+        }
+        const ownedAdWrap = element.closest('.view_ad_wrap, .power_link');
+        return ownedAdWrap || element;
+    };
+
+    const removeArticleAds = (roots = [document]) => {
+        const targets = new Set();
+        collectArticleAdCandidates(roots).forEach((candidate) => {
+            const target = resolveArticleAdRemovalTarget(candidate);
+            if (target instanceof Element && target.isConnected) targets.add(target);
+        });
+        targets.forEach((target) => target.remove());
+        return targets.size;
+    };
+
+    let cleanupRafId = 0;
+    let pendingCleanupRoots = [];
+    const scheduleArticleAdCleanup = (reason = 'scheduled', roots = [document]) => {
+        pendingCleanupRoots.push(...(Array.isArray(roots) ? roots : [roots]));
+        if (cleanupRafId) return;
+        cleanupRafId = window.requestAnimationFrame(() => {
+            cleanupRafId = 0;
+            const rootsForPass = pendingCleanupRoots.splice(0).filter(Boolean);
+            removeArticleAds(rootsForPass.length > 0 ? rootsForPass : [document]);
+        });
+    };
+
+    const bindArticleAdCleanup = () => {
+        scheduleArticleAdCleanup('initial');
+        [120, 420, 1100, 2500, 5000].forEach((delay) => {
+            window.setTimeout(() => scheduleArticleAdCleanup(`delayed:${delay}`), delay);
+        });
+
+        const runtimeCoordinator = window.__dcufRuntimeCoordinator;
+        if (!runtimeCoordinator || typeof runtimeCoordinator.subscribeMutations !== 'function') return;
+        runtimeCoordinator.subscribeMutations('runtime-article-ad-cleanup', (payload) => {
+            const relevantNodes = payload.collectMatches(ARTICLE_AD_SELECTOR, { includeRoots: true });
+            if (relevantNodes.length > 0) {
+                scheduleArticleAdCleanup('mutation-bus', relevantNodes);
+            }
+        });
+    };
+
     injectStyle();
+    bindArticleAdCleanup();
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', injectStyle, { once: true });
+        document.addEventListener('DOMContentLoaded', () => {
+            injectStyle();
+            scheduleArticleAdCleanup('domcontentloaded');
+        }, { once: true });
     }
-    window.addEventListener('load', injectStyle, { once: true });
+    window.addEventListener('load', () => {
+        injectStyle();
+        scheduleArticleAdCleanup('window-load');
+    }, { once: true });
 })();
 
 (() => {
