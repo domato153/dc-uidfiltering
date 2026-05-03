@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         DC_UserFilter_Mobile
 // @namespace    http://tampermonkey.net/
-// @version      3.2.4
+// @version      3.2.5
 // @description  유저 필터링, UI 개선, 개인 차단/해제 기능
 // @author       domato153
 // @match        https://gall.dcinside.com/*
@@ -29,6 +29,16 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
         return;
     }
     __dcufRoot.__dcufRuntimeLoaded = `dcuf-${Date.now()}`;
+
+    if (!__dcufRoot.__dcufBfcacheOptOutInstalled) {
+        __dcufRoot.__dcufBfcacheOptOutInstalled = true;
+        const preventBackForwardCache = () => {};
+        try {
+            __dcufRoot.addEventListener('unload', preventBackForwardCache, { capture: true });
+        } catch (error) {
+            window.addEventListener('unload', preventBackForwardCache, { capture: true });
+        }
+    }
 
 
     // [개선] 전역 스코프 오염 방지를 위해 스크립트 상태 변수를 IIFE 내부 스코프로 이동
@@ -228,7 +238,6 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
     injectInitialLockStyle();
     ensureBootOverlay();
     startBootUiWatchdog();
-
     // Phase 2 runtime shared prelude
 /**
  * Shared storage/schema constants extracted from v2.7.5.4.
@@ -3061,6 +3070,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             });
         },
         async debugDumpState(reason = 'manual') {
+            if (!this.DEBUG_ENABLED) return null;
             await this.reloadSettings();
             const rawBlockConfig = await GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG, {});
             const payload = this.debugSettingsSnapshot({
@@ -3953,10 +3963,13 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             const targets = [{ c: this.CONSTANTS.SELECTORS.POST_LIST_CONTAINER, i: this.CONSTANTS.SELECTORS.POST_ITEM }, { c: this.CONSTANTS.SELECTORS.COMMENT_CONTAINER, i: this.CONSTANTS.SELECTORS.COMMENT_ITEM }, { c: this.CONSTANTS.SELECTORS.POST_VIEW_LIST_CONTAINER, i: 'li' }];
             const filterItems = (items) => this.applyFilterItems(items);
             const queueFilterItems = (items) => this.queueObservedFilterItems(items);
-            const attachObserver = (container, itemSelector) => {
+            const runtimeCoordinator = this.getRuntimeCoordinator();
+            const hasRuntimeMutationBus = runtimeCoordinator && typeof runtimeCoordinator.subscribeMutations === 'function';
+            const attachObserver = (container, itemSelector, { attachDomObserver = true } = {}) => {
                 if (container.hasAttribute(this.CONSTANTS.CUSTOM_ATTRS.OBSERVER_ATTACHED)) return;
                 container.setAttribute(this.CONSTANTS.CUSTOM_ATTRS.OBSERVER_ATTACHED, 'true');
                 filterItems(Array.from(container.querySelectorAll(itemSelector)));
+                if (!attachDomObserver) return;
                 // [디버깅 추가]
                 new MutationObserver(mutations => {
                     const newItems = [];
@@ -3967,14 +3980,15 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                     if (newItems.length > 0) queueFilterItems(newItems);
                 }).observe(container, { childList: true, subtree: true });
             };
-            targets.forEach(t => document.querySelectorAll(t.c).forEach(c => attachObserver(c, t.i)));
+            targets.forEach(t => document.querySelectorAll(t.c).forEach(c => attachObserver(c, t.i, { attachDomObserver: !hasRuntimeMutationBus })));
 
-            const runtimeCoordinator = this.getRuntimeCoordinator();
-            if (runtimeCoordinator && typeof runtimeCoordinator.subscribeMutations === 'function') {
+            if (hasRuntimeMutationBus) {
                 if (typeof this._runtimeMutationUnsubscribe === 'function') this._runtimeMutationUnsubscribe();
                 this._runtimeMutationUnsubscribe = runtimeCoordinator.subscribeMutations('filter-universal-observer', (payload) => {
                     targets.forEach((target) => {
-                        payload.collectMatches(target.c).forEach((container) => attachObserver(container, target.i));
+                        payload.collectMatches(target.c).forEach((container) => attachObserver(container, target.i, { attachDomObserver: false }));
+                        const changedItems = payload.collectMatches(target.i, { includeRoots: true });
+                        if (changedItems.length > 0) queueFilterItems(changedItems);
                     });
                 });
                 return;
@@ -4207,15 +4221,10 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         async init() {
             if (isInitialized) return; isInitialized = true;
             this.installDebugApi();
-            this.debugLog('init', 'FilterModule init start', { version: '3.2.4' });
+            this.debugLog('init', 'FilterModule init start', { version: '3.2.5' });
             await this.cleanupLegacyManagedBlockConfig();
             await this.reloadSettings();
-            this.getKrPrefixSet();
-            this.getTelecomPrefixSet();
-            this.getProxyStrictPrefixSet();
-            this.getProxyAggressiveExtraPrefixSet();
-            this.getProxyPrefixSet(this.PROXY_MODE.AGGRESSIVE);
-            await this.debugDumpState('after init reload');
+            if (this.DEBUG_ENABLED) await this.debugDumpState('after init reload');
 
             // [수정] 개념글 목록에서 스크립트가 조기 종료되던 문제를 해결하기 위해 아래 라인을 삭제했습니다.
             // if (dcFilterSettings.excludeRecommended && window.location.pathname.includes('/lists/') && this.isRecommendedContext()) return;
@@ -5991,6 +6000,16 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 state.listWrap.removeAttribute(this.TRANSFORMED_ATTR);
             }
             this.LIST_STATE_MAP.delete(state.listWrap);
+            if (state.itemByRowId && typeof state.itemByRowId.clear === 'function') {
+                state.itemByRowId.clear();
+            }
+            state.listWrap = null;
+            state.originalTable = null;
+            state.originalTbody = null;
+            state.newListContainer = null;
+            state.itemByRowId = null;
+            state.tbodyObserver = null;
+            state.syncScheduler = null;
             this.recordDiagnostic('ui.listState.destroyed');
         },
 
@@ -7226,6 +7245,147 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
     };
 
 
+    const getDcufCollectionSize = (value) => {
+        if (!value) return 0;
+        if (value instanceof Map || value instanceof Set) return value.size;
+        if (Array.isArray(value)) return value.length;
+        if (typeof value === 'object') return Object.keys(value).length;
+        return 0;
+    };
+
+    const getDcufHeapMb = () => {
+        const heap = performance.memory || {};
+        const toMb = (bytes) => Number.isFinite(bytes) ? Math.round((bytes / 1048576) * 10) / 10 : null;
+        return {
+            used: toMb(heap.usedJSHeapSize),
+            total: toMb(heap.totalJSHeapSize),
+            limit: toMb(heap.jsHeapSizeLimit)
+        };
+    };
+
+    const getDcufApproxJsonKb = (value) => {
+        try {
+            return Math.round((JSON.stringify(value || {}).length / 1024) * 10) / 10;
+        } catch (error) {
+            return null;
+        }
+    };
+
+    const collectDcufInternalMemorySample = (reason = 'manual') => {
+        const runtimeCoordinator = window.__dcufRuntimeCoordinator || null;
+        const diagnostics = typeof runtimeCoordinator?.snapshotDiagnostics === 'function'
+            ? runtimeCoordinator.snapshotDiagnostics()
+            : null;
+        const taskQueues = runtimeCoordinator?._taskQueues || {};
+        const taskQueueSnapshots = Object.fromEntries(
+            Object.entries(taskQueues).map(([key, queue]) => [
+                key,
+                typeof queue?.snapshot === 'function' ? queue.snapshot() : null
+            ])
+        );
+
+        return {
+            reason,
+            version: '3.2.5',
+            time: new Date().toISOString(),
+            href: location.href,
+            heap: getDcufHeapMb(),
+            runtime: {
+                mutationObserverReady: Boolean(runtimeCoordinator?._mutationObserverReady),
+                subscriberCount: getDcufCollectionSize(runtimeCoordinator?._mutationSubscribers),
+                pendingMutationRecords: getDcufCollectionSize(runtimeCoordinator?._pendingMutationRecords),
+                pendingMutationRafActive: Boolean(runtimeCoordinator?._pendingMutationRafId),
+                pendingMutationTimerActive: Boolean(runtimeCoordinator?._pendingMutationTimerId),
+                taskQueueCount: getDcufCollectionSize(taskQueues),
+                taskQueues: taskQueueSnapshots,
+                diagnostics
+            },
+            filter: {
+                userSumCache: getDcufCollectionSize(userSumCache),
+                negativeUserSumCache: getDcufCollectionSize(FilterModule.USER_SUM_NEGATIVE_CACHE),
+                inflightUserSumRequests: getDcufCollectionSize(FilterModule.INFLIGHT_USER_SUM_REQUESTS),
+                blockedUidsCache: getDcufCollectionSize(FilterModule.BLOCKED_UIDS_CACHE),
+                debugDecisionKeys: getDcufCollectionSize(FilterModule.DEBUG_DECISION_KEYS),
+                queuedObserverFilterItems: getDcufCollectionSize(FilterModule._queuedObserverFilterItems),
+                syncRefilterTimers: getDcufCollectionSize(FilterModule._syncRefilterTimerIds),
+                commentRefilterTimers: getDcufCollectionSize(FilterModule._commentRefilterTimerIds),
+                userSumCacheKb: getDcufApproxJsonKb(userSumCache),
+                negativeUserSumCacheKb: getDcufApproxJsonKb(Array.from(FilterModule.USER_SUM_NEGATIVE_CACHE || [])),
+                blockedUidsCacheKb: getDcufApproxJsonKb(FilterModule.BLOCKED_UIDS_CACHE)
+            },
+            ui: {
+                nextRowId: UIModule._nextRowId,
+                nextListRuntimeId: UIModule._nextListRuntimeId,
+                listMutationSubscribed: typeof UIModule._listMutationUnsubscribe === 'function',
+                postRevealRecoveryActive: typeof UIModule._postRevealRecoveryStop === 'function'
+            },
+            dom: {
+                nodes: document.getElementsByTagName('*').length,
+                listWraps: document.querySelectorAll(UIModule.SELECTORS.LIST_WRAP).length,
+                originalRows: document.querySelectorAll(UIModule.SELECTORS.ORIGINAL_POST_ITEM).length,
+                customLists: document.querySelectorAll(`.${UIModule.CUSTOM_CLASSES.MOBILE_LIST}`).length,
+                customPosts: document.querySelectorAll(`.${UIModule.CUSTOM_CLASSES.POST_ITEM}`).length,
+                customBottomControls: document.querySelectorAll(`.${UIModule.CUSTOM_CLASSES.BOTTOM_CONTROLS}`).length,
+                dcufStyles: document.querySelectorAll('style[id^="dcuf"], style[id*="dcuf"]').length
+            }
+        };
+    };
+
+    const emitDcufInternalMemorySample = (reason = 'manual') => {
+        const sample = collectDcufInternalMemorySample(reason);
+        window.__dcufLastMemorySample = sample;
+        __dcufRoot.__dcufLastMemorySample = sample;
+        __dcufRoot.postMessage({ type: 'DCUF_INTERNAL_MEMORY_SAMPLE', data: sample }, '*');
+        return sample;
+    };
+
+    const dcufMemoryDebugApi = {
+        sample: collectDcufInternalMemorySample,
+        emit: emitDcufInternalMemorySample,
+        dump(reason = 'manual-dump') {
+            const sample = emitDcufInternalMemorySample(reason);
+            console.table([{
+                heapUsedMB: sample.heap.used,
+                heapTotalMB: sample.heap.total,
+                subscribers: sample.runtime.subscriberCount,
+                pendingMutations: sample.runtime.pendingMutationRecords,
+                userSumCache: sample.filter.userSumCache,
+                userSumCacheKb: sample.filter.userSumCacheKb,
+                negativeCache: sample.filter.negativeUserSumCache,
+                inflight: sample.filter.inflightUserSumRequests,
+                blockedUidsCache: sample.filter.blockedUidsCache,
+                blockedUidsCacheKb: sample.filter.blockedUidsCacheKb,
+                customPosts: sample.dom.customPosts
+            }]);
+            return sample;
+        }
+    };
+    window.__dcufMemoryDebug = dcufMemoryDebugApi;
+    __dcufRoot.__dcufMemoryDebug = dcufMemoryDebugApi;
+
+    const isDcufMemoryDebugAutoEnabled = () => {
+        try {
+            return window.__DCUF_MEMORY_DEBUG__ === true
+                || __dcufRoot.__DCUF_MEMORY_DEBUG__ === true
+                || localStorage.getItem('dcufMemoryDebug') === '1';
+        } catch (error) {
+            return window.__DCUF_MEMORY_DEBUG__ === true || __dcufRoot.__DCUF_MEMORY_DEBUG__ === true;
+        }
+    };
+
+    let dcufMemoryDebugTimerId = 0;
+    if (isDcufMemoryDebugAutoEnabled()) {
+        dcufMemoryDebugTimerId = window.setInterval(() => emitDcufInternalMemorySample('interval'), 10000);
+    }
+    window.addEventListener('pagehide', () => {
+        if (dcufMemoryDebugTimerId) {
+            emitDcufInternalMemorySample('pagehide');
+            window.clearInterval(dcufMemoryDebugTimerId);
+            dcufMemoryDebugTimerId = 0;
+        }
+    }, { once: true });
+
+
     // =================================================================
     // ================ Script-Level Initializations ===================
     // =================================================================
@@ -7263,7 +7423,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 commentInitState: { reason: 'already-initialized' }
             };
         }
-        console.log("[DC Filter+UI] Initializing v3.2.4...");
+        console.log("[DC Filter+UI] Initializing v3.2.5...");
 
 
         // [수정] main 함수에서 reloadShortcutKey 함수를 호출하여 초기화
@@ -7301,7 +7461,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         // stabilization window finishes so personally blocked comments do not flash visible.
         const commentInitState = await awaitInitialCommentStabilization();
         const initState = { uiInitState, commentInitState };
-        console.log("[DC Filter+UI] Initialization complete.", initState);
+        console.log(`[DC Filter+UI] Initialization complete. ui=${uiInitState} comment=${commentInitState?.reason || 'unknown'}`);
         return initState;
     }
 
@@ -7333,7 +7493,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             if (typeof UIModule?.startPostRevealRecoveryWatch === 'function') {
                 UIModule.startPostRevealRecoveryWatch({ revealState });
             }
-            console.log("[DC Filter+UI] UI is now visible.", { ...initState, revealState });
+            console.log(`[DC Filter+UI] UI is now visible. ui=${initState.uiInitState} comment=${initState.commentInitState?.reason || 'unknown'} reveal=${revealState}`);
         }
     };
 
@@ -8149,6 +8309,8 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 })();
 
 (() => {
+    if ((window.location.pathname || '').indexOf('/board/lists') !== -1) return;
+
     const STYLE_ID = 'dcuf-phase1-view-theme';
     const css = `
         .view_content_wrap {
@@ -11100,6 +11262,8 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 })();
 
 (() => {
+    if ((window.location.pathname || '').indexOf('/board/lists') !== -1) return;
+
     const setImportant = (element, property, value) => {
         if (!element) return;
         if (element.style.getPropertyValue(property) === value && element.style.getPropertyPriority(property) === 'important') return;
@@ -11688,6 +11852,11 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 })();
 
 (() => {
+    if ((window.location.pathname || '').indexOf('/board/lists') !== -1) {
+        window.__dcufAwaitInitialCommentStabilization = () => Promise.resolve({ reason: 'list-page' });
+        return;
+    }
+
     const COMMENT_LIST_SELECTOR = 'div[id^="comment_wrap_"] .comment_box .cmt_list';
     const PLACEHOLDER_ATTR = 'data-dcuf-parent-placeholder';
     const PLACEHOLDER_CLASS = 'dcuf-comment-placeholder';
@@ -12070,6 +12239,8 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 })();
 
 (() => {
+    if ((window.location.pathname || '').indexOf('/board/lists') !== -1) return;
+
     const cleanupViewHeader = () => {
         document.querySelectorAll('.view_content_wrap .title_headtext').forEach((element) => {
             if ((element.textContent || '').replace(/s+/g, '') === '') {
@@ -12318,6 +12489,8 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 })();
 
 (() => {
+    if ((window.location.pathname || '').indexOf('/board/lists') !== -1) return;
+
     const FORM_SELECTOR = '.view_comment.image_comment .cmt_write_box';
     const VISIBLE_INPUT_SELECTOR = 'input[id^="img_cmt_name_"]';
     const CANONICAL_PREFIX = 'all_nick_name_';
@@ -12658,6 +12831,8 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 })();
 
 (() => {
+    if ((window.location.pathname || '').indexOf('/board/lists') !== -1) return;
+
     const pendingImageCommentSections = new Set();
     const imageCommentWidthState = new WeakMap();
     let forceImageCommentWidthFullPass = false;
@@ -12828,6 +13003,8 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
 
 (() => {
+    if ((window.location.pathname || '').indexOf('/board/lists') !== -1) return;
+
     const ACTIVE_ATTR = 'data-dcuf-userpopup-active';
     const ACTIVE_INFO_ATTR = 'data-dcuf-userpopup-info-active';
     const ACTIVE_LAYER_ATTR = 'data-dcuf-userpopup-layer-active';
@@ -13769,6 +13946,8 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
     }, { once: true });
 })();
 (() => {
+    if ((window.location.pathname || '').indexOf('/board/lists') !== -1) return;
+
     const WRITER_SCOPE = '.view_content_wrap .gallview_head .gall_writer.ub-writer';
 
     const isPopupVisible = () => {
