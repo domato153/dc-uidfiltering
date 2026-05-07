@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         DC_UserFilter_Mobile
 // @namespace    http://tampermonkey.net/
-// @version      3.2.7
+// @version      3.2.8
 // @description  유저 필터링, UI 개선, 개인 차단/해제 기능
 // @author       domato153
 // @match        https://gall.dcinside.com/*
@@ -3505,10 +3505,28 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             if (this.isFilterTargetDescriptor(target)) return target;
             return this.describeFilterTarget(target);
         },
+        isReplyOnlyCommentWrapper(element) {
+            if (!(element instanceof HTMLElement)) return false;
+            if (!this.isCommentListItem(element)) return false;
+            return Boolean(element.querySelector(':scope > div.reply.show'))
+                && !element.querySelector(':scope > div.cmt_info');
+        },
+        findWriterInfoForFilterTarget(element) {
+            if (!(element instanceof HTMLElement)) return null;
+            const directCommentWriter = element.querySelector(':scope > div.cmt_info .ub-writer');
+            if (directCommentWriter instanceof HTMLElement) return directCommentWriter;
+
+            const directReplyWriter = element.querySelector(':scope > div.reply_info .ub-writer');
+            if (directReplyWriter instanceof HTMLElement) return directReplyWriter;
+
+            if (this.isCommentListItem(element)) return null;
+            return element.querySelector(this.CONSTANTS.SELECTORS.WRITER_INFO);
+        },
         describeFilterTarget(element) {
             if (!(element instanceof HTMLElement)) return null;
+            if (this.isReplyOnlyCommentWrapper(element)) return null;
 
-            const writerInfo = element.querySelector(this.CONSTANTS.SELECTORS.WRITER_INFO);
+            const writerInfo = this.findWriterInfoForFilterTarget(element);
             const uid = writerInfo?.getAttribute('data-uid') || null;
             const nickname = writerInfo?.getAttribute('data-nick') || null;
             const writerDataIp = writerInfo?.getAttribute('data-ip') || null;
@@ -3723,8 +3741,19 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         isCommentListItem(element) {
             return element instanceof HTMLElement && !!element.closest(this.CONSTANTS.SELECTORS.COMMENT_CONTAINER);
         },
+        getParentCommentNo(element) {
+            if (!this.isCommentListItem(element)) return '';
+            const directInfo = element.querySelector(':scope > div.cmt_info[data-no]');
+            if (directInfo instanceof HTMLElement) {
+                const no = directInfo.getAttribute('data-no');
+                if (no) return no;
+            }
+            if (this.isReplyOnlyCommentWrapper(element)) return '';
+            const idMatch = (element.id || '').match(/^comment_li_(\d+)$/);
+            return idMatch && idMatch[1] !== '0' ? idMatch[1] : '';
+        },
         isParentCommentListItem(element) {
-            return this.isCommentListItem(element) && /^comment_li_/.test(element.id || '');
+            return Boolean(this.getParentCommentNo(element));
         },
         isReplyCommentListItem(element) {
             return this.isCommentListItem(element) && /^reply_li_/.test(element.id || '');
@@ -3737,8 +3766,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             const list = parentElement.parentElement;
             if (!(list instanceof HTMLElement)) return [];
 
-            const parentNoMatch = (parentElement.id || '').match(/^comment_li_(\d+)$/);
-            const parentNo = parentNoMatch ? parentNoMatch[1] : '';
+            const parentNo = this.getParentCommentNo(parentElement);
             if (!parentNo) return [];
 
             const detachedReplyItems = [];
@@ -3747,7 +3775,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
                 const wrapperLi = replyShow.closest('li');
                 if (!(wrapperLi instanceof HTMLElement) || wrapperLi === parentElement) return;
-                if (/^comment_li_/.test(wrapperLi.id || '')) return;
+                if (this.getParentCommentNo(wrapperLi)) return;
 
                 const replyList = replyShow.querySelector(':scope > .reply_box > .reply_list[p-no], :scope > .reply_box > ul.reply_list[p-no], .reply_list[p-no]');
                 const pNo = replyList?.getAttribute('p-no') || '';
@@ -4221,7 +4249,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         async init() {
             if (isInitialized) return; isInitialized = true;
             this.installDebugApi();
-            this.debugLog('init', 'FilterModule init start', { version: '3.2.7' });
+            this.debugLog('init', 'FilterModule init start', { version: '3.2.8-beta' });
             await this.cleanupLegacyManagedBlockConfig();
             await this.reloadSettings();
             if (this.DEBUG_ENABLED) await this.debugDumpState('after init reload');
@@ -7474,7 +7502,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
         return {
             reason,
-            version: '3.2.7',
+            version: '3.2.8-beta',
             time: new Date().toISOString(),
             href: location.href,
             heap: getDcufHeapMb(),
@@ -7611,7 +7639,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 commentInitState: { reason: 'already-initialized' }
             };
         }
-        console.log("[DC Filter+UI] Initializing v3.2.7...");
+        console.log("[DC Filter+UI] Initializing v3.2.8-beta...");
 
 
         // [수정] main 함수에서 reloadShortcutKey 함수를 호출하여 초기화
@@ -12066,6 +12094,12 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         return { resolve };
     })();
 
+    const isReplyOnlyCommentWrapper = (li) => {
+        if (!(li instanceof HTMLElement)) return false;
+        return Boolean(li.querySelector(':scope > div.reply.show'))
+            && !li.querySelector(':scope > div.cmt_info');
+    };
+
     const getParentNoFromCommentLi = (li) => {
         if (!(li instanceof HTMLElement)) return '';
 
@@ -12075,8 +12109,10 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             if (no) return no;
         }
 
+        if (isReplyOnlyCommentWrapper(li)) return '';
+
         const idMatch = (li.id || '').match(/^comment_li_(\d+)$/);
-        return idMatch ? idMatch[1] : '';
+        return idMatch && idMatch[1] !== '0' ? idMatch[1] : '';
     };
 
     const getParentNoFromReplyBlock = (replyShow) => {
