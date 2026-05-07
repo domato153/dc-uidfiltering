@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         DC_UserFilter_Mobile
 // @namespace    http://tampermonkey.net/
-// @version      3.2.5
+// @version      3.2.6
 // @description  유저 필터링, UI 개선, 개인 차단/해제 기능
 // @author       domato153
 // @match        https://gall.dcinside.com/*
@@ -4221,7 +4221,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         async init() {
             if (isInitialized) return; isInitialized = true;
             this.installDebugApi();
-            this.debugLog('init', 'FilterModule init start', { version: '3.2.5' });
+            this.debugLog('init', 'FilterModule init start', { version: '3.2.6' });
             await this.cleanupLegacyManagedBlockConfig();
             await this.reloadSettings();
             if (this.DEBUG_ENABLED) await this.debugDumpState('after init reload');
@@ -7125,6 +7125,142 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             return;
         },
 
+        getArticleAdContentRoots(root = document) {
+            const queryRoot = (root instanceof Document || root instanceof Element || root instanceof DocumentFragment) ? root : document;
+            const selector = '.gallview_contents, .writing_view_box, .view_content_wrap';
+            const roots = [];
+            const seen = new Set();
+            const addRoot = (element) => {
+                if (!(element instanceof HTMLElement) || seen.has(element)) return;
+                seen.add(element);
+                roots.push(element);
+            };
+
+            if (queryRoot instanceof HTMLElement && queryRoot.matches(selector)) addRoot(queryRoot);
+            if (typeof queryRoot.querySelectorAll === 'function') {
+                queryRoot.querySelectorAll(selector).forEach(addRoot);
+            }
+
+            return roots;
+        },
+
+        isArticleNativeAdFrame(frame) {
+            if (!(frame instanceof HTMLIFrameElement)) return false;
+
+            const signature = [
+                frame.id,
+                frame.name,
+                frame.title,
+                frame.className,
+                frame.getAttribute('src') || ''
+            ].join(' ');
+
+            if (/google_ads_iframe_|gfp|pstatic\.net\/tvetalibs|tivan\.naver\.com/i.test(signature)) {
+                return true;
+            }
+
+            try {
+                const frameDocument = frame.contentDocument;
+                const frameBody = frameDocument?.body;
+                if (!frameBody) return false;
+                if (frameBody.id === 'gfp_sf_body' || frameBody.classList.contains('banner_ad_wrapper')) return true;
+                return Boolean(frameDocument.querySelector('#ad-element.native_image_wrap, [data-gfp-role]'));
+            } catch (error) {
+                return false;
+            }
+        },
+
+        hideArticleNativeAdFrames(root = document) {
+            this.getArticleAdContentRoots(root).forEach((articleRoot) => {
+                articleRoot.querySelectorAll('#ad_nv_slot').forEach((slot) => {
+                    if (!(slot instanceof HTMLElement)) return;
+                    slot.setAttribute('data-dcuf-article-ad-hidden', 'true');
+                    slot.style.setProperty('display', 'none', 'important');
+                    slot.style.setProperty('width', '0', 'important');
+                    slot.style.setProperty('height', '0', 'important');
+                    slot.style.setProperty('min-width', '0', 'important');
+                    slot.style.setProperty('min-height', '0', 'important');
+                    slot.style.setProperty('margin', '0', 'important');
+                    slot.style.setProperty('padding', '0', 'important');
+                    slot.style.setProperty('border', '0', 'important');
+                    slot.style.setProperty('visibility', 'hidden', 'important');
+                    slot.style.setProperty('overflow', 'hidden', 'important');
+                });
+                articleRoot.querySelectorAll('iframe').forEach((frame) => {
+                    if (!this.isArticleNativeAdFrame(frame)) return;
+                    frame.setAttribute('data-dcuf-article-ad-hidden', 'true');
+                    frame.style.setProperty('display', 'none', 'important');
+                    frame.style.setProperty('width', '0', 'important');
+                    frame.style.setProperty('height', '0', 'important');
+                    frame.style.setProperty('margin', '0', 'important');
+                    frame.style.setProperty('padding', '0', 'important');
+                    frame.style.setProperty('border', '0', 'important');
+                    frame.style.setProperty('visibility', 'hidden', 'important');
+                });
+            });
+        },
+
+        ensureArticleNativeAdBlocker() {
+            if (__dcufRoot.__dcufArticleNativeAdBlockerInstalled) return;
+            __dcufRoot.__dcufArticleNativeAdBlockerInstalled = true;
+
+            GM_addStyle(`
+                .gallview_contents iframe[data-dcuf-article-ad-hidden="true"],
+                .writing_view_box iframe[data-dcuf-article-ad-hidden="true"],
+                .view_content_wrap iframe[data-dcuf-article-ad-hidden="true"],
+                .gallview_contents #ad_nv_slot,
+                .writing_view_box #ad_nv_slot,
+                .view_content_wrap #ad_nv_slot,
+                .gallview_contents iframe[id^="google_ads_iframe_"],
+                .gallview_contents iframe[name^="google_ads_iframe_"],
+                .gallview_contents iframe[id*="gfp"],
+                .gallview_contents iframe[name*="gfp"],
+                .gallview_contents iframe[src*="pstatic.net/tvetalibs"],
+                .gallview_contents iframe[src*="tivan.naver.com"],
+                .writing_view_box iframe[id^="google_ads_iframe_"],
+                .writing_view_box iframe[name^="google_ads_iframe_"],
+                .writing_view_box iframe[id*="gfp"],
+                .writing_view_box iframe[name*="gfp"],
+                .writing_view_box iframe[src*="pstatic.net/tvetalibs"],
+                .writing_view_box iframe[src*="tivan.naver.com"] {
+                    display: none !important;
+                    width: 0 !important;
+                    height: 0 !important;
+                    min-width: 0 !important;
+                    min-height: 0 !important;
+                    margin: 0 !important;
+                    padding: 0 !important;
+                    border: 0 !important;
+                    visibility: hidden !important;
+                }
+            `);
+
+            const scheduleHide = () => {
+                if (__dcufRoot.__dcufArticleNativeAdRafId) return;
+                __dcufRoot.__dcufArticleNativeAdRafId = requestAnimationFrame(() => {
+                    __dcufRoot.__dcufArticleNativeAdRafId = 0;
+                    this.hideArticleNativeAdFrames();
+                });
+            };
+
+            this.hideArticleNativeAdFrames();
+            [80, 300, 900, 1800].forEach((delay) => window.setTimeout(scheduleHide, delay));
+
+            const roots = this.getArticleAdContentRoots();
+            if (roots.length === 0) return;
+
+            const observer = new MutationObserver((mutations) => {
+                const hasFrameChange = mutations.some((mutation) => Array.from(mutation.addedNodes).some((node) => {
+                    if (!(node instanceof Element)) return false;
+                    return node.matches('iframe, #ad_nv_slot') || Boolean(node.querySelector('iframe, #ad_nv_slot'));
+                }));
+                if (hasFrameChange) scheduleHide();
+            });
+            roots.forEach((root) => observer.observe(root, { childList: true, subtree: true }));
+            window.addEventListener('pagehide', () => observer.disconnect(), { once: true });
+            __dcufRoot.__dcufArticleNativeAdObserver = observer;
+        },
+
         transformWritePage() {
             if (document.body.classList.contains('is-write-page')) return;
             document.body.classList.add('is-write-page');
@@ -7232,6 +7368,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 if (viewBottomContainer) {
                     this.applyForceRefreshPagination(viewBottomContainer);
                 }
+                this.ensureArticleNativeAdBlocker();
                 // [v2.6.8] 본문 + 댓글 글자크기 배율 스케일링 (통합)
                 this.scaleAllFontSizes();
             }
@@ -7286,7 +7423,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
         return {
             reason,
-            version: '3.2.5',
+            version: '3.2.6',
             time: new Date().toISOString(),
             href: location.href,
             heap: getDcufHeapMb(),
@@ -7423,7 +7560,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 commentInitState: { reason: 'already-initialized' }
             };
         }
-        console.log("[DC Filter+UI] Initializing v3.2.5...");
+        console.log("[DC Filter+UI] Initializing v3.2.6...");
 
 
         // [수정] main 함수에서 reloadShortcutKey 함수를 호출하여 초기화
