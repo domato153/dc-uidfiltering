@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         DC_UserFilter_Mobile
 // @namespace    http://tampermonkey.net/
-// @version      3.2.6
+// @version      3.2.7
 // @description  유저 필터링, UI 개선, 개인 차단/해제 기능
 // @author       domato153
 // @match        https://gall.dcinside.com/*
@@ -4221,7 +4221,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         async init() {
             if (isInitialized) return; isInitialized = true;
             this.installDebugApi();
-            this.debugLog('init', 'FilterModule init start', { version: '3.2.6' });
+            this.debugLog('init', 'FilterModule init start', { version: '3.2.7' });
             await this.cleanupLegacyManagedBlockConfig();
             await this.reloadSettings();
             if (this.DEBUG_ENABLED) await this.debugDumpState('after init reload');
@@ -5237,6 +5237,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         _listMutationUnsubscribe: null,
         _initialRevealStartedAt: 0,
         _postRevealRecoveryStop: null,
+        ARTICLE_AD_STYLE_ID: 'dcuf-article-native-ad-style',
 
         getRuntimeCoordinator() {
             return window.__dcufRuntimeCoordinator || null;
@@ -6890,6 +6891,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                     this.applyForceRefreshPagination(viewBottomContainer);
                 }
 
+                this.hideArticleNativeAdFrames();
                 this.scaleAllFontSizes();
 
                 if (typeof window.__dcufSyncArticleDarkText === 'function') {
@@ -7170,6 +7172,48 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             }
         },
 
+        installArticleNativeAdStyles() {
+            if (__dcufRoot.__dcufArticleNativeAdStyleInstalled || document.getElementById(this.ARTICLE_AD_STYLE_ID)) return;
+            __dcufRoot.__dcufArticleNativeAdStyleInstalled = true;
+
+            const css = `
+                .gallview_contents iframe[data-dcuf-article-ad-hidden="true"],
+                .writing_view_box iframe[data-dcuf-article-ad-hidden="true"],
+                .view_content_wrap iframe[data-dcuf-article-ad-hidden="true"],
+                .gallview_contents #ad_nv_slot,
+                .writing_view_box #ad_nv_slot,
+                .view_content_wrap #ad_nv_slot,
+                .gallview_contents iframe[id^="google_ads_iframe_"],
+                .gallview_contents iframe[name^="google_ads_iframe_"],
+                .gallview_contents iframe[id*="gfp"],
+                .gallview_contents iframe[name*="gfp"],
+                .gallview_contents iframe[src*="pstatic.net/tvetalibs"],
+                .gallview_contents iframe[src*="tivan.naver.com"],
+                .writing_view_box iframe[id^="google_ads_iframe_"],
+                .writing_view_box iframe[name^="google_ads_iframe_"],
+                .writing_view_box iframe[id*="gfp"],
+                .writing_view_box iframe[name*="gfp"],
+                .writing_view_box iframe[src*="pstatic.net/tvetalibs"],
+                .writing_view_box iframe[src*="tivan.naver.com"] {
+                    display: none !important;
+                    width: 0 !important;
+                    height: 0 !important;
+                    min-width: 0 !important;
+                    min-height: 0 !important;
+                    margin: 0 !important;
+                    padding: 0 !important;
+                    border: 0 !important;
+                    visibility: hidden !important;
+                    overflow: hidden !important;
+                }
+            `;
+
+            const styleElement = GM_addStyle(css);
+            if (styleElement instanceof HTMLElement) {
+                styleElement.id = this.ARTICLE_AD_STYLE_ID;
+            }
+        },
+
         hideArticleNativeAdFrames(root = document) {
             this.getArticleAdContentRoots(root).forEach((articleRoot) => {
                 articleRoot.querySelectorAll('#ad_nv_slot').forEach((slot) => {
@@ -7200,65 +7244,64 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             });
         },
 
-        ensureArticleNativeAdBlocker() {
-            if (__dcufRoot.__dcufArticleNativeAdBlockerInstalled) return;
-            __dcufRoot.__dcufArticleNativeAdBlockerInstalled = true;
+        scheduleArticleNativeAdHide() {
+            if (__dcufRoot.__dcufArticleNativeAdRafId) return;
+            __dcufRoot.__dcufArticleNativeAdRafId = requestAnimationFrame(() => {
+                __dcufRoot.__dcufArticleNativeAdRafId = 0;
+                this.hideArticleNativeAdFrames();
+            });
+        },
 
-            GM_addStyle(`
-                .gallview_contents iframe[data-dcuf-article-ad-hidden="true"],
-                .writing_view_box iframe[data-dcuf-article-ad-hidden="true"],
-                .view_content_wrap iframe[data-dcuf-article-ad-hidden="true"],
-                .gallview_contents #ad_nv_slot,
-                .writing_view_box #ad_nv_slot,
-                .view_content_wrap #ad_nv_slot,
-                .gallview_contents iframe[id^="google_ads_iframe_"],
-                .gallview_contents iframe[name^="google_ads_iframe_"],
-                .gallview_contents iframe[id*="gfp"],
-                .gallview_contents iframe[name*="gfp"],
-                .gallview_contents iframe[src*="pstatic.net/tvetalibs"],
-                .gallview_contents iframe[src*="tivan.naver.com"],
-                .writing_view_box iframe[id^="google_ads_iframe_"],
-                .writing_view_box iframe[name^="google_ads_iframe_"],
-                .writing_view_box iframe[id*="gfp"],
-                .writing_view_box iframe[name*="gfp"],
-                .writing_view_box iframe[src*="pstatic.net/tvetalibs"],
-                .writing_view_box iframe[src*="tivan.naver.com"] {
-                    display: none !important;
-                    width: 0 !important;
-                    height: 0 !important;
-                    min-width: 0 !important;
-                    min-height: 0 !important;
-                    margin: 0 !important;
-                    padding: 0 !important;
-                    border: 0 !important;
-                    visibility: hidden !important;
-                }
-            `);
-
-            const scheduleHide = () => {
-                if (__dcufRoot.__dcufArticleNativeAdRafId) return;
-                __dcufRoot.__dcufArticleNativeAdRafId = requestAnimationFrame(() => {
-                    __dcufRoot.__dcufArticleNativeAdRafId = 0;
-                    this.hideArticleNativeAdFrames();
-                });
-            };
-
+        scheduleArticleNativeAdHidePasses() {
             this.hideArticleNativeAdFrames();
-            [80, 300, 900, 1800].forEach((delay) => window.setTimeout(scheduleHide, delay));
+            [40, 120, 300, 900, 1800, 3200].forEach((delay) => {
+                window.setTimeout(() => this.scheduleArticleNativeAdHide(), delay);
+            });
+        },
 
-            const roots = this.getArticleAdContentRoots();
-            if (roots.length === 0) return;
+        isArticleNativeAdMutationTarget(node) {
+            if (!(node instanceof Element)) return false;
+            if (node.matches('#ad_nv_slot, iframe')) return true;
+            if (node.closest?.('#ad_nv_slot')) return true;
+            return Boolean(node.querySelector?.('#ad_nv_slot, iframe'));
+        },
+
+        attachArticleNativeAdObserver() {
+            if (__dcufRoot.__dcufArticleNativeAdObserver) return;
+
+            const observerTarget = document.body || document.documentElement;
+            if (!(observerTarget instanceof Element)) {
+                if (!__dcufRoot.__dcufArticleNativeAdObserverRetryId) {
+                    __dcufRoot.__dcufArticleNativeAdObserverRetryId = window.setTimeout(() => {
+                        __dcufRoot.__dcufArticleNativeAdObserverRetryId = 0;
+                        this.attachArticleNativeAdObserver();
+                    }, 50);
+                }
+                return;
+            }
 
             const observer = new MutationObserver((mutations) => {
-                const hasFrameChange = mutations.some((mutation) => Array.from(mutation.addedNodes).some((node) => {
-                    if (!(node instanceof Element)) return false;
-                    return node.matches('iframe, #ad_nv_slot') || Boolean(node.querySelector('iframe, #ad_nv_slot'));
-                }));
-                if (hasFrameChange) scheduleHide();
+                const hasAdChange = mutations.some((mutation) => (
+                    this.isArticleNativeAdMutationTarget(mutation.target)
+                    || Array.from(mutation.addedNodes).some((node) => this.isArticleNativeAdMutationTarget(node))
+                ));
+                if (hasAdChange) this.scheduleArticleNativeAdHide();
             });
-            roots.forEach((root) => observer.observe(root, { childList: true, subtree: true }));
+
+            observer.observe(observerTarget, {
+                childList: true,
+                subtree: true,
+                attributes: true,
+                attributeFilter: ['style', 'class']
+            });
             window.addEventListener('pagehide', () => observer.disconnect(), { once: true });
             __dcufRoot.__dcufArticleNativeAdObserver = observer;
+        },
+
+        ensureArticleNativeAdBlocker() {
+            this.installArticleNativeAdStyles();
+            this.attachArticleNativeAdObserver();
+            this.scheduleArticleNativeAdHidePasses();
         },
 
         transformWritePage() {
@@ -7381,6 +7424,14 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         }
     };
 
+    if (UIModule.isViewPage()) {
+        try {
+            UIModule.ensureArticleNativeAdBlocker();
+        } catch (error) {
+            console.warn('[DC Filter+UI] Article ad blocker early install failed:', error);
+        }
+    }
+
 
     const getDcufCollectionSize = (value) => {
         if (!value) return 0;
@@ -7423,7 +7474,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
         return {
             reason,
-            version: '3.2.6',
+            version: '3.2.7',
             time: new Date().toISOString(),
             href: location.href,
             heap: getDcufHeapMb(),
@@ -7560,7 +7611,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 commentInitState: { reason: 'already-initialized' }
             };
         }
-        console.log("[DC Filter+UI] Initializing v3.2.6...");
+        console.log("[DC Filter+UI] Initializing v3.2.7...");
 
 
         // [수정] main 함수에서 reloadShortcutKey 함수를 호출하여 초기화
