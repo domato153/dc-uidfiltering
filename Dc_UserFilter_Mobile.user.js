@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         DC_UserFilter_Mobile
 // @namespace    http://tampermonkey.net/
-// @version      3.2.8
+// @version      3.2.9
 // @description  유저 필터링, UI 개선, 개인 차단/해제 기능
 // @author       domato153
 // @match        https://gall.dcinside.com/*
@@ -4249,7 +4249,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         async init() {
             if (isInitialized) return; isInitialized = true;
             this.installDebugApi();
-            this.debugLog('init', 'FilterModule init start', { version: '3.2.8-beta' });
+            this.debugLog('init', 'FilterModule init start', { version: '3.2.9' });
             await this.cleanupLegacyManagedBlockConfig();
             await this.reloadSettings();
             if (this.DEBUG_ENABLED) await this.debugDumpState('after init reload');
@@ -5280,7 +5280,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         },
 
         getCurrentRevealTheme() {
-            if (window.location.pathname.includes('/board/view/')) return this.getPhase1ViewTheme();
+            if (this.isViewPage()) return this.getPhase1ViewTheme();
             return this.getPhase1Theme();
         },
 
@@ -6301,12 +6301,22 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             this.ensureKnownListRuntimes(document, `${reason}:full-scan`);
         },
 
+        isBoardPage(pageName) {
+            const pathname = window.location.pathname || '';
+            const boardPath = `/board/${pageName}`;
+            return pathname.endsWith(boardPath) || pathname.includes(`${boardPath}/`);
+        },
+
         isListPage() {
-            return window.location.pathname.includes('/board/lists');
+            return this.isBoardPage('lists');
         },
 
         isViewPage() {
-            return window.location.pathname.includes('/board/view/');
+            return this.isBoardPage('view');
+        },
+
+        isWritePage() {
+            return this.isBoardPage('write');
         },
 
         shouldEnsureListRuntimeForReveal() {
@@ -6640,7 +6650,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         },
 
         getInitialRevealState() {
-            if (window.location.pathname.includes('/board/write/')) {
+            if (this.isWritePage()) {
                 return { ready: true, reason: 'non-list', detail: { pageType: 'write' } };
             }
             if (this.isViewPage()) {
@@ -7431,10 +7441,10 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             }
 
 
-            if (window.location.pathname.includes('/board/write/')) {
+            if (this.isWritePage()) {
                 this.transformWritePage();
                 return 'non-list';
-            } else if (window.location.pathname.includes('/board/view/')) {
+            } else if (this.isViewPage()) {
                 const viewBottomContainer = document.querySelector('.view_bottom');
                 if (viewBottomContainer) {
                     this.applyForceRefreshPagination(viewBottomContainer);
@@ -7502,7 +7512,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
         return {
             reason,
-            version: '3.2.8-beta',
+            version: '3.2.9',
             time: new Date().toISOString(),
             href: location.href,
             heap: getDcufHeapMb(),
@@ -7639,7 +7649,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 commentInitState: { reason: 'already-initialized' }
             };
         }
-        console.log("[DC Filter+UI] Initializing v3.2.8-beta...");
+        console.log("[DC Filter+UI] Initializing v3.2.9...");
 
 
         // [수정] main 함수에서 reloadShortcutKey 함수를 호출하여 초기화
@@ -11319,6 +11329,14 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         '.power_link',
         '.power_link .pwlink_list',
         '.power_link .pwlink_img_list',
+        '.view_content_wrap #ad_nv_slot',
+        '.gallview_contents #ad_nv_slot',
+        '.writing_view_box #ad_nv_slot',
+        '.write_div #ad_nv_slot',
+        '.view_content_wrap iframe[id^="ad_nv_slot_tgt"]',
+        '.gallview_contents iframe[id^="ad_nv_slot_tgt"]',
+        '.writing_view_box iframe[id^="ad_nv_slot_tgt"]',
+        '.write_div iframe[id^="ad_nv_slot_tgt"]',
         '.view_content_wrap .view_ad_wrap',
         '.gallview_contents .view_ad_wrap',
         '.writing_view_box .view_ad_wrap',
@@ -11337,6 +11355,14 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         .power_link,
         .power_link .pwlink_list,
         .power_link .pwlink_img_list,
+        .view_content_wrap #ad_nv_slot,
+        .gallview_contents #ad_nv_slot,
+        .writing_view_box #ad_nv_slot,
+        .write_div #ad_nv_slot,
+        .view_content_wrap iframe[id^="ad_nv_slot_tgt"],
+        .gallview_contents iframe[id^="ad_nv_slot_tgt"],
+        .writing_view_box iframe[id^="ad_nv_slot_tgt"],
+        .write_div iframe[id^="ad_nv_slot_tgt"],
         .view_content_wrap .view_ad_wrap,
         .gallview_contents .view_ad_wrap,
         .writing_view_box .view_ad_wrap,
@@ -11415,13 +11441,16 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
     const resolveArticleAdRemovalTarget = (element) => {
         if (!(element instanceof Element)) return null;
-        if (element.matches('.view_ad_wrap, div[id^="foin_"], div[id^="kakao_ad_"], .power_link')) {
+        if (element.matches('#ad_nv_slot, .view_ad_wrap, div[id^="foin_"], div[id^="kakao_ad_"], .power_link')) {
             return element;
+        }
+        if (element.matches('iframe[id^="ad_nv_slot_tgt"]')) {
+            return element.closest('#ad_nv_slot') || element;
         }
         if (element.matches('iframe[id^="pageid_"], iframe[src*="adnmore"], ins.kakao_ad_area')) {
             return element.closest('.view_ad_wrap, div[id^="foin_"], div[id^="kakao_ad_"], .cm_ad') || element;
         }
-        const ownedAdWrap = element.closest('.view_ad_wrap, .power_link');
+        const ownedAdWrap = element.closest('#ad_nv_slot, .view_ad_wrap, .power_link');
         return ownedAdWrap || element;
     };
 
