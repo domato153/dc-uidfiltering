@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         DC_UserFilter_Mobile
 // @namespace    http://tampermonkey.net/
-// @version      3.3.0
+// @version      3.3.1
 // @description  유저 필터링, UI 개선, 개인 차단/해제 기능
 // @author       domato153
 // @match        https://gall.dcinside.com/*
@@ -4249,7 +4249,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         async init() {
             if (isInitialized) return; isInitialized = true;
             this.installDebugApi();
-            this.debugLog('init', 'FilterModule init start', { version: '3.3.0' });
+            this.debugLog('init', 'FilterModule init start', { version: '3.3.1' });
             await this.cleanupLegacyManagedBlockConfig();
             await this.reloadSettings();
             if (this.DEBUG_ENABLED) await this.debugDumpState('after init reload');
@@ -6921,6 +6921,15 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 });
             };
 
+            const runFilteredCommentRepair = (reason = 'post-reveal') => {
+                if (typeof window.__dcufRepairFilteredCommentPlaceholders !== 'function') return;
+                try {
+                    window.__dcufRepairFilteredCommentPlaceholders({ reason });
+                } catch (error) {
+                    console.warn('[DC Filter+UI] Post-reveal filtered comment repair failed:', error);
+                }
+            };
+
             const runSupportPasses = (reason = 'post-reveal') => {
                 this.ensureKnownListRuntimes(document, `post-reveal:${reason}`);
 
@@ -7004,6 +7013,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 } catch (error) {
                     console.warn('[DC Filter+UI] Post-reveal list runtime ensure failed:', error);
                 }
+                runFilteredCommentRepair(reason);
 
                 lastState = this.evaluateViewPostRevealRecoveryState();
                 if (lastState.ready) {
@@ -7512,7 +7522,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
         return {
             reason,
-            version: '3.3.0',
+            version: '3.3.1',
             time: new Date().toISOString(),
             href: location.href,
             heap: getDcufHeapMb(),
@@ -7680,7 +7690,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 commentInitState: { reason: 'already-initialized' }
             };
         }
-        console.log("[DC Filter+UI] Initializing v3.3.0...");
+        console.log("[DC Filter+UI] Initializing v3.3.1...");
 
 
         // [수정] main 함수에서 reloadShortcutKey 함수를 호출하여 초기화
@@ -10735,6 +10745,14 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             content: none !important;
             display: none !important;
         }
+        #focus_cmt > div[id^="comment_wrap_"] .comment_box .cmt_list > li.dcuf-parent-comment-filtered[data-dcuf-parent-placeholder="1"] > .cmt_info,
+        #focus_cmt > div[id^="comment_wrap_"] .comment_box .cmt_list > li.dcuf-parent-comment-filtered[data-dcuf-parent-placeholder="1"] > .cmt_txtbox,
+        #focus_cmt > div[id^="comment_wrap_"] .comment_box .cmt_list > li.dcuf-parent-comment-filtered[data-dcuf-parent-placeholder="1"] > :not(.reply):not(.dcuf-comment-placeholder) {
+            display: none !important;
+        }
+        #focus_cmt > div[id^="comment_wrap_"] .comment_box .cmt_list > li.dcuf-parent-comment-filtered[data-dcuf-parent-placeholder="1"] > .dcuf-comment-placeholder {
+            display: flex !important;
+        }
         #focus_cmt > div[id^="comment_wrap_"] .comment_box .cmt_txtbox {
             border-top: 0 !important;
             box-shadow: none !important;
@@ -12346,7 +12364,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         });
     };
 
-    window.__dcufPrepareInitialCommentReveal = (meta = null) => {
+    const repairFilteredCommentPlaceholders = (meta = null) => {
         mergeDetachedRepliesIntoParent();
         const filterModule = window.__dcufFilterModule;
         let targetCount = 0;
@@ -12362,6 +12380,8 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             targetCount
         };
     };
+    window.__dcufRepairFilteredCommentPlaceholders = repairFilteredCommentPlaceholders;
+    window.__dcufPrepareInitialCommentReveal = repairFilteredCommentPlaceholders;
 
     const shouldSkipReplyMergeTarget = (parentLi) => {
         if (!(parentLi instanceof HTMLElement)) return true;
