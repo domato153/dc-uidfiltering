@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         DC_UserFilter_Mobile
 // @namespace    http://tampermonkey.net/
-// @version      3.2.9
+// @version      3.3.0
 // @description  유저 필터링, UI 개선, 개인 차단/해제 기능
 // @author       domato153
 // @match        https://gall.dcinside.com/*
@@ -4249,7 +4249,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         async init() {
             if (isInitialized) return; isInitialized = true;
             this.installDebugApi();
-            this.debugLog('init', 'FilterModule init start', { version: '3.2.9' });
+            this.debugLog('init', 'FilterModule init start', { version: '3.3.0' });
             await this.cleanupLegacyManagedBlockConfig();
             await this.reloadSettings();
             if (this.DEBUG_ENABLED) await this.debugDumpState('after init reload');
@@ -7512,7 +7512,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
         return {
             reason,
-            version: '3.2.9',
+            version: '3.3.0',
             time: new Date().toISOString(),
             href: location.href,
             heap: getDcufHeapMb(),
@@ -7627,17 +7627,48 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
     async function awaitInitialCommentStabilization() {
         const waiter = window.__dcufAwaitInitialCommentStabilization;
-        if (typeof waiter !== 'function') return { reason: 'unavailable' };
+        const prepareInitialCommentReveal = (state) => {
+            const normalizedState = state && typeof state === 'object' ? state : { reason: 'unknown' };
+            const prepare = window.__dcufPrepareInitialCommentReveal;
+            if (typeof prepare !== 'function') return normalizedState;
+            try {
+                return {
+                    ...normalizedState,
+                    prepareState: prepare(normalizedState)
+                };
+            } catch (error) {
+                return {
+                    ...normalizedState,
+                    prepareError: error?.message || 'unknown'
+                };
+            }
+        };
+
+        if (typeof waiter !== 'function') return prepareInitialCommentReveal({ reason: 'unavailable' });
 
         try {
-            return await Promise.race([
+            const state = await Promise.race([
                 Promise.resolve().then(() => waiter()),
                 new Promise((resolve) => {
                     window.setTimeout(() => resolve({ reason: 'ui-timeout' }), 650);
                 })
             ]);
+            return prepareInitialCommentReveal(state);
         } catch (error) {
-            return { reason: `error:${error?.message || 'unknown'}` };
+            return prepareInitialCommentReveal({ reason: `error:${error?.message || 'unknown'}` });
+        }
+    }
+
+    function prepareInitialCommentRevealBeforeMark(state = null) {
+        const prepare = window.__dcufPrepareInitialCommentReveal;
+        if (typeof prepare !== 'function') return null;
+        try {
+            return prepare({
+                reason: 'before-mark-ui-ready',
+                previous: state?.commentInitState?.reason || ''
+            });
+        } catch (error) {
+            return { reason: 'error', message: error?.message || 'unknown' };
         }
     }
 
@@ -7649,7 +7680,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 commentInitState: { reason: 'already-initialized' }
             };
         }
-        console.log("[DC Filter+UI] Initializing v3.2.9...");
+        console.log("[DC Filter+UI] Initializing v3.3.0...");
 
 
         // [수정] main 함수에서 reloadShortcutKey 함수를 호출하여 초기화
@@ -7715,6 +7746,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         } finally {
             // [v2.2.2 수정] 모든 UI 처리 및 필터링 적용이 끝난 후,
             // 루트 준비 완료 클래스를 추가하여 화면을 표시합니다.
+            initState.commentPrepareState = prepareInitialCommentRevealBeforeMark(initState);
             markUiReady();
             if (typeof UIModule?.startPostRevealRecoveryWatch === 'function') {
                 UIModule.startPostRevealRecoveryWatch({ revealState });
@@ -12109,18 +12141,29 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
     const initialCommentStabilization = (() => {
         let resolved = false;
         let resolvePromise;
+        let timeoutId = 0;
         const promise = new Promise((resolve) => {
             resolvePromise = resolve;
         });
         const resolve = (reason) => {
             if (resolved) return;
             resolved = true;
+            if (timeoutId) {
+                window.clearTimeout(timeoutId);
+                timeoutId = 0;
+            }
             resolvePromise({ reason, ts: Date.now() });
         };
+        const startTimeout = () => {
+            if (resolved || timeoutId) return;
+            timeoutId = window.setTimeout(() => resolve('timeout'), 500);
+        };
 
-        window.__dcufAwaitInitialCommentStabilization = () => promise;
-        window.setTimeout(() => resolve('timeout'), 500);
-        return { resolve };
+        window.__dcufAwaitInitialCommentStabilization = () => {
+            startTimeout();
+            return promise;
+        };
+        return { resolve, startTimeout };
     })();
 
     const isReplyOnlyCommentWrapper = (li) => {
@@ -12180,6 +12223,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             const wrapperLi = replyShow.closest('li');
             if (!(wrapperLi instanceof HTMLElement) || wrapperLi === parentLi) return;
             if (getParentNoFromCommentLi(wrapperLi)) return;
+            if (wrapperLi.style.display === 'none') return;
             if (getParentNoFromReplyBlock(replyShow) !== parentNo) return;
 
             replyShow.querySelectorAll(':scope > .reply_box > .reply_list > li, :scope > .reply_list > li, .reply_list > li').forEach((replyLi) => {
@@ -12274,10 +12318,14 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                     const candidateLi = children[cursor];
                     if (!(candidateLi instanceof HTMLElement)) continue;
                     if (getParentNoFromCommentLi(candidateLi)) break;
+                    if (candidateLi.style.display === 'none') continue;
 
                     const replyShow = candidateLi.querySelector(':scope > .reply.show');
                     if (!(replyShow instanceof HTMLElement)) continue;
                     if (getParentNoFromReplyBlock(replyShow) !== parentNo) continue;
+                    const hasVisibleReply = Array.from(replyShow.querySelectorAll(':scope > .reply_box > .reply_list > li, :scope > .reply_list > li, .reply_list > li'))
+                        .some((replyLi) => replyLi instanceof HTMLElement && replyLi.style.display !== 'none');
+                    if (!hasVisibleReply) continue;
 
                     groupedReplyLis.push(candidateLi);
                 }
@@ -12296,6 +12344,23 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 parentLi.style.setProperty('--dcuf-focus-group-extend', `${extend}px`);
             });
         });
+    };
+
+    window.__dcufPrepareInitialCommentReveal = (meta = null) => {
+        mergeDetachedRepliesIntoParent();
+        const filterModule = window.__dcufFilterModule;
+        let targetCount = 0;
+        if (typeof filterModule?.runSyncRefilterPass === 'function') {
+            const descriptors = filterModule.runSyncRefilterPass('comments');
+            targetCount = Array.isArray(descriptors) ? descriptors.length : 0;
+        }
+        syncFilteredParentPlaceholders();
+        syncFocusCommentCardGroups();
+        return {
+            reason: 'prepared',
+            source: meta && typeof meta === 'object' ? meta.reason || meta.source || '' : '',
+            targetCount
+        };
     };
 
     const shouldSkipReplyMergeTarget = (parentLi) => {
@@ -12473,6 +12538,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         document.addEventListener('DOMContentLoaded', () => {
             // Run the initial reply merge synchronously so blocked parent comments stay
             // filtered before the comment area becomes visually stable.
+            initialCommentStabilization.startTimeout();
             flushReplyMerge({ source: 'dom-ready-initial' });
             if (!document.querySelector(`${COMMENT_LIST_SELECTOR}, #focus_cmt, .view_comment.image_comment .comment_box`)) {
                 initialCommentStabilization.resolve('no-comment-target-dom-ready');
@@ -12480,6 +12546,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             observeReplyMergeTargets();
         }, { once: true });
     } else {
+        initialCommentStabilization.startTimeout();
         flushReplyMerge({ source: 'ready-initial' });
         if (!document.querySelector(`${COMMENT_LIST_SELECTOR}, #focus_cmt, .view_comment.image_comment .comment_box`)) {
             initialCommentStabilization.resolve('no-comment-target-ready');
