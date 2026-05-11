@@ -6924,7 +6924,12 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             const runFilteredCommentRepair = (reason = 'post-reveal') => {
                 if (typeof window.__dcufRepairFilteredCommentPlaceholders !== 'function') return;
                 try {
-                    window.__dcufRepairFilteredCommentPlaceholders({ reason });
+                    window.__dcufRepairFilteredCommentPlaceholders({
+                        reason,
+                        onlyIfBroken: true,
+                        runFilter: false,
+                        mergeDetachedReplies: false
+                    });
                 } catch (error) {
                     console.warn('[DC Filter+UI] Post-reveal filtered comment repair failed:', error);
                 }
@@ -12318,14 +12323,10 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         document.querySelectorAll('#focus_cmt div[id^="comment_wrap_"] .comment_box .cmt_list').forEach((list) => {
             if (!(list instanceof HTMLElement)) return;
 
-            Array.from(list.children).forEach((li) => {
-                if (!(li instanceof HTMLElement)) return;
-                li.removeAttribute('data-dcuf-focus-group-parent');
-                li.removeAttribute('data-dcuf-focus-group-reply');
-                li.style.removeProperty('--dcuf-focus-group-extend');
-            });
-
             const children = Array.from(list.children).filter((li) => li instanceof HTMLElement);
+            const desiredParentExtends = new Map();
+            const desiredReplyLis = new Set();
+
             children.forEach((parentLi, index) => {
                 if (!(parentLi instanceof HTMLElement)) return;
                 const parentNo = getParentNoFromCommentLi(parentLi);
@@ -12355,29 +12356,105 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 const groupBottom = lastGroupedReplyLi.offsetTop + lastGroupedReplyLi.offsetHeight;
                 const extend = Math.max(0, groupBottom - parentBottom);
 
-                parentLi.setAttribute('data-dcuf-focus-group-parent', '1');
+                desiredParentExtends.set(parentLi, `${extend}px`);
                 groupedReplyLis.forEach((replyLi) => {
-                    replyLi.setAttribute('data-dcuf-focus-group-reply', '1');
+                    desiredReplyLis.add(replyLi);
                 });
-                parentLi.style.setProperty('--dcuf-focus-group-extend', `${extend}px`);
+            });
+
+            children.forEach((li) => {
+                if (!(li instanceof HTMLElement)) return;
+
+                if (desiredParentExtends.has(li)) {
+                    const nextExtend = desiredParentExtends.get(li);
+                    if (li.getAttribute('data-dcuf-focus-group-parent') !== '1') {
+                        li.setAttribute('data-dcuf-focus-group-parent', '1');
+                    }
+                    if (li.style.getPropertyValue('--dcuf-focus-group-extend') !== nextExtend) {
+                        li.style.setProperty('--dcuf-focus-group-extend', nextExtend);
+                    }
+                } else {
+                    if (li.hasAttribute('data-dcuf-focus-group-parent')) {
+                        li.removeAttribute('data-dcuf-focus-group-parent');
+                    }
+                    if (li.style.getPropertyValue('--dcuf-focus-group-extend')) {
+                        li.style.removeProperty('--dcuf-focus-group-extend');
+                    }
+                }
+
+                if (desiredReplyLis.has(li)) {
+                    if (li.getAttribute('data-dcuf-focus-group-reply') !== '1') {
+                        li.setAttribute('data-dcuf-focus-group-reply', '1');
+                    }
+                } else if (li.hasAttribute('data-dcuf-focus-group-reply')) {
+                    li.removeAttribute('data-dcuf-focus-group-reply');
+                }
             });
         });
     };
 
+    const isElementVisiblyRendered = (element) => {
+        if (!(element instanceof HTMLElement)) return false;
+        if (element.style.display === 'none') return false;
+        const style = window.getComputedStyle(element);
+        return style.display !== 'none'
+            && style.visibility !== 'hidden'
+            && Number(style.opacity || '1') !== 0;
+    };
+
+    const getBrokenFilteredParentPlaceholders = () => {
+        const broken = [];
+        document.querySelectorAll(`${COMMENT_LIST_SELECTOR} > li.dcuf-parent-comment-filtered[data-dcuf-parent-placeholder="1"]`).forEach((parentLi) => {
+            if (!(parentLi instanceof HTMLElement)) return;
+
+            const placeholder = parentLi.querySelector(`:scope > .${PLACEHOLDER_CLASS}`);
+            if (!(placeholder instanceof HTMLElement) || !isElementVisiblyRendered(placeholder)) {
+                broken.push(parentLi);
+                return;
+            }
+
+            const hasVisibleBlockedContent = Array.from(parentLi.children).some((child) => {
+                if (!(child instanceof HTMLElement)) return false;
+                if (child.classList.contains(PLACEHOLDER_CLASS)) return false;
+                if (child.classList.contains('reply')) return false;
+                return isElementVisiblyRendered(child);
+            });
+            if (hasVisibleBlockedContent) broken.push(parentLi);
+        });
+        return broken;
+    };
+
     const repairFilteredCommentPlaceholders = (meta = null) => {
-        mergeDetachedRepliesIntoParent();
+        const options = meta && typeof meta === 'object' ? meta : {};
+        const source = options.reason || options.source || '';
+        const brokenBefore = getBrokenFilteredParentPlaceholders();
+        if (options.onlyIfBroken && brokenBefore.length === 0) {
+            return {
+                reason: 'skipped',
+                source,
+                targetCount: 0,
+                brokenCount: 0
+            };
+        }
+
+        if (options.mergeDetachedReplies !== false) {
+            mergeDetachedRepliesIntoParent();
+        }
         const filterModule = window.__dcufFilterModule;
         let targetCount = 0;
-        if (typeof filterModule?.runSyncRefilterPass === 'function') {
+        if (options.runFilter !== false && typeof filterModule?.runSyncRefilterPass === 'function') {
             const descriptors = filterModule.runSyncRefilterPass('comments');
             targetCount = Array.isArray(descriptors) ? descriptors.length : 0;
         }
         syncFilteredParentPlaceholders();
         syncFocusCommentCardGroups();
+        const brokenAfter = options.onlyIfBroken ? getBrokenFilteredParentPlaceholders() : [];
         return {
             reason: 'prepared',
-            source: meta && typeof meta === 'object' ? meta.reason || meta.source || '' : '',
-            targetCount
+            source,
+            targetCount,
+            brokenCount: brokenBefore.length,
+            remainingBrokenCount: brokenAfter.length
         };
     };
     window.__dcufRepairFilteredCommentPlaceholders = repairFilteredCommentPlaceholders;
