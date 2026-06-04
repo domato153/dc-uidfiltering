@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         DC_UserFilter_Mobile
 // @namespace    http://tampermonkey.net/
-// @version      3.3.1
+// @version      3.3.2
 // @description  유저 필터링, UI 개선, 개인 차단/해제 기능
 // @author       domato153
 // @match        https://gall.dcinside.com/*
@@ -3570,7 +3570,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 const element = descriptor?.element;
                 if (!(element instanceof HTMLElement)) return;
                 if (resetDisplay && !dcFilterSettings.masterDisabled) {
-                    // Comment items can already be hidden by async UID blocking or parent placeholder logic.
+                    // Comment items can already be hidden by async UID blocking.
                     // Clearing display before the next sync decision makes blocked comments briefly flash back in
                     // until a later async/stabilized pass hides them again, so preserve current visibility here.
                     if (!this.isCommentListItem(element)) {
@@ -3741,88 +3741,8 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         isCommentListItem(element) {
             return element instanceof HTMLElement && !!element.closest(this.CONSTANTS.SELECTORS.COMMENT_CONTAINER);
         },
-        getParentCommentNo(element) {
-            if (!this.isCommentListItem(element)) return '';
-            const directInfo = element.querySelector(':scope > div.cmt_info[data-no]');
-            if (directInfo instanceof HTMLElement) {
-                const no = directInfo.getAttribute('data-no');
-                if (no) return no;
-            }
-            if (this.isReplyOnlyCommentWrapper(element)) return '';
-            const idMatch = (element.id || '').match(/^comment_li_(\d+)$/);
-            return idMatch && idMatch[1] !== '0' ? idMatch[1] : '';
-        },
-        isParentCommentListItem(element) {
-            return Boolean(this.getParentCommentNo(element));
-        },
-        isReplyCommentListItem(element) {
-            return this.isCommentListItem(element) && /^reply_li_/.test(element.id || '');
-        },
-        hasReplyChildren(element) {
-            return element instanceof HTMLElement && !!element.querySelector(':scope > div.reply.show .reply_list > li');
-        },
-        getDetachedReplyItemsForFocusParent(parentElement) {
-            if (!(parentElement instanceof HTMLElement) || !parentElement.closest('#focus_cmt')) return [];
-            const list = parentElement.parentElement;
-            if (!(list instanceof HTMLElement)) return [];
-
-            const parentNo = this.getParentCommentNo(parentElement);
-            if (!parentNo) return [];
-
-            const detachedReplyItems = [];
-            list.querySelectorAll(':scope > li > div.reply.show').forEach((replyShow) => {
-                if (!(replyShow instanceof HTMLElement)) return;
-
-                const wrapperLi = replyShow.closest('li');
-                if (!(wrapperLi instanceof HTMLElement) || wrapperLi === parentElement) return;
-                if (this.getParentCommentNo(wrapperLi)) return;
-
-                const replyList = replyShow.querySelector(':scope > .reply_box > .reply_list[p-no], :scope > .reply_box > ul.reply_list[p-no], .reply_list[p-no]');
-                const pNo = replyList?.getAttribute('p-no') || '';
-                if (pNo !== parentNo) return;
-
-                replyShow.querySelectorAll(':scope > .reply_box > .reply_list > li, :scope > .reply_list > li, .reply_list > li').forEach((replyLi) => {
-                    if (replyLi instanceof HTMLElement && replyLi.style.display !== 'none') {
-                        detachedReplyItems.push(replyLi);
-                    }
-                });
-            });
-
-            return detachedReplyItems;
-        },
-        syncFilteredParentCommentVisibility(parentElement) {
-            if (!(parentElement instanceof HTMLElement)) return;
-            if (parentElement.getAttribute('data-dcuf-parent-filtered') !== '1') return;
-            const replyItems = parentElement.querySelectorAll(':scope > div.reply.show .reply_list > li');
-            const hasDirectVisibleReply = Array.from(replyItems).some(li => li.style.display !== 'none');
-            const detachedReplyItems = this.getDetachedReplyItemsForFocusParent(parentElement);
-            const hasVisibleReply = hasDirectVisibleReply || detachedReplyItems.length > 0;
-            if (hasVisibleReply) {
-                parentElement.setAttribute('data-dcuf-parent-placeholder', '1');
-            } else {
-                parentElement.removeAttribute('data-dcuf-parent-placeholder');
-            }
-            const nextDisplay = hasVisibleReply ? '' : 'none';
-            if (parentElement.style.display !== nextDisplay) parentElement.style.display = nextDisplay;
-        },
-        updateParentVisibilityFromReply(replyElement) {
-            if (!this.isReplyCommentListItem(replyElement)) return;
-            const parentElement = replyElement.closest('li[id^="comment_li_"]');
-            this.syncFilteredParentCommentVisibility(parentElement);
-        },
         setElementVisibility(element, shouldHide) {
             if (!(element instanceof HTMLElement)) return;
-            const isolateParentOnly = shouldHide && this.isParentCommentListItem(element);
-            if (isolateParentOnly) {
-                if (element.getAttribute('data-dcuf-parent-filtered') !== '1') {
-                    element.setAttribute('data-dcuf-parent-filtered', '1');
-                }
-                if (!element.classList.contains('dcuf-parent-comment-filtered')) {
-                    element.classList.add('dcuf-parent-comment-filtered');
-                }
-                this.syncFilteredParentCommentVisibility(element);
-                return;
-            }
             if (element.hasAttribute('data-dcuf-parent-filtered')) {
                 element.removeAttribute('data-dcuf-parent-filtered');
             }
@@ -3832,9 +3752,12 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             if (element.classList.contains('dcuf-parent-comment-filtered')) {
                 element.classList.remove('dcuf-parent-comment-filtered');
             }
+            if (this.isCommentListItem(element)) {
+                const stalePlaceholder = element.querySelector(':scope > .dcuf-comment-placeholder');
+                if (stalePlaceholder instanceof HTMLElement) stalePlaceholder.remove();
+            }
             const nextDisplay = shouldHide ? 'none' : '';
             if (element.style.display !== nextDisplay) element.style.display = nextDisplay;
-            this.updateParentVisibilityFromReply(element);
         },
         async applyBlockFilterToElement(element, uid, userData, addBlockedUidFn) {
             if (!userData) return;
@@ -4030,7 +3953,10 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                         return;
                     }
                     if (n.nodeType === 1 && !n.closest('.user_data')) {
-                        targets.forEach(t => { if (n.matches(t.c)) attachObserver(n, t.i); else if (n.querySelectorAll) n.querySelectorAll(t.c).forEach(c => attachObserver(c, t.i)); });
+                        targets.forEach(t => {
+                            if (n.matches(t.c)) attachObserver(n, t.i);
+                            else if (n.querySelectorAll) n.querySelectorAll(t.c).forEach(c => attachObserver(c, t.i));
+                        });
                     }
                 }));
             });
@@ -4249,7 +4175,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         async init() {
             if (isInitialized) return; isInitialized = true;
             this.installDebugApi();
-            this.debugLog('init', 'FilterModule init start', { version: '3.3.1' });
+            this.debugLog('init', 'FilterModule init start', { version: '3.3.2' });
             await this.cleanupLegacyManagedBlockConfig();
             await this.reloadSettings();
             if (this.DEBUG_ENABLED) await this.debugDumpState('after init reload');
@@ -7527,7 +7453,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
         return {
             reason,
-            version: '3.3.1',
+            version: '3.3.2',
             time: new Date().toISOString(),
             href: location.href,
             heap: getDcufHeapMb(),
@@ -7695,7 +7621,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 commentInitState: { reason: 'already-initialized' }
             };
         }
-        console.log("[DC Filter+UI] Initializing v3.3.1...");
+        console.log("[DC Filter+UI] Initializing v3.3.2...");
 
 
         // [수정] main 함수에서 reloadShortcutKey 함수를 호출하여 초기화
@@ -7728,7 +7654,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         await FilterModule.init();
         await PersonalBlockModule.init();
         const uiInitState = await UIModule.init();
-        // Mobile comment reply-merge / placeholder sync can rerender blocked comment rows
+        // Mobile comment reply-merge cleanup can rerender blocked comment rows
         // once more after Filter/UI init. Keep the initial body lock until that first
         // stabilization window finishes so personally blocked comments do not flash visible.
         const commentInitState = await awaitInitialCommentStabilization();
@@ -10058,50 +9984,13 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             content: none !important;
             display: none !important;
         }
-        div[id^="comment_wrap_"] .comment_box .cmt_list > li.dcuf-parent-comment-filtered[data-dcuf-parent-placeholder="1"] > .cmt_info,
-        div[id^="comment_wrap_"] .comment_box .cmt_list > li.dcuf-parent-comment-filtered[data-dcuf-parent-placeholder="1"] > .cmt_txtbox {
+        div[id^="comment_wrap_"] .comment_box .cmt_list > li[data-dcuf-comment-shell-blocked="1"] > :not(.reply) {
             display: none !important;
         }
-        div[id^="comment_wrap_"] .comment_box .cmt_list > li.dcuf-parent-comment-filtered[data-dcuf-parent-placeholder="1"] > :not(.reply):not(.dcuf-comment-placeholder) {
-            display: none !important;
+        div[id^="comment_wrap_"] .comment_box .cmt_list > li[data-dcuf-comment-shell-blocked="1"] {
+            min-height: 0 !important;
         }
-        div[id^="comment_wrap_"] .comment_box .cmt_list > li.dcuf-parent-comment-filtered[data-dcuf-parent-placeholder="1"] > .dcuf-comment-placeholder {
-            display: flex !important;
-            align-items: center !important;
-            justify-content: space-between !important;
-            gap: 12px !important;
-            padding: 12px 14px !important;
-            border: 1px dashed #d5deea !important;
-            border-radius: 12px !important;
-            background: rgba(245, 248, 252, 0.96) !important;
-            color: #536274 !important;
-            font-size: 13px !important;
-            font-weight: 700 !important;
-        }
-        div[id^="comment_wrap_"] .comment_box .cmt_list > li.dcuf-parent-comment-filtered[data-dcuf-parent-placeholder="1"] > .dcuf-comment-placeholder .dcuf-comment-placeholder__count {
-            flex: 0 0 auto !important;
-            padding: 3px 8px !important;
-            border-radius: 999px !important;
-            background: rgba(36, 91, 218, 0.1) !important;
-            color: #245bda !important;
-            font-size: 11px !important;
-            font-weight: 800 !important;
-        }
-        div[id^="comment_wrap_"] .comment_box .cmt_list > li.dcuf-parent-comment-filtered[data-dcuf-parent-placeholder="1"] > .reply.show {
-            margin-top: 10px !important;
-            padding-top: 10px !important;
-            border-top: 1px solid #dfe6f1 !important;
-        }
-        body.dc-filter-dark-mode div[id^="comment_wrap_"] .comment_box .cmt_list > li.dcuf-parent-comment-filtered[data-dcuf-parent-placeholder="1"] > .dcuf-comment-placeholder {
-            border-color: rgba(120, 144, 175, 0.32) !important;
-            background: rgba(24, 33, 45, 0.86) !important;
-            color: #d2dced !important;
-        }
-        body.dc-filter-dark-mode div[id^="comment_wrap_"] .comment_box .cmt_list > li.dcuf-parent-comment-filtered[data-dcuf-parent-placeholder="1"] > .dcuf-comment-placeholder .dcuf-comment-placeholder__count {
-            background: rgba(140, 180, 255, 0.16) !important;
-            color: #9fc3ff !important;
-        }
-        div[id^="comment_wrap_"] .comment_box .cmt_list > li:has(> .reply.show):not(:has(> .cmt_info)):not([data-dcuf-parent-placeholder="1"]) {
+        div[id^="comment_wrap_"] .comment_box .cmt_list > li:has(> .reply.show):not(:has(> .cmt_info)) {
             margin: -6px 0 12px !important;
             padding: 0 !important;
             border: 0 !important;
@@ -10749,14 +10638,6 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         #focus_cmt > div[id^="comment_wrap_"] .comment_box .reply_info::after {
             content: none !important;
             display: none !important;
-        }
-        #focus_cmt > div[id^="comment_wrap_"] .comment_box .cmt_list > li.dcuf-parent-comment-filtered[data-dcuf-parent-placeholder="1"] > .cmt_info,
-        #focus_cmt > div[id^="comment_wrap_"] .comment_box .cmt_list > li.dcuf-parent-comment-filtered[data-dcuf-parent-placeholder="1"] > .cmt_txtbox,
-        #focus_cmt > div[id^="comment_wrap_"] .comment_box .cmt_list > li.dcuf-parent-comment-filtered[data-dcuf-parent-placeholder="1"] > :not(.reply):not(.dcuf-comment-placeholder) {
-            display: none !important;
-        }
-        #focus_cmt > div[id^="comment_wrap_"] .comment_box .cmt_list > li.dcuf-parent-comment-filtered[data-dcuf-parent-placeholder="1"] > .dcuf-comment-placeholder {
-            display: flex !important;
         }
         #focus_cmt > div[id^="comment_wrap_"] .comment_box .cmt_txtbox {
             border-top: 0 !important;
@@ -12156,10 +12037,12 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         window.__dcufAwaitInitialCommentStabilization = () => Promise.resolve({ reason: 'list-page' });
         return;
     }
-
     const COMMENT_LIST_SELECTOR = 'div[id^="comment_wrap_"] .comment_box .cmt_list';
     const PLACEHOLDER_ATTR = 'data-dcuf-parent-placeholder';
     const PLACEHOLDER_CLASS = 'dcuf-comment-placeholder';
+    const COMMENT_BLOCKED_ATTR = 'data-dcuf-comment-blocked';
+    const COMMENT_SHELL_BLOCKED_ATTR = 'data-dcuf-comment-shell-blocked';
+    const COMMENT_SHELL_BLOCKED_CLASS = 'dcuf-comment-shell-blocked';
     const INITIAL_COMMENT_STABILIZE_SOURCES = new Set(['dom-ready-initial', 'ready-initial']);
     const initialCommentStabilization = (() => {
         let resolved = false;
@@ -12224,98 +12107,113 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         return liMatch ? liMatch[1] : '';
     };
 
-    const getVisibleReplyItems = (parentLi) => {
-        if (!(parentLi instanceof HTMLElement)) return [];
-        return Array.from(parentLi.querySelectorAll(':scope > div.reply.show .reply_list > li'))
-            .filter((replyLi) => replyLi instanceof HTMLElement && replyLi.style.display !== 'none');
+    const hasVisibleReplyItems = (replyShow) => {
+        if (!(replyShow instanceof HTMLElement)) return false;
+        return Array.from(replyShow.querySelectorAll(':scope > .reply_box > .reply_list > li, :scope > .reply_list > li, .reply_list > li'))
+            .some((replyLi) => replyLi instanceof HTMLElement && replyLi.style.display !== 'none');
     };
 
-    const getDetachedVisibleReplyItems = (parentLi) => {
-        if (!(parentLi instanceof HTMLElement) || !parentLi.closest('#focus_cmt')) return [];
+    const clearFilteredParentPlaceholder = (parentLi) => {
+        if (!(parentLi instanceof HTMLElement)) return;
 
-        const list = parentLi.parentElement;
-        if (!(list instanceof HTMLElement)) return [];
+        const placeholder = parentLi.querySelector(`:scope > .${PLACEHOLDER_CLASS}`);
+        if (placeholder instanceof HTMLElement) placeholder.remove();
+        parentLi.removeAttribute(PLACEHOLDER_ATTR);
+        parentLi.removeAttribute('data-dcuf-parent-filtered');
+        parentLi.classList.remove('dcuf-parent-comment-filtered');
+    };
 
+    const isCommentListItem = (element) => {
+        return element instanceof HTMLElement && !!element.closest(COMMENT_LIST_SELECTOR);
+    };
+
+    const getAssociatedVisibleReplyItems = (parentLi) => {
+        if (!(parentLi instanceof HTMLElement)) return [];
         const parentNo = getParentNoFromCommentLi(parentLi);
         if (!parentNo) return [];
 
-        const detachedReplyItems = [];
-        list.querySelectorAll(':scope > li > div.reply.show').forEach((replyShow) => {
+        const replyItems = [];
+        const addVisibleReplies = (replyShow) => {
             if (!(replyShow instanceof HTMLElement)) return;
-
-            const wrapperLi = replyShow.closest('li');
-            if (!(wrapperLi instanceof HTMLElement) || wrapperLi === parentLi) return;
-            if (getParentNoFromCommentLi(wrapperLi)) return;
-            if (wrapperLi.style.display === 'none') return;
-            if (getParentNoFromReplyBlock(replyShow) !== parentNo) return;
-
             replyShow.querySelectorAll(':scope > .reply_box > .reply_list > li, :scope > .reply_list > li, .reply_list > li').forEach((replyLi) => {
                 if (replyLi instanceof HTMLElement && replyLi.style.display !== 'none') {
-                    detachedReplyItems.push(replyLi);
+                    replyItems.push(replyLi);
                 }
             });
-        });
+        };
 
-        return detachedReplyItems;
-    };
+        addVisibleReplies(parentLi.querySelector(':scope > div.reply.show'));
 
-    const ensurePlaceholderElement = (parentLi) => {
-        if (!(parentLi instanceof HTMLElement)) return null;
-
-        let placeholder = parentLi.querySelector(`:scope > .${PLACEHOLDER_CLASS}`);
-        if (!(placeholder instanceof HTMLElement)) {
-            placeholder = document.createElement('div');
-            placeholder.className = PLACEHOLDER_CLASS;
-            placeholder.innerHTML = `
-                <span class="dcuf-comment-placeholder__text">차단된 댓글입니다</span>
-                <span class="dcuf-comment-placeholder__count"></span>
-            `;
+        const list = parentLi.parentElement;
+        if (list instanceof HTMLElement) {
+            list.querySelectorAll(':scope > li > div.reply.show').forEach((replyShow) => {
+                if (!(replyShow instanceof HTMLElement)) return;
+                const wrapperLi = replyShow.closest('li');
+                if (!(wrapperLi instanceof HTMLElement) || wrapperLi === parentLi) return;
+                if (getParentNoFromCommentLi(wrapperLi)) return;
+                if (wrapperLi.style.display === 'none') return;
+                if (getParentNoFromReplyBlock(replyShow) !== parentNo) return;
+                addVisibleReplies(replyShow);
+            });
         }
 
-        const replyShow = parentLi.querySelector(':scope > .reply.show');
-        if (replyShow instanceof HTMLElement) {
-            if (placeholder.parentElement !== parentLi || placeholder.nextElementSibling !== replyShow) {
-                parentLi.insertBefore(placeholder, replyShow);
-            }
-        } else if (placeholder.parentElement !== parentLi) {
-            parentLi.insertBefore(placeholder, parentLi.firstChild);
-        }
-
-        return placeholder;
+        return replyItems;
     };
 
-    const syncFilteredParentPlaceholder = (parentLi) => {
+    const clearBlockedCommentShell = (element) => {
+        if (!(element instanceof HTMLElement)) return;
+        element.removeAttribute(COMMENT_SHELL_BLOCKED_ATTR);
+        element.classList.remove(COMMENT_SHELL_BLOCKED_CLASS);
+    };
+
+    const applyBlockedCommentShell = (parentLi) => {
         if (!(parentLi instanceof HTMLElement)) return;
-
-        const isFiltered = parentLi.getAttribute('data-dcuf-parent-filtered') === '1'
-            || parentLi.classList.contains('dcuf-parent-comment-filtered');
-        const directVisibleReplies = getVisibleReplyItems(parentLi);
-        const detachedVisibleReplies = getDetachedVisibleReplyItems(parentLi);
-        const visibleReplies = directVisibleReplies.length > 0 ? directVisibleReplies : detachedVisibleReplies;
-        const placeholder = parentLi.querySelector(`:scope > .${PLACEHOLDER_CLASS}`);
-
-        if (!isFiltered || visibleReplies.length === 0) {
-            if (placeholder instanceof HTMLElement) placeholder.remove();
-            parentLi.removeAttribute(PLACEHOLDER_ATTR);
-            return;
-        }
-
-        parentLi.setAttribute(PLACEHOLDER_ATTR, '1');
-        parentLi.style.display = '';
-
-        const ensuredPlaceholder = ensurePlaceholderElement(parentLi);
-        if (!(ensuredPlaceholder instanceof HTMLElement)) return;
-
-        const count = ensuredPlaceholder.querySelector('.dcuf-comment-placeholder__count');
-        if (count instanceof HTMLElement) {
-            count.textContent = `답글 ${visibleReplies.length}`;
-            count.hidden = visibleReplies.length < 1;
-        }
+        clearFilteredParentPlaceholder(parentLi);
+        parentLi.setAttribute(COMMENT_SHELL_BLOCKED_ATTR, '1');
+        parentLi.classList.add(COMMENT_SHELL_BLOCKED_CLASS);
+        if (parentLi.style.display !== '') parentLi.style.display = '';
     };
+
+    const shouldKeepBlockedParentCommentShell = (parentLi) => {
+        return isCommentListItem(parentLi)
+            && Boolean(getParentNoFromCommentLi(parentLi))
+            && getAssociatedVisibleReplyItems(parentLi).length > 0;
+    };
+
+    const installBlockedCommentShellFilterHook = () => {
+        const filterModule = window.__dcufFilterModule;
+        if (!filterModule || typeof filterModule.setElementVisibility !== 'function') return false;
+        if (filterModule.__dcufCommentShellBlockHooked) return true;
+
+        const originalSetElementVisibility = filterModule.setElementVisibility.bind(filterModule);
+        filterModule.setElementVisibility = (element, shouldHide) => {
+            if (!isCommentListItem(element)) {
+                originalSetElementVisibility(element, shouldHide);
+                return;
+            }
+
+            if (shouldHide) {
+                element.setAttribute(COMMENT_BLOCKED_ATTR, '1');
+                if (shouldKeepBlockedParentCommentShell(element)) {
+                    applyBlockedCommentShell(element);
+                    return;
+                }
+            } else {
+                element.removeAttribute(COMMENT_BLOCKED_ATTR);
+                clearBlockedCommentShell(element);
+            }
+
+            originalSetElementVisibility(element, shouldHide);
+        };
+        filterModule.__dcufCommentShellBlockHooked = true;
+        return true;
+    };
+
+    installBlockedCommentShellFilterHook();
 
     const syncFilteredParentPlaceholders = () => {
         document.querySelectorAll(`${COMMENT_LIST_SELECTOR} > li[id^="comment_li_"]`).forEach((parentLi) => {
-            syncFilteredParentPlaceholder(parentLi);
+            clearFilteredParentPlaceholder(parentLi);
         });
     };
 
@@ -12342,9 +12240,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                     const replyShow = candidateLi.querySelector(':scope > .reply.show');
                     if (!(replyShow instanceof HTMLElement)) continue;
                     if (getParentNoFromReplyBlock(replyShow) !== parentNo) continue;
-                    const hasVisibleReply = Array.from(replyShow.querySelectorAll(':scope > .reply_box > .reply_list > li, :scope > .reply_list > li, .reply_list > li'))
-                        .some((replyLi) => replyLi instanceof HTMLElement && replyLi.style.display !== 'none');
-                    if (!hasVisibleReply) continue;
+                    if (!hasVisibleReplyItems(replyShow)) continue;
 
                     groupedReplyLis.push(candidateLi);
                 }
@@ -12393,80 +12289,71 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         });
     };
 
-    const isElementVisiblyRendered = (element) => {
-        if (!(element instanceof HTMLElement)) return false;
-        if (element.style.display === 'none') return false;
-        const style = window.getComputedStyle(element);
-        return style.display !== 'none'
-            && style.visibility !== 'hidden'
-            && Number(style.opacity || '1') !== 0;
-    };
-
-    const getBrokenFilteredParentPlaceholders = () => {
-        const broken = [];
-        document.querySelectorAll(`${COMMENT_LIST_SELECTOR} > li.dcuf-parent-comment-filtered[data-dcuf-parent-placeholder="1"]`).forEach((parentLi) => {
+    const getStaleFilteredParentPlaceholders = () => {
+        const stale = [];
+        document.querySelectorAll(`${COMMENT_LIST_SELECTOR} > li[id^="comment_li_"]`).forEach((parentLi) => {
             if (!(parentLi instanceof HTMLElement)) return;
-
-            const placeholder = parentLi.querySelector(`:scope > .${PLACEHOLDER_CLASS}`);
-            if (!(placeholder instanceof HTMLElement) || !isElementVisiblyRendered(placeholder)) {
-                broken.push(parentLi);
-                return;
+            if (parentLi.hasAttribute(PLACEHOLDER_ATTR)
+                || parentLi.hasAttribute('data-dcuf-parent-filtered')
+                || parentLi.classList.contains('dcuf-parent-comment-filtered')
+                || parentLi.querySelector(`:scope > .${PLACEHOLDER_CLASS}`)) {
+                stale.push(parentLi);
             }
-
-            const hasVisibleBlockedContent = Array.from(parentLi.children).some((child) => {
-                if (!(child instanceof HTMLElement)) return false;
-                if (child.classList.contains(PLACEHOLDER_CLASS)) return false;
-                if (child.classList.contains('reply')) return false;
-                return isElementVisiblyRendered(child);
-            });
-            if (hasVisibleBlockedContent) broken.push(parentLi);
         });
-        return broken;
+        return stale;
     };
 
     const repairFilteredCommentPlaceholders = (meta = null) => {
         const options = meta && typeof meta === 'object' ? meta : {};
         const source = options.reason || options.source || '';
-        const brokenBefore = getBrokenFilteredParentPlaceholders();
-        if (options.onlyIfBroken && brokenBefore.length === 0) {
+        const staleBefore = getStaleFilteredParentPlaceholders();
+        if (options.onlyIfBroken && staleBefore.length === 0) {
             return {
                 reason: 'skipped',
                 source,
                 targetCount: 0,
+                staleCount: 0,
+                remainingStaleCount: 0,
                 brokenCount: 0
             };
         }
 
-        if (options.mergeDetachedReplies !== false) {
-            mergeDetachedRepliesIntoParent();
-        }
         const filterModule = window.__dcufFilterModule;
         let targetCount = 0;
         if (options.runFilter !== false && typeof filterModule?.runSyncRefilterPass === 'function') {
             const descriptors = filterModule.runSyncRefilterPass('comments');
             targetCount = Array.isArray(descriptors) ? descriptors.length : 0;
         }
+        if (options.mergeDetachedReplies !== false) {
+            mergeDetachedRepliesIntoParent();
+        }
         syncFilteredParentPlaceholders();
         syncFocusCommentCardGroups();
-        const brokenAfter = options.onlyIfBroken ? getBrokenFilteredParentPlaceholders() : [];
+        const staleAfter = options.onlyIfBroken ? getStaleFilteredParentPlaceholders() : [];
         return {
             reason: 'prepared',
             source,
             targetCount,
-            brokenCount: brokenBefore.length,
-            remainingBrokenCount: brokenAfter.length
+            staleCount: staleBefore.length,
+            remainingStaleCount: staleAfter.length,
+            brokenCount: staleBefore.length,
+            remainingBrokenCount: staleAfter.length
         };
     };
     window.__dcufRepairFilteredCommentPlaceholders = repairFilteredCommentPlaceholders;
     window.__dcufPrepareInitialCommentReveal = repairFilteredCommentPlaceholders;
 
-    const shouldSkipReplyMergeTarget = (parentLi) => {
+    const shouldSkipReplyMergeTarget = (parentLi, replyShow = null) => {
         if (!(parentLi instanceof HTMLElement)) return true;
-        const isFiltered = parentLi.getAttribute('data-dcuf-parent-filtered') === '1'
-            || parentLi.classList.contains('dcuf-parent-comment-filtered');
         const isFocusCommentTarget = Boolean(parentLi.closest('#focus_cmt'));
         if (isFocusCommentTarget) return true;
-        if (parentLi.style.display === 'none' && !isFiltered && parentLi.getAttribute(PLACEHOLDER_ATTR) !== '1') return true;
+        if (parentLi.style.display === 'none') {
+            if (parentLi.getAttribute(COMMENT_BLOCKED_ATTR) === '1' && hasVisibleReplyItems(replyShow)) {
+                applyBlockedCommentShell(parentLi);
+                return false;
+            }
+            return true;
+        }
         return false;
     };
 
@@ -12494,7 +12381,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
                 const parentLi = parentMap.get(parentNo) || list.querySelector(':scope > li#comment_li_' + parentNo);
                 if (!(parentLi instanceof HTMLElement) || parentLi === wrapperLi) return;
-                if (shouldSkipReplyMergeTarget(parentLi)) return;
+                if (shouldSkipReplyMergeTarget(parentLi, replyShow)) return;
 
                 const alreadyMerged = parentLi.querySelector(':scope > div.reply.show .reply_list[p-no="' + parentNo + '"]');
                 if (alreadyMerged) {
@@ -12510,16 +12397,16 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
     const replyMergeScheduler = __dcufCreatePhaseScheduler('reply-merge', ({ delay, meta }) => {
         const source = meta && typeof meta === 'object' ? meta.source : '';
         const shouldMergeDetachedReplies = source !== 'window-load';
-
-        if (shouldMergeDetachedReplies) {
-            mergeDetachedRepliesIntoParent();
-        }
         const filterModule = window.__dcufFilterModule;
+
         if (shouldMergeDetachedReplies && delay === 0 && typeof filterModule?.runSyncRefilterPass === 'function') {
             // Focus-comment reply merges can recreate parent comment li nodes before the
-            // delayed stabilized refilter runs. Re-apply comment blocking immediately so
-            // blocked parents do not flash visible while placeholder/group sync catches up.
+            // delayed stabilized refilter runs. Re-apply comment blocking before merging
+            // so blocked parent comments choose shell/display state before replies move.
             filterModule.runSyncRefilterPass('comments');
+        }
+        if (shouldMergeDetachedReplies) {
+            mergeDetachedRepliesIntoParent();
         }
         syncFilteredParentPlaceholders();
         syncFocusCommentCardGroups();
