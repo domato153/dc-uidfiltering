@@ -1,0 +1,4 @@
+interface:
+  display_name: "CSS Isolation"
+  short_description: "Scope injected CSS and UI changes safely"
+  default_prompt: "Use $css-isolation to modify injected UI styles without causing DCInside layout regressions."

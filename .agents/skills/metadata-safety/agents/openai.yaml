@@ -1,0 +1,4 @@
+interface:
+  display_name: "Metadata Safety"
+  short_description: "Review metadata, GM APIs, and compatibility"
+  default_prompt: "Use $metadata-safety to review Tampermonkey metadata, GM API usage, and compatibility risks in this userscript."

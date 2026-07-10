@@ -1,0 +1,4 @@
+interface:
+  display_name: "Regression Checklist"
+  short_description: "Run manual mobile/PC regression checks"
+  default_prompt: "Use $regression-checklist to produce a manual regression checklist for the recent DCUF source change."

@@ -1,0 +1,18 @@
+# Local archives and diagnostics
+/Legacy유저스크립트storage/
+/artifacts/
+/debugcode.txt
+/modtool.txt
+
+# Superseded root release
+/Dc_UserFilter_Mobile_v3.3.1.user.js
+
+# Historical dist releases; current and future release names remain trackable.
+/dist/Dc_UserFilter_Mobile_v3.0*.user.js
+/dist/Dc_UserFilter_Mobile_v3.1*.user.js
+/dist/Dc_UserFilter_Mobile_v3.2*.user.js
+/dist/Dc_UserFilter_Mobile_v3.3.0.user.js
+/dist/Dc_UserFilter_Mobile_v3.3.1.user.js
+/dist/dcinside_user_filter_v1.8*.user.js
+/dist/dcinside_user_filter_v1.9.0.user.js
+/dist/dcinside_user_filter_v1.9.1-beta.user.js

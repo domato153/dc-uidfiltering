@@ -1,0 +1,20 @@
+// ==UserScript==
+// @name         DCInside PC User Filter
+// @namespace    http://tampermonkey.net/
+// @version      __VERSION__
+// @description  DCInside PC filter port based on the latest mobile filter runtime and shared filter core
+// @author       domato153
+// @match        https://gall.dcinside.com/*
+// @grant        GM_setValue
+// @grant        GM_getValue
+// @grant        GM_registerMenuCommand
+// @grant        GM_addStyle
+// @run-at       document-start
+// @license      MIT
+// ==/UserScript==
+
+/*-----------------------------------------------------------------
+DBAD license / Copyright (C) 2025 domato153
+https://github.com/philsturgeon/dbad/blob/master/LICENSE.md
+https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
+------------------------------------------------------------------*/
