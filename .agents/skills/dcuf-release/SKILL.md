@@ -12,5 +12,6 @@ description: Build, version, promote, or verify DCUF mobile and PC release artif
 3. Change the version source in the affected build script, never in generated userscripts.
 4. Build mobile with `node tools/build-userscript.mjs` and PC with `node tools/build-pc-filter-userscript.mjs` as applicable.
 5. Run `node tools/verify-repo.mjs release`. Stop on any BOM, version, token, syntax, debug-default, or root/dist mismatch.
-6. Read [manual-smoke.md](references/manual-smoke.md) only when UI, observers, initialization, storage behavior, or filter decisions changed.
-7. Report generated files, automated results, manual checks actually performed, skipped checks, and remaining risk. Never imply an unperformed live check passed.
+6. During beta or review, push only a `codex/*` checkpoint when requested. For a confirmed stable release, create a clean worktree from `origin/Mobile` for mobile or `origin/main` for PC, replace only `Dc_UserFilter_Mobile.user.js` or `dcinside_user_filter.user.js`, preserve other files and remote history, and push without force. Never merge the source branch wholesale into an official branch.
+7. Read [manual-smoke.md](references/manual-smoke.md) only when UI, observers, initialization, storage behavior, or filter decisions changed.
+8. Report generated files, automated results, manual checks actually performed, skipped checks, and remaining risk. Never imply an unperformed live check passed.

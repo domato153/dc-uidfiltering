@@ -20,6 +20,11 @@
 - After builds, run `node tools/verify-repo.mjs release`. For guidance-only changes, run `node tools/verify-repo.mjs guidance`; run `all` when both surfaces changed.
 - Never repair source/build divergence by editing generated userscripts.
 
+## Git publishing
+- `origin` is `https://github.com/domato153/dc-uidfiltering.git`. Intermediate checkpoints may push only `codex/*`; never update official branches during beta or review.
+- `origin/Mobile` owns the stable mobile file `Dc_UserFilter_Mobile.user.js`. `origin/main` owns the stable PC file `dcinside_user_filter.user.js` plus website assets.
+- For an explicit stable release after verification, use a clean worktree based on the target remote branch, replace only its canonical userscript, preserve its history and other files, then commit and push without force. Never merge the source branch wholesale into an official release branch.
+
 ## Fragile contracts
 - Preserve existing GM storage keys and data shapes. Add migration or compatible fallback when semantics must change.
 - Treat `document-start`, hidden-body locking, boot overlay release, and timeout recovery as one initialization contract.
