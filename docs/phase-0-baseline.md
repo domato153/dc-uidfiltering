@@ -1,5 +1,7 @@
 # Phase 0 Baseline
 
+> Historical refactor record — current instructions 아님. Use `AGENTS.md` and current source/build tooling for active work.
+
 ## Baseline source
 - Primary source of truth: `Dc_UserFilter_Mobile_v2.7.5.4.user.js`
 - Extracted runtime shell: `src/runtime/bootstrap.js`

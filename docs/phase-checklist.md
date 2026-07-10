@@ -1,5 +1,7 @@
 # DCUF 3.0 Phase Checklist
 
+> Historical refactor record — current instructions 아님. Use `AGENTS.md` and current source/build tooling for active work.
+
 ## Agent ownership
 - Main agent: integration, build output, regression judgment.
 - Shared-core worker: `src/shared/**`

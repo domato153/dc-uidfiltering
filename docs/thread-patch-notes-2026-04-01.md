@@ -1,5 +1,7 @@
 # Thread Patch Notes (2026-04-01)
 
+> Historical patch record — current instructions 아님. Use `AGENTS.md` and current source/build tooling for active work.
+
 Version baseline: `3.2.1`
 
 This note records the net result of the long comment/popup thread. It only describes changes that remain in source, plus one known unresolved issue.

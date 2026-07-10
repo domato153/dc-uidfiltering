@@ -1,4 +1,0 @@
-interface:
-  display_name: "Userscript Patch"
-  short_description: "Source-first patching for mobile/PC DCUF"
-  default_prompt: "Use $userscript-patch to make a minimal, behavior-preserving source change to this DCInside mobile/PC userscript and rebuild affected outputs."

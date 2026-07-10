@@ -1,5 +1,7 @@
 # DCUF Phase 6 PC Porting Path
 
+> Historical refactor record — current instructions 아님. Use `AGENTS.md` and current source/build tooling for active work.
+
 ## Goal
 - The future PC filter script should come from the refactored mobile 3.0 filter runtime, not from preserving the old `1.7.4` codebase.
 - The portable unit is the shared filter stack plus a thin PC DOM adapter.

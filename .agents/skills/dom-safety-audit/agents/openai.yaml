@@ -1,0 +1,4 @@
+interface:
+  display_name: "DOM Safety Audit"
+  short_description: "Audit DOM and injected UI safety"
+  default_prompt: "Use $dom-safety-audit to audit a DCUF DOM, rerender, or injected-style failure."

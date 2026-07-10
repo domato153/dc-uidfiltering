@@ -1,0 +1,4 @@
+interface:
+  display_name: "DCUF Release"
+  short_description: "Build and verify DCUF releases"
+  default_prompt: "Use $dcuf-release to build or verify an explicitly requested DCUF release."

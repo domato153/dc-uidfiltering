@@ -1,4 +1,0 @@
-interface:
-  display_name: "Selector Audit"
-  short_description: "Audit fragile selectors and DOM targeting"
-  default_prompt: "Use $selector-audit to review fragile selectors and propose safer DOM targeting for this userscript."
