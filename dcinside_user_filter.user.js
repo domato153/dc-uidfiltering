@@ -1,7 +1,7 @@
-// ==UserScript==
+﻿// ==UserScript==
 // @name         DCInside PC User Filter
 // @namespace    http://tampermonkey.net/
-// @version      1.9.0
+// @version      1.9.2
 // @description  DCInside PC filter port based on the latest mobile filter runtime and shared filter core
 // @author       domato153
 // @match        https://gall.dcinside.com/*
@@ -16,7 +16,7 @@
 /*-----------------------------------------------------------------
 DBAD license / Copyright (C) 2025 domato153
 https://github.com/philsturgeon/dbad/blob/master/LICENSE.md
-https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
+https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
 ------------------------------------------------------------------*/
 
 (function () {
@@ -29,6 +29,16 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
     }
     __dcufRoot.__dcufRuntimeLoaded = `dcuf-${Date.now()}`;
 
+    if (!__dcufRoot.__dcufBfcacheOptOutInstalled) {
+        __dcufRoot.__dcufBfcacheOptOutInstalled = true;
+        const preventBackForwardCache = () => {};
+        try {
+            __dcufRoot.addEventListener('unload', preventBackForwardCache, { capture: true });
+        } catch (error) {
+            window.addEventListener('unload', preventBackForwardCache, { capture: true });
+        }
+    }
+
 
     // [개선] 전역 스코프 오염 방지를 위해 스크립트 상태 변수를 IIFE 내부 스코프로 이동
     let dcFilterSettings = {};
@@ -40,8 +50,15 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
     const INITIAL_LOCK_STYLE_ID = 'dcuf-initial-lock-style';
     const BOOT_OVERLAY_ID = 'dcuf-boot-overlay';
     const BOOT_OVERLAY_STYLE_ID = 'dcuf-boot-overlay-style';
+    const BOOT_UI_WATCHDOG_MAX_MS = 8000;
+    const BOOT_UI_WATCHDOG_INTERVAL_MS = 50;
+    let bootUiWatchdogTimerId = 0;
+    let bootUiWatchdogStartedAt = 0;
+    let bootUiWatchdogDomReadyHandler = null;
+    let bootUiWatchdogLoadHandler = null;
 
     const isBootOverlayTargetPage = () => true;
+    const isRootUiReady = () => !!document.documentElement?.classList.contains(ROOT_READY_CLASS);
     const removeBootOverlay = (reason = 'unknown') => {
         const overlay = document.getElementById(BOOT_OVERLAY_ID);
         if (overlay) overlay.remove();
@@ -152,6 +169,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
         const body = document.body;
         if (body) body.classList.add(ROOT_READY_CLASS);
 
+        stopBootUiWatchdog();
         removeBootOverlay('mark-ui-ready');
     };
 
@@ -169,11 +187,56 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A4%EC%8A%A4
         mountPoint.appendChild(style);
     };
 
+    const ensureBootUi = (reason = 'ensure-boot-ui') => {
+        if (!isBootOverlayTargetPage() || isRootUiReady()) return true;
+        injectInitialLockStyle();
+        ensureBootOverlay();
+        return !!document.getElementById(INITIAL_LOCK_STYLE_ID) && !!document.getElementById(BOOT_OVERLAY_ID);
+    };
+
+    const stopBootUiWatchdog = () => {
+        if (bootUiWatchdogTimerId) {
+            window.clearInterval(bootUiWatchdogTimerId);
+            bootUiWatchdogTimerId = 0;
+        }
+        if (bootUiWatchdogDomReadyHandler) {
+            document.removeEventListener('DOMContentLoaded', bootUiWatchdogDomReadyHandler);
+            bootUiWatchdogDomReadyHandler = null;
+        }
+        if (bootUiWatchdogLoadHandler) {
+            window.removeEventListener('load', bootUiWatchdogLoadHandler);
+            bootUiWatchdogLoadHandler = null;
+        }
+    };
+
+    const startBootUiWatchdog = () => {
+        if (bootUiWatchdogTimerId || isRootUiReady() || !isBootOverlayTargetPage()) return;
+        bootUiWatchdogStartedAt = Date.now();
+
+        const tick = () => {
+            if (isRootUiReady()) {
+                stopBootUiWatchdog();
+                return;
+            }
+
+            ensureBootUi('watchdog');
+            if (Date.now() - bootUiWatchdogStartedAt >= BOOT_UI_WATCHDOG_MAX_MS) {
+                stopBootUiWatchdog();
+            }
+        };
+
+        bootUiWatchdogTimerId = window.setInterval(tick, BOOT_UI_WATCHDOG_INTERVAL_MS);
+        bootUiWatchdogDomReadyHandler = () => tick();
+        bootUiWatchdogLoadHandler = () => tick();
+        document.addEventListener('DOMContentLoaded', bootUiWatchdogDomReadyHandler, { once: true });
+        window.addEventListener('load', bootUiWatchdogLoadHandler, { once: true });
+        tick();
+    };
+
+    __dcufRoot.__dcufEnsureBootUi = ensureBootUi;
     injectInitialLockStyle();
     ensureBootOverlay();
-
-
-
+    startBootUiWatchdog();
     // PC filter port shared prelude
 /**
  * Shared storage/schema constants extracted from v2.7.5.4.
@@ -621,7 +684,7 @@ const hasPersonalNicknameBlock = (subject, personalBlockList) =>
 const hasPersonalIpBlock = (subject, personalBlockList) =>
     Boolean(subject?.ip && collectionHasValue(personalBlockList?.ipSet ?? personalBlockList?.ips, subject.ip));
 
-const FILTER_CORE_PHASE = '3.1.1';
+const FILTER_CORE_PHASE = '3.2.2';
 
 function createEmptyDecision(proxyBlockMode = PROXY_MODE.OFF) {
     return {
@@ -756,374 +819,402 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         isPersonalBlockHit,
         evaluateSyncBlockDecision,
     });
+    // PC-only filter UI adapter rail.
+    //
+    // The visual rules for settings, shortcut modal, personal-block FAB,
+    // selection popup, management panel, and backup popup are owned by the
+    // marked sections in targets/mobile/filter-module.js. The PC builder
+    // extracts those sections verbatim so the two targets cannot drift.
+    // Add rules here only for a verified PC host-DOM difference; do not copy
+    // shared filter UI declarations back into this file.
+    // Extracted verbatim from the mobile-owned filter UI style rail.
     GM_addStyle(`
-        .switch {
-            position: relative;
-            display: inline-block;
-            width: 40px;
-            height: 22px;
-        }
-        .switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-            position: absolute;
-        }
-        .switch-slider {
-            position: absolute;
-            cursor: pointer;
-            inset: 0;
-            background-color: #c7cfdb;
-            transition: .2s;
+#dc-personal-block-fab {
+            position: fixed;
+            z-index: 2147483640;
+            width: auto !important;
+            min-width: 76px;
+            height: 38px;
+            padding: 0 10px;
+            background: linear-gradient(180deg, #fbfcfe 0%, #f1f4f8 100%) !important;
+            color: #4d5e76;
             border-radius: 999px;
+            border: 1px solid #c7d2df;
+            box-shadow: 0 6px 16px rgba(36, 49, 72, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            font-size: 15px;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            line-height: 1;
+            white-space: nowrap;
+            word-break: keep-all;
+            cursor: pointer;
+            user-select: none;
+            transition: transform 0.18s ease-out, box-shadow 0.18s ease-out, border-color 0.18s ease-out, background-color 0.18s ease-out;
         }
-        .switch-slider:before {
-            position: absolute;
-            content: "";
-            height: 16px;
-            width: 16px;
-            left: 3px;
-            bottom: 3px;
-            background-color: #fff;
-            transition: .2s;
-            border-radius: 50%;
-            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.18);
+        #dc-personal-block-fab:hover {
+            background: linear-gradient(180deg, #ffffff 0%, #eef2f7 100%) !important;
+            border-color: #b6c2d1;
+            box-shadow: 0 8px 18px rgba(36, 49, 72, 0.14);
         }
-        .switch input:checked + .switch-slider {
-            background-color: #3b71fd;
+        #dc-personal-block-fab:active {
+            cursor: grabbing;
+            transform: scale(0.97);
+            box-shadow: 0 4px 10px rgba(36, 49, 72, 0.1);
         }
-        .switch input:checked + .switch-slider:before {
-            transform: translateX(18px);
+        #dc-selection-popup {
+            position: fixed;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 2147483641;
+            background: #fff;
+            border: 1px solid #ccc;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            min-width: 320px;
+            text-align: center;
+        }
+        #dc-selection-popup h4 { margin: 0 0 20px 0; font-size: 18px; font-weight: 600; }
+        #dc-selection-popup .block-options { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+        #dc-selection-popup .block-option { display: flex; justify-content: space-between; align-items: center; background-color: #f8f9fa; padding: 12px; border-radius: 8px; }
+        #dc-selection-popup .block-option span { font-size: 15px; color: #333; word-break: break-all; margin-right: 15px; }
+        #dc-selection-popup .block-option button { font-size: 14px; padding: 6px 12px; cursor: pointer; border: none; border-radius: 6px; background-color: #4263eb; color: #fff; font-weight: 500; }
+        /* [v2.5.7 추가] 차단 해제 버튼 스타일 */
+        #dc-selection-popup .block-option button.btn-unblock { background-color: #e03131; }
+        #dc-selection-popup .popup-buttons button { width: 100%; font-size: 16px; padding: 10px; cursor: pointer; border: none; border-radius: 8px; background-color: #e9ecef; color: #555; }
+        body.selection-mode-active .gall_writer,
+        body.selection-mode-active .ub-writer {
+            cursor: pointer !important;
         }
 
+
+        #dc-block-management-panel-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 2147483645;
+        }
+        #dc-block-management-panel {
+            position: fixed;
+            background: #f9f9f9;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            z-index: 2147483646;
+            display: flex;
+            flex-direction: column;
+            min-width: 350px; min-height: 300px;
+            resize: both;
+            overflow: hidden;
+        }
+        #dc-block-management-panel .panel-header {
+            display: flex;  align-items: center;
+            padding: 10px 15px;
+            background: #eee;
+            border-bottom: 1px solid #ccc;
+            cursor: move;
+            user-select: none;
+        }
+        #dc-block-management-panel .panel-header h3 { margin: 0; font-size: 16px; }
+        #dc-block-management-panel .panel-close-btn { font-size: 20px; cursor: pointer; border: none; background: none; margin-left: auto;}
+        #dc-block-management-panel .panel-tabs { display: flex; border-bottom: 1px solid #ccc; background: #fff; }
+        #dc-block-management-panel .panel-tab { flex: 1; padding: 10px; text-align: center; cursor: pointer; border-right: 1px solid #eee; }
+        #dc-block-management-panel .panel-tab:last-child { border-right: none; }
+        #dc-block-management-panel .panel-tab.active { background: #3b71fd; color: #fff; font-weight: bold; }
+        #dc-block-management-panel .panel-body { flex-grow: 1; display: flex; flex-direction: column; overflow: hidden; background: #fff; }
+        #dc-block-management-panel .panel-list-controls { padding: 8px 10px; border-bottom: 1px solid #eee; text-align: left; }
+        #dc-block-management-panel .select-all-btn,
+        #dc-block-management-panel .select-all-global-btn,
+        #dc-block-management-panel .panel-backup-btn { /* [수정] 백업 버튼 공통 스타일 적용 */
+            font-size: 13px; padding: 4px 8px; cursor: pointer;
+            border: 1px solid #ccc; background: #f1f3f5; border-radius: 4px; margin-left: 5px;
+        }
+        #dc-block-management-panel .panel-content { flex-grow: 1; overflow-y: auto; }
+        #dc-block-management-panel .blocked-list { list-style: none; margin: 0; padding: 10px; }
+        #dc-block-management-panel .blocked-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 5px; border-bottom: 1px solid #f0f0f0; }
+        #dc-block-management-panel .blocked-item.item-to-delete { text-decoration: line-through; opacity: 0.5; }
+        #dc-block-management-panel .item-name { font-size: 14px; word-break: break-all; }
+        #dc-block-management-panel .delete-item-btn { cursor: pointer; color: #e03131; font-weight: bold; padding: 0 5px; }
+        #dc-block-management-panel .panel-footer {
+            display: flex; /* [수정] Flexbox 레이아웃으로 변경 */
+            justify-content: space-between; /* [수정] 양쪽 끝으로 요소 배치 */
+            align-items: center; /* [수정] 세로 중앙 정렬 */
+            padding: 10px;
+            border-top: 1px solid #ccc;
+            background: #f9f9f9;
+        }
+        #dc-block-management-panel .panel-footer-left {
+            display: flex;
+            align-items: center;
+        }
+        #dc-block-management-panel .panel-save-btn { padding: 8px 16px; font-size: 14px; background: #3b71fd; color: #fff; border: none; border-radius: 4px; cursor: pointer; }
+        #dc-block-management-panel .panel-resize-handle {
+            position: absolute;
+            right: 0; bottom: 0;
+            width: 15px; height: 15px;
+            cursor: nwse-resize;
+            background: repeating-linear-gradient(135deg, #ccc, #ccc 1px, transparent 1px, transparent 3px);
+        }
+
+        /* [신규] 개인 차단 On/Off 스위치 UI */
+        #dc-block-management-panel .switch-container { display: flex; align-items: center; margin-left: 15px; }
+        #dcinside-filter-setting .switch,
+        #dc-block-management-panel .switch { position: relative; display: inline-block; width: 40px; height: 22px; }
+        #dcinside-filter-setting .switch input,
+        #dc-block-management-panel .switch input { opacity: 0; width: 0; height: 0; }
+        #dcinside-filter-setting .switch-slider,
+        #dc-block-management-panel .switch-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 22px; }
+        #dcinside-filter-setting .switch-slider:before,
+        #dc-block-management-panel .switch-slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        #dcinside-filter-setting input:checked + .switch-slider,
+        #dc-block-management-panel input:checked + .switch-slider { background-color: #3b71fd; }
+        #dcinside-filter-setting input:checked + .switch-slider:before,
+        #dc-block-management-panel input:checked + .switch-slider:before { transform: translateX(18px); }
+
+        /* [신규] 백업/복원 팝업 UI */
+        #dc-backup-popup-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6);
+            z-index: 2147483647;
+        }
+        #dc-backup-popup {
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: #fff; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            z-index: 2147483647; padding: 20px; min-width: 350px;
+        }
+        #dc-backup-popup .popup-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #eee; }
+        #dc-backup-popup .popup-header h4 { margin: 0; font-size: 16px; }
+        #dc-backup-popup .popup-close-btn { font-size: 20px; background: none; border: none; cursor: pointer; color: #888; }
+        #dc-backup-popup .popup-content { display: flex; flex-direction: column; gap: 15px; }
+        #dc-backup-popup .export-section, #dc-backup-popup .import-section { display: flex; flex-direction: column; gap: 8px; }
+        #dc-backup-popup label { font-size: 14px; font-weight: bold; }
+        #dc-backup-popup .description { font-size: 12px; color: #666; }
+        /* [수정] import-controls를 세로 정렬로 변경 */
+        #dc-backup-popup .import-controls { display: flex; flex-direction: column; gap: 8px; }
+        /* [추가] 파일 입력(<input type="file">) 스타일 */
+        #dc-backup-popup .import-file-input {
+            font-size: 14px;
+            padding: 5px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background-color: #f8f9fa;
+        }
+        #dc-backup-popup textarea { flex-grow: 1; height: 80px; resize: vertical; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 12px; font-family: monospace; }
+        #dc-backup-popup button { padding: 8px 12px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        /* [수정] 기존 버튼들에 flex 속성 추가 */
+        #dc-backup-popup .export-btn { background-color: #3b71fd; color: #fff; border: 1px solid #3b71fd; flex: 1; }
+        /* [추가] '파일로 다운로드' 버튼 전용 스타일 */
+        #dc-backup-popup .export-btn-download { background-color: #ffffff; color: #374151; border: 1px solid #d4dbe8; flex: 1; }
+        /* [수정] 불러오기 버튼 스타일 조정 */
+        #dc-backup-popup .import-btn { background-color: #3b71fd; color: #fff; border: 1px solid #3b71fd; width: 100%; margin-top: 8px; }
+
+        /* Popup refresh */
         #dcinside-filter-setting,
-        #dcinside-shortcut-modal {
-            font-family: "Segoe UI", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif !important;
+        #dc-selection-popup,
+        #dc-backup-popup,
+        #dc-block-management-panel {
+            border: 1px solid #d9dee7 !important;
+            border-radius: 14px !important;
+            box-shadow: 0 18px 42px rgba(26, 39, 60, 0.18) !important;
+        }
+        #dcinside-filter-setting,
+        #dc-selection-popup,
+        #dc-backup-popup {
+            animation: dcuf-popup-center-in 0.16s ease-out;
+        }
+        #dc-block-management-panel {
+            animation: dcuf-popup-fade-in 0.16s ease-out;
+            min-width: 460px !important;
+            min-height: 340px !important;
+            background: #f7f9fc !important;
         }
         #dcinside-filter-setting {
-            min-width: 420px !important;
-            max-width: min(92vw, 760px) !important;
-            max-height: 92vh !important;
-            overflow: hidden !important;
-            border-color: #273142 !important;
-            box-shadow: 0 20px 48px rgba(17, 24, 39, 0.24) !important;
+            min-width: 540px !important;
+            max-width: min(92vw, 680px) !important;
+            padding: 18px !important;
+            cursor: default !important;
         }
         #dcinside-filter-setting .dcuf-settings-header {
-            cursor: move;
+            margin-bottom: 12px !important;
+            padding: 0 0 12px !important;
+            border-bottom: 1px solid #e5e9f1 !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            gap: 10px !important;
+        }
+        #dcinside-filter-setting .dcuf-settings-header > div:first-child {
+            display: flex !important;
+            flex-wrap: wrap !important;
+            gap: 10px !important;
+            align-items: center !important;
+        }
+        #dcinside-filter-setting .dcuf-settings-header > div:first-child > div {
+            border-left: 0 !important;
+            padding-left: 0 !important;
         }
         #dcinside-filter-setting .dcuf-settings-body {
-            max-height: calc(92vh - 158px) !important;
-            overflow-y: auto !important;
-            padding-right: 4px !important;
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 10px !important;
+        }
+        #dcinside-filter-setting .dcuf-settings-body > hr {
+            display: none !important;
         }
         #dcinside-filter-setting .dcuf-settings-section {
-            background: #fbfcfe;
-            border: 1px solid #e2e8f0;
-            border-radius: 10px;
-            padding: 14px;
+            border: 1px solid #e5e9f1 !important;
+            background: #fbfcff !important;
+            border-radius: 10px !important;
+            padding: 12px !important;
         }
-        #dcinside-filter-setting .dcuf-settings-guest-controls {
-            background: #fff;
-            border: 1px solid #d9e0ea;
-            border-radius: 8px;
-            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.75);
+        #dcinside-filter-setting .dcuf-settings-threshold {
+            display: flex !important;
+            gap: 12px !important;
+            align-items: stretch !important;
+            justify-content: space-between !important;
+        }
+        #dcinside-filter-setting .dcuf-settings-threshold > div:first-child {
+            flex: 0 1 280px !important;
+            min-width: 0 !important;
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: center !important;
+            justify-content: center !important;
+            text-align: center !important;
+        }
+        #dcinside-filter-setting .dcuf-settings-threshold > div:first-child > h3 {
+            width: 100% !important;
+            text-align: center !important;
+        }
+        #dcinside-filter-setting .dcuf-settings-threshold > div:first-child > input {
+            margin: 0 auto !important;
+        }
+        #dcinside-filter-setting .dcuf-settings-threshold > div:first-child > div {
+            width: auto !important;
+            min-height: 0 !important;
+            max-width: 100% !important;
+            border: 0 !important;
+            background: transparent !important;
+            padding: 0 !important;
+            text-align: center !important;
+        }
+        #dcinside-filter-setting .dcuf-settings-threshold > div:last-child {
+            flex: 0 0 auto !important;
+            border: 0 !important;
+            border-radius: 10px !important;
+            background: #fff !important;
+            padding: 10px !important;
+            box-shadow: none !important;
+        }
+        #dcinside-filter-setting #dcinside-ratio-section > div:first-child {
+            display: grid !important;
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+            gap: 10px !important;
+            align-items: stretch !important;
+        }
+        #dcinside-filter-setting #dcinside-ratio-section > div:last-child {
+            text-align: center !important;
         }
         #dcinside-filter-setting #dcinside-threshold-input,
         #dcinside-filter-setting #dcinside-ratio-min,
         #dcinside-filter-setting #dcinside-ratio-max {
-            border: 1px solid #cbd5e1 !important;
+            min-height: 40px !important;
+            border: 1px solid #cfd7e6 !important;
             border-radius: 8px !important;
-            padding: 8px 10px !important;
+            padding: 6px 10px !important;
             box-sizing: border-box !important;
+            background: #fff !important;
+        }
+        #dcinside-filter-setting .dcuf-settings-footer {
+            margin-top: 11px !important;
+            padding-top: 11px !important;
+            border-top: 1px solid #e5e9f1 !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            gap: 10px !important;
         }
         #dcinside-filter-setting #dcinside-threshold-save {
-            min-width: 110px;
-            font-weight: 700;
+            background: #3b71fd !important;
+            color: #fff !important;
+            border: 1px solid #3b71fd !important;
+            border-radius: 9px !important;
+            min-height: 42px !important;
+            padding: 0 16px !important;
+            font-weight: 700 !important;
         }
-        #dcinside-filter-setting.dcuf-pop-leave {
-            opacity: 0 !important;
-            transform: translate(-50%, -48%) scale(0.985) !important;
-            transition: opacity 0.13s ease, transform 0.13s ease !important;
-            pointer-events: none !important;
-        }
-
-        body.dc-filter-dark-mode #dcinside-filter-setting,
-        body.dc-filter-dark-mode #dcinside-shortcut-modal {
-            background: #232a34 !important;
-            color: #e8edf7 !important;
-            border-color: #4b5b74 !important;
-            box-shadow: 0 24px 58px rgba(0, 0, 0, 0.44) !important;
-        }
-        body.dc-filter-dark-mode #dcinside-filter-setting .dcuf-settings-section {
-            background: #2c3440 !important;
-            border-color: #47556f !important;
-        }
-        body.dc-filter-dark-mode #dcinside-filter-setting .dcuf-settings-guest-controls {
-            background: #26303c !important;
-            border-color: #47556f !important;
-        }
-        body.dc-filter-dark-mode #dcinside-filter-setting div,
-        body.dc-filter-dark-mode #dcinside-filter-setting label,
-        body.dc-filter-dark-mode #dcinside-filter-setting h3,
-        body.dc-filter-dark-mode #dcinside-filter-setting b,
-        body.dc-filter-dark-mode #dcinside-filter-setting a,
-        body.dc-filter-dark-mode #dcinside-shortcut-modal h4,
-        body.dc-filter-dark-mode #dcinside-shortcut-modal div {
-            color: #e8edf7 !important;
-        }
-        body.dc-filter-dark-mode #dcinside-filter-setting #dcinside-threshold-input,
-        body.dc-filter-dark-mode #dcinside-filter-setting #dcinside-ratio-min,
-        body.dc-filter-dark-mode #dcinside-filter-setting #dcinside-ratio-max,
-        body.dc-filter-dark-mode #dcinside-shortcut-modal #dcinside-new-shortcut-preview {
-            background: #1d2430 !important;
-            color: #eef3ff !important;
-            border-color: #51617d !important;
-        }
-        body.dc-filter-dark-mode #dcinside-filter-setting #dcinside-proxy-ip-block-mode-group {
-            background: #1d2430 !important;
-            border-color: #51617d !important;
-        }
-        body.dc-filter-dark-mode #dcinside-filter-setting button,
-        body.dc-filter-dark-mode #dcinside-shortcut-modal button {
-            border-color: #5f6f89 !important;
-        }
-
-        @media (max-width: 760px) {
-            #dcinside-filter-setting {
-                min-width: auto !important;
-                width: min(96vw, 760px) !important;
-            }
-            #dcinside-filter-setting .dcuf-settings-threshold {
-                flex-direction: column !important;
-                align-items: stretch !important;
-            }
-            #dcinside-filter-setting #dcinside-ratio-section > div:first-child {
-                flex-direction: column !important;
-            }
-        }
-
-        #dc-personal-block-fab {
-            position: fixed;
-            right: 20px;
-            bottom: 20px;
-            z-index: 2147483640;
-            min-width: 84px !important;
-            height: 42px !important;
-            padding: 0 14px !important;
-            border-radius: 999px !important;
-            background: linear-gradient(180deg, #fbfcfe 0%, #f1f4f8 100%) !important;
-            color: #4d5e76 !important;
-            border: 1px solid #c7d2df !important;
-            box-shadow: 0 10px 24px rgba(43, 61, 96, 0.14) !important;
-            display: flex !important;
+        #dcinside-filter-setting #dcinside-filter-close,
+        #dc-backup-popup .popup-close-btn,
+        #dc-block-management-panel .panel-close-btn {
+            display: inline-flex !important;
             align-items: center !important;
             justify-content: center !important;
             text-align: center !important;
-            font-size: 15px !important;
-            font-weight: 800 !important;
-            letter-spacing: -0.03em !important;
+            padding: 0 !important;
             line-height: 1 !important;
-            white-space: nowrap !important;
-            cursor: pointer !important;
-            user-select: none !important;
-            transition: transform 0.18s ease-out, box-shadow 0.18s ease-out, border-color 0.18s ease-out, background-color 0.18s ease-out !important;
         }
-        #dc-personal-block-fab:hover {
-            background: linear-gradient(180deg, #ffffff 0%, #eef2f7 100%) !important;
-            border-color: #b6c2d1 !important;
-            box-shadow: 0 8px 18px rgba(36, 49, 72, 0.14) !important;
-        }
-        #dc-personal-block-fab:active {
-            transform: scale(0.97) !important;
-            cursor: grabbing !important;
+        #dcinside-filter-setting #dcinside-filter-close {
+            width: 30px !important;
+            height: 30px !important;
+            border-radius: 999px !important;
         }
 
-        #dc-selection-popup {
-            position: fixed !important;
-            top: 50% !important;
-            left: 50% !important;
-            transform: translate(-50%, -50%) !important;
-            z-index: 2147483641 !important;
-            background: #fff !important;
-            border: 1px solid #d7deea !important;
-            border-radius: 12px !important;
-            padding: 20px !important;
-            box-shadow: 0 14px 36px rgba(36, 49, 72, 0.18) !important;
-            min-width: 360px !important;
-            max-width: min(92vw, 520px) !important;
-            text-align: center !important;
-        }
-        #dc-selection-popup h4 {
-            margin: 0 0 20px 0 !important;
-            font-size: 18px !important;
-            font-weight: 600 !important;
-        }
-        #dc-selection-popup .block-options {
-            display: flex !important;
-            flex-direction: column !important;
-            gap: 10px !important;
-            margin-bottom: 20px !important;
-        }
-        #dc-selection-popup .block-option {
-            display: flex !important;
-            justify-content: space-between !important;
-            align-items: center !important;
-            background-color: #f8fbff !important;
-            border: 1px solid #e4e9f3 !important;
-            padding: 12px !important;
-            border-radius: 9px !important;
-            gap: 12px !important;
-        }
-        #dc-selection-popup .block-option span {
-            font-size: 15px !important;
-            color: #333 !important;
-            word-break: break-all !important;
-            margin-right: 15px !important;
-            text-align: left !important;
-        }
-        #dc-selection-popup .block-option button {
-            font-size: 14px !important;
-            padding: 6px 12px !important;
-            cursor: pointer !important;
-            border: none !important;
-            border-radius: 6px !important;
-            background-color: #4263eb !important;
-            color: #fff !important;
-            font-weight: 500 !important;
-        }
-        #dc-selection-popup .block-option button.btn-unblock {
-            background-color: #e03131 !important;
-        }
-        #dc-selection-popup .popup-buttons button {
-            width: 100% !important;
-            font-size: 16px !important;
-            padding: 10px !important;
-            cursor: pointer !important;
-            border: none !important;
-            border-radius: 8px !important;
-            background-color: #e9ecef !important;
-            color: #555 !important;
-        }
-        body.selection-mode-active .gall_writer,
-        body.selection-mode-active .ub-writer {
-            cursor: pointer !important;
-            outline: 2px dashed #4263eb !important;
-        }
-
-        #dc-block-management-panel-overlay,
-        #dc-backup-popup-overlay {
-            position: fixed !important;
-            top: 0 !important;
-            left: 0 !important;
-            width: 100% !important;
-            height: 100% !important;
-            background: rgba(0, 0, 0, 0.55) !important;
-            z-index: 2147483645 !important;
-            backdrop-filter: blur(2px) !important;
-        }
-        #dc-block-management-panel,
-        #dc-backup-popup {
-            touch-action: pan-x pan-y !important;
-        }
-        #dc-block-management-panel {
-            position: fixed !important;
-            top: 50% !important;
-            left: 50% !important;
-            transform: translate(-50%, -50%) !important;
-            background: #fff !important;
-            border: 1px solid #d9e1ef !important;
-            border-radius: 18px !important;
-            box-shadow: 0 18px 44px rgba(34, 51, 84, 0.18) !important;
-            z-index: 2147483646 !important;
-            display: flex !important;
-            flex-direction: column !important;
-            width: 400px !important;
-            height: 500px !important;
-            min-width: 350px !important;
-            min-height: 300px !important;
-            resize: both !important;
-            overflow: hidden !important;
-        }
         #dc-block-management-panel .panel-header {
-            display: flex !important;
-            align-items: center !important;
-            padding: 16px 18px 14px !important;
-            background: #fff !important;
-            border-bottom: 1px solid #e6ebf4 !important;
-            cursor: move !important;
-            user-select: none !important;
-        }
-        #dc-block-management-panel .panel-header h3 {
-            margin: 0 !important;
-            font-size: 16px !important;
+            background: #f3f6fc !important;
+            border-bottom: 1px solid #e3e8f2 !important;
+            padding: 12px 14px !important;
         }
         #dc-block-management-panel .panel-close-btn {
-            font-size: 20px !important;
-            cursor: pointer !important;
-            border: none !important;
-            background: none !important;
-            margin-left: auto !important;
+            width: 28px !important;
+            height: 28px !important;
+            border-radius: 999px !important;
+            color: #4b5563 !important;
+        }
+        #dc-block-management-panel .panel-close-btn:hover {
+            background: #e9eef8 !important;
         }
         #dc-block-management-panel .panel-tabs {
-            display: flex !important;
-            background: #fff !important;
-            border-bottom: 1px solid #e6ebf4 !important;
+            background: #f8faff !important;
+            border-bottom: 1px solid #e5e9f1 !important;
+            padding: 6px !important;
+            gap: 6px !important;
         }
         #dc-block-management-panel .panel-tab {
-            flex: 1 !important;
-            padding: 14px 8px !important;
-            text-align: center !important;
-            cursor: pointer !important;
-            border-right: 1px solid #e6ebf4 !important;
-            background: #fff !important;
-            color: #4b5563 !important;
+            border-right: 0 !important;
+            border-radius: 8px !important;
             font-weight: 600 !important;
+            color: #4b5563 !important;
+            padding: 10px 8px !important;
             position: relative !important;
         }
-        #dc-block-management-panel .panel-tab:last-child {
-            border-right: none !important;
-        }
         #dc-block-management-panel .panel-tab.active {
+            background: #eaf1ff !important;
             color: #1d4ed8 !important;
             font-weight: 700 !important;
         }
         #dc-block-management-panel .panel-tab.active::after {
-            content: '' !important;
-            position: absolute !important;
-            left: 16px !important;
-            right: 16px !important;
-            bottom: 8px !important;
-            height: 2px !important;
-            border-radius: 999px !important;
-            background: #3b71fd !important;
-        }
-        #dc-block-management-panel .panel-body {
-            flex-grow: 1 !important;
-            display: flex !important;
-            flex-direction: column !important;
-            overflow: hidden !important;
-            background: #fff !important;
-            padding: 0 12px 12px !important;
-        }
-        #dc-block-management-panel .panel-list-controls {
-            padding: 10px 0 12px !important;
-            text-align: left !important;
-            background: transparent !important;
+            content: '';
+            position: absolute;
+            left: 12px;
+            right: 12px;
+            bottom: 6px;
+            height: 2px;
+            border-radius: 999px;
+            background: #3b71fd;
         }
         #dc-block-management-panel .select-all-btn,
         #dc-block-management-panel .select-all-global-btn,
         #dc-block-management-panel .panel-backup-btn {
             min-height: 36px !important;
-            font-size: 13px !important;
-            padding: 4px 10px !important;
-            cursor: pointer !important;
             border: 1px solid #d4dbe8 !important;
-            background: #fff !important;
             border-radius: 8px !important;
-            margin-left: 5px !important;
+            background: #fff !important;
             color: #374151 !important;
             font-weight: 600 !important;
-            transition: background-color 0.14s ease, border-color 0.14s ease !important;
+            transition: background-color 0.14s ease, border-color 0.14s ease;
         }
         #dc-block-management-panel .select-all-btn:hover,
         #dc-block-management-panel .select-all-global-btn:hover,
@@ -1131,186 +1222,163 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             background: #f6f9ff !important;
             border-color: #b8c8ea !important;
         }
-        #dc-block-management-panel .panel-content {
-            flex-grow: 1 !important;
-            overflow-y: auto !important;
-            border: 1px solid #e6ebf4 !important;
-            border-radius: 14px !important;
-            background: #fff !important;
+        #dc-block-management-panel .panel-save-btn {
+            min-height: 38px !important;
+            border-radius: 9px !important;
+            padding: 0 18px !important;
+            font-weight: 700 !important;
+            box-shadow: 0 6px 16px rgba(59, 113, 253, 0.24) !important;
         }
         #dc-block-management-panel .blocked-list {
-            list-style: none !important;
-            margin: 0 !important;
-            padding: 6px 12px 12px !important;
+            padding: 6px 10px 12px !important;
         }
         #dc-block-management-panel .blocked-item {
-            display: flex !important;
-            justify-content: space-between !important;
-            align-items: center !important;
-            min-height: 52px !important;
-            padding: 12px 8px !important;
-            border-bottom: 1px solid #eef2f7 !important;
-            transition: background-color 0.14s ease, opacity 0.14s ease !important;
-            background: #fff !important;
+            min-height: 44px !important;
+            padding: 10px 8px !important;
+            border-bottom: 1px solid #edf1f7 !important;
+            transition: background-color 0.14s ease, opacity 0.14s ease;
         }
         #dc-block-management-panel .blocked-item:hover {
             background: #f6f9ff !important;
         }
         #dc-block-management-panel .blocked-item.item-to-delete {
-            text-decoration: line-through !important;
+            background: #fff5f6 !important;
             opacity: 0.5 !important;
         }
-        #dc-block-management-panel .item-name {
-            font-size: 14px !important;
-            word-break: break-all !important;
-        }
         #dc-block-management-panel .delete-item-btn {
-            cursor: pointer !important;
-            color: #e03131 !important;
-            font-weight: bold !important;
-            padding: 0 5px !important;
             display: inline-flex !important;
             align-items: center !important;
             justify-content: center !important;
             width: 24px !important;
             height: 24px !important;
             border-radius: 999px !important;
-            background: #fff0f2 !important;
-        }
-        #dc-block-management-panel .panel-footer {
-            display: flex !important;
-            justify-content: space-between !important;
-            align-items: center !important;
-            padding: 12px 14px !important;
-            border-top: 1px solid #e6ebf4 !important;
-            background: #fff !important;
-        }
-        #dc-block-management-panel .panel-footer-left {
-            display: flex !important;
-            align-items: center !important;
-        }
-        #dc-block-management-panel .panel-save-btn {
-            min-height: 38px !important;
-            padding: 0 18px !important;
+            background: #ffe9ec !important;
+            color: #e03131 !important;
             font-size: 14px !important;
-            font-weight: 700 !important;
-            background: #3b71fd !important;
-            color: #fff !important;
-            border: none !important;
-            border-radius: 9px !important;
-            cursor: pointer !important;
-            box-shadow: 0 6px 16px rgba(59, 113, 253, 0.24) !important;
+            line-height: 1 !important;
+            padding: 0 !important;
+            transition: background-color 0.14s ease;
         }
-        #dc-block-management-panel .panel-resize-handle {
-            position: absolute !important;
-            right: 0 !important;
-            bottom: 0 !important;
-            width: 15px !important;
-            height: 15px !important;
-            cursor: nwse-resize !important;
+        #dc-block-management-panel .delete-item-btn:hover {
+            background: #ffd4dc !important;
         }
 
         #dc-backup-popup {
-            position: fixed !important;
-            top: 50% !important;
-            left: 50% !important;
-            transform: translate(-50%, -50%) !important;
-            background: #fff !important;
-            border: 1px solid #d9e1ef !important;
-            border-radius: 18px !important;
-            box-shadow: 0 18px 44px rgba(34, 51, 84, 0.18) !important;
-            z-index: 2147483647 !important;
-            padding: 18px !important;
             min-width: 420px !important;
-            min-height: 320px !important;
-            width: min(92vw, 520px) !important;
-            overflow: hidden !important;
-            resize: both !important;
+            max-width: min(92vw, 560px) !important;
+            padding: 18px !important;
         }
         #dc-backup-popup .popup-header {
-            display: flex !important;
-            justify-content: space-between !important;
-            align-items: center !important;
-            margin-bottom: 16px !important;
-            padding: 0 4px 12px !important;
-            border-bottom: 1px solid #e6ebf4 !important;
-            background: #fff !important;
-        }
-        #dc-backup-popup .popup-header h4 {
-            margin: 0 !important;
-            font-size: 16px !important;
+            margin-bottom: 12px !important;
+            padding-bottom: 10px !important;
+            border-bottom: 1px solid #e5e9f1 !important;
         }
         #dc-backup-popup .popup-close-btn {
-            font-size: 20px !important;
-            background: none !important;
-            border: none !important;
-            cursor: pointer !important;
-            color: #888 !important;
+            width: 28px !important;
+            height: 28px !important;
+            border-radius: 999px !important;
         }
-        #dc-backup-popup .popup-content {
-            display: flex !important;
-            flex-direction: column !important;
-            gap: 22px !important;
-            max-height: calc(92vh - 96px) !important;
-            overflow-y: auto !important;
-            padding-right: 2px !important;
+        #dc-backup-popup .popup-close-btn:hover {
+            background: #eef3fb !important;
         }
-        #dc-backup-popup label {
-            font-size: 14px !important;
-            font-weight: bold !important;
-        }
-        #dc-backup-popup .description {
-            font-size: 12px !important;
-            color: #6b7280 !important;
-            line-height: 1.5 !important;
-        }
-        #dc-backup-popup .import-controls {
-            display: flex !important;
-            flex-direction: column !important;
-            gap: 8px !important;
-        }
-        #dc-backup-popup .import-file-input,
-        #dc-backup-popup textarea {
-            width: 100% !important;
-            box-sizing: border-box !important;
-            padding: 8px !important;
-            border: 1px solid #d2dae8 !important;
+        #dc-backup-popup .export-btn,
+        #dc-backup-popup .export-btn-download,
+        #dc-backup-popup .import-btn {
+            min-height: 40px !important;
             border-radius: 8px !important;
-            background: #fff !important;
-            color: #333 !important;
-        }
-        #dc-backup-popup textarea {
-            height: 100px !important;
-            resize: vertical !important;
-            font-size: 12px !important;
-            font-family: Consolas, "Courier New", monospace !important;
-        }
-        #dc-backup-popup button {
-            padding: 8px 12px !important;
-            border: none !important;
-            border-radius: 8px !important;
-            cursor: pointer !important;
             font-weight: 700 !important;
+            transition: background-color 0.14s ease, border-color 0.14s ease, color 0.14s ease !important;
         }
         #dc-backup-popup .export-btn {
-            background-color: #3b71fd !important;
-            color: #fff !important;
+            background: #3b71fd !important;
             border: 1px solid #3b71fd !important;
-            flex: 1 !important;
+            color: #fff !important;
+        }
+        #dc-backup-popup .export-btn:hover {
+            background: #2f63ea !important;
+            border-color: #2f63ea !important;
         }
         #dc-backup-popup .export-btn-download {
             background: #eef4ff !important;
             border: 1px solid #c8d8ff !important;
             color: #315fc2 !important;
         }
+        #dc-backup-popup .export-btn-download:hover {
+            background: #e2edff !important;
+            border-color: #b4cbff !important;
+        }
         #dc-backup-popup .import-btn {
-            background-color: #3b71fd !important;
-            color: #fff !important;
+            background: #3b71fd !important;
             border: 1px solid #3b71fd !important;
-            width: 100% !important;
-            margin-top: 8px !important;
+            color: #fff !important;
+            box-shadow: 0 6px 16px rgba(59, 113, 253, 0.22) !important;
+        }
+        #dc-backup-popup .import-btn:hover {
+            background: #2f63ea !important;
+            border-color: #2f63ea !important;
+        }
+        #dc-backup-popup .import-file-input,
+        #dc-backup-popup textarea {
+            border: 1px solid #d2dae8 !important;
+            border-radius: 8px !important;
+            background: #fff !important;
         }
 
+        #dcinside-filter-setting,
+        #dc-backup-popup,
+        #dc-block-management-panel {
+            touch-action: pan-x pan-y !important;
+        }
+
+        #dcinside-filter-setting,
+        #dc-backup-popup {
+            overflow: hidden !important;
+            resize: both !important;
+        }
+        #dcinside-filter-setting {
+            min-height: 360px !important;
+        }
+        #dc-backup-popup {
+            min-height: 320px !important;
+        }
+
+        #dcinside-filter-setting .dcuf-settings-body {
+            max-height: calc(92vh - 156px) !important;
+            overflow-y: auto !important;
+            padding-right: 2px !important;
+        }
+
+        #dc-backup-popup .popup-content {
+            max-height: calc(92vh - 96px) !important;
+            overflow-y: auto !important;
+            padding-right: 2px !important;
+        }
+
+
+        #dc-selection-popup {
+            min-width: 360px !important;
+            max-width: min(92vw, 520px) !important;
+            padding: 18px !important;
+        }
+        #dc-selection-popup .block-option {
+            border: 1px solid #e4e9f3 !important;
+            background: #f8fbff !important;
+            border-radius: 9px !important;
+        }
+
+        #dc-block-management-panel-overlay,
+        #dc-backup-popup-overlay {
+            backdrop-filter: blur(2px);
+        }
+
+        @keyframes dcuf-popup-center-in {
+            from { opacity: 0; transform: translate(-50%, -48%) scale(0.985); }
+            to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        }
+        @keyframes dcuf-popup-fade-in {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
         @keyframes dcuf-popup-out {
             from { opacity: 1; }
             to { opacity: 0; }
@@ -1319,6 +1387,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             from { opacity: 1; }
             to { opacity: 0; }
         }
+        #dcinside-filter-setting.dcuf-pop-leave,
         #dc-selection-popup.dcuf-pop-leave,
         #dc-backup-popup.dcuf-pop-leave,
         #dc-block-management-panel.dcuf-pop-leave {
@@ -1331,27 +1400,67 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             pointer-events: none !important;
         }
 
-        body.dc-filter-dark-mode #dc-personal-block-fab {
-            background: linear-gradient(180deg, #313948 0%, #242b36 100%) !important;
-            color: #e6eefc !important;
-            border-color: #50617d !important;
-            box-shadow: 0 10px 24px rgba(0, 0, 0, 0.32) !important;
+        @media (max-width: 640px) {
+            #dcinside-filter-setting { min-width: auto !important; width: min(96vw, 640px) !important; }
+            #dcinside-filter-setting #dcinside-ratio-section > div:first-child {
+                grid-template-columns: 1fr !important;
+            }
+            #dc-block-management-panel { min-width: min(96vw, 520px) !important; }
+            #dc-backup-popup { min-width: auto !important; width: min(96vw, 560px) !important; }
         }
+
+        @media (prefers-reduced-motion: reduce) {
+            #dcinside-filter-setting,
+            #dc-selection-popup,
+            #dc-backup-popup,
+            #dc-block-management-panel,
+            #dcinside-filter-setting.dcuf-pop-leave,
+            #dc-selection-popup.dcuf-pop-leave,
+            #dc-backup-popup.dcuf-pop-leave,
+            #dc-block-management-panel.dcuf-pop-leave,
+            #dc-block-management-panel-overlay.dcuf-overlay-leave,
+            #dc-backup-popup-overlay.dcuf-overlay-leave {
+                animation: none !important;
+                transition: none !important;
+            }
+        }
+
+/* 5. 스크립트 팝업창 전체 다크 테마 */
+        body.dc-filter-dark-mode #dcinside-filter-setting,
         body.dc-filter-dark-mode #dc-selection-popup,
         body.dc-filter-dark-mode #dc-block-management-panel,
-        body.dc-filter-dark-mode #dc-backup-popup {
+        body.dc-filter-dark-mode #dc-backup-popup,
+        body.dc-filter-dark-mode #dcinside-shortcut-modal {
             background-color: #2d2d2d !important;
             color: #e0e0e0 !important;
             border-color: #555 !important;
-            box-shadow: 0 0 15px rgba(0, 0, 0, 0.7) !important;
+            box-shadow: 0 0 15px rgba(0,0,0,0.7) !important;
         }
-        body.dc-filter-dark-mode #dc-selection-popup .block-option,
+
+        /* 팝업 내부 요소들 */
+        body.dc-filter-dark-mode #dc-block-management-panel .panel-tabs {
+            background: #252525 !important;
+            border-color: #4a4a4a !important;
+        }
+        body.dc-filter-dark-mode #dcinside-filter-setting .dcuf-settings-header,
+        body.dc-filter-dark-mode #dcinside-filter-setting .dcuf-settings-footer,
+        body.dc-filter-dark-mode #dc-backup-popup .popup-header,
+        body.dc-filter-dark-mode #dc-block-management-panel .panel-header,
+        body.dc-filter-dark-mode #dc-block-management-panel .panel-footer {
+            background: transparent !important;
+            border-color: #4a4a4a !important;
+        }
+        body.dc-filter-dark-mode #dcinside-filter-setting hr,
+        body.dc-filter-dark-mode #dc-block-management-panel .panel-tab {
+            border-color: #4a4a4a !important;
+        }
         body.dc-filter-dark-mode #dc-block-management-panel .panel-body,
-        body.dc-filter-dark-mode #dc-block-management-panel .panel-content,
-        body.dc-filter-dark-mode #dc-block-management-panel .blocked-item {
-            background: #252b36 !important;
-            border-color: #46506a !important;
+        body.dc-filter-dark-mode #dc-selection-popup .block-option {
+            background: #3a3a3c !important;
         }
+        body.dc-filter-dark-mode #dcinside-filter-setting div,
+        body.dc-filter-dark-mode #dcinside-filter-setting label,
+        body.dc-filter-dark-mode #dcinside-filter-setting h3,
         body.dc-filter-dark-mode #dc-selection-popup h4,
         body.dc-filter-dark-mode #dc-selection-popup .block-option span,
         body.dc-filter-dark-mode #dc-backup-popup .description,
@@ -1359,38 +1468,84 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         body.dc-filter-dark-mode #dc-block-management-panel .item-name {
             color: #e0e0e0 !important;
         }
-        body.dc-filter-dark-mode #dc-block-management-panel .panel-header,
-        body.dc-filter-dark-mode #dc-block-management-panel .panel-footer,
-        body.dc-filter-dark-mode #dc-block-management-panel .panel-tabs,
-        body.dc-filter-dark-mode #dc-backup-popup .popup-header {
-            background: transparent !important;
-            border-color: #4a556b !important;
-        }
-        body.dc-filter-dark-mode #dc-block-management-panel .panel-tab {
-            background: transparent !important;
-            border-right-color: #46506a !important;
-            color: #dbe6f5 !important;
+        body.dc-filter-dark-mode #dcinside-filter-setting input[type="number"],
+        body.dc-filter-dark-mode #dc-backup-popup textarea {
+            background-color: #1e1e1e !important;
+            color: #f0f0f0 !important;
+            border: 1px solid #666 !important;
         }
         body.dc-filter-dark-mode #dc-block-management-panel .panel-tab.active {
-            color: #8db2ff !important;
+            background: #007bff !important; /* 활성 탭은 색상 유지 */
         }
-        body.dc-filter-dark-mode #dc-block-management-panel .select-all-btn,
-        body.dc-filter-dark-mode #dc-block-management-panel .select-all-global-btn,
-        body.dc-filter-dark-mode #dc-block-management-panel .panel-backup-btn {
-            background-color: #555 !important;
+
+        /* 버튼 배경 문제 해결 (필요한 버튼만 개별 적용) */
+        body.dc-filter-dark-mode #dcinside-filter-setting button,
+        body.dc-filter-dark-mode #dc-selection-popup button,
+        body.dc-filter-dark-mode #dc-block-management-panel button,
+        body.dc-filter-dark-mode #dc-backup-popup button,
+        body.dc-filter-dark-mode #dcinside-shortcut-modal button {
+             background-color: #555 !important;
+             color: #fff !important;
+             border-color: #777 !important;
+        }
+
+        body.dc-filter-dark-mode #dcinside-filter-setting,
+        body.dc-filter-dark-mode #dc-selection-popup,
+        body.dc-filter-dark-mode #dc-backup-popup,
+        body.dc-filter-dark-mode #dc-block-management-panel {
+            border-color: #445066 !important;
+            box-shadow: 0 18px 44px rgba(0, 0, 0, 0.45) !important;
+        }
+        body.dc-filter-dark-mode #dcinside-filter-setting .dcuf-settings-section,
+        body.dc-filter-dark-mode #dc-selection-popup .block-option {
+            background: #323845 !important;
+            border-color: #434f66 !important;
+        }
+        body.dc-filter-dark-mode #dcinside-filter-setting .dcuf-settings-threshold > div:last-child,
+        body.dc-filter-dark-mode #dcinside-filter-setting .dcuf-settings-guest-controls {
+            background: #2b313d !important;
+            border-color: #47556f !important;
+            box-shadow: none !important;
+        }
+        body.dc-filter-dark-mode #dcinside-filter-setting .dcuf-settings-guest-controls [style*="border-bottom"] {
+            border-bottom-color: #47556f !important;
+        }
+        body.dc-filter-dark-mode #dcinside-filter-setting .dcuf-settings-guest-controls [style*="color:#666"],
+        body.dc-filter-dark-mode #dcinside-filter-setting .dcuf-settings-guest-controls .dcuf-proxy-mode-desc {
+            color: #9fb0c8 !important;
+        }
+        body.dc-filter-dark-mode #dcinside-filter-setting #dcinside-proxy-ip-block-mode-group {
+            background: #252b36 !important;
+            border-color: #47556f !important;
+        }
+        body.dc-filter-dark-mode #dcinside-filter-setting #dcinside-proxy-ip-block-mode-group button[data-proxy-mode] {
+            background: transparent !important;
+            color: #dbe6f5 !important;
+            border-color: transparent !important;
+        }
+        body.dc-filter-dark-mode #dcinside-filter-setting #dcinside-proxy-ip-block-mode-group button[data-proxy-mode][aria-pressed="true"] {
+            background: #3b71fd !important;
             color: #fff !important;
-            border-color: #777 !important;
         }
-        body.dc-filter-dark-mode #dc-backup-popup .export-btn-download {
-            background: #2d3950 !important;
-            border-color: #4b5f83 !important;
-            color: #dbe6ff !important;
-        }
+        body.dc-filter-dark-mode #dcinside-filter-setting #dcinside-threshold-input,
+        body.dc-filter-dark-mode #dcinside-filter-setting #dcinside-ratio-min,
+        body.dc-filter-dark-mode #dcinside-filter-setting #dcinside-ratio-max,
         body.dc-filter-dark-mode #dc-backup-popup .import-file-input,
         body.dc-filter-dark-mode #dc-backup-popup textarea {
             background: #252b36 !important;
             border-color: #47556f !important;
             color: #eef3ff !important;
+        }
+        body.dc-filter-dark-mode #dc-block-management-panel .panel-tab.active {
+            background: #253556 !important;
+            color: #8db2ff !important;
+        }
+        body.dc-filter-dark-mode #dc-block-management-panel .blocked-item:hover {
+            background: #2f394b !important;
+        }
+        body.dc-filter-dark-mode #dc-block-management-panel .delete-item-btn {
+            background: #53313a !important;
+            color: #ff9fb1 !important;
         }
     `);
 const FilterModule = {
@@ -1407,7 +1562,7 @@ const FilterModule = {
         DEBUG_MAX_DECISIONS_PER_PASS: 150,
         DEBUG_PASS_ID: 0,
         DEBUG_DECISION_LOG_COUNT: 0,
-        DEBUG_DECISION_KEYS: new Set(),
+        DEBUG_DECISION_KEYS: null,
         _runtimeMutationUnsubscribe: null,
         _userSumTaskQueue: null,
         _queuedObserverFilterItems: null,
@@ -1554,6 +1709,7 @@ const FilterModule = {
             if (!this.DEBUG_ENABLED) return;
             this.DEBUG_PASS_ID += 1;
             this.DEBUG_DECISION_LOG_COUNT = 0;
+            if (!(this.DEBUG_DECISION_KEYS instanceof Set)) this.DEBUG_DECISION_KEYS = new Set();
             this.DEBUG_DECISION_KEYS.clear();
             this.debugLog('pass', `start #${this.DEBUG_PASS_ID} ${reason}`, {
                 passId: this.DEBUG_PASS_ID,
@@ -1563,6 +1719,7 @@ const FilterModule = {
         },
         debugDecision(element, payload) {
             if (!this.DEBUG_ENABLED) return;
+            if (!(this.DEBUG_DECISION_KEYS instanceof Set)) this.DEBUG_DECISION_KEYS = new Set();
             const reasons = Array.isArray(payload.reasons) ? payload.reasons.filter(Boolean) : [];
             const identity = [
                 this.DEBUG_PASS_ID,
@@ -1604,6 +1761,7 @@ const FilterModule = {
             });
         },
         async debugDumpState(reason = 'manual') {
+            if (!this.DEBUG_ENABLED) return null;
             await this.reloadSettings();
             const rawBlockConfig = await GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG, {});
             const payload = this.debugSettingsSnapshot({
@@ -1899,7 +2057,6 @@ const FilterModule = {
                 ];
                 if (!blockGuestChecked) promises.push(this.clearBlockedGuests()); try {
                     await Promise.all(promises);
-                    await this.reloadSettings();
                     await this.debugDumpState('save button before refilter');
                     await this.refilterAllContent('save button');
                     closeSettingsPanel();
@@ -2038,10 +2195,28 @@ const FilterModule = {
             if (this.isFilterTargetDescriptor(target)) return target;
             return this.describeFilterTarget(target);
         },
+        isReplyOnlyCommentWrapper(element) {
+            if (!(element instanceof HTMLElement)) return false;
+            if (!this.isCommentListItem(element)) return false;
+            return Boolean(element.querySelector(':scope > div.reply.show'))
+                && !element.querySelector(':scope > div.cmt_info');
+        },
+        findWriterInfoForFilterTarget(element) {
+            if (!(element instanceof HTMLElement)) return null;
+            const directCommentWriter = element.querySelector(':scope > div.cmt_info .ub-writer');
+            if (directCommentWriter instanceof HTMLElement) return directCommentWriter;
+
+            const directReplyWriter = element.querySelector(':scope > div.reply_info .ub-writer');
+            if (directReplyWriter instanceof HTMLElement) return directReplyWriter;
+
+            if (this.isCommentListItem(element)) return null;
+            return element.querySelector(this.CONSTANTS.SELECTORS.WRITER_INFO);
+        },
         describeFilterTarget(element) {
             if (!(element instanceof HTMLElement)) return null;
+            if (this.isReplyOnlyCommentWrapper(element)) return null;
 
-            const writerInfo = element.querySelector(this.CONSTANTS.SELECTORS.WRITER_INFO);
+            const writerInfo = this.findWriterInfoForFilterTarget(element);
             const uid = writerInfo?.getAttribute('data-uid') || null;
             const nickname = writerInfo?.getAttribute('data-nick') || null;
             const writerDataIp = writerInfo?.getAttribute('data-ip') || null;
@@ -2084,7 +2259,14 @@ const FilterModule = {
             descriptors.forEach((descriptor) => {
                 const element = descriptor?.element;
                 if (!(element instanceof HTMLElement)) return;
-                if (resetDisplay && !dcFilterSettings.masterDisabled) element.style.display = '';
+                if (resetDisplay && !dcFilterSettings.masterDisabled) {
+                    // Comment items can already be hidden by async UID blocking.
+                    // Clearing display before the next sync decision makes blocked comments briefly flash back in
+                    // until a later async/stabilized pass hides them again, so preserve current visibility here.
+                    if (!this.isCommentListItem(element)) {
+                        element.style.display = '';
+                    }
+                }
                 this.applySyncBlock(descriptor);
             });
         },
@@ -2134,6 +2316,30 @@ const FilterModule = {
         },
         getRuntimeCoordinator() {
             return window.__dcufRuntimeCoordinator || null;
+        },
+        incrementRuntimeDiagnostic(label, amount = 1) {
+            const runtimeCoordinator = this.getRuntimeCoordinator();
+            if (typeof runtimeCoordinator?.incrementDiagnostic === 'function') {
+                runtimeCoordinator.incrementDiagnostic(label, amount);
+            }
+        },
+        setRuntimeDiagnosticGauge(label, value) {
+            const runtimeCoordinator = this.getRuntimeCoordinator();
+            if (typeof runtimeCoordinator?.setDiagnosticGauge === 'function') {
+                runtimeCoordinator.setDiagnosticGauge(label, value);
+            }
+        },
+        getRelevantMutationGeneration(scope = 'all') {
+            if (scope === 'comments') return Number(this._commentRelevantMutationGeneration) || 0;
+            return Number(this._filterRelevantMutationGeneration) || 0;
+        },
+        markRelevantMutation(scope = 'all') {
+            this._filterRelevantMutationGeneration = (Number(this._filterRelevantMutationGeneration) || 0) + 1;
+            if (scope === 'comments') {
+                this._commentRelevantMutationGeneration = (Number(this._commentRelevantMutationGeneration) || 0) + 1;
+            }
+            this.setRuntimeDiagnosticGauge('filter.relevantGeneration', this._filterRelevantMutationGeneration);
+            this.setRuntimeDiagnosticGauge('filter.commentRelevantGeneration', Number(this._commentRelevantMutationGeneration) || 0);
         },
         getUserSumTaskQueue() {
             if (this._userSumTaskQueue) return this._userSumTaskQueue;
@@ -2246,53 +2452,38 @@ const FilterModule = {
         isUserBlocked({ sum, post, comment }) {
             return DCUF_SHARED_FILTER_CORE.evaluateUserStatsBlock({ sum, post, comment }, dcFilterSettings);
         },
+        isUserStatsFilterActive(settings = dcFilterSettings) {
+            if (!settings || settings.masterDisabled) return false;
+
+            const threshold = Number(settings.threshold);
+            if (Number.isFinite(threshold) && threshold > 0) return true;
+            if (!settings.ratioEnabled) return false;
+
+            return [settings.ratioMin, settings.ratioMax].some((value) => {
+                const numeric = Number(value);
+                return Number.isFinite(numeric) && numeric > 0;
+            });
+        },
         isCommentListItem(element) {
             return element instanceof HTMLElement && !!element.closest(this.CONSTANTS.SELECTORS.COMMENT_CONTAINER);
         },
-        isParentCommentListItem(element) {
-            return this.isCommentListItem(element) && /^comment_li_/.test(element.id || '');
-        },
-        isReplyCommentListItem(element) {
-            return this.isCommentListItem(element) && /^reply_li_/.test(element.id || '');
-        },
-        hasReplyChildren(element) {
-            return element instanceof HTMLElement && !!element.querySelector(':scope > div.reply.show .reply_list > li');
-        },
-        syncFilteredParentCommentVisibility(parentElement) {
-            if (!(parentElement instanceof HTMLElement)) return;
-            if (parentElement.getAttribute('data-dcuf-parent-filtered') !== '1') return;
-            const replyItems = parentElement.querySelectorAll(':scope > div.reply.show .reply_list > li');
-            const hasVisibleReply = Array.from(replyItems).some(li => li.style.display !== 'none');
-            const nextDisplay = hasVisibleReply ? '' : 'none';
-            if (parentElement.style.display !== nextDisplay) parentElement.style.display = nextDisplay;
-        },
-        updateParentVisibilityFromReply(replyElement) {
-            if (!this.isReplyCommentListItem(replyElement)) return;
-            const parentElement = replyElement.closest('li[id^="comment_li_"]');
-            this.syncFilteredParentCommentVisibility(parentElement);
-        },
         setElementVisibility(element, shouldHide) {
             if (!(element instanceof HTMLElement)) return;
-            const isolateParentOnly = shouldHide && this.isParentCommentListItem(element);
-            if (isolateParentOnly) {
-                if (element.getAttribute('data-dcuf-parent-filtered') !== '1') {
-                    element.setAttribute('data-dcuf-parent-filtered', '1');
-                }
-                if (!element.classList.contains('dcuf-parent-comment-filtered')) {
-                    element.classList.add('dcuf-parent-comment-filtered');
-                }
-                this.syncFilteredParentCommentVisibility(element);
-                return;
-            }
             if (element.hasAttribute('data-dcuf-parent-filtered')) {
                 element.removeAttribute('data-dcuf-parent-filtered');
+            }
+            if (element.hasAttribute('data-dcuf-parent-placeholder')) {
+                element.removeAttribute('data-dcuf-parent-placeholder');
             }
             if (element.classList.contains('dcuf-parent-comment-filtered')) {
                 element.classList.remove('dcuf-parent-comment-filtered');
             }
+            if (this.isCommentListItem(element)) {
+                const stalePlaceholder = element.querySelector(':scope > .dcuf-comment-placeholder');
+                if (stalePlaceholder instanceof HTMLElement) stalePlaceholder.remove();
+            }
             const nextDisplay = shouldHide ? 'none' : '';
             if (element.style.display !== nextDisplay) element.style.display = nextDisplay;
-            this.updateParentVisibilityFromReply(element);
         },
         async applyBlockFilterToElement(element, uid, userData, addBlockedUidFn) {
             if (!userData) return;
@@ -2312,6 +2503,7 @@ const FilterModule = {
 
             const { element, writerInfo, uid, isNotice, shouldSkipFiltering } = descriptor;
             if (isNotice || shouldSkipFiltering) return;
+            if (!this.isUserStatsFilterActive()) return;
 
             try {
                 if (element.style.display === 'none') return;
@@ -2363,7 +2555,7 @@ const FilterModule = {
                 shouldSkipFiltering,
                 hasBlockDisableClass
             };
-            const baseDebug = {
+            const baseDebug = this.DEBUG_ENABLED ? {
                 branch: 'sync-base',
                 uid,
                 nickname,
@@ -2376,7 +2568,7 @@ const FilterModule = {
                 proxyBlockMode: normalizedProxyBlockMode,
                 proxyBlockEnabled,
                 telecomBlockEnabled
-            };
+            } : null;
 
             const proxyMatchInfo = this.getProxyPrefixMatch(ipPrefix, normalizedProxyBlockMode);
             const telecomPrefixSet = telecomBlockEnabled && ipPrefix ? this.getTelecomPrefixSet() : null;
@@ -2405,32 +2597,65 @@ const FilterModule = {
                     telecomPrefixMatch: Boolean(ipPrefix && telecomPrefixSet && telecomPrefixSet.has(ipPrefix)),
                     blockedGuestMatch: Boolean(ip && (blockedGuestSet instanceof Set ? blockedGuestSet.has(ip) : blockedGuests.includes(ip)))
                 },
-                blockedUidEntry: uid ? this.BLOCKED_UIDS_CACHE[uid] : null
+                blockedUidEntry: uid ? (this.BLOCKED_UIDS_CACHE[uid] || userSumCache[uid] || null) : null
             });
+            const allowPersonalBlockReveal = Boolean(this._syncPassOptions?.allowPersonalBlockReveal);
+            const wasPersonallyBlocked = element.getAttribute('data-dcuf-personal-blocked') === '1';
 
-            this.debugDecision(element, {
-                ...baseDebug,
-                branch: decision.path || 'sync-final',
-                isBlocked: decision.isBlocked,
-                reasons: decision.reasons,
-                blockedGuestsCount: blockedGuestSet instanceof Set ? blockedGuestSet.size : blockedGuests.length,
-                customIpPrefixCount: customIpPrefixSet instanceof Set ? customIpPrefixSet.size : 0,
-                hasCustomIpPrefixBlock: decision.hasCustomIpPrefixBlock,
-                proxyPrefixMatch: decision.proxyPrefixMatch,
-                proxyMatchTier: decision.proxyMatchTier,
-                telecomPrefixMatch: decision.telecomPrefixMatch,
-                blockedGuestMatch: decision.blockedGuestMatch
-            });
+            if (decision.path === 'personal-block') {
+                element.setAttribute('data-dcuf-personal-blocked', '1');
+            } else if (decision.isBlocked) {
+                element.removeAttribute('data-dcuf-personal-blocked');
+            } else if (wasPersonallyBlocked && this.isCommentListItem(element) && !allowPersonalBlockReveal) {
+                // Reply-merge / comment-stabilization passes can temporarily rebuild comment UI in a
+                // state where personal-block metadata is not reliable yet. Keep already personal-blocked
+                // comments hidden until a full refilter with refreshed settings explicitly reveals them.
+                if (this.DEBUG_ENABLED) {
+                    this.debugDecision(element, {
+                        ...baseDebug,
+                        branch: 'personal-block-hold',
+                        isBlocked: true,
+                        reasons: ['personalBlock-hold']
+                    });
+                }
+                this.setElementVisibility(element, true);
+                return;
+            } else {
+                element.removeAttribute('data-dcuf-personal-blocked');
+            }
+
+            if (this.DEBUG_ENABLED) {
+                this.debugDecision(element, {
+                    ...baseDebug,
+                    branch: decision.path || 'sync-final',
+                    isBlocked: decision.isBlocked,
+                    reasons: decision.reasons,
+                    blockedGuestsCount: blockedGuestSet instanceof Set ? blockedGuestSet.size : blockedGuests.length,
+                    customIpPrefixCount: customIpPrefixSet instanceof Set ? customIpPrefixSet.size : 0,
+                    hasCustomIpPrefixBlock: decision.hasCustomIpPrefixBlock,
+                    proxyPrefixMatch: decision.proxyPrefixMatch,
+                    proxyMatchTier: decision.proxyMatchTier,
+                    telecomPrefixMatch: decision.telecomPrefixMatch,
+                    blockedGuestMatch: decision.blockedGuestMatch
+                });
+            }
             this.setElementVisibility(element, decision.isBlocked);
         },
         initializeUniversalObserver() {
-            const targets = [{ c: this.CONSTANTS.SELECTORS.POST_LIST_CONTAINER, i: this.CONSTANTS.SELECTORS.POST_ITEM }, { c: this.CONSTANTS.SELECTORS.COMMENT_CONTAINER, i: this.CONSTANTS.SELECTORS.COMMENT_ITEM }, { c: this.CONSTANTS.SELECTORS.POST_VIEW_LIST_CONTAINER, i: 'li' }];
+            const targets = [
+                { c: this.CONSTANTS.SELECTORS.POST_LIST_CONTAINER, i: this.CONSTANTS.SELECTORS.POST_ITEM, scope: 'posts' },
+                { c: this.CONSTANTS.SELECTORS.COMMENT_CONTAINER, i: this.CONSTANTS.SELECTORS.COMMENT_ITEM, scope: 'comments' },
+                { c: this.CONSTANTS.SELECTORS.POST_VIEW_LIST_CONTAINER, i: 'li', scope: 'posts' }
+            ];
             const filterItems = (items) => this.applyFilterItems(items);
             const queueFilterItems = (items) => this.queueObservedFilterItems(items);
-            const attachObserver = (container, itemSelector) => {
+            const runtimeCoordinator = this.getRuntimeCoordinator();
+            const hasRuntimeMutationBus = runtimeCoordinator && typeof runtimeCoordinator.subscribeMutations === 'function';
+            const attachObserver = (container, itemSelector, { attachDomObserver = true } = {}) => {
                 if (container.hasAttribute(this.CONSTANTS.CUSTOM_ATTRS.OBSERVER_ATTACHED)) return;
                 container.setAttribute(this.CONSTANTS.CUSTOM_ATTRS.OBSERVER_ATTACHED, 'true');
                 filterItems(Array.from(container.querySelectorAll(itemSelector)));
+                if (!attachDomObserver) return;
                 // [디버깅 추가]
                 new MutationObserver(mutations => {
                     const newItems = [];
@@ -2441,15 +2666,24 @@ const FilterModule = {
                     if (newItems.length > 0) queueFilterItems(newItems);
                 }).observe(container, { childList: true, subtree: true });
             };
-            targets.forEach(t => document.querySelectorAll(t.c).forEach(c => attachObserver(c, t.i)));
+            targets.forEach(t => document.querySelectorAll(t.c).forEach(c => attachObserver(c, t.i, { attachDomObserver: !hasRuntimeMutationBus })));
 
-            const runtimeCoordinator = this.getRuntimeCoordinator();
-            if (runtimeCoordinator && typeof runtimeCoordinator.subscribeMutations === 'function') {
+            if (hasRuntimeMutationBus) {
                 if (typeof this._runtimeMutationUnsubscribe === 'function') this._runtimeMutationUnsubscribe();
                 this._runtimeMutationUnsubscribe = runtimeCoordinator.subscribeMutations('filter-universal-observer', (payload) => {
+                    let hasRelevantMutation = false;
+                    let hasCommentMutation = false;
                     targets.forEach((target) => {
-                        payload.collectMatches(target.c).forEach((container) => attachObserver(container, target.i));
+                        const changedContainers = payload.collectMatches(target.c);
+                        changedContainers.forEach((container) => attachObserver(container, target.i, { attachDomObserver: false }));
+                        const changedItems = payload.collectMatches(target.i, { includeRoots: true }).filter((item) => item.closest?.(target.c));
+                        if (changedContainers.length > 0 || changedItems.length > 0) {
+                            hasRelevantMutation = true;
+                            if (target.scope === 'comments') hasCommentMutation = true;
+                        }
+                        if (changedItems.length > 0) queueFilterItems(changedItems);
                     });
+                    if (hasRelevantMutation) this.markRelevantMutation(hasCommentMutation ? 'comments' : 'all');
                 });
                 return;
             }
@@ -2462,7 +2696,10 @@ const FilterModule = {
                         return;
                     }
                     if (n.nodeType === 1 && !n.closest('.user_data')) {
-                        targets.forEach(t => { if (n.matches(t.c)) attachObserver(n, t.i); else if (n.querySelectorAll) n.querySelectorAll(t.c).forEach(c => attachObserver(c, t.i)); });
+                        targets.forEach(t => {
+                            if (n.matches(t.c)) attachObserver(n, t.i);
+                            else if (n.querySelectorAll) n.querySelectorAll(t.c).forEach(c => attachObserver(c, t.i));
+                        });
                     }
                 }));
             });
@@ -2526,10 +2763,12 @@ const FilterModule = {
                 personalBlockIpSet,
                 personalBlockEnabled
             };
-            this.debugLog('settings', 'reloadSettings complete', this.debugSettingsSnapshot({
-                rawBlockConfigIp: typeof blockConfig?.ip === 'string' ? blockConfig.ip : '',
-                rawBlockConfigPreview: typeof blockConfig?.ip === 'string' ? blockConfig.ip.split('||').slice(0, 20) : []
-            }));
+            if (this.DEBUG_ENABLED) {
+                this.debugLog('settings', 'reloadSettings complete', this.debugSettingsSnapshot({
+                    rawBlockConfigIp: typeof blockConfig?.ip === 'string' ? blockConfig.ip : '',
+                    rawBlockConfigPreview: typeof blockConfig?.ip === 'string' ? blockConfig.ip.split('||').slice(0, 20) : []
+                }));
+            }
         },
         getRefilterTargetSelectors(scope = 'all') {
             const commentSelectors = [
@@ -2572,9 +2811,23 @@ const FilterModule = {
                 return descriptors;
             }, []);
         },
-        runSyncRefilterPass(scope = 'all', root = document, descriptors = null) {
+        runSyncRefilterPass(scope = 'all', root = document, descriptors = null, options = null) {
+            const runtimeCoordinator = this.getRuntimeCoordinator();
+            const measureDuration = Boolean(runtimeCoordinator?._diagnosticsEnabled) && typeof performance?.now === 'function';
+            const startedAt = measureDuration ? performance.now() : 0;
             const targetDescriptors = Array.isArray(descriptors) ? descriptors : this.getRefilterTargets(scope, root);
-            this.applySyncToDescriptors(targetDescriptors, { resetDisplay: true });
+            const previousSyncPassOptions = this._syncPassOptions;
+            this._syncPassOptions = options && typeof options === 'object' ? options : null;
+            try {
+                this.applySyncToDescriptors(targetDescriptors, { resetDisplay: true });
+            } finally {
+                this._syncPassOptions = previousSyncPassOptions;
+            }
+            this.incrementRuntimeDiagnostic(`filter.syncPass.${scope}.runs`);
+            this.setRuntimeDiagnosticGauge(`filter.syncPass.${scope}.lastTargetCount`, targetDescriptors.length);
+            if (measureDuration) {
+                this.setRuntimeDiagnosticGauge(`filter.syncPass.${scope}.lastDurationMs`, Math.round((performance.now() - startedAt) * 1000) / 1000);
+            }
             return targetDescriptors;
         },
         scheduleSyncRefilterPasses(scope = 'all', root = document) {
@@ -2583,15 +2836,27 @@ const FilterModule = {
             this._syncRefilterTimerIds.forEach((timerId) => clearTimeout(timerId));
             this._syncRefilterTimerIds.clear();
 
-            const rerun = () => this.runSyncRefilterPass(scope, root);
+            const runtimeCoordinator = this.getRuntimeCoordinator();
+            const hasRuntimeMutationBus = Boolean(runtimeCoordinator && typeof runtimeCoordinator.subscribeMutations === 'function');
+            let lastGeneration = this.getRelevantMutationGeneration(scope);
+            const rerun = (phase, { force = false } = {}) => {
+                const generation = this.getRelevantMutationGeneration(scope);
+                if (!force && hasRuntimeMutationBus && generation === lastGeneration) {
+                    this.incrementRuntimeDiagnostic(`filter.syncPass.${scope}.skippedUnchanged`);
+                    return;
+                }
+                this.runSyncRefilterPass(scope, root);
+                lastGeneration = this.getRelevantMutationGeneration(scope);
+                this.setRuntimeDiagnosticGauge(`filter.syncPass.${scope}.lastPhase`, phase);
+            };
             this._syncRefilterRafId = requestAnimationFrame(() => {
                 this._syncRefilterRafId = 0;
-                rerun();
+                rerun('raf', { force: true });
             });
             [90, 220].forEach((delay) => {
                 const timerId = window.setTimeout(() => {
                     this._syncRefilterTimerIds.delete(timerId);
-                    rerun();
+                    rerun(`delay:${delay}`);
                 }, delay);
                 this._syncRefilterTimerIds.add(timerId);
             });
@@ -2602,40 +2867,54 @@ const FilterModule = {
             this._commentRefilterTimerIds.forEach((timerId) => clearTimeout(timerId));
             this._commentRefilterTimerIds.clear();
 
-            const rerun = () => {
+            const runtimeCoordinator = this.getRuntimeCoordinator();
+            const hasRuntimeMutationBus = Boolean(runtimeCoordinator && typeof runtimeCoordinator.subscribeMutations === 'function');
+            let lastGeneration = this.getRelevantMutationGeneration('comments');
+            const rerun = (phase, { force = false } = {}) => {
+                const generation = this.getRelevantMutationGeneration('comments');
+                if (!force && hasRuntimeMutationBus && generation === lastGeneration) {
+                    this.incrementRuntimeDiagnostic('filter.syncPass.comments.skippedUnchanged');
+                    return;
+                }
                 const scopeRoot = this.resolveRefilterRoot(root || document);
                 const shouldFallbackToFullPass = root instanceof Element && !document.contains(root);
                 if (shouldFallbackToFullPass) {
                     this.runSyncRefilterPass('all');
-                    return;
+                } else {
+                    this.runSyncRefilterPass('comments', scopeRoot);
                 }
-                this.runSyncRefilterPass('comments', scopeRoot);
+                lastGeneration = this.getRelevantMutationGeneration('comments');
+                this.setRuntimeDiagnosticGauge('filter.syncPass.comments.lastPhase', phase);
             };
             this.debugLog('comment-refilter', 'scheduleCommentStabilizedRefilter', { reason });
             this._commentRefilterRafId = requestAnimationFrame(() => {
                 this._commentRefilterRafId = 0;
-                rerun();
+                rerun('raf', { force: true });
                 [140, 420, 1100].forEach((delay) => {
                     const timerId = window.setTimeout(() => {
                         this._commentRefilterTimerIds.delete(timerId);
-                        rerun();
+                        rerun(`delay:${delay}`);
                     }, delay);
                     this._commentRefilterTimerIds.add(timerId);
                 });
             });
         },
-        async runFullRefilterPass(reason = 'refilterAllContent') {
+        async runFullRefilterPass(reason = 'refilterAllContent', { scheduleFollowups = true } = {}) {
             await this.reloadSettings();
             const descriptors = this.getRefilterTargets('all');
             this.startDebugPass(reason, { targetCount: descriptors.length });
-            this.runSyncRefilterPass('all', document, descriptors);
-            this.scheduleSyncRefilterPasses();
+            this.runSyncRefilterPass('all', document, descriptors, {
+                allowPersonalBlockReveal: true
+            });
+            if (scheduleFollowups) this.scheduleSyncRefilterPasses();
             this.applyAsyncToDescriptors(descriptors);
+            this.incrementRuntimeDiagnostic('filter.fullRefilter.runs');
+            this.setRuntimeDiagnosticGauge('filter.fullRefilter.lastTargetCount', descriptors.length);
             document.dispatchEvent(new CustomEvent('dcFilterRefiltered'));
         },
-        async refilterAllContent(reason = 'refilterAllContent') {
+        async refilterAllContent(reason = 'refilterAllContent', { scheduleFollowups = true } = {}) {
             if (!this._pendingFullRefilterReasons) this._pendingFullRefilterReasons = [];
-            this._pendingFullRefilterReasons.push(reason);
+            this._pendingFullRefilterReasons.push({ reason, scheduleFollowups });
 
             if (this._refilterAllContentRunning) {
                 this.debugLog('refilter', 'coalesced full refilter request', {
@@ -2648,11 +2927,13 @@ const FilterModule = {
             this._refilterAllContentRunning = true;
             this._refilterAllContentPromise = (async () => {
                 while (this._pendingFullRefilterReasons.length > 0) {
-                    const pendingReasons = this._pendingFullRefilterReasons.splice(0);
-                    const runReason = pendingReasons.length > 1
-                        ? `${pendingReasons[pendingReasons.length - 1]} [coalesced:${pendingReasons.length}]`
-                        : pendingReasons[0];
-                    await this.runFullRefilterPass(runReason);
+                    const pendingRequests = this._pendingFullRefilterReasons.splice(0);
+                    const lastRequest = pendingRequests[pendingRequests.length - 1];
+                    const runReason = pendingRequests.length > 1
+                        ? `${lastRequest.reason} [coalesced:${pendingRequests.length}]`
+                        : lastRequest.reason;
+                    const shouldScheduleFollowups = pendingRequests.some((request) => request.scheduleFollowups !== false);
+                    await this.runFullRefilterPass(runReason, { scheduleFollowups: shouldScheduleFollowups });
                 }
             })();
 
@@ -2667,21 +2948,16 @@ const FilterModule = {
         async handleVisibilityChange() {
             if (document.visibilityState === 'visible') {
                 await reloadShortcutKey(); // 단축키 설정을 다시 로드
-                await this.refilterAllContent('visibilitychange-visible'); // 기존 필터 설정을 다시 로드하고 적용
+                await this.refilterAllContent('visibilitychange-visible', { scheduleFollowups: false }); // 복구 패스 1회는 유지하고 무변화 지연 패스는 생략
             }
         },
         async init() {
             if (isInitialized) return; isInitialized = true;
             this.installDebugApi();
-            this.debugLog('init', 'FilterModule init start', { version: '1.9.0' });
+            this.debugLog('init', 'FilterModule init start', { version: '1.9.2' });
             await this.cleanupLegacyManagedBlockConfig();
             await this.reloadSettings();
-            this.getKrPrefixSet();
-            this.getTelecomPrefixSet();
-            this.getProxyStrictPrefixSet();
-            this.getProxyAggressiveExtraPrefixSet();
-            this.getProxyPrefixSet(this.PROXY_MODE.AGGRESSIVE);
-            await this.debugDumpState('after init reload');
+            if (this.DEBUG_ENABLED) await this.debugDumpState('after init reload');
 
             // [수정] 개념글 목록에서 스크립트가 조기 종료되던 문제를 해결하기 위해 아래 라인을 삭제했습니다.
             // if (dcFilterSettings.excludeRecommended && window.location.pathname.includes('/lists/') && this.isRecommendedContext()) return;
@@ -3184,6 +3460,49 @@ const FilterModule = {
 
             this.attachPopupPinchResize(popup, { minWidth: 300, minHeight: 240 });
 
+            const textarea = popup.querySelector('textarea');
+            const fileInput = popup.querySelector('.import-file-input');
+            let bufferedClipboardImport = '';
+            const originalTextareaPlaceholder = textarea ? (textarea.getAttribute('placeholder') || '') : '';
+
+            const formatImportSize = (text) => {
+                const size = new Blob([text]).size;
+                if (size >= 1024 * 1024) return `${(size / (1024 * 1024)).toFixed(2)}MB`;
+                if (size >= 1024) return `${(size / 1024).toFixed(1)}KB`;
+                return `${size}B`;
+            };
+
+            const setBufferedImportPreview = (text) => {
+                if (!textarea) return;
+                textarea.value = '';
+                textarea.placeholder = `클립보드 백업 데이터 붙여넣기 완료 (${formatImportSize(text)})\n불러오기 버튼을 누르면 가져옵니다.`;
+                textarea.dataset.dcufBufferedImport = '1';
+            };
+
+            const clearBufferedImport = () => {
+                bufferedClipboardImport = '';
+                if (!textarea) return;
+                textarea.placeholder = originalTextareaPlaceholder;
+                delete textarea.dataset.dcufBufferedImport;
+            };
+
+            if (textarea) {
+                textarea.addEventListener('paste', (e) => {
+                    const pastedText = e.clipboardData?.getData('text');
+                    if (typeof pastedText !== 'string' || !pastedText.length) return;
+
+                    e.preventDefault();
+                    bufferedClipboardImport = pastedText;
+                    setBufferedImportPreview(pastedText);
+                });
+
+                textarea.addEventListener('input', () => {
+                    if (textarea.dataset.dcufBufferedImport === '1') {
+                        clearBufferedImport();
+                    }
+                });
+            }
+
 
             const closePopup = () => {
                 popup.classList.add('dcuf-pop-leave');
@@ -3221,7 +3540,7 @@ const FilterModule = {
             };
             popup.querySelector('.export-btn').onclick = async () => {
                 const data = await this.loadPersonalBlocks();
-                const jsonString = JSON.stringify(data, null, 2);
+                const jsonString = JSON.stringify(data);
                 try {
                     await navigator.clipboard.writeText(jsonString);
                     alert('차단 목록이 클립보드에 복사되었습니다.');
@@ -3266,9 +3585,6 @@ const FilterModule = {
 
             // 불러오기 버튼 클릭 이벤트
             popup.querySelector('.import-btn').onclick = async () => {
-                const fileInput = popup.querySelector('.import-file-input');
-                const textarea = popup.querySelector('textarea');
-
                 // 1순위: 파일이 선택되었는지 확인
                 if (fileInput.files.length > 0) {
                     const file = fileInput.files[0];
@@ -3286,7 +3602,10 @@ const FilterModule = {
                 }
                 // 2순위: 파일이 없다면 textarea의 값을 사용
                 else {
-                    processImportData(textarea.value);
+                    const importText = textarea && textarea.dataset.dcufBufferedImport === '1'
+                        ? bufferedClipboardImport
+                        : (textarea ? textarea.value : '');
+                    processImportData(importText);
                 }
             };
         },
@@ -3665,7 +3984,7 @@ const FilterModule = {
         if (__dcufRoot.__dcufPcFilterPortInitialized) return;
         __dcufRoot.__dcufPcFilterPortInitialized = true;
 
-        console.log('[DCUF PC] Initializing filter port v1.9.0...');
+        console.log('[DCUF PC] Initializing filter port v1.9.2...');
 
         observeDarkMode();
         await reloadShortcutKey();
