@@ -1,7 +1,7 @@
-// ==UserScript==
+﻿// ==UserScript==
 // @name         DC_UserFilter_Mobile
 // @namespace    http://tampermonkey.net/
-// @version      3.3.2
+// @version      3.3.3
 // @description  유저 필터링, UI 개선, 개인 차단/해제 기능
 // @author       domato153
 // @match        https://gall.dcinside.com/*
@@ -845,6 +845,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         _pendingMutationRecords: [],
         _pendingMutationRafId: 0,
         _pendingMutationTimerId: 0,
+        _mutationGeneration: 0,
         _taskQueues: Object.create(null),
         _diagnosticsEnabled: false,
         _diagnosticCounters: Object.create(null),
@@ -1049,9 +1050,15 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
             const records = this._pendingMutationRecords.splice(0);
             const payload = this.buildMutationPayload(records);
+            this._mutationGeneration += 1;
+            payload.generation = this._mutationGeneration;
             this.incrementDiagnostic('mutation.dispatches');
             this.setDiagnosticGauge('mutation.roots', payload.roots.length);
             this.setDiagnosticGauge('mutation.subscribers', this._mutationSubscribers.size);
+            this.setDiagnosticGauge('mutation.generation', this._mutationGeneration);
+
+            const measureDispatch = this._diagnosticsEnabled && typeof performance?.now === 'function';
+            const dispatchStartedAt = measureDispatch ? performance.now() : 0;
 
             this._mutationSubscribers.forEach((listener, key) => {
                 try {
@@ -1060,6 +1067,10 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                     console.error('[DCUF runtime] mutation subscriber failed:', key, error);
                 }
             });
+
+            if (measureDispatch) {
+                this.setDiagnosticGauge('mutation.lastDispatchDurationMs', Math.round((performance.now() - dispatchStartedAt) * 1000) / 1000);
+            }
         },
 
         queueMutationRecords(records) {
@@ -1104,7 +1115,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 subtree: true,
                 attributes: true,
                 characterData: true,
-                attributeFilter: ['class', 'style', 'src', 'id']
+                attributeFilter: ['class', 'style', 'src', 'id', 'data-uid', 'data-nick', 'data-ip', 'data-no', 'p-no']
             });
             this._mutationObserverReady = true;
             this.noteDiagnostic('mutation.bus.ready', { target: 'document.body' });
@@ -1914,6 +1925,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
 
         /* --- [v2.3.2 수정] 개인 차단 기능 UI --- */
+        /* DCUF_SHARED_FILTER_UI_START */
         #dc-personal-block-fab {
             position: fixed;
             z-index: 2147483640;
@@ -2045,13 +2057,19 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         }
 
         /* [신규] 개인 차단 On/Off 스위치 UI */
-        .switch-container { display: flex; align-items: center; margin-left: 15px; }
-        .switch { position: relative; display: inline-block; width: 40px; height: 22px; }
-        .switch input { opacity: 0; width: 0; height: 0; }
-        .switch-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 22px; }
-        .switch-slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
-        input:checked + .switch-slider { background-color: #3b71fd; }
-        input:checked + .switch-slider:before { transform: translateX(18px); }
+        #dc-block-management-panel .switch-container { display: flex; align-items: center; margin-left: 15px; }
+        #dcinside-filter-setting .switch,
+        #dc-block-management-panel .switch { position: relative; display: inline-block; width: 40px; height: 22px; }
+        #dcinside-filter-setting .switch input,
+        #dc-block-management-panel .switch input { opacity: 0; width: 0; height: 0; }
+        #dcinside-filter-setting .switch-slider,
+        #dc-block-management-panel .switch-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 22px; }
+        #dcinside-filter-setting .switch-slider:before,
+        #dc-block-management-panel .switch-slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        #dcinside-filter-setting input:checked + .switch-slider,
+        #dc-block-management-panel input:checked + .switch-slider { background-color: #3b71fd; }
+        #dcinside-filter-setting input:checked + .switch-slider:before,
+        #dc-block-management-panel input:checked + .switch-slider:before { transform: translateX(18px); }
 
         /* [신규] 백업/복원 팝업 UI */
         #dc-backup-popup-overlay {
@@ -2503,6 +2521,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 transition: none !important;
             }
         }
+        /* DCUF_SHARED_FILTER_UI_END */
 
         /* [수정] DCCon 및 각종 팝업 모바일 반응형 중앙 정렬 */
          /* --- [최종 진짜 수정 v9] 야간 모드 완벽 지원 (색상 반전 대응) --- */
@@ -2608,6 +2627,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             border-color: #555 !important;
         }
 
+        /* DCUF_SHARED_FILTER_UI_DARK_START */
         /* 5. 스크립트 팝업창 전체 다크 테마 */
         body.dc-filter-dark-mode #dcinside-filter-setting,
         body.dc-filter-dark-mode #dc-selection-popup,
@@ -2648,16 +2668,16 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         body.dc-filter-dark-mode #dc-selection-popup .block-option span,
         body.dc-filter-dark-mode #dc-backup-popup .description,
         body.dc-filter-dark-mode #dc-backup-popup h4,
-        body.dc-filter-dark-mode .item-name {
+        body.dc-filter-dark-mode #dc-block-management-panel .item-name {
             color: #e0e0e0 !important;
         }
-        body.dc-filter-dark-mode input[type="number"],
+        body.dc-filter-dark-mode #dcinside-filter-setting input[type="number"],
         body.dc-filter-dark-mode #dc-backup-popup textarea {
             background-color: #1e1e1e !important;
             color: #f0f0f0 !important;
             border: 1px solid #666 !important;
         }
-        body.dc-filter-dark-mode .panel-tab.active {
+        body.dc-filter-dark-mode #dc-block-management-panel .panel-tab.active {
             background: #007bff !important; /* 활성 탭은 색상 유지 */
         }
 
@@ -2666,9 +2686,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         body.dc-filter-dark-mode #dc-selection-popup button,
         body.dc-filter-dark-mode #dc-block-management-panel button,
         body.dc-filter-dark-mode #dc-backup-popup button,
-        body.dc-filter-dark-mode #dcinside-shortcut-modal button,
-        body.dc-filter-dark-mode .list_bottom_btnbox .btn_grey,
-        body.dc-filter-dark-mode .list_bottom_btnbox .btn_blue {
+        body.dc-filter-dark-mode #dcinside-shortcut-modal button {
              background-color: #555 !important;
              color: #fff !important;
              border-color: #777 !important;
@@ -2732,6 +2750,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             background: #53313a !important;
             color: #ff9fb1 !important;
         }
+        /* DCUF_SHARED_FILTER_UI_DARK_END */
     `);
 
 
@@ -2873,7 +2892,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         DEBUG_MAX_DECISIONS_PER_PASS: 150,
         DEBUG_PASS_ID: 0,
         DEBUG_DECISION_LOG_COUNT: 0,
-        DEBUG_DECISION_KEYS: new Set(),
+        DEBUG_DECISION_KEYS: null,
         _runtimeMutationUnsubscribe: null,
         _userSumTaskQueue: null,
         _queuedObserverFilterItems: null,
@@ -3020,6 +3039,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             if (!this.DEBUG_ENABLED) return;
             this.DEBUG_PASS_ID += 1;
             this.DEBUG_DECISION_LOG_COUNT = 0;
+            if (!(this.DEBUG_DECISION_KEYS instanceof Set)) this.DEBUG_DECISION_KEYS = new Set();
             this.DEBUG_DECISION_KEYS.clear();
             this.debugLog('pass', `start #${this.DEBUG_PASS_ID} ${reason}`, {
                 passId: this.DEBUG_PASS_ID,
@@ -3029,6 +3049,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         },
         debugDecision(element, payload) {
             if (!this.DEBUG_ENABLED) return;
+            if (!(this.DEBUG_DECISION_KEYS instanceof Set)) this.DEBUG_DECISION_KEYS = new Set();
             const reasons = Array.isArray(payload.reasons) ? payload.reasons.filter(Boolean) : [];
             const identity = [
                 this.DEBUG_PASS_ID,
@@ -3366,7 +3387,6 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 ];
                 if (!blockGuestChecked) promises.push(this.clearBlockedGuests()); try {
                     await Promise.all(promises);
-                    await this.reloadSettings();
                     await this.debugDumpState('save button before refilter');
                     await this.refilterAllContent('save button');
                     closeSettingsPanel();
@@ -3627,6 +3647,30 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         getRuntimeCoordinator() {
             return window.__dcufRuntimeCoordinator || null;
         },
+        incrementRuntimeDiagnostic(label, amount = 1) {
+            const runtimeCoordinator = this.getRuntimeCoordinator();
+            if (typeof runtimeCoordinator?.incrementDiagnostic === 'function') {
+                runtimeCoordinator.incrementDiagnostic(label, amount);
+            }
+        },
+        setRuntimeDiagnosticGauge(label, value) {
+            const runtimeCoordinator = this.getRuntimeCoordinator();
+            if (typeof runtimeCoordinator?.setDiagnosticGauge === 'function') {
+                runtimeCoordinator.setDiagnosticGauge(label, value);
+            }
+        },
+        getRelevantMutationGeneration(scope = 'all') {
+            if (scope === 'comments') return Number(this._commentRelevantMutationGeneration) || 0;
+            return Number(this._filterRelevantMutationGeneration) || 0;
+        },
+        markRelevantMutation(scope = 'all') {
+            this._filterRelevantMutationGeneration = (Number(this._filterRelevantMutationGeneration) || 0) + 1;
+            if (scope === 'comments') {
+                this._commentRelevantMutationGeneration = (Number(this._commentRelevantMutationGeneration) || 0) + 1;
+            }
+            this.setRuntimeDiagnosticGauge('filter.relevantGeneration', this._filterRelevantMutationGeneration);
+            this.setRuntimeDiagnosticGauge('filter.commentRelevantGeneration', Number(this._commentRelevantMutationGeneration) || 0);
+        },
         getUserSumTaskQueue() {
             if (this._userSumTaskQueue) return this._userSumTaskQueue;
             const runtimeCoordinator = this.getRuntimeCoordinator();
@@ -3738,6 +3782,18 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         isUserBlocked({ sum, post, comment }) {
             return DCUF_SHARED_FILTER_CORE.evaluateUserStatsBlock({ sum, post, comment }, dcFilterSettings);
         },
+        isUserStatsFilterActive(settings = dcFilterSettings) {
+            if (!settings || settings.masterDisabled) return false;
+
+            const threshold = Number(settings.threshold);
+            if (Number.isFinite(threshold) && threshold > 0) return true;
+            if (!settings.ratioEnabled) return false;
+
+            return [settings.ratioMin, settings.ratioMax].some((value) => {
+                const numeric = Number(value);
+                return Number.isFinite(numeric) && numeric > 0;
+            });
+        },
         isCommentListItem(element) {
             return element instanceof HTMLElement && !!element.closest(this.CONSTANTS.SELECTORS.COMMENT_CONTAINER);
         },
@@ -3777,6 +3833,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
             const { element, writerInfo, uid, isNotice, shouldSkipFiltering } = descriptor;
             if (isNotice || shouldSkipFiltering) return;
+            if (!this.isUserStatsFilterActive()) return;
 
             try {
                 if (element.style.display === 'none') return;
@@ -3828,7 +3885,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 shouldSkipFiltering,
                 hasBlockDisableClass
             };
-            const baseDebug = {
+            const baseDebug = this.DEBUG_ENABLED ? {
                 branch: 'sync-base',
                 uid,
                 nickname,
@@ -3841,7 +3898,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 proxyBlockMode: normalizedProxyBlockMode,
                 proxyBlockEnabled,
                 telecomBlockEnabled
-            };
+            } : null;
 
             const proxyMatchInfo = this.getProxyPrefixMatch(ipPrefix, normalizedProxyBlockMode);
             const telecomPrefixSet = telecomBlockEnabled && ipPrefix ? this.getTelecomPrefixSet() : null;
@@ -3870,7 +3927,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                     telecomPrefixMatch: Boolean(ipPrefix && telecomPrefixSet && telecomPrefixSet.has(ipPrefix)),
                     blockedGuestMatch: Boolean(ip && (blockedGuestSet instanceof Set ? blockedGuestSet.has(ip) : blockedGuests.includes(ip)))
                 },
-                blockedUidEntry: uid ? this.BLOCKED_UIDS_CACHE[uid] : null
+                blockedUidEntry: uid ? (this.BLOCKED_UIDS_CACHE[uid] || userSumCache[uid] || null) : null
             });
             const allowPersonalBlockReveal = Boolean(this._syncPassOptions?.allowPersonalBlockReveal);
             const wasPersonallyBlocked = element.getAttribute('data-dcuf-personal-blocked') === '1';
@@ -3883,35 +3940,43 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 // Reply-merge / comment-stabilization passes can temporarily rebuild comment UI in a
                 // state where personal-block metadata is not reliable yet. Keep already personal-blocked
                 // comments hidden until a full refilter with refreshed settings explicitly reveals them.
-                this.debugDecision(element, {
-                    ...baseDebug,
-                    branch: 'personal-block-hold',
-                    isBlocked: true,
-                    reasons: ['personalBlock-hold']
-                });
+                if (this.DEBUG_ENABLED) {
+                    this.debugDecision(element, {
+                        ...baseDebug,
+                        branch: 'personal-block-hold',
+                        isBlocked: true,
+                        reasons: ['personalBlock-hold']
+                    });
+                }
                 this.setElementVisibility(element, true);
                 return;
             } else {
                 element.removeAttribute('data-dcuf-personal-blocked');
             }
 
-            this.debugDecision(element, {
-                ...baseDebug,
-                branch: decision.path || 'sync-final',
-                isBlocked: decision.isBlocked,
-                reasons: decision.reasons,
-                blockedGuestsCount: blockedGuestSet instanceof Set ? blockedGuestSet.size : blockedGuests.length,
-                customIpPrefixCount: customIpPrefixSet instanceof Set ? customIpPrefixSet.size : 0,
-                hasCustomIpPrefixBlock: decision.hasCustomIpPrefixBlock,
-                proxyPrefixMatch: decision.proxyPrefixMatch,
-                proxyMatchTier: decision.proxyMatchTier,
-                telecomPrefixMatch: decision.telecomPrefixMatch,
-                blockedGuestMatch: decision.blockedGuestMatch
-            });
+            if (this.DEBUG_ENABLED) {
+                this.debugDecision(element, {
+                    ...baseDebug,
+                    branch: decision.path || 'sync-final',
+                    isBlocked: decision.isBlocked,
+                    reasons: decision.reasons,
+                    blockedGuestsCount: blockedGuestSet instanceof Set ? blockedGuestSet.size : blockedGuests.length,
+                    customIpPrefixCount: customIpPrefixSet instanceof Set ? customIpPrefixSet.size : 0,
+                    hasCustomIpPrefixBlock: decision.hasCustomIpPrefixBlock,
+                    proxyPrefixMatch: decision.proxyPrefixMatch,
+                    proxyMatchTier: decision.proxyMatchTier,
+                    telecomPrefixMatch: decision.telecomPrefixMatch,
+                    blockedGuestMatch: decision.blockedGuestMatch
+                });
+            }
             this.setElementVisibility(element, decision.isBlocked);
         },
         initializeUniversalObserver() {
-            const targets = [{ c: this.CONSTANTS.SELECTORS.POST_LIST_CONTAINER, i: this.CONSTANTS.SELECTORS.POST_ITEM }, { c: this.CONSTANTS.SELECTORS.COMMENT_CONTAINER, i: this.CONSTANTS.SELECTORS.COMMENT_ITEM }, { c: this.CONSTANTS.SELECTORS.POST_VIEW_LIST_CONTAINER, i: 'li' }];
+            const targets = [
+                { c: this.CONSTANTS.SELECTORS.POST_LIST_CONTAINER, i: this.CONSTANTS.SELECTORS.POST_ITEM, scope: 'posts' },
+                { c: this.CONSTANTS.SELECTORS.COMMENT_CONTAINER, i: this.CONSTANTS.SELECTORS.COMMENT_ITEM, scope: 'comments' },
+                { c: this.CONSTANTS.SELECTORS.POST_VIEW_LIST_CONTAINER, i: 'li', scope: 'posts' }
+            ];
             const filterItems = (items) => this.applyFilterItems(items);
             const queueFilterItems = (items) => this.queueObservedFilterItems(items);
             const runtimeCoordinator = this.getRuntimeCoordinator();
@@ -3936,11 +4001,19 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             if (hasRuntimeMutationBus) {
                 if (typeof this._runtimeMutationUnsubscribe === 'function') this._runtimeMutationUnsubscribe();
                 this._runtimeMutationUnsubscribe = runtimeCoordinator.subscribeMutations('filter-universal-observer', (payload) => {
+                    let hasRelevantMutation = false;
+                    let hasCommentMutation = false;
                     targets.forEach((target) => {
-                        payload.collectMatches(target.c).forEach((container) => attachObserver(container, target.i, { attachDomObserver: false }));
-                        const changedItems = payload.collectMatches(target.i, { includeRoots: true });
+                        const changedContainers = payload.collectMatches(target.c);
+                        changedContainers.forEach((container) => attachObserver(container, target.i, { attachDomObserver: false }));
+                        const changedItems = payload.collectMatches(target.i, { includeRoots: true }).filter((item) => item.closest?.(target.c));
+                        if (changedContainers.length > 0 || changedItems.length > 0) {
+                            hasRelevantMutation = true;
+                            if (target.scope === 'comments') hasCommentMutation = true;
+                        }
                         if (changedItems.length > 0) queueFilterItems(changedItems);
                     });
+                    if (hasRelevantMutation) this.markRelevantMutation(hasCommentMutation ? 'comments' : 'all');
                 });
                 return;
             }
@@ -4020,10 +4093,12 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 personalBlockIpSet,
                 personalBlockEnabled
             };
-            this.debugLog('settings', 'reloadSettings complete', this.debugSettingsSnapshot({
-                rawBlockConfigIp: typeof blockConfig?.ip === 'string' ? blockConfig.ip : '',
-                rawBlockConfigPreview: typeof blockConfig?.ip === 'string' ? blockConfig.ip.split('||').slice(0, 20) : []
-            }));
+            if (this.DEBUG_ENABLED) {
+                this.debugLog('settings', 'reloadSettings complete', this.debugSettingsSnapshot({
+                    rawBlockConfigIp: typeof blockConfig?.ip === 'string' ? blockConfig.ip : '',
+                    rawBlockConfigPreview: typeof blockConfig?.ip === 'string' ? blockConfig.ip.split('||').slice(0, 20) : []
+                }));
+            }
         },
         getRefilterTargetSelectors(scope = 'all') {
             const commentSelectors = [
@@ -4067,6 +4142,9 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             }, []);
         },
         runSyncRefilterPass(scope = 'all', root = document, descriptors = null, options = null) {
+            const runtimeCoordinator = this.getRuntimeCoordinator();
+            const measureDuration = Boolean(runtimeCoordinator?._diagnosticsEnabled) && typeof performance?.now === 'function';
+            const startedAt = measureDuration ? performance.now() : 0;
             const targetDescriptors = Array.isArray(descriptors) ? descriptors : this.getRefilterTargets(scope, root);
             const previousSyncPassOptions = this._syncPassOptions;
             this._syncPassOptions = options && typeof options === 'object' ? options : null;
@@ -4074,6 +4152,11 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 this.applySyncToDescriptors(targetDescriptors, { resetDisplay: true });
             } finally {
                 this._syncPassOptions = previousSyncPassOptions;
+            }
+            this.incrementRuntimeDiagnostic(`filter.syncPass.${scope}.runs`);
+            this.setRuntimeDiagnosticGauge(`filter.syncPass.${scope}.lastTargetCount`, targetDescriptors.length);
+            if (measureDuration) {
+                this.setRuntimeDiagnosticGauge(`filter.syncPass.${scope}.lastDurationMs`, Math.round((performance.now() - startedAt) * 1000) / 1000);
             }
             return targetDescriptors;
         },
@@ -4083,15 +4166,27 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             this._syncRefilterTimerIds.forEach((timerId) => clearTimeout(timerId));
             this._syncRefilterTimerIds.clear();
 
-            const rerun = () => this.runSyncRefilterPass(scope, root);
+            const runtimeCoordinator = this.getRuntimeCoordinator();
+            const hasRuntimeMutationBus = Boolean(runtimeCoordinator && typeof runtimeCoordinator.subscribeMutations === 'function');
+            let lastGeneration = this.getRelevantMutationGeneration(scope);
+            const rerun = (phase, { force = false } = {}) => {
+                const generation = this.getRelevantMutationGeneration(scope);
+                if (!force && hasRuntimeMutationBus && generation === lastGeneration) {
+                    this.incrementRuntimeDiagnostic(`filter.syncPass.${scope}.skippedUnchanged`);
+                    return;
+                }
+                this.runSyncRefilterPass(scope, root);
+                lastGeneration = this.getRelevantMutationGeneration(scope);
+                this.setRuntimeDiagnosticGauge(`filter.syncPass.${scope}.lastPhase`, phase);
+            };
             this._syncRefilterRafId = requestAnimationFrame(() => {
                 this._syncRefilterRafId = 0;
-                rerun();
+                rerun('raf', { force: true });
             });
             [90, 220].forEach((delay) => {
                 const timerId = window.setTimeout(() => {
                     this._syncRefilterTimerIds.delete(timerId);
-                    rerun();
+                    rerun(`delay:${delay}`);
                 }, delay);
                 this._syncRefilterTimerIds.add(timerId);
             });
@@ -4102,42 +4197,54 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             this._commentRefilterTimerIds.forEach((timerId) => clearTimeout(timerId));
             this._commentRefilterTimerIds.clear();
 
-            const rerun = () => {
+            const runtimeCoordinator = this.getRuntimeCoordinator();
+            const hasRuntimeMutationBus = Boolean(runtimeCoordinator && typeof runtimeCoordinator.subscribeMutations === 'function');
+            let lastGeneration = this.getRelevantMutationGeneration('comments');
+            const rerun = (phase, { force = false } = {}) => {
+                const generation = this.getRelevantMutationGeneration('comments');
+                if (!force && hasRuntimeMutationBus && generation === lastGeneration) {
+                    this.incrementRuntimeDiagnostic('filter.syncPass.comments.skippedUnchanged');
+                    return;
+                }
                 const scopeRoot = this.resolveRefilterRoot(root || document);
                 const shouldFallbackToFullPass = root instanceof Element && !document.contains(root);
                 if (shouldFallbackToFullPass) {
                     this.runSyncRefilterPass('all');
-                    return;
+                } else {
+                    this.runSyncRefilterPass('comments', scopeRoot);
                 }
-                this.runSyncRefilterPass('comments', scopeRoot);
+                lastGeneration = this.getRelevantMutationGeneration('comments');
+                this.setRuntimeDiagnosticGauge('filter.syncPass.comments.lastPhase', phase);
             };
             this.debugLog('comment-refilter', 'scheduleCommentStabilizedRefilter', { reason });
             this._commentRefilterRafId = requestAnimationFrame(() => {
                 this._commentRefilterRafId = 0;
-                rerun();
+                rerun('raf', { force: true });
                 [140, 420, 1100].forEach((delay) => {
                     const timerId = window.setTimeout(() => {
                         this._commentRefilterTimerIds.delete(timerId);
-                        rerun();
+                        rerun(`delay:${delay}`);
                     }, delay);
                     this._commentRefilterTimerIds.add(timerId);
                 });
             });
         },
-        async runFullRefilterPass(reason = 'refilterAllContent') {
+        async runFullRefilterPass(reason = 'refilterAllContent', { scheduleFollowups = true } = {}) {
             await this.reloadSettings();
             const descriptors = this.getRefilterTargets('all');
             this.startDebugPass(reason, { targetCount: descriptors.length });
             this.runSyncRefilterPass('all', document, descriptors, {
                 allowPersonalBlockReveal: true
             });
-            this.scheduleSyncRefilterPasses();
+            if (scheduleFollowups) this.scheduleSyncRefilterPasses();
             this.applyAsyncToDescriptors(descriptors);
+            this.incrementRuntimeDiagnostic('filter.fullRefilter.runs');
+            this.setRuntimeDiagnosticGauge('filter.fullRefilter.lastTargetCount', descriptors.length);
             document.dispatchEvent(new CustomEvent('dcFilterRefiltered'));
         },
-        async refilterAllContent(reason = 'refilterAllContent') {
+        async refilterAllContent(reason = 'refilterAllContent', { scheduleFollowups = true } = {}) {
             if (!this._pendingFullRefilterReasons) this._pendingFullRefilterReasons = [];
-            this._pendingFullRefilterReasons.push(reason);
+            this._pendingFullRefilterReasons.push({ reason, scheduleFollowups });
 
             if (this._refilterAllContentRunning) {
                 this.debugLog('refilter', 'coalesced full refilter request', {
@@ -4150,11 +4257,13 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             this._refilterAllContentRunning = true;
             this._refilterAllContentPromise = (async () => {
                 while (this._pendingFullRefilterReasons.length > 0) {
-                    const pendingReasons = this._pendingFullRefilterReasons.splice(0);
-                    const runReason = pendingReasons.length > 1
-                        ? `${pendingReasons[pendingReasons.length - 1]} [coalesced:${pendingReasons.length}]`
-                        : pendingReasons[0];
-                    await this.runFullRefilterPass(runReason);
+                    const pendingRequests = this._pendingFullRefilterReasons.splice(0);
+                    const lastRequest = pendingRequests[pendingRequests.length - 1];
+                    const runReason = pendingRequests.length > 1
+                        ? `${lastRequest.reason} [coalesced:${pendingRequests.length}]`
+                        : lastRequest.reason;
+                    const shouldScheduleFollowups = pendingRequests.some((request) => request.scheduleFollowups !== false);
+                    await this.runFullRefilterPass(runReason, { scheduleFollowups: shouldScheduleFollowups });
                 }
             })();
 
@@ -4169,13 +4278,13 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         async handleVisibilityChange() {
             if (document.visibilityState === 'visible') {
                 await reloadShortcutKey(); // 단축키 설정을 다시 로드
-                await this.refilterAllContent('visibilitychange-visible'); // 기존 필터 설정을 다시 로드하고 적용
+                await this.refilterAllContent('visibilitychange-visible', { scheduleFollowups: false }); // 복구 패스 1회는 유지하고 무변화 지연 패스는 생략
             }
         },
         async init() {
             if (isInitialized) return; isInitialized = true;
             this.installDebugApi();
-            this.debugLog('init', 'FilterModule init start', { version: '3.3.2' });
+            this.debugLog('init', 'FilterModule init start', { version: '3.3.3' });
             await this.cleanupLegacyManagedBlockConfig();
             await this.reloadSettings();
             if (this.DEBUG_ENABLED) await this.debugDumpState('after init reload');
@@ -5923,14 +6032,22 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 originalTbody,
                 newListContainer,
                 itemByRowId: new Map(),
+                dirtyRows: new Set(),
                 tbodyObserver: null,
                 syncScheduler: null,
                 rebuildAll: false,
+                mutationGeneration: 0,
+                lastSyncedGeneration: -1,
                 lastSyncReason: 'init'
             };
 
-            state.syncScheduler = this.createPhaseScheduler(`ui-list-${state.runtimeId}`, () => {
+            state.syncScheduler = this.createPhaseScheduler(`ui-list-${state.runtimeId}`, ({ delay }) => {
+                if (delay > 0 && state.lastSyncedGeneration === state.mutationGeneration) {
+                    this.recordDiagnostic('ui.listState.skippedUnchanged');
+                    return;
+                }
                 this.syncListState(state, state.lastSyncReason);
+                state.lastSyncedGeneration = state.mutationGeneration;
             }, [90]);
 
             return state;
@@ -5957,6 +6074,9 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             this.LIST_STATE_MAP.delete(state.listWrap);
             if (state.itemByRowId && typeof state.itemByRowId.clear === 'function') {
                 state.itemByRowId.clear();
+            }
+            if (state.dirtyRows && typeof state.dirtyRows.clear === 'function') {
+                state.dirtyRows.clear();
             }
             state.listWrap = null;
             state.originalTable = null;
@@ -5998,9 +6118,15 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             }, true);
         },
 
-        scheduleListSync(state, reason = 'sync', { rebuildAll = false } = {}) {
+        scheduleListSync(state, reason = 'sync', { rebuildAll = false, dirtyRows = null } = {}) {
             if (!state) return;
             if (rebuildAll) state.rebuildAll = true;
+            if (dirtyRows && typeof dirtyRows[Symbol.iterator] === 'function') {
+                Array.from(dirtyRows).forEach((row) => {
+                    if (row instanceof HTMLElement) state.dirtyRows?.add(row);
+                });
+            }
+            state.mutationGeneration = (Number(state.mutationGeneration) || 0) + 1;
             state.lastSyncReason = reason;
             state.syncScheduler?.schedule({ reason });
         },
@@ -6033,6 +6159,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             const originalRows = Array.from(state.originalTbody.querySelectorAll(this.SELECTORS.ORIGINAL_POST_ITEM));
             const seenRowIds = new Set();
             let previousItem = null;
+            let rebuiltRowCount = 0;
 
             originalRows.forEach((row) => {
                 try {
@@ -6041,10 +6168,11 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                     seenRowIds.add(rowId);
 
                     let mirroredItem = state.itemByRowId.get(rowId);
-                    if (shouldRebuildAll && mirroredItem instanceof HTMLElement) {
+                    if ((shouldRebuildAll || state.dirtyRows?.has(row)) && mirroredItem instanceof HTMLElement) {
                         mirroredItem.remove();
                         state.itemByRowId.delete(rowId);
                         mirroredItem = null;
+                        rebuiltRowCount += 1;
                     }
 
                     if (!(mirroredItem instanceof HTMLElement)) {
@@ -6077,6 +6205,9 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             });
 
             state.rebuildAll = false;
+            state.dirtyRows?.clear();
+            if (rebuiltRowCount > 0) this.recordDiagnostic('ui.listRows.rebuilt', rebuiltRowCount);
+            this.getRuntimeCoordinator()?.setDiagnosticGauge?.('ui.listRows.lastRebuilt', rebuiltRowCount);
             this.recordDiagnostic('ui.listState.synced');
         },
 
@@ -6085,7 +6216,19 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
             state.tbodyObserver = new MutationObserver((mutations) => {
                 const visibilityTargets = new Set();
+                const dirtyRows = new Set();
                 let needsResync = false;
+
+                const addDirtyRow = (node) => {
+                    const element = node instanceof Element ? node : node?.parentElement;
+                    if (!(element instanceof Element)) return;
+                    const row = element.matches?.(this.SELECTORS.ORIGINAL_POST_ITEM)
+                        ? element
+                        : element.closest?.(this.SELECTORS.ORIGINAL_POST_ITEM);
+                    if (row instanceof HTMLElement && row.closest(this.SELECTORS.ORIGINAL_TBODY) === state.originalTbody) {
+                        dirtyRows.add(row);
+                    }
+                };
 
                 mutations.forEach((mutation) => {
                     if (mutation.type === 'attributes' && (mutation.attributeName === 'style' || mutation.attributeName === 'class')) {
@@ -6096,7 +6239,16 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                         return;
                     }
 
-                    if (mutation.type === 'childList' || mutation.type === 'characterData') {
+                    if (mutation.type === 'characterData') {
+                        addDirtyRow(mutation.target);
+                        needsResync = true;
+                        return;
+                    }
+
+                    if (mutation.type === 'childList') {
+                        addDirtyRow(mutation.target);
+                        mutation.addedNodes.forEach(addDirtyRow);
+                        mutation.removedNodes.forEach(addDirtyRow);
                         needsResync = true;
                     }
                 });
@@ -6109,7 +6261,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 });
 
                 if (needsResync) {
-                    this.scheduleListSync(state, 'tbody-mutated', { rebuildAll: true });
+                    this.scheduleListSync(state, 'tbody-mutated', { dirtyRows });
                 }
             });
 
@@ -6197,8 +6349,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                     const candidates = payload.collectMatches([
                         this.SELECTORS.LIST_WRAP,
                         this.SELECTORS.ORIGINAL_TABLE,
-                        this.SELECTORS.ORIGINAL_TBODY,
-                        this.SELECTORS.ORIGINAL_POST_ITEM
+                        this.SELECTORS.ORIGINAL_TBODY
                     ], { includeRoots: true });
                     if (candidates.length === 0) return;
 
@@ -7071,13 +7222,11 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 const contentRatio = targetSize / contentBasePx;
 
                 if (contentRatio > 1) {
-                    contentEl.querySelectorAll('*').forEach(el => {
+                    contentEl.querySelectorAll('[style]').forEach(el => {
                         // [v2.7.0.1 추가] 이미 스케일링된 요소는 중복 처리 방지
                         if (el.closest('.comment_box, .img_comment, #focus_cmt')) return;
 
                         if (el.dataset.scaledByFilter) return;
-                        el.dataset.scaledByFilter = '1';
-
                         const inlineFontSize = el.style.fontSize;
                         if (!inlineFontSize) return; // 인라인 없으면 부모 상속
 
@@ -7093,6 +7242,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
                         const scaledPx = Math.round(originalPx * contentRatio * 10) / 10;
                         el.style.setProperty('font-size', scaledPx + 'px', 'important');
+                        el.dataset.scaledByFilter = '1';
                     });
                 }
             }
@@ -7390,7 +7540,6 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 if (viewBottomContainer) {
                     this.applyForceRefreshPagination(viewBottomContainer);
                 }
-                this.ensureArticleNativeAdBlocker();
                 // [v2.6.8] 본문 + 댓글 글자크기 배율 스케일링 (통합)
                 this.scaleAllFontSizes();
             }
@@ -7402,15 +7551,6 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             return 'non-list';
         }
     };
-
-    if (UIModule.isViewPage()) {
-        try {
-            UIModule.ensureArticleNativeAdBlocker();
-        } catch (error) {
-            console.warn('[DC Filter+UI] Article ad blocker early install failed:', error);
-        }
-    }
-
 
     const getDcufCollectionSize = (value) => {
         if (!value) return 0;
@@ -7453,7 +7593,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
         return {
             reason,
-            version: '3.3.2',
+            version: '3.3.3',
             time: new Date().toISOString(),
             href: location.href,
             heap: getDcufHeapMb(),
@@ -7585,11 +7725,42 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             }
         };
 
-        if (typeof waiter !== 'function') return prepareInitialCommentReveal({ reason: 'unavailable' });
+        const waitForMutationQuiet = async () => {
+            const filterModule = window.__dcufFilterModule;
+            if (typeof filterModule?.getRelevantMutationGeneration !== 'function') return null;
+
+            let previousGeneration = filterModule.getRelevantMutationGeneration('comments');
+            for (let attempt = 1; attempt <= 3; attempt += 1) {
+                const prepareState = prepareInitialCommentReveal({
+                    reason: 'mutation-quiet-prepare',
+                    attempt
+                });
+                await new Promise((resolve) => requestAnimationFrame(resolve));
+                const nextGeneration = filterModule.getRelevantMutationGeneration('comments');
+                if (nextGeneration === previousGeneration) {
+                    const runtimeCoordinator = window.__dcufRuntimeCoordinator;
+                    runtimeCoordinator?.incrementDiagnostic?.('ui.initialComment.mutationQuiet');
+                    return {
+                        reason: 'mutation-quiet',
+                        attempt,
+                        generation: nextGeneration,
+                        prepareState
+                    };
+                }
+                previousGeneration = nextGeneration;
+            }
+            return null;
+        };
+
+        if (typeof waiter !== 'function') {
+            return (await waitForMutationQuiet()) || prepareInitialCommentReveal({ reason: 'unavailable' });
+        }
 
         try {
+            const waiterPromise = Promise.resolve().then(() => waiter());
             const state = await Promise.race([
-                Promise.resolve().then(() => waiter()),
+                waitForMutationQuiet().then((quietState) => quietState || waiterPromise),
+                waiterPromise,
                 new Promise((resolve) => {
                     window.setTimeout(() => resolve({ reason: 'ui-timeout' }), 650);
                 })
@@ -7621,7 +7792,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 commentInitState: { reason: 'already-initialized' }
             };
         }
-        console.log("[DC Filter+UI] Initializing v3.3.2...");
+        console.log("[DC Filter+UI] Initializing v3.3.3...");
 
 
         // [수정] main 함수에서 reloadShortcutKey 함수를 호출하여 초기화
@@ -8722,6 +8893,14 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             color: var(--dcuf-view-fg) !important;
             -webkit-text-fill-color: var(--dcuf-view-fg) !important;
             background-color: transparent !important;
+        }
+        body.dc-filter-dark-mode .view_content_wrap :is(.gallview_contents, .writing_view_box, .write_div)
+            :is([style], p, div, span, font, b, strong, em, i, a, li, td, th, pre, blockquote) {
+            opacity: 1 !important;
+            filter: none !important;
+            mix-blend-mode: normal !important;
+            text-shadow: none !important;
+            -webkit-text-stroke: 0 transparent !important;
         }
         .view_content_wrap .recommend_kapcode {
             display: flex !important;
@@ -11279,7 +11458,24 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         '.write_div .view_ad_wrap',
         '.view_bottom .view_ad_wrap',
         '.view_content_wrap ins.kakao_ad_area',
-        '.view_content_wrap div[id^="kakao_ad_"]'
+        '.view_content_wrap div[id^="kakao_ad_"]',
+        '.gallview_contents iframe[id^="google_ads_iframe_"]',
+        '.gallview_contents iframe[name^="google_ads_iframe_"]',
+        '.gallview_contents iframe[id*="gfp"]',
+        '.gallview_contents iframe[name*="gfp"]',
+        '.gallview_contents iframe[src*="pstatic.net/tvetalibs"]',
+        '.gallview_contents iframe[src*="tivan.naver.com"]',
+        '.writing_view_box iframe[id^="google_ads_iframe_"]',
+        '.writing_view_box iframe[name^="google_ads_iframe_"]',
+        '.writing_view_box iframe[id*="gfp"]',
+        '.writing_view_box iframe[name*="gfp"]',
+        '.writing_view_box iframe[src*="pstatic.net/tvetalibs"]',
+        '.writing_view_box iframe[src*="tivan.naver.com"]'
+    ].join(', ');
+    const ARTICLE_FRAME_CANDIDATE_SELECTOR = [
+        '.gallview_contents iframe',
+        '.writing_view_box iframe',
+        '.view_content_wrap iframe'
     ].join(', ');
     const css = `
         div[id^="foin_"],
@@ -11305,7 +11501,19 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         .write_div .view_ad_wrap,
         .view_bottom .view_ad_wrap,
         .view_content_wrap ins.kakao_ad_area,
-        .view_content_wrap div[id^="kakao_ad_"] {
+        .view_content_wrap div[id^="kakao_ad_"],
+        .gallview_contents iframe[id^="google_ads_iframe_"],
+        .gallview_contents iframe[name^="google_ads_iframe_"],
+        .gallview_contents iframe[id*="gfp"],
+        .gallview_contents iframe[name*="gfp"],
+        .gallview_contents iframe[src*="pstatic.net/tvetalibs"],
+        .gallview_contents iframe[src*="tivan.naver.com"],
+        .writing_view_box iframe[id^="google_ads_iframe_"],
+        .writing_view_box iframe[name^="google_ads_iframe_"],
+        .writing_view_box iframe[id*="gfp"],
+        .writing_view_box iframe[name*="gfp"],
+        .writing_view_box iframe[src*="pstatic.net/tvetalibs"],
+        .writing_view_box iframe[src*="tivan.naver.com"] {
             display: none !important;
             width: 0 !important;
             height: 0 !important;
@@ -11355,13 +11563,35 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         return true;
     };
 
+    const isArticleNativeAdFrame = (frame) => {
+        if (!(frame instanceof HTMLIFrameElement)) return false;
+        const signature = [
+            frame.id,
+            frame.name,
+            frame.title,
+            frame.className,
+            frame.getAttribute('src') || ''
+        ].join(' ');
+        if (/google_ads_iframe_|gfp|pstatic\.net\/tvetalibs|tivan\.naver\.com/i.test(signature)) return true;
+
+        try {
+            const frameDocument = frame.contentDocument;
+            const frameBody = frameDocument?.body;
+            if (!frameBody) return false;
+            if (frameBody.id === 'gfp_sf_body' || frameBody.classList.contains('banner_ad_wrapper')) return true;
+            return Boolean(frameDocument.querySelector('#ad-element.native_image_wrap, [data-gfp-role]'));
+        } catch (error) {
+            return false;
+        }
+    };
+
     const collectArticleAdCandidates = (roots = [document]) => {
         const rootList = Array.isArray(roots) ? roots : [roots];
         const seen = new Set();
         const candidates = [];
         const push = (element) => {
             if (!(element instanceof Element) || seen.has(element)) return;
-            if (!element.matches(ARTICLE_AD_SELECTOR)) return;
+            if (!element.matches(ARTICLE_AD_SELECTOR) && !isArticleNativeAdFrame(element)) return;
             seen.add(element);
             candidates.push(element);
         };
@@ -11369,7 +11599,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         rootList.forEach((root) => {
             if (root instanceof Element) push(root);
             if (root && typeof root.querySelectorAll === 'function') {
-                root.querySelectorAll(ARTICLE_AD_SELECTOR).forEach(push);
+                root.querySelectorAll(`${ARTICLE_AD_SELECTOR}, ${ARTICLE_FRAME_CANDIDATE_SELECTOR}`).forEach(push);
             }
         });
         return candidates;
@@ -11385,6 +11615,9 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         }
         if (element.matches('iframe[id^="pageid_"], iframe[src*="adnmore"], ins.kakao_ad_area')) {
             return element.closest('.view_ad_wrap, div[id^="foin_"], div[id^="kakao_ad_"], .cm_ad') || element;
+        }
+        if (isArticleNativeAdFrame(element)) {
+            return element.closest('#ad_nv_slot, .view_ad_wrap, .cm_ad') || element;
         }
         const ownedAdWrap = element.closest('#ad_nv_slot, .view_ad_wrap, .power_link');
         return ownedAdWrap || element;
@@ -11402,27 +11635,46 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
     let cleanupRafId = 0;
     let pendingCleanupRoots = [];
+    let articleAdGeneration = 0;
+    let lastArticleAdCleanupGeneration = -1;
     const scheduleArticleAdCleanup = (reason = 'scheduled', roots = [document]) => {
         pendingCleanupRoots.push(...(Array.isArray(roots) ? roots : [roots]));
         if (cleanupRafId) return;
         cleanupRafId = window.requestAnimationFrame(() => {
             cleanupRafId = 0;
             const rootsForPass = pendingCleanupRoots.splice(0).filter(Boolean);
-            removeArticleAds(rootsForPass.length > 0 ? rootsForPass : [document]);
+            const removedCount = removeArticleAds(rootsForPass.length > 0 ? rootsForPass : [document]);
+            lastArticleAdCleanupGeneration = articleAdGeneration;
+            const runtimeCoordinator = window.__dcufRuntimeCoordinator;
+            runtimeCoordinator?.incrementDiagnostic?.('ui.articleAd.scans');
+            if (removedCount > 0) runtimeCoordinator?.incrementDiagnostic?.('ui.articleAd.removed', removedCount);
+            runtimeCoordinator?.setDiagnosticGauge?.('ui.articleAd.lastRemoved', removedCount);
         });
     };
 
     const bindArticleAdCleanup = () => {
         scheduleArticleAdCleanup('initial');
+        const runtimeCoordinator = window.__dcufRuntimeCoordinator;
+        const hasMutationBus = Boolean(runtimeCoordinator && typeof runtimeCoordinator.subscribeMutations === 'function');
+        const scheduleFallbackIfChanged = (reason) => {
+            const requiresFrameContentFallback = reason === 'delayed:1100' || reason === 'delayed:5000';
+            if (hasMutationBus && !requiresFrameContentFallback && articleAdGeneration === lastArticleAdCleanupGeneration) {
+                runtimeCoordinator?.incrementDiagnostic?.('ui.articleAd.skippedUnchanged');
+                return;
+            }
+            scheduleArticleAdCleanup(reason);
+        };
         [120, 420, 1100, 2500, 5000].forEach((delay) => {
-            window.setTimeout(() => scheduleArticleAdCleanup(`delayed:${delay}`), delay);
+            window.setTimeout(() => scheduleFallbackIfChanged(`delayed:${delay}`), delay);
         });
 
-        const runtimeCoordinator = window.__dcufRuntimeCoordinator;
-        if (!runtimeCoordinator || typeof runtimeCoordinator.subscribeMutations !== 'function') return;
+        if (!hasMutationBus) return;
         runtimeCoordinator.subscribeMutations('runtime-article-ad-cleanup', (payload) => {
-            const relevantNodes = payload.collectMatches(ARTICLE_AD_SELECTOR, { includeRoots: true });
+            const relevantNodes = payload.collectMatches(`${ARTICLE_AD_SELECTOR}, ${ARTICLE_FRAME_CANDIDATE_SELECTOR}`, { includeRoots: true })
+                .filter((element) => element.matches(ARTICLE_AD_SELECTOR) || isArticleNativeAdFrame(element));
             if (relevantNodes.length > 0) {
+                articleAdGeneration += 1;
+                runtimeCoordinator.setDiagnosticGauge?.('ui.articleAd.generation', articleAdGeneration);
                 scheduleArticleAdCleanup('mutation-bus', relevantNodes);
             }
         });
@@ -11433,7 +11685,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', () => {
             injectStyle();
-            scheduleArticleAdCleanup('domcontentloaded');
+            if (articleAdGeneration !== lastArticleAdCleanupGeneration) scheduleArticleAdCleanup('domcontentloaded');
         }, { once: true });
     }
     window.addEventListener('load', () => {
@@ -11581,25 +11833,9 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         '.writer_nikcon img',
         'img.gallercon'
     ].join(', ');
-    const ARTICLE_DARK_TARGET_SELECTOR = [
-        '[style]',
-        '[data-scaled-by-filter]',
-        '[data-scaled-by-filter] *',
-        'p',
-        'div',
-        'span',
-        'font',
-        'b',
-        'strong',
-        'em',
-        'i',
-        'a',
-        'li',
-        'td',
-        'th',
-        'pre',
-        'blockquote'
-    ].join(', ');
+    // 기본 야간 보정은 위 CSS가 담당합니다. JS는 inline !important가 CSS보다
+    // 우선하는 예외만 만지므로 article 전체 하위 노드를 반복 순회하지 않습니다.
+    const ARTICLE_DARK_TARGET_SELECTOR = '[style]';
     const IMAGE_COMMENT_DARK_TEXT_TARGET_SELECTOR = '.gall_writer, .nickname, .nickname em, .usertxt';
     const IMAGE_COMMENT_DARK_META_TARGET_SELECTOR = '.ip, .date_time, .txt_del, .reply_num';
     const pendingNormalizeRoots = new Set();
@@ -11607,7 +11843,12 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
     const pendingDarkTextTargets = new Set();
     const pendingImageCommentDarkTextTargets = new Set();
     const pendingImageCommentDarkMetaTargets = new Set();
+    const articleInlineStyleState = new WeakMap();
+    const articleInlineOverrideElements = new Set();
     let forceNormalizeFullPass = false;
+    let normalizeMutationGeneration = 0;
+    let lastNormalizeGeneration = -1;
+    let hasCentralNormalizeBus = false;
     const addUniqueElement = (targetSet, element) => {
         if (!(element instanceof Element)) return;
         targetSet.add(element);
@@ -11771,17 +12012,43 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         });
     };
 
-    const applyArticleDarkTarget = (element, darkMode, articleDarkProps) => {
+    const applyArticleDarkTarget = (element, articleDarkProps) => {
         if (!(element instanceof HTMLElement)) return;
-        if (darkMode) {
-            articleDarkProps.forEach(([property, value, storageKey]) => {
-                rememberInlineStyle(element, property, storageKey);
-                setImportantIfChanged(element, property, value);
+        articleDarkProps.forEach(([property, value]) => {
+            if (element.style.getPropertyPriority(property) !== 'important') return;
+            if (element.style.getPropertyValue(property).trim() === value) return;
+
+            let storedProperties = articleInlineStyleState.get(element);
+            if (!storedProperties) {
+                storedProperties = new Map();
+                articleInlineStyleState.set(element, storedProperties);
+                articleInlineOverrideElements.add(element);
+            }
+            if (!storedProperties.has(property)) {
+                storedProperties.set(property, {
+                    value: element.style.getPropertyValue(property) || '',
+                    priority: element.style.getPropertyPriority(property) || ''
+                });
+            }
+            setImportantIfChanged(element, property, value);
+        });
+    };
+    const restoreArticleDarkOverrides = () => {
+        articleInlineOverrideElements.forEach((element) => {
+            const storedProperties = articleInlineStyleState.get(element);
+            storedProperties?.forEach(({ value, priority }, property) => {
+                if (value) element.style.setProperty(property, value, priority);
+                else element.style.removeProperty(property);
             });
-            return;
-        }
-        articleDarkProps.forEach(([property, _value, storageKey]) => {
-            restoreInlineStyleIfStored(element, property, storageKey);
+            articleInlineStyleState.delete(element);
+        });
+        articleInlineOverrideElements.clear();
+    };
+    const pruneDetachedArticleDarkOverrides = () => {
+        articleInlineOverrideElements.forEach((element) => {
+            if (element.isConnected) return;
+            articleInlineStyleState.delete(element);
+            articleInlineOverrideElements.delete(element);
         });
     };
     const applyImageCommentDarkTarget = (element, darkMode, colorValue) => {
@@ -11803,6 +12070,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         forceFullScan = false
     } = {}) => {
         const darkMode = document.body?.classList.contains('dc-filter-dark-mode');
+        pruneDetachedArticleDarkOverrides();
         const scopedRoots = Array.isArray(roots) ? roots : null;
         const viewScope = resolveViewScope(scopedRoots);
         const resolvedViewFg = (viewScope ? getComputedStyle(viewScope).getPropertyValue('--dcuf-view-fg') : '').trim() || '#edf3ff';
@@ -11811,25 +12079,29 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         // 본문은 color만으로 안 끝나는 케이스가 있습니다.
         // 인라인 text-fill/opacity/filter/blend/stroke까지 같이 정리해야 야간모드가 안정적으로 먹습니다.
         const articleDarkProps = [
-            ['color', resolvedViewFg, 'dcufOrigColor'],
-            ['-webkit-text-fill-color', resolvedViewFg, 'dcufOrigTextFill'],
-            ['opacity', '1', 'dcufOrigOpacity'],
-            ['filter', 'none', 'dcufOrigFilter'],
-            ['mix-blend-mode', 'normal', 'dcufOrigBlendMode'],
-            ['text-shadow', 'none', 'dcufOrigTextShadow'],
-            ['-webkit-text-stroke', '0px transparent', 'dcufOrigTextStroke'],
+            ['color', resolvedViewFg],
+            ['-webkit-text-fill-color', resolvedViewFg],
+            ['opacity', '1'],
+            ['filter', 'none'],
+            ['mix-blend-mode', 'normal'],
+            ['text-shadow', 'none'],
+            ['-webkit-text-stroke', '0px transparent'],
         ];
 
-        const scopedArticleTargets = Array.isArray(articleTargets)
-            ? articleTargets.filter((element) => element instanceof HTMLElement && element.closest(ARTICLE_SCOPE_SELECTOR))
-            : [];
-        if (!forceFullScan && scopedArticleTargets.length > 0) {
-            scopedArticleTargets.forEach((element) => applyArticleDarkTarget(element, darkMode, articleDarkProps));
+        if (!darkMode) {
+            restoreArticleDarkOverrides();
         } else {
-            const articleScopes = collectScopedRoots(scopedRoots, ARTICLE_SCOPE_SELECTOR);
-            collectMatchesWithinRoots(articleScopes, ARTICLE_DARK_TARGET_SELECTOR).forEach((element) => {
-                applyArticleDarkTarget(element, darkMode, articleDarkProps);
-            });
+            const scopedArticleTargets = Array.isArray(articleTargets)
+                ? articleTargets.filter((element) => element instanceof HTMLElement && element.closest(ARTICLE_SCOPE_SELECTOR))
+                : [];
+            if (!forceFullScan && scopedArticleTargets.length > 0) {
+                scopedArticleTargets.forEach((element) => applyArticleDarkTarget(element, articleDarkProps));
+            } else {
+                const articleScopes = collectScopedRoots(scopedRoots, ARTICLE_SCOPE_SELECTOR);
+                collectMatchesWithinRoots(articleScopes, ARTICLE_DARK_TARGET_SELECTOR).forEach((element) => {
+                    applyArticleDarkTarget(element, articleDarkProps);
+                });
+            }
         }
 
         const scopedImageCommentTextTargets = Array.isArray(imageCommentTextTargets)
@@ -11892,11 +12164,31 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         });
     };
     const normalizeScheduler = __dcufCreatePhaseScheduler('comment-normalize', ({ delay }) => {
+        const runtimeCoordinator = window.__dcufRuntimeCoordinator;
+        if (delay > 0
+            && hasCentralNormalizeBus
+            && !forceNormalizeFullPass
+            && lastNormalizeGeneration === normalizeMutationGeneration) {
+            runtimeCoordinator?.incrementDiagnostic?.('ui.normalize.skippedUnchanged');
+            return;
+        }
+        const measureDuration = Boolean(runtimeCoordinator?._diagnosticsEnabled) && typeof performance?.now === 'function';
+        const startedAt = measureDuration ? performance.now() : 0;
         flushPendingNormalize({ forceFullPass: delay > 0 });
+        lastNormalizeGeneration = normalizeMutationGeneration;
+        runtimeCoordinator?.incrementDiagnostic?.('ui.normalize.executed');
+        runtimeCoordinator?.setDiagnosticGauge?.('ui.normalize.generation', normalizeMutationGeneration);
+        if (measureDuration) {
+            runtimeCoordinator?.setDiagnosticGauge?.(
+                'ui.normalize.lastDurationMs',
+                Math.round((performance.now() - startedAt) * 1000) / 1000
+            );
+        }
     }, NORMALIZE_DELAYS);
 
     const scheduleNormalize = ({ elements = null, forceFullPass = false } = {}) => {
         queueNormalizeWork(elements, { forceFullPass });
+        normalizeMutationGeneration += 1;
         normalizeScheduler.schedule();
     };
 
@@ -11915,6 +12207,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             }
         });
         if (typeof unsubscribe === 'function') {
+            hasCentralNormalizeBus = true;
             window.__dcufCommentTypographyMutationUnsubscribe = unsubscribe;
             return;
         }
