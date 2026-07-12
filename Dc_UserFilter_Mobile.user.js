@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         DC_UserFilter_Mobile
 // @namespace    http://tampermonkey.net/
-// @version      3.3.5
+// @version      3.3.6
 // @description  유저 필터링, UI 개선, 개인 차단/해제 기능
 // @author       domato153
 // @match        https://gall.dcinside.com/*
@@ -4258,7 +4258,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         async init() {
             if (isInitialized) return; isInitialized = true;
             this.installDebugApi();
-            this.debugLog('init', 'FilterModule init start', { version: '3.3.5' });
+            this.debugLog('init', 'FilterModule init start', { version: '3.3.6' });
             await this.cleanupLegacyManagedBlockConfig();
             await this.reloadSettings();
             if (this.DEBUG_ENABLED) await this.debugDumpState('after init reload');
@@ -7579,28 +7579,171 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 captchaCell.classList.add('user_info_input', 'dcuf-write-captcha-cell');
             }
 
+            const mobileFontNames = [
+                '맑은 고딕', '굴림체', '굴림', '바탕체', '바탕', '궁서',
+                'helvetica', 'Arial', 'Arial Black', 'Comic Sans MS', 'Courier New',
+                'Impact', 'Tahoma', 'Times New Roman', 'Verdana', 'MS Gothic',
+                'MS PGothic', 'MS UI Gothic'
+            ];
+            const ensureMobileFontMenu = () => {
+                const isMobileScreen = (Number(window.screen?.width) || window.innerWidth || 0) <= 600;
+                document.body.classList.toggle('dcuf-write-mobile-font-menu', isMobileScreen);
+                if (!isMobileScreen || !(writeForm instanceof HTMLElement)) return;
+
+                writeForm.querySelectorAll('.note-toolbar .note-fontname').forEach((fontGroup) => {
+                    if (!(fontGroup instanceof HTMLElement)) return;
+                    const button = fontGroup.querySelector('button.dropdown-toggle, button.note-btn');
+                    const label = button?.querySelector('.note-current-fontname');
+                    const menu = fontGroup.querySelector('.note-dropdown-menu.dropdown-fontname');
+                    if (label instanceof HTMLElement && !(label.textContent || '').trim()) {
+                        label.textContent = '글꼴';
+                        label.style.removeProperty('font-family');
+                    }
+                    if (!(menu instanceof HTMLElement)) return;
+
+                    if (menu.dataset.dcufMobileFonts !== '1') {
+                        const selectedValue = menu.querySelector('.note-dropdown-item.checked')?.getAttribute('data-value') || '';
+                        const fragment = document.createDocumentFragment();
+                        mobileFontNames.forEach((fontName) => {
+                            const item = document.createElement('a');
+                            item.className = `note-dropdown-item${selectedValue === fontName ? ' checked' : ''}`;
+                            item.href = '#';
+                            item.setAttribute('data-value', fontName);
+                            item.setAttribute('data-dcuf-mobile-font-item', '1');
+                            item.setAttribute('role', 'listitem');
+                            item.setAttribute('aria-label', fontName);
+                            const check = document.createElement('i');
+                            check.className = 'note-icon-menu-check';
+                            const text = document.createElement('span');
+                            text.textContent = fontName;
+                            text.style.fontFamily = fontName;
+                            item.append(check, document.createTextNode(' '), text);
+                            fragment.appendChild(item);
+                        });
+                        menu.replaceChildren(fragment);
+                        menu.dataset.dcufMobileFonts = '1';
+                    }
+
+                    if (menu.__dcufMobileFontBound) return;
+                    menu.__dcufMobileFontBound = true;
+
+                    menu.addEventListener('mousedown', (event) => {
+                        if (event.target instanceof Element && event.target.closest('[data-dcuf-mobile-font-item="1"]')) {
+                            event.preventDefault();
+                        }
+                    });
+                    menu.addEventListener('click', (event) => {
+                        const item = event.target instanceof Element
+                            ? event.target.closest('[data-dcuf-mobile-font-item="1"]')
+                            : null;
+                        if (!(item instanceof HTMLElement)) return;
+                        event.preventDefault();
+                        event.stopPropagation();
+                        const fontName = item.getAttribute('data-value') || '';
+                        if (!fontName) return;
+
+                        const memo = writeForm.querySelector('textarea#memo');
+                        const jq = window.jQuery;
+                        if (memo instanceof HTMLTextAreaElement && typeof jq === 'function' && typeof jq(memo).summernote === 'function') {
+                            jq(memo).summernote('fontName', fontName);
+                        } else {
+                            document.execCommand('fontName', false, fontName);
+                        }
+                        menu.querySelectorAll('.note-dropdown-item').forEach((candidate) => {
+                            candidate.classList.toggle('checked', candidate === item);
+                        });
+                        if (label instanceof HTMLElement) {
+                            label.textContent = fontName;
+                            label.style.fontFamily = fontName;
+                        }
+                        fontGroup.querySelectorAll('.note-btn-group.open').forEach((group) => group.classList.remove('open'));
+                        button?.classList.remove('active');
+                        menu.style.display = 'none';
+                    });
+                });
+            };
+            ensureMobileFontMenu();
+
             if (writeForm instanceof HTMLElement && writeForm.dataset.dcufEditorLayersBound !== '1') {
                 writeForm.dataset.dcufEditorLayersBound = '1';
-                const positionEditorLayers = () => {
-                    writeForm.querySelectorAll('.note-toolbar .note-dropdown-menu, .note-toolbar .pop_wrap').forEach((layer) => {
+                // Live Summernote editor dropdown contracts. Keep the generic selector as a
+                // forward-compatible fallback and list known menus here for fixture/audit parity.
+                const editorDropdownSelector = [
+                    '.note-toolbar .note-dropdown-menu',
+                    '.note-toolbar .dropdown-fontname',
+                    '.note-toolbar .dropdown-fontsize',
+                    '.note-toolbar .note-color .note-dropdown-menu',
+                    '.note-toolbar .note-table',
+                    '.note-toolbar .note-height .dropdown-line-height',
+                    '.note-toolbar .note-para .note-dropdown-menu'
+                ].join(', ');
+                const editorLayerSelector = `${editorDropdownSelector}, .note-toolbar .pop_wrap`;
+                const positionEditorLayers = ({ includeDropdowns = true } = {}) => {
+                    writeForm.querySelectorAll(editorLayerSelector).forEach((layer) => {
                         if (!(layer instanceof HTMLElement) || getComputedStyle(layer).display === 'none') return;
+                        const isDropdown = layer.matches('.note-dropdown-menu');
+                        if (isDropdown && !includeDropdowns) return;
                         const anchor = layer.closest('.note-btn-group');
                         if (!(anchor instanceof HTMLElement)) return;
-                        layer.classList.add('dcuf-editor-layer-positioning');
+                        layer.classList.remove('dcuf-editor-layer-positioned');
                         const anchorRect = anchor.getBoundingClientRect();
                         const layerRect = layer.getBoundingClientRect();
-                        const viewportWidth = window.visualViewport?.width || window.innerWidth;
-                        const viewportHeight = window.visualViewport?.height || window.innerHeight;
-                        const width = Math.min(layerRect.width, Math.max(0, viewportWidth - 16));
-                        const left = Math.max(8, Math.min(viewportWidth - width - 8, anchorRect.left));
-                        const below = Math.max(0, viewportHeight - anchorRect.bottom - 8);
-                        const above = Math.max(0, anchorRect.top - 8);
-                        const openAbove = layerRect.height > below && above > below;
-                        const top = openAbove
-                            ? Math.max(8, anchorRect.top - layerRect.height - 6)
-                            : Math.max(8, anchorRect.bottom + 6);
-                        layer.style.setProperty('--dcuf-editor-layer-left', `${Math.round(left)}px`);
-                        layer.style.setProperty('--dcuf-editor-layer-top', `${Math.round(top)}px`);
+                        // Desktop-site mobile browsers and the testbed can expose different
+                        // coordinate spaces for an absolutely positioned Summernote menu.
+                        // Convert viewport deltas back into the anchor's local CSS pixels.
+                        const measuredLocalScale = isDropdown && anchor.offsetWidth > 0
+                            ? anchorRect.width / anchor.offsetWidth
+                            : 1;
+                        const localCoordinateScale = Number.isFinite(measuredLocalScale) && measuredLocalScale > 0
+                            ? measuredLocalScale
+                            : 1;
+                        const visualViewport = window.visualViewport;
+                        const visualScale = visualViewport?.scale || 1;
+                        const scaledVisualWidth = (visualViewport?.width || window.innerWidth) * visualScale;
+                        const containerRect = writeForm.closest('#container')?.getBoundingClientRect();
+                        const rectUsesScaledVisualCoordinates = document.body.classList.contains('dcuf-write-desktop-site-mobile')
+                            && containerRect instanceof DOMRect
+                            && containerRect.width <= scaledVisualWidth + 2;
+                        const viewportCoordinateScale = rectUsesScaledVisualCoordinates ? visualScale : 1;
+                        const viewportLeft = (visualViewport?.offsetLeft || 0) * viewportCoordinateScale;
+                        const viewportTop = (visualViewport?.offsetTop || 0) * viewportCoordinateScale;
+                        const viewportWidth = (visualViewport?.width || window.innerWidth) * viewportCoordinateScale;
+                        const viewportHeight = (visualViewport?.height || window.innerHeight) * viewportCoordinateScale;
+                        const viewportRight = viewportLeft + viewportWidth;
+                        const viewportBottom = viewportTop + viewportHeight;
+                        const edgePadding = 8;
+                        const layerGap = 6;
+                        const maxWidth = Math.max(1, viewportWidth - (edgePadding * 2));
+                        const maxHeight = Math.max(1, viewportHeight - (edgePadding * 2));
+                        const constrainToViewport = isDropdown;
+                        const width = constrainToViewport ? Math.min(layerRect.width, maxWidth) : layerRect.width;
+                        const height = constrainToViewport ? Math.min(layerRect.height, maxHeight) : layerRect.height;
+                        const left = Math.max(
+                            viewportLeft + edgePadding,
+                            Math.min(viewportRight - width - edgePadding, anchorRect.left)
+                        );
+                        const below = Math.max(0, viewportBottom - anchorRect.bottom - edgePadding - layerGap);
+                        const above = Math.max(0, anchorRect.top - viewportTop - edgePadding - layerGap);
+                        const openAbove = height > below && above > below;
+                        const preferredTop = openAbove
+                            ? anchorRect.top - height - layerGap
+                            : anchorRect.bottom + layerGap;
+                        const top = Math.max(
+                            viewportTop + edgePadding,
+                            Math.min(viewportBottom - height - edgePadding, preferredTop)
+                        );
+                        const positionedLeft = isDropdown
+                            ? (left - anchorRect.left) / localCoordinateScale
+                            : left;
+                        const positionedTop = isDropdown
+                            ? (top - anchorRect.top) / localCoordinateScale
+                            : top;
+                        const localMaxWidth = isDropdown ? maxWidth / localCoordinateScale : maxWidth;
+                        const localMaxHeight = isDropdown ? maxHeight / localCoordinateScale : maxHeight;
+                        layer.style.setProperty('--dcuf-editor-layer-left', `${Math.round(positionedLeft)}px`);
+                        layer.style.setProperty('--dcuf-editor-layer-top', `${Math.round(positionedTop)}px`);
+                        layer.style.setProperty('--dcuf-editor-layer-max-width', `${Math.floor(localMaxWidth)}px`);
+                        layer.style.setProperty('--dcuf-editor-layer-max-height', `${Math.floor(localMaxHeight)}px`);
                         layer.classList.remove('dcuf-editor-layer-positioning');
                         layer.classList.add('dcuf-editor-layer-positioned');
                     });
@@ -7608,16 +7751,25 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 const scheduleEditorLayerPosition = () => {
                     requestAnimationFrame(positionEditorLayers);
                 };
+                const scheduleEditorPopupPosition = () => {
+                    requestAnimationFrame(() => positionEditorLayers({ includeDropdowns: false }));
+                };
                 writeForm.addEventListener('click', (event) => {
                     if (!(event.target instanceof Element) || !event.target.closest('.note-toolbar')) return;
+                    if (event.target.closest('.note-fontname')) ensureMobileFontMenu();
                     positionEditorLayers();
                     scheduleEditorLayerPosition();
                 });
                 writeForm.addEventListener('pointerover', (event) => {
-                    if (event.target instanceof Element && event.target.closest('.note-toolbar')) scheduleEditorLayerPosition();
+                    if (!(event.target instanceof Element) || !event.target.closest('.note-toolbar')) return;
+                    if (event.target.closest('.note-fontname')) ensureMobileFontMenu();
+                    scheduleEditorLayerPosition();
                 });
+                writeForm.addEventListener('scroll', scheduleEditorPopupPosition, { passive: true, capture: true });
                 window.addEventListener('resize', scheduleEditorLayerPosition, { passive: true });
-                window.addEventListener('scroll', scheduleEditorLayerPosition, { passive: true, capture: true });
+                window.addEventListener('scroll', scheduleEditorPopupPosition, { passive: true, capture: true });
+                window.visualViewport?.addEventListener('resize', scheduleEditorLayerPosition, { passive: true });
+                window.visualViewport?.addEventListener('scroll', scheduleEditorPopupPosition, { passive: true });
             }
 
             // [최종 완전판] 글쓰기 페이지의 광고 컨테이너를 직접 찾아 제거하는 함수
@@ -7764,7 +7916,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
         return {
             reason,
-            version: '3.3.5',
+            version: '3.3.6',
             time: new Date().toISOString(),
             href: location.href,
             heap: getDcufHeapMb(),
@@ -7963,7 +8115,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 commentInitState: { reason: 'already-initialized' }
             };
         }
-        console.log("[DC Filter+UI] Initializing v3.3.5...");
+        console.log("[DC Filter+UI] Initializing v3.3.6...");
 
 
         // [수정] main 함수에서 reloadShortcutKey 함수를 호출하여 초기화
@@ -13674,21 +13826,43 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             visibility: visible;
             pointer-events: auto;
         }
-        body.is-write-page form#write .note-toolbar :is(.note-dropdown-menu, .pop_wrap).dcuf-editor-layer-positioning,
-        body.is-write-page form#write .note-toolbar :is(.note-dropdown-menu, .pop_wrap).dcuf-editor-layer-positioned {
+        body.is-write-page form#write .note-toolbar .pop_wrap.dcuf-editor-layer-positioned {
             position: fixed !important;
             zoom: var(--dcuf-write-desktop-site-inverse-scale, 1);
         }
-        body.is-write-page form#write .note-toolbar :is(.note-dropdown-menu, .pop_wrap).dcuf-editor-layer-positioning {
-            left: 0 !important;
-            top: 0 !important;
-            visibility: hidden !important;
+        body.is-write-page form#write .note-toolbar .note-dropdown-menu.dcuf-editor-layer-positioned {
+            position: absolute !important;
+            zoom: 1 !important;
         }
         body.is-write-page form#write .note-toolbar :is(.note-dropdown-menu, .pop_wrap).dcuf-editor-layer-positioned {
             left: var(--dcuf-editor-layer-left) !important;
             top: var(--dcuf-editor-layer-top) !important;
             right: auto !important;
             bottom: auto !important;
+            z-index: 2147483647 !important;
+        }
+        body.is-write-page form#write .note-toolbar .note-dropdown-menu.dcuf-editor-layer-positioned {
+            max-width: var(--dcuf-editor-layer-max-width) !important;
+            max-height: var(--dcuf-editor-layer-max-height) !important;
+            overflow: auto !important;
+            overscroll-behavior: contain !important;
+            -webkit-overflow-scrolling: touch !important;
+        }
+        body.is-write-page.dcuf-write-mobile-font-menu form#write .note-toolbar .note-fontname button.dropdown-toggle,
+        body.is-write-page.dcuf-write-mobile-font-menu form#write .note-toolbar .note-fontname button.note-btn {
+            width: auto !important;
+            min-width: 88px !important;
+            max-width: 132px !important;
+            flex: 0 0 auto !important;
+        }
+        body.is-write-page.dcuf-write-mobile-font-menu form#write .note-toolbar .note-current-fontname {
+            display: inline-block !important;
+            min-width: 42px !important;
+            max-width: 88px !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+            vertical-align: middle !important;
+            white-space: nowrap !important;
         }
         body.is-write-page form#write .note-toolbar-media,
         body.is-write-page form#write .note-toolbar,
