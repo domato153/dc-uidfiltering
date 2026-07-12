@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         DC_UserFilter_Mobile
 // @namespace    http://tampermonkey.net/
-// @version      3.3.4
+// @version      3.3.5
 // @description  유저 필터링, UI 개선, 개인 차단/해제 기능
 // @author       domato153
 // @match        https://gall.dcinside.com/*
@@ -1898,32 +1898,6 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             .cmt_write_box { flex-direction: column !important; }
             .cmt_write_box > .fl, .cmt_write_box .cmt_txt_cont { flex-basis: auto; width: 100% !important; min-width: 100%; }
         }
-
-
-        /* [개선] --- 글쓰기 페이지 전용 스타일 --- */
-        .is-write-page #container { background: #fff !important; padding: 0 !important; }
-        .is-write-page .center_content, .is-write-page .gall_write, .is-write-page .write_box { padding: 0 !important; border: none !important; box-shadow: none !important; margin: 0 !important; }
-        .is-write-page .write_box { padding: 15px !important; }
-        .is-write-page .write_box > table, .is-write-page .write_box .w_top > tbody, .is-write-page .write_box .w_top > tbody > tr, .is-write-page .write_box .w_top > tbody > tr > th, .is-write-page .write_box .w_top > tbody > tr > td { display: block; width: 100% !important; border: none !important; padding: 0 !important; }
-        .is-write-page .write_box .w_top { display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px; }
-        .is-write-page .write_box .w_top .write_subject, .is-write-page .write_box .w_top .user_info_box { display: flex; flex-direction: column; gap: 10px; }
-        .is-write-page .write_box .user_info_box { flex-direction: row; }
-        .is-write-page .write_box select, .is-write-page .write_box input[type="text"], .is-write-page .write_box input[type="password"] { width: 100% !important; height: 45px !important; padding: 0 12px !important; font-size: 16px !important; border: 1px solid #ddd !important; border-radius: 4px !important; box-sizing: border-box !important; }
-        .is-write-page .write_box .user_info_box .user_info_input { flex: 1; }
-        .is-write-page .write_box .btn_bottom_box { display: flex !important; gap: 10px; padding: 15px 0 0 0 !important; border-top: 1px solid #eee; margin-top: 15px; }
-        .is-write-page .write_box .btn_bottom_box a, .is-write-page .write_box .btn_bottom_box button { flex: 1; display: inline-block !important; text-align: center !important; padding: 12px 0 !important; font-size: 16px !important; border-radius: 4px !important; text-decoration: none !important; height: auto !important; float: none !important; line-height: normal !important; }
-        .is-write-page .write_box .btn_bottom_box .btn_blue { background-color: #3b71fd !important; color: #fff !important; border: none !important; }
-        .is-write-page .write_box .btn_bottom_box .btn_lightred { background-color: #e9e9e9 !important; color: #555 !important; border: none !important; }
-        .is-write-page .tx-toolbar-basic { border-bottom: 1px solid #ddd !important; }
-        .is-write-page .tx-toolbar-advanced, .is-write-page .write_infobox, .is-write-page .file_upload_info { display: none !important; }
-        /* [종합 수정] 글쓰기 페이지 광고 및 빈 공간 제거 */
-        .is-write-page .cm_ad,.is-write-page .adv_bottom_write,.is-write-page div[id^="kakao_ad_"] {display: none !important;height: 0 !important;margin: 0 !important;padding: 0 !important;visibility: hidden !important;}
-
-        @media (max-width: 480px) {
-            .is-write-page .write_box .user_info_box { flex-direction: column; }
-        }
-
-
         /* --- [v2.3.2 수정] 개인 차단 기능 UI --- */
         /* DCUF_SHARED_FILTER_UI_START */
         #dc-personal-block-fab {
@@ -4284,7 +4258,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         async init() {
             if (isInitialized) return; isInitialized = true;
             this.installDebugApi();
-            this.debugLog('init', 'FilterModule init start', { version: '3.3.4' });
+            this.debugLog('init', 'FilterModule init start', { version: '3.3.5' });
             await this.cleanupLegacyManagedBlockConfig();
             await this.reloadSettings();
             if (this.DEBUG_ENABLED) await this.debugDumpState('after init reload');
@@ -7441,15 +7415,209 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             document.body.classList.add('is-write-page');
 
             const writeBox = document.querySelector('.write_box');
-            if (writeBox) {
-                const topTable = writeBox.querySelector('.w_top');
-                if (topTable) {
-                    const userInfoRow = topTable.querySelector('tr:nth-child(2)');
-                    if (userInfoRow) {
-                        userInfoRow.classList.add('user_info_box');
-                        userInfoRow.querySelectorAll('td').forEach(td => td.classList.add('user_info_input'));
-                    }
+            const writeForm = writeBox?.querySelector('form#write') || document.querySelector('form#write');
+            const gallType = writeForm?.querySelector('input[name="_GALLTYPE_"]')?.value || '';
+            const isMinorWrite = gallType.toUpperCase() === 'M'
+                || document.querySelector('#container.minor_write') instanceof Element
+                || (window.location.pathname || '').includes('/mgallery/');
+            document.body.classList.add(isMinorWrite ? 'dcuf-write-minor' : 'dcuf-write-major');
+            writeForm?.classList.add(isMinorWrite ? 'dcuf-write-form-minor' : 'dcuf-write-form-major');
+
+            const syncDesktopSiteMobileWriteMode = () => {
+                const screenWidth = Number(window.screen?.width) || 0;
+                const layoutWidth = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0);
+                const scale = screenWidth > 0 ? layoutWidth / screenWidth : 1;
+                const enabled = screenWidth > 0 && screenWidth <= 600 && layoutWidth >= 800 && scale >= 1.5;
+                document.body.classList.toggle('dcuf-write-desktop-site-mobile', enabled);
+                if (enabled) {
+                    const initialScale = Math.min(3, scale);
+                    document.body.style.setProperty('--dcuf-write-desktop-site-scale', String(initialScale));
+                    document.body.style.setProperty('--dcuf-write-desktop-site-inverse-scale', String(1 / initialScale));
+                    document.body.style.setProperty('--dcuf-write-device-width', `${screenWidth}px`);
+                } else {
+                    document.body.style.removeProperty('--dcuf-write-desktop-site-scale');
+                    document.body.style.removeProperty('--dcuf-write-desktop-site-inverse-scale');
+                    document.body.style.removeProperty('--dcuf-write-device-width');
                 }
+            };
+            syncDesktopSiteMobileWriteMode();
+            if (document.body.dataset.dcufWriteViewportBound !== '1') {
+                document.body.dataset.dcufWriteViewportBound = '1';
+                window.addEventListener('resize', syncDesktopSiteMobileWriteMode, { passive: true });
+                window.visualViewport?.addEventListener('resize', syncDesktopSiteMobileWriteMode, { passive: true });
+            }
+
+            const liveFieldset = writeForm?.querySelector('fieldset');
+            if (liveFieldset) liveFieldset.classList.add('dcuf-write-fields');
+
+            writeForm?.querySelectorAll('input[type="text"]:not([id]):not([name]), input[type="password"]:not([id]):not([name])')
+                .forEach((input) => input.classList.add('dcuf-write-decoy-input'));
+
+            const subjectRow = writeForm?.querySelector('#subject')?.closest('tr');
+            if (subjectRow) subjectRow.classList.add('dcuf-write-subject-row');
+            const subjectField = writeForm?.querySelector('#subject')?.closest('.input_box');
+            if (subjectField) subjectField.classList.add('dcuf-write-subject-field');
+
+            const guestControls = ['#name', '#password', '#code']
+                .map((selector) => writeForm?.querySelector(selector))
+                .filter((control) => control instanceof HTMLElement);
+            const guestRows = new Set(guestControls.map((control) => control.closest('tr')).filter(Boolean));
+            guestRows.forEach((row) => {
+                row.classList.add('user_info_box', 'dcuf-write-guest-row');
+                row.querySelectorAll('td').forEach((cell) => cell.classList.add('user_info_input'));
+            });
+
+            const liveFieldClasses = new Map([
+                ['#name', 'dcuf-write-name-field'],
+                ['#password', 'dcuf-write-password-field'],
+                ['#code', 'dcuf-write-captcha-field']
+            ]);
+            liveFieldClasses.forEach((className, selector) => {
+                const field = writeForm?.querySelector(selector)?.closest('.input_box');
+                if (field) field.classList.add('dcuf-write-guest-field', className);
+            });
+
+            const captchaImageBox = writeForm?.querySelector('#kcaptcha')?.closest('.kap_codeimg');
+            if (captchaImageBox) captchaImageBox.classList.add('dcuf-write-captcha-image');
+
+            const headtextLabel = writeForm?.querySelector('.write_subject > .tit, .write_subject > .write_subject_label');
+            if (headtextLabel) headtextLabel.classList.add('dcuf-write-headtext-label');
+
+            const headtextList = writeForm?.querySelector('.write_subject .subject_list');
+            if (headtextList instanceof HTMLElement) {
+                let draggedHeadtext = false;
+                let headtextDrag = null;
+                const revealHeadtext = (candidate, behavior = 'smooth') => {
+                    if (!(candidate instanceof HTMLElement)) return;
+                    requestAnimationFrame(() => {
+                        const maxScrollLeft = Math.max(0, headtextList.scrollWidth - headtextList.clientWidth);
+                        const centeredLeft = candidate.offsetLeft - ((headtextList.clientWidth - candidate.offsetWidth) / 2);
+                        headtextList.scrollTo({
+                            left: Math.max(0, Math.min(maxScrollLeft, centeredLeft)),
+                            behavior
+                        });
+                    });
+                };
+                const positionHeadtextTips = () => {
+                    headtextList.querySelectorAll(':scope > li .tip_box2').forEach((tip) => {
+                        if (!(tip instanceof HTMLElement)) return;
+                        const item = tip.closest('li');
+                        if (!(item instanceof HTMLElement) || getComputedStyle(tip).display === 'none') return;
+                        const itemRect = item.getBoundingClientRect();
+                        const tipRect = tip.getBoundingClientRect();
+                        const viewportWidth = window.visualViewport?.width || window.innerWidth;
+                        const modeScale = document.body.classList.contains('dcuf-write-desktop-site-mobile')
+                            ? (Number(document.body.style.getPropertyValue('--dcuf-write-desktop-site-scale')) || 1)
+                            : 1;
+                        const left = Math.max(8, Math.min(viewportWidth - tipRect.width - 8, itemRect.left + ((itemRect.width - tipRect.width) / 2)));
+                        const top = Math.max(8, itemRect.top - tipRect.height - 8);
+                        tip.style.setProperty('--dcuf-headtext-tip-left', `${Math.round(left / modeScale)}px`);
+                        tip.style.setProperty('--dcuf-headtext-tip-top', `${Math.round(top / modeScale)}px`);
+                        tip.style.setProperty('--dcuf-headtext-tip-max-width', `${Math.floor((viewportWidth - 16) / modeScale)}px`);
+                    });
+                };
+                const scheduleHeadtextTipPosition = () => {
+                    requestAnimationFrame(() => requestAnimationFrame(positionHeadtextTips));
+                };
+                revealHeadtext(headtextList.querySelector(':scope > li.sel, :scope > li.active'), 'auto');
+                if (headtextList.dataset.dcufScrollBound !== '1') {
+                    headtextList.dataset.dcufScrollBound = '1';
+                    headtextList.addEventListener('pointerdown', (event) => {
+                        if (event.pointerType === 'touch' || event.button !== 0) return;
+                        headtextDrag = {
+                            pointerId: event.pointerId,
+                            startX: event.clientX,
+                            startScrollLeft: headtextList.scrollLeft,
+                            moved: false
+                        };
+                    });
+                    headtextList.addEventListener('pointermove', (event) => {
+                        if (!headtextDrag || headtextDrag.pointerId !== event.pointerId) return;
+                        const delta = event.clientX - headtextDrag.startX;
+                        if (!headtextDrag.moved && Math.abs(delta) >= 8) {
+                            headtextDrag.moved = true;
+                            headtextList.setPointerCapture?.(event.pointerId);
+                            headtextList.classList.add('dcuf-headtext-dragging');
+                        }
+                        if (!headtextDrag.moved) return;
+                        event.preventDefault();
+                        headtextList.scrollLeft = headtextDrag.startScrollLeft - delta;
+                        positionHeadtextTips();
+                    });
+                    const finishHeadtextDrag = (event) => {
+                        if (!headtextDrag || headtextDrag.pointerId !== event.pointerId) return;
+                        draggedHeadtext = headtextDrag.moved;
+                        headtextDrag = null;
+                        headtextList.classList.remove('dcuf-headtext-dragging');
+                        if (headtextList.hasPointerCapture?.(event.pointerId)) headtextList.releasePointerCapture(event.pointerId);
+                        if (draggedHeadtext) window.setTimeout(() => { draggedHeadtext = false; }, 0);
+                    };
+                    headtextList.addEventListener('pointerup', finishHeadtextDrag);
+                    headtextList.addEventListener('pointercancel', finishHeadtextDrag);
+                    headtextList.addEventListener('click', (event) => {
+                        if (draggedHeadtext) {
+                            event.preventDefault();
+                            event.stopImmediatePropagation();
+                            return;
+                        }
+                        const clicked = event.target instanceof Element ? event.target.closest('li') : null;
+                        if (!(clicked instanceof HTMLElement) || clicked.parentElement !== headtextList) return;
+                        requestAnimationFrame(() => {
+                            revealHeadtext(headtextList.querySelector(':scope > li.sel, :scope > li.active') || clicked);
+                        });
+                    });
+                    headtextList.addEventListener('pointerover', scheduleHeadtextTipPosition);
+                    headtextList.addEventListener('focusin', scheduleHeadtextTipPosition);
+                    headtextList.addEventListener('scroll', positionHeadtextTips, { passive: true });
+                    window.addEventListener('resize', scheduleHeadtextTipPosition, { passive: true });
+                    window.addEventListener('scroll', scheduleHeadtextTipPosition, { passive: true, capture: true });
+                }
+            }
+
+            const captchaCell = writeForm?.querySelector('#code')?.closest('td');
+            if (captchaCell) {
+                captchaCell.classList.add('user_info_input', 'dcuf-write-captcha-cell');
+            }
+
+            if (writeForm instanceof HTMLElement && writeForm.dataset.dcufEditorLayersBound !== '1') {
+                writeForm.dataset.dcufEditorLayersBound = '1';
+                const positionEditorLayers = () => {
+                    writeForm.querySelectorAll('.note-toolbar .note-dropdown-menu, .note-toolbar .pop_wrap').forEach((layer) => {
+                        if (!(layer instanceof HTMLElement) || getComputedStyle(layer).display === 'none') return;
+                        const anchor = layer.closest('.note-btn-group');
+                        if (!(anchor instanceof HTMLElement)) return;
+                        layer.classList.add('dcuf-editor-layer-positioning');
+                        const anchorRect = anchor.getBoundingClientRect();
+                        const layerRect = layer.getBoundingClientRect();
+                        const viewportWidth = window.visualViewport?.width || window.innerWidth;
+                        const viewportHeight = window.visualViewport?.height || window.innerHeight;
+                        const width = Math.min(layerRect.width, Math.max(0, viewportWidth - 16));
+                        const left = Math.max(8, Math.min(viewportWidth - width - 8, anchorRect.left));
+                        const below = Math.max(0, viewportHeight - anchorRect.bottom - 8);
+                        const above = Math.max(0, anchorRect.top - 8);
+                        const openAbove = layerRect.height > below && above > below;
+                        const top = openAbove
+                            ? Math.max(8, anchorRect.top - layerRect.height - 6)
+                            : Math.max(8, anchorRect.bottom + 6);
+                        layer.style.setProperty('--dcuf-editor-layer-left', `${Math.round(left)}px`);
+                        layer.style.setProperty('--dcuf-editor-layer-top', `${Math.round(top)}px`);
+                        layer.classList.remove('dcuf-editor-layer-positioning');
+                        layer.classList.add('dcuf-editor-layer-positioned');
+                    });
+                };
+                const scheduleEditorLayerPosition = () => {
+                    requestAnimationFrame(positionEditorLayers);
+                };
+                writeForm.addEventListener('click', (event) => {
+                    if (!(event.target instanceof Element) || !event.target.closest('.note-toolbar')) return;
+                    positionEditorLayers();
+                    scheduleEditorLayerPosition();
+                });
+                writeForm.addEventListener('pointerover', (event) => {
+                    if (event.target instanceof Element && event.target.closest('.note-toolbar')) scheduleEditorLayerPosition();
+                });
+                window.addEventListener('resize', scheduleEditorLayerPosition, { passive: true });
+                window.addEventListener('scroll', scheduleEditorLayerPosition, { passive: true, capture: true });
             }
 
             // [최종 완전판] 글쓰기 페이지의 광고 컨테이너를 직접 찾아 제거하는 함수
@@ -7596,7 +7764,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
         return {
             reason,
-            version: '3.3.4',
+            version: '3.3.5',
             time: new Date().toISOString(),
             href: location.href,
             heap: getDcufHeapMb(),
@@ -7795,7 +7963,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 commentInitState: { reason: 'already-initialized' }
             };
         }
-        console.log("[DC Filter+UI] Initializing v3.3.4...");
+        console.log("[DC Filter+UI] Initializing v3.3.5...");
 
 
         // [수정] main 함수에서 reloadShortcutKey 함수를 호출하여 초기화
@@ -8336,7 +8504,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             box-shadow: none !important;
             overflow: visible !important;
         }
-        .dcuf-header-drawer__panel[data-source="issue"] > .issue_contentbox *,
+        .dcuf-header-drawer__panel[data-source="issue"] > .issue_contentbox *:not(#hot_rank_pop2):not(#hot_rank_pop2 *),
         .dcuf-header-drawer__panel[data-source="top-recom"] > .concept_wrap * {
             box-sizing: border-box !important;
             max-width: 100% !important;
@@ -8346,9 +8514,19 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         .dcuf-header-drawer__panel[data-source="top-recom"] > .concept_wrap .concept_txt_list {
             width: 100% !important;
         }
-        .dcuf-header-drawer__panel .btn_mgall_dcp::before,
-        .dcuf-header-drawer__panel .under_poply_close::before,
-        .dcuf-header-drawer__panel button[class*="btn_blue"]::before {
+        body #hot_rank_pop2 {
+            position: fixed !important;
+            left: 50% !important;
+            top: 50% !important;
+            right: auto !important;
+            bottom: auto !important;
+            margin: 0 !important;
+            transform: translate(-50%, -50%) !important;
+            z-index: 2147483647 !important;
+        }
+        .dcuf-header-drawer__panel .btn_mgall_dcp:not(#hot_rank_pop2 *)::before,
+        .dcuf-header-drawer__panel .under_poply_close:not(#hot_rank_pop2 *)::before,
+        .dcuf-header-drawer__panel button[class*="btn_blue"]:not(#hot_rank_pop2 *)::before {
             content: none !important;
             display: none !important;
         }
@@ -8433,20 +8611,8 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             border-top: 1px solid rgba(88, 106, 132, 0.45) !important;
             box-shadow: inset 0 1px 0 rgba(120, 138, 164, 0.08) !important;
         }
-        body.dc-filter-dark-mode .dcuf-header-drawer__panel[data-source="issue"] > .issue_contentbox *,
-        body.dc-filter-dark-mode .dcuf-header-drawer__panel[data-source="issue"] > .issue_contentbox a,
-        body.dc-filter-dark-mode .dcuf-header-drawer__panel[data-source="issue"] > .issue_contentbox button,
-        body.dc-filter-dark-mode .dcuf-header-drawer__panel[data-source="issue"] > .issue_contentbox span,
-        body.dc-filter-dark-mode .dcuf-header-drawer__panel[data-source="issue"] > .issue_contentbox li,
-        body.dc-filter-dark-mode .dcuf-header-drawer__panel[data-source="issue"] > .issue_contentbox p,
-        body.dc-filter-dark-mode .dcuf-header-drawer__panel[data-source="issue"] > .issue_contentbox div {
+        body.dc-filter-dark-mode .dcuf-header-drawer__panel[data-source="issue"] > .issue_contentbox *:not(#hot_rank_pop2):not(#hot_rank_pop2 *) {
             color: #d2dced !important;
-        }
-        body.dc-filter-dark-mode .dcuf-header-drawer__panel[data-source="issue"] > .issue_contentbox .minor_ranking_box .rank_txt,
-        body.dc-filter-dark-mode .dcuf-header-drawer__panel[data-source="issue"] > .issue_contentbox .minor_ranking_box .rank_num,
-        body.dc-filter-dark-mode .dcuf-header-drawer__panel[data-source="issue"] > .issue_contentbox .minor_ranking_box .rank_txt *,
-        body.dc-filter-dark-mode .dcuf-header-drawer__panel[data-source="issue"] > .issue_contentbox .minor_ranking_box .rank_num * {
-            color: #edf3ff !important;
         }
         body.dc-filter-dark-mode .custom-bottom-controls form[name="frmSearch"] input[type="text"] {
             background: #111722 !important;
@@ -9241,6 +9407,10 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         .view_bottom,
         #bottom_listwrap {
             margin-top: 18px !important;
+        }
+        #container.mini_view article > .view_bottom_btnbox {
+            position: relative !important;
+            z-index: 1 !important;
         }
         .view_content_wrap .recommend_kapcode {
             display: flex !important;
@@ -12875,6 +13045,12 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
     const findOutsideDrawer = (selector) => Array.from(document.querySelectorAll(selector))
         .find((element) => element instanceof HTMLElement && !element.closest(DRAWER_SELECTOR));
     const isInsideDrawer = (node) => node instanceof Element && Boolean(node.closest(DRAWER_SELECTOR));
+    const portalOriginalHotRankPopup = () => {
+        const popup = document.getElementById('hot_rank_pop2');
+        if (!(popup instanceof HTMLElement) || !document.body || popup.parentElement === document.body) return;
+        popup.setAttribute('data-dcuf-host-popup-portal', '1');
+        document.body.appendChild(popup);
+    };
 
     const resolveDrawerMount = () => {
         const pageHeadActions = document.querySelector('.page_head > .fr');
@@ -12934,8 +13110,6 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         }
     };
 
-    const restoreDrawerSources = () => {};
-
     const ensureDrawerShell = (mount) => {
         if (!mount?.parent) return null;
 
@@ -12964,19 +13138,13 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
     const syncHeaderDrawer = () => {
         const existingDrawer = document.querySelector(DRAWER_SELECTOR);
         if (!isListPage()) {
-            if (existingDrawer instanceof HTMLElement) {
-                restoreDrawerSources(existingDrawer);
-                existingDrawer.remove();
-            }
+            if (existingDrawer instanceof HTMLElement) existingDrawer.remove();
             return;
         }
 
         const mount = resolveDrawerMount();
         if (!mount?.parent) {
-            if (existingDrawer instanceof HTMLElement) {
-                restoreDrawerSources(existingDrawer);
-                existingDrawer.remove();
-            }
+            if (existingDrawer instanceof HTMLElement) existingDrawer.remove();
             return;
         }
 
@@ -12985,6 +13153,10 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
         const body = drawer.querySelector(DRAWER_BODY_SELECTOR);
         if (!(body instanceof HTMLElement)) return;
+
+        // The host hides the desktop issue content after mobile list conversion.
+        // Portal only the original rank popup so it is not clipped by that hidden ancestor.
+        portalOriginalHotRankPopup();
 
         SOURCE_ORDER.forEach(({ key, selector }) => {
             let panel = body.querySelector(`.dcuf-header-drawer__panel[data-source="${key}"]`);
@@ -13005,8 +13177,13 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             if (panel.__dcufSourceSignature !== nextSignature) {
                 const clonedSource = source.cloneNode(true);
                 if (clonedSource instanceof HTMLElement) {
-                    if (key === 'top-recom') clonedSource.removeAttribute('id');
+                    // Host dropdown functions depend on the original issue_wrap hierarchy.
+                    // Keep every host node in place and make the drawer clone presentation-only.
+                    clonedSource.querySelectorAll('.pop_wrap, script, template').forEach((element) => element.remove());
+                    clonedSource.querySelectorAll('[id]').forEach((element) => element.removeAttribute('id'));
+                    clonedSource.removeAttribute('id');
                     clonedSource.setAttribute('data-dcuf-drawer-source', key);
+                    clonedSource.setAttribute('data-dcuf-drawer-clone', '1');
                     panel.replaceChildren(clonedSource);
                     panel.__dcufSourceSignature = nextSignature;
                 }
@@ -13091,6 +13268,991 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         event.stopPropagation();
         setDrawerOpenState(drawer, drawer.getAttribute('data-open') !== '1');
     }, true);
+})();
+
+(() => {
+    if ((window.location.pathname || '').indexOf('/board/write') === -1) return;
+
+    const STYLE_ID = 'dcuf-mobile-write-theme';
+    if (document.getElementById(STYLE_ID)) return;
+
+    const css = `
+        body.is-write-page {
+            --dcuf-write-fg: #22324c;
+            --dcuf-write-fg-sub: #5f6f86;
+            --dcuf-write-accent: #3f6de0;
+            --dcuf-write-accent-strong: #245bda;
+            --dcuf-write-surface: #ffffff;
+            --dcuf-write-surface-muted: #f6f8fb;
+            --dcuf-write-border: #d7e0ec;
+            --dcuf-write-border-strong: #c7d3e4;
+            --dcuf-write-shadow: 0 8px 24px rgba(18, 35, 69, 0.08);
+            background: #f2f6fb !important;
+            overflow-x: clip !important;
+        }
+        body.is-write-page.dc-filter-dark-mode {
+            --dcuf-write-fg: #edf3ff;
+            --dcuf-write-fg-sub: #b6c4d9;
+            --dcuf-write-accent: #8cb4ff;
+            --dcuf-write-accent-strong: #6f9dff;
+            --dcuf-write-surface: #18212d;
+            --dcuf-write-surface-muted: #1e2a39;
+            --dcuf-write-border: #314258;
+            --dcuf-write-border-strong: #45607c;
+            --dcuf-write-shadow: 0 10px 24px rgba(0, 0, 0, 0.32);
+            background: #121922 !important;
+        }
+        body.is-write-page #container,
+        body.is-write-page #top.dcwrap,
+        body.is-write-page #write_wrap,
+        body.is-write-page #container .center_content,
+        body.is-write-page #container .gall_write,
+        body.is-write-page #container .write_box {
+            box-sizing: border-box !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            min-width: 0 !important;
+            margin: 0 !important;
+            border: 0 !important;
+            box-shadow: none !important;
+        }
+        body.is-write-page #top.dcwrap {
+            width: 100% !important;
+            max-width: none !important;
+            min-width: 0 !important;
+        }
+        body.is-write-page #container {
+            padding: 8px !important;
+            background: transparent !important;
+            overflow: visible !important;
+        }
+        body.is-write-page #write_wrap {
+            padding-right: 0 !important;
+            padding-left: 0 !important;
+        }
+        body.is-write-page.dcuf-write-desktop-site-mobile #container {
+            width: var(--dcuf-write-device-width) !important;
+            max-width: var(--dcuf-write-device-width) !important;
+            padding: 8px !important;
+            zoom: var(--dcuf-write-desktop-site-scale);
+        }
+        body.is-write-page.dcuf-write-desktop-site-mobile {
+            padding-right: 0 !important;
+            padding-left: 0 !important;
+        }
+        body.is-write-page #container .center_content,
+        body.is-write-page #container .gall_write,
+        body.is-write-page #container .write_box {
+            padding: 0 !important;
+            background: transparent !important;
+            overflow: visible !important;
+        }
+        body.is-write-page form#write {
+            box-sizing: border-box !important;
+            display: block !important;
+            width: min(100%, 1120px) !important;
+            max-width: 100% !important;
+            min-width: 0 !important;
+            margin: 0 auto !important;
+            padding: 12px !important;
+            border: 1px solid var(--dcuf-write-border) !important;
+            border-radius: 12px !important;
+            background: var(--dcuf-write-surface) !important;
+            box-shadow: var(--dcuf-write-shadow) !important;
+            overflow: visible !important;
+        }
+        body.is-write-page form#write *:not(.pop_wrap):not(.pop_wrap *):not(.note-dropdown-menu):not(.note-dropdown-menu *):not(.note-popover):not(.note-popover *):not(.note-modal):not(.note-modal *),
+        body.is-write-page form#write *:not(.pop_wrap):not(.pop_wrap *):not(.note-dropdown-menu):not(.note-dropdown-menu *):not(.note-popover):not(.note-popover *):not(.note-modal):not(.note-modal *)::before,
+        body.is-write-page form#write *:not(.pop_wrap):not(.pop_wrap *):not(.note-dropdown-menu):not(.note-dropdown-menu *):not(.note-popover):not(.note-popover *):not(.note-modal):not(.note-modal *)::after {
+            box-sizing: border-box;
+        }
+        body.is-write-page form#write .dcuf-write-decoy-input {
+            width: 0 !important;
+            height: 0 !important;
+            min-width: 0 !important;
+            min-height: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            border: 0 !important;
+            position: absolute !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
+        }
+        body.is-write-page form#write .dcuf-write-fields {
+            display: grid !important;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 8px !important;
+            width: 100% !important;
+            min-width: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            border: 0 !important;
+        }
+        body.is-write-page form#write .dcuf-write-fields > legend {
+            position: absolute !important;
+            width: 1px !important;
+            height: 1px !important;
+            overflow: hidden !important;
+            clip-path: inset(50%) !important;
+        }
+        body.is-write-page form#write .dcuf-write-guest-field,
+        body.is-write-page form#write .dcuf-write-subject-field,
+        body.is-write-page form#write .dcuf-write-captcha-image {
+            width: 100% !important;
+            min-width: 0 !important;
+            margin: 0 !important;
+            float: none !important;
+        }
+        body.is-write-page form#write .dcuf-write-subject-field,
+        body.is-write-page form#write .dcuf-write-fields > .write_subject,
+        body.is-write-page form#write .dcuf-write-fields > [style*="clear"] {
+            grid-column: 1 / -1;
+        }
+        body.is-write-page form#write .dcuf-write-fields > [style*="clear"] {
+            display: none !important;
+        }
+        body.is-write-page form#write .dcuf-write-captcha-image {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            min-height: 46px !important;
+            padding: 4px !important;
+            border: 1px solid var(--dcuf-write-border) !important;
+            border-radius: 9px !important;
+            background: var(--dcuf-write-surface-muted) !important;
+        }
+        body.is-write-page form#write .dcuf-write-captcha-image img {
+            display: block !important;
+            width: auto !important;
+            max-width: 100% !important;
+            height: 38px !important;
+            object-fit: contain !important;
+        }
+        body.is-write-page form#write .w_top,
+        body.is-write-page form#write .w_top > tbody {
+            display: block !important;
+            width: 100% !important;
+            min-width: 0 !important;
+            margin: 0 !important;
+            border: 0 !important;
+            border-spacing: 0 !important;
+        }
+        body.is-write-page form#write .w_top > tbody > tr {
+            width: 100% !important;
+            min-width: 0 !important;
+            margin: 0 0 10px !important;
+            padding: 0 !important;
+            border: 0 !important;
+        }
+        body.is-write-page form#write .dcuf-write-subject-row {
+            display: grid !important;
+            grid-template-columns: 58px minmax(0, 1fr);
+            align-items: center;
+            gap: 8px;
+        }
+        body.is-write-page form#write .user_info_box {
+            display: grid !important;
+            grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+            gap: 8px;
+        }
+        body.is-write-page form#write .dcuf-write-subject-row > th,
+        body.is-write-page form#write .dcuf-write-subject-row > td,
+        body.is-write-page form#write .user_info_box > th,
+        body.is-write-page form#write .user_info_box > td {
+            display: block !important;
+            width: auto !important;
+            min-width: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            border: 0 !important;
+            color: var(--dcuf-write-fg-sub) !important;
+        }
+        body.is-write-page form#write .user_info_box > th {
+            position: absolute !important;
+            width: 1px !important;
+            height: 1px !important;
+            overflow: hidden !important;
+            clip-path: inset(50%) !important;
+        }
+        body.is-write-page form#write .user_info_box > .fixture-captcha-cell,
+        body.is-write-page form#write .user_info_box > td:has(.captcha) {
+            grid-column: 1 / -1;
+        }
+        body.is-write-page form#write #subject,
+        body.is-write-page form#write #name,
+        body.is-write-page form#write #password,
+        body.is-write-page form#write #code,
+        body.is-write-page form#write select:not(.pop_wrap *):not(.note-dropdown-menu *):not(.note-popover *):not(.note-modal *) {
+            width: 100% !important;
+            max-width: 100% !important;
+            min-width: 0 !important;
+            height: 46px !important;
+            padding: 0 12px !important;
+            border: 1px solid var(--dcuf-write-border-strong) !important;
+            border-radius: 9px !important;
+            outline: none !important;
+            background: var(--dcuf-write-surface) !important;
+            color: var(--dcuf-write-fg) !important;
+            font-size: 16px !important;
+            line-height: 1.2 !important;
+        }
+        body.is-write-page form#write input:not(.pop_wrap *):not(.note-dropdown-menu *):not(.note-popover *):not(.note-modal *):focus,
+        body.is-write-page form#write select:not(.pop_wrap *):not(.note-dropdown-menu *):not(.note-popover *):not(.note-modal *):focus,
+        body.is-write-page form#write .note-editable:focus,
+        body.is-write-page form#write .note-codable:focus {
+            border-color: var(--dcuf-write-accent) !important;
+            box-shadow: 0 0 0 3px color-mix(in srgb, var(--dcuf-write-accent) 18%, transparent) !important;
+        }
+        body.is-write-page form#write .captcha {
+            display: grid !important;
+            grid-template-columns: minmax(108px, 0.42fr) minmax(0, 1fr);
+            align-items: center !important;
+            gap: 8px !important;
+            width: 100% !important;
+            min-width: 0 !important;
+            padding: 8px !important;
+            border: 1px solid var(--dcuf-write-border) !important;
+            border-radius: 10px !important;
+            background: var(--dcuf-write-surface-muted) !important;
+        }
+        body.is-write-page form#write .captcha label {
+            position: absolute !important;
+            width: 1px !important;
+            height: 1px !important;
+            overflow: hidden !important;
+            clip-path: inset(50%) !important;
+        }
+        body.is-write-page form#write .captcha .fixture-captcha-image,
+        body.is-write-page form#write .captcha img {
+            width: 100% !important;
+            max-width: 100% !important;
+            min-width: 0 !important;
+            height: 38px !important;
+            object-fit: contain !important;
+            border-radius: 7px !important;
+        }
+        body.is-write-page form#write .write_subject {
+            display: flex !important;
+            flex-wrap: nowrap !important;
+            align-items: center !important;
+            gap: 6px !important;
+            width: 100% !important;
+            min-width: 0 !important;
+            min-height: 48px !important;
+            margin: 0 0 10px !important;
+            padding: 6px !important;
+            border: 1px solid var(--dcuf-write-border) !important;
+            border-radius: 10px !important;
+            background: var(--dcuf-write-surface-muted) !important;
+            position: relative !important;
+            overflow: visible !important;
+        }
+        body.is-write-page form#write .write_subject > * {
+            flex: 0 0 auto !important;
+        }
+        body.is-write-page form#write .write_subject .subject_list {
+            display: flex !important;
+            flex-wrap: nowrap !important;
+            align-items: center !important;
+            gap: 3px !important;
+            flex: 1 1 auto !important;
+            width: auto !important;
+            min-width: 0 !important;
+            margin: 0 !important;
+            padding: 0 4px 0 0 !important;
+            float: none !important;
+            list-style: none !important;
+            overflow-x: auto !important;
+            overflow-y: hidden !important;
+            overscroll-behavior-inline: contain;
+            scroll-behavior: smooth;
+            scroll-snap-type: x proximity;
+            scroll-padding-inline: 12px;
+            scrollbar-width: none !important;
+            -ms-overflow-style: none;
+            -webkit-overflow-scrolling: touch;
+            touch-action: pan-x pinch-zoom;
+            cursor: grab;
+            user-select: none;
+        }
+        body.is-write-page form#write .write_subject .subject_list.dcuf-headtext-dragging {
+            cursor: grabbing;
+            scroll-behavior: auto;
+            scroll-snap-type: none;
+        }
+        body.is-write-page form#write .write_subject .subject_list::-webkit-scrollbar {
+            display: none !important;
+            width: 0 !important;
+            height: 0 !important;
+        }
+        body.is-write-page form#write .write_subject .subject_list > li {
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            min-width: 48px !important;
+            min-height: 38px !important;
+            width: auto !important;
+            max-width: none !important;
+            margin: 0 !important;
+            padding: 0 10px !important;
+            float: none !important;
+            flex: 0 0 auto !important;
+            scroll-snap-align: start;
+            border-radius: 999px !important;
+            cursor: pointer;
+        }
+        body.is-write-page form#write .write_subject .subject_list > li .tip_box2 {
+            position: fixed !important;
+            left: var(--dcuf-headtext-tip-left, 8px) !important;
+            top: var(--dcuf-headtext-tip-top, 8px) !important;
+            right: auto !important;
+            bottom: auto !important;
+            z-index: 1200 !important;
+            max-width: min(320px, var(--dcuf-headtext-tip-max-width, calc(100vw - 16px))) !important;
+        }
+        body.is-write-page form#write .write_subject_label {
+            padding: 0 6px !important;
+            color: var(--dcuf-write-fg-sub) !important;
+            font-weight: 700 !important;
+        }
+        body.is-write-page form#write .write_subject > .tit {
+            padding: 0 6px !important;
+            color: var(--dcuf-write-fg-sub) !important;
+            font-weight: 700 !important;
+        }
+        body.is-write-page form#write .write_subject > button,
+        body.is-write-page form#write .write_subject .subject_list > li > button,
+        body.is-write-page form#write [data-headtext] {
+            min-width: 48px !important;
+            min-height: 38px !important;
+            padding: 0 12px !important;
+            border: 1px solid var(--dcuf-write-border) !important;
+            border-radius: 999px !important;
+            background: var(--dcuf-write-surface) !important;
+            color: var(--dcuf-write-fg-sub) !important;
+        }
+        body.is-write-page form#write .write_subject > button.active,
+        body.is-write-page form#write .write_subject .subject_list > li > button.active,
+        body.is-write-page form#write [data-headtext].active {
+            border-color: var(--dcuf-write-accent-strong) !important;
+            background: var(--dcuf-write-accent-strong) !important;
+            color: #fff !important;
+        }
+        body.is-write-page form#write .editor_wrap,
+        body.is-write-page form#write .note-editor,
+        body.is-write-page form#write .note-editing-area {
+            width: 100% !important;
+            max-width: 100% !important;
+            min-width: 0 !important;
+        }
+        body.is-write-page form#write .editor_wrap,
+        body.is-write-page form#write .note-editor {
+            border: 1px solid var(--dcuf-write-border-strong) !important;
+            border-radius: 10px !important;
+            background: var(--dcuf-write-surface) !important;
+            position: relative !important;
+            overflow: visible !important;
+        }
+        body.is-write-page form#write .note-toolbar,
+        body.is-write-page form#write .note-toolbar-media {
+            position: relative !important;
+            z-index: 3 !important;
+            border-radius: 13px 13px 0 0 !important;
+        }
+        body.is-write-page form#write .note-editing-area {
+            position: relative !important;
+            z-index: 0 !important;
+            overflow: hidden !important;
+        }
+        body.is-write-page form#write .note-statusbar {
+            border-radius: 0 0 13px 13px !important;
+        }
+        body.is-write-page form#write .write_subject .toast,
+        body.is-write-page form#write .write_subject [role="alert"] {
+            z-index: 1000 !important;
+            max-width: calc(100vw - 24px) !important;
+            visibility: visible;
+            pointer-events: auto;
+        }
+        body.is-write-page form#write .note-toolbar :is(.note-dropdown-menu, .pop_wrap).dcuf-editor-layer-positioning,
+        body.is-write-page form#write .note-toolbar :is(.note-dropdown-menu, .pop_wrap).dcuf-editor-layer-positioned {
+            position: fixed !important;
+            zoom: var(--dcuf-write-desktop-site-inverse-scale, 1);
+        }
+        body.is-write-page form#write .note-toolbar :is(.note-dropdown-menu, .pop_wrap).dcuf-editor-layer-positioning {
+            left: 0 !important;
+            top: 0 !important;
+            visibility: hidden !important;
+        }
+        body.is-write-page form#write .note-toolbar :is(.note-dropdown-menu, .pop_wrap).dcuf-editor-layer-positioned {
+            left: var(--dcuf-editor-layer-left) !important;
+            top: var(--dcuf-editor-layer-top) !important;
+            right: auto !important;
+            bottom: auto !important;
+        }
+        body.is-write-page form#write .note-toolbar-media,
+        body.is-write-page form#write .note-toolbar,
+        body.is-write-page form#write .tx-toolbar-basic,
+        body.is-write-page form#write .btns-box {
+            display: flex !important;
+            flex-wrap: wrap !important;
+            align-items: center !important;
+            gap: 5px !important;
+            width: 100% !important;
+            min-width: 0 !important;
+            min-height: 48px !important;
+            margin: 0 !important;
+            padding: 5px !important;
+            border-color: var(--dcuf-write-border) !important;
+            background: var(--dcuf-write-surface-muted) !important;
+            overflow: visible !important;
+        }
+        body.is-write-page form#write .note-toolbar-media > :not(.pop_wrap):not(.note-dropdown-menu):not(.note-popover):not(.note-modal),
+        body.is-write-page form#write .note-toolbar > :not(.pop_wrap):not(.note-dropdown-menu):not(.note-popover):not(.note-modal),
+        body.is-write-page form#write .tx-toolbar-basic > *,
+        body.is-write-page form#write .btns-box > * {
+            flex: 0 0 auto !important;
+        }
+        body.is-write-page form#write .note-toolbar > .note-btn,
+        body.is-write-page form#write .note-toolbar > button,
+        body.is-write-page form#write .note-toolbar > input[type="button"],
+        body.is-write-page form#write .note-toolbar .note-btn-group > .note-btn:not(.pop_wrap *):not(.note-dropdown-menu *):not(.note-popover *):not(.note-modal *),
+        body.is-write-page form#write .note-toolbar .note-btn-group > button:not(.pop_wrap *):not(.note-dropdown-menu *):not(.note-popover *):not(.note-modal *),
+        body.is-write-page form#write .note-toolbar .note-btn-group > input[type="button"]:not(.pop_wrap *):not(.note-dropdown-menu *):not(.note-popover *):not(.note-modal *),
+        body.is-write-page form#write .note-toolbar-media > .note-btn,
+        body.is-write-page form#write .note-toolbar-media > button,
+        body.is-write-page form#write .btns-box button:not(.pop_wrap *):not(.note-dropdown-menu *):not(.note-popover *):not(.note-modal *) {
+            min-width: 38px !important;
+            min-height: 38px !important;
+            padding: 0 9px !important;
+            border: 1px solid var(--dcuf-write-border) !important;
+            border-radius: 8px !important;
+            background: var(--dcuf-write-surface) !important;
+            color: var(--dcuf-write-fg) !important;
+        }
+        body.is-write-page form#write .note-toolbar > .note-btn-danger,
+        body.is-write-page form#write .note-toolbar .note-btn-group > .note-btn-danger:not(.pop_wrap *):not(.note-dropdown-menu *):not(.note-popover *):not(.note-modal *),
+        body.is-write-page form#write .note-toolbar-media > .note-btn-danger {
+            border-color: #d5525b !important;
+            background: #d5525b !important;
+            color: #fff !important;
+        }
+        body.is-write-page form#write .write-html-toggle {
+            display: inline-flex !important;
+            align-items: center !important;
+            gap: 5px !important;
+            min-height: 38px !important;
+            margin-left: auto !important;
+            padding: 0 9px !important;
+            color: var(--dcuf-write-fg-sub) !important;
+            white-space: nowrap !important;
+        }
+        body.is-write-page form#write .note-editable,
+        body.is-write-page form#write .note-codable {
+            width: 100% !important;
+            max-width: 100% !important;
+            min-width: 0 !important;
+            min-height: 320px !important;
+            padding: 14px !important;
+            border: 0 !important;
+            border-radius: 0 !important;
+            outline: none !important;
+            background: var(--dcuf-write-surface) !important;
+            color: var(--dcuf-write-fg) !important;
+            font-size: 16px !important;
+            line-height: 1.6 !important;
+            resize: vertical !important;
+            overflow-wrap: anywhere !important;
+        }
+        body.is-write-page form#write .note-editable {
+            display: block !important;
+        }
+        body.is-write-page form#write .note-codable {
+            display: none !important;
+        }
+        body.is-write-page form#write .note-editor.codeview .note-editable,
+        body.is-write-page form#write .note-editor.fixture-html-mode .note-editable,
+        body.is-write-page form#write .note-editable[hidden],
+        body.is-write-page form#write .note-codable[hidden] {
+            display: none !important;
+        }
+        body.is-write-page form#write .note-editor.codeview .note-codable,
+        body.is-write-page form#write .note-editor.fixture-html-mode .note-codable {
+            display: block !important;
+        }
+        body.is-write-page form#write .note-statusbar {
+            border-color: var(--dcuf-write-border) !important;
+            background: var(--dcuf-write-surface-muted) !important;
+        }
+        body.is-write-page form#write .fixture-attachment-panel,
+        body.is-write-page form#write [class*="file_upload"]:not(.pop_wrap *):not(.note-dropdown-menu *):not(.note-popover *):not(.note-modal *),
+        body.is-write-page form#write .upload-img-lst:not(.pop_wrap *):not(.note-dropdown-menu *):not(.note-popover *):not(.note-modal *) {
+            width: 100% !important;
+            max-width: 100% !important;
+            min-width: 0 !important;
+            margin: 10px 0 0 !important;
+            padding: 10px !important;
+            border: 1px solid var(--dcuf-write-border) !important;
+            border-radius: 10px !important;
+            background: var(--dcuf-write-surface-muted) !important;
+            overflow: hidden !important;
+        }
+        body.is-write-page form#write input[type="file"]:not(.pop_wrap *):not(.note-dropdown-menu *):not(.note-popover *):not(.note-modal *) {
+            width: 100% !important;
+            max-width: 100% !important;
+            min-height: 38px !important;
+            color: var(--dcuf-write-fg-sub) !important;
+        }
+        body.is-write-page form#write .fixture-attachment-list,
+        body.is-write-page form#write .upload-img-lst:not(.pop_wrap *):not(.note-dropdown-menu *):not(.note-popover *):not(.note-modal *) ul {
+            min-width: 0 !important;
+            overflow-wrap: anywhere !important;
+        }
+        body.is-write-page form#write .fixture-attachment {
+            max-width: 100% !important;
+            background: color-mix(in srgb, var(--dcuf-write-accent) 12%, var(--dcuf-write-surface)) !important;
+            color: var(--dcuf-write-fg) !important;
+        }
+        body.is-write-page form#write .ai_easy_wrap {
+            width: 100% !important;
+            max-width: 100% !important;
+            min-width: 0 !important;
+            margin: 8px 0 0 !important;
+            overflow: hidden !important;
+        }
+        body.is-write-page form#write .ai_easy_box {
+            display: grid !important;
+            grid-template-columns: minmax(0, 1fr) auto auto !important;
+            align-items: stretch !important;
+            gap: 6px !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            min-width: 0 !important;
+        }
+        body.is-write-page form#write .ai_easy_box .ipt_box,
+        body.is-write-page form#write .ai_easy_box .ipt_txt {
+            width: 100% !important;
+            max-width: 100% !important;
+            min-width: 0 !important;
+        }
+        body.is-write-page form#write .ai_easy_box .ipt_box {
+            display: flex !important;
+            align-items: center !important;
+            overflow: hidden !important;
+        }
+        body.is-write-page form#write .ai_easy_box .ipt_txt {
+            flex: 1 1 auto !important;
+            resize: none !important;
+        }
+        body.is-write-page form#write #write_option_box {
+            width: 100% !important;
+            max-width: 100% !important;
+            min-width: 0 !important;
+        }
+        body.is-write-page form#write .fixture-adult {
+            display: inline-flex !important;
+            align-items: center !important;
+            gap: 8px !important;
+            min-height: 38px !important;
+            margin: 8px 0 0 !important;
+            color: var(--dcuf-write-fg-sub) !important;
+        }
+        body.is-write-page form#write .btn_bottom_box,
+        body.is-write-page form#write .btm-btns-box,
+        body.is-write-page form#write > .btn_box.write {
+            display: flex !important;
+            align-items: stretch !important;
+            gap: 8px !important;
+            width: 100% !important;
+            min-width: 0 !important;
+            margin: 10px 0 0 !important;
+            padding: 10px 0 0 !important;
+            border-top: 1px solid var(--dcuf-write-border) !important;
+            background: var(--dcuf-write-surface) !important;
+        }
+        body.is-write-page form#write .btn_bottom_box > *,
+        body.is-write-page form#write .btm-btns-box > *,
+        body.is-write-page form#write .btm-btns-box > .fr,
+        body.is-write-page form#write > .btn_box.write > button {
+            flex: 1 1 0 !important;
+            min-width: 0 !important;
+            float: none !important;
+        }
+        body.is-write-page form#write .btn_bottom_box a,
+        body.is-write-page form#write .btn_bottom_box button,
+        body.is-write-page form#write .btm-btns-box button,
+        body.is-write-page form#write > .btn_box.write > button {
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            width: 100% !important;
+            min-width: 0 !important;
+            min-height: 46px !important;
+            padding: 0 12px !important;
+            border: 1px solid var(--dcuf-write-border-strong) !important;
+            border-radius: 9px !important;
+            background: var(--dcuf-write-surface-muted) !important;
+            color: var(--dcuf-write-fg) !important;
+            font-size: 16px !important;
+            font-weight: 700 !important;
+            line-height: 1.2 !important;
+            text-align: center !important;
+            text-decoration: none !important;
+        }
+        body.is-write-page form#write .btn_bottom_box .btn_blue,
+        body.is-write-page form#write .btm-btns-box .btn-line-blue,
+        body.is-write-page form#write > .btn_box.write > .btn_blue {
+            border-color: var(--dcuf-write-accent-strong) !important;
+            background: linear-gradient(180deg, #426fe4 0%, var(--dcuf-write-accent-strong) 100%) !important;
+            color: #fff !important;
+        }
+        /* Visual refinement: match the mobile list/article card language. */
+        body.is-write-page form#write {
+            border-color: #dbe6f3 !important;
+            border-radius: 16px !important;
+            box-shadow: 0 12px 30px rgba(25, 50, 92, 0.1) !important;
+        }
+        body.is-write-page form#write #subject,
+        body.is-write-page form#write #name,
+        body.is-write-page form#write #password,
+        body.is-write-page form#write #code {
+            border-color: #cfdbeb !important;
+            border-radius: 11px !important;
+            background: #fff !important;
+            box-shadow: 0 2px 7px rgba(25, 50, 92, 0.04) !important;
+        }
+        body.is-write-page form#write .dcuf-write-captcha-image,
+        body.is-write-page form#write .captcha {
+            border-color: #cfdbeb !important;
+            background: #fff !important;
+            box-shadow: 0 2px 7px rgba(25, 50, 92, 0.04) !important;
+        }
+        body.is-write-page form#write .dcuf-write-captcha-image img,
+        body.is-write-page form#write .captcha img,
+        body.is-write-page form#write .captcha .fixture-captcha-image {
+            background: #fff !important;
+        }
+        body.is-write-page form#write .write_subject {
+            min-height: 52px !important;
+            padding: 7px 9px !important;
+            border-color: #d7e2f0 !important;
+            border-radius: 13px !important;
+            background: #fff !important;
+            box-shadow: 0 3px 10px rgba(25, 50, 92, 0.05) !important;
+        }
+        body.is-write-page form#write .write_subject > .tit,
+        body.is-write-page form#write .write_subject > .tit::before,
+        body.is-write-page form#write .write_subject > .tit::after {
+            min-height: 38px !important;
+            border: 0 !important;
+            border-radius: 0 !important;
+            background: transparent !important;
+            box-shadow: none !important;
+            content: none !important;
+        }
+        body.is-write-page form#write .write_subject::before,
+        body.is-write-page form#write .write_subject::after {
+            display: none !important;
+            content: none !important;
+        }
+        body.is-write-page form#write .write_subject > .dcuf-write-headtext-label {
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            align-self: center !important;
+            min-width: 58px !important;
+            min-height: 36px !important;
+            margin: 0 4px 0 0 !important;
+            padding: 0 12px !important;
+            border: 0 !important;
+            border-radius: 9px !important;
+            background: #eef2f7 !important;
+            color: #4d5e76 !important;
+            box-shadow: none !important;
+            line-height: 1 !important;
+        }
+        body.is-write-page form#write .write_subject .subject_list > li {
+            border: 1px solid transparent !important;
+            background: transparent !important;
+            color: var(--dcuf-write-fg-sub) !important;
+        }
+        body.is-write-page form#write .write_subject .subject_list > li.sel,
+        body.is-write-page form#write .write_subject .subject_list > li.active {
+            border-color: var(--dcuf-write-accent-strong) !important;
+            background: var(--dcuf-write-accent-strong) !important;
+            color: #fff !important;
+            box-shadow: 0 4px 10px rgba(36, 91, 218, 0.2) !important;
+        }
+        body.is-write-page form#write .editor_wrap,
+        body.is-write-page form#write .note-editor {
+            border-color: #d4e0ef !important;
+            border-radius: 14px !important;
+            box-shadow: 0 5px 16px rgba(25, 50, 92, 0.06) !important;
+        }
+        body.is-write-page form#write .note-toolbar-media,
+        body.is-write-page form#write .note-toolbar,
+        body.is-write-page form#write .tx-toolbar-basic,
+        body.is-write-page form#write .btns-box {
+            border-bottom: 1px solid #dce6f2 !important;
+            background: linear-gradient(180deg, #fbfdff 0%, #f5f9ff 100%) !important;
+        }
+        body.is-write-page form#write .note-toolbar > .note-btn-group,
+        body.is-write-page form#write .note-toolbar > .note-btn-group > .note-btn-group,
+        body.is-write-page form#write .note-toolbar > .note-mybutton {
+            position: relative !important;
+            float: none !important;
+            width: auto !important;
+            min-width: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            border: 0 !important;
+            background: transparent !important;
+            box-shadow: none !important;
+        }
+        body.is-write-page form#write .note-toolbar > .note-btn-group::before,
+        body.is-write-page form#write .note-toolbar > .note-btn-group::after,
+        body.is-write-page form#write .note-toolbar > .note-btn-group > .note-btn-group::before,
+        body.is-write-page form#write .note-toolbar > .note-btn-group > .note-btn-group::after,
+        body.is-write-page form#write .note-toolbar > .note-mybutton::before,
+        body.is-write-page form#write .note-toolbar > .note-mybutton::after {
+            display: none !important;
+            content: none !important;
+            border: 0 !important;
+        }
+        body.is-write-page form#write .note-toolbar .fixture-html-group,
+        body.is-write-page form#write .note-toolbar .note-btn-group:has(#chk_html) {
+            order: 99 !important;
+            margin-left: auto !important;
+        }
+        body.is-write-page form#write .note-toolbar-media .fixture-html-group,
+        body.is-write-page form#write .note-toolbar .note-btn-group:has(#chk_html) {
+            display: inline-flex !important;
+            align-items: center !important;
+            align-self: center !important;
+            position: relative !important;
+            inset: auto !important;
+            width: auto !important;
+            height: auto !important;
+            min-width: 0 !important;
+            min-height: 0 !important;
+            margin: 0 0 0 auto !important;
+            padding: 0 !important;
+            float: none !important;
+            transform: none !important;
+        }
+        body.is-write-page form#write .note-toolbar-media .fixture-html-group > .note-btn,
+        body.is-write-page form#write .note-toolbar .note-btn-group:has(#chk_html) > .note-btn {
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            position: static !important;
+            inset: auto !important;
+            width: auto !important;
+            height: 38px !important;
+            min-width: 70px !important;
+            min-height: 38px !important;
+            margin: 0 !important;
+            padding: 0 10px !important;
+            float: none !important;
+            transform: none !important;
+            overflow: visible !important;
+        }
+        body.is-write-page form#write .note-toolbar-media .fixture-html-group label,
+        body.is-write-page form#write .note-toolbar .note-btn-group:has(#chk_html) label {
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            position: static !important;
+            inset: auto !important;
+            width: auto !important;
+            height: 100% !important;
+            min-width: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            float: none !important;
+            transform: none !important;
+            white-space: nowrap !important;
+            line-height: 1 !important;
+        }
+        body.is-write-page form#write #chk_html {
+            appearance: auto !important;
+            display: inline-block !important;
+            position: static !important;
+            inset: auto !important;
+            width: 16px !important;
+            height: 16px !important;
+            min-width: 16px !important;
+            min-height: 16px !important;
+            margin: 0 6px 0 0 !important;
+            padding: 0 !important;
+            clip: auto !important;
+            clip-path: none !important;
+            opacity: 1 !important;
+            float: none !important;
+            transform: none !important;
+            pointer-events: auto !important;
+            vertical-align: middle !important;
+        }
+        body.is-write-page form#write .note-toolbar > .note-btn,
+        body.is-write-page form#write .note-toolbar .note-btn-group > .note-btn:not(.pop_wrap *):not(.note-dropdown-menu *):not(.note-popover *):not(.note-modal *),
+        body.is-write-page form#write .note-toolbar-media > .note-btn,
+        body.is-write-page form#write .btns-box button:not(.pop_wrap *):not(.note-dropdown-menu *):not(.note-popover *):not(.note-modal *) {
+            border-color: #d4e0ef !important;
+            border-radius: 10px !important;
+            background: #fff !important;
+            box-shadow: 0 2px 6px rgba(25, 50, 92, 0.05) !important;
+        }
+        body.is-write-page form#write .note-statusbar {
+            background: #f7faff !important;
+        }
+        body.is-write-page form#write .btn_bottom_box,
+        body.is-write-page form#write .btm-btns-box,
+        body.is-write-page form#write > .btn_box.write {
+            position: static !important;
+            clear: both !important;
+            float: none !important;
+            transform: none !important;
+            gap: 10px !important;
+            margin: 12px 0 0 !important;
+            padding: 10px !important;
+            border: 1px solid #dbe6f3 !important;
+            border-radius: 14px !important;
+            background: linear-gradient(180deg, #f8fbff 0%, #f3f7fd 100%) !important;
+            box-shadow: 0 4px 12px rgba(25, 50, 92, 0.06) !important;
+        }
+        body.is-write-page form#write .btn_bottom_box a,
+        body.is-write-page form#write .btn_bottom_box button,
+        body.is-write-page form#write .btm-btns-box button,
+        body.is-write-page form#write > .btn_box.write > button {
+            min-height: 48px !important;
+            border-radius: 12px !important;
+            box-shadow: 0 3px 8px rgba(25, 50, 92, 0.06) !important;
+        }
+        body.is-write-page form#write .btn_bottom_box .btn_lightred,
+        body.is-write-page form#write .btm-btns-box .btn-line-gray,
+        body.is-write-page form#write > .btn_box.write > .btn_grey {
+            border-color: #cbd8e9 !important;
+            background: #fff !important;
+            color: #42536d !important;
+        }
+        body.is-write-page form#write .btn_bottom_box .btn_blue,
+        body.is-write-page form#write .btm-btns-box .btn-line-blue,
+        body.is-write-page form#write > .btn_box.write > .btn_blue {
+            border-color: var(--dcuf-write-accent-strong) !important;
+            background: linear-gradient(180deg, #426fe4 0%, #245bda 100%) !important;
+            color: #fff !important;
+            box-shadow: 0 6px 14px rgba(36, 91, 218, 0.24) !important;
+        }
+        body.is-write-page.dc-filter-dark-mode form#write,
+        body.is-write-page.dc-filter-dark-mode form#write .write_subject,
+        body.is-write-page.dc-filter-dark-mode form#write .dcuf-write-captcha-image,
+        body.is-write-page.dc-filter-dark-mode form#write .captcha,
+        body.is-write-page.dc-filter-dark-mode form#write #subject,
+        body.is-write-page.dc-filter-dark-mode form#write #name,
+        body.is-write-page.dc-filter-dark-mode form#write #password,
+        body.is-write-page.dc-filter-dark-mode form#write #code {
+            border-color: var(--dcuf-write-border) !important;
+            background: var(--dcuf-write-surface) !important;
+        }
+        body.is-write-page.dc-filter-dark-mode form#write .note-toolbar,
+        body.is-write-page.dc-filter-dark-mode form#write .note-toolbar-media,
+        body.is-write-page.dc-filter-dark-mode form#write .tx-toolbar-basic,
+        body.is-write-page.dc-filter-dark-mode form#write .btns-box,
+        body.is-write-page.dc-filter-dark-mode form#write .btn_bottom_box,
+        body.is-write-page.dc-filter-dark-mode form#write .btm-btns-box,
+        body.is-write-page.dc-filter-dark-mode form#write > .btn_box.write {
+            border-color: var(--dcuf-write-border) !important;
+            background: var(--dcuf-write-surface-muted) !important;
+        }
+        body.is-write-page.dc-filter-dark-mode form#write .write_subject > .dcuf-write-headtext-label {
+            background: #273446 !important;
+            color: #d2dced !important;
+        }
+        body.is-write-page.dc-filter-dark-mode form#write .note-toolbar > .note-btn,
+        body.is-write-page.dc-filter-dark-mode form#write .note-toolbar .note-btn-group > .note-btn:not(.pop_wrap *):not(.note-dropdown-menu *):not(.note-popover *):not(.note-modal *),
+        body.is-write-page.dc-filter-dark-mode form#write .note-toolbar-media > .note-btn,
+        body.is-write-page.dc-filter-dark-mode form#write .btns-box button:not(.pop_wrap *):not(.note-dropdown-menu *):not(.note-popover *):not(.note-modal *),
+        body.is-write-page.dc-filter-dark-mode form#write select:not(.pop_wrap *):not(.note-dropdown-menu *):not(.note-popover *):not(.note-modal *) {
+            border-color: #40526b !important;
+            background: #233044 !important;
+            color: #edf3ff !important;
+            -webkit-text-fill-color: #edf3ff !important;
+            box-shadow: 0 2px 7px rgba(0, 0, 0, 0.2) !important;
+            opacity: 1 !important;
+        }
+        body.is-write-page.dc-filter-dark-mode form#write .note-toolbar > .note-btn *,
+        body.is-write-page.dc-filter-dark-mode form#write .note-toolbar .note-btn-group > .note-btn:not(.pop_wrap *):not(.note-dropdown-menu *):not(.note-popover *):not(.note-modal *) *,
+        body.is-write-page.dc-filter-dark-mode form#write .note-toolbar-media > .note-btn *,
+        body.is-write-page.dc-filter-dark-mode form#write .btns-box button:not(.pop_wrap *):not(.note-dropdown-menu *):not(.note-popover *):not(.note-modal *) * {
+            color: inherit !important;
+            -webkit-text-fill-color: inherit !important;
+            opacity: 1 !important;
+        }
+        body.is-write-page.dc-filter-dark-mode form#write .write_subject .subject_list > li:not(.sel):not(.active) {
+            color: #d2dced !important;
+            -webkit-text-fill-color: #d2dced !important;
+        }
+        body.is-write-page.dc-filter-dark-mode form#write #chk_html {
+            accent-color: var(--dcuf-write-accent-strong) !important;
+        }
+        body.is-write-page form#write .tx-toolbar-advanced,
+        body.is-write-page form#write .write_infobox,
+        body.is-write-page form#write .file_upload_info,
+        body.is-write-page form#write .cm_ad,
+        body.is-write-page form#write .adv_bottom_write,
+        body.is-write-page form#write div[id^="kakao_ad_"] {
+            display: none !important;
+            width: 0 !important;
+            height: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            visibility: hidden !important;
+        }
+        @media screen and (max-width: 480px) {
+            body.is-write-page #container {
+                padding: 6px !important;
+            }
+            body.is-write-page form#write {
+                padding: 10px !important;
+                border-radius: 11px !important;
+            }
+            body.is-write-page form#write .dcuf-write-subject-row {
+                grid-template-columns: 50px minmax(0, 1fr);
+                gap: 6px;
+            }
+        }
+        @media screen and (min-width: 900px) {
+            body.is-write-page #container {
+                padding: 16px 24px !important;
+            }
+            body.is-write-page form#write {
+                padding: 18px !important;
+            }
+            body.is-write-page form#write .dcuf-write-fields {
+                grid-template-columns: repeat(4, minmax(0, 1fr));
+            }
+            body.is-write-page form#write .dcuf-write-fields > .write_subject,
+            body.is-write-page form#write .dcuf-write-subject-field,
+            body.is-write-page form#write .dcuf-write-fields > [style*="clear"] {
+                grid-column: 1 / -1;
+            }
+        }
+    `;
+
+    const injectWriteStyle = () => {
+        if (document.getElementById(STYLE_ID)) return true;
+        const target = document.head || document.documentElement;
+        if (!target) return false;
+        const style = document.createElement('style');
+        style.id = STYLE_ID;
+        style.textContent = css;
+        target.appendChild(style);
+        return true;
+    };
+
+    if (!injectWriteStyle()) {
+        document.addEventListener('DOMContentLoaded', injectWriteStyle, { once: true });
+    }
 })();
 
 (() => {
