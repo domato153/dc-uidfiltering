@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         DC_UserFilter_Mobile
 // @namespace    http://tampermonkey.net/
-// @version      3.3.3
+// @version      3.3.4
 // @description  유저 필터링, UI 개선, 개인 차단/해제 기능
 // @author       domato153
 // @match        https://gall.dcinside.com/*
@@ -4284,7 +4284,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         async init() {
             if (isInitialized) return; isInitialized = true;
             this.installDebugApi();
-            this.debugLog('init', 'FilterModule init start', { version: '3.3.3' });
+            this.debugLog('init', 'FilterModule init start', { version: '3.3.4' });
             await this.cleanupLegacyManagedBlockConfig();
             await this.reloadSettings();
             if (this.DEBUG_ENABLED) await this.debugDumpState('after init reload');
@@ -5524,7 +5524,10 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         updateItemVisibility(originalRow, mirroredItem) {
             const isDibsBlocked = originalRow.classList.contains('block-disable');
             const isUserFilterBlocked = originalRow.style.display === 'none';
-            const nextDisplay = (isDibsBlocked || isUserFilterBlocked) ? 'none' : 'block';
+            // Host CSS also hides non-post survey/advertisement rows. The original table is
+            // off-screen, but each row retains its own computed display value.
+            const isHostHidden = window.getComputedStyle(originalRow).display === 'none';
+            const nextDisplay = (isDibsBlocked || isUserFilterBlocked || isHostHidden) ? 'none' : 'block';
             if (typeof FilterModule?.debugMirrorSync === 'function') {
                 FilterModule.debugMirrorSync(originalRow, mirroredItem, nextDisplay, 'UIModule.updateItemVisibility');
             }
@@ -7593,7 +7596,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
         return {
             reason,
-            version: '3.3.3',
+            version: '3.3.4',
             time: new Date().toISOString(),
             href: location.href,
             heap: getDcufHeapMb(),
@@ -7792,7 +7795,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 commentInitState: { reason: 'already-initialized' }
             };
         }
-        console.log("[DC Filter+UI] Initializing v3.3.3...");
+        console.log("[DC Filter+UI] Initializing v3.3.4...");
 
 
         // [수정] main 함수에서 reloadShortcutKey 함수를 호출하여 초기화
@@ -7922,6 +7925,11 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
     observeDarkMode();
 
 })();
+
+; (() => {
+    const __dcufPostMainRoot = (typeof unsafeWindow !== 'undefined' && unsafeWindow) ? unsafeWindow : window;
+    if (__dcufPostMainRoot.__dcufPostMainFixesLoaded) return;
+    __dcufPostMainRoot.__dcufPostMainFixesLoaded = true;
 
 ; (() => {
     const STYLE_ID = 'dcuf-phase1-list-theme';
@@ -12411,9 +12419,9 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
         const placeholder = parentLi.querySelector(`:scope > .${PLACEHOLDER_CLASS}`);
         if (placeholder instanceof HTMLElement) placeholder.remove();
-        parentLi.removeAttribute(PLACEHOLDER_ATTR);
-        parentLi.removeAttribute('data-dcuf-parent-filtered');
-        parentLi.classList.remove('dcuf-parent-comment-filtered');
+        if (parentLi.hasAttribute(PLACEHOLDER_ATTR)) parentLi.removeAttribute(PLACEHOLDER_ATTR);
+        if (parentLi.hasAttribute('data-dcuf-parent-filtered')) parentLi.removeAttribute('data-dcuf-parent-filtered');
+        if (parentLi.classList.contains('dcuf-parent-comment-filtered')) parentLi.classList.remove('dcuf-parent-comment-filtered');
     };
 
     const isCommentListItem = (element) => {
@@ -12455,15 +12463,15 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
     const clearBlockedCommentShell = (element) => {
         if (!(element instanceof HTMLElement)) return;
-        element.removeAttribute(COMMENT_SHELL_BLOCKED_ATTR);
-        element.classList.remove(COMMENT_SHELL_BLOCKED_CLASS);
+        if (element.hasAttribute(COMMENT_SHELL_BLOCKED_ATTR)) element.removeAttribute(COMMENT_SHELL_BLOCKED_ATTR);
+        if (element.classList.contains(COMMENT_SHELL_BLOCKED_CLASS)) element.classList.remove(COMMENT_SHELL_BLOCKED_CLASS);
     };
 
     const applyBlockedCommentShell = (parentLi) => {
         if (!(parentLi instanceof HTMLElement)) return;
         clearFilteredParentPlaceholder(parentLi);
-        parentLi.setAttribute(COMMENT_SHELL_BLOCKED_ATTR, '1');
-        parentLi.classList.add(COMMENT_SHELL_BLOCKED_CLASS);
+        if (parentLi.getAttribute(COMMENT_SHELL_BLOCKED_ATTR) !== '1') parentLi.setAttribute(COMMENT_SHELL_BLOCKED_ATTR, '1');
+        if (!parentLi.classList.contains(COMMENT_SHELL_BLOCKED_CLASS)) parentLi.classList.add(COMMENT_SHELL_BLOCKED_CLASS);
         if (parentLi.style.display !== '') parentLi.style.display = '';
     };
 
@@ -14700,3 +14708,5 @@ function __dcufCollectMatches(payload, selectors, options = {}) {
     if (!selectorText) return [];
     return Array.from(document.querySelectorAll(selectorText));
 }
+
+})();
