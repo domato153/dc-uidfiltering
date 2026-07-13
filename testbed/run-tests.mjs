@@ -477,6 +477,103 @@ test('플로팅 메뉴 서랍과 원위치 복구가 안전하게 동작한다',
     } finally { await session.close(); }
 });
 
+test('mobile popup pinch resize keeps rendered geometry aligned with the touch midpoint', 'functional', async ({ browser, server }) => {
+    if (isPcUserscript) return;
+
+    const session = await createTestPage(browser, server.baseUrl, {
+        storage: noStatsStorage,
+        viewport: { width: 390, height: 844 },
+        hasTouch: true,
+        isMobile: true
+    });
+
+    const pinchAndMeasure = async (selector) => session.page.locator(selector).evaluate((element) => {
+        const dispatchTouch = (type, points) => {
+            const event = new Event(type, { bubbles: true, cancelable: true });
+            Object.defineProperty(event, 'touches', {
+                value: points.map(([clientX, clientY]) => ({ clientX, clientY }))
+            });
+            element.dispatchEvent(event);
+        };
+
+        const readRect = () => {
+            const rect = element.getBoundingClientRect();
+            return { left: rect.left, top: rect.top, width: rect.width, height: rect.height };
+        };
+        const pinch = (startHalfDistance, endHalfDistance) => {
+            const rect = element.getBoundingClientRect();
+            const midpoint = {
+                x: (rect.left + rect.right) / 2,
+                y: (rect.top + rect.bottom) / 2
+            };
+            dispatchTouch('touchstart', [
+                [midpoint.x - startHalfDistance, midpoint.y],
+                [midpoint.x + startHalfDistance, midpoint.y]
+            ]);
+            dispatchTouch('touchmove', [
+                [midpoint.x - endHalfDistance, midpoint.y],
+                [midpoint.x + endHalfDistance, midpoint.y]
+            ]);
+            dispatchTouch('touchend', []);
+            return { midpoint, rect: readRect() };
+        };
+
+        const before = readRect();
+        const shrink = pinch(60, 40);
+        const expand = pinch(40, 60);
+        const style = getComputedStyle(element);
+        return {
+            before,
+            shrink,
+            expand,
+            transform: style.transform,
+            boxSizing: style.boxSizing
+        };
+    });
+
+    const assertPinchGeometry = (name, report) => {
+        const center = (entry) => ({
+            x: entry.rect.left + (entry.rect.width / 2),
+            y: entry.rect.top + (entry.rect.height / 2)
+        });
+        const shrinkCenter = center(report.shrink);
+        const expandCenter = center(report.expand);
+        assert.equal(report.shrink.rect.width < report.before.width, true, `${name} width must follow pinch shrink: ${JSON.stringify(report)}`);
+        assert.equal(report.shrink.rect.height < report.before.height, true, `${name} height must follow pinch shrink: ${JSON.stringify(report)}`);
+        assert.equal(report.expand.rect.width > report.shrink.rect.width, true, `${name} width must follow pinch expansion: ${JSON.stringify(report)}`);
+        assert.equal(report.expand.rect.height > report.shrink.rect.height, true, `${name} height must follow pinch expansion: ${JSON.stringify(report)}`);
+        assert.equal(Math.abs(shrinkCenter.x - report.shrink.midpoint.x) <= 1, true, `${name} shrink center x must follow touch midpoint: ${JSON.stringify(report)}`);
+        assert.equal(Math.abs(shrinkCenter.y - report.shrink.midpoint.y) <= 1, true, `${name} shrink center y must follow touch midpoint: ${JSON.stringify(report)}`);
+        assert.equal(Math.abs(expandCenter.x - report.expand.midpoint.x) <= 1, true, `${name} expand center x must follow touch midpoint: ${JSON.stringify(report)}`);
+        assert.equal(Math.abs(expandCenter.y - report.expand.midpoint.y) <= 1, true, `${name} expand center y must follow touch midpoint: ${JSON.stringify(report)}`);
+        assert.equal(report.shrink.rect.left >= 0 && report.shrink.rect.top >= 0, true, `${name} shrink must not jump beyond the top-left viewport edge: ${JSON.stringify(report)}`);
+        assert.equal(report.expand.rect.left >= 0 && report.expand.rect.top >= 0, true, `${name} expansion must not jump beyond the top-left viewport edge: ${JSON.stringify(report)}`);
+        assert.equal(report.transform, 'none', `${name} centered transform must be normalized during pinch`);
+        assert.equal(report.boxSizing, 'border-box', `${name} pinch dimensions must use border-box geometry`);
+    };
+
+    try {
+        await session.goto('/board/view?id=test&no=1001');
+        const fab = session.page.locator('#dc-personal-block-fab');
+        const drawer = session.page.locator('#dc-personal-block-drawer');
+
+        await fab.click();
+        await drawer.locator('[data-dcuf-fab-action="filter-settings"]').click();
+        assertPinchGeometry('settings', await pinchAndMeasure('#dcinside-filter-setting'));
+        await session.page.locator('#dcinside-filter-setting').evaluate((element) => element.remove());
+
+        await fab.click();
+        await drawer.locator('[data-dcuf-fab-action="block-management"]').click();
+        assertPinchGeometry('management', await pinchAndMeasure('#dc-block-management-panel'));
+
+        await session.page.locator('#dc-block-management-panel .panel-backup-btn').click();
+        assertPinchGeometry('backup', await pinchAndMeasure('#dc-backup-popup'));
+        assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
+    } finally {
+        await session.close();
+    }
+});
+
 test('야간모드 전환 후 DOM과 주요 스타일이 유지된다', 'functional', async ({ browser, server }) => {
     const session = await createTestPage(browser, server.baseUrl, { storage: noStatsStorage });
     try {

@@ -525,11 +525,19 @@
 
             const normalizeFixedPosition = () => {
                 const rect = target.getBoundingClientRect();
-                if (target.style.transform && target.style.transform !== 'none') {
-                    target.style.transform = 'none';
-                    target.style.left = `${rect.left}px`;
-                    target.style.top = `${rect.top}px`;
+                const computedStyle = window.getComputedStyle(target);
+                if (computedStyle.transform && computedStyle.transform !== 'none') {
+                    target.style.setProperty('transform', 'none', 'important');
+                    target.style.setProperty('left', `${rect.left}px`, 'important');
+                    target.style.setProperty('top', `${rect.top}px`, 'important');
                 }
+
+                // Pinch geometry is calculated from the border box. Keep the CSS sizing
+                // model and the runtime dimensions in the same coordinate space so that
+                // padded popups do not grow or jump on the first move.
+                target.style.setProperty('box-sizing', 'border-box', 'important');
+                target.style.setProperty('width', `${rect.width}px`, 'important');
+                target.style.setProperty('height', `${rect.height}px`, 'important');
                 return target.getBoundingClientRect();
             };
 
@@ -615,10 +623,17 @@
                 const nextLeft = clamp(rawLeft, 0, Math.max(0, vp.width - nextWidth));
                 const nextTop = clamp(rawTop, 0, Math.max(0, vp.height - nextHeight));
 
-                target.style.width = `${nextWidth}px`;
-                target.style.height = `${nextHeight}px`;
-                target.style.left = `${nextLeft}px`;
-                target.style.top = `${nextTop}px`;
+                // The centered settings/backup popups have responsive !important width,
+                // max-width, and min-height rules. Override those constraints only after
+                // an explicit pinch starts so the rendered box matches these calculations.
+                target.style.setProperty('min-width', `${dynamicMinWidth}px`, 'important');
+                target.style.setProperty('min-height', `${dynamicMinHeight}px`, 'important');
+                target.style.setProperty('max-width', `${maxWidth}px`, 'important');
+                target.style.setProperty('max-height', `${maxHeight}px`, 'important');
+                target.style.setProperty('width', `${nextWidth}px`, 'important');
+                target.style.setProperty('height', `${nextHeight}px`, 'important');
+                target.style.setProperty('left', `${nextLeft}px`, 'important');
+                target.style.setProperty('top', `${nextTop}px`, 'important');
 
                 if (e.cancelable) e.preventDefault();
                 e.stopPropagation();
