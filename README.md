@@ -103,7 +103,7 @@
 
 ### 모바일
 
-1. 확장 프로그램을 지원하는 Chromium 기반 모바일 브라우저를 준비합니다.
+1. 확장 프로그램을 지원하는 Chromium 기반 모바일 브라우저를 준비합니다.(Lemur 추천, Edge도 가능)
 2. Tampermonkey 또는 Tampermonkey Legacy를 설치합니다.
 3. 가능하면 브라우저에서 **데스크톱 사이트를 기본값**으로 설정합니다.
 4. [모바일 안정 버전 설치](https://github.com/domato153/dc-uidfiltering/raw/refs/heads/Mobile/Dc_UserFilter_Mobile.user.js)를 누릅니다.
