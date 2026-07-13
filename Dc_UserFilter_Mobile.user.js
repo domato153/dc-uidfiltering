@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         DC_UserFilter_Mobile
 // @namespace    http://tampermonkey.net/
-// @version      3.3.6
+// @version      3.3.7
 // @description  유저 필터링, UI 개선, 개인 차단/해제 기능
 // @author       domato153
 // @match        https://gall.dcinside.com/*
@@ -4258,7 +4258,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         async init() {
             if (isInitialized) return; isInitialized = true;
             this.installDebugApi();
-            this.debugLog('init', 'FilterModule init start', { version: '3.3.6' });
+            this.debugLog('init', 'FilterModule init start', { version: '3.3.7' });
             await this.cleanupLegacyManagedBlockConfig();
             await this.reloadSettings();
             if (this.DEBUG_ENABLED) await this.debugDumpState('after init reload');
@@ -7514,6 +7514,8 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                         tip.style.setProperty('--dcuf-headtext-tip-left', `${Math.round(left / modeScale)}px`);
                         tip.style.setProperty('--dcuf-headtext-tip-top', `${Math.round(top / modeScale)}px`);
                         tip.style.setProperty('--dcuf-headtext-tip-max-width', `${Math.floor((viewportWidth - 16) / modeScale)}px`);
+                        tip.classList.remove('dcuf-headtext-tip-positioning');
+                        tip.classList.add('dcuf-headtext-tip-positioned');
                     });
                 };
                 const scheduleHeadtextTipPosition = () => {
@@ -7566,11 +7568,39 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                             revealHeadtext(headtextList.querySelector(':scope > li.sel, :scope > li.active') || clicked);
                         });
                     });
-                    headtextList.addEventListener('pointerover', scheduleHeadtextTipPosition);
-                    headtextList.addEventListener('focusin', scheduleHeadtextTipPosition);
+                    const prepareHeadtextTipPosition = (event) => {
+                        const item = event.target instanceof Element ? event.target.closest('li') : null;
+                        if (!(item instanceof HTMLElement) || item.parentElement !== headtextList) return;
+                        const tip = item.querySelector(':scope > .tip_box2');
+                        if (tip instanceof HTMLElement) {
+                            tip.classList.remove('dcuf-headtext-tip-positioned');
+                            tip.classList.add('dcuf-headtext-tip-positioning');
+                        }
+                        positionHeadtextTips();
+                        scheduleHeadtextTipPosition();
+                    };
+                    headtextList.addEventListener('pointerover', prepareHeadtextTipPosition);
+                    headtextList.addEventListener('focusin', prepareHeadtextTipPosition);
                     headtextList.addEventListener('scroll', positionHeadtextTips, { passive: true });
                     window.addEventListener('resize', scheduleHeadtextTipPosition, { passive: true });
                     window.addEventListener('scroll', scheduleHeadtextTipPosition, { passive: true, capture: true });
+                    const runtimeCoordinator = this.getRuntimeCoordinator();
+                    if (runtimeCoordinator && typeof runtimeCoordinator.subscribeMutations === 'function') {
+                        runtimeCoordinator.subscribeMutations('ui-write-headtext-tip-position', (payload) => {
+                            const relevantTargets = [
+                                ...(payload.attributeTargets || []),
+                                ...(payload.addedElements || []),
+                                ...(payload.childListTargets || [])
+                            ];
+                            if (!relevantTargets.some((node) => (
+                                node === headtextList
+                                || (node instanceof Node && headtextList.contains(node))
+                            ))) return;
+                            const hasVisiblePendingTip = Array.from(headtextList.querySelectorAll(':scope > li .tip_box2:not(.dcuf-headtext-tip-positioned)'))
+                                .some((tip) => tip instanceof HTMLElement && getComputedStyle(tip).display !== 'none');
+                            if (hasVisiblePendingTip) positionHeadtextTips();
+                        });
+                    }
                 }
             }
 
@@ -7666,6 +7696,53 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
             if (writeForm instanceof HTMLElement && writeForm.dataset.dcufEditorLayersBound !== '1') {
                 writeForm.dataset.dcufEditorLayersBound = '1';
+                let editorToolbarDrag = null;
+                let draggedEditorToolbar = false;
+                const editorToolbarSelector = '.note-toolbar, .note-toolbar-media';
+                writeForm.addEventListener('pointerdown', (event) => {
+                    if (event.pointerType === 'touch' || event.button !== 0) return;
+                    if (!(event.target instanceof Element)
+                        || event.target.closest('.note-dropdown-menu, .pop_wrap, input, textarea, select')) return;
+                    const toolbar = event.target.closest(editorToolbarSelector);
+                    if (!(toolbar instanceof HTMLElement)) return;
+                    draggedEditorToolbar = false;
+                    editorToolbarDrag = {
+                        toolbar,
+                        pointerId: event.pointerId,
+                        startX: event.clientX,
+                        startScrollLeft: toolbar.scrollLeft,
+                        moved: false
+                    };
+                });
+                writeForm.addEventListener('pointermove', (event) => {
+                    if (!editorToolbarDrag || editorToolbarDrag.pointerId !== event.pointerId) return;
+                    const delta = event.clientX - editorToolbarDrag.startX;
+                    if (!editorToolbarDrag.moved && Math.abs(delta) >= 8) {
+                        editorToolbarDrag.moved = true;
+                        editorToolbarDrag.toolbar.setPointerCapture?.(event.pointerId);
+                        editorToolbarDrag.toolbar.classList.add('dcuf-editor-toolbar-dragging');
+                    }
+                    if (!editorToolbarDrag.moved) return;
+                    event.preventDefault();
+                    editorToolbarDrag.toolbar.scrollLeft = editorToolbarDrag.startScrollLeft - delta;
+                    positionEditorLayers();
+                });
+                const finishEditorToolbarDrag = (event) => {
+                    if (!editorToolbarDrag || editorToolbarDrag.pointerId !== event.pointerId) return;
+                    const { toolbar, moved } = editorToolbarDrag;
+                    editorToolbarDrag = null;
+                    draggedEditorToolbar = moved;
+                    toolbar.classList.remove('dcuf-editor-toolbar-dragging');
+                    if (toolbar.hasPointerCapture?.(event.pointerId)) toolbar.releasePointerCapture(event.pointerId);
+                    if (draggedEditorToolbar) window.setTimeout(() => { draggedEditorToolbar = false; }, 0);
+                };
+                writeForm.addEventListener('pointerup', finishEditorToolbarDrag);
+                writeForm.addEventListener('pointercancel', finishEditorToolbarDrag);
+                writeForm.addEventListener('click', (event) => {
+                    if (!draggedEditorToolbar) return;
+                    event.preventDefault();
+                    event.stopImmediatePropagation();
+                }, true);
                 // Live Summernote editor dropdown contracts. Keep the generic selector as a
                 // forward-compatible fallback and list known menus here for fixture/audit parity.
                 const editorDropdownSelector = [
@@ -7678,6 +7755,25 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                     '.note-toolbar .note-para .note-dropdown-menu'
                 ].join(', ');
                 const editorLayerSelector = `${editorDropdownSelector}, .note-toolbar .pop_wrap`;
+                const prepareEditorLayersForTrigger = (event) => {
+                    if (!(event.target instanceof Element)
+                        || event.target.closest('.note-dropdown-menu, .pop_wrap')) return;
+                    const group = event.target.closest('.note-toolbar .note-btn-group');
+                    if (!(group instanceof HTMLElement)) return;
+                    if (event.type === 'pointerover'
+                        && event.relatedTarget instanceof Node
+                        && group.contains(event.relatedTarget)) return;
+                    group.querySelectorAll('.note-dropdown-menu, .pop_wrap').forEach((layer) => {
+                        layer.classList.remove('dcuf-editor-layer-positioned');
+                        layer.classList.add('dcuf-editor-layer-positioning');
+                    });
+                };
+                writeForm.addEventListener('pointerdown', prepareEditorLayersForTrigger, true);
+                writeForm.addEventListener('pointerover', prepareEditorLayersForTrigger, true);
+                writeForm.addEventListener('click', prepareEditorLayersForTrigger, true);
+                writeForm.addEventListener('keydown', (event) => {
+                    if (event.key === 'Enter' || event.key === ' ') prepareEditorLayersForTrigger(event);
+                }, true);
                 const positionEditorLayers = ({ includeDropdowns = true } = {}) => {
                     writeForm.querySelectorAll(editorLayerSelector).forEach((layer) => {
                         if (!(layer instanceof HTMLElement) || getComputedStyle(layer).display === 'none') return;
@@ -7685,12 +7781,13 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                         if (isDropdown && !includeDropdowns) return;
                         const anchor = layer.closest('.note-btn-group');
                         if (!(anchor instanceof HTMLElement)) return;
+                        layer.classList.add('dcuf-editor-layer-positioning');
                         layer.classList.remove('dcuf-editor-layer-positioned');
                         const anchorRect = anchor.getBoundingClientRect();
                         const layerRect = layer.getBoundingClientRect();
-                        // Desktop-site mobile browsers and the testbed can expose different
-                        // coordinate spaces for an absolutely positioned Summernote menu.
-                        // Convert viewport deltas back into the anchor's local CSS pixels.
+                        // Fixed Summernote dropdowns still inherit the desktop-site mobile
+                        // zoom. Convert viewport coordinates back into that local CSS space
+                        // while keeping the host menu's intended physical size.
                         const measuredLocalScale = isDropdown && anchor.offsetWidth > 0
                             ? anchorRect.width / anchor.offsetWidth
                             : 1;
@@ -7711,7 +7808,9 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                         const viewportHeight = (visualViewport?.height || window.innerHeight) * viewportCoordinateScale;
                         const viewportRight = viewportLeft + viewportWidth;
                         const viewportBottom = viewportTop + viewportHeight;
-                        const edgePadding = 8;
+                        // Leave two extra visual pixels for browser zoom rounding so a fixed
+                        // layer cannot bleed into the clipped page edge.
+                        const edgePadding = 10;
                         const layerGap = 6;
                         const maxWidth = Math.max(1, viewportWidth - (edgePadding * 2));
                         const maxHeight = Math.max(1, viewportHeight - (edgePadding * 2));
@@ -7732,16 +7831,12 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                             viewportTop + edgePadding,
                             Math.min(viewportBottom - height - edgePadding, preferredTop)
                         );
-                        const positionedLeft = isDropdown
-                            ? (left - anchorRect.left) / localCoordinateScale
-                            : left;
-                        const positionedTop = isDropdown
-                            ? (top - anchorRect.top) / localCoordinateScale
-                            : top;
+                        const positionedLeft = isDropdown ? left / localCoordinateScale : left;
+                        const positionedTop = isDropdown ? top / localCoordinateScale : top;
                         const localMaxWidth = isDropdown ? maxWidth / localCoordinateScale : maxWidth;
                         const localMaxHeight = isDropdown ? maxHeight / localCoordinateScale : maxHeight;
-                        layer.style.setProperty('--dcuf-editor-layer-left', `${Math.round(positionedLeft)}px`);
-                        layer.style.setProperty('--dcuf-editor-layer-top', `${Math.round(positionedTop)}px`);
+                        layer.style.setProperty('--dcuf-editor-layer-left', `${positionedLeft.toFixed(3)}px`);
+                        layer.style.setProperty('--dcuf-editor-layer-top', `${positionedTop.toFixed(3)}px`);
                         layer.style.setProperty('--dcuf-editor-layer-max-width', `${Math.floor(localMaxWidth)}px`);
                         layer.style.setProperty('--dcuf-editor-layer-max-height', `${Math.floor(localMaxHeight)}px`);
                         layer.classList.remove('dcuf-editor-layer-positioning');
@@ -7749,11 +7844,38 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                     });
                 };
                 const scheduleEditorLayerPosition = () => {
-                    requestAnimationFrame(positionEditorLayers);
+                    requestAnimationFrame(() => {
+                        positionEditorLayers();
+                        requestAnimationFrame(positionEditorLayers);
+                    });
                 };
                 const scheduleEditorPopupPosition = () => {
-                    requestAnimationFrame(() => positionEditorLayers({ includeDropdowns: false }));
+                    requestAnimationFrame(() => {
+                        positionEditorLayers();
+                        requestAnimationFrame(positionEditorLayers);
+                    });
                 };
+                const runtimeCoordinator = this.getRuntimeCoordinator();
+                if (runtimeCoordinator && typeof runtimeCoordinator.subscribeMutations === 'function') {
+                    runtimeCoordinator.subscribeMutations('ui-write-editor-layer-position', (payload) => {
+                        const relevantTargets = [
+                            ...(payload.attributeTargets || []),
+                            ...(payload.addedElements || []),
+                            ...(payload.childListTargets || [])
+                        ];
+                        if (!relevantTargets.some((node) => (
+                            node === writeForm
+                            || (node instanceof Node && writeForm.contains(node))
+                        ))) return;
+                        const hasVisiblePendingLayer = Array.from(writeForm.querySelectorAll(editorLayerSelector))
+                            .some((layer) => (
+                                layer instanceof HTMLElement
+                                && !layer.classList.contains('dcuf-editor-layer-positioned')
+                                && getComputedStyle(layer).display !== 'none'
+                            ));
+                        if (hasVisiblePendingLayer) positionEditorLayers();
+                    });
+                }
                 writeForm.addEventListener('click', (event) => {
                     if (!(event.target instanceof Element) || !event.target.closest('.note-toolbar')) return;
                     if (event.target.closest('.note-fontname')) ensureMobileFontMenu();
@@ -7916,7 +8038,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
         return {
             reason,
-            version: '3.3.6',
+            version: '3.3.7',
             time: new Date().toISOString(),
             href: location.href,
             heap: getDcufHeapMb(),
@@ -8115,7 +8237,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 commentInitState: { reason: 'already-initialized' }
             };
         }
-        console.log("[DC Filter+UI] Initializing v3.3.6...");
+        console.log("[DC Filter+UI] Initializing v3.3.7...");
 
 
         // [수정] main 함수에서 reloadShortcutKey 함수를 호출하여 초기화
@@ -13826,12 +13948,28 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             visibility: visible;
             pointer-events: auto;
         }
+        body.is-write-page form#write .write_subject .tip_box2:not(.dcuf-headtext-tip-positioned) {
+            visibility: hidden !important;
+            pointer-events: none !important;
+        }
+        body.is-write-page form#write .write_subject .tip_box2.dcuf-headtext-tip-positioned {
+            visibility: visible !important;
+            pointer-events: auto !important;
+        }
+        body.is-write-page form#write .note-toolbar :is(.note-dropdown-menu, .pop_wrap):not(.dcuf-editor-layer-positioned) {
+            visibility: hidden !important;
+            pointer-events: none !important;
+        }
+        body.is-write-page form#write .note-toolbar :is(.note-dropdown-menu, .pop_wrap).dcuf-editor-layer-positioned {
+            visibility: visible !important;
+            pointer-events: auto !important;
+        }
         body.is-write-page form#write .note-toolbar .pop_wrap.dcuf-editor-layer-positioned {
             position: fixed !important;
             zoom: var(--dcuf-write-desktop-site-inverse-scale, 1);
         }
         body.is-write-page form#write .note-toolbar .note-dropdown-menu.dcuf-editor-layer-positioned {
-            position: absolute !important;
+            position: fixed !important;
             zoom: 1 !important;
         }
         body.is-write-page form#write .note-toolbar :is(.note-dropdown-menu, .pop_wrap).dcuf-editor-layer-positioned {
@@ -13855,7 +13993,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             max-width: 132px !important;
             flex: 0 0 auto !important;
         }
-        body.is-write-page.dcuf-write-mobile-font-menu form#write .note-toolbar .note-current-fontname {
+        body.is-write-page form#write .note-toolbar .note-current-fontname {
             display: inline-block !important;
             min-width: 42px !important;
             max-width: 88px !important;
@@ -13863,6 +14001,15 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             text-overflow: ellipsis !important;
             vertical-align: middle !important;
             white-space: nowrap !important;
+            color: var(--dcuf-write-fg) !important;
+            -webkit-text-fill-color: currentColor !important;
+            opacity: 1 !important;
+            visibility: visible !important;
+        }
+        body.is-write-page form#write .note-toolbar .note-current-fontname:empty::before {
+            content: "글꼴";
+            color: inherit !important;
+            -webkit-text-fill-color: currentColor !important;
         }
         body.is-write-page form#write .note-toolbar-media,
         body.is-write-page form#write .note-toolbar,
@@ -13886,6 +14033,30 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         body.is-write-page form#write .tx-toolbar-basic > *,
         body.is-write-page form#write .btns-box > * {
             flex: 0 0 auto !important;
+        }
+        body.is-write-page form#write .note-toolbar-media,
+        body.is-write-page form#write .note-toolbar,
+        body.is-write-page form#write .tx-toolbar-basic {
+            flex-wrap: nowrap !important;
+            overflow-x: auto !important;
+            overflow-y: hidden !important;
+            overscroll-behavior-inline: contain;
+            scroll-behavior: smooth;
+            scrollbar-width: none !important;
+            -ms-overflow-style: none;
+            -webkit-overflow-scrolling: touch;
+            touch-action: pan-x pinch-zoom;
+            cursor: grab;
+            user-select: none;
+        }
+        body.is-write-page form#write :is(.note-toolbar-media, .note-toolbar, .tx-toolbar-basic).dcuf-editor-toolbar-dragging {
+            scroll-behavior: auto;
+            cursor: grabbing;
+        }
+        body.is-write-page form#write :is(.note-toolbar-media, .note-toolbar, .tx-toolbar-basic)::-webkit-scrollbar {
+            display: none !important;
+            width: 0 !important;
+            height: 0 !important;
         }
         body.is-write-page form#write .note-toolbar > .note-btn,
         body.is-write-page form#write .note-toolbar > button,
