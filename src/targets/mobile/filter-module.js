@@ -972,6 +972,7 @@
         #dc-selection-popup,
         #dc-backup-popup,
         #dc-block-management-panel {
+            box-sizing: border-box !important;
             border: 1px solid #d9dee7 !important;
             border-radius: 14px !important;
             box-shadow: 0 18px 42px rgba(26, 39, 60, 0.18) !important;

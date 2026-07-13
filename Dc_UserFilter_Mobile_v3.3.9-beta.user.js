@@ -2221,6 +2221,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         #dc-selection-popup,
         #dc-backup-popup,
         #dc-block-management-panel {
+            box-sizing: border-box !important;
             border: 1px solid #d9dee7 !important;
             border-radius: 14px !important;
             box-shadow: 0 18px 42px rgba(26, 39, 60, 0.18) !important;
@@ -4975,6 +4976,8 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             let startDistance = 0;
             let startWidth = 0;
             let startHeight = 0;
+            let startAnchorX = 0.5;
+            let startAnchorY = 0.5;
             let lastMoveTs = 0;
             let lastMoveDistance = -1;
 
@@ -5028,6 +5031,9 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 startDistance = distance;
                 startWidth = rect.width;
                 startHeight = rect.height;
+                const midpoint = getMidpoint(touches[0], touches[1]);
+                startAnchorX = rect.width > 0 ? clamp((midpoint.x - rect.left) / rect.width, 0, 1) : 0.5;
+                startAnchorY = rect.height > 0 ? clamp((midpoint.y - rect.top) / rect.height, 0, 1) : 0.5;
                 lastMoveTs = 0;
                 lastMoveDistance = -1;
             };
@@ -5074,14 +5080,18 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 const maxWidth = Math.max(dynamicMinWidth, configuredMaxWidth);
                 const maxHeight = Math.max(dynamicMinHeight, configuredMaxHeight);
 
-                const scale = distance / startDistance;
-                const nextWidth = clamp(startWidth * scale, dynamicMinWidth, maxWidth);
-                const nextHeight = clamp(startHeight * scale, dynamicMinHeight, maxHeight);
+                const requestedScale = distance / startDistance;
+                const minScale = Math.min(1, Math.max(dynamicMinWidth / startWidth, dynamicMinHeight / startHeight));
+                const maxScale = Math.max(1, Math.min(maxWidth / startWidth, maxHeight / startHeight));
+                const scale = clamp(requestedScale, minScale, maxScale);
+                const nextWidth = startWidth * scale;
+                const nextHeight = startHeight * scale;
 
-                const rawLeft = mid.x - (nextWidth / 2);
-                const rawTop = mid.y - (nextHeight / 2);
-                const nextLeft = clamp(rawLeft, 0, Math.max(0, vp.width - nextWidth));
-                const nextTop = clamp(rawTop, 0, Math.max(0, vp.height - nextHeight));
+                const rawLeft = mid.x - (nextWidth * startAnchorX);
+                const rawTop = mid.y - (nextHeight * startAnchorY);
+                const viewportGap = 4;
+                const nextLeft = clamp(rawLeft, viewportGap, Math.max(viewportGap, vp.width - nextWidth - viewportGap));
+                const nextTop = clamp(rawTop, viewportGap, Math.max(viewportGap, vp.height - nextHeight - viewportGap));
 
                 // The centered settings/backup popups have responsive !important width,
                 // max-width, and min-height rules. Override those constraints only after

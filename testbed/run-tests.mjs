@@ -477,7 +477,7 @@ test('플로팅 메뉴 서랍과 원위치 복구가 안전하게 동작한다',
     } finally { await session.close(); }
 });
 
-test('mobile popup pinch resize keeps rendered geometry aligned with the touch midpoint', 'functional', async ({ browser, server }) => {
+test('mobile popup pinch resize preserves an off-center real-touch focal point', 'functional', async ({ browser, server }) => {
     if (isPcUserscript) return;
 
     const session = await createTestPage(browser, server.baseUrl, {
@@ -487,69 +487,71 @@ test('mobile popup pinch resize keeps rendered geometry aligned with the touch m
         isMobile: true
     });
 
-    const pinchAndMeasure = async (selector) => session.page.locator(selector).evaluate((element) => {
-        const dispatchTouch = (type, points) => {
-            const event = new Event(type, { bubbles: true, cancelable: true });
-            Object.defineProperty(event, 'touches', {
-                value: points.map(([clientX, clientY]) => ({ clientX, clientY }))
-            });
-            element.dispatchEvent(event);
-        };
-
-        const readRect = () => {
-            const rect = element.getBoundingClientRect();
-            return { left: rect.left, top: rect.top, width: rect.width, height: rect.height };
-        };
-        const pinch = (startHalfDistance, endHalfDistance) => {
-            const rect = element.getBoundingClientRect();
-            const midpoint = {
-                x: (rect.left + rect.right) / 2,
-                y: (rect.top + rect.bottom) / 2
-            };
-            dispatchTouch('touchstart', [
-                [midpoint.x - startHalfDistance, midpoint.y],
-                [midpoint.x + startHalfDistance, midpoint.y]
-            ]);
-            dispatchTouch('touchmove', [
-                [midpoint.x - endHalfDistance, midpoint.y],
-                [midpoint.x + endHalfDistance, midpoint.y]
-            ]);
-            dispatchTouch('touchend', []);
-            return { midpoint, rect: readRect() };
-        };
-
-        const before = readRect();
-        const shrink = pinch(60, 40);
-        const expand = pinch(40, 60);
+    const cdp = await session.context.newCDPSession(session.page);
+    const readPopup = async (selector) => session.page.locator(selector).evaluate((element) => {
+        const rect = element.getBoundingClientRect();
         const style = getComputedStyle(element);
         return {
-            before,
-            shrink,
-            expand,
+            rect: { left: rect.left, top: rect.top, width: rect.width, height: rect.height },
             transform: style.transform,
             boxSizing: style.boxSizing
         };
     });
+    const dispatchPinch = async (selector, startHalfDistance, endHalfDistance) => {
+        const before = await readPopup(selector);
+        const anchor = {
+            x: before.rect.left + (before.rect.width * 0.4),
+            y: before.rect.top + (before.rect.height * 0.45)
+        };
+        const point = (x, id) => ({ x, y: anchor.y, id, radiusX: 2, radiusY: 2, force: 1 });
+
+        await cdp.send('Input.dispatchTouchEvent', {
+            type: 'touchStart',
+            touchPoints: [point(anchor.x - startHalfDistance, 1), point(anchor.x + startHalfDistance, 2)]
+        });
+        await session.page.waitForTimeout(20);
+        await cdp.send('Input.dispatchTouchEvent', {
+            type: 'touchMove',
+            touchPoints: [point(anchor.x - endHalfDistance, 1), point(anchor.x + endHalfDistance, 2)]
+        });
+        await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+
+        return { before, after: await readPopup(selector), anchor };
+    };
+    const pinchAndMeasure = async (selector) => {
+        await session.page.waitForTimeout(220);
+        const before = await readPopup(selector);
+        const shrink = await dispatchPinch(selector, 45, 35);
+        const expand = await dispatchPinch(selector, 35, 45);
+        const after = await readPopup(selector);
+        return { before, shrink, expand, after };
+    };
 
     const assertPinchGeometry = (name, report) => {
-        const center = (entry) => ({
-            x: entry.rect.left + (entry.rect.width / 2),
-            y: entry.rect.top + (entry.rect.height / 2)
+        const focalPoint = (entry) => ({
+            x: entry.after.rect.left + (entry.after.rect.width * 0.4),
+            y: entry.after.rect.top + (entry.after.rect.height * 0.45)
         });
-        const shrinkCenter = center(report.shrink);
-        const expandCenter = center(report.expand);
-        assert.equal(report.shrink.rect.width < report.before.width, true, `${name} width must follow pinch shrink: ${JSON.stringify(report)}`);
-        assert.equal(report.shrink.rect.height < report.before.height, true, `${name} height must follow pinch shrink: ${JSON.stringify(report)}`);
-        assert.equal(report.expand.rect.width > report.shrink.rect.width, true, `${name} width must follow pinch expansion: ${JSON.stringify(report)}`);
-        assert.equal(report.expand.rect.height > report.shrink.rect.height, true, `${name} height must follow pinch expansion: ${JSON.stringify(report)}`);
-        assert.equal(Math.abs(shrinkCenter.x - report.shrink.midpoint.x) <= 1, true, `${name} shrink center x must follow touch midpoint: ${JSON.stringify(report)}`);
-        assert.equal(Math.abs(shrinkCenter.y - report.shrink.midpoint.y) <= 1, true, `${name} shrink center y must follow touch midpoint: ${JSON.stringify(report)}`);
-        assert.equal(Math.abs(expandCenter.x - report.expand.midpoint.x) <= 1, true, `${name} expand center x must follow touch midpoint: ${JSON.stringify(report)}`);
-        assert.equal(Math.abs(expandCenter.y - report.expand.midpoint.y) <= 1, true, `${name} expand center y must follow touch midpoint: ${JSON.stringify(report)}`);
-        assert.equal(report.shrink.rect.left >= 0 && report.shrink.rect.top >= 0, true, `${name} shrink must not jump beyond the top-left viewport edge: ${JSON.stringify(report)}`);
-        assert.equal(report.expand.rect.left >= 0 && report.expand.rect.top >= 0, true, `${name} expansion must not jump beyond the top-left viewport edge: ${JSON.stringify(report)}`);
-        assert.equal(report.transform, 'none', `${name} centered transform must be normalized during pinch`);
-        assert.equal(report.boxSizing, 'border-box', `${name} pinch dimensions must use border-box geometry`);
+        const shrinkFocal = focalPoint(report.shrink);
+        const expandFocal = focalPoint(report.expand);
+        const shrinkScaleX = report.shrink.after.rect.width / report.shrink.before.rect.width;
+        const shrinkScaleY = report.shrink.after.rect.height / report.shrink.before.rect.height;
+        const expandScaleX = report.expand.after.rect.width / report.expand.before.rect.width;
+        const expandScaleY = report.expand.after.rect.height / report.expand.before.rect.height;
+
+        assert.equal(report.shrink.after.rect.width < report.before.rect.width, true, `${name} width must follow pinch shrink: ${JSON.stringify(report)}`);
+        assert.equal(report.shrink.after.rect.height < report.before.rect.height, true, `${name} height must follow pinch shrink: ${JSON.stringify(report)}`);
+        assert.equal(report.expand.after.rect.width > report.shrink.after.rect.width, true, `${name} width must follow pinch expansion: ${JSON.stringify(report)}`);
+        assert.equal(report.expand.after.rect.height > report.shrink.after.rect.height, true, `${name} height must follow pinch expansion: ${JSON.stringify(report)}`);
+        assert.equal(Math.abs(shrinkScaleX - shrinkScaleY) <= 0.01, true, `${name} shrink must preserve popup proportions: ${JSON.stringify(report)}`);
+        assert.equal(Math.abs(expandScaleX - expandScaleY) <= 0.01, true, `${name} expansion must preserve popup proportions: ${JSON.stringify(report)}`);
+        assert.equal(Math.abs(shrinkFocal.x - report.shrink.anchor.x) <= 3, true, `${name} shrink focal x must stay under the touch midpoint: ${JSON.stringify(report)}`);
+        assert.equal(Math.abs(shrinkFocal.y - report.shrink.anchor.y) <= 3, true, `${name} shrink focal y must stay under the touch midpoint: ${JSON.stringify(report)}`);
+        assert.equal(Math.abs(expandFocal.x - report.expand.anchor.x) <= 3, true, `${name} expand focal x must stay under the touch midpoint: ${JSON.stringify(report)}`);
+        assert.equal(Math.abs(expandFocal.y - report.expand.anchor.y) <= 3, true, `${name} expand focal y must stay under the touch midpoint: ${JSON.stringify(report)}`);
+        assert.equal(report.after.rect.left >= 0 && report.after.rect.top >= 0, true, `${name} must remain inside the top-left viewport edge: ${JSON.stringify(report)}`);
+        assert.equal(report.after.transform, 'none', `${name} centered transform must be normalized during pinch`);
+        assert.equal(report.after.boxSizing, 'border-box', `${name} pinch dimensions must use border-box geometry`);
     };
 
     try {
