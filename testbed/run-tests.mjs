@@ -478,8 +478,6 @@ test('플로팅 메뉴 서랍과 원위치 복구가 안전하게 동작한다',
 });
 
 test('mobile popup pinch resize preserves an off-center real-touch focal point', 'functional', async ({ browser, server }) => {
-    if (isPcUserscript) return;
-
     const session = await createTestPage(browser, server.baseUrl, {
         storage: noStatsStorage,
         viewport: { width: 390, height: 844 },
