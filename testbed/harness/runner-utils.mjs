@@ -119,7 +119,8 @@ export const storageKeys = Object.freeze({
     personalEnabled: 'dcinside_personal_block_enabled',
     blockedUids: 'dcinside_blocked_uids',
     blockedGuests: 'dcinside_blocked_guests',
-    shortcut: 'dcinside_shortcut_key'
+    shortcut: 'dcinside_shortcut_key',
+    fabScalePercent: 'dcinside_fab_scale_percent'
 });
 
 export { assert, testbedDir };

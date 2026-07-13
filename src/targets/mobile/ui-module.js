@@ -2912,6 +2912,7 @@
     GM_registerMenuCommand('글댓합 설정하기', FilterModule.showSettings.bind(FilterModule));
     GM_registerMenuCommand('차단 유저 관리', PersonalBlockModule.createManagementPanel.bind(PersonalBlockModule));
     GM_registerMenuCommand('플로팅 버튼 원위치', PersonalBlockModule.resetFabPosition.bind(PersonalBlockModule));
+    GM_registerMenuCommand('메뉴 버튼 크기 조절', PersonalBlockModule.showFabScalePanel.bind(PersonalBlockModule));
 
 
     // [신규] 단축키 설정을 다시 로드하는 전용 함수

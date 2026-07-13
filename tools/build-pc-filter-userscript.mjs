@@ -25,6 +25,7 @@ const REQUIRED_SHARED_FILTER_UI_SELECTORS = [
     '#dc-personal-block-controls',
     '#dc-personal-block-fab',
     '#dc-personal-block-drawer',
+    '#dc-personal-block-size-panel',
     '#dc-selection-popup',
     '#dc-block-management-panel',
     '#dc-backup-popup',

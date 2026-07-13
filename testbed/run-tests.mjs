@@ -346,7 +346,7 @@ test('플로팅 메뉴 서랍과 원위치 복구가 안전하게 동작한다',
         await session.goto('/board/view?id=test&no=1001');
         const valuesBefore = await session.page.evaluate(() => window.__dcufTestbedGM.snapshot().values);
         const menuLabels = await session.page.evaluate(() => window.__dcufTestbedGM.snapshot().menuLabels);
-        assert.deepEqual(menuLabels.slice(0, 3), ['글댓합 설정하기', '차단 유저 관리', '플로팅 버튼 원위치']);
+        assert.deepEqual(menuLabels.slice(0, 4), ['글댓합 설정하기', '차단 유저 관리', '플로팅 버튼 원위치', '메뉴 버튼 크기 조절']);
         assert.equal(await session.page.locator('#dc-personal-block-controls').count(), 1);
         assert.equal(await session.page.locator('#dc-personal-block-fab').textContent(), '메뉴');
 
@@ -362,11 +362,16 @@ test('플로팅 메뉴 서랍과 원위치 복구가 안전하게 동작한다',
         });
         assert.equal(fabTapTarget.width >= 152, true, `FAB width: ${fabTapTarget.width}`);
         assert.equal(fabTapTarget.height >= 76, true, `FAB height: ${fabTapTarget.height}`);
-        assert.equal(fabTapTarget.fontSize >= 28, true, `FAB font size: ${fabTapTarget.fontSize}`);
+        assert.equal(fabTapTarget.fontSize >= 32, true, `FAB font size: ${fabTapTarget.fontSize}`);
         await fab.click();
         assert.equal(await fab.getAttribute('aria-expanded'), 'true');
         assert.equal(await drawer.isVisible(), true);
         assert.deepEqual(await drawer.locator('button').allTextContents(), ['간편차단', '글댓합 설정', '차단 유저 관리']);
+
+        await fab.click();
+        assert.equal(await fab.getAttribute('aria-expanded'), 'false');
+        assert.equal(await drawer.isHidden(), true, 'a second launcher click must close the drawer');
+        await fab.click();
 
         const drawerRect = await drawer.boundingBox();
         assert.equal(Boolean(drawerRect), true);
@@ -428,8 +433,46 @@ test('플로팅 메뉴 서랍과 원위치 복구가 안전하게 동작한다',
             bottom: element.style.bottom
         }));
         assert.deepEqual(resetStyle, { left: 'auto', top: 'auto', right: '20px', bottom: '20px' });
+
+        await session.page.evaluate(() => window.__dcufTestbedGM.invokeMenu('메뉴 버튼 크기 조절'));
+        const sizePanel = session.page.locator('#dc-personal-block-size-panel');
+        const sizeRange = sizePanel.locator('#dc-personal-block-size-range');
+        assert.equal(await sizePanel.count(), 1);
+        assert.equal(await sizeRange.inputValue(), '100');
+        const panelBackground = await sizePanel.evaluate((element) => getComputedStyle(element).backgroundColor);
+        assert.notEqual(panelBackground, 'rgba(0, 0, 0, 0)');
+        await sizeRange.evaluate((element) => {
+            element.value = '75';
+            element.dispatchEvent(new Event('input', { bubbles: true }));
+        });
+        assert.equal(await sizePanel.locator('.dcuf-fab-size-value').textContent(), '75%');
+        const scaledTapTarget = await fab.evaluate((element) => {
+            const rect = element.getBoundingClientRect();
+            return {
+                width: Math.round(rect.width),
+                height: Math.round(rect.height),
+                fontSize: parseFloat(getComputedStyle(element).fontSize)
+            };
+        });
+        assert.equal(Math.abs(scaledTapTarget.width - 114) <= 1, true, `scaled FAB width: ${scaledTapTarget.width}`);
+        assert.equal(Math.abs(scaledTapTarget.height - 57) <= 1, true, `scaled FAB height: ${scaledTapTarget.height}`);
+        assert.equal(Math.abs(scaledTapTarget.fontSize - 24) <= 0.1, true, `scaled FAB font size: ${scaledTapTarget.fontSize}`);
+        await sizePanel.locator('[data-dcuf-fab-size-action="save"]').click();
+        assert.equal(await sizePanel.count(), 0);
+        assert.equal(await session.page.evaluate((key) => window.__dcufTestbedGM.get(key), storageKeys.fabScalePercent), 75);
+
+        await session.page.locator('#dc-personal-block-controls').evaluate((element) => element.remove());
+        await session.page.evaluate(() => window.__dcufTestbedGM.invokeMenu('플로팅 버튼 원위치'));
+        const recreatedTapTarget = await session.page.locator('#dc-personal-block-fab').evaluate((element) => {
+            const rect = element.getBoundingClientRect();
+            return { width: Math.round(rect.width), height: Math.round(rect.height) };
+        });
+        assert.equal(Math.abs(recreatedTapTarget.width - 114) <= 1, true, `recreated FAB width: ${recreatedTapTarget.width}`);
+        assert.equal(Math.abs(recreatedTapTarget.height - 57) <= 1, true, `recreated FAB height: ${recreatedTapTarget.height}`);
         const valuesAfter = await session.page.evaluate(() => window.__dcufTestbedGM.snapshot().values);
-        assert.deepEqual(valuesAfter, valuesBefore, 'floating controls must not add or change stored settings');
+        assert.equal(valuesAfter[storageKeys.fabScalePercent], 75);
+        delete valuesAfter[storageKeys.fabScalePercent];
+        assert.deepEqual(valuesAfter, valuesBefore, 'floating controls must preserve all pre-existing stored settings');
         assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
     } finally { await session.close(); }
 });

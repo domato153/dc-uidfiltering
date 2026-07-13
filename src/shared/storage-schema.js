@@ -23,6 +23,7 @@ export const FILTER_CONSTANTS = {
                 // [신규] 개인 차단 기능 On/Off 저장 키
                 PERSONAL_BLOCK_ENABLED: 'dcinside_personal_block_enabled',
                 FAB_POSITION: 'dcinside_fab_position',
+                FAB_SCALE_PERCENT: 'dcinside_fab_scale_percent',
                 MANAGEMENT_PANEL_GEOMETRY: 'dcinside_management_panel_geometry',
             },
             SELECTORS: {

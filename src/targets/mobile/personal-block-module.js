@@ -6,10 +6,14 @@
     const PersonalBlockModule = {
         isSelectionMode: false,
         personalBlockListCache: { uids: [], nicknames: [], ips: [] },
+        fabScalePercent: 100,
+        FAB_SCALE_MIN: 60,
+        FAB_SCALE_MAX: 160,
 
 
         async init() {
             this.personalBlockListCache = await this.loadPersonalBlocks();
+            this.fabScalePercent = await this.loadFabScalePercent();
             this.createFab();
             document.addEventListener('click', this.handleSelectionClick.bind(this), true);
         },
@@ -87,6 +91,107 @@
             await this.savePersonalBlocks();
             await FilterModule.refilterAllContent();
             this.exitSelectionMode();
+        },
+
+        normalizeFabScalePercent(value) {
+            const numeric = Number(value);
+            if (!Number.isFinite(numeric)) return 100;
+            return Math.max(this.FAB_SCALE_MIN, Math.min(this.FAB_SCALE_MAX, Math.round(numeric)));
+        },
+
+        async loadFabScalePercent() {
+            const stored = await GM_getValue(FilterModule.CONSTANTS.STORAGE_KEYS.FAB_SCALE_PERCENT, 100);
+            return this.normalizeFabScalePercent(stored);
+        },
+
+        clampFabPosition() {
+            const controls = document.getElementById('dc-personal-block-controls');
+            if (!controls) return;
+            const currentLeft = Number.parseFloat(controls.style.left);
+            const currentTop = Number.parseFloat(controls.style.top);
+            if (!Number.isFinite(currentLeft) || !Number.isFinite(currentTop)) return;
+            const maxX = Math.max(0, window.innerWidth - controls.offsetWidth);
+            const maxY = Math.max(0, window.innerHeight - controls.offsetHeight);
+            controls.style.left = `${Math.round(Math.max(0, Math.min(currentLeft, maxX)))}px`;
+            controls.style.top = `${Math.round(Math.max(0, Math.min(currentTop, maxY)))}px`;
+        },
+
+        applyFabScalePercent(value, { clamp = true } = {}) {
+            const normalized = this.normalizeFabScalePercent(value);
+            this.fabScalePercent = normalized;
+            const controls = document.getElementById('dc-personal-block-controls');
+            if (!controls) return normalized;
+            const ratio = normalized / 100;
+            const scaledValue = (base) => `${Number((base * ratio).toFixed(2))}px`;
+            controls.style.setProperty('--dcuf-fab-width', scaledValue(152));
+            controls.style.setProperty('--dcuf-fab-height', scaledValue(76));
+            controls.style.setProperty('--dcuf-fab-padding-x', scaledValue(28));
+            controls.style.setProperty('--dcuf-fab-font-size', scaledValue(32));
+            this.closeFabDrawer();
+            if (clamp) this.clampFabPosition();
+            return normalized;
+        },
+
+        async showFabScalePanel() {
+            document.getElementById('dc-personal-block-size-overlay')?.remove();
+            const savedPercent = await this.loadFabScalePercent();
+            this.applyFabScalePercent(savedPercent);
+            if (this.isFabSupportedPage()) this.createFab();
+
+            const overlay = document.createElement('div');
+            overlay.id = 'dc-personal-block-size-overlay';
+            const panel = document.createElement('div');
+            panel.id = 'dc-personal-block-size-panel';
+            panel.setAttribute('role', 'dialog');
+            panel.setAttribute('aria-modal', 'true');
+            panel.setAttribute('aria-labelledby', 'dc-personal-block-size-title');
+            panel.innerHTML = `
+                <h3 id="dc-personal-block-size-title">메뉴 버튼 크기 조절</h3>
+                <p class="dcuf-fab-size-description">버튼과 글자 크기가 같은 비율로 조절됩니다.</p>
+                <output class="dcuf-fab-size-value" for="dc-personal-block-size-range">${savedPercent}%</output>
+                <input id="dc-personal-block-size-range" type="range" min="${this.FAB_SCALE_MIN}" max="${this.FAB_SCALE_MAX}" step="5" value="${savedPercent}" aria-label="메뉴 버튼 크기 비율">
+                <div class="dcuf-fab-size-bounds"><span>${this.FAB_SCALE_MIN}%</span><span>${this.FAB_SCALE_MAX}%</span></div>
+                <div class="dcuf-fab-size-actions">
+                    <button type="button" data-dcuf-fab-size-action="reset">기본값</button>
+                    <button type="button" data-dcuf-fab-size-action="cancel">취소</button>
+                    <button type="button" data-dcuf-fab-size-action="save">저장</button>
+                </div>
+            `;
+            overlay.appendChild(panel);
+            document.body.appendChild(overlay);
+
+            const range = panel.querySelector('#dc-personal-block-size-range');
+            const valueOutput = panel.querySelector('.dcuf-fab-size-value');
+            const closePanel = (restoreSaved) => {
+                if (restoreSaved) this.applyFabScalePercent(savedPercent);
+                document.removeEventListener('keydown', handleKeydown, true);
+                overlay.remove();
+            };
+            const handleKeydown = (event) => {
+                if (event.key !== 'Escape') return;
+                event.preventDefault();
+                closePanel(true);
+            };
+
+            range.addEventListener('input', () => {
+                const nextPercent = this.applyFabScalePercent(range.value);
+                valueOutput.textContent = `${nextPercent}%`;
+            });
+            panel.querySelector('[data-dcuf-fab-size-action="reset"]').addEventListener('click', () => {
+                range.value = '100';
+                range.dispatchEvent(new Event('input', { bubbles: true }));
+            });
+            panel.querySelector('[data-dcuf-fab-size-action="cancel"]').addEventListener('click', () => closePanel(true));
+            panel.querySelector('[data-dcuf-fab-size-action="save"]').addEventListener('click', async () => {
+                const nextPercent = this.applyFabScalePercent(range.value);
+                await GM_setValue(FilterModule.CONSTANTS.STORAGE_KEYS.FAB_SCALE_PERCENT, nextPercent);
+                closePanel(false);
+            });
+            overlay.addEventListener('click', (event) => {
+                if (event.target === overlay) closePanel(true);
+            });
+            document.addEventListener('keydown', handleKeydown, true);
+            range.focus();
         },
 
         isFabSupportedPage() {
@@ -192,6 +297,7 @@
 
             controls.append(fab, drawer);
             document.body.appendChild(controls);
+            this.applyFabScalePercent(this.fabScalePercent, { clamp: false });
 
             let activePointerId = null;
             let offsetX = 0;
@@ -210,13 +316,13 @@
                 startX = event.clientX;
                 startY = event.clientY;
                 wasDragged = false;
-                this.closeFabDrawer();
                 fab.setPointerCapture?.(event.pointerId);
             });
 
             fab.addEventListener('pointermove', (event) => {
                 if (event.pointerId !== activePointerId) return;
                 if (!wasDragged && Math.hypot(event.clientX - startX, event.clientY - startY) < 5) return;
+                if (!wasDragged) this.closeFabDrawer();
                 wasDragged = true;
                 event.preventDefault();
                 const maxX = Math.max(0, window.innerWidth - controls.offsetWidth);
@@ -267,6 +373,7 @@
                     if (event.key === 'Escape') this.closeFabDrawer();
                 });
                 window.addEventListener('resize', () => {
+                    this.clampFabPosition();
                     if (!document.getElementById('dc-personal-block-drawer')?.hidden) this.positionFabDrawer();
                 });
                 this._fabGlobalHandlersBound = true;

@@ -653,19 +653,23 @@
         /* --- [v2.3.2 수정] 개인 차단 기능 UI --- */
         /* DCUF_SHARED_FILTER_UI_START */
         #dc-personal-block-controls {
+            --dcuf-fab-width: 152px;
+            --dcuf-fab-height: 76px;
+            --dcuf-fab-padding-x: 28px;
+            --dcuf-fab-font-size: 32px;
             position: fixed;
             z-index: 2147483640;
             width: max-content;
-            height: 76px;
+            height: var(--dcuf-fab-height);
             overflow: visible;
         }
         #dc-personal-block-fab {
             box-sizing: border-box;
             appearance: none;
             width: auto !important;
-            min-width: 152px !important;
-            height: 76px !important;
-            padding: 0 28px;
+            min-width: var(--dcuf-fab-width) !important;
+            height: var(--dcuf-fab-height) !important;
+            padding: 0 var(--dcuf-fab-padding-x);
             background: linear-gradient(180deg, #fbfcfe 0%, #f1f4f8 100%) !important;
             color: #4d5e76;
             border-radius: 999px;
@@ -675,7 +679,7 @@
             align-items: center;
             justify-content: center;
             text-align: center;
-            font-size: 28px !important;
+            font-size: var(--dcuf-fab-font-size) !important;
             font-weight: 800;
             letter-spacing: -0.03em;
             line-height: 1;
@@ -742,6 +746,80 @@
             background: #edf2f8;
             color: #24364f;
             outline: none;
+        }
+        #dc-personal-block-size-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 2147483644;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            background: rgba(18, 25, 35, 0.45);
+        }
+        #dc-personal-block-size-panel {
+            box-sizing: border-box;
+            width: min(360px, calc(100vw - 32px));
+            padding: 20px;
+            background: #fff;
+            color: #34445a;
+            border: 1px solid #c7d2df;
+            border-radius: 14px;
+            box-shadow: 0 18px 48px rgba(36, 49, 72, 0.28);
+        }
+        #dc-personal-block-size-panel h3 {
+            margin: 0 0 8px;
+            color: inherit;
+            font-size: 19px;
+        }
+        #dc-personal-block-size-panel .dcuf-fab-size-description {
+            margin: 0 0 16px;
+            color: #66758a;
+            font-size: 13px;
+            line-height: 1.45;
+        }
+        #dc-personal-block-size-panel .dcuf-fab-size-value {
+            display: block;
+            margin-bottom: 8px;
+            color: #33445b;
+            text-align: center;
+            font-size: 18px;
+            font-weight: 800;
+        }
+        #dc-personal-block-size-panel input[type="range"] {
+            width: 100%;
+            min-height: 36px;
+            margin: 0;
+            cursor: pointer;
+        }
+        #dc-personal-block-size-panel .dcuf-fab-size-bounds {
+            display: flex;
+            justify-content: space-between;
+            margin-top: -2px;
+            color: #7b8798;
+            font-size: 11px;
+        }
+        #dc-personal-block-size-panel .dcuf-fab-size-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 18px;
+        }
+        #dc-personal-block-size-panel .dcuf-fab-size-actions button {
+            flex: 1;
+            min-height: 42px;
+            padding: 8px;
+            background: #edf2f8;
+            color: #34445a;
+            border: 0;
+            border-radius: 9px;
+            font-family: inherit;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        #dc-personal-block-size-panel .dcuf-fab-size-actions [data-dcuf-fab-size-action="save"] {
+            background: #3b71fd;
+            color: #fff;
         }
         #dc-selection-popup {
             position: fixed;
@@ -1433,6 +1511,29 @@
             background: #414956 !important;
             color: #fff !important;
         }
+        body.dc-filter-dark-mode #dc-personal-block-size-overlay {
+            background: rgba(0, 0, 0, 0.62) !important;
+        }
+        body.dc-filter-dark-mode #dc-personal-block-size-panel {
+            background: #2d323a !important;
+            color: #e2e8f0 !important;
+            border-color: #596474 !important;
+            box-shadow: 0 20px 52px rgba(0, 0, 0, 0.58) !important;
+        }
+        body.dc-filter-dark-mode #dc-personal-block-size-panel .dcuf-fab-size-description,
+        body.dc-filter-dark-mode #dc-personal-block-size-panel .dcuf-fab-size-bounds {
+            color: #aeb9c8 !important;
+        }
+        body.dc-filter-dark-mode #dc-personal-block-size-panel .dcuf-fab-size-value {
+            color: #f2f6fb !important;
+        }
+        body.dc-filter-dark-mode #dc-personal-block-size-panel .dcuf-fab-size-actions button {
+            background: #4a5360 !important;
+            color: #fff !important;
+        }
+        body.dc-filter-dark-mode #dc-personal-block-size-panel .dcuf-fab-size-actions [data-dcuf-fab-size-action="save"] {
+            background: #4d7cff !important;
+        }
 
         /* 5. 스크립트 팝업창 전체 다크 테마 */
         body.dc-filter-dark-mode #dcinside-filter-setting,
@@ -1736,6 +1837,7 @@
                 // [신규] 개인 차단 기능 On/Off 저장 키
                 PERSONAL_BLOCK_ENABLED: 'dcinside_personal_block_enabled',
                 FAB_POSITION: 'dcinside_fab_position',
+                FAB_SCALE_PERCENT: 'dcinside_fab_scale_percent',
                 MANAGEMENT_PANEL_GEOMETRY: 'dcinside_management_panel_geometry',
             },
             SELECTORS: {
