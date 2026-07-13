@@ -151,17 +151,45 @@
     </section>
 
     <section id="install" class="install-section">
-      <div class="section-shell install-layout">
-        <div>
+      <div class="section-shell install-content">
+        <div class="install-heading">
           <p class="eyebrow">INSTALL</p>
-          <h2>설치는 세 단계면 됩니다</h2>
-          <p>모바일은 확장 프로그램 지원 브라우저와 데스크톱 사이트 모드를 권장합니다.</p>
+          <h2>설치 방법</h2>
+          <p>사용 환경에 맞는 안내를 따라 설치하세요. 모바일은 확장 프로그램 지원 브라우저와 데스크톱 사이트 모드를 권장합니다.</p>
         </div>
-        <ol class="steps">
-          <li><span>1</span><div><strong>Tampermonkey 설치</strong><p>사용 중인 Chromium 브라우저에 확장을 추가합니다.</p></div></li>
-          <li><span>2</span><div><strong>개발자 모드 켜기</strong><p>브라우저 확장 프로그램 관리 화면에서 활성화합니다.</p></div></li>
-          <li><span>3</span><div><strong>대상 스크립트 설치</strong><p>PC 또는 모바일 설치 버튼을 누르고 새로고침합니다.</p></div></li>
-        </ol>
+
+        <div class="install-grid">
+          <article class="install-card">
+            <div class="install-card-header">
+              <span class="target-tag pc-tag">PC</span>
+              <h3>PC 설치</h3>
+            </div>
+            <ol class="install-steps">
+              <li><span>1</span><p>Chrome, Edge, Vivaldi 등 Chromium 기반 브라우저에 <a href="https://www.tampermonkey.net/">Tampermonkey</a>를 설치합니다.</p></li>
+              <li><span>2</span><p>브라우저 확장 프로그램 관리 화면에서 <strong>개발자 모드</strong>를 켭니다.</p></li>
+              <li><span>3</span><p>아래의 <strong>PC 안정 버전 설치</strong> 버튼을 누릅니다.</p></li>
+              <li><span>4</span><p>Tampermonkey 설치 화면에서 스크립트를 설치합니다.</p></li>
+              <li><span>5</span><p>디시인사이드 페이지를 새로고침합니다.</p></li>
+            </ol>
+            <a class="button button-primary install-button" href="https://github.com/domato153/dc-uidfiltering/raw/refs/heads/main/dcinside_user_filter.user.js">PC 안정 버전 설치</a>
+          </article>
+
+          <article class="install-card mobile-install-card">
+            <div class="install-card-header">
+              <span class="target-tag mobile-tag">MOBILE</span>
+              <h3>모바일 설치</h3>
+            </div>
+            <ol class="install-steps">
+              <li><span>1</span><p>확장 프로그램을 지원하는 Chromium 기반 모바일 브라우저를 준비합니다. <strong>(Lemur 추천, Edge도 가능)</strong></p></li>
+              <li><span>2</span><p>Tampermonkey 또는 Tampermonkey Legacy를 설치합니다.</p></li>
+              <li><span>3</span><p>가능하면 브라우저에서 <strong>데스크톱 사이트를 기본값</strong>으로 설정합니다.</p></li>
+              <li><span>4</span><p>아래의 <strong>모바일 안정 버전 설치</strong> 버튼을 누릅니다.</p></li>
+              <li><span>5</span><p>설치 화면이 열리지 않으면 Tampermonkey의 <code>도구 → Import from URL</code>에 아래 주소를 붙여넣습니다.</p></li>
+            </ol>
+            <div class="install-url"><code>https://github.com/domato153/dc-uidfiltering/raw/refs/heads/Mobile/Dc_UserFilter_Mobile.user.js</code></div>
+            <a class="button button-primary install-button" href="https://github.com/domato153/dc-uidfiltering/raw/refs/heads/Mobile/Dc_UserFilter_Mobile.user.js">모바일 안정 버전 설치</a>
+          </article>
+        </div>
       </div>
     </section>
 
