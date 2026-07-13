@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="디시인사이드 깡계·유동·IP 차단과 모바일 UI를 제공하는 Tampermonkey 사용자 스크립트">
   <title>DCInside User Filter</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=20260713-install4">
 </head>
 <body>
   <header class="site-header">
@@ -68,12 +68,12 @@
         <article class="feature-card accent-blue">
           <span class="feature-number">01</span>
           <h3>깡계 활동량 필터</h3>
-          <p>글과 댓글의 합, 댓글/글·글/댓글 비율을 기준으로 활동 패턴을 걸러냅니다.</p>
+          <p>글·댓글 합과 글댓비 설정 등 활동 패턴을 기준으로 사용자를 선택적으로 차단합니다.</p>
         </article>
         <article class="feature-card accent-violet">
           <span class="feature-number">02</span>
           <h3>유동·IP 필터</h3>
-          <p>유동 전체, 통신사 IP, 우회 IP를 각각 켜고 강도를 조절할 수 있습니다.</p>
+          <p>유동 전체, 통신사 IP, 우회 IP별 차단 강도를 조절해 필터링할 수 있습니다.</p>
         </article>
         <article class="feature-card accent-green">
           <span class="feature-number">03</span>
@@ -161,33 +161,50 @@
         <div class="install-grid">
           <article class="install-card">
             <div class="install-card-header">
-              <span class="target-tag pc-tag">PC</span>
-              <h3>PC 설치</h3>
+              <div>
+                <span class="target-tag pc-tag">PC</span>
+                <h3>PC 브라우저</h3>
+              </div>
+              <p>Chrome · Edge · Vivaldi</p>
             </div>
             <ol class="install-steps">
-              <li><span>1</span><p>Chrome, Edge, Vivaldi 등 Chromium 기반 브라우저에 <a href="https://www.tampermonkey.net/">Tampermonkey</a>를 설치합니다.</p></li>
-              <li><span>2</span><p>브라우저 확장 프로그램 관리 화면에서 <strong>개발자 모드</strong>를 켭니다.</p></li>
-              <li><span>3</span><p>아래의 <strong>PC 안정 버전 설치</strong> 버튼을 누릅니다.</p></li>
-              <li><span>4</span><p>Tampermonkey 설치 화면에서 스크립트를 설치합니다.</p></li>
-              <li><span>5</span><p>디시인사이드 페이지를 새로고침합니다.</p></li>
+              <li><p>Chromium 기반 브라우저에 <a href="https://www.tampermonkey.net/">Tampermonkey</a>를 설치합니다.</p></li>
+              <li><p>확장 프로그램 관리 화면에서 <strong>개발자 모드</strong>를 켭니다.</p></li>
+              <li><p>아래 설치 버튼을 누르고 Tampermonkey에서 스크립트를 설치합니다.</p></li>
+              <li><p>디시인사이드 페이지를 새로고침합니다.</p></li>
             </ol>
             <a class="button button-primary install-button" href="https://github.com/domato153/dc-uidfiltering/raw/refs/heads/main/dcinside_user_filter.user.js">PC 안정 버전 설치</a>
           </article>
 
           <article class="install-card mobile-install-card">
             <div class="install-card-header">
-              <span class="target-tag mobile-tag">MOBILE</span>
-              <h3>모바일 설치</h3>
+              <div>
+                <span class="target-tag mobile-tag">MOBILE</span>
+                <h3>모바일 브라우저</h3>
+              </div>
+              <div class="mobile-browser-meta" aria-label="추천 모바일 브라우저">
+                <strong>추천 모바일 브라우저</strong>
+                <div class="browser-pills">
+                  <span class="browser-pill recommended">Lemur 추천</span>
+                  <span class="browser-pill supported">Edge 사용 가능</span>
+                </div>
+              </div>
             </div>
             <ol class="install-steps">
-              <li><span>1</span><p>확장 프로그램을 지원하는 Chromium 기반 모바일 브라우저를 준비합니다. <strong>(Lemur 추천, Edge도 가능)</strong></p></li>
-              <li><span>2</span><p>Tampermonkey 또는 Tampermonkey Legacy를 설치합니다.</p></li>
-              <li><span>3</span><p>가능하면 브라우저에서 <strong>데스크톱 사이트를 기본값</strong>으로 설정합니다.</p></li>
-              <li><span>4</span><p>아래의 <strong>모바일 안정 버전 설치</strong> 버튼을 누릅니다.</p></li>
-              <li><span>5</span><p>설치 화면이 열리지 않으면 Tampermonkey의 <code>도구 → Import from URL</code>에 아래 주소를 붙여넣습니다.</p></li>
+              <li><p>확장 프로그램을 지원하는 Chromium 기반 모바일 브라우저를 준비합니다.</p></li>
+              <li><p>Tampermonkey 또는 Tampermonkey Legacy를 설치합니다.</p></li>
+              <li><p>가능하면 <strong>데스크톱 사이트를 기본값</strong>으로 설정합니다.</p></li>
+              <li><p>아래 설치 버튼을 누르고 Tampermonkey에서 스크립트를 설치합니다.</p></li>
             </ol>
-            <div class="install-url"><code>https://github.com/domato153/dc-uidfiltering/raw/refs/heads/Mobile/Dc_UserFilter_Mobile.user.js</code></div>
             <a class="button button-primary install-button" href="https://github.com/domato153/dc-uidfiltering/raw/refs/heads/Mobile/Dc_UserFilter_Mobile.user.js">모바일 안정 버전 설치</a>
+            <details class="manual-install">
+              <summary>설치 화면이 열리지 않나요?</summary>
+              <p>Tampermonkey의 <code>도구 → Import from URL</code>에 아래 주소를 붙여넣으세요.</p>
+              <div class="install-url">
+                <code>https://github.com/domato153/dc-uidfiltering/raw/refs/heads/Mobile/Dc_UserFilter_Mobile.user.js</code>
+                <button type="button" data-copy-url>주소 복사</button>
+              </div>
+            </details>
           </article>
         </div>
       </div>
@@ -207,5 +224,19 @@
       <div class="footer-links"><a href="https://github.com/domato153/dc-uidfiltering">GitHub</a><a href="https://github.com/domato153/dc-uidfiltering/issues">문제 제보</a></div>
     </div>
   </footer>
+  <script>
+    document.querySelectorAll('[data-copy-url]').forEach((button) => {
+      button.addEventListener('click', async () => {
+        const value = button.previousElementSibling.textContent.trim();
+        try {
+          await navigator.clipboard.writeText(value);
+          button.textContent = '복사됨';
+          window.setTimeout(() => { button.textContent = '주소 복사'; }, 1400);
+        } catch {
+          window.prompt('아래 주소를 복사하세요.', value);
+        }
+      });
+    });
+  </script>
 </body>
 </html>

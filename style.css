@@ -138,21 +138,37 @@ nav a:hover { color: var(--blue); }
 .install-section { padding-block: 100px; background: #e9edfa; }
 .install-heading { max-width: 760px; margin-bottom: 38px; }
 .install-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; align-items: stretch; }
-.install-card { display: flex; flex-direction: column; min-width: 0; padding: 30px; border: 1px solid rgba(255,255,255,.9); border-radius: 22px; background: rgba(255,255,255,.82); box-shadow: 0 16px 46px rgba(59, 75, 125, .1); }
-.install-card-header { display: flex; align-items: center; gap: 12px; padding-bottom: 22px; border-bottom: 1px solid #dfe4f0; }
-.install-card h3 { margin: 0; font-size: 24px; letter-spacing: -.035em; }
+.install-card { position: relative; display: flex; flex-direction: column; min-width: 0; overflow: hidden; padding: 32px; border: 1px solid #d9dfed; border-radius: 24px; background: #fff; box-shadow: 0 18px 48px rgba(48, 65, 118, .11); }
+.install-card::before { position: absolute; inset: 0 0 auto; height: 5px; content: ""; background: #334a9d; }
+.mobile-install-card::before { background: linear-gradient(90deg, #4263eb, #748ffc); }
+.install-card-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; min-height: 78px; padding-bottom: 23px; border-bottom: 1px solid #e5e9f2; }
+.install-card-header > p { margin: 5px 0 0; color: #828ba0; font-size: 13px; text-align: right; }
+.install-card h3 { margin: 9px 0 0; font-size: 25px; letter-spacing: -.035em; }
 .target-tag { display: inline-flex; align-items: center; min-height: 28px; padding: 0 10px; border-radius: 8px; color: #fff; font-size: 11px; font-weight: 900; letter-spacing: .08em; }
 .pc-tag { background: #334a9d; }
 .mobile-tag { background: #4263eb; }
-.install-steps { display: grid; gap: 15px; margin: 25px 0 26px; padding: 0; list-style: none; }
-.install-steps li { display: grid; grid-template-columns: 28px 1fr; gap: 11px; align-items: start; }
-.install-steps li > span { display: grid; width: 26px; height: 26px; place-items: center; border-radius: 8px; color: var(--blue); background: var(--soft-blue); font-size: 12px; font-weight: 900; }
+.mobile-browser-meta { display: flex; align-items: flex-end; flex-direction: column; gap: 7px; margin-top: 3px; }
+.mobile-browser-meta > strong { color: #828ba0; font-size: 12px; font-weight: 700; white-space: nowrap; }
+.browser-pills { display: flex; flex-wrap: wrap; gap: 6px; }
+.browser-pill { display: inline-flex; align-items: center; min-height: 27px; padding: 0 9px; border-radius: 999px; font-size: 11px; font-weight: 900; white-space: nowrap; }
+.browser-pill.recommended { color: #2443b4; background: #e7edff; }
+.browser-pill.supported { color: #496079; background: #edf1f6; }
+.install-steps { counter-reset: install-step; display: grid; gap: 17px; margin: 27px 0 28px; padding: 0; list-style: none; }
+.install-steps li { counter-increment: install-step; display: grid; grid-template-columns: 30px 1fr; gap: 12px; align-items: start; }
+.install-steps li::before { display: grid; width: 28px; height: 28px; content: counter(install-step); place-items: center; border-radius: 9px; color: var(--blue); background: var(--soft-blue); font-size: 12px; font-weight: 900; }
 .install-steps p { margin: 1px 0 0; color: #4d5870; font-size: 14px; line-height: 1.65; }
 .install-steps a { color: var(--blue); font-weight: 800; text-decoration: underline; text-underline-offset: 3px; }
 .install-steps code { padding: 2px 6px; border-radius: 5px; background: #eef1f7; font-size: 12px; }
-.install-url { overflow-x: auto; margin: -5px 0 20px; padding: 13px 15px; border: 1px solid #dce2ee; border-radius: 10px; background: #f5f7fb; color: #2b3857; }
-.install-url code { font-size: 11px; white-space: nowrap; }
 .install-button { width: 100%; margin-top: auto; }
+.manual-install { margin-top: 13px; border: 1px solid #dfe4ee; border-radius: 13px; background: #f7f8fb; }
+.manual-install summary { padding: 13px 15px; color: #536078; cursor: pointer; font-size: 13px; font-weight: 800; }
+.manual-install[open] summary { border-bottom: 1px solid #e2e6ef; }
+.manual-install > p { margin: 14px 15px 10px; color: #68738a; font-size: 12px; }
+.manual-install > p code { padding: 2px 5px; border-radius: 4px; background: #e9edf4; }
+.install-url { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: center; margin: 0 15px 15px; padding: 8px 8px 8px 12px; border: 1px solid #dce2ee; border-radius: 10px; background: #fff; color: #2b3857; }
+.install-url code { overflow: hidden; font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+.install-url button { min-height: 34px; padding: 0 11px; border: 0; border-radius: 8px; color: #fff; background: #4263eb; cursor: pointer; font-size: 11px; font-weight: 900; }
+.install-url button:hover { background: #3451c8; }
 
 .notice-section { padding-block: 90px; }
 .notice-card { display: grid; grid-template-columns: 60px 1fr; gap: 22px; padding: 30px; border: 1px solid #ffd8a8; border-radius: var(--radius-md); background: #fff9db; }
@@ -195,7 +211,12 @@ footer { padding-block: 42px; color: #bec6d6; background: #0c1323; }
   .feature-grid, .screen-grid { grid-template-columns: 1fr; }
   .feature-card { min-height: 210px; padding: 27px; }
   .install-card { padding: 23px; }
+  .install-card-header { flex-direction: column; min-height: 0; }
+  .mobile-browser-meta { align-items: flex-start; }
+  .browser-pills { justify-content: flex-start; max-width: none; }
+  .install-url { grid-template-columns: 1fr; }
   .install-url code { white-space: normal; overflow-wrap: anywhere; }
+  .install-url button { width: 100%; }
   .compare-row { grid-template-columns: 1fr 54px 62px; padding-inline: 14px; font-size: 13px; }
   .notice-card { grid-template-columns: 1fr; }
   .footer-inner { align-items: flex-start; flex-direction: column; }
