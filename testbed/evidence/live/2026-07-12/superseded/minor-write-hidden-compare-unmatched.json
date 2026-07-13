@@ -1,0 +1,41 @@
+{
+  "audit": "hidden-compare",
+  "baselineUrl": "https://gall.dcinside.com/mgallery/board/view/?id=aoegame&no=31186430&page=1",
+  "currentUrl": "https://gall.dcinside.com/mgallery/board/view/?id=aoegame&no=31186430&page=1",
+  "comparedAt": "2026-07-12T06:29:17.269Z",
+  "exposedCount": 0,
+  "results": [
+    {
+      "baseline": {
+        "index": 0,
+        "tag": "TR",
+        "id": "",
+        "dataNo": "",
+        "className": "ub-content ",
+        "inlineDisplay": "none",
+        "computedDisplay": "none",
+        "text": "- AD 지금이 복귀각! 워프레임 무료로 다운로드 받기! 운영자 26/07/11 - -"
+      },
+      "found": false,
+      "current": null,
+      "mirror": null,
+      "exposed": false
+    },
+    {
+      "baseline": {
+        "index": 1,
+        "tag": "TR",
+        "id": "",
+        "dataNo": "",
+        "className": "ub-content ",
+        "inlineDisplay": "none",
+        "computedDisplay": "none",
+        "text": "- AD <소니 INZONE> 정품등록 프로모션 지금 진행 중! 운영자 26/07/10 - -"
+      },
+      "found": false,
+      "current": null,
+      "mirror": null,
+      "exposed": false
+    }
+  ]
+}

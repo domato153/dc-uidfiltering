@@ -20,6 +20,7 @@
         _pendingMutationRecords: [],
         _pendingMutationRafId: 0,
         _pendingMutationTimerId: 0,
+        _mutationGeneration: 0,
         _taskQueues: Object.create(null),
         _diagnosticsEnabled: false,
         _diagnosticCounters: Object.create(null),
@@ -224,9 +225,15 @@
 
             const records = this._pendingMutationRecords.splice(0);
             const payload = this.buildMutationPayload(records);
+            this._mutationGeneration += 1;
+            payload.generation = this._mutationGeneration;
             this.incrementDiagnostic('mutation.dispatches');
             this.setDiagnosticGauge('mutation.roots', payload.roots.length);
             this.setDiagnosticGauge('mutation.subscribers', this._mutationSubscribers.size);
+            this.setDiagnosticGauge('mutation.generation', this._mutationGeneration);
+
+            const measureDispatch = this._diagnosticsEnabled && typeof performance?.now === 'function';
+            const dispatchStartedAt = measureDispatch ? performance.now() : 0;
 
             this._mutationSubscribers.forEach((listener, key) => {
                 try {
@@ -235,6 +242,10 @@
                     console.error('[DCUF runtime] mutation subscriber failed:', key, error);
                 }
             });
+
+            if (measureDispatch) {
+                this.setDiagnosticGauge('mutation.lastDispatchDurationMs', Math.round((performance.now() - dispatchStartedAt) * 1000) / 1000);
+            }
         },
 
         queueMutationRecords(records) {
@@ -279,7 +290,7 @@
                 subtree: true,
                 attributes: true,
                 characterData: true,
-                attributeFilter: ['class', 'style', 'src', 'id']
+                attributeFilter: ['class', 'style', 'src', 'id', 'data-uid', 'data-nick', 'data-ip', 'data-no', 'p-no']
             });
             this._mutationObserverReady = true;
             this.noteDiagnostic('mutation.bus.ready', { target: 'document.body' });

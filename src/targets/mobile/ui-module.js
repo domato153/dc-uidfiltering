@@ -266,7 +266,10 @@
         updateItemVisibility(originalRow, mirroredItem) {
             const isDibsBlocked = originalRow.classList.contains('block-disable');
             const isUserFilterBlocked = originalRow.style.display === 'none';
-            const nextDisplay = (isDibsBlocked || isUserFilterBlocked) ? 'none' : 'block';
+            // Host CSS also hides non-post survey/advertisement rows. The original table is
+            // off-screen, but each row retains its own computed display value.
+            const isHostHidden = window.getComputedStyle(originalRow).display === 'none';
+            const nextDisplay = (isDibsBlocked || isUserFilterBlocked || isHostHidden) ? 'none' : 'block';
             if (typeof FilterModule?.debugMirrorSync === 'function') {
                 FilterModule.debugMirrorSync(originalRow, mirroredItem, nextDisplay, 'UIModule.updateItemVisibility');
             }
@@ -774,14 +777,22 @@
                 originalTbody,
                 newListContainer,
                 itemByRowId: new Map(),
+                dirtyRows: new Set(),
                 tbodyObserver: null,
                 syncScheduler: null,
                 rebuildAll: false,
+                mutationGeneration: 0,
+                lastSyncedGeneration: -1,
                 lastSyncReason: 'init'
             };
 
-            state.syncScheduler = this.createPhaseScheduler(`ui-list-${state.runtimeId}`, () => {
+            state.syncScheduler = this.createPhaseScheduler(`ui-list-${state.runtimeId}`, ({ delay }) => {
+                if (delay > 0 && state.lastSyncedGeneration === state.mutationGeneration) {
+                    this.recordDiagnostic('ui.listState.skippedUnchanged');
+                    return;
+                }
                 this.syncListState(state, state.lastSyncReason);
+                state.lastSyncedGeneration = state.mutationGeneration;
             }, [90]);
 
             return state;
@@ -808,6 +819,9 @@
             this.LIST_STATE_MAP.delete(state.listWrap);
             if (state.itemByRowId && typeof state.itemByRowId.clear === 'function') {
                 state.itemByRowId.clear();
+            }
+            if (state.dirtyRows && typeof state.dirtyRows.clear === 'function') {
+                state.dirtyRows.clear();
             }
             state.listWrap = null;
             state.originalTable = null;
@@ -849,9 +863,15 @@
             }, true);
         },
 
-        scheduleListSync(state, reason = 'sync', { rebuildAll = false } = {}) {
+        scheduleListSync(state, reason = 'sync', { rebuildAll = false, dirtyRows = null } = {}) {
             if (!state) return;
             if (rebuildAll) state.rebuildAll = true;
+            if (dirtyRows && typeof dirtyRows[Symbol.iterator] === 'function') {
+                Array.from(dirtyRows).forEach((row) => {
+                    if (row instanceof HTMLElement) state.dirtyRows?.add(row);
+                });
+            }
+            state.mutationGeneration = (Number(state.mutationGeneration) || 0) + 1;
             state.lastSyncReason = reason;
             state.syncScheduler?.schedule({ reason });
         },
@@ -884,6 +904,7 @@
             const originalRows = Array.from(state.originalTbody.querySelectorAll(this.SELECTORS.ORIGINAL_POST_ITEM));
             const seenRowIds = new Set();
             let previousItem = null;
+            let rebuiltRowCount = 0;
 
             originalRows.forEach((row) => {
                 try {
@@ -892,10 +913,11 @@
                     seenRowIds.add(rowId);
 
                     let mirroredItem = state.itemByRowId.get(rowId);
-                    if (shouldRebuildAll && mirroredItem instanceof HTMLElement) {
+                    if ((shouldRebuildAll || state.dirtyRows?.has(row)) && mirroredItem instanceof HTMLElement) {
                         mirroredItem.remove();
                         state.itemByRowId.delete(rowId);
                         mirroredItem = null;
+                        rebuiltRowCount += 1;
                     }
 
                     if (!(mirroredItem instanceof HTMLElement)) {
@@ -928,6 +950,9 @@
             });
 
             state.rebuildAll = false;
+            state.dirtyRows?.clear();
+            if (rebuiltRowCount > 0) this.recordDiagnostic('ui.listRows.rebuilt', rebuiltRowCount);
+            this.getRuntimeCoordinator()?.setDiagnosticGauge?.('ui.listRows.lastRebuilt', rebuiltRowCount);
             this.recordDiagnostic('ui.listState.synced');
         },
 
@@ -936,7 +961,19 @@
 
             state.tbodyObserver = new MutationObserver((mutations) => {
                 const visibilityTargets = new Set();
+                const dirtyRows = new Set();
                 let needsResync = false;
+
+                const addDirtyRow = (node) => {
+                    const element = node instanceof Element ? node : node?.parentElement;
+                    if (!(element instanceof Element)) return;
+                    const row = element.matches?.(this.SELECTORS.ORIGINAL_POST_ITEM)
+                        ? element
+                        : element.closest?.(this.SELECTORS.ORIGINAL_POST_ITEM);
+                    if (row instanceof HTMLElement && row.closest(this.SELECTORS.ORIGINAL_TBODY) === state.originalTbody) {
+                        dirtyRows.add(row);
+                    }
+                };
 
                 mutations.forEach((mutation) => {
                     if (mutation.type === 'attributes' && (mutation.attributeName === 'style' || mutation.attributeName === 'class')) {
@@ -947,7 +984,16 @@
                         return;
                     }
 
-                    if (mutation.type === 'childList' || mutation.type === 'characterData') {
+                    if (mutation.type === 'characterData') {
+                        addDirtyRow(mutation.target);
+                        needsResync = true;
+                        return;
+                    }
+
+                    if (mutation.type === 'childList') {
+                        addDirtyRow(mutation.target);
+                        mutation.addedNodes.forEach(addDirtyRow);
+                        mutation.removedNodes.forEach(addDirtyRow);
                         needsResync = true;
                     }
                 });
@@ -960,7 +1006,7 @@
                 });
 
                 if (needsResync) {
-                    this.scheduleListSync(state, 'tbody-mutated', { rebuildAll: true });
+                    this.scheduleListSync(state, 'tbody-mutated', { dirtyRows });
                 }
             });
 
@@ -1048,8 +1094,7 @@
                     const candidates = payload.collectMatches([
                         this.SELECTORS.LIST_WRAP,
                         this.SELECTORS.ORIGINAL_TABLE,
-                        this.SELECTORS.ORIGINAL_TBODY,
-                        this.SELECTORS.ORIGINAL_POST_ITEM
+                        this.SELECTORS.ORIGINAL_TBODY
                     ], { includeRoots: true });
                     if (candidates.length === 0) return;
 
@@ -1922,13 +1967,11 @@
                 const contentRatio = targetSize / contentBasePx;
 
                 if (contentRatio > 1) {
-                    contentEl.querySelectorAll('*').forEach(el => {
+                    contentEl.querySelectorAll('[style]').forEach(el => {
                         // [v2.7.0.1 추가] 이미 스케일링된 요소는 중복 처리 방지
                         if (el.closest('.comment_box, .img_comment, #focus_cmt')) return;
 
                         if (el.dataset.scaledByFilter) return;
-                        el.dataset.scaledByFilter = '1';
-
                         const inlineFontSize = el.style.fontSize;
                         if (!inlineFontSize) return; // 인라인 없으면 부모 상속
 
@@ -1944,6 +1987,7 @@
 
                         const scaledPx = Math.round(originalPx * contentRatio * 10) / 10;
                         el.style.setProperty('font-size', scaledPx + 'px', 'important');
+                        el.dataset.scaledByFilter = '1';
                     });
                 }
             }
@@ -2139,15 +2183,483 @@
             document.body.classList.add('is-write-page');
 
             const writeBox = document.querySelector('.write_box');
-            if (writeBox) {
-                const topTable = writeBox.querySelector('.w_top');
-                if (topTable) {
-                    const userInfoRow = topTable.querySelector('tr:nth-child(2)');
-                    if (userInfoRow) {
-                        userInfoRow.classList.add('user_info_box');
-                        userInfoRow.querySelectorAll('td').forEach(td => td.classList.add('user_info_input'));
+            const writeForm = writeBox?.querySelector('form#write') || document.querySelector('form#write');
+            const gallType = writeForm?.querySelector('input[name="_GALLTYPE_"]')?.value || '';
+            const isMinorWrite = gallType.toUpperCase() === 'M'
+                || document.querySelector('#container.minor_write') instanceof Element
+                || (window.location.pathname || '').includes('/mgallery/');
+            document.body.classList.add(isMinorWrite ? 'dcuf-write-minor' : 'dcuf-write-major');
+            writeForm?.classList.add(isMinorWrite ? 'dcuf-write-form-minor' : 'dcuf-write-form-major');
+
+            const syncDesktopSiteMobileWriteMode = () => {
+                const screenWidth = Number(window.screen?.width) || 0;
+                const layoutWidth = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0);
+                const scale = screenWidth > 0 ? layoutWidth / screenWidth : 1;
+                const enabled = screenWidth > 0 && screenWidth <= 600 && layoutWidth >= 800 && scale >= 1.5;
+                document.body.classList.toggle('dcuf-write-desktop-site-mobile', enabled);
+                if (enabled) {
+                    const initialScale = Math.min(3, scale);
+                    document.body.style.setProperty('--dcuf-write-desktop-site-scale', String(initialScale));
+                    document.body.style.setProperty('--dcuf-write-desktop-site-inverse-scale', String(1 / initialScale));
+                    document.body.style.setProperty('--dcuf-write-device-width', `${screenWidth}px`);
+                } else {
+                    document.body.style.removeProperty('--dcuf-write-desktop-site-scale');
+                    document.body.style.removeProperty('--dcuf-write-desktop-site-inverse-scale');
+                    document.body.style.removeProperty('--dcuf-write-device-width');
+                }
+            };
+            syncDesktopSiteMobileWriteMode();
+            if (document.body.dataset.dcufWriteViewportBound !== '1') {
+                document.body.dataset.dcufWriteViewportBound = '1';
+                window.addEventListener('resize', syncDesktopSiteMobileWriteMode, { passive: true });
+                window.visualViewport?.addEventListener('resize', syncDesktopSiteMobileWriteMode, { passive: true });
+            }
+
+            const liveFieldset = writeForm?.querySelector('fieldset');
+            if (liveFieldset) liveFieldset.classList.add('dcuf-write-fields');
+
+            writeForm?.querySelectorAll('input[type="text"]:not([id]):not([name]), input[type="password"]:not([id]):not([name])')
+                .forEach((input) => input.classList.add('dcuf-write-decoy-input'));
+
+            const subjectRow = writeForm?.querySelector('#subject')?.closest('tr');
+            if (subjectRow) subjectRow.classList.add('dcuf-write-subject-row');
+            const subjectField = writeForm?.querySelector('#subject')?.closest('.input_box');
+            if (subjectField) subjectField.classList.add('dcuf-write-subject-field');
+
+            const guestControls = ['#name', '#password', '#code']
+                .map((selector) => writeForm?.querySelector(selector))
+                .filter((control) => control instanceof HTMLElement);
+            const guestRows = new Set(guestControls.map((control) => control.closest('tr')).filter(Boolean));
+            guestRows.forEach((row) => {
+                row.classList.add('user_info_box', 'dcuf-write-guest-row');
+                row.querySelectorAll('td').forEach((cell) => cell.classList.add('user_info_input'));
+            });
+
+            const liveFieldClasses = new Map([
+                ['#name', 'dcuf-write-name-field'],
+                ['#password', 'dcuf-write-password-field'],
+                ['#code', 'dcuf-write-captcha-field']
+            ]);
+            liveFieldClasses.forEach((className, selector) => {
+                const field = writeForm?.querySelector(selector)?.closest('.input_box');
+                if (field) field.classList.add('dcuf-write-guest-field', className);
+            });
+
+            const captchaImageBox = writeForm?.querySelector('#kcaptcha')?.closest('.kap_codeimg');
+            if (captchaImageBox) captchaImageBox.classList.add('dcuf-write-captcha-image');
+
+            const headtextLabel = writeForm?.querySelector('.write_subject > .tit, .write_subject > .write_subject_label');
+            if (headtextLabel) headtextLabel.classList.add('dcuf-write-headtext-label');
+
+            const headtextList = writeForm?.querySelector('.write_subject .subject_list');
+            if (headtextList instanceof HTMLElement) {
+                let draggedHeadtext = false;
+                let headtextDrag = null;
+                const revealHeadtext = (candidate, behavior = 'smooth') => {
+                    if (!(candidate instanceof HTMLElement)) return;
+                    requestAnimationFrame(() => {
+                        const maxScrollLeft = Math.max(0, headtextList.scrollWidth - headtextList.clientWidth);
+                        const centeredLeft = candidate.offsetLeft - ((headtextList.clientWidth - candidate.offsetWidth) / 2);
+                        headtextList.scrollTo({
+                            left: Math.max(0, Math.min(maxScrollLeft, centeredLeft)),
+                            behavior
+                        });
+                    });
+                };
+                const positionHeadtextTips = () => {
+                    headtextList.querySelectorAll(':scope > li .tip_box2').forEach((tip) => {
+                        if (!(tip instanceof HTMLElement)) return;
+                        const item = tip.closest('li');
+                        if (!(item instanceof HTMLElement) || getComputedStyle(tip).display === 'none') return;
+                        const itemRect = item.getBoundingClientRect();
+                        const tipRect = tip.getBoundingClientRect();
+                        const viewportWidth = window.visualViewport?.width || window.innerWidth;
+                        const modeScale = document.body.classList.contains('dcuf-write-desktop-site-mobile')
+                            ? (Number(document.body.style.getPropertyValue('--dcuf-write-desktop-site-scale')) || 1)
+                            : 1;
+                        const left = Math.max(8, Math.min(viewportWidth - tipRect.width - 8, itemRect.left + ((itemRect.width - tipRect.width) / 2)));
+                        const top = Math.max(8, itemRect.top - tipRect.height - 8);
+                        tip.style.setProperty('--dcuf-headtext-tip-left', `${Math.round(left / modeScale)}px`);
+                        tip.style.setProperty('--dcuf-headtext-tip-top', `${Math.round(top / modeScale)}px`);
+                        tip.style.setProperty('--dcuf-headtext-tip-max-width', `${Math.floor((viewportWidth - 16) / modeScale)}px`);
+                        tip.classList.remove('dcuf-headtext-tip-positioning');
+                        tip.classList.add('dcuf-headtext-tip-positioned');
+                    });
+                };
+                const scheduleHeadtextTipPosition = () => {
+                    requestAnimationFrame(() => requestAnimationFrame(positionHeadtextTips));
+                };
+                revealHeadtext(headtextList.querySelector(':scope > li.sel, :scope > li.active'), 'auto');
+                if (headtextList.dataset.dcufScrollBound !== '1') {
+                    headtextList.dataset.dcufScrollBound = '1';
+                    headtextList.addEventListener('pointerdown', (event) => {
+                        if (event.pointerType === 'touch' || event.button !== 0) return;
+                        headtextDrag = {
+                            pointerId: event.pointerId,
+                            startX: event.clientX,
+                            startScrollLeft: headtextList.scrollLeft,
+                            moved: false
+                        };
+                    });
+                    headtextList.addEventListener('pointermove', (event) => {
+                        if (!headtextDrag || headtextDrag.pointerId !== event.pointerId) return;
+                        const delta = event.clientX - headtextDrag.startX;
+                        if (!headtextDrag.moved && Math.abs(delta) >= 8) {
+                            headtextDrag.moved = true;
+                            headtextList.setPointerCapture?.(event.pointerId);
+                            headtextList.classList.add('dcuf-headtext-dragging');
+                        }
+                        if (!headtextDrag.moved) return;
+                        event.preventDefault();
+                        headtextList.scrollLeft = headtextDrag.startScrollLeft - delta;
+                        positionHeadtextTips();
+                    });
+                    const finishHeadtextDrag = (event) => {
+                        if (!headtextDrag || headtextDrag.pointerId !== event.pointerId) return;
+                        draggedHeadtext = headtextDrag.moved;
+                        headtextDrag = null;
+                        headtextList.classList.remove('dcuf-headtext-dragging');
+                        if (headtextList.hasPointerCapture?.(event.pointerId)) headtextList.releasePointerCapture(event.pointerId);
+                        if (draggedHeadtext) window.setTimeout(() => { draggedHeadtext = false; }, 0);
+                    };
+                    headtextList.addEventListener('pointerup', finishHeadtextDrag);
+                    headtextList.addEventListener('pointercancel', finishHeadtextDrag);
+                    headtextList.addEventListener('click', (event) => {
+                        if (draggedHeadtext) {
+                            event.preventDefault();
+                            event.stopImmediatePropagation();
+                            return;
+                        }
+                        const clicked = event.target instanceof Element ? event.target.closest('li') : null;
+                        if (!(clicked instanceof HTMLElement) || clicked.parentElement !== headtextList) return;
+                        requestAnimationFrame(() => {
+                            revealHeadtext(headtextList.querySelector(':scope > li.sel, :scope > li.active') || clicked);
+                        });
+                    });
+                    const prepareHeadtextTipPosition = (event) => {
+                        const item = event.target instanceof Element ? event.target.closest('li') : null;
+                        if (!(item instanceof HTMLElement) || item.parentElement !== headtextList) return;
+                        const tip = item.querySelector(':scope > .tip_box2');
+                        if (tip instanceof HTMLElement) {
+                            tip.classList.remove('dcuf-headtext-tip-positioned');
+                            tip.classList.add('dcuf-headtext-tip-positioning');
+                        }
+                        positionHeadtextTips();
+                        scheduleHeadtextTipPosition();
+                    };
+                    headtextList.addEventListener('pointerover', prepareHeadtextTipPosition);
+                    headtextList.addEventListener('focusin', prepareHeadtextTipPosition);
+                    headtextList.addEventListener('scroll', positionHeadtextTips, { passive: true });
+                    window.addEventListener('resize', scheduleHeadtextTipPosition, { passive: true });
+                    window.addEventListener('scroll', scheduleHeadtextTipPosition, { passive: true, capture: true });
+                    const runtimeCoordinator = this.getRuntimeCoordinator();
+                    if (runtimeCoordinator && typeof runtimeCoordinator.subscribeMutations === 'function') {
+                        runtimeCoordinator.subscribeMutations('ui-write-headtext-tip-position', (payload) => {
+                            const relevantTargets = [
+                                ...(payload.attributeTargets || []),
+                                ...(payload.addedElements || []),
+                                ...(payload.childListTargets || [])
+                            ];
+                            if (!relevantTargets.some((node) => (
+                                node === headtextList
+                                || (node instanceof Node && headtextList.contains(node))
+                            ))) return;
+                            const hasVisiblePendingTip = Array.from(headtextList.querySelectorAll(':scope > li .tip_box2:not(.dcuf-headtext-tip-positioned)'))
+                                .some((tip) => tip instanceof HTMLElement && getComputedStyle(tip).display !== 'none');
+                            if (hasVisiblePendingTip) positionHeadtextTips();
+                        });
                     }
                 }
+            }
+
+            const captchaCell = writeForm?.querySelector('#code')?.closest('td');
+            if (captchaCell) {
+                captchaCell.classList.add('user_info_input', 'dcuf-write-captcha-cell');
+            }
+
+            const mobileFontNames = [
+                '맑은 고딕', '굴림체', '굴림', '바탕체', '바탕', '궁서',
+                'helvetica', 'Arial', 'Arial Black', 'Comic Sans MS', 'Courier New',
+                'Impact', 'Tahoma', 'Times New Roman', 'Verdana', 'MS Gothic',
+                'MS PGothic', 'MS UI Gothic'
+            ];
+            const ensureMobileFontMenu = () => {
+                const isMobileScreen = (Number(window.screen?.width) || window.innerWidth || 0) <= 600;
+                document.body.classList.toggle('dcuf-write-mobile-font-menu', isMobileScreen);
+                if (!isMobileScreen || !(writeForm instanceof HTMLElement)) return;
+
+                writeForm.querySelectorAll('.note-toolbar .note-fontname').forEach((fontGroup) => {
+                    if (!(fontGroup instanceof HTMLElement)) return;
+                    const button = fontGroup.querySelector('button.dropdown-toggle, button.note-btn');
+                    const label = button?.querySelector('.note-current-fontname');
+                    const menu = fontGroup.querySelector('.note-dropdown-menu.dropdown-fontname');
+                    if (label instanceof HTMLElement && !(label.textContent || '').trim()) {
+                        label.textContent = '글꼴';
+                        label.style.removeProperty('font-family');
+                    }
+                    if (!(menu instanceof HTMLElement)) return;
+
+                    if (menu.dataset.dcufMobileFonts !== '1') {
+                        const selectedValue = menu.querySelector('.note-dropdown-item.checked')?.getAttribute('data-value') || '';
+                        const fragment = document.createDocumentFragment();
+                        mobileFontNames.forEach((fontName) => {
+                            const item = document.createElement('a');
+                            item.className = `note-dropdown-item${selectedValue === fontName ? ' checked' : ''}`;
+                            item.href = '#';
+                            item.setAttribute('data-value', fontName);
+                            item.setAttribute('data-dcuf-mobile-font-item', '1');
+                            item.setAttribute('role', 'listitem');
+                            item.setAttribute('aria-label', fontName);
+                            const check = document.createElement('i');
+                            check.className = 'note-icon-menu-check';
+                            const text = document.createElement('span');
+                            text.textContent = fontName;
+                            text.style.fontFamily = fontName;
+                            item.append(check, document.createTextNode(' '), text);
+                            fragment.appendChild(item);
+                        });
+                        menu.replaceChildren(fragment);
+                        menu.dataset.dcufMobileFonts = '1';
+                    }
+
+                    if (menu.__dcufMobileFontBound) return;
+                    menu.__dcufMobileFontBound = true;
+
+                    menu.addEventListener('mousedown', (event) => {
+                        if (event.target instanceof Element && event.target.closest('[data-dcuf-mobile-font-item="1"]')) {
+                            event.preventDefault();
+                        }
+                    });
+                    menu.addEventListener('click', (event) => {
+                        const item = event.target instanceof Element
+                            ? event.target.closest('[data-dcuf-mobile-font-item="1"]')
+                            : null;
+                        if (!(item instanceof HTMLElement)) return;
+                        event.preventDefault();
+                        event.stopPropagation();
+                        const fontName = item.getAttribute('data-value') || '';
+                        if (!fontName) return;
+
+                        const memo = writeForm.querySelector('textarea#memo');
+                        const jq = window.jQuery;
+                        if (memo instanceof HTMLTextAreaElement && typeof jq === 'function' && typeof jq(memo).summernote === 'function') {
+                            jq(memo).summernote('fontName', fontName);
+                        } else {
+                            document.execCommand('fontName', false, fontName);
+                        }
+                        menu.querySelectorAll('.note-dropdown-item').forEach((candidate) => {
+                            candidate.classList.toggle('checked', candidate === item);
+                        });
+                        if (label instanceof HTMLElement) {
+                            label.textContent = fontName;
+                            label.style.fontFamily = fontName;
+                        }
+                        fontGroup.querySelectorAll('.note-btn-group.open').forEach((group) => group.classList.remove('open'));
+                        button?.classList.remove('active');
+                        menu.style.display = 'none';
+                    });
+                });
+            };
+            ensureMobileFontMenu();
+
+            if (writeForm instanceof HTMLElement && writeForm.dataset.dcufEditorLayersBound !== '1') {
+                writeForm.dataset.dcufEditorLayersBound = '1';
+                let editorToolbarDrag = null;
+                let draggedEditorToolbar = false;
+                const editorToolbarSelector = '.note-toolbar, .note-toolbar-media';
+                writeForm.addEventListener('pointerdown', (event) => {
+                    if (event.pointerType === 'touch' || event.button !== 0) return;
+                    if (!(event.target instanceof Element)
+                        || event.target.closest('.note-dropdown-menu, .pop_wrap, input, textarea, select')) return;
+                    const toolbar = event.target.closest(editorToolbarSelector);
+                    if (!(toolbar instanceof HTMLElement)) return;
+                    draggedEditorToolbar = false;
+                    editorToolbarDrag = {
+                        toolbar,
+                        pointerId: event.pointerId,
+                        startX: event.clientX,
+                        startScrollLeft: toolbar.scrollLeft,
+                        moved: false
+                    };
+                });
+                writeForm.addEventListener('pointermove', (event) => {
+                    if (!editorToolbarDrag || editorToolbarDrag.pointerId !== event.pointerId) return;
+                    const delta = event.clientX - editorToolbarDrag.startX;
+                    if (!editorToolbarDrag.moved && Math.abs(delta) >= 8) {
+                        editorToolbarDrag.moved = true;
+                        editorToolbarDrag.toolbar.setPointerCapture?.(event.pointerId);
+                        editorToolbarDrag.toolbar.classList.add('dcuf-editor-toolbar-dragging');
+                    }
+                    if (!editorToolbarDrag.moved) return;
+                    event.preventDefault();
+                    editorToolbarDrag.toolbar.scrollLeft = editorToolbarDrag.startScrollLeft - delta;
+                    positionEditorLayers();
+                });
+                const finishEditorToolbarDrag = (event) => {
+                    if (!editorToolbarDrag || editorToolbarDrag.pointerId !== event.pointerId) return;
+                    const { toolbar, moved } = editorToolbarDrag;
+                    editorToolbarDrag = null;
+                    draggedEditorToolbar = moved;
+                    toolbar.classList.remove('dcuf-editor-toolbar-dragging');
+                    if (toolbar.hasPointerCapture?.(event.pointerId)) toolbar.releasePointerCapture(event.pointerId);
+                    if (draggedEditorToolbar) window.setTimeout(() => { draggedEditorToolbar = false; }, 0);
+                };
+                writeForm.addEventListener('pointerup', finishEditorToolbarDrag);
+                writeForm.addEventListener('pointercancel', finishEditorToolbarDrag);
+                writeForm.addEventListener('click', (event) => {
+                    if (!draggedEditorToolbar) return;
+                    event.preventDefault();
+                    event.stopImmediatePropagation();
+                }, true);
+                // Live Summernote editor dropdown contracts. Keep the generic selector as a
+                // forward-compatible fallback and list known menus here for fixture/audit parity.
+                const editorDropdownSelector = [
+                    '.note-toolbar .note-dropdown-menu',
+                    '.note-toolbar .dropdown-fontname',
+                    '.note-toolbar .dropdown-fontsize',
+                    '.note-toolbar .note-color .note-dropdown-menu',
+                    '.note-toolbar .note-table',
+                    '.note-toolbar .note-height .dropdown-line-height',
+                    '.note-toolbar .note-para .note-dropdown-menu'
+                ].join(', ');
+                const editorLayerSelector = `${editorDropdownSelector}, .note-toolbar .pop_wrap`;
+                const prepareEditorLayersForTrigger = (event) => {
+                    if (!(event.target instanceof Element)
+                        || event.target.closest('.note-dropdown-menu, .pop_wrap')) return;
+                    const group = event.target.closest('.note-toolbar .note-btn-group');
+                    if (!(group instanceof HTMLElement)) return;
+                    if (event.type === 'pointerover'
+                        && event.relatedTarget instanceof Node
+                        && group.contains(event.relatedTarget)) return;
+                    group.querySelectorAll('.note-dropdown-menu, .pop_wrap').forEach((layer) => {
+                        layer.classList.remove('dcuf-editor-layer-positioned');
+                        layer.classList.add('dcuf-editor-layer-positioning');
+                    });
+                };
+                writeForm.addEventListener('pointerdown', prepareEditorLayersForTrigger, true);
+                writeForm.addEventListener('pointerover', prepareEditorLayersForTrigger, true);
+                writeForm.addEventListener('click', prepareEditorLayersForTrigger, true);
+                writeForm.addEventListener('keydown', (event) => {
+                    if (event.key === 'Enter' || event.key === ' ') prepareEditorLayersForTrigger(event);
+                }, true);
+                const positionEditorLayers = ({ includeDropdowns = true } = {}) => {
+                    writeForm.querySelectorAll(editorLayerSelector).forEach((layer) => {
+                        if (!(layer instanceof HTMLElement) || getComputedStyle(layer).display === 'none') return;
+                        const isDropdown = layer.matches('.note-dropdown-menu');
+                        if (isDropdown && !includeDropdowns) return;
+                        const anchor = layer.closest('.note-btn-group');
+                        if (!(anchor instanceof HTMLElement)) return;
+                        layer.classList.add('dcuf-editor-layer-positioning');
+                        layer.classList.remove('dcuf-editor-layer-positioned');
+                        const anchorRect = anchor.getBoundingClientRect();
+                        const layerRect = layer.getBoundingClientRect();
+                        // Fixed Summernote dropdowns still inherit the desktop-site mobile
+                        // zoom. Convert viewport coordinates back into that local CSS space
+                        // while keeping the host menu's intended physical size.
+                        const measuredLocalScale = isDropdown && anchor.offsetWidth > 0
+                            ? anchorRect.width / anchor.offsetWidth
+                            : 1;
+                        const localCoordinateScale = Number.isFinite(measuredLocalScale) && measuredLocalScale > 0
+                            ? measuredLocalScale
+                            : 1;
+                        const visualViewport = window.visualViewport;
+                        const visualScale = visualViewport?.scale || 1;
+                        const scaledVisualWidth = (visualViewport?.width || window.innerWidth) * visualScale;
+                        const containerRect = writeForm.closest('#container')?.getBoundingClientRect();
+                        const rectUsesScaledVisualCoordinates = document.body.classList.contains('dcuf-write-desktop-site-mobile')
+                            && containerRect instanceof DOMRect
+                            && containerRect.width <= scaledVisualWidth + 2;
+                        const viewportCoordinateScale = rectUsesScaledVisualCoordinates ? visualScale : 1;
+                        const viewportLeft = (visualViewport?.offsetLeft || 0) * viewportCoordinateScale;
+                        const viewportTop = (visualViewport?.offsetTop || 0) * viewportCoordinateScale;
+                        const viewportWidth = (visualViewport?.width || window.innerWidth) * viewportCoordinateScale;
+                        const viewportHeight = (visualViewport?.height || window.innerHeight) * viewportCoordinateScale;
+                        const viewportRight = viewportLeft + viewportWidth;
+                        const viewportBottom = viewportTop + viewportHeight;
+                        // Leave two extra visual pixels for browser zoom rounding so a fixed
+                        // layer cannot bleed into the clipped page edge.
+                        const edgePadding = 10;
+                        const layerGap = 6;
+                        const maxWidth = Math.max(1, viewportWidth - (edgePadding * 2));
+                        const maxHeight = Math.max(1, viewportHeight - (edgePadding * 2));
+                        const constrainToViewport = isDropdown;
+                        const width = constrainToViewport ? Math.min(layerRect.width, maxWidth) : layerRect.width;
+                        const height = constrainToViewport ? Math.min(layerRect.height, maxHeight) : layerRect.height;
+                        const left = Math.max(
+                            viewportLeft + edgePadding,
+                            Math.min(viewportRight - width - edgePadding, anchorRect.left)
+                        );
+                        const below = Math.max(0, viewportBottom - anchorRect.bottom - edgePadding - layerGap);
+                        const above = Math.max(0, anchorRect.top - viewportTop - edgePadding - layerGap);
+                        const openAbove = height > below && above > below;
+                        const preferredTop = openAbove
+                            ? anchorRect.top - height - layerGap
+                            : anchorRect.bottom + layerGap;
+                        const top = Math.max(
+                            viewportTop + edgePadding,
+                            Math.min(viewportBottom - height - edgePadding, preferredTop)
+                        );
+                        const positionedLeft = isDropdown ? left / localCoordinateScale : left;
+                        const positionedTop = isDropdown ? top / localCoordinateScale : top;
+                        const localMaxWidth = isDropdown ? maxWidth / localCoordinateScale : maxWidth;
+                        const localMaxHeight = isDropdown ? maxHeight / localCoordinateScale : maxHeight;
+                        layer.style.setProperty('--dcuf-editor-layer-left', `${positionedLeft.toFixed(3)}px`);
+                        layer.style.setProperty('--dcuf-editor-layer-top', `${positionedTop.toFixed(3)}px`);
+                        layer.style.setProperty('--dcuf-editor-layer-max-width', `${Math.floor(localMaxWidth)}px`);
+                        layer.style.setProperty('--dcuf-editor-layer-max-height', `${Math.floor(localMaxHeight)}px`);
+                        layer.classList.remove('dcuf-editor-layer-positioning');
+                        layer.classList.add('dcuf-editor-layer-positioned');
+                    });
+                };
+                const scheduleEditorLayerPosition = () => {
+                    requestAnimationFrame(() => {
+                        positionEditorLayers();
+                        requestAnimationFrame(positionEditorLayers);
+                    });
+                };
+                const scheduleEditorPopupPosition = () => {
+                    requestAnimationFrame(() => {
+                        positionEditorLayers();
+                        requestAnimationFrame(positionEditorLayers);
+                    });
+                };
+                const runtimeCoordinator = this.getRuntimeCoordinator();
+                if (runtimeCoordinator && typeof runtimeCoordinator.subscribeMutations === 'function') {
+                    runtimeCoordinator.subscribeMutations('ui-write-editor-layer-position', (payload) => {
+                        const relevantTargets = [
+                            ...(payload.attributeTargets || []),
+                            ...(payload.addedElements || []),
+                            ...(payload.childListTargets || [])
+                        ];
+                        if (!relevantTargets.some((node) => (
+                            node === writeForm
+                            || (node instanceof Node && writeForm.contains(node))
+                        ))) return;
+                        const hasVisiblePendingLayer = Array.from(writeForm.querySelectorAll(editorLayerSelector))
+                            .some((layer) => (
+                                layer instanceof HTMLElement
+                                && !layer.classList.contains('dcuf-editor-layer-positioned')
+                                && getComputedStyle(layer).display !== 'none'
+                            ));
+                        if (hasVisiblePendingLayer) positionEditorLayers();
+                    });
+                }
+                writeForm.addEventListener('click', (event) => {
+                    if (!(event.target instanceof Element) || !event.target.closest('.note-toolbar')) return;
+                    if (event.target.closest('.note-fontname')) ensureMobileFontMenu();
+                    positionEditorLayers();
+                    scheduleEditorLayerPosition();
+                });
+                writeForm.addEventListener('pointerover', (event) => {
+                    if (!(event.target instanceof Element) || !event.target.closest('.note-toolbar')) return;
+                    if (event.target.closest('.note-fontname')) ensureMobileFontMenu();
+                    scheduleEditorLayerPosition();
+                });
+                writeForm.addEventListener('scroll', scheduleEditorPopupPosition, { passive: true, capture: true });
+                window.addEventListener('resize', scheduleEditorLayerPosition, { passive: true });
+                window.addEventListener('scroll', scheduleEditorPopupPosition, { passive: true, capture: true });
+                window.visualViewport?.addEventListener('resize', scheduleEditorLayerPosition, { passive: true });
+                window.visualViewport?.addEventListener('scroll', scheduleEditorPopupPosition, { passive: true });
             }
 
             // [최종 완전판] 글쓰기 페이지의 광고 컨테이너를 직접 찾아 제거하는 함수
@@ -2241,7 +2753,6 @@
                 if (viewBottomContainer) {
                     this.applyForceRefreshPagination(viewBottomContainer);
                 }
-                this.ensureArticleNativeAdBlocker();
                 // [v2.6.8] 본문 + 댓글 글자크기 배율 스케일링 (통합)
                 this.scaleAllFontSizes();
             }
@@ -2253,15 +2764,6 @@
             return 'non-list';
         }
     };
-
-    if (UIModule.isViewPage()) {
-        try {
-            UIModule.ensureArticleNativeAdBlocker();
-        } catch (error) {
-            console.warn('[DC Filter+UI] Article ad blocker early install failed:', error);
-        }
-    }
-
 
     const getDcufCollectionSize = (value) => {
         if (!value) return 0;
@@ -2409,6 +2911,7 @@
     // =================================================================
     GM_registerMenuCommand('글댓합 설정하기', FilterModule.showSettings.bind(FilterModule));
     GM_registerMenuCommand('차단 유저 관리', PersonalBlockModule.createManagementPanel.bind(PersonalBlockModule));
+    GM_registerMenuCommand('플로팅 버튼 원위치', PersonalBlockModule.resetFabPosition.bind(PersonalBlockModule));
 
 
     // [신규] 단축키 설정을 다시 로드하는 전용 함수
@@ -2436,11 +2939,42 @@
             }
         };
 
-        if (typeof waiter !== 'function') return prepareInitialCommentReveal({ reason: 'unavailable' });
+        const waitForMutationQuiet = async () => {
+            const filterModule = window.__dcufFilterModule;
+            if (typeof filterModule?.getRelevantMutationGeneration !== 'function') return null;
+
+            let previousGeneration = filterModule.getRelevantMutationGeneration('comments');
+            for (let attempt = 1; attempt <= 3; attempt += 1) {
+                const prepareState = prepareInitialCommentReveal({
+                    reason: 'mutation-quiet-prepare',
+                    attempt
+                });
+                await new Promise((resolve) => requestAnimationFrame(resolve));
+                const nextGeneration = filterModule.getRelevantMutationGeneration('comments');
+                if (nextGeneration === previousGeneration) {
+                    const runtimeCoordinator = window.__dcufRuntimeCoordinator;
+                    runtimeCoordinator?.incrementDiagnostic?.('ui.initialComment.mutationQuiet');
+                    return {
+                        reason: 'mutation-quiet',
+                        attempt,
+                        generation: nextGeneration,
+                        prepareState
+                    };
+                }
+                previousGeneration = nextGeneration;
+            }
+            return null;
+        };
+
+        if (typeof waiter !== 'function') {
+            return (await waitForMutationQuiet()) || prepareInitialCommentReveal({ reason: 'unavailable' });
+        }
 
         try {
+            const waiterPromise = Promise.resolve().then(() => waiter());
             const state = await Promise.race([
-                Promise.resolve().then(() => waiter()),
+                waitForMutationQuiet().then((quietState) => quietState || waiterPromise),
+                waiterPromise,
                 new Promise((resolve) => {
                     window.setTimeout(() => resolve({ reason: 'ui-timeout' }), 650);
                 })

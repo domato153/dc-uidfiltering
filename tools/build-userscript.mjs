@@ -6,8 +6,12 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const rootDir = path.resolve(__dirname, '..');
 
-const VERSION = '3.3.2';
+const VERSION = '3.3.8-beta';
 const OUTPUT_NAME = `Dc_UserFilter_Mobile_v${VERSION}.user.js`;
+const testbedOutputIndex = process.argv.indexOf('--testbed-output');
+const testbedOutput = testbedOutputIndex >= 0 && process.argv[testbedOutputIndex + 1]
+    ? path.resolve(rootDir, process.argv[testbedOutputIndex + 1])
+    : null;
 
 const MOBILE_LEGACY_PARTS = [
     'src/targets/mobile/runtime-coordinator.js',
@@ -139,14 +143,20 @@ async function main() {
     const transformedLegacyApp = transformLegacyAppForPhaseTwo(legacyApp);
     const combined = `${header}\n${bootstrap}${sharedPrelude}${styleBanner}${transformedLegacyApp}`;
     const built = applyReplacements(combined).replace(/\r?\n/g, '\r\n');
+    const bomText = `\uFEFF${built}`;
+
+    if (testbedOutput) {
+        await mkdir(path.dirname(testbedOutput), { recursive: true });
+        await writeFile(testbedOutput, bomText, 'utf8');
+        process.stdout.write(`Built testbed runtime: ${testbedOutput}`);
+        return;
+    }
 
     const distDir = path.join(rootDir, 'dist');
     await mkdir(distDir, { recursive: true });
 
     const distPath = path.join(distDir, OUTPUT_NAME);
     const rootCopyPath = path.join(rootDir, OUTPUT_NAME);
-    const bomText = `\uFEFF${built}`;
-
     await writeFile(distPath, bomText, 'utf8');
     await writeFile(rootCopyPath, bomText, 'utf8');
 

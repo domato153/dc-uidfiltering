@@ -1,0 +1,50 @@
+{
+  "audit": "comment-style-dom-churn",
+  "url": "https://gall.dcinside.com/board/view/?id=comic_new6&no=5252925&page=1",
+  "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36 Edg/150.0.0.0",
+  "waitMs": 1600,
+  "target": {
+    "index": 0,
+    "tag": "LI",
+    "id": "comment_li_17939145",
+    "dataNo": "",
+    "className": "ub-content",
+    "inlineDisplay": "",
+    "computedDisplay": "list-item",
+    "text": "ㅇㅇ(210.113)이제 30대라 그런거 아니냐07.12 15:11:45삭제"
+  },
+  "idle": {
+    "durationMs": 1600,
+    "callbacks": 609,
+    "records": 6708,
+    "attributes": 6706,
+    "childList": 2,
+    "addedNodes": 1,
+    "removedNodes": 1,
+    "styleRecords": 42,
+    "classRecords": 6664
+  },
+  "triggered": {
+    "durationMs": 1600,
+    "callbacks": 673,
+    "records": 6786,
+    "attributes": 6786,
+    "childList": 0,
+    "addedNodes": 0,
+    "removedNodes": 0,
+    "styleRecords": 88,
+    "classRecords": 6698
+  },
+  "delta": {
+    "callbacks": 64,
+    "records": 78,
+    "attributes": 80,
+    "childList": -2,
+    "addedNodes": -1,
+    "removedNodes": -1,
+    "styleRecords": 46,
+    "classRecords": 34
+  },
+  "scriptUiReady": true,
+  "customPostCount": 51
+}

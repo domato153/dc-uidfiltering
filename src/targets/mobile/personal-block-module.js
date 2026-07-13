@@ -89,91 +89,190 @@
             this.exitSelectionMode();
         },
 
-        createFab() {
-            // [수정] 글 목록 및 글 내용 페이지에서만 '간편차단' 버튼을 표시합니다.
+        isFabSupportedPage() {
             const currentPath = window.location.pathname;
-            if (!currentPath.includes('/board/lists') && !currentPath.includes('/board/view')) {
-                return; // 대상 페이지가 아니면 버튼을 생성하지 않고 함수를 종료합니다.
+            return currentPath.includes('/board/lists') || currentPath.includes('/board/view');
+        },
+
+        closeFabDrawer() {
+            const fab = document.getElementById('dc-personal-block-fab');
+            const drawer = document.getElementById('dc-personal-block-drawer');
+            if (!fab || !drawer) return;
+            drawer.hidden = true;
+            fab.setAttribute('aria-expanded', 'false');
+        },
+
+        positionFabDrawer() {
+            const controls = document.getElementById('dc-personal-block-controls');
+            const drawer = document.getElementById('dc-personal-block-drawer');
+            if (!controls || !drawer || drawer.hidden) return;
+
+            const viewportGap = 8;
+            const drawerGap = 8;
+            const controlsRect = controls.getBoundingClientRect();
+            const drawerRect = drawer.getBoundingClientRect();
+            const maxLeft = Math.max(viewportGap, window.innerWidth - drawerRect.width - viewportGap);
+            const left = Math.max(viewportGap, Math.min(controlsRect.right - drawerRect.width, maxLeft));
+            let top = controlsRect.top - drawerRect.height - drawerGap;
+
+            if (top < viewportGap) {
+                top = Math.min(
+                    controlsRect.bottom + drawerGap,
+                    Math.max(viewportGap, window.innerHeight - drawerRect.height - viewportGap)
+                );
             }
 
-            // [방어 코드 1] 이미 FAB가 존재하면 중복 생성을 방지
-            if (document.getElementById('dc-personal-block-fab')) {
-                return;
+            drawer.style.left = `${Math.round(left - controlsRect.left)}px`;
+            drawer.style.top = `${Math.round(top - controlsRect.top)}px`;
+        },
+
+        toggleFabDrawer() {
+            const fab = document.getElementById('dc-personal-block-fab');
+            const drawer = document.getElementById('dc-personal-block-drawer');
+            if (!fab || !drawer) return;
+            const willOpen = drawer.hidden;
+            drawer.hidden = !willOpen;
+            fab.setAttribute('aria-expanded', String(willOpen));
+            if (willOpen) this.positionFabDrawer();
+        },
+
+        resetFabPosition() {
+            if (!this.isFabSupportedPage()) {
+                alert('플로팅 메뉴는 글 목록과 본문 페이지에서만 표시됩니다.');
+                return false;
             }
 
+            const controls = this.createFab();
+            if (!controls) return false;
+            this.closeFabDrawer();
+            Object.assign(controls.style, {
+                left: 'auto',
+                top: 'auto',
+                right: '20px',
+                bottom: '20px'
+            });
+            return true;
+        },
 
-            const fab = document.createElement('div');
+        createFab() {
+            if (!this.isFabSupportedPage() || !document.body) return null;
+
+            const existingControls = document.getElementById('dc-personal-block-controls');
+            const existingFab = document.getElementById('dc-personal-block-fab');
+            const existingDrawer = document.getElementById('dc-personal-block-drawer');
+            if (existingControls && existingFab && existingDrawer && existingControls.contains(existingFab) && existingControls.contains(existingDrawer)) {
+                return existingControls;
+            }
+            existingControls?.remove();
+            existingFab?.remove();
+            existingDrawer?.remove();
+
+            const controls = document.createElement('div');
+            controls.id = 'dc-personal-block-controls';
+            Object.assign(controls.style, { left: 'auto', top: 'auto', right: '20px', bottom: '20px' });
+
+            const fab = document.createElement('button');
             fab.id = 'dc-personal-block-fab';
-            fab.textContent = '간편차단';
-            document.body.appendChild(fab);
+            fab.type = 'button';
+            fab.textContent = '메뉴';
+            fab.setAttribute('aria-expanded', 'false');
+            fab.setAttribute('aria-controls', 'dc-personal-block-drawer');
+            fab.setAttribute('aria-label', 'DC 유저 필터 메뉴');
 
+            const drawer = document.createElement('div');
+            drawer.id = 'dc-personal-block-drawer';
+            drawer.hidden = true;
+            drawer.setAttribute('role', 'menu');
+            drawer.setAttribute('aria-label', 'DC 유저 필터 기능');
+            drawer.innerHTML = `
+                <button type="button" role="menuitem" data-dcuf-fab-action="quick-block">간편차단</button>
+                <button type="button" role="menuitem" data-dcuf-fab-action="filter-settings">글댓합 설정</button>
+                <button type="button" role="menuitem" data-dcuf-fab-action="block-management">차단 유저 관리</button>
+            `;
 
-            fab.addEventListener('click', (e) => {
-                if (fab.getAttribute('data-dragged') === 'true') {
-                    fab.removeAttribute('data-dragged');
-                    return;
-                }
-                this.enterSelectionMode();
+            controls.append(fab, drawer);
+            document.body.appendChild(controls);
+
+            let activePointerId = null;
+            let offsetX = 0;
+            let offsetY = 0;
+            let startX = 0;
+            let startY = 0;
+            let wasDragged = false;
+            let suppressClick = false;
+
+            fab.addEventListener('pointerdown', (event) => {
+                if (event.button !== 0 || activePointerId !== null) return;
+                const rect = controls.getBoundingClientRect();
+                activePointerId = event.pointerId;
+                offsetX = event.clientX - rect.left;
+                offsetY = event.clientY - rect.top;
+                startX = event.clientX;
+                startY = event.clientY;
+                wasDragged = false;
+                this.closeFabDrawer();
+                fab.setPointerCapture?.(event.pointerId);
             });
 
+            fab.addEventListener('pointermove', (event) => {
+                if (event.pointerId !== activePointerId) return;
+                if (!wasDragged && Math.hypot(event.clientX - startX, event.clientY - startY) < 5) return;
+                wasDragged = true;
+                event.preventDefault();
+                const maxX = Math.max(0, window.innerWidth - controls.offsetWidth);
+                const maxY = Math.max(0, window.innerHeight - controls.offsetHeight);
+                const nextX = Math.max(0, Math.min(event.clientX - offsetX, maxX));
+                const nextY = Math.max(0, Math.min(event.clientY - offsetY, maxY));
+                Object.assign(controls.style, {
+                    left: `${Math.round(nextX)}px`,
+                    top: `${Math.round(nextY)}px`,
+                    right: 'auto',
+                    bottom: 'auto'
+                });
+            });
 
-            // 드래그 기능
-            let isDragging = false, offsetX, offsetY;
-            const onDragStart = (e) => { // async 제거 (필요 없음)
-                isDragging = true;
-                fab.style.transition = 'none';
-                const clientX = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
-                const clientY = e.type === 'touchstart' ? e.touches[0].clientY : e.clientY;
-                const rect = fab.getBoundingClientRect();
-                offsetX = clientX - rect.left;
-                offsetY = clientY - rect.top;
-                fab.setAttribute('data-dragged', 'false');
+            const finishDrag = (event) => {
+                if (event.pointerId !== activePointerId) return;
+                suppressClick = wasDragged;
+                activePointerId = null;
+                fab.releasePointerCapture?.(event.pointerId);
             };
+            fab.addEventListener('pointerup', finishDrag);
+            fab.addEventListener('pointercancel', finishDrag);
 
+            fab.addEventListener('click', () => {
+                if (suppressClick) {
+                    suppressClick = false;
+                    return;
+                }
+                this.toggleFabDrawer();
+            });
 
-            const onDragMove = (e) => {
-                if (!isDragging) return;
-                e.preventDefault();
-                fab.setAttribute('data-dragged', 'true');
-                const clientX = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
-                const clientY = e.type === 'touchmove' ? e.touches[0].clientY : e.clientY;
-                let newX = clientX - offsetX;
-                let newY = clientY - offsetY;
-                newX = Math.max(0, Math.min(newX, window.innerWidth - fab.offsetWidth));
-                newY = Math.max(0, Math.min(newY, window.innerHeight - fab.offsetHeight));
-                fab.style.left = `${newX}px`;
-                fab.style.top = `${newY}px`;
-                // [방어 코드 2] right, bottom 속성 제거하여 left/top과 충돌 방지
-                fab.style.right = 'auto';
-                fab.style.bottom = 'auto';
-            };
+            drawer.addEventListener('click', async (event) => {
+                const actionButton = event.target.closest('[data-dcuf-fab-action]');
+                if (!actionButton || !drawer.contains(actionButton)) return;
+                const action = actionButton.dataset.dcufFabAction;
+                this.closeFabDrawer();
+                if (action === 'quick-block') this.enterSelectionMode();
+                else if (action === 'filter-settings') await FilterModule.showSettings();
+                else if (action === 'block-management') await this.createManagementPanel();
+            });
 
+            if (!this._fabGlobalHandlersBound) {
+                document.addEventListener('click', (event) => {
+                    const currentControls = document.getElementById('dc-personal-block-controls');
+                    if (currentControls && !currentControls.contains(event.target)) this.closeFabDrawer();
+                });
+                document.addEventListener('keydown', (event) => {
+                    if (event.key === 'Escape') this.closeFabDrawer();
+                });
+                window.addEventListener('resize', () => {
+                    if (!document.getElementById('dc-personal-block-drawer')?.hidden) this.positionFabDrawer();
+                });
+                this._fabGlobalHandlersBound = true;
+            }
 
-            const onDragEnd = () => { // async 키워드 제거
-                if (!isDragging) return;
-                isDragging = false;
-                fab.style.transition = 'transform 0.2s ease-out';
-
-                // GM_setValue 호출을 포함한 위치 저장 로직 전체를 제거하여
-                // 드래그가 끝나도 위치가 저장되지 않도록 합니다.
-            };
-
-
-            fab.addEventListener('mousedown', onDragStart);
-            document.addEventListener('mousemove', onDragMove);
-            document.addEventListener('mouseup', onDragEnd);
-            fab.addEventListener('touchstart', onDragStart, { passive: true });
-            document.addEventListener('touchmove', onDragMove, { passive: false });
-            document.addEventListener('touchend', onDragEnd);
-
-
-            // 저장된 위치 로드 대신 항상 기본 위치에 생성
-            (() => { // async 키워드 제거
-                // 저장된 위치를 불러오는 대신 항상 기본 위치를 사용하도록 수정
-                const defaultPos = { left: 'auto', top: 'auto', right: '20px', bottom: '20px' };
-                // GM_getValue 및 유효성 검사 로직을 제거하고, defaultPos를 바로 적용합니다.
-                Object.assign(fab.style, defaultPos);
-            })();
+            return controls;
         },
 
         enterSelectionMode() {

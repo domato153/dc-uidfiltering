@@ -4,6 +4,7 @@ Run only the groups affected by the release. Record each item as passed, failed,
 
 ## Initialization
 
+- Confirm the local Testbed result is recorded before live smoke checks, or record that a stable promotion reuses the unchanged beta result under the release workflow's skip rule.
 - Page becomes visible on success and failure fallback.
 - Boot overlay neither sticks nor releases before the intended first paint.
 - Duplicate-runtime guard prevents duplicated UI and handlers.

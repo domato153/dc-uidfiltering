@@ -1,0 +1,17 @@
+{
+  "name": "dcuf-local-testbed",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node run-tests.mjs",
+    "test:smoke": "node run-tests.mjs --group smoke",
+    "test:functional": "node run-tests.mjs --group functional",
+    "test:write": "node run-tests.mjs --group write",
+    "test:performance": "node run-tests.mjs --group performance",
+    "test:bfcache": "node run-bfcache.mjs",
+    "test:headed": "node run-tests.mjs --headed"
+  },
+  "devDependencies": {
+    "playwright": "^1.52.0"
+  }
+}

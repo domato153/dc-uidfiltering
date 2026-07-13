@@ -6,12 +6,38 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const rootDir = path.resolve(__dirname, '..');
 
-const VERSION = '1.9.1';
+const VERSION = '1.9.3-beta';
 const OUTPUT_NAME = `dcinside_user_filter_v${VERSION}.user.js`;
 
 const PC_PARTS = [
     'src/targets/pc/filter-style.js',
     'src/targets/pc/filter-entry.js',
+];
+
+const SHARED_FILTER_UI_STYLE_RANGES = [
+    ['/* DCUF_SHARED_FILTER_UI_START */', '/* DCUF_SHARED_FILTER_UI_END */'],
+    ['/* DCUF_SHARED_FILTER_UI_DARK_START */', '/* DCUF_SHARED_FILTER_UI_DARK_END */'],
+];
+
+const REQUIRED_SHARED_FILTER_UI_SELECTORS = [
+    '#dcinside-filter-setting',
+    '#dcinside-shortcut-modal',
+    '#dc-personal-block-controls',
+    '#dc-personal-block-fab',
+    '#dc-personal-block-drawer',
+    '#dc-selection-popup',
+    '#dc-block-management-panel',
+    '#dc-backup-popup',
+];
+
+const FORBIDDEN_MOBILE_UI_TOKENS = [
+    '.custom-mobile-list',
+    '.custom-post-item',
+    '.custom-bottom-controls',
+    '.gallview_contents',
+    '.writing_view_box',
+    '.comment_box',
+    '.img_comment',
 ];
 
 const replacements = [
@@ -101,6 +127,34 @@ function extractFilterModuleSource(source) {
     return `${source.slice(startIndex, endIndex + endMarker.length)}\n`;
 }
 
+function extractSharedFilterUiStyle(source) {
+    const cssParts = SHARED_FILTER_UI_STYLE_RANGES.map(([startMarker, endMarker]) => {
+        const startIndex = source.indexOf(startMarker);
+        const endIndex = source.indexOf(endMarker, startIndex + startMarker.length);
+        if (startIndex === -1 || endIndex === -1 || endIndex < startIndex) {
+            throw new Error(`Failed to extract shared filter UI style range: ${startMarker}`);
+        }
+        return source.slice(startIndex + startMarker.length, endIndex).trim();
+    });
+    const css = cssParts.join('\n\n');
+
+    REQUIRED_SHARED_FILTER_UI_SELECTORS.forEach((selector) => {
+        if (!css.includes(selector)) {
+            throw new Error(`Shared filter UI style is missing required selector: ${selector}`);
+        }
+    });
+    FORBIDDEN_MOBILE_UI_TOKENS.forEach((token) => {
+        if (css.includes(token)) {
+            throw new Error(`Mobile-only UI token leaked into shared filter UI style: ${token}`);
+        }
+    });
+    if (css.includes('`') || css.includes('${')) {
+        throw new Error('Shared filter UI style cannot contain template literal syntax');
+    }
+
+    return `    // Extracted verbatim from the mobile-owned filter UI style rail.\n    GM_addStyle(\`\n${css}\n    \`);\n`;
+}
+
 function transformFilterModuleForSharedPort(source) {
     let text = source;
 
@@ -148,9 +202,10 @@ async function main() {
 
     const teardown = await readPart('src/runtime/teardown.js');
     const extractedFilterModule = extractFilterModuleSource(rawFilterModule);
+    const sharedFilterUiStyle = extractSharedFilterUiStyle(rawFilterModule);
     const transformedFilterModule = transformFilterModuleForSharedPort(extractedFilterModule);
     const [filterStyle, filterEntry] = pcParts;
-    const combined = `${header}\n${bootstrap}${sharedPrelude}${filterStyle}${transformedFilterModule}${rawPersonalBlockModule}${filterEntry}${teardown}`;
+    const combined = `${header}\n${bootstrap}${sharedPrelude}${filterStyle}${sharedFilterUiStyle}${transformedFilterModule}${rawPersonalBlockModule}${filterEntry}${teardown}`;
     const built = applyReplacements(combined).replace(/\r?\n/g, '\r\n');
 
     const distDir = path.join(rootDir, 'dist');

@@ -1,0 +1,176 @@
+{
+  "probe": "DCUF_MANUAL_PROBE_V1",
+  "time": "2026-07-11T17:53:17.252Z",
+  "page": {
+    "href": "https://gall.dcinside.com/mgallery/board/lists/?id=aoegame",
+    "pathname": "/mgallery/board/lists/",
+    "viewport": "1120x956",
+    "readyState": "complete",
+    "domNodes": 2883,
+    "darkBody": false,
+    "darkHtml": false
+  },
+  "userscript": {
+    "loaded": false,
+    "runtimeTokenPresent": false,
+    "diagnosticsPresent": false,
+    "memoryDebugPresent": false
+  },
+  "selectors": {
+    "listContainers": 1,
+    "listRows": 53,
+    "commentContainers": 0,
+    "commentItems": 0,
+    "replies": 0,
+    "imageComments": 0,
+    "relatedLists": 0,
+    "relatedItems": 0,
+    "writers": 53,
+    "articleWraps": 0,
+    "articleBodies": 0,
+    "adWraps": 0,
+    "iframes": 0,
+    "customLists": 0,
+    "customPosts": 0,
+    "bootOverlays": 0
+  },
+  "rows": [
+    {
+      "row": {
+        "tag": "tr",
+        "id": "",
+        "classes": [
+          "ub-content"
+        ],
+        "childElements": 8,
+        "display": "none",
+        "attrs": [
+          "class"
+        ]
+      },
+      "hasTitle": true,
+      "hasWriter": true,
+      "hasDate": true,
+      "hasUidAttribute": false,
+      "hasIpAttribute": false
+    },
+    {
+      "row": {
+        "tag": "tr",
+        "id": "",
+        "classes": [
+          "ub-content"
+        ],
+        "childElements": 7,
+        "display": "none",
+        "attrs": [
+          "class",
+          "style"
+        ]
+      },
+      "hasTitle": true,
+      "hasWriter": true,
+      "hasDate": true,
+      "hasUidAttribute": false,
+      "hasIpAttribute": false
+    },
+    {
+      "row": {
+        "tag": "tr",
+        "id": "",
+        "classes": [
+          "ub-content"
+        ],
+        "childElements": 7,
+        "display": "none",
+        "attrs": [
+          "class",
+          "style"
+        ]
+      },
+      "hasTitle": true,
+      "hasWriter": true,
+      "hasDate": true,
+      "hasUidAttribute": false,
+      "hasIpAttribute": false
+    },
+    {
+      "row": {
+        "tag": "tr",
+        "id": "",
+        "classes": [
+          "ub-content",
+          "us-post"
+        ],
+        "childElements": 7,
+        "display": "table-row",
+        "attrs": [
+          "class",
+          "data-no",
+          "data-type"
+        ]
+      },
+      "hasTitle": true,
+      "hasWriter": true,
+      "hasDate": true,
+      "hasUidAttribute": true,
+      "hasIpAttribute": true
+    },
+    {
+      "row": {
+        "tag": "tr",
+        "id": "",
+        "classes": [
+          "ub-content",
+          "us-post"
+        ],
+        "childElements": 7,
+        "display": "table-row",
+        "attrs": [
+          "class",
+          "data-no",
+          "data-type"
+        ]
+      },
+      "hasTitle": true,
+      "hasWriter": true,
+      "hasDate": true,
+      "hasUidAttribute": true,
+      "hasIpAttribute": true
+    }
+  ],
+  "comments": [],
+  "keyContainers": {
+    "container": {
+      "tag": "main",
+      "id": "container",
+      "classes": [
+        "listwrap",
+        "clear"
+      ],
+      "childElements": 5,
+      "display": "block",
+      "attrs": [
+        "id",
+        "class"
+      ]
+    },
+    "list": {
+      "tag": "tbody",
+      "id": "",
+      "classes": [
+        "listwrap2"
+      ],
+      "childElements": 53,
+      "display": "table-row-group",
+      "attrs": [
+        "class"
+      ]
+    },
+    "article": null,
+    "comments": null,
+    "imageComments": null,
+    "related": null
+  },
+  "styleMutationProbe": null
+}

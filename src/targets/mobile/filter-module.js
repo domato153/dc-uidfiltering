@@ -650,36 +650,18 @@
             .cmt_write_box { flex-direction: column !important; }
             .cmt_write_box > .fl, .cmt_write_box .cmt_txt_cont { flex-basis: auto; width: 100% !important; min-width: 100%; }
         }
-
-
-        /* [개선] --- 글쓰기 페이지 전용 스타일 --- */
-        .is-write-page #container { background: #fff !important; padding: 0 !important; }
-        .is-write-page .center_content, .is-write-page .gall_write, .is-write-page .write_box { padding: 0 !important; border: none !important; box-shadow: none !important; margin: 0 !important; }
-        .is-write-page .write_box { padding: 15px !important; }
-        .is-write-page .write_box > table, .is-write-page .write_box .w_top > tbody, .is-write-page .write_box .w_top > tbody > tr, .is-write-page .write_box .w_top > tbody > tr > th, .is-write-page .write_box .w_top > tbody > tr > td { display: block; width: 100% !important; border: none !important; padding: 0 !important; }
-        .is-write-page .write_box .w_top { display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px; }
-        .is-write-page .write_box .w_top .write_subject, .is-write-page .write_box .w_top .user_info_box { display: flex; flex-direction: column; gap: 10px; }
-        .is-write-page .write_box .user_info_box { flex-direction: row; }
-        .is-write-page .write_box select, .is-write-page .write_box input[type="text"], .is-write-page .write_box input[type="password"] { width: 100% !important; height: 45px !important; padding: 0 12px !important; font-size: 16px !important; border: 1px solid #ddd !important; border-radius: 4px !important; box-sizing: border-box !important; }
-        .is-write-page .write_box .user_info_box .user_info_input { flex: 1; }
-        .is-write-page .write_box .btn_bottom_box { display: flex !important; gap: 10px; padding: 15px 0 0 0 !important; border-top: 1px solid #eee; margin-top: 15px; }
-        .is-write-page .write_box .btn_bottom_box a, .is-write-page .write_box .btn_bottom_box button { flex: 1; display: inline-block !important; text-align: center !important; padding: 12px 0 !important; font-size: 16px !important; border-radius: 4px !important; text-decoration: none !important; height: auto !important; float: none !important; line-height: normal !important; }
-        .is-write-page .write_box .btn_bottom_box .btn_blue { background-color: #3b71fd !important; color: #fff !important; border: none !important; }
-        .is-write-page .write_box .btn_bottom_box .btn_lightred { background-color: #e9e9e9 !important; color: #555 !important; border: none !important; }
-        .is-write-page .tx-toolbar-basic { border-bottom: 1px solid #ddd !important; }
-        .is-write-page .tx-toolbar-advanced, .is-write-page .write_infobox, .is-write-page .file_upload_info { display: none !important; }
-        /* [종합 수정] 글쓰기 페이지 광고 및 빈 공간 제거 */
-        .is-write-page .cm_ad,.is-write-page .adv_bottom_write,.is-write-page div[id^="kakao_ad_"] {display: none !important;height: 0 !important;margin: 0 !important;padding: 0 !important;visibility: hidden !important;}
-
-        @media (max-width: 480px) {
-            .is-write-page .write_box .user_info_box { flex-direction: column; }
-        }
-
-
         /* --- [v2.3.2 수정] 개인 차단 기능 UI --- */
-        #dc-personal-block-fab {
+        /* DCUF_SHARED_FILTER_UI_START */
+        #dc-personal-block-controls {
             position: fixed;
             z-index: 2147483640;
+            width: max-content;
+            height: 38px;
+            overflow: visible;
+        }
+        #dc-personal-block-fab {
+            box-sizing: border-box;
+            appearance: none;
             width: auto !important;
             min-width: 76px;
             height: 38px;
@@ -701,6 +683,8 @@
             word-break: keep-all;
             cursor: pointer;
             user-select: none;
+            touch-action: none;
+            font-family: inherit;
             transition: transform 0.18s ease-out, box-shadow 0.18s ease-out, border-color 0.18s ease-out, background-color 0.18s ease-out;
         }
         #dc-personal-block-fab:hover {
@@ -712,6 +696,52 @@
             cursor: grabbing;
             transform: scale(0.97);
             box-shadow: 0 4px 10px rgba(36, 49, 72, 0.1);
+        }
+        #dc-personal-block-fab:focus-visible {
+            outline: 3px solid rgba(59, 113, 253, 0.36);
+            outline-offset: 2px;
+        }
+        #dc-personal-block-drawer {
+            position: absolute;
+            z-index: 2147483641;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            width: max-content;
+            min-width: 164px;
+            padding: 6px;
+            background: #fff;
+            border: 1px solid #c7d2df;
+            border-radius: 12px;
+            box-shadow: 0 12px 28px rgba(36, 49, 72, 0.2);
+        }
+        #dc-personal-block-drawer[hidden] {
+            display: none !important;
+        }
+        #dc-personal-block-drawer button {
+            box-sizing: border-box;
+            appearance: none;
+            width: 100%;
+            min-height: 40px;
+            padding: 8px 12px;
+            background: transparent;
+            color: #34445a;
+            border: 0;
+            border-radius: 8px;
+            text-align: left;
+            font-family: inherit;
+            font-size: 14px;
+            font-weight: 700;
+            line-height: 1.2;
+            white-space: nowrap;
+            cursor: pointer;
+        }
+        #dc-personal-block-drawer button:hover,
+        #dc-personal-block-drawer button:focus-visible {
+            background: #edf2f8;
+            color: #24364f;
+            outline: none;
         }
         #dc-selection-popup {
             position: fixed;
@@ -808,13 +838,19 @@
         }
 
         /* [신규] 개인 차단 On/Off 스위치 UI */
-        .switch-container { display: flex; align-items: center; margin-left: 15px; }
-        .switch { position: relative; display: inline-block; width: 40px; height: 22px; }
-        .switch input { opacity: 0; width: 0; height: 0; }
-        .switch-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 22px; }
-        .switch-slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
-        input:checked + .switch-slider { background-color: #3b71fd; }
-        input:checked + .switch-slider:before { transform: translateX(18px); }
+        #dc-block-management-panel .switch-container { display: flex; align-items: center; margin-left: 15px; }
+        #dcinside-filter-setting .switch,
+        #dc-block-management-panel .switch { position: relative; display: inline-block; width: 40px; height: 22px; }
+        #dcinside-filter-setting .switch input,
+        #dc-block-management-panel .switch input { opacity: 0; width: 0; height: 0; }
+        #dcinside-filter-setting .switch-slider,
+        #dc-block-management-panel .switch-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 22px; }
+        #dcinside-filter-setting .switch-slider:before,
+        #dc-block-management-panel .switch-slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        #dcinside-filter-setting input:checked + .switch-slider,
+        #dc-block-management-panel input:checked + .switch-slider { background-color: #3b71fd; }
+        #dcinside-filter-setting input:checked + .switch-slider:before,
+        #dc-block-management-panel input:checked + .switch-slider:before { transform: translateX(18px); }
 
         /* [신규] 백업/복원 팝업 UI */
         #dc-backup-popup-overlay {
@@ -1266,6 +1302,7 @@
                 transition: none !important;
             }
         }
+        /* DCUF_SHARED_FILTER_UI_END */
 
         /* [수정] DCCon 및 각종 팝업 모바일 반응형 중앙 정렬 */
          /* --- [최종 진짜 수정 v9] 야간 모드 완벽 지원 (색상 반전 대응) --- */
@@ -1371,6 +1408,32 @@
             border-color: #555 !important;
         }
 
+        /* DCUF_SHARED_FILTER_UI_DARK_START */
+        body.dc-filter-dark-mode #dc-personal-block-fab {
+            background: linear-gradient(180deg, #3b414b 0%, #303640 100%) !important;
+            color: #e9eef6 !important;
+            border-color: #596474 !important;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3) !important;
+        }
+        body.dc-filter-dark-mode #dc-personal-block-fab:hover {
+            background: linear-gradient(180deg, #464d58 0%, #373e49 100%) !important;
+            border-color: #6c788a !important;
+        }
+        body.dc-filter-dark-mode #dc-personal-block-drawer {
+            background: #2d323a !important;
+            border-color: #596474 !important;
+            box-shadow: 0 14px 32px rgba(0, 0, 0, 0.5) !important;
+        }
+        body.dc-filter-dark-mode #dc-personal-block-drawer button {
+            background: transparent !important;
+            color: #e2e8f0 !important;
+        }
+        body.dc-filter-dark-mode #dc-personal-block-drawer button:hover,
+        body.dc-filter-dark-mode #dc-personal-block-drawer button:focus-visible {
+            background: #414956 !important;
+            color: #fff !important;
+        }
+
         /* 5. 스크립트 팝업창 전체 다크 테마 */
         body.dc-filter-dark-mode #dcinside-filter-setting,
         body.dc-filter-dark-mode #dc-selection-popup,
@@ -1411,16 +1474,16 @@
         body.dc-filter-dark-mode #dc-selection-popup .block-option span,
         body.dc-filter-dark-mode #dc-backup-popup .description,
         body.dc-filter-dark-mode #dc-backup-popup h4,
-        body.dc-filter-dark-mode .item-name {
+        body.dc-filter-dark-mode #dc-block-management-panel .item-name {
             color: #e0e0e0 !important;
         }
-        body.dc-filter-dark-mode input[type="number"],
+        body.dc-filter-dark-mode #dcinside-filter-setting input[type="number"],
         body.dc-filter-dark-mode #dc-backup-popup textarea {
             background-color: #1e1e1e !important;
             color: #f0f0f0 !important;
             border: 1px solid #666 !important;
         }
-        body.dc-filter-dark-mode .panel-tab.active {
+        body.dc-filter-dark-mode #dc-block-management-panel .panel-tab.active {
             background: #007bff !important; /* 활성 탭은 색상 유지 */
         }
 
@@ -1429,9 +1492,7 @@
         body.dc-filter-dark-mode #dc-selection-popup button,
         body.dc-filter-dark-mode #dc-block-management-panel button,
         body.dc-filter-dark-mode #dc-backup-popup button,
-        body.dc-filter-dark-mode #dcinside-shortcut-modal button,
-        body.dc-filter-dark-mode .list_bottom_btnbox .btn_grey,
-        body.dc-filter-dark-mode .list_bottom_btnbox .btn_blue {
+        body.dc-filter-dark-mode #dcinside-shortcut-modal button {
              background-color: #555 !important;
              color: #fff !important;
              border-color: #777 !important;
@@ -1495,6 +1556,7 @@
             background: #53313a !important;
             color: #ff9fb1 !important;
         }
+        /* DCUF_SHARED_FILTER_UI_DARK_END */
     `);
 
 
@@ -1731,7 +1793,7 @@
         DEBUG_MAX_DECISIONS_PER_PASS: 150,
         DEBUG_PASS_ID: 0,
         DEBUG_DECISION_LOG_COUNT: 0,
-        DEBUG_DECISION_KEYS: new Set(),
+        DEBUG_DECISION_KEYS: null,
         _runtimeMutationUnsubscribe: null,
         _userSumTaskQueue: null,
         _queuedObserverFilterItems: null,
@@ -1960,6 +2022,7 @@
             if (!this.DEBUG_ENABLED) return;
             this.DEBUG_PASS_ID += 1;
             this.DEBUG_DECISION_LOG_COUNT = 0;
+            if (!(this.DEBUG_DECISION_KEYS instanceof Set)) this.DEBUG_DECISION_KEYS = new Set();
             this.DEBUG_DECISION_KEYS.clear();
             this.debugLog('pass', `start #${this.DEBUG_PASS_ID} ${reason}`, {
                 passId: this.DEBUG_PASS_ID,
@@ -1969,6 +2032,7 @@
         },
         debugDecision(element, payload) {
             if (!this.DEBUG_ENABLED) return;
+            if (!(this.DEBUG_DECISION_KEYS instanceof Set)) this.DEBUG_DECISION_KEYS = new Set();
             const reasons = Array.isArray(payload.reasons) ? payload.reasons.filter(Boolean) : [];
             const identity = [
                 this.DEBUG_PASS_ID,
@@ -2306,7 +2370,6 @@
                 ];
                 if (!blockGuestChecked) promises.push(this.clearBlockedGuests()); try {
                     await Promise.all(promises);
-                    await this.reloadSettings();
                     await this.debugDumpState('save button before refilter');
                     await this.refilterAllContent('save button');
                     closeSettingsPanel();
@@ -2567,6 +2630,30 @@
         getRuntimeCoordinator() {
             return window.__dcufRuntimeCoordinator || null;
         },
+        incrementRuntimeDiagnostic(label, amount = 1) {
+            const runtimeCoordinator = this.getRuntimeCoordinator();
+            if (typeof runtimeCoordinator?.incrementDiagnostic === 'function') {
+                runtimeCoordinator.incrementDiagnostic(label, amount);
+            }
+        },
+        setRuntimeDiagnosticGauge(label, value) {
+            const runtimeCoordinator = this.getRuntimeCoordinator();
+            if (typeof runtimeCoordinator?.setDiagnosticGauge === 'function') {
+                runtimeCoordinator.setDiagnosticGauge(label, value);
+            }
+        },
+        getRelevantMutationGeneration(scope = 'all') {
+            if (scope === 'comments') return Number(this._commentRelevantMutationGeneration) || 0;
+            return Number(this._filterRelevantMutationGeneration) || 0;
+        },
+        markRelevantMutation(scope = 'all') {
+            this._filterRelevantMutationGeneration = (Number(this._filterRelevantMutationGeneration) || 0) + 1;
+            if (scope === 'comments') {
+                this._commentRelevantMutationGeneration = (Number(this._commentRelevantMutationGeneration) || 0) + 1;
+            }
+            this.setRuntimeDiagnosticGauge('filter.relevantGeneration', this._filterRelevantMutationGeneration);
+            this.setRuntimeDiagnosticGauge('filter.commentRelevantGeneration', Number(this._commentRelevantMutationGeneration) || 0);
+        },
         getUserSumTaskQueue() {
             if (this._userSumTaskQueue) return this._userSumTaskQueue;
             const runtimeCoordinator = this.getRuntimeCoordinator();
@@ -2678,6 +2765,18 @@
         isUserBlocked({ sum, post, comment }) {
             return DCUF_SHARED_FILTER_CORE.evaluateUserStatsBlock({ sum, post, comment }, dcFilterSettings);
         },
+        isUserStatsFilterActive(settings = dcFilterSettings) {
+            if (!settings || settings.masterDisabled) return false;
+
+            const threshold = Number(settings.threshold);
+            if (Number.isFinite(threshold) && threshold > 0) return true;
+            if (!settings.ratioEnabled) return false;
+
+            return [settings.ratioMin, settings.ratioMax].some((value) => {
+                const numeric = Number(value);
+                return Number.isFinite(numeric) && numeric > 0;
+            });
+        },
         isCommentListItem(element) {
             return element instanceof HTMLElement && !!element.closest(this.CONSTANTS.SELECTORS.COMMENT_CONTAINER);
         },
@@ -2717,6 +2816,7 @@
 
             const { element, writerInfo, uid, isNotice, shouldSkipFiltering } = descriptor;
             if (isNotice || shouldSkipFiltering) return;
+            if (!this.isUserStatsFilterActive()) return;
 
             try {
                 if (element.style.display === 'none') return;
@@ -2768,7 +2868,7 @@
                 shouldSkipFiltering,
                 hasBlockDisableClass
             };
-            const baseDebug = {
+            const baseDebug = this.DEBUG_ENABLED ? {
                 branch: 'sync-base',
                 uid,
                 nickname,
@@ -2781,7 +2881,7 @@
                 proxyBlockMode: normalizedProxyBlockMode,
                 proxyBlockEnabled,
                 telecomBlockEnabled
-            };
+            } : null;
 
             const proxyMatchInfo = this.getProxyPrefixMatch(ipPrefix, normalizedProxyBlockMode);
             const telecomPrefixSet = telecomBlockEnabled && ipPrefix ? this.getTelecomPrefixSet() : null;
@@ -2810,7 +2910,7 @@
                     telecomPrefixMatch: Boolean(ipPrefix && telecomPrefixSet && telecomPrefixSet.has(ipPrefix)),
                     blockedGuestMatch: Boolean(ip && (blockedGuestSet instanceof Set ? blockedGuestSet.has(ip) : blockedGuests.includes(ip)))
                 },
-                blockedUidEntry: uid ? this.BLOCKED_UIDS_CACHE[uid] : null
+                blockedUidEntry: uid ? (this.BLOCKED_UIDS_CACHE[uid] || userSumCache[uid] || null) : null
             });
             const allowPersonalBlockReveal = Boolean(this._syncPassOptions?.allowPersonalBlockReveal);
             const wasPersonallyBlocked = element.getAttribute('data-dcuf-personal-blocked') === '1';
@@ -2823,35 +2923,43 @@
                 // Reply-merge / comment-stabilization passes can temporarily rebuild comment UI in a
                 // state where personal-block metadata is not reliable yet. Keep already personal-blocked
                 // comments hidden until a full refilter with refreshed settings explicitly reveals them.
-                this.debugDecision(element, {
-                    ...baseDebug,
-                    branch: 'personal-block-hold',
-                    isBlocked: true,
-                    reasons: ['personalBlock-hold']
-                });
+                if (this.DEBUG_ENABLED) {
+                    this.debugDecision(element, {
+                        ...baseDebug,
+                        branch: 'personal-block-hold',
+                        isBlocked: true,
+                        reasons: ['personalBlock-hold']
+                    });
+                }
                 this.setElementVisibility(element, true);
                 return;
             } else {
                 element.removeAttribute('data-dcuf-personal-blocked');
             }
 
-            this.debugDecision(element, {
-                ...baseDebug,
-                branch: decision.path || 'sync-final',
-                isBlocked: decision.isBlocked,
-                reasons: decision.reasons,
-                blockedGuestsCount: blockedGuestSet instanceof Set ? blockedGuestSet.size : blockedGuests.length,
-                customIpPrefixCount: customIpPrefixSet instanceof Set ? customIpPrefixSet.size : 0,
-                hasCustomIpPrefixBlock: decision.hasCustomIpPrefixBlock,
-                proxyPrefixMatch: decision.proxyPrefixMatch,
-                proxyMatchTier: decision.proxyMatchTier,
-                telecomPrefixMatch: decision.telecomPrefixMatch,
-                blockedGuestMatch: decision.blockedGuestMatch
-            });
+            if (this.DEBUG_ENABLED) {
+                this.debugDecision(element, {
+                    ...baseDebug,
+                    branch: decision.path || 'sync-final',
+                    isBlocked: decision.isBlocked,
+                    reasons: decision.reasons,
+                    blockedGuestsCount: blockedGuestSet instanceof Set ? blockedGuestSet.size : blockedGuests.length,
+                    customIpPrefixCount: customIpPrefixSet instanceof Set ? customIpPrefixSet.size : 0,
+                    hasCustomIpPrefixBlock: decision.hasCustomIpPrefixBlock,
+                    proxyPrefixMatch: decision.proxyPrefixMatch,
+                    proxyMatchTier: decision.proxyMatchTier,
+                    telecomPrefixMatch: decision.telecomPrefixMatch,
+                    blockedGuestMatch: decision.blockedGuestMatch
+                });
+            }
             this.setElementVisibility(element, decision.isBlocked);
         },
         initializeUniversalObserver() {
-            const targets = [{ c: this.CONSTANTS.SELECTORS.POST_LIST_CONTAINER, i: this.CONSTANTS.SELECTORS.POST_ITEM }, { c: this.CONSTANTS.SELECTORS.COMMENT_CONTAINER, i: this.CONSTANTS.SELECTORS.COMMENT_ITEM }, { c: this.CONSTANTS.SELECTORS.POST_VIEW_LIST_CONTAINER, i: 'li' }];
+            const targets = [
+                { c: this.CONSTANTS.SELECTORS.POST_LIST_CONTAINER, i: this.CONSTANTS.SELECTORS.POST_ITEM, scope: 'posts' },
+                { c: this.CONSTANTS.SELECTORS.COMMENT_CONTAINER, i: this.CONSTANTS.SELECTORS.COMMENT_ITEM, scope: 'comments' },
+                { c: this.CONSTANTS.SELECTORS.POST_VIEW_LIST_CONTAINER, i: 'li', scope: 'posts' }
+            ];
             const filterItems = (items) => this.applyFilterItems(items);
             const queueFilterItems = (items) => this.queueObservedFilterItems(items);
             const runtimeCoordinator = this.getRuntimeCoordinator();
@@ -2876,11 +2984,19 @@
             if (hasRuntimeMutationBus) {
                 if (typeof this._runtimeMutationUnsubscribe === 'function') this._runtimeMutationUnsubscribe();
                 this._runtimeMutationUnsubscribe = runtimeCoordinator.subscribeMutations('filter-universal-observer', (payload) => {
+                    let hasRelevantMutation = false;
+                    let hasCommentMutation = false;
                     targets.forEach((target) => {
-                        payload.collectMatches(target.c).forEach((container) => attachObserver(container, target.i, { attachDomObserver: false }));
-                        const changedItems = payload.collectMatches(target.i, { includeRoots: true });
+                        const changedContainers = payload.collectMatches(target.c);
+                        changedContainers.forEach((container) => attachObserver(container, target.i, { attachDomObserver: false }));
+                        const changedItems = payload.collectMatches(target.i, { includeRoots: true }).filter((item) => item.closest?.(target.c));
+                        if (changedContainers.length > 0 || changedItems.length > 0) {
+                            hasRelevantMutation = true;
+                            if (target.scope === 'comments') hasCommentMutation = true;
+                        }
                         if (changedItems.length > 0) queueFilterItems(changedItems);
                     });
+                    if (hasRelevantMutation) this.markRelevantMutation(hasCommentMutation ? 'comments' : 'all');
                 });
                 return;
             }
@@ -2960,10 +3076,12 @@
                 personalBlockIpSet,
                 personalBlockEnabled
             };
-            this.debugLog('settings', 'reloadSettings complete', this.debugSettingsSnapshot({
-                rawBlockConfigIp: typeof blockConfig?.ip === 'string' ? blockConfig.ip : '',
-                rawBlockConfigPreview: typeof blockConfig?.ip === 'string' ? blockConfig.ip.split('||').slice(0, 20) : []
-            }));
+            if (this.DEBUG_ENABLED) {
+                this.debugLog('settings', 'reloadSettings complete', this.debugSettingsSnapshot({
+                    rawBlockConfigIp: typeof blockConfig?.ip === 'string' ? blockConfig.ip : '',
+                    rawBlockConfigPreview: typeof blockConfig?.ip === 'string' ? blockConfig.ip.split('||').slice(0, 20) : []
+                }));
+            }
         },
         getRefilterTargetSelectors(scope = 'all') {
             const commentSelectors = [
@@ -3007,6 +3125,9 @@
             }, []);
         },
         runSyncRefilterPass(scope = 'all', root = document, descriptors = null, options = null) {
+            const runtimeCoordinator = this.getRuntimeCoordinator();
+            const measureDuration = Boolean(runtimeCoordinator?._diagnosticsEnabled) && typeof performance?.now === 'function';
+            const startedAt = measureDuration ? performance.now() : 0;
             const targetDescriptors = Array.isArray(descriptors) ? descriptors : this.getRefilterTargets(scope, root);
             const previousSyncPassOptions = this._syncPassOptions;
             this._syncPassOptions = options && typeof options === 'object' ? options : null;
@@ -3014,6 +3135,11 @@
                 this.applySyncToDescriptors(targetDescriptors, { resetDisplay: true });
             } finally {
                 this._syncPassOptions = previousSyncPassOptions;
+            }
+            this.incrementRuntimeDiagnostic(`filter.syncPass.${scope}.runs`);
+            this.setRuntimeDiagnosticGauge(`filter.syncPass.${scope}.lastTargetCount`, targetDescriptors.length);
+            if (measureDuration) {
+                this.setRuntimeDiagnosticGauge(`filter.syncPass.${scope}.lastDurationMs`, Math.round((performance.now() - startedAt) * 1000) / 1000);
             }
             return targetDescriptors;
         },
@@ -3023,15 +3149,27 @@
             this._syncRefilterTimerIds.forEach((timerId) => clearTimeout(timerId));
             this._syncRefilterTimerIds.clear();
 
-            const rerun = () => this.runSyncRefilterPass(scope, root);
+            const runtimeCoordinator = this.getRuntimeCoordinator();
+            const hasRuntimeMutationBus = Boolean(runtimeCoordinator && typeof runtimeCoordinator.subscribeMutations === 'function');
+            let lastGeneration = this.getRelevantMutationGeneration(scope);
+            const rerun = (phase, { force = false } = {}) => {
+                const generation = this.getRelevantMutationGeneration(scope);
+                if (!force && hasRuntimeMutationBus && generation === lastGeneration) {
+                    this.incrementRuntimeDiagnostic(`filter.syncPass.${scope}.skippedUnchanged`);
+                    return;
+                }
+                this.runSyncRefilterPass(scope, root);
+                lastGeneration = this.getRelevantMutationGeneration(scope);
+                this.setRuntimeDiagnosticGauge(`filter.syncPass.${scope}.lastPhase`, phase);
+            };
             this._syncRefilterRafId = requestAnimationFrame(() => {
                 this._syncRefilterRafId = 0;
-                rerun();
+                rerun('raf', { force: true });
             });
             [90, 220].forEach((delay) => {
                 const timerId = window.setTimeout(() => {
                     this._syncRefilterTimerIds.delete(timerId);
-                    rerun();
+                    rerun(`delay:${delay}`);
                 }, delay);
                 this._syncRefilterTimerIds.add(timerId);
             });
@@ -3042,42 +3180,54 @@
             this._commentRefilterTimerIds.forEach((timerId) => clearTimeout(timerId));
             this._commentRefilterTimerIds.clear();
 
-            const rerun = () => {
+            const runtimeCoordinator = this.getRuntimeCoordinator();
+            const hasRuntimeMutationBus = Boolean(runtimeCoordinator && typeof runtimeCoordinator.subscribeMutations === 'function');
+            let lastGeneration = this.getRelevantMutationGeneration('comments');
+            const rerun = (phase, { force = false } = {}) => {
+                const generation = this.getRelevantMutationGeneration('comments');
+                if (!force && hasRuntimeMutationBus && generation === lastGeneration) {
+                    this.incrementRuntimeDiagnostic('filter.syncPass.comments.skippedUnchanged');
+                    return;
+                }
                 const scopeRoot = this.resolveRefilterRoot(root || document);
                 const shouldFallbackToFullPass = root instanceof Element && !document.contains(root);
                 if (shouldFallbackToFullPass) {
                     this.runSyncRefilterPass('all');
-                    return;
+                } else {
+                    this.runSyncRefilterPass('comments', scopeRoot);
                 }
-                this.runSyncRefilterPass('comments', scopeRoot);
+                lastGeneration = this.getRelevantMutationGeneration('comments');
+                this.setRuntimeDiagnosticGauge('filter.syncPass.comments.lastPhase', phase);
             };
             this.debugLog('comment-refilter', 'scheduleCommentStabilizedRefilter', { reason });
             this._commentRefilterRafId = requestAnimationFrame(() => {
                 this._commentRefilterRafId = 0;
-                rerun();
+                rerun('raf', { force: true });
                 [140, 420, 1100].forEach((delay) => {
                     const timerId = window.setTimeout(() => {
                         this._commentRefilterTimerIds.delete(timerId);
-                        rerun();
+                        rerun(`delay:${delay}`);
                     }, delay);
                     this._commentRefilterTimerIds.add(timerId);
                 });
             });
         },
-        async runFullRefilterPass(reason = 'refilterAllContent') {
+        async runFullRefilterPass(reason = 'refilterAllContent', { scheduleFollowups = true } = {}) {
             await this.reloadSettings();
             const descriptors = this.getRefilterTargets('all');
             this.startDebugPass(reason, { targetCount: descriptors.length });
             this.runSyncRefilterPass('all', document, descriptors, {
                 allowPersonalBlockReveal: true
             });
-            this.scheduleSyncRefilterPasses();
+            if (scheduleFollowups) this.scheduleSyncRefilterPasses();
             this.applyAsyncToDescriptors(descriptors);
+            this.incrementRuntimeDiagnostic('filter.fullRefilter.runs');
+            this.setRuntimeDiagnosticGauge('filter.fullRefilter.lastTargetCount', descriptors.length);
             document.dispatchEvent(new CustomEvent('dcFilterRefiltered'));
         },
-        async refilterAllContent(reason = 'refilterAllContent') {
+        async refilterAllContent(reason = 'refilterAllContent', { scheduleFollowups = true } = {}) {
             if (!this._pendingFullRefilterReasons) this._pendingFullRefilterReasons = [];
-            this._pendingFullRefilterReasons.push(reason);
+            this._pendingFullRefilterReasons.push({ reason, scheduleFollowups });
 
             if (this._refilterAllContentRunning) {
                 this.debugLog('refilter', 'coalesced full refilter request', {
@@ -3090,11 +3240,13 @@
             this._refilterAllContentRunning = true;
             this._refilterAllContentPromise = (async () => {
                 while (this._pendingFullRefilterReasons.length > 0) {
-                    const pendingReasons = this._pendingFullRefilterReasons.splice(0);
-                    const runReason = pendingReasons.length > 1
-                        ? `${pendingReasons[pendingReasons.length - 1]} [coalesced:${pendingReasons.length}]`
-                        : pendingReasons[0];
-                    await this.runFullRefilterPass(runReason);
+                    const pendingRequests = this._pendingFullRefilterReasons.splice(0);
+                    const lastRequest = pendingRequests[pendingRequests.length - 1];
+                    const runReason = pendingRequests.length > 1
+                        ? `${lastRequest.reason} [coalesced:${pendingRequests.length}]`
+                        : lastRequest.reason;
+                    const shouldScheduleFollowups = pendingRequests.some((request) => request.scheduleFollowups !== false);
+                    await this.runFullRefilterPass(runReason, { scheduleFollowups: shouldScheduleFollowups });
                 }
             })();
 
@@ -3109,7 +3261,7 @@
         async handleVisibilityChange() {
             if (document.visibilityState === 'visible') {
                 await reloadShortcutKey(); // 단축키 설정을 다시 로드
-                await this.refilterAllContent('visibilitychange-visible'); // 기존 필터 설정을 다시 로드하고 적용
+                await this.refilterAllContent('visibilitychange-visible', { scheduleFollowups: false }); // 복구 패스 1회는 유지하고 무변화 지연 패스는 생략
             }
         },
         async init() {

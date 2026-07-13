@@ -1,0 +1,231 @@
+{
+  "probe": "DCUF_MANUAL_PROBE_V1",
+  "time": "2026-07-11T17:52:44.772Z",
+  "page": {
+    "href": "https://gall.dcinside.com/board/view/?id=comic_new6&no=5246837&page=1",
+    "pathname": "/board/view/",
+    "viewport": "1120x956",
+    "readyState": "complete",
+    "domNodes": 3143,
+    "darkBody": false,
+    "darkHtml": false
+  },
+  "userscript": {
+    "loaded": false,
+    "runtimeTokenPresent": false,
+    "diagnosticsPresent": false,
+    "memoryDebugPresent": false
+  },
+  "selectors": {
+    "listContainers": 1,
+    "listRows": 51,
+    "commentContainers": 1,
+    "commentItems": 3,
+    "replies": 0,
+    "imageComments": 0,
+    "relatedLists": 0,
+    "relatedItems": 0,
+    "writers": 55,
+    "articleWraps": 1,
+    "articleBodies": 2,
+    "adWraps": 1,
+    "iframes": 0,
+    "customLists": 0,
+    "customPosts": 0,
+    "bootOverlays": 0
+  },
+  "rows": [
+    {
+      "row": {
+        "tag": "tr",
+        "id": "",
+        "classes": [
+          "ub-content"
+        ],
+        "childElements": 7,
+        "display": "none",
+        "attrs": [
+          "class"
+        ]
+      },
+      "hasTitle": true,
+      "hasWriter": true,
+      "hasDate": true,
+      "hasUidAttribute": false,
+      "hasIpAttribute": false
+    },
+    {
+      "row": {
+        "tag": "tr",
+        "id": "",
+        "classes": [
+          "ub-content",
+          ">"
+        ],
+        "childElements": 6,
+        "display": "table-row",
+        "attrs": [
+          "class"
+        ]
+      },
+      "hasTitle": true,
+      "hasWriter": true,
+      "hasDate": true,
+      "hasUidAttribute": true,
+      "hasIpAttribute": true
+    },
+    {
+      "row": {
+        "tag": "tr",
+        "id": "",
+        "classes": [
+          "ub-content",
+          ">"
+        ],
+        "childElements": 6,
+        "display": "table-row",
+        "attrs": [
+          "class"
+        ]
+      },
+      "hasTitle": true,
+      "hasWriter": true,
+      "hasDate": true,
+      "hasUidAttribute": true,
+      "hasIpAttribute": true
+    },
+    {
+      "row": {
+        "tag": "tr",
+        "id": "",
+        "classes": [
+          "ub-content",
+          ">"
+        ],
+        "childElements": 6,
+        "display": "table-row",
+        "attrs": [
+          "class"
+        ]
+      },
+      "hasTitle": true,
+      "hasWriter": true,
+      "hasDate": true,
+      "hasUidAttribute": true,
+      "hasIpAttribute": true
+    },
+    {
+      "row": {
+        "tag": "tr",
+        "id": "",
+        "classes": [
+          "ub-content",
+          ">"
+        ],
+        "childElements": 6,
+        "display": "table-row",
+        "attrs": [
+          "class"
+        ]
+      },
+      "hasTitle": true,
+      "hasWriter": true,
+      "hasDate": true,
+      "hasUidAttribute": true,
+      "hasIpAttribute": true
+    }
+  ],
+  "comments": [
+    {
+      "idPattern": "comment_li_#",
+      "classes": [
+        "ub-content"
+      ],
+      "display": "list-item",
+      "hasCommentInfo": true,
+      "hasReplyInfo": false,
+      "hasReplyBlock": false,
+      "hasWriter": true,
+      "hasUidAttribute": true,
+      "hasImage": false
+    },
+    {
+      "idPattern": "comment_li_#",
+      "classes": [
+        "ub-content"
+      ],
+      "display": "list-item",
+      "hasCommentInfo": true,
+      "hasReplyInfo": false,
+      "hasReplyBlock": false,
+      "hasWriter": true,
+      "hasUidAttribute": true,
+      "hasImage": true
+    },
+    {
+      "idPattern": "comment_li_#",
+      "classes": [
+        "ub-content"
+      ],
+      "display": "list-item",
+      "hasCommentInfo": true,
+      "hasReplyInfo": false,
+      "hasReplyBlock": false,
+      "hasWriter": true,
+      "hasUidAttribute": true,
+      "hasImage": false
+    }
+  ],
+  "keyContainers": {
+    "container": {
+      "tag": "main",
+      "id": "container",
+      "classes": [
+        "clear",
+        "gallery_view"
+      ],
+      "childElements": 3,
+      "display": "block",
+      "attrs": [
+        "id",
+        "class"
+      ]
+    },
+    "list": {
+      "tag": "tbody",
+      "id": "",
+      "classes": [],
+      "childElements": 51,
+      "display": "table-row-group",
+      "attrs": []
+    },
+    "article": {
+      "tag": "div",
+      "id": "",
+      "classes": [
+        "writing_view_box"
+      ],
+      "childElements": 6,
+      "display": "block",
+      "attrs": [
+        "class"
+      ]
+    },
+    "comments": {
+      "tag": "ul",
+      "id": "",
+      "classes": [
+        "cmt_list",
+        "add"
+      ],
+      "childElements": 3,
+      "display": "block",
+      "attrs": [
+        "class"
+      ]
+    },
+    "imageComments": null,
+    "related": null
+  },
+  "styleMutationProbe": null
+}

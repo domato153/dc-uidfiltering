@@ -1,0 +1,38 @@
+import { imageCommentItem, liveCommentRows, liveListRows, longArticleNodes } from './builders.mjs';
+
+const baseHead = (title) => `<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${title}</title><link rel="stylesheet" href="/__testbed/fixture.css"></head>`;
+const controls = `<aside id="dcuf-testbed-controls" aria-label="testbed controls">
+    <button data-action="add-one-comment">댓글 1개</button><button data-action="add-100-comments">댓글 100개</button><button data-action="add-500-comments">댓글 500개</button>
+    <button data-action="rerender-comments">댓글 재렌더</button><button data-action="insert-blocked">차단 UID</button><button data-action="insert-ads">광고 삽입</button>
+    <button data-action="long-article">장문 노드</button><button data-action="dark">야간모드</button><button data-action="change-row">한 행 변경</button><button data-action="replace-list">목록 교체</button>
+    <button data-action="change-style">style mutation</button><button data-action="uid-delay">UID delay</button><button data-action="uid-fail">UID fail</button><button data-action="uid-normal">UID normal</button>
+</aside>`;
+const scripts = `<script src="/__testbed/fixture-client.js"></script></body></html>`;
+
+const tableHead = (variant) => `<thead><tr><th>번호</th>${variant === 'minor' ? '<th>구분</th>' : ''}<th>제목</th><th>작성자</th><th>날짜</th><th>조회</th><th>추천</th></tr></thead>`;
+const listTable = (variant, className = '') => `<table class="gall_list ${className}">${tableHead(variant)}<tbody class="${className ? '' : 'listwrap2'}">${liveListRows(variant)}</tbody></table>`;
+
+export function listPage({ variant = 'major' } = {}) {
+    const isMinor = variant === 'minor';
+    const viewPath = isMinor ? '/mgallery/board/view' : '/board/view';
+    const listPath = isMinor ? '/mgallery/board/lists' : '/board/lists';
+    const galleryDoor = isMinor ? `<header class="page_head"><div class="fr gall_issuebox"><button type="button" class="relate" onclick="open_relation(6965)">연관 갤러리</button><button type="button" class="gall_useinfo" onclick="open_user_guide()">이용안내</button><button type="button" class="fixture-issue-more" onclick="gt_toggle_issue(this)"><span>더보기</span><em class="sp_img icon_listmore"></em></button></div></header><div class="issue_wrap" data-fixture-original-issue-wrap="1"><div id="relation_popup" class="pop_wrap type3" style="display:none"><div>연관 갤러리 원본 팝업</div></div><section class="issue_contentbox" data-fixture-original-door="1"><div class="minor_intro_box">원본 갤러리 대문</div><button type="button" class="btn_hotall_list" onclick="toggle_hot_rank_pop()">흥한갤 전체 순위</button><div id="hot_rank_pop2" class="pop_wrap type2" style="display:none;right:-1px;top:139px"><div class="pop_content pop_hot_mgall"><div class="hot_rank_list_wrap"><ul id="heung_list_ul_top" class="pop_hotmgall_listbox">${Array.from({ length: 100 }, (_, index) => `<li>${index + 1}. fixture gallery ${index + 1}</li>`).join('')}</ul></div></div><button type="button" class="under poply_close" onclick="toggle_hot_rank_pop()">닫기</button></div></section></div><script>window.__fixtureHotRankToggles=0;window.__fixtureHostHeaderToggles={relation:0,guide:0,issue:0};window.toggle_hot_rank_pop=()=>{const popup=document.getElementById('hot_rank_pop2');if(!popup)return;popup.style.display=popup.style.display==='none'?'block':'none';window.__fixtureHotRankToggles+=1;};window.open_relation=()=>{const popup=document.getElementById('relation_popup');popup.style.display=popup.style.display==='none'?'block':'none';window.__fixtureHostHeaderToggles.relation+=1;};window.open_user_guide=()=>{window.__fixtureHostHeaderToggles.guide+=1;};window.gt_toggle_issue=()=>{document.querySelector('.issue_wrap').classList.toggle('open');window.__fixtureHostHeaderToggles.issue+=1;};</script>` : '';
+    return `${baseHead(`DCUF ${variant} list fixture`)}<body data-fixture-page="list" data-fixture-variant="${variant}">${controls}${galleryDoor}<main id="container" class="listwrap clear"><section class="gall_listwrap">${listTable(variant)}<div class="bottom_paging_box"><a href="${listPath}?id=test&page=2">2</a></div><div class="list_bottom_btnbox"></div><form name="frmSearch"><input name="search_keyword"><button>검색</button></form><div id="searchTypeLayer"></div><div class="bottom_movebox"></div></section></main><a id="fixture-to-view" href="${viewPath}?id=test&no=1001">본문으로 이동</a>${scripts}`;
+}
+
+export function viewPage({ long = false, massComments = 0, variant = 'major' } = {}) {
+    const isMinor = variant === 'minor';
+    const isMini = variant === 'mini';
+    const comments = liveCommentRows(variant, massComments);
+    const baseCommentCount = isMinor ? 9 : 4;
+    const viewClass = isMini ? 'mini_view' : (isMinor ? 'minor_view' : 'gallery_view');
+    const routeRoot = isMini ? '/mini' : (isMinor ? '/mgallery' : '');
+    const listPath = `${routeRoot}/board/lists`;
+    const viewPath = `${routeRoot}/board/view`;
+    const miniButtons = isMini ? `<div class="view_bottom_btnbox clear"><div class="fr"><button type="button" class="btn_grey modify" onclick="window.__fixtureMiniButtonClicks=(window.__fixtureMiniButtonClicks||0)+1">수정</button><button type="button" class="btn_grey cancle" onclick="window.__fixtureMiniButtonClicks=(window.__fixtureMiniButtonClicks||0)+1">삭제</button><button type="button" id="btn_write" class="btn_lightpurple write" onclick="window.__fixtureMiniButtonClicks=(window.__fixtureMiniButtonClicks||0)+1">글쓰기</button></div></div><div class="fixture-mini-absolute-obstruction" aria-hidden="true"></div>` : '';
+    return `${baseHead(`DCUF ${variant} view fixture`)}<body data-fixture-page="view" data-fixture-variant="${variant}">${controls}<main id="container" class="clear ${viewClass}"><article class="view_content_wrap"><header class="view_content_wrap"><div class="gallview_head"><span class="title_subject">테스트 본문</span></div></header><section class="writing_view_box"><div class="write_div"><p>본문 시작</p>${long ? longArticleNodes(1600) : ''}<div id="fixture-long-article"></div></div></section><div class="view_ad_wrap" id="fixture-initial-ad"><iframe id="google_ads_iframe_fixture" title="advertisement"></iframe></div><div class="gall_exposure_list fixture-synthetic-related"><ul><li><span class="ub-writer" data-uid="safe-related-1" data-nick="관련글작성자"></span><a href="${viewPath}?id=test&no=2001">관련 글 1</a></li><li><span class="ub-writer" data-uid="blocked-related-user" data-nick="관련차단"></span><a href="${viewPath}?id=test&no=2002">관련 글 2</a></li></ul></div>${miniButtons}</article><section id="focus_cmt"><div id="comment_wrap_1" class="gall_comment"><div class="comment_count"><span class="num_box"><span class="font_red">${massComments || baseCommentCount}</span></span></div><div class="comment_box"><ul class="cmt_list add">${comments}</ul></div></div></section><section class="view_comment image_comment fixture-synthetic-image-comments"><div class="comment_wrap"><div class="comment_box img_comment_box"><ul class="cmt_list">${imageCommentItem(1, { uid: 'safe-image-user' })}${imageCommentItem(2, { uid: 'blocked-image-user' })}</ul></div><div class="cmt_write_box"><div class="cmt_txt_cont"><textarea></textarea></div></div></div></section><div class="view_bottom"><a href="${listPath}?id=test">목록</a><section class="gall_listwrap fixture-view-list">${listTable(variant, 'fixture-view-table')}</section></div></main><a id="fixture-to-list" href="${listPath}?id=test">목록으로 이동</a>${scripts}`;
+}
+
+export function blankPage() {
+    return `${baseHead('DCUF navigation fixture')}<body data-fixture-page="blank"><main id="container"><p>navigation target</p><a href="/board/lists?id=test">목록으로</a></main>${scripts}`;
+}

@@ -1,0 +1,74 @@
+{
+  "probe": "DCUF_IMAGE_COMMENT_PROBE_V1",
+  "capturedAt": "2026-07-12T07:27:46.863Z",
+  "page": {
+    "href": "https://gall.dcinside.com/mgallery/board/view/?id=aoegame&no=31186616&page=1",
+    "pathname": "/mgallery/board/view/",
+    "readyState": "complete"
+  },
+  "userscript": {
+    "uiReady": false,
+    "customPosts": 0
+  },
+  "counts": {
+    "sections": 2,
+    "boxes": 1,
+    "items": 1,
+    "replies": 0,
+    "writers": 1,
+    "writeForms": 0,
+    "deletePopups": 0
+  },
+  "section": {
+    "tag": "div",
+    "id": "",
+    "classes": [
+      "img_comment",
+      "fold",
+      "getMoreComment"
+    ],
+    "childElements": 1,
+    "display": "block",
+    "attributes": [
+      "class"
+    ]
+  },
+  "box": {
+    "tag": "div",
+    "id": "",
+    "classes": [
+      "comment_box",
+      "img_comment_box"
+    ],
+    "childElements": 1,
+    "display": "block",
+    "attributes": [
+      "class",
+      "data-imgno",
+      "data-article-lv"
+    ]
+  },
+  "items": [
+    {
+      "element": {
+        "tag": "li",
+        "id": "img_comment_li_97241953",
+        "classes": [
+          "ub-content"
+        ],
+        "childElements": 1,
+        "display": "list-item",
+        "attributes": [
+          "id",
+          "class"
+        ]
+      },
+      "idPattern": "img_comment_li_#",
+      "hasWriter": true,
+      "hasImage": false,
+      "hasReplyInfo": false,
+      "hasDeletePopup": false
+    }
+  ],
+  "sanitizedSectionHtml": "<div class=\"img_comment fold getMoreComment\">\n            <div class=\"view_comment image_comment\">\n                <h2 class=\"blind\">[text]</h2>\n                <div class=\"comment_wrap show\">\n                    \n                    \n        <div class=\"comment_box img_comment_box\" data-imgno=\"32984842\" data-article-lv=\"undefined\">\n            <ul class=\"cmt_list add\">\n                <li id=\"img_comment_li_97241953\" class=\"ub-content\"><div class=\"cmt_info clear\" data-no=\"97241953\" data-rcnt=\"0\" data-article-no=\"31186616\" data-article-lv=\"undefined\"><div class=\"addbox\"><div class=\"cmt_nickbox\"><span class=\"gall_writer ub-writer\" data-nick=\"[redacted-data-nick]\" data-uid=\"[redacted-data-uid]\" data-ip=\"[redacted-data-ip]\"><span class=\"nickname\"><em title=\"ㅇㅇ\">[text]</em><span class=\"ip\">[text]</span></span></span></div><div class=\"clear cmt_txtbox\"><p class=\"usertxt\" style=\"cursor:default\">[text]</p></div><div class=\"fr clear\"><span class=\"date_time\">[text]</span></div></div></div></li>\n                \n            </ul>\n        </div>\n    \n                    \n                </div>\n                \n            </div>\n            \n        </div>"
+}
