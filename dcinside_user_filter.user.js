@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         DCInside PC User Filter
 // @namespace    http://tampermonkey.net/
-// @version      1.9.2
+// @version      1.9.3
 // @description  DCInside PC filter port based on the latest mobile filter runtime and shared filter core
 // @author       domato153
 // @match        https://gall.dcinside.com/*
@@ -263,6 +263,7 @@ const FILTER_CONSTANTS = {
                 // [신규] 개인 차단 기능 On/Off 저장 키
                 PERSONAL_BLOCK_ENABLED: 'dcinside_personal_block_enabled',
                 FAB_POSITION: 'dcinside_fab_position',
+                FAB_SCALE_PERCENT: 'dcinside_fab_scale_percent',
                 MANAGEMENT_PANEL_GEOMETRY: 'dcinside_management_panel_geometry',
             },
             SELECTORS: {
@@ -829,13 +830,24 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
     // shared filter UI declarations back into this file.
     // Extracted verbatim from the mobile-owned filter UI style rail.
     GM_addStyle(`
-#dc-personal-block-fab {
+#dc-personal-block-controls {
+            --dcuf-fab-width: 152px;
+            --dcuf-fab-height: 76px;
+            --dcuf-fab-padding-x: 28px;
+            --dcuf-fab-font-size: 32px;
             position: fixed;
             z-index: 2147483640;
+            width: max-content;
+            height: var(--dcuf-fab-height);
+            overflow: visible;
+        }
+        #dc-personal-block-fab {
+            box-sizing: border-box;
+            appearance: none;
             width: auto !important;
-            min-width: 76px;
-            height: 38px;
-            padding: 0 10px;
+            min-width: var(--dcuf-fab-width) !important;
+            height: var(--dcuf-fab-height) !important;
+            padding: 0 var(--dcuf-fab-padding-x);
             background: linear-gradient(180deg, #fbfcfe 0%, #f1f4f8 100%) !important;
             color: #4d5e76;
             border-radius: 999px;
@@ -845,7 +857,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             align-items: center;
             justify-content: center;
             text-align: center;
-            font-size: 15px;
+            font-size: var(--dcuf-fab-font-size) !important;
             font-weight: 800;
             letter-spacing: -0.03em;
             line-height: 1;
@@ -853,6 +865,8 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             word-break: keep-all;
             cursor: pointer;
             user-select: none;
+            touch-action: none;
+            font-family: inherit;
             transition: transform 0.18s ease-out, box-shadow 0.18s ease-out, border-color 0.18s ease-out, background-color 0.18s ease-out;
         }
         #dc-personal-block-fab:hover {
@@ -864,6 +878,126 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             cursor: grabbing;
             transform: scale(0.97);
             box-shadow: 0 4px 10px rgba(36, 49, 72, 0.1);
+        }
+        #dc-personal-block-fab:focus-visible {
+            outline: 3px solid rgba(59, 113, 253, 0.36);
+            outline-offset: 2px;
+        }
+        #dc-personal-block-drawer {
+            position: absolute;
+            z-index: 2147483641;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            width: max-content;
+            min-width: 164px;
+            padding: 6px;
+            background: #fff;
+            border: 1px solid #c7d2df;
+            border-radius: 12px;
+            box-shadow: 0 12px 28px rgba(36, 49, 72, 0.2);
+        }
+        #dc-personal-block-drawer[hidden] {
+            display: none !important;
+        }
+        #dc-personal-block-drawer button {
+            box-sizing: border-box;
+            appearance: none;
+            width: 100%;
+            min-height: 40px;
+            padding: 8px 12px;
+            background: transparent;
+            color: #34445a;
+            border: 0;
+            border-radius: 8px;
+            text-align: left;
+            font-family: inherit;
+            font-size: 14px;
+            font-weight: 700;
+            line-height: 1.2;
+            white-space: nowrap;
+            cursor: pointer;
+        }
+        #dc-personal-block-drawer button:hover,
+        #dc-personal-block-drawer button:focus-visible {
+            background: #edf2f8;
+            color: #24364f;
+            outline: none;
+        }
+        #dc-personal-block-size-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 2147483644;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            background: rgba(18, 25, 35, 0.45);
+        }
+        #dc-personal-block-size-panel {
+            box-sizing: border-box;
+            width: min(360px, calc(100vw - 32px));
+            padding: 20px;
+            background: #fff;
+            color: #34445a;
+            border: 1px solid #c7d2df;
+            border-radius: 14px;
+            box-shadow: 0 18px 48px rgba(36, 49, 72, 0.28);
+        }
+        #dc-personal-block-size-panel h3 {
+            margin: 0 0 8px;
+            color: inherit;
+            font-size: 19px;
+        }
+        #dc-personal-block-size-panel .dcuf-fab-size-description {
+            margin: 0 0 16px;
+            color: #66758a;
+            font-size: 13px;
+            line-height: 1.45;
+        }
+        #dc-personal-block-size-panel .dcuf-fab-size-value {
+            display: block;
+            margin-bottom: 8px;
+            color: #33445b;
+            text-align: center;
+            font-size: 18px;
+            font-weight: 800;
+        }
+        #dc-personal-block-size-panel input[type="range"] {
+            width: 100%;
+            min-height: 36px;
+            margin: 0;
+            cursor: pointer;
+        }
+        #dc-personal-block-size-panel .dcuf-fab-size-bounds {
+            display: flex;
+            justify-content: space-between;
+            margin-top: -2px;
+            color: #7b8798;
+            font-size: 11px;
+        }
+        #dc-personal-block-size-panel .dcuf-fab-size-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 18px;
+        }
+        #dc-personal-block-size-panel .dcuf-fab-size-actions button {
+            flex: 1;
+            min-height: 42px;
+            padding: 8px;
+            background: #edf2f8;
+            color: #34445a;
+            border: 0;
+            border-radius: 9px;
+            font-family: inherit;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        #dc-personal-block-size-panel .dcuf-fab-size-actions [data-dcuf-fab-size-action="save"] {
+            background: #3b71fd;
+            color: #fff;
         }
         #dc-selection-popup {
             position: fixed;
@@ -1425,7 +1559,55 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             }
         }
 
-/* 5. 스크립트 팝업창 전체 다크 테마 */
+body.dc-filter-dark-mode #dc-personal-block-fab {
+            background: linear-gradient(180deg, #3b414b 0%, #303640 100%) !important;
+            color: #e9eef6 !important;
+            border-color: #596474 !important;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3) !important;
+        }
+        body.dc-filter-dark-mode #dc-personal-block-fab:hover {
+            background: linear-gradient(180deg, #464d58 0%, #373e49 100%) !important;
+            border-color: #6c788a !important;
+        }
+        body.dc-filter-dark-mode #dc-personal-block-drawer {
+            background: #2d323a !important;
+            border-color: #596474 !important;
+            box-shadow: 0 14px 32px rgba(0, 0, 0, 0.5) !important;
+        }
+        body.dc-filter-dark-mode #dc-personal-block-drawer button {
+            background: transparent !important;
+            color: #e2e8f0 !important;
+        }
+        body.dc-filter-dark-mode #dc-personal-block-drawer button:hover,
+        body.dc-filter-dark-mode #dc-personal-block-drawer button:focus-visible {
+            background: #414956 !important;
+            color: #fff !important;
+        }
+        body.dc-filter-dark-mode #dc-personal-block-size-overlay {
+            background: rgba(0, 0, 0, 0.62) !important;
+        }
+        body.dc-filter-dark-mode #dc-personal-block-size-panel {
+            background: #2d323a !important;
+            color: #e2e8f0 !important;
+            border-color: #596474 !important;
+            box-shadow: 0 20px 52px rgba(0, 0, 0, 0.58) !important;
+        }
+        body.dc-filter-dark-mode #dc-personal-block-size-panel .dcuf-fab-size-description,
+        body.dc-filter-dark-mode #dc-personal-block-size-panel .dcuf-fab-size-bounds {
+            color: #aeb9c8 !important;
+        }
+        body.dc-filter-dark-mode #dc-personal-block-size-panel .dcuf-fab-size-value {
+            color: #f2f6fb !important;
+        }
+        body.dc-filter-dark-mode #dc-personal-block-size-panel .dcuf-fab-size-actions button {
+            background: #4a5360 !important;
+            color: #fff !important;
+        }
+        body.dc-filter-dark-mode #dc-personal-block-size-panel .dcuf-fab-size-actions [data-dcuf-fab-size-action="save"] {
+            background: #4d7cff !important;
+        }
+
+        /* 5. 스크립트 팝업창 전체 다크 테마 */
         body.dc-filter-dark-mode #dcinside-filter-setting,
         body.dc-filter-dark-mode #dc-selection-popup,
         body.dc-filter-dark-mode #dc-block-management-panel,
@@ -2954,7 +3136,7 @@ const FilterModule = {
         async init() {
             if (isInitialized) return; isInitialized = true;
             this.installDebugApi();
-            this.debugLog('init', 'FilterModule init start', { version: '1.9.2' });
+            this.debugLog('init', 'FilterModule init start', { version: '1.9.3' });
             await this.cleanupLegacyManagedBlockConfig();
             await this.reloadSettings();
             if (this.DEBUG_ENABLED) await this.debugDumpState('after init reload');
@@ -2980,10 +3162,14 @@ const FilterModule = {
     const PersonalBlockModule = {
         isSelectionMode: false,
         personalBlockListCache: { uids: [], nicknames: [], ips: [] },
+        fabScalePercent: 100,
+        FAB_SCALE_MIN: 60,
+        FAB_SCALE_MAX: 160,
 
 
         async init() {
             this.personalBlockListCache = await this.loadPersonalBlocks();
+            this.fabScalePercent = await this.loadFabScalePercent();
             this.createFab();
             document.addEventListener('click', this.handleSelectionClick.bind(this), true);
         },
@@ -3063,91 +3249,293 @@ const FilterModule = {
             this.exitSelectionMode();
         },
 
-        createFab() {
-            // [수정] 글 목록 및 글 내용 페이지에서만 '간편차단' 버튼을 표시합니다.
+        normalizeFabScalePercent(value) {
+            const numeric = Number(value);
+            if (!Number.isFinite(numeric)) return 100;
+            return Math.max(this.FAB_SCALE_MIN, Math.min(this.FAB_SCALE_MAX, Math.round(numeric)));
+        },
+
+        async loadFabScalePercent() {
+            const stored = await GM_getValue(FilterModule.CONSTANTS.STORAGE_KEYS.FAB_SCALE_PERCENT, 100);
+            return this.normalizeFabScalePercent(stored);
+        },
+
+        clampFabPosition() {
+            const controls = document.getElementById('dc-personal-block-controls');
+            if (!controls) return;
+            const currentLeft = Number.parseFloat(controls.style.left);
+            const currentTop = Number.parseFloat(controls.style.top);
+            if (!Number.isFinite(currentLeft) || !Number.isFinite(currentTop)) return;
+            const maxX = Math.max(0, window.innerWidth - controls.offsetWidth);
+            const maxY = Math.max(0, window.innerHeight - controls.offsetHeight);
+            controls.style.left = `${Math.round(Math.max(0, Math.min(currentLeft, maxX)))}px`;
+            controls.style.top = `${Math.round(Math.max(0, Math.min(currentTop, maxY)))}px`;
+        },
+
+        applyFabScalePercent(value, { clamp = true } = {}) {
+            const normalized = this.normalizeFabScalePercent(value);
+            this.fabScalePercent = normalized;
+            const controls = document.getElementById('dc-personal-block-controls');
+            if (!controls) return normalized;
+            const ratio = normalized / 100;
+            const scaledValue = (base) => `${Number((base * ratio).toFixed(2))}px`;
+            controls.style.setProperty('--dcuf-fab-width', scaledValue(152));
+            controls.style.setProperty('--dcuf-fab-height', scaledValue(76));
+            controls.style.setProperty('--dcuf-fab-padding-x', scaledValue(28));
+            controls.style.setProperty('--dcuf-fab-font-size', scaledValue(32));
+            this.closeFabDrawer();
+            if (clamp) this.clampFabPosition();
+            return normalized;
+        },
+
+        async showFabScalePanel() {
+            document.getElementById('dc-personal-block-size-overlay')?.remove();
+            const savedPercent = await this.loadFabScalePercent();
+            this.applyFabScalePercent(savedPercent);
+            if (this.isFabSupportedPage()) this.createFab();
+
+            const overlay = document.createElement('div');
+            overlay.id = 'dc-personal-block-size-overlay';
+            const panel = document.createElement('div');
+            panel.id = 'dc-personal-block-size-panel';
+            panel.setAttribute('role', 'dialog');
+            panel.setAttribute('aria-modal', 'true');
+            panel.setAttribute('aria-labelledby', 'dc-personal-block-size-title');
+            panel.innerHTML = `
+                <h3 id="dc-personal-block-size-title">메뉴 버튼 크기 조절</h3>
+                <p class="dcuf-fab-size-description">버튼과 글자 크기가 같은 비율로 조절됩니다.</p>
+                <output class="dcuf-fab-size-value" for="dc-personal-block-size-range">${savedPercent}%</output>
+                <input id="dc-personal-block-size-range" type="range" min="${this.FAB_SCALE_MIN}" max="${this.FAB_SCALE_MAX}" step="5" value="${savedPercent}" aria-label="메뉴 버튼 크기 비율">
+                <div class="dcuf-fab-size-bounds"><span>${this.FAB_SCALE_MIN}%</span><span>${this.FAB_SCALE_MAX}%</span></div>
+                <div class="dcuf-fab-size-actions">
+                    <button type="button" data-dcuf-fab-size-action="reset">기본값</button>
+                    <button type="button" data-dcuf-fab-size-action="cancel">취소</button>
+                    <button type="button" data-dcuf-fab-size-action="save">저장</button>
+                </div>
+            `;
+            overlay.appendChild(panel);
+            document.body.appendChild(overlay);
+
+            const range = panel.querySelector('#dc-personal-block-size-range');
+            const valueOutput = panel.querySelector('.dcuf-fab-size-value');
+            const closePanel = (restoreSaved) => {
+                if (restoreSaved) this.applyFabScalePercent(savedPercent);
+                document.removeEventListener('keydown', handleKeydown, true);
+                overlay.remove();
+            };
+            const handleKeydown = (event) => {
+                if (event.key !== 'Escape') return;
+                event.preventDefault();
+                closePanel(true);
+            };
+
+            range.addEventListener('input', () => {
+                const nextPercent = this.applyFabScalePercent(range.value);
+                valueOutput.textContent = `${nextPercent}%`;
+            });
+            panel.querySelector('[data-dcuf-fab-size-action="reset"]').addEventListener('click', () => {
+                range.value = '100';
+                range.dispatchEvent(new Event('input', { bubbles: true }));
+            });
+            panel.querySelector('[data-dcuf-fab-size-action="cancel"]').addEventListener('click', () => closePanel(true));
+            panel.querySelector('[data-dcuf-fab-size-action="save"]').addEventListener('click', async () => {
+                const nextPercent = this.applyFabScalePercent(range.value);
+                await GM_setValue(FilterModule.CONSTANTS.STORAGE_KEYS.FAB_SCALE_PERCENT, nextPercent);
+                closePanel(false);
+            });
+            overlay.addEventListener('click', (event) => {
+                if (event.target === overlay) closePanel(true);
+            });
+            document.addEventListener('keydown', handleKeydown, true);
+            range.focus();
+        },
+
+        isFabSupportedPage() {
             const currentPath = window.location.pathname;
-            if (!currentPath.includes('/board/lists') && !currentPath.includes('/board/view')) {
-                return; // 대상 페이지가 아니면 버튼을 생성하지 않고 함수를 종료합니다.
+            return currentPath.includes('/board/lists') || currentPath.includes('/board/view');
+        },
+
+        closeFabDrawer() {
+            const fab = document.getElementById('dc-personal-block-fab');
+            const drawer = document.getElementById('dc-personal-block-drawer');
+            if (!fab || !drawer) return;
+            drawer.hidden = true;
+            fab.setAttribute('aria-expanded', 'false');
+        },
+
+        positionFabDrawer() {
+            const controls = document.getElementById('dc-personal-block-controls');
+            const drawer = document.getElementById('dc-personal-block-drawer');
+            if (!controls || !drawer || drawer.hidden) return;
+
+            const viewportGap = 8;
+            const drawerGap = 8;
+            const controlsRect = controls.getBoundingClientRect();
+            const drawerRect = drawer.getBoundingClientRect();
+            const maxLeft = Math.max(viewportGap, window.innerWidth - drawerRect.width - viewportGap);
+            const left = Math.max(viewportGap, Math.min(controlsRect.right - drawerRect.width, maxLeft));
+            let top = controlsRect.top - drawerRect.height - drawerGap;
+
+            if (top < viewportGap) {
+                top = Math.min(
+                    controlsRect.bottom + drawerGap,
+                    Math.max(viewportGap, window.innerHeight - drawerRect.height - viewportGap)
+                );
             }
 
-            // [방어 코드 1] 이미 FAB가 존재하면 중복 생성을 방지
-            if (document.getElementById('dc-personal-block-fab')) {
-                return;
+            drawer.style.left = `${Math.round(left - controlsRect.left)}px`;
+            drawer.style.top = `${Math.round(top - controlsRect.top)}px`;
+        },
+
+        toggleFabDrawer() {
+            const fab = document.getElementById('dc-personal-block-fab');
+            const drawer = document.getElementById('dc-personal-block-drawer');
+            if (!fab || !drawer) return;
+            const willOpen = drawer.hidden;
+            drawer.hidden = !willOpen;
+            fab.setAttribute('aria-expanded', String(willOpen));
+            if (willOpen) this.positionFabDrawer();
+        },
+
+        resetFabPosition() {
+            if (!this.isFabSupportedPage()) {
+                alert('플로팅 메뉴는 글 목록과 본문 페이지에서만 표시됩니다.');
+                return false;
             }
 
+            const controls = this.createFab();
+            if (!controls) return false;
+            this.closeFabDrawer();
+            Object.assign(controls.style, {
+                left: 'auto',
+                top: 'auto',
+                right: '20px',
+                bottom: '20px'
+            });
+            return true;
+        },
 
-            const fab = document.createElement('div');
+        createFab() {
+            if (!this.isFabSupportedPage() || !document.body) return null;
+
+            const existingControls = document.getElementById('dc-personal-block-controls');
+            const existingFab = document.getElementById('dc-personal-block-fab');
+            const existingDrawer = document.getElementById('dc-personal-block-drawer');
+            if (existingControls && existingFab && existingDrawer && existingControls.contains(existingFab) && existingControls.contains(existingDrawer)) {
+                return existingControls;
+            }
+            existingControls?.remove();
+            existingFab?.remove();
+            existingDrawer?.remove();
+
+            const controls = document.createElement('div');
+            controls.id = 'dc-personal-block-controls';
+            Object.assign(controls.style, { left: 'auto', top: 'auto', right: '20px', bottom: '20px' });
+
+            const fab = document.createElement('button');
             fab.id = 'dc-personal-block-fab';
-            fab.textContent = '간편차단';
-            document.body.appendChild(fab);
+            fab.type = 'button';
+            fab.textContent = '메뉴';
+            fab.setAttribute('aria-expanded', 'false');
+            fab.setAttribute('aria-controls', 'dc-personal-block-drawer');
+            fab.setAttribute('aria-label', 'DC 유저 필터 메뉴');
 
+            const drawer = document.createElement('div');
+            drawer.id = 'dc-personal-block-drawer';
+            drawer.hidden = true;
+            drawer.setAttribute('role', 'menu');
+            drawer.setAttribute('aria-label', 'DC 유저 필터 기능');
+            drawer.innerHTML = `
+                <button type="button" role="menuitem" data-dcuf-fab-action="quick-block">간편차단</button>
+                <button type="button" role="menuitem" data-dcuf-fab-action="filter-settings">글댓합 설정</button>
+                <button type="button" role="menuitem" data-dcuf-fab-action="block-management">차단 유저 관리</button>
+            `;
 
-            fab.addEventListener('click', (e) => {
-                if (fab.getAttribute('data-dragged') === 'true') {
-                    fab.removeAttribute('data-dragged');
-                    return;
-                }
-                this.enterSelectionMode();
+            controls.append(fab, drawer);
+            document.body.appendChild(controls);
+            this.applyFabScalePercent(this.fabScalePercent, { clamp: false });
+
+            let activePointerId = null;
+            let offsetX = 0;
+            let offsetY = 0;
+            let startX = 0;
+            let startY = 0;
+            let wasDragged = false;
+            let suppressClick = false;
+
+            fab.addEventListener('pointerdown', (event) => {
+                if (event.button !== 0 || activePointerId !== null) return;
+                const rect = controls.getBoundingClientRect();
+                activePointerId = event.pointerId;
+                offsetX = event.clientX - rect.left;
+                offsetY = event.clientY - rect.top;
+                startX = event.clientX;
+                startY = event.clientY;
+                wasDragged = false;
+                fab.setPointerCapture?.(event.pointerId);
             });
 
+            fab.addEventListener('pointermove', (event) => {
+                if (event.pointerId !== activePointerId) return;
+                if (!wasDragged && Math.hypot(event.clientX - startX, event.clientY - startY) < 5) return;
+                if (!wasDragged) this.closeFabDrawer();
+                wasDragged = true;
+                event.preventDefault();
+                const maxX = Math.max(0, window.innerWidth - controls.offsetWidth);
+                const maxY = Math.max(0, window.innerHeight - controls.offsetHeight);
+                const nextX = Math.max(0, Math.min(event.clientX - offsetX, maxX));
+                const nextY = Math.max(0, Math.min(event.clientY - offsetY, maxY));
+                Object.assign(controls.style, {
+                    left: `${Math.round(nextX)}px`,
+                    top: `${Math.round(nextY)}px`,
+                    right: 'auto',
+                    bottom: 'auto'
+                });
+            });
 
-            // 드래그 기능
-            let isDragging = false, offsetX, offsetY;
-            const onDragStart = (e) => { // async 제거 (필요 없음)
-                isDragging = true;
-                fab.style.transition = 'none';
-                const clientX = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
-                const clientY = e.type === 'touchstart' ? e.touches[0].clientY : e.clientY;
-                const rect = fab.getBoundingClientRect();
-                offsetX = clientX - rect.left;
-                offsetY = clientY - rect.top;
-                fab.setAttribute('data-dragged', 'false');
+            const finishDrag = (event) => {
+                if (event.pointerId !== activePointerId) return;
+                suppressClick = wasDragged;
+                activePointerId = null;
+                fab.releasePointerCapture?.(event.pointerId);
             };
+            fab.addEventListener('pointerup', finishDrag);
+            fab.addEventListener('pointercancel', finishDrag);
 
+            fab.addEventListener('click', () => {
+                if (suppressClick) {
+                    suppressClick = false;
+                    return;
+                }
+                this.toggleFabDrawer();
+            });
 
-            const onDragMove = (e) => {
-                if (!isDragging) return;
-                e.preventDefault();
-                fab.setAttribute('data-dragged', 'true');
-                const clientX = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
-                const clientY = e.type === 'touchmove' ? e.touches[0].clientY : e.clientY;
-                let newX = clientX - offsetX;
-                let newY = clientY - offsetY;
-                newX = Math.max(0, Math.min(newX, window.innerWidth - fab.offsetWidth));
-                newY = Math.max(0, Math.min(newY, window.innerHeight - fab.offsetHeight));
-                fab.style.left = `${newX}px`;
-                fab.style.top = `${newY}px`;
-                // [방어 코드 2] right, bottom 속성 제거하여 left/top과 충돌 방지
-                fab.style.right = 'auto';
-                fab.style.bottom = 'auto';
-            };
+            drawer.addEventListener('click', async (event) => {
+                const actionButton = event.target.closest('[data-dcuf-fab-action]');
+                if (!actionButton || !drawer.contains(actionButton)) return;
+                const action = actionButton.dataset.dcufFabAction;
+                this.closeFabDrawer();
+                if (action === 'quick-block') this.enterSelectionMode();
+                else if (action === 'filter-settings') await FilterModule.showSettings();
+                else if (action === 'block-management') await this.createManagementPanel();
+            });
 
+            if (!this._fabGlobalHandlersBound) {
+                document.addEventListener('click', (event) => {
+                    const currentControls = document.getElementById('dc-personal-block-controls');
+                    if (currentControls && !currentControls.contains(event.target)) this.closeFabDrawer();
+                });
+                document.addEventListener('keydown', (event) => {
+                    if (event.key === 'Escape') this.closeFabDrawer();
+                });
+                window.addEventListener('resize', () => {
+                    this.clampFabPosition();
+                    if (!document.getElementById('dc-personal-block-drawer')?.hidden) this.positionFabDrawer();
+                });
+                this._fabGlobalHandlersBound = true;
+            }
 
-            const onDragEnd = () => { // async 키워드 제거
-                if (!isDragging) return;
-                isDragging = false;
-                fab.style.transition = 'transform 0.2s ease-out';
-
-                // GM_setValue 호출을 포함한 위치 저장 로직 전체를 제거하여
-                // 드래그가 끝나도 위치가 저장되지 않도록 합니다.
-            };
-
-
-            fab.addEventListener('mousedown', onDragStart);
-            document.addEventListener('mousemove', onDragMove);
-            document.addEventListener('mouseup', onDragEnd);
-            fab.addEventListener('touchstart', onDragStart, { passive: true });
-            document.addEventListener('touchmove', onDragMove, { passive: false });
-            document.addEventListener('touchend', onDragEnd);
-
-
-            // 저장된 위치 로드 대신 항상 기본 위치에 생성
-            (() => { // async 키워드 제거
-                // 저장된 위치를 불러오는 대신 항상 기본 위치를 사용하도록 수정
-                const defaultPos = { left: 'auto', top: 'auto', right: '20px', bottom: '20px' };
-                // GM_getValue 및 유효성 검사 로직을 제거하고, defaultPos를 바로 적용합니다.
-                Object.assign(fab.style, defaultPos);
-            })();
+            return controls;
         },
 
         enterSelectionMode() {
@@ -3928,6 +4316,8 @@ const FilterModule = {
 
     GM_registerMenuCommand('글댓합 설정하기', FilterModule.showSettings.bind(FilterModule));
     GM_registerMenuCommand('차단 유저 관리', PersonalBlockModule.createManagementPanel.bind(PersonalBlockModule));
+    GM_registerMenuCommand('플로팅 버튼 원위치', PersonalBlockModule.resetFabPosition.bind(PersonalBlockModule));
+    GM_registerMenuCommand('메뉴 버튼 크기 조절', PersonalBlockModule.showFabScalePanel.bind(PersonalBlockModule));
 
     async function reloadShortcutKey() {
         const shortcutString = await GM_getValue(FilterModule.CONSTANTS.STORAGE_KEYS.SHORTCUT_KEY, 'Shift+S');
@@ -3984,7 +4374,7 @@ const FilterModule = {
         if (__dcufRoot.__dcufPcFilterPortInitialized) return;
         __dcufRoot.__dcufPcFilterPortInitialized = true;
 
-        console.log('[DCUF PC] Initializing filter port v1.9.2...');
+        console.log('[DCUF PC] Initializing filter port v1.9.3...');
 
         observeDarkMode();
         await reloadShortcutKey();
