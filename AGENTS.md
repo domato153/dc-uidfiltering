@@ -12,10 +12,10 @@
 - Treat `src/runtime/bootstrap.js`, `src/targets/mobile/filter-module.js`, and `src/targets/mobile/personal-block-module.js` as cross-target inputs. Do not place mobile-only UI changes in them unless PC should receive the behavior.
 
 ## Build and release
-- Ordinary source edits do not change versions or create release artifacts unless the user explicitly asks for a build, beta, release, or promotion.
-- After mobile runtime changes requested for build, run `node tools/build-userscript.mjs`.
-- After PC runtime changes requested for build, run `node tools/build-pc-filter-userscript.mjs`.
-- For shared filtering, storage, identity extraction, or cross-target input changes requested for build, rebuild both targets unless the PC output is proven unaffected.
+- After ordinary source edits, keep the current version and rebuild the affected target artifacts by default. Only bump versions, start a new beta, promote, push, or publish when the user explicitly requests it.
+- After mobile runtime changes, run `node tools/build-userscript.mjs`.
+- After PC runtime changes, run `node tools/build-pc-filter-userscript.mjs`.
+- For shared filtering, storage, identity extraction, or cross-target input changes, rebuild both targets unless the PC output is proven unaffected.
 - After builds, run `node tools/verify-repo.mjs release`. For guidance-only changes, run `node tools/verify-repo.mjs guidance`; run `all` when both surfaces changed.
 - Run only Testbed `--group`/`--filter` selections covering changed surfaces. Use the full suite only when impact cannot be isolated or the user asks. Run bfcache only for lifecycle work. A stable promotion may reuse the recorded beta Testbed result when the runtime source is unchanged, the only artifact change is the version suffix, and live beta use has been confirmed; record the skip basis instead of rerunning.
 - Never repair source/build divergence by editing generated userscripts.
@@ -27,8 +27,10 @@
 
 ## Git publishing
 - `origin` is `https://github.com/domato153/dc-uidfiltering.git`. Intermediate checkpoints may push only `codex/*`; never update official branches during beta or review.
+- Commit verified beta/review builds locally by default; push them only when the user explicitly requests a checkpoint.
 - `origin/Mobile` owns the stable mobile file `Dc_UserFilter_Mobile.user.js`. `origin/main` owns the stable PC file `dcinside_user_filter.user.js` plus website assets.
 - For stable release, use a clean target-branch worktree, replace only its canonical userscript, preserve history, and push without force. Never merge the source branch wholesale.
+- After the user confirms live beta use and requests full stable publication, push the affected official branches, create the matching GitHub Release, and attach the affected canonical userscript files.
 
 ## Fragile contracts
 - Preserve existing GM storage keys and data shapes. Add migration or compatible fallback when semantics must change.

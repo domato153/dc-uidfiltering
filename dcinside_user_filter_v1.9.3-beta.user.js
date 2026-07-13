@@ -833,16 +833,16 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             position: fixed;
             z-index: 2147483640;
             width: max-content;
-            height: 38px;
+            height: 76px;
             overflow: visible;
         }
         #dc-personal-block-fab {
             box-sizing: border-box;
             appearance: none;
             width: auto !important;
-            min-width: 76px;
-            height: 38px;
-            padding: 0 10px;
+            min-width: 152px !important;
+            height: 76px !important;
+            padding: 0 28px;
             background: linear-gradient(180deg, #fbfcfe 0%, #f1f4f8 100%) !important;
             color: #4d5e76;
             border-radius: 999px;
@@ -852,7 +852,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             align-items: center;
             justify-content: center;
             text-align: center;
-            font-size: 15px;
+            font-size: 28px !important;
             font-weight: 800;
             letter-spacing: -0.03em;
             line-height: 1;

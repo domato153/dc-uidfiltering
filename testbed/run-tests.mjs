@@ -352,6 +352,17 @@ test('플로팅 메뉴 서랍과 원위치 복구가 안전하게 동작한다',
 
         const fab = session.page.locator('#dc-personal-block-fab');
         const drawer = session.page.locator('#dc-personal-block-drawer');
+        const fabTapTarget = await fab.evaluate((element) => {
+            const rect = element.getBoundingClientRect();
+            return {
+                width: Math.round(rect.width),
+                height: Math.round(rect.height),
+                fontSize: parseFloat(getComputedStyle(element).fontSize)
+            };
+        });
+        assert.equal(fabTapTarget.width >= 152, true, `FAB width: ${fabTapTarget.width}`);
+        assert.equal(fabTapTarget.height >= 76, true, `FAB height: ${fabTapTarget.height}`);
+        assert.equal(fabTapTarget.fontSize >= 28, true, `FAB font size: ${fabTapTarget.fontSize}`);
         await fab.click();
         assert.equal(await fab.getAttribute('aria-expanded'), 'true');
         assert.equal(await drawer.isVisible(), true);
