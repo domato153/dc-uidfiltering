@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         DC_UserFilter_Mobile
 // @namespace    http://tampermonkey.net/
-// @version      3.3.8
+// @version      3.3.9
 // @description  유저 필터링, UI 개선, 개인 차단/해제 기능
 // @author       domato153
 // @match        https://gall.dcinside.com/*
@@ -2221,6 +2221,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         #dc-selection-popup,
         #dc-backup-popup,
         #dc-block-management-panel {
+            box-sizing: border-box !important;
             border: 1px solid #d9dee7 !important;
             border-radius: 14px !important;
             box-shadow: 0 18px 42px rgba(26, 39, 60, 0.18) !important;
@@ -4440,7 +4441,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         async init() {
             if (isInitialized) return; isInitialized = true;
             this.installDebugApi();
-            this.debugLog('init', 'FilterModule init start', { version: '3.3.8' });
+            this.debugLog('init', 'FilterModule init start', { version: '3.3.9' });
             await this.cleanupLegacyManagedBlockConfig();
             await this.reloadSettings();
             if (this.DEBUG_ENABLED) await this.debugDumpState('after init reload');
@@ -4975,6 +4976,8 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             let startDistance = 0;
             let startWidth = 0;
             let startHeight = 0;
+            let startAnchorX = 0.5;
+            let startAnchorY = 0.5;
             let lastMoveTs = 0;
             let lastMoveDistance = -1;
 
@@ -4985,11 +4988,19 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
             const normalizeFixedPosition = () => {
                 const rect = target.getBoundingClientRect();
-                if (target.style.transform && target.style.transform !== 'none') {
-                    target.style.transform = 'none';
-                    target.style.left = `${rect.left}px`;
-                    target.style.top = `${rect.top}px`;
+                const computedStyle = window.getComputedStyle(target);
+                if (computedStyle.transform && computedStyle.transform !== 'none') {
+                    target.style.setProperty('transform', 'none', 'important');
+                    target.style.setProperty('left', `${rect.left}px`, 'important');
+                    target.style.setProperty('top', `${rect.top}px`, 'important');
                 }
+
+                // Pinch geometry is calculated from the border box. Keep the CSS sizing
+                // model and the runtime dimensions in the same coordinate space so that
+                // padded popups do not grow or jump on the first move.
+                target.style.setProperty('box-sizing', 'border-box', 'important');
+                target.style.setProperty('width', `${rect.width}px`, 'important');
+                target.style.setProperty('height', `${rect.height}px`, 'important');
                 return target.getBoundingClientRect();
             };
 
@@ -5020,6 +5031,9 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 startDistance = distance;
                 startWidth = rect.width;
                 startHeight = rect.height;
+                const midpoint = getMidpoint(touches[0], touches[1]);
+                startAnchorX = rect.width > 0 ? clamp((midpoint.x - rect.left) / rect.width, 0, 1) : 0.5;
+                startAnchorY = rect.height > 0 ? clamp((midpoint.y - rect.top) / rect.height, 0, 1) : 0.5;
                 lastMoveTs = 0;
                 lastMoveDistance = -1;
             };
@@ -5066,19 +5080,30 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 const maxWidth = Math.max(dynamicMinWidth, configuredMaxWidth);
                 const maxHeight = Math.max(dynamicMinHeight, configuredMaxHeight);
 
-                const scale = distance / startDistance;
-                const nextWidth = clamp(startWidth * scale, dynamicMinWidth, maxWidth);
-                const nextHeight = clamp(startHeight * scale, dynamicMinHeight, maxHeight);
+                const requestedScale = distance / startDistance;
+                const minScale = Math.min(1, Math.max(dynamicMinWidth / startWidth, dynamicMinHeight / startHeight));
+                const maxScale = Math.max(1, Math.min(maxWidth / startWidth, maxHeight / startHeight));
+                const scale = clamp(requestedScale, minScale, maxScale);
+                const nextWidth = startWidth * scale;
+                const nextHeight = startHeight * scale;
 
-                const rawLeft = mid.x - (nextWidth / 2);
-                const rawTop = mid.y - (nextHeight / 2);
-                const nextLeft = clamp(rawLeft, 0, Math.max(0, vp.width - nextWidth));
-                const nextTop = clamp(rawTop, 0, Math.max(0, vp.height - nextHeight));
+                const rawLeft = mid.x - (nextWidth * startAnchorX);
+                const rawTop = mid.y - (nextHeight * startAnchorY);
+                const viewportGap = 4;
+                const nextLeft = clamp(rawLeft, viewportGap, Math.max(viewportGap, vp.width - nextWidth - viewportGap));
+                const nextTop = clamp(rawTop, viewportGap, Math.max(viewportGap, vp.height - nextHeight - viewportGap));
 
-                target.style.width = `${nextWidth}px`;
-                target.style.height = `${nextHeight}px`;
-                target.style.left = `${nextLeft}px`;
-                target.style.top = `${nextTop}px`;
+                // The centered settings/backup popups have responsive !important width,
+                // max-width, and min-height rules. Override those constraints only after
+                // an explicit pinch starts so the rendered box matches these calculations.
+                target.style.setProperty('min-width', `${dynamicMinWidth}px`, 'important');
+                target.style.setProperty('min-height', `${dynamicMinHeight}px`, 'important');
+                target.style.setProperty('max-width', `${maxWidth}px`, 'important');
+                target.style.setProperty('max-height', `${maxHeight}px`, 'important');
+                target.style.setProperty('width', `${nextWidth}px`, 'important');
+                target.style.setProperty('height', `${nextHeight}px`, 'important');
+                target.style.setProperty('left', `${nextLeft}px`, 'important');
+                target.style.setProperty('top', `${nextTop}px`, 'important');
 
                 if (e.cancelable) e.preventDefault();
                 e.stopPropagation();
@@ -8426,7 +8451,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
         return {
             reason,
-            version: '3.3.8',
+            version: '3.3.9',
             time: new Date().toISOString(),
             href: location.href,
             heap: getDcufHeapMb(),
@@ -8627,7 +8652,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 commentInitState: { reason: 'already-initialized' }
             };
         }
-        console.log("[DC Filter+UI] Initializing v3.3.8...");
+        console.log("[DC Filter+UI] Initializing v3.3.9...");
 
 
         // [수정] main 함수에서 reloadShortcutKey 함수를 호출하여 초기화
