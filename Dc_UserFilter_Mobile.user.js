@@ -1,7 +1,7 @@
-﻿// ==UserScript==
+// ==UserScript==
 // @name         DC_UserFilter_Mobile
 // @namespace    http://tampermonkey.net/
-// @version      3.3.9
+// @version      3.4.0
 // @description  유저 필터링, UI 개선, 개인 차단/해제 기능
 // @author       domato153
 // @match        https://gall.dcinside.com/*
@@ -4441,7 +4441,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         async init() {
             if (isInitialized) return; isInitialized = true;
             this.installDebugApi();
-            this.debugLog('init', 'FilterModule init start', { version: '3.3.9' });
+            this.debugLog('init', 'FilterModule init start', { version: '3.3.10-beta' });
             await this.cleanupLegacyManagedBlockConfig();
             await this.reloadSettings();
             if (this.DEBUG_ENABLED) await this.debugDumpState('after init reload');
@@ -7829,6 +7829,11 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
             const writeBox = document.querySelector('.write_box');
             const writeForm = writeBox?.querySelector('form#write') || document.querySelector('form#write');
+            const leaveConfirm = writeForm?.querySelector('#leave_confirm_box');
+            if (leaveConfirm instanceof HTMLElement) {
+                leaveConfirm.classList.add('dcuf-write-leave-confirm');
+                document.body.appendChild(leaveConfirm);
+            }
             const gallType = writeForm?.querySelector('input[name="_GALLTYPE_"]')?.value || '';
             const isMinorWrite = gallType.toUpperCase() === 'M'
                 || document.querySelector('#container.minor_write') instanceof Element
@@ -8451,7 +8456,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
         return {
             reason,
-            version: '3.3.9',
+            version: '3.3.10-beta',
             time: new Date().toISOString(),
             href: location.href,
             heap: getDcufHeapMb(),
@@ -8652,7 +8657,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 commentInitState: { reason: 'already-initialized' }
             };
         }
-        console.log("[DC Filter+UI] Initializing v3.3.9...");
+        console.log("[DC Filter+UI] Initializing v3.3.10-beta...");
 
 
         // [수정] main 함수에서 reloadShortcutKey 함수를 호출하여 초기화
@@ -14866,9 +14871,15 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             background: #f7faff !important;
         }
         body.is-write-page form#write .btn_bottom_box,
+        body.is-write-page form#write .btm-btns-box {
+            position: static !important;
+        }
+        body.is-write-page form#write > .btn_box.write {
+            position: relative !important;
+        }
+        body.is-write-page form#write .btn_bottom_box,
         body.is-write-page form#write .btm-btns-box,
         body.is-write-page form#write > .btn_box.write {
-            position: static !important;
             clear: both !important;
             float: none !important;
             transform: none !important;
@@ -14902,6 +14913,197 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             background: linear-gradient(180deg, #426fe4 0%, #245bda 100%) !important;
             color: #fff !important;
             box-shadow: 0 6px 14px rgba(36, 91, 218, 0.24) !important;
+        }
+        body.is-write-page > #leave_confirm_box.dcuf-write-leave-confirm {
+            box-sizing: border-box !important;
+            position: fixed !important;
+            inset: 50% auto auto 50% !important;
+            width: min(420px, calc(100vw - 32px)) !important;
+            min-width: 0 !important;
+            max-width: calc(100vw - 32px) !important;
+            height: auto !important;
+            min-height: 0 !important;
+            max-height: calc(100dvh - 32px) !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            border: 1px solid var(--dcuf-write-border-strong) !important;
+            border-radius: 16px !important;
+            background: var(--dcuf-write-surface) !important;
+            color: var(--dcuf-write-fg) !important;
+            transform: translate(-50%, -50%) !important;
+            overflow: hidden auto !important;
+            z-index: 2147483646 !important;
+            box-shadow: 0 20px 54px rgba(15, 28, 52, 0.28), 0 0 0 100vmax rgba(15, 23, 42, 0.28) !important;
+            isolation: isolate !important;
+            pointer-events: auto !important;
+            animation: none !important;
+            transition: none !important;
+        }
+        body.is-write-page > #leave_confirm_box.dcuf-write-leave-confirm .pop_content.write_ly {
+            box-sizing: border-box !important;
+            position: relative !important;
+            width: 100% !important;
+            min-width: 0 !important;
+            height: auto !important;
+            min-height: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            border: 0 !important;
+            background: var(--dcuf-write-surface) !important;
+            color: var(--dcuf-write-fg) !important;
+        }
+        body.is-write-page > #leave_confirm_box.dcuf-write-leave-confirm .pop_head.bg {
+            box-sizing: border-box !important;
+            display: flex !important;
+            align-items: center !important;
+            width: 100% !important;
+            height: 52px !important;
+            margin: 0 !important;
+            padding: 0 56px 0 18px !important;
+            border: 0 !important;
+            border-radius: 15px 15px 0 0 !important;
+            background: linear-gradient(135deg, #3f6de0 0%, #2d57bd 100%) !important;
+        }
+        body.is-write-page > #leave_confirm_box.dcuf-write-leave-confirm .pop_head.bg h3 {
+            margin: 0 !important;
+            padding: 0 !important;
+            color: #fff !important;
+            font-size: 17px !important;
+            font-weight: 700 !important;
+            line-height: 1.2 !important;
+        }
+        body.is-write-page > #leave_confirm_box.dcuf-write-leave-confirm .write_cont {
+            box-sizing: border-box !important;
+            width: 100% !important;
+            min-width: 0 !important;
+            margin: 0 !important;
+            padding: 28px 24px 24px !important;
+            background: var(--dcuf-write-surface) !important;
+            color: var(--dcuf-write-fg) !important;
+            text-align: center !important;
+        }
+        body.is-write-page > #leave_confirm_box.dcuf-write-leave-confirm .write_cont > .txt {
+            margin: 0 !important;
+            padding: 0 !important;
+            color: var(--dcuf-write-fg) !important;
+            font-size: 16px !important;
+            font-weight: 600 !important;
+            line-height: 1.5 !important;
+        }
+        body.is-write-page > #leave_confirm_box.dcuf-write-leave-confirm .write_cont > .btn_box {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            position: static !important;
+            width: 100% !important;
+            height: auto !important;
+            margin: 20px 0 0 !important;
+            padding: 0 !important;
+            gap: 10px !important;
+            float: none !important;
+        }
+        body.is-write-page > #leave_confirm_box.dcuf-write-leave-confirm .write_cont > .btn_box > button {
+            box-sizing: border-box !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            flex: 1 1 0 !important;
+            width: auto !important;
+            max-width: 132px !important;
+            min-width: 0 !important;
+            min-height: 44px !important;
+            margin: 0 !important;
+            padding: 0 16px !important;
+            border: 1px solid var(--dcuf-write-border-strong) !important;
+            border-radius: 10px !important;
+            background: var(--dcuf-write-surface-muted) !important;
+            color: var(--dcuf-write-fg) !important;
+            font-size: 15px !important;
+            font-weight: 700 !important;
+            line-height: 1 !important;
+            box-shadow: none !important;
+            cursor: pointer !important;
+        }
+        body.is-write-page > #leave_confirm_box.dcuf-write-leave-confirm .write_cont > .btn_box > .btn_blue {
+            border-color: var(--dcuf-write-accent-strong) !important;
+            background: linear-gradient(180deg, #426fe4 0%, #245bda 100%) !important;
+            color: #fff !important;
+            box-shadow: 0 6px 14px rgba(36, 91, 218, 0.22) !important;
+        }
+        body.is-write-page > #leave_confirm_box.dcuf-write-leave-confirm .pop_content.write_ly > .poply_whiteclose {
+            box-sizing: border-box !important;
+            position: absolute !important;
+            inset: 0 0 auto auto !important;
+            width: 52px !important;
+            min-width: 52px !important;
+            height: 52px !important;
+            min-height: 52px !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            border: 0 !important;
+            border-radius: 0 15px 0 0 !important;
+            background: transparent !important;
+            box-shadow: none !important;
+            cursor: pointer !important;
+        }
+        body.is-write-page > #leave_confirm_box.dcuf-write-leave-confirm .pop_content.write_ly > .poply_whiteclose::before,
+        body.is-write-page > #leave_confirm_box.dcuf-write-leave-confirm .pop_content.write_ly > .poply_whiteclose::after {
+            content: '' !important;
+            position: absolute !important;
+            top: 25px !important;
+            left: 15px !important;
+            width: 22px !important;
+            height: 1px !important;
+            border: 0 !important;
+            background: #fff !important;
+            transform: rotate(45deg) !important;
+        }
+        body.is-write-page > #leave_confirm_box.dcuf-write-leave-confirm .pop_content.write_ly > .poply_whiteclose::after {
+            transform: rotate(-45deg) !important;
+        }
+        body.is-write-page > #leave_confirm_box.dcuf-write-leave-confirm .pop_content.write_ly > .poply_whiteclose > em {
+            display: none !important;
+        }
+        body.is-write-page.dc-filter-dark-mode > #leave_confirm_box.dcuf-write-leave-confirm {
+            border-color: var(--dcuf-write-border) !important;
+            background: var(--dcuf-write-surface) !important;
+            box-shadow: 0 22px 58px rgba(0, 0, 0, 0.48), 0 0 0 100vmax rgba(0, 0, 0, 0.52) !important;
+        }
+        body.is-write-page.dc-filter-dark-mode > #leave_confirm_box.dcuf-write-leave-confirm .write_cont > .btn_box > button:not(.btn_blue) {
+            border-color: #40526b !important;
+            background: #233044 !important;
+            color: #edf3ff !important;
+        }
+        @media screen and (max-width: 480px) {
+            body.is-write-page > #leave_confirm_box.dcuf-write-leave-confirm {
+                width: calc(100vw - 24px) !important;
+                max-width: calc(100vw - 24px) !important;
+                border-radius: 14px !important;
+            }
+            body.is-write-page > #leave_confirm_box.dcuf-write-leave-confirm .pop_head.bg {
+                height: 48px !important;
+                padding: 0 52px 0 16px !important;
+                border-radius: 13px 13px 0 0 !important;
+            }
+            body.is-write-page > #leave_confirm_box.dcuf-write-leave-confirm .write_cont {
+                padding: 24px 16px 18px !important;
+            }
+            body.is-write-page > #leave_confirm_box.dcuf-write-leave-confirm .write_cont > .btn_box {
+                margin-top: 18px !important;
+            }
+            body.is-write-page > #leave_confirm_box.dcuf-write-leave-confirm .pop_content.write_ly > .poply_whiteclose {
+                width: 48px !important;
+                min-width: 48px !important;
+                height: 48px !important;
+                min-height: 48px !important;
+                border-radius: 0 13px 0 0 !important;
+            }
+            body.is-write-page > #leave_confirm_box.dcuf-write-leave-confirm .pop_content.write_ly > .poply_whiteclose::before,
+            body.is-write-page > #leave_confirm_box.dcuf-write-leave-confirm .pop_content.write_ly > .poply_whiteclose::after {
+                top: 23px !important;
+                left: 14px !important;
+                width: 20px !important;
+            }
         }
         body.is-write-page.dc-filter-dark-mode form#write,
         body.is-write-page.dc-filter-dark-mode form#write .write_subject,
