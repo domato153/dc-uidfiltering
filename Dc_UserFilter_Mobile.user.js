@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         DC_UserFilter_Mobile
 // @namespace    http://tampermonkey.net/
-// @version      3.4.2
+// @version      3.4.3
 // @description  유저 필터링, UI 개선, 개인 차단/해제 기능
 // @author       domato153
 // @match        https://gall.dcinside.com/*
@@ -2631,7 +2631,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             }
         }
 
-        /* [v3.4.2] Script-owned soft-depth control surfaces */
+        /* [v3.4.3] Script-owned soft-depth control surfaces */
         #dc-personal-block-fab {
             background: linear-gradient(180deg, #fff 0%, #eef4ff 100%) !important;
             color: #29466f !important;
@@ -5243,7 +5243,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         async init() {
             if (isInitialized) return; isInitialized = true;
             this.installDebugApi();
-            this.debugLog('init', 'FilterModule init start', { version: '3.4.2' });
+            this.debugLog('init', 'FilterModule init start', { version: '3.4.3' });
             await this.cleanupLegacyManagedBlockConfig();
             await this.reloadSettings();
             if (this.DEBUG_ENABLED) await this.debugDumpState('after init reload');
@@ -9551,7 +9551,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
         return {
             reason,
-            version: '3.4.2',
+            version: '3.4.3',
             time: new Date().toISOString(),
             href: location.href,
             heap: getDcufHeapMb(),
@@ -9752,7 +9752,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 commentInitState: { reason: 'already-initialized' }
             };
         }
-        console.log("[DC Filter+UI] Initializing v3.4.2...");
+        console.log("[DC Filter+UI] Initializing v3.4.3...");
 
 
         // [수정] main 함수에서 reloadShortcutKey 함수를 호출하여 초기화
@@ -14241,6 +14241,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         '.power_link',
         '.power_link .pwlink_list',
         '.power_link .pwlink_img_list',
+        '.view_content_wrap div:has(> ins.adsbygoogle[data-ad-client][data-ad-slot])',
         '.view_content_wrap #ad_nv_slot',
         '.gallview_contents #ad_nv_slot',
         '.writing_view_box #ad_nv_slot',
@@ -14285,6 +14286,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         .power_link,
         .power_link .pwlink_list,
         .power_link .pwlink_img_list,
+        .view_content_wrap div:has(> ins.adsbygoogle[data-ad-client][data-ad-slot]),
         .wrap_inner > div:has(> script[src*="/dcinside/pc/list@right_wing_"]),
         .view_content_wrap #ad_nv_slot,
         .gallview_contents #ad_nv_slot,
