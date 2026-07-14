@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="디시인사이드 깡계·유동·IP 차단과 모바일 UI를 제공하는 Tampermonkey 사용자 스크립트">
   <title>DCInside User Filter</title>
-  <link rel="stylesheet" href="style.css?v=20260713-install4">
+  <link rel="stylesheet" href="style.css?v=20260714-ui341">
 </head>
 <body>
   <header class="site-header">
@@ -96,43 +96,43 @@
         <div class="section-heading light">
           <p class="eyebrow">SCREENSHOTS</p>
           <h2>실제 사용 화면</h2>
-          <p>글 목록부터 본문과 댓글, 글 작성, 필터와 차단 관리까지 Lemur Browser에서 실행한 실제 화면입니다. 이미지를 누르면 원본 크기로 볼 수 있습니다.</p>
+          <p>3.4.1의 글 목록부터 본문과 댓글, 글 작성, 필터와 직접 차단·목록 관리까지 Lemur Browser에서 실행한 실제 화면입니다. 이미지를 누르면 원본 크기로 볼 수 있습니다.</p>
         </div>
         <div class="screen-grid">
           <figure class="screen-card">
-            <a class="image-frame mobile-frame" href="assets/mobile-list.jpg"><img src="assets/mobile-list.jpg" alt="모바일 갤러리 글 목록"></a>
+            <a class="image-frame mobile-frame" href="assets/mobile-list-3.4.1.jpg"><img src="assets/mobile-list-3.4.1.jpg" alt="모바일 갤러리 글 목록"></a>
             <figcaption><strong>글 리스트</strong><span>게시글을 작은 화면에 맞춘 카드형 목록으로 표시</span></figcaption>
           </figure>
           <figure class="screen-card">
-            <a class="image-frame mobile-frame" href="assets/mobile-view.jpg"><img src="assets/mobile-view.jpg" alt="모바일 게시글 본문과 댓글"></a>
+            <a class="image-frame mobile-frame" href="assets/mobile-view-3.4.1.jpg"><img src="assets/mobile-view-3.4.1.jpg" alt="모바일 게시글 본문과 댓글"></a>
             <figcaption><strong>글 내용</strong><span>본문, 추천 영역과 댓글을 모바일 화면에 맞게 정리</span></figcaption>
           </figure>
           <figure class="screen-card">
-            <a class="image-frame mobile-frame" href="assets/mobile-write.jpg"><img src="assets/mobile-write.jpg" alt="모바일 글 작성 화면"></a>
+            <a class="image-frame mobile-frame" href="assets/mobile-write-3.4.1.jpg"><img src="assets/mobile-write-3.4.1.jpg" alt="모바일 글 작성 화면"></a>
             <figcaption><strong>글 작성</strong><span>입력 필드, 첨부 도구와 등록 버튼을 터치하기 쉽게 배치</span></figcaption>
           </figure>
           <figure class="screen-card">
-            <a class="image-frame" href="assets/filter-settings-index.png"><img src="assets/filter-settings-index.png" alt="필터 설정 화면"></a>
+            <a class="image-frame" href="assets/filter-settings-3.4.1.jpg"><img src="assets/filter-settings-3.4.1.jpg" alt="필터 설정 화면"></a>
             <figcaption><strong>필터 설정</strong><span>활동량, 비율, 유동과 IP 차단 설정</span></figcaption>
           </figure>
           <figure class="screen-card">
-            <a class="image-frame" href="assets/quick-block.jpg"><img src="assets/quick-block.jpg" alt="간편차단 화면"></a>
-            <figcaption><strong>간편차단</strong><span>작성자의 닉네임과 식별번호를 선택해 차단</span></figcaption>
+            <a class="image-frame" href="assets/direct-block-3.4.1.jpg"><img src="assets/direct-block-3.4.1.jpg" alt="직접 차단 화면"></a>
+            <figcaption><strong>직접 차단</strong><span>닉네임·식별번호·IP를 입력해 바로 차단</span></figcaption>
           </figure>
           <figure class="screen-card">
-            <a class="image-frame mobile-frame" href="assets/block-management.jpg"><img src="assets/block-management.jpg" alt="차단 유저 관리"></a>
+            <a class="image-frame mobile-frame" href="assets/block-management-3.4.1.jpg"><img src="assets/block-management-3.4.1.jpg" alt="차단 유저 관리"></a>
             <figcaption><strong>차단 유저 관리</strong><span>UID·닉네임·IP 목록을 탭으로 관리</span></figcaption>
           </figure>
           <figure class="screen-card">
-            <a class="image-frame mobile-frame" href="assets/backup-restore.jpg"><img src="assets/backup-restore.jpg" alt="차단 목록 백업과 복원"></a>
+            <a class="image-frame mobile-frame" href="assets/backup-restore-3.4.1.jpg"><img src="assets/backup-restore-3.4.1.jpg" alt="차단 목록 백업과 복원"></a>
             <figcaption><strong>백업·복원</strong><span>파일 다운로드, 클립보드 복사와 목록 불러오기</span></figcaption>
           </figure>
           <figure class="screen-card">
-            <a class="image-frame" href="assets/menu-size.jpg"><img src="assets/menu-size.jpg" alt="메뉴 버튼 크기 조절"></a>
-            <figcaption><strong>메뉴 버튼 크기</strong><span>플로팅 버튼과 글자 크기를 같은 비율로 조절</span></figcaption>
+            <a class="image-frame" href="assets/floating-menu-3.4.1.jpg"><img src="assets/floating-menu-3.4.1.jpg" alt="플로팅 메뉴"></a>
+            <figcaption><strong>플로팅 메뉴</strong><span>간편차단, 직접 차단, 필터 설정과 차단 관리 진입</span></figcaption>
           </figure>
           <figure class="screen-card">
-            <a class="image-frame" href="assets/tampermonkey-menu.jpg"><img src="assets/tampermonkey-menu.jpg" alt="Tampermonkey 스크립트 메뉴"></a>
+            <a class="image-frame compact-frame" href="assets/tampermonkey-menu-3.4.1.png"><img src="assets/tampermonkey-menu-3.4.1.png" alt="Tampermonkey 스크립트 메뉴"></a>
             <figcaption><strong>Tampermonkey 메뉴</strong><span>설정, 차단 관리, 버튼 위치와 크기 메뉴</span></figcaption>
           </figure>
         </div>

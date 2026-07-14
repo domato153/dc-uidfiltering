@@ -60,35 +60,35 @@
 ### 글 리스트, 글 내용, 글 작성
 
 <p align="center">
-  <img src="assets/mobile-list.jpg" width="300" alt="모바일 카드형 갤러리 글 목록">
-  <img src="assets/mobile-view.jpg" width="300" alt="모바일 게시글 본문과 댓글 화면">
-  <img src="assets/mobile-write.jpg" width="300" alt="모바일 글 작성 화면">
+  <img src="assets/mobile-list-3.4.1.jpg" width="300" alt="모바일 카드형 갤러리 글 목록">
+  <img src="assets/mobile-view-3.4.1.jpg" width="300" alt="모바일 게시글 본문과 댓글 화면">
+  <img src="assets/mobile-write-3.4.1.jpg" width="300" alt="모바일 글 작성 화면">
 </p>
 
 ### 필터 설정
 
 <p align="center">
-  <img src="assets/filter-settings-index.png" width="560" alt="글댓합, 비율, 유동과 IP 차단 설정 화면">
+  <img src="assets/filter-settings-3.4.1.jpg" width="560" alt="글댓합, 비율, 유동과 IP 차단 설정 화면">
 </p>
 
-### 모바일 메뉴와 크기 조절
+### 모바일 메뉴와 Tampermonkey 메뉴
 
 <p align="center">
-  <img src="assets/tampermonkey-menu.jpg" width="620" alt="Tampermonkey의 DC UserFilter Mobile 메뉴">
-  <img src="assets/menu-size.jpg" width="420" alt="플로팅 메뉴 버튼 크기 조절 화면">
+  <img src="assets/floating-menu-3.4.1.jpg" width="420" alt="3.4.1 플로팅 메뉴 화면">
+  <img src="assets/tampermonkey-menu-3.4.1.png" width="360" alt="Tampermonkey의 DC UserFilter Mobile 메뉴">
 </p>
 
-### 간편차단과 차단 목록 관리
+### 직접 차단과 차단 목록 관리
 
 <p align="center">
-  <img src="assets/quick-block.jpg" width="480" alt="닉네임과 식별번호를 선택하는 간편차단 화면">
-  <img src="assets/block-management.jpg" width="390" alt="식별번호, 닉네임, IP 차단 유저 관리 화면">
+  <img src="assets/direct-block-3.4.1.jpg" width="480" alt="닉네임, 식별번호, IP를 입력하는 직접 차단 화면">
+  <img src="assets/block-management-3.4.1.jpg" width="390" alt="식별번호, 닉네임, IP 차단 유저 관리 화면">
 </p>
 
 ### 차단 목록 백업과 복원
 
 <p align="center">
-  <img src="assets/backup-restore.jpg" width="420" alt="차단 목록 파일 다운로드, 클립보드 복사와 불러오기 화면">
+  <img src="assets/backup-restore-3.4.1.jpg" width="420" alt="차단 목록 파일 다운로드, 클립보드 복사와 불러오기 화면">
 </p>
 
 ## 설치 방법
