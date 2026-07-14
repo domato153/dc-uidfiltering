@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         DC_UserFilter_Mobile
 // @namespace    http://tampermonkey.net/
-// @version      3.4.1
+// @version      3.4.2
 // @description  유저 필터링, UI 개선, 개인 차단/해제 기능
 // @author       domato153
 // @match        https://gall.dcinside.com/*
@@ -2631,7 +2631,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             }
         }
 
-        /* [v3.4.1] Script-owned soft-depth control surfaces */
+        /* [v3.4.2] Script-owned soft-depth control surfaces */
         #dc-personal-block-fab {
             background: linear-gradient(180deg, #fff 0%, #eef4ff 100%) !important;
             color: #29466f !important;
@@ -5243,7 +5243,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         async init() {
             if (isInitialized) return; isInitialized = true;
             this.installDebugApi();
-            this.debugLog('init', 'FilterModule init start', { version: '3.4.1' });
+            this.debugLog('init', 'FilterModule init start', { version: '3.4.2' });
             await this.cleanupLegacyManagedBlockConfig();
             await this.reloadSettings();
             if (this.DEBUG_ENABLED) await this.debugDumpState('after init reload');
@@ -8753,13 +8753,20 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         isArticleNativeAdFrame(frame) {
             if (!(frame instanceof HTMLIFrameElement)) return false;
 
+            const frameId = frame.id || '';
+            const frameName = frame.name || '';
+            const frameSrc = frame.getAttribute('src') || '';
             const signature = [
-                frame.id,
-                frame.name,
+                frameId,
+                frameName,
                 frame.title,
                 frame.className,
-                frame.getAttribute('src') || ''
+                frameSrc
             ].join(' ');
+
+            const isGoogleArticleSafeFrame = (/^aswift_\d+$/i.test(frameId) || /^aswift_\d+$/i.test(frameName))
+                && /googleads\.g\.doubleclick\.net\/pagead\/ads/i.test(frameSrc);
+            if (isGoogleArticleSafeFrame) return true;
 
             if (/google_ads_iframe_|gfp|pstatic\.net\/tvetalibs|tivan\.naver\.com/i.test(signature)) {
                 return true;
@@ -8798,7 +8805,10 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 .writing_view_box iframe[id*="gfp"],
                 .writing_view_box iframe[name*="gfp"],
                 .writing_view_box iframe[src*="pstatic.net/tvetalibs"],
-                .writing_view_box iframe[src*="tivan.naver.com"] {
+                .writing_view_box iframe[src*="tivan.naver.com"],
+                .gallview_contents iframe[id^="aswift_"][src*="googleads.g.doubleclick.net/pagead/ads"],
+                .writing_view_box iframe[id^="aswift_"][src*="googleads.g.doubleclick.net/pagead/ads"],
+                .view_content_wrap iframe[id^="aswift_"][src*="googleads.g.doubleclick.net/pagead/ads"] {
                     display: none !important;
                     width: 0 !important;
                     height: 0 !important;
@@ -9541,7 +9551,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
         return {
             reason,
-            version: '3.4.1',
+            version: '3.4.2',
             time: new Date().toISOString(),
             href: location.href,
             heap: getDcufHeapMb(),
@@ -9742,7 +9752,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 commentInitState: { reason: 'already-initialized' }
             };
         }
-        console.log("[DC Filter+UI] Initializing v3.4.1...");
+        console.log("[DC Filter+UI] Initializing v3.4.2...");
 
 
         // [수정] main 함수에서 reloadShortcutKey 함수를 호출하여 초기화
@@ -14257,7 +14267,8 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         '.writing_view_box iframe[id*="gfp"]',
         '.writing_view_box iframe[name*="gfp"]',
         '.writing_view_box iframe[src*="pstatic.net/tvetalibs"]',
-        '.writing_view_box iframe[src*="tivan.naver.com"]'
+        '.writing_view_box iframe[src*="tivan.naver.com"]',
+        '.wrap_inner > div:has(> script[src*="/dcinside/pc/list@right_wing_"])'
     ].join(', ');
     const ARTICLE_FRAME_CANDIDATE_SELECTOR = [
         '.gallview_contents iframe',
@@ -14274,6 +14285,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         .power_link,
         .power_link .pwlink_list,
         .power_link .pwlink_img_list,
+        .wrap_inner > div:has(> script[src*="/dcinside/pc/list@right_wing_"]),
         .view_content_wrap #ad_nv_slot,
         .gallview_contents #ad_nv_slot,
         .writing_view_box #ad_nv_slot,
@@ -14300,7 +14312,10 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         .writing_view_box iframe[id*="gfp"],
         .writing_view_box iframe[name*="gfp"],
         .writing_view_box iframe[src*="pstatic.net/tvetalibs"],
-        .writing_view_box iframe[src*="tivan.naver.com"] {
+        .writing_view_box iframe[src*="tivan.naver.com"],
+        .gallview_contents iframe[id^="aswift_"][src*="googleads.g.doubleclick.net/pagead/ads"],
+        .writing_view_box iframe[id^="aswift_"][src*="googleads.g.doubleclick.net/pagead/ads"],
+        .view_content_wrap iframe[id^="aswift_"][src*="googleads.g.doubleclick.net/pagead/ads"] {
             display: none !important;
             width: 0 !important;
             height: 0 !important;
@@ -14352,13 +14367,19 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
     const isArticleNativeAdFrame = (frame) => {
         if (!(frame instanceof HTMLIFrameElement)) return false;
+        const frameId = frame.id || '';
+        const frameName = frame.name || '';
+        const frameSrc = frame.getAttribute('src') || '';
         const signature = [
-            frame.id,
-            frame.name,
+            frameId,
+            frameName,
             frame.title,
             frame.className,
-            frame.getAttribute('src') || ''
+            frameSrc
         ].join(' ');
+        const isGoogleArticleSafeFrame = (/^aswift_\d+$/i.test(frameId) || /^aswift_\d+$/i.test(frameName))
+            && /googleads\.g\.doubleclick\.net\/pagead\/ads/i.test(frameSrc);
+        if (isGoogleArticleSafeFrame) return true;
         if (/google_ads_iframe_|gfp|pstatic\.net\/tvetalibs|tivan\.naver\.com/i.test(signature)) return true;
 
         try {
@@ -14404,6 +14425,10 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             return element.closest('.view_ad_wrap, div[id^="foin_"], div[id^="kakao_ad_"], .cm_ad') || element;
         }
         if (isArticleNativeAdFrame(element)) {
+            const safeFrameHost = element.parentElement;
+            if (safeFrameHost instanceof HTMLElement && /^aswift_\d+_host$/i.test(safeFrameHost.id || '')) {
+                return safeFrameHost;
+            }
             return element.closest('#ad_nv_slot, .view_ad_wrap, .cm_ad') || element;
         }
         const ownedAdWrap = element.closest('#ad_nv_slot, .view_ad_wrap, .power_link');
