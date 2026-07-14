@@ -1,7 +1,7 @@
-// ==UserScript==
+﻿// ==UserScript==
 // @name         DC_UserFilter_Mobile
 // @namespace    http://tampermonkey.net/
-// @version      3.4.0
+// @version      3.4.1
 // @description  유저 필터링, UI 개선, 개인 차단/해제 기능
 // @author       domato153
 // @match        https://gall.dcinside.com/*
@@ -2630,6 +2630,598 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 transition: none !important;
             }
         }
+
+        /* [v3.4.1] Script-owned soft-depth control surfaces */
+        #dc-personal-block-fab {
+            background: linear-gradient(180deg, #fff 0%, #eef4ff 100%) !important;
+            color: #29466f !important;
+            border: 1px solid rgba(127,154,196,.46) !important;
+            box-shadow: 0 14px 30px rgba(40,68,112,.2), 0 3px 8px rgba(40,68,112,.12), inset 0 1px 0 #fff !important;
+        }
+        #dc-personal-block-fab:hover {
+            background: linear-gradient(180deg, #fff 0%, #e7f0ff 100%) !important;
+            border-color: rgba(86,124,185,.56) !important;
+            box-shadow: 0 17px 34px rgba(40,68,112,.24), inset 0 1px 0 #fff !important;
+        }
+        #dc-personal-block-fab:active {
+            transform: translateY(2px) scale(.98) !important;
+            box-shadow: 0 7px 16px rgba(40,68,112,.17), inset 0 1px 3px rgba(40,68,112,.12) !important;
+        }
+        #dc-personal-block-drawer {
+            width: 260px !important;
+            min-width: 260px !important;
+            max-height: min(440px, calc(100dvh - 24px)) !important;
+            gap: 6px !important;
+            padding: 9px !important;
+            overflow-y: auto !important;
+            border: 1px solid rgba(151,171,202,.5) !important;
+            border-radius: 18px !important;
+            background: linear-gradient(145deg, rgba(255,255,255,.98), rgba(241,246,255,.98)) !important;
+            box-shadow: 0 22px 48px rgba(35,55,91,.25), 0 6px 16px rgba(35,55,91,.12), inset 0 1px 0 #fff !important;
+        }
+        #dc-personal-block-drawer button {
+            display: grid !important;
+            grid-template-columns: 36px minmax(0,1fr) !important;
+            align-items: center !important;
+            gap: 10px !important;
+            min-height: 58px !important;
+            padding: 8px 10px !important;
+            border: 1px solid transparent !important;
+            border-radius: 13px !important;
+            white-space: normal !important;
+            transition: transform .14s ease, background .14s ease, border-color .14s ease, box-shadow .14s ease !important;
+        }
+        #dc-personal-block-drawer button:hover,
+        #dc-personal-block-drawer button:focus-visible {
+            background: linear-gradient(180deg,#fff,#eaf2ff) !important;
+            border-color: #cfddf2 !important;
+            box-shadow: 0 7px 16px rgba(52,83,132,.12), inset 0 1px 0 #fff !important;
+        }
+        #dc-personal-block-drawer button:active { transform: translateY(1px) !important; }
+        #dc-personal-block-drawer .dcuf-menu-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 34px;
+            height: 34px;
+            border: 1px solid #cedbf0;
+            border-radius: 11px;
+            background: linear-gradient(145deg,#fff,#e6efff);
+            color: #3b71fd;
+            font-size: 19px;
+            font-weight: 800;
+            box-shadow: 0 5px 11px rgba(59,113,253,.13), inset 0 1px 0 #fff;
+        }
+        #dc-personal-block-drawer button > span:last-child { min-width: 0; }
+        #dc-personal-block-drawer strong,
+        #dc-personal-block-drawer small { display: block; }
+        #dc-personal-block-drawer strong { color: #263b5a; font-size: 14px; line-height: 1.25; }
+        #dc-personal-block-drawer small { margin-top: 3px; color: #71819a; font-size: 11px; font-weight: 500; line-height: 1.25; }
+
+        #dc-manual-block-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 2147483647;
+            box-sizing: border-box;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            background: rgba(20,31,50,.48);
+            backdrop-filter: blur(3px);
+        }
+        #dc-manual-block-panel {
+            box-sizing: border-box;
+            width: min(430px, calc(100vw - 32px));
+            max-height: calc(100dvh - 32px);
+            overflow: hidden auto;
+            border: 1px solid rgba(151,171,202,.56);
+            border-radius: 22px;
+            background: linear-gradient(155deg,#fff,#f3f7ff);
+            color: #20334f;
+            box-shadow: 0 28px 70px rgba(18,34,60,.32), 0 8px 24px rgba(18,34,60,.14), inset 0 1px 0 #fff;
+            animation: dcuf-popup-fade-in .18s ease-out;
+        }
+        #dc-manual-block-panel .dcuf-manual-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            min-height: 68px;
+            padding: 14px 14px 13px 20px;
+            border-bottom: 1px solid #dce5f3;
+            background: linear-gradient(135deg,#eff5ff,#fff);
+        }
+        #dc-manual-block-panel .dcuf-manual-kicker,
+        #dc-block-management-panel .panel-kicker {
+            display: block;
+            margin-bottom: 3px;
+            color: #6684b4;
+            font-size: 9px;
+            font-weight: 900;
+            letter-spacing: .14em;
+        }
+        #dc-manual-block-panel h3 { margin: 0; color: #1f3555; font-size: 20px; line-height: 1.15; }
+        #dc-manual-block-panel .dcuf-manual-close,
+        #dc-block-management-panel .panel-close-btn,
+        #dc-backup-popup .popup-close-btn,
+        #dcinside-filter-setting #dcinside-filter-close {
+            box-sizing: border-box !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            width: 44px !important;
+            min-width: 44px !important;
+            height: 44px !important;
+            min-height: 44px !important;
+            padding: 0 !important;
+            border: 1px solid transparent !important;
+            border-radius: 13px !important;
+            background: transparent !important;
+            color: #61728d !important;
+            font-size: 23px !important;
+            line-height: 1 !important;
+        }
+        #dc-manual-block-panel .dcuf-manual-close:hover,
+        #dc-block-management-panel .panel-close-btn:hover,
+        #dc-backup-popup .popup-close-btn:hover,
+        #dcinside-filter-setting #dcinside-filter-close:hover {
+            border-color: #d8e2f0 !important;
+            background: #edf3fb !important;
+            color: #29405f !important;
+        }
+        #dc-manual-block-panel .dcuf-manual-form { padding: 18px 20px 20px; }
+        #dc-manual-block-panel .dcuf-manual-type-tabs {
+            display: grid;
+            grid-template-columns: repeat(3,1fr);
+            gap: 4px;
+            padding: 4px;
+            border: 1px solid #d6e0ef;
+            border-radius: 14px;
+            background: #eaf0f8;
+            box-shadow: inset 0 2px 5px rgba(48,72,111,.08);
+        }
+        #dc-manual-block-panel [data-manual-block-type] {
+            min-height: 42px;
+            padding: 8px 6px;
+            border: 1px solid transparent;
+            border-radius: 10px;
+            background: transparent;
+            color: #65758d;
+            font: 700 13px/1.2 inherit;
+            cursor: pointer;
+        }
+        #dc-manual-block-panel [data-manual-block-type][aria-pressed="true"] {
+            border-color: #ccdaf0;
+            background: linear-gradient(180deg,#fff,#edf4ff);
+            color: #3265d2;
+            box-shadow: 0 5px 12px rgba(46,81,139,.16), inset 0 1px 0 #fff;
+        }
+        #dc-manual-block-panel .dcuf-manual-field {
+            display: grid;
+            gap: 7px;
+            margin-top: 17px;
+            color: #314867;
+            font-size: 13px;
+            font-weight: 800;
+        }
+        #dc-manual-block-panel .dcuf-manual-field[hidden] { display: none !important; }
+        #dc-manual-block-panel .dcuf-manual-field small { color: #8a98ac; font-weight: 500; }
+        #dc-manual-block-panel .dcuf-manual-field input {
+            box-sizing: border-box;
+            width: 100%;
+            min-height: 48px;
+            padding: 11px 13px;
+            border: 1px solid #cad7e9;
+            border-radius: 12px;
+            outline: 0;
+            background: #fff;
+            color: #1d2f49;
+            font: 600 15px/1.3 inherit;
+            box-shadow: inset 0 2px 5px rgba(37,60,96,.08), 0 1px 0 #fff;
+        }
+        #dc-manual-block-panel .dcuf-manual-field input:focus {
+            border-color: #7199f5;
+            box-shadow: 0 0 0 3px rgba(59,113,253,.15), inset 0 1px 3px rgba(37,60,96,.08);
+        }
+        #dc-manual-block-panel .dcuf-manual-hint {
+            min-height: 34px;
+            margin: 10px 2px 0;
+            color: #6d7d94;
+            font-size: 12px;
+            line-height: 1.45;
+        }
+        #dc-manual-block-panel .dcuf-manual-status {
+            min-height: 20px;
+            margin: 4px 2px 0;
+            color: #65758d;
+            font-size: 12px;
+            font-weight: 700;
+            line-height: 1.4;
+        }
+        #dc-manual-block-panel .dcuf-manual-status[data-state="success"] { color: #16835f; }
+        #dc-manual-block-panel .dcuf-manual-status[data-state="error"] { color: #d7485a; }
+        #dc-manual-block-panel .dcuf-manual-status[data-state="info"] { color: #3b68c6; }
+        #dc-manual-block-panel .dcuf-manual-actions {
+            display: grid;
+            grid-template-columns: .75fr 1.25fr;
+            gap: 9px;
+            margin-top: 10px;
+        }
+        #dc-manual-block-panel .dcuf-manual-actions button {
+            min-height: 46px;
+            border: 1px solid #ccd8e8;
+            border-radius: 12px;
+            background: linear-gradient(180deg,#fff,#edf2f8);
+            color: #53657e;
+            font: 800 14px/1 inherit;
+            box-shadow: 0 5px 12px rgba(35,56,89,.1), inset 0 1px 0 #fff;
+            cursor: pointer;
+        }
+        #dc-manual-block-panel .dcuf-manual-actions [data-manual-block-action="add"] {
+            border-color: #3b71fd;
+            background: linear-gradient(180deg,#5687ff,#376af0);
+            color: #fff;
+            box-shadow: 0 9px 18px rgba(59,113,253,.28), inset 0 1px 0 rgba(255,255,255,.34);
+        }
+        #dc-manual-block-panel .dcuf-manual-actions button:active { transform: translateY(1px); }
+        #dc-manual-block-panel .dcuf-manual-actions button:disabled { opacity: .65; cursor: wait; }
+
+
+        @keyframes dcuf-selection-prompt-in {
+            from { opacity: 0; transform: translate(-50%,-8px) scale(.98); }
+            to { opacity: 1; transform: translate(-50%,0) scale(1); }
+        }
+        #dc-selection-popup.dcuf-selection-prompt {
+            top: calc(env(safe-area-inset-top,0px) + 14px) !important;
+            left: 50% !important;
+            bottom: auto !important;
+            box-sizing: border-box !important;
+            display: grid !important;
+            grid-template-columns: 42px minmax(0,1fr) auto !important;
+            align-items: center !important;
+            gap: 11px !important;
+            width: min(560px,calc(100vw - 24px)) !important;
+            min-width: 0 !important;
+            max-width: calc(100vw - 24px) !important;
+            padding: 11px 12px !important;
+            border: 1px solid rgba(142,166,203,.58) !important;
+            border-radius: 18px !important;
+            transform: translateX(-50%) !important;
+            text-align: left !important;
+            background: linear-gradient(145deg,rgba(255,255,255,.98),rgba(237,244,255,.98)) !important;
+            box-shadow: 0 18px 40px rgba(31,51,83,.25), inset 0 1px 0 #fff !important;
+            animation: dcuf-selection-prompt-in .18s ease-out !important;
+        }
+        #dc-selection-popup .dcuf-selection-prompt-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            border-radius: 13px;
+            background: linear-gradient(145deg,#fff,#dfeaff);
+            color: #3b71fd;
+            font-size: 21px;
+            font-weight: 900;
+            box-shadow: 0 6px 14px rgba(59,113,253,.18), inset 0 1px 0 #fff;
+        }
+        #dc-selection-popup .dcuf-selection-prompt-copy h4 {
+            margin: 0 0 3px !important;
+            color: #233a5b !important;
+            font-size: 15px !important;
+            font-weight: 850 !important;
+        }
+        #dc-selection-popup .dcuf-selection-prompt-copy p {
+            margin: 0;
+            color: #71819a;
+            font-size: 12px;
+            line-height: 1.35;
+        }
+        #dc-selection-popup.dcuf-selection-prompt .popup-buttons button {
+            width: auto !important;
+            min-width: 86px;
+            min-height: 42px;
+            padding: 9px 12px !important;
+            border: 1px solid #cfdaea !important;
+            border-radius: 11px !important;
+            background: linear-gradient(180deg,#fff,#e9eff7) !important;
+            color: #50627d !important;
+            font-size: 13px !important;
+            font-weight: 800 !important;
+            box-shadow: 0 5px 12px rgba(41,62,96,.1), inset 0 1px 0 #fff;
+        }
+        body.selection-mode-active .gall_writer,
+        body.selection-mode-active .ub-writer {
+            border-radius: 6px !important;
+            outline: 2px solid rgba(59,113,253,.44) !important;
+            outline-offset: 2px !important;
+            background: rgba(59,113,253,.08) !important;
+        }
+        #dc-selection-popup:not(.dcuf-selection-prompt) {
+            border: 1px solid #d1dceb !important;
+            border-radius: 20px !important;
+            background: linear-gradient(150deg,#fff,#f3f7fd) !important;
+            box-shadow: 0 24px 58px rgba(24,42,71,.3), inset 0 1px 0 #fff !important;
+        }
+        #dc-selection-popup .block-option {
+            border-radius: 13px !important;
+            background: linear-gradient(145deg,#fff,#eef4fc) !important;
+            box-shadow: 0 6px 15px rgba(38,60,96,.09), inset 0 1px 0 #fff !important;
+        }
+        #dc-selection-popup .block-option button,
+        #dc-selection-popup .popup-buttons button { min-height: 42px; }
+
+        #dcinside-filter-setting,
+        #dc-block-management-panel,
+        #dc-backup-popup {
+            border: 1px solid rgba(149,169,201,.55) !important;
+            border-radius: 22px !important;
+            background: linear-gradient(155deg,#fff,#f4f7fc) !important;
+            box-shadow: 0 28px 68px rgba(23,39,67,.3), 0 7px 20px rgba(23,39,67,.13), inset 0 1px 0 #fff !important;
+        }
+        #dcinside-filter-setting .dcuf-settings-header,
+        #dc-block-management-panel .panel-header,
+        #dc-backup-popup .popup-header {
+            background: linear-gradient(135deg,rgba(238,244,255,.98),rgba(255,255,255,.98)) !important;
+            border-bottom: 1px solid #dbe4f1 !important;
+        }
+        #dcinside-filter-setting .dcuf-settings-section,
+        #dcinside-filter-setting .dcuf-settings-threshold > div:last-child,
+        #dcinside-filter-setting .dcuf-settings-guest-controls {
+            border: 1px solid #dce5f1 !important;
+            border-radius: 16px !important;
+            background: linear-gradient(145deg,#fff,#f3f7fd) !important;
+            box-shadow: 0 8px 20px rgba(36,58,94,.09), inset 0 1px 0 #fff !important;
+        }
+        #dcinside-filter-setting input[type="number"] {
+            min-height: 44px !important;
+            border-radius: 11px !important;
+            box-shadow: inset 0 2px 5px rgba(37,60,96,.09), 0 1px 0 #fff !important;
+        }
+        #dcinside-filter-setting #dcinside-threshold-save {
+            min-height: 46px !important;
+            border-radius: 12px !important;
+            background: linear-gradient(180deg,#5687ff,#376af0) !important;
+            box-shadow: 0 9px 18px rgba(59,113,253,.28), inset 0 1px 0 rgba(255,255,255,.32) !important;
+        }
+
+        #dc-block-management-panel .panel-header {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            min-height: 68px !important;
+            padding: 10px 12px 10px 18px !important;
+            cursor: move;
+        }
+        #dc-block-management-panel .panel-title-group { min-width: 0; }
+        #dc-block-management-panel .panel-title-group h3 { color: #213756 !important; font-size: 18px !important; }
+        #dc-block-management-panel .panel-header-actions { display: flex; align-items: center; gap: 7px; }
+        #dc-block-management-panel .switch-container { margin-left: 0 !important; }
+        #dc-block-management-panel .panel-add-btn {
+            min-height: 40px;
+            padding: 8px 11px;
+            border: 1px solid #cbdaf0;
+            border-radius: 11px;
+            background: linear-gradient(180deg,#fff,#e8f1ff);
+            color: #3564c4;
+            font-size: 12px;
+            font-weight: 850;
+            box-shadow: 0 6px 13px rgba(47,78,128,.12), inset 0 1px 0 #fff;
+            cursor: pointer;
+        }
+        #dc-block-management-panel .panel-tabs {
+            gap: 5px !important;
+            padding: 7px !important;
+            border-bottom: 1px solid #dce4f0 !important;
+            background: #edf2f8 !important;
+            box-shadow: inset 0 2px 5px rgba(38,59,91,.06);
+        }
+        #dc-block-management-panel .panel-tab {
+            appearance: none;
+            border: 1px solid transparent !important;
+            border-radius: 11px !important;
+            background: transparent !important;
+            color: #65758d !important;
+            font-family: inherit;
+            font-weight: 750 !important;
+        }
+        #dc-block-management-panel .panel-tab.active {
+            border-color: #ccdaf0 !important;
+            background: linear-gradient(180deg,#fff,#e8f1ff) !important;
+            color: #315fc2 !important;
+            box-shadow: 0 6px 14px rgba(45,74,121,.15), inset 0 1px 0 #fff !important;
+        }
+        #dc-block-management-panel .panel-tab.active::after { display: none !important; }
+        #dc-block-management-panel .panel-tab-count {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 20px;
+            height: 20px;
+            margin-left: 4px;
+            padding: 0 5px;
+            border-radius: 999px;
+            background: rgba(74,111,182,.12);
+            font-size: 10px;
+            font-weight: 900;
+        }
+        #dc-block-management-panel .panel-body { background: #f5f8fc !important; }
+        #dc-block-management-panel .panel-list-controls {
+            display: grid !important;
+            grid-template-columns: minmax(150px,1fr) auto !important;
+            align-items: center;
+            gap: 8px;
+            padding: 10px !important;
+            text-align: left !important;
+            background: rgba(255,255,255,.72);
+        }
+        #dc-block-management-panel .panel-search {
+            box-sizing: border-box;
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            min-height: 42px;
+            padding: 0 11px;
+            border: 1px solid #d0dbea;
+            border-radius: 11px;
+            background: #fff;
+            color: #71819a;
+            box-shadow: inset 0 2px 5px rgba(35,56,88,.07);
+        }
+        #dc-block-management-panel .panel-search-input {
+            min-width: 0;
+            width: 100%;
+            border: 0;
+            outline: 0;
+            background: transparent;
+            color: #263a58;
+            font: 600 13px/1.2 inherit;
+        }
+        #dc-block-management-panel .panel-list-summary {
+            grid-column: 1 / -1;
+            color: #7a899e;
+            font-size: 11px;
+        }
+
+
+        #dc-block-management-panel .select-all-btn,
+        #dc-block-management-panel .select-all-global-btn,
+        #dc-block-management-panel .panel-backup-btn {
+            min-height: 40px !important;
+            border-radius: 10px !important;
+            background: linear-gradient(180deg,#fff,#edf2f8) !important;
+            box-shadow: 0 5px 12px rgba(35,56,89,.09), inset 0 1px 0 #fff !important;
+        }
+        #dc-block-management-panel .blocked-list {
+            display: grid;
+            gap: 8px;
+            padding: 10px !important;
+        }
+        #dc-block-management-panel .blocked-item {
+            min-height: 52px;
+            padding: 8px 9px 8px 13px !important;
+            border: 1px solid #dce5f1 !important;
+            border-radius: 13px !important;
+            background: linear-gradient(145deg,#fff,#f0f5fb) !important;
+            box-shadow: 0 6px 15px rgba(34,55,88,.08), inset 0 1px 0 #fff;
+        }
+        #dc-block-management-panel .blocked-item.item-to-delete {
+            border-color: #f1bdc5 !important;
+            background: linear-gradient(145deg,#fff8f9,#fbecef) !important;
+            text-decoration: none !important;
+            opacity: .72 !important;
+        }
+        #dc-block-management-panel .blocked-item.item-to-delete .item-name { text-decoration: line-through; }
+        #dc-block-management-panel .delete-item-btn {
+            min-width: 52px !important;
+            min-height: 36px !important;
+            padding: 7px 9px !important;
+            border: 1px solid #ffd3da !important;
+            border-radius: 10px !important;
+            background: linear-gradient(180deg,#fff8f9,#ffe9ed) !important;
+            color: #df5366 !important;
+            font-size: 11px !important;
+            font-weight: 850 !important;
+            text-decoration: none !important;
+        }
+        #dc-block-management-panel .blocked-list-empty {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 150px;
+            color: #8290a4;
+            font-size: 13px;
+            text-align: center;
+        }
+        #dc-block-management-panel .panel-footer {
+            min-height: 64px;
+            background: linear-gradient(180deg,rgba(250,252,255,.98),rgba(239,244,251,.98)) !important;
+        }
+        #dc-block-management-panel .panel-save-btn {
+            min-height: 44px;
+            border-radius: 11px !important;
+            background: linear-gradient(180deg,#5687ff,#376af0) !important;
+            box-shadow: 0 8px 17px rgba(59,113,253,.28), inset 0 1px 0 rgba(255,255,255,.32) !important;
+        }
+        #dc-backup-popup .popup-content { gap: 12px !important; padding: 4px 2px 2px !important; }
+        #dc-backup-popup .export-section,
+        #dc-backup-popup .import-section {
+            padding: 14px !important;
+            border: 1px solid #dce5f1;
+            border-radius: 16px;
+            background: linear-gradient(145deg,#fff,#f2f6fc);
+            box-shadow: 0 8px 20px rgba(36,58,94,.09), inset 0 1px 0 #fff;
+        }
+        #dc-backup-popup .popup-content > hr { display: none; }
+        #dc-backup-popup .export-btn,
+        #dc-backup-popup .export-btn-download,
+        #dc-backup-popup .import-btn,
+        #dc-backup-popup .import-file-input,
+        #dc-backup-popup textarea {
+            min-height: 44px;
+            border-radius: 11px !important;
+        }
+        #dc-backup-popup .export-btn,
+        #dc-backup-popup .import-btn {
+            background: linear-gradient(180deg,#5687ff,#376af0) !important;
+            box-shadow: 0 8px 17px rgba(59,113,253,.25), inset 0 1px 0 rgba(255,255,255,.3) !important;
+        }
+        #dc-manual-block-panel.dcuf-pop-leave {
+            animation: dcuf-popup-out .13s ease-in forwards !important;
+            pointer-events: none !important;
+        }
+        #dc-manual-block-overlay.dcuf-overlay-leave {
+            animation: dcuf-overlay-out .13s ease-in forwards !important;
+            pointer-events: none !important;
+        }
+        @media (max-width: 640px) {
+            #dc-manual-block-overlay {
+                align-items: flex-end;
+                padding: 10px 8px max(8px,env(safe-area-inset-bottom,0px));
+            }
+            #dc-manual-block-panel {
+                width: 100%;
+                max-height: calc(100dvh - 10px);
+                border-radius: 22px 22px 16px 16px;
+            }
+            #dc-block-management-panel .panel-header { padding-left: 14px !important; }
+            #dc-block-management-panel .panel-kicker { display: none; }
+            #dc-block-management-panel .panel-add-btn {
+                width: 44px;
+                min-width: 44px;
+                padding: 0;
+                overflow: hidden;
+                color: transparent;
+                white-space: nowrap;
+            }
+            #dc-block-management-panel .panel-add-btn::first-letter {
+                color: #3564c4;
+                font-size: 18px;
+            }
+            #dc-block-management-panel .panel-list-controls { grid-template-columns: 1fr !important; }
+            #dc-block-management-panel .panel-list-summary { grid-column: 1; }
+            #dc-selection-popup.dcuf-selection-prompt { grid-template-columns: 38px minmax(0,1fr) !important; }
+            #dc-selection-popup.dcuf-selection-prompt .popup-buttons { grid-column: 1 / -1; }
+            #dc-selection-popup.dcuf-selection-prompt .popup-buttons button { width: 100% !important; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            #dc-manual-block-panel,
+            #dc-manual-block-overlay,
+            #dc-selection-popup.dcuf-selection-prompt {
+                animation: none !important;
+                transition: none !important;
+            }
+        }
+
+
+        #dc-personal-block-drawer { background-color: #f1f6ff !important; }
+        #dc-manual-block-panel { background-color: #f3f7ff; }
+        #dc-selection-popup.dcuf-selection-prompt { background-color: #edf4ff !important; }
+        #dc-selection-popup:not(.dcuf-selection-prompt) { background-color: #f3f7fd !important; }
+        #dcinside-filter-setting,
+        #dc-block-management-panel,
+        #dc-backup-popup { background-color: #f4f7fc !important; }
+
         /* DCUF_SHARED_FILTER_UI_END */
 
         /* [수정] DCCon 및 각종 팝업 모바일 반응형 중앙 정렬 */
@@ -2907,6 +3499,216 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             background: #53313a !important;
             color: #ff9fb1 !important;
         }
+
+        body.dc-filter-dark-mode #dc-personal-block-fab {
+            background: linear-gradient(180deg,#34435b,#253247) !important;
+            color: #eef4ff !important;
+            border-color: #52657f !important;
+            box-shadow: 0 16px 34px rgba(0,0,0,.46), inset 0 1px 0 rgba(255,255,255,.1) !important;
+        }
+        body.dc-filter-dark-mode #dc-personal-block-drawer {
+            border-color: #465a76 !important;
+            background: linear-gradient(145deg,#27354a,#1d293b) !important;
+            box-shadow: 0 24px 52px rgba(0,0,0,.58), inset 0 1px 0 rgba(255,255,255,.08) !important;
+        }
+        body.dc-filter-dark-mode #dc-personal-block-drawer .dcuf-menu-icon {
+            border-color: #49617f;
+            background: linear-gradient(145deg,#344760,#25354c);
+            color: #8db2ff;
+            box-shadow: 0 6px 14px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.08);
+        }
+        body.dc-filter-dark-mode #dc-personal-block-drawer strong { color: #edf3ff; }
+        body.dc-filter-dark-mode #dc-personal-block-drawer small { color: #9fb0c8; }
+        body.dc-filter-dark-mode #dc-personal-block-drawer button:hover,
+        body.dc-filter-dark-mode #dc-personal-block-drawer button:focus-visible {
+            border-color: #506987 !important;
+            background: linear-gradient(180deg,#34465e,#29394f) !important;
+        }
+        body.dc-filter-dark-mode #dc-manual-block-overlay { background: rgba(0,0,0,.68); }
+        body.dc-filter-dark-mode #dc-manual-block-panel {
+            border-color: #475a74;
+            background: linear-gradient(155deg,#26354a,#1c283a);
+            color: #edf3ff;
+            box-shadow: 0 30px 74px rgba(0,0,0,.62), inset 0 1px 0 rgba(255,255,255,.08);
+        }
+        body.dc-filter-dark-mode #dc-manual-block-panel .dcuf-manual-header {
+            border-color: #40536d;
+            background: linear-gradient(135deg,#2b3b52,#223047);
+        }
+        body.dc-filter-dark-mode #dc-manual-block-panel h3 { color: #f1f5ff; }
+        body.dc-filter-dark-mode #dc-manual-block-panel .dcuf-manual-kicker,
+        body.dc-filter-dark-mode #dc-block-management-panel .panel-kicker { color: #89a9dd; }
+        body.dc-filter-dark-mode #dc-manual-block-panel .dcuf-manual-close,
+        body.dc-filter-dark-mode #dc-block-management-panel .panel-close-btn,
+        body.dc-filter-dark-mode #dc-backup-popup .popup-close-btn,
+        body.dc-filter-dark-mode #dcinside-filter-setting #dcinside-filter-close {
+            background: transparent !important;
+            color: #b8c6da !important;
+            border-color: transparent !important;
+        }
+        body.dc-filter-dark-mode #dc-manual-block-panel .dcuf-manual-close:hover,
+        body.dc-filter-dark-mode #dc-block-management-panel .panel-close-btn:hover,
+        body.dc-filter-dark-mode #dc-backup-popup .popup-close-btn:hover,
+        body.dc-filter-dark-mode #dcinside-filter-setting #dcinside-filter-close:hover {
+            border-color: #4a5e79 !important;
+            background: #314159 !important;
+            color: #fff !important;
+        }
+        body.dc-filter-dark-mode #dc-manual-block-panel .dcuf-manual-type-tabs {
+            border-color: #40536d;
+            background: #172335;
+            box-shadow: inset 0 2px 6px rgba(0,0,0,.32);
+        }
+        body.dc-filter-dark-mode #dc-manual-block-panel [data-manual-block-type] {
+            background: transparent !important;
+            color: #aab8ca !important;
+            border-color: transparent !important;
+        }
+        body.dc-filter-dark-mode #dc-manual-block-panel [data-manual-block-type][aria-pressed="true"] {
+            border-color: #4e6685 !important;
+            background: linear-gradient(180deg,#344862,#293a52) !important;
+            color: #9fbdff !important;
+            box-shadow: 0 6px 14px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.08);
+        }
+        body.dc-filter-dark-mode #dc-manual-block-panel .dcuf-manual-field { color: #dce6f5; }
+        body.dc-filter-dark-mode #dc-manual-block-panel .dcuf-manual-field small,
+        body.dc-filter-dark-mode #dc-manual-block-panel .dcuf-manual-hint { color: #9dadc2; }
+        body.dc-filter-dark-mode #dc-manual-block-panel .dcuf-manual-field input {
+            border-color: #465a76;
+            background: #162234;
+            color: #f2f6ff;
+            box-shadow: inset 0 2px 6px rgba(0,0,0,.35);
+        }
+        body.dc-filter-dark-mode #dc-manual-block-panel .dcuf-manual-actions button {
+            border-color: #465a76;
+            background: linear-gradient(180deg,#34445b,#29384e);
+            color: #dce6f5;
+            box-shadow: 0 6px 14px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.08);
+        }
+        body.dc-filter-dark-mode #dc-manual-block-panel .dcuf-manual-actions [data-manual-block-action="add"] {
+            border-color: #5e8cff;
+            background: linear-gradient(180deg,#5f8dff,#3d6de7);
+            color: #fff;
+        }
+        body.dc-filter-dark-mode #dc-selection-popup.dcuf-selection-prompt,
+        body.dc-filter-dark-mode #dc-selection-popup:not(.dcuf-selection-prompt) {
+            border-color: #465a76 !important;
+            background: linear-gradient(145deg,#29384e,#1d2a3d) !important;
+            box-shadow: 0 22px 52px rgba(0,0,0,.58), inset 0 1px 0 rgba(255,255,255,.08) !important;
+        }
+        body.dc-filter-dark-mode #dc-selection-popup .dcuf-selection-prompt-icon {
+            background: linear-gradient(145deg,#344862,#26374f);
+            color: #8db2ff;
+            box-shadow: 0 7px 15px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.08);
+        }
+        body.dc-filter-dark-mode #dc-selection-popup .dcuf-selection-prompt-copy h4 { color: #edf3ff !important; }
+        body.dc-filter-dark-mode #dc-selection-popup .dcuf-selection-prompt-copy p { color: #9fb0c8; }
+        body.dc-filter-dark-mode #dc-selection-popup.dcuf-selection-prompt .popup-buttons button {
+            border-color: #4b607c !important;
+            background: linear-gradient(180deg,#34445b,#28384e) !important;
+            color: #dce6f5 !important;
+            box-shadow: 0 6px 13px rgba(0,0,0,.26), inset 0 1px 0 rgba(255,255,255,.08) !important;
+        }
+        body.dc-filter-dark-mode.selection-mode-active .gall_writer,
+        body.dc-filter-dark-mode.selection-mode-active .ub-writer {
+            outline-color: rgba(117,159,255,.66) !important;
+            background: rgba(92,137,241,.16) !important;
+        }
+
+
+        body.dc-filter-dark-mode #dcinside-filter-setting,
+        body.dc-filter-dark-mode #dc-block-management-panel,
+        body.dc-filter-dark-mode #dc-backup-popup {
+            border-color: #455a76 !important;
+            background: linear-gradient(155deg,#26354a,#1b2738) !important;
+            box-shadow: 0 30px 72px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.07) !important;
+        }
+        body.dc-filter-dark-mode #dcinside-filter-setting .dcuf-settings-header,
+        body.dc-filter-dark-mode #dc-block-management-panel .panel-header,
+        body.dc-filter-dark-mode #dc-backup-popup .popup-header {
+            border-color: #40536d !important;
+            background: linear-gradient(135deg,#2b3b52,#223047) !important;
+        }
+        body.dc-filter-dark-mode #dcinside-filter-setting .dcuf-settings-section,
+        body.dc-filter-dark-mode #dcinside-filter-setting .dcuf-settings-threshold > div:last-child,
+        body.dc-filter-dark-mode #dcinside-filter-setting .dcuf-settings-guest-controls,
+        body.dc-filter-dark-mode #dc-backup-popup .export-section,
+        body.dc-filter-dark-mode #dc-backup-popup .import-section {
+            border-color: #40536d !important;
+            background: linear-gradient(145deg,#29394f,#202e43) !important;
+            box-shadow: 0 9px 21px rgba(0,0,0,.26), inset 0 1px 0 rgba(255,255,255,.06) !important;
+        }
+        body.dc-filter-dark-mode #dc-block-management-panel .panel-title-group h3 { color: #edf3ff !important; }
+        body.dc-filter-dark-mode #dc-block-management-panel .panel-add-btn {
+            border-color: #4e6685 !important;
+            background: linear-gradient(180deg,#344862,#293a52) !important;
+            color: #9fbdff !important;
+            box-shadow: 0 6px 14px rgba(0,0,0,.27), inset 0 1px 0 rgba(255,255,255,.07);
+        }
+        body.dc-filter-dark-mode #dc-block-management-panel .panel-tabs {
+            border-color: #3e5069 !important;
+            background: #172335 !important;
+            box-shadow: inset 0 2px 6px rgba(0,0,0,.3);
+        }
+        body.dc-filter-dark-mode #dc-block-management-panel .panel-tab {
+            background: transparent !important;
+            color: #aab8ca !important;
+            border-color: transparent !important;
+        }
+        body.dc-filter-dark-mode #dc-block-management-panel .panel-tab.active {
+            border-color: #4e6685 !important;
+            background: linear-gradient(180deg,#344862,#293a52) !important;
+            color: #9fbdff !important;
+            box-shadow: 0 6px 14px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.08) !important;
+        }
+        body.dc-filter-dark-mode #dc-block-management-panel .panel-body { background: #1b2738 !important; }
+        body.dc-filter-dark-mode #dc-block-management-panel .panel-list-controls {
+            border-color: #40536d !important;
+            background: rgba(28,40,58,.84);
+        }
+        body.dc-filter-dark-mode #dc-block-management-panel .panel-search {
+            border-color: #455a76;
+            background: #162234;
+            color: #9dadc2;
+            box-shadow: inset 0 2px 6px rgba(0,0,0,.34);
+        }
+        body.dc-filter-dark-mode #dc-block-management-panel .panel-search-input { color: #edf3ff; }
+        body.dc-filter-dark-mode #dc-block-management-panel .blocked-item {
+            border-color: #40536d !important;
+            background: linear-gradient(145deg,#29394f,#202e43) !important;
+            box-shadow: 0 7px 16px rgba(0,0,0,.24), inset 0 1px 0 rgba(255,255,255,.06);
+        }
+        body.dc-filter-dark-mode #dc-block-management-panel .blocked-item.item-to-delete {
+            border-color: #714856 !important;
+            background: linear-gradient(145deg,#3d2b35,#34232c) !important;
+        }
+        body.dc-filter-dark-mode #dc-block-management-panel .delete-item-btn {
+            border-color: #704653 !important;
+            background: linear-gradient(180deg,#4d303a,#402731) !important;
+            color: #ff9cad !important;
+        }
+        body.dc-filter-dark-mode #dc-block-management-panel .select-all-btn,
+        body.dc-filter-dark-mode #dc-block-management-panel .select-all-global-btn,
+        body.dc-filter-dark-mode #dc-block-management-panel .panel-backup-btn {
+            border-color: #465a76 !important;
+            background: linear-gradient(180deg,#34445b,#29384e) !important;
+            color: #dce6f5 !important;
+            box-shadow: 0 6px 14px rgba(0,0,0,.24), inset 0 1px 0 rgba(255,255,255,.06) !important;
+        }
+        body.dc-filter-dark-mode #dc-block-management-panel .panel-footer {
+            border-color: #40536d !important;
+            background: linear-gradient(180deg,#253449,#1d2a3d) !important;
+        }
+
+
+        body.dc-filter-dark-mode #dc-personal-block-drawer { background-color: #1d293b !important; }
+        body.dc-filter-dark-mode #dc-manual-block-panel { background-color: #1c283a; }
+        body.dc-filter-dark-mode #dc-selection-popup.dcuf-selection-prompt,
+        body.dc-filter-dark-mode #dc-selection-popup:not(.dcuf-selection-prompt) { background-color: #1d2a3d !important; }
+        body.dc-filter-dark-mode #dcinside-filter-setting,
+        body.dc-filter-dark-mode #dc-block-management-panel,
+        body.dc-filter-dark-mode #dc-backup-popup { background-color: #1b2738 !important; }
+
         /* DCUF_SHARED_FILTER_UI_DARK_END */
     `);
 
@@ -4441,7 +5243,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         async init() {
             if (isInitialized) return; isInitialized = true;
             this.installDebugApi();
-            this.debugLog('init', 'FilterModule init start', { version: '3.3.10-beta' });
+            this.debugLog('init', 'FilterModule init start', { version: '3.4.1' });
             await this.cleanupLegacyManagedBlockConfig();
             await this.reloadSettings();
             if (this.DEBUG_ENABLED) await this.debugDumpState('after init reload');
@@ -4655,6 +5457,159 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             range.focus();
         },
 
+
+        async createManualBlockPanel({ initialType = 'nickname', onAdded = null } = {}) {
+            const existingPanel = document.getElementById('dc-manual-block-panel');
+            if (existingPanel) {
+                existingPanel.querySelector('#dc-manual-block-value')?.focus();
+                return existingPanel;
+            }
+
+            const typeConfig = {
+                uid: { label: '식별번호', placeholder: '예: user1234', hint: '입력한 식별번호와 정확히 일치하는 작성자를 차단합니다.' },
+                nickname: { label: '닉네임', placeholder: '차단할 닉네임을 입력하세요', hint: '대소문자와 공백을 포함해 정확히 같은 닉네임만 차단합니다.' },
+                ip: { label: '아이피', placeholder: '예: 123.45 또는 화면에 표시된 IP', hint: '화면에 표시되는 IP 문자열과 정확히 일치할 때만 차단합니다.' }
+            };
+            let activeType = typeConfig[initialType] ? initialType : 'nickname';
+
+            const overlay = document.createElement('div');
+            overlay.id = 'dc-manual-block-overlay';
+            const panel = document.createElement('section');
+            panel.id = 'dc-manual-block-panel';
+            panel.setAttribute('role', 'dialog');
+            panel.setAttribute('aria-modal', 'true');
+            panel.setAttribute('aria-labelledby', 'dc-manual-block-title');
+            panel.innerHTML = `
+                <div class="dcuf-manual-header">
+                    <div>
+                        <span class="dcuf-manual-kicker">PERSONAL BLOCK</span>
+                        <h3 id="dc-manual-block-title">직접 차단</h3>
+                    </div>
+                    <button type="button" class="dcuf-manual-close" aria-label="직접 차단 닫기">×</button>
+                </div>
+                <form class="dcuf-manual-form">
+                    <div class="dcuf-manual-type-tabs" role="group" aria-label="차단 정보 종류">
+                        <button type="button" data-manual-block-type="uid">식별번호</button>
+                        <button type="button" data-manual-block-type="nickname">닉네임</button>
+                        <button type="button" data-manual-block-type="ip">아이피</button>
+                    </div>
+                    <label class="dcuf-manual-field" for="dc-manual-block-value">
+                        <span id="dc-manual-block-value-label">닉네임</span>
+                        <input id="dc-manual-block-value" type="text" autocomplete="off" autocapitalize="off" spellcheck="false">
+                    </label>
+                    <label class="dcuf-manual-field dcuf-manual-display-field" for="dc-manual-block-display" hidden>
+                        <span>닉네임 / 표시 이름 <small>(선택)</small></span>
+                        <input id="dc-manual-block-display" type="text" autocomplete="off" spellcheck="false" placeholder="예: 홍길동">
+                    </label>
+                    <p class="dcuf-manual-hint"></p>
+                    <p class="dcuf-manual-status" role="status" aria-live="polite"></p>
+                    <div class="dcuf-manual-actions">
+                        <button type="button" data-manual-block-action="close">닫기</button>
+                        <button type="submit" data-manual-block-action="add">차단 추가</button>
+                    </div>
+                </form>
+            `;
+            overlay.appendChild(panel);
+            document.body.appendChild(overlay);
+
+            const form = panel.querySelector('.dcuf-manual-form');
+            const valueInput = panel.querySelector('#dc-manual-block-value');
+            const displayField = panel.querySelector('.dcuf-manual-display-field');
+            const displayInput = panel.querySelector('#dc-manual-block-display');
+            const valueLabel = panel.querySelector('#dc-manual-block-value-label');
+            const hint = panel.querySelector('.dcuf-manual-hint');
+            const status = panel.querySelector('.dcuf-manual-status');
+            const addButton = panel.querySelector('[data-manual-block-action="add"]');
+            let isClosing = false;
+
+            const setStatus = (message = '', state = '') => {
+                status.textContent = message;
+                status.dataset.state = state;
+            };
+            const selectType = (type) => {
+                if (!typeConfig[type]) return;
+                activeType = type;
+                panel.querySelectorAll('[data-manual-block-type]').forEach((button) => {
+                    button.setAttribute('aria-pressed', String(button.dataset.manualBlockType === type));
+                });
+                valueLabel.textContent = typeConfig[type].label;
+                valueInput.placeholder = typeConfig[type].placeholder;
+                hint.textContent = typeConfig[type].hint;
+                displayField.hidden = type !== 'uid';
+                setStatus();
+                valueInput.focus();
+            };
+            const closePanel = () => {
+                if (isClosing) return;
+                isClosing = true;
+                document.removeEventListener('keydown', handleKeydown, true);
+                panel.classList.add('dcuf-pop-leave');
+                overlay.classList.add('dcuf-overlay-leave');
+                window.setTimeout(() => overlay.remove(), 140);
+            };
+            const handleKeydown = (event) => {
+                if (event.key !== 'Escape') return;
+                event.preventDefault();
+                closePanel();
+            };
+
+            panel.querySelectorAll('[data-manual-block-type]').forEach((button) => {
+                button.addEventListener('click', () => selectType(button.dataset.manualBlockType));
+            });
+            panel.querySelector('.dcuf-manual-close').addEventListener('click', closePanel);
+            panel.querySelector('[data-manual-block-action="close"]').addEventListener('click', closePanel);
+            overlay.addEventListener('click', (event) => {
+                if (event.target === overlay) closePanel();
+            });
+            form.addEventListener('submit', async (event) => {
+                event.preventDefault();
+                const value = valueInput.value.trim();
+                const displayValue = displayInput.value.trim();
+                if (!value) {
+                    setStatus(`${typeConfig[activeType].label}을(를) 입력해주세요.`, 'error');
+                    valueInput.focus();
+                    return;
+                }
+
+                const currentList = await this.loadPersonalBlocks();
+                const isDuplicate = activeType === 'uid'
+                    ? currentList.uids.some((item) => item?.id === value)
+                    : activeType === 'nickname'
+                        ? currentList.nicknames.includes(value)
+                        : currentList.ips.includes(value);
+                if (isDuplicate) {
+                    setStatus('이미 차단 목록에 있는 값입니다.', 'info');
+                    valueInput.select();
+                    return;
+                }
+
+                addButton.disabled = true;
+                addButton.textContent = '추가 중…';
+                try {
+                    const displayName = activeType === 'uid' && displayValue ? `${displayValue}(${value})` : null;
+                    await this.addBlock(activeType, value, displayName);
+                    if (typeof onAdded === 'function') await onAdded({ type: activeType, value });
+                    const isEnabled = await GM_getValue(FilterModule.CONSTANTS.STORAGE_KEYS.PERSONAL_BLOCK_ENABLED, true);
+                    setStatus(
+                        isEnabled ? `${typeConfig[activeType].label} 차단을 추가했습니다.` : '목록에 추가했습니다. 개인 차단 기능은 현재 꺼져 있습니다.',
+                        'success'
+                    );
+                    valueInput.value = '';
+                    if (activeType === 'uid') displayInput.value = '';
+                    valueInput.focus();
+                } catch (error) {
+                    console.error('[DCUF] 직접 차단 추가 실패:', error);
+                    setStatus('차단을 추가하지 못했습니다. 잠시 후 다시 시도해주세요.', 'error');
+                } finally {
+                    addButton.disabled = false;
+                    addButton.textContent = '차단 추가';
+                }
+            });
+            document.addEventListener('keydown', handleKeydown, true);
+            selectType(activeType);
+            return panel;
+        },
+
         isFabSupportedPage() {
             const currentPath = window.location.pathname;
             return currentPath.includes('/board/lists') || currentPath.includes('/board/view');
@@ -4751,9 +5706,10 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             drawer.setAttribute('role', 'menu');
             drawer.setAttribute('aria-label', 'DC 유저 필터 기능');
             drawer.innerHTML = `
-                <button type="button" role="menuitem" data-dcuf-fab-action="quick-block">간편차단</button>
-                <button type="button" role="menuitem" data-dcuf-fab-action="filter-settings">글댓합 설정</button>
-                <button type="button" role="menuitem" data-dcuf-fab-action="block-management">차단 유저 관리</button>
+                <button type="button" role="menuitem" data-dcuf-fab-action="quick-block"><span class="dcuf-menu-icon" aria-hidden="true">◎</span><span><strong>화면에서 간편차단</strong><small>글·댓글 작성자를 눌러 선택</small></span></button>
+                <button type="button" role="menuitem" data-dcuf-fab-action="manual-block"><span class="dcuf-menu-icon" aria-hidden="true">＋</span><span><strong>직접 차단</strong><small>닉네임·식별번호·IP 입력</small></span></button>
+                <button type="button" role="menuitem" data-dcuf-fab-action="filter-settings"><span class="dcuf-menu-icon" aria-hidden="true">◫</span><span><strong>글댓합 설정</strong><small>필터 기준과 범위 조정</small></span></button>
+                <button type="button" role="menuitem" data-dcuf-fab-action="block-management"><span class="dcuf-menu-icon" aria-hidden="true">☰</span><span><strong>차단 유저 관리</strong><small>목록 확인·삭제·백업</small></span></button>
             `;
 
             controls.append(fab, drawer);
@@ -4821,6 +5777,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 const action = actionButton.dataset.dcufFabAction;
                 this.closeFabDrawer();
                 if (action === 'quick-block') this.enterSelectionMode();
+                else if (action === 'manual-block') await this.createManualBlockPanel();
                 else if (action === 'filter-settings') await FilterModule.showSettings();
                 else if (action === 'block-management') await this.createManagementPanel();
             });
@@ -4851,10 +5808,15 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
             const popup = document.createElement('div');
             popup.id = 'dc-selection-popup';
+            popup.className = 'dcuf-selection-prompt';
             popup.innerHTML = `
-                <h4>차단할 유저를 선택하세요</h4>
+                <div class="dcuf-selection-prompt-icon" aria-hidden="true">◎</div>
+                <div class="dcuf-selection-prompt-copy">
+                    <h4>차단할 작성자를 선택하세요</h4>
+                    <p>글이나 댓글의 닉네임을 눌러주세요.</p>
+                </div>
                 <div class="popup-buttons">
-                    <button class="cancel-btn">취소</button>
+                    <button class="cancel-btn">선택 취소</button>
                 </div>
             `;
             document.body.appendChild(popup);
@@ -5346,23 +6308,34 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             panel.id = 'dc-block-management-panel';
             panel.innerHTML = `
                 <div class="panel-header">
-                    <h3>차단 유저 관리</h3>
-                    <div class="switch-container">
-                        <label class="switch">
-                            <input type="checkbox" id="personal-block-toggle" ${isPersonalBlockEnabled ? 'checked' : ''}>
-                            <span class="switch-slider"></span>
-                        </label>
+                    <div class="panel-title-group">
+                        <span class="panel-kicker">PERSONAL BLOCK</span>
+                        <h3>차단 유저 관리</h3>
                     </div>
-                    <button class="panel-close-btn">×</button>
+                    <div class="panel-header-actions">
+                        <button type="button" class="panel-add-btn">＋ 직접 추가</button>
+                        <div class="switch-container">
+                            <label class="switch" aria-label="개인 차단 기능 사용">
+                                <input type="checkbox" id="personal-block-toggle" ${isPersonalBlockEnabled ? 'checked' : ''}>
+                                <span class="switch-slider"></span>
+                            </label>
+                        </div>
+                        <button type="button" class="panel-close-btn" aria-label="차단 유저 관리 닫기">×</button>
+                    </div>
                 </div>
-                <div class="panel-tabs">
-                    <div class="panel-tab active" data-type="uids">식별 번호</div>
-                    <div class="panel-tab" data-type="nicknames">닉네임</div>
-                    <div class="panel-tab" data-type="ips">아이피</div>
+                <div class="panel-tabs" role="tablist" aria-label="차단 정보 종류">
+                    <button type="button" class="panel-tab active" data-type="uids">식별 번호 <span class="panel-tab-count">${originalBlockList.uids.length}</span></button>
+                    <button type="button" class="panel-tab" data-type="nicknames">닉네임 <span class="panel-tab-count">${originalBlockList.nicknames.length}</span></button>
+                    <button type="button" class="panel-tab" data-type="ips">아이피 <span class="panel-tab-count">${originalBlockList.ips.length}</span></button>
                 </div>
                 <div class="panel-body">
                     <div class="panel-list-controls">
-                        <button class="select-all-btn">해당 탭 전체 선택/해제</button>
+                        <label class="panel-search">
+                            <span aria-hidden="true">⌕</span>
+                            <input type="search" class="panel-search-input" placeholder="현재 탭에서 검색" autocomplete="off" aria-label="차단 목록 검색">
+                        </label>
+                        <button type="button" class="select-all-btn">해당 탭 전체 선택/해제</button>
+                        <span class="panel-list-summary" aria-live="polite"></span>
                     </div>
                     <div class="panel-content">
                         <ul class="blocked-list"></ul>
@@ -5397,6 +6370,16 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             };
 
             const globalSelectAllBtn = panel.querySelector('.select-all-global-btn');
+            const saveButton = panel.querySelector('.panel-save-btn');
+            const searchInput = panel.querySelector('.panel-search-input');
+            const listSummary = panel.querySelector('.panel-list-summary');
+            const updateTabCounts = () => {
+                panel.querySelectorAll('.panel-tab').forEach((tab) => {
+                    const count = originalBlockList[tab.dataset.type]?.length || 0;
+                    const countEl = tab.querySelector('.panel-tab-count');
+                    if (countEl) countEl.textContent = String(count);
+                });
+            };
 
 
             const isEverythingSelected = () => {
@@ -5408,6 +6391,8 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
 
             const updateGlobalSelectAllButtonState = () => {
+                const pendingCount = itemsToDelete.uids.size + itemsToDelete.nicknames.size + itemsToDelete.ips.size;
+                saveButton.textContent = pendingCount ? `${pendingCount}건 변경 저장` : '변경 저장';
                 if (isEverythingSelected()) {
                     globalSelectAllBtn.textContent = '모든 탭 전체 해제';
                 } else {
@@ -5420,35 +6405,57 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 const listEl = panel.querySelector('.blocked-list');
                 listEl.innerHTML = '';
                 const data = originalBlockList[type] || [];
+                const query = searchInput.value.trim().toLocaleLowerCase();
+                const filteredData = data.filter((item) => {
+                    const value = typeof item === 'object' ? item?.id : item;
+                    const name = typeof item === 'object' ? item?.name : item;
+                    return !query || String(name ?? value ?? '').toLocaleLowerCase().includes(query)
+                        || String(value ?? '').toLocaleLowerCase().includes(query);
+                });
 
+                listSummary.textContent = query ? `${filteredData.length} / ${data.length}개 표시` : `총 ${data.length}개`;
+                if (filteredData.length === 0) {
+                    const emptyItem = document.createElement('li');
+                    emptyItem.className = 'blocked-list-empty';
+                    emptyItem.textContent = query ? '검색 결과가 없습니다.' : '이 탭에 차단된 항목이 없습니다.';
+                    listEl.appendChild(emptyItem);
+                }
 
-                data.forEach(item => {
+                filteredData.forEach((item) => {
                     const li = document.createElement('li');
                     li.className = 'blocked-item';
                     const value = (typeof item === 'object') ? item.id : item;
                     const name = (typeof item === 'object') ? item.name : item;
                     li.dataset.value = value;
-                    li.innerHTML = `<span class="item-name">${name}</span><span class="delete-item-btn">X</span>`;
 
+                    const nameEl = document.createElement('span');
+                    nameEl.className = 'item-name';
+                    nameEl.textContent = String(name ?? value ?? '');
+                    const deleteButton = document.createElement('button');
+                    deleteButton.type = 'button';
+                    deleteButton.className = 'delete-item-btn';
+                    deleteButton.textContent = '삭제';
+                    deleteButton.setAttribute('aria-label', `${nameEl.textContent} 삭제 선택`);
+                    li.append(nameEl, deleteButton);
 
                     if (itemsToDelete[type].has(value)) {
                         li.classList.add('item-to-delete');
                     }
 
-
-                    li.querySelector('.delete-item-btn').onclick = () => {
+                    deleteButton.onclick = () => {
                         if (li.classList.toggle('item-to-delete')) {
                             itemsToDelete[type].add(value);
                         } else {
                             itemsToDelete[type].delete(value);
                         }
                         updateSelectAllButtonState(type);
-                        updateGlobalSelectAllButtonState(); // [추가] 개별 변경 시 전역 버튼 상태도 업데이트
+                        updateGlobalSelectAllButtonState();
                     };
                     listEl.appendChild(li);
                 });
+                updateTabCounts();
                 updateSelectAllButtonState(type);
-                updateGlobalSelectAllButtonState(); // [추가] 탭 변경 시 전역 버튼 상태도 업데이트
+                updateGlobalSelectAllButtonState();
             };
 
 
@@ -5515,6 +6522,27 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                     renderList(tab.dataset.type);
                 };
             });
+
+
+            searchInput.addEventListener('input', () => {
+                const activeType = panel.querySelector('.panel-tab.active').dataset.type;
+                renderList(activeType);
+            });
+
+            panel.querySelector('.panel-add-btn').onclick = async () => {
+                const activeType = panel.querySelector('.panel-tab.active').dataset.type;
+                const manualType = activeType === 'uids' ? 'uid' : activeType === 'nicknames' ? 'nickname' : 'ip';
+                await this.createManualBlockPanel({
+                    initialType: manualType,
+                    onAdded: async () => {
+                        const latestList = await this.loadPersonalBlocks();
+                        originalBlockList.uids = latestList.uids;
+                        originalBlockList.nicknames = latestList.nicknames;
+                        originalBlockList.ips = latestList.ips;
+                        renderList(panel.querySelector('.panel-tab.active').dataset.type);
+                    }
+                });
+            };
 
 
             const closePanel = () => {
@@ -5763,10 +6791,10 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
         resolveBottomControlScope(listWrap) {
             if (!(listWrap instanceof HTMLElement)) return null;
-            return listWrap.closest('article')
-                || listWrap.closest('section')
-                || listWrap.parentElement
-                || listWrap;
+            // Live view pages keep the embedded-list controls beside the
+            // list wrapper. closest('section') returned the wrapper itself,
+            // which made those sibling controls impossible to discover.
+            return listWrap.parentElement || listWrap;
         },
 
         findBottomControlElement(listWrap, selector) {
@@ -5775,10 +6803,26 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             if (!(scope instanceof HTMLElement)) return null;
 
             const candidates = Array.from(scope.querySelectorAll(selector));
-            return candidates.find((element) => (
-                element instanceof HTMLElement
-                && !element.closest(`.${this.CUSTOM_CLASSES.BOTTOM_CONTROLS}`)
-            )) || null;
+            return candidates.find((element) => {
+                if (!(element instanceof HTMLElement)) return false;
+                if (element.closest(`.${this.CUSTOM_CLASSES.BOTTOM_CONTROLS}`)) return false;
+
+                // Live list controls are siblings of `.gall_listwrap`, but the
+                // whole page is nested in `#top.list_wrap`. Comparing only the
+                // nearest LIST_WRAP assigns them to that decorative outer wrapper
+                // and rejects every control. Resolve the table-owned list instead.
+                const controlOwner = this.resolveOwnedListWrap(element);
+                return !(controlOwner instanceof HTMLElement) || controlOwner === listWrap;
+            }) || null;
+        },
+
+        findAdjacentViewListActionBar(listWrap) {
+            if (!(listWrap instanceof HTMLElement)) return null;
+            const sibling = listWrap.previousElementSibling;
+            if (!(sibling instanceof HTMLElement)) return null;
+            if (!sibling.matches('.view_bottom_btnbox')) return null;
+            if (sibling.closest(`.${this.CUSTOM_CLASSES.BOTTOM_CONTROLS}`)) return null;
+            return sibling;
         },
 
         recordDiagnostic(label, amount = 1) {
@@ -6112,7 +7156,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
             searchForm.style.setProperty('display', 'block', 'important');
             searchForm.style.setProperty('width', '100%', 'important');
-            searchForm.style.setProperty('max-width', '520px', 'important');
+            searchForm.style.setProperty('max-width', 'none', 'important');
             searchForm.style.setProperty('margin', '0', 'important');
             searchForm.style.setProperty('padding', '0', 'important');
             searchForm.style.setProperty('border', 'none', 'important');
@@ -6130,32 +7174,32 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             if (searchWrap instanceof HTMLElement) {
                 searchWrap.style.setProperty('display', 'flex', 'important');
                 searchWrap.style.setProperty('align-items', 'center', 'important');
-                searchWrap.style.setProperty('justify-content', 'center', 'important');
-                searchWrap.style.setProperty('gap', '4px', 'important');
-                searchWrap.style.setProperty('width', 'fit-content', 'important');
+                searchWrap.style.setProperty('justify-content', 'flex-start', 'important');
+                searchWrap.style.setProperty('gap', '8px', 'important');
+                searchWrap.style.setProperty('width', '100%', 'important');
                 searchWrap.style.setProperty('max-width', '100%', 'important');
                 searchWrap.style.setProperty('margin', '0 auto', 'important');
                 searchWrap.style.setProperty('padding', '0', 'important');
-                searchWrap.style.setProperty('flex-wrap', 'nowrap', 'important');
+                searchWrap.style.setProperty('flex-wrap', 'wrap', 'important');
             }
 
             if (hasLegacySearchColumns && searchWrap instanceof HTMLElement) {
                 searchWrap.style.setProperty('display', 'flex', 'important');
                 searchWrap.style.setProperty('align-items', 'center', 'important');
-                searchWrap.style.setProperty('justify-content', 'center', 'important');
-                searchWrap.style.setProperty('gap', '4px', 'important');
-                searchWrap.style.setProperty('width', 'fit-content', 'important');
+                searchWrap.style.setProperty('justify-content', 'flex-start', 'important');
+                searchWrap.style.setProperty('gap', '8px', 'important');
+                searchWrap.style.setProperty('width', '100%', 'important');
                 searchWrap.style.setProperty('max-width', '100%', 'important');
                 searchWrap.style.setProperty('margin', '0 auto', 'important');
                 searchWrap.style.setProperty('padding', '0', 'important');
-                searchWrap.style.setProperty('flex-wrap', 'nowrap', 'important');
+                searchWrap.style.setProperty('flex-wrap', 'wrap', 'important');
             }
 
             if (leftBox instanceof HTMLElement) {
                 leftBox.style.setProperty('display', 'block', 'important');
-                leftBox.style.setProperty('flex', '0 0 125px', 'important');
-                leftBox.style.setProperty('width', '125px', 'important');
-                leftBox.style.setProperty('min-width', '125px', 'important');
+                leftBox.style.setProperty('flex', '0 0 128px', 'important');
+                leftBox.style.setProperty('width', '128px', 'important');
+                leftBox.style.setProperty('min-width', '128px', 'important');
                 leftBox.style.setProperty('margin', '0', 'important');
                 leftBox.style.setProperty('padding', '0', 'important');
                 leftBox.style.setProperty('float', 'none', 'important');
@@ -6165,8 +7209,8 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             if (rightBox instanceof HTMLElement) {
                 rightBox.style.setProperty('display', 'flex', 'important');
                 rightBox.style.setProperty('align-items', 'center', 'important');
-                rightBox.style.setProperty('flex', '0 1 auto', 'important');
-                rightBox.style.setProperty('width', '320px', 'important');
+                rightBox.style.setProperty('flex', '1 1 260px', 'important');
+                rightBox.style.setProperty('width', 'auto', 'important');
                 rightBox.style.setProperty('min-width', '0', 'important');
                 rightBox.style.setProperty('margin', '0', 'important');
                 rightBox.style.setProperty('padding', '0', 'important');
@@ -6176,10 +7220,10 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
             if (nativeSelectHost instanceof HTMLElement) {
                 nativeSelectHost.style.setProperty('display', 'block', 'important');
-                nativeSelectHost.style.setProperty('flex', '0 0 125px', 'important');
-                nativeSelectHost.style.setProperty('width', '125px', 'important');
-                nativeSelectHost.style.setProperty('min-width', '125px', 'important');
-                nativeSelectHost.style.setProperty('height', '38px', 'important');
+                nativeSelectHost.style.setProperty('flex', '0 0 128px', 'important');
+                nativeSelectHost.style.setProperty('width', '128px', 'important');
+                nativeSelectHost.style.setProperty('min-width', '128px', 'important');
+                nativeSelectHost.style.setProperty('height', '44px', 'important');
                 nativeSelectHost.style.setProperty('margin', '0', 'important');
                 nativeSelectHost.style.setProperty('padding', '0', 'important');
                 nativeSelectHost.style.setProperty('box-sizing', 'border-box', 'important');
@@ -6203,15 +7247,15 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
                 nativeSelect.style.setProperty('display', 'block', 'important');
                 nativeSelect.style.setProperty('width', '100%', 'important');
-                nativeSelect.style.setProperty('min-width', '125px', 'important');
-                nativeSelect.style.setProperty('height', '38px', 'important');
+                nativeSelect.style.setProperty('min-width', '128px', 'important');
+                nativeSelect.style.setProperty('height', '44px', 'important');
                 nativeSelect.style.setProperty('margin', '0', 'important');
                 nativeSelect.style.setProperty('padding', '0 10px', 'important');
-                nativeSelect.style.setProperty('border', '1px solid #3b4890', 'important');
-                nativeSelect.style.setProperty('border-radius', '0', 'important');
-                nativeSelect.style.setProperty('background', '#fff', 'important');
-                nativeSelect.style.setProperty('box-shadow', 'none', 'important');
-                nativeSelect.style.setProperty('color', '#333', 'important');
+                nativeSelect.style.setProperty('border', '1px solid var(--dcuf-control-border, #c6d2e4)', 'important');
+                nativeSelect.style.setProperty('border-radius', '12px', 'important');
+                nativeSelect.style.setProperty('background', 'var(--dcuf-control-surface, linear-gradient(180deg, #ffffff 0%, #f4f7fb 100%))', 'important');
+                nativeSelect.style.setProperty('box-shadow', 'inset 0 1px 0 rgba(255, 255, 255, 0.96), 0 4px 10px rgba(20, 39, 75, 0.08)', 'important');
+                nativeSelect.style.setProperty('color', 'var(--dcuf-control-text, #333)', 'important');
                 nativeSelect.style.setProperty('font-size', '13px', 'important');
                 nativeSelect.style.setProperty('font-weight', '700', 'important');
                 nativeSelect.style.setProperty('box-sizing', 'border-box', 'important');
@@ -6245,23 +7289,23 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 }
             }
 
-            if (selectBox instanceof HTMLElement) {
+            if (selectBox instanceof HTMLElement && !(nativeSelect instanceof HTMLSelectElement)) {
                 selectBox.style.setProperty('display', 'flex', 'important');
                 selectBox.style.setProperty('align-items', 'stretch', 'important');
                 selectBox.style.setProperty('position', 'relative', 'important');
-                selectBox.style.setProperty('flex', '0 0 125px', 'important');
-                selectBox.style.setProperty('width', '125px', 'important');
-                selectBox.style.setProperty('min-width', '125px', 'important');
-                selectBox.style.setProperty('height', '38px', 'important');
+                selectBox.style.setProperty('flex', '0 0 128px', 'important');
+                selectBox.style.setProperty('width', '128px', 'important');
+                selectBox.style.setProperty('min-width', '128px', 'important');
+                selectBox.style.setProperty('height', '44px', 'important');
                 selectBox.style.setProperty('margin', '0', 'important');
                 selectBox.style.setProperty('float', 'none', 'important');
                 selectBox.style.setProperty('overflow', 'visible', 'important');
                 selectBox.style.setProperty('box-sizing', 'border-box', 'important');
                 selectBox.style.setProperty('visibility', 'visible', 'important');
-                selectBox.style.setProperty('border', '1px solid #3b4890', 'important');
-                selectBox.style.setProperty('border-radius', '0', 'important');
-                selectBox.style.setProperty('background', '#fff', 'important');
-                selectBox.style.setProperty('box-shadow', 'none', 'important');
+                selectBox.style.setProperty('border', '1px solid var(--dcuf-control-border, #c6d2e4)', 'important');
+                selectBox.style.setProperty('border-radius', '12px', 'important');
+                selectBox.style.setProperty('background', 'var(--dcuf-control-surface, linear-gradient(180deg, #ffffff 0%, #f4f7fb 100%))', 'important');
+                selectBox.style.setProperty('box-shadow', 'inset 0 1px 0 rgba(255, 255, 255, 0.96), 0 4px 10px rgba(20, 39, 75, 0.08)', 'important');
             }
 
             if (selectArea instanceof HTMLElement) {
@@ -6276,7 +7320,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 selectArea.style.setProperty('background', 'transparent', 'important');
                 selectArea.style.setProperty('box-sizing', 'border-box', 'important');
                 selectArea.style.setProperty('overflow', 'hidden', 'important');
-                selectArea.style.setProperty('color', '#333', 'important');
+                selectArea.style.setProperty('color', 'var(--dcuf-control-text, #333)', 'important');
             }
 
             if (selectInner instanceof HTMLElement) {
@@ -6291,44 +7335,48 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             if (bottomSearch instanceof HTMLElement) {
                 bottomSearch.style.setProperty('display', 'flex', 'important');
                 bottomSearch.style.setProperty('align-items', 'center', 'important');
-                bottomSearch.style.setProperty('flex', '0 1 auto', 'important');
-                bottomSearch.style.setProperty('width', '320px', 'important');
-                bottomSearch.style.setProperty('height', '38px', 'important');
+                bottomSearch.style.setProperty('flex', '1 1 260px', 'important');
+                bottomSearch.style.setProperty('width', 'auto', 'important');
+                bottomSearch.style.setProperty('height', 'auto', 'important');
                 bottomSearch.style.setProperty('min-width', '0', 'important');
                 bottomSearch.style.setProperty('margin', '0', 'important');
                 bottomSearch.style.setProperty('float', 'none', 'important');
+                bottomSearch.style.setProperty('position', 'static', 'important');
+                bottomSearch.style.setProperty('inset', 'auto', 'important');
+                bottomSearch.style.setProperty('transform', 'none', 'important');
             }
 
             if (innerSearch instanceof HTMLElement) {
                 innerSearch.style.setProperty('display', 'block', 'important');
                 innerSearch.style.setProperty('flex', '1 1 auto', 'important');
                 innerSearch.style.setProperty('width', 'auto', 'important');
-                innerSearch.style.setProperty('height', '30px', 'important');
+                innerSearch.style.setProperty('height', '44px', 'important');
                 innerSearch.style.setProperty('margin', '0', 'important');
                 innerSearch.style.setProperty('padding', '0', 'important');
-                innerSearch.style.setProperty('border', 'none', 'important');
-                innerSearch.style.setProperty('background', '#fff', 'important');
-                innerSearch.style.setProperty('box-shadow', 'inset 0 0 0 1px rgba(255, 255, 255, 0.06)', 'important');
+                innerSearch.style.setProperty('border', '1px solid var(--dcuf-control-border, #c6d2e4)', 'important');
+                innerSearch.style.setProperty('border-radius', '12px', 'important');
+                innerSearch.style.setProperty('background', 'var(--dcuf-search-input, #fff)', 'important');
+                innerSearch.style.setProperty('box-shadow', 'inset 0 1px 2px rgba(20, 39, 75, 0.06), 0 4px 10px rgba(20, 39, 75, 0.07)', 'important');
                 innerSearch.style.setProperty('overflow', 'hidden', 'important');
             }
 
             if (keywordInput instanceof HTMLInputElement) {
                 keywordInput.style.setProperty('width', '100%', 'important');
-                keywordInput.style.setProperty('height', '30px', 'important');
+                keywordInput.style.setProperty('height', '42px', 'important');
                 keywordInput.style.setProperty('margin', '0', 'important');
-                keywordInput.style.setProperty('padding', '0 9px', 'important');
+                keywordInput.style.setProperty('padding', '0 13px', 'important');
                 keywordInput.style.setProperty('border', 'none', 'important');
-                keywordInput.style.setProperty('border-radius', '0', 'important');
-                keywordInput.style.setProperty('background', '#fff', 'important');
+                keywordInput.style.setProperty('border-radius', '11px', 'important');
+                keywordInput.style.setProperty('background', 'var(--dcuf-search-input, #fff)', 'important');
                 keywordInput.style.setProperty('box-shadow', 'none', 'important');
                 keywordInput.style.setProperty('box-sizing', 'border-box', 'important');
             }
 
             if (searchButton instanceof HTMLElement) {
                 searchButton.style.setProperty('flex', 'none', 'important');
-                searchButton.style.setProperty('width', '37px', 'important');
-                searchButton.style.setProperty('min-width', '37px', 'important');
-                searchButton.style.setProperty('height', '36px', 'important');
+                searchButton.style.setProperty('width', '44px');
+                searchButton.style.setProperty('min-width', '44px');
+                searchButton.style.setProperty('height', '44px');
                 searchButton.style.setProperty('margin', '0', 'important');
             }
 
@@ -6343,15 +7391,25 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
         enhanceBottomControls(bottomControls) {
             if (!(bottomControls instanceof HTMLElement)) return;
+
+            const searchSlot = bottomControls.querySelector(`.${this.CUSTOM_CLASSES.SEARCH_SLOT}`);
+            if (searchSlot instanceof HTMLElement) {
+                this.normalizeSearchFormLayout(searchSlot);
+                this.bindSearchDrawerReserve(searchSlot);
+            }
+            bottomControls.setAttribute('data-dcuf-controls-ready', '1');
         },
 
         createBottomControls(listWrap) {
-            const gallTabs = this.findBottomControlElement(listWrap, this.SELECTORS.GALL_TABS);
+            const gallTabs = this.findBottomControlElement(listWrap, this.SELECTORS.GALL_TABS)
+                || this.findAdjacentViewListActionBar(listWrap);
             const pagination = this.findBottomControlElement(listWrap, this.SELECTORS.PAGINATION);
             const pageMoveBox = this.findBottomControlElement(listWrap, this.SELECTORS.PAGE_MOVE_BOX);
+            const searchForm = this.findBottomControlElement(listWrap, this.SELECTORS.SEARCH_FORM);
+            const searchLayer = this.findBottomControlElement(listWrap, this.SELECTORS.SEARCH_LAYER);
 
 
-            if (!gallTabs && !pagination && !pageMoveBox) return null;
+            if (!gallTabs && !pagination && !pageMoveBox && !searchForm) return null;
 
 
             const bottomControls = document.createElement('div');
@@ -6360,23 +7418,49 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
             if (gallTabs) {
                 const buttonRow = document.createElement('div');
-                buttonRow.className = 'custom-button-row';
+                buttonRow.className = 'custom-button-row dcuf-bottom-action-card';
                 buttonRow.appendChild(gallTabs);
                 bottomControls.appendChild(buttonRow);
             }
 
 
-            if (pagination) {
-                bottomControls.appendChild(pagination);
+            if (pagination || pageMoveBox) {
+                const paginationCard = document.createElement('div');
+                paginationCard.className = 'dcuf-pagination-card';
+                if (pagination) paginationCard.appendChild(pagination);
+                if (pageMoveBox) paginationCard.appendChild(pageMoveBox);
+                bottomControls.appendChild(paginationCard);
             }
 
-            if (pageMoveBox) {
-                bottomControls.appendChild(pageMoveBox);
+            if (searchForm) {
+                const searchCard = document.createElement('div');
+                searchCard.className = 'dcuf-search-card';
+                const searchSlot = document.createElement('div');
+                searchSlot.className = this.CUSTOM_CLASSES.SEARCH_SLOT;
+                if (searchLayer instanceof HTMLElement && !searchForm.contains(searchLayer)) {
+                    searchForm.appendChild(searchLayer);
+                }
+                searchSlot.appendChild(searchForm);
+                searchCard.appendChild(searchSlot);
+                bottomControls.appendChild(searchCard);
             }
 
             this.enhanceBottomControls(bottomControls);
 
             return bottomControls;
+        },
+
+        ensureBottomControls(listWrap) {
+            if (!(listWrap instanceof HTMLElement)) return null;
+            let bottomControls = listWrap.querySelector(`.${this.CUSTOM_CLASSES.BOTTOM_CONTROLS}`);
+            if (!(bottomControls instanceof HTMLElement)) {
+                bottomControls = this.createBottomControls(listWrap);
+            }
+            if (bottomControls instanceof HTMLElement && bottomControls.parentElement !== listWrap) {
+                listWrap.appendChild(bottomControls);
+            }
+            this.enhanceBottomControls(bottomControls);
+            return bottomControls instanceof HTMLElement ? bottomControls : null;
         },
 
         bindTooltipEvents(listContainer) {
@@ -6675,6 +7759,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
             const existingState = this.LIST_STATE_MAP.get(listWrap);
             if (existingState && existingState.originalTbody === originalTbody && existingState.newListContainer instanceof HTMLElement) {
+                this.ensureBottomControls(listWrap);
                 this.enhanceOriginalSearchForms(listWrap);
                 this.scheduleListSync(existingState, reason);
                 return existingState;
@@ -6694,11 +7779,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
             this.bindTooltipEvents(newListContainer);
 
-            const bottomControls = listWrap.querySelector(`.${this.CUSTOM_CLASSES.BOTTOM_CONTROLS}`) || this.createBottomControls(listWrap);
-            if (bottomControls && bottomControls.parentElement !== listWrap) {
-                listWrap.appendChild(bottomControls);
-            }
-            this.enhanceBottomControls(bottomControls);
+            this.ensureBottomControls(listWrap);
             this.enhanceOriginalSearchForms(listWrap);
 
             this.applyForceRefreshPagination(listWrap);
@@ -6739,7 +7820,11 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                     const candidates = payload.collectMatches([
                         this.SELECTORS.LIST_WRAP,
                         this.SELECTORS.ORIGINAL_TABLE,
-                        this.SELECTORS.ORIGINAL_TBODY
+                        this.SELECTORS.ORIGINAL_TBODY,
+                        this.SELECTORS.GALL_TABS,
+                        this.SELECTORS.PAGINATION,
+                        this.SELECTORS.PAGE_MOVE_BOX,
+                        this.SELECTORS.SEARCH_FORM
                     ], { includeRoots: true });
                     if (candidates.length === 0) return;
 
@@ -8456,7 +9541,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
         return {
             reason,
-            version: '3.3.10-beta',
+            version: '3.4.1',
             time: new Date().toISOString(),
             href: location.href,
             heap: getDcufHeapMb(),
@@ -8657,7 +9742,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 commentInitState: { reason: 'already-initialized' }
             };
         }
-        console.log("[DC Filter+UI] Initializing v3.3.10-beta...");
+        console.log("[DC Filter+UI] Initializing v3.4.1...");
 
 
         // [수정] main 함수에서 reloadShortcutKey 함수를 호출하여 초기화
@@ -9096,6 +10181,645 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         .custom-bottom-controls .bottom_movebox > .btn_grey_roundbg.btn_schmove::after {
             margin-left: 6px !important;
         }
+        /* DCUF list navigation surfaces */
+        body:not(.is-write-page) .list_array_option {
+            display: flex !important;
+            align-items: center !important;
+            flex-wrap: wrap !important;
+            gap: 10px !important;
+            width: calc(100% - 12px) !important;
+            min-height: 64px !important;
+            height: auto !important;
+            position: relative !important;
+            margin: 12px 6px 16px !important;
+            padding: 10px 12px !important;
+            border: 1px solid rgba(201, 213, 230, 0.96) !important;
+            border-radius: 16px !important;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(244, 248, 253, 0.98) 100%) !important;
+            box-shadow:
+                inset 0 1px 0 rgba(255, 255, 255, 0.98),
+                inset 0 -8px 16px rgba(211, 222, 237, 0.18),
+                0 12px 24px rgba(22, 39, 72, 0.08),
+                0 2px 6px rgba(22, 39, 72, 0.05) !important;
+            box-sizing: border-box !important;
+            overflow: visible !important;
+        }
+        body:not(.is-write-page) .list_array_option .array_tab,
+        body:not(.is-write-page) .list_array_option > .fl,
+        body:not(.is-write-page) .list_array_option .center_box,
+        body:not(.is-write-page) .list_array_option .right_box,
+        body:not(.is-write-page) .list_array_option .fr {
+            display: flex !important;
+            align-items: center !important;
+            flex-wrap: wrap !important;
+            float: none !important;
+            gap: 7px !important;
+            min-width: 0 !important;
+            position: static !important;
+            inset: auto !important;
+            width: auto !important;
+            height: auto !important;
+            max-height: none !important;
+            overflow: visible !important;
+            margin-top: 0 !important;
+            margin-bottom: 0 !important;
+        }
+        body:not(.is-write-page) .list_array_option .center_box {
+            flex: 1 1 220px !important;
+            justify-content: center !important;
+        }
+        body:not(.is-write-page) .list_array_option .right_box,
+        body:not(.is-write-page) .list_array_option .fr {
+            margin-left: auto !important;
+            justify-content: flex-end !important;
+        }
+        body:not(.is-write-page) .list_array_option .array_tab > ul,
+        body:not(.is-write-page) .list_array_option .array_tab > ol {
+            display: flex !important;
+            align-items: center !important;
+            flex-wrap: wrap !important;
+            gap: 7px !important;
+            position: static !important;
+            float: none !important;
+            width: auto !important;
+            height: auto !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            list-style: none !important;
+        }
+        body:not(.is-write-page) .list_array_option .array_tab li {
+            position: static !important;
+            float: none !important;
+            width: auto !important;
+            height: auto !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            border: 0 !important;
+            background: transparent !important;
+            box-shadow: none !important;
+            list-style: none !important;
+        }
+        body:not(.is-write-page) .list_array_option .array_tab button,
+        body:not(.is-write-page) .list_array_option .array_tab a,
+        .custom-bottom-controls .dcuf-bottom-action-card button,
+        .custom-bottom-controls .dcuf-bottom-action-card a {
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            min-width: 72px !important;
+            min-height: 42px !important;
+            margin: 0 !important;
+            padding: 0 15px !important;
+            border: 1px solid #c7d3e4 !important;
+            border-radius: 11px !important;
+            background: linear-gradient(180deg, #ffffff 0%, #f2f6fb 100%) !important;
+            color: #35445d !important;
+            font-size: 14px !important;
+            font-weight: 800 !important;
+            line-height: 1 !important;
+            text-decoration: none !important;
+            box-shadow:
+                inset 0 1px 0 rgba(255, 255, 255, 0.98),
+                0 4px 10px rgba(24, 43, 79, 0.08) !important;
+            box-sizing: border-box !important;
+        }
+        body:not(.is-write-page) .list_array_option .array_tab .on,
+        body:not(.is-write-page) .list_array_option .array_tab button.on,
+        body:not(.is-write-page) .list_array_option .array_tab a.on,
+        body:not(.is-write-page) .list_array_option .array_tab li.on > a,
+        .custom-bottom-controls .dcuf-bottom-action-card .on,
+        .custom-bottom-controls .dcuf-bottom-action-card button.on,
+        .custom-bottom-controls .dcuf-bottom-action-card a.on {
+            border-color: #315fdb !important;
+            background: linear-gradient(180deg, #527df0 0%, #315fdc 100%) !important;
+            color: #fff !important;
+            box-shadow:
+                inset 0 1px 0 rgba(255, 255, 255, 0.28),
+                0 7px 14px rgba(49, 95, 220, 0.24) !important;
+        }
+        body:not(.is-write-page) .list_array_option select,
+        body:not(.is-write-page) .list_array_option .select_box {
+            min-height: 42px !important;
+            margin: 0 !important;
+            border: 1px solid #c7d3e4 !important;
+            border-radius: 11px !important;
+            background: linear-gradient(180deg, #ffffff 0%, #f2f6fb 100%) !important;
+            color: #43516a !important;
+            box-shadow: inset 0 1px 0 #fff, 0 4px 10px rgba(24, 43, 79, 0.07) !important;
+        }
+        body:not(.is-write-page) .list_array_option .btn_write,
+        body:not(.is-write-page) .list_array_option .write,
+        .custom-bottom-controls .dcuf-bottom-action-card .btn_write,
+        .custom-bottom-controls .dcuf-bottom-action-card .write {
+            min-width: 92px !important;
+            min-height: 44px !important;
+            border-color: #2e5bd4 !important;
+            background: linear-gradient(180deg, #527cf0 0%, #2e5bd4 100%) !important;
+            color: #fff !important;
+            box-shadow:
+                inset 0 1px 0 rgba(255, 255, 255, 0.28),
+                0 8px 16px rgba(46, 91, 212, 0.25) !important;
+        }
+        .custom-bottom-controls {
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: center !important;
+            gap: 12px !important;
+            width: 100% !important;
+            margin: 0 !important;
+            padding: 16px 8px 24px !important;
+            background: transparent !important;
+            box-sizing: border-box !important;
+            overflow: visible !important;
+        }
+        .custom-bottom-controls > .dcuf-bottom-action-card,
+        .custom-bottom-controls > .dcuf-pagination-card,
+        .custom-bottom-controls > .dcuf-search-card {
+            width: 100% !important;
+            max-width: 820px !important;
+            margin: 0 auto !important;
+            border: 1px solid rgba(201, 213, 230, 0.96) !important;
+            border-radius: 16px !important;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(244, 248, 253, 0.98) 100%) !important;
+            box-shadow:
+                inset 0 1px 0 rgba(255, 255, 255, 0.98),
+                inset 0 -10px 18px rgba(211, 222, 237, 0.16),
+                0 12px 24px rgba(22, 39, 72, 0.08),
+                0 2px 6px rgba(22, 39, 72, 0.05) !important;
+            box-sizing: border-box !important;
+            overflow: visible !important;
+        }
+        .custom-bottom-controls > .dcuf-pagination-card {
+            max-width: 1100px !important;
+        }
+        .custom-bottom-controls > .dcuf-search-card {
+            max-width: 820px !important;
+        }
+        .custom-bottom-controls > .dcuf-bottom-action-card {
+            max-width: none !important;
+            padding: 10px !important;
+        }
+        .custom-bottom-controls .dcuf-bottom-action-card .list_bottom_btnbox,
+        .custom-bottom-controls .dcuf-bottom-action-card .view_bottom_btnbox {
+            display: flex !important;
+            align-items: center !important;
+            flex-wrap: wrap !important;
+            gap: 8px !important;
+            width: 100% !important;
+            min-height: 44px !important;
+            height: auto !important;
+            position: static !important;
+            inset: auto !important;
+            float: none !important;
+            overflow: visible !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            border: 0 !important;
+            border-radius: 0 !important;
+            background: transparent !important;
+            box-shadow: none !important;
+        }
+        .custom-bottom-controls .dcuf-bottom-action-card .fl,
+        .custom-bottom-controls .dcuf-bottom-action-card .fr,
+        .custom-bottom-controls .dcuf-bottom-action-card .right_box {
+            display: flex !important;
+            align-items: center !important;
+            flex-wrap: wrap !important;
+            gap: 8px !important;
+            position: static !important;
+            inset: auto !important;
+            float: none !important;
+            width: auto !important;
+            height: auto !important;
+        }
+        .custom-bottom-controls .dcuf-bottom-action-card .fr,
+        .custom-bottom-controls .dcuf-bottom-action-card .right_box {
+            margin-left: auto !important;
+        }
+        .custom-bottom-controls > .dcuf-pagination-card {
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: center !important;
+            gap: 10px !important;
+            padding: 12px !important;
+        }
+        .custom-bottom-controls .dcuf-pagination-card .bottom_paging_box {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: safe center !important;
+            flex-wrap: nowrap !important;
+            gap: 5px !important;
+            width: 100% !important;
+            min-width: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            position: static !important;
+            float: none !important;
+            height: auto !important;
+            min-height: 38px !important;
+            overflow-x: auto !important;
+            overflow-y: hidden !important;
+            scrollbar-width: thin !important;
+            overscroll-behavior-x: contain !important;
+        }
+        .custom-bottom-controls .bottom_paging_box > a,
+        .custom-bottom-controls .bottom_paging_box > strong,
+        .custom-bottom-controls .bottom_paging_box > em,
+        .custom-bottom-controls .bottom_paging_box > span > a,
+        .custom-bottom-controls .bottom_paging_box > div > a,
+        .custom-bottom-controls .bottom_paging_box > span > strong,
+        .custom-bottom-controls .bottom_paging_box > div > strong,
+        .custom-bottom-controls .bottom_paging_box > span > em,
+        .custom-bottom-controls .bottom_paging_box > div > em {
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            flex: 0 0 auto !important;
+            min-width: 38px !important;
+            height: 38px !important;
+            margin: 0 !important;
+            padding: 0 8px !important;
+            border: 1px solid transparent !important;
+            border-radius: 10px !important;
+            color: #43516a !important;
+            font-size: 14px !important;
+            font-weight: 800 !important;
+            line-height: 1 !important;
+            text-decoration: none !important;
+            box-sizing: border-box !important;
+            position: static !important;
+            float: none !important;
+        }
+        .custom-bottom-controls .bottom_paging_box > span,
+        .custom-bottom-controls .bottom_paging_box > div {
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: safe center !important;
+            flex-wrap: nowrap !important;
+            gap: 5px !important;
+            position: static !important;
+            inset: auto !important;
+            float: none !important;
+            min-width: 0 !important;
+            width: auto !important;
+            height: auto !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            border: 0 !important;
+            background: transparent !important;
+            box-shadow: none !important;
+            overflow: visible !important;
+        }
+        .custom-bottom-controls .bottom_paging_box > span > *,
+        .custom-bottom-controls .bottom_paging_box > div > * {
+            position: static !important;
+            float: none !important;
+        }
+        .custom-bottom-controls .bottom_paging_box > a:hover,
+        .custom-bottom-controls .bottom_paging_box > span > a:hover,
+        .custom-bottom-controls .bottom_paging_box > div > a:hover {
+            border-color: #c7d3e4 !important;
+            background: rgba(255, 255, 255, 0.86) !important;
+        }
+        .custom-bottom-controls .bottom_paging_box > strong,
+        .custom-bottom-controls .bottom_paging_box > em,
+        .custom-bottom-controls .bottom_paging_box > .on {
+            border-color: #315fdb !important;
+            background: linear-gradient(180deg, #527df0 0%, #315fdc 100%) !important;
+            color: #fff !important;
+            box-shadow: 0 6px 12px rgba(49, 95, 220, 0.22) !important;
+        }
+        .custom-bottom-controls .dcuf-pagination-card .bottom_movebox {
+            display: flex !important;
+            justify-content: flex-end !important;
+            width: 100% !important;
+            position: static !important;
+            margin: 0 !important;
+        }
+        .custom-bottom-controls .dcuf-pagination-card .bottom_movebox > .btn_grey_roundbg.btn_schmove,
+        .custom-bottom-controls .dcuf-pagination-card .bottom_movebox > button,
+        .custom-bottom-controls .dcuf-pagination-card .bottom_movebox > a {
+            min-width: 116px !important;
+            min-height: 42px !important;
+            padding: 0 14px !important;
+            border: 1px solid #c7d3e4 !important;
+            border-radius: 11px !important;
+            background: linear-gradient(180deg, #ffffff 0%, #f2f6fb 100%) !important;
+            color: #43516a !important;
+            font-weight: 800 !important;
+            box-shadow: inset 0 1px 0 #fff, 0 4px 10px rgba(24, 43, 79, 0.08) !important;
+        }
+        .custom-bottom-controls > .dcuf-search-card {
+            padding: 12px !important;
+        }
+        .custom-bottom-controls .dcuf-search-card .dcuf-search-drawer-slot {
+            display: flex !important;
+            justify-content: flex-start !important;
+            width: 100% !important;
+            padding-bottom: var(--dcuf-search-layer-reserve, 0px) !important;
+        }
+        .custom-bottom-controls .dcuf-search-card form[name="frmSearch"] {
+            width: 100% !important;
+            max-width: none !important;
+        }
+        .custom-bottom-controls[data-dcuf-controls-ready="1"] .dcuf-search-card form[name="frmSearch"] .bnt_search,
+        .custom-bottom-controls[data-dcuf-controls-ready="1"] .dcuf-search-card form[name="frmSearch"] button.sp_img.bnt_search {
+            flex: none !important;
+            position: relative !important;
+            width: 44px !important;
+            min-width: 44px !important;
+            height: 44px !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            border: 1px solid #2e5bd4 !important;
+            border-radius: 12px !important;
+            background-color: #3768df !important;
+            background-image: none !important;
+            background-position: 0 0 !important;
+            background-repeat: no-repeat !important;
+            color: transparent !important;
+            font-size: 0 !important;
+            line-height: 0 !important;
+            text-indent: 0 !important;
+            overflow: hidden !important;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 7px 14px rgba(46, 91, 212, 0.24) !important;
+        }
+        .custom-bottom-controls[data-dcuf-controls-ready="1"] .dcuf-search-card form[name="frmSearch"] .bnt_search::before,
+        .custom-bottom-controls[data-dcuf-controls-ready="1"] .dcuf-search-card form[name="frmSearch"] button.sp_img.bnt_search::before {
+            content: "" !important;
+            position: absolute !important;
+            left: 50% !important;
+            top: 50% !important;
+            display: block !important;
+            width: 15px !important;
+            height: 15px !important;
+            border: 3px solid #fff !important;
+            border-radius: 50% !important;
+            background: transparent !important;
+            background-image: none !important;
+            box-sizing: border-box !important;
+            transform: translate(-62%, -62%) !important;
+            pointer-events: none !important;
+        }
+        .custom-bottom-controls[data-dcuf-controls-ready="1"] .dcuf-search-card form[name="frmSearch"] .bnt_search::after,
+        .custom-bottom-controls[data-dcuf-controls-ready="1"] .dcuf-search-card form[name="frmSearch"] button.sp_img.bnt_search::after {
+            content: "" !important;
+            position: absolute !important;
+            left: 50% !important;
+            top: 50% !important;
+            display: block !important;
+            width: 8px !important;
+            height: 3px !important;
+            border: 0 !important;
+            border-radius: 999px !important;
+            background: #fff !important;
+            background-image: none !important;
+            box-sizing: border-box !important;
+            transform: translate(3px, 5px) rotate(45deg) !important;
+            transform-origin: left center !important;
+            pointer-events: none !important;
+        }
+
+        /* Live DCInside list controls: normalize host wrappers without cloning them. */
+        body:not(.is-write-page) .list_array_option .output_array {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: flex-end !important;
+            gap: 8px !important;
+            position: static !important;
+            inset: auto !important;
+            float: none !important;
+            width: auto !important;
+            height: auto !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            overflow: visible !important;
+        }
+        body:not(.is-write-page) .list_array_option .select_box.array_num {
+            display: block !important;
+            position: relative !important;
+            inset: auto !important;
+            flex: 0 0 76px !important;
+            width: 76px !important;
+            min-width: 76px !important;
+            height: 44px !important;
+            min-height: 44px !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            overflow: visible !important;
+            box-sizing: border-box !important;
+        }
+        body:not(.is-write-page) .list_array_option .select_box.array_num > select {
+            position: absolute !important;
+            width: 1px !important;
+            height: 1px !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
+        }
+        body:not(.is-write-page) .list_array_option .select_box.array_num > .select_area {
+            display: flex !important;
+            align-items: stretch !important;
+            position: relative !important;
+            inset: auto !important;
+            width: 100% !important;
+            height: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            border: 0 !important;
+            background: transparent !important;
+        }
+        body:not(.is-write-page) .list_array_option .select_box.array_num > .select_area > a {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            width: 100% !important;
+            height: 100% !important;
+            margin: 0 !important;
+            padding: 0 10px 0 12px !important;
+            border: 0 !important;
+            background: transparent !important;
+            box-shadow: none !important;
+            color: #43516a !important;
+            font-size: 13px !important;
+            font-weight: 800 !important;
+            line-height: 1 !important;
+            text-indent: 0 !important;
+            text-decoration: none !important;
+            box-sizing: border-box !important;
+        }
+        body:not(.is-write-page) .list_array_option .select_box.array_num > .option_box {
+            position: absolute !important;
+            left: 0 !important;
+            top: calc(100% + 7px) !important;
+            z-index: 30 !important;
+            width: 100% !important;
+            min-width: 76px !important;
+            margin: 0 !important;
+            border: 1px solid #c7d3e4 !important;
+            border-radius: 10px !important;
+            background: #fff !important;
+            box-shadow: 0 10px 22px rgba(24, 43, 79, 0.16) !important;
+            overflow: hidden !important;
+        }
+        body:not(.is-write-page) .list_array_option .switch_btnbox {
+            display: flex !important;
+            align-items: center !important;
+            position: static !important;
+            inset: auto !important;
+            float: none !important;
+            width: auto !important;
+            height: auto !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+        body:not(.is-write-page) .list_array_option .btn_write,
+        body:not(.is-write-page) .list_array_option .btn_write.txt {
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            position: static !important;
+            inset: auto !important;
+            float: none !important;
+            width: auto !important;
+            min-width: 92px !important;
+            height: 44px !important;
+            margin: 0 !important;
+            padding: 0 18px !important;
+            border: 1px solid #2e5bd4 !important;
+            border-radius: 11px !important;
+            background-color: #2e5bd4 !important;
+            background-image: linear-gradient(180deg, #527cf0 0%, #2e5bd4 100%) !important;
+            background-position: 0 0 !important;
+            background-repeat: no-repeat !important;
+            color: #fff !important;
+            font-size: 14px !important;
+            font-weight: 800 !important;
+            line-height: 1 !important;
+            text-indent: 0 !important;
+            text-decoration: none !important;
+            box-sizing: border-box !important;
+        }
+        .custom-bottom-controls .dcuf-search-card form[name="frmSearch"] .bottom_search {
+            position: static !important;
+            inset: auto !important;
+            transform: none !important;
+            padding: 0 !important;
+            border: 0 !important;
+            border-radius: 0 !important;
+            outline: 0 !important;
+            background: transparent !important;
+            background-image: none !important;
+            box-shadow: none !important;
+            box-sizing: border-box !important;
+        }
+        .custom-bottom-controls .bottom_paging_box > a.sp_pagingicon {
+            position: static !important;
+            inset: auto !important;
+            float: none !important;
+            width: auto !important;
+            min-width: 52px !important;
+            height: 38px !important;
+            padding: 0 10px !important;
+            background: transparent !important;
+            background-image: none !important;
+            background-position: 0 0 !important;
+            color: #43516a !important;
+            font-size: 13px !important;
+            font-weight: 800 !important;
+            line-height: 38px !important;
+            text-indent: 0 !important;
+            white-space: nowrap !important;
+            overflow: visible !important;
+        }
+        .custom-bottom-controls .bottom_paging_box > a.sp_pagingicon::before,
+        .custom-bottom-controls .bottom_paging_box > a.sp_pagingicon::after {
+            display: none !important;
+            content: none !important;
+        }
+        #container.gallery_view .view_bottom_btnbox,
+        #container.minor_view .view_bottom_btnbox,
+        #container.mini_view .view_bottom_btnbox {
+            display: flex !important;
+            align-items: center !important;
+            flex-wrap: wrap !important;
+            gap: 8px !important;
+            position: relative !important;
+            inset: auto !important;
+            float: none !important;
+            width: calc(100% - 12px) !important;
+            min-height: 64px !important;
+            height: auto !important;
+            margin: 12px 6px 16px !important;
+            padding: 10px !important;
+            border: 1px solid rgba(201, 213, 230, 0.96) !important;
+            border-radius: 16px !important;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(244, 248, 253, 0.98) 100%) !important;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.98), 0 12px 24px rgba(22, 39, 72, 0.08) !important;
+            box-sizing: border-box !important;
+            overflow: visible !important;
+        }
+        #container.gallery_view .view_bottom_btnbox > .fl,
+        #container.gallery_view .view_bottom_btnbox > .fr,
+        #container.minor_view .view_bottom_btnbox > .fl,
+        #container.minor_view .view_bottom_btnbox > .fr,
+        #container.mini_view .view_bottom_btnbox > .fl,
+        #container.mini_view .view_bottom_btnbox > .fr {
+            display: flex !important;
+            align-items: center !important;
+            flex-wrap: wrap !important;
+            gap: 8px !important;
+            position: static !important;
+            inset: auto !important;
+            float: none !important;
+            width: auto !important;
+            height: auto !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+        #container.gallery_view .view_bottom_btnbox > .fr,
+        #container.minor_view .view_bottom_btnbox > .fr,
+        #container.mini_view .view_bottom_btnbox > .fr {
+            margin-left: auto !important;
+        }
+        #container.gallery_view .view_bottom_btnbox button,
+        #container.gallery_view .view_bottom_btnbox a,
+        #container.minor_view .view_bottom_btnbox button,
+        #container.minor_view .view_bottom_btnbox a,
+        #container.mini_view .view_bottom_btnbox button,
+        #container.mini_view .view_bottom_btnbox a {
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            position: static !important;
+            inset: auto !important;
+            min-width: 72px !important;
+            min-height: 44px !important;
+            margin: 0 !important;
+            padding: 0 15px !important;
+            border: 1px solid #c7d3e4 !important;
+            border-radius: 11px !important;
+            background: linear-gradient(180deg, #ffffff 0%, #f2f6fb 100%) !important;
+            background-image: none !important;
+            color: #35445d !important;
+            font-size: 14px !important;
+            font-weight: 800 !important;
+            line-height: 1 !important;
+            text-indent: 0 !important;
+            text-decoration: none !important;
+            box-sizing: border-box !important;
+        }
+        #container.gallery_view .view_bottom_btnbox .btn_blue,
+        #container.gallery_view .view_bottom_btnbox .write,
+        #container.minor_view .view_bottom_btnbox .btn_blue,
+        #container.minor_view .view_bottom_btnbox .write,
+        #container.mini_view .view_bottom_btnbox .btn_blue,
+        #container.mini_view .view_bottom_btnbox .write {
+            border-color: #2e5bd4 !important;
+            background: linear-gradient(180deg, #527cf0 0%, #2e5bd4 100%) !important;
+            color: #fff !important;
+            box-shadow: 0 8px 16px rgba(46, 91, 212, 0.25) !important;
+        }
+
         .page_head > .fr {
             position: relative !important;
             overflow: visible !important;
@@ -9313,6 +11037,197 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             border-color: #445267 !important;
             color: #f3f6ff !important;
         }
+        body.dc-filter-dark-mode:not(.is-write-page) .list_array_option,
+        body.dc-filter-dark-mode .custom-bottom-controls > .dcuf-bottom-action-card,
+        body.dc-filter-dark-mode .custom-bottom-controls > .dcuf-pagination-card,
+        body.dc-filter-dark-mode .custom-bottom-controls > .dcuf-search-card {
+            --dcuf-control-border: #43526a;
+            --dcuf-control-surface: linear-gradient(180deg, #263347 0%, #202b3a 100%);
+            --dcuf-control-text: #e8eef8;
+            --dcuf-search-input: #111722;
+            border-color: #3d4c60 !important;
+            background: linear-gradient(180deg, rgba(35, 46, 62, 0.98) 0%, rgba(25, 34, 47, 0.98) 100%) !important;
+            box-shadow:
+                inset 0 1px 0 rgba(133, 153, 183, 0.14),
+                inset 0 -10px 18px rgba(5, 10, 18, 0.18),
+                0 14px 28px rgba(0, 0, 0, 0.3),
+                0 2px 7px rgba(0, 0, 0, 0.24) !important;
+        }
+        body.dc-filter-dark-mode:not(.is-write-page) .list_array_option .array_tab button,
+        body.dc-filter-dark-mode:not(.is-write-page) .list_array_option .array_tab a,
+        body.dc-filter-dark-mode .custom-bottom-controls .dcuf-bottom-action-card button,
+        body.dc-filter-dark-mode .custom-bottom-controls .dcuf-bottom-action-card a,
+        body.dc-filter-dark-mode:not(.is-write-page) .list_array_option select,
+        body.dc-filter-dark-mode:not(.is-write-page) .list_array_option .select_box,
+        body.dc-filter-dark-mode .custom-bottom-controls .dcuf-pagination-card .bottom_movebox > button,
+        body.dc-filter-dark-mode .custom-bottom-controls .dcuf-pagination-card .bottom_movebox > a {
+            border-color: #43526a !important;
+            background: linear-gradient(180deg, #2a384c 0%, #222d3d 100%) !important;
+            color: #e1e9f5 !important;
+            box-shadow: inset 0 1px 0 rgba(135, 155, 184, 0.14), 0 5px 12px rgba(0, 0, 0, 0.22) !important;
+        }
+        body.dc-filter-dark-mode:not(.is-write-page) .list_array_option .array_tab .on,
+        body.dc-filter-dark-mode:not(.is-write-page) .list_array_option .array_tab button.on,
+        body.dc-filter-dark-mode:not(.is-write-page) .list_array_option .array_tab a.on,
+        body.dc-filter-dark-mode .custom-bottom-controls .dcuf-bottom-action-card .on,
+        body.dc-filter-dark-mode .custom-bottom-controls .dcuf-bottom-action-card button.on,
+        body.dc-filter-dark-mode .custom-bottom-controls .dcuf-bottom-action-card a.on {
+            border-color: #4c7bf0 !important;
+            background: linear-gradient(180deg, #5b86f2 0%, #3868df 100%) !important;
+            color: #fff !important;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.24), 0 7px 14px rgba(31, 68, 164, 0.4) !important;
+        }
+
+        body.dc-filter-dark-mode .custom-bottom-controls .bottom_paging_box > a,
+        body.dc-filter-dark-mode .custom-bottom-controls .bottom_paging_box > span > a,
+        body.dc-filter-dark-mode .custom-bottom-controls .bottom_paging_box > div > a {
+            color: #cbd7e8 !important;
+        }
+        body.dc-filter-dark-mode .custom-bottom-controls .bottom_paging_box > a:hover,
+        body.dc-filter-dark-mode .custom-bottom-controls .bottom_paging_box > span > a:hover,
+        body.dc-filter-dark-mode .custom-bottom-controls .bottom_paging_box > div > a:hover {
+            border-color: #4b5c74 !important;
+            background: rgba(46, 60, 80, 0.86) !important;
+        }
+        body.dc-filter-dark-mode .custom-bottom-controls .dcuf-search-card form[name="frmSearch"] input[type="text"] {
+            background: var(--dcuf-search-input) !important;
+            color: #f3f6ff !important;
+        }
+        body.dc-filter-dark-mode #container.gallery_view .view_bottom_btnbox,
+        body.dc-filter-dark-mode #container.minor_view .view_bottom_btnbox,
+        body.dc-filter-dark-mode #container.mini_view .view_bottom_btnbox {
+            border-color: #3d4c60 !important;
+            background: linear-gradient(180deg, rgba(35, 46, 62, 0.98) 0%, rgba(25, 34, 47, 0.98) 100%) !important;
+            box-shadow: inset 0 1px 0 rgba(133, 153, 183, 0.14), 0 14px 28px rgba(0, 0, 0, 0.3) !important;
+        }
+        body.dc-filter-dark-mode #container.gallery_view .view_bottom_btnbox button,
+        body.dc-filter-dark-mode #container.gallery_view .view_bottom_btnbox a,
+        body.dc-filter-dark-mode #container.minor_view .view_bottom_btnbox button,
+        body.dc-filter-dark-mode #container.minor_view .view_bottom_btnbox a,
+        body.dc-filter-dark-mode #container.mini_view .view_bottom_btnbox button,
+        body.dc-filter-dark-mode #container.mini_view .view_bottom_btnbox a {
+            border-color: #43526a !important;
+            background: linear-gradient(180deg, #2a384c 0%, #222d3d 100%) !important;
+            color: #e1e9f5 !important;
+            box-shadow: inset 0 1px 0 rgba(135, 155, 184, 0.14), 0 5px 12px rgba(0, 0, 0, 0.22) !important;
+        }
+        body.dc-filter-dark-mode #container.gallery_view .view_bottom_btnbox .btn_blue,
+        body.dc-filter-dark-mode #container.gallery_view .view_bottom_btnbox .write,
+        body.dc-filter-dark-mode #container.minor_view .view_bottom_btnbox .btn_blue,
+        body.dc-filter-dark-mode #container.minor_view .view_bottom_btnbox .write,
+        body.dc-filter-dark-mode #container.mini_view .view_bottom_btnbox .btn_blue,
+        body.dc-filter-dark-mode #container.mini_view .view_bottom_btnbox .write {
+            border-color: #4c7bf0 !important;
+            background: linear-gradient(180deg, #5b86f2 0%, #3868df 100%) !important;
+            color: #fff !important;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.24), 0 7px 14px rgba(31, 68, 164, 0.4) !important;
+        }
+        body.dc-filter-dark-mode:not(.is-write-page) .list_array_option .select_box.array_num > .select_area > a {
+            color: #e1e9f5 !important;
+        }
+        body.dc-filter-dark-mode:not(.is-write-page) .list_array_option .select_box.array_num > .option_box {
+            border-color: #43526a !important;
+            background: #222d3d !important;
+            color: #e1e9f5 !important;
+        }
+
+        @media screen and (max-width: 640px) {
+            body:not(.is-write-page) .list_array_option {
+                width: calc(100% - 8px) !important;
+                margin: 8px 4px 12px !important;
+                padding: 9px !important;
+                border-radius: 14px !important;
+                gap: 8px !important;
+            }
+            #container.gallery_view .view_bottom_btnbox,
+            #container.minor_view .view_bottom_btnbox,
+            #container.mini_view .view_bottom_btnbox {
+                width: calc(100% - 8px) !important;
+                margin: 8px 4px 12px !important;
+                padding: 9px 88px 9px 9px !important;
+                border-radius: 14px !important;
+                gap: 8px !important;
+            }
+            #container.gallery_view .view_bottom_btnbox button,
+            #container.gallery_view .view_bottom_btnbox a,
+            #container.minor_view .view_bottom_btnbox button,
+            #container.minor_view .view_bottom_btnbox a,
+            #container.mini_view .view_bottom_btnbox button,
+            #container.mini_view .view_bottom_btnbox a {
+                min-width: 64px !important;
+                min-height: 42px !important;
+                padding: 0 12px !important;
+            }
+
+            body:not(.is-write-page) .list_array_option .center_box {
+                order: 3 !important;
+                flex-basis: 100% !important;
+                justify-content: flex-start !important;
+            }
+            body:not(.is-write-page) .list_array_option .right_box,
+            body:not(.is-write-page) .list_array_option .fr {
+                flex: 1 1 auto !important;
+            }
+            body:not(.is-write-page) .list_array_option .array_tab button,
+            body:not(.is-write-page) .list_array_option .array_tab a,
+            .custom-bottom-controls .dcuf-bottom-action-card button,
+            .custom-bottom-controls .dcuf-bottom-action-card a {
+                min-width: 64px !important;
+                min-height: 42px !important;
+                padding: 0 12px !important;
+            }
+            .custom-bottom-controls {
+                padding: 12px 4px 20px !important;
+                gap: 10px !important;
+            }
+            .custom-bottom-controls > .dcuf-bottom-action-card,
+            .custom-bottom-controls > .dcuf-pagination-card,
+            .custom-bottom-controls > .dcuf-search-card {
+                border-radius: 14px !important;
+            }
+            .custom-bottom-controls > .dcuf-bottom-action-card {
+                padding: 9px 88px 9px 9px !important;
+            }
+            .custom-bottom-controls > .dcuf-pagination-card {
+                padding: 10px !important;
+            }
+            .custom-bottom-controls .dcuf-pagination-card .bottom_movebox {
+                width: 100% !important;
+                justify-content: center !important;
+            }
+            .custom-bottom-controls .bottom_paging_box > a,
+            .custom-bottom-controls .bottom_paging_box > strong,
+            .custom-bottom-controls .bottom_paging_box > em,
+            .custom-bottom-controls .bottom_paging_box > span > a,
+            .custom-bottom-controls .bottom_paging_box > div > a,
+            .custom-bottom-controls .bottom_paging_box > span > strong,
+            .custom-bottom-controls .bottom_paging_box > div > strong,
+            .custom-bottom-controls .bottom_paging_box > span > em {
+                min-width: 36px !important;
+                height: 36px !important;
+                padding: 0 6px !important;
+            }
+            .custom-bottom-controls > .dcuf-search-card {
+                padding: 10px !important;
+            }
+            .custom-bottom-controls .dcuf-search-card form[name="frmSearch"] .bottom_search {
+                flex-wrap: wrap !important;
+                height: auto !important;
+                gap: 8px !important;
+            }
+            .custom-bottom-controls .dcuf-search-card form[name="frmSearch"] .inner_search {
+                flex: 1 1 100% !important;
+                width: 100% !important;
+            }
+            .custom-bottom-controls[data-dcuf-controls-ready="1"] .dcuf-search-card form[name="frmSearch"] .bnt_search,
+            .custom-bottom-controls[data-dcuf-controls-ready="1"] .dcuf-search-card form[name="frmSearch"] button.sp_img.bnt_search {
+                width: 100% !important;
+                min-width: 100% !important;
+                height: 44px !important;
+            }
+
+        }
+
         @media screen and (max-width: 640px) {
             .custom-mobile-list { padding: 8px !important; }
             .custom-post-item { padding: 12px !important; border-radius: 11px !important; }
@@ -13633,6 +15548,10 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         if (!payload || typeof payload !== 'object') return false;
         if (Array.isArray(payload.addedElements) && payload.addedElements.some(isReplyMergeMutationNode)) return true;
         if (Array.isArray(payload.removedElements) && payload.removedElements.some(isReplyMergeMutationNode)) return true;
+        // Removed reply-composer trees are already detached when the mutation bus
+        // dispatches, so ancestor-dependent selectors cannot recognize them. Inspect
+        // the still-connected childList target to clear stale focus-card grouping.
+        if (Array.isArray(payload.childListTargets) && payload.childListTargets.some(isReplyMergeAttributeTarget)) return true;
         if (Array.isArray(payload.attributeTargets) && payload.attributeTargets.some(isReplyMergeAttributeTarget)) return true;
         return false;
     };
@@ -13655,7 +15574,8 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         const observer = new MutationObserver((mutations) => {
             for (const mutation of mutations) {
                 if (mutation.type === 'childList' && (mutation.addedNodes.length > 0 || mutation.removedNodes.length > 0)) {
-                    const hasRelevantChange = Array.from(mutation.addedNodes).some(isReplyMergeMutationNode)
+                    const hasRelevantChange = isReplyMergeAttributeTarget(mutation.target)
+                        || Array.from(mutation.addedNodes).some(isReplyMergeMutationNode)
                         || Array.from(mutation.removedNodes).some(isReplyMergeMutationNode);
                     if (hasRelevantChange) {
                         scheduleReplyMerge();
