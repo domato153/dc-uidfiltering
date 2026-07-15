@@ -1,10 +1,11 @@
 ﻿// ==UserScript==
 // @name         DC_UserFilter_Mobile
 // @namespace    http://tampermonkey.net/
-// @version      3.4.3
+// @version      3.4.4
 // @description  유저 필터링, UI 개선, 개인 차단/해제 기능
 // @author       domato153
 // @match        https://gall.dcinside.com/*
+// @noframes
 // @grant        GM_setValue
 // @grant        GM_getValue
 // @grant        GM_registerMenuCommand
@@ -24,220 +25,289 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
     'use strict';
 
     const __dcufRoot = (typeof unsafeWindow !== 'undefined' && unsafeWindow) ? unsafeWindow : window;
-    if (__dcufRoot.__dcufRuntimeLoaded) {
-        console.warn('DCinside User Filter: duplicate runtime detected, skip init.');
+    if (window.top !== window.self) return;
+
+    const previousBoot = __dcufRoot.__dcufBootController || window.__dcufBootController;
+    if (previousBoot) {
+        if (previousBoot.state === 'locked' || previousBoot.state === 'preparing') previousBoot.ensure('duplicate-runtime');
+        else if (previousBoot.state === 'degraded') previousBoot.requestRecovery?.('duplicate-runtime');
+        console.warn('DCinside User Filter: duplicate runtime detected; reusing bootstrap.');
         return;
     }
-    __dcufRoot.__dcufRuntimeLoaded = `dcuf-${Date.now()}`;
 
     if (!__dcufRoot.__dcufBfcacheOptOutInstalled) {
         __dcufRoot.__dcufBfcacheOptOutInstalled = true;
         const preventBackForwardCache = () => {};
-        try {
-            __dcufRoot.addEventListener('unload', preventBackForwardCache, { capture: true });
-        } catch (error) {
-            window.addEventListener('unload', preventBackForwardCache, { capture: true });
-        }
+        try { __dcufRoot.addEventListener('unload', preventBackForwardCache, { capture: true }); }
+        catch { window.addEventListener('unload', preventBackForwardCache, { capture: true }); }
     }
 
-
-    // [개선] 전역 스코프 오염 방지를 위해 스크립트 상태 변수를 IIFE 내부 스코프로 이동
     let dcFilterSettings = {};
     let userSumCache = {};
     let isInitialized = false;
     let isUiInitialized = false;
-    let activeShortcutObject = null; // [v2.1 추가] 현재 활성화된 단축키 객체
-    const ROOT_READY_CLASS = 'script-ui-ready';
-    const INITIAL_LOCK_STYLE_ID = 'dcuf-initial-lock-style';
-    const BOOT_OVERLAY_ID = 'dcuf-boot-overlay';
-    const BOOT_OVERLAY_STYLE_ID = 'dcuf-boot-overlay-style';
-    const BOOT_UI_WATCHDOG_MAX_MS = 8000;
-    const BOOT_UI_WATCHDOG_INTERVAL_MS = 50;
-    let bootUiWatchdogTimerId = 0;
-    let bootUiWatchdogStartedAt = 0;
-    let bootUiWatchdogDomReadyHandler = null;
-    let bootUiWatchdogLoadHandler = null;
+    let activeShortcutObject = null;
 
-    const isBootOverlayTargetPage = () => true;
-    const isRootUiReady = () => !!document.documentElement?.classList.contains(ROOT_READY_CLASS);
-    const removeBootOverlay = (reason = 'unknown') => {
-        const overlay = document.getElementById(BOOT_OVERLAY_ID);
-        if (overlay) overlay.remove();
-    };
+    const READY_CLASS = 'script-ui-ready';
+    const STATE_ATTR = 'data-dcuf-boot-state';
+    const LOCK_STYLE_ID = 'dcuf-initial-lock-style';
+    const OVERLAY_ID = 'dcuf-boot-overlay';
+    const OVERLAY_STYLE_ID = 'dcuf-boot-overlay-style';
+    const DEGRADED_STYLE_ID = 'dcuf-degraded-filter-style';
+    const DEGRADED_BANNER_ID = 'dcuf-degraded-banner';
+    const testBootConfig = __dcufRoot.__DCUF_TESTBED_CONFIG__?.boot || null;
+    const ABSOLUTE_DEADLINE_MS = Math.max(20, Number(testBootConfig?.absoluteDeadlineMs) || 15000);
+    const CRITICAL_DEADLINE_MS = Math.max(20, Number(testBootConfig?.criticalDeadlineMs) || 6000);
+    const startedAt = Date.now();
+    const diagnosticsBuffer = [];
+    const rollbackHandlers = new Set();
+    const recoveryHandlers = new Set();
+    const readyHandlers = new Set();
+    let ensureTimer = 0;
+    let absoluteTimer = 0;
+    let criticalTimer = 0;
+    let domReadyListener = null;
+    let loadListener = null;
 
-    const ensureBootOverlay = () => {
-        if (!isBootOverlayTargetPage()) return;
-
-        const mountPoint = document.head || document.documentElement;
-        if (mountPoint && !document.getElementById(BOOT_OVERLAY_STYLE_ID)) {
-            const style = document.createElement('style');
-            style.id = BOOT_OVERLAY_STYLE_ID;
-            style.textContent = `
-                #${BOOT_OVERLAY_ID} {
-                    position: fixed;
-                    inset: 0;
-                    z-index: 2147483646;
-                    background:
-                        radial-gradient(circle at top, rgba(255,255,255,0.96), rgba(245,247,251,0.98) 45%, rgba(238,241,246,0.99)),
-                        linear-gradient(180deg, #f7f9fc 0%, #eef2f7 100%);
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    padding: 24px;
-                    pointer-events: auto;
-                }
-                #${BOOT_OVERLAY_ID} .dcuf-boot-card {
-                    width: min(420px, calc(100vw - 32px));
-                    border: 1px solid rgba(197, 206, 218, 0.9);
-                    border-radius: 18px;
-                    background: rgba(255,255,255,0.96);
-                    box-shadow: 0 20px 48px rgba(31, 45, 68, 0.12);
-                    padding: 22px 20px 18px;
-                    color: #2b3340;
-                    text-align: center;
-                }
-                #${BOOT_OVERLAY_ID} .dcuf-boot-title {
-                    font-size: 17px;
-                    font-weight: 700;
-                    letter-spacing: -0.01em;
-                    margin-bottom: 8px;
-                }
-                #${BOOT_OVERLAY_ID} .dcuf-boot-copy {
-                    font-size: 13px;
-                    line-height: 1.55;
-                    color: #5a6575;
-                    margin-bottom: 14px;
-                }
-                #${BOOT_OVERLAY_ID} .dcuf-boot-bar {
-                    height: 4px;
-                    border-radius: 999px;
-                    background: rgba(203, 211, 223, 0.6);
-                    overflow: hidden;
-                }
-                #${BOOT_OVERLAY_ID} .dcuf-boot-bar::before {
-                    content: '';
-                    display: block;
-                    width: 42%;
-                    height: 100%;
-                    border-radius: inherit;
-                    background: linear-gradient(90deg, #245bda 0%, #5d87f0 100%);
-                    animation: dcuf-boot-progress 1s ease-in-out infinite;
-                }
-                html.dc-filter-dark-mode #${BOOT_OVERLAY_ID} {
-                    background:
-                        radial-gradient(circle at top, rgba(34,39,48,0.95), rgba(20,24,31,0.98) 48%, rgba(14,17,22,0.99)),
-                        linear-gradient(180deg, #1d222a 0%, #11151b 100%);
-                }
-                html.dc-filter-dark-mode #${BOOT_OVERLAY_ID} .dcuf-boot-card {
-                    border-color: rgba(71, 81, 96, 0.92);
-                    background: rgba(28, 33, 41, 0.96);
-                    box-shadow: 0 20px 48px rgba(0, 0, 0, 0.34);
-                    color: #e7ebf2;
-                }
-                html.dc-filter-dark-mode #${BOOT_OVERLAY_ID} .dcuf-boot-copy {
-                    color: #adb7c7;
-                }
-                html.dc-filter-dark-mode #${BOOT_OVERLAY_ID} .dcuf-boot-bar {
-                    background: rgba(63, 73, 88, 0.9);
-                }
-                @keyframes dcuf-boot-progress {
-                    0% { transform: translateX(-120%); }
-                    100% { transform: translateX(260%); }
-                }
-            `;
-            mountPoint.appendChild(style);
+    const pageType = ((window.location.pathname || '').match(/\/board\/(lists|view|write)(?:\/|$)/) || [])[1] || 'other';
+    const isTargetPage = () => pageType !== 'other';
+    const note = (label, detail = null) => {
+        const entry = { label, detail, ts: Date.now(), elapsedMs: Date.now() - startedAt };
+        const api = window.__dcufDiagnostics;
+        if (typeof api?.note === 'function') api.note(label, entry);
+        else {
+            diagnosticsBuffer.push(entry);
+            if (diagnosticsBuffer.length > 40) diagnosticsBuffer.shift();
         }
-
-        if (document.getElementById(BOOT_OVERLAY_ID)) return;
-        if (!document.documentElement) return;
-
-        const overlay = document.createElement('div');
-        overlay.id = BOOT_OVERLAY_ID;
-        overlay.innerHTML = `
-            <div class="dcuf-boot-card">
-                <div class="dcuf-boot-title">UI 준비 중</div>
-                <div class="dcuf-boot-copy">광고 차단과 충돌하면 로딩이 지연될 수 있습니다.<br>DCInside에서는 광고 차단을 꺼주세요.</div>
-                <div class="dcuf-boot-bar" aria-hidden="true"></div>
-            </div>
+    };
+    const flushDiagnostics = () => {
+        const api = window.__dcufDiagnostics;
+        if (typeof api?.note !== 'function') return;
+        diagnosticsBuffer.splice(0).forEach((entry) => api.note(entry.label, entry));
+    };
+    const removeBootChrome = () => {
+        document.getElementById(OVERLAY_ID)?.remove();
+        document.getElementById(LOCK_STYLE_ID)?.remove();
+        document.getElementById(OVERLAY_STYLE_ID)?.remove();
+    };
+    const stopTimers = () => {
+        if (ensureTimer) clearInterval(ensureTimer);
+        if (absoluteTimer) clearTimeout(absoluteTimer);
+        if (criticalTimer) clearTimeout(criticalTimer);
+        ensureTimer = absoluteTimer = criticalTimer = 0;
+        if (domReadyListener) document.removeEventListener('DOMContentLoaded', domReadyListener);
+        if (loadListener) window.removeEventListener('load', loadListener);
+        domReadyListener = loadListener = null;
+    };
+    const ensureLockStyle = () => {
+        const mount = document.head || document.documentElement;
+        if (!mount || document.getElementById(LOCK_STYLE_ID)) return;
+        const style = document.createElement('style');
+        style.id = LOCK_STYLE_ID;
+        style.textContent = `
+            html[${STATE_ATTR}="locked"] body,
+            html[${STATE_ATTR}="preparing"] body {
+                opacity: 0 !important;
+                visibility: hidden !important;
+                pointer-events: none !important;
+            }
         `;
+        mount.appendChild(style);
+    };
+    const ensureOverlay = () => {
+        if (!isTargetPage() || !document.documentElement) return;
+        const mount = document.head || document.documentElement;
+        if (mount && !document.getElementById(OVERLAY_STYLE_ID)) {
+            const style = document.createElement('style');
+            style.id = OVERLAY_STYLE_ID;
+            style.textContent = `
+                #${OVERLAY_ID} {
+                    position: fixed !important; inset: 0 !important; z-index: 2147483646 !important;
+                    box-sizing: border-box !important; display: flex !important; align-items: center !important;
+                    justify-content: center !important; width: 100vw !important; height: 100vh !important;
+                    margin: 0 !important; padding: 24px !important; visibility: visible !important;
+                    opacity: 1 !important; pointer-events: auto !important;
+                    background: linear-gradient(180deg,#f7f9fc,#eef2f7) !important;
+                }
+                #${OVERLAY_ID} .dcuf-boot-card {
+                    box-sizing: border-box !important; width: min(420px,calc(100vw - 32px)) !important;
+                    padding: 22px 20px 18px !important; border: 1px solid #c5ceda !important;
+                    border-radius: 18px !important; background: #fff !important; color: #2b3340 !important;
+                    text-align: center !important; box-shadow: 0 20px 48px rgba(31,45,68,.12) !important;
+                }
+                #${OVERLAY_ID} .dcuf-boot-title { margin-bottom: 8px !important; font: 700 17px/1.35 sans-serif !important; }
+                #${OVERLAY_ID} .dcuf-boot-copy { margin-bottom: 14px !important; color: #5a6575 !important; font: 500 13px/1.55 sans-serif !important; }
+                #${OVERLAY_ID} .dcuf-boot-bar { height: 4px !important; overflow: hidden !important; border-radius: 999px !important; background: #cbd3df !important; }
+                #${OVERLAY_ID} .dcuf-boot-bar::before {
+                    content: '' !important; display: block !important; width: 42% !important; height: 100% !important;
+                    border-radius: inherit !important; background: linear-gradient(90deg,#245bda,#5d87f0) !important;
+                    animation: dcuf-boot-progress 1s ease-in-out infinite !important;
+                }
+                html.dc-filter-dark-mode #${OVERLAY_ID} { background: linear-gradient(180deg,#1d222a,#11151b) !important; }
+                html.dc-filter-dark-mode #${OVERLAY_ID} .dcuf-boot-card { border-color: #475160 !important; background: #1c2129 !important; color: #e7ebf2 !important; }
+                @keyframes dcuf-boot-progress { from { transform: translateX(-120%); } to { transform: translateX(260%); } }
+                @media (prefers-reduced-motion: reduce) { #${OVERLAY_ID} .dcuf-boot-bar::before { width: 100% !important; animation: none !important; } }
+            `;
+            mount.appendChild(style);
+        }
+        if (document.getElementById(OVERLAY_ID)) return;
+        const overlay = document.createElement('div');
+        overlay.id = OVERLAY_ID;
+        overlay.setAttribute('role', 'status');
+        overlay.setAttribute('aria-live', 'polite');
+        overlay.setAttribute('aria-atomic', 'true');
+        const card = document.createElement('div');
+        card.className = 'dcuf-boot-card';
+        const title = document.createElement('div');
+        title.className = 'dcuf-boot-title';
+        title.textContent = 'UI 준비 중';
+        const copy = document.createElement('div');
+        copy.className = 'dcuf-boot-copy';
+        copy.append(
+            document.createTextNode('광고 차단과 충돌하면 로딩이 지연될 수 있습니다.'),
+            document.createElement('br'),
+            document.createTextNode('DCInside에서는 광고 차단을 꺼주세요.')
+        );
+        const bar = document.createElement('div');
+        bar.className = 'dcuf-boot-bar';
+        bar.setAttribute('aria-hidden', 'true');
+        card.append(title, copy, bar);
+        overlay.appendChild(card);
         document.documentElement.appendChild(overlay);
     };
-
-    const markUiReady = () => {
-        const root = document.documentElement;
-        if (root) root.classList.add(ROOT_READY_CLASS);
-
-        const body = document.body;
-        if (body) body.classList.add(ROOT_READY_CLASS);
-
-        stopBootUiWatchdog();
-        removeBootOverlay('mark-ui-ready');
-    };
-
-    const injectInitialLockStyle = () => {
-        const mountPoint = document.head || document.documentElement;
-        if (!mountPoint || document.getElementById(INITIAL_LOCK_STYLE_ID)) return;
-
-        const style = document.createElement('style');
-        style.id = INITIAL_LOCK_STYLE_ID;
-        style.textContent = `
-            html:not(.${ROOT_READY_CLASS}) body {
-                visibility: hidden !important;
-            }
-        `;
-        mountPoint.appendChild(style);
-    };
-
-    const ensureBootUi = (reason = 'ensure-boot-ui') => {
-        if (!isBootOverlayTargetPage() || isRootUiReady()) return true;
-        injectInitialLockStyle();
-        ensureBootOverlay();
-        return !!document.getElementById(INITIAL_LOCK_STYLE_ID) && !!document.getElementById(BOOT_OVERLAY_ID);
-    };
-
-    const stopBootUiWatchdog = () => {
-        if (bootUiWatchdogTimerId) {
-            window.clearInterval(bootUiWatchdogTimerId);
-            bootUiWatchdogTimerId = 0;
+    const ensureDegradedUi = (reason) => {
+        if ((pageType === 'list' || pageType === 'view') && !document.getElementById(DEGRADED_STYLE_ID)) {
+            const style = document.createElement('style');
+            style.id = DEGRADED_STYLE_ID;
+            style.textContent = `
+                html[${STATE_ATTR}="degraded"] :is(
+                    .gall_listwrap table.gall_list,.list_wrap table.gall_list,.custom-mobile-list,
+                    .gall_exposure_list,#focus_cmt .comment_box,div[id^="comment_wrap_"] .comment_box,
+                    .view_comment.image_comment .comment_box
+                ) { opacity: 0 !important; visibility: hidden !important; pointer-events: none !important; }
+            `;
+            (document.head || document.documentElement)?.appendChild(style);
         }
-        if (bootUiWatchdogDomReadyHandler) {
-            document.removeEventListener('DOMContentLoaded', bootUiWatchdogDomReadyHandler);
-            bootUiWatchdogDomReadyHandler = null;
-        }
-        if (bootUiWatchdogLoadHandler) {
-            window.removeEventListener('load', bootUiWatchdogLoadHandler);
-            bootUiWatchdogLoadHandler = null;
-        }
+        if (!document.body || document.getElementById(DEGRADED_BANNER_ID)) return;
+        const banner = document.createElement('aside');
+        banner.id = DEGRADED_BANNER_ID;
+        banner.dataset.reason = reason;
+        banner.setAttribute('role', 'status');
+        banner.style.cssText = 'position:fixed!important;left:12px!important;right:12px!important;bottom:12px!important;z-index:2147483645!important;box-sizing:border-box!important;display:flex!important;align-items:center!important;justify-content:space-between!important;gap:12px!important;padding:12px 14px!important;border:1px solid #d5a93a!important;border-radius:12px!important;background:#fff8dd!important;color:#4f3b00!important;box-shadow:0 8px 28px rgba(0,0,0,.18)!important;font:600 13px/1.4 sans-serif!important;pointer-events:auto!important;visibility:visible!important;opacity:1!important;';
+        const message = document.createElement('span');
+        message.textContent = pageType === 'write' ? 'DCUF failed; the native write page is available.' : 'DCUF is recovering; filterable areas are temporarily withheld.';
+        const reload = document.createElement('button');
+        reload.type = 'button';
+        reload.textContent = 'Reload';
+        reload.style.cssText = 'min-width:76px!important;min-height:40px!important;padding:8px 12px!important;border:1px solid #9c7716!important;border-radius:9px!important;background:#fff!important;color:#4f3b00!important;font-weight:700!important;cursor:pointer!important;';
+        reload.addEventListener('click', () => location.reload());
+        banner.append(message, reload);
+        document.body.appendChild(banner);
     };
 
+    const bootController = {
+        state: isTargetPage() ? 'locked' : 'idle',
+        pageType,
+        startedAt,
+        ensure(reason = 'ensure') {
+            if (!isTargetPage() || this.state === 'ready' || this.state === 'degraded') return true;
+            document.documentElement?.setAttribute(STATE_ATTR, this.state === 'preparing' ? 'preparing' : 'locked');
+            ensureLockStyle();
+            ensureOverlay();
+            note('boot.ensure', { reason });
+            return !!document.getElementById(LOCK_STYLE_ID) && !!document.getElementById(OVERLAY_ID);
+        },
+        startPreparing(reason = 'main') {
+            if (!isTargetPage() || this.state === 'ready' || this.state === 'degraded') return;
+            this.state = 'preparing';
+            document.documentElement?.setAttribute(STATE_ATTR, 'preparing');
+            note('boot.preparing', { reason });
+        },
+        registerRollback(fn) { if (typeof fn === 'function') rollbackHandlers.add(fn); return () => rollbackHandlers.delete(fn); },
+        registerRecovery(fn) { if (typeof fn === 'function') recoveryHandlers.add(fn); return () => recoveryHandlers.delete(fn); },
+        onReady(fn) {
+            if (typeof fn !== 'function') return () => {};
+            if (this.state === 'ready') queueMicrotask(fn);
+            else readyHandlers.add(fn);
+            return () => readyHandlers.delete(fn);
+        },
+        requestRecovery(reason = 'manual') {
+            recoveryHandlers.forEach((fn) => { try { fn(reason); } catch (error) { console.warn('[DCUF boot] recovery failed:', error); } });
+        },
+        markReady(reason = 'ready') {
+            if (this.state === 'ready') return;
+            const recovered = this.state === 'degraded';
+            this.state = 'ready';
+            __dcufRoot.__dcufRuntimeState = 'ready';
+            document.documentElement?.setAttribute(STATE_ATTR, 'ready');
+            document.documentElement?.classList.add(READY_CLASS);
+            document.body?.classList.add(READY_CLASS);
+            stopTimers();
+            removeBootChrome();
+            document.getElementById(DEGRADED_STYLE_ID)?.remove();
+            document.getElementById(DEGRADED_BANNER_ID)?.remove();
+            note(recovered ? 'boot.recovered' : 'boot.ready', { reason });
+            flushDiagnostics();
+            readyHandlers.forEach((fn) => { try { fn(); } catch (error) { console.warn('[DCUF boot] ready handler failed:', error); } });
+            readyHandlers.clear();
+            window.dispatchEvent(new CustomEvent('dcuf:boot-ready', { detail: { reason, recovered } }));
+        },
+        degrade(reason = 'deadline') {
+            if (this.state === 'ready' || this.state === 'degraded') return;
+            rollbackHandlers.forEach((fn) => { try { fn(reason); } catch (error) { console.warn('[DCUF boot] rollback failed:', error); } });
+            ensureDegradedUi(reason);
+            this.state = 'degraded';
+            __dcufRoot.__dcufRuntimeState = 'degraded';
+            document.documentElement?.setAttribute(STATE_ATTR, 'degraded');
+            document.documentElement?.classList.add(READY_CLASS);
+            document.body?.classList.add(READY_CLASS);
+            stopTimers();
+            removeBootChrome();
+            note('boot.degraded', { reason });
+            flushDiagnostics();
+            window.dispatchEvent(new CustomEvent('dcuf:boot-degraded', { detail: { reason } }));
+        },
+        note,
+        flushDiagnostics
+    };
+
+    const markUiReady = (reason = 'ready') => bootController.markReady(reason);
+    const ensureBootUi = (reason = 'ensure-boot-ui') => bootController.ensure(reason);
     const startBootUiWatchdog = () => {
-        if (bootUiWatchdogTimerId || isRootUiReady() || !isBootOverlayTargetPage()) return;
-        bootUiWatchdogStartedAt = Date.now();
-
-        const tick = () => {
-            if (isRootUiReady()) {
-                stopBootUiWatchdog();
-                return;
-            }
-
-            ensureBootUi('watchdog');
-            if (Date.now() - bootUiWatchdogStartedAt >= BOOT_UI_WATCHDOG_MAX_MS) {
-                stopBootUiWatchdog();
+        if (!isTargetPage() || ensureTimer) return;
+        const tick = () => bootController.ensure('watchdog');
+        ensureTimer = setInterval(tick, 80);
+        absoluteTimer = setTimeout(() => bootController.degrade('absolute-deadline'), ABSOLUTE_DEADLINE_MS);
+        domReadyListener = () => {
+            note('boot.dom-content-loaded');
+            tick();
+            if ((pageType === 'list' || pageType === 'view') && !criticalTimer) {
+                criticalTimer = setTimeout(() => bootController.degrade('critical-deadline'), CRITICAL_DEADLINE_MS);
             }
         };
-
-        bootUiWatchdogTimerId = window.setInterval(tick, BOOT_UI_WATCHDOG_INTERVAL_MS);
-        bootUiWatchdogDomReadyHandler = () => tick();
-        bootUiWatchdogLoadHandler = () => tick();
-        document.addEventListener('DOMContentLoaded', bootUiWatchdogDomReadyHandler, { once: true });
-        window.addEventListener('load', bootUiWatchdogLoadHandler, { once: true });
+        loadListener = tick;
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', domReadyListener, { once: true });
+        } else {
+            domReadyListener();
+        }
+        window.addEventListener('load', loadListener, { once: true });
         tick();
     };
 
+    __dcufRoot.__dcufRuntimeLoaded = `dcuf-${Date.now()}`;
+    __dcufRoot.__dcufRuntimeState = 'initializing';
+    __dcufRoot.__dcufBootController = bootController;
+    window.__dcufBootController = bootController;
     __dcufRoot.__dcufEnsureBootUi = ensureBootUi;
-    injectInitialLockStyle();
-    ensureBootOverlay();
-    startBootUiWatchdog();
+    window.__dcufEnsureBootUi = ensureBootUi;
+    note('boot.start', { pageType });
+    if (isTargetPage()) {
+        document.documentElement?.setAttribute(STATE_ATTR, 'locked');
+        ensureLockStyle();
+        ensureOverlay();
+        startBootUiWatchdog();
+    }
     // Phase 2 runtime shared prelude
 /**
  * Shared storage/schema constants extracted from v2.7.5.4.
@@ -841,8 +911,11 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             '.custom-bottom-controls'
         ].join(', '),
         _mutationObserver: null,
+        _mutationObserverTarget: null,
+        _bodyMountObserver: null,
         _mutationObserverReady: false,
         _mutationSubscribers: new Map(),
+        _immediateMutationSubscribers: new Map(),
         _pendingMutationRecords: [],
         _pendingMutationRafId: 0,
         _pendingMutationTimerId: 0,
@@ -1074,8 +1147,37 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             }
         },
 
+        dispatchImmediateMutations(records) {
+            if (!Array.isArray(records) || records.length === 0) return;
+            if (!(this._immediateMutationSubscribers instanceof Map) || this._immediateMutationSubscribers.size === 0) return;
+
+            const payload = this.buildMutationPayload(records);
+            this.incrementDiagnostic('mutation.immediateDispatches');
+            this.setDiagnosticGauge('mutation.immediateSubscribers', this._immediateMutationSubscribers.size);
+
+            const measureDispatch = this._diagnosticsEnabled && typeof performance?.now === 'function';
+            const dispatchStartedAt = measureDispatch ? performance.now() : 0;
+            this._immediateMutationSubscribers.forEach((listener, key) => {
+                try {
+                    listener(payload);
+                } catch (error) {
+                    console.error('[DCUF runtime] immediate mutation subscriber failed:', key, error);
+                }
+            });
+            if (measureDispatch) {
+                this.setDiagnosticGauge(
+                    'mutation.lastImmediateDispatchDurationMs',
+                    Math.round((performance.now() - dispatchStartedAt) * 1000) / 1000
+                );
+            }
+        },
+
         queueMutationRecords(records) {
             if (!Array.isArray(records) || records.length === 0) return;
+            // MutationObserver callbacks run before the next paint. Critical visibility
+            // subscribers must see the fresh records here; the ordinary bus remains
+            // animation-frame batched for heavier UI and async work.
+            this.dispatchImmediateMutations(records);
             this._pendingMutationRecords.push(...records);
             this.incrementDiagnostic('mutation.bursts');
             this.incrementDiagnostic('mutation.records', records.length);
@@ -1092,11 +1194,28 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             }, 50);
         },
 
+        flushPendingMutations(reason = 'manual-flush') {
+            this.installDiagnosticsApi();
+            if (this._mutationObserver) {
+                const records = this._mutationObserver.takeRecords();
+                if (records.length > 0) {
+                    this.dispatchImmediateMutations(records);
+                    this._pendingMutationRecords.push(...records);
+                }
+            }
+            if (this._pendingMutationRecords.length > 0) this.dispatchQueuedMutations();
+            this.noteDiagnostic('mutation.bus.flushed', { reason, generation: this._mutationGeneration });
+            return this._mutationGeneration;
+        },
+
         ensureMutationBus() {
             this.installDiagnosticsApi();
-            if (this._mutationObserverReady) return true;
-
             const observerTarget = document.body;
+            if (this._mutationObserverReady
+                && this._mutationObserverTarget === observerTarget
+                && observerTarget?.isConnected) {
+                return true;
+            }
             if (!observerTarget) {
                 if (!this._awaitingBodyForMutationBus) {
                     this._awaitingBodyForMutationBus = true;
@@ -1106,6 +1225,15 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                     }, { once: true });
                 }
                 return false;
+            }
+
+            if (this._mutationObserver) {
+                const pending = this._mutationObserver.takeRecords();
+                if (pending.length > 0) {
+                    this.dispatchImmediateMutations(pending);
+                    this._pendingMutationRecords.push(...pending);
+                }
+                this._mutationObserver.disconnect();
             }
 
             this._mutationObserver = new MutationObserver((records) => {
@@ -1118,8 +1246,19 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 characterData: true,
                 attributeFilter: ['class', 'style', 'src', 'id', 'data-uid', 'data-nick', 'data-ip', 'data-no', 'p-no']
             });
+            this._mutationObserverTarget = observerTarget;
             this._mutationObserverReady = true;
-            this.noteDiagnostic('mutation.bus.ready', { target: 'document.body' });
+            if (!this._bodyMountObserver && document.documentElement) {
+                this._bodyMountObserver = new MutationObserver((records) => {
+                    if (this._mutationObserverTarget !== document.body) {
+                        this.ensureMutationBus();
+                        this.queueMutationRecords(records);
+                    }
+                });
+                this._bodyMountObserver.observe(document.documentElement, { childList: true });
+            }
+            this.noteDiagnostic('mutation.bus.ready', { target: 'document.body', rebound: true });
+            if (this._pendingMutationRecords.length > 0) this.dispatchQueuedMutations();
             return true;
         },
 
@@ -1131,6 +1270,17 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             return () => {
                 this._mutationSubscribers.delete(key);
                 this.setDiagnosticGauge('mutation.subscribers', this._mutationSubscribers.size);
+            };
+        },
+
+        subscribeImmediateMutations(key, listener) {
+            if (typeof listener !== 'function') return () => {};
+            this.ensureMutationBus();
+            this._immediateMutationSubscribers.set(key, listener);
+            this.setDiagnosticGauge('mutation.immediateSubscribers', this._immediateMutationSubscribers.size);
+            return () => {
+                this._immediateMutationSubscribers.delete(key);
+                this.setDiagnosticGauge('mutation.immediateSubscribers', this._immediateMutationSubscribers.size);
             };
         },
 
@@ -2631,7 +2781,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             }
         }
 
-        /* [v3.4.3] Script-owned soft-depth control surfaces */
+        /* [v3.4.4] Script-owned soft-depth control surfaces */
         #dc-personal-block-fab {
             background: linear-gradient(180deg, #fff 0%, #eef4ff 100%) !important;
             color: #29466f !important;
@@ -3854,6 +4004,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         DEBUG_DECISION_KEYS: null,
         _runtimeMutationUnsubscribe: null,
         _userSumTaskQueue: null,
+        _blockedUidWritePromise: null,
         _queuedObserverFilterItems: null,
         _queuedObserverFilterRafId: 0,
         _queuedObserverFilterTimerId: 0,
@@ -3868,7 +4019,9 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         PROXY_STRICT_PREFIXES: DCUF_SHARED_IP.PROXY_STRICT_PREFIXES,
         PROXY_AGGRESSIVE_EXTRA_PREFIXES: DCUF_SHARED_IP.PROXY_AGGRESSIVE_EXTRA_PREFIXES,
         KR_IP_RANGES: DCUF_SHARED_IP.KR_IP_RANGES,
-        isMobile: () => /Mobi/i.test(navigator.userAgent),
+        // This source is the mobile target adapter. The PC builder rewrites this
+        // target flag to false when it ports the shared filter module.
+        isMobile: () => true,
         isRecommendedContext: () => window.location.search.includes('exception_mode=recommend'),
         normalizeProxyBlockMode(value) {
             return DCUF_SHARED_STORAGE.normalizeProxyBlockModeValue(value);
@@ -4081,12 +4234,13 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             };
             this.debugLog('api', 'window.DCUFDebug installed', Object.keys(window.DCUFDebug));
         },
-        async cleanupLegacyManagedBlockConfig() {
-            const migrationDone = await GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG_MIGRATION_V275_DONE, false);
+        async cleanupLegacyManagedBlockConfig(snapshot = null) {
+            const migrationDone = snapshot ? snapshot.migrationDone : await GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG_MIGRATION_V275_DONE, false);
             if (migrationDone) return;
-            const conf = await GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG, {});
+            const conf = snapshot?.blockConfig || await GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG, {});
             if (!conf || typeof conf !== 'object') {
                 await GM_setValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG_MIGRATION_V275_DONE, true);
+                if (snapshot) snapshot.migrationDone = true;
                 return;
             }
             const currentIp = typeof conf.ip === 'string' ? conf.ip : '';
@@ -4103,6 +4257,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 conf.ip = '';
                 await GM_setValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG, conf);
                 await GM_setValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG_MIGRATION_V275_DONE, true);
+                if (snapshot) { snapshot.blockConfig = conf; snapshot.migrationDone = true; }
                 return;
             }
 
@@ -4115,6 +4270,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 await GM_setValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG, conf);
             }
             await GM_setValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG_MIGRATION_V275_DONE, true);
+            if (snapshot) { snapshot.blockConfig = conf; snapshot.migrationDone = true; }
         },
         async showSettings() {
             await this.reloadSettings();
@@ -4603,6 +4759,62 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 this.flushQueuedObservedFilterItems();
             }, 80);
         },
+        collectMutationFilterItems(payload, containerSelector, itemSelector, {
+            attributeNames = [],
+            includeChildListTargets = false
+        } = {}) {
+            if (!payload || typeof payload !== 'object') return [];
+            const items = [];
+            const seen = new Set();
+            const watchedAttributes = new Set(attributeNames);
+            const addItem = (element) => {
+                if (!(element instanceof HTMLElement) || !element.isConnected || seen.has(element)) return;
+                if (!element.matches(itemSelector) || !element.closest(containerSelector)) return;
+                seen.add(element);
+                items.push(element);
+            };
+            const scanTarget = (root) => {
+                if (!(root instanceof Element)) return;
+                addItem(root);
+                const closestItem = root.closest(itemSelector);
+                if (closestItem) addItem(closestItem);
+            };
+            const scanAddedRoot = (root) => {
+                if (!(root instanceof Element)) return;
+                scanTarget(root);
+                if (typeof root.querySelectorAll === 'function') {
+                    root.querySelectorAll(itemSelector).forEach(addItem);
+                }
+            };
+
+            if (Array.isArray(payload.addedElements)) payload.addedElements.forEach(scanAddedRoot);
+            if (Array.isArray(payload.records)) {
+                payload.records.forEach((record) => {
+                    if (record?.type === 'attributes' && watchedAttributes.has(record.attributeName)) {
+                        scanTarget(record.target);
+                    } else if (includeChildListTargets && record?.type === 'childList') {
+                        scanTarget(record.target);
+                    }
+                });
+            }
+            return items;
+        },
+        collectImmediateCommentFilterItems(payload) {
+            return this.collectMutationFilterItems(
+                payload,
+                this.CONSTANTS.SELECTORS.COMMENT_CONTAINER,
+                this.CONSTANTS.SELECTORS.COMMENT_ITEM,
+                { attributeNames: ['data-uid', 'data-nick', 'data-ip'] }
+            );
+        },
+        applyImmediateCommentMutations(payload) {
+            const items = this.collectImmediateCommentFilterItems(payload);
+            if (items.length === 0) return;
+            const descriptors = this.describeFilterTargets(items);
+            this.applySyncToDescriptors(descriptors);
+            this.incrementRuntimeDiagnostic('filter.immediateComment.runs');
+            this.setRuntimeDiagnosticGauge('filter.immediateComment.lastTargetCount', descriptors.length);
+        },
         getRuntimeCoordinator() {
             return window.__dcufRuntimeCoordinator || null;
         },
@@ -4715,10 +4927,35 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             }
         },
         async addBlockedUid(uid, sum, post, comment, ratioBlocked) {
-            if (this.isMobile()) return;
-            await this.refreshBlockedUidsCache();
-            this.BLOCKED_UIDS_CACHE[uid] = { ts: Date.now(), sum, post, comment, ratioBlocked: !!ratioBlocked };
-            await GM_setValue(this.CONSTANTS.STORAGE_KEYS.BLOCKED_UIDS, JSON.stringify(this.BLOCKED_UIDS_CACHE));
+            if (!uid) return;
+            if (!this.isMobile()) {
+                await this.refreshBlockedUidsCache();
+            }
+            const nextEntry = { ts: Date.now(), sum, post, comment, ratioBlocked: !!ratioBlocked };
+            const currentEntry = this.BLOCKED_UIDS_CACHE[uid];
+            if (currentEntry
+                && currentEntry.sum === nextEntry.sum
+                && currentEntry.post === nextEntry.post
+                && currentEntry.comment === nextEntry.comment
+                && currentEntry.ratioBlocked === nextEntry.ratioBlocked) {
+                return;
+            }
+            this.BLOCKED_UIDS_CACHE[uid] = nextEntry;
+            if (!this.isMobile()) {
+                await GM_setValue(this.CONSTANTS.STORAGE_KEYS.BLOCKED_UIDS, JSON.stringify(this.BLOCKED_UIDS_CACHE));
+                return;
+            }
+            const serializedCache = JSON.stringify(this.BLOCKED_UIDS_CACHE);
+            const previousWrite = this._blockedUidWritePromise || Promise.resolve();
+            const writePromise = previousWrite
+                .catch(() => {})
+                .then(() => GM_setValue(this.CONSTANTS.STORAGE_KEYS.BLOCKED_UIDS, serializedCache));
+            this._blockedUidWritePromise = writePromise;
+            try {
+                await writePromise;
+            } finally {
+                if (this._blockedUidWritePromise === writePromise) this._blockedUidWritePromise = null;
+            }
         },
         async getBlockedGuests() { try { return JSON.parse(await GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCKED_GUESTS, '[]')); } catch { return []; } },
         async setBlockedGuests(list) { await GM_setValue(this.CONSTANTS.STORAGE_KEYS.BLOCKED_GUESTS, JSON.stringify(list)); },
@@ -4775,9 +5012,17 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             if (element.style.display !== nextDisplay) element.style.display = nextDisplay;
         },
         async applyBlockFilterToElement(element, uid, userData, addBlockedUidFn) {
-            if (!userData) return;
+            if (!userData || !(element instanceof HTMLElement) || !element.isConnected) return;
             const { sumBlocked, ratioBlocked } = this.isUserBlocked(userData);
             const shouldBeBlocked = sumBlocked || ratioBlocked;
+            // UID statistics are an additional blocking reason, not an authority to reveal content.
+            // A request can begin before a personal block is saved and resolve afterwards; letting a
+            // negative statistics result call setElementVisibility(false) in that race briefly exposes
+            // the personally blocked comment and starts a shell-attribute refilter loop.
+            if (!shouldBeBlocked && element.getAttribute('data-dcuf-personal-blocked') === '1') {
+                this.incrementRuntimeDiagnostic('filter.asyncAllow.suppressedPersonalBlock');
+                return;
+            }
             this.setElementVisibility(element, shouldBeBlocked);
             if (shouldBeBlocked) await addBlockedUidFn.call(this, uid, userData.sum, userData.post, userData.comment, ratioBlocked);
         },
@@ -4796,6 +5041,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
             try {
                 if (element.style.display === 'none') return;
+                if (element.getAttribute('data-dcuf-personal-blocked') === '1') return;
                 if (!(writerInfo instanceof HTMLElement)) return;
                 if (!uid || uid.length < 3) return;
                 if (this.BLOCKED_UIDS_CACHE[uid]) return;
@@ -4803,10 +5049,14 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 await this.applyBlockFilterToElement(element, uid, userData, this.addBlockedUid);
             } catch (e) { console.warn(`DCinside User Filter: Async filter exception.`, e, element); }
         },
-        async refreshBlockedUidsCache() {
-            if (this.isMobile()) { this.BLOCKED_UIDS_CACHE = {}; return; }
-            let data; try { data = JSON.parse(await GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCKED_UIDS, '{}')); } catch { data = {}; }
-            const now = Date.now(); let changed = false;
+        async refreshBlockedUidsCache(rawValue = null) {
+            let data; try { data = JSON.parse(rawValue === null ? await GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCKED_UIDS, '{}') : rawValue); } catch { data = {}; }
+            let changed = false;
+            if (!data || typeof data !== 'object' || Array.isArray(data)) {
+                data = {};
+                changed = true;
+            }
+            const now = Date.now();
             for (const [uid, cacheData] of Object.entries(data)) {
                 if (typeof cacheData !== 'object' || cacheData === null || typeof cacheData.ts !== 'number' || now - cacheData.ts > this.BLOCK_UID_EXPIRE) { delete data[uid]; changed = true; }
             }
@@ -4959,13 +5209,23 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
             if (hasRuntimeMutationBus) {
                 if (typeof this._runtimeMutationUnsubscribe === 'function') this._runtimeMutationUnsubscribe();
+                if (typeof this._runtimeImmediateMutationUnsubscribe === 'function') this._runtimeImmediateMutationUnsubscribe();
+                if (typeof runtimeCoordinator.subscribeImmediateMutations === 'function') {
+                    this._runtimeImmediateMutationUnsubscribe = runtimeCoordinator.subscribeImmediateMutations(
+                        'filter-immediate-comment-visibility',
+                        (payload) => this.applyImmediateCommentMutations(payload)
+                    );
+                }
                 this._runtimeMutationUnsubscribe = runtimeCoordinator.subscribeMutations('filter-universal-observer', (payload) => {
                     let hasRelevantMutation = false;
                     let hasCommentMutation = false;
                     targets.forEach((target) => {
                         const changedContainers = payload.collectMatches(target.c);
                         changedContainers.forEach((container) => attachObserver(container, target.i, { attachDomObserver: false }));
-                        const changedItems = payload.collectMatches(target.i, { includeRoots: true }).filter((item) => item.closest?.(target.c));
+                        const changedItems = this.collectMutationFilterItems(payload, target.c, target.i, {
+                            attributeNames: ['class', 'id', 'data-uid', 'data-nick', 'data-ip'],
+                            includeChildListTargets: true
+                        });
                         if (changedContainers.length > 0 || changedItems.length > 0) {
                             hasRelevantMutation = true;
                             if (target.scope === 'comments') hasCommentMutation = true;
@@ -4994,27 +5254,95 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             });
             bodyObserver.observe(observerTarget, { childList: true, subtree: true });
         },
-        async reloadSettings() {
+        loadBootSnapshot() {
+            if (this._bootSnapshotPromise) return this._bootSnapshotPromise;
+            const keys = this.CONSTANTS.STORAGE_KEYS;
+            this._bootSnapshotPromise = Promise.all([
+                GM_getValue(keys.BLOCK_CONFIG_MIGRATION_V275_DONE, false),
+                GM_getValue(keys.MASTER_DISABLED, false),
+                GM_getValue(keys.EXCLUDE_RECOMMENDED, false),
+                GM_getValue(keys.THRESHOLD),
+                GM_getValue(keys.RATIO_ENABLED, false),
+                GM_getValue(keys.RATIO_MIN, ''),
+                GM_getValue(keys.RATIO_MAX, ''),
+                GM_getValue(keys.BLOCK_GUEST, false),
+                GM_getValue(keys.BLOCK_PROXY, 0),
+                GM_getValue(keys.BLOCK_TELECOM, false),
+                GM_getValue(keys.BLOCKED_GUESTS, '[]'),
+                GM_getValue(keys.BLOCK_CONFIG, {}),
+                GM_getValue(keys.PERSONAL_BLOCK_LIST, { uids: [], nicknames: [], ips: [] }),
+                GM_getValue(keys.PERSONAL_BLOCK_ENABLED, true),
+                GM_getValue(keys.BLOCKED_UIDS, '{}')
+            ]).then((values) => {
+                const [
+                    migrationDone, masterDisabled, excludeRecommended, rawThreshold, ratioEnabled,
+                    ratioMin, ratioMax, blockGuestEnabled, proxyBlockMode, telecomBlockEnabled,
+                    blockedGuestsRaw, blockConfig, personalBlockList, personalBlockEnabled, blockedUidsRaw
+                ] = values;
+                let blockedGuests = [];
+                try { blockedGuests = JSON.parse(blockedGuestsRaw); } catch { blockedGuests = []; }
+                const snapshot = {
+                    migrationDone,
+                    masterDisabled,
+                    excludeRecommended,
+                    threshold: rawThreshold === undefined ? 0 : rawThreshold,
+                    thresholdMissing: rawThreshold === undefined,
+                    ratioEnabled,
+                    ratioMin,
+                    ratioMax,
+                    blockGuestEnabled,
+                    proxyBlockMode,
+                    telecomBlockEnabled,
+                    blockedGuests: Array.isArray(blockedGuests) ? blockedGuests : [],
+                    blockConfig,
+                    personalBlockList,
+                    personalBlockEnabled,
+                    blockedUidsRaw
+                };
+                this._bootSnapshot = snapshot;
+                window.__dcufBootController?.note?.('boot.storage-snapshot', { keys: values.length });
+                return snapshot;
+            }).catch((error) => {
+                this._bootSnapshotPromise = null;
+                throw error;
+            });
+            return this._bootSnapshotPromise;
+        },
+        getBootSnapshot() {
+            return this._bootSnapshot || null;
+        },
+        async reloadSettings(snapshot = null) {
+            let values;
+            if (snapshot) {
+                values = [
+                    snapshot.masterDisabled, snapshot.excludeRecommended, snapshot.threshold,
+                    snapshot.ratioEnabled, snapshot.ratioMin, snapshot.ratioMax,
+                    snapshot.blockGuestEnabled, snapshot.proxyBlockMode, snapshot.telecomBlockEnabled,
+                    snapshot.blockedGuests, snapshot.blockConfig, snapshot.personalBlockList,
+                    snapshot.personalBlockEnabled
+                ];
+            } else {
+                values = await Promise.all([
+                    GM_getValue(this.CONSTANTS.STORAGE_KEYS.MASTER_DISABLED, false),
+                    GM_getValue(this.CONSTANTS.STORAGE_KEYS.EXCLUDE_RECOMMENDED, false),
+                    GM_getValue(this.CONSTANTS.STORAGE_KEYS.THRESHOLD, 0),
+                    GM_getValue(this.CONSTANTS.STORAGE_KEYS.RATIO_ENABLED, false),
+                    GM_getValue(this.CONSTANTS.STORAGE_KEYS.RATIO_MIN, ''),
+                    GM_getValue(this.CONSTANTS.STORAGE_KEYS.RATIO_MAX, ''),
+                    GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_GUEST, false),
+                    GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_PROXY, 0),
+                    GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_TELECOM, false),
+                    this.getBlockedGuests(),
+                    GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG, {}),
+                    PersonalBlockModule.loadPersonalBlocks(),
+                    GM_getValue(this.CONSTANTS.STORAGE_KEYS.PERSONAL_BLOCK_ENABLED, true)
+                ]);
+            }
             const [
                 masterDisabled, excludeRecommended, threshold, ratioEnabled,
                 ratioMin, ratioMax, blockGuestEnabled, proxyBlockMode, telecomBlockEnabled,
                 blockedGuests, blockConfig, personalBlockList, personalBlockEnabled
-            ] = await Promise.all([
-                GM_getValue(this.CONSTANTS.STORAGE_KEYS.MASTER_DISABLED, false),
-                GM_getValue(this.CONSTANTS.STORAGE_KEYS.EXCLUDE_RECOMMENDED, false),
-                GM_getValue(this.CONSTANTS.STORAGE_KEYS.THRESHOLD, 0),
-                GM_getValue(this.CONSTANTS.STORAGE_KEYS.RATIO_ENABLED, false),
-                GM_getValue(this.CONSTANTS.STORAGE_KEYS.RATIO_MIN, ''),
-                GM_getValue(this.CONSTANTS.STORAGE_KEYS.RATIO_MAX, ''),
-                GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_GUEST, false),
-                GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_PROXY, 0),
-                GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_TELECOM, false),
-                this.getBlockedGuests(),
-                GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG, {}),
-                PersonalBlockModule.loadPersonalBlocks(),
-                // [신규] 개인 차단 기능 활성화 상태 로드 (기본값 true)
-                GM_getValue(this.CONSTANTS.STORAGE_KEYS.PERSONAL_BLOCK_ENABLED, true)
-            ]);
+            ] = values;
             const normalizedSettings = DCUF_SHARED_STORAGE.normalizeStoredFilterSettings({
                 [this.CONSTANTS.STORAGE_KEYS.MASTER_DISABLED]: masterDisabled,
                 [this.CONSTANTS.STORAGE_KEYS.EXCLUDE_RECOMMENDED]: excludeRecommended,
@@ -5034,9 +5362,11 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             const personalBlockUidSet = this.buildLookupSet(personalBlockList?.uids, (item) => item?.id);
             const personalBlockNicknameSet = this.buildLookupSet(personalBlockList?.nicknames);
             const personalBlockIpSet = this.buildLookupSet(personalBlockList?.ips);
-
             dcFilterSettings = {
-                masterDisabled: normalizedSettings.masterDisabled, excludeRecommended: normalizedSettings.excludeRecommended, threshold: normalizedSettings.threshold, ratioEnabled: normalizedSettings.ratioEnabled,
+                masterDisabled: normalizedSettings.masterDisabled,
+                excludeRecommended: normalizedSettings.excludeRecommended,
+                threshold: normalizedSettings.threshold,
+                ratioEnabled: normalizedSettings.ratioEnabled,
                 ratioMin: normalizedSettings.ratioMin,
                 ratioMax: normalizedSettings.ratioMax,
                 blockGuestEnabled: normalizedSettings.blockGuest,
@@ -5058,6 +5388,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                     rawBlockConfigPreview: typeof blockConfig?.ip === 'string' ? blockConfig.ip.split('||').slice(0, 20) : []
                 }));
             }
+            return dcFilterSettings;
         },
         getRefilterTargetSelectors(scope = 'all') {
             const commentSelectors = [
@@ -5240,21 +5571,40 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 await this.refilterAllContent('visibilitychange-visible', { scheduleFollowups: false }); // 복구 패스 1회는 유지하고 무변화 지연 패스는 생략
             }
         },
-        async init() {
-            if (isInitialized) return; isInitialized = true;
-            this.installDebugApi();
-            this.debugLog('init', 'FilterModule init start', { version: '3.4.3' });
-            await this.cleanupLegacyManagedBlockConfig();
-            await this.reloadSettings();
-            if (this.DEBUG_ENABLED) await this.debugDumpState('after init reload');
-
-            // [수정] 개념글 목록에서 스크립트가 조기 종료되던 문제를 해결하기 위해 아래 라인을 삭제했습니다.
-            // if (dcFilterSettings.excludeRecommended && window.location.pathname.includes('/lists/') && this.isRecommendedContext()) return;
-
-            await this.refreshBlockedUidsCache();
-            document.addEventListener('visibilitychange', this.handleVisibilityChange.bind(this));
-            this.initializeUniversalObserver();
-            if (await GM_getValue(this.CONSTANTS.STORAGE_KEYS.THRESHOLD) === undefined) { await GM_setValue(this.CONSTANTS.STORAGE_KEYS.THRESHOLD, 0); await this.showSettings(); }
+        init() {
+            if (this._initState === 'ready') return Promise.resolve('already-ready');
+            if (this._initState === 'initializing' && this._initPromise) return this._initPromise;
+            this._initState = 'initializing';
+            this._initPromise = (async () => {
+                this.installDebugApi();
+                this.debugLog('init', 'FilterModule init start', { version: '3.4.4' });
+                const snapshot = await this.loadBootSnapshot();
+                await this.cleanupLegacyManagedBlockConfig(snapshot);
+                await this.reloadSettings(snapshot);
+                await this.refreshBlockedUidsCache(snapshot.blockedUidsRaw);
+                if (!this._visibilityChangeHandler) {
+                    this._visibilityChangeHandler = () => this.handleVisibilityChange();
+                    document.addEventListener('visibilitychange', this._visibilityChangeHandler);
+                }
+                this.initializeUniversalObserver();
+                window.__dcufBootController?.note?.('boot.local-filter-settings-ready');
+                if (snapshot.thresholdMissing) {
+                    const showFirstRunSettings = async () => {
+                        await GM_setValue(this.CONSTANTS.STORAGE_KEYS.THRESHOLD, 0);
+                        await this.showSettings();
+                    };
+                    const bootController = window.__dcufBootController;
+                    if (typeof bootController?.onReady === 'function') bootController.onReady(showFirstRunSettings);
+                    else queueMicrotask(showFirstRunSettings);
+                }
+                this._initState = 'ready';
+                return 'ready';
+            })().catch((error) => {
+                this._initState = 'failed';
+                this._initPromise = null;
+                throw error;
+            });
+            return this._initPromise;
         }
     };
 
@@ -5270,16 +5620,52 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         isSelectionMode: false,
         personalBlockListCache: { uids: [], nicknames: [], ips: [] },
         fabScalePercent: 100,
+        _initState: 'idle',
+        _initPromise: null,
+        _uiMounted: false,
+        _selectionClickHandler: null,
         FAB_SCALE_MIN: 60,
         FAB_SCALE_MAX: 160,
 
 
-        async init() {
-            this.personalBlockListCache = await this.loadPersonalBlocks();
-            this.fabScalePercent = await this.loadFabScalePercent();
-            this.createFab();
-            document.addEventListener('click', this.handleSelectionClick.bind(this), true);
+        async init(snapshot = null, { deferUi = false } = {}) {
+            if (this._initState === 'ready') return 'already-ready';
+            if (this._initState === 'initializing' && this._initPromise) return this._initPromise;
+            this._initState = 'initializing';
+            this._initPromise = (async () => {
+                const list = snapshot?.personalBlockList || await this.loadPersonalBlocks();
+                this.personalBlockListCache = {
+                    uids: Array.isArray(list?.uids) ? list.uids : [],
+                    nicknames: Array.isArray(list?.nicknames) ? list.nicknames : [],
+                    ips: Array.isArray(list?.ips) ? list.ips : []
+                };
+                const mountUi = async () => {
+                    if (this._uiMounted) return;
+                    this.fabScalePercent = await this.loadFabScalePercent();
+                    this.createFab();
+                    if (!this._selectionClickHandler) {
+                        this._selectionClickHandler = this.handleSelectionClick.bind(this);
+                        document.addEventListener('click', this._selectionClickHandler, true);
+                    }
+                    this._uiMounted = true;
+                };
+                if (deferUi && typeof window.__dcufBootController?.onReady === 'function') {
+                    window.__dcufBootController.onReady(() => mountUi().catch((error) => console.warn('[DCUF] deferred FAB mount failed:', error)));
+                } else {
+                    await mountUi();
+                }
+                this._initState = 'ready';
+                return 'ready';
+            })();
+            try {
+                return await this._initPromise;
+            } catch (error) {
+                this._initState = 'failed';
+                this._initPromise = null;
+                throw error;
+            }
         },
+
 
 
         async loadPersonalBlocks() {
@@ -6678,6 +7064,8 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
      * =================================================================
      */
     const UIModule = {
+        _initState: 'idle',
+        _initPromise: null,
         DATA_ATTR: 'data-custom-row-id',
         TRANSFORMED_ATTR: 'data-ui-transformed',
 
@@ -6703,6 +7091,8 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         },
 
         LIST_STATE_MAP: new WeakMap(),
+        ACTIVE_LIST_STATES: new Set(),
+        _bootRollbackRegistered: false,
         PAGINATION_BOUND_ATTR: 'data-dcuf-force-refresh-bound',
         TOOLTIP_BOUND_ATTR: 'data-dcuf-tooltip-bound',
         SEARCH_LAYER_BOUND_ATTR: 'data-dcuf-search-layer-bound',
@@ -7498,13 +7888,76 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             return rowId;
         },
 
-        createListState(listWrap, originalTable, originalTbody, newListContainer) {
+        captureListTransaction(listWrap, originalTable) {
+            const scope = this.resolveBottomControlScope(listWrap) || listWrap;
+            const movableSelector = [
+                this.SELECTORS.PAGINATION, this.SELECTORS.GALL_TABS, this.SELECTORS.SEARCH_FORM,
+                this.SELECTORS.SEARCH_LAYER, this.SELECTORS.PAGE_MOVE_BOX, '.view_bottom_btnbox'
+            ].join(', ');
+            const movedNodes = Array.from(scope.querySelectorAll(movableSelector))
+                .filter((node) => !node.closest(`.${this.CUSTOM_CLASSES.BOTTOM_CONTROLS}`))
+                .map((node) => ({
+                    node, parent: node.parentNode, nextSibling: node.nextSibling,
+                    style: node.getAttribute('style'), className: node.getAttribute('class')
+                }));
+            return {
+                originalTableStyle: originalTable.getAttribute('style'),
+                transformedValue: listWrap.getAttribute(this.TRANSFORMED_ATTR),
+                existingCustomLists: new Set(listWrap.querySelectorAll(`.${this.CUSTOM_CLASSES.MOBILE_LIST}`)),
+                existingBottomControls: new Set(scope.querySelectorAll(`.${this.CUSTOM_CLASSES.BOTTOM_CONTROLS}`)),
+                movedNodes
+            };
+        },
+
+        rollbackListState(state, reason = 'boot-degraded') {
+            if (!state) return;
+            state.tbodyObserver?.disconnect();
+            state.syncScheduler?.cancel?.();
+            const transaction = state.transaction || {};
+            const listWrap = state.listWrap;
+            const originalTable = state.originalTable;
+            if (state.newListContainer instanceof HTMLElement && !transaction.existingCustomLists?.has(state.newListContainer)) state.newListContainer.remove();
+            const scope = this.resolveBottomControlScope(listWrap) || listWrap;
+            scope?.querySelectorAll?.(`.${this.CUSTOM_CLASSES.BOTTOM_CONTROLS}`).forEach((node) => {
+                if (!transaction.existingBottomControls?.has(node)) node.remove();
+            });
+            Array.from(transaction.movedNodes || []).reverse().forEach((entry) => {
+                if (!entry?.node || !entry.parent) return;
+                if (entry.nextSibling?.parentNode === entry.parent) entry.parent.insertBefore(entry.node, entry.nextSibling);
+                else entry.parent.appendChild(entry.node);
+                if (entry.style === null) entry.node.removeAttribute('style');
+                else entry.node.setAttribute('style', entry.style);
+                if (entry.className === null) entry.node.removeAttribute('class');
+                else entry.node.setAttribute('class', entry.className);
+            });
+            if (originalTable instanceof HTMLElement) {
+                if (transaction.originalTableStyle === null) originalTable.removeAttribute('style');
+                else originalTable.setAttribute('style', transaction.originalTableStyle);
+            }
+            if (listWrap instanceof HTMLElement) {
+                if (transaction.transformedValue === null) listWrap.removeAttribute(this.TRANSFORMED_ATTR);
+                else listWrap.setAttribute(this.TRANSFORMED_ATTR, transaction.transformedValue);
+                this.LIST_STATE_MAP.delete(listWrap);
+            }
+            this.ACTIVE_LIST_STATES.delete(state);
+            state.rolledBack = true;
+            this.recordDiagnostic('ui.listState.rolledBack');
+            this.getRuntimeCoordinator()?.noteDiagnostic?.('ui.list.rollback', { reason });
+        },
+
+        rollbackInitialListTransactions(reason = 'boot-degraded') {
+            Array.from(this.ACTIVE_LIST_STATES).reverse().forEach((state) => this.rollbackListState(state, reason));
+        },
+
+        createListState(listWrap, originalTable, originalTbody, newListContainer, transaction = null) {
             const state = {
                 runtimeId: this._nextListRuntimeId++,
                 listWrap,
                 originalTable,
                 originalTbody,
                 newListContainer,
+                transaction,
+                committed: false,
                 itemByRowId: new Map(),
                 dirtyRows: new Set(),
                 tbodyObserver: null,
@@ -7524,6 +7977,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 state.lastSyncedGeneration = state.mutationGeneration;
             }, [90]);
 
+            this.ACTIVE_LIST_STATES.add(state);
             return state;
         },
 
@@ -7545,6 +7999,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             if (state.listWrap instanceof HTMLElement) {
                 state.listWrap.removeAttribute(this.TRANSFORMED_ATTR);
             }
+            this.ACTIVE_LIST_STATES.delete(state);
             this.LIST_STATE_MAP.delete(state.listWrap);
             if (state.itemByRowId && typeof state.itemByRowId.clear === 'function') {
                 state.itemByRowId.clear();
@@ -7623,7 +8078,6 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
             state.originalTable = originalTable;
             state.originalTbody = originalTbody;
-            state.originalTable.style.setProperty('display', 'none', 'important');
 
             if (!state.newListContainer.isConnected && state.originalTable.parentNode) {
                 state.originalTable.parentNode.insertBefore(state.newListContainer, state.originalTable.nextSibling);
@@ -7680,6 +8134,9 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
             state.rebuildAll = false;
             state.dirtyRows?.clear();
+            state.listWrap.setAttribute(this.TRANSFORMED_ATTR, 'true');
+            state.originalTable.style.setProperty('display', 'none', 'important');
+            state.committed = true;
             if (rebuiltRowCount > 0) this.recordDiagnostic('ui.listRows.rebuilt', rebuiltRowCount);
             this.getRuntimeCoordinator()?.setDiagnosticGauge?.('ui.listRows.lastRebuilt', rebuiltRowCount);
             this.recordDiagnostic('ui.listState.synced');
@@ -7767,30 +8224,38 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
             if (existingState) this.destroyListState(existingState, 'list-runtime-refresh');
 
-            listWrap.setAttribute(this.TRANSFORMED_ATTR, 'true');
-            originalTable.style.setProperty('display', 'none', 'important');
+            const transaction = this.captureListTransaction(listWrap, originalTable);
+            let newListContainer = null;
+            let state = null;
+            try {
+                newListContainer = listWrap.querySelector(`.${this.CUSTOM_CLASSES.MOBILE_LIST}`);
+                if (!(newListContainer instanceof HTMLElement)) {
+                    newListContainer = document.createElement('div');
+                    newListContainer.className = this.CUSTOM_CLASSES.MOBILE_LIST;
+                    originalTable.parentNode.insertBefore(newListContainer, originalTable.nextSibling);
+                }
 
-            let newListContainer = listWrap.querySelector(`.${this.CUSTOM_CLASSES.MOBILE_LIST}`);
-            if (!(newListContainer instanceof HTMLElement)) {
-                newListContainer = document.createElement('div');
-                newListContainer.className = this.CUSTOM_CLASSES.MOBILE_LIST;
-                originalTable.parentNode.insertBefore(newListContainer, originalTable.nextSibling);
+                this.bindTooltipEvents(newListContainer);
+                this.ensureBottomControls(listWrap);
+                this.enhanceOriginalSearchForms(listWrap);
+                this.applyForceRefreshPagination(listWrap);
+                const testBoot = __dcufRoot.__DCUF_TESTBED_CONFIG__?.boot;
+                if (testBoot?.failListPrepareOnce && !__dcufRoot.__dcufListPrepareFailureInjected) {
+                    __dcufRoot.__dcufListPrepareFailureInjected = true;
+                    throw new Error('testbed list prepare failure');
+                }
+
+                state = this.createListState(listWrap, originalTable, originalTbody, newListContainer, transaction);
+                this.LIST_STATE_MAP.set(listWrap, state);
+                this.hydrateExistingListItems(state);
+                this.attachOriginalTbodyObserver(state);
+                this.scheduleListSync(state, reason, { rebuildAll: true });
+                this.recordDiagnostic('ui.listState.created');
+                return state;
+            } catch (error) {
+                this.rollbackListState(state || { listWrap, originalTable, newListContainer, transaction }, 'list-prepare-failed');
+                throw error;
             }
-
-            this.bindTooltipEvents(newListContainer);
-
-            this.ensureBottomControls(listWrap);
-            this.enhanceOriginalSearchForms(listWrap);
-
-            this.applyForceRefreshPagination(listWrap);
-
-            const state = this.createListState(listWrap, originalTable, originalTbody, newListContainer);
-            this.LIST_STATE_MAP.set(listWrap, state);
-            this.hydrateExistingListItems(state);
-            this.attachOriginalTbodyObserver(state);
-            this.scheduleListSync(state, reason, { rebuildAll: true });
-            this.recordDiagnostic('ui.listState.created');
-            return state;
         },
 
         ensureKnownListRuntimes(root = document, reason = 'ensure-known') {
@@ -8271,7 +8736,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             return this.getInitialRevealState().ready;
         },
 
-        waitForInitialRevealReady(timeoutMs = 4000) {
+        waitForInitialRevealReady(timeoutMs = 6000) {
             return new Promise((resolve) => {
                 this.ensureBootUi('initial-reveal:start');
                 this._initialRevealStartedAt = Date.now();
@@ -8426,12 +8891,13 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             });
         },
 
-        waitForInitialUiReady(timeoutMs = 4000) {
+        waitForInitialUiReady(timeoutMs = 6000) {
             return this.waitForInitialRevealReady(timeoutMs);
         },
 
         startPostRevealRecoveryWatch(context = {}) {
-            if (!this.isViewPage()) return 'not-view';
+            const isViewPage = this.isViewPage();
+            if (!isViewPage && !this.isListPage()) return 'not-applicable';
             if (typeof this._postRevealRecoveryStop === 'function') {
                 this._postRevealRecoveryStop('restart');
             }
@@ -8439,7 +8905,9 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             const startedAt = new Date().toISOString();
             const startedTime = Date.now();
             let active = true;
-            let lastState = this.evaluateViewPostRevealRecoveryState();
+            let lastState = isViewPage
+                ? this.evaluateViewPostRevealRecoveryState()
+                : this.getInitialRevealState();
             let checkCount = 0;
             let stablePasses = 0;
             let viewThemeRefreshes = 0;
@@ -8572,7 +9040,9 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 }
                 runFilteredCommentRepair(reason);
 
-                lastState = this.evaluateViewPostRevealRecoveryState();
+                lastState = isViewPage
+                    ? this.evaluateViewPostRevealRecoveryState()
+                    : this.getInitialRevealState();
                 if (lastState.ready) {
                     stablePasses += 1;
                     this.updatePostRevealRecoveryDebug(lastState, {
@@ -8585,6 +9055,13 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                         startedAt
                     });
                     if (stablePasses >= this.POST_REVEAL_RECOVERY_STABLE_PASSES) {
+                        const bootController = window.__dcufBootController;
+                        if (bootController && bootController.state === 'degraded') {
+                            if (isViewPage && typeof window.__dcufFlushInitialCommentBarrier === 'function') {
+                                window.__dcufFlushInitialCommentBarrier({ reason: 'post-reveal-recovery' });
+                            }
+                            bootController.markReady('post-reveal-recovery');
+                        }
                         cleanup('completed');
                     }
                     return;
@@ -9460,8 +9937,16 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             }, 250);
         },
         async init() {
-            if (isUiInitialized) return 'already-ready';
-            isUiInitialized = true;
+            if (this._initState === 'ready') return 'already-ready';
+            if (this._initState === 'initializing' && this._initPromise) return this._initPromise;
+            this._initState = 'initializing';
+            this._initPromise = (async () => {
+            const bootController = window.__dcufBootController;
+            if (!this._bootRollbackRegistered && typeof bootController?.registerRollback === 'function') {
+                this._bootRollbackRegistered = true;
+                bootController.registerRollback((reason) => this.rollbackInitialListTransactions(reason));
+                bootController.registerRecovery(() => this.ensureKnownListRuntimes(document, 'boot-recovery'));
+            }
 
 
             // [핵심 수정] 스크립트 시작 시, 툴팁으로 사용할 div를 미리 한 번만 생성
@@ -9507,8 +9992,20 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
             if (this.isListPage()) return 'list-runtime-ready';
             return 'non-list';
+            })();
+            try {
+                const result = await this._initPromise;
+                this._initState = 'ready';
+                return result;
+            } catch (error) {
+                this._initState = 'failed';
+                this._initPromise = null;
+                this.rollbackInitialListTransactions('ui-init-failed');
+                throw error;
+            }
         }
     };
+    window.__dcufUIModule = UIModule;
 
     const getDcufCollectionSize = (value) => {
         if (!value) return 0;
@@ -9551,7 +10048,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
         return {
             reason,
-            version: '3.4.3',
+            version: '3.4.4',
             time: new Date().toISOString(),
             href: location.href,
             heap: getDcufHeapMb(),
@@ -9654,10 +10151,21 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
     // =================================================================
     // ================ Script-Level Initializations ===================
     // =================================================================
-    GM_registerMenuCommand('글댓합 설정하기', FilterModule.showSettings.bind(FilterModule));
-    GM_registerMenuCommand('차단 유저 관리', PersonalBlockModule.createManagementPanel.bind(PersonalBlockModule));
-    GM_registerMenuCommand('플로팅 버튼 원위치', PersonalBlockModule.resetFabPosition.bind(PersonalBlockModule));
-    GM_registerMenuCommand('메뉴 버튼 크기 조절', PersonalBlockModule.showFabScalePanel.bind(PersonalBlockModule));
+    const registerMenuCommandsSafely = () => {
+        if (__dcufRoot.__dcufMenuCommandsRegistered) return;
+        const commands = [
+            ['글댓합 설정하기', FilterModule.showSettings.bind(FilterModule)],
+            ['차단 유저 관리', PersonalBlockModule.createManagementPanel.bind(PersonalBlockModule)],
+            ['플로팅 버튼 원위치', PersonalBlockModule.resetFabPosition.bind(PersonalBlockModule)],
+            ['메뉴 버튼 크기 조절', PersonalBlockModule.showFabScalePanel.bind(PersonalBlockModule)]
+        ];
+        commands.forEach(([label, handler]) => {
+            try { GM_registerMenuCommand(label, handler); }
+            catch (error) { console.warn('[DCUF] menu registration failed:', label, error); }
+        });
+        __dcufRoot.__dcufMenuCommandsRegistered = true;
+    };
+    registerMenuCommandsSafely();
 
 
     // [신규] 단축키 설정을 다시 로드하는 전용 함수
@@ -9667,78 +10175,50 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
     }
 
     async function awaitInitialCommentStabilization() {
-        const waiter = window.__dcufAwaitInitialCommentStabilization;
-        const prepareInitialCommentReveal = (state) => {
-            const normalizedState = state && typeof state === 'object' ? state : { reason: 'unknown' };
-            const prepare = window.__dcufPrepareInitialCommentReveal;
-            if (typeof prepare !== 'function') return normalizedState;
-            try {
-                return {
-                    ...normalizedState,
-                    prepareState: prepare(normalizedState)
-                };
-            } catch (error) {
-                return {
-                    ...normalizedState,
-                    prepareError: error?.message || 'unknown'
-                };
+        if (!UIModule.isViewPage()) return { reason: 'non-view' };
+        const flushBarrier = window.__dcufFlushInitialCommentBarrier;
+        if (typeof flushBarrier !== 'function') return { reason: 'unavailable' };
+
+        const runtimeCoordinator = window.__dcufRuntimeCoordinator;
+        const deadline = Date.now() + 500;
+        let lastState = null;
+        for (let attempt = 1; attempt <= 3 && Date.now() < deadline; attempt += 1) {
+            runtimeCoordinator?.ensureMutationBus?.();
+            lastState = flushBarrier({ reason: 'initial-comment-barrier', attempt });
+            const firstGeneration = runtimeCoordinator?._mutationGeneration || lastState?.generation || 0;
+            await new Promise((resolve) => requestAnimationFrame(resolve));
+            runtimeCoordinator?.flushPendingMutations?.('initial-comment:quiet-1');
+            const secondGeneration = runtimeCoordinator?._mutationGeneration || 0;
+            if (secondGeneration !== firstGeneration) continue;
+            await new Promise((resolve) => requestAnimationFrame(resolve));
+            runtimeCoordinator?.flushPendingMutations?.('initial-comment:quiet-2');
+            const thirdGeneration = runtimeCoordinator?._mutationGeneration || 0;
+            if (thirdGeneration === secondGeneration) {
+                lastState = flushBarrier({ reason: 'initial-comment-quiet', attempt });
+                runtimeCoordinator?.incrementDiagnostic?.('ui.initialComment.mutationQuiet');
+                return { reason: 'mutation-quiet', attempt, generation: thirdGeneration, prepareState: lastState };
             }
-        };
-
-        const waitForMutationQuiet = async () => {
-            const filterModule = window.__dcufFilterModule;
-            if (typeof filterModule?.getRelevantMutationGeneration !== 'function') return null;
-
-            let previousGeneration = filterModule.getRelevantMutationGeneration('comments');
-            for (let attempt = 1; attempt <= 3; attempt += 1) {
-                const prepareState = prepareInitialCommentReveal({
-                    reason: 'mutation-quiet-prepare',
-                    attempt
+        }
+        lastState = flushBarrier({ reason: 'initial-comment-bounded-timeout', attempt: 3 });
+        return { reason: 'bounded-timeout', prepareState: lastState };
+    }
+    function prepareInitialCommentRevealBeforeMark(state = null) {
+        const prepare = window.__dcufFlushInitialCommentBarrier || window.__dcufPrepareInitialCommentReveal;
+        try {
+            if (typeof prepare === 'function') {
+                return prepare({
+                    reason: 'before-mark-ui-ready',
+                    previous: state?.commentInitState?.reason || ''
                 });
-                await new Promise((resolve) => requestAnimationFrame(resolve));
-                const nextGeneration = filterModule.getRelevantMutationGeneration('comments');
-                if (nextGeneration === previousGeneration) {
-                    const runtimeCoordinator = window.__dcufRuntimeCoordinator;
-                    runtimeCoordinator?.incrementDiagnostic?.('ui.initialComment.mutationQuiet');
-                    return {
-                        reason: 'mutation-quiet',
-                        attempt,
-                        generation: nextGeneration,
-                        prepareState
-                    };
-                }
-                previousGeneration = nextGeneration;
+            }
+            if (UIModule.isViewPage() && typeof FilterModule?.runSyncRefilterPass === 'function') {
+                const descriptors = FilterModule.runSyncRefilterPass('comments');
+                return {
+                    reason: 'filter-only',
+                    targetCount: Array.isArray(descriptors) ? descriptors.length : 0
+                };
             }
             return null;
-        };
-
-        if (typeof waiter !== 'function') {
-            return (await waitForMutationQuiet()) || prepareInitialCommentReveal({ reason: 'unavailable' });
-        }
-
-        try {
-            const waiterPromise = Promise.resolve().then(() => waiter());
-            const state = await Promise.race([
-                waitForMutationQuiet().then((quietState) => quietState || waiterPromise),
-                waiterPromise,
-                new Promise((resolve) => {
-                    window.setTimeout(() => resolve({ reason: 'ui-timeout' }), 650);
-                })
-            ]);
-            return prepareInitialCommentReveal(state);
-        } catch (error) {
-            return prepareInitialCommentReveal({ reason: `error:${error?.message || 'unknown'}` });
-        }
-    }
-
-    function prepareInitialCommentRevealBeforeMark(state = null) {
-        const prepare = window.__dcufPrepareInitialCommentReveal;
-        if (typeof prepare !== 'function') return null;
-        try {
-            return prepare({
-                reason: 'before-mark-ui-ready',
-                previous: state?.commentInitState?.reason || ''
-            });
         } catch (error) {
             return { reason: 'error', message: error?.message || 'unknown' };
         }
@@ -9752,14 +10232,22 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 commentInitState: { reason: 'already-initialized' }
             };
         }
-        console.log("[DC Filter+UI] Initializing v3.4.3...");
+        isInitialized = true;
+        if (window.__dcufBootController) {
+            window.__dcufBootController.startPreparing('mobile-main');
+            if (!__dcufRoot.__dcufShortcutReadyHookRegistered) {
+                __dcufRoot.__dcufShortcutReadyHookRegistered = true;
+                window.__dcufBootController.onReady(() => reloadShortcutKey().catch((error) => {
+                    console.warn('[DCUF] shortcut initialization failed:', error);
+                }));
+            }
+        }
+        console.log("[DC Filter+UI] Initializing v3.4.4...");
 
 
-        // [수정] main 함수에서 reloadShortcutKey 함수를 호출하여 초기화
-        await reloadShortcutKey();
-
-
-        window.addEventListener('keydown', async (e) => {
+        if (!__dcufRoot.__dcufShortcutBound) {
+            __dcufRoot.__dcufShortcutBound = true;
+            window.addEventListener('keydown', async (e) => {
             if (!activeShortcutObject || !activeShortcutObject.key) return;
 
 
@@ -9779,28 +10267,48 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                     await FilterModule.showSettings();
                 }
             }
-        });
+            });
+        }
 
+
+        if (UIModule.isWritePage() || (!UIModule.isListPage() && !UIModule.isViewPage())) {
+            const uiInitState = await UIModule.init();
+            window.__dcufBootController?.note?.(UIModule.isWritePage() ? 'boot.write-ui-ready' : 'boot.other-ui-ready', { uiInitState });
+            if (window.__dcufBootController) {
+                window.__dcufBootController.onReady(() => {
+                    void (async () => {
+                        await FilterModule.init();
+                        await PersonalBlockModule.init(FilterModule.getBootSnapshot(), { deferUi: true });
+                    })().catch((error) => console.warn('[DCUF] deferred non-view initialization failed:', error));
+                });
+            }
+            return { uiInitState, commentInitState: { reason: 'non-view' } };
+        }
 
         await FilterModule.init();
-        await PersonalBlockModule.init();
+        await PersonalBlockModule.init(FilterModule.getBootSnapshot(), { deferUi: true });
+        window.__dcufBootController?.note?.('boot.local-filter-ready');
         const uiInitState = await UIModule.init();
+        window.__dcufBootController?.note?.('boot.ui-ready', { uiInitState });
         // Mobile comment reply-merge cleanup can rerender blocked comment rows
         // once more after Filter/UI init. Keep the initial body lock until that first
         // stabilization window finishes so personally blocked comments do not flash visible.
         const commentInitState = await awaitInitialCommentStabilization();
+        window.__dcufBootController?.note?.('boot.comment-barrier', { reason: commentInitState?.reason || 'unknown' });
         const initState = { uiInitState, commentInitState };
         console.log(`[DC Filter+UI] Initialization complete. ui=${uiInitState} comment=${commentInitState?.reason || 'unknown'}`);
         return initState;
     }
 
 
+    let initializationRecoveryAttempts = 0;
     const runSafely = async () => {
         let initState = {
             uiInitState: 'fallback',
             commentInitState: { reason: 'not-started' }
         };
         let revealState = 'error';
+        let initializationSucceeded = false;
 
         try {
             const mainState = await main();
@@ -9808,27 +10316,56 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             if (typeof UIModule?.waitForInitialRevealReady === 'function') {
                 revealState = await UIModule.waitForInitialRevealReady();
             }
+            window.__dcufBootController?.note?.('boot.style-verified', { revealState });
+            initializationSucceeded = revealState !== 'error' && !String(revealState).startsWith('timeout-');
         } catch (error) {
             initState = {
                 ...initState,
                 uiInitState: 'error'
             };
             revealState = 'error';
+            isInitialized = false;
             console.error("[DC Filter+UI] A critical error occurred during main execution:", error);
         } finally {
             // [v2.2.2 수정] 모든 UI 처리 및 필터링 적용이 끝난 후,
             // 루트 준비 완료 클래스를 추가하여 화면을 표시합니다.
-            initState.commentPrepareState = prepareInitialCommentRevealBeforeMark(initState);
-            markUiReady();
+            if (initializationSucceeded) {
+                // Do not yield between the final local comment pass and removing the body lock.
+                // This closes the window where host AJAX can replace comments after the initial
+                // barrier but before markUiReady exposes the page.
+                const finalCommentState = prepareInitialCommentRevealBeforeMark(initState);
+                window.__dcufBootController?.note?.('boot.comment-finalized', {
+                    reason: finalCommentState?.reason || 'not-applicable',
+                    targetCount: finalCommentState?.targetCount || 0
+                });
+                if (UIModule.isViewPage() && finalCommentState?.reason === 'error') {
+                    initializationSucceeded = false;
+                    revealState = 'comment-finalize-error';
+                }
+            }
+            if (initializationSucceeded) markUiReady('ready:' + revealState);
+            else if (window.__dcufBootController) window.__dcufBootController.degrade('initialization:' + revealState);
             if (typeof UIModule?.startPostRevealRecoveryWatch === 'function') {
-                UIModule.startPostRevealRecoveryWatch({ revealState });
+                const recoveryWatchDelayMs = Math.max(0, Number(__dcufRoot.__DCUF_TESTBED_CONFIG__?.boot?.recoveryWatchDelayMs) || 0);
+                if (recoveryWatchDelayMs > 0) {
+                    window.setTimeout(() => UIModule.startPostRevealRecoveryWatch({ revealState }), recoveryWatchDelayMs);
+                } else {
+                    UIModule.startPostRevealRecoveryWatch({ revealState });
+                }
+            }
+            if (!initializationSucceeded && revealState === 'error' && initializationRecoveryAttempts < 2) {
+                initializationRecoveryAttempts += 1;
+                const retryBaseMs = Math.max(20, Number(__dcufRoot.__DCUF_TESTBED_CONFIG__?.boot?.recoveryRetryDelayMs) || 160);
+                window.setTimeout(() => {
+                    if (window.__dcufBootController?.state === 'degraded') runSafely();
+                }, retryBaseMs * initializationRecoveryAttempts);
             }
             console.log(`[DC Filter+UI] UI is now visible. ui=${initState.uiInitState} comment=${initState.commentInitState?.reason || 'unknown'} reveal=${revealState}`);
         }
     };
 
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', runSafely);
+        document.addEventListener('DOMContentLoaded', runSafely, { once: true });
     } else {
         runSafely();
     }
@@ -9885,8 +10422,11 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
 ; (() => {
     const __dcufPostMainRoot = (typeof unsafeWindow !== 'undefined' && unsafeWindow) ? unsafeWindow : window;
-    if (__dcufPostMainRoot.__dcufPostMainFixesLoaded) return;
-    __dcufPostMainRoot.__dcufPostMainFixesLoaded = true;
+    if (window.top !== window.self) return;
+    const previousState = __dcufPostMainRoot.__dcufPostMainFixesState;
+    if (previousState === 'initializing' || previousState === 'ready') return;
+    __dcufPostMainRoot.__dcufPostMainFixesState = 'initializing';
+    try {
 
 ; (() => {
     const STYLE_ID = 'dcuf-phase1-list-theme';
@@ -13546,6 +14086,14 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         #focus_cmt > .cmt_write_box .dccon_guidebox {
             overflow: visible !important;
         }
+        /* Live comment close removes the show class and collapses the wrapper to its header height.
+           Do not let the open-state popup overflow rule leak the comment body outside it. */
+        #focus_cmt > div[id^="comment_wrap_"].comment_wrap:not(.show) {
+            overflow: hidden !important;
+        }
+        #focus_cmt > div[id^="comment_wrap_"].comment_wrap:not(.show) > .comment_box {
+            display: none !important;
+        }
         #focus_cmt > div[id^="comment_wrap_"] .comment_box .cmt_info,
         #focus_cmt > div[id^="comment_wrap_"] .comment_box .reply_info,
         #focus_cmt > div[id^="comment_wrap_"] .view_comment .cmt_info,
@@ -14075,7 +14623,8 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         }
 
         const head = viewWrap.querySelector('.gallview_head');
-        const content = viewWrap.querySelector('.gallview_contents');
+        const content = viewWrap.querySelector('.gallview_contents, .writing_view_box');
+        const contentIsWritingBox = content?.classList.contains('writing_view_box') || false;
         if (!(head instanceof HTMLElement) || !(content instanceof HTMLElement)) {
             const result = {
                 ready: false,
@@ -14118,6 +14667,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             headBackgroundImage: headStyle.backgroundImage,
             headBoxShadow: headStyle.boxShadow,
             headHasRenderableBorder: hasRenderableBorder(headStyle),
+            contentVariant: contentIsWritingBox ? 'writing-view-box' : 'gallview-contents',
             contentRadius: toPixelValue(contentStyle.borderRadius),
             contentBackgroundColor: contentStyle.backgroundColor,
             contentBackgroundImage: contentStyle.backgroundImage,
@@ -14157,11 +14707,11 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             failureReason = 'missing-head-elevation';
         } else if (headStyle.backgroundImage === 'none' && isTransparentColor(detail.headBackgroundColor)) {
             failureReason = 'transparent-head-background';
-        } else if (detail.contentRadius < 16) {
+        } else if (!contentIsWritingBox && detail.contentRadius < 16) {
             failureReason = 'insufficient-content-radius';
-        } else if (contentStyle.boxShadow === 'none') {
+        } else if (!contentIsWritingBox && contentStyle.boxShadow === 'none') {
             failureReason = 'missing-content-elevation';
-        } else if (contentStyle.backgroundImage === 'none' && isTransparentColor(detail.contentBackgroundColor)) {
+        } else if (!contentIsWritingBox && contentStyle.backgroundImage === 'none' && isTransparentColor(detail.contentBackgroundColor)) {
             failureReason = 'transparent-content-background';
         } else if (mode !== 'core' && recommendBox instanceof HTMLElement && detail.recommendBoxRadius < 16) {
             failureReason = 'insufficient-recommend-radius';
@@ -15150,35 +15700,6 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
     const COMMENT_BLOCKED_ATTR = 'data-dcuf-comment-blocked';
     const COMMENT_SHELL_BLOCKED_ATTR = 'data-dcuf-comment-shell-blocked';
     const COMMENT_SHELL_BLOCKED_CLASS = 'dcuf-comment-shell-blocked';
-    const INITIAL_COMMENT_STABILIZE_SOURCES = new Set(['dom-ready-initial', 'ready-initial']);
-    const initialCommentStabilization = (() => {
-        let resolved = false;
-        let resolvePromise;
-        let timeoutId = 0;
-        const promise = new Promise((resolve) => {
-            resolvePromise = resolve;
-        });
-        const resolve = (reason) => {
-            if (resolved) return;
-            resolved = true;
-            if (timeoutId) {
-                window.clearTimeout(timeoutId);
-                timeoutId = 0;
-            }
-            resolvePromise({ reason, ts: Date.now() });
-        };
-        const startTimeout = () => {
-            if (resolved || timeoutId) return;
-            timeoutId = window.setTimeout(() => resolve('timeout'), 500);
-        };
-
-        window.__dcufAwaitInitialCommentStabilization = () => {
-            startTimeout();
-            return promise;
-        };
-        return { resolve, startTimeout };
-    })();
-
     const isReplyOnlyCommentWrapper = (li) => {
         if (!(li instanceof HTMLElement)) return false;
         return Boolean(li.querySelector(':scope > div.reply.show'))
@@ -15449,6 +15970,21 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
     };
     window.__dcufRepairFilteredCommentPlaceholders = repairFilteredCommentPlaceholders;
     window.__dcufPrepareInitialCommentReveal = repairFilteredCommentPlaceholders;
+    window.__dcufFlushInitialCommentBarrier = (meta = null) => {
+        const runtimeCoordinator = __dcufGetRuntimeCoordinator();
+        runtimeCoordinator?.ensureMutationBus?.();
+        runtimeCoordinator?.flushPendingMutations?.('initial-comment:before');
+        const state = repairFilteredCommentPlaceholders({
+            ...(meta && typeof meta === 'object' ? meta : {}),
+            runFilter: true,
+            mergeDetachedReplies: true
+        });
+        runtimeCoordinator?.flushPendingMutations?.('initial-comment:after');
+        return {
+            ...state,
+            generation: runtimeCoordinator?._mutationGeneration || 0
+        };
+    };
 
     const shouldSkipReplyMergeTarget = (parentLi, replyShow = null) => {
         if (!(parentLi instanceof HTMLElement)) return true;
@@ -15520,11 +16056,6 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         if (delay === 140) {
             if (typeof filterModule?.scheduleCommentStabilizedRefilter === 'function') {
                 filterModule.scheduleCommentStabilizedRefilter('reply-merge');
-            }
-            if (INITIAL_COMMENT_STABILIZE_SOURCES.has(source)) {
-                window.setTimeout(() => {
-                    initialCommentStabilization.resolve('reply-merge-delayed');
-                }, 180);
             }
         }
     }, [140]);
@@ -15634,19 +16165,11 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         document.addEventListener('DOMContentLoaded', () => {
             // Run the initial reply merge synchronously so blocked parent comments stay
             // filtered before the comment area becomes visually stable.
-            initialCommentStabilization.startTimeout();
             flushReplyMerge({ source: 'dom-ready-initial' });
-            if (!document.querySelector(`${COMMENT_LIST_SELECTOR}, #focus_cmt, .view_comment.image_comment .comment_box`)) {
-                initialCommentStabilization.resolve('no-comment-target-dom-ready');
-            }
             observeReplyMergeTargets();
         }, { once: true });
     } else {
-        initialCommentStabilization.startTimeout();
         flushReplyMerge({ source: 'ready-initial' });
-        if (!document.querySelector(`${COMMENT_LIST_SELECTOR}, #focus_cmt, .view_comment.image_comment .comment_box`)) {
-            initialCommentStabilization.resolve('no-comment-target-ready');
-        }
         observeReplyMergeTargets();
     }
 
@@ -18780,4 +19303,9 @@ function __dcufCollectMatches(payload, selectors, options = {}) {
     return Array.from(document.querySelectorAll(selectorText));
 }
 
+    __dcufPostMainRoot.__dcufPostMainFixesState = 'ready';
+    } catch (error) {
+        __dcufPostMainRoot.__dcufPostMainFixesState = 'failed';
+        throw error;
+    }
 })();
