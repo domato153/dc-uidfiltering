@@ -4,6 +4,23 @@
     const __dcufRoot = (typeof unsafeWindow !== 'undefined' && unsafeWindow) ? unsafeWindow : window;
     if (window.top !== window.self) return;
 
+    const detectedPageType = ((window.location.pathname || '').match(/\/board\/(lists|view|write)(?:\/|$)/) || [])[1] || 'other';
+    const pageContext = Object.freeze({
+        type: detectedPageType,
+        isList: detectedPageType === 'lists',
+        isView: detectedPageType === 'view',
+        isWrite: detectedPageType === 'write',
+        isOther: detectedPageType === 'other',
+        isTargetPage: detectedPageType !== 'other',
+        hasListSurface: detectedPageType === 'lists' || detectedPageType === 'view',
+        hasComments: detectedPageType === 'view'
+    });
+    __dcufRoot.__dcufPageContext = pageContext;
+    window.__dcufPageContext = pageContext;
+    const exposePageContextAttribute = () => document.documentElement?.setAttribute('data-dcuf-page-context', detectedPageType);
+    if (document.documentElement) exposePageContextAttribute();
+    else document.addEventListener('DOMContentLoaded', exposePageContextAttribute, { once: true });
+
     const previousBoot = __dcufRoot.__dcufBootController || window.__dcufBootController;
     if (previousBoot) {
         if (previousBoot.state === 'locked' || previousBoot.state === 'preparing') previousBoot.ensure('duplicate-runtime');
@@ -46,7 +63,7 @@
     let domReadyListener = null;
     let loadListener = null;
 
-    const pageType = ((window.location.pathname || '').match(/\/board\/(lists|view|write)(?:\/|$)/) || [])[1] || 'other';
+    const pageType = pageContext.type;
     const isTargetPage = () => pageType !== 'other';
     const note = (label, detail = null) => {
         const entry = { label, detail, ts: Date.now(), elapsedMs: Date.now() - startedAt };

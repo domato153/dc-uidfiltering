@@ -27,6 +27,23 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
     const __dcufRoot = (typeof unsafeWindow !== 'undefined' && unsafeWindow) ? unsafeWindow : window;
     if (window.top !== window.self) return;
 
+    const detectedPageType = ((window.location.pathname || '').match(/\/board\/(lists|view|write)(?:\/|$)/) || [])[1] || 'other';
+    const pageContext = Object.freeze({
+        type: detectedPageType,
+        isList: detectedPageType === 'lists',
+        isView: detectedPageType === 'view',
+        isWrite: detectedPageType === 'write',
+        isOther: detectedPageType === 'other',
+        isTargetPage: detectedPageType !== 'other',
+        hasListSurface: detectedPageType === 'lists' || detectedPageType === 'view',
+        hasComments: detectedPageType === 'view'
+    });
+    __dcufRoot.__dcufPageContext = pageContext;
+    window.__dcufPageContext = pageContext;
+    const exposePageContextAttribute = () => document.documentElement?.setAttribute('data-dcuf-page-context', detectedPageType);
+    if (document.documentElement) exposePageContextAttribute();
+    else document.addEventListener('DOMContentLoaded', exposePageContextAttribute, { once: true });
+
     const previousBoot = __dcufRoot.__dcufBootController || window.__dcufBootController;
     if (previousBoot) {
         if (previousBoot.state === 'locked' || previousBoot.state === 'preparing') previousBoot.ensure('duplicate-runtime');
@@ -69,7 +86,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
     let domReadyListener = null;
     let loadListener = null;
 
-    const pageType = ((window.location.pathname || '').match(/\/board\/(lists|view|write)(?:\/|$)/) || [])[1] || 'other';
+    const pageType = pageContext.type;
     const isTargetPage = () => pageType !== 'other';
     const note = (label, detail = null) => {
         const entry = { label, detail, ts: Date.now(), elapsedMs: Date.now() - startedAt };
@@ -965,8 +982,39 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 enabled: this._diagnosticsEnabled,
                 counters: { ...this._diagnosticCounters },
                 gauges: { ...this._diagnosticGauges },
-                events: this._diagnosticEvents.slice(-50)
+                events: this._diagnosticEvents.slice(-50),
+                pageContext: { ...this.getPageContext() },
+                subscribers: Array.from(this._mutationSubscribers.keys()),
+                immediateSubscribers: Array.from(this._immediateMutationSubscribers.keys())
             };
+        },
+
+        getPageContext() {
+            const sharedContext = window.__dcufPageContext;
+            if (sharedContext && typeof sharedContext === 'object') return sharedContext;
+            const type = ((window.location.pathname || '').match(/\/board\/(lists|view|write)(?:\/|$)/) || [])[1] || 'other';
+            return {
+                type,
+                isList: type === 'lists',
+                isView: type === 'view',
+                isWrite: type === 'write',
+                isOther: type === 'other',
+                isTargetPage: type !== 'other',
+                hasListSurface: type === 'lists' || type === 'view',
+                hasComments: type === 'view'
+            };
+        },
+
+        pageSupports(contexts) {
+            const requested = Array.isArray(contexts) ? contexts : [contexts];
+            if (requested.length === 0 || requested.every((context) => !context)) return true;
+            const pageContext = this.getPageContext();
+            return requested.some((context) => {
+                if (context === 'list-surface') return pageContext.hasListSurface;
+                if (context === 'comments') return pageContext.hasComments;
+                if (context === 'target') return pageContext.isTargetPage;
+                return pageContext.type === context;
+            });
         },
 
         incrementDiagnostic(label, amount = 1) {
@@ -1262,8 +1310,12 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             return true;
         },
 
-        subscribeMutations(key, listener) {
+        subscribeMutations(key, listener, options = {}) {
             if (typeof listener !== 'function') return () => {};
+            if (!this.pageSupports(options.contexts || [])) {
+                this.noteDiagnostic('mutation.subscriber.skipped', { key, contexts: options.contexts || [], pageType: this.getPageContext().type });
+                return () => {};
+            }
             this.ensureMutationBus();
             this._mutationSubscribers.set(key, listener);
             this.setDiagnosticGauge('mutation.subscribers', this._mutationSubscribers.size);
@@ -1273,8 +1325,12 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             };
         },
 
-        subscribeImmediateMutations(key, listener) {
+        subscribeImmediateMutations(key, listener, options = {}) {
             if (typeof listener !== 'function') return () => {};
+            if (!this.pageSupports(options.contexts || [])) {
+                this.noteDiagnostic('mutation.immediateSubscriber.skipped', { key, contexts: options.contexts || [], pageType: this.getPageContext().type });
+                return () => {};
+            }
             this.ensureMutationBus();
             this._immediateMutationSubscribers.set(key, listener);
             this.setDiagnosticGauge('mutation.immediateSubscribers', this._immediateMutationSubscribers.size);
@@ -5230,11 +5286,18 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             this.setElementVisibility(element, decision.isBlocked);
         },
         initializeUniversalObserver() {
-            const targets = [
-                { c: this.CONSTANTS.SELECTORS.POST_LIST_CONTAINER, i: this.CONSTANTS.SELECTORS.POST_ITEM, scope: 'posts' },
-                { c: this.CONSTANTS.SELECTORS.COMMENT_CONTAINER, i: this.CONSTANTS.SELECTORS.COMMENT_ITEM, scope: 'comments' },
-                { c: this.CONSTANTS.SELECTORS.POST_VIEW_LIST_CONTAINER, i: 'li', scope: 'posts' }
-            ];
+            const pageContext = window.__dcufPageContext || {};
+            const targets = [];
+            if (pageContext.hasListSurface) {
+                targets.push(
+                    { c: this.CONSTANTS.SELECTORS.POST_LIST_CONTAINER, i: this.CONSTANTS.SELECTORS.POST_ITEM, scope: 'posts' },
+                    { c: this.CONSTANTS.SELECTORS.POST_VIEW_LIST_CONTAINER, i: 'li', scope: 'posts' }
+                );
+            }
+            if (pageContext.hasComments) {
+                targets.push({ c: this.CONSTANTS.SELECTORS.COMMENT_CONTAINER, i: this.CONSTANTS.SELECTORS.COMMENT_ITEM, scope: 'comments' });
+            }
+            if (targets.length === 0) return;
             const filterItems = (items) => this.applyFilterItems(items);
             const queueFilterItems = (items) => this.queueObservedFilterItems(items);
             const runtimeCoordinator = this.getRuntimeCoordinator();
@@ -5262,7 +5325,8 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 if (typeof runtimeCoordinator.subscribeImmediateMutations === 'function') {
                     this._runtimeImmediateMutationUnsubscribe = runtimeCoordinator.subscribeImmediateMutations(
                         'filter-immediate-comment-visibility',
-                        (payload) => this.applyImmediateCommentMutations(payload)
+                        (payload) => this.applyImmediateCommentMutations(payload),
+                        { contexts: ['comments'] }
                     );
                 }
                 this._runtimeMutationUnsubscribe = runtimeCoordinator.subscribeMutations('filter-universal-observer', (payload) => {
@@ -5282,7 +5346,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                         if (changedItems.length > 0) queueFilterItems(changedItems);
                     });
                     if (hasRelevantMutation) this.markRelevantMutation(hasCommentMutation ? 'comments' : 'all');
-                });
+                }, { contexts: ['list-surface'] });
                 return;
             }
 
@@ -8396,6 +8460,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
         subscribeListRuntimeUpdates() {
             if (typeof this._listMutationUnsubscribe === 'function') return;
+            if (!this.getPageContext().hasListSurface) return;
 
             const runtimeCoordinator = this.getRuntimeCoordinator();
             if (runtimeCoordinator && typeof runtimeCoordinator.subscribeMutations === 'function') {
@@ -8412,7 +8477,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                     if (candidates.length === 0) return;
 
                     this.ensureListRuntimesFromCandidates(candidates, 'mutation-bus');
-                });
+                }, { contexts: ['list-surface'] });
                 return;
             }
 
@@ -8437,9 +8502,23 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         },
 
         isBoardPage(pageName) {
-            const pathname = window.location.pathname || '';
-            const boardPath = `/board/${pageName}`;
-            return pathname.endsWith(boardPath) || pathname.includes(`${boardPath}/`);
+            return this.getPageContext().type === pageName;
+        },
+
+        getPageContext() {
+            const sharedContext = window.__dcufPageContext;
+            if (sharedContext && typeof sharedContext === 'object') return sharedContext;
+            const type = ((window.location.pathname || '').match(/\/board\/(lists|view|write)(?:\/|$)/) || [])[1] || 'other';
+            return {
+                type,
+                isList: type === 'lists',
+                isView: type === 'view',
+                isWrite: type === 'write',
+                isOther: type === 'other',
+                isTargetPage: type !== 'other',
+                hasListSurface: type === 'lists' || type === 'view',
+                hasComments: type === 'view'
+            };
         },
 
         isListPage() {
@@ -12144,7 +12223,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 })();
 
 (() => {
-    if ((window.location.pathname || '').indexOf('/board/lists') !== -1) return;
+    if (!__dcufPageSupports('view')) return;
 
     const STYLE_ID = 'dcuf-phase1-view-theme';
     const css = `
@@ -14915,6 +14994,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
     }, { once: true });
 })();
 (() => {
+    if (!__dcufPageSupports('view')) return;
     const STYLE_ID = 'dcuf-runtime-fixes';
     const ARTICLE_AD_SELECTOR = [
         'div[id^="foin_"]',
@@ -15191,7 +15271,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 })();
 
 (() => {
-    if ((window.location.pathname || '').indexOf('/board/lists') !== -1) return;
+    if (!__dcufPageSupports('view')) return;
 
     const setImportant = (element, property, value) => {
         if (!element) return;
@@ -15822,8 +15902,8 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 })();
 
 (() => {
-    if ((window.location.pathname || '').indexOf('/board/lists') !== -1) {
-        window.__dcufAwaitInitialCommentStabilization = () => Promise.resolve({ reason: 'list-page' });
+    if (!__dcufPageSupports('view')) {
+        window.__dcufAwaitInitialCommentStabilization = () => Promise.resolve({ reason: 'non-view-page' });
         return;
     }
     const COMMENT_LIST_SELECTOR = 'div[id^="comment_wrap_"] .comment_box .cmt_list';
@@ -16310,7 +16390,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 })();
 
 (() => {
-    if ((window.location.pathname || '').indexOf('/board/lists') !== -1) return;
+    if (!__dcufPageSupports('view')) return;
 
     const cleanupViewHeader = () => {
         document.querySelectorAll('.view_content_wrap .title_headtext').forEach((element) => {
@@ -16328,6 +16408,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 })();
 
 (() => {
+    if (!__dcufPageSupports('list')) return;
     const DRAWER_SELECTOR = '.dcuf-header-drawer';
     const DRAWER_BODY_SELECTOR = '.dcuf-header-drawer__body-inner';
     const CLOSED_LABEL = '갤러리 대문 열기';
@@ -16567,7 +16648,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 })();
 
 (() => {
-    if ((window.location.pathname || '').indexOf('/board/write') === -1) return;
+    if (!__dcufPageSupports('write')) return;
 
     const STYLE_ID = 'dcuf-mobile-write-theme';
     if (document.getElementById(STYLE_ID)) return;
@@ -17820,7 +17901,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 })();
 
 (() => {
-    if ((window.location.pathname || '').indexOf('/board/lists') !== -1) return;
+    if (!__dcufPageSupports('view')) return;
 
     const FORM_SELECTOR = '.view_comment.image_comment .cmt_write_box';
     const VISIBLE_INPUT_SELECTOR = 'input[id^="img_cmt_name_"]';
@@ -18162,7 +18243,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 })();
 
 (() => {
-    if ((window.location.pathname || '').indexOf('/board/lists') !== -1) return;
+    if (!__dcufPageSupports('view')) return;
 
     const pendingImageCommentSections = new Set();
     const imageCommentWidthState = new WeakMap();
@@ -18334,7 +18415,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
 
 (() => {
-    if ((window.location.pathname || '').indexOf('/board/lists') !== -1) return;
+    if (!__dcufPageSupports('view')) return;
 
     const ACTIVE_ATTR = 'data-dcuf-userpopup-active';
     const ACTIVE_INFO_ATTR = 'data-dcuf-userpopup-info-active';
@@ -18943,6 +19024,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
     window.addEventListener('load', () => scheduleApply({ forceFullPass: true }), { once: true });
 })();
 (() => {
+    if (!__dcufPageSupports('list-surface')) return;
     const STYLE_ID = 'dcuf-list-memo-popup-fix';
     const CENTER_ATTR = 'data-dcuf-list-memo-centered';
     const POPUP_SELECTOR = '#user_memo_config.pop_wrap.type3, #um_picker_lay.pop_wrap.type3';
@@ -19277,7 +19359,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
     }, { once: true });
 })();
 (() => {
-    if ((window.location.pathname || '').indexOf('/board/lists') !== -1) return;
+    if (!__dcufPageSupports('view')) return;
 
     const WRITER_SCOPE = '.view_content_wrap .gallview_head .gall_writer.ub-writer';
 
@@ -19370,6 +19452,33 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
 function __dcufGetRuntimeCoordinator() {
     return window.__dcufRuntimeCoordinator || null;
+}
+
+function __dcufGetPageContext() {
+    const sharedContext = window.__dcufPageContext;
+    if (sharedContext && typeof sharedContext === 'object') return sharedContext;
+    const type = ((window.location.pathname || '').match(/\/board\/(lists|view|write)(?:\/|$)/) || [])[1] || 'other';
+    return {
+        type,
+        isList: type === 'lists',
+        isView: type === 'view',
+        isWrite: type === 'write',
+        isOther: type === 'other',
+        isTargetPage: type !== 'other',
+        hasListSurface: type === 'lists' || type === 'view',
+        hasComments: type === 'view'
+    };
+}
+
+function __dcufPageSupports(surface) {
+    const pageContext = __dcufGetPageContext();
+    if (surface === 'list') return pageContext.isList;
+    if (surface === 'view') return pageContext.isView;
+    if (surface === 'write') return pageContext.isWrite;
+    if (surface === 'list-surface') return pageContext.hasListSurface;
+    if (surface === 'comments') return pageContext.hasComments;
+    if (surface === 'target') return pageContext.isTargetPage;
+    return false;
 }
 
 function __dcufCreatePhaseScheduler(label, run, delays = []) {

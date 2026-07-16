@@ -509,6 +509,59 @@ test('smoke: 목록과 본문에서 실제 사용자 스크립트가 초기화�
     } finally { await minorView.close(); }
 });
 
+test('page context registers only the runtime subscribers owned by each surface', 'functional', async ({ browser, server }) => {
+    if (isPcUserscript) return;
+    const cases = [
+        {
+            pathname: '/board/lists?id=test',
+            type: 'lists',
+            subscribers: ['filter-universal-observer', 'ui-list-runtime', 'header-drawer', 'list-memo-popup'],
+            excluded: ['reply-merge', 'comment-typography', 'runtime-article-ad-cleanup', 'ui-write-headtext-tip-position'],
+            immediate: []
+        },
+        {
+            pathname: '/board/view?id=test&no=1001',
+            type: 'view',
+            subscribers: ['filter-universal-observer', 'ui-list-runtime', 'reply-merge', 'comment-typography', 'runtime-article-ad-cleanup', 'list-memo-popup'],
+            excluded: ['header-drawer', 'ui-write-headtext-tip-position'],
+            immediate: ['filter-immediate-comment-visibility']
+        },
+        {
+            pathname: '/board/write/?id=test',
+            type: 'write',
+            subscribers: ['ui-write-editor-layer-position'],
+            excluded: ['filter-universal-observer', 'ui-list-runtime', 'reply-merge', 'header-drawer', 'list-memo-popup'],
+            immediate: []
+        },
+        {
+            pathname: '/unrelated',
+            type: 'other',
+            subscribers: [],
+            excluded: ['filter-universal-observer', 'ui-list-runtime', 'reply-merge', 'header-drawer', 'list-memo-popup', 'ui-write-headtext-tip-position'],
+            immediate: []
+        }
+    ];
+
+    for (const expected of cases) {
+        const session = await createTestPage(browser, server.baseUrl, { storage: noStatsStorage });
+        try {
+            await session.goto(expected.pathname);
+            const state = await session.page.evaluate(() => ({
+                context: window.__dcufPageContext,
+                subscribers: Array.from(window.__dcufRuntimeCoordinator?._mutationSubscribers?.keys?.() || []),
+                immediate: Array.from(window.__dcufRuntimeCoordinator?._immediateMutationSubscribers?.keys?.() || []),
+                contextAttr: document.documentElement.getAttribute('data-dcuf-page-context')
+            }));
+            assert.equal(state.context?.type, expected.type, JSON.stringify(state));
+            assert.equal(state.contextAttr, expected.type, JSON.stringify(state));
+            expected.subscribers.forEach((key) => assert.equal(state.subscribers.includes(key), true, `${expected.type}: missing ${key}; ${JSON.stringify(state.subscribers)}`));
+            expected.excluded.forEach((key) => assert.equal(state.subscribers.includes(key), false, `${expected.type}: unexpected ${key}; ${JSON.stringify(state.subscribers)}`));
+            assert.deepEqual(state.immediate.sort(), expected.immediate.slice().sort(), `${expected.type}: ${JSON.stringify(state.immediate)}`);
+            assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
+        } finally { await session.close(); }
+    }
+});
+
 test('mini view bottom buttons remain clickable above article overlays', 'functional', async ({ browser, server }) => {
     const session = await createTestPage(browser, server.baseUrl, { storage: noStatsStorage, viewport: { width: 1120, height: 900 } });
     try {

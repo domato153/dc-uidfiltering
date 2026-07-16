@@ -4009,11 +4009,18 @@
             this.setElementVisibility(element, decision.isBlocked);
         },
         initializeUniversalObserver() {
-            const targets = [
-                { c: this.CONSTANTS.SELECTORS.POST_LIST_CONTAINER, i: this.CONSTANTS.SELECTORS.POST_ITEM, scope: 'posts' },
-                { c: this.CONSTANTS.SELECTORS.COMMENT_CONTAINER, i: this.CONSTANTS.SELECTORS.COMMENT_ITEM, scope: 'comments' },
-                { c: this.CONSTANTS.SELECTORS.POST_VIEW_LIST_CONTAINER, i: 'li', scope: 'posts' }
-            ];
+            const pageContext = window.__dcufPageContext || {};
+            const targets = [];
+            if (pageContext.hasListSurface) {
+                targets.push(
+                    { c: this.CONSTANTS.SELECTORS.POST_LIST_CONTAINER, i: this.CONSTANTS.SELECTORS.POST_ITEM, scope: 'posts' },
+                    { c: this.CONSTANTS.SELECTORS.POST_VIEW_LIST_CONTAINER, i: 'li', scope: 'posts' }
+                );
+            }
+            if (pageContext.hasComments) {
+                targets.push({ c: this.CONSTANTS.SELECTORS.COMMENT_CONTAINER, i: this.CONSTANTS.SELECTORS.COMMENT_ITEM, scope: 'comments' });
+            }
+            if (targets.length === 0) return;
             const filterItems = (items) => this.applyFilterItems(items);
             const queueFilterItems = (items) => this.queueObservedFilterItems(items);
             const runtimeCoordinator = this.getRuntimeCoordinator();
@@ -4041,7 +4048,8 @@
                 if (typeof runtimeCoordinator.subscribeImmediateMutations === 'function') {
                     this._runtimeImmediateMutationUnsubscribe = runtimeCoordinator.subscribeImmediateMutations(
                         'filter-immediate-comment-visibility',
-                        (payload) => this.applyImmediateCommentMutations(payload)
+                        (payload) => this.applyImmediateCommentMutations(payload),
+                        { contexts: ['comments'] }
                     );
                 }
                 this._runtimeMutationUnsubscribe = runtimeCoordinator.subscribeMutations('filter-universal-observer', (payload) => {
@@ -4061,7 +4069,7 @@
                         if (changedItems.length > 0) queueFilterItems(changedItems);
                     });
                     if (hasRelevantMutation) this.markRelevantMutation(hasCommentMutation ? 'comments' : 'all');
-                });
+                }, { contexts: ['list-surface'] });
                 return;
             }
 

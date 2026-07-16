@@ -69,8 +69,39 @@
                 enabled: this._diagnosticsEnabled,
                 counters: { ...this._diagnosticCounters },
                 gauges: { ...this._diagnosticGauges },
-                events: this._diagnosticEvents.slice(-50)
+                events: this._diagnosticEvents.slice(-50),
+                pageContext: { ...this.getPageContext() },
+                subscribers: Array.from(this._mutationSubscribers.keys()),
+                immediateSubscribers: Array.from(this._immediateMutationSubscribers.keys())
             };
+        },
+
+        getPageContext() {
+            const sharedContext = window.__dcufPageContext;
+            if (sharedContext && typeof sharedContext === 'object') return sharedContext;
+            const type = ((window.location.pathname || '').match(/\/board\/(lists|view|write)(?:\/|$)/) || [])[1] || 'other';
+            return {
+                type,
+                isList: type === 'lists',
+                isView: type === 'view',
+                isWrite: type === 'write',
+                isOther: type === 'other',
+                isTargetPage: type !== 'other',
+                hasListSurface: type === 'lists' || type === 'view',
+                hasComments: type === 'view'
+            };
+        },
+
+        pageSupports(contexts) {
+            const requested = Array.isArray(contexts) ? contexts : [contexts];
+            if (requested.length === 0 || requested.every((context) => !context)) return true;
+            const pageContext = this.getPageContext();
+            return requested.some((context) => {
+                if (context === 'list-surface') return pageContext.hasListSurface;
+                if (context === 'comments') return pageContext.hasComments;
+                if (context === 'target') return pageContext.isTargetPage;
+                return pageContext.type === context;
+            });
         },
 
         incrementDiagnostic(label, amount = 1) {
@@ -366,8 +397,12 @@
             return true;
         },
 
-        subscribeMutations(key, listener) {
+        subscribeMutations(key, listener, options = {}) {
             if (typeof listener !== 'function') return () => {};
+            if (!this.pageSupports(options.contexts || [])) {
+                this.noteDiagnostic('mutation.subscriber.skipped', { key, contexts: options.contexts || [], pageType: this.getPageContext().type });
+                return () => {};
+            }
             this.ensureMutationBus();
             this._mutationSubscribers.set(key, listener);
             this.setDiagnosticGauge('mutation.subscribers', this._mutationSubscribers.size);
@@ -377,8 +412,12 @@
             };
         },
 
-        subscribeImmediateMutations(key, listener) {
+        subscribeImmediateMutations(key, listener, options = {}) {
             if (typeof listener !== 'function') return () => {};
+            if (!this.pageSupports(options.contexts || [])) {
+                this.noteDiagnostic('mutation.immediateSubscriber.skipped', { key, contexts: options.contexts || [], pageType: this.getPageContext().type });
+                return () => {};
+            }
             this.ensureMutationBus();
             this._immediateMutationSubscribers.set(key, listener);
             this.setDiagnosticGauge('mutation.immediateSubscribers', this._immediateMutationSubscribers.size);

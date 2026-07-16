@@ -1266,6 +1266,7 @@
 
         subscribeListRuntimeUpdates() {
             if (typeof this._listMutationUnsubscribe === 'function') return;
+            if (!this.getPageContext().hasListSurface) return;
 
             const runtimeCoordinator = this.getRuntimeCoordinator();
             if (runtimeCoordinator && typeof runtimeCoordinator.subscribeMutations === 'function') {
@@ -1282,7 +1283,7 @@
                     if (candidates.length === 0) return;
 
                     this.ensureListRuntimesFromCandidates(candidates, 'mutation-bus');
-                });
+                }, { contexts: ['list-surface'] });
                 return;
             }
 
@@ -1307,9 +1308,23 @@
         },
 
         isBoardPage(pageName) {
-            const pathname = window.location.pathname || '';
-            const boardPath = `/board/${pageName}`;
-            return pathname.endsWith(boardPath) || pathname.includes(`${boardPath}/`);
+            return this.getPageContext().type === pageName;
+        },
+
+        getPageContext() {
+            const sharedContext = window.__dcufPageContext;
+            if (sharedContext && typeof sharedContext === 'object') return sharedContext;
+            const type = ((window.location.pathname || '').match(/\/board\/(lists|view|write)(?:\/|$)/) || [])[1] || 'other';
+            return {
+                type,
+                isList: type === 'lists',
+                isView: type === 'view',
+                isWrite: type === 'write',
+                isOther: type === 'other',
+                isTargetPage: type !== 'other',
+                hasListSurface: type === 'lists' || type === 'view',
+                hasComments: type === 'view'
+            };
         },
 
         isListPage() {

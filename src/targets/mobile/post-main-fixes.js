@@ -1590,7 +1590,7 @@
 })();
 
 (() => {
-    if ((window.location.pathname || '').indexOf('/board/lists') !== -1) return;
+    if (!__dcufPageSupports('view')) return;
 
     const STYLE_ID = 'dcuf-phase1-view-theme';
     const css = `
@@ -4361,6 +4361,7 @@
     }, { once: true });
 })();
 (() => {
+    if (!__dcufPageSupports('view')) return;
     const STYLE_ID = 'dcuf-runtime-fixes';
     const ARTICLE_AD_SELECTOR = [
         'div[id^="foin_"]',
@@ -4637,7 +4638,7 @@
 })();
 
 (() => {
-    if ((window.location.pathname || '').indexOf('/board/lists') !== -1) return;
+    if (!__dcufPageSupports('view')) return;
 
     const setImportant = (element, property, value) => {
         if (!element) return;
@@ -5268,8 +5269,8 @@
 })();
 
 (() => {
-    if ((window.location.pathname || '').indexOf('/board/lists') !== -1) {
-        window.__dcufAwaitInitialCommentStabilization = () => Promise.resolve({ reason: 'list-page' });
+    if (!__dcufPageSupports('view')) {
+        window.__dcufAwaitInitialCommentStabilization = () => Promise.resolve({ reason: 'non-view-page' });
         return;
     }
     const COMMENT_LIST_SELECTOR = 'div[id^="comment_wrap_"] .comment_box .cmt_list';
@@ -5756,7 +5757,7 @@
 })();
 
 (() => {
-    if ((window.location.pathname || '').indexOf('/board/lists') !== -1) return;
+    if (!__dcufPageSupports('view')) return;
 
     const cleanupViewHeader = () => {
         document.querySelectorAll('.view_content_wrap .title_headtext').forEach((element) => {
@@ -5774,6 +5775,7 @@
 })();
 
 (() => {
+    if (!__dcufPageSupports('list')) return;
     const DRAWER_SELECTOR = '.dcuf-header-drawer';
     const DRAWER_BODY_SELECTOR = '.dcuf-header-drawer__body-inner';
     const CLOSED_LABEL = '갤러리 대문 열기';
@@ -6013,7 +6015,7 @@
 })();
 
 (() => {
-    if ((window.location.pathname || '').indexOf('/board/write') === -1) return;
+    if (!__dcufPageSupports('write')) return;
 
     const STYLE_ID = 'dcuf-mobile-write-theme';
     if (document.getElementById(STYLE_ID)) return;
@@ -7266,7 +7268,7 @@
 })();
 
 (() => {
-    if ((window.location.pathname || '').indexOf('/board/lists') !== -1) return;
+    if (!__dcufPageSupports('view')) return;
 
     const FORM_SELECTOR = '.view_comment.image_comment .cmt_write_box';
     const VISIBLE_INPUT_SELECTOR = 'input[id^="img_cmt_name_"]';
@@ -7608,7 +7610,7 @@
 })();
 
 (() => {
-    if ((window.location.pathname || '').indexOf('/board/lists') !== -1) return;
+    if (!__dcufPageSupports('view')) return;
 
     const pendingImageCommentSections = new Set();
     const imageCommentWidthState = new WeakMap();
@@ -7780,7 +7782,7 @@
 
 
 (() => {
-    if ((window.location.pathname || '').indexOf('/board/lists') !== -1) return;
+    if (!__dcufPageSupports('view')) return;
 
     const ACTIVE_ATTR = 'data-dcuf-userpopup-active';
     const ACTIVE_INFO_ATTR = 'data-dcuf-userpopup-info-active';
@@ -8389,6 +8391,7 @@
     window.addEventListener('load', () => scheduleApply({ forceFullPass: true }), { once: true });
 })();
 (() => {
+    if (!__dcufPageSupports('list-surface')) return;
     const STYLE_ID = 'dcuf-list-memo-popup-fix';
     const CENTER_ATTR = 'data-dcuf-list-memo-centered';
     const POPUP_SELECTOR = '#user_memo_config.pop_wrap.type3, #um_picker_lay.pop_wrap.type3';
@@ -8723,7 +8726,7 @@
     }, { once: true });
 })();
 (() => {
-    if ((window.location.pathname || '').indexOf('/board/lists') !== -1) return;
+    if (!__dcufPageSupports('view')) return;
 
     const WRITER_SCOPE = '.view_content_wrap .gallview_head .gall_writer.ub-writer';
 
@@ -8816,6 +8819,33 @@
 
 function __dcufGetRuntimeCoordinator() {
     return window.__dcufRuntimeCoordinator || null;
+}
+
+function __dcufGetPageContext() {
+    const sharedContext = window.__dcufPageContext;
+    if (sharedContext && typeof sharedContext === 'object') return sharedContext;
+    const type = ((window.location.pathname || '').match(/\/board\/(lists|view|write)(?:\/|$)/) || [])[1] || 'other';
+    return {
+        type,
+        isList: type === 'lists',
+        isView: type === 'view',
+        isWrite: type === 'write',
+        isOther: type === 'other',
+        isTargetPage: type !== 'other',
+        hasListSurface: type === 'lists' || type === 'view',
+        hasComments: type === 'view'
+    };
+}
+
+function __dcufPageSupports(surface) {
+    const pageContext = __dcufGetPageContext();
+    if (surface === 'list') return pageContext.isList;
+    if (surface === 'view') return pageContext.isView;
+    if (surface === 'write') return pageContext.isWrite;
+    if (surface === 'list-surface') return pageContext.hasListSurface;
+    if (surface === 'comments') return pageContext.hasComments;
+    if (surface === 'target') return pageContext.isTargetPage;
+    return false;
 }
 
 function __dcufCreatePhaseScheduler(label, run, delays = []) {
