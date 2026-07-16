@@ -4,7 +4,7 @@
 - Preserve user-visible behavior, stored settings, and release output.
 - Keep work task-specific; use deterministic contract checks.
 - For performance work, measure first, then consult `docs/agent-performance-notes.md`.
-- For long, multi-stage work, keep `.codex/` notes of goals, contracts, status, validation, and next step. Recheck notes and Git before major stages and after compaction/resume; prefer records to memory. Skip one-off fixes.
+- For long work, keep `.codex/` notes with goals, contracts, status, validation, and next step. Recheck them and Git before stages and after compaction/resume; prefer records to memory. Delete it when complete; skip one-off fixes.
 
 ## Source and target routing
 - Release sources are `src/` and build scripts; root userscripts and `dist/` are generated.
