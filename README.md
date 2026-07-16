@@ -60,9 +60,9 @@
 ### 글 리스트, 글 내용, 글 작성
 
 <p align="center">
-  <img src="assets/mobile-list-3.4.1.jpg" width="300" alt="모바일 카드형 갤러리 글 목록">
-  <img src="assets/mobile-view-3.4.1.jpg" width="300" alt="모바일 게시글 본문과 댓글 화면">
-  <img src="assets/mobile-write-3.4.1.jpg" width="300" alt="모바일 글 작성 화면">
+  <img src="assets/mobile-list-3.4.1.jpg" width="30%" alt="모바일 카드형 갤러리 글 목록">
+  <img src="assets/mobile-view-3.4.1.jpg" width="30%" alt="모바일 게시글 본문과 댓글 화면">
+  <img src="assets/mobile-write-3.4.1.jpg" width="30%" alt="모바일 글 작성 화면">
 </p>
 
 ### 필터 설정
