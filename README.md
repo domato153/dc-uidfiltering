@@ -1,5 +1,9 @@
 # DCInside User Filter
 
+![PC version](https://img.shields.io/badge/PC-1.9.5-3b5bdb?style=flat-square)
+![Mobile version](https://img.shields.io/badge/Mobile-3.4.5-4263eb?style=flat-square)
+![Tampermonkey](https://img.shields.io/badge/Tampermonkey-userscript-111827?style=flat-square)
+
 디시인사이드의 게시글과 댓글을 조건에 따라 걸러내고, 모바일 화면을 읽기 편하게 다듬는 Tampermonkey 사용자 스크립트입니다.
 
 핵심은 활동량이 적은 계정, 특정 글·댓글 비율, 통신사·우회 IP, 유동 사용자를 원하는 기준으로 차단하는 기능입니다. 닉네임·UID·IP를 직접 차단하고 목록을 백업하거나 복원할 수도 있습니다.
@@ -50,6 +54,42 @@
 - 늦게 추가된 댓글과 게시글에도 필터 재적용
 - 목록 교체와 댓글 다시 불러오기 대응
 - 한 번 차단한 UID 통계를 일정 기간 캐시해 반복 요청 감소
+
+## 화면
+
+### 글 리스트, 글 내용, 글 작성
+
+<p align="center">
+  <img src="assets/mobile-list-3.4.1.jpg" width="30%" alt="모바일 카드형 갤러리 글 목록">
+  <img src="assets/mobile-view-3.4.1.jpg" width="30%" alt="모바일 게시글 본문과 댓글 화면">
+  <img src="assets/mobile-write-3.4.1.jpg" width="30%" alt="모바일 글 작성 화면">
+</p>
+
+### 필터 설정
+
+<p align="center">
+  <img src="assets/filter-settings-3.4.1.jpg" width="560" alt="글댓합, 비율, 유동과 IP 차단 설정 화면">
+</p>
+
+### 모바일 메뉴와 Tampermonkey 메뉴
+
+<p align="center">
+  <img src="assets/floating-menu-3.4.1.jpg" width="420" alt="3.4.1 플로팅 메뉴 화면">
+  <img src="assets/tampermonkey-menu-3.4.1.png" width="360" alt="Tampermonkey의 DC UserFilter Mobile 메뉴">
+</p>
+
+### 직접 차단과 차단 목록 관리
+
+<p align="center">
+  <img src="assets/direct-block-3.4.1.jpg" width="480" alt="닉네임, 식별번호, IP를 입력하는 직접 차단 화면">
+  <img src="assets/block-management-3.4.1.jpg" width="390" alt="식별번호, 닉네임, IP 차단 유저 관리 화면">
+</p>
+
+### 차단 목록 백업과 복원
+
+<p align="center">
+  <img src="assets/backup-restore-3.4.1.jpg" width="420" alt="차단 목록 파일 다운로드, 클립보드 복사와 불러오기 화면">
+</p>
 
 ## 설치 방법
 
