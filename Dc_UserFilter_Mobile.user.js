@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         DC_UserFilter_Mobile
 // @namespace    http://tampermonkey.net/
-// @version      3.4.4
+// @version      3.4.5
 // @description  유저 필터링, UI 개선, 개인 차단/해제 기능
 // @author       domato153
 // @match        https://gall.dcinside.com/*
@@ -26,6 +26,23 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
 
     const __dcufRoot = (typeof unsafeWindow !== 'undefined' && unsafeWindow) ? unsafeWindow : window;
     if (window.top !== window.self) return;
+
+    const detectedPageType = ((window.location.pathname || '').match(/\/board\/(lists|view|write)(?:\/|$)/) || [])[1] || 'other';
+    const pageContext = Object.freeze({
+        type: detectedPageType,
+        isList: detectedPageType === 'lists',
+        isView: detectedPageType === 'view',
+        isWrite: detectedPageType === 'write',
+        isOther: detectedPageType === 'other',
+        isTargetPage: detectedPageType !== 'other',
+        hasListSurface: detectedPageType === 'lists' || detectedPageType === 'view',
+        hasComments: detectedPageType === 'view'
+    });
+    __dcufRoot.__dcufPageContext = pageContext;
+    window.__dcufPageContext = pageContext;
+    const exposePageContextAttribute = () => document.documentElement?.setAttribute('data-dcuf-page-context', detectedPageType);
+    if (document.documentElement) exposePageContextAttribute();
+    else document.addEventListener('DOMContentLoaded', exposePageContextAttribute, { once: true });
 
     const previousBoot = __dcufRoot.__dcufBootController || window.__dcufBootController;
     if (previousBoot) {
@@ -69,7 +86,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
     let domReadyListener = null;
     let loadListener = null;
 
-    const pageType = ((window.location.pathname || '').match(/\/board\/(lists|view|write)(?:\/|$)/) || [])[1] || 'other';
+    const pageType = pageContext.type;
     const isTargetPage = () => pageType !== 'other';
     const note = (label, detail = null) => {
         const entry = { label, detail, ts: Date.now(), elapsedMs: Date.now() - startedAt };
@@ -910,6 +927,17 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             '.custom-post-item',
             '.custom-bottom-controls'
         ].join(', '),
+        COMMENT_VISIBILITY_SELECTOR: [
+            '#focus_cmt',
+            'div[id^="comment_wrap_"]',
+            '.comment_box',
+            '.view_comment.image_comment',
+            'li[id^="comment_li_"]',
+            'li[id^="reply_li_"]',
+            'li[id^="img_comment_li_"]',
+            'li[id^="mg_comment_li_"]'
+        ].join(', '),
+        IDENTITY_ATTRIBUTE_NAMES: new Set(['id', 'data-uid', 'data-nick', 'data-ip', 'data-no', 'p-no']),
         _mutationObserver: null,
         _mutationObserverTarget: null,
         _bodyMountObserver: null,
@@ -965,8 +993,116 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 enabled: this._diagnosticsEnabled,
                 counters: { ...this._diagnosticCounters },
                 gauges: { ...this._diagnosticGauges },
-                events: this._diagnosticEvents.slice(-50)
+                events: this._diagnosticEvents.slice(-50),
+                pageContext: { ...this.getPageContext() },
+                subscribers: Array.from(this._mutationSubscribers.keys()),
+                immediateSubscribers: Array.from(this._immediateMutationSubscribers.keys())
             };
+        },
+
+        getPageContext() {
+            const sharedContext = window.__dcufPageContext;
+            if (sharedContext && typeof sharedContext === 'object') return sharedContext;
+            const type = ((window.location.pathname || '').match(/\/board\/(lists|view|write)(?:\/|$)/) || [])[1] || 'other';
+            return {
+                type,
+                isList: type === 'lists',
+                isView: type === 'view',
+                isWrite: type === 'write',
+                isOther: type === 'other',
+                isTargetPage: type !== 'other',
+                hasListSurface: type === 'lists' || type === 'view',
+                hasComments: type === 'view'
+            };
+        },
+
+        pageSupports(contexts) {
+            const requested = Array.isArray(contexts) ? contexts : [contexts];
+            if (requested.length === 0 || requested.every((context) => !context)) return true;
+            const pageContext = this.getPageContext();
+            return requested.some((context) => {
+                if (context === 'list-surface') return pageContext.hasListSurface;
+                if (context === 'comments') return pageContext.hasComments;
+                if (context === 'target') return pageContext.isTargetPage;
+                return pageContext.type === context;
+            });
+        },
+
+        getMutationSurfaceSelector() {
+            const pageContext = this.getPageContext();
+            const shared = [
+                '#user_data_lyr',
+                '.user_data',
+                '#user_memo_config',
+                '#um_picker_lay'
+            ];
+            const list = [
+                '.list_wrap',
+                '.gall_listwrap',
+                '.gall_list',
+                '.issue_contentbox',
+                '#gall_top_recom'
+            ];
+            if (pageContext.isList) return [...shared, ...list].join(', ');
+            if (pageContext.isView) {
+                return [
+                    ...shared,
+                    ...list,
+                    '.view_content_wrap',
+                    '.gallview_contents',
+                    '.writing_view_box',
+                    '.gall_comment',
+                    '#focus_cmt',
+                    'div[id^="comment_wrap_"]',
+                    '.view_comment'
+                ].join(', ');
+            }
+            if (pageContext.isWrite) return 'form#write, #write_wrap, .gall_write, .write_box';
+            return shared.join(', ');
+        },
+
+        isMutationSurfaceElement(element) {
+            if (!(element instanceof Element) || this.isScriptOwnedElement(element)) return false;
+            if (element === document.body) return true;
+            const selector = this.getMutationSurfaceSelector();
+            return Boolean(selector && (element.matches(selector) || element.closest(selector)));
+        },
+
+        prefilterMutationRecords(records) {
+            if (!Array.isArray(records) || records.length === 0) return [];
+            return records.filter((record) => {
+                if (!record) return false;
+                if (record.type === 'childList') return !this.isScriptOwnedElement(record.target);
+                if (record.type === 'attributes') {
+                    if (this.isScriptOwnedElement(record.target)) return false;
+                    if (this.IDENTITY_ATTRIBUTE_NAMES.has(record.attributeName)) return true;
+                    return this.isMutationSurfaceElement(record.target);
+                }
+                if (record.type === 'characterData') {
+                    return this.isMutationSurfaceElement(record.target?.parentElement || null);
+                }
+                return false;
+            });
+        },
+
+        isCommentVisibilityElement(element) {
+            if (!(element instanceof Element) || this.isScriptOwnedElement(element)) return false;
+            return element.matches(this.COMMENT_VISIBILITY_SELECTOR)
+                || Boolean(element.closest(this.COMMENT_VISIBILITY_SELECTOR))
+                || Boolean(element.querySelector?.(this.COMMENT_VISIBILITY_SELECTOR));
+        },
+
+        filterImmediateMutationRecords(records) {
+            if (!Array.isArray(records) || records.length === 0 || !this.getPageContext().hasComments) return [];
+            return records.filter((record) => {
+                if (record?.type === 'attributes') {
+                    return ['data-uid', 'data-nick', 'data-ip'].includes(record.attributeName)
+                        && this.isCommentVisibilityElement(record.target);
+                }
+                if (record?.type !== 'childList' || record.addedNodes.length === 0) return false;
+                if (this.isCommentVisibilityElement(record.target)) return true;
+                return Array.from(record.addedNodes).some((node) => this.isCommentVisibilityElement(node));
+            });
         },
 
         incrementDiagnostic(label, amount = 1) {
@@ -1065,6 +1201,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             const charDataSet = new Set();
             const childListSet = new Set();
             const rootSet = new Set();
+            const collectMatchesCache = new Map();
             const addRoot = (node) => this.addUniqueElement(rootSet, roots, node);
 
             records.forEach((record) => {
@@ -1095,6 +1232,22 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 }
             });
 
+            const collectMatches = (selectors, options = {}) => {
+                const selectorText = this.normalizeSelectors(selectors);
+                if (!selectorText) return [];
+                const includeRoots = options.includeRoots !== false;
+                const includeDescendants = options.includeDescendants !== false;
+                const cacheKey = `${includeRoots ? 1 : 0}:${includeDescendants ? 1 : 0}:${selectorText}`;
+                if (collectMatchesCache.has(cacheKey)) {
+                    this.incrementDiagnostic('mutation.collectMatches.cacheHits');
+                    return collectMatchesCache.get(cacheKey).slice();
+                }
+                const matches = this.collectMatchesFromRoots(roots, selectorText, { includeRoots, includeDescendants });
+                collectMatchesCache.set(cacheKey, matches);
+                this.incrementDiagnostic('mutation.collectMatches.cacheMisses');
+                return matches.slice();
+            };
+
             return {
                 records,
                 addedElements,
@@ -1103,7 +1256,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 characterDataTargets,
                 childListTargets,
                 roots,
-                collectMatches: (selectors, options = {}) => this.collectMatchesFromRoots(roots, selectors, options)
+                collectMatches
             };
         },
 
@@ -1153,6 +1306,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
             const payload = this.buildMutationPayload(records);
             this.incrementDiagnostic('mutation.immediateDispatches');
+            this.incrementDiagnostic('mutation.immediateRecords', records.length);
             this.setDiagnosticGauge('mutation.immediateSubscribers', this._immediateMutationSubscribers.size);
 
             const measureDispatch = this._diagnosticsEnabled && typeof performance?.now === 'function';
@@ -1174,13 +1328,18 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
         queueMutationRecords(records) {
             if (!Array.isArray(records) || records.length === 0) return;
+            const filteredRecords = this.prefilterMutationRecords(records);
+            const skippedRecords = records.length - filteredRecords.length;
+            this.incrementDiagnostic('mutation.rawRecords', records.length);
+            if (skippedRecords > 0) this.incrementDiagnostic('mutation.skippedRecords', skippedRecords);
+            if (filteredRecords.length === 0) return;
             // MutationObserver callbacks run before the next paint. Critical visibility
             // subscribers must see the fresh records here; the ordinary bus remains
             // animation-frame batched for heavier UI and async work.
-            this.dispatchImmediateMutations(records);
-            this._pendingMutationRecords.push(...records);
+            this.dispatchImmediateMutations(this.filterImmediateMutationRecords(filteredRecords));
+            this._pendingMutationRecords.push(...filteredRecords);
             this.incrementDiagnostic('mutation.bursts');
-            this.incrementDiagnostic('mutation.records', records.length);
+            this.incrementDiagnostic('mutation.records', filteredRecords.length);
 
             if (this._pendingMutationRafId || this._pendingMutationTimerId) return;
 
@@ -1198,10 +1357,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             this.installDiagnosticsApi();
             if (this._mutationObserver) {
                 const records = this._mutationObserver.takeRecords();
-                if (records.length > 0) {
-                    this.dispatchImmediateMutations(records);
-                    this._pendingMutationRecords.push(...records);
-                }
+                if (records.length > 0) this.queueMutationRecords(records);
             }
             if (this._pendingMutationRecords.length > 0) this.dispatchQueuedMutations();
             this.noteDiagnostic('mutation.bus.flushed', { reason, generation: this._mutationGeneration });
@@ -1229,10 +1385,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
             if (this._mutationObserver) {
                 const pending = this._mutationObserver.takeRecords();
-                if (pending.length > 0) {
-                    this.dispatchImmediateMutations(pending);
-                    this._pendingMutationRecords.push(...pending);
-                }
+                if (pending.length > 0) this.queueMutationRecords(pending);
                 this._mutationObserver.disconnect();
             }
 
@@ -1262,8 +1415,12 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             return true;
         },
 
-        subscribeMutations(key, listener) {
+        subscribeMutations(key, listener, options = {}) {
             if (typeof listener !== 'function') return () => {};
+            if (!this.pageSupports(options.contexts || [])) {
+                this.noteDiagnostic('mutation.subscriber.skipped', { key, contexts: options.contexts || [], pageType: this.getPageContext().type });
+                return () => {};
+            }
             this.ensureMutationBus();
             this._mutationSubscribers.set(key, listener);
             this.setDiagnosticGauge('mutation.subscribers', this._mutationSubscribers.size);
@@ -1273,8 +1430,12 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             };
         },
 
-        subscribeImmediateMutations(key, listener) {
+        subscribeImmediateMutations(key, listener, options = {}) {
             if (typeof listener !== 'function') return () => {};
+            if (!this.pageSupports(options.contexts || [])) {
+                this.noteDiagnostic('mutation.immediateSubscriber.skipped', { key, contexts: options.contexts || [], pageType: this.getPageContext().type });
+                return () => {};
+            }
             this.ensureMutationBus();
             this._immediateMutationSubscribers.set(key, listener);
             this.setDiagnosticGauge('mutation.immediateSubscribers', this._immediateMutationSubscribers.size);
@@ -1397,7 +1558,14 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
     RuntimeCoordinator.installDiagnosticsApi();
     window.__dcufRuntimeCoordinator = RuntimeCoordinator;
-    GM_addStyle(`
+    const __dcufFilterPageContext = window.__dcufPageContext || {
+        type: 'other',
+        isList: false,
+        isView: false,
+        hasListSurface: false,
+        hasComments: false
+    };
+    const __dcufAllFilterCss = `
         /* [최종 해결] 링크 미리보기 텍스트 박스 스타일 재정의 */
         .thum-txtin {
             box-sizing: border-box !important;  /* [핵심] 너비 계산 방식을 올바르게 수정 */
@@ -1831,6 +1999,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         }
         
         /* --- 글 보기/댓글 UI --- */
+        /* DCUF_VIEW_SURFACE_START */
         .gall_content, .gall_tit_box, .gall_writer_info, .btn_recommend_box, .view_bottom, .gall_comment {
             background: #fff !important;
             padding: 15px !important;
@@ -2146,6 +2315,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             color: #24364f;
             outline: none;
         }
+        /* DCUF_FAB_SHELL_END */
         #dc-personal-block-size-overlay {
             position: fixed;
             inset: 0;
@@ -2781,7 +2951,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             }
         }
 
-        /* [v3.4.4] Script-owned soft-depth control surfaces */
+        /* [v3.4.5] Script-owned soft-depth control surfaces */
         #dc-personal-block-fab {
             background: linear-gradient(180deg, #fff 0%, #eef4ff 100%) !important;
             color: #29466f !important;
@@ -3436,7 +3606,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             background: #1c1c1e !important;
             border-bottom-color: #3a3a3c !important;
         }
-        
+
         /* [v3.0 alpha] 본문 글자색은 실제 다크 팔레트로 직접 덮어씁니다. */
         body.dc-filter-dark-mode .gallview_contents,
         body.dc-filter-dark-mode .gallview_contents p,
@@ -3452,7 +3622,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             color: var(--dcuf-view-fg) !important;
             -webkit-text-fill-color: var(--dcuf-view-fg) !important;
         }
-        
+
         /* 댓글은 반전 필터의 영향을 받지 않으므로 그대로 밝은 색 설정 */
         body.dc-filter-dark-mode .comment_box .usertxt {
             color: #e0e0e0 !important;
@@ -3503,6 +3673,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             background: #414956 !important;
             color: #fff !important;
         }
+        /* DCUF_FAB_SHELL_DARK_END */
         body.dc-filter-dark-mode #dc-personal-block-size-overlay {
             background: rgba(0, 0, 0, 0.62) !important;
         }
@@ -3860,10 +4031,61 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         body.dc-filter-dark-mode #dc-backup-popup { background-color: #1b2738 !important; }
 
         /* DCUF_SHARED_FILTER_UI_DARK_END */
-    `);
+    `;
+
+    const __dcufCssMarkers = Object.freeze({
+        view: '/* DCUF_VIEW_SURFACE_START */',
+        ui: '/* DCUF_SHARED_FILTER_UI_START */',
+        uiEnd: '/* DCUF_SHARED_FILTER_UI_END */',
+        uiDark: '/* DCUF_SHARED_FILTER_UI_DARK_START */',
+        uiDarkEnd: '/* DCUF_SHARED_FILTER_UI_DARK_END */',
+        fabEnd: '/* DCUF_FAB_SHELL_END */',
+        fabDarkEnd: '/* DCUF_FAB_SHELL_DARK_END */'
+    });
+    const __dcufCssIndex = (marker) => {
+        const index = __dcufAllFilterCss.indexOf(marker);
+        if (index < 0) throw new Error(`DCUF CSS marker missing: ${marker}`);
+        return index;
+    };
+    const __dcufViewCssIndex = __dcufCssIndex(__dcufCssMarkers.view);
+    const __dcufUiCssIndex = __dcufCssIndex(__dcufCssMarkers.ui);
+    const __dcufUiCssEndIndex = __dcufCssIndex(__dcufCssMarkers.uiEnd) + __dcufCssMarkers.uiEnd.length;
+    const __dcufUiDarkCssIndex = __dcufCssIndex(__dcufCssMarkers.uiDark);
+    const __dcufUiDarkCssEndIndex = __dcufCssIndex(__dcufCssMarkers.uiDarkEnd) + __dcufCssMarkers.uiDarkEnd.length;
+    const __dcufFabCssEndIndex = __dcufCssIndex(__dcufCssMarkers.fabEnd) + __dcufCssMarkers.fabEnd.length;
+    const __dcufFabDarkCssEndIndex = __dcufCssIndex(__dcufCssMarkers.fabDarkEnd) + __dcufCssMarkers.fabDarkEnd.length;
+    const __dcufCoreFilterCss = __dcufAllFilterCss.slice(0, __dcufViewCssIndex);
+    const __dcufViewFilterCss = __dcufAllFilterCss.slice(__dcufViewCssIndex, __dcufUiCssIndex);
+    const __dcufGlobalDarkCss = __dcufAllFilterCss.slice(__dcufUiCssEndIndex, __dcufUiDarkCssIndex);
+    const __dcufLazyFilterUiCss = [
+        __dcufAllFilterCss.slice(__dcufUiCssIndex, __dcufUiCssEndIndex),
+        __dcufAllFilterCss.slice(__dcufUiDarkCssIndex, __dcufUiDarkCssEndIndex)
+    ].join('\n');
+    const __dcufFabShellCss = [
+        __dcufAllFilterCss.slice(__dcufUiCssIndex, __dcufFabCssEndIndex),
+        __dcufAllFilterCss.slice(__dcufUiDarkCssIndex, __dcufFabDarkCssEndIndex)
+    ].join('\n');
+
+    if (__dcufFilterPageContext.hasListSurface) {
+        GM_addStyle(`${__dcufCoreFilterCss}\n${__dcufGlobalDarkCss}`);
+        GM_addStyle(__dcufFabShellCss);
+    }
+    if (__dcufFilterPageContext.isView) GM_addStyle(__dcufViewFilterCss);
+
+    let __dcufFilterUiStylesLoaded = false;
+    const __dcufEnsureFilterUiStyles = () => {
+        if (__dcufFilterUiStylesLoaded) return false;
+        GM_addStyle(__dcufLazyFilterUiCss);
+        __dcufFilterUiStylesLoaded = true;
+        window.__dcufFilterUiStylesLoaded = true;
+        window.__dcufDiagnostics?.increment?.('style.filterUi.lazyLoads');
+        return true;
+    };
+    window.__dcufFilterUiStylesLoaded = false;
+    window.__dcufEnsureFilterUiStyles = __dcufEnsureFilterUiStyles;
 
 
-    GM_addStyle(`
+    if (__dcufFilterPageContext.hasListSurface) GM_addStyle(`
         /* [v2.7.5] 댓글/글목록 닉네임 폭 보정 */
         .post-meta {
             justify-content: flex-start !important;
@@ -3997,6 +4219,8 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         INFLIGHT_USER_SUM_REQUESTS: Object.create(null),
         USER_SUM_NEGATIVE_CACHE: new Map(),
         USER_SUM_NEGATIVE_TTL: 30000,
+        USER_SUM_NEGATIVE_MAX_ENTRIES: 256,
+        _negativeUserSumCacheWrites: 0,
         DEBUG_ENABLED: false,
         DEBUG_MAX_DECISIONS_PER_PASS: 150,
         DEBUG_PASS_ID: 0,
@@ -4005,6 +4229,13 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         _runtimeMutationUnsubscribe: null,
         _userSumTaskQueue: null,
         _blockedUidWritePromise: null,
+        _blockedUidWriteTimerId: 0,
+        _blockedUidDirtyGeneration: 0,
+        _blockedUidPersistedGeneration: 0,
+        _blockedUidDirtyUids: null,
+        _blockedUidWriteWaiters: null,
+        _blockedUidPagehideHandler: null,
+        BLOCKED_UID_WRITE_DELAY: 120,
         _queuedObserverFilterItems: null,
         _queuedObserverFilterRafId: 0,
         _queuedObserverFilterTimerId: 0,
@@ -4273,6 +4504,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             if (snapshot) { snapshot.blockConfig = conf; snapshot.migrationDone = true; }
         },
         async showSettings() {
+            window.__dcufEnsureFilterUiStyles?.();
             await this.reloadSettings();
             const { masterDisabled = false, excludeRecommended = false, threshold = 0, ratioEnabled = false, ratioMin = '', ratioMax = '', blockGuestEnabled = false, proxyBlockMode = 0, telecomBlockEnabled = false } = dcFilterSettings;
             const currentShortcut = await GM_getValue(this.CONSTANTS.STORAGE_KEYS.SHORTCUT_KEY, 'Shift+S');
@@ -4451,6 +4683,20 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             const enterKeySave = (e) => { if (e.key === 'Enter') saveButton.click(); };
             [input, ratioMinInput, ratioMaxInput].forEach(el => { if (el) el.addEventListener('keydown', enterKeySave); });
             let isDragging = false, offsetX, offsetY;
+            let dragWidth = 0, dragHeight = 0;
+            let dragRafId = 0, pendingDragX = null, pendingDragY = null;
+            const applyDragPosition = () => {
+                dragRafId = 0;
+                if (!isDragging || pendingDragX === null || pendingDragY === null) return;
+                let newX = pendingDragX - offsetX;
+                let newY = pendingDragY - offsetY;
+                pendingDragX = null;
+                pendingDragY = null;
+                newX = Math.max(0, Math.min(newX, window.innerWidth - dragWidth));
+                newY = Math.max(0, Math.min(newY, window.innerHeight - dragHeight));
+                div.style.left = `${newX}px`;
+                div.style.top = `${newY}px`;
+            };
             const onDragStart = (e) => {
                 if (e.type === 'touchstart' && e.touches && e.touches.length > 1) return;
                 const startTarget = (e.target && e.target.nodeType === 1) ? e.target : e.target.parentElement;
@@ -4459,6 +4705,8 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 isDragging = true;
                 const rect = div.getBoundingClientRect();
                 if (div.style.transform !== 'none') { div.style.transform = 'none'; div.style.left = `${rect.left}px`; div.style.top = `${rect.top}px`; }
+                dragWidth = rect.width;
+                dragHeight = rect.height;
                 const clientX = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
                 const clientY = e.type === 'touchstart' ? e.touches[0].clientY : e.clientY;
                 offsetX = clientX - rect.left; offsetY = clientY - rect.top;
@@ -4469,14 +4717,19 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 if (!isDragging) return;
                 if (e.type === 'touchmove' && e.touches && e.touches.length > 1) return;
                 e.preventDefault();
-                const rect = div.getBoundingClientRect();
                 const clientX = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
                 const clientY = e.type === 'touchmove' ? e.touches[0].clientY : e.clientY;
-                let newX = clientX - offsetX; let newY = clientY - offsetY;
-                newX = Math.max(0, Math.min(newX, window.innerWidth - rect.width)); newY = Math.max(0, Math.min(newY, window.innerHeight - rect.height));
-                div.style.left = `${newX}px`; div.style.top = `${newY}px`;
+                pendingDragX = clientX;
+                pendingDragY = clientY;
+                if (!dragRafId) dragRafId = requestAnimationFrame(applyDragPosition);
             };
-            const onDragEnd = () => { isDragging = false; document.removeEventListener('mousemove', onDragMove); document.removeEventListener('touchmove', onDragMove); };
+            const onDragEnd = () => {
+                if (dragRafId) cancelAnimationFrame(dragRafId);
+                applyDragPosition();
+                isDragging = false;
+                document.removeEventListener('mousemove', onDragMove);
+                document.removeEventListener('touchmove', onDragMove);
+            };
             const dragHandle = settingsHeader || div;
             try {
                 dragHandle.addEventListener('mousedown', onDragStart);
@@ -4864,14 +5117,40 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             if (!cached) return null;
             if (Date.now() - cached.ts > this.USER_SUM_NEGATIVE_TTL) {
                 this.USER_SUM_NEGATIVE_CACHE.delete(uid);
+                this.setRuntimeDiagnosticGauge('filter.negativeUserSumCache.size', this.USER_SUM_NEGATIVE_CACHE.size);
                 return null;
             }
             return cached;
         },
+        pruneNegativeUserSumCache(now = Date.now()) {
+            let removed = 0;
+            this.USER_SUM_NEGATIVE_CACHE.forEach((entry, key) => {
+                if (!entry || typeof entry.ts !== 'number' || now - entry.ts > this.USER_SUM_NEGATIVE_TTL) {
+                    this.USER_SUM_NEGATIVE_CACHE.delete(key);
+                    removed += 1;
+                }
+            });
+            while (this.USER_SUM_NEGATIVE_CACHE.size > this.USER_SUM_NEGATIVE_MAX_ENTRIES) {
+                const oldestKey = this.USER_SUM_NEGATIVE_CACHE.keys().next().value;
+                if (oldestKey === undefined) break;
+                this.USER_SUM_NEGATIVE_CACHE.delete(oldestKey);
+                removed += 1;
+            }
+            if (removed > 0) this.incrementRuntimeDiagnostic('filter.negativeUserSumCache.pruned', removed);
+            this.setRuntimeDiagnosticGauge('filter.negativeUserSumCache.size', this.USER_SUM_NEGATIVE_CACHE.size);
+            return removed;
+        },
         setNegativeUserSumCache(uid, reason = 'error') {
             if (!uid) return null;
             const cached = { ts: Date.now(), reason };
+            this.USER_SUM_NEGATIVE_CACHE.delete(uid);
             this.USER_SUM_NEGATIVE_CACHE.set(uid, cached);
+            this._negativeUserSumCacheWrites = (this._negativeUserSumCacheWrites + 1) % 32;
+            if (this.USER_SUM_NEGATIVE_CACHE.size > this.USER_SUM_NEGATIVE_MAX_ENTRIES || this._negativeUserSumCacheWrites === 0) {
+                this.pruneNegativeUserSumCache(cached.ts);
+            } else {
+                this.setRuntimeDiagnosticGauge('filter.negativeUserSumCache.size', this.USER_SUM_NEGATIVE_CACHE.size);
+            }
             return cached;
         },
         async getUserPostCommentSum(uid) {
@@ -4926,9 +5205,97 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 delete this.INFLIGHT_USER_SUM_REQUESTS[uid];
             }
         },
+        updateBlockedUidWriteDiagnostics(reason = '') {
+            const pendingEntries = this._blockedUidDirtyUids instanceof Map
+                ? this._blockedUidDirtyUids.size
+                : 0;
+            this.setRuntimeDiagnosticGauge('filter.blockedUidPersist.pendingEntries', pendingEntries);
+            this.setRuntimeDiagnosticGauge('filter.blockedUidPersist.timerActive', this._blockedUidWriteTimerId ? 1 : 0);
+            this.setRuntimeDiagnosticGauge('filter.blockedUidPersist.writeActive', this._blockedUidWritePromise ? 1 : 0);
+            if (reason) this.setRuntimeDiagnosticGauge('filter.blockedUidPersist.lastReason', reason);
+        },
+        waitForBlockedUidGeneration(generation) {
+            if (this._blockedUidPersistedGeneration >= generation) return Promise.resolve();
+            if (!Array.isArray(this._blockedUidWriteWaiters)) this._blockedUidWriteWaiters = [];
+            return new Promise((resolve, reject) => {
+                this._blockedUidWriteWaiters.push({ generation, resolve, reject });
+            });
+        },
+        settleBlockedUidWriteWaiters(generation, error = null) {
+            if (!Array.isArray(this._blockedUidWriteWaiters)) return;
+            const pending = [];
+            this._blockedUidWriteWaiters.forEach((waiter) => {
+                if (waiter.generation > generation) {
+                    pending.push(waiter);
+                    return;
+                }
+                if (error) waiter.reject(error);
+                else waiter.resolve();
+            });
+            this._blockedUidWriteWaiters = pending;
+        },
+        scheduleBlockedUidCachePersist(generation) {
+            const waiter = this.waitForBlockedUidGeneration(generation);
+            if (this._blockedUidWriteTimerId) window.clearTimeout(this._blockedUidWriteTimerId);
+            this._blockedUidWriteTimerId = window.setTimeout(() => {
+                this._blockedUidWriteTimerId = 0;
+                this.updateBlockedUidWriteDiagnostics('timer');
+                void this.flushBlockedUidCache('timer').catch((error) => {
+                    console.warn('DCinside User Filter: blocked UID cache write failed.', error);
+                });
+            }, this.BLOCKED_UID_WRITE_DELAY);
+            this.updateBlockedUidWriteDiagnostics('scheduled');
+            return waiter;
+        },
+        flushBlockedUidCache(reason = 'manual') {
+            if (this._blockedUidWriteTimerId) {
+                window.clearTimeout(this._blockedUidWriteTimerId);
+                this._blockedUidWriteTimerId = 0;
+            }
+            if (this._blockedUidWritePromise) {
+                const activeWrite = this._blockedUidWritePromise;
+                return activeWrite.catch(() => {}).then(() => this.flushBlockedUidCache(reason));
+            }
+
+            const generation = this._blockedUidDirtyGeneration;
+            if (generation <= this._blockedUidPersistedGeneration) {
+                this.updateBlockedUidWriteDiagnostics(reason);
+                return Promise.resolve();
+            }
+            const dirtyUids = this._blockedUidDirtyUids instanceof Map
+                ? Array.from(this._blockedUidDirtyUids.entries())
+                    .filter(([, dirtyGeneration]) => dirtyGeneration <= generation)
+                    .map(([uid]) => uid)
+                : [];
+            const serializedCache = JSON.stringify(this.BLOCKED_UIDS_CACHE);
+            const writePromise = (async () => {
+                try {
+                    await GM_setValue(this.CONSTANTS.STORAGE_KEYS.BLOCKED_UIDS, serializedCache);
+                    this._blockedUidPersistedGeneration = Math.max(this._blockedUidPersistedGeneration, generation);
+                    dirtyUids.forEach((uid) => {
+                        if (this._blockedUidDirtyUids?.get(uid) <= generation) this._blockedUidDirtyUids.delete(uid);
+                    });
+                    this.incrementRuntimeDiagnostic('filter.blockedUidPersist.writes');
+                    this.incrementRuntimeDiagnostic('filter.blockedUidPersist.entries', dirtyUids.length);
+                    this.setRuntimeDiagnosticGauge('filter.blockedUidPersist.lastBatchSize', dirtyUids.length);
+                    this.settleBlockedUidWriteWaiters(generation);
+                } catch (error) {
+                    this.incrementRuntimeDiagnostic('filter.blockedUidPersist.failures');
+                    this.settleBlockedUidWriteWaiters(generation, error);
+                    throw error;
+                } finally {
+                    if (this._blockedUidWritePromise === writePromise) this._blockedUidWritePromise = null;
+                    this.updateBlockedUidWriteDiagnostics(reason);
+                }
+            })();
+            this._blockedUidWritePromise = writePromise;
+            this.updateBlockedUidWriteDiagnostics(reason);
+            return writePromise;
+        },
         async addBlockedUid(uid, sum, post, comment, ratioBlocked) {
             if (!uid) return;
-            if (!this.isMobile()) {
+            const isMobile = this.isMobile();
+            if (!isMobile) {
                 await this.refreshBlockedUidsCache();
             }
             const nextEntry = { ts: Date.now(), sum, post, comment, ratioBlocked: !!ratioBlocked };
@@ -4941,21 +5308,16 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 return;
             }
             this.BLOCKED_UIDS_CACHE[uid] = nextEntry;
-            if (!this.isMobile()) {
+            if (!isMobile) {
                 await GM_setValue(this.CONSTANTS.STORAGE_KEYS.BLOCKED_UIDS, JSON.stringify(this.BLOCKED_UIDS_CACHE));
                 return;
             }
-            const serializedCache = JSON.stringify(this.BLOCKED_UIDS_CACHE);
-            const previousWrite = this._blockedUidWritePromise || Promise.resolve();
-            const writePromise = previousWrite
-                .catch(() => {})
-                .then(() => GM_setValue(this.CONSTANTS.STORAGE_KEYS.BLOCKED_UIDS, serializedCache));
-            this._blockedUidWritePromise = writePromise;
-            try {
-                await writePromise;
-            } finally {
-                if (this._blockedUidWritePromise === writePromise) this._blockedUidWritePromise = null;
-            }
+            const generation = this._blockedUidDirtyGeneration + 1;
+            this._blockedUidDirtyGeneration = generation;
+            if (!(this._blockedUidDirtyUids instanceof Map)) this._blockedUidDirtyUids = new Map();
+            this._blockedUidDirtyUids.set(uid, generation);
+            this.incrementRuntimeDiagnostic('filter.blockedUidPersist.queuedEntries');
+            await this.scheduleBlockedUidCachePersist(generation);
         },
         async getBlockedGuests() { try { return JSON.parse(await GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCKED_GUESTS, '[]')); } catch { return []; } },
         async setBlockedGuests(list) { await GM_setValue(this.CONSTANTS.STORAGE_KEYS.BLOCKED_GUESTS, JSON.stringify(list)); },
@@ -5181,11 +5543,18 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             this.setElementVisibility(element, decision.isBlocked);
         },
         initializeUniversalObserver() {
-            const targets = [
-                { c: this.CONSTANTS.SELECTORS.POST_LIST_CONTAINER, i: this.CONSTANTS.SELECTORS.POST_ITEM, scope: 'posts' },
-                { c: this.CONSTANTS.SELECTORS.COMMENT_CONTAINER, i: this.CONSTANTS.SELECTORS.COMMENT_ITEM, scope: 'comments' },
-                { c: this.CONSTANTS.SELECTORS.POST_VIEW_LIST_CONTAINER, i: 'li', scope: 'posts' }
-            ];
+            const pageContext = window.__dcufPageContext || {};
+            const targets = [];
+            if (pageContext.hasListSurface) {
+                targets.push(
+                    { c: this.CONSTANTS.SELECTORS.POST_LIST_CONTAINER, i: this.CONSTANTS.SELECTORS.POST_ITEM, scope: 'posts' },
+                    { c: this.CONSTANTS.SELECTORS.POST_VIEW_LIST_CONTAINER, i: 'li', scope: 'posts' }
+                );
+            }
+            if (pageContext.hasComments) {
+                targets.push({ c: this.CONSTANTS.SELECTORS.COMMENT_CONTAINER, i: this.CONSTANTS.SELECTORS.COMMENT_ITEM, scope: 'comments' });
+            }
+            if (targets.length === 0) return;
             const filterItems = (items) => this.applyFilterItems(items);
             const queueFilterItems = (items) => this.queueObservedFilterItems(items);
             const runtimeCoordinator = this.getRuntimeCoordinator();
@@ -5213,7 +5582,8 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 if (typeof runtimeCoordinator.subscribeImmediateMutations === 'function') {
                     this._runtimeImmediateMutationUnsubscribe = runtimeCoordinator.subscribeImmediateMutations(
                         'filter-immediate-comment-visibility',
-                        (payload) => this.applyImmediateCommentMutations(payload)
+                        (payload) => this.applyImmediateCommentMutations(payload),
+                        { contexts: ['comments'] }
                     );
                 }
                 this._runtimeMutationUnsubscribe = runtimeCoordinator.subscribeMutations('filter-universal-observer', (payload) => {
@@ -5233,7 +5603,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                         if (changedItems.length > 0) queueFilterItems(changedItems);
                     });
                     if (hasRelevantMutation) this.markRelevantMutation(hasCommentMutation ? 'comments' : 'all');
-                });
+                }, { contexts: ['list-surface'] });
                 return;
             }
 
@@ -5481,42 +5851,35 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 this._syncRefilterTimerIds.add(timerId);
             });
         },
-        scheduleCommentStabilizedRefilter(reason = 'comment-stabilized', root = null) {
+        scheduleCommentStabilizedRefilter(reason = 'comment-stabilized', roots = null) {
             if (this._commentRefilterRafId) cancelAnimationFrame(this._commentRefilterRafId);
             if (!this._commentRefilterTimerIds) this._commentRefilterTimerIds = new Set();
             this._commentRefilterTimerIds.forEach((timerId) => clearTimeout(timerId));
             this._commentRefilterTimerIds.clear();
 
-            const runtimeCoordinator = this.getRuntimeCoordinator();
-            const hasRuntimeMutationBus = Boolean(runtimeCoordinator && typeof runtimeCoordinator.subscribeMutations === 'function');
-            let lastGeneration = this.getRelevantMutationGeneration('comments');
-            const rerun = (phase, { force = false } = {}) => {
-                const generation = this.getRelevantMutationGeneration('comments');
-                if (!force && hasRuntimeMutationBus && generation === lastGeneration) {
-                    this.incrementRuntimeDiagnostic('filter.syncPass.comments.skippedUnchanged');
-                    return;
-                }
-                const scopeRoot = this.resolveRefilterRoot(root || document);
-                const shouldFallbackToFullPass = root instanceof Element && !document.contains(root);
-                if (shouldFallbackToFullPass) {
-                    this.runSyncRefilterPass('all');
-                } else {
-                    this.runSyncRefilterPass('comments', scopeRoot);
-                }
-                lastGeneration = this.getRelevantMutationGeneration('comments');
-                this.setRuntimeDiagnosticGauge('filter.syncPass.comments.lastPhase', phase);
-            };
-            this.debugLog('comment-refilter', 'scheduleCommentStabilizedRefilter', { reason });
+            const requestedRoots = roots && typeof roots[Symbol.iterator] === 'function'
+                ? Array.from(roots)
+                : (roots ? [roots] : [document]);
+            this.debugLog('comment-refilter', 'scheduleCommentStabilizedRefilter', { reason, rootCount: requestedRoots.length });
             this._commentRefilterRafId = requestAnimationFrame(() => {
                 this._commentRefilterRafId = 0;
-                rerun('raf', { force: true });
-                [140, 420, 1100].forEach((delay) => {
-                    const timerId = window.setTimeout(() => {
-                        this._commentRefilterTimerIds.delete(timerId);
-                        rerun(`delay:${delay}`);
-                    }, delay);
-                    this._commentRefilterTimerIds.add(timerId);
+                const descriptors = [];
+                const seenElements = new Set();
+                requestedRoots.forEach((root) => {
+                    if (root instanceof Element && !root.isConnected) return;
+                    this.getRefilterTargets('comments', this.resolveRefilterRoot(root)).forEach((descriptor) => {
+                        if (!descriptor?.element || seenElements.has(descriptor.element)) return;
+                        seenElements.add(descriptor.element);
+                        descriptors.push(descriptor);
+                    });
                 });
+                if (descriptors.length === 0) {
+                    this.incrementRuntimeDiagnostic('filter.syncPass.comments.skippedEmptyRoots');
+                    return;
+                }
+                this.runSyncRefilterPass('comments', document, descriptors);
+                this.setRuntimeDiagnosticGauge('filter.syncPass.comments.lastPhase', 'raf:root-scoped');
+                this.setRuntimeDiagnosticGauge('filter.syncPass.comments.lastRootCount', requestedRoots.length);
             });
         },
         async runFullRefilterPass(reason = 'refilterAllContent', { scheduleFollowups = true } = {}) {
@@ -5566,6 +5929,10 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         },
         // [수정] handleVisibilityChange를 async 함수로 변경하고 reloadShortcutKey 호출 추가
         async handleVisibilityChange() {
+            if (document.visibilityState !== 'visible') {
+                await this.flushBlockedUidCache('visibility-hidden');
+                return;
+            }
             if (document.visibilityState === 'visible') {
                 await reloadShortcutKey(); // 단축키 설정을 다시 로드
                 await this.refilterAllContent('visibilitychange-visible', { scheduleFollowups: false }); // 복구 패스 1회는 유지하고 무변화 지연 패스는 생략
@@ -5577,7 +5944,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             this._initState = 'initializing';
             this._initPromise = (async () => {
                 this.installDebugApi();
-                this.debugLog('init', 'FilterModule init start', { version: '3.4.4' });
+                this.debugLog('init', 'FilterModule init start', { version: '3.4.5' });
                 const snapshot = await this.loadBootSnapshot();
                 await this.cleanupLegacyManagedBlockConfig(snapshot);
                 await this.reloadSettings(snapshot);
@@ -5585,6 +5952,14 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 if (!this._visibilityChangeHandler) {
                     this._visibilityChangeHandler = () => this.handleVisibilityChange();
                     document.addEventListener('visibilitychange', this._visibilityChangeHandler);
+                }
+                if (!this._blockedUidPagehideHandler) {
+                    this._blockedUidPagehideHandler = () => {
+                        void this.flushBlockedUidCache('pagehide').catch((error) => {
+                            console.warn('DCinside User Filter: pagehide blocked UID flush failed.', error);
+                        });
+                    };
+                    window.addEventListener('pagehide', this._blockedUidPagehideHandler);
                 }
                 this.initializeUniversalObserver();
                 window.__dcufBootController?.note?.('boot.local-filter-settings-ready');
@@ -5782,6 +6157,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         },
 
         async showFabScalePanel() {
+            window.__dcufEnsureFilterUiStyles?.();
             document.getElementById('dc-personal-block-size-overlay')?.remove();
             const savedPercent = await this.loadFabScalePercent();
             this.applyFabScalePercent(savedPercent);
@@ -5845,6 +6221,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
 
         async createManualBlockPanel({ initialType = 'nickname', onAdded = null } = {}) {
+            window.__dcufEnsureFilterUiStyles?.();
             const existingPanel = document.getElementById('dc-manual-block-panel');
             if (existingPanel) {
                 existingPanel.querySelector('#dc-manual-block-value')?.focus();
@@ -6038,6 +6415,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             const drawer = document.getElementById('dc-personal-block-drawer');
             if (!fab || !drawer) return;
             const willOpen = drawer.hidden;
+            if (willOpen) window.__dcufEnsureFilterUiStyles?.();
             drawer.hidden = !willOpen;
             fab.setAttribute('aria-expanded', String(willOpen));
             if (willOpen) this.positionFabDrawer();
@@ -6109,6 +6487,26 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             let startY = 0;
             let wasDragged = false;
             let suppressClick = false;
+            let dragWidth = 0;
+            let dragHeight = 0;
+            let dragRafId = 0;
+            let pendingDragX = null;
+            let pendingDragY = null;
+
+            const applyFabDragPosition = () => {
+                dragRafId = 0;
+                if (activePointerId === null || pendingDragX === null || pendingDragY === null) return;
+                const nextX = Math.max(0, Math.min(pendingDragX - offsetX, window.innerWidth - dragWidth));
+                const nextY = Math.max(0, Math.min(pendingDragY - offsetY, window.innerHeight - dragHeight));
+                pendingDragX = null;
+                pendingDragY = null;
+                Object.assign(controls.style, {
+                    left: `${Math.round(nextX)}px`,
+                    top: `${Math.round(nextY)}px`,
+                    right: 'auto',
+                    bottom: 'auto'
+                });
+            };
 
             fab.addEventListener('pointerdown', (event) => {
                 if (event.button !== 0 || activePointerId !== null) return;
@@ -6116,6 +6514,8 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 activePointerId = event.pointerId;
                 offsetX = event.clientX - rect.left;
                 offsetY = event.clientY - rect.top;
+                dragWidth = rect.width;
+                dragHeight = rect.height;
                 startX = event.clientX;
                 startY = event.clientY;
                 wasDragged = false;
@@ -6128,20 +6528,15 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 if (!wasDragged) this.closeFabDrawer();
                 wasDragged = true;
                 event.preventDefault();
-                const maxX = Math.max(0, window.innerWidth - controls.offsetWidth);
-                const maxY = Math.max(0, window.innerHeight - controls.offsetHeight);
-                const nextX = Math.max(0, Math.min(event.clientX - offsetX, maxX));
-                const nextY = Math.max(0, Math.min(event.clientY - offsetY, maxY));
-                Object.assign(controls.style, {
-                    left: `${Math.round(nextX)}px`,
-                    top: `${Math.round(nextY)}px`,
-                    right: 'auto',
-                    bottom: 'auto'
-                });
+                pendingDragX = event.clientX;
+                pendingDragY = event.clientY;
+                if (!dragRafId) dragRafId = requestAnimationFrame(applyFabDragPosition);
             });
 
             const finishDrag = (event) => {
                 if (event.pointerId !== activePointerId) return;
+                if (dragRafId) cancelAnimationFrame(dragRafId);
+                applyFabDragPosition();
                 suppressClick = wasDragged;
                 activePointerId = null;
                 fab.releasePointerCapture?.(event.pointerId);
@@ -6188,6 +6583,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
         enterSelectionMode() {
             if (this.isSelectionMode) return;
+            window.__dcufEnsureFilterUiStyles?.();
             this.isSelectionMode = true;
             document.body.classList.add('selection-mode-active');
 
@@ -6247,6 +6643,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
         // [v2.5.7 수정] 차단/차단 해제 버튼을 동적으로 생성
         showSelectionPopup(userInfo) {
+            window.__dcufEnsureFilterUiStyles?.();
             this.exitSelectionMode();
             this.isSelectionMode = true;
             document.body.classList.add('selection-mode-active');
@@ -6486,6 +6883,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
         // [신규] 백업 및 복원 팝업 생성 함수
         async createBackupPopup() {
+            window.__dcufEnsureFilterUiStyles?.();
             if (document.getElementById('dc-backup-popup')) return;
 
             const overlay = document.createElement('div');
@@ -6678,6 +7076,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
         // [수정] 차단 관리 패널 로직 전체 개선 (On/Off 스위치, 백업 버튼 추가)
         async createManagementPanel() {
+            window.__dcufEnsureFilterUiStyles?.();
             if (document.getElementById('dc-block-management-panel')) return;
 
 
@@ -6962,7 +7361,30 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
             // 드래그 & 리사이즈 로직 전체 개선
             let isDragging = false, isResizing = false;
-            let offsetX, offsetY, lastX, lastY; // lastX, lastY는 리사이즈 전용
+            let offsetX, offsetY, resizeStartX, resizeStartY;
+            let panelWidth = 0, panelHeight = 0;
+            let dragRafId = 0, pendingPointerX = null, pendingPointerY = null;
+
+            const applyPanelGeometry = () => {
+                dragRafId = 0;
+                if (pendingPointerX === null || pendingPointerY === null) return;
+                const clientX = pendingPointerX;
+                const clientY = pendingPointerY;
+                pendingPointerX = null;
+                pendingPointerY = null;
+
+                if (isDragging) {
+                    let newX = clientX - offsetX;
+                    let newY = clientY - offsetY;
+                    newX = Math.max(0, Math.min(newX, window.innerWidth - panelWidth));
+                    newY = Math.max(0, Math.min(newY, window.innerHeight - panelHeight));
+                    panel.style.left = `${newX}px`;
+                    panel.style.top = `${newY}px`;
+                } else if (isResizing) {
+                    panel.style.width = `${panelWidth + clientX - resizeStartX}px`;
+                    panel.style.height = `${panelHeight + clientY - resizeStartY}px`;
+                }
+            };
 
 
             const onDragStart = (e) => {
@@ -6992,9 +7414,11 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                     offsetX = e.clientX - rect.left;
                     offsetY = e.clientY - rect.top;
                 } else if (isResizing) {
-                    lastX = e.clientX;
-                    lastY = e.clientY;
+                    resizeStartX = e.clientX;
+                    resizeStartY = e.clientY;
                 }
+                panelWidth = rect.width;
+                panelHeight = rect.height;
 
 
                 document.addEventListener('mousemove', onDragMove);
@@ -7004,35 +7428,15 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
             const onDragMove = (e) => {
                 e.preventDefault();
-
-
-                if (isDragging) {
-                    const rect = panel.getBoundingClientRect();
-                    let newX = e.clientX - offsetX;
-                    let newY = e.clientY - offsetY;
-
-
-                    newX = Math.max(0, Math.min(newX, window.innerWidth - rect.width));
-                    newY = Math.max(0, Math.min(newY, window.innerHeight - rect.height));
-
-
-                    panel.style.left = `${newX}px`;
-                    panel.style.top = `${newY}px`;
-                } else if (isResizing) {
-                    const dx = e.clientX - lastX;
-                    const dy = e.clientY - lastY;
-                    lastX = e.clientX;
-                    lastY = e.clientY;
-
-
-                    const rect = panel.getBoundingClientRect();
-                    panel.style.width = `${rect.width + dx}px`;
-                    panel.style.height = `${rect.height + dy}px`;
-                }
+                pendingPointerX = e.clientX;
+                pendingPointerY = e.clientY;
+                if (!dragRafId) dragRafId = requestAnimationFrame(applyPanelGeometry);
             };
 
 
             const onDragEnd = () => { // async 키워드 제거
+                if (dragRafId) cancelAnimationFrame(dragRafId);
+                applyPanelGeometry();
                 isDragging = false;
                 isResizing = false;
                 document.removeEventListener('mousemove', onDragMove);
@@ -7106,6 +7510,10 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         _initialRevealStartedAt: 0,
         _postRevealRecoveryStop: null,
         ARTICLE_AD_STYLE_ID: 'dcuf-article-native-ad-style',
+        SEARCH_DRAWER_ROOTS: new Set(),
+        _searchDrawerGlobalHandlersBound: false,
+        _searchDrawerUpdateRafId: 0,
+        _searchDrawerUpdateTimerId: 0,
 
         getRuntimeCoordinator() {
             return window.__dcufRuntimeCoordinator || null;
@@ -7479,35 +7887,78 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             searchRoot.setAttribute('data-dcuf-search-layer-open', '1');
         },
 
+        pruneSearchDrawerRoots() {
+            this.SEARCH_DRAWER_ROOTS.forEach((searchRoot) => {
+                const hasSearchForm = searchRoot instanceof HTMLElement
+                    && (searchRoot.matches?.(this.SELECTORS.SEARCH_FORM)
+                        || searchRoot.querySelector?.(this.SELECTORS.SEARCH_FORM));
+                if (!searchRoot.isConnected || !hasSearchForm) this.SEARCH_DRAWER_ROOTS.delete(searchRoot);
+            });
+            const diagnostics = window.__dcufDiagnostics;
+            if (typeof diagnostics?.setGauge === 'function') {
+                diagnostics.setGauge('ui.searchDrawer.activeRoots', this.SEARCH_DRAWER_ROOTS.size);
+                diagnostics.setGauge('ui.searchDrawer.globalListeners', this._searchDrawerGlobalHandlersBound ? 4 : 0);
+            }
+        },
+
+        flushSearchDrawerReserveUpdates() {
+            this.pruneSearchDrawerRoots();
+            this.SEARCH_DRAWER_ROOTS.forEach((searchRoot) => this.updateSearchDrawerReserve(searchRoot));
+        },
+
+        scheduleSearchDrawerReserveUpdate() {
+            if (!this._searchDrawerUpdateRafId) {
+                this._searchDrawerUpdateRafId = requestAnimationFrame(() => {
+                    this._searchDrawerUpdateRafId = 0;
+                    this.flushSearchDrawerReserveUpdates();
+                });
+            }
+            if (this._searchDrawerUpdateTimerId) window.clearTimeout(this._searchDrawerUpdateTimerId);
+            this._searchDrawerUpdateTimerId = window.setTimeout(() => {
+                this._searchDrawerUpdateTimerId = 0;
+                this.flushSearchDrawerReserveUpdates();
+            }, 40);
+        },
+
+        ensureSearchDrawerGlobalHandlers() {
+            if (this._searchDrawerGlobalHandlersBound) return;
+            const scheduleUpdate = () => this.scheduleSearchDrawerReserveUpdate();
+            document.addEventListener('click', scheduleUpdate, true);
+            document.addEventListener('change', scheduleUpdate, true);
+            document.addEventListener('focusin', scheduleUpdate, true);
+            window.addEventListener('resize', scheduleUpdate);
+            this._searchDrawerGlobalHandlersBound = true;
+        },
+
         bindSearchDrawerReserve(searchRoot) {
             if (!(searchRoot instanceof HTMLElement)) return;
-            if (searchRoot.getAttribute(this.SEARCH_LAYER_BOUND_ATTR) === '1') {
-                this.updateSearchDrawerReserve(searchRoot);
-                return;
-            }
-            searchRoot.setAttribute(this.SEARCH_LAYER_BOUND_ATTR, '1');
-
             const searchForm = searchRoot.matches?.(this.SELECTORS.SEARCH_FORM)
                 ? searchRoot
                 : searchRoot.querySelector(this.SELECTORS.SEARCH_FORM);
             if (!(searchForm instanceof HTMLElement)) return;
 
-            searchRoot.style.setProperty('overflow', 'visible', 'important');
-            searchRoot.style.setProperty('position', 'relative', 'important');
-            searchRoot.style.setProperty('transition', 'padding-bottom 0.18s ease', 'important');
+            const searchSlot = searchForm.closest(`.${this.CUSTOM_CLASSES.SEARCH_SLOT}`);
+            const reserveRoot = searchSlot instanceof HTMLElement ? searchSlot : searchRoot;
+            this.SEARCH_DRAWER_ROOTS.forEach((registeredRoot) => {
+                if (registeredRoot === reserveRoot) return;
+                const registeredForm = registeredRoot.matches?.(this.SELECTORS.SEARCH_FORM)
+                    ? registeredRoot
+                    : registeredRoot.querySelector?.(this.SELECTORS.SEARCH_FORM);
+                if (registeredForm === searchForm) this.SEARCH_DRAWER_ROOTS.delete(registeredRoot);
+            });
+            this.SEARCH_DRAWER_ROOTS.add(reserveRoot);
+            this.ensureSearchDrawerGlobalHandlers();
+            if (reserveRoot.getAttribute(this.SEARCH_LAYER_BOUND_ATTR) === '1') {
+                this.scheduleSearchDrawerReserveUpdate();
+                return;
+            }
+            reserveRoot.setAttribute(this.SEARCH_LAYER_BOUND_ATTR, '1');
 
-            const scheduleUpdate = () => {
-                requestAnimationFrame(() => this.updateSearchDrawerReserve(searchRoot));
-                window.setTimeout(() => this.updateSearchDrawerReserve(searchRoot), 40);
-            };
+            reserveRoot.style.setProperty('overflow', 'visible', 'important');
+            reserveRoot.style.setProperty('position', 'relative', 'important');
+            reserveRoot.style.setProperty('transition', 'padding-bottom 0.18s ease', 'important');
 
-            searchForm.addEventListener('click', scheduleUpdate, true);
-            searchForm.addEventListener('change', scheduleUpdate, true);
-            searchForm.addEventListener('focusin', scheduleUpdate, true);
-            document.addEventListener('click', scheduleUpdate, true);
-            window.addEventListener('resize', scheduleUpdate);
-
-            scheduleUpdate();
+            this.scheduleSearchDrawerReserveUpdate();
         },
 
         enhanceOriginalSearchForms(listWrap) {
@@ -8278,6 +8729,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
         subscribeListRuntimeUpdates() {
             if (typeof this._listMutationUnsubscribe === 'function') return;
+            if (!this.getPageContext().hasListSurface) return;
 
             const runtimeCoordinator = this.getRuntimeCoordinator();
             if (runtimeCoordinator && typeof runtimeCoordinator.subscribeMutations === 'function') {
@@ -8294,7 +8746,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                     if (candidates.length === 0) return;
 
                     this.ensureListRuntimesFromCandidates(candidates, 'mutation-bus');
-                });
+                }, { contexts: ['list-surface'] });
                 return;
             }
 
@@ -8319,9 +8771,23 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         },
 
         isBoardPage(pageName) {
-            const pathname = window.location.pathname || '';
-            const boardPath = `/board/${pageName}`;
-            return pathname.endsWith(boardPath) || pathname.includes(`${boardPath}/`);
+            return this.getPageContext().type === pageName;
+        },
+
+        getPageContext() {
+            const sharedContext = window.__dcufPageContext;
+            if (sharedContext && typeof sharedContext === 'object') return sharedContext;
+            const type = ((window.location.pathname || '').match(/\/board\/(lists|view|write)(?:\/|$)/) || [])[1] || 'other';
+            return {
+                type,
+                isList: type === 'lists',
+                isView: type === 'view',
+                isWrite: type === 'write',
+                isOther: type === 'other',
+                isTargetPage: type !== 'other',
+                hasListSurface: type === 'lists' || type === 'view',
+                hasComments: type === 'view'
+            };
         },
 
         isListPage() {
@@ -10048,7 +10514,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
         return {
             reason,
-            version: '3.4.4',
+            version: '3.4.5',
             time: new Date().toISOString(),
             href: location.href,
             heap: getDcufHeapMb(),
@@ -10065,6 +10531,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             filter: {
                 userSumCache: getDcufCollectionSize(userSumCache),
                 negativeUserSumCache: getDcufCollectionSize(FilterModule.USER_SUM_NEGATIVE_CACHE),
+                negativeUserSumCacheLimit: FilterModule.USER_SUM_NEGATIVE_MAX_ENTRIES,
                 inflightUserSumRequests: getDcufCollectionSize(FilterModule.INFLIGHT_USER_SUM_REQUESTS),
                 blockedUidsCache: getDcufCollectionSize(FilterModule.BLOCKED_UIDS_CACHE),
                 debugDecisionKeys: getDcufCollectionSize(FilterModule.DEBUG_DECISION_KEYS),
@@ -10079,7 +10546,12 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 nextRowId: UIModule._nextRowId,
                 nextListRuntimeId: UIModule._nextListRuntimeId,
                 listMutationSubscribed: typeof UIModule._listMutationUnsubscribe === 'function',
-                postRevealRecoveryActive: typeof UIModule._postRevealRecoveryStop === 'function'
+                postRevealRecoveryActive: typeof UIModule._postRevealRecoveryStop === 'function',
+                searchDrawerRoots: getDcufCollectionSize(UIModule.SEARCH_DRAWER_ROOTS),
+                searchDrawerGlobalHandlersBound: UIModule._searchDrawerGlobalHandlersBound,
+                searchDrawerRafActive: Boolean(UIModule._searchDrawerUpdateRafId),
+                searchDrawerTimerActive: Boolean(UIModule._searchDrawerUpdateTimerId),
+                effectiveDarkMode: window.__dcufEffectiveDarkMode ?? null
             },
             dom: {
                 nodes: document.getElementsByTagName('*').length,
@@ -10242,7 +10714,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 }));
             }
         }
-        console.log("[DC Filter+UI] Initializing v3.4.4...");
+        console.log("[DC Filter+UI] Initializing v3.4.5...");
 
 
         if (!__dcufRoot.__dcufShortcutBound) {
@@ -10386,13 +10858,21 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             const root = document.documentElement;
 
             const darkModeStylesheet = document.getElementById('css-darkmode');
-            if (darkModeStylesheet) {
-                body.classList.add('dc-filter-dark-mode');
-                if (root) root.classList.add('dc-filter-dark-mode');
-            } else {
-                body.classList.remove('dc-filter-dark-mode');
-                if (root) root.classList.remove('dc-filter-dark-mode');
+            const nextDarkMode = Boolean(darkModeStylesheet);
+            const classStateChanged = body.classList.contains('dc-filter-dark-mode') !== nextDarkMode
+                || Boolean(root && root.classList.contains('dc-filter-dark-mode') !== nextDarkMode);
+            const effectiveStateChanged = window.__dcufEffectiveDarkMode !== nextDarkMode;
+
+            if (!classStateChanged && !effectiveStateChanged) {
+                UIModule.recordDiagnostic('ui.darkMode.skippedUnchanged');
+                return;
             }
+
+            body.classList.toggle('dc-filter-dark-mode', nextDarkMode);
+            if (root) root.classList.toggle('dc-filter-dark-mode', nextDarkMode);
+            window.__dcufEffectiveDarkMode = nextDarkMode;
+            UIModule.recordDiagnostic('ui.darkMode.synced');
+            window.__dcufDiagnostics?.setGauge?.('ui.darkMode.enabled', nextDarkMode ? 1 : 0);
 
             // 본문/이미지댓글은 host 쪽 늦은 렌더가 다시 색을 덮는 경우가 있어
             // dark class 토글 직후 후처리 동기화도 같이 다시 태웁니다.
@@ -12012,7 +12492,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 })();
 
 (() => {
-    if ((window.location.pathname || '').indexOf('/board/lists') !== -1) return;
+    if (!__dcufPageSupports('view')) return;
 
     const STYLE_ID = 'dcuf-phase1-view-theme';
     const css = `
@@ -14783,6 +15263,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
     }, { once: true });
 })();
 (() => {
+    if (!__dcufPageSupports('view')) return;
     const STYLE_ID = 'dcuf-runtime-fixes';
     const ARTICLE_AD_SELECTOR = [
         'div[id^="foin_"]',
@@ -15059,7 +15540,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 })();
 
 (() => {
-    if ((window.location.pathname || '').indexOf('/board/lists') !== -1) return;
+    if (!__dcufPageSupports('view')) return;
 
     const setImportant = (element, property, value) => {
         if (!element) return;
@@ -15690,8 +16171,8 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 })();
 
 (() => {
-    if ((window.location.pathname || '').indexOf('/board/lists') !== -1) {
-        window.__dcufAwaitInitialCommentStabilization = () => Promise.resolve({ reason: 'list-page' });
+    if (!__dcufPageSupports('view')) {
+        window.__dcufAwaitInitialCommentStabilization = () => Promise.resolve({ reason: 'non-view-page' });
         return;
     }
     const COMMENT_LIST_SELECTOR = 'div[id^="comment_wrap_"] .comment_box .cmt_list';
@@ -15839,14 +16320,40 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
     installBlockedCommentShellFilterHook();
 
-    const syncFilteredParentPlaceholders = () => {
-        document.querySelectorAll(`${COMMENT_LIST_SELECTOR} > li[id^="comment_li_"]`).forEach((parentLi) => {
-            clearFilteredParentPlaceholder(parentLi);
+    const collectCommentLists = (roots = null) => {
+        const candidates = roots && typeof roots[Symbol.iterator] === 'function'
+            ? Array.from(roots)
+            : (roots ? [roots] : [document]);
+        const lists = [];
+        const seen = new Set();
+        const addList = (list) => {
+            if (!(list instanceof HTMLElement) || !list.isConnected || seen.has(list)) return;
+            if (!list.matches(COMMENT_LIST_SELECTOR)) return;
+            seen.add(list);
+            lists.push(list);
+        };
+        candidates.forEach((root) => {
+            if (root instanceof Element) {
+                addList(root);
+                addList(root.closest(COMMENT_LIST_SELECTOR));
+            }
+            if (typeof root?.querySelectorAll === 'function') {
+                root.querySelectorAll(COMMENT_LIST_SELECTOR).forEach(addList);
+            }
+        });
+        return lists;
+    };
+
+    const syncFilteredParentPlaceholders = (roots = null) => {
+        collectCommentLists(roots).forEach((list) => {
+            list.querySelectorAll(':scope > li[id^="comment_li_"]').forEach((parentLi) => {
+                clearFilteredParentPlaceholder(parentLi);
+            });
         });
     };
 
-    const syncFocusCommentCardGroups = () => {
-        document.querySelectorAll('#focus_cmt div[id^="comment_wrap_"] .comment_box .cmt_list').forEach((list) => {
+    const syncFocusCommentCardGroups = (roots = null) => {
+        collectCommentLists(roots).filter((list) => list.closest('#focus_cmt')).forEach((list) => {
             if (!(list instanceof HTMLElement)) return;
 
             const children = Array.from(list.children).filter((li) => li instanceof HTMLElement);
@@ -16000,8 +16507,8 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         return false;
     };
 
-    const mergeDetachedRepliesIntoParent = () => {
-        document.querySelectorAll(COMMENT_LIST_SELECTOR).forEach((list) => {
+    const mergeDetachedRepliesIntoParent = (roots = null) => {
+        collectCommentLists(roots).forEach((list) => {
             if (!(list instanceof HTMLElement)) return;
 
             const parentMap = new Map();
@@ -16037,33 +16544,49 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             });
         });
     };
+    const pendingReplyMergeRoots = new Set();
+    let forceFullReplyMerge = false;
+    let lastReplyMergeRoots = [];
+    const addPendingReplyMergeRoots = (roots) => {
+        collectCommentLists(roots).forEach((list) => pendingReplyMergeRoots.add(list));
+    };
     const replyMergeScheduler = __dcufCreatePhaseScheduler('reply-merge', ({ delay, meta }) => {
-        const source = meta && typeof meta === 'object' ? meta.source : '';
-        const shouldMergeDetachedReplies = source !== 'window-load';
+        const options = meta && typeof meta === 'object' ? meta : {};
+        const source = options.source || '';
         const filterModule = window.__dcufFilterModule;
 
-        if (shouldMergeDetachedReplies && delay === 0 && typeof filterModule?.runSyncRefilterPass === 'function') {
-            // Focus-comment reply merges can recreate parent comment li nodes before the
-            // delayed stabilized refilter runs. Re-apply comment blocking before merging
-            // so blocked parent comments choose shell/display state before replies move.
-            filterModule.runSyncRefilterPass('comments');
+        if (delay === 0) {
+            const roots = forceFullReplyMerge
+                ? collectCommentLists()
+                : Array.from(pendingReplyMergeRoots).filter((root) => root.isConnected);
+            pendingReplyMergeRoots.clear();
+            forceFullReplyMerge = false;
+            lastReplyMergeRoots = roots;
+            if (roots.length === 0) return;
+            if (source !== 'window-load') mergeDetachedRepliesIntoParent(roots);
+            syncFilteredParentPlaceholders(roots);
+            syncFocusCommentCardGroups(roots);
+            return;
         }
-        if (shouldMergeDetachedReplies) {
-            mergeDetachedRepliesIntoParent();
-        }
-        syncFilteredParentPlaceholders();
-        syncFocusCommentCardGroups();
-        if (delay === 140) {
-            if (typeof filterModule?.scheduleCommentStabilizedRefilter === 'function') {
-                filterModule.scheduleCommentStabilizedRefilter('reply-merge');
-            }
+
+        if (delay === 140
+            && !options.skipRefilter
+            && lastReplyMergeRoots.length > 0
+            && typeof filterModule?.scheduleCommentStabilizedRefilter === 'function') {
+            filterModule.scheduleCommentStabilizedRefilter('reply-merge', lastReplyMergeRoots);
         }
     }, [140]);
     const scheduleReplyMerge = (meta = null) => {
-        replyMergeScheduler.schedule(meta);
+        const options = meta && typeof meta === 'object' ? meta : {};
+        if (options.forceFull) forceFullReplyMerge = true;
+        if (options.roots) addPendingReplyMergeRoots(options.roots);
+        replyMergeScheduler.schedule(options);
     };
     const flushReplyMerge = (meta = null) => {
-        replyMergeScheduler.flush(meta);
+        const options = meta && typeof meta === 'object' ? meta : {};
+        if (options.forceFull) forceFullReplyMerge = true;
+        if (options.roots) addPendingReplyMergeRoots(options.roots);
+        replyMergeScheduler.flush(options);
     };
     const isReplyMergeMutationNode = (node) => {
         if (!(node instanceof Element)) return false;
@@ -16072,6 +16595,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             return false;
         }
         if (node.matches('#focus_cmt')) return true;
+        if (node.matches(COMMENT_LIST_SELECTOR)) return true;
         if (node.matches('div[id^="comment_wrap_"] .comment_box .reply.show, div[id^="comment_wrap_"] .comment_box .reply_box, div[id^="comment_wrap_"] .comment_box .reply_list')) {
             return true;
         }
@@ -16102,25 +16626,31 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         }
         return !!node.closest('div[id^="comment_wrap_"] .comment_box .reply.show, #focus_cmt');
     };
-    const shouldScheduleReplyMergeFromPayload = (payload) => {
-        if (!payload || typeof payload !== 'object') return false;
-        if (Array.isArray(payload.addedElements) && payload.addedElements.some(isReplyMergeMutationNode)) return true;
-        if (Array.isArray(payload.removedElements) && payload.removedElements.some(isReplyMergeMutationNode)) return true;
-        // Removed reply-composer trees are already detached when the mutation bus
-        // dispatches, so ancestor-dependent selectors cannot recognize them. Inspect
-        // the still-connected childList target to clear stale focus-card grouping.
-        if (Array.isArray(payload.childListTargets) && payload.childListTargets.some(isReplyMergeAttributeTarget)) return true;
-        if (Array.isArray(payload.attributeTargets) && payload.attributeTargets.some(isReplyMergeAttributeTarget)) return true;
-        return false;
+    const collectReplyMergeRootsFromPayload = (payload) => {
+        if (!payload || typeof payload !== 'object') return [];
+        const roots = new Set();
+        const addRoots = (nodes, predicate) => {
+            if (!Array.isArray(nodes)) return;
+            nodes.forEach((node) => {
+                if (!predicate(node)) return;
+                collectCommentLists([node]).forEach((list) => roots.add(list));
+            });
+        };
+        addRoots(payload.addedElements, isReplyMergeMutationNode);
+        addRoots(payload.removedElements, isReplyMergeMutationNode);
+        // Removed reply-composer trees are detached by dispatch time, so use the
+        // still-connected childList target to clear stale focus grouping.
+        addRoots(payload.childListTargets, isReplyMergeAttributeTarget);
+        addRoots(payload.attributeTargets, isReplyMergeAttributeTarget);
+        return Array.from(roots);
     };
 
     const observeReplyMergeTargets = () => {
         if (window.__dcufReplyMergeMutationUnsubscribe || window.__dcufReplyMergeObserver) return;
 
         const unsubscribe = __dcufSubscribeMutationBus('reply-merge', (payload) => {
-            if (shouldScheduleReplyMergeFromPayload(payload)) {
-                scheduleReplyMerge();
-            }
+            const roots = collectReplyMergeRootsFromPayload(payload);
+            if (roots.length > 0) scheduleReplyMerge({ source: 'mutation-bus', roots });
         });
         if (typeof unsubscribe === 'function') {
             window.__dcufReplyMergeMutationUnsubscribe = unsubscribe;
@@ -16136,7 +16666,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                         || Array.from(mutation.addedNodes).some(isReplyMergeMutationNode)
                         || Array.from(mutation.removedNodes).some(isReplyMergeMutationNode);
                     if (hasRelevantChange) {
-                        scheduleReplyMerge();
+                        scheduleReplyMerge({ source: 'mutation-observer', roots: [mutation.target, ...Array.from(mutation.addedNodes)] });
                         return;
                     }
                 }
@@ -16144,7 +16674,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 if (mutation.type === 'attributes') {
                     const target = mutation.target;
                     if (isReplyMergeAttributeTarget(target)) {
-                        scheduleReplyMerge();
+                        scheduleReplyMerge({ source: 'mutation-observer', roots: [target] });
                         return;
                     }
                 }
@@ -16165,20 +16695,20 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         document.addEventListener('DOMContentLoaded', () => {
             // Run the initial reply merge synchronously so blocked parent comments stay
             // filtered before the comment area becomes visually stable.
-            flushReplyMerge({ source: 'dom-ready-initial' });
+            flushReplyMerge({ source: 'dom-ready-initial', forceFull: true });
             observeReplyMergeTargets();
         }, { once: true });
     } else {
-        flushReplyMerge({ source: 'ready-initial' });
+        flushReplyMerge({ source: 'ready-initial', forceFull: true });
         observeReplyMergeTargets();
     }
 
-    window.addEventListener('load', () => scheduleReplyMerge({ source: 'window-load' }), { once: true });
-    window.addEventListener('resize', () => scheduleReplyMerge({ source: 'resize' }));
+    window.addEventListener('load', () => scheduleReplyMerge({ source: 'window-load', forceFull: true, skipRefilter: true }), { once: true });
+    window.addEventListener('resize', () => scheduleReplyMerge({ source: 'resize', forceFull: true, skipRefilter: true }));
 })();
 
 (() => {
-    if ((window.location.pathname || '').indexOf('/board/lists') !== -1) return;
+    if (!__dcufPageSupports('view')) return;
 
     const cleanupViewHeader = () => {
         document.querySelectorAll('.view_content_wrap .title_headtext').forEach((element) => {
@@ -16196,6 +16726,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 })();
 
 (() => {
+    if (!__dcufPageSupports('list')) return;
     const DRAWER_SELECTOR = '.dcuf-header-drawer';
     const DRAWER_BODY_SELECTOR = '.dcuf-header-drawer__body-inner';
     const CLOSED_LABEL = '갤러리 대문 열기';
@@ -16435,13 +16966,21 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 })();
 
 (() => {
-    if ((window.location.pathname || '').indexOf('/board/write') === -1) return;
+    if (!__dcufPageSupports('write')) return;
 
     const STYLE_ID = 'dcuf-mobile-write-theme';
     if (document.getElementById(STYLE_ID)) return;
 
     const css = `
+        html, body {
+            overflow-x: hidden !important;
+        }
         body.is-write-page {
+            box-sizing: border-box !important;
+            width: 100% !important;
+            min-width: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
             --dcuf-write-fg: #22324c;
             --dcuf-write-fg-sub: #5f6f86;
             --dcuf-write-accent: #3f6de0;
@@ -17688,7 +18227,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 })();
 
 (() => {
-    if ((window.location.pathname || '').indexOf('/board/lists') !== -1) return;
+    if (!__dcufPageSupports('view')) return;
 
     const FORM_SELECTOR = '.view_comment.image_comment .cmt_write_box';
     const VISIBLE_INPUT_SELECTOR = 'input[id^="img_cmt_name_"]';
@@ -18030,7 +18569,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 })();
 
 (() => {
-    if ((window.location.pathname || '').indexOf('/board/lists') !== -1) return;
+    if (!__dcufPageSupports('view')) return;
 
     const pendingImageCommentSections = new Set();
     const imageCommentWidthState = new WeakMap();
@@ -18202,7 +18741,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
 
 (() => {
-    if ((window.location.pathname || '').indexOf('/board/lists') !== -1) return;
+    if (!__dcufPageSupports('view')) return;
 
     const ACTIVE_ATTR = 'data-dcuf-userpopup-active';
     const ACTIVE_INFO_ATTR = 'data-dcuf-userpopup-info-active';
@@ -18811,6 +19350,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
     window.addEventListener('load', () => scheduleApply({ forceFullPass: true }), { once: true });
 })();
 (() => {
+    if (!__dcufPageSupports('list-surface')) return;
     const STYLE_ID = 'dcuf-list-memo-popup-fix';
     const CENTER_ATTR = 'data-dcuf-list-memo-centered';
     const POPUP_SELECTOR = '#user_memo_config.pop_wrap.type3, #um_picker_lay.pop_wrap.type3';
@@ -19145,7 +19685,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
     }, { once: true });
 })();
 (() => {
-    if ((window.location.pathname || '').indexOf('/board/lists') !== -1) return;
+    if (!__dcufPageSupports('view')) return;
 
     const WRITER_SCOPE = '.view_content_wrap .gallview_head .gall_writer.ub-writer';
 
@@ -19238,6 +19778,33 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
 function __dcufGetRuntimeCoordinator() {
     return window.__dcufRuntimeCoordinator || null;
+}
+
+function __dcufGetPageContext() {
+    const sharedContext = window.__dcufPageContext;
+    if (sharedContext && typeof sharedContext === 'object') return sharedContext;
+    const type = ((window.location.pathname || '').match(/\/board\/(lists|view|write)(?:\/|$)/) || [])[1] || 'other';
+    return {
+        type,
+        isList: type === 'lists',
+        isView: type === 'view',
+        isWrite: type === 'write',
+        isOther: type === 'other',
+        isTargetPage: type !== 'other',
+        hasListSurface: type === 'lists' || type === 'view',
+        hasComments: type === 'view'
+    };
+}
+
+function __dcufPageSupports(surface) {
+    const pageContext = __dcufGetPageContext();
+    if (surface === 'list') return pageContext.isList;
+    if (surface === 'view') return pageContext.isView;
+    if (surface === 'write') return pageContext.isWrite;
+    if (surface === 'list-surface') return pageContext.hasListSurface;
+    if (surface === 'comments') return pageContext.hasComments;
+    if (surface === 'target') return pageContext.isTargetPage;
+    return false;
 }
 
 function __dcufCreatePhaseScheduler(label, run, delays = []) {
