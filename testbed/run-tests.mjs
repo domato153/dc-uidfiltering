@@ -604,6 +604,75 @@ test('filter UI CSS stays lazy until the first interactive surface opens', 'func
     } finally { await session.close(); }
 });
 
+test('mutation bus skips irrelevant attributes and caches repeated payload searches', 'functional', async ({ browser, server }) => {
+    if (isPcUserscript) return;
+    const session = await createTestPage(browser, server.baseUrl, { storage: noStatsStorage });
+    try {
+        await session.goto('/board/view?id=test&no=1001');
+        await session.page.evaluate(() => {
+            const noise = document.createElement('aside');
+            noise.id = 'dcuf-fixture-irrelevant-churn';
+            document.body.appendChild(noise);
+        });
+        await waitForSettled(session.page, 120);
+        await session.page.evaluate(() => {
+            window.__dcufDiagnostics.reset();
+            const noise = document.getElementById('dcuf-fixture-irrelevant-churn');
+            for (let index = 0; index < 120; index += 1) {
+                noise.className = `noise-${index}`;
+                noise.style.width = `${index}px`;
+            }
+        });
+        await waitForSettled(session.page, 120);
+        const churn = await getDiagnostics(session.page);
+        assert.equal((churn.counters['mutation.rawRecords'] || 0) >= 200, true, JSON.stringify(churn.counters));
+        assert.equal(churn.counters['mutation.skippedRecords'], churn.counters['mutation.rawRecords']);
+        assert.equal(churn.counters['mutation.records'] || 0, 0);
+        assert.equal(churn.counters['mutation.dispatches'] || 0, 0);
+        assert.equal(churn.counters['mutation.immediateDispatches'] || 0, 0);
+
+        const payloadContract = await session.page.evaluate(() => {
+            window.__dcufDiagnostics.reset();
+            const coordinator = window.__dcufRuntimeCoordinator;
+            const target = document.querySelector('#comment_wrap_1 .comment_box');
+            const payload = coordinator.buildMutationPayload([{
+                type: 'childList',
+                target,
+                addedNodes: [],
+                removedNodes: []
+            }]);
+            const first = payload.collectMatches('.comment_box', { includeRoots: true });
+            const second = payload.collectMatches('.comment_box', { includeRoots: true });
+            const identityRecord = { type: 'attributes', attributeName: 'data-uid', target: target.querySelector('.ub-writer') };
+            const classRecord = { type: 'attributes', attributeName: 'class', target };
+            return {
+                firstCount: first.length,
+                secondCount: second.length,
+                sameElement: first[0] === second[0],
+                cacheCounters: window.__dcufDiagnostics.snapshot().counters,
+                immediateIdentityCount: coordinator.filterImmediateMutationRecords([identityRecord]).length,
+                immediateClassCount: coordinator.filterImmediateMutationRecords([classRecord]).length
+            };
+        });
+        assert.deepEqual({
+            firstCount: payloadContract.firstCount,
+            secondCount: payloadContract.secondCount,
+            sameElement: payloadContract.sameElement,
+            immediateIdentityCount: payloadContract.immediateIdentityCount,
+            immediateClassCount: payloadContract.immediateClassCount
+        }, {
+            firstCount: 1,
+            secondCount: 1,
+            sameElement: true,
+            immediateIdentityCount: 1,
+            immediateClassCount: 0
+        });
+        assert.equal(payloadContract.cacheCounters['mutation.collectMatches.cacheMisses'], 1);
+        assert.equal(payloadContract.cacheCounters['mutation.collectMatches.cacheHits'], 1);
+        assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
+    } finally { await session.close(); }
+});
+
 test('mini view bottom buttons remain clickable above article overlays', 'functional', async ({ browser, server }) => {
     const session = await createTestPage(browser, server.baseUrl, { storage: noStatsStorage, viewport: { width: 1120, height: 900 } });
     try {

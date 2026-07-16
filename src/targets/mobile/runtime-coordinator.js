@@ -14,6 +14,17 @@
             '.custom-post-item',
             '.custom-bottom-controls'
         ].join(', '),
+        COMMENT_VISIBILITY_SELECTOR: [
+            '#focus_cmt',
+            'div[id^="comment_wrap_"]',
+            '.comment_box',
+            '.view_comment.image_comment',
+            'li[id^="comment_li_"]',
+            'li[id^="reply_li_"]',
+            'li[id^="img_comment_li_"]',
+            'li[id^="mg_comment_li_"]'
+        ].join(', '),
+        IDENTITY_ATTRIBUTE_NAMES: new Set(['id', 'data-uid', 'data-nick', 'data-ip', 'data-no', 'p-no']),
         _mutationObserver: null,
         _mutationObserverTarget: null,
         _bodyMountObserver: null,
@@ -101,6 +112,83 @@
                 if (context === 'comments') return pageContext.hasComments;
                 if (context === 'target') return pageContext.isTargetPage;
                 return pageContext.type === context;
+            });
+        },
+
+        getMutationSurfaceSelector() {
+            const pageContext = this.getPageContext();
+            const shared = [
+                '#user_data_lyr',
+                '.user_data',
+                '#user_memo_config',
+                '#um_picker_lay'
+            ];
+            const list = [
+                '.list_wrap',
+                '.gall_listwrap',
+                '.gall_list',
+                '.issue_contentbox',
+                '#gall_top_recom'
+            ];
+            if (pageContext.isList) return [...shared, ...list].join(', ');
+            if (pageContext.isView) {
+                return [
+                    ...shared,
+                    ...list,
+                    '.view_content_wrap',
+                    '.gallview_contents',
+                    '.writing_view_box',
+                    '.gall_comment',
+                    '#focus_cmt',
+                    'div[id^="comment_wrap_"]',
+                    '.view_comment'
+                ].join(', ');
+            }
+            if (pageContext.isWrite) return 'form#write, #write_wrap, .gall_write, .write_box';
+            return shared.join(', ');
+        },
+
+        isMutationSurfaceElement(element) {
+            if (!(element instanceof Element) || this.isScriptOwnedElement(element)) return false;
+            if (element === document.body) return true;
+            const selector = this.getMutationSurfaceSelector();
+            return Boolean(selector && (element.matches(selector) || element.closest(selector)));
+        },
+
+        prefilterMutationRecords(records) {
+            if (!Array.isArray(records) || records.length === 0) return [];
+            return records.filter((record) => {
+                if (!record) return false;
+                if (record.type === 'childList') return !this.isScriptOwnedElement(record.target);
+                if (record.type === 'attributes') {
+                    if (this.isScriptOwnedElement(record.target)) return false;
+                    if (this.IDENTITY_ATTRIBUTE_NAMES.has(record.attributeName)) return true;
+                    return this.isMutationSurfaceElement(record.target);
+                }
+                if (record.type === 'characterData') {
+                    return this.isMutationSurfaceElement(record.target?.parentElement || null);
+                }
+                return false;
+            });
+        },
+
+        isCommentVisibilityElement(element) {
+            if (!(element instanceof Element) || this.isScriptOwnedElement(element)) return false;
+            return element.matches(this.COMMENT_VISIBILITY_SELECTOR)
+                || Boolean(element.closest(this.COMMENT_VISIBILITY_SELECTOR))
+                || Boolean(element.querySelector?.(this.COMMENT_VISIBILITY_SELECTOR));
+        },
+
+        filterImmediateMutationRecords(records) {
+            if (!Array.isArray(records) || records.length === 0 || !this.getPageContext().hasComments) return [];
+            return records.filter((record) => {
+                if (record?.type === 'attributes') {
+                    return ['data-uid', 'data-nick', 'data-ip'].includes(record.attributeName)
+                        && this.isCommentVisibilityElement(record.target);
+                }
+                if (record?.type !== 'childList' || record.addedNodes.length === 0) return false;
+                if (this.isCommentVisibilityElement(record.target)) return true;
+                return Array.from(record.addedNodes).some((node) => this.isCommentVisibilityElement(node));
             });
         },
 
@@ -200,6 +288,7 @@
             const charDataSet = new Set();
             const childListSet = new Set();
             const rootSet = new Set();
+            const collectMatchesCache = new Map();
             const addRoot = (node) => this.addUniqueElement(rootSet, roots, node);
 
             records.forEach((record) => {
@@ -230,6 +319,22 @@
                 }
             });
 
+            const collectMatches = (selectors, options = {}) => {
+                const selectorText = this.normalizeSelectors(selectors);
+                if (!selectorText) return [];
+                const includeRoots = options.includeRoots !== false;
+                const includeDescendants = options.includeDescendants !== false;
+                const cacheKey = `${includeRoots ? 1 : 0}:${includeDescendants ? 1 : 0}:${selectorText}`;
+                if (collectMatchesCache.has(cacheKey)) {
+                    this.incrementDiagnostic('mutation.collectMatches.cacheHits');
+                    return collectMatchesCache.get(cacheKey).slice();
+                }
+                const matches = this.collectMatchesFromRoots(roots, selectorText, { includeRoots, includeDescendants });
+                collectMatchesCache.set(cacheKey, matches);
+                this.incrementDiagnostic('mutation.collectMatches.cacheMisses');
+                return matches.slice();
+            };
+
             return {
                 records,
                 addedElements,
@@ -238,7 +343,7 @@
                 characterDataTargets,
                 childListTargets,
                 roots,
-                collectMatches: (selectors, options = {}) => this.collectMatchesFromRoots(roots, selectors, options)
+                collectMatches
             };
         },
 
@@ -288,6 +393,7 @@
 
             const payload = this.buildMutationPayload(records);
             this.incrementDiagnostic('mutation.immediateDispatches');
+            this.incrementDiagnostic('mutation.immediateRecords', records.length);
             this.setDiagnosticGauge('mutation.immediateSubscribers', this._immediateMutationSubscribers.size);
 
             const measureDispatch = this._diagnosticsEnabled && typeof performance?.now === 'function';
@@ -309,13 +415,18 @@
 
         queueMutationRecords(records) {
             if (!Array.isArray(records) || records.length === 0) return;
+            const filteredRecords = this.prefilterMutationRecords(records);
+            const skippedRecords = records.length - filteredRecords.length;
+            this.incrementDiagnostic('mutation.rawRecords', records.length);
+            if (skippedRecords > 0) this.incrementDiagnostic('mutation.skippedRecords', skippedRecords);
+            if (filteredRecords.length === 0) return;
             // MutationObserver callbacks run before the next paint. Critical visibility
             // subscribers must see the fresh records here; the ordinary bus remains
             // animation-frame batched for heavier UI and async work.
-            this.dispatchImmediateMutations(records);
-            this._pendingMutationRecords.push(...records);
+            this.dispatchImmediateMutations(this.filterImmediateMutationRecords(filteredRecords));
+            this._pendingMutationRecords.push(...filteredRecords);
             this.incrementDiagnostic('mutation.bursts');
-            this.incrementDiagnostic('mutation.records', records.length);
+            this.incrementDiagnostic('mutation.records', filteredRecords.length);
 
             if (this._pendingMutationRafId || this._pendingMutationTimerId) return;
 
@@ -333,10 +444,7 @@
             this.installDiagnosticsApi();
             if (this._mutationObserver) {
                 const records = this._mutationObserver.takeRecords();
-                if (records.length > 0) {
-                    this.dispatchImmediateMutations(records);
-                    this._pendingMutationRecords.push(...records);
-                }
+                if (records.length > 0) this.queueMutationRecords(records);
             }
             if (this._pendingMutationRecords.length > 0) this.dispatchQueuedMutations();
             this.noteDiagnostic('mutation.bus.flushed', { reason, generation: this._mutationGeneration });
@@ -364,10 +472,7 @@
 
             if (this._mutationObserver) {
                 const pending = this._mutationObserver.takeRecords();
-                if (pending.length > 0) {
-                    this.dispatchImmediateMutations(pending);
-                    this._pendingMutationRecords.push(...pending);
-                }
+                if (pending.length > 0) this.queueMutationRecords(pending);
                 this._mutationObserver.disconnect();
             }
 

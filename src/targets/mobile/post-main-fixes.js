@@ -6021,7 +6021,15 @@
     if (document.getElementById(STYLE_ID)) return;
 
     const css = `
+        html, body {
+            overflow-x: hidden !important;
+        }
         body.is-write-page {
+            box-sizing: border-box !important;
+            width: 100% !important;
+            min-width: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
             --dcuf-write-fg: #22324c;
             --dcuf-write-fg-sub: #5f6f86;
             --dcuf-write-accent: #3f6de0;
