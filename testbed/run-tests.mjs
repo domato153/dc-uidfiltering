@@ -165,6 +165,104 @@ test('모바일 UID 통계 차단 결과는 기존 캐시 형식으로 저장된
     } finally { await session.close(); }
 });
 
+test('mobile blocked UID persistence batches bursts and preserves in-flight updates', 'functional', async ({ browser, server }) => {
+    if (isPcUserscript) return;
+    const session = await createTestPage(browser, server.baseUrl, {
+        storage: noStatsStorage,
+        gmBehavior: { writeDelayByKey: { [storageKeys.blockedUids]: 180 } }
+    });
+    try {
+        await session.goto('/board/view?id=test&no=1001');
+        const result = await session.page.evaluate(async (blockedUidsKey) => {
+            const filterModule = window.__dcufFilterModule;
+            window.__dcufDiagnostics.reset();
+            const writesBefore = window.__dcufTestbedGM.snapshot().writes.filter((entry) => entry.key === blockedUidsKey).length;
+
+            await Promise.all([
+                filterModule.addBlockedUid('batch-uid-a', 2, 1, 1, false),
+                filterModule.addBlockedUid('batch-uid-b', 3, 1, 2, true),
+                filterModule.addBlockedUid('batch-uid-c', 4, 2, 2, false)
+            ]);
+
+            const firstInFlight = filterModule.addBlockedUid('inflight-uid-a', 5, 2, 3, false);
+            await new Promise((resolve) => setTimeout(resolve, 160));
+            const secondInFlight = filterModule.addBlockedUid('inflight-uid-b', 6, 3, 3, true);
+            await Promise.all([firstInFlight, secondInFlight]);
+            await filterModule.flushBlockedUidCache('test-final');
+
+            const snapshot = window.__dcufTestbedGM.snapshot();
+            const writes = snapshot.writes.filter((entry) => entry.key === blockedUidsKey).slice(writesBefore);
+            return {
+                writes,
+                cache: JSON.parse(snapshot.values[blockedUidsKey] || '{}'),
+                diagnostics: window.__dcufDiagnostics.snapshot()
+            };
+        }, storageKeys.blockedUids);
+
+        assert.equal(result.writes.length, 3, JSON.stringify(result.writes));
+        assert.deepEqual(Object.keys(result.cache).sort(), [
+            'batch-uid-a',
+            'batch-uid-b',
+            'batch-uid-c',
+            'inflight-uid-a',
+            'inflight-uid-b'
+        ]);
+        assert.equal(result.cache['inflight-uid-a'].sum, 5);
+        assert.equal(result.cache['inflight-uid-b'].ratioBlocked, true);
+        assert.equal(result.diagnostics.counters['filter.blockedUidPersist.writes'], 3);
+        assert.equal(result.diagnostics.counters['filter.blockedUidPersist.entries'], 5);
+        assert.equal(result.diagnostics.gauges['filter.blockedUidPersist.pendingEntries'], 0);
+        assert.equal(result.diagnostics.gauges['filter.blockedUidPersist.timerActive'], 0);
+        assert.equal(result.diagnostics.gauges['filter.blockedUidPersist.writeActive'], 0);
+        assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
+    } finally { await session.close(); }
+});
+
+test('mobile blocked UID persistence flushes on hidden and pagehide', 'functional', async ({ browser, server }) => {
+    if (isPcUserscript) return;
+    const session = await createTestPage(browser, server.baseUrl, { storage: noStatsStorage });
+    try {
+        await session.goto('/board/view?id=test&no=1001');
+        const result = await session.page.evaluate(async (blockedUidsKey) => {
+            const filterModule = window.__dcufFilterModule;
+            let visibilityState = 'visible';
+            Object.defineProperty(document, 'visibilityState', {
+                configurable: true,
+                get: () => visibilityState
+            });
+            const writesBefore = window.__dcufTestbedGM.snapshot().writes.filter((entry) => entry.key === blockedUidsKey).length;
+
+            const hiddenWrite = filterModule.addBlockedUid('hidden-flush-uid', 7, 3, 4, false);
+            visibilityState = 'hidden';
+            document.dispatchEvent(new Event('visibilitychange'));
+            await hiddenWrite;
+            const hiddenReason = window.__dcufDiagnostics.snapshot().gauges['filter.blockedUidPersist.lastReason'];
+
+            visibilityState = 'visible';
+            const pagehideWrite = filterModule.addBlockedUid('pagehide-flush-uid', 8, 4, 4, true);
+            window.dispatchEvent(new PageTransitionEvent('pagehide', { persisted: true }));
+            await pagehideWrite;
+
+            const snapshot = window.__dcufTestbedGM.snapshot();
+            const writes = snapshot.writes.filter((entry) => entry.key === blockedUidsKey).slice(writesBefore);
+            return {
+                writes,
+                cache: JSON.parse(snapshot.values[blockedUidsKey] || '{}'),
+                hiddenReason,
+                finalDiagnostics: window.__dcufDiagnostics.snapshot()
+            };
+        }, storageKeys.blockedUids);
+
+        assert.equal(result.writes.length, 2, JSON.stringify(result.writes));
+        assert.equal(Boolean(result.cache['hidden-flush-uid']), true);
+        assert.equal(Boolean(result.cache['pagehide-flush-uid']), true);
+        assert.equal(result.hiddenReason, 'visibility-hidden');
+        assert.equal(result.finalDiagnostics.gauges['filter.blockedUidPersist.lastReason'], 'pagehide');
+        assert.equal(result.finalDiagnostics.gauges['filter.blockedUidPersist.pendingEntries'], 0);
+        assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
+    } finally { await session.close(); }
+});
+
 const summarizePasses = (passes = []) => {
     const durations = passes.map((item) => Number(item.durationMs) || 0).sort((left, right) => left - right);
     const percentile = (ratio) => durations.length === 0 ? 0 : durations[Math.min(durations.length - 1, Math.floor(durations.length * ratio))];

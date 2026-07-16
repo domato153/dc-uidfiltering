@@ -4229,6 +4229,13 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         _runtimeMutationUnsubscribe: null,
         _userSumTaskQueue: null,
         _blockedUidWritePromise: null,
+        _blockedUidWriteTimerId: 0,
+        _blockedUidDirtyGeneration: 0,
+        _blockedUidPersistedGeneration: 0,
+        _blockedUidDirtyUids: null,
+        _blockedUidWriteWaiters: null,
+        _blockedUidPagehideHandler: null,
+        BLOCKED_UID_WRITE_DELAY: 120,
         _queuedObserverFilterItems: null,
         _queuedObserverFilterRafId: 0,
         _queuedObserverFilterTimerId: 0,
@@ -5198,9 +5205,97 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 delete this.INFLIGHT_USER_SUM_REQUESTS[uid];
             }
         },
+        updateBlockedUidWriteDiagnostics(reason = '') {
+            const pendingEntries = this._blockedUidDirtyUids instanceof Map
+                ? this._blockedUidDirtyUids.size
+                : 0;
+            this.setRuntimeDiagnosticGauge('filter.blockedUidPersist.pendingEntries', pendingEntries);
+            this.setRuntimeDiagnosticGauge('filter.blockedUidPersist.timerActive', this._blockedUidWriteTimerId ? 1 : 0);
+            this.setRuntimeDiagnosticGauge('filter.blockedUidPersist.writeActive', this._blockedUidWritePromise ? 1 : 0);
+            if (reason) this.setRuntimeDiagnosticGauge('filter.blockedUidPersist.lastReason', reason);
+        },
+        waitForBlockedUidGeneration(generation) {
+            if (this._blockedUidPersistedGeneration >= generation) return Promise.resolve();
+            if (!Array.isArray(this._blockedUidWriteWaiters)) this._blockedUidWriteWaiters = [];
+            return new Promise((resolve, reject) => {
+                this._blockedUidWriteWaiters.push({ generation, resolve, reject });
+            });
+        },
+        settleBlockedUidWriteWaiters(generation, error = null) {
+            if (!Array.isArray(this._blockedUidWriteWaiters)) return;
+            const pending = [];
+            this._blockedUidWriteWaiters.forEach((waiter) => {
+                if (waiter.generation > generation) {
+                    pending.push(waiter);
+                    return;
+                }
+                if (error) waiter.reject(error);
+                else waiter.resolve();
+            });
+            this._blockedUidWriteWaiters = pending;
+        },
+        scheduleBlockedUidCachePersist(generation) {
+            const waiter = this.waitForBlockedUidGeneration(generation);
+            if (this._blockedUidWriteTimerId) window.clearTimeout(this._blockedUidWriteTimerId);
+            this._blockedUidWriteTimerId = window.setTimeout(() => {
+                this._blockedUidWriteTimerId = 0;
+                this.updateBlockedUidWriteDiagnostics('timer');
+                void this.flushBlockedUidCache('timer').catch((error) => {
+                    console.warn('DCinside User Filter: blocked UID cache write failed.', error);
+                });
+            }, this.BLOCKED_UID_WRITE_DELAY);
+            this.updateBlockedUidWriteDiagnostics('scheduled');
+            return waiter;
+        },
+        flushBlockedUidCache(reason = 'manual') {
+            if (this._blockedUidWriteTimerId) {
+                window.clearTimeout(this._blockedUidWriteTimerId);
+                this._blockedUidWriteTimerId = 0;
+            }
+            if (this._blockedUidWritePromise) {
+                const activeWrite = this._blockedUidWritePromise;
+                return activeWrite.catch(() => {}).then(() => this.flushBlockedUidCache(reason));
+            }
+
+            const generation = this._blockedUidDirtyGeneration;
+            if (generation <= this._blockedUidPersistedGeneration) {
+                this.updateBlockedUidWriteDiagnostics(reason);
+                return Promise.resolve();
+            }
+            const dirtyUids = this._blockedUidDirtyUids instanceof Map
+                ? Array.from(this._blockedUidDirtyUids.entries())
+                    .filter(([, dirtyGeneration]) => dirtyGeneration <= generation)
+                    .map(([uid]) => uid)
+                : [];
+            const serializedCache = JSON.stringify(this.BLOCKED_UIDS_CACHE);
+            const writePromise = (async () => {
+                try {
+                    await GM_setValue(this.CONSTANTS.STORAGE_KEYS.BLOCKED_UIDS, serializedCache);
+                    this._blockedUidPersistedGeneration = Math.max(this._blockedUidPersistedGeneration, generation);
+                    dirtyUids.forEach((uid) => {
+                        if (this._blockedUidDirtyUids?.get(uid) <= generation) this._blockedUidDirtyUids.delete(uid);
+                    });
+                    this.incrementRuntimeDiagnostic('filter.blockedUidPersist.writes');
+                    this.incrementRuntimeDiagnostic('filter.blockedUidPersist.entries', dirtyUids.length);
+                    this.setRuntimeDiagnosticGauge('filter.blockedUidPersist.lastBatchSize', dirtyUids.length);
+                    this.settleBlockedUidWriteWaiters(generation);
+                } catch (error) {
+                    this.incrementRuntimeDiagnostic('filter.blockedUidPersist.failures');
+                    this.settleBlockedUidWriteWaiters(generation, error);
+                    throw error;
+                } finally {
+                    if (this._blockedUidWritePromise === writePromise) this._blockedUidWritePromise = null;
+                    this.updateBlockedUidWriteDiagnostics(reason);
+                }
+            })();
+            this._blockedUidWritePromise = writePromise;
+            this.updateBlockedUidWriteDiagnostics(reason);
+            return writePromise;
+        },
         async addBlockedUid(uid, sum, post, comment, ratioBlocked) {
             if (!uid) return;
-            if (!this.isMobile()) {
+            const isMobile = this.isMobile();
+            if (!isMobile) {
                 await this.refreshBlockedUidsCache();
             }
             const nextEntry = { ts: Date.now(), sum, post, comment, ratioBlocked: !!ratioBlocked };
@@ -5213,21 +5308,16 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 return;
             }
             this.BLOCKED_UIDS_CACHE[uid] = nextEntry;
-            if (!this.isMobile()) {
+            if (!isMobile) {
                 await GM_setValue(this.CONSTANTS.STORAGE_KEYS.BLOCKED_UIDS, JSON.stringify(this.BLOCKED_UIDS_CACHE));
                 return;
             }
-            const serializedCache = JSON.stringify(this.BLOCKED_UIDS_CACHE);
-            const previousWrite = this._blockedUidWritePromise || Promise.resolve();
-            const writePromise = previousWrite
-                .catch(() => {})
-                .then(() => GM_setValue(this.CONSTANTS.STORAGE_KEYS.BLOCKED_UIDS, serializedCache));
-            this._blockedUidWritePromise = writePromise;
-            try {
-                await writePromise;
-            } finally {
-                if (this._blockedUidWritePromise === writePromise) this._blockedUidWritePromise = null;
-            }
+            const generation = this._blockedUidDirtyGeneration + 1;
+            this._blockedUidDirtyGeneration = generation;
+            if (!(this._blockedUidDirtyUids instanceof Map)) this._blockedUidDirtyUids = new Map();
+            this._blockedUidDirtyUids.set(uid, generation);
+            this.incrementRuntimeDiagnostic('filter.blockedUidPersist.queuedEntries');
+            await this.scheduleBlockedUidCachePersist(generation);
         },
         async getBlockedGuests() { try { return JSON.parse(await GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCKED_GUESTS, '[]')); } catch { return []; } },
         async setBlockedGuests(list) { await GM_setValue(this.CONSTANTS.STORAGE_KEYS.BLOCKED_GUESTS, JSON.stringify(list)); },
@@ -5839,6 +5929,10 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         },
         // [수정] handleVisibilityChange를 async 함수로 변경하고 reloadShortcutKey 호출 추가
         async handleVisibilityChange() {
+            if (document.visibilityState !== 'visible') {
+                await this.flushBlockedUidCache('visibility-hidden');
+                return;
+            }
             if (document.visibilityState === 'visible') {
                 await reloadShortcutKey(); // 단축키 설정을 다시 로드
                 await this.refilterAllContent('visibilitychange-visible', { scheduleFollowups: false }); // 복구 패스 1회는 유지하고 무변화 지연 패스는 생략
@@ -5858,6 +5952,14 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 if (!this._visibilityChangeHandler) {
                     this._visibilityChangeHandler = () => this.handleVisibilityChange();
                     document.addEventListener('visibilitychange', this._visibilityChangeHandler);
+                }
+                if (!this._blockedUidPagehideHandler) {
+                    this._blockedUidPagehideHandler = () => {
+                        void this.flushBlockedUidCache('pagehide').catch((error) => {
+                            console.warn('DCinside User Filter: pagehide blocked UID flush failed.', error);
+                        });
+                    };
+                    window.addEventListener('pagehide', this._blockedUidPagehideHandler);
                 }
                 this.initializeUniversalObserver();
                 window.__dcufBootController?.note?.('boot.local-filter-settings-ready');
