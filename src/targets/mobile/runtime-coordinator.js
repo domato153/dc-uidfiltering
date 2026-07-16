@@ -35,6 +35,12 @@
         _pendingMutationRafId: 0,
         _pendingMutationTimerId: 0,
         _mutationGeneration: 0,
+        _bfcacheRecoveryPromise: null,
+        _bfcacheRecoveryId: 0,
+        _bfcacheRecoveryStartedAt: 0,
+        _bfcacheRecoveryCompletedAt: 0,
+        _bfcacheRecoveryBody: null,
+        _bfcacheRecoverySucceeded: false,
         _taskQueues: Object.create(null),
         _diagnosticsEnabled: false,
         _diagnosticCounters: Object.create(null),
@@ -90,12 +96,14 @@
         getPageContext() {
             const sharedContext = window.__dcufPageContext;
             if (sharedContext && typeof sharedContext === 'object') return sharedContext;
-            const type = ((window.location.pathname || '').match(/\/board\/(lists|view|write)(?:\/|$)/) || [])[1] || 'other';
+            const type = ((window.location.pathname || '').match(/\/board\/(lists|view|write|modify)(?:\/|$)/) || [])[1] || 'other';
             return {
                 type,
                 isList: type === 'lists',
                 isView: type === 'view',
                 isWrite: type === 'write',
+                isModify: type === 'modify',
+                isWriteSurface: type === 'write' || type === 'modify',
                 isOther: type === 'other',
                 isTargetPage: type !== 'other',
                 hasListSurface: type === 'lists' || type === 'view',
@@ -144,7 +152,9 @@
                     '.view_comment'
                 ].join(', ');
             }
-            if (pageContext.isWrite) return 'form#write, #write_wrap, .gall_write, .write_box';
+            if (pageContext.isWriteSurface) {
+                return 'form#write, form[name="modify"][action*="modify_submit"], #write_wrap, .gall_write, .write_box, form[name="password_confirm"], form[action*="modify_password_submit"], .no_memberwrap';
+            }
             return shared.join(', ');
         },
 
@@ -155,11 +165,29 @@
             return Boolean(selector && (element.matches(selector) || element.closest(selector)));
         },
 
+        mutationNodeTouchesSurface(node) {
+            const element = node instanceof Element ? node : node?.parentElement;
+            if (!(element instanceof Element) || this.isScriptOwnedElement(element)) return false;
+            if (element === document.body) return true;
+            const selector = this.getMutationSurfaceSelector();
+            if (!selector) return false;
+            return element.matches(selector)
+                || Boolean(element.closest(selector))
+                || Boolean(element.querySelector?.(selector));
+        },
+
         prefilterMutationRecords(records) {
             if (!Array.isArray(records) || records.length === 0) return [];
             return records.filter((record) => {
                 if (!record) return false;
-                if (record.type === 'childList') return !this.isScriptOwnedElement(record.target);
+                if (record.type === 'childList') {
+                    if (this.isScriptOwnedElement(record.target)) return false;
+                    if (record.target instanceof Element
+                        && record.target !== document.body
+                        && this.isMutationSurfaceElement(record.target)) return true;
+                    return [...record.addedNodes, ...record.removedNodes]
+                        .some((node) => this.mutationNodeTouchesSurface(node));
+                }
                 if (record.type === 'attributes') {
                     if (this.isScriptOwnedElement(record.target)) return false;
                     if (this.IDENTITY_ATTRIBUTE_NAMES.has(record.attributeName)) return true;
@@ -451,6 +479,25 @@
             return this._mutationGeneration;
         },
 
+        getMutationGeneration() {
+            return this._mutationGeneration;
+        },
+
+        getBfcacheRecoveryState() {
+            return {
+                id: this._bfcacheRecoveryId,
+                startedAt: this._bfcacheRecoveryStartedAt,
+                completedAt: this._bfcacheRecoveryCompletedAt,
+                body: this._bfcacheRecoveryBody,
+                pending: Boolean(this._bfcacheRecoveryPromise),
+                succeeded: this._bfcacheRecoverySucceeded
+            };
+        },
+
+        waitForBfcacheRecovery() {
+            return this._bfcacheRecoveryPromise || Promise.resolve(this._bfcacheRecoverySucceeded);
+        },
+
         ensureMutationBus() {
             this.installDiagnosticsApi();
             const observerTarget = document.body;
@@ -530,6 +577,47 @@
                 this._immediateMutationSubscribers.delete(key);
                 this.setDiagnosticGauge('mutation.immediateSubscribers', this._immediateMutationSubscribers.size);
             };
+        },
+
+        recoverFromBfcache(event) {
+            if (!event?.persisted) return Promise.resolve(false);
+            if (this._bfcacheRecoveryPromise) return this._bfcacheRecoveryPromise;
+
+            const recoveryId = this._bfcacheRecoveryId + 1;
+            this._bfcacheRecoveryId = recoveryId;
+            this._bfcacheRecoveryStartedAt = Date.now();
+            this._bfcacheRecoveryCompletedAt = 0;
+            this._bfcacheRecoveryBody = document.body;
+            this._bfcacheRecoverySucceeded = false;
+            this.incrementDiagnostic('lifecycle.bfcache.restore.requested');
+            this._bfcacheRecoveryPromise = Promise.resolve().then(async () => {
+                this.ensureMutationBus();
+                window.__dcufUIModule?.processAllLists?.('pageshow-persisted');
+                await window.__dcufFilterModule?.refilterAllContent?.('pageshow-persisted', { scheduleFollowups: false });
+                window.__dcufSyncArticleDarkText?.();
+                window.__dcufScheduleCommentNormalize?.();
+                this._bfcacheRecoveryCompletedAt = Date.now();
+                this._bfcacheRecoverySucceeded = true;
+                this.incrementDiagnostic('lifecycle.bfcache.restore.completed');
+                window.dispatchEvent(new CustomEvent('dcuf:bfcache-restored', {
+                    detail: {
+                        pageType: this.getPageContext().type,
+                        recoveryId,
+                        startedAt: this._bfcacheRecoveryStartedAt,
+                        completedAt: this._bfcacheRecoveryCompletedAt
+                    }
+                }));
+                return true;
+            }).catch((error) => {
+                this._bfcacheRecoveryCompletedAt = Date.now();
+                this._bfcacheRecoverySucceeded = false;
+                this.incrementDiagnostic('lifecycle.bfcache.restore.failed');
+                console.warn('[DCUF lifecycle] bfcache restore failed:', error);
+                return false;
+            }).finally(() => {
+                this._bfcacheRecoveryPromise = null;
+            });
+            return this._bfcacheRecoveryPromise;
         },
 
         createPhaseScheduler(label, run, options = {}) {
@@ -645,3 +733,9 @@
 
     RuntimeCoordinator.installDiagnosticsApi();
     window.__dcufRuntimeCoordinator = RuntimeCoordinator;
+    if (!__dcufRoot.__dcufBfcachePageshowBound) {
+        __dcufRoot.__dcufBfcachePageshowBound = true;
+        window.addEventListener('pageshow', (event) => {
+            void RuntimeCoordinator.recoverFromBfcache(event);
+        });
+    }

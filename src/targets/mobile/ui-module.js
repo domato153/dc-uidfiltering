@@ -37,7 +37,7 @@
         PAGINATION_BOUND_ATTR: 'data-dcuf-force-refresh-bound',
         TOOLTIP_BOUND_ATTR: 'data-dcuf-tooltip-bound',
         SEARCH_LAYER_BOUND_ATTR: 'data-dcuf-search-layer-bound',
-        POST_REVEAL_RECOVERY_MAX_MS: 4500,
+        POST_REVEAL_RECOVERY_MAX_MS: Math.max(20, Number(__dcufRoot.__DCUF_TESTBED_CONFIG__?.boot?.recoveryMaxMs) || 4500),
         POST_REVEAL_RECOVERY_POLL_MS: 280,
         POST_REVEAL_RECOVERY_STABLE_PASSES: 3,
         POST_REVEAL_RECOVERY_THEME_REFRESH_LIMIT: 2,
@@ -1314,12 +1314,14 @@
         getPageContext() {
             const sharedContext = window.__dcufPageContext;
             if (sharedContext && typeof sharedContext === 'object') return sharedContext;
-            const type = ((window.location.pathname || '').match(/\/board\/(lists|view|write)(?:\/|$)/) || [])[1] || 'other';
+            const type = ((window.location.pathname || '').match(/\/board\/(lists|view|write|modify)(?:\/|$)/) || [])[1] || 'other';
             return {
                 type,
                 isList: type === 'lists',
                 isView: type === 'view',
                 isWrite: type === 'write',
+                isModify: type === 'modify',
+                isWriteSurface: type === 'write' || type === 'modify',
                 isOther: type === 'other',
                 isTargetPage: type !== 'other',
                 hasListSurface: type === 'lists' || type === 'view',
@@ -1335,18 +1337,49 @@
             return this.isBoardPage('view');
         },
 
+        getWriteForm() {
+            const standardWriteForm = document.querySelector('form#write');
+            if (standardWriteForm instanceof HTMLFormElement) return standardWriteForm;
+            if (!this.getPageContext().isModify) return null;
+            const modifyForm = document.querySelector('form[name="modify"][action*="modify_submit"]');
+            return modifyForm instanceof HTMLFormElement ? modifyForm : null;
+        },
+
         isWritePage() {
-            return this.isBoardPage('write');
+            const pageContext = this.getPageContext();
+            return pageContext.isWrite || (pageContext.isModify && this.getWriteForm() instanceof HTMLFormElement);
+        },
+
+        isModifyPage() {
+            return this.getPageContext().isModify === true;
         },
 
         shouldEnsureListRuntimeForReveal() {
             return this.isListPage();
         },
 
-        updateInitialRevealDebug(_state, _meta = {}) {
+        updateRevealDebug(channel, state, meta = {}) {
+            const snapshot = {
+                updatedAt: new Date().toISOString(),
+                ready: Boolean(state?.ready),
+                reason: state?.reason || 'unknown',
+                detail: state?.detail && typeof state.detail === 'object' ? { ...state.detail } : null,
+                ...meta
+            };
+            const previous = window.__dcufRevealDebug && typeof window.__dcufRevealDebug === 'object'
+                ? window.__dcufRevealDebug
+                : {};
+            window.__dcufRevealDebug = { ...previous, [channel]: snapshot };
+            this.getRuntimeCoordinator()?.noteDiagnostic?.(`ui.reveal.${channel}`, snapshot);
+            return snapshot;
         },
 
-        updatePostRevealRecoveryDebug(_state, _meta = {}) {
+        updateInitialRevealDebug(state, meta = {}) {
+            return this.updateRevealDebug('initial', state, meta);
+        },
+
+        updatePostRevealRecoveryDebug(state, meta = {}) {
+            return this.updateRevealDebug('recovery', state, meta);
         },
 
         evaluateListInitialRevealState(listWrap) {
@@ -1521,38 +1554,6 @@
             const hasBottomListSignal = !!document.querySelector('.view_bottom .gall_listwrap, .view_bottom .list_wrap, .view_bottom table.gall_list, .view_bottom tr.ub-content');
             const embeddedListWraps = this.collectOwnedListWraps(viewBottom || document);
 
-            if (!(recommendBox instanceof HTMLElement)) {
-                return {
-                    ready: false,
-                    reason: 'waiting-view',
-                    detail: {
-                        phase: 'post-reveal',
-                        hasViewWrap: true,
-                        hasViewBottom: viewBottom instanceof HTMLElement,
-                        hasRecommendBox: false,
-                        hasBottomListSignal,
-                        embeddedListCount: embeddedListWraps.length,
-                        revealTheme: 'view'
-                    }
-                };
-            }
-
-            if (!(viewBottom instanceof HTMLElement)) {
-                return {
-                    ready: false,
-                    reason: 'waiting-view',
-                    detail: {
-                        phase: 'post-reveal',
-                        hasViewWrap: true,
-                        hasViewBottom: false,
-                        hasRecommendBox: true,
-                        hasBottomListSignal,
-                        embeddedListCount: embeddedListWraps.length,
-                        revealTheme: 'view'
-                    }
-                };
-            }
-
             if (commentSignal instanceof HTMLElement && !(commentBox instanceof HTMLElement) && !(commentWriteBox instanceof HTMLElement)) {
                 return {
                     ready: false,
@@ -1560,8 +1561,8 @@
                     detail: {
                         phase: 'post-reveal',
                         hasViewWrap: true,
-                        hasViewBottom: true,
-                        hasRecommendBox: true,
+                        hasViewBottom: viewBottom instanceof HTMLElement,
+                        hasRecommendBox: recommendBox instanceof HTMLElement,
                         hasCommentSignal: true,
                         hasCommentBox: false,
                         hasCommentWriteBox: false,
@@ -1577,8 +1578,8 @@
                     detail: {
                         phase: 'post-reveal',
                         hasViewWrap: true,
-                        hasViewBottom: true,
-                        hasRecommendBox: true,
+                        hasViewBottom: viewBottom instanceof HTMLElement,
+                        hasRecommendBox: recommendBox instanceof HTMLElement,
                         hasBottomListSignal: true,
                         embeddedListCount: 0,
                         revealTheme: 'list'
@@ -1595,8 +1596,8 @@
                         detail: {
                             phase: 'post-reveal',
                             hasViewWrap: true,
-                            hasViewBottom: true,
-                            hasRecommendBox: true,
+                            hasViewBottom: viewBottom instanceof HTMLElement,
+                            hasRecommendBox: recommendBox instanceof HTMLElement,
                             hasBottomListSignal,
                             embeddedListCount: embeddedListWraps.length,
                             embeddedListIndex: index,
@@ -1615,8 +1616,8 @@
                     detail: {
                         phase: 'post-reveal',
                         hasViewWrap: true,
-                        hasViewBottom: true,
-                        hasRecommendBox: true,
+                        hasViewBottom: viewBottom instanceof HTMLElement,
+                        hasRecommendBox: recommendBox instanceof HTMLElement,
                         hasBottomListSignal,
                         embeddedListCount: embeddedListWraps.length,
                         missingThemeBridge: true,
@@ -1625,7 +1626,10 @@
                 };
             }
 
-            const verifyResult = themeBridge.verify(document, { mode: 'full' });
+            // Post-reveal recovery must require structural surfaces and the core
+            // article theme only. Optional comment/recommend decoration is not a
+            // safe reason to keep polling or to return the page to recovery.
+            const verifyResult = themeBridge.verify(document, { mode: 'core' });
             if (!verifyResult?.ready) {
                 return {
                     ready: false,
@@ -1635,8 +1639,8 @@
                     detail: {
                         phase: 'post-reveal',
                         hasViewWrap: true,
-                        hasViewBottom: true,
-                        hasRecommendBox: true,
+                        hasViewBottom: viewBottom instanceof HTMLElement,
+                        hasRecommendBox: recommendBox instanceof HTMLElement,
                         hasBottomListSignal,
                         embeddedListCount: embeddedListWraps.length,
                         hasCommentSignal: commentSignal instanceof HTMLElement,
@@ -1655,8 +1659,8 @@
                 detail: {
                     phase: 'post-reveal',
                     hasViewWrap: true,
-                    hasViewBottom: true,
-                    hasRecommendBox: true,
+                    hasViewBottom: viewBottom instanceof HTMLElement,
+                    hasRecommendBox: recommendBox instanceof HTMLElement,
                     hasBottomListSignal,
                     embeddedListCount: embeddedListWraps.length,
                     hasCommentSignal: commentSignal instanceof HTMLElement,
@@ -1842,6 +1846,10 @@
                     return true;
                 };
 
+                const canRevealFilteredNativeFallback = (state) => state?.reason === 'waiting-style'
+                    && refreshTriggered
+                    && window.__dcufBootController?.filterReady === true;
+
                 const checkReady = (reason = 'check', candidates = null) => {
                     try {
                         this.ensureBootUi(`initial-reveal:${reason}`);
@@ -1861,7 +1869,15 @@
                             finish(lastState.reason);
                             return;
                         }
-                        maybeRefreshStyle(lastState, reason);
+                        const refreshStarted = maybeRefreshStyle(lastState, reason);
+                        if (!refreshStarted && canRevealFilteredNativeFallback(lastState)) {
+                            this.updateInitialRevealDebug(lastState, {
+                                refreshAttempted: true,
+                                refreshTriggered: true,
+                                fallback: 'filtered-native-style'
+                            });
+                            finish('filtered-native-style-fallback');
+                        }
                     } catch (error) {
                         console.error('[DC Filter+UI] Failed while evaluating initial reveal readiness:', error);
                         finish('error');
@@ -2028,7 +2044,13 @@
                 checkCount += 1;
 
                 if (Date.now() - startedTime >= this.POST_REVEAL_RECOVERY_MAX_MS) {
-                    cleanup('timeout');
+                    const bootController = window.__dcufBootController;
+                    if (bootController?.state === 'degraded' && bootController.filterReady) {
+                        bootController.markReady('post-reveal-filtered-native-fallback');
+                        cleanup('filtered-native-fallback');
+                    } else {
+                        cleanup('timeout');
+                    }
                     return;
                 }
 
@@ -2207,7 +2229,7 @@
             //     대상: .comment_box .usertxt
             //           .img_comment .usertxt (이미지 댓글)
             // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-            // ??/????? ???? ??? ?? normalize ??? ?????.
+            // 일반·이미지 댓글 글자 크기는 댓글 normalize 루틴에서 별도로 처리한다.
             return;
         },
 
@@ -2398,12 +2420,74 @@
             this.scheduleArticleNativeAdHidePasses();
         },
 
-        transformWritePage() {
-            if (document.body.classList.contains('is-write-page')) return;
-            document.body.classList.add('is-write-page');
+        syncModifySurface(reason = 'sync') {
+            if (!this.isModifyPage() || !document.body) return 'not-modify';
 
-            const writeBox = document.querySelector('.write_box');
-            const writeForm = writeBox?.querySelector('form#write') || document.querySelector('form#write');
+            const writeForm = this.getWriteForm();
+            if (writeForm instanceof HTMLFormElement) {
+                document.body.classList.remove('is-modify-password-page');
+                document.body.classList.add('is-modify-page', 'is-modify-editor-page');
+                document.body.dataset.dcufModifySurface = 'editor';
+                document.documentElement?.setAttribute('data-dcuf-modify-surface', 'editor');
+                this.transformWritePage();
+                this.recordDiagnostic('ui.modifySurface.editor', { reason });
+                return 'editor';
+            }
+
+            const passwordForm = document.querySelector('form[name="password_confirm"], form[action*="modify_password_submit"]');
+            if (passwordForm instanceof HTMLFormElement) {
+                document.body.classList.remove('is-modify-editor-page');
+                document.body.classList.add('is-modify-page', 'is-modify-password-page');
+                document.body.dataset.dcufModifySurface = 'password';
+                document.documentElement?.setAttribute('data-dcuf-modify-surface', 'password');
+                passwordForm.classList.add('dcuf-modify-password-form');
+                const passwordInput = passwordForm.querySelector('input[type="password"][name="password"], #password');
+                if (passwordInput instanceof HTMLInputElement) {
+                    passwordInput.autocomplete = 'current-password';
+                    if (!passwordInput.getAttribute('aria-label')) passwordInput.setAttribute('aria-label', '비밀번호');
+                }
+                this.recordDiagnostic('ui.modifySurface.password', { reason });
+                return 'password';
+            }
+
+            document.body.classList.add('is-modify-page');
+            document.body.classList.remove('is-modify-password-page', 'is-modify-editor-page');
+            document.body.dataset.dcufModifySurface = 'pending';
+            document.documentElement?.setAttribute('data-dcuf-modify-surface', 'pending');
+            return 'pending';
+        },
+
+        subscribeModifySurfaceUpdates() {
+            if (!this.isModifyPage() || this._modifySurfaceMutationUnsubscribe) return;
+            const runtimeCoordinator = this.getRuntimeCoordinator();
+            if (!runtimeCoordinator || typeof runtimeCoordinator.subscribeMutations !== 'function') return;
+
+            const unsubscribe = runtimeCoordinator.subscribeMutations('ui-modify-surface', (payload) => {
+                const candidates = typeof payload?.collectMatches === 'function'
+                    ? payload.collectMatches([
+                        'form#write',
+                        'form[name="modify"][action*="modify_submit"]',
+                        'form[name="password_confirm"]',
+                        'form[action*="modify_password_submit"]',
+                        '.no_memberwrap'
+                    ], { includeRoots: true })
+                    : [];
+                if (candidates.length > 0 || document.body?.dataset.dcufModifySurface === 'pending') {
+                    this.syncModifySurface('mutation');
+                }
+            });
+            if (typeof unsubscribe === 'function') this._modifySurfaceMutationUnsubscribe = unsubscribe;
+        },
+
+        transformWritePage() {
+            const writeForm = this.getWriteForm();
+            if (!(writeForm instanceof HTMLFormElement)) return false;
+            const writeBox = writeForm.closest('.write_box') || document.querySelector('.write_box');
+            writeForm.classList.add('dcuf-write-form');
+            document.body.classList.add('is-write-page');
+            if (writeForm.dataset.dcufWriteTransformed === '1') return true;
+            writeForm.dataset.dcufWriteTransformed = '1';
+
             const leaveConfirm = writeForm?.querySelector('#leave_confirm_box');
             if (leaveConfirm instanceof HTMLElement) {
                 leaveConfirm.classList.add('dcuf-write-leave-confirm');
@@ -2920,7 +3004,7 @@
             let adRemovalInterval = 0;
             let adRemovalAttempts = 0;
 
-            if (removeWritePageAds()) return;
+            if (removeWritePageAds()) return true;
 
             const observerTarget = writeBox || document.body;
             if (observerTarget instanceof Element) {
@@ -2938,6 +3022,7 @@
                     stopAdCleanup();
                 }
             }, 250);
+            return true;
         },
         async init() {
             if (this._initState === 'ready') return 'already-ready';
@@ -2977,6 +3062,12 @@
                 document.body.classList.add('is-mgallery');
             }
 
+
+            if (this.isModifyPage()) {
+                const modifySurface = this.syncModifySurface('init');
+                this.subscribeModifySurfaceUpdates();
+                return modifySurface === 'editor' ? 'non-list' : `modify-${modifySurface}`;
+            }
 
             if (this.isWritePage()) {
                 this.transformWritePage();
@@ -3166,7 +3257,8 @@
             ['글댓합 설정하기', FilterModule.showSettings.bind(FilterModule)],
             ['차단 유저 관리', PersonalBlockModule.createManagementPanel.bind(PersonalBlockModule)],
             ['플로팅 버튼 원위치', PersonalBlockModule.resetFabPosition.bind(PersonalBlockModule)],
-            ['메뉴 버튼 크기 조절', PersonalBlockModule.showFabScalePanel.bind(PersonalBlockModule)]
+            ['메뉴 버튼 크기 조절', PersonalBlockModule.showFabScalePanel.bind(PersonalBlockModule)],
+            ['UI 색상 설정', ThemeModule.openPaletteDialog.bind(ThemeModule)]
         ];
         commands.forEach(([label, handler]) => {
             try { GM_registerMenuCommand(label, handler); }
@@ -3179,8 +3271,11 @@
 
     // [신규] 단축키 설정을 다시 로드하는 전용 함수
     async function reloadShortcutKey() {
-        const shortcutString = await GM_getValue(FilterModule.CONSTANTS.STORAGE_KEYS.SHORTCUT_KEY, 'Shift+S');
-        activeShortcutObject = FilterModule.parseShortcutString(shortcutString);
+        const shortcutString = String(await GM_getValue(FilterModule.CONSTANTS.STORAGE_KEYS.SHORTCUT_KEY, 'Shift+S') || 'Shift+S');
+        const changed = activeShortcutString !== null && activeShortcutString !== shortcutString;
+        activeShortcutString = shortcutString;
+        activeShortcutObject = FilterModule.parseShortcutString(activeShortcutString);
+        return { changed, shortcutString: activeShortcutString };
     }
 
     async function awaitInitialCommentStabilization() {
@@ -3296,6 +3391,7 @@
 
         await FilterModule.init();
         await PersonalBlockModule.init(FilterModule.getBootSnapshot(), { deferUi: true });
+        window.__dcufBootController?.markFilterReady?.('mobile-filter-and-personal-block-ready');
         window.__dcufBootController?.note?.('boot.local-filter-ready');
         const uiInitState = await UIModule.init();
         window.__dcufBootController?.note?.('boot.ui-ready', { uiInitState });
@@ -3323,7 +3419,10 @@
             const mainState = await main();
             if (mainState && typeof mainState === 'object') initState = mainState;
             if (typeof UIModule?.waitForInitialRevealReady === 'function') {
-                revealState = await UIModule.waitForInitialRevealReady();
+                const configuredRevealTimeout = Number(__dcufRoot.__DCUF_TESTBED_CONFIG__?.boot?.revealTimeoutMs);
+                revealState = await UIModule.waitForInitialRevealReady(
+                    Number.isFinite(configuredRevealTimeout) && configuredRevealTimeout > 0 ? configuredRevealTimeout : undefined
+                );
             }
             window.__dcufBootController?.note?.('boot.style-verified', { revealState });
             initializationSucceeded = revealState !== 'error' && !String(revealState).startsWith('timeout-');

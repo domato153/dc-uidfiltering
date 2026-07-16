@@ -1,10 +1,12 @@
 ﻿// ==UserScript==
 // @name         DC_UserFilter_Mobile
 // @namespace    http://tampermonkey.net/
-// @version      3.4.5
+// @version      3.4.6
 // @description  유저 필터링, UI 개선, 개인 차단/해제 기능
 // @author       domato153
-// @match        https://gall.dcinside.com/*
+// @match        https://gall.dcinside.com/board/*
+// @match        https://gall.dcinside.com/mgallery/board/*
+// @match        https://gall.dcinside.com/mini/board/*
 // @noframes
 // @grant        GM_setValue
 // @grant        GM_getValue
@@ -27,12 +29,14 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
     const __dcufRoot = (typeof unsafeWindow !== 'undefined' && unsafeWindow) ? unsafeWindow : window;
     if (window.top !== window.self) return;
 
-    const detectedPageType = ((window.location.pathname || '').match(/\/board\/(lists|view|write)(?:\/|$)/) || [])[1] || 'other';
+    const detectedPageType = ((window.location.pathname || '').match(/\/board\/(lists|view|write|modify)(?:\/|$)/) || [])[1] || 'other';
     const pageContext = Object.freeze({
         type: detectedPageType,
         isList: detectedPageType === 'lists',
         isView: detectedPageType === 'view',
         isWrite: detectedPageType === 'write',
+        isModify: detectedPageType === 'modify',
+        isWriteSurface: detectedPageType === 'write' || detectedPageType === 'modify',
         isOther: detectedPageType === 'other',
         isTargetPage: detectedPageType !== 'other',
         hasListSurface: detectedPageType === 'lists' || detectedPageType === 'view',
@@ -44,6 +48,11 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
     if (document.documentElement) exposePageContextAttribute();
     else document.addEventListener('DOMContentLoaded', exposePageContextAttribute, { once: true });
 
+    // The metadata covers a few gallery-adjacent pages, but the mobile runtime owns
+    // only board list/view/write/modify surfaces. Keep the lightweight page-context bridge
+    // and stop before installing observers, menus, or styles elsewhere.
+    if (!pageContext.isTargetPage) return;
+
     const previousBoot = __dcufRoot.__dcufBootController || window.__dcufBootController;
     if (previousBoot) {
         if (previousBoot.state === 'locked' || previousBoot.state === 'preparing') previousBoot.ensure('duplicate-runtime');
@@ -52,18 +61,12 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
         return;
     }
 
-    if (!__dcufRoot.__dcufBfcacheOptOutInstalled) {
-        __dcufRoot.__dcufBfcacheOptOutInstalled = true;
-        const preventBackForwardCache = () => {};
-        try { __dcufRoot.addEventListener('unload', preventBackForwardCache, { capture: true }); }
-        catch { window.addEventListener('unload', preventBackForwardCache, { capture: true }); }
-    }
-
     let dcFilterSettings = {};
     let userSumCache = {};
     let isInitialized = false;
     let isUiInitialized = false;
     let activeShortcutObject = null;
+    let activeShortcutString = null;
 
     const READY_CLASS = 'script-ui-ready';
     const STATE_ATTR = 'data-dcuf-boot-state';
@@ -72,6 +75,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
     const OVERLAY_STYLE_ID = 'dcuf-boot-overlay-style';
     const DEGRADED_STYLE_ID = 'dcuf-degraded-filter-style';
     const DEGRADED_BANNER_ID = 'dcuf-degraded-banner';
+    const FILTER_READY_ATTR = 'data-dcuf-filter-ready';
     const testBootConfig = __dcufRoot.__DCUF_TESTBED_CONFIG__?.boot || null;
     const ABSOLUTE_DEADLINE_MS = Math.max(20, Number(testBootConfig?.absoluteDeadlineMs) || 15000);
     const CRITICAL_DEADLINE_MS = Math.max(20, Number(testBootConfig?.criticalDeadlineMs) || 6000);
@@ -157,7 +161,8 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
                 #${OVERLAY_ID} .dcuf-boot-bar { height: 4px !important; overflow: hidden !important; border-radius: 999px !important; background: #cbd3df !important; }
                 #${OVERLAY_ID} .dcuf-boot-bar::before {
                     content: '' !important; display: block !important; width: 42% !important; height: 100% !important;
-                    border-radius: inherit !important; background: linear-gradient(90deg,#245bda,#5d87f0) !important;
+                    border-radius: inherit !important;
+                    background: linear-gradient(90deg,var(--dcuf-theme-accent-strong,#245bda),var(--dcuf-theme-accent,#5d87f0)) !important;
                     animation: dcuf-boot-progress 1s ease-in-out infinite !important;
                 }
                 html.dc-filter-dark-mode #${OVERLAY_ID} { background: linear-gradient(180deg,#1d222a,#11151b) !important; }
@@ -193,11 +198,11 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
         document.documentElement.appendChild(overlay);
     };
     const ensureDegradedUi = (reason) => {
-        if ((pageType === 'list' || pageType === 'view') && !document.getElementById(DEGRADED_STYLE_ID)) {
+        if ((pageType === 'lists' || pageType === 'view') && !document.getElementById(DEGRADED_STYLE_ID)) {
             const style = document.createElement('style');
             style.id = DEGRADED_STYLE_ID;
             style.textContent = `
-                html[${STATE_ATTR}="degraded"] :is(
+                html[${STATE_ATTR}="degraded"]:not([${FILTER_READY_ATTR}="true"]) :is(
                     .gall_listwrap table.gall_list,.list_wrap table.gall_list,.custom-mobile-list,
                     .gall_exposure_list,#focus_cmt .comment_box,div[id^="comment_wrap_"] .comment_box,
                     .view_comment.image_comment .comment_box
@@ -205,7 +210,12 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
             `;
             (document.head || document.documentElement)?.appendChild(style);
         }
-        if (!document.body || document.getElementById(DEGRADED_BANNER_ID)) return;
+        const existingBanner = document.getElementById(DEGRADED_BANNER_ID);
+        if (existingBanner) {
+            existingBanner.dataset.reason = reason;
+            return;
+        }
+        if (!document.body) return;
         const banner = document.createElement('aside');
         banner.id = DEGRADED_BANNER_ID;
         banner.dataset.reason = reason;
@@ -226,6 +236,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
         state: isTargetPage() ? 'locked' : 'idle',
         pageType,
         startedAt,
+        filterReady: false,
         ensure(reason = 'ensure') {
             if (!isTargetPage() || this.state === 'ready' || this.state === 'degraded') return true;
             document.documentElement?.setAttribute(STATE_ATTR, this.state === 'preparing' ? 'preparing' : 'locked');
@@ -250,6 +261,13 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
         },
         requestRecovery(reason = 'manual') {
             recoveryHandlers.forEach((fn) => { try { fn(reason); } catch (error) { console.warn('[DCUF boot] recovery failed:', error); } });
+        },
+        markFilterReady(reason = 'filter-ready') {
+            if (this.filterReady) return;
+            this.filterReady = true;
+            document.documentElement?.setAttribute(FILTER_READY_ATTR, 'true');
+            note('boot.filter-ready', { reason, state: this.state });
+            if (this.state === 'degraded') this.requestRecovery('filter-ready');
         },
         markReady(reason = 'ready') {
             if (this.state === 'ready') return;
@@ -298,7 +316,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
         domReadyListener = () => {
             note('boot.dom-content-loaded');
             tick();
-            if ((pageType === 'list' || pageType === 'view') && !criticalTimer) {
+            if ((pageType === 'lists' || pageType === 'view') && !criticalTimer) {
                 criticalTimer = setTimeout(() => bootController.degrade('critical-deadline'), CRITICAL_DEADLINE_MS);
             }
         };
@@ -413,7 +431,7 @@ const ETC_CONSTANTS = FILTER_CONSTANTS.ETC;
  * Shared IP-related datasets extracted from v2.7.5.4 for 3.0 refactoring.
  * This is the planned single source of truth for mobile and PC filter rules.
  */
-const TELECOM = [
+const TELECOM = () => [
             [1, [[96, "KT모바일", "MOB"], [97, "KT모바일", "MOB"], [98, "KT모바일", "MOB"], [99, "KT모바일", "MOB"], [100, "KT모바일", "MOB"], [101, "KT모바일", "MOB"], [102, "KT모바일", "MOB"], [103, "KT모바일", "MOB"], [104, "KT모바일", "MOB"], [105, "KT모바일", "MOB"], [106, "KT모바일", "MOB"], [107, "KT모바일", "MOB"], [108, "KT모바일", "MOB"], [109, "KT모바일", "MOB"], [110, "KT모바일", "MOB"], [111, "KT모바일", "MOB"]]],
             [27, [[160, "SKT", "MOB"], [161, "SKT", "MOB"], [162, "SKT", "MOB"], [163, "SKT", "MOB"], [164, "SKT", "MOB"], [165, "SKT", "MOB"], [166, "SKT", "MOB"], [167, "SKT", "MOB"], [168, "SKT", "MOB"], [169, "SKT", "MOB"], [170, "SKT", "MOB"], [171, "SKT", "MOB"], [172, "SKT", "MOB"], [173, "SKT", "MOB"], [174, "SKT", "MOB"], [175, "SKT", "MOB"], [176, "SKT", "MOB"], [177, "SKT", "MOB"], [178, "SKT", "MOB"], [179, "SKT", "MOB"], [180, "SKT", "MOB"], [181, "SKT", "MOB"], [182, "SKT", "MOB"], [183, "SKT", "MOB"]]],
             [39, [[4, "KT모바일", "MOB"], [5, "KT모바일", "MOB"], [6, "KT모바일", "MOB"], [7, "KT모바일", "MOB"]]],
@@ -513,7 +531,7 @@ const PROXY_STRICT_PREFIXES = `
             216.247 217.9 217.64 217.78 217.138 217.148 217.151 217.156 217.170 217.197 218.55 218.145 218.146 218.150 218.153 218.155 218.158 218.232
             218.234 218.239 220.67 220.71 220.76 220.78 220.82 220.89 220.90 220.116 220.118 220.123 221.140 221.144 221.147 221.150 221.153 221.158
             221.160 221.164 221.167 222.102 222.108 222.109 222.110 222.111 222.112 222.118 222.238
-        `.trim().split(/\s+/);
+        `;
 
 const PROXY_AGGRESSIVE_EXTRA_PREFIXES = `
             1.209 1.224 1.255 14.129 27.96 27.255 38.77 39.115 43.227 43.228 43.250 43.254 45.114 45.119 45.125 45.164 45.225 45.249
@@ -528,9 +546,9 @@ const PROXY_AGGRESSIVE_EXTRA_PREFIXES = `
             210.219 211.32 211.37 211.41 211.47 211.50 211.56 211.60 211.63 211.104 211.110 211.115 211.116 211.118 211.168 211.169 211.170 211.171
             211.172 211.175 211.180 211.188 211.189 211.233 211.234 211.235 211.236 211.238 211.239 211.241 211.249 211.254 211.255 218.36 220.230 222.239
             223.26 223.130 223.165 223.255
-        `.trim().split(/\s+/);
+        `;
 
-const KR_IP_RANGES = { "1": [[11, 11], [16, 19], [96, 111], [176, 177], [201, 201], [208, 223], [224, 255]], "14": [[0, 0], [4, 7], [32, 63], [64, 95], [128, 128], [129, 129], [138, 138], [192, 192], [206, 206]], "27": [[0, 0], [1, 1], [35, 35], [96, 96], [100, 100], [101, 101], [102, 102], [111, 111], [112, 112], [113, 113], [115, 115], [116, 116], [117, 117], [118, 118], [119, 119], [120, 120], [122, 122], [124, 124], [125, 125], [126, 126], [160, 175], [176, 183], [232, 239], [255, 255]], "36": [[38, 39]], "39": [[4, 7], [16, 31], [112, 127]], "42": [[8, 15], [16, 31], [32, 47], [82, 82]], "43": [[224, 224], [227, 227], [228, 228], [230, 230], [230, 230], [230, 230], [241, 241], [242, 242], [243, 243], [246, 246], [247, 247], [247, 247], [250, 250], [251, 251], [254, 254], [255, 255]], "45": [[64, 64], [64, 64], [64, 64], [112, 112], [112, 112], [113, 113], [115, 115], [117, 117], [119, 119], [120, 120], [121, 121], [125, 125], [248, 248], [249, 249], [249, 249], [250, 250], [250, 250]], "49": [[1, 1], [8, 11], [16, 31], [50, 50], [50, 50], [50, 50], [56, 63], [128, 128], [142, 142], [143, 143], [160, 175], [236, 236], [238, 238], [239, 239], [246, 246], [247, 247], [254, 254]], "58": [[29, 29], [65, 65], [72, 79], [84, 84], [87, 87], [102, 103], [120, 127], [138, 138], [140, 143], [145, 145], [146, 146], [147, 147], [148, 151], [180, 180], [181, 181], [184, 184], [224, 239]], "59": [[0, 31], [86, 86], [150, 150], [151, 151], [152, 152], [186, 187]], "60": [[196, 197], [253, 253]], "61": [[4, 4], [5, 5], [14, 14], [32, 39], [40, 43], [47, 47], [72, 77], [78, 79], [80, 83], [84, 85], [96, 111], [245, 245], [245, 245], [247, 247], [247, 247], [248, 255]], "101": [[1, 1], [1, 1], [53, 53], [55, 55], [79, 79], [101, 101], [202, 202], [235, 235], [250, 250]], "103": [[2, 2], [2, 2], [2, 2], [3, 3], [4, 4], [4, 4], [4, 4], [5, 5], [5, 5], [6, 6], [6, 6], [6, 6], [6, 6], [7, 7], [7, 7], [7, 7], [8, 8], [8, 8], [9, 9], [9, 9], [10, 10], [10, 10], [11, 11], [11, 11], [11, 11], [11, 11], [11, 11], [12, 12], [13, 13], [13, 13], [19, 19], [20, 20], [21, 21], [21, 21], [22, 22], [23, 23], [24, 24], [25, 25], [27, 27], [27, 27], [28, 28], [30, 30], [30, 30], [30, 30], [31, 31], [38, 38], [39, 39], [42, 42], [42, 42], [43, 43], [43, 43], [49, 49], [50, 50], [51, 51], [51, 51], [51, 51], [52, 52], [53, 53], [55, 55], [55, 55], [57, 57], [59, 59], [60, 60], [62, 62], [66, 66], [67, 67], [68, 68], [68, 68], [71, 71], [74, 74], [77, 77], [79, 79], [85, 85], [87, 87], [90, 90], [90, 90], [104, 104], [105, 105], [106, 106], [108, 108], [109, 109], [114, 114], [114, 114], [117, 117], [122, 122], [122, 122], [124, 124], [125, 125], [126, 126], [126, 126], [127, 127], [129, 129], [132, 132], [138, 138], [139, 139], [139, 139], [139, 139], [140, 140], [141, 141], [141, 141], [143, 143], [143, 143], [144, 144], [145, 145], [146, 146], [150, 150], [150, 150], [150, 150], [150, 150], [153, 153], [157, 157], [157, 157], [159, 159], [161, 161], [162, 162], [162, 162], [164, 164], [166, 166], [171, 171], [175, 175], [178, 178], [182, 182], [182, 182], [186, 186], [187, 187], [187, 187], [188, 188], [194, 194], [194, 194], [206, 206], [212, 212], [212, 212], [214, 214], [214, 214], [215, 215], [216, 216], [218, 218], [219, 219], [226, 226], [226, 226], [229, 229], [230, 230], [231, 231], [234, 234], [235, 235], [237, 237], [238, 238], [239, 239], [239, 239], [240, 240], [240, 240], [243, 243], [244, 244], [244, 244], [246, 246], [246, 246], [246, 246], [247, 247], [247, 247], [248, 248], [249, 249], [251, 251], [253, 253], [254, 254]], "106": [[10, 10], [96, 103], [240, 255]], "110": [[4, 4], [5, 5], [8, 15], [34, 34], [35, 35], [35, 35], [44, 44], [44, 44], [45, 45], [46, 47], [68, 71], [76, 76], [76, 76], [92, 92], [92, 92], [93, 93], [93, 93], [165, 165], [165, 165], [172, 172], [232, 232]], "111": [[65, 65], [67, 67], [91, 91], [92, 92], [118, 118], [171, 171], [218, 219], [221, 221]], "112": [[72, 72], [72, 72], [76, 77], [106, 107], [108, 108], [109, 109], [121, 121], [121, 121], [133, 133], [136, 136], [137, 137], [140, 140], [140, 140], [140, 140], [144, 159], [160, 191], [196, 196], [212, 212], [213, 213], [214, 214], [216, 223]], "113": [[10, 10], [21, 21], [29, 29], [30, 30], [52, 52], [52, 52], [59, 59], [60, 60], [61, 61], [61, 61], [130, 130], [130, 130], [131, 131], [192, 192], [197, 197], [198, 198], [199, 199], [216, 217]], "114": [[29, 29], [30, 30], [30, 30], [30, 30], [31, 31], [31, 31], [52, 53], [70, 71], [108, 108], [110, 110], [110, 110], [111, 111], [111, 111], [129, 129], [129, 129], [141, 141], [141, 141], [141, 141], [199, 199], [199, 199], [200, 207]], "115": [[0, 23], [31, 31], [40, 41], [68, 68], [69, 69], [71, 71], [84, 84], [85, 85], [86, 86], [88, 95], [126, 126], [136, 143], [144, 144], [145, 145], [160, 160], [161, 161], [165, 165], [178, 178], [178, 178], [187, 187], [187, 187]], "116": [[32, 47], [67, 67], [68, 68], [68, 68], [84, 84], [89, 89], [90, 90], [93, 93], [120, 127], [193, 193], [199, 199], [200, 201], [212, 212], [255, 255]], "117": [[16, 17], [20, 20], [20, 20], [52, 52], [53, 53], [53, 53], [55, 55], [58, 58], [110, 111], [123, 123]], "118": [[32, 63], [67, 67], [91, 91], [91, 91], [103, 103], [107, 107], [127, 127], [128, 131], [139, 139], [176, 176], [216, 223], [234, 235]], "119": [[17, 17], [17, 17], [18, 18], [30, 30], [31, 31], [42, 42], [56, 56], [59, 59], [63, 63], [64, 71], [75, 75], [77, 77], [82, 82], [148, 148], [149, 149], [161, 161], [192, 223], [235, 235], [235, 235]], "120": [[29, 29], [50, 50], [73, 73], [136, 136], [142, 142], [143, 143]], "121": [[0, 0], [1, 1], [50, 50], [50, 50], [50, 50], [53, 53], [54, 54], [55, 55], [64, 67], [78, 78], [88, 88], [100, 100], [101, 101], [101, 101], [124, 125], [126, 126], [127, 127], [128, 159], [160, 191], [200, 200], [252, 253], [254, 254], [254, 254]], "122": [[0, 0], [0, 0], [32, 47], [49, 49], [99, 99], [100, 100], [101, 101], [128, 128], [128, 128], [129, 129], [129, 129], [152, 152], [153, 153], [199, 199], [202, 202], [202, 202], [203, 203], [252, 252], [252, 252], [254, 254]], "123": [[0, 0], [32, 47], [98, 98], [99, 99], [100, 100], [108, 108], [108, 108], [109, 109], [111, 111], [140, 143], [199, 199], [200, 200], [212, 215], [228, 229], [248, 248], [250, 251], [253, 253], [254, 254], [254, 254]], "124": [[0, 1], [2, 2], [3, 3], [5, 5], [28, 28], [46, 46], [48, 63], [66, 66], [66, 66], [80, 80], [111, 111], [136, 139], [146, 146], [153, 153], [194, 194], [195, 195], [195, 195], [197, 197], [198, 198], [199, 199], [199, 199], [216, 216], [217, 217], [243, 243], [254, 254]], "125": [[7, 7], [31, 31], [57, 57], [60, 60], [61, 61], [62, 62], [128, 159], [176, 191], [208, 208], [208, 208], [209, 209], [209, 209], [240, 247], [248, 251], [252, 252]], "128": [[134, 134]], "129": [[254, 254]], "134": [[75, 75]], "137": [[68, 68]], "139": [[5, 5], [150, 150]], "141": [[223, 223]], "143": [[248, 248]], "144": [[48, 48], [48, 48], [48, 48]], "147": [[6, 6], [43, 43], [46, 46], [47, 47]], "150": [[107, 107], [107, 107], [129, 129], [150, 150], [183, 183], [197, 197], [242, 242], [242, 242]], "152": [[99, 99], [149, 149]], "154": [[10, 10]], "155": [[230, 230]], "156": [[147, 147]], "157": [[119, 119], [197, 197]], "158": [[44, 44]], "160": [[202, 202]], "161": [[122, 122]], "163": [[53, 53], [152, 152], [180, 180], [213, 213], [222, 222], [229, 229], [239, 239], [255, 255]], "164": [[124, 124], [125, 125]], "165": [[132, 132], [133, 133], [141, 141], [186, 186], [194, 194], [213, 213], [229, 229], [243, 243], [244, 244], [246, 246]], "166": [[79, 79], [103, 103], [104, 104], [125, 125]], "168": [[78, 78], [115, 115], [126, 126], [131, 131], [154, 154], [188, 188], [219, 219], [248, 249]], "169": [[140, 140], [208, 223]], "175": [[28, 28], [41, 41], [45, 45], [45, 45], [106, 106], [107, 107], [111, 111], [112, 127], [158, 158], [176, 176], [192, 255]], "180": [[64, 71], [80, 83], [92, 92], [92, 92], [94, 94], [131, 131], [132, 135], [148, 148], [150, 150], [182, 182], [189, 189], [189, 189], [210, 210], [210, 210], [211, 211], [222, 222], [224, 231], [233, 233], [236, 239]], "182": [[31, 31], [50, 50], [161, 161], [162, 162], [163, 163], [172, 172], [173, 173], [173, 173], [192, 199], [208, 223], [224, 231], [237, 237], [237, 237], [252, 252], [252, 252], [255, 255]], "183": [[78, 78], [78, 78], [86, 86], [90, 90], [91, 91], [96, 127]], "192": [[5, 5], [100, 100], [104, 104], [132, 132], [132, 132], [195, 195], [203, 203], [245, 245], [249, 249]], "202": [[3, 3], [6, 6], [8, 8], [14, 14], [14, 14], [14, 14], [20, 20], [20, 20], [20, 20], [20, 20], [21, 21], [22, 22], [30, 31], [43, 43], [59, 59], [68, 68], [73, 73], [86, 86], [89, 89], [89, 89], [90, 90], [126, 126], [128, 128], [131, 131], [133, 133], [136, 136], [148, 148], [150, 150], [158, 158], [163, 163], [165, 165], [167, 167], [171, 171], [174, 174], [179, 179], [179, 179]], "203": [[17, 17], [81, 81], [81, 81], [82, 82], [82, 82], [83, 83], [84, 84], [90, 90], [100, 100], [109, 109], [123, 123], [128, 128], [128, 128], [129, 129], [130, 130], [130, 130], [132, 132], [133, 133], [142, 142], [142, 142], [149, 149], [152, 152], [153, 153], [160, 160], [166, 166], [169, 169], [170, 170], [171, 171], [173, 173], [175, 175], [175, 175], [190, 190], [190, 190], [191, 191], [207, 207], [210, 210], [212, 212], [212, 212], [215, 215], [216, 216], [217, 217], [223, 223], [223, 223], [224, 224], [225, 225], [226, 227], [228, 229], [230, 231], [232, 233], [234, 235], [236, 239], [240, 243], [244, 247], [248, 251], [252, 255]], "210": [[0, 0], [2, 2], [4, 4], [4, 4], [16, 16], [57, 57], [87, 87], [89, 89], [90, 91], [92, 95], [96, 96], [97, 97], [98, 98], [99, 99], [100, 103], [104, 107], [108, 111], [112, 115], [116, 119], [120, 123], [124, 127], [178, 179], [180, 181], [182, 183], [192, 192], [204, 207], [210, 210], [211, 211], [211, 211], [216, 219], [220, 223]], "211": [[32, 39], [40, 51], [52, 63], [104, 111], [112, 119], [168, 175], [176, 191], [192, 199], [200, 205], [206, 211], [212, 215], [216, 225], [226, 231], [232, 255]], "218": [[36, 39], [48, 49], [50, 55], [101, 101], [144, 159], [209, 209], [232, 233], [234, 239]], "219": [[240, 241], [248, 255]], "220": [[64, 71], [72, 91], [92, 95], [103, 103], [116, 127], [149, 149], [230, 230]], "221": [[132, 132], [133, 133], [133, 133], [138, 143], [144, 168]], "222": [[96, 122], [231, 231], [232, 239], [251, 251]], "223": [[26, 26], [28, 28], [32, 63], [130, 130], [131, 131], [165, 165], [168, 175], [194, 195], [222, 222], [253, 253], [255, 255]] };
+const KR_IP_RANGES = () => ({ "1": [[11, 11], [16, 19], [96, 111], [176, 177], [201, 201], [208, 223], [224, 255]], "14": [[0, 0], [4, 7], [32, 63], [64, 95], [128, 128], [129, 129], [138, 138], [192, 192], [206, 206]], "27": [[0, 0], [1, 1], [35, 35], [96, 96], [100, 100], [101, 101], [102, 102], [111, 111], [112, 112], [113, 113], [115, 115], [116, 116], [117, 117], [118, 118], [119, 119], [120, 120], [122, 122], [124, 124], [125, 125], [126, 126], [160, 175], [176, 183], [232, 239], [255, 255]], "36": [[38, 39]], "39": [[4, 7], [16, 31], [112, 127]], "42": [[8, 15], [16, 31], [32, 47], [82, 82]], "43": [[224, 224], [227, 227], [228, 228], [230, 230], [230, 230], [230, 230], [241, 241], [242, 242], [243, 243], [246, 246], [247, 247], [247, 247], [250, 250], [251, 251], [254, 254], [255, 255]], "45": [[64, 64], [64, 64], [64, 64], [112, 112], [112, 112], [113, 113], [115, 115], [117, 117], [119, 119], [120, 120], [121, 121], [125, 125], [248, 248], [249, 249], [249, 249], [250, 250], [250, 250]], "49": [[1, 1], [8, 11], [16, 31], [50, 50], [50, 50], [50, 50], [56, 63], [128, 128], [142, 142], [143, 143], [160, 175], [236, 236], [238, 238], [239, 239], [246, 246], [247, 247], [254, 254]], "58": [[29, 29], [65, 65], [72, 79], [84, 84], [87, 87], [102, 103], [120, 127], [138, 138], [140, 143], [145, 145], [146, 146], [147, 147], [148, 151], [180, 180], [181, 181], [184, 184], [224, 239]], "59": [[0, 31], [86, 86], [150, 150], [151, 151], [152, 152], [186, 187]], "60": [[196, 197], [253, 253]], "61": [[4, 4], [5, 5], [14, 14], [32, 39], [40, 43], [47, 47], [72, 77], [78, 79], [80, 83], [84, 85], [96, 111], [245, 245], [245, 245], [247, 247], [247, 247], [248, 255]], "101": [[1, 1], [1, 1], [53, 53], [55, 55], [79, 79], [101, 101], [202, 202], [235, 235], [250, 250]], "103": [[2, 2], [2, 2], [2, 2], [3, 3], [4, 4], [4, 4], [4, 4], [5, 5], [5, 5], [6, 6], [6, 6], [6, 6], [6, 6], [7, 7], [7, 7], [7, 7], [8, 8], [8, 8], [9, 9], [9, 9], [10, 10], [10, 10], [11, 11], [11, 11], [11, 11], [11, 11], [11, 11], [12, 12], [13, 13], [13, 13], [19, 19], [20, 20], [21, 21], [21, 21], [22, 22], [23, 23], [24, 24], [25, 25], [27, 27], [27, 27], [28, 28], [30, 30], [30, 30], [30, 30], [31, 31], [38, 38], [39, 39], [42, 42], [42, 42], [43, 43], [43, 43], [49, 49], [50, 50], [51, 51], [51, 51], [51, 51], [52, 52], [53, 53], [55, 55], [55, 55], [57, 57], [59, 59], [60, 60], [62, 62], [66, 66], [67, 67], [68, 68], [68, 68], [71, 71], [74, 74], [77, 77], [79, 79], [85, 85], [87, 87], [90, 90], [90, 90], [104, 104], [105, 105], [106, 106], [108, 108], [109, 109], [114, 114], [114, 114], [117, 117], [122, 122], [122, 122], [124, 124], [125, 125], [126, 126], [126, 126], [127, 127], [129, 129], [132, 132], [138, 138], [139, 139], [139, 139], [139, 139], [140, 140], [141, 141], [141, 141], [143, 143], [143, 143], [144, 144], [145, 145], [146, 146], [150, 150], [150, 150], [150, 150], [150, 150], [153, 153], [157, 157], [157, 157], [159, 159], [161, 161], [162, 162], [162, 162], [164, 164], [166, 166], [171, 171], [175, 175], [178, 178], [182, 182], [182, 182], [186, 186], [187, 187], [187, 187], [188, 188], [194, 194], [194, 194], [206, 206], [212, 212], [212, 212], [214, 214], [214, 214], [215, 215], [216, 216], [218, 218], [219, 219], [226, 226], [226, 226], [229, 229], [230, 230], [231, 231], [234, 234], [235, 235], [237, 237], [238, 238], [239, 239], [239, 239], [240, 240], [240, 240], [243, 243], [244, 244], [244, 244], [246, 246], [246, 246], [246, 246], [247, 247], [247, 247], [248, 248], [249, 249], [251, 251], [253, 253], [254, 254]], "106": [[10, 10], [96, 103], [240, 255]], "110": [[4, 4], [5, 5], [8, 15], [34, 34], [35, 35], [35, 35], [44, 44], [44, 44], [45, 45], [46, 47], [68, 71], [76, 76], [76, 76], [92, 92], [92, 92], [93, 93], [93, 93], [165, 165], [165, 165], [172, 172], [232, 232]], "111": [[65, 65], [67, 67], [91, 91], [92, 92], [118, 118], [171, 171], [218, 219], [221, 221]], "112": [[72, 72], [72, 72], [76, 77], [106, 107], [108, 108], [109, 109], [121, 121], [121, 121], [133, 133], [136, 136], [137, 137], [140, 140], [140, 140], [140, 140], [144, 159], [160, 191], [196, 196], [212, 212], [213, 213], [214, 214], [216, 223]], "113": [[10, 10], [21, 21], [29, 29], [30, 30], [52, 52], [52, 52], [59, 59], [60, 60], [61, 61], [61, 61], [130, 130], [130, 130], [131, 131], [192, 192], [197, 197], [198, 198], [199, 199], [216, 217]], "114": [[29, 29], [30, 30], [30, 30], [30, 30], [31, 31], [31, 31], [52, 53], [70, 71], [108, 108], [110, 110], [110, 110], [111, 111], [111, 111], [129, 129], [129, 129], [141, 141], [141, 141], [141, 141], [199, 199], [199, 199], [200, 207]], "115": [[0, 23], [31, 31], [40, 41], [68, 68], [69, 69], [71, 71], [84, 84], [85, 85], [86, 86], [88, 95], [126, 126], [136, 143], [144, 144], [145, 145], [160, 160], [161, 161], [165, 165], [178, 178], [178, 178], [187, 187], [187, 187]], "116": [[32, 47], [67, 67], [68, 68], [68, 68], [84, 84], [89, 89], [90, 90], [93, 93], [120, 127], [193, 193], [199, 199], [200, 201], [212, 212], [255, 255]], "117": [[16, 17], [20, 20], [20, 20], [52, 52], [53, 53], [53, 53], [55, 55], [58, 58], [110, 111], [123, 123]], "118": [[32, 63], [67, 67], [91, 91], [91, 91], [103, 103], [107, 107], [127, 127], [128, 131], [139, 139], [176, 176], [216, 223], [234, 235]], "119": [[17, 17], [17, 17], [18, 18], [30, 30], [31, 31], [42, 42], [56, 56], [59, 59], [63, 63], [64, 71], [75, 75], [77, 77], [82, 82], [148, 148], [149, 149], [161, 161], [192, 223], [235, 235], [235, 235]], "120": [[29, 29], [50, 50], [73, 73], [136, 136], [142, 142], [143, 143]], "121": [[0, 0], [1, 1], [50, 50], [50, 50], [50, 50], [53, 53], [54, 54], [55, 55], [64, 67], [78, 78], [88, 88], [100, 100], [101, 101], [101, 101], [124, 125], [126, 126], [127, 127], [128, 159], [160, 191], [200, 200], [252, 253], [254, 254], [254, 254]], "122": [[0, 0], [0, 0], [32, 47], [49, 49], [99, 99], [100, 100], [101, 101], [128, 128], [128, 128], [129, 129], [129, 129], [152, 152], [153, 153], [199, 199], [202, 202], [202, 202], [203, 203], [252, 252], [252, 252], [254, 254]], "123": [[0, 0], [32, 47], [98, 98], [99, 99], [100, 100], [108, 108], [108, 108], [109, 109], [111, 111], [140, 143], [199, 199], [200, 200], [212, 215], [228, 229], [248, 248], [250, 251], [253, 253], [254, 254], [254, 254]], "124": [[0, 1], [2, 2], [3, 3], [5, 5], [28, 28], [46, 46], [48, 63], [66, 66], [66, 66], [80, 80], [111, 111], [136, 139], [146, 146], [153, 153], [194, 194], [195, 195], [195, 195], [197, 197], [198, 198], [199, 199], [199, 199], [216, 216], [217, 217], [243, 243], [254, 254]], "125": [[7, 7], [31, 31], [57, 57], [60, 60], [61, 61], [62, 62], [128, 159], [176, 191], [208, 208], [208, 208], [209, 209], [209, 209], [240, 247], [248, 251], [252, 252]], "128": [[134, 134]], "129": [[254, 254]], "134": [[75, 75]], "137": [[68, 68]], "139": [[5, 5], [150, 150]], "141": [[223, 223]], "143": [[248, 248]], "144": [[48, 48], [48, 48], [48, 48]], "147": [[6, 6], [43, 43], [46, 46], [47, 47]], "150": [[107, 107], [107, 107], [129, 129], [150, 150], [183, 183], [197, 197], [242, 242], [242, 242]], "152": [[99, 99], [149, 149]], "154": [[10, 10]], "155": [[230, 230]], "156": [[147, 147]], "157": [[119, 119], [197, 197]], "158": [[44, 44]], "160": [[202, 202]], "161": [[122, 122]], "163": [[53, 53], [152, 152], [180, 180], [213, 213], [222, 222], [229, 229], [239, 239], [255, 255]], "164": [[124, 124], [125, 125]], "165": [[132, 132], [133, 133], [141, 141], [186, 186], [194, 194], [213, 213], [229, 229], [243, 243], [244, 244], [246, 246]], "166": [[79, 79], [103, 103], [104, 104], [125, 125]], "168": [[78, 78], [115, 115], [126, 126], [131, 131], [154, 154], [188, 188], [219, 219], [248, 249]], "169": [[140, 140], [208, 223]], "175": [[28, 28], [41, 41], [45, 45], [45, 45], [106, 106], [107, 107], [111, 111], [112, 127], [158, 158], [176, 176], [192, 255]], "180": [[64, 71], [80, 83], [92, 92], [92, 92], [94, 94], [131, 131], [132, 135], [148, 148], [150, 150], [182, 182], [189, 189], [189, 189], [210, 210], [210, 210], [211, 211], [222, 222], [224, 231], [233, 233], [236, 239]], "182": [[31, 31], [50, 50], [161, 161], [162, 162], [163, 163], [172, 172], [173, 173], [173, 173], [192, 199], [208, 223], [224, 231], [237, 237], [237, 237], [252, 252], [252, 252], [255, 255]], "183": [[78, 78], [78, 78], [86, 86], [90, 90], [91, 91], [96, 127]], "192": [[5, 5], [100, 100], [104, 104], [132, 132], [132, 132], [195, 195], [203, 203], [245, 245], [249, 249]], "202": [[3, 3], [6, 6], [8, 8], [14, 14], [14, 14], [14, 14], [20, 20], [20, 20], [20, 20], [20, 20], [21, 21], [22, 22], [30, 31], [43, 43], [59, 59], [68, 68], [73, 73], [86, 86], [89, 89], [89, 89], [90, 90], [126, 126], [128, 128], [131, 131], [133, 133], [136, 136], [148, 148], [150, 150], [158, 158], [163, 163], [165, 165], [167, 167], [171, 171], [174, 174], [179, 179], [179, 179]], "203": [[17, 17], [81, 81], [81, 81], [82, 82], [82, 82], [83, 83], [84, 84], [90, 90], [100, 100], [109, 109], [123, 123], [128, 128], [128, 128], [129, 129], [130, 130], [130, 130], [132, 132], [133, 133], [142, 142], [142, 142], [149, 149], [152, 152], [153, 153], [160, 160], [166, 166], [169, 169], [170, 170], [171, 171], [173, 173], [175, 175], [175, 175], [190, 190], [190, 190], [191, 191], [207, 207], [210, 210], [212, 212], [212, 212], [215, 215], [216, 216], [217, 217], [223, 223], [223, 223], [224, 224], [225, 225], [226, 227], [228, 229], [230, 231], [232, 233], [234, 235], [236, 239], [240, 243], [244, 247], [248, 251], [252, 255]], "210": [[0, 0], [2, 2], [4, 4], [4, 4], [16, 16], [57, 57], [87, 87], [89, 89], [90, 91], [92, 95], [96, 96], [97, 97], [98, 98], [99, 99], [100, 103], [104, 107], [108, 111], [112, 115], [116, 119], [120, 123], [124, 127], [178, 179], [180, 181], [182, 183], [192, 192], [204, 207], [210, 210], [211, 211], [211, 211], [216, 219], [220, 223]], "211": [[32, 39], [40, 51], [52, 63], [104, 111], [112, 119], [168, 175], [176, 191], [192, 199], [200, 205], [206, 211], [212, 215], [216, 225], [226, 231], [232, 255]], "218": [[36, 39], [48, 49], [50, 55], [101, 101], [144, 159], [209, 209], [232, 233], [234, 239]], "219": [[240, 241], [248, 255]], "220": [[64, 71], [72, 91], [92, 95], [103, 103], [116, 127], [149, 149], [230, 230]], "221": [[132, 132], [133, 133], [133, 133], [138, 143], [144, 168]], "222": [[96, 122], [231, 231], [232, 239], [251, 251]], "223": [[26, 26], [28, 28], [32, 63], [130, 130], [131, 131], [165, 165], [168, 175], [194, 195], [222, 222], [253, 253], [255, 255]] });
 
     const DCUF_SHARED_IP = Object.freeze({ TELECOM, PROXY_MODE, PROXY_STRICT_PREFIXES, PROXY_AGGRESSIVE_EXTRA_PREFIXES, KR_IP_RANGES });
 
@@ -948,6 +966,12 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         _pendingMutationRafId: 0,
         _pendingMutationTimerId: 0,
         _mutationGeneration: 0,
+        _bfcacheRecoveryPromise: null,
+        _bfcacheRecoveryId: 0,
+        _bfcacheRecoveryStartedAt: 0,
+        _bfcacheRecoveryCompletedAt: 0,
+        _bfcacheRecoveryBody: null,
+        _bfcacheRecoverySucceeded: false,
         _taskQueues: Object.create(null),
         _diagnosticsEnabled: false,
         _diagnosticCounters: Object.create(null),
@@ -1003,12 +1027,14 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         getPageContext() {
             const sharedContext = window.__dcufPageContext;
             if (sharedContext && typeof sharedContext === 'object') return sharedContext;
-            const type = ((window.location.pathname || '').match(/\/board\/(lists|view|write)(?:\/|$)/) || [])[1] || 'other';
+            const type = ((window.location.pathname || '').match(/\/board\/(lists|view|write|modify)(?:\/|$)/) || [])[1] || 'other';
             return {
                 type,
                 isList: type === 'lists',
                 isView: type === 'view',
                 isWrite: type === 'write',
+                isModify: type === 'modify',
+                isWriteSurface: type === 'write' || type === 'modify',
                 isOther: type === 'other',
                 isTargetPage: type !== 'other',
                 hasListSurface: type === 'lists' || type === 'view',
@@ -1057,7 +1083,9 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                     '.view_comment'
                 ].join(', ');
             }
-            if (pageContext.isWrite) return 'form#write, #write_wrap, .gall_write, .write_box';
+            if (pageContext.isWriteSurface) {
+                return 'form#write, form[name="modify"][action*="modify_submit"], #write_wrap, .gall_write, .write_box, form[name="password_confirm"], form[action*="modify_password_submit"], .no_memberwrap';
+            }
             return shared.join(', ');
         },
 
@@ -1068,11 +1096,29 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             return Boolean(selector && (element.matches(selector) || element.closest(selector)));
         },
 
+        mutationNodeTouchesSurface(node) {
+            const element = node instanceof Element ? node : node?.parentElement;
+            if (!(element instanceof Element) || this.isScriptOwnedElement(element)) return false;
+            if (element === document.body) return true;
+            const selector = this.getMutationSurfaceSelector();
+            if (!selector) return false;
+            return element.matches(selector)
+                || Boolean(element.closest(selector))
+                || Boolean(element.querySelector?.(selector));
+        },
+
         prefilterMutationRecords(records) {
             if (!Array.isArray(records) || records.length === 0) return [];
             return records.filter((record) => {
                 if (!record) return false;
-                if (record.type === 'childList') return !this.isScriptOwnedElement(record.target);
+                if (record.type === 'childList') {
+                    if (this.isScriptOwnedElement(record.target)) return false;
+                    if (record.target instanceof Element
+                        && record.target !== document.body
+                        && this.isMutationSurfaceElement(record.target)) return true;
+                    return [...record.addedNodes, ...record.removedNodes]
+                        .some((node) => this.mutationNodeTouchesSurface(node));
+                }
                 if (record.type === 'attributes') {
                     if (this.isScriptOwnedElement(record.target)) return false;
                     if (this.IDENTITY_ATTRIBUTE_NAMES.has(record.attributeName)) return true;
@@ -1364,6 +1410,25 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             return this._mutationGeneration;
         },
 
+        getMutationGeneration() {
+            return this._mutationGeneration;
+        },
+
+        getBfcacheRecoveryState() {
+            return {
+                id: this._bfcacheRecoveryId,
+                startedAt: this._bfcacheRecoveryStartedAt,
+                completedAt: this._bfcacheRecoveryCompletedAt,
+                body: this._bfcacheRecoveryBody,
+                pending: Boolean(this._bfcacheRecoveryPromise),
+                succeeded: this._bfcacheRecoverySucceeded
+            };
+        },
+
+        waitForBfcacheRecovery() {
+            return this._bfcacheRecoveryPromise || Promise.resolve(this._bfcacheRecoverySucceeded);
+        },
+
         ensureMutationBus() {
             this.installDiagnosticsApi();
             const observerTarget = document.body;
@@ -1443,6 +1508,47 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 this._immediateMutationSubscribers.delete(key);
                 this.setDiagnosticGauge('mutation.immediateSubscribers', this._immediateMutationSubscribers.size);
             };
+        },
+
+        recoverFromBfcache(event) {
+            if (!event?.persisted) return Promise.resolve(false);
+            if (this._bfcacheRecoveryPromise) return this._bfcacheRecoveryPromise;
+
+            const recoveryId = this._bfcacheRecoveryId + 1;
+            this._bfcacheRecoveryId = recoveryId;
+            this._bfcacheRecoveryStartedAt = Date.now();
+            this._bfcacheRecoveryCompletedAt = 0;
+            this._bfcacheRecoveryBody = document.body;
+            this._bfcacheRecoverySucceeded = false;
+            this.incrementDiagnostic('lifecycle.bfcache.restore.requested');
+            this._bfcacheRecoveryPromise = Promise.resolve().then(async () => {
+                this.ensureMutationBus();
+                window.__dcufUIModule?.processAllLists?.('pageshow-persisted');
+                await window.__dcufFilterModule?.refilterAllContent?.('pageshow-persisted', { scheduleFollowups: false });
+                window.__dcufSyncArticleDarkText?.();
+                window.__dcufScheduleCommentNormalize?.();
+                this._bfcacheRecoveryCompletedAt = Date.now();
+                this._bfcacheRecoverySucceeded = true;
+                this.incrementDiagnostic('lifecycle.bfcache.restore.completed');
+                window.dispatchEvent(new CustomEvent('dcuf:bfcache-restored', {
+                    detail: {
+                        pageType: this.getPageContext().type,
+                        recoveryId,
+                        startedAt: this._bfcacheRecoveryStartedAt,
+                        completedAt: this._bfcacheRecoveryCompletedAt
+                    }
+                }));
+                return true;
+            }).catch((error) => {
+                this._bfcacheRecoveryCompletedAt = Date.now();
+                this._bfcacheRecoverySucceeded = false;
+                this.incrementDiagnostic('lifecycle.bfcache.restore.failed');
+                console.warn('[DCUF lifecycle] bfcache restore failed:', error);
+                return false;
+            }).finally(() => {
+                this._bfcacheRecoveryPromise = null;
+            });
+            return this._bfcacheRecoveryPromise;
         },
 
         createPhaseScheduler(label, run, options = {}) {
@@ -1558,6 +1664,1364 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
     RuntimeCoordinator.installDiagnosticsApi();
     window.__dcufRuntimeCoordinator = RuntimeCoordinator;
+    if (!__dcufRoot.__dcufBfcachePageshowBound) {
+        __dcufRoot.__dcufBfcachePageshowBound = true;
+        window.addEventListener('pageshow', (event) => {
+            void RuntimeCoordinator.recoverFromBfcache(event);
+        });
+    }
+const ThemeModule = (() => {
+    const STORAGE_KEY = 'dcuf_mobile_ui_palette';
+    const ROOT_ATTRIBUTE = 'data-dcuf-palette';
+    const STYLE_ID = 'dcuf-mobile-palette-style';
+    const OVERLAY_ID = 'dcuf-palette-overlay';
+    const PANEL_ID = 'dcuf-palette-panel';
+    const DEFAULT_ID = 'blue';
+    const PRESETS = Object.freeze([
+        Object.freeze({ id: 'blue', label: '기본 블루', light: ['#3f6de0', '#245bda', '#eaf1ff'], dark: ['#8cb4ff', '#3868df', '#243a64'] }),
+        Object.freeze({ id: 'purple', label: '퍼플', light: ['#7c3aed', '#6d28d9', '#f3e8ff'], dark: ['#c4b5fd', '#7c3aed', '#39275a'] }),
+        Object.freeze({ id: 'green', label: '그린', light: ['#16805d', '#047857', '#e7f7ef'], dark: ['#6ee7b7', '#047857', '#173c32'] }),
+        Object.freeze({ id: 'orange', label: '오렌지', light: ['#c2410c', '#9a3412', '#fff0e7'], dark: ['#fdba74', '#c2410c', '#4a2a1b'] }),
+        Object.freeze({ id: 'mono', label: '모노톤', light: ['#526274', '#374151', '#eef2f7'], dark: ['#cbd5e1', '#475569', '#28323f'] })
+    ]);
+    const VALID_IDS = new Set(PRESETS.map((preset) => preset.id));
+
+    let committedId = DEFAULT_ID;
+    let writeRevision = 0;
+    let initialReadSettled = false;
+    let initialReadPromise = null;
+    let domReadyApplyScheduled = false;
+
+    const normalize = (value) => typeof value === 'string' && VALID_IDS.has(value) ? value : DEFAULT_ID;
+
+    const apply = (value, reason = 'apply') => {
+        const id = normalize(value);
+        const root = document.documentElement;
+        if (root) root.setAttribute(ROOT_ATTRIBUTE, id);
+        else if (!domReadyApplyScheduled) {
+            domReadyApplyScheduled = true;
+            document.addEventListener('DOMContentLoaded', () => {
+                domReadyApplyScheduled = false;
+                apply(committedId, 'dom-ready');
+            }, { once: true });
+        }
+        window.__dcufActivePalette = id;
+        window.dispatchEvent(new CustomEvent('dcuf:palette-change', { detail: { id, reason } }));
+        return id;
+    };
+
+    const buildPresetVariables = () => PRESETS.map((preset) => {
+        const [accent, strong, soft] = preset.light;
+        const [darkAccent, darkStrong, darkSoft] = preset.dark;
+        return `
+            html[${ROOT_ATTRIBUTE}="${preset.id}"] {
+                --dcuf-theme-accent: ${accent};
+                --dcuf-theme-accent-strong: ${strong};
+                --dcuf-theme-accent-soft: ${soft};
+                --dcuf-theme-on-accent: #fff;
+            }
+            html[${ROOT_ATTRIBUTE}="${preset.id}"].dc-filter-dark-mode,
+            html[${ROOT_ATTRIBUTE}="${preset.id}"] body.dc-filter-dark-mode {
+                --dcuf-theme-accent: ${darkAccent};
+                --dcuf-theme-accent-strong: ${darkStrong};
+                --dcuf-theme-accent-soft: ${darkSoft};
+                --dcuf-theme-on-accent: #fff;
+            }
+        `;
+    }).join('\n');
+
+    const buildCss = () => `
+        ${buildPresetVariables()}
+
+        html[${ROOT_ATTRIBUTE}] {
+            --dcuf-theme-fg: #27313f;
+            --dcuf-theme-fg-muted: #687384;
+            --dcuf-theme-border: color-mix(in srgb, var(--dcuf-theme-accent) 7%, #d9dde3);
+            --dcuf-theme-border-strong: color-mix(in srgb, var(--dcuf-theme-accent) 14%, #cbd2db);
+            --dcuf-theme-page: #f6f7f9;
+            --dcuf-theme-surface: color-mix(in srgb, var(--dcuf-theme-accent-soft) 8%, #f7f8fa);
+            --dcuf-theme-surface-raised: color-mix(in srgb, var(--dcuf-theme-accent-soft) 12%, #fbfcfd);
+            --dcuf-theme-surface-muted: color-mix(in srgb, var(--dcuf-theme-accent-soft) 9%, #f1f3f6);
+            --dcuf-theme-surface-input: color-mix(in srgb, var(--dcuf-theme-accent-soft) 2%, #fff);
+            --dcuf-theme-canvas: color-mix(in srgb, var(--dcuf-theme-accent-soft) 14%, #f6f7f9);
+            --dcuf-theme-card-top: color-mix(in srgb, var(--dcuf-theme-accent-soft) 1%, #fff);
+            --dcuf-theme-card-bottom: color-mix(in srgb, var(--dcuf-theme-accent-soft) 4%, #fafbfc);
+            --dcuf-theme-article-surface: color-mix(in srgb, var(--dcuf-theme-accent-soft) 6%, #f8f9fb);
+            --dcuf-theme-concept-surface: color-mix(in srgb, var(--dcuf-theme-accent-soft) 7%, #fff);
+            --dcuf-theme-notice-surface: #f2f4f7;
+            --dcuf-theme-reply-surface: color-mix(in srgb, var(--dcuf-theme-accent-soft) 10%, #f4f6f8);
+            --dcuf-theme-card-shadow: 0 1px 3px rgba(31, 41, 55, .07), 0 6px 16px rgba(31, 41, 55, .075);
+            --dcuf-theme-panel-shadow: 0 18px 42px rgba(31, 41, 55, .16), 0 3px 9px rgba(31, 41, 55, .09);
+            --dcuf-theme-primary-top: color-mix(in srgb, var(--dcuf-theme-accent) 78%, white);
+            --dcuf-theme-focus-ring: color-mix(in srgb, var(--dcuf-theme-accent) 18%, transparent);
+            --dcuf-theme-accent-shadow: color-mix(in srgb, var(--dcuf-theme-accent-strong) 25%, transparent);
+        }
+        html[${ROOT_ATTRIBUTE}].dc-filter-dark-mode,
+        html[${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode {
+            --dcuf-theme-fg: #edf2f7;
+            --dcuf-theme-fg-muted: #aeb8c4;
+            --dcuf-theme-border: color-mix(in srgb, var(--dcuf-theme-accent) 7%, #3a4149);
+            --dcuf-theme-border-strong: color-mix(in srgb, var(--dcuf-theme-accent) 14%, #4b525b);
+            --dcuf-theme-page: #121417;
+            --dcuf-theme-surface: color-mix(in srgb, var(--dcuf-theme-accent-soft) 5%, #1b1f24);
+            --dcuf-theme-surface-raised: color-mix(in srgb, var(--dcuf-theme-accent-soft) 8%, #22262c);
+            --dcuf-theme-surface-muted: color-mix(in srgb, var(--dcuf-theme-accent-soft) 6%, #1d2228);
+            --dcuf-theme-surface-input: color-mix(in srgb, var(--dcuf-theme-accent-soft) 2%, #171b20);
+            --dcuf-theme-canvas: color-mix(in srgb, var(--dcuf-theme-accent-soft) 10%, #171a1f);
+            --dcuf-theme-card-top: color-mix(in srgb, var(--dcuf-theme-accent-soft) 3%, #24272d);
+            --dcuf-theme-card-bottom: color-mix(in srgb, var(--dcuf-theme-accent-soft) 4%, #20242a);
+            --dcuf-theme-article-surface: color-mix(in srgb, var(--dcuf-theme-accent-soft) 5%, #1a1e23);
+            --dcuf-theme-concept-surface: color-mix(in srgb, var(--dcuf-theme-accent-soft) 8%, #22262c);
+            --dcuf-theme-notice-surface: #252a31;
+            --dcuf-theme-reply-surface: color-mix(in srgb, var(--dcuf-theme-accent-soft) 10%, #21262c);
+            --dcuf-theme-card-shadow: 0 1px 3px rgba(0,0,0,.28), 0 7px 18px rgba(0,0,0,.22);
+            --dcuf-theme-panel-shadow: 0 20px 46px rgba(0,0,0,.44), 0 3px 9px rgba(0,0,0,.24);
+            --dcuf-theme-primary-top: color-mix(in srgb, var(--dcuf-theme-accent) 68%, white);
+        }
+
+        /* DCUF_MOBILE_THEME_CSS_START */
+        html[${ROOT_ATTRIBUTE}] #dcuf-boot-overlay .dcuf-boot-bar::before {
+            background: linear-gradient(90deg, var(--dcuf-theme-accent-strong), var(--dcuf-theme-accent)) !important;
+        }
+
+        html[${ROOT_ATTRIBUTE}] body .custom-mobile-list {
+            --dcuf-accent: var(--dcuf-theme-accent) !important;
+            --dcuf-border: var(--dcuf-theme-border) !important;
+            --dcuf-surface: var(--dcuf-theme-surface-muted) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body .view_content_wrap,
+        html[${ROOT_ATTRIBUTE}] body #focus_cmt,
+        html[${ROOT_ATTRIBUTE}] body div[id^="comment_wrap_"],
+        html[${ROOT_ATTRIBUTE}] body .view_comment.image_comment {
+            --dcuf-view-accent: var(--dcuf-theme-accent) !important;
+            --dcuf-view-border: var(--dcuf-theme-border) !important;
+            --dcuf-view-border-strong: var(--dcuf-theme-border-strong) !important;
+            --dcuf-view-surface: var(--dcuf-theme-surface) !important;
+            --dcuf-view-surface-muted: var(--dcuf-theme-surface-muted) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body.is-write-page,
+        html[${ROOT_ATTRIBUTE}] body.is-write-page.dc-filter-dark-mode {
+            --dcuf-write-accent: var(--dcuf-theme-accent) !important;
+            --dcuf-write-accent-strong: var(--dcuf-theme-accent-strong) !important;
+            --dcuf-write-border: var(--dcuf-theme-border) !important;
+            --dcuf-write-border-strong: var(--dcuf-theme-border-strong) !important;
+            --dcuf-write-surface: var(--dcuf-theme-surface) !important;
+            --dcuf-write-surface-muted: var(--dcuf-theme-surface-muted) !important;
+        }
+
+        html[${ROOT_ATTRIBUTE}] body .custom-post-item.concept::before,
+        html[${ROOT_ATTRIBUTE}] body #dcinside-filter-setting #dcinside-threshold-save,
+        html[${ROOT_ATTRIBUTE}] body #dcinside-shortcut-modal #dcinside-save-shortcut-btn,
+        html[${ROOT_ATTRIBUTE}] body #dc-personal-block-size-panel [data-dcuf-fab-size-action="save"],
+        html[${ROOT_ATTRIBUTE}] body #dc-selection-popup .block-option button:not(.btn-unblock),
+        html[${ROOT_ATTRIBUTE}] body #dc-block-management-panel .panel-save-btn,
+        html[${ROOT_ATTRIBUTE}] body #dc-backup-popup .export-btn,
+        html[${ROOT_ATTRIBUTE}] body #dc-backup-popup .import-btn,
+        html[${ROOT_ATTRIBUTE}] body #dc-manual-block-panel .dcuf-manual-actions [data-manual-block-action="add"],
+        html[${ROOT_ATTRIBUTE}] body #dcinside-filter-setting #dcinside-proxy-ip-block-mode-group button[data-proxy-mode][aria-pressed="true"] {
+            border-color: var(--dcuf-theme-accent-strong) !important;
+            background: var(--dcuf-theme-accent-strong) !important;
+            color: var(--dcuf-theme-on-accent) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-block-management-panel input:checked + .switch-slider,
+        html[${ROOT_ATTRIBUTE}] body #dcinside-filter-setting input:checked + .switch-slider {
+            background-color: var(--dcuf-theme-accent-strong) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-block-management-panel .panel-tab.active {
+            border-color: color-mix(in srgb, var(--dcuf-theme-accent) 42%, transparent) !important;
+            background: var(--dcuf-theme-accent-soft) !important;
+            color: var(--dcuf-theme-accent) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-block-management-panel .panel-tab.active::after {
+            background: var(--dcuf-theme-accent-strong) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body .custom-post-item.concept + .custom-post-item:not(.notice):not(.concept) {
+            border-top-color: var(--dcuf-theme-accent) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-personal-block-size-panel input[type="range"] {
+            accent-color: var(--dcuf-theme-accent-strong) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-backup-popup .export-btn-download {
+            border-color: color-mix(in srgb, var(--dcuf-theme-accent) 30%, transparent) !important;
+            background: var(--dcuf-theme-accent-soft) !important;
+            color: var(--dcuf-theme-accent) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-backup-popup .export-btn-download:hover {
+            border-color: color-mix(in srgb, var(--dcuf-theme-accent) 45%, transparent) !important;
+            background: color-mix(in srgb, var(--dcuf-theme-accent) 18%, var(--dcuf-theme-accent-soft)) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-personal-block-fab {
+            border-color: color-mix(in srgb, var(--dcuf-theme-accent) 38%, transparent) !important;
+            background: linear-gradient(180deg, #fff 0%, var(--dcuf-theme-accent-soft) 100%) !important;
+            color: var(--dcuf-theme-accent-strong) !important;
+            box-shadow: 0 14px 30px color-mix(in srgb, var(--dcuf-theme-accent) 20%, transparent), 0 3px 8px rgba(40,68,112,.1), inset 0 1px 0 #fff !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-personal-block-fab:hover {
+            border-color: color-mix(in srgb, var(--dcuf-theme-accent) 54%, transparent) !important;
+            background: linear-gradient(180deg, #fff 0%, color-mix(in srgb, var(--dcuf-theme-accent) 16%, var(--dcuf-theme-accent-soft)) 100%) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-personal-block-drawer button:hover,
+        html[${ROOT_ATTRIBUTE}] body #dc-personal-block-drawer button:focus-visible {
+            border-color: color-mix(in srgb, var(--dcuf-theme-accent) 28%, transparent) !important;
+            background: linear-gradient(180deg, #fff, var(--dcuf-theme-accent-soft)) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-personal-block-drawer {
+            background: linear-gradient(145deg, rgba(255,255,255,.98), color-mix(in srgb, var(--dcuf-theme-accent-soft) 78%, white)) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-personal-block-drawer .dcuf-menu-icon,
+        html[${ROOT_ATTRIBUTE}] body #dc-selection-popup .dcuf-selection-prompt-icon {
+            border-color: color-mix(in srgb, var(--dcuf-theme-accent) 28%, transparent) !important;
+            background: linear-gradient(145deg, #fff, var(--dcuf-theme-accent-soft)) !important;
+            color: var(--dcuf-theme-accent) !important;
+            box-shadow: 0 5px 11px color-mix(in srgb, var(--dcuf-theme-accent) 18%, transparent), inset 0 1px 0 #fff !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-manual-block-panel [data-manual-block-type][aria-pressed="true"] {
+            border-color: color-mix(in srgb, var(--dcuf-theme-accent) 35%, transparent) !important;
+            background: linear-gradient(180deg, #fff, var(--dcuf-theme-accent-soft)) !important;
+            color: var(--dcuf-theme-accent) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-manual-block-panel {
+            background: linear-gradient(155deg, #fff, color-mix(in srgb, var(--dcuf-theme-accent-soft) 72%, white)) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-manual-block-panel .dcuf-manual-header {
+            background: linear-gradient(135deg, var(--dcuf-theme-accent-soft), #fff) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-manual-block-panel .dcuf-manual-type-tabs {
+            border-color: color-mix(in srgb, var(--dcuf-theme-accent) 24%, #d6e0ef) !important;
+            background: color-mix(in srgb, var(--dcuf-theme-accent-soft) 68%, #eaf0f8) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-manual-block-panel .dcuf-manual-status[data-state="info"],
+        html[${ROOT_ATTRIBUTE}] body #dc-manual-block-panel .dcuf-manual-kicker,
+        html[${ROOT_ATTRIBUTE}] body #dc-block-management-panel .panel-kicker {
+            color: var(--dcuf-theme-accent) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-block-management-panel .panel-add-btn {
+            border-color: color-mix(in srgb, var(--dcuf-theme-accent) 30%, transparent) !important;
+            background: var(--dcuf-theme-accent-soft) !important;
+            color: var(--dcuf-theme-accent) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-block-management-panel :is(.select-all-btn, .select-all-global-btn, .panel-backup-btn):hover,
+        html[${ROOT_ATTRIBUTE}] body #dc-block-management-panel .blocked-item:not(.item-to-delete):hover {
+            border-color: color-mix(in srgb, var(--dcuf-theme-accent) 28%, transparent) !important;
+            background: color-mix(in srgb, var(--dcuf-theme-accent-soft) 72%, white) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-selection-popup.dcuf-selection-prompt {
+            border-color: color-mix(in srgb, var(--dcuf-theme-accent) 34%, transparent) !important;
+            background: linear-gradient(145deg, rgba(255,255,255,.98), color-mix(in srgb, var(--dcuf-theme-accent-soft) 82%, white)) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-manual-block-panel .dcuf-manual-field input:focus,
+        html[${ROOT_ATTRIBUTE}] body #dcinside-filter-setting :is(input, button):focus-visible,
+        html[${ROOT_ATTRIBUTE}] body #dc-block-management-panel :is(input, button):focus-visible,
+        html[${ROOT_ATTRIBUTE}] body.is-write-page :is(input, textarea, select, button):focus-visible {
+            border-color: var(--dcuf-theme-accent) !important;
+            box-shadow: 0 0 0 3px color-mix(in srgb, var(--dcuf-theme-accent) 18%, transparent) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body.selection-mode-active .gall_writer,
+        html[${ROOT_ATTRIBUTE}] body.selection-mode-active .ub-writer {
+            outline-color: color-mix(in srgb, var(--dcuf-theme-accent) 66%, transparent) !important;
+            background: color-mix(in srgb, var(--dcuf-theme-accent) 16%, transparent) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body .btn_recommend_box .up_num,
+        html[${ROOT_ATTRIBUTE}] body .btn_recommend_box .font_blue.smallnum,
+        html[${ROOT_ATTRIBUTE}] body .post-title .reply_num,
+        html[${ROOT_ATTRIBUTE}] body #focus_cmt .comment_box .gall_writer .nickname.me,
+        html[${ROOT_ATTRIBUTE}] body div[id^="comment_wrap_"] .comment_box .gall_writer .nickname.me {
+            color: var(--dcuf-theme-accent) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body .view_content_wrap .btn_recommend_box {
+            border-color: var(--dcuf-theme-border) !important;
+            background-color: var(--dcuf-theme-article-surface) !important;
+            background-image: linear-gradient(180deg, var(--dcuf-theme-surface-raised), var(--dcuf-theme-article-surface)) !important;
+            box-shadow: 0 2px 7px rgba(31, 41, 55, .07) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body .view_content_wrap .btn_recommend_box .inner_box > .inner {
+            border-color: var(--dcuf-theme-border) !important;
+            background-color: var(--dcuf-theme-card-top) !important;
+            background-image: linear-gradient(180deg, var(--dcuf-theme-card-top), var(--dcuf-theme-card-bottom)) !important;
+            box-shadow: var(--dcuf-theme-card-shadow), inset 0 1px 0 color-mix(in srgb, white 70%, transparent) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body .view_content_wrap .btn_recommend_box .recom_bottom_box {
+            border-color: var(--dcuf-theme-border) !important;
+            background-color: transparent !important;
+            background-image: none !important;
+            box-shadow: none !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body .view_content_wrap .btn_recommend_box .recom_bottom_box :is(button, a) {
+            border-color: var(--dcuf-theme-border-strong) !important;
+            background-color: var(--dcuf-theme-card-top) !important;
+            background-image: linear-gradient(180deg, var(--dcuf-theme-card-top), var(--dcuf-theme-surface-input)) !important;
+            color: var(--dcuf-theme-fg-muted) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode .view_content_wrap .btn_recommend_box,
+        html[${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode .view_content_wrap .btn_recommend_box .inner_box > .inner,
+        html[${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode .view_content_wrap .btn_recommend_box .recom_bottom_box {
+            border-color: var(--dcuf-theme-border) !important;
+            box-shadow: 0 4px 12px rgba(0,0,0,.18), inset 0 1px 0 rgba(255,255,255,.035) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body .view_content_wrap .btn_recommend_box .btn_recom_up {
+            display: inline-flex !important;
+            width: 56px !important;
+            min-width: 56px !important;
+            height: 56px !important;
+            align-items: center !important;
+            justify-content: center !important;
+            border: 1px solid color-mix(in srgb, var(--dcuf-theme-accent) 72%, transparent) !important;
+            border-radius: 50% !important;
+            background: linear-gradient(145deg, var(--dcuf-theme-accent), var(--dcuf-theme-accent-strong)) !important;
+            box-shadow: 0 6px 14px var(--dcuf-theme-accent-shadow) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body .view_content_wrap .btn_recommend_box .btn_recom_up > em.icon_recom_up {
+            position: relative !important;
+            display: inline-flex !important;
+            width: 100% !important;
+            height: 100% !important;
+            flex-direction: column !important;
+            align-items: center !important;
+            justify-content: center !important;
+            gap: 0 !important;
+            background: none !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body .view_content_wrap .btn_recommend_box .btn_recom_up > em.icon_recom_up::before {
+            content: "★" !important;
+            color: var(--dcuf-theme-on-accent) !important;
+            font: 900 26px/.9 Arial, sans-serif !important;
+            text-shadow: 0 1px 1px rgba(0,0,0,.12) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body .view_content_wrap .btn_recommend_box .btn_recom_up > em.icon_recom_up::after {
+            content: "개념" !important;
+            display: block !important;
+            margin-top: 2px !important;
+            color: var(--dcuf-theme-on-accent) !important;
+            font: 850 10px/1.05 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+            letter-spacing: -.04em !important;
+            text-shadow: 0 1px 1px rgba(0,0,0,.12) !important;
+        }
+        /* Host chrome uses the palette only where DCInside itself uses its fixed blue accent. */
+        html[${ROOT_ATTRIBUTE}] body .dcheader.typea,
+        html[${ROOT_ATTRIBUTE}] body .page_head {
+            border-color: var(--dcuf-theme-border-strong) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body .gnb_bar,
+        html[${ROOT_ATTRIBUTE}] body .dchead .top_search,
+        html[${ROOT_ATTRIBUTE}] body .dchead .top_search .bnt_search,
+        html[${ROOT_ATTRIBUTE}] body .dchead .top_search button.sp_img.bnt_search,
+        html[${ROOT_ATTRIBUTE}] body .dchead .area_links .btn_login,
+        html[${ROOT_ATTRIBUTE}] body .dchead .area_links .btn_top_loginout,
+        html[${ROOT_ATTRIBUTE}] body .page_head :is(.gall_search, .gall_search_box, .inner_search) :is(.btn_search, .bnt_search, button[type="submit"]),
+        html[${ROOT_ATTRIBUTE}] body .page_head > .fl form :is(.btn_search, .bnt_search, button[type="submit"]) {
+            border-color: var(--dcuf-theme-accent-strong) !important;
+            background-color: var(--dcuf-theme-accent-strong) !important;
+            background-image: none !important;
+            color: var(--dcuf-theme-on-accent) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body .dchead .top_search {
+            box-shadow: inset 0 0 0 1px var(--dcuf-theme-accent-strong) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body .dchead .top_search :is(input, .inner_search) {
+            border-color: var(--dcuf-theme-accent-strong) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body .dchead .top_search .bnt_search::before,
+        html[${ROOT_ATTRIBUTE}] body .dchead .top_search button.sp_img.bnt_search::before {
+            content: "" !important;
+            display: block !important;
+            width: 12px !important;
+            height: 12px !important;
+            margin: auto !important;
+            border: 3px solid var(--dcuf-theme-on-accent) !important;
+            border-radius: 50% !important;
+            box-shadow: 7px 7px 0 -5px var(--dcuf-theme-on-accent) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body .page_head :is(h2, h2 a, .gall_tit, .gall_tit a, .gallery_title, .gallery_title a),
+        html[${ROOT_ATTRIBUTE}] body .newvisit_history > .tit,
+        html[${ROOT_ATTRIBUTE}] body .newvisit_history > :is(.btn_open, .bnt_newvisit_more),
+        html[${ROOT_ATTRIBUTE}] body .newvisit_history .newvisit_list a.on {
+            color: var(--dcuf-theme-accent) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body .page_head :is(.icon_mini, .mini_icon, .gallery_badge) {
+            border-color: var(--dcuf-theme-accent) !important;
+            color: var(--dcuf-theme-accent) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body .page_head .pagehead_titicon:is(.mgall, .ngall).sp_img,
+        html[${ROOT_ATTRIBUTE}] body .page_head h2 a > .pagehead_titicon:is(.mgall, .ngall).sp_img {
+            display: inline-flex !important;
+            width: 26px !important;
+            height: 20px !important;
+            margin-left: 5px !important;
+            align-items: center !important;
+            justify-content: center !important;
+            border: 2px solid var(--dcuf-theme-accent) !important;
+            border-radius: 2px !important;
+            background: none !important;
+            background-image: none !important;
+            background-position: 0 0 !important;
+            text-indent: 0 !important;
+            overflow: hidden !important;
+            color: var(--dcuf-theme-accent) !important;
+            font-size: 0 !important;
+            line-height: 1 !important;
+            box-sizing: border-box !important;
+            vertical-align: middle !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body .page_head .pagehead_titicon:is(.mgall, .ngall).sp_img::before,
+        html[${ROOT_ATTRIBUTE}] body .page_head h2 a > .pagehead_titicon:is(.mgall, .ngall).sp_img::before {
+            content: "m" !important;
+            font: 900 12px/1 Arial, sans-serif !important;
+            text-transform: lowercase !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body[data-fixture-variant="mini"] .page_head .pagehead_titicon:is(.mgall, .ngall).sp_img::before,
+        html[${ROOT_ATTRIBUTE}] body:has(#top.miniwrap) .page_head .pagehead_titicon:is(.mgall, .ngall).sp_img::before,
+        html[${ROOT_ATTRIBUTE}] body .miniwrap .page_head .pagehead_titicon:is(.mgall, .ngall).sp_img::before,
+        html[${ROOT_ATTRIBUTE}] body .page_head .pagehead_titicon.ngall.sp_img::before {
+            content: "mi" !important;
+            font-size: 10px !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body .gnb_bar .sp_img.icon_next {
+            display: inline-block !important;
+            width: 0 !important;
+            height: 0 !important;
+            margin-left: 8px !important;
+            border: 0 solid transparent !important;
+            border-right-width: 7px !important;
+            border-left-width: 7px !important;
+            border-top: 10px solid var(--dcuf-theme-on-accent) !important;
+            background: none !important;
+            filter: none !important;
+            vertical-align: middle !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body .issue_wrap {
+            border-top-color: var(--dcuf-theme-accent) !important;
+            box-shadow: inset 0 2px 0 color-mix(in srgb, var(--dcuf-theme-accent) 78%, transparent) !important;
+        }
+
+        html[${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode #dc-personal-block-fab {
+            border-color: color-mix(in srgb, var(--dcuf-theme-accent) 45%, transparent) !important;
+            background: linear-gradient(180deg, color-mix(in srgb, var(--dcuf-theme-accent-soft) 78%, #263347), #202b3a) !important;
+            color: var(--dcuf-theme-accent) !important;
+            box-shadow: 0 12px 28px rgba(0,0,0,.34), inset 0 1px 0 rgba(255,255,255,.08) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode #dc-personal-block-drawer button:hover,
+        html[${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode #dc-personal-block-drawer button:focus-visible,
+        html[${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode #dc-manual-block-panel [data-manual-block-type][aria-pressed="true"],
+        html[${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode #dc-block-management-panel .panel-tab.active {
+            border-color: var(--dcuf-theme-border-strong) !important;
+            background: linear-gradient(180deg, var(--dcuf-theme-surface-raised), var(--dcuf-theme-surface-muted)) !important;
+            color: var(--dcuf-theme-accent) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode #dc-personal-block-drawer,
+        html[${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode #dc-manual-block-panel,
+        html[${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode #dc-selection-popup.dcuf-selection-prompt {
+            border-color: var(--dcuf-theme-border-strong) !important;
+            background: linear-gradient(145deg, var(--dcuf-theme-card-top), var(--dcuf-theme-card-bottom)) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode #dc-personal-block-drawer,
+        html[${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode #dc-manual-block-panel,
+        html[${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode #dc-selection-popup.dcuf-selection-prompt { background-color: var(--dcuf-theme-card-bottom) !important; }
+        html[${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode #dc-manual-block-panel .dcuf-manual-header,
+        html[${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode #dc-manual-block-panel .dcuf-manual-type-tabs {
+            border-color: var(--dcuf-theme-border) !important;
+            background: var(--dcuf-theme-reply-surface) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode #dc-personal-block-drawer .dcuf-menu-icon,
+        html[${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode #dc-selection-popup .dcuf-selection-prompt-icon {
+            border-color: var(--dcuf-theme-border-strong) !important;
+            background: linear-gradient(145deg, var(--dcuf-theme-card-top), var(--dcuf-theme-surface-raised)) !important;
+            color: var(--dcuf-theme-accent) !important;
+        }
+
+        html[${ROOT_ATTRIBUTE}] body:not(.is-write-page) .list_array_option .array_tab .on,
+        html[${ROOT_ATTRIBUTE}] body:not(.is-write-page) .list_array_option .array_tab button.on,
+        html[${ROOT_ATTRIBUTE}] body:not(.is-write-page) .list_array_option .array_tab a.on,
+        html[${ROOT_ATTRIBUTE}] body:not(.is-write-page) .list_array_option .array_tab li.on > a,
+        html[${ROOT_ATTRIBUTE}] body:not(.is-write-page) .list_array_option .btn_write,
+        html[${ROOT_ATTRIBUTE}] body:not(.is-write-page) .list_array_option .write,
+        html[${ROOT_ATTRIBUTE}] body .custom-bottom-controls .dcuf-bottom-action-card .on,
+        html[${ROOT_ATTRIBUTE}] body .custom-bottom-controls .dcuf-bottom-action-card .btn_write,
+        html[${ROOT_ATTRIBUTE}] body .custom-bottom-controls .dcuf-bottom-action-card .write,
+        html[${ROOT_ATTRIBUTE}] body .custom-bottom-controls .bottom_paging_box > strong,
+        html[${ROOT_ATTRIBUTE}] body .custom-bottom-controls .bottom_paging_box > em,
+        html[${ROOT_ATTRIBUTE}] body .custom-bottom-controls .bottom_paging_box > .on,
+        html[${ROOT_ATTRIBUTE}] body .custom-bottom-controls .bottom_paging_box > span > strong,
+        html[${ROOT_ATTRIBUTE}] body .custom-bottom-controls .bottom_paging_box > div > strong,
+        html[${ROOT_ATTRIBUTE}] body .custom-bottom-controls .dcuf-search-card form[name="frmSearch"] .bnt_search,
+        html[${ROOT_ATTRIBUTE}] body #container.gallery_view .view_bottom_btnbox .btn_blue,
+        html[${ROOT_ATTRIBUTE}] body #container.gallery_view .view_bottom_btnbox .write,
+        html[${ROOT_ATTRIBUTE}] body #container.minor_view .view_bottom_btnbox .btn_blue,
+        html[${ROOT_ATTRIBUTE}] body #container.minor_view .view_bottom_btnbox .write,
+        html[${ROOT_ATTRIBUTE}] body #container.mini_view .view_bottom_btnbox .btn_blue,
+        html[${ROOT_ATTRIBUTE}] body #container.mini_view .view_bottom_btnbox .write,
+        html[${ROOT_ATTRIBUTE}] body.is-write-page form.dcuf-write-form .btn_bottom_box .btn_blue,
+        html[${ROOT_ATTRIBUTE}] body.is-write-page form.dcuf-write-form .btm-btns-box .btn-line-blue,
+        html[${ROOT_ATTRIBUTE}] body.is-write-page form.dcuf-write-form > .btn_box.write > .btn_blue,
+        html[${ROOT_ATTRIBUTE}] body.is-write-page form.dcuf-write-form .ai_easy_box > .btn_aigo,
+        html[${ROOT_ATTRIBUTE}] body #focus_cmt .cmt_write_box .cmt_btn_bot > button,
+        html[${ROOT_ATTRIBUTE}] body #focus_cmt .cmt_write_box .cmt_cont_bottm > .fr > button,
+        html[${ROOT_ATTRIBUTE}] body #container .view_comment.image_comment .cmt_write_box .cmt_btn_bot > button,
+        html[${ROOT_ATTRIBUTE}] body #container .view_comment.image_comment .cmt_write_box .cmt_cont_bottm > .fr > button,
+        html[${ROOT_ATTRIBUTE}] body.is-write-page > #leave_confirm_box.dcuf-write-leave-confirm .write_cont > .btn_box > .btn_blue {
+            border-color: var(--dcuf-theme-accent-strong) !important;
+            background-color: var(--dcuf-theme-accent-strong) !important;
+            background-image: linear-gradient(180deg, var(--dcuf-theme-primary-top), var(--dcuf-theme-accent-strong)) !important;
+            color: var(--dcuf-theme-on-accent) !important;
+            box-shadow: 0 6px 14px var(--dcuf-theme-accent-shadow) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body:not(.is-write-page) .list_array_option .btn_write::before,
+        html[${ROOT_ATTRIBUTE}] body .custom-bottom-controls .dcuf-bottom-action-card .btn_write::before,
+        html[${ROOT_ATTRIBUTE}] body .custom-bottom-controls .dcuf-bottom-action-card .write::before {
+            content: "\\270E" !important;
+            display: inline-block !important;
+            width: auto !important;
+            height: auto !important;
+            margin: 0 5px 0 0 !important;
+            border: 0 !important;
+            background: none !important;
+            color: var(--dcuf-theme-on-accent) !important;
+            font: 900 15px/1 Arial, sans-serif !important;
+            filter: none !important;
+            transform: none !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body:not(.is-write-page) .list_array_option,
+        html[${ROOT_ATTRIBUTE}] body .custom-bottom-controls .dcuf-bottom-action-card,
+        html[${ROOT_ATTRIBUTE}] body .custom-bottom-controls .dcuf-pagination-card,
+        html[${ROOT_ATTRIBUTE}] body .custom-bottom-controls .dcuf-search-card,
+        html[${ROOT_ATTRIBUTE}] body #container.gallery_view .view_bottom_btnbox,
+        html[${ROOT_ATTRIBUTE}] body #container.minor_view .view_bottom_btnbox,
+        html[${ROOT_ATTRIBUTE}] body #container.mini_view .view_bottom_btnbox {
+            border-color: var(--dcuf-theme-border) !important;
+            background-color: var(--dcuf-theme-surface-raised) !important;
+            background-image: none !important;
+        }
+
+        /* The list canvas carries the preset softly; each post remains a readable raised card. */
+        html[${ROOT_ATTRIBUTE}] body #container .custom-mobile-list {
+            border-color: var(--dcuf-theme-border) !important;
+            background-color: var(--dcuf-theme-canvas) !important;
+            background-image: linear-gradient(180deg, var(--dcuf-theme-canvas), color-mix(in srgb, var(--dcuf-theme-canvas) 76%, var(--dcuf-theme-surface-raised))) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body:not(.is-write-page) .list_array_option,
+        html[${ROOT_ATTRIBUTE}] body .custom-bottom-controls .dcuf-bottom-action-card {
+            background-color: var(--dcuf-theme-surface-raised) !important;
+            background-image: none !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body .custom-bottom-controls .dcuf-pagination-card,
+        html[${ROOT_ATTRIBUTE}] body .custom-bottom-controls .dcuf-search-card {
+            background-color: var(--dcuf-theme-card-top) !important;
+            background-image: linear-gradient(180deg, var(--dcuf-theme-card-top), var(--dcuf-theme-card-bottom)) !important;
+            box-shadow: var(--dcuf-theme-card-shadow) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body:not(.is-write-page) .list_array_option :is(select, .select_area),
+        html[${ROOT_ATTRIBUTE}] body .custom-bottom-controls .dcuf-bottom-action-card :is(button, .btn_white),
+        html[${ROOT_ATTRIBUTE}] body .custom-bottom-controls .dcuf-pagination-card .btn_schmove,
+        html[${ROOT_ATTRIBUTE}] body .custom-bottom-controls .dcuf-search-card :is(select, .select_area, .in_keyword, input[type="text"]) {
+            border-color: var(--dcuf-theme-border-strong) !important;
+            background-color: var(--dcuf-theme-surface-input) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body .custom-mobile-list .custom-post-item,
+        html[${ROOT_ATTRIBUTE}] body .custom-mobile-list .post-title-link,
+        html[${ROOT_ATTRIBUTE}] body .custom-mobile-list .post-meta,
+        html[${ROOT_ATTRIBUTE}] body .custom-mobile-list .post-meta .author {
+            -webkit-tap-highlight-color: transparent !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body .custom-mobile-list .custom-post-item {
+            border-color: var(--dcuf-theme-border) !important;
+            background-color: var(--dcuf-theme-card-top) !important;
+            background-image: linear-gradient(180deg, var(--dcuf-theme-card-top) 0%, var(--dcuf-theme-card-bottom) 100%) !important;
+            box-shadow: var(--dcuf-theme-card-shadow) !important;
+            transition: transform .14s ease, border-color .14s ease, box-shadow .14s ease !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body .custom-mobile-list .custom-post-item.concept {
+            border-color: color-mix(in srgb, var(--dcuf-theme-accent) 18%, var(--dcuf-theme-border)) !important;
+            background-color: var(--dcuf-theme-concept-surface) !important;
+            background-image: linear-gradient(180deg, color-mix(in srgb, white 24%, var(--dcuf-theme-concept-surface)), var(--dcuf-theme-concept-surface)) !important;
+            box-shadow: inset 3px 0 0 var(--dcuf-theme-accent), var(--dcuf-theme-card-shadow) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body .custom-mobile-list .custom-post-item.notice {
+            border-color: color-mix(in srgb, #7b8492 22%, var(--dcuf-theme-border)) !important;
+            background-color: var(--dcuf-theme-notice-surface) !important;
+            background-image: linear-gradient(180deg, color-mix(in srgb, white 24%, var(--dcuf-theme-notice-surface)), var(--dcuf-theme-notice-surface)) !important;
+            box-shadow: inset 3px 0 0 #8993a1, var(--dcuf-theme-card-shadow) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode .custom-mobile-list .custom-post-item:is(.concept, .notice) {
+            background-image: linear-gradient(180deg, rgba(255,255,255,.018), transparent) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body .custom-mobile-list .custom-post-item .post-title {
+            border: 0 !important;
+            background: transparent !important;
+            box-shadow: none !important;
+        }
+        @media (hover: hover) and (pointer: fine) {
+            html[${ROOT_ATTRIBUTE}] body .custom-mobile-list .custom-post-item:hover {
+                transform: translateY(-1px) !important;
+                border-color: var(--dcuf-theme-border-strong) !important;
+            }
+        }
+        html[${ROOT_ATTRIBUTE}] body .custom-mobile-list .post-meta .author {
+            flex: 0 1 auto !important;
+            align-self: flex-start !important;
+            width: max-content !important;
+            max-width: calc(100% - 120px) !important;
+        }
+
+        /* View title, article, and comment hierarchy. */
+        html[${ROOT_ATTRIBUTE}] body .view_content_wrap .gallview_head {
+            border-color: var(--dcuf-theme-border-strong) !important;
+            background-color: var(--dcuf-theme-surface-raised) !important;
+            background-image: linear-gradient(180deg, color-mix(in srgb, white 20%, var(--dcuf-theme-surface-raised)) 0%, var(--dcuf-theme-surface) 100%) !important;
+            box-shadow: inset 0 1px 0 color-mix(in srgb, white 70%, transparent), 0 5px 14px rgba(31, 41, 55, .09) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode .view_content_wrap .gallview_head {
+            background-image: linear-gradient(180deg, color-mix(in srgb, white 5%, var(--dcuf-theme-surface-raised)) 0%, var(--dcuf-theme-surface) 100%) !important;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.07), 0 5px 14px rgba(0,0,0,.22) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body .view_content_wrap .gallview_contents,
+        html[${ROOT_ATTRIBUTE}] body .view_content_wrap .writing_view_box {
+            border: 0 !important;
+            border-radius: 0 !important;
+            background: transparent !important;
+            box-shadow: none !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body .view_content_wrap .writing_view_box > .write_div {
+            border: 0 !important;
+            border-radius: 0 !important;
+            background: transparent !important;
+            box-shadow: none !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #focus_cmt {
+            border-color: transparent !important;
+            background-color: transparent !important;
+            background-image: none !important;
+            box-shadow: none !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #focus_cmt .comment_box {
+            border-color: transparent !important;
+            background: transparent !important;
+            box-shadow: none !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #focus_cmt .comment_count,
+        html[${ROOT_ATTRIBUTE}] body #focus_cmt .bottom_paging_box {
+            background: transparent !important;
+            box-shadow: none !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #focus_cmt > div[id^="comment_wrap_"] .comment_box .cmt_list > li {
+            border-color: var(--dcuf-theme-border) !important;
+            background-color: var(--dcuf-theme-card-top) !important;
+            background-image: linear-gradient(180deg, var(--dcuf-theme-card-top), var(--dcuf-theme-card-bottom)) !important;
+            box-shadow: var(--dcuf-theme-card-shadow) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #focus_cmt > div[id^="comment_wrap_"] .comment_box .cmt_list > li[data-dcuf-focus-group-parent="1"]::after {
+            border-color: var(--dcuf-theme-border) !important;
+            background-color: var(--dcuf-theme-card-top) !important;
+            background-image: linear-gradient(180deg, var(--dcuf-theme-card-top), var(--dcuf-theme-card-bottom)) !important;
+            box-shadow: var(--dcuf-theme-card-shadow) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode #focus_cmt > div[id^="comment_wrap_"] .comment_box .cmt_list > li,
+        html[${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode #focus_cmt > div[id^="comment_wrap_"] .comment_box .cmt_list > li[data-dcuf-focus-group-parent="1"]::after {
+            border-color: var(--dcuf-theme-border) !important;
+            background-color: var(--dcuf-theme-card-top) !important;
+            background-image: linear-gradient(180deg, var(--dcuf-theme-card-top), var(--dcuf-theme-card-bottom)) !important;
+            box-shadow: var(--dcuf-theme-card-shadow) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #focus_cmt .comment_box .reply.show {
+            border-top-color: var(--dcuf-theme-border) !important;
+            background: transparent !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #focus_cmt .comment_box .reply_box,
+        html[${ROOT_ATTRIBUTE}] body #focus_cmt .comment_box .cmt_list > li[data-dcuf-focus-group-reply="1"] > .reply.show > .reply_box {
+            border-color: var(--dcuf-theme-border) !important;
+            border-left-color: color-mix(in srgb, var(--dcuf-theme-accent) 28%, var(--dcuf-theme-border-strong)) !important;
+            background-color: var(--dcuf-theme-reply-surface) !important;
+            background-image: linear-gradient(180deg, color-mix(in srgb, white 20%, var(--dcuf-theme-reply-surface)), var(--dcuf-theme-reply-surface)) !important;
+            box-shadow: 0 1px 3px rgba(49,42,38,.045), 0 5px 14px color-mix(in srgb, var(--dcuf-theme-accent-strong) 5%, transparent) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode #focus_cmt > div[id^="comment_wrap_"] .comment_box .reply_box,
+        html[${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode #focus_cmt > div[id^="comment_wrap_"] .comment_box .cmt_list > li[data-dcuf-focus-group-reply="1"] > .reply.show > .reply_box {
+            border-color: var(--dcuf-theme-border) !important;
+            border-left-color: color-mix(in srgb, var(--dcuf-theme-accent) 28%, var(--dcuf-theme-border-strong)) !important;
+            background-color: var(--dcuf-theme-reply-surface) !important;
+            background-image: linear-gradient(180deg, color-mix(in srgb, white 3%, var(--dcuf-theme-reply-surface)), var(--dcuf-theme-reply-surface)) !important;
+            box-shadow: 0 2px 7px rgba(0,0,0,.16) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #focus_cmt .comment_box .reply_list > li,
+        html[${ROOT_ATTRIBUTE}] body #focus_cmt .comment_box .reply_list > li + li {
+            border-color: var(--dcuf-theme-border) !important;
+            background: transparent !important;
+            box-shadow: none !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #focus_cmt .comment_box .reply_list > li .cmt_nickbox::before {
+            color: var(--dcuf-theme-fg-muted) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #focus_cmt .cmt_write_box,
+        html[${ROOT_ATTRIBUTE}] body #container .view_comment.image_comment .cmt_write_box {
+            border-color: var(--dcuf-theme-border) !important;
+            background-color: var(--dcuf-theme-surface) !important;
+            background-image: linear-gradient(180deg, var(--dcuf-theme-surface-raised), var(--dcuf-theme-surface)) !important;
+            box-shadow: 0 3px 10px rgba(31, 41, 55, .07) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #focus_cmt .cmt_write_box :is(.cmt_txt_cont, .user_info_input input),
+        html[${ROOT_ATTRIBUTE}] body #container .view_comment.image_comment .cmt_write_box :is(.cmt_txt_cont, .user_info_input input) {
+            border-color: var(--dcuf-theme-border-strong) !important;
+            background-color: var(--dcuf-theme-surface-input) !important;
+            background-image: none !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #focus_cmt .cmt_write_box :is(.cmt_write, textarea),
+        html[${ROOT_ATTRIBUTE}] body #container .view_comment.image_comment .cmt_write_box :is(.cmt_write, textarea) {
+            background-color: var(--dcuf-theme-surface-input) !important;
+            background-image: none !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #focus_cmt .cmt_write_box .cmt_cont_bottm,
+        html[${ROOT_ATTRIBUTE}] body #container .view_comment.image_comment .cmt_write_box .cmt_cont_bottm {
+            border-color: var(--dcuf-theme-border) !important;
+            background-color: var(--dcuf-theme-surface-input) !important;
+            background-image: none !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #focus_cmt .reply_box .cmt_write_box.small {
+            width: 100% !important;
+            max-width: 100% !important;
+            min-width: 0 !important;
+            border-color: var(--dcuf-theme-border) !important;
+            background-color: var(--dcuf-theme-surface) !important;
+            background-image: none !important;
+            box-sizing: border-box !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #focus_cmt .reply_box .cmt_write_box.small > .fl,
+        html[${ROOT_ATTRIBUTE}] body #focus_cmt .reply_box .cmt_write_box.small .cmt_txt_cont {
+            max-width: 100% !important;
+            min-width: 0 !important;
+            box-sizing: border-box !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #focus_cmt .reply_box .cmt_write_box.small .cmt_txt_cont,
+        html[${ROOT_ATTRIBUTE}] body #focus_cmt .reply_box .cmt_write_box.small .cmt_write,
+        html[${ROOT_ATTRIBUTE}] body #focus_cmt .reply_box .cmt_write_box.small textarea,
+        html[${ROOT_ATTRIBUTE}] body #focus_cmt .reply_box .cmt_write_box.small .user_info_input input:not([type="hidden"]) {
+            border-color: var(--dcuf-theme-border-strong) !important;
+            background-color: var(--dcuf-theme-surface-input) !important;
+            background-image: none !important;
+            color: var(--dcuf-theme-fg) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #focus_cmt .reply_box .cmt_write_box.small .cmt_cont_bottm {
+            border-color: var(--dcuf-theme-border) !important;
+            background-color: var(--dcuf-theme-surface-input) !important;
+            background-image: none !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #container .view_comment.image_comment .comment_box.img_comment_box,
+        html[${ROOT_ATTRIBUTE}] body #container .view_comment.image_comment .comment_wrap {
+            border-color: var(--dcuf-theme-border) !important;
+            background-color: var(--dcuf-theme-canvas) !important;
+            background-image: linear-gradient(180deg, color-mix(in srgb, white 5%, var(--dcuf-theme-canvas)), var(--dcuf-theme-canvas)) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #container .view_comment.image_comment .comment_box.img_comment_box .cmt_list > li,
+        html[${ROOT_ATTRIBUTE}] body #container .view_comment.image_comment .comment_box.img_comment_box .reply_list > li {
+            border-color: var(--dcuf-theme-border) !important;
+            background-color: var(--dcuf-theme-card-top) !important;
+            background-image: linear-gradient(180deg, var(--dcuf-theme-card-top), var(--dcuf-theme-card-bottom)) !important;
+            box-shadow: var(--dcuf-theme-card-shadow) !important;
+        }
+
+        /* Write-page card hierarchy. Inputs remain nearly neutral while grouping cards carry the preset tint. */
+        html[${ROOT_ATTRIBUTE}] body.is-write-page form.dcuf-write-form {
+            border-color: var(--dcuf-theme-border) !important;
+            background-color: var(--dcuf-theme-canvas) !important;
+            background-image: linear-gradient(180deg, color-mix(in srgb, white 5%, var(--dcuf-theme-canvas)), var(--dcuf-theme-canvas)) !important;
+            box-shadow: var(--dcuf-theme-panel-shadow) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body.is-write-page form.dcuf-write-form :is(.write_subject, .btn_bottom_box, .btm-btns-box),
+        html[${ROOT_ATTRIBUTE}] body.is-write-page form.dcuf-write-form > .btn_box.write,
+        html[${ROOT_ATTRIBUTE}] body.is-write-page form.dcuf-write-form :is(.ai_easy_wrap, .ai_easy_box),
+        html[${ROOT_ATTRIBUTE}] body.is-write-page form.dcuf-write-form [class*="file_upload"]:not(.pop_wrap *):not(.note-dropdown-menu *):not(.note-popover *):not(.note-modal *) {
+            border-color: var(--dcuf-theme-border) !important;
+            background-color: var(--dcuf-theme-surface) !important;
+            background-image: linear-gradient(180deg, var(--dcuf-theme-surface-raised), var(--dcuf-theme-surface)) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body.is-write-page form.dcuf-write-form :is(#subject, #name, #password, #code, .dcuf-write-captcha-image),
+        html[${ROOT_ATTRIBUTE}] body.is-write-page form.dcuf-write-form .captcha {
+            border-color: var(--dcuf-theme-border-strong) !important;
+            background-color: var(--dcuf-theme-surface-input) !important;
+            background-image: none !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body.is-write-page form.dcuf-write-form :is(.editor_wrap, .note-editor) {
+            border-color: var(--dcuf-theme-border) !important;
+            background-color: var(--dcuf-theme-surface-input) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body.is-write-page form.dcuf-write-form :is(.note-toolbar, .note-toolbar-media, .tx-toolbar-basic, .btns-box, .note-statusbar) {
+            border-color: var(--dcuf-theme-border) !important;
+            background-color: var(--dcuf-theme-surface-muted) !important;
+            background-image: none !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body.is-write-page form.dcuf-write-form :is(.note-editing-area, .note-editable) {
+            background-color: var(--dcuf-theme-surface-input) !important;
+            background-image: none !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body.is-write-page form.dcuf-write-form :is(.note-editing-area, .note-editable, #subject, #name, #password, #code, textarea),
+        html[${ROOT_ATTRIBUTE}] body.is-write-page form.dcuf-write-form :is(.btn_bottom_box, .btm-btns-box) :is(.btn_lightred, .btn-line-gray),
+        html[${ROOT_ATTRIBUTE}] body.is-write-page form.dcuf-write-form > .btn_box.write > .btn_grey {
+            border-color: var(--dcuf-theme-border-strong) !important;
+            background-color: var(--dcuf-theme-surface-input) !important;
+            background-image: none !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body.is-write-page form.dcuf-write-form :is(.note-toolbar, .note-toolbar-media, .tx-toolbar-basic, .btns-box) :is(.note-btn, button, select),
+        html[${ROOT_ATTRIBUTE}] body.is-write-page form.dcuf-write-form :is(.note-toolbar, .note-toolbar-media, .tx-toolbar-basic, .btns-box) .note-btn-group > :is(a, span) {
+            border-color: var(--dcuf-theme-border-strong) !important;
+            background-color: var(--dcuf-theme-surface-input) !important;
+            background-image: none !important;
+            box-shadow: none !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body.is-write-page form.dcuf-write-form :is(.note-toolbar, .note-toolbar-media, .tx-toolbar-basic, .btns-box) :is(.note-btn, button, select):is(:hover, :focus-visible, .active),
+        html[${ROOT_ATTRIBUTE}] body.is-write-page form.dcuf-write-form :is(.note-toolbar, .note-toolbar-media, .tx-toolbar-basic, .btns-box) .note-btn-group.open > :is(.note-btn, button, a) {
+            border-color: var(--dcuf-theme-accent) !important;
+            box-shadow: 0 0 0 1px color-mix(in srgb, var(--dcuf-theme-accent) 28%, transparent) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body.is-write-page form.dcuf-write-form .write_subject > .dcuf-write-headtext-label {
+            background-color: var(--dcuf-theme-surface-muted) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body.is-write-page > #leave_confirm_box.dcuf-write-leave-confirm .pop_head.bg {
+            background: linear-gradient(135deg, var(--dcuf-theme-accent), var(--dcuf-theme-accent-strong)) !important;
+        }
+
+        /* Inactive navigation/actions are neutral; selected and primary actions keep the preset accent. */
+        html[${ROOT_ATTRIBUTE}] body:not(.is-write-page) .list_array_option .array_tab li:not(.on) > a,
+        html[${ROOT_ATTRIBUTE}] body:not(.is-write-page) .list_array_option .array_tab :is(button, a):not(.on),
+        html[${ROOT_ATTRIBUTE}] body .custom-bottom-controls .dcuf-bottom-action-card :is(button, a):not(.on):not(.btn_write):not(.write),
+        html[${ROOT_ATTRIBUTE}] body #container:is(.gallery_view, .minor_view, .mini_view) .view_bottom_btnbox :is(.btn_white, .btn_grey),
+        html[${ROOT_ATTRIBUTE}] body.is-write-page form.dcuf-write-form :is(.btn_lightred, .btn-line-gray, .btn_grey) {
+            border-color: var(--dcuf-theme-border-strong) !important;
+            background-color: var(--dcuf-theme-surface-input) !important;
+            background-image: linear-gradient(180deg, var(--dcuf-theme-card-top), var(--dcuf-theme-surface-input)) !important;
+            color: var(--dcuf-theme-fg) !important;
+            box-shadow: 0 2px 6px color-mix(in srgb, var(--dcuf-theme-accent-strong) 4%, transparent) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #container:is(.gallery_view, .minor_view, .mini_view) .view_bottom_btnbox .cancle:is(:hover, :focus-visible) {
+            border-color: #d87070 !important;
+            background: #fff1f2 !important;
+            color: #b42318 !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode #container:is(.gallery_view, .minor_view, .mini_view) .view_bottom_btnbox .cancle:is(:hover, :focus-visible) {
+            border-color: #b95d65 !important;
+            background: #3b2025 !important;
+            color: #ffb4bc !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body .custom-bottom-controls .dcuf-bottom-action-card,
+        html[${ROOT_ATTRIBUTE}] body #container:is(.gallery_view, .minor_view, .mini_view) .view_bottom_btnbox {
+            border-color: var(--dcuf-theme-border) !important;
+            background-color: var(--dcuf-theme-surface-raised) !important;
+            background-image: linear-gradient(180deg, var(--dcuf-theme-card-top), var(--dcuf-theme-surface-raised)) !important;
+            box-shadow: var(--dcuf-theme-card-shadow), inset 0 1px 0 color-mix(in srgb, white 68%, transparent) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body .custom-bottom-controls .dcuf-bottom-action-card :is(button, a),
+        html[${ROOT_ATTRIBUTE}] body #container:is(.gallery_view, .minor_view, .mini_view) .view_bottom_btnbox :is(button, a) {
+            border-radius: 11px !important;
+            box-shadow: 0 3px 8px color-mix(in srgb, var(--dcuf-theme-accent-strong) 6%, transparent), inset 0 1px 0 color-mix(in srgb, white 72%, transparent) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode .custom-bottom-controls .dcuf-bottom-action-card,
+        html[${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode #container:is(.gallery_view, .minor_view, .mini_view) .view_bottom_btnbox {
+            box-shadow: 0 7px 18px rgba(0,0,0,.22), inset 0 1px 0 rgba(255,255,255,.045) !important;
+        }
+
+        /* DCUF_MOBILE_THEME_CSS_END */
+
+        /* DCUF_SHARED_PALETTE_UI_START */
+        html[${ROOT_ATTRIBUTE}] body #dcinside-filter-setting #dcinside-threshold-save,
+        html[${ROOT_ATTRIBUTE}] body #dcinside-shortcut-modal #dcinside-save-shortcut-btn,
+        html[${ROOT_ATTRIBUTE}] body #dc-personal-block-size-panel [data-dcuf-fab-size-action="save"],
+        html[${ROOT_ATTRIBUTE}] body #dc-selection-popup .block-option button:not(.btn-unblock),
+        html[${ROOT_ATTRIBUTE}] body #dc-block-management-panel .panel-save-btn,
+        html[${ROOT_ATTRIBUTE}] body #dc-backup-popup :is(.export-btn, .import-btn),
+        html[${ROOT_ATTRIBUTE}] body #dc-manual-block-panel .dcuf-manual-actions [data-manual-block-action="add"],
+        html[${ROOT_ATTRIBUTE}] body #dcinside-filter-setting #dcinside-proxy-ip-block-mode-group button[data-proxy-mode][aria-pressed="true"] {
+            border-color: var(--dcuf-theme-accent-strong) !important;
+            background-color: var(--dcuf-theme-accent-strong) !important;
+            background-image: linear-gradient(180deg, var(--dcuf-theme-primary-top), var(--dcuf-theme-accent-strong)) !important;
+            color: var(--dcuf-theme-on-accent) !important;
+            box-shadow: 0 7px 16px var(--dcuf-theme-accent-shadow) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-block-management-panel input:checked + .switch-slider,
+        html[${ROOT_ATTRIBUTE}] body #dcinside-filter-setting input:checked + .switch-slider,
+        html[${ROOT_ATTRIBUTE}] body #dc-block-management-panel .panel-tab.active {
+            border-color: var(--dcuf-theme-accent) !important;
+            background-color: var(--dcuf-theme-accent-soft) !important;
+            background-image: none !important;
+            color: var(--dcuf-theme-accent-strong) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-personal-block-fab {
+            border-color: var(--dcuf-theme-accent) !important;
+            background: linear-gradient(180deg, var(--dcuf-theme-card-top), var(--dcuf-theme-surface-raised)) !important;
+            color: var(--dcuf-theme-accent-strong) !important;
+            box-shadow: 0 8px 20px var(--dcuf-theme-accent-shadow) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-personal-block-drawer button:is(:hover, :focus-visible),
+        html[${ROOT_ATTRIBUTE}] body #dc-manual-block-panel [data-manual-block-type][aria-pressed="true"] {
+            border-color: var(--dcuf-theme-accent) !important;
+            background: var(--dcuf-theme-accent-soft) !important;
+            color: var(--dcuf-theme-accent-strong) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-backup-popup .export-btn-download {
+            border-color: color-mix(in srgb, var(--dcuf-theme-accent) 30%, transparent) !important;
+            background: var(--dcuf-theme-accent-soft) !important;
+            color: var(--dcuf-theme-accent) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-backup-popup .export-btn-download:hover {
+            border-color: color-mix(in srgb, var(--dcuf-theme-accent) 45%, transparent) !important;
+            background: color-mix(in srgb, var(--dcuf-theme-accent) 18%, var(--dcuf-theme-accent-soft)) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-personal-block-drawer {
+            border-color: var(--dcuf-theme-border-strong) !important;
+            background-color: var(--dcuf-theme-card-bottom) !important;
+            background-image: linear-gradient(145deg, var(--dcuf-theme-card-top), var(--dcuf-theme-card-bottom)) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-personal-block-drawer .dcuf-menu-icon,
+        html[${ROOT_ATTRIBUTE}] body #dc-selection-popup .dcuf-selection-prompt-icon {
+            border-color: color-mix(in srgb, var(--dcuf-theme-accent) 28%, transparent) !important;
+            background: linear-gradient(145deg, var(--dcuf-theme-card-top), var(--dcuf-theme-accent-soft)) !important;
+            color: var(--dcuf-theme-accent) !important;
+            box-shadow: 0 5px 11px color-mix(in srgb, var(--dcuf-theme-accent) 18%, transparent), inset 0 1px 0 color-mix(in srgb, white 70%, transparent) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-manual-block-panel {
+            border-color: var(--dcuf-theme-border-strong) !important;
+            background-color: var(--dcuf-theme-card-bottom) !important;
+            background-image: linear-gradient(155deg, var(--dcuf-theme-card-top), var(--dcuf-theme-card-bottom)) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-manual-block-panel .dcuf-manual-header {
+            border-color: var(--dcuf-theme-border) !important;
+            background: linear-gradient(135deg, var(--dcuf-theme-accent-soft), var(--dcuf-theme-card-top)) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-manual-block-panel .dcuf-manual-type-tabs {
+            border-color: color-mix(in srgb, var(--dcuf-theme-accent) 24%, var(--dcuf-theme-border)) !important;
+            background: color-mix(in srgb, var(--dcuf-theme-accent-soft) 68%, var(--dcuf-theme-surface-muted)) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-manual-block-panel .dcuf-manual-status[data-state="info"],
+        html[${ROOT_ATTRIBUTE}] body #dc-manual-block-panel .dcuf-manual-kicker,
+        html[${ROOT_ATTRIBUTE}] body #dc-block-management-panel .panel-kicker {
+            color: var(--dcuf-theme-accent) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-block-management-panel .panel-add-btn {
+            border-color: color-mix(in srgb, var(--dcuf-theme-accent) 30%, transparent) !important;
+            background: var(--dcuf-theme-accent-soft) !important;
+            color: var(--dcuf-theme-accent) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-block-management-panel :is(.select-all-btn, .select-all-global-btn, .panel-backup-btn):hover,
+        html[${ROOT_ATTRIBUTE}] body #dc-block-management-panel .blocked-item:not(.item-to-delete):hover {
+            border-color: color-mix(in srgb, var(--dcuf-theme-accent) 28%, transparent) !important;
+            background: color-mix(in srgb, var(--dcuf-theme-accent-soft) 72%, var(--dcuf-theme-card-top)) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-selection-popup.dcuf-selection-prompt {
+            border-color: color-mix(in srgb, var(--dcuf-theme-accent) 34%, transparent) !important;
+            background-color: var(--dcuf-theme-card-bottom) !important;
+            background-image: linear-gradient(145deg, var(--dcuf-theme-card-top), var(--dcuf-theme-accent-soft)) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-manual-block-panel .dcuf-manual-field input:focus {
+            border-color: var(--dcuf-theme-accent) !important;
+            box-shadow: 0 0 0 3px var(--dcuf-theme-focus-ring) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dcinside-filter-setting :is(input, button):focus-visible,
+        html[${ROOT_ATTRIBUTE}] body #dcinside-shortcut-modal :is(input, button):focus-visible,
+        html[${ROOT_ATTRIBUTE}] body #dc-personal-block-size-panel :is(input, button):focus-visible,
+        html[${ROOT_ATTRIBUTE}] body #dc-personal-block-drawer button:focus-visible,
+        html[${ROOT_ATTRIBUTE}] body #dc-selection-popup button:focus-visible,
+        html[${ROOT_ATTRIBUTE}] body #dc-manual-block-panel :is(input, button):focus-visible,
+        html[${ROOT_ATTRIBUTE}] body #dc-block-management-panel :is(input, button):focus-visible,
+        html[${ROOT_ATTRIBUTE}] body #dc-backup-popup :is(input, textarea, button):focus-visible {
+            outline: 3px solid var(--dcuf-theme-focus-ring) !important;
+            outline-offset: 2px !important;
+        }
+
+        /* Script-owned management surfaces use the same neutralized card hierarchy. */
+        html[${ROOT_ATTRIBUTE}] body #dcinside-filter-setting,
+        html[${ROOT_ATTRIBUTE}] body #dc-backup-popup,
+        html[${ROOT_ATTRIBUTE}] body #dc-block-management-panel {
+            border-color: var(--dcuf-theme-border-strong) !important;
+            background-color: var(--dcuf-theme-canvas) !important;
+            background-image: linear-gradient(160deg, var(--dcuf-theme-card-top), var(--dcuf-theme-canvas)) !important;
+            color: var(--dcuf-theme-fg) !important;
+            box-shadow: var(--dcuf-theme-panel-shadow) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dcinside-filter-setting :is(.dcuf-settings-header, .dcuf-settings-footer),
+        html[${ROOT_ATTRIBUTE}] body #dc-backup-popup .popup-header,
+        html[${ROOT_ATTRIBUTE}] body #dc-block-management-panel :is(.panel-header, .panel-tabs, .panel-footer) {
+            border-color: var(--dcuf-theme-border) !important;
+            background-color: var(--dcuf-theme-surface-raised) !important;
+            background-image: linear-gradient(180deg, var(--dcuf-theme-card-top), var(--dcuf-theme-surface-raised)) !important;
+            color: var(--dcuf-theme-fg) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dcinside-filter-setting :is(.dcuf-settings-section, .dcuf-settings-threshold > div:last-child, .dcuf-settings-guest-controls),
+        html[${ROOT_ATTRIBUTE}] body #dc-backup-popup :is(.export-section, .import-section),
+        html[${ROOT_ATTRIBUTE}] body #dc-block-management-panel :is(.panel-list-controls, .blocked-item) {
+            border-color: var(--dcuf-theme-border) !important;
+            background-color: var(--dcuf-theme-card-top) !important;
+            background-image: linear-gradient(145deg, var(--dcuf-theme-card-top), var(--dcuf-theme-card-bottom)) !important;
+            color: var(--dcuf-theme-fg) !important;
+            box-shadow: 0 5px 14px color-mix(in srgb, var(--dcuf-theme-accent-strong) 5%, transparent), inset 0 1px 0 color-mix(in srgb, white 60%, transparent) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode #dcinside-filter-setting :is(.dcuf-settings-section, .dcuf-settings-threshold > div:last-child, .dcuf-settings-guest-controls),
+        html[${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode #dc-backup-popup :is(.export-section, .import-section),
+        html[${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode #dc-block-management-panel :is(.panel-list-controls, .blocked-item) {
+            box-shadow: 0 6px 15px rgba(0,0,0,.2), inset 0 1px 0 rgba(255,255,255,.045) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-block-management-panel :is(.panel-body, .panel-content, .blocked-list) {
+            background-color: var(--dcuf-theme-canvas) !important;
+            background-image: none !important;
+            color: var(--dcuf-theme-fg) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-block-management-panel .panel-tab:not(.active),
+        html[${ROOT_ATTRIBUTE}] body #dc-block-management-panel :is(.select-all-btn, .select-all-global-btn, .panel-backup-btn),
+        html[${ROOT_ATTRIBUTE}] body #dcinside-filter-setting button:not(#dcinside-threshold-save):not([aria-pressed="true"]),
+        html[${ROOT_ATTRIBUTE}] body #dc-backup-popup button:not(.export-btn):not(.export-btn-download):not(.import-btn):not(.delete-item-btn) {
+            border-color: var(--dcuf-theme-border-strong) !important;
+            background-color: var(--dcuf-theme-surface-input) !important;
+            background-image: linear-gradient(180deg, var(--dcuf-theme-card-top), var(--dcuf-theme-surface-input)) !important;
+            color: var(--dcuf-theme-fg) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dcinside-filter-setting :is(input, textarea, select),
+        html[${ROOT_ATTRIBUTE}] body #dc-backup-popup :is(.import-file-input, textarea),
+        html[${ROOT_ATTRIBUTE}] body #dc-block-management-panel :is(.panel-search-input, input:not([type="checkbox"])) {
+            border-color: var(--dcuf-theme-border-strong) !important;
+            background-color: var(--dcuf-theme-surface-input) !important;
+            background-image: none !important;
+            color: var(--dcuf-theme-fg) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dcinside-filter-setting #dcinside-threshold-input,
+        html[${ROOT_ATTRIBUTE}] body #dcinside-filter-setting #dcinside-ratio-min,
+        html[${ROOT_ATTRIBUTE}] body #dcinside-filter-setting #dcinside-ratio-max {
+            border-color: var(--dcuf-theme-border-strong) !important;
+            background-color: var(--dcuf-theme-surface-input) !important;
+            background-image: none !important;
+            color: var(--dcuf-theme-fg) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dcinside-filter-setting :is(.dcuf-settings-description, .dcuf-settings-help, small),
+        html[${ROOT_ATTRIBUTE}] body #dc-backup-popup .description,
+        html[${ROOT_ATTRIBUTE}] body #dc-block-management-panel :is(.panel-list-summary, .blocked-list-empty) {
+            color: var(--dcuf-theme-fg-muted) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-block-management-panel .blocked-item.item-to-delete {
+            border-color: #efb9c1 !important;
+            background: #fff5f6 !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode #dc-block-management-panel .blocked-item.item-to-delete {
+            border-color: #7f3d48 !important;
+            background: #372127 !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode #dc-personal-block-drawer,
+        html[${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode #dc-manual-block-panel,
+        html[${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode #dc-selection-popup.dcuf-selection-prompt {
+            border-color: var(--dcuf-theme-border-strong) !important;
+            background-color: var(--dcuf-theme-card-bottom) !important;
+            background-image: linear-gradient(145deg, var(--dcuf-theme-card-top), var(--dcuf-theme-card-bottom)) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode #dc-manual-block-panel .dcuf-manual-header,
+        html[${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode #dc-manual-block-panel .dcuf-manual-type-tabs {
+            border-color: var(--dcuf-theme-border) !important;
+            background: var(--dcuf-theme-surface-muted) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode #dc-personal-block-drawer .dcuf-menu-icon,
+        html[${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode #dc-selection-popup .dcuf-selection-prompt-icon {
+            border-color: var(--dcuf-theme-border-strong) !important;
+            background: linear-gradient(145deg, var(--dcuf-theme-card-top), var(--dcuf-theme-surface-raised)) !important;
+            color: var(--dcuf-theme-accent) !important;
+        }
+        /* DCUF_SHARED_PALETTE_UI_END */
+
+        #${OVERLAY_ID} {
+            position: fixed !important;
+            inset: 0 !important;
+            z-index: 2147483646 !important;
+            box-sizing: border-box !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)) !important;
+            background: rgba(18, 25, 35, .52) !important;
+            backdrop-filter: blur(3px);
+            pointer-events: auto !important;
+        }
+        #${PANEL_ID} {
+            box-sizing: border-box !important;
+            width: min(520px, calc(100vw - 32px)) !important;
+            max-height: calc(100dvh - 32px) !important;
+            overflow: hidden auto !important;
+            padding: 0 !important;
+            border: 1px solid var(--dcuf-theme-border-strong) !important;
+            border-radius: 20px !important;
+            background: var(--dcuf-theme-card-top) !important;
+            color: var(--dcuf-theme-fg) !important;
+            box-shadow: var(--dcuf-theme-panel-shadow) !important;
+            font: 500 14px/1.45 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+        }
+        #${PANEL_ID} .dcuf-palette-header {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            gap: 12px !important;
+            padding: 18px 18px 14px !important;
+            border-bottom: 1px solid var(--dcuf-theme-border) !important;
+            background: linear-gradient(180deg, var(--dcuf-theme-card-top), var(--dcuf-theme-surface-raised)) !important;
+        }
+        #${PANEL_ID} h2 { margin: 0 !important; color: inherit !important; font-size: 20px !important; line-height: 1.2 !important; }
+        #${PANEL_ID} .dcuf-palette-close {
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            width: 44px !important;
+            height: 44px !important;
+            min-width: 44px !important;
+            padding: 0 !important;
+            border: 1px solid transparent !important;
+            border-radius: 12px !important;
+            background: transparent !important;
+            color: var(--dcuf-theme-fg-muted) !important;
+            font-size: 24px !important;
+            cursor: pointer !important;
+        }
+        #${PANEL_ID} .dcuf-palette-body { padding: 16px 18px 18px !important; }
+        #${PANEL_ID} .dcuf-palette-description { margin: 0 0 14px !important; color: var(--dcuf-theme-fg-muted) !important; }
+        #${PANEL_ID} .dcuf-palette-options { display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 10px !important; }
+        #${PANEL_ID} .dcuf-palette-option {
+            box-sizing: border-box !important;
+            display: grid !important;
+            grid-template-columns: 50px minmax(0, 1fr) !important;
+            align-items: center !important;
+            gap: 11px !important;
+            min-height: 70px !important;
+            padding: 10px !important;
+            border: 1px solid var(--dcuf-theme-border) !important;
+            border-radius: 14px !important;
+            background: var(--dcuf-theme-surface-input) !important;
+            color: var(--dcuf-theme-fg) !important;
+            text-align: left !important;
+            cursor: pointer !important;
+        }
+        #${PANEL_ID} .dcuf-palette-option[aria-checked="true"] {
+            border-color: var(--dcuf-theme-accent) !important;
+            background: var(--dcuf-theme-accent-soft) !important;
+            color: var(--dcuf-theme-accent-strong) !important;
+            box-shadow: 0 0 0 2px color-mix(in srgb, var(--dcuf-theme-accent) 18%, transparent) !important;
+        }
+        #${PANEL_ID} .dcuf-palette-swatch {
+            display: grid !important;
+            grid-template-columns: repeat(3, 1fr) !important;
+            width: 48px !important;
+            height: 38px !important;
+            overflow: hidden !important;
+            border: 1px solid rgba(0,0,0,.09) !important;
+            border-radius: 10px !important;
+        }
+        #${PANEL_ID} .dcuf-palette-swatch > span { display: block !important; }
+        #${PANEL_ID} .dcuf-palette-name { font-weight: 800 !important; }
+        #${PANEL_ID} .dcuf-palette-status { min-height: 20px !important; margin: 12px 2px 0 !important; color: #d7485a !important; font-weight: 700 !important; }
+        #${PANEL_ID} .dcuf-palette-actions { display: grid !important; grid-template-columns: 1fr 1fr 1.2fr !important; gap: 9px !important; margin-top: 4px !important; }
+        #${PANEL_ID} .dcuf-palette-actions button {
+            min-height: 44px !important;
+            padding: 8px 10px !important;
+            border: 1px solid var(--dcuf-theme-border-strong) !important;
+            border-radius: 11px !important;
+            background: var(--dcuf-theme-surface-input) !important;
+            color: var(--dcuf-theme-fg) !important;
+            font-weight: 800 !important;
+            cursor: pointer !important;
+        }
+        #${PANEL_ID} .dcuf-palette-actions [data-dcuf-palette-action="save"] {
+            border-color: var(--dcuf-theme-accent-strong) !important;
+            background: var(--dcuf-theme-accent-strong) !important;
+            color: var(--dcuf-theme-on-accent) !important;
+        }
+        #${PANEL_ID} :focus-visible { outline: 3px solid color-mix(in srgb, var(--dcuf-theme-accent) 38%, transparent) !important; outline-offset: 2px !important; }
+        #${PANEL_ID} button:disabled { opacity: .62 !important; cursor: wait !important; }
+
+        body.dc-filter-dark-mode #${PANEL_ID} {
+            border-color: var(--dcuf-theme-border-strong) !important;
+            background: var(--dcuf-theme-card-top) !important;
+            color: var(--dcuf-theme-fg) !important;
+            box-shadow: var(--dcuf-theme-panel-shadow) !important;
+        }
+        body.dc-filter-dark-mode #${PANEL_ID} .dcuf-palette-header { border-color: var(--dcuf-theme-border) !important; background: linear-gradient(180deg, var(--dcuf-theme-card-top), var(--dcuf-theme-surface-raised)) !important; }
+        body.dc-filter-dark-mode #${PANEL_ID} .dcuf-palette-description { color: var(--dcuf-theme-fg-muted) !important; }
+        body.dc-filter-dark-mode #${PANEL_ID} .dcuf-palette-close { color: var(--dcuf-theme-fg) !important; }
+        body.dc-filter-dark-mode #${PANEL_ID} .dcuf-palette-option { border-color: var(--dcuf-theme-border) !important; background: var(--dcuf-theme-surface-input) !important; color: var(--dcuf-theme-fg) !important; }
+        body.dc-filter-dark-mode #${PANEL_ID} .dcuf-palette-option[aria-checked="true"] { border-color: var(--dcuf-theme-accent) !important; background: var(--dcuf-theme-accent-soft) !important; color: var(--dcuf-theme-accent) !important; }
+        body.dc-filter-dark-mode #${PANEL_ID} .dcuf-palette-actions button { border-color: var(--dcuf-theme-border-strong) !important; background: var(--dcuf-theme-surface-input) !important; color: var(--dcuf-theme-fg) !important; }
+        body.dc-filter-dark-mode #${PANEL_ID} .dcuf-palette-actions [data-dcuf-palette-action="save"] { border-color: var(--dcuf-theme-accent-strong) !important; background: var(--dcuf-theme-accent-strong) !important; color: var(--dcuf-theme-on-accent) !important; }
+
+        @media (max-width: 440px) {
+            #${PANEL_ID} .dcuf-palette-options { grid-template-columns: 1fr !important; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            #${OVERLAY_ID}, #${PANEL_ID}, #${PANEL_ID} * { scroll-behavior: auto !important; transition: none !important; animation: none !important; }
+        }
+    `;
+
+    const ensureStyle = () => {
+        if (document.getElementById(STYLE_ID)) return true;
+        const mount = document.head || document.documentElement;
+        if (!mount) return false;
+        const style = document.createElement('style');
+        style.id = STYLE_ID;
+        style.textContent = buildCss();
+        mount.appendChild(style);
+        return true;
+    };
+
+    const beginInitialRead = () => {
+        if (initialReadPromise) return initialReadPromise;
+        const revisionAtStart = writeRevision;
+        initialReadPromise = Promise.resolve()
+            .then(() => GM_getValue(STORAGE_KEY, DEFAULT_ID))
+            .then((value) => {
+                initialReadSettled = true;
+                if (writeRevision !== revisionAtStart) return committedId;
+                committedId = normalize(value);
+                if (!document.getElementById(OVERLAY_ID)) apply(committedId, 'storage-load');
+                return committedId;
+            })
+            .catch((error) => {
+                initialReadSettled = true;
+                console.warn('[DCUF] palette storage read failed; using blue:', error);
+                return committedId;
+            });
+        return initialReadPromise;
+    };
+
+    const setSelectedOption = (panel, id) => {
+        const normalized = apply(id, 'preview');
+        panel.dataset.selectedPalette = normalized;
+        panel.querySelectorAll('.dcuf-palette-option').forEach((option) => {
+            option.setAttribute('aria-checked', option.dataset.paletteId === normalized ? 'true' : 'false');
+        });
+        return normalized;
+    };
+
+    const closePaletteDialog = ({ restore = true } = {}) => {
+        const overlay = document.getElementById(OVERLAY_ID);
+        if (!overlay) return false;
+        const returnFocus = overlay.__dcufReturnFocus;
+        if (restore) apply(committedId, 'preview-cancel');
+        overlay.remove();
+        if (returnFocus instanceof HTMLElement && returnFocus.isConnected) returnFocus.focus({ preventScroll: true });
+        return true;
+    };
+
+    const openPaletteDialog = () => {
+        ensureStyle();
+        const existing = document.getElementById(PANEL_ID);
+        if (existing) {
+            existing.focus({ preventScroll: true });
+            return existing;
+        }
+
+        const overlay = document.createElement('div');
+        overlay.id = OVERLAY_ID;
+        overlay.__dcufReturnFocus = document.activeElement;
+
+        const panel = document.createElement('section');
+        panel.id = PANEL_ID;
+        panel.setAttribute('role', 'dialog');
+        panel.setAttribute('aria-modal', 'true');
+        panel.setAttribute('aria-labelledby', 'dcuf-palette-title');
+        panel.tabIndex = -1;
+
+        const optionsHtml = PRESETS.map((preset) => `
+            <button type="button" class="dcuf-palette-option" role="radio" aria-checked="false" data-palette-id="${preset.id}">
+                <span class="dcuf-palette-swatch" aria-hidden="true">
+                    <span style="background:${preset.light[0]}"></span>
+                    <span style="background:${preset.light[1]}"></span>
+                    <span style="background:${preset.light[2]}"></span>
+                </span>
+                <span class="dcuf-palette-name">${preset.label}</span>
+            </button>
+        `).join('');
+
+        panel.innerHTML = `
+            <div class="dcuf-palette-header">
+                <h2 id="dcuf-palette-title">UI 색상 설정</h2>
+                <button type="button" class="dcuf-palette-close" aria-label="UI 색상 설정 닫기">×</button>
+            </div>
+            <div class="dcuf-palette-body">
+                <p class="dcuf-palette-description">색상을 선택해 미리 본 뒤 저장하세요.</p>
+                <div class="dcuf-palette-options" role="radiogroup" aria-label="UI 색상 프리셋">${optionsHtml}</div>
+                <p class="dcuf-palette-status" role="status" aria-live="polite"></p>
+                <div class="dcuf-palette-actions">
+                    <button type="button" data-dcuf-palette-action="default">기본값</button>
+                    <button type="button" data-dcuf-palette-action="cancel">취소</button>
+                    <button type="button" data-dcuf-palette-action="save">저장</button>
+                </div>
+            </div>
+        `;
+        overlay.appendChild(panel);
+        (document.body || document.documentElement).appendChild(overlay);
+        setSelectedOption(panel, committedId);
+
+        const status = panel.querySelector('.dcuf-palette-status');
+        const saveButton = panel.querySelector('[data-dcuf-palette-action="save"]');
+        const actionButtons = Array.from(panel.querySelectorAll('button'));
+
+        panel.querySelectorAll('.dcuf-palette-option').forEach((option) => {
+            option.addEventListener('click', () => {
+                status.textContent = '';
+                setSelectedOption(panel, option.dataset.paletteId);
+            });
+        });
+        panel.querySelector('.dcuf-palette-close').addEventListener('click', () => closePaletteDialog({ restore: true }));
+        panel.querySelector('[data-dcuf-palette-action="cancel"]').addEventListener('click', () => closePaletteDialog({ restore: true }));
+        panel.querySelector('[data-dcuf-palette-action="default"]').addEventListener('click', () => {
+            status.textContent = '';
+            setSelectedOption(panel, DEFAULT_ID);
+        });
+        saveButton.addEventListener('click', async () => {
+            const selectedId = normalize(panel.dataset.selectedPalette);
+            actionButtons.forEach((button) => { button.disabled = true; });
+            status.textContent = '';
+            try {
+                await GM_setValue(STORAGE_KEY, selectedId);
+                writeRevision += 1;
+                committedId = selectedId;
+                apply(committedId, 'save');
+                closePaletteDialog({ restore: false });
+            } catch (error) {
+                console.warn('[DCUF] palette storage write failed:', error);
+                status.textContent = '색상 설정을 저장하지 못했습니다. 다시 시도해 주세요.';
+                actionButtons.forEach((button) => { button.disabled = false; });
+                saveButton.focus({ preventScroll: true });
+            }
+        });
+        overlay.addEventListener('click', (event) => {
+            if (event.target === overlay) closePaletteDialog({ restore: true });
+        });
+        panel.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape') {
+                event.preventDefault();
+                closePaletteDialog({ restore: true });
+                return;
+            }
+            if (event.key !== 'Tab') return;
+            const focusable = actionButtons.filter((button) => !button.disabled && button.offsetParent !== null);
+            if (focusable.length === 0) return;
+            const first = focusable[0];
+            const last = focusable[focusable.length - 1];
+            if (event.shiftKey && document.activeElement === first) {
+                event.preventDefault();
+                last.focus();
+            } else if (!event.shiftKey && document.activeElement === last) {
+                event.preventDefault();
+                first.focus();
+            }
+        });
+
+        panel.querySelector(`.dcuf-palette-option[data-palette-id="${committedId}"]`)?.focus({ preventScroll: true });
+        return panel;
+    };
+
+    apply(DEFAULT_ID, 'default');
+    document.addEventListener('DOMContentLoaded', () => apply(committedId, 'dom-ready-sync'), { once: true });
+    if (!ensureStyle()) document.addEventListener('DOMContentLoaded', ensureStyle, { once: true });
+    beginInitialRead();
+
+    return Object.freeze({
+        STORAGE_KEY,
+        PRESETS,
+        DEFAULT_ID,
+        normalize,
+        apply,
+        openPaletteDialog,
+        closePaletteDialog,
+        getCommittedId: () => committedId,
+        isInitialReadSettled: () => initialReadSettled
+    });
+})();
     const __dcufFilterPageContext = window.__dcufPageContext || {
         type: 'other',
         isList: false,
@@ -1800,13 +3264,13 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         }
 
         .custom-post-item.notice + .custom-post-item:not(.notice):not(.concept),
-        .custom-post-item.concept + .custom-post-item:not(.notice):not(.concept) { border-top: 1px solid #4263eb !important; }
+        .custom-post-item.concept + .custom-post-item:not(.notice):not(.concept) { border-top: 1px solid var(--dcuf-theme-accent, #4263eb) !important; }
         .custom-post-item { display: block; padding: 15px 18px; border-bottom: 1px solid #e6e6e6; text-decoration: none; color: #333; }
         .custom-post-item:hover { background-color: #f8f9fa; }
         .custom-post-item .author { cursor: pointer; }
         .custom-post-item.notice, .custom-post-item.concept { background-color: #f8f9fa; position: relative; padding-left: 60px; }
         .custom-post-item.notice::before { content: '공지'; background-color: #e03131; position: absolute; left: 18px; top: 50%; transform: translateY(-50%); font-size: 13px; font-weight: bold; color: #fff; padding: 4px 9px; border-radius: 4px; }
-        .custom-post-item.concept::before { content: '개념'; background-color: #4263eb; position: absolute; left: 18px; top: 50%; transform: translateY(-50%); font-size: 13px; font-weight: bold; color: #fff; padding: 4px 9px; border-radius: 4px; }
+        .custom-post-item.concept::before { content: '개념'; background-color: var(--dcuf-theme-accent-strong, #4263eb); position: absolute; left: 18px; top: 50%; transform: translateY(-50%); font-size: 13px; font-weight: bold; color: var(--dcuf-theme-on-accent, #fff); padding: 4px 9px; border-radius: 4px; }
 
 
                 /* [v2.2.0 이식] 게시글 목록: 제목, 말머리, 댓글수 */
@@ -1835,7 +3299,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             border: none !important; /* [요청 수정] 글머리 테두리 제거 */
         }
         .post-title .reply_num {
-            color: #4263eb !important;
+            color: var(--dcuf-theme-accent, #4263eb) !important;
             font-weight: bold !important;
             margin-left: 8px !important; /* 간격 조정 */
             cursor: pointer;
@@ -2149,8 +3613,8 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         .btn_recommend_box .writer_nikcon { display: inline-block !important; margin-right: 2px !important; vertical-align: middle !important; }
         .btn_recommend_box .writer_nikcon img { width: 14px !important; height: 14px !important; vertical-align: middle !important; }
         .btn_recommend_box .font_blue.smallnum {
-            display: inline-block !important; font-size: 11px !important; color: #4263eb !important; vertical-align: middle !important;
-            background: rgba(66, 99, 235, 0.08); padding: 1px 4px; border-radius: 3px; font-weight: normal !important;
+            display: inline-block !important; font-size: 11px !important; color: var(--dcuf-theme-accent, #4263eb) !important; vertical-align: middle !important;
+            background: color-mix(in srgb, var(--dcuf-theme-accent, #4263eb) 8%, transparent); padding: 1px 4px; border-radius: 3px; font-weight: normal !important;
         }
         .btn_recommend_box {
             display: flex !important;
@@ -2407,7 +3871,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         #dc-selection-popup .block-options { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
         #dc-selection-popup .block-option { display: flex; justify-content: space-between; align-items: center; background-color: #f8f9fa; padding: 12px; border-radius: 8px; }
         #dc-selection-popup .block-option span { font-size: 15px; color: #333; word-break: break-all; margin-right: 15px; }
-        #dc-selection-popup .block-option button { font-size: 14px; padding: 6px 12px; cursor: pointer; border: none; border-radius: 6px; background-color: #4263eb; color: #fff; font-weight: 500; }
+        #dc-selection-popup .block-option button { font-size: 14px; padding: 6px 12px; cursor: pointer; border: none; border-radius: 6px; background-color: var(--dcuf-theme-accent-strong, #4263eb); color: var(--dcuf-theme-on-accent, #fff); font-weight: 500; }
         /* [v2.5.7 추가] 차단 해제 버튼 스타일 */
         #dc-selection-popup .block-option button.btn-unblock { background-color: #e03131; }
         #dc-selection-popup .popup-buttons button { width: 100%; font-size: 16px; padding: 10px; cursor: pointer; border: none; border-radius: 8px; background-color: #e9ecef; color: #555; }
@@ -2951,7 +4415,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             }
         }
 
-        /* [v3.4.5] Script-owned soft-depth control surfaces */
+        /* [v3.4.6] Script-owned soft-depth control surfaces */
         #dc-personal-block-fab {
             background: linear-gradient(180deg, #fff 0%, #eef4ff 100%) !important;
             color: #29466f !important;
@@ -3695,7 +5159,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             color: #fff !important;
         }
         body.dc-filter-dark-mode #dc-personal-block-size-panel .dcuf-fab-size-actions [data-dcuf-fab-size-action="save"] {
-            background: #4d7cff !important;
+            background: var(--dcuf-theme-accent, #4d7cff) !important;
         }
 
         /* 5. 스크립트 팝업창 전체 다크 테마 */
@@ -4241,6 +5705,15 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         _queuedObserverFilterTimerId: 0,
         _syncRefilterRafId: 0,
         _syncRefilterTimerIds: null,
+        _settingsSignature: '',
+        _hiddenAt: 0,
+        _hiddenMutationGeneration: 0,
+        _hiddenBody: null,
+        _hiddenRecoverySurface: null,
+        _hiddenBfcacheRecoveryId: 0,
+        _visibilityCycleId: 0,
+        _visibilityRecoveryPromise: null,
+        VISIBILITY_LONG_RESTORE_MS: 5 * 60 * 1000,
         _krPrefixSet: null,
         _telecomPrefixSet: null,
         _proxyStrictPrefixSet: null,
@@ -4276,7 +5749,10 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         getKrPrefixSet() {
             if (!this._krPrefixSet) {
                 const prefixes = [];
-                Object.entries(this.KR_IP_RANGES).forEach(([first, ranges]) => {
+                const rangeSource = typeof this.KR_IP_RANGES === 'function'
+                    ? this.KR_IP_RANGES()
+                    : this.KR_IP_RANGES;
+                Object.entries(rangeSource || {}).forEach(([first, ranges]) => {
                     ranges.forEach(([start, end]) => {
                         for (let second = start; second <= end; second += 1) {
                             prefixes.push(`${first}.${second}`);
@@ -4284,6 +5760,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                     });
                 });
                 this._krPrefixSet = new Set(prefixes);
+                this.incrementRuntimeDiagnostic('filter.ipData.kr.decodes');
             }
             return this._krPrefixSet;
         },
@@ -4293,19 +5770,33 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         getTelecomPrefixSet() {
             if (!this._telecomPrefixSet) {
                 const prefixes = [];
-                this.TELECOM.forEach((group) => group[1].forEach((item) => {
+                const telecomSource = typeof this.TELECOM === 'function'
+                    ? this.TELECOM()
+                    : this.TELECOM;
+                (telecomSource || []).forEach((group) => group[1].forEach((item) => {
                     if (item[2] === 'MOB') prefixes.push(`${group[0]}.${item[0]}`);
                 }));
                 this._telecomPrefixSet = new Set(prefixes);
+                this.incrementRuntimeDiagnostic('filter.ipData.telecom.decodes');
             }
             return this._telecomPrefixSet;
         },
         getProxyStrictPrefixSet() {
-            if (!this._proxyStrictPrefixSet) this._proxyStrictPrefixSet = new Set(this.PROXY_STRICT_PREFIXES);
+            if (!this._proxyStrictPrefixSet) {
+                const source = this.PROXY_STRICT_PREFIXES;
+                const prefixes = typeof source === 'string' ? source.trim().split(/\s+/).filter(Boolean) : source;
+                this._proxyStrictPrefixSet = new Set(prefixes || []);
+                this.incrementRuntimeDiagnostic('filter.ipData.proxyStrict.decodes');
+            }
             return this._proxyStrictPrefixSet;
         },
         getProxyAggressiveExtraPrefixSet() {
-            if (!this._proxyAggressiveExtraPrefixSet) this._proxyAggressiveExtraPrefixSet = new Set(this.PROXY_AGGRESSIVE_EXTRA_PREFIXES);
+            if (!this._proxyAggressiveExtraPrefixSet) {
+                const source = this.PROXY_AGGRESSIVE_EXTRA_PREFIXES;
+                const prefixes = typeof source === 'string' ? source.trim().split(/\s+/).filter(Boolean) : source;
+                this._proxyAggressiveExtraPrefixSet = new Set(prefixes || []);
+                this.incrementRuntimeDiagnostic('filter.ipData.proxyAggressive.decodes');
+            }
             return this._proxyAggressiveExtraPrefixSet;
         },
         getProxyPrefixSet(mode = this.PROXY_MODE.STRICT) {
@@ -4857,6 +6348,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 const newShortcut = previewEl.textContent;
                 if (newShortcut && newShortcut !== '입력 대기 중...') {
                     await GM_setValue(this.CONSTANTS.STORAGE_KEYS.SHORTCUT_KEY, newShortcut);
+                    activeShortcutString = newShortcut;
                     activeShortcutObject = this.parseShortcutString(newShortcut);
                     document.getElementById(this.CONSTANTS.UI_IDS.SHORTCUT_DISPLAY).textContent = newShortcut;
                     cleanup();
@@ -5681,6 +7173,33 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         getBootSnapshot() {
             return this._bootSnapshot || null;
         },
+        createSettingsSignature(settings = dcFilterSettings) {
+            if (!settings || typeof settings !== 'object') return '';
+            const normalizeStrings = (values) => (Array.isArray(values) ? values : [])
+                .map((value) => String(value ?? ''))
+                .filter(Boolean)
+                .sort();
+            const personalBlockList = settings.personalBlockList || {};
+            return JSON.stringify({
+                masterDisabled: Boolean(settings.masterDisabled),
+                excludeRecommended: Boolean(settings.excludeRecommended),
+                threshold: Number(settings.threshold) || 0,
+                ratioEnabled: Boolean(settings.ratioEnabled),
+                ratioMin: String(settings.ratioMin ?? ''),
+                ratioMax: String(settings.ratioMax ?? ''),
+                blockGuestEnabled: Boolean(settings.blockGuestEnabled),
+                proxyBlockMode: this.normalizeProxyBlockMode(settings.proxyBlockMode),
+                telecomBlockEnabled: Boolean(settings.telecomBlockEnabled),
+                blockedGuests: normalizeStrings(settings.blockedGuests),
+                customIpPrefixes: settings.customIpPrefixSet instanceof Set
+                    ? Array.from(settings.customIpPrefixSet, (value) => String(value)).sort()
+                    : [],
+                personalBlockEnabled: Boolean(settings.personalBlockEnabled),
+                personalUids: normalizeStrings((personalBlockList.uids || []).map((item) => item?.id)),
+                personalNicknames: normalizeStrings(personalBlockList.nicknames),
+                personalIps: normalizeStrings(personalBlockList.ips)
+            });
+        },
         async reloadSettings(snapshot = null) {
             let values;
             if (snapshot) {
@@ -5752,6 +7271,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 personalBlockIpSet,
                 personalBlockEnabled
             };
+            this._settingsSignature = this.createSettingsSignature(dcFilterSettings);
             if (this.DEBUG_ENABLED) {
                 this.debugLog('settings', 'reloadSettings complete', this.debugSettingsSnapshot({
                     rawBlockConfigIp: typeof blockConfig?.ip === 'string' ? blockConfig.ip : '',
@@ -5882,8 +7402,111 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 this.setRuntimeDiagnosticGauge('filter.syncPass.comments.lastRootCount', requestedRoots.length);
             });
         },
-        async runFullRefilterPass(reason = 'refilterAllContent', { scheduleFollowups = true } = {}) {
-            await this.reloadSettings();
+        getVisibilityRecoverySurface() {
+            const pageType = window.__dcufRuntimeCoordinator?.getPageContext?.().type
+                || window.__dcufPageContext?.type
+                || 'other';
+            if (pageType === 'lists') {
+                return document.querySelector('table.gall_list, .gall_listwrap, .list_wrap');
+            }
+            if (pageType === 'view') {
+                return document.querySelector('.writing_view_box, .gallview_contents, .view_content_wrap');
+            }
+            if (pageType === 'write') {
+                return document.querySelector('form#write, form[name="modify"][action*="modify_submit"], #write_wrap, .gall_write, .write_box');
+            }
+            return document.body;
+        },
+        captureHiddenVisibilityState() {
+            const runtimeCoordinator = window.__dcufRuntimeCoordinator;
+            runtimeCoordinator?.ensureMutationBus?.();
+            const generation = runtimeCoordinator?.flushPendingMutations?.('visibility-hidden-snapshot')
+                ?? runtimeCoordinator?.getMutationGeneration?.()
+                ?? 0;
+            const bfcacheState = runtimeCoordinator?.getBfcacheRecoveryState?.() || {};
+            this._visibilityCycleId += 1;
+            this._hiddenAt = Date.now();
+            this._hiddenMutationGeneration = generation;
+            this._hiddenBody = document.body;
+            this._hiddenRecoverySurface = this.getVisibilityRecoverySurface();
+            this._hiddenBfcacheRecoveryId = Number(bfcacheState.id) || 0;
+            this.incrementRuntimeDiagnostic('lifecycle.visibility.hidden');
+            this.setRuntimeDiagnosticGauge('lifecycle.visibility.hiddenGeneration', generation);
+        },
+        getHiddenVisibilitySnapshot() {
+            return {
+                cycleId: this._visibilityCycleId,
+                hiddenAt: this._hiddenAt,
+                mutationGeneration: this._hiddenMutationGeneration,
+                body: this._hiddenBody,
+                recoverySurface: this._hiddenRecoverySurface,
+                bfcacheRecoveryId: this._hiddenBfcacheRecoveryId
+            };
+        },
+        isMatchingBfcacheRecovery(snapshot, recoveryState) {
+            return Boolean(
+                snapshot?.hiddenAt
+                && recoveryState?.succeeded
+                && Number(recoveryState.id) > Number(snapshot.bfcacheRecoveryId || 0)
+                && Number(recoveryState.startedAt) >= Number(snapshot.hiddenAt)
+                && recoveryState.body === document.body
+            );
+        },
+        async restoreVisibleState(snapshot) {
+            const runtimeCoordinator = window.__dcufRuntimeCoordinator;
+            runtimeCoordinator?.ensureMutationBus?.();
+
+            let recoveryState = runtimeCoordinator?.getBfcacheRecoveryState?.() || {};
+            const recoveryBelongsToCycle = Number(recoveryState.id) > Number(snapshot.bfcacheRecoveryId || 0)
+                && Number(recoveryState.startedAt) >= Number(snapshot.hiddenAt || 0)
+                && recoveryState.body === document.body;
+            if (recoveryState.pending && recoveryBelongsToCycle) {
+                await runtimeCoordinator.waitForBfcacheRecovery?.();
+                recoveryState = runtimeCoordinator?.getBfcacheRecoveryState?.() || recoveryState;
+            }
+
+            if (this.isMatchingBfcacheRecovery(snapshot, recoveryState)) {
+                await reloadShortcutKey();
+                this.incrementRuntimeDiagnostic('lifecycle.visibility.restore.skippedBfcache');
+                this.setRuntimeDiagnosticGauge('lifecycle.visibility.restore.lastReason', 'bfcache-handled');
+                return { restored: false, reason: 'bfcache-handled' };
+            }
+
+            const previousSettingsSignature = this._settingsSignature;
+            const [, shortcutState] = await Promise.all([
+                this.reloadSettings(),
+                reloadShortcutKey()
+            ]);
+            const generation = runtimeCoordinator?.flushPendingMutations?.('visibility-visible-check')
+                ?? runtimeCoordinator?.getMutationGeneration?.()
+                ?? 0;
+            const currentSurface = this.getVisibilityRecoverySurface();
+            const reasons = [];
+            if (generation !== snapshot.mutationGeneration) reasons.push('mutation');
+            if (snapshot.body !== document.body || (snapshot.body && !snapshot.body.isConnected)) reasons.push('body');
+            if (snapshot.recoverySurface !== currentSurface
+                || (snapshot.recoverySurface && !snapshot.recoverySurface.isConnected)) reasons.push('surface');
+            if (previousSettingsSignature !== this._settingsSignature) reasons.push('settings');
+            if (snapshot.hiddenAt && Date.now() - snapshot.hiddenAt >= this.VISIBILITY_LONG_RESTORE_MS) reasons.push('long-suspend');
+
+            this.setRuntimeDiagnosticGauge('lifecycle.visibility.restore.shortcutChanged', Boolean(shortcutState?.changed));
+            if (reasons.length === 0) {
+                this.incrementRuntimeDiagnostic('lifecycle.visibility.restore.skippedClean');
+                this.setRuntimeDiagnosticGauge('lifecycle.visibility.restore.lastReason', 'clean');
+                return { restored: false, reason: 'clean', shortcutChanged: Boolean(shortcutState?.changed) };
+            }
+
+            const reason = `visibilitychange-visible:${reasons.join('+')}`;
+            await this.refilterAllContent(reason, {
+                scheduleFollowups: false,
+                settingsAlreadyLoaded: true
+            });
+            this.incrementRuntimeDiagnostic('lifecycle.visibility.restore.runs');
+            this.setRuntimeDiagnosticGauge('lifecycle.visibility.restore.lastReason', reasons.join(','));
+            return { restored: true, reason, shortcutChanged: Boolean(shortcutState?.changed) };
+        },
+        async runFullRefilterPass(reason = 'refilterAllContent', { scheduleFollowups = true, settingsAlreadyLoaded = false } = {}) {
+            if (!settingsAlreadyLoaded) await this.reloadSettings();
             const descriptors = this.getRefilterTargets('all');
             this.startDebugPass(reason, { targetCount: descriptors.length });
             this.runSyncRefilterPass('all', document, descriptors, {
@@ -5895,9 +7518,9 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             this.setRuntimeDiagnosticGauge('filter.fullRefilter.lastTargetCount', descriptors.length);
             document.dispatchEvent(new CustomEvent('dcFilterRefiltered'));
         },
-        async refilterAllContent(reason = 'refilterAllContent', { scheduleFollowups = true } = {}) {
+        async refilterAllContent(reason = 'refilterAllContent', { scheduleFollowups = true, settingsAlreadyLoaded = false } = {}) {
             if (!this._pendingFullRefilterReasons) this._pendingFullRefilterReasons = [];
-            this._pendingFullRefilterReasons.push({ reason, scheduleFollowups });
+            this._pendingFullRefilterReasons.push({ reason, scheduleFollowups, settingsAlreadyLoaded });
 
             if (this._refilterAllContentRunning) {
                 this.debugLog('refilter', 'coalesced full refilter request', {
@@ -5916,7 +7539,11 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                         ? `${lastRequest.reason} [coalesced:${pendingRequests.length}]`
                         : lastRequest.reason;
                     const shouldScheduleFollowups = pendingRequests.some((request) => request.scheduleFollowups !== false);
-                    await this.runFullRefilterPass(runReason, { scheduleFollowups: shouldScheduleFollowups });
+                    const settingsWereLoaded = pendingRequests.every((request) => request.settingsAlreadyLoaded === true);
+                    await this.runFullRefilterPass(runReason, {
+                        scheduleFollowups: shouldScheduleFollowups,
+                        settingsAlreadyLoaded: settingsWereLoaded
+                    });
                 }
             })();
 
@@ -5927,16 +7554,31 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 this._refilterAllContentPromise = null;
             }
         },
-        // [수정] handleVisibilityChange를 async 함수로 변경하고 reloadShortcutKey 호출 추가
         async handleVisibilityChange() {
             if (document.visibilityState !== 'visible') {
+                this.captureHiddenVisibilityState();
                 await this.flushBlockedUidCache('visibility-hidden');
                 return;
             }
-            if (document.visibilityState === 'visible') {
-                await reloadShortcutKey(); // 단축키 설정을 다시 로드
-                await this.refilterAllContent('visibilitychange-visible', { scheduleFollowups: false }); // 복구 패스 1회는 유지하고 무변화 지연 패스는 생략
-            }
+            if (this._visibilityRecoveryPromise) return this._visibilityRecoveryPromise;
+
+            const snapshot = this.getHiddenVisibilitySnapshot();
+            this._visibilityRecoveryPromise = this.restoreVisibleState(snapshot).catch(async (error) => {
+                this.incrementRuntimeDiagnostic('lifecycle.visibility.restore.failed');
+                console.warn('[DCUF lifecycle] visibility restore failed; running fallback refilter.', error);
+                await this.refilterAllContent('visibilitychange-visible:fallback', { scheduleFollowups: false });
+                return { restored: true, reason: 'fallback' };
+            }).finally(() => {
+                this._visibilityRecoveryPromise = null;
+                if (this._visibilityCycleId === snapshot.cycleId && document.visibilityState === 'visible') {
+                    this._hiddenAt = 0;
+                    this._hiddenMutationGeneration = 0;
+                    this._hiddenBody = null;
+                    this._hiddenRecoverySurface = null;
+                    this._hiddenBfcacheRecoveryId = 0;
+                }
+            });
+            return this._visibilityRecoveryPromise;
         },
         init() {
             if (this._initState === 'ready') return Promise.resolve('already-ready');
@@ -5944,7 +7586,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             this._initState = 'initializing';
             this._initPromise = (async () => {
                 this.installDebugApi();
-                this.debugLog('init', 'FilterModule init start', { version: '3.4.5' });
+                this.debugLog('init', 'FilterModule init start', { version: '3.4.6' });
                 const snapshot = await this.loadBootSnapshot();
                 await this.cleanupLegacyManagedBlockConfig(snapshot);
                 await this.reloadSettings(snapshot);
@@ -7500,7 +9142,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         PAGINATION_BOUND_ATTR: 'data-dcuf-force-refresh-bound',
         TOOLTIP_BOUND_ATTR: 'data-dcuf-tooltip-bound',
         SEARCH_LAYER_BOUND_ATTR: 'data-dcuf-search-layer-bound',
-        POST_REVEAL_RECOVERY_MAX_MS: 4500,
+        POST_REVEAL_RECOVERY_MAX_MS: Math.max(20, Number(__dcufRoot.__DCUF_TESTBED_CONFIG__?.boot?.recoveryMaxMs) || 4500),
         POST_REVEAL_RECOVERY_POLL_MS: 280,
         POST_REVEAL_RECOVERY_STABLE_PASSES: 3,
         POST_REVEAL_RECOVERY_THEME_REFRESH_LIMIT: 2,
@@ -8777,12 +10419,14 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         getPageContext() {
             const sharedContext = window.__dcufPageContext;
             if (sharedContext && typeof sharedContext === 'object') return sharedContext;
-            const type = ((window.location.pathname || '').match(/\/board\/(lists|view|write)(?:\/|$)/) || [])[1] || 'other';
+            const type = ((window.location.pathname || '').match(/\/board\/(lists|view|write|modify)(?:\/|$)/) || [])[1] || 'other';
             return {
                 type,
                 isList: type === 'lists',
                 isView: type === 'view',
                 isWrite: type === 'write',
+                isModify: type === 'modify',
+                isWriteSurface: type === 'write' || type === 'modify',
                 isOther: type === 'other',
                 isTargetPage: type !== 'other',
                 hasListSurface: type === 'lists' || type === 'view',
@@ -8798,18 +10442,49 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             return this.isBoardPage('view');
         },
 
+        getWriteForm() {
+            const standardWriteForm = document.querySelector('form#write');
+            if (standardWriteForm instanceof HTMLFormElement) return standardWriteForm;
+            if (!this.getPageContext().isModify) return null;
+            const modifyForm = document.querySelector('form[name="modify"][action*="modify_submit"]');
+            return modifyForm instanceof HTMLFormElement ? modifyForm : null;
+        },
+
         isWritePage() {
-            return this.isBoardPage('write');
+            const pageContext = this.getPageContext();
+            return pageContext.isWrite || (pageContext.isModify && this.getWriteForm() instanceof HTMLFormElement);
+        },
+
+        isModifyPage() {
+            return this.getPageContext().isModify === true;
         },
 
         shouldEnsureListRuntimeForReveal() {
             return this.isListPage();
         },
 
-        updateInitialRevealDebug(_state, _meta = {}) {
+        updateRevealDebug(channel, state, meta = {}) {
+            const snapshot = {
+                updatedAt: new Date().toISOString(),
+                ready: Boolean(state?.ready),
+                reason: state?.reason || 'unknown',
+                detail: state?.detail && typeof state.detail === 'object' ? { ...state.detail } : null,
+                ...meta
+            };
+            const previous = window.__dcufRevealDebug && typeof window.__dcufRevealDebug === 'object'
+                ? window.__dcufRevealDebug
+                : {};
+            window.__dcufRevealDebug = { ...previous, [channel]: snapshot };
+            this.getRuntimeCoordinator()?.noteDiagnostic?.(`ui.reveal.${channel}`, snapshot);
+            return snapshot;
         },
 
-        updatePostRevealRecoveryDebug(_state, _meta = {}) {
+        updateInitialRevealDebug(state, meta = {}) {
+            return this.updateRevealDebug('initial', state, meta);
+        },
+
+        updatePostRevealRecoveryDebug(state, meta = {}) {
+            return this.updateRevealDebug('recovery', state, meta);
         },
 
         evaluateListInitialRevealState(listWrap) {
@@ -8984,38 +10659,6 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             const hasBottomListSignal = !!document.querySelector('.view_bottom .gall_listwrap, .view_bottom .list_wrap, .view_bottom table.gall_list, .view_bottom tr.ub-content');
             const embeddedListWraps = this.collectOwnedListWraps(viewBottom || document);
 
-            if (!(recommendBox instanceof HTMLElement)) {
-                return {
-                    ready: false,
-                    reason: 'waiting-view',
-                    detail: {
-                        phase: 'post-reveal',
-                        hasViewWrap: true,
-                        hasViewBottom: viewBottom instanceof HTMLElement,
-                        hasRecommendBox: false,
-                        hasBottomListSignal,
-                        embeddedListCount: embeddedListWraps.length,
-                        revealTheme: 'view'
-                    }
-                };
-            }
-
-            if (!(viewBottom instanceof HTMLElement)) {
-                return {
-                    ready: false,
-                    reason: 'waiting-view',
-                    detail: {
-                        phase: 'post-reveal',
-                        hasViewWrap: true,
-                        hasViewBottom: false,
-                        hasRecommendBox: true,
-                        hasBottomListSignal,
-                        embeddedListCount: embeddedListWraps.length,
-                        revealTheme: 'view'
-                    }
-                };
-            }
-
             if (commentSignal instanceof HTMLElement && !(commentBox instanceof HTMLElement) && !(commentWriteBox instanceof HTMLElement)) {
                 return {
                     ready: false,
@@ -9023,8 +10666,8 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                     detail: {
                         phase: 'post-reveal',
                         hasViewWrap: true,
-                        hasViewBottom: true,
-                        hasRecommendBox: true,
+                        hasViewBottom: viewBottom instanceof HTMLElement,
+                        hasRecommendBox: recommendBox instanceof HTMLElement,
                         hasCommentSignal: true,
                         hasCommentBox: false,
                         hasCommentWriteBox: false,
@@ -9040,8 +10683,8 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                     detail: {
                         phase: 'post-reveal',
                         hasViewWrap: true,
-                        hasViewBottom: true,
-                        hasRecommendBox: true,
+                        hasViewBottom: viewBottom instanceof HTMLElement,
+                        hasRecommendBox: recommendBox instanceof HTMLElement,
                         hasBottomListSignal: true,
                         embeddedListCount: 0,
                         revealTheme: 'list'
@@ -9058,8 +10701,8 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                         detail: {
                             phase: 'post-reveal',
                             hasViewWrap: true,
-                            hasViewBottom: true,
-                            hasRecommendBox: true,
+                            hasViewBottom: viewBottom instanceof HTMLElement,
+                            hasRecommendBox: recommendBox instanceof HTMLElement,
                             hasBottomListSignal,
                             embeddedListCount: embeddedListWraps.length,
                             embeddedListIndex: index,
@@ -9078,8 +10721,8 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                     detail: {
                         phase: 'post-reveal',
                         hasViewWrap: true,
-                        hasViewBottom: true,
-                        hasRecommendBox: true,
+                        hasViewBottom: viewBottom instanceof HTMLElement,
+                        hasRecommendBox: recommendBox instanceof HTMLElement,
                         hasBottomListSignal,
                         embeddedListCount: embeddedListWraps.length,
                         missingThemeBridge: true,
@@ -9088,7 +10731,10 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 };
             }
 
-            const verifyResult = themeBridge.verify(document, { mode: 'full' });
+            // Post-reveal recovery must require structural surfaces and the core
+            // article theme only. Optional comment/recommend decoration is not a
+            // safe reason to keep polling or to return the page to recovery.
+            const verifyResult = themeBridge.verify(document, { mode: 'core' });
             if (!verifyResult?.ready) {
                 return {
                     ready: false,
@@ -9098,8 +10744,8 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                     detail: {
                         phase: 'post-reveal',
                         hasViewWrap: true,
-                        hasViewBottom: true,
-                        hasRecommendBox: true,
+                        hasViewBottom: viewBottom instanceof HTMLElement,
+                        hasRecommendBox: recommendBox instanceof HTMLElement,
                         hasBottomListSignal,
                         embeddedListCount: embeddedListWraps.length,
                         hasCommentSignal: commentSignal instanceof HTMLElement,
@@ -9118,8 +10764,8 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 detail: {
                     phase: 'post-reveal',
                     hasViewWrap: true,
-                    hasViewBottom: true,
-                    hasRecommendBox: true,
+                    hasViewBottom: viewBottom instanceof HTMLElement,
+                    hasRecommendBox: recommendBox instanceof HTMLElement,
                     hasBottomListSignal,
                     embeddedListCount: embeddedListWraps.length,
                     hasCommentSignal: commentSignal instanceof HTMLElement,
@@ -9305,6 +10951,10 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                     return true;
                 };
 
+                const canRevealFilteredNativeFallback = (state) => state?.reason === 'waiting-style'
+                    && refreshTriggered
+                    && window.__dcufBootController?.filterReady === true;
+
                 const checkReady = (reason = 'check', candidates = null) => {
                     try {
                         this.ensureBootUi(`initial-reveal:${reason}`);
@@ -9324,7 +10974,15 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                             finish(lastState.reason);
                             return;
                         }
-                        maybeRefreshStyle(lastState, reason);
+                        const refreshStarted = maybeRefreshStyle(lastState, reason);
+                        if (!refreshStarted && canRevealFilteredNativeFallback(lastState)) {
+                            this.updateInitialRevealDebug(lastState, {
+                                refreshAttempted: true,
+                                refreshTriggered: true,
+                                fallback: 'filtered-native-style'
+                            });
+                            finish('filtered-native-style-fallback');
+                        }
                     } catch (error) {
                         console.error('[DC Filter+UI] Failed while evaluating initial reveal readiness:', error);
                         finish('error');
@@ -9491,7 +11149,13 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 checkCount += 1;
 
                 if (Date.now() - startedTime >= this.POST_REVEAL_RECOVERY_MAX_MS) {
-                    cleanup('timeout');
+                    const bootController = window.__dcufBootController;
+                    if (bootController?.state === 'degraded' && bootController.filterReady) {
+                        bootController.markReady('post-reveal-filtered-native-fallback');
+                        cleanup('filtered-native-fallback');
+                    } else {
+                        cleanup('timeout');
+                    }
                     return;
                 }
 
@@ -9670,7 +11334,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             //     대상: .comment_box .usertxt
             //           .img_comment .usertxt (이미지 댓글)
             // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-            // ??/????? ???? ??? ?? normalize ??? ?????.
+            // 일반·이미지 댓글 글자 크기는 댓글 normalize 루틴에서 별도로 처리한다.
             return;
         },
 
@@ -9861,12 +11525,74 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             this.scheduleArticleNativeAdHidePasses();
         },
 
-        transformWritePage() {
-            if (document.body.classList.contains('is-write-page')) return;
-            document.body.classList.add('is-write-page');
+        syncModifySurface(reason = 'sync') {
+            if (!this.isModifyPage() || !document.body) return 'not-modify';
 
-            const writeBox = document.querySelector('.write_box');
-            const writeForm = writeBox?.querySelector('form#write') || document.querySelector('form#write');
+            const writeForm = this.getWriteForm();
+            if (writeForm instanceof HTMLFormElement) {
+                document.body.classList.remove('is-modify-password-page');
+                document.body.classList.add('is-modify-page', 'is-modify-editor-page');
+                document.body.dataset.dcufModifySurface = 'editor';
+                document.documentElement?.setAttribute('data-dcuf-modify-surface', 'editor');
+                this.transformWritePage();
+                this.recordDiagnostic('ui.modifySurface.editor', { reason });
+                return 'editor';
+            }
+
+            const passwordForm = document.querySelector('form[name="password_confirm"], form[action*="modify_password_submit"]');
+            if (passwordForm instanceof HTMLFormElement) {
+                document.body.classList.remove('is-modify-editor-page');
+                document.body.classList.add('is-modify-page', 'is-modify-password-page');
+                document.body.dataset.dcufModifySurface = 'password';
+                document.documentElement?.setAttribute('data-dcuf-modify-surface', 'password');
+                passwordForm.classList.add('dcuf-modify-password-form');
+                const passwordInput = passwordForm.querySelector('input[type="password"][name="password"], #password');
+                if (passwordInput instanceof HTMLInputElement) {
+                    passwordInput.autocomplete = 'current-password';
+                    if (!passwordInput.getAttribute('aria-label')) passwordInput.setAttribute('aria-label', '비밀번호');
+                }
+                this.recordDiagnostic('ui.modifySurface.password', { reason });
+                return 'password';
+            }
+
+            document.body.classList.add('is-modify-page');
+            document.body.classList.remove('is-modify-password-page', 'is-modify-editor-page');
+            document.body.dataset.dcufModifySurface = 'pending';
+            document.documentElement?.setAttribute('data-dcuf-modify-surface', 'pending');
+            return 'pending';
+        },
+
+        subscribeModifySurfaceUpdates() {
+            if (!this.isModifyPage() || this._modifySurfaceMutationUnsubscribe) return;
+            const runtimeCoordinator = this.getRuntimeCoordinator();
+            if (!runtimeCoordinator || typeof runtimeCoordinator.subscribeMutations !== 'function') return;
+
+            const unsubscribe = runtimeCoordinator.subscribeMutations('ui-modify-surface', (payload) => {
+                const candidates = typeof payload?.collectMatches === 'function'
+                    ? payload.collectMatches([
+                        'form#write',
+                        'form[name="modify"][action*="modify_submit"]',
+                        'form[name="password_confirm"]',
+                        'form[action*="modify_password_submit"]',
+                        '.no_memberwrap'
+                    ], { includeRoots: true })
+                    : [];
+                if (candidates.length > 0 || document.body?.dataset.dcufModifySurface === 'pending') {
+                    this.syncModifySurface('mutation');
+                }
+            });
+            if (typeof unsubscribe === 'function') this._modifySurfaceMutationUnsubscribe = unsubscribe;
+        },
+
+        transformWritePage() {
+            const writeForm = this.getWriteForm();
+            if (!(writeForm instanceof HTMLFormElement)) return false;
+            const writeBox = writeForm.closest('.write_box') || document.querySelector('.write_box');
+            writeForm.classList.add('dcuf-write-form');
+            document.body.classList.add('is-write-page');
+            if (writeForm.dataset.dcufWriteTransformed === '1') return true;
+            writeForm.dataset.dcufWriteTransformed = '1';
+
             const leaveConfirm = writeForm?.querySelector('#leave_confirm_box');
             if (leaveConfirm instanceof HTMLElement) {
                 leaveConfirm.classList.add('dcuf-write-leave-confirm');
@@ -10383,7 +12109,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             let adRemovalInterval = 0;
             let adRemovalAttempts = 0;
 
-            if (removeWritePageAds()) return;
+            if (removeWritePageAds()) return true;
 
             const observerTarget = writeBox || document.body;
             if (observerTarget instanceof Element) {
@@ -10401,6 +12127,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                     stopAdCleanup();
                 }
             }, 250);
+            return true;
         },
         async init() {
             if (this._initState === 'ready') return 'already-ready';
@@ -10440,6 +12167,12 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 document.body.classList.add('is-mgallery');
             }
 
+
+            if (this.isModifyPage()) {
+                const modifySurface = this.syncModifySurface('init');
+                this.subscribeModifySurfaceUpdates();
+                return modifySurface === 'editor' ? 'non-list' : `modify-${modifySurface}`;
+            }
 
             if (this.isWritePage()) {
                 this.transformWritePage();
@@ -10514,7 +12247,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
         return {
             reason,
-            version: '3.4.5',
+            version: '3.4.6',
             time: new Date().toISOString(),
             href: location.href,
             heap: getDcufHeapMb(),
@@ -10629,7 +12362,8 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             ['글댓합 설정하기', FilterModule.showSettings.bind(FilterModule)],
             ['차단 유저 관리', PersonalBlockModule.createManagementPanel.bind(PersonalBlockModule)],
             ['플로팅 버튼 원위치', PersonalBlockModule.resetFabPosition.bind(PersonalBlockModule)],
-            ['메뉴 버튼 크기 조절', PersonalBlockModule.showFabScalePanel.bind(PersonalBlockModule)]
+            ['메뉴 버튼 크기 조절', PersonalBlockModule.showFabScalePanel.bind(PersonalBlockModule)],
+            ['UI 색상 설정', ThemeModule.openPaletteDialog.bind(ThemeModule)]
         ];
         commands.forEach(([label, handler]) => {
             try { GM_registerMenuCommand(label, handler); }
@@ -10642,8 +12376,11 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
     // [신규] 단축키 설정을 다시 로드하는 전용 함수
     async function reloadShortcutKey() {
-        const shortcutString = await GM_getValue(FilterModule.CONSTANTS.STORAGE_KEYS.SHORTCUT_KEY, 'Shift+S');
-        activeShortcutObject = FilterModule.parseShortcutString(shortcutString);
+        const shortcutString = String(await GM_getValue(FilterModule.CONSTANTS.STORAGE_KEYS.SHORTCUT_KEY, 'Shift+S') || 'Shift+S');
+        const changed = activeShortcutString !== null && activeShortcutString !== shortcutString;
+        activeShortcutString = shortcutString;
+        activeShortcutObject = FilterModule.parseShortcutString(activeShortcutString);
+        return { changed, shortcutString: activeShortcutString };
     }
 
     async function awaitInitialCommentStabilization() {
@@ -10714,7 +12451,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 }));
             }
         }
-        console.log("[DC Filter+UI] Initializing v3.4.5...");
+        console.log("[DC Filter+UI] Initializing v3.4.6...");
 
 
         if (!__dcufRoot.__dcufShortcutBound) {
@@ -10759,6 +12496,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
         await FilterModule.init();
         await PersonalBlockModule.init(FilterModule.getBootSnapshot(), { deferUi: true });
+        window.__dcufBootController?.markFilterReady?.('mobile-filter-and-personal-block-ready');
         window.__dcufBootController?.note?.('boot.local-filter-ready');
         const uiInitState = await UIModule.init();
         window.__dcufBootController?.note?.('boot.ui-ready', { uiInitState });
@@ -10786,7 +12524,10 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             const mainState = await main();
             if (mainState && typeof mainState === 'object') initState = mainState;
             if (typeof UIModule?.waitForInitialRevealReady === 'function') {
-                revealState = await UIModule.waitForInitialRevealReady();
+                const configuredRevealTimeout = Number(__dcufRoot.__DCUF_TESTBED_CONFIG__?.boot?.revealTimeoutMs);
+                revealState = await UIModule.waitForInitialRevealReady(
+                    Number.isFinite(configuredRevealTimeout) && configuredRevealTimeout > 0 ? configuredRevealTimeout : undefined
+                );
             }
             window.__dcufBootController?.note?.('boot.style-verified', { revealState });
             initializationSucceeded = revealState !== 'error' && !String(revealState).startsWith('timeout-');
@@ -10909,6 +12650,8 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
     try {
 
 ; (() => {
+    if (!__dcufPageSupports('list-surface')) return;
+
     const STYLE_ID = 'dcuf-phase1-list-theme';
     const DEBUG_KEY = '__DCUF_PHASE1_DEBUG__';
     const css = `
@@ -10916,7 +12659,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             --dcuf-fg: #2b3340;
             --dcuf-fg-sub: #4a5566;
             --dcuf-fg-meta: #667285;
-            --dcuf-accent: #245bda;
+            --dcuf-accent: var(--dcuf-theme-accent, #245bda);
             --dcuf-surface: #f6f8fb;
             --dcuf-border: #dfe5ee;
             background: linear-gradient(180deg, #f2f6fb 0%, #f8fafc 100%) !important;
@@ -11320,12 +13063,12 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         .custom-bottom-controls .dcuf-bottom-action-card .on,
         .custom-bottom-controls .dcuf-bottom-action-card button.on,
         .custom-bottom-controls .dcuf-bottom-action-card a.on {
-            border-color: #315fdb !important;
-            background: linear-gradient(180deg, #527df0 0%, #315fdc 100%) !important;
+            border-color: var(--dcuf-theme-accent-strong, #315fdb) !important;
+            background: linear-gradient(180deg, var(--dcuf-theme-primary-top, #527df0) 0%, var(--dcuf-theme-accent-strong, #315fdc) 100%) !important;
             color: #fff !important;
             box-shadow:
                 inset 0 1px 0 rgba(255, 255, 255, 0.28),
-                0 7px 14px rgba(49, 95, 220, 0.24) !important;
+                0 7px 14px var(--dcuf-theme-accent-shadow, rgba(49, 95, 220, 0.24)) !important;
         }
         body:not(.is-write-page) .list_array_option select,
         body:not(.is-write-page) .list_array_option .select_box {
@@ -11343,12 +13086,12 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         .custom-bottom-controls .dcuf-bottom-action-card .write {
             min-width: 92px !important;
             min-height: 44px !important;
-            border-color: #2e5bd4 !important;
-            background: linear-gradient(180deg, #527cf0 0%, #2e5bd4 100%) !important;
+            border-color: var(--dcuf-theme-accent-strong, #2e5bd4) !important;
+            background: linear-gradient(180deg, var(--dcuf-theme-primary-top, #527cf0) 0%, var(--dcuf-theme-accent-strong, #2e5bd4) 100%) !important;
             color: #fff !important;
             box-shadow:
                 inset 0 1px 0 rgba(255, 255, 255, 0.28),
-                0 8px 16px rgba(46, 91, 212, 0.25) !important;
+                0 8px 16px var(--dcuf-theme-accent-shadow, rgba(46, 91, 212, 0.25)) !important;
         }
         .custom-bottom-controls {
             display: flex !important;
@@ -11514,10 +13257,10 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         .custom-bottom-controls .bottom_paging_box > strong,
         .custom-bottom-controls .bottom_paging_box > em,
         .custom-bottom-controls .bottom_paging_box > .on {
-            border-color: #315fdb !important;
-            background: linear-gradient(180deg, #527df0 0%, #315fdc 100%) !important;
+            border-color: var(--dcuf-theme-accent-strong, #315fdb) !important;
+            background: linear-gradient(180deg, var(--dcuf-theme-primary-top, #527df0) 0%, var(--dcuf-theme-accent-strong, #315fdc) 100%) !important;
             color: #fff !important;
-            box-shadow: 0 6px 12px rgba(49, 95, 220, 0.22) !important;
+            box-shadow: 0 6px 12px var(--dcuf-theme-accent-shadow, rgba(49, 95, 220, 0.22)) !important;
         }
         .custom-bottom-controls .dcuf-pagination-card .bottom_movebox {
             display: flex !important;
@@ -11561,9 +13304,9 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             height: 44px !important;
             margin: 0 !important;
             padding: 0 !important;
-            border: 1px solid #2e5bd4 !important;
+            border: 1px solid var(--dcuf-theme-accent-strong, #2e5bd4) !important;
             border-radius: 12px !important;
-            background-color: #3768df !important;
+            background-color: var(--dcuf-theme-accent-strong, #3768df) !important;
             background-image: none !important;
             background-position: 0 0 !important;
             background-repeat: no-repeat !important;
@@ -11572,7 +13315,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             line-height: 0 !important;
             text-indent: 0 !important;
             overflow: hidden !important;
-            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 7px 14px rgba(46, 91, 212, 0.24) !important;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 7px 14px var(--dcuf-theme-accent-shadow, rgba(46, 91, 212, 0.24)) !important;
         }
         .custom-bottom-controls[data-dcuf-controls-ready="1"] .dcuf-search-card form[name="frmSearch"] .bnt_search::before,
         .custom-bottom-controls[data-dcuf-controls-ready="1"] .dcuf-search-card form[name="frmSearch"] button.sp_img.bnt_search::before {
@@ -11715,10 +13458,10 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             height: 44px !important;
             margin: 0 !important;
             padding: 0 18px !important;
-            border: 1px solid #2e5bd4 !important;
+            border: 1px solid var(--dcuf-theme-accent-strong, #2e5bd4) !important;
             border-radius: 11px !important;
-            background-color: #2e5bd4 !important;
-            background-image: linear-gradient(180deg, #527cf0 0%, #2e5bd4 100%) !important;
+            background-color: var(--dcuf-theme-accent-strong, #2e5bd4) !important;
+            background-image: linear-gradient(180deg, var(--dcuf-theme-primary-top, #527cf0) 0%, var(--dcuf-theme-accent-strong, #2e5bd4) 100%) !important;
             background-position: 0 0 !important;
             background-repeat: no-repeat !important;
             color: #fff !important;
@@ -11844,10 +13587,10 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         #container.minor_view .view_bottom_btnbox .write,
         #container.mini_view .view_bottom_btnbox .btn_blue,
         #container.mini_view .view_bottom_btnbox .write {
-            border-color: #2e5bd4 !important;
-            background: linear-gradient(180deg, #527cf0 0%, #2e5bd4 100%) !important;
+            border-color: var(--dcuf-theme-accent-strong, #2e5bd4) !important;
+            background: linear-gradient(180deg, var(--dcuf-theme-primary-top, #527cf0) 0%, var(--dcuf-theme-accent-strong, #2e5bd4) 100%) !important;
             color: #fff !important;
-            box-shadow: 0 8px 16px rgba(46, 91, 212, 0.25) !important;
+            box-shadow: 0 8px 16px var(--dcuf-theme-accent-shadow, rgba(46, 91, 212, 0.25)) !important;
         }
 
         .page_head > .fr {
@@ -12063,8 +13806,8 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             color: #d2dced !important;
         }
         body.dc-filter-dark-mode .custom-bottom-controls form[name="frmSearch"] input[type="text"] {
-            background: #111722 !important;
-            border-color: #445267 !important;
+            background: var(--dcuf-theme-surface-input, #111722) !important;
+            border-color: var(--dcuf-theme-border-strong, #445267) !important;
             color: #f3f6ff !important;
         }
         body.dc-filter-dark-mode:not(.is-write-page) .list_array_option,
@@ -12074,7 +13817,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             --dcuf-control-border: #43526a;
             --dcuf-control-surface: linear-gradient(180deg, #263347 0%, #202b3a 100%);
             --dcuf-control-text: #e8eef8;
-            --dcuf-search-input: #111722;
+            --dcuf-search-input: var(--dcuf-theme-surface-input, #111722);
             border-color: #3d4c60 !important;
             background: linear-gradient(180deg, rgba(35, 46, 62, 0.98) 0%, rgba(25, 34, 47, 0.98) 100%) !important;
             box-shadow:
@@ -12102,10 +13845,10 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         body.dc-filter-dark-mode .custom-bottom-controls .dcuf-bottom-action-card .on,
         body.dc-filter-dark-mode .custom-bottom-controls .dcuf-bottom-action-card button.on,
         body.dc-filter-dark-mode .custom-bottom-controls .dcuf-bottom-action-card a.on {
-            border-color: #4c7bf0 !important;
-            background: linear-gradient(180deg, #5b86f2 0%, #3868df 100%) !important;
+            border-color: var(--dcuf-theme-accent, #4c7bf0) !important;
+            background: linear-gradient(180deg, var(--dcuf-theme-primary-top, #5b86f2) 0%, var(--dcuf-theme-accent-strong, #3868df) 100%) !important;
             color: #fff !important;
-            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.24), 0 7px 14px rgba(31, 68, 164, 0.4) !important;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.24), 0 7px 14px var(--dcuf-theme-accent-shadow, rgba(31, 68, 164, 0.4)) !important;
         }
 
         body.dc-filter-dark-mode .custom-bottom-controls .bottom_paging_box > a,
@@ -12147,10 +13890,10 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         body.dc-filter-dark-mode #container.minor_view .view_bottom_btnbox .write,
         body.dc-filter-dark-mode #container.mini_view .view_bottom_btnbox .btn_blue,
         body.dc-filter-dark-mode #container.mini_view .view_bottom_btnbox .write {
-            border-color: #4c7bf0 !important;
-            background: linear-gradient(180deg, #5b86f2 0%, #3868df 100%) !important;
+            border-color: var(--dcuf-theme-accent, #4c7bf0) !important;
+            background: linear-gradient(180deg, var(--dcuf-theme-primary-top, #5b86f2) 0%, var(--dcuf-theme-accent-strong, #3868df) 100%) !important;
             color: #fff !important;
-            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.24), 0 7px 14px rgba(31, 68, 164, 0.4) !important;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.24), 0 7px 14px var(--dcuf-theme-accent-shadow, rgba(31, 68, 164, 0.4)) !important;
         }
         body.dc-filter-dark-mode:not(.is-write-page) .list_array_option .select_box.array_num > .select_area > a {
             color: #e1e9f5 !important;
@@ -12468,26 +14211,16 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
     injectStyle({ reason: 'initial' });
     verifyApplied('initial');
 
-    const scheduleVerify = (reason, delay) => {
-        setTimeout(() => verifyApplied(reason), delay);
-    };
-
-    scheduleVerify('after-100ms', 100);
-    scheduleVerify('after-500ms', 500);
-    scheduleVerify('after-1500ms', 1500);
-
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', () => {
             injectStyle({ reason: 'domcontentloaded' });
             verifyApplied('domcontentloaded');
-            scheduleVerify('domcontentloaded+300ms', 300);
         }, { once: true });
     }
 
     window.addEventListener('load', () => {
         injectStyle({ reason: 'window-load' });
         verifyApplied('window-load');
-        scheduleVerify('window-load+300ms', 300);
     }, { once: true });
 })();
 
@@ -12498,27 +14231,27 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
     const css = `
         .view_content_wrap {
             --dcuf-view-surface: rgba(255, 255, 255, 0.96);
-            --dcuf-view-surface-muted: #f7f9fd;
-            --dcuf-view-border: #d7e0ec;
-            --dcuf-view-border-strong: #c7d3e4;
+            --dcuf-view-surface-muted: var(--dcuf-theme-surface-muted, #f7f9fd);
+            --dcuf-view-border: var(--dcuf-theme-border, #d7e0ec);
+            --dcuf-view-border-strong: var(--dcuf-theme-border-strong, #c7d3e4);
             --dcuf-view-shadow: 0 8px 24px rgba(18, 35, 69, 0.08);
             --dcuf-view-shadow-soft: 0 4px 14px rgba(18, 35, 69, 0.05);
             --dcuf-view-fg: #22324c;
             --dcuf-view-fg-sub: #5f6f86;
-            --dcuf-view-accent: #3f6de0;
+            --dcuf-view-accent: var(--dcuf-theme-accent, #3f6de0);
             padding: 10px 10px 0 !important;
             color: var(--dcuf-view-fg) !important;
         }
         body.dc-filter-dark-mode .view_content_wrap {
             --dcuf-view-surface: #18212d;
-            --dcuf-view-surface-muted: #1e2a39;
-            --dcuf-view-border: #314258;
-            --dcuf-view-border-strong: #45607c;
+            --dcuf-view-surface-muted: var(--dcuf-theme-surface-muted, #1e2a39);
+            --dcuf-view-border: var(--dcuf-theme-border, #314258);
+            --dcuf-view-border-strong: var(--dcuf-theme-border-strong, #45607c);
             --dcuf-view-shadow: 0 10px 24px rgba(0, 0, 0, 0.32);
             --dcuf-view-shadow-soft: 0 6px 18px rgba(0, 0, 0, 0.24);
             --dcuf-view-fg: #edf3ff;
             --dcuf-view-fg-sub: #b6c4d9;
-            --dcuf-view-accent: #8cb4ff;
+            --dcuf-view-accent: var(--dcuf-theme-accent, #8cb4ff);
         }
         .view_content_wrap > header {
             margin-bottom: 12px !important;
@@ -12714,6 +14447,13 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             mix-blend-mode: normal !important;
             text-shadow: none !important;
             -webkit-text-stroke: 0 transparent !important;
+        }
+        body.dc-filter-dark-mode .view_content_wrap :is(.gallview_contents, .writing_view_box, .write_div)
+            :is(img, picture, video, canvas) {
+            opacity: 1 !important;
+            filter: none !important;
+            -webkit-filter: none !important;
+            mix-blend-mode: normal !important;
         }
         .view_content_wrap .recommend_kapcode {
             display: flex !important;
@@ -14557,7 +16297,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             border-top-color: rgba(120, 144, 175, 0.2) !important;
             background: rgba(20, 28, 39, 0.84) !important;
         }
-        /* [?? ??/??? ?? ?? ?????] */
+        /* [댓글 입력·팝업 레이어 overflow 보정] */
         #focus_cmt,
         #focus_cmt > div[id^="comment_wrap_"],
         #focus_cmt > .cmt_write_box,
@@ -14609,7 +16349,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             left: 0 !important;
             right: 0 !important;
             top: 0 !important;
-            bottom: calc(var(--dcuf-focus-group-extend, 0px) * -1) !important;
+            bottom: 0 !important;
             border-radius: 16px !important;
             background: linear-gradient(180deg, #ffffff 0%, #f7f7f8 100%) !important;
             border: 1px solid rgba(222, 230, 239, 0.92) !important;
@@ -14651,7 +16391,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         /* fcno 포커스 댓글은 "대댓글만 담긴 top-level li"가 따로 생길 수 있습니다.
            이 wrapper는 카드처럼 보이면 부모/대댓글이 분리돼 보이므로, 시각적으로는 reply 박스처럼 눌러줍니다. */
         #focus_cmt > div[id^="comment_wrap_"] .comment_box .cmt_list > li:has(> .reply.show):not(:has(> .cmt_info)) {
-            margin: -6px 0 12px !important;
+            margin: 8px 0 12px !important;
             padding: 0 !important;
             border: 0 !important;
             border-radius: 0 !important;
@@ -14678,21 +16418,21 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         }
         #focus_cmt > div[id^="comment_wrap_"] .comment_box .reply.show {
             margin-top: 10px !important;
-            padding-top: 10px !important;
-            border-top: 1px solid #e3e9f1 !important;
+            padding-top: 0 !important;
+            border-top: 0 !important;
             background: transparent !important;
         }
         #focus_cmt > div[id^="comment_wrap_"] .comment_box .reply_box {
-            margin: 2px 0 0 8px !important;
+            margin: 0 0 0 18px !important;
             padding: 10px 12px 10px 14px !important;
             border: 0 !important;
-            border-left: 1px solid #d7dee8 !important;
+            border-left: 3px solid #d7dee8 !important;
             border-radius: 12px !important;
             background: linear-gradient(180deg, rgba(247, 249, 252, 0.96) 0%, rgba(243, 246, 250, 0.96) 100%) !important;
             box-shadow: inset 0 0 0 1px rgba(211, 220, 232, 0.76) !important;
         }
         #focus_cmt > div[id^="comment_wrap_"] .comment_box .cmt_list > li[data-dcuf-focus-group-reply="1"] {
-            margin: -16px 0 12px !important;
+            margin: 8px 0 12px !important;
             background: transparent !important;
             box-shadow: none !important;
         }
@@ -14702,9 +16442,9 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             border-top: 0 !important;
         }
         #focus_cmt > div[id^="comment_wrap_"] .comment_box .cmt_list > li[data-dcuf-focus-group-reply="1"] > .reply.show > .reply_box {
-            margin: -14px 0 0 8px !important;
+            margin: 0 0 0 18px !important;
             padding: 8px 12px 10px 14px !important;
-            border-left: 1px solid #d2dbe7 !important;
+            border-left: 3px solid #d2dbe7 !important;
             border-radius: 12px !important;
             background: linear-gradient(180deg, rgba(244, 247, 251, 0.98) 0%, rgba(239, 243, 248, 0.98) 100%) !important;
             box-shadow: inset 0 0 0 1px rgba(208, 218, 230, 0.84) !important;
@@ -15127,10 +16867,15 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         const wrapStyle = window.getComputedStyle(viewWrap);
         const headStyle = window.getComputedStyle(head);
         const contentStyle = window.getComputedStyle(content);
-        const recommendBox = viewWrap.querySelector('.btn_recommend_box');
+        const includeExtendedSurfaces = mode !== 'core';
+        const recommendBox = includeExtendedSurfaces ? viewWrap.querySelector('.btn_recommend_box') : null;
         const recommendBoxStyle = recommendBox instanceof HTMLElement ? window.getComputedStyle(recommendBox) : null;
-        const commentBox = document.querySelector('#focus_cmt .comment_box, div[id^="comment_wrap_"] .comment_box, .view_comment .comment_box');
-        const commentWriteBox = document.querySelector('#focus_cmt > .cmt_write_box, #focus_cmt .cmt_write_box, .view_comment .cmt_write_box');
+        const commentBox = includeExtendedSurfaces
+            ? document.querySelector('#focus_cmt .comment_box, div[id^="comment_wrap_"] .comment_box, .view_comment .comment_box')
+            : null;
+        const commentWriteBox = includeExtendedSurfaces
+            ? document.querySelector('#focus_cmt > .cmt_write_box, #focus_cmt .cmt_write_box, .view_comment .cmt_write_box')
+            : null;
         const commentTextContainer = commentWriteBox instanceof HTMLElement
             ? commentWriteBox.querySelector('.cmt_txt_cont')
             : null;
@@ -15193,29 +16938,29 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             failureReason = 'missing-content-elevation';
         } else if (!contentIsWritingBox && contentStyle.backgroundImage === 'none' && isTransparentColor(detail.contentBackgroundColor)) {
             failureReason = 'transparent-content-background';
-        } else if (mode !== 'core' && recommendBox instanceof HTMLElement && detail.recommendBoxRadius < 16) {
+        } else if (includeExtendedSurfaces && recommendBox instanceof HTMLElement && detail.recommendBoxRadius < 16) {
             failureReason = 'insufficient-recommend-radius';
-        } else if (mode !== 'core' && recommendBox instanceof HTMLElement && recommendBoxStyle.boxShadow === 'none') {
+        } else if (includeExtendedSurfaces && recommendBox instanceof HTMLElement && recommendBoxStyle.boxShadow === 'none') {
             failureReason = 'missing-recommend-elevation';
-        } else if (mode !== 'core' && recommendBox instanceof HTMLElement && recommendBoxStyle.backgroundImage === 'none' && isTransparentColor(detail.recommendBoxBackgroundColor)) {
+        } else if (includeExtendedSurfaces && recommendBox instanceof HTMLElement && recommendBoxStyle.backgroundImage === 'none' && isTransparentColor(detail.recommendBoxBackgroundColor)) {
             failureReason = 'transparent-recommend-background';
-        } else if (mode !== 'core' && commentBox instanceof HTMLElement && detail.commentBoxRadius < 16) {
+        } else if (includeExtendedSurfaces && commentBox instanceof HTMLElement && detail.commentBoxRadius < 16) {
             failureReason = 'insufficient-comment-radius';
-        } else if (mode !== 'core' && commentBox instanceof HTMLElement && commentBoxStyle.boxShadow === 'none') {
+        } else if (includeExtendedSurfaces && commentBox instanceof HTMLElement && commentBoxStyle.boxShadow === 'none') {
             failureReason = 'missing-comment-elevation';
-        } else if (mode !== 'core' && commentBox instanceof HTMLElement && commentBoxStyle.backgroundImage === 'none' && isTransparentColor(detail.commentBoxBackgroundColor)) {
+        } else if (includeExtendedSurfaces && commentBox instanceof HTMLElement && commentBoxStyle.backgroundImage === 'none' && isTransparentColor(detail.commentBoxBackgroundColor)) {
             failureReason = 'transparent-comment-background';
-        } else if (mode !== 'core' && commentWriteBox instanceof HTMLElement && detail.commentWriteBoxRadius < 16) {
+        } else if (includeExtendedSurfaces && commentWriteBox instanceof HTMLElement && detail.commentWriteBoxRadius < 16) {
             failureReason = 'insufficient-comment-write-radius';
-        } else if (mode !== 'core' && commentWriteBox instanceof HTMLElement && commentWriteBoxStyle.boxShadow === 'none') {
+        } else if (includeExtendedSurfaces && commentWriteBox instanceof HTMLElement && commentWriteBoxStyle.boxShadow === 'none') {
             failureReason = 'missing-comment-write-elevation';
-        } else if (mode !== 'core' && commentWriteBox instanceof HTMLElement && commentWriteBoxStyle.backgroundImage === 'none' && isTransparentColor(detail.commentWriteBoxBackgroundColor)) {
+        } else if (includeExtendedSurfaces && commentWriteBox instanceof HTMLElement && commentWriteBoxStyle.backgroundImage === 'none' && isTransparentColor(detail.commentWriteBoxBackgroundColor)) {
             failureReason = 'transparent-comment-write-background';
-        } else if (mode !== 'core' && commentTextContainer instanceof HTMLElement && detail.commentTextContainerRadius < 12) {
+        } else if (includeExtendedSurfaces && commentTextContainer instanceof HTMLElement && detail.commentTextContainerRadius < 12) {
             failureReason = 'insufficient-comment-input-radius';
-        } else if (mode !== 'core' && commentTextContainer instanceof HTMLElement && commentTextContainerStyle.backgroundImage === 'none' && isTransparentColor(detail.commentTextContainerBackgroundColor)) {
+        } else if (includeExtendedSurfaces && commentTextContainer instanceof HTMLElement && commentTextContainerStyle.backgroundImage === 'none' && isTransparentColor(detail.commentTextContainerBackgroundColor)) {
             failureReason = 'transparent-comment-input-background';
-        } else if (mode !== 'core' && commentTextContainer instanceof HTMLElement && !detail.commentTextContainerHasRenderableBorder) {
+        } else if (includeExtendedSurfaces && commentTextContainer instanceof HTMLElement && !detail.commentTextContainerHasRenderableBorder) {
             failureReason = 'missing-comment-input-border';
         }
 
@@ -16966,6 +18711,178 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 })();
 
 (() => {
+    if (!__dcufPageSupports('modify')) return;
+
+    const STYLE_ID = 'dcuf-mobile-modify-theme';
+    if (document.getElementById(STYLE_ID)) return;
+
+    const css = `
+        body.is-modify-password-page {
+            box-sizing: border-box !important;
+            min-width: 0 !important;
+            margin: 0 !important;
+            background: var(--dcuf-theme-page, #f2f6fb) !important;
+            color: var(--dcuf-theme-fg, #27313f) !important;
+            overflow-x: clip !important;
+        }
+        body.is-modify-password-page #container {
+            box-sizing: border-box !important;
+            width: 100% !important;
+            min-width: 0 !important;
+            min-height: calc(100dvh - 170px) !important;
+            margin: 0 !important;
+            padding: 6px 12px 28px !important;
+            background: transparent !important;
+        }
+        body.is-modify-password-page #container > section {
+            box-sizing: border-box !important;
+            width: min(760px, 100%) !important;
+            min-width: 0 !important;
+            margin: 0 auto !important;
+        }
+        body.is-modify-password-page #container > section > header.page_head {
+            width: 100% !important;
+            margin: 0 !important;
+            padding: 12px 4px !important;
+            border-bottom-color: var(--dcuf-theme-accent, #3f6de0) !important;
+            color: var(--dcuf-theme-accent, #3f6de0) !important;
+        }
+        body.is-modify-password-page form.dcuf-modify-password-form {
+            box-sizing: border-box !important;
+            display: grid !important;
+            width: 100% !important;
+            min-height: min(520px, calc(100dvh - 250px)) !important;
+            margin: 0 !important;
+            padding: 24px 0 !important;
+            place-items: center !important;
+        }
+        body.is-modify-password-page form.dcuf-modify-password-form > article,
+        body.is-modify-password-page form.dcuf-modify-password-form .no_memberwrap,
+        body.is-modify-password-page form.dcuf-modify-password-form .no_member_cont {
+            box-sizing: border-box !important;
+            width: 100% !important;
+            max-width: 520px !important;
+            min-width: 0 !important;
+            height: auto !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            border: 0 !important;
+            background: transparent !important;
+        }
+        body.is-modify-password-page form.dcuf-modify-password-form .no_memberwrap {
+            overflow: hidden !important;
+            border: 1px solid var(--dcuf-theme-border-strong, #cbd2db) !important;
+            border-radius: 20px !important;
+            background: linear-gradient(160deg, var(--dcuf-theme-card-top, #fff), var(--dcuf-theme-card-bottom, #fafbfc)) !important;
+            box-shadow: var(--dcuf-theme-panel-shadow, 0 18px 42px rgba(31, 45, 68, .16)) !important;
+        }
+        body.is-modify-password-page form.dcuf-modify-password-form .no_member_cont .inner {
+            box-sizing: border-box !important;
+            display: grid !important;
+            width: 100% !important;
+            min-width: 0 !important;
+            margin: 0 !important;
+            padding: 30px 26px 24px !important;
+            gap: 16px !important;
+            place-items: stretch !important;
+            text-align: center !important;
+        }
+        body.is-modify-password-page form.dcuf-modify-password-form .no_member_cont .txt {
+            display: block !important;
+            margin: 0 !important;
+            color: var(--dcuf-theme-fg, #27313f) !important;
+            font-size: 17px !important;
+            font-weight: 800 !important;
+            line-height: 1.45 !important;
+        }
+        body.is-modify-password-page form.dcuf-modify-password-form input#password,
+        body.is-modify-password-page form.dcuf-modify-password-form input[name="password"] {
+            box-sizing: border-box !important;
+            display: block !important;
+            width: 100% !important;
+            min-width: 0 !important;
+            height: 50px !important;
+            margin: 0 !important;
+            padding: 0 14px !important;
+            border: 1px solid var(--dcuf-theme-border-strong, #cbd2db) !important;
+            border-radius: 12px !important;
+            outline: 0 !important;
+            background: var(--dcuf-theme-surface-input, #fff) !important;
+            color: var(--dcuf-theme-fg, #27313f) !important;
+            font: 700 17px/1 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+            box-shadow: inset 0 2px 5px color-mix(in srgb, var(--dcuf-theme-accent) 6%, transparent) !important;
+        }
+        body.is-modify-password-page form.dcuf-modify-password-form input#password:focus,
+        body.is-modify-password-page form.dcuf-modify-password-form input[name="password"]:focus {
+            border-color: var(--dcuf-theme-accent, #3f6de0) !important;
+            box-shadow: 0 0 0 3px var(--dcuf-theme-focus-ring, rgba(63, 109, 224, .18)) !important;
+        }
+        body.is-modify-password-page form.dcuf-modify-password-form .btn_box {
+            box-sizing: border-box !important;
+            display: grid !important;
+            grid-template-columns: 1fr 1fr !important;
+            width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            gap: 10px !important;
+        }
+        body.is-modify-password-page form.dcuf-modify-password-form .btn_box > button {
+            box-sizing: border-box !important;
+            width: 100% !important;
+            min-width: 0 !important;
+            min-height: 46px !important;
+            margin: 0 !important;
+            padding: 10px 12px !important;
+            border: 1px solid var(--dcuf-theme-border-strong, #cbd2db) !important;
+            border-radius: 12px !important;
+            background: linear-gradient(180deg, var(--dcuf-theme-card-top, #fff), var(--dcuf-theme-surface-input, #f7f8fa)) !important;
+            color: var(--dcuf-theme-fg, #27313f) !important;
+            font-size: 15px !important;
+            font-weight: 800 !important;
+            line-height: 1.2 !important;
+            cursor: pointer !important;
+        }
+        body.is-modify-password-page form.dcuf-modify-password-form .btn_box > :is(.btn_blue, .btn_ok) {
+            border-color: var(--dcuf-theme-accent-strong, #245bda) !important;
+            background-color: var(--dcuf-theme-accent-strong, #245bda) !important;
+            background-image: linear-gradient(180deg, var(--dcuf-theme-primary-top, #5d87f0), var(--dcuf-theme-accent-strong, #245bda)) !important;
+            color: var(--dcuf-theme-on-accent, #fff) !important;
+            box-shadow: 0 8px 18px var(--dcuf-theme-accent-shadow, rgba(36, 91, 218, .25)) !important;
+        }
+        body.is-modify-password-page footer.dcfoot,
+        body.is-modify-password-page #data_info {
+            display: none !important;
+        }
+        body.is-modify-password-page.dc-filter-dark-mode form.dcuf-modify-password-form .no_memberwrap {
+            box-shadow: 0 20px 46px rgba(0, 0, 0, .44) !important;
+        }
+        @media screen and (max-width: 480px) {
+            body.is-modify-password-page #container { padding: 4px 10px 20px !important; }
+            body.is-modify-password-page form.dcuf-modify-password-form {
+                min-height: calc(100dvh - 220px) !important;
+                padding: 16px 0 !important;
+            }
+            body.is-modify-password-page form.dcuf-modify-password-form .no_member_cont .inner {
+                padding: 24px 18px 18px !important;
+            }
+        }
+    `;
+
+    const injectModifyStyle = () => {
+        if (document.getElementById(STYLE_ID)) return true;
+        const target = document.head || document.documentElement;
+        if (!target) return false;
+        const style = document.createElement('style');
+        style.id = STYLE_ID;
+        style.textContent = css;
+        target.appendChild(style);
+        return true;
+    };
+
+    if (!injectModifyStyle()) document.addEventListener('DOMContentLoaded', injectModifyStyle, { once: true });
+})();
+
+(() => {
     if (!__dcufPageSupports('write')) return;
 
     const STYLE_ID = 'dcuf-mobile-write-theme';
@@ -16983,12 +18900,12 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             padding: 0 !important;
             --dcuf-write-fg: #22324c;
             --dcuf-write-fg-sub: #5f6f86;
-            --dcuf-write-accent: #3f6de0;
-            --dcuf-write-accent-strong: #245bda;
+            --dcuf-write-accent: var(--dcuf-theme-accent, #3f6de0);
+            --dcuf-write-accent-strong: var(--dcuf-theme-accent-strong, #245bda);
             --dcuf-write-surface: #ffffff;
-            --dcuf-write-surface-muted: #f6f8fb;
-            --dcuf-write-border: #d7e0ec;
-            --dcuf-write-border-strong: #c7d3e4;
+            --dcuf-write-surface-muted: var(--dcuf-theme-surface-muted, #f6f8fb);
+            --dcuf-write-border: var(--dcuf-theme-border, #d7e0ec);
+            --dcuf-write-border-strong: var(--dcuf-theme-border-strong, #c7d3e4);
             --dcuf-write-shadow: 0 8px 24px rgba(18, 35, 69, 0.08);
             background: #f2f6fb !important;
             overflow-x: clip !important;
@@ -16996,12 +18913,12 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         body.is-write-page.dc-filter-dark-mode {
             --dcuf-write-fg: #edf3ff;
             --dcuf-write-fg-sub: #b6c4d9;
-            --dcuf-write-accent: #8cb4ff;
-            --dcuf-write-accent-strong: #6f9dff;
+            --dcuf-write-accent: var(--dcuf-theme-accent, #8cb4ff);
+            --dcuf-write-accent-strong: var(--dcuf-theme-accent-strong, #6f9dff);
             --dcuf-write-surface: #18212d;
-            --dcuf-write-surface-muted: #1e2a39;
-            --dcuf-write-border: #314258;
-            --dcuf-write-border-strong: #45607c;
+            --dcuf-write-surface-muted: var(--dcuf-theme-surface-muted, #1e2a39);
+            --dcuf-write-border: var(--dcuf-theme-border, #314258);
+            --dcuf-write-border-strong: var(--dcuf-theme-border-strong, #45607c);
             --dcuf-write-shadow: 0 10px 24px rgba(0, 0, 0, 0.32);
             background: #121922 !important;
         }
@@ -17050,7 +18967,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             background: transparent !important;
             overflow: visible !important;
         }
-        body.is-write-page form#write {
+        body.is-write-page form.dcuf-write-form {
             box-sizing: border-box !important;
             display: block !important;
             width: min(100%, 1120px) !important;
@@ -17064,12 +18981,12 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             box-shadow: var(--dcuf-write-shadow) !important;
             overflow: visible !important;
         }
-        body.is-write-page form#write *:not(.pop_wrap):not(.pop_wrap *):not(.note-dropdown-menu):not(.note-dropdown-menu *):not(.note-popover):not(.note-popover *):not(.note-modal):not(.note-modal *),
-        body.is-write-page form#write *:not(.pop_wrap):not(.pop_wrap *):not(.note-dropdown-menu):not(.note-dropdown-menu *):not(.note-popover):not(.note-popover *):not(.note-modal):not(.note-modal *)::before,
-        body.is-write-page form#write *:not(.pop_wrap):not(.pop_wrap *):not(.note-dropdown-menu):not(.note-dropdown-menu *):not(.note-popover):not(.note-popover *):not(.note-modal):not(.note-modal *)::after {
+        body.is-write-page form.dcuf-write-form *:not(.pop_wrap):not(.pop_wrap *):not(.note-dropdown-menu):not(.note-dropdown-menu *):not(.note-popover):not(.note-popover *):not(.note-modal):not(.note-modal *),
+        body.is-write-page form.dcuf-write-form *:not(.pop_wrap):not(.pop_wrap *):not(.note-dropdown-menu):not(.note-dropdown-menu *):not(.note-popover):not(.note-popover *):not(.note-modal):not(.note-modal *)::before,
+        body.is-write-page form.dcuf-write-form *:not(.pop_wrap):not(.pop_wrap *):not(.note-dropdown-menu):not(.note-dropdown-menu *):not(.note-popover):not(.note-popover *):not(.note-modal):not(.note-modal *)::after {
             box-sizing: border-box;
         }
-        body.is-write-page form#write .dcuf-write-decoy-input {
+        body.is-write-page form.dcuf-write-form .dcuf-write-decoy-input {
             width: 0 !important;
             height: 0 !important;
             min-width: 0 !important;
@@ -17081,7 +18998,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             opacity: 0 !important;
             pointer-events: none !important;
         }
-        body.is-write-page form#write .dcuf-write-fields {
+        body.is-write-page form.dcuf-write-form .dcuf-write-fields {
             display: grid !important;
             grid-template-columns: repeat(2, minmax(0, 1fr));
             gap: 8px !important;
@@ -17091,30 +19008,30 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             padding: 0 !important;
             border: 0 !important;
         }
-        body.is-write-page form#write .dcuf-write-fields > legend {
+        body.is-write-page form.dcuf-write-form .dcuf-write-fields > legend {
             position: absolute !important;
             width: 1px !important;
             height: 1px !important;
             overflow: hidden !important;
             clip-path: inset(50%) !important;
         }
-        body.is-write-page form#write .dcuf-write-guest-field,
-        body.is-write-page form#write .dcuf-write-subject-field,
-        body.is-write-page form#write .dcuf-write-captcha-image {
+        body.is-write-page form.dcuf-write-form .dcuf-write-guest-field,
+        body.is-write-page form.dcuf-write-form .dcuf-write-subject-field,
+        body.is-write-page form.dcuf-write-form .dcuf-write-captcha-image {
             width: 100% !important;
             min-width: 0 !important;
             margin: 0 !important;
             float: none !important;
         }
-        body.is-write-page form#write .dcuf-write-subject-field,
-        body.is-write-page form#write .dcuf-write-fields > .write_subject,
-        body.is-write-page form#write .dcuf-write-fields > [style*="clear"] {
+        body.is-write-page form.dcuf-write-form .dcuf-write-subject-field,
+        body.is-write-page form.dcuf-write-form .dcuf-write-fields > .write_subject,
+        body.is-write-page form.dcuf-write-form .dcuf-write-fields > [style*="clear"] {
             grid-column: 1 / -1;
         }
-        body.is-write-page form#write .dcuf-write-fields > [style*="clear"] {
+        body.is-write-page form.dcuf-write-form .dcuf-write-fields > [style*="clear"] {
             display: none !important;
         }
-        body.is-write-page form#write .dcuf-write-captcha-image {
+        body.is-write-page form.dcuf-write-form .dcuf-write-captcha-image {
             display: flex !important;
             align-items: center !important;
             justify-content: center !important;
@@ -17124,15 +19041,15 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             border-radius: 9px !important;
             background: var(--dcuf-write-surface-muted) !important;
         }
-        body.is-write-page form#write .dcuf-write-captcha-image img {
+        body.is-write-page form.dcuf-write-form .dcuf-write-captcha-image img {
             display: block !important;
             width: auto !important;
             max-width: 100% !important;
             height: 38px !important;
             object-fit: contain !important;
         }
-        body.is-write-page form#write .w_top,
-        body.is-write-page form#write .w_top > tbody {
+        body.is-write-page form.dcuf-write-form .w_top,
+        body.is-write-page form.dcuf-write-form .w_top > tbody {
             display: block !important;
             width: 100% !important;
             min-width: 0 !important;
@@ -17140,28 +19057,28 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             border: 0 !important;
             border-spacing: 0 !important;
         }
-        body.is-write-page form#write .w_top > tbody > tr {
+        body.is-write-page form.dcuf-write-form .w_top > tbody > tr {
             width: 100% !important;
             min-width: 0 !important;
             margin: 0 0 10px !important;
             padding: 0 !important;
             border: 0 !important;
         }
-        body.is-write-page form#write .dcuf-write-subject-row {
+        body.is-write-page form.dcuf-write-form .dcuf-write-subject-row {
             display: grid !important;
             grid-template-columns: 58px minmax(0, 1fr);
             align-items: center;
             gap: 8px;
         }
-        body.is-write-page form#write .user_info_box {
+        body.is-write-page form.dcuf-write-form .user_info_box {
             display: grid !important;
             grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
             gap: 8px;
         }
-        body.is-write-page form#write .dcuf-write-subject-row > th,
-        body.is-write-page form#write .dcuf-write-subject-row > td,
-        body.is-write-page form#write .user_info_box > th,
-        body.is-write-page form#write .user_info_box > td {
+        body.is-write-page form.dcuf-write-form .dcuf-write-subject-row > th,
+        body.is-write-page form.dcuf-write-form .dcuf-write-subject-row > td,
+        body.is-write-page form.dcuf-write-form .user_info_box > th,
+        body.is-write-page form.dcuf-write-form .user_info_box > td {
             display: block !important;
             width: auto !important;
             min-width: 0 !important;
@@ -17170,22 +19087,22 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             border: 0 !important;
             color: var(--dcuf-write-fg-sub) !important;
         }
-        body.is-write-page form#write .user_info_box > th {
+        body.is-write-page form.dcuf-write-form .user_info_box > th {
             position: absolute !important;
             width: 1px !important;
             height: 1px !important;
             overflow: hidden !important;
             clip-path: inset(50%) !important;
         }
-        body.is-write-page form#write .user_info_box > .fixture-captcha-cell,
-        body.is-write-page form#write .user_info_box > td:has(.captcha) {
+        body.is-write-page form.dcuf-write-form .user_info_box > .fixture-captcha-cell,
+        body.is-write-page form.dcuf-write-form .user_info_box > td:has(.captcha) {
             grid-column: 1 / -1;
         }
-        body.is-write-page form#write #subject,
-        body.is-write-page form#write #name,
-        body.is-write-page form#write #password,
-        body.is-write-page form#write #code,
-        body.is-write-page form#write select:not(.pop_wrap *):not(.note-dropdown-menu *):not(.note-popover *):not(.note-modal *) {
+        body.is-write-page form.dcuf-write-form #subject,
+        body.is-write-page form.dcuf-write-form #name,
+        body.is-write-page form.dcuf-write-form #password,
+        body.is-write-page form.dcuf-write-form #code,
+        body.is-write-page form.dcuf-write-form select:not(.pop_wrap *):not(.note-dropdown-menu *):not(.note-popover *):not(.note-modal *) {
             width: 100% !important;
             max-width: 100% !important;
             min-width: 0 !important;
@@ -17199,14 +19116,14 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             font-size: 16px !important;
             line-height: 1.2 !important;
         }
-        body.is-write-page form#write input:not(.pop_wrap *):not(.note-dropdown-menu *):not(.note-popover *):not(.note-modal *):focus,
-        body.is-write-page form#write select:not(.pop_wrap *):not(.note-dropdown-menu *):not(.note-popover *):not(.note-modal *):focus,
-        body.is-write-page form#write .note-editable:focus,
-        body.is-write-page form#write .note-codable:focus {
+        body.is-write-page form.dcuf-write-form input:not(.pop_wrap *):not(.note-dropdown-menu *):not(.note-popover *):not(.note-modal *):focus,
+        body.is-write-page form.dcuf-write-form select:not(.pop_wrap *):not(.note-dropdown-menu *):not(.note-popover *):not(.note-modal *):focus,
+        body.is-write-page form.dcuf-write-form .note-editable:focus,
+        body.is-write-page form.dcuf-write-form .note-codable:focus {
             border-color: var(--dcuf-write-accent) !important;
             box-shadow: 0 0 0 3px color-mix(in srgb, var(--dcuf-write-accent) 18%, transparent) !important;
         }
-        body.is-write-page form#write .captcha {
+        body.is-write-page form.dcuf-write-form .captcha {
             display: grid !important;
             grid-template-columns: minmax(108px, 0.42fr) minmax(0, 1fr);
             align-items: center !important;
@@ -17218,15 +19135,15 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             border-radius: 10px !important;
             background: var(--dcuf-write-surface-muted) !important;
         }
-        body.is-write-page form#write .captcha label {
+        body.is-write-page form.dcuf-write-form .captcha label {
             position: absolute !important;
             width: 1px !important;
             height: 1px !important;
             overflow: hidden !important;
             clip-path: inset(50%) !important;
         }
-        body.is-write-page form#write .captcha .fixture-captcha-image,
-        body.is-write-page form#write .captcha img {
+        body.is-write-page form.dcuf-write-form .captcha .fixture-captcha-image,
+        body.is-write-page form.dcuf-write-form .captcha img {
             width: 100% !important;
             max-width: 100% !important;
             min-width: 0 !important;
@@ -17234,7 +19151,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             object-fit: contain !important;
             border-radius: 7px !important;
         }
-        body.is-write-page form#write .write_subject {
+        body.is-write-page form.dcuf-write-form .write_subject {
             display: flex !important;
             flex-wrap: nowrap !important;
             align-items: center !important;
@@ -17250,10 +19167,10 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             position: relative !important;
             overflow: visible !important;
         }
-        body.is-write-page form#write .write_subject > * {
+        body.is-write-page form.dcuf-write-form .write_subject > * {
             flex: 0 0 auto !important;
         }
-        body.is-write-page form#write .write_subject .subject_list {
+        body.is-write-page form.dcuf-write-form .write_subject .subject_list {
             display: flex !important;
             flex-wrap: nowrap !important;
             align-items: center !important;
@@ -17278,17 +19195,17 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             cursor: grab;
             user-select: none;
         }
-        body.is-write-page form#write .write_subject .subject_list.dcuf-headtext-dragging {
+        body.is-write-page form.dcuf-write-form .write_subject .subject_list.dcuf-headtext-dragging {
             cursor: grabbing;
             scroll-behavior: auto;
             scroll-snap-type: none;
         }
-        body.is-write-page form#write .write_subject .subject_list::-webkit-scrollbar {
+        body.is-write-page form.dcuf-write-form .write_subject .subject_list::-webkit-scrollbar {
             display: none !important;
             width: 0 !important;
             height: 0 !important;
         }
-        body.is-write-page form#write .write_subject .subject_list > li {
+        body.is-write-page form.dcuf-write-form .write_subject .subject_list > li {
             display: inline-flex !important;
             align-items: center !important;
             justify-content: center !important;
@@ -17304,7 +19221,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             border-radius: 999px !important;
             cursor: pointer;
         }
-        body.is-write-page form#write .write_subject .subject_list > li .tip_box2 {
+        body.is-write-page form.dcuf-write-form .write_subject .subject_list > li .tip_box2 {
             position: fixed !important;
             left: var(--dcuf-headtext-tip-left, 8px) !important;
             top: var(--dcuf-headtext-tip-top, 8px) !important;
@@ -17313,19 +19230,19 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             z-index: 1200 !important;
             max-width: min(320px, var(--dcuf-headtext-tip-max-width, calc(100vw - 16px))) !important;
         }
-        body.is-write-page form#write .write_subject_label {
+        body.is-write-page form.dcuf-write-form .write_subject_label {
             padding: 0 6px !important;
             color: var(--dcuf-write-fg-sub) !important;
             font-weight: 700 !important;
         }
-        body.is-write-page form#write .write_subject > .tit {
+        body.is-write-page form.dcuf-write-form .write_subject > .tit {
             padding: 0 6px !important;
             color: var(--dcuf-write-fg-sub) !important;
             font-weight: 700 !important;
         }
-        body.is-write-page form#write .write_subject > button,
-        body.is-write-page form#write .write_subject .subject_list > li > button,
-        body.is-write-page form#write [data-headtext] {
+        body.is-write-page form.dcuf-write-form .write_subject > button,
+        body.is-write-page form.dcuf-write-form .write_subject .subject_list > li > button,
+        body.is-write-page form.dcuf-write-form [data-headtext] {
             min-width: 48px !important;
             min-height: 38px !important;
             padding: 0 12px !important;
@@ -17334,95 +19251,95 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             background: var(--dcuf-write-surface) !important;
             color: var(--dcuf-write-fg-sub) !important;
         }
-        body.is-write-page form#write .write_subject > button.active,
-        body.is-write-page form#write .write_subject .subject_list > li > button.active,
-        body.is-write-page form#write [data-headtext].active {
+        body.is-write-page form.dcuf-write-form .write_subject > button.active,
+        body.is-write-page form.dcuf-write-form .write_subject .subject_list > li > button.active,
+        body.is-write-page form.dcuf-write-form [data-headtext].active {
             border-color: var(--dcuf-write-accent-strong) !important;
             background: var(--dcuf-write-accent-strong) !important;
             color: #fff !important;
         }
-        body.is-write-page form#write .editor_wrap,
-        body.is-write-page form#write .note-editor,
-        body.is-write-page form#write .note-editing-area {
+        body.is-write-page form.dcuf-write-form .editor_wrap,
+        body.is-write-page form.dcuf-write-form .note-editor,
+        body.is-write-page form.dcuf-write-form .note-editing-area {
             width: 100% !important;
             max-width: 100% !important;
             min-width: 0 !important;
         }
-        body.is-write-page form#write .editor_wrap,
-        body.is-write-page form#write .note-editor {
+        body.is-write-page form.dcuf-write-form .editor_wrap,
+        body.is-write-page form.dcuf-write-form .note-editor {
             border: 1px solid var(--dcuf-write-border-strong) !important;
             border-radius: 10px !important;
             background: var(--dcuf-write-surface) !important;
             position: relative !important;
             overflow: visible !important;
         }
-        body.is-write-page form#write .note-toolbar,
-        body.is-write-page form#write .note-toolbar-media {
+        body.is-write-page form.dcuf-write-form .note-toolbar,
+        body.is-write-page form.dcuf-write-form .note-toolbar-media {
             position: relative !important;
             z-index: 3 !important;
             border-radius: 13px 13px 0 0 !important;
         }
-        body.is-write-page form#write .note-editing-area {
+        body.is-write-page form.dcuf-write-form .note-editing-area {
             position: relative !important;
             z-index: 0 !important;
             overflow: hidden !important;
         }
-        body.is-write-page form#write .note-statusbar {
+        body.is-write-page form.dcuf-write-form .note-statusbar {
             border-radius: 0 0 13px 13px !important;
         }
-        body.is-write-page form#write .write_subject .toast,
-        body.is-write-page form#write .write_subject [role="alert"] {
+        body.is-write-page form.dcuf-write-form .write_subject .toast,
+        body.is-write-page form.dcuf-write-form .write_subject [role="alert"] {
             z-index: 1000 !important;
             max-width: calc(100vw - 24px) !important;
             visibility: visible;
             pointer-events: auto;
         }
-        body.is-write-page form#write .write_subject .tip_box2:not(.dcuf-headtext-tip-positioned) {
+        body.is-write-page form.dcuf-write-form .write_subject .tip_box2:not(.dcuf-headtext-tip-positioned) {
             visibility: hidden !important;
             pointer-events: none !important;
         }
-        body.is-write-page form#write .write_subject .tip_box2.dcuf-headtext-tip-positioned {
+        body.is-write-page form.dcuf-write-form .write_subject .tip_box2.dcuf-headtext-tip-positioned {
             visibility: visible !important;
             pointer-events: auto !important;
         }
-        body.is-write-page form#write .note-toolbar :is(.note-dropdown-menu, .pop_wrap):not(.dcuf-editor-layer-positioned) {
+        body.is-write-page form.dcuf-write-form .note-toolbar :is(.note-dropdown-menu, .pop_wrap):not(.dcuf-editor-layer-positioned) {
             visibility: hidden !important;
             pointer-events: none !important;
         }
-        body.is-write-page form#write .note-toolbar :is(.note-dropdown-menu, .pop_wrap).dcuf-editor-layer-positioned {
+        body.is-write-page form.dcuf-write-form .note-toolbar :is(.note-dropdown-menu, .pop_wrap).dcuf-editor-layer-positioned {
             visibility: visible !important;
             pointer-events: auto !important;
         }
-        body.is-write-page form#write .note-toolbar .pop_wrap.dcuf-editor-layer-positioned {
+        body.is-write-page form.dcuf-write-form .note-toolbar .pop_wrap.dcuf-editor-layer-positioned {
             position: fixed !important;
             zoom: var(--dcuf-write-desktop-site-inverse-scale, 1);
         }
-        body.is-write-page form#write .note-toolbar .note-dropdown-menu.dcuf-editor-layer-positioned {
+        body.is-write-page form.dcuf-write-form .note-toolbar .note-dropdown-menu.dcuf-editor-layer-positioned {
             position: fixed !important;
             zoom: 1 !important;
         }
-        body.is-write-page form#write .note-toolbar :is(.note-dropdown-menu, .pop_wrap).dcuf-editor-layer-positioned {
+        body.is-write-page form.dcuf-write-form .note-toolbar :is(.note-dropdown-menu, .pop_wrap).dcuf-editor-layer-positioned {
             left: var(--dcuf-editor-layer-left) !important;
             top: var(--dcuf-editor-layer-top) !important;
             right: auto !important;
             bottom: auto !important;
             z-index: 2147483647 !important;
         }
-        body.is-write-page form#write .note-toolbar .note-dropdown-menu.dcuf-editor-layer-positioned {
+        body.is-write-page form.dcuf-write-form .note-toolbar .note-dropdown-menu.dcuf-editor-layer-positioned {
             max-width: var(--dcuf-editor-layer-max-width) !important;
             max-height: var(--dcuf-editor-layer-max-height) !important;
             overflow: auto !important;
             overscroll-behavior: contain !important;
             -webkit-overflow-scrolling: touch !important;
         }
-        body.is-write-page.dcuf-write-mobile-font-menu form#write .note-toolbar .note-fontname button.dropdown-toggle,
-        body.is-write-page.dcuf-write-mobile-font-menu form#write .note-toolbar .note-fontname button.note-btn {
+        body.is-write-page.dcuf-write-mobile-font-menu form.dcuf-write-form .note-toolbar .note-fontname button.dropdown-toggle,
+        body.is-write-page.dcuf-write-mobile-font-menu form.dcuf-write-form .note-toolbar .note-fontname button.note-btn {
             width: auto !important;
             min-width: 88px !important;
             max-width: 132px !important;
             flex: 0 0 auto !important;
         }
-        body.is-write-page form#write .note-toolbar .note-current-fontname {
+        body.is-write-page form.dcuf-write-form .note-toolbar .note-current-fontname {
             display: inline-block !important;
             min-width: 42px !important;
             max-width: 88px !important;
@@ -17435,15 +19352,15 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             opacity: 1 !important;
             visibility: visible !important;
         }
-        body.is-write-page form#write .note-toolbar .note-current-fontname:empty::before {
+        body.is-write-page form.dcuf-write-form .note-toolbar .note-current-fontname:empty::before {
             content: "글꼴";
             color: inherit !important;
             -webkit-text-fill-color: currentColor !important;
         }
-        body.is-write-page form#write .note-toolbar-media,
-        body.is-write-page form#write .note-toolbar,
-        body.is-write-page form#write .tx-toolbar-basic,
-        body.is-write-page form#write .btns-box {
+        body.is-write-page form.dcuf-write-form .note-toolbar-media,
+        body.is-write-page form.dcuf-write-form .note-toolbar,
+        body.is-write-page form.dcuf-write-form .tx-toolbar-basic,
+        body.is-write-page form.dcuf-write-form .btns-box {
             display: flex !important;
             flex-wrap: wrap !important;
             align-items: center !important;
@@ -17457,15 +19374,15 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             background: var(--dcuf-write-surface-muted) !important;
             overflow: visible !important;
         }
-        body.is-write-page form#write .note-toolbar-media > :not(.pop_wrap):not(.note-dropdown-menu):not(.note-popover):not(.note-modal),
-        body.is-write-page form#write .note-toolbar > :not(.pop_wrap):not(.note-dropdown-menu):not(.note-popover):not(.note-modal),
-        body.is-write-page form#write .tx-toolbar-basic > *,
-        body.is-write-page form#write .btns-box > * {
+        body.is-write-page form.dcuf-write-form .note-toolbar-media > :not(.pop_wrap):not(.note-dropdown-menu):not(.note-popover):not(.note-modal),
+        body.is-write-page form.dcuf-write-form .note-toolbar > :not(.pop_wrap):not(.note-dropdown-menu):not(.note-popover):not(.note-modal),
+        body.is-write-page form.dcuf-write-form .tx-toolbar-basic > *,
+        body.is-write-page form.dcuf-write-form .btns-box > * {
             flex: 0 0 auto !important;
         }
-        body.is-write-page form#write .note-toolbar-media,
-        body.is-write-page form#write .note-toolbar,
-        body.is-write-page form#write .tx-toolbar-basic {
+        body.is-write-page form.dcuf-write-form .note-toolbar-media,
+        body.is-write-page form.dcuf-write-form .note-toolbar,
+        body.is-write-page form.dcuf-write-form .tx-toolbar-basic {
             flex-wrap: nowrap !important;
             overflow-x: auto !important;
             overflow-y: hidden !important;
@@ -17478,24 +19395,24 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             cursor: grab;
             user-select: none;
         }
-        body.is-write-page form#write :is(.note-toolbar-media, .note-toolbar, .tx-toolbar-basic).dcuf-editor-toolbar-dragging {
+        body.is-write-page form.dcuf-write-form :is(.note-toolbar-media, .note-toolbar, .tx-toolbar-basic).dcuf-editor-toolbar-dragging {
             scroll-behavior: auto;
             cursor: grabbing;
         }
-        body.is-write-page form#write :is(.note-toolbar-media, .note-toolbar, .tx-toolbar-basic)::-webkit-scrollbar {
+        body.is-write-page form.dcuf-write-form :is(.note-toolbar-media, .note-toolbar, .tx-toolbar-basic)::-webkit-scrollbar {
             display: none !important;
             width: 0 !important;
             height: 0 !important;
         }
-        body.is-write-page form#write .note-toolbar > .note-btn,
-        body.is-write-page form#write .note-toolbar > button,
-        body.is-write-page form#write .note-toolbar > input[type="button"],
-        body.is-write-page form#write .note-toolbar .note-btn-group > .note-btn:not(.pop_wrap *):not(.note-dropdown-menu *):not(.note-popover *):not(.note-modal *),
-        body.is-write-page form#write .note-toolbar .note-btn-group > button:not(.pop_wrap *):not(.note-dropdown-menu *):not(.note-popover *):not(.note-modal *),
-        body.is-write-page form#write .note-toolbar .note-btn-group > input[type="button"]:not(.pop_wrap *):not(.note-dropdown-menu *):not(.note-popover *):not(.note-modal *),
-        body.is-write-page form#write .note-toolbar-media > .note-btn,
-        body.is-write-page form#write .note-toolbar-media > button,
-        body.is-write-page form#write .btns-box button:not(.pop_wrap *):not(.note-dropdown-menu *):not(.note-popover *):not(.note-modal *) {
+        body.is-write-page form.dcuf-write-form .note-toolbar > .note-btn,
+        body.is-write-page form.dcuf-write-form .note-toolbar > button,
+        body.is-write-page form.dcuf-write-form .note-toolbar > input[type="button"],
+        body.is-write-page form.dcuf-write-form .note-toolbar .note-btn-group > .note-btn:not(.pop_wrap *):not(.note-dropdown-menu *):not(.note-popover *):not(.note-modal *),
+        body.is-write-page form.dcuf-write-form .note-toolbar .note-btn-group > button:not(.pop_wrap *):not(.note-dropdown-menu *):not(.note-popover *):not(.note-modal *),
+        body.is-write-page form.dcuf-write-form .note-toolbar .note-btn-group > input[type="button"]:not(.pop_wrap *):not(.note-dropdown-menu *):not(.note-popover *):not(.note-modal *),
+        body.is-write-page form.dcuf-write-form .note-toolbar-media > .note-btn,
+        body.is-write-page form.dcuf-write-form .note-toolbar-media > button,
+        body.is-write-page form.dcuf-write-form .btns-box button:not(.pop_wrap *):not(.note-dropdown-menu *):not(.note-popover *):not(.note-modal *) {
             min-width: 38px !important;
             min-height: 38px !important;
             padding: 0 9px !important;
@@ -17504,14 +19421,14 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             background: var(--dcuf-write-surface) !important;
             color: var(--dcuf-write-fg) !important;
         }
-        body.is-write-page form#write .note-toolbar > .note-btn-danger,
-        body.is-write-page form#write .note-toolbar .note-btn-group > .note-btn-danger:not(.pop_wrap *):not(.note-dropdown-menu *):not(.note-popover *):not(.note-modal *),
-        body.is-write-page form#write .note-toolbar-media > .note-btn-danger {
+        body.is-write-page form.dcuf-write-form .note-toolbar > .note-btn-danger,
+        body.is-write-page form.dcuf-write-form .note-toolbar .note-btn-group > .note-btn-danger:not(.pop_wrap *):not(.note-dropdown-menu *):not(.note-popover *):not(.note-modal *),
+        body.is-write-page form.dcuf-write-form .note-toolbar-media > .note-btn-danger {
             border-color: #d5525b !important;
             background: #d5525b !important;
             color: #fff !important;
         }
-        body.is-write-page form#write .write-html-toggle {
+        body.is-write-page form.dcuf-write-form .write-html-toggle {
             display: inline-flex !important;
             align-items: center !important;
             gap: 5px !important;
@@ -17521,8 +19438,8 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             color: var(--dcuf-write-fg-sub) !important;
             white-space: nowrap !important;
         }
-        body.is-write-page form#write .note-editable,
-        body.is-write-page form#write .note-codable {
+        body.is-write-page form.dcuf-write-form .note-editable,
+        body.is-write-page form.dcuf-write-form .note-codable {
             width: 100% !important;
             max-width: 100% !important;
             min-width: 0 !important;
@@ -17538,29 +19455,29 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             resize: vertical !important;
             overflow-wrap: anywhere !important;
         }
-        body.is-write-page form#write .note-editable {
+        body.is-write-page form.dcuf-write-form .note-editable {
             display: block !important;
         }
-        body.is-write-page form#write .note-codable {
+        body.is-write-page form.dcuf-write-form .note-codable {
             display: none !important;
         }
-        body.is-write-page form#write .note-editor.codeview .note-editable,
-        body.is-write-page form#write .note-editor.fixture-html-mode .note-editable,
-        body.is-write-page form#write .note-editable[hidden],
-        body.is-write-page form#write .note-codable[hidden] {
+        body.is-write-page form.dcuf-write-form .note-editor.codeview .note-editable,
+        body.is-write-page form.dcuf-write-form .note-editor.fixture-html-mode .note-editable,
+        body.is-write-page form.dcuf-write-form .note-editable[hidden],
+        body.is-write-page form.dcuf-write-form .note-codable[hidden] {
             display: none !important;
         }
-        body.is-write-page form#write .note-editor.codeview .note-codable,
-        body.is-write-page form#write .note-editor.fixture-html-mode .note-codable {
+        body.is-write-page form.dcuf-write-form .note-editor.codeview .note-codable,
+        body.is-write-page form.dcuf-write-form .note-editor.fixture-html-mode .note-codable {
             display: block !important;
         }
-        body.is-write-page form#write .note-statusbar {
+        body.is-write-page form.dcuf-write-form .note-statusbar {
             border-color: var(--dcuf-write-border) !important;
             background: var(--dcuf-write-surface-muted) !important;
         }
-        body.is-write-page form#write .fixture-attachment-panel,
-        body.is-write-page form#write [class*="file_upload"]:not(.pop_wrap *):not(.note-dropdown-menu *):not(.note-popover *):not(.note-modal *),
-        body.is-write-page form#write .upload-img-lst:not(.pop_wrap *):not(.note-dropdown-menu *):not(.note-popover *):not(.note-modal *) {
+        body.is-write-page form.dcuf-write-form .fixture-attachment-panel,
+        body.is-write-page form.dcuf-write-form [class*="file_upload"]:not(.pop_wrap *):not(.note-dropdown-menu *):not(.note-popover *):not(.note-modal *),
+        body.is-write-page form.dcuf-write-form .upload-img-lst:not(.pop_wrap *):not(.note-dropdown-menu *):not(.note-popover *):not(.note-modal *) {
             width: 100% !important;
             max-width: 100% !important;
             min-width: 0 !important;
@@ -17571,30 +19488,30 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             background: var(--dcuf-write-surface-muted) !important;
             overflow: hidden !important;
         }
-        body.is-write-page form#write input[type="file"]:not(.pop_wrap *):not(.note-dropdown-menu *):not(.note-popover *):not(.note-modal *) {
+        body.is-write-page form.dcuf-write-form input[type="file"]:not(.pop_wrap *):not(.note-dropdown-menu *):not(.note-popover *):not(.note-modal *) {
             width: 100% !important;
             max-width: 100% !important;
             min-height: 38px !important;
             color: var(--dcuf-write-fg-sub) !important;
         }
-        body.is-write-page form#write .fixture-attachment-list,
-        body.is-write-page form#write .upload-img-lst:not(.pop_wrap *):not(.note-dropdown-menu *):not(.note-popover *):not(.note-modal *) ul {
+        body.is-write-page form.dcuf-write-form .fixture-attachment-list,
+        body.is-write-page form.dcuf-write-form .upload-img-lst:not(.pop_wrap *):not(.note-dropdown-menu *):not(.note-popover *):not(.note-modal *) ul {
             min-width: 0 !important;
             overflow-wrap: anywhere !important;
         }
-        body.is-write-page form#write .fixture-attachment {
+        body.is-write-page form.dcuf-write-form .fixture-attachment {
             max-width: 100% !important;
             background: color-mix(in srgb, var(--dcuf-write-accent) 12%, var(--dcuf-write-surface)) !important;
             color: var(--dcuf-write-fg) !important;
         }
-        body.is-write-page form#write .ai_easy_wrap {
+        body.is-write-page form.dcuf-write-form .ai_easy_wrap {
             width: 100% !important;
             max-width: 100% !important;
             min-width: 0 !important;
             margin: 8px 0 0 !important;
             overflow: hidden !important;
         }
-        body.is-write-page form#write .ai_easy_box {
+        body.is-write-page form.dcuf-write-form .ai_easy_box {
             display: grid !important;
             grid-template-columns: minmax(0, 1fr) auto auto !important;
             align-items: stretch !important;
@@ -17603,27 +19520,27 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             max-width: 100% !important;
             min-width: 0 !important;
         }
-        body.is-write-page form#write .ai_easy_box .ipt_box,
-        body.is-write-page form#write .ai_easy_box .ipt_txt {
+        body.is-write-page form.dcuf-write-form .ai_easy_box .ipt_box,
+        body.is-write-page form.dcuf-write-form .ai_easy_box .ipt_txt {
             width: 100% !important;
             max-width: 100% !important;
             min-width: 0 !important;
         }
-        body.is-write-page form#write .ai_easy_box .ipt_box {
+        body.is-write-page form.dcuf-write-form .ai_easy_box .ipt_box {
             display: flex !important;
             align-items: center !important;
             overflow: hidden !important;
         }
-        body.is-write-page form#write .ai_easy_box .ipt_txt {
+        body.is-write-page form.dcuf-write-form .ai_easy_box .ipt_txt {
             flex: 1 1 auto !important;
             resize: none !important;
         }
-        body.is-write-page form#write #write_option_box {
+        body.is-write-page form.dcuf-write-form #write_option_box {
             width: 100% !important;
             max-width: 100% !important;
             min-width: 0 !important;
         }
-        body.is-write-page form#write .fixture-adult {
+        body.is-write-page form.dcuf-write-form .fixture-adult {
             display: inline-flex !important;
             align-items: center !important;
             gap: 8px !important;
@@ -17631,9 +19548,9 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             margin: 8px 0 0 !important;
             color: var(--dcuf-write-fg-sub) !important;
         }
-        body.is-write-page form#write .btn_bottom_box,
-        body.is-write-page form#write .btm-btns-box,
-        body.is-write-page form#write > .btn_box.write {
+        body.is-write-page form.dcuf-write-form .btn_bottom_box,
+        body.is-write-page form.dcuf-write-form .btm-btns-box,
+        body.is-write-page form.dcuf-write-form > .btn_box.write {
             display: flex !important;
             align-items: stretch !important;
             gap: 8px !important;
@@ -17644,18 +19561,18 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             border-top: 1px solid var(--dcuf-write-border) !important;
             background: var(--dcuf-write-surface) !important;
         }
-        body.is-write-page form#write .btn_bottom_box > *,
-        body.is-write-page form#write .btm-btns-box > *,
-        body.is-write-page form#write .btm-btns-box > .fr,
-        body.is-write-page form#write > .btn_box.write > button {
+        body.is-write-page form.dcuf-write-form .btn_bottom_box > *,
+        body.is-write-page form.dcuf-write-form .btm-btns-box > *,
+        body.is-write-page form.dcuf-write-form .btm-btns-box > .fr,
+        body.is-write-page form.dcuf-write-form > .btn_box.write > button {
             flex: 1 1 0 !important;
             min-width: 0 !important;
             float: none !important;
         }
-        body.is-write-page form#write .btn_bottom_box a,
-        body.is-write-page form#write .btn_bottom_box button,
-        body.is-write-page form#write .btm-btns-box button,
-        body.is-write-page form#write > .btn_box.write > button {
+        body.is-write-page form.dcuf-write-form .btn_bottom_box a,
+        body.is-write-page form.dcuf-write-form .btn_bottom_box button,
+        body.is-write-page form.dcuf-write-form .btm-btns-box button,
+        body.is-write-page form.dcuf-write-form > .btn_box.write > button {
             display: inline-flex !important;
             align-items: center !important;
             justify-content: center !important;
@@ -17673,40 +19590,40 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             text-align: center !important;
             text-decoration: none !important;
         }
-        body.is-write-page form#write .btn_bottom_box .btn_blue,
-        body.is-write-page form#write .btm-btns-box .btn-line-blue,
-        body.is-write-page form#write > .btn_box.write > .btn_blue {
+        body.is-write-page form.dcuf-write-form .btn_bottom_box .btn_blue,
+        body.is-write-page form.dcuf-write-form .btm-btns-box .btn-line-blue,
+        body.is-write-page form.dcuf-write-form > .btn_box.write > .btn_blue {
             border-color: var(--dcuf-write-accent-strong) !important;
-            background: linear-gradient(180deg, #426fe4 0%, var(--dcuf-write-accent-strong) 100%) !important;
+            background: linear-gradient(180deg, var(--dcuf-theme-primary-top, #426fe4) 0%, var(--dcuf-write-accent-strong) 100%) !important;
             color: #fff !important;
         }
         /* Visual refinement: match the mobile list/article card language. */
-        body.is-write-page form#write {
-            border-color: #dbe6f3 !important;
+        body.is-write-page form.dcuf-write-form {
+            border-color: var(--dcuf-write-border) !important;
             border-radius: 16px !important;
-            box-shadow: 0 12px 30px rgba(25, 50, 92, 0.1) !important;
+            box-shadow: 0 12px 30px color-mix(in srgb, var(--dcuf-write-accent) 10%, transparent) !important;
         }
-        body.is-write-page form#write #subject,
-        body.is-write-page form#write #name,
-        body.is-write-page form#write #password,
-        body.is-write-page form#write #code {
-            border-color: #cfdbeb !important;
+        body.is-write-page form.dcuf-write-form #subject,
+        body.is-write-page form.dcuf-write-form #name,
+        body.is-write-page form.dcuf-write-form #password,
+        body.is-write-page form.dcuf-write-form #code {
+            border-color: var(--dcuf-write-border) !important;
             border-radius: 11px !important;
             background: #fff !important;
-            box-shadow: 0 2px 7px rgba(25, 50, 92, 0.04) !important;
+            box-shadow: 0 2px 7px color-mix(in srgb, var(--dcuf-write-accent) 6%, transparent) !important;
         }
-        body.is-write-page form#write .dcuf-write-captcha-image,
-        body.is-write-page form#write .captcha {
-            border-color: #cfdbeb !important;
+        body.is-write-page form.dcuf-write-form .dcuf-write-captcha-image,
+        body.is-write-page form.dcuf-write-form .captcha {
+            border-color: var(--dcuf-write-border) !important;
             background: #fff !important;
             box-shadow: 0 2px 7px rgba(25, 50, 92, 0.04) !important;
         }
-        body.is-write-page form#write .dcuf-write-captcha-image img,
-        body.is-write-page form#write .captcha img,
-        body.is-write-page form#write .captcha .fixture-captcha-image {
+        body.is-write-page form.dcuf-write-form .dcuf-write-captcha-image img,
+        body.is-write-page form.dcuf-write-form .captcha img,
+        body.is-write-page form.dcuf-write-form .captcha .fixture-captcha-image {
             background: #fff !important;
         }
-        body.is-write-page form#write .write_subject {
+        body.is-write-page form.dcuf-write-form .write_subject {
             min-height: 52px !important;
             padding: 7px 9px !important;
             border-color: #d7e2f0 !important;
@@ -17714,9 +19631,9 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             background: #fff !important;
             box-shadow: 0 3px 10px rgba(25, 50, 92, 0.05) !important;
         }
-        body.is-write-page form#write .write_subject > .tit,
-        body.is-write-page form#write .write_subject > .tit::before,
-        body.is-write-page form#write .write_subject > .tit::after {
+        body.is-write-page form.dcuf-write-form .write_subject > .tit,
+        body.is-write-page form.dcuf-write-form .write_subject > .tit::before,
+        body.is-write-page form.dcuf-write-form .write_subject > .tit::after {
             min-height: 38px !important;
             border: 0 !important;
             border-radius: 0 !important;
@@ -17724,12 +19641,12 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             box-shadow: none !important;
             content: none !important;
         }
-        body.is-write-page form#write .write_subject::before,
-        body.is-write-page form#write .write_subject::after {
+        body.is-write-page form.dcuf-write-form .write_subject::before,
+        body.is-write-page form.dcuf-write-form .write_subject::after {
             display: none !important;
             content: none !important;
         }
-        body.is-write-page form#write .write_subject > .dcuf-write-headtext-label {
+        body.is-write-page form.dcuf-write-form .write_subject > .dcuf-write-headtext-label {
             display: inline-flex !important;
             align-items: center !important;
             justify-content: center !important;
@@ -17745,34 +19662,34 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             box-shadow: none !important;
             line-height: 1 !important;
         }
-        body.is-write-page form#write .write_subject .subject_list > li {
+        body.is-write-page form.dcuf-write-form .write_subject .subject_list > li {
             border: 1px solid transparent !important;
             background: transparent !important;
             color: var(--dcuf-write-fg-sub) !important;
         }
-        body.is-write-page form#write .write_subject .subject_list > li.sel,
-        body.is-write-page form#write .write_subject .subject_list > li.active {
+        body.is-write-page form.dcuf-write-form .write_subject .subject_list > li.sel,
+        body.is-write-page form.dcuf-write-form .write_subject .subject_list > li.active {
             border-color: var(--dcuf-write-accent-strong) !important;
             background: var(--dcuf-write-accent-strong) !important;
             color: #fff !important;
-            box-shadow: 0 4px 10px rgba(36, 91, 218, 0.2) !important;
+            box-shadow: 0 4px 10px var(--dcuf-theme-accent-shadow, rgba(36, 91, 218, 0.2)) !important;
         }
-        body.is-write-page form#write .editor_wrap,
-        body.is-write-page form#write .note-editor {
-            border-color: #d4e0ef !important;
+        body.is-write-page form.dcuf-write-form .editor_wrap,
+        body.is-write-page form.dcuf-write-form .note-editor {
+            border-color: var(--dcuf-write-border) !important;
             border-radius: 14px !important;
-            box-shadow: 0 5px 16px rgba(25, 50, 92, 0.06) !important;
+            box-shadow: 0 5px 16px color-mix(in srgb, var(--dcuf-write-accent) 7%, transparent) !important;
         }
-        body.is-write-page form#write .note-toolbar-media,
-        body.is-write-page form#write .note-toolbar,
-        body.is-write-page form#write .tx-toolbar-basic,
-        body.is-write-page form#write .btns-box {
-            border-bottom: 1px solid #dce6f2 !important;
-            background: linear-gradient(180deg, #fbfdff 0%, #f5f9ff 100%) !important;
+        body.is-write-page form.dcuf-write-form .note-toolbar-media,
+        body.is-write-page form.dcuf-write-form .note-toolbar,
+        body.is-write-page form.dcuf-write-form .tx-toolbar-basic,
+        body.is-write-page form.dcuf-write-form .btns-box {
+            border-bottom: 1px solid var(--dcuf-write-border) !important;
+            background: linear-gradient(180deg, var(--dcuf-write-surface) 0%, var(--dcuf-write-surface-muted) 100%) !important;
         }
-        body.is-write-page form#write .note-toolbar > .note-btn-group,
-        body.is-write-page form#write .note-toolbar > .note-btn-group > .note-btn-group,
-        body.is-write-page form#write .note-toolbar > .note-mybutton {
+        body.is-write-page form.dcuf-write-form .note-toolbar > .note-btn-group,
+        body.is-write-page form.dcuf-write-form .note-toolbar > .note-btn-group > .note-btn-group,
+        body.is-write-page form.dcuf-write-form .note-toolbar > .note-mybutton {
             position: relative !important;
             float: none !important;
             width: auto !important;
@@ -17783,23 +19700,23 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             background: transparent !important;
             box-shadow: none !important;
         }
-        body.is-write-page form#write .note-toolbar > .note-btn-group::before,
-        body.is-write-page form#write .note-toolbar > .note-btn-group::after,
-        body.is-write-page form#write .note-toolbar > .note-btn-group > .note-btn-group::before,
-        body.is-write-page form#write .note-toolbar > .note-btn-group > .note-btn-group::after,
-        body.is-write-page form#write .note-toolbar > .note-mybutton::before,
-        body.is-write-page form#write .note-toolbar > .note-mybutton::after {
+        body.is-write-page form.dcuf-write-form .note-toolbar > .note-btn-group::before,
+        body.is-write-page form.dcuf-write-form .note-toolbar > .note-btn-group::after,
+        body.is-write-page form.dcuf-write-form .note-toolbar > .note-btn-group > .note-btn-group::before,
+        body.is-write-page form.dcuf-write-form .note-toolbar > .note-btn-group > .note-btn-group::after,
+        body.is-write-page form.dcuf-write-form .note-toolbar > .note-mybutton::before,
+        body.is-write-page form.dcuf-write-form .note-toolbar > .note-mybutton::after {
             display: none !important;
             content: none !important;
             border: 0 !important;
         }
-        body.is-write-page form#write .note-toolbar .fixture-html-group,
-        body.is-write-page form#write .note-toolbar .note-btn-group:has(#chk_html) {
+        body.is-write-page form.dcuf-write-form .note-toolbar .fixture-html-group,
+        body.is-write-page form.dcuf-write-form .note-toolbar .note-btn-group:has(#chk_html) {
             order: 99 !important;
             margin-left: auto !important;
         }
-        body.is-write-page form#write .note-toolbar-media .fixture-html-group,
-        body.is-write-page form#write .note-toolbar .note-btn-group:has(#chk_html) {
+        body.is-write-page form.dcuf-write-form .note-toolbar-media .fixture-html-group,
+        body.is-write-page form.dcuf-write-form .note-toolbar .note-btn-group:has(#chk_html) {
             display: inline-flex !important;
             align-items: center !important;
             align-self: center !important;
@@ -17814,8 +19731,8 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             float: none !important;
             transform: none !important;
         }
-        body.is-write-page form#write .note-toolbar-media .fixture-html-group > .note-btn,
-        body.is-write-page form#write .note-toolbar .note-btn-group:has(#chk_html) > .note-btn {
+        body.is-write-page form.dcuf-write-form .note-toolbar-media .fixture-html-group > .note-btn,
+        body.is-write-page form.dcuf-write-form .note-toolbar .note-btn-group:has(#chk_html) > .note-btn {
             display: inline-flex !important;
             align-items: center !important;
             justify-content: center !important;
@@ -17831,8 +19748,8 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             transform: none !important;
             overflow: visible !important;
         }
-        body.is-write-page form#write .note-toolbar-media .fixture-html-group label,
-        body.is-write-page form#write .note-toolbar .note-btn-group:has(#chk_html) label {
+        body.is-write-page form.dcuf-write-form .note-toolbar-media .fixture-html-group label,
+        body.is-write-page form.dcuf-write-form .note-toolbar .note-btn-group:has(#chk_html) label {
             display: inline-flex !important;
             align-items: center !important;
             justify-content: center !important;
@@ -17848,7 +19765,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             white-space: nowrap !important;
             line-height: 1 !important;
         }
-        body.is-write-page form#write #chk_html {
+        body.is-write-page form.dcuf-write-form #chk_html {
             appearance: auto !important;
             display: inline-block !important;
             position: static !important;
@@ -17867,28 +19784,28 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             pointer-events: auto !important;
             vertical-align: middle !important;
         }
-        body.is-write-page form#write .note-toolbar > .note-btn,
-        body.is-write-page form#write .note-toolbar .note-btn-group > .note-btn:not(.pop_wrap *):not(.note-dropdown-menu *):not(.note-popover *):not(.note-modal *),
-        body.is-write-page form#write .note-toolbar-media > .note-btn,
-        body.is-write-page form#write .btns-box button:not(.pop_wrap *):not(.note-dropdown-menu *):not(.note-popover *):not(.note-modal *) {
-            border-color: #d4e0ef !important;
+        body.is-write-page form.dcuf-write-form .note-toolbar > .note-btn,
+        body.is-write-page form.dcuf-write-form .note-toolbar .note-btn-group > .note-btn:not(.pop_wrap *):not(.note-dropdown-menu *):not(.note-popover *):not(.note-modal *),
+        body.is-write-page form.dcuf-write-form .note-toolbar-media > .note-btn,
+        body.is-write-page form.dcuf-write-form .btns-box button:not(.pop_wrap *):not(.note-dropdown-menu *):not(.note-popover *):not(.note-modal *) {
+            border-color: var(--dcuf-write-border-strong, #d4e0ef) !important;
             border-radius: 10px !important;
-            background: #fff !important;
-            box-shadow: 0 2px 6px rgba(25, 50, 92, 0.05) !important;
+            background: var(--dcuf-write-surface, #fff) !important;
+            box-shadow: 0 2px 6px var(--dcuf-theme-accent-shadow, rgba(25, 50, 92, 0.05)) !important;
         }
-        body.is-write-page form#write .note-statusbar {
+        body.is-write-page form.dcuf-write-form .note-statusbar {
             background: #f7faff !important;
         }
-        body.is-write-page form#write .btn_bottom_box,
-        body.is-write-page form#write .btm-btns-box {
+        body.is-write-page form.dcuf-write-form .btn_bottom_box,
+        body.is-write-page form.dcuf-write-form .btm-btns-box {
             position: static !important;
         }
-        body.is-write-page form#write > .btn_box.write {
+        body.is-write-page form.dcuf-write-form > .btn_box.write {
             position: relative !important;
         }
-        body.is-write-page form#write .btn_bottom_box,
-        body.is-write-page form#write .btm-btns-box,
-        body.is-write-page form#write > .btn_box.write {
+        body.is-write-page form.dcuf-write-form .btn_bottom_box,
+        body.is-write-page form.dcuf-write-form .btm-btns-box,
+        body.is-write-page form.dcuf-write-form > .btn_box.write {
             clear: both !important;
             float: none !important;
             transform: none !important;
@@ -17900,28 +19817,28 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             background: linear-gradient(180deg, #f8fbff 0%, #f3f7fd 100%) !important;
             box-shadow: 0 4px 12px rgba(25, 50, 92, 0.06) !important;
         }
-        body.is-write-page form#write .btn_bottom_box a,
-        body.is-write-page form#write .btn_bottom_box button,
-        body.is-write-page form#write .btm-btns-box button,
-        body.is-write-page form#write > .btn_box.write > button {
+        body.is-write-page form.dcuf-write-form .btn_bottom_box a,
+        body.is-write-page form.dcuf-write-form .btn_bottom_box button,
+        body.is-write-page form.dcuf-write-form .btm-btns-box button,
+        body.is-write-page form.dcuf-write-form > .btn_box.write > button {
             min-height: 48px !important;
             border-radius: 12px !important;
             box-shadow: 0 3px 8px rgba(25, 50, 92, 0.06) !important;
         }
-        body.is-write-page form#write .btn_bottom_box .btn_lightred,
-        body.is-write-page form#write .btm-btns-box .btn-line-gray,
-        body.is-write-page form#write > .btn_box.write > .btn_grey {
+        body.is-write-page form.dcuf-write-form .btn_bottom_box .btn_lightred,
+        body.is-write-page form.dcuf-write-form .btm-btns-box .btn-line-gray,
+        body.is-write-page form.dcuf-write-form > .btn_box.write > .btn_grey {
             border-color: #cbd8e9 !important;
             background: #fff !important;
             color: #42536d !important;
         }
-        body.is-write-page form#write .btn_bottom_box .btn_blue,
-        body.is-write-page form#write .btm-btns-box .btn-line-blue,
-        body.is-write-page form#write > .btn_box.write > .btn_blue {
+        body.is-write-page form.dcuf-write-form .btn_bottom_box .btn_blue,
+        body.is-write-page form.dcuf-write-form .btm-btns-box .btn-line-blue,
+        body.is-write-page form.dcuf-write-form > .btn_box.write > .btn_blue {
             border-color: var(--dcuf-write-accent-strong) !important;
-            background: linear-gradient(180deg, #426fe4 0%, #245bda 100%) !important;
+            background: linear-gradient(180deg, var(--dcuf-theme-primary-top, #426fe4) 0%, var(--dcuf-write-accent-strong) 100%) !important;
             color: #fff !important;
-            box-shadow: 0 6px 14px rgba(36, 91, 218, 0.24) !important;
+            box-shadow: 0 6px 14px var(--dcuf-theme-accent-shadow, rgba(36, 91, 218, 0.24)) !important;
         }
         body.is-write-page > #leave_confirm_box.dcuf-write-leave-confirm {
             box-sizing: border-box !important;
@@ -17971,7 +19888,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             padding: 0 56px 0 18px !important;
             border: 0 !important;
             border-radius: 15px 15px 0 0 !important;
-            background: linear-gradient(135deg, #3f6de0 0%, #2d57bd 100%) !important;
+            background: linear-gradient(135deg, var(--dcuf-write-accent) 0%, var(--dcuf-write-accent-strong) 100%) !important;
         }
         body.is-write-page > #leave_confirm_box.dcuf-write-leave-confirm .pop_head.bg h3 {
             margin: 0 !important;
@@ -18035,9 +19952,9 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         }
         body.is-write-page > #leave_confirm_box.dcuf-write-leave-confirm .write_cont > .btn_box > .btn_blue {
             border-color: var(--dcuf-write-accent-strong) !important;
-            background: linear-gradient(180deg, #426fe4 0%, #245bda 100%) !important;
+            background: linear-gradient(180deg, var(--dcuf-theme-primary-top, #426fe4) 0%, var(--dcuf-write-accent-strong) 100%) !important;
             color: #fff !important;
-            box-shadow: 0 6px 14px rgba(36, 91, 218, 0.22) !important;
+            box-shadow: 0 6px 14px var(--dcuf-theme-accent-shadow, rgba(36, 91, 218, 0.22)) !important;
         }
         body.is-write-page > #leave_confirm_box.dcuf-write-leave-confirm .pop_content.write_ly > .poply_whiteclose {
             box-sizing: border-box !important;
@@ -18079,8 +19996,8 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             box-shadow: 0 22px 58px rgba(0, 0, 0, 0.48), 0 0 0 100vmax rgba(0, 0, 0, 0.52) !important;
         }
         body.is-write-page.dc-filter-dark-mode > #leave_confirm_box.dcuf-write-leave-confirm .write_cont > .btn_box > button:not(.btn_blue) {
-            border-color: #40526b !important;
-            background: #233044 !important;
+            border-color: var(--dcuf-write-border-strong, #40526b) !important;
+            background: var(--dcuf-write-surface, #233044) !important;
             color: #edf3ff !important;
         }
         @media screen and (max-width: 480px) {
@@ -18114,36 +20031,36 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 width: 20px !important;
             }
         }
-        body.is-write-page.dc-filter-dark-mode form#write,
-        body.is-write-page.dc-filter-dark-mode form#write .write_subject,
-        body.is-write-page.dc-filter-dark-mode form#write .dcuf-write-captcha-image,
-        body.is-write-page.dc-filter-dark-mode form#write .captcha,
-        body.is-write-page.dc-filter-dark-mode form#write #subject,
-        body.is-write-page.dc-filter-dark-mode form#write #name,
-        body.is-write-page.dc-filter-dark-mode form#write #password,
-        body.is-write-page.dc-filter-dark-mode form#write #code {
+        body.is-write-page.dc-filter-dark-mode form.dcuf-write-form,
+        body.is-write-page.dc-filter-dark-mode form.dcuf-write-form .write_subject,
+        body.is-write-page.dc-filter-dark-mode form.dcuf-write-form .dcuf-write-captcha-image,
+        body.is-write-page.dc-filter-dark-mode form.dcuf-write-form .captcha,
+        body.is-write-page.dc-filter-dark-mode form.dcuf-write-form #subject,
+        body.is-write-page.dc-filter-dark-mode form.dcuf-write-form #name,
+        body.is-write-page.dc-filter-dark-mode form.dcuf-write-form #password,
+        body.is-write-page.dc-filter-dark-mode form.dcuf-write-form #code {
             border-color: var(--dcuf-write-border) !important;
             background: var(--dcuf-write-surface) !important;
         }
-        body.is-write-page.dc-filter-dark-mode form#write .note-toolbar,
-        body.is-write-page.dc-filter-dark-mode form#write .note-toolbar-media,
-        body.is-write-page.dc-filter-dark-mode form#write .tx-toolbar-basic,
-        body.is-write-page.dc-filter-dark-mode form#write .btns-box,
-        body.is-write-page.dc-filter-dark-mode form#write .btn_bottom_box,
-        body.is-write-page.dc-filter-dark-mode form#write .btm-btns-box,
-        body.is-write-page.dc-filter-dark-mode form#write > .btn_box.write {
+        body.is-write-page.dc-filter-dark-mode form.dcuf-write-form .note-toolbar,
+        body.is-write-page.dc-filter-dark-mode form.dcuf-write-form .note-toolbar-media,
+        body.is-write-page.dc-filter-dark-mode form.dcuf-write-form .tx-toolbar-basic,
+        body.is-write-page.dc-filter-dark-mode form.dcuf-write-form .btns-box,
+        body.is-write-page.dc-filter-dark-mode form.dcuf-write-form .btn_bottom_box,
+        body.is-write-page.dc-filter-dark-mode form.dcuf-write-form .btm-btns-box,
+        body.is-write-page.dc-filter-dark-mode form.dcuf-write-form > .btn_box.write {
             border-color: var(--dcuf-write-border) !important;
             background: var(--dcuf-write-surface-muted) !important;
         }
-        body.is-write-page.dc-filter-dark-mode form#write .write_subject > .dcuf-write-headtext-label {
+        body.is-write-page.dc-filter-dark-mode form.dcuf-write-form .write_subject > .dcuf-write-headtext-label {
             background: #273446 !important;
             color: #d2dced !important;
         }
-        body.is-write-page.dc-filter-dark-mode form#write .note-toolbar > .note-btn,
-        body.is-write-page.dc-filter-dark-mode form#write .note-toolbar .note-btn-group > .note-btn:not(.pop_wrap *):not(.note-dropdown-menu *):not(.note-popover *):not(.note-modal *),
-        body.is-write-page.dc-filter-dark-mode form#write .note-toolbar-media > .note-btn,
-        body.is-write-page.dc-filter-dark-mode form#write .btns-box button:not(.pop_wrap *):not(.note-dropdown-menu *):not(.note-popover *):not(.note-modal *),
-        body.is-write-page.dc-filter-dark-mode form#write select:not(.pop_wrap *):not(.note-dropdown-menu *):not(.note-popover *):not(.note-modal *) {
+        body.is-write-page.dc-filter-dark-mode form.dcuf-write-form .note-toolbar > .note-btn,
+        body.is-write-page.dc-filter-dark-mode form.dcuf-write-form .note-toolbar .note-btn-group > .note-btn:not(.pop_wrap *):not(.note-dropdown-menu *):not(.note-popover *):not(.note-modal *),
+        body.is-write-page.dc-filter-dark-mode form.dcuf-write-form .note-toolbar-media > .note-btn,
+        body.is-write-page.dc-filter-dark-mode form.dcuf-write-form .btns-box button:not(.pop_wrap *):not(.note-dropdown-menu *):not(.note-popover *):not(.note-modal *),
+        body.is-write-page.dc-filter-dark-mode form.dcuf-write-form select:not(.pop_wrap *):not(.note-dropdown-menu *):not(.note-popover *):not(.note-modal *) {
             border-color: #40526b !important;
             background: #233044 !important;
             color: #edf3ff !important;
@@ -18151,27 +20068,27 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             box-shadow: 0 2px 7px rgba(0, 0, 0, 0.2) !important;
             opacity: 1 !important;
         }
-        body.is-write-page.dc-filter-dark-mode form#write .note-toolbar > .note-btn *,
-        body.is-write-page.dc-filter-dark-mode form#write .note-toolbar .note-btn-group > .note-btn:not(.pop_wrap *):not(.note-dropdown-menu *):not(.note-popover *):not(.note-modal *) *,
-        body.is-write-page.dc-filter-dark-mode form#write .note-toolbar-media > .note-btn *,
-        body.is-write-page.dc-filter-dark-mode form#write .btns-box button:not(.pop_wrap *):not(.note-dropdown-menu *):not(.note-popover *):not(.note-modal *) * {
+        body.is-write-page.dc-filter-dark-mode form.dcuf-write-form .note-toolbar > .note-btn *,
+        body.is-write-page.dc-filter-dark-mode form.dcuf-write-form .note-toolbar .note-btn-group > .note-btn:not(.pop_wrap *):not(.note-dropdown-menu *):not(.note-popover *):not(.note-modal *) *,
+        body.is-write-page.dc-filter-dark-mode form.dcuf-write-form .note-toolbar-media > .note-btn *,
+        body.is-write-page.dc-filter-dark-mode form.dcuf-write-form .btns-box button:not(.pop_wrap *):not(.note-dropdown-menu *):not(.note-popover *):not(.note-modal *) * {
             color: inherit !important;
             -webkit-text-fill-color: inherit !important;
             opacity: 1 !important;
         }
-        body.is-write-page.dc-filter-dark-mode form#write .write_subject .subject_list > li:not(.sel):not(.active) {
+        body.is-write-page.dc-filter-dark-mode form.dcuf-write-form .write_subject .subject_list > li:not(.sel):not(.active) {
             color: #d2dced !important;
             -webkit-text-fill-color: #d2dced !important;
         }
-        body.is-write-page.dc-filter-dark-mode form#write #chk_html {
+        body.is-write-page.dc-filter-dark-mode form.dcuf-write-form #chk_html {
             accent-color: var(--dcuf-write-accent-strong) !important;
         }
-        body.is-write-page form#write .tx-toolbar-advanced,
-        body.is-write-page form#write .write_infobox,
-        body.is-write-page form#write .file_upload_info,
-        body.is-write-page form#write .cm_ad,
-        body.is-write-page form#write .adv_bottom_write,
-        body.is-write-page form#write div[id^="kakao_ad_"] {
+        body.is-write-page form.dcuf-write-form .tx-toolbar-advanced,
+        body.is-write-page form.dcuf-write-form .write_infobox,
+        body.is-write-page form.dcuf-write-form .file_upload_info,
+        body.is-write-page form.dcuf-write-form .cm_ad,
+        body.is-write-page form.dcuf-write-form .adv_bottom_write,
+        body.is-write-page form.dcuf-write-form div[id^="kakao_ad_"] {
             display: none !important;
             width: 0 !important;
             height: 0 !important;
@@ -18183,11 +20100,11 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             body.is-write-page #container {
                 padding: 6px !important;
             }
-            body.is-write-page form#write {
+            body.is-write-page form.dcuf-write-form {
                 padding: 10px !important;
                 border-radius: 11px !important;
             }
-            body.is-write-page form#write .dcuf-write-subject-row {
+            body.is-write-page form.dcuf-write-form .dcuf-write-subject-row {
                 grid-template-columns: 50px minmax(0, 1fr);
                 gap: 6px;
             }
@@ -18196,15 +20113,15 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             body.is-write-page #container {
                 padding: 16px 24px !important;
             }
-            body.is-write-page form#write {
+            body.is-write-page form.dcuf-write-form {
                 padding: 18px !important;
             }
-            body.is-write-page form#write .dcuf-write-fields {
+            body.is-write-page form.dcuf-write-form .dcuf-write-fields {
                 grid-template-columns: repeat(4, minmax(0, 1fr));
             }
-            body.is-write-page form#write .dcuf-write-fields > .write_subject,
-            body.is-write-page form#write .dcuf-write-subject-field,
-            body.is-write-page form#write .dcuf-write-fields > [style*="clear"] {
+            body.is-write-page form.dcuf-write-form .dcuf-write-fields > .write_subject,
+            body.is-write-page form.dcuf-write-form .dcuf-write-subject-field,
+            body.is-write-page form.dcuf-write-form .dcuf-write-fields > [style*="clear"] {
                 grid-column: 1 / -1;
             }
         }
@@ -19783,12 +21700,14 @@ function __dcufGetRuntimeCoordinator() {
 function __dcufGetPageContext() {
     const sharedContext = window.__dcufPageContext;
     if (sharedContext && typeof sharedContext === 'object') return sharedContext;
-    const type = ((window.location.pathname || '').match(/\/board\/(lists|view|write)(?:\/|$)/) || [])[1] || 'other';
+    const type = ((window.location.pathname || '').match(/\/board\/(lists|view|write|modify)(?:\/|$)/) || [])[1] || 'other';
     return {
         type,
         isList: type === 'lists',
         isView: type === 'view',
         isWrite: type === 'write',
+        isModify: type === 'modify',
+        isWriteSurface: type === 'write' || type === 'modify',
         isOther: type === 'other',
         isTargetPage: type !== 'other',
         hasListSurface: type === 'lists' || type === 'view',
@@ -19800,7 +21719,8 @@ function __dcufPageSupports(surface) {
     const pageContext = __dcufGetPageContext();
     if (surface === 'list') return pageContext.isList;
     if (surface === 'view') return pageContext.isView;
-    if (surface === 'write') return pageContext.isWrite;
+    if (surface === 'write') return pageContext.isWriteSurface;
+    if (surface === 'modify') return pageContext.isModify;
     if (surface === 'list-surface') return pageContext.hasListSurface;
     if (surface === 'comments') return pageContext.hasComments;
     if (surface === 'target') return pageContext.isTargetPage;

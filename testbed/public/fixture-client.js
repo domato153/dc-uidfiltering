@@ -11,7 +11,7 @@
     };
     const getCommentList = () => document.querySelector('#comment_wrap_1 .comment_box > .cmt_list');
     const getListBody = () => document.querySelector('table.gall_list tbody');
-    const getWriteForm = () => document.querySelector('form#write, form#writeForm');
+    const getWriteForm = () => document.querySelector('form#write, form#writeForm, form[name="modify"][action*="modify_submit"]');
     const getWriteEditor = () => document.querySelector('[data-fixture-editor] .note-editable, .native-editor');
     const syncWriteMemo = () => {
         const editor = getWriteEditor();
@@ -33,7 +33,6 @@
         box?.setAttribute('data-imgno', 'fixture-image');
         box?.setAttribute('data-article-lv', 'undefined');
         box?.querySelector('.cmt_list')?.classList.add('add');
-        section.querySelector('.cmt_write_box')?.remove();
     };
     normalizeImageCommentFixture();
 
@@ -113,6 +112,15 @@
         },
         toggleDark(force) {
             const enabled = typeof force === 'boolean' ? force : !document.body.classList.contains('dc-filter-dark-mode');
+            const currentStylesheet = document.getElementById('css-darkmode');
+            if (enabled && !currentStylesheet) {
+                const stylesheet = document.createElement('style');
+                stylesheet.id = 'css-darkmode';
+                stylesheet.textContent = 'html { color-scheme: dark; }';
+                document.head.appendChild(stylesheet);
+            } else if (!enabled && currentStylesheet) {
+                currentStylesheet.remove();
+            }
             document.body.classList.toggle('dc-filter-dark-mode', enabled);
             document.documentElement.classList.toggle('dc-filter-dark-mode', enabled);
             return enabled;

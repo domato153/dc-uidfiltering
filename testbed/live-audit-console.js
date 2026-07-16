@@ -62,8 +62,73 @@
         computedDisplay: getComputedStyle(element).display,
         text: String(element.textContent || '').trim().replace(/\s+/g, ' ').slice(0, 120)
     });
+    const inspectSurface = (selector) => {
+        const elements = Array.from(document.querySelectorAll(selector));
+        const visibleCount = elements.filter((element) => {
+            const style = getComputedStyle(element);
+            const rect = element.getBoundingClientRect();
+            return style.display !== 'none'
+                && style.visibility !== 'hidden'
+                && Number(style.opacity) > 0
+                && rect.width > 0
+                && rect.height > 0;
+        }).length;
+        const first = elements[0];
+        const firstStyle = first ? getComputedStyle(first) : null;
+        return {
+            selector,
+            count: elements.length,
+            visibleCount,
+            first: firstStyle ? {
+                display: firstStyle.display,
+                visibility: firstStyle.visibility,
+                opacity: firstStyle.opacity,
+                boxShadow: firstStyle.boxShadow,
+                backgroundColor: firstStyle.backgroundColor
+            } : null
+        };
+    };
 
     window.DCUFLiveAudit = {
+        bootDark() {
+            const root = document.documentElement;
+            const body = document.body;
+            const banner = document.getElementById('dcuf-degraded-banner');
+            return copyReport({
+                audit: 'dark-view-boot',
+                page: `${location.origin}${location.pathname}`,
+                capturedAt: new Date().toISOString(),
+                userAgent: navigator.userAgent,
+                boot: {
+                    state: root.getAttribute('data-dcuf-boot-state'),
+                    filterReady: root.getAttribute('data-dcuf-filter-ready'),
+                    scriptUiReady: root.classList.contains('script-ui-ready'),
+                    bannerReason: banner?.dataset.reason || null,
+                    bannerPresent: Boolean(banner),
+                    degradedStylePresent: Boolean(document.getElementById('dcuf-degraded-filter-style'))
+                },
+                dark: {
+                    stylesheetPresent: Boolean(document.getElementById('css-darkmode')),
+                    rootClass: root.classList.contains('dc-filter-dark-mode'),
+                    bodyClass: Boolean(body?.classList.contains('dc-filter-dark-mode')),
+                    effective: window.__dcufEffectiveDarkMode ?? null
+                },
+                surfaces: [
+                    inspectSurface('.view_content_wrap'),
+                    inspectSurface('#focus_cmt .comment_box, div[id^="comment_wrap_"] .comment_box'),
+                    inspectSurface('.view_bottom'),
+                    inspectSurface('.view_bottom .gall_listwrap, .view_bottom .custom-mobile-list')
+                ],
+                reveal: clone(window.__dcufRevealDebug || null),
+                viewTheme: clone(window.__dcufPhase1ViewTheme?.getDebugState?.() || null),
+                diagnostics: diagnostics()
+            });
+        },
+
+        bootDarkDownload(filename = 'dark-view-boot.json') {
+            return downloadReport(this.bootDark(), filename);
+        },
+
         async commentChurn(waitMs = 1600) {
             const target = document.querySelector('#comment_wrap_1 .cmt_list > li:not(.dory), .comment_box .cmt_list > li:not(.dory)');
             if (!target) throw new Error('댓글을 찾지 못했습니다. 댓글이 있는 글 본문에서 실행하세요.');

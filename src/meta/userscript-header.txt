@@ -4,7 +4,9 @@
 // @version      __VERSION__
 // @description  유저 필터링, UI 개선, 개인 차단/해제 기능
 // @author       domato153
-// @match        https://gall.dcinside.com/*
+// @match        https://gall.dcinside.com/board/*
+// @match        https://gall.dcinside.com/mgallery/board/*
+// @match        https://gall.dcinside.com/mini/board/*
 // @noframes
 // @grant        GM_setValue
 // @grant        GM_getValue

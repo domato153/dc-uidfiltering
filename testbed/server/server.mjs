@@ -3,7 +3,7 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { blankPage, listPage, viewPage } from '../fixtures/pages.mjs';
-import { nativeWritePage, writePage } from '../fixtures/write-pages.mjs';
+import { modifyPasswordPage, nativeWritePage, writePage } from '../fixtures/write-pages.mjs';
 import { loadHarnessSource } from '../harness/userscript-loader.mjs';
 
 const testbedDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -104,6 +104,13 @@ export async function startServer({ port = 0 } = {}) {
                 send(response, 200, nativeWritePage(), 'text/html; charset=utf-8', headers);
                 return;
             }
+            if (url.pathname.includes('/board/modify')) {
+                const page = url.searchParams.get('stage') === 'editor'
+                    ? writePage({ variant, formMode: 'modify' })
+                    : modifyPasswordPage();
+                send(response, 200, await withManualHarness(page, url), 'text/html; charset=utf-8', headers);
+                return;
+            }
             if (url.pathname.includes('/board/write')) {
                 send(response, 200, await withManualHarness(writePage({ variant }), url), 'text/html; charset=utf-8', headers);
                 return;
@@ -113,7 +120,13 @@ export async function startServer({ port = 0 } = {}) {
                 return;
             }
             if (url.pathname.includes('/board/view')) {
-                send(response, 200, await withManualHarness(viewPage({ variant, long: url.searchParams.get('long') === '1', massComments: Number(url.searchParams.get('comments')) || 0 }), url), 'text/html; charset=utf-8', headers);
+                send(response, 200, await withManualHarness(viewPage({
+                    variant,
+                    long: url.searchParams.get('long') === '1',
+                    massComments: Number(url.searchParams.get('comments')) || 0,
+                    darkAtStart: url.searchParams.get('dark-start') === '1',
+                    brokenTheme: url.searchParams.get('broken-theme') === '1'
+                }), url), 'text/html; charset=utf-8', headers);
                 return;
             }
             send(response, 200, blankPage(), 'text/html; charset=utf-8', headers);

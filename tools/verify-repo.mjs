@@ -8,6 +8,11 @@ const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const requestedMode = process.argv[2] || 'all';
 const validModes = new Set(['guidance', 'release', 'all']);
 const failures = [];
+const BOARD_MATCHES = [
+    'https://gall.dcinside.com/board/*',
+    'https://gall.dcinside.com/mgallery/board/*',
+    'https://gall.dcinside.com/mini/board/*'
+];
 
 function check(condition, message) {
     if (!condition) failures.push(message);
@@ -96,6 +101,68 @@ function parseBuildVersion(buildText, buildPath) {
     return match?.[1];
 }
 
+async function verifyMobileSourceContracts() {
+    const [bootstrap, postMain, coordinator, theme, mobileHeader, pcHeader] = await Promise.all([
+        readFile(path.join(rootDir, 'src', 'runtime', 'bootstrap.js'), 'utf8'),
+        readFile(path.join(rootDir, 'src', 'targets', 'mobile', 'post-main-fixes.js'), 'utf8'),
+        readFile(path.join(rootDir, 'src', 'targets', 'mobile', 'runtime-coordinator.js'), 'utf8'),
+        readFile(path.join(rootDir, 'src', 'targets', 'mobile', 'theme-module.js'), 'utf8'),
+        readFile(path.join(rootDir, 'src', 'meta', 'userscript-header.txt'), 'utf8'),
+        readFile(path.join(rootDir, 'src', 'meta', 'pc-filter-userscript-header.txt'), 'utf8')
+    ]);
+
+    check(!/pageType\s*===\s*['"]list['"]/.test(bootstrap),
+        "mobile source: singular pageType 'list' typo returned");
+    check(bootstrap.includes('if (!pageContext.isTargetPage) return;'),
+        'mobile source: non-target page early return is missing');
+    check(!/addEventListener\(\s*['"]unload['"]/.test(bootstrap),
+        'mobile source: unload listener would opt production out of bfcache');
+    check(coordinator.includes("window.addEventListener('pageshow'") && coordinator.includes('recoverFromBfcache(event)'),
+        'mobile source: explicit persisted pageshow recovery is missing');
+
+    for (const [label, header] of [['mobile', mobileHeader], ['pc', pcHeader]]) {
+        const matches = Array.from(header.matchAll(/^\/\/ @match\s+([^\r\n]+)$/gm), (match) => match[1].trim());
+        check(JSON.stringify(matches) === JSON.stringify(BOARD_MATCHES),
+            `${label} metadata: @match scope is [${matches.join(', ')}]; expected board routes only`);
+        check(!header.includes('https://gall.dcinside.com/*'), `${label} metadata: broad origin @match returned`);
+    }
+
+    const listGuardIndex = postMain.indexOf("if (!__dcufPageSupports('list-surface')) return;");
+    const listStyleIndex = postMain.indexOf("const STYLE_ID = 'dcuf-phase1-list-theme';");
+    check(listGuardIndex >= 0 && listStyleIndex >= 0 && listGuardIndex < listStyleIndex,
+        'mobile source: phase-1 list CSS must be guarded by list-surface before injection');
+    check(!postMain.includes('scheduleVerify'),
+        'mobile source: superseded repeated phase-1 verification timers returned');
+
+    check(coordinator.includes('mutationNodeTouchesSurface(node)'),
+        'mobile source: child-list surface prefilter helper is missing');
+    check(!coordinator.includes("if (record.type === 'childList') return !this.isScriptOwnedElement(record.target);"),
+        'mobile source: broad child-list pass-through returned');
+
+    for (const token of [
+        '--dcuf-theme-accent',
+        '--dcuf-theme-accent-strong',
+        '--dcuf-theme-border',
+        '--dcuf-theme-surface',
+        '--dcuf-theme-surface-raised',
+        '--dcuf-theme-surface-muted'
+    ]) {
+        check(theme.includes(token), `mobile source: palette token is missing: ${token}`);
+    }
+    for (const selector of [
+        '.list_array_option .btn_write',
+        '.custom-bottom-controls .bottom_paging_box > em',
+        '.custom-bottom-controls .dcuf-search-card form[name="frmSearch"] .bnt_search',
+        '#container.gallery_view .view_bottom_btnbox .btn_blue',
+        'form.dcuf-write-form .btn_bottom_box .btn_blue'
+    ]) {
+        check(theme.includes(selector), `mobile source: palette selector is missing: ${selector}`);
+    }
+
+    console.log('Mobile source contracts');
+    console.log(' - page scope, page type, lifecycle, mutation routing, and palette selectors checked');
+}
+
 async function verifyReleaseTarget(target) {
     const buildPath = path.join(rootDir, target.buildFile);
     const buildText = await readFile(buildPath, 'utf8');
@@ -114,6 +181,7 @@ async function verifyReleaseTarget(target) {
     const distHash = createHash('sha256').update(distBytes).digest('hex').toUpperCase();
     const text = rootBytes.toString('utf8');
     const metadataVersion = text.match(/^\/\/ @version\s+([^\r\n]+)$/m)?.[1]?.trim();
+    const metadataMatches = Array.from(text.matchAll(/^\/\/ @match\s+([^\r\n]+)$/gm), (match) => match[1].trim());
     const hasBom = rootBytes.length >= 3
         && rootBytes[0] === 0xef
         && rootBytes[1] === 0xbb
@@ -124,6 +192,8 @@ async function verifyReleaseTarget(target) {
     check(hasBom, `${target.name}: UTF-8 BOM is missing`);
     check(metadataVersion === version,
         `${target.name}: @version is ${metadataVersion || '(missing)'}; expected ${version}`);
+    check(JSON.stringify(metadataMatches) === JSON.stringify(target.expectedMatches),
+        `${target.name}: @match scope is [${metadataMatches.join(', ')}]; expected [${target.expectedMatches.join(', ')}]`);
     check(!text.includes('__VERSION__'), `${target.name}: unresolved __VERSION__ token remains`);
     check(text.includes(`v${version}`), `${target.name}: versioned init text v${version} is missing`);
     check(/DEBUG_ENABLED:\s*false/.test(text), `${target.name}: DEBUG_ENABLED is not false`);
@@ -139,15 +209,18 @@ async function verifyReleaseTarget(target) {
 }
 
 async function verifyRelease() {
+    await verifyMobileSourceContracts();
     const targets = [
         {
             name: 'mobile',
             buildFile: 'tools/build-userscript.mjs',
+            expectedMatches: BOARD_MATCHES,
             outputName: (version) => `Dc_UserFilter_Mobile_v${version}.user.js`
         },
         {
             name: 'pc',
             buildFile: 'tools/build-pc-filter-userscript.mjs',
+            expectedMatches: BOARD_MATCHES,
             outputName: (version) => `dcinside_user_filter_v${version}.user.js`
         }
     ];

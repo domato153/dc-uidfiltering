@@ -4250,7 +4250,7 @@
             //     대상: .comment_box .usertxt
             //           .img_comment .usertxt (이미지 댓글)
             // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-            // ??/????? ???? ??? ?? normalize ??? ?????.
+            // 일반·이미지 댓글 글자 크기는 댓글 normalize 루틴에서 별도로 처리한다.
             return;
         },
 
@@ -6796,7 +6796,7 @@
             border-top-color: rgba(120, 144, 175, 0.2) !important;
             background: rgba(20, 28, 39, 0.84) !important;
         }
-        /* [?? ??/??? ?? ?? ?????] */
+        /* [댓글 입력·팝업 레이어 overflow 보정] */
         #focus_cmt,
         #focus_cmt > div[id^="comment_wrap_"],
         #focus_cmt > div[id^="comment_wrap_"] .comment_box,

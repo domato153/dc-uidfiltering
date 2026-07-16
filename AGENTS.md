@@ -4,7 +4,7 @@
 - Preserve user-visible behavior, stored settings, and release output.
 - Keep work task-specific; use deterministic contract checks.
 - For performance work, measure first, then consult `docs/agent-performance-notes.md`.
-- For long work, keep `.codex/` notes with goals, contracts, status, validation, and next step. Recheck them and Git before stages and after compaction/resume; prefer records to memory. Delete it when complete; skip one-off fixes.
+- For long work, keep `.codex/` goals, contracts, status, validation, and next step; recheck Git after resume/stages, then delete it. Skip one-offs.
 
 ## Source and target routing
 - Release sources are `src/` and build scripts; root userscripts and `dist/` are generated.
@@ -18,6 +18,7 @@
 - After builds run `node tools/verify-repo.mjs release`; use `guidance` for guidance-only edits and `all` if both changed.
 - Run Testbed `--group`/`--filter` for changed surfaces; use the full suite for broad/requested impact. Run bfcache only for lifecycle work.
 - Reuse beta Testbed for stable only if runtime is unchanged, only `-beta` is removed, and live beta use is confirmed; record why.
+- Move superseded local userscripts to `Legacy유저스크립트storage/`; if root/`dist/` match, archive one copy.
 - Never repair source/build divergence by editing generated userscripts.
 
 ## Testbed fidelity
@@ -31,7 +32,7 @@
 
 ## Git publishing
 - `origin`: `https://github.com/domato153/dc-uidfiltering.git`. Beta/review uses `codex/*`; commit locally and push only when requested.
-- Before `codex/*` commit/push, remove superseded root/`dist/` userscripts. Keep current mobile/PC artifacts, sources, probes, official files, and required evidence.
+- Before `codex/*` commit/push, keep current artifacts/evidence and archive older userscripts locally.
 - `Mobile` owns `Dc_UserFilter_Mobile.user.js`; `main` owns PC script/site. Mirror `README.md` and its images to `Mobile` on every change.
 - Stable: update that target's badge in `main:README.md`.
 - Publish stable from a clean official worktree; replace only the canonical userscript, preserve history, and never force/merge the source branch wholesale.

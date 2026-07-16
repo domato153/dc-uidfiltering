@@ -27,6 +27,14 @@ const performanceReports = [];
 const writeLayoutReports = [];
 const testResults = [];
 const test = (name, group, run) => tests.push({ name, group, run });
+const mobileTest = (name, group, run) => test(name, group, async (context) => {
+    if (isPcUserscript) return;
+    return run(context);
+});
+const pcTest = (name, group, run) => test(name, group, async (context) => {
+    if (!isPcUserscript) return;
+    return run(context);
+});
 const statsStorage = {
     [storageKeys.threshold]: 10,
     [storageKeys.ratioEnabled]: false,
@@ -35,7 +43,7 @@ const statsStorage = {
 };
 const noStatsStorage = { ...statsStorage, [storageKeys.threshold]: 0 };
 
-test('boot: 모바일 UID 통계 캐시는 재로드 시 공개 전에 차단하고 서버를 재조회하지 않는다', 'boot', async ({ browser, server }) => {
+mobileTest('boot: 모바일 UID 통계 캐시는 재로드 시 공개 전에 차단하고 서버를 재조회하지 않는다', 'boot', async ({ browser, server }) => {
     const cachedUid = 'safe-comment-2';
     const storage = {
         ...statsStorage,
@@ -68,7 +76,7 @@ test('boot: 모바일 UID 통계 캐시는 재로드 시 공개 전에 차단하
     } finally { await session.close(); }
 });
 
-test('boot: 댓글 장벽 이후의 새 DOM도 최종 동기 필터 뒤에 공개된다', 'boot', async ({ browser, server }) => {
+mobileTest('boot: 댓글 장벽 이후의 새 DOM도 최종 동기 필터 뒤에 공개된다', 'boot', async ({ browser, server }) => {
     const cachedUid = 'safe-comment-2';
     const storage = {
         ...statsStorage,
@@ -465,6 +473,58 @@ test('boot: 댓글이 0·140·420ms에 들어와도 초기 장벽 뒤 한 번만
     } finally { await session.close(); }
 });
 
+test('boot: 야간모드의 시각 테마 판정 실패는 필터 완료 뒤 댓글과 하단 목록을 가리지 않는다', 'boot', async ({ browser, server }) => {
+    if (isPcUserscript) return;
+    const session = await createTestPage(browser, server.baseUrl, {
+        storage: noStatsStorage,
+        boot: { revealTimeoutMs: 120, criticalDeadlineMs: 320, absoluteDeadlineMs: 1200, recoveryMaxMs: 300 }
+    });
+    try {
+        await session.goto('/board/view?id=test&no=1001&dark-start=1&broken-theme=1');
+        const result = await session.page.evaluate(() => {
+            const isVisible = (selector) => {
+                const element = document.querySelector(selector);
+                if (!(element instanceof HTMLElement)) return false;
+                const style = getComputedStyle(element);
+                const rect = element.getBoundingClientRect();
+                return style.display !== 'none'
+                    && style.visibility !== 'hidden'
+                    && Number(style.opacity) > 0
+                    && rect.width > 0
+                    && rect.height > 0;
+            };
+            return {
+                bootState: document.documentElement.getAttribute('data-dcuf-boot-state'),
+                filterReady: document.documentElement.getAttribute('data-dcuf-filter-ready'),
+                darkStylesheet: Boolean(document.getElementById('css-darkmode')),
+                darkClass: document.documentElement.classList.contains('dc-filter-dark-mode')
+                    && document.body.classList.contains('dc-filter-dark-mode'),
+                commentVisible: isVisible('#comment_wrap_1 .comment_box'),
+                listVisible: isVisible('.view_bottom .gall_listwrap'),
+                degradedBannerCount: document.querySelectorAll('#dcuf-degraded-banner').length,
+                degradedStyleCount: document.querySelectorAll('#dcuf-degraded-filter-style').length,
+                events: window.__dcufBootProbe.events(),
+                revealDebug: window.__dcufRevealDebug || null,
+                viewThemeDebug: window.__dcufPhase1ViewTheme?.getDebugState?.() || null
+            };
+        });
+        assert.equal(result.bootState, 'ready', JSON.stringify(result));
+        assert.equal(result.filterReady, 'true', JSON.stringify(result));
+        assert.equal(result.darkStylesheet, true);
+        assert.equal(result.darkClass, true);
+        assert.equal(result.commentVisible, true, JSON.stringify(result));
+        assert.equal(result.listVisible, true, JSON.stringify(result));
+        assert.equal(result.degradedBannerCount, 0);
+        assert.equal(result.degradedStyleCount, 0);
+        assert.deepEqual(result.events.map((event) => event.type), ['ready'], JSON.stringify(result.events));
+        assert.equal(result.events[0]?.reason, 'ready:filtered-native-style-fallback', JSON.stringify(result.events));
+        assert.equal(result.revealDebug?.initial?.reason, 'waiting-style', JSON.stringify(result.revealDebug));
+        assert.equal(result.revealDebug?.initial?.fallback, 'filtered-native-style', JSON.stringify(result.revealDebug));
+        assert.equal(result.viewThemeDebug?.lastFailureReason, 'missing-head-elevation', JSON.stringify(result.viewThemeDebug));
+        assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
+    } finally { await session.close(); }
+});
+
 test('boot: 목록 준비 실패는 이동 DOM과 인라인 상태를 롤백한 뒤 재시도로 복구한다', 'boot', async ({ browser, server }) => {
     if (isPcUserscript) return;
     const session = await createTestPage(browser, server.baseUrl, {
@@ -514,6 +574,7 @@ test('boot: body 교체 후 mutation bus가 새 body에 재연결되고 필터 �
     try {
         await session.goto('/board/lists?id=test');
         const before = await getMetrics(session.page);
+        const beforeSubscribers = await session.page.evaluate(() => Array.from(window.__dcufRuntimeCoordinator?._mutationSubscribers?.keys?.() || []));
         await session.page.evaluate(() => {
             const replacement = document.createElement('body');
             replacement.dataset.fixturePage = 'list';
@@ -527,7 +588,11 @@ test('boot: body 교체 후 mutation bus가 새 body에 재연결되고 필터 �
             return item && getComputedStyle(item).display === 'none';
         });
         const after = await getMetrics(session.page);
-        assert.equal(after.dcuf.gauges['mutation.subscribers'], before.dcuf.gauges['mutation.subscribers']);
+        const afterSubscribers = await session.page.evaluate(() => Array.from(window.__dcufRuntimeCoordinator?._mutationSubscribers?.keys?.() || []));
+        assert.equal(beforeSubscribers.includes('filter-universal-observer'), true, JSON.stringify(beforeSubscribers));
+        assert.equal(afterSubscribers.includes('filter-universal-observer'), true, JSON.stringify(afterSubscribers));
+        assert.equal(afterSubscribers.includes('ui-list-runtime'), true, JSON.stringify(afterSubscribers));
+        assert.equal(after.dcuf.gauges['mutation.subscribers'], afterSubscribers.length);
         assert.equal(after.mutationObserversCreated - before.mutationObserversCreated <= 2, true);
         assert.equal(await session.page.locator('#dcuf-boot-overlay').count(), 0);
         assert.equal(await session.page.locator('.custom-mobile-list').count(), isPcUserscript ? 0 : 1);
@@ -565,11 +630,16 @@ test('smoke: 목록과 본문에서 실제 사용자 스크립트가 초기화�
     const list = await createTestPage(browser, server.baseUrl, { storage: noStatsStorage });
     try {
         await list.goto('/board/lists?id=test');
-        assert.equal(await list.page.locator('.custom-post-item').count(), 51);
-        assert.equal(await list.page.locator('table.gall_list').evaluate((element) => getComputedStyle(element).display), 'none');
+        assert.equal(await list.page.locator('.custom-post-item').count(), isPcUserscript ? 0 : 51);
+        const tableDisplay = await list.page.locator('table.gall_list').evaluate((element) => getComputedStyle(element).display);
+        assert.equal(tableDisplay, isPcUserscript ? 'table' : 'none');
         assert.equal(await list.page.locator('#dc-personal-block-fab').count(), 1);
         const metrics = await getMetrics(list.page);
-        assert.equal(metrics.dcuf.gauges['mutation.subscribers'] > 0, true);
+        if (isPcUserscript) {
+            assert.equal(await list.page.evaluate(() => Boolean(window.__dcufFilterModule)), true);
+        } else {
+            assert.equal(metrics.dcuf.gauges['mutation.subscribers'] > 0, true);
+        }
         assertNoRuntimeErrors(metrics, list.consoleErrors);
     } finally { await list.close(); }
 
@@ -580,7 +650,7 @@ test('smoke: 목록과 본문에서 실제 사용자 스크립트가 초기화�
         assert.equal(await view.page.locator('.img_comment.fold.getMoreComment .view_comment.image_comment .comment_box.img_comment_box[data-imgno] .cmt_list.add > li').count(), 2);
         assert.equal(await view.page.locator('.gall_exposure_list > ul > li').count(), 2);
         assert.equal(await view.page.locator('.fixture-view-list tr.ub-content').count(), 51);
-        assert.equal(await view.page.locator('.fixture-view-list .custom-post-item').count(), 51);
+        assert.equal(await view.page.locator('.fixture-view-list .custom-post-item').count(), isPcUserscript ? 0 : 51);
         assertNoRuntimeErrors(await getMetrics(view.page), view.consoleErrors);
     } finally { await view.close(); }
 
@@ -588,7 +658,7 @@ test('smoke: 목록과 본문에서 실제 사용자 스크립트가 초기화�
     try {
         await minorList.goto('/mgallery/board/lists?id=test');
         assert.equal(await minorList.page.locator('table.gall_list tr.ub-content').count(), 53);
-        assert.equal(await minorList.page.locator('.custom-post-item').count(), 53);
+        assert.equal(await minorList.page.locator('.custom-post-item').count(), isPcUserscript ? 0 : 53);
         assert.equal(await minorList.page.locator('table.gall_list tr.ub-content[data-fixture-host-hidden="1"], table.gall_list tr.ub-content[data-fixture-host-css-hidden="1"]').count(), 3);
         const ordinaryCellCount = await minorList.page.evaluate(() => document.querySelector('table.gall_list tr.us-post')?.children.length || 0);
         assert.equal(ordinaryCellCount, 7);
@@ -643,18 +713,26 @@ test('page context registers only the runtime subscribers owned by each surface'
     for (const expected of cases) {
         const session = await createTestPage(browser, server.baseUrl, { storage: noStatsStorage });
         try {
-            await session.goto(expected.pathname);
+            await session.goto(expected.pathname, { waitForReady: expected.type !== 'other' });
             const state = await session.page.evaluate(() => ({
                 context: window.__dcufPageContext,
                 subscribers: Array.from(window.__dcufRuntimeCoordinator?._mutationSubscribers?.keys?.() || []),
                 immediate: Array.from(window.__dcufRuntimeCoordinator?._immediateMutationSubscribers?.keys?.() || []),
-                contextAttr: document.documentElement.getAttribute('data-dcuf-page-context')
+                contextAttr: document.documentElement.getAttribute('data-dcuf-page-context'),
+                phase1ListStyles: document.querySelectorAll('#dcuf-phase1-list-theme').length,
+                paletteStyles: document.querySelectorAll('#dcuf-mobile-palette-style').length,
+                bootState: document.documentElement.getAttribute('data-dcuf-boot-state')
             }));
             assert.equal(state.context?.type, expected.type, JSON.stringify(state));
             assert.equal(state.contextAttr, expected.type, JSON.stringify(state));
             expected.subscribers.forEach((key) => assert.equal(state.subscribers.includes(key), true, `${expected.type}: missing ${key}; ${JSON.stringify(state.subscribers)}`));
             expected.excluded.forEach((key) => assert.equal(state.subscribers.includes(key), false, `${expected.type}: unexpected ${key}; ${JSON.stringify(state.subscribers)}`));
             assert.deepEqual(state.immediate.sort(), expected.immediate.slice().sort(), `${expected.type}: ${JSON.stringify(state.immediate)}`);
+            if (expected.type === 'other') {
+                assert.equal(state.phase1ListStyles, 0, JSON.stringify(state));
+                assert.equal(state.paletteStyles, 0, JSON.stringify(state));
+                assert.equal(state.bootState, null, JSON.stringify(state));
+            }
             assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
         } finally { await session.close(); }
     }
@@ -716,6 +794,12 @@ test('mutation bus skips irrelevant attributes and caches repeated payload searc
         await session.page.evaluate(() => {
             window.__dcufDiagnostics.reset();
             const noise = document.getElementById('dcuf-fixture-irrelevant-churn');
+            for (let index = 0; index < 80; index += 1) {
+                const child = document.createElement('span');
+                child.textContent = `irrelevant-${index}`;
+                noise.appendChild(child);
+                child.remove();
+            }
             for (let index = 0; index < 120; index += 1) {
                 noise.className = `noise-${index}`;
                 noise.style.width = `${index}px`;
@@ -771,7 +855,7 @@ test('mutation bus skips irrelevant attributes and caches repeated payload searc
     } finally { await session.close(); }
 });
 
-test('mini view bottom buttons remain clickable above article overlays', 'functional', async ({ browser, server }) => {
+mobileTest('mini view bottom buttons remain clickable above article overlays', 'functional', async ({ browser, server }) => {
     const session = await createTestPage(browser, server.baseUrl, { storage: noStatsStorage, viewport: { width: 1120, height: 900 } });
     try {
         await session.goto('/mini/board/view/?id=test&no=1001');
@@ -1041,7 +1125,7 @@ test('mobile list navigation uses integrated raised toolbar and control cards', 
             assert.equal(layout.pagination.display, 'flex');
             assert.equal(layout.toolbar.radius >= 14, true);
             assert.equal(layout.search.radius >= 14, true);
-            assert.equal(layout.toolbar.background.includes('linear-gradient'), true);
+            assert.notEqual(layout.toolbar.backgroundColor, 'rgba(0, 0, 0, 0)');
             assert.notEqual(layout.search.shadow, 'none');
             assert.equal(layout.formCount, 1);
             assert.equal(layout.nestedFormCount, 1);
@@ -1079,15 +1163,20 @@ test('mobile list navigation uses integrated raised toolbar and control cards', 
             assert.equal(await session.page.evaluate(() => window.__fixtureWriteClicks || 0), 2);
             assert.equal(await session.page.evaluate(() => window.__fixtureSearchClicks || 0), 1);
 
-            const lightBackground = layout.search.background;
-            await session.page.evaluate(() => document.body.classList.add('dc-filter-dark-mode'));
+            const lightBackground = layout.search.backgroundColor;
+            await session.page.evaluate(() => window.__dcufFixture.toggleDark(true));
             const darkState = await session.page.evaluate(() => {
                 const card = getComputedStyle(document.querySelector('.dcuf-search-card'));
                 const input = getComputedStyle(document.querySelector('.dcuf-search-card input[type="text"]'));
-                return { background: card.backgroundImage, inputBackground: input.backgroundColor };
+                const probe = document.createElement('span');
+                probe.style.cssText = 'position:fixed;visibility:hidden;background:var(--dcuf-theme-surface-input)';
+                document.body.appendChild(probe);
+                const expectedInputBackground = getComputedStyle(probe).backgroundColor;
+                probe.remove();
+                return { background: card.backgroundColor, inputBackground: input.backgroundColor, expectedInputBackground };
             });
             assert.notEqual(darkState.background, lightBackground);
-            assert.equal(darkState.inputBackground, 'rgb(17, 23, 34)');
+            assert.equal(darkState.inputBackground, darkState.expectedInputBackground);
             assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
         } finally { await session.close(); }
     }
@@ -1158,7 +1247,7 @@ test('mobile list navigation uses integrated raised toolbar and control cards', 
     } finally { await viewSession.close(); }
 });
 
-test('gallery door keeps the original hot-rank popup DOM and layout', 'functional', async ({ browser, server }) => {
+mobileTest('gallery door keeps the original hot-rank popup DOM and layout', 'functional', async ({ browser, server }) => {
     const session = await createTestPage(browser, server.baseUrl, { storage: noStatsStorage, viewport: { width: 1280, height: 900 } });
     try {
         await session.goto('/mgallery/board/lists/?id=test');
@@ -1243,7 +1332,7 @@ test('통계 차단 항목은 차단 후 다시 표시되지 않는다', 'functi
     } finally { await session.close(); }
 });
 
-test('안정화 후 필터 pass가 유휴 상태에서 과도하게 반복되지 않는다', 'functional', async ({ browser, server }) => {
+mobileTest('안정화 후 필터 pass가 유휴 상태에서 과도하게 반복되지 않는다', 'functional', async ({ browser, server }) => {
     const session = await createTestPage(browser, server.baseUrl, { storage: noStatsStorage });
     try {
         await session.goto('/board/view?id=test&no=1001');
@@ -1268,7 +1357,7 @@ test('통계 필터가 꺼져 있으면 UID API 요청이 없다', 'functional',
     } finally { await session.close(); }
 });
 
-test('댓글 하나 추가 시 전체 refilter를 실행하지 않는다', 'functional', async ({ browser, server }) => {
+mobileTest('댓글 하나 추가 시 전체 refilter를 실행하지 않는다', 'functional', async ({ browser, server }) => {
     const session = await createTestPage(browser, server.baseUrl, { storage: noStatsStorage });
     try {
         await session.goto('/board/view?id=test&no=1001');
@@ -1296,7 +1385,7 @@ test('목록 한 행 변경 시 미러 한 행만 재생성한다', 'functional'
     } finally { await session.close(); }
 });
 
-test('호스트 숨김 설문·광고 행이 미러 목록에 노출되지 않는다', 'functional', async ({ browser, server }) => {
+mobileTest('호스트 숨김 설문·광고 행이 미러 목록에 노출되지 않는다', 'functional', async ({ browser, server }) => {
     const session = await createTestPage(browser, server.baseUrl, { storage: noStatsStorage });
     try {
         await session.goto('/mgallery/board/view?id=test&no=1001');
@@ -1352,7 +1441,7 @@ test('일반 댓글, 답글, 이미지 댓글이 개인 UID 차단된다', 'func
     } finally { await session.close(); }
 });
 
-test('댓글 닫힘 상태는 접힌 래퍼 밖으로 댓글을 노출하지 않고 다시 열 수 있다', 'functional', async ({ browser, server }) => {
+mobileTest('댓글 닫힘 상태는 접힌 래퍼 밖으로 댓글을 노출하지 않고 다시 열 수 있다', 'functional', async ({ browser, server }) => {
     const session = await createTestPage(browser, server.baseUrl, { storage: noStatsStorage });
     try {
         await session.goto('/board/view?id=test&no=1001');
@@ -1427,7 +1516,7 @@ test('간편차단 UI로 개인 차단과 차단 해제가 동작한다', 'funct
     } finally { await session.close(); }
 });
 
-test('직접 차단 입력이 닉네임·식별번호·IP를 저장하고 관리창과 동기화된다', 'functional', async ({ browser, server }) => {
+mobileTest('직접 차단 입력이 닉네임·식별번호·IP를 저장하고 관리창과 동기화된다', 'functional', async ({ browser, server }) => {
     const session = await createTestPage(browser, server.baseUrl, {
         storage: noStatsStorage,
         viewport: { width: 390, height: 844 },
@@ -1639,7 +1728,7 @@ test('플로팅 메뉴 서랍과 원위치 복구가 안전하게 동작한다',
     } finally { await session.close(); }
 });
 
-test('mobile popup pinch resize preserves an off-center real-touch focal point', 'functional', async ({ browser, server }) => {
+mobileTest('mobile popup pinch resize preserves an off-center real-touch focal point', 'functional', async ({ browser, server }) => {
     const session = await createTestPage(browser, server.baseUrl, {
         storage: noStatsStorage,
         viewport: { width: 390, height: 844 },
@@ -1736,7 +1825,7 @@ test('mobile popup pinch resize preserves an off-center real-touch focal point',
     }
 });
 
-test('야간모드 전환 후 DOM과 주요 스타일이 유지된다', 'functional', async ({ browser, server }) => {
+mobileTest('야간모드 전환 후 DOM과 주요 스타일이 유지된다', 'functional', async ({ browser, server }) => {
     const session = await createTestPage(browser, server.baseUrl, { storage: noStatsStorage });
     try {
         await session.goto('/board/lists?id=test');
@@ -1758,10 +1847,11 @@ test('야간모드 전환 후 DOM과 주요 스타일이 유지된다', 'functio
     } finally { await session.close(); }
 });
 
-test('광고 DOM 반복 삽입에도 observer subscriber가 폭증하지 않는다', 'functional', async ({ browser, server }) => {
+mobileTest('광고 DOM 반복 삽입에도 observer subscriber가 폭증하지 않는다', 'functional', async ({ browser, server }) => {
     const session = await createTestPage(browser, server.baseUrl, { storage: noStatsStorage });
     try {
         await session.goto('/board/view?id=test&no=1001');
+        await session.page.waitForFunction(() => !window.__dcufRuntimeCoordinator?._mutationSubscribers?.has('ui-post-reveal-recovery'));
         const before = await getMetrics(session.page);
         for (let index = 0; index < 5; index += 1) {
             await session.page.evaluate(() => window.__dcufFixture.insertAds(10));
@@ -1776,7 +1866,7 @@ test('광고 DOM 반복 삽입에도 observer subscriber가 폭증하지 않는�
     } finally { await session.close(); }
 });
 
-test('?? Google SafeFrame ??? host? ?? ????', 'functional', async ({ browser, server }) => {
+mobileTest('본문 Google SafeFrame 광고 host만 제거하고 일반 iframe은 보존한다', 'functional', async ({ browser, server }) => {
     const session = await createTestPage(browser, server.baseUrl, { storage: noStatsStorage });
     try {
         await session.page.route('https://googleads.g.doubleclick.net/**', (route) => route.abort());
@@ -1808,7 +1898,7 @@ test('?? Google SafeFrame ??? host? ?? ????', 'functional', async ({ browser, se
     } finally { await session.close(); }
 });
 
-test('article right_wing ad container is removed', 'functional', async ({ browser, server }) => {
+mobileTest('article right_wing ad container is removed', 'functional', async ({ browser, server }) => {
     const session = await createTestPage(browser, server.baseUrl, { storage: noStatsStorage });
     try {
         await session.goto('/board/view?id=test&no=1001');
@@ -1841,7 +1931,7 @@ test('article right_wing ad container is removed', 'functional', async ({ browse
     } finally { await session.close(); }
 });
 
-test('article adsbygoogle wrapper is removed without a residual gap', 'functional', async ({ browser, server }) => {
+mobileTest('article adsbygoogle wrapper is removed without a residual gap', 'functional', async ({ browser, server }) => {
     const session = await createTestPage(browser, server.baseUrl, { storage: noStatsStorage });
     try {
         await session.goto('/board/view?id=test&no=1001');
@@ -1871,7 +1961,7 @@ test('article adsbygoogle wrapper is removed without a residual gap', 'functiona
     } finally { await session.close(); }
 });
 
-test('페이지 이동과 뒤로가기 후 주요 기능이 복원된다', 'functional', async ({ browser, server }) => {
+mobileTest('페이지 이동과 뒤로가기 후 주요 기능이 복원된다', 'functional', async ({ browser, server }) => {
     const session = await createTestPage(browser, server.baseUrl, { storage: noStatsStorage });
     try {
         await session.goto('/board/lists?id=test');
@@ -1914,7 +2004,7 @@ test('대량 댓글과 장문 DOM의 비교 가능한 성능 지표를 기록한
     const session = await createTestPage(browser, server.baseUrl, { storage: noStatsStorage });
     try {
         await session.goto('/board/view?id=test&no=1001');
-        await session.page.evaluate(() => window.__dcufDiagnostics.reset());
+        await session.page.evaluate(() => window.__dcufDiagnostics?.reset?.());
         const before = await getMetrics(session.page);
         const commentsBefore = await session.page.locator('#comment_wrap_1 .cmt_list > li').count();
         const startedAt = Date.now();
@@ -2004,13 +2094,15 @@ test('대량 댓글과 장문 DOM의 비교 가능한 성능 지표를 기록한
         assert.equal(report.activeTimeoutsAfter <= report.activeTimeoutsBefore, true, JSON.stringify({ before: report.activeTimeoutsBefore, after: report.activeTimeoutsAfter }));
         assert.equal(report.activeIntervalsAfter <= report.activeIntervalsBefore, true, JSON.stringify({ before: report.activeIntervalsBefore, after: report.activeIntervalsAfter }));
         assert.equal(report.activeAnimationFramesAfter, 0);
-        assert.equal((after.dcuf.counters['filter.fullRefilter.runs'] || 0), 0);
-        assert.equal((after.dcuf.counters['filter.syncPass.comments.runs'] || 0) <= 10, true, JSON.stringify(report.filterPassSummary));
+        if (after.dcuf) {
+            assert.equal((after.dcuf.counters['filter.fullRefilter.runs'] || 0), 0);
+            assert.equal((after.dcuf.counters['filter.syncPass.comments.runs'] || 0) <= 10, true, JSON.stringify(report.filterPassSummary));
+        }
         assert.equal(report.filterPassSummary.processedTargets <= 3500, true, JSON.stringify(report.filterPassSummary));
     } finally { await session.close(); }
 });
 
-test('UID API 지연과 실패를 큐·캐시 상태와 함께 재현한다', 'functional', async ({ browser, server }) => {
+mobileTest('UID API 지연과 실패를 큐·캐시 상태와 함께 재현한다', 'functional', async ({ browser, server }) => {
     const session = await createTestPage(browser, server.baseUrl, { storage: noStatsStorage });
     try {
         await session.goto('/board/view?id=test&no=1001');
@@ -2056,7 +2148,7 @@ test('UID API 지연과 실패를 큐·캐시 상태와 함께 재현한다', 'f
     } finally { await session.close(); }
 });
 
-test('UID API 비차단 응답이 개인차단 댓글 셸을 다시 노출하지 않는다', 'functional', async ({ browser, server }) => {
+mobileTest('UID API 비차단 응답이 개인차단 댓글 셸을 다시 노출하지 않는다', 'functional', async ({ browser, server }) => {
     server.state.apiMode = 'delay';
     server.state.apiDelayMs = 1800;
     const session = await createTestPage(browser, server.baseUrl, { storage: noStatsStorage });
@@ -2151,7 +2243,7 @@ test('UID API 비차단 응답이 개인차단 댓글 셸을 다시 노출하지
     } finally { await session.close(); }
 });
 
-test('댓글 새 DOM 추가와 전체 교체는 로컬 차단 사용자를 페인트하지 않는다', 'functional', async ({ browser, server }) => {
+mobileTest('댓글 새 DOM 추가와 전체 교체는 로컬 차단 사용자를 페인트하지 않는다', 'functional', async ({ browser, server }) => {
     const cachedUids = ['safe-comment-2', 'cached-late-user'];
     const personalUids = ['safe-comment-3', 'personal-late-user'];
     const storage = {
@@ -2219,7 +2311,7 @@ test('댓글 새 DOM 추가와 전체 교체는 로컬 차단 사용자를 페�
     } finally { await session.close(); }
 });
 
-test('댓글 전체 재렌더 후 차단 상태와 단일 댓글 목록이 유지된다', 'functional', async ({ browser, server }) => {
+mobileTest('댓글 전체 재렌더 후 차단 상태와 단일 댓글 목록이 유지된다', 'functional', async ({ browser, server }) => {
     const storage = {
         ...noStatsStorage,
         [storageKeys.personalList]: { uids: [{ id: 'safe-comment-2', name: 'rerender target' }], nicknames: [], ips: [] }
@@ -2240,7 +2332,7 @@ test('댓글 전체 재렌더 후 차단 상태와 단일 댓글 목록이 유�
     } finally { await session.close(); }
 });
 
-test('목록 전체 교체는 정확히 한 목록 상태로 재구축된다', 'functional', async ({ browser, server }) => {
+mobileTest('목록 전체 교체는 정확히 한 목록 상태로 재구축된다', 'functional', async ({ browser, server }) => {
     const session = await createTestPage(browser, server.baseUrl, { storage: noStatsStorage });
     try {
         await session.goto('/mgallery/board/lists?id=test');
@@ -2264,7 +2356,7 @@ test('목록 전체 교체는 정확히 한 목록 상태로 재구축된다', '
     } finally { await session.close(); }
 });
 
-test('search drawer replacement keeps one global listener set and prunes detached forms', 'functional', async ({ browser, server }) => {
+mobileTest('search drawer replacement keeps one global listener set and prunes detached forms', 'functional', async ({ browser, server }) => {
     const session = await createTestPage(browser, server.baseUrl, { storage: noStatsStorage });
     try {
         await session.goto('/board/lists?id=test');
@@ -2384,6 +2476,7 @@ test('visibility recovery preserves blocked comments and settled runtime state',
     const session = await createTestPage(browser, server.baseUrl, { storage });
     try {
         await session.goto('/board/view?id=test&no=1001');
+        await session.page.waitForFunction(() => !window.__dcufRuntimeCoordinator?._mutationSubscribers?.has('ui-post-reveal-recovery'));
         const before = await getMetrics(session.page);
         const frames = await session.page.evaluate(async (uid) => {
             let visibilityState = 'visible';
@@ -2427,7 +2520,224 @@ test('visibility recovery preserves blocked comments and settled runtime state',
     } finally { await session.close(); }
 });
 
-test('unchanged dark-mode head mutations skip expensive theme normalization', 'functional', async ({ browser, server }) => {
+mobileTest('visibility recovery skips clean and shortcut-only resumes but refilters dirty state once', 'functional', async ({ browser, server }) => {
+    const session = await createTestPage(browser, server.baseUrl, { storage: noStatsStorage });
+    try {
+        await session.goto('/board/view?id=test&no=1001');
+        const phases = await session.page.evaluate(async ({ masterDisabledKey, shortcutKey }) => {
+            const filterModule = window.__dcufFilterModule;
+            let visibilityState = 'visible';
+            Object.defineProperty(document, 'visibilityState', {
+                configurable: true,
+                get: () => visibilityState
+            });
+            window.__dcufDiagnostics.enable();
+
+            const hide = async () => {
+                const previousCycleId = filterModule._visibilityCycleId;
+                visibilityState = 'hidden';
+                document.dispatchEvent(new Event('visibilitychange'));
+                while (filterModule._visibilityCycleId === previousCycleId) await Promise.resolve();
+                await Promise.resolve();
+            };
+            const show = async ({ duplicate = false, label = 'visibility-cycle' } = {}) => {
+                visibilityState = 'visible';
+                document.dispatchEvent(new Event('visibilitychange'));
+                if (duplicate) document.dispatchEvent(new Event('visibilitychange'));
+                const recovery = filterModule._visibilityRecoveryPromise;
+                if (recovery) {
+                    await Promise.race([
+                        recovery,
+                        new Promise((_, reject) => setTimeout(() => reject(new Error(`${label} recovery timed out`)), 3000))
+                    ]);
+                }
+                await Promise.resolve();
+            };
+            const snapshot = () => {
+                const diagnostics = window.__dcufDiagnostics.snapshot();
+                return {
+                    fullRefilters: diagnostics.counters['filter.fullRefilter.runs'] || 0,
+                    cleanSkips: diagnostics.counters['lifecycle.visibility.restore.skippedClean'] || 0,
+                    bfcacheSkips: diagnostics.counters['lifecycle.visibility.restore.skippedBfcache'] || 0,
+                    restoreRuns: diagnostics.counters['lifecycle.visibility.restore.runs'] || 0,
+                    lastReason: diagnostics.gauges['lifecycle.visibility.restore.lastReason'] || '',
+                    shortcutChanged: Boolean(diagnostics.gauges['lifecycle.visibility.restore.shortcutChanged'])
+                };
+            };
+            const runPhase = async (label, mutate, options) => {
+                window.__dcufDiagnostics.reset();
+                await hide();
+                if (mutate) await mutate();
+                await show({ ...options, label });
+                return snapshot();
+            };
+
+            const clean = await runPhase('clean', null, { duplicate: true });
+            const shortcutOnly = await runPhase(
+                'shortcut-only',
+                () => window.__dcufTestbedGM.set(shortcutKey, 'Alt+K'),
+                { duplicate: true }
+            );
+            const settings = await runPhase(
+                'settings',
+                () => window.__dcufTestbedGM.set(masterDisabledKey, true),
+                { duplicate: true }
+            );
+            const longSuspend = await runPhase('long-suspend', () => {
+                filterModule._hiddenAt -= filterModule.VISIBILITY_LONG_RESTORE_MS + 1;
+            }, { duplicate: true });
+            const surfaceReplacement = await runPhase('surface-replacement', () => {
+                const surface = filterModule.getVisibilityRecoverySurface();
+                surface.replaceWith(surface.cloneNode(true));
+            }, { duplicate: true });
+
+            return { clean, shortcutOnly, settings, longSuspend, surfaceReplacement };
+        }, {
+            masterDisabledKey: storageKeys.masterDisabled,
+            shortcutKey: storageKeys.shortcut
+        });
+
+        assert.deepEqual(phases.clean, {
+            fullRefilters: 0,
+            cleanSkips: 1,
+            bfcacheSkips: 0,
+            restoreRuns: 0,
+            lastReason: 'clean',
+            shortcutChanged: false
+        });
+        assert.deepEqual(phases.shortcutOnly, {
+            fullRefilters: 0,
+            cleanSkips: 1,
+            bfcacheSkips: 0,
+            restoreRuns: 0,
+            lastReason: 'clean',
+            shortcutChanged: true
+        });
+        assert.equal(phases.settings.fullRefilters, 1, JSON.stringify(phases.settings));
+        assert.equal(phases.settings.restoreRuns, 1, JSON.stringify(phases.settings));
+        assert.equal(phases.settings.lastReason.includes('settings'), true, JSON.stringify(phases.settings));
+        assert.equal(phases.longSuspend.fullRefilters, 1, JSON.stringify(phases.longSuspend));
+        assert.equal(phases.longSuspend.restoreRuns, 1, JSON.stringify(phases.longSuspend));
+        assert.equal(phases.longSuspend.lastReason.includes('long-suspend'), true, JSON.stringify(phases.longSuspend));
+        assert.equal(phases.surfaceReplacement.fullRefilters, 1, JSON.stringify(phases.surfaceReplacement));
+        assert.equal(phases.surfaceReplacement.restoreRuns, 1, JSON.stringify(phases.surfaceReplacement));
+        assert.equal(phases.surfaceReplacement.lastReason.includes('surface'), true, JSON.stringify(phases.surfaceReplacement));
+        assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
+    } finally { await session.close(); }
+});
+
+test('IP datasets stay unallocated at boot and each lazy cache decodes once with stable content', 'functional', async ({ browser, server }) => {
+    const session = await createTestPage(browser, server.baseUrl, { storage: noStatsStorage });
+    try {
+        await session.goto('/board/lists?id=test');
+        const contract = await session.page.evaluate(() => {
+            const filterModule = window.__dcufFilterModule;
+            const checksum = (values) => {
+                let hash = 2166136261;
+                for (const character of values.join(' ')) {
+                    hash ^= character.charCodeAt(0);
+                    hash = Math.imul(hash, 16777619) >>> 0;
+                }
+                return hash.toString(16).padStart(8, '0');
+            };
+            const before = {
+                telecomCache: filterModule._telecomPrefixSet,
+                strictCache: filterModule._proxyStrictPrefixSet,
+                aggressiveExtraCache: filterModule._proxyAggressiveExtraPrefixSet,
+                aggressiveCache: filterModule._proxyAggressivePrefixSet,
+                krCache: filterModule._krPrefixSet,
+                telecomSourceType: typeof filterModule.TELECOM,
+                strictSourceType: typeof filterModule.PROXY_STRICT_PREFIXES,
+                aggressiveSourceType: typeof filterModule.PROXY_AGGRESSIVE_EXTRA_PREFIXES,
+                krSourceType: typeof filterModule.KR_IP_RANGES
+            };
+
+            window.__dcufDiagnostics?.enable?.();
+            window.__dcufDiagnostics?.reset?.();
+            const strict = filterModule.getProxyStrictPrefixSet();
+            const strictAgain = filterModule.getProxyStrictPrefixSet();
+            const aggressive = filterModule.getProxyPrefixSet(filterModule.PROXY_MODE.AGGRESSIVE);
+            const aggressiveAgain = filterModule.getProxyPrefixSet(filterModule.PROXY_MODE.AGGRESSIVE);
+            const aggressiveExtra = filterModule.getProxyAggressiveExtraPrefixSet();
+            const telecom = filterModule.getTelecomPrefixSet();
+            const telecomAgain = filterModule.getTelecomPrefixSet();
+            const kr = filterModule.getKrPrefixSet();
+            const krAgain = filterModule.getKrPrefixSet();
+            const diagnostics = window.__dcufDiagnostics?.snapshot?.() || null;
+
+            return {
+                before,
+                identity: {
+                    strict: strict === strictAgain,
+                    aggressive: aggressive === aggressiveAgain,
+                    telecom: telecom === telecomAgain,
+                    kr: kr === krAgain
+                },
+                sizes: {
+                    telecom: telecom.size,
+                    strict: strict.size,
+                    aggressiveExtra: aggressiveExtra.size,
+                    aggressive: aggressive.size,
+                    kr: kr.size
+                },
+                checksums: {
+                    telecom: checksum(Array.from(telecom)),
+                    strict: checksum(Array.from(strict)),
+                    aggressiveExtra: checksum(Array.from(aggressiveExtra)),
+                    kr: checksum(Array.from(kr))
+                },
+                representative: {
+                    telecomHit: telecom.has('1.96'),
+                    strictHit: strict.has('1.176'),
+                    aggressiveOnlyHit: !strict.has('1.209') && aggressive.has('1.209'),
+                    domesticHit: kr.has('1.11'),
+                    foreignMiss: !kr.has('8.8'),
+                    foreignDecision: filterModule.isForeignIpPrefix('8.8')
+                },
+                decodes: {
+                    telecom: diagnostics ? diagnostics.counters['filter.ipData.telecom.decodes'] || 0 : null,
+                    strict: diagnostics ? diagnostics.counters['filter.ipData.proxyStrict.decodes'] || 0 : null,
+                    aggressive: diagnostics ? diagnostics.counters['filter.ipData.proxyAggressive.decodes'] || 0 : null,
+                    kr: diagnostics ? diagnostics.counters['filter.ipData.kr.decodes'] || 0 : null
+                }
+            };
+        });
+
+        assert.deepEqual(contract.before, {
+            telecomCache: null,
+            strictCache: null,
+            aggressiveExtraCache: null,
+            aggressiveCache: null,
+            krCache: null,
+            telecomSourceType: 'function',
+            strictSourceType: 'string',
+            aggressiveSourceType: 'string',
+            krSourceType: 'function'
+        });
+        assert.deepEqual(contract.identity, { strict: true, aggressive: true, telecom: true, kr: true });
+        assert.deepEqual(contract.sizes, { telecom: 204, strict: 1163, aggressiveExtra: 202, aggressive: 1365, kr: 2084 });
+        assert.deepEqual(contract.checksums, {
+            telecom: 'ff610dad',
+            strict: '9fdb204e',
+            aggressiveExtra: 'ec798217',
+            kr: '3a253dfb'
+        });
+        assert.deepEqual(contract.representative, {
+            telecomHit: true,
+            strictHit: true,
+            aggressiveOnlyHit: true,
+            domesticHit: true,
+            foreignMiss: true,
+            foreignDecision: true
+        });
+        assert.deepEqual(contract.decodes, isPcUserscript
+            ? { telecom: null, strict: null, aggressive: null, kr: null }
+            : { telecom: 1, strict: 1, aggressive: 1, kr: 1 });
+        assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
+    } finally { await session.close(); }
+});
+
+mobileTest('unchanged dark-mode head mutations skip expensive theme normalization', 'functional', async ({ browser, server }) => {
     const session = await createTestPage(browser, server.baseUrl, { storage: noStatsStorage });
     try {
         await session.goto('/board/view?id=test&no=1001');
@@ -2459,7 +2769,7 @@ test('unchanged dark-mode head mutations skip expensive theme normalization', 'f
     } finally { await session.close(); }
 });
 
-test('negative UID failure cache stays bounded and prunes expired entries', 'functional', async ({ browser, server }) => {
+mobileTest('negative UID failure cache stays bounded and prunes expired entries', 'functional', async ({ browser, server }) => {
     const session = await createTestPage(browser, server.baseUrl, { storage: noStatsStorage });
     try {
         await session.goto('/board/view?id=test&no=1001');
@@ -2495,7 +2805,7 @@ test('negative UID failure cache stays bounded and prunes expired entries', 'fun
     } finally { await session.close(); }
 });
 
-test('글쓰기: 메이저·마이너 원본 폼 계약과 모바일 변환이 초기화된다', 'write', async ({ browser, server }) => {
+mobileTest('글쓰기: 메이저·마이너 원본 폼 계약과 모바일 변환이 초기화된다', 'write', async ({ browser, server }) => {
     for (const variant of ['major', 'minor']) {
         const pathname = variant === 'minor' ? '/mgallery/board/write/?id=test' : '/board/write/?id=test';
         const session = await createTestPage(browser, server.baseUrl, {
@@ -2560,7 +2870,7 @@ test('글쓰기: 메이저·마이너 원본 폼 계약과 모바일 변환이 �
     }
 });
 
-test('write cancel confirmation remains visible and interactive', 'write', async ({ browser, server }) => {
+mobileTest('write cancel confirmation remains visible and interactive', 'write', async ({ browser, server }) => {
     const scenarios = [
         { name: 'major-desktop', pathname: '/board/write/?id=test', viewport: { width: 1280, height: 900 } },
         { name: 'minor-desktop', pathname: '/mgallery/board/write/?id=test', viewport: { width: 1280, height: 900 } },
@@ -2584,7 +2894,7 @@ test('write cancel confirmation remains visible and interactive', 'write', async
         });
         try {
             await session.goto(scenario.pathname);
-            if (scenario.dark) await session.page.evaluate(() => document.body.classList.add('dc-filter-dark-mode'));
+            if (scenario.dark) await session.page.evaluate(() => window.__dcufFixture.toggleDark(true));
             const cancel = session.page.locator('.fixture-write-actions > .btn_grey.cancle');
             await cancel.scrollIntoViewIfNeeded();
             assert.equal(await session.page.locator('body > #leave_confirm_box.dcuf-write-leave-confirm').count(), 1, `${scenario.name}: popup must keep its original node in the body portal`);
@@ -2648,7 +2958,7 @@ test('write cancel confirmation remains visible and interactive', 'write', async
     }
 });
 
-test('글쓰기: 입력·말머리·에디터 재렌더·HTML 전환에도 작성값이 보존된다', 'write', async ({ browser, server }) => {
+mobileTest('글쓰기: 입력·말머리·에디터 재렌더·HTML 전환에도 작성값이 보존된다', 'write', async ({ browser, server }) => {
     const session = await createTestPage(browser, server.baseUrl, {
         storage: noStatsStorage,
         viewport: { width: 430, height: 900 }
@@ -3036,7 +3346,7 @@ test('글쓰기: 중복 등록은 외부 이동 없이 로컬 mock에 한 번만
     } finally { await session.close(); }
 });
 
-test('글쓰기: 네이티브 모바일 기준 fixture는 가로 넘침 없이 핵심 터치 UI를 제공한다', 'write', async ({ browser, server }) => {
+mobileTest('글쓰기: 네이티브 모바일 기준 fixture는 가로 넘침 없이 핵심 터치 UI를 제공한다', 'write', async ({ browser, server }) => {
     const native = await createRawPage(browser, server.baseUrl, { viewport: { width: 390, height: 844 } });
     try {
         await native.goto('/__testbed/native-write');
@@ -3120,6 +3430,13 @@ test('글쓰기: 네이티브 모바일 기준 fixture는 가로 넘침 없이 �
                         const headtextList = subjectPanel?.querySelector('.subject_list');
                         const headtextRects = Array.from(headtextList?.querySelectorAll(':scope > li') || [])
                             .map((item) => item.getBoundingClientRect());
+                        const surfaceProbe = document.createElement('span');
+                        surfaceProbe.style.cssText = 'position:fixed;visibility:hidden;background:var(--dcuf-theme-surface)';
+                        document.body.appendChild(surfaceProbe);
+                        const expectedSubjectBackground = getComputedStyle(surfaceProbe).backgroundColor;
+                        surfaceProbe.style.background = 'var(--dcuf-theme-surface-input)';
+                        const expectedInputBackground = getComputedStyle(surfaceProbe).backgroundColor;
+                        surfaceProbe.remove();
                         return {
                             actionRadius: parseFloat(actions.borderRadius) || 0,
                             cancelBackground: cancel.backgroundColor,
@@ -3129,6 +3446,8 @@ test('글쓰기: 네이티브 모바일 기준 fixture는 가로 넘침 없이 �
                             htmlBeforeContent: getComputedStyle(htmlGroup, '::before').content,
                             htmlContained: htmlRect.top >= toolbarRect.top - 1 && htmlRect.bottom <= toolbarRect.bottom + 1,
                             subjectBackground: subjectPanel ? getComputedStyle(subjectPanel).backgroundColor : null,
+                            expectedSubjectBackground,
+                            expectedInputBackground,
                             subjectRadius: subjectPanel ? parseFloat(getComputedStyle(subjectPanel).borderRadius) || 0 : null,
                             headtextLabelInset: panelRect && labelRect ? {
                                 top: Math.round(labelRect.top - panelRect.top),
@@ -3173,7 +3492,7 @@ test('글쓰기: 네이티브 모바일 기준 fixture는 가로 넘침 없이 �
             assert.equal(['none', 'normal', '""'].includes(report.visual.htmlBeforeContent), true);
             assert.equal(report.visual.htmlContained, true);
             if (variant === 'minor') {
-                assert.equal(report.visual.subjectBackground, 'rgb(255, 255, 255)');
+                assert.equal(report.visual.subjectBackground, report.visual.expectedSubjectBackground);
                 assert.equal(report.visual.subjectRadius >= 12, true);
                 assert.equal(report.visual.headtextLabelInset.top >= 5, true);
                 assert.equal(report.visual.headtextLabelInset.left >= 5, true);
@@ -3183,7 +3502,7 @@ test('글쓰기: 네이티브 모바일 기준 fixture는 가로 넘침 없이 �
                 assert.equal(report.visual.headtextListOverflow, 'auto');
                 assert.equal(report.visual.headtextScrollbarWidth, 'none');
                 assert.equal(report.visual.headtextScrollable, true);
-                assert.equal(report.visual.captchaBackground, 'rgb(255, 255, 255)');
+                assert.equal(report.visual.captchaBackground, report.visual.expectedInputBackground);
             }
             assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
         } finally { await session.close(); }
@@ -3451,6 +3770,1166 @@ test('글쓰기: 네이티브 모바일 기준 fixture는 가로 넘침 없이 �
         assert.equal(Math.abs(colorGapAfterScroll - colorGap) <= 1, true, 'absolute dropdowns must move with their toolbar anchor without jumping');
         assertNoRuntimeErrors(await getMetrics(desktopSiteMobile.page), desktopSiteMobile.consoleErrors);
     } finally { await desktopSiteMobile.close(); }
+});
+
+const collectPaletteSurfaceContract = (page, entries) => page.evaluate((items) => {
+    const probes = new Map();
+    const resolveToken = (token) => {
+        if (probes.has(token)) return probes.get(token);
+        const probe = document.createElement('span');
+        probe.style.cssText = `position:fixed;left:-9999px;background-color:var(${token})`;
+        document.documentElement.appendChild(probe);
+        const value = getComputedStyle(probe).backgroundColor;
+        probe.remove();
+        probes.set(token, value);
+        return value;
+    };
+    return items.map(({ selector, token }) => {
+        const element = document.querySelector(selector);
+        return {
+            selector,
+            token,
+            expected: resolveToken(token),
+            actual: element ? getComputedStyle(element).backgroundColor : null
+        };
+    });
+}, entries);
+
+const assertPaletteSurfaces = (contract, label) => {
+    contract.forEach(({ selector, token, expected, actual }) => {
+        assert.notEqual(actual, null, `${label}: missing ${selector}`);
+        assert.equal(actual, expected, `${label}: ${selector} must use ${token}; actual=${actual} expected=${expected}`);
+    });
+};
+
+mobileTest('modify password surface uses the mobile card UI and removes trailing host chrome', 'write', async ({ browser, server }) => {
+    const session = await createTestPage(browser, server.baseUrl, {
+        storage: { ...noStatsStorage, [storageKeys.palette]: 'orange' },
+        viewport: { width: 390, height: 844 }
+    });
+    try {
+        await session.goto('/board/modify/?id=test&no=1001');
+        const contract = await session.page.evaluate(() => {
+            const form = document.querySelector('form[name="password_confirm"]');
+            const card = document.querySelector('.no_memberwrap');
+            const input = document.querySelector('#password');
+            const confirm = document.querySelector('.btn_ok');
+            const rect = card.getBoundingClientRect();
+            return {
+                pageContext: { ...window.__dcufPageContext },
+                surface: document.documentElement.getAttribute('data-dcuf-modify-surface'),
+                bodyClass: document.body.className,
+                formClass: form.className,
+                formAction: form.getAttribute('action'),
+                hiddenNo: form.querySelector('input[name="no"]')?.value,
+                inputAutocomplete: input.autocomplete,
+                inputAriaLabel: input.getAttribute('aria-label'),
+                cardWidth: rect.width,
+                viewportWidth: innerWidth,
+                cardRadius: getComputedStyle(card).borderRadius,
+                confirmBackground: getComputedStyle(confirm).backgroundColor,
+                footerDisplay: getComputedStyle(document.querySelector('footer.dcfoot')).display,
+                dataInfoDisplay: getComputedStyle(document.querySelector('#data_info')).display,
+                modifyStyleCount: document.querySelectorAll('#dcuf-mobile-modify-theme').length,
+                writeStyleCount: document.querySelectorAll('#dcuf-mobile-write-theme').length,
+                modifySubscribers: window.__dcufRuntimeCoordinator?._mutationSubscribers?.has('ui-modify-surface') || false
+            };
+        });
+        assert.deepEqual({
+            type: contract.pageContext.type,
+            isModify: contract.pageContext.isModify,
+            isWrite: contract.pageContext.isWrite,
+            isWriteSurface: contract.pageContext.isWriteSurface,
+            isTargetPage: contract.pageContext.isTargetPage
+        }, { type: 'modify', isModify: true, isWrite: false, isWriteSurface: true, isTargetPage: true });
+        assert.equal(contract.surface, 'password');
+        assert.equal(contract.bodyClass.includes('is-modify-password-page'), true, contract.bodyClass);
+        assert.equal(contract.formClass.includes('dcuf-modify-password-form'), true, contract.formClass);
+        assert.equal(contract.formAction, '/__testbed/modify_password_submit');
+        assert.equal(contract.hiddenNo, '1001');
+        assert.equal(contract.inputAutocomplete, 'current-password');
+        assert.equal(contract.inputAriaLabel, '비밀번호');
+        assert.equal(contract.cardWidth <= contract.viewportWidth - 20, true, JSON.stringify(contract));
+        assert.equal(contract.cardRadius, '20px');
+        assert.equal(contract.confirmBackground, 'rgb(154, 52, 18)');
+        assert.equal(contract.footerDisplay, 'none');
+        assert.equal(contract.dataInfoDisplay, 'none');
+        assert.equal(contract.modifyStyleCount, 1);
+        assert.equal(contract.writeStyleCount, 1);
+        assert.equal(contract.modifySubscribers, true);
+        assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
+    } finally { await session.close(); }
+});
+
+mobileTest('modify editor surface reuses the write transformation without changing the route', 'write', async ({ browser, server }) => {
+    const session = await createTestPage(browser, server.baseUrl, {
+        storage: { ...noStatsStorage, [storageKeys.palette]: 'orange' },
+        viewport: { width: 390, height: 844 }
+    });
+    try {
+        await session.goto('/board/modify/?id=test&no=1001&stage=editor');
+        const contract = await session.page.evaluate(() => ({
+            pathname: location.pathname,
+            pageType: window.__dcufPageContext?.type,
+            surface: document.documentElement.getAttribute('data-dcuf-modify-surface'),
+            bodyClass: document.body.className,
+            legacyWriteFormCount: document.querySelectorAll('form#write').length,
+            formName: document.querySelector('form[name="modify"]')?.getAttribute('name') || '',
+            formAction: document.querySelector('form[name="modify"]')?.getAttribute('action') || '',
+            formIdAttribute: document.querySelector('form[name="modify"]')?.getAttribute('id'),
+            formClass: document.querySelector('form[name="modify"]')?.className || '',
+            formTransformed: document.querySelector('form[name="modify"]')?.dataset.dcufWriteTransformed || '',
+            subjectRow: document.querySelector('#subject')?.closest('tr')?.classList.contains('dcuf-write-subject-row') || false,
+            submitBackground: getComputedStyle(document.querySelector('#write-submit')).backgroundColor,
+            writeStyleCount: document.querySelectorAll('#dcuf-mobile-write-theme').length,
+            modifyStyleCount: document.querySelectorAll('#dcuf-mobile-modify-theme').length,
+            modifySubscribers: window.__dcufRuntimeCoordinator?._mutationSubscribers?.has('ui-modify-surface') || false
+        }));
+        assert.deepEqual(contract, {
+            pathname: '/board/modify/',
+            pageType: 'modify',
+            surface: 'editor',
+            bodyClass: contract.bodyClass,
+            legacyWriteFormCount: 0,
+            formName: 'modify',
+            formAction: '/board/forms/modify_submit',
+            formIdAttribute: null,
+            formClass: contract.formClass,
+            formTransformed: '1',
+            subjectRow: true,
+            submitBackground: 'rgb(154, 52, 18)',
+            writeStyleCount: 1,
+            modifyStyleCount: 1,
+            modifySubscribers: true
+        });
+        assert.equal(contract.bodyClass.includes('is-modify-editor-page'), true, contract.bodyClass);
+        assert.equal(contract.bodyClass.includes('is-write-page'), true, contract.bodyClass);
+        assert.equal(contract.bodyClass.includes('is-modify-password-page'), false, contract.bodyClass);
+        assert.equal(contract.formClass.includes('dcuf-write-form'), true, contract.formClass);
+        assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
+    } finally { await session.close(); }
+});
+
+mobileTest('UI palette presets normalize stored values without blocking boot', 'functional', async ({ browser, server }) => {
+    const strongColors = {
+        blue: { light: '#245bda', dark: '#3868df' },
+        purple: { light: '#6d28d9', dark: '#7c3aed' },
+        green: { light: '#047857', dark: '#047857' },
+        orange: { light: '#9a3412', dark: '#c2410c' },
+        mono: { light: '#374151', dark: '#475569' }
+    };
+    const hexToRgb = (hex) => {
+        const value = hex.replace('#', '');
+        return `rgb(${Number.parseInt(value.slice(0, 2), 16)}, ${Number.parseInt(value.slice(2, 4), 16)}, ${Number.parseInt(value.slice(4, 6), 16)})`;
+    };
+    for (const [stored, expected] of [
+        [undefined, 'blue'],
+        ['blue', 'blue'],
+        ['purple', 'purple'],
+        ['green', 'green'],
+        ['orange', 'orange'],
+        ['mono', 'mono'],
+        ['unknown-palette', 'blue']
+    ]) {
+        const storage = { ...noStatsStorage };
+        if (stored !== undefined) storage[storageKeys.palette] = stored;
+        const session = await createTestPage(browser, server.baseUrl, { storage });
+        try {
+            await session.goto('/board/lists?id=test');
+            await session.page.waitForTimeout(80);
+            assert.equal(await session.page.getAttribute('html', 'data-dcuf-palette'), expected, `stored palette: ${String(stored)}`);
+            assert.equal(await session.page.locator('style#dcuf-mobile-palette-style').count(), 1);
+            assert.equal(await session.page.locator('html.script-ui-ready').count(), 1);
+            const lightColors = await session.page.evaluate(() => {
+                const selectors = [
+                    '.list_array_option .array_tab .on',
+                    '.list_array_option .btn_write',
+                    '.custom-bottom-controls .bottom_paging_box > em',
+                    '.custom-bottom-controls .dcuf-search-card .bnt_search'
+                ];
+                const rootStyle = getComputedStyle(document.documentElement);
+                return {
+                    strong: rootStyle.getPropertyValue('--dcuf-theme-accent-strong').trim().toLowerCase(),
+                    controls: selectors.map((selector) => {
+                        const element = document.querySelector(selector);
+                        return { selector, color: element ? getComputedStyle(element).backgroundColor : null };
+                    })
+                };
+            });
+            assert.equal(lightColors.strong, strongColors[expected].light, JSON.stringify(lightColors));
+            lightColors.controls.forEach(({ selector, color }) => {
+                assert.equal(color, hexToRgb(strongColors[expected].light), `${expected} light ${selector}: ${color}`);
+            });
+            assertPaletteSurfaces(await collectPaletteSurfaceContract(session.page, [
+                { selector: '.custom-mobile-list', token: '--dcuf-theme-canvas' },
+                { selector: '.list_array_option', token: '--dcuf-theme-surface-raised' },
+                { selector: '.dcuf-bottom-action-card', token: '--dcuf-theme-surface-raised' },
+                { selector: '.dcuf-pagination-card', token: '--dcuf-theme-card-top' },
+                { selector: '.dcuf-search-card', token: '--dcuf-theme-card-top' }
+            ]), `${expected} light list surfaces`);
+            const listCardContract = await session.page.locator('.custom-post-item').first().evaluate((element) => ({
+                background: getComputedStyle(element).backgroundImage,
+                shadow: getComputedStyle(element).boxShadow,
+                titleHighlight: getComputedStyle(element.querySelector('.post-title')).backgroundImage
+            }));
+            assert.equal(listCardContract.background.includes('linear-gradient'), true, JSON.stringify(listCardContract));
+            assert.notEqual(listCardContract.shadow, 'none', JSON.stringify(listCardContract));
+            assert.equal(listCardContract.titleHighlight, 'none', JSON.stringify(listCardContract));
+
+            await session.page.evaluate(() => window.__dcufFixture.toggleDark(true));
+            await session.page.waitForTimeout(40);
+            const darkColors = await session.page.evaluate(() => {
+                const selectors = [
+                    '.list_array_option .array_tab .on',
+                    '.list_array_option .btn_write',
+                    '.custom-bottom-controls .bottom_paging_box > em',
+                    '.custom-bottom-controls .dcuf-search-card .bnt_search'
+                ];
+                const rootStyle = getComputedStyle(document.documentElement);
+                return {
+                    strong: rootStyle.getPropertyValue('--dcuf-theme-accent-strong').trim().toLowerCase(),
+                    controls: selectors.map((selector) => {
+                        const element = document.querySelector(selector);
+                        return { selector, color: element ? getComputedStyle(element).backgroundColor : null };
+                    })
+                };
+            });
+            assert.equal(darkColors.strong, strongColors[expected].dark, JSON.stringify(darkColors));
+            darkColors.controls.forEach(({ selector, color }) => {
+                assert.equal(color, hexToRgb(strongColors[expected].dark), `${expected} dark ${selector}: ${color}`);
+            });
+            assertPaletteSurfaces(await collectPaletteSurfaceContract(session.page, [
+                { selector: '.custom-mobile-list', token: '--dcuf-theme-canvas' },
+                { selector: '.list_array_option', token: '--dcuf-theme-surface-raised' },
+                { selector: '.dcuf-pagination-card', token: '--dcuf-theme-card-top' },
+                { selector: '.dcuf-search-card', token: '--dcuf-theme-card-top' }
+            ]), `${expected} dark list surfaces`);
+            assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
+        } finally { await session.close(); }
+    }
+
+    const pending = await createTestPage(browser, server.baseUrl, {
+        storage: { ...noStatsStorage, [storageKeys.palette]: 'purple' },
+        gmBehavior: { pendingKeys: [storageKeys.palette] }
+    });
+    try {
+        await pending.goto('/board/lists?id=test');
+        assert.equal(await pending.page.locator('html.script-ui-ready').count(), 1, 'a pending palette read must not block reveal');
+        assert.equal(await pending.page.getAttribute('html', 'data-dcuf-palette'), 'blue');
+        await pending.page.evaluate((key) => window.__dcufTestbedGM.release(key), storageKeys.palette);
+        await pending.page.waitForFunction(() => document.documentElement.getAttribute('data-dcuf-palette') === 'purple');
+        assertNoRuntimeErrors(await getMetrics(pending.page), pending.consoleErrors);
+    } finally { await pending.close(); }
+
+    const rejected = await createTestPage(browser, server.baseUrl, {
+        storage: { ...noStatsStorage, [storageKeys.palette]: 'purple' },
+        gmBehavior: { rejectOnceKeys: [storageKeys.palette] }
+    });
+    try {
+        await rejected.goto('/board/lists?id=test');
+        assert.equal(await rejected.page.locator('html.script-ui-ready').count(), 1);
+        assert.equal(await rejected.page.getAttribute('html', 'data-dcuf-palette'), 'blue');
+        assertNoRuntimeErrors(await getMetrics(rejected.page), rejected.consoleErrors);
+    } finally { await rejected.close(); }
+});
+
+mobileTest('UI palette surfaces cover list canvas, comments, image comments, and write cards', 'functional', async ({ browser, server }) => {
+    const session = await createTestPage(browser, server.baseUrl, {
+        storage: { ...noStatsStorage, [storageKeys.palette]: 'orange' },
+        viewport: { width: 390, height: 844 }
+    });
+    try {
+        await session.goto('/board/lists?id=test');
+        assertPaletteSurfaces(await collectPaletteSurfaceContract(session.page, [
+            { selector: '.custom-mobile-list', token: '--dcuf-theme-canvas' },
+            { selector: '.list_array_option', token: '--dcuf-theme-surface-raised' },
+            { selector: '.dcuf-bottom-action-card', token: '--dcuf-theme-surface-raised' },
+            { selector: '.dcuf-pagination-card', token: '--dcuf-theme-card-top' },
+            { selector: '.dcuf-search-card', token: '--dcuf-theme-card-top' }
+        ]), 'orange list');
+        const listHierarchy = await session.page.evaluate(() => {
+            const surface = (selector) => {
+                const style = getComputedStyle(document.querySelector(selector));
+                return { color: style.backgroundColor, image: style.backgroundImage, shadow: style.boxShadow };
+            };
+            return {
+                canvas: surface('.custom-mobile-list'),
+                normal: surface('.custom-post-item:not(.notice):not(.concept)'),
+                concept: surface('.custom-post-item.concept'),
+                notice: surface('.custom-post-item.notice'),
+                action: surface('.dcuf-bottom-action-card'),
+                pagination: surface('.dcuf-pagination-card'),
+                search: surface('.dcuf-search-card'),
+                titleBackground: getComputedStyle(document.querySelector('.custom-post-item .post-title')).backgroundImage
+            };
+        });
+        assert.notEqual(listHierarchy.canvas.color, listHierarchy.normal.color, JSON.stringify(listHierarchy));
+        assert.notEqual(listHierarchy.normal.color, listHierarchy.concept.color, JSON.stringify(listHierarchy));
+        assert.notEqual(listHierarchy.normal.color, listHierarchy.notice.color, JSON.stringify(listHierarchy));
+        assert.notEqual(listHierarchy.concept.color, listHierarchy.notice.color, JSON.stringify(listHierarchy));
+        assert.notEqual(listHierarchy.action.color, listHierarchy.pagination.color, JSON.stringify(listHierarchy));
+        assert.equal(listHierarchy.pagination.color, listHierarchy.search.color, JSON.stringify(listHierarchy));
+        assert.notEqual(listHierarchy.normal.shadow, 'none', JSON.stringify(listHierarchy));
+        assert.equal(listHierarchy.titleBackground, 'none', JSON.stringify(listHierarchy));
+        await session.page.evaluate(() => window.__dcufFixture.toggleDark(true));
+        await session.page.waitForTimeout(40);
+        const darkListHierarchy = await session.page.evaluate(() => {
+            const normal = document.querySelector('.custom-post-item:not(.notice):not(.concept)');
+            const concept = document.querySelector('.custom-post-item.concept');
+            const notice = document.querySelector('.custom-post-item.notice');
+            return {
+                normal: getComputedStyle(normal).backgroundColor,
+                concept: getComputedStyle(concept).backgroundColor,
+                notice: getComputedStyle(notice).backgroundColor,
+                titleBackground: getComputedStyle(normal.querySelector('.post-title')).backgroundImage,
+                titleShadow: getComputedStyle(normal.querySelector('.post-title')).boxShadow
+            };
+        });
+        assert.notEqual(darkListHierarchy.normal, darkListHierarchy.concept, JSON.stringify(darkListHierarchy));
+        assert.notEqual(darkListHierarchy.normal, darkListHierarchy.notice, JSON.stringify(darkListHierarchy));
+        assert.equal(darkListHierarchy.titleBackground, 'none', JSON.stringify(darkListHierarchy));
+        assert.equal(darkListHierarchy.titleShadow, 'none', JSON.stringify(darkListHierarchy));
+        await session.page.evaluate(() => window.__dcufFixture.toggleDark(false));
+        await session.page.waitForTimeout(40);
+        const listInteractionContract = await session.page.evaluate(() => {
+            const author = document.querySelector('.custom-post-item .post-meta .author');
+            const writer = author?.querySelector('.gall_writer');
+            const authorRect = author?.getBoundingClientRect();
+            const writerRect = writer?.getBoundingClientRect();
+            const write = document.querySelector('.list_array_option .btn_write');
+            const pencil = write ? getComputedStyle(write, '::before') : null;
+            return {
+                authorWidth: authorRect?.width || 0,
+                writerWidth: writerRect?.width || 0,
+                tapHighlight: author ? getComputedStyle(author).webkitTapHighlightColor : '',
+                pencilContent: pencil?.content || '',
+                pencilColor: pencil?.color || ''
+            };
+        });
+        assert.equal(listInteractionContract.authorWidth <= listInteractionContract.writerWidth + 2, true, JSON.stringify(listInteractionContract));
+        assert.equal(['rgba(0, 0, 0, 0)', 'transparent'].includes(listInteractionContract.tapHighlight), true, JSON.stringify(listInteractionContract));
+        assert.notEqual(listInteractionContract.pencilContent, 'none');
+        assert.equal(listInteractionContract.pencilColor, 'rgb(255, 255, 255)');
+        const hostChromeContract = await session.page.evaluate(() => {
+            const color = (selector, property) => getComputedStyle(document.querySelector(selector))[property];
+            return {
+                gnb: color('.gnb_bar', 'backgroundColor'),
+                topSearch: color('.dchead .top_search', 'backgroundColor'),
+                topSearchButton: color('.dchead .top_search .bnt_search', 'backgroundColor'),
+                login: color('.dchead .btn_top_loginout', 'backgroundColor'),
+                galleryTitle: color('.page_head h2 a', 'color'),
+                gallerySearch: color('.page_head .btn_search', 'backgroundColor'),
+                recentTitle: color('.newvisit_history > .tit', 'color'),
+                recentAll: color('.newvisit_history > .bnt_newvisit_more', 'color')
+            };
+        });
+        assert.deepEqual(hostChromeContract, {
+            gnb: 'rgb(154, 52, 18)',
+            topSearch: 'rgb(154, 52, 18)',
+            topSearchButton: 'rgb(154, 52, 18)',
+            login: 'rgb(154, 52, 18)',
+            galleryTitle: 'rgb(194, 65, 12)',
+            gallerySearch: 'rgb(154, 52, 18)',
+            recentTitle: 'rgb(194, 65, 12)',
+            recentAll: 'rgb(194, 65, 12)'
+        });
+
+        await session.goto('/board/view?id=test&no=1001&comments=4');
+        await session.page.locator('#focus_cmt .comment_box .reply.show').waitFor({ state: 'attached' });
+        assertPaletteSurfaces(await collectPaletteSurfaceContract(session.page, [
+            { selector: '#focus_cmt .comment_box .cmt_list > li', token: '--dcuf-theme-card-top' },
+            { selector: '#focus_cmt .comment_box .reply_box', token: '--dcuf-theme-reply-surface' },
+            { selector: '#focus_cmt > .fixture-normal-comment-composer', token: '--dcuf-theme-surface' },
+            { selector: '#focus_cmt > .fixture-normal-comment-composer .cmt_txt_cont', token: '--dcuf-theme-surface-input' },
+            { selector: '.view_comment.image_comment .comment_wrap', token: '--dcuf-theme-canvas' },
+            { selector: '.view_comment.image_comment .comment_box.img_comment_box .cmt_list > li', token: '--dcuf-theme-card-top' },
+            { selector: '.view_comment.image_comment .cmt_write_box', token: '--dcuf-theme-surface' },
+            { selector: '.view_comment.image_comment .cmt_write_box .cmt_txt_cont', token: '--dcuf-theme-surface-input' }
+        ]), 'orange view');
+        assert.equal(
+            await session.page.locator('#focus_cmt').evaluate((element) => getComputedStyle(element).backgroundColor),
+            'rgba(0, 0, 0, 0)',
+            'orange view: #focus_cmt is a transparent structural container'
+        );
+        const commentButtons = await session.page.evaluate(() => Array.from(document.querySelectorAll([
+            '#focus_cmt > .fixture-normal-comment-composer .cmt_cont_bottm > .fr > button',
+            '.view_comment.image_comment .cmt_write_box .cmt_cont_bottm > .fr > button'
+        ].join(','))).map((button) => getComputedStyle(button).backgroundColor));
+        assert.deepEqual(commentButtons, ['rgb(154, 52, 18)', 'rgb(154, 52, 18)']);
+        const recommendationContract = await session.page.evaluate(() => {
+            const box = document.querySelector('.btn_recommend_box');
+            const inner = box.querySelector('.inner_box > .inner');
+            const bottom = box.querySelector('.recom_bottom_box');
+            const button = document.querySelector('.btn_recommend_box .btn_recom_up');
+            const number = document.querySelector('.btn_recommend_box .up_num');
+            const fixedNumber = document.querySelector('.btn_recommend_box .font_blue.smallnum');
+            const icon = document.querySelector('.btn_recommend_box .icon_recom_up');
+            return {
+                boxBackground: getComputedStyle(box).backgroundImage,
+                innerBackground: getComputedStyle(inner).backgroundImage,
+                innerShadow: getComputedStyle(inner).boxShadow,
+                bottomBackground: getComputedStyle(bottom).backgroundImage,
+                buttonBackground: getComputedStyle(button).backgroundImage,
+                numberColor: getComputedStyle(number).color,
+                fixedNumberColor: getComputedStyle(fixedNumber).color,
+                iconBackgroundImage: getComputedStyle(icon).backgroundImage,
+                starColor: getComputedStyle(icon, '::before').color,
+                labelContent: getComputedStyle(icon, '::after').content,
+                labelColor: getComputedStyle(icon, '::after').color
+            };
+        });
+        assert.equal(recommendationContract.boxBackground.includes('linear-gradient'), true, JSON.stringify(recommendationContract));
+        assert.equal(recommendationContract.innerBackground.includes('linear-gradient'), true, JSON.stringify(recommendationContract));
+        assert.notEqual(recommendationContract.innerShadow, 'none', JSON.stringify(recommendationContract));
+        assert.equal(recommendationContract.bottomBackground, 'none', JSON.stringify(recommendationContract));
+        assert.equal(recommendationContract.buttonBackground.includes('rgb(194, 65, 12)'), true, JSON.stringify(recommendationContract));
+        assert.equal(recommendationContract.buttonBackground.includes('rgb(154, 52, 18)'), true, JSON.stringify(recommendationContract));
+        assert.equal(recommendationContract.numberColor, 'rgb(194, 65, 12)', JSON.stringify(recommendationContract));
+        assert.equal(recommendationContract.fixedNumberColor, 'rgb(194, 65, 12)', JSON.stringify(recommendationContract));
+        assert.equal(recommendationContract.iconBackgroundImage, 'none', JSON.stringify(recommendationContract));
+        assert.equal(recommendationContract.starColor, 'rgb(255, 255, 255)', JSON.stringify(recommendationContract));
+        assert.equal(recommendationContract.labelContent, '"개념"', JSON.stringify(recommendationContract));
+        assert.equal(recommendationContract.labelColor, 'rgb(255, 255, 255)', JSON.stringify(recommendationContract));
+
+        await session.page.evaluate(() => window.__dcufFixture.toggleDark(true));
+        await session.page.waitForTimeout(40);
+        assertPaletteSurfaces(await collectPaletteSurfaceContract(session.page, [
+            { selector: '#focus_cmt .comment_box .reply_box', token: '--dcuf-theme-reply-surface' },
+            { selector: '#focus_cmt > .fixture-normal-comment-composer', token: '--dcuf-theme-surface' },
+            { selector: '.view_comment.image_comment .cmt_write_box', token: '--dcuf-theme-surface' }
+        ]), 'orange dark view');
+        assert.equal(
+            await session.page.locator('#focus_cmt').evaluate((element) => getComputedStyle(element).backgroundColor),
+            'rgba(0, 0, 0, 0)',
+            'orange dark view: #focus_cmt is a transparent structural container'
+        );
+
+        await session.goto('/mgallery/board/write/?id=test');
+        assertPaletteSurfaces(await collectPaletteSurfaceContract(session.page, [
+            { selector: 'form#write', token: '--dcuf-theme-canvas' },
+            { selector: 'form#write .write_subject', token: '--dcuf-theme-surface' },
+            { selector: 'form#write .note-toolbar', token: '--dcuf-theme-surface-muted' },
+            { selector: 'form#write .note-editable', token: '--dcuf-theme-surface-input' },
+            { selector: 'form#write .ai_easy_wrap', token: '--dcuf-theme-surface' },
+            { selector: 'form#write > .btn_box.write', token: '--dcuf-theme-surface' }
+        ]), 'orange write');
+        assert.equal(await session.page.locator('.ai_easy_box > .btn_aigo').evaluate((button) => getComputedStyle(button).backgroundColor), 'rgb(154, 52, 18)');
+        const toolbarBorderContract = await session.page.evaluate(() => {
+            const probe = document.createElement('span');
+            probe.style.cssText = 'position:fixed;visibility:hidden;border:1px solid var(--dcuf-theme-border-strong)';
+            document.body.appendChild(probe);
+            const expected = getComputedStyle(probe).borderTopColor;
+            probe.remove();
+            return Array.from(document.querySelectorAll([
+                '.note-toolbar [data-command="image"]',
+                '.note-toolbar [data-command="video"]',
+                '.note-toolbar [data-command="youtube"]',
+                '.note-toolbar [data-command="font"]',
+                '.note-toolbar [data-command="size"]'
+            ].join(','))).map((button) => ({
+                command: button.dataset.command,
+                expected,
+                actual: getComputedStyle(button).borderTopColor,
+                boxShadow: getComputedStyle(button).boxShadow
+            }));
+        });
+        assert.equal(toolbarBorderContract.length, 5, JSON.stringify(toolbarBorderContract));
+        toolbarBorderContract.forEach(({ command, expected, actual, boxShadow }) => {
+            assert.equal(actual, expected, `toolbar ${command} border must follow the palette`);
+            assert.equal(boxShadow.includes('25, 50, 92'), false, `toolbar ${command} must not retain the fixed blue shadow`);
+        });
+        await session.page.evaluate(() => window.__dcufFixture.toggleDark(true));
+        await session.page.waitForTimeout(40);
+        assertPaletteSurfaces(await collectPaletteSurfaceContract(session.page, [
+            { selector: 'form#write .write_subject', token: '--dcuf-theme-surface' },
+            { selector: 'form#write .note-toolbar', token: '--dcuf-theme-surface-muted' },
+            { selector: 'form#write > .btn_box.write', token: '--dcuf-theme-surface' }
+        ]), 'orange dark write');
+        assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
+    } finally { await session.close(); }
+});
+
+mobileTest('UI palette replaces live-shaped host blue and keeps raised list, view, and comment hierarchy', 'functional', async ({ browser, server }) => {
+    const session = await createTestPage(browser, server.baseUrl, {
+        storage: { ...noStatsStorage, [storageKeys.palette]: 'orange' },
+        viewport: { width: 1280, height: 900 }
+    });
+    try {
+        await session.goto('/mgallery/board/lists?id=test');
+        const listContract = await session.page.evaluate(() => {
+            const tokenColor = (token) => {
+                const probe = document.createElement('span');
+                probe.style.cssText = `position:fixed;left:-9999px;color:var(${token})`;
+                document.body.appendChild(probe);
+                const color = getComputedStyle(probe).color;
+                probe.remove();
+                return color;
+            };
+            const badge = document.querySelector('.pagehead_titicon.mgall.sp_img');
+            const next = document.querySelector('.gnb_bar .sp_img.icon_next');
+            const card = document.querySelector('.custom-mobile-list .custom-post-item');
+            const inactive = document.querySelector('.list_array_option .array_tab li:not(.on) > a');
+            return {
+                accent: tokenColor('--dcuf-theme-accent'),
+                foreground: tokenColor('--dcuf-theme-fg'),
+                login: getComputedStyle(document.querySelector('.btn_top_loginout')).backgroundColor,
+                badgeBackground: getComputedStyle(badge).backgroundImage,
+                badgeColor: getComputedStyle(badge).color,
+                badgeLabel: getComputedStyle(badge, '::before').content,
+                nextBackground: getComputedStyle(next).backgroundImage,
+                nextColor: getComputedStyle(next).borderTopColor,
+                issueBorder: getComputedStyle(document.querySelector('.issue_wrap')).borderTopColor,
+                inactiveColor: getComputedStyle(inactive).color,
+                cardBackground: getComputedStyle(card).backgroundImage,
+                cardShadow: getComputedStyle(card).boxShadow,
+                titleHighlight: getComputedStyle(card.querySelector('.post-title')).backgroundImage
+            };
+        });
+        assert.equal(listContract.login, 'rgb(154, 52, 18)', JSON.stringify(listContract));
+        assert.equal(listContract.badgeBackground, 'none', JSON.stringify(listContract));
+        assert.equal(listContract.badgeColor, listContract.accent, JSON.stringify(listContract));
+        assert.equal(listContract.badgeLabel, '"m"', JSON.stringify(listContract));
+        assert.equal(listContract.nextBackground, 'none', JSON.stringify(listContract));
+        assert.equal(listContract.nextColor, 'rgb(255, 255, 255)', JSON.stringify(listContract));
+        assert.equal(listContract.issueBorder, listContract.accent, JSON.stringify(listContract));
+        assert.equal(listContract.inactiveColor, listContract.foreground, JSON.stringify(listContract));
+        assert.equal(listContract.cardBackground.includes('linear-gradient'), true, JSON.stringify(listContract));
+        assert.notEqual(listContract.cardShadow, 'none', JSON.stringify(listContract));
+        assert.equal(listContract.titleHighlight, 'none', JSON.stringify(listContract));
+
+        await session.goto('/mini/board/lists?id=test');
+        const miniBadge = await session.page.evaluate(() => {
+            const badge = document.querySelector('.pagehead_titicon.ngall.sp_img');
+            const style = getComputedStyle(badge);
+            return {
+                label: getComputedStyle(badge, '::before').content,
+                background: style.backgroundImage,
+                position: style.backgroundPosition,
+                textIndent: style.textIndent,
+                width: style.width,
+                height: style.height,
+                color: style.color,
+                borderColor: style.borderColor,
+                accent: getComputedStyle(document.documentElement).getPropertyValue('--dcuf-theme-accent').trim()
+            };
+        });
+        assert.deepEqual(miniBadge, {
+            label: '"mi"',
+            background: 'none',
+            position: '0px 0px',
+            textIndent: '0px',
+            width: '26px',
+            height: '20px',
+            color: 'rgb(194, 65, 12)',
+            borderColor: 'rgb(194, 65, 12)',
+            accent: '#c2410c'
+        }, JSON.stringify(miniBadge));
+
+        await session.goto('/board/view?id=test&no=1001&comments=4');
+        await session.page.locator('.fixture-reply-comment-composer').waitFor({ state: 'attached' });
+        const viewContract = await session.page.evaluate(() => {
+            const tokenBackground = (token) => {
+                const probe = document.createElement('span');
+                probe.style.cssText = `position:fixed;left:-9999px;background-color:var(${token})`;
+                document.body.appendChild(probe);
+                const color = getComputedStyle(probe).backgroundColor;
+                probe.remove();
+                return color;
+            };
+            const title = document.querySelector('.view_content_wrap .gallview_head');
+            const article = document.querySelector('.view_content_wrap .writing_view_box');
+            const articleInner = article.querySelector(':scope > .write_div');
+            const articleOuter = article.closest('.gallview_contents');
+            const comment = document.querySelector('#focus_cmt .comment_box .cmt_list > li:not([data-dcuf-focus-group-parent])');
+            const reply = document.querySelector('#focus_cmt .comment_box .reply_box');
+            const commentList = document.querySelector('#focus_cmt .comment_box .cmt_list');
+            const groupedParent = document.createElement('li');
+            groupedParent.dataset.dcufFocusGroupParent = '1';
+            const groupedReply = document.createElement('li');
+            groupedReply.dataset.dcufFocusGroupReply = '1';
+            groupedReply.innerHTML = '<div class="reply show"><div class="reply_box"></div></div>';
+            commentList.append(groupedParent, groupedReply);
+            const normal = document.querySelector('.fixture-normal-comment-composer');
+            const replyComposer = document.querySelector('.fixture-reply-comment-composer');
+            const replyHost = replyComposer.closest('.reply_box');
+            const imageCard = document.querySelector('.view_comment.image_comment .cmt_list > li');
+            const imageComposer = document.querySelector('.fixture-image-comment-composer');
+            const rect = replyComposer.getBoundingClientRect();
+            const hostRect = replyHost.getBoundingClientRect();
+            const contract = {
+                inputSurface: tokenBackground('--dcuf-theme-surface-input'),
+                titleBackground: getComputedStyle(title).backgroundImage,
+                titleShadow: getComputedStyle(title).boxShadow,
+                articleBackground: getComputedStyle(article).backgroundImage,
+                articleShadow: getComputedStyle(article).boxShadow,
+                articleOuterBackground: articleOuter ? getComputedStyle(articleOuter).backgroundImage : 'none',
+                articleOuterShadow: articleOuter ? getComputedStyle(articleOuter).boxShadow : 'none',
+                articleInnerRadius: getComputedStyle(articleInner).borderRadius,
+                articleInnerShadow: getComputedStyle(articleInner).boxShadow,
+                commentBackground: getComputedStyle(comment).backgroundImage,
+                commentShadow: getComputedStyle(comment).boxShadow,
+                replyBackground: getComputedStyle(reply).backgroundImage,
+                replyShadow: getComputedStyle(reply).boxShadow,
+                replyIndent: parseFloat(getComputedStyle(reply).marginLeft) || 0,
+                groupedParentBottom: getComputedStyle(groupedParent, '::after').bottom,
+                groupedReplyMarginTop: parseFloat(getComputedStyle(groupedReply).marginTop) || 0,
+                normalBody: getComputedStyle(normal.querySelector('.cmt_txt_cont')).backgroundColor,
+                normalFooter: getComputedStyle(normal.querySelector('.cmt_cont_bottm')).backgroundColor,
+                replyBody: getComputedStyle(replyComposer.querySelector('.cmt_txt_cont')).backgroundColor,
+                replyFits: rect.left >= hostRect.left - 1 && rect.right <= hostRect.right + 1,
+                imageBackground: getComputedStyle(imageCard).backgroundImage,
+                imageBody: getComputedStyle(imageComposer.querySelector('.cmt_txt_cont')).backgroundColor
+            };
+            groupedParent.remove();
+            groupedReply.remove();
+            return contract;
+        });
+        assert.equal(viewContract.titleBackground.includes('linear-gradient'), true, JSON.stringify(viewContract));
+        assert.notEqual(viewContract.titleShadow, 'none', JSON.stringify(viewContract));
+        assert.equal(viewContract.articleBackground, 'none', JSON.stringify(viewContract));
+        assert.equal(viewContract.articleShadow, 'none', JSON.stringify(viewContract));
+        assert.equal(viewContract.articleOuterBackground, 'none', JSON.stringify(viewContract));
+        assert.equal(viewContract.articleOuterShadow, 'none', JSON.stringify(viewContract));
+        assert.equal(viewContract.articleInnerRadius, '0px', JSON.stringify(viewContract));
+        assert.equal(viewContract.articleInnerShadow, 'none', JSON.stringify(viewContract));
+        assert.equal(viewContract.commentBackground.includes('linear-gradient'), true, JSON.stringify(viewContract));
+        assert.notEqual(viewContract.commentShadow, 'none', JSON.stringify(viewContract));
+        assert.equal(viewContract.replyBackground.includes('linear-gradient'), true, JSON.stringify(viewContract));
+        assert.equal(viewContract.replyShadow.includes('inset'), false, JSON.stringify(viewContract));
+        assert.equal(viewContract.replyIndent >= 18, true, JSON.stringify(viewContract));
+        assert.equal(viewContract.groupedParentBottom, '0px', JSON.stringify(viewContract));
+        assert.equal(viewContract.groupedReplyMarginTop >= 8, true, JSON.stringify(viewContract));
+        assert.equal(viewContract.normalBody, viewContract.inputSurface, JSON.stringify(viewContract));
+        assert.equal(viewContract.normalFooter, viewContract.inputSurface, JSON.stringify(viewContract));
+        assert.equal(viewContract.replyBody, viewContract.inputSurface, JSON.stringify(viewContract));
+        assert.equal(viewContract.replyFits, true, JSON.stringify(viewContract));
+        assert.equal(viewContract.imageBackground.includes('linear-gradient'), true, JSON.stringify(viewContract));
+        assert.equal(viewContract.imageBody, viewContract.inputSurface, JSON.stringify(viewContract));
+
+        await session.page.evaluate(() => {
+            const image = document.createElement('img');
+            image.className = 'fixture-article-upload-image';
+            image.alt = 'uploaded article fixture';
+            image.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==';
+            image.style.cssText = 'filter:invert(1) hue-rotate(180deg);-webkit-filter:invert(1) hue-rotate(180deg);mix-blend-mode:difference';
+            document.querySelector('.writing_view_box > .write_div').appendChild(image);
+            window.__dcufFixture.toggleDark(true);
+        });
+        await session.page.waitForTimeout(40);
+        const darkContract = await session.page.evaluate(() => {
+            const composer = document.querySelector('.fixture-reply-comment-composer');
+            const host = composer.closest('.reply_box');
+            const rect = composer.getBoundingClientRect();
+            const hostRect = host.getBoundingClientRect();
+            return {
+                replyFits: rect.left >= hostRect.left - 1 && rect.right <= hostRect.right + 1,
+                replyBackground: getComputedStyle(document.querySelector('#focus_cmt .comment_box .reply_box')).backgroundImage,
+                commentShadow: getComputedStyle(document.querySelector('#focus_cmt .comment_box .cmt_list > li:not([data-dcuf-focus-group-parent])')).boxShadow,
+                articleInnerRadius: getComputedStyle(document.querySelector('.writing_view_box > .write_div')).borderRadius,
+                articleInnerImage: getComputedStyle(document.querySelector('.writing_view_box > .write_div')).backgroundImage,
+                uploadedImageFilter: getComputedStyle(document.querySelector('.fixture-article-upload-image')).filter,
+                uploadedImageBlend: getComputedStyle(document.querySelector('.fixture-article-upload-image')).mixBlendMode,
+                recommendationBottom: getComputedStyle(document.querySelector('.btn_recommend_box .recom_bottom_box')).backgroundImage
+            };
+        });
+        assert.equal(darkContract.replyFits, true, JSON.stringify(darkContract));
+        assert.equal(darkContract.replyBackground.includes('linear-gradient'), true, JSON.stringify(darkContract));
+        assert.notEqual(darkContract.commentShadow, 'none', JSON.stringify(darkContract));
+        assert.equal(darkContract.articleInnerRadius, '0px', JSON.stringify(darkContract));
+        assert.equal(darkContract.articleInnerImage, 'none', JSON.stringify(darkContract));
+        assert.equal(darkContract.uploadedImageFilter, 'none', JSON.stringify(darkContract));
+        assert.equal(darkContract.uploadedImageBlend, 'normal', JSON.stringify(darkContract));
+        assert.equal(darkContract.recommendationBottom, 'none', JSON.stringify(darkContract));
+        assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
+    } finally { await session.close(); }
+});
+
+mobileTest('UI palette reaches settings, block management, and backup card surfaces in light and dark', 'functional', async ({ browser, server }) => {
+    const session = await createTestPage(browser, server.baseUrl, {
+        storage: { ...noStatsStorage, [storageKeys.palette]: 'orange' },
+        viewport: { width: 390, height: 844 }
+    });
+    try {
+        await session.goto('/board/lists?id=test');
+        for (const dark of [false, true]) {
+            await session.page.evaluate((enabled) => window.__dcufFixture.toggleDark(enabled), dark);
+            await session.page.waitForTimeout(40);
+
+            await session.page.evaluate(() => window.__dcufTestbedGM.invokeMenu('글댓합 설정하기'));
+            await session.page.locator('#dcinside-filter-setting').waitFor({ state: 'attached' });
+            assertPaletteSurfaces(await collectPaletteSurfaceContract(session.page, [
+                { selector: '#dcinside-filter-setting', token: '--dcuf-theme-canvas' },
+                { selector: '#dcinside-filter-setting .dcuf-settings-section', token: '--dcuf-theme-card-top' },
+                { selector: '#dcinside-filter-setting #dcinside-threshold-input', token: '--dcuf-theme-surface-input' }
+            ]), `settings ${dark ? 'dark' : 'light'}`);
+            await session.page.locator('#dcinside-filter-setting').evaluate((element) => element.remove());
+
+            await session.page.evaluate(() => window.__dcufTestbedGM.invokeMenu('차단 유저 관리'));
+            await session.page.locator('#dc-block-management-panel').waitFor({ state: 'attached' });
+            assertPaletteSurfaces(await collectPaletteSurfaceContract(session.page, [
+                { selector: '#dc-block-management-panel', token: '--dcuf-theme-canvas' },
+                { selector: '#dc-block-management-panel .panel-body', token: '--dcuf-theme-canvas' },
+                { selector: '#dc-block-management-panel .panel-list-controls', token: '--dcuf-theme-card-top' },
+                { selector: '#dc-block-management-panel .panel-search-input', token: '--dcuf-theme-surface-input' }
+            ]), `management ${dark ? 'dark' : 'light'}`);
+            await session.page.locator('#dc-block-management-panel .panel-backup-btn').click();
+            await session.page.locator('#dc-backup-popup').waitFor({ state: 'attached' });
+            assertPaletteSurfaces(await collectPaletteSurfaceContract(session.page, [
+                { selector: '#dc-backup-popup', token: '--dcuf-theme-canvas' },
+                { selector: '#dc-backup-popup .export-section', token: '--dcuf-theme-card-top' },
+                { selector: '#dc-backup-popup textarea', token: '--dcuf-theme-surface-input' }
+            ]), `backup ${dark ? 'dark' : 'light'}`);
+            await session.page.locator('#dc-backup-popup, #dc-backup-popup-overlay, #dc-block-management-panel, #dc-block-management-panel-overlay').evaluateAll((elements) => elements.forEach((element) => element.remove()));
+        }
+        assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
+    } finally { await session.close(); }
+});
+
+mobileTest('overlapping persisted pageshow and visible resume share one refilter and consume only that cycle', 'functional', async ({ browser, server }) => {
+    const session = await createTestPage(browser, server.baseUrl, { storage: noStatsStorage });
+    try {
+        await session.goto('/board/lists?id=test');
+        const contract = await session.page.evaluate(async () => {
+            const filterModule = window.__dcufFilterModule;
+            const coordinator = window.__dcufRuntimeCoordinator;
+            let visibilityState = 'visible';
+            Object.defineProperty(document, 'visibilityState', {
+                configurable: true,
+                get: () => visibilityState
+            });
+            const dispatchHidden = () => {
+                visibilityState = 'hidden';
+                document.dispatchEvent(new Event('visibilitychange'));
+            };
+            const dispatchVisible = async ({ duplicate = false } = {}) => {
+                visibilityState = 'visible';
+                document.dispatchEvent(new Event('visibilitychange'));
+                if (duplicate) document.dispatchEvent(new Event('visibilitychange'));
+                const recovery = filterModule._visibilityRecoveryPromise;
+                if (recovery) await recovery;
+            };
+            const snapshot = () => {
+                const diagnostics = window.__dcufDiagnostics.snapshot();
+                return {
+                    requested: diagnostics.counters['lifecycle.bfcache.restore.requested'] || 0,
+                    completed: diagnostics.counters['lifecycle.bfcache.restore.completed'] || 0,
+                    fullRefilters: diagnostics.counters['filter.fullRefilter.runs'] || 0,
+                    bfcacheSkips: diagnostics.counters['lifecycle.visibility.restore.skippedBfcache'] || 0,
+                    cleanSkips: diagnostics.counters['lifecycle.visibility.restore.skippedClean'] || 0,
+                    visibilityRuns: diagnostics.counters['lifecycle.visibility.restore.runs'] || 0,
+                    lastReason: diagnostics.gauges['lifecycle.visibility.restore.lastReason'] || ''
+                };
+            };
+
+            window.__dcufDiagnostics.enable();
+            window.__dcufDiagnostics.reset();
+            dispatchHidden();
+            const complete = new Promise((resolve) => window.addEventListener('dcuf:bfcache-restored', resolve, { once: true }));
+            const persisted = new Event('pageshow');
+            Object.defineProperty(persisted, 'persisted', { value: true });
+            window.dispatchEvent(persisted);
+            const firstVisible = dispatchVisible({ duplicate: true });
+            await Promise.all([complete, firstVisible, coordinator.waitForBfcacheRecovery()]);
+            const afterOverlap = snapshot();
+
+            dispatchHidden();
+            await dispatchVisible({ duplicate: true });
+            const afterNextOrdinaryCycle = snapshot();
+            return {
+                afterOverlap,
+                afterNextOrdinaryCycle,
+                recoveryState: {
+                    id: coordinator.getBfcacheRecoveryState().id,
+                    pending: coordinator.getBfcacheRecoveryState().pending,
+                    succeeded: coordinator.getBfcacheRecoveryState().succeeded
+                }
+            };
+        });
+
+        assert.deepEqual(contract.afterOverlap, {
+            requested: 1,
+            completed: 1,
+            fullRefilters: 1,
+            bfcacheSkips: 1,
+            cleanSkips: 0,
+            visibilityRuns: 0,
+            lastReason: 'bfcache-handled'
+        });
+        assert.deepEqual(contract.afterNextOrdinaryCycle, {
+            requested: 1,
+            completed: 1,
+            fullRefilters: 1,
+            bfcacheSkips: 1,
+            cleanSkips: 1,
+            visibilityRuns: 0,
+            lastReason: 'clean'
+        });
+        assert.deepEqual(contract.recoveryState, { id: 1, pending: false, succeeded: true });
+        assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
+    } finally { await session.close(); }
+});
+
+mobileTest('twenty persisted pageshow recoveries keep lifecycle observers UI and timers bounded', 'functional', async ({ browser, server }) => {
+    const session = await createTestPage(browser, server.baseUrl, { storage: noStatsStorage });
+    try {
+        await session.goto('/board/lists?id=test');
+        await waitForSettled(session.page, 300);
+        const before = await getMetrics(session.page);
+        const contract = await session.page.evaluate(async () => {
+            window.__dcufDiagnostics.enable();
+            window.__dcufDiagnostics.reset();
+            const coordinator = window.__dcufRuntimeCoordinator;
+            const observerBefore = coordinator._mutationObserver;
+            const subscribersBefore = coordinator._mutationSubscribers.size;
+            for (let index = 0; index < 20; index += 1) {
+                const persisted = new Event('pageshow');
+                Object.defineProperty(persisted, 'persisted', { value: true });
+                window.dispatchEvent(persisted);
+                await coordinator.waitForBfcacheRecovery();
+            }
+            const afterPersisted = window.__dcufDiagnostics.snapshot();
+
+            const ordinary = new Event('pageshow');
+            Object.defineProperty(ordinary, 'persisted', { value: false });
+            window.dispatchEvent(ordinary);
+            await Promise.resolve();
+            const afterOrdinary = window.__dcufDiagnostics.snapshot();
+            return {
+                requested: afterPersisted.counters['lifecycle.bfcache.restore.requested'] || 0,
+                completed: afterPersisted.counters['lifecycle.bfcache.restore.completed'] || 0,
+                completedAfterOrdinary: afterOrdinary.counters['lifecycle.bfcache.restore.completed'] || 0,
+                fullRefilters: afterPersisted.counters['filter.fullRefilter.runs'] || 0,
+                processAllLists: afterPersisted.counters['ui.processAllLists'] || 0,
+                sameObserver: observerBefore === coordinator._mutationObserver,
+                subscribersBefore,
+                subscribersAfter: coordinator._mutationSubscribers.size,
+                customLists: document.querySelectorAll('.custom-mobile-list').length,
+                ready: document.documentElement.classList.contains('script-ui-ready')
+            };
+        });
+        await waitForSettled(session.page, 300);
+        const after = await getMetrics(session.page);
+        assert.deepEqual(contract, {
+            requested: 20,
+            completed: 20,
+            completedAfterOrdinary: 20,
+            fullRefilters: 20,
+            processAllLists: 20,
+            sameObserver: true,
+            subscribersBefore: contract.subscribersBefore,
+            subscribersAfter: contract.subscribersBefore,
+            customLists: 1,
+            ready: true
+        });
+        assert.equal(after.mutationObserversCreated, before.mutationObserversCreated);
+        assert.equal(after.listenerUnique, before.listenerUnique);
+        assert.equal(after.memory.runtime.subscriberCount, before.memory.runtime.subscriberCount);
+        assert.equal(after.activeIntervals, before.activeIntervals);
+        assert.equal(after.activeTimeouts <= before.activeTimeouts, true, JSON.stringify({ before: before.activeTimeouts, after: after.activeTimeouts }));
+        assert.equal(after.activeAnimationFrames, 0);
+        assertNoRuntimeErrors(after, session.consoleErrors);
+    } finally { await session.close(); }
+});
+
+mobileTest('UI palette colors reach view actions and embedded list controls', 'functional', async ({ browser, server }) => {
+    const session = await createTestPage(browser, server.baseUrl, {
+        storage: { ...noStatsStorage, [storageKeys.palette]: 'orange' },
+        viewport: { width: 1120, height: 900 }
+    });
+    try {
+        await session.goto('/board/view?id=test&no=1001');
+        const collectColors = () => session.page.evaluate(() => {
+            const selectors = [
+                '#container.gallery_view .view_bottom_btnbox .btn_blue',
+                '#container.gallery_view .view_bottom_btnbox .write',
+                '.custom-bottom-controls .bottom_paging_box > em',
+                '.custom-bottom-controls .dcuf-search-card .bnt_search'
+            ];
+            return selectors.map((selector) => {
+                const element = document.querySelector(selector);
+                return { selector, color: element ? getComputedStyle(element).backgroundColor : null };
+            });
+        });
+        const light = await collectColors();
+        light.forEach(({ selector, color }) => assert.equal(color, 'rgb(154, 52, 18)', `orange light ${selector}: ${color}`));
+        const lightBar = await session.page.evaluate(() => {
+            const bar = document.querySelector('#container.gallery_view .view_bottom_btnbox');
+            const inactive = bar.querySelector('.btn_grey');
+            return {
+                background: getComputedStyle(bar).backgroundImage,
+                shadow: getComputedStyle(bar).boxShadow,
+                inactiveBackground: getComputedStyle(inactive).backgroundImage,
+                inactiveShadow: getComputedStyle(inactive).boxShadow
+            };
+        });
+        assert.equal(lightBar.background.includes('linear-gradient'), true, JSON.stringify(lightBar));
+        assert.notEqual(lightBar.shadow, 'none', JSON.stringify(lightBar));
+        assert.equal(lightBar.inactiveBackground.includes('linear-gradient'), true, JSON.stringify(lightBar));
+        assert.notEqual(lightBar.inactiveShadow, 'none', JSON.stringify(lightBar));
+        await session.page.evaluate(() => window.__dcufFixture.toggleDark(true));
+        await session.page.waitForTimeout(40);
+        const dark = await collectColors();
+        dark.forEach(({ selector, color }) => assert.equal(color, 'rgb(194, 65, 12)', `orange dark ${selector}: ${color}`));
+        assert.equal(await session.page.locator('#container.gallery_view .view_bottom_btnbox').evaluate((bar) => getComputedStyle(bar).backgroundImage.includes('linear-gradient')), true);
+        assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
+    } finally { await session.close(); }
+});
+
+mobileTest('UI palette menu previews, saves, restores, and remains singleton', 'functional', async ({ browser, server }) => {
+    const session = await createTestPage(browser, server.baseUrl, {
+        storage: { ...noStatsStorage, [storageKeys.palette]: 'blue' },
+        viewport: { width: 390, height: 844 }
+    });
+    try {
+        await session.goto('/board/lists?id=test');
+        const menuLabels = await session.page.evaluate(() => window.__dcufTestbedGM.snapshot().menuLabels);
+        assert.equal(menuLabels.filter((label) => label === 'UI 색상 설정').length, 1);
+
+        await session.page.evaluate(() => window.__dcufTestbedGM.invokeMenu('UI 색상 설정'));
+        await session.page.evaluate(() => window.__dcufTestbedGM.invokeMenu('UI 색상 설정'));
+        const panel = session.page.locator('#dcuf-palette-panel');
+        assert.equal(await panel.count(), 1);
+        assert.equal(await panel.locator('.dcuf-palette-option').count(), 5);
+        assert.equal(await panel.getAttribute('role'), 'dialog');
+        const geometry = await panel.evaluate((element) => {
+            const rect = element.getBoundingClientRect();
+            const close = element.querySelector('.dcuf-palette-close').getBoundingClientRect();
+            const option = element.querySelector('.dcuf-palette-option').getBoundingClientRect();
+            return {
+                rect: { left: rect.left, top: rect.top, right: rect.right, bottom: rect.bottom },
+                viewport: { width: innerWidth, height: innerHeight },
+                close: { width: close.width, height: close.height },
+                optionHeight: option.height,
+                zIndex: Number(getComputedStyle(element.parentElement).zIndex)
+            };
+        });
+        assert.equal(geometry.rect.left >= 8 && geometry.rect.top >= 8, true, JSON.stringify(geometry));
+        assert.equal(geometry.rect.right <= geometry.viewport.width - 8 && geometry.rect.bottom <= geometry.viewport.height - 8, true, JSON.stringify(geometry));
+        assert.equal(geometry.close.width >= 44 && geometry.close.height >= 44, true);
+        assert.equal(geometry.optionHeight >= 44, true);
+        assert.equal(geometry.zIndex >= 2147483646, true);
+
+        const writesBeforePreview = (await session.page.evaluate(() => window.__dcufTestbedGM.snapshot().writes)).length;
+        await panel.locator('[data-palette-id="purple"]').click();
+        assert.equal(await session.page.getAttribute('html', 'data-dcuf-palette'), 'purple');
+        assert.equal((await session.page.evaluate(() => window.__dcufTestbedGM.snapshot().writes)).length, writesBeforePreview);
+        await panel.locator('[data-dcuf-palette-action="cancel"]').click();
+        assert.equal(await session.page.getAttribute('html', 'data-dcuf-palette'), 'blue');
+
+        await session.page.evaluate(() => window.__dcufTestbedGM.invokeMenu('UI 색상 설정'));
+        await panel.locator('[data-palette-id="purple"]').click();
+        await panel.locator('[data-dcuf-palette-action="save"]').click();
+        assert.equal(await session.page.locator('#dcuf-palette-panel').count(), 0);
+        assert.equal(await session.page.getAttribute('html', 'data-dcuf-palette'), 'purple');
+        assert.equal(await session.page.evaluate((key) => window.__dcufTestbedGM.snapshot().values[key], storageKeys.palette), 'purple');
+
+        await session.page.evaluate(() => window.__dcufTestbedGM.invokeMenu('UI 색상 설정'));
+        await panel.locator('[data-palette-id="green"]').click();
+        await session.page.keyboard.press('Escape');
+        assert.equal(await session.page.getAttribute('html', 'data-dcuf-palette'), 'purple');
+
+        await session.page.evaluate(() => window.__dcufTestbedGM.invokeMenu('UI 색상 설정'));
+        await panel.locator('[data-dcuf-palette-action="default"]').click();
+        assert.equal(await session.page.getAttribute('html', 'data-dcuf-palette'), 'blue');
+        await session.page.locator('#dcuf-palette-overlay').click({ position: { x: 3, y: 3 } });
+        assert.equal(await session.page.getAttribute('html', 'data-dcuf-palette'), 'purple');
+
+        await session.page.evaluate(() => window.__dcufFixture.toggleDark(true));
+        await session.page.evaluate(() => window.__dcufTestbedGM.invokeMenu('UI 색상 설정'));
+        const darkContract = await session.page.evaluate(() => {
+            const root = getComputedStyle(document.documentElement);
+            const save = document.querySelector('#dcuf-palette-panel [data-dcuf-palette-action="save"]');
+            const style = getComputedStyle(save);
+            const rgb = (value) => (value.match(/[\d.]+/g) || []).slice(0, 3).map(Number);
+            const luminance = (value) => {
+                const [r, g, b] = rgb(value).map((channel) => {
+                    const normalized = channel / 255;
+                    return normalized <= 0.03928 ? normalized / 12.92 : ((normalized + 0.055) / 1.055) ** 2.4;
+                });
+                return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+            };
+            const foreground = luminance(style.color);
+            const background = luminance(style.backgroundColor);
+            return {
+                accent: root.getPropertyValue('--dcuf-theme-accent').trim().toLowerCase(),
+                contrast: (Math.max(foreground, background) + 0.05) / (Math.min(foreground, background) + 0.05),
+                panelBackground: getComputedStyle(document.querySelector('#dcuf-palette-panel')).backgroundColor
+            };
+        });
+        assert.equal(darkContract.accent, '#c4b5fd');
+        assert.equal(darkContract.contrast >= 4.5, true, `save contrast: ${darkContract.contrast}`);
+        assert.notEqual(darkContract.panelBackground, 'rgb(255, 255, 255)');
+        await session.page.keyboard.press('Escape');
+        assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
+    } finally { await session.close(); }
+});
+
+mobileTest('UI palette save failure keeps the dialog open and committed value intact', 'functional', async ({ browser, server }) => {
+    const session = await createTestPage(browser, server.baseUrl, {
+        storage: { ...noStatsStorage, [storageKeys.palette]: 'blue' },
+        gmBehavior: { rejectWriteOnceKeys: [storageKeys.palette] }
+    });
+    try {
+        await session.goto('/board/lists?id=test');
+        await session.page.evaluate(() => window.__dcufTestbedGM.invokeMenu('UI 색상 설정'));
+        const panel = session.page.locator('#dcuf-palette-panel');
+        await panel.locator('[data-palette-id="green"]').click();
+        await panel.locator('[data-dcuf-palette-action="save"]').click();
+        await panel.locator('.dcuf-palette-status').waitFor({ state: 'visible' });
+        assert.equal((await panel.locator('.dcuf-palette-status').textContent()).includes('저장하지 못했습니다'), true);
+        assert.equal(await panel.count(), 1);
+        assert.equal(await session.page.evaluate((key) => window.__dcufTestbedGM.snapshot().values[key], storageKeys.palette), 'blue');
+        await panel.locator('[data-dcuf-palette-action="cancel"]').click();
+        assert.equal(await session.page.getAttribute('html', 'data-dcuf-palette'), 'blue');
+        assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
+    } finally { await session.close(); }
+});
+
+pcTest('PC palette port themes only DCUF-owned controls and dialogs', 'functional', async ({ browser, server }) => {
+    const session = await createTestPage(browser, server.baseUrl, {
+        storage: { ...noStatsStorage, [storageKeys.palette]: 'blue' },
+        viewport: { width: 1280, height: 900 },
+        hasTouch: false,
+        isMobile: false
+    });
+    try {
+        await session.goto('/board/lists?id=test');
+        const menuLabels = await session.page.evaluate(() => window.__dcufTestbedGM.snapshot().menuLabels);
+        assert.equal(menuLabels.filter((label) => label === 'UI 색상 설정').length, 1, JSON.stringify(menuLabels));
+
+        const hostColorBefore = await session.page.locator('.page_head h2 a').evaluate((element) => getComputedStyle(element).color);
+        await session.page.evaluate(() => window.__dcufTestbedGM.invokeMenu('글댓합 설정하기'));
+        await session.page.locator('#dcinside-filter-setting').waitFor({ state: 'attached' });
+        const blueSave = await session.page.locator('#dcinside-threshold-save').evaluate((element) => getComputedStyle(element).backgroundColor);
+        assert.equal(blueSave, 'rgb(36, 91, 218)');
+        await session.page.locator('#dcinside-filter-setting').evaluate((element) => element.remove());
+
+        await session.page.evaluate(() => window.__dcufTestbedGM.invokeMenu('UI 색상 설정'));
+        const palettePanel = session.page.locator('#dcuf-palette-panel');
+        await palettePanel.locator('[data-palette-id="orange"]').click();
+        assert.equal(await session.page.getAttribute('html', 'data-dcuf-palette'), 'orange');
+        const previewContract = await session.page.evaluate(() => {
+            const css = document.getElementById('dcuf-mobile-palette-style')?.textContent || '';
+            return {
+                hostColor: getComputedStyle(document.querySelector('.page_head h2 a')).color,
+                styleCount: document.querySelectorAll('#dcuf-mobile-palette-style').length,
+                customLists: document.querySelectorAll('.custom-mobile-list').length,
+                forbiddenTokens: [
+                    '.custom-mobile-list', '.custom-post-item', '.custom-bottom-controls',
+                    '.gnb_bar', '.page_head', '.view_content_wrap', '.writing_view_box', '#focus_cmt',
+                    'form#write', 'form.dcuf-write-form'
+                ].filter((token) => css.includes(token))
+            };
+        });
+        assert.equal(previewContract.hostColor, hostColorBefore);
+        assert.equal(previewContract.styleCount, 1);
+        assert.equal(previewContract.customLists, 0);
+        assert.deepEqual(previewContract.forbiddenTokens, []);
+        await palettePanel.locator('[data-dcuf-palette-action="save"]').click();
+        assert.equal(await session.page.evaluate((key) => window.__dcufTestbedGM.snapshot().values[key], storageKeys.palette), 'orange');
+
+        await session.page.evaluate(() => window.__dcufTestbedGM.invokeMenu('글댓합 설정하기'));
+        await session.page.locator('#dcinside-filter-setting').waitFor({ state: 'attached' });
+        const orangeSave = await session.page.locator('#dcinside-threshold-save').evaluate((element) => getComputedStyle(element).backgroundColor);
+        assert.equal(orangeSave, 'rgb(154, 52, 18)');
+        await session.page.locator('#dcinside-filter-setting').evaluate((element) => element.remove());
+
+        const fab = session.page.locator('#dc-personal-block-fab');
+        const drawer = session.page.locator('#dc-personal-block-drawer');
+        await fab.click();
+        const drawerIconColor = await drawer.locator('.dcuf-menu-icon').first().evaluate((element) => getComputedStyle(element).color);
+        assert.equal(drawerIconColor, 'rgb(194, 65, 12)');
+        await drawer.locator('[data-dcuf-fab-action="quick-block"]').click();
+        const prompt = session.page.locator('#dc-selection-popup.dcuf-selection-prompt');
+        await prompt.waitFor({ state: 'visible' });
+        const promptContract = await prompt.evaluate((element) => ({
+            backgroundImage: getComputedStyle(element).backgroundImage,
+            iconColor: getComputedStyle(element.querySelector('.dcuf-selection-prompt-icon')).color
+        }));
+        assert.equal(promptContract.iconColor, 'rgb(194, 65, 12)', JSON.stringify(promptContract));
+        assert.equal(promptContract.backgroundImage.includes('59, 113, 253'), false, JSON.stringify(promptContract));
+        await prompt.locator('.popup-buttons button').click();
+
+        await fab.click();
+        await drawer.locator('[data-dcuf-fab-action="manual-block"]').click();
+        const manual = session.page.locator('#dc-manual-block-panel');
+        await manual.waitFor({ state: 'visible' });
+        await manual.locator('#dc-manual-block-value').focus();
+        const manualContract = await manual.evaluate((element) => ({
+            kicker: getComputedStyle(element.querySelector('.dcuf-manual-kicker')).color,
+            activeType: getComputedStyle(element.querySelector('[data-manual-block-type][aria-pressed="true"]')).color,
+            inputBorder: getComputedStyle(element.querySelector('#dc-manual-block-value')).borderColor
+        }));
+        assert.deepEqual(manualContract, {
+            kicker: 'rgb(194, 65, 12)',
+            activeType: 'rgb(154, 52, 18)',
+            inputBorder: 'rgb(194, 65, 12)'
+        });
+        await manual.locator('[data-manual-block-action="close"]').click();
+
+        await session.page.evaluate(() => window.__dcufTestbedGM.invokeMenu('차단 유저 관리'));
+        await session.page.locator('#dc-block-management-panel').waitFor({ state: 'attached' });
+        const activeTab = await session.page.locator('#dc-block-management-panel .panel-tab.active').evaluate((element) => ({
+            background: getComputedStyle(element).backgroundColor,
+            color: getComputedStyle(element).color
+        }));
+        assert.equal(activeTab.background, 'rgb(255, 240, 231)', JSON.stringify(activeTab));
+        assert.notEqual(activeTab.color, 'rgb(0, 123, 255)', JSON.stringify(activeTab));
+        const managementAccent = await session.page.locator('#dc-block-management-panel').evaluate((element) => ({
+            kicker: getComputedStyle(element.querySelector('.panel-kicker')).color,
+            addBackground: getComputedStyle(element.querySelector('.panel-add-btn')).backgroundColor
+        }));
+        assert.deepEqual(managementAccent, {
+            kicker: 'rgb(194, 65, 12)',
+            addBackground: 'rgb(255, 240, 231)'
+        });
+        await session.page.locator('#dc-block-management-panel .panel-backup-btn').click();
+        const backupContract = await session.page.locator('#dc-backup-popup').evaluate((element) => ({
+            downloadBackground: getComputedStyle(element.querySelector('.export-btn-download')).backgroundColor,
+            copyBackground: getComputedStyle(element.querySelector('.export-btn')).backgroundColor,
+            importBackground: getComputedStyle(element.querySelector('.import-btn')).backgroundColor
+        }));
+        assert.deepEqual(backupContract, {
+            downloadBackground: 'rgb(255, 240, 231)',
+            copyBackground: 'rgb(154, 52, 18)',
+            importBackground: 'rgb(154, 52, 18)'
+        });
+        assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
+    } finally { await session.close(); }
+});
+
+mobileTest('UI palette tokens drive the mobile write surface', 'write', async ({ browser, server }) => {
+    const session = await createTestPage(browser, server.baseUrl, {
+        storage: { ...noStatsStorage, [storageKeys.palette]: 'orange' },
+        viewport: { width: 390, height: 844 }
+    });
+    try {
+        await session.goto('/board/write/?id=test');
+        const contract = await session.page.evaluate(() => {
+            const body = getComputedStyle(document.body);
+            const submit = getComputedStyle(document.querySelector('#write-submit'));
+            return {
+                palette: document.documentElement.getAttribute('data-dcuf-palette'),
+                accent: body.getPropertyValue('--dcuf-write-accent').trim().toLowerCase(),
+                strong: body.getPropertyValue('--dcuf-write-accent-strong').trim().toLowerCase(),
+                submitBackground: submit.backgroundColor
+            };
+        });
+        assert.deepEqual(contract, { palette: 'orange', accent: '#c2410c', strong: '#9a3412', submitBackground: 'rgb(154, 52, 18)' });
+        await session.page.evaluate(() => window.__dcufFixture.toggleDark(true));
+        await session.page.waitForTimeout(40);
+        const darkContract = await session.page.evaluate(() => {
+            const body = getComputedStyle(document.body);
+            const submit = getComputedStyle(document.querySelector('#write-submit'));
+            return {
+                accent: body.getPropertyValue('--dcuf-write-accent').trim().toLowerCase(),
+                strong: body.getPropertyValue('--dcuf-write-accent-strong').trim().toLowerCase(),
+                submitBackground: submit.backgroundColor
+            };
+        });
+        assert.deepEqual(darkContract, { accent: '#fdba74', strong: '#c2410c', submitBackground: 'rgb(194, 65, 12)' });
+        assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
+    } finally { await session.close(); }
 });
 
 const server = await startServer();

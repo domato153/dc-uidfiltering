@@ -49,6 +49,8 @@
   - `createManagementPanel()`
 
 ## Manual parity checklist for PC UI
+- palette CSS must remain inside the shared DCUF-owned rail for all filter controls; do not place drawer, selection prompt, manual-block, management, or backup palette rules inside the mobile host-theme range
+- changing the shared palette rail requires computed-color coverage for the selection prompt, drawer icons, manual-block focus/active state, management header actions, and both backup export actions
 - quick-block FAB shape should match the current mobile pill style, not the old blue circle
 - quick-block FAB interaction should match mobile:
   - mouse drag
@@ -65,6 +67,8 @@
   - `createBackupPopup()`
   - `createManagementPanel()`
 - dark mode should be checked for:
+  - selection prompt and drawer icons
+  - manual-block header, type tabs, and focus ring
   - backup popup header / body shell
   - block management panel body / list container
   - quick-block FAB

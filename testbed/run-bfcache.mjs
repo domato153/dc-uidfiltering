@@ -5,9 +5,8 @@ import { assert, createTestPage, launchBrowser, storageKeys, testbedDir } from '
 
 const headed = process.argv.includes('--headed');
 const variants = [
-    { id: 'current', label: 'current unload opt-out' },
-    { id: 'no-unload', label: 'unload registration removed in test loader' },
-    { id: 'pagehide', label: 'test-only pagehide cleanup and pageshow restore' }
+    { id: 'current', label: 'production lifecycle with explicit persisted-pageshow recovery' },
+    { id: 'pagehide', label: 'production recovery after test-only observer disconnect' }
 ];
 const storage = {
     [storageKeys.threshold]: 0,
@@ -33,6 +32,10 @@ try {
             await session.page.goBack({ waitUntil: 'domcontentloaded' });
             await session.page.waitForFunction(() => document.documentElement.classList.contains('script-ui-ready'));
             await session.page.waitForFunction(() => document.querySelectorAll('.custom-post-item').length === 51);
+            const wasPersisted = await session.page.evaluate(() => Boolean(window.__dcufTestbedPageshow?.persisted));
+            if (wasPersisted) {
+                await session.page.waitForFunction(() => (window.__dcufDiagnostics?.snapshot?.().counters?.['lifecycle.bfcache.restore.completed'] || 0) >= 1);
+            }
             const result = await session.page.evaluate((token) => ({
                 runtimeTokenBefore: token,
                 runtimeTokenAfter: window.__dcufRuntimeLoaded,
@@ -42,6 +45,8 @@ try {
                 customLists: document.querySelectorAll('.custom-mobile-list').length,
                 customPosts: document.querySelectorAll('.custom-post-item').length,
                 subscribers: window.__dcufDiagnostics?.snapshot?.().gauges?.['mutation.subscribers'] ?? null,
+                recoveryRequested: window.__dcufDiagnostics?.snapshot?.().counters?.['lifecycle.bfcache.restore.requested'] ?? 0,
+                recoveryCompleted: window.__dcufDiagnostics?.snapshot?.().counters?.['lifecycle.bfcache.restore.completed'] ?? 0,
                 memory: window.__dcufMemoryDebug?.sample?.(`bfcache-${token}`) || null
             }), tokenBefore);
             assert.equal(result.customLists, 1);

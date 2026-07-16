@@ -4,7 +4,9 @@
 // @version      __VERSION__
 // @description  DCInside PC filter port based on the latest mobile filter runtime and shared filter core
 // @author       domato153
-// @match        https://gall.dcinside.com/*
+// @match        https://gall.dcinside.com/board/*
+// @match        https://gall.dcinside.com/mgallery/board/*
+// @match        https://gall.dcinside.com/mini/board/*
 // @noframes
 // @grant        GM_setValue
 // @grant        GM_getValue

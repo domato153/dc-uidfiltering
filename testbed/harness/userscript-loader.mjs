@@ -22,13 +22,7 @@ export async function loadHarnessSource({ storage = {}, gmBehavior = {}, boot = 
         readFile(path.join(testbedDir, 'harness', 'runtime-instrumentation.js'), 'utf8'),
         resolveBuiltUserscript().then((file) => readFile(file, 'utf8'))
     ]);
-    let userscript = rawUserscript.replace(/^\uFEFF/, '');
-    if (bfcacheVariant !== 'current') {
-        userscript = userscript.replace(
-            /\n\s*if \(!__dcufRoot\.__dcufBfcacheOptOutInstalled\) \{[\s\S]*?\n\s*\}\n\n/,
-            '\n\n'
-        );
-    }
+    const userscript = rawUserscript.replace(/^\uFEFF/, '');
     const lifecycleExperiment = bfcacheVariant === 'pagehide'
         ? `
 window.addEventListener('pagehide', (event) => {
@@ -39,9 +33,6 @@ window.addEventListener('pagehide', (event) => {
 });
 window.addEventListener('pageshow', (event) => {
     window.__dcufTestbedPageshow = { persisted: event.persisted, ts: Date.now() };
-    if (!event.persisted) return;
-    window.__dcufRuntimeCoordinator?.ensureMutationBus?.();
-    void window.__dcufFilterModule?.refilterAllContent?.('testbed-pageshow', { scheduleFollowups: false });
 });`
         : `window.addEventListener('pageshow', (event) => { window.__dcufTestbedPageshow = { persisted: event.persisted, ts: Date.now() }; });`;
 

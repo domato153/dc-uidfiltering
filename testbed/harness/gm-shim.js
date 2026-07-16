@@ -15,6 +15,7 @@
     const delayByKey = behavior.delayByKey && typeof behavior.delayByKey === 'object' ? behavior.delayByKey : {};
     const writeDelayByKey = behavior.writeDelayByKey && typeof behavior.writeDelayByKey === 'object' ? behavior.writeDelayByKey : {};
     const rejectOnceKeys = new Set(Array.isArray(behavior.rejectOnceKeys) ? behavior.rejectOnceKeys : []);
+    const rejectWriteOnceKeys = new Set(Array.isArray(behavior.rejectWriteOnceKeys) ? behavior.rejectWriteOnceKeys : []);
     const pendingKeys = new Set(Array.isArray(behavior.pendingKeys) ? behavior.pendingKeys : []);
     const pendingResolvers = new Map();
 
@@ -34,6 +35,7 @@
         return clone(values.has(key) ? values.get(key) : fallbackValue);
     };
     globalThis.GM_setValue = async (key, value) => {
+        if (rejectWriteOnceKeys.delete(key)) throw new Error(`GM_setValue rejected once: ${key}`);
         const storedValue = clone(value);
         const delayMs = Math.max(0, Number(writeDelayByKey[key]) || 0);
         if (delayMs > 0) await new Promise((resolve) => setTimeout(resolve, delayMs));

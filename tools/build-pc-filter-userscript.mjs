@@ -6,7 +6,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const rootDir = path.resolve(__dirname, '..');
 
-const VERSION = '1.9.5';
+const VERSION = '1.9.6';
 const OUTPUT_NAME = `dcinside_user_filter_v${VERSION}.user.js`;
 
 const PC_PARTS = [
@@ -40,6 +40,36 @@ const FORBIDDEN_MOBILE_UI_TOKENS = [
     '.writing_view_box',
     '.comment_box',
     '.img_comment',
+];
+
+const MOBILE_THEME_CSS_RANGE = [
+    '/* DCUF_MOBILE_THEME_CSS_START */',
+    '/* DCUF_MOBILE_THEME_CSS_END */',
+];
+
+const REQUIRED_PC_PALETTE_UI_SELECTORS = [
+    '#dcinside-filter-setting',
+    '#dcinside-shortcut-modal',
+    '#dc-personal-block-size-panel',
+    '#dc-personal-block-drawer',
+    '#dc-selection-popup',
+    '#dc-block-management-panel',
+    '#dc-backup-popup',
+    '#dc-personal-block-fab',
+    '#dc-manual-block-panel',
+];
+
+const FORBIDDEN_PC_PALETTE_HOST_TOKENS = [
+    '.custom-mobile-list',
+    '.custom-post-item',
+    '.custom-bottom-controls',
+    '.gnb_bar',
+    '.page_head',
+    '.view_content_wrap',
+    '.writing_view_box',
+    '#focus_cmt',
+    'form#write',
+    'form.dcuf-write-form',
 ];
 
 const replacements = [
@@ -195,15 +225,44 @@ function transformFilterModuleForSharedPort(source) {
     return text;
 }
 
+function transformThemeModuleForPc(source) {
+    const [startMarker, endMarker] = MOBILE_THEME_CSS_RANGE;
+    const startIndex = source.indexOf(startMarker);
+    const endIndex = source.indexOf(endMarker, startIndex + startMarker.length);
+    if (startIndex === -1 || endIndex === -1 || endIndex < startIndex) {
+        throw new Error('Failed to locate the mobile-only palette CSS range');
+    }
+
+    const transformed = [
+        source.slice(0, startIndex + startMarker.length),
+        '\n        /* Mobile host palette CSS removed by the PC port rail. */\n        ',
+        source.slice(endIndex),
+    ].join('');
+
+    REQUIRED_PC_PALETTE_UI_SELECTORS.forEach((selector) => {
+        if (!transformed.includes(selector)) {
+            throw new Error(`PC palette UI rail is missing required selector: ${selector}`);
+        }
+    });
+    FORBIDDEN_PC_PALETTE_HOST_TOKENS.forEach((token) => {
+        if (transformed.includes(token)) {
+            throw new Error(`Mobile/host palette token leaked into the PC palette rail: ${token}`);
+        }
+    });
+
+    return transformed;
+}
+
 function applyReplacements(source) {
     return replacements.reduce((acc, step) => step.apply(acc), source);
 }
 
 async function main() {
-    const [header, bootstrap, sharedPrelude, rawFilterModule, rawPersonalBlockModule, ...pcParts] = await Promise.all([
+    const [header, bootstrap, sharedPrelude, rawThemeModule, rawFilterModule, rawPersonalBlockModule, ...pcParts] = await Promise.all([
         readPart('src/meta/pc-filter-userscript-header.txt'),
         readPart('src/runtime/bootstrap.js'),
         buildSharedRuntimePrelude(),
+        readPart('src/targets/mobile/theme-module.js'),
         readPart('src/targets/mobile/filter-module.js'),
         readPart('src/targets/mobile/personal-block-module.js'),
         ...PC_PARTS.map(readPart),
@@ -212,9 +271,10 @@ async function main() {
     const teardown = await readPart('src/runtime/teardown.js');
     const extractedFilterModule = extractFilterModuleSource(rawFilterModule);
     const sharedFilterUiStyle = extractSharedFilterUiStyle(rawFilterModule);
+    const transformedThemeModule = transformThemeModuleForPc(rawThemeModule);
     const transformedFilterModule = transformFilterModuleForSharedPort(extractedFilterModule);
     const [filterStyle, filterEntry] = pcParts;
-    const combined = `${header}\n${bootstrap}${sharedPrelude}${filterStyle}${sharedFilterUiStyle}${transformedFilterModule}${rawPersonalBlockModule}${filterEntry}${teardown}`;
+    const combined = `${header}\n${bootstrap}${sharedPrelude}${filterStyle}${sharedFilterUiStyle}${transformedThemeModule}${transformedFilterModule}${rawPersonalBlockModule}${filterEntry}${teardown}`;
     const built = applyReplacements(combined).replace(/\r?\n/g, '\r\n');
 
     const distDir = path.join(rootDir, 'dist');
@@ -229,7 +289,7 @@ async function main() {
 
     process.stdout.write([
         `Built ${OUTPUT_NAME}`,
-        ' - source: latest mobile FilterModule + shared core + PC adapter entry',
+        ' - source: latest mobile FilterModule + shared palette/UI rail + shared core + PC adapter entry',
         ` - dist: ${distPath}`,
         ` - root: ${rootCopyPath}`,
     ].join('\n'));

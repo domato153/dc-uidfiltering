@@ -16,7 +16,7 @@ This file records reusable debugging lessons that are likely to prevent repeat r
 
 ### Stable contract
 
-- Only list, view, and write routes use the document-start lock. `data-dcuf-boot-state` owns `locked`, `preparing`, `degraded`, and `ready`; normal release occurs exactly once after local filters and required UI commit.
+- Only list, view, write, and modify routes use the document-start lock. `data-dcuf-boot-state` owns `locked`, `preparing`, `degraded`, and `ready`; normal release occurs exactly once after local filters and required UI commit.
 - A deadline rolls list/view pages back and hides only filterable zones while keeping article text and navigation usable. Late initialization may promote `degraded` to `ready` only after filters and UI commit again.
 - Boot storage uses one shared snapshot without changing GM keys, shapes, grants, or migration order. List preparation records moved nodes and inline state before mutation and restores them on failure.
 - Comment stabilization flushes the shared observer, runs filter/merge/placeholder synchronization, and requires two quiet animation frames within a bounded attempt window. Body replacement rebinds the shared mutation bus without losing subscribers.
@@ -230,3 +230,117 @@ The Testbed functional check `mobile list navigation uses integrated raised tool
 - Replace the search form repeatedly and assert one active reserve root, four global listeners, and no increase in unique registrations.
 - Mutate unrelated head nodes, then add/remove `#css-darkmode`; unchanged mutations must be skipped and the two real state transitions must synchronize.
 - Fill the negative UID cache past its limit and assert the newest entry remains while expired and oldest entries are removed.
+
+## 2026-07-17 - Dark-view boot fallback and palette coverage
+
+### Context and root cause
+
+- A degraded view applied a safety style that hid comment boxes, related lists, and embedded bottom lists for the entire degraded lifetime. In dark mode the remaining page surface is black, so this appeared as a dark-only loss of all content even though the direct hiding mechanism was boot recovery CSS.
+- The initial reveal gate treated a visual phase-1 theme mismatch (for example, a host dark stylesheet overriding elevation) like an incomplete filter. A harmless computed-style mismatch could therefore wait for the critical deadline and enter degraded mode after local filtering had already completed.
+- The original Testbed dark toggle only changed classes. Live DCInside uses `#css-darkmode`, so the production head observer path and host signal were not represented.
+- The first palette checks asserted root tokens but not the computed colors of list, view, pagination, search, and write controls. Stronger legacy blue rules could pass those token-only checks.
+
+### Stable contract
+
+- Keep unfiltered content withheld until mobile filtering and personal blocking finish. Once the boot controller records filter readiness, a persistent visual-theme verification failure may reveal the filtered/native surface after one style refresh attempt; visual recovery continues post-reveal.
+- Degraded CSS may hide filterable surfaces only while `data-dcuf-filter-ready` is not true. Filter-complete fallback must not leave comments or embedded lists invisible.
+- Dark Testbed transitions add/remove the live-shaped `#css-darkmode` element and assert synchronized root/body classes.
+- Palette regressions must inspect actual computed primary-control backgrounds in both light and dark mode; token presence alone is insufficient.
+
+### Regression and live diagnostics
+
+- The boot regression forces a dark-view elevation mismatch and verifies ready fallback, visible comments/list, one filter-ready marker, no degraded banner, and `missing-head-elevation` diagnostics.
+- The five-preset functional regression checks top tabs/write, pagination, search, view actions, and write submit colors in light and dark mode.
+- If a live dark-view trigger differs, `DCUFLiveAudit.bootDarkDownload()` records non-sensitive boot reason, filter readiness, dark signal/classes, surface visibility, reveal state, and phase-1 failure reason.
+
+## 2026-07-17 - Palette surface, metadata, and bfcache contracts
+
+### Palette surfaces and touch ownership
+
+- Palette coverage includes the list canvas and softly raised post cards, list control cards, write grouping/editor/action cards, normal and reply composers, reply cards, image-comment cards, and the image-comment composer. Preserve semantic notice/error/warning colors.
+- When palette scope includes the host chrome, target only DCInside's accent-bearing selectors: `.top_search`, `.gnb_bar`, login/search actions, recent-history labels, and `.page_head` title/divider/badge. Preserve the logo, ordinary recent-history text, and semantic host colors. Keep these live-shaped selectors in the list fixture.
+- Write editor option buttons have later, high-specificity mobile layout rules. Their border, surface, and shadow fallbacks must read `--dcuf-write-*`/theme tokens at that owning rule; a weaker late theme override is not a reliable contract. The recommend-up circle and both recommend counters use the accent, while the down-vote control remains neutral.
+- Keep the neutralized token rail (`surface`, `surface-raised`, `surface-muted`, `surface-input`, `canvas`, `card-top`, `card-bottom`, `reply-surface`) with light/dark values derived from the selected preset. Large canvases use more tint than near-white input/card faces; regressions compare computed backgrounds against resolved tokens, not variable presence.
+- The list author hit target must shrink to visible writer content instead of flexing across the empty metadata row. Keep the proxy click, but use a transparent tap highlight. The themed write button owns a white text-glyph pencil so a host blue sprite cannot leak through.
+- The image-comment fixture used to delete `.cmt_write_box` while normalizing the live wrapper. Preserve it: production has an image-comment writer and its absence prevented surface and submit-color regressions from being tested.
+
+### Metadata and bfcache lifecycle
+
+- Mobile and PC artifacts support only the three board route families: `/board/*`, `/mgallery/board/*`, and `/mini/board/*`. Keep exact `@match` entries for those families and retain the bootstrap page guard defensively. No storage, grant, or run-at semantics changed.
+- A persisted `pageshow` reuses the shared mutation bus and existing subscribers, runs one list resync and one coalesced full refilter without delayed followups, then reruns article-dark/comment normalization. Do not add a second observer or an `unload` listener.
+- The deterministic functional test dispatches persisted and ordinary pageshow events. The browser experiment separately reports whether Chromium actually used bfcache and, when it did, waits for the production recovery counter.
+
+### Palette visual hierarchy and live-selector fidelity
+
+- Host accent coverage must include the live selectors `.btn_top_loginout`, `.pagehead_titicon.mgall.sp_img`, `.gnb_bar .sp_img.icon_next`, and `.issue_wrap`; simplified `.btn_login`/`.icon_mini` fixtures are insufficient. Replace sprite-only badges/arrows with CSS shapes/text so the fixed blue sprite cannot show through.
+- A list post is one raised card: apply the gradient and shadow to `.custom-post-item`, with only a subtle inset highlight on `.post-title`. Do not create a second bordered title card, expand the author click target, or translate cards on touch devices.
+- View hierarchy is title header (strongest elevation), article content (near-neutral, weakest tint), comment canvas, comment cards, then a slightly darker low-saturation reply surface. Avoid hard black lower shadows and blue-gray inset outlines; multi-layer soft shadows and neutral borders provide the transition.
+- Comment, reply, and image-comment composers keep a softly tinted outer shell while inputs, textarea body, and footer resolve to the near-neutral input token. The live `.reply_box .cmt_write_box.small` needs explicit `width/max-width/min-width` and `box-sizing` rules because generic composer flex styles can otherwise overflow the reply card.
+- Recommendation UI is not one flat tinted block: the outer box, two vote cells, and bottom share/scrap/report row use separate surface levels. The recommendation icon exposes a visible `개념` label below the CSS star while retaining its hidden accessible label.
+- The view-adjacent `전체글/개념글/수정/삭제/글쓰기` strip is a raised action card with individually elevated controls. Inactive actions use neutral foregrounds, selected/write actions use the accent, and delete becomes red only on hover/focus or confirmation.
+- The `50개` list-size control is deliberately outside this visual pass; do not add a regression that treats it as an accent surface.
+
+## 2026-07-17 - Palette area-to-saturation ladder
+
+### Stable visual contract
+
+- Palette saturation is inversely proportional to painted area. Large list/view/comment/write canvases use only a faint preset wash, normal cards and input faces remain nearly neutral, replies use one stronger secondary level, and only selected/primary controls use the full accent. Shadows are neutral gray/black rather than accent-colored.
+- A list title must not paint its own rectangular highlight. Elevation belongs to the whole `.custom-post-item`; this prevents dark mode from exposing a sharp inner title bar. Normal cards are near-neutral, concept cards use a low-saturation theme wash plus an accent inset rail, and notice cards use a theme-independent slate surface/rail. Semantic notice badges remain unchanged.
+- Pagination and search are near-neutral raised cards distinct from the faint bottom action strip. The `50개` control remains excluded.
+- Keep only the view title and recommendation controls as cards. `.gallview_contents`, `.writing_view_box`, and `.write_div` are structural content containers and must remain borderless, shadowless, square, and transparent so the article body does not become nested cards. Uploaded article images/video/canvas opt out of dark-mode filter and blend corrections.
+- Comment and image-comment canvases are faint; comment cards are near-neutral; reply cards use the secondary surface. Focus-comment grouping must not extend the parent-card pseudo background through replies or use negative reply margins: replies are separate cards with a positive gap, 18px inset, and a 3px accent-side border. Preserve existing reply-composer geometry and popup overflow rules.
+- `#focus_cmt` itself is a transparent structural container in both themes; surface color belongs to the contained composer and comment/reply cards, not to one full-width background plate.
+- Write form outer canvas, headtext group, credentials/title inputs, editor toolbar/body, AI card, and action card use separate levels. Inputs/editor body stay near-neutral; the toolbar stays muted; the form canvas alone carries the larger-area tint.
+- The live minor badge uses `.pagehead_titicon.mgall.sp_img`, while the live mini badge uses `.pagehead_titicon.ngall.sp_img`. Clear every sprite property (`background-image`, position, text indent) and render `m`/`mi` as CSS text at 26×20 so a host sprite cannot win by specificity.
+
+### Regression coverage
+
+- Compare computed list canvas, normal/concept/notice cards, bottom action, pagination, and search surfaces; assert the post-title background and shadow are `none` in both light and dark mode.
+- Cover the flat article containers, unfiltered dark-mode upload media, recommendation separator, positive parent/reply spacing, and reply containment in light and dark mode.
+- Exercise the exact minor and mini badge markup and require sprite-free `m`/`mi` labels. Keep orange mobile-width coverage and wide-host coverage; all preset token normalization remains covered separately.
+
+## 2026-07-17 - Conditional visibility restore and lazy IP data
+
+### Lifecycle contract
+
+- A hidden transition snapshots the current body, route-specific recovery surface, shared mutation generation, bfcache recovery ID, and time before flushing the blocked-UID cache. A visible transition reloads settings and the shortcut, flushes pending mutation records, and runs one followup-free full refilter only for mutation-generation change, body/surface replacement, semantic filter-setting change, or a suspension of at least five minutes.
+- Shortcut-only and unchanged resumes update caches without a full refilter. Consecutive visible events share one recovery Promise.
+- Persisted pageshow recovery owns an increasing ID plus start/completion time, body, pending state, and success state. A matching visibility cycle waits for that recovery and skips only its own duplicate refilter; the next hidden cycle snapshots the completed ID and must not consume stale recovery state.
+
+### IP allocation contract
+
+- Keep telecom and Korean-range literals behind factories, and keep proxy data as unsplit raw strings. Their getters accept the legacy eager representation for build compatibility but cache only the final Sets after first use.
+- With proxy and telecom filtering off, boot must leave all IP Sets null and must not execute the factories or split proxy strings. Data sizes and insertion-order checksums are regression contracts shared by mobile and PC: telecom `204/ff610dad`, strict proxy `1163/9fdb204e`, aggressive extra `202/ec798217`, and Korean prefixes `2084/3a253dfb`.
+
+### Regression coverage
+
+- Visibility coverage includes clean and shortcut-only skips, settings/long-suspend/surface-replacement single refilters, hidden-DOM immediate filtering, duplicate visible events, persisted-pageshow overlap, stale-token rejection, and twenty deterministic bfcache recoveries with stable Observer/subscriber/UI/timer state.
+- The browser bfcache experiment remains evidence only when the return navigation reports `pageshow.persisted === true`; deterministic dispatch coverage is not reported as a real browser bfcache hit.
+
+## 2026-07-17 - Modify route and target-limited PC palette
+
+### Modify surface contract
+
+- `/board/modify/` is a target route with two DOM states under the same pathname. The non-member gate is identified by `form[name="password_confirm"]` or the `modify_password_submit` action. Live authenticated major-gallery editing instead uses an id-less `form[name="modify"][action*="modify_submit"]`; it is not `form#write`.
+- Preserve the host form action, hidden inputs, password field, and cancel/confirm controls. The mobile pass may restyle the prompt card and hide the trailing `footer.dcfoot`/`#data_info`, but it must not replace or proxy the submission form.
+- Resolve either the standard `form#write` or the route-bound modify form, then add the script-owned `.dcuf-write-form` class and reuse the existing write transformation/CSS without changing the host form id, name, action, or hidden fields. A single central mutation-bus subscription may reconcile a same-document surface swap; do not add a route-specific MutationObserver.
+- The runtime page context exposes `isModify` and `isWriteSurface`. `isWrite` remains true only for `/board/write/`, so password-gate logic cannot be mistaken for an editor before the authenticated modify form exists.
+
+### Palette port contract
+
+- The PC artifact shares the existing `dcuf_mobile_ui_palette` storage key and palette dialog so a user's saved preset remains compatible across targets.
+- The PC builder removes the CSS range between `DCUF_MOBILE_THEME_CSS_START/END`. Only root palette tokens, the explicitly shared DCUF-owned control/popup rail, and the palette dialog may remain; host `.gnb_bar`, `.page_head`, list/view/write, and custom-mobile selectors are forbidden in the PC palette output.
+- Keep every DCUF-owned filter surface palette rule in `DCUF_SHARED_PALETTE_UI_START/END`. Putting drawer, selection prompt, manual-block, management-action, or backup-export rules in the removed mobile range produces a half-themed PC UI even though the base popup CSS still ports successfully.
+- The live mini title badge is `.pagehead_titicon.ngall.sp_img`. Its sprite must be cleared and the visible `mi` label, border, and text must resolve to the active palette accent.
+
+### Regression coverage
+
+- The `write` group covers the modify password gate and the same-path editor response, including preserved form metadata, responsive card geometry, hidden trailing host chrome, one shared mutation subscriber, and reuse of the write transform.
+- Functional coverage asserts the live-shaped `ngall` mini badge and runs the PC artifact to verify palette preview/save on DCUF settings and management controls while host title/chrome CSS remains absent and unchanged.
+
+## 2026-07-17 - 3.4.6 / 1.9.6 stable promotion
+
+- The user confirmed live beta behavior after the authenticated modify-form fix and the PC popup palette completion. Supplied captures show the injected menu in green, orange, and purple plus the five-preset palette dialog without visible clipping.
+- Stable runtime source is unchanged from the confirmed `3.4.6-beta` / `1.9.6-beta`; promotion removes only the version suffix. Under the stable reuse rule, do not rerun the full Testbed solely for the suffix change.
+- Reused post-fix beta coverage: mobile `write` 8/8, mobile management/backup palette 1/1, PC DCUF-owned popup palette 1/1, and `verify-repo all`. The earlier optimization beta run also completed the full mobile and PC suites at 74/74 each before the later live-shaped modify/palette fixtures were added.
+- Manual evidence does not cover every browser/dark-mode combination. Keep deterministic light/dark computed-style coverage as the contract for unobserved combinations.

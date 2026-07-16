@@ -4,7 +4,8 @@
             ['글댓합 설정하기', FilterModule.showSettings.bind(FilterModule)],
             ['차단 유저 관리', PersonalBlockModule.createManagementPanel.bind(PersonalBlockModule)],
             ['플로팅 버튼 원위치', PersonalBlockModule.resetFabPosition.bind(PersonalBlockModule)],
-            ['메뉴 버튼 크기 조절', PersonalBlockModule.showFabScalePanel.bind(PersonalBlockModule)]
+            ['메뉴 버튼 크기 조절', PersonalBlockModule.showFabScalePanel.bind(PersonalBlockModule)],
+            ['UI 색상 설정', ThemeModule.openPaletteDialog.bind(ThemeModule)]
         ];
         menuCommands.forEach(([label, handler]) => {
             try {
@@ -16,8 +17,11 @@
     }
 
     async function reloadShortcutKey() {
-        const shortcutString = await GM_getValue(FilterModule.CONSTANTS.STORAGE_KEYS.SHORTCUT_KEY, 'Shift+S');
-        activeShortcutObject = FilterModule.parseShortcutString(shortcutString);
+        const shortcutString = String(await GM_getValue(FilterModule.CONSTANTS.STORAGE_KEYS.SHORTCUT_KEY, 'Shift+S') || 'Shift+S');
+        const changed = activeShortcutString !== null && activeShortcutString !== shortcutString;
+        activeShortcutString = shortcutString;
+        activeShortcutObject = FilterModule.parseShortcutString(activeShortcutString);
+        return { changed, shortcutString: activeShortcutString };
     }
 
     function observeDarkMode() {

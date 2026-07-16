@@ -8,6 +8,7 @@ This directory runs the built mobile userscript against deterministic local DCIn
 - `/board/view`: article DOM, ordinary comments, replies, detached/rebuilt comment-compatible structures, image comments, related posts, and article ads/iframes
 - `/mgallery/board/lists` and `/mgallery/board/view`: live-sampled minor-gallery variants with 53 seven-cell rows, three host-hidden advertisement/utility rows, `#container.minor_view`, and three image-bearing parent comments; reply items remain an explicitly synthetic optional state
 - `/board/write` and `/mgallery/board/write`: live-probe-backed desktop write forms with guest fields, minor-gallery captcha/category controls, hidden submission fields, Summernote-shaped editor, attachment UI, and local-only submit handling
+- `/board/modify`: live-shaped non-member password gate; add `stage=editor` to serve the write-editor DOM under the same modify pathname
 - `/__testbed/native-write`: responsive native-mobile reference fixture used as a layout and touch-target baseline
 - UID statistics POST mock at `/api/gallog_user_layer/gallog_content_reple/`
 - Local navigation and browser back navigation
@@ -61,8 +62,8 @@ node testbed/run-tests.mjs
 - `--group smoke`: initialization, list mirror creation, article/comment/image-comment/related-list presence
 - `--group functional`: visibility stability, bounded reruns, disabled/delayed/failed UID traffic, scoped comment/list updates, whole-comment rerender, whole-list replacement, duplicate runtime registration, all comment variants, personal block/unblock UI, dark mode, repeated ads, navigation/back, and storage contracts
 - `--group performance`: five 100-comment bursts plus 1,500 article nodes, pass-level timings, processed-target counts, heap trend samples, and JSON comparison metrics
-- `--group write`: live-backed major/minor desktop write forms, current mobile transformation, guest/captcha/category contracts, editor rerender and HTML-mode value retention, duplicate-safe local submission, and native mobile reference layout
-- `run-bfcache.mjs`: current unload opt-out, test-only unload removal, and test-only pagehide/pageshow lifecycle comparison
+- `--group write`: live-backed major/minor desktop write forms, modify password/editor states, current mobile transformation, guest/captcha/category contracts, editor rerender and HTML-mode value retention, duplicate-safe local submission, and native mobile reference layout
+- `run-bfcache.mjs`: production bfcache-eligible lifecycle and test-only pagehide/pageshow cleanup comparison
 - `--filter <text>`: run tests whose Korean name contains the text
 
 Failures are not converted to expected passes. A current release can therefore expose pre-existing regressions; fix or explicitly investigate them before release rather than weakening assertions.
@@ -145,7 +146,7 @@ The accepted raw reports and ON/OFF comparisons are retained under [`evidence/li
 
 ## bfcache experiment isolation
 
-`run-bfcache.mjs` never edits production source or the generated userscript. The loader transforms an in-memory copy only for the `no-unload` and `pagehide` variants. `pageshow.persisted` and memory/navigation data vary by Chromium version and instrumentation, so this experiment reports results without proposing a production lifecycle change.
+`run-bfcache.mjs` never edits production source or the generated userscript. The `current` variant runs the production `pageshow.persisted` recovery as built. The `pagehide` variant disconnects only the shared mutation observer in memory before navigation, then verifies that the same production recovery path rebinds it; the harness does not perform its own refilter. `pageshow.persisted` and memory/navigation data vary by Chromium version and instrumentation, so the experiment records whether the browser actually restored from bfcache. A separate deterministic functional test dispatches a persisted `pageshow` and asserts one coalesced refilter, one list resync, reused observers, and no action for an ordinary pageshow.
 
 ## Adding a fixture
 

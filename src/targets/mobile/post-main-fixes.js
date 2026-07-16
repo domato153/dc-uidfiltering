@@ -7,6 +7,8 @@
     try {
 
 ; (() => {
+    if (!__dcufPageSupports('list-surface')) return;
+
     const STYLE_ID = 'dcuf-phase1-list-theme';
     const DEBUG_KEY = '__DCUF_PHASE1_DEBUG__';
     const css = `
@@ -14,7 +16,7 @@
             --dcuf-fg: #2b3340;
             --dcuf-fg-sub: #4a5566;
             --dcuf-fg-meta: #667285;
-            --dcuf-accent: #245bda;
+            --dcuf-accent: var(--dcuf-theme-accent, #245bda);
             --dcuf-surface: #f6f8fb;
             --dcuf-border: #dfe5ee;
             background: linear-gradient(180deg, #f2f6fb 0%, #f8fafc 100%) !important;
@@ -418,12 +420,12 @@
         .custom-bottom-controls .dcuf-bottom-action-card .on,
         .custom-bottom-controls .dcuf-bottom-action-card button.on,
         .custom-bottom-controls .dcuf-bottom-action-card a.on {
-            border-color: #315fdb !important;
-            background: linear-gradient(180deg, #527df0 0%, #315fdc 100%) !important;
+            border-color: var(--dcuf-theme-accent-strong, #315fdb) !important;
+            background: linear-gradient(180deg, var(--dcuf-theme-primary-top, #527df0) 0%, var(--dcuf-theme-accent-strong, #315fdc) 100%) !important;
             color: #fff !important;
             box-shadow:
                 inset 0 1px 0 rgba(255, 255, 255, 0.28),
-                0 7px 14px rgba(49, 95, 220, 0.24) !important;
+                0 7px 14px var(--dcuf-theme-accent-shadow, rgba(49, 95, 220, 0.24)) !important;
         }
         body:not(.is-write-page) .list_array_option select,
         body:not(.is-write-page) .list_array_option .select_box {
@@ -441,12 +443,12 @@
         .custom-bottom-controls .dcuf-bottom-action-card .write {
             min-width: 92px !important;
             min-height: 44px !important;
-            border-color: #2e5bd4 !important;
-            background: linear-gradient(180deg, #527cf0 0%, #2e5bd4 100%) !important;
+            border-color: var(--dcuf-theme-accent-strong, #2e5bd4) !important;
+            background: linear-gradient(180deg, var(--dcuf-theme-primary-top, #527cf0) 0%, var(--dcuf-theme-accent-strong, #2e5bd4) 100%) !important;
             color: #fff !important;
             box-shadow:
                 inset 0 1px 0 rgba(255, 255, 255, 0.28),
-                0 8px 16px rgba(46, 91, 212, 0.25) !important;
+                0 8px 16px var(--dcuf-theme-accent-shadow, rgba(46, 91, 212, 0.25)) !important;
         }
         .custom-bottom-controls {
             display: flex !important;
@@ -612,10 +614,10 @@
         .custom-bottom-controls .bottom_paging_box > strong,
         .custom-bottom-controls .bottom_paging_box > em,
         .custom-bottom-controls .bottom_paging_box > .on {
-            border-color: #315fdb !important;
-            background: linear-gradient(180deg, #527df0 0%, #315fdc 100%) !important;
+            border-color: var(--dcuf-theme-accent-strong, #315fdb) !important;
+            background: linear-gradient(180deg, var(--dcuf-theme-primary-top, #527df0) 0%, var(--dcuf-theme-accent-strong, #315fdc) 100%) !important;
             color: #fff !important;
-            box-shadow: 0 6px 12px rgba(49, 95, 220, 0.22) !important;
+            box-shadow: 0 6px 12px var(--dcuf-theme-accent-shadow, rgba(49, 95, 220, 0.22)) !important;
         }
         .custom-bottom-controls .dcuf-pagination-card .bottom_movebox {
             display: flex !important;
@@ -659,9 +661,9 @@
             height: 44px !important;
             margin: 0 !important;
             padding: 0 !important;
-            border: 1px solid #2e5bd4 !important;
+            border: 1px solid var(--dcuf-theme-accent-strong, #2e5bd4) !important;
             border-radius: 12px !important;
-            background-color: #3768df !important;
+            background-color: var(--dcuf-theme-accent-strong, #3768df) !important;
             background-image: none !important;
             background-position: 0 0 !important;
             background-repeat: no-repeat !important;
@@ -670,7 +672,7 @@
             line-height: 0 !important;
             text-indent: 0 !important;
             overflow: hidden !important;
-            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 7px 14px rgba(46, 91, 212, 0.24) !important;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 7px 14px var(--dcuf-theme-accent-shadow, rgba(46, 91, 212, 0.24)) !important;
         }
         .custom-bottom-controls[data-dcuf-controls-ready="1"] .dcuf-search-card form[name="frmSearch"] .bnt_search::before,
         .custom-bottom-controls[data-dcuf-controls-ready="1"] .dcuf-search-card form[name="frmSearch"] button.sp_img.bnt_search::before {
@@ -813,10 +815,10 @@
             height: 44px !important;
             margin: 0 !important;
             padding: 0 18px !important;
-            border: 1px solid #2e5bd4 !important;
+            border: 1px solid var(--dcuf-theme-accent-strong, #2e5bd4) !important;
             border-radius: 11px !important;
-            background-color: #2e5bd4 !important;
-            background-image: linear-gradient(180deg, #527cf0 0%, #2e5bd4 100%) !important;
+            background-color: var(--dcuf-theme-accent-strong, #2e5bd4) !important;
+            background-image: linear-gradient(180deg, var(--dcuf-theme-primary-top, #527cf0) 0%, var(--dcuf-theme-accent-strong, #2e5bd4) 100%) !important;
             background-position: 0 0 !important;
             background-repeat: no-repeat !important;
             color: #fff !important;
@@ -942,10 +944,10 @@
         #container.minor_view .view_bottom_btnbox .write,
         #container.mini_view .view_bottom_btnbox .btn_blue,
         #container.mini_view .view_bottom_btnbox .write {
-            border-color: #2e5bd4 !important;
-            background: linear-gradient(180deg, #527cf0 0%, #2e5bd4 100%) !important;
+            border-color: var(--dcuf-theme-accent-strong, #2e5bd4) !important;
+            background: linear-gradient(180deg, var(--dcuf-theme-primary-top, #527cf0) 0%, var(--dcuf-theme-accent-strong, #2e5bd4) 100%) !important;
             color: #fff !important;
-            box-shadow: 0 8px 16px rgba(46, 91, 212, 0.25) !important;
+            box-shadow: 0 8px 16px var(--dcuf-theme-accent-shadow, rgba(46, 91, 212, 0.25)) !important;
         }
 
         .page_head > .fr {
@@ -1161,8 +1163,8 @@
             color: #d2dced !important;
         }
         body.dc-filter-dark-mode .custom-bottom-controls form[name="frmSearch"] input[type="text"] {
-            background: #111722 !important;
-            border-color: #445267 !important;
+            background: var(--dcuf-theme-surface-input, #111722) !important;
+            border-color: var(--dcuf-theme-border-strong, #445267) !important;
             color: #f3f6ff !important;
         }
         body.dc-filter-dark-mode:not(.is-write-page) .list_array_option,
@@ -1172,7 +1174,7 @@
             --dcuf-control-border: #43526a;
             --dcuf-control-surface: linear-gradient(180deg, #263347 0%, #202b3a 100%);
             --dcuf-control-text: #e8eef8;
-            --dcuf-search-input: #111722;
+            --dcuf-search-input: var(--dcuf-theme-surface-input, #111722);
             border-color: #3d4c60 !important;
             background: linear-gradient(180deg, rgba(35, 46, 62, 0.98) 0%, rgba(25, 34, 47, 0.98) 100%) !important;
             box-shadow:
@@ -1200,10 +1202,10 @@
         body.dc-filter-dark-mode .custom-bottom-controls .dcuf-bottom-action-card .on,
         body.dc-filter-dark-mode .custom-bottom-controls .dcuf-bottom-action-card button.on,
         body.dc-filter-dark-mode .custom-bottom-controls .dcuf-bottom-action-card a.on {
-            border-color: #4c7bf0 !important;
-            background: linear-gradient(180deg, #5b86f2 0%, #3868df 100%) !important;
+            border-color: var(--dcuf-theme-accent, #4c7bf0) !important;
+            background: linear-gradient(180deg, var(--dcuf-theme-primary-top, #5b86f2) 0%, var(--dcuf-theme-accent-strong, #3868df) 100%) !important;
             color: #fff !important;
-            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.24), 0 7px 14px rgba(31, 68, 164, 0.4) !important;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.24), 0 7px 14px var(--dcuf-theme-accent-shadow, rgba(31, 68, 164, 0.4)) !important;
         }
 
         body.dc-filter-dark-mode .custom-bottom-controls .bottom_paging_box > a,
@@ -1245,10 +1247,10 @@
         body.dc-filter-dark-mode #container.minor_view .view_bottom_btnbox .write,
         body.dc-filter-dark-mode #container.mini_view .view_bottom_btnbox .btn_blue,
         body.dc-filter-dark-mode #container.mini_view .view_bottom_btnbox .write {
-            border-color: #4c7bf0 !important;
-            background: linear-gradient(180deg, #5b86f2 0%, #3868df 100%) !important;
+            border-color: var(--dcuf-theme-accent, #4c7bf0) !important;
+            background: linear-gradient(180deg, var(--dcuf-theme-primary-top, #5b86f2) 0%, var(--dcuf-theme-accent-strong, #3868df) 100%) !important;
             color: #fff !important;
-            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.24), 0 7px 14px rgba(31, 68, 164, 0.4) !important;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.24), 0 7px 14px var(--dcuf-theme-accent-shadow, rgba(31, 68, 164, 0.4)) !important;
         }
         body.dc-filter-dark-mode:not(.is-write-page) .list_array_option .select_box.array_num > .select_area > a {
             color: #e1e9f5 !important;
@@ -1566,26 +1568,16 @@
     injectStyle({ reason: 'initial' });
     verifyApplied('initial');
 
-    const scheduleVerify = (reason, delay) => {
-        setTimeout(() => verifyApplied(reason), delay);
-    };
-
-    scheduleVerify('after-100ms', 100);
-    scheduleVerify('after-500ms', 500);
-    scheduleVerify('after-1500ms', 1500);
-
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', () => {
             injectStyle({ reason: 'domcontentloaded' });
             verifyApplied('domcontentloaded');
-            scheduleVerify('domcontentloaded+300ms', 300);
         }, { once: true });
     }
 
     window.addEventListener('load', () => {
         injectStyle({ reason: 'window-load' });
         verifyApplied('window-load');
-        scheduleVerify('window-load+300ms', 300);
     }, { once: true });
 })();
 
@@ -1596,27 +1588,27 @@
     const css = `
         .view_content_wrap {
             --dcuf-view-surface: rgba(255, 255, 255, 0.96);
-            --dcuf-view-surface-muted: #f7f9fd;
-            --dcuf-view-border: #d7e0ec;
-            --dcuf-view-border-strong: #c7d3e4;
+            --dcuf-view-surface-muted: var(--dcuf-theme-surface-muted, #f7f9fd);
+            --dcuf-view-border: var(--dcuf-theme-border, #d7e0ec);
+            --dcuf-view-border-strong: var(--dcuf-theme-border-strong, #c7d3e4);
             --dcuf-view-shadow: 0 8px 24px rgba(18, 35, 69, 0.08);
             --dcuf-view-shadow-soft: 0 4px 14px rgba(18, 35, 69, 0.05);
             --dcuf-view-fg: #22324c;
             --dcuf-view-fg-sub: #5f6f86;
-            --dcuf-view-accent: #3f6de0;
+            --dcuf-view-accent: var(--dcuf-theme-accent, #3f6de0);
             padding: 10px 10px 0 !important;
             color: var(--dcuf-view-fg) !important;
         }
         body.dc-filter-dark-mode .view_content_wrap {
             --dcuf-view-surface: #18212d;
-            --dcuf-view-surface-muted: #1e2a39;
-            --dcuf-view-border: #314258;
-            --dcuf-view-border-strong: #45607c;
+            --dcuf-view-surface-muted: var(--dcuf-theme-surface-muted, #1e2a39);
+            --dcuf-view-border: var(--dcuf-theme-border, #314258);
+            --dcuf-view-border-strong: var(--dcuf-theme-border-strong, #45607c);
             --dcuf-view-shadow: 0 10px 24px rgba(0, 0, 0, 0.32);
             --dcuf-view-shadow-soft: 0 6px 18px rgba(0, 0, 0, 0.24);
             --dcuf-view-fg: #edf3ff;
             --dcuf-view-fg-sub: #b6c4d9;
-            --dcuf-view-accent: #8cb4ff;
+            --dcuf-view-accent: var(--dcuf-theme-accent, #8cb4ff);
         }
         .view_content_wrap > header {
             margin-bottom: 12px !important;
@@ -1812,6 +1804,13 @@
             mix-blend-mode: normal !important;
             text-shadow: none !important;
             -webkit-text-stroke: 0 transparent !important;
+        }
+        body.dc-filter-dark-mode .view_content_wrap :is(.gallview_contents, .writing_view_box, .write_div)
+            :is(img, picture, video, canvas) {
+            opacity: 1 !important;
+            filter: none !important;
+            -webkit-filter: none !important;
+            mix-blend-mode: normal !important;
         }
         .view_content_wrap .recommend_kapcode {
             display: flex !important;
@@ -3655,7 +3654,7 @@
             border-top-color: rgba(120, 144, 175, 0.2) !important;
             background: rgba(20, 28, 39, 0.84) !important;
         }
-        /* [?? ??/??? ?? ?? ?????] */
+        /* [댓글 입력·팝업 레이어 overflow 보정] */
         #focus_cmt,
         #focus_cmt > div[id^="comment_wrap_"],
         #focus_cmt > .cmt_write_box,
@@ -3707,7 +3706,7 @@
             left: 0 !important;
             right: 0 !important;
             top: 0 !important;
-            bottom: calc(var(--dcuf-focus-group-extend, 0px) * -1) !important;
+            bottom: 0 !important;
             border-radius: 16px !important;
             background: linear-gradient(180deg, #ffffff 0%, #f7f7f8 100%) !important;
             border: 1px solid rgba(222, 230, 239, 0.92) !important;
@@ -3749,7 +3748,7 @@
         /* fcno 포커스 댓글은 "대댓글만 담긴 top-level li"가 따로 생길 수 있습니다.
            이 wrapper는 카드처럼 보이면 부모/대댓글이 분리돼 보이므로, 시각적으로는 reply 박스처럼 눌러줍니다. */
         #focus_cmt > div[id^="comment_wrap_"] .comment_box .cmt_list > li:has(> .reply.show):not(:has(> .cmt_info)) {
-            margin: -6px 0 12px !important;
+            margin: 8px 0 12px !important;
             padding: 0 !important;
             border: 0 !important;
             border-radius: 0 !important;
@@ -3776,21 +3775,21 @@
         }
         #focus_cmt > div[id^="comment_wrap_"] .comment_box .reply.show {
             margin-top: 10px !important;
-            padding-top: 10px !important;
-            border-top: 1px solid #e3e9f1 !important;
+            padding-top: 0 !important;
+            border-top: 0 !important;
             background: transparent !important;
         }
         #focus_cmt > div[id^="comment_wrap_"] .comment_box .reply_box {
-            margin: 2px 0 0 8px !important;
+            margin: 0 0 0 18px !important;
             padding: 10px 12px 10px 14px !important;
             border: 0 !important;
-            border-left: 1px solid #d7dee8 !important;
+            border-left: 3px solid #d7dee8 !important;
             border-radius: 12px !important;
             background: linear-gradient(180deg, rgba(247, 249, 252, 0.96) 0%, rgba(243, 246, 250, 0.96) 100%) !important;
             box-shadow: inset 0 0 0 1px rgba(211, 220, 232, 0.76) !important;
         }
         #focus_cmt > div[id^="comment_wrap_"] .comment_box .cmt_list > li[data-dcuf-focus-group-reply="1"] {
-            margin: -16px 0 12px !important;
+            margin: 8px 0 12px !important;
             background: transparent !important;
             box-shadow: none !important;
         }
@@ -3800,9 +3799,9 @@
             border-top: 0 !important;
         }
         #focus_cmt > div[id^="comment_wrap_"] .comment_box .cmt_list > li[data-dcuf-focus-group-reply="1"] > .reply.show > .reply_box {
-            margin: -14px 0 0 8px !important;
+            margin: 0 0 0 18px !important;
             padding: 8px 12px 10px 14px !important;
-            border-left: 1px solid #d2dbe7 !important;
+            border-left: 3px solid #d2dbe7 !important;
             border-radius: 12px !important;
             background: linear-gradient(180deg, rgba(244, 247, 251, 0.98) 0%, rgba(239, 243, 248, 0.98) 100%) !important;
             box-shadow: inset 0 0 0 1px rgba(208, 218, 230, 0.84) !important;
@@ -4225,10 +4224,15 @@
         const wrapStyle = window.getComputedStyle(viewWrap);
         const headStyle = window.getComputedStyle(head);
         const contentStyle = window.getComputedStyle(content);
-        const recommendBox = viewWrap.querySelector('.btn_recommend_box');
+        const includeExtendedSurfaces = mode !== 'core';
+        const recommendBox = includeExtendedSurfaces ? viewWrap.querySelector('.btn_recommend_box') : null;
         const recommendBoxStyle = recommendBox instanceof HTMLElement ? window.getComputedStyle(recommendBox) : null;
-        const commentBox = document.querySelector('#focus_cmt .comment_box, div[id^="comment_wrap_"] .comment_box, .view_comment .comment_box');
-        const commentWriteBox = document.querySelector('#focus_cmt > .cmt_write_box, #focus_cmt .cmt_write_box, .view_comment .cmt_write_box');
+        const commentBox = includeExtendedSurfaces
+            ? document.querySelector('#focus_cmt .comment_box, div[id^="comment_wrap_"] .comment_box, .view_comment .comment_box')
+            : null;
+        const commentWriteBox = includeExtendedSurfaces
+            ? document.querySelector('#focus_cmt > .cmt_write_box, #focus_cmt .cmt_write_box, .view_comment .cmt_write_box')
+            : null;
         const commentTextContainer = commentWriteBox instanceof HTMLElement
             ? commentWriteBox.querySelector('.cmt_txt_cont')
             : null;
@@ -4291,29 +4295,29 @@
             failureReason = 'missing-content-elevation';
         } else if (!contentIsWritingBox && contentStyle.backgroundImage === 'none' && isTransparentColor(detail.contentBackgroundColor)) {
             failureReason = 'transparent-content-background';
-        } else if (mode !== 'core' && recommendBox instanceof HTMLElement && detail.recommendBoxRadius < 16) {
+        } else if (includeExtendedSurfaces && recommendBox instanceof HTMLElement && detail.recommendBoxRadius < 16) {
             failureReason = 'insufficient-recommend-radius';
-        } else if (mode !== 'core' && recommendBox instanceof HTMLElement && recommendBoxStyle.boxShadow === 'none') {
+        } else if (includeExtendedSurfaces && recommendBox instanceof HTMLElement && recommendBoxStyle.boxShadow === 'none') {
             failureReason = 'missing-recommend-elevation';
-        } else if (mode !== 'core' && recommendBox instanceof HTMLElement && recommendBoxStyle.backgroundImage === 'none' && isTransparentColor(detail.recommendBoxBackgroundColor)) {
+        } else if (includeExtendedSurfaces && recommendBox instanceof HTMLElement && recommendBoxStyle.backgroundImage === 'none' && isTransparentColor(detail.recommendBoxBackgroundColor)) {
             failureReason = 'transparent-recommend-background';
-        } else if (mode !== 'core' && commentBox instanceof HTMLElement && detail.commentBoxRadius < 16) {
+        } else if (includeExtendedSurfaces && commentBox instanceof HTMLElement && detail.commentBoxRadius < 16) {
             failureReason = 'insufficient-comment-radius';
-        } else if (mode !== 'core' && commentBox instanceof HTMLElement && commentBoxStyle.boxShadow === 'none') {
+        } else if (includeExtendedSurfaces && commentBox instanceof HTMLElement && commentBoxStyle.boxShadow === 'none') {
             failureReason = 'missing-comment-elevation';
-        } else if (mode !== 'core' && commentBox instanceof HTMLElement && commentBoxStyle.backgroundImage === 'none' && isTransparentColor(detail.commentBoxBackgroundColor)) {
+        } else if (includeExtendedSurfaces && commentBox instanceof HTMLElement && commentBoxStyle.backgroundImage === 'none' && isTransparentColor(detail.commentBoxBackgroundColor)) {
             failureReason = 'transparent-comment-background';
-        } else if (mode !== 'core' && commentWriteBox instanceof HTMLElement && detail.commentWriteBoxRadius < 16) {
+        } else if (includeExtendedSurfaces && commentWriteBox instanceof HTMLElement && detail.commentWriteBoxRadius < 16) {
             failureReason = 'insufficient-comment-write-radius';
-        } else if (mode !== 'core' && commentWriteBox instanceof HTMLElement && commentWriteBoxStyle.boxShadow === 'none') {
+        } else if (includeExtendedSurfaces && commentWriteBox instanceof HTMLElement && commentWriteBoxStyle.boxShadow === 'none') {
             failureReason = 'missing-comment-write-elevation';
-        } else if (mode !== 'core' && commentWriteBox instanceof HTMLElement && commentWriteBoxStyle.backgroundImage === 'none' && isTransparentColor(detail.commentWriteBoxBackgroundColor)) {
+        } else if (includeExtendedSurfaces && commentWriteBox instanceof HTMLElement && commentWriteBoxStyle.backgroundImage === 'none' && isTransparentColor(detail.commentWriteBoxBackgroundColor)) {
             failureReason = 'transparent-comment-write-background';
-        } else if (mode !== 'core' && commentTextContainer instanceof HTMLElement && detail.commentTextContainerRadius < 12) {
+        } else if (includeExtendedSurfaces && commentTextContainer instanceof HTMLElement && detail.commentTextContainerRadius < 12) {
             failureReason = 'insufficient-comment-input-radius';
-        } else if (mode !== 'core' && commentTextContainer instanceof HTMLElement && commentTextContainerStyle.backgroundImage === 'none' && isTransparentColor(detail.commentTextContainerBackgroundColor)) {
+        } else if (includeExtendedSurfaces && commentTextContainer instanceof HTMLElement && commentTextContainerStyle.backgroundImage === 'none' && isTransparentColor(detail.commentTextContainerBackgroundColor)) {
             failureReason = 'transparent-comment-input-background';
-        } else if (mode !== 'core' && commentTextContainer instanceof HTMLElement && !detail.commentTextContainerHasRenderableBorder) {
+        } else if (includeExtendedSurfaces && commentTextContainer instanceof HTMLElement && !detail.commentTextContainerHasRenderableBorder) {
             failureReason = 'missing-comment-input-border';
         }
 
@@ -6064,6 +6068,178 @@
 })();
 
 (() => {
+    if (!__dcufPageSupports('modify')) return;
+
+    const STYLE_ID = 'dcuf-mobile-modify-theme';
+    if (document.getElementById(STYLE_ID)) return;
+
+    const css = `
+        body.is-modify-password-page {
+            box-sizing: border-box !important;
+            min-width: 0 !important;
+            margin: 0 !important;
+            background: var(--dcuf-theme-page, #f2f6fb) !important;
+            color: var(--dcuf-theme-fg, #27313f) !important;
+            overflow-x: clip !important;
+        }
+        body.is-modify-password-page #container {
+            box-sizing: border-box !important;
+            width: 100% !important;
+            min-width: 0 !important;
+            min-height: calc(100dvh - 170px) !important;
+            margin: 0 !important;
+            padding: 6px 12px 28px !important;
+            background: transparent !important;
+        }
+        body.is-modify-password-page #container > section {
+            box-sizing: border-box !important;
+            width: min(760px, 100%) !important;
+            min-width: 0 !important;
+            margin: 0 auto !important;
+        }
+        body.is-modify-password-page #container > section > header.page_head {
+            width: 100% !important;
+            margin: 0 !important;
+            padding: 12px 4px !important;
+            border-bottom-color: var(--dcuf-theme-accent, #3f6de0) !important;
+            color: var(--dcuf-theme-accent, #3f6de0) !important;
+        }
+        body.is-modify-password-page form.dcuf-modify-password-form {
+            box-sizing: border-box !important;
+            display: grid !important;
+            width: 100% !important;
+            min-height: min(520px, calc(100dvh - 250px)) !important;
+            margin: 0 !important;
+            padding: 24px 0 !important;
+            place-items: center !important;
+        }
+        body.is-modify-password-page form.dcuf-modify-password-form > article,
+        body.is-modify-password-page form.dcuf-modify-password-form .no_memberwrap,
+        body.is-modify-password-page form.dcuf-modify-password-form .no_member_cont {
+            box-sizing: border-box !important;
+            width: 100% !important;
+            max-width: 520px !important;
+            min-width: 0 !important;
+            height: auto !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            border: 0 !important;
+            background: transparent !important;
+        }
+        body.is-modify-password-page form.dcuf-modify-password-form .no_memberwrap {
+            overflow: hidden !important;
+            border: 1px solid var(--dcuf-theme-border-strong, #cbd2db) !important;
+            border-radius: 20px !important;
+            background: linear-gradient(160deg, var(--dcuf-theme-card-top, #fff), var(--dcuf-theme-card-bottom, #fafbfc)) !important;
+            box-shadow: var(--dcuf-theme-panel-shadow, 0 18px 42px rgba(31, 45, 68, .16)) !important;
+        }
+        body.is-modify-password-page form.dcuf-modify-password-form .no_member_cont .inner {
+            box-sizing: border-box !important;
+            display: grid !important;
+            width: 100% !important;
+            min-width: 0 !important;
+            margin: 0 !important;
+            padding: 30px 26px 24px !important;
+            gap: 16px !important;
+            place-items: stretch !important;
+            text-align: center !important;
+        }
+        body.is-modify-password-page form.dcuf-modify-password-form .no_member_cont .txt {
+            display: block !important;
+            margin: 0 !important;
+            color: var(--dcuf-theme-fg, #27313f) !important;
+            font-size: 17px !important;
+            font-weight: 800 !important;
+            line-height: 1.45 !important;
+        }
+        body.is-modify-password-page form.dcuf-modify-password-form input#password,
+        body.is-modify-password-page form.dcuf-modify-password-form input[name="password"] {
+            box-sizing: border-box !important;
+            display: block !important;
+            width: 100% !important;
+            min-width: 0 !important;
+            height: 50px !important;
+            margin: 0 !important;
+            padding: 0 14px !important;
+            border: 1px solid var(--dcuf-theme-border-strong, #cbd2db) !important;
+            border-radius: 12px !important;
+            outline: 0 !important;
+            background: var(--dcuf-theme-surface-input, #fff) !important;
+            color: var(--dcuf-theme-fg, #27313f) !important;
+            font: 700 17px/1 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+            box-shadow: inset 0 2px 5px color-mix(in srgb, var(--dcuf-theme-accent) 6%, transparent) !important;
+        }
+        body.is-modify-password-page form.dcuf-modify-password-form input#password:focus,
+        body.is-modify-password-page form.dcuf-modify-password-form input[name="password"]:focus {
+            border-color: var(--dcuf-theme-accent, #3f6de0) !important;
+            box-shadow: 0 0 0 3px var(--dcuf-theme-focus-ring, rgba(63, 109, 224, .18)) !important;
+        }
+        body.is-modify-password-page form.dcuf-modify-password-form .btn_box {
+            box-sizing: border-box !important;
+            display: grid !important;
+            grid-template-columns: 1fr 1fr !important;
+            width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            gap: 10px !important;
+        }
+        body.is-modify-password-page form.dcuf-modify-password-form .btn_box > button {
+            box-sizing: border-box !important;
+            width: 100% !important;
+            min-width: 0 !important;
+            min-height: 46px !important;
+            margin: 0 !important;
+            padding: 10px 12px !important;
+            border: 1px solid var(--dcuf-theme-border-strong, #cbd2db) !important;
+            border-radius: 12px !important;
+            background: linear-gradient(180deg, var(--dcuf-theme-card-top, #fff), var(--dcuf-theme-surface-input, #f7f8fa)) !important;
+            color: var(--dcuf-theme-fg, #27313f) !important;
+            font-size: 15px !important;
+            font-weight: 800 !important;
+            line-height: 1.2 !important;
+            cursor: pointer !important;
+        }
+        body.is-modify-password-page form.dcuf-modify-password-form .btn_box > :is(.btn_blue, .btn_ok) {
+            border-color: var(--dcuf-theme-accent-strong, #245bda) !important;
+            background-color: var(--dcuf-theme-accent-strong, #245bda) !important;
+            background-image: linear-gradient(180deg, var(--dcuf-theme-primary-top, #5d87f0), var(--dcuf-theme-accent-strong, #245bda)) !important;
+            color: var(--dcuf-theme-on-accent, #fff) !important;
+            box-shadow: 0 8px 18px var(--dcuf-theme-accent-shadow, rgba(36, 91, 218, .25)) !important;
+        }
+        body.is-modify-password-page footer.dcfoot,
+        body.is-modify-password-page #data_info {
+            display: none !important;
+        }
+        body.is-modify-password-page.dc-filter-dark-mode form.dcuf-modify-password-form .no_memberwrap {
+            box-shadow: 0 20px 46px rgba(0, 0, 0, .44) !important;
+        }
+        @media screen and (max-width: 480px) {
+            body.is-modify-password-page #container { padding: 4px 10px 20px !important; }
+            body.is-modify-password-page form.dcuf-modify-password-form {
+                min-height: calc(100dvh - 220px) !important;
+                padding: 16px 0 !important;
+            }
+            body.is-modify-password-page form.dcuf-modify-password-form .no_member_cont .inner {
+                padding: 24px 18px 18px !important;
+            }
+        }
+    `;
+
+    const injectModifyStyle = () => {
+        if (document.getElementById(STYLE_ID)) return true;
+        const target = document.head || document.documentElement;
+        if (!target) return false;
+        const style = document.createElement('style');
+        style.id = STYLE_ID;
+        style.textContent = css;
+        target.appendChild(style);
+        return true;
+    };
+
+    if (!injectModifyStyle()) document.addEventListener('DOMContentLoaded', injectModifyStyle, { once: true });
+})();
+
+(() => {
     if (!__dcufPageSupports('write')) return;
 
     const STYLE_ID = 'dcuf-mobile-write-theme';
@@ -6081,12 +6257,12 @@
             padding: 0 !important;
             --dcuf-write-fg: #22324c;
             --dcuf-write-fg-sub: #5f6f86;
-            --dcuf-write-accent: #3f6de0;
-            --dcuf-write-accent-strong: #245bda;
+            --dcuf-write-accent: var(--dcuf-theme-accent, #3f6de0);
+            --dcuf-write-accent-strong: var(--dcuf-theme-accent-strong, #245bda);
             --dcuf-write-surface: #ffffff;
-            --dcuf-write-surface-muted: #f6f8fb;
-            --dcuf-write-border: #d7e0ec;
-            --dcuf-write-border-strong: #c7d3e4;
+            --dcuf-write-surface-muted: var(--dcuf-theme-surface-muted, #f6f8fb);
+            --dcuf-write-border: var(--dcuf-theme-border, #d7e0ec);
+            --dcuf-write-border-strong: var(--dcuf-theme-border-strong, #c7d3e4);
             --dcuf-write-shadow: 0 8px 24px rgba(18, 35, 69, 0.08);
             background: #f2f6fb !important;
             overflow-x: clip !important;
@@ -6094,12 +6270,12 @@
         body.is-write-page.dc-filter-dark-mode {
             --dcuf-write-fg: #edf3ff;
             --dcuf-write-fg-sub: #b6c4d9;
-            --dcuf-write-accent: #8cb4ff;
-            --dcuf-write-accent-strong: #6f9dff;
+            --dcuf-write-accent: var(--dcuf-theme-accent, #8cb4ff);
+            --dcuf-write-accent-strong: var(--dcuf-theme-accent-strong, #6f9dff);
             --dcuf-write-surface: #18212d;
-            --dcuf-write-surface-muted: #1e2a39;
-            --dcuf-write-border: #314258;
-            --dcuf-write-border-strong: #45607c;
+            --dcuf-write-surface-muted: var(--dcuf-theme-surface-muted, #1e2a39);
+            --dcuf-write-border: var(--dcuf-theme-border, #314258);
+            --dcuf-write-border-strong: var(--dcuf-theme-border-strong, #45607c);
             --dcuf-write-shadow: 0 10px 24px rgba(0, 0, 0, 0.32);
             background: #121922 !important;
         }
@@ -6148,7 +6324,7 @@
             background: transparent !important;
             overflow: visible !important;
         }
-        body.is-write-page form#write {
+        body.is-write-page form.dcuf-write-form {
             box-sizing: border-box !important;
             display: block !important;
             width: min(100%, 1120px) !important;
@@ -6162,12 +6338,12 @@
             box-shadow: var(--dcuf-write-shadow) !important;
             overflow: visible !important;
         }
-        body.is-write-page form#write *:not(.pop_wrap):not(.pop_wrap *):not(.note-dropdown-menu):not(.note-dropdown-menu *):not(.note-popover):not(.note-popover *):not(.note-modal):not(.note-modal *),
-        body.is-write-page form#write *:not(.pop_wrap):not(.pop_wrap *):not(.note-dropdown-menu):not(.note-dropdown-menu *):not(.note-popover):not(.note-popover *):not(.note-modal):not(.note-modal *)::before,
-        body.is-write-page form#write *:not(.pop_wrap):not(.pop_wrap *):not(.note-dropdown-menu):not(.note-dropdown-menu *):not(.note-popover):not(.note-popover *):not(.note-modal):not(.note-modal *)::after {
+        body.is-write-page form.dcuf-write-form *:not(.pop_wrap):not(.pop_wrap *):not(.note-dropdown-menu):not(.note-dropdown-menu *):not(.note-popover):not(.note-popover *):not(.note-modal):not(.note-modal *),
+        body.is-write-page form.dcuf-write-form *:not(.pop_wrap):not(.pop_wrap *):not(.note-dropdown-menu):not(.note-dropdown-menu *):not(.note-popover):not(.note-popover *):not(.note-modal):not(.note-modal *)::before,
+        body.is-write-page form.dcuf-write-form *:not(.pop_wrap):not(.pop_wrap *):not(.note-dropdown-menu):not(.note-dropdown-menu *):not(.note-popover):not(.note-popover *):not(.note-modal):not(.note-modal *)::after {
             box-sizing: border-box;
         }
-        body.is-write-page form#write .dcuf-write-decoy-input {
+        body.is-write-page form.dcuf-write-form .dcuf-write-decoy-input {
             width: 0 !important;
             height: 0 !important;
             min-width: 0 !important;
@@ -6179,7 +6355,7 @@
             opacity: 0 !important;
             pointer-events: none !important;
         }
-        body.is-write-page form#write .dcuf-write-fields {
+        body.is-write-page form.dcuf-write-form .dcuf-write-fields {
             display: grid !important;
             grid-template-columns: repeat(2, minmax(0, 1fr));
             gap: 8px !important;
@@ -6189,30 +6365,30 @@
             padding: 0 !important;
             border: 0 !important;
         }
-        body.is-write-page form#write .dcuf-write-fields > legend {
+        body.is-write-page form.dcuf-write-form .dcuf-write-fields > legend {
             position: absolute !important;
             width: 1px !important;
             height: 1px !important;
             overflow: hidden !important;
             clip-path: inset(50%) !important;
         }
-        body.is-write-page form#write .dcuf-write-guest-field,
-        body.is-write-page form#write .dcuf-write-subject-field,
-        body.is-write-page form#write .dcuf-write-captcha-image {
+        body.is-write-page form.dcuf-write-form .dcuf-write-guest-field,
+        body.is-write-page form.dcuf-write-form .dcuf-write-subject-field,
+        body.is-write-page form.dcuf-write-form .dcuf-write-captcha-image {
             width: 100% !important;
             min-width: 0 !important;
             margin: 0 !important;
             float: none !important;
         }
-        body.is-write-page form#write .dcuf-write-subject-field,
-        body.is-write-page form#write .dcuf-write-fields > .write_subject,
-        body.is-write-page form#write .dcuf-write-fields > [style*="clear"] {
+        body.is-write-page form.dcuf-write-form .dcuf-write-subject-field,
+        body.is-write-page form.dcuf-write-form .dcuf-write-fields > .write_subject,
+        body.is-write-page form.dcuf-write-form .dcuf-write-fields > [style*="clear"] {
             grid-column: 1 / -1;
         }
-        body.is-write-page form#write .dcuf-write-fields > [style*="clear"] {
+        body.is-write-page form.dcuf-write-form .dcuf-write-fields > [style*="clear"] {
             display: none !important;
         }
-        body.is-write-page form#write .dcuf-write-captcha-image {
+        body.is-write-page form.dcuf-write-form .dcuf-write-captcha-image {
             display: flex !important;
             align-items: center !important;
             justify-content: center !important;
@@ -6222,15 +6398,15 @@
             border-radius: 9px !important;
             background: var(--dcuf-write-surface-muted) !important;
         }
-        body.is-write-page form#write .dcuf-write-captcha-image img {
+        body.is-write-page form.dcuf-write-form .dcuf-write-captcha-image img {
             display: block !important;
             width: auto !important;
             max-width: 100% !important;
             height: 38px !important;
             object-fit: contain !important;
         }
-        body.is-write-page form#write .w_top,
-        body.is-write-page form#write .w_top > tbody {
+        body.is-write-page form.dcuf-write-form .w_top,
+        body.is-write-page form.dcuf-write-form .w_top > tbody {
             display: block !important;
             width: 100% !important;
             min-width: 0 !important;
@@ -6238,28 +6414,28 @@
             border: 0 !important;
             border-spacing: 0 !important;
         }
-        body.is-write-page form#write .w_top > tbody > tr {
+        body.is-write-page form.dcuf-write-form .w_top > tbody > tr {
             width: 100% !important;
             min-width: 0 !important;
             margin: 0 0 10px !important;
             padding: 0 !important;
             border: 0 !important;
         }
-        body.is-write-page form#write .dcuf-write-subject-row {
+        body.is-write-page form.dcuf-write-form .dcuf-write-subject-row {
             display: grid !important;
             grid-template-columns: 58px minmax(0, 1fr);
             align-items: center;
             gap: 8px;
         }
-        body.is-write-page form#write .user_info_box {
+        body.is-write-page form.dcuf-write-form .user_info_box {
             display: grid !important;
             grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
             gap: 8px;
         }
-        body.is-write-page form#write .dcuf-write-subject-row > th,
-        body.is-write-page form#write .dcuf-write-subject-row > td,
-        body.is-write-page form#write .user_info_box > th,
-        body.is-write-page form#write .user_info_box > td {
+        body.is-write-page form.dcuf-write-form .dcuf-write-subject-row > th,
+        body.is-write-page form.dcuf-write-form .dcuf-write-subject-row > td,
+        body.is-write-page form.dcuf-write-form .user_info_box > th,
+        body.is-write-page form.dcuf-write-form .user_info_box > td {
             display: block !important;
             width: auto !important;
             min-width: 0 !important;
@@ -6268,22 +6444,22 @@
             border: 0 !important;
             color: var(--dcuf-write-fg-sub) !important;
         }
-        body.is-write-page form#write .user_info_box > th {
+        body.is-write-page form.dcuf-write-form .user_info_box > th {
             position: absolute !important;
             width: 1px !important;
             height: 1px !important;
             overflow: hidden !important;
             clip-path: inset(50%) !important;
         }
-        body.is-write-page form#write .user_info_box > .fixture-captcha-cell,
-        body.is-write-page form#write .user_info_box > td:has(.captcha) {
+        body.is-write-page form.dcuf-write-form .user_info_box > .fixture-captcha-cell,
+        body.is-write-page form.dcuf-write-form .user_info_box > td:has(.captcha) {
             grid-column: 1 / -1;
         }
-        body.is-write-page form#write #subject,
-        body.is-write-page form#write #name,
-        body.is-write-page form#write #password,
-        body.is-write-page form#write #code,
-        body.is-write-page form#write select:not(.pop_wrap *):not(.note-dropdown-menu *):not(.note-popover *):not(.note-modal *) {
+        body.is-write-page form.dcuf-write-form #subject,
+        body.is-write-page form.dcuf-write-form #name,
+        body.is-write-page form.dcuf-write-form #password,
+        body.is-write-page form.dcuf-write-form #code,
+        body.is-write-page form.dcuf-write-form select:not(.pop_wrap *):not(.note-dropdown-menu *):not(.note-popover *):not(.note-modal *) {
             width: 100% !important;
             max-width: 100% !important;
             min-width: 0 !important;
@@ -6297,14 +6473,14 @@
             font-size: 16px !important;
             line-height: 1.2 !important;
         }
-        body.is-write-page form#write input:not(.pop_wrap *):not(.note-dropdown-menu *):not(.note-popover *):not(.note-modal *):focus,
-        body.is-write-page form#write select:not(.pop_wrap *):not(.note-dropdown-menu *):not(.note-popover *):not(.note-modal *):focus,
-        body.is-write-page form#write .note-editable:focus,
-        body.is-write-page form#write .note-codable:focus {
+        body.is-write-page form.dcuf-write-form input:not(.pop_wrap *):not(.note-dropdown-menu *):not(.note-popover *):not(.note-modal *):focus,
+        body.is-write-page form.dcuf-write-form select:not(.pop_wrap *):not(.note-dropdown-menu *):not(.note-popover *):not(.note-modal *):focus,
+        body.is-write-page form.dcuf-write-form .note-editable:focus,
+        body.is-write-page form.dcuf-write-form .note-codable:focus {
             border-color: var(--dcuf-write-accent) !important;
             box-shadow: 0 0 0 3px color-mix(in srgb, var(--dcuf-write-accent) 18%, transparent) !important;
         }
-        body.is-write-page form#write .captcha {
+        body.is-write-page form.dcuf-write-form .captcha {
             display: grid !important;
             grid-template-columns: minmax(108px, 0.42fr) minmax(0, 1fr);
             align-items: center !important;
@@ -6316,15 +6492,15 @@
             border-radius: 10px !important;
             background: var(--dcuf-write-surface-muted) !important;
         }
-        body.is-write-page form#write .captcha label {
+        body.is-write-page form.dcuf-write-form .captcha label {
             position: absolute !important;
             width: 1px !important;
             height: 1px !important;
             overflow: hidden !important;
             clip-path: inset(50%) !important;
         }
-        body.is-write-page form#write .captcha .fixture-captcha-image,
-        body.is-write-page form#write .captcha img {
+        body.is-write-page form.dcuf-write-form .captcha .fixture-captcha-image,
+        body.is-write-page form.dcuf-write-form .captcha img {
             width: 100% !important;
             max-width: 100% !important;
             min-width: 0 !important;
@@ -6332,7 +6508,7 @@
             object-fit: contain !important;
             border-radius: 7px !important;
         }
-        body.is-write-page form#write .write_subject {
+        body.is-write-page form.dcuf-write-form .write_subject {
             display: flex !important;
             flex-wrap: nowrap !important;
             align-items: center !important;
@@ -6348,10 +6524,10 @@
             position: relative !important;
             overflow: visible !important;
         }
-        body.is-write-page form#write .write_subject > * {
+        body.is-write-page form.dcuf-write-form .write_subject > * {
             flex: 0 0 auto !important;
         }
-        body.is-write-page form#write .write_subject .subject_list {
+        body.is-write-page form.dcuf-write-form .write_subject .subject_list {
             display: flex !important;
             flex-wrap: nowrap !important;
             align-items: center !important;
@@ -6376,17 +6552,17 @@
             cursor: grab;
             user-select: none;
         }
-        body.is-write-page form#write .write_subject .subject_list.dcuf-headtext-dragging {
+        body.is-write-page form.dcuf-write-form .write_subject .subject_list.dcuf-headtext-dragging {
             cursor: grabbing;
             scroll-behavior: auto;
             scroll-snap-type: none;
         }
-        body.is-write-page form#write .write_subject .subject_list::-webkit-scrollbar {
+        body.is-write-page form.dcuf-write-form .write_subject .subject_list::-webkit-scrollbar {
             display: none !important;
             width: 0 !important;
             height: 0 !important;
         }
-        body.is-write-page form#write .write_subject .subject_list > li {
+        body.is-write-page form.dcuf-write-form .write_subject .subject_list > li {
             display: inline-flex !important;
             align-items: center !important;
             justify-content: center !important;
@@ -6402,7 +6578,7 @@
             border-radius: 999px !important;
             cursor: pointer;
         }
-        body.is-write-page form#write .write_subject .subject_list > li .tip_box2 {
+        body.is-write-page form.dcuf-write-form .write_subject .subject_list > li .tip_box2 {
             position: fixed !important;
             left: var(--dcuf-headtext-tip-left, 8px) !important;
             top: var(--dcuf-headtext-tip-top, 8px) !important;
@@ -6411,19 +6587,19 @@
             z-index: 1200 !important;
             max-width: min(320px, var(--dcuf-headtext-tip-max-width, calc(100vw - 16px))) !important;
         }
-        body.is-write-page form#write .write_subject_label {
+        body.is-write-page form.dcuf-write-form .write_subject_label {
             padding: 0 6px !important;
             color: var(--dcuf-write-fg-sub) !important;
             font-weight: 700 !important;
         }
-        body.is-write-page form#write .write_subject > .tit {
+        body.is-write-page form.dcuf-write-form .write_subject > .tit {
             padding: 0 6px !important;
             color: var(--dcuf-write-fg-sub) !important;
             font-weight: 700 !important;
         }
-        body.is-write-page form#write .write_subject > button,
-        body.is-write-page form#write .write_subject .subject_list > li > button,
-        body.is-write-page form#write [data-headtext] {
+        body.is-write-page form.dcuf-write-form .write_subject > button,
+        body.is-write-page form.dcuf-write-form .write_subject .subject_list > li > button,
+        body.is-write-page form.dcuf-write-form [data-headtext] {
             min-width: 48px !important;
             min-height: 38px !important;
             padding: 0 12px !important;
@@ -6432,95 +6608,95 @@
             background: var(--dcuf-write-surface) !important;
             color: var(--dcuf-write-fg-sub) !important;
         }
-        body.is-write-page form#write .write_subject > button.active,
-        body.is-write-page form#write .write_subject .subject_list > li > button.active,
-        body.is-write-page form#write [data-headtext].active {
+        body.is-write-page form.dcuf-write-form .write_subject > button.active,
+        body.is-write-page form.dcuf-write-form .write_subject .subject_list > li > button.active,
+        body.is-write-page form.dcuf-write-form [data-headtext].active {
             border-color: var(--dcuf-write-accent-strong) !important;
             background: var(--dcuf-write-accent-strong) !important;
             color: #fff !important;
         }
-        body.is-write-page form#write .editor_wrap,
-        body.is-write-page form#write .note-editor,
-        body.is-write-page form#write .note-editing-area {
+        body.is-write-page form.dcuf-write-form .editor_wrap,
+        body.is-write-page form.dcuf-write-form .note-editor,
+        body.is-write-page form.dcuf-write-form .note-editing-area {
             width: 100% !important;
             max-width: 100% !important;
             min-width: 0 !important;
         }
-        body.is-write-page form#write .editor_wrap,
-        body.is-write-page form#write .note-editor {
+        body.is-write-page form.dcuf-write-form .editor_wrap,
+        body.is-write-page form.dcuf-write-form .note-editor {
             border: 1px solid var(--dcuf-write-border-strong) !important;
             border-radius: 10px !important;
             background: var(--dcuf-write-surface) !important;
             position: relative !important;
             overflow: visible !important;
         }
-        body.is-write-page form#write .note-toolbar,
-        body.is-write-page form#write .note-toolbar-media {
+        body.is-write-page form.dcuf-write-form .note-toolbar,
+        body.is-write-page form.dcuf-write-form .note-toolbar-media {
             position: relative !important;
             z-index: 3 !important;
             border-radius: 13px 13px 0 0 !important;
         }
-        body.is-write-page form#write .note-editing-area {
+        body.is-write-page form.dcuf-write-form .note-editing-area {
             position: relative !important;
             z-index: 0 !important;
             overflow: hidden !important;
         }
-        body.is-write-page form#write .note-statusbar {
+        body.is-write-page form.dcuf-write-form .note-statusbar {
             border-radius: 0 0 13px 13px !important;
         }
-        body.is-write-page form#write .write_subject .toast,
-        body.is-write-page form#write .write_subject [role="alert"] {
+        body.is-write-page form.dcuf-write-form .write_subject .toast,
+        body.is-write-page form.dcuf-write-form .write_subject [role="alert"] {
             z-index: 1000 !important;
             max-width: calc(100vw - 24px) !important;
             visibility: visible;
             pointer-events: auto;
         }
-        body.is-write-page form#write .write_subject .tip_box2:not(.dcuf-headtext-tip-positioned) {
+        body.is-write-page form.dcuf-write-form .write_subject .tip_box2:not(.dcuf-headtext-tip-positioned) {
             visibility: hidden !important;
             pointer-events: none !important;
         }
-        body.is-write-page form#write .write_subject .tip_box2.dcuf-headtext-tip-positioned {
+        body.is-write-page form.dcuf-write-form .write_subject .tip_box2.dcuf-headtext-tip-positioned {
             visibility: visible !important;
             pointer-events: auto !important;
         }
-        body.is-write-page form#write .note-toolbar :is(.note-dropdown-menu, .pop_wrap):not(.dcuf-editor-layer-positioned) {
+        body.is-write-page form.dcuf-write-form .note-toolbar :is(.note-dropdown-menu, .pop_wrap):not(.dcuf-editor-layer-positioned) {
             visibility: hidden !important;
             pointer-events: none !important;
         }
-        body.is-write-page form#write .note-toolbar :is(.note-dropdown-menu, .pop_wrap).dcuf-editor-layer-positioned {
+        body.is-write-page form.dcuf-write-form .note-toolbar :is(.note-dropdown-menu, .pop_wrap).dcuf-editor-layer-positioned {
             visibility: visible !important;
             pointer-events: auto !important;
         }
-        body.is-write-page form#write .note-toolbar .pop_wrap.dcuf-editor-layer-positioned {
+        body.is-write-page form.dcuf-write-form .note-toolbar .pop_wrap.dcuf-editor-layer-positioned {
             position: fixed !important;
             zoom: var(--dcuf-write-desktop-site-inverse-scale, 1);
         }
-        body.is-write-page form#write .note-toolbar .note-dropdown-menu.dcuf-editor-layer-positioned {
+        body.is-write-page form.dcuf-write-form .note-toolbar .note-dropdown-menu.dcuf-editor-layer-positioned {
             position: fixed !important;
             zoom: 1 !important;
         }
-        body.is-write-page form#write .note-toolbar :is(.note-dropdown-menu, .pop_wrap).dcuf-editor-layer-positioned {
+        body.is-write-page form.dcuf-write-form .note-toolbar :is(.note-dropdown-menu, .pop_wrap).dcuf-editor-layer-positioned {
             left: var(--dcuf-editor-layer-left) !important;
             top: var(--dcuf-editor-layer-top) !important;
             right: auto !important;
             bottom: auto !important;
             z-index: 2147483647 !important;
         }
-        body.is-write-page form#write .note-toolbar .note-dropdown-menu.dcuf-editor-layer-positioned {
+        body.is-write-page form.dcuf-write-form .note-toolbar .note-dropdown-menu.dcuf-editor-layer-positioned {
             max-width: var(--dcuf-editor-layer-max-width) !important;
             max-height: var(--dcuf-editor-layer-max-height) !important;
             overflow: auto !important;
             overscroll-behavior: contain !important;
             -webkit-overflow-scrolling: touch !important;
         }
-        body.is-write-page.dcuf-write-mobile-font-menu form#write .note-toolbar .note-fontname button.dropdown-toggle,
-        body.is-write-page.dcuf-write-mobile-font-menu form#write .note-toolbar .note-fontname button.note-btn {
+        body.is-write-page.dcuf-write-mobile-font-menu form.dcuf-write-form .note-toolbar .note-fontname button.dropdown-toggle,
+        body.is-write-page.dcuf-write-mobile-font-menu form.dcuf-write-form .note-toolbar .note-fontname button.note-btn {
             width: auto !important;
             min-width: 88px !important;
             max-width: 132px !important;
             flex: 0 0 auto !important;
         }
-        body.is-write-page form#write .note-toolbar .note-current-fontname {
+        body.is-write-page form.dcuf-write-form .note-toolbar .note-current-fontname {
             display: inline-block !important;
             min-width: 42px !important;
             max-width: 88px !important;
@@ -6533,15 +6709,15 @@
             opacity: 1 !important;
             visibility: visible !important;
         }
-        body.is-write-page form#write .note-toolbar .note-current-fontname:empty::before {
+        body.is-write-page form.dcuf-write-form .note-toolbar .note-current-fontname:empty::before {
             content: "글꼴";
             color: inherit !important;
             -webkit-text-fill-color: currentColor !important;
         }
-        body.is-write-page form#write .note-toolbar-media,
-        body.is-write-page form#write .note-toolbar,
-        body.is-write-page form#write .tx-toolbar-basic,
-        body.is-write-page form#write .btns-box {
+        body.is-write-page form.dcuf-write-form .note-toolbar-media,
+        body.is-write-page form.dcuf-write-form .note-toolbar,
+        body.is-write-page form.dcuf-write-form .tx-toolbar-basic,
+        body.is-write-page form.dcuf-write-form .btns-box {
             display: flex !important;
             flex-wrap: wrap !important;
             align-items: center !important;
@@ -6555,15 +6731,15 @@
             background: var(--dcuf-write-surface-muted) !important;
             overflow: visible !important;
         }
-        body.is-write-page form#write .note-toolbar-media > :not(.pop_wrap):not(.note-dropdown-menu):not(.note-popover):not(.note-modal),
-        body.is-write-page form#write .note-toolbar > :not(.pop_wrap):not(.note-dropdown-menu):not(.note-popover):not(.note-modal),
-        body.is-write-page form#write .tx-toolbar-basic > *,
-        body.is-write-page form#write .btns-box > * {
+        body.is-write-page form.dcuf-write-form .note-toolbar-media > :not(.pop_wrap):not(.note-dropdown-menu):not(.note-popover):not(.note-modal),
+        body.is-write-page form.dcuf-write-form .note-toolbar > :not(.pop_wrap):not(.note-dropdown-menu):not(.note-popover):not(.note-modal),
+        body.is-write-page form.dcuf-write-form .tx-toolbar-basic > *,
+        body.is-write-page form.dcuf-write-form .btns-box > * {
             flex: 0 0 auto !important;
         }
-        body.is-write-page form#write .note-toolbar-media,
-        body.is-write-page form#write .note-toolbar,
-        body.is-write-page form#write .tx-toolbar-basic {
+        body.is-write-page form.dcuf-write-form .note-toolbar-media,
+        body.is-write-page form.dcuf-write-form .note-toolbar,
+        body.is-write-page form.dcuf-write-form .tx-toolbar-basic {
             flex-wrap: nowrap !important;
             overflow-x: auto !important;
             overflow-y: hidden !important;
@@ -6576,24 +6752,24 @@
             cursor: grab;
             user-select: none;
         }
-        body.is-write-page form#write :is(.note-toolbar-media, .note-toolbar, .tx-toolbar-basic).dcuf-editor-toolbar-dragging {
+        body.is-write-page form.dcuf-write-form :is(.note-toolbar-media, .note-toolbar, .tx-toolbar-basic).dcuf-editor-toolbar-dragging {
             scroll-behavior: auto;
             cursor: grabbing;
         }
-        body.is-write-page form#write :is(.note-toolbar-media, .note-toolbar, .tx-toolbar-basic)::-webkit-scrollbar {
+        body.is-write-page form.dcuf-write-form :is(.note-toolbar-media, .note-toolbar, .tx-toolbar-basic)::-webkit-scrollbar {
             display: none !important;
             width: 0 !important;
             height: 0 !important;
         }
-        body.is-write-page form#write .note-toolbar > .note-btn,
-        body.is-write-page form#write .note-toolbar > button,
-        body.is-write-page form#write .note-toolbar > input[type="button"],
-        body.is-write-page form#write .note-toolbar .note-btn-group > .note-btn:not(.pop_wrap *):not(.note-dropdown-menu *):not(.note-popover *):not(.note-modal *),
-        body.is-write-page form#write .note-toolbar .note-btn-group > button:not(.pop_wrap *):not(.note-dropdown-menu *):not(.note-popover *):not(.note-modal *),
-        body.is-write-page form#write .note-toolbar .note-btn-group > input[type="button"]:not(.pop_wrap *):not(.note-dropdown-menu *):not(.note-popover *):not(.note-modal *),
-        body.is-write-page form#write .note-toolbar-media > .note-btn,
-        body.is-write-page form#write .note-toolbar-media > button,
-        body.is-write-page form#write .btns-box button:not(.pop_wrap *):not(.note-dropdown-menu *):not(.note-popover *):not(.note-modal *) {
+        body.is-write-page form.dcuf-write-form .note-toolbar > .note-btn,
+        body.is-write-page form.dcuf-write-form .note-toolbar > button,
+        body.is-write-page form.dcuf-write-form .note-toolbar > input[type="button"],
+        body.is-write-page form.dcuf-write-form .note-toolbar .note-btn-group > .note-btn:not(.pop_wrap *):not(.note-dropdown-menu *):not(.note-popover *):not(.note-modal *),
+        body.is-write-page form.dcuf-write-form .note-toolbar .note-btn-group > button:not(.pop_wrap *):not(.note-dropdown-menu *):not(.note-popover *):not(.note-modal *),
+        body.is-write-page form.dcuf-write-form .note-toolbar .note-btn-group > input[type="button"]:not(.pop_wrap *):not(.note-dropdown-menu *):not(.note-popover *):not(.note-modal *),
+        body.is-write-page form.dcuf-write-form .note-toolbar-media > .note-btn,
+        body.is-write-page form.dcuf-write-form .note-toolbar-media > button,
+        body.is-write-page form.dcuf-write-form .btns-box button:not(.pop_wrap *):not(.note-dropdown-menu *):not(.note-popover *):not(.note-modal *) {
             min-width: 38px !important;
             min-height: 38px !important;
             padding: 0 9px !important;
@@ -6602,14 +6778,14 @@
             background: var(--dcuf-write-surface) !important;
             color: var(--dcuf-write-fg) !important;
         }
-        body.is-write-page form#write .note-toolbar > .note-btn-danger,
-        body.is-write-page form#write .note-toolbar .note-btn-group > .note-btn-danger:not(.pop_wrap *):not(.note-dropdown-menu *):not(.note-popover *):not(.note-modal *),
-        body.is-write-page form#write .note-toolbar-media > .note-btn-danger {
+        body.is-write-page form.dcuf-write-form .note-toolbar > .note-btn-danger,
+        body.is-write-page form.dcuf-write-form .note-toolbar .note-btn-group > .note-btn-danger:not(.pop_wrap *):not(.note-dropdown-menu *):not(.note-popover *):not(.note-modal *),
+        body.is-write-page form.dcuf-write-form .note-toolbar-media > .note-btn-danger {
             border-color: #d5525b !important;
             background: #d5525b !important;
             color: #fff !important;
         }
-        body.is-write-page form#write .write-html-toggle {
+        body.is-write-page form.dcuf-write-form .write-html-toggle {
             display: inline-flex !important;
             align-items: center !important;
             gap: 5px !important;
@@ -6619,8 +6795,8 @@
             color: var(--dcuf-write-fg-sub) !important;
             white-space: nowrap !important;
         }
-        body.is-write-page form#write .note-editable,
-        body.is-write-page form#write .note-codable {
+        body.is-write-page form.dcuf-write-form .note-editable,
+        body.is-write-page form.dcuf-write-form .note-codable {
             width: 100% !important;
             max-width: 100% !important;
             min-width: 0 !important;
@@ -6636,29 +6812,29 @@
             resize: vertical !important;
             overflow-wrap: anywhere !important;
         }
-        body.is-write-page form#write .note-editable {
+        body.is-write-page form.dcuf-write-form .note-editable {
             display: block !important;
         }
-        body.is-write-page form#write .note-codable {
+        body.is-write-page form.dcuf-write-form .note-codable {
             display: none !important;
         }
-        body.is-write-page form#write .note-editor.codeview .note-editable,
-        body.is-write-page form#write .note-editor.fixture-html-mode .note-editable,
-        body.is-write-page form#write .note-editable[hidden],
-        body.is-write-page form#write .note-codable[hidden] {
+        body.is-write-page form.dcuf-write-form .note-editor.codeview .note-editable,
+        body.is-write-page form.dcuf-write-form .note-editor.fixture-html-mode .note-editable,
+        body.is-write-page form.dcuf-write-form .note-editable[hidden],
+        body.is-write-page form.dcuf-write-form .note-codable[hidden] {
             display: none !important;
         }
-        body.is-write-page form#write .note-editor.codeview .note-codable,
-        body.is-write-page form#write .note-editor.fixture-html-mode .note-codable {
+        body.is-write-page form.dcuf-write-form .note-editor.codeview .note-codable,
+        body.is-write-page form.dcuf-write-form .note-editor.fixture-html-mode .note-codable {
             display: block !important;
         }
-        body.is-write-page form#write .note-statusbar {
+        body.is-write-page form.dcuf-write-form .note-statusbar {
             border-color: var(--dcuf-write-border) !important;
             background: var(--dcuf-write-surface-muted) !important;
         }
-        body.is-write-page form#write .fixture-attachment-panel,
-        body.is-write-page form#write [class*="file_upload"]:not(.pop_wrap *):not(.note-dropdown-menu *):not(.note-popover *):not(.note-modal *),
-        body.is-write-page form#write .upload-img-lst:not(.pop_wrap *):not(.note-dropdown-menu *):not(.note-popover *):not(.note-modal *) {
+        body.is-write-page form.dcuf-write-form .fixture-attachment-panel,
+        body.is-write-page form.dcuf-write-form [class*="file_upload"]:not(.pop_wrap *):not(.note-dropdown-menu *):not(.note-popover *):not(.note-modal *),
+        body.is-write-page form.dcuf-write-form .upload-img-lst:not(.pop_wrap *):not(.note-dropdown-menu *):not(.note-popover *):not(.note-modal *) {
             width: 100% !important;
             max-width: 100% !important;
             min-width: 0 !important;
@@ -6669,30 +6845,30 @@
             background: var(--dcuf-write-surface-muted) !important;
             overflow: hidden !important;
         }
-        body.is-write-page form#write input[type="file"]:not(.pop_wrap *):not(.note-dropdown-menu *):not(.note-popover *):not(.note-modal *) {
+        body.is-write-page form.dcuf-write-form input[type="file"]:not(.pop_wrap *):not(.note-dropdown-menu *):not(.note-popover *):not(.note-modal *) {
             width: 100% !important;
             max-width: 100% !important;
             min-height: 38px !important;
             color: var(--dcuf-write-fg-sub) !important;
         }
-        body.is-write-page form#write .fixture-attachment-list,
-        body.is-write-page form#write .upload-img-lst:not(.pop_wrap *):not(.note-dropdown-menu *):not(.note-popover *):not(.note-modal *) ul {
+        body.is-write-page form.dcuf-write-form .fixture-attachment-list,
+        body.is-write-page form.dcuf-write-form .upload-img-lst:not(.pop_wrap *):not(.note-dropdown-menu *):not(.note-popover *):not(.note-modal *) ul {
             min-width: 0 !important;
             overflow-wrap: anywhere !important;
         }
-        body.is-write-page form#write .fixture-attachment {
+        body.is-write-page form.dcuf-write-form .fixture-attachment {
             max-width: 100% !important;
             background: color-mix(in srgb, var(--dcuf-write-accent) 12%, var(--dcuf-write-surface)) !important;
             color: var(--dcuf-write-fg) !important;
         }
-        body.is-write-page form#write .ai_easy_wrap {
+        body.is-write-page form.dcuf-write-form .ai_easy_wrap {
             width: 100% !important;
             max-width: 100% !important;
             min-width: 0 !important;
             margin: 8px 0 0 !important;
             overflow: hidden !important;
         }
-        body.is-write-page form#write .ai_easy_box {
+        body.is-write-page form.dcuf-write-form .ai_easy_box {
             display: grid !important;
             grid-template-columns: minmax(0, 1fr) auto auto !important;
             align-items: stretch !important;
@@ -6701,27 +6877,27 @@
             max-width: 100% !important;
             min-width: 0 !important;
         }
-        body.is-write-page form#write .ai_easy_box .ipt_box,
-        body.is-write-page form#write .ai_easy_box .ipt_txt {
+        body.is-write-page form.dcuf-write-form .ai_easy_box .ipt_box,
+        body.is-write-page form.dcuf-write-form .ai_easy_box .ipt_txt {
             width: 100% !important;
             max-width: 100% !important;
             min-width: 0 !important;
         }
-        body.is-write-page form#write .ai_easy_box .ipt_box {
+        body.is-write-page form.dcuf-write-form .ai_easy_box .ipt_box {
             display: flex !important;
             align-items: center !important;
             overflow: hidden !important;
         }
-        body.is-write-page form#write .ai_easy_box .ipt_txt {
+        body.is-write-page form.dcuf-write-form .ai_easy_box .ipt_txt {
             flex: 1 1 auto !important;
             resize: none !important;
         }
-        body.is-write-page form#write #write_option_box {
+        body.is-write-page form.dcuf-write-form #write_option_box {
             width: 100% !important;
             max-width: 100% !important;
             min-width: 0 !important;
         }
-        body.is-write-page form#write .fixture-adult {
+        body.is-write-page form.dcuf-write-form .fixture-adult {
             display: inline-flex !important;
             align-items: center !important;
             gap: 8px !important;
@@ -6729,9 +6905,9 @@
             margin: 8px 0 0 !important;
             color: var(--dcuf-write-fg-sub) !important;
         }
-        body.is-write-page form#write .btn_bottom_box,
-        body.is-write-page form#write .btm-btns-box,
-        body.is-write-page form#write > .btn_box.write {
+        body.is-write-page form.dcuf-write-form .btn_bottom_box,
+        body.is-write-page form.dcuf-write-form .btm-btns-box,
+        body.is-write-page form.dcuf-write-form > .btn_box.write {
             display: flex !important;
             align-items: stretch !important;
             gap: 8px !important;
@@ -6742,18 +6918,18 @@
             border-top: 1px solid var(--dcuf-write-border) !important;
             background: var(--dcuf-write-surface) !important;
         }
-        body.is-write-page form#write .btn_bottom_box > *,
-        body.is-write-page form#write .btm-btns-box > *,
-        body.is-write-page form#write .btm-btns-box > .fr,
-        body.is-write-page form#write > .btn_box.write > button {
+        body.is-write-page form.dcuf-write-form .btn_bottom_box > *,
+        body.is-write-page form.dcuf-write-form .btm-btns-box > *,
+        body.is-write-page form.dcuf-write-form .btm-btns-box > .fr,
+        body.is-write-page form.dcuf-write-form > .btn_box.write > button {
             flex: 1 1 0 !important;
             min-width: 0 !important;
             float: none !important;
         }
-        body.is-write-page form#write .btn_bottom_box a,
-        body.is-write-page form#write .btn_bottom_box button,
-        body.is-write-page form#write .btm-btns-box button,
-        body.is-write-page form#write > .btn_box.write > button {
+        body.is-write-page form.dcuf-write-form .btn_bottom_box a,
+        body.is-write-page form.dcuf-write-form .btn_bottom_box button,
+        body.is-write-page form.dcuf-write-form .btm-btns-box button,
+        body.is-write-page form.dcuf-write-form > .btn_box.write > button {
             display: inline-flex !important;
             align-items: center !important;
             justify-content: center !important;
@@ -6771,40 +6947,40 @@
             text-align: center !important;
             text-decoration: none !important;
         }
-        body.is-write-page form#write .btn_bottom_box .btn_blue,
-        body.is-write-page form#write .btm-btns-box .btn-line-blue,
-        body.is-write-page form#write > .btn_box.write > .btn_blue {
+        body.is-write-page form.dcuf-write-form .btn_bottom_box .btn_blue,
+        body.is-write-page form.dcuf-write-form .btm-btns-box .btn-line-blue,
+        body.is-write-page form.dcuf-write-form > .btn_box.write > .btn_blue {
             border-color: var(--dcuf-write-accent-strong) !important;
-            background: linear-gradient(180deg, #426fe4 0%, var(--dcuf-write-accent-strong) 100%) !important;
+            background: linear-gradient(180deg, var(--dcuf-theme-primary-top, #426fe4) 0%, var(--dcuf-write-accent-strong) 100%) !important;
             color: #fff !important;
         }
         /* Visual refinement: match the mobile list/article card language. */
-        body.is-write-page form#write {
-            border-color: #dbe6f3 !important;
+        body.is-write-page form.dcuf-write-form {
+            border-color: var(--dcuf-write-border) !important;
             border-radius: 16px !important;
-            box-shadow: 0 12px 30px rgba(25, 50, 92, 0.1) !important;
+            box-shadow: 0 12px 30px color-mix(in srgb, var(--dcuf-write-accent) 10%, transparent) !important;
         }
-        body.is-write-page form#write #subject,
-        body.is-write-page form#write #name,
-        body.is-write-page form#write #password,
-        body.is-write-page form#write #code {
-            border-color: #cfdbeb !important;
+        body.is-write-page form.dcuf-write-form #subject,
+        body.is-write-page form.dcuf-write-form #name,
+        body.is-write-page form.dcuf-write-form #password,
+        body.is-write-page form.dcuf-write-form #code {
+            border-color: var(--dcuf-write-border) !important;
             border-radius: 11px !important;
             background: #fff !important;
-            box-shadow: 0 2px 7px rgba(25, 50, 92, 0.04) !important;
+            box-shadow: 0 2px 7px color-mix(in srgb, var(--dcuf-write-accent) 6%, transparent) !important;
         }
-        body.is-write-page form#write .dcuf-write-captcha-image,
-        body.is-write-page form#write .captcha {
-            border-color: #cfdbeb !important;
+        body.is-write-page form.dcuf-write-form .dcuf-write-captcha-image,
+        body.is-write-page form.dcuf-write-form .captcha {
+            border-color: var(--dcuf-write-border) !important;
             background: #fff !important;
             box-shadow: 0 2px 7px rgba(25, 50, 92, 0.04) !important;
         }
-        body.is-write-page form#write .dcuf-write-captcha-image img,
-        body.is-write-page form#write .captcha img,
-        body.is-write-page form#write .captcha .fixture-captcha-image {
+        body.is-write-page form.dcuf-write-form .dcuf-write-captcha-image img,
+        body.is-write-page form.dcuf-write-form .captcha img,
+        body.is-write-page form.dcuf-write-form .captcha .fixture-captcha-image {
             background: #fff !important;
         }
-        body.is-write-page form#write .write_subject {
+        body.is-write-page form.dcuf-write-form .write_subject {
             min-height: 52px !important;
             padding: 7px 9px !important;
             border-color: #d7e2f0 !important;
@@ -6812,9 +6988,9 @@
             background: #fff !important;
             box-shadow: 0 3px 10px rgba(25, 50, 92, 0.05) !important;
         }
-        body.is-write-page form#write .write_subject > .tit,
-        body.is-write-page form#write .write_subject > .tit::before,
-        body.is-write-page form#write .write_subject > .tit::after {
+        body.is-write-page form.dcuf-write-form .write_subject > .tit,
+        body.is-write-page form.dcuf-write-form .write_subject > .tit::before,
+        body.is-write-page form.dcuf-write-form .write_subject > .tit::after {
             min-height: 38px !important;
             border: 0 !important;
             border-radius: 0 !important;
@@ -6822,12 +6998,12 @@
             box-shadow: none !important;
             content: none !important;
         }
-        body.is-write-page form#write .write_subject::before,
-        body.is-write-page form#write .write_subject::after {
+        body.is-write-page form.dcuf-write-form .write_subject::before,
+        body.is-write-page form.dcuf-write-form .write_subject::after {
             display: none !important;
             content: none !important;
         }
-        body.is-write-page form#write .write_subject > .dcuf-write-headtext-label {
+        body.is-write-page form.dcuf-write-form .write_subject > .dcuf-write-headtext-label {
             display: inline-flex !important;
             align-items: center !important;
             justify-content: center !important;
@@ -6843,34 +7019,34 @@
             box-shadow: none !important;
             line-height: 1 !important;
         }
-        body.is-write-page form#write .write_subject .subject_list > li {
+        body.is-write-page form.dcuf-write-form .write_subject .subject_list > li {
             border: 1px solid transparent !important;
             background: transparent !important;
             color: var(--dcuf-write-fg-sub) !important;
         }
-        body.is-write-page form#write .write_subject .subject_list > li.sel,
-        body.is-write-page form#write .write_subject .subject_list > li.active {
+        body.is-write-page form.dcuf-write-form .write_subject .subject_list > li.sel,
+        body.is-write-page form.dcuf-write-form .write_subject .subject_list > li.active {
             border-color: var(--dcuf-write-accent-strong) !important;
             background: var(--dcuf-write-accent-strong) !important;
             color: #fff !important;
-            box-shadow: 0 4px 10px rgba(36, 91, 218, 0.2) !important;
+            box-shadow: 0 4px 10px var(--dcuf-theme-accent-shadow, rgba(36, 91, 218, 0.2)) !important;
         }
-        body.is-write-page form#write .editor_wrap,
-        body.is-write-page form#write .note-editor {
-            border-color: #d4e0ef !important;
+        body.is-write-page form.dcuf-write-form .editor_wrap,
+        body.is-write-page form.dcuf-write-form .note-editor {
+            border-color: var(--dcuf-write-border) !important;
             border-radius: 14px !important;
-            box-shadow: 0 5px 16px rgba(25, 50, 92, 0.06) !important;
+            box-shadow: 0 5px 16px color-mix(in srgb, var(--dcuf-write-accent) 7%, transparent) !important;
         }
-        body.is-write-page form#write .note-toolbar-media,
-        body.is-write-page form#write .note-toolbar,
-        body.is-write-page form#write .tx-toolbar-basic,
-        body.is-write-page form#write .btns-box {
-            border-bottom: 1px solid #dce6f2 !important;
-            background: linear-gradient(180deg, #fbfdff 0%, #f5f9ff 100%) !important;
+        body.is-write-page form.dcuf-write-form .note-toolbar-media,
+        body.is-write-page form.dcuf-write-form .note-toolbar,
+        body.is-write-page form.dcuf-write-form .tx-toolbar-basic,
+        body.is-write-page form.dcuf-write-form .btns-box {
+            border-bottom: 1px solid var(--dcuf-write-border) !important;
+            background: linear-gradient(180deg, var(--dcuf-write-surface) 0%, var(--dcuf-write-surface-muted) 100%) !important;
         }
-        body.is-write-page form#write .note-toolbar > .note-btn-group,
-        body.is-write-page form#write .note-toolbar > .note-btn-group > .note-btn-group,
-        body.is-write-page form#write .note-toolbar > .note-mybutton {
+        body.is-write-page form.dcuf-write-form .note-toolbar > .note-btn-group,
+        body.is-write-page form.dcuf-write-form .note-toolbar > .note-btn-group > .note-btn-group,
+        body.is-write-page form.dcuf-write-form .note-toolbar > .note-mybutton {
             position: relative !important;
             float: none !important;
             width: auto !important;
@@ -6881,23 +7057,23 @@
             background: transparent !important;
             box-shadow: none !important;
         }
-        body.is-write-page form#write .note-toolbar > .note-btn-group::before,
-        body.is-write-page form#write .note-toolbar > .note-btn-group::after,
-        body.is-write-page form#write .note-toolbar > .note-btn-group > .note-btn-group::before,
-        body.is-write-page form#write .note-toolbar > .note-btn-group > .note-btn-group::after,
-        body.is-write-page form#write .note-toolbar > .note-mybutton::before,
-        body.is-write-page form#write .note-toolbar > .note-mybutton::after {
+        body.is-write-page form.dcuf-write-form .note-toolbar > .note-btn-group::before,
+        body.is-write-page form.dcuf-write-form .note-toolbar > .note-btn-group::after,
+        body.is-write-page form.dcuf-write-form .note-toolbar > .note-btn-group > .note-btn-group::before,
+        body.is-write-page form.dcuf-write-form .note-toolbar > .note-btn-group > .note-btn-group::after,
+        body.is-write-page form.dcuf-write-form .note-toolbar > .note-mybutton::before,
+        body.is-write-page form.dcuf-write-form .note-toolbar > .note-mybutton::after {
             display: none !important;
             content: none !important;
             border: 0 !important;
         }
-        body.is-write-page form#write .note-toolbar .fixture-html-group,
-        body.is-write-page form#write .note-toolbar .note-btn-group:has(#chk_html) {
+        body.is-write-page form.dcuf-write-form .note-toolbar .fixture-html-group,
+        body.is-write-page form.dcuf-write-form .note-toolbar .note-btn-group:has(#chk_html) {
             order: 99 !important;
             margin-left: auto !important;
         }
-        body.is-write-page form#write .note-toolbar-media .fixture-html-group,
-        body.is-write-page form#write .note-toolbar .note-btn-group:has(#chk_html) {
+        body.is-write-page form.dcuf-write-form .note-toolbar-media .fixture-html-group,
+        body.is-write-page form.dcuf-write-form .note-toolbar .note-btn-group:has(#chk_html) {
             display: inline-flex !important;
             align-items: center !important;
             align-self: center !important;
@@ -6912,8 +7088,8 @@
             float: none !important;
             transform: none !important;
         }
-        body.is-write-page form#write .note-toolbar-media .fixture-html-group > .note-btn,
-        body.is-write-page form#write .note-toolbar .note-btn-group:has(#chk_html) > .note-btn {
+        body.is-write-page form.dcuf-write-form .note-toolbar-media .fixture-html-group > .note-btn,
+        body.is-write-page form.dcuf-write-form .note-toolbar .note-btn-group:has(#chk_html) > .note-btn {
             display: inline-flex !important;
             align-items: center !important;
             justify-content: center !important;
@@ -6929,8 +7105,8 @@
             transform: none !important;
             overflow: visible !important;
         }
-        body.is-write-page form#write .note-toolbar-media .fixture-html-group label,
-        body.is-write-page form#write .note-toolbar .note-btn-group:has(#chk_html) label {
+        body.is-write-page form.dcuf-write-form .note-toolbar-media .fixture-html-group label,
+        body.is-write-page form.dcuf-write-form .note-toolbar .note-btn-group:has(#chk_html) label {
             display: inline-flex !important;
             align-items: center !important;
             justify-content: center !important;
@@ -6946,7 +7122,7 @@
             white-space: nowrap !important;
             line-height: 1 !important;
         }
-        body.is-write-page form#write #chk_html {
+        body.is-write-page form.dcuf-write-form #chk_html {
             appearance: auto !important;
             display: inline-block !important;
             position: static !important;
@@ -6965,28 +7141,28 @@
             pointer-events: auto !important;
             vertical-align: middle !important;
         }
-        body.is-write-page form#write .note-toolbar > .note-btn,
-        body.is-write-page form#write .note-toolbar .note-btn-group > .note-btn:not(.pop_wrap *):not(.note-dropdown-menu *):not(.note-popover *):not(.note-modal *),
-        body.is-write-page form#write .note-toolbar-media > .note-btn,
-        body.is-write-page form#write .btns-box button:not(.pop_wrap *):not(.note-dropdown-menu *):not(.note-popover *):not(.note-modal *) {
-            border-color: #d4e0ef !important;
+        body.is-write-page form.dcuf-write-form .note-toolbar > .note-btn,
+        body.is-write-page form.dcuf-write-form .note-toolbar .note-btn-group > .note-btn:not(.pop_wrap *):not(.note-dropdown-menu *):not(.note-popover *):not(.note-modal *),
+        body.is-write-page form.dcuf-write-form .note-toolbar-media > .note-btn,
+        body.is-write-page form.dcuf-write-form .btns-box button:not(.pop_wrap *):not(.note-dropdown-menu *):not(.note-popover *):not(.note-modal *) {
+            border-color: var(--dcuf-write-border-strong, #d4e0ef) !important;
             border-radius: 10px !important;
-            background: #fff !important;
-            box-shadow: 0 2px 6px rgba(25, 50, 92, 0.05) !important;
+            background: var(--dcuf-write-surface, #fff) !important;
+            box-shadow: 0 2px 6px var(--dcuf-theme-accent-shadow, rgba(25, 50, 92, 0.05)) !important;
         }
-        body.is-write-page form#write .note-statusbar {
+        body.is-write-page form.dcuf-write-form .note-statusbar {
             background: #f7faff !important;
         }
-        body.is-write-page form#write .btn_bottom_box,
-        body.is-write-page form#write .btm-btns-box {
+        body.is-write-page form.dcuf-write-form .btn_bottom_box,
+        body.is-write-page form.dcuf-write-form .btm-btns-box {
             position: static !important;
         }
-        body.is-write-page form#write > .btn_box.write {
+        body.is-write-page form.dcuf-write-form > .btn_box.write {
             position: relative !important;
         }
-        body.is-write-page form#write .btn_bottom_box,
-        body.is-write-page form#write .btm-btns-box,
-        body.is-write-page form#write > .btn_box.write {
+        body.is-write-page form.dcuf-write-form .btn_bottom_box,
+        body.is-write-page form.dcuf-write-form .btm-btns-box,
+        body.is-write-page form.dcuf-write-form > .btn_box.write {
             clear: both !important;
             float: none !important;
             transform: none !important;
@@ -6998,28 +7174,28 @@
             background: linear-gradient(180deg, #f8fbff 0%, #f3f7fd 100%) !important;
             box-shadow: 0 4px 12px rgba(25, 50, 92, 0.06) !important;
         }
-        body.is-write-page form#write .btn_bottom_box a,
-        body.is-write-page form#write .btn_bottom_box button,
-        body.is-write-page form#write .btm-btns-box button,
-        body.is-write-page form#write > .btn_box.write > button {
+        body.is-write-page form.dcuf-write-form .btn_bottom_box a,
+        body.is-write-page form.dcuf-write-form .btn_bottom_box button,
+        body.is-write-page form.dcuf-write-form .btm-btns-box button,
+        body.is-write-page form.dcuf-write-form > .btn_box.write > button {
             min-height: 48px !important;
             border-radius: 12px !important;
             box-shadow: 0 3px 8px rgba(25, 50, 92, 0.06) !important;
         }
-        body.is-write-page form#write .btn_bottom_box .btn_lightred,
-        body.is-write-page form#write .btm-btns-box .btn-line-gray,
-        body.is-write-page form#write > .btn_box.write > .btn_grey {
+        body.is-write-page form.dcuf-write-form .btn_bottom_box .btn_lightred,
+        body.is-write-page form.dcuf-write-form .btm-btns-box .btn-line-gray,
+        body.is-write-page form.dcuf-write-form > .btn_box.write > .btn_grey {
             border-color: #cbd8e9 !important;
             background: #fff !important;
             color: #42536d !important;
         }
-        body.is-write-page form#write .btn_bottom_box .btn_blue,
-        body.is-write-page form#write .btm-btns-box .btn-line-blue,
-        body.is-write-page form#write > .btn_box.write > .btn_blue {
+        body.is-write-page form.dcuf-write-form .btn_bottom_box .btn_blue,
+        body.is-write-page form.dcuf-write-form .btm-btns-box .btn-line-blue,
+        body.is-write-page form.dcuf-write-form > .btn_box.write > .btn_blue {
             border-color: var(--dcuf-write-accent-strong) !important;
-            background: linear-gradient(180deg, #426fe4 0%, #245bda 100%) !important;
+            background: linear-gradient(180deg, var(--dcuf-theme-primary-top, #426fe4) 0%, var(--dcuf-write-accent-strong) 100%) !important;
             color: #fff !important;
-            box-shadow: 0 6px 14px rgba(36, 91, 218, 0.24) !important;
+            box-shadow: 0 6px 14px var(--dcuf-theme-accent-shadow, rgba(36, 91, 218, 0.24)) !important;
         }
         body.is-write-page > #leave_confirm_box.dcuf-write-leave-confirm {
             box-sizing: border-box !important;
@@ -7069,7 +7245,7 @@
             padding: 0 56px 0 18px !important;
             border: 0 !important;
             border-radius: 15px 15px 0 0 !important;
-            background: linear-gradient(135deg, #3f6de0 0%, #2d57bd 100%) !important;
+            background: linear-gradient(135deg, var(--dcuf-write-accent) 0%, var(--dcuf-write-accent-strong) 100%) !important;
         }
         body.is-write-page > #leave_confirm_box.dcuf-write-leave-confirm .pop_head.bg h3 {
             margin: 0 !important;
@@ -7133,9 +7309,9 @@
         }
         body.is-write-page > #leave_confirm_box.dcuf-write-leave-confirm .write_cont > .btn_box > .btn_blue {
             border-color: var(--dcuf-write-accent-strong) !important;
-            background: linear-gradient(180deg, #426fe4 0%, #245bda 100%) !important;
+            background: linear-gradient(180deg, var(--dcuf-theme-primary-top, #426fe4) 0%, var(--dcuf-write-accent-strong) 100%) !important;
             color: #fff !important;
-            box-shadow: 0 6px 14px rgba(36, 91, 218, 0.22) !important;
+            box-shadow: 0 6px 14px var(--dcuf-theme-accent-shadow, rgba(36, 91, 218, 0.22)) !important;
         }
         body.is-write-page > #leave_confirm_box.dcuf-write-leave-confirm .pop_content.write_ly > .poply_whiteclose {
             box-sizing: border-box !important;
@@ -7177,8 +7353,8 @@
             box-shadow: 0 22px 58px rgba(0, 0, 0, 0.48), 0 0 0 100vmax rgba(0, 0, 0, 0.52) !important;
         }
         body.is-write-page.dc-filter-dark-mode > #leave_confirm_box.dcuf-write-leave-confirm .write_cont > .btn_box > button:not(.btn_blue) {
-            border-color: #40526b !important;
-            background: #233044 !important;
+            border-color: var(--dcuf-write-border-strong, #40526b) !important;
+            background: var(--dcuf-write-surface, #233044) !important;
             color: #edf3ff !important;
         }
         @media screen and (max-width: 480px) {
@@ -7212,36 +7388,36 @@
                 width: 20px !important;
             }
         }
-        body.is-write-page.dc-filter-dark-mode form#write,
-        body.is-write-page.dc-filter-dark-mode form#write .write_subject,
-        body.is-write-page.dc-filter-dark-mode form#write .dcuf-write-captcha-image,
-        body.is-write-page.dc-filter-dark-mode form#write .captcha,
-        body.is-write-page.dc-filter-dark-mode form#write #subject,
-        body.is-write-page.dc-filter-dark-mode form#write #name,
-        body.is-write-page.dc-filter-dark-mode form#write #password,
-        body.is-write-page.dc-filter-dark-mode form#write #code {
+        body.is-write-page.dc-filter-dark-mode form.dcuf-write-form,
+        body.is-write-page.dc-filter-dark-mode form.dcuf-write-form .write_subject,
+        body.is-write-page.dc-filter-dark-mode form.dcuf-write-form .dcuf-write-captcha-image,
+        body.is-write-page.dc-filter-dark-mode form.dcuf-write-form .captcha,
+        body.is-write-page.dc-filter-dark-mode form.dcuf-write-form #subject,
+        body.is-write-page.dc-filter-dark-mode form.dcuf-write-form #name,
+        body.is-write-page.dc-filter-dark-mode form.dcuf-write-form #password,
+        body.is-write-page.dc-filter-dark-mode form.dcuf-write-form #code {
             border-color: var(--dcuf-write-border) !important;
             background: var(--dcuf-write-surface) !important;
         }
-        body.is-write-page.dc-filter-dark-mode form#write .note-toolbar,
-        body.is-write-page.dc-filter-dark-mode form#write .note-toolbar-media,
-        body.is-write-page.dc-filter-dark-mode form#write .tx-toolbar-basic,
-        body.is-write-page.dc-filter-dark-mode form#write .btns-box,
-        body.is-write-page.dc-filter-dark-mode form#write .btn_bottom_box,
-        body.is-write-page.dc-filter-dark-mode form#write .btm-btns-box,
-        body.is-write-page.dc-filter-dark-mode form#write > .btn_box.write {
+        body.is-write-page.dc-filter-dark-mode form.dcuf-write-form .note-toolbar,
+        body.is-write-page.dc-filter-dark-mode form.dcuf-write-form .note-toolbar-media,
+        body.is-write-page.dc-filter-dark-mode form.dcuf-write-form .tx-toolbar-basic,
+        body.is-write-page.dc-filter-dark-mode form.dcuf-write-form .btns-box,
+        body.is-write-page.dc-filter-dark-mode form.dcuf-write-form .btn_bottom_box,
+        body.is-write-page.dc-filter-dark-mode form.dcuf-write-form .btm-btns-box,
+        body.is-write-page.dc-filter-dark-mode form.dcuf-write-form > .btn_box.write {
             border-color: var(--dcuf-write-border) !important;
             background: var(--dcuf-write-surface-muted) !important;
         }
-        body.is-write-page.dc-filter-dark-mode form#write .write_subject > .dcuf-write-headtext-label {
+        body.is-write-page.dc-filter-dark-mode form.dcuf-write-form .write_subject > .dcuf-write-headtext-label {
             background: #273446 !important;
             color: #d2dced !important;
         }
-        body.is-write-page.dc-filter-dark-mode form#write .note-toolbar > .note-btn,
-        body.is-write-page.dc-filter-dark-mode form#write .note-toolbar .note-btn-group > .note-btn:not(.pop_wrap *):not(.note-dropdown-menu *):not(.note-popover *):not(.note-modal *),
-        body.is-write-page.dc-filter-dark-mode form#write .note-toolbar-media > .note-btn,
-        body.is-write-page.dc-filter-dark-mode form#write .btns-box button:not(.pop_wrap *):not(.note-dropdown-menu *):not(.note-popover *):not(.note-modal *),
-        body.is-write-page.dc-filter-dark-mode form#write select:not(.pop_wrap *):not(.note-dropdown-menu *):not(.note-popover *):not(.note-modal *) {
+        body.is-write-page.dc-filter-dark-mode form.dcuf-write-form .note-toolbar > .note-btn,
+        body.is-write-page.dc-filter-dark-mode form.dcuf-write-form .note-toolbar .note-btn-group > .note-btn:not(.pop_wrap *):not(.note-dropdown-menu *):not(.note-popover *):not(.note-modal *),
+        body.is-write-page.dc-filter-dark-mode form.dcuf-write-form .note-toolbar-media > .note-btn,
+        body.is-write-page.dc-filter-dark-mode form.dcuf-write-form .btns-box button:not(.pop_wrap *):not(.note-dropdown-menu *):not(.note-popover *):not(.note-modal *),
+        body.is-write-page.dc-filter-dark-mode form.dcuf-write-form select:not(.pop_wrap *):not(.note-dropdown-menu *):not(.note-popover *):not(.note-modal *) {
             border-color: #40526b !important;
             background: #233044 !important;
             color: #edf3ff !important;
@@ -7249,27 +7425,27 @@
             box-shadow: 0 2px 7px rgba(0, 0, 0, 0.2) !important;
             opacity: 1 !important;
         }
-        body.is-write-page.dc-filter-dark-mode form#write .note-toolbar > .note-btn *,
-        body.is-write-page.dc-filter-dark-mode form#write .note-toolbar .note-btn-group > .note-btn:not(.pop_wrap *):not(.note-dropdown-menu *):not(.note-popover *):not(.note-modal *) *,
-        body.is-write-page.dc-filter-dark-mode form#write .note-toolbar-media > .note-btn *,
-        body.is-write-page.dc-filter-dark-mode form#write .btns-box button:not(.pop_wrap *):not(.note-dropdown-menu *):not(.note-popover *):not(.note-modal *) * {
+        body.is-write-page.dc-filter-dark-mode form.dcuf-write-form .note-toolbar > .note-btn *,
+        body.is-write-page.dc-filter-dark-mode form.dcuf-write-form .note-toolbar .note-btn-group > .note-btn:not(.pop_wrap *):not(.note-dropdown-menu *):not(.note-popover *):not(.note-modal *) *,
+        body.is-write-page.dc-filter-dark-mode form.dcuf-write-form .note-toolbar-media > .note-btn *,
+        body.is-write-page.dc-filter-dark-mode form.dcuf-write-form .btns-box button:not(.pop_wrap *):not(.note-dropdown-menu *):not(.note-popover *):not(.note-modal *) * {
             color: inherit !important;
             -webkit-text-fill-color: inherit !important;
             opacity: 1 !important;
         }
-        body.is-write-page.dc-filter-dark-mode form#write .write_subject .subject_list > li:not(.sel):not(.active) {
+        body.is-write-page.dc-filter-dark-mode form.dcuf-write-form .write_subject .subject_list > li:not(.sel):not(.active) {
             color: #d2dced !important;
             -webkit-text-fill-color: #d2dced !important;
         }
-        body.is-write-page.dc-filter-dark-mode form#write #chk_html {
+        body.is-write-page.dc-filter-dark-mode form.dcuf-write-form #chk_html {
             accent-color: var(--dcuf-write-accent-strong) !important;
         }
-        body.is-write-page form#write .tx-toolbar-advanced,
-        body.is-write-page form#write .write_infobox,
-        body.is-write-page form#write .file_upload_info,
-        body.is-write-page form#write .cm_ad,
-        body.is-write-page form#write .adv_bottom_write,
-        body.is-write-page form#write div[id^="kakao_ad_"] {
+        body.is-write-page form.dcuf-write-form .tx-toolbar-advanced,
+        body.is-write-page form.dcuf-write-form .write_infobox,
+        body.is-write-page form.dcuf-write-form .file_upload_info,
+        body.is-write-page form.dcuf-write-form .cm_ad,
+        body.is-write-page form.dcuf-write-form .adv_bottom_write,
+        body.is-write-page form.dcuf-write-form div[id^="kakao_ad_"] {
             display: none !important;
             width: 0 !important;
             height: 0 !important;
@@ -7281,11 +7457,11 @@
             body.is-write-page #container {
                 padding: 6px !important;
             }
-            body.is-write-page form#write {
+            body.is-write-page form.dcuf-write-form {
                 padding: 10px !important;
                 border-radius: 11px !important;
             }
-            body.is-write-page form#write .dcuf-write-subject-row {
+            body.is-write-page form.dcuf-write-form .dcuf-write-subject-row {
                 grid-template-columns: 50px minmax(0, 1fr);
                 gap: 6px;
             }
@@ -7294,15 +7470,15 @@
             body.is-write-page #container {
                 padding: 16px 24px !important;
             }
-            body.is-write-page form#write {
+            body.is-write-page form.dcuf-write-form {
                 padding: 18px !important;
             }
-            body.is-write-page form#write .dcuf-write-fields {
+            body.is-write-page form.dcuf-write-form .dcuf-write-fields {
                 grid-template-columns: repeat(4, minmax(0, 1fr));
             }
-            body.is-write-page form#write .dcuf-write-fields > .write_subject,
-            body.is-write-page form#write .dcuf-write-subject-field,
-            body.is-write-page form#write .dcuf-write-fields > [style*="clear"] {
+            body.is-write-page form.dcuf-write-form .dcuf-write-fields > .write_subject,
+            body.is-write-page form.dcuf-write-form .dcuf-write-subject-field,
+            body.is-write-page form.dcuf-write-form .dcuf-write-fields > [style*="clear"] {
                 grid-column: 1 / -1;
             }
         }
@@ -8881,12 +9057,14 @@ function __dcufGetRuntimeCoordinator() {
 function __dcufGetPageContext() {
     const sharedContext = window.__dcufPageContext;
     if (sharedContext && typeof sharedContext === 'object') return sharedContext;
-    const type = ((window.location.pathname || '').match(/\/board\/(lists|view|write)(?:\/|$)/) || [])[1] || 'other';
+    const type = ((window.location.pathname || '').match(/\/board\/(lists|view|write|modify)(?:\/|$)/) || [])[1] || 'other';
     return {
         type,
         isList: type === 'lists',
         isView: type === 'view',
         isWrite: type === 'write',
+        isModify: type === 'modify',
+        isWriteSurface: type === 'write' || type === 'modify',
         isOther: type === 'other',
         isTargetPage: type !== 'other',
         hasListSurface: type === 'lists' || type === 'view',
@@ -8898,7 +9076,8 @@ function __dcufPageSupports(surface) {
     const pageContext = __dcufGetPageContext();
     if (surface === 'list') return pageContext.isList;
     if (surface === 'view') return pageContext.isView;
-    if (surface === 'write') return pageContext.isWrite;
+    if (surface === 'write') return pageContext.isWriteSurface;
+    if (surface === 'modify') return pageContext.isModify;
     if (surface === 'list-surface') return pageContext.hasListSurface;
     if (surface === 'comments') return pageContext.hasComments;
     if (surface === 'target') return pageContext.isTargetPage;

@@ -119,12 +119,15 @@ export const storageKeys = Object.freeze({
     masterDisabled: 'dcinside_master_disabled',
     threshold: 'dcinside_threshold',
     ratioEnabled: 'dcinside_ratio_filter_enabled',
+    proxyBlockMode: 'dcinside_proxy_ip_block_enabled',
+    telecomBlockEnabled: 'dcinside_telecom_ip_block_enabled',
     personalList: 'dcinside_personal_block_list',
     personalEnabled: 'dcinside_personal_block_enabled',
     blockedUids: 'dcinside_blocked_uids',
     blockedGuests: 'dcinside_blocked_guests',
     shortcut: 'dcinside_shortcut_key',
-    fabScalePercent: 'dcinside_fab_scale_percent'
+    fabScalePercent: 'dcinside_fab_scale_percent',
+    palette: 'dcuf_mobile_ui_palette'
 });
 
 export { assert, testbedDir };

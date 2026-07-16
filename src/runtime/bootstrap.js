@@ -4,12 +4,14 @@
     const __dcufRoot = (typeof unsafeWindow !== 'undefined' && unsafeWindow) ? unsafeWindow : window;
     if (window.top !== window.self) return;
 
-    const detectedPageType = ((window.location.pathname || '').match(/\/board\/(lists|view|write)(?:\/|$)/) || [])[1] || 'other';
+    const detectedPageType = ((window.location.pathname || '').match(/\/board\/(lists|view|write|modify)(?:\/|$)/) || [])[1] || 'other';
     const pageContext = Object.freeze({
         type: detectedPageType,
         isList: detectedPageType === 'lists',
         isView: detectedPageType === 'view',
         isWrite: detectedPageType === 'write',
+        isModify: detectedPageType === 'modify',
+        isWriteSurface: detectedPageType === 'write' || detectedPageType === 'modify',
         isOther: detectedPageType === 'other',
         isTargetPage: detectedPageType !== 'other',
         hasListSurface: detectedPageType === 'lists' || detectedPageType === 'view',
@@ -21,6 +23,11 @@
     if (document.documentElement) exposePageContextAttribute();
     else document.addEventListener('DOMContentLoaded', exposePageContextAttribute, { once: true });
 
+    // The metadata covers a few gallery-adjacent pages, but the mobile runtime owns
+    // only board list/view/write/modify surfaces. Keep the lightweight page-context bridge
+    // and stop before installing observers, menus, or styles elsewhere.
+    if (!pageContext.isTargetPage) return;
+
     const previousBoot = __dcufRoot.__dcufBootController || window.__dcufBootController;
     if (previousBoot) {
         if (previousBoot.state === 'locked' || previousBoot.state === 'preparing') previousBoot.ensure('duplicate-runtime');
@@ -29,18 +36,12 @@
         return;
     }
 
-    if (!__dcufRoot.__dcufBfcacheOptOutInstalled) {
-        __dcufRoot.__dcufBfcacheOptOutInstalled = true;
-        const preventBackForwardCache = () => {};
-        try { __dcufRoot.addEventListener('unload', preventBackForwardCache, { capture: true }); }
-        catch { window.addEventListener('unload', preventBackForwardCache, { capture: true }); }
-    }
-
     let dcFilterSettings = {};
     let userSumCache = {};
     let isInitialized = false;
     let isUiInitialized = false;
     let activeShortcutObject = null;
+    let activeShortcutString = null;
 
     const READY_CLASS = 'script-ui-ready';
     const STATE_ATTR = 'data-dcuf-boot-state';
@@ -49,6 +50,7 @@
     const OVERLAY_STYLE_ID = 'dcuf-boot-overlay-style';
     const DEGRADED_STYLE_ID = 'dcuf-degraded-filter-style';
     const DEGRADED_BANNER_ID = 'dcuf-degraded-banner';
+    const FILTER_READY_ATTR = 'data-dcuf-filter-ready';
     const testBootConfig = __dcufRoot.__DCUF_TESTBED_CONFIG__?.boot || null;
     const ABSOLUTE_DEADLINE_MS = Math.max(20, Number(testBootConfig?.absoluteDeadlineMs) || 15000);
     const CRITICAL_DEADLINE_MS = Math.max(20, Number(testBootConfig?.criticalDeadlineMs) || 6000);
@@ -134,7 +136,8 @@
                 #${OVERLAY_ID} .dcuf-boot-bar { height: 4px !important; overflow: hidden !important; border-radius: 999px !important; background: #cbd3df !important; }
                 #${OVERLAY_ID} .dcuf-boot-bar::before {
                     content: '' !important; display: block !important; width: 42% !important; height: 100% !important;
-                    border-radius: inherit !important; background: linear-gradient(90deg,#245bda,#5d87f0) !important;
+                    border-radius: inherit !important;
+                    background: linear-gradient(90deg,var(--dcuf-theme-accent-strong,#245bda),var(--dcuf-theme-accent,#5d87f0)) !important;
                     animation: dcuf-boot-progress 1s ease-in-out infinite !important;
                 }
                 html.dc-filter-dark-mode #${OVERLAY_ID} { background: linear-gradient(180deg,#1d222a,#11151b) !important; }
@@ -170,11 +173,11 @@
         document.documentElement.appendChild(overlay);
     };
     const ensureDegradedUi = (reason) => {
-        if ((pageType === 'list' || pageType === 'view') && !document.getElementById(DEGRADED_STYLE_ID)) {
+        if ((pageType === 'lists' || pageType === 'view') && !document.getElementById(DEGRADED_STYLE_ID)) {
             const style = document.createElement('style');
             style.id = DEGRADED_STYLE_ID;
             style.textContent = `
-                html[${STATE_ATTR}="degraded"] :is(
+                html[${STATE_ATTR}="degraded"]:not([${FILTER_READY_ATTR}="true"]) :is(
                     .gall_listwrap table.gall_list,.list_wrap table.gall_list,.custom-mobile-list,
                     .gall_exposure_list,#focus_cmt .comment_box,div[id^="comment_wrap_"] .comment_box,
                     .view_comment.image_comment .comment_box
@@ -182,7 +185,12 @@
             `;
             (document.head || document.documentElement)?.appendChild(style);
         }
-        if (!document.body || document.getElementById(DEGRADED_BANNER_ID)) return;
+        const existingBanner = document.getElementById(DEGRADED_BANNER_ID);
+        if (existingBanner) {
+            existingBanner.dataset.reason = reason;
+            return;
+        }
+        if (!document.body) return;
         const banner = document.createElement('aside');
         banner.id = DEGRADED_BANNER_ID;
         banner.dataset.reason = reason;
@@ -203,6 +211,7 @@
         state: isTargetPage() ? 'locked' : 'idle',
         pageType,
         startedAt,
+        filterReady: false,
         ensure(reason = 'ensure') {
             if (!isTargetPage() || this.state === 'ready' || this.state === 'degraded') return true;
             document.documentElement?.setAttribute(STATE_ATTR, this.state === 'preparing' ? 'preparing' : 'locked');
@@ -227,6 +236,13 @@
         },
         requestRecovery(reason = 'manual') {
             recoveryHandlers.forEach((fn) => { try { fn(reason); } catch (error) { console.warn('[DCUF boot] recovery failed:', error); } });
+        },
+        markFilterReady(reason = 'filter-ready') {
+            if (this.filterReady) return;
+            this.filterReady = true;
+            document.documentElement?.setAttribute(FILTER_READY_ATTR, 'true');
+            note('boot.filter-ready', { reason, state: this.state });
+            if (this.state === 'degraded') this.requestRecovery('filter-ready');
         },
         markReady(reason = 'ready') {
             if (this.state === 'ready') return;
@@ -275,7 +291,7 @@
         domReadyListener = () => {
             note('boot.dom-content-loaded');
             tick();
-            if ((pageType === 'list' || pageType === 'view') && !criticalTimer) {
+            if ((pageType === 'lists' || pageType === 'view') && !criticalTimer) {
                 criticalTimer = setTimeout(() => bootController.degrade('critical-deadline'), CRITICAL_DEADLINE_MS);
             }
         };

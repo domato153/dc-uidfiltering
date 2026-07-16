@@ -240,13 +240,13 @@
         }
 
         .custom-post-item.notice + .custom-post-item:not(.notice):not(.concept),
-        .custom-post-item.concept + .custom-post-item:not(.notice):not(.concept) { border-top: 1px solid #4263eb !important; }
+        .custom-post-item.concept + .custom-post-item:not(.notice):not(.concept) { border-top: 1px solid var(--dcuf-theme-accent, #4263eb) !important; }
         .custom-post-item { display: block; padding: 15px 18px; border-bottom: 1px solid #e6e6e6; text-decoration: none; color: #333; }
         .custom-post-item:hover { background-color: #f8f9fa; }
         .custom-post-item .author { cursor: pointer; }
         .custom-post-item.notice, .custom-post-item.concept { background-color: #f8f9fa; position: relative; padding-left: 60px; }
         .custom-post-item.notice::before { content: '공지'; background-color: #e03131; position: absolute; left: 18px; top: 50%; transform: translateY(-50%); font-size: 13px; font-weight: bold; color: #fff; padding: 4px 9px; border-radius: 4px; }
-        .custom-post-item.concept::before { content: '개념'; background-color: #4263eb; position: absolute; left: 18px; top: 50%; transform: translateY(-50%); font-size: 13px; font-weight: bold; color: #fff; padding: 4px 9px; border-radius: 4px; }
+        .custom-post-item.concept::before { content: '개념'; background-color: var(--dcuf-theme-accent-strong, #4263eb); position: absolute; left: 18px; top: 50%; transform: translateY(-50%); font-size: 13px; font-weight: bold; color: var(--dcuf-theme-on-accent, #fff); padding: 4px 9px; border-radius: 4px; }
 
 
                 /* [v2.2.0 이식] 게시글 목록: 제목, 말머리, 댓글수 */
@@ -275,7 +275,7 @@
             border: none !important; /* [요청 수정] 글머리 테두리 제거 */
         }
         .post-title .reply_num {
-            color: #4263eb !important;
+            color: var(--dcuf-theme-accent, #4263eb) !important;
             font-weight: bold !important;
             margin-left: 8px !important; /* 간격 조정 */
             cursor: pointer;
@@ -589,8 +589,8 @@
         .btn_recommend_box .writer_nikcon { display: inline-block !important; margin-right: 2px !important; vertical-align: middle !important; }
         .btn_recommend_box .writer_nikcon img { width: 14px !important; height: 14px !important; vertical-align: middle !important; }
         .btn_recommend_box .font_blue.smallnum {
-            display: inline-block !important; font-size: 11px !important; color: #4263eb !important; vertical-align: middle !important;
-            background: rgba(66, 99, 235, 0.08); padding: 1px 4px; border-radius: 3px; font-weight: normal !important;
+            display: inline-block !important; font-size: 11px !important; color: var(--dcuf-theme-accent, #4263eb) !important; vertical-align: middle !important;
+            background: color-mix(in srgb, var(--dcuf-theme-accent, #4263eb) 8%, transparent); padding: 1px 4px; border-radius: 3px; font-weight: normal !important;
         }
         .btn_recommend_box {
             display: flex !important;
@@ -847,7 +847,7 @@
         #dc-selection-popup .block-options { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
         #dc-selection-popup .block-option { display: flex; justify-content: space-between; align-items: center; background-color: #f8f9fa; padding: 12px; border-radius: 8px; }
         #dc-selection-popup .block-option span { font-size: 15px; color: #333; word-break: break-all; margin-right: 15px; }
-        #dc-selection-popup .block-option button { font-size: 14px; padding: 6px 12px; cursor: pointer; border: none; border-radius: 6px; background-color: #4263eb; color: #fff; font-weight: 500; }
+        #dc-selection-popup .block-option button { font-size: 14px; padding: 6px 12px; cursor: pointer; border: none; border-radius: 6px; background-color: var(--dcuf-theme-accent-strong, #4263eb); color: var(--dcuf-theme-on-accent, #fff); font-weight: 500; }
         /* [v2.5.7 추가] 차단 해제 버튼 스타일 */
         #dc-selection-popup .block-option button.btn-unblock { background-color: #e03131; }
         #dc-selection-popup .popup-buttons button { width: 100%; font-size: 16px; padding: 10px; cursor: pointer; border: none; border-radius: 8px; background-color: #e9ecef; color: #555; }
@@ -2135,7 +2135,7 @@
             color: #fff !important;
         }
         body.dc-filter-dark-mode #dc-personal-block-size-panel .dcuf-fab-size-actions [data-dcuf-fab-size-action="save"] {
-            background: #4d7cff !important;
+            background: var(--dcuf-theme-accent, #4d7cff) !important;
         }
 
         /* 5. 스크립트 팝업창 전체 다크 테마 */
@@ -2777,6 +2777,15 @@
         _queuedObserverFilterTimerId: 0,
         _syncRefilterRafId: 0,
         _syncRefilterTimerIds: null,
+        _settingsSignature: '',
+        _hiddenAt: 0,
+        _hiddenMutationGeneration: 0,
+        _hiddenBody: null,
+        _hiddenRecoverySurface: null,
+        _hiddenBfcacheRecoveryId: 0,
+        _visibilityCycleId: 0,
+        _visibilityRecoveryPromise: null,
+        VISIBILITY_LONG_RESTORE_MS: 5 * 60 * 1000,
         _krPrefixSet: null,
         _telecomPrefixSet: null,
         _proxyStrictPrefixSet: null,
@@ -2894,7 +2903,10 @@
         getKrPrefixSet() {
             if (!this._krPrefixSet) {
                 const prefixes = [];
-                Object.entries(this.KR_IP_RANGES).forEach(([first, ranges]) => {
+                const rangeSource = typeof this.KR_IP_RANGES === 'function'
+                    ? this.KR_IP_RANGES()
+                    : this.KR_IP_RANGES;
+                Object.entries(rangeSource || {}).forEach(([first, ranges]) => {
                     ranges.forEach(([start, end]) => {
                         for (let second = start; second <= end; second += 1) {
                             prefixes.push(`${first}.${second}`);
@@ -2902,6 +2914,7 @@
                     });
                 });
                 this._krPrefixSet = new Set(prefixes);
+                this.incrementRuntimeDiagnostic('filter.ipData.kr.decodes');
             }
             return this._krPrefixSet;
         },
@@ -2911,19 +2924,33 @@
         getTelecomPrefixSet() {
             if (!this._telecomPrefixSet) {
                 const prefixes = [];
-                this.TELECOM.forEach((group) => group[1].forEach((item) => {
+                const telecomSource = typeof this.TELECOM === 'function'
+                    ? this.TELECOM()
+                    : this.TELECOM;
+                (telecomSource || []).forEach((group) => group[1].forEach((item) => {
                     if (item[2] === 'MOB') prefixes.push(`${group[0]}.${item[0]}`);
                 }));
                 this._telecomPrefixSet = new Set(prefixes);
+                this.incrementRuntimeDiagnostic('filter.ipData.telecom.decodes');
             }
             return this._telecomPrefixSet;
         },
         getProxyStrictPrefixSet() {
-            if (!this._proxyStrictPrefixSet) this._proxyStrictPrefixSet = new Set(this.PROXY_STRICT_PREFIXES);
+            if (!this._proxyStrictPrefixSet) {
+                const source = this.PROXY_STRICT_PREFIXES;
+                const prefixes = typeof source === 'string' ? source.trim().split(/\s+/).filter(Boolean) : source;
+                this._proxyStrictPrefixSet = new Set(prefixes || []);
+                this.incrementRuntimeDiagnostic('filter.ipData.proxyStrict.decodes');
+            }
             return this._proxyStrictPrefixSet;
         },
         getProxyAggressiveExtraPrefixSet() {
-            if (!this._proxyAggressiveExtraPrefixSet) this._proxyAggressiveExtraPrefixSet = new Set(this.PROXY_AGGRESSIVE_EXTRA_PREFIXES);
+            if (!this._proxyAggressiveExtraPrefixSet) {
+                const source = this.PROXY_AGGRESSIVE_EXTRA_PREFIXES;
+                const prefixes = typeof source === 'string' ? source.trim().split(/\s+/).filter(Boolean) : source;
+                this._proxyAggressiveExtraPrefixSet = new Set(prefixes || []);
+                this.incrementRuntimeDiagnostic('filter.ipData.proxyAggressive.decodes');
+            }
             return this._proxyAggressiveExtraPrefixSet;
         },
         getProxyPrefixSet(mode = this.PROXY_MODE.STRICT) {
@@ -3475,6 +3502,7 @@
                 const newShortcut = previewEl.textContent;
                 if (newShortcut && newShortcut !== '입력 대기 중...') {
                     await GM_setValue(this.CONSTANTS.STORAGE_KEYS.SHORTCUT_KEY, newShortcut);
+                    activeShortcutString = newShortcut;
                     activeShortcutObject = this.parseShortcutString(newShortcut);
                     document.getElementById(this.CONSTANTS.UI_IDS.SHORTCUT_DISPLAY).textContent = newShortcut;
                     cleanup();
@@ -4299,6 +4327,33 @@
         getBootSnapshot() {
             return this._bootSnapshot || null;
         },
+        createSettingsSignature(settings = dcFilterSettings) {
+            if (!settings || typeof settings !== 'object') return '';
+            const normalizeStrings = (values) => (Array.isArray(values) ? values : [])
+                .map((value) => String(value ?? ''))
+                .filter(Boolean)
+                .sort();
+            const personalBlockList = settings.personalBlockList || {};
+            return JSON.stringify({
+                masterDisabled: Boolean(settings.masterDisabled),
+                excludeRecommended: Boolean(settings.excludeRecommended),
+                threshold: Number(settings.threshold) || 0,
+                ratioEnabled: Boolean(settings.ratioEnabled),
+                ratioMin: String(settings.ratioMin ?? ''),
+                ratioMax: String(settings.ratioMax ?? ''),
+                blockGuestEnabled: Boolean(settings.blockGuestEnabled),
+                proxyBlockMode: this.normalizeProxyBlockMode(settings.proxyBlockMode),
+                telecomBlockEnabled: Boolean(settings.telecomBlockEnabled),
+                blockedGuests: normalizeStrings(settings.blockedGuests),
+                customIpPrefixes: settings.customIpPrefixSet instanceof Set
+                    ? Array.from(settings.customIpPrefixSet, (value) => String(value)).sort()
+                    : [],
+                personalBlockEnabled: Boolean(settings.personalBlockEnabled),
+                personalUids: normalizeStrings((personalBlockList.uids || []).map((item) => item?.id)),
+                personalNicknames: normalizeStrings(personalBlockList.nicknames),
+                personalIps: normalizeStrings(personalBlockList.ips)
+            });
+        },
         async reloadSettings(snapshot = null) {
             let values;
             if (snapshot) {
@@ -4370,6 +4425,7 @@
                 personalBlockIpSet,
                 personalBlockEnabled
             };
+            this._settingsSignature = this.createSettingsSignature(dcFilterSettings);
             if (this.DEBUG_ENABLED) {
                 this.debugLog('settings', 'reloadSettings complete', this.debugSettingsSnapshot({
                     rawBlockConfigIp: typeof blockConfig?.ip === 'string' ? blockConfig.ip : '',
@@ -4500,8 +4556,111 @@
                 this.setRuntimeDiagnosticGauge('filter.syncPass.comments.lastRootCount', requestedRoots.length);
             });
         },
-        async runFullRefilterPass(reason = 'refilterAllContent', { scheduleFollowups = true } = {}) {
-            await this.reloadSettings();
+        getVisibilityRecoverySurface() {
+            const pageType = window.__dcufRuntimeCoordinator?.getPageContext?.().type
+                || window.__dcufPageContext?.type
+                || 'other';
+            if (pageType === 'lists') {
+                return document.querySelector('table.gall_list, .gall_listwrap, .list_wrap');
+            }
+            if (pageType === 'view') {
+                return document.querySelector('.writing_view_box, .gallview_contents, .view_content_wrap');
+            }
+            if (pageType === 'write') {
+                return document.querySelector('form#write, form[name="modify"][action*="modify_submit"], #write_wrap, .gall_write, .write_box');
+            }
+            return document.body;
+        },
+        captureHiddenVisibilityState() {
+            const runtimeCoordinator = window.__dcufRuntimeCoordinator;
+            runtimeCoordinator?.ensureMutationBus?.();
+            const generation = runtimeCoordinator?.flushPendingMutations?.('visibility-hidden-snapshot')
+                ?? runtimeCoordinator?.getMutationGeneration?.()
+                ?? 0;
+            const bfcacheState = runtimeCoordinator?.getBfcacheRecoveryState?.() || {};
+            this._visibilityCycleId += 1;
+            this._hiddenAt = Date.now();
+            this._hiddenMutationGeneration = generation;
+            this._hiddenBody = document.body;
+            this._hiddenRecoverySurface = this.getVisibilityRecoverySurface();
+            this._hiddenBfcacheRecoveryId = Number(bfcacheState.id) || 0;
+            this.incrementRuntimeDiagnostic('lifecycle.visibility.hidden');
+            this.setRuntimeDiagnosticGauge('lifecycle.visibility.hiddenGeneration', generation);
+        },
+        getHiddenVisibilitySnapshot() {
+            return {
+                cycleId: this._visibilityCycleId,
+                hiddenAt: this._hiddenAt,
+                mutationGeneration: this._hiddenMutationGeneration,
+                body: this._hiddenBody,
+                recoverySurface: this._hiddenRecoverySurface,
+                bfcacheRecoveryId: this._hiddenBfcacheRecoveryId
+            };
+        },
+        isMatchingBfcacheRecovery(snapshot, recoveryState) {
+            return Boolean(
+                snapshot?.hiddenAt
+                && recoveryState?.succeeded
+                && Number(recoveryState.id) > Number(snapshot.bfcacheRecoveryId || 0)
+                && Number(recoveryState.startedAt) >= Number(snapshot.hiddenAt)
+                && recoveryState.body === document.body
+            );
+        },
+        async restoreVisibleState(snapshot) {
+            const runtimeCoordinator = window.__dcufRuntimeCoordinator;
+            runtimeCoordinator?.ensureMutationBus?.();
+
+            let recoveryState = runtimeCoordinator?.getBfcacheRecoveryState?.() || {};
+            const recoveryBelongsToCycle = Number(recoveryState.id) > Number(snapshot.bfcacheRecoveryId || 0)
+                && Number(recoveryState.startedAt) >= Number(snapshot.hiddenAt || 0)
+                && recoveryState.body === document.body;
+            if (recoveryState.pending && recoveryBelongsToCycle) {
+                await runtimeCoordinator.waitForBfcacheRecovery?.();
+                recoveryState = runtimeCoordinator?.getBfcacheRecoveryState?.() || recoveryState;
+            }
+
+            if (this.isMatchingBfcacheRecovery(snapshot, recoveryState)) {
+                await reloadShortcutKey();
+                this.incrementRuntimeDiagnostic('lifecycle.visibility.restore.skippedBfcache');
+                this.setRuntimeDiagnosticGauge('lifecycle.visibility.restore.lastReason', 'bfcache-handled');
+                return { restored: false, reason: 'bfcache-handled' };
+            }
+
+            const previousSettingsSignature = this._settingsSignature;
+            const [, shortcutState] = await Promise.all([
+                this.reloadSettings(),
+                reloadShortcutKey()
+            ]);
+            const generation = runtimeCoordinator?.flushPendingMutations?.('visibility-visible-check')
+                ?? runtimeCoordinator?.getMutationGeneration?.()
+                ?? 0;
+            const currentSurface = this.getVisibilityRecoverySurface();
+            const reasons = [];
+            if (generation !== snapshot.mutationGeneration) reasons.push('mutation');
+            if (snapshot.body !== document.body || (snapshot.body && !snapshot.body.isConnected)) reasons.push('body');
+            if (snapshot.recoverySurface !== currentSurface
+                || (snapshot.recoverySurface && !snapshot.recoverySurface.isConnected)) reasons.push('surface');
+            if (previousSettingsSignature !== this._settingsSignature) reasons.push('settings');
+            if (snapshot.hiddenAt && Date.now() - snapshot.hiddenAt >= this.VISIBILITY_LONG_RESTORE_MS) reasons.push('long-suspend');
+
+            this.setRuntimeDiagnosticGauge('lifecycle.visibility.restore.shortcutChanged', Boolean(shortcutState?.changed));
+            if (reasons.length === 0) {
+                this.incrementRuntimeDiagnostic('lifecycle.visibility.restore.skippedClean');
+                this.setRuntimeDiagnosticGauge('lifecycle.visibility.restore.lastReason', 'clean');
+                return { restored: false, reason: 'clean', shortcutChanged: Boolean(shortcutState?.changed) };
+            }
+
+            const reason = `visibilitychange-visible:${reasons.join('+')}`;
+            await this.refilterAllContent(reason, {
+                scheduleFollowups: false,
+                settingsAlreadyLoaded: true
+            });
+            this.incrementRuntimeDiagnostic('lifecycle.visibility.restore.runs');
+            this.setRuntimeDiagnosticGauge('lifecycle.visibility.restore.lastReason', reasons.join(','));
+            return { restored: true, reason, shortcutChanged: Boolean(shortcutState?.changed) };
+        },
+        async runFullRefilterPass(reason = 'refilterAllContent', { scheduleFollowups = true, settingsAlreadyLoaded = false } = {}) {
+            if (!settingsAlreadyLoaded) await this.reloadSettings();
             const descriptors = this.getRefilterTargets('all');
             this.startDebugPass(reason, { targetCount: descriptors.length });
             this.runSyncRefilterPass('all', document, descriptors, {
@@ -4513,9 +4672,9 @@
             this.setRuntimeDiagnosticGauge('filter.fullRefilter.lastTargetCount', descriptors.length);
             document.dispatchEvent(new CustomEvent('dcFilterRefiltered'));
         },
-        async refilterAllContent(reason = 'refilterAllContent', { scheduleFollowups = true } = {}) {
+        async refilterAllContent(reason = 'refilterAllContent', { scheduleFollowups = true, settingsAlreadyLoaded = false } = {}) {
             if (!this._pendingFullRefilterReasons) this._pendingFullRefilterReasons = [];
-            this._pendingFullRefilterReasons.push({ reason, scheduleFollowups });
+            this._pendingFullRefilterReasons.push({ reason, scheduleFollowups, settingsAlreadyLoaded });
 
             if (this._refilterAllContentRunning) {
                 this.debugLog('refilter', 'coalesced full refilter request', {
@@ -4534,7 +4693,11 @@
                         ? `${lastRequest.reason} [coalesced:${pendingRequests.length}]`
                         : lastRequest.reason;
                     const shouldScheduleFollowups = pendingRequests.some((request) => request.scheduleFollowups !== false);
-                    await this.runFullRefilterPass(runReason, { scheduleFollowups: shouldScheduleFollowups });
+                    const settingsWereLoaded = pendingRequests.every((request) => request.settingsAlreadyLoaded === true);
+                    await this.runFullRefilterPass(runReason, {
+                        scheduleFollowups: shouldScheduleFollowups,
+                        settingsAlreadyLoaded: settingsWereLoaded
+                    });
                 }
             })();
 
@@ -4545,16 +4708,31 @@
                 this._refilterAllContentPromise = null;
             }
         },
-        // [수정] handleVisibilityChange를 async 함수로 변경하고 reloadShortcutKey 호출 추가
         async handleVisibilityChange() {
             if (document.visibilityState !== 'visible') {
+                this.captureHiddenVisibilityState();
                 await this.flushBlockedUidCache('visibility-hidden');
                 return;
             }
-            if (document.visibilityState === 'visible') {
-                await reloadShortcutKey(); // 단축키 설정을 다시 로드
-                await this.refilterAllContent('visibilitychange-visible', { scheduleFollowups: false }); // 복구 패스 1회는 유지하고 무변화 지연 패스는 생략
-            }
+            if (this._visibilityRecoveryPromise) return this._visibilityRecoveryPromise;
+
+            const snapshot = this.getHiddenVisibilitySnapshot();
+            this._visibilityRecoveryPromise = this.restoreVisibleState(snapshot).catch(async (error) => {
+                this.incrementRuntimeDiagnostic('lifecycle.visibility.restore.failed');
+                console.warn('[DCUF lifecycle] visibility restore failed; running fallback refilter.', error);
+                await this.refilterAllContent('visibilitychange-visible:fallback', { scheduleFollowups: false });
+                return { restored: true, reason: 'fallback' };
+            }).finally(() => {
+                this._visibilityRecoveryPromise = null;
+                if (this._visibilityCycleId === snapshot.cycleId && document.visibilityState === 'visible') {
+                    this._hiddenAt = 0;
+                    this._hiddenMutationGeneration = 0;
+                    this._hiddenBody = null;
+                    this._hiddenRecoverySurface = null;
+                    this._hiddenBfcacheRecoveryId = 0;
+                }
+            });
+            return this._visibilityRecoveryPromise;
         },
         init() {
             if (this._initState === 'ready') return Promise.resolve('already-ready');

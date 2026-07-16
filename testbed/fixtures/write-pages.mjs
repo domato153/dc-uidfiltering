@@ -88,14 +88,19 @@ const controls = `<aside id="dcuf-testbed-controls" aria-label="글쓰기 testbe
     <button type="button" data-action="dark">야간모드</button>
 </aside>`;
 
-export function writePage({ variant = 'major' } = {}) {
+export function writePage({ variant = 'major', formMode = 'write' } = {}) {
     const isMinor = variant === 'minor';
+    const isModify = formMode === 'modify';
+    const formAttributes = isModify
+        ? 'name="modify" method="post" action="/board/forms/modify_submit" autocomplete="off"'
+        : 'id="write" name="write" method="post" action="/__testbed/write-submit" autocomplete="off"';
     const captcha = isMinor ? `<td class="fixture-captcha-cell"><div class="captcha"><label for="code">코드 입력</label><span class="fixture-captcha-image" aria-label="캡차 이미지">3D8WA</span><input id="code" name="code" type="text" inputmode="text" autocomplete="off"></div></td>` : '';
-    return `${head(`DCUF ${variant} write fixture`)}<body data-fixture-page="write" data-fixture-variant="${variant}">${controls}<div id="top" class="dcwrap width1160">
+    return `${head(`DCUF ${variant} ${formMode} fixture`)}<body data-fixture-page="${isModify ? 'modify' : 'write'}" data-fixture-variant="${variant}">${controls}<div id="top" class="dcwrap width1160">
     <header class="fixture-gallery-header"><h1>${isMinor ? '마이너' : '메이저'} 갤러리</h1></header>
     <main id="container" class="clear ${isMinor ? 'minor_write' : 'gallery_write'}"><section class="center_content gall_write"><article id="write_wrap" class="clear">
-        <form id="write" name="write" method="post" action="/__testbed/write-submit" autocomplete="off">
+        <form ${formAttributes}>
             ${hiddenContract(variant)}
+            ${isModify ? '<input type="hidden" name="no" value="1001">' : ''}
             <input class="fixture-decoy-input" type="text" style="width:0;height:0;border:0" value="fixture-redacted">
             <input class="fixture-decoy-input" type="password" style="display:block;width:0;height:0;border:0" value="fixture-redacted">
             <table class="w_top"><tbody>
@@ -130,6 +135,26 @@ export function writePage({ variant = 'major' } = {}) {
             </div>
         </form>
     </article></section></main></div>${scripts}`;
+}
+
+export function modifyPasswordPage() {
+    return `${head('DCUF modify password fixture')}<body data-fixture-page="modify" data-fixture-variant="major"><div id="top" class="dcwrap width1160">
+        <header class="dcheader typea"><div class="dchead"><h1 class="dc_logo"><a href="#">dcinside.com</a></h1><div class="wrap_search"><form class="top_search"><input aria-label="갤러리 검색"><button type="button" class="sp_img bnt_search">검색</button></form></div></div></header>
+        <div class="gnb_bar"><nav class="gnb"><ul class="gnb_list"><li>갤러리</li><li>마이너갤</li><li>미니갤</li></ul></nav></div>
+        <div class="newvisit_history"><strong class="tit">최근 방문</strong><div class="newvisit_box"><ul class="newvisit_list"><li><a href="#">테스트 갤러리</a></li></ul></div></div>
+        <main id="container" class="clear"><section>
+            <header class="page_head clear"><div class="fl"><h2><a href="#gallery">테스트 갤러리</a></h2></div></header>
+            <form id="password_confirm" name="password_confirm" method="post" action="/__testbed/modify_password_submit" onsubmit="event.preventDefault()">
+                <input type="hidden" name="id" value="test"><input type="hidden" name="no" value="1001"><input type="hidden" name="auth_token" value="fixture-redacted">
+                <article><div class="no_memberwrap"><div class="no_member_cont"><h3 class="blind">비회원 글 수정</h3><div class="inner">
+                    <b class="txt">비밀번호를 입력하세요.</b>
+                    <input class="pw_inquiry" id="password" name="password" type="password" title="비밀번호 입력">
+                    <div class="btn_box"><button type="button" class="btn_grey small">취소</button><button type="submit" class="btn_blue small btn_ok">확인</button></div>
+                </div></div></div></article>
+            </form>
+        </section></main>
+        <footer class="dcfoot type1"><p>fixture footer should be hidden</p></footer><div id="data_info">fixture data info should be hidden</div>
+    </div>${scripts}`;
 }
 
 export function nativeWritePage() {
