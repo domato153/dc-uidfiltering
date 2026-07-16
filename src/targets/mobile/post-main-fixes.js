@@ -5418,14 +5418,40 @@
 
     installBlockedCommentShellFilterHook();
 
-    const syncFilteredParentPlaceholders = () => {
-        document.querySelectorAll(`${COMMENT_LIST_SELECTOR} > li[id^="comment_li_"]`).forEach((parentLi) => {
-            clearFilteredParentPlaceholder(parentLi);
+    const collectCommentLists = (roots = null) => {
+        const candidates = roots && typeof roots[Symbol.iterator] === 'function'
+            ? Array.from(roots)
+            : (roots ? [roots] : [document]);
+        const lists = [];
+        const seen = new Set();
+        const addList = (list) => {
+            if (!(list instanceof HTMLElement) || !list.isConnected || seen.has(list)) return;
+            if (!list.matches(COMMENT_LIST_SELECTOR)) return;
+            seen.add(list);
+            lists.push(list);
+        };
+        candidates.forEach((root) => {
+            if (root instanceof Element) {
+                addList(root);
+                addList(root.closest(COMMENT_LIST_SELECTOR));
+            }
+            if (typeof root?.querySelectorAll === 'function') {
+                root.querySelectorAll(COMMENT_LIST_SELECTOR).forEach(addList);
+            }
+        });
+        return lists;
+    };
+
+    const syncFilteredParentPlaceholders = (roots = null) => {
+        collectCommentLists(roots).forEach((list) => {
+            list.querySelectorAll(':scope > li[id^="comment_li_"]').forEach((parentLi) => {
+                clearFilteredParentPlaceholder(parentLi);
+            });
         });
     };
 
-    const syncFocusCommentCardGroups = () => {
-        document.querySelectorAll('#focus_cmt div[id^="comment_wrap_"] .comment_box .cmt_list').forEach((list) => {
+    const syncFocusCommentCardGroups = (roots = null) => {
+        collectCommentLists(roots).filter((list) => list.closest('#focus_cmt')).forEach((list) => {
             if (!(list instanceof HTMLElement)) return;
 
             const children = Array.from(list.children).filter((li) => li instanceof HTMLElement);
@@ -5579,8 +5605,8 @@
         return false;
     };
 
-    const mergeDetachedRepliesIntoParent = () => {
-        document.querySelectorAll(COMMENT_LIST_SELECTOR).forEach((list) => {
+    const mergeDetachedRepliesIntoParent = (roots = null) => {
+        collectCommentLists(roots).forEach((list) => {
             if (!(list instanceof HTMLElement)) return;
 
             const parentMap = new Map();
@@ -5616,33 +5642,49 @@
             });
         });
     };
+    const pendingReplyMergeRoots = new Set();
+    let forceFullReplyMerge = false;
+    let lastReplyMergeRoots = [];
+    const addPendingReplyMergeRoots = (roots) => {
+        collectCommentLists(roots).forEach((list) => pendingReplyMergeRoots.add(list));
+    };
     const replyMergeScheduler = __dcufCreatePhaseScheduler('reply-merge', ({ delay, meta }) => {
-        const source = meta && typeof meta === 'object' ? meta.source : '';
-        const shouldMergeDetachedReplies = source !== 'window-load';
+        const options = meta && typeof meta === 'object' ? meta : {};
+        const source = options.source || '';
         const filterModule = window.__dcufFilterModule;
 
-        if (shouldMergeDetachedReplies && delay === 0 && typeof filterModule?.runSyncRefilterPass === 'function') {
-            // Focus-comment reply merges can recreate parent comment li nodes before the
-            // delayed stabilized refilter runs. Re-apply comment blocking before merging
-            // so blocked parent comments choose shell/display state before replies move.
-            filterModule.runSyncRefilterPass('comments');
+        if (delay === 0) {
+            const roots = forceFullReplyMerge
+                ? collectCommentLists()
+                : Array.from(pendingReplyMergeRoots).filter((root) => root.isConnected);
+            pendingReplyMergeRoots.clear();
+            forceFullReplyMerge = false;
+            lastReplyMergeRoots = roots;
+            if (roots.length === 0) return;
+            if (source !== 'window-load') mergeDetachedRepliesIntoParent(roots);
+            syncFilteredParentPlaceholders(roots);
+            syncFocusCommentCardGroups(roots);
+            return;
         }
-        if (shouldMergeDetachedReplies) {
-            mergeDetachedRepliesIntoParent();
-        }
-        syncFilteredParentPlaceholders();
-        syncFocusCommentCardGroups();
-        if (delay === 140) {
-            if (typeof filterModule?.scheduleCommentStabilizedRefilter === 'function') {
-                filterModule.scheduleCommentStabilizedRefilter('reply-merge');
-            }
+
+        if (delay === 140
+            && !options.skipRefilter
+            && lastReplyMergeRoots.length > 0
+            && typeof filterModule?.scheduleCommentStabilizedRefilter === 'function') {
+            filterModule.scheduleCommentStabilizedRefilter('reply-merge', lastReplyMergeRoots);
         }
     }, [140]);
     const scheduleReplyMerge = (meta = null) => {
-        replyMergeScheduler.schedule(meta);
+        const options = meta && typeof meta === 'object' ? meta : {};
+        if (options.forceFull) forceFullReplyMerge = true;
+        if (options.roots) addPendingReplyMergeRoots(options.roots);
+        replyMergeScheduler.schedule(options);
     };
     const flushReplyMerge = (meta = null) => {
-        replyMergeScheduler.flush(meta);
+        const options = meta && typeof meta === 'object' ? meta : {};
+        if (options.forceFull) forceFullReplyMerge = true;
+        if (options.roots) addPendingReplyMergeRoots(options.roots);
+        replyMergeScheduler.flush(options);
     };
     const isReplyMergeMutationNode = (node) => {
         if (!(node instanceof Element)) return false;
@@ -5651,6 +5693,7 @@
             return false;
         }
         if (node.matches('#focus_cmt')) return true;
+        if (node.matches(COMMENT_LIST_SELECTOR)) return true;
         if (node.matches('div[id^="comment_wrap_"] .comment_box .reply.show, div[id^="comment_wrap_"] .comment_box .reply_box, div[id^="comment_wrap_"] .comment_box .reply_list')) {
             return true;
         }
@@ -5681,25 +5724,31 @@
         }
         return !!node.closest('div[id^="comment_wrap_"] .comment_box .reply.show, #focus_cmt');
     };
-    const shouldScheduleReplyMergeFromPayload = (payload) => {
-        if (!payload || typeof payload !== 'object') return false;
-        if (Array.isArray(payload.addedElements) && payload.addedElements.some(isReplyMergeMutationNode)) return true;
-        if (Array.isArray(payload.removedElements) && payload.removedElements.some(isReplyMergeMutationNode)) return true;
-        // Removed reply-composer trees are already detached when the mutation bus
-        // dispatches, so ancestor-dependent selectors cannot recognize them. Inspect
-        // the still-connected childList target to clear stale focus-card grouping.
-        if (Array.isArray(payload.childListTargets) && payload.childListTargets.some(isReplyMergeAttributeTarget)) return true;
-        if (Array.isArray(payload.attributeTargets) && payload.attributeTargets.some(isReplyMergeAttributeTarget)) return true;
-        return false;
+    const collectReplyMergeRootsFromPayload = (payload) => {
+        if (!payload || typeof payload !== 'object') return [];
+        const roots = new Set();
+        const addRoots = (nodes, predicate) => {
+            if (!Array.isArray(nodes)) return;
+            nodes.forEach((node) => {
+                if (!predicate(node)) return;
+                collectCommentLists([node]).forEach((list) => roots.add(list));
+            });
+        };
+        addRoots(payload.addedElements, isReplyMergeMutationNode);
+        addRoots(payload.removedElements, isReplyMergeMutationNode);
+        // Removed reply-composer trees are detached by dispatch time, so use the
+        // still-connected childList target to clear stale focus grouping.
+        addRoots(payload.childListTargets, isReplyMergeAttributeTarget);
+        addRoots(payload.attributeTargets, isReplyMergeAttributeTarget);
+        return Array.from(roots);
     };
 
     const observeReplyMergeTargets = () => {
         if (window.__dcufReplyMergeMutationUnsubscribe || window.__dcufReplyMergeObserver) return;
 
         const unsubscribe = __dcufSubscribeMutationBus('reply-merge', (payload) => {
-            if (shouldScheduleReplyMergeFromPayload(payload)) {
-                scheduleReplyMerge();
-            }
+            const roots = collectReplyMergeRootsFromPayload(payload);
+            if (roots.length > 0) scheduleReplyMerge({ source: 'mutation-bus', roots });
         });
         if (typeof unsubscribe === 'function') {
             window.__dcufReplyMergeMutationUnsubscribe = unsubscribe;
@@ -5715,7 +5764,7 @@
                         || Array.from(mutation.addedNodes).some(isReplyMergeMutationNode)
                         || Array.from(mutation.removedNodes).some(isReplyMergeMutationNode);
                     if (hasRelevantChange) {
-                        scheduleReplyMerge();
+                        scheduleReplyMerge({ source: 'mutation-observer', roots: [mutation.target, ...Array.from(mutation.addedNodes)] });
                         return;
                     }
                 }
@@ -5723,7 +5772,7 @@
                 if (mutation.type === 'attributes') {
                     const target = mutation.target;
                     if (isReplyMergeAttributeTarget(target)) {
-                        scheduleReplyMerge();
+                        scheduleReplyMerge({ source: 'mutation-observer', roots: [target] });
                         return;
                     }
                 }
@@ -5744,16 +5793,16 @@
         document.addEventListener('DOMContentLoaded', () => {
             // Run the initial reply merge synchronously so blocked parent comments stay
             // filtered before the comment area becomes visually stable.
-            flushReplyMerge({ source: 'dom-ready-initial' });
+            flushReplyMerge({ source: 'dom-ready-initial', forceFull: true });
             observeReplyMergeTargets();
         }, { once: true });
     } else {
-        flushReplyMerge({ source: 'ready-initial' });
+        flushReplyMerge({ source: 'ready-initial', forceFull: true });
         observeReplyMergeTargets();
     }
 
-    window.addEventListener('load', () => scheduleReplyMerge({ source: 'window-load' }), { once: true });
-    window.addEventListener('resize', () => scheduleReplyMerge({ source: 'resize' }));
+    window.addEventListener('load', () => scheduleReplyMerge({ source: 'window-load', forceFull: true, skipRefilter: true }), { once: true });
+    window.addEventListener('resize', () => scheduleReplyMerge({ source: 'resize', forceFull: true, skipRefilter: true }));
 })();
 
 (() => {

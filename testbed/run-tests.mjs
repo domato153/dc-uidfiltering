@@ -697,6 +697,93 @@ test('mini view bottom buttons remain clickable above article overlays', 'functi
     } finally { await session.close(); }
 });
 
+test('comment add edit delete and detached replies stay root-scoped and filtered', 'functional', async ({ browser, server }) => {
+    if (isPcUserscript) return;
+    const blockedUids = ['blocked-parent-dynamic', 'blocked-edit-dynamic', 'blocked-added-dynamic'];
+    const session = await createTestPage(browser, server.baseUrl, {
+        storage: {
+            ...noStatsStorage,
+            [storageKeys.personalList]: {
+                uids: blockedUids.map((id) => ({ id, name: id })),
+                nicknames: [],
+                ips: []
+            }
+        }
+    });
+    try {
+        await session.goto('/board/view?id=test&no=1001');
+        await session.page.evaluate(() => window.__dcufDiagnostics.reset());
+        await session.page.evaluate(() => {
+            const mount = document.createElement('section');
+            mount.id = 'fixture-detached-reply-merge';
+            mount.innerHTML = `
+                <div id="comment_wrap_88001" class="gall_comment comment_wrap show"><div class="comment_box"><ul class="cmt_list add">
+                    <li id="comment_li_88001" class="ub-content" data-no="88001">
+                        <div class="cmt_info"><div class="cmt_nickbox"><span class="gall_writer ub-writer" data-uid="blocked-parent-dynamic" data-nick="blocked parent"><span class="nickname"><em>blocked parent</em></span></span></div></div>
+                        <div class="cmt_txtbox"><p class="usertxt ub-word">blocked parent body</p></div>
+                    </li>
+                    <li id="reply_empty_last_li_88001" class="ub-content">
+                        <div class="reply show"><div class="reply_box"><ul class="reply_list" p-no="88001">
+                            <li id="reply_li_88001_1" class="ub-content"><div class="reply_info"><div class="cmt_nickbox"><span class="gall_writer ub-writer" data-uid="safe-root-scoped-reply" data-nick="safe reply"></span></div></div><div class="cmt_txtbox">safe reply body</div></li>
+                        </ul></div></div>
+                    </li>
+                </ul></div></div>
+            `;
+            document.querySelector('#focus_cmt').after(mount);
+        });
+        await waitForSettled(session.page, 500);
+        const mergedState = await session.page.locator('#comment_li_88001').evaluate((parent) => ({
+            ownInfoDisplay: getComputedStyle(parent.querySelector(':scope > .cmt_info')).display,
+            replyDisplay: parent.querySelector('#reply_li_88001_1') ? getComputedStyle(parent.querySelector('#reply_li_88001_1')).display : 'missing',
+            shell: parent.getAttribute('data-dcuf-comment-shell-blocked'),
+            parentDisplay: parent.style.display,
+            merged: Boolean(parent.querySelector(':scope > .reply.show #reply_li_88001_1')),
+            wrapperPresent: Boolean(document.getElementById('reply_empty_last_li_88001'))
+        }));
+        const mergeDiagnostics = await getDiagnostics(session.page);
+        assert.equal(mergedState.merged, true, JSON.stringify({ mergedState, counters: mergeDiagnostics.counters, gauges: mergeDiagnostics.gauges }));
+        assert.equal(mergedState.wrapperPresent, false);
+        assert.equal(mergedState.ownInfoDisplay, 'none');
+        assert.equal(mergedState.replyDisplay, 'list-item');
+        assert.equal(mergedState.shell, '1');
+        assert.equal(mergedState.parentDisplay, '');
+
+        const editFrames = await session.page.evaluate(async () => {
+            const item = document.getElementById('comment_li_3');
+            const writer = item.querySelector('.ub-writer');
+            writer.setAttribute('data-uid', 'blocked-edit-dynamic');
+            writer.setAttribute('data-nick', 'blocked edit');
+            const frames = [];
+            for (let index = 0; index < 3; index += 1) {
+                await new Promise((resolve) => requestAnimationFrame(resolve));
+                frames.push(item.style.display);
+            }
+            return frames;
+        });
+        assert.equal(editFrames.every((display) => display === 'none'), true, JSON.stringify(editFrames));
+        await session.page.locator('#comment_li_3').evaluate((item) => item.remove());
+        await waitForSettled(session.page, 180);
+        assert.equal(await session.page.locator('#comment_li_3').count(), 0);
+
+        const addFrames = await session.page.evaluate(async () => {
+            window.__dcufFixture.addComments(1, { uid: 'blocked-added-dynamic', nick: 'blocked added' });
+            const item = document.querySelector('[data-uid="blocked-added-dynamic"]')?.closest('li');
+            const frames = [];
+            for (let index = 0; index < 3; index += 1) {
+                await new Promise((resolve) => requestAnimationFrame(resolve));
+                frames.push(item?.style.display || 'missing');
+            }
+            return frames;
+        });
+        assert.equal(addFrames.every((display) => display === 'none'), true, JSON.stringify(addFrames));
+        await waitForSettled(session.page, 220);
+        const diagnostics = await getDiagnostics(session.page);
+        assert.equal(diagnostics.counters['filter.fullRefilter.runs'] || 0, 0);
+        assert.equal((diagnostics.counters['filter.syncPass.comments.runs'] || 0) <= 3, true, JSON.stringify(diagnostics.counters));
+        assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
+    } finally { await session.close(); }
+});
+
 test('focus comment reply composer collapse clears merged card state', 'functional', async ({ browser, server }) => {
     if (isPcUserscript) return;
 
@@ -1790,6 +1877,8 @@ test('대량 댓글과 장문 DOM의 비교 가능한 성능 지표를 기록한
         const addedDomNodes = Math.max(1, report.domNodesAfter - report.domNodesBefore);
         assert.equal(report.mutationCallbacks / addedDomNodes < 0.25, true, `mutation callback/node ratio: ${report.mutationCallbacks}/${addedDomNodes}`);
         assert.equal((after.dcuf.counters['filter.fullRefilter.runs'] || 0), 0);
+        assert.equal((after.dcuf.counters['filter.syncPass.comments.runs'] || 0) <= 10, true, JSON.stringify(report.filterPassSummary));
+        assert.equal(report.filterPassSummary.processedTargets <= 3500, true, JSON.stringify(report.filterPassSummary));
     } finally { await session.close(); }
 });
 

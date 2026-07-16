@@ -4379,42 +4379,35 @@
                 this._syncRefilterTimerIds.add(timerId);
             });
         },
-        scheduleCommentStabilizedRefilter(reason = 'comment-stabilized', root = null) {
+        scheduleCommentStabilizedRefilter(reason = 'comment-stabilized', roots = null) {
             if (this._commentRefilterRafId) cancelAnimationFrame(this._commentRefilterRafId);
             if (!this._commentRefilterTimerIds) this._commentRefilterTimerIds = new Set();
             this._commentRefilterTimerIds.forEach((timerId) => clearTimeout(timerId));
             this._commentRefilterTimerIds.clear();
 
-            const runtimeCoordinator = this.getRuntimeCoordinator();
-            const hasRuntimeMutationBus = Boolean(runtimeCoordinator && typeof runtimeCoordinator.subscribeMutations === 'function');
-            let lastGeneration = this.getRelevantMutationGeneration('comments');
-            const rerun = (phase, { force = false } = {}) => {
-                const generation = this.getRelevantMutationGeneration('comments');
-                if (!force && hasRuntimeMutationBus && generation === lastGeneration) {
-                    this.incrementRuntimeDiagnostic('filter.syncPass.comments.skippedUnchanged');
-                    return;
-                }
-                const scopeRoot = this.resolveRefilterRoot(root || document);
-                const shouldFallbackToFullPass = root instanceof Element && !document.contains(root);
-                if (shouldFallbackToFullPass) {
-                    this.runSyncRefilterPass('all');
-                } else {
-                    this.runSyncRefilterPass('comments', scopeRoot);
-                }
-                lastGeneration = this.getRelevantMutationGeneration('comments');
-                this.setRuntimeDiagnosticGauge('filter.syncPass.comments.lastPhase', phase);
-            };
-            this.debugLog('comment-refilter', 'scheduleCommentStabilizedRefilter', { reason });
+            const requestedRoots = roots && typeof roots[Symbol.iterator] === 'function'
+                ? Array.from(roots)
+                : (roots ? [roots] : [document]);
+            this.debugLog('comment-refilter', 'scheduleCommentStabilizedRefilter', { reason, rootCount: requestedRoots.length });
             this._commentRefilterRafId = requestAnimationFrame(() => {
                 this._commentRefilterRafId = 0;
-                rerun('raf', { force: true });
-                [140, 420, 1100].forEach((delay) => {
-                    const timerId = window.setTimeout(() => {
-                        this._commentRefilterTimerIds.delete(timerId);
-                        rerun(`delay:${delay}`);
-                    }, delay);
-                    this._commentRefilterTimerIds.add(timerId);
+                const descriptors = [];
+                const seenElements = new Set();
+                requestedRoots.forEach((root) => {
+                    if (root instanceof Element && !root.isConnected) return;
+                    this.getRefilterTargets('comments', this.resolveRefilterRoot(root)).forEach((descriptor) => {
+                        if (!descriptor?.element || seenElements.has(descriptor.element)) return;
+                        seenElements.add(descriptor.element);
+                        descriptors.push(descriptor);
+                    });
                 });
+                if (descriptors.length === 0) {
+                    this.incrementRuntimeDiagnostic('filter.syncPass.comments.skippedEmptyRoots');
+                    return;
+                }
+                this.runSyncRefilterPass('comments', document, descriptors);
+                this.setRuntimeDiagnosticGauge('filter.syncPass.comments.lastPhase', 'raf:root-scoped');
+                this.setRuntimeDiagnosticGauge('filter.syncPass.comments.lastRootCount', requestedRoots.length);
             });
         },
         async runFullRefilterPass(reason = 'refilterAllContent', { scheduleFollowups = true } = {}) {
