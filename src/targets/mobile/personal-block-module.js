@@ -169,6 +169,7 @@
         },
 
         async showFabScalePanel() {
+            window.__dcufEnsureFilterUiStyles?.();
             document.getElementById('dc-personal-block-size-overlay')?.remove();
             const savedPercent = await this.loadFabScalePercent();
             this.applyFabScalePercent(savedPercent);
@@ -232,6 +233,7 @@
 
 
         async createManualBlockPanel({ initialType = 'nickname', onAdded = null } = {}) {
+            window.__dcufEnsureFilterUiStyles?.();
             const existingPanel = document.getElementById('dc-manual-block-panel');
             if (existingPanel) {
                 existingPanel.querySelector('#dc-manual-block-value')?.focus();
@@ -425,6 +427,7 @@
             const drawer = document.getElementById('dc-personal-block-drawer');
             if (!fab || !drawer) return;
             const willOpen = drawer.hidden;
+            if (willOpen) window.__dcufEnsureFilterUiStyles?.();
             drawer.hidden = !willOpen;
             fab.setAttribute('aria-expanded', String(willOpen));
             if (willOpen) this.positionFabDrawer();
@@ -592,6 +595,7 @@
 
         enterSelectionMode() {
             if (this.isSelectionMode) return;
+            window.__dcufEnsureFilterUiStyles?.();
             this.isSelectionMode = true;
             document.body.classList.add('selection-mode-active');
 
@@ -651,6 +655,7 @@
 
         // [v2.5.7 수정] 차단/차단 해제 버튼을 동적으로 생성
         showSelectionPopup(userInfo) {
+            window.__dcufEnsureFilterUiStyles?.();
             this.exitSelectionMode();
             this.isSelectionMode = true;
             document.body.classList.add('selection-mode-active');
@@ -890,6 +895,7 @@
 
         // [신규] 백업 및 복원 팝업 생성 함수
         async createBackupPopup() {
+            window.__dcufEnsureFilterUiStyles?.();
             if (document.getElementById('dc-backup-popup')) return;
 
             const overlay = document.createElement('div');
@@ -1082,6 +1088,7 @@
 
         // [수정] 차단 관리 패널 로직 전체 개선 (On/Off 스위치, 백업 버튼 추가)
         async createManagementPanel() {
+            window.__dcufEnsureFilterUiStyles?.();
             if (document.getElementById('dc-block-management-panel')) return;
 
 

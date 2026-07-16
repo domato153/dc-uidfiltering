@@ -1453,7 +1453,14 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
     RuntimeCoordinator.installDiagnosticsApi();
     window.__dcufRuntimeCoordinator = RuntimeCoordinator;
-    GM_addStyle(`
+    const __dcufFilterPageContext = window.__dcufPageContext || {
+        type: 'other',
+        isList: false,
+        isView: false,
+        hasListSurface: false,
+        hasComments: false
+    };
+    const __dcufAllFilterCss = `
         /* [최종 해결] 링크 미리보기 텍스트 박스 스타일 재정의 */
         .thum-txtin {
             box-sizing: border-box !important;  /* [핵심] 너비 계산 방식을 올바르게 수정 */
@@ -1887,6 +1894,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         }
         
         /* --- 글 보기/댓글 UI --- */
+        /* DCUF_VIEW_SURFACE_START */
         .gall_content, .gall_tit_box, .gall_writer_info, .btn_recommend_box, .view_bottom, .gall_comment {
             background: #fff !important;
             padding: 15px !important;
@@ -2202,6 +2210,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             color: #24364f;
             outline: none;
         }
+        /* DCUF_FAB_SHELL_END */
         #dc-personal-block-size-overlay {
             position: fixed;
             inset: 0;
@@ -3559,6 +3568,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             background: #414956 !important;
             color: #fff !important;
         }
+        /* DCUF_FAB_SHELL_DARK_END */
         body.dc-filter-dark-mode #dc-personal-block-size-overlay {
             background: rgba(0, 0, 0, 0.62) !important;
         }
@@ -3916,10 +3926,61 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         body.dc-filter-dark-mode #dc-backup-popup { background-color: #1b2738 !important; }
 
         /* DCUF_SHARED_FILTER_UI_DARK_END */
-    `);
+    `;
+
+    const __dcufCssMarkers = Object.freeze({
+        view: '/* DCUF_VIEW_SURFACE_START */',
+        ui: '/* DCUF_SHARED_FILTER_UI_START */',
+        uiEnd: '/* DCUF_SHARED_FILTER_UI_END */',
+        uiDark: '/* DCUF_SHARED_FILTER_UI_DARK_START */',
+        uiDarkEnd: '/* DCUF_SHARED_FILTER_UI_DARK_END */',
+        fabEnd: '/* DCUF_FAB_SHELL_END */',
+        fabDarkEnd: '/* DCUF_FAB_SHELL_DARK_END */'
+    });
+    const __dcufCssIndex = (marker) => {
+        const index = __dcufAllFilterCss.indexOf(marker);
+        if (index < 0) throw new Error(`DCUF CSS marker missing: ${marker}`);
+        return index;
+    };
+    const __dcufViewCssIndex = __dcufCssIndex(__dcufCssMarkers.view);
+    const __dcufUiCssIndex = __dcufCssIndex(__dcufCssMarkers.ui);
+    const __dcufUiCssEndIndex = __dcufCssIndex(__dcufCssMarkers.uiEnd) + __dcufCssMarkers.uiEnd.length;
+    const __dcufUiDarkCssIndex = __dcufCssIndex(__dcufCssMarkers.uiDark);
+    const __dcufUiDarkCssEndIndex = __dcufCssIndex(__dcufCssMarkers.uiDarkEnd) + __dcufCssMarkers.uiDarkEnd.length;
+    const __dcufFabCssEndIndex = __dcufCssIndex(__dcufCssMarkers.fabEnd) + __dcufCssMarkers.fabEnd.length;
+    const __dcufFabDarkCssEndIndex = __dcufCssIndex(__dcufCssMarkers.fabDarkEnd) + __dcufCssMarkers.fabDarkEnd.length;
+    const __dcufCoreFilterCss = __dcufAllFilterCss.slice(0, __dcufViewCssIndex);
+    const __dcufViewFilterCss = __dcufAllFilterCss.slice(__dcufViewCssIndex, __dcufUiCssIndex);
+    const __dcufGlobalDarkCss = __dcufAllFilterCss.slice(__dcufUiCssEndIndex, __dcufUiDarkCssIndex);
+    const __dcufLazyFilterUiCss = [
+        __dcufAllFilterCss.slice(__dcufUiCssIndex, __dcufUiCssEndIndex),
+        __dcufAllFilterCss.slice(__dcufUiDarkCssIndex, __dcufUiDarkCssEndIndex)
+    ].join('\n');
+    const __dcufFabShellCss = [
+        __dcufAllFilterCss.slice(__dcufUiCssIndex, __dcufFabCssEndIndex),
+        __dcufAllFilterCss.slice(__dcufUiDarkCssIndex, __dcufFabDarkCssEndIndex)
+    ].join('\n');
+
+    if (__dcufFilterPageContext.hasListSurface) {
+        GM_addStyle(`${__dcufCoreFilterCss}\n${__dcufGlobalDarkCss}`);
+        GM_addStyle(__dcufFabShellCss);
+    }
+    if (__dcufFilterPageContext.isView) GM_addStyle(__dcufViewFilterCss);
+
+    let __dcufFilterUiStylesLoaded = false;
+    const __dcufEnsureFilterUiStyles = () => {
+        if (__dcufFilterUiStylesLoaded) return false;
+        GM_addStyle(__dcufLazyFilterUiCss);
+        __dcufFilterUiStylesLoaded = true;
+        window.__dcufFilterUiStylesLoaded = true;
+        window.__dcufDiagnostics?.increment?.('style.filterUi.lazyLoads');
+        return true;
+    };
+    window.__dcufFilterUiStylesLoaded = false;
+    window.__dcufEnsureFilterUiStyles = __dcufEnsureFilterUiStyles;
 
 
-    GM_addStyle(`
+    if (__dcufFilterPageContext.hasListSurface) GM_addStyle(`
         /* [v2.7.5] 댓글/글목록 닉네임 폭 보정 */
         .post-meta {
             justify-content: flex-start !important;
@@ -4331,6 +4392,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             if (snapshot) { snapshot.blockConfig = conf; snapshot.migrationDone = true; }
         },
         async showSettings() {
+            window.__dcufEnsureFilterUiStyles?.();
             await this.reloadSettings();
             const { masterDisabled = false, excludeRecommended = false, threshold = 0, ratioEnabled = false, ratioMin = '', ratioMax = '', blockGuestEnabled = false, proxyBlockMode = 0, telecomBlockEnabled = false } = dcFilterSettings;
             const currentShortcut = await GM_getValue(this.CONSTANTS.STORAGE_KEYS.SHORTCUT_KEY, 'Shift+S');
@@ -5895,6 +5957,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         },
 
         async showFabScalePanel() {
+            window.__dcufEnsureFilterUiStyles?.();
             document.getElementById('dc-personal-block-size-overlay')?.remove();
             const savedPercent = await this.loadFabScalePercent();
             this.applyFabScalePercent(savedPercent);
@@ -5958,6 +6021,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
 
         async createManualBlockPanel({ initialType = 'nickname', onAdded = null } = {}) {
+            window.__dcufEnsureFilterUiStyles?.();
             const existingPanel = document.getElementById('dc-manual-block-panel');
             if (existingPanel) {
                 existingPanel.querySelector('#dc-manual-block-value')?.focus();
@@ -6151,6 +6215,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             const drawer = document.getElementById('dc-personal-block-drawer');
             if (!fab || !drawer) return;
             const willOpen = drawer.hidden;
+            if (willOpen) window.__dcufEnsureFilterUiStyles?.();
             drawer.hidden = !willOpen;
             fab.setAttribute('aria-expanded', String(willOpen));
             if (willOpen) this.positionFabDrawer();
@@ -6318,6 +6383,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
         enterSelectionMode() {
             if (this.isSelectionMode) return;
+            window.__dcufEnsureFilterUiStyles?.();
             this.isSelectionMode = true;
             document.body.classList.add('selection-mode-active');
 
@@ -6377,6 +6443,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
         // [v2.5.7 수정] 차단/차단 해제 버튼을 동적으로 생성
         showSelectionPopup(userInfo) {
+            window.__dcufEnsureFilterUiStyles?.();
             this.exitSelectionMode();
             this.isSelectionMode = true;
             document.body.classList.add('selection-mode-active');
@@ -6616,6 +6683,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
         // [신규] 백업 및 복원 팝업 생성 함수
         async createBackupPopup() {
+            window.__dcufEnsureFilterUiStyles?.();
             if (document.getElementById('dc-backup-popup')) return;
 
             const overlay = document.createElement('div');
@@ -6808,6 +6876,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
         // [수정] 차단 관리 패널 로직 전체 개선 (On/Off 스위치, 백업 버튼 추가)
         async createManagementPanel() {
+            window.__dcufEnsureFilterUiStyles?.();
             if (document.getElementById('dc-block-management-panel')) return;
 
 

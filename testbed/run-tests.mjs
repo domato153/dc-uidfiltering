@@ -562,6 +562,48 @@ test('page context registers only the runtime subscribers owned by each surface'
     }
 });
 
+test('filter UI CSS stays lazy until the first interactive surface opens', 'functional', async ({ browser, server }) => {
+    if (isPcUserscript) return;
+    const session = await createTestPage(browser, server.baseUrl, { storage: noStatsStorage });
+    try {
+        await session.goto('/board/view?id=test&no=1001');
+        const before = await session.page.evaluate(() => ({
+            loaded: window.__dcufFilterUiStylesLoaded,
+            styleCount: window.__dcufTestbedGM.snapshot().styleCount,
+            hasSettingsCss: Array.from(document.querySelectorAll('style[data-dcuf-testbed-gm-style="1"]'))
+                .some((style) => style.textContent.includes('#dcinside-filter-setting')),
+            lazyLoads: window.__dcufDiagnostics?.snapshot?.().counters?.['style.filterUi.lazyLoads'] || 0
+        }));
+        assert.deepEqual({ loaded: before.loaded, hasSettingsCss: before.hasSettingsCss, lazyLoads: before.lazyLoads }, {
+            loaded: false,
+            hasSettingsCss: false,
+            lazyLoads: 0
+        });
+
+        await session.page.locator('#dc-personal-block-fab').click();
+        const afterOpen = await session.page.evaluate(() => ({
+            loaded: window.__dcufFilterUiStylesLoaded,
+            styleCount: window.__dcufTestbedGM.snapshot().styleCount,
+            hasSettingsCss: Array.from(document.querySelectorAll('style[data-dcuf-testbed-gm-style="1"]'))
+                .some((style) => style.textContent.includes('#dcinside-filter-setting')),
+            lazyLoads: window.__dcufDiagnostics?.snapshot?.().counters?.['style.filterUi.lazyLoads'] || 0
+        }));
+        assert.equal(afterOpen.loaded, true);
+        assert.equal(afterOpen.hasSettingsCss, true);
+        assert.equal(afterOpen.lazyLoads, 1);
+        assert.equal(afterOpen.styleCount, before.styleCount + 1);
+
+        await session.page.locator('#dc-personal-block-fab').click();
+        await session.page.locator('#dc-personal-block-fab').click();
+        const afterRepeat = await session.page.evaluate(() => ({
+            styleCount: window.__dcufTestbedGM.snapshot().styleCount,
+            lazyLoads: window.__dcufDiagnostics?.snapshot?.().counters?.['style.filterUi.lazyLoads'] || 0
+        }));
+        assert.deepEqual(afterRepeat, { styleCount: afterOpen.styleCount, lazyLoads: 1 });
+        assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
+    } finally { await session.close(); }
+});
+
 test('mini view bottom buttons remain clickable above article overlays', 'functional', async ({ browser, server }) => {
     const session = await createTestPage(browser, server.baseUrl, { storage: noStatsStorage, viewport: { width: 1120, height: 900 } });
     try {
