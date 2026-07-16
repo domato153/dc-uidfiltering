@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         DC_UserFilter_Mobile
 // @namespace    http://tampermonkey.net/
-// @version      3.4.5-beta
+// @version      3.4.5
 // @description  유저 필터링, UI 개선, 개인 차단/해제 기능
 // @author       domato153
 // @match        https://gall.dcinside.com/*
@@ -2951,7 +2951,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             }
         }
 
-        /* [v3.4.5-beta] Script-owned soft-depth control surfaces */
+        /* [v3.4.5] Script-owned soft-depth control surfaces */
         #dc-personal-block-fab {
             background: linear-gradient(180deg, #fff 0%, #eef4ff 100%) !important;
             color: #29466f !important;
@@ -5944,7 +5944,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             this._initState = 'initializing';
             this._initPromise = (async () => {
                 this.installDebugApi();
-                this.debugLog('init', 'FilterModule init start', { version: '3.4.5-beta' });
+                this.debugLog('init', 'FilterModule init start', { version: '3.4.5' });
                 const snapshot = await this.loadBootSnapshot();
                 await this.cleanupLegacyManagedBlockConfig(snapshot);
                 await this.reloadSettings(snapshot);
@@ -10514,7 +10514,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
         return {
             reason,
-            version: '3.4.5-beta',
+            version: '3.4.5',
             time: new Date().toISOString(),
             href: location.href,
             heap: getDcufHeapMb(),
@@ -10714,7 +10714,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 }));
             }
         }
-        console.log("[DC Filter+UI] Initializing v3.4.5-beta...");
+        console.log("[DC Filter+UI] Initializing v3.4.5...");
 
 
         if (!__dcufRoot.__dcufShortcutBound) {

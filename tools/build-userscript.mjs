@@ -6,7 +6,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const rootDir = path.resolve(__dirname, '..');
 
-const VERSION = '3.4.5-beta';
+const VERSION = '3.4.5';
 const OUTPUT_NAME = `Dc_UserFilter_Mobile_v${VERSION}.user.js`;
 const testbedOutputIndex = process.argv.indexOf('--testbed-output');
 const testbedOutput = testbedOutputIndex >= 0 && process.argv[testbedOutputIndex + 1]
