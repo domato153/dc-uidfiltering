@@ -544,17 +544,21 @@ const ThemeModule = (() => {
             background-color: var(--dcuf-theme-surface-input) !important;
         }
         html[${ROOT_ATTRIBUTE}] body .custom-mobile-list .custom-post-item,
-        html[${ROOT_ATTRIBUTE}] body .custom-mobile-list .post-title-link,
         html[${ROOT_ATTRIBUTE}] body .custom-mobile-list .post-meta,
         html[${ROOT_ATTRIBUTE}] body .custom-mobile-list .post-meta .author {
             -webkit-tap-highlight-color: transparent !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body .custom-mobile-list .post-title-link {
+            -webkit-tap-highlight-color: color-mix(in srgb, var(--dcuf-theme-accent) 24%, transparent) !important;
         }
         html[${ROOT_ATTRIBUTE}] body .custom-mobile-list .custom-post-item {
             border-color: var(--dcuf-theme-border) !important;
             background-color: var(--dcuf-theme-card-top) !important;
             background-image: linear-gradient(180deg, var(--dcuf-theme-card-top) 0%, var(--dcuf-theme-card-bottom) 100%) !important;
             box-shadow: var(--dcuf-theme-card-shadow) !important;
-            transition: transform .14s ease, border-color .14s ease, box-shadow .14s ease !important;
+            outline: 2px solid transparent !important;
+            outline-offset: -2px !important;
+            transition: transform .14s ease, filter .08s ease, border-color .08s ease, outline-color .08s ease, box-shadow .14s ease !important;
         }
         html[${ROOT_ATTRIBUTE}] body .custom-mobile-list .custom-post-item.concept {
             border-color: color-mix(in srgb, var(--dcuf-theme-accent) 18%, var(--dcuf-theme-border)) !important;
@@ -575,6 +579,12 @@ const ThemeModule = (() => {
             border: 0 !important;
             background: transparent !important;
             box-shadow: none !important;
+        }
+        /* Preserve the native title link while giving touch and mouse presses immediate feedback. */
+        html[${ROOT_ATTRIBUTE}] body .custom-mobile-list .custom-post-item:has(.post-title-link:active) {
+            border-color: color-mix(in srgb, var(--dcuf-theme-accent) 56%, var(--dcuf-theme-border)) !important;
+            outline-color: color-mix(in srgb, var(--dcuf-theme-accent) 34%, transparent) !important;
+            filter: brightness(.94) saturate(1.06) !important;
         }
         @media (hover: hover) and (pointer: fine) {
             html[${ROOT_ATTRIBUTE}] body .custom-mobile-list .custom-post-item:hover {

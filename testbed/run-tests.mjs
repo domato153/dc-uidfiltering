@@ -4110,6 +4110,31 @@ mobileTest('UI palette surfaces cover list canvas, comments, image comments, and
         assert.equal(['rgba(0, 0, 0, 0)', 'transparent'].includes(listInteractionContract.tapHighlight), true, JSON.stringify(listInteractionContract));
         assert.notEqual(listInteractionContract.pencilContent, 'none');
         assert.equal(listInteractionContract.pencilColor, 'rgb(255, 255, 255)');
+        const titleLink = session.page.locator('.custom-post-item:not(.notice):not(.concept) .post-title-link:visible').first();
+        const titleHref = await titleLink.getAttribute('href');
+        await titleLink.evaluate((link) => link.setAttribute('href', 'javascript:;'));
+        const idleTitlePress = await titleLink.evaluate((link) => {
+            const cardStyle = getComputedStyle(link.closest('.custom-post-item'));
+            return {
+                filter: cardStyle.filter,
+                outlineColor: cardStyle.outlineColor,
+                tapHighlight: getComputedStyle(link).webkitTapHighlightColor
+            };
+        });
+        await titleLink.hover();
+        await session.page.mouse.down();
+        const activeTitlePress = await titleLink.evaluate((link) => {
+            const cardStyle = getComputedStyle(link.closest('.custom-post-item'));
+            return {
+                filter: cardStyle.filter,
+                outlineColor: cardStyle.outlineColor
+            };
+        });
+        await session.page.mouse.up();
+        await titleLink.evaluate((link, href) => link.setAttribute('href', href), titleHref);
+        assert.equal(['rgba(0, 0, 0, 0)', 'transparent'].includes(idleTitlePress.tapHighlight), false, JSON.stringify(idleTitlePress));
+        assert.notEqual(activeTitlePress.filter, idleTitlePress.filter, JSON.stringify({ idleTitlePress, activeTitlePress }));
+        assert.notEqual(activeTitlePress.outlineColor, idleTitlePress.outlineColor, JSON.stringify({ idleTitlePress, activeTitlePress }));
         const hostChromeContract = await session.page.evaluate(() => {
             const color = (selector, property) => getComputedStyle(document.querySelector(selector))[property];
             return {

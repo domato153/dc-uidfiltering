@@ -344,3 +344,11 @@ The Testbed functional check `mobile list navigation uses integrated raised tool
 - Stable runtime source is unchanged from the confirmed `3.4.6-beta` / `1.9.6-beta`; promotion removes only the version suffix. Under the stable reuse rule, do not rerun the full Testbed solely for the suffix change.
 - Reused post-fix beta coverage: mobile `write` 8/8, mobile management/backup palette 1/1, PC DCUF-owned popup palette 1/1, and `verify-repo all`. The earlier optimization beta run also completed the full mobile and PC suites at 74/74 each before the later live-shaped modify/palette fixtures were added.
 - Manual evidence does not cover every browser/dark-mode combination. Keep deterministic light/dark computed-style coverage as the contract for unobserved combinations.
+
+## 2026-07-17 - Mobile list title press feedback
+
+- The themed mobile list deliberately cleared tap highlights and limited card hover motion to fine pointers. That left a title tap with no visible acknowledgement on touch screens even though the native link still navigated correctly.
+- Keep the original `.post-title-link` and its navigation. Do not proxy clicks, make the whole card a link, or add another listener/observer. The title uses a palette-derived native tap highlight, while the containing card reacts only while that title is `:active`.
+- The pressed card may change its border, inner outline, brightness, and saturation, but must not translate or resize on touch. Normal, concept, and notice surfaces retain their existing gradients, rails, and semantic styling.
+- The focused functional palette regression holds the real title link active and verifies a non-transparent tap highlight plus changed card filter/outline without navigating away.
+- Mobile `3.4.7` ships this CSS-only interaction change after the focused list/palette regression passed 1/1 and `verify-repo release` passed. The user approved the built stable artifact for publication; no separate live browser smoke was performed by the agent.

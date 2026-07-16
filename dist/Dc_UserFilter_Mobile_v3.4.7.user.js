@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         DC_UserFilter_Mobile
 // @namespace    http://tampermonkey.net/
-// @version      3.4.6
+// @version      3.4.7
 // @description  유저 필터링, UI 개선, 개인 차단/해제 기능
 // @author       domato153
 // @match        https://gall.dcinside.com/board/*
@@ -2216,17 +2216,21 @@ const ThemeModule = (() => {
             background-color: var(--dcuf-theme-surface-input) !important;
         }
         html[${ROOT_ATTRIBUTE}] body .custom-mobile-list .custom-post-item,
-        html[${ROOT_ATTRIBUTE}] body .custom-mobile-list .post-title-link,
         html[${ROOT_ATTRIBUTE}] body .custom-mobile-list .post-meta,
         html[${ROOT_ATTRIBUTE}] body .custom-mobile-list .post-meta .author {
             -webkit-tap-highlight-color: transparent !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body .custom-mobile-list .post-title-link {
+            -webkit-tap-highlight-color: color-mix(in srgb, var(--dcuf-theme-accent) 24%, transparent) !important;
         }
         html[${ROOT_ATTRIBUTE}] body .custom-mobile-list .custom-post-item {
             border-color: var(--dcuf-theme-border) !important;
             background-color: var(--dcuf-theme-card-top) !important;
             background-image: linear-gradient(180deg, var(--dcuf-theme-card-top) 0%, var(--dcuf-theme-card-bottom) 100%) !important;
             box-shadow: var(--dcuf-theme-card-shadow) !important;
-            transition: transform .14s ease, border-color .14s ease, box-shadow .14s ease !important;
+            outline: 2px solid transparent !important;
+            outline-offset: -2px !important;
+            transition: transform .14s ease, filter .08s ease, border-color .08s ease, outline-color .08s ease, box-shadow .14s ease !important;
         }
         html[${ROOT_ATTRIBUTE}] body .custom-mobile-list .custom-post-item.concept {
             border-color: color-mix(in srgb, var(--dcuf-theme-accent) 18%, var(--dcuf-theme-border)) !important;
@@ -2247,6 +2251,12 @@ const ThemeModule = (() => {
             border: 0 !important;
             background: transparent !important;
             box-shadow: none !important;
+        }
+        /* Preserve the native title link while giving touch and mouse presses immediate feedback. */
+        html[${ROOT_ATTRIBUTE}] body .custom-mobile-list .custom-post-item:has(.post-title-link:active) {
+            border-color: color-mix(in srgb, var(--dcuf-theme-accent) 56%, var(--dcuf-theme-border)) !important;
+            outline-color: color-mix(in srgb, var(--dcuf-theme-accent) 34%, transparent) !important;
+            filter: brightness(.94) saturate(1.06) !important;
         }
         @media (hover: hover) and (pointer: fine) {
             html[${ROOT_ATTRIBUTE}] body .custom-mobile-list .custom-post-item:hover {
@@ -4415,7 +4425,7 @@ const ThemeModule = (() => {
             }
         }
 
-        /* [v3.4.6] Script-owned soft-depth control surfaces */
+        /* [v3.4.7] Script-owned soft-depth control surfaces */
         #dc-personal-block-fab {
             background: linear-gradient(180deg, #fff 0%, #eef4ff 100%) !important;
             color: #29466f !important;
@@ -7586,7 +7596,7 @@ const ThemeModule = (() => {
             this._initState = 'initializing';
             this._initPromise = (async () => {
                 this.installDebugApi();
-                this.debugLog('init', 'FilterModule init start', { version: '3.4.6' });
+                this.debugLog('init', 'FilterModule init start', { version: '3.4.7' });
                 const snapshot = await this.loadBootSnapshot();
                 await this.cleanupLegacyManagedBlockConfig(snapshot);
                 await this.reloadSettings(snapshot);
@@ -12247,7 +12257,7 @@ const ThemeModule = (() => {
 
         return {
             reason,
-            version: '3.4.6',
+            version: '3.4.7',
             time: new Date().toISOString(),
             href: location.href,
             heap: getDcufHeapMb(),
@@ -12451,7 +12461,7 @@ const ThemeModule = (() => {
                 }));
             }
         }
-        console.log("[DC Filter+UI] Initializing v3.4.6...");
+        console.log("[DC Filter+UI] Initializing v3.4.7...");
 
 
         if (!__dcufRoot.__dcufShortcutBound) {
