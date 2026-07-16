@@ -14,6 +14,25 @@
         mirrorRemoved: 0,
         filterPasses: [],
         processedDomNodes: 0,
+        documentQuerySelectorCalls: 0,
+        documentQuerySelectorAllCalls: 0,
+        documentQuerySelectorAllResults: 0,
+        elementQuerySelectorCalls: 0,
+        elementQuerySelectorAllCalls: 0,
+        elementQuerySelectorAllResults: 0,
+        computedStyleReads: 0,
+        boundingClientRectReads: 0,
+        clientRectListReads: 0,
+        layoutPropertyReads: 0,
+        timeoutScheduled: 0,
+        timeoutCompleted: 0,
+        timeoutCleared: 0,
+        intervalScheduled: 0,
+        intervalCallbacks: 0,
+        intervalCleared: 0,
+        animationFrameScheduled: 0,
+        animationFrameCompleted: 0,
+        animationFrameCancelled: 0,
         errors: []
     };
     const NativeMutationObserver = globalThis.MutationObserver;
@@ -21,6 +40,22 @@
     const NativeRemoveEventListener = EventTarget.prototype.removeEventListener;
     const NativeXhrOpen = XMLHttpRequest.prototype.open;
     const NativeXhrSend = XMLHttpRequest.prototype.send;
+    const NativeDocumentQuerySelector = Document.prototype.querySelector;
+    const NativeDocumentQuerySelectorAll = Document.prototype.querySelectorAll;
+    const NativeElementQuerySelector = Element.prototype.querySelector;
+    const NativeElementQuerySelectorAll = Element.prototype.querySelectorAll;
+    const NativeGetComputedStyle = globalThis.getComputedStyle;
+    const NativeGetBoundingClientRect = Element.prototype.getBoundingClientRect;
+    const NativeGetClientRects = Element.prototype.getClientRects;
+    const NativeSetTimeout = globalThis.setTimeout;
+    const NativeClearTimeout = globalThis.clearTimeout;
+    const NativeSetInterval = globalThis.setInterval;
+    const NativeClearInterval = globalThis.clearInterval;
+    const NativeRequestAnimationFrame = globalThis.requestAnimationFrame;
+    const NativeCancelAnimationFrame = globalThis.cancelAnimationFrame;
+    const activeTimeouts = new Set();
+    const activeIntervals = new Set();
+    const activeAnimationFrames = new Set();
     const callbackIds = new WeakMap();
     const targetIds = new WeakMap();
     const listenerKeys = new Set();
@@ -32,6 +67,109 @@
         return map.get(value);
     };
     const getCapture = (options) => typeof options === 'boolean' ? options : Boolean(options?.capture);
+
+    Document.prototype.querySelector = function (...args) {
+        state.documentQuerySelectorCalls += 1;
+        return NativeDocumentQuerySelector.apply(this, args);
+    };
+    Document.prototype.querySelectorAll = function (...args) {
+        state.documentQuerySelectorAllCalls += 1;
+        const result = NativeDocumentQuerySelectorAll.apply(this, args);
+        state.documentQuerySelectorAllResults += result.length;
+        return result;
+    };
+    Element.prototype.querySelector = function (...args) {
+        state.elementQuerySelectorCalls += 1;
+        return NativeElementQuerySelector.apply(this, args);
+    };
+    Element.prototype.querySelectorAll = function (...args) {
+        state.elementQuerySelectorAllCalls += 1;
+        const result = NativeElementQuerySelectorAll.apply(this, args);
+        state.elementQuerySelectorAllResults += result.length;
+        return result;
+    };
+    globalThis.getComputedStyle = function (...args) {
+        state.computedStyleReads += 1;
+        return NativeGetComputedStyle.apply(this, args);
+    };
+    Element.prototype.getBoundingClientRect = function (...args) {
+        state.boundingClientRectReads += 1;
+        return NativeGetBoundingClientRect.apply(this, args);
+    };
+    Element.prototype.getClientRects = function (...args) {
+        state.clientRectListReads += 1;
+        return NativeGetClientRects.apply(this, args);
+    };
+    const wrapLayoutProperty = (prototype, propertyName) => {
+        const descriptor = Object.getOwnPropertyDescriptor(prototype, propertyName);
+        if (!descriptor?.get || descriptor.configurable === false) return;
+        Object.defineProperty(prototype, propertyName, {
+            ...descriptor,
+            get() {
+                state.layoutPropertyReads += 1;
+                return descriptor.get.call(this);
+            }
+        });
+    };
+    ['offsetWidth', 'offsetHeight', 'offsetTop', 'offsetLeft', 'offsetParent'].forEach((propertyName) => {
+        wrapLayoutProperty(HTMLElement.prototype, propertyName);
+    });
+    ['clientWidth', 'clientHeight', 'clientTop', 'clientLeft', 'scrollWidth', 'scrollHeight'].forEach((propertyName) => {
+        wrapLayoutProperty(Element.prototype, propertyName);
+    });
+
+    globalThis.setTimeout = function (callback, delay, ...args) {
+        state.timeoutScheduled += 1;
+        let timerId;
+        const wrappedCallback = typeof callback === 'function'
+            ? function (...callbackArgs) {
+                activeTimeouts.delete(timerId);
+                state.timeoutCompleted += 1;
+                return callback.apply(this, callbackArgs);
+            }
+            : callback;
+        timerId = NativeSetTimeout.call(this, wrappedCallback, delay, ...args);
+        if (typeof callback === 'function') activeTimeouts.add(timerId);
+        return timerId;
+    };
+    globalThis.clearTimeout = function (timerId) {
+        if (activeTimeouts.delete(timerId)) state.timeoutCleared += 1;
+        if (activeIntervals.delete(timerId)) state.intervalCleared += 1;
+        return NativeClearTimeout.call(this, timerId);
+    };
+    globalThis.setInterval = function (callback, delay, ...args) {
+        state.intervalScheduled += 1;
+        const wrappedCallback = typeof callback === 'function'
+            ? function (...callbackArgs) {
+                state.intervalCallbacks += 1;
+                return callback.apply(this, callbackArgs);
+            }
+            : callback;
+        const intervalId = NativeSetInterval.call(this, wrappedCallback, delay, ...args);
+        if (typeof callback === 'function') activeIntervals.add(intervalId);
+        return intervalId;
+    };
+    globalThis.clearInterval = function (intervalId) {
+        if (activeIntervals.delete(intervalId)) state.intervalCleared += 1;
+        if (activeTimeouts.delete(intervalId)) state.timeoutCleared += 1;
+        return NativeClearInterval.call(this, intervalId);
+    };
+    globalThis.requestAnimationFrame = function (callback) {
+        state.animationFrameScheduled += 1;
+        let frameId;
+        const wrappedCallback = (timestamp) => {
+            activeAnimationFrames.delete(frameId);
+            state.animationFrameCompleted += 1;
+            return callback(timestamp);
+        };
+        frameId = NativeRequestAnimationFrame.call(this, wrappedCallback);
+        activeAnimationFrames.add(frameId);
+        return frameId;
+    };
+    globalThis.cancelAnimationFrame = function (frameId) {
+        if (activeAnimationFrames.delete(frameId)) state.animationFrameCancelled += 1;
+        return NativeCancelAnimationFrame.call(this, frameId);
+    };
 
     class InstrumentedMutationObserver extends NativeMutationObserver {
         constructor(callback) {
@@ -168,6 +306,9 @@
         snapshot() {
             return {
                 ...state,
+                activeTimeouts: activeTimeouts.size,
+                activeIntervals: activeIntervals.size,
+                activeAnimationFrames: activeAnimationFrames.size,
                 mutationObserverCreationStacks: state.mutationObserverCreationStacks.slice(),
                 xhrRequests: state.xhrRequests.map((item) => ({ ...item })),
                 filterPasses: state.filterPasses.map((item) => ({ ...item })),

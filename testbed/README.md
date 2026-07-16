@@ -81,9 +81,9 @@ The current source fixes all three without changing stored data or release metad
 - comment-shell cleanup mutates attributes/classes only when state actually changes, breaking the reply-merge feedback loop without removing delayed-comment coverage;
 - one outer post-main guard prevents all fix IIFEs and listeners from running again on reinjection.
 
-The initial fixed runtime completed the then-current 18 of 18 tests. The current 3.3.4 release plus write fixtures completes 22 of 22 tests. In the 500-comment/1,500-node comparison, filter passes dropped from roughly 224 to 24, processed targets from roughly 62,120 to 7,534, and MutationObserver callbacks from roughly 241 to 17. These are comparative measurements, not fixed timing gates.
+The initial fixed runtime completed the then-current 18 of 18 tests, and the historical 3.3.4 checkpoint plus write fixtures completed 22 of 22. The combined 3.4.5-beta optimization state completes the current 58 of 58 tests. In the original 500-comment/1,500-node comparison, filter passes dropped from roughly 224 to 24, processed targets from roughly 62,120 to 7,534, and MutationObserver callbacks from roughly 241 to 17. These are comparative measurements, not fixed timing gates.
 
-The canonical mobile release is 3.3.4. Use the test-only runtime command above when validating later unbuilt source changes; ordinary testbed work does not rebuild or version production artifacts.
+The runner resolves the current mobile version from `tools/build-userscript.mjs`; do not hard-code an older release filename. Use the test-only runtime command above when validating unbuilt source changes; ordinary testbed work does not rebuild or version production artifacts.
 
 The earlier `.dory` assumption is withdrawn: the corrected live view contains no `.dory`. Updated live traces do confirm continuous churn even before the style mutation (major: 609 callbacks/6,708 records; minor: 678 callbacks/2,994 records over 1.6 seconds), so the automated assertion now checks excessive idle pass growth after stabilization rather than claiming the style mutation is the sole cause. Duplicate injection remains deterministic in the harness but matters only for reinjection/update lifecycle paths, not an ordinary single page load.
 
@@ -95,12 +95,25 @@ The earlier `.dory` assumption is withdrawn: the corrected live view contains no
 - MutationObserver instances, observe/disconnect/callback/record counts, and creation stacks
 - mutation-bus subscriber count and dispatch data
 - listener registration attempts and duplicate attempts
+- document-wide and element-scoped selector calls/results
+- computed-style, geometry, and layout-property reads that can expose layout-heavy hot paths
+- scheduled/completed/cleared timeout, interval, and animation-frame work plus active handles
 - UID XHR count, body, status, and duration
 - mirror nodes added/removed and production mirror rebuild counters
 - task queue active/pending gauges
 - DOM node count, repeated Chromium heap samples, and heap delta/trend
 
 Performance and bfcache reports are written to ignored `testbed/artifacts/*.json`. `performance-latest.json` retains the previous report timestamp and numeric deltas for the same scenario, so release runs can be compared without a brittle absolute-time threshold. Wall-clock and heap values are reports, not fixed pass thresholds. Structural bounds such as no full refilter for a one-comment change remain assertions.
+
+The performance group also gates selector and layout-read work relative to the
+number of added DOM nodes and requires active timer/frame counts not to grow.
+The fixed-size replacement contract repeatedly rebuilds the same 53-row list,
+forces Chromium garbage collection between samples, and checks stable DOM,
+observer, subscriber, queue, timer, and heap behavior. These counters identify
+regressions; a layout-property read is only a risk signal and does not prove the
+browser performed a synchronous layout on that individual access.
+The wrappers add test-only overhead, so timing comparisons are meaningful only
+between runs using the same Testbed instrumentation revision.
 
 Write-layout measurements are written to `testbed/artifacts/write-layout-latest.json`. The native reference must remain free of horizontal overflow; major/minor desktop-host overflow is recorded as a comparison metric rather than an absolute timing-style gate. This lets a future mobile write UI prove improvement without preserving a cramped layout.
 

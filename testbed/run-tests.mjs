@@ -1959,6 +1959,28 @@ test('대량 댓글과 장문 DOM의 비교 가능한 성능 지표를 기록한
             mirrorAdded: after.mirrorAdded - before.mirrorAdded,
             mirrorRemoved: after.mirrorRemoved - before.mirrorRemoved,
             processedDomNodes: after.processedDomNodes - before.processedDomNodes,
+            documentSelectorCalls: (after.documentQuerySelectorCalls - before.documentQuerySelectorCalls)
+                + (after.documentQuerySelectorAllCalls - before.documentQuerySelectorAllCalls),
+            documentSelectorAllCalls: after.documentQuerySelectorAllCalls - before.documentQuerySelectorAllCalls,
+            documentSelectorAllResults: after.documentQuerySelectorAllResults - before.documentQuerySelectorAllResults,
+            elementSelectorCalls: (after.elementQuerySelectorCalls - before.elementQuerySelectorCalls)
+                + (after.elementQuerySelectorAllCalls - before.elementQuerySelectorAllCalls),
+            layoutReadCount: (after.computedStyleReads - before.computedStyleReads)
+                + (after.boundingClientRectReads - before.boundingClientRectReads)
+                + (after.clientRectListReads - before.clientRectListReads)
+                + (after.layoutPropertyReads - before.layoutPropertyReads),
+            geometryReadCount: (after.boundingClientRectReads - before.boundingClientRectReads)
+                + (after.clientRectListReads - before.clientRectListReads)
+                + (after.layoutPropertyReads - before.layoutPropertyReads),
+            timeoutsScheduled: after.timeoutScheduled - before.timeoutScheduled,
+            intervalsScheduled: after.intervalScheduled - before.intervalScheduled,
+            animationFramesScheduled: after.animationFrameScheduled - before.animationFrameScheduled,
+            activeTimeoutsBefore: before.activeTimeouts,
+            activeTimeoutsAfter: after.activeTimeouts,
+            activeIntervalsBefore: before.activeIntervals,
+            activeIntervalsAfter: after.activeIntervals,
+            activeAnimationFramesBefore: before.activeAnimationFrames,
+            activeAnimationFramesAfter: after.activeAnimationFrames,
             filterPassSummary: summarizePasses(filterPasses),
             filterPasses,
             pendingQueuePeak: Math.max(...heapSamples.map((item) => item.pendingQueue || 0)),
@@ -1974,6 +1996,14 @@ test('대량 댓글과 장문 DOM의 비교 가능한 성능 지표를 기록한
         assert.equal(report.uidRequests, 0);
         const addedDomNodes = Math.max(1, report.domNodesAfter - report.domNodesBefore);
         assert.equal(report.mutationCallbacks / addedDomNodes < 0.25, true, `mutation callback/node ratio: ${report.mutationCallbacks}/${addedDomNodes}`);
+        assert.equal(report.documentSelectorCalls / addedDomNodes < 0.15, true, `document selector/node ratio: ${report.documentSelectorCalls}/${addedDomNodes}`);
+        assert.equal(report.documentSelectorAllResults / addedDomNodes < 2.5, true, `document selector result/node ratio: ${report.documentSelectorAllResults}/${addedDomNodes}`);
+        assert.equal(report.elementSelectorCalls / addedDomNodes < 25, true, `element selector/node ratio: ${report.elementSelectorCalls}/${addedDomNodes}`);
+        assert.equal(report.layoutReadCount / addedDomNodes < 0.5, true, `layout read/node ratio: ${report.layoutReadCount}/${addedDomNodes}`);
+        assert.equal(report.geometryReadCount / addedDomNodes < 0.05, true, `geometry read/node ratio: ${report.geometryReadCount}/${addedDomNodes}`);
+        assert.equal(report.activeTimeoutsAfter <= report.activeTimeoutsBefore, true, JSON.stringify({ before: report.activeTimeoutsBefore, after: report.activeTimeoutsAfter }));
+        assert.equal(report.activeIntervalsAfter <= report.activeIntervalsBefore, true, JSON.stringify({ before: report.activeIntervalsBefore, after: report.activeIntervalsAfter }));
+        assert.equal(report.activeAnimationFramesAfter, 0);
         assert.equal((after.dcuf.counters['filter.fullRefilter.runs'] || 0), 0);
         assert.equal((after.dcuf.counters['filter.syncPass.comments.runs'] || 0) <= 10, true, JSON.stringify(report.filterPassSummary));
         assert.equal(report.filterPassSummary.processedTargets <= 3500, true, JSON.stringify(report.filterPassSummary));
@@ -2261,6 +2291,138 @@ test('search drawer replacement keeps one global listener set and prunes detache
         assert.equal(result.searchDrawerGlobalHandlersBound, true);
         assert.equal(after.dcuf.gauges['ui.searchDrawer.globalListeners'], 4);
         assert.equal(after.dcuf.gauges['ui.searchDrawer.activeRoots'], 1);
+        assertNoRuntimeErrors(after, session.consoleErrors);
+    } finally { await session.close(); }
+});
+
+test('fixed-size list replacement loops settle without runtime lifecycle growth', 'functional', async ({ browser, server }) => {
+    if (isPcUserscript) return;
+    const session = await createTestPage(browser, server.baseUrl, { storage: noStatsStorage });
+    try {
+        await session.goto('/mgallery/board/lists?id=test');
+        const cdp = await session.context.newCDPSession(session.page);
+        await cdp.send('HeapProfiler.enable');
+        await cdp.send('HeapProfiler.collectGarbage');
+        const before = await getMetrics(session.page);
+        const samples = [];
+
+        for (let index = 0; index < 12; index += 1) {
+            await session.page.evaluate(() => window.__dcufFixture.replaceList(53));
+            await waitForSettled(session.page, 240);
+            if ((index + 1) % 4 !== 0) continue;
+            await cdp.send('HeapProfiler.collectGarbage');
+            await session.page.waitForTimeout(50);
+            const metrics = await getMetrics(session.page);
+            samples.push({
+                loop: index + 1,
+                heapUsed: metrics.heap?.usedJSHeapSize ?? null,
+                domNodes: metrics.domNodes,
+                originalRows: metrics.memory.dom.originalRows,
+                customLists: metrics.memory.dom.customLists,
+                customPosts: metrics.memory.dom.customPosts,
+                customBottomControls: metrics.memory.dom.customBottomControls,
+                subscribers: metrics.memory.runtime.subscriberCount,
+                activeObservers: metrics.mutationObserversCreated - metrics.mutationDisconnectCalls,
+                pendingMutations: metrics.memory.runtime.pendingMutationRecords,
+                pendingMutationRaf: metrics.memory.runtime.pendingMutationRafActive,
+                pendingMutationTimer: metrics.memory.runtime.pendingMutationTimerActive,
+                taskQueues: metrics.memory.runtime.taskQueueCount,
+                searchRoots: metrics.memory.ui.searchDrawerRoots,
+                searchRaf: metrics.memory.ui.searchDrawerRafActive,
+                searchTimer: metrics.memory.ui.searchDrawerTimerActive,
+                uidPending: Number(metrics.dcuf.gauges['filter.blockedUidPersist.pendingEntries']) || 0,
+                uidWriteActive: Number(metrics.dcuf.gauges['filter.blockedUidPersist.writeActive']) || 0,
+                activeTimeouts: metrics.activeTimeouts,
+                activeIntervals: metrics.activeIntervals,
+                activeAnimationFrames: metrics.activeAnimationFrames
+            });
+        }
+
+        const settledSubscribers = samples[0]?.subscribers;
+        const settledActiveObservers = samples[0]?.activeObservers;
+        samples.forEach((sample) => {
+            assert.equal(sample.originalRows, 53, JSON.stringify(samples));
+            assert.equal(sample.customLists, 1, JSON.stringify(samples));
+            assert.equal(sample.customPosts, 53, JSON.stringify(samples));
+            assert.equal(sample.customBottomControls, 1, JSON.stringify(samples));
+            assert.equal(sample.subscribers, settledSubscribers, JSON.stringify(samples));
+            assert.equal(sample.subscribers <= before.memory.runtime.subscriberCount, true, JSON.stringify(samples));
+            assert.equal(sample.activeObservers, settledActiveObservers, JSON.stringify(samples));
+            assert.equal(sample.activeObservers <= before.mutationObserversCreated - before.mutationDisconnectCalls, true, JSON.stringify(samples));
+            assert.equal(sample.pendingMutations, 0, JSON.stringify(samples));
+            assert.equal(sample.pendingMutationRaf, false, JSON.stringify(samples));
+            assert.equal(sample.pendingMutationTimer, false, JSON.stringify(samples));
+            assert.equal(sample.taskQueues, 0, JSON.stringify(samples));
+            assert.equal(sample.searchRoots, 1, JSON.stringify(samples));
+            assert.equal(sample.searchRaf, false, JSON.stringify(samples));
+            assert.equal(sample.searchTimer, false, JSON.stringify(samples));
+            assert.equal(sample.uidPending, 0, JSON.stringify(samples));
+            assert.equal(sample.uidWriteActive, 0, JSON.stringify(samples));
+            assert.equal(sample.activeTimeouts, samples[0].activeTimeouts, JSON.stringify(samples));
+            assert.equal(sample.activeIntervals, samples[0].activeIntervals, JSON.stringify(samples));
+            assert.equal(sample.activeAnimationFrames, 0, JSON.stringify(samples));
+        });
+        assert.equal(samples[0].activeTimeouts <= before.activeTimeouts, true, JSON.stringify(samples));
+        assert.equal(samples[0].activeIntervals <= before.activeIntervals, true, JSON.stringify(samples));
+        assert.equal(new Set(samples.map((sample) => sample.domNodes)).size, 1, JSON.stringify(samples));
+        const heapSamples = samples.map((sample) => sample.heapUsed).filter(Number.isFinite);
+        if (heapSamples.length >= 2) {
+            assert.equal(heapSamples.at(-1) - heapSamples[0] <= 6 * 1024 * 1024, true, JSON.stringify(samples));
+        }
+        console.log(`Lifecycle fixed-DOM report: ${JSON.stringify(samples)}`);
+        assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
+    } finally { await session.close(); }
+});
+
+test('visibility recovery preserves blocked comments and settled runtime state', 'functional', async ({ browser, server }) => {
+    if (isPcUserscript) return;
+    const blockedUid = 'visibility-recovery-blocked';
+    const storage = {
+        ...noStatsStorage,
+        [storageKeys.personalList]: { uids: [{ id: blockedUid, name: blockedUid }], nicknames: [], ips: [] }
+    };
+    const session = await createTestPage(browser, server.baseUrl, { storage });
+    try {
+        await session.goto('/board/view?id=test&no=1001');
+        const before = await getMetrics(session.page);
+        const frames = await session.page.evaluate(async (uid) => {
+            let visibilityState = 'visible';
+            Object.defineProperty(document, 'visibilityState', {
+                configurable: true,
+                get: () => visibilityState
+            });
+            window.__dcufDiagnostics.reset();
+            visibilityState = 'hidden';
+            document.dispatchEvent(new Event('visibilitychange'));
+            window.__dcufFixture.addComments(1, { uid, nick: uid });
+            const item = document.querySelector(`[data-uid="${CSS.escape(uid)}"]`)?.closest('li');
+            const sampled = [];
+            for (let index = 0; index < 6; index += 1) {
+                await new Promise((resolve) => requestAnimationFrame(resolve));
+                sampled.push(item?.style.display || 'missing');
+            }
+            visibilityState = 'visible';
+            document.dispatchEvent(new Event('visibilitychange'));
+            return sampled;
+        }, blockedUid);
+        await session.page.waitForFunction(() => (
+            (window.__dcufDiagnostics.snapshot().counters['filter.fullRefilter.runs'] || 0) === 1
+        ));
+        await waitForSettled(session.page, 250);
+        const after = await getMetrics(session.page);
+        const itemDisplay = await session.page.locator(`[data-uid="${blockedUid}"]`).evaluate((writer) => writer.closest('li')?.style.display || 'missing');
+
+        assert.equal(frames.every((display) => display === 'none'), true, JSON.stringify(frames));
+        assert.equal(itemDisplay, 'none');
+        assert.equal(after.mutationObserversCreated, before.mutationObserversCreated);
+        assert.equal(after.listenerUnique, before.listenerUnique);
+        assert.equal(after.memory.runtime.subscriberCount, before.memory.runtime.subscriberCount);
+        assert.equal(after.memory.runtime.pendingMutationRecords, 0);
+        assert.equal(after.memory.runtime.pendingMutationRafActive, false);
+        assert.equal(after.memory.runtime.pendingMutationTimerActive, false);
+        assert.equal(after.memory.runtime.taskQueueCount, 0);
+        assert.equal(Number(after.dcuf.gauges['filter.blockedUidPersist.pendingEntries']) || 0, 0);
+        assert.equal(Number(after.dcuf.gauges['filter.blockedUidPersist.writeActive']) || 0, 0);
         assertNoRuntimeErrors(after, session.consoleErrors);
     } finally { await session.close(); }
 });
@@ -3323,7 +3485,27 @@ if (performanceReports.length > 0) {
     const artifactPath = path.join(artifactDir, 'performance-latest.json');
     let previous = null;
     try { previous = JSON.parse(await readFile(artifactPath, 'utf8')); } catch { /* first performance run */ }
-    const comparisonFields = ['wallDurationMs', 'domNodesAfter', 'mutationCallbacks', 'mutationRecords', 'processedDomNodes', 'uidRequests', 'heapUsedDelta'];
+    const comparisonFields = [
+        'wallDurationMs',
+        'domNodesAfter',
+        'mutationCallbacks',
+        'mutationRecords',
+        'processedDomNodes',
+        'documentSelectorCalls',
+        'documentSelectorAllCalls',
+        'documentSelectorAllResults',
+        'elementSelectorCalls',
+        'layoutReadCount',
+        'geometryReadCount',
+        'timeoutsScheduled',
+        'intervalsScheduled',
+        'animationFramesScheduled',
+        'activeTimeoutsAfter',
+        'activeIntervalsAfter',
+        'activeAnimationFramesAfter',
+        'uidRequests',
+        'heapUsedDelta'
+    ];
     const comparisons = performanceReports.map((current) => {
         const prior = previous?.reports?.find((item) => item.scenario === current.scenario) || null;
         const deltas = Object.fromEntries(comparisonFields.flatMap((field) => (
