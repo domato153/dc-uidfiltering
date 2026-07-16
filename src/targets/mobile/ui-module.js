@@ -5,6 +5,8 @@
      * =================================================================
      */
     const UIModule = {
+        _initState: 'idle',
+        _initPromise: null,
         DATA_ATTR: 'data-custom-row-id',
         TRANSFORMED_ATTR: 'data-ui-transformed',
 
@@ -30,6 +32,8 @@
         },
 
         LIST_STATE_MAP: new WeakMap(),
+        ACTIVE_LIST_STATES: new Set(),
+        _bootRollbackRegistered: false,
         PAGINATION_BOUND_ATTR: 'data-dcuf-force-refresh-bound',
         TOOLTIP_BOUND_ATTR: 'data-dcuf-tooltip-bound',
         SEARCH_LAYER_BOUND_ATTR: 'data-dcuf-search-layer-bound',
@@ -43,6 +47,10 @@
         _initialRevealStartedAt: 0,
         _postRevealRecoveryStop: null,
         ARTICLE_AD_STYLE_ID: 'dcuf-article-native-ad-style',
+        SEARCH_DRAWER_ROOTS: new Set(),
+        _searchDrawerGlobalHandlersBound: false,
+        _searchDrawerUpdateRafId: 0,
+        _searchDrawerUpdateTimerId: 0,
 
         getRuntimeCoordinator() {
             return window.__dcufRuntimeCoordinator || null;
@@ -118,10 +126,10 @@
 
         resolveBottomControlScope(listWrap) {
             if (!(listWrap instanceof HTMLElement)) return null;
-            return listWrap.closest('article')
-                || listWrap.closest('section')
-                || listWrap.parentElement
-                || listWrap;
+            // Live view pages keep the embedded-list controls beside the
+            // list wrapper. closest('section') returned the wrapper itself,
+            // which made those sibling controls impossible to discover.
+            return listWrap.parentElement || listWrap;
         },
 
         findBottomControlElement(listWrap, selector) {
@@ -130,10 +138,26 @@
             if (!(scope instanceof HTMLElement)) return null;
 
             const candidates = Array.from(scope.querySelectorAll(selector));
-            return candidates.find((element) => (
-                element instanceof HTMLElement
-                && !element.closest(`.${this.CUSTOM_CLASSES.BOTTOM_CONTROLS}`)
-            )) || null;
+            return candidates.find((element) => {
+                if (!(element instanceof HTMLElement)) return false;
+                if (element.closest(`.${this.CUSTOM_CLASSES.BOTTOM_CONTROLS}`)) return false;
+
+                // Live list controls are siblings of `.gall_listwrap`, but the
+                // whole page is nested in `#top.list_wrap`. Comparing only the
+                // nearest LIST_WRAP assigns them to that decorative outer wrapper
+                // and rejects every control. Resolve the table-owned list instead.
+                const controlOwner = this.resolveOwnedListWrap(element);
+                return !(controlOwner instanceof HTMLElement) || controlOwner === listWrap;
+            }) || null;
+        },
+
+        findAdjacentViewListActionBar(listWrap) {
+            if (!(listWrap instanceof HTMLElement)) return null;
+            const sibling = listWrap.previousElementSibling;
+            if (!(sibling instanceof HTMLElement)) return null;
+            if (!sibling.matches('.view_bottom_btnbox')) return null;
+            if (sibling.closest(`.${this.CUSTOM_CLASSES.BOTTOM_CONTROLS}`)) return null;
+            return sibling;
         },
 
         recordDiagnostic(label, amount = 1) {
@@ -400,35 +424,78 @@
             searchRoot.setAttribute('data-dcuf-search-layer-open', '1');
         },
 
+        pruneSearchDrawerRoots() {
+            this.SEARCH_DRAWER_ROOTS.forEach((searchRoot) => {
+                const hasSearchForm = searchRoot instanceof HTMLElement
+                    && (searchRoot.matches?.(this.SELECTORS.SEARCH_FORM)
+                        || searchRoot.querySelector?.(this.SELECTORS.SEARCH_FORM));
+                if (!searchRoot.isConnected || !hasSearchForm) this.SEARCH_DRAWER_ROOTS.delete(searchRoot);
+            });
+            const diagnostics = window.__dcufDiagnostics;
+            if (typeof diagnostics?.setGauge === 'function') {
+                diagnostics.setGauge('ui.searchDrawer.activeRoots', this.SEARCH_DRAWER_ROOTS.size);
+                diagnostics.setGauge('ui.searchDrawer.globalListeners', this._searchDrawerGlobalHandlersBound ? 4 : 0);
+            }
+        },
+
+        flushSearchDrawerReserveUpdates() {
+            this.pruneSearchDrawerRoots();
+            this.SEARCH_DRAWER_ROOTS.forEach((searchRoot) => this.updateSearchDrawerReserve(searchRoot));
+        },
+
+        scheduleSearchDrawerReserveUpdate() {
+            if (!this._searchDrawerUpdateRafId) {
+                this._searchDrawerUpdateRafId = requestAnimationFrame(() => {
+                    this._searchDrawerUpdateRafId = 0;
+                    this.flushSearchDrawerReserveUpdates();
+                });
+            }
+            if (this._searchDrawerUpdateTimerId) window.clearTimeout(this._searchDrawerUpdateTimerId);
+            this._searchDrawerUpdateTimerId = window.setTimeout(() => {
+                this._searchDrawerUpdateTimerId = 0;
+                this.flushSearchDrawerReserveUpdates();
+            }, 40);
+        },
+
+        ensureSearchDrawerGlobalHandlers() {
+            if (this._searchDrawerGlobalHandlersBound) return;
+            const scheduleUpdate = () => this.scheduleSearchDrawerReserveUpdate();
+            document.addEventListener('click', scheduleUpdate, true);
+            document.addEventListener('change', scheduleUpdate, true);
+            document.addEventListener('focusin', scheduleUpdate, true);
+            window.addEventListener('resize', scheduleUpdate);
+            this._searchDrawerGlobalHandlersBound = true;
+        },
+
         bindSearchDrawerReserve(searchRoot) {
             if (!(searchRoot instanceof HTMLElement)) return;
-            if (searchRoot.getAttribute(this.SEARCH_LAYER_BOUND_ATTR) === '1') {
-                this.updateSearchDrawerReserve(searchRoot);
-                return;
-            }
-            searchRoot.setAttribute(this.SEARCH_LAYER_BOUND_ATTR, '1');
-
             const searchForm = searchRoot.matches?.(this.SELECTORS.SEARCH_FORM)
                 ? searchRoot
                 : searchRoot.querySelector(this.SELECTORS.SEARCH_FORM);
             if (!(searchForm instanceof HTMLElement)) return;
 
-            searchRoot.style.setProperty('overflow', 'visible', 'important');
-            searchRoot.style.setProperty('position', 'relative', 'important');
-            searchRoot.style.setProperty('transition', 'padding-bottom 0.18s ease', 'important');
+            const searchSlot = searchForm.closest(`.${this.CUSTOM_CLASSES.SEARCH_SLOT}`);
+            const reserveRoot = searchSlot instanceof HTMLElement ? searchSlot : searchRoot;
+            this.SEARCH_DRAWER_ROOTS.forEach((registeredRoot) => {
+                if (registeredRoot === reserveRoot) return;
+                const registeredForm = registeredRoot.matches?.(this.SELECTORS.SEARCH_FORM)
+                    ? registeredRoot
+                    : registeredRoot.querySelector?.(this.SELECTORS.SEARCH_FORM);
+                if (registeredForm === searchForm) this.SEARCH_DRAWER_ROOTS.delete(registeredRoot);
+            });
+            this.SEARCH_DRAWER_ROOTS.add(reserveRoot);
+            this.ensureSearchDrawerGlobalHandlers();
+            if (reserveRoot.getAttribute(this.SEARCH_LAYER_BOUND_ATTR) === '1') {
+                this.scheduleSearchDrawerReserveUpdate();
+                return;
+            }
+            reserveRoot.setAttribute(this.SEARCH_LAYER_BOUND_ATTR, '1');
 
-            const scheduleUpdate = () => {
-                requestAnimationFrame(() => this.updateSearchDrawerReserve(searchRoot));
-                window.setTimeout(() => this.updateSearchDrawerReserve(searchRoot), 40);
-            };
+            reserveRoot.style.setProperty('overflow', 'visible', 'important');
+            reserveRoot.style.setProperty('position', 'relative', 'important');
+            reserveRoot.style.setProperty('transition', 'padding-bottom 0.18s ease', 'important');
 
-            searchForm.addEventListener('click', scheduleUpdate, true);
-            searchForm.addEventListener('change', scheduleUpdate, true);
-            searchForm.addEventListener('focusin', scheduleUpdate, true);
-            document.addEventListener('click', scheduleUpdate, true);
-            window.addEventListener('resize', scheduleUpdate);
-
-            scheduleUpdate();
+            this.scheduleSearchDrawerReserveUpdate();
         },
 
         enhanceOriginalSearchForms(listWrap) {
@@ -467,7 +534,7 @@
 
             searchForm.style.setProperty('display', 'block', 'important');
             searchForm.style.setProperty('width', '100%', 'important');
-            searchForm.style.setProperty('max-width', '520px', 'important');
+            searchForm.style.setProperty('max-width', 'none', 'important');
             searchForm.style.setProperty('margin', '0', 'important');
             searchForm.style.setProperty('padding', '0', 'important');
             searchForm.style.setProperty('border', 'none', 'important');
@@ -485,32 +552,32 @@
             if (searchWrap instanceof HTMLElement) {
                 searchWrap.style.setProperty('display', 'flex', 'important');
                 searchWrap.style.setProperty('align-items', 'center', 'important');
-                searchWrap.style.setProperty('justify-content', 'center', 'important');
-                searchWrap.style.setProperty('gap', '4px', 'important');
-                searchWrap.style.setProperty('width', 'fit-content', 'important');
+                searchWrap.style.setProperty('justify-content', 'flex-start', 'important');
+                searchWrap.style.setProperty('gap', '8px', 'important');
+                searchWrap.style.setProperty('width', '100%', 'important');
                 searchWrap.style.setProperty('max-width', '100%', 'important');
                 searchWrap.style.setProperty('margin', '0 auto', 'important');
                 searchWrap.style.setProperty('padding', '0', 'important');
-                searchWrap.style.setProperty('flex-wrap', 'nowrap', 'important');
+                searchWrap.style.setProperty('flex-wrap', 'wrap', 'important');
             }
 
             if (hasLegacySearchColumns && searchWrap instanceof HTMLElement) {
                 searchWrap.style.setProperty('display', 'flex', 'important');
                 searchWrap.style.setProperty('align-items', 'center', 'important');
-                searchWrap.style.setProperty('justify-content', 'center', 'important');
-                searchWrap.style.setProperty('gap', '4px', 'important');
-                searchWrap.style.setProperty('width', 'fit-content', 'important');
+                searchWrap.style.setProperty('justify-content', 'flex-start', 'important');
+                searchWrap.style.setProperty('gap', '8px', 'important');
+                searchWrap.style.setProperty('width', '100%', 'important');
                 searchWrap.style.setProperty('max-width', '100%', 'important');
                 searchWrap.style.setProperty('margin', '0 auto', 'important');
                 searchWrap.style.setProperty('padding', '0', 'important');
-                searchWrap.style.setProperty('flex-wrap', 'nowrap', 'important');
+                searchWrap.style.setProperty('flex-wrap', 'wrap', 'important');
             }
 
             if (leftBox instanceof HTMLElement) {
                 leftBox.style.setProperty('display', 'block', 'important');
-                leftBox.style.setProperty('flex', '0 0 125px', 'important');
-                leftBox.style.setProperty('width', '125px', 'important');
-                leftBox.style.setProperty('min-width', '125px', 'important');
+                leftBox.style.setProperty('flex', '0 0 128px', 'important');
+                leftBox.style.setProperty('width', '128px', 'important');
+                leftBox.style.setProperty('min-width', '128px', 'important');
                 leftBox.style.setProperty('margin', '0', 'important');
                 leftBox.style.setProperty('padding', '0', 'important');
                 leftBox.style.setProperty('float', 'none', 'important');
@@ -520,8 +587,8 @@
             if (rightBox instanceof HTMLElement) {
                 rightBox.style.setProperty('display', 'flex', 'important');
                 rightBox.style.setProperty('align-items', 'center', 'important');
-                rightBox.style.setProperty('flex', '0 1 auto', 'important');
-                rightBox.style.setProperty('width', '320px', 'important');
+                rightBox.style.setProperty('flex', '1 1 260px', 'important');
+                rightBox.style.setProperty('width', 'auto', 'important');
                 rightBox.style.setProperty('min-width', '0', 'important');
                 rightBox.style.setProperty('margin', '0', 'important');
                 rightBox.style.setProperty('padding', '0', 'important');
@@ -531,10 +598,10 @@
 
             if (nativeSelectHost instanceof HTMLElement) {
                 nativeSelectHost.style.setProperty('display', 'block', 'important');
-                nativeSelectHost.style.setProperty('flex', '0 0 125px', 'important');
-                nativeSelectHost.style.setProperty('width', '125px', 'important');
-                nativeSelectHost.style.setProperty('min-width', '125px', 'important');
-                nativeSelectHost.style.setProperty('height', '38px', 'important');
+                nativeSelectHost.style.setProperty('flex', '0 0 128px', 'important');
+                nativeSelectHost.style.setProperty('width', '128px', 'important');
+                nativeSelectHost.style.setProperty('min-width', '128px', 'important');
+                nativeSelectHost.style.setProperty('height', '44px', 'important');
                 nativeSelectHost.style.setProperty('margin', '0', 'important');
                 nativeSelectHost.style.setProperty('padding', '0', 'important');
                 nativeSelectHost.style.setProperty('box-sizing', 'border-box', 'important');
@@ -558,15 +625,15 @@
 
                 nativeSelect.style.setProperty('display', 'block', 'important');
                 nativeSelect.style.setProperty('width', '100%', 'important');
-                nativeSelect.style.setProperty('min-width', '125px', 'important');
-                nativeSelect.style.setProperty('height', '38px', 'important');
+                nativeSelect.style.setProperty('min-width', '128px', 'important');
+                nativeSelect.style.setProperty('height', '44px', 'important');
                 nativeSelect.style.setProperty('margin', '0', 'important');
                 nativeSelect.style.setProperty('padding', '0 10px', 'important');
-                nativeSelect.style.setProperty('border', '1px solid #3b4890', 'important');
-                nativeSelect.style.setProperty('border-radius', '0', 'important');
-                nativeSelect.style.setProperty('background', '#fff', 'important');
-                nativeSelect.style.setProperty('box-shadow', 'none', 'important');
-                nativeSelect.style.setProperty('color', '#333', 'important');
+                nativeSelect.style.setProperty('border', '1px solid var(--dcuf-control-border, #c6d2e4)', 'important');
+                nativeSelect.style.setProperty('border-radius', '12px', 'important');
+                nativeSelect.style.setProperty('background', 'var(--dcuf-control-surface, linear-gradient(180deg, #ffffff 0%, #f4f7fb 100%))', 'important');
+                nativeSelect.style.setProperty('box-shadow', 'inset 0 1px 0 rgba(255, 255, 255, 0.96), 0 4px 10px rgba(20, 39, 75, 0.08)', 'important');
+                nativeSelect.style.setProperty('color', 'var(--dcuf-control-text, #333)', 'important');
                 nativeSelect.style.setProperty('font-size', '13px', 'important');
                 nativeSelect.style.setProperty('font-weight', '700', 'important');
                 nativeSelect.style.setProperty('box-sizing', 'border-box', 'important');
@@ -600,23 +667,23 @@
                 }
             }
 
-            if (selectBox instanceof HTMLElement) {
+            if (selectBox instanceof HTMLElement && !(nativeSelect instanceof HTMLSelectElement)) {
                 selectBox.style.setProperty('display', 'flex', 'important');
                 selectBox.style.setProperty('align-items', 'stretch', 'important');
                 selectBox.style.setProperty('position', 'relative', 'important');
-                selectBox.style.setProperty('flex', '0 0 125px', 'important');
-                selectBox.style.setProperty('width', '125px', 'important');
-                selectBox.style.setProperty('min-width', '125px', 'important');
-                selectBox.style.setProperty('height', '38px', 'important');
+                selectBox.style.setProperty('flex', '0 0 128px', 'important');
+                selectBox.style.setProperty('width', '128px', 'important');
+                selectBox.style.setProperty('min-width', '128px', 'important');
+                selectBox.style.setProperty('height', '44px', 'important');
                 selectBox.style.setProperty('margin', '0', 'important');
                 selectBox.style.setProperty('float', 'none', 'important');
                 selectBox.style.setProperty('overflow', 'visible', 'important');
                 selectBox.style.setProperty('box-sizing', 'border-box', 'important');
                 selectBox.style.setProperty('visibility', 'visible', 'important');
-                selectBox.style.setProperty('border', '1px solid #3b4890', 'important');
-                selectBox.style.setProperty('border-radius', '0', 'important');
-                selectBox.style.setProperty('background', '#fff', 'important');
-                selectBox.style.setProperty('box-shadow', 'none', 'important');
+                selectBox.style.setProperty('border', '1px solid var(--dcuf-control-border, #c6d2e4)', 'important');
+                selectBox.style.setProperty('border-radius', '12px', 'important');
+                selectBox.style.setProperty('background', 'var(--dcuf-control-surface, linear-gradient(180deg, #ffffff 0%, #f4f7fb 100%))', 'important');
+                selectBox.style.setProperty('box-shadow', 'inset 0 1px 0 rgba(255, 255, 255, 0.96), 0 4px 10px rgba(20, 39, 75, 0.08)', 'important');
             }
 
             if (selectArea instanceof HTMLElement) {
@@ -631,7 +698,7 @@
                 selectArea.style.setProperty('background', 'transparent', 'important');
                 selectArea.style.setProperty('box-sizing', 'border-box', 'important');
                 selectArea.style.setProperty('overflow', 'hidden', 'important');
-                selectArea.style.setProperty('color', '#333', 'important');
+                selectArea.style.setProperty('color', 'var(--dcuf-control-text, #333)', 'important');
             }
 
             if (selectInner instanceof HTMLElement) {
@@ -646,44 +713,48 @@
             if (bottomSearch instanceof HTMLElement) {
                 bottomSearch.style.setProperty('display', 'flex', 'important');
                 bottomSearch.style.setProperty('align-items', 'center', 'important');
-                bottomSearch.style.setProperty('flex', '0 1 auto', 'important');
-                bottomSearch.style.setProperty('width', '320px', 'important');
-                bottomSearch.style.setProperty('height', '38px', 'important');
+                bottomSearch.style.setProperty('flex', '1 1 260px', 'important');
+                bottomSearch.style.setProperty('width', 'auto', 'important');
+                bottomSearch.style.setProperty('height', 'auto', 'important');
                 bottomSearch.style.setProperty('min-width', '0', 'important');
                 bottomSearch.style.setProperty('margin', '0', 'important');
                 bottomSearch.style.setProperty('float', 'none', 'important');
+                bottomSearch.style.setProperty('position', 'static', 'important');
+                bottomSearch.style.setProperty('inset', 'auto', 'important');
+                bottomSearch.style.setProperty('transform', 'none', 'important');
             }
 
             if (innerSearch instanceof HTMLElement) {
                 innerSearch.style.setProperty('display', 'block', 'important');
                 innerSearch.style.setProperty('flex', '1 1 auto', 'important');
                 innerSearch.style.setProperty('width', 'auto', 'important');
-                innerSearch.style.setProperty('height', '30px', 'important');
+                innerSearch.style.setProperty('height', '44px', 'important');
                 innerSearch.style.setProperty('margin', '0', 'important');
                 innerSearch.style.setProperty('padding', '0', 'important');
-                innerSearch.style.setProperty('border', 'none', 'important');
-                innerSearch.style.setProperty('background', '#fff', 'important');
-                innerSearch.style.setProperty('box-shadow', 'inset 0 0 0 1px rgba(255, 255, 255, 0.06)', 'important');
+                innerSearch.style.setProperty('border', '1px solid var(--dcuf-control-border, #c6d2e4)', 'important');
+                innerSearch.style.setProperty('border-radius', '12px', 'important');
+                innerSearch.style.setProperty('background', 'var(--dcuf-search-input, #fff)', 'important');
+                innerSearch.style.setProperty('box-shadow', 'inset 0 1px 2px rgba(20, 39, 75, 0.06), 0 4px 10px rgba(20, 39, 75, 0.07)', 'important');
                 innerSearch.style.setProperty('overflow', 'hidden', 'important');
             }
 
             if (keywordInput instanceof HTMLInputElement) {
                 keywordInput.style.setProperty('width', '100%', 'important');
-                keywordInput.style.setProperty('height', '30px', 'important');
+                keywordInput.style.setProperty('height', '42px', 'important');
                 keywordInput.style.setProperty('margin', '0', 'important');
-                keywordInput.style.setProperty('padding', '0 9px', 'important');
+                keywordInput.style.setProperty('padding', '0 13px', 'important');
                 keywordInput.style.setProperty('border', 'none', 'important');
-                keywordInput.style.setProperty('border-radius', '0', 'important');
-                keywordInput.style.setProperty('background', '#fff', 'important');
+                keywordInput.style.setProperty('border-radius', '11px', 'important');
+                keywordInput.style.setProperty('background', 'var(--dcuf-search-input, #fff)', 'important');
                 keywordInput.style.setProperty('box-shadow', 'none', 'important');
                 keywordInput.style.setProperty('box-sizing', 'border-box', 'important');
             }
 
             if (searchButton instanceof HTMLElement) {
                 searchButton.style.setProperty('flex', 'none', 'important');
-                searchButton.style.setProperty('width', '37px', 'important');
-                searchButton.style.setProperty('min-width', '37px', 'important');
-                searchButton.style.setProperty('height', '36px', 'important');
+                searchButton.style.setProperty('width', '44px');
+                searchButton.style.setProperty('min-width', '44px');
+                searchButton.style.setProperty('height', '44px');
                 searchButton.style.setProperty('margin', '0', 'important');
             }
 
@@ -698,15 +769,25 @@
 
         enhanceBottomControls(bottomControls) {
             if (!(bottomControls instanceof HTMLElement)) return;
+
+            const searchSlot = bottomControls.querySelector(`.${this.CUSTOM_CLASSES.SEARCH_SLOT}`);
+            if (searchSlot instanceof HTMLElement) {
+                this.normalizeSearchFormLayout(searchSlot);
+                this.bindSearchDrawerReserve(searchSlot);
+            }
+            bottomControls.setAttribute('data-dcuf-controls-ready', '1');
         },
 
         createBottomControls(listWrap) {
-            const gallTabs = this.findBottomControlElement(listWrap, this.SELECTORS.GALL_TABS);
+            const gallTabs = this.findBottomControlElement(listWrap, this.SELECTORS.GALL_TABS)
+                || this.findAdjacentViewListActionBar(listWrap);
             const pagination = this.findBottomControlElement(listWrap, this.SELECTORS.PAGINATION);
             const pageMoveBox = this.findBottomControlElement(listWrap, this.SELECTORS.PAGE_MOVE_BOX);
+            const searchForm = this.findBottomControlElement(listWrap, this.SELECTORS.SEARCH_FORM);
+            const searchLayer = this.findBottomControlElement(listWrap, this.SELECTORS.SEARCH_LAYER);
 
 
-            if (!gallTabs && !pagination && !pageMoveBox) return null;
+            if (!gallTabs && !pagination && !pageMoveBox && !searchForm) return null;
 
 
             const bottomControls = document.createElement('div');
@@ -715,23 +796,49 @@
 
             if (gallTabs) {
                 const buttonRow = document.createElement('div');
-                buttonRow.className = 'custom-button-row';
+                buttonRow.className = 'custom-button-row dcuf-bottom-action-card';
                 buttonRow.appendChild(gallTabs);
                 bottomControls.appendChild(buttonRow);
             }
 
 
-            if (pagination) {
-                bottomControls.appendChild(pagination);
+            if (pagination || pageMoveBox) {
+                const paginationCard = document.createElement('div');
+                paginationCard.className = 'dcuf-pagination-card';
+                if (pagination) paginationCard.appendChild(pagination);
+                if (pageMoveBox) paginationCard.appendChild(pageMoveBox);
+                bottomControls.appendChild(paginationCard);
             }
 
-            if (pageMoveBox) {
-                bottomControls.appendChild(pageMoveBox);
+            if (searchForm) {
+                const searchCard = document.createElement('div');
+                searchCard.className = 'dcuf-search-card';
+                const searchSlot = document.createElement('div');
+                searchSlot.className = this.CUSTOM_CLASSES.SEARCH_SLOT;
+                if (searchLayer instanceof HTMLElement && !searchForm.contains(searchLayer)) {
+                    searchForm.appendChild(searchLayer);
+                }
+                searchSlot.appendChild(searchForm);
+                searchCard.appendChild(searchSlot);
+                bottomControls.appendChild(searchCard);
             }
 
             this.enhanceBottomControls(bottomControls);
 
             return bottomControls;
+        },
+
+        ensureBottomControls(listWrap) {
+            if (!(listWrap instanceof HTMLElement)) return null;
+            let bottomControls = listWrap.querySelector(`.${this.CUSTOM_CLASSES.BOTTOM_CONTROLS}`);
+            if (!(bottomControls instanceof HTMLElement)) {
+                bottomControls = this.createBottomControls(listWrap);
+            }
+            if (bottomControls instanceof HTMLElement && bottomControls.parentElement !== listWrap) {
+                listWrap.appendChild(bottomControls);
+            }
+            this.enhanceBottomControls(bottomControls);
+            return bottomControls instanceof HTMLElement ? bottomControls : null;
         },
 
         bindTooltipEvents(listContainer) {
@@ -769,13 +876,76 @@
             return rowId;
         },
 
-        createListState(listWrap, originalTable, originalTbody, newListContainer) {
+        captureListTransaction(listWrap, originalTable) {
+            const scope = this.resolveBottomControlScope(listWrap) || listWrap;
+            const movableSelector = [
+                this.SELECTORS.PAGINATION, this.SELECTORS.GALL_TABS, this.SELECTORS.SEARCH_FORM,
+                this.SELECTORS.SEARCH_LAYER, this.SELECTORS.PAGE_MOVE_BOX, '.view_bottom_btnbox'
+            ].join(', ');
+            const movedNodes = Array.from(scope.querySelectorAll(movableSelector))
+                .filter((node) => !node.closest(`.${this.CUSTOM_CLASSES.BOTTOM_CONTROLS}`))
+                .map((node) => ({
+                    node, parent: node.parentNode, nextSibling: node.nextSibling,
+                    style: node.getAttribute('style'), className: node.getAttribute('class')
+                }));
+            return {
+                originalTableStyle: originalTable.getAttribute('style'),
+                transformedValue: listWrap.getAttribute(this.TRANSFORMED_ATTR),
+                existingCustomLists: new Set(listWrap.querySelectorAll(`.${this.CUSTOM_CLASSES.MOBILE_LIST}`)),
+                existingBottomControls: new Set(scope.querySelectorAll(`.${this.CUSTOM_CLASSES.BOTTOM_CONTROLS}`)),
+                movedNodes
+            };
+        },
+
+        rollbackListState(state, reason = 'boot-degraded') {
+            if (!state) return;
+            state.tbodyObserver?.disconnect();
+            state.syncScheduler?.cancel?.();
+            const transaction = state.transaction || {};
+            const listWrap = state.listWrap;
+            const originalTable = state.originalTable;
+            if (state.newListContainer instanceof HTMLElement && !transaction.existingCustomLists?.has(state.newListContainer)) state.newListContainer.remove();
+            const scope = this.resolveBottomControlScope(listWrap) || listWrap;
+            scope?.querySelectorAll?.(`.${this.CUSTOM_CLASSES.BOTTOM_CONTROLS}`).forEach((node) => {
+                if (!transaction.existingBottomControls?.has(node)) node.remove();
+            });
+            Array.from(transaction.movedNodes || []).reverse().forEach((entry) => {
+                if (!entry?.node || !entry.parent) return;
+                if (entry.nextSibling?.parentNode === entry.parent) entry.parent.insertBefore(entry.node, entry.nextSibling);
+                else entry.parent.appendChild(entry.node);
+                if (entry.style === null) entry.node.removeAttribute('style');
+                else entry.node.setAttribute('style', entry.style);
+                if (entry.className === null) entry.node.removeAttribute('class');
+                else entry.node.setAttribute('class', entry.className);
+            });
+            if (originalTable instanceof HTMLElement) {
+                if (transaction.originalTableStyle === null) originalTable.removeAttribute('style');
+                else originalTable.setAttribute('style', transaction.originalTableStyle);
+            }
+            if (listWrap instanceof HTMLElement) {
+                if (transaction.transformedValue === null) listWrap.removeAttribute(this.TRANSFORMED_ATTR);
+                else listWrap.setAttribute(this.TRANSFORMED_ATTR, transaction.transformedValue);
+                this.LIST_STATE_MAP.delete(listWrap);
+            }
+            this.ACTIVE_LIST_STATES.delete(state);
+            state.rolledBack = true;
+            this.recordDiagnostic('ui.listState.rolledBack');
+            this.getRuntimeCoordinator()?.noteDiagnostic?.('ui.list.rollback', { reason });
+        },
+
+        rollbackInitialListTransactions(reason = 'boot-degraded') {
+            Array.from(this.ACTIVE_LIST_STATES).reverse().forEach((state) => this.rollbackListState(state, reason));
+        },
+
+        createListState(listWrap, originalTable, originalTbody, newListContainer, transaction = null) {
             const state = {
                 runtimeId: this._nextListRuntimeId++,
                 listWrap,
                 originalTable,
                 originalTbody,
                 newListContainer,
+                transaction,
+                committed: false,
                 itemByRowId: new Map(),
                 dirtyRows: new Set(),
                 tbodyObserver: null,
@@ -795,6 +965,7 @@
                 state.lastSyncedGeneration = state.mutationGeneration;
             }, [90]);
 
+            this.ACTIVE_LIST_STATES.add(state);
             return state;
         },
 
@@ -816,6 +987,7 @@
             if (state.listWrap instanceof HTMLElement) {
                 state.listWrap.removeAttribute(this.TRANSFORMED_ATTR);
             }
+            this.ACTIVE_LIST_STATES.delete(state);
             this.LIST_STATE_MAP.delete(state.listWrap);
             if (state.itemByRowId && typeof state.itemByRowId.clear === 'function') {
                 state.itemByRowId.clear();
@@ -894,7 +1066,6 @@
 
             state.originalTable = originalTable;
             state.originalTbody = originalTbody;
-            state.originalTable.style.setProperty('display', 'none', 'important');
 
             if (!state.newListContainer.isConnected && state.originalTable.parentNode) {
                 state.originalTable.parentNode.insertBefore(state.newListContainer, state.originalTable.nextSibling);
@@ -951,6 +1122,9 @@
 
             state.rebuildAll = false;
             state.dirtyRows?.clear();
+            state.listWrap.setAttribute(this.TRANSFORMED_ATTR, 'true');
+            state.originalTable.style.setProperty('display', 'none', 'important');
+            state.committed = true;
             if (rebuiltRowCount > 0) this.recordDiagnostic('ui.listRows.rebuilt', rebuiltRowCount);
             this.getRuntimeCoordinator()?.setDiagnosticGauge?.('ui.listRows.lastRebuilt', rebuiltRowCount);
             this.recordDiagnostic('ui.listState.synced');
@@ -1030,6 +1204,7 @@
 
             const existingState = this.LIST_STATE_MAP.get(listWrap);
             if (existingState && existingState.originalTbody === originalTbody && existingState.newListContainer instanceof HTMLElement) {
+                this.ensureBottomControls(listWrap);
                 this.enhanceOriginalSearchForms(listWrap);
                 this.scheduleListSync(existingState, reason);
                 return existingState;
@@ -1037,34 +1212,38 @@
 
             if (existingState) this.destroyListState(existingState, 'list-runtime-refresh');
 
-            listWrap.setAttribute(this.TRANSFORMED_ATTR, 'true');
-            originalTable.style.setProperty('display', 'none', 'important');
+            const transaction = this.captureListTransaction(listWrap, originalTable);
+            let newListContainer = null;
+            let state = null;
+            try {
+                newListContainer = listWrap.querySelector(`.${this.CUSTOM_CLASSES.MOBILE_LIST}`);
+                if (!(newListContainer instanceof HTMLElement)) {
+                    newListContainer = document.createElement('div');
+                    newListContainer.className = this.CUSTOM_CLASSES.MOBILE_LIST;
+                    originalTable.parentNode.insertBefore(newListContainer, originalTable.nextSibling);
+                }
 
-            let newListContainer = listWrap.querySelector(`.${this.CUSTOM_CLASSES.MOBILE_LIST}`);
-            if (!(newListContainer instanceof HTMLElement)) {
-                newListContainer = document.createElement('div');
-                newListContainer.className = this.CUSTOM_CLASSES.MOBILE_LIST;
-                originalTable.parentNode.insertBefore(newListContainer, originalTable.nextSibling);
+                this.bindTooltipEvents(newListContainer);
+                this.ensureBottomControls(listWrap);
+                this.enhanceOriginalSearchForms(listWrap);
+                this.applyForceRefreshPagination(listWrap);
+                const testBoot = __dcufRoot.__DCUF_TESTBED_CONFIG__?.boot;
+                if (testBoot?.failListPrepareOnce && !__dcufRoot.__dcufListPrepareFailureInjected) {
+                    __dcufRoot.__dcufListPrepareFailureInjected = true;
+                    throw new Error('testbed list prepare failure');
+                }
+
+                state = this.createListState(listWrap, originalTable, originalTbody, newListContainer, transaction);
+                this.LIST_STATE_MAP.set(listWrap, state);
+                this.hydrateExistingListItems(state);
+                this.attachOriginalTbodyObserver(state);
+                this.scheduleListSync(state, reason, { rebuildAll: true });
+                this.recordDiagnostic('ui.listState.created');
+                return state;
+            } catch (error) {
+                this.rollbackListState(state || { listWrap, originalTable, newListContainer, transaction }, 'list-prepare-failed');
+                throw error;
             }
-
-            this.bindTooltipEvents(newListContainer);
-
-            const bottomControls = listWrap.querySelector(`.${this.CUSTOM_CLASSES.BOTTOM_CONTROLS}`) || this.createBottomControls(listWrap);
-            if (bottomControls && bottomControls.parentElement !== listWrap) {
-                listWrap.appendChild(bottomControls);
-            }
-            this.enhanceBottomControls(bottomControls);
-            this.enhanceOriginalSearchForms(listWrap);
-
-            this.applyForceRefreshPagination(listWrap);
-
-            const state = this.createListState(listWrap, originalTable, originalTbody, newListContainer);
-            this.LIST_STATE_MAP.set(listWrap, state);
-            this.hydrateExistingListItems(state);
-            this.attachOriginalTbodyObserver(state);
-            this.scheduleListSync(state, reason, { rebuildAll: true });
-            this.recordDiagnostic('ui.listState.created');
-            return state;
         },
 
         ensureKnownListRuntimes(root = document, reason = 'ensure-known') {
@@ -1094,7 +1273,11 @@
                     const candidates = payload.collectMatches([
                         this.SELECTORS.LIST_WRAP,
                         this.SELECTORS.ORIGINAL_TABLE,
-                        this.SELECTORS.ORIGINAL_TBODY
+                        this.SELECTORS.ORIGINAL_TBODY,
+                        this.SELECTORS.GALL_TABS,
+                        this.SELECTORS.PAGINATION,
+                        this.SELECTORS.PAGE_MOVE_BOX,
+                        this.SELECTORS.SEARCH_FORM
                     ], { includeRoots: true });
                     if (candidates.length === 0) return;
 
@@ -1541,7 +1724,7 @@
             return this.getInitialRevealState().ready;
         },
 
-        waitForInitialRevealReady(timeoutMs = 4000) {
+        waitForInitialRevealReady(timeoutMs = 6000) {
             return new Promise((resolve) => {
                 this.ensureBootUi('initial-reveal:start');
                 this._initialRevealStartedAt = Date.now();
@@ -1696,12 +1879,13 @@
             });
         },
 
-        waitForInitialUiReady(timeoutMs = 4000) {
+        waitForInitialUiReady(timeoutMs = 6000) {
             return this.waitForInitialRevealReady(timeoutMs);
         },
 
         startPostRevealRecoveryWatch(context = {}) {
-            if (!this.isViewPage()) return 'not-view';
+            const isViewPage = this.isViewPage();
+            if (!isViewPage && !this.isListPage()) return 'not-applicable';
             if (typeof this._postRevealRecoveryStop === 'function') {
                 this._postRevealRecoveryStop('restart');
             }
@@ -1709,7 +1893,9 @@
             const startedAt = new Date().toISOString();
             const startedTime = Date.now();
             let active = true;
-            let lastState = this.evaluateViewPostRevealRecoveryState();
+            let lastState = isViewPage
+                ? this.evaluateViewPostRevealRecoveryState()
+                : this.getInitialRevealState();
             let checkCount = 0;
             let stablePasses = 0;
             let viewThemeRefreshes = 0;
@@ -1842,7 +2028,9 @@
                 }
                 runFilteredCommentRepair(reason);
 
-                lastState = this.evaluateViewPostRevealRecoveryState();
+                lastState = isViewPage
+                    ? this.evaluateViewPostRevealRecoveryState()
+                    : this.getInitialRevealState();
                 if (lastState.ready) {
                     stablePasses += 1;
                     this.updatePostRevealRecoveryDebug(lastState, {
@@ -1855,6 +2043,13 @@
                         startedAt
                     });
                     if (stablePasses >= this.POST_REVEAL_RECOVERY_STABLE_PASSES) {
+                        const bootController = window.__dcufBootController;
+                        if (bootController && bootController.state === 'degraded') {
+                            if (isViewPage && typeof window.__dcufFlushInitialCommentBarrier === 'function') {
+                                window.__dcufFlushInitialCommentBarrier({ reason: 'post-reveal-recovery' });
+                            }
+                            bootController.markReady('post-reveal-recovery');
+                        }
                         cleanup('completed');
                     }
                     return;
@@ -2023,13 +2218,20 @@
         isArticleNativeAdFrame(frame) {
             if (!(frame instanceof HTMLIFrameElement)) return false;
 
+            const frameId = frame.id || '';
+            const frameName = frame.name || '';
+            const frameSrc = frame.getAttribute('src') || '';
             const signature = [
-                frame.id,
-                frame.name,
+                frameId,
+                frameName,
                 frame.title,
                 frame.className,
-                frame.getAttribute('src') || ''
+                frameSrc
             ].join(' ');
+
+            const isGoogleArticleSafeFrame = (/^aswift_\d+$/i.test(frameId) || /^aswift_\d+$/i.test(frameName))
+                && /googleads\.g\.doubleclick\.net\/pagead\/ads/i.test(frameSrc);
+            if (isGoogleArticleSafeFrame) return true;
 
             if (/google_ads_iframe_|gfp|pstatic\.net\/tvetalibs|tivan\.naver\.com/i.test(signature)) {
                 return true;
@@ -2068,7 +2270,10 @@
                 .writing_view_box iframe[id*="gfp"],
                 .writing_view_box iframe[name*="gfp"],
                 .writing_view_box iframe[src*="pstatic.net/tvetalibs"],
-                .writing_view_box iframe[src*="tivan.naver.com"] {
+                .writing_view_box iframe[src*="tivan.naver.com"],
+                .gallview_contents iframe[id^="aswift_"][src*="googleads.g.doubleclick.net/pagead/ads"],
+                .writing_view_box iframe[id^="aswift_"][src*="googleads.g.doubleclick.net/pagead/ads"],
+                .view_content_wrap iframe[id^="aswift_"][src*="googleads.g.doubleclick.net/pagead/ads"] {
                     display: none !important;
                     width: 0 !important;
                     height: 0 !important;
@@ -2184,6 +2389,11 @@
 
             const writeBox = document.querySelector('.write_box');
             const writeForm = writeBox?.querySelector('form#write') || document.querySelector('form#write');
+            const leaveConfirm = writeForm?.querySelector('#leave_confirm_box');
+            if (leaveConfirm instanceof HTMLElement) {
+                leaveConfirm.classList.add('dcuf-write-leave-confirm');
+                document.body.appendChild(leaveConfirm);
+            }
             const gallType = writeForm?.querySelector('input[name="_GALLTYPE_"]')?.value || '';
             const isMinorWrite = gallType.toUpperCase() === 'M'
                 || document.querySelector('#container.minor_write') instanceof Element
@@ -2715,8 +2925,16 @@
             }, 250);
         },
         async init() {
-            if (isUiInitialized) return 'already-ready';
-            isUiInitialized = true;
+            if (this._initState === 'ready') return 'already-ready';
+            if (this._initState === 'initializing' && this._initPromise) return this._initPromise;
+            this._initState = 'initializing';
+            this._initPromise = (async () => {
+            const bootController = window.__dcufBootController;
+            if (!this._bootRollbackRegistered && typeof bootController?.registerRollback === 'function') {
+                this._bootRollbackRegistered = true;
+                bootController.registerRollback((reason) => this.rollbackInitialListTransactions(reason));
+                bootController.registerRecovery(() => this.ensureKnownListRuntimes(document, 'boot-recovery'));
+            }
 
 
             // [핵심 수정] 스크립트 시작 시, 툴팁으로 사용할 div를 미리 한 번만 생성
@@ -2762,8 +2980,20 @@
 
             if (this.isListPage()) return 'list-runtime-ready';
             return 'non-list';
+            })();
+            try {
+                const result = await this._initPromise;
+                this._initState = 'ready';
+                return result;
+            } catch (error) {
+                this._initState = 'failed';
+                this._initPromise = null;
+                this.rollbackInitialListTransactions('ui-init-failed');
+                throw error;
+            }
         }
     };
+    window.__dcufUIModule = UIModule;
 
     const getDcufCollectionSize = (value) => {
         if (!value) return 0;
@@ -2823,6 +3053,7 @@
             filter: {
                 userSumCache: getDcufCollectionSize(userSumCache),
                 negativeUserSumCache: getDcufCollectionSize(FilterModule.USER_SUM_NEGATIVE_CACHE),
+                negativeUserSumCacheLimit: FilterModule.USER_SUM_NEGATIVE_MAX_ENTRIES,
                 inflightUserSumRequests: getDcufCollectionSize(FilterModule.INFLIGHT_USER_SUM_REQUESTS),
                 blockedUidsCache: getDcufCollectionSize(FilterModule.BLOCKED_UIDS_CACHE),
                 debugDecisionKeys: getDcufCollectionSize(FilterModule.DEBUG_DECISION_KEYS),
@@ -2837,7 +3068,12 @@
                 nextRowId: UIModule._nextRowId,
                 nextListRuntimeId: UIModule._nextListRuntimeId,
                 listMutationSubscribed: typeof UIModule._listMutationUnsubscribe === 'function',
-                postRevealRecoveryActive: typeof UIModule._postRevealRecoveryStop === 'function'
+                postRevealRecoveryActive: typeof UIModule._postRevealRecoveryStop === 'function',
+                searchDrawerRoots: getDcufCollectionSize(UIModule.SEARCH_DRAWER_ROOTS),
+                searchDrawerGlobalHandlersBound: UIModule._searchDrawerGlobalHandlersBound,
+                searchDrawerRafActive: Boolean(UIModule._searchDrawerUpdateRafId),
+                searchDrawerTimerActive: Boolean(UIModule._searchDrawerUpdateTimerId),
+                effectiveDarkMode: window.__dcufEffectiveDarkMode ?? null
             },
             dom: {
                 nodes: document.getElementsByTagName('*').length,
@@ -2909,10 +3145,21 @@
     // =================================================================
     // ================ Script-Level Initializations ===================
     // =================================================================
-    GM_registerMenuCommand('글댓합 설정하기', FilterModule.showSettings.bind(FilterModule));
-    GM_registerMenuCommand('차단 유저 관리', PersonalBlockModule.createManagementPanel.bind(PersonalBlockModule));
-    GM_registerMenuCommand('플로팅 버튼 원위치', PersonalBlockModule.resetFabPosition.bind(PersonalBlockModule));
-    GM_registerMenuCommand('메뉴 버튼 크기 조절', PersonalBlockModule.showFabScalePanel.bind(PersonalBlockModule));
+    const registerMenuCommandsSafely = () => {
+        if (__dcufRoot.__dcufMenuCommandsRegistered) return;
+        const commands = [
+            ['글댓합 설정하기', FilterModule.showSettings.bind(FilterModule)],
+            ['차단 유저 관리', PersonalBlockModule.createManagementPanel.bind(PersonalBlockModule)],
+            ['플로팅 버튼 원위치', PersonalBlockModule.resetFabPosition.bind(PersonalBlockModule)],
+            ['메뉴 버튼 크기 조절', PersonalBlockModule.showFabScalePanel.bind(PersonalBlockModule)]
+        ];
+        commands.forEach(([label, handler]) => {
+            try { GM_registerMenuCommand(label, handler); }
+            catch (error) { console.warn('[DCUF] menu registration failed:', label, error); }
+        });
+        __dcufRoot.__dcufMenuCommandsRegistered = true;
+    };
+    registerMenuCommandsSafely();
 
 
     // [신규] 단축키 설정을 다시 로드하는 전용 함수
@@ -2922,78 +3169,50 @@
     }
 
     async function awaitInitialCommentStabilization() {
-        const waiter = window.__dcufAwaitInitialCommentStabilization;
-        const prepareInitialCommentReveal = (state) => {
-            const normalizedState = state && typeof state === 'object' ? state : { reason: 'unknown' };
-            const prepare = window.__dcufPrepareInitialCommentReveal;
-            if (typeof prepare !== 'function') return normalizedState;
-            try {
-                return {
-                    ...normalizedState,
-                    prepareState: prepare(normalizedState)
-                };
-            } catch (error) {
-                return {
-                    ...normalizedState,
-                    prepareError: error?.message || 'unknown'
-                };
+        if (!UIModule.isViewPage()) return { reason: 'non-view' };
+        const flushBarrier = window.__dcufFlushInitialCommentBarrier;
+        if (typeof flushBarrier !== 'function') return { reason: 'unavailable' };
+
+        const runtimeCoordinator = window.__dcufRuntimeCoordinator;
+        const deadline = Date.now() + 500;
+        let lastState = null;
+        for (let attempt = 1; attempt <= 3 && Date.now() < deadline; attempt += 1) {
+            runtimeCoordinator?.ensureMutationBus?.();
+            lastState = flushBarrier({ reason: 'initial-comment-barrier', attempt });
+            const firstGeneration = runtimeCoordinator?._mutationGeneration || lastState?.generation || 0;
+            await new Promise((resolve) => requestAnimationFrame(resolve));
+            runtimeCoordinator?.flushPendingMutations?.('initial-comment:quiet-1');
+            const secondGeneration = runtimeCoordinator?._mutationGeneration || 0;
+            if (secondGeneration !== firstGeneration) continue;
+            await new Promise((resolve) => requestAnimationFrame(resolve));
+            runtimeCoordinator?.flushPendingMutations?.('initial-comment:quiet-2');
+            const thirdGeneration = runtimeCoordinator?._mutationGeneration || 0;
+            if (thirdGeneration === secondGeneration) {
+                lastState = flushBarrier({ reason: 'initial-comment-quiet', attempt });
+                runtimeCoordinator?.incrementDiagnostic?.('ui.initialComment.mutationQuiet');
+                return { reason: 'mutation-quiet', attempt, generation: thirdGeneration, prepareState: lastState };
             }
-        };
-
-        const waitForMutationQuiet = async () => {
-            const filterModule = window.__dcufFilterModule;
-            if (typeof filterModule?.getRelevantMutationGeneration !== 'function') return null;
-
-            let previousGeneration = filterModule.getRelevantMutationGeneration('comments');
-            for (let attempt = 1; attempt <= 3; attempt += 1) {
-                const prepareState = prepareInitialCommentReveal({
-                    reason: 'mutation-quiet-prepare',
-                    attempt
+        }
+        lastState = flushBarrier({ reason: 'initial-comment-bounded-timeout', attempt: 3 });
+        return { reason: 'bounded-timeout', prepareState: lastState };
+    }
+    function prepareInitialCommentRevealBeforeMark(state = null) {
+        const prepare = window.__dcufFlushInitialCommentBarrier || window.__dcufPrepareInitialCommentReveal;
+        try {
+            if (typeof prepare === 'function') {
+                return prepare({
+                    reason: 'before-mark-ui-ready',
+                    previous: state?.commentInitState?.reason || ''
                 });
-                await new Promise((resolve) => requestAnimationFrame(resolve));
-                const nextGeneration = filterModule.getRelevantMutationGeneration('comments');
-                if (nextGeneration === previousGeneration) {
-                    const runtimeCoordinator = window.__dcufRuntimeCoordinator;
-                    runtimeCoordinator?.incrementDiagnostic?.('ui.initialComment.mutationQuiet');
-                    return {
-                        reason: 'mutation-quiet',
-                        attempt,
-                        generation: nextGeneration,
-                        prepareState
-                    };
-                }
-                previousGeneration = nextGeneration;
+            }
+            if (UIModule.isViewPage() && typeof FilterModule?.runSyncRefilterPass === 'function') {
+                const descriptors = FilterModule.runSyncRefilterPass('comments');
+                return {
+                    reason: 'filter-only',
+                    targetCount: Array.isArray(descriptors) ? descriptors.length : 0
+                };
             }
             return null;
-        };
-
-        if (typeof waiter !== 'function') {
-            return (await waitForMutationQuiet()) || prepareInitialCommentReveal({ reason: 'unavailable' });
-        }
-
-        try {
-            const waiterPromise = Promise.resolve().then(() => waiter());
-            const state = await Promise.race([
-                waitForMutationQuiet().then((quietState) => quietState || waiterPromise),
-                waiterPromise,
-                new Promise((resolve) => {
-                    window.setTimeout(() => resolve({ reason: 'ui-timeout' }), 650);
-                })
-            ]);
-            return prepareInitialCommentReveal(state);
-        } catch (error) {
-            return prepareInitialCommentReveal({ reason: `error:${error?.message || 'unknown'}` });
-        }
-    }
-
-    function prepareInitialCommentRevealBeforeMark(state = null) {
-        const prepare = window.__dcufPrepareInitialCommentReveal;
-        if (typeof prepare !== 'function') return null;
-        try {
-            return prepare({
-                reason: 'before-mark-ui-ready',
-                previous: state?.commentInitState?.reason || ''
-            });
         } catch (error) {
             return { reason: 'error', message: error?.message || 'unknown' };
         }
@@ -3007,14 +3226,22 @@
                 commentInitState: { reason: 'already-initialized' }
             };
         }
+        isInitialized = true;
+        if (window.__dcufBootController) {
+            window.__dcufBootController.startPreparing('mobile-main');
+            if (!__dcufRoot.__dcufShortcutReadyHookRegistered) {
+                __dcufRoot.__dcufShortcutReadyHookRegistered = true;
+                window.__dcufBootController.onReady(() => reloadShortcutKey().catch((error) => {
+                    console.warn('[DCUF] shortcut initialization failed:', error);
+                }));
+            }
+        }
         console.log("[DC Filter+UI] Initializing v__VERSION__...");
 
 
-        // [수정] main 함수에서 reloadShortcutKey 함수를 호출하여 초기화
-        await reloadShortcutKey();
-
-
-        window.addEventListener('keydown', async (e) => {
+        if (!__dcufRoot.__dcufShortcutBound) {
+            __dcufRoot.__dcufShortcutBound = true;
+            window.addEventListener('keydown', async (e) => {
             if (!activeShortcutObject || !activeShortcutObject.key) return;
 
 
@@ -3034,28 +3261,48 @@
                     await FilterModule.showSettings();
                 }
             }
-        });
+            });
+        }
 
+
+        if (UIModule.isWritePage() || (!UIModule.isListPage() && !UIModule.isViewPage())) {
+            const uiInitState = await UIModule.init();
+            window.__dcufBootController?.note?.(UIModule.isWritePage() ? 'boot.write-ui-ready' : 'boot.other-ui-ready', { uiInitState });
+            if (window.__dcufBootController) {
+                window.__dcufBootController.onReady(() => {
+                    void (async () => {
+                        await FilterModule.init();
+                        await PersonalBlockModule.init(FilterModule.getBootSnapshot(), { deferUi: true });
+                    })().catch((error) => console.warn('[DCUF] deferred non-view initialization failed:', error));
+                });
+            }
+            return { uiInitState, commentInitState: { reason: 'non-view' } };
+        }
 
         await FilterModule.init();
-        await PersonalBlockModule.init();
+        await PersonalBlockModule.init(FilterModule.getBootSnapshot(), { deferUi: true });
+        window.__dcufBootController?.note?.('boot.local-filter-ready');
         const uiInitState = await UIModule.init();
+        window.__dcufBootController?.note?.('boot.ui-ready', { uiInitState });
         // Mobile comment reply-merge cleanup can rerender blocked comment rows
         // once more after Filter/UI init. Keep the initial body lock until that first
         // stabilization window finishes so personally blocked comments do not flash visible.
         const commentInitState = await awaitInitialCommentStabilization();
+        window.__dcufBootController?.note?.('boot.comment-barrier', { reason: commentInitState?.reason || 'unknown' });
         const initState = { uiInitState, commentInitState };
         console.log(`[DC Filter+UI] Initialization complete. ui=${uiInitState} comment=${commentInitState?.reason || 'unknown'}`);
         return initState;
     }
 
 
+    let initializationRecoveryAttempts = 0;
     const runSafely = async () => {
         let initState = {
             uiInitState: 'fallback',
             commentInitState: { reason: 'not-started' }
         };
         let revealState = 'error';
+        let initializationSucceeded = false;
 
         try {
             const mainState = await main();
@@ -3063,27 +3310,56 @@
             if (typeof UIModule?.waitForInitialRevealReady === 'function') {
                 revealState = await UIModule.waitForInitialRevealReady();
             }
+            window.__dcufBootController?.note?.('boot.style-verified', { revealState });
+            initializationSucceeded = revealState !== 'error' && !String(revealState).startsWith('timeout-');
         } catch (error) {
             initState = {
                 ...initState,
                 uiInitState: 'error'
             };
             revealState = 'error';
+            isInitialized = false;
             console.error("[DC Filter+UI] A critical error occurred during main execution:", error);
         } finally {
             // [v2.2.2 수정] 모든 UI 처리 및 필터링 적용이 끝난 후,
             // 루트 준비 완료 클래스를 추가하여 화면을 표시합니다.
-            initState.commentPrepareState = prepareInitialCommentRevealBeforeMark(initState);
-            markUiReady();
+            if (initializationSucceeded) {
+                // Do not yield between the final local comment pass and removing the body lock.
+                // This closes the window where host AJAX can replace comments after the initial
+                // barrier but before markUiReady exposes the page.
+                const finalCommentState = prepareInitialCommentRevealBeforeMark(initState);
+                window.__dcufBootController?.note?.('boot.comment-finalized', {
+                    reason: finalCommentState?.reason || 'not-applicable',
+                    targetCount: finalCommentState?.targetCount || 0
+                });
+                if (UIModule.isViewPage() && finalCommentState?.reason === 'error') {
+                    initializationSucceeded = false;
+                    revealState = 'comment-finalize-error';
+                }
+            }
+            if (initializationSucceeded) markUiReady('ready:' + revealState);
+            else if (window.__dcufBootController) window.__dcufBootController.degrade('initialization:' + revealState);
             if (typeof UIModule?.startPostRevealRecoveryWatch === 'function') {
-                UIModule.startPostRevealRecoveryWatch({ revealState });
+                const recoveryWatchDelayMs = Math.max(0, Number(__dcufRoot.__DCUF_TESTBED_CONFIG__?.boot?.recoveryWatchDelayMs) || 0);
+                if (recoveryWatchDelayMs > 0) {
+                    window.setTimeout(() => UIModule.startPostRevealRecoveryWatch({ revealState }), recoveryWatchDelayMs);
+                } else {
+                    UIModule.startPostRevealRecoveryWatch({ revealState });
+                }
+            }
+            if (!initializationSucceeded && revealState === 'error' && initializationRecoveryAttempts < 2) {
+                initializationRecoveryAttempts += 1;
+                const retryBaseMs = Math.max(20, Number(__dcufRoot.__DCUF_TESTBED_CONFIG__?.boot?.recoveryRetryDelayMs) || 160);
+                window.setTimeout(() => {
+                    if (window.__dcufBootController?.state === 'degraded') runSafely();
+                }, retryBaseMs * initializationRecoveryAttempts);
             }
             console.log(`[DC Filter+UI] UI is now visible. ui=${initState.uiInitState} comment=${initState.commentInitState?.reason || 'unknown'} reveal=${revealState}`);
         }
     };
 
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', runSafely);
+        document.addEventListener('DOMContentLoaded', runSafely, { once: true });
     } else {
         runSafely();
     }
@@ -3104,13 +3380,21 @@
             const root = document.documentElement;
 
             const darkModeStylesheet = document.getElementById('css-darkmode');
-            if (darkModeStylesheet) {
-                body.classList.add('dc-filter-dark-mode');
-                if (root) root.classList.add('dc-filter-dark-mode');
-            } else {
-                body.classList.remove('dc-filter-dark-mode');
-                if (root) root.classList.remove('dc-filter-dark-mode');
+            const nextDarkMode = Boolean(darkModeStylesheet);
+            const classStateChanged = body.classList.contains('dc-filter-dark-mode') !== nextDarkMode
+                || Boolean(root && root.classList.contains('dc-filter-dark-mode') !== nextDarkMode);
+            const effectiveStateChanged = window.__dcufEffectiveDarkMode !== nextDarkMode;
+
+            if (!classStateChanged && !effectiveStateChanged) {
+                UIModule.recordDiagnostic('ui.darkMode.skippedUnchanged');
+                return;
             }
+
+            body.classList.toggle('dc-filter-dark-mode', nextDarkMode);
+            if (root) root.classList.toggle('dc-filter-dark-mode', nextDarkMode);
+            window.__dcufEffectiveDarkMode = nextDarkMode;
+            UIModule.recordDiagnostic('ui.darkMode.synced');
+            window.__dcufDiagnostics?.setGauge?.('ui.darkMode.enabled', nextDarkMode ? 1 : 0);
 
             // 본문/이미지댓글은 host 쪽 늦은 렌더가 다시 색을 덮는 경우가 있어
             // dark class 토글 직후 후처리 동기화도 같이 다시 태웁니다.

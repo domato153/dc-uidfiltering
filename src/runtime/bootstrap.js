@@ -2,217 +2,286 @@
     'use strict';
 
     const __dcufRoot = (typeof unsafeWindow !== 'undefined' && unsafeWindow) ? unsafeWindow : window;
-    if (__dcufRoot.__dcufRuntimeLoaded) {
-        console.warn('DCinside User Filter: duplicate runtime detected, skip init.');
+    if (window.top !== window.self) return;
+
+    const previousBoot = __dcufRoot.__dcufBootController || window.__dcufBootController;
+    if (previousBoot) {
+        if (previousBoot.state === 'locked' || previousBoot.state === 'preparing') previousBoot.ensure('duplicate-runtime');
+        else if (previousBoot.state === 'degraded') previousBoot.requestRecovery?.('duplicate-runtime');
+        console.warn('DCinside User Filter: duplicate runtime detected; reusing bootstrap.');
         return;
     }
-    __dcufRoot.__dcufRuntimeLoaded = `dcuf-${Date.now()}`;
 
     if (!__dcufRoot.__dcufBfcacheOptOutInstalled) {
         __dcufRoot.__dcufBfcacheOptOutInstalled = true;
         const preventBackForwardCache = () => {};
-        try {
-            __dcufRoot.addEventListener('unload', preventBackForwardCache, { capture: true });
-        } catch (error) {
-            window.addEventListener('unload', preventBackForwardCache, { capture: true });
-        }
+        try { __dcufRoot.addEventListener('unload', preventBackForwardCache, { capture: true }); }
+        catch { window.addEventListener('unload', preventBackForwardCache, { capture: true }); }
     }
 
-
-    // [개선] 전역 스코프 오염 방지를 위해 스크립트 상태 변수를 IIFE 내부 스코프로 이동
     let dcFilterSettings = {};
     let userSumCache = {};
     let isInitialized = false;
     let isUiInitialized = false;
-    let activeShortcutObject = null; // [v2.1 추가] 현재 활성화된 단축키 객체
-    const ROOT_READY_CLASS = 'script-ui-ready';
-    const INITIAL_LOCK_STYLE_ID = 'dcuf-initial-lock-style';
-    const BOOT_OVERLAY_ID = 'dcuf-boot-overlay';
-    const BOOT_OVERLAY_STYLE_ID = 'dcuf-boot-overlay-style';
-    const BOOT_UI_WATCHDOG_MAX_MS = 8000;
-    const BOOT_UI_WATCHDOG_INTERVAL_MS = 50;
-    let bootUiWatchdogTimerId = 0;
-    let bootUiWatchdogStartedAt = 0;
-    let bootUiWatchdogDomReadyHandler = null;
-    let bootUiWatchdogLoadHandler = null;
+    let activeShortcutObject = null;
 
-    const isBootOverlayTargetPage = () => true;
-    const isRootUiReady = () => !!document.documentElement?.classList.contains(ROOT_READY_CLASS);
-    const removeBootOverlay = (reason = 'unknown') => {
-        const overlay = document.getElementById(BOOT_OVERLAY_ID);
-        if (overlay) overlay.remove();
-    };
+    const READY_CLASS = 'script-ui-ready';
+    const STATE_ATTR = 'data-dcuf-boot-state';
+    const LOCK_STYLE_ID = 'dcuf-initial-lock-style';
+    const OVERLAY_ID = 'dcuf-boot-overlay';
+    const OVERLAY_STYLE_ID = 'dcuf-boot-overlay-style';
+    const DEGRADED_STYLE_ID = 'dcuf-degraded-filter-style';
+    const DEGRADED_BANNER_ID = 'dcuf-degraded-banner';
+    const testBootConfig = __dcufRoot.__DCUF_TESTBED_CONFIG__?.boot || null;
+    const ABSOLUTE_DEADLINE_MS = Math.max(20, Number(testBootConfig?.absoluteDeadlineMs) || 15000);
+    const CRITICAL_DEADLINE_MS = Math.max(20, Number(testBootConfig?.criticalDeadlineMs) || 6000);
+    const startedAt = Date.now();
+    const diagnosticsBuffer = [];
+    const rollbackHandlers = new Set();
+    const recoveryHandlers = new Set();
+    const readyHandlers = new Set();
+    let ensureTimer = 0;
+    let absoluteTimer = 0;
+    let criticalTimer = 0;
+    let domReadyListener = null;
+    let loadListener = null;
 
-    const ensureBootOverlay = () => {
-        if (!isBootOverlayTargetPage()) return;
-
-        const mountPoint = document.head || document.documentElement;
-        if (mountPoint && !document.getElementById(BOOT_OVERLAY_STYLE_ID)) {
-            const style = document.createElement('style');
-            style.id = BOOT_OVERLAY_STYLE_ID;
-            style.textContent = `
-                #${BOOT_OVERLAY_ID} {
-                    position: fixed;
-                    inset: 0;
-                    z-index: 2147483646;
-                    background:
-                        radial-gradient(circle at top, rgba(255,255,255,0.96), rgba(245,247,251,0.98) 45%, rgba(238,241,246,0.99)),
-                        linear-gradient(180deg, #f7f9fc 0%, #eef2f7 100%);
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    padding: 24px;
-                    pointer-events: auto;
-                }
-                #${BOOT_OVERLAY_ID} .dcuf-boot-card {
-                    width: min(420px, calc(100vw - 32px));
-                    border: 1px solid rgba(197, 206, 218, 0.9);
-                    border-radius: 18px;
-                    background: rgba(255,255,255,0.96);
-                    box-shadow: 0 20px 48px rgba(31, 45, 68, 0.12);
-                    padding: 22px 20px 18px;
-                    color: #2b3340;
-                    text-align: center;
-                }
-                #${BOOT_OVERLAY_ID} .dcuf-boot-title {
-                    font-size: 17px;
-                    font-weight: 700;
-                    letter-spacing: -0.01em;
-                    margin-bottom: 8px;
-                }
-                #${BOOT_OVERLAY_ID} .dcuf-boot-copy {
-                    font-size: 13px;
-                    line-height: 1.55;
-                    color: #5a6575;
-                    margin-bottom: 14px;
-                }
-                #${BOOT_OVERLAY_ID} .dcuf-boot-bar {
-                    height: 4px;
-                    border-radius: 999px;
-                    background: rgba(203, 211, 223, 0.6);
-                    overflow: hidden;
-                }
-                #${BOOT_OVERLAY_ID} .dcuf-boot-bar::before {
-                    content: '';
-                    display: block;
-                    width: 42%;
-                    height: 100%;
-                    border-radius: inherit;
-                    background: linear-gradient(90deg, #245bda 0%, #5d87f0 100%);
-                    animation: dcuf-boot-progress 1s ease-in-out infinite;
-                }
-                html.dc-filter-dark-mode #${BOOT_OVERLAY_ID} {
-                    background:
-                        radial-gradient(circle at top, rgba(34,39,48,0.95), rgba(20,24,31,0.98) 48%, rgba(14,17,22,0.99)),
-                        linear-gradient(180deg, #1d222a 0%, #11151b 100%);
-                }
-                html.dc-filter-dark-mode #${BOOT_OVERLAY_ID} .dcuf-boot-card {
-                    border-color: rgba(71, 81, 96, 0.92);
-                    background: rgba(28, 33, 41, 0.96);
-                    box-shadow: 0 20px 48px rgba(0, 0, 0, 0.34);
-                    color: #e7ebf2;
-                }
-                html.dc-filter-dark-mode #${BOOT_OVERLAY_ID} .dcuf-boot-copy {
-                    color: #adb7c7;
-                }
-                html.dc-filter-dark-mode #${BOOT_OVERLAY_ID} .dcuf-boot-bar {
-                    background: rgba(63, 73, 88, 0.9);
-                }
-                @keyframes dcuf-boot-progress {
-                    0% { transform: translateX(-120%); }
-                    100% { transform: translateX(260%); }
-                }
-            `;
-            mountPoint.appendChild(style);
+    const pageType = ((window.location.pathname || '').match(/\/board\/(lists|view|write)(?:\/|$)/) || [])[1] || 'other';
+    const isTargetPage = () => pageType !== 'other';
+    const note = (label, detail = null) => {
+        const entry = { label, detail, ts: Date.now(), elapsedMs: Date.now() - startedAt };
+        const api = window.__dcufDiagnostics;
+        if (typeof api?.note === 'function') api.note(label, entry);
+        else {
+            diagnosticsBuffer.push(entry);
+            if (diagnosticsBuffer.length > 40) diagnosticsBuffer.shift();
         }
-
-        if (document.getElementById(BOOT_OVERLAY_ID)) return;
-        if (!document.documentElement) return;
-
-        const overlay = document.createElement('div');
-        overlay.id = BOOT_OVERLAY_ID;
-        overlay.innerHTML = `
-            <div class="dcuf-boot-card">
-                <div class="dcuf-boot-title">UI 준비 중</div>
-                <div class="dcuf-boot-copy">광고 차단과 충돌하면 로딩이 지연될 수 있습니다.<br>DCInside에서는 광고 차단을 꺼주세요.</div>
-                <div class="dcuf-boot-bar" aria-hidden="true"></div>
-            </div>
+    };
+    const flushDiagnostics = () => {
+        const api = window.__dcufDiagnostics;
+        if (typeof api?.note !== 'function') return;
+        diagnosticsBuffer.splice(0).forEach((entry) => api.note(entry.label, entry));
+    };
+    const removeBootChrome = () => {
+        document.getElementById(OVERLAY_ID)?.remove();
+        document.getElementById(LOCK_STYLE_ID)?.remove();
+        document.getElementById(OVERLAY_STYLE_ID)?.remove();
+    };
+    const stopTimers = () => {
+        if (ensureTimer) clearInterval(ensureTimer);
+        if (absoluteTimer) clearTimeout(absoluteTimer);
+        if (criticalTimer) clearTimeout(criticalTimer);
+        ensureTimer = absoluteTimer = criticalTimer = 0;
+        if (domReadyListener) document.removeEventListener('DOMContentLoaded', domReadyListener);
+        if (loadListener) window.removeEventListener('load', loadListener);
+        domReadyListener = loadListener = null;
+    };
+    const ensureLockStyle = () => {
+        const mount = document.head || document.documentElement;
+        if (!mount || document.getElementById(LOCK_STYLE_ID)) return;
+        const style = document.createElement('style');
+        style.id = LOCK_STYLE_ID;
+        style.textContent = `
+            html[${STATE_ATTR}="locked"] body,
+            html[${STATE_ATTR}="preparing"] body {
+                opacity: 0 !important;
+                visibility: hidden !important;
+                pointer-events: none !important;
+            }
         `;
+        mount.appendChild(style);
+    };
+    const ensureOverlay = () => {
+        if (!isTargetPage() || !document.documentElement) return;
+        const mount = document.head || document.documentElement;
+        if (mount && !document.getElementById(OVERLAY_STYLE_ID)) {
+            const style = document.createElement('style');
+            style.id = OVERLAY_STYLE_ID;
+            style.textContent = `
+                #${OVERLAY_ID} {
+                    position: fixed !important; inset: 0 !important; z-index: 2147483646 !important;
+                    box-sizing: border-box !important; display: flex !important; align-items: center !important;
+                    justify-content: center !important; width: 100vw !important; height: 100vh !important;
+                    margin: 0 !important; padding: 24px !important; visibility: visible !important;
+                    opacity: 1 !important; pointer-events: auto !important;
+                    background: linear-gradient(180deg,#f7f9fc,#eef2f7) !important;
+                }
+                #${OVERLAY_ID} .dcuf-boot-card {
+                    box-sizing: border-box !important; width: min(420px,calc(100vw - 32px)) !important;
+                    padding: 22px 20px 18px !important; border: 1px solid #c5ceda !important;
+                    border-radius: 18px !important; background: #fff !important; color: #2b3340 !important;
+                    text-align: center !important; box-shadow: 0 20px 48px rgba(31,45,68,.12) !important;
+                }
+                #${OVERLAY_ID} .dcuf-boot-title { margin-bottom: 8px !important; font: 700 17px/1.35 sans-serif !important; }
+                #${OVERLAY_ID} .dcuf-boot-copy { margin-bottom: 14px !important; color: #5a6575 !important; font: 500 13px/1.55 sans-serif !important; }
+                #${OVERLAY_ID} .dcuf-boot-bar { height: 4px !important; overflow: hidden !important; border-radius: 999px !important; background: #cbd3df !important; }
+                #${OVERLAY_ID} .dcuf-boot-bar::before {
+                    content: '' !important; display: block !important; width: 42% !important; height: 100% !important;
+                    border-radius: inherit !important; background: linear-gradient(90deg,#245bda,#5d87f0) !important;
+                    animation: dcuf-boot-progress 1s ease-in-out infinite !important;
+                }
+                html.dc-filter-dark-mode #${OVERLAY_ID} { background: linear-gradient(180deg,#1d222a,#11151b) !important; }
+                html.dc-filter-dark-mode #${OVERLAY_ID} .dcuf-boot-card { border-color: #475160 !important; background: #1c2129 !important; color: #e7ebf2 !important; }
+                @keyframes dcuf-boot-progress { from { transform: translateX(-120%); } to { transform: translateX(260%); } }
+                @media (prefers-reduced-motion: reduce) { #${OVERLAY_ID} .dcuf-boot-bar::before { width: 100% !important; animation: none !important; } }
+            `;
+            mount.appendChild(style);
+        }
+        if (document.getElementById(OVERLAY_ID)) return;
+        const overlay = document.createElement('div');
+        overlay.id = OVERLAY_ID;
+        overlay.setAttribute('role', 'status');
+        overlay.setAttribute('aria-live', 'polite');
+        overlay.setAttribute('aria-atomic', 'true');
+        const card = document.createElement('div');
+        card.className = 'dcuf-boot-card';
+        const title = document.createElement('div');
+        title.className = 'dcuf-boot-title';
+        title.textContent = 'UI 준비 중';
+        const copy = document.createElement('div');
+        copy.className = 'dcuf-boot-copy';
+        copy.append(
+            document.createTextNode('광고 차단과 충돌하면 로딩이 지연될 수 있습니다.'),
+            document.createElement('br'),
+            document.createTextNode('DCInside에서는 광고 차단을 꺼주세요.')
+        );
+        const bar = document.createElement('div');
+        bar.className = 'dcuf-boot-bar';
+        bar.setAttribute('aria-hidden', 'true');
+        card.append(title, copy, bar);
+        overlay.appendChild(card);
         document.documentElement.appendChild(overlay);
     };
-
-    const markUiReady = () => {
-        const root = document.documentElement;
-        if (root) root.classList.add(ROOT_READY_CLASS);
-
-        const body = document.body;
-        if (body) body.classList.add(ROOT_READY_CLASS);
-
-        stopBootUiWatchdog();
-        removeBootOverlay('mark-ui-ready');
-    };
-
-    const injectInitialLockStyle = () => {
-        const mountPoint = document.head || document.documentElement;
-        if (!mountPoint || document.getElementById(INITIAL_LOCK_STYLE_ID)) return;
-
-        const style = document.createElement('style');
-        style.id = INITIAL_LOCK_STYLE_ID;
-        style.textContent = `
-            html:not(.${ROOT_READY_CLASS}) body {
-                visibility: hidden !important;
-            }
-        `;
-        mountPoint.appendChild(style);
-    };
-
-    const ensureBootUi = (reason = 'ensure-boot-ui') => {
-        if (!isBootOverlayTargetPage() || isRootUiReady()) return true;
-        injectInitialLockStyle();
-        ensureBootOverlay();
-        return !!document.getElementById(INITIAL_LOCK_STYLE_ID) && !!document.getElementById(BOOT_OVERLAY_ID);
-    };
-
-    const stopBootUiWatchdog = () => {
-        if (bootUiWatchdogTimerId) {
-            window.clearInterval(bootUiWatchdogTimerId);
-            bootUiWatchdogTimerId = 0;
+    const ensureDegradedUi = (reason) => {
+        if ((pageType === 'list' || pageType === 'view') && !document.getElementById(DEGRADED_STYLE_ID)) {
+            const style = document.createElement('style');
+            style.id = DEGRADED_STYLE_ID;
+            style.textContent = `
+                html[${STATE_ATTR}="degraded"] :is(
+                    .gall_listwrap table.gall_list,.list_wrap table.gall_list,.custom-mobile-list,
+                    .gall_exposure_list,#focus_cmt .comment_box,div[id^="comment_wrap_"] .comment_box,
+                    .view_comment.image_comment .comment_box
+                ) { opacity: 0 !important; visibility: hidden !important; pointer-events: none !important; }
+            `;
+            (document.head || document.documentElement)?.appendChild(style);
         }
-        if (bootUiWatchdogDomReadyHandler) {
-            document.removeEventListener('DOMContentLoaded', bootUiWatchdogDomReadyHandler);
-            bootUiWatchdogDomReadyHandler = null;
-        }
-        if (bootUiWatchdogLoadHandler) {
-            window.removeEventListener('load', bootUiWatchdogLoadHandler);
-            bootUiWatchdogLoadHandler = null;
-        }
+        if (!document.body || document.getElementById(DEGRADED_BANNER_ID)) return;
+        const banner = document.createElement('aside');
+        banner.id = DEGRADED_BANNER_ID;
+        banner.dataset.reason = reason;
+        banner.setAttribute('role', 'status');
+        banner.style.cssText = 'position:fixed!important;left:12px!important;right:12px!important;bottom:12px!important;z-index:2147483645!important;box-sizing:border-box!important;display:flex!important;align-items:center!important;justify-content:space-between!important;gap:12px!important;padding:12px 14px!important;border:1px solid #d5a93a!important;border-radius:12px!important;background:#fff8dd!important;color:#4f3b00!important;box-shadow:0 8px 28px rgba(0,0,0,.18)!important;font:600 13px/1.4 sans-serif!important;pointer-events:auto!important;visibility:visible!important;opacity:1!important;';
+        const message = document.createElement('span');
+        message.textContent = pageType === 'write' ? 'DCUF failed; the native write page is available.' : 'DCUF is recovering; filterable areas are temporarily withheld.';
+        const reload = document.createElement('button');
+        reload.type = 'button';
+        reload.textContent = 'Reload';
+        reload.style.cssText = 'min-width:76px!important;min-height:40px!important;padding:8px 12px!important;border:1px solid #9c7716!important;border-radius:9px!important;background:#fff!important;color:#4f3b00!important;font-weight:700!important;cursor:pointer!important;';
+        reload.addEventListener('click', () => location.reload());
+        banner.append(message, reload);
+        document.body.appendChild(banner);
     };
 
+    const bootController = {
+        state: isTargetPage() ? 'locked' : 'idle',
+        pageType,
+        startedAt,
+        ensure(reason = 'ensure') {
+            if (!isTargetPage() || this.state === 'ready' || this.state === 'degraded') return true;
+            document.documentElement?.setAttribute(STATE_ATTR, this.state === 'preparing' ? 'preparing' : 'locked');
+            ensureLockStyle();
+            ensureOverlay();
+            note('boot.ensure', { reason });
+            return !!document.getElementById(LOCK_STYLE_ID) && !!document.getElementById(OVERLAY_ID);
+        },
+        startPreparing(reason = 'main') {
+            if (!isTargetPage() || this.state === 'ready' || this.state === 'degraded') return;
+            this.state = 'preparing';
+            document.documentElement?.setAttribute(STATE_ATTR, 'preparing');
+            note('boot.preparing', { reason });
+        },
+        registerRollback(fn) { if (typeof fn === 'function') rollbackHandlers.add(fn); return () => rollbackHandlers.delete(fn); },
+        registerRecovery(fn) { if (typeof fn === 'function') recoveryHandlers.add(fn); return () => recoveryHandlers.delete(fn); },
+        onReady(fn) {
+            if (typeof fn !== 'function') return () => {};
+            if (this.state === 'ready') queueMicrotask(fn);
+            else readyHandlers.add(fn);
+            return () => readyHandlers.delete(fn);
+        },
+        requestRecovery(reason = 'manual') {
+            recoveryHandlers.forEach((fn) => { try { fn(reason); } catch (error) { console.warn('[DCUF boot] recovery failed:', error); } });
+        },
+        markReady(reason = 'ready') {
+            if (this.state === 'ready') return;
+            const recovered = this.state === 'degraded';
+            this.state = 'ready';
+            __dcufRoot.__dcufRuntimeState = 'ready';
+            document.documentElement?.setAttribute(STATE_ATTR, 'ready');
+            document.documentElement?.classList.add(READY_CLASS);
+            document.body?.classList.add(READY_CLASS);
+            stopTimers();
+            removeBootChrome();
+            document.getElementById(DEGRADED_STYLE_ID)?.remove();
+            document.getElementById(DEGRADED_BANNER_ID)?.remove();
+            note(recovered ? 'boot.recovered' : 'boot.ready', { reason });
+            flushDiagnostics();
+            readyHandlers.forEach((fn) => { try { fn(); } catch (error) { console.warn('[DCUF boot] ready handler failed:', error); } });
+            readyHandlers.clear();
+            window.dispatchEvent(new CustomEvent('dcuf:boot-ready', { detail: { reason, recovered } }));
+        },
+        degrade(reason = 'deadline') {
+            if (this.state === 'ready' || this.state === 'degraded') return;
+            rollbackHandlers.forEach((fn) => { try { fn(reason); } catch (error) { console.warn('[DCUF boot] rollback failed:', error); } });
+            ensureDegradedUi(reason);
+            this.state = 'degraded';
+            __dcufRoot.__dcufRuntimeState = 'degraded';
+            document.documentElement?.setAttribute(STATE_ATTR, 'degraded');
+            document.documentElement?.classList.add(READY_CLASS);
+            document.body?.classList.add(READY_CLASS);
+            stopTimers();
+            removeBootChrome();
+            note('boot.degraded', { reason });
+            flushDiagnostics();
+            window.dispatchEvent(new CustomEvent('dcuf:boot-degraded', { detail: { reason } }));
+        },
+        note,
+        flushDiagnostics
+    };
+
+    const markUiReady = (reason = 'ready') => bootController.markReady(reason);
+    const ensureBootUi = (reason = 'ensure-boot-ui') => bootController.ensure(reason);
     const startBootUiWatchdog = () => {
-        if (bootUiWatchdogTimerId || isRootUiReady() || !isBootOverlayTargetPage()) return;
-        bootUiWatchdogStartedAt = Date.now();
-
-        const tick = () => {
-            if (isRootUiReady()) {
-                stopBootUiWatchdog();
-                return;
-            }
-
-            ensureBootUi('watchdog');
-            if (Date.now() - bootUiWatchdogStartedAt >= BOOT_UI_WATCHDOG_MAX_MS) {
-                stopBootUiWatchdog();
+        if (!isTargetPage() || ensureTimer) return;
+        const tick = () => bootController.ensure('watchdog');
+        ensureTimer = setInterval(tick, 80);
+        absoluteTimer = setTimeout(() => bootController.degrade('absolute-deadline'), ABSOLUTE_DEADLINE_MS);
+        domReadyListener = () => {
+            note('boot.dom-content-loaded');
+            tick();
+            if ((pageType === 'list' || pageType === 'view') && !criticalTimer) {
+                criticalTimer = setTimeout(() => bootController.degrade('critical-deadline'), CRITICAL_DEADLINE_MS);
             }
         };
-
-        bootUiWatchdogTimerId = window.setInterval(tick, BOOT_UI_WATCHDOG_INTERVAL_MS);
-        bootUiWatchdogDomReadyHandler = () => tick();
-        bootUiWatchdogLoadHandler = () => tick();
-        document.addEventListener('DOMContentLoaded', bootUiWatchdogDomReadyHandler, { once: true });
-        window.addEventListener('load', bootUiWatchdogLoadHandler, { once: true });
+        loadListener = tick;
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', domReadyListener, { once: true });
+        } else {
+            domReadyListener();
+        }
+        window.addEventListener('load', loadListener, { once: true });
         tick();
     };
 
+    __dcufRoot.__dcufRuntimeLoaded = `dcuf-${Date.now()}`;
+    __dcufRoot.__dcufRuntimeState = 'initializing';
+    __dcufRoot.__dcufBootController = bootController;
+    window.__dcufBootController = bootController;
     __dcufRoot.__dcufEnsureBootUi = ensureBootUi;
-    injectInitialLockStyle();
-    ensureBootOverlay();
-    startBootUiWatchdog();
+    window.__dcufEnsureBootUi = ensureBootUi;
+    note('boot.start', { pageType });
+    if (isTargetPage()) {
+        document.documentElement?.setAttribute(STATE_ATTR, 'locked');
+        ensureLockStyle();
+        ensureOverlay();
+        startBootUiWatchdog();
+    }

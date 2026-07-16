@@ -15,9 +15,10 @@ export async function resolveBuiltUserscript() {
     return path.join(rootDir, `Dc_UserFilter_Mobile_v${version}.user.js`);
 }
 
-export async function loadHarnessSource({ storage = {}, bfcacheVariant = 'current' } = {}) {
-    const [gmShim, instrumentation, rawUserscript] = await Promise.all([
+export async function loadHarnessSource({ storage = {}, gmBehavior = {}, boot = {}, bfcacheVariant = 'current' } = {}) {
+    const [gmShim, bootProbe, instrumentation, rawUserscript] = await Promise.all([
         readFile(path.join(testbedDir, 'harness', 'gm-shim.js'), 'utf8'),
+        readFile(path.join(testbedDir, 'harness', 'boot-probe.js'), 'utf8'),
         readFile(path.join(testbedDir, 'harness', 'runtime-instrumentation.js'), 'utf8'),
         resolveBuiltUserscript().then((file) => readFile(file, 'utf8'))
     ]);
@@ -45,8 +46,9 @@ window.addEventListener('pageshow', (event) => {
         : `window.addEventListener('pageshow', (event) => { window.__dcufTestbedPageshow = { persisted: event.persisted, ts: Date.now() }; });`;
 
     const topFrameSource = [
-        `globalThis.__DCUF_TESTBED_CONFIG__ = ${JSON.stringify({ storage })};`,
+        `globalThis.__DCUF_TESTBED_CONFIG__ = ${JSON.stringify({ storage, gmBehavior, boot })};`,
         gmShim,
+        bootProbe,
         instrumentation,
         userscript,
         lifecycleExperiment

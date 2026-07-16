@@ -1,4 +1,6 @@
 # Local archives and diagnostics
+/.codex/
+/.pnpm-store/
 /Legacy유저스크립트storage/
 /artifacts/
 /debugcode.txt

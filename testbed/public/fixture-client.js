@@ -45,10 +45,26 @@
             list.insertAdjacentHTML('beforeend', html);
             return count;
         },
-        rerenderComments() {
+        rerenderComments({ fresh = true } = {}) {
             const list = getCommentList();
             if (!list) return false;
             const replacement = list.cloneNode(true);
+            if (fresh) {
+                replacement.removeAttribute('data-filter-observer-attached');
+                replacement.querySelectorAll('.dcuf-comment-placeholder').forEach((element) => element.remove());
+                replacement.querySelectorAll('li').forEach((item) => {
+                    if (!item.hasAttribute('data-fixture-host-hidden')) item.style.removeProperty('display');
+                    if (!item.getAttribute('style')) item.removeAttribute('style');
+                    [
+                        'data-dcuf-personal-blocked',
+                        'data-dcuf-comment-blocked',
+                        'data-dcuf-comment-shell-blocked',
+                        'data-dcuf-parent-filtered',
+                        'data-dcuf-parent-placeholder'
+                    ].forEach((attribute) => item.removeAttribute(attribute));
+                    item.classList.remove('dcuf-comment-shell-blocked', 'dcuf-parent-comment-filtered');
+                });
+            }
             replacement.dataset.rerendered = String(Date.now());
             list.replaceWith(replacement);
             return true;

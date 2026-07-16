@@ -7,16 +7,52 @@
         isSelectionMode: false,
         personalBlockListCache: { uids: [], nicknames: [], ips: [] },
         fabScalePercent: 100,
+        _initState: 'idle',
+        _initPromise: null,
+        _uiMounted: false,
+        _selectionClickHandler: null,
         FAB_SCALE_MIN: 60,
         FAB_SCALE_MAX: 160,
 
 
-        async init() {
-            this.personalBlockListCache = await this.loadPersonalBlocks();
-            this.fabScalePercent = await this.loadFabScalePercent();
-            this.createFab();
-            document.addEventListener('click', this.handleSelectionClick.bind(this), true);
+        async init(snapshot = null, { deferUi = false } = {}) {
+            if (this._initState === 'ready') return 'already-ready';
+            if (this._initState === 'initializing' && this._initPromise) return this._initPromise;
+            this._initState = 'initializing';
+            this._initPromise = (async () => {
+                const list = snapshot?.personalBlockList || await this.loadPersonalBlocks();
+                this.personalBlockListCache = {
+                    uids: Array.isArray(list?.uids) ? list.uids : [],
+                    nicknames: Array.isArray(list?.nicknames) ? list.nicknames : [],
+                    ips: Array.isArray(list?.ips) ? list.ips : []
+                };
+                const mountUi = async () => {
+                    if (this._uiMounted) return;
+                    this.fabScalePercent = await this.loadFabScalePercent();
+                    this.createFab();
+                    if (!this._selectionClickHandler) {
+                        this._selectionClickHandler = this.handleSelectionClick.bind(this);
+                        document.addEventListener('click', this._selectionClickHandler, true);
+                    }
+                    this._uiMounted = true;
+                };
+                if (deferUi && typeof window.__dcufBootController?.onReady === 'function') {
+                    window.__dcufBootController.onReady(() => mountUi().catch((error) => console.warn('[DCUF] deferred FAB mount failed:', error)));
+                } else {
+                    await mountUi();
+                }
+                this._initState = 'ready';
+                return 'ready';
+            })();
+            try {
+                return await this._initPromise;
+            } catch (error) {
+                this._initState = 'failed';
+                this._initPromise = null;
+                throw error;
+            }
         },
+
 
 
         async loadPersonalBlocks() {
@@ -194,6 +230,159 @@
             range.focus();
         },
 
+
+        async createManualBlockPanel({ initialType = 'nickname', onAdded = null } = {}) {
+            const existingPanel = document.getElementById('dc-manual-block-panel');
+            if (existingPanel) {
+                existingPanel.querySelector('#dc-manual-block-value')?.focus();
+                return existingPanel;
+            }
+
+            const typeConfig = {
+                uid: { label: '식별번호', placeholder: '예: user1234', hint: '입력한 식별번호와 정확히 일치하는 작성자를 차단합니다.' },
+                nickname: { label: '닉네임', placeholder: '차단할 닉네임을 입력하세요', hint: '대소문자와 공백을 포함해 정확히 같은 닉네임만 차단합니다.' },
+                ip: { label: '아이피', placeholder: '예: 123.45 또는 화면에 표시된 IP', hint: '화면에 표시되는 IP 문자열과 정확히 일치할 때만 차단합니다.' }
+            };
+            let activeType = typeConfig[initialType] ? initialType : 'nickname';
+
+            const overlay = document.createElement('div');
+            overlay.id = 'dc-manual-block-overlay';
+            const panel = document.createElement('section');
+            panel.id = 'dc-manual-block-panel';
+            panel.setAttribute('role', 'dialog');
+            panel.setAttribute('aria-modal', 'true');
+            panel.setAttribute('aria-labelledby', 'dc-manual-block-title');
+            panel.innerHTML = `
+                <div class="dcuf-manual-header">
+                    <div>
+                        <span class="dcuf-manual-kicker">PERSONAL BLOCK</span>
+                        <h3 id="dc-manual-block-title">직접 차단</h3>
+                    </div>
+                    <button type="button" class="dcuf-manual-close" aria-label="직접 차단 닫기">×</button>
+                </div>
+                <form class="dcuf-manual-form">
+                    <div class="dcuf-manual-type-tabs" role="group" aria-label="차단 정보 종류">
+                        <button type="button" data-manual-block-type="uid">식별번호</button>
+                        <button type="button" data-manual-block-type="nickname">닉네임</button>
+                        <button type="button" data-manual-block-type="ip">아이피</button>
+                    </div>
+                    <label class="dcuf-manual-field" for="dc-manual-block-value">
+                        <span id="dc-manual-block-value-label">닉네임</span>
+                        <input id="dc-manual-block-value" type="text" autocomplete="off" autocapitalize="off" spellcheck="false">
+                    </label>
+                    <label class="dcuf-manual-field dcuf-manual-display-field" for="dc-manual-block-display" hidden>
+                        <span>닉네임 / 표시 이름 <small>(선택)</small></span>
+                        <input id="dc-manual-block-display" type="text" autocomplete="off" spellcheck="false" placeholder="예: 홍길동">
+                    </label>
+                    <p class="dcuf-manual-hint"></p>
+                    <p class="dcuf-manual-status" role="status" aria-live="polite"></p>
+                    <div class="dcuf-manual-actions">
+                        <button type="button" data-manual-block-action="close">닫기</button>
+                        <button type="submit" data-manual-block-action="add">차단 추가</button>
+                    </div>
+                </form>
+            `;
+            overlay.appendChild(panel);
+            document.body.appendChild(overlay);
+
+            const form = panel.querySelector('.dcuf-manual-form');
+            const valueInput = panel.querySelector('#dc-manual-block-value');
+            const displayField = panel.querySelector('.dcuf-manual-display-field');
+            const displayInput = panel.querySelector('#dc-manual-block-display');
+            const valueLabel = panel.querySelector('#dc-manual-block-value-label');
+            const hint = panel.querySelector('.dcuf-manual-hint');
+            const status = panel.querySelector('.dcuf-manual-status');
+            const addButton = panel.querySelector('[data-manual-block-action="add"]');
+            let isClosing = false;
+
+            const setStatus = (message = '', state = '') => {
+                status.textContent = message;
+                status.dataset.state = state;
+            };
+            const selectType = (type) => {
+                if (!typeConfig[type]) return;
+                activeType = type;
+                panel.querySelectorAll('[data-manual-block-type]').forEach((button) => {
+                    button.setAttribute('aria-pressed', String(button.dataset.manualBlockType === type));
+                });
+                valueLabel.textContent = typeConfig[type].label;
+                valueInput.placeholder = typeConfig[type].placeholder;
+                hint.textContent = typeConfig[type].hint;
+                displayField.hidden = type !== 'uid';
+                setStatus();
+                valueInput.focus();
+            };
+            const closePanel = () => {
+                if (isClosing) return;
+                isClosing = true;
+                document.removeEventListener('keydown', handleKeydown, true);
+                panel.classList.add('dcuf-pop-leave');
+                overlay.classList.add('dcuf-overlay-leave');
+                window.setTimeout(() => overlay.remove(), 140);
+            };
+            const handleKeydown = (event) => {
+                if (event.key !== 'Escape') return;
+                event.preventDefault();
+                closePanel();
+            };
+
+            panel.querySelectorAll('[data-manual-block-type]').forEach((button) => {
+                button.addEventListener('click', () => selectType(button.dataset.manualBlockType));
+            });
+            panel.querySelector('.dcuf-manual-close').addEventListener('click', closePanel);
+            panel.querySelector('[data-manual-block-action="close"]').addEventListener('click', closePanel);
+            overlay.addEventListener('click', (event) => {
+                if (event.target === overlay) closePanel();
+            });
+            form.addEventListener('submit', async (event) => {
+                event.preventDefault();
+                const value = valueInput.value.trim();
+                const displayValue = displayInput.value.trim();
+                if (!value) {
+                    setStatus(`${typeConfig[activeType].label}을(를) 입력해주세요.`, 'error');
+                    valueInput.focus();
+                    return;
+                }
+
+                const currentList = await this.loadPersonalBlocks();
+                const isDuplicate = activeType === 'uid'
+                    ? currentList.uids.some((item) => item?.id === value)
+                    : activeType === 'nickname'
+                        ? currentList.nicknames.includes(value)
+                        : currentList.ips.includes(value);
+                if (isDuplicate) {
+                    setStatus('이미 차단 목록에 있는 값입니다.', 'info');
+                    valueInput.select();
+                    return;
+                }
+
+                addButton.disabled = true;
+                addButton.textContent = '추가 중…';
+                try {
+                    const displayName = activeType === 'uid' && displayValue ? `${displayValue}(${value})` : null;
+                    await this.addBlock(activeType, value, displayName);
+                    if (typeof onAdded === 'function') await onAdded({ type: activeType, value });
+                    const isEnabled = await GM_getValue(FilterModule.CONSTANTS.STORAGE_KEYS.PERSONAL_BLOCK_ENABLED, true);
+                    setStatus(
+                        isEnabled ? `${typeConfig[activeType].label} 차단을 추가했습니다.` : '목록에 추가했습니다. 개인 차단 기능은 현재 꺼져 있습니다.',
+                        'success'
+                    );
+                    valueInput.value = '';
+                    if (activeType === 'uid') displayInput.value = '';
+                    valueInput.focus();
+                } catch (error) {
+                    console.error('[DCUF] 직접 차단 추가 실패:', error);
+                    setStatus('차단을 추가하지 못했습니다. 잠시 후 다시 시도해주세요.', 'error');
+                } finally {
+                    addButton.disabled = false;
+                    addButton.textContent = '차단 추가';
+                }
+            });
+            document.addEventListener('keydown', handleKeydown, true);
+            selectType(activeType);
+            return panel;
+        },
+
         isFabSupportedPage() {
             const currentPath = window.location.pathname;
             return currentPath.includes('/board/lists') || currentPath.includes('/board/view');
@@ -290,9 +479,10 @@
             drawer.setAttribute('role', 'menu');
             drawer.setAttribute('aria-label', 'DC 유저 필터 기능');
             drawer.innerHTML = `
-                <button type="button" role="menuitem" data-dcuf-fab-action="quick-block">간편차단</button>
-                <button type="button" role="menuitem" data-dcuf-fab-action="filter-settings">글댓합 설정</button>
-                <button type="button" role="menuitem" data-dcuf-fab-action="block-management">차단 유저 관리</button>
+                <button type="button" role="menuitem" data-dcuf-fab-action="quick-block"><span class="dcuf-menu-icon" aria-hidden="true">◎</span><span><strong>화면에서 간편차단</strong><small>글·댓글 작성자를 눌러 선택</small></span></button>
+                <button type="button" role="menuitem" data-dcuf-fab-action="manual-block"><span class="dcuf-menu-icon" aria-hidden="true">＋</span><span><strong>직접 차단</strong><small>닉네임·식별번호·IP 입력</small></span></button>
+                <button type="button" role="menuitem" data-dcuf-fab-action="filter-settings"><span class="dcuf-menu-icon" aria-hidden="true">◫</span><span><strong>글댓합 설정</strong><small>필터 기준과 범위 조정</small></span></button>
+                <button type="button" role="menuitem" data-dcuf-fab-action="block-management"><span class="dcuf-menu-icon" aria-hidden="true">☰</span><span><strong>차단 유저 관리</strong><small>목록 확인·삭제·백업</small></span></button>
             `;
 
             controls.append(fab, drawer);
@@ -306,6 +496,26 @@
             let startY = 0;
             let wasDragged = false;
             let suppressClick = false;
+            let dragWidth = 0;
+            let dragHeight = 0;
+            let dragRafId = 0;
+            let pendingDragX = null;
+            let pendingDragY = null;
+
+            const applyFabDragPosition = () => {
+                dragRafId = 0;
+                if (activePointerId === null || pendingDragX === null || pendingDragY === null) return;
+                const nextX = Math.max(0, Math.min(pendingDragX - offsetX, window.innerWidth - dragWidth));
+                const nextY = Math.max(0, Math.min(pendingDragY - offsetY, window.innerHeight - dragHeight));
+                pendingDragX = null;
+                pendingDragY = null;
+                Object.assign(controls.style, {
+                    left: `${Math.round(nextX)}px`,
+                    top: `${Math.round(nextY)}px`,
+                    right: 'auto',
+                    bottom: 'auto'
+                });
+            };
 
             fab.addEventListener('pointerdown', (event) => {
                 if (event.button !== 0 || activePointerId !== null) return;
@@ -313,6 +523,8 @@
                 activePointerId = event.pointerId;
                 offsetX = event.clientX - rect.left;
                 offsetY = event.clientY - rect.top;
+                dragWidth = rect.width;
+                dragHeight = rect.height;
                 startX = event.clientX;
                 startY = event.clientY;
                 wasDragged = false;
@@ -325,20 +537,15 @@
                 if (!wasDragged) this.closeFabDrawer();
                 wasDragged = true;
                 event.preventDefault();
-                const maxX = Math.max(0, window.innerWidth - controls.offsetWidth);
-                const maxY = Math.max(0, window.innerHeight - controls.offsetHeight);
-                const nextX = Math.max(0, Math.min(event.clientX - offsetX, maxX));
-                const nextY = Math.max(0, Math.min(event.clientY - offsetY, maxY));
-                Object.assign(controls.style, {
-                    left: `${Math.round(nextX)}px`,
-                    top: `${Math.round(nextY)}px`,
-                    right: 'auto',
-                    bottom: 'auto'
-                });
+                pendingDragX = event.clientX;
+                pendingDragY = event.clientY;
+                if (!dragRafId) dragRafId = requestAnimationFrame(applyFabDragPosition);
             });
 
             const finishDrag = (event) => {
                 if (event.pointerId !== activePointerId) return;
+                if (dragRafId) cancelAnimationFrame(dragRafId);
+                applyFabDragPosition();
                 suppressClick = wasDragged;
                 activePointerId = null;
                 fab.releasePointerCapture?.(event.pointerId);
@@ -360,6 +567,7 @@
                 const action = actionButton.dataset.dcufFabAction;
                 this.closeFabDrawer();
                 if (action === 'quick-block') this.enterSelectionMode();
+                else if (action === 'manual-block') await this.createManualBlockPanel();
                 else if (action === 'filter-settings') await FilterModule.showSettings();
                 else if (action === 'block-management') await this.createManagementPanel();
             });
@@ -390,10 +598,15 @@
 
             const popup = document.createElement('div');
             popup.id = 'dc-selection-popup';
+            popup.className = 'dcuf-selection-prompt';
             popup.innerHTML = `
-                <h4>차단할 유저를 선택하세요</h4>
+                <div class="dcuf-selection-prompt-icon" aria-hidden="true">◎</div>
+                <div class="dcuf-selection-prompt-copy">
+                    <h4>차단할 작성자를 선택하세요</h4>
+                    <p>글이나 댓글의 닉네임을 눌러주세요.</p>
+                </div>
                 <div class="popup-buttons">
-                    <button class="cancel-btn">취소</button>
+                    <button class="cancel-btn">선택 취소</button>
                 </div>
             `;
             document.body.appendChild(popup);
@@ -885,23 +1098,34 @@
             panel.id = 'dc-block-management-panel';
             panel.innerHTML = `
                 <div class="panel-header">
-                    <h3>차단 유저 관리</h3>
-                    <div class="switch-container">
-                        <label class="switch">
-                            <input type="checkbox" id="personal-block-toggle" ${isPersonalBlockEnabled ? 'checked' : ''}>
-                            <span class="switch-slider"></span>
-                        </label>
+                    <div class="panel-title-group">
+                        <span class="panel-kicker">PERSONAL BLOCK</span>
+                        <h3>차단 유저 관리</h3>
                     </div>
-                    <button class="panel-close-btn">×</button>
+                    <div class="panel-header-actions">
+                        <button type="button" class="panel-add-btn">＋ 직접 추가</button>
+                        <div class="switch-container">
+                            <label class="switch" aria-label="개인 차단 기능 사용">
+                                <input type="checkbox" id="personal-block-toggle" ${isPersonalBlockEnabled ? 'checked' : ''}>
+                                <span class="switch-slider"></span>
+                            </label>
+                        </div>
+                        <button type="button" class="panel-close-btn" aria-label="차단 유저 관리 닫기">×</button>
+                    </div>
                 </div>
-                <div class="panel-tabs">
-                    <div class="panel-tab active" data-type="uids">식별 번호</div>
-                    <div class="panel-tab" data-type="nicknames">닉네임</div>
-                    <div class="panel-tab" data-type="ips">아이피</div>
+                <div class="panel-tabs" role="tablist" aria-label="차단 정보 종류">
+                    <button type="button" class="panel-tab active" data-type="uids">식별 번호 <span class="panel-tab-count">${originalBlockList.uids.length}</span></button>
+                    <button type="button" class="panel-tab" data-type="nicknames">닉네임 <span class="panel-tab-count">${originalBlockList.nicknames.length}</span></button>
+                    <button type="button" class="panel-tab" data-type="ips">아이피 <span class="panel-tab-count">${originalBlockList.ips.length}</span></button>
                 </div>
                 <div class="panel-body">
                     <div class="panel-list-controls">
-                        <button class="select-all-btn">해당 탭 전체 선택/해제</button>
+                        <label class="panel-search">
+                            <span aria-hidden="true">⌕</span>
+                            <input type="search" class="panel-search-input" placeholder="현재 탭에서 검색" autocomplete="off" aria-label="차단 목록 검색">
+                        </label>
+                        <button type="button" class="select-all-btn">해당 탭 전체 선택/해제</button>
+                        <span class="panel-list-summary" aria-live="polite"></span>
                     </div>
                     <div class="panel-content">
                         <ul class="blocked-list"></ul>
@@ -936,6 +1160,16 @@
             };
 
             const globalSelectAllBtn = panel.querySelector('.select-all-global-btn');
+            const saveButton = panel.querySelector('.panel-save-btn');
+            const searchInput = panel.querySelector('.panel-search-input');
+            const listSummary = panel.querySelector('.panel-list-summary');
+            const updateTabCounts = () => {
+                panel.querySelectorAll('.panel-tab').forEach((tab) => {
+                    const count = originalBlockList[tab.dataset.type]?.length || 0;
+                    const countEl = tab.querySelector('.panel-tab-count');
+                    if (countEl) countEl.textContent = String(count);
+                });
+            };
 
 
             const isEverythingSelected = () => {
@@ -947,6 +1181,8 @@
 
 
             const updateGlobalSelectAllButtonState = () => {
+                const pendingCount = itemsToDelete.uids.size + itemsToDelete.nicknames.size + itemsToDelete.ips.size;
+                saveButton.textContent = pendingCount ? `${pendingCount}건 변경 저장` : '변경 저장';
                 if (isEverythingSelected()) {
                     globalSelectAllBtn.textContent = '모든 탭 전체 해제';
                 } else {
@@ -959,35 +1195,57 @@
                 const listEl = panel.querySelector('.blocked-list');
                 listEl.innerHTML = '';
                 const data = originalBlockList[type] || [];
+                const query = searchInput.value.trim().toLocaleLowerCase();
+                const filteredData = data.filter((item) => {
+                    const value = typeof item === 'object' ? item?.id : item;
+                    const name = typeof item === 'object' ? item?.name : item;
+                    return !query || String(name ?? value ?? '').toLocaleLowerCase().includes(query)
+                        || String(value ?? '').toLocaleLowerCase().includes(query);
+                });
 
+                listSummary.textContent = query ? `${filteredData.length} / ${data.length}개 표시` : `총 ${data.length}개`;
+                if (filteredData.length === 0) {
+                    const emptyItem = document.createElement('li');
+                    emptyItem.className = 'blocked-list-empty';
+                    emptyItem.textContent = query ? '검색 결과가 없습니다.' : '이 탭에 차단된 항목이 없습니다.';
+                    listEl.appendChild(emptyItem);
+                }
 
-                data.forEach(item => {
+                filteredData.forEach((item) => {
                     const li = document.createElement('li');
                     li.className = 'blocked-item';
                     const value = (typeof item === 'object') ? item.id : item;
                     const name = (typeof item === 'object') ? item.name : item;
                     li.dataset.value = value;
-                    li.innerHTML = `<span class="item-name">${name}</span><span class="delete-item-btn">X</span>`;
 
+                    const nameEl = document.createElement('span');
+                    nameEl.className = 'item-name';
+                    nameEl.textContent = String(name ?? value ?? '');
+                    const deleteButton = document.createElement('button');
+                    deleteButton.type = 'button';
+                    deleteButton.className = 'delete-item-btn';
+                    deleteButton.textContent = '삭제';
+                    deleteButton.setAttribute('aria-label', `${nameEl.textContent} 삭제 선택`);
+                    li.append(nameEl, deleteButton);
 
                     if (itemsToDelete[type].has(value)) {
                         li.classList.add('item-to-delete');
                     }
 
-
-                    li.querySelector('.delete-item-btn').onclick = () => {
+                    deleteButton.onclick = () => {
                         if (li.classList.toggle('item-to-delete')) {
                             itemsToDelete[type].add(value);
                         } else {
                             itemsToDelete[type].delete(value);
                         }
                         updateSelectAllButtonState(type);
-                        updateGlobalSelectAllButtonState(); // [추가] 개별 변경 시 전역 버튼 상태도 업데이트
+                        updateGlobalSelectAllButtonState();
                     };
                     listEl.appendChild(li);
                 });
+                updateTabCounts();
                 updateSelectAllButtonState(type);
-                updateGlobalSelectAllButtonState(); // [추가] 탭 변경 시 전역 버튼 상태도 업데이트
+                updateGlobalSelectAllButtonState();
             };
 
 
@@ -1056,6 +1314,27 @@
             });
 
 
+            searchInput.addEventListener('input', () => {
+                const activeType = panel.querySelector('.panel-tab.active').dataset.type;
+                renderList(activeType);
+            });
+
+            panel.querySelector('.panel-add-btn').onclick = async () => {
+                const activeType = panel.querySelector('.panel-tab.active').dataset.type;
+                const manualType = activeType === 'uids' ? 'uid' : activeType === 'nicknames' ? 'nickname' : 'ip';
+                await this.createManualBlockPanel({
+                    initialType: manualType,
+                    onAdded: async () => {
+                        const latestList = await this.loadPersonalBlocks();
+                        originalBlockList.uids = latestList.uids;
+                        originalBlockList.nicknames = latestList.nicknames;
+                        originalBlockList.ips = latestList.ips;
+                        renderList(panel.querySelector('.panel-tab.active').dataset.type);
+                    }
+                });
+            };
+
+
             const closePanel = () => {
                 panel.classList.add('dcuf-pop-leave');
                 overlay.classList.add('dcuf-overlay-leave');
@@ -1087,7 +1366,30 @@
 
             // 드래그 & 리사이즈 로직 전체 개선
             let isDragging = false, isResizing = false;
-            let offsetX, offsetY, lastX, lastY; // lastX, lastY는 리사이즈 전용
+            let offsetX, offsetY, resizeStartX, resizeStartY;
+            let panelWidth = 0, panelHeight = 0;
+            let dragRafId = 0, pendingPointerX = null, pendingPointerY = null;
+
+            const applyPanelGeometry = () => {
+                dragRafId = 0;
+                if (pendingPointerX === null || pendingPointerY === null) return;
+                const clientX = pendingPointerX;
+                const clientY = pendingPointerY;
+                pendingPointerX = null;
+                pendingPointerY = null;
+
+                if (isDragging) {
+                    let newX = clientX - offsetX;
+                    let newY = clientY - offsetY;
+                    newX = Math.max(0, Math.min(newX, window.innerWidth - panelWidth));
+                    newY = Math.max(0, Math.min(newY, window.innerHeight - panelHeight));
+                    panel.style.left = `${newX}px`;
+                    panel.style.top = `${newY}px`;
+                } else if (isResizing) {
+                    panel.style.width = `${panelWidth + clientX - resizeStartX}px`;
+                    panel.style.height = `${panelHeight + clientY - resizeStartY}px`;
+                }
+            };
 
 
             const onDragStart = (e) => {
@@ -1117,9 +1419,11 @@
                     offsetX = e.clientX - rect.left;
                     offsetY = e.clientY - rect.top;
                 } else if (isResizing) {
-                    lastX = e.clientX;
-                    lastY = e.clientY;
+                    resizeStartX = e.clientX;
+                    resizeStartY = e.clientY;
                 }
+                panelWidth = rect.width;
+                panelHeight = rect.height;
 
 
                 document.addEventListener('mousemove', onDragMove);
@@ -1129,35 +1433,15 @@
 
             const onDragMove = (e) => {
                 e.preventDefault();
-
-
-                if (isDragging) {
-                    const rect = panel.getBoundingClientRect();
-                    let newX = e.clientX - offsetX;
-                    let newY = e.clientY - offsetY;
-
-
-                    newX = Math.max(0, Math.min(newX, window.innerWidth - rect.width));
-                    newY = Math.max(0, Math.min(newY, window.innerHeight - rect.height));
-
-
-                    panel.style.left = `${newX}px`;
-                    panel.style.top = `${newY}px`;
-                } else if (isResizing) {
-                    const dx = e.clientX - lastX;
-                    const dy = e.clientY - lastY;
-                    lastX = e.clientX;
-                    lastY = e.clientY;
-
-
-                    const rect = panel.getBoundingClientRect();
-                    panel.style.width = `${rect.width + dx}px`;
-                    panel.style.height = `${rect.height + dy}px`;
-                }
+                pendingPointerX = e.clientX;
+                pendingPointerY = e.clientY;
+                if (!dragRafId) dragRafId = requestAnimationFrame(applyPanelGeometry);
             };
 
 
             const onDragEnd = () => { // async 키워드 제거
+                if (dragRafId) cancelAnimationFrame(dragRafId);
+                applyPanelGeometry();
                 isDragging = false;
                 isResizing = false;
                 document.removeEventListener('mousemove', onDragMove);

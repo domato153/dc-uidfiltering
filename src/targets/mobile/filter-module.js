@@ -1,4 +1,4 @@
-﻿    GM_addStyle(`
+    GM_addStyle(`
         /* [최종 해결] 링크 미리보기 텍스트 박스 스타일 재정의 */
         .thum-txtin {
             box-sizing: border-box !important;  /* [핵심] 너비 계산 방식을 올바르게 수정 */
@@ -1381,6 +1381,598 @@
                 transition: none !important;
             }
         }
+
+        /* [v__VERSION__] Script-owned soft-depth control surfaces */
+        #dc-personal-block-fab {
+            background: linear-gradient(180deg, #fff 0%, #eef4ff 100%) !important;
+            color: #29466f !important;
+            border: 1px solid rgba(127,154,196,.46) !important;
+            box-shadow: 0 14px 30px rgba(40,68,112,.2), 0 3px 8px rgba(40,68,112,.12), inset 0 1px 0 #fff !important;
+        }
+        #dc-personal-block-fab:hover {
+            background: linear-gradient(180deg, #fff 0%, #e7f0ff 100%) !important;
+            border-color: rgba(86,124,185,.56) !important;
+            box-shadow: 0 17px 34px rgba(40,68,112,.24), inset 0 1px 0 #fff !important;
+        }
+        #dc-personal-block-fab:active {
+            transform: translateY(2px) scale(.98) !important;
+            box-shadow: 0 7px 16px rgba(40,68,112,.17), inset 0 1px 3px rgba(40,68,112,.12) !important;
+        }
+        #dc-personal-block-drawer {
+            width: 260px !important;
+            min-width: 260px !important;
+            max-height: min(440px, calc(100dvh - 24px)) !important;
+            gap: 6px !important;
+            padding: 9px !important;
+            overflow-y: auto !important;
+            border: 1px solid rgba(151,171,202,.5) !important;
+            border-radius: 18px !important;
+            background: linear-gradient(145deg, rgba(255,255,255,.98), rgba(241,246,255,.98)) !important;
+            box-shadow: 0 22px 48px rgba(35,55,91,.25), 0 6px 16px rgba(35,55,91,.12), inset 0 1px 0 #fff !important;
+        }
+        #dc-personal-block-drawer button {
+            display: grid !important;
+            grid-template-columns: 36px minmax(0,1fr) !important;
+            align-items: center !important;
+            gap: 10px !important;
+            min-height: 58px !important;
+            padding: 8px 10px !important;
+            border: 1px solid transparent !important;
+            border-radius: 13px !important;
+            white-space: normal !important;
+            transition: transform .14s ease, background .14s ease, border-color .14s ease, box-shadow .14s ease !important;
+        }
+        #dc-personal-block-drawer button:hover,
+        #dc-personal-block-drawer button:focus-visible {
+            background: linear-gradient(180deg,#fff,#eaf2ff) !important;
+            border-color: #cfddf2 !important;
+            box-shadow: 0 7px 16px rgba(52,83,132,.12), inset 0 1px 0 #fff !important;
+        }
+        #dc-personal-block-drawer button:active { transform: translateY(1px) !important; }
+        #dc-personal-block-drawer .dcuf-menu-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 34px;
+            height: 34px;
+            border: 1px solid #cedbf0;
+            border-radius: 11px;
+            background: linear-gradient(145deg,#fff,#e6efff);
+            color: #3b71fd;
+            font-size: 19px;
+            font-weight: 800;
+            box-shadow: 0 5px 11px rgba(59,113,253,.13), inset 0 1px 0 #fff;
+        }
+        #dc-personal-block-drawer button > span:last-child { min-width: 0; }
+        #dc-personal-block-drawer strong,
+        #dc-personal-block-drawer small { display: block; }
+        #dc-personal-block-drawer strong { color: #263b5a; font-size: 14px; line-height: 1.25; }
+        #dc-personal-block-drawer small { margin-top: 3px; color: #71819a; font-size: 11px; font-weight: 500; line-height: 1.25; }
+
+        #dc-manual-block-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 2147483647;
+            box-sizing: border-box;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            background: rgba(20,31,50,.48);
+            backdrop-filter: blur(3px);
+        }
+        #dc-manual-block-panel {
+            box-sizing: border-box;
+            width: min(430px, calc(100vw - 32px));
+            max-height: calc(100dvh - 32px);
+            overflow: hidden auto;
+            border: 1px solid rgba(151,171,202,.56);
+            border-radius: 22px;
+            background: linear-gradient(155deg,#fff,#f3f7ff);
+            color: #20334f;
+            box-shadow: 0 28px 70px rgba(18,34,60,.32), 0 8px 24px rgba(18,34,60,.14), inset 0 1px 0 #fff;
+            animation: dcuf-popup-fade-in .18s ease-out;
+        }
+        #dc-manual-block-panel .dcuf-manual-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            min-height: 68px;
+            padding: 14px 14px 13px 20px;
+            border-bottom: 1px solid #dce5f3;
+            background: linear-gradient(135deg,#eff5ff,#fff);
+        }
+        #dc-manual-block-panel .dcuf-manual-kicker,
+        #dc-block-management-panel .panel-kicker {
+            display: block;
+            margin-bottom: 3px;
+            color: #6684b4;
+            font-size: 9px;
+            font-weight: 900;
+            letter-spacing: .14em;
+        }
+        #dc-manual-block-panel h3 { margin: 0; color: #1f3555; font-size: 20px; line-height: 1.15; }
+        #dc-manual-block-panel .dcuf-manual-close,
+        #dc-block-management-panel .panel-close-btn,
+        #dc-backup-popup .popup-close-btn,
+        #dcinside-filter-setting #dcinside-filter-close {
+            box-sizing: border-box !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            width: 44px !important;
+            min-width: 44px !important;
+            height: 44px !important;
+            min-height: 44px !important;
+            padding: 0 !important;
+            border: 1px solid transparent !important;
+            border-radius: 13px !important;
+            background: transparent !important;
+            color: #61728d !important;
+            font-size: 23px !important;
+            line-height: 1 !important;
+        }
+        #dc-manual-block-panel .dcuf-manual-close:hover,
+        #dc-block-management-panel .panel-close-btn:hover,
+        #dc-backup-popup .popup-close-btn:hover,
+        #dcinside-filter-setting #dcinside-filter-close:hover {
+            border-color: #d8e2f0 !important;
+            background: #edf3fb !important;
+            color: #29405f !important;
+        }
+        #dc-manual-block-panel .dcuf-manual-form { padding: 18px 20px 20px; }
+        #dc-manual-block-panel .dcuf-manual-type-tabs {
+            display: grid;
+            grid-template-columns: repeat(3,1fr);
+            gap: 4px;
+            padding: 4px;
+            border: 1px solid #d6e0ef;
+            border-radius: 14px;
+            background: #eaf0f8;
+            box-shadow: inset 0 2px 5px rgba(48,72,111,.08);
+        }
+        #dc-manual-block-panel [data-manual-block-type] {
+            min-height: 42px;
+            padding: 8px 6px;
+            border: 1px solid transparent;
+            border-radius: 10px;
+            background: transparent;
+            color: #65758d;
+            font: 700 13px/1.2 inherit;
+            cursor: pointer;
+        }
+        #dc-manual-block-panel [data-manual-block-type][aria-pressed="true"] {
+            border-color: #ccdaf0;
+            background: linear-gradient(180deg,#fff,#edf4ff);
+            color: #3265d2;
+            box-shadow: 0 5px 12px rgba(46,81,139,.16), inset 0 1px 0 #fff;
+        }
+        #dc-manual-block-panel .dcuf-manual-field {
+            display: grid;
+            gap: 7px;
+            margin-top: 17px;
+            color: #314867;
+            font-size: 13px;
+            font-weight: 800;
+        }
+        #dc-manual-block-panel .dcuf-manual-field[hidden] { display: none !important; }
+        #dc-manual-block-panel .dcuf-manual-field small { color: #8a98ac; font-weight: 500; }
+        #dc-manual-block-panel .dcuf-manual-field input {
+            box-sizing: border-box;
+            width: 100%;
+            min-height: 48px;
+            padding: 11px 13px;
+            border: 1px solid #cad7e9;
+            border-radius: 12px;
+            outline: 0;
+            background: #fff;
+            color: #1d2f49;
+            font: 600 15px/1.3 inherit;
+            box-shadow: inset 0 2px 5px rgba(37,60,96,.08), 0 1px 0 #fff;
+        }
+        #dc-manual-block-panel .dcuf-manual-field input:focus {
+            border-color: #7199f5;
+            box-shadow: 0 0 0 3px rgba(59,113,253,.15), inset 0 1px 3px rgba(37,60,96,.08);
+        }
+        #dc-manual-block-panel .dcuf-manual-hint {
+            min-height: 34px;
+            margin: 10px 2px 0;
+            color: #6d7d94;
+            font-size: 12px;
+            line-height: 1.45;
+        }
+        #dc-manual-block-panel .dcuf-manual-status {
+            min-height: 20px;
+            margin: 4px 2px 0;
+            color: #65758d;
+            font-size: 12px;
+            font-weight: 700;
+            line-height: 1.4;
+        }
+        #dc-manual-block-panel .dcuf-manual-status[data-state="success"] { color: #16835f; }
+        #dc-manual-block-panel .dcuf-manual-status[data-state="error"] { color: #d7485a; }
+        #dc-manual-block-panel .dcuf-manual-status[data-state="info"] { color: #3b68c6; }
+        #dc-manual-block-panel .dcuf-manual-actions {
+            display: grid;
+            grid-template-columns: .75fr 1.25fr;
+            gap: 9px;
+            margin-top: 10px;
+        }
+        #dc-manual-block-panel .dcuf-manual-actions button {
+            min-height: 46px;
+            border: 1px solid #ccd8e8;
+            border-radius: 12px;
+            background: linear-gradient(180deg,#fff,#edf2f8);
+            color: #53657e;
+            font: 800 14px/1 inherit;
+            box-shadow: 0 5px 12px rgba(35,56,89,.1), inset 0 1px 0 #fff;
+            cursor: pointer;
+        }
+        #dc-manual-block-panel .dcuf-manual-actions [data-manual-block-action="add"] {
+            border-color: #3b71fd;
+            background: linear-gradient(180deg,#5687ff,#376af0);
+            color: #fff;
+            box-shadow: 0 9px 18px rgba(59,113,253,.28), inset 0 1px 0 rgba(255,255,255,.34);
+        }
+        #dc-manual-block-panel .dcuf-manual-actions button:active { transform: translateY(1px); }
+        #dc-manual-block-panel .dcuf-manual-actions button:disabled { opacity: .65; cursor: wait; }
+
+
+        @keyframes dcuf-selection-prompt-in {
+            from { opacity: 0; transform: translate(-50%,-8px) scale(.98); }
+            to { opacity: 1; transform: translate(-50%,0) scale(1); }
+        }
+        #dc-selection-popup.dcuf-selection-prompt {
+            top: calc(env(safe-area-inset-top,0px) + 14px) !important;
+            left: 50% !important;
+            bottom: auto !important;
+            box-sizing: border-box !important;
+            display: grid !important;
+            grid-template-columns: 42px minmax(0,1fr) auto !important;
+            align-items: center !important;
+            gap: 11px !important;
+            width: min(560px,calc(100vw - 24px)) !important;
+            min-width: 0 !important;
+            max-width: calc(100vw - 24px) !important;
+            padding: 11px 12px !important;
+            border: 1px solid rgba(142,166,203,.58) !important;
+            border-radius: 18px !important;
+            transform: translateX(-50%) !important;
+            text-align: left !important;
+            background: linear-gradient(145deg,rgba(255,255,255,.98),rgba(237,244,255,.98)) !important;
+            box-shadow: 0 18px 40px rgba(31,51,83,.25), inset 0 1px 0 #fff !important;
+            animation: dcuf-selection-prompt-in .18s ease-out !important;
+        }
+        #dc-selection-popup .dcuf-selection-prompt-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            border-radius: 13px;
+            background: linear-gradient(145deg,#fff,#dfeaff);
+            color: #3b71fd;
+            font-size: 21px;
+            font-weight: 900;
+            box-shadow: 0 6px 14px rgba(59,113,253,.18), inset 0 1px 0 #fff;
+        }
+        #dc-selection-popup .dcuf-selection-prompt-copy h4 {
+            margin: 0 0 3px !important;
+            color: #233a5b !important;
+            font-size: 15px !important;
+            font-weight: 850 !important;
+        }
+        #dc-selection-popup .dcuf-selection-prompt-copy p {
+            margin: 0;
+            color: #71819a;
+            font-size: 12px;
+            line-height: 1.35;
+        }
+        #dc-selection-popup.dcuf-selection-prompt .popup-buttons button {
+            width: auto !important;
+            min-width: 86px;
+            min-height: 42px;
+            padding: 9px 12px !important;
+            border: 1px solid #cfdaea !important;
+            border-radius: 11px !important;
+            background: linear-gradient(180deg,#fff,#e9eff7) !important;
+            color: #50627d !important;
+            font-size: 13px !important;
+            font-weight: 800 !important;
+            box-shadow: 0 5px 12px rgba(41,62,96,.1), inset 0 1px 0 #fff;
+        }
+        body.selection-mode-active .gall_writer,
+        body.selection-mode-active .ub-writer {
+            border-radius: 6px !important;
+            outline: 2px solid rgba(59,113,253,.44) !important;
+            outline-offset: 2px !important;
+            background: rgba(59,113,253,.08) !important;
+        }
+        #dc-selection-popup:not(.dcuf-selection-prompt) {
+            border: 1px solid #d1dceb !important;
+            border-radius: 20px !important;
+            background: linear-gradient(150deg,#fff,#f3f7fd) !important;
+            box-shadow: 0 24px 58px rgba(24,42,71,.3), inset 0 1px 0 #fff !important;
+        }
+        #dc-selection-popup .block-option {
+            border-radius: 13px !important;
+            background: linear-gradient(145deg,#fff,#eef4fc) !important;
+            box-shadow: 0 6px 15px rgba(38,60,96,.09), inset 0 1px 0 #fff !important;
+        }
+        #dc-selection-popup .block-option button,
+        #dc-selection-popup .popup-buttons button { min-height: 42px; }
+
+        #dcinside-filter-setting,
+        #dc-block-management-panel,
+        #dc-backup-popup {
+            border: 1px solid rgba(149,169,201,.55) !important;
+            border-radius: 22px !important;
+            background: linear-gradient(155deg,#fff,#f4f7fc) !important;
+            box-shadow: 0 28px 68px rgba(23,39,67,.3), 0 7px 20px rgba(23,39,67,.13), inset 0 1px 0 #fff !important;
+        }
+        #dcinside-filter-setting .dcuf-settings-header,
+        #dc-block-management-panel .panel-header,
+        #dc-backup-popup .popup-header {
+            background: linear-gradient(135deg,rgba(238,244,255,.98),rgba(255,255,255,.98)) !important;
+            border-bottom: 1px solid #dbe4f1 !important;
+        }
+        #dcinside-filter-setting .dcuf-settings-section,
+        #dcinside-filter-setting .dcuf-settings-threshold > div:last-child,
+        #dcinside-filter-setting .dcuf-settings-guest-controls {
+            border: 1px solid #dce5f1 !important;
+            border-radius: 16px !important;
+            background: linear-gradient(145deg,#fff,#f3f7fd) !important;
+            box-shadow: 0 8px 20px rgba(36,58,94,.09), inset 0 1px 0 #fff !important;
+        }
+        #dcinside-filter-setting input[type="number"] {
+            min-height: 44px !important;
+            border-radius: 11px !important;
+            box-shadow: inset 0 2px 5px rgba(37,60,96,.09), 0 1px 0 #fff !important;
+        }
+        #dcinside-filter-setting #dcinside-threshold-save {
+            min-height: 46px !important;
+            border-radius: 12px !important;
+            background: linear-gradient(180deg,#5687ff,#376af0) !important;
+            box-shadow: 0 9px 18px rgba(59,113,253,.28), inset 0 1px 0 rgba(255,255,255,.32) !important;
+        }
+
+        #dc-block-management-panel .panel-header {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            min-height: 68px !important;
+            padding: 10px 12px 10px 18px !important;
+            cursor: move;
+        }
+        #dc-block-management-panel .panel-title-group { min-width: 0; }
+        #dc-block-management-panel .panel-title-group h3 { color: #213756 !important; font-size: 18px !important; }
+        #dc-block-management-panel .panel-header-actions { display: flex; align-items: center; gap: 7px; }
+        #dc-block-management-panel .switch-container { margin-left: 0 !important; }
+        #dc-block-management-panel .panel-add-btn {
+            min-height: 40px;
+            padding: 8px 11px;
+            border: 1px solid #cbdaf0;
+            border-radius: 11px;
+            background: linear-gradient(180deg,#fff,#e8f1ff);
+            color: #3564c4;
+            font-size: 12px;
+            font-weight: 850;
+            box-shadow: 0 6px 13px rgba(47,78,128,.12), inset 0 1px 0 #fff;
+            cursor: pointer;
+        }
+        #dc-block-management-panel .panel-tabs {
+            gap: 5px !important;
+            padding: 7px !important;
+            border-bottom: 1px solid #dce4f0 !important;
+            background: #edf2f8 !important;
+            box-shadow: inset 0 2px 5px rgba(38,59,91,.06);
+        }
+        #dc-block-management-panel .panel-tab {
+            appearance: none;
+            border: 1px solid transparent !important;
+            border-radius: 11px !important;
+            background: transparent !important;
+            color: #65758d !important;
+            font-family: inherit;
+            font-weight: 750 !important;
+        }
+        #dc-block-management-panel .panel-tab.active {
+            border-color: #ccdaf0 !important;
+            background: linear-gradient(180deg,#fff,#e8f1ff) !important;
+            color: #315fc2 !important;
+            box-shadow: 0 6px 14px rgba(45,74,121,.15), inset 0 1px 0 #fff !important;
+        }
+        #dc-block-management-panel .panel-tab.active::after { display: none !important; }
+        #dc-block-management-panel .panel-tab-count {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 20px;
+            height: 20px;
+            margin-left: 4px;
+            padding: 0 5px;
+            border-radius: 999px;
+            background: rgba(74,111,182,.12);
+            font-size: 10px;
+            font-weight: 900;
+        }
+        #dc-block-management-panel .panel-body { background: #f5f8fc !important; }
+        #dc-block-management-panel .panel-list-controls {
+            display: grid !important;
+            grid-template-columns: minmax(150px,1fr) auto !important;
+            align-items: center;
+            gap: 8px;
+            padding: 10px !important;
+            text-align: left !important;
+            background: rgba(255,255,255,.72);
+        }
+        #dc-block-management-panel .panel-search {
+            box-sizing: border-box;
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            min-height: 42px;
+            padding: 0 11px;
+            border: 1px solid #d0dbea;
+            border-radius: 11px;
+            background: #fff;
+            color: #71819a;
+            box-shadow: inset 0 2px 5px rgba(35,56,88,.07);
+        }
+        #dc-block-management-panel .panel-search-input {
+            min-width: 0;
+            width: 100%;
+            border: 0;
+            outline: 0;
+            background: transparent;
+            color: #263a58;
+            font: 600 13px/1.2 inherit;
+        }
+        #dc-block-management-panel .panel-list-summary {
+            grid-column: 1 / -1;
+            color: #7a899e;
+            font-size: 11px;
+        }
+
+
+        #dc-block-management-panel .select-all-btn,
+        #dc-block-management-panel .select-all-global-btn,
+        #dc-block-management-panel .panel-backup-btn {
+            min-height: 40px !important;
+            border-radius: 10px !important;
+            background: linear-gradient(180deg,#fff,#edf2f8) !important;
+            box-shadow: 0 5px 12px rgba(35,56,89,.09), inset 0 1px 0 #fff !important;
+        }
+        #dc-block-management-panel .blocked-list {
+            display: grid;
+            gap: 8px;
+            padding: 10px !important;
+        }
+        #dc-block-management-panel .blocked-item {
+            min-height: 52px;
+            padding: 8px 9px 8px 13px !important;
+            border: 1px solid #dce5f1 !important;
+            border-radius: 13px !important;
+            background: linear-gradient(145deg,#fff,#f0f5fb) !important;
+            box-shadow: 0 6px 15px rgba(34,55,88,.08), inset 0 1px 0 #fff;
+        }
+        #dc-block-management-panel .blocked-item.item-to-delete {
+            border-color: #f1bdc5 !important;
+            background: linear-gradient(145deg,#fff8f9,#fbecef) !important;
+            text-decoration: none !important;
+            opacity: .72 !important;
+        }
+        #dc-block-management-panel .blocked-item.item-to-delete .item-name { text-decoration: line-through; }
+        #dc-block-management-panel .delete-item-btn {
+            min-width: 52px !important;
+            min-height: 36px !important;
+            padding: 7px 9px !important;
+            border: 1px solid #ffd3da !important;
+            border-radius: 10px !important;
+            background: linear-gradient(180deg,#fff8f9,#ffe9ed) !important;
+            color: #df5366 !important;
+            font-size: 11px !important;
+            font-weight: 850 !important;
+            text-decoration: none !important;
+        }
+        #dc-block-management-panel .blocked-list-empty {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 150px;
+            color: #8290a4;
+            font-size: 13px;
+            text-align: center;
+        }
+        #dc-block-management-panel .panel-footer {
+            min-height: 64px;
+            background: linear-gradient(180deg,rgba(250,252,255,.98),rgba(239,244,251,.98)) !important;
+        }
+        #dc-block-management-panel .panel-save-btn {
+            min-height: 44px;
+            border-radius: 11px !important;
+            background: linear-gradient(180deg,#5687ff,#376af0) !important;
+            box-shadow: 0 8px 17px rgba(59,113,253,.28), inset 0 1px 0 rgba(255,255,255,.32) !important;
+        }
+        #dc-backup-popup .popup-content { gap: 12px !important; padding: 4px 2px 2px !important; }
+        #dc-backup-popup .export-section,
+        #dc-backup-popup .import-section {
+            padding: 14px !important;
+            border: 1px solid #dce5f1;
+            border-radius: 16px;
+            background: linear-gradient(145deg,#fff,#f2f6fc);
+            box-shadow: 0 8px 20px rgba(36,58,94,.09), inset 0 1px 0 #fff;
+        }
+        #dc-backup-popup .popup-content > hr { display: none; }
+        #dc-backup-popup .export-btn,
+        #dc-backup-popup .export-btn-download,
+        #dc-backup-popup .import-btn,
+        #dc-backup-popup .import-file-input,
+        #dc-backup-popup textarea {
+            min-height: 44px;
+            border-radius: 11px !important;
+        }
+        #dc-backup-popup .export-btn,
+        #dc-backup-popup .import-btn {
+            background: linear-gradient(180deg,#5687ff,#376af0) !important;
+            box-shadow: 0 8px 17px rgba(59,113,253,.25), inset 0 1px 0 rgba(255,255,255,.3) !important;
+        }
+        #dc-manual-block-panel.dcuf-pop-leave {
+            animation: dcuf-popup-out .13s ease-in forwards !important;
+            pointer-events: none !important;
+        }
+        #dc-manual-block-overlay.dcuf-overlay-leave {
+            animation: dcuf-overlay-out .13s ease-in forwards !important;
+            pointer-events: none !important;
+        }
+        @media (max-width: 640px) {
+            #dc-manual-block-overlay {
+                align-items: flex-end;
+                padding: 10px 8px max(8px,env(safe-area-inset-bottom,0px));
+            }
+            #dc-manual-block-panel {
+                width: 100%;
+                max-height: calc(100dvh - 10px);
+                border-radius: 22px 22px 16px 16px;
+            }
+            #dc-block-management-panel .panel-header { padding-left: 14px !important; }
+            #dc-block-management-panel .panel-kicker { display: none; }
+            #dc-block-management-panel .panel-add-btn {
+                width: 44px;
+                min-width: 44px;
+                padding: 0;
+                overflow: hidden;
+                color: transparent;
+                white-space: nowrap;
+            }
+            #dc-block-management-panel .panel-add-btn::first-letter {
+                color: #3564c4;
+                font-size: 18px;
+            }
+            #dc-block-management-panel .panel-list-controls { grid-template-columns: 1fr !important; }
+            #dc-block-management-panel .panel-list-summary { grid-column: 1; }
+            #dc-selection-popup.dcuf-selection-prompt { grid-template-columns: 38px minmax(0,1fr) !important; }
+            #dc-selection-popup.dcuf-selection-prompt .popup-buttons { grid-column: 1 / -1; }
+            #dc-selection-popup.dcuf-selection-prompt .popup-buttons button { width: 100% !important; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            #dc-manual-block-panel,
+            #dc-manual-block-overlay,
+            #dc-selection-popup.dcuf-selection-prompt {
+                animation: none !important;
+                transition: none !important;
+            }
+        }
+
+
+        #dc-personal-block-drawer { background-color: #f1f6ff !important; }
+        #dc-manual-block-panel { background-color: #f3f7ff; }
+        #dc-selection-popup.dcuf-selection-prompt { background-color: #edf4ff !important; }
+        #dc-selection-popup:not(.dcuf-selection-prompt) { background-color: #f3f7fd !important; }
+        #dcinside-filter-setting,
+        #dc-block-management-panel,
+        #dc-backup-popup { background-color: #f4f7fc !important; }
+
         /* DCUF_SHARED_FILTER_UI_END */
 
         /* [수정] DCCon 및 각종 팝업 모바일 반응형 중앙 정렬 */
@@ -1445,7 +2037,7 @@
             background: #1c1c1e !important;
             border-bottom-color: #3a3a3c !important;
         }
-        
+
         /* [v3.0 alpha] 본문 글자색은 실제 다크 팔레트로 직접 덮어씁니다. */
         body.dc-filter-dark-mode .gallview_contents,
         body.dc-filter-dark-mode .gallview_contents p,
@@ -1461,7 +2053,7 @@
             color: var(--dcuf-view-fg) !important;
             -webkit-text-fill-color: var(--dcuf-view-fg) !important;
         }
-        
+
         /* 댓글은 반전 필터의 영향을 받지 않으므로 그대로 밝은 색 설정 */
         body.dc-filter-dark-mode .comment_box .usertxt {
             color: #e0e0e0 !important;
@@ -1658,6 +2250,216 @@
             background: #53313a !important;
             color: #ff9fb1 !important;
         }
+
+        body.dc-filter-dark-mode #dc-personal-block-fab {
+            background: linear-gradient(180deg,#34435b,#253247) !important;
+            color: #eef4ff !important;
+            border-color: #52657f !important;
+            box-shadow: 0 16px 34px rgba(0,0,0,.46), inset 0 1px 0 rgba(255,255,255,.1) !important;
+        }
+        body.dc-filter-dark-mode #dc-personal-block-drawer {
+            border-color: #465a76 !important;
+            background: linear-gradient(145deg,#27354a,#1d293b) !important;
+            box-shadow: 0 24px 52px rgba(0,0,0,.58), inset 0 1px 0 rgba(255,255,255,.08) !important;
+        }
+        body.dc-filter-dark-mode #dc-personal-block-drawer .dcuf-menu-icon {
+            border-color: #49617f;
+            background: linear-gradient(145deg,#344760,#25354c);
+            color: #8db2ff;
+            box-shadow: 0 6px 14px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.08);
+        }
+        body.dc-filter-dark-mode #dc-personal-block-drawer strong { color: #edf3ff; }
+        body.dc-filter-dark-mode #dc-personal-block-drawer small { color: #9fb0c8; }
+        body.dc-filter-dark-mode #dc-personal-block-drawer button:hover,
+        body.dc-filter-dark-mode #dc-personal-block-drawer button:focus-visible {
+            border-color: #506987 !important;
+            background: linear-gradient(180deg,#34465e,#29394f) !important;
+        }
+        body.dc-filter-dark-mode #dc-manual-block-overlay { background: rgba(0,0,0,.68); }
+        body.dc-filter-dark-mode #dc-manual-block-panel {
+            border-color: #475a74;
+            background: linear-gradient(155deg,#26354a,#1c283a);
+            color: #edf3ff;
+            box-shadow: 0 30px 74px rgba(0,0,0,.62), inset 0 1px 0 rgba(255,255,255,.08);
+        }
+        body.dc-filter-dark-mode #dc-manual-block-panel .dcuf-manual-header {
+            border-color: #40536d;
+            background: linear-gradient(135deg,#2b3b52,#223047);
+        }
+        body.dc-filter-dark-mode #dc-manual-block-panel h3 { color: #f1f5ff; }
+        body.dc-filter-dark-mode #dc-manual-block-panel .dcuf-manual-kicker,
+        body.dc-filter-dark-mode #dc-block-management-panel .panel-kicker { color: #89a9dd; }
+        body.dc-filter-dark-mode #dc-manual-block-panel .dcuf-manual-close,
+        body.dc-filter-dark-mode #dc-block-management-panel .panel-close-btn,
+        body.dc-filter-dark-mode #dc-backup-popup .popup-close-btn,
+        body.dc-filter-dark-mode #dcinside-filter-setting #dcinside-filter-close {
+            background: transparent !important;
+            color: #b8c6da !important;
+            border-color: transparent !important;
+        }
+        body.dc-filter-dark-mode #dc-manual-block-panel .dcuf-manual-close:hover,
+        body.dc-filter-dark-mode #dc-block-management-panel .panel-close-btn:hover,
+        body.dc-filter-dark-mode #dc-backup-popup .popup-close-btn:hover,
+        body.dc-filter-dark-mode #dcinside-filter-setting #dcinside-filter-close:hover {
+            border-color: #4a5e79 !important;
+            background: #314159 !important;
+            color: #fff !important;
+        }
+        body.dc-filter-dark-mode #dc-manual-block-panel .dcuf-manual-type-tabs {
+            border-color: #40536d;
+            background: #172335;
+            box-shadow: inset 0 2px 6px rgba(0,0,0,.32);
+        }
+        body.dc-filter-dark-mode #dc-manual-block-panel [data-manual-block-type] {
+            background: transparent !important;
+            color: #aab8ca !important;
+            border-color: transparent !important;
+        }
+        body.dc-filter-dark-mode #dc-manual-block-panel [data-manual-block-type][aria-pressed="true"] {
+            border-color: #4e6685 !important;
+            background: linear-gradient(180deg,#344862,#293a52) !important;
+            color: #9fbdff !important;
+            box-shadow: 0 6px 14px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.08);
+        }
+        body.dc-filter-dark-mode #dc-manual-block-panel .dcuf-manual-field { color: #dce6f5; }
+        body.dc-filter-dark-mode #dc-manual-block-panel .dcuf-manual-field small,
+        body.dc-filter-dark-mode #dc-manual-block-panel .dcuf-manual-hint { color: #9dadc2; }
+        body.dc-filter-dark-mode #dc-manual-block-panel .dcuf-manual-field input {
+            border-color: #465a76;
+            background: #162234;
+            color: #f2f6ff;
+            box-shadow: inset 0 2px 6px rgba(0,0,0,.35);
+        }
+        body.dc-filter-dark-mode #dc-manual-block-panel .dcuf-manual-actions button {
+            border-color: #465a76;
+            background: linear-gradient(180deg,#34445b,#29384e);
+            color: #dce6f5;
+            box-shadow: 0 6px 14px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.08);
+        }
+        body.dc-filter-dark-mode #dc-manual-block-panel .dcuf-manual-actions [data-manual-block-action="add"] {
+            border-color: #5e8cff;
+            background: linear-gradient(180deg,#5f8dff,#3d6de7);
+            color: #fff;
+        }
+        body.dc-filter-dark-mode #dc-selection-popup.dcuf-selection-prompt,
+        body.dc-filter-dark-mode #dc-selection-popup:not(.dcuf-selection-prompt) {
+            border-color: #465a76 !important;
+            background: linear-gradient(145deg,#29384e,#1d2a3d) !important;
+            box-shadow: 0 22px 52px rgba(0,0,0,.58), inset 0 1px 0 rgba(255,255,255,.08) !important;
+        }
+        body.dc-filter-dark-mode #dc-selection-popup .dcuf-selection-prompt-icon {
+            background: linear-gradient(145deg,#344862,#26374f);
+            color: #8db2ff;
+            box-shadow: 0 7px 15px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.08);
+        }
+        body.dc-filter-dark-mode #dc-selection-popup .dcuf-selection-prompt-copy h4 { color: #edf3ff !important; }
+        body.dc-filter-dark-mode #dc-selection-popup .dcuf-selection-prompt-copy p { color: #9fb0c8; }
+        body.dc-filter-dark-mode #dc-selection-popup.dcuf-selection-prompt .popup-buttons button {
+            border-color: #4b607c !important;
+            background: linear-gradient(180deg,#34445b,#28384e) !important;
+            color: #dce6f5 !important;
+            box-shadow: 0 6px 13px rgba(0,0,0,.26), inset 0 1px 0 rgba(255,255,255,.08) !important;
+        }
+        body.dc-filter-dark-mode.selection-mode-active .gall_writer,
+        body.dc-filter-dark-mode.selection-mode-active .ub-writer {
+            outline-color: rgba(117,159,255,.66) !important;
+            background: rgba(92,137,241,.16) !important;
+        }
+
+
+        body.dc-filter-dark-mode #dcinside-filter-setting,
+        body.dc-filter-dark-mode #dc-block-management-panel,
+        body.dc-filter-dark-mode #dc-backup-popup {
+            border-color: #455a76 !important;
+            background: linear-gradient(155deg,#26354a,#1b2738) !important;
+            box-shadow: 0 30px 72px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.07) !important;
+        }
+        body.dc-filter-dark-mode #dcinside-filter-setting .dcuf-settings-header,
+        body.dc-filter-dark-mode #dc-block-management-panel .panel-header,
+        body.dc-filter-dark-mode #dc-backup-popup .popup-header {
+            border-color: #40536d !important;
+            background: linear-gradient(135deg,#2b3b52,#223047) !important;
+        }
+        body.dc-filter-dark-mode #dcinside-filter-setting .dcuf-settings-section,
+        body.dc-filter-dark-mode #dcinside-filter-setting .dcuf-settings-threshold > div:last-child,
+        body.dc-filter-dark-mode #dcinside-filter-setting .dcuf-settings-guest-controls,
+        body.dc-filter-dark-mode #dc-backup-popup .export-section,
+        body.dc-filter-dark-mode #dc-backup-popup .import-section {
+            border-color: #40536d !important;
+            background: linear-gradient(145deg,#29394f,#202e43) !important;
+            box-shadow: 0 9px 21px rgba(0,0,0,.26), inset 0 1px 0 rgba(255,255,255,.06) !important;
+        }
+        body.dc-filter-dark-mode #dc-block-management-panel .panel-title-group h3 { color: #edf3ff !important; }
+        body.dc-filter-dark-mode #dc-block-management-panel .panel-add-btn {
+            border-color: #4e6685 !important;
+            background: linear-gradient(180deg,#344862,#293a52) !important;
+            color: #9fbdff !important;
+            box-shadow: 0 6px 14px rgba(0,0,0,.27), inset 0 1px 0 rgba(255,255,255,.07);
+        }
+        body.dc-filter-dark-mode #dc-block-management-panel .panel-tabs {
+            border-color: #3e5069 !important;
+            background: #172335 !important;
+            box-shadow: inset 0 2px 6px rgba(0,0,0,.3);
+        }
+        body.dc-filter-dark-mode #dc-block-management-panel .panel-tab {
+            background: transparent !important;
+            color: #aab8ca !important;
+            border-color: transparent !important;
+        }
+        body.dc-filter-dark-mode #dc-block-management-panel .panel-tab.active {
+            border-color: #4e6685 !important;
+            background: linear-gradient(180deg,#344862,#293a52) !important;
+            color: #9fbdff !important;
+            box-shadow: 0 6px 14px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.08) !important;
+        }
+        body.dc-filter-dark-mode #dc-block-management-panel .panel-body { background: #1b2738 !important; }
+        body.dc-filter-dark-mode #dc-block-management-panel .panel-list-controls {
+            border-color: #40536d !important;
+            background: rgba(28,40,58,.84);
+        }
+        body.dc-filter-dark-mode #dc-block-management-panel .panel-search {
+            border-color: #455a76;
+            background: #162234;
+            color: #9dadc2;
+            box-shadow: inset 0 2px 6px rgba(0,0,0,.34);
+        }
+        body.dc-filter-dark-mode #dc-block-management-panel .panel-search-input { color: #edf3ff; }
+        body.dc-filter-dark-mode #dc-block-management-panel .blocked-item {
+            border-color: #40536d !important;
+            background: linear-gradient(145deg,#29394f,#202e43) !important;
+            box-shadow: 0 7px 16px rgba(0,0,0,.24), inset 0 1px 0 rgba(255,255,255,.06);
+        }
+        body.dc-filter-dark-mode #dc-block-management-panel .blocked-item.item-to-delete {
+            border-color: #714856 !important;
+            background: linear-gradient(145deg,#3d2b35,#34232c) !important;
+        }
+        body.dc-filter-dark-mode #dc-block-management-panel .delete-item-btn {
+            border-color: #704653 !important;
+            background: linear-gradient(180deg,#4d303a,#402731) !important;
+            color: #ff9cad !important;
+        }
+        body.dc-filter-dark-mode #dc-block-management-panel .select-all-btn,
+        body.dc-filter-dark-mode #dc-block-management-panel .select-all-global-btn,
+        body.dc-filter-dark-mode #dc-block-management-panel .panel-backup-btn {
+            border-color: #465a76 !important;
+            background: linear-gradient(180deg,#34445b,#29384e) !important;
+            color: #dce6f5 !important;
+            box-shadow: 0 6px 14px rgba(0,0,0,.24), inset 0 1px 0 rgba(255,255,255,.06) !important;
+        }
+        body.dc-filter-dark-mode #dc-block-management-panel .panel-footer {
+            border-color: #40536d !important;
+            background: linear-gradient(180deg,#253449,#1d2a3d) !important;
+        }
+
+
+        body.dc-filter-dark-mode #dc-personal-block-drawer { background-color: #1d293b !important; }
+        body.dc-filter-dark-mode #dc-manual-block-panel { background-color: #1c283a; }
+        body.dc-filter-dark-mode #dc-selection-popup.dcuf-selection-prompt,
+        body.dc-filter-dark-mode #dc-selection-popup:not(.dcuf-selection-prompt) { background-color: #1d2a3d !important; }
+        body.dc-filter-dark-mode #dcinside-filter-setting,
+        body.dc-filter-dark-mode #dc-block-management-panel,
+        body.dc-filter-dark-mode #dc-backup-popup { background-color: #1b2738 !important; }
+
         /* DCUF_SHARED_FILTER_UI_DARK_END */
     `);
 
@@ -1892,6 +2694,8 @@
         INFLIGHT_USER_SUM_REQUESTS: Object.create(null),
         USER_SUM_NEGATIVE_CACHE: new Map(),
         USER_SUM_NEGATIVE_TTL: 30000,
+        USER_SUM_NEGATIVE_MAX_ENTRIES: 256,
+        _negativeUserSumCacheWrites: 0,
         DEBUG_ENABLED: false,
         DEBUG_MAX_DECISIONS_PER_PASS: 150,
         DEBUG_PASS_ID: 0,
@@ -1899,6 +2703,7 @@
         DEBUG_DECISION_KEYS: null,
         _runtimeMutationUnsubscribe: null,
         _userSumTaskQueue: null,
+        _blockedUidWritePromise: null,
         _queuedObserverFilterItems: null,
         _queuedObserverFilterRafId: 0,
         _queuedObserverFilterTimerId: 0,
@@ -1995,7 +2800,9 @@
             223.26 223.130 223.165 223.255
         `.trim().split(/\s+/),
         KR_IP_RANGES: { "1": [[11, 11], [16, 19], [96, 111], [176, 177], [201, 201], [208, 223], [224, 255]], "14": [[0, 0], [4, 7], [32, 63], [64, 95], [128, 128], [129, 129], [138, 138], [192, 192], [206, 206]], "27": [[0, 0], [1, 1], [35, 35], [96, 96], [100, 100], [101, 101], [102, 102], [111, 111], [112, 112], [113, 113], [115, 115], [116, 116], [117, 117], [118, 118], [119, 119], [120, 120], [122, 122], [124, 124], [125, 125], [126, 126], [160, 175], [176, 183], [232, 239], [255, 255]], "36": [[38, 39]], "39": [[4, 7], [16, 31], [112, 127]], "42": [[8, 15], [16, 31], [32, 47], [82, 82]], "43": [[224, 224], [227, 227], [228, 228], [230, 230], [230, 230], [230, 230], [241, 241], [242, 242], [243, 243], [246, 246], [247, 247], [247, 247], [250, 250], [251, 251], [254, 254], [255, 255]], "45": [[64, 64], [64, 64], [64, 64], [112, 112], [112, 112], [113, 113], [115, 115], [117, 117], [119, 119], [120, 120], [121, 121], [125, 125], [248, 248], [249, 249], [249, 249], [250, 250], [250, 250]], "49": [[1, 1], [8, 11], [16, 31], [50, 50], [50, 50], [50, 50], [56, 63], [128, 128], [142, 142], [143, 143], [160, 175], [236, 236], [238, 238], [239, 239], [246, 246], [247, 247], [254, 254]], "58": [[29, 29], [65, 65], [72, 79], [84, 84], [87, 87], [102, 103], [120, 127], [138, 138], [140, 143], [145, 145], [146, 146], [147, 147], [148, 151], [180, 180], [181, 181], [184, 184], [224, 239]], "59": [[0, 31], [86, 86], [150, 150], [151, 151], [152, 152], [186, 187]], "60": [[196, 197], [253, 253]], "61": [[4, 4], [5, 5], [14, 14], [32, 39], [40, 43], [47, 47], [72, 77], [78, 79], [80, 83], [84, 85], [96, 111], [245, 245], [245, 245], [247, 247], [247, 247], [248, 255]], "101": [[1, 1], [1, 1], [53, 53], [55, 55], [79, 79], [101, 101], [202, 202], [235, 235], [250, 250]], "103": [[2, 2], [2, 2], [2, 2], [3, 3], [4, 4], [4, 4], [4, 4], [5, 5], [5, 5], [6, 6], [6, 6], [6, 6], [6, 6], [7, 7], [7, 7], [7, 7], [8, 8], [8, 8], [9, 9], [9, 9], [10, 10], [10, 10], [11, 11], [11, 11], [11, 11], [11, 11], [11, 11], [12, 12], [13, 13], [13, 13], [19, 19], [20, 20], [21, 21], [21, 21], [22, 22], [23, 23], [24, 24], [25, 25], [27, 27], [27, 27], [28, 28], [30, 30], [30, 30], [30, 30], [31, 31], [38, 38], [39, 39], [42, 42], [42, 42], [43, 43], [43, 43], [49, 49], [50, 50], [51, 51], [51, 51], [51, 51], [52, 52], [53, 53], [55, 55], [55, 55], [57, 57], [59, 59], [60, 60], [62, 62], [66, 66], [67, 67], [68, 68], [68, 68], [71, 71], [74, 74], [77, 77], [79, 79], [85, 85], [87, 87], [90, 90], [90, 90], [104, 104], [105, 105], [106, 106], [108, 108], [109, 109], [114, 114], [114, 114], [117, 117], [122, 122], [122, 122], [124, 124], [125, 125], [126, 126], [126, 126], [127, 127], [129, 129], [132, 132], [138, 138], [139, 139], [139, 139], [139, 139], [140, 140], [141, 141], [141, 141], [143, 143], [143, 143], [144, 144], [145, 145], [146, 146], [150, 150], [150, 150], [150, 150], [150, 150], [153, 153], [157, 157], [157, 157], [159, 159], [161, 161], [162, 162], [162, 162], [164, 164], [166, 166], [171, 171], [175, 175], [178, 178], [182, 182], [182, 182], [186, 186], [187, 187], [187, 187], [188, 188], [194, 194], [194, 194], [206, 206], [212, 212], [212, 212], [214, 214], [214, 214], [215, 215], [216, 216], [218, 218], [219, 219], [226, 226], [226, 226], [229, 229], [230, 230], [231, 231], [234, 234], [235, 235], [237, 237], [238, 238], [239, 239], [239, 239], [240, 240], [240, 240], [243, 243], [244, 244], [244, 244], [246, 246], [246, 246], [246, 246], [247, 247], [247, 247], [248, 248], [249, 249], [251, 251], [253, 253], [254, 254]], "106": [[10, 10], [96, 103], [240, 255]], "110": [[4, 4], [5, 5], [8, 15], [34, 34], [35, 35], [35, 35], [44, 44], [44, 44], [45, 45], [46, 47], [68, 71], [76, 76], [76, 76], [92, 92], [92, 92], [93, 93], [93, 93], [165, 165], [165, 165], [172, 172], [232, 232]], "111": [[65, 65], [67, 67], [91, 91], [92, 92], [118, 118], [171, 171], [218, 219], [221, 221]], "112": [[72, 72], [72, 72], [76, 77], [106, 107], [108, 108], [109, 109], [121, 121], [121, 121], [133, 133], [136, 136], [137, 137], [140, 140], [140, 140], [140, 140], [144, 159], [160, 191], [196, 196], [212, 212], [213, 213], [214, 214], [216, 223]], "113": [[10, 10], [21, 21], [29, 29], [30, 30], [52, 52], [52, 52], [59, 59], [60, 60], [61, 61], [61, 61], [130, 130], [130, 130], [131, 131], [192, 192], [197, 197], [198, 198], [199, 199], [216, 217]], "114": [[29, 29], [30, 30], [30, 30], [30, 30], [31, 31], [31, 31], [52, 53], [70, 71], [108, 108], [110, 110], [110, 110], [111, 111], [111, 111], [129, 129], [129, 129], [141, 141], [141, 141], [141, 141], [199, 199], [199, 199], [200, 207]], "115": [[0, 23], [31, 31], [40, 41], [68, 68], [69, 69], [71, 71], [84, 84], [85, 85], [86, 86], [88, 95], [126, 126], [136, 143], [144, 144], [145, 145], [160, 160], [161, 161], [165, 165], [178, 178], [178, 178], [187, 187], [187, 187]], "116": [[32, 47], [67, 67], [68, 68], [68, 68], [84, 84], [89, 89], [90, 90], [93, 93], [120, 127], [193, 193], [199, 199], [200, 201], [212, 212], [255, 255]], "117": [[16, 17], [20, 20], [20, 20], [52, 52], [53, 53], [53, 53], [55, 55], [58, 58], [110, 111], [123, 123]], "118": [[32, 63], [67, 67], [91, 91], [91, 91], [103, 103], [107, 107], [127, 127], [128, 131], [139, 139], [176, 176], [216, 223], [234, 235]], "119": [[17, 17], [17, 17], [18, 18], [30, 30], [31, 31], [42, 42], [56, 56], [59, 59], [63, 63], [64, 71], [75, 75], [77, 77], [82, 82], [148, 148], [149, 149], [161, 161], [192, 223], [235, 235], [235, 235]], "120": [[29, 29], [50, 50], [73, 73], [136, 136], [142, 142], [143, 143]], "121": [[0, 0], [1, 1], [50, 50], [50, 50], [50, 50], [53, 53], [54, 54], [55, 55], [64, 67], [78, 78], [88, 88], [100, 100], [101, 101], [101, 101], [124, 125], [126, 126], [127, 127], [128, 159], [160, 191], [200, 200], [252, 253], [254, 254], [254, 254]], "122": [[0, 0], [0, 0], [32, 47], [49, 49], [99, 99], [100, 100], [101, 101], [128, 128], [128, 128], [129, 129], [129, 129], [152, 152], [153, 153], [199, 199], [202, 202], [202, 202], [203, 203], [252, 252], [252, 252], [254, 254]], "123": [[0, 0], [32, 47], [98, 98], [99, 99], [100, 100], [108, 108], [108, 108], [109, 109], [111, 111], [140, 143], [199, 199], [200, 200], [212, 215], [228, 229], [248, 248], [250, 251], [253, 253], [254, 254], [254, 254]], "124": [[0, 1], [2, 2], [3, 3], [5, 5], [28, 28], [46, 46], [48, 63], [66, 66], [66, 66], [80, 80], [111, 111], [136, 139], [146, 146], [153, 153], [194, 194], [195, 195], [195, 195], [197, 197], [198, 198], [199, 199], [199, 199], [216, 216], [217, 217], [243, 243], [254, 254]], "125": [[7, 7], [31, 31], [57, 57], [60, 60], [61, 61], [62, 62], [128, 159], [176, 191], [208, 208], [208, 208], [209, 209], [209, 209], [240, 247], [248, 251], [252, 252]], "128": [[134, 134]], "129": [[254, 254]], "134": [[75, 75]], "137": [[68, 68]], "139": [[5, 5], [150, 150]], "141": [[223, 223]], "143": [[248, 248]], "144": [[48, 48], [48, 48], [48, 48]], "147": [[6, 6], [43, 43], [46, 46], [47, 47]], "150": [[107, 107], [107, 107], [129, 129], [150, 150], [183, 183], [197, 197], [242, 242], [242, 242]], "152": [[99, 99], [149, 149]], "154": [[10, 10]], "155": [[230, 230]], "156": [[147, 147]], "157": [[119, 119], [197, 197]], "158": [[44, 44]], "160": [[202, 202]], "161": [[122, 122]], "163": [[53, 53], [152, 152], [180, 180], [213, 213], [222, 222], [229, 229], [239, 239], [255, 255]], "164": [[124, 124], [125, 125]], "165": [[132, 132], [133, 133], [141, 141], [186, 186], [194, 194], [213, 213], [229, 229], [243, 243], [244, 244], [246, 246]], "166": [[79, 79], [103, 103], [104, 104], [125, 125]], "168": [[78, 78], [115, 115], [126, 126], [131, 131], [154, 154], [188, 188], [219, 219], [248, 249]], "169": [[140, 140], [208, 223]], "175": [[28, 28], [41, 41], [45, 45], [45, 45], [106, 106], [107, 107], [111, 111], [112, 127], [158, 158], [176, 176], [192, 255]], "180": [[64, 71], [80, 83], [92, 92], [92, 92], [94, 94], [131, 131], [132, 135], [148, 148], [150, 150], [182, 182], [189, 189], [189, 189], [210, 210], [210, 210], [211, 211], [222, 222], [224, 231], [233, 233], [236, 239]], "182": [[31, 31], [50, 50], [161, 161], [162, 162], [163, 163], [172, 172], [173, 173], [173, 173], [192, 199], [208, 223], [224, 231], [237, 237], [237, 237], [252, 252], [252, 252], [255, 255]], "183": [[78, 78], [78, 78], [86, 86], [90, 90], [91, 91], [96, 127]], "192": [[5, 5], [100, 100], [104, 104], [132, 132], [132, 132], [195, 195], [203, 203], [245, 245], [249, 249]], "202": [[3, 3], [6, 6], [8, 8], [14, 14], [14, 14], [14, 14], [20, 20], [20, 20], [20, 20], [20, 20], [21, 21], [22, 22], [30, 31], [43, 43], [59, 59], [68, 68], [73, 73], [86, 86], [89, 89], [89, 89], [90, 90], [126, 126], [128, 128], [131, 131], [133, 133], [136, 136], [148, 148], [150, 150], [158, 158], [163, 163], [165, 165], [167, 167], [171, 171], [174, 174], [179, 179], [179, 179]], "203": [[17, 17], [81, 81], [81, 81], [82, 82], [82, 82], [83, 83], [84, 84], [90, 90], [100, 100], [109, 109], [123, 123], [128, 128], [128, 128], [129, 129], [130, 130], [130, 130], [132, 132], [133, 133], [142, 142], [142, 142], [149, 149], [152, 152], [153, 153], [160, 160], [166, 166], [169, 169], [170, 170], [171, 171], [173, 173], [175, 175], [175, 175], [190, 190], [190, 190], [191, 191], [207, 207], [210, 210], [212, 212], [212, 212], [215, 215], [216, 216], [217, 217], [223, 223], [223, 223], [224, 224], [225, 225], [226, 227], [228, 229], [230, 231], [232, 233], [234, 235], [236, 239], [240, 243], [244, 247], [248, 251], [252, 255]], "210": [[0, 0], [2, 2], [4, 4], [4, 4], [16, 16], [57, 57], [87, 87], [89, 89], [90, 91], [92, 95], [96, 96], [97, 97], [98, 98], [99, 99], [100, 103], [104, 107], [108, 111], [112, 115], [116, 119], [120, 123], [124, 127], [178, 179], [180, 181], [182, 183], [192, 192], [204, 207], [210, 210], [211, 211], [211, 211], [216, 219], [220, 223]], "211": [[32, 39], [40, 51], [52, 63], [104, 111], [112, 119], [168, 175], [176, 191], [192, 199], [200, 205], [206, 211], [212, 215], [216, 225], [226, 231], [232, 255]], "218": [[36, 39], [48, 49], [50, 55], [101, 101], [144, 159], [209, 209], [232, 233], [234, 239]], "219": [[240, 241], [248, 255]], "220": [[64, 71], [72, 91], [92, 95], [103, 103], [116, 127], [149, 149], [230, 230]], "221": [[132, 132], [133, 133], [133, 133], [138, 143], [144, 168]], "222": [[96, 122], [231, 231], [232, 239], [251, 251]], "223": [[26, 26], [28, 28], [32, 63], [130, 130], [131, 131], [165, 165], [168, 175], [194, 195], [222, 222], [253, 253], [255, 255]] },
-        isMobile: () => /Mobi/i.test(navigator.userAgent),
+        // This source is the mobile target adapter. The PC builder rewrites this
+        // target flag to false when it ports the shared filter module.
+        isMobile: () => true,
         isRecommendedContext: () => window.location.search.includes('exception_mode=recommend'),
         normalizeProxyBlockMode(value) {
             return DCUF_SHARED_STORAGE.normalizeProxyBlockModeValue(value);
@@ -2208,12 +3015,13 @@
             };
             this.debugLog('api', 'window.DCUFDebug installed', Object.keys(window.DCUFDebug));
         },
-        async cleanupLegacyManagedBlockConfig() {
-            const migrationDone = await GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG_MIGRATION_V275_DONE, false);
+        async cleanupLegacyManagedBlockConfig(snapshot = null) {
+            const migrationDone = snapshot ? snapshot.migrationDone : await GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG_MIGRATION_V275_DONE, false);
             if (migrationDone) return;
-            const conf = await GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG, {});
+            const conf = snapshot?.blockConfig || await GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG, {});
             if (!conf || typeof conf !== 'object') {
                 await GM_setValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG_MIGRATION_V275_DONE, true);
+                if (snapshot) snapshot.migrationDone = true;
                 return;
             }
             const currentIp = typeof conf.ip === 'string' ? conf.ip : '';
@@ -2230,6 +3038,7 @@
                 conf.ip = '';
                 await GM_setValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG, conf);
                 await GM_setValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG_MIGRATION_V275_DONE, true);
+                if (snapshot) { snapshot.blockConfig = conf; snapshot.migrationDone = true; }
                 return;
             }
 
@@ -2242,6 +3051,7 @@
                 await GM_setValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG, conf);
             }
             await GM_setValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG_MIGRATION_V275_DONE, true);
+            if (snapshot) { snapshot.blockConfig = conf; snapshot.migrationDone = true; }
         },
         async showSettings() {
             await this.reloadSettings();
@@ -2422,6 +3232,20 @@
             const enterKeySave = (e) => { if (e.key === 'Enter') saveButton.click(); };
             [input, ratioMinInput, ratioMaxInput].forEach(el => { if (el) el.addEventListener('keydown', enterKeySave); });
             let isDragging = false, offsetX, offsetY;
+            let dragWidth = 0, dragHeight = 0;
+            let dragRafId = 0, pendingDragX = null, pendingDragY = null;
+            const applyDragPosition = () => {
+                dragRafId = 0;
+                if (!isDragging || pendingDragX === null || pendingDragY === null) return;
+                let newX = pendingDragX - offsetX;
+                let newY = pendingDragY - offsetY;
+                pendingDragX = null;
+                pendingDragY = null;
+                newX = Math.max(0, Math.min(newX, window.innerWidth - dragWidth));
+                newY = Math.max(0, Math.min(newY, window.innerHeight - dragHeight));
+                div.style.left = `${newX}px`;
+                div.style.top = `${newY}px`;
+            };
             const onDragStart = (e) => {
                 if (e.type === 'touchstart' && e.touches && e.touches.length > 1) return;
                 const startTarget = (e.target && e.target.nodeType === 1) ? e.target : e.target.parentElement;
@@ -2430,6 +3254,8 @@
                 isDragging = true;
                 const rect = div.getBoundingClientRect();
                 if (div.style.transform !== 'none') { div.style.transform = 'none'; div.style.left = `${rect.left}px`; div.style.top = `${rect.top}px`; }
+                dragWidth = rect.width;
+                dragHeight = rect.height;
                 const clientX = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
                 const clientY = e.type === 'touchstart' ? e.touches[0].clientY : e.clientY;
                 offsetX = clientX - rect.left; offsetY = clientY - rect.top;
@@ -2440,14 +3266,19 @@
                 if (!isDragging) return;
                 if (e.type === 'touchmove' && e.touches && e.touches.length > 1) return;
                 e.preventDefault();
-                const rect = div.getBoundingClientRect();
                 const clientX = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
                 const clientY = e.type === 'touchmove' ? e.touches[0].clientY : e.clientY;
-                let newX = clientX - offsetX; let newY = clientY - offsetY;
-                newX = Math.max(0, Math.min(newX, window.innerWidth - rect.width)); newY = Math.max(0, Math.min(newY, window.innerHeight - rect.height));
-                div.style.left = `${newX}px`; div.style.top = `${newY}px`;
+                pendingDragX = clientX;
+                pendingDragY = clientY;
+                if (!dragRafId) dragRafId = requestAnimationFrame(applyDragPosition);
             };
-            const onDragEnd = () => { isDragging = false; document.removeEventListener('mousemove', onDragMove); document.removeEventListener('touchmove', onDragMove); };
+            const onDragEnd = () => {
+                if (dragRafId) cancelAnimationFrame(dragRafId);
+                applyDragPosition();
+                isDragging = false;
+                document.removeEventListener('mousemove', onDragMove);
+                document.removeEventListener('touchmove', onDragMove);
+            };
             const dragHandle = settingsHeader || div;
             try {
                 dragHandle.addEventListener('mousedown', onDragStart);
@@ -2730,6 +3561,62 @@
                 this.flushQueuedObservedFilterItems();
             }, 80);
         },
+        collectMutationFilterItems(payload, containerSelector, itemSelector, {
+            attributeNames = [],
+            includeChildListTargets = false
+        } = {}) {
+            if (!payload || typeof payload !== 'object') return [];
+            const items = [];
+            const seen = new Set();
+            const watchedAttributes = new Set(attributeNames);
+            const addItem = (element) => {
+                if (!(element instanceof HTMLElement) || !element.isConnected || seen.has(element)) return;
+                if (!element.matches(itemSelector) || !element.closest(containerSelector)) return;
+                seen.add(element);
+                items.push(element);
+            };
+            const scanTarget = (root) => {
+                if (!(root instanceof Element)) return;
+                addItem(root);
+                const closestItem = root.closest(itemSelector);
+                if (closestItem) addItem(closestItem);
+            };
+            const scanAddedRoot = (root) => {
+                if (!(root instanceof Element)) return;
+                scanTarget(root);
+                if (typeof root.querySelectorAll === 'function') {
+                    root.querySelectorAll(itemSelector).forEach(addItem);
+                }
+            };
+
+            if (Array.isArray(payload.addedElements)) payload.addedElements.forEach(scanAddedRoot);
+            if (Array.isArray(payload.records)) {
+                payload.records.forEach((record) => {
+                    if (record?.type === 'attributes' && watchedAttributes.has(record.attributeName)) {
+                        scanTarget(record.target);
+                    } else if (includeChildListTargets && record?.type === 'childList') {
+                        scanTarget(record.target);
+                    }
+                });
+            }
+            return items;
+        },
+        collectImmediateCommentFilterItems(payload) {
+            return this.collectMutationFilterItems(
+                payload,
+                this.CONSTANTS.SELECTORS.COMMENT_CONTAINER,
+                this.CONSTANTS.SELECTORS.COMMENT_ITEM,
+                { attributeNames: ['data-uid', 'data-nick', 'data-ip'] }
+            );
+        },
+        applyImmediateCommentMutations(payload) {
+            const items = this.collectImmediateCommentFilterItems(payload);
+            if (items.length === 0) return;
+            const descriptors = this.describeFilterTargets(items);
+            this.applySyncToDescriptors(descriptors);
+            this.incrementRuntimeDiagnostic('filter.immediateComment.runs');
+            this.setRuntimeDiagnosticGauge('filter.immediateComment.lastTargetCount', descriptors.length);
+        },
         getRuntimeCoordinator() {
             return window.__dcufRuntimeCoordinator || null;
         },
@@ -2779,14 +3666,40 @@
             if (!cached) return null;
             if (Date.now() - cached.ts > this.USER_SUM_NEGATIVE_TTL) {
                 this.USER_SUM_NEGATIVE_CACHE.delete(uid);
+                this.setRuntimeDiagnosticGauge('filter.negativeUserSumCache.size', this.USER_SUM_NEGATIVE_CACHE.size);
                 return null;
             }
             return cached;
         },
+        pruneNegativeUserSumCache(now = Date.now()) {
+            let removed = 0;
+            this.USER_SUM_NEGATIVE_CACHE.forEach((entry, key) => {
+                if (!entry || typeof entry.ts !== 'number' || now - entry.ts > this.USER_SUM_NEGATIVE_TTL) {
+                    this.USER_SUM_NEGATIVE_CACHE.delete(key);
+                    removed += 1;
+                }
+            });
+            while (this.USER_SUM_NEGATIVE_CACHE.size > this.USER_SUM_NEGATIVE_MAX_ENTRIES) {
+                const oldestKey = this.USER_SUM_NEGATIVE_CACHE.keys().next().value;
+                if (oldestKey === undefined) break;
+                this.USER_SUM_NEGATIVE_CACHE.delete(oldestKey);
+                removed += 1;
+            }
+            if (removed > 0) this.incrementRuntimeDiagnostic('filter.negativeUserSumCache.pruned', removed);
+            this.setRuntimeDiagnosticGauge('filter.negativeUserSumCache.size', this.USER_SUM_NEGATIVE_CACHE.size);
+            return removed;
+        },
         setNegativeUserSumCache(uid, reason = 'error') {
             if (!uid) return null;
             const cached = { ts: Date.now(), reason };
+            this.USER_SUM_NEGATIVE_CACHE.delete(uid);
             this.USER_SUM_NEGATIVE_CACHE.set(uid, cached);
+            this._negativeUserSumCacheWrites = (this._negativeUserSumCacheWrites + 1) % 32;
+            if (this.USER_SUM_NEGATIVE_CACHE.size > this.USER_SUM_NEGATIVE_MAX_ENTRIES || this._negativeUserSumCacheWrites === 0) {
+                this.pruneNegativeUserSumCache(cached.ts);
+            } else {
+                this.setRuntimeDiagnosticGauge('filter.negativeUserSumCache.size', this.USER_SUM_NEGATIVE_CACHE.size);
+            }
             return cached;
         },
         async getUserPostCommentSum(uid) {
@@ -2842,10 +3755,35 @@
             }
         },
         async addBlockedUid(uid, sum, post, comment, ratioBlocked) {
-            if (this.isMobile()) return;
-            await this.refreshBlockedUidsCache();
-            this.BLOCKED_UIDS_CACHE[uid] = { ts: Date.now(), sum, post, comment, ratioBlocked: !!ratioBlocked };
-            await GM_setValue(this.CONSTANTS.STORAGE_KEYS.BLOCKED_UIDS, JSON.stringify(this.BLOCKED_UIDS_CACHE));
+            if (!uid) return;
+            if (!this.isMobile()) {
+                await this.refreshBlockedUidsCache();
+            }
+            const nextEntry = { ts: Date.now(), sum, post, comment, ratioBlocked: !!ratioBlocked };
+            const currentEntry = this.BLOCKED_UIDS_CACHE[uid];
+            if (currentEntry
+                && currentEntry.sum === nextEntry.sum
+                && currentEntry.post === nextEntry.post
+                && currentEntry.comment === nextEntry.comment
+                && currentEntry.ratioBlocked === nextEntry.ratioBlocked) {
+                return;
+            }
+            this.BLOCKED_UIDS_CACHE[uid] = nextEntry;
+            if (!this.isMobile()) {
+                await GM_setValue(this.CONSTANTS.STORAGE_KEYS.BLOCKED_UIDS, JSON.stringify(this.BLOCKED_UIDS_CACHE));
+                return;
+            }
+            const serializedCache = JSON.stringify(this.BLOCKED_UIDS_CACHE);
+            const previousWrite = this._blockedUidWritePromise || Promise.resolve();
+            const writePromise = previousWrite
+                .catch(() => {})
+                .then(() => GM_setValue(this.CONSTANTS.STORAGE_KEYS.BLOCKED_UIDS, serializedCache));
+            this._blockedUidWritePromise = writePromise;
+            try {
+                await writePromise;
+            } finally {
+                if (this._blockedUidWritePromise === writePromise) this._blockedUidWritePromise = null;
+            }
         },
         async getBlockedGuests() { try { return JSON.parse(await GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCKED_GUESTS, '[]')); } catch { return []; } },
         async setBlockedGuests(list) { await GM_setValue(this.CONSTANTS.STORAGE_KEYS.BLOCKED_GUESTS, JSON.stringify(list)); },
@@ -2902,9 +3840,17 @@
             if (element.style.display !== nextDisplay) element.style.display = nextDisplay;
         },
         async applyBlockFilterToElement(element, uid, userData, addBlockedUidFn) {
-            if (!userData) return;
+            if (!userData || !(element instanceof HTMLElement) || !element.isConnected) return;
             const { sumBlocked, ratioBlocked } = this.isUserBlocked(userData);
             const shouldBeBlocked = sumBlocked || ratioBlocked;
+            // UID statistics are an additional blocking reason, not an authority to reveal content.
+            // A request can begin before a personal block is saved and resolve afterwards; letting a
+            // negative statistics result call setElementVisibility(false) in that race briefly exposes
+            // the personally blocked comment and starts a shell-attribute refilter loop.
+            if (!shouldBeBlocked && element.getAttribute('data-dcuf-personal-blocked') === '1') {
+                this.incrementRuntimeDiagnostic('filter.asyncAllow.suppressedPersonalBlock');
+                return;
+            }
             this.setElementVisibility(element, shouldBeBlocked);
             if (shouldBeBlocked) await addBlockedUidFn.call(this, uid, userData.sum, userData.post, userData.comment, ratioBlocked);
         },
@@ -2923,6 +3869,7 @@
 
             try {
                 if (element.style.display === 'none') return;
+                if (element.getAttribute('data-dcuf-personal-blocked') === '1') return;
                 if (!(writerInfo instanceof HTMLElement)) return;
                 if (!uid || uid.length < 3) return;
                 if (this.BLOCKED_UIDS_CACHE[uid]) return;
@@ -2930,10 +3877,14 @@
                 await this.applyBlockFilterToElement(element, uid, userData, this.addBlockedUid);
             } catch (e) { console.warn(`DCinside User Filter: Async filter exception.`, e, element); }
         },
-        async refreshBlockedUidsCache() {
-            if (this.isMobile()) { this.BLOCKED_UIDS_CACHE = {}; return; }
-            let data; try { data = JSON.parse(await GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCKED_UIDS, '{}')); } catch { data = {}; }
-            const now = Date.now(); let changed = false;
+        async refreshBlockedUidsCache(rawValue = null) {
+            let data; try { data = JSON.parse(rawValue === null ? await GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCKED_UIDS, '{}') : rawValue); } catch { data = {}; }
+            let changed = false;
+            if (!data || typeof data !== 'object' || Array.isArray(data)) {
+                data = {};
+                changed = true;
+            }
+            const now = Date.now();
             for (const [uid, cacheData] of Object.entries(data)) {
                 if (typeof cacheData !== 'object' || cacheData === null || typeof cacheData.ts !== 'number' || now - cacheData.ts > this.BLOCK_UID_EXPIRE) { delete data[uid]; changed = true; }
             }
@@ -3086,13 +4037,23 @@
 
             if (hasRuntimeMutationBus) {
                 if (typeof this._runtimeMutationUnsubscribe === 'function') this._runtimeMutationUnsubscribe();
+                if (typeof this._runtimeImmediateMutationUnsubscribe === 'function') this._runtimeImmediateMutationUnsubscribe();
+                if (typeof runtimeCoordinator.subscribeImmediateMutations === 'function') {
+                    this._runtimeImmediateMutationUnsubscribe = runtimeCoordinator.subscribeImmediateMutations(
+                        'filter-immediate-comment-visibility',
+                        (payload) => this.applyImmediateCommentMutations(payload)
+                    );
+                }
                 this._runtimeMutationUnsubscribe = runtimeCoordinator.subscribeMutations('filter-universal-observer', (payload) => {
                     let hasRelevantMutation = false;
                     let hasCommentMutation = false;
                     targets.forEach((target) => {
                         const changedContainers = payload.collectMatches(target.c);
                         changedContainers.forEach((container) => attachObserver(container, target.i, { attachDomObserver: false }));
-                        const changedItems = payload.collectMatches(target.i, { includeRoots: true }).filter((item) => item.closest?.(target.c));
+                        const changedItems = this.collectMutationFilterItems(payload, target.c, target.i, {
+                            attributeNames: ['class', 'id', 'data-uid', 'data-nick', 'data-ip'],
+                            includeChildListTargets: true
+                        });
                         if (changedContainers.length > 0 || changedItems.length > 0) {
                             hasRelevantMutation = true;
                             if (target.scope === 'comments') hasCommentMutation = true;
@@ -3121,27 +4082,95 @@
             });
             bodyObserver.observe(observerTarget, { childList: true, subtree: true });
         },
-        async reloadSettings() {
+        loadBootSnapshot() {
+            if (this._bootSnapshotPromise) return this._bootSnapshotPromise;
+            const keys = this.CONSTANTS.STORAGE_KEYS;
+            this._bootSnapshotPromise = Promise.all([
+                GM_getValue(keys.BLOCK_CONFIG_MIGRATION_V275_DONE, false),
+                GM_getValue(keys.MASTER_DISABLED, false),
+                GM_getValue(keys.EXCLUDE_RECOMMENDED, false),
+                GM_getValue(keys.THRESHOLD),
+                GM_getValue(keys.RATIO_ENABLED, false),
+                GM_getValue(keys.RATIO_MIN, ''),
+                GM_getValue(keys.RATIO_MAX, ''),
+                GM_getValue(keys.BLOCK_GUEST, false),
+                GM_getValue(keys.BLOCK_PROXY, 0),
+                GM_getValue(keys.BLOCK_TELECOM, false),
+                GM_getValue(keys.BLOCKED_GUESTS, '[]'),
+                GM_getValue(keys.BLOCK_CONFIG, {}),
+                GM_getValue(keys.PERSONAL_BLOCK_LIST, { uids: [], nicknames: [], ips: [] }),
+                GM_getValue(keys.PERSONAL_BLOCK_ENABLED, true),
+                GM_getValue(keys.BLOCKED_UIDS, '{}')
+            ]).then((values) => {
+                const [
+                    migrationDone, masterDisabled, excludeRecommended, rawThreshold, ratioEnabled,
+                    ratioMin, ratioMax, blockGuestEnabled, proxyBlockMode, telecomBlockEnabled,
+                    blockedGuestsRaw, blockConfig, personalBlockList, personalBlockEnabled, blockedUidsRaw
+                ] = values;
+                let blockedGuests = [];
+                try { blockedGuests = JSON.parse(blockedGuestsRaw); } catch { blockedGuests = []; }
+                const snapshot = {
+                    migrationDone,
+                    masterDisabled,
+                    excludeRecommended,
+                    threshold: rawThreshold === undefined ? 0 : rawThreshold,
+                    thresholdMissing: rawThreshold === undefined,
+                    ratioEnabled,
+                    ratioMin,
+                    ratioMax,
+                    blockGuestEnabled,
+                    proxyBlockMode,
+                    telecomBlockEnabled,
+                    blockedGuests: Array.isArray(blockedGuests) ? blockedGuests : [],
+                    blockConfig,
+                    personalBlockList,
+                    personalBlockEnabled,
+                    blockedUidsRaw
+                };
+                this._bootSnapshot = snapshot;
+                window.__dcufBootController?.note?.('boot.storage-snapshot', { keys: values.length });
+                return snapshot;
+            }).catch((error) => {
+                this._bootSnapshotPromise = null;
+                throw error;
+            });
+            return this._bootSnapshotPromise;
+        },
+        getBootSnapshot() {
+            return this._bootSnapshot || null;
+        },
+        async reloadSettings(snapshot = null) {
+            let values;
+            if (snapshot) {
+                values = [
+                    snapshot.masterDisabled, snapshot.excludeRecommended, snapshot.threshold,
+                    snapshot.ratioEnabled, snapshot.ratioMin, snapshot.ratioMax,
+                    snapshot.blockGuestEnabled, snapshot.proxyBlockMode, snapshot.telecomBlockEnabled,
+                    snapshot.blockedGuests, snapshot.blockConfig, snapshot.personalBlockList,
+                    snapshot.personalBlockEnabled
+                ];
+            } else {
+                values = await Promise.all([
+                    GM_getValue(this.CONSTANTS.STORAGE_KEYS.MASTER_DISABLED, false),
+                    GM_getValue(this.CONSTANTS.STORAGE_KEYS.EXCLUDE_RECOMMENDED, false),
+                    GM_getValue(this.CONSTANTS.STORAGE_KEYS.THRESHOLD, 0),
+                    GM_getValue(this.CONSTANTS.STORAGE_KEYS.RATIO_ENABLED, false),
+                    GM_getValue(this.CONSTANTS.STORAGE_KEYS.RATIO_MIN, ''),
+                    GM_getValue(this.CONSTANTS.STORAGE_KEYS.RATIO_MAX, ''),
+                    GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_GUEST, false),
+                    GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_PROXY, 0),
+                    GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_TELECOM, false),
+                    this.getBlockedGuests(),
+                    GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG, {}),
+                    PersonalBlockModule.loadPersonalBlocks(),
+                    GM_getValue(this.CONSTANTS.STORAGE_KEYS.PERSONAL_BLOCK_ENABLED, true)
+                ]);
+            }
             const [
                 masterDisabled, excludeRecommended, threshold, ratioEnabled,
                 ratioMin, ratioMax, blockGuestEnabled, proxyBlockMode, telecomBlockEnabled,
                 blockedGuests, blockConfig, personalBlockList, personalBlockEnabled
-            ] = await Promise.all([
-                GM_getValue(this.CONSTANTS.STORAGE_KEYS.MASTER_DISABLED, false),
-                GM_getValue(this.CONSTANTS.STORAGE_KEYS.EXCLUDE_RECOMMENDED, false),
-                GM_getValue(this.CONSTANTS.STORAGE_KEYS.THRESHOLD, 0),
-                GM_getValue(this.CONSTANTS.STORAGE_KEYS.RATIO_ENABLED, false),
-                GM_getValue(this.CONSTANTS.STORAGE_KEYS.RATIO_MIN, ''),
-                GM_getValue(this.CONSTANTS.STORAGE_KEYS.RATIO_MAX, ''),
-                GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_GUEST, false),
-                GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_PROXY, 0),
-                GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_TELECOM, false),
-                this.getBlockedGuests(),
-                GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG, {}),
-                PersonalBlockModule.loadPersonalBlocks(),
-                // [신규] 개인 차단 기능 활성화 상태 로드 (기본값 true)
-                GM_getValue(this.CONSTANTS.STORAGE_KEYS.PERSONAL_BLOCK_ENABLED, true)
-            ]);
+            ] = values;
             const normalizedSettings = DCUF_SHARED_STORAGE.normalizeStoredFilterSettings({
                 [this.CONSTANTS.STORAGE_KEYS.MASTER_DISABLED]: masterDisabled,
                 [this.CONSTANTS.STORAGE_KEYS.EXCLUDE_RECOMMENDED]: excludeRecommended,
@@ -3161,9 +4190,11 @@
             const personalBlockUidSet = this.buildLookupSet(personalBlockList?.uids, (item) => item?.id);
             const personalBlockNicknameSet = this.buildLookupSet(personalBlockList?.nicknames);
             const personalBlockIpSet = this.buildLookupSet(personalBlockList?.ips);
-
             dcFilterSettings = {
-                masterDisabled: normalizedSettings.masterDisabled, excludeRecommended: normalizedSettings.excludeRecommended, threshold: normalizedSettings.threshold, ratioEnabled: normalizedSettings.ratioEnabled,
+                masterDisabled: normalizedSettings.masterDisabled,
+                excludeRecommended: normalizedSettings.excludeRecommended,
+                threshold: normalizedSettings.threshold,
+                ratioEnabled: normalizedSettings.ratioEnabled,
                 ratioMin: normalizedSettings.ratioMin,
                 ratioMax: normalizedSettings.ratioMax,
                 blockGuestEnabled: normalizedSettings.blockGuest,
@@ -3185,6 +4216,7 @@
                     rawBlockConfigPreview: typeof blockConfig?.ip === 'string' ? blockConfig.ip.split('||').slice(0, 20) : []
                 }));
             }
+            return dcFilterSettings;
         },
         getRefilterTargetSelectors(scope = 'all') {
             const commentSelectors = [
@@ -3367,21 +4399,40 @@
                 await this.refilterAllContent('visibilitychange-visible', { scheduleFollowups: false }); // 복구 패스 1회는 유지하고 무변화 지연 패스는 생략
             }
         },
-        async init() {
-            if (isInitialized) return; isInitialized = true;
-            this.installDebugApi();
-            this.debugLog('init', 'FilterModule init start', { version: '__VERSION__' });
-            await this.cleanupLegacyManagedBlockConfig();
-            await this.reloadSettings();
-            if (this.DEBUG_ENABLED) await this.debugDumpState('after init reload');
-
-            // [수정] 개념글 목록에서 스크립트가 조기 종료되던 문제를 해결하기 위해 아래 라인을 삭제했습니다.
-            // if (dcFilterSettings.excludeRecommended && window.location.pathname.includes('/lists/') && this.isRecommendedContext()) return;
-
-            await this.refreshBlockedUidsCache();
-            document.addEventListener('visibilitychange', this.handleVisibilityChange.bind(this));
-            this.initializeUniversalObserver();
-            if (await GM_getValue(this.CONSTANTS.STORAGE_KEYS.THRESHOLD) === undefined) { await GM_setValue(this.CONSTANTS.STORAGE_KEYS.THRESHOLD, 0); await this.showSettings(); }
+        init() {
+            if (this._initState === 'ready') return Promise.resolve('already-ready');
+            if (this._initState === 'initializing' && this._initPromise) return this._initPromise;
+            this._initState = 'initializing';
+            this._initPromise = (async () => {
+                this.installDebugApi();
+                this.debugLog('init', 'FilterModule init start', { version: '__VERSION__' });
+                const snapshot = await this.loadBootSnapshot();
+                await this.cleanupLegacyManagedBlockConfig(snapshot);
+                await this.reloadSettings(snapshot);
+                await this.refreshBlockedUidsCache(snapshot.blockedUidsRaw);
+                if (!this._visibilityChangeHandler) {
+                    this._visibilityChangeHandler = () => this.handleVisibilityChange();
+                    document.addEventListener('visibilitychange', this._visibilityChangeHandler);
+                }
+                this.initializeUniversalObserver();
+                window.__dcufBootController?.note?.('boot.local-filter-settings-ready');
+                if (snapshot.thresholdMissing) {
+                    const showFirstRunSettings = async () => {
+                        await GM_setValue(this.CONSTANTS.STORAGE_KEYS.THRESHOLD, 0);
+                        await this.showSettings();
+                    };
+                    const bootController = window.__dcufBootController;
+                    if (typeof bootController?.onReady === 'function') bootController.onReady(showFirstRunSettings);
+                    else queueMicrotask(showFirstRunSettings);
+                }
+                this._initState = 'ready';
+                return 'ready';
+            })().catch((error) => {
+                this._initState = 'failed';
+                this._initPromise = null;
+                throw error;
+            });
+            return this._initPromise;
         }
     };
 

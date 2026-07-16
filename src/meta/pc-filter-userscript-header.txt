@@ -5,6 +5,7 @@
 // @description  DCInside PC filter port based on the latest mobile filter runtime and shared filter core
 // @author       domato153
 // @match        https://gall.dcinside.com/*
+// @noframes
 // @grant        GM_setValue
 // @grant        GM_getValue
 // @grant        GM_registerMenuCommand

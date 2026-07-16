@@ -6,7 +6,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const rootDir = path.resolve(__dirname, '..');
 
-const VERSION = '1.9.4';
+const VERSION = '1.9.5';
 const OUTPUT_NAME = `dcinside_user_filter_v${VERSION}.user.js`;
 
 const PC_PARTS = [
@@ -26,6 +26,7 @@ const REQUIRED_SHARED_FILTER_UI_SELECTORS = [
     '#dc-personal-block-fab',
     '#dc-personal-block-drawer',
     '#dc-personal-block-size-panel',
+    '#dc-manual-block-panel',
     '#dc-selection-popup',
     '#dc-block-management-panel',
     '#dc-backup-popup',
@@ -173,7 +174,7 @@ function transformFilterModuleForSharedPort(source) {
 
     text = replaceOrThrow(
         text,
-        /PROXY_MODE:\s*\{[\s\S]*?KR_IP_RANGES:\s*\{[\s\S]*?\},\n\s*isMobile:/,
+        /PROXY_MODE:\s*\{[\s\S]*?\r?\n\s*isMobile:/,
         [
             'PROXY_MODE: DCUF_SHARED_IP.PROXY_MODE,',
             '        PROXY_STRICT_PREFIXES: DCUF_SHARED_IP.PROXY_STRICT_PREFIXES,',
@@ -182,6 +183,13 @@ function transformFilterModuleForSharedPort(source) {
             '        isMobile:',
         ].join('\n'),
         'shared proxy and KR range block'
+    );
+
+    text = replaceOrThrow(
+        text,
+        'isMobile: () => true,',
+        'isMobile: () => false,',
+        'PC target flag'
     );
 
     return text;

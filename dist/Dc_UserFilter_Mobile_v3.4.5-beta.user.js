@@ -1,10 +1,11 @@
 ﻿// ==UserScript==
 // @name         DC_UserFilter_Mobile
 // @namespace    http://tampermonkey.net/
-// @version      3.3.8-beta
+// @version      3.4.5-beta
 // @description  유저 필터링, UI 개선, 개인 차단/해제 기능
 // @author       domato153
 // @match        https://gall.dcinside.com/*
+// @noframes
 // @grant        GM_setValue
 // @grant        GM_getValue
 // @grant        GM_registerMenuCommand
@@ -24,220 +25,289 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
     'use strict';
 
     const __dcufRoot = (typeof unsafeWindow !== 'undefined' && unsafeWindow) ? unsafeWindow : window;
-    if (__dcufRoot.__dcufRuntimeLoaded) {
-        console.warn('DCinside User Filter: duplicate runtime detected, skip init.');
+    if (window.top !== window.self) return;
+
+    const previousBoot = __dcufRoot.__dcufBootController || window.__dcufBootController;
+    if (previousBoot) {
+        if (previousBoot.state === 'locked' || previousBoot.state === 'preparing') previousBoot.ensure('duplicate-runtime');
+        else if (previousBoot.state === 'degraded') previousBoot.requestRecovery?.('duplicate-runtime');
+        console.warn('DCinside User Filter: duplicate runtime detected; reusing bootstrap.');
         return;
     }
-    __dcufRoot.__dcufRuntimeLoaded = `dcuf-${Date.now()}`;
 
     if (!__dcufRoot.__dcufBfcacheOptOutInstalled) {
         __dcufRoot.__dcufBfcacheOptOutInstalled = true;
         const preventBackForwardCache = () => {};
-        try {
-            __dcufRoot.addEventListener('unload', preventBackForwardCache, { capture: true });
-        } catch (error) {
-            window.addEventListener('unload', preventBackForwardCache, { capture: true });
-        }
+        try { __dcufRoot.addEventListener('unload', preventBackForwardCache, { capture: true }); }
+        catch { window.addEventListener('unload', preventBackForwardCache, { capture: true }); }
     }
 
-
-    // [개선] 전역 스코프 오염 방지를 위해 스크립트 상태 변수를 IIFE 내부 스코프로 이동
     let dcFilterSettings = {};
     let userSumCache = {};
     let isInitialized = false;
     let isUiInitialized = false;
-    let activeShortcutObject = null; // [v2.1 추가] 현재 활성화된 단축키 객체
-    const ROOT_READY_CLASS = 'script-ui-ready';
-    const INITIAL_LOCK_STYLE_ID = 'dcuf-initial-lock-style';
-    const BOOT_OVERLAY_ID = 'dcuf-boot-overlay';
-    const BOOT_OVERLAY_STYLE_ID = 'dcuf-boot-overlay-style';
-    const BOOT_UI_WATCHDOG_MAX_MS = 8000;
-    const BOOT_UI_WATCHDOG_INTERVAL_MS = 50;
-    let bootUiWatchdogTimerId = 0;
-    let bootUiWatchdogStartedAt = 0;
-    let bootUiWatchdogDomReadyHandler = null;
-    let bootUiWatchdogLoadHandler = null;
+    let activeShortcutObject = null;
 
-    const isBootOverlayTargetPage = () => true;
-    const isRootUiReady = () => !!document.documentElement?.classList.contains(ROOT_READY_CLASS);
-    const removeBootOverlay = (reason = 'unknown') => {
-        const overlay = document.getElementById(BOOT_OVERLAY_ID);
-        if (overlay) overlay.remove();
-    };
+    const READY_CLASS = 'script-ui-ready';
+    const STATE_ATTR = 'data-dcuf-boot-state';
+    const LOCK_STYLE_ID = 'dcuf-initial-lock-style';
+    const OVERLAY_ID = 'dcuf-boot-overlay';
+    const OVERLAY_STYLE_ID = 'dcuf-boot-overlay-style';
+    const DEGRADED_STYLE_ID = 'dcuf-degraded-filter-style';
+    const DEGRADED_BANNER_ID = 'dcuf-degraded-banner';
+    const testBootConfig = __dcufRoot.__DCUF_TESTBED_CONFIG__?.boot || null;
+    const ABSOLUTE_DEADLINE_MS = Math.max(20, Number(testBootConfig?.absoluteDeadlineMs) || 15000);
+    const CRITICAL_DEADLINE_MS = Math.max(20, Number(testBootConfig?.criticalDeadlineMs) || 6000);
+    const startedAt = Date.now();
+    const diagnosticsBuffer = [];
+    const rollbackHandlers = new Set();
+    const recoveryHandlers = new Set();
+    const readyHandlers = new Set();
+    let ensureTimer = 0;
+    let absoluteTimer = 0;
+    let criticalTimer = 0;
+    let domReadyListener = null;
+    let loadListener = null;
 
-    const ensureBootOverlay = () => {
-        if (!isBootOverlayTargetPage()) return;
-
-        const mountPoint = document.head || document.documentElement;
-        if (mountPoint && !document.getElementById(BOOT_OVERLAY_STYLE_ID)) {
-            const style = document.createElement('style');
-            style.id = BOOT_OVERLAY_STYLE_ID;
-            style.textContent = `
-                #${BOOT_OVERLAY_ID} {
-                    position: fixed;
-                    inset: 0;
-                    z-index: 2147483646;
-                    background:
-                        radial-gradient(circle at top, rgba(255,255,255,0.96), rgba(245,247,251,0.98) 45%, rgba(238,241,246,0.99)),
-                        linear-gradient(180deg, #f7f9fc 0%, #eef2f7 100%);
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    padding: 24px;
-                    pointer-events: auto;
-                }
-                #${BOOT_OVERLAY_ID} .dcuf-boot-card {
-                    width: min(420px, calc(100vw - 32px));
-                    border: 1px solid rgba(197, 206, 218, 0.9);
-                    border-radius: 18px;
-                    background: rgba(255,255,255,0.96);
-                    box-shadow: 0 20px 48px rgba(31, 45, 68, 0.12);
-                    padding: 22px 20px 18px;
-                    color: #2b3340;
-                    text-align: center;
-                }
-                #${BOOT_OVERLAY_ID} .dcuf-boot-title {
-                    font-size: 17px;
-                    font-weight: 700;
-                    letter-spacing: -0.01em;
-                    margin-bottom: 8px;
-                }
-                #${BOOT_OVERLAY_ID} .dcuf-boot-copy {
-                    font-size: 13px;
-                    line-height: 1.55;
-                    color: #5a6575;
-                    margin-bottom: 14px;
-                }
-                #${BOOT_OVERLAY_ID} .dcuf-boot-bar {
-                    height: 4px;
-                    border-radius: 999px;
-                    background: rgba(203, 211, 223, 0.6);
-                    overflow: hidden;
-                }
-                #${BOOT_OVERLAY_ID} .dcuf-boot-bar::before {
-                    content: '';
-                    display: block;
-                    width: 42%;
-                    height: 100%;
-                    border-radius: inherit;
-                    background: linear-gradient(90deg, #245bda 0%, #5d87f0 100%);
-                    animation: dcuf-boot-progress 1s ease-in-out infinite;
-                }
-                html.dc-filter-dark-mode #${BOOT_OVERLAY_ID} {
-                    background:
-                        radial-gradient(circle at top, rgba(34,39,48,0.95), rgba(20,24,31,0.98) 48%, rgba(14,17,22,0.99)),
-                        linear-gradient(180deg, #1d222a 0%, #11151b 100%);
-                }
-                html.dc-filter-dark-mode #${BOOT_OVERLAY_ID} .dcuf-boot-card {
-                    border-color: rgba(71, 81, 96, 0.92);
-                    background: rgba(28, 33, 41, 0.96);
-                    box-shadow: 0 20px 48px rgba(0, 0, 0, 0.34);
-                    color: #e7ebf2;
-                }
-                html.dc-filter-dark-mode #${BOOT_OVERLAY_ID} .dcuf-boot-copy {
-                    color: #adb7c7;
-                }
-                html.dc-filter-dark-mode #${BOOT_OVERLAY_ID} .dcuf-boot-bar {
-                    background: rgba(63, 73, 88, 0.9);
-                }
-                @keyframes dcuf-boot-progress {
-                    0% { transform: translateX(-120%); }
-                    100% { transform: translateX(260%); }
-                }
-            `;
-            mountPoint.appendChild(style);
+    const pageType = ((window.location.pathname || '').match(/\/board\/(lists|view|write)(?:\/|$)/) || [])[1] || 'other';
+    const isTargetPage = () => pageType !== 'other';
+    const note = (label, detail = null) => {
+        const entry = { label, detail, ts: Date.now(), elapsedMs: Date.now() - startedAt };
+        const api = window.__dcufDiagnostics;
+        if (typeof api?.note === 'function') api.note(label, entry);
+        else {
+            diagnosticsBuffer.push(entry);
+            if (diagnosticsBuffer.length > 40) diagnosticsBuffer.shift();
         }
-
-        if (document.getElementById(BOOT_OVERLAY_ID)) return;
-        if (!document.documentElement) return;
-
-        const overlay = document.createElement('div');
-        overlay.id = BOOT_OVERLAY_ID;
-        overlay.innerHTML = `
-            <div class="dcuf-boot-card">
-                <div class="dcuf-boot-title">UI 준비 중</div>
-                <div class="dcuf-boot-copy">광고 차단과 충돌하면 로딩이 지연될 수 있습니다.<br>DCInside에서는 광고 차단을 꺼주세요.</div>
-                <div class="dcuf-boot-bar" aria-hidden="true"></div>
-            </div>
+    };
+    const flushDiagnostics = () => {
+        const api = window.__dcufDiagnostics;
+        if (typeof api?.note !== 'function') return;
+        diagnosticsBuffer.splice(0).forEach((entry) => api.note(entry.label, entry));
+    };
+    const removeBootChrome = () => {
+        document.getElementById(OVERLAY_ID)?.remove();
+        document.getElementById(LOCK_STYLE_ID)?.remove();
+        document.getElementById(OVERLAY_STYLE_ID)?.remove();
+    };
+    const stopTimers = () => {
+        if (ensureTimer) clearInterval(ensureTimer);
+        if (absoluteTimer) clearTimeout(absoluteTimer);
+        if (criticalTimer) clearTimeout(criticalTimer);
+        ensureTimer = absoluteTimer = criticalTimer = 0;
+        if (domReadyListener) document.removeEventListener('DOMContentLoaded', domReadyListener);
+        if (loadListener) window.removeEventListener('load', loadListener);
+        domReadyListener = loadListener = null;
+    };
+    const ensureLockStyle = () => {
+        const mount = document.head || document.documentElement;
+        if (!mount || document.getElementById(LOCK_STYLE_ID)) return;
+        const style = document.createElement('style');
+        style.id = LOCK_STYLE_ID;
+        style.textContent = `
+            html[${STATE_ATTR}="locked"] body,
+            html[${STATE_ATTR}="preparing"] body {
+                opacity: 0 !important;
+                visibility: hidden !important;
+                pointer-events: none !important;
+            }
         `;
+        mount.appendChild(style);
+    };
+    const ensureOverlay = () => {
+        if (!isTargetPage() || !document.documentElement) return;
+        const mount = document.head || document.documentElement;
+        if (mount && !document.getElementById(OVERLAY_STYLE_ID)) {
+            const style = document.createElement('style');
+            style.id = OVERLAY_STYLE_ID;
+            style.textContent = `
+                #${OVERLAY_ID} {
+                    position: fixed !important; inset: 0 !important; z-index: 2147483646 !important;
+                    box-sizing: border-box !important; display: flex !important; align-items: center !important;
+                    justify-content: center !important; width: 100vw !important; height: 100vh !important;
+                    margin: 0 !important; padding: 24px !important; visibility: visible !important;
+                    opacity: 1 !important; pointer-events: auto !important;
+                    background: linear-gradient(180deg,#f7f9fc,#eef2f7) !important;
+                }
+                #${OVERLAY_ID} .dcuf-boot-card {
+                    box-sizing: border-box !important; width: min(420px,calc(100vw - 32px)) !important;
+                    padding: 22px 20px 18px !important; border: 1px solid #c5ceda !important;
+                    border-radius: 18px !important; background: #fff !important; color: #2b3340 !important;
+                    text-align: center !important; box-shadow: 0 20px 48px rgba(31,45,68,.12) !important;
+                }
+                #${OVERLAY_ID} .dcuf-boot-title { margin-bottom: 8px !important; font: 700 17px/1.35 sans-serif !important; }
+                #${OVERLAY_ID} .dcuf-boot-copy { margin-bottom: 14px !important; color: #5a6575 !important; font: 500 13px/1.55 sans-serif !important; }
+                #${OVERLAY_ID} .dcuf-boot-bar { height: 4px !important; overflow: hidden !important; border-radius: 999px !important; background: #cbd3df !important; }
+                #${OVERLAY_ID} .dcuf-boot-bar::before {
+                    content: '' !important; display: block !important; width: 42% !important; height: 100% !important;
+                    border-radius: inherit !important; background: linear-gradient(90deg,#245bda,#5d87f0) !important;
+                    animation: dcuf-boot-progress 1s ease-in-out infinite !important;
+                }
+                html.dc-filter-dark-mode #${OVERLAY_ID} { background: linear-gradient(180deg,#1d222a,#11151b) !important; }
+                html.dc-filter-dark-mode #${OVERLAY_ID} .dcuf-boot-card { border-color: #475160 !important; background: #1c2129 !important; color: #e7ebf2 !important; }
+                @keyframes dcuf-boot-progress { from { transform: translateX(-120%); } to { transform: translateX(260%); } }
+                @media (prefers-reduced-motion: reduce) { #${OVERLAY_ID} .dcuf-boot-bar::before { width: 100% !important; animation: none !important; } }
+            `;
+            mount.appendChild(style);
+        }
+        if (document.getElementById(OVERLAY_ID)) return;
+        const overlay = document.createElement('div');
+        overlay.id = OVERLAY_ID;
+        overlay.setAttribute('role', 'status');
+        overlay.setAttribute('aria-live', 'polite');
+        overlay.setAttribute('aria-atomic', 'true');
+        const card = document.createElement('div');
+        card.className = 'dcuf-boot-card';
+        const title = document.createElement('div');
+        title.className = 'dcuf-boot-title';
+        title.textContent = 'UI 준비 중';
+        const copy = document.createElement('div');
+        copy.className = 'dcuf-boot-copy';
+        copy.append(
+            document.createTextNode('광고 차단과 충돌하면 로딩이 지연될 수 있습니다.'),
+            document.createElement('br'),
+            document.createTextNode('DCInside에서는 광고 차단을 꺼주세요.')
+        );
+        const bar = document.createElement('div');
+        bar.className = 'dcuf-boot-bar';
+        bar.setAttribute('aria-hidden', 'true');
+        card.append(title, copy, bar);
+        overlay.appendChild(card);
         document.documentElement.appendChild(overlay);
     };
-
-    const markUiReady = () => {
-        const root = document.documentElement;
-        if (root) root.classList.add(ROOT_READY_CLASS);
-
-        const body = document.body;
-        if (body) body.classList.add(ROOT_READY_CLASS);
-
-        stopBootUiWatchdog();
-        removeBootOverlay('mark-ui-ready');
-    };
-
-    const injectInitialLockStyle = () => {
-        const mountPoint = document.head || document.documentElement;
-        if (!mountPoint || document.getElementById(INITIAL_LOCK_STYLE_ID)) return;
-
-        const style = document.createElement('style');
-        style.id = INITIAL_LOCK_STYLE_ID;
-        style.textContent = `
-            html:not(.${ROOT_READY_CLASS}) body {
-                visibility: hidden !important;
-            }
-        `;
-        mountPoint.appendChild(style);
-    };
-
-    const ensureBootUi = (reason = 'ensure-boot-ui') => {
-        if (!isBootOverlayTargetPage() || isRootUiReady()) return true;
-        injectInitialLockStyle();
-        ensureBootOverlay();
-        return !!document.getElementById(INITIAL_LOCK_STYLE_ID) && !!document.getElementById(BOOT_OVERLAY_ID);
-    };
-
-    const stopBootUiWatchdog = () => {
-        if (bootUiWatchdogTimerId) {
-            window.clearInterval(bootUiWatchdogTimerId);
-            bootUiWatchdogTimerId = 0;
+    const ensureDegradedUi = (reason) => {
+        if ((pageType === 'list' || pageType === 'view') && !document.getElementById(DEGRADED_STYLE_ID)) {
+            const style = document.createElement('style');
+            style.id = DEGRADED_STYLE_ID;
+            style.textContent = `
+                html[${STATE_ATTR}="degraded"] :is(
+                    .gall_listwrap table.gall_list,.list_wrap table.gall_list,.custom-mobile-list,
+                    .gall_exposure_list,#focus_cmt .comment_box,div[id^="comment_wrap_"] .comment_box,
+                    .view_comment.image_comment .comment_box
+                ) { opacity: 0 !important; visibility: hidden !important; pointer-events: none !important; }
+            `;
+            (document.head || document.documentElement)?.appendChild(style);
         }
-        if (bootUiWatchdogDomReadyHandler) {
-            document.removeEventListener('DOMContentLoaded', bootUiWatchdogDomReadyHandler);
-            bootUiWatchdogDomReadyHandler = null;
-        }
-        if (bootUiWatchdogLoadHandler) {
-            window.removeEventListener('load', bootUiWatchdogLoadHandler);
-            bootUiWatchdogLoadHandler = null;
-        }
+        if (!document.body || document.getElementById(DEGRADED_BANNER_ID)) return;
+        const banner = document.createElement('aside');
+        banner.id = DEGRADED_BANNER_ID;
+        banner.dataset.reason = reason;
+        banner.setAttribute('role', 'status');
+        banner.style.cssText = 'position:fixed!important;left:12px!important;right:12px!important;bottom:12px!important;z-index:2147483645!important;box-sizing:border-box!important;display:flex!important;align-items:center!important;justify-content:space-between!important;gap:12px!important;padding:12px 14px!important;border:1px solid #d5a93a!important;border-radius:12px!important;background:#fff8dd!important;color:#4f3b00!important;box-shadow:0 8px 28px rgba(0,0,0,.18)!important;font:600 13px/1.4 sans-serif!important;pointer-events:auto!important;visibility:visible!important;opacity:1!important;';
+        const message = document.createElement('span');
+        message.textContent = pageType === 'write' ? 'DCUF failed; the native write page is available.' : 'DCUF is recovering; filterable areas are temporarily withheld.';
+        const reload = document.createElement('button');
+        reload.type = 'button';
+        reload.textContent = 'Reload';
+        reload.style.cssText = 'min-width:76px!important;min-height:40px!important;padding:8px 12px!important;border:1px solid #9c7716!important;border-radius:9px!important;background:#fff!important;color:#4f3b00!important;font-weight:700!important;cursor:pointer!important;';
+        reload.addEventListener('click', () => location.reload());
+        banner.append(message, reload);
+        document.body.appendChild(banner);
     };
 
+    const bootController = {
+        state: isTargetPage() ? 'locked' : 'idle',
+        pageType,
+        startedAt,
+        ensure(reason = 'ensure') {
+            if (!isTargetPage() || this.state === 'ready' || this.state === 'degraded') return true;
+            document.documentElement?.setAttribute(STATE_ATTR, this.state === 'preparing' ? 'preparing' : 'locked');
+            ensureLockStyle();
+            ensureOverlay();
+            note('boot.ensure', { reason });
+            return !!document.getElementById(LOCK_STYLE_ID) && !!document.getElementById(OVERLAY_ID);
+        },
+        startPreparing(reason = 'main') {
+            if (!isTargetPage() || this.state === 'ready' || this.state === 'degraded') return;
+            this.state = 'preparing';
+            document.documentElement?.setAttribute(STATE_ATTR, 'preparing');
+            note('boot.preparing', { reason });
+        },
+        registerRollback(fn) { if (typeof fn === 'function') rollbackHandlers.add(fn); return () => rollbackHandlers.delete(fn); },
+        registerRecovery(fn) { if (typeof fn === 'function') recoveryHandlers.add(fn); return () => recoveryHandlers.delete(fn); },
+        onReady(fn) {
+            if (typeof fn !== 'function') return () => {};
+            if (this.state === 'ready') queueMicrotask(fn);
+            else readyHandlers.add(fn);
+            return () => readyHandlers.delete(fn);
+        },
+        requestRecovery(reason = 'manual') {
+            recoveryHandlers.forEach((fn) => { try { fn(reason); } catch (error) { console.warn('[DCUF boot] recovery failed:', error); } });
+        },
+        markReady(reason = 'ready') {
+            if (this.state === 'ready') return;
+            const recovered = this.state === 'degraded';
+            this.state = 'ready';
+            __dcufRoot.__dcufRuntimeState = 'ready';
+            document.documentElement?.setAttribute(STATE_ATTR, 'ready');
+            document.documentElement?.classList.add(READY_CLASS);
+            document.body?.classList.add(READY_CLASS);
+            stopTimers();
+            removeBootChrome();
+            document.getElementById(DEGRADED_STYLE_ID)?.remove();
+            document.getElementById(DEGRADED_BANNER_ID)?.remove();
+            note(recovered ? 'boot.recovered' : 'boot.ready', { reason });
+            flushDiagnostics();
+            readyHandlers.forEach((fn) => { try { fn(); } catch (error) { console.warn('[DCUF boot] ready handler failed:', error); } });
+            readyHandlers.clear();
+            window.dispatchEvent(new CustomEvent('dcuf:boot-ready', { detail: { reason, recovered } }));
+        },
+        degrade(reason = 'deadline') {
+            if (this.state === 'ready' || this.state === 'degraded') return;
+            rollbackHandlers.forEach((fn) => { try { fn(reason); } catch (error) { console.warn('[DCUF boot] rollback failed:', error); } });
+            ensureDegradedUi(reason);
+            this.state = 'degraded';
+            __dcufRoot.__dcufRuntimeState = 'degraded';
+            document.documentElement?.setAttribute(STATE_ATTR, 'degraded');
+            document.documentElement?.classList.add(READY_CLASS);
+            document.body?.classList.add(READY_CLASS);
+            stopTimers();
+            removeBootChrome();
+            note('boot.degraded', { reason });
+            flushDiagnostics();
+            window.dispatchEvent(new CustomEvent('dcuf:boot-degraded', { detail: { reason } }));
+        },
+        note,
+        flushDiagnostics
+    };
+
+    const markUiReady = (reason = 'ready') => bootController.markReady(reason);
+    const ensureBootUi = (reason = 'ensure-boot-ui') => bootController.ensure(reason);
     const startBootUiWatchdog = () => {
-        if (bootUiWatchdogTimerId || isRootUiReady() || !isBootOverlayTargetPage()) return;
-        bootUiWatchdogStartedAt = Date.now();
-
-        const tick = () => {
-            if (isRootUiReady()) {
-                stopBootUiWatchdog();
-                return;
-            }
-
-            ensureBootUi('watchdog');
-            if (Date.now() - bootUiWatchdogStartedAt >= BOOT_UI_WATCHDOG_MAX_MS) {
-                stopBootUiWatchdog();
+        if (!isTargetPage() || ensureTimer) return;
+        const tick = () => bootController.ensure('watchdog');
+        ensureTimer = setInterval(tick, 80);
+        absoluteTimer = setTimeout(() => bootController.degrade('absolute-deadline'), ABSOLUTE_DEADLINE_MS);
+        domReadyListener = () => {
+            note('boot.dom-content-loaded');
+            tick();
+            if ((pageType === 'list' || pageType === 'view') && !criticalTimer) {
+                criticalTimer = setTimeout(() => bootController.degrade('critical-deadline'), CRITICAL_DEADLINE_MS);
             }
         };
-
-        bootUiWatchdogTimerId = window.setInterval(tick, BOOT_UI_WATCHDOG_INTERVAL_MS);
-        bootUiWatchdogDomReadyHandler = () => tick();
-        bootUiWatchdogLoadHandler = () => tick();
-        document.addEventListener('DOMContentLoaded', bootUiWatchdogDomReadyHandler, { once: true });
-        window.addEventListener('load', bootUiWatchdogLoadHandler, { once: true });
+        loadListener = tick;
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', domReadyListener, { once: true });
+        } else {
+            domReadyListener();
+        }
+        window.addEventListener('load', loadListener, { once: true });
         tick();
     };
 
+    __dcufRoot.__dcufRuntimeLoaded = `dcuf-${Date.now()}`;
+    __dcufRoot.__dcufRuntimeState = 'initializing';
+    __dcufRoot.__dcufBootController = bootController;
+    window.__dcufBootController = bootController;
     __dcufRoot.__dcufEnsureBootUi = ensureBootUi;
-    injectInitialLockStyle();
-    ensureBootOverlay();
-    startBootUiWatchdog();
+    window.__dcufEnsureBootUi = ensureBootUi;
+    note('boot.start', { pageType });
+    if (isTargetPage()) {
+        document.documentElement?.setAttribute(STATE_ATTR, 'locked');
+        ensureLockStyle();
+        ensureOverlay();
+        startBootUiWatchdog();
+    }
     // Phase 2 runtime shared prelude
 /**
  * Shared storage/schema constants extracted from v2.7.5.4.
@@ -841,8 +911,11 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             '.custom-bottom-controls'
         ].join(', '),
         _mutationObserver: null,
+        _mutationObserverTarget: null,
+        _bodyMountObserver: null,
         _mutationObserverReady: false,
         _mutationSubscribers: new Map(),
+        _immediateMutationSubscribers: new Map(),
         _pendingMutationRecords: [],
         _pendingMutationRafId: 0,
         _pendingMutationTimerId: 0,
@@ -1074,8 +1147,37 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             }
         },
 
+        dispatchImmediateMutations(records) {
+            if (!Array.isArray(records) || records.length === 0) return;
+            if (!(this._immediateMutationSubscribers instanceof Map) || this._immediateMutationSubscribers.size === 0) return;
+
+            const payload = this.buildMutationPayload(records);
+            this.incrementDiagnostic('mutation.immediateDispatches');
+            this.setDiagnosticGauge('mutation.immediateSubscribers', this._immediateMutationSubscribers.size);
+
+            const measureDispatch = this._diagnosticsEnabled && typeof performance?.now === 'function';
+            const dispatchStartedAt = measureDispatch ? performance.now() : 0;
+            this._immediateMutationSubscribers.forEach((listener, key) => {
+                try {
+                    listener(payload);
+                } catch (error) {
+                    console.error('[DCUF runtime] immediate mutation subscriber failed:', key, error);
+                }
+            });
+            if (measureDispatch) {
+                this.setDiagnosticGauge(
+                    'mutation.lastImmediateDispatchDurationMs',
+                    Math.round((performance.now() - dispatchStartedAt) * 1000) / 1000
+                );
+            }
+        },
+
         queueMutationRecords(records) {
             if (!Array.isArray(records) || records.length === 0) return;
+            // MutationObserver callbacks run before the next paint. Critical visibility
+            // subscribers must see the fresh records here; the ordinary bus remains
+            // animation-frame batched for heavier UI and async work.
+            this.dispatchImmediateMutations(records);
             this._pendingMutationRecords.push(...records);
             this.incrementDiagnostic('mutation.bursts');
             this.incrementDiagnostic('mutation.records', records.length);
@@ -1092,11 +1194,28 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             }, 50);
         },
 
+        flushPendingMutations(reason = 'manual-flush') {
+            this.installDiagnosticsApi();
+            if (this._mutationObserver) {
+                const records = this._mutationObserver.takeRecords();
+                if (records.length > 0) {
+                    this.dispatchImmediateMutations(records);
+                    this._pendingMutationRecords.push(...records);
+                }
+            }
+            if (this._pendingMutationRecords.length > 0) this.dispatchQueuedMutations();
+            this.noteDiagnostic('mutation.bus.flushed', { reason, generation: this._mutationGeneration });
+            return this._mutationGeneration;
+        },
+
         ensureMutationBus() {
             this.installDiagnosticsApi();
-            if (this._mutationObserverReady) return true;
-
             const observerTarget = document.body;
+            if (this._mutationObserverReady
+                && this._mutationObserverTarget === observerTarget
+                && observerTarget?.isConnected) {
+                return true;
+            }
             if (!observerTarget) {
                 if (!this._awaitingBodyForMutationBus) {
                     this._awaitingBodyForMutationBus = true;
@@ -1106,6 +1225,15 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                     }, { once: true });
                 }
                 return false;
+            }
+
+            if (this._mutationObserver) {
+                const pending = this._mutationObserver.takeRecords();
+                if (pending.length > 0) {
+                    this.dispatchImmediateMutations(pending);
+                    this._pendingMutationRecords.push(...pending);
+                }
+                this._mutationObserver.disconnect();
             }
 
             this._mutationObserver = new MutationObserver((records) => {
@@ -1118,8 +1246,19 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 characterData: true,
                 attributeFilter: ['class', 'style', 'src', 'id', 'data-uid', 'data-nick', 'data-ip', 'data-no', 'p-no']
             });
+            this._mutationObserverTarget = observerTarget;
             this._mutationObserverReady = true;
-            this.noteDiagnostic('mutation.bus.ready', { target: 'document.body' });
+            if (!this._bodyMountObserver && document.documentElement) {
+                this._bodyMountObserver = new MutationObserver((records) => {
+                    if (this._mutationObserverTarget !== document.body) {
+                        this.ensureMutationBus();
+                        this.queueMutationRecords(records);
+                    }
+                });
+                this._bodyMountObserver.observe(document.documentElement, { childList: true });
+            }
+            this.noteDiagnostic('mutation.bus.ready', { target: 'document.body', rebound: true });
+            if (this._pendingMutationRecords.length > 0) this.dispatchQueuedMutations();
             return true;
         },
 
@@ -1131,6 +1270,17 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             return () => {
                 this._mutationSubscribers.delete(key);
                 this.setDiagnosticGauge('mutation.subscribers', this._mutationSubscribers.size);
+            };
+        },
+
+        subscribeImmediateMutations(key, listener) {
+            if (typeof listener !== 'function') return () => {};
+            this.ensureMutationBus();
+            this._immediateMutationSubscribers.set(key, listener);
+            this.setDiagnosticGauge('mutation.immediateSubscribers', this._immediateMutationSubscribers.size);
+            return () => {
+                this._immediateMutationSubscribers.delete(key);
+                this.setDiagnosticGauge('mutation.immediateSubscribers', this._immediateMutationSubscribers.size);
             };
         },
 
@@ -2221,6 +2371,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         #dc-selection-popup,
         #dc-backup-popup,
         #dc-block-management-panel {
+            box-sizing: border-box !important;
             border: 1px solid #d9dee7 !important;
             border-radius: 14px !important;
             box-shadow: 0 18px 42px rgba(26, 39, 60, 0.18) !important;
@@ -2629,6 +2780,598 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 transition: none !important;
             }
         }
+
+        /* [v3.4.5-beta] Script-owned soft-depth control surfaces */
+        #dc-personal-block-fab {
+            background: linear-gradient(180deg, #fff 0%, #eef4ff 100%) !important;
+            color: #29466f !important;
+            border: 1px solid rgba(127,154,196,.46) !important;
+            box-shadow: 0 14px 30px rgba(40,68,112,.2), 0 3px 8px rgba(40,68,112,.12), inset 0 1px 0 #fff !important;
+        }
+        #dc-personal-block-fab:hover {
+            background: linear-gradient(180deg, #fff 0%, #e7f0ff 100%) !important;
+            border-color: rgba(86,124,185,.56) !important;
+            box-shadow: 0 17px 34px rgba(40,68,112,.24), inset 0 1px 0 #fff !important;
+        }
+        #dc-personal-block-fab:active {
+            transform: translateY(2px) scale(.98) !important;
+            box-shadow: 0 7px 16px rgba(40,68,112,.17), inset 0 1px 3px rgba(40,68,112,.12) !important;
+        }
+        #dc-personal-block-drawer {
+            width: 260px !important;
+            min-width: 260px !important;
+            max-height: min(440px, calc(100dvh - 24px)) !important;
+            gap: 6px !important;
+            padding: 9px !important;
+            overflow-y: auto !important;
+            border: 1px solid rgba(151,171,202,.5) !important;
+            border-radius: 18px !important;
+            background: linear-gradient(145deg, rgba(255,255,255,.98), rgba(241,246,255,.98)) !important;
+            box-shadow: 0 22px 48px rgba(35,55,91,.25), 0 6px 16px rgba(35,55,91,.12), inset 0 1px 0 #fff !important;
+        }
+        #dc-personal-block-drawer button {
+            display: grid !important;
+            grid-template-columns: 36px minmax(0,1fr) !important;
+            align-items: center !important;
+            gap: 10px !important;
+            min-height: 58px !important;
+            padding: 8px 10px !important;
+            border: 1px solid transparent !important;
+            border-radius: 13px !important;
+            white-space: normal !important;
+            transition: transform .14s ease, background .14s ease, border-color .14s ease, box-shadow .14s ease !important;
+        }
+        #dc-personal-block-drawer button:hover,
+        #dc-personal-block-drawer button:focus-visible {
+            background: linear-gradient(180deg,#fff,#eaf2ff) !important;
+            border-color: #cfddf2 !important;
+            box-shadow: 0 7px 16px rgba(52,83,132,.12), inset 0 1px 0 #fff !important;
+        }
+        #dc-personal-block-drawer button:active { transform: translateY(1px) !important; }
+        #dc-personal-block-drawer .dcuf-menu-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 34px;
+            height: 34px;
+            border: 1px solid #cedbf0;
+            border-radius: 11px;
+            background: linear-gradient(145deg,#fff,#e6efff);
+            color: #3b71fd;
+            font-size: 19px;
+            font-weight: 800;
+            box-shadow: 0 5px 11px rgba(59,113,253,.13), inset 0 1px 0 #fff;
+        }
+        #dc-personal-block-drawer button > span:last-child { min-width: 0; }
+        #dc-personal-block-drawer strong,
+        #dc-personal-block-drawer small { display: block; }
+        #dc-personal-block-drawer strong { color: #263b5a; font-size: 14px; line-height: 1.25; }
+        #dc-personal-block-drawer small { margin-top: 3px; color: #71819a; font-size: 11px; font-weight: 500; line-height: 1.25; }
+
+        #dc-manual-block-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 2147483647;
+            box-sizing: border-box;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            background: rgba(20,31,50,.48);
+            backdrop-filter: blur(3px);
+        }
+        #dc-manual-block-panel {
+            box-sizing: border-box;
+            width: min(430px, calc(100vw - 32px));
+            max-height: calc(100dvh - 32px);
+            overflow: hidden auto;
+            border: 1px solid rgba(151,171,202,.56);
+            border-radius: 22px;
+            background: linear-gradient(155deg,#fff,#f3f7ff);
+            color: #20334f;
+            box-shadow: 0 28px 70px rgba(18,34,60,.32), 0 8px 24px rgba(18,34,60,.14), inset 0 1px 0 #fff;
+            animation: dcuf-popup-fade-in .18s ease-out;
+        }
+        #dc-manual-block-panel .dcuf-manual-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            min-height: 68px;
+            padding: 14px 14px 13px 20px;
+            border-bottom: 1px solid #dce5f3;
+            background: linear-gradient(135deg,#eff5ff,#fff);
+        }
+        #dc-manual-block-panel .dcuf-manual-kicker,
+        #dc-block-management-panel .panel-kicker {
+            display: block;
+            margin-bottom: 3px;
+            color: #6684b4;
+            font-size: 9px;
+            font-weight: 900;
+            letter-spacing: .14em;
+        }
+        #dc-manual-block-panel h3 { margin: 0; color: #1f3555; font-size: 20px; line-height: 1.15; }
+        #dc-manual-block-panel .dcuf-manual-close,
+        #dc-block-management-panel .panel-close-btn,
+        #dc-backup-popup .popup-close-btn,
+        #dcinside-filter-setting #dcinside-filter-close {
+            box-sizing: border-box !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            width: 44px !important;
+            min-width: 44px !important;
+            height: 44px !important;
+            min-height: 44px !important;
+            padding: 0 !important;
+            border: 1px solid transparent !important;
+            border-radius: 13px !important;
+            background: transparent !important;
+            color: #61728d !important;
+            font-size: 23px !important;
+            line-height: 1 !important;
+        }
+        #dc-manual-block-panel .dcuf-manual-close:hover,
+        #dc-block-management-panel .panel-close-btn:hover,
+        #dc-backup-popup .popup-close-btn:hover,
+        #dcinside-filter-setting #dcinside-filter-close:hover {
+            border-color: #d8e2f0 !important;
+            background: #edf3fb !important;
+            color: #29405f !important;
+        }
+        #dc-manual-block-panel .dcuf-manual-form { padding: 18px 20px 20px; }
+        #dc-manual-block-panel .dcuf-manual-type-tabs {
+            display: grid;
+            grid-template-columns: repeat(3,1fr);
+            gap: 4px;
+            padding: 4px;
+            border: 1px solid #d6e0ef;
+            border-radius: 14px;
+            background: #eaf0f8;
+            box-shadow: inset 0 2px 5px rgba(48,72,111,.08);
+        }
+        #dc-manual-block-panel [data-manual-block-type] {
+            min-height: 42px;
+            padding: 8px 6px;
+            border: 1px solid transparent;
+            border-radius: 10px;
+            background: transparent;
+            color: #65758d;
+            font: 700 13px/1.2 inherit;
+            cursor: pointer;
+        }
+        #dc-manual-block-panel [data-manual-block-type][aria-pressed="true"] {
+            border-color: #ccdaf0;
+            background: linear-gradient(180deg,#fff,#edf4ff);
+            color: #3265d2;
+            box-shadow: 0 5px 12px rgba(46,81,139,.16), inset 0 1px 0 #fff;
+        }
+        #dc-manual-block-panel .dcuf-manual-field {
+            display: grid;
+            gap: 7px;
+            margin-top: 17px;
+            color: #314867;
+            font-size: 13px;
+            font-weight: 800;
+        }
+        #dc-manual-block-panel .dcuf-manual-field[hidden] { display: none !important; }
+        #dc-manual-block-panel .dcuf-manual-field small { color: #8a98ac; font-weight: 500; }
+        #dc-manual-block-panel .dcuf-manual-field input {
+            box-sizing: border-box;
+            width: 100%;
+            min-height: 48px;
+            padding: 11px 13px;
+            border: 1px solid #cad7e9;
+            border-radius: 12px;
+            outline: 0;
+            background: #fff;
+            color: #1d2f49;
+            font: 600 15px/1.3 inherit;
+            box-shadow: inset 0 2px 5px rgba(37,60,96,.08), 0 1px 0 #fff;
+        }
+        #dc-manual-block-panel .dcuf-manual-field input:focus {
+            border-color: #7199f5;
+            box-shadow: 0 0 0 3px rgba(59,113,253,.15), inset 0 1px 3px rgba(37,60,96,.08);
+        }
+        #dc-manual-block-panel .dcuf-manual-hint {
+            min-height: 34px;
+            margin: 10px 2px 0;
+            color: #6d7d94;
+            font-size: 12px;
+            line-height: 1.45;
+        }
+        #dc-manual-block-panel .dcuf-manual-status {
+            min-height: 20px;
+            margin: 4px 2px 0;
+            color: #65758d;
+            font-size: 12px;
+            font-weight: 700;
+            line-height: 1.4;
+        }
+        #dc-manual-block-panel .dcuf-manual-status[data-state="success"] { color: #16835f; }
+        #dc-manual-block-panel .dcuf-manual-status[data-state="error"] { color: #d7485a; }
+        #dc-manual-block-panel .dcuf-manual-status[data-state="info"] { color: #3b68c6; }
+        #dc-manual-block-panel .dcuf-manual-actions {
+            display: grid;
+            grid-template-columns: .75fr 1.25fr;
+            gap: 9px;
+            margin-top: 10px;
+        }
+        #dc-manual-block-panel .dcuf-manual-actions button {
+            min-height: 46px;
+            border: 1px solid #ccd8e8;
+            border-radius: 12px;
+            background: linear-gradient(180deg,#fff,#edf2f8);
+            color: #53657e;
+            font: 800 14px/1 inherit;
+            box-shadow: 0 5px 12px rgba(35,56,89,.1), inset 0 1px 0 #fff;
+            cursor: pointer;
+        }
+        #dc-manual-block-panel .dcuf-manual-actions [data-manual-block-action="add"] {
+            border-color: #3b71fd;
+            background: linear-gradient(180deg,#5687ff,#376af0);
+            color: #fff;
+            box-shadow: 0 9px 18px rgba(59,113,253,.28), inset 0 1px 0 rgba(255,255,255,.34);
+        }
+        #dc-manual-block-panel .dcuf-manual-actions button:active { transform: translateY(1px); }
+        #dc-manual-block-panel .dcuf-manual-actions button:disabled { opacity: .65; cursor: wait; }
+
+
+        @keyframes dcuf-selection-prompt-in {
+            from { opacity: 0; transform: translate(-50%,-8px) scale(.98); }
+            to { opacity: 1; transform: translate(-50%,0) scale(1); }
+        }
+        #dc-selection-popup.dcuf-selection-prompt {
+            top: calc(env(safe-area-inset-top,0px) + 14px) !important;
+            left: 50% !important;
+            bottom: auto !important;
+            box-sizing: border-box !important;
+            display: grid !important;
+            grid-template-columns: 42px minmax(0,1fr) auto !important;
+            align-items: center !important;
+            gap: 11px !important;
+            width: min(560px,calc(100vw - 24px)) !important;
+            min-width: 0 !important;
+            max-width: calc(100vw - 24px) !important;
+            padding: 11px 12px !important;
+            border: 1px solid rgba(142,166,203,.58) !important;
+            border-radius: 18px !important;
+            transform: translateX(-50%) !important;
+            text-align: left !important;
+            background: linear-gradient(145deg,rgba(255,255,255,.98),rgba(237,244,255,.98)) !important;
+            box-shadow: 0 18px 40px rgba(31,51,83,.25), inset 0 1px 0 #fff !important;
+            animation: dcuf-selection-prompt-in .18s ease-out !important;
+        }
+        #dc-selection-popup .dcuf-selection-prompt-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            border-radius: 13px;
+            background: linear-gradient(145deg,#fff,#dfeaff);
+            color: #3b71fd;
+            font-size: 21px;
+            font-weight: 900;
+            box-shadow: 0 6px 14px rgba(59,113,253,.18), inset 0 1px 0 #fff;
+        }
+        #dc-selection-popup .dcuf-selection-prompt-copy h4 {
+            margin: 0 0 3px !important;
+            color: #233a5b !important;
+            font-size: 15px !important;
+            font-weight: 850 !important;
+        }
+        #dc-selection-popup .dcuf-selection-prompt-copy p {
+            margin: 0;
+            color: #71819a;
+            font-size: 12px;
+            line-height: 1.35;
+        }
+        #dc-selection-popup.dcuf-selection-prompt .popup-buttons button {
+            width: auto !important;
+            min-width: 86px;
+            min-height: 42px;
+            padding: 9px 12px !important;
+            border: 1px solid #cfdaea !important;
+            border-radius: 11px !important;
+            background: linear-gradient(180deg,#fff,#e9eff7) !important;
+            color: #50627d !important;
+            font-size: 13px !important;
+            font-weight: 800 !important;
+            box-shadow: 0 5px 12px rgba(41,62,96,.1), inset 0 1px 0 #fff;
+        }
+        body.selection-mode-active .gall_writer,
+        body.selection-mode-active .ub-writer {
+            border-radius: 6px !important;
+            outline: 2px solid rgba(59,113,253,.44) !important;
+            outline-offset: 2px !important;
+            background: rgba(59,113,253,.08) !important;
+        }
+        #dc-selection-popup:not(.dcuf-selection-prompt) {
+            border: 1px solid #d1dceb !important;
+            border-radius: 20px !important;
+            background: linear-gradient(150deg,#fff,#f3f7fd) !important;
+            box-shadow: 0 24px 58px rgba(24,42,71,.3), inset 0 1px 0 #fff !important;
+        }
+        #dc-selection-popup .block-option {
+            border-radius: 13px !important;
+            background: linear-gradient(145deg,#fff,#eef4fc) !important;
+            box-shadow: 0 6px 15px rgba(38,60,96,.09), inset 0 1px 0 #fff !important;
+        }
+        #dc-selection-popup .block-option button,
+        #dc-selection-popup .popup-buttons button { min-height: 42px; }
+
+        #dcinside-filter-setting,
+        #dc-block-management-panel,
+        #dc-backup-popup {
+            border: 1px solid rgba(149,169,201,.55) !important;
+            border-radius: 22px !important;
+            background: linear-gradient(155deg,#fff,#f4f7fc) !important;
+            box-shadow: 0 28px 68px rgba(23,39,67,.3), 0 7px 20px rgba(23,39,67,.13), inset 0 1px 0 #fff !important;
+        }
+        #dcinside-filter-setting .dcuf-settings-header,
+        #dc-block-management-panel .panel-header,
+        #dc-backup-popup .popup-header {
+            background: linear-gradient(135deg,rgba(238,244,255,.98),rgba(255,255,255,.98)) !important;
+            border-bottom: 1px solid #dbe4f1 !important;
+        }
+        #dcinside-filter-setting .dcuf-settings-section,
+        #dcinside-filter-setting .dcuf-settings-threshold > div:last-child,
+        #dcinside-filter-setting .dcuf-settings-guest-controls {
+            border: 1px solid #dce5f1 !important;
+            border-radius: 16px !important;
+            background: linear-gradient(145deg,#fff,#f3f7fd) !important;
+            box-shadow: 0 8px 20px rgba(36,58,94,.09), inset 0 1px 0 #fff !important;
+        }
+        #dcinside-filter-setting input[type="number"] {
+            min-height: 44px !important;
+            border-radius: 11px !important;
+            box-shadow: inset 0 2px 5px rgba(37,60,96,.09), 0 1px 0 #fff !important;
+        }
+        #dcinside-filter-setting #dcinside-threshold-save {
+            min-height: 46px !important;
+            border-radius: 12px !important;
+            background: linear-gradient(180deg,#5687ff,#376af0) !important;
+            box-shadow: 0 9px 18px rgba(59,113,253,.28), inset 0 1px 0 rgba(255,255,255,.32) !important;
+        }
+
+        #dc-block-management-panel .panel-header {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            min-height: 68px !important;
+            padding: 10px 12px 10px 18px !important;
+            cursor: move;
+        }
+        #dc-block-management-panel .panel-title-group { min-width: 0; }
+        #dc-block-management-panel .panel-title-group h3 { color: #213756 !important; font-size: 18px !important; }
+        #dc-block-management-panel .panel-header-actions { display: flex; align-items: center; gap: 7px; }
+        #dc-block-management-panel .switch-container { margin-left: 0 !important; }
+        #dc-block-management-panel .panel-add-btn {
+            min-height: 40px;
+            padding: 8px 11px;
+            border: 1px solid #cbdaf0;
+            border-radius: 11px;
+            background: linear-gradient(180deg,#fff,#e8f1ff);
+            color: #3564c4;
+            font-size: 12px;
+            font-weight: 850;
+            box-shadow: 0 6px 13px rgba(47,78,128,.12), inset 0 1px 0 #fff;
+            cursor: pointer;
+        }
+        #dc-block-management-panel .panel-tabs {
+            gap: 5px !important;
+            padding: 7px !important;
+            border-bottom: 1px solid #dce4f0 !important;
+            background: #edf2f8 !important;
+            box-shadow: inset 0 2px 5px rgba(38,59,91,.06);
+        }
+        #dc-block-management-panel .panel-tab {
+            appearance: none;
+            border: 1px solid transparent !important;
+            border-radius: 11px !important;
+            background: transparent !important;
+            color: #65758d !important;
+            font-family: inherit;
+            font-weight: 750 !important;
+        }
+        #dc-block-management-panel .panel-tab.active {
+            border-color: #ccdaf0 !important;
+            background: linear-gradient(180deg,#fff,#e8f1ff) !important;
+            color: #315fc2 !important;
+            box-shadow: 0 6px 14px rgba(45,74,121,.15), inset 0 1px 0 #fff !important;
+        }
+        #dc-block-management-panel .panel-tab.active::after { display: none !important; }
+        #dc-block-management-panel .panel-tab-count {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 20px;
+            height: 20px;
+            margin-left: 4px;
+            padding: 0 5px;
+            border-radius: 999px;
+            background: rgba(74,111,182,.12);
+            font-size: 10px;
+            font-weight: 900;
+        }
+        #dc-block-management-panel .panel-body { background: #f5f8fc !important; }
+        #dc-block-management-panel .panel-list-controls {
+            display: grid !important;
+            grid-template-columns: minmax(150px,1fr) auto !important;
+            align-items: center;
+            gap: 8px;
+            padding: 10px !important;
+            text-align: left !important;
+            background: rgba(255,255,255,.72);
+        }
+        #dc-block-management-panel .panel-search {
+            box-sizing: border-box;
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            min-height: 42px;
+            padding: 0 11px;
+            border: 1px solid #d0dbea;
+            border-radius: 11px;
+            background: #fff;
+            color: #71819a;
+            box-shadow: inset 0 2px 5px rgba(35,56,88,.07);
+        }
+        #dc-block-management-panel .panel-search-input {
+            min-width: 0;
+            width: 100%;
+            border: 0;
+            outline: 0;
+            background: transparent;
+            color: #263a58;
+            font: 600 13px/1.2 inherit;
+        }
+        #dc-block-management-panel .panel-list-summary {
+            grid-column: 1 / -1;
+            color: #7a899e;
+            font-size: 11px;
+        }
+
+
+        #dc-block-management-panel .select-all-btn,
+        #dc-block-management-panel .select-all-global-btn,
+        #dc-block-management-panel .panel-backup-btn {
+            min-height: 40px !important;
+            border-radius: 10px !important;
+            background: linear-gradient(180deg,#fff,#edf2f8) !important;
+            box-shadow: 0 5px 12px rgba(35,56,89,.09), inset 0 1px 0 #fff !important;
+        }
+        #dc-block-management-panel .blocked-list {
+            display: grid;
+            gap: 8px;
+            padding: 10px !important;
+        }
+        #dc-block-management-panel .blocked-item {
+            min-height: 52px;
+            padding: 8px 9px 8px 13px !important;
+            border: 1px solid #dce5f1 !important;
+            border-radius: 13px !important;
+            background: linear-gradient(145deg,#fff,#f0f5fb) !important;
+            box-shadow: 0 6px 15px rgba(34,55,88,.08), inset 0 1px 0 #fff;
+        }
+        #dc-block-management-panel .blocked-item.item-to-delete {
+            border-color: #f1bdc5 !important;
+            background: linear-gradient(145deg,#fff8f9,#fbecef) !important;
+            text-decoration: none !important;
+            opacity: .72 !important;
+        }
+        #dc-block-management-panel .blocked-item.item-to-delete .item-name { text-decoration: line-through; }
+        #dc-block-management-panel .delete-item-btn {
+            min-width: 52px !important;
+            min-height: 36px !important;
+            padding: 7px 9px !important;
+            border: 1px solid #ffd3da !important;
+            border-radius: 10px !important;
+            background: linear-gradient(180deg,#fff8f9,#ffe9ed) !important;
+            color: #df5366 !important;
+            font-size: 11px !important;
+            font-weight: 850 !important;
+            text-decoration: none !important;
+        }
+        #dc-block-management-panel .blocked-list-empty {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 150px;
+            color: #8290a4;
+            font-size: 13px;
+            text-align: center;
+        }
+        #dc-block-management-panel .panel-footer {
+            min-height: 64px;
+            background: linear-gradient(180deg,rgba(250,252,255,.98),rgba(239,244,251,.98)) !important;
+        }
+        #dc-block-management-panel .panel-save-btn {
+            min-height: 44px;
+            border-radius: 11px !important;
+            background: linear-gradient(180deg,#5687ff,#376af0) !important;
+            box-shadow: 0 8px 17px rgba(59,113,253,.28), inset 0 1px 0 rgba(255,255,255,.32) !important;
+        }
+        #dc-backup-popup .popup-content { gap: 12px !important; padding: 4px 2px 2px !important; }
+        #dc-backup-popup .export-section,
+        #dc-backup-popup .import-section {
+            padding: 14px !important;
+            border: 1px solid #dce5f1;
+            border-radius: 16px;
+            background: linear-gradient(145deg,#fff,#f2f6fc);
+            box-shadow: 0 8px 20px rgba(36,58,94,.09), inset 0 1px 0 #fff;
+        }
+        #dc-backup-popup .popup-content > hr { display: none; }
+        #dc-backup-popup .export-btn,
+        #dc-backup-popup .export-btn-download,
+        #dc-backup-popup .import-btn,
+        #dc-backup-popup .import-file-input,
+        #dc-backup-popup textarea {
+            min-height: 44px;
+            border-radius: 11px !important;
+        }
+        #dc-backup-popup .export-btn,
+        #dc-backup-popup .import-btn {
+            background: linear-gradient(180deg,#5687ff,#376af0) !important;
+            box-shadow: 0 8px 17px rgba(59,113,253,.25), inset 0 1px 0 rgba(255,255,255,.3) !important;
+        }
+        #dc-manual-block-panel.dcuf-pop-leave {
+            animation: dcuf-popup-out .13s ease-in forwards !important;
+            pointer-events: none !important;
+        }
+        #dc-manual-block-overlay.dcuf-overlay-leave {
+            animation: dcuf-overlay-out .13s ease-in forwards !important;
+            pointer-events: none !important;
+        }
+        @media (max-width: 640px) {
+            #dc-manual-block-overlay {
+                align-items: flex-end;
+                padding: 10px 8px max(8px,env(safe-area-inset-bottom,0px));
+            }
+            #dc-manual-block-panel {
+                width: 100%;
+                max-height: calc(100dvh - 10px);
+                border-radius: 22px 22px 16px 16px;
+            }
+            #dc-block-management-panel .panel-header { padding-left: 14px !important; }
+            #dc-block-management-panel .panel-kicker { display: none; }
+            #dc-block-management-panel .panel-add-btn {
+                width: 44px;
+                min-width: 44px;
+                padding: 0;
+                overflow: hidden;
+                color: transparent;
+                white-space: nowrap;
+            }
+            #dc-block-management-panel .panel-add-btn::first-letter {
+                color: #3564c4;
+                font-size: 18px;
+            }
+            #dc-block-management-panel .panel-list-controls { grid-template-columns: 1fr !important; }
+            #dc-block-management-panel .panel-list-summary { grid-column: 1; }
+            #dc-selection-popup.dcuf-selection-prompt { grid-template-columns: 38px minmax(0,1fr) !important; }
+            #dc-selection-popup.dcuf-selection-prompt .popup-buttons { grid-column: 1 / -1; }
+            #dc-selection-popup.dcuf-selection-prompt .popup-buttons button { width: 100% !important; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            #dc-manual-block-panel,
+            #dc-manual-block-overlay,
+            #dc-selection-popup.dcuf-selection-prompt {
+                animation: none !important;
+                transition: none !important;
+            }
+        }
+
+
+        #dc-personal-block-drawer { background-color: #f1f6ff !important; }
+        #dc-manual-block-panel { background-color: #f3f7ff; }
+        #dc-selection-popup.dcuf-selection-prompt { background-color: #edf4ff !important; }
+        #dc-selection-popup:not(.dcuf-selection-prompt) { background-color: #f3f7fd !important; }
+        #dcinside-filter-setting,
+        #dc-block-management-panel,
+        #dc-backup-popup { background-color: #f4f7fc !important; }
+
         /* DCUF_SHARED_FILTER_UI_END */
 
         /* [수정] DCCon 및 각종 팝업 모바일 반응형 중앙 정렬 */
@@ -2693,7 +3436,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             background: #1c1c1e !important;
             border-bottom-color: #3a3a3c !important;
         }
-        
+
         /* [v3.0 alpha] 본문 글자색은 실제 다크 팔레트로 직접 덮어씁니다. */
         body.dc-filter-dark-mode .gallview_contents,
         body.dc-filter-dark-mode .gallview_contents p,
@@ -2709,7 +3452,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             color: var(--dcuf-view-fg) !important;
             -webkit-text-fill-color: var(--dcuf-view-fg) !important;
         }
-        
+
         /* 댓글은 반전 필터의 영향을 받지 않으므로 그대로 밝은 색 설정 */
         body.dc-filter-dark-mode .comment_box .usertxt {
             color: #e0e0e0 !important;
@@ -2906,6 +3649,216 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             background: #53313a !important;
             color: #ff9fb1 !important;
         }
+
+        body.dc-filter-dark-mode #dc-personal-block-fab {
+            background: linear-gradient(180deg,#34435b,#253247) !important;
+            color: #eef4ff !important;
+            border-color: #52657f !important;
+            box-shadow: 0 16px 34px rgba(0,0,0,.46), inset 0 1px 0 rgba(255,255,255,.1) !important;
+        }
+        body.dc-filter-dark-mode #dc-personal-block-drawer {
+            border-color: #465a76 !important;
+            background: linear-gradient(145deg,#27354a,#1d293b) !important;
+            box-shadow: 0 24px 52px rgba(0,0,0,.58), inset 0 1px 0 rgba(255,255,255,.08) !important;
+        }
+        body.dc-filter-dark-mode #dc-personal-block-drawer .dcuf-menu-icon {
+            border-color: #49617f;
+            background: linear-gradient(145deg,#344760,#25354c);
+            color: #8db2ff;
+            box-shadow: 0 6px 14px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.08);
+        }
+        body.dc-filter-dark-mode #dc-personal-block-drawer strong { color: #edf3ff; }
+        body.dc-filter-dark-mode #dc-personal-block-drawer small { color: #9fb0c8; }
+        body.dc-filter-dark-mode #dc-personal-block-drawer button:hover,
+        body.dc-filter-dark-mode #dc-personal-block-drawer button:focus-visible {
+            border-color: #506987 !important;
+            background: linear-gradient(180deg,#34465e,#29394f) !important;
+        }
+        body.dc-filter-dark-mode #dc-manual-block-overlay { background: rgba(0,0,0,.68); }
+        body.dc-filter-dark-mode #dc-manual-block-panel {
+            border-color: #475a74;
+            background: linear-gradient(155deg,#26354a,#1c283a);
+            color: #edf3ff;
+            box-shadow: 0 30px 74px rgba(0,0,0,.62), inset 0 1px 0 rgba(255,255,255,.08);
+        }
+        body.dc-filter-dark-mode #dc-manual-block-panel .dcuf-manual-header {
+            border-color: #40536d;
+            background: linear-gradient(135deg,#2b3b52,#223047);
+        }
+        body.dc-filter-dark-mode #dc-manual-block-panel h3 { color: #f1f5ff; }
+        body.dc-filter-dark-mode #dc-manual-block-panel .dcuf-manual-kicker,
+        body.dc-filter-dark-mode #dc-block-management-panel .panel-kicker { color: #89a9dd; }
+        body.dc-filter-dark-mode #dc-manual-block-panel .dcuf-manual-close,
+        body.dc-filter-dark-mode #dc-block-management-panel .panel-close-btn,
+        body.dc-filter-dark-mode #dc-backup-popup .popup-close-btn,
+        body.dc-filter-dark-mode #dcinside-filter-setting #dcinside-filter-close {
+            background: transparent !important;
+            color: #b8c6da !important;
+            border-color: transparent !important;
+        }
+        body.dc-filter-dark-mode #dc-manual-block-panel .dcuf-manual-close:hover,
+        body.dc-filter-dark-mode #dc-block-management-panel .panel-close-btn:hover,
+        body.dc-filter-dark-mode #dc-backup-popup .popup-close-btn:hover,
+        body.dc-filter-dark-mode #dcinside-filter-setting #dcinside-filter-close:hover {
+            border-color: #4a5e79 !important;
+            background: #314159 !important;
+            color: #fff !important;
+        }
+        body.dc-filter-dark-mode #dc-manual-block-panel .dcuf-manual-type-tabs {
+            border-color: #40536d;
+            background: #172335;
+            box-shadow: inset 0 2px 6px rgba(0,0,0,.32);
+        }
+        body.dc-filter-dark-mode #dc-manual-block-panel [data-manual-block-type] {
+            background: transparent !important;
+            color: #aab8ca !important;
+            border-color: transparent !important;
+        }
+        body.dc-filter-dark-mode #dc-manual-block-panel [data-manual-block-type][aria-pressed="true"] {
+            border-color: #4e6685 !important;
+            background: linear-gradient(180deg,#344862,#293a52) !important;
+            color: #9fbdff !important;
+            box-shadow: 0 6px 14px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.08);
+        }
+        body.dc-filter-dark-mode #dc-manual-block-panel .dcuf-manual-field { color: #dce6f5; }
+        body.dc-filter-dark-mode #dc-manual-block-panel .dcuf-manual-field small,
+        body.dc-filter-dark-mode #dc-manual-block-panel .dcuf-manual-hint { color: #9dadc2; }
+        body.dc-filter-dark-mode #dc-manual-block-panel .dcuf-manual-field input {
+            border-color: #465a76;
+            background: #162234;
+            color: #f2f6ff;
+            box-shadow: inset 0 2px 6px rgba(0,0,0,.35);
+        }
+        body.dc-filter-dark-mode #dc-manual-block-panel .dcuf-manual-actions button {
+            border-color: #465a76;
+            background: linear-gradient(180deg,#34445b,#29384e);
+            color: #dce6f5;
+            box-shadow: 0 6px 14px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.08);
+        }
+        body.dc-filter-dark-mode #dc-manual-block-panel .dcuf-manual-actions [data-manual-block-action="add"] {
+            border-color: #5e8cff;
+            background: linear-gradient(180deg,#5f8dff,#3d6de7);
+            color: #fff;
+        }
+        body.dc-filter-dark-mode #dc-selection-popup.dcuf-selection-prompt,
+        body.dc-filter-dark-mode #dc-selection-popup:not(.dcuf-selection-prompt) {
+            border-color: #465a76 !important;
+            background: linear-gradient(145deg,#29384e,#1d2a3d) !important;
+            box-shadow: 0 22px 52px rgba(0,0,0,.58), inset 0 1px 0 rgba(255,255,255,.08) !important;
+        }
+        body.dc-filter-dark-mode #dc-selection-popup .dcuf-selection-prompt-icon {
+            background: linear-gradient(145deg,#344862,#26374f);
+            color: #8db2ff;
+            box-shadow: 0 7px 15px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.08);
+        }
+        body.dc-filter-dark-mode #dc-selection-popup .dcuf-selection-prompt-copy h4 { color: #edf3ff !important; }
+        body.dc-filter-dark-mode #dc-selection-popup .dcuf-selection-prompt-copy p { color: #9fb0c8; }
+        body.dc-filter-dark-mode #dc-selection-popup.dcuf-selection-prompt .popup-buttons button {
+            border-color: #4b607c !important;
+            background: linear-gradient(180deg,#34445b,#28384e) !important;
+            color: #dce6f5 !important;
+            box-shadow: 0 6px 13px rgba(0,0,0,.26), inset 0 1px 0 rgba(255,255,255,.08) !important;
+        }
+        body.dc-filter-dark-mode.selection-mode-active .gall_writer,
+        body.dc-filter-dark-mode.selection-mode-active .ub-writer {
+            outline-color: rgba(117,159,255,.66) !important;
+            background: rgba(92,137,241,.16) !important;
+        }
+
+
+        body.dc-filter-dark-mode #dcinside-filter-setting,
+        body.dc-filter-dark-mode #dc-block-management-panel,
+        body.dc-filter-dark-mode #dc-backup-popup {
+            border-color: #455a76 !important;
+            background: linear-gradient(155deg,#26354a,#1b2738) !important;
+            box-shadow: 0 30px 72px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.07) !important;
+        }
+        body.dc-filter-dark-mode #dcinside-filter-setting .dcuf-settings-header,
+        body.dc-filter-dark-mode #dc-block-management-panel .panel-header,
+        body.dc-filter-dark-mode #dc-backup-popup .popup-header {
+            border-color: #40536d !important;
+            background: linear-gradient(135deg,#2b3b52,#223047) !important;
+        }
+        body.dc-filter-dark-mode #dcinside-filter-setting .dcuf-settings-section,
+        body.dc-filter-dark-mode #dcinside-filter-setting .dcuf-settings-threshold > div:last-child,
+        body.dc-filter-dark-mode #dcinside-filter-setting .dcuf-settings-guest-controls,
+        body.dc-filter-dark-mode #dc-backup-popup .export-section,
+        body.dc-filter-dark-mode #dc-backup-popup .import-section {
+            border-color: #40536d !important;
+            background: linear-gradient(145deg,#29394f,#202e43) !important;
+            box-shadow: 0 9px 21px rgba(0,0,0,.26), inset 0 1px 0 rgba(255,255,255,.06) !important;
+        }
+        body.dc-filter-dark-mode #dc-block-management-panel .panel-title-group h3 { color: #edf3ff !important; }
+        body.dc-filter-dark-mode #dc-block-management-panel .panel-add-btn {
+            border-color: #4e6685 !important;
+            background: linear-gradient(180deg,#344862,#293a52) !important;
+            color: #9fbdff !important;
+            box-shadow: 0 6px 14px rgba(0,0,0,.27), inset 0 1px 0 rgba(255,255,255,.07);
+        }
+        body.dc-filter-dark-mode #dc-block-management-panel .panel-tabs {
+            border-color: #3e5069 !important;
+            background: #172335 !important;
+            box-shadow: inset 0 2px 6px rgba(0,0,0,.3);
+        }
+        body.dc-filter-dark-mode #dc-block-management-panel .panel-tab {
+            background: transparent !important;
+            color: #aab8ca !important;
+            border-color: transparent !important;
+        }
+        body.dc-filter-dark-mode #dc-block-management-panel .panel-tab.active {
+            border-color: #4e6685 !important;
+            background: linear-gradient(180deg,#344862,#293a52) !important;
+            color: #9fbdff !important;
+            box-shadow: 0 6px 14px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.08) !important;
+        }
+        body.dc-filter-dark-mode #dc-block-management-panel .panel-body { background: #1b2738 !important; }
+        body.dc-filter-dark-mode #dc-block-management-panel .panel-list-controls {
+            border-color: #40536d !important;
+            background: rgba(28,40,58,.84);
+        }
+        body.dc-filter-dark-mode #dc-block-management-panel .panel-search {
+            border-color: #455a76;
+            background: #162234;
+            color: #9dadc2;
+            box-shadow: inset 0 2px 6px rgba(0,0,0,.34);
+        }
+        body.dc-filter-dark-mode #dc-block-management-panel .panel-search-input { color: #edf3ff; }
+        body.dc-filter-dark-mode #dc-block-management-panel .blocked-item {
+            border-color: #40536d !important;
+            background: linear-gradient(145deg,#29394f,#202e43) !important;
+            box-shadow: 0 7px 16px rgba(0,0,0,.24), inset 0 1px 0 rgba(255,255,255,.06);
+        }
+        body.dc-filter-dark-mode #dc-block-management-panel .blocked-item.item-to-delete {
+            border-color: #714856 !important;
+            background: linear-gradient(145deg,#3d2b35,#34232c) !important;
+        }
+        body.dc-filter-dark-mode #dc-block-management-panel .delete-item-btn {
+            border-color: #704653 !important;
+            background: linear-gradient(180deg,#4d303a,#402731) !important;
+            color: #ff9cad !important;
+        }
+        body.dc-filter-dark-mode #dc-block-management-panel .select-all-btn,
+        body.dc-filter-dark-mode #dc-block-management-panel .select-all-global-btn,
+        body.dc-filter-dark-mode #dc-block-management-panel .panel-backup-btn {
+            border-color: #465a76 !important;
+            background: linear-gradient(180deg,#34445b,#29384e) !important;
+            color: #dce6f5 !important;
+            box-shadow: 0 6px 14px rgba(0,0,0,.24), inset 0 1px 0 rgba(255,255,255,.06) !important;
+        }
+        body.dc-filter-dark-mode #dc-block-management-panel .panel-footer {
+            border-color: #40536d !important;
+            background: linear-gradient(180deg,#253449,#1d2a3d) !important;
+        }
+
+
+        body.dc-filter-dark-mode #dc-personal-block-drawer { background-color: #1d293b !important; }
+        body.dc-filter-dark-mode #dc-manual-block-panel { background-color: #1c283a; }
+        body.dc-filter-dark-mode #dc-selection-popup.dcuf-selection-prompt,
+        body.dc-filter-dark-mode #dc-selection-popup:not(.dcuf-selection-prompt) { background-color: #1d2a3d !important; }
+        body.dc-filter-dark-mode #dcinside-filter-setting,
+        body.dc-filter-dark-mode #dc-block-management-panel,
+        body.dc-filter-dark-mode #dc-backup-popup { background-color: #1b2738 !important; }
+
         /* DCUF_SHARED_FILTER_UI_DARK_END */
     `);
 
@@ -3044,6 +3997,8 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         INFLIGHT_USER_SUM_REQUESTS: Object.create(null),
         USER_SUM_NEGATIVE_CACHE: new Map(),
         USER_SUM_NEGATIVE_TTL: 30000,
+        USER_SUM_NEGATIVE_MAX_ENTRIES: 256,
+        _negativeUserSumCacheWrites: 0,
         DEBUG_ENABLED: false,
         DEBUG_MAX_DECISIONS_PER_PASS: 150,
         DEBUG_PASS_ID: 0,
@@ -3051,6 +4006,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         DEBUG_DECISION_KEYS: null,
         _runtimeMutationUnsubscribe: null,
         _userSumTaskQueue: null,
+        _blockedUidWritePromise: null,
         _queuedObserverFilterItems: null,
         _queuedObserverFilterRafId: 0,
         _queuedObserverFilterTimerId: 0,
@@ -3065,7 +4021,9 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         PROXY_STRICT_PREFIXES: DCUF_SHARED_IP.PROXY_STRICT_PREFIXES,
         PROXY_AGGRESSIVE_EXTRA_PREFIXES: DCUF_SHARED_IP.PROXY_AGGRESSIVE_EXTRA_PREFIXES,
         KR_IP_RANGES: DCUF_SHARED_IP.KR_IP_RANGES,
-        isMobile: () => /Mobi/i.test(navigator.userAgent),
+        // This source is the mobile target adapter. The PC builder rewrites this
+        // target flag to false when it ports the shared filter module.
+        isMobile: () => true,
         isRecommendedContext: () => window.location.search.includes('exception_mode=recommend'),
         normalizeProxyBlockMode(value) {
             return DCUF_SHARED_STORAGE.normalizeProxyBlockModeValue(value);
@@ -3278,12 +4236,13 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             };
             this.debugLog('api', 'window.DCUFDebug installed', Object.keys(window.DCUFDebug));
         },
-        async cleanupLegacyManagedBlockConfig() {
-            const migrationDone = await GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG_MIGRATION_V275_DONE, false);
+        async cleanupLegacyManagedBlockConfig(snapshot = null) {
+            const migrationDone = snapshot ? snapshot.migrationDone : await GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG_MIGRATION_V275_DONE, false);
             if (migrationDone) return;
-            const conf = await GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG, {});
+            const conf = snapshot?.blockConfig || await GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG, {});
             if (!conf || typeof conf !== 'object') {
                 await GM_setValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG_MIGRATION_V275_DONE, true);
+                if (snapshot) snapshot.migrationDone = true;
                 return;
             }
             const currentIp = typeof conf.ip === 'string' ? conf.ip : '';
@@ -3300,6 +4259,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 conf.ip = '';
                 await GM_setValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG, conf);
                 await GM_setValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG_MIGRATION_V275_DONE, true);
+                if (snapshot) { snapshot.blockConfig = conf; snapshot.migrationDone = true; }
                 return;
             }
 
@@ -3312,6 +4272,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 await GM_setValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG, conf);
             }
             await GM_setValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG_MIGRATION_V275_DONE, true);
+            if (snapshot) { snapshot.blockConfig = conf; snapshot.migrationDone = true; }
         },
         async showSettings() {
             await this.reloadSettings();
@@ -3492,6 +4453,20 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             const enterKeySave = (e) => { if (e.key === 'Enter') saveButton.click(); };
             [input, ratioMinInput, ratioMaxInput].forEach(el => { if (el) el.addEventListener('keydown', enterKeySave); });
             let isDragging = false, offsetX, offsetY;
+            let dragWidth = 0, dragHeight = 0;
+            let dragRafId = 0, pendingDragX = null, pendingDragY = null;
+            const applyDragPosition = () => {
+                dragRafId = 0;
+                if (!isDragging || pendingDragX === null || pendingDragY === null) return;
+                let newX = pendingDragX - offsetX;
+                let newY = pendingDragY - offsetY;
+                pendingDragX = null;
+                pendingDragY = null;
+                newX = Math.max(0, Math.min(newX, window.innerWidth - dragWidth));
+                newY = Math.max(0, Math.min(newY, window.innerHeight - dragHeight));
+                div.style.left = `${newX}px`;
+                div.style.top = `${newY}px`;
+            };
             const onDragStart = (e) => {
                 if (e.type === 'touchstart' && e.touches && e.touches.length > 1) return;
                 const startTarget = (e.target && e.target.nodeType === 1) ? e.target : e.target.parentElement;
@@ -3500,6 +4475,8 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 isDragging = true;
                 const rect = div.getBoundingClientRect();
                 if (div.style.transform !== 'none') { div.style.transform = 'none'; div.style.left = `${rect.left}px`; div.style.top = `${rect.top}px`; }
+                dragWidth = rect.width;
+                dragHeight = rect.height;
                 const clientX = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
                 const clientY = e.type === 'touchstart' ? e.touches[0].clientY : e.clientY;
                 offsetX = clientX - rect.left; offsetY = clientY - rect.top;
@@ -3510,14 +4487,19 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 if (!isDragging) return;
                 if (e.type === 'touchmove' && e.touches && e.touches.length > 1) return;
                 e.preventDefault();
-                const rect = div.getBoundingClientRect();
                 const clientX = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
                 const clientY = e.type === 'touchmove' ? e.touches[0].clientY : e.clientY;
-                let newX = clientX - offsetX; let newY = clientY - offsetY;
-                newX = Math.max(0, Math.min(newX, window.innerWidth - rect.width)); newY = Math.max(0, Math.min(newY, window.innerHeight - rect.height));
-                div.style.left = `${newX}px`; div.style.top = `${newY}px`;
+                pendingDragX = clientX;
+                pendingDragY = clientY;
+                if (!dragRafId) dragRafId = requestAnimationFrame(applyDragPosition);
             };
-            const onDragEnd = () => { isDragging = false; document.removeEventListener('mousemove', onDragMove); document.removeEventListener('touchmove', onDragMove); };
+            const onDragEnd = () => {
+                if (dragRafId) cancelAnimationFrame(dragRafId);
+                applyDragPosition();
+                isDragging = false;
+                document.removeEventListener('mousemove', onDragMove);
+                document.removeEventListener('touchmove', onDragMove);
+            };
             const dragHandle = settingsHeader || div;
             try {
                 dragHandle.addEventListener('mousedown', onDragStart);
@@ -3800,6 +4782,62 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 this.flushQueuedObservedFilterItems();
             }, 80);
         },
+        collectMutationFilterItems(payload, containerSelector, itemSelector, {
+            attributeNames = [],
+            includeChildListTargets = false
+        } = {}) {
+            if (!payload || typeof payload !== 'object') return [];
+            const items = [];
+            const seen = new Set();
+            const watchedAttributes = new Set(attributeNames);
+            const addItem = (element) => {
+                if (!(element instanceof HTMLElement) || !element.isConnected || seen.has(element)) return;
+                if (!element.matches(itemSelector) || !element.closest(containerSelector)) return;
+                seen.add(element);
+                items.push(element);
+            };
+            const scanTarget = (root) => {
+                if (!(root instanceof Element)) return;
+                addItem(root);
+                const closestItem = root.closest(itemSelector);
+                if (closestItem) addItem(closestItem);
+            };
+            const scanAddedRoot = (root) => {
+                if (!(root instanceof Element)) return;
+                scanTarget(root);
+                if (typeof root.querySelectorAll === 'function') {
+                    root.querySelectorAll(itemSelector).forEach(addItem);
+                }
+            };
+
+            if (Array.isArray(payload.addedElements)) payload.addedElements.forEach(scanAddedRoot);
+            if (Array.isArray(payload.records)) {
+                payload.records.forEach((record) => {
+                    if (record?.type === 'attributes' && watchedAttributes.has(record.attributeName)) {
+                        scanTarget(record.target);
+                    } else if (includeChildListTargets && record?.type === 'childList') {
+                        scanTarget(record.target);
+                    }
+                });
+            }
+            return items;
+        },
+        collectImmediateCommentFilterItems(payload) {
+            return this.collectMutationFilterItems(
+                payload,
+                this.CONSTANTS.SELECTORS.COMMENT_CONTAINER,
+                this.CONSTANTS.SELECTORS.COMMENT_ITEM,
+                { attributeNames: ['data-uid', 'data-nick', 'data-ip'] }
+            );
+        },
+        applyImmediateCommentMutations(payload) {
+            const items = this.collectImmediateCommentFilterItems(payload);
+            if (items.length === 0) return;
+            const descriptors = this.describeFilterTargets(items);
+            this.applySyncToDescriptors(descriptors);
+            this.incrementRuntimeDiagnostic('filter.immediateComment.runs');
+            this.setRuntimeDiagnosticGauge('filter.immediateComment.lastTargetCount', descriptors.length);
+        },
         getRuntimeCoordinator() {
             return window.__dcufRuntimeCoordinator || null;
         },
@@ -3849,14 +4887,40 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             if (!cached) return null;
             if (Date.now() - cached.ts > this.USER_SUM_NEGATIVE_TTL) {
                 this.USER_SUM_NEGATIVE_CACHE.delete(uid);
+                this.setRuntimeDiagnosticGauge('filter.negativeUserSumCache.size', this.USER_SUM_NEGATIVE_CACHE.size);
                 return null;
             }
             return cached;
         },
+        pruneNegativeUserSumCache(now = Date.now()) {
+            let removed = 0;
+            this.USER_SUM_NEGATIVE_CACHE.forEach((entry, key) => {
+                if (!entry || typeof entry.ts !== 'number' || now - entry.ts > this.USER_SUM_NEGATIVE_TTL) {
+                    this.USER_SUM_NEGATIVE_CACHE.delete(key);
+                    removed += 1;
+                }
+            });
+            while (this.USER_SUM_NEGATIVE_CACHE.size > this.USER_SUM_NEGATIVE_MAX_ENTRIES) {
+                const oldestKey = this.USER_SUM_NEGATIVE_CACHE.keys().next().value;
+                if (oldestKey === undefined) break;
+                this.USER_SUM_NEGATIVE_CACHE.delete(oldestKey);
+                removed += 1;
+            }
+            if (removed > 0) this.incrementRuntimeDiagnostic('filter.negativeUserSumCache.pruned', removed);
+            this.setRuntimeDiagnosticGauge('filter.negativeUserSumCache.size', this.USER_SUM_NEGATIVE_CACHE.size);
+            return removed;
+        },
         setNegativeUserSumCache(uid, reason = 'error') {
             if (!uid) return null;
             const cached = { ts: Date.now(), reason };
+            this.USER_SUM_NEGATIVE_CACHE.delete(uid);
             this.USER_SUM_NEGATIVE_CACHE.set(uid, cached);
+            this._negativeUserSumCacheWrites = (this._negativeUserSumCacheWrites + 1) % 32;
+            if (this.USER_SUM_NEGATIVE_CACHE.size > this.USER_SUM_NEGATIVE_MAX_ENTRIES || this._negativeUserSumCacheWrites === 0) {
+                this.pruneNegativeUserSumCache(cached.ts);
+            } else {
+                this.setRuntimeDiagnosticGauge('filter.negativeUserSumCache.size', this.USER_SUM_NEGATIVE_CACHE.size);
+            }
             return cached;
         },
         async getUserPostCommentSum(uid) {
@@ -3912,10 +4976,35 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             }
         },
         async addBlockedUid(uid, sum, post, comment, ratioBlocked) {
-            if (this.isMobile()) return;
-            await this.refreshBlockedUidsCache();
-            this.BLOCKED_UIDS_CACHE[uid] = { ts: Date.now(), sum, post, comment, ratioBlocked: !!ratioBlocked };
-            await GM_setValue(this.CONSTANTS.STORAGE_KEYS.BLOCKED_UIDS, JSON.stringify(this.BLOCKED_UIDS_CACHE));
+            if (!uid) return;
+            if (!this.isMobile()) {
+                await this.refreshBlockedUidsCache();
+            }
+            const nextEntry = { ts: Date.now(), sum, post, comment, ratioBlocked: !!ratioBlocked };
+            const currentEntry = this.BLOCKED_UIDS_CACHE[uid];
+            if (currentEntry
+                && currentEntry.sum === nextEntry.sum
+                && currentEntry.post === nextEntry.post
+                && currentEntry.comment === nextEntry.comment
+                && currentEntry.ratioBlocked === nextEntry.ratioBlocked) {
+                return;
+            }
+            this.BLOCKED_UIDS_CACHE[uid] = nextEntry;
+            if (!this.isMobile()) {
+                await GM_setValue(this.CONSTANTS.STORAGE_KEYS.BLOCKED_UIDS, JSON.stringify(this.BLOCKED_UIDS_CACHE));
+                return;
+            }
+            const serializedCache = JSON.stringify(this.BLOCKED_UIDS_CACHE);
+            const previousWrite = this._blockedUidWritePromise || Promise.resolve();
+            const writePromise = previousWrite
+                .catch(() => {})
+                .then(() => GM_setValue(this.CONSTANTS.STORAGE_KEYS.BLOCKED_UIDS, serializedCache));
+            this._blockedUidWritePromise = writePromise;
+            try {
+                await writePromise;
+            } finally {
+                if (this._blockedUidWritePromise === writePromise) this._blockedUidWritePromise = null;
+            }
         },
         async getBlockedGuests() { try { return JSON.parse(await GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCKED_GUESTS, '[]')); } catch { return []; } },
         async setBlockedGuests(list) { await GM_setValue(this.CONSTANTS.STORAGE_KEYS.BLOCKED_GUESTS, JSON.stringify(list)); },
@@ -3972,9 +5061,17 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             if (element.style.display !== nextDisplay) element.style.display = nextDisplay;
         },
         async applyBlockFilterToElement(element, uid, userData, addBlockedUidFn) {
-            if (!userData) return;
+            if (!userData || !(element instanceof HTMLElement) || !element.isConnected) return;
             const { sumBlocked, ratioBlocked } = this.isUserBlocked(userData);
             const shouldBeBlocked = sumBlocked || ratioBlocked;
+            // UID statistics are an additional blocking reason, not an authority to reveal content.
+            // A request can begin before a personal block is saved and resolve afterwards; letting a
+            // negative statistics result call setElementVisibility(false) in that race briefly exposes
+            // the personally blocked comment and starts a shell-attribute refilter loop.
+            if (!shouldBeBlocked && element.getAttribute('data-dcuf-personal-blocked') === '1') {
+                this.incrementRuntimeDiagnostic('filter.asyncAllow.suppressedPersonalBlock');
+                return;
+            }
             this.setElementVisibility(element, shouldBeBlocked);
             if (shouldBeBlocked) await addBlockedUidFn.call(this, uid, userData.sum, userData.post, userData.comment, ratioBlocked);
         },
@@ -3993,6 +5090,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
             try {
                 if (element.style.display === 'none') return;
+                if (element.getAttribute('data-dcuf-personal-blocked') === '1') return;
                 if (!(writerInfo instanceof HTMLElement)) return;
                 if (!uid || uid.length < 3) return;
                 if (this.BLOCKED_UIDS_CACHE[uid]) return;
@@ -4000,10 +5098,14 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 await this.applyBlockFilterToElement(element, uid, userData, this.addBlockedUid);
             } catch (e) { console.warn(`DCinside User Filter: Async filter exception.`, e, element); }
         },
-        async refreshBlockedUidsCache() {
-            if (this.isMobile()) { this.BLOCKED_UIDS_CACHE = {}; return; }
-            let data; try { data = JSON.parse(await GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCKED_UIDS, '{}')); } catch { data = {}; }
-            const now = Date.now(); let changed = false;
+        async refreshBlockedUidsCache(rawValue = null) {
+            let data; try { data = JSON.parse(rawValue === null ? await GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCKED_UIDS, '{}') : rawValue); } catch { data = {}; }
+            let changed = false;
+            if (!data || typeof data !== 'object' || Array.isArray(data)) {
+                data = {};
+                changed = true;
+            }
+            const now = Date.now();
             for (const [uid, cacheData] of Object.entries(data)) {
                 if (typeof cacheData !== 'object' || cacheData === null || typeof cacheData.ts !== 'number' || now - cacheData.ts > this.BLOCK_UID_EXPIRE) { delete data[uid]; changed = true; }
             }
@@ -4156,13 +5258,23 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
             if (hasRuntimeMutationBus) {
                 if (typeof this._runtimeMutationUnsubscribe === 'function') this._runtimeMutationUnsubscribe();
+                if (typeof this._runtimeImmediateMutationUnsubscribe === 'function') this._runtimeImmediateMutationUnsubscribe();
+                if (typeof runtimeCoordinator.subscribeImmediateMutations === 'function') {
+                    this._runtimeImmediateMutationUnsubscribe = runtimeCoordinator.subscribeImmediateMutations(
+                        'filter-immediate-comment-visibility',
+                        (payload) => this.applyImmediateCommentMutations(payload)
+                    );
+                }
                 this._runtimeMutationUnsubscribe = runtimeCoordinator.subscribeMutations('filter-universal-observer', (payload) => {
                     let hasRelevantMutation = false;
                     let hasCommentMutation = false;
                     targets.forEach((target) => {
                         const changedContainers = payload.collectMatches(target.c);
                         changedContainers.forEach((container) => attachObserver(container, target.i, { attachDomObserver: false }));
-                        const changedItems = payload.collectMatches(target.i, { includeRoots: true }).filter((item) => item.closest?.(target.c));
+                        const changedItems = this.collectMutationFilterItems(payload, target.c, target.i, {
+                            attributeNames: ['class', 'id', 'data-uid', 'data-nick', 'data-ip'],
+                            includeChildListTargets: true
+                        });
                         if (changedContainers.length > 0 || changedItems.length > 0) {
                             hasRelevantMutation = true;
                             if (target.scope === 'comments') hasCommentMutation = true;
@@ -4191,27 +5303,95 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             });
             bodyObserver.observe(observerTarget, { childList: true, subtree: true });
         },
-        async reloadSettings() {
+        loadBootSnapshot() {
+            if (this._bootSnapshotPromise) return this._bootSnapshotPromise;
+            const keys = this.CONSTANTS.STORAGE_KEYS;
+            this._bootSnapshotPromise = Promise.all([
+                GM_getValue(keys.BLOCK_CONFIG_MIGRATION_V275_DONE, false),
+                GM_getValue(keys.MASTER_DISABLED, false),
+                GM_getValue(keys.EXCLUDE_RECOMMENDED, false),
+                GM_getValue(keys.THRESHOLD),
+                GM_getValue(keys.RATIO_ENABLED, false),
+                GM_getValue(keys.RATIO_MIN, ''),
+                GM_getValue(keys.RATIO_MAX, ''),
+                GM_getValue(keys.BLOCK_GUEST, false),
+                GM_getValue(keys.BLOCK_PROXY, 0),
+                GM_getValue(keys.BLOCK_TELECOM, false),
+                GM_getValue(keys.BLOCKED_GUESTS, '[]'),
+                GM_getValue(keys.BLOCK_CONFIG, {}),
+                GM_getValue(keys.PERSONAL_BLOCK_LIST, { uids: [], nicknames: [], ips: [] }),
+                GM_getValue(keys.PERSONAL_BLOCK_ENABLED, true),
+                GM_getValue(keys.BLOCKED_UIDS, '{}')
+            ]).then((values) => {
+                const [
+                    migrationDone, masterDisabled, excludeRecommended, rawThreshold, ratioEnabled,
+                    ratioMin, ratioMax, blockGuestEnabled, proxyBlockMode, telecomBlockEnabled,
+                    blockedGuestsRaw, blockConfig, personalBlockList, personalBlockEnabled, blockedUidsRaw
+                ] = values;
+                let blockedGuests = [];
+                try { blockedGuests = JSON.parse(blockedGuestsRaw); } catch { blockedGuests = []; }
+                const snapshot = {
+                    migrationDone,
+                    masterDisabled,
+                    excludeRecommended,
+                    threshold: rawThreshold === undefined ? 0 : rawThreshold,
+                    thresholdMissing: rawThreshold === undefined,
+                    ratioEnabled,
+                    ratioMin,
+                    ratioMax,
+                    blockGuestEnabled,
+                    proxyBlockMode,
+                    telecomBlockEnabled,
+                    blockedGuests: Array.isArray(blockedGuests) ? blockedGuests : [],
+                    blockConfig,
+                    personalBlockList,
+                    personalBlockEnabled,
+                    blockedUidsRaw
+                };
+                this._bootSnapshot = snapshot;
+                window.__dcufBootController?.note?.('boot.storage-snapshot', { keys: values.length });
+                return snapshot;
+            }).catch((error) => {
+                this._bootSnapshotPromise = null;
+                throw error;
+            });
+            return this._bootSnapshotPromise;
+        },
+        getBootSnapshot() {
+            return this._bootSnapshot || null;
+        },
+        async reloadSettings(snapshot = null) {
+            let values;
+            if (snapshot) {
+                values = [
+                    snapshot.masterDisabled, snapshot.excludeRecommended, snapshot.threshold,
+                    snapshot.ratioEnabled, snapshot.ratioMin, snapshot.ratioMax,
+                    snapshot.blockGuestEnabled, snapshot.proxyBlockMode, snapshot.telecomBlockEnabled,
+                    snapshot.blockedGuests, snapshot.blockConfig, snapshot.personalBlockList,
+                    snapshot.personalBlockEnabled
+                ];
+            } else {
+                values = await Promise.all([
+                    GM_getValue(this.CONSTANTS.STORAGE_KEYS.MASTER_DISABLED, false),
+                    GM_getValue(this.CONSTANTS.STORAGE_KEYS.EXCLUDE_RECOMMENDED, false),
+                    GM_getValue(this.CONSTANTS.STORAGE_KEYS.THRESHOLD, 0),
+                    GM_getValue(this.CONSTANTS.STORAGE_KEYS.RATIO_ENABLED, false),
+                    GM_getValue(this.CONSTANTS.STORAGE_KEYS.RATIO_MIN, ''),
+                    GM_getValue(this.CONSTANTS.STORAGE_KEYS.RATIO_MAX, ''),
+                    GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_GUEST, false),
+                    GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_PROXY, 0),
+                    GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_TELECOM, false),
+                    this.getBlockedGuests(),
+                    GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG, {}),
+                    PersonalBlockModule.loadPersonalBlocks(),
+                    GM_getValue(this.CONSTANTS.STORAGE_KEYS.PERSONAL_BLOCK_ENABLED, true)
+                ]);
+            }
             const [
                 masterDisabled, excludeRecommended, threshold, ratioEnabled,
                 ratioMin, ratioMax, blockGuestEnabled, proxyBlockMode, telecomBlockEnabled,
                 blockedGuests, blockConfig, personalBlockList, personalBlockEnabled
-            ] = await Promise.all([
-                GM_getValue(this.CONSTANTS.STORAGE_KEYS.MASTER_DISABLED, false),
-                GM_getValue(this.CONSTANTS.STORAGE_KEYS.EXCLUDE_RECOMMENDED, false),
-                GM_getValue(this.CONSTANTS.STORAGE_KEYS.THRESHOLD, 0),
-                GM_getValue(this.CONSTANTS.STORAGE_KEYS.RATIO_ENABLED, false),
-                GM_getValue(this.CONSTANTS.STORAGE_KEYS.RATIO_MIN, ''),
-                GM_getValue(this.CONSTANTS.STORAGE_KEYS.RATIO_MAX, ''),
-                GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_GUEST, false),
-                GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_PROXY, 0),
-                GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_TELECOM, false),
-                this.getBlockedGuests(),
-                GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG, {}),
-                PersonalBlockModule.loadPersonalBlocks(),
-                // [신규] 개인 차단 기능 활성화 상태 로드 (기본값 true)
-                GM_getValue(this.CONSTANTS.STORAGE_KEYS.PERSONAL_BLOCK_ENABLED, true)
-            ]);
+            ] = values;
             const normalizedSettings = DCUF_SHARED_STORAGE.normalizeStoredFilterSettings({
                 [this.CONSTANTS.STORAGE_KEYS.MASTER_DISABLED]: masterDisabled,
                 [this.CONSTANTS.STORAGE_KEYS.EXCLUDE_RECOMMENDED]: excludeRecommended,
@@ -4231,9 +5411,11 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             const personalBlockUidSet = this.buildLookupSet(personalBlockList?.uids, (item) => item?.id);
             const personalBlockNicknameSet = this.buildLookupSet(personalBlockList?.nicknames);
             const personalBlockIpSet = this.buildLookupSet(personalBlockList?.ips);
-
             dcFilterSettings = {
-                masterDisabled: normalizedSettings.masterDisabled, excludeRecommended: normalizedSettings.excludeRecommended, threshold: normalizedSettings.threshold, ratioEnabled: normalizedSettings.ratioEnabled,
+                masterDisabled: normalizedSettings.masterDisabled,
+                excludeRecommended: normalizedSettings.excludeRecommended,
+                threshold: normalizedSettings.threshold,
+                ratioEnabled: normalizedSettings.ratioEnabled,
                 ratioMin: normalizedSettings.ratioMin,
                 ratioMax: normalizedSettings.ratioMax,
                 blockGuestEnabled: normalizedSettings.blockGuest,
@@ -4255,6 +5437,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                     rawBlockConfigPreview: typeof blockConfig?.ip === 'string' ? blockConfig.ip.split('||').slice(0, 20) : []
                 }));
             }
+            return dcFilterSettings;
         },
         getRefilterTargetSelectors(scope = 'all') {
             const commentSelectors = [
@@ -4437,21 +5620,40 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 await this.refilterAllContent('visibilitychange-visible', { scheduleFollowups: false }); // 복구 패스 1회는 유지하고 무변화 지연 패스는 생략
             }
         },
-        async init() {
-            if (isInitialized) return; isInitialized = true;
-            this.installDebugApi();
-            this.debugLog('init', 'FilterModule init start', { version: '3.3.8-beta' });
-            await this.cleanupLegacyManagedBlockConfig();
-            await this.reloadSettings();
-            if (this.DEBUG_ENABLED) await this.debugDumpState('after init reload');
-
-            // [수정] 개념글 목록에서 스크립트가 조기 종료되던 문제를 해결하기 위해 아래 라인을 삭제했습니다.
-            // if (dcFilterSettings.excludeRecommended && window.location.pathname.includes('/lists/') && this.isRecommendedContext()) return;
-
-            await this.refreshBlockedUidsCache();
-            document.addEventListener('visibilitychange', this.handleVisibilityChange.bind(this));
-            this.initializeUniversalObserver();
-            if (await GM_getValue(this.CONSTANTS.STORAGE_KEYS.THRESHOLD) === undefined) { await GM_setValue(this.CONSTANTS.STORAGE_KEYS.THRESHOLD, 0); await this.showSettings(); }
+        init() {
+            if (this._initState === 'ready') return Promise.resolve('already-ready');
+            if (this._initState === 'initializing' && this._initPromise) return this._initPromise;
+            this._initState = 'initializing';
+            this._initPromise = (async () => {
+                this.installDebugApi();
+                this.debugLog('init', 'FilterModule init start', { version: '3.4.5-beta' });
+                const snapshot = await this.loadBootSnapshot();
+                await this.cleanupLegacyManagedBlockConfig(snapshot);
+                await this.reloadSettings(snapshot);
+                await this.refreshBlockedUidsCache(snapshot.blockedUidsRaw);
+                if (!this._visibilityChangeHandler) {
+                    this._visibilityChangeHandler = () => this.handleVisibilityChange();
+                    document.addEventListener('visibilitychange', this._visibilityChangeHandler);
+                }
+                this.initializeUniversalObserver();
+                window.__dcufBootController?.note?.('boot.local-filter-settings-ready');
+                if (snapshot.thresholdMissing) {
+                    const showFirstRunSettings = async () => {
+                        await GM_setValue(this.CONSTANTS.STORAGE_KEYS.THRESHOLD, 0);
+                        await this.showSettings();
+                    };
+                    const bootController = window.__dcufBootController;
+                    if (typeof bootController?.onReady === 'function') bootController.onReady(showFirstRunSettings);
+                    else queueMicrotask(showFirstRunSettings);
+                }
+                this._initState = 'ready';
+                return 'ready';
+            })().catch((error) => {
+                this._initState = 'failed';
+                this._initPromise = null;
+                throw error;
+            });
+            return this._initPromise;
         }
     };
 
@@ -4467,16 +5669,52 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         isSelectionMode: false,
         personalBlockListCache: { uids: [], nicknames: [], ips: [] },
         fabScalePercent: 100,
+        _initState: 'idle',
+        _initPromise: null,
+        _uiMounted: false,
+        _selectionClickHandler: null,
         FAB_SCALE_MIN: 60,
         FAB_SCALE_MAX: 160,
 
 
-        async init() {
-            this.personalBlockListCache = await this.loadPersonalBlocks();
-            this.fabScalePercent = await this.loadFabScalePercent();
-            this.createFab();
-            document.addEventListener('click', this.handleSelectionClick.bind(this), true);
+        async init(snapshot = null, { deferUi = false } = {}) {
+            if (this._initState === 'ready') return 'already-ready';
+            if (this._initState === 'initializing' && this._initPromise) return this._initPromise;
+            this._initState = 'initializing';
+            this._initPromise = (async () => {
+                const list = snapshot?.personalBlockList || await this.loadPersonalBlocks();
+                this.personalBlockListCache = {
+                    uids: Array.isArray(list?.uids) ? list.uids : [],
+                    nicknames: Array.isArray(list?.nicknames) ? list.nicknames : [],
+                    ips: Array.isArray(list?.ips) ? list.ips : []
+                };
+                const mountUi = async () => {
+                    if (this._uiMounted) return;
+                    this.fabScalePercent = await this.loadFabScalePercent();
+                    this.createFab();
+                    if (!this._selectionClickHandler) {
+                        this._selectionClickHandler = this.handleSelectionClick.bind(this);
+                        document.addEventListener('click', this._selectionClickHandler, true);
+                    }
+                    this._uiMounted = true;
+                };
+                if (deferUi && typeof window.__dcufBootController?.onReady === 'function') {
+                    window.__dcufBootController.onReady(() => mountUi().catch((error) => console.warn('[DCUF] deferred FAB mount failed:', error)));
+                } else {
+                    await mountUi();
+                }
+                this._initState = 'ready';
+                return 'ready';
+            })();
+            try {
+                return await this._initPromise;
+            } catch (error) {
+                this._initState = 'failed';
+                this._initPromise = null;
+                throw error;
+            }
         },
+
 
 
         async loadPersonalBlocks() {
@@ -4654,6 +5892,159 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             range.focus();
         },
 
+
+        async createManualBlockPanel({ initialType = 'nickname', onAdded = null } = {}) {
+            const existingPanel = document.getElementById('dc-manual-block-panel');
+            if (existingPanel) {
+                existingPanel.querySelector('#dc-manual-block-value')?.focus();
+                return existingPanel;
+            }
+
+            const typeConfig = {
+                uid: { label: '식별번호', placeholder: '예: user1234', hint: '입력한 식별번호와 정확히 일치하는 작성자를 차단합니다.' },
+                nickname: { label: '닉네임', placeholder: '차단할 닉네임을 입력하세요', hint: '대소문자와 공백을 포함해 정확히 같은 닉네임만 차단합니다.' },
+                ip: { label: '아이피', placeholder: '예: 123.45 또는 화면에 표시된 IP', hint: '화면에 표시되는 IP 문자열과 정확히 일치할 때만 차단합니다.' }
+            };
+            let activeType = typeConfig[initialType] ? initialType : 'nickname';
+
+            const overlay = document.createElement('div');
+            overlay.id = 'dc-manual-block-overlay';
+            const panel = document.createElement('section');
+            panel.id = 'dc-manual-block-panel';
+            panel.setAttribute('role', 'dialog');
+            panel.setAttribute('aria-modal', 'true');
+            panel.setAttribute('aria-labelledby', 'dc-manual-block-title');
+            panel.innerHTML = `
+                <div class="dcuf-manual-header">
+                    <div>
+                        <span class="dcuf-manual-kicker">PERSONAL BLOCK</span>
+                        <h3 id="dc-manual-block-title">직접 차단</h3>
+                    </div>
+                    <button type="button" class="dcuf-manual-close" aria-label="직접 차단 닫기">×</button>
+                </div>
+                <form class="dcuf-manual-form">
+                    <div class="dcuf-manual-type-tabs" role="group" aria-label="차단 정보 종류">
+                        <button type="button" data-manual-block-type="uid">식별번호</button>
+                        <button type="button" data-manual-block-type="nickname">닉네임</button>
+                        <button type="button" data-manual-block-type="ip">아이피</button>
+                    </div>
+                    <label class="dcuf-manual-field" for="dc-manual-block-value">
+                        <span id="dc-manual-block-value-label">닉네임</span>
+                        <input id="dc-manual-block-value" type="text" autocomplete="off" autocapitalize="off" spellcheck="false">
+                    </label>
+                    <label class="dcuf-manual-field dcuf-manual-display-field" for="dc-manual-block-display" hidden>
+                        <span>닉네임 / 표시 이름 <small>(선택)</small></span>
+                        <input id="dc-manual-block-display" type="text" autocomplete="off" spellcheck="false" placeholder="예: 홍길동">
+                    </label>
+                    <p class="dcuf-manual-hint"></p>
+                    <p class="dcuf-manual-status" role="status" aria-live="polite"></p>
+                    <div class="dcuf-manual-actions">
+                        <button type="button" data-manual-block-action="close">닫기</button>
+                        <button type="submit" data-manual-block-action="add">차단 추가</button>
+                    </div>
+                </form>
+            `;
+            overlay.appendChild(panel);
+            document.body.appendChild(overlay);
+
+            const form = panel.querySelector('.dcuf-manual-form');
+            const valueInput = panel.querySelector('#dc-manual-block-value');
+            const displayField = panel.querySelector('.dcuf-manual-display-field');
+            const displayInput = panel.querySelector('#dc-manual-block-display');
+            const valueLabel = panel.querySelector('#dc-manual-block-value-label');
+            const hint = panel.querySelector('.dcuf-manual-hint');
+            const status = panel.querySelector('.dcuf-manual-status');
+            const addButton = panel.querySelector('[data-manual-block-action="add"]');
+            let isClosing = false;
+
+            const setStatus = (message = '', state = '') => {
+                status.textContent = message;
+                status.dataset.state = state;
+            };
+            const selectType = (type) => {
+                if (!typeConfig[type]) return;
+                activeType = type;
+                panel.querySelectorAll('[data-manual-block-type]').forEach((button) => {
+                    button.setAttribute('aria-pressed', String(button.dataset.manualBlockType === type));
+                });
+                valueLabel.textContent = typeConfig[type].label;
+                valueInput.placeholder = typeConfig[type].placeholder;
+                hint.textContent = typeConfig[type].hint;
+                displayField.hidden = type !== 'uid';
+                setStatus();
+                valueInput.focus();
+            };
+            const closePanel = () => {
+                if (isClosing) return;
+                isClosing = true;
+                document.removeEventListener('keydown', handleKeydown, true);
+                panel.classList.add('dcuf-pop-leave');
+                overlay.classList.add('dcuf-overlay-leave');
+                window.setTimeout(() => overlay.remove(), 140);
+            };
+            const handleKeydown = (event) => {
+                if (event.key !== 'Escape') return;
+                event.preventDefault();
+                closePanel();
+            };
+
+            panel.querySelectorAll('[data-manual-block-type]').forEach((button) => {
+                button.addEventListener('click', () => selectType(button.dataset.manualBlockType));
+            });
+            panel.querySelector('.dcuf-manual-close').addEventListener('click', closePanel);
+            panel.querySelector('[data-manual-block-action="close"]').addEventListener('click', closePanel);
+            overlay.addEventListener('click', (event) => {
+                if (event.target === overlay) closePanel();
+            });
+            form.addEventListener('submit', async (event) => {
+                event.preventDefault();
+                const value = valueInput.value.trim();
+                const displayValue = displayInput.value.trim();
+                if (!value) {
+                    setStatus(`${typeConfig[activeType].label}을(를) 입력해주세요.`, 'error');
+                    valueInput.focus();
+                    return;
+                }
+
+                const currentList = await this.loadPersonalBlocks();
+                const isDuplicate = activeType === 'uid'
+                    ? currentList.uids.some((item) => item?.id === value)
+                    : activeType === 'nickname'
+                        ? currentList.nicknames.includes(value)
+                        : currentList.ips.includes(value);
+                if (isDuplicate) {
+                    setStatus('이미 차단 목록에 있는 값입니다.', 'info');
+                    valueInput.select();
+                    return;
+                }
+
+                addButton.disabled = true;
+                addButton.textContent = '추가 중…';
+                try {
+                    const displayName = activeType === 'uid' && displayValue ? `${displayValue}(${value})` : null;
+                    await this.addBlock(activeType, value, displayName);
+                    if (typeof onAdded === 'function') await onAdded({ type: activeType, value });
+                    const isEnabled = await GM_getValue(FilterModule.CONSTANTS.STORAGE_KEYS.PERSONAL_BLOCK_ENABLED, true);
+                    setStatus(
+                        isEnabled ? `${typeConfig[activeType].label} 차단을 추가했습니다.` : '목록에 추가했습니다. 개인 차단 기능은 현재 꺼져 있습니다.',
+                        'success'
+                    );
+                    valueInput.value = '';
+                    if (activeType === 'uid') displayInput.value = '';
+                    valueInput.focus();
+                } catch (error) {
+                    console.error('[DCUF] 직접 차단 추가 실패:', error);
+                    setStatus('차단을 추가하지 못했습니다. 잠시 후 다시 시도해주세요.', 'error');
+                } finally {
+                    addButton.disabled = false;
+                    addButton.textContent = '차단 추가';
+                }
+            });
+            document.addEventListener('keydown', handleKeydown, true);
+            selectType(activeType);
+            return panel;
+        },
+
         isFabSupportedPage() {
             const currentPath = window.location.pathname;
             return currentPath.includes('/board/lists') || currentPath.includes('/board/view');
@@ -4750,9 +6141,10 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             drawer.setAttribute('role', 'menu');
             drawer.setAttribute('aria-label', 'DC 유저 필터 기능');
             drawer.innerHTML = `
-                <button type="button" role="menuitem" data-dcuf-fab-action="quick-block">간편차단</button>
-                <button type="button" role="menuitem" data-dcuf-fab-action="filter-settings">글댓합 설정</button>
-                <button type="button" role="menuitem" data-dcuf-fab-action="block-management">차단 유저 관리</button>
+                <button type="button" role="menuitem" data-dcuf-fab-action="quick-block"><span class="dcuf-menu-icon" aria-hidden="true">◎</span><span><strong>화면에서 간편차단</strong><small>글·댓글 작성자를 눌러 선택</small></span></button>
+                <button type="button" role="menuitem" data-dcuf-fab-action="manual-block"><span class="dcuf-menu-icon" aria-hidden="true">＋</span><span><strong>직접 차단</strong><small>닉네임·식별번호·IP 입력</small></span></button>
+                <button type="button" role="menuitem" data-dcuf-fab-action="filter-settings"><span class="dcuf-menu-icon" aria-hidden="true">◫</span><span><strong>글댓합 설정</strong><small>필터 기준과 범위 조정</small></span></button>
+                <button type="button" role="menuitem" data-dcuf-fab-action="block-management"><span class="dcuf-menu-icon" aria-hidden="true">☰</span><span><strong>차단 유저 관리</strong><small>목록 확인·삭제·백업</small></span></button>
             `;
 
             controls.append(fab, drawer);
@@ -4766,6 +6158,26 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             let startY = 0;
             let wasDragged = false;
             let suppressClick = false;
+            let dragWidth = 0;
+            let dragHeight = 0;
+            let dragRafId = 0;
+            let pendingDragX = null;
+            let pendingDragY = null;
+
+            const applyFabDragPosition = () => {
+                dragRafId = 0;
+                if (activePointerId === null || pendingDragX === null || pendingDragY === null) return;
+                const nextX = Math.max(0, Math.min(pendingDragX - offsetX, window.innerWidth - dragWidth));
+                const nextY = Math.max(0, Math.min(pendingDragY - offsetY, window.innerHeight - dragHeight));
+                pendingDragX = null;
+                pendingDragY = null;
+                Object.assign(controls.style, {
+                    left: `${Math.round(nextX)}px`,
+                    top: `${Math.round(nextY)}px`,
+                    right: 'auto',
+                    bottom: 'auto'
+                });
+            };
 
             fab.addEventListener('pointerdown', (event) => {
                 if (event.button !== 0 || activePointerId !== null) return;
@@ -4773,6 +6185,8 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 activePointerId = event.pointerId;
                 offsetX = event.clientX - rect.left;
                 offsetY = event.clientY - rect.top;
+                dragWidth = rect.width;
+                dragHeight = rect.height;
                 startX = event.clientX;
                 startY = event.clientY;
                 wasDragged = false;
@@ -4785,20 +6199,15 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 if (!wasDragged) this.closeFabDrawer();
                 wasDragged = true;
                 event.preventDefault();
-                const maxX = Math.max(0, window.innerWidth - controls.offsetWidth);
-                const maxY = Math.max(0, window.innerHeight - controls.offsetHeight);
-                const nextX = Math.max(0, Math.min(event.clientX - offsetX, maxX));
-                const nextY = Math.max(0, Math.min(event.clientY - offsetY, maxY));
-                Object.assign(controls.style, {
-                    left: `${Math.round(nextX)}px`,
-                    top: `${Math.round(nextY)}px`,
-                    right: 'auto',
-                    bottom: 'auto'
-                });
+                pendingDragX = event.clientX;
+                pendingDragY = event.clientY;
+                if (!dragRafId) dragRafId = requestAnimationFrame(applyFabDragPosition);
             });
 
             const finishDrag = (event) => {
                 if (event.pointerId !== activePointerId) return;
+                if (dragRafId) cancelAnimationFrame(dragRafId);
+                applyFabDragPosition();
                 suppressClick = wasDragged;
                 activePointerId = null;
                 fab.releasePointerCapture?.(event.pointerId);
@@ -4820,6 +6229,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 const action = actionButton.dataset.dcufFabAction;
                 this.closeFabDrawer();
                 if (action === 'quick-block') this.enterSelectionMode();
+                else if (action === 'manual-block') await this.createManualBlockPanel();
                 else if (action === 'filter-settings') await FilterModule.showSettings();
                 else if (action === 'block-management') await this.createManagementPanel();
             });
@@ -4850,10 +6260,15 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
             const popup = document.createElement('div');
             popup.id = 'dc-selection-popup';
+            popup.className = 'dcuf-selection-prompt';
             popup.innerHTML = `
-                <h4>차단할 유저를 선택하세요</h4>
+                <div class="dcuf-selection-prompt-icon" aria-hidden="true">◎</div>
+                <div class="dcuf-selection-prompt-copy">
+                    <h4>차단할 작성자를 선택하세요</h4>
+                    <p>글이나 댓글의 닉네임을 눌러주세요.</p>
+                </div>
                 <div class="popup-buttons">
-                    <button class="cancel-btn">취소</button>
+                    <button class="cancel-btn">선택 취소</button>
                 </div>
             `;
             document.body.appendChild(popup);
@@ -4975,6 +6390,8 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             let startDistance = 0;
             let startWidth = 0;
             let startHeight = 0;
+            let startAnchorX = 0.5;
+            let startAnchorY = 0.5;
             let lastMoveTs = 0;
             let lastMoveDistance = -1;
 
@@ -4985,11 +6402,19 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
             const normalizeFixedPosition = () => {
                 const rect = target.getBoundingClientRect();
-                if (target.style.transform && target.style.transform !== 'none') {
-                    target.style.transform = 'none';
-                    target.style.left = `${rect.left}px`;
-                    target.style.top = `${rect.top}px`;
+                const computedStyle = window.getComputedStyle(target);
+                if (computedStyle.transform && computedStyle.transform !== 'none') {
+                    target.style.setProperty('transform', 'none', 'important');
+                    target.style.setProperty('left', `${rect.left}px`, 'important');
+                    target.style.setProperty('top', `${rect.top}px`, 'important');
                 }
+
+                // Pinch geometry is calculated from the border box. Keep the CSS sizing
+                // model and the runtime dimensions in the same coordinate space so that
+                // padded popups do not grow or jump on the first move.
+                target.style.setProperty('box-sizing', 'border-box', 'important');
+                target.style.setProperty('width', `${rect.width}px`, 'important');
+                target.style.setProperty('height', `${rect.height}px`, 'important');
                 return target.getBoundingClientRect();
             };
 
@@ -5020,6 +6445,9 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 startDistance = distance;
                 startWidth = rect.width;
                 startHeight = rect.height;
+                const midpoint = getMidpoint(touches[0], touches[1]);
+                startAnchorX = rect.width > 0 ? clamp((midpoint.x - rect.left) / rect.width, 0, 1) : 0.5;
+                startAnchorY = rect.height > 0 ? clamp((midpoint.y - rect.top) / rect.height, 0, 1) : 0.5;
                 lastMoveTs = 0;
                 lastMoveDistance = -1;
             };
@@ -5066,19 +6494,30 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 const maxWidth = Math.max(dynamicMinWidth, configuredMaxWidth);
                 const maxHeight = Math.max(dynamicMinHeight, configuredMaxHeight);
 
-                const scale = distance / startDistance;
-                const nextWidth = clamp(startWidth * scale, dynamicMinWidth, maxWidth);
-                const nextHeight = clamp(startHeight * scale, dynamicMinHeight, maxHeight);
+                const requestedScale = distance / startDistance;
+                const minScale = Math.min(1, Math.max(dynamicMinWidth / startWidth, dynamicMinHeight / startHeight));
+                const maxScale = Math.max(1, Math.min(maxWidth / startWidth, maxHeight / startHeight));
+                const scale = clamp(requestedScale, minScale, maxScale);
+                const nextWidth = startWidth * scale;
+                const nextHeight = startHeight * scale;
 
-                const rawLeft = mid.x - (nextWidth / 2);
-                const rawTop = mid.y - (nextHeight / 2);
-                const nextLeft = clamp(rawLeft, 0, Math.max(0, vp.width - nextWidth));
-                const nextTop = clamp(rawTop, 0, Math.max(0, vp.height - nextHeight));
+                const rawLeft = mid.x - (nextWidth * startAnchorX);
+                const rawTop = mid.y - (nextHeight * startAnchorY);
+                const viewportGap = 4;
+                const nextLeft = clamp(rawLeft, viewportGap, Math.max(viewportGap, vp.width - nextWidth - viewportGap));
+                const nextTop = clamp(rawTop, viewportGap, Math.max(viewportGap, vp.height - nextHeight - viewportGap));
 
-                target.style.width = `${nextWidth}px`;
-                target.style.height = `${nextHeight}px`;
-                target.style.left = `${nextLeft}px`;
-                target.style.top = `${nextTop}px`;
+                // The centered settings/backup popups have responsive !important width,
+                // max-width, and min-height rules. Override those constraints only after
+                // an explicit pinch starts so the rendered box matches these calculations.
+                target.style.setProperty('min-width', `${dynamicMinWidth}px`, 'important');
+                target.style.setProperty('min-height', `${dynamicMinHeight}px`, 'important');
+                target.style.setProperty('max-width', `${maxWidth}px`, 'important');
+                target.style.setProperty('max-height', `${maxHeight}px`, 'important');
+                target.style.setProperty('width', `${nextWidth}px`, 'important');
+                target.style.setProperty('height', `${nextHeight}px`, 'important');
+                target.style.setProperty('left', `${nextLeft}px`, 'important');
+                target.style.setProperty('top', `${nextTop}px`, 'important');
 
                 if (e.cancelable) e.preventDefault();
                 e.stopPropagation();
@@ -5321,23 +6760,34 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             panel.id = 'dc-block-management-panel';
             panel.innerHTML = `
                 <div class="panel-header">
-                    <h3>차단 유저 관리</h3>
-                    <div class="switch-container">
-                        <label class="switch">
-                            <input type="checkbox" id="personal-block-toggle" ${isPersonalBlockEnabled ? 'checked' : ''}>
-                            <span class="switch-slider"></span>
-                        </label>
+                    <div class="panel-title-group">
+                        <span class="panel-kicker">PERSONAL BLOCK</span>
+                        <h3>차단 유저 관리</h3>
                     </div>
-                    <button class="panel-close-btn">×</button>
+                    <div class="panel-header-actions">
+                        <button type="button" class="panel-add-btn">＋ 직접 추가</button>
+                        <div class="switch-container">
+                            <label class="switch" aria-label="개인 차단 기능 사용">
+                                <input type="checkbox" id="personal-block-toggle" ${isPersonalBlockEnabled ? 'checked' : ''}>
+                                <span class="switch-slider"></span>
+                            </label>
+                        </div>
+                        <button type="button" class="panel-close-btn" aria-label="차단 유저 관리 닫기">×</button>
+                    </div>
                 </div>
-                <div class="panel-tabs">
-                    <div class="panel-tab active" data-type="uids">식별 번호</div>
-                    <div class="panel-tab" data-type="nicknames">닉네임</div>
-                    <div class="panel-tab" data-type="ips">아이피</div>
+                <div class="panel-tabs" role="tablist" aria-label="차단 정보 종류">
+                    <button type="button" class="panel-tab active" data-type="uids">식별 번호 <span class="panel-tab-count">${originalBlockList.uids.length}</span></button>
+                    <button type="button" class="panel-tab" data-type="nicknames">닉네임 <span class="panel-tab-count">${originalBlockList.nicknames.length}</span></button>
+                    <button type="button" class="panel-tab" data-type="ips">아이피 <span class="panel-tab-count">${originalBlockList.ips.length}</span></button>
                 </div>
                 <div class="panel-body">
                     <div class="panel-list-controls">
-                        <button class="select-all-btn">해당 탭 전체 선택/해제</button>
+                        <label class="panel-search">
+                            <span aria-hidden="true">⌕</span>
+                            <input type="search" class="panel-search-input" placeholder="현재 탭에서 검색" autocomplete="off" aria-label="차단 목록 검색">
+                        </label>
+                        <button type="button" class="select-all-btn">해당 탭 전체 선택/해제</button>
+                        <span class="panel-list-summary" aria-live="polite"></span>
                     </div>
                     <div class="panel-content">
                         <ul class="blocked-list"></ul>
@@ -5372,6 +6822,16 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             };
 
             const globalSelectAllBtn = panel.querySelector('.select-all-global-btn');
+            const saveButton = panel.querySelector('.panel-save-btn');
+            const searchInput = panel.querySelector('.panel-search-input');
+            const listSummary = panel.querySelector('.panel-list-summary');
+            const updateTabCounts = () => {
+                panel.querySelectorAll('.panel-tab').forEach((tab) => {
+                    const count = originalBlockList[tab.dataset.type]?.length || 0;
+                    const countEl = tab.querySelector('.panel-tab-count');
+                    if (countEl) countEl.textContent = String(count);
+                });
+            };
 
 
             const isEverythingSelected = () => {
@@ -5383,6 +6843,8 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
 
             const updateGlobalSelectAllButtonState = () => {
+                const pendingCount = itemsToDelete.uids.size + itemsToDelete.nicknames.size + itemsToDelete.ips.size;
+                saveButton.textContent = pendingCount ? `${pendingCount}건 변경 저장` : '변경 저장';
                 if (isEverythingSelected()) {
                     globalSelectAllBtn.textContent = '모든 탭 전체 해제';
                 } else {
@@ -5395,35 +6857,57 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 const listEl = panel.querySelector('.blocked-list');
                 listEl.innerHTML = '';
                 const data = originalBlockList[type] || [];
+                const query = searchInput.value.trim().toLocaleLowerCase();
+                const filteredData = data.filter((item) => {
+                    const value = typeof item === 'object' ? item?.id : item;
+                    const name = typeof item === 'object' ? item?.name : item;
+                    return !query || String(name ?? value ?? '').toLocaleLowerCase().includes(query)
+                        || String(value ?? '').toLocaleLowerCase().includes(query);
+                });
 
+                listSummary.textContent = query ? `${filteredData.length} / ${data.length}개 표시` : `총 ${data.length}개`;
+                if (filteredData.length === 0) {
+                    const emptyItem = document.createElement('li');
+                    emptyItem.className = 'blocked-list-empty';
+                    emptyItem.textContent = query ? '검색 결과가 없습니다.' : '이 탭에 차단된 항목이 없습니다.';
+                    listEl.appendChild(emptyItem);
+                }
 
-                data.forEach(item => {
+                filteredData.forEach((item) => {
                     const li = document.createElement('li');
                     li.className = 'blocked-item';
                     const value = (typeof item === 'object') ? item.id : item;
                     const name = (typeof item === 'object') ? item.name : item;
                     li.dataset.value = value;
-                    li.innerHTML = `<span class="item-name">${name}</span><span class="delete-item-btn">X</span>`;
 
+                    const nameEl = document.createElement('span');
+                    nameEl.className = 'item-name';
+                    nameEl.textContent = String(name ?? value ?? '');
+                    const deleteButton = document.createElement('button');
+                    deleteButton.type = 'button';
+                    deleteButton.className = 'delete-item-btn';
+                    deleteButton.textContent = '삭제';
+                    deleteButton.setAttribute('aria-label', `${nameEl.textContent} 삭제 선택`);
+                    li.append(nameEl, deleteButton);
 
                     if (itemsToDelete[type].has(value)) {
                         li.classList.add('item-to-delete');
                     }
 
-
-                    li.querySelector('.delete-item-btn').onclick = () => {
+                    deleteButton.onclick = () => {
                         if (li.classList.toggle('item-to-delete')) {
                             itemsToDelete[type].add(value);
                         } else {
                             itemsToDelete[type].delete(value);
                         }
                         updateSelectAllButtonState(type);
-                        updateGlobalSelectAllButtonState(); // [추가] 개별 변경 시 전역 버튼 상태도 업데이트
+                        updateGlobalSelectAllButtonState();
                     };
                     listEl.appendChild(li);
                 });
+                updateTabCounts();
                 updateSelectAllButtonState(type);
-                updateGlobalSelectAllButtonState(); // [추가] 탭 변경 시 전역 버튼 상태도 업데이트
+                updateGlobalSelectAllButtonState();
             };
 
 
@@ -5492,6 +6976,27 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             });
 
 
+            searchInput.addEventListener('input', () => {
+                const activeType = panel.querySelector('.panel-tab.active').dataset.type;
+                renderList(activeType);
+            });
+
+            panel.querySelector('.panel-add-btn').onclick = async () => {
+                const activeType = panel.querySelector('.panel-tab.active').dataset.type;
+                const manualType = activeType === 'uids' ? 'uid' : activeType === 'nicknames' ? 'nickname' : 'ip';
+                await this.createManualBlockPanel({
+                    initialType: manualType,
+                    onAdded: async () => {
+                        const latestList = await this.loadPersonalBlocks();
+                        originalBlockList.uids = latestList.uids;
+                        originalBlockList.nicknames = latestList.nicknames;
+                        originalBlockList.ips = latestList.ips;
+                        renderList(panel.querySelector('.panel-tab.active').dataset.type);
+                    }
+                });
+            };
+
+
             const closePanel = () => {
                 panel.classList.add('dcuf-pop-leave');
                 overlay.classList.add('dcuf-overlay-leave');
@@ -5523,7 +7028,30 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
             // 드래그 & 리사이즈 로직 전체 개선
             let isDragging = false, isResizing = false;
-            let offsetX, offsetY, lastX, lastY; // lastX, lastY는 리사이즈 전용
+            let offsetX, offsetY, resizeStartX, resizeStartY;
+            let panelWidth = 0, panelHeight = 0;
+            let dragRafId = 0, pendingPointerX = null, pendingPointerY = null;
+
+            const applyPanelGeometry = () => {
+                dragRafId = 0;
+                if (pendingPointerX === null || pendingPointerY === null) return;
+                const clientX = pendingPointerX;
+                const clientY = pendingPointerY;
+                pendingPointerX = null;
+                pendingPointerY = null;
+
+                if (isDragging) {
+                    let newX = clientX - offsetX;
+                    let newY = clientY - offsetY;
+                    newX = Math.max(0, Math.min(newX, window.innerWidth - panelWidth));
+                    newY = Math.max(0, Math.min(newY, window.innerHeight - panelHeight));
+                    panel.style.left = `${newX}px`;
+                    panel.style.top = `${newY}px`;
+                } else if (isResizing) {
+                    panel.style.width = `${panelWidth + clientX - resizeStartX}px`;
+                    panel.style.height = `${panelHeight + clientY - resizeStartY}px`;
+                }
+            };
 
 
             const onDragStart = (e) => {
@@ -5553,9 +7081,11 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                     offsetX = e.clientX - rect.left;
                     offsetY = e.clientY - rect.top;
                 } else if (isResizing) {
-                    lastX = e.clientX;
-                    lastY = e.clientY;
+                    resizeStartX = e.clientX;
+                    resizeStartY = e.clientY;
                 }
+                panelWidth = rect.width;
+                panelHeight = rect.height;
 
 
                 document.addEventListener('mousemove', onDragMove);
@@ -5565,35 +7095,15 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
             const onDragMove = (e) => {
                 e.preventDefault();
-
-
-                if (isDragging) {
-                    const rect = panel.getBoundingClientRect();
-                    let newX = e.clientX - offsetX;
-                    let newY = e.clientY - offsetY;
-
-
-                    newX = Math.max(0, Math.min(newX, window.innerWidth - rect.width));
-                    newY = Math.max(0, Math.min(newY, window.innerHeight - rect.height));
-
-
-                    panel.style.left = `${newX}px`;
-                    panel.style.top = `${newY}px`;
-                } else if (isResizing) {
-                    const dx = e.clientX - lastX;
-                    const dy = e.clientY - lastY;
-                    lastX = e.clientX;
-                    lastY = e.clientY;
-
-
-                    const rect = panel.getBoundingClientRect();
-                    panel.style.width = `${rect.width + dx}px`;
-                    panel.style.height = `${rect.height + dy}px`;
-                }
+                pendingPointerX = e.clientX;
+                pendingPointerY = e.clientY;
+                if (!dragRafId) dragRafId = requestAnimationFrame(applyPanelGeometry);
             };
 
 
             const onDragEnd = () => { // async 키워드 제거
+                if (dragRafId) cancelAnimationFrame(dragRafId);
+                applyPanelGeometry();
                 isDragging = false;
                 isResizing = false;
                 document.removeEventListener('mousemove', onDragMove);
@@ -5625,6 +7135,8 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
      * =================================================================
      */
     const UIModule = {
+        _initState: 'idle',
+        _initPromise: null,
         DATA_ATTR: 'data-custom-row-id',
         TRANSFORMED_ATTR: 'data-ui-transformed',
 
@@ -5650,6 +7162,8 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         },
 
         LIST_STATE_MAP: new WeakMap(),
+        ACTIVE_LIST_STATES: new Set(),
+        _bootRollbackRegistered: false,
         PAGINATION_BOUND_ATTR: 'data-dcuf-force-refresh-bound',
         TOOLTIP_BOUND_ATTR: 'data-dcuf-tooltip-bound',
         SEARCH_LAYER_BOUND_ATTR: 'data-dcuf-search-layer-bound',
@@ -5663,6 +7177,10 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         _initialRevealStartedAt: 0,
         _postRevealRecoveryStop: null,
         ARTICLE_AD_STYLE_ID: 'dcuf-article-native-ad-style',
+        SEARCH_DRAWER_ROOTS: new Set(),
+        _searchDrawerGlobalHandlersBound: false,
+        _searchDrawerUpdateRafId: 0,
+        _searchDrawerUpdateTimerId: 0,
 
         getRuntimeCoordinator() {
             return window.__dcufRuntimeCoordinator || null;
@@ -5738,10 +7256,10 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
         resolveBottomControlScope(listWrap) {
             if (!(listWrap instanceof HTMLElement)) return null;
-            return listWrap.closest('article')
-                || listWrap.closest('section')
-                || listWrap.parentElement
-                || listWrap;
+            // Live view pages keep the embedded-list controls beside the
+            // list wrapper. closest('section') returned the wrapper itself,
+            // which made those sibling controls impossible to discover.
+            return listWrap.parentElement || listWrap;
         },
 
         findBottomControlElement(listWrap, selector) {
@@ -5750,10 +7268,26 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             if (!(scope instanceof HTMLElement)) return null;
 
             const candidates = Array.from(scope.querySelectorAll(selector));
-            return candidates.find((element) => (
-                element instanceof HTMLElement
-                && !element.closest(`.${this.CUSTOM_CLASSES.BOTTOM_CONTROLS}`)
-            )) || null;
+            return candidates.find((element) => {
+                if (!(element instanceof HTMLElement)) return false;
+                if (element.closest(`.${this.CUSTOM_CLASSES.BOTTOM_CONTROLS}`)) return false;
+
+                // Live list controls are siblings of `.gall_listwrap`, but the
+                // whole page is nested in `#top.list_wrap`. Comparing only the
+                // nearest LIST_WRAP assigns them to that decorative outer wrapper
+                // and rejects every control. Resolve the table-owned list instead.
+                const controlOwner = this.resolveOwnedListWrap(element);
+                return !(controlOwner instanceof HTMLElement) || controlOwner === listWrap;
+            }) || null;
+        },
+
+        findAdjacentViewListActionBar(listWrap) {
+            if (!(listWrap instanceof HTMLElement)) return null;
+            const sibling = listWrap.previousElementSibling;
+            if (!(sibling instanceof HTMLElement)) return null;
+            if (!sibling.matches('.view_bottom_btnbox')) return null;
+            if (sibling.closest(`.${this.CUSTOM_CLASSES.BOTTOM_CONTROLS}`)) return null;
+            return sibling;
         },
 
         recordDiagnostic(label, amount = 1) {
@@ -6020,35 +7554,78 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             searchRoot.setAttribute('data-dcuf-search-layer-open', '1');
         },
 
+        pruneSearchDrawerRoots() {
+            this.SEARCH_DRAWER_ROOTS.forEach((searchRoot) => {
+                const hasSearchForm = searchRoot instanceof HTMLElement
+                    && (searchRoot.matches?.(this.SELECTORS.SEARCH_FORM)
+                        || searchRoot.querySelector?.(this.SELECTORS.SEARCH_FORM));
+                if (!searchRoot.isConnected || !hasSearchForm) this.SEARCH_DRAWER_ROOTS.delete(searchRoot);
+            });
+            const diagnostics = window.__dcufDiagnostics;
+            if (typeof diagnostics?.setGauge === 'function') {
+                diagnostics.setGauge('ui.searchDrawer.activeRoots', this.SEARCH_DRAWER_ROOTS.size);
+                diagnostics.setGauge('ui.searchDrawer.globalListeners', this._searchDrawerGlobalHandlersBound ? 4 : 0);
+            }
+        },
+
+        flushSearchDrawerReserveUpdates() {
+            this.pruneSearchDrawerRoots();
+            this.SEARCH_DRAWER_ROOTS.forEach((searchRoot) => this.updateSearchDrawerReserve(searchRoot));
+        },
+
+        scheduleSearchDrawerReserveUpdate() {
+            if (!this._searchDrawerUpdateRafId) {
+                this._searchDrawerUpdateRafId = requestAnimationFrame(() => {
+                    this._searchDrawerUpdateRafId = 0;
+                    this.flushSearchDrawerReserveUpdates();
+                });
+            }
+            if (this._searchDrawerUpdateTimerId) window.clearTimeout(this._searchDrawerUpdateTimerId);
+            this._searchDrawerUpdateTimerId = window.setTimeout(() => {
+                this._searchDrawerUpdateTimerId = 0;
+                this.flushSearchDrawerReserveUpdates();
+            }, 40);
+        },
+
+        ensureSearchDrawerGlobalHandlers() {
+            if (this._searchDrawerGlobalHandlersBound) return;
+            const scheduleUpdate = () => this.scheduleSearchDrawerReserveUpdate();
+            document.addEventListener('click', scheduleUpdate, true);
+            document.addEventListener('change', scheduleUpdate, true);
+            document.addEventListener('focusin', scheduleUpdate, true);
+            window.addEventListener('resize', scheduleUpdate);
+            this._searchDrawerGlobalHandlersBound = true;
+        },
+
         bindSearchDrawerReserve(searchRoot) {
             if (!(searchRoot instanceof HTMLElement)) return;
-            if (searchRoot.getAttribute(this.SEARCH_LAYER_BOUND_ATTR) === '1') {
-                this.updateSearchDrawerReserve(searchRoot);
-                return;
-            }
-            searchRoot.setAttribute(this.SEARCH_LAYER_BOUND_ATTR, '1');
-
             const searchForm = searchRoot.matches?.(this.SELECTORS.SEARCH_FORM)
                 ? searchRoot
                 : searchRoot.querySelector(this.SELECTORS.SEARCH_FORM);
             if (!(searchForm instanceof HTMLElement)) return;
 
-            searchRoot.style.setProperty('overflow', 'visible', 'important');
-            searchRoot.style.setProperty('position', 'relative', 'important');
-            searchRoot.style.setProperty('transition', 'padding-bottom 0.18s ease', 'important');
+            const searchSlot = searchForm.closest(`.${this.CUSTOM_CLASSES.SEARCH_SLOT}`);
+            const reserveRoot = searchSlot instanceof HTMLElement ? searchSlot : searchRoot;
+            this.SEARCH_DRAWER_ROOTS.forEach((registeredRoot) => {
+                if (registeredRoot === reserveRoot) return;
+                const registeredForm = registeredRoot.matches?.(this.SELECTORS.SEARCH_FORM)
+                    ? registeredRoot
+                    : registeredRoot.querySelector?.(this.SELECTORS.SEARCH_FORM);
+                if (registeredForm === searchForm) this.SEARCH_DRAWER_ROOTS.delete(registeredRoot);
+            });
+            this.SEARCH_DRAWER_ROOTS.add(reserveRoot);
+            this.ensureSearchDrawerGlobalHandlers();
+            if (reserveRoot.getAttribute(this.SEARCH_LAYER_BOUND_ATTR) === '1') {
+                this.scheduleSearchDrawerReserveUpdate();
+                return;
+            }
+            reserveRoot.setAttribute(this.SEARCH_LAYER_BOUND_ATTR, '1');
 
-            const scheduleUpdate = () => {
-                requestAnimationFrame(() => this.updateSearchDrawerReserve(searchRoot));
-                window.setTimeout(() => this.updateSearchDrawerReserve(searchRoot), 40);
-            };
+            reserveRoot.style.setProperty('overflow', 'visible', 'important');
+            reserveRoot.style.setProperty('position', 'relative', 'important');
+            reserveRoot.style.setProperty('transition', 'padding-bottom 0.18s ease', 'important');
 
-            searchForm.addEventListener('click', scheduleUpdate, true);
-            searchForm.addEventListener('change', scheduleUpdate, true);
-            searchForm.addEventListener('focusin', scheduleUpdate, true);
-            document.addEventListener('click', scheduleUpdate, true);
-            window.addEventListener('resize', scheduleUpdate);
-
-            scheduleUpdate();
+            this.scheduleSearchDrawerReserveUpdate();
         },
 
         enhanceOriginalSearchForms(listWrap) {
@@ -6087,7 +7664,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
             searchForm.style.setProperty('display', 'block', 'important');
             searchForm.style.setProperty('width', '100%', 'important');
-            searchForm.style.setProperty('max-width', '520px', 'important');
+            searchForm.style.setProperty('max-width', 'none', 'important');
             searchForm.style.setProperty('margin', '0', 'important');
             searchForm.style.setProperty('padding', '0', 'important');
             searchForm.style.setProperty('border', 'none', 'important');
@@ -6105,32 +7682,32 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             if (searchWrap instanceof HTMLElement) {
                 searchWrap.style.setProperty('display', 'flex', 'important');
                 searchWrap.style.setProperty('align-items', 'center', 'important');
-                searchWrap.style.setProperty('justify-content', 'center', 'important');
-                searchWrap.style.setProperty('gap', '4px', 'important');
-                searchWrap.style.setProperty('width', 'fit-content', 'important');
+                searchWrap.style.setProperty('justify-content', 'flex-start', 'important');
+                searchWrap.style.setProperty('gap', '8px', 'important');
+                searchWrap.style.setProperty('width', '100%', 'important');
                 searchWrap.style.setProperty('max-width', '100%', 'important');
                 searchWrap.style.setProperty('margin', '0 auto', 'important');
                 searchWrap.style.setProperty('padding', '0', 'important');
-                searchWrap.style.setProperty('flex-wrap', 'nowrap', 'important');
+                searchWrap.style.setProperty('flex-wrap', 'wrap', 'important');
             }
 
             if (hasLegacySearchColumns && searchWrap instanceof HTMLElement) {
                 searchWrap.style.setProperty('display', 'flex', 'important');
                 searchWrap.style.setProperty('align-items', 'center', 'important');
-                searchWrap.style.setProperty('justify-content', 'center', 'important');
-                searchWrap.style.setProperty('gap', '4px', 'important');
-                searchWrap.style.setProperty('width', 'fit-content', 'important');
+                searchWrap.style.setProperty('justify-content', 'flex-start', 'important');
+                searchWrap.style.setProperty('gap', '8px', 'important');
+                searchWrap.style.setProperty('width', '100%', 'important');
                 searchWrap.style.setProperty('max-width', '100%', 'important');
                 searchWrap.style.setProperty('margin', '0 auto', 'important');
                 searchWrap.style.setProperty('padding', '0', 'important');
-                searchWrap.style.setProperty('flex-wrap', 'nowrap', 'important');
+                searchWrap.style.setProperty('flex-wrap', 'wrap', 'important');
             }
 
             if (leftBox instanceof HTMLElement) {
                 leftBox.style.setProperty('display', 'block', 'important');
-                leftBox.style.setProperty('flex', '0 0 125px', 'important');
-                leftBox.style.setProperty('width', '125px', 'important');
-                leftBox.style.setProperty('min-width', '125px', 'important');
+                leftBox.style.setProperty('flex', '0 0 128px', 'important');
+                leftBox.style.setProperty('width', '128px', 'important');
+                leftBox.style.setProperty('min-width', '128px', 'important');
                 leftBox.style.setProperty('margin', '0', 'important');
                 leftBox.style.setProperty('padding', '0', 'important');
                 leftBox.style.setProperty('float', 'none', 'important');
@@ -6140,8 +7717,8 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             if (rightBox instanceof HTMLElement) {
                 rightBox.style.setProperty('display', 'flex', 'important');
                 rightBox.style.setProperty('align-items', 'center', 'important');
-                rightBox.style.setProperty('flex', '0 1 auto', 'important');
-                rightBox.style.setProperty('width', '320px', 'important');
+                rightBox.style.setProperty('flex', '1 1 260px', 'important');
+                rightBox.style.setProperty('width', 'auto', 'important');
                 rightBox.style.setProperty('min-width', '0', 'important');
                 rightBox.style.setProperty('margin', '0', 'important');
                 rightBox.style.setProperty('padding', '0', 'important');
@@ -6151,10 +7728,10 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
             if (nativeSelectHost instanceof HTMLElement) {
                 nativeSelectHost.style.setProperty('display', 'block', 'important');
-                nativeSelectHost.style.setProperty('flex', '0 0 125px', 'important');
-                nativeSelectHost.style.setProperty('width', '125px', 'important');
-                nativeSelectHost.style.setProperty('min-width', '125px', 'important');
-                nativeSelectHost.style.setProperty('height', '38px', 'important');
+                nativeSelectHost.style.setProperty('flex', '0 0 128px', 'important');
+                nativeSelectHost.style.setProperty('width', '128px', 'important');
+                nativeSelectHost.style.setProperty('min-width', '128px', 'important');
+                nativeSelectHost.style.setProperty('height', '44px', 'important');
                 nativeSelectHost.style.setProperty('margin', '0', 'important');
                 nativeSelectHost.style.setProperty('padding', '0', 'important');
                 nativeSelectHost.style.setProperty('box-sizing', 'border-box', 'important');
@@ -6178,15 +7755,15 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
                 nativeSelect.style.setProperty('display', 'block', 'important');
                 nativeSelect.style.setProperty('width', '100%', 'important');
-                nativeSelect.style.setProperty('min-width', '125px', 'important');
-                nativeSelect.style.setProperty('height', '38px', 'important');
+                nativeSelect.style.setProperty('min-width', '128px', 'important');
+                nativeSelect.style.setProperty('height', '44px', 'important');
                 nativeSelect.style.setProperty('margin', '0', 'important');
                 nativeSelect.style.setProperty('padding', '0 10px', 'important');
-                nativeSelect.style.setProperty('border', '1px solid #3b4890', 'important');
-                nativeSelect.style.setProperty('border-radius', '0', 'important');
-                nativeSelect.style.setProperty('background', '#fff', 'important');
-                nativeSelect.style.setProperty('box-shadow', 'none', 'important');
-                nativeSelect.style.setProperty('color', '#333', 'important');
+                nativeSelect.style.setProperty('border', '1px solid var(--dcuf-control-border, #c6d2e4)', 'important');
+                nativeSelect.style.setProperty('border-radius', '12px', 'important');
+                nativeSelect.style.setProperty('background', 'var(--dcuf-control-surface, linear-gradient(180deg, #ffffff 0%, #f4f7fb 100%))', 'important');
+                nativeSelect.style.setProperty('box-shadow', 'inset 0 1px 0 rgba(255, 255, 255, 0.96), 0 4px 10px rgba(20, 39, 75, 0.08)', 'important');
+                nativeSelect.style.setProperty('color', 'var(--dcuf-control-text, #333)', 'important');
                 nativeSelect.style.setProperty('font-size', '13px', 'important');
                 nativeSelect.style.setProperty('font-weight', '700', 'important');
                 nativeSelect.style.setProperty('box-sizing', 'border-box', 'important');
@@ -6220,23 +7797,23 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 }
             }
 
-            if (selectBox instanceof HTMLElement) {
+            if (selectBox instanceof HTMLElement && !(nativeSelect instanceof HTMLSelectElement)) {
                 selectBox.style.setProperty('display', 'flex', 'important');
                 selectBox.style.setProperty('align-items', 'stretch', 'important');
                 selectBox.style.setProperty('position', 'relative', 'important');
-                selectBox.style.setProperty('flex', '0 0 125px', 'important');
-                selectBox.style.setProperty('width', '125px', 'important');
-                selectBox.style.setProperty('min-width', '125px', 'important');
-                selectBox.style.setProperty('height', '38px', 'important');
+                selectBox.style.setProperty('flex', '0 0 128px', 'important');
+                selectBox.style.setProperty('width', '128px', 'important');
+                selectBox.style.setProperty('min-width', '128px', 'important');
+                selectBox.style.setProperty('height', '44px', 'important');
                 selectBox.style.setProperty('margin', '0', 'important');
                 selectBox.style.setProperty('float', 'none', 'important');
                 selectBox.style.setProperty('overflow', 'visible', 'important');
                 selectBox.style.setProperty('box-sizing', 'border-box', 'important');
                 selectBox.style.setProperty('visibility', 'visible', 'important');
-                selectBox.style.setProperty('border', '1px solid #3b4890', 'important');
-                selectBox.style.setProperty('border-radius', '0', 'important');
-                selectBox.style.setProperty('background', '#fff', 'important');
-                selectBox.style.setProperty('box-shadow', 'none', 'important');
+                selectBox.style.setProperty('border', '1px solid var(--dcuf-control-border, #c6d2e4)', 'important');
+                selectBox.style.setProperty('border-radius', '12px', 'important');
+                selectBox.style.setProperty('background', 'var(--dcuf-control-surface, linear-gradient(180deg, #ffffff 0%, #f4f7fb 100%))', 'important');
+                selectBox.style.setProperty('box-shadow', 'inset 0 1px 0 rgba(255, 255, 255, 0.96), 0 4px 10px rgba(20, 39, 75, 0.08)', 'important');
             }
 
             if (selectArea instanceof HTMLElement) {
@@ -6251,7 +7828,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 selectArea.style.setProperty('background', 'transparent', 'important');
                 selectArea.style.setProperty('box-sizing', 'border-box', 'important');
                 selectArea.style.setProperty('overflow', 'hidden', 'important');
-                selectArea.style.setProperty('color', '#333', 'important');
+                selectArea.style.setProperty('color', 'var(--dcuf-control-text, #333)', 'important');
             }
 
             if (selectInner instanceof HTMLElement) {
@@ -6266,44 +7843,48 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             if (bottomSearch instanceof HTMLElement) {
                 bottomSearch.style.setProperty('display', 'flex', 'important');
                 bottomSearch.style.setProperty('align-items', 'center', 'important');
-                bottomSearch.style.setProperty('flex', '0 1 auto', 'important');
-                bottomSearch.style.setProperty('width', '320px', 'important');
-                bottomSearch.style.setProperty('height', '38px', 'important');
+                bottomSearch.style.setProperty('flex', '1 1 260px', 'important');
+                bottomSearch.style.setProperty('width', 'auto', 'important');
+                bottomSearch.style.setProperty('height', 'auto', 'important');
                 bottomSearch.style.setProperty('min-width', '0', 'important');
                 bottomSearch.style.setProperty('margin', '0', 'important');
                 bottomSearch.style.setProperty('float', 'none', 'important');
+                bottomSearch.style.setProperty('position', 'static', 'important');
+                bottomSearch.style.setProperty('inset', 'auto', 'important');
+                bottomSearch.style.setProperty('transform', 'none', 'important');
             }
 
             if (innerSearch instanceof HTMLElement) {
                 innerSearch.style.setProperty('display', 'block', 'important');
                 innerSearch.style.setProperty('flex', '1 1 auto', 'important');
                 innerSearch.style.setProperty('width', 'auto', 'important');
-                innerSearch.style.setProperty('height', '30px', 'important');
+                innerSearch.style.setProperty('height', '44px', 'important');
                 innerSearch.style.setProperty('margin', '0', 'important');
                 innerSearch.style.setProperty('padding', '0', 'important');
-                innerSearch.style.setProperty('border', 'none', 'important');
-                innerSearch.style.setProperty('background', '#fff', 'important');
-                innerSearch.style.setProperty('box-shadow', 'inset 0 0 0 1px rgba(255, 255, 255, 0.06)', 'important');
+                innerSearch.style.setProperty('border', '1px solid var(--dcuf-control-border, #c6d2e4)', 'important');
+                innerSearch.style.setProperty('border-radius', '12px', 'important');
+                innerSearch.style.setProperty('background', 'var(--dcuf-search-input, #fff)', 'important');
+                innerSearch.style.setProperty('box-shadow', 'inset 0 1px 2px rgba(20, 39, 75, 0.06), 0 4px 10px rgba(20, 39, 75, 0.07)', 'important');
                 innerSearch.style.setProperty('overflow', 'hidden', 'important');
             }
 
             if (keywordInput instanceof HTMLInputElement) {
                 keywordInput.style.setProperty('width', '100%', 'important');
-                keywordInput.style.setProperty('height', '30px', 'important');
+                keywordInput.style.setProperty('height', '42px', 'important');
                 keywordInput.style.setProperty('margin', '0', 'important');
-                keywordInput.style.setProperty('padding', '0 9px', 'important');
+                keywordInput.style.setProperty('padding', '0 13px', 'important');
                 keywordInput.style.setProperty('border', 'none', 'important');
-                keywordInput.style.setProperty('border-radius', '0', 'important');
-                keywordInput.style.setProperty('background', '#fff', 'important');
+                keywordInput.style.setProperty('border-radius', '11px', 'important');
+                keywordInput.style.setProperty('background', 'var(--dcuf-search-input, #fff)', 'important');
                 keywordInput.style.setProperty('box-shadow', 'none', 'important');
                 keywordInput.style.setProperty('box-sizing', 'border-box', 'important');
             }
 
             if (searchButton instanceof HTMLElement) {
                 searchButton.style.setProperty('flex', 'none', 'important');
-                searchButton.style.setProperty('width', '37px', 'important');
-                searchButton.style.setProperty('min-width', '37px', 'important');
-                searchButton.style.setProperty('height', '36px', 'important');
+                searchButton.style.setProperty('width', '44px');
+                searchButton.style.setProperty('min-width', '44px');
+                searchButton.style.setProperty('height', '44px');
                 searchButton.style.setProperty('margin', '0', 'important');
             }
 
@@ -6318,15 +7899,25 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
         enhanceBottomControls(bottomControls) {
             if (!(bottomControls instanceof HTMLElement)) return;
+
+            const searchSlot = bottomControls.querySelector(`.${this.CUSTOM_CLASSES.SEARCH_SLOT}`);
+            if (searchSlot instanceof HTMLElement) {
+                this.normalizeSearchFormLayout(searchSlot);
+                this.bindSearchDrawerReserve(searchSlot);
+            }
+            bottomControls.setAttribute('data-dcuf-controls-ready', '1');
         },
 
         createBottomControls(listWrap) {
-            const gallTabs = this.findBottomControlElement(listWrap, this.SELECTORS.GALL_TABS);
+            const gallTabs = this.findBottomControlElement(listWrap, this.SELECTORS.GALL_TABS)
+                || this.findAdjacentViewListActionBar(listWrap);
             const pagination = this.findBottomControlElement(listWrap, this.SELECTORS.PAGINATION);
             const pageMoveBox = this.findBottomControlElement(listWrap, this.SELECTORS.PAGE_MOVE_BOX);
+            const searchForm = this.findBottomControlElement(listWrap, this.SELECTORS.SEARCH_FORM);
+            const searchLayer = this.findBottomControlElement(listWrap, this.SELECTORS.SEARCH_LAYER);
 
 
-            if (!gallTabs && !pagination && !pageMoveBox) return null;
+            if (!gallTabs && !pagination && !pageMoveBox && !searchForm) return null;
 
 
             const bottomControls = document.createElement('div');
@@ -6335,23 +7926,49 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
             if (gallTabs) {
                 const buttonRow = document.createElement('div');
-                buttonRow.className = 'custom-button-row';
+                buttonRow.className = 'custom-button-row dcuf-bottom-action-card';
                 buttonRow.appendChild(gallTabs);
                 bottomControls.appendChild(buttonRow);
             }
 
 
-            if (pagination) {
-                bottomControls.appendChild(pagination);
+            if (pagination || pageMoveBox) {
+                const paginationCard = document.createElement('div');
+                paginationCard.className = 'dcuf-pagination-card';
+                if (pagination) paginationCard.appendChild(pagination);
+                if (pageMoveBox) paginationCard.appendChild(pageMoveBox);
+                bottomControls.appendChild(paginationCard);
             }
 
-            if (pageMoveBox) {
-                bottomControls.appendChild(pageMoveBox);
+            if (searchForm) {
+                const searchCard = document.createElement('div');
+                searchCard.className = 'dcuf-search-card';
+                const searchSlot = document.createElement('div');
+                searchSlot.className = this.CUSTOM_CLASSES.SEARCH_SLOT;
+                if (searchLayer instanceof HTMLElement && !searchForm.contains(searchLayer)) {
+                    searchForm.appendChild(searchLayer);
+                }
+                searchSlot.appendChild(searchForm);
+                searchCard.appendChild(searchSlot);
+                bottomControls.appendChild(searchCard);
             }
 
             this.enhanceBottomControls(bottomControls);
 
             return bottomControls;
+        },
+
+        ensureBottomControls(listWrap) {
+            if (!(listWrap instanceof HTMLElement)) return null;
+            let bottomControls = listWrap.querySelector(`.${this.CUSTOM_CLASSES.BOTTOM_CONTROLS}`);
+            if (!(bottomControls instanceof HTMLElement)) {
+                bottomControls = this.createBottomControls(listWrap);
+            }
+            if (bottomControls instanceof HTMLElement && bottomControls.parentElement !== listWrap) {
+                listWrap.appendChild(bottomControls);
+            }
+            this.enhanceBottomControls(bottomControls);
+            return bottomControls instanceof HTMLElement ? bottomControls : null;
         },
 
         bindTooltipEvents(listContainer) {
@@ -6389,13 +8006,76 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             return rowId;
         },
 
-        createListState(listWrap, originalTable, originalTbody, newListContainer) {
+        captureListTransaction(listWrap, originalTable) {
+            const scope = this.resolveBottomControlScope(listWrap) || listWrap;
+            const movableSelector = [
+                this.SELECTORS.PAGINATION, this.SELECTORS.GALL_TABS, this.SELECTORS.SEARCH_FORM,
+                this.SELECTORS.SEARCH_LAYER, this.SELECTORS.PAGE_MOVE_BOX, '.view_bottom_btnbox'
+            ].join(', ');
+            const movedNodes = Array.from(scope.querySelectorAll(movableSelector))
+                .filter((node) => !node.closest(`.${this.CUSTOM_CLASSES.BOTTOM_CONTROLS}`))
+                .map((node) => ({
+                    node, parent: node.parentNode, nextSibling: node.nextSibling,
+                    style: node.getAttribute('style'), className: node.getAttribute('class')
+                }));
+            return {
+                originalTableStyle: originalTable.getAttribute('style'),
+                transformedValue: listWrap.getAttribute(this.TRANSFORMED_ATTR),
+                existingCustomLists: new Set(listWrap.querySelectorAll(`.${this.CUSTOM_CLASSES.MOBILE_LIST}`)),
+                existingBottomControls: new Set(scope.querySelectorAll(`.${this.CUSTOM_CLASSES.BOTTOM_CONTROLS}`)),
+                movedNodes
+            };
+        },
+
+        rollbackListState(state, reason = 'boot-degraded') {
+            if (!state) return;
+            state.tbodyObserver?.disconnect();
+            state.syncScheduler?.cancel?.();
+            const transaction = state.transaction || {};
+            const listWrap = state.listWrap;
+            const originalTable = state.originalTable;
+            if (state.newListContainer instanceof HTMLElement && !transaction.existingCustomLists?.has(state.newListContainer)) state.newListContainer.remove();
+            const scope = this.resolveBottomControlScope(listWrap) || listWrap;
+            scope?.querySelectorAll?.(`.${this.CUSTOM_CLASSES.BOTTOM_CONTROLS}`).forEach((node) => {
+                if (!transaction.existingBottomControls?.has(node)) node.remove();
+            });
+            Array.from(transaction.movedNodes || []).reverse().forEach((entry) => {
+                if (!entry?.node || !entry.parent) return;
+                if (entry.nextSibling?.parentNode === entry.parent) entry.parent.insertBefore(entry.node, entry.nextSibling);
+                else entry.parent.appendChild(entry.node);
+                if (entry.style === null) entry.node.removeAttribute('style');
+                else entry.node.setAttribute('style', entry.style);
+                if (entry.className === null) entry.node.removeAttribute('class');
+                else entry.node.setAttribute('class', entry.className);
+            });
+            if (originalTable instanceof HTMLElement) {
+                if (transaction.originalTableStyle === null) originalTable.removeAttribute('style');
+                else originalTable.setAttribute('style', transaction.originalTableStyle);
+            }
+            if (listWrap instanceof HTMLElement) {
+                if (transaction.transformedValue === null) listWrap.removeAttribute(this.TRANSFORMED_ATTR);
+                else listWrap.setAttribute(this.TRANSFORMED_ATTR, transaction.transformedValue);
+                this.LIST_STATE_MAP.delete(listWrap);
+            }
+            this.ACTIVE_LIST_STATES.delete(state);
+            state.rolledBack = true;
+            this.recordDiagnostic('ui.listState.rolledBack');
+            this.getRuntimeCoordinator()?.noteDiagnostic?.('ui.list.rollback', { reason });
+        },
+
+        rollbackInitialListTransactions(reason = 'boot-degraded') {
+            Array.from(this.ACTIVE_LIST_STATES).reverse().forEach((state) => this.rollbackListState(state, reason));
+        },
+
+        createListState(listWrap, originalTable, originalTbody, newListContainer, transaction = null) {
             const state = {
                 runtimeId: this._nextListRuntimeId++,
                 listWrap,
                 originalTable,
                 originalTbody,
                 newListContainer,
+                transaction,
+                committed: false,
                 itemByRowId: new Map(),
                 dirtyRows: new Set(),
                 tbodyObserver: null,
@@ -6415,6 +8095,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 state.lastSyncedGeneration = state.mutationGeneration;
             }, [90]);
 
+            this.ACTIVE_LIST_STATES.add(state);
             return state;
         },
 
@@ -6436,6 +8117,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             if (state.listWrap instanceof HTMLElement) {
                 state.listWrap.removeAttribute(this.TRANSFORMED_ATTR);
             }
+            this.ACTIVE_LIST_STATES.delete(state);
             this.LIST_STATE_MAP.delete(state.listWrap);
             if (state.itemByRowId && typeof state.itemByRowId.clear === 'function') {
                 state.itemByRowId.clear();
@@ -6514,7 +8196,6 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
             state.originalTable = originalTable;
             state.originalTbody = originalTbody;
-            state.originalTable.style.setProperty('display', 'none', 'important');
 
             if (!state.newListContainer.isConnected && state.originalTable.parentNode) {
                 state.originalTable.parentNode.insertBefore(state.newListContainer, state.originalTable.nextSibling);
@@ -6571,6 +8252,9 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
             state.rebuildAll = false;
             state.dirtyRows?.clear();
+            state.listWrap.setAttribute(this.TRANSFORMED_ATTR, 'true');
+            state.originalTable.style.setProperty('display', 'none', 'important');
+            state.committed = true;
             if (rebuiltRowCount > 0) this.recordDiagnostic('ui.listRows.rebuilt', rebuiltRowCount);
             this.getRuntimeCoordinator()?.setDiagnosticGauge?.('ui.listRows.lastRebuilt', rebuiltRowCount);
             this.recordDiagnostic('ui.listState.synced');
@@ -6650,6 +8334,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
             const existingState = this.LIST_STATE_MAP.get(listWrap);
             if (existingState && existingState.originalTbody === originalTbody && existingState.newListContainer instanceof HTMLElement) {
+                this.ensureBottomControls(listWrap);
                 this.enhanceOriginalSearchForms(listWrap);
                 this.scheduleListSync(existingState, reason);
                 return existingState;
@@ -6657,34 +8342,38 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
             if (existingState) this.destroyListState(existingState, 'list-runtime-refresh');
 
-            listWrap.setAttribute(this.TRANSFORMED_ATTR, 'true');
-            originalTable.style.setProperty('display', 'none', 'important');
+            const transaction = this.captureListTransaction(listWrap, originalTable);
+            let newListContainer = null;
+            let state = null;
+            try {
+                newListContainer = listWrap.querySelector(`.${this.CUSTOM_CLASSES.MOBILE_LIST}`);
+                if (!(newListContainer instanceof HTMLElement)) {
+                    newListContainer = document.createElement('div');
+                    newListContainer.className = this.CUSTOM_CLASSES.MOBILE_LIST;
+                    originalTable.parentNode.insertBefore(newListContainer, originalTable.nextSibling);
+                }
 
-            let newListContainer = listWrap.querySelector(`.${this.CUSTOM_CLASSES.MOBILE_LIST}`);
-            if (!(newListContainer instanceof HTMLElement)) {
-                newListContainer = document.createElement('div');
-                newListContainer.className = this.CUSTOM_CLASSES.MOBILE_LIST;
-                originalTable.parentNode.insertBefore(newListContainer, originalTable.nextSibling);
+                this.bindTooltipEvents(newListContainer);
+                this.ensureBottomControls(listWrap);
+                this.enhanceOriginalSearchForms(listWrap);
+                this.applyForceRefreshPagination(listWrap);
+                const testBoot = __dcufRoot.__DCUF_TESTBED_CONFIG__?.boot;
+                if (testBoot?.failListPrepareOnce && !__dcufRoot.__dcufListPrepareFailureInjected) {
+                    __dcufRoot.__dcufListPrepareFailureInjected = true;
+                    throw new Error('testbed list prepare failure');
+                }
+
+                state = this.createListState(listWrap, originalTable, originalTbody, newListContainer, transaction);
+                this.LIST_STATE_MAP.set(listWrap, state);
+                this.hydrateExistingListItems(state);
+                this.attachOriginalTbodyObserver(state);
+                this.scheduleListSync(state, reason, { rebuildAll: true });
+                this.recordDiagnostic('ui.listState.created');
+                return state;
+            } catch (error) {
+                this.rollbackListState(state || { listWrap, originalTable, newListContainer, transaction }, 'list-prepare-failed');
+                throw error;
             }
-
-            this.bindTooltipEvents(newListContainer);
-
-            const bottomControls = listWrap.querySelector(`.${this.CUSTOM_CLASSES.BOTTOM_CONTROLS}`) || this.createBottomControls(listWrap);
-            if (bottomControls && bottomControls.parentElement !== listWrap) {
-                listWrap.appendChild(bottomControls);
-            }
-            this.enhanceBottomControls(bottomControls);
-            this.enhanceOriginalSearchForms(listWrap);
-
-            this.applyForceRefreshPagination(listWrap);
-
-            const state = this.createListState(listWrap, originalTable, originalTbody, newListContainer);
-            this.LIST_STATE_MAP.set(listWrap, state);
-            this.hydrateExistingListItems(state);
-            this.attachOriginalTbodyObserver(state);
-            this.scheduleListSync(state, reason, { rebuildAll: true });
-            this.recordDiagnostic('ui.listState.created');
-            return state;
         },
 
         ensureKnownListRuntimes(root = document, reason = 'ensure-known') {
@@ -6714,7 +8403,11 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                     const candidates = payload.collectMatches([
                         this.SELECTORS.LIST_WRAP,
                         this.SELECTORS.ORIGINAL_TABLE,
-                        this.SELECTORS.ORIGINAL_TBODY
+                        this.SELECTORS.ORIGINAL_TBODY,
+                        this.SELECTORS.GALL_TABS,
+                        this.SELECTORS.PAGINATION,
+                        this.SELECTORS.PAGE_MOVE_BOX,
+                        this.SELECTORS.SEARCH_FORM
                     ], { includeRoots: true });
                     if (candidates.length === 0) return;
 
@@ -7161,7 +8854,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             return this.getInitialRevealState().ready;
         },
 
-        waitForInitialRevealReady(timeoutMs = 4000) {
+        waitForInitialRevealReady(timeoutMs = 6000) {
             return new Promise((resolve) => {
                 this.ensureBootUi('initial-reveal:start');
                 this._initialRevealStartedAt = Date.now();
@@ -7316,12 +9009,13 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             });
         },
 
-        waitForInitialUiReady(timeoutMs = 4000) {
+        waitForInitialUiReady(timeoutMs = 6000) {
             return this.waitForInitialRevealReady(timeoutMs);
         },
 
         startPostRevealRecoveryWatch(context = {}) {
-            if (!this.isViewPage()) return 'not-view';
+            const isViewPage = this.isViewPage();
+            if (!isViewPage && !this.isListPage()) return 'not-applicable';
             if (typeof this._postRevealRecoveryStop === 'function') {
                 this._postRevealRecoveryStop('restart');
             }
@@ -7329,7 +9023,9 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             const startedAt = new Date().toISOString();
             const startedTime = Date.now();
             let active = true;
-            let lastState = this.evaluateViewPostRevealRecoveryState();
+            let lastState = isViewPage
+                ? this.evaluateViewPostRevealRecoveryState()
+                : this.getInitialRevealState();
             let checkCount = 0;
             let stablePasses = 0;
             let viewThemeRefreshes = 0;
@@ -7462,7 +9158,9 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 }
                 runFilteredCommentRepair(reason);
 
-                lastState = this.evaluateViewPostRevealRecoveryState();
+                lastState = isViewPage
+                    ? this.evaluateViewPostRevealRecoveryState()
+                    : this.getInitialRevealState();
                 if (lastState.ready) {
                     stablePasses += 1;
                     this.updatePostRevealRecoveryDebug(lastState, {
@@ -7475,6 +9173,13 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                         startedAt
                     });
                     if (stablePasses >= this.POST_REVEAL_RECOVERY_STABLE_PASSES) {
+                        const bootController = window.__dcufBootController;
+                        if (bootController && bootController.state === 'degraded') {
+                            if (isViewPage && typeof window.__dcufFlushInitialCommentBarrier === 'function') {
+                                window.__dcufFlushInitialCommentBarrier({ reason: 'post-reveal-recovery' });
+                            }
+                            bootController.markReady('post-reveal-recovery');
+                        }
                         cleanup('completed');
                     }
                     return;
@@ -7643,13 +9348,20 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         isArticleNativeAdFrame(frame) {
             if (!(frame instanceof HTMLIFrameElement)) return false;
 
+            const frameId = frame.id || '';
+            const frameName = frame.name || '';
+            const frameSrc = frame.getAttribute('src') || '';
             const signature = [
-                frame.id,
-                frame.name,
+                frameId,
+                frameName,
                 frame.title,
                 frame.className,
-                frame.getAttribute('src') || ''
+                frameSrc
             ].join(' ');
+
+            const isGoogleArticleSafeFrame = (/^aswift_\d+$/i.test(frameId) || /^aswift_\d+$/i.test(frameName))
+                && /googleads\.g\.doubleclick\.net\/pagead\/ads/i.test(frameSrc);
+            if (isGoogleArticleSafeFrame) return true;
 
             if (/google_ads_iframe_|gfp|pstatic\.net\/tvetalibs|tivan\.naver\.com/i.test(signature)) {
                 return true;
@@ -7688,7 +9400,10 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 .writing_view_box iframe[id*="gfp"],
                 .writing_view_box iframe[name*="gfp"],
                 .writing_view_box iframe[src*="pstatic.net/tvetalibs"],
-                .writing_view_box iframe[src*="tivan.naver.com"] {
+                .writing_view_box iframe[src*="tivan.naver.com"],
+                .gallview_contents iframe[id^="aswift_"][src*="googleads.g.doubleclick.net/pagead/ads"],
+                .writing_view_box iframe[id^="aswift_"][src*="googleads.g.doubleclick.net/pagead/ads"],
+                .view_content_wrap iframe[id^="aswift_"][src*="googleads.g.doubleclick.net/pagead/ads"] {
                     display: none !important;
                     width: 0 !important;
                     height: 0 !important;
@@ -7804,6 +9519,11 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
             const writeBox = document.querySelector('.write_box');
             const writeForm = writeBox?.querySelector('form#write') || document.querySelector('form#write');
+            const leaveConfirm = writeForm?.querySelector('#leave_confirm_box');
+            if (leaveConfirm instanceof HTMLElement) {
+                leaveConfirm.classList.add('dcuf-write-leave-confirm');
+                document.body.appendChild(leaveConfirm);
+            }
             const gallType = writeForm?.querySelector('input[name="_GALLTYPE_"]')?.value || '';
             const isMinorWrite = gallType.toUpperCase() === 'M'
                 || document.querySelector('#container.minor_write') instanceof Element
@@ -8335,8 +10055,16 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             }, 250);
         },
         async init() {
-            if (isUiInitialized) return 'already-ready';
-            isUiInitialized = true;
+            if (this._initState === 'ready') return 'already-ready';
+            if (this._initState === 'initializing' && this._initPromise) return this._initPromise;
+            this._initState = 'initializing';
+            this._initPromise = (async () => {
+            const bootController = window.__dcufBootController;
+            if (!this._bootRollbackRegistered && typeof bootController?.registerRollback === 'function') {
+                this._bootRollbackRegistered = true;
+                bootController.registerRollback((reason) => this.rollbackInitialListTransactions(reason));
+                bootController.registerRecovery(() => this.ensureKnownListRuntimes(document, 'boot-recovery'));
+            }
 
 
             // [핵심 수정] 스크립트 시작 시, 툴팁으로 사용할 div를 미리 한 번만 생성
@@ -8382,8 +10110,20 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
             if (this.isListPage()) return 'list-runtime-ready';
             return 'non-list';
+            })();
+            try {
+                const result = await this._initPromise;
+                this._initState = 'ready';
+                return result;
+            } catch (error) {
+                this._initState = 'failed';
+                this._initPromise = null;
+                this.rollbackInitialListTransactions('ui-init-failed');
+                throw error;
+            }
         }
     };
+    window.__dcufUIModule = UIModule;
 
     const getDcufCollectionSize = (value) => {
         if (!value) return 0;
@@ -8426,7 +10166,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
         return {
             reason,
-            version: '3.3.8-beta',
+            version: '3.4.5-beta',
             time: new Date().toISOString(),
             href: location.href,
             heap: getDcufHeapMb(),
@@ -8443,6 +10183,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             filter: {
                 userSumCache: getDcufCollectionSize(userSumCache),
                 negativeUserSumCache: getDcufCollectionSize(FilterModule.USER_SUM_NEGATIVE_CACHE),
+                negativeUserSumCacheLimit: FilterModule.USER_SUM_NEGATIVE_MAX_ENTRIES,
                 inflightUserSumRequests: getDcufCollectionSize(FilterModule.INFLIGHT_USER_SUM_REQUESTS),
                 blockedUidsCache: getDcufCollectionSize(FilterModule.BLOCKED_UIDS_CACHE),
                 debugDecisionKeys: getDcufCollectionSize(FilterModule.DEBUG_DECISION_KEYS),
@@ -8457,7 +10198,12 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 nextRowId: UIModule._nextRowId,
                 nextListRuntimeId: UIModule._nextListRuntimeId,
                 listMutationSubscribed: typeof UIModule._listMutationUnsubscribe === 'function',
-                postRevealRecoveryActive: typeof UIModule._postRevealRecoveryStop === 'function'
+                postRevealRecoveryActive: typeof UIModule._postRevealRecoveryStop === 'function',
+                searchDrawerRoots: getDcufCollectionSize(UIModule.SEARCH_DRAWER_ROOTS),
+                searchDrawerGlobalHandlersBound: UIModule._searchDrawerGlobalHandlersBound,
+                searchDrawerRafActive: Boolean(UIModule._searchDrawerUpdateRafId),
+                searchDrawerTimerActive: Boolean(UIModule._searchDrawerUpdateTimerId),
+                effectiveDarkMode: window.__dcufEffectiveDarkMode ?? null
             },
             dom: {
                 nodes: document.getElementsByTagName('*').length,
@@ -8529,10 +10275,21 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
     // =================================================================
     // ================ Script-Level Initializations ===================
     // =================================================================
-    GM_registerMenuCommand('글댓합 설정하기', FilterModule.showSettings.bind(FilterModule));
-    GM_registerMenuCommand('차단 유저 관리', PersonalBlockModule.createManagementPanel.bind(PersonalBlockModule));
-    GM_registerMenuCommand('플로팅 버튼 원위치', PersonalBlockModule.resetFabPosition.bind(PersonalBlockModule));
-    GM_registerMenuCommand('메뉴 버튼 크기 조절', PersonalBlockModule.showFabScalePanel.bind(PersonalBlockModule));
+    const registerMenuCommandsSafely = () => {
+        if (__dcufRoot.__dcufMenuCommandsRegistered) return;
+        const commands = [
+            ['글댓합 설정하기', FilterModule.showSettings.bind(FilterModule)],
+            ['차단 유저 관리', PersonalBlockModule.createManagementPanel.bind(PersonalBlockModule)],
+            ['플로팅 버튼 원위치', PersonalBlockModule.resetFabPosition.bind(PersonalBlockModule)],
+            ['메뉴 버튼 크기 조절', PersonalBlockModule.showFabScalePanel.bind(PersonalBlockModule)]
+        ];
+        commands.forEach(([label, handler]) => {
+            try { GM_registerMenuCommand(label, handler); }
+            catch (error) { console.warn('[DCUF] menu registration failed:', label, error); }
+        });
+        __dcufRoot.__dcufMenuCommandsRegistered = true;
+    };
+    registerMenuCommandsSafely();
 
 
     // [신규] 단축키 설정을 다시 로드하는 전용 함수
@@ -8542,78 +10299,50 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
     }
 
     async function awaitInitialCommentStabilization() {
-        const waiter = window.__dcufAwaitInitialCommentStabilization;
-        const prepareInitialCommentReveal = (state) => {
-            const normalizedState = state && typeof state === 'object' ? state : { reason: 'unknown' };
-            const prepare = window.__dcufPrepareInitialCommentReveal;
-            if (typeof prepare !== 'function') return normalizedState;
-            try {
-                return {
-                    ...normalizedState,
-                    prepareState: prepare(normalizedState)
-                };
-            } catch (error) {
-                return {
-                    ...normalizedState,
-                    prepareError: error?.message || 'unknown'
-                };
+        if (!UIModule.isViewPage()) return { reason: 'non-view' };
+        const flushBarrier = window.__dcufFlushInitialCommentBarrier;
+        if (typeof flushBarrier !== 'function') return { reason: 'unavailable' };
+
+        const runtimeCoordinator = window.__dcufRuntimeCoordinator;
+        const deadline = Date.now() + 500;
+        let lastState = null;
+        for (let attempt = 1; attempt <= 3 && Date.now() < deadline; attempt += 1) {
+            runtimeCoordinator?.ensureMutationBus?.();
+            lastState = flushBarrier({ reason: 'initial-comment-barrier', attempt });
+            const firstGeneration = runtimeCoordinator?._mutationGeneration || lastState?.generation || 0;
+            await new Promise((resolve) => requestAnimationFrame(resolve));
+            runtimeCoordinator?.flushPendingMutations?.('initial-comment:quiet-1');
+            const secondGeneration = runtimeCoordinator?._mutationGeneration || 0;
+            if (secondGeneration !== firstGeneration) continue;
+            await new Promise((resolve) => requestAnimationFrame(resolve));
+            runtimeCoordinator?.flushPendingMutations?.('initial-comment:quiet-2');
+            const thirdGeneration = runtimeCoordinator?._mutationGeneration || 0;
+            if (thirdGeneration === secondGeneration) {
+                lastState = flushBarrier({ reason: 'initial-comment-quiet', attempt });
+                runtimeCoordinator?.incrementDiagnostic?.('ui.initialComment.mutationQuiet');
+                return { reason: 'mutation-quiet', attempt, generation: thirdGeneration, prepareState: lastState };
             }
-        };
-
-        const waitForMutationQuiet = async () => {
-            const filterModule = window.__dcufFilterModule;
-            if (typeof filterModule?.getRelevantMutationGeneration !== 'function') return null;
-
-            let previousGeneration = filterModule.getRelevantMutationGeneration('comments');
-            for (let attempt = 1; attempt <= 3; attempt += 1) {
-                const prepareState = prepareInitialCommentReveal({
-                    reason: 'mutation-quiet-prepare',
-                    attempt
+        }
+        lastState = flushBarrier({ reason: 'initial-comment-bounded-timeout', attempt: 3 });
+        return { reason: 'bounded-timeout', prepareState: lastState };
+    }
+    function prepareInitialCommentRevealBeforeMark(state = null) {
+        const prepare = window.__dcufFlushInitialCommentBarrier || window.__dcufPrepareInitialCommentReveal;
+        try {
+            if (typeof prepare === 'function') {
+                return prepare({
+                    reason: 'before-mark-ui-ready',
+                    previous: state?.commentInitState?.reason || ''
                 });
-                await new Promise((resolve) => requestAnimationFrame(resolve));
-                const nextGeneration = filterModule.getRelevantMutationGeneration('comments');
-                if (nextGeneration === previousGeneration) {
-                    const runtimeCoordinator = window.__dcufRuntimeCoordinator;
-                    runtimeCoordinator?.incrementDiagnostic?.('ui.initialComment.mutationQuiet');
-                    return {
-                        reason: 'mutation-quiet',
-                        attempt,
-                        generation: nextGeneration,
-                        prepareState
-                    };
-                }
-                previousGeneration = nextGeneration;
+            }
+            if (UIModule.isViewPage() && typeof FilterModule?.runSyncRefilterPass === 'function') {
+                const descriptors = FilterModule.runSyncRefilterPass('comments');
+                return {
+                    reason: 'filter-only',
+                    targetCount: Array.isArray(descriptors) ? descriptors.length : 0
+                };
             }
             return null;
-        };
-
-        if (typeof waiter !== 'function') {
-            return (await waitForMutationQuiet()) || prepareInitialCommentReveal({ reason: 'unavailable' });
-        }
-
-        try {
-            const waiterPromise = Promise.resolve().then(() => waiter());
-            const state = await Promise.race([
-                waitForMutationQuiet().then((quietState) => quietState || waiterPromise),
-                waiterPromise,
-                new Promise((resolve) => {
-                    window.setTimeout(() => resolve({ reason: 'ui-timeout' }), 650);
-                })
-            ]);
-            return prepareInitialCommentReveal(state);
-        } catch (error) {
-            return prepareInitialCommentReveal({ reason: `error:${error?.message || 'unknown'}` });
-        }
-    }
-
-    function prepareInitialCommentRevealBeforeMark(state = null) {
-        const prepare = window.__dcufPrepareInitialCommentReveal;
-        if (typeof prepare !== 'function') return null;
-        try {
-            return prepare({
-                reason: 'before-mark-ui-ready',
-                previous: state?.commentInitState?.reason || ''
-            });
         } catch (error) {
             return { reason: 'error', message: error?.message || 'unknown' };
         }
@@ -8627,14 +10356,22 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 commentInitState: { reason: 'already-initialized' }
             };
         }
-        console.log("[DC Filter+UI] Initializing v3.3.8-beta...");
+        isInitialized = true;
+        if (window.__dcufBootController) {
+            window.__dcufBootController.startPreparing('mobile-main');
+            if (!__dcufRoot.__dcufShortcutReadyHookRegistered) {
+                __dcufRoot.__dcufShortcutReadyHookRegistered = true;
+                window.__dcufBootController.onReady(() => reloadShortcutKey().catch((error) => {
+                    console.warn('[DCUF] shortcut initialization failed:', error);
+                }));
+            }
+        }
+        console.log("[DC Filter+UI] Initializing v3.4.5-beta...");
 
 
-        // [수정] main 함수에서 reloadShortcutKey 함수를 호출하여 초기화
-        await reloadShortcutKey();
-
-
-        window.addEventListener('keydown', async (e) => {
+        if (!__dcufRoot.__dcufShortcutBound) {
+            __dcufRoot.__dcufShortcutBound = true;
+            window.addEventListener('keydown', async (e) => {
             if (!activeShortcutObject || !activeShortcutObject.key) return;
 
 
@@ -8654,28 +10391,48 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                     await FilterModule.showSettings();
                 }
             }
-        });
+            });
+        }
 
+
+        if (UIModule.isWritePage() || (!UIModule.isListPage() && !UIModule.isViewPage())) {
+            const uiInitState = await UIModule.init();
+            window.__dcufBootController?.note?.(UIModule.isWritePage() ? 'boot.write-ui-ready' : 'boot.other-ui-ready', { uiInitState });
+            if (window.__dcufBootController) {
+                window.__dcufBootController.onReady(() => {
+                    void (async () => {
+                        await FilterModule.init();
+                        await PersonalBlockModule.init(FilterModule.getBootSnapshot(), { deferUi: true });
+                    })().catch((error) => console.warn('[DCUF] deferred non-view initialization failed:', error));
+                });
+            }
+            return { uiInitState, commentInitState: { reason: 'non-view' } };
+        }
 
         await FilterModule.init();
-        await PersonalBlockModule.init();
+        await PersonalBlockModule.init(FilterModule.getBootSnapshot(), { deferUi: true });
+        window.__dcufBootController?.note?.('boot.local-filter-ready');
         const uiInitState = await UIModule.init();
+        window.__dcufBootController?.note?.('boot.ui-ready', { uiInitState });
         // Mobile comment reply-merge cleanup can rerender blocked comment rows
         // once more after Filter/UI init. Keep the initial body lock until that first
         // stabilization window finishes so personally blocked comments do not flash visible.
         const commentInitState = await awaitInitialCommentStabilization();
+        window.__dcufBootController?.note?.('boot.comment-barrier', { reason: commentInitState?.reason || 'unknown' });
         const initState = { uiInitState, commentInitState };
         console.log(`[DC Filter+UI] Initialization complete. ui=${uiInitState} comment=${commentInitState?.reason || 'unknown'}`);
         return initState;
     }
 
 
+    let initializationRecoveryAttempts = 0;
     const runSafely = async () => {
         let initState = {
             uiInitState: 'fallback',
             commentInitState: { reason: 'not-started' }
         };
         let revealState = 'error';
+        let initializationSucceeded = false;
 
         try {
             const mainState = await main();
@@ -8683,27 +10440,56 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             if (typeof UIModule?.waitForInitialRevealReady === 'function') {
                 revealState = await UIModule.waitForInitialRevealReady();
             }
+            window.__dcufBootController?.note?.('boot.style-verified', { revealState });
+            initializationSucceeded = revealState !== 'error' && !String(revealState).startsWith('timeout-');
         } catch (error) {
             initState = {
                 ...initState,
                 uiInitState: 'error'
             };
             revealState = 'error';
+            isInitialized = false;
             console.error("[DC Filter+UI] A critical error occurred during main execution:", error);
         } finally {
             // [v2.2.2 수정] 모든 UI 처리 및 필터링 적용이 끝난 후,
             // 루트 준비 완료 클래스를 추가하여 화면을 표시합니다.
-            initState.commentPrepareState = prepareInitialCommentRevealBeforeMark(initState);
-            markUiReady();
+            if (initializationSucceeded) {
+                // Do not yield between the final local comment pass and removing the body lock.
+                // This closes the window where host AJAX can replace comments after the initial
+                // barrier but before markUiReady exposes the page.
+                const finalCommentState = prepareInitialCommentRevealBeforeMark(initState);
+                window.__dcufBootController?.note?.('boot.comment-finalized', {
+                    reason: finalCommentState?.reason || 'not-applicable',
+                    targetCount: finalCommentState?.targetCount || 0
+                });
+                if (UIModule.isViewPage() && finalCommentState?.reason === 'error') {
+                    initializationSucceeded = false;
+                    revealState = 'comment-finalize-error';
+                }
+            }
+            if (initializationSucceeded) markUiReady('ready:' + revealState);
+            else if (window.__dcufBootController) window.__dcufBootController.degrade('initialization:' + revealState);
             if (typeof UIModule?.startPostRevealRecoveryWatch === 'function') {
-                UIModule.startPostRevealRecoveryWatch({ revealState });
+                const recoveryWatchDelayMs = Math.max(0, Number(__dcufRoot.__DCUF_TESTBED_CONFIG__?.boot?.recoveryWatchDelayMs) || 0);
+                if (recoveryWatchDelayMs > 0) {
+                    window.setTimeout(() => UIModule.startPostRevealRecoveryWatch({ revealState }), recoveryWatchDelayMs);
+                } else {
+                    UIModule.startPostRevealRecoveryWatch({ revealState });
+                }
+            }
+            if (!initializationSucceeded && revealState === 'error' && initializationRecoveryAttempts < 2) {
+                initializationRecoveryAttempts += 1;
+                const retryBaseMs = Math.max(20, Number(__dcufRoot.__DCUF_TESTBED_CONFIG__?.boot?.recoveryRetryDelayMs) || 160);
+                window.setTimeout(() => {
+                    if (window.__dcufBootController?.state === 'degraded') runSafely();
+                }, retryBaseMs * initializationRecoveryAttempts);
             }
             console.log(`[DC Filter+UI] UI is now visible. ui=${initState.uiInitState} comment=${initState.commentInitState?.reason || 'unknown'} reveal=${revealState}`);
         }
     };
 
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', runSafely);
+        document.addEventListener('DOMContentLoaded', runSafely, { once: true });
     } else {
         runSafely();
     }
@@ -8724,13 +10510,21 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             const root = document.documentElement;
 
             const darkModeStylesheet = document.getElementById('css-darkmode');
-            if (darkModeStylesheet) {
-                body.classList.add('dc-filter-dark-mode');
-                if (root) root.classList.add('dc-filter-dark-mode');
-            } else {
-                body.classList.remove('dc-filter-dark-mode');
-                if (root) root.classList.remove('dc-filter-dark-mode');
+            const nextDarkMode = Boolean(darkModeStylesheet);
+            const classStateChanged = body.classList.contains('dc-filter-dark-mode') !== nextDarkMode
+                || Boolean(root && root.classList.contains('dc-filter-dark-mode') !== nextDarkMode);
+            const effectiveStateChanged = window.__dcufEffectiveDarkMode !== nextDarkMode;
+
+            if (!classStateChanged && !effectiveStateChanged) {
+                UIModule.recordDiagnostic('ui.darkMode.skippedUnchanged');
+                return;
             }
+
+            body.classList.toggle('dc-filter-dark-mode', nextDarkMode);
+            if (root) root.classList.toggle('dc-filter-dark-mode', nextDarkMode);
+            window.__dcufEffectiveDarkMode = nextDarkMode;
+            UIModule.recordDiagnostic('ui.darkMode.synced');
+            window.__dcufDiagnostics?.setGauge?.('ui.darkMode.enabled', nextDarkMode ? 1 : 0);
 
             // 본문/이미지댓글은 host 쪽 늦은 렌더가 다시 색을 덮는 경우가 있어
             // dark class 토글 직후 후처리 동기화도 같이 다시 태웁니다.
@@ -8760,8 +10554,11 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
 ; (() => {
     const __dcufPostMainRoot = (typeof unsafeWindow !== 'undefined' && unsafeWindow) ? unsafeWindow : window;
-    if (__dcufPostMainRoot.__dcufPostMainFixesLoaded) return;
-    __dcufPostMainRoot.__dcufPostMainFixesLoaded = true;
+    if (window.top !== window.self) return;
+    const previousState = __dcufPostMainRoot.__dcufPostMainFixesState;
+    if (previousState === 'initializing' || previousState === 'ready') return;
+    __dcufPostMainRoot.__dcufPostMainFixesState = 'initializing';
+    try {
 
 ; (() => {
     const STYLE_ID = 'dcuf-phase1-list-theme';
@@ -9066,6 +10863,645 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         .custom-bottom-controls .bottom_movebox > .btn_grey_roundbg.btn_schmove::after {
             margin-left: 6px !important;
         }
+        /* DCUF list navigation surfaces */
+        body:not(.is-write-page) .list_array_option {
+            display: flex !important;
+            align-items: center !important;
+            flex-wrap: wrap !important;
+            gap: 10px !important;
+            width: calc(100% - 12px) !important;
+            min-height: 64px !important;
+            height: auto !important;
+            position: relative !important;
+            margin: 12px 6px 16px !important;
+            padding: 10px 12px !important;
+            border: 1px solid rgba(201, 213, 230, 0.96) !important;
+            border-radius: 16px !important;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(244, 248, 253, 0.98) 100%) !important;
+            box-shadow:
+                inset 0 1px 0 rgba(255, 255, 255, 0.98),
+                inset 0 -8px 16px rgba(211, 222, 237, 0.18),
+                0 12px 24px rgba(22, 39, 72, 0.08),
+                0 2px 6px rgba(22, 39, 72, 0.05) !important;
+            box-sizing: border-box !important;
+            overflow: visible !important;
+        }
+        body:not(.is-write-page) .list_array_option .array_tab,
+        body:not(.is-write-page) .list_array_option > .fl,
+        body:not(.is-write-page) .list_array_option .center_box,
+        body:not(.is-write-page) .list_array_option .right_box,
+        body:not(.is-write-page) .list_array_option .fr {
+            display: flex !important;
+            align-items: center !important;
+            flex-wrap: wrap !important;
+            float: none !important;
+            gap: 7px !important;
+            min-width: 0 !important;
+            position: static !important;
+            inset: auto !important;
+            width: auto !important;
+            height: auto !important;
+            max-height: none !important;
+            overflow: visible !important;
+            margin-top: 0 !important;
+            margin-bottom: 0 !important;
+        }
+        body:not(.is-write-page) .list_array_option .center_box {
+            flex: 1 1 220px !important;
+            justify-content: center !important;
+        }
+        body:not(.is-write-page) .list_array_option .right_box,
+        body:not(.is-write-page) .list_array_option .fr {
+            margin-left: auto !important;
+            justify-content: flex-end !important;
+        }
+        body:not(.is-write-page) .list_array_option .array_tab > ul,
+        body:not(.is-write-page) .list_array_option .array_tab > ol {
+            display: flex !important;
+            align-items: center !important;
+            flex-wrap: wrap !important;
+            gap: 7px !important;
+            position: static !important;
+            float: none !important;
+            width: auto !important;
+            height: auto !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            list-style: none !important;
+        }
+        body:not(.is-write-page) .list_array_option .array_tab li {
+            position: static !important;
+            float: none !important;
+            width: auto !important;
+            height: auto !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            border: 0 !important;
+            background: transparent !important;
+            box-shadow: none !important;
+            list-style: none !important;
+        }
+        body:not(.is-write-page) .list_array_option .array_tab button,
+        body:not(.is-write-page) .list_array_option .array_tab a,
+        .custom-bottom-controls .dcuf-bottom-action-card button,
+        .custom-bottom-controls .dcuf-bottom-action-card a {
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            min-width: 72px !important;
+            min-height: 42px !important;
+            margin: 0 !important;
+            padding: 0 15px !important;
+            border: 1px solid #c7d3e4 !important;
+            border-radius: 11px !important;
+            background: linear-gradient(180deg, #ffffff 0%, #f2f6fb 100%) !important;
+            color: #35445d !important;
+            font-size: 14px !important;
+            font-weight: 800 !important;
+            line-height: 1 !important;
+            text-decoration: none !important;
+            box-shadow:
+                inset 0 1px 0 rgba(255, 255, 255, 0.98),
+                0 4px 10px rgba(24, 43, 79, 0.08) !important;
+            box-sizing: border-box !important;
+        }
+        body:not(.is-write-page) .list_array_option .array_tab .on,
+        body:not(.is-write-page) .list_array_option .array_tab button.on,
+        body:not(.is-write-page) .list_array_option .array_tab a.on,
+        body:not(.is-write-page) .list_array_option .array_tab li.on > a,
+        .custom-bottom-controls .dcuf-bottom-action-card .on,
+        .custom-bottom-controls .dcuf-bottom-action-card button.on,
+        .custom-bottom-controls .dcuf-bottom-action-card a.on {
+            border-color: #315fdb !important;
+            background: linear-gradient(180deg, #527df0 0%, #315fdc 100%) !important;
+            color: #fff !important;
+            box-shadow:
+                inset 0 1px 0 rgba(255, 255, 255, 0.28),
+                0 7px 14px rgba(49, 95, 220, 0.24) !important;
+        }
+        body:not(.is-write-page) .list_array_option select,
+        body:not(.is-write-page) .list_array_option .select_box {
+            min-height: 42px !important;
+            margin: 0 !important;
+            border: 1px solid #c7d3e4 !important;
+            border-radius: 11px !important;
+            background: linear-gradient(180deg, #ffffff 0%, #f2f6fb 100%) !important;
+            color: #43516a !important;
+            box-shadow: inset 0 1px 0 #fff, 0 4px 10px rgba(24, 43, 79, 0.07) !important;
+        }
+        body:not(.is-write-page) .list_array_option .btn_write,
+        body:not(.is-write-page) .list_array_option .write,
+        .custom-bottom-controls .dcuf-bottom-action-card .btn_write,
+        .custom-bottom-controls .dcuf-bottom-action-card .write {
+            min-width: 92px !important;
+            min-height: 44px !important;
+            border-color: #2e5bd4 !important;
+            background: linear-gradient(180deg, #527cf0 0%, #2e5bd4 100%) !important;
+            color: #fff !important;
+            box-shadow:
+                inset 0 1px 0 rgba(255, 255, 255, 0.28),
+                0 8px 16px rgba(46, 91, 212, 0.25) !important;
+        }
+        .custom-bottom-controls {
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: center !important;
+            gap: 12px !important;
+            width: 100% !important;
+            margin: 0 !important;
+            padding: 16px 8px 24px !important;
+            background: transparent !important;
+            box-sizing: border-box !important;
+            overflow: visible !important;
+        }
+        .custom-bottom-controls > .dcuf-bottom-action-card,
+        .custom-bottom-controls > .dcuf-pagination-card,
+        .custom-bottom-controls > .dcuf-search-card {
+            width: 100% !important;
+            max-width: 820px !important;
+            margin: 0 auto !important;
+            border: 1px solid rgba(201, 213, 230, 0.96) !important;
+            border-radius: 16px !important;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(244, 248, 253, 0.98) 100%) !important;
+            box-shadow:
+                inset 0 1px 0 rgba(255, 255, 255, 0.98),
+                inset 0 -10px 18px rgba(211, 222, 237, 0.16),
+                0 12px 24px rgba(22, 39, 72, 0.08),
+                0 2px 6px rgba(22, 39, 72, 0.05) !important;
+            box-sizing: border-box !important;
+            overflow: visible !important;
+        }
+        .custom-bottom-controls > .dcuf-pagination-card {
+            max-width: 1100px !important;
+        }
+        .custom-bottom-controls > .dcuf-search-card {
+            max-width: 820px !important;
+        }
+        .custom-bottom-controls > .dcuf-bottom-action-card {
+            max-width: none !important;
+            padding: 10px !important;
+        }
+        .custom-bottom-controls .dcuf-bottom-action-card .list_bottom_btnbox,
+        .custom-bottom-controls .dcuf-bottom-action-card .view_bottom_btnbox {
+            display: flex !important;
+            align-items: center !important;
+            flex-wrap: wrap !important;
+            gap: 8px !important;
+            width: 100% !important;
+            min-height: 44px !important;
+            height: auto !important;
+            position: static !important;
+            inset: auto !important;
+            float: none !important;
+            overflow: visible !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            border: 0 !important;
+            border-radius: 0 !important;
+            background: transparent !important;
+            box-shadow: none !important;
+        }
+        .custom-bottom-controls .dcuf-bottom-action-card .fl,
+        .custom-bottom-controls .dcuf-bottom-action-card .fr,
+        .custom-bottom-controls .dcuf-bottom-action-card .right_box {
+            display: flex !important;
+            align-items: center !important;
+            flex-wrap: wrap !important;
+            gap: 8px !important;
+            position: static !important;
+            inset: auto !important;
+            float: none !important;
+            width: auto !important;
+            height: auto !important;
+        }
+        .custom-bottom-controls .dcuf-bottom-action-card .fr,
+        .custom-bottom-controls .dcuf-bottom-action-card .right_box {
+            margin-left: auto !important;
+        }
+        .custom-bottom-controls > .dcuf-pagination-card {
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: center !important;
+            gap: 10px !important;
+            padding: 12px !important;
+        }
+        .custom-bottom-controls .dcuf-pagination-card .bottom_paging_box {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: safe center !important;
+            flex-wrap: nowrap !important;
+            gap: 5px !important;
+            width: 100% !important;
+            min-width: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            position: static !important;
+            float: none !important;
+            height: auto !important;
+            min-height: 38px !important;
+            overflow-x: auto !important;
+            overflow-y: hidden !important;
+            scrollbar-width: thin !important;
+            overscroll-behavior-x: contain !important;
+        }
+        .custom-bottom-controls .bottom_paging_box > a,
+        .custom-bottom-controls .bottom_paging_box > strong,
+        .custom-bottom-controls .bottom_paging_box > em,
+        .custom-bottom-controls .bottom_paging_box > span > a,
+        .custom-bottom-controls .bottom_paging_box > div > a,
+        .custom-bottom-controls .bottom_paging_box > span > strong,
+        .custom-bottom-controls .bottom_paging_box > div > strong,
+        .custom-bottom-controls .bottom_paging_box > span > em,
+        .custom-bottom-controls .bottom_paging_box > div > em {
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            flex: 0 0 auto !important;
+            min-width: 38px !important;
+            height: 38px !important;
+            margin: 0 !important;
+            padding: 0 8px !important;
+            border: 1px solid transparent !important;
+            border-radius: 10px !important;
+            color: #43516a !important;
+            font-size: 14px !important;
+            font-weight: 800 !important;
+            line-height: 1 !important;
+            text-decoration: none !important;
+            box-sizing: border-box !important;
+            position: static !important;
+            float: none !important;
+        }
+        .custom-bottom-controls .bottom_paging_box > span,
+        .custom-bottom-controls .bottom_paging_box > div {
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: safe center !important;
+            flex-wrap: nowrap !important;
+            gap: 5px !important;
+            position: static !important;
+            inset: auto !important;
+            float: none !important;
+            min-width: 0 !important;
+            width: auto !important;
+            height: auto !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            border: 0 !important;
+            background: transparent !important;
+            box-shadow: none !important;
+            overflow: visible !important;
+        }
+        .custom-bottom-controls .bottom_paging_box > span > *,
+        .custom-bottom-controls .bottom_paging_box > div > * {
+            position: static !important;
+            float: none !important;
+        }
+        .custom-bottom-controls .bottom_paging_box > a:hover,
+        .custom-bottom-controls .bottom_paging_box > span > a:hover,
+        .custom-bottom-controls .bottom_paging_box > div > a:hover {
+            border-color: #c7d3e4 !important;
+            background: rgba(255, 255, 255, 0.86) !important;
+        }
+        .custom-bottom-controls .bottom_paging_box > strong,
+        .custom-bottom-controls .bottom_paging_box > em,
+        .custom-bottom-controls .bottom_paging_box > .on {
+            border-color: #315fdb !important;
+            background: linear-gradient(180deg, #527df0 0%, #315fdc 100%) !important;
+            color: #fff !important;
+            box-shadow: 0 6px 12px rgba(49, 95, 220, 0.22) !important;
+        }
+        .custom-bottom-controls .dcuf-pagination-card .bottom_movebox {
+            display: flex !important;
+            justify-content: flex-end !important;
+            width: 100% !important;
+            position: static !important;
+            margin: 0 !important;
+        }
+        .custom-bottom-controls .dcuf-pagination-card .bottom_movebox > .btn_grey_roundbg.btn_schmove,
+        .custom-bottom-controls .dcuf-pagination-card .bottom_movebox > button,
+        .custom-bottom-controls .dcuf-pagination-card .bottom_movebox > a {
+            min-width: 116px !important;
+            min-height: 42px !important;
+            padding: 0 14px !important;
+            border: 1px solid #c7d3e4 !important;
+            border-radius: 11px !important;
+            background: linear-gradient(180deg, #ffffff 0%, #f2f6fb 100%) !important;
+            color: #43516a !important;
+            font-weight: 800 !important;
+            box-shadow: inset 0 1px 0 #fff, 0 4px 10px rgba(24, 43, 79, 0.08) !important;
+        }
+        .custom-bottom-controls > .dcuf-search-card {
+            padding: 12px !important;
+        }
+        .custom-bottom-controls .dcuf-search-card .dcuf-search-drawer-slot {
+            display: flex !important;
+            justify-content: flex-start !important;
+            width: 100% !important;
+            padding-bottom: var(--dcuf-search-layer-reserve, 0px) !important;
+        }
+        .custom-bottom-controls .dcuf-search-card form[name="frmSearch"] {
+            width: 100% !important;
+            max-width: none !important;
+        }
+        .custom-bottom-controls[data-dcuf-controls-ready="1"] .dcuf-search-card form[name="frmSearch"] .bnt_search,
+        .custom-bottom-controls[data-dcuf-controls-ready="1"] .dcuf-search-card form[name="frmSearch"] button.sp_img.bnt_search {
+            flex: none !important;
+            position: relative !important;
+            width: 44px !important;
+            min-width: 44px !important;
+            height: 44px !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            border: 1px solid #2e5bd4 !important;
+            border-radius: 12px !important;
+            background-color: #3768df !important;
+            background-image: none !important;
+            background-position: 0 0 !important;
+            background-repeat: no-repeat !important;
+            color: transparent !important;
+            font-size: 0 !important;
+            line-height: 0 !important;
+            text-indent: 0 !important;
+            overflow: hidden !important;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 7px 14px rgba(46, 91, 212, 0.24) !important;
+        }
+        .custom-bottom-controls[data-dcuf-controls-ready="1"] .dcuf-search-card form[name="frmSearch"] .bnt_search::before,
+        .custom-bottom-controls[data-dcuf-controls-ready="1"] .dcuf-search-card form[name="frmSearch"] button.sp_img.bnt_search::before {
+            content: "" !important;
+            position: absolute !important;
+            left: 50% !important;
+            top: 50% !important;
+            display: block !important;
+            width: 15px !important;
+            height: 15px !important;
+            border: 3px solid #fff !important;
+            border-radius: 50% !important;
+            background: transparent !important;
+            background-image: none !important;
+            box-sizing: border-box !important;
+            transform: translate(-62%, -62%) !important;
+            pointer-events: none !important;
+        }
+        .custom-bottom-controls[data-dcuf-controls-ready="1"] .dcuf-search-card form[name="frmSearch"] .bnt_search::after,
+        .custom-bottom-controls[data-dcuf-controls-ready="1"] .dcuf-search-card form[name="frmSearch"] button.sp_img.bnt_search::after {
+            content: "" !important;
+            position: absolute !important;
+            left: 50% !important;
+            top: 50% !important;
+            display: block !important;
+            width: 8px !important;
+            height: 3px !important;
+            border: 0 !important;
+            border-radius: 999px !important;
+            background: #fff !important;
+            background-image: none !important;
+            box-sizing: border-box !important;
+            transform: translate(3px, 5px) rotate(45deg) !important;
+            transform-origin: left center !important;
+            pointer-events: none !important;
+        }
+
+        /* Live DCInside list controls: normalize host wrappers without cloning them. */
+        body:not(.is-write-page) .list_array_option .output_array {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: flex-end !important;
+            gap: 8px !important;
+            position: static !important;
+            inset: auto !important;
+            float: none !important;
+            width: auto !important;
+            height: auto !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            overflow: visible !important;
+        }
+        body:not(.is-write-page) .list_array_option .select_box.array_num {
+            display: block !important;
+            position: relative !important;
+            inset: auto !important;
+            flex: 0 0 76px !important;
+            width: 76px !important;
+            min-width: 76px !important;
+            height: 44px !important;
+            min-height: 44px !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            overflow: visible !important;
+            box-sizing: border-box !important;
+        }
+        body:not(.is-write-page) .list_array_option .select_box.array_num > select {
+            position: absolute !important;
+            width: 1px !important;
+            height: 1px !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
+        }
+        body:not(.is-write-page) .list_array_option .select_box.array_num > .select_area {
+            display: flex !important;
+            align-items: stretch !important;
+            position: relative !important;
+            inset: auto !important;
+            width: 100% !important;
+            height: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            border: 0 !important;
+            background: transparent !important;
+        }
+        body:not(.is-write-page) .list_array_option .select_box.array_num > .select_area > a {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            width: 100% !important;
+            height: 100% !important;
+            margin: 0 !important;
+            padding: 0 10px 0 12px !important;
+            border: 0 !important;
+            background: transparent !important;
+            box-shadow: none !important;
+            color: #43516a !important;
+            font-size: 13px !important;
+            font-weight: 800 !important;
+            line-height: 1 !important;
+            text-indent: 0 !important;
+            text-decoration: none !important;
+            box-sizing: border-box !important;
+        }
+        body:not(.is-write-page) .list_array_option .select_box.array_num > .option_box {
+            position: absolute !important;
+            left: 0 !important;
+            top: calc(100% + 7px) !important;
+            z-index: 30 !important;
+            width: 100% !important;
+            min-width: 76px !important;
+            margin: 0 !important;
+            border: 1px solid #c7d3e4 !important;
+            border-radius: 10px !important;
+            background: #fff !important;
+            box-shadow: 0 10px 22px rgba(24, 43, 79, 0.16) !important;
+            overflow: hidden !important;
+        }
+        body:not(.is-write-page) .list_array_option .switch_btnbox {
+            display: flex !important;
+            align-items: center !important;
+            position: static !important;
+            inset: auto !important;
+            float: none !important;
+            width: auto !important;
+            height: auto !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+        body:not(.is-write-page) .list_array_option .btn_write,
+        body:not(.is-write-page) .list_array_option .btn_write.txt {
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            position: static !important;
+            inset: auto !important;
+            float: none !important;
+            width: auto !important;
+            min-width: 92px !important;
+            height: 44px !important;
+            margin: 0 !important;
+            padding: 0 18px !important;
+            border: 1px solid #2e5bd4 !important;
+            border-radius: 11px !important;
+            background-color: #2e5bd4 !important;
+            background-image: linear-gradient(180deg, #527cf0 0%, #2e5bd4 100%) !important;
+            background-position: 0 0 !important;
+            background-repeat: no-repeat !important;
+            color: #fff !important;
+            font-size: 14px !important;
+            font-weight: 800 !important;
+            line-height: 1 !important;
+            text-indent: 0 !important;
+            text-decoration: none !important;
+            box-sizing: border-box !important;
+        }
+        .custom-bottom-controls .dcuf-search-card form[name="frmSearch"] .bottom_search {
+            position: static !important;
+            inset: auto !important;
+            transform: none !important;
+            padding: 0 !important;
+            border: 0 !important;
+            border-radius: 0 !important;
+            outline: 0 !important;
+            background: transparent !important;
+            background-image: none !important;
+            box-shadow: none !important;
+            box-sizing: border-box !important;
+        }
+        .custom-bottom-controls .bottom_paging_box > a.sp_pagingicon {
+            position: static !important;
+            inset: auto !important;
+            float: none !important;
+            width: auto !important;
+            min-width: 52px !important;
+            height: 38px !important;
+            padding: 0 10px !important;
+            background: transparent !important;
+            background-image: none !important;
+            background-position: 0 0 !important;
+            color: #43516a !important;
+            font-size: 13px !important;
+            font-weight: 800 !important;
+            line-height: 38px !important;
+            text-indent: 0 !important;
+            white-space: nowrap !important;
+            overflow: visible !important;
+        }
+        .custom-bottom-controls .bottom_paging_box > a.sp_pagingicon::before,
+        .custom-bottom-controls .bottom_paging_box > a.sp_pagingicon::after {
+            display: none !important;
+            content: none !important;
+        }
+        #container.gallery_view .view_bottom_btnbox,
+        #container.minor_view .view_bottom_btnbox,
+        #container.mini_view .view_bottom_btnbox {
+            display: flex !important;
+            align-items: center !important;
+            flex-wrap: wrap !important;
+            gap: 8px !important;
+            position: relative !important;
+            inset: auto !important;
+            float: none !important;
+            width: calc(100% - 12px) !important;
+            min-height: 64px !important;
+            height: auto !important;
+            margin: 12px 6px 16px !important;
+            padding: 10px !important;
+            border: 1px solid rgba(201, 213, 230, 0.96) !important;
+            border-radius: 16px !important;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(244, 248, 253, 0.98) 100%) !important;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.98), 0 12px 24px rgba(22, 39, 72, 0.08) !important;
+            box-sizing: border-box !important;
+            overflow: visible !important;
+        }
+        #container.gallery_view .view_bottom_btnbox > .fl,
+        #container.gallery_view .view_bottom_btnbox > .fr,
+        #container.minor_view .view_bottom_btnbox > .fl,
+        #container.minor_view .view_bottom_btnbox > .fr,
+        #container.mini_view .view_bottom_btnbox > .fl,
+        #container.mini_view .view_bottom_btnbox > .fr {
+            display: flex !important;
+            align-items: center !important;
+            flex-wrap: wrap !important;
+            gap: 8px !important;
+            position: static !important;
+            inset: auto !important;
+            float: none !important;
+            width: auto !important;
+            height: auto !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+        #container.gallery_view .view_bottom_btnbox > .fr,
+        #container.minor_view .view_bottom_btnbox > .fr,
+        #container.mini_view .view_bottom_btnbox > .fr {
+            margin-left: auto !important;
+        }
+        #container.gallery_view .view_bottom_btnbox button,
+        #container.gallery_view .view_bottom_btnbox a,
+        #container.minor_view .view_bottom_btnbox button,
+        #container.minor_view .view_bottom_btnbox a,
+        #container.mini_view .view_bottom_btnbox button,
+        #container.mini_view .view_bottom_btnbox a {
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            position: static !important;
+            inset: auto !important;
+            min-width: 72px !important;
+            min-height: 44px !important;
+            margin: 0 !important;
+            padding: 0 15px !important;
+            border: 1px solid #c7d3e4 !important;
+            border-radius: 11px !important;
+            background: linear-gradient(180deg, #ffffff 0%, #f2f6fb 100%) !important;
+            background-image: none !important;
+            color: #35445d !important;
+            font-size: 14px !important;
+            font-weight: 800 !important;
+            line-height: 1 !important;
+            text-indent: 0 !important;
+            text-decoration: none !important;
+            box-sizing: border-box !important;
+        }
+        #container.gallery_view .view_bottom_btnbox .btn_blue,
+        #container.gallery_view .view_bottom_btnbox .write,
+        #container.minor_view .view_bottom_btnbox .btn_blue,
+        #container.minor_view .view_bottom_btnbox .write,
+        #container.mini_view .view_bottom_btnbox .btn_blue,
+        #container.mini_view .view_bottom_btnbox .write {
+            border-color: #2e5bd4 !important;
+            background: linear-gradient(180deg, #527cf0 0%, #2e5bd4 100%) !important;
+            color: #fff !important;
+            box-shadow: 0 8px 16px rgba(46, 91, 212, 0.25) !important;
+        }
+
         .page_head > .fr {
             position: relative !important;
             overflow: visible !important;
@@ -9283,6 +11719,197 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             border-color: #445267 !important;
             color: #f3f6ff !important;
         }
+        body.dc-filter-dark-mode:not(.is-write-page) .list_array_option,
+        body.dc-filter-dark-mode .custom-bottom-controls > .dcuf-bottom-action-card,
+        body.dc-filter-dark-mode .custom-bottom-controls > .dcuf-pagination-card,
+        body.dc-filter-dark-mode .custom-bottom-controls > .dcuf-search-card {
+            --dcuf-control-border: #43526a;
+            --dcuf-control-surface: linear-gradient(180deg, #263347 0%, #202b3a 100%);
+            --dcuf-control-text: #e8eef8;
+            --dcuf-search-input: #111722;
+            border-color: #3d4c60 !important;
+            background: linear-gradient(180deg, rgba(35, 46, 62, 0.98) 0%, rgba(25, 34, 47, 0.98) 100%) !important;
+            box-shadow:
+                inset 0 1px 0 rgba(133, 153, 183, 0.14),
+                inset 0 -10px 18px rgba(5, 10, 18, 0.18),
+                0 14px 28px rgba(0, 0, 0, 0.3),
+                0 2px 7px rgba(0, 0, 0, 0.24) !important;
+        }
+        body.dc-filter-dark-mode:not(.is-write-page) .list_array_option .array_tab button,
+        body.dc-filter-dark-mode:not(.is-write-page) .list_array_option .array_tab a,
+        body.dc-filter-dark-mode .custom-bottom-controls .dcuf-bottom-action-card button,
+        body.dc-filter-dark-mode .custom-bottom-controls .dcuf-bottom-action-card a,
+        body.dc-filter-dark-mode:not(.is-write-page) .list_array_option select,
+        body.dc-filter-dark-mode:not(.is-write-page) .list_array_option .select_box,
+        body.dc-filter-dark-mode .custom-bottom-controls .dcuf-pagination-card .bottom_movebox > button,
+        body.dc-filter-dark-mode .custom-bottom-controls .dcuf-pagination-card .bottom_movebox > a {
+            border-color: #43526a !important;
+            background: linear-gradient(180deg, #2a384c 0%, #222d3d 100%) !important;
+            color: #e1e9f5 !important;
+            box-shadow: inset 0 1px 0 rgba(135, 155, 184, 0.14), 0 5px 12px rgba(0, 0, 0, 0.22) !important;
+        }
+        body.dc-filter-dark-mode:not(.is-write-page) .list_array_option .array_tab .on,
+        body.dc-filter-dark-mode:not(.is-write-page) .list_array_option .array_tab button.on,
+        body.dc-filter-dark-mode:not(.is-write-page) .list_array_option .array_tab a.on,
+        body.dc-filter-dark-mode .custom-bottom-controls .dcuf-bottom-action-card .on,
+        body.dc-filter-dark-mode .custom-bottom-controls .dcuf-bottom-action-card button.on,
+        body.dc-filter-dark-mode .custom-bottom-controls .dcuf-bottom-action-card a.on {
+            border-color: #4c7bf0 !important;
+            background: linear-gradient(180deg, #5b86f2 0%, #3868df 100%) !important;
+            color: #fff !important;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.24), 0 7px 14px rgba(31, 68, 164, 0.4) !important;
+        }
+
+        body.dc-filter-dark-mode .custom-bottom-controls .bottom_paging_box > a,
+        body.dc-filter-dark-mode .custom-bottom-controls .bottom_paging_box > span > a,
+        body.dc-filter-dark-mode .custom-bottom-controls .bottom_paging_box > div > a {
+            color: #cbd7e8 !important;
+        }
+        body.dc-filter-dark-mode .custom-bottom-controls .bottom_paging_box > a:hover,
+        body.dc-filter-dark-mode .custom-bottom-controls .bottom_paging_box > span > a:hover,
+        body.dc-filter-dark-mode .custom-bottom-controls .bottom_paging_box > div > a:hover {
+            border-color: #4b5c74 !important;
+            background: rgba(46, 60, 80, 0.86) !important;
+        }
+        body.dc-filter-dark-mode .custom-bottom-controls .dcuf-search-card form[name="frmSearch"] input[type="text"] {
+            background: var(--dcuf-search-input) !important;
+            color: #f3f6ff !important;
+        }
+        body.dc-filter-dark-mode #container.gallery_view .view_bottom_btnbox,
+        body.dc-filter-dark-mode #container.minor_view .view_bottom_btnbox,
+        body.dc-filter-dark-mode #container.mini_view .view_bottom_btnbox {
+            border-color: #3d4c60 !important;
+            background: linear-gradient(180deg, rgba(35, 46, 62, 0.98) 0%, rgba(25, 34, 47, 0.98) 100%) !important;
+            box-shadow: inset 0 1px 0 rgba(133, 153, 183, 0.14), 0 14px 28px rgba(0, 0, 0, 0.3) !important;
+        }
+        body.dc-filter-dark-mode #container.gallery_view .view_bottom_btnbox button,
+        body.dc-filter-dark-mode #container.gallery_view .view_bottom_btnbox a,
+        body.dc-filter-dark-mode #container.minor_view .view_bottom_btnbox button,
+        body.dc-filter-dark-mode #container.minor_view .view_bottom_btnbox a,
+        body.dc-filter-dark-mode #container.mini_view .view_bottom_btnbox button,
+        body.dc-filter-dark-mode #container.mini_view .view_bottom_btnbox a {
+            border-color: #43526a !important;
+            background: linear-gradient(180deg, #2a384c 0%, #222d3d 100%) !important;
+            color: #e1e9f5 !important;
+            box-shadow: inset 0 1px 0 rgba(135, 155, 184, 0.14), 0 5px 12px rgba(0, 0, 0, 0.22) !important;
+        }
+        body.dc-filter-dark-mode #container.gallery_view .view_bottom_btnbox .btn_blue,
+        body.dc-filter-dark-mode #container.gallery_view .view_bottom_btnbox .write,
+        body.dc-filter-dark-mode #container.minor_view .view_bottom_btnbox .btn_blue,
+        body.dc-filter-dark-mode #container.minor_view .view_bottom_btnbox .write,
+        body.dc-filter-dark-mode #container.mini_view .view_bottom_btnbox .btn_blue,
+        body.dc-filter-dark-mode #container.mini_view .view_bottom_btnbox .write {
+            border-color: #4c7bf0 !important;
+            background: linear-gradient(180deg, #5b86f2 0%, #3868df 100%) !important;
+            color: #fff !important;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.24), 0 7px 14px rgba(31, 68, 164, 0.4) !important;
+        }
+        body.dc-filter-dark-mode:not(.is-write-page) .list_array_option .select_box.array_num > .select_area > a {
+            color: #e1e9f5 !important;
+        }
+        body.dc-filter-dark-mode:not(.is-write-page) .list_array_option .select_box.array_num > .option_box {
+            border-color: #43526a !important;
+            background: #222d3d !important;
+            color: #e1e9f5 !important;
+        }
+
+        @media screen and (max-width: 640px) {
+            body:not(.is-write-page) .list_array_option {
+                width: calc(100% - 8px) !important;
+                margin: 8px 4px 12px !important;
+                padding: 9px !important;
+                border-radius: 14px !important;
+                gap: 8px !important;
+            }
+            #container.gallery_view .view_bottom_btnbox,
+            #container.minor_view .view_bottom_btnbox,
+            #container.mini_view .view_bottom_btnbox {
+                width: calc(100% - 8px) !important;
+                margin: 8px 4px 12px !important;
+                padding: 9px 88px 9px 9px !important;
+                border-radius: 14px !important;
+                gap: 8px !important;
+            }
+            #container.gallery_view .view_bottom_btnbox button,
+            #container.gallery_view .view_bottom_btnbox a,
+            #container.minor_view .view_bottom_btnbox button,
+            #container.minor_view .view_bottom_btnbox a,
+            #container.mini_view .view_bottom_btnbox button,
+            #container.mini_view .view_bottom_btnbox a {
+                min-width: 64px !important;
+                min-height: 42px !important;
+                padding: 0 12px !important;
+            }
+
+            body:not(.is-write-page) .list_array_option .center_box {
+                order: 3 !important;
+                flex-basis: 100% !important;
+                justify-content: flex-start !important;
+            }
+            body:not(.is-write-page) .list_array_option .right_box,
+            body:not(.is-write-page) .list_array_option .fr {
+                flex: 1 1 auto !important;
+            }
+            body:not(.is-write-page) .list_array_option .array_tab button,
+            body:not(.is-write-page) .list_array_option .array_tab a,
+            .custom-bottom-controls .dcuf-bottom-action-card button,
+            .custom-bottom-controls .dcuf-bottom-action-card a {
+                min-width: 64px !important;
+                min-height: 42px !important;
+                padding: 0 12px !important;
+            }
+            .custom-bottom-controls {
+                padding: 12px 4px 20px !important;
+                gap: 10px !important;
+            }
+            .custom-bottom-controls > .dcuf-bottom-action-card,
+            .custom-bottom-controls > .dcuf-pagination-card,
+            .custom-bottom-controls > .dcuf-search-card {
+                border-radius: 14px !important;
+            }
+            .custom-bottom-controls > .dcuf-bottom-action-card {
+                padding: 9px 88px 9px 9px !important;
+            }
+            .custom-bottom-controls > .dcuf-pagination-card {
+                padding: 10px !important;
+            }
+            .custom-bottom-controls .dcuf-pagination-card .bottom_movebox {
+                width: 100% !important;
+                justify-content: center !important;
+            }
+            .custom-bottom-controls .bottom_paging_box > a,
+            .custom-bottom-controls .bottom_paging_box > strong,
+            .custom-bottom-controls .bottom_paging_box > em,
+            .custom-bottom-controls .bottom_paging_box > span > a,
+            .custom-bottom-controls .bottom_paging_box > div > a,
+            .custom-bottom-controls .bottom_paging_box > span > strong,
+            .custom-bottom-controls .bottom_paging_box > div > strong,
+            .custom-bottom-controls .bottom_paging_box > span > em {
+                min-width: 36px !important;
+                height: 36px !important;
+                padding: 0 6px !important;
+            }
+            .custom-bottom-controls > .dcuf-search-card {
+                padding: 10px !important;
+            }
+            .custom-bottom-controls .dcuf-search-card form[name="frmSearch"] .bottom_search {
+                flex-wrap: wrap !important;
+                height: auto !important;
+                gap: 8px !important;
+            }
+            .custom-bottom-controls .dcuf-search-card form[name="frmSearch"] .inner_search {
+                flex: 1 1 100% !important;
+                width: 100% !important;
+            }
+            .custom-bottom-controls[data-dcuf-controls-ready="1"] .dcuf-search-card form[name="frmSearch"] .bnt_search,
+            .custom-bottom-controls[data-dcuf-controls-ready="1"] .dcuf-search-card form[name="frmSearch"] button.sp_img.bnt_search {
+                width: 100% !important;
+                min-width: 100% !important;
+                height: 44px !important;
+            }
+
+        }
+
         @media screen and (max-width: 640px) {
             .custom-mobile-list { padding: 8px !important; }
             .custom-post-item { padding: 12px !important; border-radius: 11px !important; }
@@ -11591,6 +14218,14 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         #focus_cmt > .cmt_write_box .dccon_guidebox {
             overflow: visible !important;
         }
+        /* Live comment close removes the show class and collapses the wrapper to its header height.
+           Do not let the open-state popup overflow rule leak the comment body outside it. */
+        #focus_cmt > div[id^="comment_wrap_"].comment_wrap:not(.show) {
+            overflow: hidden !important;
+        }
+        #focus_cmt > div[id^="comment_wrap_"].comment_wrap:not(.show) > .comment_box {
+            display: none !important;
+        }
         #focus_cmt > div[id^="comment_wrap_"] .comment_box .cmt_info,
         #focus_cmt > div[id^="comment_wrap_"] .comment_box .reply_info,
         #focus_cmt > div[id^="comment_wrap_"] .view_comment .cmt_info,
@@ -12120,7 +14755,8 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         }
 
         const head = viewWrap.querySelector('.gallview_head');
-        const content = viewWrap.querySelector('.gallview_contents');
+        const content = viewWrap.querySelector('.gallview_contents, .writing_view_box');
+        const contentIsWritingBox = content?.classList.contains('writing_view_box') || false;
         if (!(head instanceof HTMLElement) || !(content instanceof HTMLElement)) {
             const result = {
                 ready: false,
@@ -12163,6 +14799,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             headBackgroundImage: headStyle.backgroundImage,
             headBoxShadow: headStyle.boxShadow,
             headHasRenderableBorder: hasRenderableBorder(headStyle),
+            contentVariant: contentIsWritingBox ? 'writing-view-box' : 'gallview-contents',
             contentRadius: toPixelValue(contentStyle.borderRadius),
             contentBackgroundColor: contentStyle.backgroundColor,
             contentBackgroundImage: contentStyle.backgroundImage,
@@ -12202,11 +14839,11 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             failureReason = 'missing-head-elevation';
         } else if (headStyle.backgroundImage === 'none' && isTransparentColor(detail.headBackgroundColor)) {
             failureReason = 'transparent-head-background';
-        } else if (detail.contentRadius < 16) {
+        } else if (!contentIsWritingBox && detail.contentRadius < 16) {
             failureReason = 'insufficient-content-radius';
-        } else if (contentStyle.boxShadow === 'none') {
+        } else if (!contentIsWritingBox && contentStyle.boxShadow === 'none') {
             failureReason = 'missing-content-elevation';
-        } else if (contentStyle.backgroundImage === 'none' && isTransparentColor(detail.contentBackgroundColor)) {
+        } else if (!contentIsWritingBox && contentStyle.backgroundImage === 'none' && isTransparentColor(detail.contentBackgroundColor)) {
             failureReason = 'transparent-content-background';
         } else if (mode !== 'core' && recommendBox instanceof HTMLElement && detail.recommendBoxRadius < 16) {
             failureReason = 'insufficient-recommend-radius';
@@ -12286,6 +14923,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         '.power_link',
         '.power_link .pwlink_list',
         '.power_link .pwlink_img_list',
+        '.view_content_wrap div:has(> ins.adsbygoogle[data-ad-client][data-ad-slot])',
         '.view_content_wrap #ad_nv_slot',
         '.gallview_contents #ad_nv_slot',
         '.writing_view_box #ad_nv_slot',
@@ -12312,7 +14950,8 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         '.writing_view_box iframe[id*="gfp"]',
         '.writing_view_box iframe[name*="gfp"]',
         '.writing_view_box iframe[src*="pstatic.net/tvetalibs"]',
-        '.writing_view_box iframe[src*="tivan.naver.com"]'
+        '.writing_view_box iframe[src*="tivan.naver.com"]',
+        '.wrap_inner > div:has(> script[src*="/dcinside/pc/list@right_wing_"])'
     ].join(', ');
     const ARTICLE_FRAME_CANDIDATE_SELECTOR = [
         '.gallview_contents iframe',
@@ -12329,6 +14968,8 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         .power_link,
         .power_link .pwlink_list,
         .power_link .pwlink_img_list,
+        .view_content_wrap div:has(> ins.adsbygoogle[data-ad-client][data-ad-slot]),
+        .wrap_inner > div:has(> script[src*="/dcinside/pc/list@right_wing_"]),
         .view_content_wrap #ad_nv_slot,
         .gallview_contents #ad_nv_slot,
         .writing_view_box #ad_nv_slot,
@@ -12355,7 +14996,10 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         .writing_view_box iframe[id*="gfp"],
         .writing_view_box iframe[name*="gfp"],
         .writing_view_box iframe[src*="pstatic.net/tvetalibs"],
-        .writing_view_box iframe[src*="tivan.naver.com"] {
+        .writing_view_box iframe[src*="tivan.naver.com"],
+        .gallview_contents iframe[id^="aswift_"][src*="googleads.g.doubleclick.net/pagead/ads"],
+        .writing_view_box iframe[id^="aswift_"][src*="googleads.g.doubleclick.net/pagead/ads"],
+        .view_content_wrap iframe[id^="aswift_"][src*="googleads.g.doubleclick.net/pagead/ads"] {
             display: none !important;
             width: 0 !important;
             height: 0 !important;
@@ -12407,13 +15051,19 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
     const isArticleNativeAdFrame = (frame) => {
         if (!(frame instanceof HTMLIFrameElement)) return false;
+        const frameId = frame.id || '';
+        const frameName = frame.name || '';
+        const frameSrc = frame.getAttribute('src') || '';
         const signature = [
-            frame.id,
-            frame.name,
+            frameId,
+            frameName,
             frame.title,
             frame.className,
-            frame.getAttribute('src') || ''
+            frameSrc
         ].join(' ');
+        const isGoogleArticleSafeFrame = (/^aswift_\d+$/i.test(frameId) || /^aswift_\d+$/i.test(frameName))
+            && /googleads\.g\.doubleclick\.net\/pagead\/ads/i.test(frameSrc);
+        if (isGoogleArticleSafeFrame) return true;
         if (/google_ads_iframe_|gfp|pstatic\.net\/tvetalibs|tivan\.naver\.com/i.test(signature)) return true;
 
         try {
@@ -12459,6 +15109,10 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             return element.closest('.view_ad_wrap, div[id^="foin_"], div[id^="kakao_ad_"], .cm_ad') || element;
         }
         if (isArticleNativeAdFrame(element)) {
+            const safeFrameHost = element.parentElement;
+            if (safeFrameHost instanceof HTMLElement && /^aswift_\d+_host$/i.test(safeFrameHost.id || '')) {
+                return safeFrameHost;
+            }
             return element.closest('#ad_nv_slot, .view_ad_wrap, .cm_ad') || element;
         }
         const ownedAdWrap = element.closest('#ad_nv_slot, .view_ad_wrap, .power_link');
@@ -13178,35 +15832,6 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
     const COMMENT_BLOCKED_ATTR = 'data-dcuf-comment-blocked';
     const COMMENT_SHELL_BLOCKED_ATTR = 'data-dcuf-comment-shell-blocked';
     const COMMENT_SHELL_BLOCKED_CLASS = 'dcuf-comment-shell-blocked';
-    const INITIAL_COMMENT_STABILIZE_SOURCES = new Set(['dom-ready-initial', 'ready-initial']);
-    const initialCommentStabilization = (() => {
-        let resolved = false;
-        let resolvePromise;
-        let timeoutId = 0;
-        const promise = new Promise((resolve) => {
-            resolvePromise = resolve;
-        });
-        const resolve = (reason) => {
-            if (resolved) return;
-            resolved = true;
-            if (timeoutId) {
-                window.clearTimeout(timeoutId);
-                timeoutId = 0;
-            }
-            resolvePromise({ reason, ts: Date.now() });
-        };
-        const startTimeout = () => {
-            if (resolved || timeoutId) return;
-            timeoutId = window.setTimeout(() => resolve('timeout'), 500);
-        };
-
-        window.__dcufAwaitInitialCommentStabilization = () => {
-            startTimeout();
-            return promise;
-        };
-        return { resolve, startTimeout };
-    })();
-
     const isReplyOnlyCommentWrapper = (li) => {
         if (!(li instanceof HTMLElement)) return false;
         return Boolean(li.querySelector(':scope > div.reply.show'))
@@ -13477,6 +16102,21 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
     };
     window.__dcufRepairFilteredCommentPlaceholders = repairFilteredCommentPlaceholders;
     window.__dcufPrepareInitialCommentReveal = repairFilteredCommentPlaceholders;
+    window.__dcufFlushInitialCommentBarrier = (meta = null) => {
+        const runtimeCoordinator = __dcufGetRuntimeCoordinator();
+        runtimeCoordinator?.ensureMutationBus?.();
+        runtimeCoordinator?.flushPendingMutations?.('initial-comment:before');
+        const state = repairFilteredCommentPlaceholders({
+            ...(meta && typeof meta === 'object' ? meta : {}),
+            runFilter: true,
+            mergeDetachedReplies: true
+        });
+        runtimeCoordinator?.flushPendingMutations?.('initial-comment:after');
+        return {
+            ...state,
+            generation: runtimeCoordinator?._mutationGeneration || 0
+        };
+    };
 
     const shouldSkipReplyMergeTarget = (parentLi, replyShow = null) => {
         if (!(parentLi instanceof HTMLElement)) return true;
@@ -13549,11 +16189,6 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             if (typeof filterModule?.scheduleCommentStabilizedRefilter === 'function') {
                 filterModule.scheduleCommentStabilizedRefilter('reply-merge');
             }
-            if (INITIAL_COMMENT_STABILIZE_SOURCES.has(source)) {
-                window.setTimeout(() => {
-                    initialCommentStabilization.resolve('reply-merge-delayed');
-                }, 180);
-            }
         }
     }, [140]);
     const scheduleReplyMerge = (meta = null) => {
@@ -13603,6 +16238,10 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         if (!payload || typeof payload !== 'object') return false;
         if (Array.isArray(payload.addedElements) && payload.addedElements.some(isReplyMergeMutationNode)) return true;
         if (Array.isArray(payload.removedElements) && payload.removedElements.some(isReplyMergeMutationNode)) return true;
+        // Removed reply-composer trees are already detached when the mutation bus
+        // dispatches, so ancestor-dependent selectors cannot recognize them. Inspect
+        // the still-connected childList target to clear stale focus-card grouping.
+        if (Array.isArray(payload.childListTargets) && payload.childListTargets.some(isReplyMergeAttributeTarget)) return true;
         if (Array.isArray(payload.attributeTargets) && payload.attributeTargets.some(isReplyMergeAttributeTarget)) return true;
         return false;
     };
@@ -13625,7 +16264,8 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         const observer = new MutationObserver((mutations) => {
             for (const mutation of mutations) {
                 if (mutation.type === 'childList' && (mutation.addedNodes.length > 0 || mutation.removedNodes.length > 0)) {
-                    const hasRelevantChange = Array.from(mutation.addedNodes).some(isReplyMergeMutationNode)
+                    const hasRelevantChange = isReplyMergeAttributeTarget(mutation.target)
+                        || Array.from(mutation.addedNodes).some(isReplyMergeMutationNode)
                         || Array.from(mutation.removedNodes).some(isReplyMergeMutationNode);
                     if (hasRelevantChange) {
                         scheduleReplyMerge();
@@ -13657,19 +16297,11 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         document.addEventListener('DOMContentLoaded', () => {
             // Run the initial reply merge synchronously so blocked parent comments stay
             // filtered before the comment area becomes visually stable.
-            initialCommentStabilization.startTimeout();
             flushReplyMerge({ source: 'dom-ready-initial' });
-            if (!document.querySelector(`${COMMENT_LIST_SELECTOR}, #focus_cmt, .view_comment.image_comment .comment_box`)) {
-                initialCommentStabilization.resolve('no-comment-target-dom-ready');
-            }
             observeReplyMergeTargets();
         }, { once: true });
     } else {
-        initialCommentStabilization.startTimeout();
         flushReplyMerge({ source: 'ready-initial' });
-        if (!document.querySelector(`${COMMENT_LIST_SELECTOR}, #focus_cmt, .view_comment.image_comment .comment_box`)) {
-            initialCommentStabilization.resolve('no-comment-target-ready');
-        }
         observeReplyMergeTargets();
     }
 
@@ -14841,9 +17473,15 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             background: #f7faff !important;
         }
         body.is-write-page form#write .btn_bottom_box,
+        body.is-write-page form#write .btm-btns-box {
+            position: static !important;
+        }
+        body.is-write-page form#write > .btn_box.write {
+            position: relative !important;
+        }
+        body.is-write-page form#write .btn_bottom_box,
         body.is-write-page form#write .btm-btns-box,
         body.is-write-page form#write > .btn_box.write {
-            position: static !important;
             clear: both !important;
             float: none !important;
             transform: none !important;
@@ -14877,6 +17515,197 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             background: linear-gradient(180deg, #426fe4 0%, #245bda 100%) !important;
             color: #fff !important;
             box-shadow: 0 6px 14px rgba(36, 91, 218, 0.24) !important;
+        }
+        body.is-write-page > #leave_confirm_box.dcuf-write-leave-confirm {
+            box-sizing: border-box !important;
+            position: fixed !important;
+            inset: 50% auto auto 50% !important;
+            width: min(420px, calc(100vw - 32px)) !important;
+            min-width: 0 !important;
+            max-width: calc(100vw - 32px) !important;
+            height: auto !important;
+            min-height: 0 !important;
+            max-height: calc(100dvh - 32px) !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            border: 1px solid var(--dcuf-write-border-strong) !important;
+            border-radius: 16px !important;
+            background: var(--dcuf-write-surface) !important;
+            color: var(--dcuf-write-fg) !important;
+            transform: translate(-50%, -50%) !important;
+            overflow: hidden auto !important;
+            z-index: 2147483646 !important;
+            box-shadow: 0 20px 54px rgba(15, 28, 52, 0.28), 0 0 0 100vmax rgba(15, 23, 42, 0.28) !important;
+            isolation: isolate !important;
+            pointer-events: auto !important;
+            animation: none !important;
+            transition: none !important;
+        }
+        body.is-write-page > #leave_confirm_box.dcuf-write-leave-confirm .pop_content.write_ly {
+            box-sizing: border-box !important;
+            position: relative !important;
+            width: 100% !important;
+            min-width: 0 !important;
+            height: auto !important;
+            min-height: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            border: 0 !important;
+            background: var(--dcuf-write-surface) !important;
+            color: var(--dcuf-write-fg) !important;
+        }
+        body.is-write-page > #leave_confirm_box.dcuf-write-leave-confirm .pop_head.bg {
+            box-sizing: border-box !important;
+            display: flex !important;
+            align-items: center !important;
+            width: 100% !important;
+            height: 52px !important;
+            margin: 0 !important;
+            padding: 0 56px 0 18px !important;
+            border: 0 !important;
+            border-radius: 15px 15px 0 0 !important;
+            background: linear-gradient(135deg, #3f6de0 0%, #2d57bd 100%) !important;
+        }
+        body.is-write-page > #leave_confirm_box.dcuf-write-leave-confirm .pop_head.bg h3 {
+            margin: 0 !important;
+            padding: 0 !important;
+            color: #fff !important;
+            font-size: 17px !important;
+            font-weight: 700 !important;
+            line-height: 1.2 !important;
+        }
+        body.is-write-page > #leave_confirm_box.dcuf-write-leave-confirm .write_cont {
+            box-sizing: border-box !important;
+            width: 100% !important;
+            min-width: 0 !important;
+            margin: 0 !important;
+            padding: 28px 24px 24px !important;
+            background: var(--dcuf-write-surface) !important;
+            color: var(--dcuf-write-fg) !important;
+            text-align: center !important;
+        }
+        body.is-write-page > #leave_confirm_box.dcuf-write-leave-confirm .write_cont > .txt {
+            margin: 0 !important;
+            padding: 0 !important;
+            color: var(--dcuf-write-fg) !important;
+            font-size: 16px !important;
+            font-weight: 600 !important;
+            line-height: 1.5 !important;
+        }
+        body.is-write-page > #leave_confirm_box.dcuf-write-leave-confirm .write_cont > .btn_box {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            position: static !important;
+            width: 100% !important;
+            height: auto !important;
+            margin: 20px 0 0 !important;
+            padding: 0 !important;
+            gap: 10px !important;
+            float: none !important;
+        }
+        body.is-write-page > #leave_confirm_box.dcuf-write-leave-confirm .write_cont > .btn_box > button {
+            box-sizing: border-box !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            flex: 1 1 0 !important;
+            width: auto !important;
+            max-width: 132px !important;
+            min-width: 0 !important;
+            min-height: 44px !important;
+            margin: 0 !important;
+            padding: 0 16px !important;
+            border: 1px solid var(--dcuf-write-border-strong) !important;
+            border-radius: 10px !important;
+            background: var(--dcuf-write-surface-muted) !important;
+            color: var(--dcuf-write-fg) !important;
+            font-size: 15px !important;
+            font-weight: 700 !important;
+            line-height: 1 !important;
+            box-shadow: none !important;
+            cursor: pointer !important;
+        }
+        body.is-write-page > #leave_confirm_box.dcuf-write-leave-confirm .write_cont > .btn_box > .btn_blue {
+            border-color: var(--dcuf-write-accent-strong) !important;
+            background: linear-gradient(180deg, #426fe4 0%, #245bda 100%) !important;
+            color: #fff !important;
+            box-shadow: 0 6px 14px rgba(36, 91, 218, 0.22) !important;
+        }
+        body.is-write-page > #leave_confirm_box.dcuf-write-leave-confirm .pop_content.write_ly > .poply_whiteclose {
+            box-sizing: border-box !important;
+            position: absolute !important;
+            inset: 0 0 auto auto !important;
+            width: 52px !important;
+            min-width: 52px !important;
+            height: 52px !important;
+            min-height: 52px !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            border: 0 !important;
+            border-radius: 0 15px 0 0 !important;
+            background: transparent !important;
+            box-shadow: none !important;
+            cursor: pointer !important;
+        }
+        body.is-write-page > #leave_confirm_box.dcuf-write-leave-confirm .pop_content.write_ly > .poply_whiteclose::before,
+        body.is-write-page > #leave_confirm_box.dcuf-write-leave-confirm .pop_content.write_ly > .poply_whiteclose::after {
+            content: '' !important;
+            position: absolute !important;
+            top: 25px !important;
+            left: 15px !important;
+            width: 22px !important;
+            height: 1px !important;
+            border: 0 !important;
+            background: #fff !important;
+            transform: rotate(45deg) !important;
+        }
+        body.is-write-page > #leave_confirm_box.dcuf-write-leave-confirm .pop_content.write_ly > .poply_whiteclose::after {
+            transform: rotate(-45deg) !important;
+        }
+        body.is-write-page > #leave_confirm_box.dcuf-write-leave-confirm .pop_content.write_ly > .poply_whiteclose > em {
+            display: none !important;
+        }
+        body.is-write-page.dc-filter-dark-mode > #leave_confirm_box.dcuf-write-leave-confirm {
+            border-color: var(--dcuf-write-border) !important;
+            background: var(--dcuf-write-surface) !important;
+            box-shadow: 0 22px 58px rgba(0, 0, 0, 0.48), 0 0 0 100vmax rgba(0, 0, 0, 0.52) !important;
+        }
+        body.is-write-page.dc-filter-dark-mode > #leave_confirm_box.dcuf-write-leave-confirm .write_cont > .btn_box > button:not(.btn_blue) {
+            border-color: #40526b !important;
+            background: #233044 !important;
+            color: #edf3ff !important;
+        }
+        @media screen and (max-width: 480px) {
+            body.is-write-page > #leave_confirm_box.dcuf-write-leave-confirm {
+                width: calc(100vw - 24px) !important;
+                max-width: calc(100vw - 24px) !important;
+                border-radius: 14px !important;
+            }
+            body.is-write-page > #leave_confirm_box.dcuf-write-leave-confirm .pop_head.bg {
+                height: 48px !important;
+                padding: 0 52px 0 16px !important;
+                border-radius: 13px 13px 0 0 !important;
+            }
+            body.is-write-page > #leave_confirm_box.dcuf-write-leave-confirm .write_cont {
+                padding: 24px 16px 18px !important;
+            }
+            body.is-write-page > #leave_confirm_box.dcuf-write-leave-confirm .write_cont > .btn_box {
+                margin-top: 18px !important;
+            }
+            body.is-write-page > #leave_confirm_box.dcuf-write-leave-confirm .pop_content.write_ly > .poply_whiteclose {
+                width: 48px !important;
+                min-width: 48px !important;
+                height: 48px !important;
+                min-height: 48px !important;
+                border-radius: 0 13px 0 0 !important;
+            }
+            body.is-write-page > #leave_confirm_box.dcuf-write-leave-confirm .pop_content.write_ly > .poply_whiteclose::before,
+            body.is-write-page > #leave_confirm_box.dcuf-write-leave-confirm .pop_content.write_ly > .poply_whiteclose::after {
+                top: 23px !important;
+                left: 14px !important;
+                width: 20px !important;
+            }
         }
         body.is-write-page.dc-filter-dark-mode form#write,
         body.is-write-page.dc-filter-dark-mode form#write .write_subject,
@@ -16606,4 +19435,9 @@ function __dcufCollectMatches(payload, selectors, options = {}) {
     return Array.from(document.querySelectorAll(selectorText));
 }
 
+    __dcufPostMainRoot.__dcufPostMainFixesState = 'ready';
+    } catch (error) {
+        __dcufPostMainRoot.__dcufPostMainFixesState = 'failed';
+        throw error;
+    }
 })();

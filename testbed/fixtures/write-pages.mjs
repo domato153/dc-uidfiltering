@@ -111,7 +111,23 @@ export function writePage({ variant = 'major' } = {}) {
             </div></section>
             <label class="fixture-adult"><input type="checkbox" name="adult" value="1"> 성인 게시물</label>
             <div class="cm_ad"><ins class="kakao_ad_area">local write ad</ins></div>
-            <div class="btn_box write fr fixture-write-actions"><button class="btn_grey cancle" type="button">취소</button><button id="write-submit" class="btn_blue btn_svc write" type="submit">등록</button></div>
+            <div class="btn_box write fr fixture-write-actions">
+                <button class="btn_grey cancle" type="button" onclick="document.querySelector('#leave_confirm_box').style.display='block'">취소</button>
+                <button id="write-submit" class="btn_blue btn_svc write" type="submit">등록</button>
+                <div id="leave_confirm_box" class="pop_wrap type2 fixture-leave-confirm" style="left:50%;top:-322px;margin-left:-619px;display:none" role="dialog" aria-label="글쓰기 취소 확인">
+                    <div class="pop_content write_ly">
+                        <div class="pop_head bg"><h3>글쓰기</h3></div>
+                        <div class="write_cont">
+                            <p class="txt">글 작성을 취소하시겠습니까?</p>
+                            <div class="btn_box">
+                                <button type="button" class="btn_grey small" onclick="document.querySelector('#leave_confirm_box').style.display='none'">취소</button>
+                                <button type="button" class="btn_blue small">확인</button>
+                            </div>
+                        </div>
+                        <button type="button" class="poply_whiteclose" onclick="document.querySelector('#leave_confirm_box').style.display='none'"><span class="blind">레이어 닫기</span><em></em></button>
+                    </div>
+                </div>
+            </div>
         </form>
     </article></section></main></div>${scripts}`;
 }

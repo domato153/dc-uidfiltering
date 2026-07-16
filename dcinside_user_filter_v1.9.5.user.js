@@ -1,10 +1,11 @@
 ﻿// ==UserScript==
 // @name         DCInside PC User Filter
 // @namespace    http://tampermonkey.net/
-// @version      1.9.1
+// @version      1.9.5
 // @description  DCInside PC filter port based on the latest mobile filter runtime and shared filter core
 // @author       domato153
 // @match        https://gall.dcinside.com/*
+// @noframes
 // @grant        GM_setValue
 // @grant        GM_getValue
 // @grant        GM_registerMenuCommand
@@ -23,220 +24,289 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
     'use strict';
 
     const __dcufRoot = (typeof unsafeWindow !== 'undefined' && unsafeWindow) ? unsafeWindow : window;
-    if (__dcufRoot.__dcufRuntimeLoaded) {
-        console.warn('DCinside User Filter: duplicate runtime detected, skip init.');
+    if (window.top !== window.self) return;
+
+    const previousBoot = __dcufRoot.__dcufBootController || window.__dcufBootController;
+    if (previousBoot) {
+        if (previousBoot.state === 'locked' || previousBoot.state === 'preparing') previousBoot.ensure('duplicate-runtime');
+        else if (previousBoot.state === 'degraded') previousBoot.requestRecovery?.('duplicate-runtime');
+        console.warn('DCinside User Filter: duplicate runtime detected; reusing bootstrap.');
         return;
     }
-    __dcufRoot.__dcufRuntimeLoaded = `dcuf-${Date.now()}`;
 
     if (!__dcufRoot.__dcufBfcacheOptOutInstalled) {
         __dcufRoot.__dcufBfcacheOptOutInstalled = true;
         const preventBackForwardCache = () => {};
-        try {
-            __dcufRoot.addEventListener('unload', preventBackForwardCache, { capture: true });
-        } catch (error) {
-            window.addEventListener('unload', preventBackForwardCache, { capture: true });
-        }
+        try { __dcufRoot.addEventListener('unload', preventBackForwardCache, { capture: true }); }
+        catch { window.addEventListener('unload', preventBackForwardCache, { capture: true }); }
     }
 
-
-    // [개선] 전역 스코프 오염 방지를 위해 스크립트 상태 변수를 IIFE 내부 스코프로 이동
     let dcFilterSettings = {};
     let userSumCache = {};
     let isInitialized = false;
     let isUiInitialized = false;
-    let activeShortcutObject = null; // [v2.1 추가] 현재 활성화된 단축키 객체
-    const ROOT_READY_CLASS = 'script-ui-ready';
-    const INITIAL_LOCK_STYLE_ID = 'dcuf-initial-lock-style';
-    const BOOT_OVERLAY_ID = 'dcuf-boot-overlay';
-    const BOOT_OVERLAY_STYLE_ID = 'dcuf-boot-overlay-style';
-    const BOOT_UI_WATCHDOG_MAX_MS = 8000;
-    const BOOT_UI_WATCHDOG_INTERVAL_MS = 50;
-    let bootUiWatchdogTimerId = 0;
-    let bootUiWatchdogStartedAt = 0;
-    let bootUiWatchdogDomReadyHandler = null;
-    let bootUiWatchdogLoadHandler = null;
+    let activeShortcutObject = null;
 
-    const isBootOverlayTargetPage = () => true;
-    const isRootUiReady = () => !!document.documentElement?.classList.contains(ROOT_READY_CLASS);
-    const removeBootOverlay = (reason = 'unknown') => {
-        const overlay = document.getElementById(BOOT_OVERLAY_ID);
-        if (overlay) overlay.remove();
-    };
+    const READY_CLASS = 'script-ui-ready';
+    const STATE_ATTR = 'data-dcuf-boot-state';
+    const LOCK_STYLE_ID = 'dcuf-initial-lock-style';
+    const OVERLAY_ID = 'dcuf-boot-overlay';
+    const OVERLAY_STYLE_ID = 'dcuf-boot-overlay-style';
+    const DEGRADED_STYLE_ID = 'dcuf-degraded-filter-style';
+    const DEGRADED_BANNER_ID = 'dcuf-degraded-banner';
+    const testBootConfig = __dcufRoot.__DCUF_TESTBED_CONFIG__?.boot || null;
+    const ABSOLUTE_DEADLINE_MS = Math.max(20, Number(testBootConfig?.absoluteDeadlineMs) || 15000);
+    const CRITICAL_DEADLINE_MS = Math.max(20, Number(testBootConfig?.criticalDeadlineMs) || 6000);
+    const startedAt = Date.now();
+    const diagnosticsBuffer = [];
+    const rollbackHandlers = new Set();
+    const recoveryHandlers = new Set();
+    const readyHandlers = new Set();
+    let ensureTimer = 0;
+    let absoluteTimer = 0;
+    let criticalTimer = 0;
+    let domReadyListener = null;
+    let loadListener = null;
 
-    const ensureBootOverlay = () => {
-        if (!isBootOverlayTargetPage()) return;
-
-        const mountPoint = document.head || document.documentElement;
-        if (mountPoint && !document.getElementById(BOOT_OVERLAY_STYLE_ID)) {
-            const style = document.createElement('style');
-            style.id = BOOT_OVERLAY_STYLE_ID;
-            style.textContent = `
-                #${BOOT_OVERLAY_ID} {
-                    position: fixed;
-                    inset: 0;
-                    z-index: 2147483646;
-                    background:
-                        radial-gradient(circle at top, rgba(255,255,255,0.96), rgba(245,247,251,0.98) 45%, rgba(238,241,246,0.99)),
-                        linear-gradient(180deg, #f7f9fc 0%, #eef2f7 100%);
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    padding: 24px;
-                    pointer-events: auto;
-                }
-                #${BOOT_OVERLAY_ID} .dcuf-boot-card {
-                    width: min(420px, calc(100vw - 32px));
-                    border: 1px solid rgba(197, 206, 218, 0.9);
-                    border-radius: 18px;
-                    background: rgba(255,255,255,0.96);
-                    box-shadow: 0 20px 48px rgba(31, 45, 68, 0.12);
-                    padding: 22px 20px 18px;
-                    color: #2b3340;
-                    text-align: center;
-                }
-                #${BOOT_OVERLAY_ID} .dcuf-boot-title {
-                    font-size: 17px;
-                    font-weight: 700;
-                    letter-spacing: -0.01em;
-                    margin-bottom: 8px;
-                }
-                #${BOOT_OVERLAY_ID} .dcuf-boot-copy {
-                    font-size: 13px;
-                    line-height: 1.55;
-                    color: #5a6575;
-                    margin-bottom: 14px;
-                }
-                #${BOOT_OVERLAY_ID} .dcuf-boot-bar {
-                    height: 4px;
-                    border-radius: 999px;
-                    background: rgba(203, 211, 223, 0.6);
-                    overflow: hidden;
-                }
-                #${BOOT_OVERLAY_ID} .dcuf-boot-bar::before {
-                    content: '';
-                    display: block;
-                    width: 42%;
-                    height: 100%;
-                    border-radius: inherit;
-                    background: linear-gradient(90deg, #245bda 0%, #5d87f0 100%);
-                    animation: dcuf-boot-progress 1s ease-in-out infinite;
-                }
-                html.dc-filter-dark-mode #${BOOT_OVERLAY_ID} {
-                    background:
-                        radial-gradient(circle at top, rgba(34,39,48,0.95), rgba(20,24,31,0.98) 48%, rgba(14,17,22,0.99)),
-                        linear-gradient(180deg, #1d222a 0%, #11151b 100%);
-                }
-                html.dc-filter-dark-mode #${BOOT_OVERLAY_ID} .dcuf-boot-card {
-                    border-color: rgba(71, 81, 96, 0.92);
-                    background: rgba(28, 33, 41, 0.96);
-                    box-shadow: 0 20px 48px rgba(0, 0, 0, 0.34);
-                    color: #e7ebf2;
-                }
-                html.dc-filter-dark-mode #${BOOT_OVERLAY_ID} .dcuf-boot-copy {
-                    color: #adb7c7;
-                }
-                html.dc-filter-dark-mode #${BOOT_OVERLAY_ID} .dcuf-boot-bar {
-                    background: rgba(63, 73, 88, 0.9);
-                }
-                @keyframes dcuf-boot-progress {
-                    0% { transform: translateX(-120%); }
-                    100% { transform: translateX(260%); }
-                }
-            `;
-            mountPoint.appendChild(style);
+    const pageType = ((window.location.pathname || '').match(/\/board\/(lists|view|write)(?:\/|$)/) || [])[1] || 'other';
+    const isTargetPage = () => pageType !== 'other';
+    const note = (label, detail = null) => {
+        const entry = { label, detail, ts: Date.now(), elapsedMs: Date.now() - startedAt };
+        const api = window.__dcufDiagnostics;
+        if (typeof api?.note === 'function') api.note(label, entry);
+        else {
+            diagnosticsBuffer.push(entry);
+            if (diagnosticsBuffer.length > 40) diagnosticsBuffer.shift();
         }
-
-        if (document.getElementById(BOOT_OVERLAY_ID)) return;
-        if (!document.documentElement) return;
-
-        const overlay = document.createElement('div');
-        overlay.id = BOOT_OVERLAY_ID;
-        overlay.innerHTML = `
-            <div class="dcuf-boot-card">
-                <div class="dcuf-boot-title">UI 준비 중</div>
-                <div class="dcuf-boot-copy">광고 차단과 충돌하면 로딩이 지연될 수 있습니다.<br>DCInside에서는 광고 차단을 꺼주세요.</div>
-                <div class="dcuf-boot-bar" aria-hidden="true"></div>
-            </div>
+    };
+    const flushDiagnostics = () => {
+        const api = window.__dcufDiagnostics;
+        if (typeof api?.note !== 'function') return;
+        diagnosticsBuffer.splice(0).forEach((entry) => api.note(entry.label, entry));
+    };
+    const removeBootChrome = () => {
+        document.getElementById(OVERLAY_ID)?.remove();
+        document.getElementById(LOCK_STYLE_ID)?.remove();
+        document.getElementById(OVERLAY_STYLE_ID)?.remove();
+    };
+    const stopTimers = () => {
+        if (ensureTimer) clearInterval(ensureTimer);
+        if (absoluteTimer) clearTimeout(absoluteTimer);
+        if (criticalTimer) clearTimeout(criticalTimer);
+        ensureTimer = absoluteTimer = criticalTimer = 0;
+        if (domReadyListener) document.removeEventListener('DOMContentLoaded', domReadyListener);
+        if (loadListener) window.removeEventListener('load', loadListener);
+        domReadyListener = loadListener = null;
+    };
+    const ensureLockStyle = () => {
+        const mount = document.head || document.documentElement;
+        if (!mount || document.getElementById(LOCK_STYLE_ID)) return;
+        const style = document.createElement('style');
+        style.id = LOCK_STYLE_ID;
+        style.textContent = `
+            html[${STATE_ATTR}="locked"] body,
+            html[${STATE_ATTR}="preparing"] body {
+                opacity: 0 !important;
+                visibility: hidden !important;
+                pointer-events: none !important;
+            }
         `;
+        mount.appendChild(style);
+    };
+    const ensureOverlay = () => {
+        if (!isTargetPage() || !document.documentElement) return;
+        const mount = document.head || document.documentElement;
+        if (mount && !document.getElementById(OVERLAY_STYLE_ID)) {
+            const style = document.createElement('style');
+            style.id = OVERLAY_STYLE_ID;
+            style.textContent = `
+                #${OVERLAY_ID} {
+                    position: fixed !important; inset: 0 !important; z-index: 2147483646 !important;
+                    box-sizing: border-box !important; display: flex !important; align-items: center !important;
+                    justify-content: center !important; width: 100vw !important; height: 100vh !important;
+                    margin: 0 !important; padding: 24px !important; visibility: visible !important;
+                    opacity: 1 !important; pointer-events: auto !important;
+                    background: linear-gradient(180deg,#f7f9fc,#eef2f7) !important;
+                }
+                #${OVERLAY_ID} .dcuf-boot-card {
+                    box-sizing: border-box !important; width: min(420px,calc(100vw - 32px)) !important;
+                    padding: 22px 20px 18px !important; border: 1px solid #c5ceda !important;
+                    border-radius: 18px !important; background: #fff !important; color: #2b3340 !important;
+                    text-align: center !important; box-shadow: 0 20px 48px rgba(31,45,68,.12) !important;
+                }
+                #${OVERLAY_ID} .dcuf-boot-title { margin-bottom: 8px !important; font: 700 17px/1.35 sans-serif !important; }
+                #${OVERLAY_ID} .dcuf-boot-copy { margin-bottom: 14px !important; color: #5a6575 !important; font: 500 13px/1.55 sans-serif !important; }
+                #${OVERLAY_ID} .dcuf-boot-bar { height: 4px !important; overflow: hidden !important; border-radius: 999px !important; background: #cbd3df !important; }
+                #${OVERLAY_ID} .dcuf-boot-bar::before {
+                    content: '' !important; display: block !important; width: 42% !important; height: 100% !important;
+                    border-radius: inherit !important; background: linear-gradient(90deg,#245bda,#5d87f0) !important;
+                    animation: dcuf-boot-progress 1s ease-in-out infinite !important;
+                }
+                html.dc-filter-dark-mode #${OVERLAY_ID} { background: linear-gradient(180deg,#1d222a,#11151b) !important; }
+                html.dc-filter-dark-mode #${OVERLAY_ID} .dcuf-boot-card { border-color: #475160 !important; background: #1c2129 !important; color: #e7ebf2 !important; }
+                @keyframes dcuf-boot-progress { from { transform: translateX(-120%); } to { transform: translateX(260%); } }
+                @media (prefers-reduced-motion: reduce) { #${OVERLAY_ID} .dcuf-boot-bar::before { width: 100% !important; animation: none !important; } }
+            `;
+            mount.appendChild(style);
+        }
+        if (document.getElementById(OVERLAY_ID)) return;
+        const overlay = document.createElement('div');
+        overlay.id = OVERLAY_ID;
+        overlay.setAttribute('role', 'status');
+        overlay.setAttribute('aria-live', 'polite');
+        overlay.setAttribute('aria-atomic', 'true');
+        const card = document.createElement('div');
+        card.className = 'dcuf-boot-card';
+        const title = document.createElement('div');
+        title.className = 'dcuf-boot-title';
+        title.textContent = 'UI 준비 중';
+        const copy = document.createElement('div');
+        copy.className = 'dcuf-boot-copy';
+        copy.append(
+            document.createTextNode('광고 차단과 충돌하면 로딩이 지연될 수 있습니다.'),
+            document.createElement('br'),
+            document.createTextNode('DCInside에서는 광고 차단을 꺼주세요.')
+        );
+        const bar = document.createElement('div');
+        bar.className = 'dcuf-boot-bar';
+        bar.setAttribute('aria-hidden', 'true');
+        card.append(title, copy, bar);
+        overlay.appendChild(card);
         document.documentElement.appendChild(overlay);
     };
-
-    const markUiReady = () => {
-        const root = document.documentElement;
-        if (root) root.classList.add(ROOT_READY_CLASS);
-
-        const body = document.body;
-        if (body) body.classList.add(ROOT_READY_CLASS);
-
-        stopBootUiWatchdog();
-        removeBootOverlay('mark-ui-ready');
-    };
-
-    const injectInitialLockStyle = () => {
-        const mountPoint = document.head || document.documentElement;
-        if (!mountPoint || document.getElementById(INITIAL_LOCK_STYLE_ID)) return;
-
-        const style = document.createElement('style');
-        style.id = INITIAL_LOCK_STYLE_ID;
-        style.textContent = `
-            html:not(.${ROOT_READY_CLASS}) body {
-                visibility: hidden !important;
-            }
-        `;
-        mountPoint.appendChild(style);
-    };
-
-    const ensureBootUi = (reason = 'ensure-boot-ui') => {
-        if (!isBootOverlayTargetPage() || isRootUiReady()) return true;
-        injectInitialLockStyle();
-        ensureBootOverlay();
-        return !!document.getElementById(INITIAL_LOCK_STYLE_ID) && !!document.getElementById(BOOT_OVERLAY_ID);
-    };
-
-    const stopBootUiWatchdog = () => {
-        if (bootUiWatchdogTimerId) {
-            window.clearInterval(bootUiWatchdogTimerId);
-            bootUiWatchdogTimerId = 0;
+    const ensureDegradedUi = (reason) => {
+        if ((pageType === 'list' || pageType === 'view') && !document.getElementById(DEGRADED_STYLE_ID)) {
+            const style = document.createElement('style');
+            style.id = DEGRADED_STYLE_ID;
+            style.textContent = `
+                html[${STATE_ATTR}="degraded"] :is(
+                    .gall_listwrap table.gall_list,.list_wrap table.gall_list,.custom-mobile-list,
+                    .gall_exposure_list,#focus_cmt .comment_box,div[id^="comment_wrap_"] .comment_box,
+                    .view_comment.image_comment .comment_box
+                ) { opacity: 0 !important; visibility: hidden !important; pointer-events: none !important; }
+            `;
+            (document.head || document.documentElement)?.appendChild(style);
         }
-        if (bootUiWatchdogDomReadyHandler) {
-            document.removeEventListener('DOMContentLoaded', bootUiWatchdogDomReadyHandler);
-            bootUiWatchdogDomReadyHandler = null;
-        }
-        if (bootUiWatchdogLoadHandler) {
-            window.removeEventListener('load', bootUiWatchdogLoadHandler);
-            bootUiWatchdogLoadHandler = null;
-        }
+        if (!document.body || document.getElementById(DEGRADED_BANNER_ID)) return;
+        const banner = document.createElement('aside');
+        banner.id = DEGRADED_BANNER_ID;
+        banner.dataset.reason = reason;
+        banner.setAttribute('role', 'status');
+        banner.style.cssText = 'position:fixed!important;left:12px!important;right:12px!important;bottom:12px!important;z-index:2147483645!important;box-sizing:border-box!important;display:flex!important;align-items:center!important;justify-content:space-between!important;gap:12px!important;padding:12px 14px!important;border:1px solid #d5a93a!important;border-radius:12px!important;background:#fff8dd!important;color:#4f3b00!important;box-shadow:0 8px 28px rgba(0,0,0,.18)!important;font:600 13px/1.4 sans-serif!important;pointer-events:auto!important;visibility:visible!important;opacity:1!important;';
+        const message = document.createElement('span');
+        message.textContent = pageType === 'write' ? 'DCUF failed; the native write page is available.' : 'DCUF is recovering; filterable areas are temporarily withheld.';
+        const reload = document.createElement('button');
+        reload.type = 'button';
+        reload.textContent = 'Reload';
+        reload.style.cssText = 'min-width:76px!important;min-height:40px!important;padding:8px 12px!important;border:1px solid #9c7716!important;border-radius:9px!important;background:#fff!important;color:#4f3b00!important;font-weight:700!important;cursor:pointer!important;';
+        reload.addEventListener('click', () => location.reload());
+        banner.append(message, reload);
+        document.body.appendChild(banner);
     };
 
+    const bootController = {
+        state: isTargetPage() ? 'locked' : 'idle',
+        pageType,
+        startedAt,
+        ensure(reason = 'ensure') {
+            if (!isTargetPage() || this.state === 'ready' || this.state === 'degraded') return true;
+            document.documentElement?.setAttribute(STATE_ATTR, this.state === 'preparing' ? 'preparing' : 'locked');
+            ensureLockStyle();
+            ensureOverlay();
+            note('boot.ensure', { reason });
+            return !!document.getElementById(LOCK_STYLE_ID) && !!document.getElementById(OVERLAY_ID);
+        },
+        startPreparing(reason = 'main') {
+            if (!isTargetPage() || this.state === 'ready' || this.state === 'degraded') return;
+            this.state = 'preparing';
+            document.documentElement?.setAttribute(STATE_ATTR, 'preparing');
+            note('boot.preparing', { reason });
+        },
+        registerRollback(fn) { if (typeof fn === 'function') rollbackHandlers.add(fn); return () => rollbackHandlers.delete(fn); },
+        registerRecovery(fn) { if (typeof fn === 'function') recoveryHandlers.add(fn); return () => recoveryHandlers.delete(fn); },
+        onReady(fn) {
+            if (typeof fn !== 'function') return () => {};
+            if (this.state === 'ready') queueMicrotask(fn);
+            else readyHandlers.add(fn);
+            return () => readyHandlers.delete(fn);
+        },
+        requestRecovery(reason = 'manual') {
+            recoveryHandlers.forEach((fn) => { try { fn(reason); } catch (error) { console.warn('[DCUF boot] recovery failed:', error); } });
+        },
+        markReady(reason = 'ready') {
+            if (this.state === 'ready') return;
+            const recovered = this.state === 'degraded';
+            this.state = 'ready';
+            __dcufRoot.__dcufRuntimeState = 'ready';
+            document.documentElement?.setAttribute(STATE_ATTR, 'ready');
+            document.documentElement?.classList.add(READY_CLASS);
+            document.body?.classList.add(READY_CLASS);
+            stopTimers();
+            removeBootChrome();
+            document.getElementById(DEGRADED_STYLE_ID)?.remove();
+            document.getElementById(DEGRADED_BANNER_ID)?.remove();
+            note(recovered ? 'boot.recovered' : 'boot.ready', { reason });
+            flushDiagnostics();
+            readyHandlers.forEach((fn) => { try { fn(); } catch (error) { console.warn('[DCUF boot] ready handler failed:', error); } });
+            readyHandlers.clear();
+            window.dispatchEvent(new CustomEvent('dcuf:boot-ready', { detail: { reason, recovered } }));
+        },
+        degrade(reason = 'deadline') {
+            if (this.state === 'ready' || this.state === 'degraded') return;
+            rollbackHandlers.forEach((fn) => { try { fn(reason); } catch (error) { console.warn('[DCUF boot] rollback failed:', error); } });
+            ensureDegradedUi(reason);
+            this.state = 'degraded';
+            __dcufRoot.__dcufRuntimeState = 'degraded';
+            document.documentElement?.setAttribute(STATE_ATTR, 'degraded');
+            document.documentElement?.classList.add(READY_CLASS);
+            document.body?.classList.add(READY_CLASS);
+            stopTimers();
+            removeBootChrome();
+            note('boot.degraded', { reason });
+            flushDiagnostics();
+            window.dispatchEvent(new CustomEvent('dcuf:boot-degraded', { detail: { reason } }));
+        },
+        note,
+        flushDiagnostics
+    };
+
+    const markUiReady = (reason = 'ready') => bootController.markReady(reason);
+    const ensureBootUi = (reason = 'ensure-boot-ui') => bootController.ensure(reason);
     const startBootUiWatchdog = () => {
-        if (bootUiWatchdogTimerId || isRootUiReady() || !isBootOverlayTargetPage()) return;
-        bootUiWatchdogStartedAt = Date.now();
-
-        const tick = () => {
-            if (isRootUiReady()) {
-                stopBootUiWatchdog();
-                return;
-            }
-
-            ensureBootUi('watchdog');
-            if (Date.now() - bootUiWatchdogStartedAt >= BOOT_UI_WATCHDOG_MAX_MS) {
-                stopBootUiWatchdog();
+        if (!isTargetPage() || ensureTimer) return;
+        const tick = () => bootController.ensure('watchdog');
+        ensureTimer = setInterval(tick, 80);
+        absoluteTimer = setTimeout(() => bootController.degrade('absolute-deadline'), ABSOLUTE_DEADLINE_MS);
+        domReadyListener = () => {
+            note('boot.dom-content-loaded');
+            tick();
+            if ((pageType === 'list' || pageType === 'view') && !criticalTimer) {
+                criticalTimer = setTimeout(() => bootController.degrade('critical-deadline'), CRITICAL_DEADLINE_MS);
             }
         };
-
-        bootUiWatchdogTimerId = window.setInterval(tick, BOOT_UI_WATCHDOG_INTERVAL_MS);
-        bootUiWatchdogDomReadyHandler = () => tick();
-        bootUiWatchdogLoadHandler = () => tick();
-        document.addEventListener('DOMContentLoaded', bootUiWatchdogDomReadyHandler, { once: true });
-        window.addEventListener('load', bootUiWatchdogLoadHandler, { once: true });
+        loadListener = tick;
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', domReadyListener, { once: true });
+        } else {
+            domReadyListener();
+        }
+        window.addEventListener('load', loadListener, { once: true });
         tick();
     };
 
+    __dcufRoot.__dcufRuntimeLoaded = `dcuf-${Date.now()}`;
+    __dcufRoot.__dcufRuntimeState = 'initializing';
+    __dcufRoot.__dcufBootController = bootController;
+    window.__dcufBootController = bootController;
     __dcufRoot.__dcufEnsureBootUi = ensureBootUi;
-    injectInitialLockStyle();
-    ensureBootOverlay();
-    startBootUiWatchdog();
+    window.__dcufEnsureBootUi = ensureBootUi;
+    note('boot.start', { pageType });
+    if (isTargetPage()) {
+        document.documentElement?.setAttribute(STATE_ATTR, 'locked');
+        ensureLockStyle();
+        ensureOverlay();
+        startBootUiWatchdog();
+    }
     // PC filter port shared prelude
 /**
  * Shared storage/schema constants extracted from v2.7.5.4.
@@ -263,6 +333,7 @@ const FILTER_CONSTANTS = {
                 // [신규] 개인 차단 기능 On/Off 저장 키
                 PERSONAL_BLOCK_ENABLED: 'dcinside_personal_block_enabled',
                 FAB_POSITION: 'dcinside_fab_position',
+                FAB_SCALE_PERCENT: 'dcinside_fab_scale_percent',
                 MANAGEMENT_PANEL_GEOMETRY: 'dcinside_management_panel_geometry',
             },
             SELECTORS: {
@@ -819,374 +890,536 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         isPersonalBlockHit,
         evaluateSyncBlockDecision,
     });
+    // PC-only filter UI adapter rail.
+    //
+    // The visual rules for settings, shortcut modal, personal-block FAB,
+    // selection popup, management panel, and backup popup are owned by the
+    // marked sections in targets/mobile/filter-module.js. The PC builder
+    // extracts those sections verbatim so the two targets cannot drift.
+    // Add rules here only for a verified PC host-DOM difference; do not copy
+    // shared filter UI declarations back into this file.
+    // Extracted verbatim from the mobile-owned filter UI style rail.
     GM_addStyle(`
-        .switch {
-            position: relative;
-            display: inline-block;
-            width: 40px;
-            height: 22px;
+#dc-personal-block-controls {
+            --dcuf-fab-width: 152px;
+            --dcuf-fab-height: 76px;
+            --dcuf-fab-padding-x: 28px;
+            --dcuf-fab-font-size: 32px;
+            position: fixed;
+            z-index: 2147483640;
+            width: max-content;
+            height: var(--dcuf-fab-height);
+            overflow: visible;
         }
-        .switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-            position: absolute;
-        }
-        .switch-slider {
-            position: absolute;
-            cursor: pointer;
-            inset: 0;
-            background-color: #c7cfdb;
-            transition: .2s;
+        #dc-personal-block-fab {
+            box-sizing: border-box;
+            appearance: none;
+            width: auto !important;
+            min-width: var(--dcuf-fab-width) !important;
+            height: var(--dcuf-fab-height) !important;
+            padding: 0 var(--dcuf-fab-padding-x);
+            background: linear-gradient(180deg, #fbfcfe 0%, #f1f4f8 100%) !important;
+            color: #4d5e76;
             border-radius: 999px;
+            border: 1px solid #c7d2df;
+            box-shadow: 0 6px 16px rgba(36, 49, 72, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            font-size: var(--dcuf-fab-font-size) !important;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            line-height: 1;
+            white-space: nowrap;
+            word-break: keep-all;
+            cursor: pointer;
+            user-select: none;
+            touch-action: none;
+            font-family: inherit;
+            transition: transform 0.18s ease-out, box-shadow 0.18s ease-out, border-color 0.18s ease-out, background-color 0.18s ease-out;
         }
-        .switch-slider:before {
+        #dc-personal-block-fab:hover {
+            background: linear-gradient(180deg, #ffffff 0%, #eef2f7 100%) !important;
+            border-color: #b6c2d1;
+            box-shadow: 0 8px 18px rgba(36, 49, 72, 0.14);
+        }
+        #dc-personal-block-fab:active {
+            cursor: grabbing;
+            transform: scale(0.97);
+            box-shadow: 0 4px 10px rgba(36, 49, 72, 0.1);
+        }
+        #dc-personal-block-fab:focus-visible {
+            outline: 3px solid rgba(59, 113, 253, 0.36);
+            outline-offset: 2px;
+        }
+        #dc-personal-block-drawer {
             position: absolute;
-            content: "";
-            height: 16px;
-            width: 16px;
-            left: 3px;
-            bottom: 3px;
-            background-color: #fff;
-            transition: .2s;
-            border-radius: 50%;
-            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.18);
+            z-index: 2147483641;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            width: max-content;
+            min-width: 164px;
+            padding: 6px;
+            background: #fff;
+            border: 1px solid #c7d2df;
+            border-radius: 12px;
+            box-shadow: 0 12px 28px rgba(36, 49, 72, 0.2);
         }
-        .switch input:checked + .switch-slider {
-            background-color: #3b71fd;
+        #dc-personal-block-drawer[hidden] {
+            display: none !important;
         }
-        .switch input:checked + .switch-slider:before {
-            transform: translateX(18px);
+        #dc-personal-block-drawer button {
+            box-sizing: border-box;
+            appearance: none;
+            width: 100%;
+            min-height: 40px;
+            padding: 8px 12px;
+            background: transparent;
+            color: #34445a;
+            border: 0;
+            border-radius: 8px;
+            text-align: left;
+            font-family: inherit;
+            font-size: 14px;
+            font-weight: 700;
+            line-height: 1.2;
+            white-space: nowrap;
+            cursor: pointer;
+        }
+        #dc-personal-block-drawer button:hover,
+        #dc-personal-block-drawer button:focus-visible {
+            background: #edf2f8;
+            color: #24364f;
+            outline: none;
+        }
+        #dc-personal-block-size-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 2147483644;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            background: rgba(18, 25, 35, 0.45);
+        }
+        #dc-personal-block-size-panel {
+            box-sizing: border-box;
+            width: min(360px, calc(100vw - 32px));
+            padding: 20px;
+            background: #fff;
+            color: #34445a;
+            border: 1px solid #c7d2df;
+            border-radius: 14px;
+            box-shadow: 0 18px 48px rgba(36, 49, 72, 0.28);
+        }
+        #dc-personal-block-size-panel h3 {
+            margin: 0 0 8px;
+            color: inherit;
+            font-size: 19px;
+        }
+        #dc-personal-block-size-panel .dcuf-fab-size-description {
+            margin: 0 0 16px;
+            color: #66758a;
+            font-size: 13px;
+            line-height: 1.45;
+        }
+        #dc-personal-block-size-panel .dcuf-fab-size-value {
+            display: block;
+            margin-bottom: 8px;
+            color: #33445b;
+            text-align: center;
+            font-size: 18px;
+            font-weight: 800;
+        }
+        #dc-personal-block-size-panel input[type="range"] {
+            width: 100%;
+            min-height: 36px;
+            margin: 0;
+            cursor: pointer;
+        }
+        #dc-personal-block-size-panel .dcuf-fab-size-bounds {
+            display: flex;
+            justify-content: space-between;
+            margin-top: -2px;
+            color: #7b8798;
+            font-size: 11px;
+        }
+        #dc-personal-block-size-panel .dcuf-fab-size-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 18px;
+        }
+        #dc-personal-block-size-panel .dcuf-fab-size-actions button {
+            flex: 1;
+            min-height: 42px;
+            padding: 8px;
+            background: #edf2f8;
+            color: #34445a;
+            border: 0;
+            border-radius: 9px;
+            font-family: inherit;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        #dc-personal-block-size-panel .dcuf-fab-size-actions [data-dcuf-fab-size-action="save"] {
+            background: #3b71fd;
+            color: #fff;
+        }
+        #dc-selection-popup {
+            position: fixed;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 2147483641;
+            background: #fff;
+            border: 1px solid #ccc;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            min-width: 320px;
+            text-align: center;
+        }
+        #dc-selection-popup h4 { margin: 0 0 20px 0; font-size: 18px; font-weight: 600; }
+        #dc-selection-popup .block-options { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+        #dc-selection-popup .block-option { display: flex; justify-content: space-between; align-items: center; background-color: #f8f9fa; padding: 12px; border-radius: 8px; }
+        #dc-selection-popup .block-option span { font-size: 15px; color: #333; word-break: break-all; margin-right: 15px; }
+        #dc-selection-popup .block-option button { font-size: 14px; padding: 6px 12px; cursor: pointer; border: none; border-radius: 6px; background-color: #4263eb; color: #fff; font-weight: 500; }
+        /* [v2.5.7 추가] 차단 해제 버튼 스타일 */
+        #dc-selection-popup .block-option button.btn-unblock { background-color: #e03131; }
+        #dc-selection-popup .popup-buttons button { width: 100%; font-size: 16px; padding: 10px; cursor: pointer; border: none; border-radius: 8px; background-color: #e9ecef; color: #555; }
+        body.selection-mode-active .gall_writer,
+        body.selection-mode-active .ub-writer {
+            cursor: pointer !important;
         }
 
+
+        #dc-block-management-panel-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 2147483645;
+        }
+        #dc-block-management-panel {
+            position: fixed;
+            background: #f9f9f9;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            z-index: 2147483646;
+            display: flex;
+            flex-direction: column;
+            min-width: 350px; min-height: 300px;
+            resize: both;
+            overflow: hidden;
+        }
+        #dc-block-management-panel .panel-header {
+            display: flex;  align-items: center;
+            padding: 10px 15px;
+            background: #eee;
+            border-bottom: 1px solid #ccc;
+            cursor: move;
+            user-select: none;
+        }
+        #dc-block-management-panel .panel-header h3 { margin: 0; font-size: 16px; }
+        #dc-block-management-panel .panel-close-btn { font-size: 20px; cursor: pointer; border: none; background: none; margin-left: auto;}
+        #dc-block-management-panel .panel-tabs { display: flex; border-bottom: 1px solid #ccc; background: #fff; }
+        #dc-block-management-panel .panel-tab { flex: 1; padding: 10px; text-align: center; cursor: pointer; border-right: 1px solid #eee; }
+        #dc-block-management-panel .panel-tab:last-child { border-right: none; }
+        #dc-block-management-panel .panel-tab.active { background: #3b71fd; color: #fff; font-weight: bold; }
+        #dc-block-management-panel .panel-body { flex-grow: 1; display: flex; flex-direction: column; overflow: hidden; background: #fff; }
+        #dc-block-management-panel .panel-list-controls { padding: 8px 10px; border-bottom: 1px solid #eee; text-align: left; }
+        #dc-block-management-panel .select-all-btn,
+        #dc-block-management-panel .select-all-global-btn,
+        #dc-block-management-panel .panel-backup-btn { /* [수정] 백업 버튼 공통 스타일 적용 */
+            font-size: 13px; padding: 4px 8px; cursor: pointer;
+            border: 1px solid #ccc; background: #f1f3f5; border-radius: 4px; margin-left: 5px;
+        }
+        #dc-block-management-panel .panel-content { flex-grow: 1; overflow-y: auto; }
+        #dc-block-management-panel .blocked-list { list-style: none; margin: 0; padding: 10px; }
+        #dc-block-management-panel .blocked-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 5px; border-bottom: 1px solid #f0f0f0; }
+        #dc-block-management-panel .blocked-item.item-to-delete { text-decoration: line-through; opacity: 0.5; }
+        #dc-block-management-panel .item-name { font-size: 14px; word-break: break-all; }
+        #dc-block-management-panel .delete-item-btn { cursor: pointer; color: #e03131; font-weight: bold; padding: 0 5px; }
+        #dc-block-management-panel .panel-footer {
+            display: flex; /* [수정] Flexbox 레이아웃으로 변경 */
+            justify-content: space-between; /* [수정] 양쪽 끝으로 요소 배치 */
+            align-items: center; /* [수정] 세로 중앙 정렬 */
+            padding: 10px;
+            border-top: 1px solid #ccc;
+            background: #f9f9f9;
+        }
+        #dc-block-management-panel .panel-footer-left {
+            display: flex;
+            align-items: center;
+        }
+        #dc-block-management-panel .panel-save-btn { padding: 8px 16px; font-size: 14px; background: #3b71fd; color: #fff; border: none; border-radius: 4px; cursor: pointer; }
+        #dc-block-management-panel .panel-resize-handle {
+            position: absolute;
+            right: 0; bottom: 0;
+            width: 15px; height: 15px;
+            cursor: nwse-resize;
+            background: repeating-linear-gradient(135deg, #ccc, #ccc 1px, transparent 1px, transparent 3px);
+        }
+
+        /* [신규] 개인 차단 On/Off 스위치 UI */
+        #dc-block-management-panel .switch-container { display: flex; align-items: center; margin-left: 15px; }
+        #dcinside-filter-setting .switch,
+        #dc-block-management-panel .switch { position: relative; display: inline-block; width: 40px; height: 22px; }
+        #dcinside-filter-setting .switch input,
+        #dc-block-management-panel .switch input { opacity: 0; width: 0; height: 0; }
+        #dcinside-filter-setting .switch-slider,
+        #dc-block-management-panel .switch-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 22px; }
+        #dcinside-filter-setting .switch-slider:before,
+        #dc-block-management-panel .switch-slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        #dcinside-filter-setting input:checked + .switch-slider,
+        #dc-block-management-panel input:checked + .switch-slider { background-color: #3b71fd; }
+        #dcinside-filter-setting input:checked + .switch-slider:before,
+        #dc-block-management-panel input:checked + .switch-slider:before { transform: translateX(18px); }
+
+        /* [신규] 백업/복원 팝업 UI */
+        #dc-backup-popup-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6);
+            z-index: 2147483647;
+        }
+        #dc-backup-popup {
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: #fff; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            z-index: 2147483647; padding: 20px; min-width: 350px;
+        }
+        #dc-backup-popup .popup-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #eee; }
+        #dc-backup-popup .popup-header h4 { margin: 0; font-size: 16px; }
+        #dc-backup-popup .popup-close-btn { font-size: 20px; background: none; border: none; cursor: pointer; color: #888; }
+        #dc-backup-popup .popup-content { display: flex; flex-direction: column; gap: 15px; }
+        #dc-backup-popup .export-section, #dc-backup-popup .import-section { display: flex; flex-direction: column; gap: 8px; }
+        #dc-backup-popup label { font-size: 14px; font-weight: bold; }
+        #dc-backup-popup .description { font-size: 12px; color: #666; }
+        /* [수정] import-controls를 세로 정렬로 변경 */
+        #dc-backup-popup .import-controls { display: flex; flex-direction: column; gap: 8px; }
+        /* [추가] 파일 입력(<input type="file">) 스타일 */
+        #dc-backup-popup .import-file-input {
+            font-size: 14px;
+            padding: 5px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background-color: #f8f9fa;
+        }
+        #dc-backup-popup textarea { flex-grow: 1; height: 80px; resize: vertical; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 12px; font-family: monospace; }
+        #dc-backup-popup button { padding: 8px 12px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        /* [수정] 기존 버튼들에 flex 속성 추가 */
+        #dc-backup-popup .export-btn { background-color: #3b71fd; color: #fff; border: 1px solid #3b71fd; flex: 1; }
+        /* [추가] '파일로 다운로드' 버튼 전용 스타일 */
+        #dc-backup-popup .export-btn-download { background-color: #ffffff; color: #374151; border: 1px solid #d4dbe8; flex: 1; }
+        /* [수정] 불러오기 버튼 스타일 조정 */
+        #dc-backup-popup .import-btn { background-color: #3b71fd; color: #fff; border: 1px solid #3b71fd; width: 100%; margin-top: 8px; }
+
+        /* Popup refresh */
         #dcinside-filter-setting,
-        #dcinside-shortcut-modal {
-            font-family: "Segoe UI", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif !important;
+        #dc-selection-popup,
+        #dc-backup-popup,
+        #dc-block-management-panel {
+            box-sizing: border-box !important;
+            border: 1px solid #d9dee7 !important;
+            border-radius: 14px !important;
+            box-shadow: 0 18px 42px rgba(26, 39, 60, 0.18) !important;
+        }
+        #dcinside-filter-setting,
+        #dc-selection-popup,
+        #dc-backup-popup {
+            animation: dcuf-popup-center-in 0.16s ease-out;
+        }
+        #dc-block-management-panel {
+            animation: dcuf-popup-fade-in 0.16s ease-out;
+            min-width: 460px !important;
+            min-height: 340px !important;
+            background: #f7f9fc !important;
         }
         #dcinside-filter-setting {
-            min-width: 420px !important;
-            max-width: min(92vw, 760px) !important;
-            max-height: 92vh !important;
-            overflow: hidden !important;
-            border-color: #273142 !important;
-            box-shadow: 0 20px 48px rgba(17, 24, 39, 0.24) !important;
+            min-width: 540px !important;
+            max-width: min(92vw, 680px) !important;
+            padding: 18px !important;
+            cursor: default !important;
         }
         #dcinside-filter-setting .dcuf-settings-header {
-            cursor: move;
+            margin-bottom: 12px !important;
+            padding: 0 0 12px !important;
+            border-bottom: 1px solid #e5e9f1 !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            gap: 10px !important;
+        }
+        #dcinside-filter-setting .dcuf-settings-header > div:first-child {
+            display: flex !important;
+            flex-wrap: wrap !important;
+            gap: 10px !important;
+            align-items: center !important;
+        }
+        #dcinside-filter-setting .dcuf-settings-header > div:first-child > div {
+            border-left: 0 !important;
+            padding-left: 0 !important;
         }
         #dcinside-filter-setting .dcuf-settings-body {
-            max-height: calc(92vh - 158px) !important;
-            overflow-y: auto !important;
-            padding-right: 4px !important;
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 10px !important;
+        }
+        #dcinside-filter-setting .dcuf-settings-body > hr {
+            display: none !important;
         }
         #dcinside-filter-setting .dcuf-settings-section {
-            background: #fbfcfe;
-            border: 1px solid #e2e8f0;
-            border-radius: 10px;
-            padding: 14px;
+            border: 1px solid #e5e9f1 !important;
+            background: #fbfcff !important;
+            border-radius: 10px !important;
+            padding: 12px !important;
         }
-        #dcinside-filter-setting .dcuf-settings-guest-controls {
-            background: #fff;
-            border: 1px solid #d9e0ea;
-            border-radius: 8px;
-            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.75);
+        #dcinside-filter-setting .dcuf-settings-threshold {
+            display: flex !important;
+            gap: 12px !important;
+            align-items: stretch !important;
+            justify-content: space-between !important;
+        }
+        #dcinside-filter-setting .dcuf-settings-threshold > div:first-child {
+            flex: 0 1 280px !important;
+            min-width: 0 !important;
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: center !important;
+            justify-content: center !important;
+            text-align: center !important;
+        }
+        #dcinside-filter-setting .dcuf-settings-threshold > div:first-child > h3 {
+            width: 100% !important;
+            text-align: center !important;
+        }
+        #dcinside-filter-setting .dcuf-settings-threshold > div:first-child > input {
+            margin: 0 auto !important;
+        }
+        #dcinside-filter-setting .dcuf-settings-threshold > div:first-child > div {
+            width: auto !important;
+            min-height: 0 !important;
+            max-width: 100% !important;
+            border: 0 !important;
+            background: transparent !important;
+            padding: 0 !important;
+            text-align: center !important;
+        }
+        #dcinside-filter-setting .dcuf-settings-threshold > div:last-child {
+            flex: 0 0 auto !important;
+            border: 0 !important;
+            border-radius: 10px !important;
+            background: #fff !important;
+            padding: 10px !important;
+            box-shadow: none !important;
+        }
+        #dcinside-filter-setting #dcinside-ratio-section > div:first-child {
+            display: grid !important;
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+            gap: 10px !important;
+            align-items: stretch !important;
+        }
+        #dcinside-filter-setting #dcinside-ratio-section > div:last-child {
+            text-align: center !important;
         }
         #dcinside-filter-setting #dcinside-threshold-input,
         #dcinside-filter-setting #dcinside-ratio-min,
         #dcinside-filter-setting #dcinside-ratio-max {
-            border: 1px solid #cbd5e1 !important;
+            min-height: 40px !important;
+            border: 1px solid #cfd7e6 !important;
             border-radius: 8px !important;
-            padding: 8px 10px !important;
+            padding: 6px 10px !important;
             box-sizing: border-box !important;
+            background: #fff !important;
+        }
+        #dcinside-filter-setting .dcuf-settings-footer {
+            margin-top: 11px !important;
+            padding-top: 11px !important;
+            border-top: 1px solid #e5e9f1 !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            gap: 10px !important;
         }
         #dcinside-filter-setting #dcinside-threshold-save {
-            min-width: 110px;
-            font-weight: 700;
+            background: #3b71fd !important;
+            color: #fff !important;
+            border: 1px solid #3b71fd !important;
+            border-radius: 9px !important;
+            min-height: 42px !important;
+            padding: 0 16px !important;
+            font-weight: 700 !important;
         }
-        #dcinside-filter-setting.dcuf-pop-leave {
-            opacity: 0 !important;
-            transform: translate(-50%, -48%) scale(0.985) !important;
-            transition: opacity 0.13s ease, transform 0.13s ease !important;
-            pointer-events: none !important;
-        }
-
-        body.dc-filter-dark-mode #dcinside-filter-setting,
-        body.dc-filter-dark-mode #dcinside-shortcut-modal {
-            background: #232a34 !important;
-            color: #e8edf7 !important;
-            border-color: #4b5b74 !important;
-            box-shadow: 0 24px 58px rgba(0, 0, 0, 0.44) !important;
-        }
-        body.dc-filter-dark-mode #dcinside-filter-setting .dcuf-settings-section {
-            background: #2c3440 !important;
-            border-color: #47556f !important;
-        }
-        body.dc-filter-dark-mode #dcinside-filter-setting .dcuf-settings-guest-controls {
-            background: #26303c !important;
-            border-color: #47556f !important;
-        }
-        body.dc-filter-dark-mode #dcinside-filter-setting div,
-        body.dc-filter-dark-mode #dcinside-filter-setting label,
-        body.dc-filter-dark-mode #dcinside-filter-setting h3,
-        body.dc-filter-dark-mode #dcinside-filter-setting b,
-        body.dc-filter-dark-mode #dcinside-filter-setting a,
-        body.dc-filter-dark-mode #dcinside-shortcut-modal h4,
-        body.dc-filter-dark-mode #dcinside-shortcut-modal div {
-            color: #e8edf7 !important;
-        }
-        body.dc-filter-dark-mode #dcinside-filter-setting #dcinside-threshold-input,
-        body.dc-filter-dark-mode #dcinside-filter-setting #dcinside-ratio-min,
-        body.dc-filter-dark-mode #dcinside-filter-setting #dcinside-ratio-max,
-        body.dc-filter-dark-mode #dcinside-shortcut-modal #dcinside-new-shortcut-preview {
-            background: #1d2430 !important;
-            color: #eef3ff !important;
-            border-color: #51617d !important;
-        }
-        body.dc-filter-dark-mode #dcinside-filter-setting #dcinside-proxy-ip-block-mode-group {
-            background: #1d2430 !important;
-            border-color: #51617d !important;
-        }
-        body.dc-filter-dark-mode #dcinside-filter-setting button,
-        body.dc-filter-dark-mode #dcinside-shortcut-modal button {
-            border-color: #5f6f89 !important;
-        }
-
-        @media (max-width: 760px) {
-            #dcinside-filter-setting {
-                min-width: auto !important;
-                width: min(96vw, 760px) !important;
-            }
-            #dcinside-filter-setting .dcuf-settings-threshold {
-                flex-direction: column !important;
-                align-items: stretch !important;
-            }
-            #dcinside-filter-setting #dcinside-ratio-section > div:first-child {
-                flex-direction: column !important;
-            }
-        }
-
-        #dc-personal-block-fab {
-            position: fixed;
-            right: 20px;
-            bottom: 20px;
-            z-index: 2147483640;
-            min-width: 84px !important;
-            height: 42px !important;
-            padding: 0 14px !important;
-            border-radius: 999px !important;
-            background: linear-gradient(180deg, #fbfcfe 0%, #f1f4f8 100%) !important;
-            color: #4d5e76 !important;
-            border: 1px solid #c7d2df !important;
-            box-shadow: 0 10px 24px rgba(43, 61, 96, 0.14) !important;
-            display: flex !important;
+        #dcinside-filter-setting #dcinside-filter-close,
+        #dc-backup-popup .popup-close-btn,
+        #dc-block-management-panel .panel-close-btn {
+            display: inline-flex !important;
             align-items: center !important;
             justify-content: center !important;
             text-align: center !important;
-            font-size: 15px !important;
-            font-weight: 800 !important;
-            letter-spacing: -0.03em !important;
+            padding: 0 !important;
             line-height: 1 !important;
-            white-space: nowrap !important;
-            cursor: pointer !important;
-            user-select: none !important;
-            transition: transform 0.18s ease-out, box-shadow 0.18s ease-out, border-color 0.18s ease-out, background-color 0.18s ease-out !important;
         }
-        #dc-personal-block-fab:hover {
-            background: linear-gradient(180deg, #ffffff 0%, #eef2f7 100%) !important;
-            border-color: #b6c2d1 !important;
-            box-shadow: 0 8px 18px rgba(36, 49, 72, 0.14) !important;
-        }
-        #dc-personal-block-fab:active {
-            transform: scale(0.97) !important;
-            cursor: grabbing !important;
+        #dcinside-filter-setting #dcinside-filter-close {
+            width: 30px !important;
+            height: 30px !important;
+            border-radius: 999px !important;
         }
 
-        #dc-selection-popup {
-            position: fixed !important;
-            top: 50% !important;
-            left: 50% !important;
-            transform: translate(-50%, -50%) !important;
-            z-index: 2147483641 !important;
-            background: #fff !important;
-            border: 1px solid #d7deea !important;
-            border-radius: 12px !important;
-            padding: 20px !important;
-            box-shadow: 0 14px 36px rgba(36, 49, 72, 0.18) !important;
-            min-width: 360px !important;
-            max-width: min(92vw, 520px) !important;
-            text-align: center !important;
-        }
-        #dc-selection-popup h4 {
-            margin: 0 0 20px 0 !important;
-            font-size: 18px !important;
-            font-weight: 600 !important;
-        }
-        #dc-selection-popup .block-options {
-            display: flex !important;
-            flex-direction: column !important;
-            gap: 10px !important;
-            margin-bottom: 20px !important;
-        }
-        #dc-selection-popup .block-option {
-            display: flex !important;
-            justify-content: space-between !important;
-            align-items: center !important;
-            background-color: #f8fbff !important;
-            border: 1px solid #e4e9f3 !important;
-            padding: 12px !important;
-            border-radius: 9px !important;
-            gap: 12px !important;
-        }
-        #dc-selection-popup .block-option span {
-            font-size: 15px !important;
-            color: #333 !important;
-            word-break: break-all !important;
-            margin-right: 15px !important;
-            text-align: left !important;
-        }
-        #dc-selection-popup .block-option button {
-            font-size: 14px !important;
-            padding: 6px 12px !important;
-            cursor: pointer !important;
-            border: none !important;
-            border-radius: 6px !important;
-            background-color: #4263eb !important;
-            color: #fff !important;
-            font-weight: 500 !important;
-        }
-        #dc-selection-popup .block-option button.btn-unblock {
-            background-color: #e03131 !important;
-        }
-        #dc-selection-popup .popup-buttons button {
-            width: 100% !important;
-            font-size: 16px !important;
-            padding: 10px !important;
-            cursor: pointer !important;
-            border: none !important;
-            border-radius: 8px !important;
-            background-color: #e9ecef !important;
-            color: #555 !important;
-        }
-        body.selection-mode-active .gall_writer,
-        body.selection-mode-active .ub-writer {
-            cursor: pointer !important;
-            outline: 2px dashed #4263eb !important;
-        }
-
-        #dc-block-management-panel-overlay,
-        #dc-backup-popup-overlay {
-            position: fixed !important;
-            top: 0 !important;
-            left: 0 !important;
-            width: 100% !important;
-            height: 100% !important;
-            background: rgba(0, 0, 0, 0.55) !important;
-            z-index: 2147483645 !important;
-            backdrop-filter: blur(2px) !important;
-        }
-        #dc-block-management-panel,
-        #dc-backup-popup {
-            touch-action: pan-x pan-y !important;
-        }
-        #dc-block-management-panel {
-            position: fixed !important;
-            top: 50% !important;
-            left: 50% !important;
-            transform: translate(-50%, -50%) !important;
-            background: #fff !important;
-            border: 1px solid #d9e1ef !important;
-            border-radius: 18px !important;
-            box-shadow: 0 18px 44px rgba(34, 51, 84, 0.18) !important;
-            z-index: 2147483646 !important;
-            display: flex !important;
-            flex-direction: column !important;
-            width: 400px !important;
-            height: 500px !important;
-            min-width: 350px !important;
-            min-height: 300px !important;
-            resize: both !important;
-            overflow: hidden !important;
-        }
         #dc-block-management-panel .panel-header {
-            display: flex !important;
-            align-items: center !important;
-            padding: 16px 18px 14px !important;
-            background: #fff !important;
-            border-bottom: 1px solid #e6ebf4 !important;
-            cursor: move !important;
-            user-select: none !important;
-        }
-        #dc-block-management-panel .panel-header h3 {
-            margin: 0 !important;
-            font-size: 16px !important;
+            background: #f3f6fc !important;
+            border-bottom: 1px solid #e3e8f2 !important;
+            padding: 12px 14px !important;
         }
         #dc-block-management-panel .panel-close-btn {
-            font-size: 20px !important;
-            cursor: pointer !important;
-            border: none !important;
-            background: none !important;
-            margin-left: auto !important;
+            width: 28px !important;
+            height: 28px !important;
+            border-radius: 999px !important;
+            color: #4b5563 !important;
+        }
+        #dc-block-management-panel .panel-close-btn:hover {
+            background: #e9eef8 !important;
         }
         #dc-block-management-panel .panel-tabs {
-            display: flex !important;
-            background: #fff !important;
-            border-bottom: 1px solid #e6ebf4 !important;
+            background: #f8faff !important;
+            border-bottom: 1px solid #e5e9f1 !important;
+            padding: 6px !important;
+            gap: 6px !important;
         }
         #dc-block-management-panel .panel-tab {
-            flex: 1 !important;
-            padding: 14px 8px !important;
-            text-align: center !important;
-            cursor: pointer !important;
-            border-right: 1px solid #e6ebf4 !important;
-            background: #fff !important;
-            color: #4b5563 !important;
+            border-right: 0 !important;
+            border-radius: 8px !important;
             font-weight: 600 !important;
+            color: #4b5563 !important;
+            padding: 10px 8px !important;
             position: relative !important;
         }
-        #dc-block-management-panel .panel-tab:last-child {
-            border-right: none !important;
-        }
         #dc-block-management-panel .panel-tab.active {
+            background: #eaf1ff !important;
             color: #1d4ed8 !important;
             font-weight: 700 !important;
         }
         #dc-block-management-panel .panel-tab.active::after {
-            content: '' !important;
-            position: absolute !important;
-            left: 16px !important;
-            right: 16px !important;
-            bottom: 8px !important;
-            height: 2px !important;
-            border-radius: 999px !important;
-            background: #3b71fd !important;
-        }
-        #dc-block-management-panel .panel-body {
-            flex-grow: 1 !important;
-            display: flex !important;
-            flex-direction: column !important;
-            overflow: hidden !important;
-            background: #fff !important;
-            padding: 0 12px 12px !important;
-        }
-        #dc-block-management-panel .panel-list-controls {
-            padding: 10px 0 12px !important;
-            text-align: left !important;
-            background: transparent !important;
+            content: '';
+            position: absolute;
+            left: 12px;
+            right: 12px;
+            bottom: 6px;
+            height: 2px;
+            border-radius: 999px;
+            background: #3b71fd;
         }
         #dc-block-management-panel .select-all-btn,
         #dc-block-management-panel .select-all-global-btn,
         #dc-block-management-panel .panel-backup-btn {
             min-height: 36px !important;
-            font-size: 13px !important;
-            padding: 4px 10px !important;
-            cursor: pointer !important;
             border: 1px solid #d4dbe8 !important;
-            background: #fff !important;
             border-radius: 8px !important;
-            margin-left: 5px !important;
+            background: #fff !important;
             color: #374151 !important;
             font-weight: 600 !important;
-            transition: background-color 0.14s ease, border-color 0.14s ease !important;
+            transition: background-color 0.14s ease, border-color 0.14s ease;
         }
         #dc-block-management-panel .select-all-btn:hover,
         #dc-block-management-panel .select-all-global-btn:hover,
@@ -1194,186 +1427,163 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             background: #f6f9ff !important;
             border-color: #b8c8ea !important;
         }
-        #dc-block-management-panel .panel-content {
-            flex-grow: 1 !important;
-            overflow-y: auto !important;
-            border: 1px solid #e6ebf4 !important;
-            border-radius: 14px !important;
-            background: #fff !important;
+        #dc-block-management-panel .panel-save-btn {
+            min-height: 38px !important;
+            border-radius: 9px !important;
+            padding: 0 18px !important;
+            font-weight: 700 !important;
+            box-shadow: 0 6px 16px rgba(59, 113, 253, 0.24) !important;
         }
         #dc-block-management-panel .blocked-list {
-            list-style: none !important;
-            margin: 0 !important;
-            padding: 6px 12px 12px !important;
+            padding: 6px 10px 12px !important;
         }
         #dc-block-management-panel .blocked-item {
-            display: flex !important;
-            justify-content: space-between !important;
-            align-items: center !important;
-            min-height: 52px !important;
-            padding: 12px 8px !important;
-            border-bottom: 1px solid #eef2f7 !important;
-            transition: background-color 0.14s ease, opacity 0.14s ease !important;
-            background: #fff !important;
+            min-height: 44px !important;
+            padding: 10px 8px !important;
+            border-bottom: 1px solid #edf1f7 !important;
+            transition: background-color 0.14s ease, opacity 0.14s ease;
         }
         #dc-block-management-panel .blocked-item:hover {
             background: #f6f9ff !important;
         }
         #dc-block-management-panel .blocked-item.item-to-delete {
-            text-decoration: line-through !important;
+            background: #fff5f6 !important;
             opacity: 0.5 !important;
         }
-        #dc-block-management-panel .item-name {
-            font-size: 14px !important;
-            word-break: break-all !important;
-        }
         #dc-block-management-panel .delete-item-btn {
-            cursor: pointer !important;
-            color: #e03131 !important;
-            font-weight: bold !important;
-            padding: 0 5px !important;
             display: inline-flex !important;
             align-items: center !important;
             justify-content: center !important;
             width: 24px !important;
             height: 24px !important;
             border-radius: 999px !important;
-            background: #fff0f2 !important;
-        }
-        #dc-block-management-panel .panel-footer {
-            display: flex !important;
-            justify-content: space-between !important;
-            align-items: center !important;
-            padding: 12px 14px !important;
-            border-top: 1px solid #e6ebf4 !important;
-            background: #fff !important;
-        }
-        #dc-block-management-panel .panel-footer-left {
-            display: flex !important;
-            align-items: center !important;
-        }
-        #dc-block-management-panel .panel-save-btn {
-            min-height: 38px !important;
-            padding: 0 18px !important;
+            background: #ffe9ec !important;
+            color: #e03131 !important;
             font-size: 14px !important;
-            font-weight: 700 !important;
-            background: #3b71fd !important;
-            color: #fff !important;
-            border: none !important;
-            border-radius: 9px !important;
-            cursor: pointer !important;
-            box-shadow: 0 6px 16px rgba(59, 113, 253, 0.24) !important;
+            line-height: 1 !important;
+            padding: 0 !important;
+            transition: background-color 0.14s ease;
         }
-        #dc-block-management-panel .panel-resize-handle {
-            position: absolute !important;
-            right: 0 !important;
-            bottom: 0 !important;
-            width: 15px !important;
-            height: 15px !important;
-            cursor: nwse-resize !important;
+        #dc-block-management-panel .delete-item-btn:hover {
+            background: #ffd4dc !important;
         }
 
         #dc-backup-popup {
-            position: fixed !important;
-            top: 50% !important;
-            left: 50% !important;
-            transform: translate(-50%, -50%) !important;
-            background: #fff !important;
-            border: 1px solid #d9e1ef !important;
-            border-radius: 18px !important;
-            box-shadow: 0 18px 44px rgba(34, 51, 84, 0.18) !important;
-            z-index: 2147483647 !important;
-            padding: 18px !important;
             min-width: 420px !important;
-            min-height: 320px !important;
-            width: min(92vw, 520px) !important;
-            overflow: hidden !important;
-            resize: both !important;
+            max-width: min(92vw, 560px) !important;
+            padding: 18px !important;
         }
         #dc-backup-popup .popup-header {
-            display: flex !important;
-            justify-content: space-between !important;
-            align-items: center !important;
-            margin-bottom: 16px !important;
-            padding: 0 4px 12px !important;
-            border-bottom: 1px solid #e6ebf4 !important;
-            background: #fff !important;
-        }
-        #dc-backup-popup .popup-header h4 {
-            margin: 0 !important;
-            font-size: 16px !important;
+            margin-bottom: 12px !important;
+            padding-bottom: 10px !important;
+            border-bottom: 1px solid #e5e9f1 !important;
         }
         #dc-backup-popup .popup-close-btn {
-            font-size: 20px !important;
-            background: none !important;
-            border: none !important;
-            cursor: pointer !important;
-            color: #888 !important;
+            width: 28px !important;
+            height: 28px !important;
+            border-radius: 999px !important;
         }
-        #dc-backup-popup .popup-content {
-            display: flex !important;
-            flex-direction: column !important;
-            gap: 22px !important;
-            max-height: calc(92vh - 96px) !important;
-            overflow-y: auto !important;
-            padding-right: 2px !important;
+        #dc-backup-popup .popup-close-btn:hover {
+            background: #eef3fb !important;
         }
-        #dc-backup-popup label {
-            font-size: 14px !important;
-            font-weight: bold !important;
-        }
-        #dc-backup-popup .description {
-            font-size: 12px !important;
-            color: #6b7280 !important;
-            line-height: 1.5 !important;
-        }
-        #dc-backup-popup .import-controls {
-            display: flex !important;
-            flex-direction: column !important;
-            gap: 8px !important;
-        }
-        #dc-backup-popup .import-file-input,
-        #dc-backup-popup textarea {
-            width: 100% !important;
-            box-sizing: border-box !important;
-            padding: 8px !important;
-            border: 1px solid #d2dae8 !important;
+        #dc-backup-popup .export-btn,
+        #dc-backup-popup .export-btn-download,
+        #dc-backup-popup .import-btn {
+            min-height: 40px !important;
             border-radius: 8px !important;
-            background: #fff !important;
-            color: #333 !important;
-        }
-        #dc-backup-popup textarea {
-            height: 100px !important;
-            resize: vertical !important;
-            font-size: 12px !important;
-            font-family: Consolas, "Courier New", monospace !important;
-        }
-        #dc-backup-popup button {
-            padding: 8px 12px !important;
-            border: none !important;
-            border-radius: 8px !important;
-            cursor: pointer !important;
             font-weight: 700 !important;
+            transition: background-color 0.14s ease, border-color 0.14s ease, color 0.14s ease !important;
         }
         #dc-backup-popup .export-btn {
-            background-color: #3b71fd !important;
-            color: #fff !important;
+            background: #3b71fd !important;
             border: 1px solid #3b71fd !important;
-            flex: 1 !important;
+            color: #fff !important;
+        }
+        #dc-backup-popup .export-btn:hover {
+            background: #2f63ea !important;
+            border-color: #2f63ea !important;
         }
         #dc-backup-popup .export-btn-download {
             background: #eef4ff !important;
             border: 1px solid #c8d8ff !important;
             color: #315fc2 !important;
         }
+        #dc-backup-popup .export-btn-download:hover {
+            background: #e2edff !important;
+            border-color: #b4cbff !important;
+        }
         #dc-backup-popup .import-btn {
-            background-color: #3b71fd !important;
-            color: #fff !important;
+            background: #3b71fd !important;
             border: 1px solid #3b71fd !important;
-            width: 100% !important;
-            margin-top: 8px !important;
+            color: #fff !important;
+            box-shadow: 0 6px 16px rgba(59, 113, 253, 0.22) !important;
+        }
+        #dc-backup-popup .import-btn:hover {
+            background: #2f63ea !important;
+            border-color: #2f63ea !important;
+        }
+        #dc-backup-popup .import-file-input,
+        #dc-backup-popup textarea {
+            border: 1px solid #d2dae8 !important;
+            border-radius: 8px !important;
+            background: #fff !important;
         }
 
+        #dcinside-filter-setting,
+        #dc-backup-popup,
+        #dc-block-management-panel {
+            touch-action: pan-x pan-y !important;
+        }
+
+        #dcinside-filter-setting,
+        #dc-backup-popup {
+            overflow: hidden !important;
+            resize: both !important;
+        }
+        #dcinside-filter-setting {
+            min-height: 360px !important;
+        }
+        #dc-backup-popup {
+            min-height: 320px !important;
+        }
+
+        #dcinside-filter-setting .dcuf-settings-body {
+            max-height: calc(92vh - 156px) !important;
+            overflow-y: auto !important;
+            padding-right: 2px !important;
+        }
+
+        #dc-backup-popup .popup-content {
+            max-height: calc(92vh - 96px) !important;
+            overflow-y: auto !important;
+            padding-right: 2px !important;
+        }
+
+
+        #dc-selection-popup {
+            min-width: 360px !important;
+            max-width: min(92vw, 520px) !important;
+            padding: 18px !important;
+        }
+        #dc-selection-popup .block-option {
+            border: 1px solid #e4e9f3 !important;
+            background: #f8fbff !important;
+            border-radius: 9px !important;
+        }
+
+        #dc-block-management-panel-overlay,
+        #dc-backup-popup-overlay {
+            backdrop-filter: blur(2px);
+        }
+
+        @keyframes dcuf-popup-center-in {
+            from { opacity: 0; transform: translate(-50%, -48%) scale(0.985); }
+            to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        }
+        @keyframes dcuf-popup-fade-in {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
         @keyframes dcuf-popup-out {
             from { opacity: 1; }
             to { opacity: 0; }
@@ -1382,6 +1592,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             from { opacity: 1; }
             to { opacity: 0; }
         }
+        #dcinside-filter-setting.dcuf-pop-leave,
         #dc-selection-popup.dcuf-pop-leave,
         #dc-backup-popup.dcuf-pop-leave,
         #dc-block-management-panel.dcuf-pop-leave {
@@ -1394,27 +1605,706 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             pointer-events: none !important;
         }
 
-        body.dc-filter-dark-mode #dc-personal-block-fab {
-            background: linear-gradient(180deg, #313948 0%, #242b36 100%) !important;
-            color: #e6eefc !important;
-            border-color: #50617d !important;
-            box-shadow: 0 10px 24px rgba(0, 0, 0, 0.32) !important;
+        @media (max-width: 640px) {
+            #dcinside-filter-setting { min-width: auto !important; width: min(96vw, 640px) !important; }
+            #dcinside-filter-setting #dcinside-ratio-section > div:first-child {
+                grid-template-columns: 1fr !important;
+            }
+            #dc-block-management-panel { min-width: min(96vw, 520px) !important; }
+            #dc-backup-popup { min-width: auto !important; width: min(96vw, 560px) !important; }
         }
+
+        @media (prefers-reduced-motion: reduce) {
+            #dcinside-filter-setting,
+            #dc-selection-popup,
+            #dc-backup-popup,
+            #dc-block-management-panel,
+            #dcinside-filter-setting.dcuf-pop-leave,
+            #dc-selection-popup.dcuf-pop-leave,
+            #dc-backup-popup.dcuf-pop-leave,
+            #dc-block-management-panel.dcuf-pop-leave,
+            #dc-block-management-panel-overlay.dcuf-overlay-leave,
+            #dc-backup-popup-overlay.dcuf-overlay-leave {
+                animation: none !important;
+                transition: none !important;
+            }
+        }
+
+        /* [v1.9.5] Script-owned soft-depth control surfaces */
+        #dc-personal-block-fab {
+            background: linear-gradient(180deg, #fff 0%, #eef4ff 100%) !important;
+            color: #29466f !important;
+            border: 1px solid rgba(127,154,196,.46) !important;
+            box-shadow: 0 14px 30px rgba(40,68,112,.2), 0 3px 8px rgba(40,68,112,.12), inset 0 1px 0 #fff !important;
+        }
+        #dc-personal-block-fab:hover {
+            background: linear-gradient(180deg, #fff 0%, #e7f0ff 100%) !important;
+            border-color: rgba(86,124,185,.56) !important;
+            box-shadow: 0 17px 34px rgba(40,68,112,.24), inset 0 1px 0 #fff !important;
+        }
+        #dc-personal-block-fab:active {
+            transform: translateY(2px) scale(.98) !important;
+            box-shadow: 0 7px 16px rgba(40,68,112,.17), inset 0 1px 3px rgba(40,68,112,.12) !important;
+        }
+        #dc-personal-block-drawer {
+            width: 260px !important;
+            min-width: 260px !important;
+            max-height: min(440px, calc(100dvh - 24px)) !important;
+            gap: 6px !important;
+            padding: 9px !important;
+            overflow-y: auto !important;
+            border: 1px solid rgba(151,171,202,.5) !important;
+            border-radius: 18px !important;
+            background: linear-gradient(145deg, rgba(255,255,255,.98), rgba(241,246,255,.98)) !important;
+            box-shadow: 0 22px 48px rgba(35,55,91,.25), 0 6px 16px rgba(35,55,91,.12), inset 0 1px 0 #fff !important;
+        }
+        #dc-personal-block-drawer button {
+            display: grid !important;
+            grid-template-columns: 36px minmax(0,1fr) !important;
+            align-items: center !important;
+            gap: 10px !important;
+            min-height: 58px !important;
+            padding: 8px 10px !important;
+            border: 1px solid transparent !important;
+            border-radius: 13px !important;
+            white-space: normal !important;
+            transition: transform .14s ease, background .14s ease, border-color .14s ease, box-shadow .14s ease !important;
+        }
+        #dc-personal-block-drawer button:hover,
+        #dc-personal-block-drawer button:focus-visible {
+            background: linear-gradient(180deg,#fff,#eaf2ff) !important;
+            border-color: #cfddf2 !important;
+            box-shadow: 0 7px 16px rgba(52,83,132,.12), inset 0 1px 0 #fff !important;
+        }
+        #dc-personal-block-drawer button:active { transform: translateY(1px) !important; }
+        #dc-personal-block-drawer .dcuf-menu-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 34px;
+            height: 34px;
+            border: 1px solid #cedbf0;
+            border-radius: 11px;
+            background: linear-gradient(145deg,#fff,#e6efff);
+            color: #3b71fd;
+            font-size: 19px;
+            font-weight: 800;
+            box-shadow: 0 5px 11px rgba(59,113,253,.13), inset 0 1px 0 #fff;
+        }
+        #dc-personal-block-drawer button > span:last-child { min-width: 0; }
+        #dc-personal-block-drawer strong,
+        #dc-personal-block-drawer small { display: block; }
+        #dc-personal-block-drawer strong { color: #263b5a; font-size: 14px; line-height: 1.25; }
+        #dc-personal-block-drawer small { margin-top: 3px; color: #71819a; font-size: 11px; font-weight: 500; line-height: 1.25; }
+
+        #dc-manual-block-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 2147483647;
+            box-sizing: border-box;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            background: rgba(20,31,50,.48);
+            backdrop-filter: blur(3px);
+        }
+        #dc-manual-block-panel {
+            box-sizing: border-box;
+            width: min(430px, calc(100vw - 32px));
+            max-height: calc(100dvh - 32px);
+            overflow: hidden auto;
+            border: 1px solid rgba(151,171,202,.56);
+            border-radius: 22px;
+            background: linear-gradient(155deg,#fff,#f3f7ff);
+            color: #20334f;
+            box-shadow: 0 28px 70px rgba(18,34,60,.32), 0 8px 24px rgba(18,34,60,.14), inset 0 1px 0 #fff;
+            animation: dcuf-popup-fade-in .18s ease-out;
+        }
+        #dc-manual-block-panel .dcuf-manual-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            min-height: 68px;
+            padding: 14px 14px 13px 20px;
+            border-bottom: 1px solid #dce5f3;
+            background: linear-gradient(135deg,#eff5ff,#fff);
+        }
+        #dc-manual-block-panel .dcuf-manual-kicker,
+        #dc-block-management-panel .panel-kicker {
+            display: block;
+            margin-bottom: 3px;
+            color: #6684b4;
+            font-size: 9px;
+            font-weight: 900;
+            letter-spacing: .14em;
+        }
+        #dc-manual-block-panel h3 { margin: 0; color: #1f3555; font-size: 20px; line-height: 1.15; }
+        #dc-manual-block-panel .dcuf-manual-close,
+        #dc-block-management-panel .panel-close-btn,
+        #dc-backup-popup .popup-close-btn,
+        #dcinside-filter-setting #dcinside-filter-close {
+            box-sizing: border-box !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            width: 44px !important;
+            min-width: 44px !important;
+            height: 44px !important;
+            min-height: 44px !important;
+            padding: 0 !important;
+            border: 1px solid transparent !important;
+            border-radius: 13px !important;
+            background: transparent !important;
+            color: #61728d !important;
+            font-size: 23px !important;
+            line-height: 1 !important;
+        }
+        #dc-manual-block-panel .dcuf-manual-close:hover,
+        #dc-block-management-panel .panel-close-btn:hover,
+        #dc-backup-popup .popup-close-btn:hover,
+        #dcinside-filter-setting #dcinside-filter-close:hover {
+            border-color: #d8e2f0 !important;
+            background: #edf3fb !important;
+            color: #29405f !important;
+        }
+        #dc-manual-block-panel .dcuf-manual-form { padding: 18px 20px 20px; }
+        #dc-manual-block-panel .dcuf-manual-type-tabs {
+            display: grid;
+            grid-template-columns: repeat(3,1fr);
+            gap: 4px;
+            padding: 4px;
+            border: 1px solid #d6e0ef;
+            border-radius: 14px;
+            background: #eaf0f8;
+            box-shadow: inset 0 2px 5px rgba(48,72,111,.08);
+        }
+        #dc-manual-block-panel [data-manual-block-type] {
+            min-height: 42px;
+            padding: 8px 6px;
+            border: 1px solid transparent;
+            border-radius: 10px;
+            background: transparent;
+            color: #65758d;
+            font: 700 13px/1.2 inherit;
+            cursor: pointer;
+        }
+        #dc-manual-block-panel [data-manual-block-type][aria-pressed="true"] {
+            border-color: #ccdaf0;
+            background: linear-gradient(180deg,#fff,#edf4ff);
+            color: #3265d2;
+            box-shadow: 0 5px 12px rgba(46,81,139,.16), inset 0 1px 0 #fff;
+        }
+        #dc-manual-block-panel .dcuf-manual-field {
+            display: grid;
+            gap: 7px;
+            margin-top: 17px;
+            color: #314867;
+            font-size: 13px;
+            font-weight: 800;
+        }
+        #dc-manual-block-panel .dcuf-manual-field[hidden] { display: none !important; }
+        #dc-manual-block-panel .dcuf-manual-field small { color: #8a98ac; font-weight: 500; }
+        #dc-manual-block-panel .dcuf-manual-field input {
+            box-sizing: border-box;
+            width: 100%;
+            min-height: 48px;
+            padding: 11px 13px;
+            border: 1px solid #cad7e9;
+            border-radius: 12px;
+            outline: 0;
+            background: #fff;
+            color: #1d2f49;
+            font: 600 15px/1.3 inherit;
+            box-shadow: inset 0 2px 5px rgba(37,60,96,.08), 0 1px 0 #fff;
+        }
+        #dc-manual-block-panel .dcuf-manual-field input:focus {
+            border-color: #7199f5;
+            box-shadow: 0 0 0 3px rgba(59,113,253,.15), inset 0 1px 3px rgba(37,60,96,.08);
+        }
+        #dc-manual-block-panel .dcuf-manual-hint {
+            min-height: 34px;
+            margin: 10px 2px 0;
+            color: #6d7d94;
+            font-size: 12px;
+            line-height: 1.45;
+        }
+        #dc-manual-block-panel .dcuf-manual-status {
+            min-height: 20px;
+            margin: 4px 2px 0;
+            color: #65758d;
+            font-size: 12px;
+            font-weight: 700;
+            line-height: 1.4;
+        }
+        #dc-manual-block-panel .dcuf-manual-status[data-state="success"] { color: #16835f; }
+        #dc-manual-block-panel .dcuf-manual-status[data-state="error"] { color: #d7485a; }
+        #dc-manual-block-panel .dcuf-manual-status[data-state="info"] { color: #3b68c6; }
+        #dc-manual-block-panel .dcuf-manual-actions {
+            display: grid;
+            grid-template-columns: .75fr 1.25fr;
+            gap: 9px;
+            margin-top: 10px;
+        }
+        #dc-manual-block-panel .dcuf-manual-actions button {
+            min-height: 46px;
+            border: 1px solid #ccd8e8;
+            border-radius: 12px;
+            background: linear-gradient(180deg,#fff,#edf2f8);
+            color: #53657e;
+            font: 800 14px/1 inherit;
+            box-shadow: 0 5px 12px rgba(35,56,89,.1), inset 0 1px 0 #fff;
+            cursor: pointer;
+        }
+        #dc-manual-block-panel .dcuf-manual-actions [data-manual-block-action="add"] {
+            border-color: #3b71fd;
+            background: linear-gradient(180deg,#5687ff,#376af0);
+            color: #fff;
+            box-shadow: 0 9px 18px rgba(59,113,253,.28), inset 0 1px 0 rgba(255,255,255,.34);
+        }
+        #dc-manual-block-panel .dcuf-manual-actions button:active { transform: translateY(1px); }
+        #dc-manual-block-panel .dcuf-manual-actions button:disabled { opacity: .65; cursor: wait; }
+
+
+        @keyframes dcuf-selection-prompt-in {
+            from { opacity: 0; transform: translate(-50%,-8px) scale(.98); }
+            to { opacity: 1; transform: translate(-50%,0) scale(1); }
+        }
+        #dc-selection-popup.dcuf-selection-prompt {
+            top: calc(env(safe-area-inset-top,0px) + 14px) !important;
+            left: 50% !important;
+            bottom: auto !important;
+            box-sizing: border-box !important;
+            display: grid !important;
+            grid-template-columns: 42px minmax(0,1fr) auto !important;
+            align-items: center !important;
+            gap: 11px !important;
+            width: min(560px,calc(100vw - 24px)) !important;
+            min-width: 0 !important;
+            max-width: calc(100vw - 24px) !important;
+            padding: 11px 12px !important;
+            border: 1px solid rgba(142,166,203,.58) !important;
+            border-radius: 18px !important;
+            transform: translateX(-50%) !important;
+            text-align: left !important;
+            background: linear-gradient(145deg,rgba(255,255,255,.98),rgba(237,244,255,.98)) !important;
+            box-shadow: 0 18px 40px rgba(31,51,83,.25), inset 0 1px 0 #fff !important;
+            animation: dcuf-selection-prompt-in .18s ease-out !important;
+        }
+        #dc-selection-popup .dcuf-selection-prompt-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            border-radius: 13px;
+            background: linear-gradient(145deg,#fff,#dfeaff);
+            color: #3b71fd;
+            font-size: 21px;
+            font-weight: 900;
+            box-shadow: 0 6px 14px rgba(59,113,253,.18), inset 0 1px 0 #fff;
+        }
+        #dc-selection-popup .dcuf-selection-prompt-copy h4 {
+            margin: 0 0 3px !important;
+            color: #233a5b !important;
+            font-size: 15px !important;
+            font-weight: 850 !important;
+        }
+        #dc-selection-popup .dcuf-selection-prompt-copy p {
+            margin: 0;
+            color: #71819a;
+            font-size: 12px;
+            line-height: 1.35;
+        }
+        #dc-selection-popup.dcuf-selection-prompt .popup-buttons button {
+            width: auto !important;
+            min-width: 86px;
+            min-height: 42px;
+            padding: 9px 12px !important;
+            border: 1px solid #cfdaea !important;
+            border-radius: 11px !important;
+            background: linear-gradient(180deg,#fff,#e9eff7) !important;
+            color: #50627d !important;
+            font-size: 13px !important;
+            font-weight: 800 !important;
+            box-shadow: 0 5px 12px rgba(41,62,96,.1), inset 0 1px 0 #fff;
+        }
+        body.selection-mode-active .gall_writer,
+        body.selection-mode-active .ub-writer {
+            border-radius: 6px !important;
+            outline: 2px solid rgba(59,113,253,.44) !important;
+            outline-offset: 2px !important;
+            background: rgba(59,113,253,.08) !important;
+        }
+        #dc-selection-popup:not(.dcuf-selection-prompt) {
+            border: 1px solid #d1dceb !important;
+            border-radius: 20px !important;
+            background: linear-gradient(150deg,#fff,#f3f7fd) !important;
+            box-shadow: 0 24px 58px rgba(24,42,71,.3), inset 0 1px 0 #fff !important;
+        }
+        #dc-selection-popup .block-option {
+            border-radius: 13px !important;
+            background: linear-gradient(145deg,#fff,#eef4fc) !important;
+            box-shadow: 0 6px 15px rgba(38,60,96,.09), inset 0 1px 0 #fff !important;
+        }
+        #dc-selection-popup .block-option button,
+        #dc-selection-popup .popup-buttons button { min-height: 42px; }
+
+        #dcinside-filter-setting,
+        #dc-block-management-panel,
+        #dc-backup-popup {
+            border: 1px solid rgba(149,169,201,.55) !important;
+            border-radius: 22px !important;
+            background: linear-gradient(155deg,#fff,#f4f7fc) !important;
+            box-shadow: 0 28px 68px rgba(23,39,67,.3), 0 7px 20px rgba(23,39,67,.13), inset 0 1px 0 #fff !important;
+        }
+        #dcinside-filter-setting .dcuf-settings-header,
+        #dc-block-management-panel .panel-header,
+        #dc-backup-popup .popup-header {
+            background: linear-gradient(135deg,rgba(238,244,255,.98),rgba(255,255,255,.98)) !important;
+            border-bottom: 1px solid #dbe4f1 !important;
+        }
+        #dcinside-filter-setting .dcuf-settings-section,
+        #dcinside-filter-setting .dcuf-settings-threshold > div:last-child,
+        #dcinside-filter-setting .dcuf-settings-guest-controls {
+            border: 1px solid #dce5f1 !important;
+            border-radius: 16px !important;
+            background: linear-gradient(145deg,#fff,#f3f7fd) !important;
+            box-shadow: 0 8px 20px rgba(36,58,94,.09), inset 0 1px 0 #fff !important;
+        }
+        #dcinside-filter-setting input[type="number"] {
+            min-height: 44px !important;
+            border-radius: 11px !important;
+            box-shadow: inset 0 2px 5px rgba(37,60,96,.09), 0 1px 0 #fff !important;
+        }
+        #dcinside-filter-setting #dcinside-threshold-save {
+            min-height: 46px !important;
+            border-radius: 12px !important;
+            background: linear-gradient(180deg,#5687ff,#376af0) !important;
+            box-shadow: 0 9px 18px rgba(59,113,253,.28), inset 0 1px 0 rgba(255,255,255,.32) !important;
+        }
+
+        #dc-block-management-panel .panel-header {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            min-height: 68px !important;
+            padding: 10px 12px 10px 18px !important;
+            cursor: move;
+        }
+        #dc-block-management-panel .panel-title-group { min-width: 0; }
+        #dc-block-management-panel .panel-title-group h3 { color: #213756 !important; font-size: 18px !important; }
+        #dc-block-management-panel .panel-header-actions { display: flex; align-items: center; gap: 7px; }
+        #dc-block-management-panel .switch-container { margin-left: 0 !important; }
+        #dc-block-management-panel .panel-add-btn {
+            min-height: 40px;
+            padding: 8px 11px;
+            border: 1px solid #cbdaf0;
+            border-radius: 11px;
+            background: linear-gradient(180deg,#fff,#e8f1ff);
+            color: #3564c4;
+            font-size: 12px;
+            font-weight: 850;
+            box-shadow: 0 6px 13px rgba(47,78,128,.12), inset 0 1px 0 #fff;
+            cursor: pointer;
+        }
+        #dc-block-management-panel .panel-tabs {
+            gap: 5px !important;
+            padding: 7px !important;
+            border-bottom: 1px solid #dce4f0 !important;
+            background: #edf2f8 !important;
+            box-shadow: inset 0 2px 5px rgba(38,59,91,.06);
+        }
+        #dc-block-management-panel .panel-tab {
+            appearance: none;
+            border: 1px solid transparent !important;
+            border-radius: 11px !important;
+            background: transparent !important;
+            color: #65758d !important;
+            font-family: inherit;
+            font-weight: 750 !important;
+        }
+        #dc-block-management-panel .panel-tab.active {
+            border-color: #ccdaf0 !important;
+            background: linear-gradient(180deg,#fff,#e8f1ff) !important;
+            color: #315fc2 !important;
+            box-shadow: 0 6px 14px rgba(45,74,121,.15), inset 0 1px 0 #fff !important;
+        }
+        #dc-block-management-panel .panel-tab.active::after { display: none !important; }
+        #dc-block-management-panel .panel-tab-count {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 20px;
+            height: 20px;
+            margin-left: 4px;
+            padding: 0 5px;
+            border-radius: 999px;
+            background: rgba(74,111,182,.12);
+            font-size: 10px;
+            font-weight: 900;
+        }
+        #dc-block-management-panel .panel-body { background: #f5f8fc !important; }
+        #dc-block-management-panel .panel-list-controls {
+            display: grid !important;
+            grid-template-columns: minmax(150px,1fr) auto !important;
+            align-items: center;
+            gap: 8px;
+            padding: 10px !important;
+            text-align: left !important;
+            background: rgba(255,255,255,.72);
+        }
+        #dc-block-management-panel .panel-search {
+            box-sizing: border-box;
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            min-height: 42px;
+            padding: 0 11px;
+            border: 1px solid #d0dbea;
+            border-radius: 11px;
+            background: #fff;
+            color: #71819a;
+            box-shadow: inset 0 2px 5px rgba(35,56,88,.07);
+        }
+        #dc-block-management-panel .panel-search-input {
+            min-width: 0;
+            width: 100%;
+            border: 0;
+            outline: 0;
+            background: transparent;
+            color: #263a58;
+            font: 600 13px/1.2 inherit;
+        }
+        #dc-block-management-panel .panel-list-summary {
+            grid-column: 1 / -1;
+            color: #7a899e;
+            font-size: 11px;
+        }
+
+
+        #dc-block-management-panel .select-all-btn,
+        #dc-block-management-panel .select-all-global-btn,
+        #dc-block-management-panel .panel-backup-btn {
+            min-height: 40px !important;
+            border-radius: 10px !important;
+            background: linear-gradient(180deg,#fff,#edf2f8) !important;
+            box-shadow: 0 5px 12px rgba(35,56,89,.09), inset 0 1px 0 #fff !important;
+        }
+        #dc-block-management-panel .blocked-list {
+            display: grid;
+            gap: 8px;
+            padding: 10px !important;
+        }
+        #dc-block-management-panel .blocked-item {
+            min-height: 52px;
+            padding: 8px 9px 8px 13px !important;
+            border: 1px solid #dce5f1 !important;
+            border-radius: 13px !important;
+            background: linear-gradient(145deg,#fff,#f0f5fb) !important;
+            box-shadow: 0 6px 15px rgba(34,55,88,.08), inset 0 1px 0 #fff;
+        }
+        #dc-block-management-panel .blocked-item.item-to-delete {
+            border-color: #f1bdc5 !important;
+            background: linear-gradient(145deg,#fff8f9,#fbecef) !important;
+            text-decoration: none !important;
+            opacity: .72 !important;
+        }
+        #dc-block-management-panel .blocked-item.item-to-delete .item-name { text-decoration: line-through; }
+        #dc-block-management-panel .delete-item-btn {
+            min-width: 52px !important;
+            min-height: 36px !important;
+            padding: 7px 9px !important;
+            border: 1px solid #ffd3da !important;
+            border-radius: 10px !important;
+            background: linear-gradient(180deg,#fff8f9,#ffe9ed) !important;
+            color: #df5366 !important;
+            font-size: 11px !important;
+            font-weight: 850 !important;
+            text-decoration: none !important;
+        }
+        #dc-block-management-panel .blocked-list-empty {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 150px;
+            color: #8290a4;
+            font-size: 13px;
+            text-align: center;
+        }
+        #dc-block-management-panel .panel-footer {
+            min-height: 64px;
+            background: linear-gradient(180deg,rgba(250,252,255,.98),rgba(239,244,251,.98)) !important;
+        }
+        #dc-block-management-panel .panel-save-btn {
+            min-height: 44px;
+            border-radius: 11px !important;
+            background: linear-gradient(180deg,#5687ff,#376af0) !important;
+            box-shadow: 0 8px 17px rgba(59,113,253,.28), inset 0 1px 0 rgba(255,255,255,.32) !important;
+        }
+        #dc-backup-popup .popup-content { gap: 12px !important; padding: 4px 2px 2px !important; }
+        #dc-backup-popup .export-section,
+        #dc-backup-popup .import-section {
+            padding: 14px !important;
+            border: 1px solid #dce5f1;
+            border-radius: 16px;
+            background: linear-gradient(145deg,#fff,#f2f6fc);
+            box-shadow: 0 8px 20px rgba(36,58,94,.09), inset 0 1px 0 #fff;
+        }
+        #dc-backup-popup .popup-content > hr { display: none; }
+        #dc-backup-popup .export-btn,
+        #dc-backup-popup .export-btn-download,
+        #dc-backup-popup .import-btn,
+        #dc-backup-popup .import-file-input,
+        #dc-backup-popup textarea {
+            min-height: 44px;
+            border-radius: 11px !important;
+        }
+        #dc-backup-popup .export-btn,
+        #dc-backup-popup .import-btn {
+            background: linear-gradient(180deg,#5687ff,#376af0) !important;
+            box-shadow: 0 8px 17px rgba(59,113,253,.25), inset 0 1px 0 rgba(255,255,255,.3) !important;
+        }
+        #dc-manual-block-panel.dcuf-pop-leave {
+            animation: dcuf-popup-out .13s ease-in forwards !important;
+            pointer-events: none !important;
+        }
+        #dc-manual-block-overlay.dcuf-overlay-leave {
+            animation: dcuf-overlay-out .13s ease-in forwards !important;
+            pointer-events: none !important;
+        }
+        @media (max-width: 640px) {
+            #dc-manual-block-overlay {
+                align-items: flex-end;
+                padding: 10px 8px max(8px,env(safe-area-inset-bottom,0px));
+            }
+            #dc-manual-block-panel {
+                width: 100%;
+                max-height: calc(100dvh - 10px);
+                border-radius: 22px 22px 16px 16px;
+            }
+            #dc-block-management-panel .panel-header { padding-left: 14px !important; }
+            #dc-block-management-panel .panel-kicker { display: none; }
+            #dc-block-management-panel .panel-add-btn {
+                width: 44px;
+                min-width: 44px;
+                padding: 0;
+                overflow: hidden;
+                color: transparent;
+                white-space: nowrap;
+            }
+            #dc-block-management-panel .panel-add-btn::first-letter {
+                color: #3564c4;
+                font-size: 18px;
+            }
+            #dc-block-management-panel .panel-list-controls { grid-template-columns: 1fr !important; }
+            #dc-block-management-panel .panel-list-summary { grid-column: 1; }
+            #dc-selection-popup.dcuf-selection-prompt { grid-template-columns: 38px minmax(0,1fr) !important; }
+            #dc-selection-popup.dcuf-selection-prompt .popup-buttons { grid-column: 1 / -1; }
+            #dc-selection-popup.dcuf-selection-prompt .popup-buttons button { width: 100% !important; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            #dc-manual-block-panel,
+            #dc-manual-block-overlay,
+            #dc-selection-popup.dcuf-selection-prompt {
+                animation: none !important;
+                transition: none !important;
+            }
+        }
+
+
+        #dc-personal-block-drawer { background-color: #f1f6ff !important; }
+        #dc-manual-block-panel { background-color: #f3f7ff; }
+        #dc-selection-popup.dcuf-selection-prompt { background-color: #edf4ff !important; }
+        #dc-selection-popup:not(.dcuf-selection-prompt) { background-color: #f3f7fd !important; }
+        #dcinside-filter-setting,
+        #dc-block-management-panel,
+        #dc-backup-popup { background-color: #f4f7fc !important; }
+
+body.dc-filter-dark-mode #dc-personal-block-fab {
+            background: linear-gradient(180deg, #3b414b 0%, #303640 100%) !important;
+            color: #e9eef6 !important;
+            border-color: #596474 !important;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3) !important;
+        }
+        body.dc-filter-dark-mode #dc-personal-block-fab:hover {
+            background: linear-gradient(180deg, #464d58 0%, #373e49 100%) !important;
+            border-color: #6c788a !important;
+        }
+        body.dc-filter-dark-mode #dc-personal-block-drawer {
+            background: #2d323a !important;
+            border-color: #596474 !important;
+            box-shadow: 0 14px 32px rgba(0, 0, 0, 0.5) !important;
+        }
+        body.dc-filter-dark-mode #dc-personal-block-drawer button {
+            background: transparent !important;
+            color: #e2e8f0 !important;
+        }
+        body.dc-filter-dark-mode #dc-personal-block-drawer button:hover,
+        body.dc-filter-dark-mode #dc-personal-block-drawer button:focus-visible {
+            background: #414956 !important;
+            color: #fff !important;
+        }
+        body.dc-filter-dark-mode #dc-personal-block-size-overlay {
+            background: rgba(0, 0, 0, 0.62) !important;
+        }
+        body.dc-filter-dark-mode #dc-personal-block-size-panel {
+            background: #2d323a !important;
+            color: #e2e8f0 !important;
+            border-color: #596474 !important;
+            box-shadow: 0 20px 52px rgba(0, 0, 0, 0.58) !important;
+        }
+        body.dc-filter-dark-mode #dc-personal-block-size-panel .dcuf-fab-size-description,
+        body.dc-filter-dark-mode #dc-personal-block-size-panel .dcuf-fab-size-bounds {
+            color: #aeb9c8 !important;
+        }
+        body.dc-filter-dark-mode #dc-personal-block-size-panel .dcuf-fab-size-value {
+            color: #f2f6fb !important;
+        }
+        body.dc-filter-dark-mode #dc-personal-block-size-panel .dcuf-fab-size-actions button {
+            background: #4a5360 !important;
+            color: #fff !important;
+        }
+        body.dc-filter-dark-mode #dc-personal-block-size-panel .dcuf-fab-size-actions [data-dcuf-fab-size-action="save"] {
+            background: #4d7cff !important;
+        }
+
+        /* 5. 스크립트 팝업창 전체 다크 테마 */
+        body.dc-filter-dark-mode #dcinside-filter-setting,
         body.dc-filter-dark-mode #dc-selection-popup,
         body.dc-filter-dark-mode #dc-block-management-panel,
-        body.dc-filter-dark-mode #dc-backup-popup {
+        body.dc-filter-dark-mode #dc-backup-popup,
+        body.dc-filter-dark-mode #dcinside-shortcut-modal {
             background-color: #2d2d2d !important;
             color: #e0e0e0 !important;
             border-color: #555 !important;
-            box-shadow: 0 0 15px rgba(0, 0, 0, 0.7) !important;
+            box-shadow: 0 0 15px rgba(0,0,0,0.7) !important;
         }
-        body.dc-filter-dark-mode #dc-selection-popup .block-option,
+
+        /* 팝업 내부 요소들 */
+        body.dc-filter-dark-mode #dc-block-management-panel .panel-tabs {
+            background: #252525 !important;
+            border-color: #4a4a4a !important;
+        }
+        body.dc-filter-dark-mode #dcinside-filter-setting .dcuf-settings-header,
+        body.dc-filter-dark-mode #dcinside-filter-setting .dcuf-settings-footer,
+        body.dc-filter-dark-mode #dc-backup-popup .popup-header,
+        body.dc-filter-dark-mode #dc-block-management-panel .panel-header,
+        body.dc-filter-dark-mode #dc-block-management-panel .panel-footer {
+            background: transparent !important;
+            border-color: #4a4a4a !important;
+        }
+        body.dc-filter-dark-mode #dcinside-filter-setting hr,
+        body.dc-filter-dark-mode #dc-block-management-panel .panel-tab {
+            border-color: #4a4a4a !important;
+        }
         body.dc-filter-dark-mode #dc-block-management-panel .panel-body,
-        body.dc-filter-dark-mode #dc-block-management-panel .panel-content,
-        body.dc-filter-dark-mode #dc-block-management-panel .blocked-item {
-            background: #252b36 !important;
-            border-color: #46506a !important;
+        body.dc-filter-dark-mode #dc-selection-popup .block-option {
+            background: #3a3a3c !important;
         }
+        body.dc-filter-dark-mode #dcinside-filter-setting div,
+        body.dc-filter-dark-mode #dcinside-filter-setting label,
+        body.dc-filter-dark-mode #dcinside-filter-setting h3,
         body.dc-filter-dark-mode #dc-selection-popup h4,
         body.dc-filter-dark-mode #dc-selection-popup .block-option span,
         body.dc-filter-dark-mode #dc-backup-popup .description,
@@ -1422,39 +2312,294 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         body.dc-filter-dark-mode #dc-block-management-panel .item-name {
             color: #e0e0e0 !important;
         }
-        body.dc-filter-dark-mode #dc-block-management-panel .panel-header,
-        body.dc-filter-dark-mode #dc-block-management-panel .panel-footer,
-        body.dc-filter-dark-mode #dc-block-management-panel .panel-tabs,
-        body.dc-filter-dark-mode #dc-backup-popup .popup-header {
-            background: transparent !important;
-            border-color: #4a556b !important;
-        }
-        body.dc-filter-dark-mode #dc-block-management-panel .panel-tab {
-            background: transparent !important;
-            border-right-color: #46506a !important;
-            color: #dbe6f5 !important;
+        body.dc-filter-dark-mode #dcinside-filter-setting input[type="number"],
+        body.dc-filter-dark-mode #dc-backup-popup textarea {
+            background-color: #1e1e1e !important;
+            color: #f0f0f0 !important;
+            border: 1px solid #666 !important;
         }
         body.dc-filter-dark-mode #dc-block-management-panel .panel-tab.active {
-            color: #8db2ff !important;
+            background: #007bff !important; /* 활성 탭은 색상 유지 */
         }
-        body.dc-filter-dark-mode #dc-block-management-panel .select-all-btn,
-        body.dc-filter-dark-mode #dc-block-management-panel .select-all-global-btn,
-        body.dc-filter-dark-mode #dc-block-management-panel .panel-backup-btn {
-            background-color: #555 !important;
+
+        /* 버튼 배경 문제 해결 (필요한 버튼만 개별 적용) */
+        body.dc-filter-dark-mode #dcinside-filter-setting button,
+        body.dc-filter-dark-mode #dc-selection-popup button,
+        body.dc-filter-dark-mode #dc-block-management-panel button,
+        body.dc-filter-dark-mode #dc-backup-popup button,
+        body.dc-filter-dark-mode #dcinside-shortcut-modal button {
+             background-color: #555 !important;
+             color: #fff !important;
+             border-color: #777 !important;
+        }
+
+        body.dc-filter-dark-mode #dcinside-filter-setting,
+        body.dc-filter-dark-mode #dc-selection-popup,
+        body.dc-filter-dark-mode #dc-backup-popup,
+        body.dc-filter-dark-mode #dc-block-management-panel {
+            border-color: #445066 !important;
+            box-shadow: 0 18px 44px rgba(0, 0, 0, 0.45) !important;
+        }
+        body.dc-filter-dark-mode #dcinside-filter-setting .dcuf-settings-section,
+        body.dc-filter-dark-mode #dc-selection-popup .block-option {
+            background: #323845 !important;
+            border-color: #434f66 !important;
+        }
+        body.dc-filter-dark-mode #dcinside-filter-setting .dcuf-settings-threshold > div:last-child,
+        body.dc-filter-dark-mode #dcinside-filter-setting .dcuf-settings-guest-controls {
+            background: #2b313d !important;
+            border-color: #47556f !important;
+            box-shadow: none !important;
+        }
+        body.dc-filter-dark-mode #dcinside-filter-setting .dcuf-settings-guest-controls [style*="border-bottom"] {
+            border-bottom-color: #47556f !important;
+        }
+        body.dc-filter-dark-mode #dcinside-filter-setting .dcuf-settings-guest-controls [style*="color:#666"],
+        body.dc-filter-dark-mode #dcinside-filter-setting .dcuf-settings-guest-controls .dcuf-proxy-mode-desc {
+            color: #9fb0c8 !important;
+        }
+        body.dc-filter-dark-mode #dcinside-filter-setting #dcinside-proxy-ip-block-mode-group {
+            background: #252b36 !important;
+            border-color: #47556f !important;
+        }
+        body.dc-filter-dark-mode #dcinside-filter-setting #dcinside-proxy-ip-block-mode-group button[data-proxy-mode] {
+            background: transparent !important;
+            color: #dbe6f5 !important;
+            border-color: transparent !important;
+        }
+        body.dc-filter-dark-mode #dcinside-filter-setting #dcinside-proxy-ip-block-mode-group button[data-proxy-mode][aria-pressed="true"] {
+            background: #3b71fd !important;
             color: #fff !important;
-            border-color: #777 !important;
         }
-        body.dc-filter-dark-mode #dc-backup-popup .export-btn-download {
-            background: #2d3950 !important;
-            border-color: #4b5f83 !important;
-            color: #dbe6ff !important;
-        }
+        body.dc-filter-dark-mode #dcinside-filter-setting #dcinside-threshold-input,
+        body.dc-filter-dark-mode #dcinside-filter-setting #dcinside-ratio-min,
+        body.dc-filter-dark-mode #dcinside-filter-setting #dcinside-ratio-max,
         body.dc-filter-dark-mode #dc-backup-popup .import-file-input,
         body.dc-filter-dark-mode #dc-backup-popup textarea {
             background: #252b36 !important;
             border-color: #47556f !important;
             color: #eef3ff !important;
         }
+        body.dc-filter-dark-mode #dc-block-management-panel .panel-tab.active {
+            background: #253556 !important;
+            color: #8db2ff !important;
+        }
+        body.dc-filter-dark-mode #dc-block-management-panel .blocked-item:hover {
+            background: #2f394b !important;
+        }
+        body.dc-filter-dark-mode #dc-block-management-panel .delete-item-btn {
+            background: #53313a !important;
+            color: #ff9fb1 !important;
+        }
+
+        body.dc-filter-dark-mode #dc-personal-block-fab {
+            background: linear-gradient(180deg,#34435b,#253247) !important;
+            color: #eef4ff !important;
+            border-color: #52657f !important;
+            box-shadow: 0 16px 34px rgba(0,0,0,.46), inset 0 1px 0 rgba(255,255,255,.1) !important;
+        }
+        body.dc-filter-dark-mode #dc-personal-block-drawer {
+            border-color: #465a76 !important;
+            background: linear-gradient(145deg,#27354a,#1d293b) !important;
+            box-shadow: 0 24px 52px rgba(0,0,0,.58), inset 0 1px 0 rgba(255,255,255,.08) !important;
+        }
+        body.dc-filter-dark-mode #dc-personal-block-drawer .dcuf-menu-icon {
+            border-color: #49617f;
+            background: linear-gradient(145deg,#344760,#25354c);
+            color: #8db2ff;
+            box-shadow: 0 6px 14px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.08);
+        }
+        body.dc-filter-dark-mode #dc-personal-block-drawer strong { color: #edf3ff; }
+        body.dc-filter-dark-mode #dc-personal-block-drawer small { color: #9fb0c8; }
+        body.dc-filter-dark-mode #dc-personal-block-drawer button:hover,
+        body.dc-filter-dark-mode #dc-personal-block-drawer button:focus-visible {
+            border-color: #506987 !important;
+            background: linear-gradient(180deg,#34465e,#29394f) !important;
+        }
+        body.dc-filter-dark-mode #dc-manual-block-overlay { background: rgba(0,0,0,.68); }
+        body.dc-filter-dark-mode #dc-manual-block-panel {
+            border-color: #475a74;
+            background: linear-gradient(155deg,#26354a,#1c283a);
+            color: #edf3ff;
+            box-shadow: 0 30px 74px rgba(0,0,0,.62), inset 0 1px 0 rgba(255,255,255,.08);
+        }
+        body.dc-filter-dark-mode #dc-manual-block-panel .dcuf-manual-header {
+            border-color: #40536d;
+            background: linear-gradient(135deg,#2b3b52,#223047);
+        }
+        body.dc-filter-dark-mode #dc-manual-block-panel h3 { color: #f1f5ff; }
+        body.dc-filter-dark-mode #dc-manual-block-panel .dcuf-manual-kicker,
+        body.dc-filter-dark-mode #dc-block-management-panel .panel-kicker { color: #89a9dd; }
+        body.dc-filter-dark-mode #dc-manual-block-panel .dcuf-manual-close,
+        body.dc-filter-dark-mode #dc-block-management-panel .panel-close-btn,
+        body.dc-filter-dark-mode #dc-backup-popup .popup-close-btn,
+        body.dc-filter-dark-mode #dcinside-filter-setting #dcinside-filter-close {
+            background: transparent !important;
+            color: #b8c6da !important;
+            border-color: transparent !important;
+        }
+        body.dc-filter-dark-mode #dc-manual-block-panel .dcuf-manual-close:hover,
+        body.dc-filter-dark-mode #dc-block-management-panel .panel-close-btn:hover,
+        body.dc-filter-dark-mode #dc-backup-popup .popup-close-btn:hover,
+        body.dc-filter-dark-mode #dcinside-filter-setting #dcinside-filter-close:hover {
+            border-color: #4a5e79 !important;
+            background: #314159 !important;
+            color: #fff !important;
+        }
+        body.dc-filter-dark-mode #dc-manual-block-panel .dcuf-manual-type-tabs {
+            border-color: #40536d;
+            background: #172335;
+            box-shadow: inset 0 2px 6px rgba(0,0,0,.32);
+        }
+        body.dc-filter-dark-mode #dc-manual-block-panel [data-manual-block-type] {
+            background: transparent !important;
+            color: #aab8ca !important;
+            border-color: transparent !important;
+        }
+        body.dc-filter-dark-mode #dc-manual-block-panel [data-manual-block-type][aria-pressed="true"] {
+            border-color: #4e6685 !important;
+            background: linear-gradient(180deg,#344862,#293a52) !important;
+            color: #9fbdff !important;
+            box-shadow: 0 6px 14px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.08);
+        }
+        body.dc-filter-dark-mode #dc-manual-block-panel .dcuf-manual-field { color: #dce6f5; }
+        body.dc-filter-dark-mode #dc-manual-block-panel .dcuf-manual-field small,
+        body.dc-filter-dark-mode #dc-manual-block-panel .dcuf-manual-hint { color: #9dadc2; }
+        body.dc-filter-dark-mode #dc-manual-block-panel .dcuf-manual-field input {
+            border-color: #465a76;
+            background: #162234;
+            color: #f2f6ff;
+            box-shadow: inset 0 2px 6px rgba(0,0,0,.35);
+        }
+        body.dc-filter-dark-mode #dc-manual-block-panel .dcuf-manual-actions button {
+            border-color: #465a76;
+            background: linear-gradient(180deg,#34445b,#29384e);
+            color: #dce6f5;
+            box-shadow: 0 6px 14px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.08);
+        }
+        body.dc-filter-dark-mode #dc-manual-block-panel .dcuf-manual-actions [data-manual-block-action="add"] {
+            border-color: #5e8cff;
+            background: linear-gradient(180deg,#5f8dff,#3d6de7);
+            color: #fff;
+        }
+        body.dc-filter-dark-mode #dc-selection-popup.dcuf-selection-prompt,
+        body.dc-filter-dark-mode #dc-selection-popup:not(.dcuf-selection-prompt) {
+            border-color: #465a76 !important;
+            background: linear-gradient(145deg,#29384e,#1d2a3d) !important;
+            box-shadow: 0 22px 52px rgba(0,0,0,.58), inset 0 1px 0 rgba(255,255,255,.08) !important;
+        }
+        body.dc-filter-dark-mode #dc-selection-popup .dcuf-selection-prompt-icon {
+            background: linear-gradient(145deg,#344862,#26374f);
+            color: #8db2ff;
+            box-shadow: 0 7px 15px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.08);
+        }
+        body.dc-filter-dark-mode #dc-selection-popup .dcuf-selection-prompt-copy h4 { color: #edf3ff !important; }
+        body.dc-filter-dark-mode #dc-selection-popup .dcuf-selection-prompt-copy p { color: #9fb0c8; }
+        body.dc-filter-dark-mode #dc-selection-popup.dcuf-selection-prompt .popup-buttons button {
+            border-color: #4b607c !important;
+            background: linear-gradient(180deg,#34445b,#28384e) !important;
+            color: #dce6f5 !important;
+            box-shadow: 0 6px 13px rgba(0,0,0,.26), inset 0 1px 0 rgba(255,255,255,.08) !important;
+        }
+        body.dc-filter-dark-mode.selection-mode-active .gall_writer,
+        body.dc-filter-dark-mode.selection-mode-active .ub-writer {
+            outline-color: rgba(117,159,255,.66) !important;
+            background: rgba(92,137,241,.16) !important;
+        }
+
+
+        body.dc-filter-dark-mode #dcinside-filter-setting,
+        body.dc-filter-dark-mode #dc-block-management-panel,
+        body.dc-filter-dark-mode #dc-backup-popup {
+            border-color: #455a76 !important;
+            background: linear-gradient(155deg,#26354a,#1b2738) !important;
+            box-shadow: 0 30px 72px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.07) !important;
+        }
+        body.dc-filter-dark-mode #dcinside-filter-setting .dcuf-settings-header,
+        body.dc-filter-dark-mode #dc-block-management-panel .panel-header,
+        body.dc-filter-dark-mode #dc-backup-popup .popup-header {
+            border-color: #40536d !important;
+            background: linear-gradient(135deg,#2b3b52,#223047) !important;
+        }
+        body.dc-filter-dark-mode #dcinside-filter-setting .dcuf-settings-section,
+        body.dc-filter-dark-mode #dcinside-filter-setting .dcuf-settings-threshold > div:last-child,
+        body.dc-filter-dark-mode #dcinside-filter-setting .dcuf-settings-guest-controls,
+        body.dc-filter-dark-mode #dc-backup-popup .export-section,
+        body.dc-filter-dark-mode #dc-backup-popup .import-section {
+            border-color: #40536d !important;
+            background: linear-gradient(145deg,#29394f,#202e43) !important;
+            box-shadow: 0 9px 21px rgba(0,0,0,.26), inset 0 1px 0 rgba(255,255,255,.06) !important;
+        }
+        body.dc-filter-dark-mode #dc-block-management-panel .panel-title-group h3 { color: #edf3ff !important; }
+        body.dc-filter-dark-mode #dc-block-management-panel .panel-add-btn {
+            border-color: #4e6685 !important;
+            background: linear-gradient(180deg,#344862,#293a52) !important;
+            color: #9fbdff !important;
+            box-shadow: 0 6px 14px rgba(0,0,0,.27), inset 0 1px 0 rgba(255,255,255,.07);
+        }
+        body.dc-filter-dark-mode #dc-block-management-panel .panel-tabs {
+            border-color: #3e5069 !important;
+            background: #172335 !important;
+            box-shadow: inset 0 2px 6px rgba(0,0,0,.3);
+        }
+        body.dc-filter-dark-mode #dc-block-management-panel .panel-tab {
+            background: transparent !important;
+            color: #aab8ca !important;
+            border-color: transparent !important;
+        }
+        body.dc-filter-dark-mode #dc-block-management-panel .panel-tab.active {
+            border-color: #4e6685 !important;
+            background: linear-gradient(180deg,#344862,#293a52) !important;
+            color: #9fbdff !important;
+            box-shadow: 0 6px 14px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.08) !important;
+        }
+        body.dc-filter-dark-mode #dc-block-management-panel .panel-body { background: #1b2738 !important; }
+        body.dc-filter-dark-mode #dc-block-management-panel .panel-list-controls {
+            border-color: #40536d !important;
+            background: rgba(28,40,58,.84);
+        }
+        body.dc-filter-dark-mode #dc-block-management-panel .panel-search {
+            border-color: #455a76;
+            background: #162234;
+            color: #9dadc2;
+            box-shadow: inset 0 2px 6px rgba(0,0,0,.34);
+        }
+        body.dc-filter-dark-mode #dc-block-management-panel .panel-search-input { color: #edf3ff; }
+        body.dc-filter-dark-mode #dc-block-management-panel .blocked-item {
+            border-color: #40536d !important;
+            background: linear-gradient(145deg,#29394f,#202e43) !important;
+            box-shadow: 0 7px 16px rgba(0,0,0,.24), inset 0 1px 0 rgba(255,255,255,.06);
+        }
+        body.dc-filter-dark-mode #dc-block-management-panel .blocked-item.item-to-delete {
+            border-color: #714856 !important;
+            background: linear-gradient(145deg,#3d2b35,#34232c) !important;
+        }
+        body.dc-filter-dark-mode #dc-block-management-panel .delete-item-btn {
+            border-color: #704653 !important;
+            background: linear-gradient(180deg,#4d303a,#402731) !important;
+            color: #ff9cad !important;
+        }
+        body.dc-filter-dark-mode #dc-block-management-panel .select-all-btn,
+        body.dc-filter-dark-mode #dc-block-management-panel .select-all-global-btn,
+        body.dc-filter-dark-mode #dc-block-management-panel .panel-backup-btn {
+            border-color: #465a76 !important;
+            background: linear-gradient(180deg,#34445b,#29384e) !important;
+            color: #dce6f5 !important;
+            box-shadow: 0 6px 14px rgba(0,0,0,.24), inset 0 1px 0 rgba(255,255,255,.06) !important;
+        }
+        body.dc-filter-dark-mode #dc-block-management-panel .panel-footer {
+            border-color: #40536d !important;
+            background: linear-gradient(180deg,#253449,#1d2a3d) !important;
+        }
+
+
+        body.dc-filter-dark-mode #dc-personal-block-drawer { background-color: #1d293b !important; }
+        body.dc-filter-dark-mode #dc-manual-block-panel { background-color: #1c283a; }
+        body.dc-filter-dark-mode #dc-selection-popup.dcuf-selection-prompt,
+        body.dc-filter-dark-mode #dc-selection-popup:not(.dcuf-selection-prompt) { background-color: #1d2a3d !important; }
+        body.dc-filter-dark-mode #dcinside-filter-setting,
+        body.dc-filter-dark-mode #dc-block-management-panel,
+        body.dc-filter-dark-mode #dc-backup-popup { background-color: #1b2738 !important; }
     `);
 const FilterModule = {
         TELECOM: DCUF_SHARED_IP.TELECOM,
@@ -1470,9 +2615,10 @@ const FilterModule = {
         DEBUG_MAX_DECISIONS_PER_PASS: 150,
         DEBUG_PASS_ID: 0,
         DEBUG_DECISION_LOG_COUNT: 0,
-        DEBUG_DECISION_KEYS: new Set(),
+        DEBUG_DECISION_KEYS: null,
         _runtimeMutationUnsubscribe: null,
         _userSumTaskQueue: null,
+        _blockedUidWritePromise: null,
         _queuedObserverFilterItems: null,
         _queuedObserverFilterRafId: 0,
         _queuedObserverFilterTimerId: 0,
@@ -1487,7 +2633,7 @@ const FilterModule = {
         PROXY_STRICT_PREFIXES: DCUF_SHARED_IP.PROXY_STRICT_PREFIXES,
         PROXY_AGGRESSIVE_EXTRA_PREFIXES: DCUF_SHARED_IP.PROXY_AGGRESSIVE_EXTRA_PREFIXES,
         KR_IP_RANGES: DCUF_SHARED_IP.KR_IP_RANGES,
-        isMobile: () => /Mobi/i.test(navigator.userAgent),
+        isMobile: () => false,
         isRecommendedContext: () => window.location.search.includes('exception_mode=recommend'),
         normalizeProxyBlockMode(value) {
             return DCUF_SHARED_STORAGE.normalizeProxyBlockModeValue(value);
@@ -1617,6 +2763,7 @@ const FilterModule = {
             if (!this.DEBUG_ENABLED) return;
             this.DEBUG_PASS_ID += 1;
             this.DEBUG_DECISION_LOG_COUNT = 0;
+            if (!(this.DEBUG_DECISION_KEYS instanceof Set)) this.DEBUG_DECISION_KEYS = new Set();
             this.DEBUG_DECISION_KEYS.clear();
             this.debugLog('pass', `start #${this.DEBUG_PASS_ID} ${reason}`, {
                 passId: this.DEBUG_PASS_ID,
@@ -1626,6 +2773,7 @@ const FilterModule = {
         },
         debugDecision(element, payload) {
             if (!this.DEBUG_ENABLED) return;
+            if (!(this.DEBUG_DECISION_KEYS instanceof Set)) this.DEBUG_DECISION_KEYS = new Set();
             const reasons = Array.isArray(payload.reasons) ? payload.reasons.filter(Boolean) : [];
             const identity = [
                 this.DEBUG_PASS_ID,
@@ -1698,12 +2846,13 @@ const FilterModule = {
             };
             this.debugLog('api', 'window.DCUFDebug installed', Object.keys(window.DCUFDebug));
         },
-        async cleanupLegacyManagedBlockConfig() {
-            const migrationDone = await GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG_MIGRATION_V275_DONE, false);
+        async cleanupLegacyManagedBlockConfig(snapshot = null) {
+            const migrationDone = snapshot ? snapshot.migrationDone : await GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG_MIGRATION_V275_DONE, false);
             if (migrationDone) return;
-            const conf = await GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG, {});
+            const conf = snapshot?.blockConfig || await GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG, {});
             if (!conf || typeof conf !== 'object') {
                 await GM_setValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG_MIGRATION_V275_DONE, true);
+                if (snapshot) snapshot.migrationDone = true;
                 return;
             }
             const currentIp = typeof conf.ip === 'string' ? conf.ip : '';
@@ -1720,6 +2869,7 @@ const FilterModule = {
                 conf.ip = '';
                 await GM_setValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG, conf);
                 await GM_setValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG_MIGRATION_V275_DONE, true);
+                if (snapshot) { snapshot.blockConfig = conf; snapshot.migrationDone = true; }
                 return;
             }
 
@@ -1732,6 +2882,7 @@ const FilterModule = {
                 await GM_setValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG, conf);
             }
             await GM_setValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG_MIGRATION_V275_DONE, true);
+            if (snapshot) { snapshot.blockConfig = conf; snapshot.migrationDone = true; }
         },
         async showSettings() {
             await this.reloadSettings();
@@ -1963,7 +3114,6 @@ const FilterModule = {
                 ];
                 if (!blockGuestChecked) promises.push(this.clearBlockedGuests()); try {
                     await Promise.all(promises);
-                    await this.reloadSettings();
                     await this.debugDumpState('save button before refilter');
                     await this.refilterAllContent('save button');
                     closeSettingsPanel();
@@ -2221,8 +3371,88 @@ const FilterModule = {
                 this.flushQueuedObservedFilterItems();
             }, 80);
         },
+        collectMutationFilterItems(payload, containerSelector, itemSelector, {
+            attributeNames = [],
+            includeChildListTargets = false
+        } = {}) {
+            if (!payload || typeof payload !== 'object') return [];
+            const items = [];
+            const seen = new Set();
+            const watchedAttributes = new Set(attributeNames);
+            const addItem = (element) => {
+                if (!(element instanceof HTMLElement) || !element.isConnected || seen.has(element)) return;
+                if (!element.matches(itemSelector) || !element.closest(containerSelector)) return;
+                seen.add(element);
+                items.push(element);
+            };
+            const scanTarget = (root) => {
+                if (!(root instanceof Element)) return;
+                addItem(root);
+                const closestItem = root.closest(itemSelector);
+                if (closestItem) addItem(closestItem);
+            };
+            const scanAddedRoot = (root) => {
+                if (!(root instanceof Element)) return;
+                scanTarget(root);
+                if (typeof root.querySelectorAll === 'function') {
+                    root.querySelectorAll(itemSelector).forEach(addItem);
+                }
+            };
+
+            if (Array.isArray(payload.addedElements)) payload.addedElements.forEach(scanAddedRoot);
+            if (Array.isArray(payload.records)) {
+                payload.records.forEach((record) => {
+                    if (record?.type === 'attributes' && watchedAttributes.has(record.attributeName)) {
+                        scanTarget(record.target);
+                    } else if (includeChildListTargets && record?.type === 'childList') {
+                        scanTarget(record.target);
+                    }
+                });
+            }
+            return items;
+        },
+        collectImmediateCommentFilterItems(payload) {
+            return this.collectMutationFilterItems(
+                payload,
+                this.CONSTANTS.SELECTORS.COMMENT_CONTAINER,
+                this.CONSTANTS.SELECTORS.COMMENT_ITEM,
+                { attributeNames: ['data-uid', 'data-nick', 'data-ip'] }
+            );
+        },
+        applyImmediateCommentMutations(payload) {
+            const items = this.collectImmediateCommentFilterItems(payload);
+            if (items.length === 0) return;
+            const descriptors = this.describeFilterTargets(items);
+            this.applySyncToDescriptors(descriptors);
+            this.incrementRuntimeDiagnostic('filter.immediateComment.runs');
+            this.setRuntimeDiagnosticGauge('filter.immediateComment.lastTargetCount', descriptors.length);
+        },
         getRuntimeCoordinator() {
             return window.__dcufRuntimeCoordinator || null;
+        },
+        incrementRuntimeDiagnostic(label, amount = 1) {
+            const runtimeCoordinator = this.getRuntimeCoordinator();
+            if (typeof runtimeCoordinator?.incrementDiagnostic === 'function') {
+                runtimeCoordinator.incrementDiagnostic(label, amount);
+            }
+        },
+        setRuntimeDiagnosticGauge(label, value) {
+            const runtimeCoordinator = this.getRuntimeCoordinator();
+            if (typeof runtimeCoordinator?.setDiagnosticGauge === 'function') {
+                runtimeCoordinator.setDiagnosticGauge(label, value);
+            }
+        },
+        getRelevantMutationGeneration(scope = 'all') {
+            if (scope === 'comments') return Number(this._commentRelevantMutationGeneration) || 0;
+            return Number(this._filterRelevantMutationGeneration) || 0;
+        },
+        markRelevantMutation(scope = 'all') {
+            this._filterRelevantMutationGeneration = (Number(this._filterRelevantMutationGeneration) || 0) + 1;
+            if (scope === 'comments') {
+                this._commentRelevantMutationGeneration = (Number(this._commentRelevantMutationGeneration) || 0) + 1;
+            }
+            this.setRuntimeDiagnosticGauge('filter.relevantGeneration', this._filterRelevantMutationGeneration);
+            this.setRuntimeDiagnosticGauge('filter.commentRelevantGeneration', Number(this._commentRelevantMutationGeneration) || 0);
         },
         getUserSumTaskQueue() {
             if (this._userSumTaskQueue) return this._userSumTaskQueue;
@@ -2309,10 +3539,35 @@ const FilterModule = {
             }
         },
         async addBlockedUid(uid, sum, post, comment, ratioBlocked) {
-            if (this.isMobile()) return;
-            await this.refreshBlockedUidsCache();
-            this.BLOCKED_UIDS_CACHE[uid] = { ts: Date.now(), sum, post, comment, ratioBlocked: !!ratioBlocked };
-            await GM_setValue(this.CONSTANTS.STORAGE_KEYS.BLOCKED_UIDS, JSON.stringify(this.BLOCKED_UIDS_CACHE));
+            if (!uid) return;
+            if (!this.isMobile()) {
+                await this.refreshBlockedUidsCache();
+            }
+            const nextEntry = { ts: Date.now(), sum, post, comment, ratioBlocked: !!ratioBlocked };
+            const currentEntry = this.BLOCKED_UIDS_CACHE[uid];
+            if (currentEntry
+                && currentEntry.sum === nextEntry.sum
+                && currentEntry.post === nextEntry.post
+                && currentEntry.comment === nextEntry.comment
+                && currentEntry.ratioBlocked === nextEntry.ratioBlocked) {
+                return;
+            }
+            this.BLOCKED_UIDS_CACHE[uid] = nextEntry;
+            if (!this.isMobile()) {
+                await GM_setValue(this.CONSTANTS.STORAGE_KEYS.BLOCKED_UIDS, JSON.stringify(this.BLOCKED_UIDS_CACHE));
+                return;
+            }
+            const serializedCache = JSON.stringify(this.BLOCKED_UIDS_CACHE);
+            const previousWrite = this._blockedUidWritePromise || Promise.resolve();
+            const writePromise = previousWrite
+                .catch(() => {})
+                .then(() => GM_setValue(this.CONSTANTS.STORAGE_KEYS.BLOCKED_UIDS, serializedCache));
+            this._blockedUidWritePromise = writePromise;
+            try {
+                await writePromise;
+            } finally {
+                if (this._blockedUidWritePromise === writePromise) this._blockedUidWritePromise = null;
+            }
         },
         async getBlockedGuests() { try { return JSON.parse(await GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCKED_GUESTS, '[]')); } catch { return []; } },
         async setBlockedGuests(list) { await GM_setValue(this.CONSTANTS.STORAGE_KEYS.BLOCKED_GUESTS, JSON.stringify(list)); },
@@ -2334,6 +3589,18 @@ const FilterModule = {
         },
         isUserBlocked({ sum, post, comment }) {
             return DCUF_SHARED_FILTER_CORE.evaluateUserStatsBlock({ sum, post, comment }, dcFilterSettings);
+        },
+        isUserStatsFilterActive(settings = dcFilterSettings) {
+            if (!settings || settings.masterDisabled) return false;
+
+            const threshold = Number(settings.threshold);
+            if (Number.isFinite(threshold) && threshold > 0) return true;
+            if (!settings.ratioEnabled) return false;
+
+            return [settings.ratioMin, settings.ratioMax].some((value) => {
+                const numeric = Number(value);
+                return Number.isFinite(numeric) && numeric > 0;
+            });
         },
         isCommentListItem(element) {
             return element instanceof HTMLElement && !!element.closest(this.CONSTANTS.SELECTORS.COMMENT_CONTAINER);
@@ -2357,9 +3624,17 @@ const FilterModule = {
             if (element.style.display !== nextDisplay) element.style.display = nextDisplay;
         },
         async applyBlockFilterToElement(element, uid, userData, addBlockedUidFn) {
-            if (!userData) return;
+            if (!userData || !(element instanceof HTMLElement) || !element.isConnected) return;
             const { sumBlocked, ratioBlocked } = this.isUserBlocked(userData);
             const shouldBeBlocked = sumBlocked || ratioBlocked;
+            // UID statistics are an additional blocking reason, not an authority to reveal content.
+            // A request can begin before a personal block is saved and resolve afterwards; letting a
+            // negative statistics result call setElementVisibility(false) in that race briefly exposes
+            // the personally blocked comment and starts a shell-attribute refilter loop.
+            if (!shouldBeBlocked && element.getAttribute('data-dcuf-personal-blocked') === '1') {
+                this.incrementRuntimeDiagnostic('filter.asyncAllow.suppressedPersonalBlock');
+                return;
+            }
             this.setElementVisibility(element, shouldBeBlocked);
             if (shouldBeBlocked) await addBlockedUidFn.call(this, uid, userData.sum, userData.post, userData.comment, ratioBlocked);
         },
@@ -2374,9 +3649,11 @@ const FilterModule = {
 
             const { element, writerInfo, uid, isNotice, shouldSkipFiltering } = descriptor;
             if (isNotice || shouldSkipFiltering) return;
+            if (!this.isUserStatsFilterActive()) return;
 
             try {
                 if (element.style.display === 'none') return;
+                if (element.getAttribute('data-dcuf-personal-blocked') === '1') return;
                 if (!(writerInfo instanceof HTMLElement)) return;
                 if (!uid || uid.length < 3) return;
                 if (this.BLOCKED_UIDS_CACHE[uid]) return;
@@ -2384,10 +3661,14 @@ const FilterModule = {
                 await this.applyBlockFilterToElement(element, uid, userData, this.addBlockedUid);
             } catch (e) { console.warn(`DCinside User Filter: Async filter exception.`, e, element); }
         },
-        async refreshBlockedUidsCache() {
-            if (this.isMobile()) { this.BLOCKED_UIDS_CACHE = {}; return; }
-            let data; try { data = JSON.parse(await GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCKED_UIDS, '{}')); } catch { data = {}; }
-            const now = Date.now(); let changed = false;
+        async refreshBlockedUidsCache(rawValue = null) {
+            let data; try { data = JSON.parse(rawValue === null ? await GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCKED_UIDS, '{}') : rawValue); } catch { data = {}; }
+            let changed = false;
+            if (!data || typeof data !== 'object' || Array.isArray(data)) {
+                data = {};
+                changed = true;
+            }
+            const now = Date.now();
             for (const [uid, cacheData] of Object.entries(data)) {
                 if (typeof cacheData !== 'object' || cacheData === null || typeof cacheData.ts !== 'number' || now - cacheData.ts > this.BLOCK_UID_EXPIRE) { delete data[uid]; changed = true; }
             }
@@ -2425,7 +3706,7 @@ const FilterModule = {
                 shouldSkipFiltering,
                 hasBlockDisableClass
             };
-            const baseDebug = {
+            const baseDebug = this.DEBUG_ENABLED ? {
                 branch: 'sync-base',
                 uid,
                 nickname,
@@ -2438,7 +3719,7 @@ const FilterModule = {
                 proxyBlockMode: normalizedProxyBlockMode,
                 proxyBlockEnabled,
                 telecomBlockEnabled
-            };
+            } : null;
 
             const proxyMatchInfo = this.getProxyPrefixMatch(ipPrefix, normalizedProxyBlockMode);
             const telecomPrefixSet = telecomBlockEnabled && ipPrefix ? this.getTelecomPrefixSet() : null;
@@ -2467,7 +3748,7 @@ const FilterModule = {
                     telecomPrefixMatch: Boolean(ipPrefix && telecomPrefixSet && telecomPrefixSet.has(ipPrefix)),
                     blockedGuestMatch: Boolean(ip && (blockedGuestSet instanceof Set ? blockedGuestSet.has(ip) : blockedGuests.includes(ip)))
                 },
-                blockedUidEntry: uid ? this.BLOCKED_UIDS_CACHE[uid] : null
+                blockedUidEntry: uid ? (this.BLOCKED_UIDS_CACHE[uid] || userSumCache[uid] || null) : null
             });
             const allowPersonalBlockReveal = Boolean(this._syncPassOptions?.allowPersonalBlockReveal);
             const wasPersonallyBlocked = element.getAttribute('data-dcuf-personal-blocked') === '1';
@@ -2480,35 +3761,43 @@ const FilterModule = {
                 // Reply-merge / comment-stabilization passes can temporarily rebuild comment UI in a
                 // state where personal-block metadata is not reliable yet. Keep already personal-blocked
                 // comments hidden until a full refilter with refreshed settings explicitly reveals them.
-                this.debugDecision(element, {
-                    ...baseDebug,
-                    branch: 'personal-block-hold',
-                    isBlocked: true,
-                    reasons: ['personalBlock-hold']
-                });
+                if (this.DEBUG_ENABLED) {
+                    this.debugDecision(element, {
+                        ...baseDebug,
+                        branch: 'personal-block-hold',
+                        isBlocked: true,
+                        reasons: ['personalBlock-hold']
+                    });
+                }
                 this.setElementVisibility(element, true);
                 return;
             } else {
                 element.removeAttribute('data-dcuf-personal-blocked');
             }
 
-            this.debugDecision(element, {
-                ...baseDebug,
-                branch: decision.path || 'sync-final',
-                isBlocked: decision.isBlocked,
-                reasons: decision.reasons,
-                blockedGuestsCount: blockedGuestSet instanceof Set ? blockedGuestSet.size : blockedGuests.length,
-                customIpPrefixCount: customIpPrefixSet instanceof Set ? customIpPrefixSet.size : 0,
-                hasCustomIpPrefixBlock: decision.hasCustomIpPrefixBlock,
-                proxyPrefixMatch: decision.proxyPrefixMatch,
-                proxyMatchTier: decision.proxyMatchTier,
-                telecomPrefixMatch: decision.telecomPrefixMatch,
-                blockedGuestMatch: decision.blockedGuestMatch
-            });
+            if (this.DEBUG_ENABLED) {
+                this.debugDecision(element, {
+                    ...baseDebug,
+                    branch: decision.path || 'sync-final',
+                    isBlocked: decision.isBlocked,
+                    reasons: decision.reasons,
+                    blockedGuestsCount: blockedGuestSet instanceof Set ? blockedGuestSet.size : blockedGuests.length,
+                    customIpPrefixCount: customIpPrefixSet instanceof Set ? customIpPrefixSet.size : 0,
+                    hasCustomIpPrefixBlock: decision.hasCustomIpPrefixBlock,
+                    proxyPrefixMatch: decision.proxyPrefixMatch,
+                    proxyMatchTier: decision.proxyMatchTier,
+                    telecomPrefixMatch: decision.telecomPrefixMatch,
+                    blockedGuestMatch: decision.blockedGuestMatch
+                });
+            }
             this.setElementVisibility(element, decision.isBlocked);
         },
         initializeUniversalObserver() {
-            const targets = [{ c: this.CONSTANTS.SELECTORS.POST_LIST_CONTAINER, i: this.CONSTANTS.SELECTORS.POST_ITEM }, { c: this.CONSTANTS.SELECTORS.COMMENT_CONTAINER, i: this.CONSTANTS.SELECTORS.COMMENT_ITEM }, { c: this.CONSTANTS.SELECTORS.POST_VIEW_LIST_CONTAINER, i: 'li' }];
+            const targets = [
+                { c: this.CONSTANTS.SELECTORS.POST_LIST_CONTAINER, i: this.CONSTANTS.SELECTORS.POST_ITEM, scope: 'posts' },
+                { c: this.CONSTANTS.SELECTORS.COMMENT_CONTAINER, i: this.CONSTANTS.SELECTORS.COMMENT_ITEM, scope: 'comments' },
+                { c: this.CONSTANTS.SELECTORS.POST_VIEW_LIST_CONTAINER, i: 'li', scope: 'posts' }
+            ];
             const filterItems = (items) => this.applyFilterItems(items);
             const queueFilterItems = (items) => this.queueObservedFilterItems(items);
             const runtimeCoordinator = this.getRuntimeCoordinator();
@@ -2532,12 +3821,30 @@ const FilterModule = {
 
             if (hasRuntimeMutationBus) {
                 if (typeof this._runtimeMutationUnsubscribe === 'function') this._runtimeMutationUnsubscribe();
+                if (typeof this._runtimeImmediateMutationUnsubscribe === 'function') this._runtimeImmediateMutationUnsubscribe();
+                if (typeof runtimeCoordinator.subscribeImmediateMutations === 'function') {
+                    this._runtimeImmediateMutationUnsubscribe = runtimeCoordinator.subscribeImmediateMutations(
+                        'filter-immediate-comment-visibility',
+                        (payload) => this.applyImmediateCommentMutations(payload)
+                    );
+                }
                 this._runtimeMutationUnsubscribe = runtimeCoordinator.subscribeMutations('filter-universal-observer', (payload) => {
+                    let hasRelevantMutation = false;
+                    let hasCommentMutation = false;
                     targets.forEach((target) => {
-                        payload.collectMatches(target.c).forEach((container) => attachObserver(container, target.i, { attachDomObserver: false }));
-                        const changedItems = payload.collectMatches(target.i, { includeRoots: true });
+                        const changedContainers = payload.collectMatches(target.c);
+                        changedContainers.forEach((container) => attachObserver(container, target.i, { attachDomObserver: false }));
+                        const changedItems = this.collectMutationFilterItems(payload, target.c, target.i, {
+                            attributeNames: ['class', 'id', 'data-uid', 'data-nick', 'data-ip'],
+                            includeChildListTargets: true
+                        });
+                        if (changedContainers.length > 0 || changedItems.length > 0) {
+                            hasRelevantMutation = true;
+                            if (target.scope === 'comments') hasCommentMutation = true;
+                        }
                         if (changedItems.length > 0) queueFilterItems(changedItems);
                     });
+                    if (hasRelevantMutation) this.markRelevantMutation(hasCommentMutation ? 'comments' : 'all');
                 });
                 return;
             }
@@ -2559,27 +3866,95 @@ const FilterModule = {
             });
             bodyObserver.observe(observerTarget, { childList: true, subtree: true });
         },
-        async reloadSettings() {
+        loadBootSnapshot() {
+            if (this._bootSnapshotPromise) return this._bootSnapshotPromise;
+            const keys = this.CONSTANTS.STORAGE_KEYS;
+            this._bootSnapshotPromise = Promise.all([
+                GM_getValue(keys.BLOCK_CONFIG_MIGRATION_V275_DONE, false),
+                GM_getValue(keys.MASTER_DISABLED, false),
+                GM_getValue(keys.EXCLUDE_RECOMMENDED, false),
+                GM_getValue(keys.THRESHOLD),
+                GM_getValue(keys.RATIO_ENABLED, false),
+                GM_getValue(keys.RATIO_MIN, ''),
+                GM_getValue(keys.RATIO_MAX, ''),
+                GM_getValue(keys.BLOCK_GUEST, false),
+                GM_getValue(keys.BLOCK_PROXY, 0),
+                GM_getValue(keys.BLOCK_TELECOM, false),
+                GM_getValue(keys.BLOCKED_GUESTS, '[]'),
+                GM_getValue(keys.BLOCK_CONFIG, {}),
+                GM_getValue(keys.PERSONAL_BLOCK_LIST, { uids: [], nicknames: [], ips: [] }),
+                GM_getValue(keys.PERSONAL_BLOCK_ENABLED, true),
+                GM_getValue(keys.BLOCKED_UIDS, '{}')
+            ]).then((values) => {
+                const [
+                    migrationDone, masterDisabled, excludeRecommended, rawThreshold, ratioEnabled,
+                    ratioMin, ratioMax, blockGuestEnabled, proxyBlockMode, telecomBlockEnabled,
+                    blockedGuestsRaw, blockConfig, personalBlockList, personalBlockEnabled, blockedUidsRaw
+                ] = values;
+                let blockedGuests = [];
+                try { blockedGuests = JSON.parse(blockedGuestsRaw); } catch { blockedGuests = []; }
+                const snapshot = {
+                    migrationDone,
+                    masterDisabled,
+                    excludeRecommended,
+                    threshold: rawThreshold === undefined ? 0 : rawThreshold,
+                    thresholdMissing: rawThreshold === undefined,
+                    ratioEnabled,
+                    ratioMin,
+                    ratioMax,
+                    blockGuestEnabled,
+                    proxyBlockMode,
+                    telecomBlockEnabled,
+                    blockedGuests: Array.isArray(blockedGuests) ? blockedGuests : [],
+                    blockConfig,
+                    personalBlockList,
+                    personalBlockEnabled,
+                    blockedUidsRaw
+                };
+                this._bootSnapshot = snapshot;
+                window.__dcufBootController?.note?.('boot.storage-snapshot', { keys: values.length });
+                return snapshot;
+            }).catch((error) => {
+                this._bootSnapshotPromise = null;
+                throw error;
+            });
+            return this._bootSnapshotPromise;
+        },
+        getBootSnapshot() {
+            return this._bootSnapshot || null;
+        },
+        async reloadSettings(snapshot = null) {
+            let values;
+            if (snapshot) {
+                values = [
+                    snapshot.masterDisabled, snapshot.excludeRecommended, snapshot.threshold,
+                    snapshot.ratioEnabled, snapshot.ratioMin, snapshot.ratioMax,
+                    snapshot.blockGuestEnabled, snapshot.proxyBlockMode, snapshot.telecomBlockEnabled,
+                    snapshot.blockedGuests, snapshot.blockConfig, snapshot.personalBlockList,
+                    snapshot.personalBlockEnabled
+                ];
+            } else {
+                values = await Promise.all([
+                    GM_getValue(this.CONSTANTS.STORAGE_KEYS.MASTER_DISABLED, false),
+                    GM_getValue(this.CONSTANTS.STORAGE_KEYS.EXCLUDE_RECOMMENDED, false),
+                    GM_getValue(this.CONSTANTS.STORAGE_KEYS.THRESHOLD, 0),
+                    GM_getValue(this.CONSTANTS.STORAGE_KEYS.RATIO_ENABLED, false),
+                    GM_getValue(this.CONSTANTS.STORAGE_KEYS.RATIO_MIN, ''),
+                    GM_getValue(this.CONSTANTS.STORAGE_KEYS.RATIO_MAX, ''),
+                    GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_GUEST, false),
+                    GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_PROXY, 0),
+                    GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_TELECOM, false),
+                    this.getBlockedGuests(),
+                    GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG, {}),
+                    PersonalBlockModule.loadPersonalBlocks(),
+                    GM_getValue(this.CONSTANTS.STORAGE_KEYS.PERSONAL_BLOCK_ENABLED, true)
+                ]);
+            }
             const [
                 masterDisabled, excludeRecommended, threshold, ratioEnabled,
                 ratioMin, ratioMax, blockGuestEnabled, proxyBlockMode, telecomBlockEnabled,
                 blockedGuests, blockConfig, personalBlockList, personalBlockEnabled
-            ] = await Promise.all([
-                GM_getValue(this.CONSTANTS.STORAGE_KEYS.MASTER_DISABLED, false),
-                GM_getValue(this.CONSTANTS.STORAGE_KEYS.EXCLUDE_RECOMMENDED, false),
-                GM_getValue(this.CONSTANTS.STORAGE_KEYS.THRESHOLD, 0),
-                GM_getValue(this.CONSTANTS.STORAGE_KEYS.RATIO_ENABLED, false),
-                GM_getValue(this.CONSTANTS.STORAGE_KEYS.RATIO_MIN, ''),
-                GM_getValue(this.CONSTANTS.STORAGE_KEYS.RATIO_MAX, ''),
-                GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_GUEST, false),
-                GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_PROXY, 0),
-                GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_TELECOM, false),
-                this.getBlockedGuests(),
-                GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG, {}),
-                PersonalBlockModule.loadPersonalBlocks(),
-                // [신규] 개인 차단 기능 활성화 상태 로드 (기본값 true)
-                GM_getValue(this.CONSTANTS.STORAGE_KEYS.PERSONAL_BLOCK_ENABLED, true)
-            ]);
+            ] = values;
             const normalizedSettings = DCUF_SHARED_STORAGE.normalizeStoredFilterSettings({
                 [this.CONSTANTS.STORAGE_KEYS.MASTER_DISABLED]: masterDisabled,
                 [this.CONSTANTS.STORAGE_KEYS.EXCLUDE_RECOMMENDED]: excludeRecommended,
@@ -2599,9 +3974,11 @@ const FilterModule = {
             const personalBlockUidSet = this.buildLookupSet(personalBlockList?.uids, (item) => item?.id);
             const personalBlockNicknameSet = this.buildLookupSet(personalBlockList?.nicknames);
             const personalBlockIpSet = this.buildLookupSet(personalBlockList?.ips);
-
             dcFilterSettings = {
-                masterDisabled: normalizedSettings.masterDisabled, excludeRecommended: normalizedSettings.excludeRecommended, threshold: normalizedSettings.threshold, ratioEnabled: normalizedSettings.ratioEnabled,
+                masterDisabled: normalizedSettings.masterDisabled,
+                excludeRecommended: normalizedSettings.excludeRecommended,
+                threshold: normalizedSettings.threshold,
+                ratioEnabled: normalizedSettings.ratioEnabled,
                 ratioMin: normalizedSettings.ratioMin,
                 ratioMax: normalizedSettings.ratioMax,
                 blockGuestEnabled: normalizedSettings.blockGuest,
@@ -2617,10 +3994,13 @@ const FilterModule = {
                 personalBlockIpSet,
                 personalBlockEnabled
             };
-            this.debugLog('settings', 'reloadSettings complete', this.debugSettingsSnapshot({
-                rawBlockConfigIp: typeof blockConfig?.ip === 'string' ? blockConfig.ip : '',
-                rawBlockConfigPreview: typeof blockConfig?.ip === 'string' ? blockConfig.ip.split('||').slice(0, 20) : []
-            }));
+            if (this.DEBUG_ENABLED) {
+                this.debugLog('settings', 'reloadSettings complete', this.debugSettingsSnapshot({
+                    rawBlockConfigIp: typeof blockConfig?.ip === 'string' ? blockConfig.ip : '',
+                    rawBlockConfigPreview: typeof blockConfig?.ip === 'string' ? blockConfig.ip.split('||').slice(0, 20) : []
+                }));
+            }
+            return dcFilterSettings;
         },
         getRefilterTargetSelectors(scope = 'all') {
             const commentSelectors = [
@@ -2664,6 +4044,9 @@ const FilterModule = {
             }, []);
         },
         runSyncRefilterPass(scope = 'all', root = document, descriptors = null, options = null) {
+            const runtimeCoordinator = this.getRuntimeCoordinator();
+            const measureDuration = Boolean(runtimeCoordinator?._diagnosticsEnabled) && typeof performance?.now === 'function';
+            const startedAt = measureDuration ? performance.now() : 0;
             const targetDescriptors = Array.isArray(descriptors) ? descriptors : this.getRefilterTargets(scope, root);
             const previousSyncPassOptions = this._syncPassOptions;
             this._syncPassOptions = options && typeof options === 'object' ? options : null;
@@ -2671,6 +4054,11 @@ const FilterModule = {
                 this.applySyncToDescriptors(targetDescriptors, { resetDisplay: true });
             } finally {
                 this._syncPassOptions = previousSyncPassOptions;
+            }
+            this.incrementRuntimeDiagnostic(`filter.syncPass.${scope}.runs`);
+            this.setRuntimeDiagnosticGauge(`filter.syncPass.${scope}.lastTargetCount`, targetDescriptors.length);
+            if (measureDuration) {
+                this.setRuntimeDiagnosticGauge(`filter.syncPass.${scope}.lastDurationMs`, Math.round((performance.now() - startedAt) * 1000) / 1000);
             }
             return targetDescriptors;
         },
@@ -2680,15 +4068,27 @@ const FilterModule = {
             this._syncRefilterTimerIds.forEach((timerId) => clearTimeout(timerId));
             this._syncRefilterTimerIds.clear();
 
-            const rerun = () => this.runSyncRefilterPass(scope, root);
+            const runtimeCoordinator = this.getRuntimeCoordinator();
+            const hasRuntimeMutationBus = Boolean(runtimeCoordinator && typeof runtimeCoordinator.subscribeMutations === 'function');
+            let lastGeneration = this.getRelevantMutationGeneration(scope);
+            const rerun = (phase, { force = false } = {}) => {
+                const generation = this.getRelevantMutationGeneration(scope);
+                if (!force && hasRuntimeMutationBus && generation === lastGeneration) {
+                    this.incrementRuntimeDiagnostic(`filter.syncPass.${scope}.skippedUnchanged`);
+                    return;
+                }
+                this.runSyncRefilterPass(scope, root);
+                lastGeneration = this.getRelevantMutationGeneration(scope);
+                this.setRuntimeDiagnosticGauge(`filter.syncPass.${scope}.lastPhase`, phase);
+            };
             this._syncRefilterRafId = requestAnimationFrame(() => {
                 this._syncRefilterRafId = 0;
-                rerun();
+                rerun('raf', { force: true });
             });
             [90, 220].forEach((delay) => {
                 const timerId = window.setTimeout(() => {
                     this._syncRefilterTimerIds.delete(timerId);
-                    rerun();
+                    rerun(`delay:${delay}`);
                 }, delay);
                 this._syncRefilterTimerIds.add(timerId);
             });
@@ -2699,42 +4099,54 @@ const FilterModule = {
             this._commentRefilterTimerIds.forEach((timerId) => clearTimeout(timerId));
             this._commentRefilterTimerIds.clear();
 
-            const rerun = () => {
+            const runtimeCoordinator = this.getRuntimeCoordinator();
+            const hasRuntimeMutationBus = Boolean(runtimeCoordinator && typeof runtimeCoordinator.subscribeMutations === 'function');
+            let lastGeneration = this.getRelevantMutationGeneration('comments');
+            const rerun = (phase, { force = false } = {}) => {
+                const generation = this.getRelevantMutationGeneration('comments');
+                if (!force && hasRuntimeMutationBus && generation === lastGeneration) {
+                    this.incrementRuntimeDiagnostic('filter.syncPass.comments.skippedUnchanged');
+                    return;
+                }
                 const scopeRoot = this.resolveRefilterRoot(root || document);
                 const shouldFallbackToFullPass = root instanceof Element && !document.contains(root);
                 if (shouldFallbackToFullPass) {
                     this.runSyncRefilterPass('all');
-                    return;
+                } else {
+                    this.runSyncRefilterPass('comments', scopeRoot);
                 }
-                this.runSyncRefilterPass('comments', scopeRoot);
+                lastGeneration = this.getRelevantMutationGeneration('comments');
+                this.setRuntimeDiagnosticGauge('filter.syncPass.comments.lastPhase', phase);
             };
             this.debugLog('comment-refilter', 'scheduleCommentStabilizedRefilter', { reason });
             this._commentRefilterRafId = requestAnimationFrame(() => {
                 this._commentRefilterRafId = 0;
-                rerun();
+                rerun('raf', { force: true });
                 [140, 420, 1100].forEach((delay) => {
                     const timerId = window.setTimeout(() => {
                         this._commentRefilterTimerIds.delete(timerId);
-                        rerun();
+                        rerun(`delay:${delay}`);
                     }, delay);
                     this._commentRefilterTimerIds.add(timerId);
                 });
             });
         },
-        async runFullRefilterPass(reason = 'refilterAllContent') {
+        async runFullRefilterPass(reason = 'refilterAllContent', { scheduleFollowups = true } = {}) {
             await this.reloadSettings();
             const descriptors = this.getRefilterTargets('all');
             this.startDebugPass(reason, { targetCount: descriptors.length });
             this.runSyncRefilterPass('all', document, descriptors, {
                 allowPersonalBlockReveal: true
             });
-            this.scheduleSyncRefilterPasses();
+            if (scheduleFollowups) this.scheduleSyncRefilterPasses();
             this.applyAsyncToDescriptors(descriptors);
+            this.incrementRuntimeDiagnostic('filter.fullRefilter.runs');
+            this.setRuntimeDiagnosticGauge('filter.fullRefilter.lastTargetCount', descriptors.length);
             document.dispatchEvent(new CustomEvent('dcFilterRefiltered'));
         },
-        async refilterAllContent(reason = 'refilterAllContent') {
+        async refilterAllContent(reason = 'refilterAllContent', { scheduleFollowups = true } = {}) {
             if (!this._pendingFullRefilterReasons) this._pendingFullRefilterReasons = [];
-            this._pendingFullRefilterReasons.push(reason);
+            this._pendingFullRefilterReasons.push({ reason, scheduleFollowups });
 
             if (this._refilterAllContentRunning) {
                 this.debugLog('refilter', 'coalesced full refilter request', {
@@ -2747,11 +4159,13 @@ const FilterModule = {
             this._refilterAllContentRunning = true;
             this._refilterAllContentPromise = (async () => {
                 while (this._pendingFullRefilterReasons.length > 0) {
-                    const pendingReasons = this._pendingFullRefilterReasons.splice(0);
-                    const runReason = pendingReasons.length > 1
-                        ? `${pendingReasons[pendingReasons.length - 1]} [coalesced:${pendingReasons.length}]`
-                        : pendingReasons[0];
-                    await this.runFullRefilterPass(runReason);
+                    const pendingRequests = this._pendingFullRefilterReasons.splice(0);
+                    const lastRequest = pendingRequests[pendingRequests.length - 1];
+                    const runReason = pendingRequests.length > 1
+                        ? `${lastRequest.reason} [coalesced:${pendingRequests.length}]`
+                        : lastRequest.reason;
+                    const shouldScheduleFollowups = pendingRequests.some((request) => request.scheduleFollowups !== false);
+                    await this.runFullRefilterPass(runReason, { scheduleFollowups: shouldScheduleFollowups });
                 }
             })();
 
@@ -2766,24 +4180,43 @@ const FilterModule = {
         async handleVisibilityChange() {
             if (document.visibilityState === 'visible') {
                 await reloadShortcutKey(); // 단축키 설정을 다시 로드
-                await this.refilterAllContent('visibilitychange-visible'); // 기존 필터 설정을 다시 로드하고 적용
+                await this.refilterAllContent('visibilitychange-visible', { scheduleFollowups: false }); // 복구 패스 1회는 유지하고 무변화 지연 패스는 생략
             }
         },
-        async init() {
-            if (isInitialized) return; isInitialized = true;
-            this.installDebugApi();
-            this.debugLog('init', 'FilterModule init start', { version: '1.9.1' });
-            await this.cleanupLegacyManagedBlockConfig();
-            await this.reloadSettings();
-            if (this.DEBUG_ENABLED) await this.debugDumpState('after init reload');
-
-            // [수정] 개념글 목록에서 스크립트가 조기 종료되던 문제를 해결하기 위해 아래 라인을 삭제했습니다.
-            // if (dcFilterSettings.excludeRecommended && window.location.pathname.includes('/lists/') && this.isRecommendedContext()) return;
-
-            await this.refreshBlockedUidsCache();
-            document.addEventListener('visibilitychange', this.handleVisibilityChange.bind(this));
-            this.initializeUniversalObserver();
-            if (await GM_getValue(this.CONSTANTS.STORAGE_KEYS.THRESHOLD) === undefined) { await GM_setValue(this.CONSTANTS.STORAGE_KEYS.THRESHOLD, 0); await this.showSettings(); }
+        init() {
+            if (this._initState === 'ready') return Promise.resolve('already-ready');
+            if (this._initState === 'initializing' && this._initPromise) return this._initPromise;
+            this._initState = 'initializing';
+            this._initPromise = (async () => {
+                this.installDebugApi();
+                this.debugLog('init', 'FilterModule init start', { version: '1.9.5' });
+                const snapshot = await this.loadBootSnapshot();
+                await this.cleanupLegacyManagedBlockConfig(snapshot);
+                await this.reloadSettings(snapshot);
+                await this.refreshBlockedUidsCache(snapshot.blockedUidsRaw);
+                if (!this._visibilityChangeHandler) {
+                    this._visibilityChangeHandler = () => this.handleVisibilityChange();
+                    document.addEventListener('visibilitychange', this._visibilityChangeHandler);
+                }
+                this.initializeUniversalObserver();
+                window.__dcufBootController?.note?.('boot.local-filter-settings-ready');
+                if (snapshot.thresholdMissing) {
+                    const showFirstRunSettings = async () => {
+                        await GM_setValue(this.CONSTANTS.STORAGE_KEYS.THRESHOLD, 0);
+                        await this.showSettings();
+                    };
+                    const bootController = window.__dcufBootController;
+                    if (typeof bootController?.onReady === 'function') bootController.onReady(showFirstRunSettings);
+                    else queueMicrotask(showFirstRunSettings);
+                }
+                this._initState = 'ready';
+                return 'ready';
+            })().catch((error) => {
+                this._initState = 'failed';
+                this._initPromise = null;
+                throw error;
+            });
+            return this._initPromise;
         }
     };
 
@@ -2798,13 +4231,53 @@ const FilterModule = {
     const PersonalBlockModule = {
         isSelectionMode: false,
         personalBlockListCache: { uids: [], nicknames: [], ips: [] },
+        fabScalePercent: 100,
+        _initState: 'idle',
+        _initPromise: null,
+        _uiMounted: false,
+        _selectionClickHandler: null,
+        FAB_SCALE_MIN: 60,
+        FAB_SCALE_MAX: 160,
 
 
-        async init() {
-            this.personalBlockListCache = await this.loadPersonalBlocks();
-            this.createFab();
-            document.addEventListener('click', this.handleSelectionClick.bind(this), true);
+        async init(snapshot = null, { deferUi = false } = {}) {
+            if (this._initState === 'ready') return 'already-ready';
+            if (this._initState === 'initializing' && this._initPromise) return this._initPromise;
+            this._initState = 'initializing';
+            this._initPromise = (async () => {
+                const list = snapshot?.personalBlockList || await this.loadPersonalBlocks();
+                this.personalBlockListCache = {
+                    uids: Array.isArray(list?.uids) ? list.uids : [],
+                    nicknames: Array.isArray(list?.nicknames) ? list.nicknames : [],
+                    ips: Array.isArray(list?.ips) ? list.ips : []
+                };
+                const mountUi = async () => {
+                    if (this._uiMounted) return;
+                    this.fabScalePercent = await this.loadFabScalePercent();
+                    this.createFab();
+                    if (!this._selectionClickHandler) {
+                        this._selectionClickHandler = this.handleSelectionClick.bind(this);
+                        document.addEventListener('click', this._selectionClickHandler, true);
+                    }
+                    this._uiMounted = true;
+                };
+                if (deferUi && typeof window.__dcufBootController?.onReady === 'function') {
+                    window.__dcufBootController.onReady(() => mountUi().catch((error) => console.warn('[DCUF] deferred FAB mount failed:', error)));
+                } else {
+                    await mountUi();
+                }
+                this._initState = 'ready';
+                return 'ready';
+            })();
+            try {
+                return await this._initPromise;
+            } catch (error) {
+                this._initState = 'failed';
+                this._initPromise = null;
+                throw error;
+            }
         },
+
 
 
         async loadPersonalBlocks() {
@@ -2881,91 +4354,448 @@ const FilterModule = {
             this.exitSelectionMode();
         },
 
-        createFab() {
-            // [수정] 글 목록 및 글 내용 페이지에서만 '간편차단' 버튼을 표시합니다.
-            const currentPath = window.location.pathname;
-            if (!currentPath.includes('/board/lists') && !currentPath.includes('/board/view')) {
-                return; // 대상 페이지가 아니면 버튼을 생성하지 않고 함수를 종료합니다.
+        normalizeFabScalePercent(value) {
+            const numeric = Number(value);
+            if (!Number.isFinite(numeric)) return 100;
+            return Math.max(this.FAB_SCALE_MIN, Math.min(this.FAB_SCALE_MAX, Math.round(numeric)));
+        },
+
+        async loadFabScalePercent() {
+            const stored = await GM_getValue(FilterModule.CONSTANTS.STORAGE_KEYS.FAB_SCALE_PERCENT, 100);
+            return this.normalizeFabScalePercent(stored);
+        },
+
+        clampFabPosition() {
+            const controls = document.getElementById('dc-personal-block-controls');
+            if (!controls) return;
+            const currentLeft = Number.parseFloat(controls.style.left);
+            const currentTop = Number.parseFloat(controls.style.top);
+            if (!Number.isFinite(currentLeft) || !Number.isFinite(currentTop)) return;
+            const maxX = Math.max(0, window.innerWidth - controls.offsetWidth);
+            const maxY = Math.max(0, window.innerHeight - controls.offsetHeight);
+            controls.style.left = `${Math.round(Math.max(0, Math.min(currentLeft, maxX)))}px`;
+            controls.style.top = `${Math.round(Math.max(0, Math.min(currentTop, maxY)))}px`;
+        },
+
+        applyFabScalePercent(value, { clamp = true } = {}) {
+            const normalized = this.normalizeFabScalePercent(value);
+            this.fabScalePercent = normalized;
+            const controls = document.getElementById('dc-personal-block-controls');
+            if (!controls) return normalized;
+            const ratio = normalized / 100;
+            const scaledValue = (base) => `${Number((base * ratio).toFixed(2))}px`;
+            controls.style.setProperty('--dcuf-fab-width', scaledValue(152));
+            controls.style.setProperty('--dcuf-fab-height', scaledValue(76));
+            controls.style.setProperty('--dcuf-fab-padding-x', scaledValue(28));
+            controls.style.setProperty('--dcuf-fab-font-size', scaledValue(32));
+            this.closeFabDrawer();
+            if (clamp) this.clampFabPosition();
+            return normalized;
+        },
+
+        async showFabScalePanel() {
+            document.getElementById('dc-personal-block-size-overlay')?.remove();
+            const savedPercent = await this.loadFabScalePercent();
+            this.applyFabScalePercent(savedPercent);
+            if (this.isFabSupportedPage()) this.createFab();
+
+            const overlay = document.createElement('div');
+            overlay.id = 'dc-personal-block-size-overlay';
+            const panel = document.createElement('div');
+            panel.id = 'dc-personal-block-size-panel';
+            panel.setAttribute('role', 'dialog');
+            panel.setAttribute('aria-modal', 'true');
+            panel.setAttribute('aria-labelledby', 'dc-personal-block-size-title');
+            panel.innerHTML = `
+                <h3 id="dc-personal-block-size-title">메뉴 버튼 크기 조절</h3>
+                <p class="dcuf-fab-size-description">버튼과 글자 크기가 같은 비율로 조절됩니다.</p>
+                <output class="dcuf-fab-size-value" for="dc-personal-block-size-range">${savedPercent}%</output>
+                <input id="dc-personal-block-size-range" type="range" min="${this.FAB_SCALE_MIN}" max="${this.FAB_SCALE_MAX}" step="5" value="${savedPercent}" aria-label="메뉴 버튼 크기 비율">
+                <div class="dcuf-fab-size-bounds"><span>${this.FAB_SCALE_MIN}%</span><span>${this.FAB_SCALE_MAX}%</span></div>
+                <div class="dcuf-fab-size-actions">
+                    <button type="button" data-dcuf-fab-size-action="reset">기본값</button>
+                    <button type="button" data-dcuf-fab-size-action="cancel">취소</button>
+                    <button type="button" data-dcuf-fab-size-action="save">저장</button>
+                </div>
+            `;
+            overlay.appendChild(panel);
+            document.body.appendChild(overlay);
+
+            const range = panel.querySelector('#dc-personal-block-size-range');
+            const valueOutput = panel.querySelector('.dcuf-fab-size-value');
+            const closePanel = (restoreSaved) => {
+                if (restoreSaved) this.applyFabScalePercent(savedPercent);
+                document.removeEventListener('keydown', handleKeydown, true);
+                overlay.remove();
+            };
+            const handleKeydown = (event) => {
+                if (event.key !== 'Escape') return;
+                event.preventDefault();
+                closePanel(true);
+            };
+
+            range.addEventListener('input', () => {
+                const nextPercent = this.applyFabScalePercent(range.value);
+                valueOutput.textContent = `${nextPercent}%`;
+            });
+            panel.querySelector('[data-dcuf-fab-size-action="reset"]').addEventListener('click', () => {
+                range.value = '100';
+                range.dispatchEvent(new Event('input', { bubbles: true }));
+            });
+            panel.querySelector('[data-dcuf-fab-size-action="cancel"]').addEventListener('click', () => closePanel(true));
+            panel.querySelector('[data-dcuf-fab-size-action="save"]').addEventListener('click', async () => {
+                const nextPercent = this.applyFabScalePercent(range.value);
+                await GM_setValue(FilterModule.CONSTANTS.STORAGE_KEYS.FAB_SCALE_PERCENT, nextPercent);
+                closePanel(false);
+            });
+            overlay.addEventListener('click', (event) => {
+                if (event.target === overlay) closePanel(true);
+            });
+            document.addEventListener('keydown', handleKeydown, true);
+            range.focus();
+        },
+
+
+        async createManualBlockPanel({ initialType = 'nickname', onAdded = null } = {}) {
+            const existingPanel = document.getElementById('dc-manual-block-panel');
+            if (existingPanel) {
+                existingPanel.querySelector('#dc-manual-block-value')?.focus();
+                return existingPanel;
             }
 
-            // [방어 코드 1] 이미 FAB가 존재하면 중복 생성을 방지
-            if (document.getElementById('dc-personal-block-fab')) {
-                return;
-            }
+            const typeConfig = {
+                uid: { label: '식별번호', placeholder: '예: user1234', hint: '입력한 식별번호와 정확히 일치하는 작성자를 차단합니다.' },
+                nickname: { label: '닉네임', placeholder: '차단할 닉네임을 입력하세요', hint: '대소문자와 공백을 포함해 정확히 같은 닉네임만 차단합니다.' },
+                ip: { label: '아이피', placeholder: '예: 123.45 또는 화면에 표시된 IP', hint: '화면에 표시되는 IP 문자열과 정확히 일치할 때만 차단합니다.' }
+            };
+            let activeType = typeConfig[initialType] ? initialType : 'nickname';
 
+            const overlay = document.createElement('div');
+            overlay.id = 'dc-manual-block-overlay';
+            const panel = document.createElement('section');
+            panel.id = 'dc-manual-block-panel';
+            panel.setAttribute('role', 'dialog');
+            panel.setAttribute('aria-modal', 'true');
+            panel.setAttribute('aria-labelledby', 'dc-manual-block-title');
+            panel.innerHTML = `
+                <div class="dcuf-manual-header">
+                    <div>
+                        <span class="dcuf-manual-kicker">PERSONAL BLOCK</span>
+                        <h3 id="dc-manual-block-title">직접 차단</h3>
+                    </div>
+                    <button type="button" class="dcuf-manual-close" aria-label="직접 차단 닫기">×</button>
+                </div>
+                <form class="dcuf-manual-form">
+                    <div class="dcuf-manual-type-tabs" role="group" aria-label="차단 정보 종류">
+                        <button type="button" data-manual-block-type="uid">식별번호</button>
+                        <button type="button" data-manual-block-type="nickname">닉네임</button>
+                        <button type="button" data-manual-block-type="ip">아이피</button>
+                    </div>
+                    <label class="dcuf-manual-field" for="dc-manual-block-value">
+                        <span id="dc-manual-block-value-label">닉네임</span>
+                        <input id="dc-manual-block-value" type="text" autocomplete="off" autocapitalize="off" spellcheck="false">
+                    </label>
+                    <label class="dcuf-manual-field dcuf-manual-display-field" for="dc-manual-block-display" hidden>
+                        <span>닉네임 / 표시 이름 <small>(선택)</small></span>
+                        <input id="dc-manual-block-display" type="text" autocomplete="off" spellcheck="false" placeholder="예: 홍길동">
+                    </label>
+                    <p class="dcuf-manual-hint"></p>
+                    <p class="dcuf-manual-status" role="status" aria-live="polite"></p>
+                    <div class="dcuf-manual-actions">
+                        <button type="button" data-manual-block-action="close">닫기</button>
+                        <button type="submit" data-manual-block-action="add">차단 추가</button>
+                    </div>
+                </form>
+            `;
+            overlay.appendChild(panel);
+            document.body.appendChild(overlay);
 
-            const fab = document.createElement('div');
-            fab.id = 'dc-personal-block-fab';
-            fab.textContent = '간편차단';
-            document.body.appendChild(fab);
+            const form = panel.querySelector('.dcuf-manual-form');
+            const valueInput = panel.querySelector('#dc-manual-block-value');
+            const displayField = panel.querySelector('.dcuf-manual-display-field');
+            const displayInput = panel.querySelector('#dc-manual-block-display');
+            const valueLabel = panel.querySelector('#dc-manual-block-value-label');
+            const hint = panel.querySelector('.dcuf-manual-hint');
+            const status = panel.querySelector('.dcuf-manual-status');
+            const addButton = panel.querySelector('[data-manual-block-action="add"]');
+            let isClosing = false;
 
+            const setStatus = (message = '', state = '') => {
+                status.textContent = message;
+                status.dataset.state = state;
+            };
+            const selectType = (type) => {
+                if (!typeConfig[type]) return;
+                activeType = type;
+                panel.querySelectorAll('[data-manual-block-type]').forEach((button) => {
+                    button.setAttribute('aria-pressed', String(button.dataset.manualBlockType === type));
+                });
+                valueLabel.textContent = typeConfig[type].label;
+                valueInput.placeholder = typeConfig[type].placeholder;
+                hint.textContent = typeConfig[type].hint;
+                displayField.hidden = type !== 'uid';
+                setStatus();
+                valueInput.focus();
+            };
+            const closePanel = () => {
+                if (isClosing) return;
+                isClosing = true;
+                document.removeEventListener('keydown', handleKeydown, true);
+                panel.classList.add('dcuf-pop-leave');
+                overlay.classList.add('dcuf-overlay-leave');
+                window.setTimeout(() => overlay.remove(), 140);
+            };
+            const handleKeydown = (event) => {
+                if (event.key !== 'Escape') return;
+                event.preventDefault();
+                closePanel();
+            };
 
-            fab.addEventListener('click', (e) => {
-                if (fab.getAttribute('data-dragged') === 'true') {
-                    fab.removeAttribute('data-dragged');
+            panel.querySelectorAll('[data-manual-block-type]').forEach((button) => {
+                button.addEventListener('click', () => selectType(button.dataset.manualBlockType));
+            });
+            panel.querySelector('.dcuf-manual-close').addEventListener('click', closePanel);
+            panel.querySelector('[data-manual-block-action="close"]').addEventListener('click', closePanel);
+            overlay.addEventListener('click', (event) => {
+                if (event.target === overlay) closePanel();
+            });
+            form.addEventListener('submit', async (event) => {
+                event.preventDefault();
+                const value = valueInput.value.trim();
+                const displayValue = displayInput.value.trim();
+                if (!value) {
+                    setStatus(`${typeConfig[activeType].label}을(를) 입력해주세요.`, 'error');
+                    valueInput.focus();
                     return;
                 }
-                this.enterSelectionMode();
+
+                const currentList = await this.loadPersonalBlocks();
+                const isDuplicate = activeType === 'uid'
+                    ? currentList.uids.some((item) => item?.id === value)
+                    : activeType === 'nickname'
+                        ? currentList.nicknames.includes(value)
+                        : currentList.ips.includes(value);
+                if (isDuplicate) {
+                    setStatus('이미 차단 목록에 있는 값입니다.', 'info');
+                    valueInput.select();
+                    return;
+                }
+
+                addButton.disabled = true;
+                addButton.textContent = '추가 중…';
+                try {
+                    const displayName = activeType === 'uid' && displayValue ? `${displayValue}(${value})` : null;
+                    await this.addBlock(activeType, value, displayName);
+                    if (typeof onAdded === 'function') await onAdded({ type: activeType, value });
+                    const isEnabled = await GM_getValue(FilterModule.CONSTANTS.STORAGE_KEYS.PERSONAL_BLOCK_ENABLED, true);
+                    setStatus(
+                        isEnabled ? `${typeConfig[activeType].label} 차단을 추가했습니다.` : '목록에 추가했습니다. 개인 차단 기능은 현재 꺼져 있습니다.',
+                        'success'
+                    );
+                    valueInput.value = '';
+                    if (activeType === 'uid') displayInput.value = '';
+                    valueInput.focus();
+                } catch (error) {
+                    console.error('[DCUF] 직접 차단 추가 실패:', error);
+                    setStatus('차단을 추가하지 못했습니다. 잠시 후 다시 시도해주세요.', 'error');
+                } finally {
+                    addButton.disabled = false;
+                    addButton.textContent = '차단 추가';
+                }
+            });
+            document.addEventListener('keydown', handleKeydown, true);
+            selectType(activeType);
+            return panel;
+        },
+
+        isFabSupportedPage() {
+            const currentPath = window.location.pathname;
+            return currentPath.includes('/board/lists') || currentPath.includes('/board/view');
+        },
+
+        closeFabDrawer() {
+            const fab = document.getElementById('dc-personal-block-fab');
+            const drawer = document.getElementById('dc-personal-block-drawer');
+            if (!fab || !drawer) return;
+            drawer.hidden = true;
+            fab.setAttribute('aria-expanded', 'false');
+        },
+
+        positionFabDrawer() {
+            const controls = document.getElementById('dc-personal-block-controls');
+            const drawer = document.getElementById('dc-personal-block-drawer');
+            if (!controls || !drawer || drawer.hidden) return;
+
+            const viewportGap = 8;
+            const drawerGap = 8;
+            const controlsRect = controls.getBoundingClientRect();
+            const drawerRect = drawer.getBoundingClientRect();
+            const maxLeft = Math.max(viewportGap, window.innerWidth - drawerRect.width - viewportGap);
+            const left = Math.max(viewportGap, Math.min(controlsRect.right - drawerRect.width, maxLeft));
+            let top = controlsRect.top - drawerRect.height - drawerGap;
+
+            if (top < viewportGap) {
+                top = Math.min(
+                    controlsRect.bottom + drawerGap,
+                    Math.max(viewportGap, window.innerHeight - drawerRect.height - viewportGap)
+                );
+            }
+
+            drawer.style.left = `${Math.round(left - controlsRect.left)}px`;
+            drawer.style.top = `${Math.round(top - controlsRect.top)}px`;
+        },
+
+        toggleFabDrawer() {
+            const fab = document.getElementById('dc-personal-block-fab');
+            const drawer = document.getElementById('dc-personal-block-drawer');
+            if (!fab || !drawer) return;
+            const willOpen = drawer.hidden;
+            drawer.hidden = !willOpen;
+            fab.setAttribute('aria-expanded', String(willOpen));
+            if (willOpen) this.positionFabDrawer();
+        },
+
+        resetFabPosition() {
+            if (!this.isFabSupportedPage()) {
+                alert('플로팅 메뉴는 글 목록과 본문 페이지에서만 표시됩니다.');
+                return false;
+            }
+
+            const controls = this.createFab();
+            if (!controls) return false;
+            this.closeFabDrawer();
+            Object.assign(controls.style, {
+                left: 'auto',
+                top: 'auto',
+                right: '20px',
+                bottom: '20px'
+            });
+            return true;
+        },
+
+        createFab() {
+            if (!this.isFabSupportedPage() || !document.body) return null;
+
+            const existingControls = document.getElementById('dc-personal-block-controls');
+            const existingFab = document.getElementById('dc-personal-block-fab');
+            const existingDrawer = document.getElementById('dc-personal-block-drawer');
+            if (existingControls && existingFab && existingDrawer && existingControls.contains(existingFab) && existingControls.contains(existingDrawer)) {
+                return existingControls;
+            }
+            existingControls?.remove();
+            existingFab?.remove();
+            existingDrawer?.remove();
+
+            const controls = document.createElement('div');
+            controls.id = 'dc-personal-block-controls';
+            Object.assign(controls.style, { left: 'auto', top: 'auto', right: '20px', bottom: '20px' });
+
+            const fab = document.createElement('button');
+            fab.id = 'dc-personal-block-fab';
+            fab.type = 'button';
+            fab.textContent = '메뉴';
+            fab.setAttribute('aria-expanded', 'false');
+            fab.setAttribute('aria-controls', 'dc-personal-block-drawer');
+            fab.setAttribute('aria-label', 'DC 유저 필터 메뉴');
+
+            const drawer = document.createElement('div');
+            drawer.id = 'dc-personal-block-drawer';
+            drawer.hidden = true;
+            drawer.setAttribute('role', 'menu');
+            drawer.setAttribute('aria-label', 'DC 유저 필터 기능');
+            drawer.innerHTML = `
+                <button type="button" role="menuitem" data-dcuf-fab-action="quick-block"><span class="dcuf-menu-icon" aria-hidden="true">◎</span><span><strong>화면에서 간편차단</strong><small>글·댓글 작성자를 눌러 선택</small></span></button>
+                <button type="button" role="menuitem" data-dcuf-fab-action="manual-block"><span class="dcuf-menu-icon" aria-hidden="true">＋</span><span><strong>직접 차단</strong><small>닉네임·식별번호·IP 입력</small></span></button>
+                <button type="button" role="menuitem" data-dcuf-fab-action="filter-settings"><span class="dcuf-menu-icon" aria-hidden="true">◫</span><span><strong>글댓합 설정</strong><small>필터 기준과 범위 조정</small></span></button>
+                <button type="button" role="menuitem" data-dcuf-fab-action="block-management"><span class="dcuf-menu-icon" aria-hidden="true">☰</span><span><strong>차단 유저 관리</strong><small>목록 확인·삭제·백업</small></span></button>
+            `;
+
+            controls.append(fab, drawer);
+            document.body.appendChild(controls);
+            this.applyFabScalePercent(this.fabScalePercent, { clamp: false });
+
+            let activePointerId = null;
+            let offsetX = 0;
+            let offsetY = 0;
+            let startX = 0;
+            let startY = 0;
+            let wasDragged = false;
+            let suppressClick = false;
+
+            fab.addEventListener('pointerdown', (event) => {
+                if (event.button !== 0 || activePointerId !== null) return;
+                const rect = controls.getBoundingClientRect();
+                activePointerId = event.pointerId;
+                offsetX = event.clientX - rect.left;
+                offsetY = event.clientY - rect.top;
+                startX = event.clientX;
+                startY = event.clientY;
+                wasDragged = false;
+                fab.setPointerCapture?.(event.pointerId);
             });
 
+            fab.addEventListener('pointermove', (event) => {
+                if (event.pointerId !== activePointerId) return;
+                if (!wasDragged && Math.hypot(event.clientX - startX, event.clientY - startY) < 5) return;
+                if (!wasDragged) this.closeFabDrawer();
+                wasDragged = true;
+                event.preventDefault();
+                const maxX = Math.max(0, window.innerWidth - controls.offsetWidth);
+                const maxY = Math.max(0, window.innerHeight - controls.offsetHeight);
+                const nextX = Math.max(0, Math.min(event.clientX - offsetX, maxX));
+                const nextY = Math.max(0, Math.min(event.clientY - offsetY, maxY));
+                Object.assign(controls.style, {
+                    left: `${Math.round(nextX)}px`,
+                    top: `${Math.round(nextY)}px`,
+                    right: 'auto',
+                    bottom: 'auto'
+                });
+            });
 
-            // 드래그 기능
-            let isDragging = false, offsetX, offsetY;
-            const onDragStart = (e) => { // async 제거 (필요 없음)
-                isDragging = true;
-                fab.style.transition = 'none';
-                const clientX = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
-                const clientY = e.type === 'touchstart' ? e.touches[0].clientY : e.clientY;
-                const rect = fab.getBoundingClientRect();
-                offsetX = clientX - rect.left;
-                offsetY = clientY - rect.top;
-                fab.setAttribute('data-dragged', 'false');
+            const finishDrag = (event) => {
+                if (event.pointerId !== activePointerId) return;
+                suppressClick = wasDragged;
+                activePointerId = null;
+                fab.releasePointerCapture?.(event.pointerId);
             };
+            fab.addEventListener('pointerup', finishDrag);
+            fab.addEventListener('pointercancel', finishDrag);
 
+            fab.addEventListener('click', () => {
+                if (suppressClick) {
+                    suppressClick = false;
+                    return;
+                }
+                this.toggleFabDrawer();
+            });
 
-            const onDragMove = (e) => {
-                if (!isDragging) return;
-                e.preventDefault();
-                fab.setAttribute('data-dragged', 'true');
-                const clientX = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
-                const clientY = e.type === 'touchmove' ? e.touches[0].clientY : e.clientY;
-                let newX = clientX - offsetX;
-                let newY = clientY - offsetY;
-                newX = Math.max(0, Math.min(newX, window.innerWidth - fab.offsetWidth));
-                newY = Math.max(0, Math.min(newY, window.innerHeight - fab.offsetHeight));
-                fab.style.left = `${newX}px`;
-                fab.style.top = `${newY}px`;
-                // [방어 코드 2] right, bottom 속성 제거하여 left/top과 충돌 방지
-                fab.style.right = 'auto';
-                fab.style.bottom = 'auto';
-            };
+            drawer.addEventListener('click', async (event) => {
+                const actionButton = event.target.closest('[data-dcuf-fab-action]');
+                if (!actionButton || !drawer.contains(actionButton)) return;
+                const action = actionButton.dataset.dcufFabAction;
+                this.closeFabDrawer();
+                if (action === 'quick-block') this.enterSelectionMode();
+                else if (action === 'manual-block') await this.createManualBlockPanel();
+                else if (action === 'filter-settings') await FilterModule.showSettings();
+                else if (action === 'block-management') await this.createManagementPanel();
+            });
 
+            if (!this._fabGlobalHandlersBound) {
+                document.addEventListener('click', (event) => {
+                    const currentControls = document.getElementById('dc-personal-block-controls');
+                    if (currentControls && !currentControls.contains(event.target)) this.closeFabDrawer();
+                });
+                document.addEventListener('keydown', (event) => {
+                    if (event.key === 'Escape') this.closeFabDrawer();
+                });
+                window.addEventListener('resize', () => {
+                    this.clampFabPosition();
+                    if (!document.getElementById('dc-personal-block-drawer')?.hidden) this.positionFabDrawer();
+                });
+                this._fabGlobalHandlersBound = true;
+            }
 
-            const onDragEnd = () => { // async 키워드 제거
-                if (!isDragging) return;
-                isDragging = false;
-                fab.style.transition = 'transform 0.2s ease-out';
-
-                // GM_setValue 호출을 포함한 위치 저장 로직 전체를 제거하여
-                // 드래그가 끝나도 위치가 저장되지 않도록 합니다.
-            };
-
-
-            fab.addEventListener('mousedown', onDragStart);
-            document.addEventListener('mousemove', onDragMove);
-            document.addEventListener('mouseup', onDragEnd);
-            fab.addEventListener('touchstart', onDragStart, { passive: true });
-            document.addEventListener('touchmove', onDragMove, { passive: false });
-            document.addEventListener('touchend', onDragEnd);
-
-
-            // 저장된 위치 로드 대신 항상 기본 위치에 생성
-            (() => { // async 키워드 제거
-                // 저장된 위치를 불러오는 대신 항상 기본 위치를 사용하도록 수정
-                const defaultPos = { left: 'auto', top: 'auto', right: '20px', bottom: '20px' };
-                // GM_getValue 및 유효성 검사 로직을 제거하고, defaultPos를 바로 적용합니다.
-                Object.assign(fab.style, defaultPos);
-            })();
+            return controls;
         },
 
         enterSelectionMode() {
@@ -2976,10 +4806,15 @@ const FilterModule = {
 
             const popup = document.createElement('div');
             popup.id = 'dc-selection-popup';
+            popup.className = 'dcuf-selection-prompt';
             popup.innerHTML = `
-                <h4>차단할 유저를 선택하세요</h4>
+                <div class="dcuf-selection-prompt-icon" aria-hidden="true">◎</div>
+                <div class="dcuf-selection-prompt-copy">
+                    <h4>차단할 작성자를 선택하세요</h4>
+                    <p>글이나 댓글의 닉네임을 눌러주세요.</p>
+                </div>
                 <div class="popup-buttons">
-                    <button class="cancel-btn">취소</button>
+                    <button class="cancel-btn">선택 취소</button>
                 </div>
             `;
             document.body.appendChild(popup);
@@ -3101,6 +4936,8 @@ const FilterModule = {
             let startDistance = 0;
             let startWidth = 0;
             let startHeight = 0;
+            let startAnchorX = 0.5;
+            let startAnchorY = 0.5;
             let lastMoveTs = 0;
             let lastMoveDistance = -1;
 
@@ -3111,11 +4948,19 @@ const FilterModule = {
 
             const normalizeFixedPosition = () => {
                 const rect = target.getBoundingClientRect();
-                if (target.style.transform && target.style.transform !== 'none') {
-                    target.style.transform = 'none';
-                    target.style.left = `${rect.left}px`;
-                    target.style.top = `${rect.top}px`;
+                const computedStyle = window.getComputedStyle(target);
+                if (computedStyle.transform && computedStyle.transform !== 'none') {
+                    target.style.setProperty('transform', 'none', 'important');
+                    target.style.setProperty('left', `${rect.left}px`, 'important');
+                    target.style.setProperty('top', `${rect.top}px`, 'important');
                 }
+
+                // Pinch geometry is calculated from the border box. Keep the CSS sizing
+                // model and the runtime dimensions in the same coordinate space so that
+                // padded popups do not grow or jump on the first move.
+                target.style.setProperty('box-sizing', 'border-box', 'important');
+                target.style.setProperty('width', `${rect.width}px`, 'important');
+                target.style.setProperty('height', `${rect.height}px`, 'important');
                 return target.getBoundingClientRect();
             };
 
@@ -3146,6 +4991,9 @@ const FilterModule = {
                 startDistance = distance;
                 startWidth = rect.width;
                 startHeight = rect.height;
+                const midpoint = getMidpoint(touches[0], touches[1]);
+                startAnchorX = rect.width > 0 ? clamp((midpoint.x - rect.left) / rect.width, 0, 1) : 0.5;
+                startAnchorY = rect.height > 0 ? clamp((midpoint.y - rect.top) / rect.height, 0, 1) : 0.5;
                 lastMoveTs = 0;
                 lastMoveDistance = -1;
             };
@@ -3192,19 +5040,30 @@ const FilterModule = {
                 const maxWidth = Math.max(dynamicMinWidth, configuredMaxWidth);
                 const maxHeight = Math.max(dynamicMinHeight, configuredMaxHeight);
 
-                const scale = distance / startDistance;
-                const nextWidth = clamp(startWidth * scale, dynamicMinWidth, maxWidth);
-                const nextHeight = clamp(startHeight * scale, dynamicMinHeight, maxHeight);
+                const requestedScale = distance / startDistance;
+                const minScale = Math.min(1, Math.max(dynamicMinWidth / startWidth, dynamicMinHeight / startHeight));
+                const maxScale = Math.max(1, Math.min(maxWidth / startWidth, maxHeight / startHeight));
+                const scale = clamp(requestedScale, minScale, maxScale);
+                const nextWidth = startWidth * scale;
+                const nextHeight = startHeight * scale;
 
-                const rawLeft = mid.x - (nextWidth / 2);
-                const rawTop = mid.y - (nextHeight / 2);
-                const nextLeft = clamp(rawLeft, 0, Math.max(0, vp.width - nextWidth));
-                const nextTop = clamp(rawTop, 0, Math.max(0, vp.height - nextHeight));
+                const rawLeft = mid.x - (nextWidth * startAnchorX);
+                const rawTop = mid.y - (nextHeight * startAnchorY);
+                const viewportGap = 4;
+                const nextLeft = clamp(rawLeft, viewportGap, Math.max(viewportGap, vp.width - nextWidth - viewportGap));
+                const nextTop = clamp(rawTop, viewportGap, Math.max(viewportGap, vp.height - nextHeight - viewportGap));
 
-                target.style.width = `${nextWidth}px`;
-                target.style.height = `${nextHeight}px`;
-                target.style.left = `${nextLeft}px`;
-                target.style.top = `${nextTop}px`;
+                // The centered settings/backup popups have responsive !important width,
+                // max-width, and min-height rules. Override those constraints only after
+                // an explicit pinch starts so the rendered box matches these calculations.
+                target.style.setProperty('min-width', `${dynamicMinWidth}px`, 'important');
+                target.style.setProperty('min-height', `${dynamicMinHeight}px`, 'important');
+                target.style.setProperty('max-width', `${maxWidth}px`, 'important');
+                target.style.setProperty('max-height', `${maxHeight}px`, 'important');
+                target.style.setProperty('width', `${nextWidth}px`, 'important');
+                target.style.setProperty('height', `${nextHeight}px`, 'important');
+                target.style.setProperty('left', `${nextLeft}px`, 'important');
+                target.style.setProperty('top', `${nextTop}px`, 'important');
 
                 if (e.cancelable) e.preventDefault();
                 e.stopPropagation();
@@ -3447,23 +5306,34 @@ const FilterModule = {
             panel.id = 'dc-block-management-panel';
             panel.innerHTML = `
                 <div class="panel-header">
-                    <h3>차단 유저 관리</h3>
-                    <div class="switch-container">
-                        <label class="switch">
-                            <input type="checkbox" id="personal-block-toggle" ${isPersonalBlockEnabled ? 'checked' : ''}>
-                            <span class="switch-slider"></span>
-                        </label>
+                    <div class="panel-title-group">
+                        <span class="panel-kicker">PERSONAL BLOCK</span>
+                        <h3>차단 유저 관리</h3>
                     </div>
-                    <button class="panel-close-btn">×</button>
+                    <div class="panel-header-actions">
+                        <button type="button" class="panel-add-btn">＋ 직접 추가</button>
+                        <div class="switch-container">
+                            <label class="switch" aria-label="개인 차단 기능 사용">
+                                <input type="checkbox" id="personal-block-toggle" ${isPersonalBlockEnabled ? 'checked' : ''}>
+                                <span class="switch-slider"></span>
+                            </label>
+                        </div>
+                        <button type="button" class="panel-close-btn" aria-label="차단 유저 관리 닫기">×</button>
+                    </div>
                 </div>
-                <div class="panel-tabs">
-                    <div class="panel-tab active" data-type="uids">식별 번호</div>
-                    <div class="panel-tab" data-type="nicknames">닉네임</div>
-                    <div class="panel-tab" data-type="ips">아이피</div>
+                <div class="panel-tabs" role="tablist" aria-label="차단 정보 종류">
+                    <button type="button" class="panel-tab active" data-type="uids">식별 번호 <span class="panel-tab-count">${originalBlockList.uids.length}</span></button>
+                    <button type="button" class="panel-tab" data-type="nicknames">닉네임 <span class="panel-tab-count">${originalBlockList.nicknames.length}</span></button>
+                    <button type="button" class="panel-tab" data-type="ips">아이피 <span class="panel-tab-count">${originalBlockList.ips.length}</span></button>
                 </div>
                 <div class="panel-body">
                     <div class="panel-list-controls">
-                        <button class="select-all-btn">해당 탭 전체 선택/해제</button>
+                        <label class="panel-search">
+                            <span aria-hidden="true">⌕</span>
+                            <input type="search" class="panel-search-input" placeholder="현재 탭에서 검색" autocomplete="off" aria-label="차단 목록 검색">
+                        </label>
+                        <button type="button" class="select-all-btn">해당 탭 전체 선택/해제</button>
+                        <span class="panel-list-summary" aria-live="polite"></span>
                     </div>
                     <div class="panel-content">
                         <ul class="blocked-list"></ul>
@@ -3498,6 +5368,16 @@ const FilterModule = {
             };
 
             const globalSelectAllBtn = panel.querySelector('.select-all-global-btn');
+            const saveButton = panel.querySelector('.panel-save-btn');
+            const searchInput = panel.querySelector('.panel-search-input');
+            const listSummary = panel.querySelector('.panel-list-summary');
+            const updateTabCounts = () => {
+                panel.querySelectorAll('.panel-tab').forEach((tab) => {
+                    const count = originalBlockList[tab.dataset.type]?.length || 0;
+                    const countEl = tab.querySelector('.panel-tab-count');
+                    if (countEl) countEl.textContent = String(count);
+                });
+            };
 
 
             const isEverythingSelected = () => {
@@ -3509,6 +5389,8 @@ const FilterModule = {
 
 
             const updateGlobalSelectAllButtonState = () => {
+                const pendingCount = itemsToDelete.uids.size + itemsToDelete.nicknames.size + itemsToDelete.ips.size;
+                saveButton.textContent = pendingCount ? `${pendingCount}건 변경 저장` : '변경 저장';
                 if (isEverythingSelected()) {
                     globalSelectAllBtn.textContent = '모든 탭 전체 해제';
                 } else {
@@ -3521,35 +5403,57 @@ const FilterModule = {
                 const listEl = panel.querySelector('.blocked-list');
                 listEl.innerHTML = '';
                 const data = originalBlockList[type] || [];
+                const query = searchInput.value.trim().toLocaleLowerCase();
+                const filteredData = data.filter((item) => {
+                    const value = typeof item === 'object' ? item?.id : item;
+                    const name = typeof item === 'object' ? item?.name : item;
+                    return !query || String(name ?? value ?? '').toLocaleLowerCase().includes(query)
+                        || String(value ?? '').toLocaleLowerCase().includes(query);
+                });
 
+                listSummary.textContent = query ? `${filteredData.length} / ${data.length}개 표시` : `총 ${data.length}개`;
+                if (filteredData.length === 0) {
+                    const emptyItem = document.createElement('li');
+                    emptyItem.className = 'blocked-list-empty';
+                    emptyItem.textContent = query ? '검색 결과가 없습니다.' : '이 탭에 차단된 항목이 없습니다.';
+                    listEl.appendChild(emptyItem);
+                }
 
-                data.forEach(item => {
+                filteredData.forEach((item) => {
                     const li = document.createElement('li');
                     li.className = 'blocked-item';
                     const value = (typeof item === 'object') ? item.id : item;
                     const name = (typeof item === 'object') ? item.name : item;
                     li.dataset.value = value;
-                    li.innerHTML = `<span class="item-name">${name}</span><span class="delete-item-btn">X</span>`;
 
+                    const nameEl = document.createElement('span');
+                    nameEl.className = 'item-name';
+                    nameEl.textContent = String(name ?? value ?? '');
+                    const deleteButton = document.createElement('button');
+                    deleteButton.type = 'button';
+                    deleteButton.className = 'delete-item-btn';
+                    deleteButton.textContent = '삭제';
+                    deleteButton.setAttribute('aria-label', `${nameEl.textContent} 삭제 선택`);
+                    li.append(nameEl, deleteButton);
 
                     if (itemsToDelete[type].has(value)) {
                         li.classList.add('item-to-delete');
                     }
 
-
-                    li.querySelector('.delete-item-btn').onclick = () => {
+                    deleteButton.onclick = () => {
                         if (li.classList.toggle('item-to-delete')) {
                             itemsToDelete[type].add(value);
                         } else {
                             itemsToDelete[type].delete(value);
                         }
                         updateSelectAllButtonState(type);
-                        updateGlobalSelectAllButtonState(); // [추가] 개별 변경 시 전역 버튼 상태도 업데이트
+                        updateGlobalSelectAllButtonState();
                     };
                     listEl.appendChild(li);
                 });
+                updateTabCounts();
                 updateSelectAllButtonState(type);
-                updateGlobalSelectAllButtonState(); // [추가] 탭 변경 시 전역 버튼 상태도 업데이트
+                updateGlobalSelectAllButtonState();
             };
 
 
@@ -3616,6 +5520,27 @@ const FilterModule = {
                     renderList(tab.dataset.type);
                 };
             });
+
+
+            searchInput.addEventListener('input', () => {
+                const activeType = panel.querySelector('.panel-tab.active').dataset.type;
+                renderList(activeType);
+            });
+
+            panel.querySelector('.panel-add-btn').onclick = async () => {
+                const activeType = panel.querySelector('.panel-tab.active').dataset.type;
+                const manualType = activeType === 'uids' ? 'uid' : activeType === 'nicknames' ? 'nickname' : 'ip';
+                await this.createManualBlockPanel({
+                    initialType: manualType,
+                    onAdded: async () => {
+                        const latestList = await this.loadPersonalBlocks();
+                        originalBlockList.uids = latestList.uids;
+                        originalBlockList.nicknames = latestList.nicknames;
+                        originalBlockList.ips = latestList.ips;
+                        renderList(panel.querySelector('.panel-tab.active').dataset.type);
+                    }
+                });
+            };
 
 
             const closePanel = () => {
@@ -3744,8 +5669,22 @@ const FilterModule = {
         }
     };
 
-    GM_registerMenuCommand('글댓합 설정하기', FilterModule.showSettings.bind(FilterModule));
-    GM_registerMenuCommand('차단 유저 관리', PersonalBlockModule.createManagementPanel.bind(PersonalBlockModule));
+    if (!__dcufRoot.__dcufPcMenuCommandsRegistered) {
+        __dcufRoot.__dcufPcMenuCommandsRegistered = true;
+        const menuCommands = [
+            ['글댓합 설정하기', FilterModule.showSettings.bind(FilterModule)],
+            ['차단 유저 관리', PersonalBlockModule.createManagementPanel.bind(PersonalBlockModule)],
+            ['플로팅 버튼 원위치', PersonalBlockModule.resetFabPosition.bind(PersonalBlockModule)],
+            ['메뉴 버튼 크기 조절', PersonalBlockModule.showFabScalePanel.bind(PersonalBlockModule)]
+        ];
+        menuCommands.forEach(([label, handler]) => {
+            try {
+                GM_registerMenuCommand(label, handler);
+            } catch (error) {
+                console.warn('[DCUF PC] menu registration failed:', label, error);
+            }
+        });
+    }
 
     async function reloadShortcutKey() {
         const shortcutString = await GM_getValue(FilterModule.CONSTANTS.STORAGE_KEYS.SHORTCUT_KEY, 'Shift+S');
@@ -3799,20 +5738,39 @@ const FilterModule = {
     }
 
     async function main() {
-        if (__dcufRoot.__dcufPcFilterPortInitialized) return;
-        __dcufRoot.__dcufPcFilterPortInitialized = true;
+        if (__dcufRoot.__dcufPcFilterPortState === 'ready') return 'ready';
+        if (__dcufRoot.__dcufPcFilterPortPromise) return __dcufRoot.__dcufPcFilterPortPromise;
 
-        console.log('[DCUF PC] Initializing filter port v1.9.1...');
+        __dcufRoot.__dcufPcFilterPortState = 'initializing';
+        __dcufRoot.__dcufPcFilterPortPromise = (async () => {
+            console.log('[DCUF PC] Initializing filter port v1.9.5...');
 
-        observeDarkMode();
-        await reloadShortcutKey();
-        bindSettingsShortcut();
-        await PersonalBlockModule.init();
-        await FilterModule.init();
+            observeDarkMode();
+            bindSettingsShortcut();
+            if (window.__dcufBootController) {
+                window.__dcufBootController.startPreparing('pc-main');
+                window.__dcufBootController.onReady(() => reloadShortcutKey().catch((error) => {
+                    console.warn('[DCUF PC] shortcut initialization failed:', error);
+                }));
+            }
+            await FilterModule.init();
+            await PersonalBlockModule.init(FilterModule.getBootSnapshot(), { deferUi: true });
+            window.__dcufBootController?.note?.('boot.local-filter-ready');
+            __dcufRoot.__dcufPcFilterPortState = 'ready';
+            console.log('[DCUF PC] Filter port ready.');
+            return 'ready';
+        })();
 
-        console.log('[DCUF PC] Filter port ready.');
+        try {
+            return await __dcufRoot.__dcufPcFilterPortPromise;
+        } catch (error) {
+            __dcufRoot.__dcufPcFilterPortState = 'failed';
+            __dcufRoot.__dcufPcFilterPortPromise = null;
+            throw error;
+        }
     }
 
+    let initializationRecoveryAttempts = 0;
     const runSafely = async () => {
         let initState = 'ok';
 
@@ -3822,7 +5780,15 @@ const FilterModule = {
             initState = 'error';
             console.error('[DCUF PC] A critical error occurred during initialization:', error);
         } finally {
-            markUiReady();
+            if (initState === 'ok') markUiReady('pc-ready');
+            else if (window.__dcufBootController) window.__dcufBootController.degrade('pc-initialization-error');
+            if (initState === 'error' && initializationRecoveryAttempts < 2) {
+                initializationRecoveryAttempts += 1;
+                const retryBaseMs = Math.max(20, Number(__dcufRoot.__DCUF_TESTBED_CONFIG__?.boot?.recoveryRetryDelayMs) || 160);
+                window.setTimeout(() => {
+                    if (window.__dcufBootController?.state === 'degraded') runSafely();
+                }, retryBaseMs * initializationRecoveryAttempts);
+            }
             console.log(`[DCUF PC] UI is now visible. (${initState})`);
         }
     };

@@ -26,6 +26,8 @@ export async function launchBrowser({ headed = false } = {}) {
 
 export async function createTestPage(browser, baseUrl, {
     storage = {},
+    gmBehavior = {},
+    boot = {},
     bfcacheVariant = 'current',
     viewport = { width: 1280, height: 900 },
     screen,
@@ -39,7 +41,7 @@ export async function createTestPage(browser, baseUrl, {
     if (typeof hasTouch === 'boolean') contextOptions.hasTouch = hasTouch;
     if (typeof isMobile === 'boolean') contextOptions.isMobile = isMobile;
     const context = await browser.newContext(contextOptions);
-    const harnessSource = await loadHarnessSource({ storage, bfcacheVariant });
+    const harnessSource = await loadHarnessSource({ storage, gmBehavior, boot, bfcacheVariant });
     await context.addInitScript({ content: harnessSource });
     const page = await context.newPage();
     const consoleErrors = [];
@@ -51,10 +53,12 @@ export async function createTestPage(browser, baseUrl, {
         context,
         page,
         consoleErrors,
-        async goto(pathname) {
+        async goto(pathname, { waitForReady = true } = {}) {
             await page.goto(`${baseUrl}${pathname}`, { waitUntil: 'domcontentloaded' });
-            await page.waitForFunction(() => document.documentElement.classList.contains('script-ui-ready'), null, { timeout: 12000 });
-            await page.waitForTimeout(180);
+            if (waitForReady) {
+                await page.waitForFunction(() => document.documentElement.classList.contains('script-ui-ready'), null, { timeout: 12000 });
+                await page.waitForTimeout(180);
+            }
         },
         async close() { await context.close(); }
     };

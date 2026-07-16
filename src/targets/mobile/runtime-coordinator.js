@@ -15,8 +15,11 @@
             '.custom-bottom-controls'
         ].join(', '),
         _mutationObserver: null,
+        _mutationObserverTarget: null,
+        _bodyMountObserver: null,
         _mutationObserverReady: false,
         _mutationSubscribers: new Map(),
+        _immediateMutationSubscribers: new Map(),
         _pendingMutationRecords: [],
         _pendingMutationRafId: 0,
         _pendingMutationTimerId: 0,
@@ -248,8 +251,37 @@
             }
         },
 
+        dispatchImmediateMutations(records) {
+            if (!Array.isArray(records) || records.length === 0) return;
+            if (!(this._immediateMutationSubscribers instanceof Map) || this._immediateMutationSubscribers.size === 0) return;
+
+            const payload = this.buildMutationPayload(records);
+            this.incrementDiagnostic('mutation.immediateDispatches');
+            this.setDiagnosticGauge('mutation.immediateSubscribers', this._immediateMutationSubscribers.size);
+
+            const measureDispatch = this._diagnosticsEnabled && typeof performance?.now === 'function';
+            const dispatchStartedAt = measureDispatch ? performance.now() : 0;
+            this._immediateMutationSubscribers.forEach((listener, key) => {
+                try {
+                    listener(payload);
+                } catch (error) {
+                    console.error('[DCUF runtime] immediate mutation subscriber failed:', key, error);
+                }
+            });
+            if (measureDispatch) {
+                this.setDiagnosticGauge(
+                    'mutation.lastImmediateDispatchDurationMs',
+                    Math.round((performance.now() - dispatchStartedAt) * 1000) / 1000
+                );
+            }
+        },
+
         queueMutationRecords(records) {
             if (!Array.isArray(records) || records.length === 0) return;
+            // MutationObserver callbacks run before the next paint. Critical visibility
+            // subscribers must see the fresh records here; the ordinary bus remains
+            // animation-frame batched for heavier UI and async work.
+            this.dispatchImmediateMutations(records);
             this._pendingMutationRecords.push(...records);
             this.incrementDiagnostic('mutation.bursts');
             this.incrementDiagnostic('mutation.records', records.length);
@@ -266,11 +298,28 @@
             }, 50);
         },
 
+        flushPendingMutations(reason = 'manual-flush') {
+            this.installDiagnosticsApi();
+            if (this._mutationObserver) {
+                const records = this._mutationObserver.takeRecords();
+                if (records.length > 0) {
+                    this.dispatchImmediateMutations(records);
+                    this._pendingMutationRecords.push(...records);
+                }
+            }
+            if (this._pendingMutationRecords.length > 0) this.dispatchQueuedMutations();
+            this.noteDiagnostic('mutation.bus.flushed', { reason, generation: this._mutationGeneration });
+            return this._mutationGeneration;
+        },
+
         ensureMutationBus() {
             this.installDiagnosticsApi();
-            if (this._mutationObserverReady) return true;
-
             const observerTarget = document.body;
+            if (this._mutationObserverReady
+                && this._mutationObserverTarget === observerTarget
+                && observerTarget?.isConnected) {
+                return true;
+            }
             if (!observerTarget) {
                 if (!this._awaitingBodyForMutationBus) {
                     this._awaitingBodyForMutationBus = true;
@@ -280,6 +329,15 @@
                     }, { once: true });
                 }
                 return false;
+            }
+
+            if (this._mutationObserver) {
+                const pending = this._mutationObserver.takeRecords();
+                if (pending.length > 0) {
+                    this.dispatchImmediateMutations(pending);
+                    this._pendingMutationRecords.push(...pending);
+                }
+                this._mutationObserver.disconnect();
             }
 
             this._mutationObserver = new MutationObserver((records) => {
@@ -292,8 +350,19 @@
                 characterData: true,
                 attributeFilter: ['class', 'style', 'src', 'id', 'data-uid', 'data-nick', 'data-ip', 'data-no', 'p-no']
             });
+            this._mutationObserverTarget = observerTarget;
             this._mutationObserverReady = true;
-            this.noteDiagnostic('mutation.bus.ready', { target: 'document.body' });
+            if (!this._bodyMountObserver && document.documentElement) {
+                this._bodyMountObserver = new MutationObserver((records) => {
+                    if (this._mutationObserverTarget !== document.body) {
+                        this.ensureMutationBus();
+                        this.queueMutationRecords(records);
+                    }
+                });
+                this._bodyMountObserver.observe(document.documentElement, { childList: true });
+            }
+            this.noteDiagnostic('mutation.bus.ready', { target: 'document.body', rebound: true });
+            if (this._pendingMutationRecords.length > 0) this.dispatchQueuedMutations();
             return true;
         },
 
@@ -305,6 +374,17 @@
             return () => {
                 this._mutationSubscribers.delete(key);
                 this.setDiagnosticGauge('mutation.subscribers', this._mutationSubscribers.size);
+            };
+        },
+
+        subscribeImmediateMutations(key, listener) {
+            if (typeof listener !== 'function') return () => {};
+            this.ensureMutationBus();
+            this._immediateMutationSubscribers.set(key, listener);
+            this.setDiagnosticGauge('mutation.immediateSubscribers', this._immediateMutationSubscribers.size);
+            return () => {
+                this._immediateMutationSubscribers.delete(key);
+                this.setDiagnosticGauge('mutation.immediateSubscribers', this._immediateMutationSubscribers.size);
             };
         },
 

@@ -11,10 +11,25 @@
     const reads = [];
     const styles = [];
     const menuCommands = [];
+    const behavior = config.gmBehavior && typeof config.gmBehavior === 'object' ? config.gmBehavior : {};
+    const delayByKey = behavior.delayByKey && typeof behavior.delayByKey === 'object' ? behavior.delayByKey : {};
+    const rejectOnceKeys = new Set(Array.isArray(behavior.rejectOnceKeys) ? behavior.rejectOnceKeys : []);
+    const pendingKeys = new Set(Array.isArray(behavior.pendingKeys) ? behavior.pendingKeys : []);
+    const pendingResolvers = new Map();
 
     globalThis.unsafeWindow = globalThis;
     globalThis.GM_getValue = async (key, fallbackValue) => {
         reads.push({ key, ts: Date.now() });
+        if (rejectOnceKeys.delete(key)) throw new Error(`GM_getValue rejected once: ${key}`);
+        const delayMs = Math.max(0, Number(delayByKey[key]) || 0);
+        if (delayMs > 0) await new Promise((resolve) => setTimeout(resolve, delayMs));
+        if (pendingKeys.has(key)) {
+            await new Promise((resolve) => {
+                const resolvers = pendingResolvers.get(key) || [];
+                resolvers.push(resolve);
+                pendingResolvers.set(key, resolvers);
+            });
+        }
         return clone(values.has(key) ? values.get(key) : fallbackValue);
     };
     globalThis.GM_setValue = async (key, value) => {
@@ -57,6 +72,17 @@
         },
         async get(key, fallbackValue) {
             return globalThis.GM_getValue(key, fallbackValue);
+        },
+        release(key) {
+            pendingKeys.delete(key);
+            const resolvers = pendingResolvers.get(key) || [];
+            pendingResolvers.delete(key);
+            resolvers.forEach((resolve) => resolve());
+            return resolvers.length;
+        },
+        setPending(key, pending = true) {
+            if (pending) pendingKeys.add(key);
+            else this.release(key);
         }
     };
 })();
