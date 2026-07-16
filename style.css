@@ -115,10 +115,31 @@ nav a:hover { color: var(--blue); }
 .accent-violet { --card-accent: #7950f2; }
 .accent-green { --card-accent: #2f9e44; }
 .accent-orange { --card-accent: #f08c00; }
+.accent-teal { --card-accent: #0ca678; }
+.accent-slate { --card-accent: #526274; }
 
 .screens-section { padding-block: 105px; color: #fff; background: #11192d; }
 .section-heading.light .eyebrow { color: #91a7ff; }
 .section-heading.light > p:last-child { color: #aeb7ca; }
+.palette-showcase {
+  display: grid;
+  grid-template-columns: .78fr 1.22fr;
+  overflow: hidden;
+  margin-bottom: 28px;
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 24px;
+  background: #1a243c;
+  box-shadow: 0 24px 70px rgba(0,0,0,.2);
+}
+.palette-showcase-copy { display: flex; flex-direction: column; padding: 38px; background: linear-gradient(155deg, #202d4a, #151d31); }
+.palette-showcase-copy h3 { margin: 0; font-size: 30px; line-height: 1.25; letter-spacing: -.035em; }
+.palette-showcase-copy > p:not(.eyebrow) { margin: 14px 0 24px; color: #b7c1d4; font-size: 14px; }
+.palette-dialog-link { width: min(100%, 300px); margin-top: auto; border-radius: 16px; cursor: zoom-in; }
+.palette-dialog-link img { width: 100%; border-radius: 16px; box-shadow: 0 14px 34px rgba(0,0,0,.32); }
+.palette-gallery { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; align-content: center; padding: 22px; background: linear-gradient(145deg, #2a3858, #161f34); }
+.palette-shot { display: block; overflow: hidden; border: 1px solid rgba(255,255,255,.14); border-radius: 13px; background: #fff; box-shadow: 0 14px 34px rgba(0,0,0,.28); cursor: zoom-in; }
+.palette-shot-main { grid-column: 1 / -1; }
+.palette-shot img { width: 100%; height: 100%; object-fit: cover; }
 .screen-grid { display: grid; grid-template-columns: 1.2fr .8fr .8fr; gap: 18px; align-items: stretch; }
 .screen-card { display: flex; overflow: hidden; flex-direction: column; margin: 0; border: 1px solid rgba(255,255,255,.1); border-radius: 21px; background: #1a243c; }
 .image-frame { display: grid; min-height: 350px; flex: 1 1 auto; padding: 22px; place-items: center; background: linear-gradient(145deg, #283656, #151d31); cursor: zoom-in; }
@@ -130,12 +151,14 @@ nav a:hover { color: var(--blue); }
 .screen-card figcaption span { margin-top: 3px; color: #aab4c8; font-size: 13px; }
 
 .compare-section { display: grid; grid-template-columns: .85fr 1.15fr; gap: 70px; align-items: start; }
+.compare-table-wrap { min-width: 0; }
 .compare-table { overflow: hidden; border: 1px solid var(--line); border-radius: var(--radius-md); background: #fff; }
 .compare-row { display: grid; grid-template-columns: 1fr 90px 90px; align-items: center; min-height: 64px; padding-inline: 22px; border-bottom: 1px solid var(--line); }
 .compare-row:last-child { border-bottom: 0; }
 .compare-row strong { text-align: center; color: var(--blue); }
 .compare-head { color: #707a92; background: #f1f4fa; font-size: 12px; font-weight: 900; letter-spacing: .07em; }
 .compare-head strong { color: #707a92; }
+.compare-note { margin: 12px 4px 0; color: var(--muted); font-size: 12px; }
 
 .install-section { padding-block: 100px; background: #e9edfa; }
 .install-heading { max-width: 760px; margin-bottom: 38px; }
@@ -192,6 +215,8 @@ footer { padding-block: 42px; color: #bec6d6; background: #0c1323; }
   .quick-facts div:nth-child(2) { border-right: 0; }
   .quick-facts div:nth-child(-n+2) { border-bottom: 1px solid var(--line); }
   .screen-grid { grid-template-columns: 1fr 1fr; }
+  .palette-showcase { grid-template-columns: 1fr; }
+  .palette-dialog-link { width: min(100%, 260px); }
   .compare-section, .install-grid { grid-template-columns: 1fr; gap: 30px; }
 }
 
@@ -211,6 +236,9 @@ footer { padding-block: 42px; color: #bec6d6; background: #0c1323; }
   .quick-facts div { padding: 18px; }
   .content-section, .screens-section, .install-section { padding-block: 70px; }
   .feature-grid, .screen-grid { grid-template-columns: 1fr; }
+  .palette-showcase-copy { padding: 26px; }
+  .palette-gallery { grid-template-columns: 1fr; padding: 14px; }
+  .palette-shot-main { grid-column: auto; }
   .feature-card { min-height: 210px; padding: 27px; }
   .install-card { padding: 23px; }
   .install-card-header { flex-direction: column; min-height: 0; }

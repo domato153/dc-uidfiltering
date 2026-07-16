@@ -1,10 +1,12 @@
 ﻿// ==UserScript==
 // @name         DCInside PC User Filter
 // @namespace    http://tampermonkey.net/
-// @version      1.9.5
+// @version      1.9.6
 // @description  DCInside PC filter port based on the latest mobile filter runtime and shared filter core
 // @author       domato153
-// @match        https://gall.dcinside.com/*
+// @match        https://gall.dcinside.com/board/*
+// @match        https://gall.dcinside.com/mgallery/board/*
+// @match        https://gall.dcinside.com/mini/board/*
 // @noframes
 // @grant        GM_setValue
 // @grant        GM_getValue
@@ -26,6 +28,30 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
     const __dcufRoot = (typeof unsafeWindow !== 'undefined' && unsafeWindow) ? unsafeWindow : window;
     if (window.top !== window.self) return;
 
+    const detectedPageType = ((window.location.pathname || '').match(/\/board\/(lists|view|write|modify)(?:\/|$)/) || [])[1] || 'other';
+    const pageContext = Object.freeze({
+        type: detectedPageType,
+        isList: detectedPageType === 'lists',
+        isView: detectedPageType === 'view',
+        isWrite: detectedPageType === 'write',
+        isModify: detectedPageType === 'modify',
+        isWriteSurface: detectedPageType === 'write' || detectedPageType === 'modify',
+        isOther: detectedPageType === 'other',
+        isTargetPage: detectedPageType !== 'other',
+        hasListSurface: detectedPageType === 'lists' || detectedPageType === 'view',
+        hasComments: detectedPageType === 'view'
+    });
+    __dcufRoot.__dcufPageContext = pageContext;
+    window.__dcufPageContext = pageContext;
+    const exposePageContextAttribute = () => document.documentElement?.setAttribute('data-dcuf-page-context', detectedPageType);
+    if (document.documentElement) exposePageContextAttribute();
+    else document.addEventListener('DOMContentLoaded', exposePageContextAttribute, { once: true });
+
+    // The metadata covers a few gallery-adjacent pages, but the mobile runtime owns
+    // only board list/view/write/modify surfaces. Keep the lightweight page-context bridge
+    // and stop before installing observers, menus, or styles elsewhere.
+    if (!pageContext.isTargetPage) return;
+
     const previousBoot = __dcufRoot.__dcufBootController || window.__dcufBootController;
     if (previousBoot) {
         if (previousBoot.state === 'locked' || previousBoot.state === 'preparing') previousBoot.ensure('duplicate-runtime');
@@ -34,18 +60,12 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
         return;
     }
 
-    if (!__dcufRoot.__dcufBfcacheOptOutInstalled) {
-        __dcufRoot.__dcufBfcacheOptOutInstalled = true;
-        const preventBackForwardCache = () => {};
-        try { __dcufRoot.addEventListener('unload', preventBackForwardCache, { capture: true }); }
-        catch { window.addEventListener('unload', preventBackForwardCache, { capture: true }); }
-    }
-
     let dcFilterSettings = {};
     let userSumCache = {};
     let isInitialized = false;
     let isUiInitialized = false;
     let activeShortcutObject = null;
+    let activeShortcutString = null;
 
     const READY_CLASS = 'script-ui-ready';
     const STATE_ATTR = 'data-dcuf-boot-state';
@@ -54,6 +74,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
     const OVERLAY_STYLE_ID = 'dcuf-boot-overlay-style';
     const DEGRADED_STYLE_ID = 'dcuf-degraded-filter-style';
     const DEGRADED_BANNER_ID = 'dcuf-degraded-banner';
+    const FILTER_READY_ATTR = 'data-dcuf-filter-ready';
     const testBootConfig = __dcufRoot.__DCUF_TESTBED_CONFIG__?.boot || null;
     const ABSOLUTE_DEADLINE_MS = Math.max(20, Number(testBootConfig?.absoluteDeadlineMs) || 15000);
     const CRITICAL_DEADLINE_MS = Math.max(20, Number(testBootConfig?.criticalDeadlineMs) || 6000);
@@ -68,7 +89,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
     let domReadyListener = null;
     let loadListener = null;
 
-    const pageType = ((window.location.pathname || '').match(/\/board\/(lists|view|write)(?:\/|$)/) || [])[1] || 'other';
+    const pageType = pageContext.type;
     const isTargetPage = () => pageType !== 'other';
     const note = (label, detail = null) => {
         const entry = { label, detail, ts: Date.now(), elapsedMs: Date.now() - startedAt };
@@ -139,7 +160,8 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
                 #${OVERLAY_ID} .dcuf-boot-bar { height: 4px !important; overflow: hidden !important; border-radius: 999px !important; background: #cbd3df !important; }
                 #${OVERLAY_ID} .dcuf-boot-bar::before {
                     content: '' !important; display: block !important; width: 42% !important; height: 100% !important;
-                    border-radius: inherit !important; background: linear-gradient(90deg,#245bda,#5d87f0) !important;
+                    border-radius: inherit !important;
+                    background: linear-gradient(90deg,var(--dcuf-theme-accent-strong,#245bda),var(--dcuf-theme-accent,#5d87f0)) !important;
                     animation: dcuf-boot-progress 1s ease-in-out infinite !important;
                 }
                 html.dc-filter-dark-mode #${OVERLAY_ID} { background: linear-gradient(180deg,#1d222a,#11151b) !important; }
@@ -175,11 +197,11 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
         document.documentElement.appendChild(overlay);
     };
     const ensureDegradedUi = (reason) => {
-        if ((pageType === 'list' || pageType === 'view') && !document.getElementById(DEGRADED_STYLE_ID)) {
+        if ((pageType === 'lists' || pageType === 'view') && !document.getElementById(DEGRADED_STYLE_ID)) {
             const style = document.createElement('style');
             style.id = DEGRADED_STYLE_ID;
             style.textContent = `
-                html[${STATE_ATTR}="degraded"] :is(
+                html[${STATE_ATTR}="degraded"]:not([${FILTER_READY_ATTR}="true"]) :is(
                     .gall_listwrap table.gall_list,.list_wrap table.gall_list,.custom-mobile-list,
                     .gall_exposure_list,#focus_cmt .comment_box,div[id^="comment_wrap_"] .comment_box,
                     .view_comment.image_comment .comment_box
@@ -187,7 +209,12 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
             `;
             (document.head || document.documentElement)?.appendChild(style);
         }
-        if (!document.body || document.getElementById(DEGRADED_BANNER_ID)) return;
+        const existingBanner = document.getElementById(DEGRADED_BANNER_ID);
+        if (existingBanner) {
+            existingBanner.dataset.reason = reason;
+            return;
+        }
+        if (!document.body) return;
         const banner = document.createElement('aside');
         banner.id = DEGRADED_BANNER_ID;
         banner.dataset.reason = reason;
@@ -208,6 +235,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
         state: isTargetPage() ? 'locked' : 'idle',
         pageType,
         startedAt,
+        filterReady: false,
         ensure(reason = 'ensure') {
             if (!isTargetPage() || this.state === 'ready' || this.state === 'degraded') return true;
             document.documentElement?.setAttribute(STATE_ATTR, this.state === 'preparing' ? 'preparing' : 'locked');
@@ -232,6 +260,13 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
         },
         requestRecovery(reason = 'manual') {
             recoveryHandlers.forEach((fn) => { try { fn(reason); } catch (error) { console.warn('[DCUF boot] recovery failed:', error); } });
+        },
+        markFilterReady(reason = 'filter-ready') {
+            if (this.filterReady) return;
+            this.filterReady = true;
+            document.documentElement?.setAttribute(FILTER_READY_ATTR, 'true');
+            note('boot.filter-ready', { reason, state: this.state });
+            if (this.state === 'degraded') this.requestRecovery('filter-ready');
         },
         markReady(reason = 'ready') {
             if (this.state === 'ready') return;
@@ -280,7 +315,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
         domReadyListener = () => {
             note('boot.dom-content-loaded');
             tick();
-            if ((pageType === 'list' || pageType === 'view') && !criticalTimer) {
+            if ((pageType === 'lists' || pageType === 'view') && !criticalTimer) {
                 criticalTimer = setTimeout(() => bootController.degrade('critical-deadline'), CRITICAL_DEADLINE_MS);
             }
         };
@@ -395,7 +430,7 @@ const ETC_CONSTANTS = FILTER_CONSTANTS.ETC;
  * Shared IP-related datasets extracted from v2.7.5.4 for 3.0 refactoring.
  * This is the planned single source of truth for mobile and PC filter rules.
  */
-const TELECOM = [
+const TELECOM = () => [
             [1, [[96, "KT모바일", "MOB"], [97, "KT모바일", "MOB"], [98, "KT모바일", "MOB"], [99, "KT모바일", "MOB"], [100, "KT모바일", "MOB"], [101, "KT모바일", "MOB"], [102, "KT모바일", "MOB"], [103, "KT모바일", "MOB"], [104, "KT모바일", "MOB"], [105, "KT모바일", "MOB"], [106, "KT모바일", "MOB"], [107, "KT모바일", "MOB"], [108, "KT모바일", "MOB"], [109, "KT모바일", "MOB"], [110, "KT모바일", "MOB"], [111, "KT모바일", "MOB"]]],
             [27, [[160, "SKT", "MOB"], [161, "SKT", "MOB"], [162, "SKT", "MOB"], [163, "SKT", "MOB"], [164, "SKT", "MOB"], [165, "SKT", "MOB"], [166, "SKT", "MOB"], [167, "SKT", "MOB"], [168, "SKT", "MOB"], [169, "SKT", "MOB"], [170, "SKT", "MOB"], [171, "SKT", "MOB"], [172, "SKT", "MOB"], [173, "SKT", "MOB"], [174, "SKT", "MOB"], [175, "SKT", "MOB"], [176, "SKT", "MOB"], [177, "SKT", "MOB"], [178, "SKT", "MOB"], [179, "SKT", "MOB"], [180, "SKT", "MOB"], [181, "SKT", "MOB"], [182, "SKT", "MOB"], [183, "SKT", "MOB"]]],
             [39, [[4, "KT모바일", "MOB"], [5, "KT모바일", "MOB"], [6, "KT모바일", "MOB"], [7, "KT모바일", "MOB"]]],
@@ -495,7 +530,7 @@ const PROXY_STRICT_PREFIXES = `
             216.247 217.9 217.64 217.78 217.138 217.148 217.151 217.156 217.170 217.197 218.55 218.145 218.146 218.150 218.153 218.155 218.158 218.232
             218.234 218.239 220.67 220.71 220.76 220.78 220.82 220.89 220.90 220.116 220.118 220.123 221.140 221.144 221.147 221.150 221.153 221.158
             221.160 221.164 221.167 222.102 222.108 222.109 222.110 222.111 222.112 222.118 222.238
-        `.trim().split(/\s+/);
+        `;
 
 const PROXY_AGGRESSIVE_EXTRA_PREFIXES = `
             1.209 1.224 1.255 14.129 27.96 27.255 38.77 39.115 43.227 43.228 43.250 43.254 45.114 45.119 45.125 45.164 45.225 45.249
@@ -510,9 +545,9 @@ const PROXY_AGGRESSIVE_EXTRA_PREFIXES = `
             210.219 211.32 211.37 211.41 211.47 211.50 211.56 211.60 211.63 211.104 211.110 211.115 211.116 211.118 211.168 211.169 211.170 211.171
             211.172 211.175 211.180 211.188 211.189 211.233 211.234 211.235 211.236 211.238 211.239 211.241 211.249 211.254 211.255 218.36 220.230 222.239
             223.26 223.130 223.165 223.255
-        `.trim().split(/\s+/);
+        `;
 
-const KR_IP_RANGES = { "1": [[11, 11], [16, 19], [96, 111], [176, 177], [201, 201], [208, 223], [224, 255]], "14": [[0, 0], [4, 7], [32, 63], [64, 95], [128, 128], [129, 129], [138, 138], [192, 192], [206, 206]], "27": [[0, 0], [1, 1], [35, 35], [96, 96], [100, 100], [101, 101], [102, 102], [111, 111], [112, 112], [113, 113], [115, 115], [116, 116], [117, 117], [118, 118], [119, 119], [120, 120], [122, 122], [124, 124], [125, 125], [126, 126], [160, 175], [176, 183], [232, 239], [255, 255]], "36": [[38, 39]], "39": [[4, 7], [16, 31], [112, 127]], "42": [[8, 15], [16, 31], [32, 47], [82, 82]], "43": [[224, 224], [227, 227], [228, 228], [230, 230], [230, 230], [230, 230], [241, 241], [242, 242], [243, 243], [246, 246], [247, 247], [247, 247], [250, 250], [251, 251], [254, 254], [255, 255]], "45": [[64, 64], [64, 64], [64, 64], [112, 112], [112, 112], [113, 113], [115, 115], [117, 117], [119, 119], [120, 120], [121, 121], [125, 125], [248, 248], [249, 249], [249, 249], [250, 250], [250, 250]], "49": [[1, 1], [8, 11], [16, 31], [50, 50], [50, 50], [50, 50], [56, 63], [128, 128], [142, 142], [143, 143], [160, 175], [236, 236], [238, 238], [239, 239], [246, 246], [247, 247], [254, 254]], "58": [[29, 29], [65, 65], [72, 79], [84, 84], [87, 87], [102, 103], [120, 127], [138, 138], [140, 143], [145, 145], [146, 146], [147, 147], [148, 151], [180, 180], [181, 181], [184, 184], [224, 239]], "59": [[0, 31], [86, 86], [150, 150], [151, 151], [152, 152], [186, 187]], "60": [[196, 197], [253, 253]], "61": [[4, 4], [5, 5], [14, 14], [32, 39], [40, 43], [47, 47], [72, 77], [78, 79], [80, 83], [84, 85], [96, 111], [245, 245], [245, 245], [247, 247], [247, 247], [248, 255]], "101": [[1, 1], [1, 1], [53, 53], [55, 55], [79, 79], [101, 101], [202, 202], [235, 235], [250, 250]], "103": [[2, 2], [2, 2], [2, 2], [3, 3], [4, 4], [4, 4], [4, 4], [5, 5], [5, 5], [6, 6], [6, 6], [6, 6], [6, 6], [7, 7], [7, 7], [7, 7], [8, 8], [8, 8], [9, 9], [9, 9], [10, 10], [10, 10], [11, 11], [11, 11], [11, 11], [11, 11], [11, 11], [12, 12], [13, 13], [13, 13], [19, 19], [20, 20], [21, 21], [21, 21], [22, 22], [23, 23], [24, 24], [25, 25], [27, 27], [27, 27], [28, 28], [30, 30], [30, 30], [30, 30], [31, 31], [38, 38], [39, 39], [42, 42], [42, 42], [43, 43], [43, 43], [49, 49], [50, 50], [51, 51], [51, 51], [51, 51], [52, 52], [53, 53], [55, 55], [55, 55], [57, 57], [59, 59], [60, 60], [62, 62], [66, 66], [67, 67], [68, 68], [68, 68], [71, 71], [74, 74], [77, 77], [79, 79], [85, 85], [87, 87], [90, 90], [90, 90], [104, 104], [105, 105], [106, 106], [108, 108], [109, 109], [114, 114], [114, 114], [117, 117], [122, 122], [122, 122], [124, 124], [125, 125], [126, 126], [126, 126], [127, 127], [129, 129], [132, 132], [138, 138], [139, 139], [139, 139], [139, 139], [140, 140], [141, 141], [141, 141], [143, 143], [143, 143], [144, 144], [145, 145], [146, 146], [150, 150], [150, 150], [150, 150], [150, 150], [153, 153], [157, 157], [157, 157], [159, 159], [161, 161], [162, 162], [162, 162], [164, 164], [166, 166], [171, 171], [175, 175], [178, 178], [182, 182], [182, 182], [186, 186], [187, 187], [187, 187], [188, 188], [194, 194], [194, 194], [206, 206], [212, 212], [212, 212], [214, 214], [214, 214], [215, 215], [216, 216], [218, 218], [219, 219], [226, 226], [226, 226], [229, 229], [230, 230], [231, 231], [234, 234], [235, 235], [237, 237], [238, 238], [239, 239], [239, 239], [240, 240], [240, 240], [243, 243], [244, 244], [244, 244], [246, 246], [246, 246], [246, 246], [247, 247], [247, 247], [248, 248], [249, 249], [251, 251], [253, 253], [254, 254]], "106": [[10, 10], [96, 103], [240, 255]], "110": [[4, 4], [5, 5], [8, 15], [34, 34], [35, 35], [35, 35], [44, 44], [44, 44], [45, 45], [46, 47], [68, 71], [76, 76], [76, 76], [92, 92], [92, 92], [93, 93], [93, 93], [165, 165], [165, 165], [172, 172], [232, 232]], "111": [[65, 65], [67, 67], [91, 91], [92, 92], [118, 118], [171, 171], [218, 219], [221, 221]], "112": [[72, 72], [72, 72], [76, 77], [106, 107], [108, 108], [109, 109], [121, 121], [121, 121], [133, 133], [136, 136], [137, 137], [140, 140], [140, 140], [140, 140], [144, 159], [160, 191], [196, 196], [212, 212], [213, 213], [214, 214], [216, 223]], "113": [[10, 10], [21, 21], [29, 29], [30, 30], [52, 52], [52, 52], [59, 59], [60, 60], [61, 61], [61, 61], [130, 130], [130, 130], [131, 131], [192, 192], [197, 197], [198, 198], [199, 199], [216, 217]], "114": [[29, 29], [30, 30], [30, 30], [30, 30], [31, 31], [31, 31], [52, 53], [70, 71], [108, 108], [110, 110], [110, 110], [111, 111], [111, 111], [129, 129], [129, 129], [141, 141], [141, 141], [141, 141], [199, 199], [199, 199], [200, 207]], "115": [[0, 23], [31, 31], [40, 41], [68, 68], [69, 69], [71, 71], [84, 84], [85, 85], [86, 86], [88, 95], [126, 126], [136, 143], [144, 144], [145, 145], [160, 160], [161, 161], [165, 165], [178, 178], [178, 178], [187, 187], [187, 187]], "116": [[32, 47], [67, 67], [68, 68], [68, 68], [84, 84], [89, 89], [90, 90], [93, 93], [120, 127], [193, 193], [199, 199], [200, 201], [212, 212], [255, 255]], "117": [[16, 17], [20, 20], [20, 20], [52, 52], [53, 53], [53, 53], [55, 55], [58, 58], [110, 111], [123, 123]], "118": [[32, 63], [67, 67], [91, 91], [91, 91], [103, 103], [107, 107], [127, 127], [128, 131], [139, 139], [176, 176], [216, 223], [234, 235]], "119": [[17, 17], [17, 17], [18, 18], [30, 30], [31, 31], [42, 42], [56, 56], [59, 59], [63, 63], [64, 71], [75, 75], [77, 77], [82, 82], [148, 148], [149, 149], [161, 161], [192, 223], [235, 235], [235, 235]], "120": [[29, 29], [50, 50], [73, 73], [136, 136], [142, 142], [143, 143]], "121": [[0, 0], [1, 1], [50, 50], [50, 50], [50, 50], [53, 53], [54, 54], [55, 55], [64, 67], [78, 78], [88, 88], [100, 100], [101, 101], [101, 101], [124, 125], [126, 126], [127, 127], [128, 159], [160, 191], [200, 200], [252, 253], [254, 254], [254, 254]], "122": [[0, 0], [0, 0], [32, 47], [49, 49], [99, 99], [100, 100], [101, 101], [128, 128], [128, 128], [129, 129], [129, 129], [152, 152], [153, 153], [199, 199], [202, 202], [202, 202], [203, 203], [252, 252], [252, 252], [254, 254]], "123": [[0, 0], [32, 47], [98, 98], [99, 99], [100, 100], [108, 108], [108, 108], [109, 109], [111, 111], [140, 143], [199, 199], [200, 200], [212, 215], [228, 229], [248, 248], [250, 251], [253, 253], [254, 254], [254, 254]], "124": [[0, 1], [2, 2], [3, 3], [5, 5], [28, 28], [46, 46], [48, 63], [66, 66], [66, 66], [80, 80], [111, 111], [136, 139], [146, 146], [153, 153], [194, 194], [195, 195], [195, 195], [197, 197], [198, 198], [199, 199], [199, 199], [216, 216], [217, 217], [243, 243], [254, 254]], "125": [[7, 7], [31, 31], [57, 57], [60, 60], [61, 61], [62, 62], [128, 159], [176, 191], [208, 208], [208, 208], [209, 209], [209, 209], [240, 247], [248, 251], [252, 252]], "128": [[134, 134]], "129": [[254, 254]], "134": [[75, 75]], "137": [[68, 68]], "139": [[5, 5], [150, 150]], "141": [[223, 223]], "143": [[248, 248]], "144": [[48, 48], [48, 48], [48, 48]], "147": [[6, 6], [43, 43], [46, 46], [47, 47]], "150": [[107, 107], [107, 107], [129, 129], [150, 150], [183, 183], [197, 197], [242, 242], [242, 242]], "152": [[99, 99], [149, 149]], "154": [[10, 10]], "155": [[230, 230]], "156": [[147, 147]], "157": [[119, 119], [197, 197]], "158": [[44, 44]], "160": [[202, 202]], "161": [[122, 122]], "163": [[53, 53], [152, 152], [180, 180], [213, 213], [222, 222], [229, 229], [239, 239], [255, 255]], "164": [[124, 124], [125, 125]], "165": [[132, 132], [133, 133], [141, 141], [186, 186], [194, 194], [213, 213], [229, 229], [243, 243], [244, 244], [246, 246]], "166": [[79, 79], [103, 103], [104, 104], [125, 125]], "168": [[78, 78], [115, 115], [126, 126], [131, 131], [154, 154], [188, 188], [219, 219], [248, 249]], "169": [[140, 140], [208, 223]], "175": [[28, 28], [41, 41], [45, 45], [45, 45], [106, 106], [107, 107], [111, 111], [112, 127], [158, 158], [176, 176], [192, 255]], "180": [[64, 71], [80, 83], [92, 92], [92, 92], [94, 94], [131, 131], [132, 135], [148, 148], [150, 150], [182, 182], [189, 189], [189, 189], [210, 210], [210, 210], [211, 211], [222, 222], [224, 231], [233, 233], [236, 239]], "182": [[31, 31], [50, 50], [161, 161], [162, 162], [163, 163], [172, 172], [173, 173], [173, 173], [192, 199], [208, 223], [224, 231], [237, 237], [237, 237], [252, 252], [252, 252], [255, 255]], "183": [[78, 78], [78, 78], [86, 86], [90, 90], [91, 91], [96, 127]], "192": [[5, 5], [100, 100], [104, 104], [132, 132], [132, 132], [195, 195], [203, 203], [245, 245], [249, 249]], "202": [[3, 3], [6, 6], [8, 8], [14, 14], [14, 14], [14, 14], [20, 20], [20, 20], [20, 20], [20, 20], [21, 21], [22, 22], [30, 31], [43, 43], [59, 59], [68, 68], [73, 73], [86, 86], [89, 89], [89, 89], [90, 90], [126, 126], [128, 128], [131, 131], [133, 133], [136, 136], [148, 148], [150, 150], [158, 158], [163, 163], [165, 165], [167, 167], [171, 171], [174, 174], [179, 179], [179, 179]], "203": [[17, 17], [81, 81], [81, 81], [82, 82], [82, 82], [83, 83], [84, 84], [90, 90], [100, 100], [109, 109], [123, 123], [128, 128], [128, 128], [129, 129], [130, 130], [130, 130], [132, 132], [133, 133], [142, 142], [142, 142], [149, 149], [152, 152], [153, 153], [160, 160], [166, 166], [169, 169], [170, 170], [171, 171], [173, 173], [175, 175], [175, 175], [190, 190], [190, 190], [191, 191], [207, 207], [210, 210], [212, 212], [212, 212], [215, 215], [216, 216], [217, 217], [223, 223], [223, 223], [224, 224], [225, 225], [226, 227], [228, 229], [230, 231], [232, 233], [234, 235], [236, 239], [240, 243], [244, 247], [248, 251], [252, 255]], "210": [[0, 0], [2, 2], [4, 4], [4, 4], [16, 16], [57, 57], [87, 87], [89, 89], [90, 91], [92, 95], [96, 96], [97, 97], [98, 98], [99, 99], [100, 103], [104, 107], [108, 111], [112, 115], [116, 119], [120, 123], [124, 127], [178, 179], [180, 181], [182, 183], [192, 192], [204, 207], [210, 210], [211, 211], [211, 211], [216, 219], [220, 223]], "211": [[32, 39], [40, 51], [52, 63], [104, 111], [112, 119], [168, 175], [176, 191], [192, 199], [200, 205], [206, 211], [212, 215], [216, 225], [226, 231], [232, 255]], "218": [[36, 39], [48, 49], [50, 55], [101, 101], [144, 159], [209, 209], [232, 233], [234, 239]], "219": [[240, 241], [248, 255]], "220": [[64, 71], [72, 91], [92, 95], [103, 103], [116, 127], [149, 149], [230, 230]], "221": [[132, 132], [133, 133], [133, 133], [138, 143], [144, 168]], "222": [[96, 122], [231, 231], [232, 239], [251, 251]], "223": [[26, 26], [28, 28], [32, 63], [130, 130], [131, 131], [165, 165], [168, 175], [194, 195], [222, 222], [253, 253], [255, 255]] };
+const KR_IP_RANGES = () => ({ "1": [[11, 11], [16, 19], [96, 111], [176, 177], [201, 201], [208, 223], [224, 255]], "14": [[0, 0], [4, 7], [32, 63], [64, 95], [128, 128], [129, 129], [138, 138], [192, 192], [206, 206]], "27": [[0, 0], [1, 1], [35, 35], [96, 96], [100, 100], [101, 101], [102, 102], [111, 111], [112, 112], [113, 113], [115, 115], [116, 116], [117, 117], [118, 118], [119, 119], [120, 120], [122, 122], [124, 124], [125, 125], [126, 126], [160, 175], [176, 183], [232, 239], [255, 255]], "36": [[38, 39]], "39": [[4, 7], [16, 31], [112, 127]], "42": [[8, 15], [16, 31], [32, 47], [82, 82]], "43": [[224, 224], [227, 227], [228, 228], [230, 230], [230, 230], [230, 230], [241, 241], [242, 242], [243, 243], [246, 246], [247, 247], [247, 247], [250, 250], [251, 251], [254, 254], [255, 255]], "45": [[64, 64], [64, 64], [64, 64], [112, 112], [112, 112], [113, 113], [115, 115], [117, 117], [119, 119], [120, 120], [121, 121], [125, 125], [248, 248], [249, 249], [249, 249], [250, 250], [250, 250]], "49": [[1, 1], [8, 11], [16, 31], [50, 50], [50, 50], [50, 50], [56, 63], [128, 128], [142, 142], [143, 143], [160, 175], [236, 236], [238, 238], [239, 239], [246, 246], [247, 247], [254, 254]], "58": [[29, 29], [65, 65], [72, 79], [84, 84], [87, 87], [102, 103], [120, 127], [138, 138], [140, 143], [145, 145], [146, 146], [147, 147], [148, 151], [180, 180], [181, 181], [184, 184], [224, 239]], "59": [[0, 31], [86, 86], [150, 150], [151, 151], [152, 152], [186, 187]], "60": [[196, 197], [253, 253]], "61": [[4, 4], [5, 5], [14, 14], [32, 39], [40, 43], [47, 47], [72, 77], [78, 79], [80, 83], [84, 85], [96, 111], [245, 245], [245, 245], [247, 247], [247, 247], [248, 255]], "101": [[1, 1], [1, 1], [53, 53], [55, 55], [79, 79], [101, 101], [202, 202], [235, 235], [250, 250]], "103": [[2, 2], [2, 2], [2, 2], [3, 3], [4, 4], [4, 4], [4, 4], [5, 5], [5, 5], [6, 6], [6, 6], [6, 6], [6, 6], [7, 7], [7, 7], [7, 7], [8, 8], [8, 8], [9, 9], [9, 9], [10, 10], [10, 10], [11, 11], [11, 11], [11, 11], [11, 11], [11, 11], [12, 12], [13, 13], [13, 13], [19, 19], [20, 20], [21, 21], [21, 21], [22, 22], [23, 23], [24, 24], [25, 25], [27, 27], [27, 27], [28, 28], [30, 30], [30, 30], [30, 30], [31, 31], [38, 38], [39, 39], [42, 42], [42, 42], [43, 43], [43, 43], [49, 49], [50, 50], [51, 51], [51, 51], [51, 51], [52, 52], [53, 53], [55, 55], [55, 55], [57, 57], [59, 59], [60, 60], [62, 62], [66, 66], [67, 67], [68, 68], [68, 68], [71, 71], [74, 74], [77, 77], [79, 79], [85, 85], [87, 87], [90, 90], [90, 90], [104, 104], [105, 105], [106, 106], [108, 108], [109, 109], [114, 114], [114, 114], [117, 117], [122, 122], [122, 122], [124, 124], [125, 125], [126, 126], [126, 126], [127, 127], [129, 129], [132, 132], [138, 138], [139, 139], [139, 139], [139, 139], [140, 140], [141, 141], [141, 141], [143, 143], [143, 143], [144, 144], [145, 145], [146, 146], [150, 150], [150, 150], [150, 150], [150, 150], [153, 153], [157, 157], [157, 157], [159, 159], [161, 161], [162, 162], [162, 162], [164, 164], [166, 166], [171, 171], [175, 175], [178, 178], [182, 182], [182, 182], [186, 186], [187, 187], [187, 187], [188, 188], [194, 194], [194, 194], [206, 206], [212, 212], [212, 212], [214, 214], [214, 214], [215, 215], [216, 216], [218, 218], [219, 219], [226, 226], [226, 226], [229, 229], [230, 230], [231, 231], [234, 234], [235, 235], [237, 237], [238, 238], [239, 239], [239, 239], [240, 240], [240, 240], [243, 243], [244, 244], [244, 244], [246, 246], [246, 246], [246, 246], [247, 247], [247, 247], [248, 248], [249, 249], [251, 251], [253, 253], [254, 254]], "106": [[10, 10], [96, 103], [240, 255]], "110": [[4, 4], [5, 5], [8, 15], [34, 34], [35, 35], [35, 35], [44, 44], [44, 44], [45, 45], [46, 47], [68, 71], [76, 76], [76, 76], [92, 92], [92, 92], [93, 93], [93, 93], [165, 165], [165, 165], [172, 172], [232, 232]], "111": [[65, 65], [67, 67], [91, 91], [92, 92], [118, 118], [171, 171], [218, 219], [221, 221]], "112": [[72, 72], [72, 72], [76, 77], [106, 107], [108, 108], [109, 109], [121, 121], [121, 121], [133, 133], [136, 136], [137, 137], [140, 140], [140, 140], [140, 140], [144, 159], [160, 191], [196, 196], [212, 212], [213, 213], [214, 214], [216, 223]], "113": [[10, 10], [21, 21], [29, 29], [30, 30], [52, 52], [52, 52], [59, 59], [60, 60], [61, 61], [61, 61], [130, 130], [130, 130], [131, 131], [192, 192], [197, 197], [198, 198], [199, 199], [216, 217]], "114": [[29, 29], [30, 30], [30, 30], [30, 30], [31, 31], [31, 31], [52, 53], [70, 71], [108, 108], [110, 110], [110, 110], [111, 111], [111, 111], [129, 129], [129, 129], [141, 141], [141, 141], [141, 141], [199, 199], [199, 199], [200, 207]], "115": [[0, 23], [31, 31], [40, 41], [68, 68], [69, 69], [71, 71], [84, 84], [85, 85], [86, 86], [88, 95], [126, 126], [136, 143], [144, 144], [145, 145], [160, 160], [161, 161], [165, 165], [178, 178], [178, 178], [187, 187], [187, 187]], "116": [[32, 47], [67, 67], [68, 68], [68, 68], [84, 84], [89, 89], [90, 90], [93, 93], [120, 127], [193, 193], [199, 199], [200, 201], [212, 212], [255, 255]], "117": [[16, 17], [20, 20], [20, 20], [52, 52], [53, 53], [53, 53], [55, 55], [58, 58], [110, 111], [123, 123]], "118": [[32, 63], [67, 67], [91, 91], [91, 91], [103, 103], [107, 107], [127, 127], [128, 131], [139, 139], [176, 176], [216, 223], [234, 235]], "119": [[17, 17], [17, 17], [18, 18], [30, 30], [31, 31], [42, 42], [56, 56], [59, 59], [63, 63], [64, 71], [75, 75], [77, 77], [82, 82], [148, 148], [149, 149], [161, 161], [192, 223], [235, 235], [235, 235]], "120": [[29, 29], [50, 50], [73, 73], [136, 136], [142, 142], [143, 143]], "121": [[0, 0], [1, 1], [50, 50], [50, 50], [50, 50], [53, 53], [54, 54], [55, 55], [64, 67], [78, 78], [88, 88], [100, 100], [101, 101], [101, 101], [124, 125], [126, 126], [127, 127], [128, 159], [160, 191], [200, 200], [252, 253], [254, 254], [254, 254]], "122": [[0, 0], [0, 0], [32, 47], [49, 49], [99, 99], [100, 100], [101, 101], [128, 128], [128, 128], [129, 129], [129, 129], [152, 152], [153, 153], [199, 199], [202, 202], [202, 202], [203, 203], [252, 252], [252, 252], [254, 254]], "123": [[0, 0], [32, 47], [98, 98], [99, 99], [100, 100], [108, 108], [108, 108], [109, 109], [111, 111], [140, 143], [199, 199], [200, 200], [212, 215], [228, 229], [248, 248], [250, 251], [253, 253], [254, 254], [254, 254]], "124": [[0, 1], [2, 2], [3, 3], [5, 5], [28, 28], [46, 46], [48, 63], [66, 66], [66, 66], [80, 80], [111, 111], [136, 139], [146, 146], [153, 153], [194, 194], [195, 195], [195, 195], [197, 197], [198, 198], [199, 199], [199, 199], [216, 216], [217, 217], [243, 243], [254, 254]], "125": [[7, 7], [31, 31], [57, 57], [60, 60], [61, 61], [62, 62], [128, 159], [176, 191], [208, 208], [208, 208], [209, 209], [209, 209], [240, 247], [248, 251], [252, 252]], "128": [[134, 134]], "129": [[254, 254]], "134": [[75, 75]], "137": [[68, 68]], "139": [[5, 5], [150, 150]], "141": [[223, 223]], "143": [[248, 248]], "144": [[48, 48], [48, 48], [48, 48]], "147": [[6, 6], [43, 43], [46, 46], [47, 47]], "150": [[107, 107], [107, 107], [129, 129], [150, 150], [183, 183], [197, 197], [242, 242], [242, 242]], "152": [[99, 99], [149, 149]], "154": [[10, 10]], "155": [[230, 230]], "156": [[147, 147]], "157": [[119, 119], [197, 197]], "158": [[44, 44]], "160": [[202, 202]], "161": [[122, 122]], "163": [[53, 53], [152, 152], [180, 180], [213, 213], [222, 222], [229, 229], [239, 239], [255, 255]], "164": [[124, 124], [125, 125]], "165": [[132, 132], [133, 133], [141, 141], [186, 186], [194, 194], [213, 213], [229, 229], [243, 243], [244, 244], [246, 246]], "166": [[79, 79], [103, 103], [104, 104], [125, 125]], "168": [[78, 78], [115, 115], [126, 126], [131, 131], [154, 154], [188, 188], [219, 219], [248, 249]], "169": [[140, 140], [208, 223]], "175": [[28, 28], [41, 41], [45, 45], [45, 45], [106, 106], [107, 107], [111, 111], [112, 127], [158, 158], [176, 176], [192, 255]], "180": [[64, 71], [80, 83], [92, 92], [92, 92], [94, 94], [131, 131], [132, 135], [148, 148], [150, 150], [182, 182], [189, 189], [189, 189], [210, 210], [210, 210], [211, 211], [222, 222], [224, 231], [233, 233], [236, 239]], "182": [[31, 31], [50, 50], [161, 161], [162, 162], [163, 163], [172, 172], [173, 173], [173, 173], [192, 199], [208, 223], [224, 231], [237, 237], [237, 237], [252, 252], [252, 252], [255, 255]], "183": [[78, 78], [78, 78], [86, 86], [90, 90], [91, 91], [96, 127]], "192": [[5, 5], [100, 100], [104, 104], [132, 132], [132, 132], [195, 195], [203, 203], [245, 245], [249, 249]], "202": [[3, 3], [6, 6], [8, 8], [14, 14], [14, 14], [14, 14], [20, 20], [20, 20], [20, 20], [20, 20], [21, 21], [22, 22], [30, 31], [43, 43], [59, 59], [68, 68], [73, 73], [86, 86], [89, 89], [89, 89], [90, 90], [126, 126], [128, 128], [131, 131], [133, 133], [136, 136], [148, 148], [150, 150], [158, 158], [163, 163], [165, 165], [167, 167], [171, 171], [174, 174], [179, 179], [179, 179]], "203": [[17, 17], [81, 81], [81, 81], [82, 82], [82, 82], [83, 83], [84, 84], [90, 90], [100, 100], [109, 109], [123, 123], [128, 128], [128, 128], [129, 129], [130, 130], [130, 130], [132, 132], [133, 133], [142, 142], [142, 142], [149, 149], [152, 152], [153, 153], [160, 160], [166, 166], [169, 169], [170, 170], [171, 171], [173, 173], [175, 175], [175, 175], [190, 190], [190, 190], [191, 191], [207, 207], [210, 210], [212, 212], [212, 212], [215, 215], [216, 216], [217, 217], [223, 223], [223, 223], [224, 224], [225, 225], [226, 227], [228, 229], [230, 231], [232, 233], [234, 235], [236, 239], [240, 243], [244, 247], [248, 251], [252, 255]], "210": [[0, 0], [2, 2], [4, 4], [4, 4], [16, 16], [57, 57], [87, 87], [89, 89], [90, 91], [92, 95], [96, 96], [97, 97], [98, 98], [99, 99], [100, 103], [104, 107], [108, 111], [112, 115], [116, 119], [120, 123], [124, 127], [178, 179], [180, 181], [182, 183], [192, 192], [204, 207], [210, 210], [211, 211], [211, 211], [216, 219], [220, 223]], "211": [[32, 39], [40, 51], [52, 63], [104, 111], [112, 119], [168, 175], [176, 191], [192, 199], [200, 205], [206, 211], [212, 215], [216, 225], [226, 231], [232, 255]], "218": [[36, 39], [48, 49], [50, 55], [101, 101], [144, 159], [209, 209], [232, 233], [234, 239]], "219": [[240, 241], [248, 255]], "220": [[64, 71], [72, 91], [92, 95], [103, 103], [116, 127], [149, 149], [230, 230]], "221": [[132, 132], [133, 133], [133, 133], [138, 143], [144, 168]], "222": [[96, 122], [231, 231], [232, 239], [251, 251]], "223": [[26, 26], [28, 28], [32, 63], [130, 130], [131, 131], [165, 165], [168, 175], [194, 195], [222, 222], [253, 253], [255, 255]] });
 
     const DCUF_SHARED_IP = Object.freeze({ TELECOM, PROXY_MODE, PROXY_STRICT_PREFIXES, PROXY_AGGRESSIVE_EXTRA_PREFIXES, KR_IP_RANGES });
 
@@ -995,6 +1030,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             color: #24364f;
             outline: none;
         }
+        /* DCUF_FAB_SHELL_END */
         #dc-personal-block-size-overlay {
             position: fixed;
             inset: 0;
@@ -1086,7 +1122,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         #dc-selection-popup .block-options { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
         #dc-selection-popup .block-option { display: flex; justify-content: space-between; align-items: center; background-color: #f8f9fa; padding: 12px; border-radius: 8px; }
         #dc-selection-popup .block-option span { font-size: 15px; color: #333; word-break: break-all; margin-right: 15px; }
-        #dc-selection-popup .block-option button { font-size: 14px; padding: 6px 12px; cursor: pointer; border: none; border-radius: 6px; background-color: #4263eb; color: #fff; font-weight: 500; }
+        #dc-selection-popup .block-option button { font-size: 14px; padding: 6px 12px; cursor: pointer; border: none; border-radius: 6px; background-color: var(--dcuf-theme-accent-strong, #4263eb); color: var(--dcuf-theme-on-accent, #fff); font-weight: 500; }
         /* [v2.5.7 추가] 차단 해제 버튼 스타일 */
         #dc-selection-popup .block-option button.btn-unblock { background-color: #e03131; }
         #dc-selection-popup .popup-buttons button { width: 100%; font-size: 16px; padding: 10px; cursor: pointer; border: none; border-radius: 8px; background-color: #e9ecef; color: #555; }
@@ -1630,7 +1666,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             }
         }
 
-        /* [v1.9.5] Script-owned soft-depth control surfaces */
+        /* [v1.9.6] Script-owned soft-depth control surfaces */
         #dc-personal-block-fab {
             background: linear-gradient(180deg, #fff 0%, #eef4ff 100%) !important;
             color: #29466f !important;
@@ -2245,6 +2281,7 @@ body.dc-filter-dark-mode #dc-personal-block-fab {
             background: #414956 !important;
             color: #fff !important;
         }
+        /* DCUF_FAB_SHELL_DARK_END */
         body.dc-filter-dark-mode #dc-personal-block-size-overlay {
             background: rgba(0, 0, 0, 0.62) !important;
         }
@@ -2266,7 +2303,7 @@ body.dc-filter-dark-mode #dc-personal-block-fab {
             color: #fff !important;
         }
         body.dc-filter-dark-mode #dc-personal-block-size-panel .dcuf-fab-size-actions [data-dcuf-fab-size-action="save"] {
-            background: #4d7cff !important;
+            background: var(--dcuf-theme-accent, #4d7cff) !important;
         }
 
         /* 5. 스크립트 팝업창 전체 다크 테마 */
@@ -2601,6 +2638,624 @@ body.dc-filter-dark-mode #dc-personal-block-fab {
         body.dc-filter-dark-mode #dc-block-management-panel,
         body.dc-filter-dark-mode #dc-backup-popup { background-color: #1b2738 !important; }
     `);
+const ThemeModule = (() => {
+    const STORAGE_KEY = 'dcuf_mobile_ui_palette';
+    const ROOT_ATTRIBUTE = 'data-dcuf-palette';
+    const STYLE_ID = 'dcuf-mobile-palette-style';
+    const OVERLAY_ID = 'dcuf-palette-overlay';
+    const PANEL_ID = 'dcuf-palette-panel';
+    const DEFAULT_ID = 'blue';
+    const PRESETS = Object.freeze([
+        Object.freeze({ id: 'blue', label: '기본 블루', light: ['#3f6de0', '#245bda', '#eaf1ff'], dark: ['#8cb4ff', '#3868df', '#243a64'] }),
+        Object.freeze({ id: 'purple', label: '퍼플', light: ['#7c3aed', '#6d28d9', '#f3e8ff'], dark: ['#c4b5fd', '#7c3aed', '#39275a'] }),
+        Object.freeze({ id: 'green', label: '그린', light: ['#16805d', '#047857', '#e7f7ef'], dark: ['#6ee7b7', '#047857', '#173c32'] }),
+        Object.freeze({ id: 'orange', label: '오렌지', light: ['#c2410c', '#9a3412', '#fff0e7'], dark: ['#fdba74', '#c2410c', '#4a2a1b'] }),
+        Object.freeze({ id: 'mono', label: '모노톤', light: ['#526274', '#374151', '#eef2f7'], dark: ['#cbd5e1', '#475569', '#28323f'] })
+    ]);
+    const VALID_IDS = new Set(PRESETS.map((preset) => preset.id));
+
+    let committedId = DEFAULT_ID;
+    let writeRevision = 0;
+    let initialReadSettled = false;
+    let initialReadPromise = null;
+    let domReadyApplyScheduled = false;
+
+    const normalize = (value) => typeof value === 'string' && VALID_IDS.has(value) ? value : DEFAULT_ID;
+
+    const apply = (value, reason = 'apply') => {
+        const id = normalize(value);
+        const root = document.documentElement;
+        if (root) root.setAttribute(ROOT_ATTRIBUTE, id);
+        else if (!domReadyApplyScheduled) {
+            domReadyApplyScheduled = true;
+            document.addEventListener('DOMContentLoaded', () => {
+                domReadyApplyScheduled = false;
+                apply(committedId, 'dom-ready');
+            }, { once: true });
+        }
+        window.__dcufActivePalette = id;
+        window.dispatchEvent(new CustomEvent('dcuf:palette-change', { detail: { id, reason } }));
+        return id;
+    };
+
+    const buildPresetVariables = () => PRESETS.map((preset) => {
+        const [accent, strong, soft] = preset.light;
+        const [darkAccent, darkStrong, darkSoft] = preset.dark;
+        return `
+            html[${ROOT_ATTRIBUTE}="${preset.id}"] {
+                --dcuf-theme-accent: ${accent};
+                --dcuf-theme-accent-strong: ${strong};
+                --dcuf-theme-accent-soft: ${soft};
+                --dcuf-theme-on-accent: #fff;
+            }
+            html[${ROOT_ATTRIBUTE}="${preset.id}"].dc-filter-dark-mode,
+            html[${ROOT_ATTRIBUTE}="${preset.id}"] body.dc-filter-dark-mode {
+                --dcuf-theme-accent: ${darkAccent};
+                --dcuf-theme-accent-strong: ${darkStrong};
+                --dcuf-theme-accent-soft: ${darkSoft};
+                --dcuf-theme-on-accent: #fff;
+            }
+        `;
+    }).join('\n');
+
+    const buildCss = () => `
+        ${buildPresetVariables()}
+
+        html[${ROOT_ATTRIBUTE}] {
+            --dcuf-theme-fg: #27313f;
+            --dcuf-theme-fg-muted: #687384;
+            --dcuf-theme-border: color-mix(in srgb, var(--dcuf-theme-accent) 7%, #d9dde3);
+            --dcuf-theme-border-strong: color-mix(in srgb, var(--dcuf-theme-accent) 14%, #cbd2db);
+            --dcuf-theme-page: #f6f7f9;
+            --dcuf-theme-surface: color-mix(in srgb, var(--dcuf-theme-accent-soft) 8%, #f7f8fa);
+            --dcuf-theme-surface-raised: color-mix(in srgb, var(--dcuf-theme-accent-soft) 12%, #fbfcfd);
+            --dcuf-theme-surface-muted: color-mix(in srgb, var(--dcuf-theme-accent-soft) 9%, #f1f3f6);
+            --dcuf-theme-surface-input: color-mix(in srgb, var(--dcuf-theme-accent-soft) 2%, #fff);
+            --dcuf-theme-canvas: color-mix(in srgb, var(--dcuf-theme-accent-soft) 14%, #f6f7f9);
+            --dcuf-theme-card-top: color-mix(in srgb, var(--dcuf-theme-accent-soft) 1%, #fff);
+            --dcuf-theme-card-bottom: color-mix(in srgb, var(--dcuf-theme-accent-soft) 4%, #fafbfc);
+            --dcuf-theme-article-surface: color-mix(in srgb, var(--dcuf-theme-accent-soft) 6%, #f8f9fb);
+            --dcuf-theme-concept-surface: color-mix(in srgb, var(--dcuf-theme-accent-soft) 7%, #fff);
+            --dcuf-theme-notice-surface: #f2f4f7;
+            --dcuf-theme-reply-surface: color-mix(in srgb, var(--dcuf-theme-accent-soft) 10%, #f4f6f8);
+            --dcuf-theme-card-shadow: 0 1px 3px rgba(31, 41, 55, .07), 0 6px 16px rgba(31, 41, 55, .075);
+            --dcuf-theme-panel-shadow: 0 18px 42px rgba(31, 41, 55, .16), 0 3px 9px rgba(31, 41, 55, .09);
+            --dcuf-theme-primary-top: color-mix(in srgb, var(--dcuf-theme-accent) 78%, white);
+            --dcuf-theme-focus-ring: color-mix(in srgb, var(--dcuf-theme-accent) 18%, transparent);
+            --dcuf-theme-accent-shadow: color-mix(in srgb, var(--dcuf-theme-accent-strong) 25%, transparent);
+        }
+        html[${ROOT_ATTRIBUTE}].dc-filter-dark-mode,
+        html[${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode {
+            --dcuf-theme-fg: #edf2f7;
+            --dcuf-theme-fg-muted: #aeb8c4;
+            --dcuf-theme-border: color-mix(in srgb, var(--dcuf-theme-accent) 7%, #3a4149);
+            --dcuf-theme-border-strong: color-mix(in srgb, var(--dcuf-theme-accent) 14%, #4b525b);
+            --dcuf-theme-page: #121417;
+            --dcuf-theme-surface: color-mix(in srgb, var(--dcuf-theme-accent-soft) 5%, #1b1f24);
+            --dcuf-theme-surface-raised: color-mix(in srgb, var(--dcuf-theme-accent-soft) 8%, #22262c);
+            --dcuf-theme-surface-muted: color-mix(in srgb, var(--dcuf-theme-accent-soft) 6%, #1d2228);
+            --dcuf-theme-surface-input: color-mix(in srgb, var(--dcuf-theme-accent-soft) 2%, #171b20);
+            --dcuf-theme-canvas: color-mix(in srgb, var(--dcuf-theme-accent-soft) 10%, #171a1f);
+            --dcuf-theme-card-top: color-mix(in srgb, var(--dcuf-theme-accent-soft) 3%, #24272d);
+            --dcuf-theme-card-bottom: color-mix(in srgb, var(--dcuf-theme-accent-soft) 4%, #20242a);
+            --dcuf-theme-article-surface: color-mix(in srgb, var(--dcuf-theme-accent-soft) 5%, #1a1e23);
+            --dcuf-theme-concept-surface: color-mix(in srgb, var(--dcuf-theme-accent-soft) 8%, #22262c);
+            --dcuf-theme-notice-surface: #252a31;
+            --dcuf-theme-reply-surface: color-mix(in srgb, var(--dcuf-theme-accent-soft) 10%, #21262c);
+            --dcuf-theme-card-shadow: 0 1px 3px rgba(0,0,0,.28), 0 7px 18px rgba(0,0,0,.22);
+            --dcuf-theme-panel-shadow: 0 20px 46px rgba(0,0,0,.44), 0 3px 9px rgba(0,0,0,.24);
+            --dcuf-theme-primary-top: color-mix(in srgb, var(--dcuf-theme-accent) 68%, white);
+        }
+
+        /* DCUF_MOBILE_THEME_CSS_START */
+        /* Mobile host palette CSS removed by the PC port rail. */
+        /* DCUF_MOBILE_THEME_CSS_END */
+
+        /* DCUF_SHARED_PALETTE_UI_START */
+        html[${ROOT_ATTRIBUTE}] body #dcinside-filter-setting #dcinside-threshold-save,
+        html[${ROOT_ATTRIBUTE}] body #dcinside-shortcut-modal #dcinside-save-shortcut-btn,
+        html[${ROOT_ATTRIBUTE}] body #dc-personal-block-size-panel [data-dcuf-fab-size-action="save"],
+        html[${ROOT_ATTRIBUTE}] body #dc-selection-popup .block-option button:not(.btn-unblock),
+        html[${ROOT_ATTRIBUTE}] body #dc-block-management-panel .panel-save-btn,
+        html[${ROOT_ATTRIBUTE}] body #dc-backup-popup :is(.export-btn, .import-btn),
+        html[${ROOT_ATTRIBUTE}] body #dc-manual-block-panel .dcuf-manual-actions [data-manual-block-action="add"],
+        html[${ROOT_ATTRIBUTE}] body #dcinside-filter-setting #dcinside-proxy-ip-block-mode-group button[data-proxy-mode][aria-pressed="true"] {
+            border-color: var(--dcuf-theme-accent-strong) !important;
+            background-color: var(--dcuf-theme-accent-strong) !important;
+            background-image: linear-gradient(180deg, var(--dcuf-theme-primary-top), var(--dcuf-theme-accent-strong)) !important;
+            color: var(--dcuf-theme-on-accent) !important;
+            box-shadow: 0 7px 16px var(--dcuf-theme-accent-shadow) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-block-management-panel input:checked + .switch-slider,
+        html[${ROOT_ATTRIBUTE}] body #dcinside-filter-setting input:checked + .switch-slider,
+        html[${ROOT_ATTRIBUTE}] body #dc-block-management-panel .panel-tab.active {
+            border-color: var(--dcuf-theme-accent) !important;
+            background-color: var(--dcuf-theme-accent-soft) !important;
+            background-image: none !important;
+            color: var(--dcuf-theme-accent-strong) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-personal-block-fab {
+            border-color: var(--dcuf-theme-accent) !important;
+            background: linear-gradient(180deg, var(--dcuf-theme-card-top), var(--dcuf-theme-surface-raised)) !important;
+            color: var(--dcuf-theme-accent-strong) !important;
+            box-shadow: 0 8px 20px var(--dcuf-theme-accent-shadow) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-personal-block-drawer button:is(:hover, :focus-visible),
+        html[${ROOT_ATTRIBUTE}] body #dc-manual-block-panel [data-manual-block-type][aria-pressed="true"] {
+            border-color: var(--dcuf-theme-accent) !important;
+            background: var(--dcuf-theme-accent-soft) !important;
+            color: var(--dcuf-theme-accent-strong) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-backup-popup .export-btn-download {
+            border-color: color-mix(in srgb, var(--dcuf-theme-accent) 30%, transparent) !important;
+            background: var(--dcuf-theme-accent-soft) !important;
+            color: var(--dcuf-theme-accent) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-backup-popup .export-btn-download:hover {
+            border-color: color-mix(in srgb, var(--dcuf-theme-accent) 45%, transparent) !important;
+            background: color-mix(in srgb, var(--dcuf-theme-accent) 18%, var(--dcuf-theme-accent-soft)) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-personal-block-drawer {
+            border-color: var(--dcuf-theme-border-strong) !important;
+            background-color: var(--dcuf-theme-card-bottom) !important;
+            background-image: linear-gradient(145deg, var(--dcuf-theme-card-top), var(--dcuf-theme-card-bottom)) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-personal-block-drawer .dcuf-menu-icon,
+        html[${ROOT_ATTRIBUTE}] body #dc-selection-popup .dcuf-selection-prompt-icon {
+            border-color: color-mix(in srgb, var(--dcuf-theme-accent) 28%, transparent) !important;
+            background: linear-gradient(145deg, var(--dcuf-theme-card-top), var(--dcuf-theme-accent-soft)) !important;
+            color: var(--dcuf-theme-accent) !important;
+            box-shadow: 0 5px 11px color-mix(in srgb, var(--dcuf-theme-accent) 18%, transparent), inset 0 1px 0 color-mix(in srgb, white 70%, transparent) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-manual-block-panel {
+            border-color: var(--dcuf-theme-border-strong) !important;
+            background-color: var(--dcuf-theme-card-bottom) !important;
+            background-image: linear-gradient(155deg, var(--dcuf-theme-card-top), var(--dcuf-theme-card-bottom)) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-manual-block-panel .dcuf-manual-header {
+            border-color: var(--dcuf-theme-border) !important;
+            background: linear-gradient(135deg, var(--dcuf-theme-accent-soft), var(--dcuf-theme-card-top)) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-manual-block-panel .dcuf-manual-type-tabs {
+            border-color: color-mix(in srgb, var(--dcuf-theme-accent) 24%, var(--dcuf-theme-border)) !important;
+            background: color-mix(in srgb, var(--dcuf-theme-accent-soft) 68%, var(--dcuf-theme-surface-muted)) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-manual-block-panel .dcuf-manual-status[data-state="info"],
+        html[${ROOT_ATTRIBUTE}] body #dc-manual-block-panel .dcuf-manual-kicker,
+        html[${ROOT_ATTRIBUTE}] body #dc-block-management-panel .panel-kicker {
+            color: var(--dcuf-theme-accent) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-block-management-panel .panel-add-btn {
+            border-color: color-mix(in srgb, var(--dcuf-theme-accent) 30%, transparent) !important;
+            background: var(--dcuf-theme-accent-soft) !important;
+            color: var(--dcuf-theme-accent) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-block-management-panel :is(.select-all-btn, .select-all-global-btn, .panel-backup-btn):hover,
+        html[${ROOT_ATTRIBUTE}] body #dc-block-management-panel .blocked-item:not(.item-to-delete):hover {
+            border-color: color-mix(in srgb, var(--dcuf-theme-accent) 28%, transparent) !important;
+            background: color-mix(in srgb, var(--dcuf-theme-accent-soft) 72%, var(--dcuf-theme-card-top)) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-selection-popup.dcuf-selection-prompt {
+            border-color: color-mix(in srgb, var(--dcuf-theme-accent) 34%, transparent) !important;
+            background-color: var(--dcuf-theme-card-bottom) !important;
+            background-image: linear-gradient(145deg, var(--dcuf-theme-card-top), var(--dcuf-theme-accent-soft)) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-manual-block-panel .dcuf-manual-field input:focus {
+            border-color: var(--dcuf-theme-accent) !important;
+            box-shadow: 0 0 0 3px var(--dcuf-theme-focus-ring) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dcinside-filter-setting :is(input, button):focus-visible,
+        html[${ROOT_ATTRIBUTE}] body #dcinside-shortcut-modal :is(input, button):focus-visible,
+        html[${ROOT_ATTRIBUTE}] body #dc-personal-block-size-panel :is(input, button):focus-visible,
+        html[${ROOT_ATTRIBUTE}] body #dc-personal-block-drawer button:focus-visible,
+        html[${ROOT_ATTRIBUTE}] body #dc-selection-popup button:focus-visible,
+        html[${ROOT_ATTRIBUTE}] body #dc-manual-block-panel :is(input, button):focus-visible,
+        html[${ROOT_ATTRIBUTE}] body #dc-block-management-panel :is(input, button):focus-visible,
+        html[${ROOT_ATTRIBUTE}] body #dc-backup-popup :is(input, textarea, button):focus-visible {
+            outline: 3px solid var(--dcuf-theme-focus-ring) !important;
+            outline-offset: 2px !important;
+        }
+
+        /* Script-owned management surfaces use the same neutralized card hierarchy. */
+        html[${ROOT_ATTRIBUTE}] body #dcinside-filter-setting,
+        html[${ROOT_ATTRIBUTE}] body #dc-backup-popup,
+        html[${ROOT_ATTRIBUTE}] body #dc-block-management-panel {
+            border-color: var(--dcuf-theme-border-strong) !important;
+            background-color: var(--dcuf-theme-canvas) !important;
+            background-image: linear-gradient(160deg, var(--dcuf-theme-card-top), var(--dcuf-theme-canvas)) !important;
+            color: var(--dcuf-theme-fg) !important;
+            box-shadow: var(--dcuf-theme-panel-shadow) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dcinside-filter-setting :is(.dcuf-settings-header, .dcuf-settings-footer),
+        html[${ROOT_ATTRIBUTE}] body #dc-backup-popup .popup-header,
+        html[${ROOT_ATTRIBUTE}] body #dc-block-management-panel :is(.panel-header, .panel-tabs, .panel-footer) {
+            border-color: var(--dcuf-theme-border) !important;
+            background-color: var(--dcuf-theme-surface-raised) !important;
+            background-image: linear-gradient(180deg, var(--dcuf-theme-card-top), var(--dcuf-theme-surface-raised)) !important;
+            color: var(--dcuf-theme-fg) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dcinside-filter-setting :is(.dcuf-settings-section, .dcuf-settings-threshold > div:last-child, .dcuf-settings-guest-controls),
+        html[${ROOT_ATTRIBUTE}] body #dc-backup-popup :is(.export-section, .import-section),
+        html[${ROOT_ATTRIBUTE}] body #dc-block-management-panel :is(.panel-list-controls, .blocked-item) {
+            border-color: var(--dcuf-theme-border) !important;
+            background-color: var(--dcuf-theme-card-top) !important;
+            background-image: linear-gradient(145deg, var(--dcuf-theme-card-top), var(--dcuf-theme-card-bottom)) !important;
+            color: var(--dcuf-theme-fg) !important;
+            box-shadow: 0 5px 14px color-mix(in srgb, var(--dcuf-theme-accent-strong) 5%, transparent), inset 0 1px 0 color-mix(in srgb, white 60%, transparent) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode #dcinside-filter-setting :is(.dcuf-settings-section, .dcuf-settings-threshold > div:last-child, .dcuf-settings-guest-controls),
+        html[${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode #dc-backup-popup :is(.export-section, .import-section),
+        html[${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode #dc-block-management-panel :is(.panel-list-controls, .blocked-item) {
+            box-shadow: 0 6px 15px rgba(0,0,0,.2), inset 0 1px 0 rgba(255,255,255,.045) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-block-management-panel :is(.panel-body, .panel-content, .blocked-list) {
+            background-color: var(--dcuf-theme-canvas) !important;
+            background-image: none !important;
+            color: var(--dcuf-theme-fg) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-block-management-panel .panel-tab:not(.active),
+        html[${ROOT_ATTRIBUTE}] body #dc-block-management-panel :is(.select-all-btn, .select-all-global-btn, .panel-backup-btn),
+        html[${ROOT_ATTRIBUTE}] body #dcinside-filter-setting button:not(#dcinside-threshold-save):not([aria-pressed="true"]),
+        html[${ROOT_ATTRIBUTE}] body #dc-backup-popup button:not(.export-btn):not(.export-btn-download):not(.import-btn):not(.delete-item-btn) {
+            border-color: var(--dcuf-theme-border-strong) !important;
+            background-color: var(--dcuf-theme-surface-input) !important;
+            background-image: linear-gradient(180deg, var(--dcuf-theme-card-top), var(--dcuf-theme-surface-input)) !important;
+            color: var(--dcuf-theme-fg) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dcinside-filter-setting :is(input, textarea, select),
+        html[${ROOT_ATTRIBUTE}] body #dc-backup-popup :is(.import-file-input, textarea),
+        html[${ROOT_ATTRIBUTE}] body #dc-block-management-panel :is(.panel-search-input, input:not([type="checkbox"])) {
+            border-color: var(--dcuf-theme-border-strong) !important;
+            background-color: var(--dcuf-theme-surface-input) !important;
+            background-image: none !important;
+            color: var(--dcuf-theme-fg) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dcinside-filter-setting #dcinside-threshold-input,
+        html[${ROOT_ATTRIBUTE}] body #dcinside-filter-setting #dcinside-ratio-min,
+        html[${ROOT_ATTRIBUTE}] body #dcinside-filter-setting #dcinside-ratio-max {
+            border-color: var(--dcuf-theme-border-strong) !important;
+            background-color: var(--dcuf-theme-surface-input) !important;
+            background-image: none !important;
+            color: var(--dcuf-theme-fg) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dcinside-filter-setting :is(.dcuf-settings-description, .dcuf-settings-help, small),
+        html[${ROOT_ATTRIBUTE}] body #dc-backup-popup .description,
+        html[${ROOT_ATTRIBUTE}] body #dc-block-management-panel :is(.panel-list-summary, .blocked-list-empty) {
+            color: var(--dcuf-theme-fg-muted) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-block-management-panel .blocked-item.item-to-delete {
+            border-color: #efb9c1 !important;
+            background: #fff5f6 !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode #dc-block-management-panel .blocked-item.item-to-delete {
+            border-color: #7f3d48 !important;
+            background: #372127 !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode #dc-personal-block-drawer,
+        html[${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode #dc-manual-block-panel,
+        html[${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode #dc-selection-popup.dcuf-selection-prompt {
+            border-color: var(--dcuf-theme-border-strong) !important;
+            background-color: var(--dcuf-theme-card-bottom) !important;
+            background-image: linear-gradient(145deg, var(--dcuf-theme-card-top), var(--dcuf-theme-card-bottom)) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode #dc-manual-block-panel .dcuf-manual-header,
+        html[${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode #dc-manual-block-panel .dcuf-manual-type-tabs {
+            border-color: var(--dcuf-theme-border) !important;
+            background: var(--dcuf-theme-surface-muted) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode #dc-personal-block-drawer .dcuf-menu-icon,
+        html[${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode #dc-selection-popup .dcuf-selection-prompt-icon {
+            border-color: var(--dcuf-theme-border-strong) !important;
+            background: linear-gradient(145deg, var(--dcuf-theme-card-top), var(--dcuf-theme-surface-raised)) !important;
+            color: var(--dcuf-theme-accent) !important;
+        }
+        /* DCUF_SHARED_PALETTE_UI_END */
+
+        #${OVERLAY_ID} {
+            position: fixed !important;
+            inset: 0 !important;
+            z-index: 2147483646 !important;
+            box-sizing: border-box !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)) !important;
+            background: rgba(18, 25, 35, .52) !important;
+            backdrop-filter: blur(3px);
+            pointer-events: auto !important;
+        }
+        #${PANEL_ID} {
+            box-sizing: border-box !important;
+            width: min(520px, calc(100vw - 32px)) !important;
+            max-height: calc(100dvh - 32px) !important;
+            overflow: hidden auto !important;
+            padding: 0 !important;
+            border: 1px solid var(--dcuf-theme-border-strong) !important;
+            border-radius: 20px !important;
+            background: var(--dcuf-theme-card-top) !important;
+            color: var(--dcuf-theme-fg) !important;
+            box-shadow: var(--dcuf-theme-panel-shadow) !important;
+            font: 500 14px/1.45 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+        }
+        #${PANEL_ID} .dcuf-palette-header {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            gap: 12px !important;
+            padding: 18px 18px 14px !important;
+            border-bottom: 1px solid var(--dcuf-theme-border) !important;
+            background: linear-gradient(180deg, var(--dcuf-theme-card-top), var(--dcuf-theme-surface-raised)) !important;
+        }
+        #${PANEL_ID} h2 { margin: 0 !important; color: inherit !important; font-size: 20px !important; line-height: 1.2 !important; }
+        #${PANEL_ID} .dcuf-palette-close {
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            width: 44px !important;
+            height: 44px !important;
+            min-width: 44px !important;
+            padding: 0 !important;
+            border: 1px solid transparent !important;
+            border-radius: 12px !important;
+            background: transparent !important;
+            color: var(--dcuf-theme-fg-muted) !important;
+            font-size: 24px !important;
+            cursor: pointer !important;
+        }
+        #${PANEL_ID} .dcuf-palette-body { padding: 16px 18px 18px !important; }
+        #${PANEL_ID} .dcuf-palette-description { margin: 0 0 14px !important; color: var(--dcuf-theme-fg-muted) !important; }
+        #${PANEL_ID} .dcuf-palette-options { display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 10px !important; }
+        #${PANEL_ID} .dcuf-palette-option {
+            box-sizing: border-box !important;
+            display: grid !important;
+            grid-template-columns: 50px minmax(0, 1fr) !important;
+            align-items: center !important;
+            gap: 11px !important;
+            min-height: 70px !important;
+            padding: 10px !important;
+            border: 1px solid var(--dcuf-theme-border) !important;
+            border-radius: 14px !important;
+            background: var(--dcuf-theme-surface-input) !important;
+            color: var(--dcuf-theme-fg) !important;
+            text-align: left !important;
+            cursor: pointer !important;
+        }
+        #${PANEL_ID} .dcuf-palette-option[aria-checked="true"] {
+            border-color: var(--dcuf-theme-accent) !important;
+            background: var(--dcuf-theme-accent-soft) !important;
+            color: var(--dcuf-theme-accent-strong) !important;
+            box-shadow: 0 0 0 2px color-mix(in srgb, var(--dcuf-theme-accent) 18%, transparent) !important;
+        }
+        #${PANEL_ID} .dcuf-palette-swatch {
+            display: grid !important;
+            grid-template-columns: repeat(3, 1fr) !important;
+            width: 48px !important;
+            height: 38px !important;
+            overflow: hidden !important;
+            border: 1px solid rgba(0,0,0,.09) !important;
+            border-radius: 10px !important;
+        }
+        #${PANEL_ID} .dcuf-palette-swatch > span { display: block !important; }
+        #${PANEL_ID} .dcuf-palette-name { font-weight: 800 !important; }
+        #${PANEL_ID} .dcuf-palette-status { min-height: 20px !important; margin: 12px 2px 0 !important; color: #d7485a !important; font-weight: 700 !important; }
+        #${PANEL_ID} .dcuf-palette-actions { display: grid !important; grid-template-columns: 1fr 1fr 1.2fr !important; gap: 9px !important; margin-top: 4px !important; }
+        #${PANEL_ID} .dcuf-palette-actions button {
+            min-height: 44px !important;
+            padding: 8px 10px !important;
+            border: 1px solid var(--dcuf-theme-border-strong) !important;
+            border-radius: 11px !important;
+            background: var(--dcuf-theme-surface-input) !important;
+            color: var(--dcuf-theme-fg) !important;
+            font-weight: 800 !important;
+            cursor: pointer !important;
+        }
+        #${PANEL_ID} .dcuf-palette-actions [data-dcuf-palette-action="save"] {
+            border-color: var(--dcuf-theme-accent-strong) !important;
+            background: var(--dcuf-theme-accent-strong) !important;
+            color: var(--dcuf-theme-on-accent) !important;
+        }
+        #${PANEL_ID} :focus-visible { outline: 3px solid color-mix(in srgb, var(--dcuf-theme-accent) 38%, transparent) !important; outline-offset: 2px !important; }
+        #${PANEL_ID} button:disabled { opacity: .62 !important; cursor: wait !important; }
+
+        body.dc-filter-dark-mode #${PANEL_ID} {
+            border-color: var(--dcuf-theme-border-strong) !important;
+            background: var(--dcuf-theme-card-top) !important;
+            color: var(--dcuf-theme-fg) !important;
+            box-shadow: var(--dcuf-theme-panel-shadow) !important;
+        }
+        body.dc-filter-dark-mode #${PANEL_ID} .dcuf-palette-header { border-color: var(--dcuf-theme-border) !important; background: linear-gradient(180deg, var(--dcuf-theme-card-top), var(--dcuf-theme-surface-raised)) !important; }
+        body.dc-filter-dark-mode #${PANEL_ID} .dcuf-palette-description { color: var(--dcuf-theme-fg-muted) !important; }
+        body.dc-filter-dark-mode #${PANEL_ID} .dcuf-palette-close { color: var(--dcuf-theme-fg) !important; }
+        body.dc-filter-dark-mode #${PANEL_ID} .dcuf-palette-option { border-color: var(--dcuf-theme-border) !important; background: var(--dcuf-theme-surface-input) !important; color: var(--dcuf-theme-fg) !important; }
+        body.dc-filter-dark-mode #${PANEL_ID} .dcuf-palette-option[aria-checked="true"] { border-color: var(--dcuf-theme-accent) !important; background: var(--dcuf-theme-accent-soft) !important; color: var(--dcuf-theme-accent) !important; }
+        body.dc-filter-dark-mode #${PANEL_ID} .dcuf-palette-actions button { border-color: var(--dcuf-theme-border-strong) !important; background: var(--dcuf-theme-surface-input) !important; color: var(--dcuf-theme-fg) !important; }
+        body.dc-filter-dark-mode #${PANEL_ID} .dcuf-palette-actions [data-dcuf-palette-action="save"] { border-color: var(--dcuf-theme-accent-strong) !important; background: var(--dcuf-theme-accent-strong) !important; color: var(--dcuf-theme-on-accent) !important; }
+
+        @media (max-width: 440px) {
+            #${PANEL_ID} .dcuf-palette-options { grid-template-columns: 1fr !important; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            #${OVERLAY_ID}, #${PANEL_ID}, #${PANEL_ID} * { scroll-behavior: auto !important; transition: none !important; animation: none !important; }
+        }
+    `;
+
+    const ensureStyle = () => {
+        if (document.getElementById(STYLE_ID)) return true;
+        const mount = document.head || document.documentElement;
+        if (!mount) return false;
+        const style = document.createElement('style');
+        style.id = STYLE_ID;
+        style.textContent = buildCss();
+        mount.appendChild(style);
+        return true;
+    };
+
+    const beginInitialRead = () => {
+        if (initialReadPromise) return initialReadPromise;
+        const revisionAtStart = writeRevision;
+        initialReadPromise = Promise.resolve()
+            .then(() => GM_getValue(STORAGE_KEY, DEFAULT_ID))
+            .then((value) => {
+                initialReadSettled = true;
+                if (writeRevision !== revisionAtStart) return committedId;
+                committedId = normalize(value);
+                if (!document.getElementById(OVERLAY_ID)) apply(committedId, 'storage-load');
+                return committedId;
+            })
+            .catch((error) => {
+                initialReadSettled = true;
+                console.warn('[DCUF] palette storage read failed; using blue:', error);
+                return committedId;
+            });
+        return initialReadPromise;
+    };
+
+    const setSelectedOption = (panel, id) => {
+        const normalized = apply(id, 'preview');
+        panel.dataset.selectedPalette = normalized;
+        panel.querySelectorAll('.dcuf-palette-option').forEach((option) => {
+            option.setAttribute('aria-checked', option.dataset.paletteId === normalized ? 'true' : 'false');
+        });
+        return normalized;
+    };
+
+    const closePaletteDialog = ({ restore = true } = {}) => {
+        const overlay = document.getElementById(OVERLAY_ID);
+        if (!overlay) return false;
+        const returnFocus = overlay.__dcufReturnFocus;
+        if (restore) apply(committedId, 'preview-cancel');
+        overlay.remove();
+        if (returnFocus instanceof HTMLElement && returnFocus.isConnected) returnFocus.focus({ preventScroll: true });
+        return true;
+    };
+
+    const openPaletteDialog = () => {
+        ensureStyle();
+        const existing = document.getElementById(PANEL_ID);
+        if (existing) {
+            existing.focus({ preventScroll: true });
+            return existing;
+        }
+
+        const overlay = document.createElement('div');
+        overlay.id = OVERLAY_ID;
+        overlay.__dcufReturnFocus = document.activeElement;
+
+        const panel = document.createElement('section');
+        panel.id = PANEL_ID;
+        panel.setAttribute('role', 'dialog');
+        panel.setAttribute('aria-modal', 'true');
+        panel.setAttribute('aria-labelledby', 'dcuf-palette-title');
+        panel.tabIndex = -1;
+
+        const optionsHtml = PRESETS.map((preset) => `
+            <button type="button" class="dcuf-palette-option" role="radio" aria-checked="false" data-palette-id="${preset.id}">
+                <span class="dcuf-palette-swatch" aria-hidden="true">
+                    <span style="background:${preset.light[0]}"></span>
+                    <span style="background:${preset.light[1]}"></span>
+                    <span style="background:${preset.light[2]}"></span>
+                </span>
+                <span class="dcuf-palette-name">${preset.label}</span>
+            </button>
+        `).join('');
+
+        panel.innerHTML = `
+            <div class="dcuf-palette-header">
+                <h2 id="dcuf-palette-title">UI 색상 설정</h2>
+                <button type="button" class="dcuf-palette-close" aria-label="UI 색상 설정 닫기">×</button>
+            </div>
+            <div class="dcuf-palette-body">
+                <p class="dcuf-palette-description">색상을 선택해 미리 본 뒤 저장하세요.</p>
+                <div class="dcuf-palette-options" role="radiogroup" aria-label="UI 색상 프리셋">${optionsHtml}</div>
+                <p class="dcuf-palette-status" role="status" aria-live="polite"></p>
+                <div class="dcuf-palette-actions">
+                    <button type="button" data-dcuf-palette-action="default">기본값</button>
+                    <button type="button" data-dcuf-palette-action="cancel">취소</button>
+                    <button type="button" data-dcuf-palette-action="save">저장</button>
+                </div>
+            </div>
+        `;
+        overlay.appendChild(panel);
+        (document.body || document.documentElement).appendChild(overlay);
+        setSelectedOption(panel, committedId);
+
+        const status = panel.querySelector('.dcuf-palette-status');
+        const saveButton = panel.querySelector('[data-dcuf-palette-action="save"]');
+        const actionButtons = Array.from(panel.querySelectorAll('button'));
+
+        panel.querySelectorAll('.dcuf-palette-option').forEach((option) => {
+            option.addEventListener('click', () => {
+                status.textContent = '';
+                setSelectedOption(panel, option.dataset.paletteId);
+            });
+        });
+        panel.querySelector('.dcuf-palette-close').addEventListener('click', () => closePaletteDialog({ restore: true }));
+        panel.querySelector('[data-dcuf-palette-action="cancel"]').addEventListener('click', () => closePaletteDialog({ restore: true }));
+        panel.querySelector('[data-dcuf-palette-action="default"]').addEventListener('click', () => {
+            status.textContent = '';
+            setSelectedOption(panel, DEFAULT_ID);
+        });
+        saveButton.addEventListener('click', async () => {
+            const selectedId = normalize(panel.dataset.selectedPalette);
+            actionButtons.forEach((button) => { button.disabled = true; });
+            status.textContent = '';
+            try {
+                await GM_setValue(STORAGE_KEY, selectedId);
+                writeRevision += 1;
+                committedId = selectedId;
+                apply(committedId, 'save');
+                closePaletteDialog({ restore: false });
+            } catch (error) {
+                console.warn('[DCUF] palette storage write failed:', error);
+                status.textContent = '색상 설정을 저장하지 못했습니다. 다시 시도해 주세요.';
+                actionButtons.forEach((button) => { button.disabled = false; });
+                saveButton.focus({ preventScroll: true });
+            }
+        });
+        overlay.addEventListener('click', (event) => {
+            if (event.target === overlay) closePaletteDialog({ restore: true });
+        });
+        panel.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape') {
+                event.preventDefault();
+                closePaletteDialog({ restore: true });
+                return;
+            }
+            if (event.key !== 'Tab') return;
+            const focusable = actionButtons.filter((button) => !button.disabled && button.offsetParent !== null);
+            if (focusable.length === 0) return;
+            const first = focusable[0];
+            const last = focusable[focusable.length - 1];
+            if (event.shiftKey && document.activeElement === first) {
+                event.preventDefault();
+                last.focus();
+            } else if (!event.shiftKey && document.activeElement === last) {
+                event.preventDefault();
+                first.focus();
+            }
+        });
+
+        panel.querySelector(`.dcuf-palette-option[data-palette-id="${committedId}"]`)?.focus({ preventScroll: true });
+        return panel;
+    };
+
+    apply(DEFAULT_ID, 'default');
+    document.addEventListener('DOMContentLoaded', () => apply(committedId, 'dom-ready-sync'), { once: true });
+    if (!ensureStyle()) document.addEventListener('DOMContentLoaded', ensureStyle, { once: true });
+    beginInitialRead();
+
+    return Object.freeze({
+        STORAGE_KEY,
+        PRESETS,
+        DEFAULT_ID,
+        normalize,
+        apply,
+        openPaletteDialog,
+        closePaletteDialog,
+        getCommittedId: () => committedId,
+        isInitialReadSettled: () => initialReadSettled
+    });
+})();
 const FilterModule = {
         TELECOM: DCUF_SHARED_IP.TELECOM,
 
@@ -2611,6 +3266,8 @@ const FilterModule = {
         INFLIGHT_USER_SUM_REQUESTS: Object.create(null),
         USER_SUM_NEGATIVE_CACHE: new Map(),
         USER_SUM_NEGATIVE_TTL: 30000,
+        USER_SUM_NEGATIVE_MAX_ENTRIES: 256,
+        _negativeUserSumCacheWrites: 0,
         DEBUG_ENABLED: false,
         DEBUG_MAX_DECISIONS_PER_PASS: 150,
         DEBUG_PASS_ID: 0,
@@ -2619,11 +3276,27 @@ const FilterModule = {
         _runtimeMutationUnsubscribe: null,
         _userSumTaskQueue: null,
         _blockedUidWritePromise: null,
+        _blockedUidWriteTimerId: 0,
+        _blockedUidDirtyGeneration: 0,
+        _blockedUidPersistedGeneration: 0,
+        _blockedUidDirtyUids: null,
+        _blockedUidWriteWaiters: null,
+        _blockedUidPagehideHandler: null,
+        BLOCKED_UID_WRITE_DELAY: 120,
         _queuedObserverFilterItems: null,
         _queuedObserverFilterRafId: 0,
         _queuedObserverFilterTimerId: 0,
         _syncRefilterRafId: 0,
         _syncRefilterTimerIds: null,
+        _settingsSignature: '',
+        _hiddenAt: 0,
+        _hiddenMutationGeneration: 0,
+        _hiddenBody: null,
+        _hiddenRecoverySurface: null,
+        _hiddenBfcacheRecoveryId: 0,
+        _visibilityCycleId: 0,
+        _visibilityRecoveryPromise: null,
+        VISIBILITY_LONG_RESTORE_MS: 5 * 60 * 1000,
         _krPrefixSet: null,
         _telecomPrefixSet: null,
         _proxyStrictPrefixSet: null,
@@ -2657,7 +3330,10 @@ const FilterModule = {
         getKrPrefixSet() {
             if (!this._krPrefixSet) {
                 const prefixes = [];
-                Object.entries(this.KR_IP_RANGES).forEach(([first, ranges]) => {
+                const rangeSource = typeof this.KR_IP_RANGES === 'function'
+                    ? this.KR_IP_RANGES()
+                    : this.KR_IP_RANGES;
+                Object.entries(rangeSource || {}).forEach(([first, ranges]) => {
                     ranges.forEach(([start, end]) => {
                         for (let second = start; second <= end; second += 1) {
                             prefixes.push(`${first}.${second}`);
@@ -2665,6 +3341,7 @@ const FilterModule = {
                     });
                 });
                 this._krPrefixSet = new Set(prefixes);
+                this.incrementRuntimeDiagnostic('filter.ipData.kr.decodes');
             }
             return this._krPrefixSet;
         },
@@ -2674,19 +3351,33 @@ const FilterModule = {
         getTelecomPrefixSet() {
             if (!this._telecomPrefixSet) {
                 const prefixes = [];
-                this.TELECOM.forEach((group) => group[1].forEach((item) => {
+                const telecomSource = typeof this.TELECOM === 'function'
+                    ? this.TELECOM()
+                    : this.TELECOM;
+                (telecomSource || []).forEach((group) => group[1].forEach((item) => {
                     if (item[2] === 'MOB') prefixes.push(`${group[0]}.${item[0]}`);
                 }));
                 this._telecomPrefixSet = new Set(prefixes);
+                this.incrementRuntimeDiagnostic('filter.ipData.telecom.decodes');
             }
             return this._telecomPrefixSet;
         },
         getProxyStrictPrefixSet() {
-            if (!this._proxyStrictPrefixSet) this._proxyStrictPrefixSet = new Set(this.PROXY_STRICT_PREFIXES);
+            if (!this._proxyStrictPrefixSet) {
+                const source = this.PROXY_STRICT_PREFIXES;
+                const prefixes = typeof source === 'string' ? source.trim().split(/\s+/).filter(Boolean) : source;
+                this._proxyStrictPrefixSet = new Set(prefixes || []);
+                this.incrementRuntimeDiagnostic('filter.ipData.proxyStrict.decodes');
+            }
             return this._proxyStrictPrefixSet;
         },
         getProxyAggressiveExtraPrefixSet() {
-            if (!this._proxyAggressiveExtraPrefixSet) this._proxyAggressiveExtraPrefixSet = new Set(this.PROXY_AGGRESSIVE_EXTRA_PREFIXES);
+            if (!this._proxyAggressiveExtraPrefixSet) {
+                const source = this.PROXY_AGGRESSIVE_EXTRA_PREFIXES;
+                const prefixes = typeof source === 'string' ? source.trim().split(/\s+/).filter(Boolean) : source;
+                this._proxyAggressiveExtraPrefixSet = new Set(prefixes || []);
+                this.incrementRuntimeDiagnostic('filter.ipData.proxyAggressive.decodes');
+            }
             return this._proxyAggressiveExtraPrefixSet;
         },
         getProxyPrefixSet(mode = this.PROXY_MODE.STRICT) {
@@ -2885,6 +3576,7 @@ const FilterModule = {
             if (snapshot) { snapshot.blockConfig = conf; snapshot.migrationDone = true; }
         },
         async showSettings() {
+            window.__dcufEnsureFilterUiStyles?.();
             await this.reloadSettings();
             const { masterDisabled = false, excludeRecommended = false, threshold = 0, ratioEnabled = false, ratioMin = '', ratioMax = '', blockGuestEnabled = false, proxyBlockMode = 0, telecomBlockEnabled = false } = dcFilterSettings;
             const currentShortcut = await GM_getValue(this.CONSTANTS.STORAGE_KEYS.SHORTCUT_KEY, 'Shift+S');
@@ -3063,6 +3755,20 @@ const FilterModule = {
             const enterKeySave = (e) => { if (e.key === 'Enter') saveButton.click(); };
             [input, ratioMinInput, ratioMaxInput].forEach(el => { if (el) el.addEventListener('keydown', enterKeySave); });
             let isDragging = false, offsetX, offsetY;
+            let dragWidth = 0, dragHeight = 0;
+            let dragRafId = 0, pendingDragX = null, pendingDragY = null;
+            const applyDragPosition = () => {
+                dragRafId = 0;
+                if (!isDragging || pendingDragX === null || pendingDragY === null) return;
+                let newX = pendingDragX - offsetX;
+                let newY = pendingDragY - offsetY;
+                pendingDragX = null;
+                pendingDragY = null;
+                newX = Math.max(0, Math.min(newX, window.innerWidth - dragWidth));
+                newY = Math.max(0, Math.min(newY, window.innerHeight - dragHeight));
+                div.style.left = `${newX}px`;
+                div.style.top = `${newY}px`;
+            };
             const onDragStart = (e) => {
                 if (e.type === 'touchstart' && e.touches && e.touches.length > 1) return;
                 const startTarget = (e.target && e.target.nodeType === 1) ? e.target : e.target.parentElement;
@@ -3071,6 +3777,8 @@ const FilterModule = {
                 isDragging = true;
                 const rect = div.getBoundingClientRect();
                 if (div.style.transform !== 'none') { div.style.transform = 'none'; div.style.left = `${rect.left}px`; div.style.top = `${rect.top}px`; }
+                dragWidth = rect.width;
+                dragHeight = rect.height;
                 const clientX = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
                 const clientY = e.type === 'touchstart' ? e.touches[0].clientY : e.clientY;
                 offsetX = clientX - rect.left; offsetY = clientY - rect.top;
@@ -3081,14 +3789,19 @@ const FilterModule = {
                 if (!isDragging) return;
                 if (e.type === 'touchmove' && e.touches && e.touches.length > 1) return;
                 e.preventDefault();
-                const rect = div.getBoundingClientRect();
                 const clientX = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
                 const clientY = e.type === 'touchmove' ? e.touches[0].clientY : e.clientY;
-                let newX = clientX - offsetX; let newY = clientY - offsetY;
-                newX = Math.max(0, Math.min(newX, window.innerWidth - rect.width)); newY = Math.max(0, Math.min(newY, window.innerHeight - rect.height));
-                div.style.left = `${newX}px`; div.style.top = `${newY}px`;
+                pendingDragX = clientX;
+                pendingDragY = clientY;
+                if (!dragRafId) dragRafId = requestAnimationFrame(applyDragPosition);
             };
-            const onDragEnd = () => { isDragging = false; document.removeEventListener('mousemove', onDragMove); document.removeEventListener('touchmove', onDragMove); };
+            const onDragEnd = () => {
+                if (dragRafId) cancelAnimationFrame(dragRafId);
+                applyDragPosition();
+                isDragging = false;
+                document.removeEventListener('mousemove', onDragMove);
+                document.removeEventListener('touchmove', onDragMove);
+            };
             const dragHandle = settingsHeader || div;
             try {
                 dragHandle.addEventListener('mousedown', onDragStart);
@@ -3216,6 +3929,7 @@ const FilterModule = {
                 const newShortcut = previewEl.textContent;
                 if (newShortcut && newShortcut !== '입력 대기 중...') {
                     await GM_setValue(this.CONSTANTS.STORAGE_KEYS.SHORTCUT_KEY, newShortcut);
+                    activeShortcutString = newShortcut;
                     activeShortcutObject = this.parseShortcutString(newShortcut);
                     document.getElementById(this.CONSTANTS.UI_IDS.SHORTCUT_DISPLAY).textContent = newShortcut;
                     cleanup();
@@ -3476,14 +4190,40 @@ const FilterModule = {
             if (!cached) return null;
             if (Date.now() - cached.ts > this.USER_SUM_NEGATIVE_TTL) {
                 this.USER_SUM_NEGATIVE_CACHE.delete(uid);
+                this.setRuntimeDiagnosticGauge('filter.negativeUserSumCache.size', this.USER_SUM_NEGATIVE_CACHE.size);
                 return null;
             }
             return cached;
         },
+        pruneNegativeUserSumCache(now = Date.now()) {
+            let removed = 0;
+            this.USER_SUM_NEGATIVE_CACHE.forEach((entry, key) => {
+                if (!entry || typeof entry.ts !== 'number' || now - entry.ts > this.USER_SUM_NEGATIVE_TTL) {
+                    this.USER_SUM_NEGATIVE_CACHE.delete(key);
+                    removed += 1;
+                }
+            });
+            while (this.USER_SUM_NEGATIVE_CACHE.size > this.USER_SUM_NEGATIVE_MAX_ENTRIES) {
+                const oldestKey = this.USER_SUM_NEGATIVE_CACHE.keys().next().value;
+                if (oldestKey === undefined) break;
+                this.USER_SUM_NEGATIVE_CACHE.delete(oldestKey);
+                removed += 1;
+            }
+            if (removed > 0) this.incrementRuntimeDiagnostic('filter.negativeUserSumCache.pruned', removed);
+            this.setRuntimeDiagnosticGauge('filter.negativeUserSumCache.size', this.USER_SUM_NEGATIVE_CACHE.size);
+            return removed;
+        },
         setNegativeUserSumCache(uid, reason = 'error') {
             if (!uid) return null;
             const cached = { ts: Date.now(), reason };
+            this.USER_SUM_NEGATIVE_CACHE.delete(uid);
             this.USER_SUM_NEGATIVE_CACHE.set(uid, cached);
+            this._negativeUserSumCacheWrites = (this._negativeUserSumCacheWrites + 1) % 32;
+            if (this.USER_SUM_NEGATIVE_CACHE.size > this.USER_SUM_NEGATIVE_MAX_ENTRIES || this._negativeUserSumCacheWrites === 0) {
+                this.pruneNegativeUserSumCache(cached.ts);
+            } else {
+                this.setRuntimeDiagnosticGauge('filter.negativeUserSumCache.size', this.USER_SUM_NEGATIVE_CACHE.size);
+            }
             return cached;
         },
         async getUserPostCommentSum(uid) {
@@ -3538,9 +4278,97 @@ const FilterModule = {
                 delete this.INFLIGHT_USER_SUM_REQUESTS[uid];
             }
         },
+        updateBlockedUidWriteDiagnostics(reason = '') {
+            const pendingEntries = this._blockedUidDirtyUids instanceof Map
+                ? this._blockedUidDirtyUids.size
+                : 0;
+            this.setRuntimeDiagnosticGauge('filter.blockedUidPersist.pendingEntries', pendingEntries);
+            this.setRuntimeDiagnosticGauge('filter.blockedUidPersist.timerActive', this._blockedUidWriteTimerId ? 1 : 0);
+            this.setRuntimeDiagnosticGauge('filter.blockedUidPersist.writeActive', this._blockedUidWritePromise ? 1 : 0);
+            if (reason) this.setRuntimeDiagnosticGauge('filter.blockedUidPersist.lastReason', reason);
+        },
+        waitForBlockedUidGeneration(generation) {
+            if (this._blockedUidPersistedGeneration >= generation) return Promise.resolve();
+            if (!Array.isArray(this._blockedUidWriteWaiters)) this._blockedUidWriteWaiters = [];
+            return new Promise((resolve, reject) => {
+                this._blockedUidWriteWaiters.push({ generation, resolve, reject });
+            });
+        },
+        settleBlockedUidWriteWaiters(generation, error = null) {
+            if (!Array.isArray(this._blockedUidWriteWaiters)) return;
+            const pending = [];
+            this._blockedUidWriteWaiters.forEach((waiter) => {
+                if (waiter.generation > generation) {
+                    pending.push(waiter);
+                    return;
+                }
+                if (error) waiter.reject(error);
+                else waiter.resolve();
+            });
+            this._blockedUidWriteWaiters = pending;
+        },
+        scheduleBlockedUidCachePersist(generation) {
+            const waiter = this.waitForBlockedUidGeneration(generation);
+            if (this._blockedUidWriteTimerId) window.clearTimeout(this._blockedUidWriteTimerId);
+            this._blockedUidWriteTimerId = window.setTimeout(() => {
+                this._blockedUidWriteTimerId = 0;
+                this.updateBlockedUidWriteDiagnostics('timer');
+                void this.flushBlockedUidCache('timer').catch((error) => {
+                    console.warn('DCinside User Filter: blocked UID cache write failed.', error);
+                });
+            }, this.BLOCKED_UID_WRITE_DELAY);
+            this.updateBlockedUidWriteDiagnostics('scheduled');
+            return waiter;
+        },
+        flushBlockedUidCache(reason = 'manual') {
+            if (this._blockedUidWriteTimerId) {
+                window.clearTimeout(this._blockedUidWriteTimerId);
+                this._blockedUidWriteTimerId = 0;
+            }
+            if (this._blockedUidWritePromise) {
+                const activeWrite = this._blockedUidWritePromise;
+                return activeWrite.catch(() => {}).then(() => this.flushBlockedUidCache(reason));
+            }
+
+            const generation = this._blockedUidDirtyGeneration;
+            if (generation <= this._blockedUidPersistedGeneration) {
+                this.updateBlockedUidWriteDiagnostics(reason);
+                return Promise.resolve();
+            }
+            const dirtyUids = this._blockedUidDirtyUids instanceof Map
+                ? Array.from(this._blockedUidDirtyUids.entries())
+                    .filter(([, dirtyGeneration]) => dirtyGeneration <= generation)
+                    .map(([uid]) => uid)
+                : [];
+            const serializedCache = JSON.stringify(this.BLOCKED_UIDS_CACHE);
+            const writePromise = (async () => {
+                try {
+                    await GM_setValue(this.CONSTANTS.STORAGE_KEYS.BLOCKED_UIDS, serializedCache);
+                    this._blockedUidPersistedGeneration = Math.max(this._blockedUidPersistedGeneration, generation);
+                    dirtyUids.forEach((uid) => {
+                        if (this._blockedUidDirtyUids?.get(uid) <= generation) this._blockedUidDirtyUids.delete(uid);
+                    });
+                    this.incrementRuntimeDiagnostic('filter.blockedUidPersist.writes');
+                    this.incrementRuntimeDiagnostic('filter.blockedUidPersist.entries', dirtyUids.length);
+                    this.setRuntimeDiagnosticGauge('filter.blockedUidPersist.lastBatchSize', dirtyUids.length);
+                    this.settleBlockedUidWriteWaiters(generation);
+                } catch (error) {
+                    this.incrementRuntimeDiagnostic('filter.blockedUidPersist.failures');
+                    this.settleBlockedUidWriteWaiters(generation, error);
+                    throw error;
+                } finally {
+                    if (this._blockedUidWritePromise === writePromise) this._blockedUidWritePromise = null;
+                    this.updateBlockedUidWriteDiagnostics(reason);
+                }
+            })();
+            this._blockedUidWritePromise = writePromise;
+            this.updateBlockedUidWriteDiagnostics(reason);
+            return writePromise;
+        },
         async addBlockedUid(uid, sum, post, comment, ratioBlocked) {
             if (!uid) return;
-            if (!this.isMobile()) {
+            const isMobile = this.isMobile();
+            if (!isMobile) {
                 await this.refreshBlockedUidsCache();
             }
             const nextEntry = { ts: Date.now(), sum, post, comment, ratioBlocked: !!ratioBlocked };
@@ -3553,21 +4381,16 @@ const FilterModule = {
                 return;
             }
             this.BLOCKED_UIDS_CACHE[uid] = nextEntry;
-            if (!this.isMobile()) {
+            if (!isMobile) {
                 await GM_setValue(this.CONSTANTS.STORAGE_KEYS.BLOCKED_UIDS, JSON.stringify(this.BLOCKED_UIDS_CACHE));
                 return;
             }
-            const serializedCache = JSON.stringify(this.BLOCKED_UIDS_CACHE);
-            const previousWrite = this._blockedUidWritePromise || Promise.resolve();
-            const writePromise = previousWrite
-                .catch(() => {})
-                .then(() => GM_setValue(this.CONSTANTS.STORAGE_KEYS.BLOCKED_UIDS, serializedCache));
-            this._blockedUidWritePromise = writePromise;
-            try {
-                await writePromise;
-            } finally {
-                if (this._blockedUidWritePromise === writePromise) this._blockedUidWritePromise = null;
-            }
+            const generation = this._blockedUidDirtyGeneration + 1;
+            this._blockedUidDirtyGeneration = generation;
+            if (!(this._blockedUidDirtyUids instanceof Map)) this._blockedUidDirtyUids = new Map();
+            this._blockedUidDirtyUids.set(uid, generation);
+            this.incrementRuntimeDiagnostic('filter.blockedUidPersist.queuedEntries');
+            await this.scheduleBlockedUidCachePersist(generation);
         },
         async getBlockedGuests() { try { return JSON.parse(await GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCKED_GUESTS, '[]')); } catch { return []; } },
         async setBlockedGuests(list) { await GM_setValue(this.CONSTANTS.STORAGE_KEYS.BLOCKED_GUESTS, JSON.stringify(list)); },
@@ -3793,11 +4616,18 @@ const FilterModule = {
             this.setElementVisibility(element, decision.isBlocked);
         },
         initializeUniversalObserver() {
-            const targets = [
-                { c: this.CONSTANTS.SELECTORS.POST_LIST_CONTAINER, i: this.CONSTANTS.SELECTORS.POST_ITEM, scope: 'posts' },
-                { c: this.CONSTANTS.SELECTORS.COMMENT_CONTAINER, i: this.CONSTANTS.SELECTORS.COMMENT_ITEM, scope: 'comments' },
-                { c: this.CONSTANTS.SELECTORS.POST_VIEW_LIST_CONTAINER, i: 'li', scope: 'posts' }
-            ];
+            const pageContext = window.__dcufPageContext || {};
+            const targets = [];
+            if (pageContext.hasListSurface) {
+                targets.push(
+                    { c: this.CONSTANTS.SELECTORS.POST_LIST_CONTAINER, i: this.CONSTANTS.SELECTORS.POST_ITEM, scope: 'posts' },
+                    { c: this.CONSTANTS.SELECTORS.POST_VIEW_LIST_CONTAINER, i: 'li', scope: 'posts' }
+                );
+            }
+            if (pageContext.hasComments) {
+                targets.push({ c: this.CONSTANTS.SELECTORS.COMMENT_CONTAINER, i: this.CONSTANTS.SELECTORS.COMMENT_ITEM, scope: 'comments' });
+            }
+            if (targets.length === 0) return;
             const filterItems = (items) => this.applyFilterItems(items);
             const queueFilterItems = (items) => this.queueObservedFilterItems(items);
             const runtimeCoordinator = this.getRuntimeCoordinator();
@@ -3825,7 +4655,8 @@ const FilterModule = {
                 if (typeof runtimeCoordinator.subscribeImmediateMutations === 'function') {
                     this._runtimeImmediateMutationUnsubscribe = runtimeCoordinator.subscribeImmediateMutations(
                         'filter-immediate-comment-visibility',
-                        (payload) => this.applyImmediateCommentMutations(payload)
+                        (payload) => this.applyImmediateCommentMutations(payload),
+                        { contexts: ['comments'] }
                     );
                 }
                 this._runtimeMutationUnsubscribe = runtimeCoordinator.subscribeMutations('filter-universal-observer', (payload) => {
@@ -3845,7 +4676,7 @@ const FilterModule = {
                         if (changedItems.length > 0) queueFilterItems(changedItems);
                     });
                     if (hasRelevantMutation) this.markRelevantMutation(hasCommentMutation ? 'comments' : 'all');
-                });
+                }, { contexts: ['list-surface'] });
                 return;
             }
 
@@ -3923,6 +4754,33 @@ const FilterModule = {
         getBootSnapshot() {
             return this._bootSnapshot || null;
         },
+        createSettingsSignature(settings = dcFilterSettings) {
+            if (!settings || typeof settings !== 'object') return '';
+            const normalizeStrings = (values) => (Array.isArray(values) ? values : [])
+                .map((value) => String(value ?? ''))
+                .filter(Boolean)
+                .sort();
+            const personalBlockList = settings.personalBlockList || {};
+            return JSON.stringify({
+                masterDisabled: Boolean(settings.masterDisabled),
+                excludeRecommended: Boolean(settings.excludeRecommended),
+                threshold: Number(settings.threshold) || 0,
+                ratioEnabled: Boolean(settings.ratioEnabled),
+                ratioMin: String(settings.ratioMin ?? ''),
+                ratioMax: String(settings.ratioMax ?? ''),
+                blockGuestEnabled: Boolean(settings.blockGuestEnabled),
+                proxyBlockMode: this.normalizeProxyBlockMode(settings.proxyBlockMode),
+                telecomBlockEnabled: Boolean(settings.telecomBlockEnabled),
+                blockedGuests: normalizeStrings(settings.blockedGuests),
+                customIpPrefixes: settings.customIpPrefixSet instanceof Set
+                    ? Array.from(settings.customIpPrefixSet, (value) => String(value)).sort()
+                    : [],
+                personalBlockEnabled: Boolean(settings.personalBlockEnabled),
+                personalUids: normalizeStrings((personalBlockList.uids || []).map((item) => item?.id)),
+                personalNicknames: normalizeStrings(personalBlockList.nicknames),
+                personalIps: normalizeStrings(personalBlockList.ips)
+            });
+        },
         async reloadSettings(snapshot = null) {
             let values;
             if (snapshot) {
@@ -3994,6 +4852,7 @@ const FilterModule = {
                 personalBlockIpSet,
                 personalBlockEnabled
             };
+            this._settingsSignature = this.createSettingsSignature(dcFilterSettings);
             if (this.DEBUG_ENABLED) {
                 this.debugLog('settings', 'reloadSettings complete', this.debugSettingsSnapshot({
                     rawBlockConfigIp: typeof blockConfig?.ip === 'string' ? blockConfig.ip : '',
@@ -4093,46 +4952,142 @@ const FilterModule = {
                 this._syncRefilterTimerIds.add(timerId);
             });
         },
-        scheduleCommentStabilizedRefilter(reason = 'comment-stabilized', root = null) {
+        scheduleCommentStabilizedRefilter(reason = 'comment-stabilized', roots = null) {
             if (this._commentRefilterRafId) cancelAnimationFrame(this._commentRefilterRafId);
             if (!this._commentRefilterTimerIds) this._commentRefilterTimerIds = new Set();
             this._commentRefilterTimerIds.forEach((timerId) => clearTimeout(timerId));
             this._commentRefilterTimerIds.clear();
 
-            const runtimeCoordinator = this.getRuntimeCoordinator();
-            const hasRuntimeMutationBus = Boolean(runtimeCoordinator && typeof runtimeCoordinator.subscribeMutations === 'function');
-            let lastGeneration = this.getRelevantMutationGeneration('comments');
-            const rerun = (phase, { force = false } = {}) => {
-                const generation = this.getRelevantMutationGeneration('comments');
-                if (!force && hasRuntimeMutationBus && generation === lastGeneration) {
-                    this.incrementRuntimeDiagnostic('filter.syncPass.comments.skippedUnchanged');
-                    return;
-                }
-                const scopeRoot = this.resolveRefilterRoot(root || document);
-                const shouldFallbackToFullPass = root instanceof Element && !document.contains(root);
-                if (shouldFallbackToFullPass) {
-                    this.runSyncRefilterPass('all');
-                } else {
-                    this.runSyncRefilterPass('comments', scopeRoot);
-                }
-                lastGeneration = this.getRelevantMutationGeneration('comments');
-                this.setRuntimeDiagnosticGauge('filter.syncPass.comments.lastPhase', phase);
-            };
-            this.debugLog('comment-refilter', 'scheduleCommentStabilizedRefilter', { reason });
+            const requestedRoots = roots && typeof roots[Symbol.iterator] === 'function'
+                ? Array.from(roots)
+                : (roots ? [roots] : [document]);
+            this.debugLog('comment-refilter', 'scheduleCommentStabilizedRefilter', { reason, rootCount: requestedRoots.length });
             this._commentRefilterRafId = requestAnimationFrame(() => {
                 this._commentRefilterRafId = 0;
-                rerun('raf', { force: true });
-                [140, 420, 1100].forEach((delay) => {
-                    const timerId = window.setTimeout(() => {
-                        this._commentRefilterTimerIds.delete(timerId);
-                        rerun(`delay:${delay}`);
-                    }, delay);
-                    this._commentRefilterTimerIds.add(timerId);
+                const descriptors = [];
+                const seenElements = new Set();
+                requestedRoots.forEach((root) => {
+                    if (root instanceof Element && !root.isConnected) return;
+                    this.getRefilterTargets('comments', this.resolveRefilterRoot(root)).forEach((descriptor) => {
+                        if (!descriptor?.element || seenElements.has(descriptor.element)) return;
+                        seenElements.add(descriptor.element);
+                        descriptors.push(descriptor);
+                    });
                 });
+                if (descriptors.length === 0) {
+                    this.incrementRuntimeDiagnostic('filter.syncPass.comments.skippedEmptyRoots');
+                    return;
+                }
+                this.runSyncRefilterPass('comments', document, descriptors);
+                this.setRuntimeDiagnosticGauge('filter.syncPass.comments.lastPhase', 'raf:root-scoped');
+                this.setRuntimeDiagnosticGauge('filter.syncPass.comments.lastRootCount', requestedRoots.length);
             });
         },
-        async runFullRefilterPass(reason = 'refilterAllContent', { scheduleFollowups = true } = {}) {
-            await this.reloadSettings();
+        getVisibilityRecoverySurface() {
+            const pageType = window.__dcufRuntimeCoordinator?.getPageContext?.().type
+                || window.__dcufPageContext?.type
+                || 'other';
+            if (pageType === 'lists') {
+                return document.querySelector('table.gall_list, .gall_listwrap, .list_wrap');
+            }
+            if (pageType === 'view') {
+                return document.querySelector('.writing_view_box, .gallview_contents, .view_content_wrap');
+            }
+            if (pageType === 'write') {
+                return document.querySelector('form#write, form[name="modify"][action*="modify_submit"], #write_wrap, .gall_write, .write_box');
+            }
+            return document.body;
+        },
+        captureHiddenVisibilityState() {
+            const runtimeCoordinator = window.__dcufRuntimeCoordinator;
+            runtimeCoordinator?.ensureMutationBus?.();
+            const generation = runtimeCoordinator?.flushPendingMutations?.('visibility-hidden-snapshot')
+                ?? runtimeCoordinator?.getMutationGeneration?.()
+                ?? 0;
+            const bfcacheState = runtimeCoordinator?.getBfcacheRecoveryState?.() || {};
+            this._visibilityCycleId += 1;
+            this._hiddenAt = Date.now();
+            this._hiddenMutationGeneration = generation;
+            this._hiddenBody = document.body;
+            this._hiddenRecoverySurface = this.getVisibilityRecoverySurface();
+            this._hiddenBfcacheRecoveryId = Number(bfcacheState.id) || 0;
+            this.incrementRuntimeDiagnostic('lifecycle.visibility.hidden');
+            this.setRuntimeDiagnosticGauge('lifecycle.visibility.hiddenGeneration', generation);
+        },
+        getHiddenVisibilitySnapshot() {
+            return {
+                cycleId: this._visibilityCycleId,
+                hiddenAt: this._hiddenAt,
+                mutationGeneration: this._hiddenMutationGeneration,
+                body: this._hiddenBody,
+                recoverySurface: this._hiddenRecoverySurface,
+                bfcacheRecoveryId: this._hiddenBfcacheRecoveryId
+            };
+        },
+        isMatchingBfcacheRecovery(snapshot, recoveryState) {
+            return Boolean(
+                snapshot?.hiddenAt
+                && recoveryState?.succeeded
+                && Number(recoveryState.id) > Number(snapshot.bfcacheRecoveryId || 0)
+                && Number(recoveryState.startedAt) >= Number(snapshot.hiddenAt)
+                && recoveryState.body === document.body
+            );
+        },
+        async restoreVisibleState(snapshot) {
+            const runtimeCoordinator = window.__dcufRuntimeCoordinator;
+            runtimeCoordinator?.ensureMutationBus?.();
+
+            let recoveryState = runtimeCoordinator?.getBfcacheRecoveryState?.() || {};
+            const recoveryBelongsToCycle = Number(recoveryState.id) > Number(snapshot.bfcacheRecoveryId || 0)
+                && Number(recoveryState.startedAt) >= Number(snapshot.hiddenAt || 0)
+                && recoveryState.body === document.body;
+            if (recoveryState.pending && recoveryBelongsToCycle) {
+                await runtimeCoordinator.waitForBfcacheRecovery?.();
+                recoveryState = runtimeCoordinator?.getBfcacheRecoveryState?.() || recoveryState;
+            }
+
+            if (this.isMatchingBfcacheRecovery(snapshot, recoveryState)) {
+                await reloadShortcutKey();
+                this.incrementRuntimeDiagnostic('lifecycle.visibility.restore.skippedBfcache');
+                this.setRuntimeDiagnosticGauge('lifecycle.visibility.restore.lastReason', 'bfcache-handled');
+                return { restored: false, reason: 'bfcache-handled' };
+            }
+
+            const previousSettingsSignature = this._settingsSignature;
+            const [, shortcutState] = await Promise.all([
+                this.reloadSettings(),
+                reloadShortcutKey()
+            ]);
+            const generation = runtimeCoordinator?.flushPendingMutations?.('visibility-visible-check')
+                ?? runtimeCoordinator?.getMutationGeneration?.()
+                ?? 0;
+            const currentSurface = this.getVisibilityRecoverySurface();
+            const reasons = [];
+            if (generation !== snapshot.mutationGeneration) reasons.push('mutation');
+            if (snapshot.body !== document.body || (snapshot.body && !snapshot.body.isConnected)) reasons.push('body');
+            if (snapshot.recoverySurface !== currentSurface
+                || (snapshot.recoverySurface && !snapshot.recoverySurface.isConnected)) reasons.push('surface');
+            if (previousSettingsSignature !== this._settingsSignature) reasons.push('settings');
+            if (snapshot.hiddenAt && Date.now() - snapshot.hiddenAt >= this.VISIBILITY_LONG_RESTORE_MS) reasons.push('long-suspend');
+
+            this.setRuntimeDiagnosticGauge('lifecycle.visibility.restore.shortcutChanged', Boolean(shortcutState?.changed));
+            if (reasons.length === 0) {
+                this.incrementRuntimeDiagnostic('lifecycle.visibility.restore.skippedClean');
+                this.setRuntimeDiagnosticGauge('lifecycle.visibility.restore.lastReason', 'clean');
+                return { restored: false, reason: 'clean', shortcutChanged: Boolean(shortcutState?.changed) };
+            }
+
+            const reason = `visibilitychange-visible:${reasons.join('+')}`;
+            await this.refilterAllContent(reason, {
+                scheduleFollowups: false,
+                settingsAlreadyLoaded: true
+            });
+            this.incrementRuntimeDiagnostic('lifecycle.visibility.restore.runs');
+            this.setRuntimeDiagnosticGauge('lifecycle.visibility.restore.lastReason', reasons.join(','));
+            return { restored: true, reason, shortcutChanged: Boolean(shortcutState?.changed) };
+        },
+        async runFullRefilterPass(reason = 'refilterAllContent', { scheduleFollowups = true, settingsAlreadyLoaded = false } = {}) {
+            if (!settingsAlreadyLoaded) await this.reloadSettings();
             const descriptors = this.getRefilterTargets('all');
             this.startDebugPass(reason, { targetCount: descriptors.length });
             this.runSyncRefilterPass('all', document, descriptors, {
@@ -4144,9 +5099,9 @@ const FilterModule = {
             this.setRuntimeDiagnosticGauge('filter.fullRefilter.lastTargetCount', descriptors.length);
             document.dispatchEvent(new CustomEvent('dcFilterRefiltered'));
         },
-        async refilterAllContent(reason = 'refilterAllContent', { scheduleFollowups = true } = {}) {
+        async refilterAllContent(reason = 'refilterAllContent', { scheduleFollowups = true, settingsAlreadyLoaded = false } = {}) {
             if (!this._pendingFullRefilterReasons) this._pendingFullRefilterReasons = [];
-            this._pendingFullRefilterReasons.push({ reason, scheduleFollowups });
+            this._pendingFullRefilterReasons.push({ reason, scheduleFollowups, settingsAlreadyLoaded });
 
             if (this._refilterAllContentRunning) {
                 this.debugLog('refilter', 'coalesced full refilter request', {
@@ -4165,7 +5120,11 @@ const FilterModule = {
                         ? `${lastRequest.reason} [coalesced:${pendingRequests.length}]`
                         : lastRequest.reason;
                     const shouldScheduleFollowups = pendingRequests.some((request) => request.scheduleFollowups !== false);
-                    await this.runFullRefilterPass(runReason, { scheduleFollowups: shouldScheduleFollowups });
+                    const settingsWereLoaded = pendingRequests.every((request) => request.settingsAlreadyLoaded === true);
+                    await this.runFullRefilterPass(runReason, {
+                        scheduleFollowups: shouldScheduleFollowups,
+                        settingsAlreadyLoaded: settingsWereLoaded
+                    });
                 }
             })();
 
@@ -4176,12 +5135,31 @@ const FilterModule = {
                 this._refilterAllContentPromise = null;
             }
         },
-        // [수정] handleVisibilityChange를 async 함수로 변경하고 reloadShortcutKey 호출 추가
         async handleVisibilityChange() {
-            if (document.visibilityState === 'visible') {
-                await reloadShortcutKey(); // 단축키 설정을 다시 로드
-                await this.refilterAllContent('visibilitychange-visible', { scheduleFollowups: false }); // 복구 패스 1회는 유지하고 무변화 지연 패스는 생략
+            if (document.visibilityState !== 'visible') {
+                this.captureHiddenVisibilityState();
+                await this.flushBlockedUidCache('visibility-hidden');
+                return;
             }
+            if (this._visibilityRecoveryPromise) return this._visibilityRecoveryPromise;
+
+            const snapshot = this.getHiddenVisibilitySnapshot();
+            this._visibilityRecoveryPromise = this.restoreVisibleState(snapshot).catch(async (error) => {
+                this.incrementRuntimeDiagnostic('lifecycle.visibility.restore.failed');
+                console.warn('[DCUF lifecycle] visibility restore failed; running fallback refilter.', error);
+                await this.refilterAllContent('visibilitychange-visible:fallback', { scheduleFollowups: false });
+                return { restored: true, reason: 'fallback' };
+            }).finally(() => {
+                this._visibilityRecoveryPromise = null;
+                if (this._visibilityCycleId === snapshot.cycleId && document.visibilityState === 'visible') {
+                    this._hiddenAt = 0;
+                    this._hiddenMutationGeneration = 0;
+                    this._hiddenBody = null;
+                    this._hiddenRecoverySurface = null;
+                    this._hiddenBfcacheRecoveryId = 0;
+                }
+            });
+            return this._visibilityRecoveryPromise;
         },
         init() {
             if (this._initState === 'ready') return Promise.resolve('already-ready');
@@ -4189,7 +5167,7 @@ const FilterModule = {
             this._initState = 'initializing';
             this._initPromise = (async () => {
                 this.installDebugApi();
-                this.debugLog('init', 'FilterModule init start', { version: '1.9.5' });
+                this.debugLog('init', 'FilterModule init start', { version: '1.9.6' });
                 const snapshot = await this.loadBootSnapshot();
                 await this.cleanupLegacyManagedBlockConfig(snapshot);
                 await this.reloadSettings(snapshot);
@@ -4197,6 +5175,14 @@ const FilterModule = {
                 if (!this._visibilityChangeHandler) {
                     this._visibilityChangeHandler = () => this.handleVisibilityChange();
                     document.addEventListener('visibilitychange', this._visibilityChangeHandler);
+                }
+                if (!this._blockedUidPagehideHandler) {
+                    this._blockedUidPagehideHandler = () => {
+                        void this.flushBlockedUidCache('pagehide').catch((error) => {
+                            console.warn('DCinside User Filter: pagehide blocked UID flush failed.', error);
+                        });
+                    };
+                    window.addEventListener('pagehide', this._blockedUidPagehideHandler);
                 }
                 this.initializeUniversalObserver();
                 window.__dcufBootController?.note?.('boot.local-filter-settings-ready');
@@ -4394,6 +5380,7 @@ const FilterModule = {
         },
 
         async showFabScalePanel() {
+            window.__dcufEnsureFilterUiStyles?.();
             document.getElementById('dc-personal-block-size-overlay')?.remove();
             const savedPercent = await this.loadFabScalePercent();
             this.applyFabScalePercent(savedPercent);
@@ -4457,6 +5444,7 @@ const FilterModule = {
 
 
         async createManualBlockPanel({ initialType = 'nickname', onAdded = null } = {}) {
+            window.__dcufEnsureFilterUiStyles?.();
             const existingPanel = document.getElementById('dc-manual-block-panel');
             if (existingPanel) {
                 existingPanel.querySelector('#dc-manual-block-value')?.focus();
@@ -4650,6 +5638,7 @@ const FilterModule = {
             const drawer = document.getElementById('dc-personal-block-drawer');
             if (!fab || !drawer) return;
             const willOpen = drawer.hidden;
+            if (willOpen) window.__dcufEnsureFilterUiStyles?.();
             drawer.hidden = !willOpen;
             fab.setAttribute('aria-expanded', String(willOpen));
             if (willOpen) this.positionFabDrawer();
@@ -4721,6 +5710,26 @@ const FilterModule = {
             let startY = 0;
             let wasDragged = false;
             let suppressClick = false;
+            let dragWidth = 0;
+            let dragHeight = 0;
+            let dragRafId = 0;
+            let pendingDragX = null;
+            let pendingDragY = null;
+
+            const applyFabDragPosition = () => {
+                dragRafId = 0;
+                if (activePointerId === null || pendingDragX === null || pendingDragY === null) return;
+                const nextX = Math.max(0, Math.min(pendingDragX - offsetX, window.innerWidth - dragWidth));
+                const nextY = Math.max(0, Math.min(pendingDragY - offsetY, window.innerHeight - dragHeight));
+                pendingDragX = null;
+                pendingDragY = null;
+                Object.assign(controls.style, {
+                    left: `${Math.round(nextX)}px`,
+                    top: `${Math.round(nextY)}px`,
+                    right: 'auto',
+                    bottom: 'auto'
+                });
+            };
 
             fab.addEventListener('pointerdown', (event) => {
                 if (event.button !== 0 || activePointerId !== null) return;
@@ -4728,6 +5737,8 @@ const FilterModule = {
                 activePointerId = event.pointerId;
                 offsetX = event.clientX - rect.left;
                 offsetY = event.clientY - rect.top;
+                dragWidth = rect.width;
+                dragHeight = rect.height;
                 startX = event.clientX;
                 startY = event.clientY;
                 wasDragged = false;
@@ -4740,20 +5751,15 @@ const FilterModule = {
                 if (!wasDragged) this.closeFabDrawer();
                 wasDragged = true;
                 event.preventDefault();
-                const maxX = Math.max(0, window.innerWidth - controls.offsetWidth);
-                const maxY = Math.max(0, window.innerHeight - controls.offsetHeight);
-                const nextX = Math.max(0, Math.min(event.clientX - offsetX, maxX));
-                const nextY = Math.max(0, Math.min(event.clientY - offsetY, maxY));
-                Object.assign(controls.style, {
-                    left: `${Math.round(nextX)}px`,
-                    top: `${Math.round(nextY)}px`,
-                    right: 'auto',
-                    bottom: 'auto'
-                });
+                pendingDragX = event.clientX;
+                pendingDragY = event.clientY;
+                if (!dragRafId) dragRafId = requestAnimationFrame(applyFabDragPosition);
             });
 
             const finishDrag = (event) => {
                 if (event.pointerId !== activePointerId) return;
+                if (dragRafId) cancelAnimationFrame(dragRafId);
+                applyFabDragPosition();
                 suppressClick = wasDragged;
                 activePointerId = null;
                 fab.releasePointerCapture?.(event.pointerId);
@@ -4800,6 +5806,7 @@ const FilterModule = {
 
         enterSelectionMode() {
             if (this.isSelectionMode) return;
+            window.__dcufEnsureFilterUiStyles?.();
             this.isSelectionMode = true;
             document.body.classList.add('selection-mode-active');
 
@@ -4859,6 +5866,7 @@ const FilterModule = {
 
         // [v2.5.7 수정] 차단/차단 해제 버튼을 동적으로 생성
         showSelectionPopup(userInfo) {
+            window.__dcufEnsureFilterUiStyles?.();
             this.exitSelectionMode();
             this.isSelectionMode = true;
             document.body.classList.add('selection-mode-active');
@@ -5098,6 +6106,7 @@ const FilterModule = {
 
         // [신규] 백업 및 복원 팝업 생성 함수
         async createBackupPopup() {
+            window.__dcufEnsureFilterUiStyles?.();
             if (document.getElementById('dc-backup-popup')) return;
 
             const overlay = document.createElement('div');
@@ -5290,6 +6299,7 @@ const FilterModule = {
 
         // [수정] 차단 관리 패널 로직 전체 개선 (On/Off 스위치, 백업 버튼 추가)
         async createManagementPanel() {
+            window.__dcufEnsureFilterUiStyles?.();
             if (document.getElementById('dc-block-management-panel')) return;
 
 
@@ -5574,7 +6584,30 @@ const FilterModule = {
 
             // 드래그 & 리사이즈 로직 전체 개선
             let isDragging = false, isResizing = false;
-            let offsetX, offsetY, lastX, lastY; // lastX, lastY는 리사이즈 전용
+            let offsetX, offsetY, resizeStartX, resizeStartY;
+            let panelWidth = 0, panelHeight = 0;
+            let dragRafId = 0, pendingPointerX = null, pendingPointerY = null;
+
+            const applyPanelGeometry = () => {
+                dragRafId = 0;
+                if (pendingPointerX === null || pendingPointerY === null) return;
+                const clientX = pendingPointerX;
+                const clientY = pendingPointerY;
+                pendingPointerX = null;
+                pendingPointerY = null;
+
+                if (isDragging) {
+                    let newX = clientX - offsetX;
+                    let newY = clientY - offsetY;
+                    newX = Math.max(0, Math.min(newX, window.innerWidth - panelWidth));
+                    newY = Math.max(0, Math.min(newY, window.innerHeight - panelHeight));
+                    panel.style.left = `${newX}px`;
+                    panel.style.top = `${newY}px`;
+                } else if (isResizing) {
+                    panel.style.width = `${panelWidth + clientX - resizeStartX}px`;
+                    panel.style.height = `${panelHeight + clientY - resizeStartY}px`;
+                }
+            };
 
 
             const onDragStart = (e) => {
@@ -5604,9 +6637,11 @@ const FilterModule = {
                     offsetX = e.clientX - rect.left;
                     offsetY = e.clientY - rect.top;
                 } else if (isResizing) {
-                    lastX = e.clientX;
-                    lastY = e.clientY;
+                    resizeStartX = e.clientX;
+                    resizeStartY = e.clientY;
                 }
+                panelWidth = rect.width;
+                panelHeight = rect.height;
 
 
                 document.addEventListener('mousemove', onDragMove);
@@ -5616,35 +6651,15 @@ const FilterModule = {
 
             const onDragMove = (e) => {
                 e.preventDefault();
-
-
-                if (isDragging) {
-                    const rect = panel.getBoundingClientRect();
-                    let newX = e.clientX - offsetX;
-                    let newY = e.clientY - offsetY;
-
-
-                    newX = Math.max(0, Math.min(newX, window.innerWidth - rect.width));
-                    newY = Math.max(0, Math.min(newY, window.innerHeight - rect.height));
-
-
-                    panel.style.left = `${newX}px`;
-                    panel.style.top = `${newY}px`;
-                } else if (isResizing) {
-                    const dx = e.clientX - lastX;
-                    const dy = e.clientY - lastY;
-                    lastX = e.clientX;
-                    lastY = e.clientY;
-
-
-                    const rect = panel.getBoundingClientRect();
-                    panel.style.width = `${rect.width + dx}px`;
-                    panel.style.height = `${rect.height + dy}px`;
-                }
+                pendingPointerX = e.clientX;
+                pendingPointerY = e.clientY;
+                if (!dragRafId) dragRafId = requestAnimationFrame(applyPanelGeometry);
             };
 
 
             const onDragEnd = () => { // async 키워드 제거
+                if (dragRafId) cancelAnimationFrame(dragRafId);
+                applyPanelGeometry();
                 isDragging = false;
                 isResizing = false;
                 document.removeEventListener('mousemove', onDragMove);
@@ -5675,7 +6690,8 @@ const FilterModule = {
             ['글댓합 설정하기', FilterModule.showSettings.bind(FilterModule)],
             ['차단 유저 관리', PersonalBlockModule.createManagementPanel.bind(PersonalBlockModule)],
             ['플로팅 버튼 원위치', PersonalBlockModule.resetFabPosition.bind(PersonalBlockModule)],
-            ['메뉴 버튼 크기 조절', PersonalBlockModule.showFabScalePanel.bind(PersonalBlockModule)]
+            ['메뉴 버튼 크기 조절', PersonalBlockModule.showFabScalePanel.bind(PersonalBlockModule)],
+            ['UI 색상 설정', ThemeModule.openPaletteDialog.bind(ThemeModule)]
         ];
         menuCommands.forEach(([label, handler]) => {
             try {
@@ -5687,8 +6703,11 @@ const FilterModule = {
     }
 
     async function reloadShortcutKey() {
-        const shortcutString = await GM_getValue(FilterModule.CONSTANTS.STORAGE_KEYS.SHORTCUT_KEY, 'Shift+S');
-        activeShortcutObject = FilterModule.parseShortcutString(shortcutString);
+        const shortcutString = String(await GM_getValue(FilterModule.CONSTANTS.STORAGE_KEYS.SHORTCUT_KEY, 'Shift+S') || 'Shift+S');
+        const changed = activeShortcutString !== null && activeShortcutString !== shortcutString;
+        activeShortcutString = shortcutString;
+        activeShortcutObject = FilterModule.parseShortcutString(activeShortcutString);
+        return { changed, shortcutString: activeShortcutString };
     }
 
     function observeDarkMode() {
@@ -5743,7 +6762,7 @@ const FilterModule = {
 
         __dcufRoot.__dcufPcFilterPortState = 'initializing';
         __dcufRoot.__dcufPcFilterPortPromise = (async () => {
-            console.log('[DCUF PC] Initializing filter port v1.9.5...');
+            console.log('[DCUF PC] Initializing filter port v1.9.6...');
 
             observeDarkMode();
             bindSettingsShortcut();

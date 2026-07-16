@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="디시인사이드 깡계·유동·IP 차단과 모바일 UI를 제공하는 Tampermonkey 사용자 스크립트">
   <title>DCInside User Filter</title>
-  <link rel="stylesheet" href="style.css?v=20260714-ui342">
+  <link rel="stylesheet" href="style.css?v=20260717-ui346">
 </head>
 <body>
   <header class="site-header">
@@ -24,11 +24,11 @@
   <main id="top">
     <section class="hero section-shell">
       <div class="hero-copy">
-        <p class="eyebrow">DCINSIDE · TAMPERMONKEY USERSCRIPT</p>
+        <p class="eyebrow">MOBILE 3.4.6 · PC 1.9.6</p>
         <h1>보고 싶은 글만<br><span>더 편하게.</span></h1>
         <p class="hero-description">
           활동량이 적은 계정부터 유동·통신사·우회 IP, 직접 지정한 닉네임·UID·IP까지
-          한곳에서 관리하는 디시인사이드 사용자 필터입니다.
+          한곳에서 관리하고, 5가지 색상으로 필터 UI를 꾸밀 수 있는 디시인사이드 사용자 필터입니다.
         </p>
         <div class="hero-actions">
           <a class="button button-primary" href="https://github.com/domato153/dc-uidfiltering/raw/refs/heads/main/dcinside_user_filter.user.js">PC 버전 설치</a>
@@ -55,7 +55,7 @@
     </section>
 
     <section class="quick-facts section-shell" aria-label="제품 요약">
-      <div><strong>2</strong><span>PC · 모바일 타깃</span></div>
+      <div><strong>5</strong><span>UI 색상 프리셋</span></div>
       <div><strong>3</strong><span>개인 차단 기준</span></div>
       <div><strong>1 click</strong><span>간편차단</span></div>
       <div><strong>local</strong><span>Tampermonkey 저장소</span></div>
@@ -86,7 +86,17 @@
         <article class="feature-card accent-orange">
           <span class="feature-number">04</span>
           <h3>모바일 UI</h3>
-          <p>목록, 본문, 댓글, 글쓰기와 팝업을 작은 화면과 터치 조작에 맞춥니다.</p>
+          <p>목록, 본문, 댓글, 글쓰기·수정 화면과 팝업을 작은 화면과 터치 조작에 맞춥니다.</p>
+        </article>
+        <article class="feature-card accent-teal">
+          <span class="feature-number">05</span>
+          <h3>5가지 UI 색상</h3>
+          <p>블루·퍼플·그린·오렌지·모노톤을 즉시 미리 보고 저장합니다. PC에서는 필터 UI에만 적용됩니다.</p>
+        </article>
+        <article class="feature-card accent-slate">
+          <span class="feature-number">06</span>
+          <h3>효율적인 복귀 처리</h3>
+          <p>탭과 앱으로 돌아왔을 때 실제 DOM·설정 변화가 있을 때만 필요한 전체 필터링을 수행합니다.</p>
         </article>
       </div>
     </section>
@@ -96,7 +106,20 @@
         <div class="section-heading light">
           <p class="eyebrow">SCREENSHOTS</p>
           <h2>실제 사용 화면</h2>
-          <p>3.4.1의 글 목록부터 본문과 댓글, 글 작성, 필터와 직접 차단·목록 관리까지 Lemur Browser에서 실행한 실제 화면입니다. 이미지를 누르면 원본 크기로 볼 수 있습니다.</p>
+          <p>3.4.6의 색상 프리셋과 플로팅 메뉴, 글 목록부터 본문·댓글·글 작성, 필터와 직접 차단·목록 관리까지의 실제 화면입니다. 이미지를 누르면 원본 크기로 볼 수 있습니다.</p>
+        </div>
+        <div class="palette-showcase">
+          <div class="palette-showcase-copy">
+            <p class="eyebrow">NEW IN 3.4.6 / 1.9.6</p>
+            <h3>한 번 고르고, 모든 필터 UI에.</h3>
+            <p>기본 블루, 퍼플, 그린, 오렌지, 모노톤 중 하나를 저장하면 모바일 화면과 DCUF 팝업이 같은 강조색을 사용합니다. PC는 사이트 원본 UI를 건드리지 않고 필터가 만든 버튼과 팝업에만 적용됩니다.</p>
+            <a class="palette-dialog-link" href="assets/palette-dialog-3.4.6.png"><img src="assets/palette-dialog-3.4.6.png" alt="5가지 UI 색상 설정 창"></a>
+          </div>
+          <div class="palette-gallery" aria-label="색상 프리셋 적용 화면">
+            <a class="palette-shot palette-shot-main" href="assets/palette-menu-orange-3.4.6.png"><img src="assets/palette-menu-orange-3.4.6.png" alt="오렌지 프리셋 갤러리와 플로팅 메뉴"></a>
+            <a class="palette-shot" href="assets/palette-menu-green-3.4.6.png"><img src="assets/palette-menu-green-3.4.6.png" alt="그린 프리셋 갤러리와 플로팅 메뉴"></a>
+            <a class="palette-shot" href="assets/palette-menu-purple-3.4.6.png"><img src="assets/palette-menu-purple-3.4.6.png" alt="퍼플 프리셋 갤러리와 플로팅 메뉴"></a>
+          </div>
         </div>
         <div class="screen-grid">
           <figure class="screen-card">
@@ -144,12 +167,16 @@
         <p class="eyebrow">PC & MOBILE</p>
         <h2>필터는 함께, 화면 변경은 모바일만</h2>
       </div>
+      <div class="compare-table-wrap">
       <div class="compare-table" role="table" aria-label="PC와 모바일 기능 비교">
         <div class="compare-row compare-head" role="row"><span>기능</span><strong>PC</strong><strong>모바일</strong></div>
         <div class="compare-row" role="row"><span>활동량·비율 필터</span><strong>✓</strong><strong>✓</strong></div>
         <div class="compare-row" role="row"><span>유동·통신사·우회 IP 차단</span><strong>✓</strong><strong>✓</strong></div>
         <div class="compare-row" role="row"><span>개인 차단·백업</span><strong>✓</strong><strong>✓</strong></div>
+        <div class="compare-row" role="row"><span>UI 색상 프리셋</span><strong>✓*</strong><strong>✓</strong></div>
         <div class="compare-row" role="row"><span>목록·본문·댓글 UI 재배치</span><strong>—</strong><strong>✓</strong></div>
+      </div>
+      <p class="compare-note">* PC는 DCUF 필터 버튼과 설정·차단·백업 팝업에만 색상이 적용됩니다.</p>
       </div>
     </section>
 
