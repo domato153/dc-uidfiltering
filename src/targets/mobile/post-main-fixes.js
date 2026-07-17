@@ -422,7 +422,7 @@
         .custom-bottom-controls .dcuf-bottom-action-card a.on {
             border-color: var(--dcuf-theme-accent-strong, #315fdb) !important;
             background: linear-gradient(180deg, var(--dcuf-theme-primary-top, #527df0) 0%, var(--dcuf-theme-accent-strong, #315fdc) 100%) !important;
-            color: #fff !important;
+            color: var(--dcuf-theme-on-accent, #fff) !important;
             box-shadow:
                 inset 0 1px 0 rgba(255, 255, 255, 0.28),
                 0 7px 14px var(--dcuf-theme-accent-shadow, rgba(49, 95, 220, 0.24)) !important;
@@ -445,7 +445,7 @@
             min-height: 44px !important;
             border-color: var(--dcuf-theme-accent-strong, #2e5bd4) !important;
             background: linear-gradient(180deg, var(--dcuf-theme-primary-top, #527cf0) 0%, var(--dcuf-theme-accent-strong, #2e5bd4) 100%) !important;
-            color: #fff !important;
+            color: var(--dcuf-theme-on-accent, #fff) !important;
             box-shadow:
                 inset 0 1px 0 rgba(255, 255, 255, 0.28),
                 0 8px 16px var(--dcuf-theme-accent-shadow, rgba(46, 91, 212, 0.25)) !important;
@@ -616,7 +616,7 @@
         .custom-bottom-controls .bottom_paging_box > .on {
             border-color: var(--dcuf-theme-accent-strong, #315fdb) !important;
             background: linear-gradient(180deg, var(--dcuf-theme-primary-top, #527df0) 0%, var(--dcuf-theme-accent-strong, #315fdc) 100%) !important;
-            color: #fff !important;
+            color: var(--dcuf-theme-on-accent, #fff) !important;
             box-shadow: 0 6px 12px var(--dcuf-theme-accent-shadow, rgba(49, 95, 220, 0.22)) !important;
         }
         .custom-bottom-controls .dcuf-pagination-card .bottom_movebox {
@@ -683,7 +683,7 @@
             display: block !important;
             width: 15px !important;
             height: 15px !important;
-            border: 3px solid #fff !important;
+            border: 3px solid var(--dcuf-theme-on-accent, #fff) !important;
             border-radius: 50% !important;
             background: transparent !important;
             background-image: none !important;
@@ -702,7 +702,7 @@
             height: 3px !important;
             border: 0 !important;
             border-radius: 999px !important;
-            background: #fff !important;
+            background: var(--dcuf-theme-on-accent, #fff) !important;
             background-image: none !important;
             box-sizing: border-box !important;
             transform: translate(3px, 5px) rotate(45deg) !important;
@@ -821,7 +821,7 @@
             background-image: linear-gradient(180deg, var(--dcuf-theme-primary-top, #527cf0) 0%, var(--dcuf-theme-accent-strong, #2e5bd4) 100%) !important;
             background-position: 0 0 !important;
             background-repeat: no-repeat !important;
-            color: #fff !important;
+            color: var(--dcuf-theme-on-accent, #fff) !important;
             font-size: 14px !important;
             font-weight: 800 !important;
             line-height: 1 !important;
@@ -946,7 +946,7 @@
         #container.mini_view .view_bottom_btnbox .write {
             border-color: var(--dcuf-theme-accent-strong, #2e5bd4) !important;
             background: linear-gradient(180deg, var(--dcuf-theme-primary-top, #527cf0) 0%, var(--dcuf-theme-accent-strong, #2e5bd4) 100%) !important;
-            color: #fff !important;
+            color: var(--dcuf-theme-on-accent, #fff) !important;
             box-shadow: 0 8px 16px var(--dcuf-theme-accent-shadow, rgba(46, 91, 212, 0.25)) !important;
         }
 
@@ -1204,7 +1204,7 @@
         body.dc-filter-dark-mode .custom-bottom-controls .dcuf-bottom-action-card a.on {
             border-color: var(--dcuf-theme-accent, #4c7bf0) !important;
             background: linear-gradient(180deg, var(--dcuf-theme-primary-top, #5b86f2) 0%, var(--dcuf-theme-accent-strong, #3868df) 100%) !important;
-            color: #fff !important;
+            color: var(--dcuf-theme-on-accent, #fff) !important;
             box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.24), 0 7px 14px var(--dcuf-theme-accent-shadow, rgba(31, 68, 164, 0.4)) !important;
         }
 
@@ -1249,7 +1249,7 @@
         body.dc-filter-dark-mode #container.mini_view .view_bottom_btnbox .write {
             border-color: var(--dcuf-theme-accent, #4c7bf0) !important;
             background: linear-gradient(180deg, var(--dcuf-theme-primary-top, #5b86f2) 0%, var(--dcuf-theme-accent-strong, #3868df) 100%) !important;
-            color: #fff !important;
+            color: var(--dcuf-theme-on-accent, #fff) !important;
             box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.24), 0 7px 14px var(--dcuf-theme-accent-shadow, rgba(31, 68, 164, 0.4)) !important;
         }
         body.dc-filter-dark-mode:not(.is-write-page) .list_array_option .select_box.array_num > .select_area > a {
@@ -6613,7 +6613,7 @@
         body.is-write-page form.dcuf-write-form [data-headtext].active {
             border-color: var(--dcuf-write-accent-strong) !important;
             background: var(--dcuf-write-accent-strong) !important;
-            color: #fff !important;
+            color: var(--dcuf-theme-on-accent, #fff) !important;
         }
         body.is-write-page form.dcuf-write-form .editor_wrap,
         body.is-write-page form.dcuf-write-form .note-editor,
@@ -6952,7 +6952,7 @@
         body.is-write-page form.dcuf-write-form > .btn_box.write > .btn_blue {
             border-color: var(--dcuf-write-accent-strong) !important;
             background: linear-gradient(180deg, var(--dcuf-theme-primary-top, #426fe4) 0%, var(--dcuf-write-accent-strong) 100%) !important;
-            color: #fff !important;
+            color: var(--dcuf-theme-on-accent, #fff) !important;
         }
         /* Visual refinement: match the mobile list/article card language. */
         body.is-write-page form.dcuf-write-form {
@@ -7028,7 +7028,7 @@
         body.is-write-page form.dcuf-write-form .write_subject .subject_list > li.active {
             border-color: var(--dcuf-write-accent-strong) !important;
             background: var(--dcuf-write-accent-strong) !important;
-            color: #fff !important;
+            color: var(--dcuf-theme-on-accent, #fff) !important;
             box-shadow: 0 4px 10px var(--dcuf-theme-accent-shadow, rgba(36, 91, 218, 0.2)) !important;
         }
         body.is-write-page form.dcuf-write-form .editor_wrap,
@@ -7194,7 +7194,7 @@
         body.is-write-page form.dcuf-write-form > .btn_box.write > .btn_blue {
             border-color: var(--dcuf-write-accent-strong) !important;
             background: linear-gradient(180deg, var(--dcuf-theme-primary-top, #426fe4) 0%, var(--dcuf-write-accent-strong) 100%) !important;
-            color: #fff !important;
+            color: var(--dcuf-theme-on-accent, #fff) !important;
             box-shadow: 0 6px 14px var(--dcuf-theme-accent-shadow, rgba(36, 91, 218, 0.24)) !important;
         }
         body.is-write-page > #leave_confirm_box.dcuf-write-leave-confirm {
@@ -7250,7 +7250,7 @@
         body.is-write-page > #leave_confirm_box.dcuf-write-leave-confirm .pop_head.bg h3 {
             margin: 0 !important;
             padding: 0 !important;
-            color: #fff !important;
+            color: var(--dcuf-theme-on-accent, #fff) !important;
             font-size: 17px !important;
             font-weight: 700 !important;
             line-height: 1.2 !important;
@@ -7310,7 +7310,7 @@
         body.is-write-page > #leave_confirm_box.dcuf-write-leave-confirm .write_cont > .btn_box > .btn_blue {
             border-color: var(--dcuf-write-accent-strong) !important;
             background: linear-gradient(180deg, var(--dcuf-theme-primary-top, #426fe4) 0%, var(--dcuf-write-accent-strong) 100%) !important;
-            color: #fff !important;
+            color: var(--dcuf-theme-on-accent, #fff) !important;
             box-shadow: 0 6px 14px var(--dcuf-theme-accent-shadow, rgba(36, 91, 218, 0.22)) !important;
         }
         body.is-write-page > #leave_confirm_box.dcuf-write-leave-confirm .pop_content.write_ly > .poply_whiteclose {
@@ -7338,7 +7338,7 @@
             width: 22px !important;
             height: 1px !important;
             border: 0 !important;
-            background: #fff !important;
+            background: var(--dcuf-theme-on-accent, #fff) !important;
             transform: rotate(45deg) !important;
         }
         body.is-write-page > #leave_confirm_box.dcuf-write-leave-confirm .pop_content.write_ly > .poply_whiteclose::after {

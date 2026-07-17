@@ -6,7 +6,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const rootDir = path.resolve(__dirname, '..');
 
-const VERSION = '1.9.6';
+const VERSION = '1.9.7';
 const OUTPUT_NAME = `dcinside_user_filter_v${VERSION}.user.js`;
 
 const PC_PARTS = [

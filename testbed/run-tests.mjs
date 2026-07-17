@@ -1982,6 +1982,10 @@ mobileTest('mobile popup pinch resize preserves an off-center real-touch focal p
 
         await session.page.locator('#dc-block-management-panel .panel-backup-btn').click();
         assertPinchGeometry('backup', await pinchAndMeasure('#dc-backup-popup'));
+        await session.page.locator('#dc-backup-popup, #dc-backup-popup-overlay, #dc-block-management-panel, #dc-block-management-panel-overlay').evaluateAll((elements) => elements.forEach((element) => element.remove()));
+
+        await session.page.evaluate(() => window.__dcufTestbedGM.invokeMenu('UI 색상 설정'));
+        assertPinchGeometry('palette', await pinchAndMeasure('#dcuf-palette-panel'));
         assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
     } finally {
         await session.close();
@@ -4079,12 +4083,34 @@ mobileTest('UI palette presets normalize stored values without blocking boot', '
         purple: { light: '#6d28d9', dark: '#7c3aed' },
         green: { light: '#047857', dark: '#047857' },
         orange: { light: '#9a3412', dark: '#c2410c' },
-        mono: { light: '#374151', dark: '#475569' }
+        mono: { light: '#374151', dark: '#475569' },
+        indigo: { light: '#4338ca', dark: '#3730a3' },
+        sky: { light: '#0369a1', dark: '#075985' },
+        cyan: { light: '#0e7490', dark: '#155e75' },
+        teal: { light: '#115e59', dark: '#115e59' },
+        lime: { light: '#4d7c0f', dark: '#3f6212' },
+        amber: { light: '#b45309', dark: '#92400e' },
+        red: { light: '#b91c1c', dark: '#991b1b' },
+        rose: { light: '#be123c', dark: '#9f1239' },
+        pink: { light: '#be185d', dark: '#9d174d' }
     };
     const hexToRgb = (hex) => {
         const value = hex.replace('#', '');
         return `rgb(${Number.parseInt(value.slice(0, 2), 16)}, ${Number.parseInt(value.slice(2, 4), 16)}, ${Number.parseInt(value.slice(4, 6), 16)})`;
     };
+    const contrastRatio = (foreground, background) => {
+        const luminance = (value) => {
+            const channels = (value.match(/[\d.]+/g) || []).slice(0, 3).map(Number).map((channel) => {
+                const normalized = channel / 255;
+                return normalized <= 0.03928 ? normalized / 12.92 : ((normalized + 0.055) / 1.055) ** 2.4;
+            });
+            return 0.2126 * channels[0] + 0.7152 * channels[1] + 0.0722 * channels[2];
+        };
+        const foregroundLuminance = luminance(foreground);
+        const backgroundLuminance = luminance(background);
+        return (Math.max(foregroundLuminance, backgroundLuminance) + 0.05) / (Math.min(foregroundLuminance, backgroundLuminance) + 0.05);
+    };
+    const strictContrastPalettes = new Set(['indigo', 'sky', 'cyan', 'teal', 'lime', 'amber', 'red', 'rose', 'pink']);
     for (const [stored, expected] of [
         [undefined, 'blue'],
         ['blue', 'blue'],
@@ -4092,6 +4118,15 @@ mobileTest('UI palette presets normalize stored values without blocking boot', '
         ['green', 'green'],
         ['orange', 'orange'],
         ['mono', 'mono'],
+        ['indigo', 'indigo'],
+        ['sky', 'sky'],
+        ['cyan', 'cyan'],
+        ['teal', 'teal'],
+        ['lime', 'lime'],
+        ['amber', 'amber'],
+        ['red', 'red'],
+        ['rose', 'rose'],
+        ['pink', 'pink'],
         ['unknown-palette', 'blue']
     ]) {
         const storage = { ...noStatsStorage };
@@ -4115,13 +4150,20 @@ mobileTest('UI palette presets normalize stored values without blocking boot', '
                     strong: rootStyle.getPropertyValue('--dcuf-theme-accent-strong').trim().toLowerCase(),
                     controls: selectors.map((selector) => {
                         const element = document.querySelector(selector);
-                        return { selector, color: element ? getComputedStyle(element).backgroundColor : null };
+                        const style = element ? getComputedStyle(element) : null;
+                        const foreground = element && selector.includes('bnt_search')
+                            ? getComputedStyle(element, '::before').borderTopColor
+                            : style?.color || null;
+                        return { selector, color: style?.backgroundColor || null, foreground };
                     })
                 };
             });
             assert.equal(lightColors.strong, strongColors[expected].light, JSON.stringify(lightColors));
-            lightColors.controls.forEach(({ selector, color }) => {
+            lightColors.controls.forEach(({ selector, color, foreground }) => {
                 assert.equal(color, hexToRgb(strongColors[expected].light), `${expected} light ${selector}: ${color}`);
+                if (strictContrastPalettes.has(expected)) {
+                    assert.equal(contrastRatio(foreground, color) >= 4.5, true, `${expected} light ${selector} contrast: ${contrastRatio(foreground, color)}`);
+                }
             });
             assertPaletteSurfaces(await collectPaletteSurfaceContract(session.page, [
                 { selector: '.custom-mobile-list', token: '--dcuf-theme-canvas' },
@@ -4153,13 +4195,20 @@ mobileTest('UI palette presets normalize stored values without blocking boot', '
                     strong: rootStyle.getPropertyValue('--dcuf-theme-accent-strong').trim().toLowerCase(),
                     controls: selectors.map((selector) => {
                         const element = document.querySelector(selector);
-                        return { selector, color: element ? getComputedStyle(element).backgroundColor : null };
+                        const style = element ? getComputedStyle(element) : null;
+                        const foreground = element && selector.includes('bnt_search')
+                            ? getComputedStyle(element, '::before').borderTopColor
+                            : style?.color || null;
+                        return { selector, color: style?.backgroundColor || null, foreground };
                     })
                 };
             });
             assert.equal(darkColors.strong, strongColors[expected].dark, JSON.stringify(darkColors));
-            darkColors.controls.forEach(({ selector, color }) => {
+            darkColors.controls.forEach(({ selector, color, foreground }) => {
                 assert.equal(color, hexToRgb(strongColors[expected].dark), `${expected} dark ${selector}: ${color}`);
+                if (strictContrastPalettes.has(expected)) {
+                    assert.equal(contrastRatio(foreground, color) >= 4.5, true, `${expected} dark ${selector} contrast: ${contrastRatio(foreground, color)}`);
+                }
             });
             assertPaletteSurfaces(await collectPaletteSurfaceContract(session.page, [
                 { selector: '.custom-mobile-list', token: '--dcuf-theme-canvas' },
@@ -4877,7 +4926,7 @@ mobileTest('UI palette menu previews, saves, restores, and remains singleton', '
         await session.page.evaluate(() => window.__dcufTestbedGM.invokeMenu('UI 색상 설정'));
         const panel = session.page.locator('#dcuf-palette-panel');
         assert.equal(await panel.count(), 1);
-        assert.equal(await panel.locator('.dcuf-palette-option').count(), 5);
+        assert.equal(await panel.locator('.dcuf-palette-option').count(), 14);
         assert.equal(await panel.getAttribute('role'), 'dialog');
         const geometry = await panel.evaluate((element) => {
             const rect = element.getBoundingClientRect();
@@ -4896,6 +4945,64 @@ mobileTest('UI palette menu previews, saves, restores, and remains singleton', '
         assert.equal(geometry.close.width >= 44 && geometry.close.height >= 44, true);
         assert.equal(geometry.optionHeight >= 44, true);
         assert.equal(geometry.zIndex >= 2147483646, true);
+
+        const scrollContract = await panel.locator('.dcuf-palette-options').evaluate((element) => {
+            element.scrollTop = Math.min(160, element.scrollHeight);
+            return {
+                clientHeight: element.clientHeight,
+                scrollHeight: element.scrollHeight,
+                scrollTop: element.scrollTop,
+                overflowY: getComputedStyle(element).overflowY,
+                touchAction: getComputedStyle(element).touchAction
+            };
+        });
+        assert.equal(scrollContract.scrollHeight > scrollContract.clientHeight, true, JSON.stringify(scrollContract));
+        assert.equal(scrollContract.scrollTop > 0, true, JSON.stringify(scrollContract));
+        assert.equal(scrollContract.overflowY, 'auto', JSON.stringify(scrollContract));
+        assert.equal(scrollContract.touchAction.includes('pan-y'), true, JSON.stringify(scrollContract));
+
+        const beforeDrag = await panel.boundingBox();
+        const headerBox = await panel.locator('.dcuf-palette-header').boundingBox();
+        await session.page.mouse.move(headerBox.x + 90, headerBox.y + (headerBox.height / 2));
+        await session.page.mouse.down();
+        await session.page.mouse.move(headerBox.x + 112, headerBox.y + (headerBox.height / 2) + 24, { steps: 5 });
+        await session.page.mouse.up();
+        const afterDrag = await panel.boundingBox();
+        assert.equal(Math.abs(afterDrag.x - beforeDrag.x) >= 8 || Math.abs(afterDrag.y - beforeDrag.y) >= 8, true, JSON.stringify({ beforeDrag, afterDrag }));
+        assert.equal(afterDrag.x >= 4 && afterDrag.y >= 4, true, JSON.stringify(afterDrag));
+        assert.equal(afterDrag.x + afterDrag.width <= 386 && afterDrag.y + afterDrag.height <= 840, true, JSON.stringify(afterDrag));
+
+        const resizeHandle = panel.locator('.dcuf-palette-resize-handle');
+        const resizeHandleBox = await resizeHandle.boundingBox();
+        const beforeResize = await panel.boundingBox();
+        await session.page.mouse.move(resizeHandleBox.x + (resizeHandleBox.width / 2), resizeHandleBox.y + (resizeHandleBox.height / 2));
+        await session.page.mouse.down();
+        await session.page.mouse.move(resizeHandleBox.x - 36, resizeHandleBox.y - 72, { steps: 5 });
+        await session.page.mouse.up();
+        const afterResize = await panel.boundingBox();
+        assert.equal(afterResize.width < beforeResize.width && afterResize.height < beforeResize.height, true, JSON.stringify({ beforeResize, afterResize }));
+        assert.equal(afterResize.width >= 300 && afterResize.height >= 320, true, JSON.stringify(afterResize));
+
+        await panel.locator('[data-palette-id="rose"]').click();
+        const roseContrast = await panel.locator('[data-dcuf-palette-action="save"]').evaluate((element) => {
+            const style = getComputedStyle(element);
+            const rgb = (value) => (value.match(/[\d.]+/g) || []).slice(0, 3).map(Number);
+            const luminance = (value) => {
+                const [r, g, b] = rgb(value).map((channel) => {
+                    const normalized = channel / 255;
+                    return normalized <= 0.03928 ? normalized / 12.92 : ((normalized + 0.055) / 1.055) ** 2.4;
+                });
+                return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+            };
+            const foreground = luminance(style.color);
+            const background = luminance(style.backgroundColor);
+            return {
+                ratio: (Math.max(foreground, background) + 0.05) / (Math.min(foreground, background) + 0.05),
+                onAccent: getComputedStyle(document.documentElement).getPropertyValue('--dcuf-theme-on-accent').trim().toLowerCase()
+            };
+        });
+        assert.equal(roseContrast.onAccent, '#fff');
+        assert.equal(roseContrast.ratio >= 4.5, true, JSON.stringify(roseContrast));
 
         const writesBeforePreview = (await session.page.evaluate(() => window.__dcufTestbedGM.snapshot().writes)).length;
         await panel.locator('[data-palette-id="purple"]').click();
@@ -4994,6 +5101,31 @@ pcTest('PC palette port themes only DCUF-owned controls and dialogs', 'functiona
 
         await session.page.evaluate(() => window.__dcufTestbedGM.invokeMenu('UI 색상 설정'));
         const palettePanel = session.page.locator('#dcuf-palette-panel');
+        assert.equal(await palettePanel.locator('.dcuf-palette-option').count(), 14);
+
+        const pcBeforeDrag = await palettePanel.boundingBox();
+        const pcHeader = await palettePanel.locator('.dcuf-palette-header').boundingBox();
+        await session.page.mouse.move(pcHeader.x + 120, pcHeader.y + (pcHeader.height / 2));
+        await session.page.mouse.down();
+        await session.page.mouse.move(pcHeader.x + 190, pcHeader.y + (pcHeader.height / 2) + 45, { steps: 5 });
+        await session.page.mouse.up();
+        const pcAfterDrag = await palettePanel.boundingBox();
+        assert.equal(pcAfterDrag.x > pcBeforeDrag.x && pcAfterDrag.y > pcBeforeDrag.y, true, JSON.stringify({ pcBeforeDrag, pcAfterDrag }));
+
+        const pcResizeHandle = await palettePanel.locator('.dcuf-palette-resize-handle').boundingBox();
+        const pcBeforeResize = await palettePanel.boundingBox();
+        await session.page.mouse.move(pcResizeHandle.x + (pcResizeHandle.width / 2), pcResizeHandle.y + (pcResizeHandle.height / 2));
+        await session.page.mouse.down();
+        await session.page.mouse.move(pcResizeHandle.x - 105, pcResizeHandle.y - 185, { steps: 5 });
+        await session.page.mouse.up();
+        const pcAfterResize = await palettePanel.boundingBox();
+        assert.equal(pcAfterResize.width < pcBeforeResize.width && pcAfterResize.height < pcBeforeResize.height, true, JSON.stringify({ pcBeforeResize, pcAfterResize }));
+        const pcScroll = await palettePanel.locator('.dcuf-palette-options').evaluate((element) => {
+            element.scrollTop = 120;
+            return { clientHeight: element.clientHeight, scrollHeight: element.scrollHeight, scrollTop: element.scrollTop };
+        });
+        assert.equal(pcScroll.scrollHeight > pcScroll.clientHeight && pcScroll.scrollTop > 0, true, JSON.stringify(pcScroll));
+
         await palettePanel.locator('[data-palette-id="orange"]').click();
         assert.equal(await session.page.getAttribute('html', 'data-dcuf-palette'), 'orange');
         const previewContract = await session.page.evaluate(() => {
@@ -5116,6 +5248,43 @@ mobileTest('UI palette tokens drive the mobile write surface', 'write', async ({
             };
         });
         assert.deepEqual(darkContract, { accent: '#fdba74', strong: '#c2410c', submitBackground: 'rgb(194, 65, 12)' });
+        assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
+    } finally { await session.close(); }
+});
+
+mobileTest('single-tone UI palette keeps mobile write actions readable', 'write', async ({ browser, server }) => {
+    const session = await createTestPage(browser, server.baseUrl, {
+        storage: { ...noStatsStorage, [storageKeys.palette]: 'rose' },
+        viewport: { width: 390, height: 844 }
+    });
+    const readContract = () => session.page.locator('#write-submit').evaluate((element) => {
+        const style = getComputedStyle(element);
+        const luminance = (value) => {
+            const channels = (value.match(/[\d.]+/g) || []).slice(0, 3).map(Number).map((channel) => {
+                const normalized = channel / 255;
+                return normalized <= 0.03928 ? normalized / 12.92 : ((normalized + 0.055) / 1.055) ** 2.4;
+            });
+            return 0.2126 * channels[0] + 0.7152 * channels[1] + 0.0722 * channels[2];
+        };
+        const foreground = luminance(style.color);
+        const background = luminance(style.backgroundColor);
+        return {
+            background: style.backgroundColor,
+            color: style.color,
+            contrast: (Math.max(foreground, background) + 0.05) / (Math.min(foreground, background) + 0.05)
+        };
+    });
+    try {
+        await session.goto('/board/write/?id=test');
+        const light = await readContract();
+        assert.deepEqual({ background: light.background, color: light.color }, { background: 'rgb(190, 18, 60)', color: 'rgb(255, 255, 255)' });
+        assert.equal(light.contrast >= 4.5, true, JSON.stringify(light));
+
+        await session.page.evaluate(() => window.__dcufFixture.toggleDark(true));
+        await session.page.waitForTimeout(40);
+        const dark = await readContract();
+        assert.deepEqual({ background: dark.background, color: dark.color }, { background: 'rgb(159, 18, 57)', color: 'rgb(255, 255, 255)' });
+        assert.equal(dark.contrast >= 4.5, true, JSON.stringify(dark));
         assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
     } finally { await session.close(); }
 });

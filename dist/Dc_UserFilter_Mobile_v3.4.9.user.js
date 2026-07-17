@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         DC_UserFilter_Mobile
 // @namespace    http://tampermonkey.net/
-// @version      3.4.8
+// @version      3.4.9
 // @description  유저 필터링, UI 개선, 개인 차단/해제 기능
 // @author       domato153
 // @match        https://gall.dcinside.com/board/*
@@ -1730,7 +1730,16 @@ const ThemeModule = (() => {
         Object.freeze({ id: 'purple', label: '퍼플', light: ['#7c3aed', '#6d28d9', '#f3e8ff'], dark: ['#c4b5fd', '#7c3aed', '#39275a'] }),
         Object.freeze({ id: 'green', label: '그린', light: ['#16805d', '#047857', '#e7f7ef'], dark: ['#6ee7b7', '#047857', '#173c32'] }),
         Object.freeze({ id: 'orange', label: '오렌지', light: ['#c2410c', '#9a3412', '#fff0e7'], dark: ['#fdba74', '#c2410c', '#4a2a1b'] }),
-        Object.freeze({ id: 'mono', label: '모노톤', light: ['#526274', '#374151', '#eef2f7'], dark: ['#cbd5e1', '#475569', '#28323f'] })
+        Object.freeze({ id: 'mono', label: '모노톤', light: ['#526274', '#374151', '#eef2f7'], dark: ['#cbd5e1', '#475569', '#28323f'] }),
+        Object.freeze({ id: 'indigo', label: '인디고', light: ['#4f46e5', '#4338ca', '#eef2ff'], dark: ['#4f46e5', '#3730a3', '#29274f'] }),
+        Object.freeze({ id: 'sky', label: '스카이', light: ['#0284c7', '#0369a1', '#e0f2fe'], dark: ['#0369a1', '#075985', '#17384a'] }),
+        Object.freeze({ id: 'cyan', label: '시안', light: ['#0891b2', '#0e7490', '#ecfeff'], dark: ['#0e7490', '#155e75', '#173b44'] }),
+        Object.freeze({ id: 'teal', label: '틸', light: ['#0f766e', '#115e59', '#e6f7f4'], dark: ['#0f766e', '#115e59', '#173c38'] }),
+        Object.freeze({ id: 'lime', label: '라임', light: ['#65a30d', '#4d7c0f', '#f7fee7'], dark: ['#4d7c0f', '#3f6212', '#2c3918'] }),
+        Object.freeze({ id: 'amber', label: '앰버', light: ['#d97706', '#b45309', '#fffbeb'], dark: ['#b45309', '#92400e', '#493016'] }),
+        Object.freeze({ id: 'red', label: '레드', light: ['#dc2626', '#b91c1c', '#fef2f2'], dark: ['#c62828', '#991b1b', '#4a2020'] }),
+        Object.freeze({ id: 'rose', label: '로즈', light: ['#e11d48', '#be123c', '#fff1f2'], dark: ['#cf234c', '#9f1239', '#4a202d'] }),
+        Object.freeze({ id: 'pink', label: '핑크', light: ['#db2777', '#be185d', '#fce7f3'], dark: ['#c52a72', '#9d174d', '#472138'] })
     ]);
     const VALID_IDS = new Set(PRESETS.map((preset) => preset.id));
 
@@ -1759,21 +1768,21 @@ const ThemeModule = (() => {
     };
 
     const buildPresetVariables = () => PRESETS.map((preset) => {
-        const [accent, strong, soft] = preset.light;
-        const [darkAccent, darkStrong, darkSoft] = preset.dark;
+        const [accent, strong, soft, onAccent = '#fff'] = preset.light;
+        const [darkAccent, darkStrong, darkSoft, darkOnAccent = '#fff'] = preset.dark;
         return `
             html[${ROOT_ATTRIBUTE}="${preset.id}"] {
                 --dcuf-theme-accent: ${accent};
                 --dcuf-theme-accent-strong: ${strong};
                 --dcuf-theme-accent-soft: ${soft};
-                --dcuf-theme-on-accent: #fff;
+                --dcuf-theme-on-accent: ${onAccent};
             }
             html[${ROOT_ATTRIBUTE}="${preset.id}"].dc-filter-dark-mode,
             html[${ROOT_ATTRIBUTE}="${preset.id}"] body.dc-filter-dark-mode {
                 --dcuf-theme-accent: ${darkAccent};
                 --dcuf-theme-accent-strong: ${darkStrong};
                 --dcuf-theme-accent-soft: ${darkSoft};
-                --dcuf-theme-on-accent: #fff;
+                --dcuf-theme-on-accent: ${darkOnAccent};
             }
         `;
     }).join('\n');
@@ -2790,9 +2799,18 @@ const ThemeModule = (() => {
         }
         #${PANEL_ID} {
             box-sizing: border-box !important;
+            position: fixed !important;
+            left: 50% !important;
+            top: 50% !important;
+            transform: translate(-50%, -50%);
+            display: flex !important;
+            flex-direction: column !important;
             width: min(520px, calc(100vw - 32px)) !important;
+            height: min(680px, calc(100dvh - 32px)) !important;
+            min-width: min(300px, calc(100vw - 16px)) !important;
+            min-height: min(360px, calc(100dvh - 16px)) !important;
             max-height: calc(100dvh - 32px) !important;
-            overflow: hidden auto !important;
+            overflow: hidden !important;
             padding: 0 !important;
             border: 1px solid var(--dcuf-theme-border-strong) !important;
             border-radius: 20px !important;
@@ -2801,7 +2819,9 @@ const ThemeModule = (() => {
             box-shadow: var(--dcuf-theme-panel-shadow) !important;
             font: 500 14px/1.45 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
         }
+        #${PANEL_ID}[data-dcuf-palette-interacting="true"] { transition: none !important; animation: none !important; }
         #${PANEL_ID} .dcuf-palette-header {
+            flex: 0 0 auto !important;
             display: flex !important;
             align-items: center !important;
             justify-content: space-between !important;
@@ -2809,6 +2829,9 @@ const ThemeModule = (() => {
             padding: 18px 18px 14px !important;
             border-bottom: 1px solid var(--dcuf-theme-border) !important;
             background: linear-gradient(180deg, var(--dcuf-theme-card-top), var(--dcuf-theme-surface-raised)) !important;
+            cursor: move !important;
+            touch-action: none !important;
+            user-select: none !important;
         }
         #${PANEL_ID} h2 { margin: 0 !important; color: inherit !important; font-size: 20px !important; line-height: 1.2 !important; }
         #${PANEL_ID} .dcuf-palette-close {
@@ -2826,9 +2849,30 @@ const ThemeModule = (() => {
             font-size: 24px !important;
             cursor: pointer !important;
         }
-        #${PANEL_ID} .dcuf-palette-body { padding: 16px 18px 18px !important; }
+        #${PANEL_ID} .dcuf-palette-body {
+            box-sizing: border-box !important;
+            display: flex !important;
+            flex: 1 1 auto !important;
+            flex-direction: column !important;
+            min-height: 0 !important;
+            padding: 16px 18px 38px !important;
+            overflow: hidden !important;
+        }
         #${PANEL_ID} .dcuf-palette-description { margin: 0 0 14px !important; color: var(--dcuf-theme-fg-muted) !important; }
-        #${PANEL_ID} .dcuf-palette-options { display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 10px !important; }
+        #${PANEL_ID} .dcuf-palette-options {
+            display: grid !important;
+            flex: 1 1 auto !important;
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+            align-content: start !important;
+            min-height: 0 !important;
+            gap: 10px !important;
+            padding: 2px 4px 6px 2px !important;
+            overflow: hidden auto !important;
+            overscroll-behavior: contain !important;
+            scrollbar-gutter: stable !important;
+            touch-action: pan-y !important;
+            -webkit-overflow-scrolling: touch;
+        }
         #${PANEL_ID} .dcuf-palette-option {
             box-sizing: border-box !important;
             display: grid !important;
@@ -2877,6 +2921,20 @@ const ThemeModule = (() => {
             border-color: var(--dcuf-theme-accent-strong) !important;
             background: var(--dcuf-theme-accent-strong) !important;
             color: var(--dcuf-theme-on-accent) !important;
+        }
+        #${PANEL_ID} .dcuf-palette-resize-handle {
+            position: absolute !important;
+            right: 4px !important;
+            bottom: 4px !important;
+            width: 36px !important;
+            height: 30px !important;
+            border: 0 !important;
+            border-radius: 9px !important;
+            background:
+                linear-gradient(135deg, transparent 50%, var(--dcuf-theme-border-strong) 51%, var(--dcuf-theme-border-strong) 56%, transparent 57%) 13px 7px / 15px 15px no-repeat,
+                linear-gradient(135deg, transparent 50%, var(--dcuf-theme-accent) 51%, var(--dcuf-theme-accent) 57%, transparent 58%) 20px 14px / 10px 10px no-repeat !important;
+            cursor: nwse-resize !important;
+            touch-action: none !important;
         }
         #${PANEL_ID} :focus-visible { outline: 3px solid color-mix(in srgb, var(--dcuf-theme-accent) 38%, transparent) !important; outline-offset: 2px !important; }
         #${PANEL_ID} button:disabled { opacity: .62 !important; cursor: wait !important; }
@@ -2943,11 +3001,130 @@ const ThemeModule = (() => {
         return normalized;
     };
 
+    const attachPanelPointerGeometry = (panel) => {
+        if (!panel || panel.dataset.dcufPaletteGeometryBound === 'true') return;
+        panel.dataset.dcufPaletteGeometryBound = 'true';
+
+        const viewportGap = 4;
+        let active = null;
+        let pendingPoint = null;
+        let frameId = 0;
+
+        const clamp = (value, min, max) => Math.max(min, Math.min(value, max));
+        const viewportSize = () => ({ width: window.innerWidth, height: window.innerHeight });
+        const normalizePosition = () => {
+            const rect = panel.getBoundingClientRect();
+            panel.style.setProperty('transform', 'none', 'important');
+            panel.style.setProperty('left', `${rect.left}px`, 'important');
+            panel.style.setProperty('top', `${rect.top}px`, 'important');
+            panel.style.setProperty('width', `${rect.width}px`, 'important');
+            panel.style.setProperty('height', `${rect.height}px`, 'important');
+            return panel.getBoundingClientRect();
+        };
+
+        const applyGeometry = () => {
+            frameId = 0;
+            if (!active || !pendingPoint) return;
+            const point = pendingPoint;
+            pendingPoint = null;
+            const viewport = viewportSize();
+
+            if (active.mode === 'drag') {
+                const maxLeft = Math.max(viewportGap, viewport.width - active.width - viewportGap);
+                const maxTop = Math.max(viewportGap, viewport.height - active.height - viewportGap);
+                panel.style.setProperty('left', `${clamp(point.x - active.offsetX, viewportGap, maxLeft)}px`, 'important');
+                panel.style.setProperty('top', `${clamp(point.y - active.offsetY, viewportGap, maxTop)}px`, 'important');
+                return;
+            }
+
+            const maxWidth = Math.max(120, viewport.width - active.left - viewportGap);
+            const maxHeight = Math.max(120, viewport.height - active.top - viewportGap);
+            const minWidth = Math.min(300, maxWidth);
+            const minHeight = Math.min(320, maxHeight);
+            const nextWidth = clamp(active.width + point.x - active.startX, minWidth, maxWidth);
+            const nextHeight = clamp(active.height + point.y - active.startY, minHeight, maxHeight);
+            panel.style.setProperty('min-width', `${minWidth}px`, 'important');
+            panel.style.setProperty('min-height', `${minHeight}px`, 'important');
+            panel.style.setProperty('max-width', `${maxWidth}px`, 'important');
+            panel.style.setProperty('max-height', `${maxHeight}px`, 'important');
+            panel.style.setProperty('width', `${nextWidth}px`, 'important');
+            panel.style.setProperty('height', `${nextHeight}px`, 'important');
+        };
+
+        const finishInteraction = (event) => {
+            if (!active || (event && event.pointerId !== active.pointerId)) return;
+            if (frameId) cancelAnimationFrame(frameId);
+            applyGeometry();
+            if (panel.hasPointerCapture?.(active.pointerId)) panel.releasePointerCapture(active.pointerId);
+            active = null;
+            pendingPoint = null;
+            panel.removeAttribute('data-dcuf-palette-interacting');
+        };
+
+        const onPointerDown = (event) => {
+            if (active || event.button !== 0 || event.isPrimary === false) return;
+            const target = event.target instanceof Element ? event.target : null;
+            if (!target) return;
+            const resizeHandle = target.closest('.dcuf-palette-resize-handle');
+            const dragHeader = target.closest('.dcuf-palette-header');
+            if (!resizeHandle && (!dragHeader || target.closest('button, input, label, a'))) return;
+
+            const rect = normalizePosition();
+            active = {
+                mode: resizeHandle ? 'resize' : 'drag',
+                pointerId: event.pointerId,
+                startX: event.clientX,
+                startY: event.clientY,
+                offsetX: event.clientX - rect.left,
+                offsetY: event.clientY - rect.top,
+                left: rect.left,
+                top: rect.top,
+                width: rect.width,
+                height: rect.height
+            };
+            panel.dataset.dcufPaletteInteracting = 'true';
+            panel.setPointerCapture?.(event.pointerId);
+            event.preventDefault();
+        };
+
+        const onPointerMove = (event) => {
+            if (!active || event.pointerId !== active.pointerId) return;
+            pendingPoint = { x: event.clientX, y: event.clientY };
+            if (!frameId) frameId = requestAnimationFrame(applyGeometry);
+            event.preventDefault();
+        };
+
+        const keepInsideViewport = () => {
+            if (!panel.isConnected) return;
+            const rect = normalizePosition();
+            const viewport = viewportSize();
+            const width = Math.min(rect.width, Math.max(120, viewport.width - (viewportGap * 2)));
+            const height = Math.min(rect.height, Math.max(120, viewport.height - (viewportGap * 2)));
+            panel.style.setProperty('width', `${width}px`, 'important');
+            panel.style.setProperty('height', `${height}px`, 'important');
+            panel.style.setProperty('left', `${clamp(rect.left, viewportGap, Math.max(viewportGap, viewport.width - width - viewportGap))}px`, 'important');
+            panel.style.setProperty('top', `${clamp(rect.top, viewportGap, Math.max(viewportGap, viewport.height - height - viewportGap))}px`, 'important');
+        };
+
+        panel.addEventListener('pointerdown', onPointerDown);
+        panel.addEventListener('pointermove', onPointerMove);
+        panel.addEventListener('pointerup', finishInteraction);
+        panel.addEventListener('pointercancel', finishInteraction);
+        window.addEventListener('resize', keepInsideViewport, { passive: true });
+        window.visualViewport?.addEventListener('resize', keepInsideViewport, { passive: true });
+        panel.__dcufPaletteGeometryCleanup = () => {
+            if (frameId) cancelAnimationFrame(frameId);
+            window.removeEventListener('resize', keepInsideViewport);
+            window.visualViewport?.removeEventListener('resize', keepInsideViewport);
+        };
+    };
+
     const closePaletteDialog = ({ restore = true } = {}) => {
         const overlay = document.getElementById(OVERLAY_ID);
         if (!overlay) return false;
         const returnFocus = overlay.__dcufReturnFocus;
         if (restore) apply(committedId, 'preview-cancel');
+        overlay.querySelector(`#${PANEL_ID}`)?.__dcufPaletteGeometryCleanup?.();
         overlay.remove();
         if (returnFocus instanceof HTMLElement && returnFocus.isConnected) returnFocus.focus({ preventScroll: true });
         return true;
@@ -2998,9 +3175,14 @@ const ThemeModule = (() => {
                     <button type="button" data-dcuf-palette-action="save">저장</button>
                 </div>
             </div>
+            <div class="dcuf-palette-resize-handle" role="separator" aria-label="UI 색상 설정 크기 조절"></div>
         `;
         overlay.appendChild(panel);
         (document.body || document.documentElement).appendChild(overlay);
+        attachPanelPointerGeometry(panel);
+        if (typeof PersonalBlockModule !== 'undefined' && typeof PersonalBlockModule.attachPopupPinchResize === 'function') {
+            PersonalBlockModule.attachPopupPinchResize(panel, { minWidth: 300, minHeight: 320 });
+        }
         setSelectedOption(panel, committedId);
 
         const status = panel.querySelector('.dcuf-palette-status');
@@ -4473,7 +4655,7 @@ const ThemeModule = (() => {
             }
         }
 
-        /* [v3.4.8] Script-owned soft-depth control surfaces */
+        /* [v3.4.9] Script-owned soft-depth control surfaces */
         #dc-personal-block-fab {
             background: linear-gradient(180deg, #fff 0%, #eef4ff 100%) !important;
             color: #29466f !important;
@@ -7644,7 +7826,7 @@ const ThemeModule = (() => {
             this._initState = 'initializing';
             this._initPromise = (async () => {
                 this.installDebugApi();
-                this.debugLog('init', 'FilterModule init start', { version: '3.4.8' });
+                this.debugLog('init', 'FilterModule init start', { version: '3.4.9' });
                 const snapshot = await this.loadBootSnapshot();
                 await this.cleanupLegacyManagedBlockConfig(snapshot);
                 await this.reloadSettings(snapshot);
@@ -12448,7 +12630,7 @@ const ThemeModule = (() => {
 
         return {
             reason,
-            version: '3.4.8',
+            version: '3.4.9',
             time: new Date().toISOString(),
             href: location.href,
             heap: getDcufHeapMb(),
@@ -12680,7 +12862,7 @@ const ThemeModule = (() => {
                 }));
             }
         }
-        console.log("[DC Filter+UI] Initializing v3.4.8...");
+        console.log("[DC Filter+UI] Initializing v3.4.9...");
 
 
         if (!__dcufRoot.__dcufShortcutBound) {
@@ -13311,7 +13493,7 @@ const ThemeModule = (() => {
         .custom-bottom-controls .dcuf-bottom-action-card a.on {
             border-color: var(--dcuf-theme-accent-strong, #315fdb) !important;
             background: linear-gradient(180deg, var(--dcuf-theme-primary-top, #527df0) 0%, var(--dcuf-theme-accent-strong, #315fdc) 100%) !important;
-            color: #fff !important;
+            color: var(--dcuf-theme-on-accent, #fff) !important;
             box-shadow:
                 inset 0 1px 0 rgba(255, 255, 255, 0.28),
                 0 7px 14px var(--dcuf-theme-accent-shadow, rgba(49, 95, 220, 0.24)) !important;
@@ -13334,7 +13516,7 @@ const ThemeModule = (() => {
             min-height: 44px !important;
             border-color: var(--dcuf-theme-accent-strong, #2e5bd4) !important;
             background: linear-gradient(180deg, var(--dcuf-theme-primary-top, #527cf0) 0%, var(--dcuf-theme-accent-strong, #2e5bd4) 100%) !important;
-            color: #fff !important;
+            color: var(--dcuf-theme-on-accent, #fff) !important;
             box-shadow:
                 inset 0 1px 0 rgba(255, 255, 255, 0.28),
                 0 8px 16px var(--dcuf-theme-accent-shadow, rgba(46, 91, 212, 0.25)) !important;
@@ -13505,7 +13687,7 @@ const ThemeModule = (() => {
         .custom-bottom-controls .bottom_paging_box > .on {
             border-color: var(--dcuf-theme-accent-strong, #315fdb) !important;
             background: linear-gradient(180deg, var(--dcuf-theme-primary-top, #527df0) 0%, var(--dcuf-theme-accent-strong, #315fdc) 100%) !important;
-            color: #fff !important;
+            color: var(--dcuf-theme-on-accent, #fff) !important;
             box-shadow: 0 6px 12px var(--dcuf-theme-accent-shadow, rgba(49, 95, 220, 0.22)) !important;
         }
         .custom-bottom-controls .dcuf-pagination-card .bottom_movebox {
@@ -13572,7 +13754,7 @@ const ThemeModule = (() => {
             display: block !important;
             width: 15px !important;
             height: 15px !important;
-            border: 3px solid #fff !important;
+            border: 3px solid var(--dcuf-theme-on-accent, #fff) !important;
             border-radius: 50% !important;
             background: transparent !important;
             background-image: none !important;
@@ -13591,7 +13773,7 @@ const ThemeModule = (() => {
             height: 3px !important;
             border: 0 !important;
             border-radius: 999px !important;
-            background: #fff !important;
+            background: var(--dcuf-theme-on-accent, #fff) !important;
             background-image: none !important;
             box-sizing: border-box !important;
             transform: translate(3px, 5px) rotate(45deg) !important;
@@ -13710,7 +13892,7 @@ const ThemeModule = (() => {
             background-image: linear-gradient(180deg, var(--dcuf-theme-primary-top, #527cf0) 0%, var(--dcuf-theme-accent-strong, #2e5bd4) 100%) !important;
             background-position: 0 0 !important;
             background-repeat: no-repeat !important;
-            color: #fff !important;
+            color: var(--dcuf-theme-on-accent, #fff) !important;
             font-size: 14px !important;
             font-weight: 800 !important;
             line-height: 1 !important;
@@ -13835,7 +14017,7 @@ const ThemeModule = (() => {
         #container.mini_view .view_bottom_btnbox .write {
             border-color: var(--dcuf-theme-accent-strong, #2e5bd4) !important;
             background: linear-gradient(180deg, var(--dcuf-theme-primary-top, #527cf0) 0%, var(--dcuf-theme-accent-strong, #2e5bd4) 100%) !important;
-            color: #fff !important;
+            color: var(--dcuf-theme-on-accent, #fff) !important;
             box-shadow: 0 8px 16px var(--dcuf-theme-accent-shadow, rgba(46, 91, 212, 0.25)) !important;
         }
 
@@ -14093,7 +14275,7 @@ const ThemeModule = (() => {
         body.dc-filter-dark-mode .custom-bottom-controls .dcuf-bottom-action-card a.on {
             border-color: var(--dcuf-theme-accent, #4c7bf0) !important;
             background: linear-gradient(180deg, var(--dcuf-theme-primary-top, #5b86f2) 0%, var(--dcuf-theme-accent-strong, #3868df) 100%) !important;
-            color: #fff !important;
+            color: var(--dcuf-theme-on-accent, #fff) !important;
             box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.24), 0 7px 14px var(--dcuf-theme-accent-shadow, rgba(31, 68, 164, 0.4)) !important;
         }
 
@@ -14138,7 +14320,7 @@ const ThemeModule = (() => {
         body.dc-filter-dark-mode #container.mini_view .view_bottom_btnbox .write {
             border-color: var(--dcuf-theme-accent, #4c7bf0) !important;
             background: linear-gradient(180deg, var(--dcuf-theme-primary-top, #5b86f2) 0%, var(--dcuf-theme-accent-strong, #3868df) 100%) !important;
-            color: #fff !important;
+            color: var(--dcuf-theme-on-accent, #fff) !important;
             box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.24), 0 7px 14px var(--dcuf-theme-accent-shadow, rgba(31, 68, 164, 0.4)) !important;
         }
         body.dc-filter-dark-mode:not(.is-write-page) .list_array_option .select_box.array_num > .select_area > a {
@@ -19502,7 +19684,7 @@ const ThemeModule = (() => {
         body.is-write-page form.dcuf-write-form [data-headtext].active {
             border-color: var(--dcuf-write-accent-strong) !important;
             background: var(--dcuf-write-accent-strong) !important;
-            color: #fff !important;
+            color: var(--dcuf-theme-on-accent, #fff) !important;
         }
         body.is-write-page form.dcuf-write-form .editor_wrap,
         body.is-write-page form.dcuf-write-form .note-editor,
@@ -19841,7 +20023,7 @@ const ThemeModule = (() => {
         body.is-write-page form.dcuf-write-form > .btn_box.write > .btn_blue {
             border-color: var(--dcuf-write-accent-strong) !important;
             background: linear-gradient(180deg, var(--dcuf-theme-primary-top, #426fe4) 0%, var(--dcuf-write-accent-strong) 100%) !important;
-            color: #fff !important;
+            color: var(--dcuf-theme-on-accent, #fff) !important;
         }
         /* Visual refinement: match the mobile list/article card language. */
         body.is-write-page form.dcuf-write-form {
@@ -19917,7 +20099,7 @@ const ThemeModule = (() => {
         body.is-write-page form.dcuf-write-form .write_subject .subject_list > li.active {
             border-color: var(--dcuf-write-accent-strong) !important;
             background: var(--dcuf-write-accent-strong) !important;
-            color: #fff !important;
+            color: var(--dcuf-theme-on-accent, #fff) !important;
             box-shadow: 0 4px 10px var(--dcuf-theme-accent-shadow, rgba(36, 91, 218, 0.2)) !important;
         }
         body.is-write-page form.dcuf-write-form .editor_wrap,
@@ -20083,7 +20265,7 @@ const ThemeModule = (() => {
         body.is-write-page form.dcuf-write-form > .btn_box.write > .btn_blue {
             border-color: var(--dcuf-write-accent-strong) !important;
             background: linear-gradient(180deg, var(--dcuf-theme-primary-top, #426fe4) 0%, var(--dcuf-write-accent-strong) 100%) !important;
-            color: #fff !important;
+            color: var(--dcuf-theme-on-accent, #fff) !important;
             box-shadow: 0 6px 14px var(--dcuf-theme-accent-shadow, rgba(36, 91, 218, 0.24)) !important;
         }
         body.is-write-page > #leave_confirm_box.dcuf-write-leave-confirm {
@@ -20139,7 +20321,7 @@ const ThemeModule = (() => {
         body.is-write-page > #leave_confirm_box.dcuf-write-leave-confirm .pop_head.bg h3 {
             margin: 0 !important;
             padding: 0 !important;
-            color: #fff !important;
+            color: var(--dcuf-theme-on-accent, #fff) !important;
             font-size: 17px !important;
             font-weight: 700 !important;
             line-height: 1.2 !important;
@@ -20199,7 +20381,7 @@ const ThemeModule = (() => {
         body.is-write-page > #leave_confirm_box.dcuf-write-leave-confirm .write_cont > .btn_box > .btn_blue {
             border-color: var(--dcuf-write-accent-strong) !important;
             background: linear-gradient(180deg, var(--dcuf-theme-primary-top, #426fe4) 0%, var(--dcuf-write-accent-strong) 100%) !important;
-            color: #fff !important;
+            color: var(--dcuf-theme-on-accent, #fff) !important;
             box-shadow: 0 6px 14px var(--dcuf-theme-accent-shadow, rgba(36, 91, 218, 0.22)) !important;
         }
         body.is-write-page > #leave_confirm_box.dcuf-write-leave-confirm .pop_content.write_ly > .poply_whiteclose {
@@ -20227,7 +20409,7 @@ const ThemeModule = (() => {
             width: 22px !important;
             height: 1px !important;
             border: 0 !important;
-            background: #fff !important;
+            background: var(--dcuf-theme-on-accent, #fff) !important;
             transform: rotate(45deg) !important;
         }
         body.is-write-page > #leave_confirm_box.dcuf-write-leave-confirm .pop_content.write_ly > .poply_whiteclose::after {
