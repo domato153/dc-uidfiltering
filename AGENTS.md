@@ -4,6 +4,7 @@
 - Preserve user-visible behavior, stored settings, and release output.
 - Keep work task-specific; use deterministic contract checks.
 - For performance work, measure first, then consult `docs/agent-performance-notes.md`.
+- Preserve measured hot-path optimizations. Allow a regression only as a bounded fallback required for correctness or recovery, and record its trigger, scope, cost, and coverage.
 - For long work, keep `.codex/` goals, contracts, status, validation, and next step; recheck Git after resume/stages, then delete it. Skip one-offs.
 
 ## Source and target routing
@@ -16,7 +17,9 @@
 - Rebuild affected artifacts without changing version. Bump, promote, push, or publish only when requested.
 - Build mobile: `node tools/build-userscript.mjs`; PC: `node tools/build-pc-filter-userscript.mjs`. Build both for shared filter/storage/identity changes unless PC is unaffected.
 - After builds run `node tools/verify-repo.mjs release`; use `guidance` for guidance-only edits and `all` if both changed.
-- Run Testbed `--group`/`--filter` for changed surfaces; use the full suite for broad/requested impact. Run bfcache only for lifecycle work.
+- Default to the smallest deterministic Testbed `--group`/`--filter` set that covers changed behavior and its direct dependencies.
+- Do not rerun already-passing coverage unless product code, shared fixtures/harness, or another change invalidated that evidence; report split runs honestly.
+- Use the full suite only for broad/requested runtime impact, normally once per unchanged runtime revision. Run bfcache only for lifecycle work.
 - Reuse beta Testbed for stable only if runtime is unchanged, only `-beta` is removed, and live beta use is confirmed; record why.
 - Move superseded local userscripts to `Legacy유저스크립트storage/`; if root/`dist/` match, archive one copy.
 - Never repair source/build divergence by editing generated userscripts.

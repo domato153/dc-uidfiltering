@@ -12,6 +12,7 @@
 (() => {
     'use strict';
     if (window.DCUFCommentFlickerProbe?.version) return;
+    if (!/^\/(?:mgallery\/|mini\/)?board\/view(?:\/|$)/.test(location.pathname)) return;
 
     const VERSION = '0.1.1';
     const DEFAULT_CAPTURE_MS = 20000;
@@ -246,6 +247,8 @@
         if (captureTimer) clearTimeout(captureTimer);
         captureTimer = 0;
         sample('capture-stop');
+        if (observer) observer.disconnect();
+        observer = null;
         pushBounded(timeline, { type: 'capture-stop', at: elapsed(), reason }, MAX_TIMELINE_EVENTS);
         return status();
     };

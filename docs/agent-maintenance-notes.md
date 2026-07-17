@@ -352,3 +352,81 @@ The Testbed functional check `mobile list navigation uses integrated raised tool
 - The pressed card may change its border, inner outline, brightness, and saturation, but must not translate or resize on touch. Normal, concept, and notice surfaces retain their existing gradients, rails, and semantic styling.
 - The focused functional palette regression holds the real title link active and verifies a non-transparent tap highlight plus changed card filter/outline without navigating away.
 - Mobile `3.4.7` ships this CSS-only interaction change after the focused list/palette regression passed 1/1 and `verify-repo release` passed. The user approved the built stable artifact for publication; no separate live browser smoke was performed by the agent.
+
+## 2026-07-17 - Scoped initial comment quiet and view-list reveal readiness
+
+### Live cause and discarded shortcuts
+
+- A live minor-view trace measured local filter/UI readiness at about 974 ms, the initial comment barrier at 1314 ms with `bounded-timeout`, style verification at 1421 ms, and first reveal at 1424 ms. Server TTFB was about 91 ms, so the user-visible delay was the boot gate rather than document download.
+- The barrier compared the shared runtime mutation generation. Unrelated host/advertising DOM churn could therefore prevent two quiet frames even when comment-relevant identity and visibility state was stable.
+- Do not shorten the barrier based only on comment count: a stable node can change UID, nickname, IP, class, or style. Do not release the whole body at UI-ready: the embedded view-bottom list sync is scheduled and could otherwise expose the native table for a frame.
+
+### Stable contract
+
+- Initial comment quiet uses `FilterModule.getRelevantMutationGeneration('comments')`, with the shared generation retained only as a compatibility fallback. The immediate comment mutation subscriber and the final no-yield synchronous comment pass remain required.
+- View-page reveal actively ensures list runtimes and requires every present embedded bottom-list mirror to contain its items and reach the committed state that hides the original table. Pure list pages retain their stronger phase-1 list-theme verification and transaction rollback.
+- Visual theme mismatch behavior remains one refresh followed by filtered/native fallback after filter readiness. The global body lock and boot/degraded recovery states are unchanged.
+
+### Regression coverage
+
+- Continuous unrelated body churn must still end the initial barrier with `mutation-quiet`, while the first ready event sees the embedded original table hidden and custom-item count equal to original-row count.
+- Keep the boot group coverage for delayed comments, final pre-reveal rerender filtering, dark visual fallback, list-prepare rollback, body replacement, and duplicate iframe injection.
+- Live beta validation must compare list and view load reports, require zero `originalListExposureFrames`, and use the comment flicker probe for a configured blocked UID/nickname during refresh and delayed comment insertion.
+
+## 2026-07-17 - Parallel view readiness and one-frame comment quiet
+
+### Live evidence and bounded-wait contract
+
+- Eighteen live beta profiles covered major, minor, and mini list/view pages. Every list and embedded view-bottom table had zero original-list exposure frames, matching original/custom item counts, and a ready boot state. List creation-to-reveal stayed between 58 and 160 ms; remaining view delay was concentrated in comment stabilization and the subsequent style check.
+- A configured personally blocked UID was hidden from first observation through ready with zero visible samples. Two live comment-refresh clicks replaced that target node, and each replacement was first observed hidden with the personal/comment/shell block attributes already applied.
+- This supersedes the earlier two-quiet-frame requirement. While the document-start body lock is active, initial comments get at most two one-frame generation checks within a 240 ms start deadline. A generation change takes another bounded attempt; exhaustion runs a synchronous `bounded-final-pass` rather than waiting for global quiet.
+- The no-yield synchronous comment pass immediately before `markReady`, the immediate mutation subscriber, post-ready rerender filtering, embedded-list commit check, timeout/degraded recovery, and original-list transaction rollback remain mandatory.
+
+### Parallel readiness contract
+
+- On view pages only, core style and embedded-list readiness starts immediately after UI initialization and runs alongside comment stabilization. Both promises must settle before the body lock can be released; parallelization must never turn either gate into a best-effort background task.
+- List pages retain their existing sequential phase-1 theme verification because live list readiness was already fast and safe. View style mismatch still performs the existing refresh/fallback behavior, but its wait no longer begins only after comment quiet completes.
+
+### Regression coverage
+
+- The scoped reveal regression asserts one quiet frame, at most two attempts, view readiness starting no later than the comment-barrier note, committed embedded-list replacement, and zero runtime errors.
+- Keep the boot checks for a post-barrier replacement, 0/140/420 ms comment insertion, dark-mode filtered/native fallback, list rollback, and body replacement. Dynamic comment add/edit/delete, visibility recovery, fixed-size list replacement, smoke, and performance coverage remain selected release checks.
+
+## 2026-07-17 - One-click guided live audit
+
+- The live page profiler owns a Shadow-DOM `#dcuf-live-audit-panel` so its controls cannot inherit host or DCUF theme CSS. It never reloads or navigates automatically.
+- `node tools/build-live-audit.mjs` embeds the canonical `DCUFCommentFlickerProbe` and the page profiler into one installable userscript. One user click waits for boot settlement and saves one combined JSON. List pages observe original-table exposure and list parity; view pages perform exactly two bounded clicks on the scoped `button.btn_cmt_refresh`, observe replacements, and include both reports.
+- The embedded comment probe returns immediately on non-view routes and disconnects its observer when capture stops. If the probe still cannot initialize, the panel saves the page profile and records `comment-probe-not-installed`. Automatic downloads remain user-initiated and produce one file to avoid browser multi-download blocking.
+- Local Testbed UI automation must cover both routes: view requires two refresh clicks, at least one configured personally blocked target, zero blocked visible samples/transitions, zero original-list exposure, and no console errors; list requires matching row/item counts, hidden originals, zero exposure, and no comment report.
+
+## 2026-07-17 - Late view-bottom replacement before-paint bridge
+
+### Live cause and scope
+
+- Eleven guided beta audits covered eight view pages and three list pages across major, minor, and mini routes. Comment refresh remained hidden from first observation and all list pages had zero native-table exposure, but seven view captures painted a late `.view_bottom table.gall_list` for one or two frames after boot ready.
+- The initial embedded list had committed before reveal. The host subsequently replaced or populated the view-bottom list 0.15-0.46 seconds after ready, while the ordinary list mutation subscriber intentionally waited for its animation-frame batch. Delaying initial body reveal cannot cover a replacement that occurs after ready and would restore the removed load delay.
+- Follow-up live audits on major, minor, and mini view routes each recorded zero original-list exposure frames, matching original/custom counts, and ready boot state. Their local comment/list/style barrier completed in 69.4-88.4 ms, so the scoped pre-paint bridge fixed the reproduced late-list exposure without restoring the former boot delay.
+- Do not use a persistent global CSS hide for the native table: a list preparation failure or degraded rollback must restore the host table. Do not add another MutationObserver; the runtime coordinator already owns a pre-paint immediate mutation channel.
+
+### Stable contract
+
+- On view pages only, newly inserted table-owned list DOM under `.view_bottom` uses the existing immediate mutation bus. It prunes detached list state, captures the normal rollback transaction, and synchronously ensures/syncs the replacement before the next paint. List pages retain the ordinary batched path.
+- Limit this bridge to child insertion/replacement. Listening to the script's own table-style mutation feeds the list sync back into itself and can raise unrelated comment sync passes. Comment identity mutations continue through the same immediate dispatcher without changing their filtering contract.
+
+### Regression coverage
+
+- After ready, replace the embedded list with an empty native table, sample its first frame, populate the rows, then sample the first populated and settled frames. Major, minor, and mini routes must show `display:none!important` in every frame, the transformed marker on the empty frame, and matching native/custom counts on the first populated frame.
+- Keep page-context assertions for exactly one `ui-view-bottom-list-visibility` immediate subscriber on view routes and none on list/write/other routes. Retain comment add/edit/delete, fixed-size list replacement, rollback, body replacement, visibility recovery, smoke, performance, and lifecycle coverage.
+
+### Stable-versus-beta performance contract
+
+- Immediate mutations are classified once as `comments` or `view-bottom-list`; each subscriber receives only its own record set. Sending the union payload to both subscribers caused 500-comment stress to add 2,025 element-selector calls and 53 layout reads even though wall time moved only 6 ms. Do not restore that cross-surface scan.
+- Initial reveal checks may ensure an existing embedded-list runtime without scheduling another list sync. The pre-paint path uses the existing scheduler's `flush`, suppresses the overlapping tbody and ordinary/post-reveal existing-state schedules, and updates the custom list on the first populated frame exactly once.
+- Alternating `3.4.7`/`3.4.8-beta` stress runs after separation held DOM, mutation, processed-target, filter-pass, pending-queue, and ordinary-subscriber counts equal. Wall time differed by about 0.5%, selector/layout counts returned to baseline, and no active rAF or pending queue remained. The beta owns one view-only immediate subscriber and about one bounded one-shot timer/rAF of coordination overhead, not a persistent observer or loop.
+- Guided live-audit 0.4.1 records the runtime script version and falls back to the memory-debug snapshot for subscriber keys, counters, gauges, pending mutation records, and task queues when the userscript sandbox does not expose the coordinator directly. This distinguishes same-version beta rebuilds that Tampermonkey may otherwise leave ambiguous.
+
+## 2026-07-17 - Mobile 3.4.8 stable promotion evidence
+
+- Final guided audit 0.4.2 captures on major, minor, and mini view routes all ran mobile `3.4.8-beta`, reached ready on the first one-frame comment-quiet attempt, kept the original embedded list hidden with exact 51/51 or 52/52 parity, and recorded zero original-list exposure frames.
+- Each route completed two automatic native comment-refresh clicks. Across five personally blocked identities and 62 observed replacement nodes, blocked visible samples, first-seen-visible events, visible-to-hidden transitions, and hidden-to-visible transitions were all zero; every blocked replacement was first observed hidden.
+- Stable `3.4.8` changes only the generated version token from the confirmed beta. Reuse the recorded 76/76 mobile beta Testbed result and the final three-route live confirmation; do not rerun Testbed for this suffix-only promotion.

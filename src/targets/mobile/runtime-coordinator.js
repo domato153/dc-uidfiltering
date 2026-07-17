@@ -207,17 +207,53 @@
                 || Boolean(element.querySelector?.(this.COMMENT_VISIBILITY_SELECTOR));
         },
 
-        filterImmediateMutationRecords(records) {
-            if (!Array.isArray(records) || records.length === 0 || !this.getPageContext().hasComments) return [];
-            return records.filter((record) => {
-                if (record?.type === 'attributes') {
-                    return ['data-uid', 'data-nick', 'data-ip'].includes(record.attributeName)
-                        && this.isCommentVisibilityElement(record.target);
+        isCommentImmediateMutationRecord(record) {
+            if (record?.type === 'attributes') {
+                return ['data-uid', 'data-nick', 'data-ip'].includes(record.attributeName)
+                    && this.isCommentVisibilityElement(record.target);
+            }
+            if (record?.type !== 'childList' || record.addedNodes.length === 0) return false;
+            if (this.isCommentVisibilityElement(record.target)) return true;
+            return Array.from(record.addedNodes).some((node) => this.isCommentVisibilityElement(node));
+        },
+
+        isViewBottomListMutationRecord(record) {
+            if (!this.getPageContext().isView || record?.type !== 'childList' || record.addedNodes.length === 0) return false;
+            const target = record.target instanceof Element ? record.target : null;
+            const listSelector = '.gall_listwrap, .list_wrap, table.gall_list, .gall_list tbody';
+            const addedElements = Array.from(record.addedNodes).filter((node) => node instanceof Element);
+            const touchesList = (element) => element.matches(listSelector)
+                || Boolean(element.closest(listSelector))
+                || Boolean(element.querySelector?.(listSelector));
+
+            if (target?.closest('.view_bottom')) {
+                return touchesList(target) || addedElements.some(touchesList);
+            }
+
+            if (!(target === document.body || target?.matches('#container, .view_content_wrap'))) return false;
+            return addedElements.some((element) => (
+                element.matches('.view_bottom')
+                    ? Boolean(element.querySelector(listSelector))
+                    : Boolean(element.querySelector('.view_bottom .gall_listwrap, .view_bottom .list_wrap, .view_bottom table.gall_list'))
+            ));
+        },
+
+        classifyImmediateMutationRecords(records) {
+            const classified = { all: [], comments: [], viewBottomList: [] };
+            if (!Array.isArray(records) || records.length === 0 || !this.getPageContext().hasComments) return classified;
+            const all = new Set();
+            records.forEach((record) => {
+                if (this.isCommentImmediateMutationRecord(record)) {
+                    classified.comments.push(record);
+                    all.add(record);
                 }
-                if (record?.type !== 'childList' || record.addedNodes.length === 0) return false;
-                if (this.isCommentVisibilityElement(record.target)) return true;
-                return Array.from(record.addedNodes).some((node) => this.isCommentVisibilityElement(node));
+                if (this.isViewBottomListMutationRecord(record)) {
+                    classified.viewBottomList.push(record);
+                    all.add(record);
+                }
             });
+            classified.all = Array.from(all);
+            return classified;
         },
 
         incrementDiagnostic(label, amount = 1) {
@@ -415,19 +451,28 @@
             }
         },
 
-        dispatchImmediateMutations(records) {
-            if (!Array.isArray(records) || records.length === 0) return;
+        dispatchImmediateMutations(classified) {
+            const allRecords = Array.isArray(classified?.all) ? classified.all : [];
+            if (allRecords.length === 0) return;
             if (!(this._immediateMutationSubscribers instanceof Map) || this._immediateMutationSubscribers.size === 0) return;
 
-            const payload = this.buildMutationPayload(records);
             this.incrementDiagnostic('mutation.immediateDispatches');
-            this.incrementDiagnostic('mutation.immediateRecords', records.length);
+            this.incrementDiagnostic('mutation.immediateRecords', allRecords.length);
             this.setDiagnosticGauge('mutation.immediateSubscribers', this._immediateMutationSubscribers.size);
 
             const measureDispatch = this._diagnosticsEnabled && typeof performance?.now === 'function';
             const dispatchStartedAt = measureDispatch ? performance.now() : 0;
-            this._immediateMutationSubscribers.forEach((listener, key) => {
+            const payloads = new Map();
+            this._immediateMutationSubscribers.forEach((subscriber, key) => {
                 try {
+                    const listener = typeof subscriber === 'function' ? subscriber : subscriber?.listener;
+                    const mutationScope = typeof subscriber === 'function' ? 'all' : (subscriber?.mutationScope || 'all');
+                    const scopedRecords = mutationScope === 'comments'
+                        ? classified.comments
+                        : (mutationScope === 'view-bottom-list' ? classified.viewBottomList : allRecords);
+                    if (typeof listener !== 'function' || !Array.isArray(scopedRecords) || scopedRecords.length === 0) return;
+                    if (!payloads.has(mutationScope)) payloads.set(mutationScope, this.buildMutationPayload(scopedRecords));
+                    const payload = payloads.get(mutationScope);
                     listener(payload);
                 } catch (error) {
                     console.error('[DCUF runtime] immediate mutation subscriber failed:', key, error);
@@ -451,7 +496,7 @@
             // MutationObserver callbacks run before the next paint. Critical visibility
             // subscribers must see the fresh records here; the ordinary bus remains
             // animation-frame batched for heavier UI and async work.
-            this.dispatchImmediateMutations(this.filterImmediateMutationRecords(filteredRecords));
+            this.dispatchImmediateMutations(this.classifyImmediateMutationRecords(filteredRecords));
             this._pendingMutationRecords.push(...filteredRecords);
             this.incrementDiagnostic('mutation.bursts');
             this.incrementDiagnostic('mutation.records', filteredRecords.length);
@@ -571,7 +616,10 @@
                 return () => {};
             }
             this.ensureMutationBus();
-            this._immediateMutationSubscribers.set(key, listener);
+            this._immediateMutationSubscribers.set(key, {
+                listener,
+                mutationScope: options.mutationScope || 'all'
+            });
             this.setDiagnosticGauge('mutation.immediateSubscribers', this._immediateMutationSubscribers.size);
             return () => {
                 this._immediateMutationSubscribers.delete(key);

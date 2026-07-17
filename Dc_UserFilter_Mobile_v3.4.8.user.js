@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         DC_UserFilter_Mobile
 // @namespace    http://tampermonkey.net/
-// @version      3.4.7
+// @version      3.4.8
 // @description  유저 필터링, UI 개선, 개인 차단/해제 기능
 // @author       domato153
 // @match        https://gall.dcinside.com/board/*
@@ -1138,17 +1138,53 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 || Boolean(element.querySelector?.(this.COMMENT_VISIBILITY_SELECTOR));
         },
 
-        filterImmediateMutationRecords(records) {
-            if (!Array.isArray(records) || records.length === 0 || !this.getPageContext().hasComments) return [];
-            return records.filter((record) => {
-                if (record?.type === 'attributes') {
-                    return ['data-uid', 'data-nick', 'data-ip'].includes(record.attributeName)
-                        && this.isCommentVisibilityElement(record.target);
+        isCommentImmediateMutationRecord(record) {
+            if (record?.type === 'attributes') {
+                return ['data-uid', 'data-nick', 'data-ip'].includes(record.attributeName)
+                    && this.isCommentVisibilityElement(record.target);
+            }
+            if (record?.type !== 'childList' || record.addedNodes.length === 0) return false;
+            if (this.isCommentVisibilityElement(record.target)) return true;
+            return Array.from(record.addedNodes).some((node) => this.isCommentVisibilityElement(node));
+        },
+
+        isViewBottomListMutationRecord(record) {
+            if (!this.getPageContext().isView || record?.type !== 'childList' || record.addedNodes.length === 0) return false;
+            const target = record.target instanceof Element ? record.target : null;
+            const listSelector = '.gall_listwrap, .list_wrap, table.gall_list, .gall_list tbody';
+            const addedElements = Array.from(record.addedNodes).filter((node) => node instanceof Element);
+            const touchesList = (element) => element.matches(listSelector)
+                || Boolean(element.closest(listSelector))
+                || Boolean(element.querySelector?.(listSelector));
+
+            if (target?.closest('.view_bottom')) {
+                return touchesList(target) || addedElements.some(touchesList);
+            }
+
+            if (!(target === document.body || target?.matches('#container, .view_content_wrap'))) return false;
+            return addedElements.some((element) => (
+                element.matches('.view_bottom')
+                    ? Boolean(element.querySelector(listSelector))
+                    : Boolean(element.querySelector('.view_bottom .gall_listwrap, .view_bottom .list_wrap, .view_bottom table.gall_list'))
+            ));
+        },
+
+        classifyImmediateMutationRecords(records) {
+            const classified = { all: [], comments: [], viewBottomList: [] };
+            if (!Array.isArray(records) || records.length === 0 || !this.getPageContext().hasComments) return classified;
+            const all = new Set();
+            records.forEach((record) => {
+                if (this.isCommentImmediateMutationRecord(record)) {
+                    classified.comments.push(record);
+                    all.add(record);
                 }
-                if (record?.type !== 'childList' || record.addedNodes.length === 0) return false;
-                if (this.isCommentVisibilityElement(record.target)) return true;
-                return Array.from(record.addedNodes).some((node) => this.isCommentVisibilityElement(node));
+                if (this.isViewBottomListMutationRecord(record)) {
+                    classified.viewBottomList.push(record);
+                    all.add(record);
+                }
             });
+            classified.all = Array.from(all);
+            return classified;
         },
 
         incrementDiagnostic(label, amount = 1) {
@@ -1346,19 +1382,28 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             }
         },
 
-        dispatchImmediateMutations(records) {
-            if (!Array.isArray(records) || records.length === 0) return;
+        dispatchImmediateMutations(classified) {
+            const allRecords = Array.isArray(classified?.all) ? classified.all : [];
+            if (allRecords.length === 0) return;
             if (!(this._immediateMutationSubscribers instanceof Map) || this._immediateMutationSubscribers.size === 0) return;
 
-            const payload = this.buildMutationPayload(records);
             this.incrementDiagnostic('mutation.immediateDispatches');
-            this.incrementDiagnostic('mutation.immediateRecords', records.length);
+            this.incrementDiagnostic('mutation.immediateRecords', allRecords.length);
             this.setDiagnosticGauge('mutation.immediateSubscribers', this._immediateMutationSubscribers.size);
 
             const measureDispatch = this._diagnosticsEnabled && typeof performance?.now === 'function';
             const dispatchStartedAt = measureDispatch ? performance.now() : 0;
-            this._immediateMutationSubscribers.forEach((listener, key) => {
+            const payloads = new Map();
+            this._immediateMutationSubscribers.forEach((subscriber, key) => {
                 try {
+                    const listener = typeof subscriber === 'function' ? subscriber : subscriber?.listener;
+                    const mutationScope = typeof subscriber === 'function' ? 'all' : (subscriber?.mutationScope || 'all');
+                    const scopedRecords = mutationScope === 'comments'
+                        ? classified.comments
+                        : (mutationScope === 'view-bottom-list' ? classified.viewBottomList : allRecords);
+                    if (typeof listener !== 'function' || !Array.isArray(scopedRecords) || scopedRecords.length === 0) return;
+                    if (!payloads.has(mutationScope)) payloads.set(mutationScope, this.buildMutationPayload(scopedRecords));
+                    const payload = payloads.get(mutationScope);
                     listener(payload);
                 } catch (error) {
                     console.error('[DCUF runtime] immediate mutation subscriber failed:', key, error);
@@ -1382,7 +1427,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             // MutationObserver callbacks run before the next paint. Critical visibility
             // subscribers must see the fresh records here; the ordinary bus remains
             // animation-frame batched for heavier UI and async work.
-            this.dispatchImmediateMutations(this.filterImmediateMutationRecords(filteredRecords));
+            this.dispatchImmediateMutations(this.classifyImmediateMutationRecords(filteredRecords));
             this._pendingMutationRecords.push(...filteredRecords);
             this.incrementDiagnostic('mutation.bursts');
             this.incrementDiagnostic('mutation.records', filteredRecords.length);
@@ -1502,7 +1547,10 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
                 return () => {};
             }
             this.ensureMutationBus();
-            this._immediateMutationSubscribers.set(key, listener);
+            this._immediateMutationSubscribers.set(key, {
+                listener,
+                mutationScope: options.mutationScope || 'all'
+            });
             this.setDiagnosticGauge('mutation.immediateSubscribers', this._immediateMutationSubscribers.size);
             return () => {
                 this._immediateMutationSubscribers.delete(key);
@@ -4425,7 +4473,7 @@ const ThemeModule = (() => {
             }
         }
 
-        /* [v3.4.7] Script-owned soft-depth control surfaces */
+        /* [v3.4.8] Script-owned soft-depth control surfaces */
         #dc-personal-block-fab {
             background: linear-gradient(180deg, #fff 0%, #eef4ff 100%) !important;
             color: #29466f !important;
@@ -7085,7 +7133,7 @@ const ThemeModule = (() => {
                     this._runtimeImmediateMutationUnsubscribe = runtimeCoordinator.subscribeImmediateMutations(
                         'filter-immediate-comment-visibility',
                         (payload) => this.applyImmediateCommentMutations(payload),
-                        { contexts: ['comments'] }
+                        { contexts: ['comments'], mutationScope: 'comments' }
                     );
                 }
                 this._runtimeMutationUnsubscribe = runtimeCoordinator.subscribeMutations('filter-universal-observer', (payload) => {
@@ -7596,7 +7644,7 @@ const ThemeModule = (() => {
             this._initState = 'initializing';
             this._initPromise = (async () => {
                 this.installDebugApi();
-                this.debugLog('init', 'FilterModule init start', { version: '3.4.7' });
+                this.debugLog('init', 'FilterModule init start', { version: '3.4.8' });
                 const snapshot = await this.loadBootSnapshot();
                 await this.cleanupLegacyManagedBlockConfig(snapshot);
                 await this.reloadSettings(snapshot);
@@ -9159,6 +9207,7 @@ const ThemeModule = (() => {
         _nextRowId: 1,
         _nextListRuntimeId: 1,
         _listMutationUnsubscribe: null,
+        _listImmediateMutationUnsubscribe: null,
         _initialRevealStartedAt: 0,
         _postRevealRecoveryStop: null,
         ARTICLE_AD_STYLE_ID: 'dcuf-article-native-ad-style',
@@ -10068,7 +10117,8 @@ const ThemeModule = (() => {
                 rebuildAll: false,
                 mutationGeneration: 0,
                 lastSyncedGeneration: -1,
-                lastSyncReason: 'init'
+                lastSyncReason: 'init',
+                suppressNextTbodySchedule: false
             };
 
             state.syncScheduler = this.createPhaseScheduler(`ui-list-${state.runtimeId}`, ({ delay }) => {
@@ -10245,6 +10295,20 @@ const ThemeModule = (() => {
             this.recordDiagnostic('ui.listState.synced');
         },
 
+        syncListStateImmediately(state, reason = 'immediate', { suppressTbodySchedule = false } = {}) {
+            if (!state) return;
+            state.lastSyncReason = reason;
+            state.suppressNextTbodySchedule = suppressTbodySchedule;
+            if (typeof state.syncScheduler?.flush === 'function') {
+                state.syncScheduler.flush({ reason });
+                return;
+            }
+            this.syncListState(state, reason);
+            if (!state.rolledBack && state.listWrap) {
+                state.lastSyncedGeneration = state.mutationGeneration;
+            }
+        },
+
         attachOriginalTbodyObserver(state) {
             if (!state?.originalTbody || state.tbodyObserver) return;
 
@@ -10295,6 +10359,11 @@ const ThemeModule = (() => {
                 });
 
                 if (needsResync) {
+                    if (state.suppressNextTbodySchedule) {
+                        state.suppressNextTbodySchedule = false;
+                        this.recordDiagnostic('ui.listImmediate.suppressedTbodySchedule');
+                        return;
+                    }
                     this.scheduleListSync(state, 'tbody-mutated', { dirtyRows });
                 }
             });
@@ -10308,7 +10377,7 @@ const ThemeModule = (() => {
             });
         },
 
-        ensureListRuntime(listWrap, reason = 'ensure') {
+        ensureListRuntime(listWrap, reason = 'ensure', { scheduleExisting = true, scheduleInitial = true } = {}) {
             if (!(listWrap instanceof HTMLElement)) return null;
             const ownedListWrap = this.resolveOwnedListWrap(listWrap);
             if (!(ownedListWrap instanceof HTMLElement) || ownedListWrap !== listWrap) return null;
@@ -10321,7 +10390,7 @@ const ThemeModule = (() => {
             if (existingState && existingState.originalTbody === originalTbody && existingState.newListContainer instanceof HTMLElement) {
                 this.ensureBottomControls(listWrap);
                 this.enhanceOriginalSearchForms(listWrap);
-                this.scheduleListSync(existingState, reason);
+                if (scheduleExisting) this.scheduleListSync(existingState, reason);
                 return existingState;
             }
 
@@ -10352,7 +10421,7 @@ const ThemeModule = (() => {
                 this.LIST_STATE_MAP.set(listWrap, state);
                 this.hydrateExistingListItems(state);
                 this.attachOriginalTbodyObserver(state);
-                this.scheduleListSync(state, reason, { rebuildAll: true });
+                if (scheduleInitial) this.scheduleListSync(state, reason, { rebuildAll: true });
                 this.recordDiagnostic('ui.listState.created');
                 return state;
             } catch (error) {
@@ -10361,11 +10430,11 @@ const ThemeModule = (() => {
             }
         },
 
-        ensureKnownListRuntimes(root = document, reason = 'ensure-known') {
-            this.collectOwnedListWraps(root).forEach((listWrap) => this.ensureListRuntime(listWrap, reason));
+        ensureKnownListRuntimes(root = document, reason = 'ensure-known', options = {}) {
+            this.collectOwnedListWraps(root).forEach((listWrap) => this.ensureListRuntime(listWrap, reason, options));
         },
 
-        ensureListRuntimesFromCandidates(candidates, reason = 'ensure-candidates') {
+        ensureListRuntimesFromCandidates(candidates, reason = 'ensure-candidates', options = {}) {
             if (!candidates || typeof candidates[Symbol.iterator] !== 'function') return [];
             const seen = new Set();
             const resolved = [];
@@ -10374,9 +10443,38 @@ const ThemeModule = (() => {
                 if (!(listWrap instanceof HTMLElement) || seen.has(listWrap)) return;
                 seen.add(listWrap);
                 resolved.push(listWrap);
-                this.ensureListRuntime(listWrap, reason);
+                this.ensureListRuntime(listWrap, reason, options);
             });
             return resolved;
+        },
+
+        syncImmediateViewBottomLists(payload) {
+            if (!this.isViewPage() || typeof payload?.collectMatches !== 'function') return;
+            Array.from(this.ACTIVE_LIST_STATES).forEach((state) => {
+                if (!state?.listWrap?.isConnected) this.destroyListState(state, 'immediate-view-bottom-detached');
+            });
+            const candidates = payload.collectMatches([
+                this.SELECTORS.LIST_WRAP,
+                this.SELECTORS.ORIGINAL_TABLE,
+                this.SELECTORS.ORIGINAL_TBODY
+            ], { includeRoots: true });
+            const seen = new Set();
+            candidates.forEach((candidate) => {
+                const listWrap = this.resolveOwnedListWrap(candidate);
+                if (!(listWrap instanceof HTMLElement) || seen.has(listWrap) || !listWrap.closest('.view_bottom')) return;
+                seen.add(listWrap);
+                const existingState = this.LIST_STATE_MAP.get(listWrap);
+                const state = this.ensureListRuntime(listWrap, 'immediate-view-bottom', {
+                    scheduleExisting: false,
+                    scheduleInitial: false
+                });
+                if (!state) return;
+
+                this.syncListStateImmediately(state, 'immediate-view-bottom', {
+                    suppressTbodySchedule: existingState === state
+                });
+                this.recordDiagnostic('ui.listImmediate.synced');
+            });
         },
 
         subscribeListRuntimeUpdates() {
@@ -10385,6 +10483,13 @@ const ThemeModule = (() => {
 
             const runtimeCoordinator = this.getRuntimeCoordinator();
             if (runtimeCoordinator && typeof runtimeCoordinator.subscribeMutations === 'function') {
+                if (this.isViewPage() && typeof runtimeCoordinator.subscribeImmediateMutations === 'function') {
+                    this._listImmediateMutationUnsubscribe = runtimeCoordinator.subscribeImmediateMutations(
+                        'ui-view-bottom-list-visibility',
+                        (payload) => this.syncImmediateViewBottomLists(payload),
+                        { contexts: ['view'], mutationScope: 'view-bottom-list' }
+                    );
+                }
                 this._listMutationUnsubscribe = runtimeCoordinator.subscribeMutations('ui-list-runtime', (payload) => {
                     const candidates = payload.collectMatches([
                         this.SELECTORS.LIST_WRAP,
@@ -10397,7 +10502,9 @@ const ThemeModule = (() => {
                     ], { includeRoots: true });
                     if (candidates.length === 0) return;
 
-                    this.ensureListRuntimesFromCandidates(candidates, 'mutation-bus');
+                    this.ensureListRuntimesFromCandidates(candidates, 'mutation-bus', {
+                        scheduleExisting: !this.isViewPage()
+                    });
                 }, { contexts: ['list-surface'] });
                 return;
             }
@@ -10470,7 +10577,7 @@ const ThemeModule = (() => {
         },
 
         shouldEnsureListRuntimeForReveal() {
-            return this.isListPage();
+            return this.getPageContext().hasListSurface === true;
         },
 
         updateRevealDebug(channel, state, meta = {}) {
@@ -10497,7 +10604,7 @@ const ThemeModule = (() => {
             return this.updateRevealDebug('recovery', state, meta);
         },
 
-        evaluateListInitialRevealState(listWrap) {
+        evaluateListStructureState(listWrap) {
             if (!(listWrap instanceof HTMLElement)) {
                 return {
                     ready: false,
@@ -10538,6 +10645,38 @@ const ThemeModule = (() => {
                     ready: true,
                     reason: 'ready',
                     detail: { originalRowCount, customItemCount }
+                };
+            }
+
+            const runtimeState = this.LIST_STATE_MAP.get(listWrap);
+            const committed = runtimeState?.newListContainer === newListContainer && runtimeState.committed === true;
+            if (!committed) {
+                return {
+                    ready: false,
+                    reason: 'waiting-list-commit',
+                    detail: { originalRowCount, customItemCount, committed: false }
+                };
+            }
+
+            return {
+                ready: true,
+                reason: 'ready',
+                detail: { originalRowCount, customItemCount, committed: true }
+            };
+        },
+
+        evaluateListInitialRevealState(listWrap) {
+            const structureState = this.evaluateListStructureState(listWrap);
+            if (!structureState.ready) return structureState;
+
+            const { originalRowCount = 0, customItemCount = 0 } = structureState.detail || {};
+            if (customItemCount === 0) return structureState;
+            const newListContainer = listWrap.querySelector(`.${this.CUSTOM_CLASSES.MOBILE_LIST}`);
+            if (!(newListContainer instanceof HTMLElement)) {
+                return {
+                    ready: false,
+                    reason: 'waiting-list',
+                    detail: { originalRowCount, customItemCount, missingCustomList: true }
                 };
             }
 
@@ -10595,6 +10734,41 @@ const ThemeModule = (() => {
             const commentSignal = document.querySelector('#focus_cmt, .view_comment, div[id^="comment_wrap_"]');
             const commentBox = document.querySelector('#focus_cmt .comment_box, div[id^="comment_wrap_"] .comment_box, .view_comment .comment_box');
             const commentWriteBox = document.querySelector('#focus_cmt > .cmt_write_box, #focus_cmt .cmt_write_box, .view_comment .cmt_write_box');
+            const hasBottomListSignal = !!viewBottom?.querySelector('.gall_listwrap, .list_wrap, table.gall_list, tr.ub-content');
+            const embeddedListWraps = viewBottom instanceof HTMLElement ? this.collectOwnedListWraps(viewBottom) : [];
+
+            if (hasBottomListSignal && embeddedListWraps.length === 0) {
+                return {
+                    ready: false,
+                    reason: 'waiting-list',
+                    detail: {
+                        hasViewWrap: true,
+                        hasViewBottom: true,
+                        hasBottomListSignal: true,
+                        embeddedListCount: 0,
+                        revealTheme: 'view'
+                    }
+                };
+            }
+
+            for (let index = 0; index < embeddedListWraps.length; index += 1) {
+                const wrapState = this.evaluateListStructureState(embeddedListWraps[index]);
+                if (!wrapState.ready) {
+                    return {
+                        ready: false,
+                        reason: wrapState.reason,
+                        detail: {
+                            hasViewWrap: true,
+                            hasViewBottom: true,
+                            hasBottomListSignal,
+                            embeddedListCount: embeddedListWraps.length,
+                            embeddedListIndex: index,
+                            revealTheme: 'view',
+                            ...wrapState.detail
+                        }
+                    };
+                }
+            }
 
             const themeBridge = this.getPhase1ViewTheme();
             if (typeof themeBridge?.verify !== 'function') {
@@ -10623,6 +10797,8 @@ const ThemeModule = (() => {
                         hasCommentSignal: commentSignal instanceof HTMLElement,
                         hasCommentBox: commentBox instanceof HTMLElement,
                         hasCommentWriteBox: commentWriteBox instanceof HTMLElement,
+                        hasBottomListSignal,
+                        embeddedListCount: embeddedListWraps.length,
                         revealTheme: 'view',
                         verifyReason: verifyResult?.reason || 'unknown',
                         verifyDetail: verifyResult?.detail || null
@@ -10640,6 +10816,8 @@ const ThemeModule = (() => {
                     hasCommentSignal: commentSignal instanceof HTMLElement,
                     hasCommentBox: commentBox instanceof HTMLElement,
                     hasCommentWriteBox: commentWriteBox instanceof HTMLElement,
+                    hasBottomListSignal,
+                    embeddedListCount: embeddedListWraps.length,
                     revealTheme: 'view',
                     verifyReason: verifyResult.reason || 'ready',
                     verifyDetail: verifyResult.detail || null
@@ -10842,7 +11020,14 @@ const ThemeModule = (() => {
                     '.view_comment',
                     '.comment_box',
                     '.cmt_write_box',
-                    '#focus_cmt'
+                    '#focus_cmt',
+                    '.view_bottom',
+                    this.SELECTORS.LIST_WRAP,
+                    this.SELECTORS.ORIGINAL_TABLE,
+                    this.SELECTORS.ORIGINAL_TBODY,
+                    this.SELECTORS.ORIGINAL_POST_ITEM,
+                    `.${this.CUSTOM_CLASSES.MOBILE_LIST}`,
+                    `.${this.CUSTOM_CLASSES.POST_ITEM}`
                 ];
             }
 
@@ -10863,7 +11048,7 @@ const ThemeModule = (() => {
                 this.ensureBootUi('initial-reveal:start');
                 this._initialRevealStartedAt = Date.now();
                 if (this.shouldEnsureListRuntimeForReveal()) {
-                    this.ensureKnownListRuntimes(document, 'initial-reveal:start');
+                    this.ensureKnownListRuntimes(document, 'initial-reveal:start', { scheduleExisting: false });
                 }
 
                 let lastState = this.getInitialRevealState();
@@ -10970,9 +11155,9 @@ const ThemeModule = (() => {
                         this.ensureBootUi(`initial-reveal:${reason}`);
                         if (this.shouldEnsureListRuntimeForReveal()) {
                             if (candidates && typeof candidates[Symbol.iterator] === 'function') {
-                                this.ensureListRuntimesFromCandidates(candidates, `initial-reveal:${reason}`);
+                                this.ensureListRuntimesFromCandidates(candidates, `initial-reveal:${reason}`, { scheduleExisting: false });
                             } else {
-                                this.ensureKnownListRuntimes(document, `initial-reveal:${reason}`);
+                                this.ensureKnownListRuntimes(document, `initial-reveal:${reason}`, { scheduleExisting: false });
                             }
                         }
                         lastState = this.getInitialRevealState();
@@ -11090,7 +11275,9 @@ const ThemeModule = (() => {
             };
 
             const runSupportPasses = (reason = 'post-reveal') => {
-                this.ensureKnownListRuntimes(document, `post-reveal:${reason}`);
+                this.ensureKnownListRuntimes(document, `post-reveal:${reason}`, {
+                    scheduleExisting: !isViewPage
+                });
 
                 const viewBottomContainer = document.querySelector('.view_bottom');
                 if (viewBottomContainer instanceof HTMLElement) {
@@ -11171,9 +11358,13 @@ const ThemeModule = (() => {
 
                 try {
                     if (candidates && typeof candidates[Symbol.iterator] === 'function') {
-                        this.ensureListRuntimesFromCandidates(candidates, `post-reveal:${reason}`);
+                        this.ensureListRuntimesFromCandidates(candidates, `post-reveal:${reason}`, {
+                            scheduleExisting: !isViewPage
+                        });
                     } else {
-                        this.ensureKnownListRuntimes(document, `post-reveal:${reason}`);
+                        this.ensureKnownListRuntimes(document, `post-reveal:${reason}`, {
+                            scheduleExisting: !isViewPage
+                        });
                     }
                 } catch (error) {
                     console.warn('[DC Filter+UI] Post-reveal list runtime ensure failed:', error);
@@ -12257,7 +12448,7 @@ const ThemeModule = (() => {
 
         return {
             reason,
-            version: '3.4.7',
+            version: '3.4.8',
             time: new Date().toISOString(),
             href: location.href,
             heap: getDcufHeapMb(),
@@ -12399,27 +12590,55 @@ const ThemeModule = (() => {
         if (typeof flushBarrier !== 'function') return { reason: 'unavailable' };
 
         const runtimeCoordinator = window.__dcufRuntimeCoordinator;
-        const deadline = Date.now() + 500;
+        const startedAt = typeof performance?.now === 'function' ? performance.now() : Date.now();
+        const maxAttempts = 2;
+        const quietFrameCount = 1;
+        const deadline = Date.now() + 240;
         let lastState = null;
-        for (let attempt = 1; attempt <= 3 && Date.now() < deadline; attempt += 1) {
+        let attemptsPerformed = 0;
+        const getCommentGeneration = () => {
+            if (typeof FilterModule?.getRelevantMutationGeneration === 'function') {
+                return FilterModule.getRelevantMutationGeneration('comments');
+            }
+            return runtimeCoordinator?._mutationGeneration || 0;
+        };
+        const finish = (state) => ({
+            ...state,
+            durationMs: Math.round(((typeof performance?.now === 'function' ? performance.now() : Date.now()) - startedAt) * 10) / 10
+        });
+        // The document-start body lock is still active here. One paint boundary is
+        // sufficient to drain comment-relevant MutationObserver work because a final
+        // synchronous pass runs immediately before markReady, and the same observer
+        // filters post-ready replacements before paint.
+        for (let attempt = 1; attempt <= maxAttempts && Date.now() < deadline; attempt += 1) {
+            attemptsPerformed = attempt;
             runtimeCoordinator?.ensureMutationBus?.();
             lastState = flushBarrier({ reason: 'initial-comment-barrier', attempt });
-            const firstGeneration = runtimeCoordinator?._mutationGeneration || lastState?.generation || 0;
+            const firstGeneration = getCommentGeneration();
             await new Promise((resolve) => requestAnimationFrame(resolve));
             runtimeCoordinator?.flushPendingMutations?.('initial-comment:quiet-1');
-            const secondGeneration = runtimeCoordinator?._mutationGeneration || 0;
+            const secondGeneration = getCommentGeneration();
             if (secondGeneration !== firstGeneration) continue;
-            await new Promise((resolve) => requestAnimationFrame(resolve));
-            runtimeCoordinator?.flushPendingMutations?.('initial-comment:quiet-2');
-            const thirdGeneration = runtimeCoordinator?._mutationGeneration || 0;
-            if (thirdGeneration === secondGeneration) {
-                lastState = flushBarrier({ reason: 'initial-comment-quiet', attempt });
-                runtimeCoordinator?.incrementDiagnostic?.('ui.initialComment.mutationQuiet');
-                return { reason: 'mutation-quiet', attempt, generation: thirdGeneration, prepareState: lastState };
-            }
+            lastState = flushBarrier({ reason: 'initial-comment-quiet', attempt });
+            runtimeCoordinator?.incrementDiagnostic?.('ui.initialComment.mutationQuiet');
+            return finish({
+                reason: 'mutation-quiet',
+                attempt,
+                generation: secondGeneration,
+                quietFrameCount,
+                maxAttempts,
+                prepareState: lastState
+            });
         }
-        lastState = flushBarrier({ reason: 'initial-comment-bounded-timeout', attempt: 3 });
-        return { reason: 'bounded-timeout', prepareState: lastState };
+        lastState = flushBarrier({ reason: 'initial-comment-bounded-final-pass', attempt: attemptsPerformed || 1 });
+        runtimeCoordinator?.incrementDiagnostic?.('ui.initialComment.boundedFinalPass');
+        return finish({
+            reason: 'bounded-final-pass',
+            attempt: attemptsPerformed,
+            quietFrameCount,
+            maxAttempts,
+            prepareState: lastState
+        });
     }
     function prepareInitialCommentRevealBeforeMark(state = null) {
         const prepare = window.__dcufFlushInitialCommentBarrier || window.__dcufPrepareInitialCommentReveal;
@@ -12461,7 +12680,7 @@ const ThemeModule = (() => {
                 }));
             }
         }
-        console.log("[DC Filter+UI] Initializing v3.4.7...");
+        console.log("[DC Filter+UI] Initializing v3.4.8...");
 
 
         if (!__dcufRoot.__dcufShortcutBound) {
@@ -12510,12 +12729,27 @@ const ThemeModule = (() => {
         window.__dcufBootController?.note?.('boot.local-filter-ready');
         const uiInitState = await UIModule.init();
         window.__dcufBootController?.note?.('boot.ui-ready', { uiInitState });
+        const configuredRevealTimeout = Number(__dcufRoot.__DCUF_TESTBED_CONFIG__?.boot?.revealTimeoutMs);
+        const initialRevealPromise = UIModule.isViewPage() && typeof UIModule?.waitForInitialRevealReady === 'function'
+            ? UIModule.waitForInitialRevealReady(
+                Number.isFinite(configuredRevealTimeout) && configuredRevealTimeout > 0 ? configuredRevealTimeout : undefined
+            )
+            : null;
         // Mobile comment reply-merge cleanup can rerender blocked comment rows
         // once more after Filter/UI init. Keep the initial body lock until that first
         // stabilization window finishes so personally blocked comments do not flash visible.
+        // View style/list readiness runs in parallel, but both promises must settle
+        // before the body lock can be released.
         const commentInitState = await awaitInitialCommentStabilization();
-        window.__dcufBootController?.note?.('boot.comment-barrier', { reason: commentInitState?.reason || 'unknown' });
-        const initState = { uiInitState, commentInitState };
+        window.__dcufBootController?.note?.('boot.comment-barrier', {
+            reason: commentInitState?.reason || 'unknown',
+            attempt: commentInitState?.attempt || 0,
+            quietFrameCount: commentInitState?.quietFrameCount || 0,
+            maxAttempts: commentInitState?.maxAttempts || 0,
+            durationMs: commentInitState?.durationMs ?? null
+        });
+        const initialRevealState = initialRevealPromise ? await initialRevealPromise : null;
+        const initState = { uiInitState, commentInitState, initialRevealState };
         console.log(`[DC Filter+UI] Initialization complete. ui=${uiInitState} comment=${commentInitState?.reason || 'unknown'}`);
         return initState;
     }
@@ -12533,7 +12767,9 @@ const ThemeModule = (() => {
         try {
             const mainState = await main();
             if (mainState && typeof mainState === 'object') initState = mainState;
-            if (typeof UIModule?.waitForInitialRevealReady === 'function') {
+            if (typeof initState.initialRevealState === 'string') {
+                revealState = initState.initialRevealState;
+            } else if (typeof UIModule?.waitForInitialRevealReady === 'function') {
                 const configuredRevealTimeout = Number(__dcufRoot.__DCUF_TESTBED_CONFIG__?.boot?.revealTimeoutMs);
                 revealState = await UIModule.waitForInitialRevealReady(
                     Number.isFinite(configuredRevealTimeout) && configuredRevealTimeout > 0 ? configuredRevealTimeout : undefined

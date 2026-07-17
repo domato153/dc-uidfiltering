@@ -144,6 +144,79 @@ mobileTest('boot: 댓글 장벽 이후의 새 DOM도 최종 동기 필터 뒤에
     } finally { await session.close(); }
 });
 
+mobileTest('boot: unrelated page churn does not extend comment quiet and the embedded list commits before reveal', 'boot', async ({ browser, server }) => {
+    const session = await createTestPage(browser, server.baseUrl, {
+        storage: noStatsStorage,
+        gmBehavior: { pendingKeys: [storageKeys.threshold] }
+    });
+    try {
+        await session.goto('/board/view?id=test&no=1001', { waitForReady: false });
+        const hooked = await session.page.evaluate(() => {
+            const controller = window.__dcufBootController;
+            if (!controller) return false;
+            const notes = [];
+            const revealWaitStarts = [];
+            const originalNote = controller.note.bind(controller);
+            controller.note = (label, detail) => {
+                notes.push({ label, detail, at: performance.now() });
+                return originalNote(label, detail);
+            };
+            const uiModule = window.__dcufUIModule;
+            if (uiModule && typeof uiModule.waitForInitialRevealReady === 'function') {
+                const originalWaitForReveal = uiModule.waitForInitialRevealReady.bind(uiModule);
+                uiModule.waitForInitialRevealReady = (timeoutMs) => {
+                    revealWaitStarts.push({ timeoutMs, at: performance.now() });
+                    return originalWaitForReveal(timeoutMs);
+                };
+            }
+
+            let active = true;
+            const churn = () => {
+                if (!active) return;
+                const node = document.createElement('i');
+                node.className = 'fixture-unrelated-boot-churn';
+                document.body.appendChild(node);
+                node.remove();
+                requestAnimationFrame(churn);
+            };
+            window.__dcufScopedRevealResult = { notes, revealWaitStarts, reveal: null };
+            window.addEventListener('dcuf:boot-ready', () => {
+                active = false;
+                const listWrap = document.querySelector('.view_bottom .gall_listwrap');
+                const originalTable = listWrap?.querySelector('table.gall_list');
+                const originalRows = originalTable?.querySelectorAll('tr.ub-content').length || 0;
+                const customItems = listWrap?.querySelectorAll('.custom-mobile-list .custom-post-item').length || 0;
+                window.__dcufScopedRevealResult.reveal = {
+                    transformed: listWrap?.getAttribute('data-ui-transformed') || '',
+                    originalInlineDisplay: originalTable?.style.getPropertyValue('display') || '',
+                    originalComputedDisplay: originalTable instanceof HTMLElement ? getComputedStyle(originalTable).display : '',
+                    originalRows,
+                    customItems
+                };
+            }, { once: true });
+            requestAnimationFrame(churn);
+            return true;
+        });
+        assert.equal(hooked, true);
+        await session.page.evaluate((key) => window.__dcufTestbedGM.release(key), storageKeys.threshold);
+        await session.page.waitForFunction(() => document.documentElement.getAttribute('data-dcuf-boot-state') === 'ready', null, { timeout: 6000 });
+        const result = await session.page.evaluate(() => window.__dcufScopedRevealResult);
+        const barrier = result.notes.find((entry) => entry.label === 'boot.comment-barrier');
+        assert.equal(barrier?.detail?.reason, 'mutation-quiet', JSON.stringify(result.notes));
+        assert.equal(Number(barrier?.detail?.attempt) >= 1 && Number(barrier?.detail?.attempt) <= 2, true, JSON.stringify(barrier));
+        assert.equal(barrier?.detail?.quietFrameCount, 1, JSON.stringify(barrier));
+        assert.equal(barrier?.detail?.maxAttempts, 2, JSON.stringify(barrier));
+        assert.equal(result.revealWaitStarts.length, 1, JSON.stringify(result.revealWaitStarts));
+        assert.equal(result.revealWaitStarts[0].at <= barrier.at, true, JSON.stringify({ revealWaitStarts: result.revealWaitStarts, barrier }));
+        assert.equal(result.reveal?.transformed, 'true', JSON.stringify(result.reveal));
+        assert.equal(result.reveal?.originalInlineDisplay, 'none', JSON.stringify(result.reveal));
+        assert.equal(result.reveal?.originalComputedDisplay, 'none', JSON.stringify(result.reveal));
+        assert.equal(result.reveal?.originalRows > 0, true, JSON.stringify(result.reveal));
+        assert.equal(result.reveal?.customItems, result.reveal?.originalRows, JSON.stringify(result.reveal));
+        assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
+    } finally { await session.close(); }
+});
+
 test('모바일 UID 통계 차단 결과는 기존 캐시 형식으로 저장된다', 'functional', async ({ browser, server }) => {
     const blockedUids = ['blocked-related-user', 'blocked-image-user'];
     const session = await createTestPage(browser, server.baseUrl, { storage: statsStorage });
@@ -170,6 +243,82 @@ test('모바일 UID 통계 차단 결과는 기존 캐시 형식으로 저장된
             );
         });
         assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
+    } finally { await session.close(); }
+});
+
+mobileTest('boot: a delayed view-bottom list replacement is hidden before its first paint', 'boot', async ({ browser, server }) => {
+    const session = await createTestPage(browser, server.baseUrl, { storage: noStatsStorage });
+    try {
+        const routes = [
+            '/board/view?id=test&no=1001',
+            '/mgallery/board/view?id=test&no=1001',
+            '/mini/board/view?id=test&no=1001'
+        ];
+        for (const pathname of routes) {
+            await session.goto(pathname);
+            const result = await session.page.evaluate(async () => {
+            const currentWrap = document.querySelector('.view_bottom .gall_listwrap');
+            const sourceRows = Array.from(currentWrap?.querySelectorAll('tr.ub-content') || []).map((row) => {
+                const clone = row.cloneNode(true);
+                clone.removeAttribute('data-custom-row-id');
+                return clone.outerHTML;
+            }).join('');
+            const replacement = document.createElement('section');
+            replacement.className = 'gall_listwrap fixture-view-list fixture-delayed-view-list';
+            replacement.innerHTML = '<table class="gall_list"><tbody class="listwrap2"></tbody></table>';
+            currentWrap.replaceWith(replacement);
+
+            const sample = (phase) => {
+                const table = replacement.querySelector('table.gall_list');
+                return {
+                    phase,
+                    transformed: replacement.getAttribute('data-ui-transformed') || '',
+                    display: getComputedStyle(table).display,
+                    inlineDisplay: table.style.getPropertyValue('display'),
+                    priority: table.style.getPropertyPriority('display'),
+                    rows: table.querySelectorAll('tr.ub-content').length,
+                    customItems: replacement.querySelectorAll('.custom-mobile-list .custom-post-item').length
+                };
+            };
+
+            await new Promise((resolve) => requestAnimationFrame(resolve));
+            const frames = [sample('empty-first-frame')];
+            window.__dcufDiagnostics.reset();
+            replacement.querySelector('tbody').innerHTML = sourceRows;
+            await new Promise((resolve) => requestAnimationFrame(resolve));
+            frames.push(sample('populated-first-frame'));
+            await new Promise((resolve) => requestAnimationFrame(resolve));
+            frames.push(sample('settled-frame'));
+            await new Promise((resolve) => setTimeout(resolve, 120));
+            const diagnostics = window.__dcufDiagnostics.snapshot();
+            return {
+                frames,
+                counters: diagnostics.counters,
+                immediateSubscribers: Array.from(window.__dcufRuntimeCoordinator?._immediateMutationSubscribers?.keys?.() || [])
+            };
+            });
+
+            const message = `${pathname}: ${JSON.stringify(result)}`;
+            assert.equal(result.frames.length, 3, message);
+            assert.equal(result.frames.every((frame) => frame.display === 'none'), true, message);
+            assert.equal(result.frames.every((frame) => frame.inlineDisplay === 'none' && frame.priority === 'important'), true, message);
+            assert.equal(result.frames[0].transformed, 'true', message);
+            assert.equal(result.frames[0].rows, 0, message);
+            assert.equal(result.frames[0].customItems, 0, message);
+            assert.equal(result.frames[1].rows > 0, true, message);
+            assert.equal(result.frames[1].customItems, result.frames[1].rows, message);
+            assert.equal(result.frames[2].customItems, result.frames[2].rows, message);
+            assert.equal(result.counters['ui.listImmediate.synced'], 1, message);
+            assert.equal(result.counters['ui.listImmediate.suppressedTbodySchedule'], 1, message);
+            assert.equal(result.counters['ui.listState.synced'], 1, message);
+            assert.equal(Object.entries(result.counters).some(([key, value]) => (
+                key.startsWith('scheduler.ui-list-')
+                    && (key.endsWith('.raf') || key.endsWith('.delay:90'))
+                    && value > 0
+            )), false, message);
+            assert.equal(result.immediateSubscribers.includes('ui-view-bottom-list-visibility'), true, message);
+            assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
+        }
     } finally { await session.close(); }
 });
 
@@ -692,7 +841,7 @@ test('page context registers only the runtime subscribers owned by each surface'
             type: 'view',
             subscribers: ['filter-universal-observer', 'ui-list-runtime', 'reply-merge', 'comment-typography', 'runtime-article-ad-cleanup', 'list-memo-popup'],
             excluded: ['header-drawer', 'ui-write-headtext-tip-position'],
-            immediate: ['filter-immediate-comment-visibility']
+            immediate: ['filter-immediate-comment-visibility', 'ui-view-bottom-list-visibility']
         },
         {
             pathname: '/board/write/?id=test',
@@ -827,13 +976,21 @@ test('mutation bus skips irrelevant attributes and caches repeated payload searc
             const second = payload.collectMatches('.comment_box', { includeRoots: true });
             const identityRecord = { type: 'attributes', attributeName: 'data-uid', target: target.querySelector('.ub-writer') };
             const classRecord = { type: 'attributes', attributeName: 'class', target };
+            const listTarget = document.querySelector('.view_bottom table.gall_list tbody');
+            const listRecord = { type: 'childList', target: listTarget, addedNodes: [document.createElement('tr')], removedNodes: [] };
+            const identityClassification = coordinator.classifyImmediateMutationRecords([identityRecord]);
+            const classClassification = coordinator.classifyImmediateMutationRecords([classRecord]);
+            const listClassification = coordinator.classifyImmediateMutationRecords([listRecord]);
             return {
                 firstCount: first.length,
                 secondCount: second.length,
                 sameElement: first[0] === second[0],
                 cacheCounters: window.__dcufDiagnostics.snapshot().counters,
-                immediateIdentityCount: coordinator.filterImmediateMutationRecords([identityRecord]).length,
-                immediateClassCount: coordinator.filterImmediateMutationRecords([classRecord]).length
+                immediateIdentityCount: identityClassification.comments.length,
+                immediateIdentityListCount: identityClassification.viewBottomList.length,
+                immediateClassCount: classClassification.all.length,
+                immediateListCount: listClassification.viewBottomList.length,
+                immediateListCommentCount: listClassification.comments.length
             };
         });
         assert.deepEqual({
@@ -841,13 +998,19 @@ test('mutation bus skips irrelevant attributes and caches repeated payload searc
             secondCount: payloadContract.secondCount,
             sameElement: payloadContract.sameElement,
             immediateIdentityCount: payloadContract.immediateIdentityCount,
-            immediateClassCount: payloadContract.immediateClassCount
+            immediateIdentityListCount: payloadContract.immediateIdentityListCount,
+            immediateClassCount: payloadContract.immediateClassCount,
+            immediateListCount: payloadContract.immediateListCount,
+            immediateListCommentCount: payloadContract.immediateListCommentCount
         }, {
             firstCount: 1,
             secondCount: 1,
             sameElement: true,
             immediateIdentityCount: 1,
-            immediateClassCount: 0
+            immediateIdentityListCount: 0,
+            immediateClassCount: 0,
+            immediateListCount: 1,
+            immediateListCommentCount: 0
         });
         assert.equal(payloadContract.cacheCounters['mutation.collectMatches.cacheMisses'], 1);
         assert.equal(payloadContract.cacheCounters['mutation.collectMatches.cacheHits'], 1);

@@ -4229,7 +4229,7 @@
                     this._runtimeImmediateMutationUnsubscribe = runtimeCoordinator.subscribeImmediateMutations(
                         'filter-immediate-comment-visibility',
                         (payload) => this.applyImmediateCommentMutations(payload),
-                        { contexts: ['comments'] }
+                        { contexts: ['comments'], mutationScope: 'comments' }
                     );
                 }
                 this._runtimeMutationUnsubscribe = runtimeCoordinator.subscribeMutations('filter-universal-observer', (payload) => {

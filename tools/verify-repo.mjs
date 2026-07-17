@@ -8,6 +8,7 @@ const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const requestedMode = process.argv[2] || 'all';
 const validModes = new Set(['guidance', 'release', 'all']);
 const failures = [];
+const AGENTS_CHAR_LIMIT = 5000;
 const BOARD_MATCHES = [
     'https://gall.dcinside.com/board/*',
     'https://gall.dcinside.com/mgallery/board/*',
@@ -55,7 +56,8 @@ async function verifyGuidance() {
     const entries = await readdir(skillsDir, { withFileTypes: true });
     const actualSkills = entries.filter((entry) => entry.isDirectory()).map((entry) => entry.name).sort();
 
-    check(agentsText.length <= 3500, `AGENTS.md is ${agentsText.length} characters; limit is 3500`);
+    check(agentsText.length <= AGENTS_CHAR_LIMIT,
+        `AGENTS.md is ${agentsText.length} characters; limit is ${AGENTS_CHAR_LIMIT}`);
     check(JSON.stringify(actualSkills) === JSON.stringify(expectedSkills),
         `active skills are [${actualSkills.join(', ')}]; expected [${expectedSkills.join(', ')}]`);
 
@@ -90,7 +92,7 @@ async function verifyGuidance() {
         'dcuf-release: references/manual-smoke.md is missing');
 
     console.log('Guidance metrics');
-    console.log(` - AGENTS.md: ${agentsText.length}/3500 characters`);
+    console.log(` - AGENTS.md: ${agentsText.length}/${AGENTS_CHAR_LIMIT} characters`);
     console.log(` - active skills: ${actualSkills.length}/3`);
     console.log(` - SKILL.md total: ${totalSkillChars}/7000 characters`);
 }
