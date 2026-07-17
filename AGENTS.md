@@ -37,7 +37,7 @@
 - `origin`: `https://github.com/domato153/dc-uidfiltering.git`. Beta/review uses `codex/*`; commit locally and push only when requested.
 - Before `codex/*` commit/push, keep current artifacts/evidence and archive older userscripts locally.
 - `Mobile` owns `Dc_UserFilter_Mobile.user.js`; `main` owns PC script/site. Mirror `README.md` and its images to `Mobile` on every change.
-- Stable: update that target's badge in `main:README.md`.
+- Stable: update the target version in both `main:README.md` and the homepage label in `main:index.html`; verify the canonical download reports the released version.
 - Publish stable from a clean official worktree; replace only the canonical userscript, preserve history, and never force/merge the source branch wholesale.
 - After confirmed beta use and a full stable request, push official branches and create the Release.
 
