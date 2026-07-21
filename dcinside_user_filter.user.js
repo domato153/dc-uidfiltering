@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         DCInside PC User Filter
 // @namespace    http://tampermonkey.net/
-// @version      1.9.7
+// @version      1.9.8
 // @description  DCInside PC filter port based on the latest mobile filter runtime and shared filter core
 // @author       domato153
 // @match        https://gall.dcinside.com/board/*
@@ -370,6 +370,7 @@ const FILTER_CONSTANTS = {
                 FAB_POSITION: 'dcinside_fab_position',
                 FAB_SCALE_PERCENT: 'dcinside_fab_scale_percent',
                 MANAGEMENT_PANEL_GEOMETRY: 'dcinside_management_panel_geometry',
+                GALLERY_HEADTEXT_BLOCKS: 'dcinside_gallery_headtext_blocks_v1',
             },
             SELECTORS: {
                 POST_LIST_CONTAINER: 'table.gall_list tbody',
@@ -409,6 +410,8 @@ const FILTER_CONSTANTS = {
                 NEW_SHORTCUT_PREVIEW: 'dcinside-new-shortcut-preview',
                 SAVE_SHORTCUT_BTN: 'dcinside-save-shortcut-btn',
                 CANCEL_SHORTCUT_BTN: 'dcinside-cancel-shortcut-btn',
+                HEADTEXT_MANAGER_BUTTON: 'dcinside-headtext-manager-button',
+                HEADTEXT_MANAGER_PANEL: 'dcinside-headtext-manager-panel',
             },
             ETC: {
                 MOBILE_IP_MARKER: 'mblck',
@@ -570,6 +573,22 @@ const toBoolean = (value, fallback = false) => {
 };
 
 const STORAGE_SCHEMA_VERSION = '3.0.0';
+
+function normalizeHeadtext(value) {
+    return typeof value === 'string' ? value.replace(/\s+/g, ' ').trim() : '';
+}
+
+function normalizeGalleryHeadtextBlocks(rawValue) {
+    if (!rawValue || typeof rawValue !== 'object' || Array.isArray(rawValue)) return {};
+    const normalized = {};
+    Object.entries(rawValue).forEach(([rawKey, rawItems]) => {
+        const key = typeof rawKey === 'string' ? rawKey.trim() : '';
+        if (!/^(?:board|mgallery|mini):[^:\s]+$/.test(key) || !Array.isArray(rawItems)) return;
+        const items = Array.from(new Set(rawItems.map(normalizeHeadtext).filter(Boolean))).slice(0, 100);
+        if (items.length > 0) normalized[key] = items;
+    });
+    return normalized;
+}
 
 function normalizeProxyBlockModeValue(rawValue) {
     if (rawValue === true || rawValue === 'true') return PROXY_MODE.STRICT;
@@ -747,6 +766,8 @@ function normalizeStoredFilterSettings(rawValues = {}) {
 
     const DCUF_SHARED_STORAGE = Object.freeze({
         STORAGE_SCHEMA_VERSION,
+        normalizeHeadtext,
+        normalizeGalleryHeadtextBlocks,
         normalizeProxyBlockModeValue,
         normalizeIpPrefix,
         stripLegacyMobileIpMarker,
@@ -846,6 +867,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         telecomPrefixMatch: Boolean(matches.telecomPrefixMatch),
         blockedGuestMatch: Boolean(matches.blockedGuestMatch),
         personallyBlocked: Boolean(matches.personalBlockHit),
+        galleryHeadtextBlocked: Boolean(matches.galleryHeadtextBlock),
     };
 
     if (decision.personallyBlocked) {
@@ -885,7 +907,13 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         return decision;
     }
 
-    if (subject?.isGuest && settings?.blockGuestEnabled) {
+    if (decision.galleryHeadtextBlocked) {
+        decision.isBlocked = true;
+        decision.path = 'gallery-headtext';
+        decision.reasons.push('galleryHeadtext');
+    }
+
+    if (!decision.isBlocked && subject?.isGuest && settings?.blockGuestEnabled) {
         decision.isBlocked = true;
         decision.reasons.push('guest-toggle');
     }
@@ -1666,7 +1694,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             }
         }
 
-        /* [v1.9.7] Script-owned soft-depth control surfaces */
+        /* [v1.9.8] Script-owned soft-depth control surfaces */
         #dc-personal-block-fab {
             background: linear-gradient(180deg, #fff 0%, #eef4ff 100%) !important;
             color: #29466f !important;
@@ -2308,6 +2336,7 @@ body.dc-filter-dark-mode #dc-personal-block-fab {
 
         /* 5. 스크립트 팝업창 전체 다크 테마 */
         body.dc-filter-dark-mode #dcinside-filter-setting,
+        body.dc-filter-dark-mode #dcinside-headtext-manager-panel,
         body.dc-filter-dark-mode #dc-selection-popup,
         body.dc-filter-dark-mode #dc-block-management-panel,
         body.dc-filter-dark-mode #dc-backup-popup,
@@ -2316,6 +2345,12 @@ body.dc-filter-dark-mode #dc-personal-block-fab {
             color: #e0e0e0 !important;
             border-color: #555 !important;
             box-shadow: 0 0 15px rgba(0,0,0,0.7) !important;
+        }
+        body.dc-filter-dark-mode #dcinside-headtext-manager-panel input,
+        body.dc-filter-dark-mode #dcinside-headtext-manager-panel button {
+            background:#343a44 !important;
+            color:#e6edf7 !important;
+            border-color:#596474 !important;
         }
 
         /* 팝업 내부 요소들 */
@@ -3797,6 +3832,7 @@ const FilterModule = {
                             <div style="display:flex;flex-direction:column;align-items:center;"><label for="${this.CONSTANTS.UI_IDS.RATIO_MAX_INPUT}" style="font-size:14px;">글/댓글 비율 일정 이상 차단 </label><div style="font-size:12px;color:#888;line-height:1.2;">(글만 많은 놈)</div><input id="${this.CONSTANTS.UI_IDS.RATIO_MAX_INPUT}" type="number" step="any" placeholder="예: 1" value="${ratioMax !== '' ? ratioMax : ''}" style="width:100px;font-size:15px;text-align:center; margin-top: 4px;"></div>
                         </div><div style="margin-top:8px;font-size:13px;color:#666;text-align:left;">비율이 입력값과 같거나 큰(이상)인 유저를 차단합니다.</div>
                     </div>
+                    <button type="button" id="${this.CONSTANTS.UI_IDS.HEADTEXT_MANAGER_BUTTON}" style="width:100%;margin-top:14px;padding:9px 10px;border:1px solid #9aa4b2;border-radius:7px;background:#f6f8fb;color:#222;font-weight:700;cursor:pointer;">갤러리별 말머리 차단 관리</button>
                 </div>
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-top:16px; padding-top:15px; border-top: 2px solid #ccc;">
                     <div style="font-size:15px;color:#444;text-align:left;">
@@ -3851,6 +3887,7 @@ const FilterModule = {
             const blockGuestCheckbox = div.querySelector(`#${this.CONSTANTS.UI_IDS.BLOCK_GUEST_CHECKBOX}`);
             const proxyBlockModeGroup = div.querySelector(`#${this.CONSTANTS.UI_IDS.PROXY_BLOCK_MODE_GROUP}`);
             const telecomBlockCheckbox = div.querySelector(`#${this.CONSTANTS.UI_IDS.TELECOM_BLOCK_CHECKBOX}`);
+            const headtextManagerButton = div.querySelector(`#${this.CONSTANTS.UI_IDS.HEADTEXT_MANAGER_BUTTON}`);
 
             if (input) { input.focus(); input.select(); }
 
@@ -3930,6 +3967,7 @@ const FilterModule = {
             telecomBlockCheckbox.addEventListener('change', (e) =>
                 applyCheckboxChange(this.CONSTANTS.STORAGE_KEYS.BLOCK_TELECOM, e.target.checked)
             );
+            headtextManagerButton?.addEventListener('click', () => this.showHeadtextBlockManager());
             ratioEnableCheckbox.addEventListener('change', (e) =>
                 applyCheckboxChange(this.CONSTANTS.STORAGE_KEYS.RATIO_ENABLED, e.target.checked)
             );
@@ -4019,6 +4057,160 @@ const FilterModule = {
                     alert('설정 저장에 실패했습니다. 콘솔을 확인해 주세요.');
                 }
             };
+        },
+        getGalleryKey(urlLike = window.location.href) {
+            try {
+                const url = new URL(urlLike, window.location.href);
+                const id = (url.searchParams.get('id') || '').trim();
+                if (!id) return null;
+                const path = url.pathname.toLowerCase();
+                const type = path.includes('/mini/') ? 'mini' : (path.includes('/mgallery/') ? 'mgallery' : 'board');
+                return `${type}:${id}`;
+            } catch {
+                return null;
+            }
+        },
+        normalizeHeadtext(value) {
+            return DCUF_SHARED_STORAGE.normalizeHeadtext(value);
+        },
+        normalizeGalleryHeadtextBlocks(value) {
+            return DCUF_SHARED_STORAGE.normalizeGalleryHeadtextBlocks(value);
+        },
+        async loadGalleryHeadtextBlocks() {
+            const raw = await GM_getValue(this.CONSTANTS.STORAGE_KEYS.GALLERY_HEADTEXT_BLOCKS, {});
+            return this.normalizeGalleryHeadtextBlocks(raw);
+        },
+        async saveGalleryHeadtextBlocks(rules, reason = 'gallery headtext blocks') {
+            const normalized = this.normalizeGalleryHeadtextBlocks(rules);
+            await GM_setValue(this.CONSTANTS.STORAGE_KEYS.GALLERY_HEADTEXT_BLOCKS, normalized);
+            await this.reloadSettings();
+            await this.refilterAllContent(reason);
+            return normalized;
+        },
+        getCanonicalHeadtextFromNode(source) {
+            if (!(source instanceof Element)) return '';
+            const explicit = source.getAttribute('data-headtext');
+            if (explicit) return this.normalizeHeadtext(explicit);
+            const canonical = source.matches('.subject_inner') ? source : source.querySelector('.subject_inner');
+            if (canonical?.textContent?.trim()) return this.normalizeHeadtext(canonical.textContent);
+            const valueNode = source.matches('[data-val]') ? source : source.querySelector('[data-val]');
+            if (valueNode?.getAttribute('data-val')) return this.normalizeHeadtext(valueNode.getAttribute('data-val'));
+            const directText = Array.from(source.childNodes)
+                .filter((node) => node.nodeType === Node.TEXT_NODE)
+                .map((node) => node.textContent || '')
+                .join(' ');
+            return this.normalizeHeadtext(directText || source.textContent || '');
+        },
+        collectDiscoveredHeadtexts() {
+            const values = new Set();
+            document.querySelectorAll('tr.ub-content, .custom-post-item, .view_bottom li').forEach((element) => {
+                const descriptor = this.describeFilterTarget(element);
+                if (descriptor?.isHeadtextTarget && descriptor.writerInfo && descriptor.headtext && !descriptor.isNotice) values.add(descriptor.headtext);
+            });
+            document.querySelectorAll('a[onclick*="listSearchHead"], .subject_morelist a, [data-fixture-headtext-nav]').forEach((element) => {
+                const headtext = this.getCanonicalHeadtextFromNode(element);
+                if (headtext && !['전체', '공지'].includes(headtext)) values.add(headtext);
+            });
+            return Array.from(values).sort((a, b) => a.localeCompare(b, 'ko'));
+        },
+        async showHeadtextBlockManager() {
+            document.getElementById(this.CONSTANTS.UI_IDS.HEADTEXT_MANAGER_PANEL)?.remove();
+            const currentKey = this.getGalleryKey();
+            const panel = document.createElement('section');
+            panel.id = this.CONSTANTS.UI_IDS.HEADTEXT_MANAGER_PANEL;
+            panel.className = 'dcuf-settings-panel';
+            panel.setAttribute('role', 'dialog');
+            panel.setAttribute('aria-modal', 'true');
+            panel.style.cssText = 'position:fixed;z-index:2147483646;left:50%;top:50%;transform:translate(-50%,-50%);width:min(420px,calc(100vw - 24px));max-height:min(680px,calc(100vh - 24px));overflow:auto;padding:18px;border:1px solid #8d98a6;border-radius:12px;background:#fff;color:#20242a;box-shadow:0 20px 60px #0007;box-sizing:border-box;';
+            document.body.appendChild(panel);
+
+            const render = async () => {
+                const rules = await this.loadGalleryHeadtextBlocks();
+                const current = new Set(currentKey ? (rules[currentKey] || []) : []);
+                const discovered = Array.from(new Set([...this.collectDiscoveredHeadtexts(), ...current])).sort((a, b) => a.localeCompare(b, 'ko'));
+                panel.replaceChildren();
+
+                const header = document.createElement('div');
+                header.style.cssText = 'display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px;';
+                const title = document.createElement('strong');
+                title.textContent = '갤러리별 말머리 차단';
+                const close = document.createElement('button');
+                close.type = 'button'; close.textContent = '✕'; close.setAttribute('aria-label', '닫기');
+                close.style.cssText = 'border:0;background:transparent;font-size:22px;cursor:pointer;color:inherit;';
+                close.onclick = () => panel.remove();
+                header.append(title, close);
+                panel.appendChild(header);
+
+                const keyLabel = document.createElement('div');
+                keyLabel.textContent = currentKey ? `현재 갤러리: ${currentKey}` : '현재 페이지의 갤러리를 확인할 수 없습니다.';
+                keyLabel.style.cssText = 'font-size:13px;color:#667085;margin-bottom:10px;';
+                panel.appendChild(keyLabel);
+
+                const choices = document.createElement('div');
+                choices.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:7px;margin-bottom:10px;';
+                discovered.forEach((headtext) => {
+                    const label = document.createElement('label');
+                    label.style.cssText = 'display:flex;align-items:center;gap:6px;padding:7px;border:1px solid #d7dde5;border-radius:7px;cursor:pointer;min-width:0;';
+                    const input = document.createElement('input');
+                    input.type = 'checkbox'; input.checked = current.has(headtext); input.disabled = !currentKey;
+                    input.addEventListener('change', async () => {
+                        if (input.checked) current.add(headtext); else current.delete(headtext);
+                        const next = { ...rules };
+                        if (current.size) next[currentKey] = Array.from(current); else delete next[currentKey];
+                        input.disabled = true;
+                        await this.saveGalleryHeadtextBlocks(next, 'headtext checkbox');
+                        await render();
+                    });
+                    const text = document.createElement('span'); text.textContent = headtext;
+                    label.append(input, text); choices.appendChild(label);
+                });
+                if (!discovered.length) {
+                    const empty = document.createElement('div'); empty.textContent = '현재 목록에서 발견한 말머리가 없습니다.'; empty.style.cssText = 'grid-column:1/-1;color:#667085;font-size:13px;'; choices.appendChild(empty);
+                }
+                panel.appendChild(choices);
+
+                const manual = document.createElement('div');
+                manual.style.cssText = 'display:flex;gap:7px;margin-bottom:10px;';
+                const manualInput = document.createElement('input');
+                manualInput.type = 'text'; manualInput.placeholder = '목록에 없는 말머리'; manualInput.disabled = !currentKey;
+                manualInput.style.cssText = 'flex:1;min-width:0;padding:8px;border:1px solid #b9c2ce;border-radius:7px;';
+                const add = document.createElement('button'); add.type = 'button'; add.textContent = '추가'; add.disabled = !currentKey;
+                add.style.cssText = 'padding:8px 12px;border:1px solid #8793a2;border-radius:7px;background:#f6f8fb;cursor:pointer;';
+                add.onclick = async () => {
+                    const value = this.normalizeHeadtext(manualInput.value);
+                    if (!value) return;
+                    current.add(value);
+                    await this.saveGalleryHeadtextBlocks({ ...rules, [currentKey]: Array.from(current) }, 'manual headtext add');
+                    await render();
+                };
+                manualInput.addEventListener('keydown', (event) => { if (event.key === 'Enter') add.click(); });
+                manual.append(manualInput, add); panel.appendChild(manual);
+
+                const clear = document.createElement('button');
+                clear.type = 'button'; clear.textContent = '현재 갤러리 전체 해제'; clear.disabled = !currentKey || !current.size;
+                clear.style.cssText = 'width:100%;padding:8px;border:1px solid #c5ccd5;border-radius:7px;background:transparent;color:inherit;cursor:pointer;margin-bottom:14px;';
+                clear.onclick = async () => {
+                    const next = { ...rules }; delete next[currentKey];
+                    await this.saveGalleryHeadtextBlocks(next, 'clear current gallery headtexts');
+                    await render();
+                };
+                panel.appendChild(clear);
+
+                const savedTitle = document.createElement('strong'); savedTitle.textContent = '저장된 다른 갤러리'; panel.appendChild(savedTitle);
+                const saved = document.createElement('div'); saved.style.cssText = 'display:grid;gap:7px;margin-top:8px;';
+                const others = Object.entries(rules).filter(([key]) => key !== currentKey).sort(([a], [b]) => a.localeCompare(b));
+                others.forEach(([key, values]) => {
+                    const row = document.createElement('div'); row.style.cssText = 'display:flex;align-items:center;gap:8px;padding:8px;border:1px solid #d7dde5;border-radius:7px;';
+                    const text = document.createElement('span'); text.textContent = `${key}: ${values.join(', ')}`; text.style.cssText = 'flex:1;min-width:0;overflow-wrap:anywhere;font-size:13px;';
+                    const remove = document.createElement('button'); remove.type = 'button'; remove.textContent = '삭제';
+                    remove.style.cssText = 'border:1px solid #d49a9a;border-radius:6px;background:#fff5f5;color:#b42318;padding:5px 8px;cursor:pointer;';
+                    remove.onclick = async () => { const next = { ...rules }; delete next[key]; await this.saveGalleryHeadtextBlocks(next, 'remove saved gallery headtexts'); await render(); };
+                    row.append(text, remove); saved.appendChild(row);
+                });
+                if (!others.length) { const none = document.createElement('div'); none.textContent = '다른 갤러리에 저장된 항목이 없습니다.'; none.style.cssText = 'font-size:13px;color:#667085;'; saved.appendChild(none); }
+                panel.appendChild(saved);
+            };
+            await render();
         },
         // [v2.1.1 수정] 단축키 변경 모달 표시 (실시간 입력 감지 로직 개선)
         showShortcutChanger() {
@@ -4144,9 +4336,9 @@ const FilterModule = {
         isFilterTargetDescriptor(value) {
             return Boolean(value && value.element instanceof HTMLElement);
         },
-        normalizeFilterTarget(target) {
+        normalizeFilterTarget(target, { includeHeadtext = true } = {}) {
             if (this.isFilterTargetDescriptor(target)) return target;
-            return this.describeFilterTarget(target);
+            return this.describeFilterTarget(target, { includeHeadtext });
         },
         isReplyOnlyCommentWrapper(element) {
             if (!(element instanceof HTMLElement)) return false;
@@ -4165,7 +4357,20 @@ const FilterModule = {
             if (this.isCommentListItem(element)) return null;
             return element.querySelector(this.CONSTANTS.SELECTORS.WRITER_INFO);
         },
-        describeFilterTarget(element) {
+        isHeadtextFilterTarget(element) {
+            if (!(element instanceof HTMLElement) || this.isCommentListItem(element)) return false;
+            if (element.matches('tr.ub-content')) return true;
+            return Boolean(element.closest('.view_bottom, .gall_listwrap'))
+                && Boolean(element.querySelector('[data-headtext], .gall_subject'));
+        },
+        extractHeadtext(element) {
+            if (!(element instanceof HTMLElement)) return '';
+            const source = element.matches('[data-headtext]')
+                ? element
+                : element.querySelector('[data-headtext], .gall_subject');
+            return this.getCanonicalHeadtextFromNode(source);
+        },
+        describeFilterTarget(element, { includeHeadtext = true } = {}) {
             if (!(element instanceof HTMLElement)) return null;
             if (this.isReplyOnlyCommentWrapper(element)) return null;
 
@@ -4178,6 +4383,14 @@ const FilterModule = {
             const ipFromSpan = (ipText.startsWith('(') && ipText.endsWith(')')) ? ipText.slice(1, -1) : ipText;
             const ip = ipFromSpan || writerDataIp || null;
             const ipPrefix = this.getIpPrefix(ip);
+            const isHeadtextTarget = includeHeadtext && this.isHeadtextFilterTarget(element);
+            const hasNoticeMarker = Boolean(element.querySelector('em.icon_notice'))
+                || element.classList.contains('notice')
+                || element.classList.contains('us-post--notice');
+            // `.gall_num` exists on post rows, not comments. Keeping this lookup row-only
+            // avoids adding a selector call to every repeated comment-filter pass.
+            const isNotice = hasNoticeMarker || (element.tagName === 'TR'
+                && this.normalizeHeadtext(element.querySelector('.gall_num')?.textContent || '') === '공지');
 
             return {
                 element,
@@ -4189,17 +4402,23 @@ const FilterModule = {
                 writerDataIp,
                 ipPrefix,
                 isGuest: Boolean((!uid || uid.length < 3) && ip),
-                isNotice: Boolean(element.querySelector('em.icon_notice')),
+                isNotice,
                 shouldSkipFiltering: this.shouldSkipFiltering(element),
-                hasBlockDisableClass: element.classList.contains('block-disable')
+                hasBlockDisableClass: element.classList.contains('block-disable'),
+                galleryKey: isHeadtextTarget ? this.getGalleryKey() : null,
+                headtext: isHeadtextTarget ? this.extractHeadtext(element) : '',
+                isHeadtextTarget
             };
         },
         describeFilterTargets(items) {
             if (!Array.isArray(items) || items.length === 0) return [];
             const seen = new Set();
             const descriptors = [];
+            // The default rule set is empty. Avoid all headtext DOM probing on the
+            // ordinary mutation hot path until the user has an active rule.
+            const includeHeadtext = dcFilterSettings.galleryHeadtextBlockSet?.size > 0;
             items.forEach((item) => {
-                const descriptor = this.normalizeFilterTarget(item);
+                const descriptor = this.normalizeFilterTarget(item, { includeHeadtext });
                 const element = descriptor?.element;
                 if (!(element instanceof HTMLElement) || seen.has(element)) return;
                 seen.add(element);
@@ -4700,7 +4919,7 @@ const FilterModule = {
             const normalizedProxyBlockMode = this.normalizeProxyBlockMode(proxyBlockMode);
             const proxyBlockEnabled = normalizedProxyBlockMode !== this.PROXY_MODE.OFF;
 
-            const { element, uid, nickname, ip, ipText, writerDataIp, ipPrefix, isGuest, isNotice, shouldSkipFiltering, hasBlockDisableClass } = descriptor;
+            const { element, uid, nickname, ip, ipText, writerDataIp, ipPrefix, isGuest, isNotice, shouldSkipFiltering, hasBlockDisableClass, galleryKey, headtext, isHeadtextTarget } = descriptor;
             const subject = {
                 uid,
                 nickname,
@@ -4709,7 +4928,10 @@ const FilterModule = {
                 isGuest,
                 isNotice,
                 shouldSkipFiltering,
-                hasBlockDisableClass
+                hasBlockDisableClass,
+                galleryKey,
+                headtext,
+                isHeadtextTarget
             };
             const baseDebug = this.DEBUG_ENABLED ? {
                 branch: 'sync-base',
@@ -4751,7 +4973,8 @@ const FilterModule = {
                     hasCustomIpPrefixBlock: Boolean(customIpPrefixSet && customIpPrefixSet.size > 0 && ipPrefix && customIpPrefixSet.has(ipPrefix)),
                     proxyMatchInfo,
                     telecomPrefixMatch: Boolean(ipPrefix && telecomPrefixSet && telecomPrefixSet.has(ipPrefix)),
-                    blockedGuestMatch: Boolean(ip && (blockedGuestSet instanceof Set ? blockedGuestSet.has(ip) : blockedGuests.includes(ip)))
+                    blockedGuestMatch: Boolean(ip && (blockedGuestSet instanceof Set ? blockedGuestSet.has(ip) : blockedGuests.includes(ip))),
+                    galleryHeadtextBlock: Boolean(isHeadtextTarget && galleryKey && headtext && dcFilterSettings.galleryHeadtextBlockSet?.has(headtext))
                 },
                 blockedUidEntry: uid ? (this.BLOCKED_UIDS_CACHE[uid] || userSumCache[uid] || null) : null
             });
@@ -4897,12 +5120,13 @@ const FilterModule = {
                 GM_getValue(keys.BLOCK_CONFIG, {}),
                 GM_getValue(keys.PERSONAL_BLOCK_LIST, { uids: [], nicknames: [], ips: [] }),
                 GM_getValue(keys.PERSONAL_BLOCK_ENABLED, true),
+                GM_getValue(keys.GALLERY_HEADTEXT_BLOCKS, {}),
                 GM_getValue(keys.BLOCKED_UIDS, '{}')
             ]).then((values) => {
                 const [
                     migrationDone, masterDisabled, excludeRecommended, rawThreshold, ratioEnabled,
                     ratioMin, ratioMax, blockGuestEnabled, proxyBlockMode, telecomBlockEnabled,
-                    blockedGuestsRaw, blockConfig, personalBlockList, personalBlockEnabled, blockedUidsRaw
+                    blockedGuestsRaw, blockConfig, personalBlockList, personalBlockEnabled, galleryHeadtextBlocks, blockedUidsRaw
                 ] = values;
                 let blockedGuests = [];
                 try { blockedGuests = JSON.parse(blockedGuestsRaw); } catch { blockedGuests = []; }
@@ -4922,6 +5146,7 @@ const FilterModule = {
                     blockConfig,
                     personalBlockList,
                     personalBlockEnabled,
+                    galleryHeadtextBlocks,
                     blockedUidsRaw
                 };
                 this._bootSnapshot = snapshot;
@@ -4960,7 +5185,8 @@ const FilterModule = {
                 personalBlockEnabled: Boolean(settings.personalBlockEnabled),
                 personalUids: normalizeStrings((personalBlockList.uids || []).map((item) => item?.id)),
                 personalNicknames: normalizeStrings(personalBlockList.nicknames),
-                personalIps: normalizeStrings(personalBlockList.ips)
+                personalIps: normalizeStrings(personalBlockList.ips),
+                galleryHeadtextBlocks: settings.galleryHeadtextBlocks || {}
             });
         },
         async reloadSettings(snapshot = null) {
@@ -4971,7 +5197,7 @@ const FilterModule = {
                     snapshot.ratioEnabled, snapshot.ratioMin, snapshot.ratioMax,
                     snapshot.blockGuestEnabled, snapshot.proxyBlockMode, snapshot.telecomBlockEnabled,
                     snapshot.blockedGuests, snapshot.blockConfig, snapshot.personalBlockList,
-                    snapshot.personalBlockEnabled
+                    snapshot.personalBlockEnabled, snapshot.galleryHeadtextBlocks
                 ];
             } else {
                 values = await Promise.all([
@@ -4987,13 +5213,14 @@ const FilterModule = {
                     this.getBlockedGuests(),
                     GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG, {}),
                     PersonalBlockModule.loadPersonalBlocks(),
-                    GM_getValue(this.CONSTANTS.STORAGE_KEYS.PERSONAL_BLOCK_ENABLED, true)
+                    GM_getValue(this.CONSTANTS.STORAGE_KEYS.PERSONAL_BLOCK_ENABLED, true),
+                    GM_getValue(this.CONSTANTS.STORAGE_KEYS.GALLERY_HEADTEXT_BLOCKS, {})
                 ]);
             }
             const [
                 masterDisabled, excludeRecommended, threshold, ratioEnabled,
                 ratioMin, ratioMax, blockGuestEnabled, proxyBlockMode, telecomBlockEnabled,
-                blockedGuests, blockConfig, personalBlockList, personalBlockEnabled
+                blockedGuests, blockConfig, personalBlockList, personalBlockEnabled, galleryHeadtextBlocksRaw
             ] = values;
             const normalizedSettings = DCUF_SHARED_STORAGE.normalizeStoredFilterSettings({
                 [this.CONSTANTS.STORAGE_KEYS.MASTER_DISABLED]: masterDisabled,
@@ -5014,6 +5241,9 @@ const FilterModule = {
             const personalBlockUidSet = this.buildLookupSet(personalBlockList?.uids, (item) => item?.id);
             const personalBlockNicknameSet = this.buildLookupSet(personalBlockList?.nicknames);
             const personalBlockIpSet = this.buildLookupSet(personalBlockList?.ips);
+            const galleryHeadtextBlocks = this.normalizeGalleryHeadtextBlocks(galleryHeadtextBlocksRaw);
+            const galleryKey = this.getGalleryKey();
+            const galleryHeadtextBlockSet = new Set(galleryKey ? (galleryHeadtextBlocks[galleryKey] || []) : []);
             dcFilterSettings = {
                 masterDisabled: normalizedSettings.masterDisabled,
                 excludeRecommended: normalizedSettings.excludeRecommended,
@@ -5032,7 +5262,10 @@ const FilterModule = {
                 personalBlockUidSet,
                 personalBlockNicknameSet,
                 personalBlockIpSet,
-                personalBlockEnabled
+                personalBlockEnabled,
+                galleryHeadtextBlocks,
+                galleryKey,
+                galleryHeadtextBlockSet
             };
             this._settingsSignature = this.createSettingsSignature(dcFilterSettings);
             if (this.DEBUG_ENABLED) {
@@ -5079,7 +5312,9 @@ const FilterModule = {
             return candidates.reduce((descriptors, element) => {
                 if (!(element instanceof HTMLElement) || seen.has(element)) return descriptors;
                 seen.add(element);
-                const descriptor = this.describeFilterTarget(element);
+                const descriptor = this.describeFilterTarget(element, {
+                    includeHeadtext: dcFilterSettings.galleryHeadtextBlockSet?.size > 0
+                });
                 if (descriptor) descriptors.push(descriptor);
                 return descriptors;
             }, []);
@@ -5349,7 +5584,7 @@ const FilterModule = {
             this._initState = 'initializing';
             this._initPromise = (async () => {
                 this.installDebugApi();
-                this.debugLog('init', 'FilterModule init start', { version: '1.9.7' });
+                this.debugLog('init', 'FilterModule init start', { version: '1.9.8' });
                 const snapshot = await this.loadBootSnapshot();
                 await this.cleanupLegacyManagedBlockConfig(snapshot);
                 await this.reloadSettings(snapshot);
@@ -6944,7 +7179,7 @@ const FilterModule = {
 
         __dcufRoot.__dcufPcFilterPortState = 'initializing';
         __dcufRoot.__dcufPcFilterPortPromise = (async () => {
-            console.log('[DCUF PC] Initializing filter port v1.9.7...');
+            console.log('[DCUF PC] Initializing filter port v1.9.8...');
 
             observeDarkMode();
             bindSettingsShortcut();
@@ -7000,4 +7235,3 @@ const FilterModule = {
         runSafely();
     }
 })();
-
