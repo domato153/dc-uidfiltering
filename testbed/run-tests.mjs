@@ -31,6 +31,9 @@ const mobileTest = (name, group, run) => test(name, group, async (context) => {
     if (isPcUserscript) return;
     return run(context);
 });
+// Historical quick-write assertions remain unregistered until the related
+// workstream closes; the production feature itself has been removed.
+const obsoleteMobileTest = () => {};
 const pcTest = (name, group, run) => test(name, group, async (context) => {
     if (!isPcUserscript) return;
     return run(context);
@@ -1780,7 +1783,7 @@ test('플로팅 메뉴 서랍과 원위치 복구가 안전하게 동작한다',
         await fab.click();
         assert.equal(await fab.getAttribute('aria-expanded'), 'true');
         assert.equal(await drawer.isVisible(), true);
-        assert.deepEqual(await drawer.locator('strong').allTextContents(), ['화면에서 간편차단', '직접 차단', '글댓합 설정', '차단 유저 관리']);
+        assert.deepEqual(await drawer.locator('button:not([hidden]) strong').allTextContents(), ['화면에서 간편차단', '직접 차단', '글댓합 설정', '차단 유저 관리']);
 
         await fab.click();
         assert.equal(await fab.getAttribute('aria-expanded'), 'false');
@@ -2972,6 +2975,1238 @@ mobileTest('negative UID failure cache stays bounded and prunes expired entries'
     } finally { await session.close(); }
 });
 
+test('갤러리별 말머리 차단은 공지·관련글을 제외하고 UID 조회 전에 모바일·PC에서 동일 적용된다', 'functional', async ({ browser, server }) => {
+    const scenarios = [
+        ['/board/lists?id=test', 'board:test'],
+        ['/mgallery/board/lists?id=test', 'mgallery:test'],
+        ['/mini/board/lists?id=test', 'mini:test']
+    ];
+    for (const [pathname, galleryKey] of scenarios) {
+        server.reset();
+        const session = await createTestPage(browser, server.baseUrl, {
+            storage: { ...statsStorage, [storageKeys.headtextBlocks]: { [galleryKey]: ['질문', '↗토피아'] } }
+        });
+        try {
+            await session.goto(pathname);
+            const result = await session.page.evaluate(() => {
+                const blockedSubject = document.querySelector('.gall_subject[data-headtext="질문"]');
+                const blockedRow = blockedSubject?.closest('tr.ub-content');
+                const innerBlockedRow = document.querySelector('[data-uid="headtext-inner-blocked-user"]')?.closest('tr.ub-content');
+                const mirrorId = blockedRow?.getAttribute('data-custom-row-id');
+                const mirror = mirrorId ? document.querySelector(`.custom-post-item[data-custom-row-id="${mirrorId}"]`) : null;
+                return {
+                    rowDisplay: blockedRow?.style.display || '',
+                    innerRowDisplay: innerBlockedRow?.style.display || '',
+                    mirrorDisplay: mirror instanceof HTMLElement ? getComputedStyle(mirror).display : 'pc-no-mirror',
+                    normalizedHeadtext: window.__dcufFilterModule.describeFilterTarget(blockedRow)?.headtext,
+                    normalizedInnerHeadtext: window.__dcufFilterModule.describeFilterTarget(innerBlockedRow)?.headtext,
+                    settings: window.__dcufFilterModule.createSettingsSignature()
+                };
+            });
+            assert.equal(result.rowDisplay, 'none', `${pathname}: exact headtext row`);
+            assert.equal(result.innerRowDisplay, 'none', `${pathname}: hidden canonical headtext row`);
+            if (!isPcUserscript) assert.equal(result.mirrorDisplay, 'none', `${pathname}: mirrored row`);
+            assert.equal(result.normalizedHeadtext, '질문', 'data-headtext must win over visible label text');
+            assert.equal(result.normalizedInnerHeadtext, '↗토피아', '.subject_inner must win over the abbreviated visible label');
+            assert.equal(server.state.uidRequests.some((entry) => entry.uid === 'headtext-blocked-user'), false, 'headtext block must precede UID lookup');
+
+            const notice = await session.page.evaluate(async () => {
+                const row = document.querySelector('tr.us-post--notice');
+                const subject = row?.querySelector('.gall_subject');
+                if (subject) subject.dataset.headtext = '질문';
+                await window.__dcufFilterModule.refilterAllContent('headtext notice contract', { scheduleFollowups: false });
+                return row?.style.display || '';
+            });
+            assert.notEqual(notice, 'none', `${pathname}: notices must be excluded`);
+
+            const dynamic = await session.page.evaluate(async () => {
+                const tbody = document.querySelector('table.gall_list tbody');
+                const row = document.querySelector('tr.ub-content:not(.us-post--notice)')?.cloneNode(true);
+                row.dataset.no = `dynamic-${Date.now()}`;
+                row.querySelector('.ub-writer')?.setAttribute('data-uid', 'dynamic-headtext-user');
+                const subject = row.querySelector('.gall_subject'); subject.dataset.headtext = '질문'; subject.textContent = '동적 질문';
+                tbody.appendChild(row);
+                await new Promise((resolve) => setTimeout(resolve, 450));
+                return row.style.display;
+            });
+            assert.equal(dynamic, 'none', `${pathname}: dynamically inserted row`);
+
+            if (pathname.startsWith('/board/')) {
+                await session.page.evaluate(() => window.__dcufFilterModule.showHeadtextBlockManager());
+                assert.equal(await session.page.locator('#dcinside-headtext-manager-panel input[type="checkbox"]:checked').count() >= 1, true);
+            } else if (pathname.startsWith('/mgallery/')) {
+                await session.page.evaluate(() => window.__dcufFilterModule.showHeadtextBlockManager());
+                const managerText = await session.page.locator('#dcinside-headtext-manager-panel').innerText();
+                assert.equal(managerText.includes('↗토피아'), true, 'canonical hidden row label must be discovered');
+                assert.equal(managerText.includes('↗토피↗토피아'), false, 'abbreviated and hidden labels must not be concatenated');
+                assert.equal(managerText.includes('®️ACT'), true, 'collapsed subject_morelist entries must be discovered');
+            }
+            assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
+        } finally { await session.close(); }
+    }
+
+    const view = await createTestPage(browser, server.baseUrl, {
+        storage: { ...noStatsStorage, [storageKeys.headtextBlocks]: { 'board:test': ['질문'] } }
+    });
+    try {
+        await view.goto('/board/view?id=test&no=1001');
+        const relatedDisplay = await view.page.evaluate(async () => {
+            const item = document.querySelector('.fixture-synthetic-related li');
+            const subject = document.createElement('span'); subject.className = 'gall_subject'; subject.dataset.headtext = '질문'; subject.textContent = '질문'; item.prepend(subject);
+            await window.__dcufFilterModule.refilterAllContent('related headtext exclusion', { scheduleFollowups: false });
+            return item.style.display;
+        });
+        assert.notEqual(relatedDisplay, 'none', 'related posts are outside the headtext contract');
+    } finally { await view.close(); }
+});
+
+mobileTest('깨진 편의 설정은 기본값으로 정규화되고 모든 기능 끄기는 저장값만 보존한다', 'functional', async ({ browser, server }) => {
+    const corrupted = { listRestore: false, recentHighlight: 'yes', postPreview: 1, unknown: true };
+    const session = await createTestPage(browser, server.baseUrl, {
+        storage: {
+            ...noStatsStorage,
+            [storageKeys.masterDisabled]: true,
+            [storageKeys.convenience]: corrupted,
+            [storageKeys.headtextBlocks]: { 'board:test': ['질문'] }
+        },
+        viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true
+    });
+    try {
+        await session.goto('/board/lists?id=test');
+        const state = await session.page.evaluate(() => {
+            const module = window.__dcufMobileConvenienceModule;
+            const row = document.querySelector('.gall_subject[data-headtext="질문"]')?.closest('tr.ub-content');
+            return {
+                settings: module.settings,
+                masterDisabled: module.isMasterDisabled(),
+                rowDisplay: row?.style.display || '',
+                quickActionCount: document.querySelectorAll('[data-dcuf-fab-action="quick-write"]').length,
+                persisted: window.__dcufTestbedGM.snapshot().values.dcuf_mobile_convenience_settings_v1
+            };
+        });
+        assert.deepEqual(state.settings, { listRestore: false, recentHighlight: true, draftRecovery: true, postPreview: false });
+        assert.equal(state.masterDisabled, true);
+        assert.notEqual(state.rowDisplay, 'none', 'master disable must suppress headtext filtering');
+        assert.equal(state.quickActionCount, 0);
+        assert.deepEqual(state.persisted, corrupted, 'normalization must not rewrite the user storage implicitly');
+    } finally { await session.close(); }
+});
+
+mobileTest('모바일 편의기능 설정은 선택 팔레트와 밝은·어두운 카드 UI를 공유한다', 'functional', async ({ browser, server }) => {
+    const session = await createTestPage(browser, server.baseUrl, {
+        storage: { ...noStatsStorage, [storageKeys.palette]: 'rose' },
+        viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true
+    });
+    try {
+        await session.goto('/board/lists?id=test');
+        await session.page.evaluate(() => localStorage.setItem('dcuf:draft-diagnostics:v1', '{"version":1,"entries":[]}'));
+        await session.goto('/board/lists?id=test');
+        const diagnosticRemoval = await session.page.evaluate(() => ({
+            stored: localStorage.getItem('dcuf:draft-diagnostics:v1'),
+            reportMethod: typeof window.__dcufMobileConvenienceModule.buildDraftDiagnosticReport,
+            menuLabels: window.__dcufTestbedGM.snapshot().menuLabels
+        }));
+        assert.equal(diagnosticRemoval.stored, null, '안정판은 베타 진단 기록을 정리해야 한다');
+        assert.equal(diagnosticRemoval.reportMethod, 'undefined', '안정판 런타임에는 진단 보고서 코드가 없어야 한다');
+        assert.equal(diagnosticRemoval.menuLabels.some((label) => label.includes('초안 진단')), false, '안정판 메뉴에는 초안 진단 동작이 없어야 한다');
+        await session.page.evaluate(() => window.__dcufMobileConvenienceModule.showSettings());
+        await session.page.waitForSelector('#dcuf-mobile-convenience-settings');
+        const inspect = await session.page.evaluate(() => {
+            const panel = document.querySelector('#dcuf-mobile-convenience-settings');
+            const row = panel.querySelector('.dcuf-convenience-row');
+            const toggle = panel.querySelector('.dcuf-convenience-toggle');
+            const save = panel.querySelector('.dcuf-convenience-save');
+            const body = panel.querySelector('.dcuf-convenience-body');
+            const rect = panel.getBoundingClientRect();
+            const probe = document.createElement('span'); probe.style.color = 'var(--dcuf-theme-accent-strong)'; document.body.appendChild(probe);
+            const accent = getComputedStyle(probe).color; probe.remove();
+            return {
+                inlineStyle: panel.getAttribute('style'),
+                backgroundImage: getComputedStyle(panel).backgroundImage,
+                color: getComputedStyle(panel).color,
+                rowRadius: parseFloat(getComputedStyle(row).borderRadius),
+                toggle: { width: toggle.getBoundingClientRect().width, height: toggle.getBoundingClientRect().height },
+                saveBorder: getComputedStyle(save).borderColor,
+                accent,
+                bodyOverflow: getComputedStyle(body).overflowY,
+                inViewport: rect.left >= 0 && rect.right <= innerWidth && rect.top >= 0 && rect.bottom <= innerHeight,
+                rows: panel.querySelectorAll('.dcuf-convenience-row').length,
+                actions: panel.querySelectorAll('.dcuf-convenience-actions button').length
+            };
+        });
+        assert.equal(inspect.inlineStyle, null, '편의 설정 레이아웃은 고정 인라인 색상에 의존하면 안 된다');
+        assert.notEqual(inspect.backgroundImage, 'none');
+        assert.equal(inspect.rowRadius >= 10, true);
+        assert.deepEqual(inspect.toggle, { width: 42, height: 24 });
+        assert.equal(inspect.saveBorder, inspect.accent, '저장 버튼은 선택한 팔레트 강조색을 사용해야 한다');
+        assert.equal(inspect.bodyOverflow, 'auto');
+        assert.equal(inspect.inViewport, true);
+        assert.equal(inspect.rows, 4); assert.equal(inspect.actions, 2);
+
+        const dark = await session.page.evaluate(() => {
+            const before = getComputedStyle(document.querySelector('#dcuf-mobile-convenience-settings')).color;
+            window.__dcufFixture.toggleDark(true);
+            const panel = document.querySelector('#dcuf-mobile-convenience-settings');
+            return { before, after: getComputedStyle(panel).color, closeLabel: panel.querySelector('.dcuf-convenience-close').getAttribute('aria-label') };
+        });
+        assert.notEqual(dark.after, dark.before, '어두운 모드에서는 팔레트의 전경 토큰이 갱신되어야 한다');
+        assert.equal(dark.closeLabel, '편의기능 설정 닫기');
+        await session.page.locator('.dcuf-convenience-close').click();
+        assert.equal(await session.page.locator('#dcuf-mobile-convenience-settings').count(), 0);
+    } finally { await session.close(); }
+});
+
+mobileTest('모바일 미리보기와 편의 설정은 짧은 패널에서도 배경 스크롤을 잠그고 원위치를 복원한다', 'functional', async ({ browser, server }) => {
+    const session = await createTestPage(browser, server.baseUrl, {
+        storage: { ...noStatsStorage, [storageKeys.convenience]: { listRestore: true, recentHighlight: true, draftRecovery: true, postPreview: true } },
+        viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true
+    });
+    try {
+        await session.goto('/board/lists?id=test');
+        const before = await session.page.evaluate(() => {
+            window.scrollTo(0, 900);
+            const scrollY = window.scrollY;
+            const module = window.__dcufMobileConvenienceModule;
+            module.createPreviewPanel('/board/view?id=test&no=1001', '짧은 미리보기', { mobile: true, x: 20, y: 20 });
+            return {
+                scrollY,
+                bodyPositionBefore: module._overlayScrollState?.body?.position?.value || '',
+                rootOverflowBefore: module._overlayScrollState?.root?.overflow?.value || ''
+            };
+        });
+        await session.page.waitForSelector('#dcuf-post-preview');
+        const previewLock = await session.page.evaluate(() => ({
+            bodyPosition: getComputedStyle(document.body).position,
+            bodyTop: parseFloat(getComputedStyle(document.body).top),
+            rootOverflow: getComputedStyle(document.documentElement).overflow,
+            panelOverscroll: getComputedStyle(document.querySelector('#dcuf-post-preview')).overscrollBehavior,
+            shortBody: document.querySelector('.dcuf-preview-body').scrollHeight <= document.querySelector('.dcuf-preview-body').clientHeight,
+            lockedScrollY: window.scrollY,
+            owners: Array.from(window.__dcufMobileConvenienceModule._overlayScrollOwners)
+        }));
+        assert.equal(previewLock.bodyPosition, 'fixed');
+        assert.equal(Math.abs(previewLock.bodyTop + before.scrollY) <= 1, true, JSON.stringify({ before, previewLock }));
+        assert.equal(previewLock.rootOverflow, 'hidden');
+        assert.equal(previewLock.panelOverscroll, 'contain');
+        assert.equal(previewLock.shortBody, true, '스크롤할 내용이 없는 미리보기 조건을 재현해야 한다');
+        assert.deepEqual(previewLock.owners, ['preview']);
+        const previewBox = await session.page.locator('#dcuf-post-preview').boundingBox();
+        await session.page.mouse.move(previewBox.x + previewBox.width / 2, previewBox.y + previewBox.height / 2);
+        await session.page.mouse.wheel(0, 600);
+        await session.page.waitForTimeout(80);
+        assert.equal(await session.page.evaluate(() => window.scrollY), previewLock.lockedScrollY, '짧은 미리보기 위 휠/드래그가 목록으로 체인되면 안 된다');
+
+        await session.page.evaluate(() => window.__dcufMobileConvenienceModule.showSettings());
+        await session.page.waitForSelector('#dcuf-mobile-convenience-settings');
+        assert.deepEqual(await session.page.evaluate(() => Array.from(window.__dcufMobileConvenienceModule._overlayScrollOwners).sort()), ['preview', 'settings']);
+        await session.page.evaluate(() => window.__dcufMobileConvenienceModule.closeSettings());
+        assert.deepEqual(await session.page.evaluate(() => ({
+            owners: Array.from(window.__dcufMobileConvenienceModule._overlayScrollOwners),
+            bodyPosition: getComputedStyle(document.body).position
+        })), { owners: ['preview'], bodyPosition: 'fixed' }, '겹친 패널 하나를 닫아도 남은 패널의 잠금은 유지해야 한다');
+        await session.page.evaluate(() => window.__dcufMobileConvenienceModule.closePreview());
+        await session.page.waitForTimeout(50);
+        const previewReleased = await session.page.evaluate(() => ({
+            scrollY: window.scrollY,
+            bodyPosition: document.body.style.position,
+            rootOverflow: document.documentElement.style.overflow,
+            owners: window.__dcufMobileConvenienceModule._overlayScrollOwners.size
+        }));
+        assert.equal(Math.abs(previewReleased.scrollY - before.scrollY) <= 1, true, JSON.stringify(previewReleased));
+        assert.equal(previewReleased.bodyPosition, before.bodyPositionBefore);
+        assert.equal(previewReleased.rootOverflow, before.rootOverflowBefore);
+        assert.equal(previewReleased.owners, 0);
+
+        await session.page.evaluate(() => window.__dcufMobileConvenienceModule.showSettings());
+        await session.page.waitForSelector('#dcuf-mobile-convenience-settings');
+        const settingsLockedScrollY = await session.page.evaluate(() => window.scrollY);
+        const settingsBox = await session.page.locator('#dcuf-mobile-convenience-settings').boundingBox();
+        await session.page.mouse.move(settingsBox.x + settingsBox.width / 2, settingsBox.y + settingsBox.height / 2);
+        await session.page.mouse.wheel(0, 600);
+        await session.page.waitForTimeout(80);
+        assert.equal(await session.page.evaluate(() => window.scrollY), settingsLockedScrollY, '편의 설정 위 휠/드래그가 목록으로 체인되면 안 된다');
+        await session.page.locator('.dcuf-convenience-close').click();
+        await session.page.waitForTimeout(50);
+        assert.equal(Math.abs((await session.page.evaluate(() => window.scrollY)) - before.scrollY) <= 1, true);
+        assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
+    } finally { await session.close(); }
+});
+
+mobileTest('목록 복원 기록과 최근 글 표시는 커밋 뒤 정확한 카드에 한 번만 적용된다', 'functional', async ({ browser, server }) => {
+    const session = await createTestPage(browser, server.baseUrl, { storage: noStatsStorage, viewport: { width: 390, height: 844 } });
+    try {
+        await session.goto('/board/lists?id=test');
+        const link = session.page.locator('.custom-post-item:visible a.post-title-link').nth(8);
+        const postNo = await link.evaluate((element) => new URL(element.href).searchParams.get('no'));
+        await link.evaluate((element) => {
+            const card = element.closest('.custom-post-item');
+            const record = { listUrl: location.href, postUrl: element.href, postNo: new URL(element.href).searchParams.get('no'), offset: 140, scrollY: 0, savedAt: Date.now() };
+            sessionStorage.setItem('dcuf:list-return:v1', JSON.stringify(record));
+            window.__dcufMobileConvenienceModule._listRestoreComplete = false;
+            window.__dcufMobileConvenienceModule._pageShowPersisted = false;
+            window.__dcufMobileConvenienceModule._pageShowSettled = true;
+            card.scrollIntoView();
+        });
+        await session.page.evaluate(() => {
+            const ui = window.__dcufUIModule;
+            const state = Array.from(ui.LIST_STATES || ui.LIST_STATE_MAP?.values?.() || [])[0];
+            if (state) return window.__dcufMobileConvenienceModule.onListCommitted(state, 'test-return');
+            const list = document.querySelector('.custom-mobile-list');
+            return window.__dcufMobileConvenienceModule.onListCommitted({ newListContainer: list }, 'test-return');
+        });
+        await session.page.waitForTimeout(80);
+        assert.equal(await session.page.locator('.custom-post-item.dcuf-recent-post').count(), 1);
+        assert.equal(await session.page.locator('.custom-post-item.dcuf-recent-post a.post-title-link').evaluate((element) => new URL(element.href).searchParams.get('no')), postNo);
+        assert.equal(await session.page.locator('.custom-post-item.dcuf-recent-post .dcuf-recent-label').textContent(), '방금 본 글');
+        const recentVisual = await session.page.locator('.custom-post-item.dcuf-recent-post').evaluate((card) => ({
+            boxShadow: getComputedStyle(card).boxShadow,
+            outlineWidth: getComputedStyle(card).outlineWidth
+        }));
+        assert.notEqual(recentVisual.boxShadow, 'none', '최근 글 카드는 테마 강조선을 가져야 한다');
+        assert.equal(parseFloat(recentVisual.outlineWidth) >= 1, true, '최근 글 카드는 배지 외에도 명확한 외곽선이 있어야 한다');
+        const restoreComplete = await session.page.evaluate(() => window.__dcufMobileConvenienceModule._listRestoreComplete);
+        assert.equal(restoreComplete, true);
+        const reloadContract = await session.page.evaluate(() => {
+            const module = window.__dcufMobileConvenienceModule;
+            const list = document.querySelector('.custom-mobile-list');
+            const originalNavigationType = module.getNavigationType;
+            const originalScrollTo = window.scrollTo;
+            let calls = 0;
+            module._listRestoreComplete = false;
+            module._pageShowPersisted = false;
+            module.getNavigationType = () => 'reload';
+            window.scrollTo = (...args) => { calls += 1; return originalScrollTo.apply(window, args); };
+            const before = window.scrollY;
+            const result = module.onListCommitted({ newListContainer: list }, 'reload-test');
+            const after = window.scrollY;
+            window.scrollTo = originalScrollTo;
+            module.getNavigationType = originalNavigationType;
+            return { calls, before, after, promise: result instanceof Promise, restored: module._listRestoreComplete };
+        });
+        assert.equal(reloadContract.calls, 0, 'reload must not jump to the stale last-opened card');
+        assert.equal(reloadContract.after, reloadContract.before, 'reload must preserve the browser-owned scroll position');
+        assert.equal(reloadContract.promise, false, 'list restore must complete synchronously with the commit');
+        assert.equal(reloadContract.restored, true);
+        const persistedContract = await session.page.evaluate(async () => {
+            const module = window.__dcufMobileConvenienceModule;
+            const list = document.querySelector('.custom-mobile-list');
+            module._listRestoreComplete = false;
+            module._pageShowPersisted = true;
+            const original = window.scrollTo;
+            let calls = 0;
+            window.scrollTo = (...args) => { calls += 1; return original.apply(window, args); };
+            await module.onListCommitted({ newListContainer: list }, 'persisted-test');
+            window.scrollTo = original;
+            return { calls, restored: module._listRestoreComplete };
+        });
+        assert.equal(persistedContract.restored, true);
+        const reloadBefore = await session.page.evaluate(() => {
+            const cards = Array.from(document.querySelectorAll('.custom-post-item'));
+            const target = cards[30];
+            target.scrollIntoView({ block: 'start' });
+            return {
+                postNo: new URL(target.querySelector('a.post-title-link').href).searchParams.get('no'),
+                scrollY: window.scrollY
+            };
+        });
+        await session.page.reload({ waitUntil: 'domcontentloaded' });
+        await session.page.waitForFunction(() => document.documentElement.classList.contains('script-ui-ready'), null, { timeout: 12000 });
+        await session.page.waitForTimeout(1300);
+        const reloadAfter = await session.page.evaluate((expectedPostNo) => {
+            const target = Array.from(document.querySelectorAll('.custom-post-item')).find((card) => {
+                const link = card.querySelector('a.post-title-link');
+                return link && new URL(link.href).searchParams.get('no') === expectedPostNo;
+            });
+            const recent = document.querySelector('.custom-post-item.dcuf-recent-post a.post-title-link');
+            return {
+                navigationType: performance.getEntriesByType('navigation')[0]?.type || '',
+                scrollY: window.scrollY,
+                targetOffset: target?.getBoundingClientRect().top ?? null,
+                recentPostNo: recent ? new URL(recent.href).searchParams.get('no') : null
+            };
+        }, reloadBefore.postNo);
+        assert.equal(reloadAfter.navigationType, 'reload');
+        assert.equal(Math.abs(reloadAfter.scrollY - reloadBefore.scrollY) <= 3, true, JSON.stringify({ reloadBefore, reloadAfter }));
+        assert.equal(Math.abs(reloadAfter.targetOffset) <= 3, true, JSON.stringify(reloadAfter));
+        assert.equal(reloadAfter.recentPostNo, postNo, 'reload may keep the recent marker without jumping back to it');
+        assert.equal(persistedContract.calls, 0, 'bfcache persisted 복귀에서는 중복 scrollTo를 호출하지 않아야 한다');
+    } finally { await session.close(); }
+});
+
+mobileTest('글 미리보기는 터치 이동을 취소하고 길게 누른 경우만 클릭을 막으며 정제·캐시한다', 'functional', async ({ browser, server }) => {
+    let requests = 0;
+    const session = await createTestPage(browser, server.baseUrl, {
+        storage: { ...noStatsStorage, [storageKeys.convenience]: { listRestore: true, recentHighlight: true, draftRecovery: true, postPreview: true } },
+        viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true
+    });
+    try {
+        await session.page.route('**/board/view?id=test&no=*', async (route) => {
+            requests += 1;
+            await route.fulfill({ status: 200, contentType: 'text/html', body: '<!doctype html><html><body><div class="writing_view_box"><div class="write_div"><p>정제 본문</p><p>본문에 추천 검색 이야기는 남아야 함</p><div class="fixture-recommend-search">추천 검색</div><div class="fixture-original-attachment">원본 첨부파일 1</div><img src="/images/loading.gif" data-src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw=="><div class="captcha"><img alt="자동등록방지" src="/dc/w/images/kcap_none.png"><span>0</span></div><span class="gall_writer"><img alt="고정닉" src="/dc/w/images/fix_nik.gif"><span>0</span></span><div class="btn_recommend_box"><div class="up_num_box">0</div><button class="btn_recom_up">개념</button><div class="down_num_box">0</div><button class="btn_recom_down">비추</button></div><script>window.bad=1</script><form><input value="secret"></form><iframe src="/bad"></iframe><video src="/movie"></video><a href="javascript:window.bad=2">위험 링크</a></div></div></body></html>' });
+        });
+        await session.goto('/board/lists?id=test');
+        const selector = '.custom-post-item:visible a.post-title-link';
+        const link = session.page.locator(selector).first();
+        await link.dispatchEvent('pointerdown', { pointerType: 'touch', pointerId: 31, clientX: 30, clientY: 30, bubbles: true });
+        const pendingContextMenu = await link.evaluate((element) => element.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true })));
+        assert.equal(pendingContextMenu, false, '미리보기 터치가 시작되면 브라우저 길게 누르기 메뉴를 즉시 선점해야 한다');
+        await link.dispatchEvent('pointermove', { pointerType: 'touch', pointerId: 31, clientX: 50, clientY: 30, bubbles: true });
+        const movedContextMenu = await link.evaluate((element) => element.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true })));
+        assert.equal(movedContextMenu, true, '이동으로 미리보기가 취소되면 네이티브 contextmenu 억제도 풀려야 한다');
+        await link.dispatchEvent('pointerdown', { pointerType: 'mouse', pointerId: 41, clientX: 30, clientY: 30, bubbles: true });
+        const mouseContextMenu = await link.evaluate((element) => element.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true })));
+        assert.equal(mouseContextMenu, true, '정밀 마우스 우클릭은 미리보기 길게 누르기와 무관하게 유지해야 한다');
+        const disabledContextMenu = await session.page.evaluate(() => {
+            const module = window.__dcufMobileConvenienceModule;
+            const link = document.querySelector('.custom-post-item a.post-title-link');
+            module.settings.postPreview = false;
+            link.dispatchEvent(new PointerEvent('pointerdown', { pointerType: 'touch', pointerId: 42, clientX: 30, clientY: 30, bubbles: true }));
+            const allowed = link.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true }));
+            module.settings.postPreview = true;
+            return allowed;
+        });
+        assert.equal(disabledContextMenu, true, '미리보기가 꺼져 있으면 터치 contextmenu도 브라우저에 남겨야 한다');
+        await session.page.waitForTimeout(560);
+        assert.equal(await session.page.locator('#dcuf-post-preview').count(), 0, '12px 초과 이동은 길게 누르기를 취소해야 한다');
+
+        await link.dispatchEvent('pointerdown', { pointerType: 'touch', pointerId: 32, clientX: 30, clientY: 30, bubbles: true });
+        await session.page.waitForTimeout(560);
+        const completedContextMenu = await link.evaluate((element) => element.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true })));
+        assert.equal(completedContextMenu, false, '미리보기로 완료된 길게 누르기는 후발 네이티브 메뉴도 막아야 한다');
+        await link.dispatchEvent('pointerup', { pointerType: 'touch', pointerId: 32, clientX: 30, clientY: 30, bubbles: true });
+        await session.page.waitForSelector('#dcuf-post-preview .dcuf-preview-body');
+        await session.page.waitForFunction(() => document.querySelector('#dcuf-post-preview .dcuf-preview-body')?.textContent.includes('정제 본문'));
+        const preview = await session.page.evaluate(() => ({
+            text: document.querySelector('#dcuf-post-preview .dcuf-preview-body').textContent,
+            forbidden: document.querySelectorAll('#dcuf-post-preview script,#dcuf-post-preview form,#dcuf-post-preview iframe,#dcuf-post-preview video').length,
+            loading: document.querySelector('#dcuf-post-preview img')?.loading,
+            imageSources: Array.from(document.querySelectorAll('#dcuf-post-preview img')).map((image) => image.src),
+            unsafeLinks: Array.from(document.querySelectorAll('#dcuf-post-preview a')).filter((anchor) => /^javascript:/i.test(anchor.getAttribute('href') || '')).length,
+            recommendationBoxes: document.querySelectorAll('#dcuf-post-preview .btn_recommend_box').length
+        }));
+        const clickContract = await link.evaluate((element) => {
+            let reachedDocumentAfterGuard = 0;
+            const afterGuard = (event) => {
+                reachedDocumentAfterGuard += 1;
+                event.preventDefault(); event.stopPropagation();
+            };
+            document.addEventListener('click', afterGuard, true);
+            sessionStorage.removeItem('dcuf:list-return:v1');
+            const first = element.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+            const recordedAfterSuppressedClick = sessionStorage.getItem('dcuf:list-return:v1');
+            const second = element.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+            document.removeEventListener('click', afterGuard, true);
+            return { first, second, reachedDocumentAfterGuard, recordedAfterSuppressedClick };
+        });
+        assert.equal(preview.forbidden, 0);
+        assert.equal(preview.loading, 'lazy');
+        assert.equal(preview.text.includes('미디어는 원문에서 보기'), true);
+        assert.equal(preview.imageSources.some((src) => /kcap_none|fix_nik/i.test(src)), false, 'host captcha and nickname icons must not be previewed');
+        assert.equal(preview.unsafeLinks, 0, 'javascript links must not survive preview sanitization');
+        assert.equal(preview.recommendationBoxes, 0, 'recommendation controls must not be cloned into the preview');
+        assert.equal(preview.text.includes('개념') || preview.text.includes('비추'), false, 'recommendation labels must not leak into preview text');
+        assert.equal(preview.text.includes('원본 첨부파일'), false, 'original attachment footer labels must not leak into preview text');
+        assert.equal(preview.text.includes('본문에 추천 검색 이야기는 남아야 함'), true, 'ordinary article sentences containing the same words must remain');
+        assert.equal(clickContract.first, false, 'the native click produced by a completed long press must be suppressed');
+        assert.equal(clickContract.reachedDocumentAfterGuard, 1, 'the next intentional click must pass the preview suppression guard');
+        assert.equal(clickContract.recordedAfterSuppressedClick, null, 'a suppressed preview click must not create a list-return record');
+        await session.page.evaluate(() => window.__dcufMobileConvenienceModule.closePreview());
+        await session.page.evaluate(() => {
+            const link = Array.from(document.querySelectorAll('.custom-post-item a.post-title-link')).find((candidate) => getComputedStyle(candidate.closest('.custom-post-item')).display !== 'none');
+            window.__dcufMobileConvenienceModule.openPreview(link.href, link.textContent, { mobile: true, x: 20, y: 20 });
+        });
+        await session.page.waitForFunction(() => document.querySelector('#dcuf-post-preview .dcuf-preview-body')?.textContent.includes('정제 본문'));
+        assert.equal(requests, 1, '3분 캐시 안에서는 같은 글을 다시 요청하지 않아야 한다');
+    } finally { await session.close(); }
+});
+
+mobileTest('최근 방문 화살표는 가변 폭만큼 이동하고 host 고정 오프셋을 차단한다', 'functional', async ({ browser, server }) => {
+    const session = await createTestPage(browser, server.baseUrl, {
+        storage: noStatsStorage,
+        viewport: { width: 750, height: 900 }
+    });
+    try {
+        await session.goto('/mgallery/board/lists?id=test');
+        await session.page.waitForFunction(() => document.querySelector('.newvisit_list')?.dataset.dcufRecentNavigationBound === '1');
+        const initial = await session.page.evaluate(() => {
+            const root = document.querySelector('.newvisit_history');
+            const list = root.querySelector('.newvisit_list');
+            const box = root.querySelector('.newvisit_box');
+            const next = root.querySelector('.bnt_visit_next');
+            const more = root.querySelector('.bnt_newvisit_more');
+            const rootRect = root.getBoundingClientRect();
+            return {
+                clientWidth: list.clientWidth,
+                scrollWidth: list.scrollWidth,
+                boxWidth: box.getBoundingClientRect().width,
+                left: getComputedStyle(list).left,
+                nextVisible: next.getBoundingClientRect().right <= rootRect.right + 1,
+                moreVisible: more.getBoundingClientRect().right <= rootRect.right + 1
+            };
+        });
+        assert.equal(initial.scrollWidth > initial.clientWidth, true);
+        assert.equal(initial.boxWidth > 100, true);
+        assert.equal(initial.left, '0px');
+        assert.equal(initial.nextVisible, true);
+        assert.equal(initial.moreVisible, true);
+
+        await session.page.locator('.bnt_visit_next').click();
+        await session.page.waitForFunction(() => document.querySelector('.newvisit_list')?.scrollLeft > 1);
+        await session.page.waitForTimeout(380);
+        const firstMove = await session.page.evaluate(() => {
+            const list = document.querySelector('.newvisit_list');
+            return { scrollLeft: list.scrollLeft, clientWidth: list.clientWidth, inlineLeft: list.style.left, priority: list.style.getPropertyPriority('left') };
+        });
+        assert.equal(firstMove.scrollLeft <= firstMove.clientWidth + 2, true, JSON.stringify(firstMove));
+        assert.equal(firstMove.inlineLeft, '0px', 'host onclick의 -1445px 이동은 실행되면 안 된다');
+        assert.equal(firstMove.priority, 'important');
+
+        await session.page.evaluate(() => {
+            const prev = document.querySelector('.bnt_visit_prev');
+            const next = document.querySelector('.bnt_visit_next');
+            prev.classList.replace('bnt_visit_prev', 'btn_visit_prev');
+            next.classList.replace('bnt_visit_next', 'btn_visit_next');
+        });
+        await session.page.locator('.btn_visit_prev').click();
+        await session.page.waitForTimeout(900);
+        const prevMove = await session.page.evaluate(() => ({
+            scrollLeft: document.querySelector('.newvisit_list').scrollLeft,
+            prevDisabled: document.querySelector('.btn_visit_prev')?.getAttribute('aria-disabled'),
+            prevClass: document.querySelector('.btn_visit_prev')?.className || ''
+        }));
+        assert.equal(prevMove.scrollLeft <= 1, true, `btn/bnt 두 host 클래스 변형을 모두 처리해야 한다: ${JSON.stringify({ firstMove, prevMove })}`);
+        assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
+    } finally { await session.close(); }
+});
+
+mobileTest('글 미리보기는 정밀 마우스 400ms 대기와 단일 요청 취소 계약을 지킨다', 'functional', async ({ browser, server }) => {
+    const session = await createTestPage(browser, server.baseUrl, {
+        storage: { ...noStatsStorage, [storageKeys.convenience]: { listRestore: true, recentHighlight: true, draftRecovery: true, postPreview: true } },
+        viewport: { width: 1280, height: 900 }
+    });
+    try {
+        await session.page.route('**/board/view?id=test&no=*', async (route) => {
+            const no = new URL(route.request().url()).searchParams.get('no');
+            await new Promise((resolve) => setTimeout(resolve, 700));
+            const dataImage = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==';
+            const longBody = Array.from({ length: 80 }, (_, index) => `<p>스크롤 본문 ${index}</p>`).join('');
+            const images = Array.from({ length: 5 }, (_, index) => `<img src="/images/loading.gif" data-original="${dataImage}" alt="본문 이미지 ${index}">`).join('');
+            await route.fulfill({ status: 200, contentType: 'text/html', body: `<!doctype html><div class="writing_view_box"><div class="write_div">본문-${no}${images}${longBody}</div></div>` });
+        });
+        await session.goto('/board/lists?id=test');
+        const links = session.page.locator('.custom-post-item:visible a.post-title-link');
+        await links.nth(0).hover();
+        await session.page.waitForTimeout(300);
+        assert.equal(await session.page.locator('#dcuf-post-preview').count(), 0, '400ms 전에는 hover 미리보기를 열지 않아야 한다');
+        await session.page.waitForTimeout(150);
+        await session.page.waitForSelector('#dcuf-post-preview');
+        assert.equal(await session.page.locator('#dcuf-post-preview .dcuf-preview-status').textContent(), '불러오는 중…', '패널은 응답을 기다리지 않고 로딩 상태로 먼저 떠야 한다');
+        await session.page.mouse.move(1240, 860);
+        await session.page.waitForTimeout(380);
+        assert.equal(await session.page.locator('#dcuf-post-preview').count(), 0, '제목에서 빈 공간으로 이동하면 미리보기가 닫혀야 한다');
+
+        await links.nth(0).hover();
+        await session.page.waitForTimeout(430);
+        const panelBox = await session.page.locator('#dcuf-post-preview').boundingBox();
+        await session.page.mouse.move(panelBox.x + Math.min(80, panelBox.width / 2), panelBox.y + Math.min(80, panelBox.height / 2));
+        await session.page.waitForTimeout(380);
+        assert.equal(await session.page.locator('#dcuf-post-preview').count(), 1, '제목에서 패널로 이동하는 320ms 통로 안에서는 닫히면 안 된다');
+        await session.page.waitForFunction(() => /본문-/.test(document.querySelector('#dcuf-post-preview .dcuf-preview-body')?.textContent || ''));
+        const scrollContract = await session.page.evaluate(() => {
+            const body = document.querySelector('#dcuf-post-preview .dcuf-preview-body');
+            body.scrollTop = body.scrollHeight;
+            return { scrollable: body.scrollHeight > body.clientHeight, scrollTop: body.scrollTop, loadingPlaceholders: Array.from(body.querySelectorAll('img')).filter((image) => /loading\.gif/i.test(image.src)).length };
+        });
+        assert.equal(scrollContract.scrollable, true, '긴 미리보기 본문은 패널 내부에서 스크롤되어야 한다');
+        assert.equal(scrollContract.scrollTop > 0, true);
+        assert.equal(scrollContract.loadingPlaceholders, 0, '호스트 loading.gif보다 실제 lazy 이미지 주소를 우선해야 한다');
+        await session.page.mouse.click(4, 4);
+        assert.equal(await session.page.locator('#dcuf-post-preview').count(), 0, '패널 밖 빈 공간 클릭은 미리보기를 닫아야 한다');
+
+        await session.page.evaluate(() => {
+            const visible = Array.from(document.querySelectorAll('.custom-post-item a.post-title-link')).filter((link) => getComputedStyle(link.closest('.custom-post-item')).display !== 'none');
+            window.__dcufMobileConvenienceModule._previewCache.clear();
+            window.__dcufMobileConvenienceModule.openPreview(visible[0].href, '느린 요청', { mobile: false, x: 20, y: 20 });
+            window.__dcufMobileConvenienceModule.openPreview(visible[1].href, '최신 요청', { mobile: false, x: 40, y: 40 });
+        });
+        await session.page.waitForFunction(() => /본문-/.test(document.querySelector('#dcuf-post-preview .dcuf-preview-body')?.textContent || ''));
+        const title = await session.page.locator('#dcuf-post-preview .dcuf-preview-head strong').textContent();
+        assert.equal(title, '최신 요청', '이전 요청은 취소되고 마지막 요청 패널만 남아야 한다');
+    } finally { await session.close(); }
+});
+
+mobileTest('글 미리보기 패널은 좁은 visual viewport 안에 고정되고 테마 토큰을 사용한다', 'functional', async ({ browser, server }) => {
+    const session = await createTestPage(browser, server.baseUrl, {
+        storage: { ...noStatsStorage, [storageKeys.convenience]: { listRestore: true, recentHighlight: true, draftRecovery: true, postPreview: true } },
+        viewport: { width: 640, height: 480 }
+    });
+    try {
+        await session.goto('/board/lists?id=test');
+        await session.page.evaluate(() => {
+            const link = Array.from(document.querySelectorAll('.custom-post-item a.post-title-link')).find((item) => getComputedStyle(item.closest('.custom-post-item')).display !== 'none');
+            window.__dcufMobileConvenienceModule.openPreview(link.href, link.textContent, { mobile: false, x: innerWidth - 2, y: innerHeight - 2, link });
+        });
+        await session.page.waitForSelector('#dcuf-post-preview');
+        const geometry = await session.page.evaluate(() => {
+            const panel = document.querySelector('#dcuf-post-preview');
+            const rect = panel.getBoundingClientRect();
+            const viewport = window.visualViewport;
+            const left = viewport?.offsetLeft || 0;
+            const top = viewport?.offsetTop || 0;
+            const right = left + (viewport?.width || innerWidth);
+            const bottom = top + (viewport?.height || innerHeight);
+            const css = getComputedStyle(panel);
+            return {
+                inViewport: rect.left >= left - 1 && rect.top >= top - 1 && rect.right <= right + 1 && rect.bottom <= bottom + 1,
+                maxHeight: parseFloat(css.maxHeight),
+                usesThemeSurface: css.backgroundImage !== 'none' || css.backgroundColor !== 'rgba(0, 0, 0, 0)',
+                titleFontSize: parseFloat(getComputedStyle(panel.querySelector('.dcuf-preview-head strong')).fontSize),
+                bodyFontSize: parseFloat(getComputedStyle(panel.querySelector('.dcuf-preview-body')).fontSize),
+                articleTitleFontSize: parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--dcuf-article-title-font-size')),
+                articleBodyFontSize: parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--dcuf-article-body-font-size')),
+                bodyOverflow: getComputedStyle(panel.querySelector('.dcuf-preview-body')).overflowY
+            };
+        });
+        assert.equal(geometry.inViewport, true, JSON.stringify(geometry));
+        assert.equal(geometry.maxHeight <= 456, true);
+        assert.equal(geometry.usesThemeSurface, true);
+        assert.equal(geometry.titleFontSize, geometry.articleTitleFontSize, '미리보기 제목은 본문 페이지 제목 확대값을 공유해야 한다');
+        assert.equal(geometry.bodyFontSize, geometry.articleBodyFontSize, '미리보기 본문은 본문 페이지 글자 확대값을 공유해야 한다');
+        assert.equal(geometry.bodyOverflow, 'auto');
+        assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
+    } finally { await session.close(); }
+});
+
+mobileTest('글 미리보기는 목록 교체 때 전역 스크롤 취소 리스너를 교체한다', 'functional', async ({ browser, server }) => {
+    const session = await createTestPage(browser, server.baseUrl, {
+        storage: { ...noStatsStorage, [storageKeys.convenience]: { listRestore: true, recentHighlight: true, draftRecovery: true, postPreview: true } }
+    });
+    try {
+        await session.goto('/board/lists?id=test');
+        const contract = await session.page.evaluate(() => {
+            const module = window.__dcufMobileConvenienceModule;
+            const previous = module._previewWindowScrollHandler;
+            const nativeRemove = window.removeEventListener;
+            let removedPrevious = 0;
+            window.removeEventListener = function (type, handler, options) {
+                if (type === 'scroll' && handler === previous) removedPrevious += 1;
+                return nativeRemove.call(this, type, handler, options);
+            };
+            const replacement = document.createElement('div');
+            replacement.className = 'custom-mobile-list';
+            document.body.appendChild(replacement);
+            module.bindPreview(replacement);
+            window.removeEventListener = nativeRemove;
+            return { removedPrevious, replaced: previous !== module._previewWindowScrollHandler };
+        });
+        assert.equal(contract.removedPrevious, 1);
+        assert.equal(contract.replaced, true);
+    } finally { await session.close(); }
+});
+
+mobileTest('초안은 TTL·용량·민감정보 제외·성공 전 보존 계약을 지킨다', 'write', async ({ browser, server }) => {
+    server.reset();
+    const draftId = 'fixture-draft';
+    const initialDraft = { version: 1, galleries: { 'mgallery:test': [{ id: draftId, subject: '복구 제목', bodyHtml: '<p>복구 본문</p>', headtext: '질문', savedAt: Date.now(), pendingSubmit: false }] } };
+    const session = await createTestPage(browser, server.baseUrl, {
+        storage: { ...noStatsStorage, [storageKeys.drafts]: initialDraft },
+        gmBehavior: { writeDelayByKey: { [storageKeys.drafts]: 150 } },
+        viewport: { width: 390, height: 844 }
+    });
+    try {
+        await session.goto('/mgallery/board/write/?id=test');
+        await session.page.waitForFunction(() => document.querySelector('#subject')?.value === '복구 제목');
+        assert.equal(await session.page.locator('.note-editable').textContent(), '복구 본문');
+        await session.page.locator('#name').fill('저장금지닉');
+        await session.page.locator('#password').fill('저장금지비밀번호');
+        await session.page.locator('#code').fill('저장금지캡차');
+        await session.page.locator('#subject').fill('보존 제목');
+        await session.page.locator('.note-editable').fill('보존 본문');
+        await session.page.waitForTimeout(950);
+        const contracts = await session.page.evaluate(async () => {
+            const module = window.__dcufMobileConvenienceModule;
+            const old = module.normalizeDraftStore({ version: 1, galleries: { 'mgallery:test': [{ id: 'old', subject: 'old', bodyHtml: '', headtext: '', savedAt: Date.now() - module.DRAFT_TTL - 1 }] } });
+            const tooLarge = await module.upsertDraft('mgallery:test', { id: 'large', subject: '', bodyHtml: 'x'.repeat(module.DRAFT_MAX_BYTES + 10), headtext: '', savedAt: Date.now(), pendingSubmit: false });
+            const stored = window.__dcufTestbedGM.snapshot().values.dcuf_mobile_write_drafts_v1;
+            return { oldCount: old.galleries['mgallery:test']?.length || 0, tooLarge, serialized: JSON.stringify(stored) };
+        });
+        assert.equal(contracts.oldCount, 0);
+        assert.equal(contracts.tooLarge.reason, 'too-large');
+        assert.equal(contracts.serialized.includes('저장금지닉'), false);
+        assert.equal(contracts.serialized.includes('저장금지비밀번호'), false);
+        assert.equal(contracts.serialized.includes('저장금지캡차'), false);
+        await session.page.evaluate(() => {
+            window.__dcufSubmitEvents = 0;
+            document.addEventListener('submit', (event) => {
+                if (event.target?.matches?.('form#write')) window.__dcufSubmitEvents += 1;
+            }, true);
+        });
+        await session.page.locator('#write-submit').click();
+        await session.page.waitForFunction(() => document.querySelector('form#write')?.dataset.submitStatus === 'done');
+        await session.page.waitForFunction(() => window.__dcufTestbedGM.snapshot().values.dcuf_mobile_write_drafts_v1?.galleries?.['mgallery:test']?.[0]?.pendingSubmit === true);
+        const pendingState = await session.page.evaluate(() => {
+            const snapshot = window.__dcufTestbedGM.snapshot();
+            const pendingWrite = [...snapshot.writes].reverse().find((entry) => entry.key === 'dcuf_mobile_write_drafts_v1' && entry.value?.galleries?.['mgallery:test']?.[0]?.pendingSubmit === true);
+            return {
+                pending: snapshot.values.dcuf_mobile_write_drafts_v1.galleries['mgallery:test'][0].pendingSubmit,
+                pendingWriteTs: pendingWrite?.ts || 0,
+                submitEvents: window.__dcufSubmitEvents,
+                markerVersion: JSON.parse(sessionStorage.getItem('dcuf:pending-submit:v1') || 'null')?.version || 0
+            };
+        });
+        const pending = pendingState.pending;
+        assert.equal(pending, true, '성공 이동 전에는 초안을 지우지 않아야 한다');
+        assert.equal(pendingState.submitEvents, 1, '한 번의 클릭은 공식 submit 이벤트도 정확히 한 번만 발생시켜야 한다');
+        assert.equal(pendingState.markerVersion, 2, '첫 공식 submit 이벤트에서 성공 이동용 표식을 남겨야 한다');
+        assert.equal(pendingState.pendingWriteTs > 0, true);
+        await session.goto('/mgallery/board/view?id=test&no=9001');
+        const remaining = await session.page.evaluate(() => window.__dcufTestbedGM.snapshot().values.dcuf_mobile_write_drafts_v1.galleries['mgallery:test'] || []);
+        assert.equal(remaining.some((draft) => draft.id === draftId), false, '같은 갤러리 본문 성공 이동 뒤에만 제출 초안을 지워야 한다');
+
+        await session.page.evaluate(async () => {
+            await GM_setValue('dcuf_mobile_write_drafts_v1', { version: 1, galleries: { 'mgallery:test': [{ id: 'fast-success', subject: '빠른 성공', bodyHtml: '<p>빠른 성공</p>', headtext: '40', savedAt: Date.now(), pendingSubmit: false }] } });
+            window.__dcufMobileConvenienceModule._draftStoreCache = null;
+            sessionStorage.setItem('dcuf:pending-submit:v1', JSON.stringify({ version: 2, galleryKey: 'mgallery:test', draftId: 'fast-success', submittedAt: Date.now() }));
+            await window.__dcufMobileConvenienceModule.confirmPendingDraftOnView();
+        });
+        const fastSuccess = await session.page.evaluate(() => window.__dcufTestbedGM.snapshot().values.dcuf_mobile_write_drafts_v1.galleries['mgallery:test'] || []);
+        assert.equal(fastSuccess.some((draft) => draft.id === 'fast-success'), false, '성공 이동이 저장 완료보다 빨라도 v2 제출 표식의 초안은 남기지 않아야 한다');
+
+        await session.page.evaluate(async () => {
+            await GM_setValue('dcuf_mobile_write_drafts_v1', { version: 1, galleries: {} });
+            window.__dcufMobileConvenienceModule._draftStoreCache = null;
+            sessionStorage.setItem('dcuf:pending-submit:v1', JSON.stringify({ version: 2, galleryKey: 'mgallery:test', draftId: 'late-success', submittedAt: Date.now() }));
+            await window.__dcufMobileConvenienceModule.confirmPendingDraftOnView();
+            window.setTimeout(() => void GM_setValue('dcuf_mobile_write_drafts_v1', {
+                version: 1,
+                galleries: { 'mgallery:test': [{ id: 'late-success', subject: '늦은 저장', bodyHtml: '<p>늦은 저장</p>', headtext: '40', savedAt: Date.now(), pendingSubmit: true }] }
+            }), 60);
+        });
+        await session.page.waitForTimeout(1050);
+        const lateSuccess = await session.page.evaluate(() => window.__dcufTestbedGM.snapshot().values.dcuf_mobile_write_drafts_v1.galleries['mgallery:test'] || []);
+        assert.equal(lateSuccess.some((draft) => draft.id === 'late-success'), false, '성공 화면의 초기 삭제 뒤 늦은 저장이 끝나도 제출 초안이 되살아나면 안 된다');
+        await session.page.evaluate(async () => {
+            await GM_setValue('dcuf_mobile_write_drafts_v1', { version: 1, galleries: { 'mgallery:test': [{ id: 'not-pending', subject: '보존', bodyHtml: '<p>보존</p>', headtext: '40', savedAt: Date.now(), pendingSubmit: false }] } });
+            window.__dcufMobileConvenienceModule._draftStoreCache = null;
+            sessionStorage.setItem('dcuf:pending-submit:v1', JSON.stringify({ galleryKey: 'mgallery:test', draftId: 'not-pending', submittedAt: Date.now() }));
+        });
+        await session.page.evaluate(async () => {
+            history.pushState({}, '', '/mgallery/board/view?id=test&no=9002');
+            await window.__dcufMobileConvenienceModule.confirmPendingDraftOnView();
+        });
+        const nonPending = await session.page.evaluate(() => window.__dcufTestbedGM.snapshot().values.dcuf_mobile_write_drafts_v1.galleries['mgallery:test'] || []);
+        assert.equal(nonPending.some((draft) => draft.id === 'not-pending'), true, 'a stale marker must not delete a non-pending draft');
+    } finally { await session.close(); }
+});
+
+mobileTest('공식 제출 뒤 글쓰기에서 목록으로 이동하면 해당 초안만 정리한다', 'write', async ({ browser, server }) => {
+    const session = await createTestPage(browser, server.baseUrl, {
+        storage: noStatsStorage,
+        viewport: { width: 390, height: 844 }
+    });
+    try {
+        const navigateByFixtureLink = async (href) => {
+            await session.page.evaluate((target) => {
+                const link = document.createElement('a');
+                link.id = 'fixture-draft-navigation';
+                link.href = target;
+                link.textContent = 'fixture navigation';
+                document.body.appendChild(link);
+            }, href);
+            await Promise.all([
+                session.page.waitForNavigation({ waitUntil: 'domcontentloaded' }),
+                session.page.locator('#fixture-draft-navigation').click()
+            ]);
+            await session.page.waitForFunction(() => document.documentElement.classList.contains('script-ui-ready'));
+            await session.page.waitForTimeout(180);
+        };
+        await session.goto('/board/write/?id=test');
+        await session.page.waitForFunction(() => document.querySelector('form#write')?._dcufDraftController);
+        await session.page.evaluate(async () => {
+            await GM_setValue('dcuf_mobile_write_drafts_v1', {
+                version: 1,
+                galleries: { 'board:test': [{ id: 'list-success', subject: '제출 제목', bodyHtml: '<p>제출 본문</p>', headtext: '', savedAt: Date.now(), pendingSubmit: false }] }
+            });
+            sessionStorage.setItem('dcuf:pending-submit:v1', JSON.stringify({ version: 2, galleryKey: 'board:test', draftId: 'list-success', submittedAt: Date.now() }));
+        });
+        await navigateByFixtureLink('/board/lists/?id=test');
+        const successState = await session.page.evaluate(() => window.__dcufTestbedGM.snapshot().values.dcuf_mobile_write_drafts_v1?.galleries?.['board:test'] || []);
+        assert.equal(successState.some((draft) => draft.id === 'list-success'), false, '글쓰기에서 목록으로 이어진 v2 성공 이동은 제출 초안을 지워야 한다');
+
+        await session.goto('/board/view/?id=test&no=1001');
+        await session.page.evaluate(async () => {
+            await GM_setValue('dcuf_mobile_write_drafts_v1', {
+                version: 1,
+                galleries: { 'board:test': [{ id: 'ordinary-list', subject: '보존 제목', bodyHtml: '<p>보존 본문</p>', headtext: '', savedAt: Date.now(), pendingSubmit: false }] }
+            });
+            sessionStorage.setItem('dcuf:pending-submit:v1', JSON.stringify({ version: 2, galleryKey: 'board:test', draftId: 'ordinary-list', submittedAt: Date.now() }));
+        });
+        await navigateByFixtureLink('/board/lists/?id=test');
+        const ordinaryState = await session.page.evaluate(() => window.__dcufTestbedGM.snapshot().values.dcuf_mobile_write_drafts_v1?.galleries?.['board:test'] || []);
+        assert.equal(ordinaryState.some((draft) => draft.id === 'ordinary-list'), true, '본문에서 목록으로 이동한 경우에는 제출 초안을 임의로 지우면 안 된다');
+    } finally { await session.close(); }
+});
+
+mobileTest('글쓰기 본문 초안은 동적 에디터 입력 직후 새로고침해도 복구한다', 'write', async ({ browser, server }) => {
+    const session = await createTestPage(browser, server.baseUrl, {
+        storage: noStatsStorage,
+        viewport: { width: 390, height: 844 }
+    });
+    try {
+        await session.goto('/mgallery/board/write/?id=test');
+        await session.page.waitForFunction(() => document.querySelector('form#write')?._dcufDraftController);
+        await session.page.locator('[data-action="write-rerender-editor"]').click();
+        await session.page.locator('#subject').fill('새로고침 제목');
+        await session.page.locator('.note-editable').fill('새로고침 직전 본문');
+        await session.page.waitForTimeout(60);
+        await session.page.reload({ waitUntil: 'domcontentloaded' });
+        await session.page.waitForFunction(() => document.querySelector('#subject')?.value === '새로고침 제목'
+            && document.querySelector('.note-editable')?.textContent === '새로고침 직전 본문');
+        const restored = await session.page.evaluate(() => ({
+            subject: document.querySelector('#subject')?.value || '',
+            body: document.querySelector('.note-editable')?.textContent || '',
+            stored: window.__dcufTestbedGM.snapshot().values.dcuf_mobile_write_drafts_v1?.galleries?.['mgallery:test']?.[0] || null
+        }));
+        assert.equal(restored.subject, '새로고침 제목');
+        assert.equal(restored.body, '새로고침 직전 본문');
+        assert.equal(restored.stored?.bodyHtml.includes('새로고침 직전 본문'), true);
+        assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
+    } finally { await session.close(); }
+});
+
+mobileTest('빠른 글쓰기는 설정·플로팅 메뉴·런타임에서 제거되고 기존 저장값만 무시한다', 'functional', async ({ browser, server }) => {
+    const staleSettings = { listRestore: true, recentHighlight: true, draftRecovery: true, postPreview: false, quickWrite: true };
+    const session = await createTestPage(browser, server.baseUrl, {
+        storage: { ...noStatsStorage, [storageKeys.convenience]: staleSettings },
+        viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true
+    });
+    try {
+        await session.goto('/mgallery/board/lists?id=test');
+        await session.page.locator('#dc-personal-block-fab').click();
+        await session.page.evaluate(() => window.__dcufMobileConvenienceModule.showSettings());
+        const state = await session.page.evaluate(() => ({
+            settings: window.__dcufMobileConvenienceModule.settings,
+            quickModuleType: typeof window.__dcufQuickWriteModule,
+            quickActionCount: document.querySelectorAll('[data-dcuf-fab-action="quick-write"]').length,
+            settingsText: document.querySelector('#dcuf-mobile-convenience-settings')?.textContent || '',
+            persisted: window.__dcufTestbedGM.snapshot().values.dcuf_mobile_convenience_settings_v1
+        }));
+        assert.deepEqual(state.settings, { listRestore: true, recentHighlight: true, draftRecovery: true, postPreview: false });
+        assert.equal(state.quickModuleType, 'undefined');
+        assert.equal(state.quickActionCount, 0);
+        assert.equal(state.settingsText.includes('빠른 글쓰기'), false);
+        assert.deepEqual(state.persisted, staleSettings, '기존 저장값은 파괴하지 않고 런타임 정규화에서만 무시한다');
+        assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
+    } finally { await session.close(); }
+});
+
+obsoleteMobileTest('빠른 글쓰기는 공식 폼의 비회원·캡차·말머리·이미지·디시콘·중복 제출을 공유한다', 'write', async ({ browser, server }) => {
+    server.reset();
+    const convenience = { listRestore: true, recentHighlight: true, draftRecovery: true, postPreview: false, quickWrite: true };
+    const session = await createTestPage(browser, server.baseUrl, { storage: { ...noStatsStorage, [storageKeys.convenience]: convenience }, viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
+    try {
+        await session.goto('/mgallery/board/lists?id=test');
+        await session.page.locator('#dc-personal-block-fab').click();
+        const quickAction = session.page.locator('[data-dcuf-fab-action="quick-write"]');
+        assert.equal(await quickAction.isVisible(), true);
+        await quickAction.click();
+        await session.page.waitForURL(/\/mgallery\/board\/write/);
+        await session.page.waitForFunction(() => window.__dcufQuickWriteModule?._form?.tagName === 'FORM', null, { timeout: 10000 });
+        assert.equal(await session.page.locator('#dcuf-quick-write-frame').count(), 0, '빠른 글쓰기는 iframe이 아닌 공식 최상위 글쓰기 문맥을 사용해야 한다');
+        assert.equal(await session.page.evaluate(() => window.__dcufQuickWriteModule._topLevel), true);
+        assert.equal(await session.page.locator('#dcuf-quick-write .dcuf-qw-guest').isVisible(), true);
+        assert.equal(await session.page.locator('#dcuf-quick-write .dcuf-qw-captcha').isVisible(), true);
+
+        const remembered = await session.page.evaluate(() => {
+            const quick = window.__dcufQuickWriteModule;
+            const fields = quick.findOfficialFields();
+            fields.name.value = '공식기억닉'; fields.password.value = 'official-remembered-password';
+            quick._credentialTouched.clear(); quick.syncOfficialSurface();
+            return {
+                name: document.querySelector('.dcuf-qw-name').value,
+                password: document.querySelector('.dcuf-qw-password').value,
+                events: window.__dcufFixture.snapshot().credentialInputEvents
+            };
+        });
+        assert.equal(remembered.name, '공식기억닉');
+        assert.equal(remembered.password, 'official-remembered-password');
+        assert.deepEqual(remembered.events, { name: 0, password: 0, code: 0 }, '공식 폼의 기억값을 읽을 때 입력 이벤트를 재발송하면 안 된다');
+
+        const captchaBefore = await session.page.locator('.dcuf-qw-captcha-view .fixture-captcha-image').textContent();
+        await session.page.locator('.dcuf-qw-name').fill('퀵닉');
+        await session.page.locator('.dcuf-qw-password').fill('quick-password');
+        await session.page.locator('.dcuf-qw-code').fill('CAPTCHA');
+        const credentialEvents = await session.page.evaluate(() => window.__dcufFixture.snapshot().credentialInputEvents);
+        assert.deepEqual(credentialEvents, { name: 1, password: 1, code: 1 }, '한 입력은 대응하는 공식 필드 하나에만 전달되어야 한다');
+        assert.equal(await session.page.locator('.dcuf-qw-captcha-view .fixture-captcha-image').textContent(), captchaBefore, '캡차 답 입력만으로 캡차가 바뀌면 안 된다');
+        assert.equal(await session.page.evaluate(() => window.__dcufFixture.snapshot().captchaGeneration), 0);
+        await session.page.locator('.dcuf-qw-captcha-view button[aria-label="캡차 새로고침"]').evaluate((button) => button.click());
+        await session.page.waitForFunction(() => window.__dcufFixture.snapshot().captchaGeneration === 1);
+        await session.page.waitForFunction(() => document.querySelector('.dcuf-qw-captcha-view .fixture-captcha-image')?.textContent === '3D8WA-1');
+        const overflow = '가'.repeat(105);
+        await session.page.locator('.dcuf-qw-input').fill(overflow);
+        const splitOverflow = await session.page.evaluate(() => {
+            const fields = window.__dcufQuickWriteModule.findOfficialFields();
+            return { subjectLength: fields.subject.value.length, bodyText: fields.editor.textContent };
+        });
+        assert.equal(splitOverflow.subjectLength, 100);
+        assert.equal(splitOverflow.bodyText, '가'.repeat(5));
+        const overflowWithNewline = `${'나'.repeat(105)}\n둘째 줄`;
+        await session.page.locator('.dcuf-qw-input').fill(overflowWithNewline);
+        const splitOverflowWithNewline = await session.page.evaluate(() => {
+            const fields = window.__dcufQuickWriteModule.findOfficialFields();
+            return { subject: fields.subject.value, bodyText: fields.editor.textContent };
+        });
+        assert.equal(splitOverflowWithNewline.subject, '나'.repeat(100));
+        assert.equal(splitOverflowWithNewline.bodyText, `${'나'.repeat(5)}둘째 줄`, 'first-line overflow must be preserved before the remaining body');
+        const ime = await session.page.evaluate(() => {
+            const input = document.querySelector('.dcuf-qw-input');
+            const subject = window.__dcufQuickWriteModule.findOfficialFields().subject;
+            input.dispatchEvent(new CompositionEvent('compositionstart', { bubbles: true, data: '조' }));
+            input.value = '조합중'; input.dispatchEvent(new InputEvent('input', { bubbles: true, data: '합' }));
+            const during = subject.value;
+            input.dispatchEvent(new CompositionEvent('compositionend', { bubbles: true, data: '조합중' }));
+            return { duringLength: during.length, after: subject.value };
+        });
+        assert.equal(ime.duringLength, 100, 'IME 조합 중에는 제목/본문을 다시 분리하지 않아야 한다');
+        assert.equal(ime.after, '조합중');
+        await session.page.locator('.dcuf-qw-input').fill('퀵 제목\n퀵 본문');
+        const official = await session.page.evaluate(() => {
+            const fields = window.__dcufQuickWriteModule.findOfficialFields();
+            return { subject: fields.subject.value, body: fields.textarea.value, name: fields.name.value, password: fields.password.value, code: fields.code.value };
+        });
+        assert.equal(official.subject, '퀵 제목');
+        assert.equal(official.body.includes('퀵 본문'), true);
+        assert.equal(official.name, '퀵닉'); assert.equal(official.password, 'quick-password'); assert.equal(official.code, 'CAPTCHA');
+
+        await session.page.locator('.dcuf-qw-toggle').click();
+        assert.equal(await session.page.evaluate(() => window.__dcufQuickWriteModule.findOfficialFields().file?.id), 'fixture-file-input', 'AI 이미지 프롬프트 파일 입력은 첨부 입력으로 선택하면 안 된다');
+        const question = session.page.locator('.dcuf-qw-headtexts button').filter({ hasText: '질문' });
+        await question.click();
+        assert.equal(await session.page.evaluate(() => window.__dcufQuickWriteModule.findOfficialFields().headtext.value), '40', 'visible headtext labels must not overwrite the official numeric value');
+        const dccon = session.page.locator('.dcuf-qw-dccon-grid button').filter({ has: session.page.locator('img[alt="테스트 디시콘"]') });
+        await dccon.click();
+        assert.equal(await session.page.evaluate(() => window.__dcufQuickWriteModule._hasDccon), true);
+
+        await session.page.locator('#fixture-file-input').setInputFiles({ name: 'quick.png', mimeType: 'image/png', buffer: Buffer.from([137, 80, 78, 71]) });
+        await session.page.waitForFunction(() => window.__dcufQuickWriteModule._hasAttachment === true);
+        assert.equal(await session.page.locator('.dcuf-qw-attachments img[data-fixture-uploaded-media="quick.png"]').count(), 1, 'uploaded media preview must be reflected in the quick panel');
+        await session.page.evaluate(() => { const button = document.querySelector('.dcuf-qw-submit'); button.click(); button.click(); });
+        await session.page.waitForFunction(() => window.__dcufQuickWriteModule?._form?.dataset.submitStatus === 'done');
+        assert.equal(server.state.writeSubmissions.length, 1, '공식 폼 제출은 중복 잠금으로 한 번만 전송되어야 한다');
+        assert.equal(server.state.writeSubmissions[0].values.subject, '퀵 제목');
+        assert.equal(server.state.writeSubmissions[0].values.memo.includes('퀵 본문'), true);
+        assert.equal(server.state.writeSubmissions[0].values.memo.includes('data-fixture-dccon-media'), true, 'DCCon markup must survive final quick-text synchronization');
+        assert.equal(server.state.writeSubmissions[0].values.memo.includes('data-fixture-uploaded-media'), true, 'uploaded editor media must survive final quick-text synchronization');
+        const draftSerialized = await session.page.evaluate(() => JSON.stringify(window.__dcufTestbedGM.snapshot().values.dcuf_mobile_write_drafts_v1 || {}));
+        assert.equal(draftSerialized.includes('quick-password'), false);
+        assert.equal(draftSerialized.includes('CAPTCHA'), false);
+        assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
+    } finally { await session.close(); }
+});
+
+obsoleteMobileTest('빠른 글쓰기는 로그인 표면·등록 오류·전체 글쓰기 fallback에서 입력과 초안을 보존한다', 'write', async ({ browser, server }) => {
+    server.reset();
+    const convenience = { listRestore: true, recentHighlight: true, draftRecovery: true, postPreview: false, quickWrite: true };
+    const session = await createTestPage(browser, server.baseUrl, {
+        storage: { ...noStatsStorage, [storageKeys.convenience]: convenience },
+        viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true
+    });
+    try {
+        await session.goto('/mgallery/board/lists?id=test');
+        await session.page.locator('#dc-personal-block-fab').click();
+        await session.page.locator('[data-dcuf-fab-action="quick-write"]').click();
+        await session.page.waitForURL(/\/mgallery\/board\/write/);
+        await session.page.waitForFunction(() => window.__dcufQuickWriteModule?._form?.tagName === 'FORM', null, { timeout: 10000 });
+
+        const loggedInSurface = await session.page.evaluate(() => {
+            const quick = window.__dcufQuickWriteModule;
+            const fields = quick.findOfficialFields();
+            fields.name?.remove(); fields.password?.remove(); fields.code?.remove();
+            quick.syncOfficialSurface();
+            const panel = document.querySelector('#dcuf-quick-write');
+            const rect = panel.getBoundingClientRect();
+            return {
+                guestHidden: panel.querySelector('.dcuf-qw-guest').hidden,
+                captchaHidden: panel.querySelector('.dcuf-qw-captcha').hidden,
+                parentOwned: panel.parentElement === document.body,
+                noFrame: !document.querySelector('#dcuf-quick-write-frame'),
+                topLevel: quick._topLevel,
+                viewportHandler: typeof quick._viewportHandler === 'function',
+                observerActive: Boolean(quick._observer),
+                zIndex: Number(getComputedStyle(panel).zIndex),
+                inViewport: rect.left >= 0 && rect.right <= innerWidth + 1 && rect.bottom <= innerHeight + 1
+            };
+        });
+        assert.equal(loggedInSurface.guestHidden, true);
+        assert.equal(loggedInSurface.captchaHidden, true);
+        assert.equal(loggedInSurface.parentOwned, true);
+        assert.equal(loggedInSurface.noFrame, true);
+        assert.equal(loggedInSurface.topLevel, true);
+        assert.equal(loggedInSurface.viewportHandler, true);
+        assert.equal(loggedInSurface.observerActive, true);
+        assert.equal(loggedInSurface.zIndex, 2147483645);
+        assert.equal(loggedInSurface.inViewport, true);
+
+        const initialErrorContract = await session.page.evaluate(async () => {
+            const quick = window.__dcufQuickWriteModule;
+            const error = document.createElement('div');
+            error.className = 'write_error'; error.textContent = '초기 공식 오류';
+            quick._form.appendChild(error);
+            quick.syncOfficialSurface();
+            const state = { text: document.querySelector('.dcuf-qw-status').textContent, error: document.querySelector('.dcuf-qw-status').dataset.error };
+            error.remove(); quick.setStatus('공식 글쓰기 페이지 연결 완료');
+            return state;
+        });
+        assert.equal(initialErrorContract.text, '초기 공식 오류');
+        assert.equal(initialErrorContract.error, '1', 'initial official errors must not be overwritten by the connected status');
+
+        await session.page.locator('.dcuf-qw-input').fill('오류 제목\n오류 본문');
+        await session.page.evaluate(async () => {
+            const quick = window.__dcufQuickWriteModule;
+            quick._submitting = true;
+            quick.syncSubmitState();
+            await quick.saveDraft(true);
+            sessionStorage.setItem('dcuf:pending-submit:v1', JSON.stringify({ galleryKey: quick._galleryKey, draftId: quick._draftId, submittedAt: Date.now() }));
+            quick._form.dataset.submitStatus = 'failed';
+            quick.syncOfficialSurface();
+        });
+        await session.page.waitForFunction(() => window.__dcufQuickWriteModule?._form?.dataset.submitStatus === 'failed');
+        await session.page.waitForFunction(() => {
+            const quick = window.__dcufQuickWriteModule;
+            const drafts = window.__dcufTestbedGM.snapshot().values.dcuf_mobile_write_drafts_v1?.galleries?.['mgallery:test'] || [];
+            return drafts.some((draft) => draft.id === quick._draftId && draft.pendingSubmit === false);
+        });
+        const failed = await session.page.evaluate(() => {
+            const quick = window.__dcufQuickWriteModule;
+            const drafts = window.__dcufTestbedGM.snapshot().values.dcuf_mobile_write_drafts_v1.galleries['mgallery:test'];
+            const draft = drafts.find((item) => item.id === quick._draftId);
+            return {
+                input: document.querySelector('.dcuf-qw-input').value,
+                status: document.querySelector('.dcuf-qw-status').textContent,
+                error: document.querySelector('.dcuf-qw-status').dataset.error,
+                submitting: quick._submitting,
+                pendingSubmit: draft.pendingSubmit,
+                bodyHtml: draft.bodyHtml,
+                submitMarker: sessionStorage.getItem('dcuf:pending-submit:v1')
+            };
+        });
+        assert.equal(failed.input, '오류 제목\n오류 본문');
+        assert.equal(failed.status.includes('거부'), true);
+        assert.equal(failed.error, '1'); assert.equal(failed.submitting, false); assert.equal(failed.pendingSubmit, false);
+        assert.equal(failed.bodyHtml.includes('오류 본문'), true); assert.equal(failed.submitMarker, null);
+        assert.equal(server.state.writeSubmissions.length, 0);
+
+        const closeWhileSubmitting = await session.page.evaluate(async () => {
+            const quick = window.__dcufQuickWriteModule;
+            quick._submitting = true; quick.syncSubmitState();
+            const closed = await quick.close();
+            const panelPresent = Boolean(document.querySelector('#dcuf-quick-write'));
+            quick._submitting = false; quick.syncSubmitState();
+            return { closed, panelPresent };
+        });
+        assert.deepEqual(closeWhileSubmitting, { closed: false, panelPresent: true }, 'quick write must not close while an official submission is unresolved');
+
+        await session.page.evaluate(() => void window.__dcufQuickWriteModule.close({ force: true }));
+        await session.page.waitForURL(/\/mgallery\/board\/lists/);
+        await session.page.locator('#dc-personal-block-fab').click();
+        await session.page.locator('[data-dcuf-fab-action="quick-write"]').click();
+        await session.page.waitForURL(/\/mgallery\/board\/write/);
+        await session.page.waitForFunction(() => window.__dcufQuickWriteModule?._form?.tagName === 'FORM', null, { timeout: 10000 });
+        const restored = await session.page.evaluate(() => ({
+            quick: document.querySelector('.dcuf-qw-input')?.value || '',
+            subject: document.querySelector('#subject')?.value || '',
+            body: document.querySelector('.note-editable')?.textContent || '',
+            draftId: window.__dcufQuickWriteModule._draftId,
+            drafts: window.__dcufTestbedGM.snapshot().values.dcuf_mobile_write_drafts_v1?.galleries?.['mgallery:test'] || []
+        }));
+        assert.equal(restored.quick, '오류 제목\n오류 본문', `빠른 글쓰기 재진입 시 제목과 본문을 함께 복구해야 한다: ${JSON.stringify(restored)}`);
+
+        await session.page.evaluate(() => void window.__dcufQuickWriteModule.close({ force: true }));
+        await session.page.waitForURL(/\/mgallery\/board\/lists/);
+        await session.page.evaluate(() => {
+            sessionStorage.setItem('dcuf:quick-write-launch:v2', JSON.stringify({
+                galleryKey: 'mgallery:test', returnUrl: location.href,
+                writeUrl: new URL('/mgallery/board/write/?id=test', location.href).href,
+                openedAt: Date.now() - 5 * 60 * 1000
+            }));
+        });
+        await session.goto('/mgallery/board/write/?id=test');
+        await session.page.waitForFunction(() => document.querySelector('form#write')?.dataset.dcufWriteTransformed === '1');
+        assert.equal(await session.page.locator('#dcuf-quick-write').count(), 0, '만료되거나 초기화에 실패한 실행 표식은 전체 공식 글쓰기를 막으면 안 된다');
+        assert.equal(await session.page.locator('form#write #subject').isEditable(), true);
+        assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
+    } finally { await session.close(); }
+});
+
+obsoleteMobileTest('빠른 글쓰기는 빈 패널을 닫아도 빈 초안을 만들지 않는다', 'write', async ({ browser, server }) => {
+    const convenience = { listRestore: true, recentHighlight: true, draftRecovery: true, postPreview: false, quickWrite: true };
+    const session = await createTestPage(browser, server.baseUrl, {
+        storage: { ...noStatsStorage, [storageKeys.convenience]: convenience },
+        viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true
+    });
+    try {
+        await session.goto('/mgallery/board/lists?id=test');
+        await session.page.evaluate(() => void window.__dcufQuickWriteModule.open());
+        await session.page.waitForURL(/\/mgallery\/board\/write/);
+        await session.page.waitForFunction(() => window.__dcufQuickWriteModule?._form?.tagName === 'FORM');
+        await session.page.evaluate(() => void window.__dcufQuickWriteModule.close({ force: true }));
+        await session.page.waitForURL(/\/mgallery\/board\/lists/);
+        const drafts = await session.page.evaluate(() => window.__dcufTestbedGM.snapshot().values.dcuf_mobile_write_drafts_v1?.galleries?.['mgallery:test'] || []);
+        assert.equal(drafts.length, 0);
+    } finally { await session.close(); }
+});
+
+obsoleteMobileTest('빠른 글쓰기는 목록을 유지한 채 공식 백그라운드 폼과 양방향 동기화한다', 'write', async ({ browser, server }) => {
+    server.reset();
+    const convenience = { listRestore: true, recentHighlight: true, draftRecovery: true, postPreview: false, quickWrite: true };
+    const session = await createTestPage(browser, server.baseUrl, {
+        storage: { ...noStatsStorage, [storageKeys.convenience]: convenience },
+        viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true
+    });
+    let helper = null;
+    const helperConsoleErrors = [];
+    try {
+        await session.goto('/mgallery/board/lists?id=test');
+        await session.page.locator('#dc-personal-block-fab').click();
+        const helperPromise = session.context.waitForEvent('page');
+        await session.page.locator('[data-dcuf-fab-action="quick-write"]').click();
+        helper = await helperPromise;
+        helper.on('console', (message) => { if (message.type() === 'error') helperConsoleErrors.push(message.text()); });
+        await helper.waitForSelector('form#write');
+        await helper.waitForTimeout(600);
+        const helperBoot = await helper.evaluate(() => ({
+            url: location.href,
+            title: document.title,
+            bodyPage: document.body?.dataset.fixturePage || '',
+            moduleType: typeof window.__dcufQuickWriteModule,
+            readyState: document.readyState,
+            role: window.__dcufQuickWriteModule?._role || '',
+            hasForm: window.__dcufQuickWriteModule?._form instanceof HTMLFormElement,
+            marker: sessionStorage.getItem('dcuf:quick-write-helper:v1'),
+            hash: location.hash,
+            transformed: document.querySelector('form#write')?.dataset.dcufWriteTransformed || ''
+        }));
+        assert.equal(helperBoot.role, 'helper', `helper bridge did not start: ${JSON.stringify(helperBoot)}`);
+        assert.equal(helperBoot.hasForm, true, `official form was not claimed: ${JSON.stringify(helperBoot)}`);
+        await session.page.waitForFunction(() => !document.querySelector('.dcuf-qw-input')?.disabled);
+
+        assert.match(session.page.url(), /\/mgallery\/board\/lists/, '목록 탭은 공식 글쓰기 연결 중에도 이동하면 안 된다');
+        assert.match(helper.url(), /\/mgallery\/board\/write/, '공식 폼은 별도 최상위 탭에서 실행되어야 한다');
+        assert.equal(await session.page.locator('#dcuf-quick-write-frame').count(), 0);
+        assert.deepEqual(await session.page.evaluate(() => window.__dcufTestbedGM.snapshot().openedTabs[0]?.options), {
+            active: false, insert: true, setParent: true
+        });
+
+        await helper.evaluate(() => {
+            const quick = window.__dcufQuickWriteModule;
+            const fields = quick.findOfficialFields();
+            fields.name.value = '공식기억닉';
+            fields.password.value = 'official-remembered-password';
+            quick.syncOfficialSurface();
+        });
+        await session.page.waitForFunction(() => document.querySelector('.dcuf-qw-name')?.value === '공식기억닉');
+        assert.equal(await session.page.locator('.dcuf-qw-password').inputValue(), 'official-remembered-password');
+
+        const captchaBefore = await session.page.locator('.dcuf-qw-captcha-view').textContent();
+        await session.page.locator('.dcuf-qw-name').fill('퀵닉');
+        await session.page.locator('.dcuf-qw-password').fill('quick-password');
+        await session.page.locator('.dcuf-qw-code').fill('CAPTCHA');
+        await helper.waitForFunction(() => document.querySelector('#name')?.value === '퀵닉'
+            && document.querySelector('#password')?.value === 'quick-password'
+            && document.querySelector('#code')?.value === 'CAPTCHA');
+        assert.equal(await session.page.locator('.dcuf-qw-captcha-view').textContent(), captchaBefore, '캡차 답 입력만으로 캡차를 새로 만들면 안 된다');
+        assert.equal(await helper.evaluate(() => window.__dcufFixture.snapshot().captchaGeneration), 0);
+        await session.page.locator('.dcuf-qw-captcha-view button[aria-label="캡차 새로고침"]').click();
+        await helper.waitForFunction(() => window.__dcufFixture.snapshot().captchaGeneration === 1);
+        await session.page.waitForFunction(() => document.querySelector('.dcuf-qw-captcha-view')?.textContent.includes('3D8WA-1'));
+
+        await session.page.locator('.dcuf-qw-input').fill(`${'가'.repeat(105)}\n둘째 줄`);
+        await helper.waitForFunction(() => document.querySelector('#subject')?.value.length === 100
+            && document.querySelector('.note-editable')?.textContent === `${'가'.repeat(5)}둘째 줄`);
+        await session.page.locator('.dcuf-qw-input').fill('퀵 제목\n퀵 본문');
+        await session.page.locator('.dcuf-qw-toggle').click();
+        await session.page.waitForFunction(() => Array.from(document.querySelectorAll('.dcuf-qw-headtexts button')).some((button) => button.textContent.includes('질문')));
+        await session.page.locator('.dcuf-qw-headtexts button').filter({ hasText: '질문' }).click();
+        await helper.waitForFunction(() => document.querySelector('input[name="headtext"]')?.value === '40');
+
+        const dcconLoad = session.page.locator('.dcuf-qw-dccon-grid button').filter({ hasText: /공식 디시콘 불러/ });
+        if (await dcconLoad.count()) await dcconLoad.click();
+        await session.page.waitForFunction(() => document.querySelector('.dcuf-qw-dccon-grid img[alt="테스트 디시콘"]'));
+        await session.page.locator('.dcuf-qw-dccon-grid button').filter({ has: session.page.locator('img[alt="테스트 디시콘"]') }).click();
+        await helper.waitForFunction(() => window.__dcufQuickWriteModule?._hasDccon === true);
+
+        await session.page.locator('.dcuf-qw-file-proxy').setInputFiles({ name: 'quick.png', mimeType: 'image/png', buffer: Buffer.from([137, 80, 78, 71]) });
+        await helper.waitForFunction(() => window.__dcufQuickWriteModule?._hasAttachment === true);
+        await session.page.waitForFunction(() => document.querySelector('.dcuf-qw-attachments img[alt="quick.png"]'));
+        await helper.waitForTimeout(900);
+        const helperDraft = await helper.evaluate(() => JSON.stringify(window.__dcufTestbedGM.snapshot().values.dcuf_mobile_write_drafts_v1 || {}));
+        assert.equal(helperDraft.includes('퀵 본문'), true, '공식 폼의 본문까지 초안으로 저장되어야 한다');
+        assert.equal(helperDraft.includes('quick-password'), false);
+        assert.equal(helperDraft.includes('CAPTCHA'), false);
+
+        await session.page.evaluate(() => {
+            const button = document.querySelector('.dcuf-qw-submit');
+            button.click(); button.click();
+        });
+        await session.page.waitForFunction(() => document.querySelector('.dcuf-qw-actions a')?.textContent === '등록한 글 열기');
+        assert.equal(server.state.writeSubmissions.length, 1, '공식 제출은 중복 클릭에도 한 번만 실행되어야 한다');
+        assert.equal(server.state.writeSubmissions[0].values.subject, '퀵 제목');
+        assert.equal(server.state.writeSubmissions[0].values.memo.includes('퀵 본문'), true);
+        assert.equal(server.state.writeSubmissions[0].values.memo.includes('data-fixture-dccon-media'), true);
+        assert.equal(server.state.writeSubmissions[0].values.memo.includes('data-fixture-uploaded-media'), true);
+        assert.match(session.page.url(), /\/mgallery\/board\/lists/, '등록 성공 뒤에도 목록 위치를 유지해야 한다');
+        assert.match(await session.page.locator('.dcuf-qw-actions a').getAttribute('href'), /\/mgallery\/board\/view\?id=test&no=9001/);
+        assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
+        if (!helper.isClosed()) assertNoRuntimeErrors(await getMetrics(helper), helperConsoleErrors);
+    } finally { await session.close(); }
+});
+
+obsoleteMobileTest('빠른 글쓰기는 공식 탭 실패를 목록 안 fallback으로 처리한다', 'write', async ({ browser, server }) => {
+    const convenience = { listRestore: true, recentHighlight: true, draftRecovery: true, postPreview: false, quickWrite: true };
+    const session = await createTestPage(browser, server.baseUrl, {
+        storage: { ...noStatsStorage, [storageKeys.convenience]: convenience },
+        viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true
+    });
+    try {
+        await session.goto('/mgallery/board/lists?id=test');
+        await session.page.evaluate(() => { globalThis.GM_openInTab = undefined; });
+        await session.page.evaluate(() => void window.__dcufQuickWriteModule.open());
+        const state = await session.page.evaluate(() => ({
+            url: location.href,
+            status: document.querySelector('.dcuf-qw-status')?.textContent || '',
+            action: document.querySelector('.dcuf-qw-actions button')?.textContent || '',
+            panelInBody: document.querySelector('#dcuf-quick-write')?.parentElement === document.body
+        }));
+        assert.match(state.url, /\/mgallery\/board\/lists/);
+        assert.equal(state.status.includes('열 수 없습니다'), true);
+        assert.equal(state.action, '공식 글쓰기 탭으로 계속');
+        assert.equal(state.panelInBody, true);
+        assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
+    } finally { await session.close(); }
+});
+
+obsoleteMobileTest('초안 복구를 끄면 빠른 글쓰기 transfer가 기존 폼을 덮어쓰지 않는다', 'write', async ({ browser, server }) => {
+    const session = await createTestPage(browser, server.baseUrl, {
+        storage: { ...noStatsStorage, [storageKeys.convenience]: { listRestore: true, recentHighlight: true, draftRecovery: false, postPreview: false, quickWrite: true } },
+        viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true
+    });
+    try {
+        await session.context.addInitScript(() => {
+            sessionStorage.setItem('dcuf:quick-write-transfer:v1', JSON.stringify({ galleryKey: 'mgallery:test', subject: '옮기면 안 됨', bodyHtml: '<p>옮기면 안 됨</p>', headtext: '40', savedAt: Date.now() }));
+        });
+        await session.goto('/mgallery/board/write/?id=test');
+        const state = await session.page.evaluate(() => ({
+            subject: document.querySelector('#subject')?.value || '',
+            body: document.querySelector('.note-editable')?.textContent || '',
+            markerPresent: Boolean(sessionStorage.getItem('dcuf:quick-write-transfer:v1'))
+        }));
+        assert.equal(state.subject, '');
+        assert.equal(state.body, '');
+        assert.equal(state.markerPresent, true, 'disabled recovery must leave the transfer available instead of consuming it');
+    } finally { await session.close(); }
+});
+
 mobileTest('글쓰기: 메이저·마이너 원본 폼 계약과 모바일 변환이 초기화된다', 'write', async ({ browser, server }) => {
     for (const variant of ['major', 'minor']) {
         const pathname = variant === 'minor' ? '/mgallery/board/write/?id=test' : '/board/write/?id=test';
@@ -3254,7 +4489,7 @@ mobileTest('글쓰기: 입력·말머리·에디터 재렌더·HTML 전환에도
                 editorOverflow: getComputedStyle(editor).overflow,
                 toolbarOverflowX: getComputedStyle(toolbar).overflowX,
                 toolbarOverflowY: getComputedStyle(toolbar).overflowY,
-                dcconGroupPosition: getComputedStyle(dccon.closest('.note-btn-group')).position,
+                dcconGroupPosition: getComputedStyle(document.querySelector('button[aria-label="디시콘"]').closest('.note-btn-group')).position,
                 subjectOverflow: getComputedStyle(subject).overflow,
                 subjectListOverflowX: getComputedStyle(subjectList).overflowX,
                 dccon: inspect(dccon)
@@ -3349,7 +4584,7 @@ mobileTest('글쓰기: 입력·말머리·에디터 재렌더·HTML 전환에도
         assert.equal(await session.page.locator('#name').inputValue(), 'fixture-user');
         assert.equal(await session.page.locator('#password').inputValue(), 'fixture-password');
         assert.equal(snapshot.subject, 'fixture subject');
-        assert.equal(snapshot.headtext, '연재');
+        assert.equal(snapshot.headtext, '30');
         assert.equal(snapshot.memo.includes('fixture body'), true);
         assert.equal(snapshot.htmlMode, 'N');
         assert.equal(snapshot.attachments, 1);
@@ -3429,14 +4664,14 @@ mobileTest('글쓰기: 입력·말머리·에디터 재렌더·HTML 전환에도
         assert.equal(editorLayout.toolbarButtonHeight >= 38, true);
 
         const clickTarget = session.page.locator('.subject_list > li').nth(1);
-        const clickValue = await clickTarget.getAttribute('data-headtext');
+        const clickValue = await clickTarget.getAttribute('data-no');
         await clickTarget.click();
         assert.equal(await session.page.locator('[name="headtext"]').inputValue(), clickValue, 'a normal pointer click must select a headtext');
         assert.equal(await clickTarget.evaluate((element) => element.classList.contains('active')), true);
         await session.page.waitForTimeout(350);
 
         const jitterTarget = session.page.locator('.subject_list > li').nth(2);
-        const jitterValue = await jitterTarget.getAttribute('data-headtext');
+        const jitterValue = await jitterTarget.getAttribute('data-no');
         const jitterBox = await jitterTarget.boundingBox();
         await session.page.mouse.move(jitterBox.x + (jitterBox.width / 2), jitterBox.y + (jitterBox.height / 2));
         await session.page.mouse.down();
@@ -3464,7 +4699,7 @@ mobileTest('글쓰기: 입력·말머리·에디터 재렌더·HTML 전환에도
         assert.equal(dragContract.touchAction.includes('pan-x'), true, 'native touch drag must remain enabled');
 
         const postDragTarget = session.page.locator('.subject_list > li').nth(3);
-        const postDragValue = await postDragTarget.getAttribute('data-headtext');
+        const postDragValue = await postDragTarget.getAttribute('data-no');
         await postDragTarget.click();
         assert.equal(await session.page.locator('[name="headtext"]').inputValue(), postDragValue, 'the next click after a drag must select normally');
 

@@ -5,7 +5,7 @@
 - Keep work task-specific; use deterministic contract checks.
 - For performance work, measure first, then consult `docs/agent-performance-notes.md`.
 - Preserve measured hot-path optimizations. Allow a regression only as a bounded fallback required for correctness or recovery, and record its trigger, scope, cost, and coverage.
-- For long work, keep `.codex/` goals, contracts, status, validation, and next step; recheck Git after resume/stages, then delete it. Skip one-offs.
+- For long work, keep `.codex/` goals, contracts, status, validation, and next step; recheck Git after resume/stages. Retain and update the same records across related implementation, beta, and live-validation follow-ups. Delete them only when that workstream is genuinely closed or the records are obsolete; prune stale entries instead of resetting useful context. Skip one-offs.
 
 ## Source and target routing
 - Release sources are `src/` and build scripts; root userscripts and `dist/` are generated.

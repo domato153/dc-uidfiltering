@@ -20,6 +20,22 @@ const toBoolean = (value, fallback = false) => {
 
 export const STORAGE_SCHEMA_VERSION = '3.0.0';
 
+export function normalizeHeadtext(value) {
+    return typeof value === 'string' ? value.replace(/\s+/g, ' ').trim() : '';
+}
+
+export function normalizeGalleryHeadtextBlocks(rawValue) {
+    if (!rawValue || typeof rawValue !== 'object' || Array.isArray(rawValue)) return {};
+    const normalized = {};
+    Object.entries(rawValue).forEach(([rawKey, rawItems]) => {
+        const key = typeof rawKey === 'string' ? rawKey.trim() : '';
+        if (!/^(?:board|mgallery|mini):[^:\s]+$/.test(key) || !Array.isArray(rawItems)) return;
+        const items = Array.from(new Set(rawItems.map(normalizeHeadtext).filter(Boolean))).slice(0, 100);
+        if (items.length > 0) normalized[key] = items;
+    });
+    return normalized;
+}
+
 export function normalizeProxyBlockModeValue(rawValue) {
     if (rawValue === true || rawValue === 'true') return PROXY_MODE.STRICT;
     if (rawValue === false || rawValue === 'false' || rawValue == null) return PROXY_MODE.OFF;

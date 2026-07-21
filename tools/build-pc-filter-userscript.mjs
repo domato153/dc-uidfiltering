@@ -6,7 +6,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const rootDir = path.resolve(__dirname, '..');
 
-const VERSION = '1.9.7';
+const VERSION = '1.9.8';
 const OUTPUT_NAME = `dcinside_user_filter_v${VERSION}.user.js`;
 
 const PC_PARTS = [
@@ -122,6 +122,8 @@ async function buildSharedRuntimePrelude() {
         '',
         '    const DCUF_SHARED_STORAGE = Object.freeze({',
         '        STORAGE_SCHEMA_VERSION,',
+        '        normalizeHeadtext,',
+        '        normalizeGalleryHeadtextBlocks,',
         '        normalizeProxyBlockModeValue,',
         '        normalizeIpPrefix,',
         '        stripLegacyMobileIpMarker,',
@@ -275,7 +277,10 @@ async function main() {
     const transformedFilterModule = transformFilterModuleForSharedPort(extractedFilterModule);
     const [filterStyle, filterEntry] = pcParts;
     const combined = `${header}\n${bootstrap}${sharedPrelude}${filterStyle}${sharedFilterUiStyle}${transformedThemeModule}${transformedFilterModule}${rawPersonalBlockModule}${filterEntry}${teardown}`;
-    const built = applyReplacements(combined).replace(/\r?\n/g, '\r\n');
+    const built = applyReplacements(combined)
+        .replace(/[ \t]+$/gm, '')
+        .replace(/\n+$/, '\n')
+        .replace(/\r?\n/g, '\r\n');
 
     const distDir = path.join(rootDir, 'dist');
     await mkdir(distDir, { recursive: true });

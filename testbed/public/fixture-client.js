@@ -1,6 +1,8 @@
 (() => {
     let nextCommentNo = 10000;
     let nextListNo = 5000;
+    let captchaGeneration = 0;
+    const credentialInputEvents = { name: 0, password: 0, code: 0 };
     const escapeHtml = (value) => String(value).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;');
     const writer = (uid, nick, ip = '') => `<span class="gall_writer ub-writer" data-uid="${escapeHtml(uid)}" data-nick="${escapeHtml(nick)}" data-ip="${escapeHtml(ip)}"><span class="nickname"><em>${escapeHtml(nick)}</em></span></span>${ip ? `<span class="ip">(${escapeHtml(ip)})</span>` : ''}`;
     const commentMarkup = ({ uid = '', nick = '동적댓글', ip = '', text = '동적으로 추가된 댓글', id = nextCommentNo++ } = {}) => `<li id="comment_li_${id}" class="ub-content" data-no="${id}"><div class="cmt_info"><div class="cmt_nickbox">${writer(uid || `safe-dynamic-${id}`, nick, ip)}</div></div><div class="cmt_txtbox"><p class="usertxt ub-word">${escapeHtml(text)}</p></div></li>`;
@@ -180,8 +182,12 @@
             const form = getWriteForm();
             const input = form?.querySelector('[name="headtext"]');
             if (!form || !input) return false;
-            input.value = String(value);
-            form.querySelectorAll('[data-headtext]').forEach((button) => button.classList.toggle('active', button.dataset.headtext === String(value)));
+            const normalized = String(value);
+            const selected = Array.from(form.querySelectorAll('.write_subject .subject_list > li[data-headtext]'))
+                .find((item) => item.dataset.headtext === normalized || item.dataset.no === normalized);
+            input.value = selected?.dataset.no || normalized;
+            form.querySelectorAll('.write_subject .subject_list > li[data-headtext]').forEach((button) => button.classList.toggle('active', button === selected));
+            input.dispatchEvent(new Event('change', { bubbles: true }));
             return true;
         },
         toggleWriteLayer(kind, force = true) {
@@ -199,12 +205,13 @@
             if (!(layer instanceof HTMLElement)) return false;
             const show = typeof force === 'boolean' ? force : layer.hidden;
             layer.hidden = !show;
-            layer.closest('.note-btn-group')?.classList.toggle('open', show);
+            const group = layer.closest('.note-btn-group') || (kind === 'dccon' ? document.querySelector('button[aria-label="디시콘"]')?.closest('.note-btn-group') : null);
+            group?.classList.toggle('open', show);
             const trigger = kind === 'headtext'
                 ? layer.closest('li')
-                : layer.closest('.note-btn-group')?.querySelector('.note-btn');
+                : group?.querySelector('.note-btn');
             trigger?.dispatchEvent(new PointerEvent('pointerover', { bubbles: true }));
-            trigger?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+            if (kind !== 'dccon') trigger?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
             return show;
         },
         toggleWriteCaptcha(force) {
@@ -219,7 +226,7 @@
             if (!cell) {
                 cell = document.createElement('td');
                 cell.className = 'fixture-captcha-cell user_info_input';
-                cell.innerHTML = '<div class="captcha"><label for="code">코드 입력</label><span class="fixture-captcha-image" aria-label="캡차 이미지">3D8WA</span><input id="code" name="code" type="text" autocomplete="off"></div>';
+                cell.innerHTML = '<div class="captcha"><label for="code">코드 입력</label><span class="fixture-captcha-image" aria-label="캡차 이미지">3D8WA-0</span><button type="button" class="fixture-captcha-refresh" aria-label="공식 캡차 새로고침">새로고침</button><input id="code" name="code" type="text" autocomplete="off"></div>';
                 row.appendChild(cell);
             }
             return true;
@@ -252,6 +259,8 @@
                     attachments: form.querySelectorAll('.fixture-attachment').length,
                     submitStatus: form.dataset.submitStatus || 'idle'
                 } : null,
+                credentialInputEvents: { ...credentialInputEvents },
+                captchaGeneration,
                 nodes: document.getElementsByTagName('*').length
             };
         }
@@ -285,11 +294,51 @@
     });
 
     document.addEventListener('click', (event) => {
-        const headtext = event.target.closest('[data-headtext]')?.dataset.headtext;
-        if (headtext) api.selectWriteHeadtext(headtext);
+        const headtextItem = event.target.closest('.write_subject .subject_list > li[data-headtext]');
+        if (headtextItem) api.selectWriteHeadtext(headtextItem.dataset.no || headtextItem.dataset.headtext);
+        const captchaRefresh = event.target.closest('.fixture-captcha-refresh');
+        if (captchaRefresh) {
+            captchaGeneration += 1;
+            const image = document.querySelector('.fixture-captcha-image');
+            if (image) image.textContent = `3D8WA-${captchaGeneration}`;
+        }
+        const dcconToggle = event.target.closest('button[aria-label="디시콘"],[data-command="dccon"]');
+        if (dcconToggle) {
+            const layer = document.querySelector('#div_con');
+            if (layer) layer.hidden = false;
+            window.setTimeout(() => {
+                const list = document.querySelector('#div_con .dccon_list');
+                if (list && !list.children.length) list.innerHTML = '<li><button type="button" class="img_dccon" data-dccon="fixture-1"><img alt="테스트 디시콘" title="테스트 디시콘" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw=="></button></li>';
+            }, 60);
+        }
+        const dcconItem = event.target.closest('#div_con [data-dccon]');
+        if (dcconItem) {
+            const editor = getWriteEditor();
+            if (editor) {
+                const image = document.createElement('img');
+                image.dataset.fixtureDcconMedia = dcconItem.dataset.dccon || 'fixture';
+                image.alt = '삽입된 테스트 디시콘';
+                image.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==';
+                editor.appendChild(image);
+                syncWriteMemo();
+            }
+        }
         if (event.target.closest('#chk_html')) api.toggleWriteHtml(event.target.checked);
     });
+    document.addEventListener('change', (event) => {
+        if (!event.target.matches('#fixture-file-input') || !event.target.files?.length) return;
+        const editor = getWriteEditor();
+        if (!editor) return;
+        const image = document.createElement('img');
+        image.dataset.fixtureUploadedMedia = event.target.files[0].name;
+        image.alt = event.target.files[0].name;
+        image.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==';
+        editor.appendChild(image);
+        syncWriteMemo();
+    });
     document.addEventListener('input', (event) => {
+        const credentialName = event.target?.getAttribute?.('name');
+        if (Object.hasOwn(credentialInputEvents, credentialName)) credentialInputEvents[credentialName] += 1;
         if (event.target.matches('.note-editable, .native-editor')) syncWriteMemo();
     });
     document.addEventListener('submit', async (event) => {

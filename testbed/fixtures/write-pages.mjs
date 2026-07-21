@@ -11,7 +11,7 @@ const hiddenContract = (variant) => `
     <input type="hidden" name="user_ip" value="127.0.0.1">
     <input type="hidden" name="block_key" value="fixture-redacted">
     <input type="hidden" name="tempIdx" value="">
-    <input type="hidden" name="headtext" value="">
+    <input type="hidden" name="headtext" value="${variant === 'minor' ? '190' : ''}">
     <input type="hidden" name="use_headtext" value="${variant === 'minor' ? 'Y' : 'N'}">
     <input type="hidden" name="poll" value="">
     <input type="hidden" name="service_code" value="fixture">
@@ -26,10 +26,7 @@ const editor = `
             <div class="note-btn-group"><button type="button" class="note-btn" data-command="image">이미지</button></div>
             <div class="note-btn-group"><button type="button" class="note-btn" data-command="video">동영상</button></div>
             <div class="note-btn-group note-mybutton">
-                <button type="button" class="note-btn" data-command="dccon">디시콘</button>
-                <div id="div_con" class="pop_wrap type3 fixture-dccon-layer" role="dialog" hidden>
-                    <div class="pop_content dcconlayer edit"><div class="dccon_list_wrap clear"><div class="dccon_list_box dcconlist">실제 구조형 디시콘 창</div></div></div>
-                </div>
+                <button type="button" class="note-btn" data-command="dccon" aria-label="디시콘">디시콘</button>
             </div>
             <div class="note-btn-group"><button type="button" class="note-btn" data-command="youtube">유튜브</button></div>
             <div class="note-btn-group"><button type="button" class="note-btn" data-command="external">외부컨텐츠</button></div>
@@ -63,19 +60,29 @@ const editor = `
         <div class="note-statusbar"><span class="note-resizebar" aria-hidden="true"></span></div>
     </div>`;
 
+const dcconLayer = `
+    <div id="div_con" class="pop_wrap type3 fixture-dccon-layer" role="dialog" style="width:640px;overflow:visible" hidden>
+        <img class="fixture-dccon-placeholder" alt="디시콘 테스트 이미지" src="/images/dccon-test.png">
+        <img class="fixture-dccon-loading" alt="불러오는 중" src="/images/loading.gif">
+        <div class="pop_content dcconlayer edit"><div class="dccon_list_wrap clear">
+            <ul class="dccon_tab"><li class="li_pack active" data-package_idx="1"><button type="button" class="dccon_btn">기본 세트</button></li><li class="li_pack" data-package_idx="2"><button type="button" class="dccon_btn">두번째 세트</button></li></ul>
+            <div class="dccon_list_box dcconlist"><ul class="dccon_list"></ul></div>
+        </div></div>
+    </div>`;
+
 const categories = `
     <div class="write_subject" role="group" aria-label="말머리">
         <strong class="tit">말머리</strong>
         <ul class="subject_list">
-            <li class="fixture-headtext" data-headtext="일반">일반</li>
-            <li class="fixture-headtext" data-headtext="중망호">중망호</li>
-            <li class="fixture-headtext" data-headtext="연재">연재</li>
-            <li class="fixture-headtext" data-headtext="대회">대회</li>
-            <li class="fixture-headtext" data-headtext="스토리">스토리📖</li>
-            <li class="fixture-headtext obstruct" data-headtext="정보">정보공략📝<div class="tip_box2 nowrap obstruct_tipbox fixture-write-toast" role="alert" hidden><div class="inner">개념글 미사용 말머리입니다.</div></div></li>
-            <li class="fixture-headtext" data-headtext="질문">질문❓</li>
-            <li class="fixture-headtext" data-headtext="유출">유출⚠️</li>
-            <li class="fixture-headtext active" data-headtext="속보">속보📢</li>
+            <li class="fixture-headtext" data-headtext="일반" data-no="0"><span data-val="일반">일반</span></li>
+            <li class="fixture-headtext" data-headtext="중망호" data-no="20"><span data-val="중망호">중망호</span></li>
+            <li class="fixture-headtext" data-headtext="연재" data-no="30"><span data-val="연재">연재</span></li>
+            <li class="fixture-headtext" data-headtext="대회" data-no="50"><span data-val="대회">대회</span></li>
+            <li class="fixture-headtext" data-headtext="스토리" data-no="170"><span data-val="스토리📖">스토리📖</span></li>
+            <li class="fixture-headtext obstruct" data-headtext="정보" data-no="60"><span data-val="정보공략📝">정보공략📝</span><div class="tip_box2 nowrap obstruct_tipbox fixture-write-toast" role="alert" hidden><div class="inner">개념글 미사용 말머리입니다.</div></div></li>
+            <li class="fixture-headtext" data-headtext="질문" data-no="40"><span data-val="질문❓">질문❓</span></li>
+            <li class="fixture-headtext" data-headtext="유출" data-no="70"><span data-val="유출⚠️">유출⚠️</span></li>
+            <li class="fixture-headtext active" data-headtext="속보" data-no="190"><span data-val="속보📢">속보📢</span></li>
         </ul>
     </div>`;
 
@@ -94,7 +101,7 @@ export function writePage({ variant = 'major', formMode = 'write' } = {}) {
     const formAttributes = isModify
         ? 'name="modify" method="post" action="/board/forms/modify_submit" autocomplete="off"'
         : 'id="write" name="write" method="post" action="/__testbed/write-submit" autocomplete="off"';
-    const captcha = isMinor ? `<td class="fixture-captcha-cell"><div class="captcha"><label for="code">코드 입력</label><span class="fixture-captcha-image" aria-label="캡차 이미지">3D8WA</span><input id="code" name="code" type="text" inputmode="text" autocomplete="off"></div></td>` : '';
+    const captcha = isMinor ? `<td class="fixture-captcha-cell"><div class="captcha"><label for="code">코드 입력</label><span class="fixture-captcha-image" aria-label="캡차 이미지">3D8WA-0</span><button type="button" class="fixture-captcha-refresh" aria-label="공식 캡차 새로고침">새로고침</button><input id="code" name="code" type="text" inputmode="text" autocomplete="off"></div></td>` : '';
     return `${head(`DCUF ${variant} ${formMode} fixture`)}<body data-fixture-page="${isModify ? 'modify' : 'write'}" data-fixture-variant="${variant}">${controls}<div id="top" class="dcwrap width1160">
     <header class="fixture-gallery-header"><h1>${isMinor ? '마이너' : '메이저'} 갤러리</h1></header>
     <main id="container" class="clear ${isMinor ? 'minor_write' : 'gallery_write'}"><section class="center_content gall_write"><article id="write_wrap" class="clear">
@@ -103,13 +110,14 @@ export function writePage({ variant = 'major', formMode = 'write' } = {}) {
             ${isModify ? '<input type="hidden" name="no" value="1001">' : ''}
             <input class="fixture-decoy-input" type="text" style="width:0;height:0;border:0" value="fixture-redacted">
             <input class="fixture-decoy-input" type="password" style="display:block;width:0;height:0;border:0" value="fixture-redacted">
+            <input id="prompt_img_file" type="file" accept="image/*" hidden>
             <table class="w_top"><tbody>
                 <tr class="write_subject_row"><th><label for="subject">제목</label></th><td><input id="subject" name="subject" type="text" maxlength="100" autocomplete="off"></td></tr>
                 <tr class="guest_info_row"><th>작성자</th><td><input id="name" name="name" type="text" placeholder="닉네임" autocomplete="off"></td><td><input id="password" name="password" type="password" placeholder="비밀번호" autocomplete="new-password"></td>${captcha}</tr>
             </tbody></table>
             ${isMinor ? categories : ''}
             <section class="editor_wrap">${editor}</section>
-            <section class="fixture-attachment-panel"><input id="fixture-file-input" type="file" name="files[]" multiple><div class="fixture-attachment-list" aria-live="polite"></div></section>
+            <section class="fixture-attachment-panel"><input id="fixture-file-input" type="file" name="files[]" accept="image/*" multiple><div class="fixture-attachment-list" aria-live="polite"></div></section>
             <section class="ai_easy_wrap fixture-live-ai-prompt"><div class="ai_easy_box">
                 <div class="ipt_box"><button class="ipt_img" type="button" aria-label="이미지 선택"></button><textarea class="ipt_txt" rows="1" placeholder="AI 이미지 간편 등록"></textarea></div>
                 <button class="btn_aigo" type="button">등록</button><button class="btn_close" type="button" aria-label="닫기">×</button>
@@ -133,7 +141,7 @@ export function writePage({ variant = 'major', formMode = 'write' } = {}) {
                     </div>
                 </div>
             </div>
-        </form>
+        </form>${dcconLayer}
     </article></section></main></div>${scripts}`;
 }
 

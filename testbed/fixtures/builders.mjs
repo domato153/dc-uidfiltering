@@ -22,9 +22,14 @@ export function listRow(index, options = {}) {
     const viewPath = variant === 'minor' ? '/mgallery/board/view' : '/board/view';
     const extraCell = variant === 'minor' ? '<td class="gall_type">일반</td>' : '';
     const utilityCell = options.utilityExtraCell ? '<td class="fixture-host-extra" aria-hidden="true"></td>' : '';
+    const headtext = options.headtext ?? '일반';
+    const headtextData = options.headtextData ? ` data-headtext="${escapeHtml(options.headtextData)}"` : '';
+    const headtextMarkup = options.headtextInner
+        ? `${escapeHtml(headtext)}<span class="subject_inner" style="display:none">${escapeHtml(options.headtextInner)}</span>`
+        : escapeHtml(headtext);
     return `<tr class="${rowClass}"${dataAttrs}${hiddenStyle}${cssHidden}>
         <td class="gall_num">${1000 + index}</td>
-        ${extraCell}<td class="gall_tit"><span class="gall_subject">일반</span><a href="${viewPath}?id=test&no=${1000 + index}">${options.title ?? `테스트 게시물 ${index}`}</a><a class="reply_numbox" href="${viewPath}?id=test&no=${1000 + index}#comment"><span class="reply_num">[${index % 7}]</span></a>${options.ad ? '<em class="icon_ad">AD</em>' : ''}</td>
+        ${extraCell}<td class="gall_tit"><span class="gall_subject"${headtextData}>${headtextMarkup}</span><a href="${viewPath}?id=test&no=${1000 + index}">${options.title ?? `테스트 게시물 ${index}`}</a><a class="reply_numbox" href="${viewPath}?id=test&no=${1000 + index}#comment"><span class="reply_num">[${index % 7}]</span></a>${options.ad ? '<em class="icon_ad">AD</em>' : ''}</td>
         <td class="gall_writer_cell">${writer({ uid, nick, ip: options.ip || '', includeIdentityAttrs: options.includeIdentityAttrs !== false })}</td>
         <td class="gall_date">2026.07.12</td>
         <td class="gall_count">${index * 3}</td>
@@ -47,7 +52,9 @@ export function liveListRows(variant = 'major', options = {}) {
         [hiddenRows + 1]: { notice: true },
         [hiddenRows + 2]: { recommended: true },
         [hiddenRows + 3]: { ad: true },
-        [hiddenRows + 4]: { uid: 'blocked-list-user' }
+        [hiddenRows + 4]: { uid: 'blocked-list-user' },
+        [hiddenRows + 5]: { headtext: '표시 질문', headtextData: '질문', uid: 'headtext-blocked-user' },
+        [hiddenRows + 6]: { headtext: '↗토피', headtextInner: '↗토피아', uid: 'headtext-inner-blocked-user' }
     };
     return listRows(totalRows, rowOptions, variant);
 }

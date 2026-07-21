@@ -6659,15 +6659,18 @@
             visibility: visible !important;
             pointer-events: auto !important;
         }
-        body.is-write-page form.dcuf-write-form .note-toolbar :is(.note-dropdown-menu, .pop_wrap):not(.dcuf-editor-layer-positioned) {
+        body.is-write-page form.dcuf-write-form .note-toolbar :is(.note-dropdown-menu, .pop_wrap):not(.dcuf-editor-layer-positioned),
+        body.is-write-page #div_con[data-dcuf-write-external-layer="1"]:not(.dcuf-editor-layer-positioned) {
             visibility: hidden !important;
             pointer-events: none !important;
         }
-        body.is-write-page form.dcuf-write-form .note-toolbar :is(.note-dropdown-menu, .pop_wrap).dcuf-editor-layer-positioned {
+        body.is-write-page form.dcuf-write-form .note-toolbar :is(.note-dropdown-menu, .pop_wrap).dcuf-editor-layer-positioned,
+        body.is-write-page #div_con[data-dcuf-write-external-layer="1"].dcuf-editor-layer-positioned {
             visibility: visible !important;
             pointer-events: auto !important;
         }
-        body.is-write-page form.dcuf-write-form .note-toolbar .pop_wrap.dcuf-editor-layer-positioned {
+        body.is-write-page form.dcuf-write-form .note-toolbar .pop_wrap.dcuf-editor-layer-positioned,
+        body.is-write-page #div_con[data-dcuf-write-external-layer="1"].dcuf-editor-layer-positioned {
             position: fixed !important;
             zoom: var(--dcuf-write-desktop-site-inverse-scale, 1);
         }
@@ -6675,7 +6678,8 @@
             position: fixed !important;
             zoom: 1 !important;
         }
-        body.is-write-page form.dcuf-write-form .note-toolbar :is(.note-dropdown-menu, .pop_wrap).dcuf-editor-layer-positioned {
+        body.is-write-page form.dcuf-write-form .note-toolbar :is(.note-dropdown-menu, .pop_wrap).dcuf-editor-layer-positioned,
+        body.is-write-page #div_con[data-dcuf-write-external-layer="1"].dcuf-editor-layer-positioned {
             left: var(--dcuf-editor-layer-left) !important;
             top: var(--dcuf-editor-layer-top) !important;
             right: auto !important;

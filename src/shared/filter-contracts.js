@@ -30,6 +30,9 @@
  * @property {boolean} isNotice
  * @property {boolean} isRecommendedContext
  * @property {boolean} hasBlockDisableClass
+ * @property {string|null} galleryKey
+ * @property {string|null} headtext
+ * @property {boolean} isHeadtextTarget
  * @property {{ postCount?: number, commentCount?: number }|null} userStats
  * @property {'list'|'view-comment'|'view-parent-comment'|'view-reply'|'unknown'} targetKind
  */

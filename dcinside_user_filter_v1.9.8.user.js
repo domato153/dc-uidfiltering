@@ -1,673 +1,969 @@
-    const __dcufFilterPageContext = window.__dcufPageContext || {
-        type: 'other',
-        isList: false,
-        isView: false,
-        hasListSurface: false,
-        hasComments: false
+﻿// ==UserScript==
+// @name         DCInside PC User Filter
+// @namespace    http://tampermonkey.net/
+// @version      1.9.8
+// @description  DCInside PC filter port based on the latest mobile filter runtime and shared filter core
+// @author       domato153
+// @match        https://gall.dcinside.com/board/*
+// @match        https://gall.dcinside.com/mgallery/board/*
+// @match        https://gall.dcinside.com/mini/board/*
+// @noframes
+// @grant        GM_setValue
+// @grant        GM_getValue
+// @grant        GM_registerMenuCommand
+// @grant        GM_addStyle
+// @run-at       document-start
+// @license      MIT
+// ==/UserScript==
+
+/*-----------------------------------------------------------------
+DBAD license / Copyright (C) 2025 domato153
+https://github.com/philsturgeon/dbad/blob/master/LICENSE.md
+https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
+------------------------------------------------------------------*/
+
+(function () {
+    'use strict';
+
+    const __dcufRoot = (typeof unsafeWindow !== 'undefined' && unsafeWindow) ? unsafeWindow : window;
+    if (window.top !== window.self) return;
+
+    const detectedPageType = ((window.location.pathname || '').match(/\/board\/(lists|view|write|modify)(?:\/|$)/) || [])[1] || 'other';
+    const pageContext = Object.freeze({
+        type: detectedPageType,
+        isList: detectedPageType === 'lists',
+        isView: detectedPageType === 'view',
+        isWrite: detectedPageType === 'write',
+        isModify: detectedPageType === 'modify',
+        isWriteSurface: detectedPageType === 'write' || detectedPageType === 'modify',
+        isOther: detectedPageType === 'other',
+        isTargetPage: detectedPageType !== 'other',
+        hasListSurface: detectedPageType === 'lists' || detectedPageType === 'view',
+        hasComments: detectedPageType === 'view'
+    });
+    __dcufRoot.__dcufPageContext = pageContext;
+    window.__dcufPageContext = pageContext;
+    const exposePageContextAttribute = () => document.documentElement?.setAttribute('data-dcuf-page-context', detectedPageType);
+    if (document.documentElement) exposePageContextAttribute();
+    else document.addEventListener('DOMContentLoaded', exposePageContextAttribute, { once: true });
+
+    // The metadata covers a few gallery-adjacent pages, but the mobile runtime owns
+    // only board list/view/write/modify surfaces. Keep the lightweight page-context bridge
+    // and stop before installing observers, menus, or styles elsewhere.
+    if (!pageContext.isTargetPage) return;
+
+    const previousBoot = __dcufRoot.__dcufBootController || window.__dcufBootController;
+    if (previousBoot) {
+        if (previousBoot.state === 'locked' || previousBoot.state === 'preparing') previousBoot.ensure('duplicate-runtime');
+        else if (previousBoot.state === 'degraded') previousBoot.requestRecovery?.('duplicate-runtime');
+        console.warn('DCinside User Filter: duplicate runtime detected; reusing bootstrap.');
+        return;
+    }
+
+    let dcFilterSettings = {};
+    let userSumCache = {};
+    let isInitialized = false;
+    let isUiInitialized = false;
+    let activeShortcutObject = null;
+    let activeShortcutString = null;
+
+    const READY_CLASS = 'script-ui-ready';
+    const STATE_ATTR = 'data-dcuf-boot-state';
+    const LOCK_STYLE_ID = 'dcuf-initial-lock-style';
+    const OVERLAY_ID = 'dcuf-boot-overlay';
+    const OVERLAY_STYLE_ID = 'dcuf-boot-overlay-style';
+    const DEGRADED_STYLE_ID = 'dcuf-degraded-filter-style';
+    const DEGRADED_BANNER_ID = 'dcuf-degraded-banner';
+    const FILTER_READY_ATTR = 'data-dcuf-filter-ready';
+    const testBootConfig = __dcufRoot.__DCUF_TESTBED_CONFIG__?.boot || null;
+    const ABSOLUTE_DEADLINE_MS = Math.max(20, Number(testBootConfig?.absoluteDeadlineMs) || 15000);
+    const CRITICAL_DEADLINE_MS = Math.max(20, Number(testBootConfig?.criticalDeadlineMs) || 6000);
+    const startedAt = Date.now();
+    const diagnosticsBuffer = [];
+    const rollbackHandlers = new Set();
+    const recoveryHandlers = new Set();
+    const readyHandlers = new Set();
+    let ensureTimer = 0;
+    let absoluteTimer = 0;
+    let criticalTimer = 0;
+    let domReadyListener = null;
+    let loadListener = null;
+
+    const pageType = pageContext.type;
+    const isTargetPage = () => pageType !== 'other';
+    const note = (label, detail = null) => {
+        const entry = { label, detail, ts: Date.now(), elapsedMs: Date.now() - startedAt };
+        const api = window.__dcufDiagnostics;
+        if (typeof api?.note === 'function') api.note(label, entry);
+        else {
+            diagnosticsBuffer.push(entry);
+            if (diagnosticsBuffer.length > 40) diagnosticsBuffer.shift();
+        }
     };
-    const __dcufAllFilterCss = `
-        :root {
-            --dcuf-article-title-font-size: 21px;
-            --dcuf-article-body-font-size: 26px;
-            --dcuf-article-body-line-height: 1.9;
-        }
-
-        /* [최종 해결] 링크 미리보기 텍스트 박스 스타일 재정의 */
-        .thum-txtin {
-            box-sizing: border-box !important;  /* [핵심] 너비 계산 방식을 올바르게 수정 */
-            width: 100% !important;            /* 부모 너비에 꽉 채우도록 설정 */
-            overflow: visible !important;      /* 내용이 잘리는 것을 원천 방지 */
-        }
-
-        /* [v2.2.7 추가] 즉시 나타나는 커스텀 툴팁 스타일 */
-        #custom-instant-tooltip {
-            position: fixed; /* 화면 기준으로 위치 고정 */
-            display: none; /* 평소에는 숨김 */
-            z-index: 2147483647; /* 모든 요소 위에 표시 */
-            background-color: rgba(0, 0, 0, 0.8);
-            color: #fff;
-            padding: 5px 10px;
-            border-radius: 4px;
-            font-size: 14px;
-            white-space: nowrap; /* 툴팁 내용이 길어도 줄바꿈 안 함 */
-            pointer-events: none; /* 툴팁이 마우스 이벤트를 방해하지 않도록 설정 (중요!) */
-        }
-
-
-        /* 초기 로딩 잠금과 로딩 팝업은 상단 injectInitialLockStyle()에서 즉시 주입합니다. */
-
-
-        /* [수정] FOUC(화면 깜빡임) 방지 및 원본 테이블 숨김 강화 */
-        table.gall_list {
-            visibility: hidden !important; position: absolute !important;
-            top: -9999px !important; left: -9999px !important;
-            height: 0 !important; overflow: hidden !important;
-        }
-
-
-        /* [수정] 불필요한 PC버전 요소 및 사이트 광고 아이콘 숨김 */
-        #dc_header, #dc_gnb, .adv_area, .right_content, .dc_all, .dcfoot, .dc_ft, .info_policy, .copyrigh, .ad_bottom_list, .bottom_paging_box + div, .intro_bg, .fixed_write_btn, .bottom_movebox, #zzbang_ad ,#zzbang_div,#zzbang_div .my_zzal, .my_dccon, .issue_contentbox, #gall_top_recom.concept_wrap,
-        .gall_exposure, .stickyunit, #kakao_search, .banner_box, #ad-layer,#ad-layer-closer, #ad_floating, .__dcNewsWidgetTypeB__, .dctrend_ranking, .cm_ad, .con_banner.writing_banbox, [id^="criteo-"], .ad_left_wing_right_top._BTN_AD_, .ad_left_wing_list_top._BTN_AD_,
-        .ad_left_wing_list_top, div:has(> script[src*="list@right_wing_game"]),
-        .adv_bottom_write, ins.kakao_ad_area, em.icon_ad {
-            display: none !important;
-        }
-
-
-        /* --- 기본 레이아웃 재정의 --- */
-        /* [개선] 마이너 갤러리 상단 링크 영역 모바일 최적화 */
-        .minor_intro_area {
-            display: block !important; /* 숨김 처리를 확실히 무효화 */
-            padding: 10px 15px !important;
-            background: #f8f9fa !important;
-            border-bottom: 1px solid #e5e5e5;
-            width: 100% !important;
-            box-sizing: border-box !important;
-        }
-        .minor_intro_area .user_wrap {
-            display: flex !important;
-            justify-content: space-around !important;
-            align-items: center !important;
-            gap: 10px;
-            padding: 0 !important;
-            margin: 0 auto !important;
-            max-width: 500px; /* 링크들이 너무 퍼지지 않게 중앙 정렬 효과 */
-        }
-
-
-        body { background: #fff !important; }
-        html, body { overflow-x: hidden !important; }
-
-
-        html, body, #top, .dcheader, .gnb_bar, #container, .wrap_inner, .visit_bookmark,
-        .list_array_option, .left_content,
-        .view_content_wrap, .gall_content, .gall_comment, .comment_box {
-            width: 100% !important; /* 100vw 대신 100% 사용 */
-            min-width: 0 !important; float: none !important;
-            position: relative !important; box-sizing: border-box !important;
-            margin: 0 !important; padding: 0 !important;
-        }
-        #container { padding-top: 5px; }
-
-
-        /* [수정] dcheader(상단 전체) 및 dchead(내부 컨테이너) 반응형 스타일 */
-        .dcheader.typea { min-width: 0 !important; width: 100% !important; height: auto !important; background: #fff; border-bottom: 1px solid #e5e5e5; }
-        .dchead {
-            display: flex !important;
-            justify-content: space-between !important;
-            align-items: center !important;
-            padding: 8px 15px !important;
-            gap: 15px !important;
-            min-width: 320px;
-            box-sizing: border-box !important;
-            width: 100% !important;
-        }
-
-
-        .dchead h1.dc_logo { flex-shrink: 0 !important; margin: 0 !important; display: block !important; }
-        .dchead h1.dc_logo img.logo_img { height: 22px !important; width: auto !important; }
-        .dchead h1.dc_logo img.logo_img2 { display: none !important; }
-
-
-        .dchead .wrap_search { flex-grow: 1 !important; min-width: 100px !important; max-width: 600px; }
-        .dchead .top_search { width: 100% !important; }
-
-
-        .dchead .area_links { display: block !important; flex-shrink: 0 !important; white-space: nowrap !important; }
-
-
-        /* [추가] 갤러리 헤더(제목, 설정 버튼 등) 반응형 스타일 */
-        .page_head {
-            display: flex !important;
-            justify-content: space-between !important;
-            align-items: center !important;
-            padding: 10px 15px !important;
-            box-sizing: border-box !important;
-            width: 100% !important;
-            min-height: 50px;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-        /* [수정됨] .fr 오른쪽 정렬을 위해 margin-left: auto 사용 */
-        .page_head > .fl { float: none !important; }
-        .page_head > .fr {
-            float: none !important;
-            margin-left: auto; /* 핵심: 이 속성으로 오른쪽 끝으로 밀어냄 */
-            display: flex;
-            align-items: center;
-            gap: 8px; /* 버튼 등 내부 요소간 간격 */
-        }
-
-
-        /* [추가] Clearfix: float으로 인한 부모 요소의 높이 붕괴 방지 */
-        .page_head::after, .list_array_option::after {
-            content: ""; display: table; clear: both;
-        }
-
-
-        /* [추가] 일반/마이너 갤러리 글 목록 상단 공통 여백 */
-        .list_array_option {
-            margin-bottom: 10px !important;
-        }
-
-
-        /* [수정] gnb_bar (메인 GNB) 반응형 스타일 개선 */
-        .gnb_bar { display: block !important; width: 100% !important; min-width: 0 !important; height: auto !important; box-sizing: border-box !important; background: #3b4890 !important; }
-        .gnb_bar nav.gnb { width: auto !important; min-width: 0 !important; padding: 0 15px !important; display: flex !important; justify-content: center !important; }
-        .gnb_bar .gnb_list { display: flex; flex-wrap: wrap; justify-content: space-around; width: 100% !important; }
-
-
-        /* [개선] newvisit_history (최근 방문 갤러리) 상/하단 선 모두 제거 */
-        .newvisit_history { display: flex !important; align-items: center; width: 100% !important; min-width: 0 !important; height: auto !important; padding: 8px 10px !important; background: #f8f9fa !important; border: none !important; box-sizing: border-box !important; gap: 5px; }
-        .newvisit_history::before { display: none !important; }
-        .newvisit_history > .tit { flex-shrink: 0; margin: 0 !important; padding-right: 5px; font-size: 14px !important; font-weight: bold; color: #333; }
-        .newvisit_history > .newvisit_box { flex: 1; min-width: 0; overflow: hidden; }
-        .newvisit_history .newvisit_list { display: flex; flex-wrap: nowrap; position: relative !important; left: 0 !important; margin-left: 0 !important; width: 100% !important; box-sizing: border-box; overflow-x: auto; scroll-behavior: smooth; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
-        .newvisit_history .newvisit_list::-webkit-scrollbar { display: none; }
-        .newvisit_history .newvisit_list li { white-space: nowrap; flex-shrink: 0; }
-        .newvisit_history > :is(.btn_open,.btn_visit_prev,.btn_visit_next,.bnt_visit_prev,.bnt_visit_next,.btn_newvisit_more,.bnt_newvisit_more) { display: inline-flex !important; align-items: center; justify-content: center; flex: 0 0 auto; position: static !important; inset: auto !important; transform: none !important; margin: 0 !important; padding: 0 4px; overflow: visible !important; }
-        .newvisit_history > :is(.btn_visit_prev,.btn_visit_next,.bnt_visit_prev,.bnt_visit_next) { min-width: 22px; min-height: 24px; }
-
-
-        /* [최종 수정] 마이너 갤러리 전용 탭/말머리 레이아웃 (v1.0.5) */
-        .is-mgallery .list_array_option {
-            display: flex !important;
-            align-items: center !important; /* 세로 중앙 정렬 */
-            flex-wrap: nowrap !important; /* 자식 요소들이 줄바꿈되지 않도록 강제 */
-            width: 100% !important;
-            box-sizing: border-box !important;
-            padding: 10px 15px !important;
-            margin-bottom: 10px !important;
-            gap: 10px; /* 요소들 사이의 간격 */
-        }
-
-
-        /* 모든 자식 div의 float 속성 원천 차단 및 기본 너비 설정 */
-        .is-mgallery .list_array_option > div {
-            float: none !important;
-            width: auto !important; /* [핵심] 원본 CSS의 width: 1% 덮어쓰기 */
-            flex-shrink: 0; /* 기본적으로 내용물 크기 유지 */
-        }
-
-
-        /* [신규] '전체글/개념글' 탭 컨테이너(.array_tab) 직접 스타일링 */
-        .is-mgallery .list_array_option .array_tab {
-            display: flex !important;
-            white-space: nowrap; /* 버튼 줄바꿈 방지 */
-            gap: 4px; /* 버튼 사이 간격 */
-        }
-
-        /* [최종 수정] 마이너 갤러리 탭 버튼 크기 및 너비 축소 */
-        .is-mgallery .list_array_option .array_tab button {
-            width: auto !important;        /* 고정 너비 해제 */
-            height: auto !important;       /* 고정 높이 해제 */
-            font-size: 12px !important;    /* 글자 크기 줄이기 */
-            padding: 6px 12px !important;  /* 상하, 좌우 내부 여백 줄이기 */
-            line-height: 1.4 !important;   /* 줄 간격 조정 */
-        }
-
-        /* 중앙 요소 (주로 말머리) - 남는 공간 모두 차지 */
-        .is-mgallery .list_array_option > .center_box {
-            flex-grow: 1; /* 남는 공간을 모두 차지 */
-            flex-shrink: 1; /* 공간 부족 시 줄어들도록 허용 */
-            min-width: 0; /* 내용이 길어도 줄어들 수 있도록 설정 */
-            justify-content: center !important; /* 내부 아이템 중앙 정렬 */
-            display: flex !important;
-            flex-wrap: wrap;
-            gap: 5px;
-            background: none !important;
-            padding: 0 !important;
-            border: none !important;
-            margin: 0 !important;
-        }
-
-
-        /* 오른쪽 요소 (글쓰기 버튼 등) - 오른쪽 끝으로 정렬 */
-        .is-mgallery .list_array_option > .right_box {
-            margin-left: auto; /* 왼쪽 요소들과 최대한 멀리 떨어지도록 설정 */
-        }
-        /* --- 마이너 갤러리 레이아웃 수정 완료 --- */
-
-
-        /* [해결] 마이너 갤러리에서 헤더와 글 목록 겹침 현상 방지 */
-        .is-mgallery .gall_listwrap {
-            margin-top: 0 !important; /* 위에서 list_array_option의 margin-bottom으로 간격을 조절하므로 0으로 초기화 */
-        }
-
-
-        /* --- 커스텀 모바일 리스트 UI --- */
-        .custom-mobile-list {
-            border-top: 1px solid #ddd;
-            background: #fff;
-        }
-
-        /* [이식된 기능] 광고 게시물 기본 숨김 처리 */
-        .custom-post-item.is-ad-post {
-            display: none !important;
-        }
-
-        .custom-post-item.notice + .custom-post-item:not(.notice):not(.concept),
-        .custom-post-item.concept + .custom-post-item:not(.notice):not(.concept) { border-top: 1px solid var(--dcuf-theme-accent, #4263eb) !important; }
-        .custom-post-item { display: block; padding: 15px 18px; border-bottom: 1px solid #e6e6e6; text-decoration: none; color: #333; }
-        .custom-post-item:hover { background-color: #f8f9fa; }
-        .custom-post-item .author { cursor: pointer; }
-        .custom-post-item.notice, .custom-post-item.concept { background-color: #f8f9fa; position: relative; padding-left: 60px; }
-        .custom-post-item.notice::before { content: '공지'; background-color: #e03131; position: absolute; left: 18px; top: 50%; transform: translateY(-50%); font-size: 13px; font-weight: bold; color: #fff; padding: 4px 9px; border-radius: 4px; }
-        .custom-post-item.concept::before { content: '개념'; background-color: var(--dcuf-theme-accent-strong, #4263eb); position: absolute; left: 18px; top: 50%; transform: translateY(-50%); font-size: 13px; font-weight: bold; color: var(--dcuf-theme-on-accent, #fff); padding: 4px 9px; border-radius: 4px; }
-
-
-                /* [v2.2.0 이식] 게시글 목록: 제목, 말머리, 댓글수 */
-        .post-title {
-            font-weight: 500;
-            color: #333;
-            margin-bottom: 10px;
-            word-break: break-all;
-            line-height: 1.5 !important;
-            display: flex !important;
-            align-items: center !important;
-            font-size: 24px !important; /* [핵심 수정] 제목/말머리 크기 기준을 부모로 이동 */
-        }
-        .post-title a {
-            color: inherit;
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            /* [핵심 수정] font-size 제거, 부모 크기를 상속받음 */
-        }
-        .post-title a:visited { color: #770088; }
-        .post-title .gall_subject {
-            font-weight: bold !important;
-            margin-right: 8px; /* 간격 살짝 조정 */
-            flex-shrink: 0; /* 말머리가 줄어들지 않도록 설정 */
-            border: none !important; /* [요청 수정] 글머리 테두리 제거 */
-        }
-        .post-title .reply_num {
-            color: var(--dcuf-theme-accent, #4263eb) !important;
-            font-weight: bold !important;
-            margin-left: 8px !important; /* 간격 조정 */
-            cursor: pointer;
-            flex-shrink: 0 !important;
-        }
-
-
-        /* [v2.2.0 이식] 게시글 목록: 작성자, 통계 */
-        .post-meta { display: flex; justify-content: space-between; align-items: center; color: #888; }
-        .post-meta .author { display: flex; align-items: center; }
-        .post-meta .author .gall_writer { display: inline !important; padding: 0 !important; text-align: left !important; border: none !important; }
-        .post-meta .author .nickname {
-            color: #555 !important;
-            font-size: 15px !important; /* 폰트 크기 키움 */
-            font-weight: 500 !important;
-        }
-        .post-meta .author .ip { color: #555 !important; }
-        .post-meta .stats {
-            display: flex;
-            gap: 10px;
-            font-size: 15px !important; /* 폰트 크기 키움 */
-        }
-
-
-        /* --- 커스텀 하단 컨트롤 UI --- */
-        .custom-bottom-controls { display: flex; flex-direction: column; align-items: center; padding: 15px; background: #fff; }
-        .custom-bottom-controls form[name="frmSearch"] { display: flex !important; width: 100%; max-width: 500px; box-sizing: border-box !important; margin: 15px 0 !important; gap: 5px; flex-wrap: nowrap !important; }
-        .custom-bottom-controls form[name="frmSearch"] .search_left_box { flex: 0 1 auto; }
-        .custom-bottom-controls form[name="frmSearch"] .search_right_box { display: flex; flex: 1 1 0; }
-        .custom-bottom-controls form[name="frmSearch"] input[type="text"] { width: 100% !important; min-width: 100px; }
-        .custom-button-row { width: 100%; }
-        .custom-button-row .list_bottom_btnbox {
-            border: 1px solid var(--dcuf-border);
-            border-radius: 12px;
-            background: rgba(255, 255, 255, 0.9) !important;
-            box-shadow: 0 2px 8px rgba(12, 22, 40, 0.05);
-            padding: 10px !important;
-        }
-        .custom-bottom-controls form[name="frmSearch"] {
-            display: block !important;
-            width: 100% !important;
-            max-width: 520px;
-            margin: 0 !important;
-            padding: 0 !important;
-            border: none !important;
-            background: transparent !important;
-            box-shadow: none !important;
-        }
-        .custom-bottom-controls form[name="frmSearch"] fieldset {
-            display: block !important;
-            min-width: 0 !important;
-            margin: 0 !important;
-            padding: 0 !important;
-            border: none !important;
-            background: transparent !important;
-            box-shadow: none !important;
-        }
-        .custom-bottom-controls form[name="frmSearch"] legend {
-            display: none !important;
-        }
-        .custom-bottom-controls form[name="frmSearch"] .bottom_search_wrap,
-        .custom-bottom-controls form[name="frmSearch"] .buttom_search_wrap {
-            display: flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            gap: 6px !important;
-            width: fit-content !important;
-            max-width: 100% !important;
-            margin: 0 auto !important;
-            padding: 0 !important;
-        }
-        .custom-bottom-controls form[name="frmSearch"] .select_box.bottom_array,
-        .custom-bottom-controls form[name="frmSearch"] .bottom_search {
-            float: none !important;
-            margin: 0 !important;
-        }
-        .custom-bottom-controls form[name="frmSearch"] .select_box.bottom_array {
-            width: 125px !important;
-            height: 38px !important;
-        }
-        .custom-bottom-controls form[name="frmSearch"] .select_box.bottom_array .select_area {
-            width: 117px !important;
-            height: 30px !important;
-            box-sizing: border-box !important;
-            overflow: hidden !important;
-        }
-        .custom-bottom-controls form[name="frmSearch"] .select_box.bottom_array .select_area .inner {
-            width: 34px !important;
-            height: 30px !important;
-            right: 0 !important;
-            top: 0 !important;
-            box-sizing: border-box !important;
-        }
-        .custom-bottom-controls form[name="frmSearch"] .bottom_search {
-            display: flex !important;
-            align-items: center !important;
-            width: 320px !important;
-            height: 38px !important;
-            min-width: 0 !important;
-        }
-        .custom-bottom-controls form[name="frmSearch"] .inner_search {
-            width: 278px !important;
-            height: 30px !important;
-            margin: 0 !important;
-            padding: 0 !important;
-            border: none !important;
-            background: #fff !important;
-            box-shadow: none !important;
-            overflow: hidden !important;
-        }
-        .custom-bottom-controls form[name="frmSearch"] input.in_keyword,
-        .custom-bottom-controls form[name="frmSearch"] input[type="text"] {
-            width: 100% !important;
-            height: 30px !important;
-            margin: 0 !important;
-            padding: 0 9px !important;
-            border: none !important;
-            border-radius: 0 !important;
-            background: #fff !important;
-            box-shadow: none !important;
-            color: #333 !important;
-            font-size: 14px !important;
-            font-weight: 700 !important;
-            line-height: 30px !important;
-            box-sizing: border-box !important;
-        }
-        .custom-bottom-controls form[name="frmSearch"] .bnt_search,
-        .custom-bottom-controls form[name="frmSearch"] button.sp_img.bnt_search {
-            flex: none !important;
-            width: 37px !important;
-            min-width: 37px !important;
-            height: 36px !important;
-            margin: 0 !important;
-            border: none !important;
-            border-radius: 0 !important;
-            box-shadow: none !important;
-        }
-        .custom-bottom-controls .page_box {
-            border-radius: 10px;
-            background: rgba(255, 255, 255, 0.85) !important;
-            padding: 8px 10px;
-            box-shadow: 0 2px 8px rgba(12, 22, 40, 0.05);
-        }
-        .comment_box .all_comment {
-            display: flex !important;
-            align-items: flex-start !important;
-            padding: 8px 15px !important;
-            border-bottom: 1px solid #eee;
-            gap: 15px !important; /* 작성자와 내용 사이 간격 */
-        }
-        .comment_box .usertxt {
-            flex: 1 !important;
-            min-width: 0 !important;
-            /* [v2.6.8] font-size는 JS scaleAllFontSizes()에서 배율 적용으로 설정됩니다 */
-            line-height: 1.7 !important;
-            word-break: break-all !important;
-            color: #333 !important;
-            box-sizing: border-box !important;
-            margin: 0 !important;
-            padding: 0 !important;
-        }
-        
-        /* --- 글 보기/댓글 UI --- */
-        /* DCUF_VIEW_SURFACE_START */
-        .gall_content, .gall_tit_box, .gall_writer_info, .btn_recommend_box, .view_bottom, .gall_comment {
-            background: #fff !important;
-            padding: 15px !important;
-            border-bottom: 1px solid #ddd;
-        }
-
-
-        /* ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼ */
-        /* [최종 수정] 이미지 댓글 UI 가로 배치 및 모든 문제 해결 */
-        
-        /* 1. 부모 컨테이너 너비 100%로 확보 */
-        .writing_view_box .img_area,
-        .writing_view_box .img_comment {
-            width: 100% !important;
-            box-sizing: border-box !important;
-        }
-
-        .writing_view_box .img_comment {
-            padding: 15px !important;
-            border-top: 1px solid #ddd !important;
-            margin-top: 10px !important;
-        }
-
-        /* 2. float-flex 충돌 방지 */
-        .writing_view_box .img_comment .fl {
-            float: none !important;
-        }
-
-        /* 3. 텍스트 컨테이너가 남은 공간을 모두 차지하도록 강제 */
-        .writing_view_box .img_comment .cmt_txt_cont {
-            flex: 1 1 0 !important;
-            min-width: 0 !important;
-            display: flex !important; /* 자식들을 가로(기본값)로 배치 */
-            align-items: stretch !important; /* 자식들의 높이를 통일 */
-        }
-        
-        /* 4. textarea를 감싸는 div가 남은 가로 공간을 모두 차지하도록 설정 (핵심 수정) */
-        .writing_view_box .img_comment .cmt_write {
-            flex-grow: 1 !important; /* 가로 방향으로 남은 공간 차지 */
-            display: flex !important;
-        }
-
-        /* 5. textarea가 부모 공간을 꽉 채우도록 설정 */
-        .writing_view_box .img_comment textarea {
-            width: 100% !important;
-            flex-grow: 1 !important;
-            box-sizing: border-box !important;
-            resize: none !important;
-        }
-
-        /* 6. 등록 버튼 영역이 고정된 크기를 갖도록 설정 */
-        .writing_view_box .img_comment .cmt_cont_bottm {
-            flex-shrink: 0 !important; /* 공간이 부족해도 줄어들지 않음 */
-            padding-left: 5px !important; /* textarea와 간격 추가 */
-            display: flex;
-            align-items: flex-end; /* 버튼을 아래쪽에 정렬 */
-        }
-                    /* ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼ */
-        /* [v2.6.8 수정] 댓글창과 게시글 목록 모두 닉네임 팝업이 잘리지 않도록 overflow 해제 */
-        /* [v2.6.9] 댓글 리스트 열맞춤을 위해 cmt_nickbox에 최소 너비 및 정렬 설정 */
-        .cmt_nickbox, .author {
-            display: inline-flex !important;
-            align-items: center !important;
-            position: relative !important; /* 팝업 위치 기준점 */
-            width: auto !important;
-            min-width: 140px !important; /* 작성자 영역 최소 너비 확보로 열맞춤 */
-            max-width: none !important;
-            overflow: visible !important; /* 팝업 노출 허용 */
-            white-space: nowrap !important;
-            vertical-align: middle !important;
-            line-height: normal !important;
-            background: transparent !important;
-            border: none !important;
-            padding: 0 !important;
-            margin: 0 !important;
-            flex-shrink: 0 !important;
-        }
-        /* 게시글 목록(.author)은 고정 너비 불필요하므로 해제 */
-        .author { min-width: 0 !important; }
-
-        .nickname, .ip {
-            display: inline-block !important;
-            max-width: 240px !important;
-            overflow: hidden !important;
-            text-overflow: ellipsis !important;
-            white-space: nowrap !important;
-            vertical-align: middle !important;
-        }
-        .gall_writer { max-width: none !important; }
-        .nickname { max-width: 240px !important; }
-        
-        /* 게시글 목록 내 닉네임 텍스트 크기 조정 */
-        .author .nickname { font-size: 15px !important; }
-
-        /* [v2.6.8] 유저 데이터 레이어(작성글 검색 등) 위치 최적화 */
-        #user_data_lyr {
-            position: absolute !important;
-            top: 100% !important; /* 닉네임 바로 아래에서 시작 */
-            left: 0 !important;   /* 왼쪽 정렬 */
-            margin-top: 5px !important;
-            z-index: 10001 !important;
-            background: #fff !important;
-            border: 1px solid #ccc !important;
-            box-shadow: 2px 2px 8px rgba(0,0,0,0.2) !important;
-            display: none; /* 기본은 숨김 (JS에서 제어) */
-        }
-        /* 이미지 댓글 내에서의 위치 미세 조정 */
-        .img_comment #user_data_lyr {
-            top: 25px !important;
-        }
-        /* ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲ */
-        /* ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲ */
-
-        .gallview_contents img, .gallview_contents video { max-width: 100% !important; height: auto !important;  }
-
-
-        /* [v2.2.0 이식] 글 본문 가독성 개선 */
-        .view_content_wrap .title_subject {
-            font-size: var(--dcuf-article-title-font-size, 21px) !important;
-            font-weight: 500 !important;
-        }
-        .gallview_contents {
-            font-size: var(--dcuf-article-body-font-size, 26px) !important;
-            line-height: var(--dcuf-article-body-line-height, 1.9) !important;
-            word-break: break-all !important;
-            /* [최종 해결] 댓글과 동일한 원리로 box-sizing 속성 추가 */
-            width: 100% !important;
-            box-sizing: border-box !important;
-        }
-        .gallview_contents p,
-        .gallview_contents div,
-        .gallview_contents span {
-            /* [v2.6.8 수정] font-size: inherit 제거 → JS 배율 스케일링으로 대체하여 원본 서식 유지 */
-            line-height: inherit !important;
-            color: inherit !important;
-        }
-
-
-        /* [v2.2.0 이식] 댓글 가독성 개선 (box-sizing 추가를 위해 위치 이동) */
-        .comment_box .date_time {
-            font-size: 15px !important;
-        }
-
-
-        /* [v2.2.0 이식] 추천/비추천 버튼 UI 개선 */
-        /* [v2.6.8] 고정닉 추천수 및 아이콘 노출 (위치 조정) */
-        .btn_recommend_box .writer_nikcon { display: inline-block !important; margin-right: 2px !important; vertical-align: middle !important; }
-        .btn_recommend_box .writer_nikcon img { width: 14px !important; height: 14px !important; vertical-align: middle !important; }
-        .btn_recommend_box .font_blue.smallnum {
-            display: inline-block !important; font-size: 11px !important; color: var(--dcuf-theme-accent, #4263eb) !important; vertical-align: middle !important;
-            background: color-mix(in srgb, var(--dcuf-theme-accent, #4263eb) 8%, transparent); padding: 1px 4px; border-radius: 3px; font-weight: normal !important;
-        }
-        .btn_recommend_box {
-            display: flex !important;
-            flex-wrap: wrap !important;
-            justify-content: center !important;
-            align-items: center !important;
-            gap: 5px 8px !important;
-            border: none !important;
-            padding: 10px !important;
-        }
-        .btn_recommend_box .inner_box,
-        .btn_recommend_box .recom_bottom_box {
-            display: contents !important;
-        }
-        .btn_recommend_box .inner_box > .inner {
-            display: inline-flex !important;
-            align-items: center !important;
-            gap: 5px !important;
-            border: 1px solid #ddd;
-            padding: 8px 12px;
-            border-radius: 5px;
-            background-color: #f8f9fa;
-        }
-        .btn_recommend_box button,
-        .btn_recommend_box .up_num_box,
-        .btn_recommend_box .down_num_box {
-            position: static !important;
-            float: none !important;
-            margin: 0 !important;
-            padding: 0 !important;
-            width: auto !important;
-            height: auto !important;
-            background: none !important;
-        }
-        .btn_recommend_box .up_num_box {
-            display: flex !important;
-            flex-direction: column !important;
-            align-items: center !important;
-            justify-content: center !important;
-            gap: 2px !important;
-        }
-        .btn_recommend_box .up_num,
-        .btn_recommend_box .down_num {
-            font-size: 16px !important;
-            font-weight: bold !important;
-            color: #333 !important;
-            line-height: 1 !important;
-        }
-        .btn_recommend_box .sup_num {
-            display: inline-flex !important;
-            align-items: center !important;
-            margin: 0 !important;
-        }
-
-
-        .cmt_write_box { display: flex !important; flex-wrap: wrap !important; gap: 10px !important; padding: 10px !important; }
-        .cmt_write_box > .fl { float: none !important; flex-basis: 200px; flex-shrink: 1; min-width: 180px; }
-        .cmt_write_box > .fl .usertxt { display: flex; flex-direction: column; gap: 5px; }
-        .cmt_write_box > .fl .usertxt input { width: 100% !important; box-sizing: border-box; }
-        .cmt_write_box .cmt_txt_cont { flex: 1; min-width: 250px; padding: 0 !important; }
-        .cmt_write_box .cmt_txt_cont textarea { width: 100% !important; height: 85px !important; box-sizing: border-box !important; resize: vertical; }
-        .cmt_write_box .cmt_cont_bott { width: 100%; padding: 0 !important; }
-        .cmt_write_box .cmt_btn_bot { display: flex; justify-content: flex-end; }
-        @media screen and (max-width: 600px) {
-            .cmt_write_box { flex-direction: column !important; }
-            .cmt_write_box > .fl, .cmt_write_box .cmt_txt_cont { flex-basis: auto; width: 100% !important; min-width: 100%; }
-        }
-        /* --- [v2.3.2 수정] 개인 차단 기능 UI --- */
-        /* DCUF_SHARED_FILTER_UI_START */
-        #dc-personal-block-controls {
+    const flushDiagnostics = () => {
+        const api = window.__dcufDiagnostics;
+        if (typeof api?.note !== 'function') return;
+        diagnosticsBuffer.splice(0).forEach((entry) => api.note(entry.label, entry));
+    };
+    const removeBootChrome = () => {
+        document.getElementById(OVERLAY_ID)?.remove();
+        document.getElementById(LOCK_STYLE_ID)?.remove();
+        document.getElementById(OVERLAY_STYLE_ID)?.remove();
+    };
+    const stopTimers = () => {
+        if (ensureTimer) clearInterval(ensureTimer);
+        if (absoluteTimer) clearTimeout(absoluteTimer);
+        if (criticalTimer) clearTimeout(criticalTimer);
+        ensureTimer = absoluteTimer = criticalTimer = 0;
+        if (domReadyListener) document.removeEventListener('DOMContentLoaded', domReadyListener);
+        if (loadListener) window.removeEventListener('load', loadListener);
+        domReadyListener = loadListener = null;
+    };
+    const ensureLockStyle = () => {
+        const mount = document.head || document.documentElement;
+        if (!mount || document.getElementById(LOCK_STYLE_ID)) return;
+        const style = document.createElement('style');
+        style.id = LOCK_STYLE_ID;
+        style.textContent = `
+            html[${STATE_ATTR}="locked"] body,
+            html[${STATE_ATTR}="preparing"] body {
+                opacity: 0 !important;
+                visibility: hidden !important;
+                pointer-events: none !important;
+            }
+        `;
+        mount.appendChild(style);
+    };
+    const ensureOverlay = () => {
+        if (!isTargetPage() || !document.documentElement) return;
+        const mount = document.head || document.documentElement;
+        if (mount && !document.getElementById(OVERLAY_STYLE_ID)) {
+            const style = document.createElement('style');
+            style.id = OVERLAY_STYLE_ID;
+            style.textContent = `
+                #${OVERLAY_ID} {
+                    position: fixed !important; inset: 0 !important; z-index: 2147483646 !important;
+                    box-sizing: border-box !important; display: flex !important; align-items: center !important;
+                    justify-content: center !important; width: 100vw !important; height: 100vh !important;
+                    margin: 0 !important; padding: 24px !important; visibility: visible !important;
+                    opacity: 1 !important; pointer-events: auto !important;
+                    background: linear-gradient(180deg,#f7f9fc,#eef2f7) !important;
+                }
+                #${OVERLAY_ID} .dcuf-boot-card {
+                    box-sizing: border-box !important; width: min(420px,calc(100vw - 32px)) !important;
+                    padding: 22px 20px 18px !important; border: 1px solid #c5ceda !important;
+                    border-radius: 18px !important; background: #fff !important; color: #2b3340 !important;
+                    text-align: center !important; box-shadow: 0 20px 48px rgba(31,45,68,.12) !important;
+                }
+                #${OVERLAY_ID} .dcuf-boot-title { margin-bottom: 8px !important; font: 700 17px/1.35 sans-serif !important; }
+                #${OVERLAY_ID} .dcuf-boot-copy { margin-bottom: 14px !important; color: #5a6575 !important; font: 500 13px/1.55 sans-serif !important; }
+                #${OVERLAY_ID} .dcuf-boot-bar { height: 4px !important; overflow: hidden !important; border-radius: 999px !important; background: #cbd3df !important; }
+                #${OVERLAY_ID} .dcuf-boot-bar::before {
+                    content: '' !important; display: block !important; width: 42% !important; height: 100% !important;
+                    border-radius: inherit !important;
+                    background: linear-gradient(90deg,var(--dcuf-theme-accent-strong,#245bda),var(--dcuf-theme-accent,#5d87f0)) !important;
+                    animation: dcuf-boot-progress 1s ease-in-out infinite !important;
+                }
+                html.dc-filter-dark-mode #${OVERLAY_ID} { background: linear-gradient(180deg,#1d222a,#11151b) !important; }
+                html.dc-filter-dark-mode #${OVERLAY_ID} .dcuf-boot-card { border-color: #475160 !important; background: #1c2129 !important; color: #e7ebf2 !important; }
+                @keyframes dcuf-boot-progress { from { transform: translateX(-120%); } to { transform: translateX(260%); } }
+                @media (prefers-reduced-motion: reduce) { #${OVERLAY_ID} .dcuf-boot-bar::before { width: 100% !important; animation: none !important; } }
+            `;
+            mount.appendChild(style);
+        }
+        if (document.getElementById(OVERLAY_ID)) return;
+        const overlay = document.createElement('div');
+        overlay.id = OVERLAY_ID;
+        overlay.setAttribute('role', 'status');
+        overlay.setAttribute('aria-live', 'polite');
+        overlay.setAttribute('aria-atomic', 'true');
+        const card = document.createElement('div');
+        card.className = 'dcuf-boot-card';
+        const title = document.createElement('div');
+        title.className = 'dcuf-boot-title';
+        title.textContent = 'UI 준비 중';
+        const copy = document.createElement('div');
+        copy.className = 'dcuf-boot-copy';
+        copy.append(
+            document.createTextNode('광고 차단과 충돌하면 로딩이 지연될 수 있습니다.'),
+            document.createElement('br'),
+            document.createTextNode('DCInside에서는 광고 차단을 꺼주세요.')
+        );
+        const bar = document.createElement('div');
+        bar.className = 'dcuf-boot-bar';
+        bar.setAttribute('aria-hidden', 'true');
+        card.append(title, copy, bar);
+        overlay.appendChild(card);
+        document.documentElement.appendChild(overlay);
+    };
+    const ensureDegradedUi = (reason) => {
+        if ((pageType === 'lists' || pageType === 'view') && !document.getElementById(DEGRADED_STYLE_ID)) {
+            const style = document.createElement('style');
+            style.id = DEGRADED_STYLE_ID;
+            style.textContent = `
+                html[${STATE_ATTR}="degraded"]:not([${FILTER_READY_ATTR}="true"]) :is(
+                    .gall_listwrap table.gall_list,.list_wrap table.gall_list,.custom-mobile-list,
+                    .gall_exposure_list,#focus_cmt .comment_box,div[id^="comment_wrap_"] .comment_box,
+                    .view_comment.image_comment .comment_box
+                ) { opacity: 0 !important; visibility: hidden !important; pointer-events: none !important; }
+            `;
+            (document.head || document.documentElement)?.appendChild(style);
+        }
+        const existingBanner = document.getElementById(DEGRADED_BANNER_ID);
+        if (existingBanner) {
+            existingBanner.dataset.reason = reason;
+            return;
+        }
+        if (!document.body) return;
+        const banner = document.createElement('aside');
+        banner.id = DEGRADED_BANNER_ID;
+        banner.dataset.reason = reason;
+        banner.setAttribute('role', 'status');
+        banner.style.cssText = 'position:fixed!important;left:12px!important;right:12px!important;bottom:12px!important;z-index:2147483645!important;box-sizing:border-box!important;display:flex!important;align-items:center!important;justify-content:space-between!important;gap:12px!important;padding:12px 14px!important;border:1px solid #d5a93a!important;border-radius:12px!important;background:#fff8dd!important;color:#4f3b00!important;box-shadow:0 8px 28px rgba(0,0,0,.18)!important;font:600 13px/1.4 sans-serif!important;pointer-events:auto!important;visibility:visible!important;opacity:1!important;';
+        const message = document.createElement('span');
+        message.textContent = pageType === 'write' ? 'DCUF failed; the native write page is available.' : 'DCUF is recovering; filterable areas are temporarily withheld.';
+        const reload = document.createElement('button');
+        reload.type = 'button';
+        reload.textContent = 'Reload';
+        reload.style.cssText = 'min-width:76px!important;min-height:40px!important;padding:8px 12px!important;border:1px solid #9c7716!important;border-radius:9px!important;background:#fff!important;color:#4f3b00!important;font-weight:700!important;cursor:pointer!important;';
+        reload.addEventListener('click', () => location.reload());
+        banner.append(message, reload);
+        document.body.appendChild(banner);
+    };
+
+    const bootController = {
+        state: isTargetPage() ? 'locked' : 'idle',
+        pageType,
+        startedAt,
+        filterReady: false,
+        ensure(reason = 'ensure') {
+            if (!isTargetPage() || this.state === 'ready' || this.state === 'degraded') return true;
+            document.documentElement?.setAttribute(STATE_ATTR, this.state === 'preparing' ? 'preparing' : 'locked');
+            ensureLockStyle();
+            ensureOverlay();
+            note('boot.ensure', { reason });
+            return !!document.getElementById(LOCK_STYLE_ID) && !!document.getElementById(OVERLAY_ID);
+        },
+        startPreparing(reason = 'main') {
+            if (!isTargetPage() || this.state === 'ready' || this.state === 'degraded') return;
+            this.state = 'preparing';
+            document.documentElement?.setAttribute(STATE_ATTR, 'preparing');
+            note('boot.preparing', { reason });
+        },
+        registerRollback(fn) { if (typeof fn === 'function') rollbackHandlers.add(fn); return () => rollbackHandlers.delete(fn); },
+        registerRecovery(fn) { if (typeof fn === 'function') recoveryHandlers.add(fn); return () => recoveryHandlers.delete(fn); },
+        onReady(fn) {
+            if (typeof fn !== 'function') return () => {};
+            if (this.state === 'ready') queueMicrotask(fn);
+            else readyHandlers.add(fn);
+            return () => readyHandlers.delete(fn);
+        },
+        requestRecovery(reason = 'manual') {
+            recoveryHandlers.forEach((fn) => { try { fn(reason); } catch (error) { console.warn('[DCUF boot] recovery failed:', error); } });
+        },
+        markFilterReady(reason = 'filter-ready') {
+            if (this.filterReady) return;
+            this.filterReady = true;
+            document.documentElement?.setAttribute(FILTER_READY_ATTR, 'true');
+            note('boot.filter-ready', { reason, state: this.state });
+            if (this.state === 'degraded') this.requestRecovery('filter-ready');
+        },
+        markReady(reason = 'ready') {
+            if (this.state === 'ready') return;
+            const recovered = this.state === 'degraded';
+            this.state = 'ready';
+            __dcufRoot.__dcufRuntimeState = 'ready';
+            document.documentElement?.setAttribute(STATE_ATTR, 'ready');
+            document.documentElement?.classList.add(READY_CLASS);
+            document.body?.classList.add(READY_CLASS);
+            stopTimers();
+            removeBootChrome();
+            document.getElementById(DEGRADED_STYLE_ID)?.remove();
+            document.getElementById(DEGRADED_BANNER_ID)?.remove();
+            note(recovered ? 'boot.recovered' : 'boot.ready', { reason });
+            flushDiagnostics();
+            readyHandlers.forEach((fn) => { try { fn(); } catch (error) { console.warn('[DCUF boot] ready handler failed:', error); } });
+            readyHandlers.clear();
+            window.dispatchEvent(new CustomEvent('dcuf:boot-ready', { detail: { reason, recovered } }));
+        },
+        degrade(reason = 'deadline') {
+            if (this.state === 'ready' || this.state === 'degraded') return;
+            rollbackHandlers.forEach((fn) => { try { fn(reason); } catch (error) { console.warn('[DCUF boot] rollback failed:', error); } });
+            ensureDegradedUi(reason);
+            this.state = 'degraded';
+            __dcufRoot.__dcufRuntimeState = 'degraded';
+            document.documentElement?.setAttribute(STATE_ATTR, 'degraded');
+            document.documentElement?.classList.add(READY_CLASS);
+            document.body?.classList.add(READY_CLASS);
+            stopTimers();
+            removeBootChrome();
+            note('boot.degraded', { reason });
+            flushDiagnostics();
+            window.dispatchEvent(new CustomEvent('dcuf:boot-degraded', { detail: { reason } }));
+        },
+        note,
+        flushDiagnostics
+    };
+
+    const markUiReady = (reason = 'ready') => bootController.markReady(reason);
+    const ensureBootUi = (reason = 'ensure-boot-ui') => bootController.ensure(reason);
+    const startBootUiWatchdog = () => {
+        if (!isTargetPage() || ensureTimer) return;
+        const tick = () => bootController.ensure('watchdog');
+        ensureTimer = setInterval(tick, 80);
+        absoluteTimer = setTimeout(() => bootController.degrade('absolute-deadline'), ABSOLUTE_DEADLINE_MS);
+        domReadyListener = () => {
+            note('boot.dom-content-loaded');
+            tick();
+            if ((pageType === 'lists' || pageType === 'view') && !criticalTimer) {
+                criticalTimer = setTimeout(() => bootController.degrade('critical-deadline'), CRITICAL_DEADLINE_MS);
+            }
+        };
+        loadListener = tick;
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', domReadyListener, { once: true });
+        } else {
+            domReadyListener();
+        }
+        window.addEventListener('load', loadListener, { once: true });
+        tick();
+    };
+
+    __dcufRoot.__dcufRuntimeLoaded = `dcuf-${Date.now()}`;
+    __dcufRoot.__dcufRuntimeState = 'initializing';
+    __dcufRoot.__dcufBootController = bootController;
+    window.__dcufBootController = bootController;
+    __dcufRoot.__dcufEnsureBootUi = ensureBootUi;
+    window.__dcufEnsureBootUi = ensureBootUi;
+    note('boot.start', { pageType });
+    if (isTargetPage()) {
+        document.documentElement?.setAttribute(STATE_ATTR, 'locked');
+        ensureLockStyle();
+        ensureOverlay();
+        startBootUiWatchdog();
+    }
+    // PC filter port shared prelude
+/**
+ * Shared storage/schema constants extracted from v2.7.5.4.
+ */
+const FILTER_CONSTANTS = {
+            STORAGE_KEYS: {
+                MASTER_DISABLED: 'dcinside_master_disabled',
+                EXCLUDE_RECOMMENDED: 'dcinside_exclude_recommended',
+                THRESHOLD: 'dcinside_threshold',
+                RATIO_ENABLED: 'dcinside_ratio_filter_enabled',
+                RATIO_MIN: 'dcinside_ratio_min',
+                RATIO_MAX: 'dcinside_ratio_max',
+                BLOCK_GUEST: 'dcinside_block_guest',
+                BLOCK_PROXY: 'dcinside_proxy_ip_block_enabled',
+                BLOCK_TELECOM: 'dcinside_telecom_ip_block_enabled',
+                BLOCK_CONFIG: 'dcinside_block_config',
+                BLOCK_CONFIG_MIGRATION_V275_DONE: 'dcinside_block_config_migration_v275_done',
+                BLOCK_CONFIG_MIGRATION_V275_BACKUP: 'dcinside_block_config_migration_v275_backup',
+                BLOCKED_UIDS: 'dcinside_blocked_uids',
+                BLOCKED_GUESTS: 'dcinside_blocked_guests',
+                SHORTCUT_KEY: 'dcinside_shortcut_key',
+                // [v2.3.1 추가] 개인 차단 기능용 저장 키
+                PERSONAL_BLOCK_LIST: 'dcinside_personal_block_list',
+                // [신규] 개인 차단 기능 On/Off 저장 키
+                PERSONAL_BLOCK_ENABLED: 'dcinside_personal_block_enabled',
+                FAB_POSITION: 'dcinside_fab_position',
+                FAB_SCALE_PERCENT: 'dcinside_fab_scale_percent',
+                MANAGEMENT_PANEL_GEOMETRY: 'dcinside_management_panel_geometry',
+                GALLERY_HEADTEXT_BLOCKS: 'dcinside_gallery_headtext_blocks_v1',
+            },
+            SELECTORS: {
+                POST_LIST_CONTAINER: 'table.gall_list tbody',
+                COMMENT_CONTAINER: 'div.comment_box ul.cmt_list',
+                POST_VIEW_LIST_CONTAINER: 'div.gall_exposure_list > ul',
+                POST_ITEM: 'tr.ub-content',
+                COMMENT_ITEM: 'li.ub-content, li[id^="comment_li_"], li[id^="reply_li_"]',
+                WRITER_INFO: '.ub-writer',
+                IP_SPAN: 'span.ip',
+                MAIN_CONTAINER: '#container',
+            },
+            API: {
+                USER_INFO: '/api/gallog_user_layer/gallog_content_reple/',
+            },
+            CUSTOM_ATTRS: {
+                OBSERVER_ATTACHED: 'data-filter-observer-attached',
+            },
+            UI_IDS: {
+                SETTINGS_PANEL: 'dcinside-filter-setting',
+                MASTER_DISABLE_CHECKBOX: 'dcinside-master-disable-checkbox',
+                EXCLUDE_RECOMMENDED_CHECKBOX: 'dcinside-exclude-recommended-checkbox',
+                SETTINGS_CONTAINER: 'dcinside-settings-container',
+                THRESHOLD_INPUT: 'dcinside-threshold-input',
+                BLOCK_GUEST_CHECKBOX: 'dcinside-block-guest-checkbox',
+                PROXY_BLOCK_MODE_GROUP: 'dcinside-proxy-ip-block-mode-group',
+                TELECOM_BLOCK_CHECKBOX: 'dcinside-telecom-ip-block-checkbox',
+                RATIO_ENABLE_CHECKBOX: 'dcinside-ratio-enable-checkbox',
+                RATIO_SECTION: 'dcinside-ratio-section',
+                RATIO_MIN_INPUT: 'dcinside-ratio-min',
+                RATIO_MAX_INPUT: 'dcinside-ratio-max',
+                SAVE_BUTTON: 'dcinside-threshold-save',
+                CLOSE_BUTTON: 'dcinside-filter-close',
+                SHORTCUT_DISPLAY: 'dcinside-shortcut-display',
+                CHANGE_SHORTCUT_BTN: 'dcinside-change-shortcut-btn',
+                SHORTCUT_MODAL_OVERLAY: 'dcinside-shortcut-modal-overlay',
+                SHORTCUT_MODAL: 'dcinside-shortcut-modal',
+                NEW_SHORTCUT_PREVIEW: 'dcinside-new-shortcut-preview',
+                SAVE_SHORTCUT_BTN: 'dcinside-save-shortcut-btn',
+                CANCEL_SHORTCUT_BTN: 'dcinside-cancel-shortcut-btn',
+                HEADTEXT_MANAGER_BUTTON: 'dcinside-headtext-manager-button',
+                HEADTEXT_MANAGER_PANEL: 'dcinside-headtext-manager-panel',
+            },
+            ETC: {
+                MOBILE_IP_MARKER: 'mblck',
+                COOKIE_NAME_1: 'ci_t',
+                COOKIE_NAME_2: 'ci_c',
+            }
+};
+
+const STORAGE_KEYS = FILTER_CONSTANTS.STORAGE_KEYS;
+const SELECTORS = FILTER_CONSTANTS.SELECTORS;
+const API_PATHS = FILTER_CONSTANTS.API;
+const CUSTOM_ATTRS = FILTER_CONSTANTS.CUSTOM_ATTRS;
+const UI_IDS = FILTER_CONSTANTS.UI_IDS;
+const ETC_CONSTANTS = FILTER_CONSTANTS.ETC;
+
+    const DCUF_SHARED_SCHEMA = Object.freeze({ FILTER_CONSTANTS, STORAGE_KEYS, SELECTORS, API_PATHS, CUSTOM_ATTRS, UI_IDS, ETC_CONSTANTS });
+
+/**
+ * Shared IP-related datasets extracted from v2.7.5.4 for 3.0 refactoring.
+ * This is the planned single source of truth for mobile and PC filter rules.
+ */
+const TELECOM = () => [
+            [1, [[96, "KT모바일", "MOB"], [97, "KT모바일", "MOB"], [98, "KT모바일", "MOB"], [99, "KT모바일", "MOB"], [100, "KT모바일", "MOB"], [101, "KT모바일", "MOB"], [102, "KT모바일", "MOB"], [103, "KT모바일", "MOB"], [104, "KT모바일", "MOB"], [105, "KT모바일", "MOB"], [106, "KT모바일", "MOB"], [107, "KT모바일", "MOB"], [108, "KT모바일", "MOB"], [109, "KT모바일", "MOB"], [110, "KT모바일", "MOB"], [111, "KT모바일", "MOB"]]],
+            [27, [[160, "SKT", "MOB"], [161, "SKT", "MOB"], [162, "SKT", "MOB"], [163, "SKT", "MOB"], [164, "SKT", "MOB"], [165, "SKT", "MOB"], [166, "SKT", "MOB"], [167, "SKT", "MOB"], [168, "SKT", "MOB"], [169, "SKT", "MOB"], [170, "SKT", "MOB"], [171, "SKT", "MOB"], [172, "SKT", "MOB"], [173, "SKT", "MOB"], [174, "SKT", "MOB"], [175, "SKT", "MOB"], [176, "SKT", "MOB"], [177, "SKT", "MOB"], [178, "SKT", "MOB"], [179, "SKT", "MOB"], [180, "SKT", "MOB"], [181, "SKT", "MOB"], [182, "SKT", "MOB"], [183, "SKT", "MOB"]]],
+            [39, [[4, "KT모바일", "MOB"], [5, "KT모바일", "MOB"], [6, "KT모바일", "MOB"], [7, "KT모바일", "MOB"]]],
+            [42, [[16, "SKT", "MOB"], [17, "SKT", "MOB"], [18, "SKT", "MOB"], [19, "SKT", "MOB"], [20, "SKT", "MOB"], [21, "SKT", "MOB"], [22, "SKT", "MOB"], [23, "SKT", "MOB"], [24, "SKT", "MOB"], [25, "SKT", "MOB"], [26, "SKT", "MOB"], [27, "SKT", "MOB"], [28, "SKT", "MOB"], [29, "SKT", "MOB"], [30, "SKT", "MOB"], [31, "SKT", "MOB"], [32, "SKT", "MOB"], [33, "SKT", "MOB"], [34, "SKT", "MOB"], [35, "SKT", "MOB"], [36, "SKT", "MOB"], [37, "SKT", "MOB"], [38, "SKT", "MOB"], [39, "SKT", "MOB"], [40, "SKT", "MOB"], [41, "SKT", "MOB"], [42, "SKT", "MOB"], [43, "SKT", "MOB"], [44, "SKT", "MOB"], [45, "SKT", "MOB"], [46, "SKT", "MOB"], [47, "SKT", "MOB"]]],
+            [49, [[16, "KT모바일", "MOB"], [17, "KT모바일", "MOB"], [18, "KT모바일", "MOB"], [19, "KT모바일", "MOB"], [20, "KT모바일", "MOB"], [21, "KT모바일", "MOB"], [22, "KT모바일", "MOB"], [23, "KT모바일", "MOB"], [24, "KT모바일", "MOB"], [25, "KT모바일", "MOB"], [26, "KT모바일", "MOB"], [27, "KT모바일", "MOB"], [28, "KT모바일", "MOB"], [29, "KT모바일", "MOB"], [30, "KT모바일", "MOB"], [31, "KT모바일", "MOB"], [56, "KT모바일", "MOB"], [57, "KT모바일", "MOB"], [58, "KT모바일", "MOB"], [59, "KT모바일", "MOB"], [60, "KT모바일", "MOB"], [61, "KT모바일", "MOB"], [62, "KT모바일", "MOB"], [63, "KT모바일", "MOB"]]],
+            [58, [[102, "SKT", "MOB"], [103, "SKT", "MOB"]]],
+            [61, [[104, "SKT", "MOB"], [250, "SKT/세종텔레콤/하이라인닷넷", "MOB"], [252, "KT모바일/SKB/딜라이브/엘엑스/세종텔레콤/한국정보화진흥원/한국인터넷진흥원/두루안/기타등등", "MOB"], [254, "SKB/SKT/기타등등", "MOB"]]],
+            [106, [[96, "LGU+모바일", "MOB"], [97, "LGU+모바일", "MOB"], [98, "LGU+모바일", "MOB"], [99, "LGU+모바일", "MOB"], [100, "LGU+모바일", "MOB"], [101, "LGU+모바일", "MOB"], [102, "LGU+모바일", "MOB"], [103, "LGU+모바일", "MOB"]]],
+            [110, [[68, "KT모바일", "MOB"], [69, "KT모바일", "MOB"], [70, "KT모바일", "MOB"], [71, "KT모바일", "MOB"]]],
+            [111, [[218, "SKT", "MOB"], [219, "SKT", "MOB"]]],
+            [113, [[216, "SKT", "MOB"], [217, "SKT", "MOB"]]],
+            [114, [[52, "SKT", "MOB"], [53, "SKT", "MOB"]]],
+            [116, [[200, "KT모바일", "MOB"], [201, "KT모바일", "MOB"]]],
+            [117, [[110, "LGU+모바일", "MOB"], [111, "LGT+모바일", "MOB"]]],
+            [118, [[234, "KT모바일", "MOB"], [235, "KT모바일", "MOB"]]],
+            [119, [[194, "KT모바일", "MOB"]]],
+            [123, [[228, "SKT", "MOB"], [229, "SKT", "MOB"]]],
+            [124, [[0, "SKT", "MOB"], [1, "SKT", "MOB"]]],
+            [163, [[213, "KT모바일", "MOB"], [222, "KT모바일", "MOB"], [229, "KT모바일", "MOB"], [255, "KT모바일", "MOB"]]],
+            [175, [[216, "KT모바일", "MOB"], [217, "KT모바일", "MOB"], [218, "KT모바일", "MOB"], [219, "KT모바일", "MOB"], [220, "KT모바일", "MOB"], [221, "KT모바일", "MOB"], [222, "KT모바일", "MOB"], [223, "KT모바일", "MOB"]]],
+            [180, [[132, "SKT", "MOB"], [133, "SKT", "MOB"], [134, "SKT", "MOB"], [135, "SKT", "MOB"], [210, "LGT+모바일/퍼플스톤즈/네이버클라우드/기타등등", "MOB"]]],
+            [203, [[82, "LGT+모바일/하이플러스카드/한국케이블텔레콤/기타등등", "MOB"], [226, "SKT/SK컴즈/대림아이앤에스/두산중공업/두산정보통신사업부/기타등등", "MOB"], [236, "SKT/KT/KINX/세종텔레콤", "MOB"]]],
+            [211, [[36, "LGT+모바일/딜라이브/세종텔레콤/엘림넷/삼성SDS/기타등등", "MOB"], [111, "SKT/아름방송네트워크/드림라인/KDDI코리아/브이토피아/세종텔레콤/지오레이넷/기타등등", "MOB"], [115, "SKB/SKT/반송종합유선방송/한국정보보호진흥원/KT/네오위즈게임즈/세종텔레콤/LGU+/기타등등", "MOB"], [188, "SKT/네트로피/네이버클라우드/NHN/누리링크시스템/기타등등", "MOB"], [234, "LGU+모바일/LGU+/SKT/SK커뮤니케이션즈/기타등등", "MOB"], [235, "SKT/남인천방송/유엘네트웍스/하이라인닷넷/기타등등", "MOB"], [240, "SKT/엘림넷/싸이크로스/기타등등", "MOB"], [246, "KT모바일/서경방송/기타등등", "MOB"]]],
+            [220, [[103, "SKT", "MOB"]]],
+            [223, [[32, "SKT", "MOB"], [33, "SKT", "MOB"], [34, "SKT", "MOB"], [35, "SKT", "MOB"], [36, "SKT", "MOB"], [37, "SKT", "MOB"], [38, "SKT", "MOB"], [39, "SKT", "MOB"], [40, "SKT", "MOB"], [41, "SKT", "MOB"], [42, "SKT", "MOB"], [43, "SKT", "MOB"], [44, "SKT", "MOB"], [45, "SKT", "MOB"], [46, "SKT", "MOB"], [47, "SKT", "MOB"], [48, "SKT", "MOB"], [49, "SKT", "MOB"], [50, "SKT", "MOB"], [51, "SKT", "MOB"], [52, "SKT", "MOB"], [53, "SKT", "MOB"], [54, "SKT", "MOB"], [55, "SKT", "MOB"], [56, "SKT", "MOB"], [57, "SKT", "MOB"], [58, "SKT", "MOB"], [59, "SKT", "MOB"], [60, "SKT", "MOB"], [61, "SKT", "MOB"], [62, "SKT", "MOB"], [63, "SKT", "MOB"], [168, "LGT+모바일", "MOB"], [169, "LGT+모바일", "MOB"], [170, "LGT+모바일", "MOB"], [171, "LGT+모바일", "MOB"], [172, "LGT+모바일", "MOB"], [173, "LGT+모바일", "MOB"], [174, "LGT+모바일", "MOB"], [175, "LGT+모바일", "MOB"]]]
+        ];
+
+const PROXY_MODE = Object.freeze({ OFF: 0, STRICT: 1, AGGRESSIVE: 2 });
+
+// IMPORTANT: split on real whitespace (`/\s+/`), not a literal backslash-s.
+// A bad escape here collapses the whole dataset into one token, which breaks
+// domestic VPN/owner-based blocking (for example Mudfish) while foreign-IP
+// blocking may still appear to work.
+const PROXY_STRICT_PREFIXES = `
+            1.176 1.201 1.215 1.227 1.228 1.229 1.231 1.237 1.245 1.248 1.252 1.254 2.56 2.57 2.58 2.59 3.36 5.22
+            5.44 5.45 5.61 5.79 5.104 5.133 5.157 5.180 5.181 5.182 5.183 5.252 5.253 5.254 13.125 14.32 14.37 14.42
+            14.51 14.56 14.63 14.136 20.194 23.26 23.27 23.29 23.227 23.249 24.235 27.102 31.3 31.13 31.14 31.24 31.25 31.40
+            31.42 31.56 31.57 31.58 31.59 31.130 31.131 31.133 31.135 31.169 31.170 31.186 31.187 31.193 31.204 31.217 31.220 31.222
+            34.22 34.64 36.38 36.50 36.255 37.0 37.19 37.35 37.46 37.49 37.58 37.97 37.120 37.143 37.221 37.235 38.48 38.54
+            38.65 38.95 38.132 38.180 38.200 38.201 38.202 38.203 38.204 38.205 38.206 39.114 39.116 39.118 39.121 39.123 39.126 40.183
+            41.223 43.225 43.226 45.8 45.9 45.10 45.11 45.12 45.13 45.14 45.15 45.33 45.38 45.59 45.66 45.67 45.74 45.80
+            45.81 45.82 45.83 45.84 45.85 45.86 45.87 45.88 45.89 45.90 45.91 45.92 45.93 45.94 45.95 45.128 45.129 45.130
+            45.131 45.132 45.133 45.134 45.135 45.136 45.137 45.139 45.140 45.141 45.142 45.143 45.144 45.145 45.146 45.147 45.148 45.149
+            45.150 45.152 45.153 45.154 45.155 45.156 45.157 45.192 45.251 46.28 46.34 46.37 46.102 46.148 46.183 46.202 46.203 49.161
+            49.246 50.7 50.114 52.78 52.79 52.141 52.144 52.231 58.124 58.226 58.228 58.237 59.4 59.6 59.8 59.10 59.14 59.20
+            59.22 59.24 61.74 61.82 61.84 61.85 61.101 61.254 62.3 62.68 62.112 62.133 62.197 62.204 62.210 62.216 63.141 63.246
+            64.43 64.79 64.224 66.78 66.85 66.90 66.150 66.225 66.249 66.251 67.207 67.210 67.227 69.10 69.168 72.5 72.14 72.18
+            74.49 74.63 74.91 74.118 77.36 77.78 77.81 77.83 77.232 77.237 77.243 77.247 78.31 78.41 79.98 79.110 79.127 79.135
+            80.71 80.76 80.89 80.93 80.96 80.97 80.243 81.17 81.22 81.29 81.92 81.161 81.180 81.181 82.102 82.117 82.140 82.149
+            82.152 82.153 82.180 82.197 83.97 83.136 83.143 83.150 83.171 83.243 84.17 84.21 84.32 84.39 84.46 84.54 84.247 84.252
+            85.8 85.11 85.28 85.31 85.120 85.121 85.122 85.132 85.190 85.203 85.204 85.206 85.208 85.209 85.254 86.38 86.48 86.62
+            86.104 86.105 86.106 86.107 87.101 87.236 87.239 87.249 88.214 88.216 88.218 89.31 89.33 89.36 89.37 89.38 89.40 89.41
+            89.42 89.44 89.45 89.46 89.47 89.116 89.117 89.184 89.185 89.187 89.213 89.238 89.249 91.90 91.92 91.102 91.123 91.132
+            91.190 91.193 91.195 91.196 91.197 91.204 91.205 91.207 91.209 91.214 91.217 91.219 91.220 91.221 91.225 91.226 91.229 91.231
+            91.232 91.233 91.234 91.238 91.239 91.240 91.242 91.245 91.246 92.38 92.50 92.51 92.61 92.62 92.112 92.113 92.114 92.118
+            92.119 92.223 92.240 92.242 92.243 92.249 93.113 93.114 93.115 93.119 93.120 93.152 93.177 93.185 93.189 94.74 94.101 94.137
+            94.140 94.154 94.156 94.176 94.177 94.190 94.198 94.242 95.141 95.153 95.156 95.173 95.174 95.181 95.214 102.38 102.128 102.129
+            102.165 102.218 103.4 103.6 103.10 103.18 103.27 103.44 103.46 103.47 103.69 103.75 103.86 103.99 103.100 103.110 103.111 103.115
+            103.119 103.130 103.149 103.155 103.160 103.209 103.210 103.221 103.225 103.254 104.16 104.17 104.18 104.19 104.20 104.21 104.22 104.23
+            104.24 104.25 104.26 104.27 104.28 104.128 104.131 104.167 104.218 104.222 104.232 104.233 104.234 104.236 104.239 104.243 104.245 104.250
+            104.251 104.252 106.185 106.186 106.187 106.243 107.22 107.155 107.161 107.167 107.170 107.181 107.190 107.191 108.61 108.165 108.181 109.70
+            109.74 109.123 109.160 109.176 109.200 109.203 109.207 109.236 109.238 110.47 112.72 112.152 112.156 112.158 112.160 112.167 112.169 112.171
+            112.172 112.173 112.186 113.52 113.130 113.203 114.199 114.207 115.22 115.23 115.40 115.71 116.120 118.32 118.33 118.37 118.38 118.40
+            118.47 118.99 118.221 118.222 119.194 119.197 119.203 119.205 120.142 121.129 121.130 121.132 121.133 121.135 121.139 121.140 121.141 121.148
+            121.149 121.151 121.155 121.162 121.171 121.172 121.173 121.176 121.183 121.185 121.187 122.42 123.215 124.5 124.54 124.111 125.132 125.138
+            125.140 125.181 125.182 125.186 125.240 128.199 130.185 130.195 134.255 136.0 138.128 138.199 139.28 140.99 140.248 141.0 141.11 141.98
+            141.164 141.193 142.111 142.252 145.14 145.223 146.19 146.56 146.66 146.70 146.75 146.255 147.46 147.47 147.78 147.79 147.136 148.135
+            149.19 149.22 149.34 149.36 149.40 149.50 149.62 149.88 149.102 149.143 149.154 151.101 151.236 152.89 154.7 154.9 154.13 154.16
+            154.17 154.28 154.29 154.30 154.36 154.37 154.47 154.70 154.85 154.92 154.95 154.127 154.194 154.199 154.216 154.218 155.133 156.67
+            156.146 156.225 156.238 156.246 157.254 158.46 158.115 158.179 158.220 158.247 158.255 159.48 159.148 160.20 160.238 162.159 162.213 162.217
+            162.218 162.221 162.243 162.246 162.248 162.252 162.254 163.5 165.231 165.246 166.0 166.88 167.88 167.100 167.253 168.91 168.93 168.199
+            168.235 169.150 171.22 171.25 172.84 172.85 172.94 172.98 172.102 172.103 172.111 172.224 172.225 172.226 173.46 173.211 173.245 173.255
+            174.140 175.110 175.115 175.118 175.127 175.197 175.203 175.205 175.207 175.208 175.210 175.211 176.9 176.10 176.46 176.53 176.58 176.67
+            176.96 176.97 176.98 176.100 176.105 176.110 176.111 176.112 176.113 176.116 176.118 176.121 176.123 176.124 176.125 176.126 176.223 176.227
+            177.67 178.62 178.79 178.132 178.157 178.159 178.162 178.171 178.209 178.211 178.212 178.218 178.249 178.255 179.43 179.61 180.68 180.149
+            180.224 181.41 181.214 181.215 182.161 182.218 182.226 182.229 183.101 183.103 183.104 183.105 183.107 184.174 185.4 185.9 185.12 185.15
+            185.19 185.23 185.25 185.26 185.30 185.34 185.37 185.45 185.46 185.49 185.51 185.52 185.54 185.59 185.75 185.76 185.81 185.82
+            185.87 185.89 185.90 185.91 185.92 185.93 185.94 185.95 185.96 185.100 185.101 185.104 185.105 185.107 185.111 185.114 185.119 185.120
+            185.123 185.126 185.128 185.130 185.132 185.135 185.143 185.144 185.145 185.147 185.151 185.152 185.153 185.154 185.156 185.158 185.159 185.161
+            185.162 185.163 185.164 185.165 185.167 185.169 185.171 185.172 185.173 185.174 185.175 185.177 185.180 185.181 185.182 185.183 185.184 185.185
+            185.187 185.188 185.189 185.192 185.193 185.194 185.195 185.196 185.197 185.198 185.199 185.200 185.201 185.202 185.203 185.204 185.205 185.206
+            185.207 185.208 185.209 185.210 185.211 185.212 185.213 185.215 185.216 185.217 185.218 185.219 185.220 185.221 185.222 185.225 185.226 185.227
+            185.228 185.229 185.230 185.231 185.232 185.233 185.235 185.236 185.237 185.238 185.239 185.240 185.241 185.242 185.243 185.244 185.245 185.246
+            185.247 185.248 185.249 185.250 185.251 185.252 185.253 185.254 185.255 188.66 188.74 188.116 188.119 188.191 188.208 188.209 188.213 188.214
+            188.215 188.226 188.240 188.241 190.2 190.106 191.96 191.101 192.30 192.34 192.36 192.40 192.54 192.55 192.71 192.73 192.81 192.99
+            192.109 192.110 192.119 192.121 192.142 192.145 192.162 192.184 192.211 192.223 192.241 192.253 193.0 193.9 193.22 193.27 193.29 193.30
+            193.31 193.32 193.36 193.37 193.38 193.42 193.43 193.46 193.47 193.56 193.57 193.58 193.105 193.106 193.108 193.111 193.135 193.142
+            193.148 193.149 193.160 193.168 193.176 193.182 193.187 193.189 193.201 193.203 193.223 193.226 193.227 193.231 193.238 193.239 194.5 194.14
+            194.15 194.26 194.31 194.32 194.33 194.34 194.35 194.36 194.37 194.48 194.50 194.53 194.59 194.60 194.61 194.68 194.71 194.79
+            194.93 194.99 194.102 194.104 194.105 194.110 194.114 194.124 194.126 194.135 194.145 194.146 194.147 194.153 194.156 194.169 194.180 194.187
+            194.195 194.233 194.242 195.8 195.12 195.34 195.54 195.58 195.64 195.80 195.88 195.158 195.160 195.179 195.181 195.184 195.189 195.206
+            195.210 195.216 195.242 196.16 196.17 196.18 196.240 196.244 196.245 198.56 198.58 198.60 198.145 198.147 198.190 198.211 198.232 199.84
+            199.96 199.115 199.120 199.241 202.168 203.21 203.32 203.34 204.93 204.124 204.217 205.142 205.143 206.53 206.80 206.123 206.127 206.144
+            206.195 206.220 206.232 207.45 207.230 207.244 208.68 209.58 209.198 209.222 209.235 210.97 210.123 210.222 211.43 211.53 211.55 211.107
+            211.183 211.184 211.222 211.226 211.228 211.230 211.237 211.245 211.251 211.253 212.30 212.60 212.80 212.81 212.90 212.92 212.97 212.102
+            212.103 212.119 212.192 213.109 213.134 213.139 213.152 213.184 213.229 213.230 213.232 216.97 216.131 216.158 216.173 216.189 216.227 216.246
+            216.247 217.9 217.64 217.78 217.138 217.148 217.151 217.156 217.170 217.197 218.55 218.145 218.146 218.150 218.153 218.155 218.158 218.232
+            218.234 218.239 220.67 220.71 220.76 220.78 220.82 220.89 220.90 220.116 220.118 220.123 221.140 221.144 221.147 221.150 221.153 221.158
+            221.160 221.164 221.167 222.102 222.108 222.109 222.110 222.111 222.112 222.118 222.238
+        `;
+
+const PROXY_AGGRESSIVE_EXTRA_PREFIXES = `
+            1.209 1.224 1.255 14.129 27.96 27.255 38.77 39.115 43.227 43.228 43.250 43.254 45.114 45.119 45.125 45.164 45.225 45.249
+            49.8 49.50 49.128 49.143 49.236 49.238 49.254 58.229 59.150 61.14 61.42 61.97 61.100 61.106 61.109 61.111 61.247 61.250
+            61.251 61.252 61.255 63.105 64.23 66.232 101.79 101.101 103.11 103.24 103.54 103.79 103.87 103.103 103.122 103.124 103.131 103.132
+            103.138 103.140 103.146 103.151 103.193 103.194 103.212 103.215 103.218 103.230 103.237 103.238 103.240 103.243 103.249 106.10 106.249 110.4
+            110.44 110.93 110.165 110.172 110.234 111.91 111.92 113.30 114.110 114.111 114.141 115.85 115.88 115.89 115.92 115.144 115.187 116.121
+            116.122 116.125 117.52 118.67 118.91 118.129 119.30 121.0 121.50 121.78 121.126 121.170 122.49 122.99 124.198 124.217 125.6 125.7
+            125.209 133.186 139.150 150.107 157.119 160.202 162.251 175.45 175.106 175.125 175.126 175.158 180.131 180.150 180.189 180.210 182.162 182.173
+            182.252 182.255 183.78 202.31 202.68 202.86 202.126 202.131 202.133 202.158 202.179 203.84 203.104 203.109 203.216 203.231 203.235 203.236
+            203.238 203.246 203.248 210.4 210.16 210.89 210.92 210.93 210.108 210.109 210.112 210.116 210.121 210.122 210.124 210.205 210.206 210.216
+            210.219 211.32 211.37 211.41 211.47 211.50 211.56 211.60 211.63 211.104 211.110 211.115 211.116 211.118 211.168 211.169 211.170 211.171
+            211.172 211.175 211.180 211.188 211.189 211.233 211.234 211.235 211.236 211.238 211.239 211.241 211.249 211.254 211.255 218.36 220.230 222.239
+            223.26 223.130 223.165 223.255
+        `;
+
+const KR_IP_RANGES = () => ({ "1": [[11, 11], [16, 19], [96, 111], [176, 177], [201, 201], [208, 223], [224, 255]], "14": [[0, 0], [4, 7], [32, 63], [64, 95], [128, 128], [129, 129], [138, 138], [192, 192], [206, 206]], "27": [[0, 0], [1, 1], [35, 35], [96, 96], [100, 100], [101, 101], [102, 102], [111, 111], [112, 112], [113, 113], [115, 115], [116, 116], [117, 117], [118, 118], [119, 119], [120, 120], [122, 122], [124, 124], [125, 125], [126, 126], [160, 175], [176, 183], [232, 239], [255, 255]], "36": [[38, 39]], "39": [[4, 7], [16, 31], [112, 127]], "42": [[8, 15], [16, 31], [32, 47], [82, 82]], "43": [[224, 224], [227, 227], [228, 228], [230, 230], [230, 230], [230, 230], [241, 241], [242, 242], [243, 243], [246, 246], [247, 247], [247, 247], [250, 250], [251, 251], [254, 254], [255, 255]], "45": [[64, 64], [64, 64], [64, 64], [112, 112], [112, 112], [113, 113], [115, 115], [117, 117], [119, 119], [120, 120], [121, 121], [125, 125], [248, 248], [249, 249], [249, 249], [250, 250], [250, 250]], "49": [[1, 1], [8, 11], [16, 31], [50, 50], [50, 50], [50, 50], [56, 63], [128, 128], [142, 142], [143, 143], [160, 175], [236, 236], [238, 238], [239, 239], [246, 246], [247, 247], [254, 254]], "58": [[29, 29], [65, 65], [72, 79], [84, 84], [87, 87], [102, 103], [120, 127], [138, 138], [140, 143], [145, 145], [146, 146], [147, 147], [148, 151], [180, 180], [181, 181], [184, 184], [224, 239]], "59": [[0, 31], [86, 86], [150, 150], [151, 151], [152, 152], [186, 187]], "60": [[196, 197], [253, 253]], "61": [[4, 4], [5, 5], [14, 14], [32, 39], [40, 43], [47, 47], [72, 77], [78, 79], [80, 83], [84, 85], [96, 111], [245, 245], [245, 245], [247, 247], [247, 247], [248, 255]], "101": [[1, 1], [1, 1], [53, 53], [55, 55], [79, 79], [101, 101], [202, 202], [235, 235], [250, 250]], "103": [[2, 2], [2, 2], [2, 2], [3, 3], [4, 4], [4, 4], [4, 4], [5, 5], [5, 5], [6, 6], [6, 6], [6, 6], [6, 6], [7, 7], [7, 7], [7, 7], [8, 8], [8, 8], [9, 9], [9, 9], [10, 10], [10, 10], [11, 11], [11, 11], [11, 11], [11, 11], [11, 11], [12, 12], [13, 13], [13, 13], [19, 19], [20, 20], [21, 21], [21, 21], [22, 22], [23, 23], [24, 24], [25, 25], [27, 27], [27, 27], [28, 28], [30, 30], [30, 30], [30, 30], [31, 31], [38, 38], [39, 39], [42, 42], [42, 42], [43, 43], [43, 43], [49, 49], [50, 50], [51, 51], [51, 51], [51, 51], [52, 52], [53, 53], [55, 55], [55, 55], [57, 57], [59, 59], [60, 60], [62, 62], [66, 66], [67, 67], [68, 68], [68, 68], [71, 71], [74, 74], [77, 77], [79, 79], [85, 85], [87, 87], [90, 90], [90, 90], [104, 104], [105, 105], [106, 106], [108, 108], [109, 109], [114, 114], [114, 114], [117, 117], [122, 122], [122, 122], [124, 124], [125, 125], [126, 126], [126, 126], [127, 127], [129, 129], [132, 132], [138, 138], [139, 139], [139, 139], [139, 139], [140, 140], [141, 141], [141, 141], [143, 143], [143, 143], [144, 144], [145, 145], [146, 146], [150, 150], [150, 150], [150, 150], [150, 150], [153, 153], [157, 157], [157, 157], [159, 159], [161, 161], [162, 162], [162, 162], [164, 164], [166, 166], [171, 171], [175, 175], [178, 178], [182, 182], [182, 182], [186, 186], [187, 187], [187, 187], [188, 188], [194, 194], [194, 194], [206, 206], [212, 212], [212, 212], [214, 214], [214, 214], [215, 215], [216, 216], [218, 218], [219, 219], [226, 226], [226, 226], [229, 229], [230, 230], [231, 231], [234, 234], [235, 235], [237, 237], [238, 238], [239, 239], [239, 239], [240, 240], [240, 240], [243, 243], [244, 244], [244, 244], [246, 246], [246, 246], [246, 246], [247, 247], [247, 247], [248, 248], [249, 249], [251, 251], [253, 253], [254, 254]], "106": [[10, 10], [96, 103], [240, 255]], "110": [[4, 4], [5, 5], [8, 15], [34, 34], [35, 35], [35, 35], [44, 44], [44, 44], [45, 45], [46, 47], [68, 71], [76, 76], [76, 76], [92, 92], [92, 92], [93, 93], [93, 93], [165, 165], [165, 165], [172, 172], [232, 232]], "111": [[65, 65], [67, 67], [91, 91], [92, 92], [118, 118], [171, 171], [218, 219], [221, 221]], "112": [[72, 72], [72, 72], [76, 77], [106, 107], [108, 108], [109, 109], [121, 121], [121, 121], [133, 133], [136, 136], [137, 137], [140, 140], [140, 140], [140, 140], [144, 159], [160, 191], [196, 196], [212, 212], [213, 213], [214, 214], [216, 223]], "113": [[10, 10], [21, 21], [29, 29], [30, 30], [52, 52], [52, 52], [59, 59], [60, 60], [61, 61], [61, 61], [130, 130], [130, 130], [131, 131], [192, 192], [197, 197], [198, 198], [199, 199], [216, 217]], "114": [[29, 29], [30, 30], [30, 30], [30, 30], [31, 31], [31, 31], [52, 53], [70, 71], [108, 108], [110, 110], [110, 110], [111, 111], [111, 111], [129, 129], [129, 129], [141, 141], [141, 141], [141, 141], [199, 199], [199, 199], [200, 207]], "115": [[0, 23], [31, 31], [40, 41], [68, 68], [69, 69], [71, 71], [84, 84], [85, 85], [86, 86], [88, 95], [126, 126], [136, 143], [144, 144], [145, 145], [160, 160], [161, 161], [165, 165], [178, 178], [178, 178], [187, 187], [187, 187]], "116": [[32, 47], [67, 67], [68, 68], [68, 68], [84, 84], [89, 89], [90, 90], [93, 93], [120, 127], [193, 193], [199, 199], [200, 201], [212, 212], [255, 255]], "117": [[16, 17], [20, 20], [20, 20], [52, 52], [53, 53], [53, 53], [55, 55], [58, 58], [110, 111], [123, 123]], "118": [[32, 63], [67, 67], [91, 91], [91, 91], [103, 103], [107, 107], [127, 127], [128, 131], [139, 139], [176, 176], [216, 223], [234, 235]], "119": [[17, 17], [17, 17], [18, 18], [30, 30], [31, 31], [42, 42], [56, 56], [59, 59], [63, 63], [64, 71], [75, 75], [77, 77], [82, 82], [148, 148], [149, 149], [161, 161], [192, 223], [235, 235], [235, 235]], "120": [[29, 29], [50, 50], [73, 73], [136, 136], [142, 142], [143, 143]], "121": [[0, 0], [1, 1], [50, 50], [50, 50], [50, 50], [53, 53], [54, 54], [55, 55], [64, 67], [78, 78], [88, 88], [100, 100], [101, 101], [101, 101], [124, 125], [126, 126], [127, 127], [128, 159], [160, 191], [200, 200], [252, 253], [254, 254], [254, 254]], "122": [[0, 0], [0, 0], [32, 47], [49, 49], [99, 99], [100, 100], [101, 101], [128, 128], [128, 128], [129, 129], [129, 129], [152, 152], [153, 153], [199, 199], [202, 202], [202, 202], [203, 203], [252, 252], [252, 252], [254, 254]], "123": [[0, 0], [32, 47], [98, 98], [99, 99], [100, 100], [108, 108], [108, 108], [109, 109], [111, 111], [140, 143], [199, 199], [200, 200], [212, 215], [228, 229], [248, 248], [250, 251], [253, 253], [254, 254], [254, 254]], "124": [[0, 1], [2, 2], [3, 3], [5, 5], [28, 28], [46, 46], [48, 63], [66, 66], [66, 66], [80, 80], [111, 111], [136, 139], [146, 146], [153, 153], [194, 194], [195, 195], [195, 195], [197, 197], [198, 198], [199, 199], [199, 199], [216, 216], [217, 217], [243, 243], [254, 254]], "125": [[7, 7], [31, 31], [57, 57], [60, 60], [61, 61], [62, 62], [128, 159], [176, 191], [208, 208], [208, 208], [209, 209], [209, 209], [240, 247], [248, 251], [252, 252]], "128": [[134, 134]], "129": [[254, 254]], "134": [[75, 75]], "137": [[68, 68]], "139": [[5, 5], [150, 150]], "141": [[223, 223]], "143": [[248, 248]], "144": [[48, 48], [48, 48], [48, 48]], "147": [[6, 6], [43, 43], [46, 46], [47, 47]], "150": [[107, 107], [107, 107], [129, 129], [150, 150], [183, 183], [197, 197], [242, 242], [242, 242]], "152": [[99, 99], [149, 149]], "154": [[10, 10]], "155": [[230, 230]], "156": [[147, 147]], "157": [[119, 119], [197, 197]], "158": [[44, 44]], "160": [[202, 202]], "161": [[122, 122]], "163": [[53, 53], [152, 152], [180, 180], [213, 213], [222, 222], [229, 229], [239, 239], [255, 255]], "164": [[124, 124], [125, 125]], "165": [[132, 132], [133, 133], [141, 141], [186, 186], [194, 194], [213, 213], [229, 229], [243, 243], [244, 244], [246, 246]], "166": [[79, 79], [103, 103], [104, 104], [125, 125]], "168": [[78, 78], [115, 115], [126, 126], [131, 131], [154, 154], [188, 188], [219, 219], [248, 249]], "169": [[140, 140], [208, 223]], "175": [[28, 28], [41, 41], [45, 45], [45, 45], [106, 106], [107, 107], [111, 111], [112, 127], [158, 158], [176, 176], [192, 255]], "180": [[64, 71], [80, 83], [92, 92], [92, 92], [94, 94], [131, 131], [132, 135], [148, 148], [150, 150], [182, 182], [189, 189], [189, 189], [210, 210], [210, 210], [211, 211], [222, 222], [224, 231], [233, 233], [236, 239]], "182": [[31, 31], [50, 50], [161, 161], [162, 162], [163, 163], [172, 172], [173, 173], [173, 173], [192, 199], [208, 223], [224, 231], [237, 237], [237, 237], [252, 252], [252, 252], [255, 255]], "183": [[78, 78], [78, 78], [86, 86], [90, 90], [91, 91], [96, 127]], "192": [[5, 5], [100, 100], [104, 104], [132, 132], [132, 132], [195, 195], [203, 203], [245, 245], [249, 249]], "202": [[3, 3], [6, 6], [8, 8], [14, 14], [14, 14], [14, 14], [20, 20], [20, 20], [20, 20], [20, 20], [21, 21], [22, 22], [30, 31], [43, 43], [59, 59], [68, 68], [73, 73], [86, 86], [89, 89], [89, 89], [90, 90], [126, 126], [128, 128], [131, 131], [133, 133], [136, 136], [148, 148], [150, 150], [158, 158], [163, 163], [165, 165], [167, 167], [171, 171], [174, 174], [179, 179], [179, 179]], "203": [[17, 17], [81, 81], [81, 81], [82, 82], [82, 82], [83, 83], [84, 84], [90, 90], [100, 100], [109, 109], [123, 123], [128, 128], [128, 128], [129, 129], [130, 130], [130, 130], [132, 132], [133, 133], [142, 142], [142, 142], [149, 149], [152, 152], [153, 153], [160, 160], [166, 166], [169, 169], [170, 170], [171, 171], [173, 173], [175, 175], [175, 175], [190, 190], [190, 190], [191, 191], [207, 207], [210, 210], [212, 212], [212, 212], [215, 215], [216, 216], [217, 217], [223, 223], [223, 223], [224, 224], [225, 225], [226, 227], [228, 229], [230, 231], [232, 233], [234, 235], [236, 239], [240, 243], [244, 247], [248, 251], [252, 255]], "210": [[0, 0], [2, 2], [4, 4], [4, 4], [16, 16], [57, 57], [87, 87], [89, 89], [90, 91], [92, 95], [96, 96], [97, 97], [98, 98], [99, 99], [100, 103], [104, 107], [108, 111], [112, 115], [116, 119], [120, 123], [124, 127], [178, 179], [180, 181], [182, 183], [192, 192], [204, 207], [210, 210], [211, 211], [211, 211], [216, 219], [220, 223]], "211": [[32, 39], [40, 51], [52, 63], [104, 111], [112, 119], [168, 175], [176, 191], [192, 199], [200, 205], [206, 211], [212, 215], [216, 225], [226, 231], [232, 255]], "218": [[36, 39], [48, 49], [50, 55], [101, 101], [144, 159], [209, 209], [232, 233], [234, 239]], "219": [[240, 241], [248, 255]], "220": [[64, 71], [72, 91], [92, 95], [103, 103], [116, 127], [149, 149], [230, 230]], "221": [[132, 132], [133, 133], [133, 133], [138, 143], [144, 168]], "222": [[96, 122], [231, 231], [232, 239], [251, 251]], "223": [[26, 26], [28, 28], [32, 63], [130, 130], [131, 131], [165, 165], [168, 175], [194, 195], [222, 222], [253, 253], [255, 255]] });
+
+    const DCUF_SHARED_IP = Object.freeze({ TELECOM, PROXY_MODE, PROXY_STRICT_PREFIXES, PROXY_AGGRESSIVE_EXTRA_PREFIXES, KR_IP_RANGES });
+
+
+const toInteger = (value, fallback) => {
+    const parsed = Number.parseInt(String(value), 10);
+    return Number.isFinite(parsed) ? parsed : fallback;
+};
+
+const toFloat = (value, fallback) => {
+    const parsed = Number.parseFloat(String(value));
+    return Number.isFinite(parsed) ? parsed : fallback;
+};
+
+const toBoolean = (value, fallback = false) => {
+    if (typeof value === 'boolean') return value;
+    if (value === 'true') return true;
+    if (value === 'false') return false;
+    return fallback;
+};
+
+const STORAGE_SCHEMA_VERSION = '3.0.0';
+
+function normalizeHeadtext(value) {
+    return typeof value === 'string' ? value.replace(/\s+/g, ' ').trim() : '';
+}
+
+function normalizeGalleryHeadtextBlocks(rawValue) {
+    if (!rawValue || typeof rawValue !== 'object' || Array.isArray(rawValue)) return {};
+    const normalized = {};
+    Object.entries(rawValue).forEach(([rawKey, rawItems]) => {
+        const key = typeof rawKey === 'string' ? rawKey.trim() : '';
+        if (!/^(?:board|mgallery|mini):[^:\s]+$/.test(key) || !Array.isArray(rawItems)) return;
+        const items = Array.from(new Set(rawItems.map(normalizeHeadtext).filter(Boolean))).slice(0, 100);
+        if (items.length > 0) normalized[key] = items;
+    });
+    return normalized;
+}
+
+function normalizeProxyBlockModeValue(rawValue) {
+    if (rawValue === true || rawValue === 'true') return PROXY_MODE.STRICT;
+    if (rawValue === false || rawValue === 'false' || rawValue == null) return PROXY_MODE.OFF;
+
+    const numeric = toInteger(rawValue, PROXY_MODE.OFF);
+    if (numeric === PROXY_MODE.AGGRESSIVE) return PROXY_MODE.AGGRESSIVE;
+    if (numeric === PROXY_MODE.STRICT) return PROXY_MODE.STRICT;
+    return PROXY_MODE.OFF;
+}
+
+function normalizeIpPrefix(value) {
+    if (typeof value !== 'string') return null;
+    const parts = value.trim().split('.');
+    if (parts.length !== 2) return null;
+
+    const normalizedParts = parts.map((part) => {
+        if (!/^\d{1,3}$/.test(part)) return null;
+        const numeric = Number(part);
+        return numeric >= 0 && numeric <= 255 ? String(numeric) : null;
+    });
+
+    return normalizedParts.includes(null) ? null : normalizedParts.join('.');
+}
+
+function stripLegacyMobileIpMarker(rawIpValue) {
+    if (typeof rawIpValue !== 'string' || !rawIpValue.trim()) return '';
+
+    const marker = ETC_CONSTANTS.MOBILE_IP_MARKER;
+    const markerToken = `||${marker}`;
+    const prefixedMarkerToken = `${marker}||`;
+
+    if (rawIpValue.startsWith(prefixedMarkerToken)) return '';
+
+    const markerIndex = rawIpValue.indexOf(markerToken);
+    if (markerIndex >= 0) return rawIpValue.slice(0, markerIndex);
+
+    return rawIpValue;
+}
+
+function parseIpPrefixList(value, marker = ETC_CONSTANTS.MOBILE_IP_MARKER) {
+    if (typeof value !== 'string' || !value) return [];
+
+    let source = value;
+    const markerIndex = source.indexOf(marker);
+    if (markerIndex !== -1) {
+        source = source.slice(0, markerIndex);
+        source = source.replace(/\|\|$/, '');
+    }
+
+    const seen = new Set();
+    return source.split('||').reduce((prefixes, token) => {
+        const normalized = normalizeIpPrefix(token);
+        if (!normalized || seen.has(normalized)) return prefixes;
+        seen.add(normalized);
+        prefixes.push(normalized);
+        return prefixes;
+    }, []);
+}
+
+function extractIpPrefix(ip) {
+    if (typeof ip !== 'string' || !ip) return null;
+    const match = ip.trim().match(/^(\d{1,3}\.\d{1,3})(?=\.|$)/);
+    return match ? normalizeIpPrefix(match[1]) : null;
+}
+
+function normalizeBlockConfigIp(rawIpValue, marker = ETC_CONSTANTS.MOBILE_IP_MARKER) {
+    return parseIpPrefixList(stripLegacyMobileIpMarker(String(rawIpValue || '')).replace(new RegExp(marker, 'g'), ''), marker).join('||');
+}
+
+function isSuspiciousLegacyManagedIpList(rawIpValue, marker = ETC_CONSTANTS.MOBILE_IP_MARKER, threshold = 100) {
+    if (typeof rawIpValue !== 'string' || !rawIpValue) return false;
+    if (rawIpValue.includes(marker)) return false;
+    return parseIpPrefixList(rawIpValue, marker).length >= threshold;
+}
+
+function formatShortcutKeys(keySet) {
+    if (!keySet || keySet.size === 0) return '';
+
+    const priority = ['Control', 'Meta', 'Alt', 'Shift', 'CapsLock', 'Tab'];
+    const keys = Array.from(keySet);
+
+    const modifiers = keys
+        .filter((key) => priority.includes(key))
+        .sort((a, b) => priority.indexOf(a) - priority.indexOf(b));
+
+    const others = keys
+        .filter((key) => !priority.includes(key) && key.length === 1)
+        .sort();
+
+    return [...modifiers, ...others].map((key) => key === 'Control' ? 'Ctrl' : key).join('+');
+}
+
+function parseShortcutString(shortcutString) {
+    const result = { ctrlKey: false, metaKey: false, altKey: false, shiftKey: false, key: '' };
+    if (!shortcutString) return result;
+
+    const parts = String(shortcutString).split('+');
+    const nonModifiers = [];
+
+    parts.forEach((part) => {
+        switch (part.toLowerCase()) {
+            case 'ctrl':
+            case 'control':
+                result.ctrlKey = true;
+                break;
+            case 'meta':
+            case 'win':
+                result.metaKey = true;
+                break;
+            case 'alt':
+                result.altKey = true;
+                break;
+            case 'shift':
+                result.shiftKey = true;
+                break;
+            default:
+                nonModifiers.push(part);
+                break;
+        }
+    });
+
+    if (nonModifiers.length > 0) {
+        result.key = String(nonModifiers[0] || '').toUpperCase();
+    }
+
+    return result;
+}
+
+function createDefaultFilterSettings() {
+    return {
+        masterDisabled: false,
+        excludeRecommended: true,
+        threshold: 200,
+        ratioEnabled: true,
+        ratioMin: 99,
+        ratioMax: 1,
+        blockGuest: false,
+        proxyBlockMode: PROXY_MODE.OFF,
+        telecomBlockEnabled: false,
+        personalBlockEnabled: true,
+        blockConfig: { uid: '', nick: '', ip: '' },
+        personalBlockList: { uids: [], nicknames: [], ips: [] },
+    };
+}
+
+function normalizeStoredFilterSettings(rawValues = {}) {
+    const defaults = createDefaultFilterSettings();
+    const blockConfig = rawValues[STORAGE_KEYS.BLOCK_CONFIG] || defaults.blockConfig;
+    const normalizedBlockConfig = {
+        ...defaults.blockConfig,
+        ...(blockConfig || {}),
+        ip: normalizeBlockConfigIp((blockConfig && blockConfig.ip) || defaults.blockConfig.ip),
+    };
+
+    return {
+        masterDisabled: toBoolean(rawValues[STORAGE_KEYS.MASTER_DISABLED], defaults.masterDisabled),
+        excludeRecommended: toBoolean(rawValues[STORAGE_KEYS.EXCLUDE_RECOMMENDED], defaults.excludeRecommended),
+        threshold: toInteger(rawValues[STORAGE_KEYS.THRESHOLD], defaults.threshold),
+        ratioEnabled: toBoolean(rawValues[STORAGE_KEYS.RATIO_ENABLED], defaults.ratioEnabled),
+        ratioMin: toFloat(rawValues[STORAGE_KEYS.RATIO_MIN], defaults.ratioMin),
+        ratioMax: toFloat(rawValues[STORAGE_KEYS.RATIO_MAX], defaults.ratioMax),
+        blockGuest: toBoolean(rawValues[STORAGE_KEYS.BLOCK_GUEST], defaults.blockGuest),
+        proxyBlockMode: normalizeProxyBlockModeValue(rawValues[STORAGE_KEYS.BLOCK_PROXY]),
+        telecomBlockEnabled: toBoolean(rawValues[STORAGE_KEYS.BLOCK_TELECOM], defaults.telecomBlockEnabled),
+        personalBlockEnabled: toBoolean(rawValues[STORAGE_KEYS.PERSONAL_BLOCK_ENABLED], defaults.personalBlockEnabled),
+        blockConfig: normalizedBlockConfig,
+        personalBlockList: rawValues[STORAGE_KEYS.PERSONAL_BLOCK_LIST]
+            && typeof rawValues[STORAGE_KEYS.PERSONAL_BLOCK_LIST] === 'object'
+            && !Array.isArray(rawValues[STORAGE_KEYS.PERSONAL_BLOCK_LIST])
+            ? rawValues[STORAGE_KEYS.PERSONAL_BLOCK_LIST]
+            : defaults.personalBlockList,
+    };
+}
+
+    const DCUF_SHARED_STORAGE = Object.freeze({
+        STORAGE_SCHEMA_VERSION,
+        normalizeHeadtext,
+        normalizeGalleryHeadtextBlocks,
+        normalizeProxyBlockModeValue,
+        normalizeIpPrefix,
+        stripLegacyMobileIpMarker,
+        parseIpPrefixList,
+        extractIpPrefix,
+        normalizeBlockConfigIp,
+        isSuspiciousLegacyManagedIpList,
+        formatShortcutKeys,
+        parseShortcutString,
+        createDefaultFilterSettings,
+        normalizeStoredFilterSettings,
+    });
+
+
+const modeToTier = (mode) => {
+    if (mode === PROXY_MODE.AGGRESSIVE) return 'aggressive';
+    if (mode === PROXY_MODE.STRICT) return 'strict';
+    return 'off';
+};
+
+const collectionHasValue = (collection, value) => {
+    if (!value || !collection) return false;
+    if (typeof collection.has === 'function') return collection.has(value);
+    if (Array.isArray(collection)) return collection.includes(value);
+    return false;
+};
+
+const uidCollectionHasValue = (collection, value) => {
+    if (!value || !collection) return false;
+    if (typeof collection.has === 'function') return collection.has(value);
+    if (!Array.isArray(collection)) return false;
+    return collection.some((item) => (typeof item === 'string' ? item : item?.id) === value);
+};
+
+const hasPersonalUidBlock = (subject, personalBlockList) =>
+    Boolean(subject?.uid && uidCollectionHasValue(personalBlockList?.uidSet ?? personalBlockList?.uids, subject.uid));
+
+const hasPersonalNicknameBlock = (subject, personalBlockList) =>
+    Boolean(subject?.nickname && collectionHasValue(personalBlockList?.nicknameSet ?? personalBlockList?.nicknames, subject.nickname));
+
+const hasPersonalIpBlock = (subject, personalBlockList) =>
+    Boolean(subject?.ip && collectionHasValue(personalBlockList?.ipSet ?? personalBlockList?.ips, subject.ip));
+
+const FILTER_CORE_PHASE = '3.2.2';
+
+function createEmptyDecision(proxyBlockMode = PROXY_MODE.OFF) {
+    return {
+        isBlocked: false,
+        reasons: [],
+        proxyTier: modeToTier(proxyBlockMode),
+        matchedBy: [],
+    };
+}
+
+function evaluateUserStatsBlock(userData, settings) {
+    const decision = { sumBlocked: false, ratioBlocked: false };
+    if (!userData || !settings || settings.masterDisabled) return decision;
+
+    const sum = Number(userData.sum) || 0;
+    const post = Number(userData.post) || 0;
+    const comment = Number(userData.comment) || 0;
+
+    decision.sumBlocked = settings.threshold > 0 && sum > 0 && sum <= settings.threshold;
+
+    if (!settings.ratioEnabled) return decision;
+
+    const useMin = !Number.isNaN(settings.ratioMin) && Number(settings.ratioMin) > 0;
+    const useMax = !Number.isNaN(settings.ratioMax) && Number(settings.ratioMax) > 0;
+    if (!useMin && !useMax) return decision;
+
+    const replyToPostRatio = post > 0 ? (comment / post) : (comment > 0 ? Infinity : 0);
+    const postToReplyRatio = comment > 0 ? (post / comment) : (post > 0 ? Infinity : 0);
+
+    if (useMin && replyToPostRatio >= settings.ratioMin) {
+        decision.ratioBlocked = true;
+    } else if (useMax && postToReplyRatio >= settings.ratioMax) {
+        decision.ratioBlocked = true;
+    }
+
+    return decision;
+}
+
+function isPersonalBlockHit(subject, personalBlockList) {
+    return hasPersonalUidBlock(subject, personalBlockList)
+        || hasPersonalNicknameBlock(subject, personalBlockList)
+        || hasPersonalIpBlock(subject, personalBlockList);
+}
+
+function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUidEntry = null }) {
+    const proxyBlockMode = settings?.proxyBlockMode ?? PROXY_MODE.OFF;
+    const decision = {
+        ...createEmptyDecision(proxyBlockMode),
+        path: 'sync-final',
+        hasCustomIpPrefixBlock: Boolean(matches.hasCustomIpPrefixBlock),
+        proxyPrefixMatch: Boolean(matches.proxyMatchInfo?.matched),
+        proxyMatchTier: matches.proxyMatchInfo?.tier || null,
+        telecomPrefixMatch: Boolean(matches.telecomPrefixMatch),
+        blockedGuestMatch: Boolean(matches.blockedGuestMatch),
+        personallyBlocked: Boolean(matches.personalBlockHit),
+        galleryHeadtextBlocked: Boolean(matches.galleryHeadtextBlock),
+    };
+
+    if (decision.personallyBlocked) {
+        decision.isBlocked = true;
+        decision.path = 'personal-block';
+        decision.reasons = ['personalBlock'];
+        decision.matchedBy = ['personalBlock'];
+        return decision;
+    }
+
+    if (subject?.hasBlockDisableClass) {
+        decision.isBlocked = true;
+        decision.path = 'dibs-block';
+        decision.reasons = ['block-disable-class'];
+        decision.matchedBy = ['block-disable-class'];
+        return decision;
+    }
+
+    if (subject?.isNotice) {
+        decision.path = 'notice-skip';
+        decision.reasons = ['notice'];
+        decision.matchedBy = ['notice'];
+        return decision;
+    }
+
+    if (subject?.shouldSkipFiltering) {
+        decision.path = 'recommended-skip';
+        decision.reasons = ['excludeRecommended-skip'];
+        decision.matchedBy = ['excludeRecommended-skip'];
+        return decision;
+    }
+
+    if (settings?.masterDisabled) {
+        decision.path = 'master-disabled';
+        decision.reasons = ['masterDisabled'];
+        decision.matchedBy = ['masterDisabled'];
+        return decision;
+    }
+
+    if (decision.galleryHeadtextBlocked) {
+        decision.isBlocked = true;
+        decision.path = 'gallery-headtext';
+        decision.reasons.push('galleryHeadtext');
+    }
+
+    if (!decision.isBlocked && subject?.isGuest && settings?.blockGuestEnabled) {
+        decision.isBlocked = true;
+        decision.reasons.push('guest-toggle');
+    }
+    if (!decision.isBlocked && decision.hasCustomIpPrefixBlock) {
+        decision.isBlocked = true;
+        decision.reasons.push('custom-ip-prefix');
+    }
+    if (!decision.isBlocked && decision.proxyPrefixMatch) {
+        decision.isBlocked = true;
+        decision.reasons.push(`proxy-prefix-match:${decision.proxyMatchTier}`);
+    }
+    if (!decision.isBlocked && decision.telecomPrefixMatch) {
+        decision.isBlocked = true;
+        decision.reasons.push('telecom-prefix-match');
+    }
+    if (!decision.isBlocked && decision.blockedGuestMatch) {
+        decision.isBlocked = true;
+        decision.reasons.push('blockedGuests-list-hit');
+    }
+
+    if (!decision.isBlocked && blockedUidEntry) {
+        const uidCacheDecision = evaluateUserStatsBlock(blockedUidEntry, settings);
+        if (uidCacheDecision.sumBlocked || uidCacheDecision.ratioBlocked) {
+            decision.isBlocked = true;
+            decision.reasons.push(`uid-cache:${uidCacheDecision.sumBlocked ? 'sum' : ''}${uidCacheDecision.ratioBlocked ? 'ratio' : ''}`);
+        }
+    }
+
+    decision.matchedBy = decision.reasons.slice();
+    return decision;
+}
+
+    const DCUF_SHARED_FILTER_CORE = Object.freeze({
+        FILTER_CORE_PHASE,
+        createEmptyDecision,
+        evaluateUserStatsBlock,
+        isPersonalBlockHit,
+        evaluateSyncBlockDecision,
+    });
+    // PC-only filter UI adapter rail.
+    //
+    // The visual rules for settings, shortcut modal, personal-block FAB,
+    // selection popup, management panel, and backup popup are owned by the
+    // marked sections in targets/mobile/filter-module.js. The PC builder
+    // extracts those sections verbatim so the two targets cannot drift.
+    // Add rules here only for a verified PC host-DOM difference; do not copy
+    // shared filter UI declarations back into this file.
+    // Extracted verbatim from the mobile-owned filter UI style rail.
+    GM_addStyle(`
+#dc-personal-block-controls {
             --dcuf-fab-width: 152px;
             --dcuf-fab-height: 76px;
             --dcuf-fab-padding-x: 28px;
@@ -1398,7 +1694,7 @@
             }
         }
 
-        /* [v__VERSION__] Script-owned soft-depth control surfaces */
+        /* [v1.9.8] Script-owned soft-depth control surfaces */
         #dc-personal-block-fab {
             background: linear-gradient(180deg, #fff 0%, #eef4ff 100%) !important;
             color: #29466f !important;
@@ -1989,114 +2285,7 @@
         #dc-block-management-panel,
         #dc-backup-popup { background-color: #f4f7fc !important; }
 
-        /* DCUF_SHARED_FILTER_UI_END */
-
-        /* [수정] DCCon 및 각종 팝업 모바일 반응형 중앙 정렬 */
-         /* --- [최종 진짜 수정 v9] 야간 모드 완벽 지원 (색상 반전 대응) --- */
-
-        /* 1. 전역 및 기본 레이웃 다크 테마 */
-        body.dc-filter-dark-mode,
-        body.dc-filter-dark-mode #container,
-        body.dc-filter-dark-mode .gall_content,
-        body.dc-filter-dark-mode .gall_comment {
-            background: #121212 !important;
-            color: #e0e0e0 !important;
-        }
-
-        body.dc-filter-dark-mode .dcheader.typea,
-        body.dc-filter-dark-mode .minor_intro_area,
-        body.dc-filter-dark-mode .newvisit_history {
-            background: #1c1c1e !important;
-            border-bottom-color: #3a3a3c !important;
-        }
-
-        body.dc-filter-dark-mode .newvisit_history > .tit {
-            color: #e0e0e0 !important;
-        }
-
-        /* 2. 커스텀 게시글 목록 다크 테마 */
-        body.dc-filter-dark-mode .custom-mobile-list {
-            background: #1c1c1e !important;
-            border-top-color: #3a3a3c !important;
-        }
-        body.dc-filter-dark-mode .custom-post-item {
-            color: #e0e0e0 !important;
-            border-bottom-color: #3a3a3c !important;
-        }
-        body.dc-filter-dark-mode .custom-post-item:hover {
-            background-color: #2a2a2a !important;
-        }
-        body.dc-filter-dark-mode .custom-post-item.notice,
-        body.dc-filter-dark-mode .custom-post-item.concept {
-            background-color: #252525 !important;
-        }
-        body.dc-filter-dark-mode .post-title {
-            color: #e0e0e0 !important;
-        }
-        body.dc-filter-dark-mode .post-title a:visited {
-            color: #a9a9a9 !important; /* 방문한 링크 색상 */
-        }
-        body.dc-filter-dark-mode .post-meta .author .nickname,
-        body.dc-filter-dark-mode .post-meta .author .ip {
-            color: #b0b0b0 !important;
-        }
-        body.dc-filter-dark-mode .post-meta,
-        body.dc-filter-dark-mode .post-meta .stats {
-            color: #888 !important;
-        }
-
-        /* 3. 글 본문 및 댓글 다크 테마 */
-        body.dc-filter-dark-mode .gall_tit_box,
-        body.dc-filter-dark-mode .gall_writer_info,
-        body.dc-filter-dark-mode .btn_recommend_box,
-        body.dc-filter-dark-mode .view_bottom {
-            background: #1c1c1e !important;
-            border-bottom-color: #3a3a3c !important;
-        }
-
-        /* [v3.0 alpha] 본문 글자색은 실제 다크 팔레트로 직접 덮어씁니다. */
-        body.dc-filter-dark-mode .gallview_contents,
-        body.dc-filter-dark-mode .gallview_contents p,
-        body.dc-filter-dark-mode .gallview_contents span,
-        body.dc-filter-dark-mode .gallview_contents div,
-        body.dc-filter-dark-mode .gallview_contents *,
-        body.dc-filter-dark-mode .writing_view_box,
-        body.dc-filter-dark-mode .writing_view_box *,
-        body.dc-filter-dark-mode .write_div,
-        body.dc-filter-dark-mode .write_div *,
-        body.dc-filter-dark-mode .write_div [data-scaled-by-filter],
-        body.dc-filter-dark-mode .write_div [data-scaled-by-filter] * {
-            color: var(--dcuf-view-fg) !important;
-            -webkit-text-fill-color: var(--dcuf-view-fg) !important;
-        }
-
-        /* 댓글은 반전 필터의 영향을 받지 않으므로 그대로 밝은 색 설정 */
-        body.dc-filter-dark-mode .comment_box .usertxt {
-            color: #e0e0e0 !important;
-        }
-
-        body.dc-filter-dark-mode .btn_recommend_box .inner_box > .inner {
-            background-color: #2a2a2a !important;
-            border-color: #444 !important;
-        }
-        body.dc-filter-dark-mode .btn_recommend_box .up_num,
-        body.dc-filter-dark-mode .btn_recommend_box .down_num {
-            color: #e0e0e0 !important;
-        }
-
-        /* 4. 하단 컨트롤 및 검색창 다크 테마 */
-        body.dc-filter-dark-mode .custom-bottom-controls,
-        body.dc-filter-dark-mode .custom-bottom-controls form[name="frmSearch"] select {
-            background: #1c1c1e !important;
-        }
-        body.dc-filter-dark-mode .custom-bottom-controls form[name="frmSearch"] input[type="text"] {
-            background: #333 !important;
-            color: #fff !important;
-            border-color: #555 !important;
-        }
-
-        /* DCUF_SHARED_FILTER_UI_DARK_START */
-        body.dc-filter-dark-mode #dc-personal-block-fab {
+body.dc-filter-dark-mode #dc-personal-block-fab {
             background: linear-gradient(180deg, #3b414b 0%, #303640 100%) !important;
             color: #e9eef6 !important;
             border-color: #596474 !important;
@@ -2483,289 +2672,811 @@
         body.dc-filter-dark-mode #dcinside-filter-setting,
         body.dc-filter-dark-mode #dc-block-management-panel,
         body.dc-filter-dark-mode #dc-backup-popup { background-color: #1b2738 !important; }
+    `);
+const ThemeModule = (() => {
+    const STORAGE_KEY = 'dcuf_mobile_ui_palette';
+    const ROOT_ATTRIBUTE = 'data-dcuf-palette';
+    const STYLE_ID = 'dcuf-mobile-palette-style';
+    const OVERLAY_ID = 'dcuf-palette-overlay';
+    const PANEL_ID = 'dcuf-palette-panel';
+    const DEFAULT_ID = 'blue';
+    const PRESETS = Object.freeze([
+        Object.freeze({ id: 'blue', label: '기본 블루', light: ['#3f6de0', '#245bda', '#eaf1ff'], dark: ['#8cb4ff', '#3868df', '#243a64'] }),
+        Object.freeze({ id: 'purple', label: '퍼플', light: ['#7c3aed', '#6d28d9', '#f3e8ff'], dark: ['#c4b5fd', '#7c3aed', '#39275a'] }),
+        Object.freeze({ id: 'green', label: '그린', light: ['#16805d', '#047857', '#e7f7ef'], dark: ['#6ee7b7', '#047857', '#173c32'] }),
+        Object.freeze({ id: 'orange', label: '오렌지', light: ['#c2410c', '#9a3412', '#fff0e7'], dark: ['#fdba74', '#c2410c', '#4a2a1b'] }),
+        Object.freeze({ id: 'mono', label: '모노톤', light: ['#526274', '#374151', '#eef2f7'], dark: ['#cbd5e1', '#475569', '#28323f'] }),
+        Object.freeze({ id: 'indigo', label: '인디고', light: ['#4f46e5', '#4338ca', '#eef2ff'], dark: ['#4f46e5', '#3730a3', '#29274f'] }),
+        Object.freeze({ id: 'sky', label: '스카이', light: ['#0284c7', '#0369a1', '#e0f2fe'], dark: ['#0369a1', '#075985', '#17384a'] }),
+        Object.freeze({ id: 'cyan', label: '시안', light: ['#0891b2', '#0e7490', '#ecfeff'], dark: ['#0e7490', '#155e75', '#173b44'] }),
+        Object.freeze({ id: 'teal', label: '틸', light: ['#0f766e', '#115e59', '#e6f7f4'], dark: ['#0f766e', '#115e59', '#173c38'] }),
+        Object.freeze({ id: 'lime', label: '라임', light: ['#65a30d', '#4d7c0f', '#f7fee7'], dark: ['#4d7c0f', '#3f6212', '#2c3918'] }),
+        Object.freeze({ id: 'amber', label: '앰버', light: ['#d97706', '#b45309', '#fffbeb'], dark: ['#b45309', '#92400e', '#493016'] }),
+        Object.freeze({ id: 'red', label: '레드', light: ['#dc2626', '#b91c1c', '#fef2f2'], dark: ['#c62828', '#991b1b', '#4a2020'] }),
+        Object.freeze({ id: 'rose', label: '로즈', light: ['#e11d48', '#be123c', '#fff1f2'], dark: ['#cf234c', '#9f1239', '#4a202d'] }),
+        Object.freeze({ id: 'pink', label: '핑크', light: ['#db2777', '#be185d', '#fce7f3'], dark: ['#c52a72', '#9d174d', '#472138'] })
+    ]);
+    const VALID_IDS = new Set(PRESETS.map((preset) => preset.id));
 
-        /* DCUF_SHARED_FILTER_UI_DARK_END */
+    let committedId = DEFAULT_ID;
+    let writeRevision = 0;
+    let initialReadSettled = false;
+    let initialReadPromise = null;
+    let domReadyApplyScheduled = false;
+
+    const normalize = (value) => typeof value === 'string' && VALID_IDS.has(value) ? value : DEFAULT_ID;
+
+    const apply = (value, reason = 'apply') => {
+        const id = normalize(value);
+        const root = document.documentElement;
+        if (root) root.setAttribute(ROOT_ATTRIBUTE, id);
+        else if (!domReadyApplyScheduled) {
+            domReadyApplyScheduled = true;
+            document.addEventListener('DOMContentLoaded', () => {
+                domReadyApplyScheduled = false;
+                apply(committedId, 'dom-ready');
+            }, { once: true });
+        }
+        window.__dcufActivePalette = id;
+        window.dispatchEvent(new CustomEvent('dcuf:palette-change', { detail: { id, reason } }));
+        return id;
+    };
+
+    const buildPresetVariables = () => PRESETS.map((preset) => {
+        const [accent, strong, soft, onAccent = '#fff'] = preset.light;
+        const [darkAccent, darkStrong, darkSoft, darkOnAccent = '#fff'] = preset.dark;
+        return `
+            html[${ROOT_ATTRIBUTE}="${preset.id}"] {
+                --dcuf-theme-accent: ${accent};
+                --dcuf-theme-accent-strong: ${strong};
+                --dcuf-theme-accent-soft: ${soft};
+                --dcuf-theme-on-accent: ${onAccent};
+            }
+            html[${ROOT_ATTRIBUTE}="${preset.id}"].dc-filter-dark-mode,
+            html[${ROOT_ATTRIBUTE}="${preset.id}"] body.dc-filter-dark-mode {
+                --dcuf-theme-accent: ${darkAccent};
+                --dcuf-theme-accent-strong: ${darkStrong};
+                --dcuf-theme-accent-soft: ${darkSoft};
+                --dcuf-theme-on-accent: ${darkOnAccent};
+            }
+        `;
+    }).join('\n');
+
+    const buildCss = () => `
+        ${buildPresetVariables()}
+
+        html[${ROOT_ATTRIBUTE}] {
+            --dcuf-theme-fg: #27313f;
+            --dcuf-theme-fg-muted: #687384;
+            --dcuf-theme-border: color-mix(in srgb, var(--dcuf-theme-accent) 7%, #d9dde3);
+            --dcuf-theme-border-strong: color-mix(in srgb, var(--dcuf-theme-accent) 14%, #cbd2db);
+            --dcuf-theme-page: #f6f7f9;
+            --dcuf-theme-surface: color-mix(in srgb, var(--dcuf-theme-accent-soft) 8%, #f7f8fa);
+            --dcuf-theme-surface-raised: color-mix(in srgb, var(--dcuf-theme-accent-soft) 12%, #fbfcfd);
+            --dcuf-theme-surface-muted: color-mix(in srgb, var(--dcuf-theme-accent-soft) 9%, #f1f3f6);
+            --dcuf-theme-surface-input: color-mix(in srgb, var(--dcuf-theme-accent-soft) 2%, #fff);
+            --dcuf-theme-canvas: color-mix(in srgb, var(--dcuf-theme-accent-soft) 14%, #f6f7f9);
+            --dcuf-theme-card-top: color-mix(in srgb, var(--dcuf-theme-accent-soft) 1%, #fff);
+            --dcuf-theme-card-bottom: color-mix(in srgb, var(--dcuf-theme-accent-soft) 4%, #fafbfc);
+            --dcuf-theme-article-surface: color-mix(in srgb, var(--dcuf-theme-accent-soft) 6%, #f8f9fb);
+            --dcuf-theme-concept-surface: color-mix(in srgb, var(--dcuf-theme-accent-soft) 7%, #fff);
+            --dcuf-theme-notice-surface: #f2f4f7;
+            --dcuf-theme-reply-surface: color-mix(in srgb, var(--dcuf-theme-accent-soft) 10%, #f4f6f8);
+            --dcuf-theme-card-shadow: 0 1px 3px rgba(31, 41, 55, .07), 0 6px 16px rgba(31, 41, 55, .075);
+            --dcuf-theme-panel-shadow: 0 18px 42px rgba(31, 41, 55, .16), 0 3px 9px rgba(31, 41, 55, .09);
+            --dcuf-theme-primary-top: color-mix(in srgb, var(--dcuf-theme-accent) 78%, white);
+            --dcuf-theme-focus-ring: color-mix(in srgb, var(--dcuf-theme-accent) 18%, transparent);
+            --dcuf-theme-accent-shadow: color-mix(in srgb, var(--dcuf-theme-accent-strong) 25%, transparent);
+        }
+        html[${ROOT_ATTRIBUTE}].dc-filter-dark-mode,
+        html[${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode {
+            --dcuf-theme-fg: #edf2f7;
+            --dcuf-theme-fg-muted: #aeb8c4;
+            --dcuf-theme-border: color-mix(in srgb, var(--dcuf-theme-accent) 7%, #3a4149);
+            --dcuf-theme-border-strong: color-mix(in srgb, var(--dcuf-theme-accent) 14%, #4b525b);
+            --dcuf-theme-page: #121417;
+            --dcuf-theme-surface: color-mix(in srgb, var(--dcuf-theme-accent-soft) 5%, #1b1f24);
+            --dcuf-theme-surface-raised: color-mix(in srgb, var(--dcuf-theme-accent-soft) 8%, #22262c);
+            --dcuf-theme-surface-muted: color-mix(in srgb, var(--dcuf-theme-accent-soft) 6%, #1d2228);
+            --dcuf-theme-surface-input: color-mix(in srgb, var(--dcuf-theme-accent-soft) 2%, #171b20);
+            --dcuf-theme-canvas: color-mix(in srgb, var(--dcuf-theme-accent-soft) 10%, #171a1f);
+            --dcuf-theme-card-top: color-mix(in srgb, var(--dcuf-theme-accent-soft) 3%, #24272d);
+            --dcuf-theme-card-bottom: color-mix(in srgb, var(--dcuf-theme-accent-soft) 4%, #20242a);
+            --dcuf-theme-article-surface: color-mix(in srgb, var(--dcuf-theme-accent-soft) 5%, #1a1e23);
+            --dcuf-theme-concept-surface: color-mix(in srgb, var(--dcuf-theme-accent-soft) 8%, #22262c);
+            --dcuf-theme-notice-surface: #252a31;
+            --dcuf-theme-reply-surface: color-mix(in srgb, var(--dcuf-theme-accent-soft) 10%, #21262c);
+            --dcuf-theme-card-shadow: 0 1px 3px rgba(0,0,0,.28), 0 7px 18px rgba(0,0,0,.22);
+            --dcuf-theme-panel-shadow: 0 20px 46px rgba(0,0,0,.44), 0 3px 9px rgba(0,0,0,.24);
+            --dcuf-theme-primary-top: color-mix(in srgb, var(--dcuf-theme-accent) 68%, white);
+        }
+
+        /* DCUF_MOBILE_THEME_CSS_START */
+        /* Mobile host palette CSS removed by the PC port rail. */
+        /* DCUF_MOBILE_THEME_CSS_END */
+
+        /* DCUF_SHARED_PALETTE_UI_START */
+        html[${ROOT_ATTRIBUTE}] body #dcinside-filter-setting #dcinside-threshold-save,
+        html[${ROOT_ATTRIBUTE}] body #dcinside-shortcut-modal #dcinside-save-shortcut-btn,
+        html[${ROOT_ATTRIBUTE}] body #dc-personal-block-size-panel [data-dcuf-fab-size-action="save"],
+        html[${ROOT_ATTRIBUTE}] body #dc-selection-popup .block-option button:not(.btn-unblock),
+        html[${ROOT_ATTRIBUTE}] body #dc-block-management-panel .panel-save-btn,
+        html[${ROOT_ATTRIBUTE}] body #dc-backup-popup :is(.export-btn, .import-btn),
+        html[${ROOT_ATTRIBUTE}] body #dc-manual-block-panel .dcuf-manual-actions [data-manual-block-action="add"],
+        html[${ROOT_ATTRIBUTE}] body #dcinside-filter-setting #dcinside-proxy-ip-block-mode-group button[data-proxy-mode][aria-pressed="true"] {
+            border-color: var(--dcuf-theme-accent-strong) !important;
+            background-color: var(--dcuf-theme-accent-strong) !important;
+            background-image: linear-gradient(180deg, var(--dcuf-theme-primary-top), var(--dcuf-theme-accent-strong)) !important;
+            color: var(--dcuf-theme-on-accent) !important;
+            box-shadow: 0 7px 16px var(--dcuf-theme-accent-shadow) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-block-management-panel input:checked + .switch-slider,
+        html[${ROOT_ATTRIBUTE}] body #dcinside-filter-setting input:checked + .switch-slider,
+        html[${ROOT_ATTRIBUTE}] body #dc-block-management-panel .panel-tab.active {
+            border-color: var(--dcuf-theme-accent) !important;
+            background-color: var(--dcuf-theme-accent-soft) !important;
+            background-image: none !important;
+            color: var(--dcuf-theme-accent-strong) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-personal-block-fab {
+            border-color: var(--dcuf-theme-accent) !important;
+            background: linear-gradient(180deg, var(--dcuf-theme-card-top), var(--dcuf-theme-surface-raised)) !important;
+            color: var(--dcuf-theme-accent-strong) !important;
+            box-shadow: 0 8px 20px var(--dcuf-theme-accent-shadow) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-personal-block-drawer button:is(:hover, :focus-visible),
+        html[${ROOT_ATTRIBUTE}] body #dc-manual-block-panel [data-manual-block-type][aria-pressed="true"] {
+            border-color: var(--dcuf-theme-accent) !important;
+            background: var(--dcuf-theme-accent-soft) !important;
+            color: var(--dcuf-theme-accent-strong) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-backup-popup .export-btn-download {
+            border-color: color-mix(in srgb, var(--dcuf-theme-accent) 30%, transparent) !important;
+            background: var(--dcuf-theme-accent-soft) !important;
+            color: var(--dcuf-theme-accent) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-backup-popup .export-btn-download:hover {
+            border-color: color-mix(in srgb, var(--dcuf-theme-accent) 45%, transparent) !important;
+            background: color-mix(in srgb, var(--dcuf-theme-accent) 18%, var(--dcuf-theme-accent-soft)) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-personal-block-drawer {
+            border-color: var(--dcuf-theme-border-strong) !important;
+            background-color: var(--dcuf-theme-card-bottom) !important;
+            background-image: linear-gradient(145deg, var(--dcuf-theme-card-top), var(--dcuf-theme-card-bottom)) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-personal-block-drawer .dcuf-menu-icon,
+        html[${ROOT_ATTRIBUTE}] body #dc-selection-popup .dcuf-selection-prompt-icon {
+            border-color: color-mix(in srgb, var(--dcuf-theme-accent) 28%, transparent) !important;
+            background: linear-gradient(145deg, var(--dcuf-theme-card-top), var(--dcuf-theme-accent-soft)) !important;
+            color: var(--dcuf-theme-accent) !important;
+            box-shadow: 0 5px 11px color-mix(in srgb, var(--dcuf-theme-accent) 18%, transparent), inset 0 1px 0 color-mix(in srgb, white 70%, transparent) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-manual-block-panel {
+            border-color: var(--dcuf-theme-border-strong) !important;
+            background-color: var(--dcuf-theme-card-bottom) !important;
+            background-image: linear-gradient(155deg, var(--dcuf-theme-card-top), var(--dcuf-theme-card-bottom)) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-manual-block-panel .dcuf-manual-header {
+            border-color: var(--dcuf-theme-border) !important;
+            background: linear-gradient(135deg, var(--dcuf-theme-accent-soft), var(--dcuf-theme-card-top)) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-manual-block-panel .dcuf-manual-type-tabs {
+            border-color: color-mix(in srgb, var(--dcuf-theme-accent) 24%, var(--dcuf-theme-border)) !important;
+            background: color-mix(in srgb, var(--dcuf-theme-accent-soft) 68%, var(--dcuf-theme-surface-muted)) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-manual-block-panel .dcuf-manual-status[data-state="info"],
+        html[${ROOT_ATTRIBUTE}] body #dc-manual-block-panel .dcuf-manual-kicker,
+        html[${ROOT_ATTRIBUTE}] body #dc-block-management-panel .panel-kicker {
+            color: var(--dcuf-theme-accent) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-block-management-panel .panel-add-btn {
+            border-color: color-mix(in srgb, var(--dcuf-theme-accent) 30%, transparent) !important;
+            background: var(--dcuf-theme-accent-soft) !important;
+            color: var(--dcuf-theme-accent) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-block-management-panel :is(.select-all-btn, .select-all-global-btn, .panel-backup-btn):hover,
+        html[${ROOT_ATTRIBUTE}] body #dc-block-management-panel .blocked-item:not(.item-to-delete):hover {
+            border-color: color-mix(in srgb, var(--dcuf-theme-accent) 28%, transparent) !important;
+            background: color-mix(in srgb, var(--dcuf-theme-accent-soft) 72%, var(--dcuf-theme-card-top)) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-selection-popup.dcuf-selection-prompt {
+            border-color: color-mix(in srgb, var(--dcuf-theme-accent) 34%, transparent) !important;
+            background-color: var(--dcuf-theme-card-bottom) !important;
+            background-image: linear-gradient(145deg, var(--dcuf-theme-card-top), var(--dcuf-theme-accent-soft)) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-manual-block-panel .dcuf-manual-field input:focus {
+            border-color: var(--dcuf-theme-accent) !important;
+            box-shadow: 0 0 0 3px var(--dcuf-theme-focus-ring) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dcinside-filter-setting :is(input, button):focus-visible,
+        html[${ROOT_ATTRIBUTE}] body #dcinside-shortcut-modal :is(input, button):focus-visible,
+        html[${ROOT_ATTRIBUTE}] body #dc-personal-block-size-panel :is(input, button):focus-visible,
+        html[${ROOT_ATTRIBUTE}] body #dc-personal-block-drawer button:focus-visible,
+        html[${ROOT_ATTRIBUTE}] body #dc-selection-popup button:focus-visible,
+        html[${ROOT_ATTRIBUTE}] body #dc-manual-block-panel :is(input, button):focus-visible,
+        html[${ROOT_ATTRIBUTE}] body #dc-block-management-panel :is(input, button):focus-visible,
+        html[${ROOT_ATTRIBUTE}] body #dc-backup-popup :is(input, textarea, button):focus-visible {
+            outline: 3px solid var(--dcuf-theme-focus-ring) !important;
+            outline-offset: 2px !important;
+        }
+
+        /* Script-owned management surfaces use the same neutralized card hierarchy. */
+        html[${ROOT_ATTRIBUTE}] body #dcinside-filter-setting,
+        html[${ROOT_ATTRIBUTE}] body #dc-backup-popup,
+        html[${ROOT_ATTRIBUTE}] body #dc-block-management-panel {
+            border-color: var(--dcuf-theme-border-strong) !important;
+            background-color: var(--dcuf-theme-canvas) !important;
+            background-image: linear-gradient(160deg, var(--dcuf-theme-card-top), var(--dcuf-theme-canvas)) !important;
+            color: var(--dcuf-theme-fg) !important;
+            box-shadow: var(--dcuf-theme-panel-shadow) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dcinside-filter-setting :is(.dcuf-settings-header, .dcuf-settings-footer),
+        html[${ROOT_ATTRIBUTE}] body #dc-backup-popup .popup-header,
+        html[${ROOT_ATTRIBUTE}] body #dc-block-management-panel :is(.panel-header, .panel-tabs, .panel-footer) {
+            border-color: var(--dcuf-theme-border) !important;
+            background-color: var(--dcuf-theme-surface-raised) !important;
+            background-image: linear-gradient(180deg, var(--dcuf-theme-card-top), var(--dcuf-theme-surface-raised)) !important;
+            color: var(--dcuf-theme-fg) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dcinside-filter-setting :is(.dcuf-settings-section, .dcuf-settings-threshold > div:last-child, .dcuf-settings-guest-controls),
+        html[${ROOT_ATTRIBUTE}] body #dc-backup-popup :is(.export-section, .import-section),
+        html[${ROOT_ATTRIBUTE}] body #dc-block-management-panel :is(.panel-list-controls, .blocked-item) {
+            border-color: var(--dcuf-theme-border) !important;
+            background-color: var(--dcuf-theme-card-top) !important;
+            background-image: linear-gradient(145deg, var(--dcuf-theme-card-top), var(--dcuf-theme-card-bottom)) !important;
+            color: var(--dcuf-theme-fg) !important;
+            box-shadow: 0 5px 14px color-mix(in srgb, var(--dcuf-theme-accent-strong) 5%, transparent), inset 0 1px 0 color-mix(in srgb, white 60%, transparent) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode #dcinside-filter-setting :is(.dcuf-settings-section, .dcuf-settings-threshold > div:last-child, .dcuf-settings-guest-controls),
+        html[${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode #dc-backup-popup :is(.export-section, .import-section),
+        html[${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode #dc-block-management-panel :is(.panel-list-controls, .blocked-item) {
+            box-shadow: 0 6px 15px rgba(0,0,0,.2), inset 0 1px 0 rgba(255,255,255,.045) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-block-management-panel :is(.panel-body, .panel-content, .blocked-list) {
+            background-color: var(--dcuf-theme-canvas) !important;
+            background-image: none !important;
+            color: var(--dcuf-theme-fg) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-block-management-panel .panel-tab:not(.active),
+        html[${ROOT_ATTRIBUTE}] body #dc-block-management-panel :is(.select-all-btn, .select-all-global-btn, .panel-backup-btn),
+        html[${ROOT_ATTRIBUTE}] body #dcinside-filter-setting button:not(#dcinside-threshold-save):not([aria-pressed="true"]),
+        html[${ROOT_ATTRIBUTE}] body #dc-backup-popup button:not(.export-btn):not(.export-btn-download):not(.import-btn):not(.delete-item-btn) {
+            border-color: var(--dcuf-theme-border-strong) !important;
+            background-color: var(--dcuf-theme-surface-input) !important;
+            background-image: linear-gradient(180deg, var(--dcuf-theme-card-top), var(--dcuf-theme-surface-input)) !important;
+            color: var(--dcuf-theme-fg) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dcinside-filter-setting :is(input, textarea, select),
+        html[${ROOT_ATTRIBUTE}] body #dc-backup-popup :is(.import-file-input, textarea),
+        html[${ROOT_ATTRIBUTE}] body #dc-block-management-panel :is(.panel-search-input, input:not([type="checkbox"])) {
+            border-color: var(--dcuf-theme-border-strong) !important;
+            background-color: var(--dcuf-theme-surface-input) !important;
+            background-image: none !important;
+            color: var(--dcuf-theme-fg) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dcinside-filter-setting #dcinside-threshold-input,
+        html[${ROOT_ATTRIBUTE}] body #dcinside-filter-setting #dcinside-ratio-min,
+        html[${ROOT_ATTRIBUTE}] body #dcinside-filter-setting #dcinside-ratio-max {
+            border-color: var(--dcuf-theme-border-strong) !important;
+            background-color: var(--dcuf-theme-surface-input) !important;
+            background-image: none !important;
+            color: var(--dcuf-theme-fg) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dcinside-filter-setting :is(.dcuf-settings-description, .dcuf-settings-help, small),
+        html[${ROOT_ATTRIBUTE}] body #dc-backup-popup .description,
+        html[${ROOT_ATTRIBUTE}] body #dc-block-management-panel :is(.panel-list-summary, .blocked-list-empty) {
+            color: var(--dcuf-theme-fg-muted) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-block-management-panel .blocked-item.item-to-delete {
+            border-color: #efb9c1 !important;
+            background: #fff5f6 !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode #dc-block-management-panel .blocked-item.item-to-delete {
+            border-color: #7f3d48 !important;
+            background: #372127 !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode #dc-personal-block-drawer,
+        html[${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode #dc-manual-block-panel,
+        html[${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode #dc-selection-popup.dcuf-selection-prompt {
+            border-color: var(--dcuf-theme-border-strong) !important;
+            background-color: var(--dcuf-theme-card-bottom) !important;
+            background-image: linear-gradient(145deg, var(--dcuf-theme-card-top), var(--dcuf-theme-card-bottom)) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode #dc-manual-block-panel .dcuf-manual-header,
+        html[${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode #dc-manual-block-panel .dcuf-manual-type-tabs {
+            border-color: var(--dcuf-theme-border) !important;
+            background: var(--dcuf-theme-surface-muted) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode #dc-personal-block-drawer .dcuf-menu-icon,
+        html[${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode #dc-selection-popup .dcuf-selection-prompt-icon {
+            border-color: var(--dcuf-theme-border-strong) !important;
+            background: linear-gradient(145deg, var(--dcuf-theme-card-top), var(--dcuf-theme-surface-raised)) !important;
+            color: var(--dcuf-theme-accent) !important;
+        }
+        /* DCUF_SHARED_PALETTE_UI_END */
+
+        #${OVERLAY_ID} {
+            position: fixed !important;
+            inset: 0 !important;
+            z-index: 2147483646 !important;
+            box-sizing: border-box !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)) !important;
+            background: rgba(18, 25, 35, .52) !important;
+            backdrop-filter: blur(3px);
+            pointer-events: auto !important;
+        }
+        #${PANEL_ID} {
+            box-sizing: border-box !important;
+            position: fixed !important;
+            left: 50% !important;
+            top: 50% !important;
+            transform: translate(-50%, -50%);
+            display: flex !important;
+            flex-direction: column !important;
+            width: min(520px, calc(100vw - 32px)) !important;
+            height: min(680px, calc(100dvh - 32px)) !important;
+            min-width: min(300px, calc(100vw - 16px)) !important;
+            min-height: min(360px, calc(100dvh - 16px)) !important;
+            max-height: calc(100dvh - 32px) !important;
+            overflow: hidden !important;
+            padding: 0 !important;
+            border: 1px solid var(--dcuf-theme-border-strong) !important;
+            border-radius: 20px !important;
+            background: var(--dcuf-theme-card-top) !important;
+            color: var(--dcuf-theme-fg) !important;
+            box-shadow: var(--dcuf-theme-panel-shadow) !important;
+            font: 500 14px/1.45 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+        }
+        #${PANEL_ID}[data-dcuf-palette-interacting="true"] { transition: none !important; animation: none !important; }
+        #${PANEL_ID} .dcuf-palette-header {
+            flex: 0 0 auto !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            gap: 12px !important;
+            padding: 18px 18px 14px !important;
+            border-bottom: 1px solid var(--dcuf-theme-border) !important;
+            background: linear-gradient(180deg, var(--dcuf-theme-card-top), var(--dcuf-theme-surface-raised)) !important;
+            cursor: move !important;
+            touch-action: none !important;
+            user-select: none !important;
+        }
+        #${PANEL_ID} h2 { margin: 0 !important; color: inherit !important; font-size: 20px !important; line-height: 1.2 !important; }
+        #${PANEL_ID} .dcuf-palette-close {
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            width: 44px !important;
+            height: 44px !important;
+            min-width: 44px !important;
+            padding: 0 !important;
+            border: 1px solid transparent !important;
+            border-radius: 12px !important;
+            background: transparent !important;
+            color: var(--dcuf-theme-fg-muted) !important;
+            font-size: 24px !important;
+            cursor: pointer !important;
+        }
+        #${PANEL_ID} .dcuf-palette-body {
+            box-sizing: border-box !important;
+            display: flex !important;
+            flex: 1 1 auto !important;
+            flex-direction: column !important;
+            min-height: 0 !important;
+            padding: 16px 18px 38px !important;
+            overflow: hidden !important;
+        }
+        #${PANEL_ID} .dcuf-palette-description { margin: 0 0 14px !important; color: var(--dcuf-theme-fg-muted) !important; }
+        #${PANEL_ID} .dcuf-palette-options {
+            display: grid !important;
+            flex: 1 1 auto !important;
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+            align-content: start !important;
+            min-height: 0 !important;
+            gap: 10px !important;
+            padding: 2px 4px 6px 2px !important;
+            overflow: hidden auto !important;
+            overscroll-behavior: contain !important;
+            scrollbar-gutter: stable !important;
+            touch-action: pan-y !important;
+            -webkit-overflow-scrolling: touch;
+        }
+        #${PANEL_ID} .dcuf-palette-option {
+            box-sizing: border-box !important;
+            display: grid !important;
+            grid-template-columns: 50px minmax(0, 1fr) !important;
+            align-items: center !important;
+            gap: 11px !important;
+            min-height: 70px !important;
+            padding: 10px !important;
+            border: 1px solid var(--dcuf-theme-border) !important;
+            border-radius: 14px !important;
+            background: var(--dcuf-theme-surface-input) !important;
+            color: var(--dcuf-theme-fg) !important;
+            text-align: left !important;
+            cursor: pointer !important;
+        }
+        #${PANEL_ID} .dcuf-palette-option[aria-checked="true"] {
+            border-color: var(--dcuf-theme-accent) !important;
+            background: var(--dcuf-theme-accent-soft) !important;
+            color: var(--dcuf-theme-accent-strong) !important;
+            box-shadow: 0 0 0 2px color-mix(in srgb, var(--dcuf-theme-accent) 18%, transparent) !important;
+        }
+        #${PANEL_ID} .dcuf-palette-swatch {
+            display: grid !important;
+            grid-template-columns: repeat(3, 1fr) !important;
+            width: 48px !important;
+            height: 38px !important;
+            overflow: hidden !important;
+            border: 1px solid rgba(0,0,0,.09) !important;
+            border-radius: 10px !important;
+        }
+        #${PANEL_ID} .dcuf-palette-swatch > span { display: block !important; }
+        #${PANEL_ID} .dcuf-palette-name { font-weight: 800 !important; }
+        #${PANEL_ID} .dcuf-palette-status { min-height: 20px !important; margin: 12px 2px 0 !important; color: #d7485a !important; font-weight: 700 !important; }
+        #${PANEL_ID} .dcuf-palette-actions { display: grid !important; grid-template-columns: 1fr 1fr 1.2fr !important; gap: 9px !important; margin-top: 4px !important; }
+        #${PANEL_ID} .dcuf-palette-actions button {
+            min-height: 44px !important;
+            padding: 8px 10px !important;
+            border: 1px solid var(--dcuf-theme-border-strong) !important;
+            border-radius: 11px !important;
+            background: var(--dcuf-theme-surface-input) !important;
+            color: var(--dcuf-theme-fg) !important;
+            font-weight: 800 !important;
+            cursor: pointer !important;
+        }
+        #${PANEL_ID} .dcuf-palette-actions [data-dcuf-palette-action="save"] {
+            border-color: var(--dcuf-theme-accent-strong) !important;
+            background: var(--dcuf-theme-accent-strong) !important;
+            color: var(--dcuf-theme-on-accent) !important;
+        }
+        #${PANEL_ID} .dcuf-palette-resize-handle {
+            position: absolute !important;
+            right: 4px !important;
+            bottom: 4px !important;
+            width: 36px !important;
+            height: 30px !important;
+            border: 0 !important;
+            border-radius: 9px !important;
+            background:
+                linear-gradient(135deg, transparent 50%, var(--dcuf-theme-border-strong) 51%, var(--dcuf-theme-border-strong) 56%, transparent 57%) 13px 7px / 15px 15px no-repeat,
+                linear-gradient(135deg, transparent 50%, var(--dcuf-theme-accent) 51%, var(--dcuf-theme-accent) 57%, transparent 58%) 20px 14px / 10px 10px no-repeat !important;
+            cursor: nwse-resize !important;
+            touch-action: none !important;
+        }
+        #${PANEL_ID} :focus-visible { outline: 3px solid color-mix(in srgb, var(--dcuf-theme-accent) 38%, transparent) !important; outline-offset: 2px !important; }
+        #${PANEL_ID} button:disabled { opacity: .62 !important; cursor: wait !important; }
+
+        body.dc-filter-dark-mode #${PANEL_ID} {
+            border-color: var(--dcuf-theme-border-strong) !important;
+            background: var(--dcuf-theme-card-top) !important;
+            color: var(--dcuf-theme-fg) !important;
+            box-shadow: var(--dcuf-theme-panel-shadow) !important;
+        }
+        body.dc-filter-dark-mode #${PANEL_ID} .dcuf-palette-header { border-color: var(--dcuf-theme-border) !important; background: linear-gradient(180deg, var(--dcuf-theme-card-top), var(--dcuf-theme-surface-raised)) !important; }
+        body.dc-filter-dark-mode #${PANEL_ID} .dcuf-palette-description { color: var(--dcuf-theme-fg-muted) !important; }
+        body.dc-filter-dark-mode #${PANEL_ID} .dcuf-palette-close { color: var(--dcuf-theme-fg) !important; }
+        body.dc-filter-dark-mode #${PANEL_ID} .dcuf-palette-option { border-color: var(--dcuf-theme-border) !important; background: var(--dcuf-theme-surface-input) !important; color: var(--dcuf-theme-fg) !important; }
+        body.dc-filter-dark-mode #${PANEL_ID} .dcuf-palette-option[aria-checked="true"] { border-color: var(--dcuf-theme-accent) !important; background: var(--dcuf-theme-accent-soft) !important; color: var(--dcuf-theme-accent) !important; }
+        body.dc-filter-dark-mode #${PANEL_ID} .dcuf-palette-actions button { border-color: var(--dcuf-theme-border-strong) !important; background: var(--dcuf-theme-surface-input) !important; color: var(--dcuf-theme-fg) !important; }
+        body.dc-filter-dark-mode #${PANEL_ID} .dcuf-palette-actions [data-dcuf-palette-action="save"] { border-color: var(--dcuf-theme-accent-strong) !important; background: var(--dcuf-theme-accent-strong) !important; color: var(--dcuf-theme-on-accent) !important; }
+
+        @media (max-width: 440px) {
+            #${PANEL_ID} .dcuf-palette-options { grid-template-columns: 1fr !important; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            #${OVERLAY_ID}, #${PANEL_ID}, #${PANEL_ID} * { scroll-behavior: auto !important; transition: none !important; animation: none !important; }
+        }
     `;
 
-    const __dcufCssMarkers = Object.freeze({
-        view: '/* DCUF_VIEW_SURFACE_START */',
-        ui: '/* DCUF_SHARED_FILTER_UI_START */',
-        uiEnd: '/* DCUF_SHARED_FILTER_UI_END */',
-        uiDark: '/* DCUF_SHARED_FILTER_UI_DARK_START */',
-        uiDarkEnd: '/* DCUF_SHARED_FILTER_UI_DARK_END */',
-        fabEnd: '/* DCUF_FAB_SHELL_END */',
-        fabDarkEnd: '/* DCUF_FAB_SHELL_DARK_END */'
-    });
-    const __dcufCssIndex = (marker) => {
-        const index = __dcufAllFilterCss.indexOf(marker);
-        if (index < 0) throw new Error(`DCUF CSS marker missing: ${marker}`);
-        return index;
-    };
-    const __dcufViewCssIndex = __dcufCssIndex(__dcufCssMarkers.view);
-    const __dcufUiCssIndex = __dcufCssIndex(__dcufCssMarkers.ui);
-    const __dcufUiCssEndIndex = __dcufCssIndex(__dcufCssMarkers.uiEnd) + __dcufCssMarkers.uiEnd.length;
-    const __dcufUiDarkCssIndex = __dcufCssIndex(__dcufCssMarkers.uiDark);
-    const __dcufUiDarkCssEndIndex = __dcufCssIndex(__dcufCssMarkers.uiDarkEnd) + __dcufCssMarkers.uiDarkEnd.length;
-    const __dcufFabCssEndIndex = __dcufCssIndex(__dcufCssMarkers.fabEnd) + __dcufCssMarkers.fabEnd.length;
-    const __dcufFabDarkCssEndIndex = __dcufCssIndex(__dcufCssMarkers.fabDarkEnd) + __dcufCssMarkers.fabDarkEnd.length;
-    const __dcufCoreFilterCss = __dcufAllFilterCss.slice(0, __dcufViewCssIndex);
-    const __dcufViewFilterCss = __dcufAllFilterCss.slice(__dcufViewCssIndex, __dcufUiCssIndex);
-    const __dcufGlobalDarkCss = __dcufAllFilterCss.slice(__dcufUiCssEndIndex, __dcufUiDarkCssIndex);
-    const __dcufLazyFilterUiCss = [
-        __dcufAllFilterCss.slice(__dcufUiCssIndex, __dcufUiCssEndIndex),
-        __dcufAllFilterCss.slice(__dcufUiDarkCssIndex, __dcufUiDarkCssEndIndex)
-    ].join('\n');
-    const __dcufFabShellCss = [
-        __dcufAllFilterCss.slice(__dcufUiCssIndex, __dcufFabCssEndIndex),
-        __dcufAllFilterCss.slice(__dcufUiDarkCssIndex, __dcufFabDarkCssEndIndex)
-    ].join('\n');
-
-    if (__dcufFilterPageContext.hasListSurface) {
-        GM_addStyle(`${__dcufCoreFilterCss}\n${__dcufGlobalDarkCss}`);
-        GM_addStyle(__dcufFabShellCss);
-    }
-    if (__dcufFilterPageContext.isView) GM_addStyle(__dcufViewFilterCss);
-
-    let __dcufFilterUiStylesLoaded = false;
-    const __dcufEnsureFilterUiStyles = () => {
-        if (__dcufFilterUiStylesLoaded) return false;
-        GM_addStyle(__dcufLazyFilterUiCss);
-        __dcufFilterUiStylesLoaded = true;
-        window.__dcufFilterUiStylesLoaded = true;
-        window.__dcufDiagnostics?.increment?.('style.filterUi.lazyLoads');
+    const ensureStyle = () => {
+        if (document.getElementById(STYLE_ID)) return true;
+        const mount = document.head || document.documentElement;
+        if (!mount) return false;
+        const style = document.createElement('style');
+        style.id = STYLE_ID;
+        style.textContent = buildCss();
+        mount.appendChild(style);
         return true;
     };
-    window.__dcufFilterUiStylesLoaded = false;
-    window.__dcufEnsureFilterUiStyles = __dcufEnsureFilterUiStyles;
 
+    const beginInitialRead = () => {
+        if (initialReadPromise) return initialReadPromise;
+        const revisionAtStart = writeRevision;
+        initialReadPromise = Promise.resolve()
+            .then(() => GM_getValue(STORAGE_KEY, DEFAULT_ID))
+            .then((value) => {
+                initialReadSettled = true;
+                if (writeRevision !== revisionAtStart) return committedId;
+                committedId = normalize(value);
+                if (!document.getElementById(OVERLAY_ID)) apply(committedId, 'storage-load');
+                return committedId;
+            })
+            .catch((error) => {
+                initialReadSettled = true;
+                console.warn('[DCUF] palette storage read failed; using blue:', error);
+                return committedId;
+            });
+        return initialReadPromise;
+    };
 
-    if (__dcufFilterPageContext.hasListSurface) GM_addStyle(`
-        /* [v2.7.5] 댓글/글목록 닉네임 폭 보정 */
-        .post-meta {
-            justify-content: flex-start !important;
-            gap: 10px !important;
-        }
-        .post-meta .author {
-            flex: 1 1 auto !important;
-            min-width: 0 !important;
-            max-width: calc(100% - 120px) !important;
-            justify-content: flex-start !important;
-            overflow: visible !important;
-        }
-        .post-meta .author .gall_writer,
-        .post-meta .author .addbox {
-            display: inline-flex !important;
-            align-items: center !important;
-            flex-wrap: nowrap !important;
-            min-width: 0 !important;
-            max-width: 100% !important;
-            width: auto !important;
-            overflow: visible !important;
-            text-overflow: clip !important;
-            white-space: nowrap !important;
-        }
-        .post-meta .author .nickname {
-            max-width: min(56vw, 420px) !important;
-        }
-        .post-meta .author .ip {
-            flex: 0 0 auto !important;
-            max-width: none !important;
-            overflow: visible !important;
-            text-overflow: clip !important;
-            white-space: nowrap !important;
-        }
-        .post-meta .stats {
-            flex: 0 0 auto !important;
-            margin-left: auto !important;
-        }
+    const setSelectedOption = (panel, id) => {
+        const normalized = apply(id, 'preview');
+        panel.dataset.selectedPalette = normalized;
+        panel.querySelectorAll('.dcuf-palette-option').forEach((option) => {
+            option.setAttribute('aria-checked', option.dataset.paletteId === normalized ? 'true' : 'false');
+        });
+        return normalized;
+    };
 
-        div[id^="comment_wrap_"] .comment_box .cmt_nickbox,
-        #focus_cmt > div[id^="comment_wrap_"] .comment_box .cmt_nickbox,
-        .gall_comment .comment_box .cmt_nickbox {
-            display: inline-flex !important;
-            align-items: center !important;
-            flex: 1 1 auto !important;
-            flex-wrap: nowrap !important;
-            min-width: 0 !important;
-            max-width: calc(100% - 84px) !important;
-            width: auto !important;
-            overflow: visible !important;
-            white-space: nowrap !important;
-        }
-        div[id^="comment_wrap_"] .comment_box .gall_writer,
-        div[id^="comment_wrap_"] .comment_box .gall_writer.ub-writer,
-        #focus_cmt > div[id^="comment_wrap_"] .comment_box .gall_writer,
-        #focus_cmt > div[id^="comment_wrap_"] .comment_box .gall_writer.ub-writer,
-        .gall_comment .comment_box .gall_writer,
-        .gall_comment .comment_box .gall_writer.ub-writer {
-            display: inline-flex !important;
-            align-items: center !important;
-            flex-wrap: nowrap !important;
-            gap: 4px !important;
-            min-width: 0 !important;
-            max-width: 100% !important;
-            width: auto !important;
-            overflow: visible !important;
-            text-overflow: clip !important;
-            white-space: nowrap !important;
-            vertical-align: middle !important;
-        }
-        div[id^="comment_wrap_"] .comment_box .nickname,
-        div[id^="comment_wrap_"] .comment_box .nickname em,
-        #focus_cmt > div[id^="comment_wrap_"] .comment_box .nickname,
-        #focus_cmt > div[id^="comment_wrap_"] .comment_box .nickname em,
-        .gall_comment .comment_box .nickname,
-        .gall_comment .comment_box .nickname em {
-            display: inline-block !important;
-            max-width: min(52vw, 360px) !important;
-            overflow: hidden !important;
-            text-overflow: ellipsis !important;
-            white-space: nowrap !important;
-            vertical-align: middle !important;
-        }
-        div[id^="comment_wrap_"] .comment_box .ip,
-        #focus_cmt > div[id^="comment_wrap_"] .comment_box .ip,
-        .gall_comment .comment_box .ip {
-            display: inline-block !important;
-            flex: 0 0 auto !important;
-            max-width: none !important;
-            overflow: visible !important;
-            text-overflow: clip !important;
-            white-space: nowrap !important;
-            vertical-align: middle !important;
-        }
+    const attachPanelPointerGeometry = (panel) => {
+        if (!panel || panel.dataset.dcufPaletteGeometryBound === 'true') return;
+        panel.dataset.dcufPaletteGeometryBound = 'true';
 
-        @media screen and (max-width: 640px) {
-            .post-meta .author {
-                max-width: 100% !important;
+        const viewportGap = 4;
+        let active = null;
+        let pendingPoint = null;
+        let frameId = 0;
+
+        const clamp = (value, min, max) => Math.max(min, Math.min(value, max));
+        const viewportSize = () => ({ width: window.innerWidth, height: window.innerHeight });
+        const normalizePosition = () => {
+            const rect = panel.getBoundingClientRect();
+            panel.style.setProperty('transform', 'none', 'important');
+            panel.style.setProperty('left', `${rect.left}px`, 'important');
+            panel.style.setProperty('top', `${rect.top}px`, 'important');
+            panel.style.setProperty('width', `${rect.width}px`, 'important');
+            panel.style.setProperty('height', `${rect.height}px`, 'important');
+            return panel.getBoundingClientRect();
+        };
+
+        const applyGeometry = () => {
+            frameId = 0;
+            if (!active || !pendingPoint) return;
+            const point = pendingPoint;
+            pendingPoint = null;
+            const viewport = viewportSize();
+
+            if (active.mode === 'drag') {
+                const maxLeft = Math.max(viewportGap, viewport.width - active.width - viewportGap);
+                const maxTop = Math.max(viewportGap, viewport.height - active.height - viewportGap);
+                panel.style.setProperty('left', `${clamp(point.x - active.offsetX, viewportGap, maxLeft)}px`, 'important');
+                panel.style.setProperty('top', `${clamp(point.y - active.offsetY, viewportGap, maxTop)}px`, 'important');
+                return;
             }
-            .post-meta .author .nickname {
-                max-width: min(72vw, 520px) !important;
-            }
-            div[id^="comment_wrap_"] .comment_box .cmt_nickbox,
-            #focus_cmt > div[id^="comment_wrap_"] .comment_box .cmt_nickbox,
-            .gall_comment .comment_box .cmt_nickbox {
-                max-width: calc(100vw - 118px) !important;
-            }
-            div[id^="comment_wrap_"] .comment_box .nickname,
-            div[id^="comment_wrap_"] .comment_box .nickname em,
-            #focus_cmt > div[id^="comment_wrap_"] .comment_box .nickname,
-            #focus_cmt > div[id^="comment_wrap_"] .comment_box .nickname em,
-            .gall_comment .comment_box .nickname,
-            .gall_comment .comment_box .nickname em {
-                max-width: calc(100vw - 160px) !important;
-            }
+
+            const maxWidth = Math.max(120, viewport.width - active.left - viewportGap);
+            const maxHeight = Math.max(120, viewport.height - active.top - viewportGap);
+            const minWidth = Math.min(300, maxWidth);
+            const minHeight = Math.min(320, maxHeight);
+            const nextWidth = clamp(active.width + point.x - active.startX, minWidth, maxWidth);
+            const nextHeight = clamp(active.height + point.y - active.startY, minHeight, maxHeight);
+            panel.style.setProperty('min-width', `${minWidth}px`, 'important');
+            panel.style.setProperty('min-height', `${minHeight}px`, 'important');
+            panel.style.setProperty('max-width', `${maxWidth}px`, 'important');
+            panel.style.setProperty('max-height', `${maxHeight}px`, 'important');
+            panel.style.setProperty('width', `${nextWidth}px`, 'important');
+            panel.style.setProperty('height', `${nextHeight}px`, 'important');
+        };
+
+        const finishInteraction = (event) => {
+            if (!active || (event && event.pointerId !== active.pointerId)) return;
+            if (frameId) cancelAnimationFrame(frameId);
+            applyGeometry();
+            if (panel.hasPointerCapture?.(active.pointerId)) panel.releasePointerCapture(active.pointerId);
+            active = null;
+            pendingPoint = null;
+            panel.removeAttribute('data-dcuf-palette-interacting');
+        };
+
+        const onPointerDown = (event) => {
+            if (active || event.button !== 0 || event.isPrimary === false) return;
+            const target = event.target instanceof Element ? event.target : null;
+            if (!target) return;
+            const resizeHandle = target.closest('.dcuf-palette-resize-handle');
+            const dragHeader = target.closest('.dcuf-palette-header');
+            if (!resizeHandle && (!dragHeader || target.closest('button, input, label, a'))) return;
+
+            const rect = normalizePosition();
+            active = {
+                mode: resizeHandle ? 'resize' : 'drag',
+                pointerId: event.pointerId,
+                startX: event.clientX,
+                startY: event.clientY,
+                offsetX: event.clientX - rect.left,
+                offsetY: event.clientY - rect.top,
+                left: rect.left,
+                top: rect.top,
+                width: rect.width,
+                height: rect.height
+            };
+            panel.dataset.dcufPaletteInteracting = 'true';
+            panel.setPointerCapture?.(event.pointerId);
+            event.preventDefault();
+        };
+
+        const onPointerMove = (event) => {
+            if (!active || event.pointerId !== active.pointerId) return;
+            pendingPoint = { x: event.clientX, y: event.clientY };
+            if (!frameId) frameId = requestAnimationFrame(applyGeometry);
+            event.preventDefault();
+        };
+
+        const keepInsideViewport = () => {
+            if (!panel.isConnected) return;
+            const rect = normalizePosition();
+            const viewport = viewportSize();
+            const width = Math.min(rect.width, Math.max(120, viewport.width - (viewportGap * 2)));
+            const height = Math.min(rect.height, Math.max(120, viewport.height - (viewportGap * 2)));
+            panel.style.setProperty('width', `${width}px`, 'important');
+            panel.style.setProperty('height', `${height}px`, 'important');
+            panel.style.setProperty('left', `${clamp(rect.left, viewportGap, Math.max(viewportGap, viewport.width - width - viewportGap))}px`, 'important');
+            panel.style.setProperty('top', `${clamp(rect.top, viewportGap, Math.max(viewportGap, viewport.height - height - viewportGap))}px`, 'important');
+        };
+
+        panel.addEventListener('pointerdown', onPointerDown);
+        panel.addEventListener('pointermove', onPointerMove);
+        panel.addEventListener('pointerup', finishInteraction);
+        panel.addEventListener('pointercancel', finishInteraction);
+        window.addEventListener('resize', keepInsideViewport, { passive: true });
+        window.visualViewport?.addEventListener('resize', keepInsideViewport, { passive: true });
+        panel.__dcufPaletteGeometryCleanup = () => {
+            if (frameId) cancelAnimationFrame(frameId);
+            window.removeEventListener('resize', keepInsideViewport);
+            window.visualViewport?.removeEventListener('resize', keepInsideViewport);
+        };
+    };
+
+    const closePaletteDialog = ({ restore = true } = {}) => {
+        const overlay = document.getElementById(OVERLAY_ID);
+        if (!overlay) return false;
+        const returnFocus = overlay.__dcufReturnFocus;
+        if (restore) apply(committedId, 'preview-cancel');
+        overlay.querySelector(`#${PANEL_ID}`)?.__dcufPaletteGeometryCleanup?.();
+        overlay.remove();
+        if (returnFocus instanceof HTMLElement && returnFocus.isConnected) returnFocus.focus({ preventScroll: true });
+        return true;
+    };
+
+    const openPaletteDialog = () => {
+        ensureStyle();
+        const existing = document.getElementById(PANEL_ID);
+        if (existing) {
+            existing.focus({ preventScroll: true });
+            return existing;
         }
-    `);
 
-    /**
-     * =================================================================
-     * ======================== Filter Module ==========================
-     * =================================================================
-     */
-    const FilterModule = {
-        TELECOM: [
-            [1, [[96, "KT모바일", "MOB"], [97, "KT모바일", "MOB"], [98, "KT모바일", "MOB"], [99, "KT모바일", "MOB"], [100, "KT모바일", "MOB"], [101, "KT모바일", "MOB"], [102, "KT모바일", "MOB"], [103, "KT모바일", "MOB"], [104, "KT모바일", "MOB"], [105, "KT모바일", "MOB"], [106, "KT모바일", "MOB"], [107, "KT모바일", "MOB"], [108, "KT모바일", "MOB"], [109, "KT모바일", "MOB"], [110, "KT모바일", "MOB"], [111, "KT모바일", "MOB"]]],
-            [27, [[160, "SKT", "MOB"], [161, "SKT", "MOB"], [162, "SKT", "MOB"], [163, "SKT", "MOB"], [164, "SKT", "MOB"], [165, "SKT", "MOB"], [166, "SKT", "MOB"], [167, "SKT", "MOB"], [168, "SKT", "MOB"], [169, "SKT", "MOB"], [170, "SKT", "MOB"], [171, "SKT", "MOB"], [172, "SKT", "MOB"], [173, "SKT", "MOB"], [174, "SKT", "MOB"], [175, "SKT", "MOB"], [176, "SKT", "MOB"], [177, "SKT", "MOB"], [178, "SKT", "MOB"], [179, "SKT", "MOB"], [180, "SKT", "MOB"], [181, "SKT", "MOB"], [182, "SKT", "MOB"], [183, "SKT", "MOB"]]],
-            [39, [[4, "KT모바일", "MOB"], [5, "KT모바일", "MOB"], [6, "KT모바일", "MOB"], [7, "KT모바일", "MOB"]]],
-            [42, [[16, "SKT", "MOB"], [17, "SKT", "MOB"], [18, "SKT", "MOB"], [19, "SKT", "MOB"], [20, "SKT", "MOB"], [21, "SKT", "MOB"], [22, "SKT", "MOB"], [23, "SKT", "MOB"], [24, "SKT", "MOB"], [25, "SKT", "MOB"], [26, "SKT", "MOB"], [27, "SKT", "MOB"], [28, "SKT", "MOB"], [29, "SKT", "MOB"], [30, "SKT", "MOB"], [31, "SKT", "MOB"], [32, "SKT", "MOB"], [33, "SKT", "MOB"], [34, "SKT", "MOB"], [35, "SKT", "MOB"], [36, "SKT", "MOB"], [37, "SKT", "MOB"], [38, "SKT", "MOB"], [39, "SKT", "MOB"], [40, "SKT", "MOB"], [41, "SKT", "MOB"], [42, "SKT", "MOB"], [43, "SKT", "MOB"], [44, "SKT", "MOB"], [45, "SKT", "MOB"], [46, "SKT", "MOB"], [47, "SKT", "MOB"]]],
-            [49, [[16, "KT모바일", "MOB"], [17, "KT모바일", "MOB"], [18, "KT모바일", "MOB"], [19, "KT모바일", "MOB"], [20, "KT모바일", "MOB"], [21, "KT모바일", "MOB"], [22, "KT모바일", "MOB"], [23, "KT모바일", "MOB"], [24, "KT모바일", "MOB"], [25, "KT모바일", "MOB"], [26, "KT모바일", "MOB"], [27, "KT모바일", "MOB"], [28, "KT모바일", "MOB"], [29, "KT모바일", "MOB"], [30, "KT모바일", "MOB"], [31, "KT모바일", "MOB"], [56, "KT모바일", "MOB"], [57, "KT모바일", "MOB"], [58, "KT모바일", "MOB"], [59, "KT모바일", "MOB"], [60, "KT모바일", "MOB"], [61, "KT모바일", "MOB"], [62, "KT모바일", "MOB"], [63, "KT모바일", "MOB"]]],
-            [58, [[102, "SKT", "MOB"], [103, "SKT", "MOB"]]],
-            [61, [[104, "SKT", "MOB"], [250, "SKT/세종텔레콤/하이라인닷넷", "MOB"], [252, "KT모바일/SKB/딜라이브/엘엑스/세종텔레콤/한국정보화진흥원/한국인터넷진흥원/두루안/기타등등", "MOB"], [254, "SKB/SKT/기타등등", "MOB"]]],
-            [106, [[96, "LGU+모바일", "MOB"], [97, "LGU+모바일", "MOB"], [98, "LGU+모바일", "MOB"], [99, "LGU+모바일", "MOB"], [100, "LGU+모바일", "MOB"], [101, "LGU+모바일", "MOB"], [102, "LGU+모바일", "MOB"], [103, "LGU+모바일", "MOB"]]],
-            [110, [[68, "KT모바일", "MOB"], [69, "KT모바일", "MOB"], [70, "KT모바일", "MOB"], [71, "KT모바일", "MOB"]]],
-            [111, [[218, "SKT", "MOB"], [219, "SKT", "MOB"]]],
-            [113, [[216, "SKT", "MOB"], [217, "SKT", "MOB"]]],
-            [114, [[52, "SKT", "MOB"], [53, "SKT", "MOB"]]],
-            [116, [[200, "KT모바일", "MOB"], [201, "KT모바일", "MOB"]]],
-            [117, [[110, "LGU+모바일", "MOB"], [111, "LGT+모바일", "MOB"]]],
-            [118, [[234, "KT모바일", "MOB"], [235, "KT모바일", "MOB"]]],
-            [119, [[194, "KT모바일", "MOB"]]],
-            [123, [[228, "SKT", "MOB"], [229, "SKT", "MOB"]]],
-            [124, [[0, "SKT", "MOB"], [1, "SKT", "MOB"]]],
-            [163, [[213, "KT모바일", "MOB"], [222, "KT모바일", "MOB"], [229, "KT모바일", "MOB"], [255, "KT모바일", "MOB"]]],
-            [175, [[216, "KT모바일", "MOB"], [217, "KT모바일", "MOB"], [218, "KT모바일", "MOB"], [219, "KT모바일", "MOB"], [220, "KT모바일", "MOB"], [221, "KT모바일", "MOB"], [222, "KT모바일", "MOB"], [223, "KT모바일", "MOB"]]],
-            [180, [[132, "SKT", "MOB"], [133, "SKT", "MOB"], [134, "SKT", "MOB"], [135, "SKT", "MOB"], [210, "LGT+모바일/퍼플스톤즈/네이버클라우드/기타등등", "MOB"]]],
-            [203, [[82, "LGT+모바일/하이플러스카드/한국케이블텔레콤/기타등등", "MOB"], [226, "SKT/SK컴즈/대림아이앤에스/두산중공업/두산정보통신사업부/기타등등", "MOB"], [236, "SKT/KT/KINX/세종텔레콤", "MOB"]]],
-            [211, [[36, "LGT+모바일/딜라이브/세종텔레콤/엘림넷/삼성SDS/기타등등", "MOB"], [111, "SKT/아름방송네트워크/드림라인/KDDI코리아/브이토피아/세종텔레콤/지오레이넷/기타등등", "MOB"], [115, "SKB/SKT/반송종합유선방송/한국정보보호진흥원/KT/네오위즈게임즈/세종텔레콤/LGU+/기타등등", "MOB"], [188, "SKT/네트로피/네이버클라우드/NHN/누리링크시스템/기타등등", "MOB"], [234, "LGU+모바일/LGU+/SKT/SK커뮤니케이션즈/기타등등", "MOB"], [235, "SKT/남인천방송/유엘네트웍스/하이라인닷넷/기타등등", "MOB"], [240, "SKT/엘림넷/싸이크로스/기타등등", "MOB"], [246, "KT모바일/서경방송/기타등등", "MOB"]]],
-            [220, [[103, "SKT", "MOB"]]],
-            [223, [[32, "SKT", "MOB"], [33, "SKT", "MOB"], [34, "SKT", "MOB"], [35, "SKT", "MOB"], [36, "SKT", "MOB"], [37, "SKT", "MOB"], [38, "SKT", "MOB"], [39, "SKT", "MOB"], [40, "SKT", "MOB"], [41, "SKT", "MOB"], [42, "SKT", "MOB"], [43, "SKT", "MOB"], [44, "SKT", "MOB"], [45, "SKT", "MOB"], [46, "SKT", "MOB"], [47, "SKT", "MOB"], [48, "SKT", "MOB"], [49, "SKT", "MOB"], [50, "SKT", "MOB"], [51, "SKT", "MOB"], [52, "SKT", "MOB"], [53, "SKT", "MOB"], [54, "SKT", "MOB"], [55, "SKT", "MOB"], [56, "SKT", "MOB"], [57, "SKT", "MOB"], [58, "SKT", "MOB"], [59, "SKT", "MOB"], [60, "SKT", "MOB"], [61, "SKT", "MOB"], [62, "SKT", "MOB"], [63, "SKT", "MOB"], [168, "LGT+모바일", "MOB"], [169, "LGT+모바일", "MOB"], [170, "LGT+모바일", "MOB"], [171, "LGT+모바일", "MOB"], [172, "LGT+모바일", "MOB"], [173, "LGT+모바일", "MOB"], [174, "LGT+모바일", "MOB"], [175, "LGT+모바일", "MOB"]]]
-        ],
+        const overlay = document.createElement('div');
+        overlay.id = OVERLAY_ID;
+        overlay.__dcufReturnFocus = document.activeElement;
 
+        const panel = document.createElement('section');
+        panel.id = PANEL_ID;
+        panel.setAttribute('role', 'dialog');
+        panel.setAttribute('aria-modal', 'true');
+        panel.setAttribute('aria-labelledby', 'dcuf-palette-title');
+        panel.tabIndex = -1;
 
-        CONSTANTS: {
-            STORAGE_KEYS: {
-                MASTER_DISABLED: 'dcinside_master_disabled',
-                EXCLUDE_RECOMMENDED: 'dcinside_exclude_recommended',
-                THRESHOLD: 'dcinside_threshold',
-                RATIO_ENABLED: 'dcinside_ratio_filter_enabled',
-                RATIO_MIN: 'dcinside_ratio_min',
-                RATIO_MAX: 'dcinside_ratio_max',
-                BLOCK_GUEST: 'dcinside_block_guest',
-                BLOCK_PROXY: 'dcinside_proxy_ip_block_enabled',
-                BLOCK_TELECOM: 'dcinside_telecom_ip_block_enabled',
-                BLOCK_CONFIG: 'dcinside_block_config',
-                BLOCK_CONFIG_MIGRATION_V275_DONE: 'dcinside_block_config_migration_v275_done',
-                BLOCK_CONFIG_MIGRATION_V275_BACKUP: 'dcinside_block_config_migration_v275_backup',
-                BLOCKED_UIDS: 'dcinside_blocked_uids',
-                BLOCKED_GUESTS: 'dcinside_blocked_guests',
-                SHORTCUT_KEY: 'dcinside_shortcut_key',
-                // [v2.3.1 추가] 개인 차단 기능용 저장 키
-                PERSONAL_BLOCK_LIST: 'dcinside_personal_block_list',
-                // [신규] 개인 차단 기능 On/Off 저장 키
-                PERSONAL_BLOCK_ENABLED: 'dcinside_personal_block_enabled',
-                FAB_POSITION: 'dcinside_fab_position',
-                FAB_SCALE_PERCENT: 'dcinside_fab_scale_percent',
-                MANAGEMENT_PANEL_GEOMETRY: 'dcinside_management_panel_geometry',
-                GALLERY_HEADTEXT_BLOCKS: 'dcinside_gallery_headtext_blocks_v1',
-            },
-            SELECTORS: {
-                POST_LIST_CONTAINER: 'table.gall_list tbody',
-                COMMENT_CONTAINER: 'div.comment_box ul.cmt_list',
-                POST_VIEW_LIST_CONTAINER: 'div.gall_exposure_list > ul',
-                POST_ITEM: 'tr.ub-content',
-                COMMENT_ITEM: 'li.ub-content, li[id^="comment_li_"], li[id^="reply_li_"]',
-                WRITER_INFO: '.ub-writer',
-                IP_SPAN: 'span.ip',
-                MAIN_CONTAINER: '#container',
-            },
-            API: {
-                USER_INFO: '/api/gallog_user_layer/gallog_content_reple/',
-            },
-            CUSTOM_ATTRS: {
-                OBSERVER_ATTACHED: 'data-filter-observer-attached',
-            },
-            UI_IDS: {
-                SETTINGS_PANEL: 'dcinside-filter-setting',
-                MASTER_DISABLE_CHECKBOX: 'dcinside-master-disable-checkbox',
-                EXCLUDE_RECOMMENDED_CHECKBOX: 'dcinside-exclude-recommended-checkbox',
-                SETTINGS_CONTAINER: 'dcinside-settings-container',
-                THRESHOLD_INPUT: 'dcinside-threshold-input',
-                BLOCK_GUEST_CHECKBOX: 'dcinside-block-guest-checkbox',
-                PROXY_BLOCK_MODE_GROUP: 'dcinside-proxy-ip-block-mode-group',
-                TELECOM_BLOCK_CHECKBOX: 'dcinside-telecom-ip-block-checkbox',
-                RATIO_ENABLE_CHECKBOX: 'dcinside-ratio-enable-checkbox',
-                RATIO_SECTION: 'dcinside-ratio-section',
-                RATIO_MIN_INPUT: 'dcinside-ratio-min',
-                RATIO_MAX_INPUT: 'dcinside-ratio-max',
-                SAVE_BUTTON: 'dcinside-threshold-save',
-                CLOSE_BUTTON: 'dcinside-filter-close',
-                SHORTCUT_DISPLAY: 'dcinside-shortcut-display',
-                CHANGE_SHORTCUT_BTN: 'dcinside-change-shortcut-btn',
-                SHORTCUT_MODAL_OVERLAY: 'dcinside-shortcut-modal-overlay',
-                SHORTCUT_MODAL: 'dcinside-shortcut-modal',
-                NEW_SHORTCUT_PREVIEW: 'dcinside-new-shortcut-preview',
-                SAVE_SHORTCUT_BTN: 'dcinside-save-shortcut-btn',
-                CANCEL_SHORTCUT_BTN: 'dcinside-cancel-shortcut-btn',
-                HEADTEXT_MANAGER_BUTTON: 'dcinside-headtext-manager-button',
-                HEADTEXT_MANAGER_PANEL: 'dcinside-headtext-manager-panel',
-            },
-            ETC: {
-                MOBILE_IP_MARKER: 'mblck',
-                COOKIE_NAME_1: 'ci_t',
-                COOKIE_NAME_2: 'ci_c',
+        const optionsHtml = PRESETS.map((preset) => `
+            <button type="button" class="dcuf-palette-option" role="radio" aria-checked="false" data-palette-id="${preset.id}">
+                <span class="dcuf-palette-swatch" aria-hidden="true">
+                    <span style="background:${preset.light[0]}"></span>
+                    <span style="background:${preset.light[1]}"></span>
+                    <span style="background:${preset.light[2]}"></span>
+                </span>
+                <span class="dcuf-palette-name">${preset.label}</span>
+            </button>
+        `).join('');
+
+        panel.innerHTML = `
+            <div class="dcuf-palette-header">
+                <h2 id="dcuf-palette-title">UI 색상 설정</h2>
+                <button type="button" class="dcuf-palette-close" aria-label="UI 색상 설정 닫기">×</button>
+            </div>
+            <div class="dcuf-palette-body">
+                <p class="dcuf-palette-description">색상을 선택해 미리 본 뒤 저장하세요.</p>
+                <div class="dcuf-palette-options" role="radiogroup" aria-label="UI 색상 프리셋">${optionsHtml}</div>
+                <p class="dcuf-palette-status" role="status" aria-live="polite"></p>
+                <div class="dcuf-palette-actions">
+                    <button type="button" data-dcuf-palette-action="default">기본값</button>
+                    <button type="button" data-dcuf-palette-action="cancel">취소</button>
+                    <button type="button" data-dcuf-palette-action="save">저장</button>
+                </div>
+            </div>
+            <div class="dcuf-palette-resize-handle" role="separator" aria-label="UI 색상 설정 크기 조절"></div>
+        `;
+        overlay.appendChild(panel);
+        (document.body || document.documentElement).appendChild(overlay);
+        attachPanelPointerGeometry(panel);
+        if (typeof PersonalBlockModule !== 'undefined' && typeof PersonalBlockModule.attachPopupPinchResize === 'function') {
+            PersonalBlockModule.attachPopupPinchResize(panel, { minWidth: 300, minHeight: 320 });
+        }
+        setSelectedOption(panel, committedId);
+
+        const status = panel.querySelector('.dcuf-palette-status');
+        const saveButton = panel.querySelector('[data-dcuf-palette-action="save"]');
+        const actionButtons = Array.from(panel.querySelectorAll('button'));
+
+        panel.querySelectorAll('.dcuf-palette-option').forEach((option) => {
+            option.addEventListener('click', () => {
+                status.textContent = '';
+                setSelectedOption(panel, option.dataset.paletteId);
+            });
+        });
+        panel.querySelector('.dcuf-palette-close').addEventListener('click', () => closePaletteDialog({ restore: true }));
+        panel.querySelector('[data-dcuf-palette-action="cancel"]').addEventListener('click', () => closePaletteDialog({ restore: true }));
+        panel.querySelector('[data-dcuf-palette-action="default"]').addEventListener('click', () => {
+            status.textContent = '';
+            setSelectedOption(panel, DEFAULT_ID);
+        });
+        saveButton.addEventListener('click', async () => {
+            const selectedId = normalize(panel.dataset.selectedPalette);
+            actionButtons.forEach((button) => { button.disabled = true; });
+            status.textContent = '';
+            try {
+                await GM_setValue(STORAGE_KEY, selectedId);
+                writeRevision += 1;
+                committedId = selectedId;
+                apply(committedId, 'save');
+                closePaletteDialog({ restore: false });
+            } catch (error) {
+                console.warn('[DCUF] palette storage write failed:', error);
+                status.textContent = '색상 설정을 저장하지 못했습니다. 다시 시도해 주세요.';
+                actionButtons.forEach((button) => { button.disabled = false; });
+                saveButton.focus({ preventScroll: true });
             }
-        },
+        });
+        overlay.addEventListener('click', (event) => {
+            if (event.target === overlay) closePaletteDialog({ restore: true });
+        });
+        panel.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape') {
+                event.preventDefault();
+                closePaletteDialog({ restore: true });
+                return;
+            }
+            if (event.key !== 'Tab') return;
+            const focusable = actionButtons.filter((button) => !button.disabled && button.offsetParent !== null);
+            if (focusable.length === 0) return;
+            const first = focusable[0];
+            const last = focusable[focusable.length - 1];
+            if (event.shiftKey && document.activeElement === first) {
+                event.preventDefault();
+                last.focus();
+            } else if (!event.shiftKey && document.activeElement === last) {
+                event.preventDefault();
+                first.focus();
+            }
+        });
+
+        panel.querySelector(`.dcuf-palette-option[data-palette-id="${committedId}"]`)?.focus({ preventScroll: true });
+        return panel;
+    };
+
+    apply(DEFAULT_ID, 'default');
+    document.addEventListener('DOMContentLoaded', () => apply(committedId, 'dom-ready-sync'), { once: true });
+    if (!ensureStyle()) document.addEventListener('DOMContentLoaded', ensureStyle, { once: true });
+    beginInitialRead();
+
+    return Object.freeze({
+        STORAGE_KEY,
+        PRESETS,
+        DEFAULT_ID,
+        normalize,
+        apply,
+        openPaletteDialog,
+        closePaletteDialog,
+        getCommittedId: () => committedId,
+        isInitialReadSettled: () => initialReadSettled
+    });
+})();
+const FilterModule = {
+        TELECOM: DCUF_SHARED_IP.TELECOM,
+
+        CONSTANTS: DCUF_SHARED_SCHEMA.FILTER_CONSTANTS,
         BLOCK_UID_EXPIRE: 1000 * 60 * 60 * 24 * 7,
         BLOCKED_UIDS_CACHE: {},
         ASYNC_UID_REQUEST_CONCURRENCY: 4,
@@ -2808,95 +3519,11 @@
         _proxyStrictPrefixSet: null,
         _proxyAggressiveExtraPrefixSet: null,
         _proxyAggressivePrefixSet: null,
-        PROXY_MODE: { OFF: 0, STRICT: 1, AGGRESSIVE: 2 },
-        // modtool.txt 기준
-        // strict: VPN_LIST + IP_OWNER_LIST 의 "Mudfish VPN(정확도 낮음)"
-        // aggressive extra: 클라우드/호스팅/IDC 계열 + 일부 인프라 owner
-        PROXY_STRICT_PREFIXES: `
-            1.176 1.201 1.215 1.227 1.228 1.229 1.231 1.237 1.245 1.248 1.252 1.254 2.56 2.57 2.58 2.59 3.36 5.22
-            5.44 5.45 5.61 5.79 5.104 5.133 5.157 5.180 5.181 5.182 5.183 5.252 5.253 5.254 13.125 14.32 14.37 14.42
-            14.51 14.56 14.63 14.136 20.194 23.26 23.27 23.29 23.227 23.249 24.235 27.102 31.3 31.13 31.14 31.24 31.25 31.40
-            31.42 31.56 31.57 31.58 31.59 31.130 31.131 31.133 31.135 31.169 31.170 31.186 31.187 31.193 31.204 31.217 31.220 31.222
-            34.22 34.64 36.38 36.50 36.255 37.0 37.19 37.35 37.46 37.49 37.58 37.97 37.120 37.143 37.221 37.235 38.48 38.54
-            38.65 38.95 38.132 38.180 38.200 38.201 38.202 38.203 38.204 38.205 38.206 39.114 39.116 39.118 39.121 39.123 39.126 40.183
-            41.223 43.225 43.226 45.8 45.9 45.10 45.11 45.12 45.13 45.14 45.15 45.33 45.38 45.59 45.66 45.67 45.74 45.80
-            45.81 45.82 45.83 45.84 45.85 45.86 45.87 45.88 45.89 45.90 45.91 45.92 45.93 45.94 45.95 45.128 45.129 45.130
-            45.131 45.132 45.133 45.134 45.135 45.136 45.137 45.139 45.140 45.141 45.142 45.143 45.144 45.145 45.146 45.147 45.148 45.149
-            45.150 45.152 45.153 45.154 45.155 45.156 45.157 45.192 45.251 46.28 46.34 46.37 46.102 46.148 46.183 46.202 46.203 49.161
-            49.246 50.7 50.114 52.78 52.79 52.141 52.144 52.231 58.124 58.226 58.228 58.237 59.4 59.6 59.8 59.10 59.14 59.20
-            59.22 59.24 61.74 61.82 61.84 61.85 61.101 61.254 62.3 62.68 62.112 62.133 62.197 62.204 62.210 62.216 63.141 63.246
-            64.43 64.79 64.224 66.78 66.85 66.90 66.150 66.225 66.249 66.251 67.207 67.210 67.227 69.10 69.168 72.5 72.14 72.18
-            74.49 74.63 74.91 74.118 77.36 77.78 77.81 77.83 77.232 77.237 77.243 77.247 78.31 78.41 79.98 79.110 79.127 79.135
-            80.71 80.76 80.89 80.93 80.96 80.97 80.243 81.17 81.22 81.29 81.92 81.161 81.180 81.181 82.102 82.117 82.140 82.149
-            82.152 82.153 82.180 82.197 83.97 83.136 83.143 83.150 83.171 83.243 84.17 84.21 84.32 84.39 84.46 84.54 84.247 84.252
-            85.8 85.11 85.28 85.31 85.120 85.121 85.122 85.132 85.190 85.203 85.204 85.206 85.208 85.209 85.254 86.38 86.48 86.62
-            86.104 86.105 86.106 86.107 87.101 87.236 87.239 87.249 88.214 88.216 88.218 89.31 89.33 89.36 89.37 89.38 89.40 89.41
-            89.42 89.44 89.45 89.46 89.47 89.116 89.117 89.184 89.185 89.187 89.213 89.238 89.249 91.90 91.92 91.102 91.123 91.132
-            91.190 91.193 91.195 91.196 91.197 91.204 91.205 91.207 91.209 91.214 91.217 91.219 91.220 91.221 91.225 91.226 91.229 91.231
-            91.232 91.233 91.234 91.238 91.239 91.240 91.242 91.245 91.246 92.38 92.50 92.51 92.61 92.62 92.112 92.113 92.114 92.118
-            92.119 92.223 92.240 92.242 92.243 92.249 93.113 93.114 93.115 93.119 93.120 93.152 93.177 93.185 93.189 94.74 94.101 94.137
-            94.140 94.154 94.156 94.176 94.177 94.190 94.198 94.242 95.141 95.153 95.156 95.173 95.174 95.181 95.214 102.38 102.128 102.129
-            102.165 102.218 103.4 103.6 103.10 103.18 103.27 103.44 103.46 103.47 103.69 103.75 103.86 103.99 103.100 103.110 103.111 103.115
-            103.119 103.130 103.149 103.155 103.160 103.209 103.210 103.221 103.225 103.254 104.16 104.17 104.18 104.19 104.20 104.21 104.22 104.23
-            104.24 104.25 104.26 104.27 104.28 104.128 104.131 104.167 104.218 104.222 104.232 104.233 104.234 104.236 104.239 104.243 104.245 104.250
-            104.251 104.252 106.185 106.186 106.187 106.243 107.22 107.155 107.161 107.167 107.170 107.181 107.190 107.191 108.61 108.165 108.181 109.70
-            109.74 109.123 109.160 109.176 109.200 109.203 109.207 109.236 109.238 110.47 112.72 112.152 112.156 112.158 112.160 112.167 112.169 112.171
-            112.172 112.173 112.186 113.52 113.130 113.203 114.199 114.207 115.22 115.23 115.40 115.71 116.120 118.32 118.33 118.37 118.38 118.40
-            118.47 118.99 118.221 118.222 119.194 119.197 119.203 119.205 120.142 121.129 121.130 121.132 121.133 121.135 121.139 121.140 121.141 121.148
-            121.149 121.151 121.155 121.162 121.171 121.172 121.173 121.176 121.183 121.185 121.187 122.42 123.215 124.5 124.54 124.111 125.132 125.138
-            125.140 125.181 125.182 125.186 125.240 128.199 130.185 130.195 134.255 136.0 138.128 138.199 139.28 140.99 140.248 141.0 141.11 141.98
-            141.164 141.193 142.111 142.252 145.14 145.223 146.19 146.56 146.66 146.70 146.75 146.255 147.46 147.47 147.78 147.79 147.136 148.135
-            149.19 149.22 149.34 149.36 149.40 149.50 149.62 149.88 149.102 149.143 149.154 151.101 151.236 152.89 154.7 154.9 154.13 154.16
-            154.17 154.28 154.29 154.30 154.36 154.37 154.47 154.70 154.85 154.92 154.95 154.127 154.194 154.199 154.216 154.218 155.133 156.67
-            156.146 156.225 156.238 156.246 157.254 158.46 158.115 158.179 158.220 158.247 158.255 159.48 159.148 160.20 160.238 162.159 162.213 162.217
-            162.218 162.221 162.243 162.246 162.248 162.252 162.254 163.5 165.231 165.246 166.0 166.88 167.88 167.100 167.253 168.91 168.93 168.199
-            168.235 169.150 171.22 171.25 172.84 172.85 172.94 172.98 172.102 172.103 172.111 172.224 172.225 172.226 173.46 173.211 173.245 173.255
-            174.140 175.110 175.115 175.118 175.127 175.197 175.203 175.205 175.207 175.208 175.210 175.211 176.9 176.10 176.46 176.53 176.58 176.67
-            176.96 176.97 176.98 176.100 176.105 176.110 176.111 176.112 176.113 176.116 176.118 176.121 176.123 176.124 176.125 176.126 176.223 176.227
-            177.67 178.62 178.79 178.132 178.157 178.159 178.162 178.171 178.209 178.211 178.212 178.218 178.249 178.255 179.43 179.61 180.68 180.149
-            180.224 181.41 181.214 181.215 182.161 182.218 182.226 182.229 183.101 183.103 183.104 183.105 183.107 184.174 185.4 185.9 185.12 185.15
-            185.19 185.23 185.25 185.26 185.30 185.34 185.37 185.45 185.46 185.49 185.51 185.52 185.54 185.59 185.75 185.76 185.81 185.82
-            185.87 185.89 185.90 185.91 185.92 185.93 185.94 185.95 185.96 185.100 185.101 185.104 185.105 185.107 185.111 185.114 185.119 185.120
-            185.123 185.126 185.128 185.130 185.132 185.135 185.143 185.144 185.145 185.147 185.151 185.152 185.153 185.154 185.156 185.158 185.159 185.161
-            185.162 185.163 185.164 185.165 185.167 185.169 185.171 185.172 185.173 185.174 185.175 185.177 185.180 185.181 185.182 185.183 185.184 185.185
-            185.187 185.188 185.189 185.192 185.193 185.194 185.195 185.196 185.197 185.198 185.199 185.200 185.201 185.202 185.203 185.204 185.205 185.206
-            185.207 185.208 185.209 185.210 185.211 185.212 185.213 185.215 185.216 185.217 185.218 185.219 185.220 185.221 185.222 185.225 185.226 185.227
-            185.228 185.229 185.230 185.231 185.232 185.233 185.235 185.236 185.237 185.238 185.239 185.240 185.241 185.242 185.243 185.244 185.245 185.246
-            185.247 185.248 185.249 185.250 185.251 185.252 185.253 185.254 185.255 188.66 188.74 188.116 188.119 188.191 188.208 188.209 188.213 188.214
-            188.215 188.226 188.240 188.241 190.2 190.106 191.96 191.101 192.30 192.34 192.36 192.40 192.54 192.55 192.71 192.73 192.81 192.99
-            192.109 192.110 192.119 192.121 192.142 192.145 192.162 192.184 192.211 192.223 192.241 192.253 193.0 193.9 193.22 193.27 193.29 193.30
-            193.31 193.32 193.36 193.37 193.38 193.42 193.43 193.46 193.47 193.56 193.57 193.58 193.105 193.106 193.108 193.111 193.135 193.142
-            193.148 193.149 193.160 193.168 193.176 193.182 193.187 193.189 193.201 193.203 193.223 193.226 193.227 193.231 193.238 193.239 194.5 194.14
-            194.15 194.26 194.31 194.32 194.33 194.34 194.35 194.36 194.37 194.48 194.50 194.53 194.59 194.60 194.61 194.68 194.71 194.79
-            194.93 194.99 194.102 194.104 194.105 194.110 194.114 194.124 194.126 194.135 194.145 194.146 194.147 194.153 194.156 194.169 194.180 194.187
-            194.195 194.233 194.242 195.8 195.12 195.34 195.54 195.58 195.64 195.80 195.88 195.158 195.160 195.179 195.181 195.184 195.189 195.206
-            195.210 195.216 195.242 196.16 196.17 196.18 196.240 196.244 196.245 198.56 198.58 198.60 198.145 198.147 198.190 198.211 198.232 199.84
-            199.96 199.115 199.120 199.241 202.168 203.21 203.32 203.34 204.93 204.124 204.217 205.142 205.143 206.53 206.80 206.123 206.127 206.144
-            206.195 206.220 206.232 207.45 207.230 207.244 208.68 209.58 209.198 209.222 209.235 210.97 210.123 210.222 211.43 211.53 211.55 211.107
-            211.183 211.184 211.222 211.226 211.228 211.230 211.237 211.245 211.251 211.253 212.30 212.60 212.80 212.81 212.90 212.92 212.97 212.102
-            212.103 212.119 212.192 213.109 213.134 213.139 213.152 213.184 213.229 213.230 213.232 216.97 216.131 216.158 216.173 216.189 216.227 216.246
-            216.247 217.9 217.64 217.78 217.138 217.148 217.151 217.156 217.170 217.197 218.55 218.145 218.146 218.150 218.153 218.155 218.158 218.232
-            218.234 218.239 220.67 220.71 220.76 220.78 220.82 220.89 220.90 220.116 220.118 220.123 221.140 221.144 221.147 221.150 221.153 221.158
-            221.160 221.164 221.167 222.102 222.108 222.109 222.110 222.111 222.112 222.118 222.238
-        `.trim().split(/\s+/),
-        PROXY_AGGRESSIVE_EXTRA_PREFIXES: `
-            1.209 1.224 1.255 14.129 27.96 27.255 38.77 39.115 43.227 43.228 43.250 43.254 45.114 45.119 45.125 45.164 45.225 45.249
-            49.8 49.50 49.128 49.143 49.236 49.238 49.254 58.229 59.150 61.14 61.42 61.97 61.100 61.106 61.109 61.111 61.247 61.250
-            61.251 61.252 61.255 63.105 64.23 66.232 101.79 101.101 103.11 103.24 103.54 103.79 103.87 103.103 103.122 103.124 103.131 103.132
-            103.138 103.140 103.146 103.151 103.193 103.194 103.212 103.215 103.218 103.230 103.237 103.238 103.240 103.243 103.249 106.10 106.249 110.4
-            110.44 110.93 110.165 110.172 110.234 111.91 111.92 113.30 114.110 114.111 114.141 115.85 115.88 115.89 115.92 115.144 115.187 116.121
-            116.122 116.125 117.52 118.67 118.91 118.129 119.30 121.0 121.50 121.78 121.126 121.170 122.49 122.99 124.198 124.217 125.6 125.7
-            125.209 133.186 139.150 150.107 157.119 160.202 162.251 175.45 175.106 175.125 175.126 175.158 180.131 180.150 180.189 180.210 182.162 182.173
-            182.252 182.255 183.78 202.31 202.68 202.86 202.126 202.131 202.133 202.158 202.179 203.84 203.104 203.109 203.216 203.231 203.235 203.236
-            203.238 203.246 203.248 210.4 210.16 210.89 210.92 210.93 210.108 210.109 210.112 210.116 210.121 210.122 210.124 210.205 210.206 210.216
-            210.219 211.32 211.37 211.41 211.47 211.50 211.56 211.60 211.63 211.104 211.110 211.115 211.116 211.118 211.168 211.169 211.170 211.171
-            211.172 211.175 211.180 211.188 211.189 211.233 211.234 211.235 211.236 211.238 211.239 211.241 211.249 211.254 211.255 218.36 220.230 222.239
-            223.26 223.130 223.165 223.255
-        `.trim().split(/\s+/),
-        KR_IP_RANGES: { "1": [[11, 11], [16, 19], [96, 111], [176, 177], [201, 201], [208, 223], [224, 255]], "14": [[0, 0], [4, 7], [32, 63], [64, 95], [128, 128], [129, 129], [138, 138], [192, 192], [206, 206]], "27": [[0, 0], [1, 1], [35, 35], [96, 96], [100, 100], [101, 101], [102, 102], [111, 111], [112, 112], [113, 113], [115, 115], [116, 116], [117, 117], [118, 118], [119, 119], [120, 120], [122, 122], [124, 124], [125, 125], [126, 126], [160, 175], [176, 183], [232, 239], [255, 255]], "36": [[38, 39]], "39": [[4, 7], [16, 31], [112, 127]], "42": [[8, 15], [16, 31], [32, 47], [82, 82]], "43": [[224, 224], [227, 227], [228, 228], [230, 230], [230, 230], [230, 230], [241, 241], [242, 242], [243, 243], [246, 246], [247, 247], [247, 247], [250, 250], [251, 251], [254, 254], [255, 255]], "45": [[64, 64], [64, 64], [64, 64], [112, 112], [112, 112], [113, 113], [115, 115], [117, 117], [119, 119], [120, 120], [121, 121], [125, 125], [248, 248], [249, 249], [249, 249], [250, 250], [250, 250]], "49": [[1, 1], [8, 11], [16, 31], [50, 50], [50, 50], [50, 50], [56, 63], [128, 128], [142, 142], [143, 143], [160, 175], [236, 236], [238, 238], [239, 239], [246, 246], [247, 247], [254, 254]], "58": [[29, 29], [65, 65], [72, 79], [84, 84], [87, 87], [102, 103], [120, 127], [138, 138], [140, 143], [145, 145], [146, 146], [147, 147], [148, 151], [180, 180], [181, 181], [184, 184], [224, 239]], "59": [[0, 31], [86, 86], [150, 150], [151, 151], [152, 152], [186, 187]], "60": [[196, 197], [253, 253]], "61": [[4, 4], [5, 5], [14, 14], [32, 39], [40, 43], [47, 47], [72, 77], [78, 79], [80, 83], [84, 85], [96, 111], [245, 245], [245, 245], [247, 247], [247, 247], [248, 255]], "101": [[1, 1], [1, 1], [53, 53], [55, 55], [79, 79], [101, 101], [202, 202], [235, 235], [250, 250]], "103": [[2, 2], [2, 2], [2, 2], [3, 3], [4, 4], [4, 4], [4, 4], [5, 5], [5, 5], [6, 6], [6, 6], [6, 6], [6, 6], [7, 7], [7, 7], [7, 7], [8, 8], [8, 8], [9, 9], [9, 9], [10, 10], [10, 10], [11, 11], [11, 11], [11, 11], [11, 11], [11, 11], [12, 12], [13, 13], [13, 13], [19, 19], [20, 20], [21, 21], [21, 21], [22, 22], [23, 23], [24, 24], [25, 25], [27, 27], [27, 27], [28, 28], [30, 30], [30, 30], [30, 30], [31, 31], [38, 38], [39, 39], [42, 42], [42, 42], [43, 43], [43, 43], [49, 49], [50, 50], [51, 51], [51, 51], [51, 51], [52, 52], [53, 53], [55, 55], [55, 55], [57, 57], [59, 59], [60, 60], [62, 62], [66, 66], [67, 67], [68, 68], [68, 68], [71, 71], [74, 74], [77, 77], [79, 79], [85, 85], [87, 87], [90, 90], [90, 90], [104, 104], [105, 105], [106, 106], [108, 108], [109, 109], [114, 114], [114, 114], [117, 117], [122, 122], [122, 122], [124, 124], [125, 125], [126, 126], [126, 126], [127, 127], [129, 129], [132, 132], [138, 138], [139, 139], [139, 139], [139, 139], [140, 140], [141, 141], [141, 141], [143, 143], [143, 143], [144, 144], [145, 145], [146, 146], [150, 150], [150, 150], [150, 150], [150, 150], [153, 153], [157, 157], [157, 157], [159, 159], [161, 161], [162, 162], [162, 162], [164, 164], [166, 166], [171, 171], [175, 175], [178, 178], [182, 182], [182, 182], [186, 186], [187, 187], [187, 187], [188, 188], [194, 194], [194, 194], [206, 206], [212, 212], [212, 212], [214, 214], [214, 214], [215, 215], [216, 216], [218, 218], [219, 219], [226, 226], [226, 226], [229, 229], [230, 230], [231, 231], [234, 234], [235, 235], [237, 237], [238, 238], [239, 239], [239, 239], [240, 240], [240, 240], [243, 243], [244, 244], [244, 244], [246, 246], [246, 246], [246, 246], [247, 247], [247, 247], [248, 248], [249, 249], [251, 251], [253, 253], [254, 254]], "106": [[10, 10], [96, 103], [240, 255]], "110": [[4, 4], [5, 5], [8, 15], [34, 34], [35, 35], [35, 35], [44, 44], [44, 44], [45, 45], [46, 47], [68, 71], [76, 76], [76, 76], [92, 92], [92, 92], [93, 93], [93, 93], [165, 165], [165, 165], [172, 172], [232, 232]], "111": [[65, 65], [67, 67], [91, 91], [92, 92], [118, 118], [171, 171], [218, 219], [221, 221]], "112": [[72, 72], [72, 72], [76, 77], [106, 107], [108, 108], [109, 109], [121, 121], [121, 121], [133, 133], [136, 136], [137, 137], [140, 140], [140, 140], [140, 140], [144, 159], [160, 191], [196, 196], [212, 212], [213, 213], [214, 214], [216, 223]], "113": [[10, 10], [21, 21], [29, 29], [30, 30], [52, 52], [52, 52], [59, 59], [60, 60], [61, 61], [61, 61], [130, 130], [130, 130], [131, 131], [192, 192], [197, 197], [198, 198], [199, 199], [216, 217]], "114": [[29, 29], [30, 30], [30, 30], [30, 30], [31, 31], [31, 31], [52, 53], [70, 71], [108, 108], [110, 110], [110, 110], [111, 111], [111, 111], [129, 129], [129, 129], [141, 141], [141, 141], [141, 141], [199, 199], [199, 199], [200, 207]], "115": [[0, 23], [31, 31], [40, 41], [68, 68], [69, 69], [71, 71], [84, 84], [85, 85], [86, 86], [88, 95], [126, 126], [136, 143], [144, 144], [145, 145], [160, 160], [161, 161], [165, 165], [178, 178], [178, 178], [187, 187], [187, 187]], "116": [[32, 47], [67, 67], [68, 68], [68, 68], [84, 84], [89, 89], [90, 90], [93, 93], [120, 127], [193, 193], [199, 199], [200, 201], [212, 212], [255, 255]], "117": [[16, 17], [20, 20], [20, 20], [52, 52], [53, 53], [53, 53], [55, 55], [58, 58], [110, 111], [123, 123]], "118": [[32, 63], [67, 67], [91, 91], [91, 91], [103, 103], [107, 107], [127, 127], [128, 131], [139, 139], [176, 176], [216, 223], [234, 235]], "119": [[17, 17], [17, 17], [18, 18], [30, 30], [31, 31], [42, 42], [56, 56], [59, 59], [63, 63], [64, 71], [75, 75], [77, 77], [82, 82], [148, 148], [149, 149], [161, 161], [192, 223], [235, 235], [235, 235]], "120": [[29, 29], [50, 50], [73, 73], [136, 136], [142, 142], [143, 143]], "121": [[0, 0], [1, 1], [50, 50], [50, 50], [50, 50], [53, 53], [54, 54], [55, 55], [64, 67], [78, 78], [88, 88], [100, 100], [101, 101], [101, 101], [124, 125], [126, 126], [127, 127], [128, 159], [160, 191], [200, 200], [252, 253], [254, 254], [254, 254]], "122": [[0, 0], [0, 0], [32, 47], [49, 49], [99, 99], [100, 100], [101, 101], [128, 128], [128, 128], [129, 129], [129, 129], [152, 152], [153, 153], [199, 199], [202, 202], [202, 202], [203, 203], [252, 252], [252, 252], [254, 254]], "123": [[0, 0], [32, 47], [98, 98], [99, 99], [100, 100], [108, 108], [108, 108], [109, 109], [111, 111], [140, 143], [199, 199], [200, 200], [212, 215], [228, 229], [248, 248], [250, 251], [253, 253], [254, 254], [254, 254]], "124": [[0, 1], [2, 2], [3, 3], [5, 5], [28, 28], [46, 46], [48, 63], [66, 66], [66, 66], [80, 80], [111, 111], [136, 139], [146, 146], [153, 153], [194, 194], [195, 195], [195, 195], [197, 197], [198, 198], [199, 199], [199, 199], [216, 216], [217, 217], [243, 243], [254, 254]], "125": [[7, 7], [31, 31], [57, 57], [60, 60], [61, 61], [62, 62], [128, 159], [176, 191], [208, 208], [208, 208], [209, 209], [209, 209], [240, 247], [248, 251], [252, 252]], "128": [[134, 134]], "129": [[254, 254]], "134": [[75, 75]], "137": [[68, 68]], "139": [[5, 5], [150, 150]], "141": [[223, 223]], "143": [[248, 248]], "144": [[48, 48], [48, 48], [48, 48]], "147": [[6, 6], [43, 43], [46, 46], [47, 47]], "150": [[107, 107], [107, 107], [129, 129], [150, 150], [183, 183], [197, 197], [242, 242], [242, 242]], "152": [[99, 99], [149, 149]], "154": [[10, 10]], "155": [[230, 230]], "156": [[147, 147]], "157": [[119, 119], [197, 197]], "158": [[44, 44]], "160": [[202, 202]], "161": [[122, 122]], "163": [[53, 53], [152, 152], [180, 180], [213, 213], [222, 222], [229, 229], [239, 239], [255, 255]], "164": [[124, 124], [125, 125]], "165": [[132, 132], [133, 133], [141, 141], [186, 186], [194, 194], [213, 213], [229, 229], [243, 243], [244, 244], [246, 246]], "166": [[79, 79], [103, 103], [104, 104], [125, 125]], "168": [[78, 78], [115, 115], [126, 126], [131, 131], [154, 154], [188, 188], [219, 219], [248, 249]], "169": [[140, 140], [208, 223]], "175": [[28, 28], [41, 41], [45, 45], [45, 45], [106, 106], [107, 107], [111, 111], [112, 127], [158, 158], [176, 176], [192, 255]], "180": [[64, 71], [80, 83], [92, 92], [92, 92], [94, 94], [131, 131], [132, 135], [148, 148], [150, 150], [182, 182], [189, 189], [189, 189], [210, 210], [210, 210], [211, 211], [222, 222], [224, 231], [233, 233], [236, 239]], "182": [[31, 31], [50, 50], [161, 161], [162, 162], [163, 163], [172, 172], [173, 173], [173, 173], [192, 199], [208, 223], [224, 231], [237, 237], [237, 237], [252, 252], [252, 252], [255, 255]], "183": [[78, 78], [78, 78], [86, 86], [90, 90], [91, 91], [96, 127]], "192": [[5, 5], [100, 100], [104, 104], [132, 132], [132, 132], [195, 195], [203, 203], [245, 245], [249, 249]], "202": [[3, 3], [6, 6], [8, 8], [14, 14], [14, 14], [14, 14], [20, 20], [20, 20], [20, 20], [20, 20], [21, 21], [22, 22], [30, 31], [43, 43], [59, 59], [68, 68], [73, 73], [86, 86], [89, 89], [89, 89], [90, 90], [126, 126], [128, 128], [131, 131], [133, 133], [136, 136], [148, 148], [150, 150], [158, 158], [163, 163], [165, 165], [167, 167], [171, 171], [174, 174], [179, 179], [179, 179]], "203": [[17, 17], [81, 81], [81, 81], [82, 82], [82, 82], [83, 83], [84, 84], [90, 90], [100, 100], [109, 109], [123, 123], [128, 128], [128, 128], [129, 129], [130, 130], [130, 130], [132, 132], [133, 133], [142, 142], [142, 142], [149, 149], [152, 152], [153, 153], [160, 160], [166, 166], [169, 169], [170, 170], [171, 171], [173, 173], [175, 175], [175, 175], [190, 190], [190, 190], [191, 191], [207, 207], [210, 210], [212, 212], [212, 212], [215, 215], [216, 216], [217, 217], [223, 223], [223, 223], [224, 224], [225, 225], [226, 227], [228, 229], [230, 231], [232, 233], [234, 235], [236, 239], [240, 243], [244, 247], [248, 251], [252, 255]], "210": [[0, 0], [2, 2], [4, 4], [4, 4], [16, 16], [57, 57], [87, 87], [89, 89], [90, 91], [92, 95], [96, 96], [97, 97], [98, 98], [99, 99], [100, 103], [104, 107], [108, 111], [112, 115], [116, 119], [120, 123], [124, 127], [178, 179], [180, 181], [182, 183], [192, 192], [204, 207], [210, 210], [211, 211], [211, 211], [216, 219], [220, 223]], "211": [[32, 39], [40, 51], [52, 63], [104, 111], [112, 119], [168, 175], [176, 191], [192, 199], [200, 205], [206, 211], [212, 215], [216, 225], [226, 231], [232, 255]], "218": [[36, 39], [48, 49], [50, 55], [101, 101], [144, 159], [209, 209], [232, 233], [234, 239]], "219": [[240, 241], [248, 255]], "220": [[64, 71], [72, 91], [92, 95], [103, 103], [116, 127], [149, 149], [230, 230]], "221": [[132, 132], [133, 133], [133, 133], [138, 143], [144, 168]], "222": [[96, 122], [231, 231], [232, 239], [251, 251]], "223": [[26, 26], [28, 28], [32, 63], [130, 130], [131, 131], [165, 165], [168, 175], [194, 195], [222, 222], [253, 253], [255, 255]] },
-        // This source is the mobile target adapter. The PC builder rewrites this
-        // target flag to false when it ports the shared filter module.
-        isMobile: () => true,
+        PROXY_MODE: DCUF_SHARED_IP.PROXY_MODE,
+        PROXY_STRICT_PREFIXES: DCUF_SHARED_IP.PROXY_STRICT_PREFIXES,
+        PROXY_AGGRESSIVE_EXTRA_PREFIXES: DCUF_SHARED_IP.PROXY_AGGRESSIVE_EXTRA_PREFIXES,
+        KR_IP_RANGES: DCUF_SHARED_IP.KR_IP_RANGES,
+        isMobile: () => false,
         isRecommendedContext: () => window.location.search.includes('exception_mode=recommend'),
         normalizeProxyBlockMode(value) {
             return DCUF_SHARED_STORAGE.normalizeProxyBlockModeValue(value);
@@ -4957,7 +5584,7 @@
             this._initState = 'initializing';
             this._initPromise = (async () => {
                 this.installDebugApi();
-                this.debugLog('init', 'FilterModule init start', { version: '__VERSION__' });
+                this.debugLog('init', 'FilterModule init start', { version: '1.9.8' });
                 const snapshot = await this.loadBootSnapshot();
                 await this.cleanupLegacyManagedBlockConfig(snapshot);
                 await this.reloadSettings(snapshot);
@@ -4999,3 +5626,1612 @@
     // post-main-fixes.js는 별도 IIFE 스코프라 FilterModule 심볼을 직접 못 잡을 수 있습니다.
     // 유지보수 시 후처리 코드가 FilterModule을 참조해야 하면 이 브리지로 접근하세요.
     window.__dcufFilterModule = FilterModule;
+    /**
+     * =================================================================
+     * =================== Personal Block Module =======================
+     * =================================================================
+     */
+    const PersonalBlockModule = {
+        isSelectionMode: false,
+        personalBlockListCache: { uids: [], nicknames: [], ips: [] },
+        fabScalePercent: 100,
+        _initState: 'idle',
+        _initPromise: null,
+        _uiMounted: false,
+        _selectionClickHandler: null,
+        FAB_SCALE_MIN: 60,
+        FAB_SCALE_MAX: 160,
+
+
+        async init(snapshot = null, { deferUi = false } = {}) {
+            if (this._initState === 'ready') return 'already-ready';
+            if (this._initState === 'initializing' && this._initPromise) return this._initPromise;
+            this._initState = 'initializing';
+            this._initPromise = (async () => {
+                const list = snapshot?.personalBlockList || await this.loadPersonalBlocks();
+                this.personalBlockListCache = {
+                    uids: Array.isArray(list?.uids) ? list.uids : [],
+                    nicknames: Array.isArray(list?.nicknames) ? list.nicknames : [],
+                    ips: Array.isArray(list?.ips) ? list.ips : []
+                };
+                const mountUi = async () => {
+                    if (this._uiMounted) return;
+                    this.fabScalePercent = await this.loadFabScalePercent();
+                    this.createFab();
+                    if (!this._selectionClickHandler) {
+                        this._selectionClickHandler = this.handleSelectionClick.bind(this);
+                        document.addEventListener('click', this._selectionClickHandler, true);
+                    }
+                    this._uiMounted = true;
+                };
+                if (deferUi && typeof window.__dcufBootController?.onReady === 'function') {
+                    window.__dcufBootController.onReady(() => mountUi().catch((error) => console.warn('[DCUF] deferred FAB mount failed:', error)));
+                } else {
+                    await mountUi();
+                }
+                this._initState = 'ready';
+                return 'ready';
+            })();
+            try {
+                return await this._initPromise;
+            } catch (error) {
+                this._initState = 'failed';
+                this._initPromise = null;
+                throw error;
+            }
+        },
+
+
+
+        async loadPersonalBlocks() {
+            const list = await GM_getValue(FilterModule.CONSTANTS.STORAGE_KEYS.PERSONAL_BLOCK_LIST, { uids: [], nicknames: [], ips: [] });
+            // 데이터 구조 보정
+            if (!list.uids) list.uids = [];
+            if (!list.nicknames) list.nicknames = [];
+            if (!list.ips) list.ips = [];
+            return list;
+        },
+
+
+        async savePersonalBlocks() {
+            await GM_setValue(FilterModule.CONSTANTS.STORAGE_KEYS.PERSONAL_BLOCK_LIST, this.personalBlockListCache);
+        },
+
+
+        async addBlock(type, value, displayName = null) {
+            if (!value) return;
+            this.personalBlockListCache = await this.loadPersonalBlocks(); // 최신 데이터로 갱신
+
+
+            switch (type) {
+                case 'uid':
+                    if (!this.personalBlockListCache.uids.some(u => u.id === value)) {
+                        this.personalBlockListCache.uids.push({ id: value, name: displayName || value });
+                    }
+                    break;
+                case 'nickname':
+                    if (!this.personalBlockListCache.nicknames.includes(value)) {
+                        this.personalBlockListCache.nicknames.push(value);
+                    }
+                    break;
+                case 'ip':
+                    if (!this.personalBlockListCache.ips.includes(value)) {
+                        this.personalBlockListCache.ips.push(value);
+                    }
+                    break;
+            }
+            await this.savePersonalBlocks();
+            await FilterModule.refilterAllContent();
+            this.exitSelectionMode();
+        },
+
+        // [v2.5.7 추가] 사용자의 차단 상태를 확인하는 헬퍼 함수
+        checkBlockStatus(userInfo) {
+            const { nick, uid, ip } = userInfo;
+            const cache = this.personalBlockListCache;
+            return {
+                isNickBlocked: nick ? cache.nicknames.includes(nick) : false,
+                isUidBlocked: uid ? cache.uids.some(u => u.id === uid) : false,
+                isIpBlocked: ip ? cache.ips.includes(ip) : false,
+            };
+        },
+
+        // [v2.5.7 추가] 특정 항목을 차단 목록에서 제거하는 함수
+        async removeBlock(type, value) {
+            if (!value) return;
+            this.personalBlockListCache = await this.loadPersonalBlocks(); // 최신 데이터로 갱신
+
+            switch (type) {
+                case 'uid':
+                    this.personalBlockListCache.uids = this.personalBlockListCache.uids.filter(u => u.id !== value);
+                    break;
+                case 'nickname':
+                    this.personalBlockListCache.nicknames = this.personalBlockListCache.nicknames.filter(n => n !== value);
+                    break;
+                case 'ip':
+                    this.personalBlockListCache.ips = this.personalBlockListCache.ips.filter(i => i !== value);
+                    break;
+            }
+            await this.savePersonalBlocks();
+            await FilterModule.refilterAllContent();
+            this.exitSelectionMode();
+        },
+
+        normalizeFabScalePercent(value) {
+            const numeric = Number(value);
+            if (!Number.isFinite(numeric)) return 100;
+            return Math.max(this.FAB_SCALE_MIN, Math.min(this.FAB_SCALE_MAX, Math.round(numeric)));
+        },
+
+        async loadFabScalePercent() {
+            const stored = await GM_getValue(FilterModule.CONSTANTS.STORAGE_KEYS.FAB_SCALE_PERCENT, 100);
+            return this.normalizeFabScalePercent(stored);
+        },
+
+        clampFabPosition() {
+            const controls = document.getElementById('dc-personal-block-controls');
+            if (!controls) return;
+            const currentLeft = Number.parseFloat(controls.style.left);
+            const currentTop = Number.parseFloat(controls.style.top);
+            if (!Number.isFinite(currentLeft) || !Number.isFinite(currentTop)) return;
+            const maxX = Math.max(0, window.innerWidth - controls.offsetWidth);
+            const maxY = Math.max(0, window.innerHeight - controls.offsetHeight);
+            controls.style.left = `${Math.round(Math.max(0, Math.min(currentLeft, maxX)))}px`;
+            controls.style.top = `${Math.round(Math.max(0, Math.min(currentTop, maxY)))}px`;
+        },
+
+        applyFabScalePercent(value, { clamp = true } = {}) {
+            const normalized = this.normalizeFabScalePercent(value);
+            this.fabScalePercent = normalized;
+            const controls = document.getElementById('dc-personal-block-controls');
+            if (!controls) return normalized;
+            const ratio = normalized / 100;
+            const scaledValue = (base) => `${Number((base * ratio).toFixed(2))}px`;
+            controls.style.setProperty('--dcuf-fab-width', scaledValue(152));
+            controls.style.setProperty('--dcuf-fab-height', scaledValue(76));
+            controls.style.setProperty('--dcuf-fab-padding-x', scaledValue(28));
+            controls.style.setProperty('--dcuf-fab-font-size', scaledValue(32));
+            this.closeFabDrawer();
+            if (clamp) this.clampFabPosition();
+            return normalized;
+        },
+
+        async showFabScalePanel() {
+            window.__dcufEnsureFilterUiStyles?.();
+            document.getElementById('dc-personal-block-size-overlay')?.remove();
+            const savedPercent = await this.loadFabScalePercent();
+            this.applyFabScalePercent(savedPercent);
+            if (this.isFabSupportedPage()) this.createFab();
+
+            const overlay = document.createElement('div');
+            overlay.id = 'dc-personal-block-size-overlay';
+            const panel = document.createElement('div');
+            panel.id = 'dc-personal-block-size-panel';
+            panel.setAttribute('role', 'dialog');
+            panel.setAttribute('aria-modal', 'true');
+            panel.setAttribute('aria-labelledby', 'dc-personal-block-size-title');
+            panel.innerHTML = `
+                <h3 id="dc-personal-block-size-title">메뉴 버튼 크기 조절</h3>
+                <p class="dcuf-fab-size-description">버튼과 글자 크기가 같은 비율로 조절됩니다.</p>
+                <output class="dcuf-fab-size-value" for="dc-personal-block-size-range">${savedPercent}%</output>
+                <input id="dc-personal-block-size-range" type="range" min="${this.FAB_SCALE_MIN}" max="${this.FAB_SCALE_MAX}" step="5" value="${savedPercent}" aria-label="메뉴 버튼 크기 비율">
+                <div class="dcuf-fab-size-bounds"><span>${this.FAB_SCALE_MIN}%</span><span>${this.FAB_SCALE_MAX}%</span></div>
+                <div class="dcuf-fab-size-actions">
+                    <button type="button" data-dcuf-fab-size-action="reset">기본값</button>
+                    <button type="button" data-dcuf-fab-size-action="cancel">취소</button>
+                    <button type="button" data-dcuf-fab-size-action="save">저장</button>
+                </div>
+            `;
+            overlay.appendChild(panel);
+            document.body.appendChild(overlay);
+
+            const range = panel.querySelector('#dc-personal-block-size-range');
+            const valueOutput = panel.querySelector('.dcuf-fab-size-value');
+            const closePanel = (restoreSaved) => {
+                if (restoreSaved) this.applyFabScalePercent(savedPercent);
+                document.removeEventListener('keydown', handleKeydown, true);
+                overlay.remove();
+            };
+            const handleKeydown = (event) => {
+                if (event.key !== 'Escape') return;
+                event.preventDefault();
+                closePanel(true);
+            };
+
+            range.addEventListener('input', () => {
+                const nextPercent = this.applyFabScalePercent(range.value);
+                valueOutput.textContent = `${nextPercent}%`;
+            });
+            panel.querySelector('[data-dcuf-fab-size-action="reset"]').addEventListener('click', () => {
+                range.value = '100';
+                range.dispatchEvent(new Event('input', { bubbles: true }));
+            });
+            panel.querySelector('[data-dcuf-fab-size-action="cancel"]').addEventListener('click', () => closePanel(true));
+            panel.querySelector('[data-dcuf-fab-size-action="save"]').addEventListener('click', async () => {
+                const nextPercent = this.applyFabScalePercent(range.value);
+                await GM_setValue(FilterModule.CONSTANTS.STORAGE_KEYS.FAB_SCALE_PERCENT, nextPercent);
+                closePanel(false);
+            });
+            overlay.addEventListener('click', (event) => {
+                if (event.target === overlay) closePanel(true);
+            });
+            document.addEventListener('keydown', handleKeydown, true);
+            range.focus();
+        },
+
+
+        async createManualBlockPanel({ initialType = 'nickname', onAdded = null } = {}) {
+            window.__dcufEnsureFilterUiStyles?.();
+            const existingPanel = document.getElementById('dc-manual-block-panel');
+            if (existingPanel) {
+                existingPanel.querySelector('#dc-manual-block-value')?.focus();
+                return existingPanel;
+            }
+
+            const typeConfig = {
+                uid: { label: '식별번호', placeholder: '예: user1234', hint: '입력한 식별번호와 정확히 일치하는 작성자를 차단합니다.' },
+                nickname: { label: '닉네임', placeholder: '차단할 닉네임을 입력하세요', hint: '대소문자와 공백을 포함해 정확히 같은 닉네임만 차단합니다.' },
+                ip: { label: '아이피', placeholder: '예: 123.45 또는 화면에 표시된 IP', hint: '화면에 표시되는 IP 문자열과 정확히 일치할 때만 차단합니다.' }
+            };
+            let activeType = typeConfig[initialType] ? initialType : 'nickname';
+
+            const overlay = document.createElement('div');
+            overlay.id = 'dc-manual-block-overlay';
+            const panel = document.createElement('section');
+            panel.id = 'dc-manual-block-panel';
+            panel.setAttribute('role', 'dialog');
+            panel.setAttribute('aria-modal', 'true');
+            panel.setAttribute('aria-labelledby', 'dc-manual-block-title');
+            panel.innerHTML = `
+                <div class="dcuf-manual-header">
+                    <div>
+                        <span class="dcuf-manual-kicker">PERSONAL BLOCK</span>
+                        <h3 id="dc-manual-block-title">직접 차단</h3>
+                    </div>
+                    <button type="button" class="dcuf-manual-close" aria-label="직접 차단 닫기">×</button>
+                </div>
+                <form class="dcuf-manual-form">
+                    <div class="dcuf-manual-type-tabs" role="group" aria-label="차단 정보 종류">
+                        <button type="button" data-manual-block-type="uid">식별번호</button>
+                        <button type="button" data-manual-block-type="nickname">닉네임</button>
+                        <button type="button" data-manual-block-type="ip">아이피</button>
+                    </div>
+                    <label class="dcuf-manual-field" for="dc-manual-block-value">
+                        <span id="dc-manual-block-value-label">닉네임</span>
+                        <input id="dc-manual-block-value" type="text" autocomplete="off" autocapitalize="off" spellcheck="false">
+                    </label>
+                    <label class="dcuf-manual-field dcuf-manual-display-field" for="dc-manual-block-display" hidden>
+                        <span>닉네임 / 표시 이름 <small>(선택)</small></span>
+                        <input id="dc-manual-block-display" type="text" autocomplete="off" spellcheck="false" placeholder="예: 홍길동">
+                    </label>
+                    <p class="dcuf-manual-hint"></p>
+                    <p class="dcuf-manual-status" role="status" aria-live="polite"></p>
+                    <div class="dcuf-manual-actions">
+                        <button type="button" data-manual-block-action="close">닫기</button>
+                        <button type="submit" data-manual-block-action="add">차단 추가</button>
+                    </div>
+                </form>
+            `;
+            overlay.appendChild(panel);
+            document.body.appendChild(overlay);
+
+            const form = panel.querySelector('.dcuf-manual-form');
+            const valueInput = panel.querySelector('#dc-manual-block-value');
+            const displayField = panel.querySelector('.dcuf-manual-display-field');
+            const displayInput = panel.querySelector('#dc-manual-block-display');
+            const valueLabel = panel.querySelector('#dc-manual-block-value-label');
+            const hint = panel.querySelector('.dcuf-manual-hint');
+            const status = panel.querySelector('.dcuf-manual-status');
+            const addButton = panel.querySelector('[data-manual-block-action="add"]');
+            let isClosing = false;
+
+            const setStatus = (message = '', state = '') => {
+                status.textContent = message;
+                status.dataset.state = state;
+            };
+            const selectType = (type) => {
+                if (!typeConfig[type]) return;
+                activeType = type;
+                panel.querySelectorAll('[data-manual-block-type]').forEach((button) => {
+                    button.setAttribute('aria-pressed', String(button.dataset.manualBlockType === type));
+                });
+                valueLabel.textContent = typeConfig[type].label;
+                valueInput.placeholder = typeConfig[type].placeholder;
+                hint.textContent = typeConfig[type].hint;
+                displayField.hidden = type !== 'uid';
+                setStatus();
+                valueInput.focus();
+            };
+            const closePanel = () => {
+                if (isClosing) return;
+                isClosing = true;
+                document.removeEventListener('keydown', handleKeydown, true);
+                panel.classList.add('dcuf-pop-leave');
+                overlay.classList.add('dcuf-overlay-leave');
+                window.setTimeout(() => overlay.remove(), 140);
+            };
+            const handleKeydown = (event) => {
+                if (event.key !== 'Escape') return;
+                event.preventDefault();
+                closePanel();
+            };
+
+            panel.querySelectorAll('[data-manual-block-type]').forEach((button) => {
+                button.addEventListener('click', () => selectType(button.dataset.manualBlockType));
+            });
+            panel.querySelector('.dcuf-manual-close').addEventListener('click', closePanel);
+            panel.querySelector('[data-manual-block-action="close"]').addEventListener('click', closePanel);
+            overlay.addEventListener('click', (event) => {
+                if (event.target === overlay) closePanel();
+            });
+            form.addEventListener('submit', async (event) => {
+                event.preventDefault();
+                const value = valueInput.value.trim();
+                const displayValue = displayInput.value.trim();
+                if (!value) {
+                    setStatus(`${typeConfig[activeType].label}을(를) 입력해주세요.`, 'error');
+                    valueInput.focus();
+                    return;
+                }
+
+                const currentList = await this.loadPersonalBlocks();
+                const isDuplicate = activeType === 'uid'
+                    ? currentList.uids.some((item) => item?.id === value)
+                    : activeType === 'nickname'
+                        ? currentList.nicknames.includes(value)
+                        : currentList.ips.includes(value);
+                if (isDuplicate) {
+                    setStatus('이미 차단 목록에 있는 값입니다.', 'info');
+                    valueInput.select();
+                    return;
+                }
+
+                addButton.disabled = true;
+                addButton.textContent = '추가 중…';
+                try {
+                    const displayName = activeType === 'uid' && displayValue ? `${displayValue}(${value})` : null;
+                    await this.addBlock(activeType, value, displayName);
+                    if (typeof onAdded === 'function') await onAdded({ type: activeType, value });
+                    const isEnabled = await GM_getValue(FilterModule.CONSTANTS.STORAGE_KEYS.PERSONAL_BLOCK_ENABLED, true);
+                    setStatus(
+                        isEnabled ? `${typeConfig[activeType].label} 차단을 추가했습니다.` : '목록에 추가했습니다. 개인 차단 기능은 현재 꺼져 있습니다.',
+                        'success'
+                    );
+                    valueInput.value = '';
+                    if (activeType === 'uid') displayInput.value = '';
+                    valueInput.focus();
+                } catch (error) {
+                    console.error('[DCUF] 직접 차단 추가 실패:', error);
+                    setStatus('차단을 추가하지 못했습니다. 잠시 후 다시 시도해주세요.', 'error');
+                } finally {
+                    addButton.disabled = false;
+                    addButton.textContent = '차단 추가';
+                }
+            });
+            document.addEventListener('keydown', handleKeydown, true);
+            selectType(activeType);
+            return panel;
+        },
+
+        isFabSupportedPage() {
+            const currentPath = window.location.pathname;
+            return currentPath.includes('/board/lists') || currentPath.includes('/board/view');
+        },
+
+        closeFabDrawer() {
+            const fab = document.getElementById('dc-personal-block-fab');
+            const drawer = document.getElementById('dc-personal-block-drawer');
+            if (!fab || !drawer) return;
+            drawer.hidden = true;
+            fab.setAttribute('aria-expanded', 'false');
+        },
+
+        positionFabDrawer() {
+            const controls = document.getElementById('dc-personal-block-controls');
+            const drawer = document.getElementById('dc-personal-block-drawer');
+            if (!controls || !drawer || drawer.hidden) return;
+
+            const viewportGap = 8;
+            const drawerGap = 8;
+            const controlsRect = controls.getBoundingClientRect();
+            const drawerRect = drawer.getBoundingClientRect();
+            const maxLeft = Math.max(viewportGap, window.innerWidth - drawerRect.width - viewportGap);
+            const left = Math.max(viewportGap, Math.min(controlsRect.right - drawerRect.width, maxLeft));
+            let top = controlsRect.top - drawerRect.height - drawerGap;
+
+            if (top < viewportGap) {
+                top = Math.min(
+                    controlsRect.bottom + drawerGap,
+                    Math.max(viewportGap, window.innerHeight - drawerRect.height - viewportGap)
+                );
+            }
+
+            drawer.style.left = `${Math.round(left - controlsRect.left)}px`;
+            drawer.style.top = `${Math.round(top - controlsRect.top)}px`;
+        },
+
+        toggleFabDrawer() {
+            const fab = document.getElementById('dc-personal-block-fab');
+            const drawer = document.getElementById('dc-personal-block-drawer');
+            if (!fab || !drawer) return;
+            const willOpen = drawer.hidden;
+            if (willOpen) window.__dcufEnsureFilterUiStyles?.();
+            drawer.hidden = !willOpen;
+            fab.setAttribute('aria-expanded', String(willOpen));
+            if (willOpen) this.positionFabDrawer();
+        },
+
+        resetFabPosition() {
+            if (!this.isFabSupportedPage()) {
+                alert('플로팅 메뉴는 글 목록과 본문 페이지에서만 표시됩니다.');
+                return false;
+            }
+
+            const controls = this.createFab();
+            if (!controls) return false;
+            this.closeFabDrawer();
+            Object.assign(controls.style, {
+                left: 'auto',
+                top: 'auto',
+                right: '20px',
+                bottom: '20px'
+            });
+            return true;
+        },
+
+        createFab() {
+            if (!this.isFabSupportedPage() || !document.body) return null;
+
+            const existingControls = document.getElementById('dc-personal-block-controls');
+            const existingFab = document.getElementById('dc-personal-block-fab');
+            const existingDrawer = document.getElementById('dc-personal-block-drawer');
+            if (existingControls && existingFab && existingDrawer && existingControls.contains(existingFab) && existingControls.contains(existingDrawer)) {
+                return existingControls;
+            }
+            existingControls?.remove();
+            existingFab?.remove();
+            existingDrawer?.remove();
+
+            const controls = document.createElement('div');
+            controls.id = 'dc-personal-block-controls';
+            Object.assign(controls.style, { left: 'auto', top: 'auto', right: '20px', bottom: '20px' });
+
+            const fab = document.createElement('button');
+            fab.id = 'dc-personal-block-fab';
+            fab.type = 'button';
+            fab.textContent = '메뉴';
+            fab.setAttribute('aria-expanded', 'false');
+            fab.setAttribute('aria-controls', 'dc-personal-block-drawer');
+            fab.setAttribute('aria-label', 'DC 유저 필터 메뉴');
+
+            const drawer = document.createElement('div');
+            drawer.id = 'dc-personal-block-drawer';
+            drawer.hidden = true;
+            drawer.setAttribute('role', 'menu');
+            drawer.setAttribute('aria-label', 'DC 유저 필터 기능');
+            drawer.innerHTML = `
+                <button type="button" role="menuitem" data-dcuf-fab-action="quick-block"><span class="dcuf-menu-icon" aria-hidden="true">◎</span><span><strong>화면에서 간편차단</strong><small>글·댓글 작성자를 눌러 선택</small></span></button>
+                <button type="button" role="menuitem" data-dcuf-fab-action="manual-block"><span class="dcuf-menu-icon" aria-hidden="true">＋</span><span><strong>직접 차단</strong><small>닉네임·식별번호·IP 입력</small></span></button>
+                <button type="button" role="menuitem" data-dcuf-fab-action="filter-settings"><span class="dcuf-menu-icon" aria-hidden="true">◫</span><span><strong>글댓합 설정</strong><small>필터 기준과 범위 조정</small></span></button>
+                <button type="button" role="menuitem" data-dcuf-fab-action="block-management"><span class="dcuf-menu-icon" aria-hidden="true">☰</span><span><strong>차단 유저 관리</strong><small>목록 확인·삭제·백업</small></span></button>
+            `;
+
+            controls.append(fab, drawer);
+            document.body.appendChild(controls);
+            this.applyFabScalePercent(this.fabScalePercent, { clamp: false });
+
+            let activePointerId = null;
+            let offsetX = 0;
+            let offsetY = 0;
+            let startX = 0;
+            let startY = 0;
+            let wasDragged = false;
+            let suppressClick = false;
+            let dragWidth = 0;
+            let dragHeight = 0;
+            let dragRafId = 0;
+            let pendingDragX = null;
+            let pendingDragY = null;
+
+            const applyFabDragPosition = () => {
+                dragRafId = 0;
+                if (activePointerId === null || pendingDragX === null || pendingDragY === null) return;
+                const nextX = Math.max(0, Math.min(pendingDragX - offsetX, window.innerWidth - dragWidth));
+                const nextY = Math.max(0, Math.min(pendingDragY - offsetY, window.innerHeight - dragHeight));
+                pendingDragX = null;
+                pendingDragY = null;
+                Object.assign(controls.style, {
+                    left: `${Math.round(nextX)}px`,
+                    top: `${Math.round(nextY)}px`,
+                    right: 'auto',
+                    bottom: 'auto'
+                });
+            };
+
+            fab.addEventListener('pointerdown', (event) => {
+                if (event.button !== 0 || activePointerId !== null) return;
+                const rect = controls.getBoundingClientRect();
+                activePointerId = event.pointerId;
+                offsetX = event.clientX - rect.left;
+                offsetY = event.clientY - rect.top;
+                dragWidth = rect.width;
+                dragHeight = rect.height;
+                startX = event.clientX;
+                startY = event.clientY;
+                wasDragged = false;
+                fab.setPointerCapture?.(event.pointerId);
+            });
+
+            fab.addEventListener('pointermove', (event) => {
+                if (event.pointerId !== activePointerId) return;
+                if (!wasDragged && Math.hypot(event.clientX - startX, event.clientY - startY) < 5) return;
+                if (!wasDragged) this.closeFabDrawer();
+                wasDragged = true;
+                event.preventDefault();
+                pendingDragX = event.clientX;
+                pendingDragY = event.clientY;
+                if (!dragRafId) dragRafId = requestAnimationFrame(applyFabDragPosition);
+            });
+
+            const finishDrag = (event) => {
+                if (event.pointerId !== activePointerId) return;
+                if (dragRafId) cancelAnimationFrame(dragRafId);
+                applyFabDragPosition();
+                suppressClick = wasDragged;
+                activePointerId = null;
+                fab.releasePointerCapture?.(event.pointerId);
+            };
+            fab.addEventListener('pointerup', finishDrag);
+            fab.addEventListener('pointercancel', finishDrag);
+
+            fab.addEventListener('click', () => {
+                if (suppressClick) {
+                    suppressClick = false;
+                    return;
+                }
+                this.toggleFabDrawer();
+            });
+
+            drawer.addEventListener('click', async (event) => {
+                const actionButton = event.target.closest('[data-dcuf-fab-action]');
+                if (!actionButton || !drawer.contains(actionButton)) return;
+                const action = actionButton.dataset.dcufFabAction;
+                this.closeFabDrawer();
+                if (action === 'quick-block') this.enterSelectionMode();
+                else if (action === 'manual-block') await this.createManualBlockPanel();
+                else if (action === 'filter-settings') await FilterModule.showSettings();
+                else if (action === 'block-management') await this.createManagementPanel();
+            });
+
+            if (!this._fabGlobalHandlersBound) {
+                document.addEventListener('click', (event) => {
+                    const currentControls = document.getElementById('dc-personal-block-controls');
+                    if (currentControls && !currentControls.contains(event.target)) this.closeFabDrawer();
+                });
+                document.addEventListener('keydown', (event) => {
+                    if (event.key === 'Escape') this.closeFabDrawer();
+                });
+                window.addEventListener('resize', () => {
+                    this.clampFabPosition();
+                    if (!document.getElementById('dc-personal-block-drawer')?.hidden) this.positionFabDrawer();
+                });
+                this._fabGlobalHandlersBound = true;
+            }
+
+            return controls;
+        },
+
+        enterSelectionMode() {
+            if (this.isSelectionMode) return;
+            window.__dcufEnsureFilterUiStyles?.();
+            this.isSelectionMode = true;
+            document.body.classList.add('selection-mode-active');
+
+
+            const popup = document.createElement('div');
+            popup.id = 'dc-selection-popup';
+            popup.className = 'dcuf-selection-prompt';
+            popup.innerHTML = `
+                <div class="dcuf-selection-prompt-icon" aria-hidden="true">◎</div>
+                <div class="dcuf-selection-prompt-copy">
+                    <h4>차단할 작성자를 선택하세요</h4>
+                    <p>글이나 댓글의 닉네임을 눌러주세요.</p>
+                </div>
+                <div class="popup-buttons">
+                    <button class="cancel-btn">선택 취소</button>
+                </div>
+            `;
+            document.body.appendChild(popup);
+
+            popup.querySelector('.cancel-btn').onclick = () => this.exitSelectionMode();
+        },
+
+
+        exitSelectionMode() {
+            if (!this.isSelectionMode) return;
+            this.isSelectionMode = false;
+            document.body.classList.remove('selection-mode-active');
+            const popup = document.getElementById('dc-selection-popup');
+            if (popup) {
+                popup.classList.add('dcuf-pop-leave');
+                window.setTimeout(() => popup.remove(), 120);
+            }
+        },
+
+
+        handleSelectionClick(e) {
+            if (!this.isSelectionMode) return;
+            const popup = document.getElementById('dc-selection-popup');
+            if (popup && popup.contains(e.target)) return;
+
+
+            const writerEl = e.target.closest('.gall_writer, .ub-writer');
+            if (writerEl) {
+                e.preventDefault();
+                e.stopPropagation();
+
+
+                const nick = writerEl.getAttribute('data-nick');
+                const uid = writerEl.getAttribute('data-uid');
+                const ip = writerEl.getAttribute('data-ip');
+
+
+                this.showSelectionPopup({ nick, uid, ip });
+            }
+        },
+
+
+        // [v2.5.7 수정] 차단/차단 해제 버튼을 동적으로 생성
+        showSelectionPopup(userInfo) {
+            window.__dcufEnsureFilterUiStyles?.();
+            this.exitSelectionMode();
+            this.isSelectionMode = true;
+            document.body.classList.add('selection-mode-active');
+
+            const popup = document.createElement('div');
+            popup.id = 'dc-selection-popup';
+
+            // [핵심 변경] 사용자의 차단 상태를 먼저 확인
+            const blockStatus = this.checkBlockStatus(userInfo);
+            let optionsHtml = '';
+
+            // 닉네임 처리
+            if (userInfo.nick) {
+                if (blockStatus.isNickBlocked) {
+                    optionsHtml += `<div class="block-option"><span>닉네임: ${userInfo.nick}</span><button class="btn-unblock" data-type="nickname" data-value="${userInfo.nick}">차단 해제</button></div>`;
+                } else {
+                    optionsHtml += `<div class="block-option"><span>닉네임: ${userInfo.nick}</span><button data-type="nickname" data-value="${userInfo.nick}">차단</button></div>`;
+                }
+            }
+            // UID 처리
+            if (userInfo.uid) {
+                const displayName = `${userInfo.nick}(${userInfo.uid})`;
+                if (blockStatus.isUidBlocked) {
+                    optionsHtml += `<div class="block-option"><span>식별번호: ${displayName}</span><button class="btn-unblock" data-type="uid" data-value="${userInfo.uid}" data-display-name="${displayName}">차단 해제</button></div>`;
+                } else {
+                    optionsHtml += `<div class="block-option"><span>식별번호: ${displayName}</span><button data-type="uid" data-value="${userInfo.uid}" data-display-name="${displayName}">차단</button></div>`;
+                }
+            }
+            // IP 처리
+            if (userInfo.ip) {
+                if (blockStatus.isIpBlocked) {
+                    optionsHtml += `<div class="block-option"><span>IP: ${userInfo.ip}</span><button class="btn-unblock" data-type="ip" data-value="${userInfo.ip}">차단 해제</button></div>`;
+                } else {
+                    optionsHtml += `<div class="block-option"><span>IP: ${userInfo.ip}</span><button data-type="ip" data-value="${userInfo.ip}">차단</button></div>`;
+                }
+            }
+
+            popup.innerHTML = `
+                <h4>어떤 정보를 처리할까요?</h4>
+                <div class="block-options">${optionsHtml}</div>
+                <div class="popup-buttons"><button class="cancel-btn">취소</button></div>
+            `;
+            document.body.appendChild(popup);
+
+            popup.querySelector('.cancel-btn').onclick = () => this.exitSelectionMode();
+
+            // [핵심 변경] 이벤트 핸들러 통합
+            popup.querySelectorAll('.block-options button').forEach(btn => {
+                btn.onclick = () => {
+                    const { type, value, displayName } = btn.dataset;
+                    if (btn.classList.contains('btn-unblock')) {
+                        // '차단 해제' 버튼 클릭 시
+                        this.removeBlock(type, value);
+                    } else {
+                        // '차단' 버튼 클릭 시
+                        this.addBlock(type, value, displayName);
+                    }
+                };
+            });
+        },
+
+
+        // [신규] 차단 목록 병합 헬퍼 함수
+        attachPopupPinchResize(target, options = {}) {
+            if (!target) return;
+            if (target.getAttribute('data-dcuf-pinch-resize-bound') === '1') return;
+            target.setAttribute('data-dcuf-pinch-resize-bound', '1');
+
+            const baseMinWidth = Number(options.minWidth) || 320;
+            const baseMinHeight = Number(options.minHeight) || 260;
+            const maxWidthOption = Number(options.maxWidth) || 0;
+            const maxHeightOption = Number(options.maxHeight) || 0;
+
+            let isPinching = false;
+            let startDistance = 0;
+            let startWidth = 0;
+            let startHeight = 0;
+            let startAnchorX = 0.5;
+            let startAnchorY = 0.5;
+            let lastMoveTs = 0;
+            let lastMoveDistance = -1;
+
+            const clamp = (value, min, max) => Math.max(min, Math.min(value, max));
+            const getDistance = (t1, t2) => Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
+            const getMidpoint = (t1, t2) => ({ x: (t1.clientX + t2.clientX) / 2, y: (t1.clientY + t2.clientY) / 2 });
+            const viewportSize = () => ({ width: window.innerWidth, height: window.innerHeight });
+
+            const normalizeFixedPosition = () => {
+                const rect = target.getBoundingClientRect();
+                const computedStyle = window.getComputedStyle(target);
+                if (computedStyle.transform && computedStyle.transform !== 'none') {
+                    target.style.setProperty('transform', 'none', 'important');
+                    target.style.setProperty('left', `${rect.left}px`, 'important');
+                    target.style.setProperty('top', `${rect.top}px`, 'important');
+                }
+
+                // Pinch geometry is calculated from the border box. Keep the CSS sizing
+                // model and the runtime dimensions in the same coordinate space so that
+                // padded popups do not grow or jump on the first move.
+                target.style.setProperty('box-sizing', 'border-box', 'important');
+                target.style.setProperty('width', `${rect.width}px`, 'important');
+                target.style.setProperty('height', `${rect.height}px`, 'important');
+                return target.getBoundingClientRect();
+            };
+
+            const isTouchInsideRect = (touch, rect, padding = 24) => (
+                touch.clientX >= rect.left - padding &&
+                touch.clientX <= rect.right + padding &&
+                touch.clientY >= rect.top - padding &&
+                touch.clientY <= rect.bottom + padding
+            );
+
+            const canStartPinch = (touches, rect) => {
+                if (!touches || touches.length < 2) return false;
+                const t1 = touches[0];
+                const t2 = touches[1];
+                if (!isTouchInsideRect(t1, rect) || !isTouchInsideRect(t2, rect)) return false;
+                const mid = getMidpoint(t1, t2);
+                return isTouchInsideRect({ clientX: mid.x, clientY: mid.y }, rect, 48);
+            };
+
+            const startPinch = (touches) => {
+                const rect = normalizeFixedPosition();
+                if (!canStartPinch(touches, rect)) return;
+
+                const distance = getDistance(touches[0], touches[1]);
+                if (!distance || !isFinite(distance)) return;
+
+                isPinching = true;
+                startDistance = distance;
+                startWidth = rect.width;
+                startHeight = rect.height;
+                const midpoint = getMidpoint(touches[0], touches[1]);
+                startAnchorX = rect.width > 0 ? clamp((midpoint.x - rect.left) / rect.width, 0, 1) : 0.5;
+                startAnchorY = rect.height > 0 ? clamp((midpoint.y - rect.top) / rect.height, 0, 1) : 0.5;
+                lastMoveTs = 0;
+                lastMoveDistance = -1;
+            };
+
+            const onTouchStart = (e) => {
+                if (!target.isConnected) return;
+                if (!e.touches || e.touches.length < 2) return;
+                startPinch(e.touches);
+                if (isPinching) {
+                    if (e.cancelable) e.preventDefault();
+                    e.stopPropagation();
+                }
+            };
+
+            const onTouchMove = (e) => {
+                if (!target.isConnected || !isPinching) return;
+                if (!e.touches || e.touches.length < 2) {
+                    isPinching = false;
+                    return;
+                }
+
+                const distance = getDistance(e.touches[0], e.touches[1]);
+                if (!distance || !isFinite(distance)) return;
+
+                const now = Date.now();
+                if (lastMoveDistance >= 0 && Math.abs(distance - lastMoveDistance) < 0.0001 && (now - lastMoveTs) < 6) {
+                    if (e.cancelable) e.preventDefault();
+                    e.stopPropagation();
+                    return;
+                }
+                lastMoveDistance = distance;
+                lastMoveTs = now;
+
+                const mid = getMidpoint(e.touches[0], e.touches[1]);
+                const vp = viewportSize();
+                const maxViewportWidth = Math.max(120, vp.width - 8);
+                const maxViewportHeight = Math.max(120, vp.height - 8);
+
+                const dynamicMinWidth = Math.max(120, Math.min(baseMinWidth, Math.max(120, vp.width - 12)));
+                const dynamicMinHeight = Math.max(120, Math.min(baseMinHeight, Math.max(120, vp.height - 12)));
+
+                const configuredMaxWidth = maxWidthOption > 0 ? Math.min(maxWidthOption, maxViewportWidth) : maxViewportWidth;
+                const configuredMaxHeight = maxHeightOption > 0 ? Math.min(maxHeightOption, maxViewportHeight) : maxViewportHeight;
+                const maxWidth = Math.max(dynamicMinWidth, configuredMaxWidth);
+                const maxHeight = Math.max(dynamicMinHeight, configuredMaxHeight);
+
+                const requestedScale = distance / startDistance;
+                const minScale = Math.min(1, Math.max(dynamicMinWidth / startWidth, dynamicMinHeight / startHeight));
+                const maxScale = Math.max(1, Math.min(maxWidth / startWidth, maxHeight / startHeight));
+                const scale = clamp(requestedScale, minScale, maxScale);
+                const nextWidth = startWidth * scale;
+                const nextHeight = startHeight * scale;
+
+                const rawLeft = mid.x - (nextWidth * startAnchorX);
+                const rawTop = mid.y - (nextHeight * startAnchorY);
+                const viewportGap = 4;
+                const nextLeft = clamp(rawLeft, viewportGap, Math.max(viewportGap, vp.width - nextWidth - viewportGap));
+                const nextTop = clamp(rawTop, viewportGap, Math.max(viewportGap, vp.height - nextHeight - viewportGap));
+
+                // The centered settings/backup popups have responsive !important width,
+                // max-width, and min-height rules. Override those constraints only after
+                // an explicit pinch starts so the rendered box matches these calculations.
+                target.style.setProperty('min-width', `${dynamicMinWidth}px`, 'important');
+                target.style.setProperty('min-height', `${dynamicMinHeight}px`, 'important');
+                target.style.setProperty('max-width', `${maxWidth}px`, 'important');
+                target.style.setProperty('max-height', `${maxHeight}px`, 'important');
+                target.style.setProperty('width', `${nextWidth}px`, 'important');
+                target.style.setProperty('height', `${nextHeight}px`, 'important');
+                target.style.setProperty('left', `${nextLeft}px`, 'important');
+                target.style.setProperty('top', `${nextTop}px`, 'important');
+
+                if (e.cancelable) e.preventDefault();
+                e.stopPropagation();
+            };
+
+            const onTouchEnd = () => {
+                if (!target.isConnected) return;
+                isPinching = false;
+            };
+
+            target.addEventListener('touchstart', onTouchStart, { passive: false });
+            target.addEventListener('touchmove', onTouchMove, { passive: false });
+            target.addEventListener('touchend', onTouchEnd, { passive: true });
+            target.addEventListener('touchcancel', onTouchEnd, { passive: true });
+        },
+        mergeBlockLists(existing, imported) {
+            // UIDs 병합 (중복 ID 확인)
+            const existingUIDs = new Set(existing.uids.map(u => u.id));
+            const mergedUIDs = [...existing.uids];
+            imported.uids.forEach(importedUser => {
+                if (!existingUIDs.has(importedUser.id)) {
+                    mergedUIDs.push(importedUser);
+                }
+            });
+
+            // Nicknames, IPs 병합 (Set을 사용하여 간단하게 중복 제거)
+            const mergedNicknames = [...new Set([...existing.nicknames, ...imported.nicknames])];
+            const mergedIPs = [...new Set([...existing.ips, ...imported.ips])];
+
+            return { uids: mergedUIDs, nicknames: mergedNicknames, ips: mergedIPs };
+        },
+
+        // [신규] 백업 및 복원 팝업 생성 함수
+        async createBackupPopup() {
+            window.__dcufEnsureFilterUiStyles?.();
+            if (document.getElementById('dc-backup-popup')) return;
+
+            const overlay = document.createElement('div');
+            overlay.id = 'dc-backup-popup-overlay';
+
+            const popup = document.createElement('div');
+            popup.id = 'dc-backup-popup';
+            popup.innerHTML = `
+                <div class="popup-header">
+                    <h4>차단 목록 백업/복원</h4>
+                    <button class="popup-close-btn">×</button>
+                </div>
+                <div class="popup-content">
+                    <div class="export-section">
+                        <label>내보내기</label>
+                        <span class="description">현재 차단 목록 전체를 파일로 저장하거나 클립보드에 복사합니다.</span>
+                        <div style="display: flex; gap: 8px; margin-top: 5px;">
+                            <button class="export-btn-download">파일로 다운로드</button>
+                            <button class="export-btn">클립보드에 복사</button>
+                        </div>
+                    </div>
+                    <hr style="border: 0; border-top: 1px solid #eee;">
+                    <div class="import-section">
+                        <label>불러오기</label>
+                        <span class="description">백업 파일을 선택하거나, 아래 텍스트 영역에 직접 붙여넣으세요.</span>
+                        <div class="import-controls">
+                           <input type="file" class="import-file-input" accept=".json,.txt">
+                           <textarea placeholder="또는, 백업 데이터를 여기에 붙여넣으세요..."></textarea>
+                        </div>
+                         <button class="import-btn">불러오기</button>
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(overlay);
+            document.body.appendChild(popup);
+
+            this.attachPopupPinchResize(popup, { minWidth: 300, minHeight: 240 });
+
+            const textarea = popup.querySelector('textarea');
+            const fileInput = popup.querySelector('.import-file-input');
+            let bufferedClipboardImport = '';
+            const originalTextareaPlaceholder = textarea ? (textarea.getAttribute('placeholder') || '') : '';
+
+            const formatImportSize = (text) => {
+                const size = new Blob([text]).size;
+                if (size >= 1024 * 1024) return `${(size / (1024 * 1024)).toFixed(2)}MB`;
+                if (size >= 1024) return `${(size / 1024).toFixed(1)}KB`;
+                return `${size}B`;
+            };
+
+            const setBufferedImportPreview = (text) => {
+                if (!textarea) return;
+                textarea.value = '';
+                textarea.placeholder = `클립보드 백업 데이터 붙여넣기 완료 (${formatImportSize(text)})\n불러오기 버튼을 누르면 가져옵니다.`;
+                textarea.dataset.dcufBufferedImport = '1';
+            };
+
+            const clearBufferedImport = () => {
+                bufferedClipboardImport = '';
+                if (!textarea) return;
+                textarea.placeholder = originalTextareaPlaceholder;
+                delete textarea.dataset.dcufBufferedImport;
+            };
+
+            if (textarea) {
+                textarea.addEventListener('paste', (e) => {
+                    const pastedText = e.clipboardData?.getData('text');
+                    if (typeof pastedText !== 'string' || !pastedText.length) return;
+
+                    e.preventDefault();
+                    bufferedClipboardImport = pastedText;
+                    setBufferedImportPreview(pastedText);
+                });
+
+                textarea.addEventListener('input', () => {
+                    if (textarea.dataset.dcufBufferedImport === '1') {
+                        clearBufferedImport();
+                    }
+                });
+            }
+
+
+            const closePopup = () => {
+                popup.classList.add('dcuf-pop-leave');
+                overlay.classList.add('dcuf-overlay-leave');
+                window.setTimeout(() => {
+                    overlay.remove();
+                    popup.remove();
+                }, 140);
+            };
+
+            popup.querySelector('.popup-close-btn').onclick = closePopup;
+            overlay.onclick = closePopup;
+
+
+            // [추가] 파일로 다운로드 버튼 이벤트 핸들러
+            popup.querySelector('.export-btn-download').onclick = async () => {
+                const data = await this.loadPersonalBlocks();
+                const jsonString = JSON.stringify(data, null, 2);
+                const blob = new Blob([jsonString], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+
+                const a = document.createElement('a');
+                a.href = url;
+
+                const date = new Date();
+                const timestamp = `${date.getFullYear()}${(date.getMonth() + 1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}_${date.getHours().toString().padStart(2, '0')}${date.getMinutes().toString().padStart(2, '0')}`;
+                a.download = `dc_blocklist_backup_${timestamp}.json`;
+
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+
+                alert('백업 파일 다운로드를 시작합니다.');
+            };
+            popup.querySelector('.export-btn').onclick = async () => {
+                const data = await this.loadPersonalBlocks();
+                const jsonString = JSON.stringify(data);
+                try {
+                    await navigator.clipboard.writeText(jsonString);
+                    alert('차단 목록이 클립보드에 복사되었습니다.');
+                } catch (err) {
+                    alert('클립보드 복사에 실패했습니다. 콘솔을 확인해주세요.');
+                    console.error('클립보드 복사 실패:', err);
+                }
+            };
+
+            // [수정] 불러오기 기능 (파일/텍스트 모두 처리)
+
+            // 공통 데이터 처리 로직을 별도 함수로 분리
+            const processImportData = async (jsonString) => {
+                if (!jsonString || !jsonString.trim()) {
+                    alert('불러올 데이터가 없습니다.');
+                    return;
+                }
+
+                let importedList;
+                try {
+                    importedList = JSON.parse(jsonString);
+                    if (typeof importedList !== 'object' || !importedList.uids || !importedList.nicknames || !importedList.ips) {
+                        throw new Error('Invalid data format');
+                    }
+                } catch (err) {
+                    alert('데이터 형식이 올바르지 않습니다. JSON 형식이 맞는지 확인해주세요.');
+                    return;
+                }
+
+                const currentList = await this.loadPersonalBlocks();
+                const mergedList = this.mergeBlockLists(currentList, importedList);
+
+                this.personalBlockListCache = mergedList;
+                await this.savePersonalBlocks();
+                await FilterModule.refilterAllContent();
+
+                alert('차단 목록을 성공적으로 불러와서 추가했습니다.');
+                closePopup();
+                const managementPanel = document.getElementById('dc-block-management-panel');
+                if (managementPanel) managementPanel.querySelector('.panel-close-btn').click();
+            };
+
+            // 불러오기 버튼 클릭 이벤트
+            popup.querySelector('.import-btn').onclick = async () => {
+                // 1순위: 파일이 선택되었는지 확인
+                if (fileInput.files.length > 0) {
+                    const file = fileInput.files[0];
+                    const reader = new FileReader();
+
+                    reader.onload = (e) => {
+                        // 파일 읽기가 완료되면 데이터 처리 함수 호출
+                        processImportData(e.target.result);
+                    };
+                    reader.onerror = () => {
+                        alert('파일을 읽는 중 오류가 발생했습니다.');
+                    };
+
+                    reader.readAsText(file); // 파일 읽기 시작
+                }
+                // 2순위: 파일이 없다면 textarea의 값을 사용
+                else {
+                    const importText = textarea && textarea.dataset.dcufBufferedImport === '1'
+                        ? bufferedClipboardImport
+                        : (textarea ? textarea.value : '');
+                    processImportData(importText);
+                }
+            };
+        },
+
+
+        // [수정] 차단 관리 패널 로직 전체 개선 (On/Off 스위치, 백업 버튼 추가)
+        async createManagementPanel() {
+            window.__dcufEnsureFilterUiStyles?.();
+            if (document.getElementById('dc-block-management-panel')) return;
+
+
+            const originalBlockList = await this.loadPersonalBlocks();
+            const itemsToDelete = { uids: new Set(), nicknames: new Set(), ips: new Set() };
+            const isPersonalBlockEnabled = await GM_getValue(FilterModule.CONSTANTS.STORAGE_KEYS.PERSONAL_BLOCK_ENABLED, true);
+
+
+            const overlay = document.createElement('div');
+            overlay.id = 'dc-block-management-panel-overlay';
+
+
+            const panel = document.createElement('div');
+            panel.id = 'dc-block-management-panel';
+            panel.innerHTML = `
+                <div class="panel-header">
+                    <div class="panel-title-group">
+                        <span class="panel-kicker">PERSONAL BLOCK</span>
+                        <h3>차단 유저 관리</h3>
+                    </div>
+                    <div class="panel-header-actions">
+                        <button type="button" class="panel-add-btn">＋ 직접 추가</button>
+                        <div class="switch-container">
+                            <label class="switch" aria-label="개인 차단 기능 사용">
+                                <input type="checkbox" id="personal-block-toggle" ${isPersonalBlockEnabled ? 'checked' : ''}>
+                                <span class="switch-slider"></span>
+                            </label>
+                        </div>
+                        <button type="button" class="panel-close-btn" aria-label="차단 유저 관리 닫기">×</button>
+                    </div>
+                </div>
+                <div class="panel-tabs" role="tablist" aria-label="차단 정보 종류">
+                    <button type="button" class="panel-tab active" data-type="uids">식별 번호 <span class="panel-tab-count">${originalBlockList.uids.length}</span></button>
+                    <button type="button" class="panel-tab" data-type="nicknames">닉네임 <span class="panel-tab-count">${originalBlockList.nicknames.length}</span></button>
+                    <button type="button" class="panel-tab" data-type="ips">아이피 <span class="panel-tab-count">${originalBlockList.ips.length}</span></button>
+                </div>
+                <div class="panel-body">
+                    <div class="panel-list-controls">
+                        <label class="panel-search">
+                            <span aria-hidden="true">⌕</span>
+                            <input type="search" class="panel-search-input" placeholder="현재 탭에서 검색" autocomplete="off" aria-label="차단 목록 검색">
+                        </label>
+                        <button type="button" class="select-all-btn">해당 탭 전체 선택/해제</button>
+                        <span class="panel-list-summary" aria-live="polite"></span>
+                    </div>
+                    <div class="panel-content">
+                        <ul class="blocked-list"></ul>
+                    </div>
+                </div>
+                <div class="panel-footer">
+                    <div class="panel-footer-left">
+                        <button class="select-all-global-btn">모든 탭 전체 선택/해제</button>
+                        <button class="panel-backup-btn">백업</button>
+                    </div>
+                    <button class="panel-save-btn">저장</button>
+                </div>
+                <div class="panel-resize-handle"></div>
+            `;
+            document.body.appendChild(overlay);
+            document.body.appendChild(panel);
+
+            this.attachPopupPinchResize(panel, { minWidth: 320, minHeight: 260 });
+
+            // [신규] On/Off 스위치 이벤트 리스너
+            const toggleSwitch = panel.querySelector('#personal-block-toggle');
+            toggleSwitch.addEventListener('change', async (e) => {
+                const isEnabled = e.target.checked;
+                await GM_setValue(FilterModule.CONSTANTS.STORAGE_KEYS.PERSONAL_BLOCK_ENABLED, isEnabled);
+                dcFilterSettings.personalBlockEnabled = isEnabled; // 즉시 설정 반영
+                await FilterModule.refilterAllContent(); // 필터 재적용
+            });
+
+            // [신규] 백업 버튼 이벤트 리스너
+            panel.querySelector('.panel-backup-btn').onclick = () => {
+                this.createBackupPopup();
+            };
+
+            const globalSelectAllBtn = panel.querySelector('.select-all-global-btn');
+            const saveButton = panel.querySelector('.panel-save-btn');
+            const searchInput = panel.querySelector('.panel-search-input');
+            const listSummary = panel.querySelector('.panel-list-summary');
+            const updateTabCounts = () => {
+                panel.querySelectorAll('.panel-tab').forEach((tab) => {
+                    const count = originalBlockList[tab.dataset.type]?.length || 0;
+                    const countEl = tab.querySelector('.panel-tab-count');
+                    if (countEl) countEl.textContent = String(count);
+                });
+            };
+
+
+            const isEverythingSelected = () => {
+                const totalItems = originalBlockList.uids.length + originalBlockList.nicknames.length + originalBlockList.ips.length;
+                if (totalItems === 0) return false; // 아무것도 없으면 선택된 게 아님
+                const totalSelected = itemsToDelete.uids.size + itemsToDelete.nicknames.size + itemsToDelete.ips.size;
+                return totalItems === totalSelected;
+            };
+
+
+            const updateGlobalSelectAllButtonState = () => {
+                const pendingCount = itemsToDelete.uids.size + itemsToDelete.nicknames.size + itemsToDelete.ips.size;
+                saveButton.textContent = pendingCount ? `${pendingCount}건 변경 저장` : '변경 저장';
+                if (isEverythingSelected()) {
+                    globalSelectAllBtn.textContent = '모든 탭 전체 해제';
+                } else {
+                    globalSelectAllBtn.textContent = '모든 탭 전체 선택';
+                }
+            };
+
+
+            const renderList = (type) => {
+                const listEl = panel.querySelector('.blocked-list');
+                listEl.innerHTML = '';
+                const data = originalBlockList[type] || [];
+                const query = searchInput.value.trim().toLocaleLowerCase();
+                const filteredData = data.filter((item) => {
+                    const value = typeof item === 'object' ? item?.id : item;
+                    const name = typeof item === 'object' ? item?.name : item;
+                    return !query || String(name ?? value ?? '').toLocaleLowerCase().includes(query)
+                        || String(value ?? '').toLocaleLowerCase().includes(query);
+                });
+
+                listSummary.textContent = query ? `${filteredData.length} / ${data.length}개 표시` : `총 ${data.length}개`;
+                if (filteredData.length === 0) {
+                    const emptyItem = document.createElement('li');
+                    emptyItem.className = 'blocked-list-empty';
+                    emptyItem.textContent = query ? '검색 결과가 없습니다.' : '이 탭에 차단된 항목이 없습니다.';
+                    listEl.appendChild(emptyItem);
+                }
+
+                filteredData.forEach((item) => {
+                    const li = document.createElement('li');
+                    li.className = 'blocked-item';
+                    const value = (typeof item === 'object') ? item.id : item;
+                    const name = (typeof item === 'object') ? item.name : item;
+                    li.dataset.value = value;
+
+                    const nameEl = document.createElement('span');
+                    nameEl.className = 'item-name';
+                    nameEl.textContent = String(name ?? value ?? '');
+                    const deleteButton = document.createElement('button');
+                    deleteButton.type = 'button';
+                    deleteButton.className = 'delete-item-btn';
+                    deleteButton.textContent = '삭제';
+                    deleteButton.setAttribute('aria-label', `${nameEl.textContent} 삭제 선택`);
+                    li.append(nameEl, deleteButton);
+
+                    if (itemsToDelete[type].has(value)) {
+                        li.classList.add('item-to-delete');
+                    }
+
+                    deleteButton.onclick = () => {
+                        if (li.classList.toggle('item-to-delete')) {
+                            itemsToDelete[type].add(value);
+                        } else {
+                            itemsToDelete[type].delete(value);
+                        }
+                        updateSelectAllButtonState(type);
+                        updateGlobalSelectAllButtonState();
+                    };
+                    listEl.appendChild(li);
+                });
+                updateTabCounts();
+                updateSelectAllButtonState(type);
+                updateGlobalSelectAllButtonState();
+            };
+
+
+            const updateSelectAllButtonState = (type) => {
+                const selectAllBtn = panel.querySelector('.select-all-btn');
+                const currentList = originalBlockList[type] || [];
+                if (currentList.length > 0 && itemsToDelete[type].size === currentList.length) {
+                    selectAllBtn.textContent = '해당 탭 전체 해제';
+                    selectAllBtn.dataset.action = 'deselect';
+                } else {
+                    selectAllBtn.textContent = '해당 탭 전체 선택';
+                    selectAllBtn.dataset.action = 'select';
+                }
+            };
+
+
+            const handleSelectAll = () => {
+                const type = panel.querySelector('.panel-tab.active').dataset.type;
+                const selectAllBtn = panel.querySelector('.select-all-btn');
+                const shouldSelectAll = selectAllBtn.dataset.action === 'select';
+
+
+                const currentList = originalBlockList[type] || [];
+                currentList.forEach(item => {
+                    const value = (typeof item === 'object') ? item.id : item;
+                    if (shouldSelectAll) {
+                        itemsToDelete[type].add(value);
+                    } else {
+                        itemsToDelete[type].delete(value);
+                    }
+                });
+                renderList(type);
+            };
+
+
+            panel.querySelector('.select-all-btn').onclick = handleSelectAll;
+
+
+            globalSelectAllBtn.onclick = () => {
+                const shouldSelectEverything = !isEverythingSelected();
+
+
+                if (shouldSelectEverything) {
+                    originalBlockList.uids.forEach(u => itemsToDelete.uids.add(u.id));
+                    originalBlockList.nicknames.forEach(n => itemsToDelete.nicknames.add(n));
+                    originalBlockList.ips.forEach(i => itemsToDelete.ips.add(i));
+                } else {
+                    itemsToDelete.uids.clear();
+                    itemsToDelete.nicknames.clear();
+                    itemsToDelete.ips.clear();
+                }
+                const activeTabType = panel.querySelector('.panel-tab.active').dataset.type;
+                renderList(activeTabType);
+            };
+
+
+
+
+            const tabs = panel.querySelectorAll('.panel-tab');
+            tabs.forEach(tab => {
+                tab.onclick = () => {
+                    tabs.forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    renderList(tab.dataset.type);
+                };
+            });
+
+
+            searchInput.addEventListener('input', () => {
+                const activeType = panel.querySelector('.panel-tab.active').dataset.type;
+                renderList(activeType);
+            });
+
+            panel.querySelector('.panel-add-btn').onclick = async () => {
+                const activeType = panel.querySelector('.panel-tab.active').dataset.type;
+                const manualType = activeType === 'uids' ? 'uid' : activeType === 'nicknames' ? 'nickname' : 'ip';
+                await this.createManualBlockPanel({
+                    initialType: manualType,
+                    onAdded: async () => {
+                        const latestList = await this.loadPersonalBlocks();
+                        originalBlockList.uids = latestList.uids;
+                        originalBlockList.nicknames = latestList.nicknames;
+                        originalBlockList.ips = latestList.ips;
+                        renderList(panel.querySelector('.panel-tab.active').dataset.type);
+                    }
+                });
+            };
+
+
+            const closePanel = () => {
+                panel.classList.add('dcuf-pop-leave');
+                overlay.classList.add('dcuf-overlay-leave');
+                window.setTimeout(() => {
+                    overlay.remove();
+                    panel.remove();
+                }, 140);
+            };
+
+
+            panel.querySelector('.panel-close-btn').onclick = closePanel;
+            overlay.onclick = closePanel;
+
+
+            panel.querySelector('.panel-save-btn').onclick = async () => {
+                const finalBlockList = {
+                    uids: originalBlockList.uids.filter(u => !itemsToDelete.uids.has(u.id)),
+                    nicknames: originalBlockList.nicknames.filter(n => !itemsToDelete.nicknames.has(n)),
+                    ips: originalBlockList.ips.filter(i => !itemsToDelete.ips.has(i))
+                };
+
+
+                this.personalBlockListCache = finalBlockList;
+                await this.savePersonalBlocks();
+                await FilterModule.refilterAllContent();
+                closePanel();
+            };
+
+
+            // 드래그 & 리사이즈 로직 전체 개선
+            let isDragging = false, isResizing = false;
+            let offsetX, offsetY, resizeStartX, resizeStartY;
+            let panelWidth = 0, panelHeight = 0;
+            let dragRafId = 0, pendingPointerX = null, pendingPointerY = null;
+
+            const applyPanelGeometry = () => {
+                dragRafId = 0;
+                if (pendingPointerX === null || pendingPointerY === null) return;
+                const clientX = pendingPointerX;
+                const clientY = pendingPointerY;
+                pendingPointerX = null;
+                pendingPointerY = null;
+
+                if (isDragging) {
+                    let newX = clientX - offsetX;
+                    let newY = clientY - offsetY;
+                    newX = Math.max(0, Math.min(newX, window.innerWidth - panelWidth));
+                    newY = Math.max(0, Math.min(newY, window.innerHeight - panelHeight));
+                    panel.style.left = `${newX}px`;
+                    panel.style.top = `${newY}px`;
+                } else if (isResizing) {
+                    panel.style.width = `${panelWidth + clientX - resizeStartX}px`;
+                    panel.style.height = `${panelHeight + clientY - resizeStartY}px`;
+                }
+            };
+
+
+            const onDragStart = (e) => {
+                if (e.button !== 0) return;
+
+
+                if (e.target.classList.contains('panel-resize-handle')) {
+                    isResizing = true;
+                } else if (e.target.closest('.panel-header')) {
+                    isDragging = true;
+                } else {
+                    return;
+                }
+
+
+                const rect = panel.getBoundingClientRect();
+
+
+                if (panel.style.transform !== 'none') {
+                    panel.style.transform = 'none';
+                    panel.style.left = `${rect.left}px`;
+                    panel.style.top = `${rect.top}px`;
+                }
+
+
+                if (isDragging) {
+                    offsetX = e.clientX - rect.left;
+                    offsetY = e.clientY - rect.top;
+                } else if (isResizing) {
+                    resizeStartX = e.clientX;
+                    resizeStartY = e.clientY;
+                }
+                panelWidth = rect.width;
+                panelHeight = rect.height;
+
+
+                document.addEventListener('mousemove', onDragMove);
+                document.addEventListener('mouseup', onDragEnd, { once: true });
+            };
+
+
+            const onDragMove = (e) => {
+                e.preventDefault();
+                pendingPointerX = e.clientX;
+                pendingPointerY = e.clientY;
+                if (!dragRafId) dragRafId = requestAnimationFrame(applyPanelGeometry);
+            };
+
+
+            const onDragEnd = () => { // async 키워드 제거
+                if (dragRafId) cancelAnimationFrame(dragRafId);
+                applyPanelGeometry();
+                isDragging = false;
+                isResizing = false;
+                document.removeEventListener('mousemove', onDragMove);
+                // GM_setValue 호출을 제거하여 창의 위치/크기 상태를 저장하지 않음
+            };
+
+
+            panel.addEventListener('mousedown', onDragStart);
+
+
+            (() => { // async 키워드 제거
+                // 저장된 값을 불러오는 대신 항상 기본값으로 패널 위치와 크기를 설정
+                const defaultGeo = {
+                    left: '50%', top: '50%', width: '400px', height: '500px'
+                };
+                // 기본값은 항상 % 단위이므로, transform 스타일을 항상 적용하여 정중앙에 배치
+                panel.style.transform = 'translate(-50%, -50%)';
+                Object.assign(panel.style, defaultGeo);
+
+                renderList('uids'); // 초기 렌더링
+            })();
+        }
+    };
+
+    if (!__dcufRoot.__dcufPcMenuCommandsRegistered) {
+        __dcufRoot.__dcufPcMenuCommandsRegistered = true;
+        const menuCommands = [
+            ['글댓합 설정하기', FilterModule.showSettings.bind(FilterModule)],
+            ['차단 유저 관리', PersonalBlockModule.createManagementPanel.bind(PersonalBlockModule)],
+            ['플로팅 버튼 원위치', PersonalBlockModule.resetFabPosition.bind(PersonalBlockModule)],
+            ['메뉴 버튼 크기 조절', PersonalBlockModule.showFabScalePanel.bind(PersonalBlockModule)],
+            ['UI 색상 설정', ThemeModule.openPaletteDialog.bind(ThemeModule)]
+        ];
+        menuCommands.forEach(([label, handler]) => {
+            try {
+                GM_registerMenuCommand(label, handler);
+            } catch (error) {
+                console.warn('[DCUF PC] menu registration failed:', label, error);
+            }
+        });
+    }
+
+    async function reloadShortcutKey() {
+        const shortcutString = String(await GM_getValue(FilterModule.CONSTANTS.STORAGE_KEYS.SHORTCUT_KEY, 'Shift+S') || 'Shift+S');
+        const changed = activeShortcutString !== null && activeShortcutString !== shortcutString;
+        activeShortcutString = shortcutString;
+        activeShortcutObject = FilterModule.parseShortcutString(activeShortcutString);
+        return { changed, shortcutString: activeShortcutString };
+    }
+
+    function observeDarkMode() {
+        if (__dcufRoot.__dcufPcDarkModeObserverAttached) return;
+        __dcufRoot.__dcufPcDarkModeObserverAttached = true;
+
+        const applyDarkModeState = () => {
+            const enabled = Boolean(document.getElementById('css-darkmode'));
+            document.documentElement.classList.toggle('dc-filter-dark-mode', enabled);
+            if (document.body) document.body.classList.toggle('dc-filter-dark-mode', enabled);
+        };
+
+        const mountObserver = () => {
+            const head = document.head || document.documentElement;
+            if (!head) return false;
+            const observer = new MutationObserver(applyDarkModeState);
+            observer.observe(head, { childList: true });
+            applyDarkModeState();
+            return true;
+        };
+
+        if (!mountObserver()) {
+            document.addEventListener('DOMContentLoaded', mountObserver, { once: true });
+        }
+    }
+
+    function bindSettingsShortcut() {
+        if (__dcufRoot.__dcufPcFilterShortcutBound) return;
+        __dcufRoot.__dcufPcFilterShortcutBound = true;
+
+        window.addEventListener('keydown', async (e) => {
+            if (!activeShortcutObject || !activeShortcutObject.key) return;
+
+            const isMatch = e.key.toUpperCase() === activeShortcutObject.key &&
+                e.ctrlKey === activeShortcutObject.ctrlKey &&
+                e.shiftKey === activeShortcutObject.shiftKey &&
+                e.altKey === activeShortcutObject.altKey &&
+                e.metaKey === activeShortcutObject.metaKey;
+
+            if (!isMatch) return;
+            e.preventDefault();
+
+            const settingsPanel = document.getElementById(FilterModule.CONSTANTS.UI_IDS.SETTINGS_PANEL);
+            if (settingsPanel) settingsPanel.remove();
+            else await FilterModule.showSettings();
+        }, true);
+    }
+
+    async function main() {
+        if (__dcufRoot.__dcufPcFilterPortState === 'ready') return 'ready';
+        if (__dcufRoot.__dcufPcFilterPortPromise) return __dcufRoot.__dcufPcFilterPortPromise;
+
+        __dcufRoot.__dcufPcFilterPortState = 'initializing';
+        __dcufRoot.__dcufPcFilterPortPromise = (async () => {
+            console.log('[DCUF PC] Initializing filter port v1.9.8...');
+
+            observeDarkMode();
+            bindSettingsShortcut();
+            if (window.__dcufBootController) {
+                window.__dcufBootController.startPreparing('pc-main');
+                window.__dcufBootController.onReady(() => reloadShortcutKey().catch((error) => {
+                    console.warn('[DCUF PC] shortcut initialization failed:', error);
+                }));
+            }
+            await FilterModule.init();
+            await PersonalBlockModule.init(FilterModule.getBootSnapshot(), { deferUi: true });
+            window.__dcufBootController?.note?.('boot.local-filter-ready');
+            __dcufRoot.__dcufPcFilterPortState = 'ready';
+            console.log('[DCUF PC] Filter port ready.');
+            return 'ready';
+        })();
+
+        try {
+            return await __dcufRoot.__dcufPcFilterPortPromise;
+        } catch (error) {
+            __dcufRoot.__dcufPcFilterPortState = 'failed';
+            __dcufRoot.__dcufPcFilterPortPromise = null;
+            throw error;
+        }
+    }
+
+    let initializationRecoveryAttempts = 0;
+    const runSafely = async () => {
+        let initState = 'ok';
+
+        try {
+            await main();
+        } catch (error) {
+            initState = 'error';
+            console.error('[DCUF PC] A critical error occurred during initialization:', error);
+        } finally {
+            if (initState === 'ok') markUiReady('pc-ready');
+            else if (window.__dcufBootController) window.__dcufBootController.degrade('pc-initialization-error');
+            if (initState === 'error' && initializationRecoveryAttempts < 2) {
+                initializationRecoveryAttempts += 1;
+                const retryBaseMs = Math.max(20, Number(__dcufRoot.__DCUF_TESTBED_CONFIG__?.boot?.recoveryRetryDelayMs) || 160);
+                window.setTimeout(() => {
+                    if (window.__dcufBootController?.state === 'degraded') runSafely();
+                }, retryBaseMs * initializationRecoveryAttempts);
+            }
+            console.log(`[DCUF PC] UI is now visible. (${initState})`);
+        }
+    };
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', runSafely, { once: true });
+    } else {
+        runSafely();
+    }
+})();

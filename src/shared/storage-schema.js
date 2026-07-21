@@ -25,6 +25,7 @@ export const FILTER_CONSTANTS = {
                 FAB_POSITION: 'dcinside_fab_position',
                 FAB_SCALE_PERCENT: 'dcinside_fab_scale_percent',
                 MANAGEMENT_PANEL_GEOMETRY: 'dcinside_management_panel_geometry',
+                GALLERY_HEADTEXT_BLOCKS: 'dcinside_gallery_headtext_blocks_v1',
             },
             SELECTORS: {
                 POST_LIST_CONTAINER: 'table.gall_list tbody',
@@ -64,6 +65,8 @@ export const FILTER_CONSTANTS = {
                 NEW_SHORTCUT_PREVIEW: 'dcinside-new-shortcut-preview',
                 SAVE_SHORTCUT_BTN: 'dcinside-save-shortcut-btn',
                 CANCEL_SHORTCUT_BTN: 'dcinside-cancel-shortcut-btn',
+                HEADTEXT_MANAGER_BUTTON: 'dcinside-headtext-manager-button',
+                HEADTEXT_MANAGER_PANEL: 'dcinside-headtext-manager-panel',
             },
             ETC: {
                 MOBILE_IP_MARKER: 'mblck',

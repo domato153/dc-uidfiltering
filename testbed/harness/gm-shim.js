@@ -6,7 +6,14 @@
         return JSON.parse(JSON.stringify(value));
     };
     const initial = config.storage && typeof config.storage === 'object' ? config.storage : {};
-    const values = new Map(Object.entries(clone(initial)));
+    const persistenceKey = '__dcuf_testbed_gm_values_v1';
+    let persisted = null;
+    try { persisted = JSON.parse(sessionStorage.getItem(persistenceKey) || 'null'); } catch { persisted = null; }
+    const values = new Map(Object.entries(clone(persisted && typeof persisted === 'object' ? persisted : initial)));
+    const persistValues = () => {
+        try { sessionStorage.setItem(persistenceKey, JSON.stringify(Object.fromEntries(values))); } catch { /* unavailable */ }
+    };
+    if (!persisted) persistValues();
     const writes = [];
     const reads = [];
     const styles = [];
@@ -40,6 +47,7 @@
         const delayMs = Math.max(0, Number(writeDelayByKey[key]) || 0);
         if (delayMs > 0) await new Promise((resolve) => setTimeout(resolve, delayMs));
         values.set(key, storedValue);
+        persistValues();
         writes.push({ key, value: clone(storedValue), ts: Date.now() });
     };
     globalThis.GM_addStyle = (cssText) => {
@@ -56,7 +64,6 @@
         menuCommands.push({ label: String(label), callback });
         return menuCommands.length;
     };
-
     globalThis.__dcufTestbedGM = {
         snapshot() {
             return {

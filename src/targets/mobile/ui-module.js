@@ -52,6 +52,80 @@
         _searchDrawerGlobalHandlersBound: false,
         _searchDrawerUpdateRafId: 0,
         _searchDrawerUpdateTimerId: 0,
+        _recentVisitNavigationBound: false,
+
+        getRecentVisitControl(root, direction) {
+            if (!(root instanceof HTMLElement)) return null;
+            const selector = direction === 'prev'
+                ? ':scope > .btn_visit_prev,:scope > .bnt_visit_prev'
+                : ':scope > .btn_visit_next,:scope > .bnt_visit_next';
+            return root.querySelector(selector);
+        },
+
+        updateRecentVisitControls(root, list) {
+            if (!(root instanceof HTMLElement) || !(list instanceof HTMLElement)) return;
+            const max = Math.max(0, list.scrollWidth - list.clientWidth);
+            const prev = this.getRecentVisitControl(root, 'prev');
+            const next = this.getRecentVisitControl(root, 'next');
+            const canPrev = list.scrollLeft > 1;
+            const canNext = list.scrollLeft < max - 1;
+            prev?.classList.toggle('on', canPrev);
+            next?.classList.toggle('on', canNext);
+            prev?.setAttribute('aria-disabled', String(!canPrev));
+            next?.setAttribute('aria-disabled', String(!canNext));
+        },
+
+        prepareRecentVisitList(root) {
+            if (!(root instanceof HTMLElement)) return null;
+            const list = root.querySelector(':scope > .newvisit_box > .newvisit_list');
+            if (!(list instanceof HTMLElement)) return null;
+            list.style.setProperty('left', '0px', 'important');
+            list.style.setProperty('margin-left', '0px', 'important');
+            if (list.dataset.dcufRecentNavigationBound !== '1') {
+                list.dataset.dcufRecentNavigationBound = '1';
+                let frame = 0;
+                list.addEventListener('scroll', () => {
+                    if (frame) return;
+                    frame = window.requestAnimationFrame(() => {
+                        frame = 0;
+                        this.updateRecentVisitControls(root, list);
+                    });
+                }, { passive: true });
+            }
+            this.updateRecentVisitControls(root, list);
+            return list;
+        },
+
+        bindRecentVisitNavigation() {
+            document.querySelectorAll('.newvisit_history').forEach((root) => this.prepareRecentVisitList(root));
+            if (this._recentVisitNavigationBound) return;
+            this._recentVisitNavigationBound = true;
+            document.addEventListener('click', (event) => {
+                const target = event.target instanceof Element ? event.target : null;
+                const button = target?.closest('.btn_visit_prev,.btn_visit_next,.bnt_visit_prev,.bnt_visit_next');
+                const root = button?.closest('.newvisit_history');
+                if (!(button instanceof HTMLElement) || !(root instanceof HTMLElement) || button.parentElement !== root) return;
+                const list = this.prepareRecentVisitList(root);
+                if (!(list instanceof HTMLElement)) return;
+                event.preventDefault();
+                event.stopPropagation();
+                event.stopImmediatePropagation();
+                const direction = button.matches('.btn_visit_prev,.bnt_visit_prev') ? -1 : 1;
+                const max = Math.max(0, list.scrollWidth - list.clientWidth);
+                const step = Math.max(1, list.clientWidth - 24);
+                let targetLeft = Math.max(0, Math.min(max, list.scrollLeft + direction * step));
+                const edgeTolerance = Math.min(96, Math.max(32, step * 0.2));
+                if (direction < 0 && targetLeft <= edgeTolerance) targetLeft = 0;
+                if (direction > 0 && max - targetLeft <= edgeTolerance) targetLeft = max;
+                const behavior = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth';
+                list.scrollTo({ left: targetLeft, behavior });
+                const settle = () => {
+                    if (targetLeft === 0 || targetLeft === max) list.scrollLeft = targetLeft;
+                    this.updateRecentVisitControls(root, list);
+                };
+                window.setTimeout(settle, behavior === 'smooth' ? 360 : 0);
+            }, true);
+        },
 
         getRuntimeCoordinator() {
             return window.__dcufRuntimeCoordinator || null;
@@ -1130,6 +1204,7 @@
             if (rebuiltRowCount > 0) this.recordDiagnostic('ui.listRows.rebuilt', rebuiltRowCount);
             this.getRuntimeCoordinator()?.setDiagnosticGauge?.('ui.listRows.lastRebuilt', rebuiltRowCount);
             this.recordDiagnostic('ui.listState.synced');
+            MobileConvenienceModule.onListCommitted(state, reason);
         },
 
         syncListStateImmediately(state, reason = 'immediate', { suppressTbodySchedule = false } = {}) {
@@ -2628,6 +2703,7 @@
             const writeBox = writeForm.closest('.write_box') || document.querySelector('.write_box');
             writeForm.classList.add('dcuf-write-form');
             document.body.classList.add('is-write-page');
+            void MobileConvenienceModule.attachDraftForm(writeForm);
             if (writeForm.dataset.dcufWriteTransformed === '1') return true;
             writeForm.dataset.dcufWriteTransformed = '1';
 
@@ -2975,6 +3051,24 @@
                     '.note-toolbar .note-para .note-dropdown-menu'
                 ].join(', ');
                 const editorLayerSelector = `${editorDropdownSelector}, .note-toolbar .pop_wrap`;
+                const getExternalDcconLayer = () => {
+                    const layer = document.querySelector('#div_con');
+                    if (!(layer instanceof HTMLElement) || writeForm.contains(layer)) return null;
+                    layer.dataset.dcufWriteExternalLayer = '1';
+                    return layer;
+                };
+                const getEditorLayers = () => {
+                    const layers = Array.from(writeForm.querySelectorAll(editorLayerSelector));
+                    const externalDccon = getExternalDcconLayer();
+                    if (externalDccon) layers.push(externalDccon);
+                    return layers;
+                };
+                const getEditorLayerAnchor = (layer) => {
+                    const nested = layer.closest('.note-btn-group');
+                    if (nested instanceof HTMLElement) return nested;
+                    if (layer.id !== 'div_con') return null;
+                    return writeForm.querySelector('button[aria-label="디시콘"],[data-command="dccon"],button[onclick*="dccon" i],.note-mybutton > button')?.closest('.note-btn-group') || null;
+                };
                 const prepareEditorLayersForTrigger = (event) => {
                     if (!(event.target instanceof Element)
                         || event.target.closest('.note-dropdown-menu, .pop_wrap')) return;
@@ -2983,7 +3077,12 @@
                     if (event.type === 'pointerover'
                         && event.relatedTarget instanceof Node
                         && group.contains(event.relatedTarget)) return;
-                    group.querySelectorAll('.note-dropdown-menu, .pop_wrap').forEach((layer) => {
+                    const layers = Array.from(group.querySelectorAll('.note-dropdown-menu, .pop_wrap'));
+                    if (group.querySelector('button[aria-label="디시콘"],[data-command="dccon"],button[onclick*="dccon" i]')) {
+                        const externalDccon = getExternalDcconLayer();
+                        if (externalDccon) layers.push(externalDccon);
+                    }
+                    layers.forEach((layer) => {
                         layer.classList.remove('dcuf-editor-layer-positioned');
                         layer.classList.add('dcuf-editor-layer-positioning');
                     });
@@ -2995,11 +3094,11 @@
                     if (event.key === 'Enter' || event.key === ' ') prepareEditorLayersForTrigger(event);
                 }, true);
                 const positionEditorLayers = ({ includeDropdowns = true } = {}) => {
-                    writeForm.querySelectorAll(editorLayerSelector).forEach((layer) => {
+                    getEditorLayers().forEach((layer) => {
                         if (!(layer instanceof HTMLElement) || getComputedStyle(layer).display === 'none') return;
                         const isDropdown = layer.matches('.note-dropdown-menu');
                         if (isDropdown && !includeDropdowns) return;
-                        const anchor = layer.closest('.note-btn-group');
+                        const anchor = getEditorLayerAnchor(layer);
                         if (!(anchor instanceof HTMLElement)) return;
                         layer.classList.add('dcuf-editor-layer-positioning');
                         layer.classList.remove('dcuf-editor-layer-positioned');
@@ -3083,17 +3182,24 @@
                             ...(payload.addedElements || []),
                             ...(payload.childListTargets || [])
                         ];
-                        if (!relevantTargets.some((node) => (
+                        const structuralTargets = [
+                            ...(payload.addedElements || []),
+                            ...(payload.childListTargets || [])
+                        ];
+                        const externalDccon = getExternalDcconLayer();
+                        const hasRelevantFormMutation = relevantTargets.some((node) => (
                             node === writeForm
                             || (node instanceof Node && writeForm.contains(node))
-                        ))) return;
-                        const hasVisiblePendingLayer = Array.from(writeForm.querySelectorAll(editorLayerSelector))
+                        ));
+                        const hasRelevantExternalMutation = externalDccon && structuralTargets.some((node) => node === externalDccon || (node instanceof Node && externalDccon.contains(node)));
+                        if (!hasRelevantFormMutation && !hasRelevantExternalMutation) return;
+                        const hasVisiblePendingLayer = getEditorLayers()
                             .some((layer) => (
                                 layer instanceof HTMLElement
                                 && !layer.classList.contains('dcuf-editor-layer-positioned')
                                 && getComputedStyle(layer).display !== 'none'
                             ));
-                        if (hasVisiblePendingLayer) positionEditorLayers();
+                        if (hasRelevantExternalMutation || hasVisiblePendingLayer) positionEditorLayers();
                     });
                 }
                 writeForm.addEventListener('click', (event) => {
@@ -3402,6 +3508,7 @@
             ['플로팅 버튼 원위치', PersonalBlockModule.resetFabPosition.bind(PersonalBlockModule)],
             ['메뉴 버튼 크기 조절', PersonalBlockModule.showFabScalePanel.bind(PersonalBlockModule)],
             ['UI 색상 설정', ThemeModule.openPaletteDialog.bind(ThemeModule)]
+            ,['모바일 편의기능 설정', MobileConvenienceModule.showSettings.bind(MobileConvenienceModule)]
         ];
         commands.forEach(([label, handler]) => {
             try { GM_registerMenuCommand(label, handler); }
@@ -3518,6 +3625,8 @@
             }
         }
         console.log("[DC Filter+UI] Initializing v__VERSION__...");
+        await MobileConvenienceModule.init();
+        UIModule.bindRecentVisitNavigation();
 
 
         if (!__dcufRoot.__dcufShortcutBound) {

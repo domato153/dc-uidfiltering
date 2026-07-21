@@ -127,7 +127,10 @@ export const storageKeys = Object.freeze({
     blockedGuests: 'dcinside_blocked_guests',
     shortcut: 'dcinside_shortcut_key',
     fabScalePercent: 'dcinside_fab_scale_percent',
-    palette: 'dcuf_mobile_ui_palette'
+    palette: 'dcuf_mobile_ui_palette',
+    headtextBlocks: 'dcinside_gallery_headtext_blocks_v1',
+    convenience: 'dcuf_mobile_convenience_settings_v1',
+    drafts: 'dcuf_mobile_write_drafts_v1'
 });
 
 export { assert, testbedDir };

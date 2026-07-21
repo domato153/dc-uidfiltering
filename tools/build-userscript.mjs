@@ -6,7 +6,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const rootDir = path.resolve(__dirname, '..');
 
-const VERSION = '3.4.9';
+const VERSION = '3.5.0';
 const OUTPUT_NAME = `Dc_UserFilter_Mobile_v${VERSION}.user.js`;
 const testbedOutputIndex = process.argv.indexOf('--testbed-output');
 const testbedOutput = testbedOutputIndex >= 0 && process.argv[testbedOutputIndex + 1]
@@ -17,6 +17,7 @@ const MOBILE_LEGACY_PARTS = [
     'src/targets/mobile/runtime-coordinator.js',
     'src/targets/mobile/theme-module.js',
     'src/targets/mobile/filter-module.js',
+    'src/targets/mobile/convenience-module.js',
     'src/targets/mobile/personal-block-module.js',
     'src/targets/mobile/ui-module.js',
     'src/targets/mobile/post-main-fixes.js',
@@ -72,6 +73,8 @@ async function buildSharedRuntimePrelude() {
         '',
         '    const DCUF_SHARED_STORAGE = Object.freeze({',
         '        STORAGE_SCHEMA_VERSION,',
+        '        normalizeHeadtext,',
+        '        normalizeGalleryHeadtextBlocks,',
         '        normalizeProxyBlockModeValue,',
         '        normalizeIpPrefix,',
         '        stripLegacyMobileIpMarker,',
@@ -143,7 +146,10 @@ async function main() {
     const legacyApp = mobileLegacyParts.join('');
     const transformedLegacyApp = transformLegacyAppForPhaseTwo(legacyApp);
     const combined = `${header}\n${bootstrap}${sharedPrelude}${styleBanner}${transformedLegacyApp}`;
-    const built = applyReplacements(combined).replace(/\r?\n/g, '\r\n');
+    const built = applyReplacements(combined)
+        .replace(/[ \t]+$/gm, '')
+        .replace(/\n+$/, '\n')
+        .replace(/\r?\n/g, '\r\n');
     const bomText = `\uFEFF${built}`;
 
     if (testbedOutput) {
