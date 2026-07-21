@@ -3774,6 +3774,93 @@ mobileTest('글쓰기 본문 초안은 동적 에디터 입력 직후 새로고�
     } finally { await session.close(); }
 });
 
+mobileTest('site write guide is never stored or restored as draft body', 'write', async ({ browser, server }) => {
+    const guideHtml = '<div class="wrt_guide_preview_inn" contenteditable="false">AI guide<br>Read the rules</div>';
+    const mixedSession = await createTestPage(browser, server.baseUrl, {
+        storage: {
+            ...noStatsStorage,
+            [storageKeys.drafts]: {
+                version: 1,
+                galleries: {
+                    'board:test': [{
+                        id: 'legacy-guide-mixed', subject: 'legacy title',
+                        bodyHtml: `${guideHtml}<p>user body</p>`, headtext: '',
+                        savedAt: Date.now(), pendingSubmit: false
+                    }]
+                }
+            }
+        },
+        viewport: { width: 390, height: 844 }
+    });
+    try {
+        await mixedSession.goto('/board/write/?id=test&guide=1');
+        await mixedSession.page.waitForFunction(() => document.querySelector('#subject')?.value === 'legacy title');
+        const restored = await mixedSession.page.evaluate(() => ({
+            body: document.querySelector('.note-editable')?.textContent || '',
+            guideCount: document.querySelectorAll('.note-editable .wrt_guide_preview_inn').length,
+            editable: document.querySelector('.note-editable')?.getAttribute('contenteditable')
+        }));
+        assert.equal(restored.body, 'user body', 'legacy draft should retain only user-authored body');
+        assert.equal(restored.guideCount, 0, 'site-owned guide must be removed while restoring a legacy draft');
+        assert.equal(restored.editable, 'true');
+
+        await mixedSession.page.locator('.note-editable').fill('replacement body');
+        await mixedSession.page.waitForTimeout(950);
+        const stored = await mixedSession.page.evaluate(() => window.__dcufTestbedGM.snapshot().values.dcuf_mobile_write_drafts_v1.galleries['board:test'][0]);
+        assert.equal(stored.bodyHtml.includes('wrt_guide_preview_inn'), false, 'a subsequent save must clean the persisted legacy draft');
+        assert.equal(stored.bodyHtml.includes('replacement body'), true);
+    } finally { await mixedSession.close(); }
+
+    const guideOnlySession = await createTestPage(browser, server.baseUrl, {
+        storage: {
+            ...noStatsStorage,
+            [storageKeys.drafts]: {
+                version: 1,
+                galleries: {
+                    'board:test': [{
+                        id: 'legacy-guide-only', subject: 'guide-only title',
+                        bodyHtml: guideHtml, headtext: '', savedAt: Date.now(), pendingSubmit: false
+                    }]
+                }
+            }
+        },
+        viewport: { width: 390, height: 844 }
+    });
+    try {
+        await guideOnlySession.goto('/board/write/?id=test&guide=1');
+        await guideOnlySession.page.waitForFunction(() => document.querySelector('#subject')?.value === 'guide-only title');
+        assert.equal(await guideOnlySession.page.locator('.note-editable').textContent(), '', 'guide-only legacy body should restore as an empty editable body');
+        await guideOnlySession.page.locator('.note-editable').fill('new writable body');
+        await guideOnlySession.page.waitForTimeout(950);
+        const stored = await guideOnlySession.page.evaluate(() => window.__dcufTestbedGM.snapshot().values.dcuf_mobile_write_drafts_v1.galleries['board:test'][0]);
+        assert.equal(stored.bodyHtml.includes('new writable body'), true, 'the cleaned editor must accept and save new body text');
+        assert.equal(stored.bodyHtml.includes('wrt_guide_preview_inn'), false);
+    } finally { await guideOnlySession.close(); }
+
+    const freshSession = await createTestPage(browser, server.baseUrl, {
+        storage: noStatsStorage,
+        viewport: { width: 390, height: 844 }
+    });
+    try {
+        await freshSession.goto('/board/write/?id=test&guide=1');
+        await freshSession.page.waitForFunction(() => document.querySelector('form#write')?._dcufDraftController);
+        await freshSession.page.locator('#subject').fill('fresh title');
+        await freshSession.page.waitForTimeout(950);
+        const titleOnly = await freshSession.page.evaluate(() => window.__dcufTestbedGM.snapshot().values.dcuf_mobile_write_drafts_v1.galleries['board:test'][0]);
+        assert.equal(titleOnly.bodyHtml.trim(), '', 'the untouched live guide must not become a newly saved body');
+
+        await freshSession.page.evaluate(() => {
+            const editor = document.querySelector('.note-editable');
+            editor.insertAdjacentHTML('beforeend', '<p>fresh user body</p>');
+            editor.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'insertText', data: 'fresh user body' }));
+        });
+        await freshSession.page.waitForTimeout(950);
+        const withBody = await freshSession.page.evaluate(() => window.__dcufTestbedGM.snapshot().values.dcuf_mobile_write_drafts_v1.galleries['board:test'][0]);
+        assert.equal(withBody.bodyHtml.includes('fresh user body'), true);
+        assert.equal(withBody.bodyHtml.includes('wrt_guide_preview_inn'), false, 'mixed live content should retain user text without the guide');
+    } finally { await freshSession.close(); }
+});
+
 mobileTest('빠른 글쓰기는 설정·플로팅 메뉴·런타임에서 제거되고 기존 저장값만 무시한다', 'functional', async ({ browser, server }) => {
     const staleSettings = { listRestore: true, recentHighlight: true, draftRecovery: true, postPreview: false, quickWrite: true };
     const session = await createTestPage(browser, server.baseUrl, {

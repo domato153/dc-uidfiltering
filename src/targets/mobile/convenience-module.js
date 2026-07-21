@@ -757,9 +757,15 @@
             this.unlockBackgroundScroll('preview');
         },
 
+        sanitizeDraftBodyHtml(html) {
+            const template = document.createElement('template');
+            template.innerHTML = String(html || '');
+            template.content.querySelectorAll('.wrt_guide_preview_inn').forEach((guide) => guide.remove());
+            return template.innerHTML;
+        },
         hasDraftContent(draft) {
             if (String(draft?.subject || '').trim()) return true;
-            const html = String(draft?.bodyHtml || '');
+            const html = this.sanitizeDraftBodyHtml(draft?.bodyHtml);
             if (/<(?:img|video|audio)\b/i.test(html)) return true;
             const text = document.createElement('div'); text.innerHTML = html;
             return Boolean(text.textContent.trim());
@@ -775,7 +781,7 @@
                     && typeof draft.id === 'string' && Number.isFinite(Number(draft.savedAt))
                     && now - Number(draft.savedAt) <= this.DRAFT_TTL && this.hasDraftContent(draft))
                     .map((draft) => ({
-                        id: draft.id, subject: String(draft.subject || ''), bodyHtml: String(draft.bodyHtml || ''),
+                        id: draft.id, subject: String(draft.subject || ''), bodyHtml: this.sanitizeDraftBodyHtml(draft.bodyHtml),
                         headtext: String(draft.headtext || ''), savedAt: Number(draft.savedAt), pendingSubmit: Boolean(draft.pendingSubmit)
                     }))
                     .sort((a, b) => b.savedAt - a.savedAt).slice(0, this.DRAFT_MAX_PER_GALLERY);
@@ -806,12 +812,13 @@
             try { return new TextEncoder().encode(serialized).byteLength; } catch { return serialized.length * 2; }
         },
         async upsertDraft(galleryKey, draft) {
-            if (!galleryKey || this.draftByteSize(draft) > this.DRAFT_MAX_BYTES) return { saved: false, reason: 'too-large' };
-            if (!this.hasDraftContent(draft)) return { saved: false, reason: 'empty' };
+            const normalizedDraft = { ...draft, bodyHtml: this.sanitizeDraftBodyHtml(draft?.bodyHtml) };
+            if (!galleryKey || this.draftByteSize(normalizedDraft) > this.DRAFT_MAX_BYTES) return { saved: false, reason: 'too-large' };
+            if (!this.hasDraftContent(normalizedDraft)) return { saved: false, reason: 'empty' };
             return this.queueDraftStoreMutation(async (store) => {
-                const list = (store.galleries[galleryKey] || []).filter((item) => item.id !== draft.id);
-                list.unshift(draft); store.galleries[galleryKey] = list.slice(0, this.DRAFT_MAX_PER_GALLERY);
-                return { saved: true, draft };
+                const list = (store.galleries[galleryKey] || []).filter((item) => item.id !== normalizedDraft.id);
+                list.unshift(normalizedDraft); store.galleries[galleryKey] = list.slice(0, this.DRAFT_MAX_PER_GALLERY);
+                return { saved: true, draft: normalizedDraft };
             });
         },
         async removeDraft(galleryKey, draftId) {
@@ -847,13 +854,13 @@
         },
         readDraftBodyHtml(form) {
             const fields = this.getDraftFields(form);
-            if (this.isCodeViewActive(fields)) return String(fields.codeview.value || '');
+            if (this.isCodeViewActive(fields)) return this.sanitizeDraftBodyHtml(fields.codeview.value);
             const summernote = this.getSummernoteCode(form);
             const textareaHtml = String(fields.textarea?.value || '');
-            if (summernote !== null && (this.hasDraftContent({ bodyHtml: summernote }) || !textareaHtml)) return summernote;
+            if (summernote !== null && (this.hasDraftContent({ bodyHtml: summernote }) || !textareaHtml)) return this.sanitizeDraftBodyHtml(summernote);
             const editorHtml = fields.editor instanceof HTMLElement ? String(fields.editor.innerHTML || '') : '';
-            if (this.hasDraftContent({ bodyHtml: editorHtml }) || !textareaHtml) return editorHtml;
-            return textareaHtml;
+            if (this.hasDraftContent({ bodyHtml: editorHtml }) || !textareaHtml) return this.sanitizeDraftBodyHtml(editorHtml);
+            return this.sanitizeDraftBodyHtml(textareaHtml);
         },
         readDraftFromForm(form, id, pendingSubmit = false) {
             const fields = this.getDraftFields(form);
@@ -868,31 +875,32 @@
         },
         applyDraftToForm(form, draft) {
             const fields = this.getDraftFields(form);
+            const bodyHtml = this.sanitizeDraftBodyHtml(draft?.bodyHtml);
             if (fields.subject instanceof HTMLInputElement) { fields.subject.value = draft.subject; fields.subject.dispatchEvent(new Event('input', { bubbles: true })); }
-            if (fields.textarea instanceof HTMLTextAreaElement) fields.textarea.value = draft.bodyHtml;
-            if (fields.codeview instanceof HTMLTextAreaElement) fields.codeview.value = draft.bodyHtml;
+            if (fields.textarea instanceof HTMLTextAreaElement) fields.textarea.value = bodyHtml;
+            if (fields.codeview instanceof HTMLTextAreaElement) fields.codeview.value = bodyHtml;
             let appliedWithSummernote = false;
             const jquery = window.jQuery || window.$;
             if (fields.textarea instanceof HTMLTextAreaElement && typeof jquery === 'function' && form.querySelector('.note-editor')) {
                 try {
                     const instance = jquery(fields.textarea);
                     if (typeof instance?.summernote === 'function') {
-                        instance.summernote('code', draft.bodyHtml);
+                        instance.summernote('code', bodyHtml);
                         appliedWithSummernote = true;
                     }
                 } catch { appliedWithSummernote = false; }
             }
-            if (!appliedWithSummernote && fields.editor instanceof HTMLElement) fields.editor.innerHTML = draft.bodyHtml;
+            if (!appliedWithSummernote && fields.editor instanceof HTMLElement) fields.editor.innerHTML = bodyHtml;
             const dispatchTarget = fields.editor instanceof HTMLElement ? fields.editor : fields.textarea;
             dispatchTarget?.dispatchEvent(new Event('input', { bubbles: true }));
-            if (!(fields.editor instanceof HTMLElement) && draft.bodyHtml) {
+            if (!(fields.editor instanceof HTMLElement) && bodyHtml) {
                 [120, 360, 800].forEach((delay) => window.setTimeout(() => {
                     if (!form.isConnected) return;
                     const nextFields = this.getDraftFields(form);
                     if (!(nextFields.editor instanceof HTMLElement)) return;
                     if (this.hasDraftContent({ bodyHtml: this.readDraftBodyHtml(form) })) return;
-                    nextFields.editor.innerHTML = draft.bodyHtml;
-                    if (nextFields.textarea instanceof HTMLTextAreaElement) nextFields.textarea.value = draft.bodyHtml;
+                    nextFields.editor.innerHTML = bodyHtml;
+                    if (nextFields.textarea instanceof HTMLTextAreaElement) nextFields.textarea.value = bodyHtml;
                     nextFields.editor.dispatchEvent(new Event('input', { bubbles: true }));
                 }, delay));
             }

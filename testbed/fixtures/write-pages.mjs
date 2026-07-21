@@ -20,7 +20,7 @@ const hiddenContract = (variant) => `
     <input type="hidden" name="use_gall_nick" value="N">
     <input type="hidden" name="auto_zzal" value="N">`;
 
-const editor = `
+const editor = (showGuide = false) => `
     <div class="note-editor note-frame" data-fixture-editor>
         <div class="note-toolbar tx-toolbar-basic" role="toolbar" aria-label="편집 도구">
             <div class="note-btn-group"><button type="button" class="note-btn" data-command="image">이미지</button></div>
@@ -53,7 +53,7 @@ const editor = `
             <div class="note-btn-group fixture-html-group"><button type="button" class="note-btn"><label class="write-html-toggle"><input id="chk_html" type="checkbox"> HTML</label></button></div>
         </div>
         <div class="note-editing-area">
-            <div class="note-editable" contenteditable="true" role="textbox" aria-label="본문 입력"></div>
+            <div class="note-editable" contenteditable="true" role="textbox" aria-label="본문 입력">${showGuide ? '<div class="wrt_guide_preview_inn" contenteditable="false">AI 이미지 생성 기능을 사용하면 차단될 수 있어요<br>AI로 소설을 만드는 내용을 쓰면 차단될 수 있어요<br>처음 오신 분들은 규칙을 꼭 읽어주세요</div>' : ''}</div>
             <textarea id="memo" name="memo" hidden></textarea>
             <textarea class="note-codable" aria-label="HTML 입력"></textarea>
         </div>
@@ -95,7 +95,7 @@ const controls = `<aside id="dcuf-testbed-controls" aria-label="글쓰기 testbe
     <button type="button" data-action="dark">야간모드</button>
 </aside>`;
 
-export function writePage({ variant = 'major', formMode = 'write' } = {}) {
+export function writePage({ variant = 'major', formMode = 'write', showGuide = false } = {}) {
     const isMinor = variant === 'minor';
     const isModify = formMode === 'modify';
     const formAttributes = isModify
@@ -116,7 +116,7 @@ export function writePage({ variant = 'major', formMode = 'write' } = {}) {
                 <tr class="guest_info_row"><th>작성자</th><td><input id="name" name="name" type="text" placeholder="닉네임" autocomplete="off"></td><td><input id="password" name="password" type="password" placeholder="비밀번호" autocomplete="new-password"></td>${captcha}</tr>
             </tbody></table>
             ${isMinor ? categories : ''}
-            <section class="editor_wrap">${editor}</section>
+            <section class="editor_wrap">${editor(showGuide)}</section>
             <section class="fixture-attachment-panel"><input id="fixture-file-input" type="file" name="files[]" accept="image/*" multiple><div class="fixture-attachment-list" aria-live="polite"></div></section>
             <section class="ai_easy_wrap fixture-live-ai-prompt"><div class="ai_easy_box">
                 <div class="ipt_box"><button class="ipt_img" type="button" aria-label="이미지 선택"></button><textarea class="ipt_txt" rows="1" placeholder="AI 이미지 간편 등록"></textarea></div>

@@ -112,7 +112,7 @@ export async function startServer({ port = 0 } = {}) {
                 return;
             }
             if (url.pathname.includes('/board/write')) {
-                send(response, 200, await withManualHarness(writePage({ variant }), url), 'text/html; charset=utf-8', headers);
+                send(response, 200, await withManualHarness(writePage({ variant, showGuide: url.searchParams.get('guide') === '1' }), url), 'text/html; charset=utf-8', headers);
                 return;
             }
             if (url.pathname.includes('/board/lists')) {
