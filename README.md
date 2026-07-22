@@ -1,7 +1,7 @@
 # DCInside User Filter
 
 ![PC version](https://img.shields.io/badge/PC-1.9.8-3b5bdb?style=flat-square)
-![Mobile version](https://img.shields.io/badge/Mobile-3.5.0-4263eb?style=flat-square)
+![Mobile version](https://img.shields.io/badge/Mobile-3.5.1-4263eb?style=flat-square)
 ![Tampermonkey](https://img.shields.io/badge/Tampermonkey-userscript-111827?style=flat-square)
 
 디시인사이드의 게시글과 댓글을 조건에 따라 걸러내고, 모바일 화면을 읽기 편하게 다듬는 Tampermonkey 사용자 스크립트입니다.
