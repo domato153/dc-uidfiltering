@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         DC_UserFilter_Mobile
 // @namespace    http://tampermonkey.net/
-// @version      3.4.9
+// @version      3.5.1
 // @description  유저 필터링, UI 개선, 개인 차단/해제 기능
 // @author       domato153
 // @match        https://gall.dcinside.com/board/*
@@ -371,6 +371,7 @@ const FILTER_CONSTANTS = {
                 FAB_POSITION: 'dcinside_fab_position',
                 FAB_SCALE_PERCENT: 'dcinside_fab_scale_percent',
                 MANAGEMENT_PANEL_GEOMETRY: 'dcinside_management_panel_geometry',
+                GALLERY_HEADTEXT_BLOCKS: 'dcinside_gallery_headtext_blocks_v1',
             },
             SELECTORS: {
                 POST_LIST_CONTAINER: 'table.gall_list tbody',
@@ -410,6 +411,8 @@ const FILTER_CONSTANTS = {
                 NEW_SHORTCUT_PREVIEW: 'dcinside-new-shortcut-preview',
                 SAVE_SHORTCUT_BTN: 'dcinside-save-shortcut-btn',
                 CANCEL_SHORTCUT_BTN: 'dcinside-cancel-shortcut-btn',
+                HEADTEXT_MANAGER_BUTTON: 'dcinside-headtext-manager-button',
+                HEADTEXT_MANAGER_PANEL: 'dcinside-headtext-manager-panel',
             },
             ETC: {
                 MOBILE_IP_MARKER: 'mblck',
@@ -571,6 +574,22 @@ const toBoolean = (value, fallback = false) => {
 };
 
 const STORAGE_SCHEMA_VERSION = '3.0.0';
+
+function normalizeHeadtext(value) {
+    return typeof value === 'string' ? value.replace(/\s+/g, ' ').trim() : '';
+}
+
+function normalizeGalleryHeadtextBlocks(rawValue) {
+    if (!rawValue || typeof rawValue !== 'object' || Array.isArray(rawValue)) return {};
+    const normalized = {};
+    Object.entries(rawValue).forEach(([rawKey, rawItems]) => {
+        const key = typeof rawKey === 'string' ? rawKey.trim() : '';
+        if (!/^(?:board|mgallery|mini):[^:\s]+$/.test(key) || !Array.isArray(rawItems)) return;
+        const items = Array.from(new Set(rawItems.map(normalizeHeadtext).filter(Boolean))).slice(0, 100);
+        if (items.length > 0) normalized[key] = items;
+    });
+    return normalized;
+}
 
 function normalizeProxyBlockModeValue(rawValue) {
     if (rawValue === true || rawValue === 'true') return PROXY_MODE.STRICT;
@@ -748,6 +767,8 @@ function normalizeStoredFilterSettings(rawValues = {}) {
 
     const DCUF_SHARED_STORAGE = Object.freeze({
         STORAGE_SCHEMA_VERSION,
+        normalizeHeadtext,
+        normalizeGalleryHeadtextBlocks,
         normalizeProxyBlockModeValue,
         normalizeIpPrefix,
         stripLegacyMobileIpMarker,
@@ -847,6 +868,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         telecomPrefixMatch: Boolean(matches.telecomPrefixMatch),
         blockedGuestMatch: Boolean(matches.blockedGuestMatch),
         personallyBlocked: Boolean(matches.personalBlockHit),
+        galleryHeadtextBlocked: Boolean(matches.galleryHeadtextBlock),
     };
 
     if (decision.personallyBlocked) {
@@ -886,7 +908,13 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         return decision;
     }
 
-    if (subject?.isGuest && settings?.blockGuestEnabled) {
+    if (decision.galleryHeadtextBlocked) {
+        decision.isBlocked = true;
+        decision.path = 'gallery-headtext';
+        decision.reasons.push('galleryHeadtext');
+    }
+
+    if (!decision.isBlocked && subject?.isGuest && settings?.blockGuestEnabled) {
         decision.isBlocked = true;
         decision.reasons.push('guest-toggle');
     }
@@ -3270,6 +3298,12 @@ const ThemeModule = (() => {
         hasComments: false
     };
     const __dcufAllFilterCss = `
+        :root {
+            --dcuf-article-title-font-size: 21px;
+            --dcuf-article-body-font-size: 26px;
+            --dcuf-article-body-line-height: 1.9;
+        }
+
         /* [최종 해결] 링크 미리보기 텍스트 박스 스타일 재정의 */
         .thum-txtin {
             box-sizing: border-box !important;  /* [핵심] 너비 계산 방식을 올바르게 수정 */
@@ -3420,10 +3454,11 @@ const ThemeModule = (() => {
         .newvisit_history::before { display: none !important; }
         .newvisit_history > .tit { flex-shrink: 0; margin: 0 !important; padding-right: 5px; font-size: 14px !important; font-weight: bold; color: #333; }
         .newvisit_history > .newvisit_box { flex: 1; min-width: 0; overflow: hidden; }
-        .newvisit_history .newvisit_list { display: flex; flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+        .newvisit_history .newvisit_list { display: flex; flex-wrap: nowrap; position: relative !important; left: 0 !important; margin-left: 0 !important; width: 100% !important; box-sizing: border-box; overflow-x: auto; scroll-behavior: smooth; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
         .newvisit_history .newvisit_list::-webkit-scrollbar { display: none; }
         .newvisit_history .newvisit_list li { white-space: nowrap; flex-shrink: 0; }
-        .newvisit_history > .bnt_visit_prev, .newvisit_history > .bnt_visit_next, .newvisit_history > .btn_open, .newvisit_history > .bnt_newvisit_more { flex-shrink: 0; position: static !important; transform: none !important; margin: 0 !important; padding: 0 4px; }
+        .newvisit_history > :is(.btn_open,.btn_visit_prev,.btn_visit_next,.bnt_visit_prev,.bnt_visit_next,.btn_newvisit_more,.bnt_newvisit_more) { display: inline-flex !important; align-items: center; justify-content: center; flex: 0 0 auto; position: static !important; inset: auto !important; transform: none !important; margin: 0 !important; padding: 0 4px; overflow: visible !important; }
+        .newvisit_history > :is(.btn_visit_prev,.btn_visit_next,.bnt_visit_prev,.bnt_visit_next) { min-width: 22px; min-height: 24px; }
 
 
         /* [최종 수정] 마이너 갤러리 전용 탭/말머리 레이아웃 (v1.0.5) */
@@ -3701,7 +3736,7 @@ const ThemeModule = (() => {
             margin: 0 !important;
             padding: 0 !important;
         }
-        
+
         /* --- 글 보기/댓글 UI --- */
         /* DCUF_VIEW_SURFACE_START */
         .gall_content, .gall_tit_box, .gall_writer_info, .btn_recommend_box, .view_bottom, .gall_comment {
@@ -3713,7 +3748,7 @@ const ThemeModule = (() => {
 
         /* ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼ */
         /* [최종 수정] 이미지 댓글 UI 가로 배치 및 모든 문제 해결 */
-        
+
         /* 1. 부모 컨테이너 너비 100%로 확보 */
         .writing_view_box .img_area,
         .writing_view_box .img_comment {
@@ -3739,7 +3774,7 @@ const ThemeModule = (() => {
             display: flex !important; /* 자식들을 가로(기본값)로 배치 */
             align-items: stretch !important; /* 자식들의 높이를 통일 */
         }
-        
+
         /* 4. textarea를 감싸는 div가 남은 가로 공간을 모두 차지하도록 설정 (핵심 수정) */
         .writing_view_box .img_comment .cmt_write {
             flex-grow: 1 !important; /* 가로 방향으로 남은 공간 차지 */
@@ -3794,7 +3829,7 @@ const ThemeModule = (() => {
         }
         .gall_writer { max-width: none !important; }
         .nickname { max-width: 240px !important; }
-        
+
         /* 게시글 목록 내 닉네임 텍스트 크기 조정 */
         .author .nickname { font-size: 15px !important; }
 
@@ -3822,12 +3857,12 @@ const ThemeModule = (() => {
 
         /* [v2.2.0 이식] 글 본문 가독성 개선 */
         .view_content_wrap .title_subject {
-            font-size: 21px !important;
+            font-size: var(--dcuf-article-title-font-size, 21px) !important;
             font-weight: 500 !important;
         }
         .gallview_contents {
-            font-size: 26px !important;
-            line-height: 1.9 !important;
+            font-size: var(--dcuf-article-body-font-size, 26px) !important;
+            line-height: var(--dcuf-article-body-line-height, 1.9) !important;
             word-break: break-all !important;
             /* [최종 해결] 댓글과 동일한 원리로 box-sizing 속성 추가 */
             width: 100% !important;
@@ -4655,7 +4690,7 @@ const ThemeModule = (() => {
             }
         }
 
-        /* [v3.4.9] Script-owned soft-depth control surfaces */
+        /* [v3.5.1] Script-owned soft-depth control surfaces */
         #dc-personal-block-fab {
             background: linear-gradient(180deg, #fff 0%, #eef4ff 100%) !important;
             color: #29466f !important;
@@ -5404,6 +5439,7 @@ const ThemeModule = (() => {
 
         /* 5. 스크립트 팝업창 전체 다크 테마 */
         body.dc-filter-dark-mode #dcinside-filter-setting,
+        body.dc-filter-dark-mode #dcinside-headtext-manager-panel,
         body.dc-filter-dark-mode #dc-selection-popup,
         body.dc-filter-dark-mode #dc-block-management-panel,
         body.dc-filter-dark-mode #dc-backup-popup,
@@ -5412,6 +5448,12 @@ const ThemeModule = (() => {
             color: #e0e0e0 !important;
             border-color: #555 !important;
             box-shadow: 0 0 15px rgba(0,0,0,0.7) !important;
+        }
+        body.dc-filter-dark-mode #dcinside-headtext-manager-panel input,
+        body.dc-filter-dark-mode #dcinside-headtext-manager-panel button {
+            background:#343a44 !important;
+            color:#e6edf7 !important;
+            border-color:#596474 !important;
         }
 
         /* 팝업 내부 요소들 */
@@ -6274,6 +6316,7 @@ const ThemeModule = (() => {
                             <div style="display:flex;flex-direction:column;align-items:center;"><label for="${this.CONSTANTS.UI_IDS.RATIO_MAX_INPUT}" style="font-size:14px;">글/댓글 비율 일정 이상 차단 </label><div style="font-size:12px;color:#888;line-height:1.2;">(글만 많은 놈)</div><input id="${this.CONSTANTS.UI_IDS.RATIO_MAX_INPUT}" type="number" step="any" placeholder="예: 1" value="${ratioMax !== '' ? ratioMax : ''}" style="width:100px;font-size:15px;text-align:center; margin-top: 4px;"></div>
                         </div><div style="margin-top:8px;font-size:13px;color:#666;text-align:left;">비율이 입력값과 같거나 큰(이상)인 유저를 차단합니다.</div>
                     </div>
+                    <button type="button" id="${this.CONSTANTS.UI_IDS.HEADTEXT_MANAGER_BUTTON}" style="width:100%;margin-top:14px;padding:9px 10px;border:1px solid #9aa4b2;border-radius:7px;background:#f6f8fb;color:#222;font-weight:700;cursor:pointer;">갤러리별 말머리 차단 관리</button>
                 </div>
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-top:16px; padding-top:15px; border-top: 2px solid #ccc;">
                     <div style="font-size:15px;color:#444;text-align:left;">
@@ -6328,6 +6371,7 @@ const ThemeModule = (() => {
             const blockGuestCheckbox = div.querySelector(`#${this.CONSTANTS.UI_IDS.BLOCK_GUEST_CHECKBOX}`);
             const proxyBlockModeGroup = div.querySelector(`#${this.CONSTANTS.UI_IDS.PROXY_BLOCK_MODE_GROUP}`);
             const telecomBlockCheckbox = div.querySelector(`#${this.CONSTANTS.UI_IDS.TELECOM_BLOCK_CHECKBOX}`);
+            const headtextManagerButton = div.querySelector(`#${this.CONSTANTS.UI_IDS.HEADTEXT_MANAGER_BUTTON}`);
 
             if (input) { input.focus(); input.select(); }
 
@@ -6407,6 +6451,7 @@ const ThemeModule = (() => {
             telecomBlockCheckbox.addEventListener('change', (e) =>
                 applyCheckboxChange(this.CONSTANTS.STORAGE_KEYS.BLOCK_TELECOM, e.target.checked)
             );
+            headtextManagerButton?.addEventListener('click', () => this.showHeadtextBlockManager());
             ratioEnableCheckbox.addEventListener('change', (e) =>
                 applyCheckboxChange(this.CONSTANTS.STORAGE_KEYS.RATIO_ENABLED, e.target.checked)
             );
@@ -6496,6 +6541,160 @@ const ThemeModule = (() => {
                     alert('설정 저장에 실패했습니다. 콘솔을 확인해 주세요.');
                 }
             };
+        },
+        getGalleryKey(urlLike = window.location.href) {
+            try {
+                const url = new URL(urlLike, window.location.href);
+                const id = (url.searchParams.get('id') || '').trim();
+                if (!id) return null;
+                const path = url.pathname.toLowerCase();
+                const type = path.includes('/mini/') ? 'mini' : (path.includes('/mgallery/') ? 'mgallery' : 'board');
+                return `${type}:${id}`;
+            } catch {
+                return null;
+            }
+        },
+        normalizeHeadtext(value) {
+            return DCUF_SHARED_STORAGE.normalizeHeadtext(value);
+        },
+        normalizeGalleryHeadtextBlocks(value) {
+            return DCUF_SHARED_STORAGE.normalizeGalleryHeadtextBlocks(value);
+        },
+        async loadGalleryHeadtextBlocks() {
+            const raw = await GM_getValue(this.CONSTANTS.STORAGE_KEYS.GALLERY_HEADTEXT_BLOCKS, {});
+            return this.normalizeGalleryHeadtextBlocks(raw);
+        },
+        async saveGalleryHeadtextBlocks(rules, reason = 'gallery headtext blocks') {
+            const normalized = this.normalizeGalleryHeadtextBlocks(rules);
+            await GM_setValue(this.CONSTANTS.STORAGE_KEYS.GALLERY_HEADTEXT_BLOCKS, normalized);
+            await this.reloadSettings();
+            await this.refilterAllContent(reason);
+            return normalized;
+        },
+        getCanonicalHeadtextFromNode(source) {
+            if (!(source instanceof Element)) return '';
+            const explicit = source.getAttribute('data-headtext');
+            if (explicit) return this.normalizeHeadtext(explicit);
+            const canonical = source.matches('.subject_inner') ? source : source.querySelector('.subject_inner');
+            if (canonical?.textContent?.trim()) return this.normalizeHeadtext(canonical.textContent);
+            const valueNode = source.matches('[data-val]') ? source : source.querySelector('[data-val]');
+            if (valueNode?.getAttribute('data-val')) return this.normalizeHeadtext(valueNode.getAttribute('data-val'));
+            const directText = Array.from(source.childNodes)
+                .filter((node) => node.nodeType === Node.TEXT_NODE)
+                .map((node) => node.textContent || '')
+                .join(' ');
+            return this.normalizeHeadtext(directText || source.textContent || '');
+        },
+        collectDiscoveredHeadtexts() {
+            const values = new Set();
+            document.querySelectorAll('tr.ub-content, .custom-post-item, .view_bottom li').forEach((element) => {
+                const descriptor = this.describeFilterTarget(element);
+                if (descriptor?.isHeadtextTarget && descriptor.writerInfo && descriptor.headtext && !descriptor.isNotice) values.add(descriptor.headtext);
+            });
+            document.querySelectorAll('a[onclick*="listSearchHead"], .subject_morelist a, [data-fixture-headtext-nav]').forEach((element) => {
+                const headtext = this.getCanonicalHeadtextFromNode(element);
+                if (headtext && !['전체', '공지'].includes(headtext)) values.add(headtext);
+            });
+            return Array.from(values).sort((a, b) => a.localeCompare(b, 'ko'));
+        },
+        async showHeadtextBlockManager() {
+            document.getElementById(this.CONSTANTS.UI_IDS.HEADTEXT_MANAGER_PANEL)?.remove();
+            const currentKey = this.getGalleryKey();
+            const panel = document.createElement('section');
+            panel.id = this.CONSTANTS.UI_IDS.HEADTEXT_MANAGER_PANEL;
+            panel.className = 'dcuf-settings-panel';
+            panel.setAttribute('role', 'dialog');
+            panel.setAttribute('aria-modal', 'true');
+            panel.style.cssText = 'position:fixed;z-index:2147483646;left:50%;top:50%;transform:translate(-50%,-50%);width:min(420px,calc(100vw - 24px));max-height:min(680px,calc(100vh - 24px));overflow:auto;padding:18px;border:1px solid #8d98a6;border-radius:12px;background:#fff;color:#20242a;box-shadow:0 20px 60px #0007;box-sizing:border-box;';
+            document.body.appendChild(panel);
+
+            const render = async () => {
+                const rules = await this.loadGalleryHeadtextBlocks();
+                const current = new Set(currentKey ? (rules[currentKey] || []) : []);
+                const discovered = Array.from(new Set([...this.collectDiscoveredHeadtexts(), ...current])).sort((a, b) => a.localeCompare(b, 'ko'));
+                panel.replaceChildren();
+
+                const header = document.createElement('div');
+                header.style.cssText = 'display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px;';
+                const title = document.createElement('strong');
+                title.textContent = '갤러리별 말머리 차단';
+                const close = document.createElement('button');
+                close.type = 'button'; close.textContent = '✕'; close.setAttribute('aria-label', '닫기');
+                close.style.cssText = 'border:0;background:transparent;font-size:22px;cursor:pointer;color:inherit;';
+                close.onclick = () => panel.remove();
+                header.append(title, close);
+                panel.appendChild(header);
+
+                const keyLabel = document.createElement('div');
+                keyLabel.textContent = currentKey ? `현재 갤러리: ${currentKey}` : '현재 페이지의 갤러리를 확인할 수 없습니다.';
+                keyLabel.style.cssText = 'font-size:13px;color:#667085;margin-bottom:10px;';
+                panel.appendChild(keyLabel);
+
+                const choices = document.createElement('div');
+                choices.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:7px;margin-bottom:10px;';
+                discovered.forEach((headtext) => {
+                    const label = document.createElement('label');
+                    label.style.cssText = 'display:flex;align-items:center;gap:6px;padding:7px;border:1px solid #d7dde5;border-radius:7px;cursor:pointer;min-width:0;';
+                    const input = document.createElement('input');
+                    input.type = 'checkbox'; input.checked = current.has(headtext); input.disabled = !currentKey;
+                    input.addEventListener('change', async () => {
+                        if (input.checked) current.add(headtext); else current.delete(headtext);
+                        const next = { ...rules };
+                        if (current.size) next[currentKey] = Array.from(current); else delete next[currentKey];
+                        input.disabled = true;
+                        await this.saveGalleryHeadtextBlocks(next, 'headtext checkbox');
+                        await render();
+                    });
+                    const text = document.createElement('span'); text.textContent = headtext;
+                    label.append(input, text); choices.appendChild(label);
+                });
+                if (!discovered.length) {
+                    const empty = document.createElement('div'); empty.textContent = '현재 목록에서 발견한 말머리가 없습니다.'; empty.style.cssText = 'grid-column:1/-1;color:#667085;font-size:13px;'; choices.appendChild(empty);
+                }
+                panel.appendChild(choices);
+
+                const manual = document.createElement('div');
+                manual.style.cssText = 'display:flex;gap:7px;margin-bottom:10px;';
+                const manualInput = document.createElement('input');
+                manualInput.type = 'text'; manualInput.placeholder = '목록에 없는 말머리'; manualInput.disabled = !currentKey;
+                manualInput.style.cssText = 'flex:1;min-width:0;padding:8px;border:1px solid #b9c2ce;border-radius:7px;';
+                const add = document.createElement('button'); add.type = 'button'; add.textContent = '추가'; add.disabled = !currentKey;
+                add.style.cssText = 'padding:8px 12px;border:1px solid #8793a2;border-radius:7px;background:#f6f8fb;cursor:pointer;';
+                add.onclick = async () => {
+                    const value = this.normalizeHeadtext(manualInput.value);
+                    if (!value) return;
+                    current.add(value);
+                    await this.saveGalleryHeadtextBlocks({ ...rules, [currentKey]: Array.from(current) }, 'manual headtext add');
+                    await render();
+                };
+                manualInput.addEventListener('keydown', (event) => { if (event.key === 'Enter') add.click(); });
+                manual.append(manualInput, add); panel.appendChild(manual);
+
+                const clear = document.createElement('button');
+                clear.type = 'button'; clear.textContent = '현재 갤러리 전체 해제'; clear.disabled = !currentKey || !current.size;
+                clear.style.cssText = 'width:100%;padding:8px;border:1px solid #c5ccd5;border-radius:7px;background:transparent;color:inherit;cursor:pointer;margin-bottom:14px;';
+                clear.onclick = async () => {
+                    const next = { ...rules }; delete next[currentKey];
+                    await this.saveGalleryHeadtextBlocks(next, 'clear current gallery headtexts');
+                    await render();
+                };
+                panel.appendChild(clear);
+
+                const savedTitle = document.createElement('strong'); savedTitle.textContent = '저장된 다른 갤러리'; panel.appendChild(savedTitle);
+                const saved = document.createElement('div'); saved.style.cssText = 'display:grid;gap:7px;margin-top:8px;';
+                const others = Object.entries(rules).filter(([key]) => key !== currentKey).sort(([a], [b]) => a.localeCompare(b));
+                others.forEach(([key, values]) => {
+                    const row = document.createElement('div'); row.style.cssText = 'display:flex;align-items:center;gap:8px;padding:8px;border:1px solid #d7dde5;border-radius:7px;';
+                    const text = document.createElement('span'); text.textContent = `${key}: ${values.join(', ')}`; text.style.cssText = 'flex:1;min-width:0;overflow-wrap:anywhere;font-size:13px;';
+                    const remove = document.createElement('button'); remove.type = 'button'; remove.textContent = '삭제';
+                    remove.style.cssText = 'border:1px solid #d49a9a;border-radius:6px;background:#fff5f5;color:#b42318;padding:5px 8px;cursor:pointer;';
+                    remove.onclick = async () => { const next = { ...rules }; delete next[key]; await this.saveGalleryHeadtextBlocks(next, 'remove saved gallery headtexts'); await render(); };
+                    row.append(text, remove); saved.appendChild(row);
+                });
+                if (!others.length) { const none = document.createElement('div'); none.textContent = '다른 갤러리에 저장된 항목이 없습니다.'; none.style.cssText = 'font-size:13px;color:#667085;'; saved.appendChild(none); }
+                panel.appendChild(saved);
+            };
+            await render();
         },
         // [v2.1.1 수정] 단축키 변경 모달 표시 (실시간 입력 감지 로직 개선)
         showShortcutChanger() {
@@ -6621,9 +6820,9 @@ const ThemeModule = (() => {
         isFilterTargetDescriptor(value) {
             return Boolean(value && value.element instanceof HTMLElement);
         },
-        normalizeFilterTarget(target) {
+        normalizeFilterTarget(target, { includeHeadtext = true } = {}) {
             if (this.isFilterTargetDescriptor(target)) return target;
-            return this.describeFilterTarget(target);
+            return this.describeFilterTarget(target, { includeHeadtext });
         },
         isReplyOnlyCommentWrapper(element) {
             if (!(element instanceof HTMLElement)) return false;
@@ -6642,7 +6841,20 @@ const ThemeModule = (() => {
             if (this.isCommentListItem(element)) return null;
             return element.querySelector(this.CONSTANTS.SELECTORS.WRITER_INFO);
         },
-        describeFilterTarget(element) {
+        isHeadtextFilterTarget(element) {
+            if (!(element instanceof HTMLElement) || this.isCommentListItem(element)) return false;
+            if (element.matches('tr.ub-content')) return true;
+            return Boolean(element.closest('.view_bottom, .gall_listwrap'))
+                && Boolean(element.querySelector('[data-headtext], .gall_subject'));
+        },
+        extractHeadtext(element) {
+            if (!(element instanceof HTMLElement)) return '';
+            const source = element.matches('[data-headtext]')
+                ? element
+                : element.querySelector('[data-headtext], .gall_subject');
+            return this.getCanonicalHeadtextFromNode(source);
+        },
+        describeFilterTarget(element, { includeHeadtext = true } = {}) {
             if (!(element instanceof HTMLElement)) return null;
             if (this.isReplyOnlyCommentWrapper(element)) return null;
 
@@ -6655,6 +6867,14 @@ const ThemeModule = (() => {
             const ipFromSpan = (ipText.startsWith('(') && ipText.endsWith(')')) ? ipText.slice(1, -1) : ipText;
             const ip = ipFromSpan || writerDataIp || null;
             const ipPrefix = this.getIpPrefix(ip);
+            const isHeadtextTarget = includeHeadtext && this.isHeadtextFilterTarget(element);
+            const hasNoticeMarker = Boolean(element.querySelector('em.icon_notice'))
+                || element.classList.contains('notice')
+                || element.classList.contains('us-post--notice');
+            // `.gall_num` exists on post rows, not comments. Keeping this lookup row-only
+            // avoids adding a selector call to every repeated comment-filter pass.
+            const isNotice = hasNoticeMarker || (element.tagName === 'TR'
+                && this.normalizeHeadtext(element.querySelector('.gall_num')?.textContent || '') === '공지');
 
             return {
                 element,
@@ -6666,17 +6886,23 @@ const ThemeModule = (() => {
                 writerDataIp,
                 ipPrefix,
                 isGuest: Boolean((!uid || uid.length < 3) && ip),
-                isNotice: Boolean(element.querySelector('em.icon_notice')),
+                isNotice,
                 shouldSkipFiltering: this.shouldSkipFiltering(element),
-                hasBlockDisableClass: element.classList.contains('block-disable')
+                hasBlockDisableClass: element.classList.contains('block-disable'),
+                galleryKey: isHeadtextTarget ? this.getGalleryKey() : null,
+                headtext: isHeadtextTarget ? this.extractHeadtext(element) : '',
+                isHeadtextTarget
             };
         },
         describeFilterTargets(items) {
             if (!Array.isArray(items) || items.length === 0) return [];
             const seen = new Set();
             const descriptors = [];
+            // The default rule set is empty. Avoid all headtext DOM probing on the
+            // ordinary mutation hot path until the user has an active rule.
+            const includeHeadtext = dcFilterSettings.galleryHeadtextBlockSet?.size > 0;
             items.forEach((item) => {
-                const descriptor = this.normalizeFilterTarget(item);
+                const descriptor = this.normalizeFilterTarget(item, { includeHeadtext });
                 const element = descriptor?.element;
                 if (!(element instanceof HTMLElement) || seen.has(element)) return;
                 seen.add(element);
@@ -7177,7 +7403,7 @@ const ThemeModule = (() => {
             const normalizedProxyBlockMode = this.normalizeProxyBlockMode(proxyBlockMode);
             const proxyBlockEnabled = normalizedProxyBlockMode !== this.PROXY_MODE.OFF;
 
-            const { element, uid, nickname, ip, ipText, writerDataIp, ipPrefix, isGuest, isNotice, shouldSkipFiltering, hasBlockDisableClass } = descriptor;
+            const { element, uid, nickname, ip, ipText, writerDataIp, ipPrefix, isGuest, isNotice, shouldSkipFiltering, hasBlockDisableClass, galleryKey, headtext, isHeadtextTarget } = descriptor;
             const subject = {
                 uid,
                 nickname,
@@ -7186,7 +7412,10 @@ const ThemeModule = (() => {
                 isGuest,
                 isNotice,
                 shouldSkipFiltering,
-                hasBlockDisableClass
+                hasBlockDisableClass,
+                galleryKey,
+                headtext,
+                isHeadtextTarget
             };
             const baseDebug = this.DEBUG_ENABLED ? {
                 branch: 'sync-base',
@@ -7228,7 +7457,8 @@ const ThemeModule = (() => {
                     hasCustomIpPrefixBlock: Boolean(customIpPrefixSet && customIpPrefixSet.size > 0 && ipPrefix && customIpPrefixSet.has(ipPrefix)),
                     proxyMatchInfo,
                     telecomPrefixMatch: Boolean(ipPrefix && telecomPrefixSet && telecomPrefixSet.has(ipPrefix)),
-                    blockedGuestMatch: Boolean(ip && (blockedGuestSet instanceof Set ? blockedGuestSet.has(ip) : blockedGuests.includes(ip)))
+                    blockedGuestMatch: Boolean(ip && (blockedGuestSet instanceof Set ? blockedGuestSet.has(ip) : blockedGuests.includes(ip))),
+                    galleryHeadtextBlock: Boolean(isHeadtextTarget && galleryKey && headtext && dcFilterSettings.galleryHeadtextBlockSet?.has(headtext))
                 },
                 blockedUidEntry: uid ? (this.BLOCKED_UIDS_CACHE[uid] || userSumCache[uid] || null) : null
             });
@@ -7374,12 +7604,13 @@ const ThemeModule = (() => {
                 GM_getValue(keys.BLOCK_CONFIG, {}),
                 GM_getValue(keys.PERSONAL_BLOCK_LIST, { uids: [], nicknames: [], ips: [] }),
                 GM_getValue(keys.PERSONAL_BLOCK_ENABLED, true),
+                GM_getValue(keys.GALLERY_HEADTEXT_BLOCKS, {}),
                 GM_getValue(keys.BLOCKED_UIDS, '{}')
             ]).then((values) => {
                 const [
                     migrationDone, masterDisabled, excludeRecommended, rawThreshold, ratioEnabled,
                     ratioMin, ratioMax, blockGuestEnabled, proxyBlockMode, telecomBlockEnabled,
-                    blockedGuestsRaw, blockConfig, personalBlockList, personalBlockEnabled, blockedUidsRaw
+                    blockedGuestsRaw, blockConfig, personalBlockList, personalBlockEnabled, galleryHeadtextBlocks, blockedUidsRaw
                 ] = values;
                 let blockedGuests = [];
                 try { blockedGuests = JSON.parse(blockedGuestsRaw); } catch { blockedGuests = []; }
@@ -7399,6 +7630,7 @@ const ThemeModule = (() => {
                     blockConfig,
                     personalBlockList,
                     personalBlockEnabled,
+                    galleryHeadtextBlocks,
                     blockedUidsRaw
                 };
                 this._bootSnapshot = snapshot;
@@ -7437,7 +7669,8 @@ const ThemeModule = (() => {
                 personalBlockEnabled: Boolean(settings.personalBlockEnabled),
                 personalUids: normalizeStrings((personalBlockList.uids || []).map((item) => item?.id)),
                 personalNicknames: normalizeStrings(personalBlockList.nicknames),
-                personalIps: normalizeStrings(personalBlockList.ips)
+                personalIps: normalizeStrings(personalBlockList.ips),
+                galleryHeadtextBlocks: settings.galleryHeadtextBlocks || {}
             });
         },
         async reloadSettings(snapshot = null) {
@@ -7448,7 +7681,7 @@ const ThemeModule = (() => {
                     snapshot.ratioEnabled, snapshot.ratioMin, snapshot.ratioMax,
                     snapshot.blockGuestEnabled, snapshot.proxyBlockMode, snapshot.telecomBlockEnabled,
                     snapshot.blockedGuests, snapshot.blockConfig, snapshot.personalBlockList,
-                    snapshot.personalBlockEnabled
+                    snapshot.personalBlockEnabled, snapshot.galleryHeadtextBlocks
                 ];
             } else {
                 values = await Promise.all([
@@ -7464,13 +7697,14 @@ const ThemeModule = (() => {
                     this.getBlockedGuests(),
                     GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG, {}),
                     PersonalBlockModule.loadPersonalBlocks(),
-                    GM_getValue(this.CONSTANTS.STORAGE_KEYS.PERSONAL_BLOCK_ENABLED, true)
+                    GM_getValue(this.CONSTANTS.STORAGE_KEYS.PERSONAL_BLOCK_ENABLED, true),
+                    GM_getValue(this.CONSTANTS.STORAGE_KEYS.GALLERY_HEADTEXT_BLOCKS, {})
                 ]);
             }
             const [
                 masterDisabled, excludeRecommended, threshold, ratioEnabled,
                 ratioMin, ratioMax, blockGuestEnabled, proxyBlockMode, telecomBlockEnabled,
-                blockedGuests, blockConfig, personalBlockList, personalBlockEnabled
+                blockedGuests, blockConfig, personalBlockList, personalBlockEnabled, galleryHeadtextBlocksRaw
             ] = values;
             const normalizedSettings = DCUF_SHARED_STORAGE.normalizeStoredFilterSettings({
                 [this.CONSTANTS.STORAGE_KEYS.MASTER_DISABLED]: masterDisabled,
@@ -7491,6 +7725,9 @@ const ThemeModule = (() => {
             const personalBlockUidSet = this.buildLookupSet(personalBlockList?.uids, (item) => item?.id);
             const personalBlockNicknameSet = this.buildLookupSet(personalBlockList?.nicknames);
             const personalBlockIpSet = this.buildLookupSet(personalBlockList?.ips);
+            const galleryHeadtextBlocks = this.normalizeGalleryHeadtextBlocks(galleryHeadtextBlocksRaw);
+            const galleryKey = this.getGalleryKey();
+            const galleryHeadtextBlockSet = new Set(galleryKey ? (galleryHeadtextBlocks[galleryKey] || []) : []);
             dcFilterSettings = {
                 masterDisabled: normalizedSettings.masterDisabled,
                 excludeRecommended: normalizedSettings.excludeRecommended,
@@ -7509,7 +7746,10 @@ const ThemeModule = (() => {
                 personalBlockUidSet,
                 personalBlockNicknameSet,
                 personalBlockIpSet,
-                personalBlockEnabled
+                personalBlockEnabled,
+                galleryHeadtextBlocks,
+                galleryKey,
+                galleryHeadtextBlockSet
             };
             this._settingsSignature = this.createSettingsSignature(dcFilterSettings);
             if (this.DEBUG_ENABLED) {
@@ -7556,7 +7796,9 @@ const ThemeModule = (() => {
             return candidates.reduce((descriptors, element) => {
                 if (!(element instanceof HTMLElement) || seen.has(element)) return descriptors;
                 seen.add(element);
-                const descriptor = this.describeFilterTarget(element);
+                const descriptor = this.describeFilterTarget(element, {
+                    includeHeadtext: dcFilterSettings.galleryHeadtextBlockSet?.size > 0
+                });
                 if (descriptor) descriptors.push(descriptor);
                 return descriptors;
             }, []);
@@ -7826,7 +8068,7 @@ const ThemeModule = (() => {
             this._initState = 'initializing';
             this._initPromise = (async () => {
                 this.installDebugApi();
-                this.debugLog('init', 'FilterModule init start', { version: '3.4.9' });
+                this.debugLog('init', 'FilterModule init start', { version: '3.5.1' });
                 const snapshot = await this.loadBootSnapshot();
                 await this.cleanupLegacyManagedBlockConfig(snapshot);
                 await this.reloadSettings(snapshot);
@@ -7868,6 +8110,1156 @@ const ThemeModule = (() => {
     // post-main-fixes.js는 별도 IIFE 스코프라 FilterModule 심볼을 직접 못 잡을 수 있습니다.
     // 유지보수 시 후처리 코드가 FilterModule을 참조해야 하면 이 브리지로 접근하세요.
     window.__dcufFilterModule = FilterModule;
+    /**
+     * Mobile-only convenience features. This module deliberately plugs into the
+     * existing list commit and write-form transform paths instead of observing
+     * the document on its own.
+     */
+    const MobileConvenienceModule = {
+        STORAGE_KEY: 'dcuf_mobile_convenience_settings_v1',
+        DRAFT_KEY: 'dcuf_mobile_write_drafts_v1',
+        LIST_SESSION_KEY: 'dcuf:list-return:v1',
+        SUBMIT_SESSION_KEY: 'dcuf:pending-submit:v1',
+        DEFAULTS: Object.freeze({
+            listRestore: true,
+            recentHighlight: true,
+            draftRecovery: true,
+            postPreview: false
+        }),
+        DRAFT_TTL: 72 * 60 * 60 * 1000,
+        DRAFT_MAX_BYTES: 512 * 1024,
+        DRAFT_MAX_PER_GALLERY: 5,
+        PREVIEW_TTL: 3 * 60 * 1000,
+        PREVIEW_MAX: 8,
+        settings: null,
+        _masterDisabledSnapshot: false,
+        _settingsPromise: null,
+        _previewCache: new Map(),
+        _previewRequest: null,
+        _previewPanel: null,
+        _previewSuppressedLink: null,
+        _previewClickGuardBound: false,
+        _previewWindowScrollHandler: null,
+        _previewBoundList: null,
+        _previewHoverLink: null,
+        _previewCloseTimer: 0,
+        _previewImageObserver: null,
+        _previewImageTimers: new Set(),
+        _previewDeferredTimer: 0,
+        _previewViewportHandler: null,
+        _previewPointerDownHandler: null,
+        _previewPointerMoveHandler: null,
+        _previewPointerEndHandler: null,
+        _previewOutsideGesture: null,
+        _previewAnchor: null,
+        _overlayScrollOwners: new Set(),
+        _overlayScrollState: null,
+        _settingsPanel: null,
+        _listNavigationRecorderBound: false,
+        _listRestoreComplete: false,
+        _pageShowPersisted: false,
+        _pageShowSettled: false,
+        _pageShowPromise: null,
+        _draftWriteQueue: Promise.resolve(),
+        _draftStoreCache: null,
+        _submitCleanupTimer: 0,
+
+        normalizeSettings(value) {
+            const source = value && typeof value === 'object' && !Array.isArray(value) ? value : {};
+            return Object.fromEntries(Object.entries(this.DEFAULTS).map(([key, fallback]) => [
+                key,
+                typeof source[key] === 'boolean' ? source[key] : fallback
+            ]));
+        },
+        async loadSettings({ force = false } = {}) {
+            if (!force && this.settings) return this.settings;
+            if (!force && this._settingsPromise) return this._settingsPromise;
+            this._settingsPromise = (async () => {
+                const raw = await GM_getValue(this.STORAGE_KEY, this.DEFAULTS);
+                this.settings = this.normalizeSettings(raw);
+                return this.settings;
+            })();
+            try { return await this._settingsPromise; }
+            finally { this._settingsPromise = null; }
+        },
+        isMasterDisabled() {
+            if (typeof dcFilterSettings === 'object' && typeof dcFilterSettings?.masterDisabled === 'boolean') {
+                return dcFilterSettings.masterDisabled;
+            }
+            return this._masterDisabledSnapshot;
+        },
+        isEnabled(key) {
+            return !this.isMasterDisabled() && Boolean(this.settings?.[key]);
+        },
+        captureInlineStyles(element, properties) {
+            return Object.fromEntries(properties.map((property) => [property, {
+                value: element.style.getPropertyValue(property),
+                priority: element.style.getPropertyPriority(property)
+            }]));
+        },
+        restoreInlineStyles(element, snapshot) {
+            Object.entries(snapshot || {}).forEach(([property, state]) => {
+                if (state.value) element.style.setProperty(property, state.value, state.priority || '');
+                else element.style.removeProperty(property);
+            });
+        },
+        syncBackgroundScrollLock() {
+            const state = this._overlayScrollState;
+            const root = document.documentElement;
+            const body = document.body;
+            if (!state || !(root instanceof HTMLElement) || !(body instanceof HTMLElement)) return;
+            root.style.setProperty('overflow', 'hidden', 'important');
+            root.style.setProperty('overscroll-behavior', 'none', 'important');
+
+            const freezeBody = Array.from(this._overlayScrollOwners).some((owner) => owner !== 'preview');
+            if (freezeBody === state.bodyFrozen) return;
+            if (!freezeBody) {
+                this.restoreInlineStyles(body, state.body);
+                state.bodyFrozen = false;
+                window.scrollTo({ left: state.x, top: state.y, behavior: 'auto' });
+                return;
+            }
+            body.style.setProperty('position', 'fixed', 'important');
+            body.style.setProperty('top', `${-state.y}px`, 'important');
+            body.style.setProperty('left', `${-state.x}px`, 'important');
+            body.style.setProperty('right', '0', 'important');
+            body.style.setProperty('width', '100%', 'important');
+            body.style.setProperty('overflow', 'hidden', 'important');
+            body.style.setProperty('overscroll-behavior', 'none', 'important');
+            state.bodyFrozen = true;
+        },
+        lockBackgroundScroll(owner) {
+            if (!owner || this._overlayScrollOwners.has(owner)) return;
+            const root = document.documentElement;
+            const body = document.body;
+            if (!(root instanceof HTMLElement) || !(body instanceof HTMLElement)) return;
+            if (!this._overlayScrollState) {
+                this._overlayScrollState = {
+                    x: window.scrollX,
+                    y: window.scrollY,
+                    bodyFrozen: false,
+                    root: this.captureInlineStyles(root, ['overflow', 'overscroll-behavior']),
+                    body: this.captureInlineStyles(body, ['position', 'top', 'left', 'right', 'width', 'overflow', 'overscroll-behavior'])
+                };
+            }
+            this._overlayScrollOwners.add(owner);
+            this.syncBackgroundScrollLock();
+        },
+        unlockBackgroundScroll(owner) {
+            if (!this._overlayScrollOwners.delete(owner)) return;
+            const state = this._overlayScrollState;
+            if (this._overlayScrollOwners.size) {
+                this.syncBackgroundScrollLock();
+                return;
+            }
+            this._overlayScrollState = null;
+            if (!state) return;
+            this.restoreInlineStyles(document.documentElement, state.root);
+            if (document.body instanceof HTMLElement) this.restoreInlineStyles(document.body, state.body);
+            window.scrollTo({ left: state.x, top: state.y, behavior: 'auto' });
+        },
+        async init() {
+            const snapshot = await FilterModule.loadBootSnapshot();
+            this._masterDisabledSnapshot = Boolean(snapshot?.masterDisabled);
+            await this.loadSettings();
+            try { localStorage.removeItem('dcuf:draft-diagnostics:v1'); } catch { /* stale beta trace cleanup */ }
+            this.ensureStyles();
+            this.initPageShowContract();
+            await this.confirmPendingDraftOnView();
+            return this.settings;
+        },
+        initPageShowContract() {
+            if (this._pageShowPromise) return this._pageShowPromise;
+            this._pageShowPromise = new Promise((resolve) => {
+                let settled = false;
+                const finish = (persisted = false) => {
+                    if (settled) return;
+                    settled = true;
+                    this._pageShowPersisted = Boolean(persisted);
+                    this._pageShowSettled = true;
+                    resolve(this._pageShowPersisted);
+                };
+                window.addEventListener('pageshow', (event) => {
+                    this._pageShowPersisted = Boolean(event.persisted);
+                    finish(event.persisted);
+                });
+                window.addEventListener('pagehide', () => {
+                    this._pageShowPersisted = false;
+                    this._listRestoreComplete = false;
+                });
+                window.setTimeout(() => finish(false), document.readyState === 'complete' ? 0 : 250);
+            });
+            return this._pageShowPromise;
+        },
+        ensureStyles() {
+            if (document.getElementById('dcuf-mobile-convenience-style')) return;
+            const style = document.createElement('style');
+            style.id = 'dcuf-mobile-convenience-style';
+            style.textContent = `
+                @keyframes dcuf-recent-pulse { 0%,100%{box-shadow:inset 6px 0 0 var(--dcuf-theme-accent,#5574e8),0 0 0 2px var(--dcuf-theme-accent,#5574e8)} 45%{box-shadow:inset 6px 0 0 var(--dcuf-theme-accent,#5574e8),0 0 0 5px var(--dcuf-theme-focus-ring,rgba(85,116,232,.3))} }
+                .custom-post-item.dcuf-recent-post { background:color-mix(in srgb,var(--dcuf-theme-accent,#5574e8) 18%,var(--dcuf-theme-card-top,#fff))!important;box-shadow:inset 6px 0 0 var(--dcuf-theme-accent,#5574e8),0 0 0 2px var(--dcuf-theme-accent,#5574e8)!important; }
+                .custom-post-item .dcuf-recent-label { display:inline-flex;align-items:center;vertical-align:middle;flex:0 0 auto;margin:0 7px 0 0;padding:2px 7px;border-radius:999px;background:var(--dcuf-theme-accent-strong,#315fdb);color:var(--dcuf-theme-on-accent,#fff);font-size:10px;font-weight:800;line-height:1.45;letter-spacing:-.02em; }
+                .custom-post-item.dcuf-recent-pulse { animation:dcuf-recent-pulse .55s ease-in-out 3; }
+                #dcuf-post-preview { position:fixed;z-index:2147483645;display:flex;flex-direction:column;box-sizing:border-box;background:linear-gradient(155deg,var(--dcuf-theme-card-top,#fff),var(--dcuf-theme-canvas,#f6f7f9));color:var(--dcuf-theme-fg,#1f2937);border:1px solid var(--dcuf-theme-border-strong,#cbd5e1);border-radius:14px;box-shadow:var(--dcuf-theme-panel-shadow,0 18px 55px #0007);overflow:hidden;overscroll-behavior:contain;color-scheme:light dark; }
+                #dcuf-post-preview .dcuf-preview-head { flex:none;display:flex;align-items:center;gap:9px;padding:10px 11px 10px 13px;border-bottom:1px solid var(--dcuf-theme-border,#e4e7ec);background:linear-gradient(180deg,var(--dcuf-theme-card-top,#fff),var(--dcuf-theme-surface-raised,#f8fafc)); }
+                #dcuf-post-preview .dcuf-preview-head strong { flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:var(--dcuf-article-title-font-size,21px);line-height:1.4; }
+                #dcuf-post-preview .dcuf-preview-head a { flex:none;padding:6px 9px;border-radius:999px;background:var(--dcuf-theme-accent-soft,#e9efff);color:var(--dcuf-theme-accent-strong,#315fdb);text-decoration:none;font-size:12.5px;font-weight:700; }
+                #dcuf-post-preview .dcuf-preview-head button { flex:none;width:36px;height:36px;padding:0;border:1px solid transparent;border-radius:10px;background:transparent;color:var(--dcuf-theme-fg-muted,#667085);font-size:21px;cursor:pointer; }
+                #dcuf-post-preview .dcuf-preview-head button:hover { border-color:var(--dcuf-theme-border,#e4e7ec);background:var(--dcuf-theme-surface-muted,#f1f3f6);color:var(--dcuf-theme-fg,#1f2937); }
+                #dcuf-post-preview .dcuf-preview-body { flex:1 1 auto;min-height:0;box-sizing:border-box;padding:14px;overflow:auto;overscroll-behavior:contain;font-size:var(--dcuf-article-body-font-size,26px);line-height:var(--dcuf-article-body-line-height,1.9);overflow-wrap:anywhere;background:var(--dcuf-theme-surface-input,var(--dcuf-theme-card-top,#fff)); }
+                #dcuf-post-preview .dcuf-preview-body img { display:block;max-width:100%;height:auto;margin:10px auto;border-radius:6px; }
+                #dcuf-post-preview .dcuf-preview-body img:not([src]) { width:min(100%,360px);min-height:76px;background:linear-gradient(100deg,var(--dcuf-theme-surface-muted,#edf0f4) 20%,var(--dcuf-theme-card-top,#f8fafc) 40%,var(--dcuf-theme-surface-muted,#edf0f4) 60%);background-size:240% 100%;animation:dcuf-preview-image-wait 1.2s linear infinite; }
+                #dcuf-post-preview .dcuf-preview-image-error { display:block;margin:10px 0;padding:12px;border:1px dashed var(--dcuf-theme-border-strong,#aab3bf);border-radius:8px;background:var(--dcuf-theme-surface-muted,#f1f3f6);color:var(--dcuf-theme-fg-muted,#667085);text-align:center;text-decoration:none; }
+                @keyframes dcuf-preview-image-wait { to { background-position:-240% 0; } }
+                #dcuf-post-preview .dcuf-preview-status { color:var(--dcuf-theme-fg-muted,#667085);text-align:center;padding:30px 12px; }
+                #dcuf-post-preview.dcuf-preview-sheet { left:0;right:0;top:auto;bottom:0;width:100%;max-height:78vh;max-height:78dvh;border-radius:18px 18px 0 0; }
+                #dcuf-post-preview.dcuf-preview-anchor { width:min(520px,calc(100vw - 24px));max-height:min(620px,calc(100vh - 24px));max-height:min(620px,calc(100dvh - 24px)); }
+                #dcuf-mobile-convenience-settings { position:fixed;z-index:2147483646;left:50%;top:50%;transform:translate(-50%,-50%);display:flex;flex-direction:column;width:min(440px,calc(100vw - 24px));max-height:calc(100vh - 24px);box-sizing:border-box;overflow:hidden;overscroll-behavior:contain;border:1px solid var(--dcuf-theme-border-strong,#cbd2db);border-radius:16px;background:linear-gradient(155deg,var(--dcuf-theme-card-top,#fff),var(--dcuf-theme-canvas,#f6f7f9));color:var(--dcuf-theme-fg,#27313f);box-shadow:var(--dcuf-theme-panel-shadow,0 20px 60px #0005); }
+                #dcuf-mobile-convenience-settings .dcuf-convenience-head { flex:none;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:15px 17px;border-bottom:1px solid var(--dcuf-theme-border,#d9dde3);background:linear-gradient(180deg,var(--dcuf-theme-card-top,#fff),var(--dcuf-theme-surface-raised,#f7f8fa)); }
+                #dcuf-mobile-convenience-settings .dcuf-convenience-title { display:flex;align-items:center;gap:9px;font-size:15px;letter-spacing:-.02em; }
+                #dcuf-mobile-convenience-settings .dcuf-convenience-title::before { content:'⚙';display:grid;place-items:center;width:28px;height:28px;border-radius:9px;background:var(--dcuf-theme-accent-soft,#e9efff);color:var(--dcuf-theme-accent-strong,#315fdb);font-size:15px; }
+                #dcuf-mobile-convenience-settings .dcuf-convenience-close { width:34px;height:34px;padding:0;border:1px solid transparent;border-radius:10px;background:transparent;color:var(--dcuf-theme-fg-muted,#687384);font-size:21px;line-height:1;cursor:pointer; }
+                #dcuf-mobile-convenience-settings .dcuf-convenience-close:hover { border-color:var(--dcuf-theme-border,#d9dde3);background:var(--dcuf-theme-surface-muted,#f1f3f6);color:var(--dcuf-theme-fg,#27313f); }
+                #dcuf-mobile-convenience-settings .dcuf-convenience-body { min-height:0;overflow:auto;padding:12px;overscroll-behavior:contain; }
+                #dcuf-mobile-convenience-settings .dcuf-convenience-row { display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:8px;padding:11px 12px;border:1px solid var(--dcuf-theme-border,#d9dde3);border-radius:11px;background:linear-gradient(145deg,var(--dcuf-theme-card-top,#fff),var(--dcuf-theme-card-bottom,#fafbfc));box-shadow:0 3px 10px color-mix(in srgb,var(--dcuf-theme-accent,#4263eb) 5%,transparent);cursor:pointer;transition:border-color .16s ease,transform .16s ease; }
+                #dcuf-mobile-convenience-settings .dcuf-convenience-row:hover { border-color:color-mix(in srgb,var(--dcuf-theme-accent,#4263eb) 35%,var(--dcuf-theme-border,#d9dde3));transform:translateY(-1px); }
+                #dcuf-mobile-convenience-settings .dcuf-convenience-copy { min-width:0; }
+                #dcuf-mobile-convenience-settings .dcuf-convenience-copy strong { display:block;font-size:14px;line-height:1.3; }
+                #dcuf-mobile-convenience-settings .dcuf-convenience-copy small { display:block;margin-top:3px;color:var(--dcuf-theme-fg-muted,#687384);font-size:11.5px;line-height:1.35; }
+                #dcuf-mobile-convenience-settings .dcuf-convenience-toggle { appearance:none;-webkit-appearance:none;position:relative;flex:0 0 auto;width:42px;height:24px;margin:0;border:1px solid var(--dcuf-theme-border-strong,#cbd2db);border-radius:999px;background:var(--dcuf-theme-surface-muted,#eef1f5);cursor:pointer;transition:.18s ease; }
+                #dcuf-mobile-convenience-settings .dcuf-convenience-toggle::before { content:'';position:absolute;left:2px;top:2px;width:18px;height:18px;border-radius:50%;background:var(--dcuf-theme-card-top,#fff);box-shadow:0 2px 5px #0003;transition:transform .18s ease; }
+                #dcuf-mobile-convenience-settings .dcuf-convenience-toggle:checked { border-color:var(--dcuf-theme-accent-strong,#315fdb);background:linear-gradient(180deg,var(--dcuf-theme-primary-top,#5d87f0),var(--dcuf-theme-accent-strong,#315fdb)); }
+                #dcuf-mobile-convenience-settings .dcuf-convenience-toggle:checked::before { transform:translateX(18px);background:var(--dcuf-theme-on-accent,#fff); }
+                #dcuf-mobile-convenience-settings :is(button,input):focus-visible { outline:3px solid var(--dcuf-theme-focus-ring,rgba(63,109,224,.18));outline-offset:2px; }
+                #dcuf-mobile-convenience-settings .dcuf-convenience-note { margin:4px 1px 0;padding:9px 10px;border-radius:9px;background:var(--dcuf-theme-surface-muted,#f1f3f6);color:var(--dcuf-theme-fg-muted,#687384);font-size:11.5px;line-height:1.45; }
+                #dcuf-mobile-convenience-settings .dcuf-convenience-actions { flex:none;display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:12px;border-top:1px solid var(--dcuf-theme-border,#d9dde3);background:linear-gradient(180deg,var(--dcuf-theme-surface-raised,#f7f8fa),var(--dcuf-theme-card-bottom,#fafbfc)); }
+                #dcuf-mobile-convenience-settings .dcuf-convenience-actions button { min-height:42px;padding:9px 12px;border-radius:10px;font-weight:750;cursor:pointer; }
+                #dcuf-mobile-convenience-settings .dcuf-convenience-clear { border:1px solid var(--dcuf-theme-border-strong,#cbd2db);background:var(--dcuf-theme-surface-input,#fff);color:var(--dcuf-theme-fg,#27313f); }
+                #dcuf-mobile-convenience-settings .dcuf-convenience-save { border:1px solid var(--dcuf-theme-accent-strong,#315fdb);background:linear-gradient(180deg,var(--dcuf-theme-primary-top,#5d87f0),var(--dcuf-theme-accent-strong,#315fdb));color:var(--dcuf-theme-on-accent,#fff);box-shadow:0 7px 15px var(--dcuf-theme-accent-shadow,rgba(49,95,219,.24)); }
+                #dcuf-mobile-convenience-settings .dcuf-convenience-actions button:disabled { opacity:.58;cursor:wait; }
+                #dcuf-draft-banner { color:var(--dcuf-theme-fg,#20242a);background:var(--dcuf-theme-card-top,#fff); }
+                #dcuf-draft-banner { position:fixed;z-index:2147483644;top:12px;left:50%;transform:translateX(-50%);width:min(520px,calc(100vw - 24px));box-sizing:border-box;padding:11px 12px;border:1px solid #9aa7b7;border-radius:10px;box-shadow:0 10px 35px #0005;display:flex;align-items:center;gap:8px; }
+                #dcuf-draft-banner span { flex:1;min-width:0; }
+                #dcuf-draft-banner button { padding:6px 9px;border:1px solid #aab3bf;border-radius:6px;background:#f8fafc;color:#20242a;cursor:pointer; }
+                body.dc-filter-dark-mode #dcuf-draft-banner { background:#171a20;color:#e7edf6;border-color:#475263; }
+                @media (prefers-color-scheme:dark) {
+                    body:not(.dc-filter-light-mode) #dcuf-post-preview,body:not(.dc-filter-light-mode) #dcuf-mobile-convenience-settings,body:not(.dc-filter-light-mode) #dcuf-draft-banner { color-scheme:dark; }
+                }
+            `;
+            (document.head || document.documentElement).appendChild(style);
+        },
+        async showSettings() {
+            await this.loadSettings({ force: true });
+            this.ensureStyles();
+            this.closeSettings();
+            const panel = document.createElement('section');
+            panel.id = 'dcuf-mobile-convenience-settings';
+            panel.className = 'dcuf-settings-panel dcuf-convenience-panel';
+            panel.setAttribute('role', 'dialog');
+            panel.setAttribute('aria-modal', 'true');
+            const header = document.createElement('div');
+            header.className = 'dcuf-convenience-head dcuf-settings-header';
+            const title = document.createElement('strong'); title.id = 'dcuf-convenience-title'; title.className = 'dcuf-convenience-title'; title.textContent = '모바일 편의기능 설정';
+            panel.setAttribute('aria-labelledby', title.id);
+            const close = document.createElement('button'); close.type = 'button'; close.className = 'dcuf-convenience-close'; close.textContent = '✕'; close.setAttribute('aria-label', '편의기능 설정 닫기'); close.onclick = () => this.closeSettings();
+            header.append(title, close); panel.appendChild(header);
+            const body = document.createElement('div'); body.className = 'dcuf-convenience-body dcuf-settings-body';
+            const labels = {
+                listRestore: ['목록 스크롤 위치 복원', '뒤로 왔을 때 열었던 글 위치로 복귀'],
+                recentHighlight: ['마지막으로 열어본 글 표시', '뒤로 돌아왔을 때 해당 글 카드를 테마색으로 표시'],
+                draftRecovery: ['글쓰기 초안 저장·복구', '제목·본문·말머리만 저장'],
+                postPreview: ['글 미리보기', '마우스 대기 또는 터치 길게 누르기']
+            };
+            const controls = {};
+            Object.entries(labels).forEach(([key, [name, detail]]) => {
+                const label = document.createElement('label');
+                label.className = 'dcuf-convenience-row dcuf-settings-section';
+                const text = document.createElement('span'); text.className = 'dcuf-convenience-copy';
+                const strong = document.createElement('strong'); strong.textContent = name;
+                const small = document.createElement('small'); small.textContent = detail;
+                text.append(strong, small);
+                const input = document.createElement('input'); input.type = 'checkbox'; input.className = 'dcuf-convenience-toggle'; input.checked = this.settings[key]; input.setAttribute('aria-label', name);
+                controls[key] = input; label.append(text, input); body.appendChild(label);
+            });
+            const note = document.createElement('p'); note.className = 'dcuf-convenience-note dcuf-settings-help'; note.textContent = '모든 기능 끄기는 선택값을 지우지 않고 실행만 멈춥니다.'; body.appendChild(note);
+            panel.appendChild(body);
+            const actions = document.createElement('div'); actions.className = 'dcuf-convenience-actions dcuf-settings-footer';
+            const clearDrafts = document.createElement('button'); clearDrafts.type = 'button'; clearDrafts.className = 'dcuf-convenience-clear'; clearDrafts.textContent = '저장된 초안 삭제';
+            clearDrafts.onclick = async () => {
+                if (!window.confirm('저장된 모바일 글쓰기 초안을 모두 삭제할까요?')) return;
+                const emptyStore = { version: 1, galleries: {} };
+                await GM_setValue(this.DRAFT_KEY, emptyStore);
+                this._draftStoreCache = emptyStore;
+                clearDrafts.textContent = '삭제됨';
+            };
+            const save = document.createElement('button'); save.type = 'button'; save.className = 'dcuf-convenience-save'; save.textContent = '저장';
+            save.onclick = async () => {
+                save.disabled = true;
+                const next = Object.fromEntries(Object.keys(this.DEFAULTS).map((key) => [key, controls[key].checked]));
+                await GM_setValue(this.STORAGE_KEY, next);
+                this.settings = this.normalizeSettings(next);
+                window.dispatchEvent(new CustomEvent('dcuf:convenience-settings-change', { detail: this.settings }));
+                this.closeSettings();
+            };
+            actions.append(clearDrafts, save); panel.appendChild(actions); document.body.appendChild(panel);
+            this._settingsPanel = panel;
+            this.lockBackgroundScroll('settings');
+        },
+        closeSettings() {
+            (this._settingsPanel || document.getElementById('dcuf-mobile-convenience-settings'))?.remove();
+            this._settingsPanel = null;
+            this.unlockBackgroundScroll('settings');
+        },
+
+        normalizedListUrl(urlLike = window.location.href) {
+            try { const url = new URL(urlLike, window.location.href); url.hash = ''; return url.href; }
+            catch { return String(urlLike || ''); }
+        },
+        getPostNoFromLink(link) {
+            try { return new URL(link.href, window.location.href).searchParams.get('no') || ''; }
+            catch { return ''; }
+        },
+        bindList(listContainer) {
+            if (!(listContainer instanceof HTMLElement) || listContainer.dataset.dcufConvenienceBound === '1') return;
+            listContainer.dataset.dcufConvenienceBound = '1';
+            this.bindPreview(listContainer);
+            this.ensureListNavigationRecorder();
+        },
+        ensureListNavigationRecorder() {
+            if (this._listNavigationRecorderBound) return;
+            this._listNavigationRecorderBound = true;
+            document.addEventListener('click', (event) => {
+                const link = event.target instanceof Element ? event.target.closest('a.post-title-link') : null;
+                const listContainer = link?.closest('.custom-mobile-list');
+                if (!(link instanceof HTMLAnchorElement) || !(listContainer instanceof HTMLElement)) return;
+                if (link === this._previewSuppressedLink) return;
+                if (this.isMasterDisabled() || (!this.settings?.listRestore && !this.settings?.recentHighlight)) return;
+                const card = link.closest('.custom-post-item');
+                const postNo = this.getPostNoFromLink(link);
+                const record = {
+                    listUrl: this.normalizedListUrl(), postUrl: link.href, postNo,
+                    offset: card instanceof HTMLElement ? card.getBoundingClientRect().top : 0,
+                    scrollY: window.scrollY, savedAt: Date.now()
+                };
+                try { sessionStorage.setItem(this.LIST_SESSION_KEY, JSON.stringify(record)); } catch { /* unavailable */ }
+                this._listRestoreComplete = false;
+                this.markRecentCard(listContainer, postNo, { pulse: false });
+            }, true);
+        },
+        readListRecord() {
+            try {
+                const record = JSON.parse(sessionStorage.getItem(this.LIST_SESSION_KEY) || 'null');
+                if (!record || record.listUrl !== this.normalizedListUrl() || Date.now() - Number(record.savedAt) > 12 * 60 * 60 * 1000) return null;
+                return record;
+            } catch { return null; }
+        },
+        findCardByPostNo(listContainer, postNo) {
+            if (!postNo) return null;
+            return Array.from(listContainer.querySelectorAll('.custom-post-item')).find((card) => {
+                const link = card.querySelector('a.post-title-link');
+                return link instanceof HTMLAnchorElement && this.getPostNoFromLink(link) === String(postNo);
+            }) || null;
+        },
+        getNavigationType() {
+            try { return performance.getEntriesByType('navigation')[0]?.type || ''; }
+            catch { return ''; }
+        },
+        markRecentCard(listContainer, postNo, { pulse = false } = {}) {
+            if (!this.settings?.recentHighlight || this.isMasterDisabled()) return;
+            listContainer.querySelectorAll('.dcuf-recent-post,.dcuf-recent-pulse').forEach((node) => node.classList.remove('dcuf-recent-post', 'dcuf-recent-pulse'));
+            listContainer.querySelectorAll('.dcuf-recent-label').forEach((node) => node.remove());
+            const card = this.findCardByPostNo(listContainer, postNo);
+            if (!(card instanceof HTMLElement)) return;
+            card.classList.add('dcuf-recent-post');
+            const title = card.querySelector('.post-title');
+            if (title instanceof HTMLElement) {
+                const label = document.createElement('span');
+                label.className = 'dcuf-recent-label'; label.textContent = '방금 본 글';
+                title.prepend(label);
+            }
+            if (pulse) {
+                card.classList.add('dcuf-recent-pulse');
+                window.setTimeout(() => card.classList.remove('dcuf-recent-pulse'), 2000);
+            }
+        },
+        onListCommitted(state) {
+            const list = state?.newListContainer;
+            if (!(list instanceof HTMLElement)) return;
+            this.bindList(list);
+            const record = this.readListRecord();
+            if (record) this.markRecentCard(list, record.postNo, { pulse: false });
+            if (this._listRestoreComplete || !record || !this.isEnabled('listRestore')) return;
+            this._listRestoreComplete = true;
+            // A reload must preserve the user's current browser scroll position,
+            // not jump back to the last post that happened to be opened. Keep
+            // this decision and any non-persisted restore synchronous with the
+            // list commit so the ready/reveal frame cannot paint an intermediate
+            // position while waiting for a pageshow promise.
+            if (this.getNavigationType() === 'reload') return;
+            const persisted = this._pageShowPersisted;
+            const card = this.findCardByPostNo(list, record.postNo);
+            if (!(card instanceof HTMLElement)) return;
+            if (!persisted) {
+                const top = card.getBoundingClientRect().top;
+                window.scrollTo({ top: Math.max(0, window.scrollY + top - Number(record.offset || 0)), behavior: 'auto' });
+            }
+            this.markRecentCard(list, record.postNo, { pulse: true });
+        },
+
+        cancelPreviewClose() {
+            if (this._previewCloseTimer) window.clearTimeout(this._previewCloseTimer);
+            this._previewCloseTimer = 0;
+        },
+        schedulePreviewClose(delay = 320) {
+            if (!this._previewPanel?.classList.contains('dcuf-preview-anchor')) return;
+            if (this._previewCloseTimer) return;
+            this._previewCloseTimer = window.setTimeout(() => {
+                this._previewCloseTimer = 0;
+                this.closePreview();
+            }, Math.max(0, Number(delay) || 0));
+        },
+        getPreviewViewportBounds() {
+            const viewport = window.visualViewport;
+            const left = Number(viewport?.offsetLeft) || 0;
+            const top = Number(viewport?.offsetTop) || 0;
+            const width = Math.max(1, Number(viewport?.width) || window.innerWidth || document.documentElement.clientWidth || 1);
+            const height = Math.max(1, Number(viewport?.height) || window.innerHeight || document.documentElement.clientHeight || 1);
+            return { left, top, width, height, right: left + width, bottom: top + height };
+        },
+        positionPreviewPanel() {
+            const panel = this._previewPanel;
+            const anchor = this._previewAnchor;
+            if (!(panel instanceof HTMLElement) || !anchor) return;
+            const mobile = panel.classList.contains('dcuf-preview-sheet');
+            if (mobile) {
+                Object.assign(panel.style, {
+                    left: '0px', right: '0px', top: 'auto', bottom: '0px',
+                    width: '100%', maxHeight: '78dvh'
+                });
+                return;
+            }
+            const bounds = this.getPreviewViewportBounds();
+            const margin = 12;
+            const width = Math.max(1, Math.min(520, bounds.width - margin * 2));
+            const maxHeight = Math.max(1, Math.min(620, bounds.height - margin * 2));
+            Object.assign(panel.style, { width: `${Math.floor(width)}px`, maxHeight: `${Math.floor(maxHeight)}px`, right: 'auto', bottom: 'auto' });
+            const height = Math.min(maxHeight, panel.getBoundingClientRect().height || maxHeight);
+            const anchorX = Number(anchor.x) || bounds.left + margin;
+            const anchorY = Number(anchor.y) || bounds.top + margin;
+            let left = anchorX + 12;
+            if (left + width > bounds.right - margin) left = anchorX - width - 12;
+            left = Math.max(bounds.left + margin, Math.min(left, bounds.right - width - margin));
+            let top = anchorY + 12;
+            if (top + height > bounds.bottom - margin && anchorY - height - 12 >= bounds.top + margin) top = anchorY - height - 12;
+            top = Math.max(bounds.top + margin, Math.min(top, bounds.bottom - height - margin));
+            Object.assign(panel.style, { left: `${Math.round(left)}px`, top: `${Math.round(top)}px` });
+        },
+        bindPreviewViewport() {
+            this.unbindPreviewViewport();
+            const reposition = () => this.positionPreviewPanel();
+            this._previewViewportHandler = reposition;
+            window.addEventListener('resize', reposition, { passive: true });
+            window.visualViewport?.addEventListener('resize', reposition, { passive: true });
+            window.visualViewport?.addEventListener('scroll', reposition, { passive: true });
+        },
+        unbindPreviewViewport() {
+            if (!this._previewViewportHandler) return;
+            window.removeEventListener('resize', this._previewViewportHandler);
+            window.visualViewport?.removeEventListener('resize', this._previewViewportHandler);
+            window.visualViewport?.removeEventListener('scroll', this._previewViewportHandler);
+            this._previewViewportHandler = null;
+        },
+        isPointInPreviewCorridor(x, y) {
+            const panel = this._previewPanel;
+            const link = this._previewHoverLink;
+            if (!(panel instanceof HTMLElement) || !(link instanceof HTMLElement) || !link.isConnected) return false;
+            const panelRect = panel.getBoundingClientRect();
+            const linkRect = link.getBoundingClientRect();
+            const pad = 14;
+            const left = Math.min(panelRect.left, linkRect.left) - pad;
+            const right = Math.max(panelRect.right, linkRect.right) + pad;
+            const top = Math.min(panelRect.top, linkRect.top) - pad;
+            const bottom = Math.max(panelRect.bottom, linkRect.bottom) + pad;
+            return x >= left && x <= right && y >= top && y <= bottom;
+        },
+        bindPreviewPointerTracking() {
+            this.unbindPreviewPointerTracking();
+            const panel = this._previewPanel;
+            if (!(panel instanceof HTMLElement)) return;
+            if (panel.classList.contains('dcuf-preview-anchor')) {
+                this._previewPointerMoveHandler = (event) => {
+                    const target = event.target instanceof Node ? event.target : null;
+                    if (target && (this._previewPanel?.contains(target) || this._previewHoverLink?.contains(target))) {
+                        this.cancelPreviewClose();
+                        return;
+                    }
+                    if (this.isPointInPreviewCorridor(event.clientX, event.clientY)) this.schedulePreviewClose(320);
+                    else this.schedulePreviewClose(100);
+                };
+                document.addEventListener('pointermove', this._previewPointerMoveHandler, { passive: true, capture: true });
+                return;
+            }
+            if (!panel.classList.contains('dcuf-preview-sheet')) return;
+            this._previewPointerDownHandler = (event) => {
+                const target = event.target instanceof Node ? event.target : null;
+                const list = this._previewBoundList;
+                if (event.pointerType === 'mouse' || event.isPrimary === false || !target
+                    || !(list instanceof HTMLElement) || !list.contains(target)
+                    || this._previewPanel?.contains(target)) {
+                    this._previewOutsideGesture = null;
+                    return;
+                }
+                this._previewOutsideGesture = { id: event.pointerId, x: event.clientX, y: event.clientY };
+            };
+            this._previewPointerMoveHandler = (event) => {
+                const gesture = this._previewOutsideGesture;
+                if (!gesture || gesture.id !== event.pointerId) return;
+                if (Math.hypot(event.clientX - gesture.x, event.clientY - gesture.y) <= 12) return;
+                this._previewOutsideGesture = null;
+                this.closePreview();
+            };
+            this._previewPointerEndHandler = (event) => {
+                if (this._previewOutsideGesture?.id === event.pointerId) this._previewOutsideGesture = null;
+            };
+            document.addEventListener('pointerdown', this._previewPointerDownHandler, { passive: true, capture: true });
+            document.addEventListener('pointermove', this._previewPointerMoveHandler, { passive: true, capture: true });
+            document.addEventListener('pointerup', this._previewPointerEndHandler, { passive: true, capture: true });
+            document.addEventListener('pointercancel', this._previewPointerEndHandler, { passive: true, capture: true });
+        },
+        unbindPreviewPointerTracking() {
+            if (this._previewPointerDownHandler) document.removeEventListener('pointerdown', this._previewPointerDownHandler, true);
+            if (this._previewPointerMoveHandler) document.removeEventListener('pointermove', this._previewPointerMoveHandler, true);
+            if (this._previewPointerEndHandler) {
+                document.removeEventListener('pointerup', this._previewPointerEndHandler, true);
+                document.removeEventListener('pointercancel', this._previewPointerEndHandler, true);
+            }
+            this._previewPointerDownHandler = null;
+            this._previewPointerMoveHandler = null;
+            this._previewPointerEndHandler = null;
+            this._previewOutsideGesture = null;
+        },
+        bindPreview(listContainer) {
+            if (!(listContainer instanceof HTMLElement) || listContainer.dataset.dcufPreviewBound === '1') return;
+            listContainer.dataset.dcufPreviewBound = '1';
+            this.ensurePreviewClickGuard();
+            let timer = 0;
+            let touch = null;
+            const cancel = () => { if (timer) window.clearTimeout(timer); timer = 0; touch = null; };
+            const startMouse = (link, anchor) => {
+                cancel();
+                this.cancelPreviewClose();
+                if (this._previewPanel?.dataset.sourceUrl === link.href) {
+                    this._previewHoverLink = link;
+                    return;
+                }
+                timer = window.setTimeout(() => {
+                    timer = 0;
+                    if (!this.isEnabled('postPreview')) return;
+                    void this.openPreview(link.href, link.textContent.trim(), { ...anchor, link });
+                }, 400);
+            };
+            listContainer.addEventListener('pointerover', (event) => {
+                if (event.pointerType !== 'mouse' || !window.matchMedia?.('(hover: hover) and (pointer: fine)').matches) return;
+                const link = event.target instanceof Element ? event.target.closest('a.post-title-link') : null;
+                if (!(link instanceof HTMLAnchorElement) || (event.relatedTarget instanceof Node && link.contains(event.relatedTarget))) return;
+                startMouse(link, { x: event.clientX, y: event.clientY, mobile: false });
+            });
+            listContainer.addEventListener('pointerout', (event) => {
+                const link = event.target instanceof Element ? event.target.closest('a.post-title-link') : null;
+                if (!link || (event.relatedTarget instanceof Node && link.contains(event.relatedTarget))) return;
+                cancel();
+                if (event.relatedTarget instanceof Node && this._previewPanel?.contains(event.relatedTarget)) return;
+                if (this._previewHoverLink === link) this.schedulePreviewClose();
+            });
+            listContainer.addEventListener('pointerdown', (event) => {
+                if (event.pointerType === 'mouse' || !this.isEnabled('postPreview')) return;
+                const link = event.target instanceof Element ? event.target.closest('a.post-title-link') : null;
+                if (!(link instanceof HTMLAnchorElement)) return;
+                cancel();
+                touch = { link, id: event.pointerId, x: event.clientX, y: event.clientY, startedAt: Date.now(), completed: false };
+                timer = window.setTimeout(() => {
+                    if (!touch || touch.link !== link || touch.id !== event.pointerId || !this.isEnabled('postPreview')) return;
+                    timer = 0;
+                    touch.completed = true;
+                    this._previewSuppressedLink = link;
+                    window.setTimeout(() => {
+                        if (this._previewSuppressedLink === link) this._previewSuppressedLink = null;
+                    }, 1200);
+                    void this.openPreview(link.href, link.textContent.trim(), { x: event.clientX, y: event.clientY, mobile: true });
+                }, 500);
+            }, { passive: true });
+            listContainer.addEventListener('pointermove', (event) => {
+                if (!touch || touch.id !== event.pointerId) return;
+                if (Math.hypot(event.clientX - touch.x, event.clientY - touch.y) > 12) cancel();
+            }, { passive: true });
+            listContainer.addEventListener('pointerup', cancel, { passive: true });
+            listContainer.addEventListener('pointercancel', cancel, { passive: true });
+            listContainer.addEventListener('scroll', cancel, { passive: true });
+            listContainer.addEventListener('contextmenu', (event) => {
+                const link = event.target instanceof Element ? event.target.closest('a.post-title-link') : null;
+                const previewTouchOwnsGesture = this.isEnabled('postPreview')
+                    && (touch?.link === link || link === this._previewSuppressedLink);
+                if (!link || !previewTouchOwnsGesture) return;
+                // Mobile Chromium can emit contextmenu slightly before its own
+                // nominal long-press threshold. Claim it from pointerdown, not
+                // only after our 500 ms timer, so the native callout never races
+                // the preview. Movement/scroll clears `touch`, restoring the
+                // browser menu for a gesture that DCUF no longer owns.
+                event.preventDefault(); event.stopImmediatePropagation();
+            }, true);
+            if (this._previewWindowScrollHandler) {
+                window.removeEventListener('scroll', this._previewWindowScrollHandler, true);
+            }
+            this._previewWindowScrollHandler = (event) => {
+                cancel();
+                if (!this._previewPanel?.classList.contains('dcuf-preview-anchor')) return;
+                if (event.target instanceof Node && this._previewPanel.contains(event.target)) return;
+                this.closePreview();
+            };
+            this._previewBoundList = listContainer;
+            window.addEventListener('scroll', this._previewWindowScrollHandler, { passive: true, capture: true });
+        },
+        ensurePreviewClickGuard() {
+            if (this._previewClickGuardBound) return;
+            this._previewClickGuardBound = true;
+            document.addEventListener('click', (event) => {
+                const link = event.target instanceof Element ? event.target.closest('a.post-title-link') : null;
+                if (link && link === this._previewSuppressedLink) {
+                    event.preventDefault(); event.stopPropagation(); event.stopImmediatePropagation();
+                    this._previewSuppressedLink = null;
+                    return;
+                }
+                if (!this._previewPanel || !(event.target instanceof Node) || this._previewPanel.contains(event.target)) return;
+                this.closePreview();
+            }, true);
+            document.addEventListener('keydown', (event) => {
+                if (event.key === 'Escape' && this._previewPanel) this.closePreview();
+            }, true);
+        },
+        sanitizePreviewDocument(html, sourceUrl) {
+            const doc = new DOMParser().parseFromString(String(html || ''), 'text/html');
+            const source = doc.querySelector('#dgn_content_de, .writing_view_box .write_div, .gallview_contents .write_div, .view_content_wrap .write_div, .gallview_contents, .writing_view_box');
+            if (!(source instanceof Element)) throw new Error('본문 영역을 찾지 못했습니다.');
+            const clone = source.cloneNode(true);
+            clone.querySelectorAll('.captcha,#kcaptcha,[class*="captcha"],.kap_codeimg,.btn_recommend_box,.btn_recommend,.recommend_box,#recommend_box,#recomAjax,.gall_writer,.gallview_head,.view_bottom_btnbox,.view_bottom,.gallview_bottom,.recom_bottom_box,.vote_box,.appending_file,.write_ban,.write_div_bottom,.view_comment,.comment_wrap,.cmt_write_box').forEach((node) => node.remove());
+            const auxiliaryLabel = /^(?:추천\s*검색|원본\s*첨부파일(?:\s*\d+)?)$/;
+            Array.from(clone.querySelectorAll('*')).reverse().forEach((node) => {
+                const text = String(node.textContent || '').replace(/\s+/g, ' ').trim();
+                if (auxiliaryLabel.test(text)) node.remove();
+            });
+            clone.querySelectorAll('script,style,form,iframe,object,embed,input,textarea,select,button,noscript,svg,math,foreignObject,canvas,source,track').forEach((node) => node.remove());
+            clone.querySelectorAll('video,audio').forEach((node) => {
+                const link = doc.createElement('a'); link.href = sourceUrl; link.textContent = '미디어는 원문에서 보기'; node.replaceWith(link);
+            });
+            clone.querySelectorAll('picture').forEach((picture) => {
+                const image = picture.querySelector('img');
+                if (image) picture.replaceWith(image); else picture.remove();
+            });
+            const allowedTags = new Set(['A', 'B', 'BLOCKQUOTE', 'BR', 'CODE', 'DEL', 'DIV', 'EM', 'FIGCAPTION', 'FIGURE', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'HR', 'I', 'IMG', 'LI', 'OL', 'P', 'PRE', 'S', 'SMALL', 'SPAN', 'STRONG', 'SUB', 'SUP', 'TABLE', 'TBODY', 'TD', 'TFOOT', 'TH', 'THEAD', 'TR', 'U', 'UL']);
+            Array.from(clone.querySelectorAll('*')).reverse().forEach((node) => {
+                if (!allowedTags.has(node.tagName)) node.replaceWith(...node.childNodes);
+            });
+            clone.querySelectorAll('img').forEach((image) => {
+                const candidates = [image.getAttribute('data-original'), image.getAttribute('data-src'), image.getAttribute('src')].filter(Boolean);
+                let resolved = null;
+                for (const candidate of candidates) {
+                    try {
+                        const next = new URL(candidate, sourceUrl);
+                        if (!['http:', 'https:', 'data:', 'blob:'].includes(next.protocol)) continue;
+                        if (/(?:kcap_none|fix_nik|loading)(?:\.[a-z]+)?(?:$|[?#])/i.test(next.href)) continue;
+                        resolved = next; break;
+                    } catch { /* try the next lazy-image source */ }
+                }
+                if (!resolved) { image.remove(); return; }
+                Array.from(image.attributes).forEach((attr) => image.removeAttribute(attr.name));
+                image.dataset.dcufPreviewSrc = resolved.href;
+                image.alt = '미리보기 이미지';
+                image.loading = 'lazy'; image.decoding = 'async';
+            });
+            clone.querySelectorAll('a').forEach((anchor) => {
+                const href = anchor.getAttribute('href');
+                Array.from(anchor.attributes).forEach((attr) => anchor.removeAttribute(attr.name));
+                if (!href) return;
+                try {
+                    const resolved = new URL(href, sourceUrl);
+                    if (!['http:', 'https:'].includes(resolved.protocol)) return;
+                    anchor.href = resolved.href; anchor.rel = 'noopener noreferrer';
+                } catch { /* leave as plain text */ }
+            });
+            clone.querySelectorAll(':not(img):not(a)').forEach((node) => {
+                Array.from(node.attributes).forEach((attr) => node.removeAttribute(attr.name));
+            });
+            return clone.innerHTML;
+        },
+        getCachedPreview(url) {
+            const item = this._previewCache.get(url);
+            if (!item || Date.now() - item.savedAt > this.PREVIEW_TTL) { this._previewCache.delete(url); return null; }
+            this._previewCache.delete(url); this._previewCache.set(url, item);
+            return item.html;
+        },
+        setCachedPreview(url, html) {
+            this._previewCache.delete(url); this._previewCache.set(url, { html, savedAt: Date.now() });
+            while (this._previewCache.size > this.PREVIEW_MAX) this._previewCache.delete(this._previewCache.keys().next().value);
+        },
+        clearPreviewImageRuntime() {
+            this._previewImageObserver?.disconnect(); this._previewImageObserver = null;
+            if (this._previewDeferredTimer) window.clearTimeout(this._previewDeferredTimer);
+            this._previewDeferredTimer = 0;
+            this._previewImageTimers.forEach((timer) => window.clearTimeout(timer));
+            this._previewImageTimers.clear();
+        },
+        preparePreviewImages(body, sourceUrl) {
+            this.clearPreviewImageRuntime();
+            if (!(body instanceof HTMLElement)) return;
+            const images = Array.from(body.querySelectorAll('img[data-dcuf-preview-src]'));
+            const loadImage = (image) => {
+                if (!(image instanceof HTMLImageElement) || image.dataset.dcufPreviewState === 'loading') return;
+                const src = image.dataset.dcufPreviewSrc;
+                if (!src) { image.remove(); return; }
+                image.dataset.dcufPreviewState = 'loading';
+                const fail = () => {
+                    if (image.dataset.dcufPreviewState === 'loaded' || image.dataset.dcufPreviewState === 'error') return;
+                    image.dataset.dcufPreviewState = 'error';
+                    const timer = Number(image.dataset.dcufPreviewTimer || 0);
+                    if (timer) { window.clearTimeout(timer); this._previewImageTimers.delete(timer); }
+                    if (!image.isConnected) return;
+                    const link = document.createElement('a'); link.className = 'dcuf-preview-image-error';
+                    link.href = sourceUrl; link.rel = 'noopener noreferrer'; link.textContent = '이미지를 불러오지 못했습니다 · 원문에서 보기';
+                    image.replaceWith(link);
+                    this.positionPreviewPanel();
+                };
+                const done = () => {
+                    if (image.dataset.dcufPreviewState === 'error') return;
+                    const timer = Number(image.dataset.dcufPreviewTimer || 0);
+                    if (timer) { window.clearTimeout(timer); this._previewImageTimers.delete(timer); }
+                    image.dataset.dcufPreviewState = 'loaded'; image.removeAttribute('data-dcuf-preview-timer');
+                    this.positionPreviewPanel();
+                };
+                image.addEventListener('load', done, { once: true });
+                image.addEventListener('error', fail, { once: true });
+                const timer = window.setTimeout(fail, 12000);
+                this._previewImageTimers.add(timer); image.dataset.dcufPreviewTimer = String(timer);
+                image.src = src;
+            };
+            images.slice(0, 2).forEach(loadImage);
+            const deferred = images.slice(2);
+            if (!deferred.length) return;
+            if (typeof IntersectionObserver !== 'function') { deferred.forEach(loadImage); return; }
+            this._previewImageObserver = new IntersectionObserver((entries, observer) => {
+                entries.forEach((entry) => {
+                    if (!entry.isIntersecting) return;
+                    observer.unobserve(entry.target); loadImage(entry.target);
+                });
+            }, { root: body, rootMargin: '320px 0px', threshold: 0.01 });
+            deferred.forEach((image) => this._previewImageObserver.observe(image));
+            this._previewDeferredTimer = window.setTimeout(() => {
+                this._previewDeferredTimer = 0;
+                this._previewImageObserver?.disconnect(); this._previewImageObserver = null;
+                deferred.forEach(loadImage);
+            }, 1200);
+        },
+        renderPreviewBody(body, html, sourceUrl) {
+            if (!(body instanceof HTMLElement)) return;
+            body.innerHTML = html || '<div class="dcuf-preview-status">표시할 본문이 없습니다.</div>';
+            this.preparePreviewImages(body, sourceUrl);
+            this.positionPreviewPanel();
+        },
+        createPreviewPanel(url, title, anchor) {
+            this.closePreview();
+            const panel = document.createElement('aside'); panel.id = 'dcuf-post-preview';
+            const mobile = anchor?.mobile || !window.matchMedia?.('(hover: hover) and (pointer: fine)').matches;
+            panel.classList.add(mobile ? 'dcuf-preview-sheet' : 'dcuf-preview-anchor');
+            const head = document.createElement('div'); head.className = 'dcuf-preview-head';
+            const heading = document.createElement('strong'); heading.textContent = title || '글 미리보기';
+            const original = document.createElement('a'); original.href = url; original.textContent = '원문 열기';
+            const close = document.createElement('button'); close.type = 'button'; close.textContent = '✕'; close.setAttribute('aria-label', '미리보기 닫기'); close.onclick = () => this.closePreview();
+            head.append(heading, original, close);
+            const body = document.createElement('div'); body.className = 'dcuf-preview-body'; body.innerHTML = '<div class="dcuf-preview-status">불러오는 중…</div>';
+            panel.append(head, body); document.body.appendChild(panel);
+            panel.dataset.sourceUrl = url;
+            this._previewPanel = panel;
+            this._previewHoverLink = anchor?.link instanceof HTMLAnchorElement ? anchor.link : null;
+            this._previewAnchor = { ...anchor, mobile };
+            if (mobile) this.lockBackgroundScroll('preview');
+            if (!mobile) {
+                panel.addEventListener('pointerenter', () => this.cancelPreviewClose());
+                panel.addEventListener('pointerleave', (event) => {
+                    if (event.relatedTarget instanceof Node && this._previewHoverLink?.contains(event.relatedTarget)) return;
+                    this.schedulePreviewClose();
+                });
+            }
+            this.positionPreviewPanel();
+            this.bindPreviewViewport();
+            this.bindPreviewPointerTracking();
+            return body;
+        },
+        async openPreview(url, title, anchor) {
+            if (!this.isEnabled('postPreview')) return;
+            let sourceUrl;
+            try { sourceUrl = new URL(url, window.location.href); } catch { return; }
+            if (sourceUrl.origin !== window.location.origin) return;
+            const body = this.createPreviewPanel(sourceUrl.href, title, anchor);
+            const cached = this.getCachedPreview(sourceUrl.href);
+            if (cached !== null) { this.renderPreviewBody(body, cached, sourceUrl.href); return; }
+            this._previewRequest?.abort();
+            const controller = new AbortController(); this._previewRequest = controller;
+            try {
+                const response = await fetch(sourceUrl.href, { credentials: 'same-origin', signal: controller.signal, headers: { Accept: 'text/html' } });
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                const sanitized = this.sanitizePreviewDocument(await response.text(), sourceUrl.href);
+                this.setCachedPreview(sourceUrl.href, sanitized);
+                if (this._previewPanel?.contains(body)) this.renderPreviewBody(body, sanitized, sourceUrl.href);
+            } catch (error) {
+                if (error?.name === 'AbortError') return;
+                if (this._previewPanel?.contains(body)) {
+                    body.innerHTML = `<div class="dcuf-preview-status">미리보기를 불러오지 못했습니다.<br>${String(error?.message || error)}</div>`;
+                    this.positionPreviewPanel();
+                }
+            } finally { if (this._previewRequest === controller) this._previewRequest = null; }
+        },
+        closePreview() {
+            this._previewRequest?.abort(); this._previewRequest = null;
+            this.cancelPreviewClose(); this.clearPreviewImageRuntime();
+            this.unbindPreviewViewport(); this.unbindPreviewPointerTracking();
+            this._previewPanel?.remove(); this._previewPanel = null;
+            this._previewHoverLink = null;
+            this._previewAnchor = null;
+            this.unlockBackgroundScroll('preview');
+        },
+
+        sanitizeDraftBodyHtml(html) {
+            const template = document.createElement('template');
+            template.innerHTML = String(html || '');
+            template.content.querySelectorAll('.wrt_guide_preview_inn').forEach((guide) => guide.remove());
+            return template.innerHTML;
+        },
+        hasDraftContent(draft) {
+            if (String(draft?.subject || '').trim()) return true;
+            const html = this.sanitizeDraftBodyHtml(draft?.bodyHtml);
+            if (/<(?:img|video|audio)\b/i.test(html)) return true;
+            const text = document.createElement('div'); text.innerHTML = html;
+            return Boolean(text.textContent.trim());
+        },
+        normalizeDraftStore(value) {
+            const source = value && typeof value === 'object' && !Array.isArray(value) ? value : {};
+            const galleries = source.galleries && typeof source.galleries === 'object' && !Array.isArray(source.galleries) ? source.galleries : {};
+            const result = { version: 1, galleries: {} };
+            const now = Date.now();
+            Object.entries(galleries).forEach(([key, drafts]) => {
+                if (!/^(?:board|mgallery|mini):[^:\s]+$/.test(key) || !Array.isArray(drafts)) return;
+                const valid = drafts.filter((draft) => draft && typeof draft === 'object'
+                    && typeof draft.id === 'string' && Number.isFinite(Number(draft.savedAt))
+                    && now - Number(draft.savedAt) <= this.DRAFT_TTL && this.hasDraftContent(draft))
+                    .map((draft) => ({
+                        id: draft.id, subject: String(draft.subject || ''), bodyHtml: this.sanitizeDraftBodyHtml(draft.bodyHtml),
+                        headtext: String(draft.headtext || ''), savedAt: Number(draft.savedAt), pendingSubmit: Boolean(draft.pendingSubmit)
+                    }))
+                    .sort((a, b) => b.savedAt - a.savedAt).slice(0, this.DRAFT_MAX_PER_GALLERY);
+                if (valid.length) result.galleries[key] = valid;
+            });
+            return result;
+        },
+        async loadDraftStore({ force = false } = {}) {
+            if (!force && this._draftStoreCache) return this.normalizeDraftStore(this._draftStoreCache);
+            const store = this.normalizeDraftStore(await GM_getValue(this.DRAFT_KEY, { version: 1, galleries: {} }));
+            this._draftStoreCache = store;
+            return this.normalizeDraftStore(store);
+        },
+        queueDraftStoreMutation(mutator) {
+            const run = async () => {
+                const store = await this.loadDraftStore();
+                const result = await mutator(store);
+                this._draftStoreCache = this.normalizeDraftStore(store);
+                await GM_setValue(this.DRAFT_KEY, store);
+                return result;
+            };
+            const queued = this._draftWriteQueue.then(run, run);
+            this._draftWriteQueue = queued.catch(() => undefined);
+            return queued;
+        },
+        draftByteSize(draft) {
+            const serialized = JSON.stringify(draft);
+            try { return new TextEncoder().encode(serialized).byteLength; } catch { return serialized.length * 2; }
+        },
+        async upsertDraft(galleryKey, draft) {
+            const normalizedDraft = { ...draft, bodyHtml: this.sanitizeDraftBodyHtml(draft?.bodyHtml) };
+            if (!galleryKey || this.draftByteSize(normalizedDraft) > this.DRAFT_MAX_BYTES) return { saved: false, reason: 'too-large' };
+            if (!this.hasDraftContent(normalizedDraft)) return { saved: false, reason: 'empty' };
+            return this.queueDraftStoreMutation(async (store) => {
+                const list = (store.galleries[galleryKey] || []).filter((item) => item.id !== normalizedDraft.id);
+                list.unshift(normalizedDraft); store.galleries[galleryKey] = list.slice(0, this.DRAFT_MAX_PER_GALLERY);
+                return { saved: true, draft: normalizedDraft };
+            });
+        },
+        async removeDraft(galleryKey, draftId) {
+            return this.queueDraftStoreMutation(async (store) => {
+                const list = (store.galleries[galleryKey] || []).filter((item) => item.id !== draftId);
+                if (list.length) store.galleries[galleryKey] = list; else delete store.galleries[galleryKey];
+                return { removed: true };
+            });
+        },
+        getDraftFields(form) {
+            const subject = form.querySelector('#subject, input[name="subject"]');
+            const textarea = form.querySelector('textarea#memo, textarea[name="memo"], textarea[name="contents"]');
+            const editor = form.querySelector('.note-editable, [contenteditable="true"][role="textbox"]');
+            const codeview = form.querySelector('.note-codable');
+            const headtext = form.querySelector('input[name="headtext"]');
+            return { subject, textarea, editor, codeview, headtext };
+        },
+        getSummernoteCode(form) {
+            const fields = this.getDraftFields(form);
+            const jquery = window.jQuery || window.$;
+            if (!(fields.textarea instanceof HTMLTextAreaElement) || typeof jquery !== 'function' || !form.querySelector('.note-editor')) return null;
+            try {
+                const instance = jquery(fields.textarea);
+                if (typeof instance?.summernote !== 'function') return null;
+                const code = instance.summernote('code');
+                return typeof code === 'string' ? code : null;
+            } catch { return null; }
+        },
+        isCodeViewActive(fields) {
+            if (!(fields?.codeview instanceof HTMLTextAreaElement)) return false;
+            const frame = fields.codeview.closest('.note-editor');
+            return Boolean(frame?.classList.contains('codeview') || frame?.classList.contains('codeview-active') || fields.codeview.dataset.dcufActive === '1');
+        },
+        readDraftBodyHtml(form) {
+            const fields = this.getDraftFields(form);
+            if (this.isCodeViewActive(fields)) return this.sanitizeDraftBodyHtml(fields.codeview.value);
+            const summernote = this.getSummernoteCode(form);
+            const textareaHtml = String(fields.textarea?.value || '');
+            if (summernote !== null && (this.hasDraftContent({ bodyHtml: summernote }) || !textareaHtml)) return this.sanitizeDraftBodyHtml(summernote);
+            const editorHtml = fields.editor instanceof HTMLElement ? String(fields.editor.innerHTML || '') : '';
+            if (this.hasDraftContent({ bodyHtml: editorHtml }) || !textareaHtml) return this.sanitizeDraftBodyHtml(editorHtml);
+            return this.sanitizeDraftBodyHtml(textareaHtml);
+        },
+        readDraftFromForm(form, id, pendingSubmit = false) {
+            const fields = this.getDraftFields(form);
+            const bodyHtml = this.readDraftBodyHtml(form);
+            return {
+                id, subject: String(fields.subject?.value || ''), bodyHtml,
+                headtext: String(fields.headtext?.value || ''), savedAt: Date.now(), pendingSubmit
+            };
+        },
+        isDraftEmpty(draft) {
+            return !this.hasDraftContent(draft);
+        },
+        applyDraftToForm(form, draft) {
+            const fields = this.getDraftFields(form);
+            const bodyHtml = this.sanitizeDraftBodyHtml(draft?.bodyHtml);
+            if (fields.subject instanceof HTMLInputElement) { fields.subject.value = draft.subject; fields.subject.dispatchEvent(new Event('input', { bubbles: true })); }
+            if (fields.textarea instanceof HTMLTextAreaElement) fields.textarea.value = bodyHtml;
+            if (fields.codeview instanceof HTMLTextAreaElement) fields.codeview.value = bodyHtml;
+            let appliedWithSummernote = false;
+            const jquery = window.jQuery || window.$;
+            if (fields.textarea instanceof HTMLTextAreaElement && typeof jquery === 'function' && form.querySelector('.note-editor')) {
+                try {
+                    const instance = jquery(fields.textarea);
+                    if (typeof instance?.summernote === 'function') {
+                        instance.summernote('code', bodyHtml);
+                        appliedWithSummernote = true;
+                    }
+                } catch { appliedWithSummernote = false; }
+            }
+            if (!appliedWithSummernote && fields.editor instanceof HTMLElement) fields.editor.innerHTML = bodyHtml;
+            const dispatchTarget = fields.editor instanceof HTMLElement ? fields.editor : fields.textarea;
+            dispatchTarget?.dispatchEvent(new Event('input', { bubbles: true }));
+            if (!(fields.editor instanceof HTMLElement) && bodyHtml) {
+                [120, 360, 800].forEach((delay) => window.setTimeout(() => {
+                    if (!form.isConnected) return;
+                    const nextFields = this.getDraftFields(form);
+                    if (!(nextFields.editor instanceof HTMLElement)) return;
+                    if (this.hasDraftContent({ bodyHtml: this.readDraftBodyHtml(form) })) return;
+                    nextFields.editor.innerHTML = bodyHtml;
+                    if (nextFields.textarea instanceof HTMLTextAreaElement) nextFields.textarea.value = bodyHtml;
+                    nextFields.editor.dispatchEvent(new Event('input', { bubbles: true }));
+                }, delay));
+            }
+            if (fields.headtext instanceof HTMLInputElement && draft.headtext) { fields.headtext.value = draft.headtext; fields.headtext.dispatchEvent(new Event('change', { bubbles: true })); }
+        },
+        showDraftBanner(message, actions = []) {
+            document.getElementById('dcuf-draft-banner')?.remove();
+            const banner = document.createElement('div'); banner.id = 'dcuf-draft-banner';
+            const text = document.createElement('span'); text.textContent = message; banner.appendChild(text);
+            actions.forEach(({ label, run }) => { const button = document.createElement('button'); button.type = 'button'; button.textContent = label; button.onclick = run; banner.appendChild(button); });
+            const close = document.createElement('button'); close.type = 'button'; close.textContent = '✕'; close.onclick = () => banner.remove(); banner.appendChild(close);
+            document.body.appendChild(banner); return banner;
+        },
+        async attachDraftForm(form) {
+            if (!(form instanceof HTMLFormElement) || form.dataset.dcufDraftBound === '1') return;
+            const galleryKey = FilterModule.getGalleryKey();
+            if (!galleryKey) return;
+            if (!this.isEnabled('draftRecovery')) return;
+            form.dataset.dcufDraftBound = '1';
+            const store = await this.loadDraftStore();
+            let draft = (store.galleries[galleryKey] || [])[0] || null;
+            let draftId = draft?.id || `draft-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+            const interruptedSubmit = Boolean(draft?.pendingSubmit);
+            if (interruptedSubmit) {
+                draft = { ...draft, pendingSubmit: false, savedAt: Date.now() };
+                await this.upsertDraft(galleryKey, draft);
+                try {
+                    const marker = JSON.parse(sessionStorage.getItem(this.SUBMIT_SESSION_KEY) || 'null');
+                    if (marker?.galleryKey === galleryKey && marker?.draftId === draftId) sessionStorage.removeItem(this.SUBMIT_SESSION_KEY);
+                } catch { /* unavailable */ }
+            }
+            const current = this.readDraftFromForm(form, draftId);
+            if (draft) {
+                if (this.isDraftEmpty(current)) {
+                    this.applyDraftToForm(form, draft);
+                    this.showDraftBanner(interruptedSubmit ? '완료되지 않은 등록의 초안을 복구했습니다.' : '저장된 초안을 자동으로 복구했습니다.');
+                } else {
+                    this.showDraftBanner('저장된 초안이 있습니다. 현재 내용을 덮어쓰지 않았습니다.', [
+                        { label: '복구', run: () => { this.applyDraftToForm(form, draft); document.getElementById('dcuf-draft-banner')?.remove(); } },
+                        { label: '삭제', run: async () => { await this.removeDraft(galleryKey, draft.id); draft = null; draftId = `draft-${Date.now()}`; document.getElementById('dcuf-draft-banner')?.remove(); } }
+                    ]);
+                }
+            }
+            let timer = 0;
+            let dirty = false;
+            let submittingPending = false;
+            const saveNow = async (pendingSubmit = submittingPending) => {
+                if (timer) window.clearTimeout(timer); timer = 0;
+                submittingPending = Boolean(pendingSubmit);
+                if (!this.isEnabled('draftRecovery')) return { saved: false, reason: 'disabled' };
+                const next = this.readDraftFromForm(form, draftId, submittingPending);
+                dirty = false;
+                if (this.isDraftEmpty(next)) {
+                    if (draft) await this.removeDraft(galleryKey, draftId);
+                    draft = null;
+                    return { saved: false, reason: 'empty' };
+                }
+                const result = await this.upsertDraft(galleryKey, next);
+                if (result.saved) draft = next;
+                else if (result.reason === 'too-large') this.showDraftBanner('초안이 512KiB를 넘어 자동 저장하지 않았습니다.');
+                return result;
+            };
+            const schedule = () => {
+                if (!this.isEnabled('draftRecovery')) return;
+                dirty = true;
+                if (timer) window.clearTimeout(timer);
+                timer = window.setTimeout(() => void saveNow(false), 800);
+            };
+            const isDraftInput = (target) => target instanceof Element && Boolean(target.matches('#subject,input[name="subject"],textarea#memo,textarea[name="memo"],textarea[name="contents"],.note-editable,.note-codable,[contenteditable="true"][role="textbox"]')
+                || target.closest('.note-editable,[contenteditable="true"][role="textbox"]'));
+            form.addEventListener('input', (event) => {
+                if (!isDraftInput(event.target)) return;
+                const fields = this.getDraftFields(form);
+                if (fields.editor instanceof HTMLElement && (event.target === fields.editor || fields.editor.contains(event.target)) && fields.textarea instanceof HTMLTextAreaElement) {
+                    fields.textarea.value = fields.editor.innerHTML;
+                } else if (fields.codeview instanceof HTMLTextAreaElement && event.target === fields.codeview && fields.textarea instanceof HTMLTextAreaElement) {
+                    fields.textarea.value = fields.codeview.value;
+                }
+                schedule();
+            }, true);
+            form.addEventListener('change', (event) => {
+                if (event.target instanceof Element && event.target.matches('input[name="headtext"]')) schedule();
+            }, true);
+            form.querySelector('.write_subject')?.addEventListener('click', () => window.setTimeout(schedule, 0), true);
+            const flushDirtyDraft = () => {
+                if (!dirty || !this.isEnabled('draftRecovery')) return;
+                void saveNow(submittingPending);
+            };
+            const visibilityHandler = () => { if (document.visibilityState === 'hidden') flushDirtyDraft(); };
+            document.addEventListener('visibilitychange', visibilityHandler, true);
+            const pageHideHandler = flushDirtyDraft;
+            window.addEventListener('pagehide', pageHideHandler, true);
+            window.addEventListener('beforeunload', flushDirtyDraft, true);
+            let submitRecoveryTimer = 0;
+            form.addEventListener('submit', () => {
+                submittingPending = true;
+                try {
+                    sessionStorage.setItem(this.SUBMIT_SESSION_KEY, JSON.stringify({ version: 2, galleryKey, draftId, submittedAt: Date.now() }));
+                } catch { /* unavailable */ }
+                // Do not cancel and synthesize the official submit. DCInside's
+                // validation/captcha pipeline owns this exact event, and a
+                // requestSubmit retry can require a second physical click.
+                void saveNow(true).catch((error) => {
+                    this.showDraftBanner(`제출 직전 초안 저장에 실패했습니다: ${error?.message || error}`);
+                });
+                if (submitRecoveryTimer) window.clearTimeout(submitRecoveryTimer);
+                submitRecoveryTimer = window.setTimeout(() => {
+                    submitRecoveryTimer = 0;
+                    if (!form.isConnected || document.visibilityState === 'hidden') return;
+                    const currentMarker = (() => { try { return JSON.parse(sessionStorage.getItem(this.SUBMIT_SESSION_KEY) || 'null'); } catch { return null; } })();
+                    if (currentMarker?.galleryKey !== galleryKey || currentMarker?.draftId !== draftId) return;
+                    submittingPending = false;
+                    void saveNow(false);
+                    try { sessionStorage.removeItem(this.SUBMIT_SESSION_KEY); } catch { /* unavailable */ }
+                }, 8000);
+            }, true);
+            const controller = {
+                galleryKey,
+                saveNow,
+                flushNow: flushDirtyDraft,
+                destroy() {
+                    if (timer) window.clearTimeout(timer);
+                    timer = 0;
+                    if (submitRecoveryTimer) window.clearTimeout(submitRecoveryTimer);
+                    submitRecoveryTimer = 0;
+                    document.removeEventListener('visibilitychange', visibilityHandler, true);
+                    window.removeEventListener('pagehide', pageHideHandler, true);
+                    window.removeEventListener('beforeunload', flushDirtyDraft, true);
+                }
+            };
+            Object.defineProperty(controller, 'draftId', { enumerable: true, get: () => draftId });
+            form._dcufDraftController = controller;
+        },
+        async confirmPendingDraftOnView() {
+            const pathname = window.location.pathname;
+            const isViewDestination = /\/view(?:\/|$)/.test(pathname);
+            const isListDestination = /\/lists(?:\/|$)/.test(pathname);
+            if (!isViewDestination && !isListDestination) return;
+            let marker = null;
+            try { marker = JSON.parse(sessionStorage.getItem(this.SUBMIT_SESSION_KEY) || 'null'); } catch { marker = null; }
+            const galleryKey = FilterModule.getGalleryKey();
+            const navigationType = performance.getEntriesByType?.('navigation')?.[0]?.type || 'unknown';
+            let referrerPath = '';
+            try { referrerPath = document.referrer ? new URL(document.referrer, window.location.href).pathname : ''; } catch { referrerPath = ''; }
+            if (!marker || marker.galleryKey !== galleryKey || !marker.draftId || Date.now() - Number(marker.submittedAt) > 10 * 60 * 1000) return;
+            const markerVersion = Number(marker.version);
+            if (isListDestination) {
+                const markerAgeMs = Date.now() - Number(marker.submittedAt);
+                const fromWritePage = /\/write(?:\/|$)/.test(referrerPath);
+                if (markerVersion !== 2 || markerAgeMs > 2 * 60 * 1000 || navigationType !== 'navigate' || !fromWritePage) return;
+            }
+            const removeMatchingDraft = async () => {
+                this._draftStoreCache = null;
+                const store = await this.loadDraftStore({ force: true });
+                const pendingDraft = (store.galleries[galleryKey] || []).find((draft) => draft.id === marker.draftId);
+                if (pendingDraft && (pendingDraft.pendingSubmit || markerVersion === 2)) {
+                    await this.removeDraft(galleryKey, marker.draftId);
+                }
+                return pendingDraft;
+            };
+            const pendingDraft = await removeMatchingDraft();
+            if (!pendingDraft?.pendingSubmit && markerVersion !== 2) {
+                try { sessionStorage.removeItem(this.SUBMIT_SESSION_KEY); } catch { /* unavailable */ }
+                return;
+            }
+            // A write queued by the page being left can settle after this view has
+            // already removed the draft. Reconcile a few times in the background
+            // before consuming the success marker so that late writes cannot
+            // resurrect a successfully submitted draft.
+            if (this._submitCleanupTimer) window.clearTimeout(this._submitCleanupTimer);
+            const retryDelays = [120, 480, 1600, 4000];
+            const reconcile = async (index = 0) => {
+                const currentMarker = (() => { try { return JSON.parse(sessionStorage.getItem(this.SUBMIT_SESSION_KEY) || 'null'); } catch { return null; } })();
+                if (currentMarker?.galleryKey !== galleryKey || currentMarker?.draftId !== marker.draftId || Number(currentMarker.version) !== markerVersion) {
+                    this._submitCleanupTimer = 0;
+                    return;
+                }
+                try { await removeMatchingDraft(); } catch { /* retry at the next interval */ }
+                if (index < retryDelays.length - 1) {
+                    this._submitCleanupTimer = window.setTimeout(() => void reconcile(index + 1), retryDelays[index + 1]);
+                    return;
+                }
+                this._submitCleanupTimer = 0;
+                try { sessionStorage.removeItem(this.SUBMIT_SESSION_KEY); } catch { /* unavailable */ }
+            };
+            this._submitCleanupTimer = window.setTimeout(() => void reconcile(0), retryDelays[0]);
+        }
+    };
+    window.__dcufMobileConvenienceModule = MobileConvenienceModule;
     /**
      * =================================================================
      * =================== Personal Block Module =======================
@@ -9397,6 +10789,80 @@ const ThemeModule = (() => {
         _searchDrawerGlobalHandlersBound: false,
         _searchDrawerUpdateRafId: 0,
         _searchDrawerUpdateTimerId: 0,
+        _recentVisitNavigationBound: false,
+
+        getRecentVisitControl(root, direction) {
+            if (!(root instanceof HTMLElement)) return null;
+            const selector = direction === 'prev'
+                ? ':scope > .btn_visit_prev,:scope > .bnt_visit_prev'
+                : ':scope > .btn_visit_next,:scope > .bnt_visit_next';
+            return root.querySelector(selector);
+        },
+
+        updateRecentVisitControls(root, list) {
+            if (!(root instanceof HTMLElement) || !(list instanceof HTMLElement)) return;
+            const max = Math.max(0, list.scrollWidth - list.clientWidth);
+            const prev = this.getRecentVisitControl(root, 'prev');
+            const next = this.getRecentVisitControl(root, 'next');
+            const canPrev = list.scrollLeft > 1;
+            const canNext = list.scrollLeft < max - 1;
+            prev?.classList.toggle('on', canPrev);
+            next?.classList.toggle('on', canNext);
+            prev?.setAttribute('aria-disabled', String(!canPrev));
+            next?.setAttribute('aria-disabled', String(!canNext));
+        },
+
+        prepareRecentVisitList(root) {
+            if (!(root instanceof HTMLElement)) return null;
+            const list = root.querySelector(':scope > .newvisit_box > .newvisit_list');
+            if (!(list instanceof HTMLElement)) return null;
+            list.style.setProperty('left', '0px', 'important');
+            list.style.setProperty('margin-left', '0px', 'important');
+            if (list.dataset.dcufRecentNavigationBound !== '1') {
+                list.dataset.dcufRecentNavigationBound = '1';
+                let frame = 0;
+                list.addEventListener('scroll', () => {
+                    if (frame) return;
+                    frame = window.requestAnimationFrame(() => {
+                        frame = 0;
+                        this.updateRecentVisitControls(root, list);
+                    });
+                }, { passive: true });
+            }
+            this.updateRecentVisitControls(root, list);
+            return list;
+        },
+
+        bindRecentVisitNavigation() {
+            document.querySelectorAll('.newvisit_history').forEach((root) => this.prepareRecentVisitList(root));
+            if (this._recentVisitNavigationBound) return;
+            this._recentVisitNavigationBound = true;
+            document.addEventListener('click', (event) => {
+                const target = event.target instanceof Element ? event.target : null;
+                const button = target?.closest('.btn_visit_prev,.btn_visit_next,.bnt_visit_prev,.bnt_visit_next');
+                const root = button?.closest('.newvisit_history');
+                if (!(button instanceof HTMLElement) || !(root instanceof HTMLElement) || button.parentElement !== root) return;
+                const list = this.prepareRecentVisitList(root);
+                if (!(list instanceof HTMLElement)) return;
+                event.preventDefault();
+                event.stopPropagation();
+                event.stopImmediatePropagation();
+                const direction = button.matches('.btn_visit_prev,.bnt_visit_prev') ? -1 : 1;
+                const max = Math.max(0, list.scrollWidth - list.clientWidth);
+                const step = Math.max(1, list.clientWidth - 24);
+                let targetLeft = Math.max(0, Math.min(max, list.scrollLeft + direction * step));
+                const edgeTolerance = Math.min(96, Math.max(32, step * 0.2));
+                if (direction < 0 && targetLeft <= edgeTolerance) targetLeft = 0;
+                if (direction > 0 && max - targetLeft <= edgeTolerance) targetLeft = max;
+                const behavior = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth';
+                list.scrollTo({ left: targetLeft, behavior });
+                const settle = () => {
+                    if (targetLeft === 0 || targetLeft === max) list.scrollLeft = targetLeft;
+                    this.updateRecentVisitControls(root, list);
+                };
+                window.setTimeout(settle, behavior === 'smooth' ? 360 : 0);
+            }, true);
+        },
 
         getRuntimeCoordinator() {
             return window.__dcufRuntimeCoordinator || null;
@@ -10475,6 +11941,7 @@ const ThemeModule = (() => {
             if (rebuiltRowCount > 0) this.recordDiagnostic('ui.listRows.rebuilt', rebuiltRowCount);
             this.getRuntimeCoordinator()?.setDiagnosticGauge?.('ui.listRows.lastRebuilt', rebuiltRowCount);
             this.recordDiagnostic('ui.listState.synced');
+            MobileConvenienceModule.onListCommitted(state, reason);
         },
 
         syncListStateImmediately(state, reason = 'immediate', { suppressTbodySchedule = false } = {}) {
@@ -11973,6 +13440,7 @@ const ThemeModule = (() => {
             const writeBox = writeForm.closest('.write_box') || document.querySelector('.write_box');
             writeForm.classList.add('dcuf-write-form');
             document.body.classList.add('is-write-page');
+            void MobileConvenienceModule.attachDraftForm(writeForm);
             if (writeForm.dataset.dcufWriteTransformed === '1') return true;
             writeForm.dataset.dcufWriteTransformed = '1';
 
@@ -12320,6 +13788,24 @@ const ThemeModule = (() => {
                     '.note-toolbar .note-para .note-dropdown-menu'
                 ].join(', ');
                 const editorLayerSelector = `${editorDropdownSelector}, .note-toolbar .pop_wrap`;
+                const getExternalDcconLayer = () => {
+                    const layer = document.querySelector('#div_con');
+                    if (!(layer instanceof HTMLElement) || writeForm.contains(layer)) return null;
+                    layer.dataset.dcufWriteExternalLayer = '1';
+                    return layer;
+                };
+                const getEditorLayers = () => {
+                    const layers = Array.from(writeForm.querySelectorAll(editorLayerSelector));
+                    const externalDccon = getExternalDcconLayer();
+                    if (externalDccon) layers.push(externalDccon);
+                    return layers;
+                };
+                const getEditorLayerAnchor = (layer) => {
+                    const nested = layer.closest('.note-btn-group');
+                    if (nested instanceof HTMLElement) return nested;
+                    if (layer.id !== 'div_con') return null;
+                    return writeForm.querySelector('button[aria-label="디시콘"],[data-command="dccon"],button[onclick*="dccon" i],.note-mybutton > button')?.closest('.note-btn-group') || null;
+                };
                 const prepareEditorLayersForTrigger = (event) => {
                     if (!(event.target instanceof Element)
                         || event.target.closest('.note-dropdown-menu, .pop_wrap')) return;
@@ -12328,7 +13814,12 @@ const ThemeModule = (() => {
                     if (event.type === 'pointerover'
                         && event.relatedTarget instanceof Node
                         && group.contains(event.relatedTarget)) return;
-                    group.querySelectorAll('.note-dropdown-menu, .pop_wrap').forEach((layer) => {
+                    const layers = Array.from(group.querySelectorAll('.note-dropdown-menu, .pop_wrap'));
+                    if (group.querySelector('button[aria-label="디시콘"],[data-command="dccon"],button[onclick*="dccon" i]')) {
+                        const externalDccon = getExternalDcconLayer();
+                        if (externalDccon) layers.push(externalDccon);
+                    }
+                    layers.forEach((layer) => {
                         layer.classList.remove('dcuf-editor-layer-positioned');
                         layer.classList.add('dcuf-editor-layer-positioning');
                     });
@@ -12340,11 +13831,11 @@ const ThemeModule = (() => {
                     if (event.key === 'Enter' || event.key === ' ') prepareEditorLayersForTrigger(event);
                 }, true);
                 const positionEditorLayers = ({ includeDropdowns = true } = {}) => {
-                    writeForm.querySelectorAll(editorLayerSelector).forEach((layer) => {
+                    getEditorLayers().forEach((layer) => {
                         if (!(layer instanceof HTMLElement) || getComputedStyle(layer).display === 'none') return;
                         const isDropdown = layer.matches('.note-dropdown-menu');
                         if (isDropdown && !includeDropdowns) return;
-                        const anchor = layer.closest('.note-btn-group');
+                        const anchor = getEditorLayerAnchor(layer);
                         if (!(anchor instanceof HTMLElement)) return;
                         layer.classList.add('dcuf-editor-layer-positioning');
                         layer.classList.remove('dcuf-editor-layer-positioned');
@@ -12428,17 +13919,24 @@ const ThemeModule = (() => {
                             ...(payload.addedElements || []),
                             ...(payload.childListTargets || [])
                         ];
-                        if (!relevantTargets.some((node) => (
+                        const structuralTargets = [
+                            ...(payload.addedElements || []),
+                            ...(payload.childListTargets || [])
+                        ];
+                        const externalDccon = getExternalDcconLayer();
+                        const hasRelevantFormMutation = relevantTargets.some((node) => (
                             node === writeForm
                             || (node instanceof Node && writeForm.contains(node))
-                        ))) return;
-                        const hasVisiblePendingLayer = Array.from(writeForm.querySelectorAll(editorLayerSelector))
+                        ));
+                        const hasRelevantExternalMutation = externalDccon && structuralTargets.some((node) => node === externalDccon || (node instanceof Node && externalDccon.contains(node)));
+                        if (!hasRelevantFormMutation && !hasRelevantExternalMutation) return;
+                        const hasVisiblePendingLayer = getEditorLayers()
                             .some((layer) => (
                                 layer instanceof HTMLElement
                                 && !layer.classList.contains('dcuf-editor-layer-positioned')
                                 && getComputedStyle(layer).display !== 'none'
                             ));
-                        if (hasVisiblePendingLayer) positionEditorLayers();
+                        if (hasRelevantExternalMutation || hasVisiblePendingLayer) positionEditorLayers();
                     });
                 }
                 writeForm.addEventListener('click', (event) => {
@@ -12630,7 +14128,7 @@ const ThemeModule = (() => {
 
         return {
             reason,
-            version: '3.4.9',
+            version: '3.5.1',
             time: new Date().toISOString(),
             href: location.href,
             heap: getDcufHeapMb(),
@@ -12747,6 +14245,7 @@ const ThemeModule = (() => {
             ['플로팅 버튼 원위치', PersonalBlockModule.resetFabPosition.bind(PersonalBlockModule)],
             ['메뉴 버튼 크기 조절', PersonalBlockModule.showFabScalePanel.bind(PersonalBlockModule)],
             ['UI 색상 설정', ThemeModule.openPaletteDialog.bind(ThemeModule)]
+            ,['모바일 편의기능 설정', MobileConvenienceModule.showSettings.bind(MobileConvenienceModule)]
         ];
         commands.forEach(([label, handler]) => {
             try { GM_registerMenuCommand(label, handler); }
@@ -12862,7 +14361,9 @@ const ThemeModule = (() => {
                 }));
             }
         }
-        console.log("[DC Filter+UI] Initializing v3.4.9...");
+        console.log("[DC Filter+UI] Initializing v3.5.1...");
+        await MobileConvenienceModule.init();
+        UIModule.bindRecentVisitNavigation();
 
 
         if (!__dcufRoot.__dcufShortcutBound) {
@@ -19730,15 +21231,18 @@ const ThemeModule = (() => {
             visibility: visible !important;
             pointer-events: auto !important;
         }
-        body.is-write-page form.dcuf-write-form .note-toolbar :is(.note-dropdown-menu, .pop_wrap):not(.dcuf-editor-layer-positioned) {
+        body.is-write-page form.dcuf-write-form .note-toolbar :is(.note-dropdown-menu, .pop_wrap):not(.dcuf-editor-layer-positioned),
+        body.is-write-page #div_con[data-dcuf-write-external-layer="1"]:not(.dcuf-editor-layer-positioned) {
             visibility: hidden !important;
             pointer-events: none !important;
         }
-        body.is-write-page form.dcuf-write-form .note-toolbar :is(.note-dropdown-menu, .pop_wrap).dcuf-editor-layer-positioned {
+        body.is-write-page form.dcuf-write-form .note-toolbar :is(.note-dropdown-menu, .pop_wrap).dcuf-editor-layer-positioned,
+        body.is-write-page #div_con[data-dcuf-write-external-layer="1"].dcuf-editor-layer-positioned {
             visibility: visible !important;
             pointer-events: auto !important;
         }
-        body.is-write-page form.dcuf-write-form .note-toolbar .pop_wrap.dcuf-editor-layer-positioned {
+        body.is-write-page form.dcuf-write-form .note-toolbar .pop_wrap.dcuf-editor-layer-positioned,
+        body.is-write-page #div_con[data-dcuf-write-external-layer="1"].dcuf-editor-layer-positioned {
             position: fixed !important;
             zoom: var(--dcuf-write-desktop-site-inverse-scale, 1);
         }
@@ -19746,7 +21250,8 @@ const ThemeModule = (() => {
             position: fixed !important;
             zoom: 1 !important;
         }
-        body.is-write-page form.dcuf-write-form .note-toolbar :is(.note-dropdown-menu, .pop_wrap).dcuf-editor-layer-positioned {
+        body.is-write-page form.dcuf-write-form .note-toolbar :is(.note-dropdown-menu, .pop_wrap).dcuf-editor-layer-positioned,
+        body.is-write-page #div_con[data-dcuf-write-external-layer="1"].dcuf-editor-layer-positioned {
             left: var(--dcuf-editor-layer-left) !important;
             top: var(--dcuf-editor-layer-top) !important;
             right: auto !important;

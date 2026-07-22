@@ -3156,7 +3156,7 @@ mobileTest('모바일 편의기능 설정은 선택 팔레트와 밝은·어두�
     } finally { await session.close(); }
 });
 
-mobileTest('모바일 미리보기와 편의 설정은 짧은 패널에서도 배경 스크롤을 잠그고 원위치를 복원한다', 'functional', async ({ browser, server }) => {
+mobileTest('모바일 미리보기는 body를 이동하지 않고 설정 중첩만 강한 잠금으로 승격한다', 'functional', async ({ browser, server }) => {
     const session = await createTestPage(browser, server.baseUrl, {
         storage: { ...noStatsStorage, [storageKeys.convenience]: { listRestore: true, recentHighlight: true, draftRecovery: true, postPreview: true } },
         viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true
@@ -3171,23 +3171,30 @@ mobileTest('모바일 미리보기와 편의 설정은 짧은 패널에서도 �
             return {
                 scrollY,
                 bodyPositionBefore: module._overlayScrollState?.body?.position?.value || '',
+                bodyTopBefore: module._overlayScrollState?.body?.top?.value || '',
                 rootOverflowBefore: module._overlayScrollState?.root?.overflow?.value || ''
             };
         });
         await session.page.waitForSelector('#dcuf-post-preview');
         const previewLock = await session.page.evaluate(() => ({
-            bodyPosition: getComputedStyle(document.body).position,
-            bodyTop: parseFloat(getComputedStyle(document.body).top),
+            bodyPosition: document.body.style.position,
+            bodyTop: document.body.style.top,
             rootOverflow: getComputedStyle(document.documentElement).overflow,
             panelOverscroll: getComputedStyle(document.querySelector('#dcuf-post-preview')).overscrollBehavior,
+            panelBottomGap: Math.abs((window.visualViewport?.height || window.innerHeight) + (window.visualViewport?.offsetTop || 0) - document.querySelector('#dcuf-post-preview').getBoundingClientRect().bottom),
+            panelTopStyle: document.querySelector('#dcuf-post-preview').style.top,
+            panelBottomStyle: document.querySelector('#dcuf-post-preview').style.bottom,
             shortBody: document.querySelector('.dcuf-preview-body').scrollHeight <= document.querySelector('.dcuf-preview-body').clientHeight,
             lockedScrollY: window.scrollY,
             owners: Array.from(window.__dcufMobileConvenienceModule._overlayScrollOwners)
         }));
-        assert.equal(previewLock.bodyPosition, 'fixed');
-        assert.equal(Math.abs(previewLock.bodyTop + before.scrollY) <= 1, true, JSON.stringify({ before, previewLock }));
+        assert.equal(previewLock.bodyPosition, before.bodyPositionBefore, '미리보기만 열렸을 때 body를 fixed로 바꾸면 안 된다');
+        assert.equal(previewLock.bodyTop, before.bodyTopBefore, '미리보기만 열렸을 때 body를 음수 top으로 이동하면 안 된다');
         assert.equal(previewLock.rootOverflow, 'hidden');
         assert.equal(previewLock.panelOverscroll, 'contain');
+        assert.equal(previewLock.panelBottomGap <= 1, true, JSON.stringify(previewLock));
+        assert.equal(previewLock.panelTopStyle, 'auto');
+        assert.equal(previewLock.panelBottomStyle, '0px');
         assert.equal(previewLock.shortBody, true, '스크롤할 내용이 없는 미리보기 조건을 재현해야 한다');
         assert.deepEqual(previewLock.owners, ['preview']);
         const previewBox = await session.page.locator('#dcuf-post-preview').boundingBox();
@@ -3198,12 +3205,27 @@ mobileTest('모바일 미리보기와 편의 설정은 짧은 패널에서도 �
 
         await session.page.evaluate(() => window.__dcufMobileConvenienceModule.showSettings());
         await session.page.waitForSelector('#dcuf-mobile-convenience-settings');
-        assert.deepEqual(await session.page.evaluate(() => Array.from(window.__dcufMobileConvenienceModule._overlayScrollOwners).sort()), ['preview', 'settings']);
+        const nestedLock = await session.page.evaluate(() => ({
+            owners: Array.from(window.__dcufMobileConvenienceModule._overlayScrollOwners).sort(),
+            bodyPosition: getComputedStyle(document.body).position,
+            bodyTop: parseFloat(getComputedStyle(document.body).top)
+        }));
+        assert.deepEqual(nestedLock.owners, ['preview', 'settings']);
+        assert.equal(nestedLock.bodyPosition, 'fixed');
+        assert.equal(Math.abs(nestedLock.bodyTop + before.scrollY) <= 1, true, JSON.stringify({ before, nestedLock }));
         await session.page.evaluate(() => window.__dcufMobileConvenienceModule.closeSettings());
-        assert.deepEqual(await session.page.evaluate(() => ({
+        const previewOnlyAgain = await session.page.evaluate(() => ({
             owners: Array.from(window.__dcufMobileConvenienceModule._overlayScrollOwners),
-            bodyPosition: getComputedStyle(document.body).position
-        })), { owners: ['preview'], bodyPosition: 'fixed' }, '겹친 패널 하나를 닫아도 남은 패널의 잠금은 유지해야 한다');
+            bodyPosition: document.body.style.position,
+            bodyTop: document.body.style.top,
+            rootOverflow: getComputedStyle(document.documentElement).overflow,
+            scrollY: window.scrollY
+        }));
+        assert.deepEqual(previewOnlyAgain.owners, ['preview']);
+        assert.equal(previewOnlyAgain.bodyPosition, before.bodyPositionBefore);
+        assert.equal(previewOnlyAgain.bodyTop, before.bodyTopBefore);
+        assert.equal(previewOnlyAgain.rootOverflow, 'hidden', '미리보기가 남아 있으면 루트 잠금을 유지해야 한다');
+        assert.equal(Math.abs(previewOnlyAgain.scrollY - before.scrollY) <= 1, true, JSON.stringify(previewOnlyAgain));
         await session.page.evaluate(() => window.__dcufMobileConvenienceModule.closePreview());
         await session.page.waitForTimeout(50);
         const previewReleased = await session.page.evaluate(() => ({
@@ -3219,7 +3241,14 @@ mobileTest('모바일 미리보기와 편의 설정은 짧은 패널에서도 �
 
         await session.page.evaluate(() => window.__dcufMobileConvenienceModule.showSettings());
         await session.page.waitForSelector('#dcuf-mobile-convenience-settings');
-        const settingsLockedScrollY = await session.page.evaluate(() => window.scrollY);
+        const settingsOnlyLock = await session.page.evaluate(() => ({
+            scrollY: window.scrollY,
+            bodyPosition: getComputedStyle(document.body).position,
+            bodyTop: parseFloat(getComputedStyle(document.body).top)
+        }));
+        assert.equal(settingsOnlyLock.bodyPosition, 'fixed');
+        assert.equal(Math.abs(settingsOnlyLock.bodyTop + before.scrollY) <= 1, true, JSON.stringify({ before, settingsOnlyLock }));
+        const settingsLockedScrollY = settingsOnlyLock.scrollY;
         const settingsBox = await session.page.locator('#dcuf-mobile-convenience-settings').boundingBox();
         await session.page.mouse.move(settingsBox.x + settingsBox.width / 2, settingsBox.y + settingsBox.height / 2);
         await session.page.mouse.wheel(0, 600);
@@ -3384,6 +3413,22 @@ mobileTest('글 미리보기는 터치 이동을 취소하고 길게 누른 경�
             unsafeLinks: Array.from(document.querySelectorAll('#dcuf-post-preview a')).filter((anchor) => /^javascript:/i.test(anchor.getAttribute('href') || '')).length,
             recommendationBoxes: document.querySelectorAll('#dcuf-post-preview .btn_recommend_box').length
         }));
+        const previewBody = session.page.locator('#dcuf-post-preview .dcuf-preview-body');
+        await previewBody.dispatchEvent('pointerdown', { pointerType: 'touch', pointerId: 51, isPrimary: true, clientX: 180, clientY: 650, bubbles: true });
+        await previewBody.dispatchEvent('pointermove', { pointerType: 'touch', pointerId: 51, isPrimary: true, clientX: 180, clientY: 610, bubbles: true });
+        await previewBody.dispatchEvent('pointerup', { pointerType: 'touch', pointerId: 51, isPrimary: true, clientX: 180, clientY: 610, bubbles: true });
+        assert.equal(await session.page.locator('#dcuf-post-preview').count(), 1, '미리보기 내부 드래그는 패널을 닫지 않고 본문 스크롤에 남겨야 한다');
+
+        const listCard = session.page.locator('.custom-post-item:visible').first();
+        await listCard.dispatchEvent('pointerdown', { pointerType: 'touch', pointerId: 52, isPrimary: true, clientX: 180, clientY: 100, bubbles: true });
+        await listCard.dispatchEvent('pointermove', { pointerType: 'touch', pointerId: 52, isPrimary: true, clientX: 180, clientY: 125, bubbles: true });
+        assert.equal(await session.page.locator('#dcuf-post-preview').count(), 0, '미리보기 밖 목록 드래그는 모바일 시트를 닫아야 한다');
+        await session.page.evaluate(() => {
+            const link = Array.from(document.querySelectorAll('.custom-post-item a.post-title-link')).find((candidate) => getComputedStyle(candidate.closest('.custom-post-item')).display !== 'none');
+            window.__dcufMobileConvenienceModule.openPreview(link.href, link.textContent, { mobile: true, x: 20, y: 20 });
+        });
+        await session.page.waitForFunction(() => document.querySelector('#dcuf-post-preview .dcuf-preview-body')?.textContent.includes('정제 본문'));
+
         const clickContract = await link.evaluate((element) => {
             let reachedDocumentAfterGuard = 0;
             const afterGuard = (event) => {
@@ -3407,6 +3452,7 @@ mobileTest('글 미리보기는 터치 이동을 취소하고 길게 누른 경�
         assert.equal(preview.text.includes('개념') || preview.text.includes('비추'), false, 'recommendation labels must not leak into preview text');
         assert.equal(preview.text.includes('원본 첨부파일'), false, 'original attachment footer labels must not leak into preview text');
         assert.equal(preview.text.includes('본문에 추천 검색 이야기는 남아야 함'), true, 'ordinary article sentences containing the same words must remain');
+
         assert.equal(clickContract.first, false, 'the native click produced by a completed long press must be suppressed');
         assert.equal(clickContract.reachedDocumentAfterGuard, 1, 'the next intentional click must pass the preview suppression guard');
         assert.equal(clickContract.recordedAfterSuppressedClick, null, 'a suppressed preview click must not create a list-return record');
