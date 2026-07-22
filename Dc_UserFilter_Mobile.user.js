@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         DC_UserFilter_Mobile
 // @namespace    http://tampermonkey.net/
-// @version      3.5.0
+// @version      3.5.1
 // @description  유저 필터링, UI 개선, 개인 차단/해제 기능
 // @author       domato153
 // @match        https://gall.dcinside.com/board/*
@@ -4690,7 +4690,7 @@ const ThemeModule = (() => {
             }
         }
 
-        /* [v3.5.0] Script-owned soft-depth control surfaces */
+        /* [v3.5.1] Script-owned soft-depth control surfaces */
         #dc-personal-block-fab {
             background: linear-gradient(180deg, #fff 0%, #eef4ff 100%) !important;
             color: #29466f !important;
@@ -8068,7 +8068,7 @@ const ThemeModule = (() => {
             this._initState = 'initializing';
             this._initPromise = (async () => {
                 this.installDebugApi();
-                this.debugLog('init', 'FilterModule init start', { version: '3.5.0' });
+                this.debugLog('init', 'FilterModule init start', { version: '3.5.1' });
                 const snapshot = await this.loadBootSnapshot();
                 await this.cleanupLegacyManagedBlockConfig(snapshot);
                 await this.reloadSettings(snapshot);
@@ -8147,7 +8147,10 @@ const ThemeModule = (() => {
         _previewImageTimers: new Set(),
         _previewDeferredTimer: 0,
         _previewViewportHandler: null,
+        _previewPointerDownHandler: null,
         _previewPointerMoveHandler: null,
+        _previewPointerEndHandler: null,
+        _previewOutsideGesture: null,
         _previewAnchor: null,
         _overlayScrollOwners: new Set(),
         _overlayScrollState: null,
@@ -8200,33 +8203,55 @@ const ThemeModule = (() => {
                 else element.style.removeProperty(property);
             });
         },
-        lockBackgroundScroll(owner) {
-            if (!owner || this._overlayScrollOwners.has(owner)) return;
-            this._overlayScrollOwners.add(owner);
-            if (this._overlayScrollOwners.size !== 1) return;
+        syncBackgroundScrollLock() {
+            const state = this._overlayScrollState;
             const root = document.documentElement;
             const body = document.body;
-            if (!(root instanceof HTMLElement) || !(body instanceof HTMLElement)) return;
-            const x = window.scrollX;
-            const y = window.scrollY;
-            this._overlayScrollState = {
-                x, y,
-                root: this.captureInlineStyles(root, ['overflow', 'overscroll-behavior']),
-                body: this.captureInlineStyles(body, ['position', 'top', 'left', 'right', 'width', 'overflow', 'overscroll-behavior'])
-            };
+            if (!state || !(root instanceof HTMLElement) || !(body instanceof HTMLElement)) return;
             root.style.setProperty('overflow', 'hidden', 'important');
             root.style.setProperty('overscroll-behavior', 'none', 'important');
+
+            const freezeBody = Array.from(this._overlayScrollOwners).some((owner) => owner !== 'preview');
+            if (freezeBody === state.bodyFrozen) return;
+            if (!freezeBody) {
+                this.restoreInlineStyles(body, state.body);
+                state.bodyFrozen = false;
+                window.scrollTo({ left: state.x, top: state.y, behavior: 'auto' });
+                return;
+            }
             body.style.setProperty('position', 'fixed', 'important');
-            body.style.setProperty('top', `${-y}px`, 'important');
-            body.style.setProperty('left', `${-x}px`, 'important');
+            body.style.setProperty('top', `${-state.y}px`, 'important');
+            body.style.setProperty('left', `${-state.x}px`, 'important');
             body.style.setProperty('right', '0', 'important');
             body.style.setProperty('width', '100%', 'important');
             body.style.setProperty('overflow', 'hidden', 'important');
             body.style.setProperty('overscroll-behavior', 'none', 'important');
+            state.bodyFrozen = true;
+        },
+        lockBackgroundScroll(owner) {
+            if (!owner || this._overlayScrollOwners.has(owner)) return;
+            const root = document.documentElement;
+            const body = document.body;
+            if (!(root instanceof HTMLElement) || !(body instanceof HTMLElement)) return;
+            if (!this._overlayScrollState) {
+                this._overlayScrollState = {
+                    x: window.scrollX,
+                    y: window.scrollY,
+                    bodyFrozen: false,
+                    root: this.captureInlineStyles(root, ['overflow', 'overscroll-behavior']),
+                    body: this.captureInlineStyles(body, ['position', 'top', 'left', 'right', 'width', 'overflow', 'overscroll-behavior'])
+                };
+            }
+            this._overlayScrollOwners.add(owner);
+            this.syncBackgroundScrollLock();
         },
         unlockBackgroundScroll(owner) {
-            if (!this._overlayScrollOwners.delete(owner) || this._overlayScrollOwners.size) return;
+            if (!this._overlayScrollOwners.delete(owner)) return;
             const state = this._overlayScrollState;
+            if (this._overlayScrollOwners.size) {
+                this.syncBackgroundScrollLock();
+                return;
+            }
             this._overlayScrollState = null;
             if (!state) return;
             this.restoreInlineStyles(document.documentElement, state.root);
@@ -8287,7 +8312,7 @@ const ThemeModule = (() => {
                 #dcuf-post-preview .dcuf-preview-image-error { display:block;margin:10px 0;padding:12px;border:1px dashed var(--dcuf-theme-border-strong,#aab3bf);border-radius:8px;background:var(--dcuf-theme-surface-muted,#f1f3f6);color:var(--dcuf-theme-fg-muted,#667085);text-align:center;text-decoration:none; }
                 @keyframes dcuf-preview-image-wait { to { background-position:-240% 0; } }
                 #dcuf-post-preview .dcuf-preview-status { color:var(--dcuf-theme-fg-muted,#667085);text-align:center;padding:30px 12px; }
-                #dcuf-post-preview.dcuf-preview-sheet { border-radius:18px 18px 0 0; }
+                #dcuf-post-preview.dcuf-preview-sheet { left:0;right:0;top:auto;bottom:0;width:100%;max-height:78vh;max-height:78dvh;border-radius:18px 18px 0 0; }
                 #dcuf-post-preview.dcuf-preview-anchor { width:min(520px,calc(100vw - 24px));max-height:min(620px,calc(100vh - 24px));max-height:min(620px,calc(100dvh - 24px)); }
                 #dcuf-mobile-convenience-settings { position:fixed;z-index:2147483646;left:50%;top:50%;transform:translate(-50%,-50%);display:flex;flex-direction:column;width:min(440px,calc(100vw - 24px));max-height:calc(100vh - 24px);box-sizing:border-box;overflow:hidden;overscroll-behavior:contain;border:1px solid var(--dcuf-theme-border-strong,#cbd2db);border-radius:16px;background:linear-gradient(155deg,var(--dcuf-theme-card-top,#fff),var(--dcuf-theme-canvas,#f6f7f9));color:var(--dcuf-theme-fg,#27313f);box-shadow:var(--dcuf-theme-panel-shadow,0 20px 60px #0005); }
                 #dcuf-mobile-convenience-settings .dcuf-convenience-head { flex:none;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:15px 17px;border-bottom:1px solid var(--dcuf-theme-border,#d9dde3);background:linear-gradient(180deg,var(--dcuf-theme-card-top,#fff),var(--dcuf-theme-surface-raised,#f7f8fa)); }
@@ -8505,19 +8530,15 @@ const ThemeModule = (() => {
             const panel = this._previewPanel;
             const anchor = this._previewAnchor;
             if (!(panel instanceof HTMLElement) || !anchor) return;
-            const bounds = this.getPreviewViewportBounds();
             const mobile = panel.classList.contains('dcuf-preview-sheet');
             if (mobile) {
-                const width = Math.max(1, bounds.width);
-                const maxHeight = Math.max(1, Math.min(bounds.height, bounds.height * 0.78));
                 Object.assign(panel.style, {
-                    left: `${Math.round(bounds.left)}px`, right: 'auto', bottom: 'auto',
-                    width: `${Math.floor(width)}px`, maxHeight: `${Math.floor(maxHeight)}px`
+                    left: '0px', right: '0px', top: 'auto', bottom: '0px',
+                    width: '100%', maxHeight: '78dvh'
                 });
-                const height = Math.min(maxHeight, panel.getBoundingClientRect().height || maxHeight);
-                panel.style.top = `${Math.max(bounds.top, bounds.bottom - height)}px`;
                 return;
             }
+            const bounds = this.getPreviewViewportBounds();
             const margin = 12;
             const width = Math.max(1, Math.min(520, bounds.width - margin * 2));
             const maxHeight = Math.max(1, Math.min(620, bounds.height - margin * 2));
@@ -8563,22 +8584,59 @@ const ThemeModule = (() => {
         },
         bindPreviewPointerTracking() {
             this.unbindPreviewPointerTracking();
-            if (!this._previewPanel?.classList.contains('dcuf-preview-anchor')) return;
-            this._previewPointerMoveHandler = (event) => {
+            const panel = this._previewPanel;
+            if (!(panel instanceof HTMLElement)) return;
+            if (panel.classList.contains('dcuf-preview-anchor')) {
+                this._previewPointerMoveHandler = (event) => {
+                    const target = event.target instanceof Node ? event.target : null;
+                    if (target && (this._previewPanel?.contains(target) || this._previewHoverLink?.contains(target))) {
+                        this.cancelPreviewClose();
+                        return;
+                    }
+                    if (this.isPointInPreviewCorridor(event.clientX, event.clientY)) this.schedulePreviewClose(320);
+                    else this.schedulePreviewClose(100);
+                };
+                document.addEventListener('pointermove', this._previewPointerMoveHandler, { passive: true, capture: true });
+                return;
+            }
+            if (!panel.classList.contains('dcuf-preview-sheet')) return;
+            this._previewPointerDownHandler = (event) => {
                 const target = event.target instanceof Node ? event.target : null;
-                if (target && (this._previewPanel?.contains(target) || this._previewHoverLink?.contains(target))) {
-                    this.cancelPreviewClose();
+                const list = this._previewBoundList;
+                if (event.pointerType === 'mouse' || event.isPrimary === false || !target
+                    || !(list instanceof HTMLElement) || !list.contains(target)
+                    || this._previewPanel?.contains(target)) {
+                    this._previewOutsideGesture = null;
                     return;
                 }
-                if (this.isPointInPreviewCorridor(event.clientX, event.clientY)) this.schedulePreviewClose(320);
-                else this.schedulePreviewClose(100);
+                this._previewOutsideGesture = { id: event.pointerId, x: event.clientX, y: event.clientY };
             };
+            this._previewPointerMoveHandler = (event) => {
+                const gesture = this._previewOutsideGesture;
+                if (!gesture || gesture.id !== event.pointerId) return;
+                if (Math.hypot(event.clientX - gesture.x, event.clientY - gesture.y) <= 12) return;
+                this._previewOutsideGesture = null;
+                this.closePreview();
+            };
+            this._previewPointerEndHandler = (event) => {
+                if (this._previewOutsideGesture?.id === event.pointerId) this._previewOutsideGesture = null;
+            };
+            document.addEventListener('pointerdown', this._previewPointerDownHandler, { passive: true, capture: true });
             document.addEventListener('pointermove', this._previewPointerMoveHandler, { passive: true, capture: true });
+            document.addEventListener('pointerup', this._previewPointerEndHandler, { passive: true, capture: true });
+            document.addEventListener('pointercancel', this._previewPointerEndHandler, { passive: true, capture: true });
         },
         unbindPreviewPointerTracking() {
-            if (!this._previewPointerMoveHandler) return;
-            document.removeEventListener('pointermove', this._previewPointerMoveHandler, true);
+            if (this._previewPointerDownHandler) document.removeEventListener('pointerdown', this._previewPointerDownHandler, true);
+            if (this._previewPointerMoveHandler) document.removeEventListener('pointermove', this._previewPointerMoveHandler, true);
+            if (this._previewPointerEndHandler) {
+                document.removeEventListener('pointerup', this._previewPointerEndHandler, true);
+                document.removeEventListener('pointercancel', this._previewPointerEndHandler, true);
+            }
+            this._previewPointerDownHandler = null;
             this._previewPointerMoveHandler = null;
+            this._previewPointerEndHandler = null;
+            this._previewOutsideGesture = null;
         },
         bindPreview(listContainer) {
             if (!(listContainer instanceof HTMLElement) || listContainer.dataset.dcufPreviewBound === '1') return;
@@ -14070,7 +14128,7 @@ const ThemeModule = (() => {
 
         return {
             reason,
-            version: '3.5.0',
+            version: '3.5.1',
             time: new Date().toISOString(),
             href: location.href,
             heap: getDcufHeapMb(),
@@ -14303,7 +14361,7 @@ const ThemeModule = (() => {
                 }));
             }
         }
-        console.log("[DC Filter+UI] Initializing v3.5.0...");
+        console.log("[DC Filter+UI] Initializing v3.5.1...");
         await MobileConvenienceModule.init();
         UIModule.bindRecentVisitNavigation();
 
