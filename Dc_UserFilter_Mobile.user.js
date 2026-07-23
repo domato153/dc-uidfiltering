@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         DC_UserFilter_Mobile
 // @namespace    http://tampermonkey.net/
-// @version      3.5.1
+// @version      3.5.2
 // @description  유저 필터링, UI 개선, 개인 차단/해제 기능
 // @author       domato153
 // @match        https://gall.dcinside.com/board/*
@@ -2031,7 +2031,7 @@ const ThemeModule = (() => {
             background-image: none !important;
             box-shadow: none !important;
         }
-        html[${ROOT_ATTRIBUTE}] body .view_content_wrap .btn_recommend_box .recom_bottom_box :is(button, a) {
+        html[${ROOT_ATTRIBUTE}] body .view_content_wrap .btn_recommend_box .recom_bottom_box > :is(button, a) {
             border-color: var(--dcuf-theme-border-strong) !important;
             background-color: var(--dcuf-theme-card-top) !important;
             background-image: linear-gradient(180deg, var(--dcuf-theme-card-top), var(--dcuf-theme-surface-input)) !important;
@@ -3580,6 +3580,13 @@ const ThemeModule = (() => {
             cursor: pointer;
             flex-shrink: 0 !important;
         }
+        .post-title > .dcuf-title-decoration {
+            flex-shrink: 0 !important;
+            color: var(--dcuf-theme-accent, #4263eb) !important;
+        }
+        .post-title > .dcuf-title-decoration > * {
+            color: inherit !important;
+        }
 
 
         /* [v2.2.0 이식] 게시글 목록: 작성자, 통계 */
@@ -3852,7 +3859,8 @@ const ThemeModule = (() => {
         /* ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲ */
         /* ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲ */
 
-        .gallview_contents img, .gallview_contents video { max-width: 100% !important; height: auto !important;  }
+        .gallview_contents img:not(.pop_wrap *),
+        .gallview_contents video:not(.pop_wrap *) { max-width: 100% !important; height: auto !important;  }
 
 
         /* [v2.2.0 이식] 글 본문 가독성 개선 */
@@ -3868,9 +3876,9 @@ const ThemeModule = (() => {
             width: 100% !important;
             box-sizing: border-box !important;
         }
-        .gallview_contents p,
-        .gallview_contents div,
-        .gallview_contents span {
+        .gallview_contents p:not(.pop_wrap *),
+        .gallview_contents div:not(.pop_wrap):not(.pop_wrap *),
+        .gallview_contents span:not(.pop_wrap *) {
             /* [v2.6.8 수정] font-size: inherit 제거 → JS 배율 스케일링으로 대체하여 원본 서식 유지 */
             line-height: inherit !important;
             color: inherit !important;
@@ -3913,7 +3921,7 @@ const ThemeModule = (() => {
             border-radius: 5px;
             background-color: #f8f9fa;
         }
-        .btn_recommend_box button,
+        .btn_recommend_box button:not(.pop_wrap *),
         .btn_recommend_box .up_num_box,
         .btn_recommend_box .down_num_box {
             position: static !important;
@@ -4690,7 +4698,7 @@ const ThemeModule = (() => {
             }
         }
 
-        /* [v3.5.1] Script-owned soft-depth control surfaces */
+        /* [v3.5.2] Script-owned soft-depth control surfaces */
         #dc-personal-block-fab {
             background: linear-gradient(180deg, #fff 0%, #eef4ff 100%) !important;
             color: #29466f !important;
@@ -8068,7 +8076,7 @@ const ThemeModule = (() => {
             this._initState = 'initializing';
             this._initPromise = (async () => {
                 this.installDebugApi();
-                this.debugLog('init', 'FilterModule init start', { version: '3.5.1' });
+                this.debugLog('init', 'FilterModule init start', { version: '3.5.2' });
                 const snapshot = await this.loadBootSnapshot();
                 await this.cleanupLegacyManagedBlockConfig(snapshot);
                 await this.reloadSettings(snapshot);
@@ -11166,6 +11174,20 @@ const ThemeModule = (() => {
                 postTitleDiv.appendChild(newLink);
             }
 
+            titleContainer.childNodes.forEach((node) => {
+                if (node === originalLink || node === subjectSpan) return;
+                if (node.nodeType === Node.TEXT_NODE && !node.textContent.trim()) return;
+                if (node instanceof Element) {
+                    if (node.matches('script, style, template, .gall_subject, .reply_num, .icon_ad')) return;
+                    if (replyNumSpan && node.contains(replyNumSpan)) return;
+                } else if (node.nodeType !== Node.TEXT_NODE) {
+                    return;
+                }
+                const decorationWrap = document.createElement('span');
+                decorationWrap.className = 'dcuf-title-decoration';
+                decorationWrap.appendChild(node.cloneNode(true));
+                postTitleDiv.appendChild(decorationWrap);
+            });
 
             if (replyNumSpan) postTitleDiv.appendChild(replyNumSpan.cloneNode(true));
             newItem.appendChild(postTitleDiv);
@@ -11661,20 +11683,41 @@ const ThemeModule = (() => {
             const tooltip = document.getElementById('custom-instant-tooltip');
             if (!tooltip) return;
 
+            const positionTooltip = (event) => {
+                const gap = 10;
+                const edge = 8;
+                const rect = tooltip.getBoundingClientRect();
+                const viewportWidth = Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
+                const viewportHeight = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
+                const preferredLeft = event.clientX + gap;
+                const preferredTop = event.clientY + gap;
+                const left = preferredLeft + rect.width <= viewportWidth - edge
+                    ? preferredLeft
+                    : event.clientX - rect.width - gap;
+                const top = preferredTop + rect.height <= viewportHeight - edge
+                    ? preferredTop
+                    : event.clientY - rect.height - gap;
+                tooltip.style.left = `${Math.max(edge, Math.min(left, viewportWidth - rect.width - edge))}px`;
+                tooltip.style.top = `${Math.max(edge, Math.min(top, viewportHeight - rect.height - edge))}px`;
+            };
+
             listContainer.addEventListener('mouseover', (e) => {
                 const subject = e.target.closest('.gall_subject');
                 if (subject && subject.title) {
                     tooltip.textContent = subject.title;
+                    tooltip.style.visibility = 'hidden';
                     tooltip.style.display = 'block';
+                    positionTooltip(e);
+                    tooltip.style.visibility = 'visible';
                 }
             });
             listContainer.addEventListener('mouseout', () => {
                 tooltip.style.display = 'none';
+                tooltip.style.visibility = 'hidden';
             });
             listContainer.addEventListener('mousemove', (e) => {
                 if (tooltip.style.display === 'block') {
-                    tooltip.style.left = `${e.clientX + 10}px`;
-                    tooltip.style.top = `${e.clientY + 10}px`;
+                    positionTooltip(e);
                 }
             });
         },
@@ -14128,7 +14171,7 @@ const ThemeModule = (() => {
 
         return {
             reason,
-            version: '3.5.1',
+            version: '3.5.2',
             time: new Date().toISOString(),
             href: location.href,
             heap: getDcufHeapMb(),
@@ -14361,7 +14404,7 @@ const ThemeModule = (() => {
                 }));
             }
         }
-        console.log("[DC Filter+UI] Initializing v3.5.1...");
+        console.log("[DC Filter+UI] Initializing v3.5.2...");
         await MobileConvenienceModule.init();
         UIModule.bindRecentVisitNavigation();
 
@@ -16350,15 +16393,15 @@ const ThemeModule = (() => {
             overflow: visible !important;
             background: transparent !important;
         }
-        .view_content_wrap .gallview_contents img,
-        .view_content_wrap .gallview_contents video {
+        .view_content_wrap .gallview_contents img:not(.pop_wrap *),
+        .view_content_wrap .gallview_contents video:not(.pop_wrap *) {
             border-radius: 14px !important;
         }
         body.dc-filter-dark-mode .view_content_wrap .gallview_contents,
-        body.dc-filter-dark-mode .view_content_wrap .gallview_contents p,
-        body.dc-filter-dark-mode .view_content_wrap .gallview_contents span,
-        body.dc-filter-dark-mode .view_content_wrap .gallview_contents div,
-        body.dc-filter-dark-mode .view_content_wrap .gallview_contents *,
+        body.dc-filter-dark-mode .view_content_wrap .gallview_contents p:not(.pop_wrap *),
+        body.dc-filter-dark-mode .view_content_wrap .gallview_contents span:not(.pop_wrap *),
+        body.dc-filter-dark-mode .view_content_wrap .gallview_contents div:not(.pop_wrap):not(.pop_wrap *),
+        body.dc-filter-dark-mode .view_content_wrap .gallview_contents *:not(.pop_wrap):not(.pop_wrap *),
         body.dc-filter-dark-mode .view_content_wrap .writing_view_box,
         body.dc-filter-dark-mode .view_content_wrap .writing_view_box *,
         body.dc-filter-dark-mode .view_content_wrap .write_div,
@@ -16503,8 +16546,8 @@ const ThemeModule = (() => {
         .view_content_wrap .btn_recommend_box .down_num {
             color: var(--dcuf-view-fg) !important;
         }
-        .view_content_wrap .btn_recommend_box .recom_bottom_box button,
-        .view_content_wrap .btn_recommend_box .recom_bottom_box a {
+        .view_content_wrap .btn_recommend_box .recom_bottom_box > button,
+        .view_content_wrap .btn_recommend_box .recom_bottom_box > a {
             display: inline-flex !important;
             align-items: center !important;
             justify-content: center !important;
@@ -18480,8 +18523,6 @@ const ThemeModule = (() => {
         #focus_cmt .reply_box .dccon_guidebox {
             overflow: visible !important;
         }
-        .view_content_wrap .pop_wrap.type2,
-        .view_content_wrap .pop_wrap.type3,
         #focus_cmt .pop_wrap.type2,
         #focus_cmt .pop_wrap.type3 {
             z-index: 2147483647 !important;
@@ -19533,6 +19574,7 @@ const ThemeModule = (() => {
 
     const applyArticleDarkTarget = (element, articleDarkProps) => {
         if (!(element instanceof HTMLElement)) return;
+        if (element.closest('.pop_wrap')) return;
         articleDarkProps.forEach(([property, value]) => {
             if (element.style.getPropertyPriority(property) !== 'important') return;
             if (element.style.getPropertyValue(property).trim() === value) return;
