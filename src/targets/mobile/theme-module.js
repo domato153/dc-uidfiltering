@@ -283,7 +283,7 @@ const ThemeModule = (() => {
             background-image: none !important;
             box-shadow: none !important;
         }
-        html[${ROOT_ATTRIBUTE}] body .view_content_wrap .btn_recommend_box .recom_bottom_box :is(button, a) {
+        html[${ROOT_ATTRIBUTE}] body .view_content_wrap .btn_recommend_box .recom_bottom_box > :is(button, a) {
             border-color: var(--dcuf-theme-border-strong) !important;
             background-color: var(--dcuf-theme-card-top) !important;
             background-image: linear-gradient(180deg, var(--dcuf-theme-card-top), var(--dcuf-theme-surface-input)) !important;

@@ -27,9 +27,14 @@ export function listRow(index, options = {}) {
     const headtextMarkup = options.headtextInner
         ? `${escapeHtml(headtext)}<span class="subject_inner" style="display:none">${escapeHtml(options.headtextInner)}</span>`
         : escapeHtml(headtext);
+    const titleDecoration = [
+        options.pum ? '<b class="font_blue009">(펌)</b>' : '',
+        options.autoDelete ? '<em class="sp_img icon_autodel_tit" aria-label="자동삭제"></em>' : '',
+        options.futureMarker ? '<strong class="fixture-future-title-marker">NEW</strong><a class="fixture-future-linked-title-marker" href="#future-marker">LINK</a>' : ''
+    ].join('');
     return `<tr class="${rowClass}"${dataAttrs}${hiddenStyle}${cssHidden}>
         <td class="gall_num">${1000 + index}</td>
-        ${extraCell}<td class="gall_tit"><span class="gall_subject"${headtextData}>${headtextMarkup}</span><a href="${viewPath}?id=test&no=${1000 + index}">${options.title ?? `테스트 게시물 ${index}`}</a><a class="reply_numbox" href="${viewPath}?id=test&no=${1000 + index}#comment"><span class="reply_num">[${index % 7}]</span></a>${options.ad ? '<em class="icon_ad">AD</em>' : ''}</td>
+        ${extraCell}<td class="gall_tit"><span class="gall_subject"${headtextData}>${headtextMarkup}</span><a href="${viewPath}?id=test&no=${1000 + index}">${options.title ?? `테스트 게시물 ${index}`}</a>${titleDecoration}<a class="reply_numbox" href="${viewPath}?id=test&no=${1000 + index}#comment"><span class="reply_num">[${index % 7}]</span></a>${options.ad ? '<em class="icon_ad">AD</em>' : ''}</td>
         <td class="gall_writer_cell">${writer({ uid, nick, ip: options.ip || '', includeIdentityAttrs: options.includeIdentityAttrs !== false })}</td>
         <td class="gall_date">2026.07.12</td>
         <td class="gall_count">${index * 3}</td>
@@ -54,7 +59,10 @@ export function liveListRows(variant = 'major', options = {}) {
         [hiddenRows + 3]: { ad: true },
         [hiddenRows + 4]: { uid: 'blocked-list-user' },
         [hiddenRows + 5]: { headtext: '표시 질문', headtextData: '질문', uid: 'headtext-blocked-user' },
-        [hiddenRows + 6]: { headtext: '↗토피', headtextInner: '↗토피아', uid: 'headtext-inner-blocked-user' }
+        [hiddenRows + 6]: { headtext: '↗토피', headtextInner: '↗토피아', uid: 'headtext-inner-blocked-user' },
+        [hiddenRows + 7]: { pum: true },
+        [hiddenRows + 8]: { autoDelete: true },
+        [hiddenRows + 9]: { futureMarker: true }
     };
     return listRows(totalRows, rowOptions, variant);
 }

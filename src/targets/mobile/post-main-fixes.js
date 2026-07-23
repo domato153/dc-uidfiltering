@@ -1778,15 +1778,15 @@
             overflow: visible !important;
             background: transparent !important;
         }
-        .view_content_wrap .gallview_contents img,
-        .view_content_wrap .gallview_contents video {
+        .view_content_wrap .gallview_contents img:not(.pop_wrap *),
+        .view_content_wrap .gallview_contents video:not(.pop_wrap *) {
             border-radius: 14px !important;
         }
         body.dc-filter-dark-mode .view_content_wrap .gallview_contents,
-        body.dc-filter-dark-mode .view_content_wrap .gallview_contents p,
-        body.dc-filter-dark-mode .view_content_wrap .gallview_contents span,
-        body.dc-filter-dark-mode .view_content_wrap .gallview_contents div,
-        body.dc-filter-dark-mode .view_content_wrap .gallview_contents *,
+        body.dc-filter-dark-mode .view_content_wrap .gallview_contents p:not(.pop_wrap *),
+        body.dc-filter-dark-mode .view_content_wrap .gallview_contents span:not(.pop_wrap *),
+        body.dc-filter-dark-mode .view_content_wrap .gallview_contents div:not(.pop_wrap):not(.pop_wrap *),
+        body.dc-filter-dark-mode .view_content_wrap .gallview_contents *:not(.pop_wrap):not(.pop_wrap *),
         body.dc-filter-dark-mode .view_content_wrap .writing_view_box,
         body.dc-filter-dark-mode .view_content_wrap .writing_view_box *,
         body.dc-filter-dark-mode .view_content_wrap .write_div,
@@ -1931,8 +1931,8 @@
         .view_content_wrap .btn_recommend_box .down_num {
             color: var(--dcuf-view-fg) !important;
         }
-        .view_content_wrap .btn_recommend_box .recom_bottom_box button,
-        .view_content_wrap .btn_recommend_box .recom_bottom_box a {
+        .view_content_wrap .btn_recommend_box .recom_bottom_box > button,
+        .view_content_wrap .btn_recommend_box .recom_bottom_box > a {
             display: inline-flex !important;
             align-items: center !important;
             justify-content: center !important;
@@ -3908,8 +3908,6 @@
         #focus_cmt .reply_box .dccon_guidebox {
             overflow: visible !important;
         }
-        .view_content_wrap .pop_wrap.type2,
-        .view_content_wrap .pop_wrap.type3,
         #focus_cmt .pop_wrap.type2,
         #focus_cmt .pop_wrap.type3 {
             z-index: 2147483647 !important;
@@ -4961,6 +4959,7 @@
 
     const applyArticleDarkTarget = (element, articleDarkProps) => {
         if (!(element instanceof HTMLElement)) return;
+        if (element.closest('.pop_wrap')) return;
         articleDarkProps.forEach(([property, value]) => {
             if (element.style.getPropertyPriority(property) !== 'important') return;
             if (element.style.getPropertyValue(property).trim() === value) return;

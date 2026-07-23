@@ -3261,6 +3261,126 @@ mobileTest('모바일 미리보기는 body를 이동하지 않고 설정 중첩�
     } finally { await session.close(); }
 });
 
+mobileTest('title decorations mirror generically, tooltips pre-place within the viewport, and native action popups stay isolated', 'functional', async ({ browser, server }) => {
+    const session = await createTestPage(browser, server.baseUrl, {
+        storage: { ...noStatsStorage, [storageKeys.palette]: 'orange' },
+        viewport: { width: 1100, height: 720 }
+    });
+    try {
+        await session.goto('/board/lists?id=test');
+        const decorationContract = await session.page.evaluate(() => {
+            const decorations = Array.from(document.querySelectorAll('.custom-mobile-list .dcuf-title-decoration'));
+            const pum = decorations.find((item) => item.querySelector('.font_blue009'));
+            const autoDelete = decorations.find((item) => item.querySelector('.icon_autodel_tit'));
+            const future = decorations.find((item) => item.querySelector('.fixture-future-title-marker'));
+            const futureLink = decorations.find((item) => item.querySelector('.fixture-future-linked-title-marker'));
+            const style = pum ? getComputedStyle(pum) : null;
+            const accentProbe = document.createElement('span');
+            accentProbe.style.color = 'var(--dcuf-theme-accent)';
+            document.body.appendChild(accentProbe);
+            const accent = getComputedStyle(accentProbe).color;
+            accentProbe.remove();
+            return {
+                pumText: pum?.textContent.trim() || '',
+                hasAutoDelete: Boolean(autoDelete),
+                futureText: future?.textContent.trim() || '',
+                futureLinkText: futureLink?.textContent.trim() || '',
+                color: style?.color || '',
+                accent,
+                backgroundColor: style?.backgroundColor || '',
+                borderStyle: style?.borderStyle || '',
+                paddingLeft: style?.paddingLeft || ''
+            };
+        });
+        assert.equal(decorationContract.pumText, '(펌)', JSON.stringify(decorationContract));
+        assert.equal(decorationContract.hasAutoDelete, true, JSON.stringify(decorationContract));
+        assert.equal(decorationContract.futureText, 'NEW', JSON.stringify(decorationContract));
+        assert.equal(decorationContract.futureLinkText, 'LINK', JSON.stringify(decorationContract));
+        assert.equal(decorationContract.color, decorationContract.accent, JSON.stringify(decorationContract));
+        assert.equal(decorationContract.backgroundColor, 'rgba(0, 0, 0, 0)', JSON.stringify(decorationContract));
+        assert.equal(decorationContract.borderStyle, 'none', JSON.stringify(decorationContract));
+        assert.equal(decorationContract.paddingLeft, '0px', JSON.stringify(decorationContract));
+
+        const tooltipContract = await session.page.evaluate(() => {
+            const subject = document.querySelector('.custom-mobile-list .gall_subject');
+            const tooltip = document.getElementById('custom-instant-tooltip');
+            const showAt = (clientY) => {
+                subject.dispatchEvent(new MouseEvent('mouseover', { bubbles: true, clientX: 540, clientY }));
+                const rect = tooltip.getBoundingClientRect();
+                return {
+                    top: rect.top,
+                    bottom: rect.bottom,
+                    display: tooltip.style.display,
+                    visibility: tooltip.style.visibility
+                };
+            };
+            return {
+                nearBottom: showAt(712),
+                nearTop: showAt(4)
+            };
+        });
+        assert.equal(tooltipContract.nearBottom.display, 'block', JSON.stringify(tooltipContract));
+        assert.equal(tooltipContract.nearBottom.visibility, 'visible', JSON.stringify(tooltipContract));
+        assert.equal(tooltipContract.nearBottom.bottom <= 702, true, JSON.stringify(tooltipContract));
+        assert.equal(tooltipContract.nearTop.top >= 14, true, JSON.stringify(tooltipContract));
+
+        await session.goto('/board/view?id=test&no=1001&comments=4');
+        const popupContract = async () => session.page.evaluate(() => {
+            const popup = document.querySelector('.fixture-original-action-popup');
+            const content = popup.querySelector('.pop_content');
+            const button = popup.querySelector('.fixture-original-popup-button');
+            const popupStyle = getComputedStyle(popup);
+            const contentStyle = getComputedStyle(content);
+            const buttonStyle = getComputedStyle(button);
+            return {
+                popupPosition: popupStyle.position,
+                popupWidth: popupStyle.width,
+                popupPadding: popupStyle.paddingLeft,
+                popupBackground: popupStyle.backgroundColor,
+                popupColor: popupStyle.color,
+                popupLineHeight: popupStyle.lineHeight,
+                contentDisplay: contentStyle.display,
+                contentPadding: contentStyle.paddingLeft,
+                contentBackground: contentStyle.backgroundColor,
+                contentColor: contentStyle.color,
+                contentLineHeight: contentStyle.lineHeight,
+                buttonPosition: buttonStyle.position,
+                buttonWidth: buttonStyle.width,
+                buttonHeight: buttonStyle.height,
+                buttonPadding: buttonStyle.paddingLeft,
+                buttonRadius: buttonStyle.borderRadius,
+                buttonBackground: buttonStyle.backgroundColor,
+                buttonColor: buttonStyle.color
+            };
+        });
+        const lightPopup = await popupContract();
+        assert.deepEqual(lightPopup, {
+            popupPosition: 'absolute',
+            popupWidth: '320px',
+            popupPadding: '11px',
+            popupBackground: 'rgb(249, 250, 251)',
+            popupColor: 'rgb(35, 42, 52)',
+            popupLineHeight: '19px',
+            contentDisplay: 'block',
+            contentPadding: '7px',
+            contentBackground: 'rgb(241, 243, 245)',
+            contentColor: 'rgb(35, 42, 52)',
+            contentLineHeight: '19px',
+            buttonPosition: 'absolute',
+            buttonWidth: '41px',
+            buttonHeight: '19px',
+            buttonPadding: '3px',
+            buttonRadius: '0px',
+            buttonBackground: 'rgb(223, 226, 230)',
+            buttonColor: 'rgb(35, 42, 52)'
+        });
+        await session.page.evaluate(() => window.__dcufFixture.toggleDark(true));
+        await session.page.waitForTimeout(40);
+        assert.deepEqual(await popupContract(), lightPopup, 'native action popup styles must remain unchanged in dark mode');
+        assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
+    } finally { await session.close(); }
+});
+
 mobileTest('목록 복원 기록과 최근 글 표시는 커밋 뒤 정확한 카드에 한 번만 적용된다', 'functional', async ({ browser, server }) => {
     const session = await createTestPage(browser, server.baseUrl, { storage: noStatsStorage, viewport: { width: 390, height: 844 } });
     try {

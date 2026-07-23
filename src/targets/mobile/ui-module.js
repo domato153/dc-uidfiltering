@@ -429,6 +429,20 @@
                 postTitleDiv.appendChild(newLink);
             }
 
+            titleContainer.childNodes.forEach((node) => {
+                if (node === originalLink || node === subjectSpan) return;
+                if (node.nodeType === Node.TEXT_NODE && !node.textContent.trim()) return;
+                if (node instanceof Element) {
+                    if (node.matches('script, style, template, .gall_subject, .reply_num, .icon_ad')) return;
+                    if (replyNumSpan && node.contains(replyNumSpan)) return;
+                } else if (node.nodeType !== Node.TEXT_NODE) {
+                    return;
+                }
+                const decorationWrap = document.createElement('span');
+                decorationWrap.className = 'dcuf-title-decoration';
+                decorationWrap.appendChild(node.cloneNode(true));
+                postTitleDiv.appendChild(decorationWrap);
+            });
 
             if (replyNumSpan) postTitleDiv.appendChild(replyNumSpan.cloneNode(true));
             newItem.appendChild(postTitleDiv);
@@ -924,20 +938,41 @@
             const tooltip = document.getElementById('custom-instant-tooltip');
             if (!tooltip) return;
 
+            const positionTooltip = (event) => {
+                const gap = 10;
+                const edge = 8;
+                const rect = tooltip.getBoundingClientRect();
+                const viewportWidth = Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
+                const viewportHeight = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
+                const preferredLeft = event.clientX + gap;
+                const preferredTop = event.clientY + gap;
+                const left = preferredLeft + rect.width <= viewportWidth - edge
+                    ? preferredLeft
+                    : event.clientX - rect.width - gap;
+                const top = preferredTop + rect.height <= viewportHeight - edge
+                    ? preferredTop
+                    : event.clientY - rect.height - gap;
+                tooltip.style.left = `${Math.max(edge, Math.min(left, viewportWidth - rect.width - edge))}px`;
+                tooltip.style.top = `${Math.max(edge, Math.min(top, viewportHeight - rect.height - edge))}px`;
+            };
+
             listContainer.addEventListener('mouseover', (e) => {
                 const subject = e.target.closest('.gall_subject');
                 if (subject && subject.title) {
                     tooltip.textContent = subject.title;
+                    tooltip.style.visibility = 'hidden';
                     tooltip.style.display = 'block';
+                    positionTooltip(e);
+                    tooltip.style.visibility = 'visible';
                 }
             });
             listContainer.addEventListener('mouseout', () => {
                 tooltip.style.display = 'none';
+                tooltip.style.visibility = 'hidden';
             });
             listContainer.addEventListener('mousemove', (e) => {
                 if (tooltip.style.display === 'block') {
-                    tooltip.style.left = `${e.clientX + 10}px`;
-                    tooltip.style.top = `${e.clientY + 10}px`;
+                    positionTooltip(e);
                 }
             });
         },

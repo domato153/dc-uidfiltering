@@ -89,7 +89,7 @@ const recommendBox = `<div class="btn_recommend_box recommuse_y morebox fixture-
         <button type="button" class="btn_recom_up"><span class="blind">개념 추천</span><em class="sp_img icon_recom_up"></em></button>
     </div><div class="inner">
         <button type="button" class="btn_recom_down"><span class="blind">비추천</span><em class="sp_img icon_recom_down"></em></button><div class="down_num_box"><p class="down_num">0</p></div>
-    </div></div><div class="recom_bottom_box"><button type="button">공유</button><button type="button">스크랩</button><button type="button">신고</button></div>
+    </div></div><div class="recom_bottom_box"><button type="button">공유</button><button type="button">스크랩</button><button type="button">신고</button><div class="pop_wrap type3 fixture-original-action-popup" style="display:block;position:absolute;width:320px;padding:11px;background:rgb(249, 250, 251);color:rgb(35, 42, 52);line-height:19px"><div class="pop_content" style="display:block;padding:7px;background:rgb(241, 243, 245);color:rgb(35, 42, 52);line-height:19px"><button type="button" class="fixture-original-popup-button" style="position:absolute;width:41px;height:19px;padding:3px;border-radius:0;background:rgb(223, 226, 230);color:rgb(35, 42, 52)">원본</button></div></div></div>
 </div>`;
 
 export function viewPage({ long = false, massComments = 0, variant = 'major', darkAtStart = false, brokenTheme = false } = {}) {

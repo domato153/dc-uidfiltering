@@ -288,6 +288,13 @@
             cursor: pointer;
             flex-shrink: 0 !important;
         }
+        .post-title > .dcuf-title-decoration {
+            flex-shrink: 0 !important;
+            color: var(--dcuf-theme-accent, #4263eb) !important;
+        }
+        .post-title > .dcuf-title-decoration > * {
+            color: inherit !important;
+        }
 
 
         /* [v2.2.0 이식] 게시글 목록: 작성자, 통계 */
@@ -560,7 +567,8 @@
         /* ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲ */
         /* ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲ */
 
-        .gallview_contents img, .gallview_contents video { max-width: 100% !important; height: auto !important;  }
+        .gallview_contents img:not(.pop_wrap *),
+        .gallview_contents video:not(.pop_wrap *) { max-width: 100% !important; height: auto !important;  }
 
 
         /* [v2.2.0 이식] 글 본문 가독성 개선 */
@@ -576,9 +584,9 @@
             width: 100% !important;
             box-sizing: border-box !important;
         }
-        .gallview_contents p,
-        .gallview_contents div,
-        .gallview_contents span {
+        .gallview_contents p:not(.pop_wrap *),
+        .gallview_contents div:not(.pop_wrap):not(.pop_wrap *),
+        .gallview_contents span:not(.pop_wrap *) {
             /* [v2.6.8 수정] font-size: inherit 제거 → JS 배율 스케일링으로 대체하여 원본 서식 유지 */
             line-height: inherit !important;
             color: inherit !important;
@@ -621,7 +629,7 @@
             border-radius: 5px;
             background-color: #f8f9fa;
         }
-        .btn_recommend_box button,
+        .btn_recommend_box button:not(.pop_wrap *),
         .btn_recommend_box .up_num_box,
         .btn_recommend_box .down_num_box {
             position: static !important;
