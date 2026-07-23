@@ -9,6 +9,7 @@ This directory runs the built mobile userscript against deterministic local DCIn
 - `/mgallery/board/lists` and `/mgallery/board/view`: live-sampled minor-gallery variants with 53 seven-cell rows, three host-hidden advertisement/utility rows, `#container.minor_view`, and three image-bearing parent comments; reply items remain an explicitly synthetic optional state
 - `/board/write` and `/mgallery/board/write`: live-probe-backed desktop write forms with guest fields, minor-gallery captcha/category controls, hidden submission fields, Summernote-shaped editor, attachment UI, and local-only submit handling
 - `/board/modify`: live-shaped non-member password gate; add `stage=editor` to serve the write-editor DOM under the same modify pathname
+- `/board/delete`: live-shaped non-member delete-password gate with the native delete form and button contract
 - `/__testbed/native-write`: responsive native-mobile reference fixture used as a layout and touch-target baseline
 - UID statistics POST mock at `/api/gallog_user_layer/gallog_content_reple/`
 - Local navigation and browser back navigation
@@ -62,7 +63,7 @@ node testbed/run-tests.mjs
 - `--group smoke`: initialization, list mirror creation, article/comment/image-comment/related-list presence
 - `--group functional`: visibility stability, bounded reruns, disabled/delayed/failed UID traffic, scoped comment/list updates, whole-comment rerender, whole-list replacement, duplicate runtime registration, all comment variants, personal block/unblock UI, dark mode, repeated ads, navigation/back, and storage contracts
 - `--group performance`: five 100-comment bursts plus 1,500 article nodes, pass-level timings, processed-target counts, heap trend samples, and JSON comparison metrics
-- `--group write`: live-backed major/minor desktop write forms, modify password/editor states, current mobile transformation, guest/captcha/category contracts, editor rerender and HTML-mode value retention, duplicate-safe local submission, and native mobile reference layout
+- `--group write`: live-backed major/minor desktop write forms, modify password/editor states, delete password state, current mobile transformation, guest/captcha/category contracts, editor rerender and HTML-mode value retention, duplicate-safe local submission, and native mobile reference layout
 - `run-bfcache.mjs`: production bfcache-eligible lifecycle and test-only pagehide/pageshow cleanup comparison
 - `--filter <text>`: run tests whose Korean name contains the text
 

@@ -123,6 +123,9 @@ export function writePage({ variant = 'major', formMode = 'write', showGuide = f
                 <button class="btn_aigo" type="button">등록</button><button class="btn_close" type="button" aria-label="닫기">×</button>
             </div></section>
             <label class="fixture-adult"><input type="checkbox" name="adult" value="1"> 성인 게시물</label>
+            <div id="write_option_box" class="write_type_box"><div class="inner">
+                <button type="button" id="btn_pumx" class="btn_write_type fsize12" onclick="toggle_pumx(this)">펌 금지</button>
+            </div></div>
             <div class="cm_ad"><ins class="kakao_ad_area">local write ad</ins></div>
             <div class="btn_box write fr fixture-write-actions">
                 <button class="btn_grey cancle" type="button" onclick="document.querySelector('#leave_confirm_box').style.display='block'">취소</button>
@@ -142,6 +145,13 @@ export function writePage({ variant = 'major', formMode = 'write', showGuide = f
                 </div>
             </div>
         </form>${dcconLayer}
+        <script>
+            window.__fixturePumxToggleCount = 0;
+            window.toggle_pumx = (button) => {
+                window.__fixturePumxToggleCount += 1;
+                button.classList.toggle('on');
+            };
+        </script>
     </article></section></main></div>${scripts}`;
 }
 
@@ -158,6 +168,26 @@ export function modifyPasswordPage() {
                     <b class="txt">비밀번호를 입력하세요.</b>
                     <input class="pw_inquiry" id="password" name="password" type="password" title="비밀번호 입력">
                     <div class="btn_box"><button type="button" class="btn_grey small">취소</button><button type="submit" class="btn_blue small btn_ok">확인</button></div>
+                </div></div></div></article>
+            </form>
+        </section></main>
+        <footer class="dcfoot type1"><p>fixture footer should be hidden</p></footer><div id="data_info">fixture data info should be hidden</div>
+    </div>${scripts}`;
+}
+
+export function deletePasswordPage() {
+    return `${head('DCUF delete password fixture')}<body data-fixture-page="delete" data-fixture-variant="mini"><div id="top" class="dcwrap width1160">
+        <header class="dcheader typea"><div class="dchead"><h1 class="dc_logo"><a href="#">dcinside.com</a></h1></div></header>
+        <div class="gnb_bar"><nav class="gnb"><ul class="gnb_list"><li>갤러리</li><li>마이너갤</li><li>미니갤</li></ul></nav></div>
+        <div class="newvisit_history"><strong class="tit">최근 방문</strong></div>
+        <main id="container" class="clear"><section>
+            <header class="page_head clear"><div class="fl"><h2><a href="#gallery">테스트 갤러리</a></h2></div></header>
+            <form id="delete" name="delete" method="post" action="/__testbed/delete_password_submit" onsubmit="return false">
+                <input type="hidden" name="id" value="test"><input type="hidden" name="no" value="1001"><input type="hidden" name="auth_token" value="fixture-redacted">
+                <article><div class="no_memberwrap"><div class="no_member_cont"><h3 class="blind">비회원 글 삭제</h3><div class="inner">
+                    <b class="txt">비밀번호를 입력하세요.</b>
+                    <input class="pw_inquiry" id="password" name="password" type="password" title="비밀번호 입력">
+                    <div class="btn_box"><button type="button" class="btn_grey small" onclick="history.back()">취소</button><button type="button" class="btn_blue btn_svc small btn_ok">확인</button></div>
                 </div></div></div></article>
             </form>
         </section></main>

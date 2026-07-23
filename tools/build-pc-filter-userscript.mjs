@@ -6,7 +6,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const rootDir = path.resolve(__dirname, '..');
 
-const VERSION = '1.9.8';
+const VERSION = '1.9.9';
 const OUTPUT_NAME = `dcinside_user_filter_v${VERSION}.user.js`;
 
 const PC_PARTS = [
@@ -77,6 +77,12 @@ const replacements = [
         description: 'version header token',
         apply(text) {
             return text.replace(/__VERSION__/g, VERSION);
+        },
+    },
+    {
+        description: 'PC delete surface target token',
+        apply(text) {
+            return text.replace(/__DCUF_DELETE_SURFACE__/g, 'off');
         },
     },
 ];
@@ -260,10 +266,11 @@ function applyReplacements(source) {
 }
 
 async function main() {
-    const [header, bootstrap, sharedPrelude, rawThemeModule, rawFilterModule, rawPersonalBlockModule, ...pcParts] = await Promise.all([
+    const [header, bootstrap, sharedPrelude, writeDefaults, rawThemeModule, rawFilterModule, rawPersonalBlockModule, ...pcParts] = await Promise.all([
         readPart('src/meta/pc-filter-userscript-header.txt'),
         readPart('src/runtime/bootstrap.js'),
         buildSharedRuntimePrelude(),
+        readPart('src/shared/write-defaults.js'),
         readPart('src/targets/mobile/theme-module.js'),
         readPart('src/targets/mobile/filter-module.js'),
         readPart('src/targets/mobile/personal-block-module.js'),
@@ -276,7 +283,7 @@ async function main() {
     const transformedThemeModule = transformThemeModuleForPc(rawThemeModule);
     const transformedFilterModule = transformFilterModuleForSharedPort(extractedFilterModule);
     const [filterStyle, filterEntry] = pcParts;
-    const combined = `${header}\n${bootstrap}${sharedPrelude}${filterStyle}${sharedFilterUiStyle}${transformedThemeModule}${transformedFilterModule}${rawPersonalBlockModule}${filterEntry}${teardown}`;
+    const combined = `${header}\n${bootstrap}${sharedPrelude}${writeDefaults}${filterStyle}${sharedFilterUiStyle}${transformedThemeModule}${transformedFilterModule}${rawPersonalBlockModule}${filterEntry}${teardown}`;
     const built = applyReplacements(combined)
         .replace(/[ \t]+$/gm, '')
         .replace(/\n+$/, '\n')

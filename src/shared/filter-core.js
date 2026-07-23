@@ -86,6 +86,7 @@ export function evaluateSyncBlockDecision({ subject, settings, matches = {}, blo
         blockedGuestMatch: Boolean(matches.blockedGuestMatch),
         personallyBlocked: Boolean(matches.personalBlockHit),
         galleryHeadtextBlocked: Boolean(matches.galleryHeadtextBlock),
+        pumPostMatch: Boolean(matches.pumPostMatch),
     };
 
     if (decision.personallyBlocked) {
@@ -129,6 +130,12 @@ export function evaluateSyncBlockDecision({ subject, settings, matches = {}, blo
         decision.isBlocked = true;
         decision.path = 'gallery-headtext';
         decision.reasons.push('galleryHeadtext');
+    }
+
+    if (!decision.isBlocked && settings?.blockPumPosts && decision.pumPostMatch) {
+        decision.isBlocked = true;
+        decision.path = 'pum-post';
+        decision.reasons.push('pumPost');
     }
 
     if (!decision.isBlocked && subject?.isGuest && settings?.blockGuestEnabled) {

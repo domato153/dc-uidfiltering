@@ -96,13 +96,14 @@
         getPageContext() {
             const sharedContext = window.__dcufPageContext;
             if (sharedContext && typeof sharedContext === 'object') return sharedContext;
-            const type = ((window.location.pathname || '').match(/\/board\/(lists|view|write|modify)(?:\/|$)/) || [])[1] || 'other';
+            const type = ((window.location.pathname || '').match(/\/board\/(lists|view|write|modify|delete)(?:\/|$)/) || [])[1] || 'other';
             return {
                 type,
                 isList: type === 'lists',
                 isView: type === 'view',
                 isWrite: type === 'write',
                 isModify: type === 'modify',
+                isDelete: type === 'delete',
                 isWriteSurface: type === 'write' || type === 'modify',
                 isOther: type === 'other',
                 isTargetPage: type !== 'other',
@@ -154,6 +155,9 @@
             }
             if (pageContext.isWriteSurface) {
                 return 'form#write, form[name="modify"][action*="modify_submit"], #write_wrap, .gall_write, .write_box, form[name="password_confirm"], form[action*="modify_password_submit"], .no_memberwrap';
+            }
+            if (pageContext.isDelete) {
+                return 'form[name="delete"], form[action*="delete_password_submit"], .no_memberwrap';
             }
             return shared.join(', ');
         },

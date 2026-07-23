@@ -6067,13 +6067,74 @@
 })();
 
 (() => {
-    if (!__dcufPageSupports('modify')) return;
+    if (!__dcufPageSupports('view')) return;
+
+    const STYLE_ID = 'dcuf-pum-layer-viewport-style';
+    const POSITIONED_CLASS = 'dcuf-pum-layer-viewport-safe';
+    const POPUP_SELECTOR = '#write_pum_layer.pop_wrap';
+    const injectStyle = () => {
+        if (document.getElementById(STYLE_ID)) return true;
+        const target = document.head || document.documentElement;
+        if (!target) return false;
+        const style = document.createElement('style');
+        style.id = STYLE_ID;
+        style.textContent = `
+            ${POPUP_SELECTOR}.${POSITIONED_CLASS} {
+                box-sizing: border-box !important;
+                position: fixed !important;
+                left: 50% !important;
+                top: 50% !important;
+                right: auto !important;
+                bottom: auto !important;
+                width: min(590px, calc(100vw - 16px)) !important;
+                max-width: calc(100vw - 16px) !important;
+                max-height: calc(100vh - 16px) !important;
+                max-height: calc(100dvh - 16px) !important;
+                margin: 0 !important;
+                transform: translate(-50%, -50%) !important;
+                overflow: auto !important;
+                overscroll-behavior: contain !important;
+                z-index: 2147483647 !important;
+            }
+        `;
+        target.appendChild(style);
+        return true;
+    };
+    const markPopup = (root = document) => {
+        const popup = root instanceof Element && root.matches(POPUP_SELECTOR)
+            ? root
+            : root.querySelector?.(POPUP_SELECTOR);
+        if (!(popup instanceof HTMLElement)) return false;
+        popup.classList.add(POSITIONED_CLASS);
+        return true;
+    };
+    const ensurePopup = () => {
+        injectStyle();
+        markPopup(document);
+    };
+    const popupScheduler = __dcufCreatePhaseScheduler('view-pum-layer-viewport', ensurePopup, [40, 160]);
+
+    ensurePopup();
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', ensurePopup, { once: true });
+    }
+    document.addEventListener('click', (event) => {
+        const trigger = event.target instanceof Element
+            ? event.target.closest('.btn_recommend_box .btn_cloned')
+            : null;
+        if (!(trigger instanceof HTMLElement)) return;
+        popupScheduler.schedule({ reason: 'host-pum-open' });
+    });
+})();
+
+(() => {
+    if (!__dcufPageSupports('modify') && !__dcufPageSupports('delete')) return;
 
     const STYLE_ID = 'dcuf-mobile-modify-theme';
     if (document.getElementById(STYLE_ID)) return;
 
     const css = `
-        body.is-modify-password-page {
+        body.is-dcuf-password-page {
             box-sizing: border-box !important;
             min-width: 0 !important;
             margin: 0 !important;
@@ -6081,7 +6142,7 @@
             color: var(--dcuf-theme-fg, #27313f) !important;
             overflow-x: clip !important;
         }
-        body.is-modify-password-page #container {
+        body.is-dcuf-password-page #container {
             box-sizing: border-box !important;
             width: 100% !important;
             min-width: 0 !important;
@@ -6090,20 +6151,20 @@
             padding: 6px 12px 28px !important;
             background: transparent !important;
         }
-        body.is-modify-password-page #container > section {
+        body.is-dcuf-password-page #container > section {
             box-sizing: border-box !important;
             width: min(760px, 100%) !important;
             min-width: 0 !important;
             margin: 0 auto !important;
         }
-        body.is-modify-password-page #container > section > header.page_head {
+        body.is-dcuf-password-page #container > section > header.page_head {
             width: 100% !important;
             margin: 0 !important;
             padding: 12px 4px !important;
             border-bottom-color: var(--dcuf-theme-accent, #3f6de0) !important;
             color: var(--dcuf-theme-accent, #3f6de0) !important;
         }
-        body.is-modify-password-page form.dcuf-modify-password-form {
+        body.is-dcuf-password-page form.dcuf-password-form {
             box-sizing: border-box !important;
             display: grid !important;
             width: 100% !important;
@@ -6112,9 +6173,9 @@
             padding: 24px 0 !important;
             place-items: center !important;
         }
-        body.is-modify-password-page form.dcuf-modify-password-form > article,
-        body.is-modify-password-page form.dcuf-modify-password-form .no_memberwrap,
-        body.is-modify-password-page form.dcuf-modify-password-form .no_member_cont {
+        body.is-dcuf-password-page form.dcuf-password-form > article,
+        body.is-dcuf-password-page form.dcuf-password-form .no_memberwrap,
+        body.is-dcuf-password-page form.dcuf-password-form .no_member_cont {
             box-sizing: border-box !important;
             width: 100% !important;
             max-width: 520px !important;
@@ -6125,14 +6186,14 @@
             border: 0 !important;
             background: transparent !important;
         }
-        body.is-modify-password-page form.dcuf-modify-password-form .no_memberwrap {
+        body.is-dcuf-password-page form.dcuf-password-form .no_memberwrap {
             overflow: hidden !important;
             border: 1px solid var(--dcuf-theme-border-strong, #cbd2db) !important;
             border-radius: 20px !important;
             background: linear-gradient(160deg, var(--dcuf-theme-card-top, #fff), var(--dcuf-theme-card-bottom, #fafbfc)) !important;
             box-shadow: var(--dcuf-theme-panel-shadow, 0 18px 42px rgba(31, 45, 68, .16)) !important;
         }
-        body.is-modify-password-page form.dcuf-modify-password-form .no_member_cont .inner {
+        body.is-dcuf-password-page form.dcuf-password-form .no_member_cont .inner {
             box-sizing: border-box !important;
             display: grid !important;
             width: 100% !important;
@@ -6143,7 +6204,7 @@
             place-items: stretch !important;
             text-align: center !important;
         }
-        body.is-modify-password-page form.dcuf-modify-password-form .no_member_cont .txt {
+        body.is-dcuf-password-page form.dcuf-password-form .no_member_cont .txt {
             display: block !important;
             margin: 0 !important;
             color: var(--dcuf-theme-fg, #27313f) !important;
@@ -6151,8 +6212,8 @@
             font-weight: 800 !important;
             line-height: 1.45 !important;
         }
-        body.is-modify-password-page form.dcuf-modify-password-form input#password,
-        body.is-modify-password-page form.dcuf-modify-password-form input[name="password"] {
+        body.is-dcuf-password-page form.dcuf-password-form input#password,
+        body.is-dcuf-password-page form.dcuf-password-form input[name="password"] {
             box-sizing: border-box !important;
             display: block !important;
             width: 100% !important;
@@ -6168,12 +6229,12 @@
             font: 700 17px/1 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
             box-shadow: inset 0 2px 5px color-mix(in srgb, var(--dcuf-theme-accent) 6%, transparent) !important;
         }
-        body.is-modify-password-page form.dcuf-modify-password-form input#password:focus,
-        body.is-modify-password-page form.dcuf-modify-password-form input[name="password"]:focus {
+        body.is-dcuf-password-page form.dcuf-password-form input#password:focus,
+        body.is-dcuf-password-page form.dcuf-password-form input[name="password"]:focus {
             border-color: var(--dcuf-theme-accent, #3f6de0) !important;
             box-shadow: 0 0 0 3px var(--dcuf-theme-focus-ring, rgba(63, 109, 224, .18)) !important;
         }
-        body.is-modify-password-page form.dcuf-modify-password-form .btn_box {
+        body.is-dcuf-password-page form.dcuf-password-form .btn_box {
             box-sizing: border-box !important;
             display: grid !important;
             grid-template-columns: 1fr 1fr !important;
@@ -6182,7 +6243,7 @@
             padding: 0 !important;
             gap: 10px !important;
         }
-        body.is-modify-password-page form.dcuf-modify-password-form .btn_box > button {
+        body.is-dcuf-password-page form.dcuf-password-form .btn_box > button {
             box-sizing: border-box !important;
             width: 100% !important;
             min-width: 0 !important;
@@ -6198,27 +6259,27 @@
             line-height: 1.2 !important;
             cursor: pointer !important;
         }
-        body.is-modify-password-page form.dcuf-modify-password-form .btn_box > :is(.btn_blue, .btn_ok) {
+        body.is-dcuf-password-page form.dcuf-password-form .btn_box > :is(.btn_blue, .btn_ok) {
             border-color: var(--dcuf-theme-accent-strong, #245bda) !important;
             background-color: var(--dcuf-theme-accent-strong, #245bda) !important;
             background-image: linear-gradient(180deg, var(--dcuf-theme-primary-top, #5d87f0), var(--dcuf-theme-accent-strong, #245bda)) !important;
             color: var(--dcuf-theme-on-accent, #fff) !important;
             box-shadow: 0 8px 18px var(--dcuf-theme-accent-shadow, rgba(36, 91, 218, .25)) !important;
         }
-        body.is-modify-password-page footer.dcfoot,
-        body.is-modify-password-page #data_info {
+        body.is-dcuf-password-page footer.dcfoot,
+        body.is-dcuf-password-page #data_info {
             display: none !important;
         }
-        body.is-modify-password-page.dc-filter-dark-mode form.dcuf-modify-password-form .no_memberwrap {
+        body.is-dcuf-password-page.dc-filter-dark-mode form.dcuf-password-form .no_memberwrap {
             box-shadow: 0 20px 46px rgba(0, 0, 0, .44) !important;
         }
         @media screen and (max-width: 480px) {
-            body.is-modify-password-page #container { padding: 4px 10px 20px !important; }
-            body.is-modify-password-page form.dcuf-modify-password-form {
+            body.is-dcuf-password-page #container { padding: 4px 10px 20px !important; }
+            body.is-dcuf-password-page form.dcuf-password-form {
                 min-height: calc(100dvh - 220px) !important;
                 padding: 16px 0 !important;
             }
-            body.is-modify-password-page form.dcuf-modify-password-form .no_member_cont .inner {
+            body.is-dcuf-password-page form.dcuf-password-form .no_member_cont .inner {
                 padding: 24px 18px 18px !important;
             }
         }
@@ -9060,13 +9121,14 @@ function __dcufGetRuntimeCoordinator() {
 function __dcufGetPageContext() {
     const sharedContext = window.__dcufPageContext;
     if (sharedContext && typeof sharedContext === 'object') return sharedContext;
-    const type = ((window.location.pathname || '').match(/\/board\/(lists|view|write|modify)(?:\/|$)/) || [])[1] || 'other';
+    const type = ((window.location.pathname || '').match(/\/board\/(lists|view|write|modify|delete)(?:\/|$)/) || [])[1] || 'other';
     return {
         type,
         isList: type === 'lists',
         isView: type === 'view',
         isWrite: type === 'write',
         isModify: type === 'modify',
+        isDelete: type === 'delete',
         isWriteSurface: type === 'write' || type === 'modify',
         isOther: type === 'other',
         isTargetPage: type !== 'other',
@@ -9081,6 +9143,7 @@ function __dcufPageSupports(surface) {
     if (surface === 'view') return pageContext.isView;
     if (surface === 'write') return pageContext.isWriteSurface;
     if (surface === 'modify') return pageContext.isModify;
+    if (surface === 'delete') return pageContext.isDelete;
     if (surface === 'list-surface') return pageContext.hasListSurface;
     if (surface === 'comments') return pageContext.hasComments;
     if (surface === 'target') return pageContext.isTargetPage;

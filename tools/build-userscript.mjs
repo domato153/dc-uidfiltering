@@ -6,7 +6,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const rootDir = path.resolve(__dirname, '..');
 
-const VERSION = '3.5.2';
+const VERSION = '3.5.3';
 const OUTPUT_NAME = `Dc_UserFilter_Mobile_v${VERSION}.user.js`;
 const testbedOutputIndex = process.argv.indexOf('--testbed-output');
 const testbedOutput = testbedOutputIndex >= 0 && process.argv[testbedOutputIndex + 1]
@@ -14,6 +14,7 @@ const testbedOutput = testbedOutputIndex >= 0 && process.argv[testbedOutputIndex
     : null;
 
 const MOBILE_LEGACY_PARTS = [
+    'src/shared/write-defaults.js',
     'src/targets/mobile/runtime-coordinator.js',
     'src/targets/mobile/theme-module.js',
     'src/targets/mobile/filter-module.js',
@@ -28,6 +29,12 @@ const replacements = [
         description: 'version header token',
         apply(text) {
             return text.replace(/__VERSION__/g, VERSION);
+        },
+    },
+    {
+        description: 'mobile delete surface target token',
+        apply(text) {
+            return text.replace(/__DCUF_DELETE_SURFACE__/g, 'mobile');
         },
     },
 ];

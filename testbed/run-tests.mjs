@@ -2975,6 +2975,128 @@ mobileTest('negative UID failure cache stays bounded and prunes expired entries'
     } finally { await session.close(); }
 });
 
+test('펌 게시물 차단은 기본 off이며 설정·동적 목록·모바일 미러·PC에서 동일 적용된다', 'functional', async ({ browser, server }) => {
+    const session = await createTestPage(browser, server.baseUrl, {
+        storage: noStatsStorage,
+        viewport: { width: 390, height: 844 },
+        hasTouch: true,
+        isMobile: true
+    });
+    try {
+        await session.goto('/board/lists?id=test');
+        const defaultState = await session.page.evaluate(() => {
+            const marker = Array.from(document.querySelectorAll('.gall_tit > b.font_blue009'))
+                .find((node) => node.textContent.trim() === '(펌)');
+            const row = marker?.closest('tr.ub-content');
+            return {
+                rowDisplay: row?.style.display || '',
+                isPumPost: window.__dcufFilterModule.describeFilterTarget(row)?.isPumPost,
+                stored: window.__dcufTestbedGM.snapshot().values.dcinside_block_pum_posts
+            };
+        });
+        assert.notEqual(defaultState.rowDisplay, 'none');
+        assert.equal(defaultState.isPumPost, true);
+        assert.equal(defaultState.stored, undefined);
+
+        await session.page.evaluate(() => window.__dcufFilterModule.showSettings());
+        const pumToggle = session.page.locator('#dcinside-block-pum-posts-checkbox');
+        assert.equal(await pumToggle.count(), 1);
+        assert.equal(await pumToggle.isChecked(), false);
+        const mobileLayout = await session.page.locator('label[for="dcinside-block-pum-posts-checkbox"]').evaluate((label) => {
+            const rect = label.getBoundingClientRect();
+            const panel = label.closest('#dcinside-filter-setting')?.getBoundingClientRect();
+            return {
+                labelVisible: rect.width > 0 && rect.height > 0,
+                panelInsideViewport: Boolean(panel)
+                    && panel.left >= -1 && panel.right <= innerWidth + 1
+                    && panel.top >= -1 && panel.bottom <= innerHeight + 1
+            };
+        });
+        assert.deepEqual(mobileLayout, { labelVisible: true, panelInsideViewport: true });
+        await session.page.locator('label[for="dcinside-block-pum-posts-checkbox"]').click();
+        await session.page.waitForFunction(() => {
+            const marker = Array.from(document.querySelectorAll('.gall_tit > b.font_blue009'))
+                .find((node) => node.textContent.trim() === '(펌)');
+            const row = marker?.closest('tr.ub-content');
+            const mirrorId = row?.getAttribute('data-custom-row-id');
+            const mirror = mirrorId ? document.querySelector(`.custom-post-item[data-custom-row-id="${mirrorId}"]`) : null;
+            return row?.style.display === 'none'
+                && (!window.__dcufUIModule || (mirror instanceof HTMLElement && getComputedStyle(mirror).display === 'none'));
+        });
+        assert.equal(await session.page.evaluate(() => window.__dcufTestbedGM.snapshot().values.dcinside_block_pum_posts), true);
+
+        const edgeCases = await session.page.evaluate(async () => {
+            const tbody = document.querySelector('table.gall_list tbody');
+            const source = Array.from(tbody.querySelectorAll('tr.ub-content'))
+                .find((row) => row.querySelector('.gall_tit > b.font_blue009')?.textContent.trim() === '(펌)');
+            const dynamic = source.cloneNode(true);
+            dynamic.style.display = '';
+            dynamic.removeAttribute('data-custom-row-id');
+            dynamic.dataset.no = 'dynamic-pum';
+            dynamic.querySelector('.ub-writer')?.setAttribute('data-uid', 'dynamic-pum-user');
+            tbody.appendChild(dynamic);
+
+            const notice = tbody.querySelector('tr.us-post--notice');
+            notice.querySelector('.gall_tit')?.insertAdjacentHTML('beforeend', '<b class="font_blue009">(펌)</b>');
+
+            const fake = source.cloneNode(true);
+            fake.style.display = '';
+            fake.removeAttribute('data-custom-row-id');
+            fake.dataset.no = 'fake-pum';
+            fake.querySelector('.ub-writer')?.setAttribute('data-uid', 'fake-pum-user');
+            fake.querySelector('.gall_tit > b.font_blue009').textContent = '(기타)';
+            tbody.appendChild(fake);
+
+            await new Promise((resolve) => setTimeout(resolve, 450));
+            await window.__dcufFilterModule.refilterAllContent('pum edge cases', { scheduleFollowups: false });
+            return {
+                dynamicDisplay: dynamic.style.display,
+                noticeDisplay: notice.style.display,
+                fakeDisplay: fake.style.display,
+                fakeDetected: window.__dcufFilterModule.describeFilterTarget(fake)?.isPumPost
+            };
+        });
+        assert.equal(edgeCases.dynamicDisplay, 'none');
+        assert.notEqual(edgeCases.noticeDisplay, 'none');
+        assert.notEqual(edgeCases.fakeDisplay, 'none');
+        assert.equal(edgeCases.fakeDetected, false);
+
+        await session.goto('/board/lists?id=test');
+        await session.page.waitForFunction(() => {
+            const marker = Array.from(document.querySelectorAll('.gall_tit > b.font_blue009'))
+                .find((node) => node.textContent.trim() === '(펌)');
+            return marker?.closest('tr.ub-content')?.style.display === 'none';
+        });
+        const masterContract = await session.page.evaluate(async () => {
+            const marker = Array.from(document.querySelectorAll('.gall_tit > b.font_blue009'))
+                .find((node) => node.textContent.trim() === '(펌)');
+            const row = marker?.closest('tr.ub-content');
+            await GM_setValue('dcinside_master_disabled', true);
+            await window.__dcufFilterModule.refilterAllContent('pum master disabled', { scheduleFollowups: false });
+            const visibleWhileDisabled = row?.style.display !== 'none';
+            await GM_setValue('dcinside_master_disabled', false);
+            await window.__dcufFilterModule.refilterAllContent('pum master restored', { scheduleFollowups: false });
+            return { visibleWhileDisabled, hiddenAfterRestore: row?.style.display === 'none' };
+        });
+        assert.deepEqual(masterContract, { visibleWhileDisabled: true, hiddenAfterRestore: true });
+        await session.page.evaluate(() => window.__dcufFilterModule.showSettings());
+        const persistedToggle = session.page.locator('#dcinside-block-pum-posts-checkbox');
+        assert.equal(await persistedToggle.isChecked(), true);
+        await session.page.locator('label[for="dcinside-block-pum-posts-checkbox"]').click();
+        await session.page.waitForFunction(() => {
+            const marker = Array.from(document.querySelectorAll('.gall_tit > b.font_blue009'))
+                .find((node) => node.textContent.trim() === '(펌)');
+            const row = marker?.closest('tr.ub-content');
+            const mirrorId = row?.getAttribute('data-custom-row-id');
+            const mirror = mirrorId ? document.querySelector(`.custom-post-item[data-custom-row-id="${mirrorId}"]`) : null;
+            return row?.style.display !== 'none'
+                && (!window.__dcufUIModule || (mirror instanceof HTMLElement && getComputedStyle(mirror).display !== 'none'));
+        });
+        assert.equal(await session.page.evaluate(() => window.__dcufTestbedGM.snapshot().values.dcinside_block_pum_posts), false);
+        assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
+    } finally { await session.close(); }
+});
+
 test('갤러리별 말머리 차단은 공지·관련글을 제외하고 UID 조회 전에 모바일·PC에서 동일 적용된다', 'functional', async ({ browser, server }) => {
     const scenarios = [
         ['/board/lists?id=test', 'board:test'],
@@ -4460,6 +4582,26 @@ obsoleteMobileTest('초안 복구를 끄면 빠른 글쓰기 transfer가 기존 
     } finally { await session.close(); }
 });
 
+test('write default: Pumx starts enabled once and remains user-toggleable on every target', 'write', async ({ browser, server }) => {
+    for (const pathname of [
+        '/board/write/?id=test',
+        '/mgallery/board/write/?id=test',
+        '/mini/board/write/?id=test'
+    ]) {
+        const session = await createTestPage(browser, server.baseUrl, { storage: noStatsStorage });
+        try {
+            await session.goto(pathname);
+            await session.page.waitForFunction(() => document.querySelector('#btn_pumx')?.classList.contains('on'));
+            assert.equal(await session.page.evaluate(() => window.__fixturePumxToggleCount), 1);
+
+            await session.page.locator('#btn_pumx').click();
+            assert.equal(await session.page.locator('#btn_pumx.on').count(), 0);
+            assert.equal(await session.page.evaluate(() => window.__fixturePumxToggleCount), 2);
+            assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
+        } finally { await session.close(); }
+    }
+});
+
 mobileTest('글쓰기: 메이저·마이너 원본 폼 계약과 모바일 변환이 초기화된다', 'write', async ({ browser, server }) => {
     for (const variant of ['major', 'minor']) {
         const pathname = variant === 'minor' ? '/mgallery/board/write/?id=test' : '/board/write/?id=test';
@@ -5565,6 +5707,112 @@ mobileTest('modify editor surface reuses the write transformation without changi
     } finally { await session.close(); }
 });
 
+mobileTest('delete password surface reuses the password card without changing native deletion behavior', 'write', async ({ browser, server }) => {
+    const session = await createTestPage(browser, server.baseUrl, {
+        storage: { ...noStatsStorage, [storageKeys.palette]: 'orange' },
+        viewport: { width: 390, height: 844 }
+    });
+    try {
+        await session.goto('/mini/board/delete/?id=test&no=1001');
+        const contract = await session.page.evaluate(() => {
+            const form = document.querySelector('form[name="delete"]');
+            const card = form?.querySelector('.no_memberwrap');
+            const input = form?.querySelector('#password');
+            const confirm = form?.querySelector('.btn_ok');
+            const rect = card?.getBoundingClientRect();
+            return {
+                pageContext: { ...window.__dcufPageContext },
+                surface: document.documentElement.getAttribute('data-dcuf-delete-surface'),
+                bodyClass: document.body.className,
+                formId: form?.getAttribute('id'),
+                formName: form?.getAttribute('name'),
+                formMethod: form?.getAttribute('method'),
+                formAction: form?.getAttribute('action'),
+                formOnsubmit: form?.getAttribute('onsubmit'),
+                formClass: form?.className || '',
+                hiddenNo: form?.querySelector('input[name="no"]')?.value,
+                confirmType: confirm?.getAttribute('type'),
+                confirmClass: confirm?.className || '',
+                inputAutocomplete: input?.autocomplete,
+                inputAriaLabel: input?.getAttribute('aria-label'),
+                cardWidth: rect?.width || 0,
+                viewportWidth: innerWidth,
+                cardRadius: card ? getComputedStyle(card).borderRadius : '',
+                confirmBackground: confirm ? getComputedStyle(confirm).backgroundColor : '',
+                footerDisplay: getComputedStyle(document.querySelector('footer.dcfoot')).display,
+                dataInfoDisplay: getComputedStyle(document.querySelector('#data_info')).display,
+                passwordStyleCount: document.querySelectorAll('#dcuf-mobile-modify-theme').length,
+                writeStyleCount: document.querySelectorAll('#dcuf-mobile-write-theme').length
+            };
+        });
+        assert.deepEqual({
+            type: contract.pageContext.type,
+            isDelete: contract.pageContext.isDelete,
+            isWrite: contract.pageContext.isWrite,
+            isModify: contract.pageContext.isModify,
+            isWriteSurface: contract.pageContext.isWriteSurface,
+            isTargetPage: contract.pageContext.isTargetPage
+        }, { type: 'delete', isDelete: true, isWrite: false, isModify: false, isWriteSurface: false, isTargetPage: true });
+        assert.equal(contract.surface, 'password');
+        assert.equal(contract.bodyClass.includes('is-delete-password-page'), true, contract.bodyClass);
+        assert.equal(contract.bodyClass.includes('is-dcuf-password-page'), true, contract.bodyClass);
+        assert.equal(contract.formId, 'delete');
+        assert.equal(contract.formName, 'delete');
+        assert.equal(contract.formMethod, 'post');
+        assert.equal(contract.formAction, '/__testbed/delete_password_submit');
+        assert.equal(contract.formOnsubmit, 'return false');
+        assert.equal(contract.formClass.includes('dcuf-delete-password-form'), true, contract.formClass);
+        assert.equal(contract.hiddenNo, '1001');
+        assert.equal(contract.confirmType, 'button');
+        assert.equal(contract.confirmClass.includes('btn_svc'), true, contract.confirmClass);
+        assert.equal(contract.inputAutocomplete, 'current-password');
+        assert.equal(contract.inputAriaLabel, '비밀번호');
+        assert.equal(contract.cardWidth <= contract.viewportWidth - 20, true, JSON.stringify(contract));
+        assert.equal(contract.cardRadius, '20px');
+        assert.equal(contract.confirmBackground, 'rgb(154, 52, 18)');
+        assert.equal(contract.footerDisplay, 'none');
+        assert.equal(contract.dataInfoDisplay, 'none');
+        assert.equal(contract.passwordStyleCount, 1);
+        assert.equal(contract.writeStyleCount, 0);
+        assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
+    } finally { await session.close(); }
+});
+
+pcTest('PC filter leaves the delete password route outside its UI target rail', 'write', async ({ browser, server }) => {
+    const session = await createTestPage(browser, server.baseUrl, {
+        storage: noStatsStorage,
+        viewport: { width: 1280, height: 900 },
+        hasTouch: false,
+        isMobile: false
+    });
+    try {
+        await session.goto('/mini/board/delete/?id=test&no=1001', { waitForReady: false });
+        const contract = await session.page.evaluate(() => {
+            const form = document.querySelector('form[name="delete"]');
+            return {
+                pageContext: { ...window.__dcufPageContext },
+                bodyClass: document.body.className,
+                formClass: form?.className || '',
+                formAction: form?.getAttribute('action'),
+                confirmType: form?.querySelector('.btn_ok')?.getAttribute('type'),
+                bootController: Boolean(window.__dcufBootController),
+                passwordStyleCount: document.querySelectorAll('#dcuf-mobile-modify-theme').length,
+                filterModule: Boolean(window.__dcufFilterModule)
+            };
+        });
+        assert.equal(contract.pageContext.type, 'other');
+        assert.equal(contract.pageContext.isTargetPage, false);
+        assert.equal(contract.bodyClass.includes('is-delete-password-page'), false, contract.bodyClass);
+        assert.equal(contract.formClass.includes('dcuf-password-form'), false, contract.formClass);
+        assert.equal(contract.formAction, '/__testbed/delete_password_submit');
+        assert.equal(contract.confirmType, 'button');
+        assert.equal(contract.bootController, false);
+        assert.equal(contract.passwordStyleCount, 0);
+        assert.equal(contract.filterModule, false);
+        assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
+    } finally { await session.close(); }
+});
+
 mobileTest('UI palette presets normalize stored values without blocking boot', 'functional', async ({ browser, server }) => {
     const strongColors = {
         blue: { light: '#245bda', dark: '#3868df' },
@@ -6169,6 +6417,69 @@ mobileTest('UI palette replaces live-shaped host blue and keeps raised list, vie
     } finally { await session.close(); }
 });
 
+mobileTest('article Pum popup keeps the host node and remains inside a short viewport', 'functional', async ({ browser, server }) => {
+    const session = await createTestPage(browser, server.baseUrl, {
+        storage: noStatsStorage,
+        viewport: { width: 390, height: 520 }
+    });
+    try {
+        await session.goto('/mini/board/view?id=test&no=1001');
+        const popup = session.page.locator('#write_pum_layer');
+        assert.equal(await popup.count(), 0, 'live Pum layer must be created only after the host opener runs');
+
+        const trigger = session.page.locator('.recom_bottom_box > .btn_cloned');
+        assert.equal(await trigger.count(), 1);
+        await trigger.evaluate((button) => button.click());
+        await popup.waitFor({ state: 'attached' });
+        await popup.waitFor({ state: 'visible' });
+        await session.page.waitForFunction(() => document.querySelector('#write_pum_layer')?.classList.contains('dcuf-pum-layer-viewport-safe'));
+        assert.equal(await popup.evaluate((element) => element.parentElement?.classList.contains('recom_bottom_box')), true);
+        const first = await popup.evaluate((element) => {
+            const rect = element.getBoundingClientRect();
+            const style = getComputedStyle(element);
+            return {
+                rect: { top: rect.top, right: rect.right, bottom: rect.bottom, left: rect.left, width: rect.width, height: rect.height },
+                viewport: { width: innerWidth, height: innerHeight },
+                computedPosition: style.position,
+                computedBottom: style.bottom,
+                computedMaxHeight: style.maxHeight,
+                inlineBottom: element.style.bottom,
+                inlineLeft: element.style.left,
+                inlineMarginLeft: element.style.marginLeft,
+                hostOpenCount: window.__fixturePumOpenCount
+            };
+        });
+        assert.equal(first.computedPosition, 'fixed', JSON.stringify(first));
+        assert.equal(first.rect.left >= 7 && first.rect.right <= first.viewport.width - 7, true, JSON.stringify(first));
+        assert.equal(first.rect.top >= 7 && first.rect.bottom <= first.viewport.height - 7, true, JSON.stringify(first));
+        assert.equal(first.rect.width <= first.viewport.width - 16, true, JSON.stringify(first));
+        assert.equal(first.rect.height <= first.viewport.height - 16, true, JSON.stringify(first));
+        assert.equal(first.inlineBottom, '139px');
+        assert.equal(first.inlineLeft, '50%');
+        assert.equal(first.inlineMarginLeft, '-295px');
+        assert.equal(first.hostOpenCount, 1);
+
+        await session.page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+        const afterScroll = await popup.evaluate((element) => {
+            const rect = element.getBoundingClientRect();
+            return { top: rect.top, right: rect.right, bottom: rect.bottom, left: rect.left, width: innerWidth, height: innerHeight };
+        });
+        assert.equal(afterScroll.left >= 7 && afterScroll.right <= afterScroll.width - 7, true, JSON.stringify(afterScroll));
+        assert.equal(afterScroll.top >= 7 && afterScroll.bottom <= afterScroll.height - 7, true, JSON.stringify(afterScroll));
+
+        await popup.locator('.poply_whiteclose').click();
+        await popup.waitFor({ state: 'detached' });
+        await trigger.evaluate((button) => button.click());
+        await popup.waitFor({ state: 'attached' });
+        await popup.waitFor({ state: 'visible' });
+        await session.page.waitForFunction(() => document.querySelector('#write_pum_layer')?.classList.contains('dcuf-pum-layer-viewport-safe'));
+        assert.equal(await popup.evaluate(() => window.__fixturePumOpenCount), 2);
+        assert.equal(await popup.evaluate((element) => element.classList.contains('dcuf-pum-layer-viewport-safe')), true);
+        assert.equal(await popup.evaluate((element) => element.parentElement?.classList.contains('recom_bottom_box')), true);
+        assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
+    } finally { await session.close(); }
+});
+
 mobileTest('UI palette reaches settings, block management, and backup card surfaces in light and dark', 'functional', async ({ browser, server }) => {
     const session = await createTestPage(browser, server.baseUrl, {
         storage: { ...noStatsStorage, [storageKeys.palette]: 'orange' },
@@ -6187,6 +6498,27 @@ mobileTest('UI palette reaches settings, block management, and backup card surfa
                 { selector: '#dcinside-filter-setting .dcuf-settings-section', token: '--dcuf-theme-card-top' },
                 { selector: '#dcinside-filter-setting #dcinside-threshold-input', token: '--dcuf-theme-surface-input' }
             ]), `settings ${dark ? 'dark' : 'light'}`);
+            await session.page.locator('#dcinside-filter-setting #dcinside-exclude-recommended-checkbox').evaluate((input) => {
+                input.checked = true;
+            });
+            await session.page.waitForTimeout(300);
+            const settingsSwitch = await session.page.locator('#dcinside-filter-setting #dcinside-exclude-recommended-checkbox + .switch-slider').evaluate((slider) => {
+                const probe = document.createElement('i');
+                probe.style.backgroundColor = 'var(--dcuf-theme-accent-strong)';
+                slider.after(probe);
+                const expected = getComputedStyle(probe).backgroundColor;
+                probe.remove();
+                return {
+                    background: getComputedStyle(slider).backgroundColor,
+                    image: getComputedStyle(slider).backgroundImage,
+                    knob: getComputedStyle(slider, '::before').backgroundColor,
+                    expected
+                };
+            });
+            assert.notEqual(settingsSwitch.background, 'rgb(204, 204, 204)', JSON.stringify(settingsSwitch));
+            assert.notEqual(settingsSwitch.image, 'none', JSON.stringify(settingsSwitch));
+            assert.equal(settingsSwitch.image.includes(settingsSwitch.expected), true, JSON.stringify(settingsSwitch));
+            assert.equal(settingsSwitch.knob, 'rgb(255, 255, 255)', JSON.stringify(settingsSwitch));
             await session.page.locator('#dcinside-filter-setting').evaluate((element) => element.remove());
 
             await session.page.evaluate(() => window.__dcufTestbedGM.invokeMenu('차단 유저 관리'));
@@ -6197,6 +6529,27 @@ mobileTest('UI palette reaches settings, block management, and backup card surfa
                 { selector: '#dc-block-management-panel .panel-list-controls', token: '--dcuf-theme-card-top' },
                 { selector: '#dc-block-management-panel .panel-search-input', token: '--dcuf-theme-surface-input' }
             ]), `management ${dark ? 'dark' : 'light'}`);
+            await session.page.locator('#dc-block-management-panel #personal-block-toggle').evaluate((input) => {
+                input.checked = true;
+            });
+            await session.page.waitForTimeout(300);
+            const managementSwitch = await session.page.locator('#dc-block-management-panel #personal-block-toggle + .switch-slider').evaluate((slider) => {
+                const probe = document.createElement('i');
+                probe.style.backgroundColor = 'var(--dcuf-theme-accent-strong)';
+                slider.after(probe);
+                const expected = getComputedStyle(probe).backgroundColor;
+                probe.remove();
+                return {
+                    background: getComputedStyle(slider).backgroundColor,
+                    image: getComputedStyle(slider).backgroundImage,
+                    knob: getComputedStyle(slider, '::before').backgroundColor,
+                    expected
+                };
+            });
+            assert.notEqual(managementSwitch.background, 'rgb(204, 204, 204)', JSON.stringify(managementSwitch));
+            assert.notEqual(managementSwitch.image, 'none', JSON.stringify(managementSwitch));
+            assert.equal(managementSwitch.image.includes(managementSwitch.expected), true, JSON.stringify(managementSwitch));
+            assert.equal(managementSwitch.knob, 'rgb(255, 255, 255)', JSON.stringify(managementSwitch));
             await session.page.locator('#dc-block-management-panel .panel-backup-btn').click();
             await session.page.locator('#dc-backup-popup').waitFor({ state: 'attached' });
             assertPaletteSurfaces(await collectPaletteSurfaceContract(session.page, [
@@ -6585,6 +6938,19 @@ pcTest('PC palette port themes only DCUF-owned controls and dialogs', 'functiona
         await session.page.locator('#dcinside-filter-setting').waitFor({ state: 'attached' });
         const blueSave = await session.page.locator('#dcinside-threshold-save').evaluate((element) => getComputedStyle(element).backgroundColor);
         assert.equal(blueSave, 'rgb(36, 91, 218)');
+        await session.page.locator('#dcinside-filter-setting #dcinside-exclude-recommended-checkbox').evaluate((input) => {
+            input.checked = true;
+        });
+        await session.page.waitForTimeout(300);
+        const blueSwitch = await session.page.locator('#dcinside-filter-setting #dcinside-exclude-recommended-checkbox + .switch-slider').evaluate((slider) => ({
+            background: getComputedStyle(slider).backgroundColor,
+            image: getComputedStyle(slider).backgroundImage,
+            knob: getComputedStyle(slider, '::before').backgroundColor
+        }));
+        assert.notEqual(blueSwitch.background, 'rgb(204, 204, 204)', JSON.stringify(blueSwitch));
+        assert.notEqual(blueSwitch.image, 'none', JSON.stringify(blueSwitch));
+        assert.equal(blueSwitch.image.includes('rgb(36, 91, 218)'), true, JSON.stringify(blueSwitch));
+        assert.equal(blueSwitch.knob, 'rgb(255, 255, 255)', JSON.stringify(blueSwitch));
         await session.page.locator('#dcinside-filter-setting').evaluate((element) => element.remove());
 
         await session.page.evaluate(() => window.__dcufTestbedGM.invokeMenu('UI 색상 설정'));
@@ -6677,6 +7043,10 @@ pcTest('PC palette port themes only DCUF-owned controls and dialogs', 'functiona
 
         await session.page.evaluate(() => window.__dcufTestbedGM.invokeMenu('차단 유저 관리'));
         await session.page.locator('#dc-block-management-panel').waitFor({ state: 'attached' });
+        await session.page.locator('#dc-block-management-panel #personal-block-toggle').evaluate((input) => {
+            input.checked = true;
+        });
+        await session.page.waitForTimeout(300);
         const activeTab = await session.page.locator('#dc-block-management-panel .panel-tab.active').evaluate((element) => ({
             background: getComputedStyle(element).backgroundColor,
             color: getComputedStyle(element).color
@@ -6685,12 +7055,17 @@ pcTest('PC palette port themes only DCUF-owned controls and dialogs', 'functiona
         assert.notEqual(activeTab.color, 'rgb(0, 123, 255)', JSON.stringify(activeTab));
         const managementAccent = await session.page.locator('#dc-block-management-panel').evaluate((element) => ({
             kicker: getComputedStyle(element.querySelector('.panel-kicker')).color,
-            addBackground: getComputedStyle(element.querySelector('.panel-add-btn')).backgroundColor
+            addBackground: getComputedStyle(element.querySelector('.panel-add-btn')).backgroundColor,
+            switchBackground: getComputedStyle(element.querySelector('#personal-block-toggle + .switch-slider')).backgroundColor,
+            switchImage: getComputedStyle(element.querySelector('#personal-block-toggle + .switch-slider')).backgroundImage,
+            switchKnob: getComputedStyle(element.querySelector('#personal-block-toggle + .switch-slider'), '::before').backgroundColor
         }));
-        assert.deepEqual(managementAccent, {
-            kicker: 'rgb(194, 65, 12)',
-            addBackground: 'rgb(255, 240, 231)'
-        });
+        assert.equal(managementAccent.kicker, 'rgb(194, 65, 12)', JSON.stringify(managementAccent));
+        assert.equal(managementAccent.addBackground, 'rgb(255, 240, 231)', JSON.stringify(managementAccent));
+        assert.notEqual(managementAccent.switchBackground, 'rgb(204, 204, 204)', JSON.stringify(managementAccent));
+        assert.notEqual(managementAccent.switchImage, 'none', JSON.stringify(managementAccent));
+        assert.equal(managementAccent.switchImage.includes('rgb(154, 52, 18)'), true, JSON.stringify(managementAccent));
+        assert.equal(managementAccent.switchKnob, 'rgb(255, 255, 255)', JSON.stringify(managementAccent));
         await session.page.locator('#dc-block-management-panel .panel-backup-btn').click();
         const backupContract = await session.page.locator('#dc-backup-popup').evaluate((element) => ({
             downloadBackground: getComputedStyle(element.querySelector('.export-btn-download')).backgroundColor,

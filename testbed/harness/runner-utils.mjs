@@ -119,6 +119,7 @@ export const storageKeys = Object.freeze({
     masterDisabled: 'dcinside_master_disabled',
     threshold: 'dcinside_threshold',
     ratioEnabled: 'dcinside_ratio_filter_enabled',
+    blockPumPosts: 'dcinside_block_pum_posts',
     proxyBlockMode: 'dcinside_proxy_ip_block_enabled',
     telecomBlockEnabled: 'dcinside_telecom_ip_block_enabled',
     personalList: 'dcinside_personal_block_list',

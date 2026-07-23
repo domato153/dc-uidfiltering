@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         DC_UserFilter_Mobile
 // @namespace    http://tampermonkey.net/
-// @version      3.5.2
+// @version      3.5.3
 // @description  유저 필터링, UI 개선, 개인 차단/해제 기능
 // @author       domato153
 // @match        https://gall.dcinside.com/board/*
@@ -29,13 +29,17 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
     const __dcufRoot = (typeof unsafeWindow !== 'undefined' && unsafeWindow) ? unsafeWindow : window;
     if (window.top !== window.self) return;
 
-    const detectedPageType = ((window.location.pathname || '').match(/\/board\/(lists|view|write|modify)(?:\/|$)/) || [])[1] || 'other';
+    const detectedRouteType = ((window.location.pathname || '').match(/\/board\/(lists|view|write|modify|delete)(?:\/|$)/) || [])[1] || 'other';
+    const detectedPageType = detectedRouteType === 'delete' && 'mobile' !== 'mobile'
+        ? 'other'
+        : detectedRouteType;
     const pageContext = Object.freeze({
         type: detectedPageType,
         isList: detectedPageType === 'lists',
         isView: detectedPageType === 'view',
         isWrite: detectedPageType === 'write',
         isModify: detectedPageType === 'modify',
+        isDelete: detectedPageType === 'delete',
         isWriteSurface: detectedPageType === 'write' || detectedPageType === 'modify',
         isOther: detectedPageType === 'other',
         isTargetPage: detectedPageType !== 'other',
@@ -49,7 +53,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
     else document.addEventListener('DOMContentLoaded', exposePageContextAttribute, { once: true });
 
     // The metadata covers a few gallery-adjacent pages, but the mobile runtime owns
-    // only board list/view/write/modify surfaces. Keep the lightweight page-context bridge
+    // only board list/view/write/modify plus the mobile delete-password surface. Keep the lightweight page-context bridge
     // and stop before installing observers, menus, or styles elsewhere.
     if (!pageContext.isTargetPage) return;
 
@@ -355,6 +359,7 @@ const FILTER_CONSTANTS = {
                 RATIO_ENABLED: 'dcinside_ratio_filter_enabled',
                 RATIO_MIN: 'dcinside_ratio_min',
                 RATIO_MAX: 'dcinside_ratio_max',
+                BLOCK_PUM_POSTS: 'dcinside_block_pum_posts',
                 BLOCK_GUEST: 'dcinside_block_guest',
                 BLOCK_PROXY: 'dcinside_proxy_ip_block_enabled',
                 BLOCK_TELECOM: 'dcinside_telecom_ip_block_enabled',
@@ -402,6 +407,7 @@ const FILTER_CONSTANTS = {
                 RATIO_SECTION: 'dcinside-ratio-section',
                 RATIO_MIN_INPUT: 'dcinside-ratio-min',
                 RATIO_MAX_INPUT: 'dcinside-ratio-max',
+                BLOCK_PUM_POSTS_CHECKBOX: 'dcinside-block-pum-posts-checkbox',
                 SAVE_BUTTON: 'dcinside-threshold-save',
                 CLOSE_BUTTON: 'dcinside-filter-close',
                 SHORTCUT_DISPLAY: 'dcinside-shortcut-display',
@@ -727,6 +733,7 @@ function createDefaultFilterSettings() {
         ratioEnabled: true,
         ratioMin: 99,
         ratioMax: 1,
+        blockPumPosts: false,
         blockGuest: false,
         proxyBlockMode: PROXY_MODE.OFF,
         telecomBlockEnabled: false,
@@ -752,6 +759,7 @@ function normalizeStoredFilterSettings(rawValues = {}) {
         ratioEnabled: toBoolean(rawValues[STORAGE_KEYS.RATIO_ENABLED], defaults.ratioEnabled),
         ratioMin: toFloat(rawValues[STORAGE_KEYS.RATIO_MIN], defaults.ratioMin),
         ratioMax: toFloat(rawValues[STORAGE_KEYS.RATIO_MAX], defaults.ratioMax),
+        blockPumPosts: toBoolean(rawValues[STORAGE_KEYS.BLOCK_PUM_POSTS], defaults.blockPumPosts),
         blockGuest: toBoolean(rawValues[STORAGE_KEYS.BLOCK_GUEST], defaults.blockGuest),
         proxyBlockMode: normalizeProxyBlockModeValue(rawValues[STORAGE_KEYS.BLOCK_PROXY]),
         telecomBlockEnabled: toBoolean(rawValues[STORAGE_KEYS.BLOCK_TELECOM], defaults.telecomBlockEnabled),
@@ -869,6 +877,7 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         blockedGuestMatch: Boolean(matches.blockedGuestMatch),
         personallyBlocked: Boolean(matches.personalBlockHit),
         galleryHeadtextBlocked: Boolean(matches.galleryHeadtextBlock),
+        pumPostMatch: Boolean(matches.pumPostMatch),
     };
 
     if (decision.personallyBlocked) {
@@ -914,6 +923,12 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         decision.reasons.push('galleryHeadtext');
     }
 
+    if (!decision.isBlocked && settings?.blockPumPosts && decision.pumPostMatch) {
+        decision.isBlocked = true;
+        decision.path = 'pum-post';
+        decision.reasons.push('pumPost');
+    }
+
     if (!decision.isBlocked && subject?.isGuest && settings?.blockGuestEnabled) {
         decision.isBlocked = true;
         decision.reasons.push('guest-toggle');
@@ -957,6 +972,41 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
     // =================================================================
     // ======================== UI Module Style ========================
     // =================================================================
+(() => {
+    'use strict';
+
+    const root = typeof unsafeWindow !== 'undefined' ? unsafeWindow : globalThis;
+    if (root.__dcufWriteDefaultsAttached) return;
+    root.__dcufWriteDefaultsAttached = true;
+
+    if (!/\/board\/write(?:\/|$)/.test(window.location.pathname || '')) return;
+
+    const activatePumx = () => {
+        const button = document.getElementById('btn_pumx');
+        if (!(button instanceof HTMLButtonElement)) return false;
+        if (button.dataset.dcufPumxDefaultActivated === '1') return true;
+
+        button.dataset.dcufPumxDefaultActivated = '1';
+        button.click();
+        return true;
+    };
+
+    const start = () => {
+        if (activatePumx()) return;
+
+        const observer = new MutationObserver(() => {
+            if (activatePumx()) observer.disconnect();
+        });
+        observer.observe(document.documentElement, { childList: true, subtree: true });
+        window.addEventListener('pagehide', () => observer.disconnect(), { once: true });
+    };
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', start, { once: true });
+    } else {
+        start();
+    }
+})();
     const RuntimeCoordinator = {
         SCRIPT_UI_SELECTOR: [
             '#dc-backup-popup',
@@ -1055,13 +1105,14 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
         getPageContext() {
             const sharedContext = window.__dcufPageContext;
             if (sharedContext && typeof sharedContext === 'object') return sharedContext;
-            const type = ((window.location.pathname || '').match(/\/board\/(lists|view|write|modify)(?:\/|$)/) || [])[1] || 'other';
+            const type = ((window.location.pathname || '').match(/\/board\/(lists|view|write|modify|delete)(?:\/|$)/) || [])[1] || 'other';
             return {
                 type,
                 isList: type === 'lists',
                 isView: type === 'view',
                 isWrite: type === 'write',
                 isModify: type === 'modify',
+                isDelete: type === 'delete',
                 isWriteSurface: type === 'write' || type === 'modify',
                 isOther: type === 'other',
                 isTargetPage: type !== 'other',
@@ -1113,6 +1164,9 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
             }
             if (pageContext.isWriteSurface) {
                 return 'form#write, form[name="modify"][action*="modify_submit"], #write_wrap, .gall_write, .write_box, form[name="password_confirm"], form[action*="modify_password_submit"], .no_memberwrap';
+            }
+            if (pageContext.isDelete) {
+                return 'form[name="delete"], form[action*="delete_password_submit"], .no_memberwrap';
             }
             return shared.join(', ');
         },
@@ -2628,7 +2682,17 @@ const ThemeModule = (() => {
             box-shadow: 0 7px 16px var(--dcuf-theme-accent-shadow) !important;
         }
         html[${ROOT_ATTRIBUTE}] body #dc-block-management-panel input:checked + .switch-slider,
-        html[${ROOT_ATTRIBUTE}] body #dcinside-filter-setting input:checked + .switch-slider,
+        html[${ROOT_ATTRIBUTE}] body #dcinside-filter-setting input:checked + .switch-slider {
+            border-color: var(--dcuf-theme-accent-strong) !important;
+            background-color: var(--dcuf-theme-accent-strong) !important;
+            background-image: linear-gradient(180deg, var(--dcuf-theme-primary-top), var(--dcuf-theme-accent-strong)) !important;
+            box-shadow: 0 3px 9px var(--dcuf-theme-accent-shadow), inset 0 1px 0 color-mix(in srgb, white 28%, transparent) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-block-management-panel input:checked + .switch-slider::before,
+        html[${ROOT_ATTRIBUTE}] body #dcinside-filter-setting input:checked + .switch-slider::before {
+            background: #fff !important;
+            box-shadow: 0 1px 4px rgba(15, 23, 42, .5) !important;
+        }
         html[${ROOT_ATTRIBUTE}] body #dc-block-management-panel .panel-tab.active {
             border-color: var(--dcuf-theme-accent) !important;
             background-color: var(--dcuf-theme-accent-soft) !important;
@@ -4238,9 +4302,9 @@ const ThemeModule = (() => {
         #dcinside-filter-setting .switch input,
         #dc-block-management-panel .switch input { opacity: 0; width: 0; height: 0; }
         #dcinside-filter-setting .switch-slider,
-        #dc-block-management-panel .switch-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 22px; }
+        #dc-block-management-panel .switch-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; box-sizing: border-box; border: 1px solid transparent; background-color: #ccc; transition: .25s; border-radius: 22px; }
         #dcinside-filter-setting .switch-slider:before,
-        #dc-block-management-panel .switch-slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        #dc-block-management-panel .switch-slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 2px; bottom: 2px; background-color: white; transition: .25s; border-radius: 50%; box-shadow: 0 1px 4px rgba(15, 23, 42, .38); }
         #dcinside-filter-setting input:checked + .switch-slider,
         #dc-block-management-panel input:checked + .switch-slider { background-color: #3b71fd; }
         #dcinside-filter-setting input:checked + .switch-slider:before,
@@ -4698,7 +4762,7 @@ const ThemeModule = (() => {
             }
         }
 
-        /* [v3.5.2] Script-owned soft-depth control surfaces */
+        /* [v3.5.3] Script-owned soft-depth control surfaces */
         #dc-personal-block-fab {
             background: linear-gradient(180deg, #fff 0%, #eef4ff 100%) !important;
             color: #29466f !important;
@@ -6124,6 +6188,7 @@ const ThemeModule = (() => {
                 ratioEnabled: !!s.ratioEnabled,
                 ratioMin: s.ratioMin,
                 ratioMax: s.ratioMax,
+                blockPumPosts: !!s.blockPumPosts,
                 blockGuestEnabled: !!s.blockGuestEnabled,
                 proxyBlockMode,
                 proxyBlockModeLabel: this.getProxyModeLabel(proxyBlockMode),
@@ -6287,7 +6352,7 @@ const ThemeModule = (() => {
         async showSettings() {
             window.__dcufEnsureFilterUiStyles?.();
             await this.reloadSettings();
-            const { masterDisabled = false, excludeRecommended = false, threshold = 0, ratioEnabled = false, ratioMin = '', ratioMax = '', blockGuestEnabled = false, proxyBlockMode = 0, telecomBlockEnabled = false } = dcFilterSettings;
+            const { masterDisabled = false, excludeRecommended = false, threshold = 0, ratioEnabled = false, ratioMin = '', ratioMax = '', blockPumPosts = false, blockGuestEnabled = false, proxyBlockMode = 0, telecomBlockEnabled = false } = dcFilterSettings;
             const currentShortcut = await GM_getValue(this.CONSTANTS.STORAGE_KEYS.SHORTCUT_KEY, 'Shift+S');
             const normalizedProxyBlockMode = this.normalizeProxyBlockMode(proxyBlockMode);
             const existingDiv = document.getElementById(this.CONSTANTS.UI_IDS.SETTINGS_PANEL);
@@ -6324,6 +6389,7 @@ const ThemeModule = (() => {
                             <div style="display:flex;flex-direction:column;align-items:center;"><label for="${this.CONSTANTS.UI_IDS.RATIO_MAX_INPUT}" style="font-size:14px;">글/댓글 비율 일정 이상 차단 </label><div style="font-size:12px;color:#888;line-height:1.2;">(글만 많은 놈)</div><input id="${this.CONSTANTS.UI_IDS.RATIO_MAX_INPUT}" type="number" step="any" placeholder="예: 1" value="${ratioMax !== '' ? ratioMax : ''}" style="width:100px;font-size:15px;text-align:center; margin-top: 4px;"></div>
                         </div><div style="margin-top:8px;font-size:13px;color:#666;text-align:left;">비율이 입력값과 같거나 큰(이상)인 유저를 차단합니다.</div>
                     </div>
+                    <div class="dcuf-settings-section dcuf-settings-pum" style="display:flex;align-items:center;gap:8px;"><label class="switch" style="flex-shrink:0;"><input id="${this.CONSTANTS.UI_IDS.BLOCK_PUM_POSTS_CHECKBOX}" type="checkbox" ${blockPumPosts ? 'checked' : ''}><span class="switch-slider"></span></label><label for="${this.CONSTANTS.UI_IDS.BLOCK_PUM_POSTS_CHECKBOX}" style="font-size:15px;cursor:pointer;">펌 게시물 차단</label></div>
                     <button type="button" id="${this.CONSTANTS.UI_IDS.HEADTEXT_MANAGER_BUTTON}" style="width:100%;margin-top:14px;padding:9px 10px;border:1px solid #9aa4b2;border-radius:7px;background:#f6f8fb;color:#222;font-weight:700;cursor:pointer;">갤러리별 말머리 차단 관리</button>
                 </div>
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-top:16px; padding-top:15px; border-top: 2px solid #ccc;">
@@ -6373,6 +6439,7 @@ const ThemeModule = (() => {
             const ratioEnableCheckbox = div.querySelector(`#${this.CONSTANTS.UI_IDS.RATIO_ENABLE_CHECKBOX}`);
             const ratioMinInput = div.querySelector(`#${this.CONSTANTS.UI_IDS.RATIO_MIN_INPUT}`);
             const ratioMaxInput = div.querySelector(`#${this.CONSTANTS.UI_IDS.RATIO_MAX_INPUT}`);
+            const blockPumPostsCheckbox = div.querySelector(`#${this.CONSTANTS.UI_IDS.BLOCK_PUM_POSTS_CHECKBOX}`);
             const closeButton = div.querySelector(`#${this.CONSTANTS.UI_IDS.CLOSE_BUTTON}`);
             const saveButton = div.querySelector(`#${this.CONSTANTS.UI_IDS.SAVE_BUTTON}`);
             const excludeRecommendedCheckbox = div.querySelector(`#${this.CONSTANTS.UI_IDS.EXCLUDE_RECOMMENDED_CHECKBOX}`);
@@ -6399,7 +6466,7 @@ const ThemeModule = (() => {
                 }, { passive: false });
             }
 
-            if (!masterDisableCheckbox || !settingsContainer || !ratioSection || !ratioEnableCheckbox || !ratioMinInput || !ratioMaxInput || !saveButton || !excludeRecommendedCheckbox || !blockGuestCheckbox || !proxyBlockModeGroup || !telecomBlockCheckbox) {
+            if (!masterDisableCheckbox || !settingsContainer || !ratioSection || !ratioEnableCheckbox || !ratioMinInput || !ratioMaxInput || !blockPumPostsCheckbox || !saveButton || !excludeRecommendedCheckbox || !blockGuestCheckbox || !proxyBlockModeGroup || !telecomBlockCheckbox) {
                 console.error('DCinside User Filter: settings popup init failed - required control missing.');
                 return;
             }
@@ -6458,6 +6525,9 @@ const ThemeModule = (() => {
             });
             telecomBlockCheckbox.addEventListener('change', (e) =>
                 applyCheckboxChange(this.CONSTANTS.STORAGE_KEYS.BLOCK_TELECOM, e.target.checked)
+            );
+            blockPumPostsCheckbox.addEventListener('change', (e) =>
+                applyCheckboxChange(this.CONSTANTS.STORAGE_KEYS.BLOCK_PUM_POSTS, e.target.checked)
             );
             headtextManagerButton?.addEventListener('click', () => this.showHeadtextBlockManager());
             ratioEnableCheckbox.addEventListener('change', (e) =>
@@ -6533,6 +6603,7 @@ const ThemeModule = (() => {
                     GM_setValue(this.CONSTANTS.STORAGE_KEYS.RATIO_ENABLED, ratioEnableCheckbox.checked),
                     GM_setValue(this.CONSTANTS.STORAGE_KEYS.RATIO_MIN, ratioMinInput.value),
                     GM_setValue(this.CONSTANTS.STORAGE_KEYS.RATIO_MAX, ratioMaxInput.value),
+                    GM_setValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_PUM_POSTS, blockPumPostsCheckbox.checked),
                     GM_setValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_GUEST, blockGuestChecked),
                     GM_setValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_PROXY, currentProxyBlockMode),
                     GM_setValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_TELECOM, telecomBlockCheckbox.checked)
@@ -6828,9 +6899,9 @@ const ThemeModule = (() => {
         isFilterTargetDescriptor(value) {
             return Boolean(value && value.element instanceof HTMLElement);
         },
-        normalizeFilterTarget(target, { includeHeadtext = true } = {}) {
+        normalizeFilterTarget(target, { includeHeadtext = true, includePum = true } = {}) {
             if (this.isFilterTargetDescriptor(target)) return target;
-            return this.describeFilterTarget(target, { includeHeadtext });
+            return this.describeFilterTarget(target, { includeHeadtext, includePum });
         },
         isReplyOnlyCommentWrapper(element) {
             if (!(element instanceof HTMLElement)) return false;
@@ -6862,7 +6933,12 @@ const ThemeModule = (() => {
                 : element.querySelector('[data-headtext], .gall_subject');
             return this.getCanonicalHeadtextFromNode(source);
         },
-        describeFilterTarget(element, { includeHeadtext = true } = {}) {
+        isPumPost(element) {
+            if (!(element instanceof HTMLElement) || !this.isHeadtextFilterTarget(element)) return false;
+            const marker = element.querySelector(':scope > .gall_tit > b.font_blue009');
+            return this.normalizeHeadtext(marker?.textContent || '') === '(펌)';
+        },
+        describeFilterTarget(element, { includeHeadtext = true, includePum = true } = {}) {
             if (!(element instanceof HTMLElement)) return null;
             if (this.isReplyOnlyCommentWrapper(element)) return null;
 
@@ -6876,6 +6952,7 @@ const ThemeModule = (() => {
             const ip = ipFromSpan || writerDataIp || null;
             const ipPrefix = this.getIpPrefix(ip);
             const isHeadtextTarget = includeHeadtext && this.isHeadtextFilterTarget(element);
+            const isPumPost = includePum && this.isPumPost(element);
             const hasNoticeMarker = Boolean(element.querySelector('em.icon_notice'))
                 || element.classList.contains('notice')
                 || element.classList.contains('us-post--notice');
@@ -6899,7 +6976,8 @@ const ThemeModule = (() => {
                 hasBlockDisableClass: element.classList.contains('block-disable'),
                 galleryKey: isHeadtextTarget ? this.getGalleryKey() : null,
                 headtext: isHeadtextTarget ? this.extractHeadtext(element) : '',
-                isHeadtextTarget
+                isHeadtextTarget,
+                isPumPost
             };
         },
         describeFilterTargets(items) {
@@ -6909,8 +6987,9 @@ const ThemeModule = (() => {
             // The default rule set is empty. Avoid all headtext DOM probing on the
             // ordinary mutation hot path until the user has an active rule.
             const includeHeadtext = dcFilterSettings.galleryHeadtextBlockSet?.size > 0;
+            const includePum = Boolean(dcFilterSettings.blockPumPosts);
             items.forEach((item) => {
-                const descriptor = this.normalizeFilterTarget(item, { includeHeadtext });
+                const descriptor = this.normalizeFilterTarget(item, { includeHeadtext, includePum });
                 const element = descriptor?.element;
                 if (!(element instanceof HTMLElement) || seen.has(element)) return;
                 seen.add(element);
@@ -7403,6 +7482,7 @@ const ThemeModule = (() => {
                 blockedGuests = [],
                 blockedGuestSet,
                 customIpPrefixSet,
+                blockPumPosts,
                 personalBlockEnabled,
                 personalBlockUidSet,
                 personalBlockNicknameSet,
@@ -7411,7 +7491,7 @@ const ThemeModule = (() => {
             const normalizedProxyBlockMode = this.normalizeProxyBlockMode(proxyBlockMode);
             const proxyBlockEnabled = normalizedProxyBlockMode !== this.PROXY_MODE.OFF;
 
-            const { element, uid, nickname, ip, ipText, writerDataIp, ipPrefix, isGuest, isNotice, shouldSkipFiltering, hasBlockDisableClass, galleryKey, headtext, isHeadtextTarget } = descriptor;
+            const { element, uid, nickname, ip, ipText, writerDataIp, ipPrefix, isGuest, isNotice, shouldSkipFiltering, hasBlockDisableClass, galleryKey, headtext, isHeadtextTarget, isPumPost } = descriptor;
             const subject = {
                 uid,
                 nickname,
@@ -7434,6 +7514,8 @@ const ThemeModule = (() => {
                 writerDataIp,
                 ipPrefix,
                 isGuest,
+                isPumPost,
+                blockPumPosts,
                 blockGuestEnabled,
                 proxyBlockMode: normalizedProxyBlockMode,
                 proxyBlockEnabled,
@@ -7451,6 +7533,7 @@ const ThemeModule = (() => {
                     telecomBlockEnabled,
                     customIpPrefixSet,
                     personalBlockEnabled,
+                    blockPumPosts,
                     threshold: dcFilterSettings.threshold,
                     ratioEnabled: dcFilterSettings.ratioEnabled,
                     ratioMin: dcFilterSettings.ratioMin,
@@ -7466,7 +7549,8 @@ const ThemeModule = (() => {
                     proxyMatchInfo,
                     telecomPrefixMatch: Boolean(ipPrefix && telecomPrefixSet && telecomPrefixSet.has(ipPrefix)),
                     blockedGuestMatch: Boolean(ip && (blockedGuestSet instanceof Set ? blockedGuestSet.has(ip) : blockedGuests.includes(ip))),
-                    galleryHeadtextBlock: Boolean(isHeadtextTarget && galleryKey && headtext && dcFilterSettings.galleryHeadtextBlockSet?.has(headtext))
+                    galleryHeadtextBlock: Boolean(isHeadtextTarget && galleryKey && headtext && dcFilterSettings.galleryHeadtextBlockSet?.has(headtext)),
+                    pumPostMatch: Boolean(isPumPost)
                 },
                 blockedUidEntry: uid ? (this.BLOCKED_UIDS_CACHE[uid] || userSumCache[uid] || null) : null
             });
@@ -7507,7 +7591,8 @@ const ThemeModule = (() => {
                     proxyPrefixMatch: decision.proxyPrefixMatch,
                     proxyMatchTier: decision.proxyMatchTier,
                     telecomPrefixMatch: decision.telecomPrefixMatch,
-                    blockedGuestMatch: decision.blockedGuestMatch
+                    blockedGuestMatch: decision.blockedGuestMatch,
+                    pumPostMatch: decision.pumPostMatch
                 });
             }
             this.setElementVisibility(element, decision.isBlocked);
@@ -7605,6 +7690,7 @@ const ThemeModule = (() => {
                 GM_getValue(keys.RATIO_ENABLED, false),
                 GM_getValue(keys.RATIO_MIN, ''),
                 GM_getValue(keys.RATIO_MAX, ''),
+                GM_getValue(keys.BLOCK_PUM_POSTS, false),
                 GM_getValue(keys.BLOCK_GUEST, false),
                 GM_getValue(keys.BLOCK_PROXY, 0),
                 GM_getValue(keys.BLOCK_TELECOM, false),
@@ -7617,7 +7703,7 @@ const ThemeModule = (() => {
             ]).then((values) => {
                 const [
                     migrationDone, masterDisabled, excludeRecommended, rawThreshold, ratioEnabled,
-                    ratioMin, ratioMax, blockGuestEnabled, proxyBlockMode, telecomBlockEnabled,
+                    ratioMin, ratioMax, blockPumPosts, blockGuestEnabled, proxyBlockMode, telecomBlockEnabled,
                     blockedGuestsRaw, blockConfig, personalBlockList, personalBlockEnabled, galleryHeadtextBlocks, blockedUidsRaw
                 ] = values;
                 let blockedGuests = [];
@@ -7631,6 +7717,7 @@ const ThemeModule = (() => {
                     ratioEnabled,
                     ratioMin,
                     ratioMax,
+                    blockPumPosts,
                     blockGuestEnabled,
                     proxyBlockMode,
                     telecomBlockEnabled,
@@ -7667,6 +7754,7 @@ const ThemeModule = (() => {
                 ratioEnabled: Boolean(settings.ratioEnabled),
                 ratioMin: String(settings.ratioMin ?? ''),
                 ratioMax: String(settings.ratioMax ?? ''),
+                blockPumPosts: Boolean(settings.blockPumPosts),
                 blockGuestEnabled: Boolean(settings.blockGuestEnabled),
                 proxyBlockMode: this.normalizeProxyBlockMode(settings.proxyBlockMode),
                 telecomBlockEnabled: Boolean(settings.telecomBlockEnabled),
@@ -7687,6 +7775,7 @@ const ThemeModule = (() => {
                 values = [
                     snapshot.masterDisabled, snapshot.excludeRecommended, snapshot.threshold,
                     snapshot.ratioEnabled, snapshot.ratioMin, snapshot.ratioMax,
+                    snapshot.blockPumPosts,
                     snapshot.blockGuestEnabled, snapshot.proxyBlockMode, snapshot.telecomBlockEnabled,
                     snapshot.blockedGuests, snapshot.blockConfig, snapshot.personalBlockList,
                     snapshot.personalBlockEnabled, snapshot.galleryHeadtextBlocks
@@ -7699,6 +7788,7 @@ const ThemeModule = (() => {
                     GM_getValue(this.CONSTANTS.STORAGE_KEYS.RATIO_ENABLED, false),
                     GM_getValue(this.CONSTANTS.STORAGE_KEYS.RATIO_MIN, ''),
                     GM_getValue(this.CONSTANTS.STORAGE_KEYS.RATIO_MAX, ''),
+                    GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_PUM_POSTS, false),
                     GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_GUEST, false),
                     GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_PROXY, 0),
                     GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_TELECOM, false),
@@ -7711,7 +7801,7 @@ const ThemeModule = (() => {
             }
             const [
                 masterDisabled, excludeRecommended, threshold, ratioEnabled,
-                ratioMin, ratioMax, blockGuestEnabled, proxyBlockMode, telecomBlockEnabled,
+                ratioMin, ratioMax, blockPumPosts, blockGuestEnabled, proxyBlockMode, telecomBlockEnabled,
                 blockedGuests, blockConfig, personalBlockList, personalBlockEnabled, galleryHeadtextBlocksRaw
             ] = values;
             const normalizedSettings = DCUF_SHARED_STORAGE.normalizeStoredFilterSettings({
@@ -7721,6 +7811,7 @@ const ThemeModule = (() => {
                 [this.CONSTANTS.STORAGE_KEYS.RATIO_ENABLED]: ratioEnabled,
                 [this.CONSTANTS.STORAGE_KEYS.RATIO_MIN]: ratioMin,
                 [this.CONSTANTS.STORAGE_KEYS.RATIO_MAX]: ratioMax,
+                [this.CONSTANTS.STORAGE_KEYS.BLOCK_PUM_POSTS]: blockPumPosts,
                 [this.CONSTANTS.STORAGE_KEYS.BLOCK_GUEST]: blockGuestEnabled,
                 [this.CONSTANTS.STORAGE_KEYS.BLOCK_PROXY]: proxyBlockMode,
                 [this.CONSTANTS.STORAGE_KEYS.BLOCK_TELECOM]: telecomBlockEnabled,
@@ -7743,6 +7834,7 @@ const ThemeModule = (() => {
                 ratioEnabled: normalizedSettings.ratioEnabled,
                 ratioMin: normalizedSettings.ratioMin,
                 ratioMax: normalizedSettings.ratioMax,
+                blockPumPosts: normalizedSettings.blockPumPosts,
                 blockGuestEnabled: normalizedSettings.blockGuest,
                 proxyBlockMode: normalizedSettings.proxyBlockMode,
                 proxyBlockEnabled: normalizedSettings.proxyBlockMode !== this.PROXY_MODE.OFF,
@@ -7805,7 +7897,8 @@ const ThemeModule = (() => {
                 if (!(element instanceof HTMLElement) || seen.has(element)) return descriptors;
                 seen.add(element);
                 const descriptor = this.describeFilterTarget(element, {
-                    includeHeadtext: dcFilterSettings.galleryHeadtextBlockSet?.size > 0
+                    includeHeadtext: dcFilterSettings.galleryHeadtextBlockSet?.size > 0,
+                    includePum: Boolean(dcFilterSettings.blockPumPosts)
                 });
                 if (descriptor) descriptors.push(descriptor);
                 return descriptors;
@@ -8076,7 +8169,7 @@ const ThemeModule = (() => {
             this._initState = 'initializing';
             this._initPromise = (async () => {
                 this.installDebugApi();
-                this.debugLog('init', 'FilterModule init start', { version: '3.5.2' });
+                this.debugLog('init', 'FilterModule init start', { version: '3.5.3' });
                 const snapshot = await this.loadBootSnapshot();
                 await this.cleanupLegacyManagedBlockConfig(snapshot);
                 await this.reloadSettings(snapshot);
@@ -12228,13 +12321,14 @@ const ThemeModule = (() => {
         getPageContext() {
             const sharedContext = window.__dcufPageContext;
             if (sharedContext && typeof sharedContext === 'object') return sharedContext;
-            const type = ((window.location.pathname || '').match(/\/board\/(lists|view|write|modify)(?:\/|$)/) || [])[1] || 'other';
+            const type = ((window.location.pathname || '').match(/\/board\/(lists|view|write|modify|delete)(?:\/|$)/) || [])[1] || 'other';
             return {
                 type,
                 isList: type === 'lists',
                 isView: type === 'view',
                 isWrite: type === 'write',
                 isModify: type === 'modify',
+                isDelete: type === 'delete',
                 isWriteSurface: type === 'write' || type === 'modify',
                 isOther: type === 'other',
                 isTargetPage: type !== 'other',
@@ -12266,6 +12360,10 @@ const ThemeModule = (() => {
 
         isModifyPage() {
             return this.getPageContext().isModify === true;
+        },
+
+        isDeletePage() {
+            return this.getPageContext().isDelete === true;
         },
 
         shouldEnsureListRuntimeForReveal() {
@@ -13423,7 +13521,7 @@ const ThemeModule = (() => {
 
             const writeForm = this.getWriteForm();
             if (writeForm instanceof HTMLFormElement) {
-                document.body.classList.remove('is-modify-password-page');
+                document.body.classList.remove('is-modify-password-page', 'is-dcuf-password-page');
                 document.body.classList.add('is-modify-page', 'is-modify-editor-page');
                 document.body.dataset.dcufModifySurface = 'editor';
                 document.documentElement?.setAttribute('data-dcuf-modify-surface', 'editor');
@@ -13435,10 +13533,10 @@ const ThemeModule = (() => {
             const passwordForm = document.querySelector('form[name="password_confirm"], form[action*="modify_password_submit"]');
             if (passwordForm instanceof HTMLFormElement) {
                 document.body.classList.remove('is-modify-editor-page');
-                document.body.classList.add('is-modify-page', 'is-modify-password-page');
+                document.body.classList.add('is-modify-page', 'is-modify-password-page', 'is-dcuf-password-page');
                 document.body.dataset.dcufModifySurface = 'password';
                 document.documentElement?.setAttribute('data-dcuf-modify-surface', 'password');
-                passwordForm.classList.add('dcuf-modify-password-form');
+                passwordForm.classList.add('dcuf-modify-password-form', 'dcuf-password-form');
                 const passwordInput = passwordForm.querySelector('input[type="password"][name="password"], #password');
                 if (passwordInput instanceof HTMLInputElement) {
                     passwordInput.autocomplete = 'current-password';
@@ -13449,7 +13547,7 @@ const ThemeModule = (() => {
             }
 
             document.body.classList.add('is-modify-page');
-            document.body.classList.remove('is-modify-password-page', 'is-modify-editor-page');
+            document.body.classList.remove('is-modify-password-page', 'is-modify-editor-page', 'is-dcuf-password-page');
             document.body.dataset.dcufModifySurface = 'pending';
             document.documentElement?.setAttribute('data-dcuf-modify-surface', 'pending');
             return 'pending';
@@ -13475,6 +13573,31 @@ const ThemeModule = (() => {
                 }
             });
             if (typeof unsubscribe === 'function') this._modifySurfaceMutationUnsubscribe = unsubscribe;
+        },
+
+        syncDeleteSurface(reason = 'sync') {
+            if (!this.isDeletePage() || !document.body) return 'not-delete';
+
+            const passwordForm = document.querySelector('form[name="delete"][action*="delete_password_submit"], form[action*="delete_password_submit"]');
+            document.body.classList.add('is-delete-page');
+            if (!(passwordForm instanceof HTMLFormElement)) {
+                document.body.classList.remove('is-delete-password-page', 'is-dcuf-password-page');
+                document.body.dataset.dcufDeleteSurface = 'pending';
+                document.documentElement?.setAttribute('data-dcuf-delete-surface', 'pending');
+                return 'pending';
+            }
+
+            document.body.classList.add('is-delete-password-page', 'is-dcuf-password-page');
+            document.body.dataset.dcufDeleteSurface = 'password';
+            document.documentElement?.setAttribute('data-dcuf-delete-surface', 'password');
+            passwordForm.classList.add('dcuf-delete-password-form', 'dcuf-password-form');
+            const passwordInput = passwordForm.querySelector('input[type="password"][name="password"], #password');
+            if (passwordInput instanceof HTMLInputElement) {
+                passwordInput.autocomplete = 'current-password';
+                if (!passwordInput.getAttribute('aria-label')) passwordInput.setAttribute('aria-label', '비밀번호');
+            }
+            this.recordDiagnostic('ui.deleteSurface.password', { reason });
+            return 'password';
         },
 
         transformWritePage() {
@@ -14098,6 +14221,10 @@ const ThemeModule = (() => {
                 return modifySurface === 'editor' ? 'non-list' : `modify-${modifySurface}`;
             }
 
+            if (this.isDeletePage()) {
+                return `delete-${this.syncDeleteSurface('init')}`;
+            }
+
             if (this.isWritePage()) {
                 this.transformWritePage();
                 return 'non-list';
@@ -14171,7 +14298,7 @@ const ThemeModule = (() => {
 
         return {
             reason,
-            version: '3.5.2',
+            version: '3.5.3',
             time: new Date().toISOString(),
             href: location.href,
             heap: getDcufHeapMb(),
@@ -14404,7 +14531,7 @@ const ThemeModule = (() => {
                 }));
             }
         }
-        console.log("[DC Filter+UI] Initializing v3.5.2...");
+        console.log("[DC Filter+UI] Initializing v3.5.3...");
         await MobileConvenienceModule.init();
         UIModule.bindRecentVisitNavigation();
 
@@ -20682,13 +20809,74 @@ const ThemeModule = (() => {
 })();
 
 (() => {
-    if (!__dcufPageSupports('modify')) return;
+    if (!__dcufPageSupports('view')) return;
+
+    const STYLE_ID = 'dcuf-pum-layer-viewport-style';
+    const POSITIONED_CLASS = 'dcuf-pum-layer-viewport-safe';
+    const POPUP_SELECTOR = '#write_pum_layer.pop_wrap';
+    const injectStyle = () => {
+        if (document.getElementById(STYLE_ID)) return true;
+        const target = document.head || document.documentElement;
+        if (!target) return false;
+        const style = document.createElement('style');
+        style.id = STYLE_ID;
+        style.textContent = `
+            ${POPUP_SELECTOR}.${POSITIONED_CLASS} {
+                box-sizing: border-box !important;
+                position: fixed !important;
+                left: 50% !important;
+                top: 50% !important;
+                right: auto !important;
+                bottom: auto !important;
+                width: min(590px, calc(100vw - 16px)) !important;
+                max-width: calc(100vw - 16px) !important;
+                max-height: calc(100vh - 16px) !important;
+                max-height: calc(100dvh - 16px) !important;
+                margin: 0 !important;
+                transform: translate(-50%, -50%) !important;
+                overflow: auto !important;
+                overscroll-behavior: contain !important;
+                z-index: 2147483647 !important;
+            }
+        `;
+        target.appendChild(style);
+        return true;
+    };
+    const markPopup = (root = document) => {
+        const popup = root instanceof Element && root.matches(POPUP_SELECTOR)
+            ? root
+            : root.querySelector?.(POPUP_SELECTOR);
+        if (!(popup instanceof HTMLElement)) return false;
+        popup.classList.add(POSITIONED_CLASS);
+        return true;
+    };
+    const ensurePopup = () => {
+        injectStyle();
+        markPopup(document);
+    };
+    const popupScheduler = __dcufCreatePhaseScheduler('view-pum-layer-viewport', ensurePopup, [40, 160]);
+
+    ensurePopup();
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', ensurePopup, { once: true });
+    }
+    document.addEventListener('click', (event) => {
+        const trigger = event.target instanceof Element
+            ? event.target.closest('.btn_recommend_box .btn_cloned')
+            : null;
+        if (!(trigger instanceof HTMLElement)) return;
+        popupScheduler.schedule({ reason: 'host-pum-open' });
+    });
+})();
+
+(() => {
+    if (!__dcufPageSupports('modify') && !__dcufPageSupports('delete')) return;
 
     const STYLE_ID = 'dcuf-mobile-modify-theme';
     if (document.getElementById(STYLE_ID)) return;
 
     const css = `
-        body.is-modify-password-page {
+        body.is-dcuf-password-page {
             box-sizing: border-box !important;
             min-width: 0 !important;
             margin: 0 !important;
@@ -20696,7 +20884,7 @@ const ThemeModule = (() => {
             color: var(--dcuf-theme-fg, #27313f) !important;
             overflow-x: clip !important;
         }
-        body.is-modify-password-page #container {
+        body.is-dcuf-password-page #container {
             box-sizing: border-box !important;
             width: 100% !important;
             min-width: 0 !important;
@@ -20705,20 +20893,20 @@ const ThemeModule = (() => {
             padding: 6px 12px 28px !important;
             background: transparent !important;
         }
-        body.is-modify-password-page #container > section {
+        body.is-dcuf-password-page #container > section {
             box-sizing: border-box !important;
             width: min(760px, 100%) !important;
             min-width: 0 !important;
             margin: 0 auto !important;
         }
-        body.is-modify-password-page #container > section > header.page_head {
+        body.is-dcuf-password-page #container > section > header.page_head {
             width: 100% !important;
             margin: 0 !important;
             padding: 12px 4px !important;
             border-bottom-color: var(--dcuf-theme-accent, #3f6de0) !important;
             color: var(--dcuf-theme-accent, #3f6de0) !important;
         }
-        body.is-modify-password-page form.dcuf-modify-password-form {
+        body.is-dcuf-password-page form.dcuf-password-form {
             box-sizing: border-box !important;
             display: grid !important;
             width: 100% !important;
@@ -20727,9 +20915,9 @@ const ThemeModule = (() => {
             padding: 24px 0 !important;
             place-items: center !important;
         }
-        body.is-modify-password-page form.dcuf-modify-password-form > article,
-        body.is-modify-password-page form.dcuf-modify-password-form .no_memberwrap,
-        body.is-modify-password-page form.dcuf-modify-password-form .no_member_cont {
+        body.is-dcuf-password-page form.dcuf-password-form > article,
+        body.is-dcuf-password-page form.dcuf-password-form .no_memberwrap,
+        body.is-dcuf-password-page form.dcuf-password-form .no_member_cont {
             box-sizing: border-box !important;
             width: 100% !important;
             max-width: 520px !important;
@@ -20740,14 +20928,14 @@ const ThemeModule = (() => {
             border: 0 !important;
             background: transparent !important;
         }
-        body.is-modify-password-page form.dcuf-modify-password-form .no_memberwrap {
+        body.is-dcuf-password-page form.dcuf-password-form .no_memberwrap {
             overflow: hidden !important;
             border: 1px solid var(--dcuf-theme-border-strong, #cbd2db) !important;
             border-radius: 20px !important;
             background: linear-gradient(160deg, var(--dcuf-theme-card-top, #fff), var(--dcuf-theme-card-bottom, #fafbfc)) !important;
             box-shadow: var(--dcuf-theme-panel-shadow, 0 18px 42px rgba(31, 45, 68, .16)) !important;
         }
-        body.is-modify-password-page form.dcuf-modify-password-form .no_member_cont .inner {
+        body.is-dcuf-password-page form.dcuf-password-form .no_member_cont .inner {
             box-sizing: border-box !important;
             display: grid !important;
             width: 100% !important;
@@ -20758,7 +20946,7 @@ const ThemeModule = (() => {
             place-items: stretch !important;
             text-align: center !important;
         }
-        body.is-modify-password-page form.dcuf-modify-password-form .no_member_cont .txt {
+        body.is-dcuf-password-page form.dcuf-password-form .no_member_cont .txt {
             display: block !important;
             margin: 0 !important;
             color: var(--dcuf-theme-fg, #27313f) !important;
@@ -20766,8 +20954,8 @@ const ThemeModule = (() => {
             font-weight: 800 !important;
             line-height: 1.45 !important;
         }
-        body.is-modify-password-page form.dcuf-modify-password-form input#password,
-        body.is-modify-password-page form.dcuf-modify-password-form input[name="password"] {
+        body.is-dcuf-password-page form.dcuf-password-form input#password,
+        body.is-dcuf-password-page form.dcuf-password-form input[name="password"] {
             box-sizing: border-box !important;
             display: block !important;
             width: 100% !important;
@@ -20783,12 +20971,12 @@ const ThemeModule = (() => {
             font: 700 17px/1 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
             box-shadow: inset 0 2px 5px color-mix(in srgb, var(--dcuf-theme-accent) 6%, transparent) !important;
         }
-        body.is-modify-password-page form.dcuf-modify-password-form input#password:focus,
-        body.is-modify-password-page form.dcuf-modify-password-form input[name="password"]:focus {
+        body.is-dcuf-password-page form.dcuf-password-form input#password:focus,
+        body.is-dcuf-password-page form.dcuf-password-form input[name="password"]:focus {
             border-color: var(--dcuf-theme-accent, #3f6de0) !important;
             box-shadow: 0 0 0 3px var(--dcuf-theme-focus-ring, rgba(63, 109, 224, .18)) !important;
         }
-        body.is-modify-password-page form.dcuf-modify-password-form .btn_box {
+        body.is-dcuf-password-page form.dcuf-password-form .btn_box {
             box-sizing: border-box !important;
             display: grid !important;
             grid-template-columns: 1fr 1fr !important;
@@ -20797,7 +20985,7 @@ const ThemeModule = (() => {
             padding: 0 !important;
             gap: 10px !important;
         }
-        body.is-modify-password-page form.dcuf-modify-password-form .btn_box > button {
+        body.is-dcuf-password-page form.dcuf-password-form .btn_box > button {
             box-sizing: border-box !important;
             width: 100% !important;
             min-width: 0 !important;
@@ -20813,27 +21001,27 @@ const ThemeModule = (() => {
             line-height: 1.2 !important;
             cursor: pointer !important;
         }
-        body.is-modify-password-page form.dcuf-modify-password-form .btn_box > :is(.btn_blue, .btn_ok) {
+        body.is-dcuf-password-page form.dcuf-password-form .btn_box > :is(.btn_blue, .btn_ok) {
             border-color: var(--dcuf-theme-accent-strong, #245bda) !important;
             background-color: var(--dcuf-theme-accent-strong, #245bda) !important;
             background-image: linear-gradient(180deg, var(--dcuf-theme-primary-top, #5d87f0), var(--dcuf-theme-accent-strong, #245bda)) !important;
             color: var(--dcuf-theme-on-accent, #fff) !important;
             box-shadow: 0 8px 18px var(--dcuf-theme-accent-shadow, rgba(36, 91, 218, .25)) !important;
         }
-        body.is-modify-password-page footer.dcfoot,
-        body.is-modify-password-page #data_info {
+        body.is-dcuf-password-page footer.dcfoot,
+        body.is-dcuf-password-page #data_info {
             display: none !important;
         }
-        body.is-modify-password-page.dc-filter-dark-mode form.dcuf-modify-password-form .no_memberwrap {
+        body.is-dcuf-password-page.dc-filter-dark-mode form.dcuf-password-form .no_memberwrap {
             box-shadow: 0 20px 46px rgba(0, 0, 0, .44) !important;
         }
         @media screen and (max-width: 480px) {
-            body.is-modify-password-page #container { padding: 4px 10px 20px !important; }
-            body.is-modify-password-page form.dcuf-modify-password-form {
+            body.is-dcuf-password-page #container { padding: 4px 10px 20px !important; }
+            body.is-dcuf-password-page form.dcuf-password-form {
                 min-height: calc(100dvh - 220px) !important;
                 padding: 16px 0 !important;
             }
-            body.is-modify-password-page form.dcuf-modify-password-form .no_member_cont .inner {
+            body.is-dcuf-password-page form.dcuf-password-form .no_member_cont .inner {
                 padding: 24px 18px 18px !important;
             }
         }
@@ -23675,13 +23863,14 @@ function __dcufGetRuntimeCoordinator() {
 function __dcufGetPageContext() {
     const sharedContext = window.__dcufPageContext;
     if (sharedContext && typeof sharedContext === 'object') return sharedContext;
-    const type = ((window.location.pathname || '').match(/\/board\/(lists|view|write|modify)(?:\/|$)/) || [])[1] || 'other';
+    const type = ((window.location.pathname || '').match(/\/board\/(lists|view|write|modify|delete)(?:\/|$)/) || [])[1] || 'other';
     return {
         type,
         isList: type === 'lists',
         isView: type === 'view',
         isWrite: type === 'write',
         isModify: type === 'modify',
+        isDelete: type === 'delete',
         isWriteSurface: type === 'write' || type === 'modify',
         isOther: type === 'other',
         isTargetPage: type !== 'other',
@@ -23696,6 +23885,7 @@ function __dcufPageSupports(surface) {
     if (surface === 'view') return pageContext.isView;
     if (surface === 'write') return pageContext.isWriteSurface;
     if (surface === 'modify') return pageContext.isModify;
+    if (surface === 'delete') return pageContext.isDelete;
     if (surface === 'list-surface') return pageContext.hasListSurface;
     if (surface === 'comments') return pageContext.hasComments;
     if (surface === 'target') return pageContext.isTargetPage;

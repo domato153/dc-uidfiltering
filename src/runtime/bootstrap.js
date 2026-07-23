@@ -4,13 +4,17 @@
     const __dcufRoot = (typeof unsafeWindow !== 'undefined' && unsafeWindow) ? unsafeWindow : window;
     if (window.top !== window.self) return;
 
-    const detectedPageType = ((window.location.pathname || '').match(/\/board\/(lists|view|write|modify)(?:\/|$)/) || [])[1] || 'other';
+    const detectedRouteType = ((window.location.pathname || '').match(/\/board\/(lists|view|write|modify|delete)(?:\/|$)/) || [])[1] || 'other';
+    const detectedPageType = detectedRouteType === 'delete' && '__DCUF_DELETE_SURFACE__' !== 'mobile'
+        ? 'other'
+        : detectedRouteType;
     const pageContext = Object.freeze({
         type: detectedPageType,
         isList: detectedPageType === 'lists',
         isView: detectedPageType === 'view',
         isWrite: detectedPageType === 'write',
         isModify: detectedPageType === 'modify',
+        isDelete: detectedPageType === 'delete',
         isWriteSurface: detectedPageType === 'write' || detectedPageType === 'modify',
         isOther: detectedPageType === 'other',
         isTargetPage: detectedPageType !== 'other',
@@ -24,7 +28,7 @@
     else document.addEventListener('DOMContentLoaded', exposePageContextAttribute, { once: true });
 
     // The metadata covers a few gallery-adjacent pages, but the mobile runtime owns
-    // only board list/view/write/modify surfaces. Keep the lightweight page-context bridge
+    // only board list/view/write/modify plus the mobile delete-password surface. Keep the lightweight page-context bridge
     // and stop before installing observers, menus, or styles elsewhere.
     if (!pageContext.isTargetPage) return;
 

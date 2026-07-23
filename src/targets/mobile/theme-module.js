@@ -880,7 +880,17 @@ const ThemeModule = (() => {
             box-shadow: 0 7px 16px var(--dcuf-theme-accent-shadow) !important;
         }
         html[${ROOT_ATTRIBUTE}] body #dc-block-management-panel input:checked + .switch-slider,
-        html[${ROOT_ATTRIBUTE}] body #dcinside-filter-setting input:checked + .switch-slider,
+        html[${ROOT_ATTRIBUTE}] body #dcinside-filter-setting input:checked + .switch-slider {
+            border-color: var(--dcuf-theme-accent-strong) !important;
+            background-color: var(--dcuf-theme-accent-strong) !important;
+            background-image: linear-gradient(180deg, var(--dcuf-theme-primary-top), var(--dcuf-theme-accent-strong)) !important;
+            box-shadow: 0 3px 9px var(--dcuf-theme-accent-shadow), inset 0 1px 0 color-mix(in srgb, white 28%, transparent) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-block-management-panel input:checked + .switch-slider::before,
+        html[${ROOT_ATTRIBUTE}] body #dcinside-filter-setting input:checked + .switch-slider::before {
+            background: #fff !important;
+            box-shadow: 0 1px 4px rgba(15, 23, 42, .5) !important;
+        }
         html[${ROOT_ATTRIBUTE}] body #dc-block-management-panel .panel-tab.active {
             border-color: var(--dcuf-theme-accent) !important;
             background-color: var(--dcuf-theme-accent-soft) !important;

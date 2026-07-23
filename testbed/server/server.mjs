@@ -3,7 +3,7 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { blankPage, listPage, viewPage } from '../fixtures/pages.mjs';
-import { modifyPasswordPage, nativeWritePage, writePage } from '../fixtures/write-pages.mjs';
+import { deletePasswordPage, modifyPasswordPage, nativeWritePage, writePage } from '../fixtures/write-pages.mjs';
 import { loadHarnessSource } from '../harness/userscript-loader.mjs';
 
 const testbedDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -102,6 +102,10 @@ export async function startServer({ port = 0 } = {}) {
             const variant = url.pathname.startsWith('/mini/') ? 'mini' : (url.pathname.startsWith('/mgallery/') ? 'minor' : 'major');
             if (url.pathname === '/__testbed/native-write') {
                 send(response, 200, nativeWritePage(), 'text/html; charset=utf-8', headers);
+                return;
+            }
+            if (url.pathname.includes('/board/delete')) {
+                send(response, 200, deletePasswordPage(), 'text/html; charset=utf-8', headers);
                 return;
             }
             if (url.pathname.includes('/board/modify')) {

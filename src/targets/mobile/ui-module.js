@@ -1483,13 +1483,14 @@
         getPageContext() {
             const sharedContext = window.__dcufPageContext;
             if (sharedContext && typeof sharedContext === 'object') return sharedContext;
-            const type = ((window.location.pathname || '').match(/\/board\/(lists|view|write|modify)(?:\/|$)/) || [])[1] || 'other';
+            const type = ((window.location.pathname || '').match(/\/board\/(lists|view|write|modify|delete)(?:\/|$)/) || [])[1] || 'other';
             return {
                 type,
                 isList: type === 'lists',
                 isView: type === 'view',
                 isWrite: type === 'write',
                 isModify: type === 'modify',
+                isDelete: type === 'delete',
                 isWriteSurface: type === 'write' || type === 'modify',
                 isOther: type === 'other',
                 isTargetPage: type !== 'other',
@@ -1521,6 +1522,10 @@
 
         isModifyPage() {
             return this.getPageContext().isModify === true;
+        },
+
+        isDeletePage() {
+            return this.getPageContext().isDelete === true;
         },
 
         shouldEnsureListRuntimeForReveal() {
@@ -2678,7 +2683,7 @@
 
             const writeForm = this.getWriteForm();
             if (writeForm instanceof HTMLFormElement) {
-                document.body.classList.remove('is-modify-password-page');
+                document.body.classList.remove('is-modify-password-page', 'is-dcuf-password-page');
                 document.body.classList.add('is-modify-page', 'is-modify-editor-page');
                 document.body.dataset.dcufModifySurface = 'editor';
                 document.documentElement?.setAttribute('data-dcuf-modify-surface', 'editor');
@@ -2690,10 +2695,10 @@
             const passwordForm = document.querySelector('form[name="password_confirm"], form[action*="modify_password_submit"]');
             if (passwordForm instanceof HTMLFormElement) {
                 document.body.classList.remove('is-modify-editor-page');
-                document.body.classList.add('is-modify-page', 'is-modify-password-page');
+                document.body.classList.add('is-modify-page', 'is-modify-password-page', 'is-dcuf-password-page');
                 document.body.dataset.dcufModifySurface = 'password';
                 document.documentElement?.setAttribute('data-dcuf-modify-surface', 'password');
-                passwordForm.classList.add('dcuf-modify-password-form');
+                passwordForm.classList.add('dcuf-modify-password-form', 'dcuf-password-form');
                 const passwordInput = passwordForm.querySelector('input[type="password"][name="password"], #password');
                 if (passwordInput instanceof HTMLInputElement) {
                     passwordInput.autocomplete = 'current-password';
@@ -2704,7 +2709,7 @@
             }
 
             document.body.classList.add('is-modify-page');
-            document.body.classList.remove('is-modify-password-page', 'is-modify-editor-page');
+            document.body.classList.remove('is-modify-password-page', 'is-modify-editor-page', 'is-dcuf-password-page');
             document.body.dataset.dcufModifySurface = 'pending';
             document.documentElement?.setAttribute('data-dcuf-modify-surface', 'pending');
             return 'pending';
@@ -2730,6 +2735,31 @@
                 }
             });
             if (typeof unsubscribe === 'function') this._modifySurfaceMutationUnsubscribe = unsubscribe;
+        },
+
+        syncDeleteSurface(reason = 'sync') {
+            if (!this.isDeletePage() || !document.body) return 'not-delete';
+
+            const passwordForm = document.querySelector('form[name="delete"][action*="delete_password_submit"], form[action*="delete_password_submit"]');
+            document.body.classList.add('is-delete-page');
+            if (!(passwordForm instanceof HTMLFormElement)) {
+                document.body.classList.remove('is-delete-password-page', 'is-dcuf-password-page');
+                document.body.dataset.dcufDeleteSurface = 'pending';
+                document.documentElement?.setAttribute('data-dcuf-delete-surface', 'pending');
+                return 'pending';
+            }
+
+            document.body.classList.add('is-delete-password-page', 'is-dcuf-password-page');
+            document.body.dataset.dcufDeleteSurface = 'password';
+            document.documentElement?.setAttribute('data-dcuf-delete-surface', 'password');
+            passwordForm.classList.add('dcuf-delete-password-form', 'dcuf-password-form');
+            const passwordInput = passwordForm.querySelector('input[type="password"][name="password"], #password');
+            if (passwordInput instanceof HTMLInputElement) {
+                passwordInput.autocomplete = 'current-password';
+                if (!passwordInput.getAttribute('aria-label')) passwordInput.setAttribute('aria-label', '비밀번호');
+            }
+            this.recordDiagnostic('ui.deleteSurface.password', { reason });
+            return 'password';
         },
 
         transformWritePage() {
@@ -3351,6 +3381,10 @@
                 const modifySurface = this.syncModifySurface('init');
                 this.subscribeModifySurfaceUpdates();
                 return modifySurface === 'editor' ? 'non-list' : `modify-${modifySurface}`;
+            }
+
+            if (this.isDeletePage()) {
+                return `delete-${this.syncDeleteSurface('init')}`;
             }
 
             if (this.isWritePage()) {

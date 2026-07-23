@@ -946,9 +946,9 @@
         #dcinside-filter-setting .switch input,
         #dc-block-management-panel .switch input { opacity: 0; width: 0; height: 0; }
         #dcinside-filter-setting .switch-slider,
-        #dc-block-management-panel .switch-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 22px; }
+        #dc-block-management-panel .switch-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; box-sizing: border-box; border: 1px solid transparent; background-color: #ccc; transition: .25s; border-radius: 22px; }
         #dcinside-filter-setting .switch-slider:before,
-        #dc-block-management-panel .switch-slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        #dc-block-management-panel .switch-slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 2px; bottom: 2px; background-color: white; transition: .25s; border-radius: 50%; box-shadow: 0 1px 4px rgba(15, 23, 42, .38); }
         #dcinside-filter-setting input:checked + .switch-slider,
         #dc-block-management-panel input:checked + .switch-slider { background-color: #3b71fd; }
         #dcinside-filter-setting input:checked + .switch-slider:before,
@@ -2709,6 +2709,7 @@
                 RATIO_ENABLED: 'dcinside_ratio_filter_enabled',
                 RATIO_MIN: 'dcinside_ratio_min',
                 RATIO_MAX: 'dcinside_ratio_max',
+                BLOCK_PUM_POSTS: 'dcinside_block_pum_posts',
                 BLOCK_GUEST: 'dcinside_block_guest',
                 BLOCK_PROXY: 'dcinside_proxy_ip_block_enabled',
                 BLOCK_TELECOM: 'dcinside_telecom_ip_block_enabled',
@@ -2756,6 +2757,7 @@
                 RATIO_SECTION: 'dcinside-ratio-section',
                 RATIO_MIN_INPUT: 'dcinside-ratio-min',
                 RATIO_MAX_INPUT: 'dcinside-ratio-max',
+                BLOCK_PUM_POSTS_CHECKBOX: 'dcinside-block-pum-posts-checkbox',
                 SAVE_BUTTON: 'dcinside-threshold-save',
                 CLOSE_BUTTON: 'dcinside-filter-close',
                 SHORTCUT_DISPLAY: 'dcinside-shortcut-display',
@@ -3013,6 +3015,7 @@
                 ratioEnabled: !!s.ratioEnabled,
                 ratioMin: s.ratioMin,
                 ratioMax: s.ratioMax,
+                blockPumPosts: !!s.blockPumPosts,
                 blockGuestEnabled: !!s.blockGuestEnabled,
                 proxyBlockMode,
                 proxyBlockModeLabel: this.getProxyModeLabel(proxyBlockMode),
@@ -3176,7 +3179,7 @@
         async showSettings() {
             window.__dcufEnsureFilterUiStyles?.();
             await this.reloadSettings();
-            const { masterDisabled = false, excludeRecommended = false, threshold = 0, ratioEnabled = false, ratioMin = '', ratioMax = '', blockGuestEnabled = false, proxyBlockMode = 0, telecomBlockEnabled = false } = dcFilterSettings;
+            const { masterDisabled = false, excludeRecommended = false, threshold = 0, ratioEnabled = false, ratioMin = '', ratioMax = '', blockPumPosts = false, blockGuestEnabled = false, proxyBlockMode = 0, telecomBlockEnabled = false } = dcFilterSettings;
             const currentShortcut = await GM_getValue(this.CONSTANTS.STORAGE_KEYS.SHORTCUT_KEY, 'Shift+S');
             const normalizedProxyBlockMode = this.normalizeProxyBlockMode(proxyBlockMode);
             const existingDiv = document.getElementById(this.CONSTANTS.UI_IDS.SETTINGS_PANEL);
@@ -3213,6 +3216,7 @@
                             <div style="display:flex;flex-direction:column;align-items:center;"><label for="${this.CONSTANTS.UI_IDS.RATIO_MAX_INPUT}" style="font-size:14px;">글/댓글 비율 일정 이상 차단 </label><div style="font-size:12px;color:#888;line-height:1.2;">(글만 많은 놈)</div><input id="${this.CONSTANTS.UI_IDS.RATIO_MAX_INPUT}" type="number" step="any" placeholder="예: 1" value="${ratioMax !== '' ? ratioMax : ''}" style="width:100px;font-size:15px;text-align:center; margin-top: 4px;"></div>
                         </div><div style="margin-top:8px;font-size:13px;color:#666;text-align:left;">비율이 입력값과 같거나 큰(이상)인 유저를 차단합니다.</div>
                     </div>
+                    <div class="dcuf-settings-section dcuf-settings-pum" style="display:flex;align-items:center;gap:8px;"><label class="switch" style="flex-shrink:0;"><input id="${this.CONSTANTS.UI_IDS.BLOCK_PUM_POSTS_CHECKBOX}" type="checkbox" ${blockPumPosts ? 'checked' : ''}><span class="switch-slider"></span></label><label for="${this.CONSTANTS.UI_IDS.BLOCK_PUM_POSTS_CHECKBOX}" style="font-size:15px;cursor:pointer;">펌 게시물 차단</label></div>
                     <button type="button" id="${this.CONSTANTS.UI_IDS.HEADTEXT_MANAGER_BUTTON}" style="width:100%;margin-top:14px;padding:9px 10px;border:1px solid #9aa4b2;border-radius:7px;background:#f6f8fb;color:#222;font-weight:700;cursor:pointer;">갤러리별 말머리 차단 관리</button>
                 </div>
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-top:16px; padding-top:15px; border-top: 2px solid #ccc;">
@@ -3262,6 +3266,7 @@
             const ratioEnableCheckbox = div.querySelector(`#${this.CONSTANTS.UI_IDS.RATIO_ENABLE_CHECKBOX}`);
             const ratioMinInput = div.querySelector(`#${this.CONSTANTS.UI_IDS.RATIO_MIN_INPUT}`);
             const ratioMaxInput = div.querySelector(`#${this.CONSTANTS.UI_IDS.RATIO_MAX_INPUT}`);
+            const blockPumPostsCheckbox = div.querySelector(`#${this.CONSTANTS.UI_IDS.BLOCK_PUM_POSTS_CHECKBOX}`);
             const closeButton = div.querySelector(`#${this.CONSTANTS.UI_IDS.CLOSE_BUTTON}`);
             const saveButton = div.querySelector(`#${this.CONSTANTS.UI_IDS.SAVE_BUTTON}`);
             const excludeRecommendedCheckbox = div.querySelector(`#${this.CONSTANTS.UI_IDS.EXCLUDE_RECOMMENDED_CHECKBOX}`);
@@ -3288,7 +3293,7 @@
                 }, { passive: false });
             }
 
-            if (!masterDisableCheckbox || !settingsContainer || !ratioSection || !ratioEnableCheckbox || !ratioMinInput || !ratioMaxInput || !saveButton || !excludeRecommendedCheckbox || !blockGuestCheckbox || !proxyBlockModeGroup || !telecomBlockCheckbox) {
+            if (!masterDisableCheckbox || !settingsContainer || !ratioSection || !ratioEnableCheckbox || !ratioMinInput || !ratioMaxInput || !blockPumPostsCheckbox || !saveButton || !excludeRecommendedCheckbox || !blockGuestCheckbox || !proxyBlockModeGroup || !telecomBlockCheckbox) {
                 console.error('DCinside User Filter: settings popup init failed - required control missing.');
                 return;
             }
@@ -3347,6 +3352,9 @@
             });
             telecomBlockCheckbox.addEventListener('change', (e) =>
                 applyCheckboxChange(this.CONSTANTS.STORAGE_KEYS.BLOCK_TELECOM, e.target.checked)
+            );
+            blockPumPostsCheckbox.addEventListener('change', (e) =>
+                applyCheckboxChange(this.CONSTANTS.STORAGE_KEYS.BLOCK_PUM_POSTS, e.target.checked)
             );
             headtextManagerButton?.addEventListener('click', () => this.showHeadtextBlockManager());
             ratioEnableCheckbox.addEventListener('change', (e) =>
@@ -3422,6 +3430,7 @@
                     GM_setValue(this.CONSTANTS.STORAGE_KEYS.RATIO_ENABLED, ratioEnableCheckbox.checked),
                     GM_setValue(this.CONSTANTS.STORAGE_KEYS.RATIO_MIN, ratioMinInput.value),
                     GM_setValue(this.CONSTANTS.STORAGE_KEYS.RATIO_MAX, ratioMaxInput.value),
+                    GM_setValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_PUM_POSTS, blockPumPostsCheckbox.checked),
                     GM_setValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_GUEST, blockGuestChecked),
                     GM_setValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_PROXY, currentProxyBlockMode),
                     GM_setValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_TELECOM, telecomBlockCheckbox.checked)
@@ -3717,9 +3726,9 @@
         isFilterTargetDescriptor(value) {
             return Boolean(value && value.element instanceof HTMLElement);
         },
-        normalizeFilterTarget(target, { includeHeadtext = true } = {}) {
+        normalizeFilterTarget(target, { includeHeadtext = true, includePum = true } = {}) {
             if (this.isFilterTargetDescriptor(target)) return target;
-            return this.describeFilterTarget(target, { includeHeadtext });
+            return this.describeFilterTarget(target, { includeHeadtext, includePum });
         },
         isReplyOnlyCommentWrapper(element) {
             if (!(element instanceof HTMLElement)) return false;
@@ -3751,7 +3760,12 @@
                 : element.querySelector('[data-headtext], .gall_subject');
             return this.getCanonicalHeadtextFromNode(source);
         },
-        describeFilterTarget(element, { includeHeadtext = true } = {}) {
+        isPumPost(element) {
+            if (!(element instanceof HTMLElement) || !this.isHeadtextFilterTarget(element)) return false;
+            const marker = element.querySelector(':scope > .gall_tit > b.font_blue009');
+            return this.normalizeHeadtext(marker?.textContent || '') === '(펌)';
+        },
+        describeFilterTarget(element, { includeHeadtext = true, includePum = true } = {}) {
             if (!(element instanceof HTMLElement)) return null;
             if (this.isReplyOnlyCommentWrapper(element)) return null;
 
@@ -3765,6 +3779,7 @@
             const ip = ipFromSpan || writerDataIp || null;
             const ipPrefix = this.getIpPrefix(ip);
             const isHeadtextTarget = includeHeadtext && this.isHeadtextFilterTarget(element);
+            const isPumPost = includePum && this.isPumPost(element);
             const hasNoticeMarker = Boolean(element.querySelector('em.icon_notice'))
                 || element.classList.contains('notice')
                 || element.classList.contains('us-post--notice');
@@ -3788,7 +3803,8 @@
                 hasBlockDisableClass: element.classList.contains('block-disable'),
                 galleryKey: isHeadtextTarget ? this.getGalleryKey() : null,
                 headtext: isHeadtextTarget ? this.extractHeadtext(element) : '',
-                isHeadtextTarget
+                isHeadtextTarget,
+                isPumPost
             };
         },
         describeFilterTargets(items) {
@@ -3798,8 +3814,9 @@
             // The default rule set is empty. Avoid all headtext DOM probing on the
             // ordinary mutation hot path until the user has an active rule.
             const includeHeadtext = dcFilterSettings.galleryHeadtextBlockSet?.size > 0;
+            const includePum = Boolean(dcFilterSettings.blockPumPosts);
             items.forEach((item) => {
-                const descriptor = this.normalizeFilterTarget(item, { includeHeadtext });
+                const descriptor = this.normalizeFilterTarget(item, { includeHeadtext, includePum });
                 const element = descriptor?.element;
                 if (!(element instanceof HTMLElement) || seen.has(element)) return;
                 seen.add(element);
@@ -4292,6 +4309,7 @@
                 blockedGuests = [],
                 blockedGuestSet,
                 customIpPrefixSet,
+                blockPumPosts,
                 personalBlockEnabled,
                 personalBlockUidSet,
                 personalBlockNicknameSet,
@@ -4300,7 +4318,7 @@
             const normalizedProxyBlockMode = this.normalizeProxyBlockMode(proxyBlockMode);
             const proxyBlockEnabled = normalizedProxyBlockMode !== this.PROXY_MODE.OFF;
 
-            const { element, uid, nickname, ip, ipText, writerDataIp, ipPrefix, isGuest, isNotice, shouldSkipFiltering, hasBlockDisableClass, galleryKey, headtext, isHeadtextTarget } = descriptor;
+            const { element, uid, nickname, ip, ipText, writerDataIp, ipPrefix, isGuest, isNotice, shouldSkipFiltering, hasBlockDisableClass, galleryKey, headtext, isHeadtextTarget, isPumPost } = descriptor;
             const subject = {
                 uid,
                 nickname,
@@ -4323,6 +4341,8 @@
                 writerDataIp,
                 ipPrefix,
                 isGuest,
+                isPumPost,
+                blockPumPosts,
                 blockGuestEnabled,
                 proxyBlockMode: normalizedProxyBlockMode,
                 proxyBlockEnabled,
@@ -4340,6 +4360,7 @@
                     telecomBlockEnabled,
                     customIpPrefixSet,
                     personalBlockEnabled,
+                    blockPumPosts,
                     threshold: dcFilterSettings.threshold,
                     ratioEnabled: dcFilterSettings.ratioEnabled,
                     ratioMin: dcFilterSettings.ratioMin,
@@ -4355,7 +4376,8 @@
                     proxyMatchInfo,
                     telecomPrefixMatch: Boolean(ipPrefix && telecomPrefixSet && telecomPrefixSet.has(ipPrefix)),
                     blockedGuestMatch: Boolean(ip && (blockedGuestSet instanceof Set ? blockedGuestSet.has(ip) : blockedGuests.includes(ip))),
-                    galleryHeadtextBlock: Boolean(isHeadtextTarget && galleryKey && headtext && dcFilterSettings.galleryHeadtextBlockSet?.has(headtext))
+                    galleryHeadtextBlock: Boolean(isHeadtextTarget && galleryKey && headtext && dcFilterSettings.galleryHeadtextBlockSet?.has(headtext)),
+                    pumPostMatch: Boolean(isPumPost)
                 },
                 blockedUidEntry: uid ? (this.BLOCKED_UIDS_CACHE[uid] || userSumCache[uid] || null) : null
             });
@@ -4396,7 +4418,8 @@
                     proxyPrefixMatch: decision.proxyPrefixMatch,
                     proxyMatchTier: decision.proxyMatchTier,
                     telecomPrefixMatch: decision.telecomPrefixMatch,
-                    blockedGuestMatch: decision.blockedGuestMatch
+                    blockedGuestMatch: decision.blockedGuestMatch,
+                    pumPostMatch: decision.pumPostMatch
                 });
             }
             this.setElementVisibility(element, decision.isBlocked);
@@ -4494,6 +4517,7 @@
                 GM_getValue(keys.RATIO_ENABLED, false),
                 GM_getValue(keys.RATIO_MIN, ''),
                 GM_getValue(keys.RATIO_MAX, ''),
+                GM_getValue(keys.BLOCK_PUM_POSTS, false),
                 GM_getValue(keys.BLOCK_GUEST, false),
                 GM_getValue(keys.BLOCK_PROXY, 0),
                 GM_getValue(keys.BLOCK_TELECOM, false),
@@ -4506,7 +4530,7 @@
             ]).then((values) => {
                 const [
                     migrationDone, masterDisabled, excludeRecommended, rawThreshold, ratioEnabled,
-                    ratioMin, ratioMax, blockGuestEnabled, proxyBlockMode, telecomBlockEnabled,
+                    ratioMin, ratioMax, blockPumPosts, blockGuestEnabled, proxyBlockMode, telecomBlockEnabled,
                     blockedGuestsRaw, blockConfig, personalBlockList, personalBlockEnabled, galleryHeadtextBlocks, blockedUidsRaw
                 ] = values;
                 let blockedGuests = [];
@@ -4520,6 +4544,7 @@
                     ratioEnabled,
                     ratioMin,
                     ratioMax,
+                    blockPumPosts,
                     blockGuestEnabled,
                     proxyBlockMode,
                     telecomBlockEnabled,
@@ -4556,6 +4581,7 @@
                 ratioEnabled: Boolean(settings.ratioEnabled),
                 ratioMin: String(settings.ratioMin ?? ''),
                 ratioMax: String(settings.ratioMax ?? ''),
+                blockPumPosts: Boolean(settings.blockPumPosts),
                 blockGuestEnabled: Boolean(settings.blockGuestEnabled),
                 proxyBlockMode: this.normalizeProxyBlockMode(settings.proxyBlockMode),
                 telecomBlockEnabled: Boolean(settings.telecomBlockEnabled),
@@ -4576,6 +4602,7 @@
                 values = [
                     snapshot.masterDisabled, snapshot.excludeRecommended, snapshot.threshold,
                     snapshot.ratioEnabled, snapshot.ratioMin, snapshot.ratioMax,
+                    snapshot.blockPumPosts,
                     snapshot.blockGuestEnabled, snapshot.proxyBlockMode, snapshot.telecomBlockEnabled,
                     snapshot.blockedGuests, snapshot.blockConfig, snapshot.personalBlockList,
                     snapshot.personalBlockEnabled, snapshot.galleryHeadtextBlocks
@@ -4588,6 +4615,7 @@
                     GM_getValue(this.CONSTANTS.STORAGE_KEYS.RATIO_ENABLED, false),
                     GM_getValue(this.CONSTANTS.STORAGE_KEYS.RATIO_MIN, ''),
                     GM_getValue(this.CONSTANTS.STORAGE_KEYS.RATIO_MAX, ''),
+                    GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_PUM_POSTS, false),
                     GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_GUEST, false),
                     GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_PROXY, 0),
                     GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_TELECOM, false),
@@ -4600,7 +4628,7 @@
             }
             const [
                 masterDisabled, excludeRecommended, threshold, ratioEnabled,
-                ratioMin, ratioMax, blockGuestEnabled, proxyBlockMode, telecomBlockEnabled,
+                ratioMin, ratioMax, blockPumPosts, blockGuestEnabled, proxyBlockMode, telecomBlockEnabled,
                 blockedGuests, blockConfig, personalBlockList, personalBlockEnabled, galleryHeadtextBlocksRaw
             ] = values;
             const normalizedSettings = DCUF_SHARED_STORAGE.normalizeStoredFilterSettings({
@@ -4610,6 +4638,7 @@
                 [this.CONSTANTS.STORAGE_KEYS.RATIO_ENABLED]: ratioEnabled,
                 [this.CONSTANTS.STORAGE_KEYS.RATIO_MIN]: ratioMin,
                 [this.CONSTANTS.STORAGE_KEYS.RATIO_MAX]: ratioMax,
+                [this.CONSTANTS.STORAGE_KEYS.BLOCK_PUM_POSTS]: blockPumPosts,
                 [this.CONSTANTS.STORAGE_KEYS.BLOCK_GUEST]: blockGuestEnabled,
                 [this.CONSTANTS.STORAGE_KEYS.BLOCK_PROXY]: proxyBlockMode,
                 [this.CONSTANTS.STORAGE_KEYS.BLOCK_TELECOM]: telecomBlockEnabled,
@@ -4632,6 +4661,7 @@
                 ratioEnabled: normalizedSettings.ratioEnabled,
                 ratioMin: normalizedSettings.ratioMin,
                 ratioMax: normalizedSettings.ratioMax,
+                blockPumPosts: normalizedSettings.blockPumPosts,
                 blockGuestEnabled: normalizedSettings.blockGuest,
                 proxyBlockMode: normalizedSettings.proxyBlockMode,
                 proxyBlockEnabled: normalizedSettings.proxyBlockMode !== this.PROXY_MODE.OFF,
@@ -4694,7 +4724,8 @@
                 if (!(element instanceof HTMLElement) || seen.has(element)) return descriptors;
                 seen.add(element);
                 const descriptor = this.describeFilterTarget(element, {
-                    includeHeadtext: dcFilterSettings.galleryHeadtextBlockSet?.size > 0
+                    includeHeadtext: dcFilterSettings.galleryHeadtextBlockSet?.size > 0,
+                    includePum: Boolean(dcFilterSettings.blockPumPosts)
                 });
                 if (descriptor) descriptors.push(descriptor);
                 return descriptors;
