@@ -1,4 +1,4 @@
-# UI renewal 3.5.4 — active phase P0-A
+# UI renewal 3.5.4 — active P0 correction
 
 This file is the authoritative execution-state companion to `docs/work/ui-renewal-3.5.4.md`. It supersedes only that document's project-status and current-active-phase fields; all technical requirements, acceptance criteria, stop conditions, and exclusions in the parent brief remain unchanged.
 
@@ -15,9 +15,7 @@ Allowed governance paths:
 - `docs/agent-maintenance-notes.md`
 - `tools/verify-repo.mjs`
 
-This governance checkpoint was inserted after the current in-progress P0 unit reached a clean implementation commit. It does not change completed P0 behavior, technical requirements, allowed runtime scope, or acceptance criteria.
-
-After this governance commit, the existing P0 implementation sequence continues from the current local HEAD.
+This governance checkpoint does not change P0 behavior, technical requirements, runtime scope, or acceptance criteria.
 
 ## Project state
 
@@ -25,99 +23,105 @@ After this governance commit, the existing P0 implementation sequence continues 
 
 User approval received in Chat on 2026-08-01.
 
-## Active phase (correction supersedes prior P0-A label)
+## Active phase
 
-- Phase: `P0-A — Establish truthful fixtures before production fixes`
-- Owner: `Codex correction implemented`
-- Start SHA: `53e8c861f7aa5e00a20b2dd1a1ff934dfa8bfe76`
-- State: `REVIEW_READY`
+- Phase: `P0-A through P0-E audit correction`
+- Owner: `ChatGPT correction implemented`
+- Correction base SHA: `4bceedfac7447f09a391d367092aa32e53a6a081`
+- State: `VALIDATION_REQUIRED`
 - Parallel work: prohibited
-- Independent reviewer: `ChatGPT`
-
-- Correction phase: `P0-A through P0-E`
+- Validation executor and independent reviewer: `Codex/Luna on one fixed SHA`
+- P1: not started and prohibited
 
 ## Active audit correction
 
-The independent audit returned `CHANGES_REQUESTED — FAIL`. P1 is excluded. This correction phase preserves the P0-A through P0-E implementation scope while fixing the writer DOM/event contract, real route coverage, and Pumx bounded retry lifecycle.
+The first independent audit returned `CHANGES_REQUESTED — FAIL`. Codex corrected the writer DOM/event contract, real route coverage, and Pumx bounded retry lifecycle. ChatGPT then found two remaining checkpoint issues:
 
-Correction paths are limited to the brief, the compact UI contract, the shared Pumx runtime, the mobile list/filter owners, and the named P0 fixtures and regression suites.
+1. `AGENTS.md` still exceeded the enforced 6000-character guidance budget.
+2. P0-A visited three real paths, but reused one row/table shape and did not assert route-specific structural differences.
 
-## Scope
+ChatGPT corrected only those remaining issues. Runtime source was not changed in this final correction.
 
-Correct the audited P0-A through P0-E implementation in the clean correction worktree. Preserve the original host DOM/event contracts, use the real major/minor/mini list routes, and prove the bounded Pumx late-listener lifecycle.
+## Allowed paths
 
-## Allowed paths (updated for correction)
-
+- `AGENTS.md`
 - `docs/work/ui-renewal-3.5.4-p0a.md`
-- `testbed/package.json`
 - `testbed/fixtures/p0a-live-contracts.mjs`
 - `testbed/run-p0a-regressions.mjs`
-- `testbed/public/fixture-client.js`
-- `testbed/run-tests.mjs`
-- `src/shared/write-defaults.js`
-- `src/targets/mobile/ui-module.js`
-- `src/targets/mobile/filter-module.js`
-- `docs/ui-surface-contracts.md`
 
-The legacy P0-A-only restriction against `src/**` and the default suite is superseded for this correction phase; generated userscripts, version, release, and P1 remain excluded.
+No runtime source, generated userscript, version, release, P1, official branch, PR, tag, or promotion may change in this final correction.
 
 ## Required evidence
 
 - Exact recent-visit root: `#visit_history.visit_bookmark > .newvisit_history.vst`, including sprite child geometry.
 - Exact headtext sibling order: `.center_box > .inner > ul + .btn_subject_more + #subject_morelist`.
 - Complete 30/50/100 list-size layer created and opened through its real-shaped trigger.
-- Exact writer signature with the native handler attached to the original interactive writer.
-- Trusted click on the visible writer must create the native nickname menu; a cloned or synthetic stand-in is not a pass.
-- Click-created `#pop_manage_report_list` must have positive geometry, viewport containment, and `elementFromPoint` ownership.
-- Complete AI quick-registration rail: loading, file input, image/character controls, layer button, prompt, count, native close sprite, and settings popup.
+- Original writer remains in valid table ancestry and trusted click reaches both direct and outer-table delegated handlers.
+- Click-created `#pop_manage_report_list` has positive geometry, viewport containment, and `elementFromPoint` ownership.
+- Complete AI quick-registration rail and settings popup.
+- `/board/lists`, `/mgallery/board/lists`, and `/mini/board/lists` are requested directly.
+- Major and mini use six-column list rows without `.gall_type`; minor uses seven columns with exactly one `.gall_type`.
+- Each variant uses its own view and write path and variant heading.
+- Pumx passes the delayed-listener race and releases retry resources after success.
+- Guidance verification passes, including `AGENTS.md <= 6000`.
 
-## False-positive stop rule
+## Correction history
 
-If the focused regression runner passes completely against the current audited runtime before any production fix, this fixture/assertion set is invalid and the phase must not be marked complete.
+- `64cae20` — Implement P0 runtime contracts
+- `f37a970` — Require authoritative remote ref verification
+- `602ede2` — Stabilize P0 lifecycle regression contracts
+- `53e8c86` — Prior review handoff rejected by independent audit
+- `9237424` — Correct audited P0 runtime contracts
+- `4bceedf` — Prior correction handoff
+- `6311cc2` — Initial guidance budget trim
+- `657b622` — Make P0-A route fixtures structurally distinct
+- `1bff9d3` — Finish guidance budget trim
+- `a185318` — Assert distinct P0-A route structures
 
-## Superseded P0-A checkpoint requirements
+## Last independently submitted validation
 
-A checkpoint may be marked `REVIEW_READY` only after:
+The following evidence was produced before the final fixture/assertion-only correction and is retained as historical context, not as current final validation:
 
-- the focused runner loads the guarded source runtime;
-- all fixture-signature assertions pass;
-- at least one production-contract assertion fails for the observed live reason;
-- no runtime or generated artifact was edited;
-- the result SHA and exact failing assertion are recorded here.
-
-## Correction exit requirements
-
-- P0-A route coverage passes on `/board/lists`, `/mgallery/board/lists`, and `/mini/board/lists`.
-- The original writer node remains in valid table ancestry and passes direct plus table-delegated trusted click paths.
-- Pumx passes the 700ms listener race, remains unmarked before success, and has no retry timer or mutation subscription after success.
-- Guarded source-runtime and full selected P0 validation are rerun from the final correction commit SHA.
-- Only after those checks pass may this document return to `REVIEW_READY`; P1 remains excluded.
-
-## Final implementation handoff
-
-Project state: `VALIDATION_REQUIRED`
-Phase state: `REVIEW_READY`
-Owner: `Codex correction implemented`
-Independent reviewer: `ChatGPT`
-
-The independent audit blockers were corrected and the final guarded validation was rerun from the correction commit. P1 remains excluded.
-
-- Repository: `domato153/dc-uidfiltering`
-- Branch: `codex/ui-renewal-3.5.4-collab`
-- Implementation start SHA: `53e8c861f7aa5e00a20b2dd1a1ff934dfa8bfe76`
-- Correction implementation commit: `9237424 Correct audited P0 runtime contracts`
-- Implementation commit: `64cae20 Implement P0 runtime contracts`
-- Governance commit: `f37a970 Require authoritative remote ref verification`
-- Lifecycle fixture/test commit: `602ede2 Stabilize P0 lifecycle regression contracts`
-- Review handoff commit: this documentation commit; exact SHA is reported in the final response.
-- Guarded runtime path: `testbed/artifacts/runtime-under-test.user.js`
 - Guarded runtime SHA-256: `156b3ef84dc84c305d8a887b3bb401e8385d78c7f0d8ff17eb6e10648d423a77`
-- P0-A focused regressions: `9 passed, 0 failed` on `/board/lists`, `/mgallery/board/lists`, and `/mini/board/lists`
-- P0-B through P0-E focused matrix: passed, including convenience independence, native writer/autocomplete containment, popup geometry, settings material, list lifecycle, and Pumx default activation.
-- Full guarded mobile suite: `108 passed, 0 failed`.
-- Guidance verification: baseline check reported `AGENTS.md` at `6007/6000`; AGENTS.md was unchanged in this correction and active skills were `4/4` with total skill text `10320/10500`.
-- Original dirty checkout: preserved byte-for-byte in status; all implementation work occurred in the clean detached worktree.
-- P1: explicitly not started.
-- No version bump, release artifact publication, official branch update, PR, tag, force-push, or release promotion was performed.
+- P0-A: `9 passed, 0 failed`
+- Full guarded mobile suite: `108 passed, 0 failed`
+- Pumx delayed-listener/mutation-churn test: passed
+- Original dirty checkout: preserved
 
-The final review target is the exact handoff commit on `codex/ui-renewal-3.5.4-collab`. A moved branch SHA invalidates this validation record; the authoritative live branch ref must be rechecked before any follow-up work.
+Because the P0-A fixture and runner changed after those passes, P0-A must be rerun. Runtime source and the broad suite did not change, but the fixed checkpoint still requires guidance and focused validation from the final SHA.
+
+## Validation required before REVIEW_READY
+
+On the final fixed SHA, run:
+
+```text
+node tools/verify-repo.mjs guidance
+node --check testbed/fixtures/p0a-live-contracts.mjs
+node --check testbed/run-p0a-regressions.mjs
+cd testbed
+npm run test:p0a
+node run-tests.mjs --require-runtime-under-test
+```
+
+The full guarded suite may only be reused if the validator confirms the guarded runtime SHA is still `156b3ef84dc84c305d8a887b3bb401e8385d78c7f0d8ff17eb6e10648d423a77` and no runtime, common fixture, harness, or full-suite code changed after `4bceedf`. Running it again is preferred for a clean fixed-SHA handoff.
+
+## Exit criteria
+
+This phase may return to `REVIEW_READY` only when:
+
+- guidance passes with the actual `AGENTS.md` character count recorded;
+- both changed JavaScript files pass syntax checks;
+- P0-A passes all nine contracts with the expected runtime SHA;
+- major/minor/mini route structure assertions pass;
+- no console or page errors occur;
+- full guarded suite passes or its unchanged-runtime reuse is explicitly justified;
+- branch remains fixed throughout review;
+- the exact result SHA and validation output are recorded here.
+
+Until then:
+
+- Project state: `VALIDATION_REQUIRED`
+- Phase state: `VALIDATION_REQUIRED`
+- Owner: `ChatGPT correction implemented`
+- Reviewer: `Codex/Luna`
+- P1: prohibited
