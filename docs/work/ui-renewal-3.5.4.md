@@ -49,24 +49,24 @@ This repository uses agent-neutral, phase-based ownership.
 - Repository: `domato153/dc-uidfiltering`
 - Branch: `codex/ui-renewal-3.5.4-collab`
 - Runtime/source audit baseline: `dbb2954435eedb8a5463d47e16c6edb1943793cf`
-- The guidance-only commits after that baseline do not alter the audited runtime snapshot.
+- The documentation-only commit containing this revised brief does not change the audited runtime snapshot.
 - `docs/ui-surface-contracts.md` remains the compact surface contract.
 - `docs/agent-maintenance-notes.md` remains the durable cause/contract index.
 - `Dc_UserFilter_Mobile_v3.5.3.user.js` is only a behavior reference for known-working host flows. It is not a visual target and must not be copied wholesale.
 
 ## Audit verdict
 
-The redesign direction is valid, but the current snapshot is **not safe to treat as completed or regression-protected**.
+The redesign direction is valid, but the current snapshot is **not safe to treat as a completed or regression-protected implementation**.
 
-The main risk is not a single selector. The runtime has multiple competing visual owners, and parts of the Testbed encode simplified or synthetic host behavior. The historical `106/106` result is therefore not a reliable acceptance signal for the live failures found during smoke testing.
+The main risk is not a single bad selector. The runtime currently has multiple competing visual owners, and parts of the Testbed encode simplified or synthetic host behavior. Therefore the historical `106/106` result is not a reliable acceptance signal for the live failures found during smoke testing.
 
-Implementation must proceed through the ordered packages below. Do not append another global override layer or declare completion from screenshots or the old test count.
+Implementation may proceed only through the ordered work packages below. Do not append another global override layer and do not declare completion from screenshots or the old test count.
 
 ## Confirmed findings
 
 ### 1. Cascade ownership is structurally ambiguous
 
-Mobile build order:
+The mobile build order is:
 
 1. `login-surface.js`
 2. `bootstrap.js`
@@ -81,280 +81,366 @@ Mobile build order:
 11. `ui-module.js`
 12. `post-main-fixes.js`
 
-`theme-module.js`, `filter-module.js`, and `post-main-fixes.js` style overlapping host surfaces. The resulting design is an accidental product of injection order, specificity, inline styles, and `!important`, rather than one explicit owner.
+`theme-module.js`, `filter-module.js`, and `post-main-fixes.js` all style overlapping host surfaces. `theme-module.js` contains multiple successive visual passes, broad high-specificity selectors, and extensive `!important`. Later files then inject more rules for the same header, recent rail, list, article, comments, and write surfaces.
 
-### 2. Filter master-disable is incorrectly coupled and mislabeled
+This means “the last intended design” is not represented by one owner. It is an accidental result of injection order, selector specificity, inline styles, and `!important` priority.
 
-`MobileConvenienceModule.isEnabled()` gates recent highlighting, draft recovery, and preview through `masterDisabled`, although they have independent settings. Personal blocking is already independent, so `모든 기능 끄기` is inaccurate.
+### 2. The master-disable behavior is incorrectly coupled and mislabeled
+
+`MobileConvenienceModule.isEnabled()` currently gates recent-post highlighting, draft recovery, and post preview through the filter panel's `masterDisabled` value. These features already have their own storage and switches, so this coupling is incorrect.
+
+The label `모든 기능 끄기` is also inaccurate. Personal blocking is evaluated independently, and the setting logically belongs to the 글·댓글 통계/filter panel.
 
 Required result:
 
 - Preserve the existing storage key and value shape.
 - Treat it as a filter-panel disable only.
-- Rename it to bounded language such as `글·댓글 필터 끄기`.
-- It may disable statistics, ratio, headtext, PUM, guest, proxy, telecom, and blocked-UID decisions owned by that panel.
-- It must not disable personal blocking, recent highlighting, preview, draft recovery, palette selection, or unrelated tools.
-- Replace tests that encode the old coupling.
+- Rename the UI to a bounded meaning such as `글·댓글 필터 끄기` or `이 필터 끄기`.
+- It may disable user-statistics, ratio, headtext, PUM, guest, proxy, telecom, and blocked-UID decisions owned by that panel.
+- It must not disable personal blocking, recent highlighting, preview, draft recovery, palette selection, or unrelated UI tools.
+- Replace the existing Testbed expectation that encodes the old coupling.
 
-### 3. Mirrored writer tests can pass while the live native menu fails
+### 3. The mirrored writer test can pass while the live native menu fails
 
-The transformed list hides the original table and clones the writer node. The current Testbed popup does not prove that live DCInside event wiring accepts the cloned target.
+The transformed list hides the original table and clones the writer node into a custom row. The current Testbed creates a fixture popup from a trusted Playwright click on that clone, but this does not prove that current DCInside delegated/direct event wiring accepts the same target.
 
-Do not repair this with `originalAuthor.click()`, synthetic events, or a pre-appended mock menu. First capture a bounded live probe of the exact writer signature and post-click result. A pass requires a trusted click on the visible writer to create the original native nickname menu. If the host requires the original node, revise the row architecture so that original remains the visible target.
+Do not repair this by calling `originalAuthor.click()`, dispatching a synthetic event, or pre-appending a mock menu. Those paths can be untrusted or bypass the host lifecycle.
+
+The first implementation gate is a bounded live probe of the exact current writer signature and post-click result. A pass requires the user's physical/trusted click on the visible writer to create the original native nickname menu.
+
+If the host requires the original interactive node, the affected list-row architecture must be revised so the original writer remains the visible event target. No clone/synthetic fallback is pre-approved.
 
 ### 4. Native popup coverage is incomplete
 
-The Testbed does not prove:
+The Testbed does not currently prove the dynamically created gallery-management popup, exact headtext trigger/open state, or complete list-size layer behavior.
 
-- click-created `#pop_manage_report_list`;
-- the exact sibling trigger/open state for `#subject_morelist`;
-- the complete 30/50/100 list-size layer;
-- clipping, stacking-context, containment, and hit-testing under short and competing-layer states.
+In particular:
 
-Preserve original popup nodes, contents, events, dimensions, and lifecycle. Keep each in place when reachable; portal only the original node after proving its ancestor graph makes in-place reachability impossible. Never clone it.
+- `#pop_manage_report_list` is absent from the registered runtime tests.
+- `#subject_morelist` is used for content discovery but not fully validated through its real sibling trigger, geometry, containment, and hit-testing.
+- The fixture list-size layer omits the full 30/50/100 state.
+- A child `z-index` increase is not sufficient when an ancestor creates a stacking or clipping context.
 
-### 5. PUMX default activation has a startup race
+Preserve each original host popup node, contents, events, dimensions, and lifecycle. Keep it in place when reachable. Portal the original node only if the ancestor graph proves that in-place reachability is impossible; never clone it.
 
-`write-defaults.js` marks activation before verifying that the host accepted the click. Completion must be marked only after observable host state changes. Reuse readiness/mutation infrastructure, bound retries, and cover already-active, late-handler, absent, write, and modify states.
+### 5. The PUMX default activation has a startup race
 
-### 6. Recent-visit navigation now owns behavior
+`write-defaults.js` marks `data-dcuf-pumx-default-activated="1"` before verifying that the host accepted the click. If the button exists before its host handler is attached, the click can do nothing and the marker prevents a later retry.
 
-`UIModule.bindRecentVisitNavigation()` intercepts clicks in capture phase and stops native propagation. Prefer the host handler. If custom behavior is necessary, verify exact controls, disabled/on synchronization, edge behavior, reduced motion, exclusion of open/more controls, rerender, and bfcache duplicate prevention.
+Required semantic result:
 
-### 7. Palette definitions are duplicated
+- Mark completion only after an observable host state changes (`.on`, `aria-pressed`, a verified hidden field, or another exact live contract).
+- Reuse existing runtime readiness/mutation infrastructure.
+- Use a bounded retry window.
+- Cover already-active, handler-attached-late, absent, write, and modify states.
 
-Fourteen palette IDs are independently defined in the main theme and login surface, with some dark-value drift. Use one canonical source or a strict deterministic parity check. Login must retain exactly one palette read, zero writes, zero menu/gallery startup, and no credential or form-value access.
+### 6. Recent-visit navigation has become behavior ownership
+
+`UIModule.bindRecentVisitNavigation()` intercepts recent-navigation button clicks in capture phase and calls `preventDefault`, `stopPropagation`, and `stopImmediatePropagation` before performing custom scrolling.
+
+This may be valid only if the exact live controls are intentionally replaced and all original states are preserved. It is not merely visual styling.
+
+Audit and test:
+
+- exact direct-child buttons only;
+- disabled/on state synchronization;
+- first/last edge behavior;
+- reduced-motion behavior;
+- no interception of the open/more controls;
+- no duplicate binding after rerender or bfcache restore.
+
+Prefer preserving a working host handler. Own the behavior only when the host implementation cannot support the approved rail and the replacement contract is explicit.
+
+### 7. Palette data is duplicated
+
+The 14 palette IDs exist independently in the main theme and login surface, and some dark values differ. This creates silent drift risk.
+
+Required result:
+
+- Move palette identity and canonical color values to one shared source that both builders consume, or add a strict generated/static parity check.
+- The login surface remains isolated: exactly one palette read, zero writes, zero menu/gallery startup, and no credential/form-value access.
 
 ### 8. Reduced-motion scope is too broad
 
-Rules equivalent to `body *` can disable unrelated host motion. Scope them to DCUF-owned roots and exact transformed surfaces whose motion DCUF introduced.
+The theme currently contains a rule equivalent to `body *`, `body *::before`, and `body *::after` under reduced motion. This can disable unrelated host animations and transitions.
 
-### 9. Guidance is sound; runtime contains existing debt
+Scope reduced-motion rules to DCUF-owned roots and the exact transformed host surfaces whose motion DCUF introduced.
 
-The current writer clone and multi-owner cascade violate the intended preserved-node and one-owner guidance. Treat them as implementation debt, not as precedent.
+### 9. The current guidance is sound, but the runtime violates part of it
+
+`AGENTS.md`, `dcuf-ui-surface-maintainer`, and `dom-safety-audit` correctly require one visual owner, preserved native nodes/events, exact live-shaped fixtures, positive geometry, and hit-testing.
+
+The current writer clone and multi-owner cascade must therefore be treated as existing implementation debt, not as evidence that the guidance permits them.
 
 ## Required ownership model
 
-Do not solve this with another final-fixes stylesheet.
+Do not solve this by adding one more “final fixes” stylesheet. Move or delete competing rules so each surface has one final owner.
 
 | Area | Allowed responsibility | Must not own |
 | --- | --- | --- |
-| `bootstrap.js` | boot lock, overlay, degraded/recovery presentation | page redesign |
-| `filter-module.js` | filter logic/visibility and filter panel/FAB shell | final host-surface design |
-| `theme-module.js` | palette state/tokens/dialog and shared owned-component tokens | repeated global correction passes |
-| dedicated final surface owner | approved header/list/view/comments/write material | behavior or duplicate corrections |
-| `post-main-fixes.js` | exact adapters, normalization, native-layer containment | broad restyling |
-| `convenience-module.js` | preview, recent highlight, draft recovery | filter-master semantics |
-| `personal-block-module.js` | personal-block UI/behavior | host redesign |
-| `ui-module.js` | list coordination and verified interaction bridges | synthetic host popup behavior |
-| `write-defaults.js` | verified default-state behavior | CSS or unverified one-shot activation |
+| `bootstrap.js` | boot lock, overlay, degraded/recovery presentation only | page redesign, list/article/write styling |
+| `filter-module.js` | filter logic, filter visibility, filter panel/FAB shell, minimum structural prerequisites | final header/recent/list/article/comment/write visual design |
+| `theme-module.js` | palette state, tokens, palette dialog, shared DCUF-owned component tokens | repeated global host-surface correction passes |
+| dedicated final surface theme or clearly isolated final sections | approved header/list/view/comments/write material and palette application | behavior, native popup reconstruction, duplicate legacy corrections |
+| `post-main-fixes.js` | exact page adapters, structural normalization, native popup containment/reachability | broad global restyling already owned elsewhere |
+| `convenience-module.js` | preview, recent highlight, draft recovery and their own roots/settings | filter master-disable semantics, unrelated host chrome |
+| `personal-block-module.js` | personal-block UI and behavior under its own roots | host page redesign |
+| `ui-module.js` | list transformation/coordination and verified interaction bridges | synthetic host popup behavior |
+| `write-defaults.js` | verified default-state behavior only | CSS or unverified one-shot activation |
 
-A new surface module is acceptable only when superseded rules are moved or removed in the same change.
+A new dedicated final-surface module is acceptable only if the corresponding rules are moved out of the old owners in the same change. It must not become another override layer.
 
 ## Work packages
 
 ### P0-A — Establish truthful fixtures before production fixes
 
-Change fixtures/harness first and add failing tests. If a new regression passes before the production fix, the fixture or assertion is invalid.
+Change fixtures/harness first and add failing tests. Do not edit production behavior until the relevant test fails for the observed reason.
 
-Required coverage:
+Required fixture upgrades:
 
-- complete logged-in/out header rails, logout, night state, tooltip, wrapping;
-- exact recent-visit root/sprite geometry;
-- exact current writer signatures;
-- exact headtext sibling structure;
-- full 30/50/100 list-size layer;
-- click-created management popup;
-- complete AI quick-registration rail and settings layer;
-- host-hidden recent/favorite label behavior;
-- short viewport and competing-layer states.
+- Full logged-in and logged-out header link rails, logout, night-mode state, tooltip, wide/narrow wrapping.
+- Exact `#visit_history.visit_bookmark > .newvisit_history.vst` structure and sprite child geometry.
+- Exact current list writer signatures from live evidence.
+- Exact `.center_box > .inner > ul + .btn_subject_more + #subject_morelist` sibling structure.
+- Full 30/50/100 list-size layer.
+- Click-created gallery-management popup under the real trigger path.
+- Full live AI quick-registration rail: loading, file input, image/character controls, layer button, prompt, count, native close sprite, and settings popup.
+- Host-hidden recent/favorite label behavior without fixture-only shortcuts.
+- Short visual viewport states and competing-layer states.
+
+False-positive stop rule: if a newly added regression passes before the production fix, the fixture/assertion is invalid and must be corrected.
 
 ### P0-B — Correct filter/convenience semantics
 
-- Remove filter-master gating from convenience enablement.
+- Remove `masterDisabled` and `_masterDisabledSnapshot` gating from convenience feature enablement.
 - Preserve independent switches and storage.
-- Rename the filter label.
+- Preserve each convenience switch and storage value.
+- Rename the filter-panel label to its actual scope.
 - Keep personal blocking independent.
-- Add toggle-combination tests.
-- Add static prevention of `masterDisabled` references in `convenience-module.js`.
+- Add tests that toggle the filter master while each convenience feature remains governed only by its own setting.
+- Add a static verification rule preventing future `masterDisabled` references in `convenience-module.js`.
 
-### P0-C — Resolve native writer interaction
+### P0-C — Resolve the native writer interaction
 
-1. Capture exact live visible/original writer, event path, and resulting popup.
-2. Reproduce the signature in the fixture.
-3. Add a failing trigger-created menu and hit-test contract.
-4. Implement the smallest original-contract-preserving architecture.
-5. Reject synthetic clicks, cloned mock popups, and pre-inserted popups.
+1. Capture the exact live visible writer, original writer, event path, and resulting popup with the audit helper.
+2. Reproduce that signature in the fixture.
+3. Add a failing test that requires trigger-created native menu content and positive hit-testing.
+4. Implement the smallest architecture that preserves the host contract.
+5. Reject synthetic click, cloned mock popup, or pre-inserted popup solutions.
 
-Acceptance applies to major, minor, and mini list surfaces where relevant.
+Acceptance requires the native menu to be created by the visible writer click on major/minor/mini list surfaces where applicable.
 
 ### P0-D — Repair native popup ownership and reachability
 
-Record root, parent chain, clipping ancestors, stacking contexts, geometry, and top element for:
+For each affected layer, record root, parent chain, clipping ancestors, stacking contexts, and the top element at visible controls.
+
+Required layers:
 
 - author menu;
 - `#subject_morelist`;
-- 30/50/100 layer;
-- gallery drawer and management popup;
-- autocomplete and editor menus;
+- 30/50/100 list-size layer;
+- gallery drawer and click-created `#pop_manage_report_list`;
+- autocomplete;
+- editor font/size/color/line-height/paragraph/table menus;
 - DCCon;
 - article actions/share/scrap/report/PUM;
-- shortcut, preview, settings, backup, block, manual-block, and convenience dialogs.
+- shortcut dialog;
+- preview;
+- settings, backup, block-management, manual-block, and convenience dialogs.
 
-Acceptance requires positive area, visual-viewport containment, and `elementFromPoint` ownership.
+Acceptance requires positive-area geometry, visual-viewport containment, and `elementFromPoint` ownership for every visible action. Screenshot and z-index assertions alone are insufficient.
 
-### P0-E — Make PUMX activation state-based
+### P0-E — Make PUMX default activation state-based
 
-Delay or retry until the host state contract is available, mark only after verified change, preserve the original control/handler, and bind custom drawing to verified state.
+- Delay or retry until the host handler/state contract is available.
+- Set the activation marker only after verified state change.
+- Preserve the original button and handler.
+- Keep the custom checked drawing purely visual and tied to the verified host state.
 
-### P1-A — Consolidate cascade ownership
+### P1-A — Consolidate the cascade by surface
 
-Create one owner for header/recent, list, article, comments, write, and native-layer containment. Remove or narrow competitors in `filter-module.js`, `theme-module.js`, and `post-main-fixes.js`. Retain `!important` only for documented host conflicts, visibility contracts, or layer corrections.
+Inventory every matching rule, injection phase, specificity, and inline priority for each surface before moving CSS.
 
-Approved composition remains selective glass:
+Required outcomes:
 
-- glass: global rails, one outer shell per major section, owned overlays;
-- flat/readable: repeated rows, comments, article paper, editor paper, native popup interiors.
+- one header/recent owner;
+- one list controls/rows owner;
+- one article owner;
+- one comments owner;
+- one write owner;
+- one native-layer containment owner;
+- DCUF-owned dialogs remain scoped to their own roots.
+
+Remove or narrow superseded rules in `filter-module.js`, `theme-module.js`, and `post-main-fixes.js`. Do not target an arbitrary `!important` percentage; retain it only for a documented host inline/important conflict, visibility contract, or layer correction.
+
+The approved composition remains selective glass:
+
+- glass: global rails, one outer shell per major section, DCUF-owned overlays;
+- flat/readable: repeated rows, comments, article paper, editor paper, and native popup interiors.
 
 ### P1-B — Correct write-page fidelity
 
-Preserve active recent/favorite semantics, verified ordering, horizontal toolbar behavior, native form fields/actions/types/submission, editor lifecycle/dropdowns, and the original PUMX control.
+- Preserve active recent/favorite label semantics; never force both labels visible.
+- Remove only the verified leaked border/positioning conflicts.
+- Keep headtexts → title → editor → AI rail → options → actions order.
+- Keep toolbar controls on one horizontal non-wrapping rail with touch scrolling on narrow viewports.
+- Preserve native form method/action, hidden fields, control types, submit/cancel path, editor lifecycle, and dropdowns.
+- Correct the malformed PUMX checked drawing without replacing its control.
 
-### P1-C — Audit recent navigation
+### P1-C — Audit recent-navigation behavior
 
-Retain native behavior where possible. Otherwise encode exact control scope, edges, reduced motion, rerender, bfcache, and duplicate-binding behavior.
+- Determine whether native behavior can be retained.
+- If custom behavior is required, scope capture interception to exact verified controls and encode the complete behavior contract.
+- Add rerender, bfcache, edge, reduced-motion, and duplicate-binding tests.
 
 ### P1-D — Unify palette definitions
 
-Use one canonical source or deterministic outputs and verify all IDs, labels, light values, dark values, storage key, and allowed values.
+- Introduce one canonical palette data source or deterministic generated outputs.
+- Verify all 14 IDs, labels, light values, and dark values for main and login surfaces.
+- Preserve the existing palette storage key and allowed values.
 
 ### P2 — Maintainability and accessibility
 
-Where touched, add appropriate list semantics, replace historical final-fix comments with ownership comments, preserve fail-fast builds, and keep maintenance notes compact. Do not expand into unrelated refactoring.
+These are non-release-blocking unless touched by a required fix:
+
+- Add `role=list`/`role=listitem` or equivalent semantics if the custom list remains div-based.
+- Replace historical comments such as “final fix” with ownership/purpose comments only where edited.
+- Keep build regex transforms fail-fast; consider replacing them with explicit modules in a later refactor, not inside this UI correction unless required.
+- Keep active maintenance notes compact; move only durable lessons from this work after validation.
 
 ## Static verification additions
 
-Where practical, extend deterministic checks to:
+Extend `tools/verify-repo.mjs` with deterministic contracts where practical:
 
-- reject filter-master references in convenience code;
-- verify palette parity;
-- require each final surface-owner marker exactly once;
-- reject broad reduced-motion selectors;
-- require exact fixture signatures;
-- require the source-runtime guard;
-- retain generated byte equality, BOM, metadata, syntax, and SHA checks.
+- fail if `convenience-module.js` references the filter `masterDisabled` state;
+- verify canonical palette parity across main and login outputs;
+- define surface-owner marker comments and require each final surface marker exactly once;
+- fail if broad reduced-motion selectors target all host descendants;
+- require exact fixture signatures for headtext, list size, writer, recent rail, and management popup;
+- require the source-runtime guard for source-work Testbed runs;
+- keep generated root/dist byte equality, BOM, metadata, syntax, and SHA checks.
 
-Static checks supplement, not replace, behavior and geometry tests.
+Static checks supplement behavior tests; they do not replace live-shaped geometry and interaction tests.
 
 ## Required validation matrix
 
 ### Routes
 
-- board/mgallery/mini list and view;
-- write and modify;
-- delete/password;
-- exact `sign.dcinside.com/login`.
+- `/board/lists`, `/mgallery/board/lists`, `/mini/board/lists`
+- `/board/view`, `/mgallery/board/view`, `/mini/board/view`
+- write and modify surfaces
+- delete/password surfaces
+- exact `sign.dcinside.com/login`
 
 ### States
 
-- logged in/out;
-- light/dark;
-- wide/narrow/short viewport;
-- first load/rerender/delayed insertion/bfcache;
-- closed and each single-open layer;
+- logged in / logged out where the host differs;
+- light / dark;
+- wide / narrow / short visual viewport;
+- first load / rerender / delayed insertion / bfcache restore;
+- closed state and every single-open layer state;
 - relevant competing-layer pairs;
 - filter master on/off with independent convenience and personal-block settings.
 
-Representative viewports include approximately 390×844, 390×560, 1100×720, and up to 1400px write allowance; they are not exclusive supported dimensions.
+### Minimum viewport classes
+
+Use live-relevant values, including at least:
+
+- narrow touch: approximately 390 × 844;
+- short viewport: approximately 390 × 560;
+- desktop-site medium: approximately 1100 × 720;
+- wide write surface: up to approximately 1400px content allowance.
+
+Do not hardcode these values as the only supported dimensions; they are regression representatives.
 
 ## Execution and commit sequence
 
-1. Baseline evidence: fixtures, audit summaries, failing tests only.
-2. Behavior: filter semantics, writer interaction, PUMX state activation.
-3. Layers: native popup reachability and focused tests.
-4. Cascade: remove competitors and establish owners.
-5. Write/secondary surfaces: write fidelity, navigation, palette, login.
-6. Settled runtime validation: artifacts plus guarded path/SHA and results.
+1. **Baseline evidence commit** — update only fixtures, audit summaries, and failing tests.
+2. **Behavior commit** — filter/convenience semantics, writer/native interaction, PUMX state activation.
+3. **Layer commit** — native popup containment/reachability and focused tests.
+4. **Cascade commit** — move/remove competing CSS and establish final surface owners.
+5. **Write and secondary surfaces commit** — write fidelity, recent navigation, palette parity, login verification.
+6. **Settled runtime validation commit** — build artifacts and record guarded runtime path/SHA and selected/full test results.
 
-Separate rules, fixtures, runtime, and generated artifacts where practical. Stage explicit paths and exclude archives, raw audits, attachments, cookies, storage dumps, credentials, and unrelated files.
+Separate rules, fixtures, runtime, and generated artifacts when practical. Stage explicit paths. Do not include archives, raw audit dumps, attachments, cookies, storage dumps, credentials, or unrelated generated files.
 
-## Validation and invalidation rules
+## Validation order and invalidation rules
 
-1. Run guidance verification after guidance changes.
+1. Run guidance verification after document/skill changes.
 2. Build `testbed/artifacts/runtime-under-test.user.js` from source.
-3. Set its absolute path and require the runtime guard.
-4. Run focused tests per package.
+3. Set `DCUF_TESTBED_USERSCRIPT` to that absolute file and use `--require-runtime-under-test`.
+4. Run focused tests for each work package.
 5. Run the complete required mobile suite once on the final unchanged runtime.
-6. Run PC verification for shared filter/storage/identity changes.
-7. Perform bounded read-only live smoke.
-8. Record runtime path, SHA-256, selected/full counts, and live-only limits.
+6. Run PC verification when shared filter/storage/identity code changed.
+7. Perform bounded read-only live smoke on the final runtime.
+8. Record the absolute runtime path, SHA-256, selected test count, full test count, and remaining live-only limitations.
 
-Runtime, fixture, or harness changes invalidate affected evidence. Branch movement invalidates stale review conclusions.
+Any runtime, fixture, or harness change after a pass invalidates the affected evidence. A moved branch SHA invalidates stale review conclusions.
 
 ## Acceptance criteria
 
-Implementation completes only when:
+The brief may be marked implementation-complete only when all of the following are true:
 
-- no P0 remains;
-- affected live triggers and dynamic states are represented truthfully;
-- each surface has one final owner;
-- filter master no longer controls independent features;
-- a trusted visible-writer click creates the original menu;
-- affected popups are contained, reachable, and win hit-testing;
-- PUMX is verified by state;
-- forms, storage, nodes/events, and submission paths remain intact;
-- focused and final guarded runs pass on one runtime SHA;
-- final live smoke does not contradict fixtures;
-- visual composition matches approved references without weakening behavioral, accessibility, geometry, lifecycle, or containment checks.
+- no P0 item remains unresolved;
+- the fixture reproduces each affected live trigger and dynamically created state;
+- one final visual owner exists for each surface and competing rules were removed or narrowed;
+- the filter master no longer controls convenience or personal-block features;
+- a trusted click on the visible writer creates the original native menu;
+- every affected popup is contained, reachable, and wins hit-testing;
+- PUMX activation is verified by host state, not by an attempted click marker;
+- forms, storage keys/shapes, native nodes/events, and submission paths remain intact;
+- focused and final guarded Testbed runs pass on the same runtime SHA;
+- final live smoke does not contradict fixture assumptions;
+- visual comparison matches the approved reference composition without weakening behavior, accessibility, geometry, lifecycle, or containment checks.
 
-## User decisions versus objective regressions
+## User visual decisions versus objective regressions
 
 The active implementer should fix these without reopening visual choices:
 
-- writer menu failure;
+- native writer menu not opening;
 - popup clipping/unreachability;
 - filter master disabling independent features;
-- PUMX not activating;
+- PUMX state not actually activating;
 - both recent/favorite labels visible;
-- AI overlap caused by incorrect reset;
+- white circular AI overlap caused by incorrect host reset;
 - malformed checked indicator;
-- detached/misordered title decoration;
-- controls outside the viewport;
-- duplicate cascade owners or stale tests.
+- title decorations detached or incorrectly ordered;
+- controls outside the visual viewport;
+- duplicate cascade owners and stale tests.
 
-Only genuinely ambiguous material choices such as unsettled spacing, tint strength, or icon treatment require a user decision.
+User visual decisions are limited to material choices not already fixed by the approved reference images, such as a genuinely ambiguous spacing, tint strength, or icon treatment. Do not reopen settled composition choices merely because implementation is difficult.
 
 ## Stop and escalation conditions
 
-Pause only the affected package and report evidence when:
+Pause only the affected work package and report evidence when:
 
-- live structure differs materially;
-- preserving the original interactive node conflicts with the mirrored architecture;
-- required portal lifecycle cannot be preserved;
-- the visual result would change form behavior, storage semantics, or native popup contents;
-- final live smoke contradicts a passing fixture.
+- the live root/signature differs materially from the contract;
+- preserving the original interactive node conflicts with the current mirrored-list architecture;
+- a portal is required but the host close/rerender lifecycle cannot yet be preserved;
+- a requested visual result would require changing form behavior, storage semantics, or native popup contents;
+- the final live smoke contradicts a passing fixture.
 
 Do not silently choose a synthetic workaround.
 
 ## Explicitly out of scope
 
 - version bump or stable promotion;
-- official branch updates;
+- official `Mobile`/`main` branch updates;
 - PR creation or merge;
-- tags, releases, homepage publishing, canonical replacement;
-- unrelated performance/shared-core refactors;
+- tags, releases, homepage publishing, or canonical download replacement;
+- unrelated performance or shared-core refactors;
 - Ponytail branding or external code import;
-- raw live audits or sensitive data.
+- raw live audit uploads or sensitive user data.
 
 ## Phase handoff and independent review checklist
 
 Before editing:
 
 - confirm branch and current SHA;
-- confirm `READY_FOR_IMPLEMENTATION` by explicit user approval;
+- confirm this brief is `READY_FOR_IMPLEMENTATION` by explicit user approval;
 - record phase owner, start SHA, scope, allowed paths, and state;
-- read `AGENTS.md`, UI/DOM skills, surface contracts, and maintenance notes;
-- capture required live evidence;
+- read `AGENTS.md`, both UI skills, surface contracts, and maintenance notes;
+- capture the bounded live evidence required for the writer and dynamic popup gates;
 - create failing live-shaped tests before production fixes.
 
 At implementation checkpoint:
@@ -363,7 +449,11 @@ At implementation checkpoint:
 - record result SHA, changed paths, and validation;
 - mark the fixed SHA `REVIEW_READY` when independent review is required;
 - report chosen owner per surface and removed/narrowed competitors;
-- report preserved contracts, runtime path/SHA-256, test results, and remaining live-only checks.
+- list removed/narrowed competing rules;
+- report preserved host contracts;
+- report focused/full validation with runtime path and SHA-256;
+- report any remaining live-only check;
+- provide the implementation commit SHA.
 
 During independent review:
 
@@ -372,4 +462,12 @@ During independent review:
 - report findings without editing;
 - if fixes are needed, mark `CHANGES_REQUESTED` and assign a new single writer from the reviewed SHA.
 
-Do not publish or promote without a separate request.
+At completion:
+
+- report chosen owner per surface;
+- list removed/narrowed competing rules;
+- report preserved host contracts;
+- report focused/full validation with runtime path and SHA-256;
+- report any remaining live-only check;
+- provide the implementation commit SHA;
+- do not publish or promote without a separate request.

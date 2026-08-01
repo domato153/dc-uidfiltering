@@ -33,7 +33,7 @@
 - Omit command logs, transient dead ends, and sensitive data.
 
 ## GitHub collaboration
-- A user-designated `codex/*` branch is the shared source of truth; its name does not assign the owner. Checkpoints are not releases; never force-push, rewrite history, open/merge a PR, tag, promote, or update official branches without a separate request.
+- A user-designated `codex/*` branch is the source of truth; its name does not assign the owner. Checkpoints are not releases; never force-push, rewrite history, open/merge a PR, tag, promote, or update official branches without a separate request.
 - Keep execution state in ignored `.codex/` and review-ready facts in `docs/work/*.md`. The active brief records phase, single owner, start/result/review SHAs, scope, allowed paths, state, and validation.
 - Either agent may perform any stage. Allow one active writer per branch; prohibit parallel implementation or commits and do not review a moving branch.
 - Handoff only from a clean checkpoint commit. Review a fixed `REVIEW_READY` SHA; movement invalidates it. Reviewers report findings only unless they close review and become the next writer.
