@@ -32,7 +32,7 @@
 
 ## GitHub collaboration
 - `codex/*` is a shared branch name and assigns no owner. Checkpoints are not releases; no force-push, history rewrite, PR merge, tag, promotion, or official-branch update without a separate request.
-- Before trusting `origin/*` or rejecting a requested SHA, verify `git remote get-url origin`, query the live `refs/heads/<branch>` with `git ls-remote origin "refs/heads/$branch"`, and compare the server SHA. A local tracking ref is not server authority; never downgrade a baseline or block solely on stale tracking refs or an old checkout.
+- Before trusting `origin/*` or rejecting a requested SHA, verify `git remote get-url origin`, query live `refs/heads/<branch>` with `git ls-remote origin "refs/heads/$branch"`, and compare the server SHA. A local tracking ref is not server authority; never downgrade a baseline or block solely on stale tracking refs or an old checkout.
 - If tracking is stale or the object is missing, use the exact refspec `git fetch --no-tags origin "+refs/heads/$branch:refs/remotes/origin/$branch"`, then verify `git cat-file -e "$expectedSha^{commit}"` and the commit tree with `git ls-tree -r --name-only "$expectedSha" -- <required paths>`. Required paths must be checked in the requested commit, not inferred from the checkout.
 - Keep execution state in ignored `.codex/` and review-ready facts in `docs/work/*.md`: phase, single owner, start/result/review SHAs, scope, allowed paths, state, and validation. Use one active writer and hand off only from a clean fixed `REVIEW_READY` SHA; do not review a moving branch.
 - `REVIEW_REQUIRED` or `PAUSED` permits only rules, skills, and the active brief. Runtime, fixture, test, or build work requires explicit `READY_FOR_IMPLEMENTATION`.
