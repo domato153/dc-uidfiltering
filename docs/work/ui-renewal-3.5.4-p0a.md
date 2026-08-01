@@ -26,9 +26,9 @@ User approval received in Chat on 2026-08-01.
 ## Active phase
 
 - Phase: `P0-A through P0-E audit correction`
-- Owner: `ChatGPT correction implemented`
-- Correction base SHA: `4bceedfac7447f09a391d367092aa32e53a6a081`
-- State: `VALIDATION_REQUIRED`
+- Owner: `Codex validation completed`
+- Correction base SHA: `bffcc0d6b506ba724eca915242bb5d6e5ff11b2e`
+- State: `REVIEW_READY`
 - Parallel work: prohibited
 - Validation executor and independent reviewer: `Codex/Luna on one fixed SHA`
 - P1: not started and prohibited
@@ -90,7 +90,7 @@ The following evidence was produced before the final fixture/assertion-only corr
 
 Because the P0-A fixture and runner changed after those passes, P0-A must be rerun. Runtime source and the broad suite did not change, but the fixed checkpoint still requires guidance and focused validation from the final SHA.
 
-## Validation required before REVIEW_READY
+## Final validation record
 
 On the final fixed SHA, run:
 
@@ -105,7 +105,18 @@ node run-tests.mjs --require-runtime-under-test
 
 The full guarded suite may only be reused if the validator confirms the guarded runtime SHA is still `156b3ef84dc84c305d8a887b3bb401e8385d78c7f0d8ff17eb6e10648d423a77` and no runtime, common fixture, harness, or full-suite code changed after `4bceedf`. Running it again is preferred for a clean fixed-SHA handoff.
 
-## Exit criteria
+Validation base SHA: `bffcc0d6b506ba724eca915242bb5d6e5ff11b2e`
+Validation worktree: `C:\Users\dign2\Documents\tampermonkey\Dcfilter\dcuf-p0-final-validation-bffcc0d`
+Guidance: `PASS`; `AGENTS.md` 5991/6000; active skills 4/4; total skill text 10320/10500.
+Syntax: `PASS` for `testbed/fixtures/p0a-live-contracts.mjs` and `testbed/run-p0a-regressions.mjs`.
+Diff check: `PASS`; changed paths from `4bceedfac7447f09a391d367092aa32e53a6a081` are exactly `AGENTS.md`, this brief, `testbed/fixtures/p0a-live-contracts.mjs`, and `testbed/run-p0a-regressions.mjs`.
+Guarded runtime: `C:\Users\dign2\Documents\tampermonkey\Dcfilter\dcuf-p0-final-validation-bffcc0d\testbed\artifacts\runtime-under-test.user.js`; SHA-256 `156b3ef84dc84c305d8a887b3bb401e8385d78c7f0d8ff17eb6e10648d423a77`.
+P0-A: `9 passed, 0 failed`; direct and table-delegated writer paths, major/minor/mini routes, route-specific structures, and console/page error checks passed.
+Full guarded mobile suite: `108 passed, 0 failed`; runtime guard PASS; console/page errors 0.
+Original dirty checkout: preserved; the original five status entries were unchanged before and after validation.
+P1: not started and prohibited.
+
+## Exit criteria satisfied
 
 This phase may return to `REVIEW_READY` only when:
 
@@ -118,10 +129,10 @@ This phase may return to `REVIEW_READY` only when:
 - branch remains fixed throughout review;
 - the exact result SHA and validation output are recorded here.
 
-Until then:
+Final handoff:
 
 - Project state: `VALIDATION_REQUIRED`
-- Phase state: `VALIDATION_REQUIRED`
-- Owner: `ChatGPT correction implemented`
+- Phase state: `REVIEW_READY`
+- Owner: `Codex validation completed`
 - Reviewer: `Codex/Luna`
 - P1: prohibited
