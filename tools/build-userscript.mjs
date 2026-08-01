@@ -23,6 +23,7 @@ const MOBILE_LEGACY_PARTS = [
     'src/targets/mobile/ui-module.js',
     'src/targets/mobile/post-main-fixes.js',
     'src/targets/mobile/live-corrections.js',
+    'src/targets/mobile/live-native-bridge.js',
 ];
 
 const replacements = [
@@ -72,8 +73,6 @@ async function buildSharedRuntimePrelude() {
         schemaSource.trimEnd(),
         '',
         '    const DCUF_SHARED_SCHEMA = Object.freeze({ FILTER_CONSTANTS, STORAGE_KEYS, SELECTORS, API_PATHS, CUSTOM_ATTRS, UI_IDS, ETC_CONSTANTS });',
-        '',
-        ipSource.trimEnd(),
         '',
         '    const DCUF_SHARED_IP = Object.freeze({ TELECOM, PROXY_MODE, PROXY_STRICT_PREFIXES, PROXY_AGGRESSIVE_EXTRA_PREFIXES, KR_IP_RANGES });',
         '',
@@ -134,6 +133,19 @@ function transformLegacyAppForPhaseTwo(source) {
             '        KR_IP_RANGES: DCUF_SHARED_IP.KR_IP_RANGES,',
         ].join('\n'),
         'shared proxy and KR range block'
+    );
+
+    text = replaceOrThrow(
+        text,
+        /    observeDarkMode\(\);\n\n\}\)\(\);/,
+        [
+            '    observeDarkMode();',
+            '    __dcufRoot.__dcufUIModule = UIModule;',
+            '    window.__dcufUIModule = UIModule;',
+            '',
+            '})();',
+        ].join('\n'),
+        'bounded UI module runtime bridge'
     );
 
     return text;
