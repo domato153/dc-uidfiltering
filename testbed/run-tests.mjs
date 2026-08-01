@@ -262,11 +262,7 @@ mobileTest('boot: a delayed view-bottom list replacement is hidden before its fi
             await session.goto(pathname);
             const result = await session.page.evaluate(async () => {
             const currentWrap = document.querySelector('.view_bottom .gall_listwrap');
-            const sourceRows = Array.from(currentWrap?.querySelectorAll('tr.ub-content') || []).map((row) => {
-                const clone = row.cloneNode(true);
-                clone.removeAttribute('data-custom-row-id');
-                return clone.outerHTML;
-            }).join('');
+            const sourceRows = window.__dcufFixture.getInitialHostListRows();
             const replacement = document.createElement('section');
             replacement.className = 'gall_listwrap fixture-view-list fixture-delayed-view-list';
             replacement.innerHTML = '<table class="gall_list"><tbody class="listwrap2"></tbody></table>';
@@ -6717,6 +6713,10 @@ mobileTest('glass material tokens cover list chrome, controls, popups, and previ
             if (item === cases[0]) {
                 await session.page.evaluate(() => window.__dcufFilterModule.showSettings());
                 await session.page.waitForSelector('#dcinside-filter-setting');
+                await waitForSettled(session.page, 220);
+                await session.page.evaluate(() => {
+                    document.getElementById('dcinside-filter-setting')?.getAnimations().forEach((animation) => animation.finish());
+                });
                 const settingsMaterial = await session.page.locator('#dcinside-filter-setting').evaluate((panel) => {
                     const style = getComputedStyle(panel);
                     const saveStyle = getComputedStyle(panel.querySelector('#dcinside-threshold-save'));

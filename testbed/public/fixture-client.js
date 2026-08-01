@@ -13,6 +13,7 @@
     };
     const getCommentList = () => document.querySelector('#comment_wrap_1 .comment_box > .cmt_list');
     const getListBody = () => document.querySelector('table.gall_list tbody');
+    const initialHostListRows = Array.from(getListBody()?.querySelectorAll('tr.ub-content') || []).map((row) => row.outerHTML);
     const getWriteForm = () => document.querySelector('form#write, form#writeForm, form[name="modify"][action*="modify_submit"]');
     const getWriteEditor = () => document.querySelector('[data-fixture-editor] .note-editable, .native-editor');
     const syncWriteMemo = () => {
@@ -161,6 +162,9 @@
             if (!link) return null;
             link.textContent = `한 행만 변경 ${Date.now()}`;
             return row.getAttribute('data-custom-row-id');
+        },
+        getInitialHostListRows() {
+            return initialHostListRows.join('');
         },
         replaceList(count = 10) {
             const tbody = getListBody();
