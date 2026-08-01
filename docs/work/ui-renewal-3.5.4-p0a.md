@@ -1,70 +1,98 @@
-# UI renewal 3.5.4 — live-site correction
+# UI renewal 3.5.4 — integrated correction state
 
-This file is the authoritative execution-state companion to `docs/work/ui-renewal-3.5.4.md`. It supersedes only that document's project-status and current-active-phase fields. The parent brief's technical requirements, exclusions, native-DOM rules, and release restrictions remain in force.
+This file is the authoritative execution-state companion to `docs/work/ui-renewal-3.5.4.md`. It supersedes only the parent brief's project-status and active-phase fields. All technical requirements, native-DOM rules, exclusions, and release restrictions in the parent brief remain in force.
 
 ## Project state
 
 `IMPLEMENTING`
 
-User approval to reopen and correct the live failures was received in Chat on 2026-08-01.
-
 ## Active phase
 
-- Phase: `Live P0 reopen, then bounded P1 surface correction`
+- Phase: `P1-A through P1-D integrated surface correction`
 - Owner and sole branch writer: `ChatGPT`
-- Fixed correction base SHA: `1a984b3b84fafff11e16894d395b0e9b5af89af9`
+- Fixed P1 start SHA: `d82d9cca32d513b104f6c4ab09f4e9e2a6046dd1`
 - State: `IN_PROGRESS`
 - Parallel implementation: prohibited
 - Independent validation owner after handoff: `Codex/Luna`
 - Independent reviewer after fixed-SHA validation: `ChatGPT`
-- P0: `CHANGES_REQUESTED — live-site failures reproduced by the user`
-- P1: `blocked until the reopened native interaction failures are corrected`
+- P0 production changes and regression coverage: `locally validated, live acceptance intentionally deferred to the integrated candidate`
+- P1: `active`
 
-## Why the prior approval was revoked
+## P0 checkpoint carried into P1
 
-The fixed runtime passed the local P0-A and guarded suites, but the exact same built runtime failed on the live DCInside site. The prior automated result is therefore retained only as historical evidence; it is not an acceptance result for the current phase.
+Commit `d82d9cca32d513b104f6c4ab09f4e9e2a6046dd1` is the only accepted P1 base.
 
-Confirmed live failures:
+Recorded clean-worktree validation:
 
-1. A visible list writer click does not create the native nickname menu.
-2. `#pop_manage_report_list` can be created inside the gallery-cover drawer clone and remain clipped by that drawer.
-3. The headtext-more arrow overlaps the headtext rail.
-4. The write page can expose both recent-visit and favorite-gallery labels and can repaint the lower border.
-5. Additional header, list metadata, toolbar, AI-rail, native-layer, and cascade-ownership defects remain open.
+- P0-A: `14 passed, 0 failed`.
+- Full guarded mobile Testbed: `108 passed, 0 failed, 0 skipped`.
+- Required source/build `node --check`: exit `0`.
+- Guidance verification: exit `0`.
+- Runtime console/page errors: none.
+- Built beta SHA-256: `39c64e2af13749a71b0358060c73adb9f0f702d3e245952232400522c069c042`.
+- `npm ci`: not applicable because no lockfile; `npm install --no-package-lock` succeeded.
+- Original dirty checkout: preserved.
 
-The uploaded `Dc_UserFilter_Mobile_v3.5.4-beta.user.js` matched the previously validated guarded runtime SHA-256:
+This checkpoint is regression evidence, not final user acceptance. The next user live test occurs only after P1-A through P1-D are integrated, independently validated, and built from one fixed SHA.
 
-`156b3ef84dc84c305d8a887b3bb401e8385d78c7f0d8ff17eb6e10648d423a77`
+## P1 implementation contract
 
-That equality proves the live failures are fixture/contract false negatives, not a build mismatch.
+### P1-A — single active owner per surface
+
+The integrated runtime must have exactly one active owner for each of:
+
+- header and recent/favorite rail;
+- list navigation, rows, metadata, and bottom controls;
+- article paper;
+- comments and reply surfaces;
+- write form, editor rail, AI rail, options, and actions;
+- native popup containment and portal geometry.
+
+`live-corrections.js` must not remain an emergency visual override. It may retain structural/native compatibility adapters only. A dedicated final-surface module is permitted only when it retires or narrows the corresponding legacy active rules in the same runtime.
+
+### P1-B — write fidelity
+
+- Preserve native form method/action, hidden fields, editor nodes, controls, and submit/cancel lifecycle.
+- Preserve host-hidden recent/favorite state; never force both labels visible.
+- Keep headtexts → title → editor → AI rail → options → actions ordering.
+- Keep toolbar controls on one horizontal touch-scroll rail.
+- Keep AI loading, file input, image/character/layer controls, prompt, count, native close/reset, and settings popup usable.
+- Keep PUMX activation state-based and render its checked mark as a conventional visual check tied to native state.
+
+### P1-C — recent navigation
+
+Preserve a working host handler. A DCUF fallback may run only when the host click produced no observable movement or state change. It must not use capture-phase cancellation, must not double-scroll, and must survive rerender and bfcache without duplicate binding.
+
+### P1-D — palette parity
+
+All 14 palette IDs, labels, light values, and dark values must be canonical or deterministically verified for both the main runtime and isolated login surface. Preserve storage key `dcuf_mobile_ui_palette`, exactly one login-surface read, and zero login-surface writes.
 
 ## Active defect register
 
-The correction scope includes the user's consolidated 24-item register:
+The integrated scope remains the user's consolidated 24-item register:
 
 - filter-master/convenience independence;
 - logged-in header wrapping and logout/night-mode alignment;
-- list writer native-menu behavior;
+- native list-writer menu behavior;
 - gallery-management popup ownership and containment;
-- headtext-more control geometry;
+- headtext-more geometry;
 - list title/right metadata alignment, including comments, PUM, and scheduled-delete indicators;
-- single-row mobile write toolbar with horizontal touch scrolling;
-- one bottom list shell for actions, pagination, move, and search;
-- consistent header/list/view/write card composition;
+- single-row mobile write toolbar;
+- one bottom list shell for actions, pagination, movement, and search;
+- consistent header/list/view/write composition;
 - recent/favorite host-hidden state and unwanted borders;
-- full AI quick-registration rail fidelity and native close/reset geometry;
-- PUM visual checkmark fidelity and verified PUMX activation;
+- full AI quick-registration fidelity and native close/reset geometry;
+- PUM checkmark fidelity and verified PUMX activation;
 - native popup clipping, stacking, containment, and hit-testing;
-- recent-navigation native-handler preservation;
-- excessive global `!important` and ambiguous final CSS ownership;
-- truthful live-shaped Testbed contracts;
-- preservation of original host DOM, event ownership, popup lifecycle, and form behavior.
+- native-first recent navigation;
+- excessive global `!important` and ambiguous active ownership;
+- truthful live-shaped fixtures;
+- original DOM, events, popup lifecycle, and form behavior preservation.
 
 ## Allowed paths
 
-The active owner may change only the following areas unless a newly discovered dependency is documented here before editing:
-
 - `docs/work/ui-renewal-3.5.4-p0a.md`
+- `src/shared/mobile-palette-data.js`
 - `src/targets/mobile/*.js`
 - `tools/build-userscript.mjs`
 - `tools/verify-repo.mjs`
@@ -72,52 +100,42 @@ The active owner may change only the following areas unless a newly discovered d
 - `testbed/*.mjs`
 - `testbed/package.json`
 
-Generated root/dist userscripts, versions, releases, tags, official branches, and unrelated PC runtime files remain prohibited.
+Generated root/dist userscripts, versions, releases, tags, official branches, unrelated PC runtime files, and the user's dirty checkout remain prohibited.
 
-## Implementation order
+## Ordered execution
 
-1. Restore a working writer compatibility path while keeping the original writer node in its original row.
-2. Make drawer copies presentation-only and route their actions through the original host controls; portal only original host popups when required for reachability.
-3. Preserve native recent-navigation handling and host-hidden recent/favorite state.
-4. Install one explicit final surface owner for header/recent, list, article/comments, write, and native-layer containment; remove or neutralize competing late ownership where touched.
-5. Upgrade the Testbed so the live failures fail before the correction and pass only through the production path.
-6. Build and run syntax, guidance, focused regressions, and the full guarded suite from one fixed SHA.
-7. Require a new user live-site smoke test before P0 or P1 is declared complete.
+1. Replace the temporary visual correction layer with one canonical active surface owner and retire/narrow competing active legacy rules.
+2. Complete write fidelity and recent/favorite semantics without replacing native form/editor controls.
+3. Replace unconditional recent scrolling with native-first fallback behavior.
+4. Establish deterministic 14-palette parity.
+5. Add failing-before/passing-after P1 ownership and behavior contracts.
+6. Run syntax, guidance, P0-A, P1, and the full guarded suite from one fixed result SHA.
+7. Perform independent fixed-SHA review.
+8. Build one integrated userscript for the user's single comprehensive live test.
 
 ## Stop conditions
 
 Stop and report instead of continuing if:
 
 - the server branch moves unexpectedly;
-- a fix requires synthetic fake popup content rather than an original host popup;
-- a fix changes storage shape, versions, release files, or official branches;
-- tests must be weakened or removed to pass;
-- a native action cannot be preserved without replacing its host lifecycle;
+- a fix requires a fake popup, cloned native control, or replacement form lifecycle;
+- storage shape, version, release files, official branches, or unrelated PC code would change;
+- tests must be weakened or removed;
+- active surface ownership still depends on an unexplained later override;
 - the original dirty checkout would need to be altered.
-
-## Historical validation record
-
-The prior local result is historical only:
-
-- Guidance: `PASS`; `AGENTS.md` 5991/6000.
-- Guarded runtime SHA-256: `156b3ef84dc84c305d8a887b3bb401e8385d78c7f0d8ff17eb6e10648d423a77`.
-- P0-A: `9 passed, 0 failed`.
-- Full guarded mobile suite: `108 passed, 0 failed`.
-- Original dirty checkout: preserved.
-
-Live use invalidated the writer and management-popup acceptance claims, so those counts cannot be reused for the reopened phase.
 
 ## Required handoff evidence
 
 A future `REVIEW_READY` handoff must record:
 
-- exact fixed start and result SHAs;
+- exact P1 start and result SHAs;
 - exact changed paths;
+- active-owner audit results for all six surfaces;
 - guidance and syntax exit codes;
+- P0-A, P1, and full guarded totals, failures, skips, and obsolete counts;
 - built runtime absolute path and SHA-256;
-- focused live-contract test results;
-- full guarded suite totals, failures, skips, and obsolete counts;
 - console/page errors;
+- palette parity result for all 14 presets;
 - original dirty-checkout preservation;
-- proof that P1 did not bypass an unresolved P0 failure;
-- user live-site results for writer menu, gallery-management popup, headtext control, recent/favorite state, write toolbar, and AI rail.
+- remaining live-only checks;
+- user live results for writer menu, management popup, recent navigation/state, headtext, list metadata, toolbar, AI rail, PUMX, and popup reachability.
