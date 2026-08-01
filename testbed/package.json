@@ -9,7 +9,8 @@
     "test:write": "node run-tests.mjs --group write",
     "test:performance": "node run-tests.mjs --group performance",
     "test:bfcache": "node run-bfcache.mjs",
-    "test:headed": "node run-tests.mjs --headed"
+    "test:headed": "node run-tests.mjs --headed",
+    "test:p0a": "node run-p0a-regressions.mjs"
   },
   "devDependencies": {
     "playwright": "^1.52.0"
