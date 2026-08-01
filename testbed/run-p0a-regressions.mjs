@@ -6,12 +6,10 @@ import { mkdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { promisify } from 'node:util';
 import { fileURLToPath } from 'node:url';
-import { createRequire } from 'node:module';
 import { p0aListPage, p0aWritePage } from './fixtures/p0a-live-contracts.mjs';
+import { launchBrowser } from './harness/runner-utils.mjs';
 
 const execFileAsync = promisify(execFile);
-const require = createRequire(import.meta.url);
-const { chromium } = require('./harness/playwright-loader.cjs');
 const testbedDir = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.resolve(testbedDir, '..');
 const runtimePath = path.join(testbedDir, 'artifacts', 'runtime-under-test.user.js');
@@ -42,10 +40,18 @@ const startFixtureServer = async (harnessSource) => {
     const inject = (html) => html.replace('</head>', `<script>${harnessSource.replaceAll('</script>', '<\\/script>')}</script></head>`);
     const server = http.createServer((request, response) => {
         const url = new URL(request.url, 'http://127.0.0.1');
+        if (url.pathname === '/favicon.ico') {
+            response.writeHead(204);
+            response.end();
+            return;
+        }
         let body = '<!doctype html><title>not found</title>';
         let status = 404;
         if (url.pathname === '/mgallery/board/lists') {
-            body = inject(p0aListPage());
+            const variant = ['major', 'minor', 'mini'].includes(url.searchParams.get('variant'))
+                ? url.searchParams.get('variant')
+                : 'minor';
+            body = inject(p0aListPage({ variant }));
             status = 200;
         } else if (url.pathname === '/mgallery/board/write') {
             body = inject(p0aWritePage());
@@ -80,7 +86,13 @@ const positiveRect = async (locator, label) => {
             withinViewport: rect.left >= 0 && rect.top >= 0
                 && rect.right <= document.documentElement.clientWidth
                 && rect.bottom <= document.documentElement.clientHeight,
-            ownsHit: top === element || element.contains(top)
+            ownsHit: top === element || element.contains(top),
+            hitTarget: top ? {
+                tag: top.tagName,
+                id: top.id,
+                className: top.className,
+                zIndex: getComputedStyle(top).zIndex
+            } : null
         };
     });
     assert.equal(result.width > 0 && result.height > 0, true, `${label}: non-positive geometry ${JSON.stringify(result)}`);
@@ -101,7 +113,7 @@ const main = async () => {
         }
     });
     const server = await startFixtureServer(harnessSource);
-    const browser = await chromium.launch({ headless: true, args: ['--disable-background-timer-throttling'] });
+    const browser = await launchBrowser();
     const context = await browser.newContext({ viewport: { width: 1100, height: 720 } });
     const page = await context.newPage();
     const consoleErrors = [];
@@ -136,6 +148,8 @@ const main = async () => {
         for (const row of await page.locator('#listSizeLayer li button').all()) await positiveRect(row, 'list-size option');
         record('complete 30/50/100 list-size layer', 'PASS');
 
+        await page.locator('.btn_subject_more').click();
+        await page.locator('.list_size_trigger').click();
         await page.locator('.btn_manage').click();
         await page.locator('#pop_manage_report_list').waitFor({ state: 'visible' });
         for (const action of await page.locator('#pop_manage_report_list .popup_action').all()) {
@@ -143,20 +157,38 @@ const main = async () => {
         }
         record('click-created management popup geometry and hit-testing', 'PASS');
 
-        const originalWriter = page.locator('table.gall_list .gall_writer[data-uid="direct-handler-writer"]');
-        assert.equal(await originalWriter.getAttribute('data-fixture-direct-handler'), '1');
+        assert.equal(await page.evaluate(() => window.__fixtureDirectWriter instanceof HTMLElement), true);
         const visibleWriter = page.locator('.custom-mobile-list .custom-post-item .author .gall_writer[data-uid="direct-handler-writer"]');
         await visibleWriter.waitFor({ state: 'visible' });
+        const visibleWriterIsOriginal = await visibleWriter.evaluate((node) => node === window.__fixtureDirectWriter);
+        assert.equal(await page.locator('.user_data[data-fixture-native-menu="1"]').count(), 0);
         await visibleWriter.click();
         const nativeMenuCount = await page.locator('.user_data[data-fixture-native-menu="1"] .native_writer_action').count();
-        if (nativeMenuCount !== 1) {
+        if (!visibleWriterIsOriginal || nativeMenuCount !== 1) {
             record(
                 'trusted visible-writer click creates original native menu',
                 'FAIL',
-                'current runtime displays a clone; the original node direct handler is not preserved'
+                visibleWriterIsOriginal
+                    ? 'the original writer did not create the native menu'
+                    : 'current runtime displays a clone; the original node direct handler is not preserved'
             );
         } else {
+            await positiveRect(page.locator('.user_data[data-fixture-native-menu="1"] .native_writer_action'), 'native writer menu action');
             record('trusted visible-writer click creates original native menu', 'PASS');
+        }
+
+        for (const variant of ['major', 'minor', 'mini']) {
+            await page.goto(`${server.baseUrl}/mgallery/board/lists?id=test&variant=${variant}`, { waitUntil: 'domcontentloaded' });
+            await page.waitForFunction(() => document.documentElement.classList.contains('script-ui-ready'), null, { timeout: 12000 });
+            await page.waitForTimeout(180);
+            const variantWriter = page.locator('.custom-mobile-list .custom-post-item .author .gall_writer[data-uid="direct-handler-writer"]');
+            await variantWriter.waitFor({ state: 'visible' });
+            assert.equal(await page.locator('.user_data[data-fixture-native-menu="1"]').count(), 0);
+            assert.equal(await variantWriter.evaluate((node) => node === window.__fixtureDirectWriter), true, `${variant} writer must remain the original node`);
+            await variantWriter.click();
+            await page.locator('.user_data[data-fixture-native-menu="1"] .native_writer_action').waitFor({ state: 'visible' });
+            await positiveRect(page.locator('.user_data[data-fixture-native-menu="1"] .native_writer_action'), `${variant} native writer menu action`);
+            record(`${variant} visible writer trusted click and native menu`, 'PASS');
         }
 
         await page.goto(`${server.baseUrl}/mgallery/board/write?id=test`, { waitUntil: 'domcontentloaded' });
@@ -177,10 +209,10 @@ const main = async () => {
         const failed = results.filter((result) => result.status === 'FAIL');
         process.stdout.write(`P0-A runtime SHA-256: ${sha256}\n`);
         process.stdout.write(`P0-A result: ${results.length - failed.length} passed, ${failed.length} failed\n`);
-        if (failed.length === 0) {
+        if (failed.length === 0 && process.env.DCUF_P0A_EXPECT_INITIAL_FAILURE === '1') {
             throw new Error('False-positive stop rule: all P0-A contracts passed before production fixes');
         }
-        process.exitCode = 1;
+        if (failed.length > 0) process.exitCode = 1;
     } finally {
         await context.close();
         await browser.close();

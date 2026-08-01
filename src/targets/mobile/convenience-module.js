@@ -19,7 +19,6 @@
         PREVIEW_TTL: 3 * 60 * 1000,
         PREVIEW_MAX: 8,
         settings: null,
-        _masterDisabledSnapshot: false,
         _settingsPromise: null,
         _previewCache: new Map(),
         _previewRequest: null,
@@ -65,14 +64,8 @@
             try { return await this._settingsPromise; }
             finally { this._settingsPromise = null; }
         },
-        isMasterDisabled() {
-            if (typeof dcFilterSettings === 'object' && typeof dcFilterSettings?.masterDisabled === 'boolean') {
-                return dcFilterSettings.masterDisabled;
-            }
-            return this._masterDisabledSnapshot;
-        },
         isEnabled(key) {
-            return !this.isMasterDisabled() && Boolean(this.settings?.[key]);
+            return Boolean(this.settings?.[key]);
         },
         captureInlineStyles(element, properties) {
             return Object.fromEntries(properties.map((property) => [property, {
@@ -142,8 +135,6 @@
             window.scrollTo({ left: state.x, top: state.y, behavior: 'auto' });
         },
         async init() {
-            const snapshot = await FilterModule.loadBootSnapshot();
-            this._masterDisabledSnapshot = Boolean(snapshot?.masterDisabled);
             await this.loadSettings();
             try { localStorage.removeItem('dcuf:draft-diagnostics:v1'); } catch { /* stale beta trace cleanup */ }
             this.ensureStyles();
@@ -290,7 +281,7 @@
                 const input = document.createElement('input'); input.type = 'checkbox'; input.className = 'dcuf-convenience-toggle'; input.checked = this.settings[key]; input.setAttribute('aria-label', name);
                 controls[key] = input; label.append(text, input); body.appendChild(label);
             });
-            const note = document.createElement('p'); note.className = 'dcuf-convenience-note dcuf-settings-help'; note.textContent = '모든 기능 끄기는 선택값을 지우지 않고 실행만 멈춥니다.'; body.appendChild(note);
+            const note = document.createElement('p'); note.className = 'dcuf-convenience-note dcuf-settings-help'; note.textContent = '필터 설정은 저장값을 유지하고 글·댓글 필터 실행만 멈춥니다.'; body.appendChild(note);
             panel.appendChild(body);
             const actions = document.createElement('div'); actions.className = 'dcuf-convenience-actions dcuf-settings-footer';
             const clearDrafts = document.createElement('button'); clearDrafts.type = 'button'; clearDrafts.className = 'dcuf-convenience-clear'; clearDrafts.textContent = '저장된 초안 삭제';
@@ -342,7 +333,7 @@
                 const listContainer = link?.closest('.custom-mobile-list');
                 if (!(link instanceof HTMLAnchorElement) || !(listContainer instanceof HTMLElement)) return;
                 if (link === this._previewSuppressedLink) return;
-                if (this.isMasterDisabled() || !this.settings?.recentHighlight) return;
+                if (!this.settings?.recentHighlight) return;
                 const postNo = this.getPostNoFromLink(link);
                 const record = {
                     listUrl: this.normalizedListUrl(), postUrl: link.href, postNo,
@@ -367,7 +358,7 @@
             }) || null;
         },
         markRecentCard(listContainer, postNo, { pulse = false } = {}) {
-            if (!this.settings?.recentHighlight || this.isMasterDisabled()) return;
+            if (!this.settings?.recentHighlight) return;
             listContainer.querySelectorAll('.dcuf-recent-post,.dcuf-recent-pulse').forEach((node) => node.classList.remove('dcuf-recent-post', 'dcuf-recent-pulse'));
             listContainer.querySelectorAll('.dcuf-recent-label').forEach((node) => node.remove());
             const card = this.findCardByPostNo(listContainer, postNo);

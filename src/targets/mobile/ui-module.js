@@ -29,6 +29,7 @@
             POST_ITEM: 'custom-post-item',
             BOTTOM_CONTROLS: 'custom-bottom-controls',
             SEARCH_SLOT: 'dcuf-search-drawer-slot',
+            WRITER_IDENTITY: 'dcuf-writer-identity',
         },
 
         LIST_STATE_MAP: new WeakMap(),
@@ -317,6 +318,77 @@
             });
         },
 
+        getWriterForMirror(originalRow, rowId, state) {
+            const owned = state?.writerByRowId?.get(rowId)?.node;
+            if (owned instanceof HTMLElement && owned.isConnected) return owned;
+            return originalRow.querySelector('.gall_writer, .ub-writer');
+        },
+
+        markWriterMutationBatch(state) {
+            if (!state) return;
+            state.writerMutationBusPending = true;
+            if (state.writerMutationResetTimer !== null) {
+                window.clearTimeout(state.writerMutationResetTimer);
+            }
+            state.writerMutationResetTimer = window.setTimeout(() => {
+                state.writerMutationBusPending = false;
+                state.writerMutationResetTimer = null;
+            }, 100);
+        },
+
+        moveWriterToMirror(originalRow, rowId, state, writerEl) {
+            if (!(originalRow instanceof HTMLElement) || !(state?.writerByRowId instanceof Map)) return null;
+            if (!(writerEl instanceof HTMLElement)) return null;
+            const existing = state.writerByRowId.get(rowId);
+            if (existing?.node === writerEl && writerEl.parentElement?.closest(`.${this.CUSTOM_CLASSES.POST_ITEM}`)) return writerEl;
+
+            const parent = writerEl.parentNode;
+            if (!(parent instanceof Node)) return null;
+            const nextSibling = writerEl.nextSibling;
+            this.markWriterMutationBatch(state);
+            let identity = originalRow.querySelector(`:scope .${this.CUSTOM_CLASSES.WRITER_IDENTITY}`);
+            if (!(identity instanceof HTMLElement)) {
+                identity = document.createElement('span');
+                identity.className = this.CUSTOM_CLASSES.WRITER_IDENTITY;
+                identity.hidden = true;
+                identity.setAttribute('aria-hidden', 'true');
+                identity.dataset.dcufWriterIdentity = '1';
+                parent.insertBefore(identity, writerEl);
+            }
+            ['data-uid', 'data-nick', 'data-ip'].forEach((attribute) => {
+                const value = writerEl.getAttribute(attribute);
+                if (value === null) identity.removeAttribute(attribute);
+                else identity.setAttribute(attribute, value);
+            });
+
+            state.writerByRowId.set(rowId, { node: writerEl, parent, nextSibling, identity });
+            state.writerOwnedMutationNodes?.add(writerEl);
+            state.writerOwnedMutationNodes?.add(identity);
+            return writerEl;
+        },
+
+        restoreWriterEntry(entry, state = null) {
+            const writer = entry?.node;
+            const parent = entry?.parent;
+            if (state?.writerOwnedMutationNodes instanceof Set) {
+                if (writer instanceof Node) state.writerOwnedMutationNodes.add(writer);
+                if (entry?.identity instanceof Node) state.writerOwnedMutationNodes.add(entry.identity);
+                this.markWriterMutationBatch(state);
+            }
+            if (writer instanceof HTMLElement && parent instanceof Node && parent.isConnected && writer.parentNode !== parent) {
+                if (entry.nextSibling?.parentNode === parent) parent.insertBefore(writer, entry.nextSibling);
+                else parent.appendChild(writer);
+            }
+            entry?.identity?.remove?.();
+        },
+
+        restoreWriterForRow(state, rowId) {
+            const entry = state?.writerByRowId?.get(rowId);
+            if (!entry) return;
+            this.restoreWriterEntry(entry, state);
+            state.writerByRowId.delete(rowId);
+        },
+
 
         updateItemVisibility(originalRow, mirroredItem) {
             const isDibsBlocked = originalRow.classList.contains('block-disable');
@@ -334,9 +406,9 @@
         },
 
 
-        createMobileListItem(originalRow, rowId) {
+        createMobileListItem(originalRow, rowId, state) {
             const titleContainer = originalRow.querySelector('.gall_tit');
-            const writerEl = originalRow.querySelector('.gall_writer');
+            const writerEl = this.getWriterForMirror(originalRow, rowId, state);
             const dateEl = originalRow.querySelector('.gall_date');
             if (!titleContainer || !writerEl || !dateEl) return null;
 
@@ -409,11 +481,6 @@
             const authorSpan = document.createElement('span');
             authorSpan.className = 'author';
 
-            // [v2.6.8 수정] 다시 복제(cloneNode) 방식으로 원복합니다. (안정성 확보)
-            // 대신 CSS와 proxyClick 로직을 통해 팝업의 위치와 기능을 완벽히 이식합니다.
-            authorSpan.appendChild(writerEl.cloneNode(true));
-
-
             const countEl = originalRow.querySelector('.gall_count');
             const recommendEl = originalRow.querySelector('.gall_recommend');
             const statsSpan = document.createElement('span');
@@ -424,6 +491,13 @@
             postMeta.appendChild(authorSpan);
             postMeta.appendChild(statsSpan);
             newItem.appendChild(postMeta);
+
+            const visibleWriter = this.moveWriterToMirror(originalRow, rowId, state, writerEl);
+            if (!(visibleWriter instanceof HTMLElement)) {
+                newItem.remove();
+                return null;
+            }
+            authorSpan.appendChild(visibleWriter);
 
 
             this.updateItemVisibility(originalRow, newItem);
@@ -967,6 +1041,10 @@
             if (!state) return;
             state.tbodyObserver?.disconnect();
             state.syncScheduler?.cancel?.();
+            state.writerByRowId?.forEach((entry) => this.restoreWriterEntry(entry, state));
+            state.writerByRowId?.clear?.();
+            state.writerOwnedMutationNodes?.clear?.();
+            if (state.writerMutationResetTimer !== null) window.clearTimeout(state.writerMutationResetTimer);
             const transaction = state.transaction || {};
             const listWrap = state.listWrap;
             const originalTable = state.originalTable;
@@ -1013,6 +1091,10 @@
                 transaction,
                 committed: false,
                 itemByRowId: new Map(),
+                writerByRowId: new Map(),
+                writerOwnedMutationNodes: new Set(),
+                writerMutationBusPending: false,
+                writerMutationResetTimer: null,
                 dirtyRows: new Set(),
                 tbodyObserver: null,
                 syncScheduler: null,
@@ -1051,6 +1133,10 @@
             if (state.syncScheduler && typeof state.syncScheduler.cancel === 'function') {
                 state.syncScheduler.cancel();
             }
+            state.writerByRowId?.forEach((entry) => this.restoreWriterEntry(entry, state));
+            state.writerByRowId?.clear?.();
+            state.writerOwnedMutationNodes?.clear?.();
+            if (state.writerMutationResetTimer !== null) window.clearTimeout(state.writerMutationResetTimer);
             if (state.listWrap instanceof HTMLElement) {
                 state.listWrap.removeAttribute(this.TRANSFORMED_ATTR);
             }
@@ -1067,6 +1153,10 @@
             state.originalTbody = null;
             state.newListContainer = null;
             state.itemByRowId = null;
+            state.writerByRowId = null;
+            state.writerOwnedMutationNodes = null;
+            state.writerMutationBusPending = false;
+            state.writerMutationResetTimer = null;
             state.tbodyObserver = null;
             state.syncScheduler = null;
             this.recordDiagnostic('ui.listState.destroyed');
@@ -1159,7 +1249,8 @@
                     }
 
                     if (!(mirroredItem instanceof HTMLElement)) {
-                        mirroredItem = this.createMobileListItem(row, rowId);
+                        this.restoreWriterForRow(state, rowId);
+                        mirroredItem = this.createMobileListItem(row, rowId, state);
                         if (!mirroredItem) return;
                         this.proxyClick(mirroredItem, row);
                         state.itemByRowId.set(rowId, mirroredItem);
@@ -1183,6 +1274,7 @@
 
             Array.from(state.itemByRowId.entries()).forEach(([rowId, mirroredItem]) => {
                 if (seenRowIds.has(rowId)) return;
+                this.restoreWriterForRow(state, rowId);
                 if (mirroredItem instanceof HTMLElement) mirroredItem.remove();
                 state.itemByRowId.delete(rowId);
             });
@@ -1232,6 +1324,22 @@
                 };
 
                 mutations.forEach((mutation) => {
+                    const mutationNodes = [
+                        ...Array.from(mutation.addedNodes || []),
+                        ...Array.from(mutation.removedNodes || [])
+                    ];
+                    const ownedWriterNodes = mutationNodes.filter((node) => state.writerOwnedMutationNodes?.has(node));
+                    const movedWriterNodes = mutationNodes.filter((node) => node.matches?.('.gall_writer, .ub-writer'));
+                    if (state.writerMutationBusPending && (ownedWriterNodes.length > 0 || movedWriterNodes.length > 0)) {
+                        ownedWriterNodes.forEach((node) => state.writerOwnedMutationNodes.delete(node));
+                        return;
+                    }
+                    if (mutationNodes.length > 0 && ownedWriterNodes.length === mutationNodes.length) {
+                        ownedWriterNodes.forEach((node) => state.writerOwnedMutationNodes.delete(node));
+                        return;
+                    }
+                    ownedWriterNodes.forEach((node) => state.writerOwnedMutationNodes.delete(node));
+
                     if (mutation.type === 'attributes' && (mutation.attributeName === 'style' || mutation.attributeName === 'class')) {
                         const originalRow = mutation.target;
                         if (originalRow instanceof HTMLElement && originalRow.matches(this.SELECTORS.ORIGINAL_POST_ITEM)) {
@@ -1394,7 +1502,7 @@
                     );
                 }
                 this._listMutationUnsubscribe = runtimeCoordinator.subscribeMutations('ui-list-runtime', (payload) => {
-                    const candidates = payload.collectMatches([
+                    const rawCandidates = payload.collectMatches([
                         this.SELECTORS.LIST_WRAP,
                         this.SELECTORS.ORIGINAL_TABLE,
                         this.SELECTORS.ORIGINAL_TBODY,
@@ -1403,6 +1511,16 @@
                         this.SELECTORS.PAGE_MOVE_BOX,
                         this.SELECTORS.SEARCH_FORM
                     ], { includeRoots: true });
+                    const candidates = rawCandidates.filter((candidate) => {
+                        const listWrap = this.resolveOwnedListWrap(candidate);
+                        const state = this.LIST_STATE_MAP.get(listWrap);
+                        if (state?.writerMutationBusPending === true) return false;
+                        return !Array.from(this.ACTIVE_LIST_STATES).some((activeState) => (
+                            activeState?.writerMutationBusPending === true
+                            && activeState.listWrap instanceof HTMLElement
+                            && activeState.listWrap.contains(candidate)
+                        ));
+                    });
                     if (candidates.length === 0) return;
 
                     this.ensureListRuntimesFromCandidates(candidates, 'mutation-bus', {

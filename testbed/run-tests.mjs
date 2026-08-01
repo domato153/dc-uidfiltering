@@ -3333,7 +3333,7 @@ test('갤러리별 말머리 차단은 공지·관련글을 제외하고 UID 조
     } finally { await view.close(); }
 });
 
-mobileTest('깨진 편의 설정은 기본값으로 정규화되고 모든 기능 끄기는 저장값만 보존한다', 'functional', async ({ browser, server }) => {
+mobileTest('편의 설정은 필터 마스터와 독립적으로 정규화·활성화되고 저장값을 보존한다', 'functional', async ({ browser, server }) => {
     const corrupted = { listRestore: false, recentHighlight: 'yes', postPreview: 1, unknown: true };
     const session = await createTestPage(browser, server.baseUrl, {
         storage: {
@@ -3351,17 +3351,33 @@ mobileTest('깨진 편의 설정은 기본값으로 정규화되고 모든 기�
             const row = document.querySelector('.gall_subject[data-headtext="질문"]')?.closest('tr.ub-content');
             return {
                 settings: module.settings,
-                masterDisabled: module.isMasterDisabled(),
+                enabledWithFilterMasterOff: {
+                    recentHighlight: module.isEnabled('recentHighlight'),
+                    draftRecovery: module.isEnabled('draftRecovery'),
+                    postPreview: module.isEnabled('postPreview')
+                },
                 rowDisplay: row?.style.display || '',
                 quickActionCount: document.querySelectorAll('[data-dcuf-fab-action="quick-write"]').length,
                 persisted: window.__dcufTestbedGM.snapshot().values.dcuf_mobile_convenience_settings_v1
             };
         });
         assert.deepEqual(state.settings, { recentHighlight: true, draftRecovery: true, postPreview: false });
-        assert.equal(state.masterDisabled, true);
+        assert.deepEqual(state.enabledWithFilterMasterOff, { recentHighlight: true, draftRecovery: true, postPreview: false });
         assert.notEqual(state.rowDisplay, 'none', 'master disable must suppress headtext filtering');
         assert.equal(state.quickActionCount, 0);
         assert.deepEqual(state.persisted, corrupted, 'normalization must not rewrite the user storage implicitly');
+
+        const enabledAfterOwnSetting = await session.page.evaluate(async () => {
+            const module = window.__dcufMobileConvenienceModule;
+            await GM_setValue(module.STORAGE_KEY, { recentHighlight: false, draftRecovery: true, postPreview: true });
+            await module.loadSettings({ force: true });
+            return {
+                recentHighlight: module.isEnabled('recentHighlight'),
+                draftRecovery: module.isEnabled('draftRecovery'),
+                postPreview: module.isEnabled('postPreview')
+            };
+        });
+        assert.deepEqual(enabledAfterOwnSetting, { recentHighlight: false, draftRecovery: true, postPreview: true });
     } finally { await session.close(); }
 });
 
@@ -4984,6 +5000,50 @@ test('write default: Pumx starts enabled once and remains user-toggleable on eve
             assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
         } finally { await session.close(); }
     }
+});
+
+test('write default: delayed state change is retried, marked only after success, and bounded when absent', 'write', async ({ browser, server }) => {
+    const session = await createTestPage(browser, server.baseUrl, { storage: noStatsStorage });
+    try {
+        await session.goto('/mgallery/board/write/?id=test');
+        const initial = await session.page.evaluate(() => {
+            const current = document.querySelector('#btn_pumx');
+            const replacement = current.cloneNode(true);
+            replacement.classList.remove('on');
+            replacement.removeAttribute('aria-pressed');
+            replacement.removeAttribute('data-dcuf-pumx-default-activated');
+            replacement.removeAttribute('onclick');
+            replacement.dataset.fixturePumxAttempts = '0';
+            replacement.addEventListener('click', () => {
+                const attempts = Number(replacement.dataset.fixturePumxAttempts || 0) + 1;
+                replacement.dataset.fixturePumxAttempts = String(attempts);
+                if (attempts >= 2) replacement.classList.add('on');
+            });
+            current.replaceWith(replacement);
+            window.__dcufEnsurePumxDefault();
+            window.__dcufEnsurePumxDefault();
+            return {
+                active: replacement.classList.contains('on'),
+                marker: replacement.dataset.dcufPumxDefaultActivated || '',
+                attempts: replacement.dataset.fixturePumxAttempts
+            };
+        });
+        assert.deepEqual(initial, { active: false, marker: '', attempts: '1' });
+        await session.page.waitForFunction(() => {
+            const button = document.querySelector('#btn_pumx');
+            return button?.classList.contains('on') && button?.dataset.dcufPumxDefaultActivated === '1';
+        });
+        assert.equal(await session.page.locator('#btn_pumx').getAttribute('data-fixture-pumx-attempts'), '2');
+
+        const absent = await session.page.evaluate(() => {
+            document.querySelector('#btn_pumx')?.remove();
+            return window.__dcufEnsurePumxDefault();
+        });
+        assert.equal(absent, false);
+        await session.page.waitForTimeout(3200);
+        assert.equal(await session.page.evaluate(() => window.__dcufPumxDefaultState), null);
+        assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
+    } finally { await session.close(); }
 });
 
 mobileTest('write reference composition follows the live authenticated field order', 'write', async ({ browser, server }) => {

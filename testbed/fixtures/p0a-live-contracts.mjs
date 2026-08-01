@@ -54,7 +54,8 @@ const listScripts = `<script>
 (() => {
   const originalWriter = document.querySelector('table.gall_list .gall_writer[data-uid="direct-handler-writer"]');
   originalWriter.dataset.fixtureDirectHandler = '1';
-  originalWriter.addEventListener('click', (event) => {
+  window.__fixtureDirectWriter = originalWriter;
+  const openNativeWriterMenu = (event) => {
     event.preventDefault();
     document.querySelectorAll('.user_data[data-fixture-native-menu="1"]').forEach((node) => node.remove());
     const menu = document.createElement('div');
@@ -66,7 +67,8 @@ const listScripts = `<script>
     menu.style.left = Math.max(0, rect.left) + 'px';
     menu.style.top = Math.max(0, rect.bottom + 4) + 'px';
     menu.style.display = 'block';
-  });
+  };
+  originalWriter.addEventListener('click', openNativeWriterMenu);
 
   const subjectButton = document.querySelector('.btn_subject_more');
   subjectButton.addEventListener('click', () => {
@@ -93,8 +95,8 @@ const listScripts = `<script>
 })();
 </script>`;
 
-export function p0aListPage() {
-    return `${baseHead('P0-A live-shaped list')}<body data-fixture-page="list" data-fixture-variant="minor"><div id="top" class="dcwrap width1160 list_wrap">
+export function p0aListPage({ variant = 'minor' } = {}) {
+    return `${baseHead('P0-A live-shaped list')}<body data-fixture-page="list" data-fixture-variant="${escapeHtml(variant)}"><div id="top" class="dcwrap width1160 list_wrap">
 ${hostChrome}${recentRail}<main id="container" class="clear"><article>
 <header class="page_head"><h2>테스트 마이너 갤러리</h2><div class="issue_wrap"><button type="button" class="btn_manage">갤러리 관리</button></div></header>
 <div class="list_array_option"><div class="array_tab left_box"><a href="#all">전체글</a></div>${headtextControls}

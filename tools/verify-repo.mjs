@@ -112,12 +112,13 @@ function parseBuildVersion(buildText, buildPath) {
 }
 
 async function verifyMobileSourceContracts() {
-    const [bootstrap, postMain, coordinator, theme, loginSurface, mobileHeader, pcHeader] = await Promise.all([
+    const [bootstrap, postMain, coordinator, theme, loginSurface, convenience, mobileHeader, pcHeader] = await Promise.all([
         readFile(path.join(rootDir, 'src', 'runtime', 'bootstrap.js'), 'utf8'),
         readFile(path.join(rootDir, 'src', 'targets', 'mobile', 'post-main-fixes.js'), 'utf8'),
         readFile(path.join(rootDir, 'src', 'targets', 'mobile', 'runtime-coordinator.js'), 'utf8'),
         readFile(path.join(rootDir, 'src', 'targets', 'mobile', 'theme-module.js'), 'utf8'),
         readFile(path.join(rootDir, 'src', 'targets', 'mobile', 'login-surface.js'), 'utf8'),
+        readFile(path.join(rootDir, 'src', 'targets', 'mobile', 'convenience-module.js'), 'utf8'),
         readFile(path.join(rootDir, 'src', 'meta', 'userscript-header.txt'), 'utf8'),
         readFile(path.join(rootDir, 'src', 'meta', 'pc-filter-userscript-header.txt'), 'utf8')
     ]);
@@ -156,6 +157,8 @@ async function verifyMobileSourceContracts() {
         'mobile source: phase-1 list CSS must be guarded by list-surface before injection');
     check(!postMain.includes('scheduleVerify'),
         'mobile source: superseded repeated phase-1 verification timers returned');
+    check(!/\bmasterDisabled\b|_masterDisabledSnapshot/.test(convenience),
+        'mobile source: convenience features must not reference the filter master-disabled state');
 
     check(coordinator.includes('mutationNodeTouchesSurface(node)'),
         'mobile source: child-list surface prefilter helper is missing');
