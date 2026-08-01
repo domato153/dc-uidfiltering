@@ -19,7 +19,7 @@ This governance checkpoint does not change P0 behavior, technical requirements, 
 
 ## Project state
 
-`VALIDATION_REQUIRED`
+`APPROVED`
 
 User approval received in Chat on 2026-08-01.
 
@@ -28,10 +28,12 @@ User approval received in Chat on 2026-08-01.
 - Phase: `P0-A through P0-E audit correction`
 - Owner: `Codex validation completed`
 - Correction base SHA: `bffcc0d6b506ba724eca915242bb5d6e5ff11b2e`
-- State: `REVIEW_READY`
+- State: `COMPLETE`
 - Parallel work: prohibited
-- Validation executor and independent reviewer: `Codex/Luna on one fixed SHA`
-- P1: not started and prohibited
+- Validation executor: `Codex/Luna on one fixed SHA`
+- Independent reviewer: `ChatGPT`
+- P0: `complete`
+- P1: `may begin`
 
 ## Active audit correction
 
@@ -131,8 +133,10 @@ This phase may return to `REVIEW_READY` only when:
 
 Final handoff:
 
-- Project state: `VALIDATION_REQUIRED`
-- Phase state: `REVIEW_READY`
+- Project state: `APPROVED`
+- Phase state: `COMPLETE`
 - Owner: `Codex validation completed`
-- Reviewer: `Codex/Luna`
-- P1: prohibited
+- Validation executor: `Codex/Luna`
+- Independent reviewer: `ChatGPT`
+- P0: `complete`
+- P1: `may begin`
