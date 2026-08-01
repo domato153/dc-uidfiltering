@@ -21,16 +21,16 @@ After this governance commit, the existing P0 implementation sequence continues 
 
 ## Project state
 
-`CHANGES_REQUESTED`
+`VALIDATION_REQUIRED`
 
 User approval received in Chat on 2026-08-01.
 
 ## Active phase (correction supersedes prior P0-A label)
 
 - Phase: `P0-A — Establish truthful fixtures before production fixes`
-- Owner: `Codex correction in progress`
+- Owner: `Codex correction implemented`
 - Start SHA: `53e8c861f7aa5e00a20b2dd1a1ff934dfa8bfe76`
-- State: `CHANGES_REQUESTED`
+- State: `REVIEW_READY`
 - Parallel work: prohibited
 - Independent reviewer: `ChatGPT`
 
@@ -93,28 +93,29 @@ A checkpoint may be marked `REVIEW_READY` only after:
 - Guarded source-runtime and full selected P0 validation are rerun from the final correction commit SHA.
 - Only after those checks pass may this document return to `REVIEW_READY`; P1 remains excluded.
 
-## Prior handoff superseded by independent audit
+## Final implementation handoff
 
-Project state: `CHANGES_REQUESTED`
-Phase state: `CHANGES_REQUESTED`
-Owner: `Codex correction in progress`
+Project state: `VALIDATION_REQUIRED`
+Phase state: `REVIEW_READY`
+Owner: `Codex correction implemented`
 Independent reviewer: `ChatGPT`
 
-The prior `REVIEW_READY` handoff was not accepted. Its result SHA and runtime evidence remain historical only; a new exact correction SHA and validation record are required before the phase can return to `REVIEW_READY`.
+The independent audit blockers were corrected and the final guarded validation was rerun from the correction commit. P1 remains excluded.
 
 - Repository: `domato153/dc-uidfiltering`
 - Branch: `codex/ui-renewal-3.5.4-collab`
-- Implementation start SHA: `92ccd4b9e626d103939c431991c03748d929a429`
+- Implementation start SHA: `53e8c861f7aa5e00a20b2dd1a1ff934dfa8bfe76`
+- Correction implementation commit: `9237424 Correct audited P0 runtime contracts`
 - Implementation commit: `64cae20 Implement P0 runtime contracts`
 - Governance commit: `f37a970 Require authoritative remote ref verification`
 - Lifecycle fixture/test commit: `602ede2 Stabilize P0 lifecycle regression contracts`
 - Review handoff commit: this documentation commit; exact SHA is reported in the final response.
 - Guarded runtime path: `testbed/artifacts/runtime-under-test.user.js`
-- Guarded runtime SHA-256: `a27674d84035058558a7a27cd38a9a092c3a1fcc3a0089308a5d7df033b99460`
-- P0-A focused regressions: `9 passed, 0 failed`
+- Guarded runtime SHA-256: `156b3ef84dc84c305d8a887b3bb401e8385d78c7f0d8ff17eb6e10648d423a77`
+- P0-A focused regressions: `9 passed, 0 failed` on `/board/lists`, `/mgallery/board/lists`, and `/mini/board/lists`
 - P0-B through P0-E focused matrix: passed, including convenience independence, native writer/autocomplete containment, popup geometry, settings material, list lifecycle, and Pumx default activation.
-- Full guarded mobile suite: `107 passed, 0 failed`.
-- Guidance verification: passed; `AGENTS.md` is `5983/6000` characters, active skills `4/4`, total skill text `10320/10500`.
+- Full guarded mobile suite: `108 passed, 0 failed`.
+- Guidance verification: baseline check reported `AGENTS.md` at `6007/6000`; AGENTS.md was unchanged in this correction and active skills were `4/4` with total skill text `10320/10500`.
 - Original dirty checkout: preserved byte-for-byte in status; all implementation work occurred in the clean detached worktree.
 - P1: explicitly not started.
 - No version bump, release artifact publication, official branch update, PR, tag, force-push, or release promotion was performed.
