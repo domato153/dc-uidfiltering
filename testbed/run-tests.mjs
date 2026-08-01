@@ -3566,8 +3566,9 @@ mobileTest('title decorations mirror generically, tooltips pre-place within the 
             const future = decorations.find((item) => item.querySelector('.fixture-future-title-marker'));
             const futureLink = decorations.find((item) => item.querySelector('.fixture-future-linked-title-marker'));
             const style = pum ? getComputedStyle(pum) : null;
-            const titleLink = pum?.parentElement?.querySelector('.post-title-link');
-            const reply = pum?.parentElement?.querySelector('.reply_num');
+            const title = pum?.closest('.post-title');
+            const titleLink = title?.querySelector('.post-title-link');
+            const reply = title?.querySelector('.reply_num');
             const titleRect = titleLink?.getBoundingClientRect();
             const replyRect = reply?.getBoundingClientRect();
             const pumRect = pum?.getBoundingClientRect();
@@ -3577,7 +3578,7 @@ mobileTest('title decorations mirror generically, tooltips pre-place within the 
             const accent = getComputedStyle(accentProbe).color;
             accentProbe.remove();
             const sequenceContracts = decorations.map((decoration) => {
-                const title = decoration.parentElement;
+                const title = decoration.closest('.post-title');
                 const headtextRect = title?.querySelector('.gall_subject')?.getBoundingClientRect();
                 const titleLinkRect = title?.querySelector('.post-title-link')?.getBoundingClientRect();
                 const replyRectForRow = title?.querySelector('.reply_num')?.getBoundingClientRect();

@@ -109,7 +109,8 @@ const main = async () => {
             dcinside_threshold: 0,
             dcinside_ratio_filter_enabled: false,
             dcinside_personal_block_enabled: true,
-            dcinside_personal_block_list: { uids: [], nicknames: [], ips: [] }
+            dcinside_personal_block_list: { uids: [], nicknames: [], ips: [] },
+            dcuf_mobile_convenience_settings_v1: { recentHighlight: true, draftRecovery: true, postPreview: true }
         }
     });
     const server = await startFixtureServer(harnessSource);
@@ -131,6 +132,31 @@ const main = async () => {
         assert.equal(Boolean(spriteRect && spriteRect.width > 0 && spriteRect.height > 0), true);
         record('recent-visit exact root and sprite geometry', 'PASS');
 
+        await page.locator('.bnt_visit_next').click();
+        const recentNativeContract = await page.evaluate(() => ({
+            clicks: window.__fixtureRecentNativeClicks,
+            defaultPrevented: window.__fixtureRecentNativeDefaultPrevented
+        }));
+        assert.equal(recentNativeContract.clicks, 1, JSON.stringify(recentNativeContract));
+        assert.deepEqual(recentNativeContract.defaultPrevented, [false], JSON.stringify(recentNativeContract));
+        record('recent-visit native handler survives without capture cancellation', 'PASS');
+
+        const recentTitleContract = await page.evaluate(() => {
+            const history = document.querySelector('#visit_history > .newvisit_history');
+            const titles = [...history.querySelectorAll(':scope > .vst_title, :scope > .bookmark_title')];
+            return { recent: titles[0]?.hidden, bookmark: titles[1]?.hidden };
+        });
+        assert.deepEqual(recentTitleContract, { recent: false, bookmark: true });
+        await page.evaluate(() => document.querySelector('#visit_history > .newvisit_history')?.classList.add('bookmark'));
+        await page.waitForTimeout(80);
+        const bookmarkTitleContract = await page.evaluate(() => {
+            const history = document.querySelector('#visit_history > .newvisit_history');
+            const titles = [...history.querySelectorAll(':scope > .vst_title, :scope > .bookmark_title')];
+            return { recent: titles[0]?.hidden, bookmark: titles[1]?.hidden };
+        });
+        assert.deepEqual(bookmarkTitleContract, { recent: true, bookmark: false });
+        record('recent/favorite host state keeps exactly one title visible', 'PASS');
+
         const headtextOrder = await page.locator('.center_box > .inner').evaluate((root) => Array.from(root.children).map((node) => {
             if (node.matches('ul:first-child')) return 'primary';
             if (node.matches('.btn_subject_more')) return 'trigger';
@@ -140,7 +166,26 @@ const main = async () => {
         assert.deepEqual(headtextOrder.slice(0, 3), ['primary', 'trigger', 'layer']);
         await page.locator('.btn_subject_more').click();
         await positiveRect(page.locator('#subject_morelist'), 'subject_morelist');
+        const headtextGeometry = await page.evaluate(() => {
+            const button = document.querySelector('.btn_subject_more').getBoundingClientRect();
+            const list = document.querySelector('.center_box > .inner > ul:first-of-type').getBoundingClientRect();
+            return { button, list, overlap: button.left < list.right && list.left < button.right && button.top < list.bottom && list.top < button.bottom };
+        });
+        assert.equal(headtextGeometry.overlap, false, JSON.stringify(headtextGeometry));
         record('headtext exact sibling order and reachable layer', 'PASS');
+
+        const titleMetadata = await page.evaluate(() => {
+            const title = document.querySelector('.custom-mobile-list .custom-post-item .post-title');
+            const meta = title?.querySelector(':scope > .dcuf-title-meta');
+            return {
+                metaLast: title?.lastElementChild === meta,
+                replyInMeta: Boolean(meta?.querySelector(':scope > .reply_num')),
+                decorationsInMeta: (meta?.querySelectorAll(':scope > .dcuf-title-decoration').length || 0) >= 2,
+                decorationsOutsideMeta: title ? [...title.children].filter((node) => node.matches('.reply_num,.dcuf-title-decoration') && node !== meta).length : -1
+            };
+        });
+        assert.deepEqual(titleMetadata, { metaLast: true, replyInMeta: true, decorationsInMeta: true, decorationsOutsideMeta: 0 }, JSON.stringify(titleMetadata));
+        record('post metadata stays in the right-aligned title meta area', 'PASS');
 
         await page.locator('.list_size_trigger').click();
         const listSizes = await page.locator('#listSizeLayer li').allTextContents();
@@ -152,10 +197,14 @@ const main = async () => {
         await page.locator('.list_size_trigger').click();
         await page.locator('.btn_manage').click();
         await page.locator('#pop_manage_report_list').waitFor({ state: 'visible' });
+        assert.equal(await page.locator('#pop_manage_report_list').evaluate((node) => node.parentElement === document.body), true);
         for (const action of await page.locator('#pop_manage_report_list .popup_action').all()) {
             await positiveRect(action, 'management popup action');
         }
-        record('click-created management popup geometry and hit-testing', 'PASS');
+        await page.locator('.hot_rank_trigger').click();
+        await page.locator('#hot_rank_pop2').waitFor({ state: 'visible' });
+        assert.equal(await page.locator('#hot_rank_pop2').evaluate((node) => node.parentElement === document.body), true);
+        record('host management and hot-rank popups portal to body', 'PASS');
 
         assert.equal(await page.evaluate(() => window.__fixtureDirectWriter instanceof HTMLElement), true);
         const visibleWriter = page.locator('.custom-mobile-list .custom-post-item .author .gall_writer[data-uid="direct-handler-writer"]');
@@ -180,7 +229,7 @@ const main = async () => {
         assert.equal(tableContract.directRowSpanIdentityCount, 0, JSON.stringify(tableContract));
         assert.equal(tableContract.directRowCellIdentityCount > 0, true, JSON.stringify(tableContract));
         assert.equal(await page.locator('.user_data[data-fixture-native-menu="1"]').count(), 0);
-        await visibleWriter.click();
+        await visibleWriter.locator('.nickname').click();
         const nativeMenuCount = await page.locator('.user_data[data-fixture-native-menu="1"] .native_writer_action').count();
         const listenerKinds = await page.evaluate(() => [...new Set(window.__fixtureWriterListenerKinds || [])]);
         const hasBothWriterPaths = listenerKinds.includes('direct') && listenerKinds.includes('table-delegated');
@@ -238,7 +287,7 @@ const main = async () => {
             assert.equal(new URL(writeHref, server.baseUrl).pathname, writeRoute, `${variant} write route`);
             assert.equal(await page.locator('.user_data[data-fixture-native-menu="1"]').count(), 0);
             assert.equal(await variantWriter.evaluate((node) => node === window.__fixtureDirectWriter), true, `${variant} writer must remain the original node`);
-            await variantWriter.click();
+            await variantWriter.locator('.nickname').click();
             await page.locator('.user_data[data-fixture-native-menu="1"] .native_writer_action').waitFor({ state: 'visible' });
             await positiveRect(page.locator('.user_data[data-fixture-native-menu="1"] .native_writer_action'), `${variant} native writer menu action`);
             const variantListenerKinds = await page.evaluate(() => [...new Set(window.__fixtureWriterListenerKinds || [])]);
@@ -246,6 +295,7 @@ const main = async () => {
             record(`${variant} visible writer trusted click and native menu`, 'PASS');
         }
 
+        await page.setViewportSize({ width: 390, height: 844 });
         await page.goto(`${server.baseUrl}/mgallery/board/write?id=test`, { waitUntil: 'domcontentloaded' });
         await page.waitForFunction(() => document.documentElement.classList.contains('script-ui-ready'), null, { timeout: 12000 });
         await page.waitForTimeout(180);
@@ -256,9 +306,35 @@ const main = async () => {
         for (const selector of requiredAiSelectors) {
             assert.equal(await page.locator(selector).count(), 1, `missing AI quick-registration control: ${selector}`);
         }
+        const toolbarContract = await page.locator('[data-fixture-toolbar]').evaluate((toolbar) => {
+            const style = getComputedStyle(toolbar);
+            return { flexWrap: style.flexWrap, overflowX: style.overflowX, clientWidth: toolbar.clientWidth, scrollWidth: toolbar.scrollWidth, childWidths: [...toolbar.children].map((child) => child.getBoundingClientRect().width), oneRow: toolbar.scrollHeight <= toolbar.clientHeight + 1, scrollable: toolbar.scrollWidth > toolbar.clientWidth };
+        });
+        assert.equal(toolbarContract.flexWrap, 'nowrap', JSON.stringify(toolbarContract));
+        assert.equal(['auto', 'scroll'].includes(toolbarContract.overflowX), true, JSON.stringify(toolbarContract));
+        assert.equal(toolbarContract.oneRow, true, JSON.stringify(toolbarContract));
+        assert.equal(toolbarContract.scrollable, true, JSON.stringify(toolbarContract));
+        record('mobile write toolbar remains one-row horizontally scrollable', 'PASS');
         await page.locator('.ai_settings_button').click();
         await positiveRect(page.locator('.ai_settings_popup'), 'AI settings popup');
         record('complete AI quick-registration rail and settings popup', 'PASS');
+
+        await page.setViewportSize({ width: 1100, height: 720 });
+        await page.goto(`${server.baseUrl}/mgallery/board/lists?id=test`, { waitUntil: 'domcontentloaded' });
+        await page.waitForFunction(() => document.documentElement.classList.contains('script-ui-ready'), null, { timeout: 12000 });
+        await page.waitForTimeout(180);
+        const convenienceBefore = await page.evaluate(() => ({ ...window.__dcufMobileConvenienceModule.settings }));
+        assert.deepEqual(convenienceBefore, { recentHighlight: true, draftRecovery: true, postPreview: true });
+        await page.evaluate(() => window.__dcufTestbedGM.invokeMenu('글댓합 설정하기'));
+        await page.locator('#dcinside-master-disable-checkbox').waitFor({ state: 'attached' });
+        await page.locator('#dcinside-master-disable-checkbox').evaluate((input) => {
+            input.checked = true;
+            input.dispatchEvent(new Event('change', { bubbles: true }));
+        });
+        await page.waitForTimeout(80);
+        const convenienceAfter = await page.evaluate(() => ({ ...window.__dcufMobileConvenienceModule.settings }));
+        assert.deepEqual(convenienceAfter, convenienceBefore, JSON.stringify({ before: convenienceBefore, after: convenienceAfter }));
+        record('filter master-off leaves convenience preview/recent/draft settings enabled', 'PASS');
 
         assert.deepEqual(consoleErrors, [], `runtime console errors: ${consoleErrors.join('\n')}`);
         const failed = results.filter((result) => result.status === 'FAIL');

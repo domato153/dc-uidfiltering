@@ -14,10 +14,10 @@ const baseHead = (title) => `<!doctype html><html lang="ko"><head>
 .newvisit_box{width:520px;overflow:hidden}.newvisit_list{display:flex;gap:8px;width:max-content;margin:0;padding:0;list-style:none}.newvisit_list li{min-width:92px}
 .sp_img{display:inline-block;width:12px;height:12px;background:linear-gradient(#29478f,#29478f)}
 .center_box>.inner{position:relative}.center_box>.inner>ul{display:flex;gap:6px;margin:0;padding:0;list-style:none}.btn_subject_more{margin-left:4px}
-#subject_morelist,#listSizeLayer,#pop_manage_report_list,.user_data{position:absolute;z-index:30;display:none;margin:0;padding:8px;list-style:none;background:#fff;border:1px solid #66758d;box-shadow:0 6px 18px #0002}
+#subject_morelist,#listSizeLayer,#pop_manage_report_list,#hot_rank_pop2,.user_data{position:absolute;z-index:30;display:none;margin:0;padding:8px;list-style:none;background:#fff;border:1px solid #66758d;box-shadow:0 6px 18px #0002}
 #subject_morelist{top:32px;left:0}#listSizeLayer{top:34px;right:0}.select_box{position:relative;margin-left:auto}.gall_list{width:100%;border-collapse:collapse}.gall_list td,.gall_list th{padding:8px;border-bottom:1px solid #e2e6ee}.gall_writer{cursor:pointer}.custom-mobile-list{display:block}.custom-post-item{padding:10px;border-bottom:1px solid #e2e6ee;background:#fff}.author{display:inline-block}
 .issue_wrap{position:relative}.btn_manage{margin-left:8px}#pop_manage_report_list{top:34px;right:0;width:220px}.popup_action{display:block;width:100%;min-height:34px}
-.write_wrap{padding:16px}.ai_quick_register{display:flex;align-items:center;gap:8px;overflow-x:auto;white-space:nowrap}.ai_quick_register>*{flex:0 0 auto}.ai_loading{width:24px;height:24px}.ai_prompt{width:260px}.ai_settings_popup{display:none;position:absolute;z-index:40;width:220px;padding:10px;background:#fff;border:1px solid #66758d}.ai_native_close.sp_img{width:18px;height:18px}
+.write_wrap{padding:16px}.note-toolbar{display:flex;width:220px;gap:8px;overflow-x:auto;white-space:nowrap}.note-toolbar>*{flex:0 0 72px;min-width:72px}.ai_quick_register{display:flex;align-items:center;gap:8px;overflow-x:auto;white-space:nowrap}.ai_quick_register>*{flex:0 0 auto}.ai_loading{width:24px;height:24px}.ai_prompt{width:260px}.ai_settings_popup{display:none;position:absolute;z-index:40;width:220px;padding:10px;background:#fff;border:1px solid #66758d}.ai_native_close.sp_img{width:18px;height:18px}
 </style></head>`;
 
 const hostChrome = `<header class="dcheader typea"><div class="dchead">
@@ -51,8 +51,8 @@ const rowsForVariant = (variant = 'minor') => Array.from({ length: 8 }, (_, inde
     const typeCell = variant === 'minor' ? '<td class="gall_type">일반</td>' : '';
     return `<tr class="ub-content us-post" data-no="${no}" data-type="icon_txt">
 <td class="gall_num">${no}</td>${typeCell}
-<td class="gall_tit"><span class="gall_subject" data-headtext="일반">일반</span><a href="${viewRouteForVariant[variant]}?id=test&no=${no}">P0-A 게시물 ${index + 1}</a><a class="reply_numbox" href="#comment"><span class="reply_num">[${index}]</span></a></td>
-<td class="gall_writer ub-writer" user_name="${nick}" data-uid="${uid}" data-nick="${nick}" data-ip=""><b>${nick}</b></td>
+<td class="gall_tit"><span class="gall_subject" data-headtext="일반">일반</span><a href="${viewRouteForVariant[variant]}?id=test&no=${no}">P0-A 게시물 ${index + 1}</a><em class="dcuf-title-decoration" data-fixture-decoration="pum">펌</em><span class="dcuf-title-decoration" data-fixture-decoration="delete">삭제예약</span><a class="reply_numbox" href="#comment"><span class="reply_num">[${index}]</span></a></td>
+<td class="gall_writer ub-writer" user_name="${nick}" data-uid="${uid}" data-nick="${nick}" data-ip=""><span class="nickname"><em>${nick}</em></span></td>
 <td class="gall_date">2026.08.01</td><td class="gall_count">${index * 3}</td><td class="gall_recommend">${index}</td></tr>`;
 }).join('');
 
@@ -85,6 +85,21 @@ const listScripts = `<script>
     if (writer) openNativeWriterMenu(event, writer, 'table-delegated');
   });
 
+  window.__fixtureRecentNativeClicks = 0;
+  window.__fixtureRecentNativeDefaultPrevented = [];
+  const recentHistory = document.querySelector('#visit_history > .newvisit_history');
+  new MutationObserver(() => {
+    const bookmarkMode = recentHistory.classList.contains('bookmark');
+    recentHistory.querySelector('.vst_title').hidden = bookmarkMode;
+    recentHistory.querySelector('.bookmark_title').hidden = !bookmarkMode;
+  }).observe(recentHistory, { attributes: true, attributeFilter: ['class'] });
+  document.querySelectorAll('.bnt_visit_prev,.bnt_visit_next').forEach((button) => {
+    button.addEventListener('click', (event) => {
+      window.__fixtureRecentNativeClicks += 1;
+      window.__fixtureRecentNativeDefaultPrevented.push(event.defaultPrevented);
+    });
+  });
+
   const subjectButton = document.querySelector('.btn_subject_more');
   subjectButton.addEventListener('click', () => {
     const layer = document.querySelector('#subject_morelist');
@@ -107,6 +122,17 @@ const listScripts = `<script>
     }
     popup.style.display = 'block';
   });
+
+  document.querySelector('.hot_rank_trigger').addEventListener('click', () => {
+    let popup = document.querySelector('#hot_rank_pop2');
+    if (!popup) {
+      popup = document.createElement('div');
+      popup.id = 'hot_rank_pop2';
+      popup.innerHTML = '<button type="button" class="popup_action">핫랭크 항목</button>';
+      document.querySelector('.issue_wrap').appendChild(popup);
+    }
+    popup.style.display = 'block';
+  });
 })();
 </script>`;
 
@@ -115,7 +141,7 @@ export function p0aListPage({ variant = 'minor' } = {}) {
     const rows = rowsForVariant(safeVariant);
     return `${baseHead(`P0-A live-shaped ${labelForVariant[safeVariant]} list`)}<body data-fixture-page="list" data-fixture-variant="${safeVariant}" data-fixture-route="${routeForVariant[safeVariant]}"><div id="top" class="dcwrap width1160 list_wrap">
 ${hostChrome}${recentRail}<main id="container" class="clear"><article>
-<header class="page_head"><h2>${labelForVariant[safeVariant]} 테스트</h2><div class="issue_wrap"><button type="button" class="btn_manage">갤러리 관리</button></div></header>
+<header class="page_head"><h2>${labelForVariant[safeVariant]} 테스트</h2><div class="issue_wrap"><button type="button" class="btn_manage">갤러리 관리</button><button type="button" class="hot_rank_trigger">핫랭크</button></div></header>
 <div class="list_array_option"><div class="array_tab left_box"><a href="#all">전체글</a></div>${headtextControls}
 <div class="right_box"><div class="select_box array_num"><button type="button" class="select_area list_size_trigger">50개<em class="sp_img icon_option_more"></em></button>
 <ul id="listSizeLayer" class="option_box"><li><button type="button">30개</button></li><li><button type="button">50개</button></li><li><button type="button">100개</button></li></ul></div></div></div>
@@ -142,7 +168,7 @@ const aiRail = `<section class="ai_quick_register" aria-label="AI 빠른 등록"
 export function p0aWritePage() {
     return `${baseHead('P0-A live-shaped write')}<body data-fixture-page="write" data-fixture-variant="minor"><div id="top" class="dcwrap width1160">
 ${hostChrome}<main id="container"><article><div class="write_wrap"><form id="write" name="write" method="post" action="/__testbed/write-submit">
-<input type="hidden" name="id" value="test"><div class="write_subject"><select name="headtext"><option>일반</option></select><input id="subject" name="subject" type="text"></div>
-<div class="editor_wrap"><textarea name="memo"></textarea></div>${aiRail}<div class="btn_box write"><button type="submit">등록</button><button type="button">취소</button></div>
+ <input type="hidden" name="id" value="test"><div class="write_subject"><select name="headtext"><option>일반</option></select><input id="subject" name="subject" type="text"></div>
+ <div class="editor_wrap"><div class="note-toolbar" data-fixture-toolbar>${Array.from({ length: 8 }, (_, index) => `<button type="button">도구${index + 1}</button>`).join('')}</div><textarea name="memo"></textarea></div>${aiRail}<div class="btn_box write"><button type="submit">등록</button><button type="button">취소</button></div>
 </form></div></article></main></div><script>document.querySelector('.ai_settings_button').addEventListener('click',()=>{document.querySelector('.ai_settings_popup').style.display='block';});document.querySelector('form').addEventListener('submit',(event)=>event.preventDefault());</script></body></html>`;
 }

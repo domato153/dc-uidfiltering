@@ -6,7 +6,6 @@
     root.__dcufLiveCorrectionsInstalled = true;
 
     const STYLE_ID = 'dcuf-live-surface-owner';
-    const WRITER_PROXY_CLASS = 'dcuf-writer-proxy';
     const PORTAL_SELECTOR = '#pop_manage_report_list, #hot_rank_pop2';
 
     const installFinalSurfaceStyle = () => {
@@ -117,29 +116,30 @@
                 display: inline-flex !important;
                 align-items: center !important;
                 justify-content: flex-end !important;
+                order: 3 !important;
                 flex: 0 0 auto !important;
                 gap: 5px !important;
                 margin-left: auto !important;
                 white-space: nowrap !important;
+            }
+            html[data-dcuf-palette] body .custom-mobile-list .post-title > .dcuf-title-meta > .reply_num {
+                order: 1 !important;
+                margin-left: 0 !important;
+            }
+            html[data-dcuf-palette] body .custom-mobile-list .post-title > .dcuf-title-meta > .dcuf-title-decoration {
+                order: 2 !important;
+                margin-left: 0 !important;
             }
             html[data-dcuf-palette] body .custom-mobile-list .dcuf-title-meta :is(.reply_num,.dcuf-title-decoration) {
                 display: inline-flex !important;
                 align-items: center !important;
                 margin: 0 !important;
             }
-
-            html[data-dcuf-palette] body .${WRITER_PROXY_CLASS} {
-                display: inline-flex !important;
-                align-items: center !important;
-                width: auto !important;
-                max-width: 100% !important;
-                padding: 0 !important;
-                border: 0 !important;
-                background: transparent !important;
-                cursor: pointer !important;
+            html[data-dcuf-palette] body .custom-mobile-list .dcuf-title-meta > .dcuf-title-decoration {
+                color: var(--dcuf-theme-accent, #4263eb) !important;
             }
-            html[data-dcuf-palette] body .${WRITER_PROXY_CLASS} :is(.nickname,.ip) {
-                pointer-events: none !important;
+            html[data-dcuf-palette] body .custom-mobile-list .dcuf-title-meta > .dcuf-title-decoration > * {
+                color: inherit !important;
             }
 
             html[data-dcuf-palette] body .custom-bottom-controls {
@@ -173,7 +173,7 @@
                 gap: 4px !important;
                 min-width: 0 !important;
                 overflow-x: auto !important;
-                overflow-y: visible !important;
+                overflow-y: hidden !important;
                 scrollbar-width: thin !important;
                 overscroll-behavior-x: contain !important;
                 -webkit-overflow-scrolling: touch !important;
@@ -247,79 +247,6 @@
             }
         `;
         mount.appendChild(style);
-    };
-
-    const findOriginalWriterTarget = (writer) => {
-        if (!(writer instanceof HTMLElement)) return null;
-        return writer.querySelector('.nickname, a, button, [onclick], [role="button"]') || writer;
-    };
-
-    const installWriterCompatibility = () => {
-        if (typeof UIModule === 'undefined' || !UIModule || UIModule.__dcufLiveWriterCompatibility) return;
-        UIModule.__dcufLiveWriterCompatibility = true;
-
-        UIModule.getWriterForMirror = function getWriterForMirror(originalRow, rowId, state) {
-            const entry = state?.writerByRowId?.get(rowId);
-            if (entry?.source instanceof HTMLElement && entry.source.isConnected) return entry.source;
-            return originalRow.querySelector('.gall_writer, .ub-writer');
-        };
-
-        UIModule.moveWriterToMirror = function moveWriterToMirror(originalRow, rowId, state, writerEl, authorContainer) {
-            if (!(originalRow instanceof HTMLElement) || !(state?.writerByRowId instanceof Map)) return null;
-            if (!(writerEl instanceof HTMLElement) || !(authorContainer instanceof HTMLElement)) return null;
-
-            const existing = state.writerByRowId.get(rowId);
-            if (existing?.node instanceof HTMLElement && existing.node.isConnected && existing.source === writerEl) {
-                if (existing.node.parentElement !== authorContainer) authorContainer.appendChild(existing.node);
-                return existing.node;
-            }
-
-            existing?.node?.remove?.();
-            const proxy = writerEl.cloneNode(true);
-            if (!(proxy instanceof HTMLElement)) return null;
-            proxy.querySelectorAll('[id]').forEach((element) => element.removeAttribute('id'));
-            proxy.removeAttribute('id');
-            proxy.classList.add(WRITER_PROXY_CLASS);
-            proxy.dataset.dcufWriterProxy = '1';
-            proxy.setAttribute('role', 'button');
-            proxy.tabIndex = 0;
-
-            const activate = (event) => {
-                if (event.type === 'keydown' && event.key !== 'Enter' && event.key !== ' ') return;
-                event.preventDefault();
-                event.stopPropagation();
-                const target = findOriginalWriterTarget(writerEl);
-                if (!(target instanceof HTMLElement) || !target.isConnected) return;
-                target.click();
-            };
-            proxy.addEventListener('click', activate);
-            proxy.addEventListener('keydown', activate);
-            authorContainer.appendChild(proxy);
-
-            state.writerByRowId.set(rowId, {
-                node: proxy,
-                source: writerEl,
-                parent: writerEl.parentNode,
-                nextSibling: writerEl.nextSibling,
-                identity: null
-            });
-            return proxy;
-        };
-
-        UIModule.restoreWriterEntry = function restoreWriterEntry(entry) {
-            if (entry?.node instanceof HTMLElement && entry.node !== entry.source) entry.node.remove();
-            entry?.identity?.remove?.();
-        };
-    };
-
-    const installRecentNavigationCompatibility = () => {
-        if (typeof UIModule === 'undefined' || !UIModule || UIModule.__dcufNativeRecentNavigation) return;
-        UIModule.__dcufNativeRecentNavigation = true;
-        UIModule.bindRecentVisitNavigation = function bindRecentVisitNavigation() {
-            document.querySelectorAll('.newvisit_history').forEach((historyRoot) => {
-                if (typeof this.prepareRecentVisitList === 'function') this.prepareRecentVisitList(historyRoot);
-            });
-        };
     };
 
     const getElementPath = (element, rootElement) => {
@@ -424,7 +351,11 @@
                 child !== meta && child.matches('.reply_num,.dcuf-title-decoration')
             ));
             if (nodes.length === 0) return;
-            nodes.forEach((node) => meta.appendChild(node));
+            const orderedNodes = [
+                ...nodes.filter((node) => node.matches('.reply_num')),
+                ...nodes.filter((node) => node.matches('.dcuf-title-decoration'))
+            ];
+            orderedNodes.forEach((node) => meta.appendChild(node));
             title.appendChild(meta);
         });
     };
@@ -447,8 +378,6 @@
         portalKnownHostPopups(scope);
     };
 
-    installWriterCompatibility();
-    installRecentNavigationCompatibility();
     installDrawerCompatibility();
     runLiveNormalization();
 

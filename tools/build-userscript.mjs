@@ -137,20 +137,21 @@ function transformLegacyAppForPhaseTwo(source) {
         'shared proxy and KR range block'
     );
 
-    text = replaceOrThrow(
-        text,
-        /    observeDarkMode\(\);\n\n\}\)\(\);/,
+    return text;
+}
+
+function transformUIModuleForPhaseTwo(source) {
+    return replaceOrThrow(
+        source,
+        /    observeDarkMode\(\);\n\n\}\)\(\);\s*$/,
         [
             '    observeDarkMode();',
             '    __dcufRoot.__dcufUIModule = UIModule;',
-            '    window.__dcufUIModule = UIModule;',
             '',
             '})();',
         ].join('\n'),
-        'bounded UI module runtime bridge'
+        'bounded UI module runtime bridge at ui-module.js EOF'
     );
-
-    return text;
 }
 
 function applyReplacements(source) {
@@ -166,9 +167,12 @@ async function main() {
         buildSharedRuntimePrelude(),
         ...MOBILE_LEGACY_PARTS.map(readPart),
     ]);
-    const legacyApp = mobileLegacyParts.join('');
-    const transformedLegacyApp = transformLegacyAppForPhaseTwo(legacyApp);
-    const combined = `${header}\n${loginSurface}${bootstrap}${sharedPrelude}${styleBanner}${transformedLegacyApp}`;
+    const transformedMobileParts = mobileLegacyParts.map((part, index) => {
+        if (index === 3) return transformLegacyAppForPhaseTwo(part);
+        if (index === 6) return transformUIModuleForPhaseTwo(part);
+        return part;
+    });
+    const combined = `${header}\n${loginSurface}${bootstrap}${sharedPrelude}${styleBanner}${transformedMobileParts.join('')}`;
     const built = applyReplacements(combined)
         .replace(/[ \t]+$/gm, '')
         .replace(/\n+$/, '\n')
