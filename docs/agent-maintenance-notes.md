@@ -23,6 +23,7 @@ This is the active, compact maintenance index. It records reusable causes and co
 - DCInside-owned forms and popups keep their original node, method, action, hidden fields, button types, handlers, and DOM order. Never clone or replace an interactive host control to make styling easier.
 - Nonmember modify/delete password cards must neutralize the host's absolute `.btn_svc` positioning on the exact direct buttons before using a two-column action grid. Cancel remains left and confirm remains right; the whole visible control must win `elementFromPoint`.
 - Authenticated delete confirmation is recognized only by `form#delete[name="delete"]` plus `.empty_pagewrap .pop_wrap.type5 .pop_content.robot > .btn_box`. Style that owned card in normal flow without broad `.pop_wrap` rules.
+- Authenticated delete is a compact confirmation surface, not a password-entry page. Do not give its form a viewport-derived minimum height or grid-center the card; bound the form/card excess height and header-to-card gap in the live-shaped regression.
 - Popup tests must close and reopen the same native node and prove the delegated handler and submit count remain singular.
 
 ## Recommendation and palette contracts

@@ -6272,12 +6272,11 @@
         }
         body.is-delete-confirm-page form.dcuf-delete-confirm-page {
             box-sizing: border-box !important;
-            display: grid !important;
+            display: block !important;
             width: 100% !important;
-            min-height: min(520px, calc(100dvh - 250px)) !important;
+            min-height: 0 !important;
             margin: 0 !important;
-            padding: 24px 0 !important;
-            place-items: center !important;
+            padding: 16px 0 24px !important;
         }
         body.is-delete-confirm-page form.dcuf-delete-confirm-page .dcuf-delete-confirm-card {
             box-sizing: border-box !important;
@@ -6286,7 +6285,7 @@
             width: min(520px, 100%) !important;
             min-width: 0 !important;
             height: auto !important;
-            margin: 0 !important;
+            margin: 0 auto !important;
             transform: none !important;
         }
         body.is-delete-confirm-page form.dcuf-delete-confirm-page .dcuf-delete-confirm-content {

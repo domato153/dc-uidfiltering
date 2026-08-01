@@ -224,6 +224,18 @@ try {
                 window.__dcufUIModule.syncDeleteSurface('host-compat-repeat-2');
             });
             const contract = await session.page.evaluate(sampleActionRow);
+            const geometry = await session.page.evaluate(() => {
+                const rectOf = (selector) => {
+                    const rect = document.querySelector(selector)?.getBoundingClientRect();
+                    return rect ? { top: rect.top, bottom: rect.bottom, width: rect.width, height: rect.height } : null;
+                };
+                return {
+                    pageHead: rectOf('.page_head'),
+                    form: rectOf('form#delete'),
+                    article: rectOf('form#delete > article'),
+                    card: rectOf('.dcuf-delete-confirm-card')
+                };
+            });
             const form = await session.page.locator('form#delete').evaluate((element) => ({
                 action: element.getAttribute('action'),
                 method: element.getAttribute('method'),
@@ -239,6 +251,8 @@ try {
                 bodyClass: form.bodyClass
             });
             assert.equal(form.bodyClass.includes('is-delete-confirm-page'), true);
+            assert.equal(geometry.form.height - geometry.card.height <= 96, true, JSON.stringify(geometry));
+            assert.equal(geometry.card.top - geometry.pageHead.bottom <= 96, true, JSON.stringify(geometry));
             assert.equal(contract.cancelRight < contract.confirmLeft, true, JSON.stringify(contract));
             assert.equal(contract.hitCount, 5, JSON.stringify(contract));
             await session.page.locator('[data-host-action="confirm"]').click();
