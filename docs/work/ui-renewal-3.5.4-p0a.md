@@ -14,7 +14,7 @@ This file is the authoritative execution-state companion to `docs/work/ui-renewa
 - Independent reviewer after fixed-SHA validation: `ChatGPT`
 - Fixed P1 start SHA: `d82d9cca32d513b104f6c4ab09f4e9e2a6046dd1`
 - Implementation-content SHA before this handoff document: `fb0e7266b8dd8aec5f8b33618886da0fe10d7853`
-- State: `REVIEW_READY — local execution evidence not yet collected`
+- State: `REVIEW_READY — local P0/P1/full validation evidence collected; live checks pending`
 - Parallel implementation: prohibited
 - P0 live acceptance and P1 live acceptance remain intentionally deferred to one integrated candidate.
 

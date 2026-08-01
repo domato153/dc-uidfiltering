@@ -154,6 +154,10 @@
 
     installDrawerCompatibility();
     runAdapters();
+    document.addEventListener('click', () => {
+        queueMicrotask(() => portalKnownHostPopups());
+        window.setTimeout(() => portalKnownHostPopups(), 0);
+    }, { capture: true, passive: true });
 
     let frame = 0;
     const scheduleAdapters = (scope = document) => {
