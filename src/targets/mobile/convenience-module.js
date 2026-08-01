@@ -9,7 +9,6 @@
         LIST_SESSION_KEY: 'dcuf:list-return:v1',
         SUBMIT_SESSION_KEY: 'dcuf:pending-submit:v1',
         DEFAULTS: Object.freeze({
-            listRestore: true,
             recentHighlight: true,
             draftRecovery: true,
             postPreview: false
@@ -20,7 +19,6 @@
         PREVIEW_TTL: 3 * 60 * 1000,
         PREVIEW_MAX: 8,
         settings: null,
-        _masterDisabledSnapshot: false,
         _settingsPromise: null,
         _previewCache: new Map(),
         _previewRequest: null,
@@ -44,10 +42,6 @@
         _overlayScrollState: null,
         _settingsPanel: null,
         _listNavigationRecorderBound: false,
-        _listRestoreComplete: false,
-        _pageShowPersisted: false,
-        _pageShowSettled: false,
-        _pageShowPromise: null,
         _draftWriteQueue: Promise.resolve(),
         _draftStoreCache: null,
         _submitCleanupTimer: 0,
@@ -70,14 +64,8 @@
             try { return await this._settingsPromise; }
             finally { this._settingsPromise = null; }
         },
-        isMasterDisabled() {
-            if (typeof dcFilterSettings === 'object' && typeof dcFilterSettings?.masterDisabled === 'boolean') {
-                return dcFilterSettings.masterDisabled;
-            }
-            return this._masterDisabledSnapshot;
-        },
         isEnabled(key) {
-            return !this.isMasterDisabled() && Boolean(this.settings?.[key]);
+            return Boolean(this.settings?.[key]);
         },
         captureInlineStyles(element, properties) {
             return Object.fromEntries(properties.map((property) => [property, {
@@ -147,37 +135,11 @@
             window.scrollTo({ left: state.x, top: state.y, behavior: 'auto' });
         },
         async init() {
-            const snapshot = await FilterModule.loadBootSnapshot();
-            this._masterDisabledSnapshot = Boolean(snapshot?.masterDisabled);
             await this.loadSettings();
             try { localStorage.removeItem('dcuf:draft-diagnostics:v1'); } catch { /* stale beta trace cleanup */ }
             this.ensureStyles();
-            this.initPageShowContract();
             await this.confirmPendingDraftOnView();
             return this.settings;
-        },
-        initPageShowContract() {
-            if (this._pageShowPromise) return this._pageShowPromise;
-            this._pageShowPromise = new Promise((resolve) => {
-                let settled = false;
-                const finish = (persisted = false) => {
-                    if (settled) return;
-                    settled = true;
-                    this._pageShowPersisted = Boolean(persisted);
-                    this._pageShowSettled = true;
-                    resolve(this._pageShowPersisted);
-                };
-                window.addEventListener('pageshow', (event) => {
-                    this._pageShowPersisted = Boolean(event.persisted);
-                    finish(event.persisted);
-                });
-                window.addEventListener('pagehide', () => {
-                    this._pageShowPersisted = false;
-                    this._listRestoreComplete = false;
-                });
-                window.setTimeout(() => finish(false), document.readyState === 'complete' ? 0 : 250);
-            });
-            return this._pageShowPromise;
         },
         ensureStyles() {
             if (document.getElementById('dcuf-mobile-convenience-style')) return;
@@ -253,7 +215,6 @@
             header.append(title, close); panel.appendChild(header);
             const body = document.createElement('div'); body.className = 'dcuf-convenience-body dcuf-settings-body';
             const labels = {
-                listRestore: ['목록 스크롤 위치 복원', '뒤로 왔을 때 열었던 글 위치로 복귀'],
                 recentHighlight: ['마지막으로 열어본 글 표시', '뒤로 돌아왔을 때 해당 글 카드를 테마색으로 표시'],
                 draftRecovery: ['글쓰기 초안 저장·복구', '제목·본문·말머리만 저장'],
                 postPreview: ['글 미리보기', '마우스 대기 또는 터치 길게 누르기']
@@ -269,7 +230,7 @@
                 const input = document.createElement('input'); input.type = 'checkbox'; input.className = 'dcuf-convenience-toggle'; input.checked = this.settings[key]; input.setAttribute('aria-label', name);
                 controls[key] = input; label.append(text, input); body.appendChild(label);
             });
-            const note = document.createElement('p'); note.className = 'dcuf-convenience-note dcuf-settings-help'; note.textContent = '모든 기능 끄기는 선택값을 지우지 않고 실행만 멈춥니다.'; body.appendChild(note);
+            const note = document.createElement('p'); note.className = 'dcuf-convenience-note dcuf-settings-help'; note.textContent = "필터의 '모든 기능 끄기'는 편의 기능 설정에 영향을 주지 않습니다."; body.appendChild(note);
             panel.appendChild(body);
             const actions = document.createElement('div'); actions.className = 'dcuf-convenience-actions dcuf-settings-footer';
             const clearDrafts = document.createElement('button'); clearDrafts.type = 'button'; clearDrafts.className = 'dcuf-convenience-clear'; clearDrafts.textContent = '저장된 초안 삭제';
@@ -321,16 +282,13 @@
                 const listContainer = link?.closest('.custom-mobile-list');
                 if (!(link instanceof HTMLAnchorElement) || !(listContainer instanceof HTMLElement)) return;
                 if (link === this._previewSuppressedLink) return;
-                if (this.isMasterDisabled() || (!this.settings?.listRestore && !this.settings?.recentHighlight)) return;
-                const card = link.closest('.custom-post-item');
+                if (!this.settings?.recentHighlight) return;
                 const postNo = this.getPostNoFromLink(link);
                 const record = {
                     listUrl: this.normalizedListUrl(), postUrl: link.href, postNo,
-                    offset: card instanceof HTMLElement ? card.getBoundingClientRect().top : 0,
-                    scrollY: window.scrollY, savedAt: Date.now()
+                    savedAt: Date.now()
                 };
                 try { sessionStorage.setItem(this.LIST_SESSION_KEY, JSON.stringify(record)); } catch { /* unavailable */ }
-                this._listRestoreComplete = false;
                 this.markRecentCard(listContainer, postNo, { pulse: false });
             }, true);
         },
@@ -348,12 +306,8 @@
                 return link instanceof HTMLAnchorElement && this.getPostNoFromLink(link) === String(postNo);
             }) || null;
         },
-        getNavigationType() {
-            try { return performance.getEntriesByType('navigation')[0]?.type || ''; }
-            catch { return ''; }
-        },
         markRecentCard(listContainer, postNo, { pulse = false } = {}) {
-            if (!this.settings?.recentHighlight || this.isMasterDisabled()) return;
+            if (!this.settings?.recentHighlight) return;
             listContainer.querySelectorAll('.dcuf-recent-post,.dcuf-recent-pulse').forEach((node) => node.classList.remove('dcuf-recent-post', 'dcuf-recent-pulse'));
             listContainer.querySelectorAll('.dcuf-recent-label').forEach((node) => node.remove());
             const card = this.findCardByPostNo(listContainer, postNo);
@@ -376,22 +330,6 @@
             this.bindList(list);
             const record = this.readListRecord();
             if (record) this.markRecentCard(list, record.postNo, { pulse: false });
-            if (this._listRestoreComplete || !record || !this.isEnabled('listRestore')) return;
-            this._listRestoreComplete = true;
-            // A reload must preserve the user's current browser scroll position,
-            // not jump back to the last post that happened to be opened. Keep
-            // this decision and any non-persisted restore synchronous with the
-            // list commit so the ready/reveal frame cannot paint an intermediate
-            // position while waiting for a pageshow promise.
-            if (this.getNavigationType() === 'reload') return;
-            const persisted = this._pageShowPersisted;
-            const card = this.findCardByPostNo(list, record.postNo);
-            if (!(card instanceof HTMLElement)) return;
-            if (!persisted) {
-                const top = card.getBoundingClientRect().top;
-                window.scrollTo({ top: Math.max(0, window.scrollY + top - Number(record.offset || 0)), behavior: 'auto' });
-            }
-            this.markRecentCard(list, record.postNo, { pulse: true });
         },
 
         cancelPreviewClose() {

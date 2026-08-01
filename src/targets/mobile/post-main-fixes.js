@@ -1883,6 +1883,13 @@
             box-sizing: border-box !important;
             overflow: hidden !important;
         }
+        .view_content_wrap div.btn_recommend_box.recomuse_y.morebox {
+            width: min(680px, 100%) !important;
+            max-width: 100% !important;
+            margin-right: auto !important;
+            margin-left: auto !important;
+            overflow: visible !important;
+        }
         body.dc-filter-dark-mode .view_content_wrap .btn_recommend_box {
             background: var(--dcuf-view-surface) !important;
             border-color: var(--dcuf-view-border) !important;
@@ -6245,6 +6252,10 @@
         }
         body.is-dcuf-password-page form.dcuf-password-form .btn_box > button {
             box-sizing: border-box !important;
+            position: static !important;
+            inset: auto !important;
+            float: none !important;
+            transform: none !important;
             width: 100% !important;
             min-width: 0 !important;
             min-height: 46px !important;
@@ -6257,6 +6268,60 @@
             font-size: 15px !important;
             font-weight: 800 !important;
             line-height: 1.2 !important;
+            cursor: pointer !important;
+        }
+        body.is-delete-confirm-page form.dcuf-delete-confirm-page {
+            box-sizing: border-box !important;
+            display: grid !important;
+            width: 100% !important;
+            min-height: min(520px, calc(100dvh - 250px)) !important;
+            margin: 0 !important;
+            padding: 24px 0 !important;
+            place-items: center !important;
+        }
+        body.is-delete-confirm-page form.dcuf-delete-confirm-page .dcuf-delete-confirm-card {
+            box-sizing: border-box !important;
+            position: static !important;
+            inset: auto !important;
+            width: min(520px, 100%) !important;
+            min-width: 0 !important;
+            height: auto !important;
+            margin: 0 !important;
+            transform: none !important;
+        }
+        body.is-delete-confirm-page form.dcuf-delete-confirm-page .dcuf-delete-confirm-content {
+            box-sizing: border-box !important;
+            position: relative !important;
+            width: 100% !important;
+            min-width: 0 !important;
+            padding: 30px 26px 24px !important;
+            border: 1px solid var(--dcuf-theme-border-strong, #cbd2db) !important;
+            border-radius: 20px !important;
+            background: linear-gradient(160deg, var(--dcuf-theme-card-top, #fff), var(--dcuf-theme-card-bottom, #fafbfc)) !important;
+            box-shadow: var(--dcuf-theme-panel-shadow, 0 18px 42px rgba(31, 45, 68, .16)) !important;
+            text-align: center !important;
+        }
+        body.is-delete-confirm-page form.dcuf-delete-confirm-page .dcuf-delete-confirm-content > .btn_box {
+            box-sizing: border-box !important;
+            display: grid !important;
+            grid-template-columns: 1fr 1fr !important;
+            width: 100% !important;
+            margin: 20px 0 0 !important;
+            padding: 0 !important;
+            gap: 10px !important;
+        }
+        body.is-delete-confirm-page form.dcuf-delete-confirm-page .dcuf-delete-confirm-content > .btn_box > button {
+            box-sizing: border-box !important;
+            position: static !important;
+            inset: auto !important;
+            float: none !important;
+            transform: none !important;
+            width: 100% !important;
+            min-width: 0 !important;
+            min-height: 46px !important;
+            margin: 0 !important;
+            padding: 10px 12px !important;
+            border-radius: 12px !important;
             cursor: pointer !important;
         }
         body.is-dcuf-password-page form.dcuf-password-form .btn_box > :is(.btn_blue, .btn_ok) {

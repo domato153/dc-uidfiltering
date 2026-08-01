@@ -2741,7 +2741,27 @@
             if (!this.isDeletePage() || !document.body) return 'not-delete';
 
             const passwordForm = document.querySelector('form[name="delete"][action*="delete_password_submit"], form[action*="delete_password_submit"]');
+            const confirmForm = document.querySelector('form#delete[name="delete"]');
+            const confirmCard = confirmForm?.querySelector('.empty_pagewrap .pop_wrap.type5');
+            const confirmContent = confirmCard?.querySelector('.pop_content.robot');
+            const confirmActions = confirmContent?.querySelector(':scope > .btn_box');
             document.body.classList.add('is-delete-page');
+            if (confirmForm instanceof HTMLFormElement
+                && confirmCard instanceof HTMLElement
+                && confirmContent instanceof HTMLElement
+                && confirmActions instanceof HTMLElement) {
+                document.body.classList.remove('is-delete-password-page', 'is-dcuf-password-page');
+                document.body.classList.add('is-delete-confirm-page');
+                document.body.dataset.dcufDeleteSurface = 'confirm';
+                document.documentElement?.setAttribute('data-dcuf-delete-surface', 'confirm');
+                confirmForm.classList.add('dcuf-delete-confirm-page');
+                confirmCard.classList.add('dcuf-delete-confirm-card');
+                confirmContent.classList.add('dcuf-delete-confirm-content');
+                this.recordDiagnostic('ui.deleteSurface.confirm', { reason });
+                return 'confirm';
+            }
+
+            document.body.classList.remove('is-delete-confirm-page');
             if (!(passwordForm instanceof HTMLFormElement)) {
                 document.body.classList.remove('is-delete-password-page', 'is-dcuf-password-page');
                 document.body.dataset.dcufDeleteSurface = 'pending';
