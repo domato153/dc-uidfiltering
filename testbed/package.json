@@ -11,7 +11,7 @@
     "test:bfcache": "node run-bfcache.mjs",
     "test:headed": "node run-tests.mjs --headed",
     "test:p0a": "node run-p0a-regressions.mjs",
-    "test:p1": "node run-p1-regressions.mjs"
+    "test:p1": "node run-p1-regressions.mjs && node run-p1-fidelity.mjs"
   },
   "devDependencies": {
     "playwright": "^1.52.0"
