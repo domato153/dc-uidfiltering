@@ -1,0 +1,50 @@
+{
+  "audit": "comment-style-dom-churn",
+  "url": "https://gall.dcinside.com/mgallery/board/view/?id=aoegame&no=31186430&page=1",
+  "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36 Edg/150.0.0.0",
+  "waitMs": 1600,
+  "target": {
+    "index": 0,
+    "tag": "LI",
+    "id": "comment_li_97241040",
+    "dataNo": "",
+    "className": "ub-content",
+    "inlineDisplay": "",
+    "computedDisplay": "list-item",
+    "text": "야겜매니아 몰라도 유미 픽하고 라면먹으면 ㄱㅊ - dc App07.12 15:23:27"
+  },
+  "idle": {
+    "durationMs": 1600,
+    "callbacks": 678,
+    "records": 2994,
+    "attributes": 2992,
+    "childList": 2,
+    "addedNodes": 1,
+    "removedNodes": 1,
+    "styleRecords": 127,
+    "classRecords": 2865
+  },
+  "triggered": {
+    "durationMs": 1600,
+    "callbacks": 579,
+    "records": 2894,
+    "attributes": 2890,
+    "childList": 4,
+    "addedNodes": 2,
+    "removedNodes": 2,
+    "styleRecords": 25,
+    "classRecords": 2865
+  },
+  "delta": {
+    "callbacks": -99,
+    "records": -100,
+    "attributes": -102,
+    "childList": 2,
+    "addedNodes": 1,
+    "removedNodes": 1,
+    "styleRecords": -102,
+    "classRecords": 0
+  },
+  "scriptUiReady": true,
+  "customPostCount": 53
+}

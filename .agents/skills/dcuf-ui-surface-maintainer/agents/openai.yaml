@@ -1,0 +1,4 @@
+interface:
+  display_name: "DCUF UI Surface Maintainer"
+  short_description: "Safely maintain DCUF host UI surfaces"
+  default_prompt: "Use $dcuf-ui-surface-maintainer to plan a scoped DCUF UI change with one cascade owner and live-shaped validation."

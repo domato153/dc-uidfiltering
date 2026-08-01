@@ -1,0 +1,114 @@
+{
+  "probe": "DCUF_IMAGE_COMMENT_PROBE_V1",
+  "capturedAt": "2026-07-12T07:27:13.099Z",
+  "page": {
+    "href": "https://gall.dcinside.com/board/view/?id=comic_new6&no=5247397&exception_mode=recommend&page=1",
+    "pathname": "/board/view/",
+    "readyState": "complete"
+  },
+  "userscript": {
+    "uiReady": false,
+    "customPosts": 0
+  },
+  "counts": {
+    "sections": 2,
+    "boxes": 1,
+    "items": 3,
+    "replies": 0,
+    "writers": 3,
+    "writeForms": 0,
+    "deletePopups": 0
+  },
+  "section": {
+    "tag": "div",
+    "id": "",
+    "classes": [
+      "img_comment",
+      "fold",
+      "getMoreComment"
+    ],
+    "childElements": 1,
+    "display": "block",
+    "attributes": [
+      "class"
+    ]
+  },
+  "box": {
+    "tag": "div",
+    "id": "",
+    "classes": [
+      "comment_box",
+      "img_comment_box"
+    ],
+    "childElements": 1,
+    "display": "block",
+    "attributes": [
+      "class",
+      "data-imgno",
+      "data-article-lv"
+    ]
+  },
+  "items": [
+    {
+      "element": {
+        "tag": "li",
+        "id": "img_comment_li_17929203",
+        "classes": [
+          "ub-content"
+        ],
+        "childElements": 1,
+        "display": "list-item",
+        "attributes": [
+          "id",
+          "class"
+        ]
+      },
+      "idPattern": "img_comment_li_#",
+      "hasWriter": true,
+      "hasImage": true,
+      "hasReplyInfo": false,
+      "hasDeletePopup": false
+    },
+    {
+      "element": {
+        "tag": "li",
+        "id": "img_comment_li_17929306",
+        "classes": [
+          "ub-content"
+        ],
+        "childElements": 1,
+        "display": "list-item",
+        "attributes": [
+          "id",
+          "class"
+        ]
+      },
+      "idPattern": "img_comment_li_#",
+      "hasWriter": true,
+      "hasImage": false,
+      "hasReplyInfo": false,
+      "hasDeletePopup": false
+    },
+    {
+      "element": {
+        "tag": "li",
+        "id": "img_comment_li_17933224",
+        "classes": [
+          "ub-content"
+        ],
+        "childElements": 1,
+        "display": "list-item",
+        "attributes": [
+          "id",
+          "class"
+        ]
+      },
+      "idPattern": "img_comment_li_#",
+      "hasWriter": true,
+      "hasImage": false,
+      "hasReplyInfo": false,
+      "hasDeletePopup": false
+    }
+  ],
+  "sanitizedSectionHtml": "<div class=\"img_comment fold getMoreComment\">\n            <div class=\"view_comment image_comment\">\n                <h2 class=\"blind\">[text]</h2>\n                <div class=\"comment_wrap show\">\n                    \n                    \n        <div class=\"comment_box img_comment_box\" data-imgno=\"4574904\" data-article-lv=\"undefined\">\n            <ul class=\"cmt_list add\">\n                <li id=\"img_comment_li_17929203\" class=\"ub-content\"><div class=\"cmt_info clear\" data-no=\"17929203\" data-rcnt=\"0\" data-article-no=\"5247397\" data-article-lv=\"undefined\"><div class=\"addbox\"><div class=\"cmt_nickbox\"><span class=\"gall_writer ub-writer\" data-nick=\"[redacted-data-nick]\" data-uid=\"[redacted-data-uid]\" data-ip=\"[redacted-data-ip]\"><span class=\"nickname in\" title=\"ㅇㅇ\" style=\"\"><em>[text]</em></span> <a class=\"writer_nikcon \"><img src=\"[redacted-src]\" border=\"0\" title=\"attitude01** : 갤로그로 이동합니다.\" width=\"12\" height=\"11\" style=\"cursor:pointer;\" onclick=\"window.open('//gallog.dcinside.com/attitude0121');\" alt=\"갤로그로 이동합니다.\"></a></span></div><div class=\"clear cmt_txtbox\"><p class=\"usertxt\" style=\"cursor:default\">[text]</p></div><div class=\"fr clear\"><span class=\"date_time\">[text]</span></div></div></div></li><li id=\"img_comment_li_17929306\" class=\"ub-content\"><div class=\"cmt_info clear\" data-no=\"17929306\" data-rcnt=\"0\" data-article-no=\"5247397\" data-article-lv=\"undefined\"><div class=\"addbox\"><div class=\"cmt_nickbox\"><span class=\"gall_writer ub-writer\" data-nick=\"[redacted-data-nick]\" data-uid=\"[redacted-data-uid]\" data-ip=\"[redacted-data-ip]\"><span class=\"nickname\"><em title=\"만갤러60\">[text]</em><em class=\"nomem_nicknum\">[text]</em><span class=\"ip\">[text]</span></span></span></div><div class=\"clear cmt_txtbox\"><p class=\"usertxt\" style=\"cursor:default\">[text]</p></div><div class=\"fr clear\"><span class=\"date_time\">[text]</span></div></div></div></li><li id=\"img_comment_li_17933224\" class=\"ub-content\"><div class=\"cmt_info clear\" data-no=\"17933224\" data-rcnt=\"0\" data-article-no=\"5247397\" data-article-lv=\"undefined\"><div class=\"addbox\"><div class=\"cmt_nickbox\"><span class=\"gall_writer ub-writer\" data-nick=\"[redacted-data-nick]\" data-uid=\"[redacted-data-uid]\" data-ip=\"[redacted-data-ip]\"><span class=\"nickname\"><em title=\"만갤러85\">[text]</em><em class=\"nomem_nicknum\">[text]</em><span class=\"ip\">[text]</span></span></span></div><div class=\"clear cmt_txtbox\"><p class=\"usertxt\" style=\"cursor:default\">[text]</p></div><div class=\"fr clear\"><span class=\"date_time\">[text]</span></div></div></div></li>\n                \n            </ul>\n        </div>\n    \n                    \n                </div>\n                \n            </div>\n            \n        </div>"
+}

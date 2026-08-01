@@ -1,0 +1,114 @@
+{
+  "audit": "hidden-compare",
+  "baselineUrl": "https://gall.dcinside.com/mgallery/board/view/?id=aoegame&no=31186430&page=1",
+  "currentUrl": "https://gall.dcinside.com/mgallery/board/view/?id=aoegame&no=31186430&page=1",
+  "comparedAt": "2026-07-12T06:52:24.628Z",
+  "exposedCount": 1,
+  "results": [
+    {
+      "baseline": {
+        "index": 0,
+        "tag": "TR",
+        "id": "",
+        "dataNo": "",
+        "className": "ub-content ",
+        "inlineDisplay": "",
+        "computedDisplay": "none",
+        "text": "- 설문 공항 비매너 논란 때문에 호감도 떨어진 스타는? 운영자 26/07/06 - -"
+      },
+      "found": true,
+      "current": {
+        "index": 0,
+        "tag": "TR",
+        "id": "",
+        "dataNo": "",
+        "className": "ub-content ",
+        "inlineDisplay": "",
+        "computedDisplay": "none",
+        "text": "- 설문 공항 비매너 논란 때문에 호감도 떨어진 스타는? 운영자 26/07/06 - -"
+      },
+      "mirror": {
+        "index": 0,
+        "tag": "DIV",
+        "id": "",
+        "dataNo": "",
+        "className": "custom-post-item ",
+        "inlineDisplay": "block",
+        "computedDisplay": "block",
+        "text": "설문공항 비매너 논란 때문에 호감도 떨어진 스타는?운영자조회 - | 추천 - | 26/07/06"
+      },
+      "exposed": true,
+      "status": "exposed"
+    },
+    {
+      "baseline": {
+        "index": 1,
+        "tag": "TR",
+        "id": "",
+        "dataNo": "",
+        "className": "ub-content ",
+        "inlineDisplay": "none",
+        "computedDisplay": "none",
+        "text": "- AD 지금이 복귀각! 워프레임 무료로 다운로드 받기! 운영자 26/07/11 - -"
+      },
+      "found": true,
+      "current": {
+        "index": 1,
+        "tag": "TR",
+        "id": "",
+        "dataNo": "",
+        "className": "ub-content ",
+        "inlineDisplay": "",
+        "computedDisplay": "none",
+        "text": "- AD 지금이 복귀각! 워프레임 무료로 다운로드 받기! 운영자 26/07/11 - -"
+      },
+      "mirror": {
+        "index": 1,
+        "tag": "DIV",
+        "id": "",
+        "dataNo": "",
+        "className": "custom-post-item is-ad-post",
+        "inlineDisplay": "block",
+        "computedDisplay": "none",
+        "text": "AD지금이 복귀각! 워프레임 무료로 다운로드 받기!운영자조회 - | 추천 - | 26/07/11"
+      },
+      "exposed": false,
+      "status": "hidden"
+    },
+    {
+      "baseline": {
+        "index": 2,
+        "tag": "TR",
+        "id": "",
+        "dataNo": "",
+        "className": "ub-content ",
+        "inlineDisplay": "none",
+        "computedDisplay": "none",
+        "text": "- AD <소니 INZONE> 정품등록 프로모션 지금 진행 중! 운영자 26/07/10 - -"
+      },
+      "found": true,
+      "current": {
+        "index": 2,
+        "tag": "TR",
+        "id": "",
+        "dataNo": "",
+        "className": "ub-content ",
+        "inlineDisplay": "",
+        "computedDisplay": "none",
+        "text": "- AD <소니 INZONE> 정품등록 프로모션 지금 진행 중! 운영자 26/07/10 - -"
+      },
+      "mirror": {
+        "index": 2,
+        "tag": "DIV",
+        "id": "",
+        "dataNo": "",
+        "className": "custom-post-item is-ad-post",
+        "inlineDisplay": "block",
+        "computedDisplay": "none",
+        "text": "AD<소니 INZONE> 정품등록 프로모션 지금 진행 중!운영자조회 - | 추천 - | 26/07/10"
+      },
+      "exposed": false,
+      "status": "hidden"
+    }
+  ]
+}

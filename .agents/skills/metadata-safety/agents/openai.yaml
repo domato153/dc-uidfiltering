@@ -1,0 +1,4 @@
+interface:
+  display_name: "Metadata Safety"
+  short_description: "Review metadata and storage safety"
+  default_prompt: "Use $metadata-safety to review a DCUF metadata, GM API, or storage compatibility change."
