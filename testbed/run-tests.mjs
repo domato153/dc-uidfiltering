@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { startServer } from './server/server.mjs';
@@ -3182,7 +3183,7 @@ test('갤러리별 말머리 차단은 공지·관련글을 제외하고 UID 조
     } finally { await view.close(); }
 });
 
-mobileTest('깨진 편의 설정은 기본값으로 정규화되고 모든 기능 끄기는 저장값만 보존한다', 'functional', async ({ browser, server }) => {
+mobileTest('깨진 편의 설정은 기본값으로 정규화되고 필터 master-off와 독립적으로 실행된다', 'functional', async ({ browser, server }) => {
     const corrupted = { listRestore: false, recentHighlight: 'yes', postPreview: 1, unknown: true };
     const session = await createTestPage(browser, server.baseUrl, {
         storage: {
@@ -3200,14 +3201,14 @@ mobileTest('깨진 편의 설정은 기본값으로 정규화되고 모든 기�
             const row = document.querySelector('.gall_subject[data-headtext="질문"]')?.closest('tr.ub-content');
             return {
                 settings: module.settings,
-                masterDisabled: module.isMasterDisabled(),
+                enabled: ['recentHighlight', 'draftRecovery', 'postPreview'].map((key) => [key, module.isEnabled(key)]),
                 rowDisplay: row?.style.display || '',
                 quickActionCount: document.querySelectorAll('[data-dcuf-fab-action="quick-write"]').length,
                 persisted: window.__dcufTestbedGM.snapshot().values.dcuf_mobile_convenience_settings_v1
             };
         });
-        assert.deepEqual(state.settings, { listRestore: false, recentHighlight: true, draftRecovery: true, postPreview: false });
-        assert.equal(state.masterDisabled, true);
+        assert.deepEqual(state.settings, { recentHighlight: true, draftRecovery: true, postPreview: false });
+        assert.deepEqual(state.enabled, [['recentHighlight', true], ['draftRecovery', true], ['postPreview', false]]);
         assert.notEqual(state.rowDisplay, 'none', 'master disable must suppress headtext filtering');
         assert.equal(state.quickActionCount, 0);
         assert.deepEqual(state.persisted, corrupted, 'normalization must not rewrite the user storage implicitly');
@@ -3263,7 +3264,7 @@ mobileTest('모바일 편의기능 설정은 선택 팔레트와 밝은·어두�
         assert.equal(inspect.saveBorder, inspect.accent, '저장 버튼은 선택한 팔레트 강조색을 사용해야 한다');
         assert.equal(inspect.bodyOverflow, 'auto');
         assert.equal(inspect.inViewport, true);
-        assert.equal(inspect.rows, 4); assert.equal(inspect.actions, 2);
+        assert.equal(inspect.rows, 3); assert.equal(inspect.actions, 2);
 
         const dark = await session.page.evaluate(() => {
             const before = getComputedStyle(document.querySelector('#dcuf-mobile-convenience-settings')).color;
@@ -3503,27 +3504,37 @@ mobileTest('title decorations mirror generically, tooltips pre-place within the 
     } finally { await session.close(); }
 });
 
-mobileTest('목록 복원 기록과 최근 글 표시는 커밋 뒤 정확한 카드에 한 번만 적용된다', 'functional', async ({ browser, server }) => {
+mobileTest('최근 글 표시는 커밋 뒤 정확한 카드에 한 번만 적용되고 오래된 스크롤 기록을 무시한다', 'functional', async ({ browser, server }) => {
     const session = await createTestPage(browser, server.baseUrl, { storage: noStatsStorage, viewport: { width: 390, height: 844 } });
     try {
         await session.goto('/board/lists?id=test');
         const link = session.page.locator('.custom-post-item:visible a.post-title-link').nth(8);
         const postNo = await link.evaluate((element) => new URL(element.href).searchParams.get('no'));
-        await link.evaluate((element) => {
+        const commitContract = await link.evaluate((element) => {
             const card = element.closest('.custom-post-item');
             const record = { listUrl: location.href, postUrl: element.href, postNo: new URL(element.href).searchParams.get('no'), offset: 140, scrollY: 0, savedAt: Date.now() };
             sessionStorage.setItem('dcuf:list-return:v1', JSON.stringify(record));
-            window.__dcufMobileConvenienceModule._listRestoreComplete = false;
-            window.__dcufMobileConvenienceModule._pageShowPersisted = false;
-            window.__dcufMobileConvenienceModule._pageShowSettled = true;
             card.scrollIntoView();
-        });
-        await session.page.evaluate(() => {
+            const module = window.__dcufMobileConvenienceModule;
             const ui = window.__dcufUIModule;
             const state = Array.from(ui.LIST_STATES || ui.LIST_STATE_MAP?.values?.() || [])[0];
-            if (state) return window.__dcufMobileConvenienceModule.onListCommitted(state, 'test-return');
             const list = document.querySelector('.custom-mobile-list');
-            return window.__dcufMobileConvenienceModule.onListCommitted({ newListContainer: list }, 'test-return');
+            const originalScrollTo = window.scrollTo;
+            let scrollCalls = 0;
+            window.scrollTo = () => { scrollCalls += 1; };
+            const before = window.scrollY;
+            const result = module.onListCommitted(state || { newListContainer: list }, 'test-return');
+            const after = window.scrollY;
+            window.scrollTo = originalScrollTo;
+            return {
+                scrollCalls,
+                before,
+                after,
+                promise: result instanceof Promise,
+                settingsHasListRestore: Object.hasOwn(module.settings, 'listRestore'),
+                hasRestoreState: '_listRestoreComplete' in module || '_pageShowPersisted' in module,
+                navigationHelperType: typeof module.getNavigationType
+            };
         });
         await session.page.waitForTimeout(80);
         assert.equal(await session.page.locator('.custom-post-item.dcuf-recent-post').count(), 1);
@@ -3535,72 +3546,15 @@ mobileTest('목록 복원 기록과 최근 글 표시는 커밋 뒤 정확한 �
         }));
         assert.notEqual(recentVisual.boxShadow, 'none', '최근 글 카드는 테마 강조선을 가져야 한다');
         assert.equal(parseFloat(recentVisual.outlineWidth) >= 1, true, '최근 글 카드는 배지 외에도 명확한 외곽선이 있어야 한다');
-        const restoreComplete = await session.page.evaluate(() => window.__dcufMobileConvenienceModule._listRestoreComplete);
-        assert.equal(restoreComplete, true);
-        const reloadContract = await session.page.evaluate(() => {
-            const module = window.__dcufMobileConvenienceModule;
-            const list = document.querySelector('.custom-mobile-list');
-            const originalNavigationType = module.getNavigationType;
-            const originalScrollTo = window.scrollTo;
-            let calls = 0;
-            module._listRestoreComplete = false;
-            module._pageShowPersisted = false;
-            module.getNavigationType = () => 'reload';
-            window.scrollTo = (...args) => { calls += 1; return originalScrollTo.apply(window, args); };
-            const before = window.scrollY;
-            const result = module.onListCommitted({ newListContainer: list }, 'reload-test');
-            const after = window.scrollY;
-            window.scrollTo = originalScrollTo;
-            module.getNavigationType = originalNavigationType;
-            return { calls, before, after, promise: result instanceof Promise, restored: module._listRestoreComplete };
+        assert.deepEqual(commitContract, {
+            scrollCalls: 0,
+            before: commitContract.before,
+            after: commitContract.before,
+            promise: false,
+            settingsHasListRestore: false,
+            hasRestoreState: false,
+            navigationHelperType: 'undefined'
         });
-        assert.equal(reloadContract.calls, 0, 'reload must not jump to the stale last-opened card');
-        assert.equal(reloadContract.after, reloadContract.before, 'reload must preserve the browser-owned scroll position');
-        assert.equal(reloadContract.promise, false, 'list restore must complete synchronously with the commit');
-        assert.equal(reloadContract.restored, true);
-        const persistedContract = await session.page.evaluate(async () => {
-            const module = window.__dcufMobileConvenienceModule;
-            const list = document.querySelector('.custom-mobile-list');
-            module._listRestoreComplete = false;
-            module._pageShowPersisted = true;
-            const original = window.scrollTo;
-            let calls = 0;
-            window.scrollTo = (...args) => { calls += 1; return original.apply(window, args); };
-            await module.onListCommitted({ newListContainer: list }, 'persisted-test');
-            window.scrollTo = original;
-            return { calls, restored: module._listRestoreComplete };
-        });
-        assert.equal(persistedContract.restored, true);
-        const reloadBefore = await session.page.evaluate(() => {
-            const cards = Array.from(document.querySelectorAll('.custom-post-item'));
-            const target = cards[30];
-            target.scrollIntoView({ block: 'start' });
-            return {
-                postNo: new URL(target.querySelector('a.post-title-link').href).searchParams.get('no'),
-                scrollY: window.scrollY
-            };
-        });
-        await session.page.reload({ waitUntil: 'domcontentloaded' });
-        await session.page.waitForFunction(() => document.documentElement.classList.contains('script-ui-ready'), null, { timeout: 12000 });
-        await session.page.waitForTimeout(1300);
-        const reloadAfter = await session.page.evaluate((expectedPostNo) => {
-            const target = Array.from(document.querySelectorAll('.custom-post-item')).find((card) => {
-                const link = card.querySelector('a.post-title-link');
-                return link && new URL(link.href).searchParams.get('no') === expectedPostNo;
-            });
-            const recent = document.querySelector('.custom-post-item.dcuf-recent-post a.post-title-link');
-            return {
-                navigationType: performance.getEntriesByType('navigation')[0]?.type || '',
-                scrollY: window.scrollY,
-                targetOffset: target?.getBoundingClientRect().top ?? null,
-                recentPostNo: recent ? new URL(recent.href).searchParams.get('no') : null
-            };
-        }, reloadBefore.postNo);
-        assert.equal(reloadAfter.navigationType, 'reload');
-        assert.equal(Math.abs(reloadAfter.scrollY - reloadBefore.scrollY) <= 3, true, JSON.stringify({ reloadBefore, reloadAfter }));
-        assert.equal(Math.abs(reloadAfter.targetOffset) <= 3, true, JSON.stringify(reloadAfter));
-        assert.equal(reloadAfter.recentPostNo, postNo, 'reload may keep the recent marker without jumping back to it');
-        assert.equal(persistedContract.calls, 0, 'bfcache persisted 복귀에서는 중복 scrollTo를 호출하지 않아야 한다');
     } finally { await session.close(); }
 });
 
@@ -4166,7 +4120,7 @@ mobileTest('빠른 글쓰기는 설정·플로팅 메뉴·런타임에서 제거
             settingsText: document.querySelector('#dcuf-mobile-convenience-settings')?.textContent || '',
             persisted: window.__dcufTestbedGM.snapshot().values.dcuf_mobile_convenience_settings_v1
         }));
-        assert.deepEqual(state.settings, { listRestore: true, recentHighlight: true, draftRecovery: true, postPreview: false });
+        assert.deepEqual(state.settings, { recentHighlight: true, draftRecovery: true, postPreview: false });
         assert.equal(state.quickModuleType, 'undefined');
         assert.equal(state.quickActionCount, 0);
         assert.equal(state.settingsText.includes('빠른 글쓰기'), false);
@@ -7151,6 +7105,16 @@ mobileTest('single-tone UI palette keeps mobile write actions readable', 'write'
         assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
     } finally { await session.close(); }
 });
+
+const userscriptUnderTest = await resolveBuiltUserscript();
+const userscriptBytes = await readFile(userscriptUnderTest);
+const userscriptSha256 = createHash('sha256').update(userscriptBytes).digest('hex').toUpperCase();
+if (args.has('--require-runtime-under-test')
+    && !/[\\/]testbed[\\/]artifacts[\\/]runtime-under-test\.user\.js$/i.test(userscriptUnderTest)) {
+    throw new Error(`Runtime guard rejected non-source artifact: ${userscriptUnderTest}`);
+}
+console.log(`Runtime under test: ${path.resolve(userscriptUnderTest)}`);
+console.log(`Runtime SHA-256: ${userscriptSha256}`);
 
 const server = await startServer();
 const browser = await launchBrowser({ headed });

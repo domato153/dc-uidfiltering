@@ -17,10 +17,6 @@ const BOARD_MATCHES = [
     'https://gall.dcinside.com/mgallery/board/*',
     'https://gall.dcinside.com/mini/board/*'
 ];
-const MOBILE_MATCHES = [
-    ...BOARD_MATCHES,
-    'https://sign.dcinside.com/login*'
-];
 
 function check(condition, message) {
     if (!condition) failures.push(message);
@@ -124,12 +120,11 @@ function parseBuildVersion(buildText, buildPath) {
 }
 
 async function verifyMobileSourceContracts() {
-    const [bootstrap, postMain, coordinator, theme, loginSurface, convenience, mobileHeader, pcHeader] = await Promise.all([
+    const [bootstrap, postMain, coordinator, theme, convenience, mobileHeader, pcHeader] = await Promise.all([
         readFile(path.join(rootDir, 'src', 'runtime', 'bootstrap.js'), 'utf8'),
         readFile(path.join(rootDir, 'src', 'targets', 'mobile', 'post-main-fixes.js'), 'utf8'),
         readFile(path.join(rootDir, 'src', 'targets', 'mobile', 'runtime-coordinator.js'), 'utf8'),
         readFile(path.join(rootDir, 'src', 'targets', 'mobile', 'theme-module.js'), 'utf8'),
-        readFile(path.join(rootDir, 'src', 'targets', 'mobile', 'login-surface.js'), 'utf8'),
         readFile(path.join(rootDir, 'src', 'targets', 'mobile', 'convenience-module.js'), 'utf8'),
         readFile(path.join(rootDir, 'src', 'meta', 'userscript-header.txt'), 'utf8'),
         readFile(path.join(rootDir, 'src', 'meta', 'pc-filter-userscript-header.txt'), 'utf8')
@@ -144,23 +139,11 @@ async function verifyMobileSourceContracts() {
     check(coordinator.includes("window.addEventListener('pageshow'") && coordinator.includes('recoverFromBfcache(event)'),
         'mobile source: explicit persisted pageshow recovery is missing');
 
-    for (const [label, header, expectedMatches] of [['mobile', mobileHeader, MOBILE_MATCHES], ['pc', pcHeader, BOARD_MATCHES]]) {
+    for (const [label, header] of [['mobile', mobileHeader], ['pc', pcHeader]]) {
         const matches = Array.from(header.matchAll(/^\/\/ @match\s+([^\r\n]+)$/gm), (match) => match[1].trim());
-        check(JSON.stringify(matches) === JSON.stringify(expectedMatches),
-            `${label} metadata: @match scope is [${matches.join(', ')}]; expected [${expectedMatches.join(', ')}]`);
+        check(JSON.stringify(matches) === JSON.stringify(BOARD_MATCHES),
+            `${label} metadata: @match scope is [${matches.join(', ')}]; expected board routes only`);
         check(!header.includes('https://gall.dcinside.com/*'), `${label} metadata: broad origin @match returned`);
-    }
-    check(loginSurface.includes("window.location.hostname === 'sign.dcinside.com'"),
-        'mobile source: login style must be restricted to sign.dcinside.com');
-    check(loginSurface.includes("window.location.pathname === '/login'"),
-        'mobile source: login style must be restricted to the exact login path');
-    check(loginSurface.includes("const PALETTE_STORAGE_KEY = 'dcuf_mobile_ui_palette';")
-        && loginSurface.includes('GM_getValue(PALETTE_STORAGE_KEY, DEFAULT_PALETTE_ID)'),
-    'mobile source: isolated login style must read only the mobile palette preference');
-    check((loginSurface.match(/GM_getValue\s*\(/g) || []).length === 1,
-        'mobile source: isolated login style must perform exactly one GM read');
-    for (const forbidden of ['GM_setValue', 'GM_registerMenuCommand', 'MutationObserver', '.value']) {
-        check(!loginSurface.includes(forbidden), `mobile source: login style reads state or installs runtime behavior: ${forbidden}`);
     }
 
     const listGuardIndex = postMain.indexOf("if (!__dcufPageSupports('list-surface')) return;");
@@ -252,7 +235,7 @@ async function verifyRelease() {
         {
             name: 'mobile',
             buildFile: 'tools/build-userscript.mjs',
-            expectedMatches: MOBILE_MATCHES,
+            expectedMatches: BOARD_MATCHES,
             outputName: (version) => `Dc_UserFilter_Mobile_v${version}.user.js`
         },
         {

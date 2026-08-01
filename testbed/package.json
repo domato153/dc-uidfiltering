@@ -6,6 +6,7 @@
     "test": "node run-tests.mjs",
     "test:smoke": "node run-tests.mjs --group smoke",
     "test:functional": "node run-tests.mjs --group functional",
+    "test:host": "node run-host-compatibility.mjs",
     "test:write": "node run-tests.mjs --group write",
     "test:performance": "node run-tests.mjs --group performance",
     "test:bfcache": "node run-bfcache.mjs",

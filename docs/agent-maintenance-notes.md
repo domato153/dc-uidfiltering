@@ -1,80 +1,46 @@
 # Agent Maintenance Notes
 
-This is the active, compact maintenance index. It records reusable causes and contracts, not commands or a chronological diary. Closed detail is preserved in [`archive/agent-maintenance-notes-history-2026-07.md`](archive/agent-maintenance-notes-history-2026-07.md).
+This is the active, compact maintenance index. It records reusable causes and contracts, not commands or a chronological diary. Closed history is preserved in [`archive/agent-maintenance-notes-history-2026-07.md`](archive/agent-maintenance-notes-history-2026-07.md).
 
-## Size and update policy
+## Scope and evidence
 
-- Update an existing topic before adding another section. Merge follow-ups into their owning contract and remove superseded wording.
-- Keep only unresolved decisions, fragile live signatures, discarded fixes likely to recur, and the regression gate that protects them.
-- Omit routine successes, transient measurements, screenshots already represented by executable assertions, and sensitive data.
-- When this active file approaches roughly 150 lines, move closed historical sections to a dated archive and retain a one-line link here.
+- Stable `3.5.3` behavior is the product baseline for the `3.5.4-beta` correction cycle. Do not revive the discarded broad UI-renewal runtime by copying later style or adapter modules wholesale.
+- Maintain the compact live-root map in [`ui-surface-contracts.md`](ui-surface-contracts.md). Before a UI correction, trace every matching injected phase and selector specificity, then assign one final visual owner to the affected surface.
+- Add a failing positive contract before the fix. Geometry and hit-testing assertions require rendered positive-area controls; a zero-area or merely present node is not a pass.
+- Source-work Testbed runs inject `testbed/artifacts/runtime-under-test.user.js`, require the source-runtime guard, and print the absolute path and SHA-256. Screenshots remain evidence, not approval.
+- A fixture must preserve the host's form, hidden inputs, original buttons, delegated handlers, route variant, popup close/reopen behavior, and relevant CSS conflict. A visual stand-in cannot prove host compatibility.
 
-## 2026-07-29 — Reference-driven UI correction workflow
+## Filter, storage, and convenience contracts
 
-- The three approved list/article/write images define appearance. `3.5.3` is only a behavior reference for popup, event, preview, and form lifecycle.
-- Maintain the compact live-root map in `ui-surface-contracts.md`; a full DOM database becomes stale and cannot explain cascade ownership.
-- Before editing, compare the live root tag/parent chain with the fixture, trace every matching injected phase and specificity, and assign one final visual owner per surface.
-- Add a failing positive contract before the fix: rendered width/height, writer containment, title-mark adjacency, blank-space click ownership, popup `elementFromPoint`, or material role. Zero-area success is invalid.
-- Hidden originals and mirrors coexist. Tests must choose a rendered positive-area instance without weakening the positive geometry contract.
-- Wait for the owning runtime class/subscriber before synthetic interaction. Measure the actual state transition; throttled `requestAnimationFrame` can misreport a layer already positioned.
-- For lifecycle closure, wait until timers and frames return to the pre-test baseline. Do not hide a real leak with a fixed sleep or call a bounded cleanup timer a leak.
-- Source-work Testbed runs must inject `testbed/artifacts/runtime-under-test.user.js` with the runtime guard and report its absolute path/SHA. Screenshot capture is evidence, never visual approval.
-- A fixture must reproduce exact interactive signatures, not visual stand-ins. The recent rail needs `#visit_history > .newvisit_history.vst` and the real sprite child; author/headtext/drawer tests must click the real-shaped trigger and observe the popup created by that interaction.
+- The filter master switch controls filtering only. Mobile convenience features read their own settings and continue operating when filtering is disabled.
+- Keep the filter label explicit: “모든 필터 기능 끄기”. Convenience copy must not imply that the filter switch owns convenience execution.
+- List scroll restoration is retired. Ignore a stale `listRestore` property when merging the existing `dcuf_mobile_convenience_settings_v1` object; do not migrate, rewrite, or reset the stored object merely to remove it.
+- Recent-post highlighting stores only the list/post identity and timestamp. It must not store or apply offsets or call `scrollTo` as a return-navigation side effect.
+- Preserve all existing GM keys and shapes. The retirement above is a read-compatible omission, not a storage schema change.
 
-## Selective glass and palette hierarchy
+## Native form and popup ownership
 
-- Use real blur only on global chrome and DCUF-owned overlays. Lists, comments, article paper, and editor paper use one outer shell with flat readable inner surfaces.
-- Palette changes subtly tint major glass shells. Active controls may be stronger, but repeated rows must not become blurred, rounded, elevated cards.
-- Preserve all 14 palette IDs and the stored palette value contract. ON/OFF and selected states remain distinguishable by geometry/luminance as well as hue.
-- Keep one final style owner per surface; an appended later style tag can still lose to an earlier higher-specificity `!important` selector.
+- DCInside-owned forms and popups keep their original node, method, action, hidden fields, button types, handlers, and DOM order. Never clone or replace an interactive host control to make styling easier.
+- Nonmember modify/delete password cards must neutralize the host's absolute `.btn_svc` positioning on the exact direct buttons before using a two-column action grid. Cancel remains left and confirm remains right; the whole visible control must win `elementFromPoint`.
+- Authenticated delete confirmation is recognized only by `form#delete[name="delete"]` plus `.empty_pagewrap .pop_wrap.type5 .pop_content.robot > .btn_box`. Style that owned card in normal flow without broad `.pop_wrap` rules.
+- Popup tests must close and reopen the same native node and prove the delegated handler and submit count remain singular.
 
-## Native popup ownership and stacking
+## Recommendation and palette contracts
 
-- DCInside-owned author, autocomplete, list-size, relation/rank, editor, DCCon, share/scrap/report/Pum, and alert popups keep their original node, handlers, contents, dimensions, scrolling, and internal style.
-- A maximum child z-index is not proof. `backdrop-filter`, transform, opacity/isolation, or a positioned ancestor with z-index can trap fixed descendants. Inspect the complete ancestor stack and hit-test visible controls.
-- `.note-toolbar { z-index:3 }` trapped fixed editor dropdowns behind `.page_head`; remove the ancestor stack rather than redesigning or cloning the menu.
-- `#hot_rank_pop2` must portal the original node to `body` because its host ancestor is hidden. Never clone it.
-- Delayed editor menus use only a bounded interaction-owned retry window and the existing mutation infrastructure; do not add another page-wide observer.
-- Native popup coverage must include dynamically inserted post-click state. The drawer can create `#pop_manage_report_list` inside its presentation clone even when the initial clone contains no `.pop_wrap`.
-- Calling `.click()` on a hidden/original writer is not equivalent to the host's delegated pointer target. Match the live `data-nick` signature and assert that the native menu is actually created.
+- The live article root is `#container > article > div.view_content_wrap` on major, minor, and mini routes.
+- Only `div.btn_recommend_box.recomuse_y.morebox` owns the centered width correction. It is capped at 680px, contained at narrow widths, and leaves overflow visible for host popups and CAPTCHA content. Do not use `100vw` or move/replace the box.
+- Recommendation tests cover normal and CAPTCHA states, wide and narrow viewports, containment, and native click counts on all three routes.
+- Preserve all 14 palette IDs and labels: blue/기본 블루, purple/퍼플, green/그린, orange/오렌지, mono/모노톤, indigo/인디고, sky/스카이, cyan/시안, teal/틸, lime/라임, amber/앰버, red/레드, rose/로즈, pink/핑크. README and homepage counts must match the runtime registry.
 
-## Live geometry contracts
+## PUMX lifecycle contract
 
-- The header recent rail lives at `#visit_history.visit_bookmark > .newvisit_history.vst`; its `.btn_open > .sp_img.icon_listmore` must have a positive, fully visible hit area. A glyph-only fixture misses sprite clipping.
-- List writers are predominantly `.author > .gall_writer[data-nick]`; do not assume `user_name`. Wide list rows are flat rails; the title link owns text only, and `(펌)`/other title decorations remain adjacent.
-- Live list headtexts are `.list_array_option .center_box .inner > ul + .btn_subject_more + #subject_morelist`. The native headtext/30/50/100 layers and gallery drawer must win `elementFromPoint`.
-- The live article root is `#container > article > div.view_content_wrap`. It is one rounded outer shell with flat header/body; reading ancestors have no blur.
-- Image-comment shells follow the readable comment rail, never the source image width. Remove obsolete inline constraints through the existing rerun path.
-- The live write form keeps headtexts → title → editor → AI rail → options → actions. It may expand to 1400px; preserve official nodes, fields, handlers, submit/cancel, toolbar overflow, and desktop-site scaling.
-- Delete/password cards must neutralize host absolute button positioning before using grid. Authenticated delete stays in normal flow after the page head.
+- Default PUMX activation is write-route-only and uses exactly one mutation source: the runtime coordinator when present, otherwise one fallback observer.
+- Wait until the native inline handler's referenced global function exists. Treat `.on` or `aria-pressed="true"` as already active and never click it again.
+- Click a given button at most once, verify the native active state, and stop immediately on success. Release timer, observer/subscription, and exposed retry state on success, the two-second deadline, or `pagehide`.
+- Repeated blind `.click()` calls are discarded: they can toggle an already active control off or invoke the host handler more than once.
 
-## Storage, login, and convenience
+## Remote authority and release boundaries
 
-- Preserve GM keys and shapes. List scroll restoration is retired by ignoring stale `listRestore` data without rewriting the stored object; recent-post highlighting remains independent.
-- `sign.dcinside.com/login` is an isolated CSS surface. It may read the existing palette ID once, performs no writes/menu/gallery startup, and never reads credential/form values.
-- Reapply the already-read login palette after `DOMContentLoaded` because the parser may replace an attribute set at document start.
-- Preserve official form methods/actions/hidden fields/button types and never cancel the first host submit to synthesize another.
-
-## Current validation anchor
-
-- Mobile source-test runtime SHA-256: `C5BA186D5E34FD168FEEA19827C4947216E4902DDE92E862B6CAD40E5B916C41`; full Testbed `106/106`.
-- PC `1.9.9` SHA-256: `DA631A656BB919696B5936F89DF88EAD432DD95445AD99F5007CED478F4DC926`; full Testbed `106/106`.
-- Read-only live smoke invalidated coverage for the recent sprite/wrapper, current author trigger, exact headtext trigger, dynamically created drawer-management popup, narrow list-size state, and short convenience viewport. Treat `106/106` as historical until those fixtures and contracts pass on the next final runtime.
-- No state-changing form or credential was used in live checks.
-
-### Remote-tracking refs are not server authority
-
-A restored or long-lived workspace may retain stale `origin/*` refs even when GitHub has a newer branch tip. `git rev-parse origin/<branch>` reads the local tracking ref, not the live server state.
-
-Before rejecting a requested SHA, verify the `origin` URL, query `refs/heads/<branch>` with `git ls-remote`, refresh the exact refspec when tracking is stale, then verify the commit object and required paths. Never downgrade the baseline or block solely because the local tracking ref or current checkout is old.
-
-### P0 list writer and Pumx correction contracts
-
-- A live list writer may be a table cell with direct and outer-table delegated handlers. Keep the original node in valid table ancestry; a valid nested table inside the mobile mirror and a sibling hidden identity cell preserve both event paths without putting a `td` under a `span` or fabricating a click target.
-- When the mobile mirror is hosted inside the original table, keep the outer table structurally present, hide only the original `thead`/row-group, and explicitly reveal the DCUF host `tbody`. Replacement tests must assert one original row-group plus one host row-group.
-- Major, minor, and mini list fixtures must exercise `/board/lists`, `/mgallery/board/lists`, and `/mini/board/lists` directly. A query-string variant on one route can produce false confidence about route-specific selectors and host signatures.
-- Pumx default activation uses exactly one mutation source (runtime coordinator or fallback observer), one deadline-bounded scheduler, and coalesced attempts. It must leave the marker absent before activation and release its timer/subscription immediately after success.
-
-### Current correction validation anchor
-
-- Mobile source-test runtime SHA-256: `156B3EF84DC84C305D8A887B3BB401E8385D78C7F0D8FF17EB6E10648D423A77`; P0-A `9/9`; full guarded Testbed `108/108`.
+- A local `origin/*` tracking ref is not server authority. Before a destructive branch update, query the exact remote ref, preserve the old tip on an archive branch, and use an explicit `--force-with-lease=<ref>:<expected-sha>`.
+- Root and `dist/` userscripts are generated from `src/` and build tooling. Validate their byte identity, but do not commit candidate artifacts unless a release workflow explicitly requires it.
+- The rebuilt `3.5.4-beta` candidate remains pending one user-run live-site approval. Local Testbed success is not a stable release, promotion, tag, or live approval.

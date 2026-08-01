@@ -4,6 +4,12 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { blankPage, listPage, viewPage } from '../fixtures/pages.mjs';
 import { deletePasswordPage, modifyPasswordPage, nativeWritePage, writePage } from '../fixtures/write-pages.mjs';
+import {
+    hostDeleteConfirmPage,
+    hostPasswordPage,
+    hostPumxPage,
+    hostRecommendationPage
+} from '../fixtures/host-compatibility.mjs';
 import { loadHarnessSource } from '../harness/userscript-loader.mjs';
 
 const testbedDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -105,10 +111,22 @@ export async function startServer({ port = 0 } = {}) {
                 return;
             }
             if (url.pathname.includes('/board/delete')) {
+                if (url.searchParams.get('host-compat') === 'delete-confirm') {
+                    send(response, 200, hostDeleteConfirmPage({ variant }), 'text/html; charset=utf-8', headers);
+                    return;
+                }
+                if (url.searchParams.get('host-compat') === 'password') {
+                    send(response, 200, hostPasswordPage({ kind: 'delete', variant }), 'text/html; charset=utf-8', headers);
+                    return;
+                }
                 send(response, 200, deletePasswordPage(), 'text/html; charset=utf-8', headers);
                 return;
             }
             if (url.pathname.includes('/board/modify')) {
+                if (url.searchParams.get('host-compat') === 'password') {
+                    send(response, 200, hostPasswordPage({ kind: 'modify', variant }), 'text/html; charset=utf-8', headers);
+                    return;
+                }
                 const page = url.searchParams.get('stage') === 'editor'
                     ? writePage({ variant, formMode: 'modify' })
                     : modifyPasswordPage();
@@ -116,6 +134,16 @@ export async function startServer({ port = 0 } = {}) {
                 return;
             }
             if (url.pathname.includes('/board/write')) {
+                if (url.searchParams.get('host-compat') === 'pumx') {
+                    send(response, 200, hostPumxPage({
+                        variant,
+                        buttonDelayMs: Number(url.searchParams.get('button-delay')) || 0,
+                        handlerDelayMs: Number(url.searchParams.get('handler-delay')) || 0,
+                        alreadyActive: url.searchParams.get('active') === '1',
+                        omitButton: url.searchParams.get('omit-button') === '1'
+                    }), 'text/html; charset=utf-8', headers);
+                    return;
+                }
                 send(response, 200, await withManualHarness(writePage({ variant, showGuide: url.searchParams.get('guide') === '1' }), url), 'text/html; charset=utf-8', headers);
                 return;
             }
@@ -124,6 +152,13 @@ export async function startServer({ port = 0 } = {}) {
                 return;
             }
             if (url.pathname.includes('/board/view')) {
+                if (url.searchParams.get('host-compat') === 'recommend') {
+                    send(response, 200, hostRecommendationPage({
+                        variant,
+                        captcha: url.searchParams.get('captcha') === '1'
+                    }), 'text/html; charset=utf-8', headers);
+                    return;
+                }
                 send(response, 200, await withManualHarness(viewPage({
                     variant,
                     long: url.searchParams.get('long') === '1',

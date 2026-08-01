@@ -27,6 +27,7 @@ From `testbed/`:
 pnpm install
 pnpm exec playwright install chromium
 pnpm test
+pnpm run test:host
 pnpm run test:write
 pnpm run test:performance
 pnpm run test:bfcache
@@ -55,8 +56,10 @@ To verify ordinary source edits without creating or replacing root/dist release 
 ```powershell
 node tools/build-userscript.mjs --testbed-output testbed/artifacts/runtime-under-test.user.js
 $env:DCUF_TESTBED_USERSCRIPT='testbed/artifacts/runtime-under-test.user.js'
-node testbed/run-tests.mjs
+node testbed/run-tests.mjs --require-runtime-under-test
 ```
+
+The guard rejects a root or `dist/` release artifact and prints the absolute injected path plus SHA-256. `node testbed/run-host-compatibility.mjs` builds the same guarded source runtime itself and exercises delayed native handlers, original form/button ownership, popup close/reopen behavior, authenticated deletion, and recommendation-box containment on major, minor, and mini routes.
 
 ## Test groups
 
@@ -65,6 +68,7 @@ node testbed/run-tests.mjs
 - `--group performance`: five 100-comment bursts plus 1,500 article nodes, pass-level timings, processed-target counts, heap trend samples, and JSON comparison metrics
 - `--group write`: live-backed major/minor desktop write forms, modify password/editor states, delete password state, current mobile transformation, guest/captcha/category contracts, editor rerender and HTML-mode value retention, duplicate-safe local submission, and native mobile reference layout
 - `run-bfcache.mjs`: production bfcache-eligible lifecycle and test-only pagehide/pageshow cleanup comparison
+- `run-host-compatibility.mjs`: live-shaped host conflicts for filter/convenience separation, retired list restoration, bounded PUMX activation, password/delete actions, authenticated delete confirmation, recommendation geometry/CAPTCHA, and the 14-palette documentation contract
 - `--filter <text>`: run tests whose Korean name contains the text
 
 Failures are not converted to expected passes. A current release can therefore expose pre-existing regressions; fix or explicitly investigate them before release rather than weakening assertions.
