@@ -2,6 +2,23 @@
 
 This file is the authoritative execution-state companion to `docs/work/ui-renewal-3.5.4.md`. It supersedes only that document's project-status and current-active-phase fields; all technical requirements, acceptance criteria, stop conditions, and exclusions in the parent brief remain unchanged.
 
+## One-time preflight governance amendment
+
+One-time preflight governance amendment authorized by the user on 2026-08-01.
+
+Purpose:
+Prevent stale local remote-tracking refs from being mistaken for authoritative server branch state.
+
+Allowed governance paths:
+- `AGENTS.md`
+- `docs/work/ui-renewal-3.5.4-p0a.md`
+- `docs/agent-maintenance-notes.md`
+- `tools/verify-repo.mjs`
+
+This governance checkpoint was inserted after the current in-progress P0 unit reached a clean implementation commit. It does not change completed P0 behavior, technical requirements, allowed runtime scope, or acceptance criteria.
+
+After this governance commit, the existing P0 implementation sequence continues from the current local HEAD.
+
 ## Project state
 
 `READY_FOR_IMPLEMENTATION`

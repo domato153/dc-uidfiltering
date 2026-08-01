@@ -99,6 +99,18 @@ async function verifyGuidance() {
     check(await exists(path.join(skillsDir, 'dcuf-release', 'references', 'manual-smoke.md')),
         'dcuf-release: references/manual-smoke.md is missing');
 
+    const authoritativeRemoteInvariants = [
+        ['authoritative_remote_ref', /git\s+ls-remote[\s\S]*refs\/heads/],
+        ['origin_url_check', /git\s+remote\s+get-url\s+origin/],
+        ['exact_refspec_recovery', /git\s+fetch[\s\S]*\+refs\/heads\/\$branch:refs\/remotes\/origin\/\$branch/],
+        ['stale_tracking_not_authority', /local tracking ref is not server authority[\s\S]*never downgrade a baseline[\s\S]*block solely on stale tracking refs/i],
+        ['commit_object_check', /git\s+cat-file\s+-e[\s\S]*\^\{commit\}/],
+        ['required_paths_check', /git\s+ls-tree[\s\S]*required paths/]
+    ];
+    authoritativeRemoteInvariants.forEach(([name, pattern]) => {
+        check(pattern.test(agentsText), `governance invariant ${name}: AGENTS.md is missing the required authoritative remote-ref contract`);
+    });
+
     console.log('Guidance metrics');
     console.log(` - AGENTS.md: ${agentsText.length}/${AGENTS_CHAR_LIMIT} characters`);
     console.log(` - active skills: ${actualSkills.length}/${expectedSkills.length}`);

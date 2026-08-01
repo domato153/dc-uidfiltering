@@ -61,3 +61,9 @@ This is the active, compact maintenance index. It records reusable causes and co
 - PC `1.9.9` SHA-256: `DA631A656BB919696B5936F89DF88EAD432DD95445AD99F5007CED478F4DC926`; full Testbed `106/106`.
 - Read-only live smoke invalidated coverage for the recent sprite/wrapper, current author trigger, exact headtext trigger, dynamically created drawer-management popup, narrow list-size state, and short convenience viewport. Treat `106/106` as historical until those fixtures and contracts pass on the next final runtime.
 - No state-changing form or credential was used in live checks.
+
+### Remote-tracking refs are not server authority
+
+A restored or long-lived workspace may retain stale `origin/*` refs even when GitHub has a newer branch tip. `git rev-parse origin/<branch>` reads the local tracking ref, not the live server state.
+
+Before rejecting a requested SHA, verify the `origin` URL, query `refs/heads/<branch>` with `git ls-remote`, refresh the exact refspec when tracking is stale, then verify the commit object and required paths. Never downgrade the baseline or block solely because the local tracking ref or current checkout is old.
