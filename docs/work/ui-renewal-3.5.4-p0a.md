@@ -21,18 +21,18 @@ After this governance commit, the existing P0 implementation sequence continues 
 
 ## Project state
 
-`READY_FOR_IMPLEMENTATION`
+`VALIDATION_REQUIRED`
 
 User approval received in Chat on 2026-08-01.
 
 ## Active phase
 
 - Phase: `P0-A — Establish truthful fixtures before production fixes`
-- Owner: `Chat/Work`
-- Start SHA: `34b85886630bc4df0d2ff3b7553444bdbec91d8b`
-- State: `IN_PROGRESS`
+- Owner: `Codex/Luna implementation completed`
+- Start SHA: `92ccd4b9e626d103939c431991c03748d929a429`
+- State: `REVIEW_READY`
 - Parallel work: prohibited
-- Independent reviewer: `Codex` after a fixed `REVIEW_READY` checkpoint
+- Independent reviewer: `ChatGPT`
 
 ## Scope
 
@@ -70,3 +70,29 @@ A checkpoint may be marked `REVIEW_READY` only after:
 - at least one production-contract assertion fails for the observed live reason;
 - no runtime or generated artifact was edited;
 - the result SHA and exact failing assertion are recorded here.
+
+## Final implementation handoff
+
+Project state: `VALIDATION_REQUIRED`
+Phase state: `REVIEW_READY`
+Owner: `Codex/Luna implementation completed`
+Independent reviewer: `ChatGPT`
+
+- Repository: `domato153/dc-uidfiltering`
+- Branch: `codex/ui-renewal-3.5.4-collab`
+- Implementation start SHA: `92ccd4b9e626d103939c431991c03748d929a429`
+- Implementation commit: `64cae20 Implement P0 runtime contracts`
+- Governance commit: `f37a970 Require authoritative remote ref verification`
+- Lifecycle fixture/test commit: `602ede2 Stabilize P0 lifecycle regression contracts`
+- Review handoff commit: this documentation commit; exact SHA is reported in the final response.
+- Guarded runtime path: `testbed/artifacts/runtime-under-test.user.js`
+- Guarded runtime SHA-256: `a27674d84035058558a7a27cd38a9a092c3a1fcc3a0089308a5d7df033b99460`
+- P0-A focused regressions: `9 passed, 0 failed`
+- P0-B through P0-E focused matrix: passed, including convenience independence, native writer/autocomplete containment, popup geometry, settings material, list lifecycle, and Pumx default activation.
+- Full guarded mobile suite: `107 passed, 0 failed`.
+- Guidance verification: passed; `AGENTS.md` is `5983/6000` characters, active skills `4/4`, total skill text `10320/10500`.
+- Original dirty checkout: preserved byte-for-byte in status; all implementation work occurred in the clean detached worktree.
+- P1: explicitly not started.
+- No version bump, release artifact publication, official branch update, PR, tag, force-push, or release promotion was performed.
+
+The final review target is the exact handoff commit on `codex/ui-renewal-3.5.4-collab`. A moved branch SHA invalidates this validation record; the authoritative live branch ref must be rechecked before any follow-up work.
