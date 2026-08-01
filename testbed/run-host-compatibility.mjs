@@ -216,7 +216,7 @@ try {
     }
 
     await run('authenticated delete keeps native form, hit area, lifecycle, and one submit handler', async () => {
-        const session = await createTestPage(browser, server.baseUrl, { storage: noStatsStorage, viewport: { width: 390, height: 844 } });
+        const session = await createTestPage(browser, server.baseUrl, { storage: noStatsStorage, viewport: { width: 982, height: 869 } });
         try {
             await session.goto('/mgallery/board/delete/?id=test&host-compat=delete-confirm');
             await session.page.evaluate(() => {
@@ -233,7 +233,20 @@ try {
                     pageHead: rectOf('.page_head'),
                     form: rectOf('form#delete'),
                     article: rectOf('form#delete > article'),
+                    shell: rectOf('form#delete > article > .empty_pagewrap'),
                     card: rectOf('.dcuf-delete-confirm-card')
+                };
+            });
+            const visualOwners = await session.page.evaluate(() => {
+                const outer = getComputedStyle(document.querySelector('.dcuf-delete-confirm-card'));
+                const content = getComputedStyle(document.querySelector('.dcuf-delete-confirm-content'));
+                return {
+                    outerBorder: outer.borderTopWidth,
+                    outerBackground: outer.backgroundColor,
+                    outerShadow: outer.boxShadow,
+                    outerZIndex: outer.zIndex,
+                    contentRadius: content.borderTopLeftRadius,
+                    contentShadow: content.boxShadow
                 };
             });
             const form = await session.page.locator('form#delete').evaluate((element) => ({
@@ -251,8 +264,21 @@ try {
                 bodyClass: form.bodyClass
             });
             assert.equal(form.bodyClass.includes('is-delete-confirm-page'), true);
-            assert.equal(geometry.form.height - geometry.card.height <= 96, true, JSON.stringify(geometry));
-            assert.equal(geometry.card.top - geometry.pageHead.bottom <= 96, true, JSON.stringify(geometry));
+            const formCenter = (geometry.form.top + geometry.form.bottom) / 2;
+            const cardCenter = (geometry.card.top + geometry.card.bottom) / 2;
+            assert.equal(Math.abs(formCenter - cardCenter) <= 2, true, JSON.stringify(geometry));
+            assert.equal(geometry.card.width, 520, JSON.stringify(geometry));
+            assert.equal(geometry.shell.top, geometry.card.top, JSON.stringify(geometry));
+            assert.deepEqual(visualOwners, {
+                outerBorder: '0px',
+                outerBackground: 'rgba(0, 0, 0, 0)',
+                outerShadow: 'none',
+                outerZIndex: 'auto',
+                contentRadius: visualOwners.contentRadius,
+                contentShadow: visualOwners.contentShadow
+            });
+            assert.notEqual(visualOwners.contentRadius, '0px');
+            assert.notEqual(visualOwners.contentShadow, 'none');
             assert.equal(contract.cancelRight < contract.confirmLeft, true, JSON.stringify(contract));
             assert.equal(contract.hitCount, 5, JSON.stringify(contract));
             await session.page.locator('[data-host-action="confirm"]').click();

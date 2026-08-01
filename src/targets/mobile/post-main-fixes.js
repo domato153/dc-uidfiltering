@@ -6141,7 +6141,8 @@
     if (document.getElementById(STYLE_ID)) return;
 
     const css = `
-        body.is-dcuf-password-page {
+        body.is-dcuf-password-page,
+        body.is-delete-confirm-page {
             box-sizing: border-box !important;
             min-width: 0 !important;
             margin: 0 !important;
@@ -6149,7 +6150,8 @@
             color: var(--dcuf-theme-fg, #27313f) !important;
             overflow-x: clip !important;
         }
-        body.is-dcuf-password-page #container {
+        body.is-dcuf-password-page #container,
+        body.is-delete-confirm-page #container {
             box-sizing: border-box !important;
             width: 100% !important;
             min-width: 0 !important;
@@ -6158,13 +6160,15 @@
             padding: 6px 12px 28px !important;
             background: transparent !important;
         }
-        body.is-dcuf-password-page #container > section {
+        body.is-dcuf-password-page #container > section,
+        body.is-delete-confirm-page #container > section {
             box-sizing: border-box !important;
             width: min(760px, 100%) !important;
             min-width: 0 !important;
             margin: 0 auto !important;
         }
-        body.is-dcuf-password-page #container > section > header.page_head {
+        body.is-dcuf-password-page #container > section > header.page_head,
+        body.is-delete-confirm-page #container > section > header.page_head {
             width: 100% !important;
             margin: 0 !important;
             padding: 12px 4px !important;
@@ -6272,21 +6276,38 @@
         }
         body.is-delete-confirm-page form.dcuf-delete-confirm-page {
             box-sizing: border-box !important;
-            display: block !important;
+            display: grid !important;
             width: 100% !important;
-            min-height: 0 !important;
+            min-height: min(520px, calc(100dvh - 250px)) !important;
             margin: 0 !important;
-            padding: 16px 0 24px !important;
+            padding: 24px 0 !important;
+            place-items: center !important;
         }
+        body.is-delete-confirm-page form.dcuf-delete-confirm-page > article,
+        body.is-delete-confirm-page form.dcuf-delete-confirm-page > article > .empty_pagewrap,
         body.is-delete-confirm-page form.dcuf-delete-confirm-page .dcuf-delete-confirm-card {
             box-sizing: border-box !important;
-            position: static !important;
-            inset: auto !important;
-            width: min(520px, 100%) !important;
+            width: 100% !important;
+            max-width: 520px !important;
             min-width: 0 !important;
             height: auto !important;
-            margin: 0 auto !important;
+            min-height: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            border: 0 !important;
+            background: transparent !important;
+        }
+        body.is-delete-confirm-page form.dcuf-delete-confirm-page > article > .empty_pagewrap {
+            position: static !important;
             transform: none !important;
+        }
+        body.is-delete-confirm-page form.dcuf-delete-confirm-page .dcuf-delete-confirm-card {
+            position: static !important;
+            inset: auto !important;
+            border-radius: 0 !important;
+            box-shadow: none !important;
+            transform: none !important;
+            z-index: auto !important;
         }
         body.is-delete-confirm-page form.dcuf-delete-confirm-page .dcuf-delete-confirm-content {
             box-sizing: border-box !important;
@@ -6299,6 +6320,15 @@
             background: linear-gradient(160deg, var(--dcuf-theme-card-top, #fff), var(--dcuf-theme-card-bottom, #fafbfc)) !important;
             box-shadow: var(--dcuf-theme-panel-shadow, 0 18px 42px rgba(31, 45, 68, .16)) !important;
             text-align: center !important;
+        }
+        body.is-delete-confirm-page form.dcuf-delete-confirm-page .dcuf-delete-confirm-content > .inner {
+            display: block !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            color: var(--dcuf-theme-fg, #27313f) !important;
+            font-size: 17px !important;
+            font-weight: 800 !important;
+            line-height: 1.45 !important;
         }
         body.is-delete-confirm-page form.dcuf-delete-confirm-page .dcuf-delete-confirm-content > .btn_box {
             box-sizing: border-box !important;
@@ -6320,10 +6350,17 @@
             min-height: 46px !important;
             margin: 0 !important;
             padding: 10px 12px !important;
+            border: 1px solid var(--dcuf-theme-border-strong, #cbd2db) !important;
             border-radius: 12px !important;
+            background: linear-gradient(180deg, var(--dcuf-theme-card-top, #fff), var(--dcuf-theme-surface-input, #f7f8fa)) !important;
+            color: var(--dcuf-theme-fg, #27313f) !important;
+            font-size: 15px !important;
+            font-weight: 800 !important;
+            line-height: 1.2 !important;
             cursor: pointer !important;
         }
-        body.is-dcuf-password-page form.dcuf-password-form .btn_box > :is(.btn_blue, .btn_ok) {
+        body.is-dcuf-password-page form.dcuf-password-form .btn_box > :is(.btn_blue, .btn_ok),
+        body.is-delete-confirm-page form.dcuf-delete-confirm-page .dcuf-delete-confirm-content > .btn_box > :is(.btn_blue, .btn_ok) {
             border-color: var(--dcuf-theme-accent-strong, #245bda) !important;
             background-color: var(--dcuf-theme-accent-strong, #245bda) !important;
             background-image: linear-gradient(180deg, var(--dcuf-theme-primary-top, #5d87f0), var(--dcuf-theme-accent-strong, #245bda)) !important;
@@ -6331,19 +6368,26 @@
             box-shadow: 0 8px 18px var(--dcuf-theme-accent-shadow, rgba(36, 91, 218, .25)) !important;
         }
         body.is-dcuf-password-page footer.dcfoot,
-        body.is-dcuf-password-page #data_info {
+        body.is-dcuf-password-page #data_info,
+        body.is-delete-confirm-page footer.dcfoot,
+        body.is-delete-confirm-page #data_info {
             display: none !important;
         }
         body.is-dcuf-password-page.dc-filter-dark-mode form.dcuf-password-form .no_memberwrap {
             box-shadow: 0 20px 46px rgba(0, 0, 0, .44) !important;
         }
         @media screen and (max-width: 480px) {
-            body.is-dcuf-password-page #container { padding: 4px 10px 20px !important; }
-            body.is-dcuf-password-page form.dcuf-password-form {
+            body.is-dcuf-password-page #container,
+            body.is-delete-confirm-page #container { padding: 4px 10px 20px !important; }
+            body.is-dcuf-password-page form.dcuf-password-form,
+            body.is-delete-confirm-page form.dcuf-delete-confirm-page {
                 min-height: calc(100dvh - 220px) !important;
                 padding: 16px 0 !important;
             }
             body.is-dcuf-password-page form.dcuf-password-form .no_member_cont .inner {
+                padding: 24px 18px 18px !important;
+            }
+            body.is-delete-confirm-page form.dcuf-delete-confirm-page .dcuf-delete-confirm-content {
                 padding: 24px 18px 18px !important;
             }
         }
