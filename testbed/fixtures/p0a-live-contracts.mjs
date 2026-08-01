@@ -39,7 +39,10 @@ const headtextControls = `<div class="center_box"><div class="inner">
 <ul id="subject_morelist"><li><a href="#sniper">🔫저격</a></li><li><a href="#act">®️ACT</a></li></ul>
 </div></div>`;
 
-const rows = Array.from({ length: 8 }, (_, index) => {
+const routeForVariant = Object.freeze({ major: '/board/lists', minor: '/mgallery/board/lists', mini: '/mini/board/lists' });
+const viewRouteForVariant = Object.freeze({ major: '/board/view', minor: '/mgallery/board/view', mini: '/mini/board/view' });
+
+const rowsForVariant = (variant = 'minor') => Array.from({ length: 8 }, (_, index) => {
     const no = 1001 + index;
     const uid = index === 0 ? 'direct-handler-writer' : `safe-list-${index + 1}`;
     const nick = index === 0 ? '직접핸들러작성자' : `목록작성자${index + 1}`;
@@ -49,26 +52,35 @@ const rows = Array.from({ length: 8 }, (_, index) => {
 <td class="gall_writer ub-writer" user_name="${nick}" data-uid="${uid}" data-nick="${nick}" data-ip=""><b>${nick}</b></td>
 <td class="gall_date">2026.08.01</td><td class="gall_count">${index * 3}</td><td class="gall_recommend">${index}</td></tr>`;
 }).join('');
+const rows = rowsForVariant('minor');
 
 const listScripts = `<script>
 (() => {
+  const route = { major: '/board/view', minor: '/mgallery/board/view', mini: '/mini/board/view' }[document.body.dataset.fixtureVariant] || '/mgallery/board/view';
+  document.body.dataset.fixtureRoute = route.replace('/view', '/lists');
+  document.querySelectorAll('a[href^="/mgallery/board/view"]').forEach((link) => { link.href = link.href.replace('/mgallery/board/view', route); });
   const originalWriter = document.querySelector('table.gall_list .gall_writer[data-uid="direct-handler-writer"]');
   originalWriter.dataset.fixtureDirectHandler = '1';
   window.__fixtureDirectWriter = originalWriter;
-  const openNativeWriterMenu = (event) => {
+  const openNativeWriterMenu = (event, anchor, listenerKind) => {
     event.preventDefault();
+    window.__fixtureWriterListenerKinds = [...(window.__fixtureWriterListenerKinds || []), listenerKind];
     document.querySelectorAll('.user_data[data-fixture-native-menu="1"]').forEach((node) => node.remove());
     const menu = document.createElement('div');
     menu.className = 'user_data';
     menu.dataset.fixtureNativeMenu = '1';
     menu.innerHTML = '<button type="button" class="native_writer_action">갤로그 보기</button>';
     document.body.appendChild(menu);
-    const rect = event.currentTarget.getBoundingClientRect();
+    const rect = anchor.getBoundingClientRect();
     menu.style.left = Math.max(0, rect.left) + 'px';
     menu.style.top = Math.max(0, rect.bottom + 4) + 'px';
     menu.style.display = 'block';
   };
-  originalWriter.addEventListener('click', openNativeWriterMenu);
+  originalWriter.addEventListener('click', (event) => openNativeWriterMenu(event, originalWriter, 'direct'));
+  originalWriter.closest('table')?.addEventListener('click', (event) => {
+    const writer = event.target instanceof Element ? event.target.closest('.gall_writer, .ub-writer') : null;
+    if (writer) openNativeWriterMenu(event, writer, 'table-delegated');
+  });
 
   const subjectButton = document.querySelector('.btn_subject_more');
   subjectButton.addEventListener('click', () => {

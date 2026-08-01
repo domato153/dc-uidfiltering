@@ -30,6 +30,9 @@
             BOTTOM_CONTROLS: 'custom-bottom-controls',
             SEARCH_SLOT: 'dcuf-search-drawer-slot',
             WRITER_IDENTITY: 'dcuf-writer-identity',
+            MOBILE_LIST_HOST: 'dcuf-mobile-list-host',
+            MOBILE_LIST_HOST_CELL: 'dcuf-mobile-list-host-cell',
+            WRITER_BRIDGE: 'dcuf-writer-bridge',
         },
 
         LIST_STATE_MAP: new WeakMap(),
@@ -336,9 +339,30 @@
             }, 100);
         },
 
-        moveWriterToMirror(originalRow, rowId, state, writerEl) {
+        ensureMobileListHost(originalTable, newListContainer) {
+            if (!(originalTable instanceof HTMLTableElement) || !(newListContainer instanceof HTMLElement)) return null;
+            const existingHost = newListContainer.closest(`.${this.CUSTOM_CLASSES.MOBILE_LIST_HOST}`);
+            if (existingHost instanceof HTMLTableSectionElement && existingHost.closest('table') === originalTable) return existingHost;
+
+            const host = document.createElement('tbody');
+            host.className = this.CUSTOM_CLASSES.MOBILE_LIST_HOST;
+            const row = document.createElement('tr');
+            const cell = document.createElement('td');
+            cell.className = this.CUSTOM_CLASSES.MOBILE_LIST_HOST_CELL;
+            const columnCount = originalTable.querySelector(':scope > thead > tr')?.children.length
+                || originalTable.querySelector(':scope > tbody > tr')?.children.length
+                || 1;
+            cell.colSpan = Math.max(1, columnCount);
+            cell.appendChild(newListContainer);
+            row.appendChild(cell);
+            host.appendChild(row);
+            originalTable.appendChild(host);
+            return host;
+        },
+
+        moveWriterToMirror(originalRow, rowId, state, writerEl, authorContainer) {
             if (!(originalRow instanceof HTMLElement) || !(state?.writerByRowId instanceof Map)) return null;
-            if (!(writerEl instanceof HTMLElement)) return null;
+            if (!(writerEl instanceof HTMLElement) || !(authorContainer instanceof HTMLElement)) return null;
             const existing = state.writerByRowId.get(rowId);
             if (existing?.node === writerEl && writerEl.parentElement?.closest(`.${this.CUSTOM_CLASSES.POST_ITEM}`)) return writerEl;
 
@@ -346,9 +370,12 @@
             if (!(parent instanceof Node)) return null;
             const nextSibling = writerEl.nextSibling;
             this.markWriterMutationBatch(state);
-            let identity = originalRow.querySelector(`:scope .${this.CUSTOM_CLASSES.WRITER_IDENTITY}`);
+            const writerIsCell = writerEl instanceof HTMLTableCellElement;
+            let identity = writerIsCell
+                ? originalRow.querySelector(`:scope > .${this.CUSTOM_CLASSES.WRITER_IDENTITY}`)
+                : parent.querySelector?.(`:scope > .${this.CUSTOM_CLASSES.WRITER_IDENTITY}`);
             if (!(identity instanceof HTMLElement)) {
-                identity = document.createElement('span');
+                identity = document.createElement(writerIsCell ? 'td' : 'span');
                 identity.className = this.CUSTOM_CLASSES.WRITER_IDENTITY;
                 identity.hidden = true;
                 identity.setAttribute('aria-hidden', 'true');
@@ -360,6 +387,19 @@
                 if (value === null) identity.removeAttribute(attribute);
                 else identity.setAttribute(attribute, value);
             });
+
+            if (writerEl instanceof HTMLTableCellElement) {
+                const table = document.createElement('table');
+                table.className = this.CUSTOM_CLASSES.WRITER_BRIDGE;
+                const tbody = document.createElement('tbody');
+                const row = document.createElement('tr');
+                row.appendChild(writerEl);
+                tbody.appendChild(row);
+                table.appendChild(tbody);
+                authorContainer.appendChild(table);
+            } else {
+                authorContainer.appendChild(writerEl);
+            }
 
             state.writerByRowId.set(rowId, { node: writerEl, parent, nextSibling, identity });
             state.writerOwnedMutationNodes?.add(writerEl);
@@ -478,8 +518,8 @@
 
             const postMeta = document.createElement('div');
             postMeta.className = 'post-meta';
-            const authorSpan = document.createElement('span');
-            authorSpan.className = 'author';
+            const authorContainer = document.createElement('div');
+            authorContainer.className = 'author';
 
             const countEl = originalRow.querySelector('.gall_count');
             const recommendEl = originalRow.querySelector('.gall_recommend');
@@ -488,18 +528,15 @@
             statsSpan.innerHTML = `조회 ${countEl?.textContent.trim() || '0'} | 추천 ${recommendEl?.textContent.trim() || '0'} | ${dateEl.textContent.trim()}`;
 
 
-            postMeta.appendChild(authorSpan);
+            postMeta.appendChild(authorContainer);
             postMeta.appendChild(statsSpan);
             newItem.appendChild(postMeta);
 
-            const visibleWriter = this.moveWriterToMirror(originalRow, rowId, state, writerEl);
+            const visibleWriter = this.moveWriterToMirror(originalRow, rowId, state, writerEl, authorContainer);
             if (!(visibleWriter instanceof HTMLElement)) {
                 newItem.remove();
                 return null;
             }
-            authorSpan.appendChild(visibleWriter);
-
-
             this.updateItemVisibility(originalRow, newItem);
             return newItem;
         },
@@ -1030,8 +1067,11 @@
                 }));
             return {
                 originalTableStyle: originalTable.getAttribute('style'),
+                originalTheadStyle: originalTable.querySelector(':scope > thead')?.getAttribute('style') ?? null,
+                originalTbodyStyle: originalTable.querySelector(':scope > tbody')?.getAttribute('style') ?? null,
                 transformedValue: listWrap.getAttribute(this.TRANSFORMED_ATTR),
                 existingCustomLists: new Set(listWrap.querySelectorAll(`.${this.CUSTOM_CLASSES.MOBILE_LIST}`)),
+                existingMobileListHosts: new Set(listWrap.querySelectorAll(`.${this.CUSTOM_CLASSES.MOBILE_LIST_HOST}`)),
                 existingBottomControls: new Set(scope.querySelectorAll(`.${this.CUSTOM_CLASSES.BOTTOM_CONTROLS}`)),
                 movedNodes
             };
@@ -1049,6 +1089,9 @@
             const listWrap = state.listWrap;
             const originalTable = state.originalTable;
             if (state.newListContainer instanceof HTMLElement && !transaction.existingCustomLists?.has(state.newListContainer)) state.newListContainer.remove();
+            if (state.mobileListHost instanceof HTMLElement && !transaction.existingMobileListHosts?.has(state.mobileListHost)) {
+                state.mobileListHost.remove();
+            }
             const scope = this.resolveBottomControlScope(listWrap) || listWrap;
             scope?.querySelectorAll?.(`.${this.CUSTOM_CLASSES.BOTTOM_CONTROLS}`).forEach((node) => {
                 if (!transaction.existingBottomControls?.has(node)) node.remove();
@@ -1065,6 +1108,16 @@
             if (originalTable instanceof HTMLElement) {
                 if (transaction.originalTableStyle === null) originalTable.removeAttribute('style');
                 else originalTable.setAttribute('style', transaction.originalTableStyle);
+                const thead = originalTable.querySelector(':scope > thead');
+                const tbody = originalTable.querySelector(':scope > tbody');
+                if (thead) {
+                    if (transaction.originalTheadStyle === null) thead.removeAttribute('style');
+                    else thead.setAttribute('style', transaction.originalTheadStyle);
+                }
+                if (tbody) {
+                    if (transaction.originalTbodyStyle === null) tbody.removeAttribute('style');
+                    else tbody.setAttribute('style', transaction.originalTbodyStyle);
+                }
             }
             if (listWrap instanceof HTMLElement) {
                 if (transaction.transformedValue === null) listWrap.removeAttribute(this.TRANSFORMED_ATTR);
@@ -1088,6 +1141,7 @@
                 originalTable,
                 originalTbody,
                 newListContainer,
+                mobileListHost: newListContainer.closest(`.${this.CUSTOM_CLASSES.MOBILE_LIST_HOST}`),
                 transaction,
                 committed: false,
                 itemByRowId: new Map(),
@@ -1224,8 +1278,8 @@
             state.originalTable = originalTable;
             state.originalTbody = originalTbody;
 
-            if (!state.newListContainer.isConnected && state.originalTable.parentNode) {
-                state.originalTable.parentNode.insertBefore(state.newListContainer, state.originalTable.nextSibling);
+            if (!state.newListContainer.isConnected) {
+                state.mobileListHost = this.ensureMobileListHost(state.originalTable, state.newListContainer);
             }
 
             const shouldRebuildAll = state.rebuildAll;
@@ -1282,7 +1336,9 @@
             state.rebuildAll = false;
             state.dirtyRows?.clear();
             state.listWrap.setAttribute(this.TRANSFORMED_ATTR, 'true');
-            state.originalTable.style.setProperty('display', 'none', 'important');
+            state.originalTable.style.setProperty('display', 'table', 'important');
+            state.originalTable.querySelector(':scope > thead')?.style.setProperty('display', 'none', 'important');
+            state.originalTbody.style.setProperty('display', 'none', 'important');
             state.committed = true;
             if (rebuiltRowCount > 0) this.recordDiagnostic('ui.listRows.rebuilt', rebuiltRowCount);
             this.getRuntimeCoordinator()?.setDiagnosticGauge?.('ui.listRows.lastRebuilt', rebuiltRowCount);
@@ -1415,8 +1471,9 @@
                 if (!(newListContainer instanceof HTMLElement)) {
                     newListContainer = document.createElement('div');
                     newListContainer.className = this.CUSTOM_CLASSES.MOBILE_LIST;
-                    originalTable.parentNode.insertBefore(newListContainer, originalTable.nextSibling);
                 }
+                const mobileListHost = this.ensureMobileListHost(originalTable, newListContainer);
+                if (!(mobileListHost instanceof HTMLTableSectionElement)) throw new Error('mobile list host creation failed');
 
                 this.bindTooltipEvents(newListContainer);
                 this.ensureBottomControls(listWrap);

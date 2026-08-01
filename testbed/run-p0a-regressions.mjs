@@ -47,13 +47,13 @@ const startFixtureServer = async (harnessSource) => {
         }
         let body = '<!doctype html><title>not found</title>';
         let status = 404;
-        if (url.pathname === '/mgallery/board/lists') {
+        if (['/board/lists', '/mgallery/board/lists', '/mini/board/lists'].includes(url.pathname)) {
             const variant = ['major', 'minor', 'mini'].includes(url.searchParams.get('variant'))
                 ? url.searchParams.get('variant')
-                : 'minor';
+                : url.pathname === '/board/lists' ? 'major' : url.pathname === '/mini/board/lists' ? 'mini' : 'minor';
             body = inject(p0aListPage({ variant }));
             status = 200;
-        } else if (url.pathname === '/mgallery/board/write') {
+        } else if (['/board/write', '/mgallery/board/write', '/mini/board/write'].includes(url.pathname)) {
             body = inject(p0aWritePage());
             status = 200;
         }
@@ -161,33 +161,74 @@ const main = async () => {
         const visibleWriter = page.locator('.custom-mobile-list .custom-post-item .author .gall_writer[data-uid="direct-handler-writer"]');
         await visibleWriter.waitFor({ state: 'visible' });
         const visibleWriterIsOriginal = await visibleWriter.evaluate((node) => node === window.__fixtureDirectWriter);
+        const tableContract = await page.evaluate(() => {
+            const writer = document.querySelector('.custom-mobile-list .custom-post-item .author .gall_writer[data-uid="direct-handler-writer"]');
+            const bridge = writer?.closest('table.dcuf-writer-bridge');
+            const outerTable = writer?.closest('table.gall_list');
+            const hostCell = document.querySelector('table.gall_list > tbody.dcuf-mobile-list-host > tr > td.dcuf-mobile-list-host-cell');
+            return {
+                bridgeCellParentValid: Boolean(writer && bridge?.querySelector(':scope > tbody > tr > td') === writer),
+                originalWriterHasOuterTablePath: Boolean(writer && outerTable),
+                hostCellValid: Boolean(hostCell?.querySelector(':scope > .custom-mobile-list')),
+                directRowSpanIdentityCount: document.querySelectorAll('table.gall_list > tbody.listwrap2 > tr > span.dcuf-writer-identity').length,
+                directRowCellIdentityCount: document.querySelectorAll('table.gall_list > tbody.listwrap2 > tr > td.dcuf-writer-identity').length
+            };
+        });
+        assert.equal(tableContract.bridgeCellParentValid, true, JSON.stringify(tableContract));
+        assert.equal(tableContract.originalWriterHasOuterTablePath, true, JSON.stringify(tableContract));
+        assert.equal(tableContract.hostCellValid, true, JSON.stringify(tableContract));
+        assert.equal(tableContract.directRowSpanIdentityCount, 0, JSON.stringify(tableContract));
+        assert.equal(tableContract.directRowCellIdentityCount > 0, true, JSON.stringify(tableContract));
         assert.equal(await page.locator('.user_data[data-fixture-native-menu="1"]').count(), 0);
         await visibleWriter.click();
         const nativeMenuCount = await page.locator('.user_data[data-fixture-native-menu="1"] .native_writer_action').count();
-        if (!visibleWriterIsOriginal || nativeMenuCount !== 1) {
+        const listenerKinds = await page.evaluate(() => [...new Set(window.__fixtureWriterListenerKinds || [])]);
+        const hasBothWriterPaths = listenerKinds.includes('direct') && listenerKinds.includes('table-delegated');
+        if (!visibleWriterIsOriginal || nativeMenuCount !== 1 || !hasBothWriterPaths) {
             record(
                 'trusted visible-writer click creates original native menu',
                 'FAIL',
-                visibleWriterIsOriginal
-                    ? 'the original writer did not create the native menu'
-                    : 'current runtime displays a clone; the original node direct handler is not preserved'
+                !visibleWriterIsOriginal
+                    ? 'current runtime displays a clone; the original node direct handler is not preserved'
+                    : !hasBothWriterPaths
+                        ? `writer event paths missing: ${listenerKinds.join(',')}`
+                        : 'the original writer did not create the native menu'
             );
         } else {
             await positiveRect(page.locator('.user_data[data-fixture-native-menu="1"] .native_writer_action'), 'native writer menu action');
             record('trusted visible-writer click creates original native menu', 'PASS');
         }
 
-        for (const variant of ['major', 'minor', 'mini']) {
-            await page.goto(`${server.baseUrl}/mgallery/board/lists?id=test&variant=${variant}`, { waitUntil: 'domcontentloaded' });
+        for (const { variant, route, viewRoute } of [
+            { variant: 'major', route: '/board/lists', viewRoute: '/board/view' },
+            { variant: 'minor', route: '/mgallery/board/lists', viewRoute: '/mgallery/board/view' },
+            { variant: 'mini', route: '/mini/board/lists', viewRoute: '/mini/board/view' }
+        ]) {
+            await page.goto(`${server.baseUrl}${route}?id=test`, { waitUntil: 'domcontentloaded' });
             await page.waitForFunction(() => document.documentElement.classList.contains('script-ui-ready'), null, { timeout: 12000 });
             await page.waitForTimeout(180);
             const variantWriter = page.locator('.custom-mobile-list .custom-post-item .author .gall_writer[data-uid="direct-handler-writer"]');
             await variantWriter.waitFor({ state: 'visible' });
+            const variantTableContract = await page.evaluate(() => {
+                const writer = document.querySelector('.custom-mobile-list .custom-post-item .author .gall_writer[data-uid="direct-handler-writer"]');
+                const bridge = writer?.closest('table.dcuf-writer-bridge');
+                return {
+                    bridgeCellParentValid: Boolean(writer && bridge?.querySelector(':scope > tbody > tr > td') === writer),
+                    outerTablePath: Boolean(writer?.closest('table.gall_list')),
+                    directRowSpanIdentityCount: document.querySelectorAll('table.gall_list > tbody.listwrap2 > tr > span.dcuf-writer-identity').length
+                };
+            });
+            assert.deepEqual(variantTableContract, { bridgeCellParentValid: true, outerTablePath: true, directRowSpanIdentityCount: 0 }, `${variant} writer table contract`);
+            const variantHref = await page.locator('.custom-mobile-list .custom-post-item .post-title-link').first().getAttribute('href');
+            assert.equal(new URL(variantHref, server.baseUrl).pathname, viewRoute, `${variant} view route`);
             assert.equal(await page.locator('.user_data[data-fixture-native-menu="1"]').count(), 0);
             assert.equal(await variantWriter.evaluate((node) => node === window.__fixtureDirectWriter), true, `${variant} writer must remain the original node`);
             await variantWriter.click();
             await page.locator('.user_data[data-fixture-native-menu="1"] .native_writer_action').waitFor({ state: 'visible' });
             await positiveRect(page.locator('.user_data[data-fixture-native-menu="1"] .native_writer_action'), `${variant} native writer menu action`);
+            const variantListenerKinds = await page.evaluate(() => [...new Set(window.__fixtureWriterListenerKinds || [])]);
+            assert.equal(variantListenerKinds.includes('direct') && variantListenerKinds.includes('table-delegated'), true, `${variant} writer listener paths: ${variantListenerKinds.join(',')}`);
+            assert.equal(await page.evaluate(() => document.body.dataset.fixtureRoute, route), route);
             record(`${variant} visible writer trusted click and native menu`, 'PASS');
         }
 

@@ -9,7 +9,10 @@
     const listMarkup = ({ uid = '', title = '교체된 목록 행', id = nextListNo++ } = {}) => {
         const minor = document.body?.dataset.fixtureVariant === 'minor';
         const viewPath = minor ? '/mgallery/board/view' : '/board/view';
-        return `<tr class="ub-content us-post" data-no="${id}" data-type="icon_txt"><td class="gall_num">${id}</td>${minor ? '<td class="gall_type">일반</td>' : ''}<td class="gall_tit"><span class="gall_subject">일반</span><a href="${viewPath}?id=test&no=${id}">${escapeHtml(title)}</a></td><td>${writer(uid || `safe-replaced-${id}`, '교체작성자')}</td><td class="gall_date">2026.07.12</td><td class="gall_count">1</td><td class="gall_recommend">0</td></tr>`;
+        const safeUid = escapeHtml(uid || `safe-replaced-${id}`);
+        const safeNick = escapeHtml('교체작성자');
+        const writerCell = `<td class="gall_writer ub-writer" data-uid="${safeUid}" data-nick="${safeNick}" data-ip=""><b>${safeNick}</b></td>`;
+        return `<tr class="ub-content us-post" data-no="${id}" data-type="icon_txt"><td class="gall_num">${id}</td>${minor ? '<td class="gall_type">일반</td>' : ''}<td class="gall_tit"><span class="gall_subject">일반</span><a href="${viewPath}?id=test&no=${id}">${escapeHtml(title)}</a></td>${writerCell}<td class="gall_date">2026.07.12</td><td class="gall_count">1</td><td class="gall_recommend">0</td></tr>`;
     };
     const getCommentList = () => document.querySelector('#comment_wrap_1 .comment_box > .cmt_list');
     const getListBody = () => document.querySelector('table.gall_list tbody');

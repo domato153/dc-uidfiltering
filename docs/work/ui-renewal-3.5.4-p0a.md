@@ -21,31 +21,45 @@ After this governance commit, the existing P0 implementation sequence continues 
 
 ## Project state
 
-`VALIDATION_REQUIRED`
+`CHANGES_REQUESTED`
 
 User approval received in Chat on 2026-08-01.
 
-## Active phase
+## Active phase (correction supersedes prior P0-A label)
 
 - Phase: `P0-A — Establish truthful fixtures before production fixes`
-- Owner: `Codex/Luna implementation completed`
-- Start SHA: `92ccd4b9e626d103939c431991c03748d929a429`
-- State: `REVIEW_READY`
+- Owner: `Codex correction in progress`
+- Start SHA: `53e8c861f7aa5e00a20b2dd1a1ff934dfa8bfe76`
+- State: `CHANGES_REQUESTED`
 - Parallel work: prohibited
 - Independent reviewer: `ChatGPT`
 
+- Correction phase: `P0-A through P0-E`
+
+## Active audit correction
+
+The independent audit returned `CHANGES_REQUESTED — FAIL`. P1 is excluded. This correction phase preserves the P0-A through P0-E implementation scope while fixing the writer DOM/event contract, real route coverage, and Pumx bounded retry lifecycle.
+
+Correction paths are limited to the brief, the compact UI contract, the shared Pumx runtime, the mobile list/filter owners, and the named P0 fixtures and regression suites.
+
 ## Scope
 
-Create live-shaped fixture evidence and a focused regression runner before production fixes. The runner must prove exact host signatures and must reproduce at least one current production failure rather than encode a fixture-only success.
+Correct the audited P0-A through P0-E implementation in the clean correction worktree. Preserve the original host DOM/event contracts, use the real major/minor/mini list routes, and prove the bounded Pumx late-listener lifecycle.
 
-## Allowed paths
+## Allowed paths (updated for correction)
 
 - `docs/work/ui-renewal-3.5.4-p0a.md`
 - `testbed/package.json`
 - `testbed/fixtures/p0a-live-contracts.mjs`
 - `testbed/run-p0a-regressions.mjs`
+- `testbed/public/fixture-client.js`
+- `testbed/run-tests.mjs`
+- `src/shared/write-defaults.js`
+- `src/targets/mobile/ui-module.js`
+- `src/targets/mobile/filter-module.js`
+- `docs/ui-surface-contracts.md`
 
-No `src/**`, generated userscript, version, release, existing shared fixture, or existing default-suite file may change in this phase.
+The legacy P0-A-only restriction against `src/**` and the default suite is superseded for this correction phase; generated userscripts, version, release, and P1 remain excluded.
 
 ## Required evidence
 
@@ -61,7 +75,7 @@ No `src/**`, generated userscript, version, release, existing shared fixture, or
 
 If the focused regression runner passes completely against the current audited runtime before any production fix, this fixture/assertion set is invalid and the phase must not be marked complete.
 
-## Checkpoint requirements
+## Superseded P0-A checkpoint requirements
 
 A checkpoint may be marked `REVIEW_READY` only after:
 
@@ -71,12 +85,22 @@ A checkpoint may be marked `REVIEW_READY` only after:
 - no runtime or generated artifact was edited;
 - the result SHA and exact failing assertion are recorded here.
 
-## Final implementation handoff
+## Correction exit requirements
 
-Project state: `VALIDATION_REQUIRED`
-Phase state: `REVIEW_READY`
-Owner: `Codex/Luna implementation completed`
+- P0-A route coverage passes on `/board/lists`, `/mgallery/board/lists`, and `/mini/board/lists`.
+- The original writer node remains in valid table ancestry and passes direct plus table-delegated trusted click paths.
+- Pumx passes the 700ms listener race, remains unmarked before success, and has no retry timer or mutation subscription after success.
+- Guarded source-runtime and full selected P0 validation are rerun from the final correction commit SHA.
+- Only after those checks pass may this document return to `REVIEW_READY`; P1 remains excluded.
+
+## Prior handoff superseded by independent audit
+
+Project state: `CHANGES_REQUESTED`
+Phase state: `CHANGES_REQUESTED`
+Owner: `Codex correction in progress`
 Independent reviewer: `ChatGPT`
+
+The prior `REVIEW_READY` handoff was not accepted. Its result SHA and runtime evidence remain historical only; a new exact correction SHA and validation record are required before the phase can return to `REVIEW_READY`.
 
 - Repository: `domato153/dc-uidfiltering`
 - Branch: `codex/ui-renewal-3.5.4-collab`

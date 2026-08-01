@@ -47,3 +47,6 @@ This is the compact visual map for the three approved reference compositions. It
 7. If runtime, fixture, or harness changes after a pass, invalidate and rerun the affected coverage; run the full suites once after the final broad revision.
 
 Keep durable signatures and contracts here, transient live measurements in `.codex/live-findings.md`, and only reusable causes or discarded fixes in maintenance notes.
+## P0 correction contract
+
+- The original live list writer node remains in valid table ancestry. A mobile mirror may use a valid nested table and an outer list-table host, but it must preserve the writer's direct listener and the host table's delegated event path; no direct `span` child or synthetic writer stand-in is valid.

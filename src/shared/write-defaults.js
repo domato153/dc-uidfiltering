@@ -9,8 +9,8 @@
 
     const MARKER = 'dcufPumxDefaultActivated';
     const RETRY_INTERVAL_MS = 250;
-    const MAX_RETRIES = 12;
-
+    const DEADLINE_MS = 2000;
+    const now = () => (typeof performance?.now === 'function' ? performance.now() : Date.now());
     const isPumxActive = (button) => button instanceof HTMLElement
         && (button.classList.contains('on') || button.getAttribute('aria-pressed') === 'true');
 
@@ -24,47 +24,82 @@
         if (root.__dcufPumxDefaultState === state) root.__dcufPumxDefaultState = null;
     };
 
+    const complete = (state, button) => {
+        if (!(button instanceof HTMLElement) || !isPumxActive(button)) return false;
+        button.dataset[MARKER] = '1';
+        root.__dcufPumxDefaultCompletedButton = button;
+        stopRetry(state);
+        return true;
+    };
+
+    const scheduleAttempt = (state, delay = RETRY_INTERVAL_MS) => {
+        if (state.stopped || state.timer) return;
+        const remaining = Math.max(0, state.deadlineAt - now());
+        if (remaining <= 0) {
+            stopRetry(state);
+            return;
+        }
+        state.timer = window.setTimeout(() => {
+            state.timer = 0;
+            attempt(state);
+        }, Math.min(delay, remaining));
+    };
+
+    const attempt = (state) => {
+        if (!state || state.stopped) return;
+        const currentTime = now();
+        if (currentTime >= state.deadlineAt) {
+            stopRetry(state);
+            return;
+        }
+        if (currentTime - state.lastAttemptAt < RETRY_INTERVAL_MS) {
+            scheduleAttempt(state, RETRY_INTERVAL_MS - (currentTime - state.lastAttemptAt));
+            return;
+        }
+
+        state.lastAttemptAt = currentTime;
+        const button = document.getElementById('btn_pumx');
+        state.button = button instanceof HTMLElement ? button : null;
+        if (complete(state, state.button)) return;
+        if (state.button) {
+            state.button.removeAttribute(`data-${MARKER.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`)}`);
+            state.button.click();
+            if (complete(state, state.button)) return;
+        }
+        scheduleAttempt(state);
+    };
+
     const observeActivation = () => {
         const previous = root.__dcufPumxDefaultState;
         if (previous) stopRetry(previous);
 
-        const state = { attempts: 0, timer: 0, observer: null, unsubscribe: null, button: null, stopped: false };
+        const state = {
+            startedAt: now(),
+            deadlineAt: now() + DEADLINE_MS,
+            lastAttemptAt: -Infinity,
+            timer: 0,
+            observer: null,
+            unsubscribe: null,
+            button: null,
+            stopped: false,
+            mutationQueued: false
+        };
         root.__dcufPumxDefaultState = state;
-        const attempt = () => {
-            if (state.stopped) return;
-            state.attempts += 1;
-            const button = document.getElementById('btn_pumx');
-            if (button instanceof HTMLElement) {
-                state.button = button;
-                if (isPumxActive(button)) {
-                    button.dataset[MARKER] = '1';
-                    root.__dcufPumxDefaultCompletedButton = button;
-                    stopRetry(state);
-                    return;
-                }
 
-                // A stale marker is never accepted without a live active state.
-                button.removeAttribute('data-dcuf-pumx-default-activated');
-                button.click();
-                if (isPumxActive(button)) {
-                    button.dataset[MARKER] = '1';
-                    stopRetry(state);
-                    return;
-                }
-            }
-
-            if (state.attempts >= MAX_RETRIES) {
-                stopRetry(state);
-                return;
-            }
-            state.timer = window.setTimeout(() => {
-                state.timer = 0;
-                attempt();
-            }, RETRY_INTERVAL_MS);
+        const notifyMutation = () => {
+            if (state.stopped || state.mutationQueued) return;
+            state.mutationQueued = true;
+            queueMicrotask(() => {
+                state.mutationQueued = false;
+                attempt(state);
+            });
         };
 
-        state.observer = new MutationObserver(() => attempt());
-        if (document.documentElement) {
+        const coordinator = root.__dcufRuntimeCoordinator;
+        if (coordinator && typeof coordinator.subscribeMutations === 'function') {
+            state.unsubscribe = coordinator.subscribeMutations('write-pumx-defaults', notifyMutation);
+        } else if (document.documentElement) {
+            state.observer = new MutationObserver(notifyMutation);
             state.observer.observe(document.documentElement, {
                 childList: true,
                 subtree: true,
@@ -73,11 +108,7 @@
             });
         }
 
-        const coordinator = root.__dcufRuntimeCoordinator;
-        if (coordinator && typeof coordinator.subscribeMutations === 'function') {
-            state.unsubscribe = coordinator.subscribeMutations('write-pumx-defaults', () => attempt());
-        }
-        attempt();
+        attempt(state);
         return state;
     };
 
@@ -87,7 +118,7 @@
         const pending = root.__dcufPumxDefaultState;
         if (pending && !pending.stopped && pending.button === button) return false;
         if (button instanceof HTMLElement && isPumxActive(button)) {
-            stopRetry(root.__dcufPumxDefaultState);
+            stopRetry(pending);
             button.dataset[MARKER] = '1';
             root.__dcufPumxDefaultCompletedButton = button;
             return true;

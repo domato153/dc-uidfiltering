@@ -240,6 +240,38 @@
             border-top: 1px solid #ddd;
             background: #fff;
         }
+        :is(.list_wrap, .gall_listwrap)[data-ui-transformed="true"] table.gall_list {
+            visibility: hidden !important;
+            position: static !important;
+            top: auto !important;
+            left: auto !important;
+            height: auto !important;
+            overflow: visible !important;
+        }
+        :is(.list_wrap, .gall_listwrap)[data-ui-transformed="true"] table.gall_list > tbody.dcuf-mobile-list-host {
+            display: table-row-group !important;
+            visibility: visible !important;
+        }
+        table.gall_list > tbody.dcuf-mobile-list-host > tr > td.dcuf-mobile-list-host-cell {
+            padding: 0 !important;
+            border: 0 !important;
+            background: transparent !important;
+        }
+        .custom-mobile-list .dcuf-writer-bridge {
+            display: inline-table !important;
+            width: auto !important;
+            border-collapse: collapse !important;
+            border-spacing: 0 !important;
+            vertical-align: middle !important;
+        }
+        .custom-mobile-list .dcuf-writer-bridge td.gall_writer,
+        .custom-mobile-list .dcuf-writer-bridge td.ub-writer {
+            display: table-cell !important;
+            width: auto !important;
+            padding: 0 !important;
+            border: 0 !important;
+            background: transparent !important;
+        }
 
         /* [이식된 기능] 광고 게시물 기본 숨김 처리 */
         .custom-post-item.is-ad-post {

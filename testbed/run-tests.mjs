@@ -213,8 +213,8 @@ mobileTest('boot: unrelated page churn does not extend comment quiet and the emb
         assert.equal(result.revealWaitStarts.length, 1, JSON.stringify(result.revealWaitStarts));
         assert.equal(result.revealWaitStarts[0].at <= barrier.at, true, JSON.stringify({ revealWaitStarts: result.revealWaitStarts, barrier }));
         assert.equal(result.reveal?.transformed, 'true', JSON.stringify(result.reveal));
-        assert.equal(result.reveal?.originalInlineDisplay, 'none', JSON.stringify(result.reveal));
-        assert.equal(result.reveal?.originalComputedDisplay, 'none', JSON.stringify(result.reveal));
+        assert.equal(result.reveal?.originalInlineDisplay, 'table', JSON.stringify(result.reveal));
+        assert.equal(result.reveal?.originalComputedDisplay, 'table', JSON.stringify(result.reveal));
         assert.equal(result.reveal?.originalRows > 0, true, JSON.stringify(result.reveal));
         assert.equal(result.reveal?.customItems, result.reveal?.originalRows, JSON.stringify(result.reveal));
         assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
@@ -300,8 +300,8 @@ mobileTest('boot: a delayed view-bottom list replacement is hidden before its fi
 
             const message = `${pathname}: ${JSON.stringify(result)}`;
             assert.equal(result.frames.length, 3, message);
-            assert.equal(result.frames.every((frame) => frame.display === 'none'), true, message);
-            assert.equal(result.frames.every((frame) => frame.inlineDisplay === 'none' && frame.priority === 'important'), true, message);
+            assert.equal(result.frames.every((frame) => frame.display === 'table'), true, message);
+            assert.equal(result.frames.every((frame) => frame.inlineDisplay === 'table' && frame.priority === 'important'), true, message);
             assert.equal(result.frames[0].transformed, 'true', message);
             assert.equal(result.frames[0].rows, 0, message);
             assert.equal(result.frames[0].customItems, 0, message);
@@ -785,7 +785,7 @@ test('smoke: 목록과 본문에서 실제 사용자 스크립트가 초기화�
         await list.goto('/board/lists?id=test');
         assert.equal(await list.page.locator('.custom-post-item').count(), isPcUserscript ? 0 : 51);
         const tableDisplay = await list.page.locator('table.gall_list').evaluate((element) => getComputedStyle(element).display);
-        assert.equal(tableDisplay, isPcUserscript ? 'table' : 'none');
+        assert.equal(tableDisplay, 'table');
         assert.equal(await list.page.locator('#dc-personal-block-fab').count(), 1);
         const metrics = await getMetrics(list.page);
         if (isPcUserscript) {
@@ -2656,7 +2656,9 @@ mobileTest('목록 전체 교체는 정확히 한 목록 상태로 재구축된�
         await session.page.waitForFunction(() => document.querySelectorAll('.custom-post-item').length === 53, null, { timeout: 7000 });
         await waitForSettled(session.page, 500);
         const after = await getMetrics(session.page);
-        assert.equal(await session.page.locator('table.gall_list tbody').count(), 1);
+        assert.equal(await session.page.locator('table.gall_list > tbody').count(), 2);
+        assert.equal(await session.page.locator('table.gall_list > tbody:not(.dcuf-mobile-list-host)').count(), 1);
+        assert.equal(await session.page.locator('table.gall_list > tbody.dcuf-mobile-list-host').count(), 1);
         assert.equal(await session.page.locator('table.gall_list tbody tr.ub-content').count(), 53);
         assert.equal(await session.page.locator('.custom-mobile-list').count(), 1);
         assert.equal(await session.page.locator('.custom-post-item').count(), 53);
@@ -5038,6 +5040,82 @@ test('write default: delayed state change is retried, marked only after success,
         assert.equal(absent, false);
         await session.page.waitForTimeout(3200);
         assert.equal(await session.page.evaluate(() => window.__dcufPumxDefaultState), null);
+        assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
+    } finally { await session.close(); }
+});
+
+test('write default: late listener survives unrelated churn and cleans its bounded retry source', 'write', async ({ browser, server }) => {
+    const session = await createTestPage(browser, server.baseUrl, { storage: noStatsStorage });
+    try {
+        await session.goto('/mgallery/board/write/?id=test');
+        const beforeListener = await session.page.evaluate(() => {
+            const current = document.querySelector('#btn_pumx');
+            if (!(current instanceof HTMLElement)) throw new Error('Pumx fixture control missing');
+            const replacement = current.cloneNode(true);
+            replacement.classList.remove('on');
+            replacement.removeAttribute('aria-pressed');
+            replacement.removeAttribute('data-dcuf-pumx-default-activated');
+            replacement.removeAttribute('onclick');
+            replacement.dataset.fixturePumxAttempts = '0';
+            current.replaceWith(replacement);
+
+            window.__dcufEnsurePumxDefault();
+            window.__fixturePumxRace = { listenerAttached: false, churnCount: 0 };
+            window.setTimeout(() => {
+                replacement.addEventListener('click', () => {
+                    const attempts = Number(replacement.dataset.fixturePumxAttempts || 0) + 1;
+                    replacement.dataset.fixturePumxAttempts = String(attempts);
+                    replacement.classList.add('on');
+                });
+                window.__fixturePumxRace.listenerAttached = true;
+            }, 700);
+            const churn = window.setInterval(() => {
+                const node = document.createElement('i');
+                node.className = 'fixture-pumx-unrelated-churn';
+                document.body.appendChild(node);
+                node.remove();
+                window.__fixturePumxRace.churnCount += 1;
+            }, 40);
+            window.setTimeout(() => window.clearInterval(churn), 1200);
+            return {
+                marker: replacement.dataset.dcufPumxDefaultActivated || '',
+            active: replacement.classList.contains('on'),
+            listenerAttached: window.__fixturePumxRace.listenerAttached,
+            attempts: replacement.dataset.fixturePumxAttempts
+        };
+        });
+        assert.deepEqual(beforeListener, { marker: '', active: false, listenerAttached: false, attempts: '0' });
+        await session.page.waitForTimeout(520);
+        assert.deepEqual(await session.page.evaluate(() => ({
+            marker: document.querySelector('#btn_pumx')?.dataset.dcufPumxDefaultActivated || '',
+            active: document.querySelector('#btn_pumx')?.classList.contains('on') || false,
+            listenerAttached: window.__fixturePumxRace?.listenerAttached || false,
+            attempts: document.querySelector('#btn_pumx')?.dataset.fixturePumxAttempts || '0'
+        })), { marker: '', active: false, listenerAttached: false, attempts: '0' });
+
+        await session.page.waitForFunction(() => {
+            const button = document.querySelector('#btn_pumx');
+            return button?.classList.contains('on') && button?.dataset.dcufPumxDefaultActivated === '1';
+        });
+        const completed = await session.page.evaluate(() => ({
+            marker: document.querySelector('#btn_pumx')?.dataset.dcufPumxDefaultActivated || '',
+            active: document.querySelector('#btn_pumx')?.classList.contains('on') || false,
+            listenerAttached: window.__fixturePumxRace?.listenerAttached || false,
+            churnCount: window.__fixturePumxRace?.churnCount || 0,
+            attempts: document.querySelector('#btn_pumx')?.dataset.fixturePumxAttempts || '0',
+            state: window.__dcufPumxDefaultState,
+            subscribed: Boolean(window.__dcufRuntimeCoordinator?._mutationSubscribers?.has('write-pumx-defaults'))
+        }));
+        assert.equal(completed.marker, '1');
+        assert.equal(completed.active, true);
+        assert.equal(completed.listenerAttached, true);
+        assert.equal(completed.attempts, '1', JSON.stringify(completed));
+        assert.equal(completed.churnCount > 10, true, JSON.stringify(completed));
+        assert.equal(completed.state, null);
+        assert.equal(completed.subscribed, false);
+        const attemptsAfterSuccess = await session.page.evaluate(() => document.querySelector('#btn_pumx')?.dataset.fixturePumxAttempts || '0');
+        await session.page.waitForTimeout(500);
+        assert.equal(await session.page.evaluate(() => document.querySelector('#btn_pumx')?.dataset.fixturePumxAttempts || '0'), attemptsAfterSuccess);
         assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
     } finally { await session.close(); }
 });

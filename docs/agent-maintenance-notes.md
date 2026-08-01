@@ -67,3 +67,14 @@ This is the active, compact maintenance index. It records reusable causes and co
 A restored or long-lived workspace may retain stale `origin/*` refs even when GitHub has a newer branch tip. `git rev-parse origin/<branch>` reads the local tracking ref, not the live server state.
 
 Before rejecting a requested SHA, verify the `origin` URL, query `refs/heads/<branch>` with `git ls-remote`, refresh the exact refspec when tracking is stale, then verify the commit object and required paths. Never downgrade the baseline or block solely because the local tracking ref or current checkout is old.
+
+### P0 list writer and Pumx correction contracts
+
+- A live list writer may be a table cell with direct and outer-table delegated handlers. Keep the original node in valid table ancestry; a valid nested table inside the mobile mirror and a sibling hidden identity cell preserve both event paths without putting a `td` under a `span` or fabricating a click target.
+- When the mobile mirror is hosted inside the original table, keep the outer table structurally present, hide only the original `thead`/row-group, and explicitly reveal the DCUF host `tbody`. Replacement tests must assert one original row-group plus one host row-group.
+- Major, minor, and mini list fixtures must exercise `/board/lists`, `/mgallery/board/lists`, and `/mini/board/lists` directly. A query-string variant on one route can produce false confidence about route-specific selectors and host signatures.
+- Pumx default activation uses exactly one mutation source (runtime coordinator or fallback observer), one deadline-bounded scheduler, and coalesced attempts. It must leave the marker absent before activation and release its timer/subscription immediately after success.
+
+### Current correction validation anchor
+
+- Mobile source-test runtime SHA-256: `156B3EF84DC84C305D8A887B3BB401E8385D78C7F0D8FF17EB6E10648D423A77`; P0-A `9/9`; full guarded Testbed `108/108`.
