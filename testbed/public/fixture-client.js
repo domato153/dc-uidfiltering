@@ -38,6 +38,34 @@
     };
     normalizeImageCommentFixture();
 
+    /*
+     * Live-shaped DCInside writer-menu contract: the site listens on document,
+     * ignores already-cancelled clicks, and anchors the popup to the writer that
+     * actually received the trusted user input.
+     */
+    document.addEventListener('click', (event) => {
+        if (document.body?.dataset.fixturePage !== 'list' || event.defaultPrevented) return;
+        const writerElement = event.target instanceof Element
+            ? event.target.closest('.gall_writer.ub-writer')
+            : null;
+        if (!(writerElement instanceof HTMLElement)) return;
+        document.getElementById('user_data_lyr')?.remove();
+        window.__fixtureAuthorMenuEvents = [
+            ...(window.__fixtureAuthorMenuEvents || []),
+            {
+                trusted: event.isTrusted,
+                mirrored: Boolean(writerElement.closest('.custom-post-item')),
+                uid: writerElement.dataset.uid || ''
+            }
+        ];
+        const popup = document.createElement('div');
+        popup.id = 'user_data_lyr';
+        popup.className = 'user_data fixture-live-author-menu';
+        popup.dataset.anchor = writerElement.closest('.custom-post-item') ? 'mirror' : 'original';
+        popup.innerHTML = '<button type="button" class="fixture-live-author-action">작성자 메뉴</button>';
+        writerElement.appendChild(popup);
+    });
+
     const api = {
         addComments(count = 1, options = {}) {
             const list = getCommentList();
@@ -157,6 +185,16 @@
             const replacement = frame.cloneNode(true);
             replacement.dataset.rerendered = String(Date.now());
             frame.replaceWith(replacement);
+            return true;
+        },
+        rerenderPumxControl() {
+            const button = document.querySelector('#btn_pumx');
+            if (!(button instanceof HTMLButtonElement)) return false;
+            const replacement = button.cloneNode(true);
+            replacement.classList.remove('on');
+            replacement.removeAttribute('aria-pressed');
+            delete replacement.dataset.dcufPumxDefaultActivated;
+            button.replaceWith(replacement);
             return true;
         },
         toggleWriteHtml(force) {

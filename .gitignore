@@ -1,5 +1,6 @@
 # Local archives and diagnostics
 /.codex/
+/.codex-remote-attachments/
 /.pnpm-store/
 /Legacy유저스크립트storage/
 /artifacts/

@@ -1,5 +1,11 @@
 const head = (title) => `<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${title}</title><link rel="stylesheet" href="/__testbed/fixture.css"></head>`;
 const scripts = '<script src="/__testbed/fixture-client.js"></script></body></html>';
+const writeHostChrome = `<header class="dcheader typea fixture-host-chrome"><div class="dchead">
+    <h1 class="dc_logo"><span>dcinside.com</span></h1>
+    <div class="wrap_search"><form><div class="top_search"><div class="inner_search"><input aria-label="통합검색"></div><button type="submit" class="sp_img bnt_search" aria-label="통합검색 실행"></button></div></form></div>
+    <div class="area_links"><a class="btn_top_loginout" href="#login">로그인</a></div>
+</div></header><div class="gnb_bar"><nav class="gnb"><ul class="gnb_list"><li><a href="#gallery">갤러리</a></li><li><a href="#minor">마이너갤</a></li><li><a href="#mini">미니갤</a></li><li><a href="#gallog">갤로그</a></li></ul></nav></div>
+<div id="visit_history" class="visit_bookmark"><div class="newvisit_history vst"><strong class="vst_title">최근 방문</strong><strong class="bookmark_title" hidden>즐겨찾기</strong><button class="btn_open" type="button" aria-label="최근 방문 레이어 열기"><em class="sp_img icon_listmore" style="background-image:linear-gradient(#3b4890,#3b4890)"></em></button><div class="newvisit_box"><ul class="newvisit_list"><li><a href="#recent">테스트 갤러리</a></li></ul></div></div></div>`;
 
 const hiddenContract = (variant) => `
     <input type="hidden" name="id" value="test">
@@ -95,15 +101,37 @@ const controls = `<aside id="dcuf-testbed-controls" aria-label="글쓰기 testbe
     <button type="button" data-action="dark">야간모드</button>
 </aside>`;
 
-export function writePage({ variant = 'major', formMode = 'write', showGuide = false } = {}) {
+export function writePage({
+    variant = 'major',
+    formMode = 'write',
+    showGuide = false,
+    liveShape = false,
+    authenticated = false
+} = {}) {
     const isMinor = variant === 'minor';
     const isModify = formMode === 'modify';
     const formAttributes = isModify
         ? 'name="modify" method="post" action="/board/forms/modify_submit" autocomplete="off"'
         : 'id="write" name="write" method="post" action="/__testbed/write-submit" autocomplete="off"';
     const captcha = isMinor ? `<td class="fixture-captcha-cell"><div class="captcha"><label for="code">코드 입력</label><span class="fixture-captcha-image" aria-label="캡차 이미지">3D8WA-0</span><button type="button" class="fixture-captcha-refresh" aria-label="공식 캡차 새로고침">새로고침</button><input id="code" name="code" type="text" inputmode="text" autocomplete="off"></div></td>` : '';
-    return `${head(`DCUF ${variant} ${formMode} fixture`)}<body data-fixture-page="${isModify ? 'modify' : 'write'}" data-fixture-variant="${variant}">${controls}<div id="top" class="dcwrap width1160">
-    <header class="fixture-gallery-header"><h1>${isMinor ? '마이너' : '메이저'} 갤러리</h1></header>
+    const legacyFields = `<table class="w_top"><tbody>
+                <tr class="write_subject_row"><th><label for="subject">제목</label></th><td><input id="subject" name="subject" type="text" maxlength="100" autocomplete="off"></td></tr>
+                <tr class="guest_info_row"><th>작성자</th><td><input id="name" name="name" type="text" placeholder="닉네임" autocomplete="off"></td><td><input id="password" name="password" type="password" placeholder="비밀번호" autocomplete="new-password"></td>${captcha}</tr>
+            </tbody></table>
+            ${isMinor ? categories : ''}`;
+    const liveGuestFields = authenticated ? '' : `
+                <div class="input_box fixture-live-name"><input id="name" name="name" type="text" placeholder="닉네임" autocomplete="off"></div>
+                <div class="input_box fixture-live-password"><input id="password" name="password" type="password" placeholder="비밀번호" autocomplete="new-password"></div>
+                <div class="kap_codeimg fixture-live-captcha-image" id="kcaptcha"><span class="fixture-captcha-image" aria-label="캡차 이미지">3D8WA-0</span></div>
+                <div class="input_box fixture-live-captcha-input"><input id="code" name="code" type="text" placeholder="코드 입력" autocomplete="off"></div>`;
+    const liveFields = `<fieldset>
+                <legend>글쓰기 입력</legend>
+                ${liveGuestFields}
+                ${isMinor ? categories : ''}
+                <div class="input_box fixture-live-title"><input id="subject" name="subject" type="text" maxlength="100" placeholder="제목을 입력해주세요" autocomplete="off"></div>
+            </fieldset>`;
+    return `${head(`DCUF ${variant} ${formMode} fixture`)}<body data-fixture-page="${isModify ? 'modify' : 'write'}" data-fixture-variant="${variant}">${writeHostChrome}${controls}<div id="top" class="dcwrap width1160">
+    <header class="page_head fixture-gallery-header"><div class="fl"><h2><a href="#gallery">${isMinor ? '마이너' : '메이저'} 갤러리</a></h2></div></header>
     <main id="container" class="clear ${isMinor ? 'minor_write' : 'gallery_write'}"><section class="center_content gall_write"><article id="write_wrap" class="clear">
         <form ${formAttributes}>
             ${hiddenContract(variant)}
@@ -111,13 +139,9 @@ export function writePage({ variant = 'major', formMode = 'write', showGuide = f
             <input class="fixture-decoy-input" type="text" style="width:0;height:0;border:0" value="fixture-redacted">
             <input class="fixture-decoy-input" type="password" style="display:block;width:0;height:0;border:0" value="fixture-redacted">
             <input id="prompt_img_file" type="file" accept="image/*" hidden>
-            <table class="w_top"><tbody>
-                <tr class="write_subject_row"><th><label for="subject">제목</label></th><td><input id="subject" name="subject" type="text" maxlength="100" autocomplete="off"></td></tr>
-                <tr class="guest_info_row"><th>작성자</th><td><input id="name" name="name" type="text" placeholder="닉네임" autocomplete="off"></td><td><input id="password" name="password" type="password" placeholder="비밀번호" autocomplete="new-password"></td>${captcha}</tr>
-            </tbody></table>
-            ${isMinor ? categories : ''}
+            ${liveShape ? liveFields : legacyFields}
             <section class="editor_wrap">${editor(showGuide)}</section>
-            <section class="fixture-attachment-panel"><input id="fixture-file-input" type="file" name="files[]" accept="image/*" multiple><div class="fixture-attachment-list" aria-live="polite"></div></section>
+            ${liveShape && authenticated ? '' : '<section class="fixture-attachment-panel"><input id="fixture-file-input" type="file" name="files[]" accept="image/*" multiple><div class="fixture-attachment-list" aria-live="polite"></div></section>'}
             <section class="ai_easy_wrap fixture-live-ai-prompt"><div class="ai_easy_box">
                 <div class="ipt_box"><button class="ipt_img" type="button" aria-label="이미지 선택"></button><textarea class="ipt_txt" rows="1" placeholder="AI 이미지 간편 등록"></textarea></div>
                 <button class="btn_aigo" type="button">등록</button><button class="btn_close" type="button" aria-label="닫기">×</button>
@@ -188,6 +212,29 @@ export function deletePasswordPage() {
                     <b class="txt">비밀번호를 입력하세요.</b>
                     <input class="pw_inquiry" id="password" name="password" type="password" title="비밀번호 입력">
                     <div class="btn_box"><button type="button" class="btn_grey small" onclick="history.back()">취소</button><button type="button" class="btn_blue btn_svc small btn_ok">확인</button></div>
+                </div></div></div></article>
+            </form>
+        </section></main>
+        <footer class="dcfoot type1"><p>fixture footer should be hidden</p></footer><div id="data_info">fixture data info should be hidden</div>
+    </div>${scripts}`;
+}
+
+export function deleteConfirmPage() {
+    return `${head('DCUF authenticated delete confirmation fixture')}<body data-fixture-page="delete-confirm" data-fixture-variant="mini"><div id="top" class="dcwrap width1160">
+        <header class="dcheader typea"><div class="dchead"><h1 class="dc_logo"><a href="#">dcinside.com</a></h1></div></header>
+        <div class="gnb_bar"><nav class="gnb"><ul class="gnb_list"><li>갤러리</li><li>마이너갤</li><li>미니갤</li></ul></nav></div>
+        <div class="newvisit_history"><strong class="tit">최근 방문</strong></div>
+        <main id="container" class="clear"><section>
+            <header class="page_head clear"><div class="fl"><h2><a href="#gallery">테스트 갤러리</a></h2></div></header>
+            <form id="delete" name="delete" method="post" action="/__testbed/delete_confirm_submit" onsubmit="event.preventDefault();window.__fixtureDeleteConfirmSubmitCount=(window.__fixtureDeleteConfirmSubmitCount||0)+1">
+                <input type="hidden" name="ci_t" value="fixture-redacted">
+                <input type="hidden" name="id" value="test">
+                <input type="hidden" name="no" value="1001">
+                <input type="hidden" name="key" value="">
+                <input type="hidden" name="dcc_key" value="fixture-redacted">
+                <article><div class="empty_pagewrap"><div class="pop_wrap type5"><div class="pop_content robot">
+                    <p>삭제된 게시물은 복구할 수 없습니다.<br>게시물을 삭제하시겠습니까?</p>
+                    <div class="btn_box"><button type="button" class="btn_grey small" onclick="history.back()">이전</button><button type="submit" class="btn_blue small">삭제</button></div>
                 </div></div></div></article>
             </form>
         </section></main>

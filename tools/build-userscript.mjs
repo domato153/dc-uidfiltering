@@ -6,7 +6,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const rootDir = path.resolve(__dirname, '..');
 
-const VERSION = '3.5.3';
+const VERSION = '3.5.4-beta';
 const OUTPUT_NAME = `Dc_UserFilter_Mobile_v${VERSION}.user.js`;
 const testbedOutputIndex = process.argv.indexOf('--testbed-output');
 const testbedOutput = testbedOutputIndex >= 0 && process.argv[testbedOutputIndex + 1]
@@ -143,8 +143,9 @@ function applyReplacements(source) {
 }
 
 async function main() {
-    const [header, bootstrap, styleBanner, sharedPrelude, ...mobileLegacyParts] = await Promise.all([
+    const [header, loginSurface, bootstrap, styleBanner, sharedPrelude, ...mobileLegacyParts] = await Promise.all([
         readPart('src/meta/userscript-header.txt'),
+        readPart('src/targets/mobile/login-surface.js'),
         readPart('src/runtime/bootstrap.js'),
         readPart('src/targets/mobile/style-banner.js'),
         buildSharedRuntimePrelude(),
@@ -152,7 +153,7 @@ async function main() {
     ]);
     const legacyApp = mobileLegacyParts.join('');
     const transformedLegacyApp = transformLegacyAppForPhaseTwo(legacyApp);
-    const combined = `${header}\n${bootstrap}${sharedPrelude}${styleBanner}${transformedLegacyApp}`;
+    const combined = `${header}\n${loginSurface}${bootstrap}${sharedPrelude}${styleBanner}${transformedLegacyApp}`;
     const built = applyReplacements(combined)
         .replace(/[ \t]+$/gm, '')
         .replace(/\n+$/, '\n')

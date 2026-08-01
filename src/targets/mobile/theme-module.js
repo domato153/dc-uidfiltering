@@ -47,9 +47,25 @@ const ThemeModule = (() => {
         return id;
     };
 
+    const relativeLuminance = (hex) => {
+        const value = String(hex || '').replace('#', '');
+        if (!/^[\da-f]{6}$/i.test(value)) return 0;
+        const channels = [0, 2, 4].map((offset) => Number.parseInt(value.slice(offset, offset + 2), 16) / 255)
+            .map((channel) => channel <= .03928 ? channel / 12.92 : ((channel + .055) / 1.055) ** 2.4);
+        return .2126 * channels[0] + .7152 * channels[1] + .0722 * channels[2];
+    };
+    const readableForeground = (background, preferred = '') => {
+        if (preferred) return preferred;
+        const luminance = relativeLuminance(background);
+        const whiteContrast = 1.05 / (luminance + .05);
+        return whiteContrast >= 4.5 ? '#fff' : '#172033';
+    };
+
     const buildPresetVariables = () => PRESETS.map((preset) => {
-        const [accent, strong, soft, onAccent = '#fff'] = preset.light;
-        const [darkAccent, darkStrong, darkSoft, darkOnAccent = '#fff'] = preset.dark;
+        const [accent, strong, soft, preferredOnAccent = ''] = preset.light;
+        const [darkAccent, darkStrong, darkSoft, preferredDarkOnAccent = ''] = preset.dark;
+        const onAccent = readableForeground(strong, preferredOnAccent);
+        const darkOnAccent = readableForeground(darkStrong, preferredDarkOnAccent);
         return `
             html[${ROOT_ATTRIBUTE}="${preset.id}"] {
                 --dcuf-theme-accent: ${accent};
@@ -92,6 +108,30 @@ const ThemeModule = (() => {
             --dcuf-theme-primary-top: color-mix(in srgb, var(--dcuf-theme-accent) 78%, white);
             --dcuf-theme-focus-ring: color-mix(in srgb, var(--dcuf-theme-accent) 18%, transparent);
             --dcuf-theme-accent-shadow: color-mix(in srgb, var(--dcuf-theme-accent-strong) 25%, transparent);
+            --dcuf-glass-page: #edf3fa;
+            --dcuf-glass-panel: color-mix(in srgb, var(--dcuf-theme-accent-soft) 18%, rgba(248, 251, 255, .72));
+            --dcuf-glass-panel-soft: color-mix(in srgb, var(--dcuf-theme-accent-soft) 14%, rgba(255, 255, 255, .26));
+            --dcuf-glass-panel-solid: color-mix(in srgb, var(--dcuf-theme-accent-soft) 12%, #f4f7fb);
+            --dcuf-glass-panel-strong: color-mix(in srgb, var(--dcuf-theme-accent-soft) 14%, rgba(250, 252, 255, .82));
+            --dcuf-glass-cell: color-mix(in srgb, var(--dcuf-theme-accent-soft) 4%, rgba(255, 255, 255, .82));
+            --dcuf-glass-cell-soft: color-mix(in srgb, var(--dcuf-theme-accent-soft) 8%, rgba(255, 255, 255, .58));
+            --dcuf-glass-input: color-mix(in srgb, var(--dcuf-theme-accent-soft) 6%, rgba(255, 255, 255, .82));
+            --dcuf-glass-control: color-mix(in srgb, var(--dcuf-theme-accent-soft) 12%, rgba(255, 255, 255, .46));
+            --dcuf-glass-paper: color-mix(in srgb, var(--dcuf-theme-accent-soft) 3%, rgba(255, 255, 255, .94));
+            --dcuf-glass-control-active: color-mix(in srgb, var(--dcuf-theme-accent) 20%, rgba(255, 255, 255, .68));
+            --dcuf-glass-control-active-top: color-mix(in srgb, var(--dcuf-theme-accent) 12%, rgba(255, 255, 255, .88));
+            --dcuf-glass-on-active: var(--dcuf-theme-fg);
+            --dcuf-glass-border: rgba(255, 255, 255, .72);
+            --dcuf-glass-border-strong: rgba(70, 88, 124, .15);
+            --dcuf-glass-highlight: rgba(255, 255, 255, .46);
+            --dcuf-glass-rim: rgba(255, 255, 255, .88);
+            --dcuf-glass-card-shadow: 0 6px 18px rgba(42, 57, 94, .06), 0 1px 4px rgba(42, 57, 94, .04);
+            --dcuf-glass-popup-shadow: 0 26px 72px rgba(26, 38, 72, .22), 0 7px 22px rgba(26, 38, 72, .10);
+            --dcuf-glass-accent-shadow: color-mix(in srgb, var(--dcuf-theme-accent-strong) 10%, transparent);
+            --dcuf-glass-blur: 16px;
+            --dcuf-radius-panel: 18px;
+            --dcuf-radius-row: 11px;
+            --dcuf-radius-control: 9px;
         }
         html[${ROOT_ATTRIBUTE}].dc-filter-dark-mode,
         html[${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode {
@@ -114,6 +154,27 @@ const ThemeModule = (() => {
             --dcuf-theme-card-shadow: 0 1px 3px rgba(0,0,0,.28), 0 7px 18px rgba(0,0,0,.22);
             --dcuf-theme-panel-shadow: 0 20px 46px rgba(0,0,0,.44), 0 3px 9px rgba(0,0,0,.24);
             --dcuf-theme-primary-top: color-mix(in srgb, var(--dcuf-theme-accent) 68%, white);
+            --dcuf-glass-page: #111722;
+            --dcuf-glass-panel: color-mix(in srgb, var(--dcuf-theme-accent-soft) 12%, rgba(24, 32, 47, .72));
+            --dcuf-glass-panel-soft: color-mix(in srgb, var(--dcuf-theme-accent-soft) 10%, rgba(139, 158, 199, .10));
+            --dcuf-glass-panel-solid: color-mix(in srgb, var(--dcuf-theme-accent-soft) 8%, #192232);
+            --dcuf-glass-panel-strong: color-mix(in srgb, var(--dcuf-theme-accent-soft) 10%, rgba(29, 39, 57, .82));
+            --dcuf-glass-cell: color-mix(in srgb, var(--dcuf-theme-accent-soft) 3%, rgba(28, 37, 53, .86));
+            --dcuf-glass-cell-soft: color-mix(in srgb, var(--dcuf-theme-accent-soft) 5%, rgba(31, 42, 61, .72));
+            --dcuf-glass-input: color-mix(in srgb, var(--dcuf-theme-accent-soft) 4%, rgba(15, 22, 34, .78));
+            --dcuf-glass-control: color-mix(in srgb, var(--dcuf-theme-accent-soft) 8%, rgba(151, 170, 214, .12));
+            --dcuf-glass-paper: color-mix(in srgb, var(--dcuf-theme-accent-soft) 2%, rgba(19, 27, 40, .94));
+            --dcuf-glass-control-active: color-mix(in srgb, var(--dcuf-theme-accent) 22%, rgba(35, 45, 64, .82));
+            --dcuf-glass-control-active-top: color-mix(in srgb, var(--dcuf-theme-accent) 13%, rgba(80, 94, 122, .42));
+            --dcuf-glass-on-active: var(--dcuf-theme-fg);
+            --dcuf-glass-border: rgba(222, 234, 255, .14);
+            --dcuf-glass-border-strong: rgba(0, 0, 0, .22);
+            --dcuf-glass-highlight: rgba(255, 255, 255, .08);
+            --dcuf-glass-rim: rgba(239, 246, 255, .21);
+            --dcuf-glass-card-shadow: 0 7px 20px rgba(0, 0, 0, .22), 0 1px 5px rgba(0, 0, 0, .15);
+            --dcuf-glass-popup-shadow: 0 32px 86px rgba(0, 0, 0, .52), 0 8px 25px rgba(0, 0, 0, .30);
+            --dcuf-glass-accent-shadow: color-mix(in srgb, var(--dcuf-theme-accent-strong) 13%, transparent);
+            --dcuf-glass-blur: 17px;
         }
 
         /* DCUF_MOBILE_THEME_CSS_START */
@@ -157,12 +218,13 @@ const ThemeModule = (() => {
         html[${ROOT_ATTRIBUTE}] body #dc-manual-block-panel .dcuf-manual-actions [data-manual-block-action="add"],
         html[${ROOT_ATTRIBUTE}] body #dcinside-filter-setting #dcinside-proxy-ip-block-mode-group button[data-proxy-mode][aria-pressed="true"] {
             border-color: var(--dcuf-theme-accent-strong) !important;
-            background: var(--dcuf-theme-accent-strong) !important;
+            background-color: var(--dcuf-glass-control-active) !important;
+            background-image: linear-gradient(145deg,var(--dcuf-glass-control-active-top),var(--dcuf-glass-control-active)) !important;
             color: var(--dcuf-theme-on-accent) !important;
         }
         html[${ROOT_ATTRIBUTE}] body #dc-block-management-panel input:checked + .switch-slider,
         html[${ROOT_ATTRIBUTE}] body #dcinside-filter-setting input:checked + .switch-slider {
-            background-color: var(--dcuf-theme-accent-strong) !important;
+            background-color: var(--dcuf-glass-control-active) !important;
         }
         html[${ROOT_ATTRIBUTE}] body #dc-block-management-panel .panel-tab.active {
             border-color: color-mix(in srgb, var(--dcuf-theme-accent) 42%, transparent) !important;
@@ -338,17 +400,15 @@ const ThemeModule = (() => {
         html[${ROOT_ATTRIBUTE}] body .page_head {
             border-color: var(--dcuf-theme-border-strong) !important;
         }
-        html[${ROOT_ATTRIBUTE}] body .gnb_bar,
-        html[${ROOT_ATTRIBUTE}] body .dchead .top_search,
         html[${ROOT_ATTRIBUTE}] body .dchead .top_search .bnt_search,
         html[${ROOT_ATTRIBUTE}] body .dchead .top_search button.sp_img.bnt_search,
         html[${ROOT_ATTRIBUTE}] body .dchead .area_links .btn_login,
         html[${ROOT_ATTRIBUTE}] body .dchead .area_links .btn_top_loginout,
         html[${ROOT_ATTRIBUTE}] body .page_head :is(.gall_search, .gall_search_box, .inner_search) :is(.btn_search, .bnt_search, button[type="submit"]),
         html[${ROOT_ATTRIBUTE}] body .page_head > .fl form :is(.btn_search, .bnt_search, button[type="submit"]) {
-            border-color: var(--dcuf-theme-accent-strong) !important;
-            background-color: var(--dcuf-theme-accent-strong) !important;
-            background-image: none !important;
+            border-color: color-mix(in srgb,var(--dcuf-theme-accent) 42%,rgba(255,255,255,.42)) !important;
+            background-color: var(--dcuf-glass-control-active) !important;
+            background-image: linear-gradient(145deg,var(--dcuf-glass-control-active-top),var(--dcuf-glass-control-active)) !important;
             color: var(--dcuf-theme-on-accent) !important;
         }
         html[${ROOT_ATTRIBUTE}] body .dchead .top_search {
@@ -425,11 +485,6 @@ const ThemeModule = (() => {
             filter: none !important;
             vertical-align: middle !important;
         }
-        html[${ROOT_ATTRIBUTE}] body .issue_wrap {
-            border-top-color: var(--dcuf-theme-accent) !important;
-            box-shadow: inset 0 2px 0 color-mix(in srgb, var(--dcuf-theme-accent) 78%, transparent) !important;
-        }
-
         html[${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode #dc-personal-block-fab {
             border-color: color-mix(in srgb, var(--dcuf-theme-accent) 45%, transparent) !important;
             background: linear-gradient(180deg, color-mix(in srgb, var(--dcuf-theme-accent-soft) 78%, #263347), #202b3a) !important;
@@ -493,11 +548,10 @@ const ThemeModule = (() => {
         html[${ROOT_ATTRIBUTE}] body #focus_cmt .cmt_write_box .cmt_btn_bot > button,
         html[${ROOT_ATTRIBUTE}] body #focus_cmt .cmt_write_box .cmt_cont_bottm > .fr > button,
         html[${ROOT_ATTRIBUTE}] body #container .view_comment.image_comment .cmt_write_box .cmt_btn_bot > button,
-        html[${ROOT_ATTRIBUTE}] body #container .view_comment.image_comment .cmt_write_box .cmt_cont_bottm > .fr > button,
-        html[${ROOT_ATTRIBUTE}] body.is-write-page > #leave_confirm_box.dcuf-write-leave-confirm .write_cont > .btn_box > .btn_blue {
+        html[${ROOT_ATTRIBUTE}] body #container .view_comment.image_comment .cmt_write_box .cmt_cont_bottm > .fr > button {
             border-color: var(--dcuf-theme-accent-strong) !important;
-            background-color: var(--dcuf-theme-accent-strong) !important;
-            background-image: linear-gradient(180deg, var(--dcuf-theme-primary-top), var(--dcuf-theme-accent-strong)) !important;
+            background-color: var(--dcuf-glass-control-active) !important;
+            background-image: linear-gradient(145deg,var(--dcuf-glass-control-active-top),var(--dcuf-glass-control-active)) !important;
             color: var(--dcuf-theme-on-accent) !important;
             box-shadow: 0 6px 14px var(--dcuf-theme-accent-shadow) !important;
         }
@@ -558,28 +612,33 @@ const ThemeModule = (() => {
             -webkit-tap-highlight-color: transparent !important;
         }
         html[${ROOT_ATTRIBUTE}] body .custom-mobile-list .post-title-link {
+            display: inline-block !important;
+            flex: 0 1 auto !important;
+            width: auto !important;
+            min-width: 0 !important;
+            max-width: 100% !important;
             -webkit-tap-highlight-color: color-mix(in srgb, var(--dcuf-theme-accent) 24%, transparent) !important;
         }
         html[${ROOT_ATTRIBUTE}] body .custom-mobile-list .custom-post-item {
             border-color: var(--dcuf-theme-border) !important;
             background-color: var(--dcuf-theme-card-top) !important;
             background-image: linear-gradient(180deg, var(--dcuf-theme-card-top) 0%, var(--dcuf-theme-card-bottom) 100%) !important;
-            box-shadow: var(--dcuf-theme-card-shadow) !important;
+            box-shadow: none !important;
             outline: 2px solid transparent !important;
             outline-offset: -2px !important;
-            transition: transform .14s ease, filter .08s ease, border-color .08s ease, outline-color .08s ease, box-shadow .14s ease !important;
+            transition: transform .14s ease, filter .08s ease, border-color .08s ease, outline-color .08s ease !important;
         }
         html[${ROOT_ATTRIBUTE}] body .custom-mobile-list .custom-post-item.concept {
             border-color: color-mix(in srgb, var(--dcuf-theme-accent) 18%, var(--dcuf-theme-border)) !important;
             background-color: var(--dcuf-theme-concept-surface) !important;
             background-image: linear-gradient(180deg, color-mix(in srgb, white 24%, var(--dcuf-theme-concept-surface)), var(--dcuf-theme-concept-surface)) !important;
-            box-shadow: inset 3px 0 0 var(--dcuf-theme-accent), var(--dcuf-theme-card-shadow) !important;
+            box-shadow: none !important;
         }
         html[${ROOT_ATTRIBUTE}] body .custom-mobile-list .custom-post-item.notice {
             border-color: color-mix(in srgb, #7b8492 22%, var(--dcuf-theme-border)) !important;
             background-color: var(--dcuf-theme-notice-surface) !important;
             background-image: linear-gradient(180deg, color-mix(in srgb, white 24%, var(--dcuf-theme-notice-surface)), var(--dcuf-theme-notice-surface)) !important;
-            box-shadow: inset 3px 0 0 #8993a1, var(--dcuf-theme-card-shadow) !important;
+            box-shadow: none !important;
         }
         html[${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode .custom-mobile-list .custom-post-item:is(.concept, .notice) {
             background-image: linear-gradient(180deg, rgba(255,255,255,.018), transparent) !important;
@@ -601,11 +660,13 @@ const ThemeModule = (() => {
                 border-color: var(--dcuf-theme-border-strong) !important;
             }
         }
-        html[${ROOT_ATTRIBUTE}] body .custom-mobile-list .post-meta .author {
-            flex: 0 1 auto !important;
-            align-self: flex-start !important;
-            width: max-content !important;
-            max-width: calc(100% - 120px) !important;
+        @media (max-width: 1023px) {
+            html[${ROOT_ATTRIBUTE}] body .custom-mobile-list .post-meta .author {
+                flex: 0 1 auto !important;
+                align-self: flex-start !important;
+                width: max-content !important;
+                max-width: calc(100% - 120px) !important;
+            }
         }
 
         /* View title, article, and comment hierarchy. */
@@ -819,10 +880,6 @@ const ThemeModule = (() => {
         html[${ROOT_ATTRIBUTE}] body.is-write-page form.dcuf-write-form .write_subject > .dcuf-write-headtext-label {
             background-color: var(--dcuf-theme-surface-muted) !important;
         }
-        html[${ROOT_ATTRIBUTE}] body.is-write-page > #leave_confirm_box.dcuf-write-leave-confirm .pop_head.bg {
-            background: linear-gradient(135deg, var(--dcuf-theme-accent), var(--dcuf-theme-accent-strong)) !important;
-        }
-
         /* Inactive navigation/actions are neutral; selected and primary actions keep the preset accent. */
         html[${ROOT_ATTRIBUTE}] body:not(.is-write-page) .list_array_option .array_tab li:not(.on) > a,
         html[${ROOT_ATTRIBUTE}] body:not(.is-write-page) .list_array_option .array_tab :is(button, a):not(.on),
@@ -862,6 +919,2132 @@ const ThemeModule = (() => {
             box-shadow: 0 7px 18px rgba(0,0,0,.22), inset 0 1px 0 rgba(255,255,255,.045) !important;
         }
 
+        /* Glass material pass: visual-only overrides, with the existing geometry and event rails intact. */
+        html[${ROOT_ATTRIBUTE}] body {
+            background-color: var(--dcuf-glass-page) !important;
+            background-image:
+                radial-gradient(circle at 18% 5%, color-mix(in srgb, var(--dcuf-theme-accent-soft) 28%, transparent), transparent 34%),
+                linear-gradient(180deg, color-mix(in srgb, var(--dcuf-glass-highlight) 34%, transparent), transparent 320px) !important;
+            color: var(--dcuf-theme-fg) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body :is(
+            .dcheader.typea,
+            .gnb_bar,
+            .newvisit_history,
+            .list_array_option,
+            .custom-bottom-controls .dcuf-bottom-action-card,
+            .custom-bottom-controls .dcuf-pagination-card,
+            .custom-bottom-controls .dcuf-search-card,
+            #container:is(.gallery_view,.minor_view,.mini_view) .view_bottom_btnbox
+        ) {
+            border-color: var(--dcuf-glass-border) !important;
+            background-color: var(--dcuf-glass-panel-solid) !important;
+            background-image: linear-gradient(180deg, var(--dcuf-glass-highlight), transparent 68%) !important;
+            box-shadow: var(--dcuf-glass-card-shadow), inset 0 1px 0 var(--dcuf-glass-highlight) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body :is(
+            .view_content_wrap,
+            #focus_cmt > div[id^="comment_wrap_"],
+            #container .view_comment.image_comment .comment_wrap,
+            form.dcuf-write-form,
+            .dcuf-password-card
+        ) {
+            border-color: var(--dcuf-glass-border) !important;
+            box-shadow: var(--dcuf-glass-card-shadow), inset 0 1px 0 var(--dcuf-glass-highlight) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body .custom-post-item:not(.notice):not(.concept) {
+            background-color: var(--dcuf-glass-panel-solid) !important;
+            background-image: linear-gradient(150deg, var(--dcuf-glass-highlight), transparent 48%) !important;
+            box-shadow: none !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body .custom-post-item.notice {
+            border-left-color: color-mix(in srgb, var(--dcuf-theme-fg-muted) 36%, var(--dcuf-glass-border)) !important;
+            background-image: linear-gradient(150deg, var(--dcuf-glass-highlight), transparent 48%) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body .custom-post-item.concept {
+            border-left-color: color-mix(in srgb, var(--dcuf-theme-accent) 64%, var(--dcuf-glass-border)) !important;
+            background-image:
+                linear-gradient(150deg, color-mix(in srgb, var(--dcuf-theme-accent-soft) 42%, var(--dcuf-glass-highlight)), transparent 55%),
+                linear-gradient(180deg, var(--dcuf-theme-concept-surface), var(--dcuf-theme-card-bottom)) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body :is(
+            .dchead .top_search,
+            .page_head :is(.gall_search,.gall_search_box,.inner_search),
+            .custom-bottom-controls .bottom_search,
+            form.dcuf-write-form :is(input:not([type="checkbox"]):not([type="radio"]),textarea,select),
+            #focus_cmt .cmt_write_box :is(input:not([type="checkbox"]),textarea),
+            #container .view_comment.image_comment .cmt_write_box :is(input:not([type="checkbox"]),textarea)
+        ) {
+            border-color: var(--dcuf-glass-border-strong) !important;
+            background-color: var(--dcuf-glass-input) !important;
+            background-image: linear-gradient(180deg, color-mix(in srgb, var(--dcuf-glass-highlight) 54%, transparent), transparent 62%) !important;
+            box-shadow: inset 0 1px 2px rgba(27,39,61,.08), 0 1px 0 var(--dcuf-glass-highlight) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body :is(
+            .list_array_option .array_tab li:not(.on) > a,
+            .list_array_option .array_tab :is(button,a):not(.on),
+            .list_array_option .select_area,
+            .custom-bottom-controls :is(button,select):not(.btn_write):not(.write),
+            .custom-bottom-controls a:not(.sp_pagingicon):not(.btn_write):not(.write),
+            #container:is(.gallery_view,.minor_view,.mini_view) .view_bottom_btnbox :is(.btn_white,.btn_grey),
+            form.dcuf-write-form :is(.btn_lightred,.btn-line-gray,.btn_grey)
+        ) {
+            border-color: var(--dcuf-glass-border-strong) !important;
+            background-color: var(--dcuf-glass-control) !important;
+            background-image: linear-gradient(180deg, var(--dcuf-glass-highlight), transparent 74%) !important;
+            box-shadow: 0 4px 11px rgba(31,45,70,.07), inset 0 1px 0 var(--dcuf-glass-highlight) !important;
+            color: var(--dcuf-theme-fg) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body :is(
+            .dchead .top_search .bnt_search,
+            .dchead .area_links .btn_login,
+            .dchead .area_links .btn_top_loginout,
+            .page_head :is(.gall_search,.gall_search_box,.inner_search) :is(.btn_search,.bnt_search,button[type="submit"]),
+            .list_array_option .array_tab .on,
+            .list_array_option .array_tab li.on > a,
+            .list_array_option .btn_write,
+            .custom-bottom-controls .bottom_paging_box > em,
+            .custom-bottom-controls .dcuf-search-card .bnt_search,
+            .custom-bottom-controls :is(.btn_write,.write),
+            #container:is(.gallery_view,.minor_view,.mini_view) .view_bottom_btnbox :is(.btn_blue,.btn_write,.write),
+            #focus_cmt .cmt_write_box .btn_blue,
+            #container .view_comment.image_comment .cmt_write_box .btn_blue,
+            form.dcuf-write-form :is(.btn_blue,.btn_svc,#write-submit),
+            .dcuf-password-card :is(.btn_blue,.btn_svc,.btn_ok)
+        ) {
+            border-color: color-mix(in srgb, var(--dcuf-theme-accent-strong) 74%, var(--dcuf-glass-border-strong)) !important;
+            background-color: var(--dcuf-glass-control-active) !important;
+            background-image: linear-gradient(180deg, var(--dcuf-glass-control-active-top), var(--dcuf-glass-control-active)) !important;
+            color: var(--dcuf-glass-on-active) !important;
+            box-shadow: 0 9px 20px var(--dcuf-glass-accent-shadow), inset 0 1px 0 color-mix(in srgb, white 38%, transparent), inset 0 -1px 0 rgba(0,0,0,.12) !important;
+            text-shadow: 0 1px 1px rgba(0,0,0,.12) !important;
+            transition: transform .15s ease, box-shadow .15s ease, filter .15s ease !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body :is(
+            .list_array_option .array_tab .on,
+            .list_array_option .array_tab li.on > a,
+            .list_array_option .btn_write,
+            .custom-bottom-controls .bottom_paging_box > em,
+            .custom-bottom-controls .dcuf-search-card .bnt_search,
+            .custom-bottom-controls :is(.btn_write,.write),
+            #container:is(.gallery_view,.minor_view,.mini_view) .view_bottom_btnbox :is(.btn_blue,.btn_write,.write),
+            #focus_cmt .cmt_write_box .btn_blue,
+            form.dcuf-write-form :is(.btn_blue,.btn_svc,#write-submit)
+        ):active {
+            transform: translateY(1px) !important;
+            box-shadow: 0 4px 10px var(--dcuf-glass-accent-shadow), inset 0 1px 3px rgba(0,0,0,.16) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body .view_content_wrap .btn_recommend_box .btn_recom_up {
+            background-color: var(--dcuf-glass-control-active) !important;
+            background-image: linear-gradient(145deg, var(--dcuf-glass-control-active-top), var(--dcuf-glass-control-active)) !important;
+            box-shadow: 0 10px 22px var(--dcuf-glass-accent-shadow), inset 0 1px 0 color-mix(in srgb, white 38%, transparent) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body :is(
+            .view_content_wrap .btn_recommend_box,
+            .view_content_wrap .btn_recommend_box .inner_box > .inner,
+            #focus_cmt .comment_box .cmt_list > li,
+            #container .view_comment.image_comment .comment_box.img_comment_box .cmt_list > li,
+            #container .view_comment.image_comment .comment_box.img_comment_box .reply_list > li
+        ) {
+            border-color: var(--dcuf-glass-border) !important;
+            box-shadow: var(--dcuf-glass-card-shadow), inset 0 1px 0 var(--dcuf-glass-highlight) !important;
+        }
+        @supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+            html[${ROOT_ATTRIBUTE}] body :is(
+                .dcheader.typea,
+                .gnb_bar,
+                .newvisit_history,
+                .list_array_option,
+                .custom-bottom-controls .dcuf-bottom-action-card,
+                .custom-bottom-controls .dcuf-pagination-card,
+                .custom-bottom-controls .dcuf-search-card,
+                #container:is(.gallery_view,.minor_view,.mini_view) .view_bottom_btnbox
+            ) {
+                background-color: var(--dcuf-glass-panel) !important;
+                -webkit-backdrop-filter: blur(var(--dcuf-glass-blur)) saturate(1.08) !important;
+                backdrop-filter: blur(var(--dcuf-glass-blur)) saturate(1.08) !important;
+            }
+            html[${ROOT_ATTRIBUTE}] body .custom-bottom-controls .dcuf-bottom-action-card {
+                background-color: var(--dcuf-glass-panel-strong) !important;
+            }
+        }
+        @media (prefers-reduced-transparency: reduce) {
+            html[${ROOT_ATTRIBUTE}] body :is(
+                .dcheader.typea,.gnb_bar,.newvisit_history,.list_array_option,
+                .custom-bottom-controls .dcuf-bottom-action-card,
+                .custom-bottom-controls .dcuf-pagination-card,
+                .custom-bottom-controls .dcuf-search-card,
+                #container:is(.gallery_view,.minor_view,.mini_view) .view_bottom_btnbox
+            ) {
+                background-color: var(--dcuf-glass-panel-solid) !important;
+                -webkit-backdrop-filter: none !important;
+                backdrop-filter: none !important;
+            }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            html[${ROOT_ATTRIBUTE}] body *, html[${ROOT_ATTRIBUTE}] body *::before, html[${ROOT_ATTRIBUTE}] body *::after {
+                scroll-behavior: auto !important;
+                transition: none !important;
+                animation: none !important;
+            }
+        }
+
+        /* Glass remodeling: replace the remaining flat host chrome without changing its DOM rails. */
+        html[${ROOT_ATTRIBUTE}],
+        html[${ROOT_ATTRIBUTE}] body {
+            background-color: var(--dcuf-glass-page) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body {
+            background-image:
+                radial-gradient(ellipse 82% 52% at 4% -8%, color-mix(in srgb, var(--dcuf-theme-accent) 30%, transparent), transparent 69%),
+                radial-gradient(ellipse 68% 48% at 98% 3%, color-mix(in srgb, color-mix(in srgb, var(--dcuf-theme-accent) 52%, #67d8ff) 21%, transparent), transparent 72%),
+                radial-gradient(ellipse 72% 54% at 54% 92%, color-mix(in srgb, var(--dcuf-theme-accent-soft) 25%, transparent), transparent 74%),
+                linear-gradient(145deg, color-mix(in srgb, var(--dcuf-glass-page) 92%, white), var(--dcuf-glass-page) 48%, color-mix(in srgb, var(--dcuf-glass-page) 93%, var(--dcuf-theme-accent-soft))) !important;
+            background-attachment: fixed !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode {
+            background-image:
+                radial-gradient(ellipse 80% 56% at 2% -8%, color-mix(in srgb, var(--dcuf-theme-accent) 24%, transparent), transparent 68%),
+                radial-gradient(ellipse 68% 50% at 100% 4%, color-mix(in srgb, color-mix(in srgb, var(--dcuf-theme-accent) 60%, #42c8ff) 16%, transparent), transparent 72%),
+                radial-gradient(ellipse 72% 58% at 50% 102%, color-mix(in srgb, var(--dcuf-theme-accent-soft) 20%, transparent), transparent 73%),
+                linear-gradient(145deg, #111a2d, var(--dcuf-glass-page) 48%, #0b1020) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body :is(
+            .dcwrap,
+            #container,
+            #container > .left_content,
+            #container article,
+            .gall_listwrap,
+            #focus_cmt,
+            .view_comment.image_comment,
+            .comment_box,
+            .reply_box,
+            .newvisit_box,
+            .dchead .wrap_search,
+            .dchead .area_links
+        ) {
+            background-color: transparent !important;
+            background-image: none !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body .custom-mobile-list {
+            border-radius: 22px !important;
+            background-color: var(--dcuf-glass-panel-soft) !important;
+            background-image:
+                radial-gradient(ellipse 58% 34% at 100% 0%, color-mix(in srgb, var(--dcuf-theme-accent-soft) 28%, transparent), transparent 72%),
+                linear-gradient(180deg, color-mix(in srgb, var(--dcuf-glass-rim) 34%, transparent), transparent 220px) !important;
+        }
+
+        html[${ROOT_ATTRIBUTE}] body .dcheader.typea {
+            border: 0 !important;
+            background: transparent !important;
+            box-shadow: none !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body .dcheader.typea .dchead {
+            border: 1px solid var(--dcuf-glass-border) !important;
+            border-radius: 0 0 22px 22px !important;
+            background-color: var(--dcuf-glass-panel) !important;
+            background-image:
+                radial-gradient(circle at 78% -20%, color-mix(in srgb, var(--dcuf-theme-accent-soft) 50%, transparent), transparent 44%),
+                linear-gradient(180deg, var(--dcuf-glass-rim), color-mix(in srgb, var(--dcuf-glass-highlight) 42%, transparent) 2px, transparent 72%) !important;
+            box-shadow: 0 18px 42px rgba(38,56,93,.09), inset 0 1px 0 var(--dcuf-glass-rim) !important;
+            -webkit-backdrop-filter: blur(var(--dcuf-glass-blur)) saturate(1.22) !important;
+            backdrop-filter: blur(var(--dcuf-glass-blur)) saturate(1.22) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body .gnb_bar {
+            box-sizing: border-box !important;
+            margin-top: 8px !important;
+            border: 1px solid var(--dcuf-glass-border-strong) !important;
+            border-radius: 18px !important;
+            background-color: color-mix(in srgb, var(--dcuf-glass-panel) 78%, var(--dcuf-theme-accent-soft)) !important;
+            background-image:
+                radial-gradient(ellipse 42% 150% at 12% -45%, color-mix(in srgb, var(--dcuf-theme-accent) 30%, transparent), transparent 70%),
+                linear-gradient(180deg, var(--dcuf-glass-rim), color-mix(in srgb, var(--dcuf-glass-highlight) 34%, transparent) 2px, transparent 76%) !important;
+            color: var(--dcuf-theme-fg) !important;
+            box-shadow: 0 16px 38px rgba(33,51,89,.12), inset 0 1px 0 var(--dcuf-glass-rim) !important;
+            -webkit-backdrop-filter: blur(var(--dcuf-glass-blur)) saturate(1.28) !important;
+            backdrop-filter: blur(var(--dcuf-glass-blur)) saturate(1.28) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body .gnb_bar .gnb_list li > a {
+            border-radius: 999px !important;
+            color: var(--dcuf-theme-fg) !important;
+            text-shadow: none !important;
+            transition: color .16s ease, background-color .16s ease, box-shadow .16s ease !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body .gnb_bar .gnb_list li > a:is(:hover,:focus-visible),
+        html[${ROOT_ATTRIBUTE}] body .gnb_bar .gnb_list li.on > a {
+            background: color-mix(in srgb, var(--dcuf-theme-accent-soft) 64%, var(--dcuf-glass-panel-soft)) !important;
+            color: var(--dcuf-theme-accent-strong) !important;
+            box-shadow: inset 0 1px 0 var(--dcuf-glass-rim), 0 7px 18px var(--dcuf-glass-accent-shadow) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body .newvisit_history {
+            border-radius: 17px !important;
+            background-color: var(--dcuf-glass-panel-soft) !important;
+            background-image:
+                linear-gradient(180deg, color-mix(in srgb, var(--dcuf-glass-rim) 72%, transparent), transparent 68%) !important;
+            box-shadow: 0 12px 30px rgba(38,56,93,.07), inset 0 1px 0 var(--dcuf-glass-rim) !important;
+            -webkit-backdrop-filter: blur(18px) saturate(1.18) !important;
+            backdrop-filter: blur(18px) saturate(1.18) !important;
+        }
+
+        html[${ROOT_ATTRIBUTE}] body :is(
+            .dchead .top_search,
+            .page_head :is(.gall_search .inner_search,.gall_search_box .inner_search,.inner_search),
+            .custom-bottom-controls .bottom_search,
+            form[name="frmSearch"] .bottom_search
+        ) {
+            position: relative !important;
+            box-sizing: border-box !important;
+            padding: 3px !important;
+            border: 1px solid var(--dcuf-glass-border-strong) !important;
+            border-radius: 999px !important;
+            overflow: hidden !important;
+            background-color: var(--dcuf-glass-input) !important;
+            background-image:
+                linear-gradient(180deg, color-mix(in srgb, var(--dcuf-glass-rim) 82%, transparent), transparent 68%) !important;
+            box-shadow: inset 0 1px 2px rgba(27,39,61,.1), 0 10px 24px rgba(38,58,100,.08), inset 0 1px 0 var(--dcuf-glass-rim) !important;
+            -webkit-backdrop-filter: blur(18px) saturate(1.18) !important;
+            backdrop-filter: blur(18px) saturate(1.18) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body :is(
+            .dchead .top_search,
+            .page_head .inner_search,
+            .custom-bottom-controls .bottom_search,
+            form[name="frmSearch"] .bottom_search
+        ) .inner_search,
+        html[${ROOT_ATTRIBUTE}] body :is(
+            .dchead .top_search,
+            .page_head .inner_search,
+            .custom-bottom-controls .bottom_search,
+            form[name="frmSearch"] .bottom_search
+        ) input {
+            border: 0 !important;
+            background: transparent !important;
+            box-shadow: none !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body :is(
+            .dchead .top_search .bnt_search,
+            .page_head :is(.btn_search,.bnt_search,button[type="submit"]),
+            .custom-bottom-controls .bottom_search .bnt_search,
+            form[name="frmSearch"] .bottom_search .bnt_search
+        ) {
+            flex: none !important;
+            box-sizing: border-box !important;
+            width: 40px !important;
+            min-width: 40px !important;
+            height: 40px !important;
+            margin: 0 !important;
+            border: 1px solid color-mix(in srgb, var(--dcuf-theme-accent) 52%, var(--dcuf-glass-rim)) !important;
+            border-radius: 50% !important;
+            background-color: color-mix(in srgb, var(--dcuf-theme-accent-strong) 72%, transparent) !important;
+            background-image:
+                radial-gradient(circle at 30% 18%, rgba(255,255,255,.62), transparent 35%),
+                linear-gradient(145deg, var(--dcuf-glass-control-active-top), var(--dcuf-glass-control-active)) !important;
+            box-shadow: 0 9px 22px var(--dcuf-glass-accent-shadow), inset 0 1px 0 rgba(255,255,255,.52), inset 0 -1px 0 rgba(0,0,0,.12) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body .dchead .top_search .bnt_search,
+        html[${ROOT_ATTRIBUTE}] body :is(.custom-bottom-controls,form[name="frmSearch"]) .bottom_search .bnt_search {
+            position: absolute !important;
+            top: 3px !important;
+            right: 3px !important;
+            bottom: auto !important;
+            left: auto !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body .dchead .top_search {
+            min-height: 46px !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body .dchead .top_search .inner_search,
+        html[${ROOT_ATTRIBUTE}] body .dchead .top_search input {
+            min-height: 38px !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body .dchead .top_search input,
+        html[${ROOT_ATTRIBUTE}] body :is(.custom-bottom-controls,form[name="frmSearch"]) .bottom_search input {
+            box-sizing: border-box !important;
+            padding-right: 48px !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body .dcuf-search-card .search_right_box .bottom_search,
+        html[${ROOT_ATTRIBUTE}] body form[name="frmSearch"] .search_right_box .bottom_search {
+            border-width: 0 !important;
+        }
+
+        html[${ROOT_ATTRIBUTE}] body .list_array_option {
+            border-radius: 24px !important;
+            background-color: var(--dcuf-glass-panel) !important;
+            background-image:
+                radial-gradient(ellipse 42% 180% at 100% -50%, color-mix(in srgb, var(--dcuf-theme-accent-soft) 58%, transparent), transparent 66%),
+                linear-gradient(180deg, var(--dcuf-glass-rim), color-mix(in srgb, var(--dcuf-glass-highlight) 38%, transparent) 2px, transparent 72%) !important;
+            box-shadow: 0 22px 52px rgba(34,54,96,.13), inset 0 1px 0 var(--dcuf-glass-rim) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body .list_array_option :is(.array_tab a,.array_tab button,.select_area,.btn_write) {
+            border-radius: 999px !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body :is(
+            .list_array_option .select_area select,
+            .custom-bottom-controls select
+        ) {
+            border: 0 !important;
+            border-radius: 999px !important;
+            background-color: transparent !important;
+            background-image: none !important;
+            color: var(--dcuf-theme-fg) !important;
+            box-shadow: none !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body :is(
+            .list_array_option .array_tab .on,
+            .list_array_option .array_tab li.on > a,
+            .list_array_option .btn_write,
+            .custom-bottom-controls .bottom_paging_box > em,
+            .custom-bottom-controls :is(.btn_write,.write),
+            #container:is(.gallery_view,.minor_view,.mini_view) .view_bottom_btnbox :is(.btn_blue,.btn_write,.write)
+        ) {
+            background-color: color-mix(in srgb, var(--dcuf-theme-accent-strong) 76%, transparent) !important;
+            background-image:
+                radial-gradient(circle at 22% 0%, rgba(255,255,255,.58), transparent 42%),
+                linear-gradient(145deg, var(--dcuf-glass-control-active-top), var(--dcuf-glass-control-active)) !important;
+            box-shadow: 0 12px 28px var(--dcuf-glass-accent-shadow), inset 0 1px 0 rgba(255,255,255,.48), inset 0 -1px 0 rgba(0,0,0,.13) !important;
+        }
+
+        html[${ROOT_ATTRIBUTE}] body .custom-post-item:not(.notice):not(.concept) {
+            border-color: color-mix(in srgb, var(--dcuf-glass-border) 82%, var(--dcuf-glass-rim)) !important;
+            border-radius: 18px !important;
+            background-color: var(--dcuf-glass-cell) !important;
+            background-image:
+                radial-gradient(ellipse 44% 180% at 100% -65%, color-mix(in srgb, var(--dcuf-theme-accent-soft) 35%, transparent), transparent 70%),
+                linear-gradient(155deg, color-mix(in srgb, var(--dcuf-glass-rim) 72%, transparent), transparent 46%) !important;
+            box-shadow: none !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body .custom-post-item:is(.notice,.concept) {
+            border-radius: 18px !important;
+            background-color: color-mix(in srgb, var(--dcuf-glass-cell) 82%, var(--dcuf-theme-accent-soft)) !important;
+            box-shadow: none !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body :is(
+            .view_content_wrap,
+            form.dcuf-write-form,
+            .dcuf-password-card
+        ) {
+            border-radius: 26px !important;
+            background-color: var(--dcuf-glass-panel-strong) !important;
+            background-image:
+                radial-gradient(ellipse 48% 40% at 100% 0%, color-mix(in srgb, var(--dcuf-theme-accent-soft) 38%, transparent), transparent 72%),
+                linear-gradient(150deg, color-mix(in srgb, var(--dcuf-glass-rim) 74%, transparent), transparent 34%) !important;
+            box-shadow: 0 28px 72px rgba(29,46,86,.16), inset 0 1px 0 var(--dcuf-glass-rim) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body :is(
+            #focus_cmt .comment_box .cmt_list > li,
+            #container .view_comment.image_comment .comment_box.img_comment_box .cmt_list > li
+        ) {
+            border: 1px solid color-mix(in srgb, var(--dcuf-glass-border) 78%, var(--dcuf-glass-rim)) !important;
+            border-radius: 18px !important;
+            background-color: var(--dcuf-glass-cell) !important;
+            background-image:
+                linear-gradient(150deg, color-mix(in srgb, var(--dcuf-glass-rim) 64%, transparent), transparent 46%) !important;
+            box-shadow: var(--dcuf-glass-card-shadow), inset 0 1px 0 var(--dcuf-glass-rim) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body :is(
+            #focus_cmt .comment_box .reply_list > li,
+            #container .view_comment.image_comment .comment_box.img_comment_box .reply_list > li,
+            #focus_cmt li[id^="reply_li_"]
+        ) {
+            border: 1px solid var(--dcuf-glass-border) !important;
+            border-left: 3px solid color-mix(in srgb, var(--dcuf-theme-accent) 62%, var(--dcuf-glass-border)) !important;
+            border-radius: 4px 18px 18px 4px !important;
+            background-color: var(--dcuf-glass-cell-soft) !important;
+            background-image:
+                linear-gradient(150deg, color-mix(in srgb, var(--dcuf-theme-accent-soft) 28%, var(--dcuf-glass-rim)), transparent 52%) !important;
+            box-shadow: 0 12px 30px rgba(34,52,89,.08), inset 0 1px 0 var(--dcuf-glass-rim) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body :is(
+            #focus_cmt .cmt_write_box,
+            #container .view_comment.image_comment .cmt_write_box,
+            .view_content_wrap .btn_recommend_box,
+            .view_content_wrap .btn_recommend_box .inner_box > .inner
+        ) {
+            border-color: var(--dcuf-glass-border) !important;
+            border-radius: 18px !important;
+            background-color: var(--dcuf-glass-panel-soft) !important;
+            background-image: linear-gradient(150deg, color-mix(in srgb, var(--dcuf-glass-rim) 64%, transparent), transparent 52%) !important;
+            box-shadow: 0 14px 34px rgba(34,52,89,.085), inset 0 1px 0 var(--dcuf-glass-rim) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body .view_content_wrap .gall_exposure_list {
+            box-sizing: border-box !important;
+            margin: 18px 0 !important;
+            padding: 8px 10px !important;
+            border: 1px solid var(--dcuf-glass-border) !important;
+            border-radius: 17px !important;
+            background-color: var(--dcuf-glass-panel-soft) !important;
+            background-image: linear-gradient(150deg, color-mix(in srgb, var(--dcuf-glass-rim) 64%, transparent), transparent 54%) !important;
+            box-shadow: 0 14px 34px rgba(34,52,89,.08), inset 0 1px 0 var(--dcuf-glass-rim) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body .view_content_wrap .gall_exposure_list li {
+            padding: 8px 9px !important;
+            border-radius: 11px !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body .view_content_wrap .gall_exposure_list li + li {
+            border-top: 1px solid color-mix(in srgb, var(--dcuf-glass-border) 72%, transparent) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body .view_content_wrap .gall_exposure_list a {
+            color: var(--dcuf-theme-accent-strong) !important;
+            text-decoration: none !important;
+        }
+
+        @media (max-width: 767px) {
+            html[${ROOT_ATTRIBUTE}] body .dcheader.typea .dchead {
+                border-radius: 0 0 18px 18px !important;
+            }
+            html[${ROOT_ATTRIBUTE}] body .gnb_bar {
+                margin-top: 6px !important;
+                border-radius: 15px !important;
+            }
+            html[${ROOT_ATTRIBUTE}] body :is(.newvisit_history,.page_head) {
+                border-radius: 14px !important;
+            }
+            html[${ROOT_ATTRIBUTE}] body :is(.view_content_wrap,form.dcuf-write-form,.dcuf-password-card) {
+                border-radius: 21px !important;
+            }
+        }
+        @media (prefers-reduced-transparency: reduce) {
+            html[${ROOT_ATTRIBUTE}] body :is(
+                .dcheader.typea .dchead,.gnb_bar,.newvisit_history,.page_head,.list_array_option
+            ) {
+                background-color: var(--dcuf-glass-panel-solid) !important;
+                -webkit-backdrop-filter: none !important;
+                backdrop-filter: none !important;
+            }
+        }
+
+        /*
+         * Aurora glass v3
+         * The page supplies neutral colour and depth; the selected palette appears only
+         * on active controls. One blurred shell per region keeps the material legible.
+         */
+        html[${ROOT_ATTRIBUTE}],
+        html[${ROOT_ATTRIBUTE}] body {
+            background-color: var(--dcuf-glass-page) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body {
+            --dcuf-control-border: rgba(255,255,255,.48);
+            --dcuf-control-surface: linear-gradient(180deg,rgba(255,255,255,.28),rgba(255,255,255,.14));
+            --dcuf-control-shadow: inset 0 1px 0 rgba(255,255,255,.40),0 7px 20px rgba(31,48,84,.08);
+            --dcuf-search-input: rgba(255,255,255,.20);
+            --dcuf-search-layer: rgba(248,251,255,.62);
+            background-image:
+                radial-gradient(70% 55% at 8% 0%, rgba(101,118,255,.34), transparent 66%),
+                radial-gradient(58% 48% at 96% 8%, rgba(52,196,224,.25), transparent 68%),
+                radial-gradient(65% 52% at 52% 100%, rgba(177,106,255,.20), transparent 70%),
+                linear-gradient(135deg,#d8e4f3 0%,#eef3fb 48%,#dce5f5 100%) !important;
+            background-attachment: fixed !important;
+            color: var(--dcuf-theme-fg) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode {
+            --dcuf-control-border: rgba(222,234,255,.15);
+            --dcuf-control-surface: linear-gradient(180deg,rgba(151,170,214,.13),rgba(151,170,214,.06));
+            --dcuf-control-shadow: inset 0 1px 0 rgba(239,246,255,.16),0 9px 24px rgba(0,0,0,.22);
+            --dcuf-search-input: rgba(7,13,25,.32);
+            --dcuf-search-layer: rgba(17,27,47,.72);
+            background-image:
+                radial-gradient(70% 55% at 8% 0%, rgba(76,96,255,.26), transparent 66%),
+                radial-gradient(58% 48% at 96% 8%, rgba(31,171,209,.18), transparent 68%),
+                radial-gradient(65% 52% at 52% 100%, rgba(142,74,224,.16), transparent 70%),
+                linear-gradient(135deg,#08111f 0%,#111a2d 48%,#070c18 100%) !important;
+        }
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body.is-write-page,
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body.is-write-page.dc-filter-dark-mode {
+            --dcuf-write-surface: var(--dcuf-glass-panel) !important;
+            --dcuf-write-surface-muted: var(--dcuf-glass-control) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body :is(
+            .dcwrap,#container,#container > .left_content,#container article,.gall_listwrap,
+            .view_content_wrap,.view_bottom,#focus_cmt,.view_comment.image_comment,
+            .comment_box,.reply_box,.newvisit_box
+        ) {
+            background-color: transparent !important;
+            background-image: none !important;
+        }
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body #focus_cmt .comment_box .reply_box,
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body #focus_cmt .comment_box .cmt_list > li[data-dcuf-focus-group-reply="1"] > .reply.show > .reply_box,
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode #focus_cmt > div[id^="comment_wrap_"] .comment_box .reply_box,
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode #focus_cmt > div[id^="comment_wrap_"] .comment_box .cmt_list > li[data-dcuf-focus-group-reply="1"] > .reply.show > .reply_box {
+            border: 0 !important;
+            border-left: 2px solid color-mix(in srgb,var(--dcuf-theme-accent) 34%,var(--dcuf-theme-border-strong)) !important;
+            border-radius: 0 !important;
+            background: transparent !important;
+            box-shadow: none !important;
+        }
+
+        /* Header: a pale floating search shell over a single smoky navigation rail. */
+        html[${ROOT_ATTRIBUTE}] body .dcheader.typea {
+            border: 0 !important;
+            background: transparent !important;
+            box-shadow: none !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body .dcheader.typea .dchead {
+            border: 1px solid var(--dcuf-glass-border) !important;
+            border-top-color: var(--dcuf-glass-rim) !important;
+            border-radius: 0 0 24px 24px !important;
+            background-color: rgba(248,251,255,.40) !important;
+            background-image: linear-gradient(145deg,rgba(255,255,255,.34),transparent 42%) !important;
+            box-shadow: 0 18px 48px rgba(38,54,91,.10),inset 0 1px 0 var(--dcuf-glass-rim) !important;
+            -webkit-backdrop-filter: blur(30px) saturate(1.34) !important;
+            backdrop-filter: blur(30px) saturate(1.34) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode .dcheader.typea .dchead {
+            background-color: rgba(17,27,47,.42) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body .gnb_bar {
+            margin-top: 8px !important;
+            border: 1px solid rgba(255,255,255,.22) !important;
+            border-radius: 18px !important;
+            background-color: rgba(18,32,58,.72) !important;
+            background-image:
+                radial-gradient(80% 180% at 12% -80%,rgba(103,126,255,.34),transparent 65%),
+                linear-gradient(180deg,rgba(255,255,255,.12),transparent 72%) !important;
+            color: rgba(246,249,255,.88) !important;
+            box-shadow: 0 18px 44px rgba(22,35,65,.22),inset 0 1px 0 rgba(255,255,255,.22) !important;
+            -webkit-backdrop-filter: blur(26px) saturate(1.30) !important;
+            backdrop-filter: blur(26px) saturate(1.30) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode .gnb_bar {
+            background-color: rgba(6,12,24,.70) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body .gnb_bar :is(a,button,span,em) {
+            color: inherit !important;
+            text-shadow: none !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body .gnb_bar .gnb_list li > a {
+            border-radius: 999px !important;
+            color: rgba(246,249,255,.84) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body .gnb_bar .gnb_list li > a:is(:hover,:focus-visible),
+        html[${ROOT_ATTRIBUTE}] body .gnb_bar .gnb_list li.on > a {
+            background: rgba(255,255,255,.12) !important;
+            color: #fff !important;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.19),0 8px 20px rgba(0,0,0,.14) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body .newvisit_history {
+            border: 0 !important;
+            border-radius: 16px !important;
+            background-color: rgba(255,255,255,.16) !important;
+            background-image: linear-gradient(180deg,rgba(255,255,255,.22),transparent 76%) !important;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.50),0 8px 24px rgba(39,58,96,.055) !important;
+            -webkit-backdrop-filter: blur(18px) saturate(1.15) !important;
+            backdrop-filter: blur(18px) saturate(1.15) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode :is(.newvisit_history,.page_head) {
+            background-color: rgba(22,34,56,.22) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body .page_head {
+            box-shadow: inset 0 -1px 0 color-mix(in srgb,var(--dcuf-theme-accent) 36%,transparent) !important;
+        }
+
+        /* Search controls have one capsule and one luminous lens, not nested rectangles. */
+        html[${ROOT_ATTRIBUTE}] body :is(
+            .dchead .top_search,
+            .page_head :is(.gall_search .inner_search,.gall_search_box .inner_search,.inner_search),
+            .custom-bottom-controls .bottom_search,
+            form[name="frmSearch"] .bottom_search
+        ) {
+            padding: 3px !important;
+            border: 1px solid rgba(255,255,255,.48) !important;
+            border-radius: 999px !important;
+            background-color: rgba(255,255,255,.24) !important;
+            background-image: linear-gradient(180deg,rgba(255,255,255,.34),transparent 70%) !important;
+            box-shadow: inset 0 1px 3px rgba(27,39,61,.10),0 8px 22px rgba(32,51,89,.08) !important;
+            -webkit-backdrop-filter: blur(16px) saturate(1.18) !important;
+            backdrop-filter: blur(16px) saturate(1.18) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body :is(
+            .dchead .top_search,
+            .page_head .inner_search,
+            .custom-bottom-controls .bottom_search,
+            form[name="frmSearch"] .bottom_search
+        ) :is(input,.inner_search) {
+            border: 0 !important;
+            background: transparent !important;
+            box-shadow: none !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body :is(
+            .dchead .top_search .bnt_search,
+            .page_head :is(.btn_search,.bnt_search,button[type="submit"]),
+            .custom-bottom-controls .bottom_search .bnt_search,
+            form[name="frmSearch"] .bottom_search .bnt_search
+        ) {
+            width: 38px !important;
+            min-width: 38px !important;
+            height: 38px !important;
+            margin: 0 !important;
+            border: 1px solid rgba(255,255,255,.32) !important;
+            border-radius: 50% !important;
+            background-color: var(--dcuf-glass-control-active) !important;
+            background-image:
+                radial-gradient(circle at 28% 16%,rgba(255,255,255,.48),transparent 36%),
+                linear-gradient(145deg,var(--dcuf-glass-control-active-top),var(--dcuf-glass-control-active)) !important;
+            box-shadow: 0 9px 22px var(--dcuf-glass-accent-shadow),inset 0 1px 0 rgba(255,255,255,.45) !important;
+        }
+
+        /* List: one floating control dock, then quiet translucent cards over the aurora. */
+        html[${ROOT_ATTRIBUTE}] body .custom-mobile-list {
+            border: 0 !important;
+            border-radius: 0 !important;
+            background: transparent !important;
+            box-shadow: none !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body .list_array_option {
+            border: 1px solid var(--dcuf-glass-border) !important;
+            border-top-color: var(--dcuf-glass-rim) !important;
+            border-radius: 20px !important;
+            background-color: var(--dcuf-glass-panel) !important;
+            background-image: linear-gradient(145deg,rgba(255,255,255,.20),transparent 44%) !important;
+            box-shadow: 0 18px 46px rgba(31,48,84,.13),inset 0 1px 0 var(--dcuf-glass-rim) !important;
+            -webkit-backdrop-filter: blur(24px) saturate(1.22) !important;
+            backdrop-filter: blur(24px) saturate(1.22) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body .list_array_option :is(.array_tab a,.array_tab button,.select_area,.btn_write) {
+            border-radius: 999px !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body :is(
+            .list_array_option .array_tab li:not(.on) > a,
+            .list_array_option .array_tab :is(button,a):not(.on),
+            .list_array_option .select_area,
+            .custom-bottom-controls :is(button,select):not(.btn_write):not(.write),
+            .custom-bottom-controls a:not(.sp_pagingicon):not(.btn_write):not(.write)
+        ) {
+            border: 1px solid rgba(255,255,255,.42) !important;
+            background-color: var(--dcuf-glass-control) !important;
+            background-image: linear-gradient(180deg,rgba(255,255,255,.24),transparent 76%) !important;
+            color: var(--dcuf-theme-fg) !important;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.38),0 5px 14px rgba(34,50,82,.06) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body :is(
+            .list_array_option .array_tab .on,
+            .list_array_option .array_tab li.on > a,
+            .list_array_option .btn_write,
+            .custom-bottom-controls .bottom_paging_box > em,
+            .custom-bottom-controls :is(.btn_write,.write)
+        ) {
+            border: 1px solid color-mix(in srgb,var(--dcuf-theme-accent) 42%,rgba(255,255,255,.44)) !important;
+            background-color: var(--dcuf-glass-control-active) !important;
+            background-image:
+                radial-gradient(circle at 22% 0%,rgba(255,255,255,.42),transparent 42%),
+                linear-gradient(145deg,var(--dcuf-glass-control-active-top),var(--dcuf-glass-control-active)) !important;
+            color: var(--dcuf-glass-on-active) !important;
+            box-shadow: 0 10px 24px var(--dcuf-glass-accent-shadow),inset 0 1px 0 rgba(255,255,255,.44) !important;
+            text-shadow: 0 1px 1px rgba(0,0,0,.12) !important;
+        }
+        /*
+         * Specificity bridge for legacy host selectors that also carry !important.
+         * It changes material only; the original elements, dimensions, and handlers stay intact.
+         */
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body:not(.is-write-page) #container .list_array_option .array_tab li.on,
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body:not(.is-write-page) #container .list_array_option .array_tab li.on > a,
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body:not(.is-write-page) #container .list_array_option .array_tab :is(a,button).on,
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body:not(.is-write-page) #container .list_array_option .btn_write,
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body #container .custom-bottom-controls .bottom_paging_box > :is(em,strong,.on),
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body #container .custom-bottom-controls .dcuf-bottom-action-card :is(.btn_write,.write),
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body .dcheader.typea .dchead .top_search .bnt_search,
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body .dcheader.typea .dchead .area_links :is(.btn_login,.btn_top_loginout),
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body .page_head .fl form :is(.btn_search,.bnt_search,button[type="submit"]) {
+            border-color: color-mix(in srgb,var(--dcuf-theme-accent) 42%,rgba(255,255,255,.42)) !important;
+            background-color: var(--dcuf-glass-control-active) !important;
+            background-image:
+                radial-gradient(circle at 22% 0%,rgba(255,255,255,.42),transparent 42%),
+                linear-gradient(145deg,var(--dcuf-glass-control-active-top),var(--dcuf-glass-control-active)) !important;
+            color: var(--dcuf-glass-on-active) !important;
+            box-shadow: 0 10px 24px var(--dcuf-glass-accent-shadow),inset 0 1px 0 rgba(255,255,255,.44) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body .custom-post-item {
+            border: 1px solid var(--dcuf-glass-border) !important;
+            border-top-color: var(--dcuf-glass-rim) !important;
+            border-radius: 15px !important;
+            background-color: var(--dcuf-glass-cell) !important;
+            background-image: linear-gradient(145deg,rgba(255,255,255,.18),transparent 46%) !important;
+            box-shadow: none !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body .custom-post-item:hover {
+            background-color: color-mix(in srgb,var(--dcuf-glass-cell) 80%,rgba(255,255,255,.18)) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body .custom-post-item.notice {
+            border-left: 3px solid rgba(103,116,141,.52) !important;
+            background-color: color-mix(in srgb,var(--dcuf-glass-cell) 86%,rgba(255,255,255,.12)) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body .custom-post-item.concept {
+            border-left: 3px solid color-mix(in srgb,var(--dcuf-theme-accent) 68%,rgba(255,255,255,.28)) !important;
+            background-color: color-mix(in srgb,var(--dcuf-theme-accent-soft) 8%,var(--dcuf-glass-cell)) !important;
+        }
+
+        /* Reading surface: separate frosted title, paper, and a compact action dock. */
+        html[${ROOT_ATTRIBUTE}] body .view_content_wrap {
+            border: 0 !important;
+            border-radius: 0 !important;
+            background: transparent !important;
+            box-shadow: none !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body .view_content_wrap :is(.gallview_head,.gallview_contents) {
+            border: 1px solid var(--dcuf-glass-border) !important;
+            border-top-color: var(--dcuf-glass-rim) !important;
+            border-radius: 20px !important;
+            background-color: var(--dcuf-glass-panel-strong) !important;
+            background-image: linear-gradient(145deg,rgba(255,255,255,.18),transparent 42%) !important;
+            box-shadow: 0 18px 48px rgba(30,47,83,.11),inset 0 1px 0 var(--dcuf-glass-rim) !important;
+            -webkit-backdrop-filter: blur(24px) saturate(1.20) !important;
+            backdrop-filter: blur(24px) saturate(1.20) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body .view_content_wrap .gallview_contents {
+            background-color: color-mix(in srgb,var(--dcuf-glass-paper) 78%,transparent) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body .view_content_wrap .gall_writer {
+            border-top-color: color-mix(in srgb,var(--dcuf-glass-border-strong) 45%,transparent) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body .view_content_wrap .btn_recommend_box {
+            width: min(480px,calc(100% - 20px)) !important;
+            min-width: 0 !important;
+            margin: 26px auto 16px !important;
+            padding: 12px 14px !important;
+            border: 1px solid var(--dcuf-glass-border) !important;
+            border-top-color: var(--dcuf-glass-rim) !important;
+            border-radius: 20px !important;
+            background-color: var(--dcuf-glass-panel-soft) !important;
+            background-image: linear-gradient(145deg,rgba(255,255,255,.14),transparent 48%) !important;
+            box-shadow: 0 16px 38px rgba(31,48,84,.10),inset 0 1px 0 rgba(255,255,255,.42) !important;
+            -webkit-backdrop-filter: none !important;
+            backdrop-filter: none !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body .view_content_wrap .btn_recommend_box .inner_box {
+            gap: 9px !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body .view_content_wrap .btn_recommend_box .inner_box > .inner {
+            flex: 0 1 156px !important;
+            min-height: 62px !important;
+            padding: 7px 10px !important;
+            border: 1px solid rgba(255,255,255,.34) !important;
+            border-radius: 16px !important;
+            background-color: rgba(255,255,255,.13) !important;
+            background-image: linear-gradient(180deg,rgba(255,255,255,.16),transparent 76%) !important;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.30) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body .view_content_wrap .btn_recommend_box .recom_bottom_box {
+            gap: 7px !important;
+            margin-top: 9px !important;
+            padding-top: 9px !important;
+            border-top-color: rgba(255,255,255,.26) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body .view_content_wrap .btn_recommend_box .recom_bottom_box > :is(button,a) {
+            min-height: 32px !important;
+            padding: 0 11px !important;
+            border: 1px solid rgba(255,255,255,.34) !important;
+            background-color: rgba(255,255,255,.10) !important;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.26) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body .view_content_wrap .btn_recommend_box .btn_recom_up {
+            background-color: var(--dcuf-glass-control-active) !important;
+            background-image:
+                radial-gradient(circle at 26% 12%,rgba(255,255,255,.46),transparent 38%),
+                linear-gradient(145deg,var(--dcuf-glass-control-active-top),var(--dcuf-glass-control-active)) !important;
+            box-shadow: 0 10px 22px var(--dcuf-glass-accent-shadow),inset 0 1px 0 rgba(255,255,255,.42) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body .view_content_wrap .recommend_kapcode {
+            border-radius: 999px !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body .view_content_wrap .recommend_kapcode .kap_codeimg {
+            border-radius: 999px 0 0 999px !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body .view_content_wrap .recommend_kapcode .recom_input_kapcode {
+            border-radius: 0 999px 999px 0 !important;
+            background-color: var(--dcuf-glass-input) !important;
+        }
+
+        /* Comments keep depth through translucency; replies use one accent rail only. */
+        html[${ROOT_ATTRIBUTE}] body :is(
+            #focus_cmt .comment_box,
+            #focus_cmt > div[id^="comment_wrap_"],
+            #container .view_comment.image_comment .comment_box.img_comment_box,
+            #container .view_comment.image_comment .comment_wrap
+        ) {
+            border: 1px solid var(--dcuf-glass-border) !important;
+            border-radius: 20px !important;
+            background-color: rgba(255,255,255,.14) !important;
+            background-image: linear-gradient(145deg,rgba(255,255,255,.12),transparent 44%) !important;
+            box-shadow: 0 16px 42px rgba(31,48,84,.09),inset 0 1px 0 rgba(255,255,255,.38) !important;
+            -webkit-backdrop-filter: blur(20px) saturate(1.16) !important;
+            backdrop-filter: blur(20px) saturate(1.16) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body :is(
+            #focus_cmt .comment_box .cmt_list > li,
+            #container .view_comment.image_comment .comment_box.img_comment_box .cmt_list > li
+        ) {
+            border: 1px solid var(--dcuf-glass-border) !important;
+            border-radius: 15px !important;
+            background-color: var(--dcuf-glass-cell) !important;
+            background-image: linear-gradient(145deg,rgba(255,255,255,.14),transparent 44%) !important;
+            box-shadow: var(--dcuf-glass-card-shadow),inset 0 1px 0 rgba(255,255,255,.38) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body :is(
+            #focus_cmt .comment_box .reply_list > li,
+            #container .view_comment.image_comment .comment_box.img_comment_box .reply_list > li,
+            #focus_cmt li[id^="reply_li_"]
+        ) {
+            border: 0 !important;
+            border-left: 3px solid color-mix(in srgb,var(--dcuf-theme-accent) 56%,rgba(255,255,255,.22)) !important;
+            border-radius: 4px 14px 14px 4px !important;
+            background-color: var(--dcuf-glass-cell-soft) !important;
+            background-image: none !important;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.18) !important;
+        }
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body :is(
+            #focus_cmt .cmt_write_box,
+            #container .view_comment.image_comment .cmt_write_box
+        ) {
+            border-color: var(--dcuf-glass-border) !important;
+            background-color: var(--dcuf-glass-panel-soft) !important;
+            background-image: linear-gradient(145deg,rgba(255,255,255,.12),transparent 52%) !important;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.22),0 8px 24px rgba(28,44,77,.055) !important;
+        }
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body :is(
+            #focus_cmt .cmt_write_box .cmt_txt_cont,
+            #focus_cmt .cmt_write_box .cmt_cont_bottm,
+            #focus_cmt .cmt_write_box .user_info_input input:not([type="hidden"]),
+            #container .view_comment.image_comment .cmt_write_box .cmt_txt_cont,
+            #container .view_comment.image_comment .cmt_write_box .cmt_cont_bottm,
+            #container .view_comment.image_comment .cmt_write_box .user_info_input input:not([type="hidden"])
+        ) {
+            border-color: var(--dcuf-glass-border-strong) !important;
+            background-color: var(--dcuf-glass-input) !important;
+            background-image: linear-gradient(180deg,rgba(255,255,255,.12),transparent 72%) !important;
+            box-shadow: inset 0 2px 5px rgba(18,29,50,.08),inset 0 1px 0 rgba(255,255,255,.20) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body :is(
+            #focus_cmt .cmt_write_box textarea,
+            #container .view_comment.image_comment .cmt_write_box textarea
+        ) {
+            background: transparent !important;
+        }
+
+        /* Write form: frosted shell, quiet toolbar, intentionally readable paper. */
+        html[${ROOT_ATTRIBUTE}] body.is-write-page #container,
+        html[${ROOT_ATTRIBUTE}] body.is-write-page :is(.center_content,.gall_write,.write_box) {
+            background: transparent !important;
+        }
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body.is-write-page form.dcuf-write-form {
+            border: 1px solid var(--dcuf-glass-border) !important;
+            border-top-color: var(--dcuf-glass-rim) !important;
+            border-radius: 22px !important;
+            background-color: rgba(248,251,255,.38) !important;
+            background-image: linear-gradient(145deg,rgba(255,255,255,.18),transparent 42%) !important;
+            box-shadow: 0 28px 72px rgba(28,44,81,.16),inset 0 1px 0 var(--dcuf-glass-rim) !important;
+            -webkit-backdrop-filter: none !important;
+            backdrop-filter: none !important;
+        }
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body.is-write-page.dc-filter-dark-mode form.dcuf-write-form {
+            background-color: rgba(17,27,47,.42) !important;
+        }
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body.is-write-page form.dcuf-write-form :is(
+            input:not([type="checkbox"]):not([type="radio"]),textarea,select,.write_subject,.captcha,.dcuf-write-captcha-image
+        ) {
+            border-color: rgba(255,255,255,.42) !important;
+            border-radius: 13px !important;
+            background-color: var(--dcuf-glass-input) !important;
+            background-image: linear-gradient(180deg,rgba(255,255,255,.18),transparent 72%) !important;
+            box-shadow: inset 0 2px 5px rgba(21,32,54,.10),inset 0 1px 0 rgba(255,255,255,.34) !important;
+        }
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body.is-write-page form.dcuf-write-form :is(.note-editor,.tx-editor-container,.tx-editor) {
+            overflow: visible !important;
+            border: 1px solid var(--dcuf-glass-border) !important;
+            border-radius: 18px !important;
+            background-color: rgba(255,255,255,.12) !important;
+            box-shadow: 0 16px 38px rgba(31,48,84,.09),inset 0 1px 0 rgba(255,255,255,.36) !important;
+        }
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body.is-write-page form.dcuf-write-form :is(
+            .note-toolbar,.note-toolbar-media,.tx-toolbar,.tx-toolbar-basic,.btns-box,.note-statusbar,
+            .btn_bottom_box,.btm-btns-box
+        ),
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body.is-write-page form.dcuf-write-form > .btn_box.write {
+            border: 0 !important;
+            border-bottom: 1px solid rgba(255,255,255,.28) !important;
+            background-color: rgba(255,255,255,.13) !important;
+            background-image: linear-gradient(180deg,rgba(255,255,255,.15),transparent 76%) !important;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.16) !important;
+        }
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body.is-write-page form.dcuf-write-form :is(
+            .note-btn,.note-toolbar-media > button,.btns-box button,.tx-toolbar button,.tx-toolbar a
+        ) {
+            border-color: transparent !important;
+            border-radius: 9px !important;
+            background: transparent !important;
+            box-shadow: none !important;
+        }
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body.is-write-page form.dcuf-write-form :is(
+            .note-btn,.note-toolbar-media > button,.btns-box button,.tx-toolbar button,.tx-toolbar a
+        ):is(:hover,:focus-visible,.active) {
+            border-color: rgba(255,255,255,.28) !important;
+            background-color: rgba(255,255,255,.18) !important;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.28) !important;
+        }
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body.is-write-page form.dcuf-write-form :is(.note-editable,.tx-content-container,.tx-canvas) {
+            background-color: var(--dcuf-glass-paper) !important;
+            background-image: linear-gradient(145deg,rgba(255,255,255,.16),transparent 38%) !important;
+            color: var(--dcuf-theme-fg) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body :is(.dcuf-password-card,.no_memberwrap) {
+            border: 1px solid var(--dcuf-glass-border) !important;
+            border-top-color: var(--dcuf-glass-rim) !important;
+            border-radius: 22px !important;
+            background-color: var(--dcuf-glass-panel) !important;
+            background-image: linear-gradient(145deg,rgba(255,255,255,.18),transparent 42%) !important;
+            box-shadow: var(--dcuf-glass-popup-shadow),inset 0 1px 0 var(--dcuf-glass-rim) !important;
+            -webkit-backdrop-filter: blur(var(--dcuf-glass-blur)) saturate(1.24) !important;
+            backdrop-filter: blur(var(--dcuf-glass-blur)) saturate(1.24) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body :is(.dcuf-password-card,.no_memberwrap) :is(
+            input:not([type="checkbox"]):not([type="radio"]),textarea,select
+        ) {
+            border: 1px solid rgba(255,255,255,.30) !important;
+            border-radius: 12px !important;
+            background-color: var(--dcuf-glass-input) !important;
+            background-image: linear-gradient(180deg,rgba(255,255,255,.14),transparent 72%) !important;
+            color: var(--dcuf-theme-fg) !important;
+            box-shadow: inset 0 2px 5px rgba(18,29,50,.10),inset 0 1px 0 rgba(255,255,255,.24) !important;
+        }
+
+        /* Native primary actions share the same coloured glass as DCUF controls. */
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body :is(
+            .dchead .area_links .btn_login,
+            .dchead .area_links .btn_top_loginout,
+            #container.gallery_view .view_bottom_btnbox .btn_blue,
+            #container.gallery_view .view_bottom_btnbox .write,
+            #container.minor_view .view_bottom_btnbox .btn_blue,
+            #container.minor_view .view_bottom_btnbox .write,
+            #container.mini_view .view_bottom_btnbox .btn_blue,
+            #container.mini_view .view_bottom_btnbox .write,
+            form.dcuf-write-form .btn_bottom_box .btn_blue,
+            form.dcuf-write-form .btm-btns-box .btn-line-blue,
+            form.dcuf-write-form > .btn_box.write > .btn_blue,
+            form.dcuf-write-form #write-submit,
+            form.dcuf-write-form .ai_easy_box > .btn_aigo,
+            .dcuf-password-card .btn_ok,
+            .no_memberwrap .btn_ok,
+            #focus_cmt .cmt_write_box .cmt_btn_bot > button,
+            #focus_cmt .cmt_write_box .cmt_cont_bottm > .fr > button,
+            #container .view_comment.image_comment .cmt_write_box .cmt_btn_bot > button,
+            #container .view_comment.image_comment .cmt_write_box .cmt_cont_bottm > .fr > button
+        ) {
+            border: 1px solid color-mix(in srgb,var(--dcuf-theme-accent) 42%,rgba(255,255,255,.42)) !important;
+            border-radius: var(--dcuf-radius-control) !important;
+            background-color: var(--dcuf-glass-control-active) !important;
+            background-image:
+                radial-gradient(circle at 22% 0%,rgba(255,255,255,.42),transparent 42%),
+                linear-gradient(145deg,var(--dcuf-glass-control-active-top),var(--dcuf-glass-control-active)) !important;
+            color: var(--dcuf-glass-on-active) !important;
+            box-shadow: 0 10px 24px var(--dcuf-glass-accent-shadow),inset 0 1px 0 rgba(255,255,255,.44) !important;
+            text-shadow: 0 1px 1px rgba(0,0,0,.12) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body .dchead .area_links :is(.btn_login,.btn_top_loginout) {
+            padding: 2px 8px !important;
+            -webkit-backdrop-filter: blur(12px) saturate(1.18) !important;
+            backdrop-filter: blur(12px) saturate(1.18) !important;
+        }
+
+        /*
+         * Live-surface correction.
+         * Keep one real glass shell in the header and use structural rails below it.
+         * This avoids the stacked-card look while preserving every host element and handler.
+         */
+        html[${ROOT_ATTRIBUTE}] body:not(.dc-filter-dark-mode) .gnb_bar {
+            border-color: rgba(255,255,255,.56) !important;
+            background-color: rgba(225,234,246,.30) !important;
+            background-image:
+                radial-gradient(75% 150% at 10% -70%,rgba(255,255,255,.52),transparent 66%),
+                linear-gradient(180deg,rgba(255,255,255,.22),rgba(255,255,255,.045)) !important;
+            color: var(--dcuf-theme-fg) !important;
+            box-shadow: 0 12px 30px rgba(31,48,84,.085),inset 0 1px 0 rgba(255,255,255,.66) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body:not(.dc-filter-dark-mode) .gnb_bar :is(a,button,span,em),
+        html[${ROOT_ATTRIBUTE}] body:not(.dc-filter-dark-mode) .gnb_bar .gnb_list li > a {
+            color: var(--dcuf-theme-fg) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body:not(.dc-filter-dark-mode) .gnb_bar .gnb_list li > a:is(:hover,:focus-visible),
+        html[${ROOT_ATTRIBUTE}] body:not(.dc-filter-dark-mode) .gnb_bar .gnb_list li.on > a {
+            background-color: rgba(255,255,255,.18) !important;
+            color: var(--dcuf-theme-accent-strong) !important;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.48),0 7px 18px rgba(31,48,84,.075) !important;
+        }
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body :is(#dcuf-structural-header-rail,.newvisit_history) {
+            border: 0 !important;
+            border-radius: 0 !important;
+            background-color: transparent !important;
+            background-image: none !important;
+            box-shadow: none !important;
+            -webkit-backdrop-filter: none !important;
+            backdrop-filter: none !important;
+            transition: none !important;
+            pointer-events: none !important;
+        }
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body #visit_history > .newvisit_history.vst :is(
+            a,
+            button,
+            input,
+            select,
+            .newvisit_box,
+            .newvisit_list,
+            [role="button"]
+        ) {
+            pointer-events: auto !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body .newvisit_history {
+            border-bottom: 1px solid color-mix(in srgb,var(--dcuf-glass-border) 72%,transparent) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body .page_head {
+            border-bottom: 1px solid color-mix(in srgb,var(--dcuf-theme-accent) 34%,var(--dcuf-glass-border)) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body .page_head :is(.fr,.gall_issuebox) {
+            border: 0 !important;
+            background: transparent !important;
+            box-shadow: none !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body .page_head > .fr.gall_issuebox > :is(
+            .relate,.gall_useinfo,.fixture-issue-more,.btn_hotall_list
+        ) {
+            border: 1px solid rgba(255,255,255,.32) !important;
+            border-radius: 999px !important;
+            background-color: var(--dcuf-glass-control) !important;
+            background-image: linear-gradient(180deg,rgba(255,255,255,.18),transparent 76%) !important;
+            color: var(--dcuf-theme-fg) !important;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.30),0 6px 16px rgba(30,46,79,.055) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body .custom-post-item {
+            background-color: var(--dcuf-glass-cell) !important;
+            box-shadow: none !important;
+        }
+
+        /*
+         * A popup cannot escape a backdrop-filter stacking context with z-index alone.
+         * Comment shells therefore keep the frosted colour/depth but leave the actual blur
+         * to the page behind them. When the host DCCon layer is open, its existing ancestor
+         * is promoted without moving, cloning, or replacing the host popup.
+         */
+        html[${ROOT_ATTRIBUTE}] body :is(
+            #focus_cmt > div[id^="comment_wrap_"],
+            #focus_cmt .comment_box,
+            #container .view_comment.image_comment .comment_wrap,
+            #container .view_comment.image_comment .comment_box.img_comment_box
+        ) {
+            -webkit-backdrop-filter: none !important;
+            backdrop-filter: none !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body :is(#focus_cmt,.view_comment.image_comment) :is(
+            .cmt_write_box,.cmt_txt_cont,.cmt_cont_bottm,.dccon_guidebox,
+            #dccon_guide_lyr,.pop_wrap.type2,.pop_wrap.type3
+        ) {
+            overflow: visible !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body :is(#focus_cmt,.view_comment.image_comment):has(
+            #dccon_guide_lyr:not([style*="display: none"]):not([hidden]),
+            .dccon_guidebox .pop_wrap:not([style*="display: none"]):not([hidden])
+        ) {
+            position: relative !important;
+            z-index: 2147483600 !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body :is(#focus_cmt,.view_comment.image_comment) :is(
+            #dccon_guide_lyr,.dccon_guidebox,.dccon_guidebox .pop_wrap
+        ) {
+            z-index: 2147483647 !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #focus_cmt > div[id^="comment_wrap_"].comment_wrap:not(.show) {
+            overflow: hidden !important;
+        }
+
+        @media (max-width:767px) {
+            html[${ROOT_ATTRIBUTE}] body .dcheader.typea .dchead { border-radius:0 0 18px 18px !important; }
+            html[${ROOT_ATTRIBUTE}] body .gnb_bar { border-radius:15px !important; }
+            html[${ROOT_ATTRIBUTE}] body :is(.newvisit_history,.page_head) { border-radius:0 !important; }
+            html[${ROOT_ATTRIBUTE}] body .custom-post-item { border-radius:14px !important; }
+            html[${ROOT_ATTRIBUTE}] body form.dcuf-write-form { border-radius:18px !important; }
+        }
+        @media (prefers-reduced-transparency:reduce) {
+            html[${ROOT_ATTRIBUTE}] body :is(
+                .dcheader.typea .dchead,.gnb_bar,.newvisit_history,.page_head,.list_array_option,
+                .view_content_wrap .gallview_head,.view_content_wrap .gallview_contents,
+                .view_content_wrap .btn_recommend_box,#focus_cmt .comment_box,
+                #container .view_comment.image_comment .comment_box.img_comment_box,
+                form.dcuf-write-form,.dcuf-password-card,.no_memberwrap
+            ) {
+                background-color:var(--dcuf-glass-panel-solid) !important;
+                -webkit-backdrop-filter:none !important;
+                backdrop-filter:none !important;
+            }
+        }
+
+        /*
+         * Selective-glass pass.
+         * Large shells carry the refraction; repeated reading rows stay calm and flat.
+         */
+        html[${ROOT_ATTRIBUTE}] body {
+            background-color: var(--dcuf-glass-page) !important;
+            background-image:
+                radial-gradient(circle at 88% 4%,color-mix(in srgb,var(--dcuf-theme-accent) 8%,transparent),transparent 34%),
+                radial-gradient(circle at 8% 2%,rgba(133,151,214,.09),transparent 38%) !important;
+        }
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body .dcheader.typea {
+            border: 0 !important;
+            background: transparent !important;
+            box-shadow: none !important;
+        }
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body .dcheader.typea .dchead {
+            border: 1px solid var(--dcuf-glass-border) !important;
+            border-radius: var(--dcuf-radius-panel) !important;
+            background-color: var(--dcuf-glass-panel) !important;
+            background-image: linear-gradient(180deg,var(--dcuf-glass-rim),transparent 72%) !important;
+            box-shadow: 0 10px 28px rgba(38,54,88,.08),inset 0 1px 0 var(--dcuf-glass-rim) !important;
+            -webkit-backdrop-filter: blur(var(--dcuf-glass-blur)) saturate(1.12) !important;
+            backdrop-filter: blur(var(--dcuf-glass-blur)) saturate(1.12) !important;
+        }
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body .gnb_bar {
+            border: 1px solid var(--dcuf-glass-border) !important;
+            border-radius: 14px !important;
+            background-color: color-mix(in srgb,var(--dcuf-glass-panel) 72%,transparent) !important;
+            background-image: linear-gradient(180deg,rgba(255,255,255,.22),transparent 78%) !important;
+            color: var(--dcuf-theme-fg) !important;
+            box-shadow: 0 6px 18px rgba(38,54,88,.055),inset 0 1px 0 var(--dcuf-glass-rim) !important;
+            -webkit-backdrop-filter: blur(12px) saturate(1.08) !important;
+            backdrop-filter: blur(12px) saturate(1.08) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body .gnb_bar :is(a,button,span,em),
+        html[${ROOT_ATTRIBUTE}] body .gnb_bar .gnb_list li > a {
+            color: var(--dcuf-theme-fg) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body .gnb_bar .sp_img.icon_next {
+            border-top-color: var(--dcuf-theme-fg-muted) !important;
+        }
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body .newvisit_history {
+            border: 0 !important;
+            border-radius: 0 !important;
+            background: transparent !important;
+            box-shadow: none !important;
+            -webkit-backdrop-filter: none !important;
+            backdrop-filter: none !important;
+            overflow: visible !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body .issue_wrap {
+            border: 0 !important;
+            background: transparent !important;
+            box-shadow: none !important;
+            -webkit-backdrop-filter: none !important;
+            backdrop-filter: none !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body .newvisit_history {
+            border-bottom: 1px solid color-mix(in srgb,var(--dcuf-theme-border-strong) 46%,transparent) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body .page_head {
+            position: relative !important;
+            z-index: 20 !important;
+            overflow: visible !important;
+            border: 1px solid var(--dcuf-glass-border) !important;
+            border-radius: var(--dcuf-radius-panel) !important;
+            background-color: var(--dcuf-glass-panel) !important;
+            background-image: linear-gradient(180deg,var(--dcuf-glass-highlight),transparent 76%) !important;
+            box-shadow: 0 9px 24px rgba(36,52,84,.07),inset 0 1px 0 var(--dcuf-glass-rim) !important;
+            -webkit-backdrop-filter: none !important;
+            backdrop-filter: none !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body .page_head :is(.fr,.gall_issuebox) {
+            border: 0 !important;
+            background: transparent !important;
+            box-shadow: none !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body .page_head > .fr.gall_issuebox > :is(
+            .relate,.gall_useinfo,.fixture-issue-more,.btn_hotall_list
+        ) {
+            border-color: var(--dcuf-glass-border) !important;
+            border-radius: var(--dcuf-radius-control) !important;
+            background-color: var(--dcuf-glass-control) !important;
+            background-image: linear-gradient(180deg,var(--dcuf-glass-highlight),transparent 78%) !important;
+            color: var(--dcuf-theme-fg) !important;
+            box-shadow: inset 0 1px 0 var(--dcuf-glass-rim) !important;
+        }
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body:not(.is-write-page) .list_array_option {
+            overflow: visible !important;
+            border: 1px solid var(--dcuf-glass-border) !important;
+            border-radius: var(--dcuf-radius-panel) !important;
+            background-color: var(--dcuf-glass-panel) !important;
+            background-image: linear-gradient(180deg,var(--dcuf-glass-highlight),transparent 76%) !important;
+            box-shadow: 0 8px 22px rgba(36,52,84,.065),inset 0 1px 0 var(--dcuf-glass-rim) !important;
+            -webkit-backdrop-filter: none !important;
+            backdrop-filter: none !important;
+        }
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body #container .custom-mobile-list {
+            overflow: hidden !important;
+            padding: 0 !important;
+            border: 1px solid var(--dcuf-glass-border) !important;
+            border-radius: var(--dcuf-radius-panel) !important;
+            background: var(--dcuf-glass-cell) !important;
+            box-shadow: 0 9px 26px rgba(35,52,88,.065),inset 0 1px 0 var(--dcuf-glass-rim) !important;
+            -webkit-backdrop-filter: none !important;
+            backdrop-filter: none !important;
+        }
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body .custom-mobile-list .custom-post-item {
+            margin: 0 !important;
+            border: 0 !important;
+            border-bottom: 1px solid color-mix(in srgb,var(--dcuf-theme-border-strong) 55%,transparent) !important;
+            border-radius: 0 !important;
+            background-color: var(--dcuf-glass-cell) !important;
+            background-image: none !important;
+            box-shadow: none !important;
+            transform: none !important;
+            transition: none !important;
+            -webkit-backdrop-filter: none !important;
+            backdrop-filter: none !important;
+        }
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body .custom-mobile-list .custom-post-item.dcuf-recent-post {
+            outline: 1px solid color-mix(in srgb,var(--dcuf-theme-accent) 22%,var(--dcuf-glass-border)) !important;
+            outline-offset: -1px !important;
+            background-color: color-mix(in srgb,var(--dcuf-theme-accent) 4%,var(--dcuf-glass-cell)) !important;
+            box-shadow: inset 3px 0 0 color-mix(in srgb,var(--dcuf-theme-accent) 54%,transparent) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body .custom-mobile-list .custom-post-item:last-child {
+            border-bottom: 0 !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body .custom-mobile-list .custom-post-item:is(:hover,:focus-within) {
+            background-color: color-mix(in srgb,var(--dcuf-theme-accent) 4%,var(--dcuf-glass-cell)) !important;
+            transform: none !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body .custom-mobile-list .custom-post-item:has(
+            #user_data_lyr:not([style*="display: none"]),
+            .user_data:not([style*="display: none"]),
+            .pop_wrap.type2[style*="display:block"],
+            .pop_wrap.type2[style*="display: block"],
+            .pop_wrap.type3[style*="display:block"],
+            .pop_wrap.type3[style*="display: block"]
+        ) {
+            position: relative !important;
+            z-index: 2147483600 !important;
+            transform: none !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body .custom-post-item :is(#user_data_lyr,.user_data,.pop_wrap.type2,.pop_wrap.type3) {
+            z-index: 2147483647 !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body .custom-post-item:is(.notice,.concept)::before,
+        html[${ROOT_ATTRIBUTE}] body .list_array_option .array_tab :is(.on,button.on,a.on) {
+            border-color: color-mix(in srgb,var(--dcuf-theme-accent) 24%,var(--dcuf-glass-border)) !important;
+            background-color: var(--dcuf-glass-control-active) !important;
+            background-image: linear-gradient(180deg,var(--dcuf-glass-control-active-top),var(--dcuf-glass-control-active)) !important;
+            color: var(--dcuf-theme-fg) !important;
+            box-shadow: inset 0 1px 0 var(--dcuf-glass-rim),0 5px 14px var(--dcuf-glass-accent-shadow) !important;
+            text-shadow: none !important;
+        }
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body:not(.is-write-page) .list_array_option :is(.btn_write,.btn_write.txt) {
+            border-color: color-mix(in srgb,var(--dcuf-theme-accent) 26%,var(--dcuf-glass-border)) !important;
+            border-radius: var(--dcuf-radius-control) !important;
+            background-color: color-mix(in srgb,var(--dcuf-theme-accent) 16%,var(--dcuf-glass-control)) !important;
+            background-image: linear-gradient(180deg,var(--dcuf-glass-control-active-top),transparent 86%) !important;
+            color: var(--dcuf-theme-fg) !important;
+            box-shadow: inset 0 1px 0 var(--dcuf-glass-rim),0 6px 16px var(--dcuf-glass-accent-shadow) !important;
+            text-shadow: none !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body:not(.is-write-page) .list_array_option .select_box.array_num {
+            z-index: 2147483600 !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body:not(.is-write-page) .list_array_option:has(
+            #listSizeLayer:not([style*="display: none"]):not([style*="display:none"])
+        ) {
+            position: relative !important;
+            z-index: 2147483600 !important;
+            filter: none !important;
+            transform: none !important;
+            -webkit-backdrop-filter: none !important;
+            backdrop-filter: none !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body:not(.is-write-page) .list_array_option .select_box.array_num .icon_option_more {
+            position: static !important;
+            inset: auto !important;
+            align-self: center !important;
+            margin: 0 0 0 6px !important;
+            transform: none !important;
+            vertical-align: middle !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body :is(.dcheader,.wrap_search,.top_search,.inner_search) {
+            overflow: visible !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body .dcheader:has(.auto_wordwrap.lately:not([style*="display: none"])) {
+            position: relative !important;
+            z-index: 2147483600 !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body :is(
+            .auto_wordwrap.lately,#listSizeLayer.option_box,#hot_rank_pop2,
+            .issue_wrap .pop_wrap,.alarmPopup.pop_wrap
+        ) {
+            z-index: 2147483647 !important;
+            pointer-events: auto !important;
+        }
+
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body #container > article > .view_content_wrap:not(header) {
+            box-sizing: border-box !important;
+            overflow: hidden !important;
+            border: 1px solid var(--dcuf-glass-border) !important;
+            border-color: var(--dcuf-glass-border) !important;
+            border-radius: var(--dcuf-radius-panel) !important;
+            background-color: var(--dcuf-glass-panel) !important;
+            background-image: linear-gradient(145deg,var(--dcuf-glass-highlight),transparent 44%) !important;
+            box-shadow: 0 10px 30px rgba(32,48,82,.075),inset 0 1px 0 var(--dcuf-glass-rim) !important;
+            -webkit-backdrop-filter: none !important;
+            backdrop-filter: none !important;
+        }
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body #container > article > .view_content_wrap:not(header) > header {
+            border: 0 !important;
+            border-radius: 0 !important;
+            background: transparent !important;
+            box-shadow: none !important;
+            -webkit-backdrop-filter: none !important;
+            backdrop-filter: none !important;
+        }
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body .view_content_wrap :is(
+            .gallview_head,.gallview_contents,.writing_view_box,.write_div
+        ) {
+            border-right: 0 !important;
+            border-left: 0 !important;
+            border-radius: 0 !important;
+            background-color: transparent !important;
+            background-image: none !important;
+            box-shadow: none !important;
+            -webkit-backdrop-filter: none !important;
+            backdrop-filter: none !important;
+        }
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body .view_content_wrap :is(.gallview_contents,.writing_view_box) {
+            background-color: var(--dcuf-glass-paper) !important;
+        }
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body .view_content_wrap .gallview_contents {
+            padding: 18px clamp(20px,3vw,34px) clamp(20px,3vw,34px) !important;
+        }
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body .view_content_wrap .write_div {
+            color: var(--dcuf-theme-fg) !important;
+            font-size: 17px !important;
+            line-height: 1.72 !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body .view_content_wrap .btn_recommend_box {
+            border-radius: 15px !important;
+            background-color: var(--dcuf-glass-panel-strong) !important;
+            background-image: linear-gradient(180deg,var(--dcuf-glass-highlight),transparent 78%) !important;
+            box-shadow: 0 6px 18px rgba(32,48,82,.06),inset 0 1px 0 var(--dcuf-glass-rim) !important;
+            -webkit-backdrop-filter: none !important;
+            backdrop-filter: none !important;
+        }
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body .view_content_wrap .btn_recommend_box .inner_box > .inner {
+            border: 0 !important;
+            border-radius: 0 !important;
+            background: transparent !important;
+            box-shadow: none !important;
+        }
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body .view_content_wrap .gall_exposure_list {
+            margin: 0 !important;
+            padding: 0 !important;
+            border: 0 !important;
+            border-top: 1px solid color-mix(in srgb,var(--dcuf-theme-border-strong) 52%,transparent) !important;
+            border-radius: 0 !important;
+            background: transparent !important;
+            box-shadow: none !important;
+            -webkit-backdrop-filter: none !important;
+            backdrop-filter: none !important;
+        }
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body .view_content_wrap .gall_exposure_list li {
+            padding: 10px clamp(20px,3vw,34px) !important;
+            border-radius: 0 !important;
+            background: transparent !important;
+            box-shadow: none !important;
+        }
+
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body :is(
+            #focus_cmt > div[id^="comment_wrap_"].show,
+            #container .view_comment.image_comment > .comment_wrap
+        ) {
+            overflow: visible !important;
+            border: 1px solid var(--dcuf-glass-border) !important;
+            border-radius: var(--dcuf-radius-panel) !important;
+            background-color: var(--dcuf-glass-cell) !important;
+            background-image: none !important;
+            box-shadow: 0 8px 24px rgba(32,48,82,.06),inset 0 1px 0 var(--dcuf-glass-rim) !important;
+            -webkit-backdrop-filter: none !important;
+            backdrop-filter: none !important;
+        }
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body :is(
+            #focus_cmt .comment_box,
+            #container .view_comment.image_comment .comment_box.img_comment_box
+        ) {
+            border: 0 !important;
+            border-radius: 0 !important;
+            background: transparent !important;
+            box-shadow: none !important;
+            -webkit-backdrop-filter: none !important;
+            backdrop-filter: none !important;
+        }
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body :is(
+            #focus_cmt .comment_box .cmt_list > li,
+            #container .view_comment.image_comment .comment_box.img_comment_box .cmt_list > li
+        ) {
+            margin: 0 !important;
+            border: 0 !important;
+            border-bottom: 1px solid color-mix(in srgb,var(--dcuf-theme-border-strong) 50%,transparent) !important;
+            border-radius: 0 !important;
+            background: transparent !important;
+            box-shadow: none !important;
+        }
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body #focus_cmt .comment_box .cmt_list > li {
+            padding: 12px 16px !important;
+        }
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body #focus_cmt .comment_box .cmt_txtbox img:is(
+            .comment_dccon,.written_dccon,.bigdccon
+        ) {
+            display: block !important;
+            width: auto !important;
+            height: auto !important;
+            max-width: min(112px,30vw) !important;
+            max-height: 112px !important;
+            object-fit: contain !important;
+            border-radius: 8px !important;
+        }
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body #focus_cmt .comment_box .cmt_txtbox img.written_dccon:not(.bigdccon) {
+            max-width: min(88px,24vw) !important;
+            max-height: 88px !important;
+        }
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body #focus_cmt :is(.reply.show,.reply_box) {
+            border: 0 !important;
+            border-radius: 0 !important;
+            background: transparent !important;
+            box-shadow: none !important;
+        }
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body #focus_cmt .reply_box {
+            margin-left: 18px !important;
+            padding-left: 14px !important;
+            border-left: 2px solid color-mix(in srgb,var(--dcuf-theme-accent) 34%,var(--dcuf-theme-border-strong)) !important;
+        }
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body #focus_cmt :is(.reply_list > li,li[id^="reply_li_"]) {
+            border: 0 !important;
+            border-bottom: 1px solid color-mix(in srgb,var(--dcuf-theme-border-strong) 42%,transparent) !important;
+            border-radius: 0 !important;
+            background: transparent !important;
+            box-shadow: none !important;
+        }
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body #focus_cmt .reply_box .cmt_write_box {
+            border: 1px solid var(--dcuf-glass-border) !important;
+            border-radius: var(--dcuf-radius-row) !important;
+            background-color: var(--dcuf-glass-cell-soft) !important;
+            background-image: none !important;
+            box-shadow: inset 0 1px 0 var(--dcuf-glass-rim) !important;
+        }
+
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body.is-write-page form.dcuf-write-form {
+            border-radius: var(--dcuf-radius-panel) !important;
+            background-color: var(--dcuf-glass-panel) !important;
+            background-image: linear-gradient(145deg,var(--dcuf-glass-highlight),transparent 44%) !important;
+            box-shadow: 0 12px 34px rgba(31,47,80,.09),inset 0 1px 0 var(--dcuf-glass-rim) !important;
+            -webkit-backdrop-filter: none !important;
+            backdrop-filter: none !important;
+        }
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body.is-write-page #container form.dcuf-write-form .write_subject {
+            border: 0 !important;
+            border-radius: 0 !important;
+            background: transparent !important;
+            box-shadow: none !important;
+        }
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body.is-write-page form.dcuf-write-form :is(
+            .note-editor,.tx-editor-container,.tx-editor
+        ) {
+            border-radius: var(--dcuf-radius-row) !important;
+            background-color: transparent !important;
+            background-image: none !important;
+            box-shadow: none !important;
+        }
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body.is-write-page form.dcuf-write-form :is(
+            .note-editable,.tx-content-container,.tx-canvas
+        ) {
+            border-radius: 0 0 var(--dcuf-radius-control) var(--dcuf-radius-control) !important;
+            background-color: var(--dcuf-glass-paper) !important;
+            background-image: none !important;
+            box-shadow: none !important;
+        }
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body.is-write-page form.dcuf-write-form :is(
+            .note-toolbar,.note-toolbar-media,.tx-toolbar,.tx-toolbar-basic,.btns-box
+        ) {
+            background-color: color-mix(in srgb,var(--dcuf-glass-panel-strong) 82%,transparent) !important;
+            background-image: none !important;
+            box-shadow: none !important;
+        }
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body.is-write-page form.dcuf-write-form :is(
+            .note-btn,.note-toolbar-media > button,.btns-box button,.tx-toolbar button,.tx-toolbar a
+        ):not(.pop_wrap *):not(.note-dropdown-menu *) {
+            border-color: transparent !important;
+            background: transparent !important;
+            box-shadow: none !important;
+        }
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body.is-write-page form.dcuf-write-form > .btn_box.write {
+            display: grid !important;
+            grid-template-columns: minmax(0,1fr) minmax(0,1fr) !important;
+            gap: 10px !important;
+            border: 0 !important;
+            border-top: 1px solid var(--dcuf-theme-border) !important;
+            border-radius: 0 !important;
+            background: transparent !important;
+            box-shadow: none !important;
+        }
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body.is-write-page #container form.dcuf-write-form > .btn_box.write > button {
+            width: 100% !important;
+            min-width: 0 !important;
+            margin: 0 !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body.is-write-page form.dcuf-write-form:has(
+            #leave_confirm_box[style*="display:block"],
+            #leave_confirm_box[style*="display: block"]
+        ) {
+            position: relative !important;
+            z-index: 2147483600 !important;
+            overflow: visible !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body.is-write-page form.dcuf-write-form #leave_confirm_box {
+            position: fixed !important;
+            inset: auto !important;
+            left: 50% !important;
+            top: 50% !important;
+            width: min(400px,calc(100vw - 16px)) !important;
+            max-width: calc(100vw - 16px) !important;
+            margin: 0 !important;
+            transform: translate(-50%,-50%) !important;
+            z-index: 2147483647 !important;
+        }
+
+        html[${ROOT_ATTRIBUTE}] body.is-delete-confirm-page #top {
+            box-sizing: border-box !important;
+            width: 100% !important;
+            max-width: none !important;
+            margin-right: auto !important;
+            margin-left: auto !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body.is-delete-confirm-page #container {
+            display: grid !important;
+            box-sizing: border-box !important;
+            width: 100% !important;
+            min-width: 0 !important;
+            min-height: calc(100dvh - 170px) !important;
+            padding: 28px 14px !important;
+            place-items: center !important;
+            background: transparent !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body.is-delete-confirm-page #container > section,
+        html[${ROOT_ATTRIBUTE}] body.is-delete-confirm-page #container form,
+        html[${ROOT_ATTRIBUTE}] body.is-delete-confirm-page #container article {
+            width: 100% !important;
+            min-width: 0 !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body.is-delete-confirm-page .dcuf-delete-confirm-page {
+            width: min(520px,100%) !important;
+            height: auto !important;
+            min-height: 0 !important;
+            margin: 0 auto !important;
+            padding: 0 !important;
+            background: transparent !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body.is-delete-confirm-page .dcuf-delete-confirm-card {
+            position: static !important;
+            box-sizing: border-box !important;
+            width: 100% !important;
+            height: auto !important;
+            min-height: 0 !important;
+            margin: 0 !important;
+            padding: 28px !important;
+            border: 1px solid var(--dcuf-glass-border) !important;
+            border-radius: var(--dcuf-radius-panel) !important;
+            background-color: var(--dcuf-glass-panel) !important;
+            background-image: linear-gradient(145deg,var(--dcuf-glass-highlight),transparent 46%) !important;
+            box-shadow: var(--dcuf-glass-popup-shadow),inset 0 1px 0 var(--dcuf-glass-rim) !important;
+            -webkit-backdrop-filter: blur(var(--dcuf-glass-blur)) saturate(1.12) !important;
+            backdrop-filter: blur(var(--dcuf-glass-blur)) saturate(1.12) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body.is-delete-confirm-page .dcuf-delete-confirm-content {
+            width: 100% !important;
+            min-width: 0 !important;
+            margin: 0 !important;
+            color: var(--dcuf-theme-fg) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body.is-delete-confirm-page .dcuf-delete-confirm-content > .btn_box {
+            display: grid !important;
+            grid-template-columns: minmax(0,1fr) minmax(0,1fr) !important;
+            gap: 10px !important;
+            width: 100% !important;
+            margin-top: 20px !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body.is-delete-confirm-page .dcuf-delete-confirm-content > .btn_box > button {
+            width: 100% !important;
+            min-width: 0 !important;
+            margin: 0 !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body.is-delete-confirm-page :is(footer.dcfoot,#data_info) {
+            display: none !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body .alarmPopup.pop_wrap {
+            position: fixed !important;
+            max-width: min(420px,calc(100vw - 24px)) !important;
+        }
+
+        @media (min-width:1024px) {
+            html[${ROOT_ATTRIBUTE}] body > :is(#top,#container,.dcheader.typea,.page_head,.issue_wrap) {
+                box-sizing: border-box !important;
+                width: min(1480px,calc(100% - 48px)) !important;
+                max-width: 1480px !important;
+                margin-right: auto !important;
+                margin-left: auto !important;
+            }
+            html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body .dcheader.typea {
+                height: 92px !important;
+                min-height: 92px !important;
+            }
+            html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body .dcheader.typea .dchead {
+                box-sizing: border-box !important;
+                display: grid !important;
+                grid-template-columns: minmax(230px,1fr) minmax(360px,480px) minmax(230px,1fr) !important;
+                align-items: center !important;
+                width: 100% !important;
+                max-width: none !important;
+                height: 92px !important;
+                min-height: 92px !important;
+                margin: 0 !important;
+                padding: 0 28px !important;
+            }
+            html[${ROOT_ATTRIBUTE}] body .dcheader.typea .dc_logo {
+                position: static !important;
+                inset: auto !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-self: start !important;
+                gap: 8px !important;
+                width: auto !important;
+                max-width: 100% !important;
+                height: auto !important;
+                margin: 0 !important;
+                overflow: visible !important;
+                transform: none !important;
+            }
+            html[${ROOT_ATTRIBUTE}] body .dcheader.typea .dc_logo > a {
+                display: flex !important;
+                align-items: center !important;
+                width: auto !important;
+                height: auto !important;
+            }
+            html[${ROOT_ATTRIBUTE}] body .dcheader.typea .dc_logo img.logo_img {
+                width: auto !important;
+                height: 28px !important;
+            }
+            html[${ROOT_ATTRIBUTE}] body .dcheader.typea .dc_logo img.logo_img2 {
+                display: block !important;
+                width: auto !important;
+                height: 18px !important;
+            }
+            html[${ROOT_ATTRIBUTE}] body .dcheader.typea .wrap_search {
+                position: relative !important;
+                inset: auto !important;
+                justify-self: center !important;
+                width: 100% !important;
+                max-width: 480px !important;
+                margin: 0 !important;
+                transform: none !important;
+            }
+            html[${ROOT_ATTRIBUTE}] body .dcheader.typea .area_links {
+                position: static !important;
+                inset: auto !important;
+                justify-self: end !important;
+                max-width: 100% !important;
+                margin: 0 !important;
+                transform: none !important;
+            }
+            html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body :is(.gnb_bar,.newvisit_history) {
+                box-sizing: border-box !important;
+                width: min(1480px,calc(100% - 48px)) !important;
+                max-width: 1480px !important;
+                margin-right: auto !important;
+                margin-left: auto !important;
+            }
+            html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body .gnb_bar {
+                min-height: 48px !important;
+                margin-top: 8px !important;
+            }
+            html[${ROOT_ATTRIBUTE}] body .gnb_bar .gnb {
+                box-sizing: border-box !important;
+                width: 100% !important;
+                max-width: none !important;
+                margin: 0 !important;
+            }
+            html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body .newvisit_history {
+                min-height: 44px !important;
+                height: 44px !important;
+                padding: 3px 14px !important;
+            }
+            html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body.is-write-page .page_head {
+                display: none !important;
+            }
+            html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body.is-write-page .newvisit_history {
+                margin-top: 8px !important;
+            }
+        }
+        @media (max-width:600px) {
+            html[${ROOT_ATTRIBUTE}] body.is-write-page :is(.gnb_bar,.newvisit_history,footer.dcfoot,#data_info),
+            html[${ROOT_ATTRIBUTE}] body.dcuf-write-desktop-site-mobile :is(.gnb_bar,.newvisit_history,footer.dcfoot,#data_info) {
+                display: none !important;
+            }
+            html[${ROOT_ATTRIBUTE}] body.is-write-page .dcheader.typea .dchead {
+                border-radius: 0 0 14px 14px !important;
+            }
+            html[${ROOT_ATTRIBUTE}] body .custom-mobile-list > .custom-post-item {
+                border-radius: 0 !important;
+            }
+        }
+
+        /*
+         * Live reference alignment.
+         * Keep native popup descendants untouched; only the page-head doors and
+         * script-adapted reading/write shells receive bounded geometry changes.
+         */
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body .page_head {
+            box-sizing: border-box !important;
+            display: flex !important;
+            align-items: center !important;
+            flex-wrap: wrap !important;
+            gap: 12px !important;
+            width: 100% !important;
+            min-width: 0 !important;
+            min-height: 66px !important;
+            margin: 14px 0 12px !important;
+            padding: 12px 18px !important;
+            border: 1px solid var(--dcuf-glass-border) !important;
+            border-radius: 18px !important;
+            background-color: var(--dcuf-glass-panel) !important;
+            background-image: linear-gradient(180deg,var(--dcuf-glass-rim),transparent 76%) !important;
+            box-shadow: 0 8px 24px rgba(32,48,82,.07),inset 0 1px 0 var(--dcuf-glass-rim) !important;
+            -webkit-backdrop-filter: none !important;
+            backdrop-filter: none !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body .page_head > .fl {
+            display: flex !important;
+            align-items: center !important;
+            flex: 1 1 260px !important;
+            min-width: 0 !important;
+            margin: 0 !important;
+            float: none !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body .page_head > .fr.gall_issuebox {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: flex-end !important;
+            flex: 0 1 auto !important;
+            flex-wrap: wrap !important;
+            gap: 8px !important;
+            width: auto !important;
+            min-width: 0 !important;
+            height: auto !important;
+            margin: 0 0 0 auto !important;
+            padding: 0 !important;
+            float: none !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body .page_head > .fr.gall_issuebox > :is(
+            button.relate,button.adr_copy,button.gall_useinfo,button.fixture-issue-more,
+            .bundle,.dcuf-header-drawer
+        ),
+        html[${ROOT_ATTRIBUTE}] body .page_head > .fr.gall_issuebox > .dcuf-header-drawer > .dcuf-header-drawer__toggle,
+        html[${ROOT_ATTRIBUTE}] body .page_head > .fr.gall_issuebox > .bundle > :is(button,a,#issue_setting) {
+            box-sizing: border-box !important;
+            display: inline-flex !important;
+            position: static !important;
+            inset: auto !important;
+            align-items: center !important;
+            justify-content: center !important;
+            width: auto !important;
+            min-width: 0 !important;
+            min-height: 38px !important;
+            margin: 0 !important;
+            padding: 0 14px !important;
+            float: none !important;
+            transform: none !important;
+            border: 1px solid var(--dcuf-glass-border) !important;
+            border-radius: 10px !important;
+            background-color: var(--dcuf-glass-control) !important;
+            background-image: linear-gradient(180deg,var(--dcuf-glass-highlight),transparent 78%) !important;
+            color: var(--dcuf-theme-fg) !important;
+            box-shadow: inset 0 1px 0 var(--dcuf-glass-rim) !important;
+            line-height: 1.2 !important;
+            white-space: nowrap !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body .page_head > .fr.gall_issuebox > .bundle,
+        html[${ROOT_ATTRIBUTE}] body .page_head > .fr.gall_issuebox > .dcuf-header-drawer {
+            padding: 0 !important;
+            border: 0 !important;
+            background: transparent !important;
+            box-shadow: none !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body .page_head > .fr.gall_issuebox > :is(
+            button.relate,button.adr_copy,button.gall_useinfo,button.fixture-issue-more
+        )::before,
+        html[${ROOT_ATTRIBUTE}] body .page_head > .fr.gall_issuebox > :is(
+            button.relate,button.adr_copy,button.gall_useinfo,button.fixture-issue-more
+        )::after,
+        html[${ROOT_ATTRIBUTE}] body .page_head > .fr.gall_issuebox > .bundle > :is(button,a,#issue_setting)::before,
+        html[${ROOT_ATTRIBUTE}] body .page_head > .fr.gall_issuebox > .bundle > :is(button,a,#issue_setting)::after {
+            content: none !important;
+            display: none !important;
+        }
+
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body #container :is(
+            .img_comment:has(> .view_comment.image_comment),
+            .view_comment.image_comment,
+            .view_comment.image_comment > .comment_wrap,
+            .view_comment.image_comment .comment_box.img_comment_box,
+            .view_comment.image_comment .comment_box.img_comment_box > .cmt_list
+        ) {
+            box-sizing: border-box !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            min-width: 0 !important;
+            margin-right: 0 !important;
+            margin-left: 0 !important;
+        }
+
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body.is-write-page #container {
+            box-sizing: border-box !important;
+            width: min(1480px,calc(100% - 48px)) !important;
+            max-width: 1480px !important;
+            margin-right: auto !important;
+            margin-left: auto !important;
+            padding: 12px 20px 28px !important;
+        }
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body.is-write-page.dcuf-write-desktop-site-mobile #container {
+            width: var(--dcuf-write-device-width) !important;
+            max-width: var(--dcuf-write-device-width) !important;
+            margin-right: 0 !important;
+            margin-left: 0 !important;
+            padding: 8px !important;
+        }
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body.is-write-page #container > section,
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body.is-write-page #container > article,
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body.is-write-page #container .content,
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body.is-write-page #container article,
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body.is-write-page #container #write_wrap {
+            box-sizing: border-box !important;
+            width: 100% !important;
+            max-width: none !important;
+            min-width: 0 !important;
+            margin-right: auto !important;
+            margin-left: auto !important;
+        }
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body.is-write-page form.dcuf-write-form {
+            width: min(1400px,100%) !important;
+            max-width: 1400px !important;
+            margin: 8px auto 0 !important;
+            padding: 18px !important;
+            border-radius: 18px !important;
+        }
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body.is-write-page #container form.dcuf-write-form .write_subject {
+            min-height: 54px !important;
+            margin-bottom: 12px !important;
+            padding: 7px 9px !important;
+            border: 1px solid var(--dcuf-write-border,var(--dcuf-theme-border)) !important;
+            border-radius: 12px !important;
+            background-color: var(--dcuf-glass-cell-soft) !important;
+            background-image: none !important;
+            box-shadow: inset 0 1px 0 var(--dcuf-glass-rim) !important;
+        }
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body.is-write-page form.dcuf-write-form :is(
+            .note-btn,.note-toolbar-media > button,.btns-box button,.tx-toolbar button,.tx-toolbar a
+        ):not(.pop_wrap *):not(.note-dropdown-menu *) {
+            border-radius: 9px !important;
+        }
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body.is-write-page form.dcuf-write-form > .btn_box.write {
+            gap: 12px !important;
+            margin-top: 16px !important;
+            padding-top: 14px !important;
+        }
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body.is-write-page form.dcuf-write-form > .btn_box.write > button {
+            position: static !important;
+            inset: auto !important;
+            min-height: 56px !important;
+            border-radius: 11px !important;
+            float: none !important;
+            transform: none !important;
+        }
+
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body.is-dcuf-password-page #container form.dcuf-password-form .btn_box > button,
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body.is-dcuf-password-page #container form.dcuf-password-form .btn_box > .btn_ok {
+            position: static !important;
+            inset: auto !important;
+            width: 100% !important;
+            min-width: 0 !important;
+            min-height: 48px !important;
+            margin: 0 !important;
+            border-radius: 11px !important;
+            float: none !important;
+            transform: none !important;
+        }
+
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body.is-delete-confirm-page #container {
+            display: block !important;
+            min-height: 0 !important;
+            padding: 16px 20px 36px !important;
+        }
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body.is-delete-confirm-page #container > section {
+            max-width: 1360px !important;
+            margin: 0 auto !important;
+        }
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body.is-delete-confirm-page .dcuf-delete-confirm-page {
+            width: min(680px,100%) !important;
+            margin: 16px auto 0 !important;
+        }
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body.is-delete-confirm-page .dcuf-delete-confirm-card {
+            padding: 26px !important;
+            border-radius: 16px !important;
+        }
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body.is-delete-confirm-page .dcuf-delete-confirm-content > p {
+            margin: 0 !important;
+            color: var(--dcuf-theme-fg) !important;
+            font-weight: 650 !important;
+            line-height: 1.55 !important;
+            text-align: center !important;
+        }
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body.is-delete-confirm-page .dcuf-delete-confirm-content > .btn_box > button {
+            position: static !important;
+            inset: auto !important;
+            min-height: 50px !important;
+            border: 1px solid var(--dcuf-glass-border-strong) !important;
+            border-radius: 10px !important;
+            background-color: var(--dcuf-glass-control) !important;
+            background-image: linear-gradient(180deg,var(--dcuf-glass-highlight),transparent 78%) !important;
+            color: var(--dcuf-theme-fg) !important;
+            box-shadow: inset 0 1px 0 var(--dcuf-glass-rim) !important;
+            font-weight: 750 !important;
+            float: none !important;
+            transform: none !important;
+        }
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body.is-delete-confirm-page .dcuf-delete-confirm-content > .btn_box > :is(
+            .btn_blue,button[type="submit"]
+        ) {
+            border-color: color-mix(in srgb,var(--dcuf-theme-accent) 32%,var(--dcuf-glass-border)) !important;
+            background-color: var(--dcuf-glass-control-active) !important;
+            background-image: linear-gradient(180deg,var(--dcuf-glass-control-active-top),var(--dcuf-glass-control-active)) !important;
+            color: var(--dcuf-glass-on-active) !important;
+            box-shadow: inset 0 1px 0 var(--dcuf-glass-rim),0 5px 14px var(--dcuf-glass-accent-shadow) !important;
+        }
+
+        @media (max-width:767px) {
+            html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body .page_head {
+                min-height: 0 !important;
+                margin: 8px 0 10px !important;
+                padding: 10px !important;
+                border-radius: 14px !important;
+            }
+            html[${ROOT_ATTRIBUTE}] body .page_head > .fl {
+                flex-basis: 100% !important;
+            }
+            html[${ROOT_ATTRIBUTE}] body .page_head > .fr.gall_issuebox {
+                justify-content: flex-start !important;
+                width: 100% !important;
+                margin-left: 0 !important;
+            }
+            html[${ROOT_ATTRIBUTE}] body .page_head > .fr.gall_issuebox > :is(
+                button.relate,button.adr_copy,button.gall_useinfo,button.fixture-issue-more
+            ),
+            html[${ROOT_ATTRIBUTE}] body .page_head > .fr.gall_issuebox > .dcuf-header-drawer > .dcuf-header-drawer__toggle,
+            html[${ROOT_ATTRIBUTE}] body .page_head > .fr.gall_issuebox > .bundle > :is(button,a,#issue_setting) {
+                min-height: 40px !important;
+                padding-right: 12px !important;
+                padding-left: 12px !important;
+            }
+            html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body.is-write-page #container {
+                padding: 8px 0 20px !important;
+            }
+            html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body.is-write-page form.dcuf-write-form {
+                margin-top: 0 !important;
+                padding: 12px !important;
+                border-right: 0 !important;
+                border-left: 0 !important;
+                border-radius: 14px !important;
+            }
+            html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body.is-delete-confirm-page #container {
+                padding: 8px 10px 24px !important;
+            }
+            html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body.is-delete-confirm-page .dcuf-delete-confirm-card {
+                padding: 22px 18px !important;
+            }
+        }
+        @media (prefers-reduced-transparency:reduce) {
+            html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body .page_head {
+                background-color: var(--dcuf-glass-panel-solid) !important;
+                -webkit-backdrop-filter: none !important;
+                backdrop-filter: none !important;
+            }
+        }
+        /*
+         * Native gallery popups can be fixed descendants of this shell. Keep the
+         * shell translucent through color only: any backdrop filter here changes
+         * their containing block and buries otherwise-correct popup geometry.
+         */
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body .page_head {
+            -webkit-backdrop-filter: none !important;
+            backdrop-filter: none !important;
+        }
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body .gnb_bar .gnb_list,
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body .newvisit_history .newvisit_list {
+            margin: 0 !important;
+            padding: 0 !important;
+            list-style: none !important;
+        }
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body .gnb_bar .gnb_list {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: space-around !important;
+            width: 100% !important;
+            min-height: 52px !important;
+        }
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body :is(
+            .gnb_bar .gnb_list > li,
+            .newvisit_history .newvisit_list > li
+        ) {
+            margin: 0 !important;
+            padding: 0 !important;
+            list-style: none !important;
+        }
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body .gnb_bar .gnb_list > li > a {
+            display: inline-flex !important;
+            align-items: center !important;
+            min-height: 36px !important;
+            padding: 0 14px !important;
+            text-decoration: none !important;
+        }
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body .newvisit_history .newvisit_list > li > a,
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body .page_head h2 > a {
+            text-decoration: none !important;
+        }
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body .newvisit_history .newvisit_box {
+            min-width: 0 !important;
+            overflow: hidden !important;
+        }
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body .newvisit_history .newvisit_list {
+            display: flex !important;
+            align-items: center !important;
+            flex-wrap: nowrap !important;
+            gap: 0 !important;
+            width: 100% !important;
+            min-width: 0 !important;
+            overflow-x: auto !important;
+            overflow-y: hidden !important;
+            scrollbar-width: none !important;
+        }
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body .newvisit_history .newvisit_list::-webkit-scrollbar {
+            display: none !important;
+        }
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body .newvisit_history .newvisit_list > li {
+            flex: 0 0 auto !important;
+        }
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body .newvisit_history .newvisit_list > li > a {
+            display: inline-flex !important;
+            align-items: center !important;
+            min-height: 32px !important;
+            padding: 0 9px !important;
+            color: var(--dcuf-theme-fg-muted) !important;
+            font-size: 12px !important;
+            line-height: 1 !important;
+            white-space: nowrap !important;
+        }
+
         /* DCUF_MOBILE_THEME_CSS_END */
 
         /* DCUF_SHARED_PALETTE_UI_START */
@@ -874,16 +3057,16 @@ const ThemeModule = (() => {
         html[${ROOT_ATTRIBUTE}] body #dc-manual-block-panel .dcuf-manual-actions [data-manual-block-action="add"],
         html[${ROOT_ATTRIBUTE}] body #dcinside-filter-setting #dcinside-proxy-ip-block-mode-group button[data-proxy-mode][aria-pressed="true"] {
             border-color: var(--dcuf-theme-accent-strong) !important;
-            background-color: var(--dcuf-theme-accent-strong) !important;
-            background-image: linear-gradient(180deg, var(--dcuf-theme-primary-top), var(--dcuf-theme-accent-strong)) !important;
+            background-color: var(--dcuf-glass-control-active) !important;
+            background-image: linear-gradient(145deg,var(--dcuf-glass-control-active-top),var(--dcuf-glass-control-active)) !important;
             color: var(--dcuf-theme-on-accent) !important;
             box-shadow: 0 7px 16px var(--dcuf-theme-accent-shadow) !important;
         }
         html[${ROOT_ATTRIBUTE}] body #dc-block-management-panel input:checked + .switch-slider,
         html[${ROOT_ATTRIBUTE}] body #dcinside-filter-setting input:checked + .switch-slider {
             border-color: var(--dcuf-theme-accent-strong) !important;
-            background-color: var(--dcuf-theme-accent-strong) !important;
-            background-image: linear-gradient(180deg, var(--dcuf-theme-primary-top), var(--dcuf-theme-accent-strong)) !important;
+            background-color: var(--dcuf-glass-control-active) !important;
+            background-image: linear-gradient(145deg,var(--dcuf-glass-control-active-top),var(--dcuf-glass-control-active)) !important;
             box-shadow: 0 3px 9px var(--dcuf-theme-accent-shadow), inset 0 1px 0 color-mix(in srgb, white 28%, transparent) !important;
         }
         html[${ROOT_ATTRIBUTE}] body #dc-block-management-panel input:checked + .switch-slider::before,
@@ -1072,6 +3255,1153 @@ const ThemeModule = (() => {
             background: linear-gradient(145deg, var(--dcuf-theme-card-top), var(--dcuf-theme-surface-raised)) !important;
             color: var(--dcuf-theme-accent) !important;
         }
+
+        /* Shared glass rail. This remains inside the PC extraction boundary. */
+        html[${ROOT_ATTRIBUTE}] body :is(
+            #dcinside-filter-setting,
+            #dcinside-shortcut-modal,
+            #dcinside-headtext-manager-panel,
+            #dc-personal-block-size-panel,
+            #dc-personal-block-drawer,
+            #dc-manual-block-panel,
+            #dc-selection-popup,
+            #dc-block-management-panel,
+            #dc-backup-popup
+        ) {
+            border-color: var(--dcuf-glass-border-strong) !important;
+            background-color: var(--dcuf-glass-panel-solid) !important;
+            background-image:
+                linear-gradient(145deg, var(--dcuf-glass-highlight), transparent 45%),
+                radial-gradient(circle at 96% 0%, color-mix(in srgb, var(--dcuf-theme-accent-soft) 42%, transparent), transparent 38%) !important;
+            color: var(--dcuf-theme-fg) !important;
+            box-shadow: var(--dcuf-glass-popup-shadow), inset 0 1px 0 var(--dcuf-glass-highlight) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body :is(
+            #dcinside-filter-setting .dcuf-settings-header,
+            #dcinside-filter-setting .dcuf-settings-footer,
+            #dcinside-shortcut-modal .modal-header,
+            #dcinside-headtext-manager-panel .panel-header,
+            #dc-personal-block-size-panel .dcuf-fab-size-header,
+            #dc-manual-block-panel .dcuf-manual-header,
+            #dc-block-management-panel .panel-header,
+            #dc-block-management-panel .panel-tabs,
+            #dc-block-management-panel .panel-footer,
+            #dc-backup-popup .popup-header
+        ) {
+            border-color: var(--dcuf-glass-border) !important;
+            background-color: var(--dcuf-glass-panel-strong) !important;
+            background-image: linear-gradient(180deg, var(--dcuf-glass-highlight), transparent 70%) !important;
+            box-shadow: inset 0 1px 0 var(--dcuf-glass-highlight) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body :is(
+            #dcinside-filter-setting .dcuf-settings-section,
+            #dcinside-filter-setting .dcuf-settings-threshold > div:last-child,
+            #dcinside-filter-setting .dcuf-settings-guest-controls,
+            #dcinside-shortcut-modal .shortcut-content,
+            #dcinside-headtext-manager-panel .headtext-manager-row,
+            #dc-personal-block-drawer button,
+            #dc-personal-block-size-panel .dcuf-fab-size-preview,
+            #dc-manual-block-panel .dcuf-manual-type-tabs,
+            #dc-selection-popup .block-option,
+            #dc-block-management-panel .panel-list-controls,
+            #dc-block-management-panel .blocked-item,
+            #dc-backup-popup .export-section,
+            #dc-backup-popup .import-section
+        ) {
+            border-color: var(--dcuf-glass-border) !important;
+            background-color: var(--dcuf-glass-control) !important;
+            background-image: linear-gradient(145deg, var(--dcuf-glass-highlight), transparent 58%) !important;
+            box-shadow: var(--dcuf-glass-card-shadow), inset 0 1px 0 var(--dcuf-glass-highlight) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body :is(
+            #dcinside-filter-setting,
+            #dcinside-shortcut-modal,
+            #dcinside-headtext-manager-panel,
+            #dc-personal-block-size-panel,
+            #dc-manual-block-panel,
+            #dc-selection-popup,
+            #dc-block-management-panel,
+            #dc-backup-popup
+        ) :is(input:not([type="checkbox"]):not([type="radio"]),textarea,select) {
+            border-color: var(--dcuf-glass-border-strong) !important;
+            background-color: var(--dcuf-glass-input) !important;
+            background-image: linear-gradient(180deg, color-mix(in srgb, var(--dcuf-glass-highlight) 52%, transparent), transparent 64%) !important;
+            color: var(--dcuf-theme-fg) !important;
+            box-shadow: inset 0 1px 2px rgba(19,29,48,.1), 0 1px 0 var(--dcuf-glass-highlight) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dcinside-filter-setting :is(
+            #dcinside-threshold-input,
+            #dcinside-ratio-min,
+            #dcinside-ratio-max
+        ),
+        html[${ROOT_ATTRIBUTE}] body #dc-backup-popup textarea,
+        html[${ROOT_ATTRIBUTE}] body #dc-block-management-panel .panel-search-input {
+            border-color: var(--dcuf-glass-border-strong) !important;
+            background-color: var(--dcuf-glass-input) !important;
+            background-image: linear-gradient(180deg, color-mix(in srgb, var(--dcuf-glass-highlight) 52%, transparent), transparent 64%) !important;
+            color: var(--dcuf-theme-fg) !important;
+            box-shadow: inset 0 1px 2px rgba(19,29,48,.1), 0 1px 0 var(--dcuf-glass-highlight) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body :is(
+            #dcinside-filter-setting,
+            #dc-block-management-panel
+        ) .switch-slider {
+            border-color: var(--dcuf-glass-border-strong) !important;
+            background-color: color-mix(in srgb, var(--dcuf-theme-fg-muted) 25%, var(--dcuf-glass-control)) !important;
+            background-image: linear-gradient(180deg, color-mix(in srgb, white 26%, transparent), transparent) !important;
+            box-shadow: inset 0 1px 2px rgba(0,0,0,.15), 0 1px 0 var(--dcuf-glass-highlight) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body :is(
+            #dcinside-filter-setting,
+            #dc-block-management-panel
+        ) input:checked + .switch-slider {
+            border-color: color-mix(in srgb, var(--dcuf-theme-accent-strong) 72%, var(--dcuf-glass-border-strong)) !important;
+            background-color: var(--dcuf-glass-control-active) !important;
+            background-image: linear-gradient(180deg, var(--dcuf-glass-control-active-top), var(--dcuf-glass-control-active)) !important;
+            box-shadow: 0 5px 12px var(--dcuf-glass-accent-shadow), inset 0 1px 0 color-mix(in srgb, white 34%, transparent) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body :is(
+            #dcinside-filter-setting,
+            #dc-block-management-panel
+        ) .switch-slider::before {
+            background: #fff !important;
+            box-shadow: 0 3px 7px rgba(15,23,42,.32), inset 0 1px 0 rgba(255,255,255,.9) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body :is(
+            #dcinside-filter-setting #dcinside-threshold-save,
+            #dcinside-shortcut-modal #dcinside-save-shortcut-btn,
+            #dc-personal-block-size-panel [data-dcuf-fab-size-action="save"],
+            #dc-selection-popup .block-option button:not(.btn-unblock),
+            #dc-block-management-panel .panel-save-btn,
+            #dc-backup-popup .export-btn,
+            #dc-backup-popup .import-btn,
+            #dc-manual-block-panel .dcuf-manual-actions [data-manual-block-action="add"],
+            #dcinside-filter-setting #dcinside-proxy-ip-block-mode-group button[data-proxy-mode][aria-pressed="true"]
+        ) {
+            border-color: color-mix(in srgb, var(--dcuf-theme-accent-strong) 74%, var(--dcuf-glass-border-strong)) !important;
+            background-color: var(--dcuf-glass-control-active) !important;
+            background-image: linear-gradient(180deg, var(--dcuf-glass-control-active-top), var(--dcuf-glass-control-active)) !important;
+            color: var(--dcuf-glass-on-active) !important;
+            box-shadow: 0 9px 20px var(--dcuf-glass-accent-shadow), inset 0 1px 0 color-mix(in srgb, white 38%, transparent), inset 0 -1px 0 rgba(0,0,0,.12) !important;
+            text-shadow: 0 1px 1px rgba(0,0,0,.12) !important;
+            transition: transform .15s ease, box-shadow .15s ease, filter .15s ease !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body :is(
+            #dc-block-management-panel .panel-tab.active,
+            #dc-manual-block-panel [data-manual-block-type][aria-pressed="true"],
+            #dcinside-headtext-manager-panel [aria-pressed="true"],
+            #dc-personal-block-drawer button:is(:hover,:focus-visible),
+            #dc-backup-popup .export-btn-download
+        ) {
+            border-color: color-mix(in srgb, var(--dcuf-theme-accent) 44%, var(--dcuf-glass-border)) !important;
+            background-color: color-mix(in srgb, var(--dcuf-theme-accent-soft) 72%, var(--dcuf-glass-control)) !important;
+            background-image: linear-gradient(180deg, var(--dcuf-glass-highlight), transparent 72%) !important;
+            color: var(--dcuf-theme-accent-strong) !important;
+            box-shadow: 0 6px 15px color-mix(in srgb, var(--dcuf-theme-accent) 12%, transparent), inset 0 1px 0 var(--dcuf-glass-highlight) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body :is(
+            #dc-selection-popup .btn-unblock,
+            #dc-block-management-panel .delete-item-btn,
+            #dc-manual-block-panel [data-manual-block-action="remove"]
+        ) {
+            border-color: color-mix(in srgb, #c83a4b 45%, var(--dcuf-glass-border)) !important;
+            background-color: color-mix(in srgb, #c83a4b 13%, var(--dcuf-glass-control)) !important;
+            background-image: linear-gradient(180deg, var(--dcuf-glass-highlight), transparent 72%) !important;
+            color: color-mix(in srgb, #b42335 88%, var(--dcuf-theme-fg)) !important;
+        }
+        @supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+            html[${ROOT_ATTRIBUTE}] body :is(
+                #dcinside-filter-setting,
+                #dcinside-shortcut-modal,
+                #dcinside-headtext-manager-panel,
+                #dc-personal-block-size-panel,
+                #dc-personal-block-drawer,
+                #dc-manual-block-panel,
+                #dc-selection-popup,
+                #dc-block-management-panel,
+                #dc-backup-popup
+            ) {
+                background-color: var(--dcuf-glass-panel) !important;
+                -webkit-backdrop-filter: blur(var(--dcuf-glass-blur)) saturate(1.08) !important;
+                backdrop-filter: blur(var(--dcuf-glass-blur)) saturate(1.08) !important;
+            }
+        }
+        @media (prefers-reduced-transparency: reduce) {
+            html[${ROOT_ATTRIBUTE}] body :is(
+                #dcinside-filter-setting,#dcinside-shortcut-modal,#dcinside-headtext-manager-panel,
+                #dc-personal-block-size-panel,#dc-personal-block-drawer,#dc-manual-block-panel,
+                #dc-selection-popup,#dc-block-management-panel,#dc-backup-popup
+            ) {
+                background-color: var(--dcuf-glass-panel-solid) !important;
+                -webkit-backdrop-filter: none !important;
+                backdrop-filter: none !important;
+            }
+        }
+
+        /* Script-owned floating glass: one deep shell, lighter nested panes, no stacked white cards. */
+        html[${ROOT_ATTRIBUTE}] body :is(
+            #dcinside-shortcut-modal-overlay,
+            #dc-personal-block-size-overlay,
+            #dc-manual-block-overlay,
+            #dc-block-management-panel-overlay,
+            #dc-backup-popup-overlay
+        ) {
+            background:
+                radial-gradient(circle at 16% 8%, color-mix(in srgb, var(--dcuf-theme-accent) 16%, transparent), transparent 42%),
+                rgba(18, 28, 48, .24) !important;
+            -webkit-backdrop-filter: blur(8px) saturate(.9) !important;
+            backdrop-filter: blur(8px) saturate(.9) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode :is(
+            #dcinside-shortcut-modal-overlay,
+            #dc-personal-block-size-overlay,
+            #dc-manual-block-overlay,
+            #dc-block-management-panel-overlay,
+            #dc-backup-popup-overlay
+        ) {
+            background:
+                radial-gradient(circle at 16% 8%, color-mix(in srgb, var(--dcuf-theme-accent) 18%, transparent), transparent 44%),
+                rgba(3, 8, 18, .52) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body :is(
+            #dcinside-filter-setting,
+            #dcinside-shortcut-modal,
+            #dcinside-headtext-manager-panel,
+            #dc-personal-block-size-panel,
+            #dc-manual-block-panel,
+            #dc-selection-popup,
+            #dc-block-management-panel,
+            #dc-backup-popup
+        ) {
+            border: 1px solid color-mix(in srgb, var(--dcuf-glass-border-strong) 74%, var(--dcuf-glass-rim)) !important;
+            border-radius: 28px !important;
+            background-color: var(--dcuf-glass-panel) !important;
+            background-image:
+                radial-gradient(ellipse 62% 42% at 100% 0%, color-mix(in srgb, var(--dcuf-theme-accent-soft) 52%, transparent), transparent 68%),
+                radial-gradient(ellipse 56% 38% at 0% 100%, color-mix(in srgb, var(--dcuf-theme-accent) 12%, transparent), transparent 72%),
+                linear-gradient(145deg, var(--dcuf-glass-rim), color-mix(in srgb, var(--dcuf-glass-highlight) 36%, transparent) 2px, transparent 48%) !important;
+            box-shadow: var(--dcuf-glass-popup-shadow), inset 0 1px 0 var(--dcuf-glass-rim), inset 0 -1px 0 color-mix(in srgb, var(--dcuf-glass-border) 52%, transparent) !important;
+            -webkit-backdrop-filter: blur(var(--dcuf-glass-blur)) saturate(1.3) !important;
+            backdrop-filter: blur(var(--dcuf-glass-blur)) saturate(1.3) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dcinside-filter-setting {
+            z-index: 2147483642 !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dcinside-shortcut-modal-overlay {
+            z-index: 2147483644 !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dcinside-shortcut-modal {
+            z-index: 2147483645 !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dcinside-headtext-manager-panel {
+            z-index: 2147483643 !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-personal-block-drawer {
+            border-radius: 24px !important;
+            background-color: color-mix(in srgb, var(--dcuf-glass-panel) 88%, var(--dcuf-theme-accent-soft)) !important;
+            background-image:
+                radial-gradient(ellipse 72% 40% at 100% 0%, color-mix(in srgb, var(--dcuf-theme-accent-soft) 62%, transparent), transparent 70%),
+                linear-gradient(145deg, var(--dcuf-glass-rim), color-mix(in srgb, var(--dcuf-glass-highlight) 34%, transparent) 2px, transparent 52%) !important;
+            box-shadow: 0 28px 72px rgba(24,40,78,.27), 0 8px 22px rgba(38,60,105,.14), inset 0 1px 0 var(--dcuf-glass-rim) !important;
+            -webkit-backdrop-filter: blur(var(--dcuf-glass-blur)) saturate(1.32) !important;
+            backdrop-filter: blur(var(--dcuf-glass-blur)) saturate(1.32) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-personal-block-fab {
+            border: 1px solid color-mix(in srgb, var(--dcuf-theme-accent) 44%, var(--dcuf-glass-rim)) !important;
+            background-color: color-mix(in srgb, var(--dcuf-glass-panel) 78%, var(--dcuf-theme-accent-soft)) !important;
+            background-image:
+                radial-gradient(circle at 24% 0%, rgba(255,255,255,.58), transparent 38%),
+                linear-gradient(145deg, color-mix(in srgb, var(--dcuf-glass-panel-strong) 72%, var(--dcuf-theme-accent-soft)), color-mix(in srgb, var(--dcuf-glass-panel-soft) 66%, var(--dcuf-theme-accent-soft))) !important;
+            color: var(--dcuf-theme-accent-strong) !important;
+            text-shadow: 0 1px 0 color-mix(in srgb, white 72%, transparent) !important;
+            box-shadow: 0 20px 46px rgba(27,48,92,.22), 0 6px 16px var(--dcuf-glass-accent-shadow), inset 0 1px 0 var(--dcuf-glass-rim), inset 0 -1px 0 color-mix(in srgb, var(--dcuf-theme-accent) 18%, transparent) !important;
+            -webkit-backdrop-filter: blur(20px) saturate(1.28) !important;
+            backdrop-filter: blur(20px) saturate(1.28) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-personal-block-fab:hover {
+            border-color: color-mix(in srgb, var(--dcuf-theme-accent) 62%, var(--dcuf-glass-rim)) !important;
+            background-color: color-mix(in srgb, var(--dcuf-glass-panel) 68%, var(--dcuf-theme-accent-soft)) !important;
+            box-shadow: 0 25px 56px rgba(27,48,92,.27), 0 8px 20px var(--dcuf-glass-accent-shadow), inset 0 1px 0 var(--dcuf-glass-rim) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body :is(
+            #dcinside-filter-setting .dcuf-settings-header,
+            #dcinside-filter-setting .dcuf-settings-footer,
+            #dcinside-shortcut-modal .modal-header,
+            #dcinside-headtext-manager-panel .panel-header,
+            #dc-personal-block-size-panel .dcuf-fab-size-header,
+            #dc-manual-block-panel .dcuf-manual-header,
+            #dc-block-management-panel .panel-header,
+            #dc-block-management-panel .panel-tabs,
+            #dc-block-management-panel .panel-footer,
+            #dc-backup-popup .popup-header
+        ) {
+            background-color: color-mix(in srgb, var(--dcuf-glass-panel-strong) 72%, transparent) !important;
+            background-image:
+                linear-gradient(180deg, color-mix(in srgb, var(--dcuf-glass-rim) 82%, transparent), transparent 78%) !important;
+            box-shadow: inset 0 1px 0 var(--dcuf-glass-rim), 0 12px 30px rgba(35,53,92,.055) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body :is(
+            #dcinside-filter-setting .dcuf-settings-section,
+            #dcinside-filter-setting .dcuf-settings-threshold > div:last-child,
+            #dcinside-filter-setting .dcuf-settings-guest-controls,
+            #dcinside-shortcut-modal .shortcut-content,
+            #dcinside-headtext-manager-panel .headtext-manager-row,
+            #dc-personal-block-drawer button,
+            #dc-personal-block-size-panel .dcuf-fab-size-preview,
+            #dc-manual-block-panel .dcuf-manual-type-tabs,
+            #dc-selection-popup .block-option,
+            #dc-block-management-panel .panel-list-controls,
+            #dc-block-management-panel .blocked-item,
+            #dc-backup-popup .export-section,
+            #dc-backup-popup .import-section
+        ) {
+            border-color: color-mix(in srgb, var(--dcuf-glass-border) 78%, var(--dcuf-glass-rim)) !important;
+            border-radius: 17px !important;
+            background-color: var(--dcuf-glass-panel-soft) !important;
+            background-image:
+                linear-gradient(150deg, color-mix(in srgb, var(--dcuf-glass-rim) 68%, transparent), transparent 54%) !important;
+            box-shadow: 0 12px 28px rgba(34,52,89,.075), inset 0 1px 0 var(--dcuf-glass-rim), inset 0 -1px 0 color-mix(in srgb, var(--dcuf-glass-border) 42%, transparent) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-personal-block-drawer button {
+            border-radius: 16px !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-personal-block-drawer .dcuf-menu-icon {
+            border: 1px solid color-mix(in srgb, var(--dcuf-theme-accent) 34%, var(--dcuf-glass-rim)) !important;
+            border-radius: 13px !important;
+            background-color: color-mix(in srgb, var(--dcuf-glass-control) 72%, var(--dcuf-theme-accent-soft)) !important;
+            background-image:
+                radial-gradient(circle at 28% 12%, rgba(255,255,255,.62), transparent 38%),
+                linear-gradient(145deg, color-mix(in srgb, var(--dcuf-glass-panel-strong) 68%, var(--dcuf-theme-accent-soft)), color-mix(in srgb, var(--dcuf-glass-control) 80%, var(--dcuf-theme-accent-soft))) !important;
+            color: var(--dcuf-theme-accent-strong) !important;
+            box-shadow: 0 8px 18px var(--dcuf-glass-accent-shadow), inset 0 1px 0 var(--dcuf-glass-rim) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body :is(
+            #dcinside-filter-setting,
+            #dcinside-shortcut-modal,
+            #dcinside-headtext-manager-panel,
+            #dc-personal-block-size-panel,
+            #dc-manual-block-panel,
+            #dc-selection-popup,
+            #dc-block-management-panel,
+            #dc-backup-popup
+        ) :is(button,a,[role="button"]) {
+            border-radius: 14px !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-block-management-panel .panel-tab {
+            border-radius: 14px !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body :is(
+            #dcinside-filter-setting,
+            #dcinside-shortcut-modal,
+            #dcinside-headtext-manager-panel,
+            #dc-personal-block-size-panel,
+            #dc-manual-block-panel,
+            #dc-selection-popup,
+            #dc-block-management-panel,
+            #dc-backup-popup
+        ) :is(input:not([type="checkbox"]):not([type="radio"]),textarea,select) {
+            border-radius: 13px !important;
+            background-color: var(--dcuf-glass-input) !important;
+            background-image:
+                linear-gradient(180deg, color-mix(in srgb, var(--dcuf-glass-rim) 68%, transparent), transparent 70%) !important;
+            box-shadow: inset 0 2px 5px rgba(18,29,50,.105), 0 1px 0 var(--dcuf-glass-rim) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body :is(
+            #dcinside-filter-setting #dcinside-threshold-save,
+            #dcinside-shortcut-modal #dcinside-save-shortcut-btn,
+            #dc-personal-block-size-panel [data-dcuf-fab-size-action="save"],
+            #dc-selection-popup .block-option button:not(.btn-unblock),
+            #dc-block-management-panel .panel-save-btn,
+            #dc-backup-popup .export-btn,
+            #dc-backup-popup .import-btn,
+            #dc-manual-block-panel .dcuf-manual-actions [data-manual-block-action="add"]
+        ) {
+            background-color: color-mix(in srgb, var(--dcuf-theme-accent-strong) 76%, transparent) !important;
+            background-image:
+                radial-gradient(circle at 22% 0%, rgba(255,255,255,.58), transparent 42%),
+                linear-gradient(145deg, var(--dcuf-glass-control-active-top), var(--dcuf-glass-control-active)) !important;
+            box-shadow: 0 14px 32px var(--dcuf-glass-accent-shadow), inset 0 1px 0 rgba(255,255,255,.5), inset 0 -1px 0 rgba(0,0,0,.14) !important;
+        }
+        @media (max-width: 520px) {
+            html[${ROOT_ATTRIBUTE}] body :is(
+                #dcinside-filter-setting,
+                #dcinside-shortcut-modal,
+                #dcinside-headtext-manager-panel,
+                #dc-personal-block-size-panel,
+                #dc-manual-block-panel,
+                #dc-selection-popup,
+                #dc-block-management-panel,
+                #dc-backup-popup
+            ) {
+                border-radius: 24px !important;
+            }
+            html[${ROOT_ATTRIBUTE}] body #dcinside-filter-setting {
+                box-sizing: border-box !important;
+                width: calc(100vw - 24px) !important;
+                max-width: calc(100vw - 24px) !important;
+                padding: 14px !important;
+            }
+            html[${ROOT_ATTRIBUTE}] body #dcinside-filter-setting .dcuf-settings-threshold {
+                display: grid !important;
+                grid-template-columns: minmax(0,1fr) !important;
+                gap: 10px !important;
+            }
+            html[${ROOT_ATTRIBUTE}] body #dcinside-filter-setting .dcuf-settings-threshold > div:first-child,
+            html[${ROOT_ATTRIBUTE}] body #dcinside-filter-setting .dcuf-settings-threshold > div:last-child {
+                box-sizing: border-box !important;
+                width: 100% !important;
+                max-width: none !important;
+                flex: none !important;
+            }
+            html[${ROOT_ATTRIBUTE}] body #dcinside-filter-setting .dcuf-settings-threshold > div:first-child > h3 {
+                max-width: 24em !important;
+                margin-right: auto !important;
+                margin-left: auto !important;
+                font-size: 15px !important;
+                line-height: 1.45 !important;
+                word-break: keep-all !important;
+            }
+            html[${ROOT_ATTRIBUTE}] body #dcinside-filter-setting .dcuf-settings-footer {
+                flex-wrap: wrap !important;
+            }
+            html[${ROOT_ATTRIBUTE}] body #dcinside-filter-setting #dcinside-threshold-save {
+                margin-left: auto !important;
+            }
+        }
+        @media (prefers-reduced-transparency: reduce) {
+            html[${ROOT_ATTRIBUTE}] body :is(
+                #dcinside-shortcut-modal-overlay,#dc-personal-block-size-overlay,#dc-manual-block-overlay,
+                #dc-block-management-panel-overlay,#dc-backup-popup-overlay
+            ) {
+                -webkit-backdrop-filter: none !important;
+                backdrop-filter: none !important;
+            }
+        }
+
+        /* Shared aurora glass v3: one translucent shell, transparent internal hierarchy. */
+        html[${ROOT_ATTRIBUTE}] body :is(
+            #dcinside-shortcut-modal-overlay,
+            #dc-personal-block-size-overlay,
+            #dc-manual-block-overlay,
+            #dc-personal-block-management-overlay,
+            #dc-block-management-panel-overlay,
+            #dc-backup-popup-overlay
+        ) {
+            background:
+                radial-gradient(58% 46% at 12% 8%,rgba(93,105,255,.18),transparent 68%),
+                radial-gradient(52% 44% at 94% 92%,rgba(43,191,221,.14),transparent 70%),
+                rgba(8,16,31,.24) !important;
+            -webkit-backdrop-filter:blur(12px) saturate(1.15) !important;
+            backdrop-filter:blur(12px) saturate(1.15) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode :is(
+            #dcinside-shortcut-modal-overlay,
+            #dc-personal-block-size-overlay,
+            #dc-manual-block-overlay,
+            #dc-personal-block-management-overlay,
+            #dc-block-management-panel-overlay,
+            #dc-backup-popup-overlay
+        ) {
+            background:
+                radial-gradient(58% 46% at 12% 8%,rgba(76,91,239,.16),transparent 68%),
+                radial-gradient(52% 44% at 94% 92%,rgba(31,164,201,.10),transparent 70%),
+                rgba(2,7,16,.50) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body :is(
+            #dcinside-filter-setting,
+            #dcinside-shortcut-modal,
+            #dcinside-headtext-manager-panel,
+            #dc-personal-block-size-panel,
+            #dc-manual-block-panel,
+            #dc-selection-popup,
+            #dc-block-management-panel,
+            #dc-backup-popup
+        ) {
+            border:1px solid var(--dcuf-glass-border) !important;
+            border-top-color:var(--dcuf-glass-rim) !important;
+            border-radius:24px !important;
+            background-color:var(--dcuf-glass-panel) !important;
+            background-image:linear-gradient(145deg,rgba(255,255,255,.18),transparent 42%) !important;
+            color:var(--dcuf-theme-fg) !important;
+            box-shadow:var(--dcuf-glass-popup-shadow),inset 0 1px 0 var(--dcuf-glass-rim) !important;
+            -webkit-backdrop-filter:blur(var(--dcuf-glass-blur)) saturate(1.28) brightness(1.03) !important;
+            backdrop-filter:blur(var(--dcuf-glass-blur)) saturate(1.28) brightness(1.03) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode :is(
+            #dcinside-filter-setting,
+            #dcinside-shortcut-modal,
+            #dcinside-headtext-manager-panel,
+            #dc-personal-block-size-panel,
+            #dc-manual-block-panel,
+            #dc-selection-popup,
+            #dc-block-management-panel,
+            #dc-backup-popup
+        ) {
+            -webkit-backdrop-filter:blur(var(--dcuf-glass-blur)) saturate(1.22) !important;
+            backdrop-filter:blur(var(--dcuf-glass-blur)) saturate(1.22) !important;
+        }
+
+        /* Headers and footers are thin refraction bands, never nested white cards. */
+        html[${ROOT_ATTRIBUTE}] body :is(
+            #dcinside-filter-setting .dcuf-settings-header,
+            #dcinside-filter-setting .dcuf-settings-footer,
+            #dcinside-shortcut-modal .modal-header,
+            #dcinside-headtext-manager-panel .panel-header,
+            #dc-personal-block-size-panel .dcuf-fab-size-header,
+            #dc-manual-block-panel .dcuf-manual-header,
+            #dc-block-management-panel .panel-header,
+            #dc-block-management-panel .panel-tabs,
+            #dc-block-management-panel .panel-footer,
+            #dc-backup-popup .popup-header
+        ) {
+            border-color:rgba(255,255,255,.24) !important;
+            background-color:rgba(255,255,255,.08) !important;
+            background-image:linear-gradient(180deg,rgba(255,255,255,.14),transparent 76%) !important;
+            box-shadow:inset 0 1px 0 rgba(255,255,255,.22) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body :is(
+            #dcinside-filter-setting .dcuf-settings-body,
+            #dcinside-shortcut-modal .shortcut-content,
+            #dcinside-headtext-manager-panel .panel-body,
+            #dc-personal-block-size-panel .dcuf-fab-size-body,
+            #dc-manual-block-panel .dcuf-manual-body,
+            #dc-block-management-panel .panel-body,
+            #dc-block-management-panel .panel-content,
+            #dc-block-management-panel .blocked-list,
+            #dc-block-management-panel .panel-empty-state,
+            #dc-backup-popup .popup-body
+        ) {
+            background-color:transparent !important;
+            background-image:none !important;
+            box-shadow:none !important;
+        }
+
+        /* Settings use space and hairlines instead of a white rectangle around every row. */
+        html[${ROOT_ATTRIBUTE}] body #dcinside-filter-setting :is(
+            .dcuf-settings-section,
+            .dcuf-settings-threshold,
+            .dcuf-settings-ratio,
+            .dcuf-settings-pum
+        ) {
+            border:0 !important;
+            border-radius:14px !important;
+            background-color:rgba(255,255,255,.075) !important;
+            background-image:linear-gradient(145deg,rgba(255,255,255,.08),transparent 52%) !important;
+            box-shadow:inset 0 1px 0 rgba(255,255,255,.16) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dcinside-filter-setting .dcuf-settings-threshold > div:last-child,
+        html[${ROOT_ATTRIBUTE}] body #dcinside-filter-setting .dcuf-settings-guest-controls {
+            border:1px solid rgba(255,255,255,.24) !important;
+            border-radius:14px !important;
+            background-color:rgba(255,255,255,.09) !important;
+            background-image:none !important;
+            box-shadow:inset 0 1px 0 rgba(255,255,255,.18) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dcinside-filter-setting .dcuf-settings-body > hr {
+            display:none !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dcinside-filter-setting #dcinside-proxy-ip-block-mode-group {
+            border:1px solid rgba(255,255,255,.26) !important;
+            border-radius:12px !important;
+            background-color:rgba(255,255,255,.10) !important;
+            background-image:none !important;
+            box-shadow:inset 0 1px 3px rgba(22,32,54,.09) !important;
+        }
+
+        /* Management tabs and lists float within the shell without an opaque empty body. */
+        html[${ROOT_ATTRIBUTE}] body #dc-block-management-panel .panel-tabs {
+            gap:6px !important;
+            padding:7px !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-block-management-panel .panel-tab {
+            border:1px solid transparent !important;
+            border-radius:12px !important;
+            background:transparent !important;
+            color:var(--dcuf-theme-fg-muted) !important;
+            box-shadow:none !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-block-management-panel .panel-tab.active {
+            border-color:color-mix(in srgb,var(--dcuf-theme-accent) 30%,rgba(255,255,255,.28)) !important;
+            background-color:color-mix(in srgb,var(--dcuf-theme-accent-soft) 12%,rgba(255,255,255,.12)) !important;
+            background-image:linear-gradient(180deg,rgba(255,255,255,.16),transparent 76%) !important;
+            color:var(--dcuf-theme-accent-strong) !important;
+            box-shadow:inset 0 1px 0 rgba(255,255,255,.26),0 7px 18px var(--dcuf-glass-accent-shadow) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-block-management-panel .panel-tab.active::after {
+            height:2px !important;
+            background:var(--dcuf-theme-accent) !important;
+            box-shadow:0 0 12px var(--dcuf-glass-accent-shadow) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-block-management-panel .panel-list-controls {
+            border:0 !important;
+            border-bottom:1px solid rgba(255,255,255,.18) !important;
+            border-radius:0 !important;
+            background-color:rgba(255,255,255,.055) !important;
+            background-image:none !important;
+            box-shadow:none !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-block-management-panel .blocked-item {
+            border:0 !important;
+            border-bottom:1px solid rgba(255,255,255,.14) !important;
+            border-radius:12px !important;
+            background-color:rgba(255,255,255,.055) !important;
+            background-image:none !important;
+            box-shadow:none !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-block-management-panel .panel-search {
+            border:1px solid rgba(255,255,255,.30) !important;
+            border-radius:12px !important;
+            background-color:var(--dcuf-glass-input) !important;
+            background-image:linear-gradient(180deg,rgba(255,255,255,.14),transparent 72%) !important;
+            color:var(--dcuf-theme-fg-muted) !important;
+            box-shadow:inset 0 2px 5px rgba(18,29,50,.10),inset 0 1px 0 rgba(255,255,255,.24) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-block-management-panel .panel-search-input {
+            border:0 !important;
+            background-color:transparent !important;
+            background-image:none !important;
+            color:var(--dcuf-theme-fg) !important;
+            box-shadow:none !important;
+            -webkit-backdrop-filter:none !important;
+            backdrop-filter:none !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-block-management-panel .blocked-list-empty {
+            border:0 !important;
+            background:transparent !important;
+            box-shadow:none !important;
+            -webkit-backdrop-filter:none !important;
+            backdrop-filter:none !important;
+        }
+
+        /* Inputs and secondary controls remain translucent and visually quiet. */
+        html[${ROOT_ATTRIBUTE}] body :is(
+            #dcinside-filter-setting,
+            #dcinside-shortcut-modal,
+            #dcinside-headtext-manager-panel,
+            #dc-personal-block-size-panel,
+            #dc-manual-block-panel,
+            #dc-selection-popup,
+            #dc-block-management-panel,
+            #dc-backup-popup
+        ) :is(input:not([type="checkbox"]):not([type="radio"]),textarea,select) {
+            border:1px solid rgba(255,255,255,.30) !important;
+            border-radius:12px !important;
+            background-color:var(--dcuf-glass-input) !important;
+            background-image:linear-gradient(180deg,rgba(255,255,255,.14),transparent 72%) !important;
+            color:var(--dcuf-theme-fg) !important;
+            box-shadow:inset 0 2px 5px rgba(18,29,50,.10),inset 0 1px 0 rgba(255,255,255,.24) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-block-management-panel .panel-search > input.panel-search-input {
+            border:0 !important;
+            background-color:transparent !important;
+            background-image:none !important;
+            box-shadow:none !important;
+            -webkit-backdrop-filter:none !important;
+            backdrop-filter:none !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body :is(
+            #dcinside-filter-setting,
+            #dcinside-shortcut-modal,
+            #dcinside-headtext-manager-panel,
+            #dc-personal-block-size-panel,
+            #dc-manual-block-panel,
+            #dc-selection-popup,
+            #dc-block-management-panel,
+            #dc-backup-popup
+        ) :is(button,a,[role="button"]) {
+            border-radius:12px !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body :is(
+            #dcinside-filter-setting button,
+            #dcinside-shortcut-modal button,
+            #dcinside-headtext-manager-panel button,
+            #dc-personal-block-size-panel button,
+            #dc-manual-block-panel button,
+            #dc-selection-popup button,
+            #dc-block-management-panel button,
+            #dc-backup-popup button
+        ):not(
+            #dcinside-threshold-save,
+            #dcinside-save-shortcut-btn,
+            .panel-save-btn,
+            .export-btn,
+            .import-btn,
+            [data-manual-block-action="add"]
+        ) {
+            border:1px solid rgba(255,255,255,.30) !important;
+            background-color:var(--dcuf-glass-control) !important;
+            background-image:linear-gradient(180deg,rgba(255,255,255,.16),transparent 76%) !important;
+            color:var(--dcuf-theme-fg) !important;
+            box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 6px 16px rgba(24,38,70,.07) !important;
+        }
+
+        /* Primary actions are coloured glass, not solid palette blocks. */
+        html[${ROOT_ATTRIBUTE}] body :is(
+            #dcinside-filter-setting #dcinside-threshold-save,
+            #dcinside-filter-setting #dcinside-proxy-ip-block-mode-group button[data-proxy-mode][aria-pressed="true"],
+            #dcinside-shortcut-modal #dcinside-save-shortcut-btn,
+            #dc-personal-block-size-panel [data-dcuf-fab-size-action="save"],
+            #dc-selection-popup .block-option button:not(.btn-unblock),
+            #dc-block-management-panel .panel-save-btn,
+            #dc-backup-popup .export-btn,
+            #dc-backup-popup .import-btn,
+            #dc-manual-block-panel .dcuf-manual-actions [data-manual-block-action="add"]
+        ) {
+            border:1px solid color-mix(in srgb,var(--dcuf-theme-accent) 42%,rgba(255,255,255,.42)) !important;
+            background-color:var(--dcuf-glass-control-active) !important;
+            background-image:
+                radial-gradient(circle at 22% 0%,rgba(255,255,255,.40),transparent 42%),
+                linear-gradient(145deg,var(--dcuf-glass-control-active-top),var(--dcuf-glass-control-active)) !important;
+            color:var(--dcuf-glass-on-active) !important;
+            box-shadow:0 11px 26px var(--dcuf-glass-accent-shadow),inset 0 1px 0 rgba(255,255,255,.42) !important;
+            text-shadow:0 1px 1px rgba(0,0,0,.12) !important;
+        }
+
+        /* Switches have translucent tracks and a dimensional white thumb. */
+        html[${ROOT_ATTRIBUTE}] body :is(#dc-block-management-panel,#dcinside-filter-setting) .switch-slider {
+            border:1px solid rgba(255,255,255,.26) !important;
+            background-color:rgba(90,109,143,.24) !important;
+            background-image:linear-gradient(180deg,rgba(255,255,255,.14),transparent 74%) !important;
+            box-shadow:inset 0 2px 5px rgba(19,29,49,.18),inset 0 1px 0 rgba(255,255,255,.18) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body :is(#dc-block-management-panel,#dcinside-filter-setting) input:checked + .switch-slider {
+            border-color:color-mix(in srgb,var(--dcuf-theme-accent) 42%,rgba(255,255,255,.32)) !important;
+            background-color:var(--dcuf-glass-control-active) !important;
+            background-image:linear-gradient(180deg,var(--dcuf-glass-control-active-top),var(--dcuf-glass-control-active)) !important;
+            box-shadow:0 6px 16px var(--dcuf-glass-accent-shadow),inset 0 1px 0 rgba(255,255,255,.34) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body :is(#dc-block-management-panel,#dcinside-filter-setting) .switch-slider::before {
+            background:rgba(255,255,255,.94) !important;
+            box-shadow:0 2px 7px rgba(17,29,51,.34),inset 0 1px 0 #fff !important;
+        }
+
+        /* The quick menu is compact smoky glass, deliberately distinct from content cards. */
+        html[${ROOT_ATTRIBUTE}] body #dc-personal-block-fab {
+            position:relative !important;
+            border:1px solid rgba(255,255,255,.26) !important;
+            border-radius:999px !important;
+            background-color:rgba(19,33,58,.72) !important;
+            background-image:
+                radial-gradient(circle at 18% 0%,rgba(255,255,255,.22),transparent 40%),
+                linear-gradient(145deg,rgba(92,112,158,.22),transparent 70%) !important;
+            color:#f5f8ff !important;
+            text-shadow:0 1px 2px rgba(0,0,0,.34) !important;
+            box-shadow:0 18px 42px rgba(24,38,71,.28),inset 0 1px 0 rgba(255,255,255,.28) !important;
+            -webkit-backdrop-filter:blur(20px) saturate(1.25) !important;
+            backdrop-filter:blur(20px) saturate(1.25) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-personal-block-fab::after {
+            content:"";
+            position:absolute;
+            inset:-6px;
+            border-radius:inherit;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-personal-block-drawer {
+            border:1px solid rgba(255,255,255,.20) !important;
+            border-radius:20px !important;
+            background-color:rgba(16,29,52,.76) !important;
+            background-image:
+                radial-gradient(70% 70% at 100% 0%,rgba(102,120,255,.20),transparent 70%),
+                linear-gradient(145deg,rgba(255,255,255,.10),transparent 54%) !important;
+            color:#f4f7ff !important;
+            box-shadow:0 28px 72px rgba(16,27,53,.36),inset 0 1px 0 rgba(255,255,255,.20) !important;
+            -webkit-backdrop-filter:blur(24px) saturate(1.26) !important;
+            backdrop-filter:blur(24px) saturate(1.26) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-personal-block-drawer button {
+            border:1px solid rgba(255,255,255,.12) !important;
+            border-radius:14px !important;
+            background-color:rgba(255,255,255,.065) !important;
+            background-image:linear-gradient(180deg,rgba(255,255,255,.08),transparent 76%) !important;
+            color:#f4f7ff !important;
+            box-shadow:inset 0 1px 0 rgba(255,255,255,.12) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-personal-block-drawer button :is(strong,small,span) {
+            color:inherit !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-personal-block-drawer button:is(:hover,:focus-visible) {
+            border-color:rgba(255,255,255,.24) !important;
+            background-color:rgba(255,255,255,.12) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-personal-block-drawer .dcuf-menu-icon {
+            border:1px solid rgba(255,255,255,.20) !important;
+            background-color:color-mix(in srgb,var(--dcuf-theme-accent) 22%,rgba(255,255,255,.08)) !important;
+            background-image:linear-gradient(145deg,rgba(255,255,255,.18),transparent 64%) !important;
+            color:#fff !important;
+            box-shadow:0 7px 18px var(--dcuf-glass-accent-shadow),inset 0 1px 0 rgba(255,255,255,.24) !important;
+        }
+
+        html[${ROOT_ATTRIBUTE}] body :is(
+            #dc-selection-popup .btn-unblock,
+            #dc-block-management-panel .delete-item-btn,
+            #dc-manual-block-panel [data-manual-block-action="remove"]
+        ) {
+            border-color:rgba(226,95,113,.34) !important;
+            background-color:rgba(190,48,69,.14) !important;
+            background-image:linear-gradient(180deg,rgba(255,255,255,.12),transparent 72%) !important;
+            color:#b42335 !important;
+            box-shadow:inset 0 1px 0 rgba(255,255,255,.18) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode :is(
+            #dc-selection-popup .btn-unblock,
+            #dc-block-management-panel .delete-item-btn,
+            #dc-manual-block-panel [data-manual-block-action="remove"]
+        ) {
+            color:#ff9dac !important;
+        }
+
+        /*
+         * Direct-block material is the canonical DCUF dialog material.
+         * The settings window carries more content, so its panes are even quieter instead
+         * of becoming an opaque white card. Primary actions and switches use the same
+         * translucent colour, rim light, and recessed depth as the direct-block action.
+         */
+        html[${ROOT_ATTRIBUTE}] body #dcinside-filter-setting {
+            background-color: color-mix(in srgb,var(--dcuf-glass-panel) 76%,transparent) !important;
+            background-image:
+                radial-gradient(ellipse 68% 44% at 100% 0%,color-mix(in srgb,var(--dcuf-theme-accent-soft) 42%,transparent),transparent 70%),
+                radial-gradient(ellipse 54% 40% at 0% 100%,color-mix(in srgb,var(--dcuf-theme-accent) 9%,transparent),transparent 72%),
+                linear-gradient(145deg,color-mix(in srgb,var(--dcuf-glass-rim) 72%,transparent),transparent 48%) !important;
+            box-shadow: 0 34px 92px rgba(25,38,70,.25),0 9px 28px rgba(31,49,87,.12),
+                inset 0 1px 0 var(--dcuf-glass-rim),inset 0 -1px 0 rgba(255,255,255,.18) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dcinside-filter-setting :is(
+            .dcuf-settings-header,.dcuf-settings-footer
+        ) {
+            background-color: rgba(255,255,255,.045) !important;
+            background-image: linear-gradient(180deg,rgba(255,255,255,.12),transparent 78%) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dcinside-filter-setting :is(
+            .dcuf-settings-section,
+            .dcuf-settings-threshold > div:last-child,
+            .dcuf-settings-guest-controls
+        ) {
+            border-color: rgba(255,255,255,.20) !important;
+            background-color: rgba(255,255,255,.042) !important;
+            background-image: linear-gradient(145deg,rgba(255,255,255,.075),transparent 54%) !important;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.15),0 8px 20px rgba(27,43,75,.045) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dcinside-filter-setting #dcinside-proxy-ip-block-mode-group {
+            border-color: rgba(255,255,255,.24) !important;
+            background-color: rgba(255,255,255,.065) !important;
+            box-shadow: inset 0 2px 5px rgba(17,29,50,.12),inset 0 1px 0 rgba(255,255,255,.18) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body :is(
+            #dcinside-filter-setting #dcinside-threshold-save,
+            #dcinside-filter-setting #dcinside-proxy-ip-block-mode-group button[data-proxy-mode][aria-pressed="true"],
+            #dcinside-shortcut-modal #dcinside-save-shortcut-btn,
+            #dc-personal-block-size-panel [data-dcuf-fab-size-action="save"],
+            #dc-selection-popup .block-option button:not(.btn-unblock),
+            #dc-block-management-panel .panel-save-btn,
+            #dc-backup-popup .export-btn,
+            #dc-backup-popup .import-btn,
+            #dc-manual-block-panel .dcuf-manual-actions [data-manual-block-action="add"]
+        ) {
+            background-color: color-mix(in srgb,var(--dcuf-glass-control-active) 88%,transparent) !important;
+            background-image:
+                radial-gradient(circle at 18% -8%,rgba(255,255,255,.58),transparent 44%),
+                linear-gradient(145deg,var(--dcuf-glass-control-active-top),color-mix(in srgb,var(--dcuf-glass-control-active) 88%,transparent)) !important;
+            box-shadow: 0 14px 32px var(--dcuf-glass-accent-shadow),inset 0 1px 0 rgba(255,255,255,.52),inset 0 -1px 0 rgba(0,0,0,.16) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body :is(#dc-block-management-panel,#dcinside-filter-setting) .switch-slider {
+            border-color: rgba(255,255,255,.30) !important;
+            background-color: rgba(82,101,135,.21) !important;
+            background-image:
+                radial-gradient(circle at 28% 0%,rgba(255,255,255,.30),transparent 42%),
+                linear-gradient(180deg,rgba(255,255,255,.10),rgba(36,50,76,.08)) !important;
+            box-shadow: inset 0 2px 5px rgba(15,26,47,.22),0 3px 9px rgba(27,43,74,.10),inset 0 1px 0 rgba(255,255,255,.24) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body :is(#dc-block-management-panel,#dcinside-filter-setting) input:checked + .switch-slider {
+            border-color: color-mix(in srgb,var(--dcuf-theme-accent) 44%,rgba(255,255,255,.34)) !important;
+            background-color: color-mix(in srgb,var(--dcuf-glass-control-active) 86%,transparent) !important;
+            background-image:
+                radial-gradient(circle at 24% -6%,rgba(255,255,255,.48),transparent 44%),
+                linear-gradient(145deg,var(--dcuf-glass-control-active-top),color-mix(in srgb,var(--dcuf-glass-control-active) 86%,transparent)) !important;
+            box-shadow: 0 7px 18px var(--dcuf-glass-accent-shadow),inset 0 1px 0 rgba(255,255,255,.38),inset 0 -1px 0 rgba(0,0,0,.15) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body :is(#dc-block-management-panel,#dcinside-filter-setting) .switch-slider::before {
+            border: 1px solid rgba(255,255,255,.76) !important;
+            background:
+                radial-gradient(circle at 34% 22%,#fff 0 14%,rgba(255,255,255,.90) 42%,rgba(229,235,245,.94) 100%) !important;
+            box-shadow: 0 3px 8px rgba(15,27,49,.32),inset 0 1px 0 #fff !important;
+        }
+
+        /* The light quick menu now belongs to the same frosted family instead of a black HUD. */
+        html[${ROOT_ATTRIBUTE}] body:not(.dc-filter-dark-mode) #dc-personal-block-fab {
+            border-color: color-mix(in srgb,var(--dcuf-theme-accent) 34%,rgba(255,255,255,.68)) !important;
+            background-color: color-mix(in srgb,var(--dcuf-glass-panel) 82%,var(--dcuf-theme-accent-soft)) !important;
+            background-image:
+                radial-gradient(circle at 22% -8%,rgba(255,255,255,.68),transparent 42%),
+                linear-gradient(145deg,color-mix(in srgb,var(--dcuf-glass-panel-strong) 72%,var(--dcuf-theme-accent-soft)),rgba(255,255,255,.08)) !important;
+            color: var(--dcuf-theme-accent-strong) !important;
+            text-shadow: 0 1px 0 rgba(255,255,255,.78) !important;
+            box-shadow: 0 19px 46px rgba(27,47,88,.21),0 7px 18px var(--dcuf-glass-accent-shadow),inset 0 1px 0 var(--dcuf-glass-rim) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body:not(.dc-filter-dark-mode) #dc-personal-block-drawer {
+            border-color: rgba(255,255,255,.58) !important;
+            background-color: color-mix(in srgb,var(--dcuf-glass-panel) 90%,var(--dcuf-theme-accent-soft)) !important;
+            background-image:
+                radial-gradient(70% 70% at 100% 0%,color-mix(in srgb,var(--dcuf-theme-accent-soft) 46%,transparent),transparent 70%),
+                linear-gradient(145deg,rgba(255,255,255,.32),transparent 54%) !important;
+            color: var(--dcuf-theme-fg) !important;
+            box-shadow: 0 28px 72px rgba(24,40,78,.25),inset 0 1px 0 var(--dcuf-glass-rim) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body:not(.dc-filter-dark-mode) #dc-personal-block-drawer button {
+            border-color: rgba(255,255,255,.38) !important;
+            background-color: rgba(255,255,255,.105) !important;
+            background-image: linear-gradient(180deg,rgba(255,255,255,.18),transparent 76%) !important;
+            color: var(--dcuf-theme-fg) !important;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.30),0 7px 18px rgba(31,48,84,.055) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body:not(.dc-filter-dark-mode) #dc-personal-block-drawer button :is(strong,small,span) {
+            color: inherit !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-selection-popup.dcuf-selection-prompt {
+            border: 1px solid var(--dcuf-glass-border) !important;
+            border-top-color: var(--dcuf-glass-rim) !important;
+            background-color: color-mix(in srgb,var(--dcuf-glass-panel) 84%,transparent) !important;
+            background-image:
+                radial-gradient(ellipse 48% 140% at 0% 0%,color-mix(in srgb,var(--dcuf-theme-accent-soft) 34%,transparent),transparent 72%),
+                linear-gradient(145deg,rgba(255,255,255,.20),transparent 50%) !important;
+            color: var(--dcuf-theme-fg) !important;
+            box-shadow: 0 24px 64px rgba(25,39,72,.24),0 7px 20px rgba(29,47,84,.10),
+                inset 0 1px 0 var(--dcuf-glass-rim) !important;
+            -webkit-backdrop-filter: blur(24px) saturate(1.24) !important;
+            backdrop-filter: blur(24px) saturate(1.24) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-selection-popup.dcuf-selection-prompt .dcuf-selection-prompt-icon {
+            border: 1px solid color-mix(in srgb,var(--dcuf-theme-accent) 30%,rgba(255,255,255,.54)) !important;
+            background-color: color-mix(in srgb,var(--dcuf-glass-control) 76%,var(--dcuf-theme-accent-soft)) !important;
+            background-image:
+                radial-gradient(circle at 28% 12%,rgba(255,255,255,.60),transparent 40%),
+                linear-gradient(145deg,rgba(255,255,255,.14),transparent 68%) !important;
+            color: var(--dcuf-theme-accent-strong) !important;
+            box-shadow: 0 8px 18px var(--dcuf-glass-accent-shadow),inset 0 1px 0 rgba(255,255,255,.42) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-selection-popup.dcuf-selection-prompt .dcuf-selection-prompt-copy :is(h4,p) {
+            color: inherit !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-selection-popup.dcuf-selection-prompt .dcuf-selection-prompt-copy p {
+            color: var(--dcuf-theme-fg-muted) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-selection-popup.dcuf-selection-prompt .popup-buttons button {
+            border-color: rgba(255,255,255,.32) !important;
+            background-color: var(--dcuf-glass-control) !important;
+            background-image: linear-gradient(180deg,rgba(255,255,255,.16),transparent 76%) !important;
+            color: var(--dcuf-theme-fg) !important;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.28),0 7px 18px rgba(29,46,78,.065) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-block-management-panel :is(
+            .panel-header,.panel-tabs,.panel-footer,.panel-list-controls
+        ) {
+            background-color: rgba(255,255,255,.045) !important;
+            background-image: linear-gradient(180deg,rgba(255,255,255,.12),transparent 78%) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-block-management-panel .panel-body {
+            background: transparent !important;
+        }
+
+        @media (max-width:520px) {
+            html[${ROOT_ATTRIBUTE}] body :is(
+                #dcinside-filter-setting,#dcinside-shortcut-modal,#dcinside-headtext-manager-panel,
+                #dc-personal-block-size-panel,#dc-manual-block-panel,#dc-selection-popup,
+                #dc-block-management-panel,#dc-backup-popup
+            ) {
+                border-radius:21px !important;
+            }
+            html[${ROOT_ATTRIBUTE}] body #dcinside-filter-setting {
+                width:calc(100vw - 24px) !important;
+                max-width:calc(100vw - 24px) !important;
+                padding:14px !important;
+            }
+        }
+        @media (prefers-reduced-transparency:reduce) {
+            html[${ROOT_ATTRIBUTE}] body :is(
+                #dcinside-filter-setting,#dcinside-shortcut-modal,#dcinside-headtext-manager-panel,
+                #dc-personal-block-size-panel,#dc-personal-block-drawer,#dc-manual-block-panel,
+                #dc-selection-popup,#dc-block-management-panel,#dc-backup-popup
+            ) {
+                background-color:var(--dcuf-glass-panel-solid) !important;
+                -webkit-backdrop-filter:none !important;
+                backdrop-filter:none !important;
+            }
+        }
+
+        /* Shared DCUF surfaces: direct-block material with fewer nested boxes. */
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body :is(
+            #dcinside-filter-setting,#dcinside-shortcut-modal,#dcinside-headtext-manager-panel,
+            #dc-personal-block-size-panel,#dc-manual-block-panel,#dc-selection-popup,
+            #dc-block-management-panel,#dc-backup-popup
+        ) {
+            border-radius: var(--dcuf-radius-panel) !important;
+            background-color: var(--dcuf-glass-panel) !important;
+            background-image: linear-gradient(145deg,var(--dcuf-glass-highlight),transparent 46%) !important;
+            box-shadow: var(--dcuf-glass-popup-shadow),inset 0 1px 0 var(--dcuf-glass-rim) !important;
+            -webkit-backdrop-filter: blur(var(--dcuf-glass-blur)) saturate(1.12) !important;
+            backdrop-filter: blur(var(--dcuf-glass-blur)) saturate(1.12) !important;
+        }
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body :is(
+            #dcinside-threshold-save,#dcinside-save-shortcut-btn,
+            #dc-personal-block-size-panel [data-dcuf-fab-size-action="save"],
+            #dc-selection-popup .block-option button:not(.btn-unblock),
+            #dc-block-management-panel .panel-save-btn,
+            #dc-backup-popup .export-btn,#dc-backup-popup .import-btn,
+            #dc-manual-block-panel [data-manual-block-action="add"]
+        ) {
+            border-color: color-mix(in srgb,var(--dcuf-theme-accent) 26%,var(--dcuf-glass-border)) !important;
+            background-color: color-mix(in srgb,var(--dcuf-theme-accent) 17%,var(--dcuf-glass-control)) !important;
+            background-image: linear-gradient(180deg,var(--dcuf-glass-control-active-top),transparent 86%) !important;
+            color: var(--dcuf-theme-fg) !important;
+            box-shadow: 0 7px 18px var(--dcuf-glass-accent-shadow),inset 0 1px 0 var(--dcuf-glass-rim) !important;
+            text-shadow: none !important;
+        }
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body :is(
+            #dc-block-management-panel,#dcinside-filter-setting
+        ) .switch-slider {
+            border-color: var(--dcuf-glass-border) !important;
+            background-color: color-mix(in srgb,var(--dcuf-theme-fg-muted) 18%,var(--dcuf-glass-control)) !important;
+            background-image: linear-gradient(180deg,var(--dcuf-glass-highlight),transparent 82%) !important;
+            box-shadow: inset 0 1px 3px rgba(25,38,64,.14),inset 0 1px 0 var(--dcuf-glass-rim) !important;
+        }
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body :is(
+            #dc-block-management-panel,#dcinside-filter-setting
+        ) input:checked + .switch-slider {
+            border-color: color-mix(in srgb,var(--dcuf-theme-accent) 30%,var(--dcuf-glass-border)) !important;
+            background-color: color-mix(in srgb,var(--dcuf-theme-accent) 24%,var(--dcuf-glass-control)) !important;
+            box-shadow: 0 5px 13px var(--dcuf-glass-accent-shadow),inset 0 1px 0 var(--dcuf-glass-rim) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body :is(
+            #dc-block-management-panel,#dcinside-filter-setting
+        ) .switch-slider::before {
+            border: 1px solid rgba(255,255,255,.82) !important;
+            background: color-mix(in srgb,var(--dcuf-glass-paper) 92%,white) !important;
+            box-shadow: 0 2px 7px rgba(23,35,58,.22),inset 0 1px 0 white !important;
+        }
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body #dc-personal-block-fab {
+            border-color: color-mix(in srgb,var(--dcuf-theme-accent) 24%,var(--dcuf-glass-border)) !important;
+            background-color: color-mix(in srgb,var(--dcuf-theme-accent) 10%,var(--dcuf-glass-panel)) !important;
+            background-image: linear-gradient(180deg,var(--dcuf-glass-highlight),transparent 82%) !important;
+            color: var(--dcuf-theme-fg) !important;
+            box-shadow: 0 10px 26px rgba(30,46,78,.12),inset 0 1px 0 var(--dcuf-glass-rim) !important;
+            -webkit-backdrop-filter: blur(14px) saturate(1.10) !important;
+            backdrop-filter: blur(14px) saturate(1.10) !important;
+            text-shadow: none !important;
+        }
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body #dc-personal-block-drawer {
+            border-color: var(--dcuf-glass-border) !important;
+            background-color: var(--dcuf-glass-panel) !important;
+            background-image: linear-gradient(145deg,var(--dcuf-glass-highlight),transparent 52%) !important;
+            color: var(--dcuf-theme-fg) !important;
+            box-shadow: var(--dcuf-glass-popup-shadow),inset 0 1px 0 var(--dcuf-glass-rim) !important;
+            -webkit-backdrop-filter: blur(var(--dcuf-glass-blur)) saturate(1.10) !important;
+            backdrop-filter: blur(var(--dcuf-glass-blur)) saturate(1.10) !important;
+        }
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body #dc-personal-block-drawer button {
+            border-color: color-mix(in srgb,var(--dcuf-glass-border-strong) 48%,transparent) !important;
+            background-color: rgba(255,255,255,.08) !important;
+            background-image: none !important;
+            color: var(--dcuf-theme-fg) !important;
+            box-shadow: inset 0 1px 0 var(--dcuf-glass-rim) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-personal-block-drawer button:is(:hover,:focus-visible) {
+            background-color: color-mix(in srgb,var(--dcuf-theme-accent) 8%,var(--dcuf-glass-control)) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-personal-block-drawer :is(strong,small,span) {
+            color: inherit !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-personal-block-drawer small {
+            opacity: .68 !important;
+        }
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body #dcinside-filter-setting :is(
+            .dcuf-settings-section,.dcuf-settings-threshold > div:last-child,.dcuf-settings-guest-controls
+        ) {
+            border-color: color-mix(in srgb,var(--dcuf-theme-border-strong) 54%,transparent) !important;
+            background-color: rgba(255,255,255,.055) !important;
+            background-image: none !important;
+            box-shadow: none !important;
+        }
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body #dc-block-management-panel :is(
+            .panel-header,.panel-tabs,.panel-list-controls,.panel-footer
+        ) {
+            border-color: color-mix(in srgb,var(--dcuf-theme-border-strong) 50%,transparent) !important;
+            background-color: transparent !important;
+            background-image: none !important;
+            box-shadow: none !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-block-management-panel .panel-header-actions :is(.panel-add-btn,.panel-close-btn) {
+            border-color: transparent !important;
+            background: transparent !important;
+            color: var(--dcuf-theme-fg) !important;
+            box-shadow: none !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-block-management-panel .panel-header-actions :is(.panel-add-btn,.panel-close-btn):is(:hover,:focus-visible) {
+            border-color: var(--dcuf-glass-border) !important;
+            background-color: var(--dcuf-glass-control) !important;
+        }
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body #dc-block-management-panel .panel-tabs {
+            margin: 0 10px !important;
+            padding: 3px !important;
+            border: 1px solid var(--dcuf-glass-border) !important;
+            border-radius: 12px !important;
+            background-color: rgba(255,255,255,.08) !important;
+        }
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body #dc-block-management-panel .panel-tab {
+            border: 0 !important;
+            background: transparent !important;
+            color: var(--dcuf-theme-fg-muted) !important;
+            box-shadow: none !important;
+        }
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body #dc-block-management-panel .panel-tab.active {
+            border: 0 !important;
+            background-color: var(--dcuf-glass-control-active) !important;
+            background-image: linear-gradient(180deg,var(--dcuf-glass-control-active-top),transparent 88%) !important;
+            color: var(--dcuf-theme-fg) !important;
+            box-shadow: inset 0 1px 0 var(--dcuf-glass-rim),0 4px 12px var(--dcuf-glass-accent-shadow) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-block-management-panel .panel-body {
+            background: transparent !important;
+        }
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body #dc-block-management-panel .panel-list-controls {
+            grid-template-columns: minmax(0,1fr) auto !important;
+            margin: 0 !important;
+            padding: 10px !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-block-management-panel .panel-search {
+            border-color: var(--dcuf-glass-border) !important;
+            background-color: var(--dcuf-glass-input) !important;
+            background-image: none !important;
+            box-shadow: inset 0 2px 5px rgba(25,38,64,.08),inset 0 1px 0 var(--dcuf-glass-rim) !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-block-management-panel .panel-search-input {
+            color: var(--dcuf-theme-fg) !important;
+        }
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body #dc-block-management-panel .blocked-list {
+            display: block !important;
+            padding: 0 10px !important;
+        }
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body #dc-block-management-panel .blocked-item {
+            margin: 0 !important;
+            border: 0 !important;
+            border-bottom: 1px solid color-mix(in srgb,var(--dcuf-theme-border-strong) 52%,transparent) !important;
+            border-radius: 0 !important;
+            background: transparent !important;
+            box-shadow: none !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-block-management-panel .blocked-item:last-child {
+            border-bottom: 0 !important;
+        }
+        html[${ROOT_ATTRIBUTE}] body #dc-block-management-panel .delete-item-btn {
+            border-color: color-mix(in srgb,#d7485a 18%,var(--dcuf-glass-border)) !important;
+            background-color: color-mix(in srgb,#d7485a 7%,var(--dcuf-glass-control)) !important;
+            background-image: none !important;
+            color: color-mix(in srgb,#d7485a 72%,var(--dcuf-theme-fg)) !important;
+            box-shadow: none !important;
+        }
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body #dc-block-management-panel .panel-save-btn {
+            background-color: color-mix(in srgb,var(--dcuf-theme-accent) 17%,var(--dcuf-glass-control)) !important;
+            background-image: linear-gradient(180deg,var(--dcuf-glass-control-active-top),transparent 86%) !important;
+            color: var(--dcuf-theme-fg) !important;
+        }
         /* DCUF_SHARED_PALETTE_UI_END */
 
         #${OVERLAY_ID} {
@@ -1083,8 +4413,12 @@ const ThemeModule = (() => {
             align-items: center !important;
             justify-content: center !important;
             padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)) !important;
-            background: rgba(18, 25, 35, .52) !important;
-            backdrop-filter: blur(3px);
+            background:
+                radial-gradient(58% 46% at 12% 8%, rgba(93,105,255,.18), transparent 68%),
+                radial-gradient(52% 44% at 94% 92%, rgba(43,191,221,.14), transparent 70%),
+                rgba(8,16,31,.24) !important;
+            -webkit-backdrop-filter: blur(12px) saturate(1.15);
+            backdrop-filter: blur(12px) saturate(1.15);
             pointer-events: auto !important;
         }
         #${PANEL_ID} {
@@ -1102,11 +4436,15 @@ const ThemeModule = (() => {
             max-height: calc(100dvh - 32px) !important;
             overflow: hidden !important;
             padding: 0 !important;
-            border: 1px solid var(--dcuf-theme-border-strong) !important;
-            border-radius: 20px !important;
-            background: var(--dcuf-theme-card-top) !important;
+            border: 1px solid var(--dcuf-glass-border) !important;
+            border-top-color: var(--dcuf-glass-rim) !important;
+            border-radius: 24px !important;
+            background-color: var(--dcuf-glass-panel) !important;
+            background-image: linear-gradient(145deg, rgba(255,255,255,.18), transparent 42%) !important;
             color: var(--dcuf-theme-fg) !important;
-            box-shadow: var(--dcuf-theme-panel-shadow) !important;
+            box-shadow: var(--dcuf-glass-popup-shadow), inset 0 1px 0 var(--dcuf-glass-rim) !important;
+            -webkit-backdrop-filter: blur(var(--dcuf-glass-blur)) saturate(1.28) brightness(1.03) !important;
+            backdrop-filter: blur(var(--dcuf-glass-blur)) saturate(1.28) brightness(1.03) !important;
             font: 500 14px/1.45 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
         }
         #${PANEL_ID}[data-dcuf-palette-interacting="true"] { transition: none !important; animation: none !important; }
@@ -1117,8 +4455,9 @@ const ThemeModule = (() => {
             justify-content: space-between !important;
             gap: 12px !important;
             padding: 18px 18px 14px !important;
-            border-bottom: 1px solid var(--dcuf-theme-border) !important;
-            background: linear-gradient(180deg, var(--dcuf-theme-card-top), var(--dcuf-theme-surface-raised)) !important;
+            border-bottom: 1px solid rgba(255,255,255,.24) !important;
+            background-color: rgba(255,255,255,.08) !important;
+            background-image: linear-gradient(180deg, rgba(255,255,255,.14), transparent 76%) !important;
             cursor: move !important;
             touch-action: none !important;
             user-select: none !important;
@@ -1171,16 +4510,18 @@ const ThemeModule = (() => {
             gap: 11px !important;
             min-height: 70px !important;
             padding: 10px !important;
-            border: 1px solid var(--dcuf-theme-border) !important;
+            border: 1px solid rgba(255,255,255,.28) !important;
             border-radius: 14px !important;
-            background: var(--dcuf-theme-surface-input) !important;
+            background-color: rgba(255,255,255,.075) !important;
+            background-image: linear-gradient(145deg, rgba(255,255,255,.10), transparent 58%) !important;
             color: var(--dcuf-theme-fg) !important;
             text-align: left !important;
             cursor: pointer !important;
         }
         #${PANEL_ID} .dcuf-palette-option[aria-checked="true"] {
-            border-color: var(--dcuf-theme-accent) !important;
-            background: var(--dcuf-theme-accent-soft) !important;
+            border-color: color-mix(in srgb,var(--dcuf-theme-accent) 34%,rgba(255,255,255,.32)) !important;
+            background-color: color-mix(in srgb,var(--dcuf-theme-accent-soft) 14%,rgba(255,255,255,.12)) !important;
+            background-image: linear-gradient(145deg, rgba(255,255,255,.15), transparent 62%) !important;
             color: var(--dcuf-theme-accent-strong) !important;
             box-shadow: 0 0 0 2px color-mix(in srgb, var(--dcuf-theme-accent) 18%, transparent) !important;
         }
@@ -1200,17 +4541,24 @@ const ThemeModule = (() => {
         #${PANEL_ID} .dcuf-palette-actions button {
             min-height: 44px !important;
             padding: 8px 10px !important;
-            border: 1px solid var(--dcuf-theme-border-strong) !important;
-            border-radius: 11px !important;
-            background: var(--dcuf-theme-surface-input) !important;
+            border: 1px solid rgba(255,255,255,.30) !important;
+            border-radius: 12px !important;
+            background-color: var(--dcuf-glass-control) !important;
+            background-image: linear-gradient(180deg,rgba(255,255,255,.16),transparent 76%) !important;
             color: var(--dcuf-theme-fg) !important;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.25),0 6px 16px rgba(24,38,70,.07) !important;
             font-weight: 800 !important;
             cursor: pointer !important;
         }
         #${PANEL_ID} .dcuf-palette-actions [data-dcuf-palette-action="save"] {
-            border-color: var(--dcuf-theme-accent-strong) !important;
-            background: var(--dcuf-theme-accent-strong) !important;
-            color: var(--dcuf-theme-on-accent) !important;
+            border-color: color-mix(in srgb,var(--dcuf-theme-accent) 42%,rgba(255,255,255,.42)) !important;
+            background-color: var(--dcuf-glass-control-active) !important;
+            background-image:
+                radial-gradient(circle at 22% 0%,rgba(255,255,255,.40),transparent 42%),
+                linear-gradient(145deg,var(--dcuf-glass-control-active-top),var(--dcuf-glass-control-active)) !important;
+            color: var(--dcuf-glass-on-active) !important;
+            box-shadow: 0 11px 26px var(--dcuf-glass-accent-shadow),inset 0 1px 0 rgba(255,255,255,.42) !important;
+            text-shadow: 0 1px 1px rgba(0,0,0,.12) !important;
         }
         #${PANEL_ID} .dcuf-palette-resize-handle {
             position: absolute !important;
@@ -1231,17 +4579,231 @@ const ThemeModule = (() => {
 
         body.dc-filter-dark-mode #${PANEL_ID} {
             border-color: var(--dcuf-theme-border-strong) !important;
-            background: var(--dcuf-theme-card-top) !important;
+            background-color: var(--dcuf-glass-panel) !important;
+            background-image: linear-gradient(145deg, var(--dcuf-glass-highlight), transparent 48%) !important;
             color: var(--dcuf-theme-fg) !important;
             box-shadow: var(--dcuf-theme-panel-shadow) !important;
         }
-        body.dc-filter-dark-mode #${PANEL_ID} .dcuf-palette-header { border-color: var(--dcuf-theme-border) !important; background: linear-gradient(180deg, var(--dcuf-theme-card-top), var(--dcuf-theme-surface-raised)) !important; }
+        body.dc-filter-dark-mode #${PANEL_ID} .dcuf-palette-header { border-color: var(--dcuf-theme-border) !important; background-color: var(--dcuf-glass-panel-strong) !important; background-image: linear-gradient(180deg, var(--dcuf-glass-highlight), transparent 72%) !important; }
         body.dc-filter-dark-mode #${PANEL_ID} .dcuf-palette-description { color: var(--dcuf-theme-fg-muted) !important; }
         body.dc-filter-dark-mode #${PANEL_ID} .dcuf-palette-close { color: var(--dcuf-theme-fg) !important; }
-        body.dc-filter-dark-mode #${PANEL_ID} .dcuf-palette-option { border-color: var(--dcuf-theme-border) !important; background: var(--dcuf-theme-surface-input) !important; color: var(--dcuf-theme-fg) !important; }
-        body.dc-filter-dark-mode #${PANEL_ID} .dcuf-palette-option[aria-checked="true"] { border-color: var(--dcuf-theme-accent) !important; background: var(--dcuf-theme-accent-soft) !important; color: var(--dcuf-theme-accent) !important; }
-        body.dc-filter-dark-mode #${PANEL_ID} .dcuf-palette-actions button { border-color: var(--dcuf-theme-border-strong) !important; background: var(--dcuf-theme-surface-input) !important; color: var(--dcuf-theme-fg) !important; }
-        body.dc-filter-dark-mode #${PANEL_ID} .dcuf-palette-actions [data-dcuf-palette-action="save"] { border-color: var(--dcuf-theme-accent-strong) !important; background: var(--dcuf-theme-accent-strong) !important; color: var(--dcuf-theme-on-accent) !important; }
+        body.dc-filter-dark-mode #${PANEL_ID} .dcuf-palette-option { border-color: var(--dcuf-theme-border) !important; background-color: var(--dcuf-glass-control) !important; background-image: linear-gradient(145deg, var(--dcuf-glass-highlight), transparent 62%) !important; color: var(--dcuf-theme-fg) !important; }
+        body.dc-filter-dark-mode #${PANEL_ID} .dcuf-palette-option[aria-checked="true"] { border-color: var(--dcuf-theme-accent) !important; background-color: color-mix(in srgb, var(--dcuf-theme-accent-soft) 72%, var(--dcuf-glass-control)) !important; background-image: linear-gradient(145deg, var(--dcuf-glass-highlight), transparent 62%) !important; color: var(--dcuf-theme-accent) !important; }
+        body.dc-filter-dark-mode #${PANEL_ID} .dcuf-palette-actions button { border-color: rgba(222,234,255,.15) !important; background-color: var(--dcuf-glass-control) !important; background-image: linear-gradient(180deg,rgba(151,170,214,.13),rgba(151,170,214,.06)) !important; color: var(--dcuf-theme-fg) !important; }
+        body.dc-filter-dark-mode #${PANEL_ID} .dcuf-palette-actions [data-dcuf-palette-action="save"] { border-color: color-mix(in srgb,var(--dcuf-theme-accent) 42%,rgba(255,255,255,.22)) !important; background-color: var(--dcuf-glass-control-active) !important; background-image: radial-gradient(circle at 22% 0%,rgba(255,255,255,.24),transparent 42%),linear-gradient(145deg,var(--dcuf-glass-control-active-top),var(--dcuf-glass-control-active)) !important; color: var(--dcuf-glass-on-active) !important; }
+
+        /*
+         * The bottom navigation is one material shell. Palette rules above paint
+         * interactive descendants, but these three direct children are layout
+         * rails and must not become nested cards again.
+         */
+        html[${ROOT_ATTRIBUTE}] body #container .custom-bottom-controls > :is(
+            .dcuf-bottom-action-card,
+            .dcuf-pagination-card,
+            .dcuf-search-card
+        ) {
+            border: 0 !important;
+            border-radius: 0 !important;
+            background-color: transparent !important;
+            background-image: none !important;
+            box-shadow: none !important;
+            -webkit-backdrop-filter: none !important;
+            backdrop-filter: none !important;
+        }
+
+        /*
+         * Final shared host-header owner for list, view, and write routes.
+         * The host keeps header/nav/recent as siblings, so a pointer-transparent
+         * pseudo-element on the header supplies their common outer material.
+         */
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body .dcheader.typea {
+            box-sizing: border-box !important;
+            position: relative !important;
+            z-index: auto !important;
+            width: calc(100% - 16px) !important;
+            max-width: none !important;
+            margin: 0 8px !important;
+            border: 0 !important;
+            border-radius: 20px !important;
+            background: transparent !important;
+            box-shadow: none !important;
+            -webkit-backdrop-filter: none !important;
+            backdrop-filter: none !important;
+            overflow: visible !important;
+        }
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body .dcheader.typea::before {
+            content: "" !important;
+            box-sizing: border-box !important;
+            display: block !important;
+            position: absolute !important;
+            inset: 0 0 auto 0 !important;
+            z-index: 0 !important;
+            width: 100% !important;
+            height: calc(100% + 136px) !important;
+            border: 1px solid var(--dcuf-glass-border,rgba(255,255,255,.58)) !important;
+            border-radius: 22px !important;
+            background-color: var(--dcuf-glass-panel,rgba(232,239,249,.68)) !important;
+            background-image:
+                radial-gradient(ellipse 54% 78% at 8% -12%,color-mix(in srgb,var(--dcuf-theme-accent-soft,#e9efff) 36%,transparent),transparent 70%),
+                linear-gradient(145deg,var(--dcuf-glass-highlight,rgba(255,255,255,.34)),transparent 48%) !important;
+            box-shadow:
+                0 20px 48px rgba(32,48,82,.11),
+                0 4px 14px rgba(32,48,82,.06),
+                inset 0 1px 0 var(--dcuf-glass-rim,rgba(255,255,255,.76)) !important;
+            -webkit-backdrop-filter: blur(18px) saturate(1.16) !important;
+            backdrop-filter: blur(18px) saturate(1.16) !important;
+            pointer-events: none !important;
+        }
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body .dcheader.typea .dchead {
+            position: relative !important;
+            z-index: 3 !important;
+            width: 100% !important;
+            max-width: none !important;
+            margin: 0 !important;
+            border: 0 !important;
+            border-radius: 0 !important;
+            background: transparent !important;
+            box-shadow: none !important;
+            -webkit-backdrop-filter: none !important;
+            backdrop-filter: none !important;
+            overflow: visible !important;
+        }
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body .dcheader.typea .wrap_search,
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body .dcheader.typea .wrap_search form {
+            z-index: 2147483646 !important;
+            overflow: visible !important;
+        }
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body .gnb_bar {
+            box-sizing: border-box !important;
+            position: relative !important;
+            z-index: auto !important;
+            width: calc(100% - 32px) !important;
+            max-width: none !important;
+            min-height: 46px !important;
+            margin: 8px 16px 0 !important;
+            border: 1px solid var(--dcuf-glass-border,rgba(255,255,255,.58)) !important;
+            border-radius: 15px !important;
+            background-color: var(--dcuf-glass-control,rgba(255,255,255,.18)) !important;
+            background-image: linear-gradient(180deg,var(--dcuf-glass-highlight,rgba(255,255,255,.24)),transparent 76%) !important;
+            box-shadow: 0 7px 18px rgba(32,48,82,.065),inset 0 1px 0 var(--dcuf-glass-rim,rgba(255,255,255,.70)) !important;
+            -webkit-backdrop-filter: none !important;
+            backdrop-filter: none !important;
+        }
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body #visit_history {
+            box-sizing: border-box !important;
+            position: relative !important;
+            z-index: auto !important;
+            width: 100% !important;
+            min-width: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            background: transparent !important;
+            pointer-events: none !important;
+        }
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body #visit_history.visit_bookmark > .newvisit_history.vst {
+            box-sizing: border-box !important;
+            width: calc(100% - 32px) !important;
+            max-width: none !important;
+            min-width: 0 !important;
+            min-height: 54px !important;
+            height: 54px !important;
+            margin: 0 16px !important;
+            padding: 8px 10px !important;
+            border: 0 !important;
+            border-radius: 0 !important;
+            background: transparent !important;
+            box-shadow: none !important;
+            -webkit-backdrop-filter: none !important;
+            backdrop-filter: none !important;
+            transition: none !important;
+        }
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body #visit_history > .newvisit_history.vst > :is(.vst_title,.bookmark_title) {
+            box-sizing: border-box !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            flex: 0 0 auto !important;
+            min-height: 32px !important;
+            margin: 0 !important;
+            padding: 0 11px !important;
+            border: 1px solid color-mix(in srgb,var(--dcuf-theme-accent,#3f6de0) 24%,var(--dcuf-glass-border,rgba(255,255,255,.58))) !important;
+            border-radius: 999px !important;
+            background-color: color-mix(in srgb,var(--dcuf-theme-accent-soft,#e9efff) 48%,transparent) !important;
+            color: var(--dcuf-theme-accent,#3f6de0) !important;
+            font-weight: 800 !important;
+            line-height: 1 !important;
+        }
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body #visit_history > .newvisit_history.vst > .bookmark_title[hidden] {
+            display: none !important;
+        }
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body #visit_history > .newvisit_history.vst > .btn_open {
+            box-sizing: border-box !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            flex: 0 0 32px !important;
+            width: 32px !important;
+            min-width: 32px !important;
+            height: 32px !important;
+            min-height: 32px !important;
+            margin: 0 2px !important;
+            padding: 0 !important;
+            border: 1px solid var(--dcuf-glass-border,rgba(255,255,255,.58)) !important;
+            border-radius: 50% !important;
+            background-color: var(--dcuf-glass-control,rgba(255,255,255,.18)) !important;
+            box-shadow: inset 0 1px 0 var(--dcuf-glass-rim,rgba(255,255,255,.70)) !important;
+        }
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body #visit_history > .newvisit_history.vst > .btn_open > .sp_img.icon_listmore {
+            box-sizing: border-box !important;
+            display: block !important;
+            flex: 0 0 15px !important;
+            width: 15px !important;
+            min-width: 15px !important;
+            height: 15px !important;
+            min-height: 15px !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            overflow: visible !important;
+        }
+        @media screen and (min-width: 1024px) {
+            html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body .dcheader.typea {
+                width: min(1480px,calc(100% - 48px)) !important;
+                max-width: 1480px !important;
+                margin-right: auto !important;
+                margin-left: auto !important;
+            }
+            html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body .dcheader.typea::before {
+                height: 198px !important;
+                border-radius: 24px !important;
+            }
+            html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body .gnb_bar,
+            html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body #visit_history.visit_bookmark > .newvisit_history.vst {
+                width: min(1432px,calc(100% - 96px)) !important;
+                max-width: 1432px !important;
+                margin-right: auto !important;
+                margin-left: auto !important;
+            }
+            html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body #visit_history.visit_bookmark > .newvisit_history.vst {
+                min-height: 44px !important;
+                height: 44px !important;
+                padding: 6px 10px !important;
+            }
+        }
+        @media screen and (max-width: 600px) {
+            html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body.is-write-page .dcheader.typea::before {
+                height: 100% !important;
+            }
+        }
+        html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body.dcuf-write-desktop-site-mobile .dcheader.typea::before {
+            height: 100% !important;
+        }
+        @media (prefers-reduced-transparency: reduce) {
+            html[${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}][${ROOT_ATTRIBUTE}] body .dcheader.typea::before {
+                background-color: var(--dcuf-glass-panel-solid,var(--dcuf-theme-card-top,#fff)) !important;
+                -webkit-backdrop-filter: none !important;
+                backdrop-filter: none !important;
+            }
+        }
 
         @media (max-width: 440px) {
             #${PANEL_ID} .dcuf-palette-options { grid-template-columns: 1fr !important; }

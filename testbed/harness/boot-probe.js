@@ -5,10 +5,14 @@
     const isPaintVisible = (element) => {
         if (!(element instanceof HTMLElement)) return false;
         const style = getComputedStyle(element);
+        const bodyStyle = document.body ? getComputedStyle(document.body) : null;
         const rect = element.getBoundingClientRect();
         return style.display !== 'none'
             && style.visibility !== 'hidden'
             && Number(style.opacity) > 0
+            && bodyStyle?.display !== 'none'
+            && bodyStyle?.visibility !== 'hidden'
+            && Number(bodyStyle?.opacity || 0) > 0
             && rect.width > 0
             && rect.height > 0;
     };

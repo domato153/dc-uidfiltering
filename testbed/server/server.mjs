@@ -3,7 +3,8 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { blankPage, listPage, viewPage } from '../fixtures/pages.mjs';
-import { deletePasswordPage, modifyPasswordPage, nativeWritePage, writePage } from '../fixtures/write-pages.mjs';
+import { deleteConfirmPage, deletePasswordPage, modifyPasswordPage, nativeWritePage, writePage } from '../fixtures/write-pages.mjs';
+import { loginPage } from '../fixtures/login-page.mjs';
 import { loadHarnessSource } from '../harness/userscript-loader.mjs';
 
 const testbedDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -104,8 +105,12 @@ export async function startServer({ port = 0 } = {}) {
                 send(response, 200, nativeWritePage(), 'text/html; charset=utf-8', headers);
                 return;
             }
+            if (url.pathname === '/__testbed/login') {
+                send(response, 200, loginPage({ withAd: url.searchParams.get('ad') === '1' }), 'text/html; charset=utf-8', headers);
+                return;
+            }
             if (url.pathname.includes('/board/delete')) {
-                send(response, 200, deletePasswordPage(), 'text/html; charset=utf-8', headers);
+                send(response, 200, url.searchParams.get('stage') === 'confirm' ? deleteConfirmPage() : deletePasswordPage(), 'text/html; charset=utf-8', headers);
                 return;
             }
             if (url.pathname.includes('/board/modify')) {
@@ -116,7 +121,12 @@ export async function startServer({ port = 0 } = {}) {
                 return;
             }
             if (url.pathname.includes('/board/write')) {
-                send(response, 200, await withManualHarness(writePage({ variant, showGuide: url.searchParams.get('guide') === '1' }), url), 'text/html; charset=utf-8', headers);
+                send(response, 200, await withManualHarness(writePage({
+                    variant,
+                    showGuide: url.searchParams.get('guide') === '1',
+                    liveShape: url.searchParams.get('shape') === 'live',
+                    authenticated: url.searchParams.get('auth') === '1'
+                }), url), 'text/html; charset=utf-8', headers);
                 return;
             }
             if (url.pathname.includes('/board/lists')) {

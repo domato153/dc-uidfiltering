@@ -54,6 +54,7 @@
     const NativeRequestAnimationFrame = globalThis.requestAnimationFrame;
     const NativeCancelAnimationFrame = globalThis.cancelAnimationFrame;
     const activeTimeouts = new Set();
+    const activeTimeoutDetails = new Map();
     const activeIntervals = new Set();
     const activeAnimationFrames = new Set();
     const callbackIds = new WeakMap();
@@ -124,16 +125,25 @@
         const wrappedCallback = typeof callback === 'function'
             ? function (...callbackArgs) {
                 activeTimeouts.delete(timerId);
+                activeTimeoutDetails.delete(timerId);
                 state.timeoutCompleted += 1;
                 return callback.apply(this, callbackArgs);
             }
             : callback;
         timerId = NativeSetTimeout.call(this, wrappedCallback, delay, ...args);
-        if (typeof callback === 'function') activeTimeouts.add(timerId);
+        if (typeof callback === 'function') {
+            activeTimeouts.add(timerId);
+            activeTimeoutDetails.set(timerId, {
+                delay: Number(delay) || 0,
+                scheduledAt: performance.now(),
+                stack: String(new Error().stack || '').split('\n').slice(2, 7)
+            });
+        }
         return timerId;
     };
     globalThis.clearTimeout = function (timerId) {
         if (activeTimeouts.delete(timerId)) state.timeoutCleared += 1;
+        activeTimeoutDetails.delete(timerId);
         if (activeIntervals.delete(timerId)) state.intervalCleared += 1;
         return NativeClearTimeout.call(this, timerId);
     };
@@ -307,6 +317,10 @@
             return {
                 ...state,
                 activeTimeouts: activeTimeouts.size,
+                activeTimeoutDetails: Array.from(activeTimeoutDetails.values()).map((item) => ({
+                    ...item,
+                    age: performance.now() - item.scheduledAt
+                })),
                 activeIntervals: activeIntervals.size,
                 activeAnimationFrames: activeAnimationFrames.size,
                 mutationObserverCreationStacks: state.mutationObserverCreationStacks.slice(),

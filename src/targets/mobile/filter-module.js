@@ -676,10 +676,10 @@
         /* --- [v2.3.2 수정] 개인 차단 기능 UI --- */
         /* DCUF_SHARED_FILTER_UI_START */
         #dc-personal-block-controls {
-            --dcuf-fab-width: 152px;
-            --dcuf-fab-height: 76px;
-            --dcuf-fab-padding-x: 28px;
-            --dcuf-fab-font-size: 32px;
+            --dcuf-fab-width: 108px;
+            --dcuf-fab-height: 54px;
+            --dcuf-fab-padding-x: 18px;
+            --dcuf-fab-font-size: 19px;
             position: fixed;
             z-index: 2147483640;
             width: max-content;
@@ -3186,14 +3186,14 @@
             if (existingDiv) existingDiv.remove();
             const div = document.createElement('div');
             div.id = this.CONSTANTS.UI_IDS.SETTINGS_PANEL;
-            div.style = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;padding:24px 20px 18px 20px;min-width:280px;z-index:99999;border:2px solid #333;border-radius:10px;box-shadow:0 0 10px #0008; cursor: default; user-select: none;';
+            div.style = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);padding:24px 20px 18px 20px;min-width:280px;z-index:99999;cursor:default;user-select:none;';
             const proxyModeButtonsHtml = [
                 [this.PROXY_MODE.OFF, '끔'],
                 [this.PROXY_MODE.STRICT, '확실'],
                 [this.PROXY_MODE.AGGRESSIVE, '공격적']
             ].map(([mode, label]) => {
                 const active = normalizedProxyBlockMode === mode;
-                return `<button type="button" data-proxy-mode="${mode}" aria-pressed="${active}" style="flex:1;min-width:0;border:0;background:${active ? '#3b71fd' : 'transparent'};color:${active ? '#fff' : '#333'};font-size:12px;font-weight:${active ? '700' : '600'};padding:5px 0;border-radius:7px;cursor:pointer;">${label}</button>`;
+                return `<button type="button" data-proxy-mode="${mode}" aria-pressed="${active}" style="flex:1;min-width:0;border:0;background:${active ? 'var(--dcuf-glass-control-active,rgba(59,113,253,.58))' : 'transparent'};color:${active ? 'var(--dcuf-glass-on-active,#fff)' : 'var(--dcuf-theme-fg,#333)'};font-size:12px;font-weight:${active ? '700' : '600'};padding:5px 0;border-radius:7px;cursor:pointer;">${label}</button>`;
             }).join('');
             div.innerHTML = `
                 <div style="margin-bottom:15px;padding-bottom:12px;border-bottom: 2px solid #ccc; display:flex;align-items:center; justify-content: space-between;">
@@ -3309,8 +3309,8 @@
                     const buttonMode = this.normalizeProxyBlockMode(button.getAttribute('data-proxy-mode'));
                     const active = mode === buttonMode;
                     button.setAttribute('aria-pressed', active ? 'true' : 'false');
-                    button.style.background = active ? '#3b71fd' : 'transparent';
-                    button.style.color = active ? '#fff' : (isDarkMode ? '#dbe6f5' : '#333');
+                    button.style.background = active ? 'var(--dcuf-glass-control-active,rgba(59,113,253,.58))' : 'transparent';
+                    button.style.color = active ? 'var(--dcuf-glass-on-active,#fff)' : (isDarkMode ? '#dbe6f5' : 'var(--dcuf-theme-fg,#333)');
                     button.style.fontWeight = active ? '700' : '600';
                     button.style.border = '0';
                 });
@@ -3613,13 +3613,13 @@
 
             const overlay = document.createElement('div');
             overlay.id = this.CONSTANTS.UI_IDS.SHORTCUT_MODAL_OVERLAY;
-            overlay.style = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 100000;';
+            overlay.style = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2147483644;';
             document.body.appendChild(overlay);
 
 
             const modal = document.createElement('div');
             modal.id = this.CONSTANTS.UI_IDS.SHORTCUT_MODAL;
-            modal.style = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #fff; padding: 20px; border-radius: 8px; z-index: 100001; text-align: center; box-shadow: 0 0 15px rgba(0,0,0,0.3);';
+            modal.style = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #fff; padding: 20px; border-radius: 8px; z-index: 2147483645; text-align: center; box-shadow: 0 0 15px rgba(0,0,0,0.3);';
             modal.innerHTML = `
                 <h4 style="margin-top: 0; margin-bottom: 15px; font-size: 16px;">새로운 단축키를 입력하세요 (최대 3개)</h4>
                 <div id="${this.CONSTANTS.UI_IDS.NEW_SHORTCUT_PREVIEW}" style="min-width: 200px; height: 40px; line-height: 40px; border: 1px solid #ccc; border-radius: 4px; margin-bottom: 20px; font-size: 18px; font-weight: bold; color: #333;">입력 대기 중...</div>

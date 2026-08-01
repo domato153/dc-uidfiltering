@@ -159,10 +159,10 @@
             if (!controls) return normalized;
             const ratio = normalized / 100;
             const scaledValue = (base) => `${Number((base * ratio).toFixed(2))}px`;
-            controls.style.setProperty('--dcuf-fab-width', scaledValue(152));
-            controls.style.setProperty('--dcuf-fab-height', scaledValue(76));
-            controls.style.setProperty('--dcuf-fab-padding-x', scaledValue(28));
-            controls.style.setProperty('--dcuf-fab-font-size', scaledValue(32));
+            controls.style.setProperty('--dcuf-fab-width', scaledValue(108));
+            controls.style.setProperty('--dcuf-fab-height', scaledValue(54));
+            controls.style.setProperty('--dcuf-fab-padding-x', scaledValue(18));
+            controls.style.setProperty('--dcuf-fab-font-size', scaledValue(19));
             this.closeFabDrawer();
             if (clamp) this.clampFabPosition();
             return normalized;

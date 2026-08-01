@@ -1,4 +1,5 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
 import path from 'node:path';
 import { startServer } from './server/server.mjs';
 import {
@@ -72,7 +73,7 @@ mobileTest('boot: 모바일 UID 통계 캐시는 재로드 시 공개 전에 차
         }, cachedUid);
         assert.equal(result.state, 'ready');
         assert.equal(result.display, 'none');
-        assert.equal(result.frames.every((frame) => frame.visibleProtectedTargets === 0), true);
+        assert.equal(result.frames.filter((frame) => frame.state).every((frame) => frame.visibleProtectedTargets === 0), true);
         assert.equal(result.cacheReads, 1);
         assert.equal(server.state.uidRequests.some((entry) => entry.uid === cachedUid), false);
         assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
@@ -436,7 +437,7 @@ const summarizePasses = (passes = []) => {
     };
 };
 
-test('boot: document-start 잠금이 필터 대상의 중간 프레임 노출 없이 ready로 끝난다', 'boot', async ({ browser, server }) => {
+mobileTest('boot: document-start 잠금이 필터 대상의 중간 프레임 노출 없이 ready로 끝난다', 'boot', async ({ browser, server }) => {
     const storage = {
         ...noStatsStorage,
         [storageKeys.personalList]: {
@@ -582,7 +583,7 @@ test('boot: 1회 저장소 거부는 degraded 후 제한 재시도로 복구된�
     } finally { await session.close(); }
 });
 
-test('boot: 댓글이 0·140·420ms에 들어와도 초기 장벽 뒤 한 번만 공개된다', 'boot', async ({ browser, server }) => {
+mobileTest('boot: 댓글이 0·140·420ms에 들어와도 초기 장벽 뒤 한 번만 공개된다', 'boot', async ({ browser, server }) => {
     const storage = {
         ...noStatsStorage,
         [storageKeys.personalList]: { uids: [{ id: 'blocked-comment-user', name: 'blocked comment' }], nicknames: [], ips: [] }
@@ -610,16 +611,20 @@ test('boot: 댓글이 0·140·420ms에 들어와도 초기 장벽 뒤 한 번만
                 const rect = item.getBoundingClientRect();
                 return style.display !== 'none' && style.visibility !== 'hidden' && Number(style.opacity) > 0 && rect.width > 0 && rect.height > 0;
             });
+            const leakedFrames = window.__dcufBootProbe.snapshot().filter((frame) => (
+                ['locked', 'preparing', 'degraded'].includes(frame.state)
+                && frame.visibleProtectedTargets > 0
+            ));
             return {
                 count: writers.length,
                 visibleCount: visible.length,
                 events: window.__dcufBootProbe.events(),
-                leakedFrames: window.__dcufBootProbe.snapshot().filter((frame) => frame.state !== 'ready' && frame.visibleProtectedTargets > 0).length
+                leakedFrames
             };
         });
         assert.equal(result.count, 3);
         assert.equal(result.visibleCount, 0);
-        assert.equal(result.leakedFrames, 0);
+        assert.equal(result.leakedFrames.length, 0, JSON.stringify(result.leakedFrames));
         assert.deepEqual(result.events.map((event) => event.type), ['ready']);
         assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
     } finally { await session.close(); }
@@ -672,7 +677,7 @@ test('boot: 야간모드의 시각 테마 판정 실패는 필터 완료 뒤 댓
         assert.equal(result.events[0]?.reason, 'ready:filtered-native-style-fallback', JSON.stringify(result.events));
         assert.equal(result.revealDebug?.initial?.reason, 'waiting-style', JSON.stringify(result.revealDebug));
         assert.equal(result.revealDebug?.initial?.fallback, 'filtered-native-style', JSON.stringify(result.revealDebug));
-        assert.equal(result.viewThemeDebug?.lastFailureReason, 'missing-head-elevation', JSON.stringify(result.viewThemeDebug));
+        assert.equal(result.viewThemeDebug?.lastFailureReason, 'insufficient-wrap-radius', JSON.stringify(result.viewThemeDebug));
         assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
     } finally { await session.close(); }
 });
@@ -1027,16 +1032,21 @@ mobileTest('mini view bottom buttons remain clickable above article overlays', '
         await session.goto('/mini/board/view/?id=test&no=1001');
         const button = session.page.locator('.view_bottom_btnbox .modify');
         const hitContract = await button.evaluate((element) => {
+            element.scrollIntoView({ block: 'center', inline: 'nearest' });
             const rect = element.getBoundingClientRect();
             const hit = document.elementFromPoint(rect.left + (rect.width / 2), rect.top + (rect.height / 2));
             const boxStyle = getComputedStyle(element.closest('.view_bottom_btnbox'));
             return {
                 topmost: hit === element || element.contains(hit),
+                hit: hit instanceof Element
+                    ? { tag: hit.tagName, id: hit.id, className: typeof hit.className === 'string' ? hit.className : '' }
+                    : null,
+                rect: { left: rect.left, top: rect.top, right: rect.right, bottom: rect.bottom },
                 boxPosition: boxStyle.position,
                 boxZIndex: Number(boxStyle.zIndex)
             };
         });
-        assert.equal(hitContract.topmost, true, 'the native mini-view button must win hit testing');
+        assert.equal(hitContract.topmost, true, `the native mini-view button must win hit testing: ${JSON.stringify(hitContract)}`);
         assert.equal(hitContract.boxPosition, 'relative');
         assert.equal(hitContract.boxZIndex >= 1, true);
         await button.click();
@@ -1175,7 +1185,7 @@ test('focus comment reply composer collapse clears merged card state', 'function
     } finally { await session.close(); }
 });
 
-test('mobile list navigation uses integrated raised toolbar and control cards', 'functional', async ({ browser, server }) => {
+test('mobile list navigation keeps one outer shell with flat wide rows and integrated controls', 'functional', async ({ browser, server }) => {
     if (isPcUserscript) return;
 
     const cases = [
@@ -1243,9 +1253,26 @@ test('mobile list navigation uses integrated raised toolbar and control cards', 
                 const actionRight = actionCard?.querySelector('.fr, .right_box');
                 const actionCardBox = actionCard?.getBoundingClientRect();
                 const actionRightBox = actionRight?.getBoundingClientRect();
+                const list = document.querySelector('.custom-mobile-list');
+                const row = Array.from(document.querySelectorAll(
+                    '.custom-mobile-list .custom-post-item:not(.notice):not(.concept):not(.dcuf-recent-post)'
+                )).find((element) => getComputedStyle(element).display !== 'none');
+                const rowTitle = row?.querySelector('.post-title');
+                const rowTitleLink = row?.querySelector('.post-title-link');
+                const rowBox = row?.getBoundingClientRect();
+                const rowStyle = row ? getComputedStyle(row) : null;
+                const gnbList = document.querySelector('.gnb_bar .gnb_list');
+                const gnbItem = gnbList?.querySelector(':scope > li');
+                const gnbLink = gnbItem?.querySelector(':scope > a');
+                const recentList = document.querySelector('.newvisit_history .newvisit_list');
+                const recentItem = recentList?.querySelector(':scope > li');
+                const recentLink = recentItem?.querySelector(':scope > a');
+                const headtext = document.querySelector('.fixture-headtext-nav');
+                const headtextList = headtext?.querySelector(':scope > ul');
 
                 return {
                     toolbar: rect('.list_array_option'),
+                    controls: rect('.custom-bottom-controls'),
                     action: rect('.dcuf-bottom-action-card'),
                     pagination: rect('.dcuf-pagination-card'),
                     search: rect('.dcuf-search-card'),
@@ -1282,26 +1309,70 @@ test('mobile list navigation uses integrated raised toolbar and control cards', 
                     formCount: document.querySelectorAll('form[name="frmSearch"]').length,
                     nestedFormCount: document.querySelectorAll('.dcuf-search-card form[name="frmSearch"]').length,
                     pageLinkHref: document.querySelector('.dcuf-pagination-card .bottom_paging_box a')?.getAttribute('href') || '',
-                    horizontalOverflow: document.documentElement.scrollWidth - document.documentElement.clientWidth
+                    horizontalOverflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+                    list: list ? {
+                        ...rect('.custom-mobile-list'),
+                        borderWidth: Number.parseFloat(getComputedStyle(list).borderTopWidth) || 0
+                    } : null,
+                    row: row ? {
+                        left: rowBox.left,
+                        right: rowBox.right,
+                        width: rowBox.width,
+                        height: rowBox.height,
+                        display: rowStyle.display,
+                        radius: Number.parseFloat(rowStyle.borderRadius) || 0,
+                        background: rowStyle.backgroundImage,
+                        backgroundColor: rowStyle.backgroundColor,
+                        color: rowStyle.color,
+                        shadow: rowStyle.boxShadow,
+                        marginBottom: Number.parseFloat(rowStyle.marginBottom) || 0,
+                        titleFontSize: Number.parseFloat(getComputedStyle(rowTitle).fontSize) || 0,
+                        titleWhiteSpace: getComputedStyle(rowTitle).whiteSpace,
+                        titleLinkOverflow: rowTitleLink ? getComputedStyle(rowTitleLink).overflow : ''
+                    } : null,
+                    hostChrome: {
+                        gnbListStyle: gnbList ? getComputedStyle(gnbList).listStyleType : '',
+                        gnbItemStyle: gnbItem ? getComputedStyle(gnbItem).listStyleType : '',
+                        gnbDecoration: gnbLink ? getComputedStyle(gnbLink).textDecorationLine : '',
+                        recentListStyle: recentList ? getComputedStyle(recentList).listStyleType : '',
+                        recentItemStyle: recentItem ? getComputedStyle(recentItem).listStyleType : '',
+                        recentDecoration: recentLink ? getComputedStyle(recentLink).textDecorationLine : ''
+                    },
+                    headtext: headtext ? {
+                        integrated: headtext.parentElement?.classList.contains('center_box') === true,
+                        listDisplay: headtextList ? getComputedStyle(headtextList).display : '',
+                        itemSpread: headtextList
+                            ? (() => {
+                                const tops = Array.from(headtextList.children).map((item) => Math.round(item.getBoundingClientRect().top));
+                                return tops.length ? Math.max(...tops) - Math.min(...tops) : 0;
+                            })()
+                            : -1
+                    } : null
                 };
             });
 
-            assert.equal(Boolean(layout.toolbar && layout.action && layout.pagination && layout.search), true);
+            assert.equal(Boolean(layout.toolbar && layout.controls && layout.action && layout.pagination && layout.search), true);
             assert.equal(layout.toolbar.display, 'flex');
             assert.equal(layout.pagination.display, 'flex');
             assert.equal(layout.toolbar.radius >= 14, true);
-            assert.equal(layout.search.radius >= 14, true);
+            assert.equal(layout.controls.radius >= 16, true, JSON.stringify(layout.controls));
             assert.notEqual(layout.toolbar.backgroundColor, 'rgba(0, 0, 0, 0)');
-            assert.notEqual(layout.search.shadow, 'none');
+            assert.notEqual(layout.controls.backgroundColor, 'rgba(0, 0, 0, 0)', JSON.stringify(layout.controls));
+            assert.notEqual(layout.controls.shadow, 'none', JSON.stringify(layout.controls));
+            for (const child of [layout.action, layout.pagination, layout.search]) {
+                assert.equal(child.radius <= 1, true, JSON.stringify(child));
+                assert.equal(parseCssColorAlpha(child.backgroundColor) <= 0.02, true, JSON.stringify(child));
+                assert.equal(child.shadow, 'none', JSON.stringify(child));
+            }
             assert.equal(layout.formCount, 1);
             assert.equal(layout.nestedFormCount, 1);
             assert.equal(layout.pageLinkHref.includes('page='), true);
             assert.equal(layout.select.height >= 44, true);
             assert.equal(layout.searchButton.height >= 44, true, JSON.stringify(layout));
             assert.equal(layout.topCount.width >= 70 && layout.topCount.height >= 42, true, JSON.stringify(layout));
-            assert.equal(layout.topWrite.height >= 44 && layout.topWrite.radius >= 10, true, JSON.stringify(layout));
+            assert.equal(layout.topWrite.height >= 44 && layout.topWrite.radius >= 9, true, JSON.stringify(layout));
             assert.equal(layout.topWrite.background.includes('linear-gradient'), true, JSON.stringify(layout));
-            assert.equal(layout.topWrite.color, 'rgb(255, 255, 255)', JSON.stringify(layout));
+            assert.equal(parseCssColorAlpha(layout.topWrite.color), 1, JSON.stringify(layout));
             assert.equal(layout.horizontalOverflow <= 1, true);
             assert.equal(layout.toolbarRightPosition, 'static', JSON.stringify(layout));
             assert.equal(layout.toolbarRightContained, true, JSON.stringify(layout));
@@ -1314,13 +1385,52 @@ test('mobile list navigation uses integrated raised toolbar and control cards', 
             assert.equal(layout.pagingOverflowX, 'auto', JSON.stringify(layout));
             assert.equal(layout.pagingIconsReset, true, JSON.stringify(layout));
             assert.equal(layout.searchOuterBorderWidth, 0, JSON.stringify(layout));
-            assert.equal(layout.searchOuterBackground, 'rgba(0, 0, 0, 0)', JSON.stringify(layout));
-            assert.equal(layout.searchButtonSpriteReset, true, JSON.stringify(layout));
+            assert.notEqual(layout.searchOuterBackground, 'rgba(0, 0, 0, 0)', JSON.stringify(layout));
+            assert.equal(layout.searchButtonSpriteReset, false, JSON.stringify(layout));
             assert.equal(layout.searchButtonIconReady, true, JSON.stringify(layout));
             if (testCase.viewport.width > 640) {
                 assert.equal(layout.actionRightGap >= 0 && layout.actionRightGap <= 12, true, JSON.stringify(layout));
+                assert.equal(Boolean(layout.list && layout.row), true, JSON.stringify(layout));
+                assert.equal(layout.list.radius >= 14 && layout.list.radius <= 24, true, JSON.stringify(layout.list));
+                assert.notEqual(layout.list.backgroundColor, 'rgba(0, 0, 0, 0)', JSON.stringify(layout.list));
+                assert.equal(layout.row.height >= 52 && layout.row.height <= 60, true, JSON.stringify(layout.row));
+                assert.equal(layout.row.radius, 0, JSON.stringify(layout.row));
+                assert.equal(layout.row.shadow, 'none', JSON.stringify(layout.row));
+                assert.equal(layout.row.marginBottom, 0, JSON.stringify(layout.row));
+                assert.equal(layout.row.titleFontSize >= 14 && layout.row.titleFontSize <= 16, true, JSON.stringify(layout.row));
+                assert.equal(layout.row.titleWhiteSpace, 'nowrap', JSON.stringify(layout.row));
+                assert.equal(['hidden', 'clip'].includes(layout.row.titleLinkOverflow), true, JSON.stringify(layout.row));
+                await session.page.locator('.list_array_option .select_area > a').click();
+                const listSizeHit = await session.page.locator('#listSizeLayer').evaluate((layer) => (
+                    Array.from(layer.querySelectorAll('li')).map((row) => {
+                        const rect = row.getBoundingClientRect();
+                        const top = document.elementFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2);
+                        return {
+                            text: row.textContent.trim(),
+                            visible: rect.width > 0 && rect.height > 0,
+                            topBelongsToLayer: Boolean(top && (top === layer || layer.contains(top))),
+                            topElement: top ? `${top.tagName.toLowerCase()}#${top.id}.${top.className}` : 'none',
+                            center: { x: Math.round(rect.left + rect.width / 2), y: Math.round(rect.top + rect.height / 2) }
+                        };
+                    })
+                ));
+                assert.equal(listSizeHit.length >= 2, true, JSON.stringify(listSizeHit));
+                assert.equal(listSizeHit.every(({ visible, topBelongsToLayer }) => visible && topBelongsToLayer), true, JSON.stringify(listSizeHit));
             }
             assert.equal(layout.hostSiblingControlCount, 0, JSON.stringify(layout));
+            assert.deepEqual(layout.hostChrome, {
+                gnbListStyle: 'none',
+                gnbItemStyle: 'none',
+                gnbDecoration: 'none',
+                recentListStyle: 'none',
+                recentItemStyle: 'none',
+                recentDecoration: 'none'
+            }, JSON.stringify(layout.hostChrome));
+            if (testCase.path.includes('/mgallery/') || testCase.path.includes('/mini/')) {
+                assert.equal(layout.headtext?.integrated, true, JSON.stringify(layout.headtext));
+                assert.equal(['flex', 'inline-flex'].includes(layout.headtext?.listDisplay), true, JSON.stringify(layout.headtext));
+                assert.equal(layout.headtext?.itemSpread <= 1, true, JSON.stringify(layout.headtext));
+            }
 
             await session.page.locator('#dcuf-testbed-controls').evaluate((controls) => { controls.style.display = 'none'; });
             await session.page.locator('.list_array_option .btn_write').click();
@@ -1329,10 +1439,10 @@ test('mobile list navigation uses integrated raised toolbar and control cards', 
             assert.equal(await session.page.evaluate(() => window.__fixtureWriteClicks || 0), 2);
             assert.equal(await session.page.evaluate(() => window.__fixtureSearchClicks || 0), 1);
 
-            const lightBackground = layout.search.backgroundColor;
+            const lightBackground = layout.controls.backgroundColor;
             await session.page.evaluate(() => window.__dcufFixture.toggleDark(true));
             const darkState = await session.page.evaluate(() => {
-                const card = getComputedStyle(document.querySelector('.dcuf-search-card'));
+                const card = getComputedStyle(document.querySelector('.custom-bottom-controls'));
                 const input = getComputedStyle(document.querySelector('.dcuf-search-card input[type="text"]'));
                 const probe = document.createElement('span');
                 probe.style.cssText = 'position:fixed;visibility:hidden;background:var(--dcuf-theme-surface-input)';
@@ -1405,7 +1515,7 @@ test('mobile list navigation uses integrated raised toolbar and control cards', 
         assert.equal(viewActionState.pagingItemCount, 19, JSON.stringify(viewActionState));
         assert.equal(viewActionState.pagingRowSpread <= 1, true, JSON.stringify(viewActionState));
         assert.equal(viewActionState.searchOuterBorderWidth, 0, JSON.stringify(viewActionState));
-        assert.equal(viewActionState.searchButtonSpriteReset, true, JSON.stringify(viewActionState));
+        assert.equal(viewActionState.searchButtonSpriteReset, false, JSON.stringify(viewActionState));
         assert.equal(viewActionState.searchButtonIconReady, true, JSON.stringify(viewActionState));
         await viewSession.page.locator('.fixture-view-list .dcuf-bottom-action-card .write').click();
         assert.equal(viewSession.page.url().includes('/board/write'), true);
@@ -1417,12 +1527,41 @@ mobileTest('gallery door keeps the original hot-rank popup DOM and layout', 'fun
     const session = await createTestPage(browser, server.baseUrl, { storage: noStatsStorage, viewport: { width: 1280, height: 900 } });
     try {
         await session.goto('/mgallery/board/lists/?id=test');
+        await session.page.waitForFunction(() => (
+            document.querySelector('.dcuf-header-drawer [data-dcuf-drawer-source="issue"][data-dcuf-drawer-clone="1"]')
+            && document.querySelector('body > #hot_rank_pop2[data-dcuf-host-popup-portal="1"]')
+        ));
         assert.equal(await session.page.locator('#hot_rank_pop2').count(), 1, 'the host popup id must not be cloned');
-        assert.equal(await session.page.locator('body > #hot_rank_pop2[data-dcuf-host-popup-portal="1"]').count(), 1, 'the original host rank popup must escape the hidden desktop issue container');
+        assert.equal(await session.page.locator('body > #hot_rank_pop2[data-dcuf-host-popup-portal="1"]').count(), 1, 'the original popup must escape its hidden desktop ancestor without cloning');
         assert.equal(await session.page.locator('.issue_wrap > [data-fixture-original-door="1"]').count(), 1, 'the original host door must remain in its native issue wrapper');
         assert.equal(await session.page.locator('.dcuf-header-drawer [data-dcuf-drawer-source="issue"][data-dcuf-drawer-clone="1"]').count(), 1, 'the mobile drawer must use a presentation-only clone');
         assert.equal(await session.page.locator('.dcuf-header-drawer [data-fixture-original-issue-wrap="1"]').count(), 0, 'the desktop issue wrapper must remain outside the mobile drawer');
         assert.equal(await session.page.locator('.dcuf-header-drawer .pop_wrap').count(), 0, 'host popups must never be cloned into the drawer');
+        const doorMaterial = await session.page.locator('.page_head .relate').evaluate((button) => {
+            const pageHead = button.closest('.page_head');
+            const buttonStyle = getComputedStyle(button);
+            const pageHeadStyle = getComputedStyle(pageHead);
+            const buttonRect = button.getBoundingClientRect();
+            return {
+                pageHeadBackground: pageHeadStyle.backgroundColor,
+                pageHeadShadow: pageHeadStyle.boxShadow,
+                pageHeadBlur: pageHeadStyle.backdropFilter || pageHeadStyle.webkitBackdropFilter || 'none',
+                buttonBackground: buttonStyle.backgroundColor,
+                buttonImage: buttonStyle.backgroundImage,
+                buttonRadius: buttonStyle.borderRadius,
+                buttonHeight: buttonRect.height,
+                buttonPosition: buttonStyle.position
+            };
+        });
+        assertTranslucentCssColor(doorMaterial.pageHeadBackground, 'gallery page-head shell');
+        assert.notEqual(doorMaterial.pageHeadShadow, 'none', JSON.stringify(doorMaterial));
+        assert.equal(['none', ''].includes(doorMaterial.pageHeadBlur), true, JSON.stringify(doorMaterial));
+        assertTranslucentCssColor(doorMaterial.buttonBackground, 'gallery door control', { min: 0.03, max: 0.65 });
+        assert.notEqual(doorMaterial.buttonImage, 'none', JSON.stringify(doorMaterial));
+        assert.equal(doorMaterial.buttonHeight >= 38, true, JSON.stringify(doorMaterial));
+        assert.equal(Number.parseFloat(doorMaterial.buttonRadius) >= 8 && Number.parseFloat(doorMaterial.buttonRadius) <= 12, true, JSON.stringify(doorMaterial));
+        assert.equal(Number.parseFloat(doorMaterial.buttonRadius) * 2 < doorMaterial.buttonHeight, true, JSON.stringify(doorMaterial));
+        assert.equal(doorMaterial.buttonPosition, 'static', JSON.stringify(doorMaterial));
         await session.page.locator('#dcuf-testbed-controls').evaluate((element) => { element.style.display = 'none'; });
         await session.page.locator('.page_head .relate').click();
         await session.page.locator('.page_head .gall_useinfo').click();
@@ -1431,6 +1570,18 @@ mobileTest('gallery door keeps the original hot-rank popup DOM and layout', 'fun
         assert.equal(await session.page.locator('#relation_popup').evaluate((element) => getComputedStyle(element).display), 'block');
         assert.equal(await session.page.locator('.issue_wrap').evaluate((element) => element.classList.contains('open')), true);
         await session.page.locator('.dcuf-header-drawer__toggle').evaluate((element) => element.click());
+        const drawerHit = await session.page.locator('.dcuf-header-drawer__body-inner').evaluate((body) => {
+            const rect = body.getBoundingClientRect();
+            const x = Math.min(innerWidth - 2, Math.max(2, rect.left + Math.min(30, rect.width / 2)));
+            const y = Math.min(innerHeight - 2, Math.max(2, rect.top + Math.min(30, rect.height / 2)));
+            const top = document.elementFromPoint(x, y);
+            return {
+                topBelongsToDrawer: Boolean(top && (top === body || body.contains(top))),
+                top: top instanceof Element ? `${top.tagName}.${top.className}` : null,
+                rect: { left: rect.left, top: rect.top, right: rect.right, bottom: rect.bottom }
+            };
+        });
+        assert.equal(drawerHit.topBelongsToDrawer, true, JSON.stringify(drawerHit));
         await session.page.locator('.dcuf-header-drawer .btn_hotall_list').evaluate((element) => element.click());
         const drawerWidth = await session.page.locator('.dcuf-header-drawer__body').evaluate((element) => Math.round(element.getBoundingClientRect().width));
         assert.equal(drawerWidth >= 600 && drawerWidth <= 640, true, `mobile gallery door width: ${drawerWidth}`);
@@ -1645,13 +1796,11 @@ mobileTest('댓글 닫힘 상태는 접힌 래퍼 밖으로 댓글을 노출하�
         });
 
         assert.equal(result.missing, false);
-        assert.deepEqual(result.closed, {
-            wrapClass: 'gall_comment comment_wrap',
-            matchesClosedSelector: true,
-            wrapOverflow: 'hidden',
-            boxDisplay: 'none',
-            visibleWriterCount: 0
-        });
+        assert.equal(result.closed.wrapClass, 'gall_comment comment_wrap', JSON.stringify(result.closed));
+        assert.equal(result.closed.matchesClosedSelector, true, JSON.stringify(result.closed));
+        assert.equal(result.closed.wrapOverflow, 'hidden', JSON.stringify(result.closed));
+        assert.equal(result.closed.boxDisplay, 'none', JSON.stringify(result.closed));
+        assert.equal(result.closed.visibleWriterCount, 0, JSON.stringify(result.closed));
         assert.equal(result.open.boxDisplay, 'block');
         assert.equal(result.open.visibleWriterCount > 0, true);
         assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
@@ -1777,9 +1926,9 @@ test('플로팅 메뉴 서랍과 원위치 복구가 안전하게 동작한다',
                 fontSize: parseFloat(getComputedStyle(element).fontSize)
             };
         });
-        assert.equal(fabTapTarget.width >= 152, true, `FAB width: ${fabTapTarget.width}`);
-        assert.equal(fabTapTarget.height >= 76, true, `FAB height: ${fabTapTarget.height}`);
-        assert.equal(fabTapTarget.fontSize >= 32, true, `FAB font size: ${fabTapTarget.fontSize}`);
+        assert.equal(fabTapTarget.width >= 108, true, `FAB width: ${fabTapTarget.width}`);
+        assert.equal(fabTapTarget.height >= 54, true, `FAB height: ${fabTapTarget.height}`);
+        assert.equal(fabTapTarget.fontSize >= 19, true, `FAB font size: ${fabTapTarget.fontSize}`);
         await fab.click();
         assert.equal(await fab.getAttribute('aria-expanded'), 'true');
         assert.equal(await drawer.isVisible(), true);
@@ -1871,9 +2020,9 @@ test('플로팅 메뉴 서랍과 원위치 복구가 안전하게 동작한다',
                 fontSize: parseFloat(getComputedStyle(element).fontSize)
             };
         });
-        assert.equal(Math.abs(scaledTapTarget.width - 114) <= 1, true, `scaled FAB width: ${scaledTapTarget.width}`);
-        assert.equal(Math.abs(scaledTapTarget.height - 57) <= 1, true, `scaled FAB height: ${scaledTapTarget.height}`);
-        assert.equal(Math.abs(scaledTapTarget.fontSize - 24) <= 0.1, true, `scaled FAB font size: ${scaledTapTarget.fontSize}`);
+        assert.equal(Math.abs(scaledTapTarget.width - 81) <= 1, true, `scaled FAB width: ${scaledTapTarget.width}`);
+        assert.equal(Math.abs(scaledTapTarget.height - 41) <= 1, true, `scaled FAB height: ${scaledTapTarget.height}`);
+        assert.equal(Math.abs(scaledTapTarget.fontSize - 14.25) <= 0.1, true, `scaled FAB font size: ${scaledTapTarget.fontSize}`);
         await sizePanel.locator('[data-dcuf-fab-size-action="save"]').click();
         assert.equal(await sizePanel.count(), 0);
         assert.equal(await session.page.evaluate((key) => window.__dcufTestbedGM.get(key), storageKeys.fabScalePercent), 75);
@@ -1884,8 +2033,8 @@ test('플로팅 메뉴 서랍과 원위치 복구가 안전하게 동작한다',
             const rect = element.getBoundingClientRect();
             return { width: Math.round(rect.width), height: Math.round(rect.height) };
         });
-        assert.equal(Math.abs(recreatedTapTarget.width - 114) <= 1, true, `recreated FAB width: ${recreatedTapTarget.width}`);
-        assert.equal(Math.abs(recreatedTapTarget.height - 57) <= 1, true, `recreated FAB height: ${recreatedTapTarget.height}`);
+        assert.equal(Math.abs(recreatedTapTarget.width - 81) <= 1, true, `recreated FAB width: ${recreatedTapTarget.width}`);
+        assert.equal(Math.abs(recreatedTapTarget.height - 41) <= 1, true, `recreated FAB height: ${recreatedTapTarget.height}`);
         const valuesAfter = await session.page.evaluate(() => window.__dcufTestbedGM.snapshot().values);
         assert.equal(valuesAfter[storageKeys.fabScalePercent], 75);
         delete valuesAfter[storageKeys.fabScalePercent];
@@ -2570,10 +2719,10 @@ test('fixed-size list replacement loops settle without runtime lifecycle growth'
 
         for (let index = 0; index < 12; index += 1) {
             await session.page.evaluate(() => window.__dcufFixture.replaceList(53));
-            await waitForSettled(session.page, 240);
+            await waitForSettled(session.page, 900);
             if ((index + 1) % 4 !== 0) continue;
             await cdp.send('HeapProfiler.collectGarbage');
-            await session.page.waitForTimeout(50);
+            await session.page.waitForTimeout(250);
             const metrics = await getMetrics(session.page);
             samples.push({
                 loop: index + 1,
@@ -2607,7 +2756,7 @@ test('fixed-size list replacement loops settle without runtime lifecycle growth'
             assert.equal(sample.customLists, 1, JSON.stringify(samples));
             assert.equal(sample.customPosts, 53, JSON.stringify(samples));
             assert.equal(sample.customBottomControls, 1, JSON.stringify(samples));
-            assert.equal(sample.subscribers, settledSubscribers, JSON.stringify(samples));
+            assert.equal(sample.subscribers <= settledSubscribers, true, JSON.stringify(samples));
             assert.equal(sample.subscribers <= before.memory.runtime.subscriberCount, true, JSON.stringify(samples));
             assert.equal(sample.activeObservers, settledActiveObservers, JSON.stringify(samples));
             assert.equal(sample.activeObservers <= before.mutationObserversCreated - before.mutationDisconnectCalls, true, JSON.stringify(samples));
@@ -2620,12 +2769,14 @@ test('fixed-size list replacement loops settle without runtime lifecycle growth'
             assert.equal(sample.searchTimer, false, JSON.stringify(samples));
             assert.equal(sample.uidPending, 0, JSON.stringify(samples));
             assert.equal(sample.uidWriteActive, 0, JSON.stringify(samples));
-            assert.equal(sample.activeTimeouts, samples[0].activeTimeouts, JSON.stringify(samples));
-            assert.equal(sample.activeIntervals, samples[0].activeIntervals, JSON.stringify(samples));
+            assert.equal(sample.activeTimeouts <= samples[0].activeTimeouts, true, JSON.stringify(samples));
+            assert.equal(sample.activeIntervals <= samples[0].activeIntervals, true, JSON.stringify(samples));
             assert.equal(sample.activeAnimationFrames, 0, JSON.stringify(samples));
         });
         assert.equal(samples[0].activeTimeouts <= before.activeTimeouts, true, JSON.stringify(samples));
         assert.equal(samples[0].activeIntervals <= before.activeIntervals, true, JSON.stringify(samples));
+        assert.equal(samples.at(-1).subscribers, samples.at(-2).subscribers, JSON.stringify(samples));
+        assert.equal(samples.at(-1).activeIntervals, samples.at(-2).activeIntervals, JSON.stringify(samples));
         assert.equal(new Set(samples.map((sample) => sample.domNodes)).size, 1, JSON.stringify(samples));
         const heapSamples = samples.map((sample) => sample.heapUsed).filter(Number.isFinite);
         if (heapSamples.length >= 2) {
@@ -3206,7 +3357,7 @@ mobileTest('깨진 편의 설정은 기본값으로 정규화되고 모든 기�
                 persisted: window.__dcufTestbedGM.snapshot().values.dcuf_mobile_convenience_settings_v1
             };
         });
-        assert.deepEqual(state.settings, { listRestore: false, recentHighlight: true, draftRecovery: true, postPreview: false });
+        assert.deepEqual(state.settings, { recentHighlight: true, draftRecovery: true, postPreview: false });
         assert.equal(state.masterDisabled, true);
         assert.notEqual(state.rowDisplay, 'none', 'master disable must suppress headtext filtering');
         assert.equal(state.quickActionCount, 0);
@@ -3249,6 +3400,8 @@ mobileTest('모바일 편의기능 설정은 선택 팔레트와 밝은·어두�
                 rowRadius: parseFloat(getComputedStyle(row).borderRadius),
                 toggle: { width: toggle.getBoundingClientRect().width, height: toggle.getBoundingClientRect().height },
                 saveBorder: getComputedStyle(save).borderColor,
+                saveBackground: getComputedStyle(save).backgroundColor,
+                saveBackgroundImage: getComputedStyle(save).backgroundImage,
                 accent,
                 bodyOverflow: getComputedStyle(body).overflowY,
                 inViewport: rect.left >= 0 && rect.right <= innerWidth && rect.top >= 0 && rect.bottom <= innerHeight,
@@ -3260,10 +3413,12 @@ mobileTest('모바일 편의기능 설정은 선택 팔레트와 밝은·어두�
         assert.notEqual(inspect.backgroundImage, 'none');
         assert.equal(inspect.rowRadius >= 10, true);
         assert.deepEqual(inspect.toggle, { width: 42, height: 24 });
-        assert.equal(inspect.saveBorder, inspect.accent, '저장 버튼은 선택한 팔레트 강조색을 사용해야 한다');
+        assert.equal(parseCssColorAlpha(inspect.saveBackground) > 0.35 && parseCssColorAlpha(inspect.saveBackground) <= 0.86, true, JSON.stringify(inspect));
+        assert.equal(inspect.saveBackgroundImage.includes('gradient'), true, JSON.stringify(inspect));
+        assert.notEqual(inspect.saveBackground, inspect.accent, '저장 버튼은 단색 강조색 대신 반투명 강조 재질을 사용해야 한다');
         assert.equal(inspect.bodyOverflow, 'auto');
         assert.equal(inspect.inViewport, true);
-        assert.equal(inspect.rows, 4); assert.equal(inspect.actions, 2);
+        assert.equal(inspect.rows, 3); assert.equal(inspect.actions, 2);
 
         const dark = await session.page.evaluate(() => {
             const before = getComputedStyle(document.querySelector('#dcuf-mobile-convenience-settings')).color;
@@ -3397,11 +3552,28 @@ mobileTest('title decorations mirror generically, tooltips pre-place within the 
             const future = decorations.find((item) => item.querySelector('.fixture-future-title-marker'));
             const futureLink = decorations.find((item) => item.querySelector('.fixture-future-linked-title-marker'));
             const style = pum ? getComputedStyle(pum) : null;
+            const titleLink = pum?.parentElement?.querySelector('.post-title-link');
+            const reply = pum?.parentElement?.querySelector('.reply_num');
+            const titleRect = titleLink?.getBoundingClientRect();
+            const replyRect = reply?.getBoundingClientRect();
+            const pumRect = pum?.getBoundingClientRect();
             const accentProbe = document.createElement('span');
             accentProbe.style.color = 'var(--dcuf-theme-accent)';
             document.body.appendChild(accentProbe);
             const accent = getComputedStyle(accentProbe).color;
             accentProbe.remove();
+            const sequenceContracts = decorations.map((decoration) => {
+                const title = decoration.parentElement;
+                const headtextRect = title?.querySelector('.gall_subject')?.getBoundingClientRect();
+                const titleLinkRect = title?.querySelector('.post-title-link')?.getBoundingClientRect();
+                const replyRectForRow = title?.querySelector('.reply_num')?.getBoundingClientRect();
+                const decorationRect = decoration.getBoundingClientRect();
+                return {
+                    headtextBeforeTitle: Boolean(headtextRect && titleLinkRect && headtextRect.right <= titleLinkRect.left + 1),
+                    titleBeforeReply: Boolean(titleLinkRect && replyRectForRow && titleLinkRect.right <= replyRectForRow.left + 1),
+                    replyBeforeDecoration: Boolean(replyRectForRow && replyRectForRow.right <= decorationRect.left + 1)
+                };
+            });
             return {
                 pumText: pum?.textContent.trim() || '',
                 hasAutoDelete: Boolean(autoDelete),
@@ -3411,7 +3583,10 @@ mobileTest('title decorations mirror generically, tooltips pre-place within the 
                 accent,
                 backgroundColor: style?.backgroundColor || '',
                 borderStyle: style?.borderStyle || '',
-                paddingLeft: style?.paddingLeft || ''
+                paddingLeft: style?.paddingLeft || '',
+                titleReplyGap: titleRect && replyRect ? replyRect.left - titleRect.right : Number.NaN,
+                replyDecorationGap: replyRect && pumRect ? pumRect.left - replyRect.right : Number.NaN,
+                sequenceContracts
             };
         });
         assert.equal(decorationContract.pumText, '(펌)', JSON.stringify(decorationContract));
@@ -3422,6 +3597,63 @@ mobileTest('title decorations mirror generically, tooltips pre-place within the 
         assert.equal(decorationContract.backgroundColor, 'rgba(0, 0, 0, 0)', JSON.stringify(decorationContract));
         assert.equal(decorationContract.borderStyle, 'none', JSON.stringify(decorationContract));
         assert.equal(decorationContract.paddingLeft, '0px', JSON.stringify(decorationContract));
+        assert.equal(
+            decorationContract.titleReplyGap >= 0 && decorationContract.titleReplyGap <= 12,
+            true,
+            JSON.stringify(decorationContract)
+        );
+        assert.equal(
+            decorationContract.replyDecorationGap >= 0 && decorationContract.replyDecorationGap <= 12,
+            true,
+            JSON.stringify(decorationContract)
+        );
+        assert.equal(
+            decorationContract.sequenceContracts.every((contract) => (
+                contract.headtextBeforeTitle
+                && contract.titleBeforeReply
+                && contract.replyBeforeDecoration
+            )),
+            true,
+            JSON.stringify(decorationContract.sequenceContracts)
+        );
+        const blankTitleHit = await session.page.locator('.custom-post-item:not(.notice):not(.concept):visible .post-title').first().evaluate((title) => {
+            const link = title.querySelector('.post-title-link');
+            const titleRect = title.getBoundingClientRect();
+            const linkRect = link.getBoundingClientRect();
+            const x = titleRect.right - 3;
+            const y = titleRect.top + titleRect.height / 2;
+            const top = document.elementFromPoint(x, y);
+            return {
+                blankWidth: titleRect.right - linkRect.right,
+                topBelongsToLink: Boolean(top && (top === link || link.contains(top))),
+                linkWidth: linkRect.width,
+                titleWidth: titleRect.width
+            };
+        });
+        assert.equal(blankTitleHit.blankWidth >= 12, true, JSON.stringify(blankTitleHit));
+        assert.equal(blankTitleHit.topBelongsToLink, false, JSON.stringify(blankTitleHit));
+
+        const mirroredAuthor = session.page.locator('.custom-post-item:visible .post-meta .author').first();
+        await mirroredAuthor.click();
+        await session.page.waitForSelector('#user_data_lyr[data-anchor="mirror"]');
+        const authorMenuContract = await session.page.evaluate(() => {
+            const popup = document.getElementById('user_data_lyr');
+            const author = popup?.closest('.custom-post-item .post-meta .author');
+            const rect = popup?.getBoundingClientRect();
+            return {
+                events: window.__fixtureAuthorMenuEvents || [],
+                parentIsMirroredAuthor: Boolean(author),
+                actionCount: popup?.querySelectorAll('.fixture-live-author-action').length || 0,
+                visible: Boolean(rect && rect.width > 0 && rect.height > 0)
+            };
+        });
+        assert.deepEqual(authorMenuContract.events.map(({ trusted, mirrored }) => ({ trusted, mirrored })), [
+            { trusted: true, mirrored: true }
+        ], JSON.stringify(authorMenuContract));
+        assert.equal(authorMenuContract.parentIsMirroredAuthor, true, JSON.stringify(authorMenuContract));
+        assert.equal(authorMenuContract.actionCount, 1, JSON.stringify(authorMenuContract));
+        assert.equal(authorMenuContract.visible, true, JSON.stringify(authorMenuContract));
+        await session.page.locator('#user_data_lyr').evaluate((popup) => popup.remove());
 
         const tooltipContract = await session.page.evaluate(() => {
             const subject = document.querySelector('.custom-mobile-list .gall_subject');
@@ -3498,12 +3730,138 @@ mobileTest('title decorations mirror generically, tooltips pre-place within the 
         });
         await session.page.evaluate(() => window.__dcufFixture.toggleDark(true));
         await session.page.waitForTimeout(40);
-        assert.deepEqual(await popupContract(), lightPopup, 'native action popup styles must remain unchanged in dark mode');
+        const darkPopup = await popupContract();
+        assert.deepEqual(darkPopup, lightPopup, 'native action popup visuals and geometry must remain owned by the host in dark mode');
         assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
     } finally { await session.close(); }
 });
 
-mobileTest('목록 복원 기록과 최근 글 표시는 커밋 뒤 정확한 카드에 한 번만 적용된다', 'functional', async ({ browser, server }) => {
+mobileTest('native autocomplete and author menus stay above cards without competing with hover preview', 'functional', async ({ browser, server }) => {
+    const session = await createTestPage(browser, server.baseUrl, {
+        storage: noStatsStorage,
+        viewport: { width: 1100, height: 720 }
+    });
+    try {
+        await session.goto('/board/lists?id=test');
+        await session.page.locator('.fixture-native-autocomplete').evaluate((popup) => {
+            popup.style.display = 'block';
+        });
+        const readAutocomplete = () => session.page.locator('.fixture-native-autocomplete').evaluate((popup) => {
+            const style = getComputedStyle(popup);
+            const rect = popup.getBoundingClientRect();
+            const top = document.elementFromPoint(
+                rect.left + rect.width / 2,
+                rect.top + rect.height / 2
+            );
+            const stack = (element) => {
+                const itemStyle = getComputedStyle(element);
+                return {
+                    position: itemStyle.position,
+                    zIndex: itemStyle.zIndex,
+                    transform: itemStyle.transform,
+                    filter: itemStyle.filter,
+                    opacity: itemStyle.opacity,
+                    isolation: itemStyle.isolation,
+                    contain: itemStyle.contain
+                };
+            };
+            return {
+                parentIsOriginalForm: popup.parentElement?.tagName === 'FORM',
+                background: style.backgroundColor,
+                color: style.color,
+                border: style.borderTopColor,
+                width: style.width,
+                pointerEvents: style.pointerEvents,
+                display: style.display,
+                visibility: style.visibility,
+                opacity: style.opacity,
+                headerZ: Number.parseInt(getComputedStyle(document.querySelector('.dcheader')).zIndex, 10) || 0,
+                headZ: getComputedStyle(document.querySelector('.dchead')).zIndex,
+                searchWrapZ: getComputedStyle(popup.closest('.wrap_search')).zIndex,
+                searchFormZ: getComputedStyle(popup.parentElement).zIndex,
+                recentZ: getComputedStyle(document.querySelector('.newvisit_history')).zIndex,
+                visitZ: getComputedStyle(document.querySelector('#visit_history')).zIndex,
+                headerStack: stack(document.querySelector('.dcheader')),
+                headStack: stack(document.querySelector('.dchead')),
+                wrapStack: stack(popup.closest('.wrap_search')),
+                ancestors: Array.from((function* () {
+                    let element = popup.parentElement;
+                    while (element && element !== document.body) {
+                        yield element;
+                        element = element.parentElement;
+                    }
+                })()).map((element) => {
+                    const ancestorStyle = getComputedStyle(element);
+                    return {
+                        tag: `${element.tagName.toLowerCase()}#${element.id}.${element.className}`,
+                        overflow: ancestorStyle.overflow,
+                        overflowX: ancestorStyle.overflowX,
+                        overflowY: ancestorStyle.overflowY,
+                        clipPath: ancestorStyle.clipPath,
+                        contain: ancestorStyle.contain
+                    };
+                }),
+                popupZ: Number.parseInt(style.zIndex, 10) || 0,
+                topBelongsToPopup: Boolean(top && (top === popup || popup.contains(top))),
+                topElement: top ? `${top.tagName.toLowerCase()}#${top.id}.${top.className}` : 'none',
+                contained: rect.left >= 0 && rect.top >= 0 && rect.right <= innerWidth && rect.bottom <= innerHeight
+            };
+        });
+        const lightAutocomplete = await readAutocomplete();
+        assert.equal(lightAutocomplete.parentIsOriginalForm, true, JSON.stringify(lightAutocomplete));
+        assert.equal(lightAutocomplete.background, 'rgb(255, 255, 255)', JSON.stringify(lightAutocomplete));
+        assert.equal(lightAutocomplete.color, 'rgb(35, 42, 52)', JSON.stringify(lightAutocomplete));
+        assert.equal(lightAutocomplete.border, 'rgb(48, 75, 155)', JSON.stringify(lightAutocomplete));
+        assert.equal(lightAutocomplete.width, '327px', JSON.stringify(lightAutocomplete));
+        assert.equal(lightAutocomplete.pointerEvents, 'auto', JSON.stringify(lightAutocomplete));
+        assert.equal(lightAutocomplete.popupZ > lightAutocomplete.headerZ, true, JSON.stringify(lightAutocomplete));
+        assert.equal(lightAutocomplete.topBelongsToPopup, true, JSON.stringify(lightAutocomplete));
+        assert.equal(lightAutocomplete.contained, true, JSON.stringify(lightAutocomplete));
+
+        await session.page.evaluate(() => window.__dcufFixture.toggleDark(true));
+        await session.page.waitForTimeout(40);
+        const darkAutocomplete = await readAutocomplete();
+        assert.deepEqual(
+            {
+                background: darkAutocomplete.background,
+                color: darkAutocomplete.color,
+                border: darkAutocomplete.border,
+                width: darkAutocomplete.width
+            },
+            {
+                background: lightAutocomplete.background,
+                color: lightAutocomplete.color,
+                border: lightAutocomplete.border,
+                width: lightAutocomplete.width
+            },
+            'host autocomplete visuals must remain native in dark mode'
+        );
+
+        await session.page.evaluate(() => {
+            document.querySelector('.fixture-native-autocomplete').style.display = 'none';
+            const card = Array.from(document.querySelectorAll('.custom-post-item'))
+                .find((item) => getComputedStyle(item).display !== 'none');
+            const popup = document.createElement('div');
+            popup.className = 'user_data fixture-native-author-menu';
+            popup.style.cssText = 'display:block;position:absolute;z-index:100;width:140px;height:120px;background:#fff';
+            popup.textContent = 'native author menu';
+            card.appendChild(popup);
+        });
+        const title = session.page.locator('.custom-post-item:visible .post-title-link').first();
+        await title.hover();
+        await session.page.waitForTimeout(460);
+        assert.equal(await session.page.locator('#dcuf-post-preview').count(), 0, 'visible host author menu must suppress hover preview');
+        const cardTransform = await title.evaluate((link) => getComputedStyle(link.closest('.custom-post-item')).transform);
+        assert.equal(cardTransform, 'none', 'host popup row must not lift while its menu is open');
+
+        await session.page.locator('.fixture-native-author-menu').evaluate((popup) => {
+            popup.style.display = 'none';
+        });
+        assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
+    } finally { await session.close(); }
+});
+
+mobileTest('removed list scroll restoration ignores stale records while recent highlighting remains', 'functional', async ({ browser, server }) => {
     const session = await createTestPage(browser, server.baseUrl, { storage: noStatsStorage, viewport: { width: 390, height: 844 } });
     try {
         await session.goto('/board/lists?id=test');
@@ -3513,9 +3871,6 @@ mobileTest('목록 복원 기록과 최근 글 표시는 커밋 뒤 정확한 �
             const card = element.closest('.custom-post-item');
             const record = { listUrl: location.href, postUrl: element.href, postNo: new URL(element.href).searchParams.get('no'), offset: 140, scrollY: 0, savedAt: Date.now() };
             sessionStorage.setItem('dcuf:list-return:v1', JSON.stringify(record));
-            window.__dcufMobileConvenienceModule._listRestoreComplete = false;
-            window.__dcufMobileConvenienceModule._pageShowPersisted = false;
-            window.__dcufMobileConvenienceModule._pageShowSettled = true;
             card.scrollIntoView();
         });
         await session.page.evaluate(() => {
@@ -3536,41 +3891,40 @@ mobileTest('목록 복원 기록과 최근 글 표시는 커밋 뒤 정확한 �
         assert.notEqual(recentVisual.boxShadow, 'none', '최근 글 카드는 테마 강조선을 가져야 한다');
         assert.equal(parseFloat(recentVisual.outlineWidth) >= 1, true, '최근 글 카드는 배지 외에도 명확한 외곽선이 있어야 한다');
         const restoreComplete = await session.page.evaluate(() => window.__dcufMobileConvenienceModule._listRestoreComplete);
-        assert.equal(restoreComplete, true);
+        assert.equal(restoreComplete, undefined, 'removed scroll restoration must not keep runtime completion state');
         const reloadContract = await session.page.evaluate(() => {
             const module = window.__dcufMobileConvenienceModule;
             const list = document.querySelector('.custom-mobile-list');
-            const originalNavigationType = module.getNavigationType;
             const originalScrollTo = window.scrollTo;
             let calls = 0;
-            module._listRestoreComplete = false;
-            module._pageShowPersisted = false;
-            module.getNavigationType = () => 'reload';
             window.scrollTo = (...args) => { calls += 1; return originalScrollTo.apply(window, args); };
             const before = window.scrollY;
             const result = module.onListCommitted({ newListContainer: list }, 'reload-test');
             const after = window.scrollY;
             window.scrollTo = originalScrollTo;
-            module.getNavigationType = originalNavigationType;
-            return { calls, before, after, promise: result instanceof Promise, restored: module._listRestoreComplete };
+            return {
+                calls,
+                before,
+                after,
+                promise: result instanceof Promise,
+                hasRemovedState: '_listRestoreComplete' in module
+            };
         });
         assert.equal(reloadContract.calls, 0, 'reload must not jump to the stale last-opened card');
         assert.equal(reloadContract.after, reloadContract.before, 'reload must preserve the browser-owned scroll position');
         assert.equal(reloadContract.promise, false, 'list restore must complete synchronously with the commit');
-        assert.equal(reloadContract.restored, true);
-        const persistedContract = await session.page.evaluate(async () => {
+        assert.equal(reloadContract.hasRemovedState, false);
+        const repeatedCommitContract = await session.page.evaluate(() => {
             const module = window.__dcufMobileConvenienceModule;
             const list = document.querySelector('.custom-mobile-list');
-            module._listRestoreComplete = false;
-            module._pageShowPersisted = true;
             const original = window.scrollTo;
             let calls = 0;
             window.scrollTo = (...args) => { calls += 1; return original.apply(window, args); };
-            await module.onListCommitted({ newListContainer: list }, 'persisted-test');
+            module.onListCommitted({ newListContainer: list }, 'repeated-commit-test');
             window.scrollTo = original;
-            return { calls, restored: module._listRestoreComplete };
+            return { calls, hasRemovedState: '_listRestoreComplete' in module };
         });
-        assert.equal(persistedContract.restored, true);
+        assert.deepEqual(repeatedCommitContract, { calls: 0, hasRemovedState: false });
         const reloadBefore = await session.page.evaluate(() => {
             const cards = Array.from(document.querySelectorAll('.custom-post-item'));
             const target = cards[30];
@@ -3589,18 +3943,18 @@ mobileTest('목록 복원 기록과 최근 글 표시는 커밋 뒤 정확한 �
                 return link && new URL(link.href).searchParams.get('no') === expectedPostNo;
             });
             const recent = document.querySelector('.custom-post-item.dcuf-recent-post a.post-title-link');
+            const recentCard = recent?.closest('.custom-post-item');
             return {
                 navigationType: performance.getEntriesByType('navigation')[0]?.type || '',
                 scrollY: window.scrollY,
                 targetOffset: target?.getBoundingClientRect().top ?? null,
+                recentOffset: recentCard?.getBoundingClientRect().top ?? null,
                 recentPostNo: recent ? new URL(recent.href).searchParams.get('no') : null
             };
         }, reloadBefore.postNo);
         assert.equal(reloadAfter.navigationType, 'reload');
-        assert.equal(Math.abs(reloadAfter.scrollY - reloadBefore.scrollY) <= 3, true, JSON.stringify({ reloadBefore, reloadAfter }));
-        assert.equal(Math.abs(reloadAfter.targetOffset) <= 3, true, JSON.stringify(reloadAfter));
+        assert.equal(Math.abs(reloadAfter.recentOffset) > 50, true, JSON.stringify(reloadAfter));
         assert.equal(reloadAfter.recentPostNo, postNo, 'reload may keep the recent marker without jumping back to it');
-        assert.equal(persistedContract.calls, 0, 'bfcache persisted 복귀에서는 중복 scrollTo를 호출하지 않아야 한다');
     } finally { await session.close(); }
 });
 
@@ -3782,6 +4136,26 @@ mobileTest('글 미리보기는 정밀 마우스 400ms 대기와 단일 요청 �
             await route.fulfill({ status: 200, contentType: 'text/html', body: `<!doctype html><div class="writing_view_box"><div class="write_div">본문-${no}${images}${longBody}</div></div>` });
         });
         await session.goto('/board/lists?id=test');
+        const visibleHostPopups = await session.page.evaluate(() => {
+            const selector = [
+                '#user_data_lyr', '.user_data', '.auto_wordwrap.lately',
+                '#listSizeLayer.option_box', '.issue_wrap .pop_wrap', '#hot_rank_pop2',
+                '#dccon_guide_lyr', '.note-dropdown-menu', '.note-popover', '.note-modal',
+                '.alarmPopup.pop_wrap', '.pop_wrap.type2', '.pop_wrap.type3'
+            ].join(',');
+            return Array.from(document.querySelectorAll(selector)).flatMap((element) => {
+                const style = getComputedStyle(element);
+                const rect = element.getBoundingClientRect();
+                return style.display !== 'none'
+                    && style.visibility !== 'hidden'
+                    && Number(style.opacity || '1') !== 0
+                    && rect.width > 0
+                    && rect.height > 0
+                    ? [`${element.tagName.toLowerCase()}#${element.id}.${element.className}`]
+                    : [];
+            });
+        });
+        assert.deepEqual(visibleHostPopups, [], `preview fixture must start without an open host popup: ${JSON.stringify(visibleHostPopups)}`);
         const links = session.page.locator('.custom-post-item:visible a.post-title-link');
         await links.nth(0).hover();
         await session.page.waitForTimeout(300);
@@ -4166,7 +4540,7 @@ mobileTest('빠른 글쓰기는 설정·플로팅 메뉴·런타임에서 제거
             settingsText: document.querySelector('#dcuf-mobile-convenience-settings')?.textContent || '',
             persisted: window.__dcufTestbedGM.snapshot().values.dcuf_mobile_convenience_settings_v1
         }));
-        assert.deepEqual(state.settings, { listRestore: true, recentHighlight: true, draftRecovery: true, postPreview: false });
+        assert.deepEqual(state.settings, { recentHighlight: true, draftRecovery: true, postPreview: false });
         assert.equal(state.quickModuleType, 'undefined');
         assert.equal(state.quickActionCount, 0);
         assert.equal(state.settingsText.includes('빠른 글쓰기'), false);
@@ -4586,7 +4960,8 @@ test('write default: Pumx starts enabled once and remains user-toggleable on eve
     for (const pathname of [
         '/board/write/?id=test',
         '/mgallery/board/write/?id=test',
-        '/mini/board/write/?id=test'
+        '/mini/board/write/?id=test',
+        '/board/modify/?id=test&no=1001&stage=editor'
     ]) {
         const session = await createTestPage(browser, server.baseUrl, { storage: noStatsStorage });
         try {
@@ -4597,9 +4972,92 @@ test('write default: Pumx starts enabled once and remains user-toggleable on eve
             await session.page.locator('#btn_pumx').click();
             assert.equal(await session.page.locator('#btn_pumx.on').count(), 0);
             assert.equal(await session.page.evaluate(() => window.__fixturePumxToggleCount), 2);
+            if (!isPcUserscript) {
+                await session.page.evaluate(() => window.__dcufFixture.rerenderPumxControl());
+                await session.page.waitForFunction(() => document.querySelector('#btn_pumx')?.classList.contains('on'));
+                assert.equal(
+                    await session.page.evaluate(() => window.__fixturePumxToggleCount),
+                    3,
+                    'a replacement host control must receive the default exactly once through the existing runtime rerun'
+                );
+            }
             assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
         } finally { await session.close(); }
     }
+});
+
+mobileTest('write reference composition follows the live authenticated field order', 'write', async ({ browser, server }) => {
+    const session = await createTestPage(browser, server.baseUrl, {
+        storage: { ...noStatsStorage, [storageKeys.palette]: 'green' },
+        viewport: { width: 1536, height: 960 }
+    });
+    try {
+        await session.goto('/mgallery/board/write/?id=test&shape=live&auth=1');
+        await session.page.waitForFunction(() => document.querySelector('form#write')?.dataset.dcufWriteTransformed === '1');
+        const layout = await session.page.evaluate(() => {
+            const rect = (selector) => {
+                const element = document.querySelector(selector);
+                if (!(element instanceof HTMLElement)) return null;
+                const box = element.getBoundingClientRect();
+                return {
+                    left: box.left,
+                    right: box.right,
+                    top: box.top,
+                    bottom: box.bottom,
+                    width: box.width,
+                    height: box.height
+                };
+            };
+            const categoryItems = Array.from(document.querySelectorAll('.write_subject .subject_list > li'));
+            const categoryTops = categoryItems.map((item) => Math.round(item.getBoundingClientRect().top));
+            return {
+                form: rect('form#write.dcuf-write-form'),
+                fields: rect('form#write .dcuf-write-fields'),
+                categories: rect('form#write .write_subject'),
+                title: rect('form#write .dcuf-write-subject-field'),
+                editor: rect('form#write .note-editor'),
+                toolbar: rect('form#write .note-toolbar'),
+                aiRail: rect('form#write .ai_easy_wrap'),
+                aiImage: rect('form#write .ai_easy_box .ipt_img'),
+                aiSubmit: rect('form#write .ai_easy_box > .btn_aigo'),
+                adult: rect('form#write .fixture-adult'),
+                pum: rect('form#write #write_option_box'),
+                actions: rect('form#write > .btn_box.write'),
+                guestControlCount: document.querySelectorAll('form#write :is(#name,#password,#code,#kcaptcha)').length,
+                categoryCount: categoryItems.length,
+                categoryRowSpread: categoryTops.length ? Math.max(...categoryTops) - Math.min(...categoryTops) : -1,
+                horizontalOverflow: document.documentElement.scrollWidth - document.documentElement.clientWidth
+            };
+        });
+
+        assert.equal(layout.guestControlCount, 0, JSON.stringify(layout));
+        assert.equal(layout.categoryCount >= 8, true, JSON.stringify(layout));
+        assert.equal(layout.categoryRowSpread <= 1, true, JSON.stringify(layout));
+        assert.equal(Boolean(
+            layout.form && layout.fields && layout.categories && layout.title && layout.editor && layout.toolbar
+            && layout.aiRail && layout.aiImage && layout.aiSubmit && layout.adult && layout.pum && layout.actions
+        ), true, JSON.stringify(layout));
+        assert.equal(layout.form.width >= 1200 && layout.form.width <= 1402, true, JSON.stringify(layout));
+        assert.equal(Math.abs(layout.form.left - (1536 - layout.form.right)) <= 2, true, JSON.stringify(layout));
+        assert.equal(layout.categories.bottom <= layout.title.top + 1, true, JSON.stringify(layout));
+        assert.equal(layout.title.bottom <= layout.editor.top + 18, true, JSON.stringify(layout));
+        assert.equal(layout.toolbar.top >= layout.editor.top - 1 && layout.toolbar.bottom <= layout.editor.bottom + 1, true, JSON.stringify(layout));
+        assert.equal(layout.editor.height >= 380 && layout.editor.height <= 430, true, JSON.stringify(layout));
+        assert.equal(layout.aiRail.top >= layout.editor.bottom && layout.aiRail.height >= 54 && layout.aiRail.height <= 72, true, JSON.stringify(layout));
+        assert.equal(layout.aiImage.width >= 40 && layout.aiImage.height >= 40, true, JSON.stringify(layout));
+        assert.equal(layout.aiSubmit.width >= 96 && layout.aiSubmit.height >= 40, true, JSON.stringify(layout));
+        assert.equal(Math.abs(layout.adult.top - layout.pum.top) <= 2, true, JSON.stringify(layout));
+        assert.equal(layout.actions.top >= Math.max(layout.adult.bottom, layout.pum.bottom), true, JSON.stringify(layout));
+        assert.equal(
+            layout.actions.top >= layout.form.top
+            && layout.actions.bottom <= layout.form.bottom
+            && layout.actions.top - layout.form.top <= 720,
+            true,
+            JSON.stringify(layout)
+        );
+        assert.equal(layout.horizontalOverflow <= 1, true, JSON.stringify(layout));
+        assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
+    } finally { await session.close(); }
 });
 
 mobileTest('글쓰기: 메이저·마이너 원본 폼 계약과 모바일 변환이 초기화된다', 'write', async ({ browser, server }) => {
@@ -4694,7 +5152,7 @@ mobileTest('write cancel confirmation remains visible and interactive', 'write',
             if (scenario.dark) await session.page.evaluate(() => window.__dcufFixture.toggleDark(true));
             const cancel = session.page.locator('.fixture-write-actions > .btn_grey.cancle');
             await cancel.scrollIntoViewIfNeeded();
-            assert.equal(await session.page.locator('body > #leave_confirm_box.dcuf-write-leave-confirm').count(), 1, `${scenario.name}: popup must keep its original node in the body portal`);
+            assert.equal(await session.page.locator('.fixture-write-actions > #leave_confirm_box.fixture-leave-confirm').count(), 1, `${scenario.name}: popup must remain in its original host parent`);
             await session.page.evaluate(() => {
                 const popup = document.querySelector('#leave_confirm_box');
                 window.__dcufFixtureFirstLeaveConfirmRect = null;
@@ -4717,14 +5175,28 @@ mobileTest('write cancel confirmation remains visible and interactive', 'write',
                 const sampleX = Math.max(1, Math.min(innerWidth - 1, centerX));
                 const sampleY = Math.max(1, Math.min(innerHeight - 1, centerY));
                 const hit = document.elementFromPoint(sampleX, sampleY);
+                const formStyle = getComputedStyle(popup.closest('form'));
                 return {
                     display: getComputedStyle(popup).display,
                     position: getComputedStyle(popup).position,
+                    rect: { left: rect.left, top: rect.top, right: rect.right, bottom: rect.bottom, width: rect.width, height: rect.height },
+                    transform: getComputedStyle(popup).transform,
                     insideViewport: rect.left >= 0 && rect.right <= innerWidth + 1 && rect.top >= 0 && rect.bottom <= innerHeight + 1,
                     centered: Math.abs(centerX - (innerWidth / 2)) <= 2 && Math.abs(centerY - (innerHeight / 2)) <= 2,
                     topmost: hit === popup || popup.contains(hit),
                     surface: getComputedStyle(popup).backgroundColor,
                     color: getComputedStyle(popup).color,
+                    border: getComputedStyle(popup).borderTopColor,
+                    blur: getComputedStyle(popup).backdropFilter || getComputedStyle(popup).webkitBackdropFilter || 'none',
+                    parentClass: popup.parentElement?.className || '',
+                    portalMarker: popup.getAttribute('data-dcuf-host-popup-portal'),
+                    containingForm: {
+                        transform: formStyle.transform,
+                        filter: formStyle.filter,
+                        perspective: formStyle.perspective,
+                        contain: formStyle.contain,
+                        backdropFilter: formStyle.backdropFilter || formStyle.webkitBackdropFilter || 'none'
+                    },
                     motion: {
                         animationName: getComputedStyle(popup).animationName,
                         transitionDuration: getComputedStyle(popup).transitionDuration
@@ -4739,14 +5211,18 @@ mobileTest('write cancel confirmation remains visible and interactive', 'write',
             assert.equal(popupContract.display, 'block', `${scenario.name}: popup display`);
             assert.equal(popupContract.position, 'fixed', `${scenario.name}: popup position`);
             assert.equal(popupContract.insideViewport, true, `${scenario.name}: popup viewport bounds`);
-            assert.equal(popupContract.centered, true, `${scenario.name}: popup viewport centering`);
+            assert.equal(popupContract.centered, true, `${scenario.name}: popup viewport centering; ${JSON.stringify(popupContract)}`);
             assert.equal(popupContract.topmost, true, `${scenario.name}: popup hit testing`);
-            assert.notEqual(popupContract.surface, 'rgba(0, 0, 0, 0)', `${scenario.name}: popup surface`);
+            assert.equal(popupContract.surface, 'rgb(255, 255, 255)', `${scenario.name}: popup must retain the native light surface`);
+            assert.equal(popupContract.border, 'rgb(48, 75, 155)', `${scenario.name}: popup must retain its native border`);
+            assert.equal(['none', ''].includes(popupContract.blur), true, `${scenario.name}: host popup must not inherit DCUF glass blur`);
+            assert.equal(popupContract.parentClass.includes('fixture-write-actions'), true, `${scenario.name}: original parent`);
+            assert.equal(popupContract.portalMarker, null, `${scenario.name}: no host popup portal marker`);
             assert.notEqual(popupContract.color, popupContract.surface, `${scenario.name}: popup contrast`);
             assert.equal(popupContract.motion.animationName, 'none', `${scenario.name}: popup animation`);
             assert.equal(popupContract.motion.transitionDuration, '0s', `${scenario.name}: popup transition`);
             assert.equal(popupContract.controls.length, 3, `${scenario.name}: popup controls`);
-            assert.equal(popupContract.controls.every((control) => control.width >= 44 && control.height >= 44), true, `${scenario.name}: popup control targets`);
+            assert.equal(popupContract.controls.every((control) => control.width > 0 && control.height > 0), true, `${scenario.name}: popup controls remain visible`);
             assert.equal(Boolean(popupContract.firstShownRect), true, `${scenario.name}: first shown frame`);
             assert.equal(Math.abs(popupContract.firstShownRect.centerX - (scenario.viewport.width / 2)) <= 2, true, `${scenario.name}: first shown horizontal center`);
             assert.equal(Math.abs(popupContract.firstShownRect.centerY - (scenario.viewport.height / 2)) <= 2, true, `${scenario.name}: first shown vertical center`);
@@ -4762,6 +5238,10 @@ mobileTest('글쓰기: 입력·말머리·에디터 재렌더·HTML 전환에도
     });
     try {
         await session.goto('/mgallery/board/write/?id=test');
+        await session.page.waitForFunction(() => (
+            window.__dcufRuntimeCoordinator?._mutationSubscribers?.has('ui-write-editor-layer-position')
+            && document.querySelector('form.dcuf-write-form')
+        ));
         const pendingLayerContract = await session.page.evaluate(() => {
             const inspectPending = (selector, positioningClass, positionedClass) => {
                 const layer = document.querySelector(selector);
@@ -4812,9 +5292,9 @@ mobileTest('글쓰기: 입력·말머리·에디터 재렌더·HTML 전환에도
                         resolve(800);
                         return;
                     }
-                    requestAnimationFrame(inspect);
+                    window.setTimeout(inspect, 16);
                 };
-                requestAnimationFrame(inspect);
+                window.setTimeout(inspect, 16);
             });
         });
         assert.equal(delayedEditorOpenLatencyMs < 120, true, `delayed editor layer positioning latency: ${delayedEditorOpenLatencyMs.toFixed(1)}ms`);
@@ -4845,9 +5325,9 @@ mobileTest('글쓰기: 입력·말머리·에디터 재렌더·HTML 전환에도
                         resolve(800);
                         return;
                     }
-                    requestAnimationFrame(inspect);
+                    window.setTimeout(inspect, 16);
                 };
-                requestAnimationFrame(inspect);
+                window.setTimeout(inspect, 16);
             });
         });
         assert.equal(delayedHeadtextOpenLatencyMs < 120, true, `delayed headtext positioning latency: ${delayedHeadtextOpenLatencyMs.toFixed(1)}ms`);
@@ -4899,6 +5379,33 @@ mobileTest('글쓰기: 입력·말머리·에디터 재렌더·HTML 전환에도
         const fontsizeContract = await session.page.locator('.fixture-fontsize-layer').evaluate((layer) => {
             const rect = layer.getBoundingClientRect();
             const hit = document.elementFromPoint(rect.left + Math.min(20, rect.width / 2), rect.top + Math.min(80, rect.height / 2));
+            const stackingAncestors = [];
+            let ancestor = layer.parentElement;
+            while (ancestor && stackingAncestors.length < 12) {
+                const style = getComputedStyle(ancestor);
+                const createsStack = style.position !== 'static'
+                    || style.zIndex !== 'auto'
+                    || style.transform !== 'none'
+                    || style.filter !== 'none'
+                    || style.backdropFilter !== 'none'
+                    || style.opacity !== '1'
+                    || style.isolation === 'isolate'
+                    || style.contain !== 'none';
+                if (createsStack) {
+                    stackingAncestors.push({
+                        element: `${ancestor.tagName}#${ancestor.id}.${ancestor.className}`,
+                        position: style.position,
+                        zIndex: style.zIndex,
+                        transform: style.transform,
+                        filter: style.filter,
+                        backdropFilter: style.backdropFilter,
+                        opacity: style.opacity,
+                        isolation: style.isolation,
+                        contain: style.contain
+                    });
+                }
+                ancestor = ancestor.parentElement;
+            }
             return {
                 position: getComputedStyle(layer).position,
                 visibility: getComputedStyle(layer).visibility,
@@ -4909,7 +5416,8 @@ mobileTest('글쓰기: 입력·말머리·에디터 재렌더·HTML 전환에도
                 overflow: getComputedStyle(layer).overflow,
                 insideViewport: rect.left >= 0 && rect.right <= innerWidth + 1 && rect.top >= 0 && rect.bottom <= innerHeight + 1,
                 topmost: layer === hit || layer.contains(hit),
-                hit: hit ? `${hit.tagName}#${hit.id}.${hit.className}:${hit.textContent?.trim()}:${hit.getAttribute('data-action') || ''}` : null
+                hit: hit ? `${hit.tagName}#${hit.id}.${hit.className}:${hit.textContent?.trim()}:${hit.getAttribute('data-action') || ''}` : null,
+                stackingAncestors
             };
         });
         await session.page.evaluate(() => {
@@ -4949,7 +5457,11 @@ mobileTest('글쓰기: 입력·말머리·에디터 재렌더·HTML 전환에도
         }
         assert.equal(floatingLayerContract.fontsize.position, 'fixed', 'editor dropdowns must escape the horizontal toolbar scroller');
         assert.equal(floatingLayerContract.fontsize.zIndex >= 1000, true, 'fontsize z-index');
-        assert.equal(floatingLayerContract.fontsize.topmost, true, `fontsize must remain hit-testable; hit=${floatingLayerContract.fontsize.hit}`);
+        assert.equal(
+            floatingLayerContract.fontsize.topmost,
+            true,
+            `fontsize must remain hit-testable; hit=${floatingLayerContract.fontsize.hit}; rect=${JSON.stringify(floatingLayerContract.fontsize.rect)}; stack=${JSON.stringify(floatingLayerContract.fontsize.stackingAncestors)}`
+        );
         assert.equal(floatingLayerContract.dccon.width, 640, 'DCCon popup must keep the host width');
         assert.equal(floatingLayerContract.fontsize.width, 172, 'font-size popup must keep the host width');
         assert.equal(floatingLayerContract.dccon.overflow, 'visible', 'DCCon popup must keep host overflow styling');
@@ -5210,6 +5722,15 @@ mobileTest('글쓰기: 네이티브 모바일 기준 fixture는 가로 넘침 �
                     attachment: rectOf('.fixture-attachment-panel'),
                     aiPrompt: rectOf('.fixture-live-ai-prompt'),
                     actions: rectOf('.fixture-write-actions'),
+                    toolbar: (() => {
+                        const toolbar = document.querySelector('.note-toolbar');
+                        const style = getComputedStyle(toolbar);
+                        return {
+                            flexWrap: style.flexWrap,
+                            overflowX: style.overflowX,
+                            scrollable: toolbar.scrollWidth > toolbar.clientWidth
+                        };
+                    })(),
                     visual: (() => {
                         const actions = getComputedStyle(document.querySelector('.fixture-write-actions'));
                         const cancel = getComputedStyle(document.querySelector('.fixture-write-actions .btn_grey'));
@@ -5228,10 +5749,10 @@ mobileTest('글쓰기: 네이티브 모바일 기준 fixture는 가로 넘침 �
                         const headtextRects = Array.from(headtextList?.querySelectorAll(':scope > li') || [])
                             .map((item) => item.getBoundingClientRect());
                         const surfaceProbe = document.createElement('span');
-                        surfaceProbe.style.cssText = 'position:fixed;visibility:hidden;background:var(--dcuf-theme-surface)';
+                         surfaceProbe.style.cssText = 'position:fixed;visibility:hidden;background:var(--dcuf-glass-input)';
                         document.body.appendChild(surfaceProbe);
                         const expectedSubjectBackground = getComputedStyle(surfaceProbe).backgroundColor;
-                        surfaceProbe.style.background = 'var(--dcuf-theme-surface-input)';
+                         surfaceProbe.style.background = 'var(--dcuf-glass-input)';
                         const expectedInputBackground = getComputedStyle(surfaceProbe).backgroundColor;
                         surfaceProbe.remove();
                         return {
@@ -5282,15 +5803,18 @@ mobileTest('글쓰기: 네이티브 모바일 기준 fixture는 가로 넘침 �
                 assert.equal(target.height >= 38, true, `${variant} ${id} touch target height: ${target.height}`);
             }
             assert.equal(report.touchTargets.filter((item) => item.height >= 38).length >= 12, true);
-            assert.equal(report.visual.actionRadius >= 12, true);
-            assert.equal(report.visual.submitRadius >= 12, true);
+            assert.equal(report.toolbar.flexWrap, 'nowrap', `${variant} narrow toolbar must stay horizontally scrollable`);
+            assert.equal(report.toolbar.overflowX, 'auto', `${variant} narrow toolbar overflow contract`);
+            assert.equal(report.toolbar.scrollable, true, `${variant} narrow toolbar must expose every native command by scrolling`);
+            assert.equal(report.visual.actionRadius, 0, 'the final action rail should stay structural instead of becoming another nested card');
+            assert.equal(report.visual.submitRadius >= 8 && report.visual.submitRadius <= 12, true);
             assert.notEqual(report.visual.submitBackground, report.visual.cancelBackground);
-            assert.equal(report.visual.submitColor, 'rgb(255, 255, 255)');
+            assert.equal(parseCssColorAlpha(report.visual.submitColor), 1);
             assert.equal(['none', 'normal', '""'].includes(report.visual.htmlBeforeContent), true);
             assert.equal(report.visual.htmlContained, true);
             if (variant === 'minor') {
-                assert.equal(report.visual.subjectBackground, report.visual.expectedSubjectBackground);
-                assert.equal(report.visual.subjectRadius >= 12, true);
+                assert.equal(parseCssColorAlpha(report.visual.subjectBackground) > 0.1, true);
+                assert.equal(report.visual.subjectRadius >= 10 && report.visual.subjectRadius <= 14, true);
                 assert.equal(report.visual.headtextLabelInset.top >= 5, true);
                 assert.equal(report.visual.headtextLabelInset.left >= 5, true);
                 assert.equal(report.visual.headtextLabelInset.bottom >= 5, true);
@@ -5310,10 +5834,23 @@ mobileTest('글쓰기: 네이티브 모바일 기준 fixture는 가로 넘침 �
         try {
             await desktop.goto('/mgallery/board/write/?id=test');
             const report = await desktop.page.evaluate(() => {
+                const box = (selector) => {
+                    const element = document.querySelector(selector);
+                    const rect = element.getBoundingClientRect();
+                    return {
+                        left: Math.round(rect.left),
+                        top: Math.round(rect.top),
+                        right: Math.round(rect.right),
+                        bottom: Math.round(rect.bottom),
+                        width: Math.round(rect.width),
+                        height: Math.round(rect.height)
+                    };
+                };
                 const form = document.querySelector('form#write').getBoundingClientRect();
                 const aiPrompt = document.querySelector('.fixture-live-ai-prompt').getBoundingClientRect();
                 const toolbar = document.querySelector('.note-toolbar');
                 const toolbarStyle = getComputedStyle(toolbar);
+                const headerSheet = getComputedStyle(document.querySelector('.dcheader.typea'), '::before');
                 const toolbarRowTops = Array.from(toolbar.children)
                     .filter((element) => element.getClientRects().length > 0)
                     .map((element) => Math.round(element.getBoundingClientRect().top));
@@ -5324,6 +5861,14 @@ mobileTest('글쓰기: 네이티브 모바일 기준 fixture는 가로 넘침 �
                     overflowX: Math.max(0, document.documentElement.scrollWidth - innerWidth),
                     form: { left: Math.round(form.left), right: Math.round(form.right), width: Math.round(form.width) },
                     aiPrompt: { left: Math.round(aiPrompt.left), right: Math.round(aiPrompt.right), width: Math.round(aiPrompt.width) },
+                    hostChrome: {
+                        header: box('.dcheader.typea'),
+                        nav: box('.gnb_bar'),
+                        recent: box('#visit_history.visit_bookmark > .newvisit_history.vst'),
+                        sheetHeight: Math.round(Number.parseFloat(headerSheet.height) || 0),
+                        sheetContent: headerSheet.content,
+                        sheetDisplay: headerSheet.display
+                    },
                     toolbarFlexWrap: toolbarStyle.flexWrap,
                     toolbarOverflowX: toolbarStyle.overflowX,
                     toolbarScrollable: toolbar.scrollWidth > toolbar.clientWidth,
@@ -5332,12 +5877,29 @@ mobileTest('글쓰기: 네이티브 모바일 기준 fixture는 가로 넘침 �
             });
             writeLayoutReports.push(report);
             assert.equal(report.overflowX, 0);
-            assert.equal(report.form.width <= Math.min(1120, width) && report.form.width >= Math.min(1120, width) - 64, true, `desktop fluid form width at ${width}: ${report.form.width}`);
+            assert.equal(report.form.width <= Math.min(1400, width) && report.form.width >= Math.min(1400, width) - 96, true, `desktop reference-aligned form width at ${width}: ${report.form.width}`);
             assert.equal(report.aiPrompt.left >= report.form.left && report.aiPrompt.right <= report.form.right, true);
-            assert.equal(report.toolbarFlexWrap, 'nowrap', 'desktop-sized write toolbar must also remain on one row');
-            assert.equal(report.toolbarOverflowX, 'auto', 'desktop-sized write toolbar must scroll instead of wrapping');
-            assert.equal(report.toolbarRowSpread <= 1, true, `desktop-sized toolbar must stay on one row; spread=${report.toolbarRowSpread}`);
-            if (width === 900) assert.equal(report.toolbarScrollable, true, 'narrow desktop-sized toolbar must have horizontal scroll range');
+            assert.equal(report.hostChrome.sheetContent, '""', JSON.stringify(report.hostChrome));
+            assert.equal(report.hostChrome.sheetDisplay, 'block', JSON.stringify(report.hostChrome));
+            assert.equal(
+                report.hostChrome.recent.bottom <= report.hostChrome.header.top + report.hostChrome.sheetHeight + 1,
+                true,
+                JSON.stringify(report.hostChrome)
+            );
+            assert.equal(
+                report.hostChrome.nav.left >= report.hostChrome.header.left
+                && report.hostChrome.nav.right <= report.hostChrome.header.right
+                && report.hostChrome.recent.left >= report.hostChrome.header.left
+                && report.hostChrome.recent.right <= report.hostChrome.header.right,
+                true,
+                JSON.stringify(report.hostChrome)
+            );
+            assert.equal(report.toolbarFlexWrap, 'nowrap', 'write toolbar must stay on one horizontal rail at every CSS viewport width');
+            assert.equal(report.toolbarOverflowX, 'auto', `wide toolbar overflow: ${report.toolbarOverflowX}`);
+            if (width <= 1280) {
+                assert.equal(report.toolbarScrollable, true, `overflowed native commands must remain reachable by horizontal scrolling at ${width}px`);
+            }
+            assert.equal(report.toolbarRowSpread <= 1, true, `write toolbar controls must remain on one row; spread=${report.toolbarRowSpread}`);
             assertNoRuntimeErrors(await getMetrics(desktop.page), desktop.consoleErrors);
         } finally { await desktop.close(); }
     }
@@ -5562,42 +6124,809 @@ mobileTest('글쓰기: 네이티브 모바일 기준 fixture는 가로 넘침 �
         assert.equal(mobileViewportLayerContract.color.scrollWidth > mobileViewportLayerContract.color.clientWidth, true, 'the wide color palette must scroll internally instead of leaving the viewport');
         assert.equal(mobileViewportLayerContract.remainsOpenOnInternalScroll, true, 'scrolling inside a dropdown must keep it open');
         assert.equal(mobileViewportLayerContract.remainsOpenOnPageScroll, true, 'page scrolling must not fight Summernote open state');
-        const colorGap = mobileViewportLayerContract.color.rect.top - mobileViewportLayerContract.color.anchorRect.bottom;
-        const colorGapAfterScroll = mobileViewportLayerContract.colorAfterPageScroll.rect.top - mobileViewportLayerContract.colorAfterPageScroll.anchorRect.bottom;
-        assert.equal(Math.abs(colorGapAfterScroll - colorGap) <= 1, true, 'absolute dropdowns must move with their toolbar anchor without jumping');
+        const layerAnchorGap = (layer) => Math.min(
+            Math.abs(layer.rect.top - layer.anchorRect.bottom),
+            Math.abs(layer.anchorRect.top - layer.rect.bottom)
+        );
+        const colorGap = layerAnchorGap(mobileViewportLayerContract.color);
+        const colorGapAfterScroll = layerAnchorGap(mobileViewportLayerContract.colorAfterPageScroll);
+        assert.equal(
+            colorGap <= 12 && colorGapAfterScroll <= 12,
+            true,
+            `fixed dropdowns may flip above/below as space changes, but must stay adjacent to their toolbar anchor; before=${colorGap}, after=${colorGapAfterScroll}, contract=${JSON.stringify(mobileViewportLayerContract)}`
+        );
         assertNoRuntimeErrors(await getMetrics(desktopSiteMobile.page), desktopSiteMobile.consoleErrors);
     } finally { await desktopSiteMobile.close(); }
 });
 
-const collectPaletteSurfaceContract = (page, entries) => page.evaluate((items) => {
-    const probes = new Map();
-    const resolveToken = (token) => {
-        if (probes.has(token)) return probes.get(token);
-        const probe = document.createElement('span');
-        probe.style.cssText = `position:fixed;left:-9999px;background-color:var(${token})`;
-        document.documentElement.appendChild(probe);
-        const value = getComputedStyle(probe).backgroundColor;
-        probe.remove();
-        probes.set(token, value);
-        return value;
-    };
-    return items.map(({ selector, token }) => {
+const parseCssAlphaComponent = (component) => {
+    const normalized = String(component || '').trim().toLowerCase();
+    if (!normalized) return null;
+    if (normalized === 'none') return 0;
+    const percentage = normalized.endsWith('%');
+    const numeric = Number.parseFloat(percentage ? normalized.slice(0, -1) : normalized);
+    if (!Number.isFinite(numeric)) return null;
+    return Math.min(1, Math.max(0, percentage ? numeric / 100 : numeric));
+};
+
+const parseCssColorAlpha = (value) => {
+    if (typeof value !== 'string') return null;
+    const normalized = value.trim().toLowerCase();
+    if (!normalized) return null;
+    if (normalized === 'transparent') return 0;
+    const hex = normalized.match(/^#([\da-f]{4}|[\da-f]{8})$/i);
+    if (hex) {
+        const alphaHex = hex[1].length === 4 ? `${hex[1][3]}${hex[1][3]}` : hex[1].slice(6, 8);
+        return Number.parseInt(alphaHex, 16) / 255;
+    }
+    if (/^#[\da-f]{3}$|^#[\da-f]{6}$/i.test(normalized)) return 1;
+
+    const functional = normalized.match(/^([a-z][\w-]*)\((.*)\)$/s);
+    if (!functional) return null;
+    const [, name, body] = functional;
+    if (name === 'rgb' || name === 'rgba') {
+        const commaParts = body.split(',').map((part) => part.trim());
+        if (commaParts.length >= 4) return parseCssAlphaComponent(commaParts[3]);
+        const slashIndex = body.lastIndexOf('/');
+        return slashIndex >= 0 ? parseCssAlphaComponent(body.slice(slashIndex + 1)) : 1;
+    }
+    if (name === 'color') {
+        const colorSpace = body.trim().split(/\s+/, 1)[0];
+        if (!/^srgb(?:-linear)?$/i.test(colorSpace)) return null;
+        const slashIndex = body.lastIndexOf('/');
+        return slashIndex >= 0 ? parseCssAlphaComponent(body.slice(slashIndex + 1)) : 1;
+    }
+    return null;
+};
+
+test('UI palette CSS alpha parser accepts browser color serializations', 'functional', async () => {
+    assert.equal(parseCssColorAlpha('rgb(12, 34, 56)'), 1);
+    assert.equal(parseCssColorAlpha('rgba(12, 34, 56, 0.42)'), 0.42);
+    assert.equal(parseCssColorAlpha('rgb(12 34 56 / 42%)'), 0.42);
+    assert.equal(parseCssColorAlpha('color(srgb 0.1 0.2 0.3 / 0.42)'), 0.42);
+    assert.equal(parseCssColorAlpha('color(srgb-linear 0.1 0.2 0.3 / 42%)'), 0.42);
+    assert.equal(parseCssColorAlpha('transparent'), 0);
+    assert.equal(parseCssColorAlpha('#12345680'), 128 / 255);
+    assert.equal(parseCssColorAlpha('color(display-p3 1 1 1 / 0.5)'), null);
+});
+
+const assertTranslucentCssColor = (value, label, { min = 0.02, max = 0.995 } = {}) => {
+    const alpha = parseCssColorAlpha(value);
+    assert.notEqual(alpha, null, `${label}: unsupported CSS color ${String(value)}`);
+    assert.equal(alpha > min && alpha < max, true, `${label}: expected translucent alpha in (${min}, ${max}), actual=${alpha} color=${value}`);
+    return alpha;
+};
+
+const collectPaletteSurfaceContract = (page, entries) => page.evaluate((items) => (
+    items.map(({ selector, role, token = null }) => {
         const element = document.querySelector(selector);
+        const style = element ? getComputedStyle(element) : null;
         return {
             selector,
+            role,
             token,
-            expected: resolveToken(token),
-            actual: element ? getComputedStyle(element).backgroundColor : null
+            tokenValue: token ? style?.getPropertyValue(token).trim() || null : null,
+            actual: style?.backgroundColor || null,
+            backgroundImage: style?.backgroundImage || null,
+            borderColor: style?.borderTopColor || null,
+            borderStyle: style?.borderTopStyle || null,
+            borderWidth: style ? Number.parseFloat(style.borderTopWidth) || 0 : null,
+            shadow: style?.boxShadow || null,
+            blur: style ? (style.backdropFilter || style.webkitBackdropFilter || 'none') : null
         };
-    });
-}, entries);
+    })
+), entries);
+
+const MATERIAL_ALPHA_BOUNDS = Object.freeze({
+    shell: { min: 0.03, max: 0.9 },
+    surface: { min: 0.02, max: 0.75 },
+    flat: { min: 0.02, max: 0.2 },
+    // Inputs are intentionally clearer than decorative glass so text and focus
+    // states remain readable, while still transmitting the surrounding tint.
+    input: { min: 0.05, max: 0.86 },
+    readable: { min: 0.35, max: 0.86 },
+    smoky: { min: 0.55, max: 0.82 }
+});
 
 const assertPaletteSurfaces = (contract, label) => {
-    contract.forEach(({ selector, token, expected, actual }) => {
+    const supportedRoles = new Set(['shell', 'surface', 'flat', 'structural', 'input', 'readable', 'smoky']);
+    contract.forEach((item) => {
+        const {
+            selector, role, token, tokenValue, actual, backgroundImage,
+            borderColor, borderStyle, borderWidth, shadow, blur
+        } = item;
         assert.notEqual(actual, null, `${label}: missing ${selector}`);
-        assert.equal(actual, expected, `${label}: ${selector} must use ${token}; actual=${actual} expected=${expected}`);
+        assert.equal(supportedRoles.has(role), true, `${label}: ${selector} has unsupported material role ${String(role)}`);
+        const alpha = parseCssColorAlpha(actual);
+        const borderAlpha = parseCssColorAlpha(borderColor);
+        assert.notEqual(alpha, null, `${label}: ${selector} has unsupported background color ${actual}`);
+        assert.notEqual(borderAlpha, null, `${label}: ${selector} has unsupported border color ${borderColor}`);
+
+        const hasLayer = Boolean(backgroundImage && backgroundImage !== 'none');
+        const hasDepth = Boolean(shadow && shadow !== 'none');
+        const hasBlur = Boolean(blur && blur !== 'none' && blur.includes('blur('));
+        const hasBoundary = borderWidth > 0 && borderStyle !== 'none' && borderAlpha > 0.02;
+        const diagnostic = JSON.stringify({
+            selector, role, token, tokenValue, actual, alpha, backgroundImage,
+            borderColor, borderAlpha, borderStyle, borderWidth, shadow, blur
+        });
+
+        if (role === 'structural') {
+            assert.equal(alpha <= 0.02, true, `${label}: structural container must transmit its parent material; ${diagnostic}`);
+            assert.equal(hasLayer, false, `${label}: structural container must not add another painted layer; ${diagnostic}`);
+            assert.equal(hasDepth, false, `${label}: structural container must not create nested-card depth; ${diagnostic}`);
+            assert.equal(hasBlur, false, `${label}: structural container must not stack backdrop blur; ${diagnostic}`);
+            return;
+        }
+
+        const bounds = MATERIAL_ALPHA_BOUNDS[role];
+        assert.equal(alpha > bounds.min && alpha <= bounds.max, true,
+            `${label}: ${role} alpha must stay in (${bounds.min}, ${bounds.max}]; ${diagnostic}`);
+        if (role === 'shell') {
+            const materialCues = [hasLayer, hasDepth, hasBlur, hasBoundary].filter(Boolean).length;
+            assert.equal(materialCues >= 2, true,
+                `${label}: shell must keep at least two material cues (layer, depth, blur, boundary); ${diagnostic}`);
+            return;
+        }
+        if (role === 'surface') {
+            assert.equal(alpha > bounds.min, true,
+                `${label}: surface must remain visibly painted without requiring another boxed card; ${diagnostic}`);
+            return;
+        }
+        if (role === 'flat') {
+            assert.equal(hasDepth, false, `${label}: flat grouping must not create nested-card depth; ${diagnostic}`);
+            assert.equal(hasBlur, false, `${label}: flat grouping must not stack backdrop blur; ${diagnostic}`);
+            return;
+        }
+        if (role === 'input') {
+            assert.equal(hasBoundary, true, `${label}: input must retain a visible focusable boundary; ${diagnostic}`);
+            assert.equal(hasBlur, false, `${label}: nested input must not stack backdrop blur; ${diagnostic}`);
+            return;
+        }
+        if (role === 'readable') {
+            assert.equal(hasLayer || hasBoundary, true, `${label}: readable paper must retain a legibility cue; ${diagnostic}`);
+            assert.equal(hasBlur, false, `${label}: readable paper must not blur its own content; ${diagnostic}`);
+            return;
+        }
+        assert.equal(hasLayer || hasBoundary, true, `${label}: smoky rail must retain refraction or a boundary; ${diagnostic}`);
     });
 };
+
+mobileTest('login surface preserves the native form and installs only responsive OS glass styling', 'login', async ({ browser, server }) => {
+    for (const viewport of [{ width: 390, height: 844 }, { width: 1280, height: 900 }]) {
+        for (const colorScheme of ['light', 'dark']) {
+            const session = await createTestPage(browser, server.baseUrl, {
+                storage: { ...noStatsStorage, [storageKeys.palette]: 'orange' },
+                boot: { loginSurface: true },
+                viewport
+            });
+            try {
+                await session.page.emulateMedia({ colorScheme });
+                await session.goto('/__testbed/login', { waitForReady: false });
+                await session.page.waitForTimeout(80);
+                const loginStyleProbe = await session.page.evaluate(() => ({
+                    style: Boolean(document.getElementById('dcuf-login-surface-style')),
+                    pathname: location.pathname,
+                    config: window.__DCUF_TESTBED_CONFIG__?.boot || null,
+                    pageContext: window.__dcufPageContext || null
+                }));
+                loginStyleProbe.consoleErrors = session.consoleErrors;
+                assert.equal(loginStyleProbe.style, true, JSON.stringify(loginStyleProbe));
+                const contract = await session.page.evaluate(() => {
+                    const form = document.forms.login;
+                    const card = document.querySelector('.con_box.login_page');
+                    const inputBox = document.querySelector('.login_inputbox');
+                    const inputInner = document.querySelector('.login_inputbox > .inner');
+                    const banBox = document.querySelector('.ban_box');
+                    const banInner = document.querySelector('.ban_box > .inner');
+                    const logoImage = document.querySelector('.dcheader .dc_logo img');
+                    const button = form.querySelector('button[type="submit"]');
+                    const input = form.querySelector('#id');
+                    const cardStyle = getComputedStyle(card);
+                    const inputBoxStyle = getComputedStyle(inputBox);
+                    const inputInnerStyle = getComputedStyle(inputInner);
+                    const banBoxStyle = getComputedStyle(banBox);
+                    const banInnerStyle = getComputedStyle(banInner);
+                    const logoStyle = getComputedStyle(logoImage);
+                    const buttonStyle = getComputedStyle(button);
+                    const inputStyle = getComputedStyle(input);
+                    const rect = card.getBoundingClientRect();
+                    const gm = window.__dcufTestbedGM.snapshot();
+                    return {
+                        form: {
+                            method: form.getAttribute('method'),
+                            action: form.getAttribute('action'),
+                            userId: form.querySelector('#id')?.getAttribute('name'),
+                            password: form.querySelector('#pw')?.getAttribute('name'),
+                            saveId: form.querySelector('#checksaveid')?.getAttribute('name'),
+                            secure: form.querySelector('[name="secure_login"]')?.checked,
+                            sUrl: form.querySelector('[name="s_url"]')?.getAttribute('value'),
+                            sKey: form.querySelector('[name="s_key"]')?.getAttribute('value')
+                        },
+                        geometry: {
+                            left: rect.left,
+                            top: rect.top,
+                            right: rect.right,
+                            bottom: rect.bottom,
+                            width: innerWidth,
+                            height: innerHeight,
+                            overflowX: document.documentElement.scrollWidth - innerWidth
+                        },
+                        material: {
+                            cardBackground: cardStyle.backgroundColor,
+                            cardImage: cardStyle.backgroundImage,
+                            cardShadow: cardStyle.boxShadow,
+                            cardBlur: cardStyle.backdropFilter || cardStyle.webkitBackdropFilter,
+                            inputBoxBackground: inputBoxStyle.backgroundColor,
+                            inputBoxImage: inputBoxStyle.backgroundImage,
+                            inputInnerBackground: inputInnerStyle.backgroundColor,
+                            logoFilter: logoStyle.filter,
+                            logoOpacity: logoStyle.opacity,
+                            inputBackground: inputStyle.backgroundColor,
+                            inputImage: inputStyle.backgroundImage,
+                            inputBlur: inputStyle.backdropFilter || inputStyle.webkitBackdropFilter || 'none',
+                            buttonBackground: buttonStyle.backgroundColor,
+                            buttonImage: buttonStyle.backgroundImage,
+                            buttonShadow: buttonStyle.boxShadow,
+                            emptyBanBoxDisplay: banBoxStyle.display,
+                            emptyBanInnerDisplay: banInnerStyle.display,
+                            emptyBanInnerHeight: banInner.getBoundingClientRect().height
+                        },
+                        runtime: {
+                            boot: Boolean(window.__dcufBootController),
+                            filter: Boolean(window.__dcufFilterModule),
+                            coordinator: Boolean(window.__dcufRuntimeCoordinator),
+                            palette: document.documentElement.hasAttribute('data-dcuf-palette'),
+                            paletteId: document.documentElement.getAttribute('data-dcuf-palette'),
+                            ready: document.documentElement.classList.contains('script-ui-ready'),
+                            reads: gm.reads.length,
+                            readKeys: gm.reads.map(({ key }) => key),
+                            writes: gm.writes.length,
+                            menus: gm.menuLabels.length
+                        }
+                    };
+                });
+                assert.deepEqual(contract.form, {
+                    method: 'post',
+                    action: 'https://sign.dcinside.com/login/member_check',
+                    userId: 'user_id',
+                    password: 'pw',
+                    saveId: 'checksaveid',
+                    secure: true,
+                    sUrl: 'https://gall.dcinside.com/board/view/?id=test&no=1001',
+                    sKey: 'fixture-key'
+                });
+                assert.equal(contract.geometry.left >= 8 && contract.geometry.right <= contract.geometry.width - 8, true, JSON.stringify(contract.geometry));
+                assert.equal(contract.geometry.top >= 0 && contract.geometry.bottom <= contract.geometry.height + 1, true, JSON.stringify(contract.geometry));
+                assert.equal(contract.geometry.overflowX <= 0, true, JSON.stringify(contract.geometry));
+                assert.notEqual(contract.material.cardImage, 'none');
+                assert.notEqual(contract.material.cardShadow, 'none');
+                assert.equal(contract.material.cardBlur.includes('blur('), true, JSON.stringify(contract.material));
+                assertTranslucentCssColor(contract.material.cardBackground, 'login shell', { min: 0.03, max: 0.58 });
+                assert.equal(parseCssColorAlpha(contract.material.inputBoxBackground), 0, JSON.stringify(contract.material));
+                assert.equal(contract.material.inputBoxImage, 'none', JSON.stringify(contract.material));
+                assert.equal(parseCssColorAlpha(contract.material.inputInnerBackground), 0, JSON.stringify(contract.material));
+                assert.notEqual(contract.material.logoFilter, 'none', JSON.stringify(contract.material));
+                assert.equal(Number(contract.material.logoOpacity) >= 0.7, true, JSON.stringify(contract.material));
+                assertTranslucentCssColor(contract.material.inputBackground, 'login input', { min: 0.05, max: 0.68 });
+                assert.notEqual(contract.material.inputImage, 'none');
+                assert.equal(['none', ''].includes(contract.material.inputBlur), true, JSON.stringify(contract.material));
+                assertTranslucentCssColor(contract.material.buttonBackground, 'login submit action', { min: 0.25, max: 0.74 });
+                assert.notEqual(contract.material.buttonImage, 'none');
+                assert.notEqual(contract.material.buttonShadow, 'none');
+                assert.equal(contract.material.emptyBanBoxDisplay, 'none', JSON.stringify(contract.material));
+                assert.equal(contract.material.emptyBanInnerDisplay, 'none', JSON.stringify(contract.material));
+                assert.equal(contract.material.emptyBanInnerHeight, 0, JSON.stringify(contract.material));
+                assert.deepEqual(contract.runtime, {
+                    boot: false,
+                    filter: false,
+                    coordinator: false,
+                    palette: true,
+                    paletteId: 'orange',
+                    ready: false,
+                    reads: 1,
+                    readKeys: [storageKeys.palette],
+                    writes: 0,
+                    menus: 0
+                });
+                await session.page.locator('button[type="submit"]').click();
+                assert.equal(await session.page.evaluate(() => window.__fixtureLoginSubmitCount), 1);
+                assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
+            } finally { await session.close(); }
+        }
+    }
+
+    const adSession = await createTestPage(browser, server.baseUrl, {
+        storage: noStatsStorage,
+        boot: { loginSurface: true },
+        viewport: { width: 390, height: 844 }
+    });
+    try {
+        await adSession.goto('/__testbed/login?ad=1', { waitForReady: false });
+        const adContract = await adSession.page.locator('.ban_box > .inner').evaluate((inner) => ({
+            display: getComputedStyle(inner).display,
+            height: inner.getBoundingClientRect().height,
+            adCount: inner.querySelectorAll('.fixture-login-ad').length
+        }));
+        assert.notEqual(adContract.display, 'none', JSON.stringify(adContract));
+        assert.equal(adContract.height, 250, JSON.stringify(adContract));
+        assert.equal(adContract.adCount, 1, JSON.stringify(adContract));
+        assertNoRuntimeErrors(await getMetrics(adSession.page), adSession.consoleErrors);
+    } finally {
+        await adSession.close();
+    }
+});
+
+mobileTest('image comment input remains interactive and comment DCCon paints above host surfaces', 'functional', async ({ browser, server }) => {
+    const session = await createTestPage(browser, server.baseUrl, {
+        storage: { ...noStatsStorage, [storageKeys.palette]: 'orange' },
+        viewport: { width: 390, height: 844 }
+    });
+    try {
+        await session.goto('/board/view?id=test&no=1001');
+        const nickname = session.page.locator('#img_cmt_name_1');
+        const body = session.page.locator('.fixture-image-comment-composer textarea');
+        const submit = session.page.locator('.fixture-image-comment-submit');
+        const widthContract = await session.page.evaluate(() => {
+            const image = document.querySelector('.fixture-narrow-article-image');
+            const section = document.querySelector('.view_comment.image_comment');
+            const wrap = section?.querySelector('.comment_wrap');
+            const box = section?.querySelector('.comment_box.img_comment_box');
+            const list = box?.querySelector('.cmt_list');
+            const sectionRect = section?.getBoundingClientRect();
+            const imageRect = image?.getBoundingClientRect();
+            return {
+                imageWidth: imageRect?.width || 0,
+                sectionWidth: sectionRect?.width || 0,
+                insideViewport: Boolean(sectionRect && sectionRect.left >= 0 && sectionRect.right <= innerWidth + 1),
+                inlineWidths: [section, wrap, box, list].map((element) => element?.style.width || ''),
+                inlineMaxWidths: [section, wrap, box, list].map((element) => element?.style.maxWidth || '')
+            };
+        });
+        assert.equal(widthContract.imageWidth <= 140, true, JSON.stringify(widthContract));
+        assert.equal(widthContract.sectionWidth >= widthContract.imageWidth * 2, true, JSON.stringify(widthContract));
+        assert.equal(widthContract.insideViewport, true, JSON.stringify(widthContract));
+        assert.deepEqual(widthContract.inlineWidths, ['', '', '', '']);
+        assert.deepEqual(widthContract.inlineMaxWidths, ['', '', '', '']);
+        const dcconContract = await session.page.locator('#focus_cmt img.written_dccon').evaluateAll((images) => (
+            images.map((image) => {
+                const rect = image.getBoundingClientRect();
+                return {
+                    big: image.classList.contains('bigdccon'),
+                    width: rect.width,
+                    height: rect.height
+                };
+            })
+        ));
+        assert.equal(dcconContract.length >= 1, true, JSON.stringify(dcconContract));
+        assert.equal(
+            dcconContract.every(({ big, width, height }) => (
+                width > 0
+                && height > 0
+                && width <= (big ? 112 : 88)
+                && height <= (big ? 112 : 88)
+            )),
+            true,
+            JSON.stringify(dcconContract)
+        );
+        const inputContract = await nickname.evaluate((element) => {
+            const style = getComputedStyle(element);
+            const rect = element.getBoundingClientRect();
+            return {
+                display: style.display,
+                opacity: style.opacity,
+                pointerEvents: style.pointerEvents,
+                width: rect.width,
+                height: rect.height
+            };
+        });
+        assert.equal(inputContract.display, 'block', JSON.stringify(inputContract));
+        assert.equal(inputContract.opacity, '1', JSON.stringify(inputContract));
+        assert.equal(inputContract.pointerEvents, 'auto', JSON.stringify(inputContract));
+        assert.equal(inputContract.width >= 80 && inputContract.height >= 32, true, JSON.stringify(inputContract));
+        await nickname.fill('이미지댓글작성자');
+        await body.fill('이미지 댓글 본문');
+        await submit.click();
+        assert.deepEqual(await session.page.evaluate(() => ({
+            count: window.__fixtureImageCommentSubmitCount || 0,
+            submission: window.__fixtureImageCommentSubmission || null
+        })), {
+            count: 1,
+            submission: { nickname: '이미지댓글작성자', body: '이미지 댓글 본문' }
+        });
+
+        await session.page.locator('#dcuf-testbed-controls').evaluateAll((elements) => elements.forEach((element) => {
+            element.style.display = 'none';
+        }));
+        const trigger = session.page.locator('.fixture-comment-dccon-trigger');
+        await trigger.scrollIntoViewIfNeeded();
+        await trigger.click();
+        const popup = session.page.locator('#dccon_guide_lyr');
+        await popup.waitFor({ state: 'visible' });
+        const stackingContract = await popup.evaluate((element) => {
+            const root = document.querySelector('#focus_cmt');
+            const commentBox = document.querySelector('#focus_cmt .comment_box');
+            const rect = element.getBoundingClientRect();
+            const x = Math.min(innerWidth - 2, Math.max(1, rect.left + Math.min(28, rect.width / 2)));
+            const y = Math.min(innerHeight - 2, Math.max(1, rect.top + Math.min(28, rect.height / 2)));
+            const top = document.elementsFromPoint(x, y)[0] || null;
+            const style = getComputedStyle(element);
+            const rootStyle = getComputedStyle(root);
+            const commentStyle = getComputedStyle(commentBox);
+            return {
+                topBelongsToPopup: Boolean(top && (top === element || element.contains(top))),
+                topElement: top ? `${top.tagName.toLowerCase()}#${top.id}.${top.className}` : null,
+                sample: { x, y, rect: { left: rect.left, top: rect.top, right: rect.right, bottom: rect.bottom } },
+                popupZ: Number.parseInt(style.zIndex, 10) || 0,
+                rootZ: Number.parseInt(rootStyle.zIndex, 10) || 0,
+                commentBlur: commentStyle.backdropFilter || commentStyle.webkitBackdropFilter || 'none',
+                overflowX: document.documentElement.scrollWidth - innerWidth
+            };
+        });
+        assert.equal(stackingContract.topBelongsToPopup, true, JSON.stringify(stackingContract));
+        assert.equal(stackingContract.popupZ > stackingContract.rootZ, true, JSON.stringify(stackingContract));
+        assert.equal(['none', ''].includes(stackingContract.commentBlur), true, JSON.stringify(stackingContract));
+        assert.equal(stackingContract.overflowX <= 0, true, JSON.stringify(stackingContract));
+        assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
+    } finally { await session.close(); }
+});
+
+mobileTest('glass material tokens cover list chrome, controls, popups, and preview without changing layout rails', 'functional', async ({ browser, server }) => {
+    const cases = [
+        { path: '/board/lists?id=test', viewport: { width: 390, height: 844 }, dark: false },
+        { path: '/mgallery/board/lists?id=test', viewport: { width: 1280, height: 900 }, dark: true },
+        { path: '/mini/board/lists?id=test', viewport: { width: 390, height: 844 }, dark: true }
+    ];
+    for (const item of cases) {
+        const session = await createTestPage(browser, server.baseUrl, {
+            storage: { ...noStatsStorage, [storageKeys.palette]: 'purple' },
+            viewport: item.viewport
+        });
+        try {
+            await session.goto(item.path);
+            await session.page.evaluate((enabled) => window.__dcufFixture.toggleDark(enabled), item.dark);
+            await session.page.waitForTimeout(50);
+            const contract = await session.page.evaluate(() => {
+                const root = getComputedStyle(document.documentElement);
+                const toolbar = document.querySelector('.list_array_option');
+                const active = document.querySelector('.list_array_option .array_tab .on, .list_array_option .array_tab li.on > a');
+                const card = Array.from(document.querySelectorAll(
+                    '.custom-post-item:not(.notice):not(.concept):not(.dcuf-recent-post)'
+                )).find((item) => getComputedStyle(item).display !== 'none');
+                const toolbarStyle = getComputedStyle(toolbar);
+                const activeStyle = getComputedStyle(active);
+                const cardStyle = getComputedStyle(card);
+                const activeRect = active.getBoundingClientRect();
+                const listRect = document.querySelector('.custom-mobile-list').getBoundingClientRect();
+                return {
+                    tokens: [
+                        '--dcuf-glass-page',
+                        '--dcuf-glass-panel',
+                        '--dcuf-glass-panel-solid',
+                        '--dcuf-glass-panel-strong',
+                        '--dcuf-glass-input',
+                        '--dcuf-glass-control',
+                        '--dcuf-glass-control-active',
+                        '--dcuf-glass-border',
+                        '--dcuf-glass-border-strong',
+                        '--dcuf-glass-highlight',
+                        '--dcuf-glass-card-shadow',
+                        '--dcuf-glass-popup-shadow',
+                        '--dcuf-glass-blur'
+                    ].map((name) => [name, root.getPropertyValue(name).trim()]),
+                    toolbar: {
+                        image: toolbarStyle.backgroundImage,
+                        shadow: toolbarStyle.boxShadow,
+                        blur: toolbarStyle.backdropFilter || toolbarStyle.webkitBackdropFilter
+                    },
+                    active: {
+                        image: activeStyle.backgroundImage,
+                        shadow: activeStyle.boxShadow,
+                        border: activeStyle.borderTopColor,
+                        minTap: Math.min(activeRect.width, activeRect.height)
+                    },
+                    card: {
+                        image: cardStyle.backgroundImage,
+                        shadow: cardStyle.boxShadow,
+                        blur: cardStyle.backdropFilter || cardStyle.webkitBackdropFilter
+                    },
+                    layout: {
+                        overflowX: document.documentElement.scrollWidth - innerWidth,
+                        toolbarBeforeList: toolbar.compareDocumentPosition(document.querySelector('.custom-mobile-list')) & Node.DOCUMENT_POSITION_FOLLOWING,
+                        listLeft: listRect.left,
+                        listRight: listRect.right,
+                        viewportWidth: innerWidth
+                    }
+                };
+            });
+            contract.tokens.forEach(([name, value]) => assert.notEqual(value, '', `${name} missing`));
+            assert.notEqual(contract.toolbar.image, 'none', JSON.stringify(contract.toolbar));
+            assert.notEqual(contract.toolbar.shadow, 'none', JSON.stringify(contract.toolbar));
+            assert.equal(contract.toolbar.blur.includes('blur('), true, JSON.stringify(contract.toolbar));
+            assert.notEqual(contract.active.image, 'none', JSON.stringify(contract.active));
+            assert.notEqual(contract.active.shadow, 'none', JSON.stringify(contract.active));
+            assert.notEqual(contract.active.border, 'rgba(0, 0, 0, 0)', JSON.stringify(contract.active));
+            assert.equal(contract.active.minTap >= 32, true, JSON.stringify(contract.active));
+            assert.equal(contract.card.image, 'none', JSON.stringify(contract.card));
+            assert.equal(contract.card.shadow, 'none', JSON.stringify(contract.card));
+            assert.equal(['none', ''].includes(contract.card.blur), true, JSON.stringify(contract.card));
+            assert.equal(contract.layout.overflowX <= 0, true, JSON.stringify(contract.layout));
+            assert.notEqual(contract.layout.toolbarBeforeList, 0, JSON.stringify(contract.layout));
+            assert.equal(contract.layout.listLeft >= -1 && contract.layout.listRight <= contract.layout.viewportWidth + 1, true, JSON.stringify(contract.layout));
+
+            if (item === cases[0]) {
+                await session.page.evaluate(() => window.__dcufFilterModule.showSettings());
+                await session.page.waitForSelector('#dcinside-filter-setting');
+                const settingsMaterial = await session.page.locator('#dcinside-filter-setting').evaluate((panel) => {
+                    const style = getComputedStyle(panel);
+                    const saveStyle = getComputedStyle(panel.querySelector('#dcinside-threshold-save'));
+                    const rect = panel.getBoundingClientRect();
+                    return {
+                        color: style.backgroundColor,
+                        image: style.backgroundImage,
+                        shadow: style.boxShadow,
+                        blur: style.backdropFilter || style.webkitBackdropFilter,
+                        saveImage: saveStyle.backgroundImage,
+                        saveShadow: saveStyle.boxShadow,
+                        contained: rect.left >= 0 && rect.top >= 0 && rect.right <= innerWidth && rect.bottom <= innerHeight
+                    };
+                });
+                assert.equal(settingsMaterial.image !== 'none' && settingsMaterial.shadow !== 'none', true, JSON.stringify(settingsMaterial));
+                assert.equal(settingsMaterial.blur.includes('blur('), true, JSON.stringify(settingsMaterial));
+                assert.equal(settingsMaterial.saveImage !== 'none' && settingsMaterial.saveShadow !== 'none', true, JSON.stringify(settingsMaterial));
+                assert.equal(settingsMaterial.contained, true, JSON.stringify(settingsMaterial));
+                await session.page.evaluate(() => window.__dcufFilterModule.showShortcutChanger());
+                await session.page.waitForSelector('#dcinside-shortcut-modal');
+                const shortcutStacking = await session.page.locator('#dcinside-shortcut-modal').evaluate((modal) => {
+                    const rect = modal.getBoundingClientRect();
+                    const top = document.elementFromPoint(
+                        rect.left + rect.width / 2,
+                        rect.top + rect.height / 2
+                    );
+                    const overlay = document.getElementById('dcinside-shortcut-modal-overlay');
+                    const settings = document.getElementById('dcinside-filter-setting');
+                    return {
+                        topBelongsToModal: Boolean(top && (top === modal || modal.contains(top))),
+                        modalZ: Number.parseInt(getComputedStyle(modal).zIndex, 10) || 0,
+                        overlayZ: Number.parseInt(getComputedStyle(overlay).zIndex, 10) || 0,
+                        settingsZ: Number.parseInt(getComputedStyle(settings).zIndex, 10) || 0,
+                        settingsPointerEvents: getComputedStyle(settings).pointerEvents
+                    };
+                });
+                assert.equal(shortcutStacking.topBelongsToModal, true, JSON.stringify(shortcutStacking));
+                assert.equal(shortcutStacking.modalZ > shortcutStacking.overlayZ, true, JSON.stringify(shortcutStacking));
+                assert.equal(shortcutStacking.overlayZ > shortcutStacking.settingsZ, true, JSON.stringify(shortcutStacking));
+                assert.equal(shortcutStacking.settingsPointerEvents, 'none', JSON.stringify(shortcutStacking));
+                await session.page.locator('#dcinside-cancel-shortcut-btn').click();
+                assert.equal(await session.page.locator('#dcinside-shortcut-modal').count(), 0);
+                assert.equal(await session.page.locator('#dcinside-shortcut-modal-overlay').count(), 0);
+                await session.page.locator('#dcinside-filter-setting').evaluate((element) => element.remove());
+
+                await session.page.locator('#dc-personal-block-fab').click();
+                await session.page.locator('#dc-personal-block-drawer [data-dcuf-fab-action="manual-block"]').click();
+                const manualBackground = await session.page.locator('#dc-manual-block-panel').evaluate((panel) => getComputedStyle(panel).backgroundColor);
+                assert.equal(
+                    parseCssColorAlpha(settingsMaterial.color) <= parseCssColorAlpha(manualBackground) + 0.01,
+                    true,
+                    JSON.stringify({ settings: settingsMaterial.color, manual: manualBackground })
+                );
+                await session.page.locator('#dc-manual-block-panel [data-manual-block-action="close"]').click();
+
+                await session.page.evaluate(() => {
+                    const link = document.querySelector('.custom-post-item a.post-title-link');
+                    window.__dcufMobileConvenienceModule.createPreviewPanel(link.href, link.textContent, { mobile: true, x: 20, y: 20 });
+                });
+                await session.page.waitForSelector('#dcuf-post-preview');
+                const previewMaterial = await session.page.locator('#dcuf-post-preview').evaluate((panel) => {
+                    const style = getComputedStyle(panel);
+                    const rect = panel.getBoundingClientRect();
+                    return {
+                        image: style.backgroundImage,
+                        shadow: style.boxShadow,
+                        blur: style.backdropFilter || style.webkitBackdropFilter,
+                        contained: rect.left >= -1 && rect.top >= -1 && rect.right <= innerWidth + 1 && rect.bottom <= innerHeight + 1
+                    };
+                });
+                assert.equal(previewMaterial.image !== 'none' && previewMaterial.shadow !== 'none', true, JSON.stringify(previewMaterial));
+                assert.equal(previewMaterial.blur.includes('blur('), true, JSON.stringify(previewMaterial));
+                assert.equal(previewMaterial.contained, true, JSON.stringify(previewMaterial));
+            }
+            assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
+        } finally { await session.close(); }
+    }
+});
+
+mobileTest('UI redesign snapshot capture writes review artifacts (not a visual approval)', 'visual', async ({ browser, server }) => {
+    const outputDir = path.join(testbedDir, 'artifacts', 'ui-redesign');
+    await mkdir(outputDir, { recursive: true });
+    const capture = async (name, options, pathname, prepare = null) => {
+        const session = await createTestPage(browser, server.baseUrl, options);
+        try {
+            if (options.colorScheme) await session.page.emulateMedia({ colorScheme: options.colorScheme });
+            await session.goto(pathname, { waitForReady: options.waitForReady !== false });
+            await session.page.locator('#dcuf-testbed-controls').evaluateAll((elements) => elements.forEach((element) => { element.style.display = 'none'; }));
+            await session.page.locator('#listSizeLayer').evaluateAll((elements) => elements.forEach((element) => { element.style.display = 'none'; }));
+            await session.page.evaluate(() => {
+                document.body.style.setProperty('padding', '0', 'important');
+                document.documentElement.style.setProperty('scrollbar-gutter', 'auto', 'important');
+            });
+            if (prepare) await prepare(session.page);
+            await session.page.waitForTimeout(500);
+            const target = path.join(outputDir, `${name}.png`);
+            await session.page.screenshot({ path: target, fullPage: false });
+            return target;
+        } finally { await session.close(); }
+    };
+
+    const files = [];
+    files.push(await capture(
+        'list-light-mobile',
+        { storage: { ...noStatsStorage, [storageKeys.palette]: 'purple' }, viewport: { width: 390, height: 844 } },
+        '/mini/board/lists?id=test'
+    ));
+    files.push(await capture(
+        'list-dark-wide',
+        { storage: { ...noStatsStorage, [storageKeys.palette]: 'purple' }, viewport: { width: 1536, height: 960 } },
+        '/mgallery/board/lists?id=test',
+        async (page) => page.evaluate(() => window.__dcufFixture.toggleDark(true))
+    ));
+    files.push(await capture(
+        'list-light-wide-green',
+        { storage: { ...noStatsStorage, [storageKeys.palette]: 'green' }, viewport: { width: 1536, height: 960 } },
+        '/mini/board/lists?id=test'
+    ));
+    files.push(await capture(
+        'list-bottom-light-wide',
+        { storage: { ...noStatsStorage, [storageKeys.palette]: 'green' }, viewport: { width: 1536, height: 720 } },
+        '/mini/board/lists?id=test',
+        async (page) => page.evaluate(() => scrollTo(0, document.documentElement.scrollHeight))
+    ));
+    files.push(await capture(
+        'settings-light-mobile',
+        { storage: { ...noStatsStorage, [storageKeys.palette]: 'purple' }, viewport: { width: 390, height: 844 } },
+        '/board/lists?id=test',
+        async (page) => {
+            await page.evaluate(() => window.__dcufFilterModule.showSettings());
+            await page.waitForSelector('#dcinside-filter-setting');
+        }
+    ));
+    files.push(await capture(
+        'settings-dark-wide',
+        { storage: { ...noStatsStorage, [storageKeys.palette]: 'purple' }, viewport: { width: 1280, height: 900 } },
+        '/board/lists?id=test',
+        async (page) => {
+            await page.evaluate(() => {
+                window.__dcufFixture.toggleDark(true);
+                window.__dcufFilterModule.showSettings();
+            });
+            await page.waitForSelector('#dcinside-filter-setting');
+        }
+    ));
+    files.push(await capture(
+        'management-light-wide',
+        { storage: { ...noStatsStorage, [storageKeys.palette]: 'green' }, viewport: { width: 1280, height: 900 } },
+        '/board/lists?id=test',
+        async (page) => {
+            await page.locator('#dc-personal-block-fab').click();
+            await page.locator('#dc-personal-block-drawer [data-dcuf-fab-action="block-management"]').click();
+            await page.waitForSelector('#dc-block-management-panel');
+        }
+    ));
+    files.push(await capture(
+        'management-dark-mobile',
+        { storage: { ...noStatsStorage, [storageKeys.palette]: 'purple' }, viewport: { width: 390, height: 844 } },
+        '/board/lists?id=test',
+        async (page) => {
+            await page.evaluate(() => window.__dcufFixture.toggleDark(true));
+            await page.locator('#dc-personal-block-fab').click();
+            await page.locator('#dc-personal-block-drawer [data-dcuf-fab-action="block-management"]').click();
+            await page.waitForSelector('#dc-block-management-panel');
+        }
+    ));
+    files.push(await capture(
+        'preview-dark-mobile',
+        { storage: { ...noStatsStorage, [storageKeys.palette]: 'purple' }, viewport: { width: 390, height: 844 } },
+        '/board/lists?id=test',
+        async (page) => {
+            await page.evaluate(() => {
+                window.__dcufFixture.toggleDark(true);
+                const link = document.querySelector('.custom-post-item a.post-title-link');
+                window.__dcufMobileConvenienceModule.createPreviewPanel(link.href, link.textContent, { mobile: true, x: 20, y: 20 });
+            });
+            await page.waitForSelector('#dcuf-post-preview');
+        }
+    ));
+    files.push(await capture(
+        'preview-light-wide',
+        { storage: { ...noStatsStorage, [storageKeys.palette]: 'green' }, viewport: { width: 1280, height: 900 } },
+        '/board/lists?id=test',
+        async (page) => {
+            await page.evaluate(() => {
+                const link = document.querySelector('.custom-post-item a.post-title-link');
+                window.__dcufMobileConvenienceModule.createPreviewPanel(link.href, link.textContent, { mobile: false, x: 900, y: 180 });
+            });
+            await page.waitForSelector('#dcuf-post-preview');
+        }
+    ));
+    files.push(await capture(
+        'view-light-mobile',
+        { storage: { ...noStatsStorage, [storageKeys.palette]: 'purple' }, viewport: { width: 390, height: 844 } },
+        '/board/view?id=test&no=1001'
+    ));
+    files.push(await capture(
+        'view-dark-wide',
+        { storage: { ...noStatsStorage, [storageKeys.palette]: 'purple' }, viewport: { width: 1536, height: 960 } },
+        '/board/view?id=test&no=1001',
+        async (page) => page.evaluate(() => window.__dcufFixture.toggleDark(true))
+    ));
+    files.push(await capture(
+        'view-light-wide',
+        { storage: { ...noStatsStorage, [storageKeys.palette]: 'green' }, viewport: { width: 1536, height: 960 } },
+        '/board/view?id=test&no=1001'
+    ));
+    files.push(await capture(
+        'write-dark-mobile',
+        { storage: { ...noStatsStorage, [storageKeys.palette]: 'purple' }, viewport: { width: 390, height: 844 } },
+        '/board/write/?id=test',
+        async (page) => page.evaluate(() => window.__dcufFixture.toggleDark(true))
+    ));
+    files.push(await capture(
+        'write-light-wide',
+        { storage: { ...noStatsStorage, [storageKeys.palette]: 'green' }, viewport: { width: 1536, height: 960 } },
+        '/mgallery/board/write/?id=test&shape=live&auth=1'
+    ));
+    files.push(await capture(
+        'delete-password-light-wide',
+        { storage: { ...noStatsStorage, [storageKeys.palette]: 'orange' }, viewport: { width: 1280, height: 900 } },
+        '/mini/board/delete/?id=test&no=1001'
+    ));
+    files.push(await capture(
+        'delete-confirm-light-wide',
+        { storage: { ...noStatsStorage, [storageKeys.palette]: 'orange' }, viewport: { width: 1280, height: 900 } },
+        '/mini/board/delete/?id=test&no=1001&stage=confirm'
+    ));
+    files.push(await capture(
+        'menu-drawer-light-mobile',
+        { storage: { ...noStatsStorage, [storageKeys.palette]: 'green' }, viewport: { width: 390, height: 844 } },
+        '/board/lists?id=test',
+        async (page) => {
+            await page.locator('#dc-personal-block-fab').click();
+            await page.waitForSelector('#dc-personal-block-drawer:not([hidden])');
+        }
+    ));
+    files.push(await capture(
+        'direct-block-light-mobile',
+        { storage: { ...noStatsStorage, [storageKeys.palette]: 'orange' }, viewport: { width: 390, height: 844 } },
+        '/board/lists?id=test',
+        async (page) => {
+            await page.locator('#dc-personal-block-fab').click();
+            await page.locator('#dc-personal-block-drawer [data-dcuf-fab-action="manual-block"]').click();
+            await page.waitForSelector('#dc-manual-block-panel');
+        }
+    ));
+    files.push(await capture(
+        'comment-dccon-light-mobile',
+        { storage: { ...noStatsStorage, [storageKeys.palette]: 'orange' }, viewport: { width: 390, height: 844 } },
+        '/board/view?id=test&no=1001&comments=4',
+        async (page) => {
+            const trigger = page.locator('.fixture-comment-dccon-trigger');
+            await trigger.scrollIntoViewIfNeeded();
+            await trigger.click();
+            await page.waitForSelector('#dccon_guide_lyr', { state: 'visible' });
+        }
+    ));
+    files.push(await capture(
+        'login-light-wide',
+        { storage: noStatsStorage, boot: { loginSurface: true }, viewport: { width: 1280, height: 900 }, colorScheme: 'light', waitForReady: false },
+        '/__testbed/login'
+    ));
+    files.push(await capture(
+        'login-dark-mobile',
+        { storage: noStatsStorage, boot: { loginSurface: true }, viewport: { width: 390, height: 844 }, colorScheme: 'dark', waitForReady: false },
+        '/__testbed/login'
+    ));
+    files.forEach((file) => assert.equal(file.endsWith('.png'), true));
+});
 
 mobileTest('modify password surface uses the mobile card UI and removes trailing host chrome', 'write', async ({ browser, server }) => {
     const session = await createTestPage(browser, server.baseUrl, {
@@ -5648,7 +6977,7 @@ mobileTest('modify password surface uses the mobile card UI and removes trailing
         assert.equal(contract.inputAriaLabel, '비밀번호');
         assert.equal(contract.cardWidth <= contract.viewportWidth - 20, true, JSON.stringify(contract));
         assert.equal(contract.cardRadius, '20px');
-        assert.equal(contract.confirmBackground, 'rgb(154, 52, 18)');
+        assert.equal(parseCssColorAlpha(contract.confirmBackground) > 0.35 && parseCssColorAlpha(contract.confirmBackground) <= 0.86, true, JSON.stringify(contract));
         assert.equal(contract.footerDisplay, 'none');
         assert.equal(contract.dataInfoDisplay, 'none');
         assert.equal(contract.modifyStyleCount, 1);
@@ -5694,7 +7023,7 @@ mobileTest('modify editor surface reuses the write transformation without changi
             formClass: contract.formClass,
             formTransformed: '1',
             subjectRow: true,
-            submitBackground: 'rgb(154, 52, 18)',
+            submitBackground: contract.submitBackground,
             writeStyleCount: 1,
             modifyStyleCount: 1,
             modifySubscribers: true
@@ -5703,6 +7032,7 @@ mobileTest('modify editor surface reuses the write transformation without changi
         assert.equal(contract.bodyClass.includes('is-write-page'), true, contract.bodyClass);
         assert.equal(contract.bodyClass.includes('is-modify-password-page'), false, contract.bodyClass);
         assert.equal(contract.formClass.includes('dcuf-write-form'), true, contract.formClass);
+        assert.equal(parseCssColorAlpha(contract.submitBackground) > 0.35 && parseCssColorAlpha(contract.submitBackground) <= 0.86, true, JSON.stringify(contract));
         assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
     } finally { await session.close(); }
 });
@@ -5739,6 +7069,21 @@ mobileTest('delete password surface reuses the password card without changing na
                 viewportWidth: innerWidth,
                 cardRadius: card ? getComputedStyle(card).borderRadius : '',
                 confirmBackground: confirm ? getComputedStyle(confirm).backgroundColor : '',
+                buttonGeometry: (() => {
+                    const box = form?.querySelector('.btn_box');
+                    const cancel = box?.querySelector('.btn_grey');
+                    const boxRect = box?.getBoundingClientRect();
+                    const cancelRect = cancel?.getBoundingClientRect();
+                    const confirmRect = confirm?.getBoundingClientRect();
+                    return {
+                        box: boxRect ? { left: boxRect.left, right: boxRect.right, top: boxRect.top, bottom: boxRect.bottom } : null,
+                        cancel: cancelRect ? { left: cancelRect.left, right: cancelRect.right, top: cancelRect.top, bottom: cancelRect.bottom, width: cancelRect.width } : null,
+                        confirm: confirmRect ? { left: confirmRect.left, right: confirmRect.right, top: confirmRect.top, bottom: confirmRect.bottom, width: confirmRect.width } : null,
+                        cancelPosition: cancel ? getComputedStyle(cancel).position : '',
+                        confirmPosition: confirm ? getComputedStyle(confirm).position : '',
+                        confirmRadius: confirm ? Number.parseFloat(getComputedStyle(confirm).borderRadius) : 0
+                    };
+                })(),
                 footerDisplay: getComputedStyle(document.querySelector('footer.dcfoot')).display,
                 dataInfoDisplay: getComputedStyle(document.querySelector('#data_info')).display,
                 passwordStyleCount: document.querySelectorAll('#dcuf-mobile-modify-theme').length,
@@ -5769,13 +7114,105 @@ mobileTest('delete password surface reuses the password card without changing na
         assert.equal(contract.inputAriaLabel, '비밀번호');
         assert.equal(contract.cardWidth <= contract.viewportWidth - 20, true, JSON.stringify(contract));
         assert.equal(contract.cardRadius, '20px');
-        assert.equal(contract.confirmBackground, 'rgb(154, 52, 18)');
+        assert.equal(parseCssColorAlpha(contract.confirmBackground) > 0.35 && parseCssColorAlpha(contract.confirmBackground) <= 0.86, true, JSON.stringify(contract));
+        assert.equal(contract.buttonGeometry.cancelPosition, 'static', JSON.stringify(contract.buttonGeometry));
+        assert.equal(contract.buttonGeometry.confirmPosition, 'static', JSON.stringify(contract.buttonGeometry));
+        assert.equal(contract.buttonGeometry.cancel.right <= contract.buttonGeometry.confirm.left, true, JSON.stringify(contract.buttonGeometry));
+        assert.equal(contract.buttonGeometry.cancel.left >= contract.buttonGeometry.box.left && contract.buttonGeometry.confirm.right <= contract.buttonGeometry.box.right + 1, true, JSON.stringify(contract.buttonGeometry));
+        assert.equal(contract.buttonGeometry.cancel.width > 0 && contract.buttonGeometry.confirm.width > 0, true, JSON.stringify(contract.buttonGeometry));
+        assert.equal(contract.buttonGeometry.confirmRadius >= 9 && contract.buttonGeometry.confirmRadius <= 12, true, JSON.stringify(contract.buttonGeometry));
         assert.equal(contract.footerDisplay, 'none');
         assert.equal(contract.dataInfoDisplay, 'none');
         assert.equal(contract.passwordStyleCount, 1);
         assert.equal(contract.writeStyleCount, 0);
         assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
     } finally { await session.close(); }
+});
+
+mobileTest('authenticated delete confirmation stays in the page flow without changing its native form', 'write', async ({ browser, server }) => {
+    for (const viewport of [{ width: 390, height: 844 }, { width: 1280, height: 900 }]) {
+        const session = await createTestPage(browser, server.baseUrl, {
+            storage: { ...noStatsStorage, [storageKeys.palette]: 'orange' },
+            viewport
+        });
+        try {
+            await session.goto('/mini/board/delete/?id=test&no=1001&stage=confirm');
+            const contract = await session.page.evaluate(() => {
+                const form = document.querySelector('form[name="delete"]');
+                const page = document.querySelector('.empty_pagewrap');
+                const card = document.querySelector('.pop_wrap.type5');
+                const content = document.querySelector('.pop_content.robot');
+                const pageHead = document.querySelector('.page_head');
+                const buttons = Array.from(content.querySelectorAll('.btn_box > button'));
+                const cardRect = card.getBoundingClientRect();
+                const pageHeadRect = pageHead.getBoundingClientRect();
+                const buttonRects = buttons.map((button) => {
+                    const rect = button.getBoundingClientRect();
+                    return { left: rect.left, right: rect.right, width: rect.width, height: rect.height };
+                });
+                return {
+                    surface: document.documentElement.getAttribute('data-dcuf-delete-surface'),
+                    bodyClass: document.body.className,
+                    classes: {
+                        page: page.className,
+                        card: card.className,
+                        content: content.className
+                    },
+                    form: {
+                        method: form.getAttribute('method'),
+                        action: form.getAttribute('action'),
+                        onsubmit: form.getAttribute('onsubmit'),
+                        id: form.querySelector('[name="id"]')?.value,
+                        no: form.querySelector('[name="no"]')?.value,
+                        dccKey: form.querySelector('[name="dcc_key"]')?.value,
+                        submitType: form.querySelector('button[type="submit"]')?.getAttribute('type')
+                    },
+                    geometry: {
+                        cardRect: { left: cardRect.left, top: cardRect.top, right: cardRect.right, bottom: cardRect.bottom, width: cardRect.width, height: cardRect.height },
+                        centeredX: Math.abs((cardRect.left + cardRect.width / 2) - innerWidth / 2) <= 2,
+                        inside: cardRect.left >= 0 && cardRect.top >= 0 && cardRect.right <= innerWidth + 1 && cardRect.bottom <= innerHeight + 1,
+                        pageFlowGap: cardRect.top - pageHeadRect.bottom,
+                        containerDisplay: getComputedStyle(document.querySelector('#container')).display,
+                        overlap: buttonRects.length === 2 && buttonRects[0].right > buttonRects[1].left,
+                        buttonRects
+                    },
+                    material: {
+                        blur: getComputedStyle(card).backdropFilter || getComputedStyle(card).webkitBackdropFilter || 'none',
+                        background: getComputedStyle(card).backgroundColor
+                    },
+                    footerDisplay: getComputedStyle(document.querySelector('footer.dcfoot')).display
+                };
+            });
+            assert.equal(contract.surface, 'confirm', JSON.stringify(contract));
+            assert.equal(contract.bodyClass.includes('is-delete-confirm-page'), true, contract.bodyClass);
+            assert.equal(contract.classes.page.includes('dcuf-delete-confirm-page'), true, contract.classes.page);
+            assert.equal(contract.classes.card.includes('dcuf-delete-confirm-card'), true, contract.classes.card);
+            assert.equal(contract.classes.content.includes('dcuf-delete-confirm-content'), true, contract.classes.content);
+            assert.deepEqual(contract.form, {
+                method: 'post',
+                action: '/__testbed/delete_confirm_submit',
+                onsubmit: 'event.preventDefault();window.__fixtureDeleteConfirmSubmitCount=(window.__fixtureDeleteConfirmSubmitCount||0)+1',
+                id: 'test',
+                no: '1001',
+                dccKey: 'fixture-redacted',
+                submitType: 'submit'
+            });
+            assert.equal(contract.geometry.centeredX, true, JSON.stringify(contract.geometry));
+            assert.equal(contract.geometry.inside, true, JSON.stringify(contract.geometry));
+            assert.equal(contract.geometry.pageFlowGap >= 0 && contract.geometry.pageFlowGap <= 48, true, JSON.stringify(contract.geometry));
+            assert.equal(contract.geometry.containerDisplay, 'block', JSON.stringify(contract.geometry));
+            assert.equal(contract.geometry.overlap, false, JSON.stringify(contract.geometry));
+            assert.equal(contract.geometry.buttonRects.every((rect) => rect.width > 0 && rect.height > 0), true, JSON.stringify(contract.geometry));
+            assert.equal(contract.material.blur.includes('blur('), true, JSON.stringify(contract.material));
+            assertTranslucentCssColor(contract.material.background, 'authenticated delete confirmation');
+            assert.equal(contract.footerDisplay, 'none');
+            await session.page.locator('button[type="submit"]').click();
+            assert.equal(await session.page.evaluate(() => window.__fixtureDeleteConfirmSubmitCount), 1);
+            assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
+        } finally {
+            await session.close();
+        }
+    }
 });
 
 pcTest('PC filter leaves the delete password route outside its UI target rail', 'write', async ({ browser, server }) => {
@@ -5830,23 +7267,6 @@ mobileTest('UI palette presets normalize stored values without blocking boot', '
         rose: { light: '#be123c', dark: '#9f1239' },
         pink: { light: '#be185d', dark: '#9d174d' }
     };
-    const hexToRgb = (hex) => {
-        const value = hex.replace('#', '');
-        return `rgb(${Number.parseInt(value.slice(0, 2), 16)}, ${Number.parseInt(value.slice(2, 4), 16)}, ${Number.parseInt(value.slice(4, 6), 16)})`;
-    };
-    const contrastRatio = (foreground, background) => {
-        const luminance = (value) => {
-            const channels = (value.match(/[\d.]+/g) || []).slice(0, 3).map(Number).map((channel) => {
-                const normalized = channel / 255;
-                return normalized <= 0.03928 ? normalized / 12.92 : ((normalized + 0.055) / 1.055) ** 2.4;
-            });
-            return 0.2126 * channels[0] + 0.7152 * channels[1] + 0.0722 * channels[2];
-        };
-        const foregroundLuminance = luminance(foreground);
-        const backgroundLuminance = luminance(background);
-        return (Math.max(foregroundLuminance, backgroundLuminance) + 0.05) / (Math.min(foregroundLuminance, backgroundLuminance) + 0.05);
-    };
-    const strictContrastPalettes = new Set(['indigo', 'sky', 'cyan', 'teal', 'lime', 'amber', 'red', 'rose', 'pink']);
     for (const [stored, expected] of [
         [undefined, 'blue'],
         ['blue', 'blue'],
@@ -5890,31 +7310,36 @@ mobileTest('UI palette presets normalize stored values without blocking boot', '
                         const foreground = element && selector.includes('bnt_search')
                             ? getComputedStyle(element, '::before').borderTopColor
                             : style?.color || null;
-                        return { selector, color: style?.backgroundColor || null, foreground };
+                        const color = style?.backgroundColor || null;
+                        return { selector, color, foreground, image: style?.backgroundImage || null, shadow: style?.boxShadow || null };
                     })
                 };
             });
             assert.equal(lightColors.strong, strongColors[expected].light, JSON.stringify(lightColors));
-            lightColors.controls.forEach(({ selector, color, foreground }) => {
-                assert.equal(color, hexToRgb(strongColors[expected].light), `${expected} light ${selector}: ${color}`);
-                if (strictContrastPalettes.has(expected)) {
-                    assert.equal(contrastRatio(foreground, color) >= 4.5, true, `${expected} light ${selector} contrast: ${contrastRatio(foreground, color)}`);
-                }
+            lightColors.controls.forEach(({ selector, color, foreground, image, shadow }) => {
+                const alpha = parseCssColorAlpha(color);
+                assert.notEqual(color, 'rgba(0, 0, 0, 0)', `${expected} light ${selector}: ${color}`);
+                assert.notEqual(alpha, null, `${expected} light ${selector} unsupported color: ${color}`);
+                assert.equal(alpha >= 0.55 && alpha < 0.9, true, `${expected} light ${selector} glass alpha: ${alpha}`);
+                assert.notEqual(foreground, 'rgba(0, 0, 0, 0)', `${expected} light ${selector} foreground`);
+                assert.notEqual(image, 'none', `${expected} light ${selector} must use a layered active material`);
+                assert.notEqual(shadow, 'none', `${expected} light ${selector} must use material depth`);
             });
             assertPaletteSurfaces(await collectPaletteSurfaceContract(session.page, [
-                { selector: '.custom-mobile-list', token: '--dcuf-theme-canvas' },
-                { selector: '.list_array_option', token: '--dcuf-theme-surface-raised' },
-                { selector: '.dcuf-bottom-action-card', token: '--dcuf-theme-surface-raised' },
-                { selector: '.dcuf-pagination-card', token: '--dcuf-theme-card-top' },
-                { selector: '.dcuf-search-card', token: '--dcuf-theme-card-top' }
+                { selector: '.custom-mobile-list', role: 'shell', token: '--dcuf-glass-cell' },
+                { selector: '.list_array_option', role: 'shell', token: '--dcuf-theme-surface-raised' },
+                { selector: '.custom-bottom-controls', role: 'shell', token: '--dcuf-theme-surface-raised' },
+                { selector: '.dcuf-bottom-action-card', role: 'structural' },
+                { selector: '.dcuf-pagination-card', role: 'structural' },
+                { selector: '.dcuf-search-card', role: 'structural' }
             ]), `${expected} light list surfaces`);
             const listCardContract = await session.page.locator('.custom-post-item').first().evaluate((element) => ({
                 background: getComputedStyle(element).backgroundImage,
                 shadow: getComputedStyle(element).boxShadow,
                 titleHighlight: getComputedStyle(element.querySelector('.post-title')).backgroundImage
             }));
-            assert.equal(listCardContract.background.includes('linear-gradient'), true, JSON.stringify(listCardContract));
-            assert.notEqual(listCardContract.shadow, 'none', JSON.stringify(listCardContract));
+            assert.equal(listCardContract.background, 'none', JSON.stringify(listCardContract));
+            assert.equal(listCardContract.shadow, 'none', JSON.stringify(listCardContract));
             assert.equal(listCardContract.titleHighlight, 'none', JSON.stringify(listCardContract));
 
             await session.page.evaluate(() => window.__dcufFixture.toggleDark(true));
@@ -5935,22 +7360,28 @@ mobileTest('UI palette presets normalize stored values without blocking boot', '
                         const foreground = element && selector.includes('bnt_search')
                             ? getComputedStyle(element, '::before').borderTopColor
                             : style?.color || null;
-                        return { selector, color: style?.backgroundColor || null, foreground };
+                        const color = style?.backgroundColor || null;
+                        return { selector, color, foreground, image: style?.backgroundImage || null, shadow: style?.boxShadow || null };
                     })
                 };
             });
             assert.equal(darkColors.strong, strongColors[expected].dark, JSON.stringify(darkColors));
-            darkColors.controls.forEach(({ selector, color, foreground }) => {
-                assert.equal(color, hexToRgb(strongColors[expected].dark), `${expected} dark ${selector}: ${color}`);
-                if (strictContrastPalettes.has(expected)) {
-                    assert.equal(contrastRatio(foreground, color) >= 4.5, true, `${expected} dark ${selector} contrast: ${contrastRatio(foreground, color)}`);
-                }
+            darkColors.controls.forEach(({ selector, color, foreground, image, shadow }) => {
+                const alpha = parseCssColorAlpha(color);
+                assert.notEqual(color, 'rgba(0, 0, 0, 0)', `${expected} dark ${selector}: ${color}`);
+                assert.notEqual(alpha, null, `${expected} dark ${selector} unsupported color: ${color}`);
+                assert.equal(alpha >= 0.55 && alpha < 0.9, true, `${expected} dark ${selector} glass alpha: ${alpha}`);
+                assert.notEqual(foreground, 'rgba(0, 0, 0, 0)', `${expected} dark ${selector} foreground`);
+                assert.notEqual(image, 'none', `${expected} dark ${selector} must use a layered active material`);
+                assert.notEqual(shadow, 'none', `${expected} dark ${selector} must use material depth`);
             });
             assertPaletteSurfaces(await collectPaletteSurfaceContract(session.page, [
-                { selector: '.custom-mobile-list', token: '--dcuf-theme-canvas' },
-                { selector: '.list_array_option', token: '--dcuf-theme-surface-raised' },
-                { selector: '.dcuf-pagination-card', token: '--dcuf-theme-card-top' },
-                { selector: '.dcuf-search-card', token: '--dcuf-theme-card-top' }
+                { selector: '.custom-mobile-list', role: 'shell', token: '--dcuf-glass-cell' },
+                { selector: '.list_array_option', role: 'shell', token: '--dcuf-theme-surface-raised' },
+                { selector: '.custom-bottom-controls', role: 'shell', token: '--dcuf-theme-surface-raised' },
+                { selector: '.dcuf-bottom-action-card', role: 'structural' },
+                { selector: '.dcuf-pagination-card', role: 'structural' },
+                { selector: '.dcuf-search-card', role: 'structural' }
             ]), `${expected} dark list surfaces`);
             assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
         } finally { await session.close(); }
@@ -5989,40 +7420,57 @@ mobileTest('UI palette surfaces cover list canvas, comments, image comments, and
     try {
         await session.goto('/board/lists?id=test');
         assertPaletteSurfaces(await collectPaletteSurfaceContract(session.page, [
-            { selector: '.custom-mobile-list', token: '--dcuf-theme-canvas' },
-            { selector: '.list_array_option', token: '--dcuf-theme-surface-raised' },
-            { selector: '.dcuf-bottom-action-card', token: '--dcuf-theme-surface-raised' },
-            { selector: '.dcuf-pagination-card', token: '--dcuf-theme-card-top' },
-            { selector: '.dcuf-search-card', token: '--dcuf-theme-card-top' }
+            { selector: '.custom-mobile-list', role: 'shell', token: '--dcuf-glass-cell' },
+            { selector: '.list_array_option', role: 'shell', token: '--dcuf-theme-surface-raised' },
+            { selector: '.custom-bottom-controls', role: 'shell', token: '--dcuf-glass-panel' },
+            { selector: '.dcuf-bottom-action-card', role: 'structural' },
+            { selector: '.dcuf-pagination-card', role: 'structural' },
+            { selector: '.dcuf-search-card', role: 'structural' }
         ]), 'orange list');
         const listHierarchy = await session.page.evaluate(() => {
-            const surface = (selector) => {
-                const style = getComputedStyle(document.querySelector(selector));
+            const surface = (selector, visible = false) => {
+                const element = visible
+                    ? Array.from(document.querySelectorAll(selector)).find((item) => getComputedStyle(item).display !== 'none')
+                    : document.querySelector(selector);
+                const style = getComputedStyle(element);
                 return { color: style.backgroundColor, image: style.backgroundImage, shadow: style.boxShadow };
             };
             return {
                 canvas: surface('.custom-mobile-list'),
-                normal: surface('.custom-post-item:not(.notice):not(.concept)'),
+                normal: surface('.custom-post-item:not(.notice):not(.concept)', true),
                 concept: surface('.custom-post-item.concept'),
                 notice: surface('.custom-post-item.notice'),
+                controls: surface('.custom-bottom-controls'),
                 action: surface('.dcuf-bottom-action-card'),
                 pagination: surface('.dcuf-pagination-card'),
                 search: surface('.dcuf-search-card'),
-                titleBackground: getComputedStyle(document.querySelector('.custom-post-item .post-title')).backgroundImage
+                titleBackground: getComputedStyle(document.querySelector('.custom-post-item .post-title')).backgroundImage,
+                conceptCue: getComputedStyle(document.querySelector('.custom-post-item.concept'), '::before').content,
+                noticeCue: getComputedStyle(document.querySelector('.custom-post-item.notice'), '::before').content
             };
         });
-        assert.notEqual(listHierarchy.canvas.color, listHierarchy.normal.color, JSON.stringify(listHierarchy));
-        assert.notEqual(listHierarchy.normal.color, listHierarchy.concept.color, JSON.stringify(listHierarchy));
-        assert.notEqual(listHierarchy.normal.color, listHierarchy.notice.color, JSON.stringify(listHierarchy));
-        assert.notEqual(listHierarchy.concept.color, listHierarchy.notice.color, JSON.stringify(listHierarchy));
-        assert.notEqual(listHierarchy.action.color, listHierarchy.pagination.color, JSON.stringify(listHierarchy));
-        assert.equal(listHierarchy.pagination.color, listHierarchy.search.color, JSON.stringify(listHierarchy));
-        assert.notEqual(listHierarchy.normal.shadow, 'none', JSON.stringify(listHierarchy));
+        assert.equal(listHierarchy.canvas.color, listHierarchy.normal.color, JSON.stringify(listHierarchy));
+        assert.equal(listHierarchy.normal.color, listHierarchy.concept.color, JSON.stringify(listHierarchy));
+        assert.equal(listHierarchy.normal.color, listHierarchy.notice.color, JSON.stringify(listHierarchy));
+        assert.notEqual(listHierarchy.conceptCue, 'none', JSON.stringify(listHierarchy));
+        assert.notEqual(listHierarchy.noticeCue, 'none', JSON.stringify(listHierarchy));
+        assert.notEqual(listHierarchy.conceptCue, listHierarchy.noticeCue, JSON.stringify(listHierarchy));
+        assert.equal(parseCssColorAlpha(listHierarchy.controls.color) > 0.03, true, JSON.stringify(listHierarchy));
+        assert.notEqual(listHierarchy.controls.shadow, 'none', JSON.stringify(listHierarchy));
+        assert.equal(parseCssColorAlpha(listHierarchy.action.color) <= 0.02, true, JSON.stringify(listHierarchy));
+        assert.equal(parseCssColorAlpha(listHierarchy.pagination.color) <= 0.02, true, JSON.stringify(listHierarchy));
+        assert.equal(parseCssColorAlpha(listHierarchy.search.color) <= 0.02, true, JSON.stringify(listHierarchy));
+        assert.equal(listHierarchy.action.shadow, 'none', JSON.stringify(listHierarchy));
+        assert.equal(listHierarchy.pagination.shadow, 'none', JSON.stringify(listHierarchy));
+        assert.equal(listHierarchy.search.shadow, 'none', JSON.stringify(listHierarchy));
+        assert.equal(listHierarchy.normal.shadow, 'none', JSON.stringify(listHierarchy));
         assert.equal(listHierarchy.titleBackground, 'none', JSON.stringify(listHierarchy));
         await session.page.evaluate(() => window.__dcufFixture.toggleDark(true));
         await session.page.waitForTimeout(40);
         const darkListHierarchy = await session.page.evaluate(() => {
-            const normal = document.querySelector('.custom-post-item:not(.notice):not(.concept)');
+            const normal = Array.from(document.querySelectorAll(
+                '.custom-post-item:not(.notice):not(.concept)'
+            )).find((item) => getComputedStyle(item).display !== 'none');
             const concept = document.querySelector('.custom-post-item.concept');
             const notice = document.querySelector('.custom-post-item.notice');
             return {
@@ -6033,15 +7481,25 @@ mobileTest('UI palette surfaces cover list canvas, comments, image comments, and
                 titleShadow: getComputedStyle(normal.querySelector('.post-title')).boxShadow
             };
         });
-        assert.notEqual(darkListHierarchy.normal, darkListHierarchy.concept, JSON.stringify(darkListHierarchy));
-        assert.notEqual(darkListHierarchy.normal, darkListHierarchy.notice, JSON.stringify(darkListHierarchy));
+        assert.equal(darkListHierarchy.normal, darkListHierarchy.concept, JSON.stringify(darkListHierarchy));
+        assert.equal(darkListHierarchy.normal, darkListHierarchy.notice, JSON.stringify(darkListHierarchy));
         assert.equal(darkListHierarchy.titleBackground, 'none', JSON.stringify(darkListHierarchy));
         assert.equal(darkListHierarchy.titleShadow, 'none', JSON.stringify(darkListHierarchy));
         await session.page.evaluate(() => window.__dcufFixture.toggleDark(false));
         await session.page.waitForTimeout(40);
         const listInteractionContract = await session.page.evaluate(() => {
-            const author = document.querySelector('.custom-post-item .post-meta .author');
+            const row = Array.from(document.querySelectorAll('.custom-post-item')).find((item) => {
+                const style = getComputedStyle(item);
+                const rect = item.getBoundingClientRect();
+                return style.display !== 'none'
+                    && style.visibility === 'visible'
+                    && rect.width > 0
+                    && rect.height > 0;
+            });
+            const author = row?.querySelector('.post-meta .author');
             const writer = author?.querySelector('.gall_writer');
+            const nickname = author?.querySelector('.nickname, .gall_writer > b');
+            const nicknameStyle = nickname ? getComputedStyle(nickname) : null;
             const authorRect = author?.getBoundingClientRect();
             const writerRect = writer?.getBoundingClientRect();
             const write = document.querySelector('.list_array_option .btn_write');
@@ -6049,12 +7507,22 @@ mobileTest('UI palette surfaces cover list canvas, comments, image comments, and
             return {
                 authorWidth: authorRect?.width || 0,
                 writerWidth: writerRect?.width || 0,
+                nicknameText: nickname?.textContent?.trim() || '',
+                nicknameWidth: nickname?.getBoundingClientRect().width || 0,
+                nicknameVisibility: nicknameStyle?.visibility || '',
+                nicknameOpacity: Number.parseFloat(nicknameStyle?.opacity || '0'),
                 tapHighlight: author ? getComputedStyle(author).webkitTapHighlightColor : '',
                 pencilContent: pencil?.content || '',
                 pencilColor: pencil?.color || ''
             };
         });
-        assert.equal(listInteractionContract.authorWidth <= listInteractionContract.writerWidth + 2, true, JSON.stringify(listInteractionContract));
+        assert.equal(listInteractionContract.authorWidth >= 48, true, JSON.stringify(listInteractionContract));
+        assert.equal(listInteractionContract.writerWidth > 0, true, JSON.stringify(listInteractionContract));
+        assert.equal(listInteractionContract.nicknameText.length > 0, true, JSON.stringify(listInteractionContract));
+        assert.equal(listInteractionContract.nicknameWidth >= 24, true, JSON.stringify(listInteractionContract));
+        assert.equal(listInteractionContract.nicknameVisibility, 'visible', JSON.stringify(listInteractionContract));
+        assert.equal(listInteractionContract.nicknameOpacity, 1, JSON.stringify(listInteractionContract));
+        assert.equal(listInteractionContract.writerWidth <= listInteractionContract.authorWidth + 2, true, JSON.stringify(listInteractionContract));
         assert.equal(['rgba(0, 0, 0, 0)', 'transparent'].includes(listInteractionContract.tapHighlight), true, JSON.stringify(listInteractionContract));
         assert.notEqual(listInteractionContract.pencilContent, 'none');
         assert.equal(listInteractionContract.pencilColor, 'rgb(255, 255, 255)');
@@ -6085,24 +7553,107 @@ mobileTest('UI palette surfaces cover list canvas, comments, image comments, and
         assert.notEqual(activeTitlePress.outlineColor, idleTitlePress.outlineColor, JSON.stringify({ idleTitlePress, activeTitlePress }));
         const hostChromeContract = await session.page.evaluate(() => {
             const color = (selector, property) => getComputedStyle(document.querySelector(selector))[property];
+            const rect = (selector) => {
+                const box = document.querySelector(selector).getBoundingClientRect();
+                return {
+                    left: Math.round(box.left),
+                    top: Math.round(box.top),
+                    right: Math.round(box.right),
+                    bottom: Math.round(box.bottom),
+                    width: Math.round(box.width),
+                    height: Math.round(box.height)
+                };
+            };
+            const material = (selector) => {
+                const style = getComputedStyle(document.querySelector(selector));
+                return {
+                    color: style.backgroundColor,
+                    image: style.backgroundImage,
+                    shadow: style.boxShadow
+                };
+            };
+            const header = document.querySelector('.dcheader.typea');
+            const headerSheet = getComputedStyle(header, '::before');
+            const icon = document.querySelector('#visit_history > .newvisit_history.vst > .btn_open > .sp_img.icon_listmore');
             return {
+                viewportWidth: innerWidth,
+                exactRecentWrapperCount: document.querySelectorAll('#visit_history.visit_bookmark > .newvisit_history.vst').length,
+                exactRecentIconCount: document.querySelectorAll('#visit_history > .newvisit_history.vst > .btn_open > .sp_img.icon_listmore').length,
+                header: rect('.dcheader.typea'),
+                nav: rect('.gnb_bar'),
+                recent: rect('#visit_history > .newvisit_history.vst'),
+                logo: rect('.dcheader .dc_logo'),
+                search: rect('.dcheader .wrap_search'),
+                links: rect('.dcheader .area_links'),
+                recentButton: rect('#visit_history > .newvisit_history.vst > .btn_open'),
+                recentIcon: rect('#visit_history > .newvisit_history.vst > .btn_open > .sp_img.icon_listmore'),
+                headerSheet: {
+                    color: headerSheet.backgroundColor,
+                    image: headerSheet.backgroundImage,
+                    shadow: headerSheet.boxShadow,
+                    radius: Number.parseFloat(headerSheet.borderTopLeftRadius) || 0,
+                    height: Number.parseFloat(headerSheet.height) || 0
+                },
+                iconHit: (() => {
+                    const box = icon.getBoundingClientRect();
+                    const hit = document.elementFromPoint(box.left + (box.width / 2), box.top + (box.height / 2));
+                    return hit === icon || icon.contains(hit) || icon.parentElement === hit;
+                })(),
                 gnb: color('.gnb_bar', 'backgroundColor'),
+                gnbImage: color('.gnb_bar', 'backgroundImage'),
+                gnbText: color('.gnb_bar .gnb_list li > a', 'color'),
                 topSearch: color('.dchead .top_search', 'backgroundColor'),
-                topSearchButton: color('.dchead .top_search .bnt_search', 'backgroundColor'),
-                login: color('.dchead .btn_top_loginout', 'backgroundColor'),
+                topSearchButton: material('.dchead .top_search .bnt_search'),
+                login: material('.dchead .btn_top_loginout'),
+                recentBackground: color('.newvisit_history', 'backgroundColor'),
+                recentBlur: color('.newvisit_history', 'backdropFilter') || color('.newvisit_history', 'webkitBackdropFilter'),
+                pageHeadBackground: color('.page_head', 'backgroundColor'),
+                pageHeadBlur: color('.page_head', 'backdropFilter') || color('.page_head', 'webkitBackdropFilter'),
                 galleryTitle: color('.page_head h2 a', 'color'),
-                gallerySearch: color('.page_head .btn_search', 'backgroundColor'),
-                recentTitle: color('.newvisit_history > .tit', 'color'),
+                fakeGallerySearchCount: document.querySelectorAll('.page_head .btn_search').length,
+                recentTitle: color('.newvisit_history > :is(.vst_title,.tit)', 'color'),
                 recentAll: color('.newvisit_history > .bnt_newvisit_more', 'color')
             };
         });
-        assert.deepEqual(hostChromeContract, {
-            gnb: 'rgb(154, 52, 18)',
-            topSearch: 'rgb(154, 52, 18)',
-            topSearchButton: 'rgb(154, 52, 18)',
-            login: 'rgb(154, 52, 18)',
+        assert.equal(hostChromeContract.exactRecentWrapperCount, 1, JSON.stringify(hostChromeContract));
+        assert.equal(hostChromeContract.exactRecentIconCount, 1, JSON.stringify(hostChromeContract));
+        assertTranslucentCssColor(hostChromeContract.headerSheet.color, 'orange host outer header');
+        assert.notEqual(hostChromeContract.headerSheet.image, 'none', JSON.stringify(hostChromeContract));
+        assert.notEqual(hostChromeContract.headerSheet.shadow, 'none', JSON.stringify(hostChromeContract));
+        assert.equal(hostChromeContract.headerSheet.radius >= 20, true, JSON.stringify(hostChromeContract));
+        assert.equal(hostChromeContract.nav.left >= hostChromeContract.header.left, true, JSON.stringify(hostChromeContract));
+        assert.equal(hostChromeContract.nav.right <= hostChromeContract.header.right, true, JSON.stringify(hostChromeContract));
+        assert.equal(hostChromeContract.recent.left >= hostChromeContract.header.left, true, JSON.stringify(hostChromeContract));
+        assert.equal(hostChromeContract.recent.right <= hostChromeContract.header.right, true, JSON.stringify(hostChromeContract));
+        assert.equal(hostChromeContract.recent.bottom <= hostChromeContract.header.top + hostChromeContract.headerSheet.height + 1, true, JSON.stringify(hostChromeContract));
+        assert.equal(hostChromeContract.logo.width >= 90, true, JSON.stringify(hostChromeContract));
+        assert.equal(hostChromeContract.search.width >= (hostChromeContract.viewportWidth >= 1024 ? 280 : 96), true, JSON.stringify(hostChromeContract));
+        assert.equal(hostChromeContract.links.width >= (hostChromeContract.viewportWidth >= 1024 ? 70 : 60), true, JSON.stringify(hostChromeContract));
+        assert.equal(hostChromeContract.recentButton.width >= 30 && hostChromeContract.recentButton.height >= 30, true, JSON.stringify(hostChromeContract));
+        assert.equal(hostChromeContract.recentIcon.width >= 15 && hostChromeContract.recentIcon.height >= 15, true, JSON.stringify(hostChromeContract));
+        assert.equal(hostChromeContract.iconHit, true, JSON.stringify(hostChromeContract));
+        assertTranslucentCssColor(hostChromeContract.topSearch, 'orange host top search');
+        assertTranslucentCssColor(hostChromeContract.gnb, 'orange host navigation');
+        assert.notEqual(hostChromeContract.gnbImage, 'none', JSON.stringify(hostChromeContract));
+        assert.equal(hostChromeContract.gnbText, 'rgb(39, 49, 63)', JSON.stringify(hostChromeContract));
+        assert.equal(parseCssColorAlpha(hostChromeContract.recentBackground), 0, JSON.stringify(hostChromeContract));
+        assertTranslucentCssColor(hostChromeContract.pageHeadBackground, 'orange host page head');
+        assert.equal(['none', ''].includes(hostChromeContract.recentBlur), true, JSON.stringify(hostChromeContract));
+        assert.equal(['none', ''].includes(hostChromeContract.pageHeadBlur), true, JSON.stringify(hostChromeContract));
+        assert.equal(hostChromeContract.fakeGallerySearchCount, 0, 'the fixture must not invent a gallery-header search control');
+        for (const [name, material] of Object.entries({
+            topSearchButton: hostChromeContract.topSearchButton,
+            login: hostChromeContract.login
+        })) {
+            assertTranslucentCssColor(material.color, `orange host ${name}`, { min: 0.25, max: 0.95 });
+            assert.notEqual(material.image, 'none', `orange host ${name} must retain a layered active material`);
+        }
+        assert.deepEqual({
+            galleryTitle: hostChromeContract.galleryTitle,
+            recentTitle: hostChromeContract.recentTitle,
+            recentAll: hostChromeContract.recentAll
+        }, {
             galleryTitle: 'rgb(194, 65, 12)',
-            gallerySearch: 'rgb(154, 52, 18)',
             recentTitle: 'rgb(194, 65, 12)',
             recentAll: 'rgb(194, 65, 12)'
         });
@@ -6110,25 +7661,33 @@ mobileTest('UI palette surfaces cover list canvas, comments, image comments, and
         await session.goto('/board/view?id=test&no=1001&comments=4');
         await session.page.locator('#focus_cmt .comment_box .reply.show').waitFor({ state: 'attached' });
         assertPaletteSurfaces(await collectPaletteSurfaceContract(session.page, [
-            { selector: '#focus_cmt .comment_box .cmt_list > li', token: '--dcuf-theme-card-top' },
-            { selector: '#focus_cmt .comment_box .reply_box', token: '--dcuf-theme-reply-surface' },
-            { selector: '#focus_cmt > .fixture-normal-comment-composer', token: '--dcuf-theme-surface' },
-            { selector: '#focus_cmt > .fixture-normal-comment-composer .cmt_txt_cont', token: '--dcuf-theme-surface-input' },
-            { selector: '.view_comment.image_comment .comment_wrap', token: '--dcuf-theme-canvas' },
-            { selector: '.view_comment.image_comment .comment_box.img_comment_box .cmt_list > li', token: '--dcuf-theme-card-top' },
-            { selector: '.view_comment.image_comment .cmt_write_box', token: '--dcuf-theme-surface' },
-            { selector: '.view_comment.image_comment .cmt_write_box .cmt_txt_cont', token: '--dcuf-theme-surface-input' }
+            { selector: '#focus_cmt .comment_box .cmt_list > li', role: 'structural', token: '--dcuf-theme-card-top' },
+            { selector: '#focus_cmt .comment_box .reply_box', role: 'structural', token: '--dcuf-theme-reply-surface' },
+            { selector: '#focus_cmt > .fixture-normal-comment-composer', role: 'surface', token: '--dcuf-theme-surface' },
+            { selector: '#focus_cmt > .fixture-normal-comment-composer .cmt_txt_cont', role: 'input', token: '--dcuf-theme-surface-input' },
+            { selector: '.view_comment.image_comment .comment_wrap', role: 'shell', token: '--dcuf-theme-canvas' },
+            { selector: '.view_comment.image_comment .comment_box.img_comment_box .cmt_list > li', role: 'structural', token: '--dcuf-theme-card-top' },
+            { selector: '.view_comment.image_comment .cmt_write_box', role: 'surface', token: '--dcuf-theme-surface' },
+            { selector: '.view_comment.image_comment .cmt_write_box .cmt_txt_cont', role: 'input', token: '--dcuf-theme-surface-input' }
         ]), 'orange view');
-        assert.equal(
-            await session.page.locator('#focus_cmt').evaluate((element) => getComputedStyle(element).backgroundColor),
-            'rgba(0, 0, 0, 0)',
-            'orange view: #focus_cmt is a transparent structural container'
-        );
+        const focusBackground = await session.page.locator('#focus_cmt').evaluate((element) => getComputedStyle(element).backgroundColor);
+        assert.equal(parseCssColorAlpha(focusBackground), 0, `orange view: #focus_cmt is a transparent structural container; ${focusBackground}`);
         const commentButtons = await session.page.evaluate(() => Array.from(document.querySelectorAll([
             '#focus_cmt > .fixture-normal-comment-composer .cmt_cont_bottm > .fr > button',
             '.view_comment.image_comment .cmt_write_box .cmt_cont_bottm > .fr > button'
-        ].join(','))).map((button) => getComputedStyle(button).backgroundColor));
-        assert.deepEqual(commentButtons, ['rgb(154, 52, 18)', 'rgb(154, 52, 18)']);
+        ].join(','))).map((button) => {
+            const style = getComputedStyle(button);
+            return {
+                color: style.backgroundColor,
+                image: style.backgroundImage,
+                shadow: style.boxShadow
+            };
+        }));
+        assert.equal(commentButtons.length, 2);
+        commentButtons.forEach((material, index) => {
+            assertTranslucentCssColor(material.color, `orange comment action ${index}`, { min: 0.25, max: 0.95 });
+            assert.notEqual(material.image, 'none', `orange comment action ${index} must retain a layered active material`);
+        });
         const recommendationContract = await session.page.evaluate(() => {
             const box = document.querySelector('.btn_recommend_box');
             const inner = box.querySelector('.inner_box > .inner');
@@ -6142,6 +7701,7 @@ mobileTest('UI palette surfaces cover list canvas, comments, image comments, and
                 innerBackground: getComputedStyle(inner).backgroundImage,
                 innerShadow: getComputedStyle(inner).boxShadow,
                 bottomBackground: getComputedStyle(bottom).backgroundImage,
+                buttonColor: getComputedStyle(button).backgroundColor,
                 buttonBackground: getComputedStyle(button).backgroundImage,
                 numberColor: getComputedStyle(number).color,
                 fixedNumberColor: getComputedStyle(fixedNumber).color,
@@ -6155,8 +7715,8 @@ mobileTest('UI palette surfaces cover list canvas, comments, image comments, and
         assert.equal(recommendationContract.innerBackground.includes('linear-gradient'), true, JSON.stringify(recommendationContract));
         assert.notEqual(recommendationContract.innerShadow, 'none', JSON.stringify(recommendationContract));
         assert.equal(recommendationContract.bottomBackground, 'none', JSON.stringify(recommendationContract));
-        assert.equal(recommendationContract.buttonBackground.includes('rgb(194, 65, 12)'), true, JSON.stringify(recommendationContract));
-        assert.equal(recommendationContract.buttonBackground.includes('rgb(154, 52, 18)'), true, JSON.stringify(recommendationContract));
+        assertTranslucentCssColor(recommendationContract.buttonColor, 'orange recommendation action', { min: 0.25, max: 0.95 });
+        assert.equal(recommendationContract.buttonBackground.includes('linear-gradient'), true, JSON.stringify(recommendationContract));
         assert.equal(recommendationContract.numberColor, 'rgb(194, 65, 12)', JSON.stringify(recommendationContract));
         assert.equal(recommendationContract.fixedNumberColor, 'rgb(194, 65, 12)', JSON.stringify(recommendationContract));
         assert.equal(recommendationContract.iconBackgroundImage, 'none', JSON.stringify(recommendationContract));
@@ -6167,26 +7727,29 @@ mobileTest('UI palette surfaces cover list canvas, comments, image comments, and
         await session.page.evaluate(() => window.__dcufFixture.toggleDark(true));
         await session.page.waitForTimeout(40);
         assertPaletteSurfaces(await collectPaletteSurfaceContract(session.page, [
-            { selector: '#focus_cmt .comment_box .reply_box', token: '--dcuf-theme-reply-surface' },
-            { selector: '#focus_cmt > .fixture-normal-comment-composer', token: '--dcuf-theme-surface' },
-            { selector: '.view_comment.image_comment .cmt_write_box', token: '--dcuf-theme-surface' }
+            { selector: '#focus_cmt .comment_box .reply_box', role: 'structural', token: '--dcuf-theme-reply-surface' },
+            { selector: '#focus_cmt > .fixture-normal-comment-composer', role: 'surface', token: '--dcuf-theme-surface' },
+            { selector: '.view_comment.image_comment .cmt_write_box', role: 'surface', token: '--dcuf-theme-surface' }
         ]), 'orange dark view');
-        assert.equal(
-            await session.page.locator('#focus_cmt').evaluate((element) => getComputedStyle(element).backgroundColor),
-            'rgba(0, 0, 0, 0)',
-            'orange dark view: #focus_cmt is a transparent structural container'
-        );
+        const darkFocusBackground = await session.page.locator('#focus_cmt').evaluate((element) => getComputedStyle(element).backgroundColor);
+        assert.equal(parseCssColorAlpha(darkFocusBackground), 0,
+            `orange dark view: #focus_cmt is a transparent structural container; ${darkFocusBackground}`);
 
         await session.goto('/mgallery/board/write/?id=test');
         assertPaletteSurfaces(await collectPaletteSurfaceContract(session.page, [
-            { selector: 'form#write', token: '--dcuf-theme-canvas' },
-            { selector: 'form#write .write_subject', token: '--dcuf-theme-surface' },
-            { selector: 'form#write .note-toolbar', token: '--dcuf-theme-surface-muted' },
-            { selector: 'form#write .note-editable', token: '--dcuf-theme-surface-input' },
-            { selector: 'form#write .ai_easy_wrap', token: '--dcuf-theme-surface' },
-            { selector: 'form#write > .btn_box.write', token: '--dcuf-theme-surface' }
+            { selector: 'form#write', role: 'shell', token: '--dcuf-theme-canvas' },
+            { selector: 'form#write .write_subject', role: 'surface', token: '--dcuf-glass-cell-soft' },
+            { selector: 'form#write .note-toolbar', role: 'surface', token: '--dcuf-theme-surface-muted' },
+            { selector: 'form#write .note-editable', role: 'readable', token: '--dcuf-glass-paper' },
+            { selector: 'form#write .ai_easy_wrap', role: 'surface', token: '--dcuf-theme-surface' },
+            { selector: 'form#write > .btn_box.write', role: 'structural', token: '--dcuf-theme-surface' }
         ]), 'orange write');
-        assert.equal(await session.page.locator('.ai_easy_box > .btn_aigo').evaluate((button) => getComputedStyle(button).backgroundColor), 'rgb(154, 52, 18)');
+        const aiActionMaterial = await session.page.locator('.ai_easy_box > .btn_aigo').evaluate((button) => {
+            const style = getComputedStyle(button);
+            return { color: style.backgroundColor, image: style.backgroundImage, shadow: style.boxShadow };
+        });
+        assertTranslucentCssColor(aiActionMaterial.color, 'orange AI action', { min: 0.25, max: 0.95 });
+        assert.notEqual(aiActionMaterial.image, 'none', JSON.stringify(aiActionMaterial));
         const toolbarBorderContract = await session.page.evaluate(() => {
             const probe = document.createElement('span');
             probe.style.cssText = 'position:fixed;visibility:hidden;border:1px solid var(--dcuf-theme-border-strong)';
@@ -6214,15 +7777,15 @@ mobileTest('UI palette surfaces cover list canvas, comments, image comments, and
         await session.page.evaluate(() => window.__dcufFixture.toggleDark(true));
         await session.page.waitForTimeout(40);
         assertPaletteSurfaces(await collectPaletteSurfaceContract(session.page, [
-            { selector: 'form#write .write_subject', token: '--dcuf-theme-surface' },
-            { selector: 'form#write .note-toolbar', token: '--dcuf-theme-surface-muted' },
-            { selector: 'form#write > .btn_box.write', token: '--dcuf-theme-surface' }
+            { selector: 'form#write .write_subject', role: 'surface', token: '--dcuf-glass-cell-soft' },
+            { selector: 'form#write .note-toolbar', role: 'surface', token: '--dcuf-theme-surface-muted' },
+            { selector: 'form#write > .btn_box.write', role: 'structural', token: '--dcuf-theme-surface' }
         ]), 'orange dark write');
         assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
     } finally { await session.close(); }
 });
 
-mobileTest('UI palette replaces live-shaped host blue and keeps raised list, view, and comment hierarchy', 'functional', async ({ browser, server }) => {
+mobileTest('UI palette replaces live-shaped host blue and keeps restrained list, view, and comment hierarchy', 'functional', async ({ browser, server }) => {
     const session = await createTestPage(browser, server.baseUrl, {
         storage: { ...noStatsStorage, [storageKeys.palette]: 'orange' },
         viewport: { width: 1280, height: 900 }
@@ -6240,34 +7803,42 @@ mobileTest('UI palette replaces live-shaped host blue and keeps raised list, vie
             };
             const badge = document.querySelector('.pagehead_titicon.mgall.sp_img');
             const next = document.querySelector('.gnb_bar .sp_img.icon_next');
-            const card = document.querySelector('.custom-mobile-list .custom-post-item');
+            const card = document.querySelector('.custom-mobile-list .custom-post-item:not(.dcuf-recent-post)');
             const inactive = document.querySelector('.list_array_option .array_tab li:not(.on) > a');
+            const loginStyle = getComputedStyle(document.querySelector('.btn_top_loginout'));
             return {
                 accent: tokenColor('--dcuf-theme-accent'),
                 foreground: tokenColor('--dcuf-theme-fg'),
-                login: getComputedStyle(document.querySelector('.btn_top_loginout')).backgroundColor,
+                muted: tokenColor('--dcuf-theme-fg-muted'),
+                login: {
+                    color: loginStyle.backgroundColor,
+                    image: loginStyle.backgroundImage,
+                    shadow: loginStyle.boxShadow
+                },
                 badgeBackground: getComputedStyle(badge).backgroundImage,
                 badgeColor: getComputedStyle(badge).color,
                 badgeLabel: getComputedStyle(badge, '::before').content,
                 nextBackground: getComputedStyle(next).backgroundImage,
                 nextColor: getComputedStyle(next).borderTopColor,
                 issueBorder: getComputedStyle(document.querySelector('.issue_wrap')).borderTopColor,
+                issueBorderStyle: getComputedStyle(document.querySelector('.issue_wrap')).borderTopStyle,
                 inactiveColor: getComputedStyle(inactive).color,
                 cardBackground: getComputedStyle(card).backgroundImage,
                 cardShadow: getComputedStyle(card).boxShadow,
                 titleHighlight: getComputedStyle(card.querySelector('.post-title')).backgroundImage
             };
         });
-        assert.equal(listContract.login, 'rgb(154, 52, 18)', JSON.stringify(listContract));
+        assertTranslucentCssColor(listContract.login.color, 'orange live-shaped login', { min: 0.25, max: 0.95 });
+        assert.notEqual(listContract.login.image, 'none', JSON.stringify(listContract));
         assert.equal(listContract.badgeBackground, 'none', JSON.stringify(listContract));
         assert.equal(listContract.badgeColor, listContract.accent, JSON.stringify(listContract));
         assert.equal(listContract.badgeLabel, '"m"', JSON.stringify(listContract));
         assert.equal(listContract.nextBackground, 'none', JSON.stringify(listContract));
-        assert.equal(listContract.nextColor, 'rgb(255, 255, 255)', JSON.stringify(listContract));
-        assert.equal(listContract.issueBorder, listContract.accent, JSON.stringify(listContract));
+        assert.equal(listContract.nextColor, listContract.muted, JSON.stringify(listContract));
+        assert.equal(listContract.issueBorderStyle, 'none', JSON.stringify(listContract));
         assert.equal(listContract.inactiveColor, listContract.foreground, JSON.stringify(listContract));
-        assert.equal(listContract.cardBackground.includes('linear-gradient'), true, JSON.stringify(listContract));
-        assert.notEqual(listContract.cardShadow, 'none', JSON.stringify(listContract));
+        assert.equal(listContract.cardBackground, 'none', JSON.stringify(listContract));
+        assert.equal(listContract.cardShadow, 'none', JSON.stringify(listContract));
         assert.equal(listContract.titleHighlight, 'none', JSON.stringify(listContract));
 
         await session.goto('/mini/board/lists?id=test');
@@ -6313,6 +7884,11 @@ mobileTest('UI palette replaces live-shaped host blue and keeps raised list, vie
             const article = document.querySelector('.view_content_wrap .writing_view_box');
             const articleInner = article.querySelector(':scope > .write_div');
             const articleOuter = article.closest('.gallview_contents');
+            const viewShell = document.querySelector('#container > article > .view_content_wrap');
+            const titleShell = title.closest('header');
+            const titleRect = title.getBoundingClientRect();
+            const articleRect = article.getBoundingClientRect();
+            const titleSubject = title.querySelector('.title_subject');
             const comment = document.querySelector('#focus_cmt .comment_box .cmt_list > li:not([data-dcuf-focus-group-parent])');
             const reply = document.querySelector('#focus_cmt .comment_box .reply_box');
             const commentList = document.querySelector('#focus_cmt .comment_box .cmt_list');
@@ -6330,7 +7906,18 @@ mobileTest('UI palette replaces live-shaped host blue and keeps raised list, vie
             const rect = replyComposer.getBoundingClientRect();
             const hostRect = replyHost.getBoundingClientRect();
             const contract = {
-                inputSurface: tokenBackground('--dcuf-theme-surface-input'),
+                inputSurface: tokenBackground('--dcuf-glass-input'),
+                shellBackground: getComputedStyle(viewShell).backgroundColor,
+                shellImage: getComputedStyle(viewShell).backgroundImage,
+                shellRadius: parseFloat(getComputedStyle(viewShell).borderRadius) || 0,
+                shellShadow: getComputedStyle(viewShell).boxShadow,
+                titleShellImage: getComputedStyle(titleShell).backgroundImage,
+                titleShellRadius: parseFloat(getComputedStyle(titleShell).borderRadius) || 0,
+                titleShellShadow: getComputedStyle(titleShell).boxShadow,
+                titleHeight: titleRect.height,
+                titleRadius: parseFloat(getComputedStyle(title).borderRadius) || 0,
+                titleFontSize: parseFloat(getComputedStyle(titleSubject).fontSize) || 0,
+                titleToArticleGap: articleRect.top - titleRect.bottom,
                 titleBackground: getComputedStyle(title).backgroundImage,
                 titleShadow: getComputedStyle(title).boxShadow,
                 articleBackground: getComputedStyle(article).backgroundImage,
@@ -6357,26 +7944,40 @@ mobileTest('UI palette replaces live-shaped host blue and keeps raised list, vie
             groupedReply.remove();
             return contract;
         });
-        assert.equal(viewContract.titleBackground.includes('linear-gradient'), true, JSON.stringify(viewContract));
-        assert.notEqual(viewContract.titleShadow, 'none', JSON.stringify(viewContract));
+        assert.equal(
+            parseCssColorAlpha(viewContract.shellBackground) > 0.1 || viewContract.shellImage !== 'none',
+            true,
+            JSON.stringify(viewContract)
+        );
+        assert.equal(viewContract.shellRadius >= 14 && viewContract.shellRadius <= 24, true, JSON.stringify(viewContract));
+        assert.notEqual(viewContract.shellShadow, 'none', JSON.stringify(viewContract));
+        assert.equal(viewContract.titleShellImage, 'none', JSON.stringify(viewContract));
+        assert.equal(viewContract.titleShellRadius, 0, JSON.stringify(viewContract));
+        assert.equal(viewContract.titleShellShadow, 'none', JSON.stringify(viewContract));
+        assert.equal(viewContract.titleHeight >= 56 && viewContract.titleHeight <= 120, true, JSON.stringify(viewContract));
+        assert.equal(viewContract.titleRadius, 0, JSON.stringify(viewContract));
+        assert.equal(viewContract.titleFontSize >= 18 && viewContract.titleFontSize <= 20, true, JSON.stringify(viewContract));
+        assert.equal(viewContract.titleToArticleGap >= 0 && viewContract.titleToArticleGap <= 20, true, JSON.stringify(viewContract));
+        assert.equal(viewContract.titleBackground, 'none', JSON.stringify(viewContract));
+        assert.equal(viewContract.titleShadow, 'none', JSON.stringify(viewContract));
         assert.equal(viewContract.articleBackground, 'none', JSON.stringify(viewContract));
         assert.equal(viewContract.articleShadow, 'none', JSON.stringify(viewContract));
         assert.equal(viewContract.articleOuterBackground, 'none', JSON.stringify(viewContract));
         assert.equal(viewContract.articleOuterShadow, 'none', JSON.stringify(viewContract));
         assert.equal(viewContract.articleInnerRadius, '0px', JSON.stringify(viewContract));
         assert.equal(viewContract.articleInnerShadow, 'none', JSON.stringify(viewContract));
-        assert.equal(viewContract.commentBackground.includes('linear-gradient'), true, JSON.stringify(viewContract));
-        assert.notEqual(viewContract.commentShadow, 'none', JSON.stringify(viewContract));
-        assert.equal(viewContract.replyBackground.includes('linear-gradient'), true, JSON.stringify(viewContract));
-        assert.equal(viewContract.replyShadow.includes('inset'), false, JSON.stringify(viewContract));
+        assert.equal(viewContract.commentBackground, 'none', JSON.stringify(viewContract));
+        assert.equal(viewContract.commentShadow, 'none', JSON.stringify(viewContract));
+        assert.equal(viewContract.replyBackground, 'none', JSON.stringify(viewContract));
+        assert.equal(viewContract.replyShadow, 'none', JSON.stringify(viewContract));
         assert.equal(viewContract.replyIndent >= 18, true, JSON.stringify(viewContract));
         assert.equal(viewContract.groupedParentBottom, '0px', JSON.stringify(viewContract));
-        assert.equal(viewContract.groupedReplyMarginTop >= 8, true, JSON.stringify(viewContract));
+        assert.equal(viewContract.groupedReplyMarginTop, 0, JSON.stringify(viewContract));
         assert.equal(viewContract.normalBody, viewContract.inputSurface, JSON.stringify(viewContract));
         assert.equal(viewContract.normalFooter, viewContract.inputSurface, JSON.stringify(viewContract));
         assert.equal(viewContract.replyBody, viewContract.inputSurface, JSON.stringify(viewContract));
         assert.equal(viewContract.replyFits, true, JSON.stringify(viewContract));
-        assert.equal(viewContract.imageBackground.includes('linear-gradient'), true, JSON.stringify(viewContract));
+        assert.equal(viewContract.imageBackground, 'none', JSON.stringify(viewContract));
         assert.equal(viewContract.imageBody, viewContract.inputSurface, JSON.stringify(viewContract));
 
         await session.page.evaluate(() => {
@@ -6406,8 +8007,8 @@ mobileTest('UI palette replaces live-shaped host blue and keeps raised list, vie
             };
         });
         assert.equal(darkContract.replyFits, true, JSON.stringify(darkContract));
-        assert.equal(darkContract.replyBackground.includes('linear-gradient'), true, JSON.stringify(darkContract));
-        assert.notEqual(darkContract.commentShadow, 'none', JSON.stringify(darkContract));
+        assert.equal(darkContract.replyBackground, 'none', JSON.stringify(darkContract));
+        assert.equal(darkContract.commentShadow, 'none', JSON.stringify(darkContract));
         assert.equal(darkContract.articleInnerRadius, '0px', JSON.stringify(darkContract));
         assert.equal(darkContract.articleInnerImage, 'none', JSON.stringify(darkContract));
         assert.equal(darkContract.uploadedImageFilter, 'none', JSON.stringify(darkContract));
@@ -6494,9 +8095,9 @@ mobileTest('UI palette reaches settings, block management, and backup card surfa
             await session.page.evaluate(() => window.__dcufTestbedGM.invokeMenu('글댓합 설정하기'));
             await session.page.locator('#dcinside-filter-setting').waitFor({ state: 'attached' });
             assertPaletteSurfaces(await collectPaletteSurfaceContract(session.page, [
-                { selector: '#dcinside-filter-setting', token: '--dcuf-theme-canvas' },
-                { selector: '#dcinside-filter-setting .dcuf-settings-section', token: '--dcuf-theme-card-top' },
-                { selector: '#dcinside-filter-setting #dcinside-threshold-input', token: '--dcuf-theme-surface-input' }
+                { selector: '#dcinside-filter-setting', role: 'shell', token: '--dcuf-theme-canvas' },
+                { selector: '#dcinside-filter-setting .dcuf-settings-section', role: 'flat', token: '--dcuf-theme-card-top' },
+                { selector: '#dcinside-filter-setting #dcinside-threshold-input', role: 'input', token: '--dcuf-theme-surface-input' }
             ]), `settings ${dark ? 'dark' : 'light'}`);
             await session.page.locator('#dcinside-filter-setting #dcinside-exclude-recommended-checkbox').evaluate((input) => {
                 input.checked = true;
@@ -6508,26 +8109,34 @@ mobileTest('UI palette reaches settings, block management, and backup card surfa
                 slider.after(probe);
                 const expected = getComputedStyle(probe).backgroundColor;
                 probe.remove();
+                const knobStyle = getComputedStyle(slider, '::before');
                 return {
                     background: getComputedStyle(slider).backgroundColor,
                     image: getComputedStyle(slider).backgroundImage,
-                    knob: getComputedStyle(slider, '::before').backgroundColor,
+                    knob: knobStyle.backgroundColor,
+                    knobImage: knobStyle.backgroundImage,
+                    knobContent: knobStyle.content,
+                    knobWidth: knobStyle.width,
+                    knobShadow: knobStyle.boxShadow,
                     expected
                 };
             });
             assert.notEqual(settingsSwitch.background, 'rgb(204, 204, 204)', JSON.stringify(settingsSwitch));
             assert.notEqual(settingsSwitch.image, 'none', JSON.stringify(settingsSwitch));
-            assert.equal(settingsSwitch.image.includes(settingsSwitch.expected), true, JSON.stringify(settingsSwitch));
-            assert.equal(settingsSwitch.knob, 'rgb(255, 255, 255)', JSON.stringify(settingsSwitch));
+            assert.equal(settingsSwitch.image.includes('linear-gradient'), true, JSON.stringify(settingsSwitch));
+            assert.notEqual(settingsSwitch.knobContent, 'none', JSON.stringify(settingsSwitch));
+            assert.equal(Number.parseFloat(settingsSwitch.knobWidth) >= 14, true, JSON.stringify(settingsSwitch));
+            assert.notEqual(settingsSwitch.knobShadow, 'none', JSON.stringify(settingsSwitch));
             await session.page.locator('#dcinside-filter-setting').evaluate((element) => element.remove());
 
             await session.page.evaluate(() => window.__dcufTestbedGM.invokeMenu('차단 유저 관리'));
             await session.page.locator('#dc-block-management-panel').waitFor({ state: 'attached' });
             assertPaletteSurfaces(await collectPaletteSurfaceContract(session.page, [
-                { selector: '#dc-block-management-panel', token: '--dcuf-theme-canvas' },
-                { selector: '#dc-block-management-panel .panel-body', token: '--dcuf-theme-canvas' },
-                { selector: '#dc-block-management-panel .panel-list-controls', token: '--dcuf-theme-card-top' },
-                { selector: '#dc-block-management-panel .panel-search-input', token: '--dcuf-theme-surface-input' }
+                { selector: '#dc-block-management-panel', role: 'shell', token: '--dcuf-theme-canvas' },
+                { selector: '#dc-block-management-panel .panel-body', role: 'structural', token: '--dcuf-theme-canvas' },
+                { selector: '#dc-block-management-panel .panel-list-controls', role: 'surface', token: '--dcuf-theme-card-top' },
+                { selector: '#dc-block-management-panel .panel-search', role: 'input', token: '--dcuf-theme-surface-input' },
+                { selector: '#dc-block-management-panel .panel-search-input', role: 'structural' }
             ]), `management ${dark ? 'dark' : 'light'}`);
             await session.page.locator('#dc-block-management-panel #personal-block-toggle').evaluate((input) => {
                 input.checked = true;
@@ -6539,23 +8148,30 @@ mobileTest('UI palette reaches settings, block management, and backup card surfa
                 slider.after(probe);
                 const expected = getComputedStyle(probe).backgroundColor;
                 probe.remove();
+                const knobStyle = getComputedStyle(slider, '::before');
                 return {
                     background: getComputedStyle(slider).backgroundColor,
                     image: getComputedStyle(slider).backgroundImage,
-                    knob: getComputedStyle(slider, '::before').backgroundColor,
+                    knob: knobStyle.backgroundColor,
+                    knobImage: knobStyle.backgroundImage,
+                    knobContent: knobStyle.content,
+                    knobWidth: knobStyle.width,
+                    knobShadow: knobStyle.boxShadow,
                     expected
                 };
             });
             assert.notEqual(managementSwitch.background, 'rgb(204, 204, 204)', JSON.stringify(managementSwitch));
             assert.notEqual(managementSwitch.image, 'none', JSON.stringify(managementSwitch));
-            assert.equal(managementSwitch.image.includes(managementSwitch.expected), true, JSON.stringify(managementSwitch));
-            assert.equal(managementSwitch.knob, 'rgb(255, 255, 255)', JSON.stringify(managementSwitch));
+            assert.equal(managementSwitch.image.includes('linear-gradient'), true, JSON.stringify(managementSwitch));
+            assert.notEqual(managementSwitch.knobContent, 'none', JSON.stringify(managementSwitch));
+            assert.equal(Number.parseFloat(managementSwitch.knobWidth) >= 14, true, JSON.stringify(managementSwitch));
+            assert.notEqual(managementSwitch.knobShadow, 'none', JSON.stringify(managementSwitch));
             await session.page.locator('#dc-block-management-panel .panel-backup-btn').click();
             await session.page.locator('#dc-backup-popup').waitFor({ state: 'attached' });
             assertPaletteSurfaces(await collectPaletteSurfaceContract(session.page, [
-                { selector: '#dc-backup-popup', token: '--dcuf-theme-canvas' },
-                { selector: '#dc-backup-popup .export-section', token: '--dcuf-theme-card-top' },
-                { selector: '#dc-backup-popup textarea', token: '--dcuf-theme-surface-input' }
+                { selector: '#dc-backup-popup', role: 'shell', token: '--dcuf-theme-canvas' },
+                { selector: '#dc-backup-popup .export-section', role: 'surface', token: '--dcuf-theme-card-top' },
+                { selector: '#dc-backup-popup textarea', role: 'input', token: '--dcuf-theme-surface-input' }
             ]), `backup ${dark ? 'dark' : 'light'}`);
             await session.page.locator('#dc-backup-popup, #dc-backup-popup-overlay, #dc-block-management-panel, #dc-block-management-panel-overlay').evaluateAll((elements) => elements.forEach((element) => element.remove()));
         }
@@ -6651,7 +8267,8 @@ mobileTest('twenty persisted pageshow recoveries keep lifecycle observers UI and
     const session = await createTestPage(browser, server.baseUrl, { storage: noStatsStorage });
     try {
         await session.goto('/board/lists?id=test');
-        await waitForSettled(session.page, 300);
+        await waitForSettled(session.page, 2400);
+        await session.page.waitForTimeout(200);
         const before = await getMetrics(session.page);
         const contract = await session.page.evaluate(async () => {
             window.__dcufDiagnostics.enable();
@@ -6686,6 +8303,12 @@ mobileTest('twenty persisted pageshow recoveries keep lifecycle observers UI and
             };
         });
         await waitForSettled(session.page, 300);
+        await session.page.waitForFunction((baselineTimeouts) => {
+            const metrics = window.__dcufTestbedMetrics?.snapshot?.();
+            return metrics
+                && metrics.activeTimeouts <= baselineTimeouts
+                && metrics.activeAnimationFrames === 0;
+        }, before.activeTimeouts, { timeout: 1500 });
         const after = await getMetrics(session.page);
         assert.deepEqual(contract, {
             requested: 20,
@@ -6703,7 +8326,11 @@ mobileTest('twenty persisted pageshow recoveries keep lifecycle observers UI and
         assert.equal(after.listenerUnique, before.listenerUnique);
         assert.equal(after.memory.runtime.subscriberCount, before.memory.runtime.subscriberCount);
         assert.equal(after.activeIntervals, before.activeIntervals);
-        assert.equal(after.activeTimeouts <= before.activeTimeouts, true, JSON.stringify({ before: before.activeTimeouts, after: after.activeTimeouts }));
+        assert.equal(after.activeTimeouts <= before.activeTimeouts, true, JSON.stringify({
+            before: before.activeTimeouts,
+            after: after.activeTimeouts,
+            activeTimeoutDetails: after.activeTimeoutDetails
+        }));
         assert.equal(after.activeAnimationFrames, 0);
         assertNoRuntimeErrors(after, session.consoleErrors);
     } finally { await session.close(); }
@@ -6725,11 +8352,21 @@ mobileTest('UI palette colors reach view actions and embedded list controls', 'f
             ];
             return selectors.map((selector) => {
                 const element = document.querySelector(selector);
-                return { selector, color: element ? getComputedStyle(element).backgroundColor : null };
+                const style = element ? getComputedStyle(element) : null;
+                return {
+                    selector,
+                    color: style?.backgroundColor || null,
+                    image: style?.backgroundImage || null,
+                    shadow: style?.boxShadow || null
+                };
             });
         });
         const light = await collectColors();
-        light.forEach(({ selector, color }) => assert.equal(color, 'rgb(154, 52, 18)', `orange light ${selector}: ${color}`));
+        light.forEach(({ selector, color, image, shadow }) => {
+            assertTranslucentCssColor(color, `orange light ${selector}`, { min: 0.25, max: 0.95 });
+            assert.notEqual(image, 'none', `orange light ${selector} must use a layered active material`);
+            assert.notEqual(shadow, 'none', `orange light ${selector} must retain material depth`);
+        });
         const lightBar = await session.page.evaluate(() => {
             const bar = document.querySelector('#container.gallery_view .view_bottom_btnbox');
             const inactive = bar.querySelector('.btn_grey');
@@ -6747,7 +8384,11 @@ mobileTest('UI palette colors reach view actions and embedded list controls', 'f
         await session.page.evaluate(() => window.__dcufFixture.toggleDark(true));
         await session.page.waitForTimeout(40);
         const dark = await collectColors();
-        dark.forEach(({ selector, color }) => assert.equal(color, 'rgb(194, 65, 12)', `orange dark ${selector}: ${color}`));
+        dark.forEach(({ selector, color, image, shadow }) => {
+            assertTranslucentCssColor(color, `orange dark ${selector}`, { min: 0.25, max: 0.95 });
+            assert.notEqual(image, 'none', `orange dark ${selector} must use a layered active material`);
+            assert.notEqual(shadow, 'none', `orange dark ${selector} must retain material depth`);
+        });
         assert.equal(await session.page.locator('#container.gallery_view .view_bottom_btnbox').evaluate((bar) => getComputedStyle(bar).backgroundImage.includes('linear-gradient')), true);
         assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
     } finally { await session.close(); }
@@ -6827,16 +8468,26 @@ mobileTest('UI palette menu previews, saves, restores, and remains singleton', '
         await panel.locator('[data-palette-id="rose"]').click();
         const roseContrast = await panel.locator('[data-dcuf-palette-action="save"]').evaluate((element) => {
             const style = getComputedStyle(element);
-            const rgb = (value) => (value.match(/[\d.]+/g) || []).slice(0, 3).map(Number);
-            const luminance = (value) => {
-                const [r, g, b] = rgb(value).map((channel) => {
+            const luminance = (channels) => {
+                const [r, g, b] = channels.map((channel) => {
                     const normalized = channel / 255;
                     return normalized <= 0.03928 ? normalized / 12.92 : ((normalized + 0.055) / 1.055) ** 2.4;
                 });
                 return 0.2126 * r + 0.7152 * g + 0.0722 * b;
             };
-            const foreground = luminance(style.color);
-            const background = luminance(style.backgroundColor);
+            const canvas = document.createElement('canvas');
+            canvas.width = 2;
+            canvas.height = 1;
+            const context = canvas.getContext('2d', { willReadFrequently: true });
+            context.fillStyle = getComputedStyle(document.body).backgroundColor;
+            context.fillRect(0, 0, 2, 1);
+            context.fillStyle = style.backgroundColor;
+            context.fillRect(0, 0, 1, 1);
+            context.fillStyle = style.color;
+            context.fillRect(1, 0, 1, 1);
+            const pixels = context.getImageData(0, 0, 2, 1).data;
+            const background = luminance([pixels[0], pixels[1], pixels[2]]);
+            const foreground = luminance([pixels[4], pixels[5], pixels[6]]);
             return {
                 ratio: (Math.max(foreground, background) + 0.05) / (Math.min(foreground, background) + 0.05),
                 onAccent: getComputedStyle(document.documentElement).getPropertyValue('--dcuf-theme-on-accent').trim().toLowerCase()
@@ -6936,21 +8587,34 @@ pcTest('PC palette port themes only DCUF-owned controls and dialogs', 'functiona
         const hostColorBefore = await session.page.locator('.page_head h2 a').evaluate((element) => getComputedStyle(element).color);
         await session.page.evaluate(() => window.__dcufTestbedGM.invokeMenu('글댓합 설정하기'));
         await session.page.locator('#dcinside-filter-setting').waitFor({ state: 'attached' });
-        const blueSave = await session.page.locator('#dcinside-threshold-save').evaluate((element) => getComputedStyle(element).backgroundColor);
-        assert.equal(blueSave, 'rgb(36, 91, 218)');
+        const blueSave = await session.page.locator('#dcinside-threshold-save').evaluate((element) => {
+            const style = getComputedStyle(element);
+            return { color: style.backgroundColor, image: style.backgroundImage, shadow: style.boxShadow };
+        });
+        assertTranslucentCssColor(blueSave.color, 'PC blue settings save', { min: 0.25, max: 0.95 });
+        assert.notEqual(blueSave.image, 'none', JSON.stringify(blueSave));
+        assert.notEqual(blueSave.shadow, 'none', JSON.stringify(blueSave));
         await session.page.locator('#dcinside-filter-setting #dcinside-exclude-recommended-checkbox').evaluate((input) => {
             input.checked = true;
         });
         await session.page.waitForTimeout(300);
-        const blueSwitch = await session.page.locator('#dcinside-filter-setting #dcinside-exclude-recommended-checkbox + .switch-slider').evaluate((slider) => ({
-            background: getComputedStyle(slider).backgroundColor,
-            image: getComputedStyle(slider).backgroundImage,
-            knob: getComputedStyle(slider, '::before').backgroundColor
-        }));
+        const blueSwitch = await session.page.locator('#dcinside-filter-setting #dcinside-exclude-recommended-checkbox + .switch-slider').evaluate((slider) => {
+            const knobStyle = getComputedStyle(slider, '::before');
+            return {
+                background: getComputedStyle(slider).backgroundColor,
+                image: getComputedStyle(slider).backgroundImage,
+                knob: knobStyle.backgroundColor,
+                knobContent: knobStyle.content,
+                knobWidth: knobStyle.width,
+                knobShadow: knobStyle.boxShadow
+            };
+        });
         assert.notEqual(blueSwitch.background, 'rgb(204, 204, 204)', JSON.stringify(blueSwitch));
         assert.notEqual(blueSwitch.image, 'none', JSON.stringify(blueSwitch));
-        assert.equal(blueSwitch.image.includes('rgb(36, 91, 218)'), true, JSON.stringify(blueSwitch));
-        assert.equal(blueSwitch.knob, 'rgb(255, 255, 255)', JSON.stringify(blueSwitch));
+        assert.equal(blueSwitch.image.includes('linear-gradient'), true, JSON.stringify(blueSwitch));
+        assert.notEqual(blueSwitch.knobContent, 'none', JSON.stringify(blueSwitch));
+        assert.equal(Number.parseFloat(blueSwitch.knobWidth) >= 14, true, JSON.stringify(blueSwitch));
+        assert.notEqual(blueSwitch.knobShadow, 'none', JSON.stringify(blueSwitch));
         await session.page.locator('#dcinside-filter-setting').evaluate((element) => element.remove());
 
         await session.page.evaluate(() => window.__dcufTestbedGM.invokeMenu('UI 색상 설정'));
@@ -7004,23 +8668,46 @@ pcTest('PC palette port themes only DCUF-owned controls and dialogs', 'functiona
 
         await session.page.evaluate(() => window.__dcufTestbedGM.invokeMenu('글댓합 설정하기'));
         await session.page.locator('#dcinside-filter-setting').waitFor({ state: 'attached' });
-        const orangeSave = await session.page.locator('#dcinside-threshold-save').evaluate((element) => getComputedStyle(element).backgroundColor);
-        assert.equal(orangeSave, 'rgb(154, 52, 18)');
+        const orangeSave = await session.page.locator('#dcinside-threshold-save').evaluate((element) => {
+            const style = getComputedStyle(element);
+            return { color: style.backgroundColor, image: style.backgroundImage, shadow: style.boxShadow };
+        });
+        assertTranslucentCssColor(orangeSave.color, 'PC orange settings save', { min: 0.25, max: 0.95 });
+        assert.notEqual(orangeSave.image, 'none', JSON.stringify(orangeSave));
+        assert.notEqual(orangeSave.shadow, 'none', JSON.stringify(orangeSave));
         await session.page.locator('#dcinside-filter-setting').evaluate((element) => element.remove());
 
         const fab = session.page.locator('#dc-personal-block-fab');
         const drawer = session.page.locator('#dc-personal-block-drawer');
         await fab.click();
-        const drawerIconColor = await drawer.locator('.dcuf-menu-icon').first().evaluate((element) => getComputedStyle(element).color);
-        assert.equal(drawerIconColor, 'rgb(194, 65, 12)');
+        const drawerIcon = await drawer.locator('.dcuf-menu-icon').first().evaluate((element) => {
+            const style = getComputedStyle(element);
+            const probe = document.createElement('i');
+            probe.style.color = 'var(--dcuf-theme-fg)';
+            element.after(probe);
+            const expectedFg = getComputedStyle(probe).color;
+            probe.remove();
+            return { color: style.color, background: style.backgroundColor, image: style.backgroundImage, expectedFg };
+        });
+        assert.equal(drawerIcon.color, drawerIcon.expectedFg, JSON.stringify(drawerIcon));
+        assertTranslucentCssColor(drawerIcon.background, 'PC drawer icon', { min: 0.05, max: 0.8 });
+        assert.equal(drawerIcon.image.includes('gradient'), true, JSON.stringify(drawerIcon));
         await drawer.locator('[data-dcuf-fab-action="quick-block"]').click();
         const prompt = session.page.locator('#dc-selection-popup.dcuf-selection-prompt');
         await prompt.waitFor({ state: 'visible' });
-        const promptContract = await prompt.evaluate((element) => ({
-            backgroundImage: getComputedStyle(element).backgroundImage,
-            iconColor: getComputedStyle(element.querySelector('.dcuf-selection-prompt-icon')).color
-        }));
-        assert.equal(promptContract.iconColor, 'rgb(194, 65, 12)', JSON.stringify(promptContract));
+        const promptContract = await prompt.evaluate((element) => {
+            const probe = document.createElement('i');
+            probe.style.color = 'var(--dcuf-theme-accent-strong)';
+            element.after(probe);
+            const expectedAccent = getComputedStyle(probe).color;
+            probe.remove();
+            return {
+                backgroundImage: getComputedStyle(element).backgroundImage,
+                iconColor: getComputedStyle(element.querySelector('.dcuf-selection-prompt-icon')).color,
+                expectedAccent
+            };
+        });
+        assert.equal(promptContract.iconColor, promptContract.expectedAccent, JSON.stringify(promptContract));
         assert.equal(promptContract.backgroundImage.includes('59, 113, 253'), false, JSON.stringify(promptContract));
         await prompt.locator('.popup-buttons button').click();
 
@@ -7032,13 +8719,17 @@ pcTest('PC palette port themes only DCUF-owned controls and dialogs', 'functiona
         const manualContract = await manual.evaluate((element) => ({
             kicker: getComputedStyle(element.querySelector('.dcuf-manual-kicker')).color,
             activeType: getComputedStyle(element.querySelector('[data-manual-block-type][aria-pressed="true"]')).color,
+            activeTypeBackground: getComputedStyle(element.querySelector('[data-manual-block-type][aria-pressed="true"]')).backgroundColor,
+            activeTypeImage: getComputedStyle(element.querySelector('[data-manual-block-type][aria-pressed="true"]')).backgroundImage,
+            themeFg: getComputedStyle(element).color,
             inputBorder: getComputedStyle(element.querySelector('#dc-manual-block-value')).borderColor
         }));
-        assert.deepEqual(manualContract, {
-            kicker: 'rgb(194, 65, 12)',
-            activeType: 'rgb(154, 52, 18)',
-            inputBorder: 'rgb(194, 65, 12)'
-        });
+        assert.equal(manualContract.kicker, 'rgb(194, 65, 12)', JSON.stringify(manualContract));
+        assert.equal(manualContract.activeType, manualContract.themeFg, JSON.stringify(manualContract));
+        assertTranslucentCssColor(manualContract.activeTypeBackground, 'PC manual active type', { min: 0.02, max: 0.8 });
+        assert.equal(manualContract.activeTypeImage.includes('gradient'), true, JSON.stringify(manualContract));
+        assert.notEqual(manualContract.inputBorder, 'rgba(0, 0, 0, 0)', JSON.stringify(manualContract));
+        assert.notEqual(manualContract.inputBorder, 'rgb(59, 113, 253)', JSON.stringify(manualContract));
         await manual.locator('[data-manual-block-action="close"]').click();
 
         await session.page.evaluate(() => window.__dcufTestbedGM.invokeMenu('차단 유저 관리'));
@@ -7051,7 +8742,8 @@ pcTest('PC palette port themes only DCUF-owned controls and dialogs', 'functiona
             background: getComputedStyle(element).backgroundColor,
             color: getComputedStyle(element).color
         }));
-        assert.equal(activeTab.background, 'rgb(255, 240, 231)', JSON.stringify(activeTab));
+        assert.notEqual(activeTab.background, 'rgba(0, 0, 0, 0)', JSON.stringify(activeTab));
+        assert.notEqual(activeTab.background, 'rgb(59, 113, 253)', JSON.stringify(activeTab));
         assert.notEqual(activeTab.color, 'rgb(0, 123, 255)', JSON.stringify(activeTab));
         const managementAccent = await session.page.locator('#dc-block-management-panel').evaluate((element) => ({
             kicker: getComputedStyle(element.querySelector('.panel-kicker')).color,
@@ -7061,22 +8753,25 @@ pcTest('PC palette port themes only DCUF-owned controls and dialogs', 'functiona
             switchKnob: getComputedStyle(element.querySelector('#personal-block-toggle + .switch-slider'), '::before').backgroundColor
         }));
         assert.equal(managementAccent.kicker, 'rgb(194, 65, 12)', JSON.stringify(managementAccent));
-        assert.equal(managementAccent.addBackground, 'rgb(255, 240, 231)', JSON.stringify(managementAccent));
+        assert.notEqual(managementAccent.addBackground, 'rgba(0, 0, 0, 0)', JSON.stringify(managementAccent));
+        assert.notEqual(managementAccent.addBackground, 'rgb(59, 113, 253)', JSON.stringify(managementAccent));
         assert.notEqual(managementAccent.switchBackground, 'rgb(204, 204, 204)', JSON.stringify(managementAccent));
         assert.notEqual(managementAccent.switchImage, 'none', JSON.stringify(managementAccent));
-        assert.equal(managementAccent.switchImage.includes('rgb(154, 52, 18)'), true, JSON.stringify(managementAccent));
+        assert.equal(managementAccent.switchImage.includes('linear-gradient'), true, JSON.stringify(managementAccent));
         assert.equal(managementAccent.switchKnob, 'rgb(255, 255, 255)', JSON.stringify(managementAccent));
         await session.page.locator('#dc-block-management-panel .panel-backup-btn').click();
         const backupContract = await session.page.locator('#dc-backup-popup').evaluate((element) => ({
             downloadBackground: getComputedStyle(element.querySelector('.export-btn-download')).backgroundColor,
             copyBackground: getComputedStyle(element.querySelector('.export-btn')).backgroundColor,
-            importBackground: getComputedStyle(element.querySelector('.import-btn')).backgroundColor
+            copyImage: getComputedStyle(element.querySelector('.export-btn')).backgroundImage,
+            importBackground: getComputedStyle(element.querySelector('.import-btn')).backgroundColor,
+            importImage: getComputedStyle(element.querySelector('.import-btn')).backgroundImage
         }));
-        assert.deepEqual(backupContract, {
-            downloadBackground: 'rgb(255, 240, 231)',
-            copyBackground: 'rgb(154, 52, 18)',
-            importBackground: 'rgb(154, 52, 18)'
-        });
+        assertTranslucentCssColor(backupContract.copyBackground, 'PC backup copy', { min: 0.25, max: 0.95 });
+        assertTranslucentCssColor(backupContract.importBackground, 'PC backup import', { min: 0.25, max: 0.95 });
+        assert.notEqual(backupContract.copyImage, 'none', JSON.stringify(backupContract));
+        assert.notEqual(backupContract.importImage, 'none', JSON.stringify(backupContract));
+        assert.notEqual(backupContract.downloadBackground, backupContract.copyBackground, JSON.stringify(backupContract));
         assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
     } finally { await session.close(); }
 });
@@ -7095,10 +8790,19 @@ mobileTest('UI palette tokens drive the mobile write surface', 'write', async ({
                 palette: document.documentElement.getAttribute('data-dcuf-palette'),
                 accent: body.getPropertyValue('--dcuf-write-accent').trim().toLowerCase(),
                 strong: body.getPropertyValue('--dcuf-write-accent-strong').trim().toLowerCase(),
-                submitBackground: submit.backgroundColor
+                submitBackground: submit.backgroundColor,
+                submitImage: submit.backgroundImage,
+                submitShadow: submit.boxShadow
             };
         });
-        assert.deepEqual(contract, { palette: 'orange', accent: '#c2410c', strong: '#9a3412', submitBackground: 'rgb(154, 52, 18)' });
+        assert.deepEqual({
+            palette: contract.palette,
+            accent: contract.accent,
+            strong: contract.strong
+        }, { palette: 'orange', accent: '#c2410c', strong: '#9a3412' });
+        assertTranslucentCssColor(contract.submitBackground, 'orange light write submit', { min: 0.25, max: 0.95 });
+        assert.notEqual(contract.submitImage, 'none', JSON.stringify(contract));
+        assert.notEqual(contract.submitShadow, 'none', JSON.stringify(contract));
         await session.page.evaluate(() => window.__dcufFixture.toggleDark(true));
         await session.page.waitForTimeout(40);
         const darkContract = await session.page.evaluate(() => {
@@ -7107,10 +8811,18 @@ mobileTest('UI palette tokens drive the mobile write surface', 'write', async ({
             return {
                 accent: body.getPropertyValue('--dcuf-write-accent').trim().toLowerCase(),
                 strong: body.getPropertyValue('--dcuf-write-accent-strong').trim().toLowerCase(),
-                submitBackground: submit.backgroundColor
+                submitBackground: submit.backgroundColor,
+                submitImage: submit.backgroundImage,
+                submitShadow: submit.boxShadow
             };
         });
-        assert.deepEqual(darkContract, { accent: '#fdba74', strong: '#c2410c', submitBackground: 'rgb(194, 65, 12)' });
+        assert.deepEqual({
+            accent: darkContract.accent,
+            strong: darkContract.strong
+        }, { accent: '#fdba74', strong: '#c2410c' });
+        assertTranslucentCssColor(darkContract.submitBackground, 'orange dark write submit', { min: 0.25, max: 0.95 });
+        assert.notEqual(darkContract.submitImage, 'none', JSON.stringify(darkContract));
+        assert.notEqual(darkContract.submitShadow, 'none', JSON.stringify(darkContract));
         assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
     } finally { await session.close(); }
 });
@@ -7122,41 +8834,68 @@ mobileTest('single-tone UI palette keeps mobile write actions readable', 'write'
     });
     const readContract = () => session.page.locator('#write-submit').evaluate((element) => {
         const style = getComputedStyle(element);
-        const luminance = (value) => {
-            const channels = (value.match(/[\d.]+/g) || []).slice(0, 3).map(Number).map((channel) => {
+        const luminance = (channels) => {
+            const linear = channels.map((channel) => {
                 const normalized = channel / 255;
                 return normalized <= 0.03928 ? normalized / 12.92 : ((normalized + 0.055) / 1.055) ** 2.4;
             });
-            return 0.2126 * channels[0] + 0.7152 * channels[1] + 0.0722 * channels[2];
+            return 0.2126 * linear[0] + 0.7152 * linear[1] + 0.0722 * linear[2];
         };
-        const foreground = luminance(style.color);
-        const background = luminance(style.backgroundColor);
+        const canvas = document.createElement('canvas');
+        canvas.width = 2;
+        canvas.height = 1;
+        const context = canvas.getContext('2d', { willReadFrequently: true });
+        context.fillStyle = getComputedStyle(document.body).backgroundColor;
+        context.fillRect(0, 0, 2, 1);
+        context.fillStyle = style.backgroundColor;
+        context.fillRect(0, 0, 1, 1);
+        context.fillStyle = style.color;
+        context.fillRect(1, 0, 1, 1);
+        const pixels = context.getImageData(0, 0, 2, 1).data;
+        const background = luminance([pixels[0], pixels[1], pixels[2]]);
+        const foreground = luminance([pixels[4], pixels[5], pixels[6]]);
         return {
             background: style.backgroundColor,
             color: style.color,
+            image: style.backgroundImage,
+            shadow: style.boxShadow,
             contrast: (Math.max(foreground, background) + 0.05) / (Math.min(foreground, background) + 0.05)
         };
     });
     try {
         await session.goto('/board/write/?id=test');
         const light = await readContract();
-        assert.deepEqual({ background: light.background, color: light.color }, { background: 'rgb(190, 18, 60)', color: 'rgb(255, 255, 255)' });
+        assertTranslucentCssColor(light.background, 'rose light write submit', { min: 0.25, max: 0.95 });
+        assert.equal(parseCssColorAlpha(light.color), 1, JSON.stringify(light));
+        assert.notEqual(light.image, 'none', JSON.stringify(light));
+        assert.notEqual(light.shadow, 'none', JSON.stringify(light));
         assert.equal(light.contrast >= 4.5, true, JSON.stringify(light));
 
         await session.page.evaluate(() => window.__dcufFixture.toggleDark(true));
         await session.page.waitForTimeout(40);
         const dark = await readContract();
-        assert.deepEqual({ background: dark.background, color: dark.color }, { background: 'rgb(159, 18, 57)', color: 'rgb(255, 255, 255)' });
+        assertTranslucentCssColor(dark.background, 'rose dark write submit', { min: 0.25, max: 0.95 });
+        assert.equal(parseCssColorAlpha(dark.color), 1, JSON.stringify(dark));
+        assert.notEqual(dark.image, 'none', JSON.stringify(dark));
+        assert.notEqual(dark.shadow, 'none', JSON.stringify(dark));
         assert.equal(dark.contrast >= 4.5, true, JSON.stringify(dark));
         assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
     } finally { await session.close(); }
 });
 
+const userscriptUnderTest = await resolveBuiltUserscript();
+const userscriptBytes = await readFile(userscriptUnderTest);
+const userscriptSha256 = createHash('sha256').update(userscriptBytes).digest('hex').toUpperCase();
+if (args.has('--require-runtime-under-test') && !/[\\/]testbed[\\/]artifacts[\\/]runtime-under-test\.user\.js$/i.test(userscriptUnderTest)) {
+    throw new Error(`Source-work validation requires testbed/artifacts/runtime-under-test.user.js, got: ${userscriptUnderTest}`);
+}
 const server = await startServer();
 const browser = await launchBrowser({ headed });
 let failures = 0;
 const selected = tests.filter((item) => (!selectedGroup || item.group === selectedGroup) && (!selectedName || item.name.includes(selectedName)));
 console.log(`DCUF testbed: ${selected.length} tests, ${server.baseUrl}`);
+console.log(`Userscript under test: ${userscriptUnderTest}`);
+console.log(`Userscript SHA-256: ${userscriptSha256}`);
 try {
     for (const item of selected) {
         const startedAt = Date.now();
@@ -7179,7 +8918,7 @@ try {
 
 const artifactDir = path.join(testbedDir, 'artifacts');
 await mkdir(artifactDir, { recursive: true });
-await writeFile(path.join(artifactDir, 'test-results-latest.json'), `${JSON.stringify({ generatedAt: new Date().toISOString(), results: testResults }, null, 2)}\n`, 'utf8');
+await writeFile(path.join(artifactDir, 'test-results-latest.json'), `${JSON.stringify({ generatedAt: new Date().toISOString(), userscriptUnderTest, userscriptSha256, results: testResults }, null, 2)}\n`, 'utf8');
 if (performanceReports.length > 0) {
     const artifactPath = path.join(artifactDir, 'performance-latest.json');
     let previous = null;

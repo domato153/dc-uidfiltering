@@ -8,11 +8,18 @@ const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const requestedMode = process.argv[2] || 'all';
 const validModes = new Set(['guidance', 'release', 'all']);
 const failures = [];
-const AGENTS_CHAR_LIMIT = 5000;
+// Collaboration gating and the dedicated UI-maintenance workflow are durable
+// repository guidance, so budget them explicitly instead of disabling limits.
+const AGENTS_CHAR_LIMIT = 6000;
+const SKILLS_CHAR_LIMIT = 10500;
 const BOARD_MATCHES = [
     'https://gall.dcinside.com/board/*',
     'https://gall.dcinside.com/mgallery/board/*',
     'https://gall.dcinside.com/mini/board/*'
+];
+const MOBILE_MATCHES = [
+    ...BOARD_MATCHES,
+    'https://sign.dcinside.com/login*'
 ];
 
 function check(condition, message) {
@@ -52,7 +59,7 @@ async function verifyGuidance() {
     const agentsPath = path.join(rootDir, 'AGENTS.md');
     const skillsDir = path.join(rootDir, '.agents', 'skills');
     const agentsText = await readFile(agentsPath, 'utf8');
-    const expectedSkills = ['dcuf-release', 'dom-safety-audit', 'metadata-safety'];
+    const expectedSkills = ['dcuf-release', 'dcuf-ui-surface-maintainer', 'dom-safety-audit', 'metadata-safety'];
     const entries = await readdir(skillsDir, { withFileTypes: true });
     const actualSkills = entries.filter((entry) => entry.isDirectory()).map((entry) => entry.name).sort();
 
@@ -87,14 +94,15 @@ async function verifyGuidance() {
         }
     }
 
-    check(totalSkillChars <= 7000, `SKILL.md total is ${totalSkillChars} characters; limit is 7000`);
+    check(totalSkillChars <= SKILLS_CHAR_LIMIT,
+        `SKILL.md total is ${totalSkillChars} characters; limit is ${SKILLS_CHAR_LIMIT}`);
     check(await exists(path.join(skillsDir, 'dcuf-release', 'references', 'manual-smoke.md')),
         'dcuf-release: references/manual-smoke.md is missing');
 
     console.log('Guidance metrics');
     console.log(` - AGENTS.md: ${agentsText.length}/${AGENTS_CHAR_LIMIT} characters`);
-    console.log(` - active skills: ${actualSkills.length}/3`);
-    console.log(` - SKILL.md total: ${totalSkillChars}/7000 characters`);
+    console.log(` - active skills: ${actualSkills.length}/${expectedSkills.length}`);
+    console.log(` - SKILL.md total: ${totalSkillChars}/${SKILLS_CHAR_LIMIT} characters`);
 }
 
 function parseBuildVersion(buildText, buildPath) {
@@ -104,11 +112,12 @@ function parseBuildVersion(buildText, buildPath) {
 }
 
 async function verifyMobileSourceContracts() {
-    const [bootstrap, postMain, coordinator, theme, mobileHeader, pcHeader] = await Promise.all([
+    const [bootstrap, postMain, coordinator, theme, loginSurface, mobileHeader, pcHeader] = await Promise.all([
         readFile(path.join(rootDir, 'src', 'runtime', 'bootstrap.js'), 'utf8'),
         readFile(path.join(rootDir, 'src', 'targets', 'mobile', 'post-main-fixes.js'), 'utf8'),
         readFile(path.join(rootDir, 'src', 'targets', 'mobile', 'runtime-coordinator.js'), 'utf8'),
         readFile(path.join(rootDir, 'src', 'targets', 'mobile', 'theme-module.js'), 'utf8'),
+        readFile(path.join(rootDir, 'src', 'targets', 'mobile', 'login-surface.js'), 'utf8'),
         readFile(path.join(rootDir, 'src', 'meta', 'userscript-header.txt'), 'utf8'),
         readFile(path.join(rootDir, 'src', 'meta', 'pc-filter-userscript-header.txt'), 'utf8')
     ]);
@@ -122,11 +131,23 @@ async function verifyMobileSourceContracts() {
     check(coordinator.includes("window.addEventListener('pageshow'") && coordinator.includes('recoverFromBfcache(event)'),
         'mobile source: explicit persisted pageshow recovery is missing');
 
-    for (const [label, header] of [['mobile', mobileHeader], ['pc', pcHeader]]) {
+    for (const [label, header, expectedMatches] of [['mobile', mobileHeader, MOBILE_MATCHES], ['pc', pcHeader, BOARD_MATCHES]]) {
         const matches = Array.from(header.matchAll(/^\/\/ @match\s+([^\r\n]+)$/gm), (match) => match[1].trim());
-        check(JSON.stringify(matches) === JSON.stringify(BOARD_MATCHES),
-            `${label} metadata: @match scope is [${matches.join(', ')}]; expected board routes only`);
+        check(JSON.stringify(matches) === JSON.stringify(expectedMatches),
+            `${label} metadata: @match scope is [${matches.join(', ')}]; expected [${expectedMatches.join(', ')}]`);
         check(!header.includes('https://gall.dcinside.com/*'), `${label} metadata: broad origin @match returned`);
+    }
+    check(loginSurface.includes("window.location.hostname === 'sign.dcinside.com'"),
+        'mobile source: login style must be restricted to sign.dcinside.com');
+    check(loginSurface.includes("window.location.pathname === '/login'"),
+        'mobile source: login style must be restricted to the exact login path');
+    check(loginSurface.includes("const PALETTE_STORAGE_KEY = 'dcuf_mobile_ui_palette';")
+        && loginSurface.includes('GM_getValue(PALETTE_STORAGE_KEY, DEFAULT_PALETTE_ID)'),
+    'mobile source: isolated login style must read only the mobile palette preference');
+    check((loginSurface.match(/GM_getValue\s*\(/g) || []).length === 1,
+        'mobile source: isolated login style must perform exactly one GM read');
+    for (const forbidden of ['GM_setValue', 'GM_registerMenuCommand', 'MutationObserver', '.value']) {
+        check(!loginSurface.includes(forbidden), `mobile source: login style reads state or installs runtime behavior: ${forbidden}`);
     }
 
     const listGuardIndex = postMain.indexOf("if (!__dcufPageSupports('list-surface')) return;");
@@ -216,7 +237,7 @@ async function verifyRelease() {
         {
             name: 'mobile',
             buildFile: 'tools/build-userscript.mjs',
-            expectedMatches: BOARD_MATCHES,
+            expectedMatches: MOBILE_MATCHES,
             outputName: (version) => `Dc_UserFilter_Mobile_v${version}.user.js`
         },
         {

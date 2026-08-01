@@ -23,6 +23,14 @@ body.dc-filter-dark-mode { color: #ddd; background: #171b22; }
 #hot_rank_pop2 { position: absolute; width: 974px; }
 #hot_rank_pop2 .pop_content.pop_hot_mgall { width: 974px; color: #222; background: #fff; }
 #hot_rank_pop2 .pop_hotmgall_listbox { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px 18px; margin: 0; padding: 16px; list-style: none; }
+.fixture-host-chrome .wrap_search,
+.fixture-host-chrome .wrap_search form { position: relative; }
+.fixture-native-autocomplete { box-sizing: border-box; position: absolute; z-index: 120; top: 44px; left: 0; width: 327px; height: 260px; overflow: auto; border: 1px solid rgb(48, 75, 155); background: rgb(255, 255, 255); color: rgb(35, 42, 52); }
+.fixture-native-autocomplete .word_tit { margin: 0; padding: 10px 12px; border-bottom: 1px solid rgb(220, 224, 231); font-size: 14px; }
+.fixture-native-autocomplete .word_list { margin: 0; padding: 5px 0; list-style: none; }
+.fixture-native-autocomplete .word_list li { display: flex; justify-content: space-between; padding: 7px 12px; }
+.fixture-native-autocomplete .word_list a { color: rgb(35, 42, 52); text-decoration: none; }
+.fixture-native-autocomplete .word_close { padding: 9px 12px; border-top: 1px solid rgb(220, 224, 231); }
 
 /* Live-probe-backed desktop write form. The 1020px host canvas is intentional: it
    preserves the desktop page pressure that the mobile userscript must adapt. */
@@ -94,6 +102,11 @@ body[data-fixture-page="write"] #container { width: 1020px; margin: 0 auto; }
 .btn_bottom_box a, .btn_bottom_box button { min-width: 86px; padding: 11px 18px; border: 1px solid #3c4e94; text-decoration: none; text-align: center; }
 .btn_blue { color: #fff; background: #3c4e94; }
 .btn_lightred { color: #fff; background: #686868; }
+
+/* Live delete pages make .btn_svc cover its positioned button box. The mobile
+   adapter must explicitly neutralize that rule when it converts the box to a grid. */
+body[data-fixture-page="delete"] .no_memberwrap .btn_box { position: relative; }
+body[data-fixture-page="delete"] .no_memberwrap .btn_svc { position: absolute; inset: 0; width: 100%; }
 
 body[data-fixture-page="native-write"] { padding: 0; background: #fff; }
 .native-mobile-write { width: 100%; max-width: 480px; min-height: 100vh; margin: 0 auto; overflow-x: clip; }

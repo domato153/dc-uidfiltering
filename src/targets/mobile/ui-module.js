@@ -304,58 +304,14 @@
                     return;
                 }
 
-                // [v2.6.8 수정] 댓글창처럼 정상 작동하게끔 이식 (복제 방식 + 위치 보정)
+                /*
+                 * The mirrored writer keeps the host .gall_writer/.ub-writer
+                 * contract. Let the user's trusted click bubble to DCInside's
+                 * delegated writer handler; synthesizing originalAuthor.click()
+                 * turns it into an untrusted event and can suppress the native
+                 * nickname popup.
+                 */
                 if (clickedElement.closest('.author')) {
-                    e.preventDefault();
-
-                    const originalAuthor = originalRow.querySelector('.gall_writer');
-                    if (originalAuthor) {
-                        // 클릭 좌표 저장 (경계 검사용)
-                        const clientX = e.clientX;
-                        const clientY = e.clientY;
-
-                        originalAuthor.click();
-
-                        // 팝업 위치 고도화 (댓글창 로직 이식 + 화면 이탈 방지)
-                        setTimeout(() => {
-                            const lyr = document.getElementById('user_data_lyr');
-                            if (lyr) {
-                                // 게시글 목록의 .author 영역에 맞춰 위치 강제 재설정
-                                lyr.style.setProperty('position', 'absolute', 'important');
-                                lyr.style.setProperty('top', '100%', 'important');
-                                lyr.style.setProperty('left', '0', 'important');
-                                lyr.style.setProperty('margin-top', '5px', 'important');
-                                lyr.style.setProperty('z-index', '2147483647', 'important');
-                                lyr.style.setProperty('display', 'block', 'important');
-                                lyr.style.setProperty('visibility', 'visible', 'important');
-
-                                // 화면 이탈 방지 (경계 검사)
-                                const rect = lyr.getBoundingClientRect();
-                                const windowW = window.innerWidth;
-                                const windowH = window.innerHeight;
-
-                                // 우측 끝에 너무 붙어있으면 왼쪽으로 이동
-                                if (rect.right > windowW) {
-                                    lyr.style.setProperty('left', 'auto', 'important');
-                                    lyr.style.setProperty('right', '0', 'important');
-                                }
-
-                                // [v2.6.8 추가] 왼쪽 끝에 너무 붙어있으면 오른쪽으로 이동
-                                if (rect.left < 0) {
-                                    lyr.style.setProperty('left', '0', 'important');
-                                    lyr.style.setProperty('right', 'auto', 'important');
-                                    lyr.style.setProperty('margin-left', '0', 'important');
-                                }
-
-                                // 아래쪽 끝에 너무 붙어있으면 위쪽으로 이동
-                                if (rect.bottom > windowH) {
-                                    lyr.style.setProperty('top', 'auto', 'important');
-                                    lyr.style.setProperty('bottom', '100%', 'important');
-                                    lyr.style.setProperty('margin-bottom', '5px', 'important');
-                                }
-                            }
-                        }, 50);
-                    }
                     return;
                 }
             });
@@ -718,10 +674,10 @@
                 nativeSelect.style.setProperty('height', '44px', 'important');
                 nativeSelect.style.setProperty('margin', '0', 'important');
                 nativeSelect.style.setProperty('padding', '0 10px', 'important');
-                nativeSelect.style.setProperty('border', '1px solid var(--dcuf-control-border, #c6d2e4)', 'important');
+                nativeSelect.style.setProperty('border', '1px solid var(--dcuf-control-border, rgba(255,255,255,.48))', 'important');
                 nativeSelect.style.setProperty('border-radius', '12px', 'important');
-                nativeSelect.style.setProperty('background', 'var(--dcuf-control-surface, linear-gradient(180deg, #ffffff 0%, #f4f7fb 100%))', 'important');
-                nativeSelect.style.setProperty('box-shadow', 'inset 0 1px 0 rgba(255, 255, 255, 0.96), 0 4px 10px rgba(20, 39, 75, 0.08)', 'important');
+                nativeSelect.style.setProperty('background', 'var(--dcuf-control-surface, rgba(255,255,255,.22))', 'important');
+                nativeSelect.style.setProperty('box-shadow', 'var(--dcuf-control-shadow, inset 0 1px 0 rgba(255,255,255,.4))', 'important');
                 nativeSelect.style.setProperty('color', 'var(--dcuf-control-text, #333)', 'important');
                 nativeSelect.style.setProperty('font-size', '13px', 'important');
                 nativeSelect.style.setProperty('font-weight', '700', 'important');
@@ -769,10 +725,10 @@
                 selectBox.style.setProperty('overflow', 'visible', 'important');
                 selectBox.style.setProperty('box-sizing', 'border-box', 'important');
                 selectBox.style.setProperty('visibility', 'visible', 'important');
-                selectBox.style.setProperty('border', '1px solid var(--dcuf-control-border, #c6d2e4)', 'important');
+                selectBox.style.setProperty('border', '1px solid var(--dcuf-control-border, rgba(255,255,255,.48))', 'important');
                 selectBox.style.setProperty('border-radius', '12px', 'important');
-                selectBox.style.setProperty('background', 'var(--dcuf-control-surface, linear-gradient(180deg, #ffffff 0%, #f4f7fb 100%))', 'important');
-                selectBox.style.setProperty('box-shadow', 'inset 0 1px 0 rgba(255, 255, 255, 0.96), 0 4px 10px rgba(20, 39, 75, 0.08)', 'important');
+                selectBox.style.setProperty('background', 'var(--dcuf-control-surface, rgba(255,255,255,.22))', 'important');
+                selectBox.style.setProperty('box-shadow', 'var(--dcuf-control-shadow, inset 0 1px 0 rgba(255,255,255,.4))', 'important');
             }
 
             if (selectArea instanceof HTMLElement) {
@@ -820,10 +776,10 @@
                 innerSearch.style.setProperty('height', '44px', 'important');
                 innerSearch.style.setProperty('margin', '0', 'important');
                 innerSearch.style.setProperty('padding', '0', 'important');
-                innerSearch.style.setProperty('border', '1px solid var(--dcuf-control-border, #c6d2e4)', 'important');
+                innerSearch.style.setProperty('border', '1px solid var(--dcuf-control-border, rgba(255,255,255,.48))', 'important');
                 innerSearch.style.setProperty('border-radius', '12px', 'important');
-                innerSearch.style.setProperty('background', 'var(--dcuf-search-input, #fff)', 'important');
-                innerSearch.style.setProperty('box-shadow', 'inset 0 1px 2px rgba(20, 39, 75, 0.06), 0 4px 10px rgba(20, 39, 75, 0.07)', 'important');
+                innerSearch.style.setProperty('background', 'var(--dcuf-search-input, rgba(255,255,255,.20))', 'important');
+                innerSearch.style.setProperty('box-shadow', 'var(--dcuf-control-shadow, inset 0 1px 2px rgba(20,39,75,.06))', 'important');
                 innerSearch.style.setProperty('overflow', 'hidden', 'important');
             }
 
@@ -834,7 +790,7 @@
                 keywordInput.style.setProperty('padding', '0 13px', 'important');
                 keywordInput.style.setProperty('border', 'none', 'important');
                 keywordInput.style.setProperty('border-radius', '11px', 'important');
-                keywordInput.style.setProperty('background', 'var(--dcuf-search-input, #fff)', 'important');
+                keywordInput.style.setProperty('background', 'var(--dcuf-search-input, rgba(255,255,255,.20))', 'important');
                 keywordInput.style.setProperty('box-shadow', 'none', 'important');
                 keywordInput.style.setProperty('box-sizing', 'border-box', 'important');
             }
@@ -850,9 +806,9 @@
             if (searchLayer instanceof HTMLElement) {
                 searchLayer.style.setProperty('left', '0', 'important');
                 searchLayer.style.setProperty('top', 'calc(100% + 8px)', 'important');
-                searchLayer.style.setProperty('border', '1px solid #3b4890', 'important');
-                searchLayer.style.setProperty('background', '#fff', 'important');
-                searchLayer.style.setProperty('box-shadow', 'none', 'important');
+                searchLayer.style.setProperty('border', '1px solid var(--dcuf-control-border, rgba(255,255,255,.48))', 'important');
+                searchLayer.style.setProperty('background', 'var(--dcuf-search-layer, rgba(248,251,255,.62))', 'important');
+                searchLayer.style.setProperty('box-shadow', 'var(--dcuf-glass-card-shadow, 0 14px 36px rgba(31,48,84,.14))', 'important');
             }
         },
 
@@ -2741,14 +2697,29 @@
             if (!this.isDeletePage() || !document.body) return 'not-delete';
 
             const passwordForm = document.querySelector('form[name="delete"][action*="delete_password_submit"], form[action*="delete_password_submit"]');
+            const confirmContent = document.querySelector('.empty_pagewrap > .pop_wrap.type5 > .pop_content.robot');
             document.body.classList.add('is-delete-page');
-            if (!(passwordForm instanceof HTMLFormElement)) {
+            if (confirmContent instanceof HTMLElement) {
+                const confirmPopup = confirmContent.closest('.pop_wrap.type5');
+                const confirmPage = confirmPopup?.closest('.empty_pagewrap');
                 document.body.classList.remove('is-delete-password-page', 'is-dcuf-password-page');
+                document.body.classList.add('is-delete-confirm-page');
+                document.body.dataset.dcufDeleteSurface = 'confirm';
+                document.documentElement?.setAttribute('data-dcuf-delete-surface', 'confirm');
+                confirmPage?.classList.add('dcuf-delete-confirm-page');
+                confirmPopup?.classList.add('dcuf-delete-confirm-card');
+                confirmContent.classList.add('dcuf-delete-confirm-content');
+                this.recordDiagnostic('ui.deleteSurface.confirm', { reason });
+                return 'confirm';
+            }
+            if (!(passwordForm instanceof HTMLFormElement)) {
+                document.body.classList.remove('is-delete-password-page', 'is-delete-confirm-page', 'is-dcuf-password-page');
                 document.body.dataset.dcufDeleteSurface = 'pending';
                 document.documentElement?.setAttribute('data-dcuf-delete-surface', 'pending');
                 return 'pending';
             }
 
+            document.body.classList.remove('is-delete-confirm-page');
             document.body.classList.add('is-delete-password-page', 'is-dcuf-password-page');
             document.body.dataset.dcufDeleteSurface = 'password';
             document.documentElement?.setAttribute('data-dcuf-delete-surface', 'password');
@@ -2769,14 +2740,12 @@
             writeForm.classList.add('dcuf-write-form');
             document.body.classList.add('is-write-page');
             void MobileConvenienceModule.attachDraftForm(writeForm);
+            const writeDefaultsRoot = typeof unsafeWindow !== 'undefined' ? unsafeWindow : window;
+            const ensurePumxDefault = writeDefaultsRoot.__dcufEnsurePumxDefault
+                || window.__dcufEnsurePumxDefault;
+            ensurePumxDefault?.();
             if (writeForm.dataset.dcufWriteTransformed === '1') return true;
             writeForm.dataset.dcufWriteTransformed = '1';
-
-            const leaveConfirm = writeForm?.querySelector('#leave_confirm_box');
-            if (leaveConfirm instanceof HTMLElement) {
-                leaveConfirm.classList.add('dcuf-write-leave-confirm');
-                document.body.appendChild(leaveConfirm);
-            }
             const gallType = writeForm?.querySelector('input[name="_GALLTYPE_"]')?.value || '';
             const isMinorWrite = gallType.toUpperCase() === 'M'
                 || document.querySelector('#container.minor_write') instanceof Element
@@ -3227,11 +3196,30 @@
                         layer.classList.add('dcuf-editor-layer-positioned');
                     });
                 };
+                let editorLayerRetryTimer = 0;
+                let editorLayerRetryToken = 0;
                 const scheduleEditorLayerPosition = () => {
+                    if (editorLayerRetryTimer) window.clearTimeout(editorLayerRetryTimer);
+                    const retryToken = ++editorLayerRetryToken;
+                    const retryStartedAt = performance.now();
                     requestAnimationFrame(() => {
                         positionEditorLayers();
                         requestAnimationFrame(positionEditorLayers);
                     });
+                    // Some host editor menus are revealed after their opener's event has
+                    // already finished. Keep a short interaction-owned retry window so the
+                    // original node is positioned on its first visible frame without adding
+                    // another page-wide observer.
+                    const retry = () => {
+                        if (retryToken !== editorLayerRetryToken) return;
+                        positionEditorLayers();
+                        if (performance.now() - retryStartedAt >= 520) {
+                            editorLayerRetryTimer = 0;
+                            return;
+                        }
+                        editorLayerRetryTimer = window.setTimeout(retry, 40);
+                    };
+                    editorLayerRetryTimer = window.setTimeout(retry, 40);
                 };
                 const scheduleEditorPopupPosition = () => {
                     requestAnimationFrame(() => {
@@ -3258,6 +3246,7 @@
                         ));
                         const hasRelevantExternalMutation = externalDccon && structuralTargets.some((node) => node === externalDccon || (node instanceof Node && externalDccon.contains(node)));
                         if (!hasRelevantFormMutation && !hasRelevantExternalMutation) return;
+                        if (hasRelevantFormMutation) ensurePumxDefault?.();
                         const hasVisiblePendingLayer = getEditorLayers()
                             .some((layer) => (
                                 layer instanceof HTMLElement

@@ -11,6 +11,13 @@ export function writer({ uid = '', nick = '작성자', ip = '', includeIdentityA
     return `<span class="gall_writer ub-writer"${identityAttrs}><span class="nickname"><em>${escapeHtml(nick)}</em></span></span>${ip ? `<span class="ip">(${escapeHtml(ip)})</span>` : ''}`;
 }
 
+function listWriterCell({ uid = '', nick = '작성자', ip = '', includeIdentityAttrs = true } = {}) {
+    const identityAttrs = includeIdentityAttrs
+        ? ` data-uid="${escapeHtml(uid)}" data-nick="${escapeHtml(nick)}" data-ip="${escapeHtml(ip)}"`
+        : '';
+    return `<td class="gall_writer ub-writer" user_name="${escapeHtml(nick)}"${identityAttrs}><b>${escapeHtml(nick)}</b>${ip ? `<span class="ip">(${escapeHtml(ip)})</span>` : ''}</td>`;
+}
+
 export function listRow(index, options = {}) {
     const variant = options.variant === 'minor' ? 'minor' : 'major';
     const uid = options.uid ?? `safe-list-${index}`;
@@ -35,7 +42,7 @@ export function listRow(index, options = {}) {
     return `<tr class="${rowClass}"${dataAttrs}${hiddenStyle}${cssHidden}>
         <td class="gall_num">${1000 + index}</td>
         ${extraCell}<td class="gall_tit"><span class="gall_subject"${headtextData}>${headtextMarkup}</span><a href="${viewPath}?id=test&no=${1000 + index}">${options.title ?? `테스트 게시물 ${index}`}</a>${titleDecoration}<a class="reply_numbox" href="${viewPath}?id=test&no=${1000 + index}#comment"><span class="reply_num">[${index % 7}]</span></a>${options.ad ? '<em class="icon_ad">AD</em>' : ''}</td>
-        <td class="gall_writer_cell">${writer({ uid, nick, ip: options.ip || '', includeIdentityAttrs: options.includeIdentityAttrs !== false })}</td>
+        ${listWriterCell({ uid, nick, ip: options.ip || '', includeIdentityAttrs: options.includeIdentityAttrs !== false })}
         <td class="gall_date">2026.07.12</td>
         <td class="gall_count">${index * 3}</td>
         <td class="gall_recommend">${index % 5}</td>${utilityCell}
@@ -69,7 +76,7 @@ export function liveListRows(variant = 'major', options = {}) {
 
 export function replyItem(index, parentNo, options = {}) {
     const uid = options.uid ?? `safe-reply-${parentNo}-${index}`;
-    const imageHtml = options.image ? '<img class="comment_dccon" alt="inline reply image" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==">' : '';
+    const imageHtml = options.image ? '<img class="comment_dccon written_dccon bigdccon" width="150" height="150" alt="inline reply image" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==">' : '';
     return `<li id="reply_li_${parentNo}_${index}" class="ub-content${options.extraClass ? ` ${escapeHtml(options.extraClass)}` : ''}" data-no="${parentNo}-${index}">
         <div class="reply_info"><div class="cmt_nickbox">${writer({ uid, nick: options.nick ?? `답글작성자${index}`, ip: options.ip || '' })}</div><div class="fr clear"><span class="date_time">07.12 12:00</span></div></div>
         <div class="cmt_txtbox"><p class="usertxt ub-word">${options.text ?? `답글 내용 ${index}`}</p>${imageHtml}</div>
@@ -83,7 +90,7 @@ export function commentItem(index, options = {}) {
     const replyHtml = replies > 0
         ? `<div class="reply show"><div class="reply_box"><ul class="reply_list" p-no="${commentNo}">${Array.from({ length: replies }, (_, offset) => replyItem(offset + 1, commentNo, options.replyOptions?.[offset + 1] || {})).join('')}</ul></div></div>`
         : '';
-    const imageHtml = options.image ? '<img class="comment_dccon" alt="inline comment image" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==">' : '';
+    const imageHtml = options.image ? '<img class="comment_dccon written_dccon" width="150" height="150" alt="inline comment image" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==">' : '';
     const className = ['ub-content', options.dory ? 'dory' : ''].filter(Boolean).join(' ');
     const hiddenStyle = options.hidden ? ' style="display:none" data-fixture-host-hidden="1"' : '';
     return `<li id="comment_li_${commentNo}" class="${className}" data-no="${commentNo}"${hiddenStyle}>

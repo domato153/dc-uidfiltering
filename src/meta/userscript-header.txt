@@ -7,6 +7,7 @@
 // @match        https://gall.dcinside.com/board/*
 // @match        https://gall.dcinside.com/mgallery/board/*
 // @match        https://gall.dcinside.com/mini/board/*
+// @match        https://sign.dcinside.com/login*
 // @noframes
 // @grant        GM_setValue
 // @grant        GM_getValue

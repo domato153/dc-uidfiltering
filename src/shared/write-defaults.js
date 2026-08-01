@@ -5,7 +5,7 @@
     if (root.__dcufWriteDefaultsAttached) return;
     root.__dcufWriteDefaultsAttached = true;
 
-    if (!/\/board\/write(?:\/|$)/.test(window.location.pathname || '')) return;
+    if (!/\/board\/(?:write|modify)(?:\/|$)/.test(window.location.pathname || '')) return;
 
     const activatePumx = () => {
         const button = document.getElementById('btn_pumx');
@@ -13,9 +13,12 @@
         if (button.dataset.dcufPumxDefaultActivated === '1') return true;
 
         button.dataset.dcufPumxDefaultActivated = '1';
-        button.click();
+        if (!button.classList.contains('on') && button.getAttribute('aria-pressed') !== 'true') {
+            button.click();
+        }
         return true;
     };
+    root.__dcufEnsurePumxDefault = activatePumx;
 
     const start = () => {
         if (activatePumx()) return;

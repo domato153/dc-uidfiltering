@@ -127,25 +127,32 @@
                     justify-content: center !important; width: 100vw !important; height: 100vh !important;
                     margin: 0 !important; padding: 24px !important; visibility: visible !important;
                     opacity: 1 !important; pointer-events: auto !important;
-                    background: linear-gradient(180deg,#f7f9fc,#eef2f7) !important;
+                    background:
+                        radial-gradient(circle at 86% 8%,rgba(92,190,214,.12),transparent 34%),
+                        radial-gradient(circle at 8% 4%,rgba(135,151,216,.10),transparent 38%),
+                        #edf3fa !important;
                 }
                 #${OVERLAY_ID} .dcuf-boot-card {
                     box-sizing: border-box !important; width: min(420px,calc(100vw - 32px)) !important;
-                    padding: 22px 20px 18px !important; border: 1px solid #c5ceda !important;
-                    border-radius: 18px !important; background: #fff !important; color: #2b3340 !important;
-                    text-align: center !important; box-shadow: 0 20px 48px rgba(31,45,68,.12) !important;
+                    padding: 22px 20px 18px !important; border: 1px solid rgba(255,255,255,.76) !important;
+                    border-radius: 18px !important;
+                    background: linear-gradient(145deg,rgba(255,255,255,.76),rgba(248,251,255,.56)) !important;
+                    color: #27313f !important; text-align: center !important;
+                    box-shadow: 0 24px 68px rgba(31,45,68,.18),inset 0 1px 0 rgba(255,255,255,.92) !important;
+                    -webkit-backdrop-filter: blur(16px) saturate(112%) !important;
+                    backdrop-filter: blur(16px) saturate(112%) !important;
                 }
                 #${OVERLAY_ID} .dcuf-boot-title { margin-bottom: 8px !important; font: 700 17px/1.35 sans-serif !important; }
                 #${OVERLAY_ID} .dcuf-boot-copy { margin-bottom: 14px !important; color: #5a6575 !important; font: 500 13px/1.55 sans-serif !important; }
-                #${OVERLAY_ID} .dcuf-boot-bar { height: 4px !important; overflow: hidden !important; border-radius: 999px !important; background: #cbd3df !important; }
+                #${OVERLAY_ID} .dcuf-boot-bar { height: 4px !important; overflow: hidden !important; border-radius: 999px !important; background: rgba(99,116,145,.18) !important; box-shadow: inset 0 1px 2px rgba(34,48,72,.12) !important; }
                 #${OVERLAY_ID} .dcuf-boot-bar::before {
                     content: '' !important; display: block !important; width: 42% !important; height: 100% !important;
                     border-radius: inherit !important;
                     background: linear-gradient(90deg,var(--dcuf-theme-accent-strong,#245bda),var(--dcuf-theme-accent,#5d87f0)) !important;
                     animation: dcuf-boot-progress 1s ease-in-out infinite !important;
                 }
-                html.dc-filter-dark-mode #${OVERLAY_ID} { background: linear-gradient(180deg,#1d222a,#11151b) !important; }
-                html.dc-filter-dark-mode #${OVERLAY_ID} .dcuf-boot-card { border-color: #475160 !important; background: #1c2129 !important; color: #e7ebf2 !important; }
+                html.dc-filter-dark-mode #${OVERLAY_ID} { background: radial-gradient(circle at 86% 8%,rgba(76,145,171,.12),transparent 34%),#111722 !important; }
+                html.dc-filter-dark-mode #${OVERLAY_ID} .dcuf-boot-card { border-color: rgba(222,234,255,.14) !important; background: linear-gradient(145deg,rgba(35,45,63,.82),rgba(22,30,44,.72)) !important; color: #edf2f7 !important; }
                 @keyframes dcuf-boot-progress { from { transform: translateX(-120%); } to { transform: translateX(260%); } }
                 @media (prefers-reduced-motion: reduce) { #${OVERLAY_ID} .dcuf-boot-bar::before { width: 100% !important; animation: none !important; } }
             `;
