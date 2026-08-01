@@ -199,28 +199,43 @@ const main = async () => {
             record('trusted visible-writer click creates original native menu', 'PASS');
         }
 
-        for (const { variant, route, viewRoute } of [
-            { variant: 'major', route: '/board/lists', viewRoute: '/board/view' },
-            { variant: 'minor', route: '/mgallery/board/lists', viewRoute: '/mgallery/board/view' },
-            { variant: 'mini', route: '/mini/board/lists', viewRoute: '/mini/board/view' }
+        for (const { variant, route, viewRoute, writeRoute, headerCount, typeColumns } of [
+            { variant: 'major', route: '/board/lists', viewRoute: '/board/view', writeRoute: '/board/write', headerCount: 6, typeColumns: 0 },
+            { variant: 'minor', route: '/mgallery/board/lists', viewRoute: '/mgallery/board/view', writeRoute: '/mgallery/board/write', headerCount: 7, typeColumns: 1 },
+            { variant: 'mini', route: '/mini/board/lists', viewRoute: '/mini/board/view', writeRoute: '/mini/board/write', headerCount: 6, typeColumns: 0 }
         ]) {
             await page.goto(`${server.baseUrl}${route}?id=test`, { waitUntil: 'domcontentloaded' });
             await page.waitForFunction(() => document.documentElement.classList.contains('script-ui-ready'), null, { timeout: 12000 });
             await page.waitForTimeout(180);
             const variantWriter = page.locator('.custom-mobile-list .custom-post-item .author .gall_writer[data-uid="direct-handler-writer"]');
             await variantWriter.waitFor({ state: 'visible' });
-            const variantTableContract = await page.evaluate(() => {
+            const variantContract = await page.evaluate(() => {
                 const writer = document.querySelector('.custom-mobile-list .custom-post-item .author .gall_writer[data-uid="direct-handler-writer"]');
                 const bridge = writer?.closest('table.dcuf-writer-bridge');
+                const originalRow = document.querySelector('table.gall_list > tbody.listwrap2 > tr.ub-content');
                 return {
                     bridgeCellParentValid: Boolean(writer && bridge?.querySelector(':scope > tbody > tr > td') === writer),
                     outerTablePath: Boolean(writer?.closest('table.gall_list')),
-                    directRowSpanIdentityCount: document.querySelectorAll('table.gall_list > tbody.listwrap2 > tr > span.dcuf-writer-identity').length
+                    directRowSpanIdentityCount: document.querySelectorAll('table.gall_list > tbody.listwrap2 > tr > span.dcuf-writer-identity').length,
+                    headerCount: document.querySelectorAll('table.gall_list > thead > tr > th').length,
+                    originalRowCellCount: originalRow?.children.length || 0,
+                    typeColumns: originalRow?.querySelectorAll(':scope > td.gall_type').length || 0,
+                    route: document.body.dataset.fixtureRoute || '',
+                    heading: document.querySelector('.page_head h2')?.textContent?.trim() || ''
                 };
             });
-            assert.deepEqual(variantTableContract, { bridgeCellParentValid: true, outerTablePath: true, directRowSpanIdentityCount: 0 }, `${variant} writer table contract`);
+            assert.equal(variantContract.bridgeCellParentValid, true, `${variant}: ${JSON.stringify(variantContract)}`);
+            assert.equal(variantContract.outerTablePath, true, `${variant}: ${JSON.stringify(variantContract)}`);
+            assert.equal(variantContract.directRowSpanIdentityCount, 0, `${variant}: ${JSON.stringify(variantContract)}`);
+            assert.equal(variantContract.headerCount, headerCount, `${variant}: ${JSON.stringify(variantContract)}`);
+            assert.equal(variantContract.originalRowCellCount, headerCount, `${variant}: ${JSON.stringify(variantContract)}`);
+            assert.equal(variantContract.typeColumns, typeColumns, `${variant}: ${JSON.stringify(variantContract)}`);
+            assert.equal(variantContract.route, route, `${variant}: ${JSON.stringify(variantContract)}`);
+            assert.equal(variantContract.heading.includes(variant === 'major' ? '일반' : variant === 'minor' ? '마이너' : '미니'), true, `${variant}: ${JSON.stringify(variantContract)}`);
             const variantHref = await page.locator('.custom-mobile-list .custom-post-item .post-title-link').first().getAttribute('href');
             assert.equal(new URL(variantHref, server.baseUrl).pathname, viewRoute, `${variant} view route`);
+            const writeHref = await page.locator('.list_bottom_btnbox .btn_write').getAttribute('href');
+            assert.equal(new URL(writeHref, server.baseUrl).pathname, writeRoute, `${variant} write route`);
             assert.equal(await page.locator('.user_data[data-fixture-native-menu="1"]').count(), 0);
             assert.equal(await variantWriter.evaluate((node) => node === window.__fixtureDirectWriter), true, `${variant} writer must remain the original node`);
             await variantWriter.click();
@@ -228,7 +243,6 @@ const main = async () => {
             await positiveRect(page.locator('.user_data[data-fixture-native-menu="1"] .native_writer_action'), `${variant} native writer menu action`);
             const variantListenerKinds = await page.evaluate(() => [...new Set(window.__fixtureWriterListenerKinds || [])]);
             assert.equal(variantListenerKinds.includes('direct') && variantListenerKinds.includes('table-delegated'), true, `${variant} writer listener paths: ${variantListenerKinds.join(',')}`);
-            assert.equal(await page.evaluate(() => document.body.dataset.fixtureRoute, route), route);
             record(`${variant} visible writer trusted click and native menu`, 'PASS');
         }
 
