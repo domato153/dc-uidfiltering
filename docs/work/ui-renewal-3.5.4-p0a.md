@@ -4,25 +4,25 @@ This file is the authoritative execution-state companion to `docs/work/ui-renewa
 
 ## Project state
 
-`IMPLEMENTING`
+`VALIDATION_REQUIRED`
 
 ## Active phase
 
 - Phase: `P1-A through P1-D integrated surface correction`
-- Owner and sole branch writer: `ChatGPT`
-- Fixed P1 start SHA: `d82d9cca32d513b104f6c4ab09f4e9e2a6046dd1`
-- State: `IN_PROGRESS`
-- Parallel implementation: prohibited
-- Independent validation owner after handoff: `Codex/Luna`
+- Implementation owner and sole branch writer: `ChatGPT`
+- Independent validation owner: `Codex/Luna`
 - Independent reviewer after fixed-SHA validation: `ChatGPT`
-- P0 production changes and regression coverage: `locally validated, live acceptance intentionally deferred to the integrated candidate`
-- P1: `active`
+- Fixed P1 start SHA: `d82d9cca32d513b104f6c4ab09f4e9e2a6046dd1`
+- Implementation-content SHA before this handoff document: `fb0e7266b8dd8aec5f8b33618886da0fe10d7853`
+- State: `REVIEW_READY — local execution evidence not yet collected`
+- Parallel implementation: prohibited
+- P0 live acceptance and P1 live acceptance remain intentionally deferred to one integrated candidate.
 
 ## P0 checkpoint carried into P1
 
-Commit `d82d9cca32d513b104f6c4ab09f4e9e2a6046dd1` is the only accepted P1 base.
+Commit `d82d9cca32d513b104f6c4ab09f4e9e2a6046dd1` is the accepted P1 base.
 
-Recorded clean-worktree validation:
+Recorded clean-worktree validation for that base:
 
 - P0-A: `14 passed, 0 failed`.
 - Full guarded mobile Testbed: `108 passed, 0 failed, 0 skipped`.
@@ -30,112 +30,108 @@ Recorded clean-worktree validation:
 - Guidance verification: exit `0`.
 - Runtime console/page errors: none.
 - Built beta SHA-256: `39c64e2af13749a71b0358060c73adb9f0f702d3e245952232400522c069c042`.
-- `npm ci`: not applicable because no lockfile; `npm install --no-package-lock` succeeded.
+- `npm ci`: unavailable because no lockfile; `npm install --no-package-lock` succeeded.
 - Original dirty checkout: preserved.
 
-This checkpoint is regression evidence, not final user acceptance. The next user live test occurs only after P1-A through P1-D are integrated, independently validated, and built from one fixed SHA.
+This evidence must be rerun against the P1 result. It is not final acceptance.
 
-## P1 implementation contract
+## Implemented P1 changes
 
-### P1-A — single active owner per surface
+### P1-A — active surface ownership
 
-The integrated runtime must have exactly one active owner for each of:
-
-- header and recent/favorite rail;
-- list navigation, rows, metadata, and bottom controls;
-- article paper;
-- comments and reply surfaces;
-- write form, editor rail, AI rail, options, and actions;
-- native popup containment and portal geometry.
-
-`live-corrections.js` must not remain an emergency visual override. It may retain structural/native compatibility adapters only. A dedicated final-surface module is permitted only when it retires or narrows the corresponding legacy active rules in the same runtime.
+- Added `surface-theme.js` as the declared active owner for header/recent, list, write, and native-layer presentation.
+- Retained `dcuf-mobile-palette-style` as the article/comments owner.
+- Retired the active `dcuf-phase1-list-theme` and emergency `dcuf-live-surface-owner` styles.
+- Pruned overlapping header/recent/list/write/native selectors from the palette stylesheet through a bounded CSSOM pass.
+- Reduced `live-corrections.js` to structural adapters: metadata grouping, recent/favorite state, drawer-to-original control bridge, and original popup portal geometry.
+- Added owner markers and an owner manifest for deterministic tests.
 
 ### P1-B — write fidelity
 
-- Preserve native form method/action, hidden fields, editor nodes, controls, and submit/cancel lifecycle.
-- Preserve host-hidden recent/favorite state; never force both labels visible.
-- Keep headtexts → title → editor → AI rail → options → actions ordering.
-- Keep toolbar controls on one horizontal touch-scroll rail.
-- Keep AI loading, file input, image/character/layer controls, prompt, count, native close/reset, and settings popup usable.
-- Keep PUMX activation state-based and render its checked mark as a conventional visual check tied to native state.
+- Preserved native form, hidden fields, editor nodes, and action controls.
+- Declared subject → editor → AI rail → options → actions surface order without moving native nodes.
+- Made editor toolbars single-row horizontal touch-scroll rails.
+- Normalized AI rail layout while retaining loading, file, image, character, layer, prompt, count, close/reset, and settings controls.
+- Replaced the malformed PUMX drawing with a conventional check drawn only for native active state.
+- Preserved host recent/favorite visibility semantics.
 
 ### P1-C — recent navigation
 
-Preserve a working host handler. A DCUF fallback may run only when the host click produced no observable movement or state change. It must not use capture-phase cancellation, must not double-scroll, and must survive rerender and bfcache without duplicate binding.
+- Removed capture cancellation and unconditional ownership.
+- Preserved the host click first.
+- Runs the DCUF fallback only when the host produced no scroll movement or button-state change.
+- Keeps one binding guard and restores preparation after bfcache.
 
 ### P1-D — palette parity
 
-All 14 palette IDs, labels, light values, and dark values must be canonical or deterministically verified for both the main runtime and isolated login surface. Preserve storage key `dcuf_mobile_ui_palette`, exactly one login-surface read, and zero login-surface writes.
+- Added one canonical 14-preset source in `src/shared/mobile-palette-data.js`.
+- The mobile builder deterministically derives both the main palette presets and isolated login palette map from that source.
+- Existing storage key and isolated login read/write restrictions remain unchanged.
 
-## Active defect register
+## Added validation contracts
 
-The integrated scope remains the user's consolidated 24-item register:
+- `testbed/run-p1-regressions.mjs`: static owner/palette/recent contracts plus runtime list, write, popup, metadata, shell, and AI checks.
+- `testbed/fixtures/p1-live-contracts.mjs`: full logged-in rail and native PUMX fixture additions.
+- `testbed/run-p1-fidelity.mjs`: wide/narrow logged-in header and PUMX visual fidelity checks.
+- `npm run test:p1`: runs both P1 suites.
 
-- filter-master/convenience independence;
-- logged-in header wrapping and logout/night-mode alignment;
-- native list-writer menu behavior;
-- gallery-management popup ownership and containment;
-- headtext-more geometry;
-- list title/right metadata alignment, including comments, PUM, and scheduled-delete indicators;
-- single-row mobile write toolbar;
-- one bottom list shell for actions, pagination, movement, and search;
-- consistent header/list/view/write composition;
-- recent/favorite host-hidden state and unwanted borders;
-- full AI quick-registration fidelity and native close/reset geometry;
-- PUM checkmark fidelity and verified PUMX activation;
-- native popup clipping, stacking, containment, and hit-testing;
-- native-first recent navigation;
-- excessive global `!important` and ambiguous active ownership;
-- truthful live-shaped fixtures;
-- original DOM, events, popup lifecycle, and form behavior preservation.
+## Validation commands
 
-## Allowed paths
+Run from one clean worktree at the fixed branch tip:
 
-- `docs/work/ui-renewal-3.5.4-p0a.md`
-- `src/shared/mobile-palette-data.js`
-- `src/targets/mobile/*.js`
-- `tools/build-userscript.mjs`
-- `tools/verify-repo.mjs`
-- `testbed/fixtures/*`
-- `testbed/*.mjs`
-- `testbed/package.json`
+1. `node --check src/shared/mobile-palette-data.js`
+2. `node --check src/targets/mobile/surface-theme.js`
+3. `node --check src/targets/mobile/live-corrections.js`
+4. `node --check src/targets/mobile/live-native-bridge.js`
+5. `node --check testbed/fixtures/p1-live-contracts.mjs`
+6. `node --check testbed/run-p1-regressions.mjs`
+7. `node --check testbed/run-p1-fidelity.mjs`
+8. `node --check tools/build-userscript.mjs`
+9. `node tools/verify-repo.mjs guidance`
+10. Build a testbed runtime and run `node --check` on it.
+11. In `testbed`: `npm install --no-package-lock` when dependencies are absent.
+12. `npm run test:p0a`
+13. `npm run test:p1`
+14. `npm test`
+15. Build the final beta candidate without committing root/dist outputs.
 
-Generated root/dist userscripts, versions, releases, tags, official branches, unrelated PC runtime files, and the user's dirty checkout remain prohibited.
+Any failure reopens implementation as `CHANGES_REQUESTED`. Tests must not be weakened or deleted.
 
-## Ordered execution
+## Required review focus
 
-1. Replace the temporary visual correction layer with one canonical active surface owner and retire/narrow competing active legacy rules.
-2. Complete write fidelity and recent/favorite semantics without replacing native form/editor controls.
-3. Replace unconditional recent scrolling with native-first fallback behavior.
-4. Establish deterministic 14-palette parity.
-5. Add failing-before/passing-after P1 ownership and behavior contracts.
-6. Run syntax, guidance, P0-A, P1, and the full guarded suite from one fixed result SHA.
-7. Perform independent fixed-SHA review.
-8. Build one integrated userscript for the user's single comprehensive live test.
+- Build regex transforms must find exactly one login palette map and one main preset array.
+- No duplicate or missing canonical palette IDs; all 14 labels/light/dark values must be preserved.
+- CSSOM pruning must report no errors and must not remove article/comments ownership.
+- Exactly one active owner must remain for each declared surface.
+- Full logged-in actions must not wrap at wide width; narrow width must scroll rather than wrap.
+- Headtext rail and more button must not overlap.
+- List metadata must stay at the title's right edge and bottom controls must remain inside the list shell.
+- Native recent handler must fire exactly once; fallback must not double-scroll or duplicate-bind.
+- Write toolbar, AI rail, native popup lifecycle, PUMX state, bfcache, and reduced-motion behavior must remain intact.
+- Full guarded suite must detect any article/comments or unrelated-host regressions caused by selector pruning.
 
 ## Stop conditions
 
 Stop and report instead of continuing if:
 
-- the server branch moves unexpectedly;
+- the server branch moves during fixed-SHA validation;
 - a fix requires a fake popup, cloned native control, or replacement form lifecycle;
 - storage shape, version, release files, official branches, or unrelated PC code would change;
 - tests must be weakened or removed;
 - active surface ownership still depends on an unexplained later override;
 - the original dirty checkout would need to be altered.
 
-## Required handoff evidence
+## Required validation handoff evidence
 
-A future `REVIEW_READY` handoff must record:
-
-- exact P1 start and result SHAs;
-- exact changed paths;
-- active-owner audit results for all six surfaces;
-- guidance and syntax exit codes;
-- P0-A, P1, and full guarded totals, failures, skips, and obsolete counts;
+- exact fixed validation SHA;
+- exact changed paths made during validation, if any;
+- every command and exit code;
+- P0-A, P1 structural, P1 fidelity, and full guarded totals;
 - built runtime absolute path and SHA-256;
-- console/page errors;
+- console/page/runtime errors;
 - palette parity result for all 14 presets;
+- active-owner audit result for all six surfaces;
 - original dirty-checkout preservation;
-- remaining live-only checks;
-- user live results for writer menu, management popup, recent navigation/state, headtext, list metadata, toolbar, AI rail, PUMX, and popup reachability.
+- remaining live-only checks.
+
+Only after clean fixed-SHA validation and independent review may one integrated userscript be given to the user for the single comprehensive live test.
