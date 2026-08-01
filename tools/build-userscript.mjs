@@ -22,6 +22,7 @@ const MOBILE_LEGACY_PARTS = [
     'src/targets/mobile/personal-block-module.js',
     'src/targets/mobile/ui-module.js',
     'src/targets/mobile/post-main-fixes.js',
+    'src/targets/mobile/live-corrections.js',
 ];
 
 const replacements = [
