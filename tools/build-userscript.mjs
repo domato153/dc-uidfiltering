@@ -22,6 +22,7 @@ const MOBILE_LEGACY_PARTS = [
     'src/targets/mobile/personal-block-module.js',
     'src/targets/mobile/ui-module.js',
     'src/targets/mobile/post-main-fixes.js',
+    'src/targets/mobile/surface-theme.js',
     'src/targets/mobile/live-corrections.js',
     'src/targets/mobile/live-native-bridge.js',
 ];
@@ -110,6 +111,31 @@ async function buildSharedRuntimePrelude() {
     ].join('\n');
 }
 
+function transformLoginSurfaceForCanonicalPalettes(source) {
+    return replaceOrThrow(
+        source,
+        /    const PALETTES = Object\.freeze\(\{[\s\S]*?\n    \}\);/,
+        [
+            '    const PALETTES = Object.freeze(Object.fromEntries(',
+            '        DCUF_MOBILE_PALETTE_PRESETS.map((preset) => [preset.id, Object.freeze({',
+            '            light: Object.freeze(preset.light.slice(0, 2)),',
+            '            dark: Object.freeze(preset.dark.slice(0, 2))',
+            '        })])',
+            '    ));',
+        ].join('\n'),
+        'canonical login palette map'
+    );
+}
+
+function transformThemeForCanonicalPalettes(source) {
+    return replaceOrThrow(
+        source,
+        /    const PRESETS = Object\.freeze\(\[[\s\S]*?\n    \]\);/,
+        '    const PRESETS = DCUF_MOBILE_PALETTE_PRESETS;',
+        'canonical main palette presets'
+    );
+}
+
 function transformLegacyAppForPhaseTwo(source) {
     let text = source;
 
@@ -159,20 +185,24 @@ function applyReplacements(source) {
 }
 
 async function main() {
-    const [header, loginSurface, bootstrap, styleBanner, sharedPrelude, ...mobileLegacyParts] = await Promise.all([
+    const [header, palettePrelude, loginSurface, bootstrap, styleBanner, sharedPrelude, ...mobileLegacyParts] = await Promise.all([
         readPart('src/meta/userscript-header.txt'),
+        readPart('src/shared/mobile-palette-data.js'),
         readPart('src/targets/mobile/login-surface.js'),
         readPart('src/runtime/bootstrap.js'),
         readPart('src/targets/mobile/style-banner.js'),
         buildSharedRuntimePrelude(),
         ...MOBILE_LEGACY_PARTS.map(readPart),
     ]);
+
+    const transformedLoginSurface = transformLoginSurfaceForCanonicalPalettes(loginSurface);
     const transformedMobileParts = mobileLegacyParts.map((part, index) => {
+        if (index === 2) return transformThemeForCanonicalPalettes(part);
         if (index === 3) return transformLegacyAppForPhaseTwo(part);
         if (index === 6) return transformUIModuleForPhaseTwo(part);
         return part;
     });
-    const combined = `${header}\n${loginSurface}${bootstrap}${sharedPrelude}${styleBanner}${transformedMobileParts.join('')}`;
+    const combined = `${header}\n${palettePrelude}\n${transformedLoginSurface}${bootstrap}${sharedPrelude}${styleBanner}${transformedMobileParts.join('')}`;
     const built = applyReplacements(combined)
         .replace(/[ \t]+$/gm, '')
         .replace(/\n+$/, '\n')
