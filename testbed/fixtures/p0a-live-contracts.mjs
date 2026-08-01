@@ -41,24 +41,27 @@ const headtextControls = `<div class="center_box"><div class="inner">
 
 const routeForVariant = Object.freeze({ major: '/board/lists', minor: '/mgallery/board/lists', mini: '/mini/board/lists' });
 const viewRouteForVariant = Object.freeze({ major: '/board/view', minor: '/mgallery/board/view', mini: '/mini/board/view' });
+const writeRouteForVariant = Object.freeze({ major: '/board/write', minor: '/mgallery/board/write', mini: '/mini/board/write' });
+const labelForVariant = Object.freeze({ major: '일반 갤러리', minor: '마이너 갤러리', mini: '미니 갤러리' });
 
 const rowsForVariant = (variant = 'minor') => Array.from({ length: 8 }, (_, index) => {
     const no = 1001 + index;
     const uid = index === 0 ? 'direct-handler-writer' : `safe-list-${index + 1}`;
     const nick = index === 0 ? '직접핸들러작성자' : `목록작성자${index + 1}`;
+    const typeCell = variant === 'minor' ? '<td class="gall_type">일반</td>' : '';
     return `<tr class="ub-content us-post" data-no="${no}" data-type="icon_txt">
-<td class="gall_num">${no}</td><td class="gall_type">일반</td>
-<td class="gall_tit"><span class="gall_subject" data-headtext="일반">일반</span><a href="/mgallery/board/view?id=test&no=${no}">P0-A 게시물 ${index + 1}</a><a class="reply_numbox" href="#comment"><span class="reply_num">[${index}]</span></a></td>
+<td class="gall_num">${no}</td>${typeCell}
+<td class="gall_tit"><span class="gall_subject" data-headtext="일반">일반</span><a href="${viewRouteForVariant[variant]}?id=test&no=${no}">P0-A 게시물 ${index + 1}</a><a class="reply_numbox" href="#comment"><span class="reply_num">[${index}]</span></a></td>
 <td class="gall_writer ub-writer" user_name="${nick}" data-uid="${uid}" data-nick="${nick}" data-ip=""><b>${nick}</b></td>
 <td class="gall_date">2026.08.01</td><td class="gall_count">${index * 3}</td><td class="gall_recommend">${index}</td></tr>`;
 }).join('');
-const rows = rowsForVariant('minor');
+
+const tableHeadForVariant = (variant) => `<thead><tr><th>번호</th>${variant === 'minor' ? '<th>구분</th>' : ''}<th>제목</th><th>작성자</th><th>날짜</th><th>조회</th><th>추천</th></tr></thead>`;
 
 const listScripts = `<script>
 (() => {
   const route = { major: '/board/view', minor: '/mgallery/board/view', mini: '/mini/board/view' }[document.body.dataset.fixtureVariant] || '/mgallery/board/view';
   document.body.dataset.fixtureRoute = route.replace('/view', '/lists');
-  document.querySelectorAll('a[href^="/mgallery/board/view"]').forEach((link) => { link.href = link.href.replace('/mgallery/board/view', route); });
   const originalWriter = document.querySelector('table.gall_list .gall_writer[data-uid="direct-handler-writer"]');
   originalWriter.dataset.fixtureDirectHandler = '1';
   window.__fixtureDirectWriter = originalWriter;
@@ -108,14 +111,16 @@ const listScripts = `<script>
 </script>`;
 
 export function p0aListPage({ variant = 'minor' } = {}) {
-    return `${baseHead('P0-A live-shaped list')}<body data-fixture-page="list" data-fixture-variant="${escapeHtml(variant)}"><div id="top" class="dcwrap width1160 list_wrap">
+    const safeVariant = Object.hasOwn(routeForVariant, variant) ? variant : 'minor';
+    const rows = rowsForVariant(safeVariant);
+    return `${baseHead(`P0-A live-shaped ${labelForVariant[safeVariant]} list`)}<body data-fixture-page="list" data-fixture-variant="${safeVariant}" data-fixture-route="${routeForVariant[safeVariant]}"><div id="top" class="dcwrap width1160 list_wrap">
 ${hostChrome}${recentRail}<main id="container" class="clear"><article>
-<header class="page_head"><h2>테스트 마이너 갤러리</h2><div class="issue_wrap"><button type="button" class="btn_manage">갤러리 관리</button></div></header>
+<header class="page_head"><h2>${labelForVariant[safeVariant]} 테스트</h2><div class="issue_wrap"><button type="button" class="btn_manage">갤러리 관리</button></div></header>
 <div class="list_array_option"><div class="array_tab left_box"><a href="#all">전체글</a></div>${headtextControls}
 <div class="right_box"><div class="select_box array_num"><button type="button" class="select_area list_size_trigger">50개<em class="sp_img icon_option_more"></em></button>
 <ul id="listSizeLayer" class="option_box"><li><button type="button">30개</button></li><li><button type="button">50개</button></li><li><button type="button">100개</button></li></ul></div></div></div>
-<section class="gall_listwrap"><table class="gall_list"><thead><tr><th>번호</th><th>구분</th><th>제목</th><th>작성자</th><th>날짜</th><th>조회</th><th>추천</th></tr></thead><tbody class="listwrap2">${rows}</tbody></table></section>
-<div class="list_bottom_btnbox"><a class="btn_write write" href="/mgallery/board/write?id=test">글쓰기</a></div>
+<section class="gall_listwrap"><table class="gall_list">${tableHeadForVariant(safeVariant)}<tbody class="listwrap2">${rows}</tbody></table></section>
+<div class="list_bottom_btnbox"><a class="btn_write write" href="${writeRouteForVariant[safeVariant]}?id=test">글쓰기</a></div>
 <div class="bottom_paging_box"><em>1</em><a href="?page=2">2</a></div>
 <form name="frmSearch"><fieldset><div class="bottom_search_wrap"><select name="search_type"><option>제목+내용</option></select><input class="in_keyword" name="search_keyword"><button type="button" class="bnt_search">검색</button></div></fieldset><div id="searchTypeLayer"></div></form>
 </article></main></div>${listScripts}</body></html>`;
