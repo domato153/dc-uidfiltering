@@ -74,6 +74,8 @@ async function buildSharedRuntimePrelude() {
         '',
         '    const DCUF_SHARED_SCHEMA = Object.freeze({ FILTER_CONSTANTS, STORAGE_KEYS, SELECTORS, API_PATHS, CUSTOM_ATTRS, UI_IDS, ETC_CONSTANTS });',
         '',
+        ipSource.trimEnd(),
+        '',
         '    const DCUF_SHARED_IP = Object.freeze({ TELECOM, PROXY_MODE, PROXY_STRICT_PREFIXES, PROXY_AGGRESSIVE_EXTRA_PREFIXES, KR_IP_RANGES });',
         '',
         storageCoreSource.trimEnd(),
