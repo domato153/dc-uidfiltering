@@ -8,6 +8,19 @@
 
     const RECENT_BUTTON_SELECTOR = '.btn_visit_prev,.btn_visit_next,.bnt_visit_prev,.bnt_visit_next';
 
+    const prepareNavigationList = (module, historyRoot) => {
+        if (typeof module.prepareRecentVisitList !== 'function') return null;
+        const list = module.prepareRecentVisitList(historyRoot);
+        if (!(list instanceof HTMLElement)) return null;
+        list.style.setProperty('box-sizing', 'border-box', 'important');
+        list.style.setProperty('width', '100%', 'important');
+        list.style.setProperty('max-width', '100%', 'important');
+        list.style.setProperty('overflow-x', 'auto', 'important');
+        list.style.setProperty('overflow-y', 'hidden', 'important');
+        list.style.setProperty('scrollbar-width', 'none', 'important');
+        return list;
+    };
+
     const snapshotButtonState = (button) => ({
         className: button.className,
         ariaDisabled: button.getAttribute('aria-disabled'),
@@ -37,9 +50,7 @@
     if (!ui.__dcufNativeRecentNavigation) {
         ui.__dcufNativeRecentNavigation = true;
         ui.bindRecentVisitNavigation = function bindRecentVisitNavigation() {
-            document.querySelectorAll('.newvisit_history').forEach((historyRoot) => {
-                if (typeof this.prepareRecentVisitList === 'function') this.prepareRecentVisitList(historyRoot);
-            });
+            document.querySelectorAll('.newvisit_history').forEach((historyRoot) => prepareNavigationList(this, historyRoot));
             if (this._recentVisitNavigationBound) return;
             this._recentVisitNavigationBound = true;
 
@@ -48,7 +59,7 @@
                 const button = target?.closest(RECENT_BUTTON_SELECTOR);
                 const historyRoot = button?.closest('.newvisit_history');
                 if (!(button instanceof HTMLElement) || !(historyRoot instanceof HTMLElement) || button.parentElement !== historyRoot) return;
-                const list = this.prepareRecentVisitList(historyRoot);
+                const list = prepareNavigationList(this, historyRoot);
                 if (!(list instanceof HTMLElement)) return;
 
                 const startLeft = list.scrollLeft;
@@ -69,9 +80,7 @@
 
             window.addEventListener('pageshow', (event) => {
                 if (!event.persisted) return;
-                document.querySelectorAll('.newvisit_history').forEach((historyRoot) => {
-                    if (typeof this.prepareRecentVisitList === 'function') this.prepareRecentVisitList(historyRoot);
-                });
+                document.querySelectorAll('.newvisit_history').forEach((historyRoot) => prepareNavigationList(this, historyRoot));
             });
         };
     }
