@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "kind": "semantic-differential",
+  "generatedAt": "2026-09-04T20:26:29.320Z",
+  "target": "mobile",
+  "selection": {
+    "group": null,
+    "filter": "UI palette menu",
+    "excludeFilter": null
+  },
+  "control": {
+    "path": "../phase-2-control/testbed/artifacts/runtime-under-test.user.js",
+    "sha256": "BB9A847B5FBB76CADC87D7CA6BFC97AB639D77E4BC2E1C9C4F11B53425FCB296"
+  },
+  "candidate": {
+    "path": "testbed/artifacts/runtime-under-test.user.js",
+    "sha256": "93DA65B74F1A4A00A92C91181E12A60060E2AA4964332292599F4A6DCC1BCD48"
+  },
+  "oracle": {
+    "distinctArtifactDigests": true,
+    "independentNodeProcesses": true,
+    "freshBrowserContextPerTest": true,
+    "sharedCurrentHarnessAndFixtures": true,
+    "comparedFields": [
+      "test identity",
+      "status"
+    ]
+  },
+  "evidenceBinding": {
+    "registrySha256": "b84d22af2a64adaff32403ef036170c0ca874140cac3a78eac0c06c7c97258c8",
+    "architectureStateSha256": "8ec84ae310b3d9a940ea7d2637f0696f30e7cc9544a2ed38fa7fa155add476c2",
+    "gatesSha256": "f2baa448919095cc737fd77f37ff1e3e6e90364ceb38a95c4d143d097fbd8c09",
+    "harnessSha256": "780f8a52338b03df39022c37e5d6121e98e56c8b4d2c73f43f284e9a5e472af0",
+    "fixturesSha256": "bd0be281145eeaebc62af58ff1ef518db506327da14a429946068d971b52929d",
+    "toolchainSha256": "4c46f80e0d7d3247faedf3a1ec33362a3d246b0a993a9705d332c3868f412d4f",
+    "node": "v22.17.0"
+  },
+  "results": {
+    "control": [
+      {
+        "name": "UI palette menu previews, saves, restores, and remains singleton",
+        "group": "functional",
+        "status": "passed"
+      }
+    ],
+    "candidate": [
+      {
+        "name": "UI palette menu previews, saves, restores, and remains singleton",
+        "group": "functional",
+        "status": "passed"
+      }
+    ]
+  },
+  "equivalent": true
+}

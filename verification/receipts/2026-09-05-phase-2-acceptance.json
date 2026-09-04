@@ -1,0 +1,48 @@
+{
+  "schemaVersion": 1,
+  "kind": "phase-acceptance",
+  "phase": "phase-2-ui-port-boundary",
+  "sourceHead": "e46a8122712d13a700fa6c69ebf9581833f816d5",
+  "controlHead": "e7fa4385b7fc65e7db40464df0dafd98b8391e4e",
+  "artifacts": {
+    "mobile": {
+      "version": "3.5.5",
+      "sha256": "93DA65B74F1A4A00A92C91181E12A60060E2AA4964332292599F4A6DCC1BCD48"
+    },
+    "pc": {
+      "version": "1.9.9",
+      "sha256": "20509CA38DD4227F350FCFFD9A8544E7EC158A5761E7119AFD96292C437907DF"
+    }
+  },
+  "declaredSemanticDelta": [],
+  "results": [
+    { "target": "mobile", "suite": "full", "selected": 97, "passed": 97, "failed": 0 },
+    { "target": "mobile", "suite": "host-compatibility", "selected": 11, "passed": 11, "failed": 0 },
+    { "target": "pc", "suite": "functional", "selected": 14, "passed": 14, "failed": 0 },
+    { "target": "verification", "suite": "proof-system-mutations", "selected": 4, "rejected": 4, "failed": 0 },
+    { "target": "repository", "suite": "policy-and-artifacts", "status": "passed" }
+  ],
+  "differentialReceipts": [
+    "verification/receipts/2026-09-05-phase-2-mobile-palette.json",
+    "verification/receipts/2026-09-05-phase-2-pc-palette.json"
+  ],
+  "registryFoldReceipts": [
+    "verification/receipts/2026-09-05-phase-2-registry-fold.json",
+    "verification/receipts/2026-09-05-phase-2-layer-fold.json"
+  ],
+  "evidenceBinding": {
+    "registrySha256": "b84d22af2a64adaff32403ef036170c0ca874140cac3a78eac0c06c7c97258c8",
+    "architectureStateSha256": "8ec84ae310b3d9a940ea7d2637f0696f30e7cc9544a2ed38fa7fa155add476c2",
+    "gatesSha256": "f2baa448919095cc737fd77f37ff1e3e6e90364ceb38a95c4d143d097fbd8c09",
+    "harnessSha256": "780f8a52338b03df39022c37e5d6121e98e56c8b4d2c73f43f284e9a5e472af0",
+    "fixturesSha256": "bd0be281145eeaebc62af58ff1ef518db506327da14a429946068d971b52929d",
+    "toolchainSha256": "4c46f80e0d7d3247faedf3a1ec33362a3d246b0a993a9705d332c3868f412d4f",
+    "node": "v22.17.0",
+    "browser": "Playwright 1.61.1 Chromium revision 1228"
+  },
+  "unrun": [
+    { "gate": "windows-2025", "reason": "Runs on the pushed PR candidate in GitHub-hosted promotion workflow." },
+    { "gate": "live-canary", "reason": "Manual Tampermonkey canary begins after shared filter and personal-block UI separation." }
+  ],
+  "status": "local-accepted"
+}
