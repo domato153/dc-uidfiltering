@@ -1,0 +1,4 @@
+interface:
+  display_name: "DCUF Semantic Architecture"
+  short_description: "Maintain DCUF ownership and layer contracts"
+  default_prompt: "Use $dcuf-semantic-architecture to update or validate the DCUF semantic registry and candidate architecture change."

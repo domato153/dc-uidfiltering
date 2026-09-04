@@ -10,4 +10,5 @@ description: Review DCUF Tampermonkey metadata, GM capabilities, execution scope
 3. Preserve storage keys and readable legacy shapes. When semantics must change, add a migration or compatibility fallback and keep failure behavior safe.
 4. Treat `@run-at document-start` and early hidden-body/overlay behavior as a compatibility contract.
 5. Check whether shared settings or identity parsing alter both mobile and PC filtering.
-6. Report the changed capability or schema, affected users/targets, migration behavior, and any irreversible risk.
+6. Keep target versions and ordered metadata/build inputs in `build/targets.json`; generated userscripts never become the authority.
+7. Report the changed capability or schema, affected users/targets, migration behavior, and any irreversible risk.

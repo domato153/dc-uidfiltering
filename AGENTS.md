@@ -4,14 +4,15 @@
 - Preserve visible behavior, stored settings, and release output.
 - Make the smallest complete change covering directly affected states, surfaces, contracts, and validation; avoid unrelated redesign.
 - Measure performance work first and consult `docs/agent-performance-notes.md`. Preserve measured hot paths; record any correctness fallback's trigger, scope, cost, and coverage.
-- For long work, keep `.codex/` goal/status/validation/next-step and recheck Git after resumes or stages; move durable lessons to maintenance notes.
+- For long work, keep accepted state and the next bounded task in tracked `docs/work/`; `.codex/` is scratch only. Recheck fresh refs, Git status, evidence validity, and impact routing after resumes or stages.
 
 ## Source and targets
-- Release sources are `src/` and build tools; root userscripts and `dist/` are generated. Site layout/UI is mobile-only; PC receives shared filter/management UI, not mobile host styling.
+- Release sources are `src/`, build tools, and `build/targets.json`; root userscripts and `dist/` are generated. Site layout/UI is mobile-only; PC receives shared filter/management UI, not mobile host styling.
 - Put shared logic/data in `src/shared/` and host DOM/visibility work in adapters. Treat bootstrap, mobile filter, and personal-block inputs as cross-target unless isolated.
+- `architecture/registry.json` is the semantic/layer authority. Its generated index is a view, and `verification/gates.json` owns impact-to-test routing.
 
 ## Build and release
-- Rebuild affected artifacts without changing version. Bump, promote, commit, push, or publish only when requested.
+- Rebuild affected artifacts without changing the version in `build/targets.json`. Bump, promote, commit, push, or publish only when requested.
 - Mobile: `node tools/build-userscript.mjs`; PC: `node tools/build-pc-filter-userscript.mjs`; build both for shared filter/storage/identity changes.
 - After builds run `node tools/verify-repo.mjs release`; use `guidance` for guidance-only work and `all` when both targets changed.
 - Run the smallest deterministic Testbed coverage for changed behavior, states, surfaces, and dependencies; reuse a pass only while runtime, code, fixtures, and harness are unchanged.
@@ -27,23 +28,28 @@
 - Before synthetic interaction, wait for the owner class/subscriber. For lifecycle closure, wait for timers/frames to return to baseline, not an arbitrary sleep.
 - Before broad UI work, update `docs/ui-surface-contracts.md`; do not build a stale full-DOM database.
 
+## Semantic architecture and proof
+- Map current ownership honestly. A mixed legacy file remains `mixed` until forbidden dependencies are actually removed.
+- Responsibility, owner, relation, invariant, public contract, lifecycle, state, or build-topology changes require a candidate overlay. Validate the effective graph, then use deterministic promotion so the final PR contains the accepted registry/index, no overlay, and a fold receipt.
+- Impact routing uses merge-base paths plus downstream registry relations. Unknown source, shared runtime, bootstrap, build, harness, or fixture changes expand to full acceptance.
+- Behavior-preserving refactors bind control and candidate source/artifact SHAs and run them in separate fresh browser contexts. Compare semantic receipts, not only DOM text or screenshots.
+- Invalidate evidence when its SUT, oracle dependency, fixture, harness, toolchain, or route changes. Classify product, oracle, fixture/harness, verifier/routing/workflow, and environment/live failures separately.
+- Skill selection and passing tests never grant commit, push, merge, live-state, or release authority.
+
 ## Maintenance notes
 - Record reusable causes, discarded fixes, contracts, coverage, recurring live regressions, viewport/target divergence, and fragile host behavior in `docs/agent-maintenance-notes.md`.
 
-## GitHub collaboration
-- `codex/*` is a shared branch name and assigns no owner. Checkpoints are not releases; no force-push, history rewrite, PR merge, tag, promotion, or official-branch update unless requested.
-- Before trusting `origin/*` or rejecting a requested SHA, verify `git remote get-url origin`, query live `refs/heads/<branch>` with `git ls-remote origin "refs/heads/$branch"`, and compare the server SHA. A local tracking ref is not server authority; never downgrade a baseline or block solely on stale tracking refs or an old checkout.
-- If tracking is stale or the object is missing, use the exact refspec `git fetch --no-tags origin "+refs/heads/$branch:refs/remotes/origin/$branch"`, then verify `git cat-file -e "$expectedSha^{commit}"` and the commit tree with `git ls-tree -r --name-only "$expectedSha" -- <required paths>`. Required paths must be checked in the requested commit, not inferred from the checkout.
-- Keep execution state in ignored `.codex/` and review-ready facts in `docs/work/*.md`: phase, single owner, start/result/review SHAs, scope, allowed paths, state, and validation. Use one active writer and hand off only from a clean fixed `REVIEW_READY` SHA; do not review a moving branch.
-- `REVIEW_REQUIRED` or `PAUSED` permits only rules, skills, and the active brief. Runtime, fixture, test, or build work requires explicit `READY_FOR_IMPLEMENTATION`.
-- Stage exact paths. Exclude archives, attachments, raw audits/downloads, secrets, user data, and unrelated generated artifacts. Release work is separately authorized.
+## GitHub development
+- `codex/mobile-development` is the protected accepted development branch. Use short `codex/*` branches and PRs after bootstrap; require latest-SHA policy, affected, and full acceptance checks before merge. Never force-push or delete the protected branch.
+- Local worktrees are working copies, not accepted authority. Before trusting `origin/*`, verify the origin URL and live `refs/heads/<branch>`; a stale tracking ref or old checkout cannot downgrade the baseline.
+- Keep tracked current state precise: accepted runtime SHA, phase, candidate overlay, validation receipts, stale evidence, unresolved live checks, and one next bounded task. Mark superseded current-looking briefs historical.
+- Stage exact paths. Exclude local archives, attachments, raw audits/downloads, credentials, user data, ignored artifacts, and unrelated generated userscripts.
 
 ## Git publishing
-- `origin`: `https://github.com/domato153/dc-uidfiltering.git`; beta/review uses `codex/*`; publish only when requested.
-- Before `codex/*` commit/push, retain artifacts/evidence and archive older userscripts.
+- `origin`: `https://github.com/domato153/dc-uidfiltering.git`. Development PRs target `codex/mobile-development`; publication remains a separate explicit request.
 - `Mobile` owns `Dc_UserFilter_Mobile.user.js`; `main` owns PC/site. Mirror README and images to `Mobile`.
 - Stable updates target version in `main:README.md` and label in `main:index.html`; verify the canonical download version.
-- Publish stable only from a clean official worktree; replace the canonical userscript, preserve history, never force/merge wholesale, and release only after confirmed beta use plus a full request.
+- Stable publication uses the trusted `main` manual workflow, an exact source/artifact SHA, the `mobile-release` environment approval, compare-and-swap expected heads, a draft Release, attached userscript and checksum, nonempty patch notes, and post-publication verification. Never merge the source branch wholesale or report success when an asset is missing or mismatched.
 
 ## Fragile contracts
 - Preserve GM keys/shapes; add migration or fallback for semantic changes.
@@ -51,3 +57,4 @@
 - Reuse observers/rerun hooks; prevent duplicates, bound retries, and retain delayed-content coverage.
 - Keep one final visual owner per surface. Inspect phase order and specificity before overrides, especially `!important`, `:is()`, IDs, and popup ancestors.
 - Scope CSS to owned containers and check affected states, themes, viewports/targets, stacking, clipping, pointer input, and popup context.
+- Presentation consumes immutable snapshots and emits typed intents through `UiPort`; it does not own GM storage, network calls, filter decisions, document-wide observers, or shared mutable state.

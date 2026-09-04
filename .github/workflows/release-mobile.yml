@@ -1,0 +1,191 @@
+name: DCUF approved mobile release
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_sha:
+        description: Exact protected codex/mobile-development source commit
+        required: true
+        type: string
+      expected_version:
+        description: Stable mobile version in build/targets.json
+        required: true
+        type: string
+      expected_dev_head:
+        description: Expected codex/mobile-development head for compare-and-swap
+        required: true
+        type: string
+      expected_main_head:
+        description: Expected main head for compare-and-swap
+        required: true
+        type: string
+      expected_mobile_head:
+        description: Expected Mobile head for compare-and-swap
+        required: true
+        type: string
+      promotion_run_id:
+        description: Successful Windows promotion workflow run for source_sha
+        required: true
+        type: string
+      tested_artifact_sha256:
+        description: Uppercase SHA-256 of the exact live-canary userscript
+        required: true
+        type: string
+      canary_result:
+        description: Exact-artifact live canary result
+        required: true
+        type: choice
+        options:
+          - PASS
+          - UNAVAILABLE
+          - FAIL
+      canary_scope:
+        description: Non-sensitive page states and flows actually checked
+        required: true
+        type: string
+      release_notes:
+        description: Nonempty user-facing patch notes
+        required: true
+        type: string
+      publish_confirmation:
+        description: Build/verify only or approval-gated publication
+        required: true
+        type: choice
+        default: DRY_RUN
+        options:
+          - DRY_RUN
+          - PUBLISH
+
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: 22.17.0
+  PNPM_VERSION: 10.33.1
+
+jobs:
+  prepare:
+    name: read-only-release-preparation
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Validate exact inputs
+        shell: bash
+        env:
+          SOURCE_SHA: ${{ inputs.source_sha }}
+          EXPECTED_DEV_HEAD: ${{ inputs.expected_dev_head }}
+          EXPECTED_MAIN_HEAD: ${{ inputs.expected_main_head }}
+          PROMOTION_RUN_ID: ${{ inputs.promotion_run_id }}
+          WORKFLOW_REF: ${{ github.ref }}
+          WORKFLOW_SHA: ${{ github.sha }}
+        run: |
+          [[ "${SOURCE_SHA}" =~ ^[0-9a-f]{40}$ ]]
+          [[ "${EXPECTED_DEV_HEAD}" == "${SOURCE_SHA}" ]]
+          [[ "${EXPECTED_MAIN_HEAD}" =~ ^[0-9a-f]{40}$ ]]
+          [[ "${PROMOTION_RUN_ID}" =~ ^[0-9]+$ ]]
+          [[ "${WORKFLOW_REF}" == "refs/heads/main" ]]
+          [[ "${WORKFLOW_SHA}" == "${EXPECTED_MAIN_HEAD}" ]]
+      - name: Verify successful Windows promotion belongs to source SHA
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_SHA: ${{ inputs.source_sha }}
+          PROMOTION_RUN_ID: ${{ inputs.promotion_run_id }}
+        shell: bash
+        run: |
+          CONCLUSION="$(gh run view "${PROMOTION_RUN_ID}" --repo "${GITHUB_REPOSITORY}" --json conclusion --jq .conclusion)"
+          HEAD_SHA="$(gh run view "${PROMOTION_RUN_ID}" --repo "${GITHUB_REPOSITORY}" --json headSha --jq .headSha)"
+          WORKFLOW="$(gh run view "${PROMOTION_RUN_ID}" --repo "${GITHUB_REPOSITORY}" --json workflowName --jq .workflowName)"
+          [[ "${CONCLUSION}" == "success" ]]
+          [[ "${HEAD_SHA}" == "${SOURCE_SHA}" ]]
+          [[ "${WORKFLOW}" == "DCUF Windows promotion verification" ]]
+      - name: Checkout exact candidate without write credentials
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ inputs.source_sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Reject a moved or abbreviated checkout
+        env:
+          SOURCE_SHA: ${{ inputs.source_sha }}
+        shell: bash
+        run: test "$(git rev-parse HEAD)" = "${SOURCE_SHA}"
+      - name: Set up Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Activate pinned pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@${PNPM_VERSION} --activate
+      - name: Install and verify exact candidate
+        run: |
+          pnpm install --frozen-lockfile
+          node tools/build-userscript.mjs
+          node tools/build-pc-filter-userscript.mjs
+          node tools/verify-repo.mjs all
+      - name: Prepare immutable release inputs
+        env:
+          SOURCE_SHA: ${{ inputs.source_sha }}
+          EXPECTED_VERSION: ${{ inputs.expected_version }}
+          EXPECTED_DEV_HEAD: ${{ inputs.expected_dev_head }}
+          EXPECTED_MAIN_HEAD: ${{ inputs.expected_main_head }}
+          EXPECTED_MOBILE_HEAD: ${{ inputs.expected_mobile_head }}
+          TESTED_ARTIFACT_SHA256: ${{ inputs.tested_artifact_sha256 }}
+          CANARY_RESULT: ${{ inputs.canary_result }}
+          CANARY_SCOPE: ${{ inputs.canary_scope }}
+          RELEASE_NOTES: ${{ inputs.release_notes }}
+          PUBLISH_CONFIRMATION: ${{ inputs.publish_confirmation }}
+        run: node tools/prepare-mobile-release.mjs artifacts/release-preparation
+      - name: Upload immutable preparation
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: mobile-release-preparation-${{ inputs.source_sha }}
+          path: artifacts/release-preparation/**
+          if-no-files-found: error
+          retention-days: 30
+
+  publish:
+    name: approved-trusted-publication
+    needs: prepare
+    if: inputs.publish_confirmation == 'PUBLISH'
+    runs-on: ubuntu-24.04
+    environment: mobile-release
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout trusted main control plane
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          path: control
+      - name: Checkout exact Mobile head
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ inputs.expected_mobile_head }}
+          fetch-depth: 0
+          path: mobile
+      - name: Download prepared artifact
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: mobile-release-preparation-${{ inputs.source_sha }}
+          path: release-preparation
+      - name: Set up Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Stage, compare-and-swap, publish, and post-verify
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CONTROL_DIR: ${{ github.workspace }}/control
+          MOBILE_DIR: ${{ github.workspace }}/mobile
+          STAGING_DIR: ${{ github.workspace }}/release-preparation
+          PUBLISH_RECEIPT_PATH: ${{ github.workspace }}/release-preparation/publication-receipt.json
+        run: node control/tools/publish-mobile-release.mjs
+      - name: Upload publication receipt
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: mobile-publication-${{ inputs.source_sha }}
+          path: release-preparation/*.json
+          if-no-files-found: error
+          retention-days: 30

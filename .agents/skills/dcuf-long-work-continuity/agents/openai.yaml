@@ -1,0 +1,4 @@
+interface:
+  display_name: "DCUF Long-work Continuity"
+  short_description: "Resume DCUF work from current authority"
+  default_prompt: "Use $dcuf-long-work-continuity to resolve the current DCUF state and next bounded task from fresh refs."

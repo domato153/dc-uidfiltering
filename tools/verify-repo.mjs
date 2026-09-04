@@ -8,10 +8,8 @@ const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const requestedMode = process.argv[2] || 'all';
 const validModes = new Set(['guidance', 'release', 'all']);
 const failures = [];
-// Collaboration gating and the dedicated UI-maintenance workflow are durable
-// repository guidance, so budget them explicitly instead of disabling limits.
-const AGENTS_CHAR_LIMIT = 6000;
-const SKILLS_CHAR_LIMIT = 10500;
+const AGENTS_CHAR_LIMIT = 9000;
+const SKILLS_CHAR_LIMIT = 24000;
 const BOARD_MATCHES = [
     'https://gall.dcinside.com/board/*',
     'https://gall.dcinside.com/mgallery/board/*',
@@ -55,7 +53,16 @@ async function verifyGuidance() {
     const agentsPath = path.join(rootDir, 'AGENTS.md');
     const skillsDir = path.join(rootDir, '.agents', 'skills');
     const agentsText = await readFile(agentsPath, 'utf8');
-    const expectedSkills = ['dcuf-release', 'dcuf-ui-surface-maintainer', 'dom-safety-audit', 'metadata-safety'];
+    const expectedSkills = [
+        'dcuf-evidence-adversarial-selection',
+        'dcuf-long-work-continuity',
+        'dcuf-release',
+        'dcuf-semantic-architecture',
+        'dcuf-semantic-preservation',
+        'dcuf-ui-surface-maintainer',
+        'dom-safety-audit',
+        'metadata-safety'
+    ];
     const entries = await readdir(skillsDir, { withFileTypes: true });
     const actualSkills = entries.filter((entry) => entry.isDirectory()).map((entry) => entry.name).sort();
 
@@ -95,17 +102,34 @@ async function verifyGuidance() {
     check(await exists(path.join(skillsDir, 'dcuf-release', 'references', 'manual-smoke.md')),
         'dcuf-release: references/manual-smoke.md is missing');
 
-    const authoritativeRemoteInvariants = [
-        ['authoritative_remote_ref', /git\s+ls-remote[\s\S]*refs\/heads/],
-        ['origin_url_check', /git\s+remote\s+get-url\s+origin/],
-        ['exact_refspec_recovery', /git\s+fetch[\s\S]*\+refs\/heads\/\$branch:refs\/remotes\/origin\/\$branch/],
-        ['stale_tracking_not_authority', /local tracking ref is not server authority[\s\S]*never downgrade a baseline[\s\S]*block solely on stale tracking refs/i],
-        ['commit_object_check', /git\s+cat-file\s+-e[\s\S]*\^\{commit\}/],
-        ['required_paths_check', /git\s+ls-tree[\s\S]*required paths/]
+    const governanceInvariants = [
+        ['protected_development_branch', /codex\/mobile-development[\s\S]*protected accepted development branch/i],
+        ['fresh_remote_authority', /verify the origin URL and live `refs\/heads\/<branch>`/i],
+        ['semantic_registry_authority', /architecture\/registry\.json[\s\S]*semantic\/layer authority/i],
+        ['candidate_promotion', /candidate overlay[\s\S]*deterministic promotion/i],
+        ['impact_graph', /merge-base paths[\s\S]*downstream registry relations/i],
+        ['evidence_invalidation', /SUT[\s\S]*oracle dependency[\s\S]*fixture[\s\S]*harness[\s\S]*toolchain[\s\S]*route/i],
+        ['skill_not_authority', /Skill selection[\s\S]*never grant[\s\S]*release authority/i],
+        ['release_asset_truth', /attached userscript and checksum[\s\S]*Never[\s\S]*asset is missing or mismatched/i]
     ];
-    authoritativeRemoteInvariants.forEach(([name, pattern]) => {
-        check(pattern.test(agentsText), `governance invariant ${name}: AGENTS.md is missing the required authoritative remote-ref contract`);
+    governanceInvariants.forEach(([name, pattern]) => {
+        check(pattern.test(agentsText), `governance invariant ${name}: AGENTS.md is missing the required contract`);
     });
+
+    for (const [label, script] of [
+        ['architecture', 'tools/architecture-registry.mjs'],
+        ['skills', 'tools/verify-skills.mjs'],
+        ['UI boundaries', 'tools/verify-ui-boundaries.mjs'],
+        ['workflows', 'tools/verify-workflows.mjs']
+    ]) {
+        const result = spawnSync(process.execPath, [script, ...(label === 'architecture' ? ['validate'] : [])], {
+            cwd: rootDir,
+            encoding: 'utf8'
+        });
+        if (result.stdout) process.stdout.write(result.stdout);
+        if (result.stderr) process.stderr.write(result.stderr);
+        check(result.status === 0, `${label} verification failed`);
+    }
 
     console.log('Guidance metrics');
     console.log(` - AGENTS.md: ${agentsText.length}/${AGENTS_CHAR_LIMIT} characters`);

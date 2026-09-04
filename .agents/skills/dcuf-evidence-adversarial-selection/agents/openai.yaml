@@ -1,0 +1,4 @@
+interface:
+  display_name: "DCUF Evidence Selection"
+  short_description: "Choose adversarial checks by failure mode"
+  default_prompt: "Use $dcuf-evidence-adversarial-selection to choose proportionate evidence and adversarial validation for this DCUF change."

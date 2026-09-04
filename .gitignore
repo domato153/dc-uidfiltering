@@ -21,6 +21,7 @@
 /dist/dcinside_user_filter_v1.9.1-beta.user.js
 
 # Local Playwright testbed outputs
+/node_modules/
 /testbed/node_modules/
 /testbed/artifacts/
 /testbed/test-results/

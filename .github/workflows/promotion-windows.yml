@@ -1,0 +1,76 @@
+name: DCUF Windows promotion verification
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_sha:
+        description: Exact accepted codex/mobile-development commit to verify
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: 22.17.0
+  PNPM_VERSION: 10.33.1
+
+jobs:
+  promotion-windows:
+    runs-on: windows-2025
+    steps:
+      - name: Checkout exact source SHA
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ inputs.source_sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Reject a moved or abbreviated SHA
+        shell: pwsh
+        env:
+          EXPECTED_SHA: ${{ inputs.source_sha }}
+        run: |
+          $actual = git rev-parse HEAD
+          if ($env:EXPECTED_SHA -notmatch '^[0-9a-f]{40}$' -or $actual -ne $env:EXPECTED_SHA) {
+            throw "Checked out $actual instead of exact $env:EXPECTED_SHA"
+          }
+      - name: Set up Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Activate pinned pnpm
+        shell: pwsh
+        run: |
+          corepack enable
+          corepack prepare pnpm@$env:PNPM_VERSION --activate
+      - name: Install locked dependencies and Chromium
+        shell: pwsh
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm --dir testbed exec playwright install chromium
+      - name: Resolve promotion receipt
+        shell: pwsh
+        env:
+          SOURCE_SHA: ${{ inputs.source_sha }}
+        run: node tools/resolve-impact.mjs --base "$env:SOURCE_SHA~1" --head "$env:SOURCE_SHA" --full --output artifacts/impact.json
+      - name: Run Windows promotion gates
+        shell: pwsh
+        run: node tools/run-gates.mjs artifacts/impact.json artifacts/promotion-result.json --only promotion-windows
+      - name: Write exact artifact manifest
+        if: always()
+        shell: pwsh
+        run: node tools/write-ci-manifest.mjs artifacts/ci-manifest.json
+      - name: Upload promotion evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: windows-promotion-${{ inputs.source_sha }}
+          path: |
+            artifacts/*.json
+            Dc_UserFilter_Mobile_v*.user.js
+            dcinside_user_filter_v*.user.js
+            dist/*.user.js
+            testbed/artifacts/runtime-under-test.user.js
+            testbed/test-results/**
+          if-no-files-found: error
+          retention-days: 30

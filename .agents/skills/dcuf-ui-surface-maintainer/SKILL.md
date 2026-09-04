@@ -9,8 +9,8 @@ Treat DCUF as a surgical host-page adapter: preserve the site contract while rep
 
 ## Gate
 
-1. Read `AGENTS.md`, the active `docs/work/*.md`, `docs/ui-surface-contracts.md`, and relevant maintenance notes.
-2. Confirm branch, reviewed SHA, and brief status. Do not change runtime, fixtures, or artifacts before user-approved `READY_FOR_IMPLEMENTATION`.
+1. Read `AGENTS.md`, the tracked current-state record, `architecture/registry.json`, `docs/ui-surface-contracts.md`, and relevant maintenance notes.
+2. Confirm branch, exact SHA, impact route, and whether an architecture candidate is required. Do not revive superseded UI briefs or the discarded login redesign.
 3. Run `dom-safety-audit` first for dynamic DOM, mirrors, popups, stacking, clipping, pointer input, or host-style collisions.
 
 ## Establish ownership
@@ -28,6 +28,7 @@ Use `!important` only for a verified host inline/important conflict, visibility 
 ## Preserve contracts
 
 - Preserve DOM order, form action/method, control types, hidden fields, delegated events, native popup content, and submission paths.
+- Presentation consumes immutable snapshots and emits intents through the UI port. It must not own GM storage, filtering decisions, UID requests, document-wide observers, or shared mutable state.
 - Keep native popup interiors unchanged unless explicitly approved; correct only isolation, ownership, containment, and reachability.
 - Reuse observers, schedulers, and rerun hooks; bound retries and retain delayed-content coverage.
 - Treat list/view/write/login, theme, viewport, authentication, and open/closed states separately until evidence proves a shared contract.
@@ -38,6 +39,6 @@ Use `!important` only for a verified host inline/important conflict, visibility 
 2. Add a failing positive contract for geometry, adjacency, visibility, overflow, focus, or `elementFromPoint`; screenshots, z-index alone, and zero-area matches are not passes.
 3. Cover relevant light/dark, wide/narrow/short, logged-in/out, and competing-layer states.
 4. Run focused guarded source-runtime tests, then the required final suite on the settled runtime; report absolute runtime path and SHA-256.
-5. Manually compare approved composition without weakening behavior or accessibility checks.
+5. Compare the control and candidate semantic receipts in separate browser contexts, then manually compare approved composition without weakening behavior or accessibility checks.
 
 Report the chosen owner, removed/narrowed competitors, preserved host contracts, validation, remaining live checks, and commit SHA. Put only review-ready facts in the tracked brief.

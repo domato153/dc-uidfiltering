@@ -1,0 +1,137 @@
+name: DCUF development CI
+
+on:
+  pull_request:
+    branches:
+      - codex/mobile-development
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dcuf-development-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: 22.17.0
+  PNPM_VERSION: 10.33.1
+
+jobs:
+  policy:
+    name: policy-contracts
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout exact candidate
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Set up Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Activate pinned pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@${PNPM_VERSION} --activate
+      - name: Install locked dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Verify policy, skills, registry, and UI boundaries
+        run: |
+          node tools/architecture-registry.mjs validate
+          node tools/verify-skills.mjs
+          node tools/verify-ui-boundaries.mjs
+          node tools/verify-repo.mjs guidance
+
+  affected:
+    name: affected-tests
+    needs: policy
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout exact candidate
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Set up Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Activate pinned pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@${PNPM_VERSION} --activate
+      - name: Install locked dependencies and Chromium
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm --dir testbed exec playwright install --with-deps chromium
+      - name: Resolve affected graph
+        env:
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          BASE_SHA="${PR_BASE_SHA}"
+          if [ -z "${BASE_SHA}" ]; then BASE_SHA="$(git rev-parse HEAD^)"; fi
+          node tools/resolve-impact.mjs --base "${BASE_SHA}" --head HEAD --output artifacts/impact.json
+      - name: Run focused affected profiles
+        run: node tools/run-gates.mjs artifacts/impact.json artifacts/affected-result.json --only mobile-focused,pc-focused
+      - name: Upload affected receipts
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: affected-${{ github.sha }}
+          path: |
+            artifacts/impact.json
+            artifacts/affected-result.json
+            testbed/test-results/**
+          if-no-files-found: error
+          retention-days: 30
+
+  acceptance:
+    name: full-acceptance
+    needs: affected
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout exact candidate
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Set up Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Activate pinned pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@${PNPM_VERSION} --activate
+      - name: Install locked dependencies and Chromium
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm --dir testbed exec playwright install --with-deps chromium
+      - name: Resolve full acceptance
+        env:
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          BASE_SHA="${PR_BASE_SHA}"
+          if [ -z "${BASE_SHA}" ]; then BASE_SHA="$(git rev-parse HEAD^)"; fi
+          node tools/resolve-impact.mjs --base "${BASE_SHA}" --head HEAD --full --output artifacts/impact.json
+      - name: Run full deterministic gates
+        run: node tools/run-gates.mjs artifacts/impact.json artifacts/acceptance-result.json --only acceptance
+      - name: Write exact artifact manifest
+        if: always()
+        run: node tools/write-ci-manifest.mjs artifacts/ci-manifest.json
+      - name: Upload acceptance evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: acceptance-${{ github.sha }}
+          path: |
+            artifacts/*.json
+            Dc_UserFilter_Mobile_v*.user.js
+            dcinside_user_filter_v*.user.js
+            dist/*.user.js
+            testbed/artifacts/runtime-under-test.user.js
+            testbed/test-results/**
+          if-no-files-found: error
+          retention-days: 30

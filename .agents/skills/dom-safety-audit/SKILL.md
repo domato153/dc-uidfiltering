@@ -20,4 +20,5 @@ Audit the smallest complete affected surface, including related states and conte
 9. Add live-shaped regressions: select a rendered positive-area instance when hidden originals/mirrors coexist, wait for its owner before interaction, and assert positive bounds, label adjacency, popup hit-testing, themes, and viewports. Do not hide the affected popup in visual setup.
 10. For lifecycle closure, wait for timers/frames to return to baseline; never replace it with a fixed sleep or call a bounded cleanup timer a leak.
 11. Treat screenshot capture as review evidence, never as visual approval. Encode the reference image's required composition, spacing, decoration, and hierarchy as assertions, then inspect the artifact against the reference.
-12. Report evidence, affected contexts, discarded partial fixes, and any remaining live-only check.
+12. Bind fixture provenance and the guarded runtime SHA to the result. For behavior-preserving refactors, compare control and candidate in separate contexts and invalidate the result if the runtime, fixture, harness, or route changes.
+13. Report evidence, affected contexts, discarded partial fixes, and any remaining live-only check.

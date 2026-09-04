@@ -1,0 +1,20 @@
+{
+  "name": "dcuf-development",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.33.1",
+  "engines": {
+    "node": "22.17.0"
+  },
+  "scripts": {
+    "build:mobile": "node tools/build-userscript.mjs",
+    "build:pc": "node tools/build-pc-filter-userscript.mjs",
+    "verify:architecture": "node tools/architecture-registry.mjs validate",
+    "verify:boundaries": "node tools/verify-ui-boundaries.mjs",
+    "verify:skills": "node tools/verify-skills.mjs",
+    "verify:all": "node tools/verify-repo.mjs all"
+  },
+  "devDependencies": {
+    "acorn": "8.18.0"
+  }
+}

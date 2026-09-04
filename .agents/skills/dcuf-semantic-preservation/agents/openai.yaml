@@ -1,0 +1,4 @@
+interface:
+  display_name: "DCUF Semantic Preservation"
+  short_description: "Prove behavior-preserving DCUF refactors"
+  default_prompt: "Use $dcuf-semantic-preservation to bind control and candidate artifacts and audit semantic preservation."

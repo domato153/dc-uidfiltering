@@ -1,4 +1,6 @@
-# DCUF mobile 3.5.4 minimal correction brief
+# Historical: DCUF mobile 3.5.4 minimal correction brief
+
+> Completed source-history record. It is not the current work authority; use `docs/work/CURRENT_STATE.md`.
 
 ## Status
 

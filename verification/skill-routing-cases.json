@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "cases": [
+    { "id": "release-positive", "category": "positive", "request": "모바일 정식 버전을 빌드하고 릴리즈 artifact를 검증해줘", "expectedSkills": ["dcuf-release"], "excludedSkills": [] },
+    { "id": "release-negative", "category": "negative", "request": "필터 조건문 한 곳만 설명해줘", "expectedSkills": [], "excludedSkills": ["dcuf-release"] },
+    { "id": "ui-positive", "category": "positive", "request": "댓글 팝업 stacking과 CSS 소유자를 고쳐줘", "expectedSkills": ["dcuf-ui-surface-maintainer", "dom-safety-audit"], "excludedSkills": [] },
+    { "id": "ui-negative", "category": "negative", "request": "순수 IP 분류 데이터를 검토해줘", "expectedSkills": [], "excludedSkills": ["dcuf-ui-surface-maintainer", "dom-safety-audit"] },
+    { "id": "dom-paraphrase", "category": "paraphrase", "request": "동적으로 생긴 native menu가 클릭은 되지만 다른 layer 뒤에 갇혀 있어", "expectedSkills": ["dom-safety-audit"], "excludedSkills": [] },
+    { "id": "metadata-positive", "category": "positive", "request": "@match와 GM grant, 저장 키 migration을 바꿔야 해", "expectedSkills": ["metadata-safety"], "excludedSkills": [] },
+    { "id": "metadata-negative", "category": "negative", "request": "버전은 그대로 두고 목록 간격만 봐줘", "expectedSkills": ["dcuf-ui-surface-maintainer"], "excludedSkills": ["metadata-safety", "dcuf-release"] },
+    { "id": "architecture-positive", "category": "positive", "request": "필터 UI 소유자를 새 layer로 옮기고 semantic registry를 갱신해줘", "expectedSkills": ["dcuf-semantic-architecture"], "excludedSkills": [] },
+    { "id": "architecture-negative", "category": "negative", "request": "현재 함수가 무슨 일을 하는지 답만 해줘", "expectedSkills": [], "excludedSkills": ["dcuf-semantic-architecture"] },
+    { "id": "preservation-positive", "category": "positive", "request": "출력 동작을 하나도 바꾸지 않는 구조 리팩터링임을 증명해줘", "expectedSkills": ["dcuf-semantic-preservation"], "excludedSkills": [] },
+    { "id": "preservation-negative", "category": "negative", "request": "주석 오타 하나만 고쳐줘", "expectedSkills": [], "excludedSkills": ["dcuf-semantic-preservation"] },
+    { "id": "preservation-held-out", "category": "held-out", "request": "rewrite 전후의 관찰 가능한 의미가 같다는 독립 증거가 필요해", "expectedSkills": ["dcuf-semantic-preservation"], "excludedSkills": [] },
+    { "id": "evidence-positive", "category": "positive", "request": "이 변경에는 mutation, fault injection, differential 중 어떤 감사를 해야 하는지 골라줘", "expectedSkills": ["dcuf-evidence-adversarial-selection"], "excludedSkills": [] },
+    { "id": "evidence-negative", "category": "negative", "request": "이미 정해진 smoke test만 실행해줘", "expectedSkills": [], "excludedSkills": ["dcuf-evidence-adversarial-selection"] },
+    { "id": "continuity-positive", "category": "positive", "request": "긴 작업을 재개하니 fresh refs와 다음 bounded task를 복구해줘", "expectedSkills": ["dcuf-long-work-continuity"], "excludedSkills": [] },
+    { "id": "continuity-negative", "category": "negative", "request": "현재 파일의 한 함수만 바로 설명해줘", "expectedSkills": [], "excludedSkills": ["dcuf-long-work-continuity"] },
+    { "id": "continuity-paraphrase", "category": "paraphrase", "request": "예전 계획 말고 지금 branch의 권위 상태에서 이어가자", "expectedSkills": ["dcuf-long-work-continuity"], "excludedSkills": [] },
+    { "id": "shared-overlap", "category": "overlap", "request": "공유 개인차단 UI를 분리하되 저장 형식과 모바일/PC 동작을 보존해줘", "expectedSkills": ["dcuf-semantic-architecture", "dcuf-semantic-preservation", "metadata-safety"], "excludedSkills": [] },
+    { "id": "ui-overlap", "category": "overlap", "request": "native popup node를 보존하며 UI layer로 분리하고 회귀를 증명해줘", "expectedSkills": ["dcuf-ui-surface-maintainer", "dom-safety-audit", "dcuf-semantic-architecture", "dcuf-semantic-preservation"], "excludedSkills": [] },
+    { "id": "release-overlap", "category": "overlap", "request": "공유 필터 변경을 정식 빌드하고 모바일/PC 저장 호환성과 artifact를 검증해줘", "expectedSkills": ["dcuf-release", "metadata-safety", "dcuf-semantic-preservation"], "excludedSkills": [] }
+  ]
+}

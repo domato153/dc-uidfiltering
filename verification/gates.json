@@ -1,0 +1,104 @@
+{
+  "schemaVersion": 1,
+  "fallbackProfile": "acceptance",
+  "failureClasses": [
+    "product-runtime",
+    "oracle-generator",
+    "fixture-harness",
+    "verifier-routing-workflow",
+    "environment-live"
+  ],
+  "profiles": {
+    "policy": {
+      "runsOn": ["ubuntu-24.04", "windows-2025"],
+      "commands": [
+        { "id": "architecture", "command": "node", "args": ["tools/architecture-registry.mjs", "validate"] },
+        { "id": "guidance", "command": "node", "args": ["tools/verify-repo.mjs", "guidance"] }
+      ]
+    },
+    "mobile-focused": {
+      "runsOn": ["ubuntu-24.04"],
+      "commands": [
+        { "id": "mobile-build", "command": "node", "args": ["tools/build-userscript.mjs", "--testbed-output", "testbed/artifacts/runtime-under-test.user.js"] },
+        { "id": "mobile-smoke", "command": "node", "args": ["testbed/run-tests.mjs", "--group", "smoke", "--require-runtime-under-test"] }
+      ]
+    },
+    "pc-focused": {
+      "runsOn": ["ubuntu-24.04"],
+      "commands": [
+        { "id": "pc-build", "command": "node", "args": ["tools/build-pc-filter-userscript.mjs"] },
+        { "id": "release-contracts", "command": "node", "args": ["tools/verify-repo.mjs", "release"] }
+      ]
+    },
+    "acceptance": {
+      "runsOn": ["ubuntu-24.04"],
+      "commands": [
+        { "id": "mobile-build", "command": "node", "args": ["tools/build-userscript.mjs", "--testbed-output", "testbed/artifacts/runtime-under-test.user.js"] },
+        { "id": "full-testbed", "command": "node", "args": ["testbed/run-tests.mjs", "--require-runtime-under-test"] },
+        { "id": "host-compatibility", "command": "node", "args": ["testbed/run-host-compatibility.mjs", "--require-runtime-under-test"] },
+        { "id": "pc-build", "command": "node", "args": ["tools/build-pc-filter-userscript.mjs"] },
+        { "id": "repository-all", "command": "node", "args": ["tools/verify-repo.mjs", "all"] }
+      ]
+    },
+    "promotion-windows": {
+      "runsOn": ["windows-2025"],
+      "commands": [
+        { "id": "mobile-build-runtime", "command": "node", "args": ["tools/build-userscript.mjs", "--testbed-output", "testbed/artifacts/runtime-under-test.user.js"] },
+        { "id": "mobile-build-release", "command": "node", "args": ["tools/build-userscript.mjs"] },
+        { "id": "pc-build", "command": "node", "args": ["tools/build-pc-filter-userscript.mjs"] },
+        { "id": "repository-all", "command": "node", "args": ["tools/verify-repo.mjs", "all"] },
+        { "id": "mobile-smoke", "command": "node", "args": ["testbed/run-tests.mjs", "--group", "smoke", "--require-runtime-under-test"] }
+      ]
+    },
+    "live-canary": {
+      "runsOn": ["manual-tampermonkey"],
+      "commands": []
+    }
+  },
+  "componentProfiles": {
+    "mobile-metadata": ["acceptance"],
+    "pc-metadata": ["pc-focused"],
+    "shared-filter-contracts": ["mobile-focused", "pc-focused"],
+    "shared-storage-schema": ["acceptance"],
+    "shared-ip-data": ["acceptance"],
+    "shared-storage-core": ["acceptance"],
+    "shared-filter-core": ["acceptance"],
+    "shared-write-defaults": ["acceptance"],
+    "runtime-bootstrap": ["acceptance"],
+    "runtime-teardown": ["acceptance"],
+    "mobile-adapter-contract": ["mobile-focused"],
+    "mobile-runtime-coordinator": ["acceptance"],
+    "mobile-style-banner": ["mobile-focused"],
+    "mobile-theme-module": ["acceptance"],
+    "mobile-filter-module": ["acceptance"],
+    "mobile-convenience-module": ["acceptance"],
+    "mobile-personal-block-module": ["acceptance"],
+    "mobile-ui-module": ["acceptance"],
+    "mobile-post-main-fixes": ["acceptance"],
+    "mobile-legacy-app": ["policy"],
+    "pc-adapter-contract": ["pc-focused"],
+    "pc-filter-style": ["pc-focused"],
+    "pc-filter-entry": ["pc-focused"],
+    "mobile-build": ["acceptance"],
+    "pc-build": ["acceptance"],
+    "repository-verifier": ["acceptance"],
+    "testbed-harness": ["acceptance"],
+    "testbed-fixtures": ["acceptance"],
+    "architecture-governance": ["policy"]
+  },
+  "invariantProfiles": {
+    "invariant-registry-integrity": ["policy"],
+    "invariant-build-inputs-mapped": ["policy"],
+    "invariant-exact-mobile-baseline": ["policy"],
+    "invariant-storage-compatibility": ["acceptance"],
+    "invariant-shared-target-semantics": ["acceptance"],
+    "invariant-initialization-recovery": ["acceptance"],
+    "invariant-host-node-preservation": ["acceptance"],
+    "invariant-one-visual-owner": ["acceptance"],
+    "invariant-pc-host-style-isolation": ["pc-focused"],
+    "invariant-runtime-guard": ["acceptance"],
+    "invariant-proof-binding": ["policy"],
+    "invariant-ui-port-boundary": ["acceptance"],
+    "invariant-hot-path-stability": ["acceptance"]
+  }
+}
