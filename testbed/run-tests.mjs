@@ -28,22 +28,17 @@ if (requestedTarget && !['mobile', 'pc'].includes(requestedTarget)) {
 }
 const isPcUserscript = requestedTarget === 'pc'
     || (!requestedTarget && /dcinside_user_filter/i.test(process.env.DCUF_TESTBED_USERSCRIPT || ''));
+const activeTarget = isPcUserscript ? 'pc' : 'mobile';
 const tests = [];
 const performanceReports = [];
 const writeLayoutReports = [];
 const testResults = [];
-const test = (name, group, run) => tests.push({ name, group, run });
-const mobileTest = (name, group, run) => test(name, group, async (context) => {
-    if (isPcUserscript) return;
-    return run(context);
-});
+const test = (name, group, run, targets = ['mobile', 'pc']) => tests.push({ name, group, run, targets });
+const mobileTest = (name, group, run) => test(name, group, run, ['mobile']);
 // Historical quick-write assertions remain unregistered until the related
 // workstream closes; the production feature itself has been removed.
 const obsoleteMobileTest = () => {};
-const pcTest = (name, group, run) => test(name, group, async (context) => {
-    if (!isPcUserscript) return;
-    return run(context);
-});
+const pcTest = (name, group, run) => test(name, group, run, ['pc']);
 const statsStorage = {
     [storageKeys.threshold]: 10,
     [storageKeys.ratioEnabled]: false,
@@ -331,8 +326,7 @@ mobileTest('boot: a delayed view-bottom list replacement is hidden before its fi
     } finally { await session.close(); }
 });
 
-test('mobile blocked UID persistence batches bursts and preserves in-flight updates', 'functional', async ({ browser, server }) => {
-    if (isPcUserscript) return;
+mobileTest('mobile blocked UID persistence batches bursts and preserves in-flight updates', 'functional', async ({ browser, server }) => {
     const session = await createTestPage(browser, server.baseUrl, {
         storage: noStatsStorage,
         gmBehavior: { writeDelayByKey: { [storageKeys.blockedUids]: 180 } }
@@ -384,8 +378,7 @@ test('mobile blocked UID persistence batches bursts and preserves in-flight upda
     } finally { await session.close(); }
 });
 
-test('mobile blocked UID persistence flushes on hidden and pagehide', 'functional', async ({ browser, server }) => {
-    if (isPcUserscript) return;
+mobileTest('mobile blocked UID persistence flushes on hidden and pagehide', 'functional', async ({ browser, server }) => {
     const session = await createTestPage(browser, server.baseUrl, { storage: noStatsStorage });
     try {
         await session.goto('/board/view?id=test&no=1001');
@@ -631,8 +624,7 @@ test('boot: 댓글이 0·140·420ms에 들어와도 초기 장벽 뒤 한 번만
     } finally { await session.close(); }
 });
 
-test('boot: 야간모드의 시각 테마 판정 실패는 필터 완료 뒤 댓글과 하단 목록을 가리지 않는다', 'boot', async ({ browser, server }) => {
-    if (isPcUserscript) return;
+mobileTest('boot: 야간모드의 시각 테마 판정 실패는 필터 완료 뒤 댓글과 하단 목록을 가리지 않는다', 'boot', async ({ browser, server }) => {
     const session = await createTestPage(browser, server.baseUrl, {
         storage: noStatsStorage,
         boot: { revealTimeoutMs: 120, criticalDeadlineMs: 320, absoluteDeadlineMs: 1200, recoveryMaxMs: 300 }
@@ -683,8 +675,7 @@ test('boot: 야간모드의 시각 테마 판정 실패는 필터 완료 뒤 댓
     } finally { await session.close(); }
 });
 
-test('boot: 목록 준비 실패는 이동 DOM과 인라인 상태를 롤백한 뒤 재시도로 복구한다', 'boot', async ({ browser, server }) => {
-    if (isPcUserscript) return;
+mobileTest('boot: 목록 준비 실패는 이동 DOM과 인라인 상태를 롤백한 뒤 재시도로 복구한다', 'boot', async ({ browser, server }) => {
     const session = await createTestPage(browser, server.baseUrl, {
         storage: noStatsStorage,
         boot: { failListPrepareOnce: true, recoveryRetryDelayMs: 1400, recoveryWatchDelayMs: 1200, criticalDeadlineMs: 1600, absoluteDeadlineMs: 3000 }
@@ -722,8 +713,7 @@ test('boot: 목록 준비 실패는 이동 DOM과 인라인 상태를 롤백한 
     } finally { await session.close(); }
 });
 
-test('boot: body 교체 후 mutation bus가 새 body에 재연결되고 필터 구독자를 보존한다', 'boot', async ({ browser, server }) => {
-    if (isPcUserscript) return;
+mobileTest('boot: body 교체 후 mutation bus가 새 body에 재연결되고 필터 구독자를 보존한다', 'boot', async ({ browser, server }) => {
     const storage = {
         ...noStatsStorage,
         [storageKeys.personalList]: { uids: [{ id: 'blocked-list-user', name: 'blocked list' }], nicknames: [], ips: [] }
@@ -835,8 +825,7 @@ test('smoke: 목록과 본문에서 실제 사용자 스크립트가 초기화�
     } finally { await minorView.close(); }
 });
 
-test('page context registers only the runtime subscribers owned by each surface', 'functional', async ({ browser, server }) => {
-    if (isPcUserscript) return;
+mobileTest('page context registers only the runtime subscribers owned by each surface', 'functional', async ({ browser, server }) => {
     const cases = [
         {
             pathname: '/board/lists?id=test',
@@ -896,8 +885,7 @@ test('page context registers only the runtime subscribers owned by each surface'
     }
 });
 
-test('filter UI CSS stays lazy until the first interactive surface opens', 'functional', async ({ browser, server }) => {
-    if (isPcUserscript) return;
+mobileTest('filter UI CSS stays lazy until the first interactive surface opens', 'functional', async ({ browser, server }) => {
     const session = await createTestPage(browser, server.baseUrl, { storage: noStatsStorage });
     try {
         await session.goto('/board/view?id=test&no=1001');
@@ -938,8 +926,7 @@ test('filter UI CSS stays lazy until the first interactive surface opens', 'func
     } finally { await session.close(); }
 });
 
-test('mutation bus skips irrelevant attributes and caches repeated payload searches', 'functional', async ({ browser, server }) => {
-    if (isPcUserscript) return;
+mobileTest('mutation bus skips irrelevant attributes and caches repeated payload searches', 'functional', async ({ browser, server }) => {
     const session = await createTestPage(browser, server.baseUrl, { storage: noStatsStorage });
     try {
         await session.goto('/board/view?id=test&no=1001');
@@ -1051,8 +1038,7 @@ mobileTest('mini view bottom buttons remain clickable above article overlays', '
     } finally { await session.close(); }
 });
 
-test('comment add edit delete and detached replies stay root-scoped and filtered', 'functional', async ({ browser, server }) => {
-    if (isPcUserscript) return;
+mobileTest('comment add edit delete and detached replies stay root-scoped and filtered', 'functional', async ({ browser, server }) => {
     const blockedUids = ['blocked-parent-dynamic', 'blocked-edit-dynamic', 'blocked-added-dynamic'];
     const session = await createTestPage(browser, server.baseUrl, {
         storage: {
@@ -1138,8 +1124,7 @@ test('comment add edit delete and detached replies stay root-scoped and filtered
     } finally { await session.close(); }
 });
 
-test('focus comment reply composer collapse clears merged card state', 'functional', async ({ browser, server }) => {
-    if (isPcUserscript) return;
+mobileTest('focus comment reply composer collapse clears merged card state', 'functional', async ({ browser, server }) => {
 
     const session = await createTestPage(browser, server.baseUrl, { storage: noStatsStorage });
     try {
@@ -1181,8 +1166,7 @@ test('focus comment reply composer collapse clears merged card state', 'function
     } finally { await session.close(); }
 });
 
-test('mobile list navigation uses integrated raised toolbar and control cards', 'functional', async ({ browser, server }) => {
-    if (isPcUserscript) return;
+mobileTest('mobile list navigation uses integrated raised toolbar and control cards', 'functional', async ({ browser, server }) => {
 
     const cases = [
         { path: '/board/lists?id=test', viewport: { width: 390, height: 844 } },
@@ -2563,8 +2547,7 @@ mobileTest('search drawer replacement keeps one global listener set and prunes d
     } finally { await session.close(); }
 });
 
-test('fixed-size list replacement loops settle without runtime lifecycle growth', 'functional', async ({ browser, server }) => {
-    if (isPcUserscript) return;
+mobileTest('fixed-size list replacement loops settle without runtime lifecycle growth', 'functional', async ({ browser, server }) => {
     const session = await createTestPage(browser, server.baseUrl, { storage: noStatsStorage });
     try {
         await session.goto('/mgallery/board/lists?id=test');
@@ -2642,8 +2625,7 @@ test('fixed-size list replacement loops settle without runtime lifecycle growth'
     } finally { await session.close(); }
 });
 
-test('visibility recovery preserves blocked comments and settled runtime state', 'functional', async ({ browser, server }) => {
-    if (isPcUserscript) return;
+mobileTest('visibility recovery preserves blocked comments and settled runtime state', 'functional', async ({ browser, server }) => {
     const blockedUid = 'visibility-recovery-blocked';
     const storage = {
         ...noStatsStorage,
@@ -7124,8 +7106,10 @@ console.log(`Runtime SHA-256: ${userscriptSha256}`);
 const server = await startServer();
 const browser = await launchBrowser({ headed });
 let failures = 0;
-const selected = tests.filter((item) => (!selectedGroup || item.group === selectedGroup) && (!selectedName || item.name.includes(selectedName)));
-console.log(`DCUF testbed: ${selected.length} tests, ${server.baseUrl}`);
+const selected = tests.filter((item) => item.targets.includes(activeTarget)
+    && (!selectedGroup || item.group === selectedGroup)
+    && (!selectedName || item.name.includes(selectedName)));
+console.log(`DCUF testbed: ${selected.length} ${activeTarget} tests, ${server.baseUrl}`);
 try {
     for (const item of selected) {
         const startedAt = Date.now();
