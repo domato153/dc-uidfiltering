@@ -6,23 +6,31 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const rootDir = path.resolve(__dirname, '..');
 
-const VERSION = '3.5.4-beta';
-const OUTPUT_NAME = `Dc_UserFilter_Mobile_v${VERSION}.user.js`;
+const buildTargets = JSON.parse(await readFile(path.join(rootDir, 'build', 'targets.json'), 'utf8'));
+const target = buildTargets.targets?.mobile;
+if (!target) throw new Error('build/targets.json: mobile target is missing');
+
 const testbedOutputIndex = process.argv.indexOf('--testbed-output');
 const testbedOutput = testbedOutputIndex >= 0 && process.argv[testbedOutputIndex + 1]
     ? path.resolve(rootDir, process.argv[testbedOutputIndex + 1])
     : null;
+const versionOverrideIndex = process.argv.indexOf('--version');
+const versionOverride = versionOverrideIndex >= 0 ? process.argv[versionOverrideIndex + 1] : null;
+if (versionOverride && !testbedOutput) {
+    throw new Error('--version is allowed only with --testbed-output');
+}
+const VERSION = versionOverride || target.version;
+const OUTPUT_NAME = target.outputPattern.replace('{version}', VERSION);
 
-const MOBILE_LEGACY_PARTS = [
-    'src/shared/write-defaults.js',
-    'src/targets/mobile/runtime-coordinator.js',
-    'src/targets/mobile/theme-module.js',
-    'src/targets/mobile/filter-module.js',
-    'src/targets/mobile/convenience-module.js',
-    'src/targets/mobile/personal-block-module.js',
-    'src/targets/mobile/ui-module.js',
-    'src/targets/mobile/post-main-fixes.js',
-];
+function inputForRole(role) {
+    const input = target.inputs.find((candidate) => candidate.role === role);
+    if (!input) throw new Error(`build/targets.json: mobile input role is missing: ${role}`);
+    return input.path;
+}
+
+const MOBILE_LEGACY_PARTS = target.inputs
+    .filter((input) => input.role === 'legacy-runtime')
+    .map((input) => input.path);
 
 const replacements = [
     {
@@ -61,10 +69,10 @@ function stripEsmSyntax(source) {
 }
 
 async function buildSharedRuntimePrelude() {
-    const schemaSource = stripEsmSyntax(await readPart('src/shared/storage-schema.js'));
-    const ipSource = stripEsmSyntax(await readPart('src/shared/ip-data.js'));
-    const storageCoreSource = stripEsmSyntax(await readPart('src/shared/storage-core.js'));
-    const filterCoreSource = stripEsmSyntax(await readPart('src/shared/filter-core.js'));
+    const schemaSource = stripEsmSyntax(await readPart(inputForRole('shared-schema')));
+    const ipSource = stripEsmSyntax(await readPart(inputForRole('shared-ip')));
+    const storageCoreSource = stripEsmSyntax(await readPart(inputForRole('shared-storage')));
+    const filterCoreSource = stripEsmSyntax(await readPart(inputForRole('shared-filter')));
 
     return [
         '    // Phase 2 runtime shared prelude',
@@ -144,9 +152,9 @@ function applyReplacements(source) {
 
 async function main() {
     const [header, bootstrap, styleBanner, sharedPrelude, ...mobileLegacyParts] = await Promise.all([
-        readPart('src/meta/userscript-header.txt'),
-        readPart('src/runtime/bootstrap.js'),
-        readPart('src/targets/mobile/style-banner.js'),
+        readPart(inputForRole('header')),
+        readPart(inputForRole('bootstrap')),
+        readPart(inputForRole('style-banner')),
         buildSharedRuntimePrelude(),
         ...MOBILE_LEGACY_PARTS.map(readPart),
     ]);

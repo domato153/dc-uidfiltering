@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "mobile": {
+    "behaviorSourceCommit": "cef5f71381116d2746b0319b2f8e609e8d7eae85",
+    "beta": {
+      "version": "3.5.4-beta",
+      "sha256": "A03038FE68126B62054EBA11244D4EE2E1766D308983FC5C27127FD3794CB343"
+    },
+    "stable": {
+      "version": "3.5.5",
+      "releaseBranchCommit": "097e999b042726e71d4a77cc49cbc7ee4a9a2193",
+      "sha256": "32BA208DDD9973A7EEC343F01E963A833AB4F0C084987077EDAE46844383C25D"
+    },
+    "normalization": {
+      "kind": "literal-version-token-only",
+      "from": "3.5.4-beta",
+      "to": "3.5.5",
+      "expectedOccurrences": 5
+    }
+  },
+  "pc": {
+    "version": "1.9.9",
+    "behaviorSourceCommit": "cef5f71381116d2746b0319b2f8e609e8d7eae85",
+    "sha256AtBehaviorSource": "D3A95C479D8D50F88D97700DE91FA17D1D338B3AEBB488F53D865F445B656212"
+  }
+}

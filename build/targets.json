@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "targets": {
+    "mobile": {
+      "version": "3.5.5",
+      "outputPattern": "Dc_UserFilter_Mobile_v{version}.user.js",
+      "inputs": [
+        { "path": "src/meta/userscript-header.txt", "role": "header" },
+        { "path": "src/runtime/bootstrap.js", "role": "bootstrap" },
+        { "path": "src/shared/storage-schema.js", "role": "shared-schema" },
+        { "path": "src/shared/ip-data.js", "role": "shared-ip" },
+        { "path": "src/shared/storage-core.js", "role": "shared-storage" },
+        { "path": "src/shared/filter-core.js", "role": "shared-filter" },
+        { "path": "src/targets/mobile/style-banner.js", "role": "style-banner" },
+        { "path": "src/shared/write-defaults.js", "role": "legacy-runtime" },
+        { "path": "src/targets/mobile/runtime-coordinator.js", "role": "legacy-runtime" },
+        { "path": "src/targets/mobile/theme-module.js", "role": "legacy-runtime" },
+        { "path": "src/targets/mobile/filter-module.js", "role": "legacy-runtime" },
+        { "path": "src/targets/mobile/convenience-module.js", "role": "legacy-runtime" },
+        { "path": "src/targets/mobile/personal-block-module.js", "role": "legacy-runtime" },
+        { "path": "src/targets/mobile/ui-module.js", "role": "legacy-runtime" },
+        { "path": "src/targets/mobile/post-main-fixes.js", "role": "legacy-runtime" }
+      ]
+    },
+    "pc": {
+      "version": "1.9.9",
+      "outputPattern": "dcinside_user_filter_v{version}.user.js",
+      "inputs": [
+        { "path": "src/meta/pc-filter-userscript-header.txt", "role": "header" },
+        { "path": "src/runtime/bootstrap.js", "role": "bootstrap" },
+        { "path": "src/shared/storage-schema.js", "role": "shared-schema" },
+        { "path": "src/shared/ip-data.js", "role": "shared-ip" },
+        { "path": "src/shared/storage-core.js", "role": "shared-storage" },
+        { "path": "src/shared/filter-core.js", "role": "shared-filter" },
+        { "path": "src/shared/write-defaults.js", "role": "shared-write-defaults" },
+        { "path": "src/targets/mobile/theme-module.js", "role": "compat-theme-source" },
+        { "path": "src/targets/mobile/filter-module.js", "role": "compat-filter-source" },
+        { "path": "src/targets/mobile/personal-block-module.js", "role": "compat-personal-block-source" },
+        { "path": "src/targets/pc/filter-style.js", "role": "pc-runtime" },
+        { "path": "src/targets/pc/filter-entry.js", "role": "pc-runtime" },
+        { "path": "src/runtime/teardown.js", "role": "teardown" }
+      ]
+    }
+  }
+}

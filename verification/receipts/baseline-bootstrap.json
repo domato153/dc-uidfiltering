@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "recordedOn": "2026-09-04",
+  "sourceCommit": "cef5f71381116d2746b0319b2f8e609e8d7eae85",
+  "mobile": {
+    "betaVersion": "3.5.4-beta",
+    "betaSha256": "A03038FE68126B62054EBA11244D4EE2E1766D308983FC5C27127FD3794CB343",
+    "stableVersion": "3.5.5",
+    "stableSha256": "32BA208DDD9973A7EEC343F01E963A833AB4F0C084987077EDAE46844383C25D",
+    "versionTokenOccurrences": 5,
+    "versionOnlyNormalization": true
+  },
+  "pc": {
+    "version": "1.9.9",
+    "sha256": "D3A95C479D8D50F88D97700DE91FA17D1D338B3AEBB488F53D865F445B656212"
+  },
+  "checks": {
+    "mobileRootDistEqual": true,
+    "pcRootDistEqual": true,
+    "metadataScopePreserved": true,
+    "bomPresent": true,
+    "syntaxPassed": true,
+    "repositoryReleaseVerification": "passed"
+  }
+}

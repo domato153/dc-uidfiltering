@@ -113,10 +113,30 @@ async function verifyGuidance() {
     console.log(` - SKILL.md total: ${totalSkillChars}/${SKILLS_CHAR_LIMIT} characters`);
 }
 
-function parseBuildVersion(buildText, buildPath) {
-    const match = buildText.match(/const VERSION = ['"]([^'"]+)['"];?/);
-    check(Boolean(match), `${buildPath}: unable to read VERSION`);
-    return match?.[1];
+async function readBuildTargets() {
+    const manifestPath = path.join(rootDir, 'build', 'targets.json');
+    const manifest = JSON.parse(await readFile(manifestPath, 'utf8'));
+    check(manifest.schemaVersion === 1, 'build/targets.json: schemaVersion must be 1');
+    check(Boolean(manifest.targets?.mobile), 'build/targets.json: mobile target is missing');
+    check(Boolean(manifest.targets?.pc), 'build/targets.json: pc target is missing');
+
+    for (const [targetName, target] of Object.entries(manifest.targets || {})) {
+        check(Boolean(target.version), `build/targets.json: ${targetName} version is missing`);
+        check(target.outputPattern?.includes('{version}'),
+            `build/targets.json: ${targetName} outputPattern must contain {version}`);
+        const paths = (target.inputs || []).map((input) => input.path);
+        check(paths.length > 0, `build/targets.json: ${targetName} inputs are missing`);
+        check(new Set(paths).size === paths.length,
+            `build/targets.json: ${targetName} contains duplicate input paths`);
+        for (const input of target.inputs || []) {
+            check(Boolean(input.role), `build/targets.json: ${targetName} input role is missing for ${input.path || '(missing path)'}`);
+            check(Boolean(input.path), `build/targets.json: ${targetName} input path is missing`);
+            if (input.path) check(await exists(path.join(rootDir, input.path)),
+                `build/targets.json: ${targetName} input does not exist: ${input.path}`);
+        }
+    }
+
+    return manifest.targets;
 }
 
 async function verifyMobileSourceContracts() {
@@ -184,13 +204,12 @@ async function verifyMobileSourceContracts() {
     console.log(' - page scope, page type, lifecycle, mutation routing, and palette selectors checked');
 }
 
-async function verifyReleaseTarget(target) {
+async function verifyReleaseTarget(target, buildTarget) {
     const buildPath = path.join(rootDir, target.buildFile);
-    const buildText = await readFile(buildPath, 'utf8');
-    const version = parseBuildVersion(buildText, target.buildFile);
+    const version = buildTarget.version;
     if (!version) return;
 
-    const outputName = target.outputName(version);
+    const outputName = buildTarget.outputPattern.replace('{version}', version);
     const rootPath = path.join(rootDir, outputName);
     const distPath = path.join(rootDir, 'dist', outputName);
     check(await exists(rootPath), `${target.name}: root output is missing: ${outputName}`);
@@ -231,22 +250,23 @@ async function verifyReleaseTarget(target) {
 
 async function verifyRelease() {
     await verifyMobileSourceContracts();
+    const buildTargets = await readBuildTargets();
     const targets = [
         {
+            key: 'mobile',
             name: 'mobile',
             buildFile: 'tools/build-userscript.mjs',
-            expectedMatches: BOARD_MATCHES,
-            outputName: (version) => `Dc_UserFilter_Mobile_v${version}.user.js`
+            expectedMatches: BOARD_MATCHES
         },
         {
+            key: 'pc',
             name: 'pc',
             buildFile: 'tools/build-pc-filter-userscript.mjs',
-            expectedMatches: BOARD_MATCHES,
-            outputName: (version) => `dcinside_user_filter_v${version}.user.js`
+            expectedMatches: BOARD_MATCHES
         }
     ];
 
-    for (const target of targets) await verifyReleaseTarget(target);
+    for (const target of targets) await verifyReleaseTarget(target, buildTargets[target.key]);
 }
 
 async function main() {

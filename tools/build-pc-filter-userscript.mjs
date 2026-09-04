@@ -6,13 +6,22 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const rootDir = path.resolve(__dirname, '..');
 
-const VERSION = '1.9.9';
-const OUTPUT_NAME = `dcinside_user_filter_v${VERSION}.user.js`;
+const buildTargets = JSON.parse(await readFile(path.join(rootDir, 'build', 'targets.json'), 'utf8'));
+const target = buildTargets.targets?.pc;
+if (!target) throw new Error('build/targets.json: pc target is missing');
 
-const PC_PARTS = [
-    'src/targets/pc/filter-style.js',
-    'src/targets/pc/filter-entry.js',
-];
+const VERSION = target.version;
+const OUTPUT_NAME = target.outputPattern.replace('{version}', VERSION);
+
+function inputForRole(role) {
+    const input = target.inputs.find((candidate) => candidate.role === role);
+    if (!input) throw new Error(`build/targets.json: pc input role is missing: ${role}`);
+    return input.path;
+}
+
+const PC_PARTS = target.inputs
+    .filter((input) => input.role === 'pc-runtime')
+    .map((input) => input.path);
 
 const SHARED_FILTER_UI_STYLE_RANGES = [
     ['/* DCUF_SHARED_FILTER_UI_START */', '/* DCUF_SHARED_FILTER_UI_END */'],
@@ -109,10 +118,10 @@ function stripEsmSyntax(source) {
 }
 
 async function buildSharedRuntimePrelude() {
-    const schemaSource = stripEsmSyntax(await readPart('src/shared/storage-schema.js'));
-    const ipSource = stripEsmSyntax(await readPart('src/shared/ip-data.js'));
-    const storageCoreSource = stripEsmSyntax(await readPart('src/shared/storage-core.js'));
-    const filterCoreSource = stripEsmSyntax(await readPart('src/shared/filter-core.js'));
+    const schemaSource = stripEsmSyntax(await readPart(inputForRole('shared-schema')));
+    const ipSource = stripEsmSyntax(await readPart(inputForRole('shared-ip')));
+    const storageCoreSource = stripEsmSyntax(await readPart(inputForRole('shared-storage')));
+    const filterCoreSource = stripEsmSyntax(await readPart(inputForRole('shared-filter')));
 
     return [
         '    // PC filter port shared prelude',
@@ -267,17 +276,17 @@ function applyReplacements(source) {
 
 async function main() {
     const [header, bootstrap, sharedPrelude, writeDefaults, rawThemeModule, rawFilterModule, rawPersonalBlockModule, ...pcParts] = await Promise.all([
-        readPart('src/meta/pc-filter-userscript-header.txt'),
-        readPart('src/runtime/bootstrap.js'),
+        readPart(inputForRole('header')),
+        readPart(inputForRole('bootstrap')),
         buildSharedRuntimePrelude(),
-        readPart('src/shared/write-defaults.js'),
-        readPart('src/targets/mobile/theme-module.js'),
-        readPart('src/targets/mobile/filter-module.js'),
-        readPart('src/targets/mobile/personal-block-module.js'),
+        readPart(inputForRole('shared-write-defaults')),
+        readPart(inputForRole('compat-theme-source')),
+        readPart(inputForRole('compat-filter-source')),
+        readPart(inputForRole('compat-personal-block-source')),
         ...PC_PARTS.map(readPart),
     ]);
 
-    const teardown = await readPart('src/runtime/teardown.js');
+    const teardown = await readPart(inputForRole('teardown'));
     const extractedFilterModule = extractFilterModuleSource(rawFilterModule);
     const sharedFilterUiStyle = extractSharedFilterUiStyle(rawFilterModule);
     const transformedThemeModule = transformThemeModuleForPc(rawThemeModule);
