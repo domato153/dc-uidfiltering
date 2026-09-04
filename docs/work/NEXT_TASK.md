@@ -1,10 +1,11 @@
 # Next bounded task
 
-Establish the locked Playwright characterization oracle for the exact 3.5.5 baseline:
+Introduce the internal UI boundary without moving visible owners yet:
 
-1. Install from the frozen pnpm lockfile and verify the browser revision.
-2. Build `testbed/artifacts/runtime-under-test.user.js` and record its exact SHA-256.
-3. Run the full deterministic mobile and host-compatibility suites without changing fixtures to obtain a baseline pass or classified failures.
-4. Add independent false-green checks for wrong artifact/head, stale receipt, and control=candidate before introducing UI ports.
+1. Submit a candidate registry overlay for `UiPort`, immutable `UiSnapshot`, typed `UiIntent`, `CommandResult`, `UiSurface`, `DisposableScope`, and `HostSurfacePort`.
+2. Add the application-owned store and legacy adapter while keeping the current renderers and host nodes unchanged.
+3. Prove that state notifications occur only after committed semantic state changes and never from the filter hot path.
+4. Add lifecycle tests for subscribe/unsubscribe and scope disposal, plus a control=candidate rejection in the differential oracle.
+5. Promote the overlay only after mobile and PC semantic receipts remain equal except for the declared boot-lock repair.
 
-Do not start UI extraction until failures are either fixed in the proof system or explicitly classified as stale/live-only evidence.
+Do not begin visual redesign or move a surface owner in this step.

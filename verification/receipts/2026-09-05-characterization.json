@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "kind": "characterization",
+  "sourceHead": "b3e247f78d67bca4ad46bf7b35e7dd07c008cf3d",
+  "control": {
+    "sourceSha": "cef5f71381116d2746b0319b2f8e609e8d7eae85",
+    "mobileVersion": "3.5.5",
+    "mobileSha256": "32BA208DDD9973A7EEC343F01E963A833AB4F0C084987077EDAE46844383C25D",
+    "pcVersion": "1.9.9",
+    "pcSha256": "D3A95C479D8D50F88D97700DE91FA17D1D338B3AEBB488F53D865F445B656212"
+  },
+  "candidate": {
+    "mobileSha256": "BB9A847B5FBB76CADC87D7CA6BFC97AB639D77E4BC2E1C9C4F11B53425FCB296",
+    "pcSha256": "5852A579F00D83E3C166B78B09B4843E11AE2A19E1BBAD48F8CC94DB28636104",
+    "declaredDelta": [
+      "Repair parser replacement of the document-start boot lock before first paint."
+    ]
+  },
+  "evidenceBinding": {
+    "registrySha256": "eb9b0571be3616ee466869e2d7afab980fce34a0abe698319cf0e30ace94fcdd",
+    "gatesSha256": "02f4f1e3ce3409849de8963eb79711dab7852fe81b158e61416b2e2ad73e2bf0",
+    "harnessSha256": "62b4577b0beec8b920f08f237983e5ffa3838077d161005b7193d14dd9ddb492",
+    "fixturesSha256": "bd0be281145eeaebc62af58ff1ef518db506327da14a429946068d971b52929d",
+    "toolchainSha256": "4c46f80e0d7d3247faedf3a1ec33362a3d246b0a993a9705d332c3868f412d4f",
+    "node": "v22.17.0",
+    "browser": "Playwright 1.61.1 Chromium revision 1228"
+  },
+  "results": [
+    { "target": "mobile", "suite": "full", "selected": 96, "passed": 96, "failed": 0 },
+    { "target": "mobile", "suite": "host-compatibility", "selected": 11, "passed": 11, "failed": 0 },
+    { "target": "mobile", "suite": "boot-parser-repair-repeat", "selected": 20, "passed": 20, "failed": 0 },
+    { "target": "pc", "suite": "functional", "selected": 13, "passed": 13, "failed": 0 },
+    { "target": "verification", "suite": "proof-system-mutations", "selected": 3, "passed": 3, "failed": 0 }
+  ],
+  "failureClassification": {
+    "initialBootFailure": "product-runtime",
+    "cause": "Chromium replaced the provisional document-start html/head and removed the lock attribute, style, and overlay while the controller remained locked.",
+    "repair": "A bounded bootstrap MutationObserver reinstalls the lock before paint and is disconnected at ready or degraded.",
+    "falseGreenRemoved": "Explicit target selection prevents PC-only and mobile-only tests from being counted as zero-duration passes."
+  },
+  "live": {
+    "status": "not-run",
+    "reason": "The first manual canary belongs after shared filter and personal-block UI separation."
+  }
+}

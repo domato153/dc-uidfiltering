@@ -8,6 +8,8 @@ This is the active, compact maintenance index. It records reusable causes and co
 - Maintain the compact live-root map in [`ui-surface-contracts.md`](ui-surface-contracts.md). Before a UI correction, trace every matching injected phase and selector specificity, then assign one final visual owner to the affected surface.
 - Add a failing positive contract before the fix. Geometry and hit-testing assertions require rendered positive-area controls; a zero-area or merely present node is not a pass.
 - Source-work Testbed runs inject `testbed/artifacts/runtime-under-test.user.js`, require the source-runtime guard, and print the absolute path and SHA-256. Screenshots remain evidence, not approval.
+- At Chromium document-start, the parser can replace the provisional `html`/`head` after the boot controller exists. A timer-only lock repair can expose one frame; observe the document only while locked/preparing, reinstall the attribute/style/overlay in the mutation checkpoint, and disconnect at ready/degraded.
+- Test target applicability is selection metadata, not an early return inside a test body. Otherwise mobile-only or PC-only cases can be reported as zero-duration passes for the wrong artifact.
 - A fixture must preserve the host's form, hidden inputs, original buttons, delegated handlers, route variant, popup close/reopen behavior, and relevant CSS conflict. A visual stand-in cannot prove host compatibility.
 
 ## Filter, storage, and convenience contracts
