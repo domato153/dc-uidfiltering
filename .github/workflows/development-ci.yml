@@ -65,7 +65,7 @@ jobs:
       - name: Install locked dependencies and Chromium
         run: |
           pnpm install --frozen-lockfile
-          pnpm --dir testbed exec playwright install --with-deps chromium
+          node testbed/node_modules/playwright/cli.js install --with-deps chromium
       - name: Resolve affected graph
         env:
           PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
@@ -108,7 +108,7 @@ jobs:
       - name: Install locked dependencies and Chromium
         run: |
           pnpm install --frozen-lockfile
-          pnpm --dir testbed exec playwright install --with-deps chromium
+          node testbed/node_modules/playwright/cli.js install --with-deps chromium
       - name: Resolve full acceptance
         env:
           PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}

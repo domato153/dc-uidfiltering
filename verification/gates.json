@@ -26,7 +26,9 @@
     "pc-focused": {
       "runsOn": ["ubuntu-24.04"],
       "commands": [
-        { "id": "pc-build", "command": "node", "args": ["tools/build-pc-filter-userscript.mjs"] },
+        { "id": "pc-build-runtime", "command": "node", "args": ["tools/build-pc-filter-userscript.mjs", "--testbed-output", "testbed/artifacts/runtime-under-test.user.js"] },
+        { "id": "pc-functional", "command": "node", "args": ["testbed/run-tests.mjs", "--group", "functional", "--require-runtime-under-test"], "env": { "DCUF_TESTBED_TARGET": "pc" } },
+        { "id": "pc-build-release", "command": "node", "args": ["tools/build-pc-filter-userscript.mjs"] },
         { "id": "release-contracts", "command": "node", "args": ["tools/verify-repo.mjs", "release"] }
       ]
     },
@@ -36,7 +38,10 @@
         { "id": "mobile-build", "command": "node", "args": ["tools/build-userscript.mjs", "--testbed-output", "testbed/artifacts/runtime-under-test.user.js"] },
         { "id": "full-testbed", "command": "node", "args": ["testbed/run-tests.mjs", "--require-runtime-under-test"] },
         { "id": "host-compatibility", "command": "node", "args": ["testbed/run-host-compatibility.mjs", "--require-runtime-under-test"] },
-        { "id": "pc-build", "command": "node", "args": ["tools/build-pc-filter-userscript.mjs"] },
+        { "id": "pc-build-runtime", "command": "node", "args": ["tools/build-pc-filter-userscript.mjs", "--testbed-output", "testbed/artifacts/runtime-under-test.user.js"] },
+        { "id": "pc-functional", "command": "node", "args": ["testbed/run-tests.mjs", "--group", "functional", "--require-runtime-under-test"], "env": { "DCUF_TESTBED_TARGET": "pc" } },
+        { "id": "mobile-build-release", "command": "node", "args": ["tools/build-userscript.mjs"] },
+        { "id": "pc-build-release", "command": "node", "args": ["tools/build-pc-filter-userscript.mjs"] },
         { "id": "repository-all", "command": "node", "args": ["tools/verify-repo.mjs", "all"] }
       ]
     },
@@ -46,6 +51,8 @@
         { "id": "mobile-build-runtime", "command": "node", "args": ["tools/build-userscript.mjs", "--testbed-output", "testbed/artifacts/runtime-under-test.user.js"] },
         { "id": "mobile-build-release", "command": "node", "args": ["tools/build-userscript.mjs"] },
         { "id": "pc-build", "command": "node", "args": ["tools/build-pc-filter-userscript.mjs"] },
+        { "id": "pc-build-runtime", "command": "node", "args": ["tools/build-pc-filter-userscript.mjs", "--testbed-output", "testbed/artifacts/runtime-under-test.user.js"] },
+        { "id": "pc-functional", "command": "node", "args": ["testbed/run-tests.mjs", "--group", "functional", "--require-runtime-under-test"], "env": { "DCUF_TESTBED_TARGET": "pc" } },
         { "id": "repository-all", "command": "node", "args": ["tools/verify-repo.mjs", "all"] },
         { "id": "mobile-smoke", "command": "node", "args": ["testbed/run-tests.mjs", "--group", "smoke", "--require-runtime-under-test"] }
       ]

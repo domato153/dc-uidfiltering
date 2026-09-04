@@ -12,6 +12,10 @@ if (!target) throw new Error('build/targets.json: pc target is missing');
 
 const VERSION = target.version;
 const OUTPUT_NAME = target.outputPattern.replace('{version}', VERSION);
+const testbedOutputIndex = process.argv.indexOf('--testbed-output');
+const testbedOutput = testbedOutputIndex >= 0 && process.argv[testbedOutputIndex + 1]
+    ? path.resolve(rootDir, process.argv[testbedOutputIndex + 1])
+    : null;
 
 function inputForRole(role) {
     const input = target.inputs.find((candidate) => candidate.role === role);
@@ -298,13 +302,19 @@ async function main() {
         .replace(/\n+$/, '\n')
         .replace(/\r?\n/g, '\r\n');
 
+    const bomText = `\uFEFF${built}`;
+    if (testbedOutput) {
+        await mkdir(path.dirname(testbedOutput), { recursive: true });
+        await writeFile(testbedOutput, bomText, 'utf8');
+        process.stdout.write(`Built PC testbed runtime: ${testbedOutput}`);
+        return;
+    }
+
     const distDir = path.join(rootDir, 'dist');
     await mkdir(distDir, { recursive: true });
 
     const distPath = path.join(distDir, OUTPUT_NAME);
     const rootCopyPath = path.join(rootDir, OUTPUT_NAME);
-    const bomText = `\uFEFF${built}`;
-
     await writeFile(distPath, bomText, 'utf8');
     await writeFile(rootCopyPath, bomText, 'utf8');
 

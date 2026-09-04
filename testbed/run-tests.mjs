@@ -22,7 +22,12 @@ const args = new Set(process.argv.slice(2));
 const selectedGroup = process.argv.includes('--group') ? process.argv[process.argv.indexOf('--group') + 1] : null;
 const selectedName = process.argv.includes('--filter') ? process.argv[process.argv.indexOf('--filter') + 1] : null;
 const headed = args.has('--headed');
-const isPcUserscript = /dcinside_user_filter/i.test(process.env.DCUF_TESTBED_USERSCRIPT || '');
+const requestedTarget = String(process.env.DCUF_TESTBED_TARGET || '').trim().toLowerCase();
+if (requestedTarget && !['mobile', 'pc'].includes(requestedTarget)) {
+    throw new Error(`Unsupported DCUF_TESTBED_TARGET: ${requestedTarget}`);
+}
+const isPcUserscript = requestedTarget === 'pc'
+    || (!requestedTarget && /dcinside_user_filter/i.test(process.env.DCUF_TESTBED_USERSCRIPT || ''));
 const tests = [];
 const performanceReports = [];
 const writeLayoutReports = [];
@@ -615,12 +620,12 @@ test('boot: 댓글이 0·140·420ms에 들어와도 초기 장벽 뒤 한 번만
                 count: writers.length,
                 visibleCount: visible.length,
                 events: window.__dcufBootProbe.events(),
-                leakedFrames: window.__dcufBootProbe.snapshot().filter((frame) => frame.state !== 'ready' && frame.visibleProtectedTargets > 0).length
+                leakedFrameDetails: window.__dcufBootProbe.snapshot().filter((frame) => frame.state !== 'ready' && frame.visibleProtectedTargets > 0)
             };
         });
         assert.equal(result.count, 3);
         assert.equal(result.visibleCount, 0);
-        assert.equal(result.leakedFrames, 0);
+        assert.equal(result.leakedFrameDetails.length, 0, JSON.stringify(result));
         assert.deepEqual(result.events.map((event) => event.type), ['ready']);
         assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
     } finally { await session.close(); }

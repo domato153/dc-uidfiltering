@@ -47,7 +47,7 @@ jobs:
         shell: pwsh
         run: |
           pnpm install --frozen-lockfile
-          pnpm --dir testbed exec playwright install chromium
+          node testbed/node_modules/playwright/cli.js install chromium
       - name: Resolve promotion receipt
         shell: pwsh
         env:

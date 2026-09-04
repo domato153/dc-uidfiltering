@@ -68,6 +68,7 @@
     let criticalTimer = 0;
     let domReadyListener = null;
     let loadListener = null;
+    let lockRepairObserver = null;
 
     const pageType = pageContext.type;
     const isTargetPage = () => pageType !== 'other';
@@ -98,6 +99,8 @@
         if (domReadyListener) document.removeEventListener('DOMContentLoaded', domReadyListener);
         if (loadListener) window.removeEventListener('load', loadListener);
         domReadyListener = loadListener = null;
+        lockRepairObserver?.disconnect();
+        lockRepairObserver = null;
     };
     const ensureLockStyle = () => {
         const mount = document.head || document.documentElement;
@@ -218,7 +221,10 @@
         filterReady: false,
         ensure(reason = 'ensure') {
             if (!isTargetPage() || this.state === 'ready' || this.state === 'degraded') return true;
-            document.documentElement?.setAttribute(STATE_ATTR, this.state === 'preparing' ? 'preparing' : 'locked');
+            const expectedState = this.state === 'preparing' ? 'preparing' : 'locked';
+            if (document.documentElement?.getAttribute(STATE_ATTR) !== expectedState) {
+                document.documentElement?.setAttribute(STATE_ATTR, expectedState);
+            }
             ensureLockStyle();
             ensureOverlay();
             note('boot.ensure', { reason });
@@ -290,6 +296,28 @@
     const startBootUiWatchdog = () => {
         if (!isTargetPage() || ensureTimer) return;
         const tick = () => bootController.ensure('watchdog');
+        // At document-start Chromium can replace the provisional <html>/<head>
+        // after an init script has installed the lock. Repair that parser-owned
+        // replacement in the mutation checkpoint before the next paint; the
+        // interval below remains only a bounded fallback.
+        if (typeof MutationObserver === 'function' && document) {
+            lockRepairObserver = new MutationObserver(() => {
+                if (bootController.state !== 'locked' && bootController.state !== 'preparing') return;
+                const root = document.documentElement;
+                const expectedState = bootController.state === 'preparing' ? 'preparing' : 'locked';
+                if (root?.getAttribute(STATE_ATTR) !== expectedState
+                    || !document.getElementById(LOCK_STYLE_ID)
+                    || !document.getElementById(OVERLAY_ID)) {
+                    bootController.ensure('parser-repair');
+                }
+            });
+            lockRepairObserver.observe(document, {
+                childList: true,
+                subtree: true,
+                attributes: true,
+                attributeFilter: [STATE_ATTR]
+            });
+        }
         ensureTimer = setInterval(tick, 80);
         absoluteTimer = setTimeout(() => bootController.degrade('absolute-deadline'), ABSOLUTE_DEADLINE_MS);
         domReadyListener = () => {

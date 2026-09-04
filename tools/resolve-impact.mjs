@@ -1,8 +1,8 @@
-import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
-import { mkdir, readdir, readFile, stat, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { createEvidenceBinding } from './evidence-binding.mjs';
 
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const args = process.argv.slice(2);
@@ -28,27 +28,6 @@ function matches(reference, file) {
     if (!normalizedReference.includes('*')) return normalizedReference === normalizedFile;
     const escaped = normalizedReference.replace(/[.+?^${}()|[\]\\]/g, '\\$&').replace(/\*\*/g, '.*').replace(/\*/g, '[^/]*');
     return new RegExp(`^${escaped}$`).test(normalizedFile);
-}
-
-function hash(bytes) {
-    return createHash('sha256').update(bytes).digest('hex');
-}
-
-async function hashTree(relativePath) {
-    const absolute = path.join(rootDir, relativePath);
-    const entries = [];
-    async function visit(current) {
-        const info = await stat(current);
-        if (info.isDirectory()) {
-            const children = await readdir(current);
-            for (const child of children.sort()) await visit(path.join(current, child));
-        } else {
-            const relative = normalize(path.relative(rootDir, current));
-            entries.push(`${relative}\0${hash(await readFile(current))}`);
-        }
-    }
-    await visit(absolute);
-    return hash(Buffer.from(entries.join('\n')));
 }
 
 const registryBytes = await readFile(path.join(rootDir, 'architecture', 'registry.json'));
@@ -111,13 +90,7 @@ const receipt = {
     selectedProfiles: profiles,
     resolvedCommands: profiles.flatMap((profile) => (gates.profiles[profile]?.commands || []).map((item) => ({ profile, ...item }))),
     unmappedFiles: [...new Set(unmappedFiles)].sort(),
-    evidenceBinding: {
-        registrySha256: hash(registryBytes),
-        gatesSha256: hash(gatesBytes),
-        harnessSha256: await hashTree('testbed/harness'),
-        fixturesSha256: await hashTree('testbed/fixtures'),
-        node: process.version,
-    },
+    evidenceBinding: await createEvidenceBinding(rootDir),
 };
 
 const output = valueAfter('--output');

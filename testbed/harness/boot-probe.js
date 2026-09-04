@@ -37,7 +37,12 @@
         const bodyStyle = body ? getComputedStyle(body) : null;
         frames.push({
             ts: performance.now(),
+            pathname: location.pathname,
+            readyState: document.readyState,
             state: root?.getAttribute('data-dcuf-boot-state') || '',
+            controllerState: globalThis.__dcufBootController?.state || '',
+            runtimeState: globalThis.__dcufRuntimeState || '',
+            pageContext: globalThis.__dcufPageContext?.type || '',
             overlayCount: document.querySelectorAll('#dcuf-boot-overlay').length,
             bodyOpacity: bodyStyle?.opacity || '',
             bodyVisibility: bodyStyle?.visibility || '',
