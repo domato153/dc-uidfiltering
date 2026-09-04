@@ -13,6 +13,7 @@
       "runsOn": ["ubuntu-24.04", "windows-2025"],
       "commands": [
         { "id": "architecture", "command": "node", "args": ["tools/architecture-registry.mjs", "validate"] },
+        { "id": "proof-audit", "command": "node", "args": ["tools/audit-proof-system.mjs", "artifacts/impact.json"] },
         { "id": "guidance", "command": "node", "args": ["tools/verify-repo.mjs", "guidance"] }
       ]
     },
