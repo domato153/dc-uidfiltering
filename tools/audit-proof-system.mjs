@@ -56,4 +56,14 @@ expectFailure('non-guarded artifact path is rejected', 'node', [
     pattern: /Runtime guard rejected non-source artifact/,
 });
 
-console.log('Proof-system adversarial audit passed: 3 mutations rejected.');
+const guardedRuntime = path.join(rootDir, 'testbed', 'artifacts', 'runtime-under-test.user.js');
+expectFailure('control=candidate differential is rejected', 'node', [
+    'tools/run-semantic-differential.mjs',
+    '--control', guardedRuntime,
+    '--candidate', guardedRuntime,
+    '--target', 'mobile',
+    '--filter', 'smoke:',
+    '--output', path.join(auditDir, 'control-equals-candidate.json'),
+], { pattern: /Differential oracle rejected control=candidate digest/ });
+
+console.log('Proof-system adversarial audit passed: 4 mutations rejected.');

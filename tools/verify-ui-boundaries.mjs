@@ -2,9 +2,14 @@ import { parse } from 'acorn';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { loadArchitectureState } from './architecture-state.mjs';
 
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const registry = JSON.parse(await readFile(path.join(rootDir, 'architecture', 'registry.json'), 'utf8'));
+const architectureState = await loadArchitectureState(rootDir);
+if (architectureState.candidateFailures.length) {
+    throw new Error(`Invalid architecture candidate:\n${architectureState.candidateFailures.join('\n')}`);
+}
+const registry = architectureState.effective;
 const forbiddenIdentifiers = new Set([
     'GM_getValue',
     'GM_setValue',

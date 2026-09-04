@@ -14,6 +14,7 @@
       "commands": [
         { "id": "architecture", "command": "node", "args": ["tools/architecture-registry.mjs", "validate"] },
         { "id": "proof-audit", "command": "node", "args": ["tools/audit-proof-system.mjs", "artifacts/impact.json"] },
+        { "id": "ui-boundaries", "command": "node", "args": ["tools/verify-ui-boundaries.mjs"] },
         { "id": "guidance", "command": "node", "args": ["tools/verify-repo.mjs", "guidance"] }
       ]
     },
@@ -71,6 +72,10 @@
     "shared-ip-data": ["acceptance"],
     "shared-storage-core": ["acceptance"],
     "shared-filter-core": ["acceptance"],
+    "shared-ui-contracts": ["acceptance"],
+    "ui-disposable-scope": ["acceptance"],
+    "ui-state-store": ["acceptance"],
+    "theme-host-port": ["acceptance"],
     "shared-write-defaults": ["acceptance"],
     "runtime-bootstrap": ["acceptance"],
     "runtime-teardown": ["acceptance"],
@@ -88,6 +93,7 @@
     "pc-filter-style": ["pc-focused"],
     "pc-filter-entry": ["pc-focused"],
     "mobile-build": ["acceptance"],
+    "mobile-release-control": ["acceptance", "promotion-windows"],
     "pc-build": ["acceptance"],
     "repository-verifier": ["acceptance"],
     "testbed-harness": ["acceptance"],

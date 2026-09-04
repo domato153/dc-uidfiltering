@@ -1,6 +1,6 @@
 # DCUF mobile host-surface contracts
 
-This compact map covers only the approved 3.5.4 correction surfaces. DCInside owns its DOM, forms, events, and native popup lifecycle. DCUF owns only its existing settings UI and the narrow style rules named below.
+This compact map covers the preserved 3.5.5 surfaces and the active UI-boundary extraction. DCInside owns its DOM, forms, events, and native popup lifecycle. DCUF owns only its existing settings UI and the narrow style rules named below.
 
 ## Surface map
 
@@ -13,6 +13,7 @@ This compact map covers only the approved 3.5.4 correction surfaces. DCInside ow
 | Authenticated delete | Native confirmation popup/card | Preserve original confirmation handler and lifecycle; no overlay covers the right action | One native call, close/reopen, overlay and hit-testing checks |
 | Recommendation | `div.btn_recommend_box.recomuse_y.morebox` | Content-sized, centered, parent-contained, and naturally responsive; CAPTCHA and every native action remain visible and interactive | Narrow/wide geometry, CAPTCHA containment, and exact native click counts |
 | Palette documentation | Existing 3.5.3 palette data and `dcuf_mobile_ui_palette` | Preserve all 14 IDs, light/dark values, and stored-value compatibility; documentation lists the same IDs | Runtime/document ID equality and login/main lookup behavior |
+| Palette UI boundary | `ThemeModule` is the single visual owner; application runtime owns GM palette reads/writes; `theme-host-port` owns document anchors and host event emission | Preserve the same menu, dialog DOM/CSS, preview/cancel/save/default behavior, focus return, storage key, and `dcuf:palette-change` event while presentation uses only `UiPort` and `HostSurfacePort` | AST boundary check, immutable snapshot/intent contract, save-failure behavior, mobile palette suite, and PC palette isolation |
 
 ## Ownership and selector rules
 

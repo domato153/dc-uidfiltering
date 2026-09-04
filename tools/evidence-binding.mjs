@@ -28,6 +28,10 @@ export async function hashPaths(rootDir, relativePaths) {
 export async function createEvidenceBinding(rootDir) {
     return {
         registrySha256: digest(await readFile(path.join(rootDir, 'architecture', 'registry.json'))),
+        architectureStateSha256: await hashPaths(rootDir, [
+            'architecture/registry.json',
+            'architecture/candidates',
+        ]),
         gatesSha256: digest(await readFile(path.join(rootDir, 'verification', 'gates.json'))),
         harnessSha256: await hashPaths(rootDir, [
             'testbed/harness',

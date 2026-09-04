@@ -3,6 +3,7 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createEvidenceBinding } from './evidence-binding.mjs';
+import { loadArchitectureState } from './architecture-state.mjs';
 
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const args = process.argv.slice(2);
@@ -30,9 +31,12 @@ function matches(reference, file) {
     return new RegExp(`^${escaped}$`).test(normalizedFile);
 }
 
-const registryBytes = await readFile(path.join(rootDir, 'architecture', 'registry.json'));
 const gatesBytes = await readFile(path.join(rootDir, 'verification', 'gates.json'));
-const registry = JSON.parse(registryBytes);
+const architectureState = await loadArchitectureState(rootDir);
+if (architectureState.candidateFailures.length) {
+    throw new Error(`Invalid architecture candidate:\n${architectureState.candidateFailures.join('\n')}`);
+}
+const registry = architectureState.effective;
 const gates = JSON.parse(gatesBytes);
 const head = valueAfter('--head') || 'HEAD';
 const base = valueAfter('--base') || `${head}^`;

@@ -33,17 +33,16 @@ const ThemeModule = (() => {
 
     const apply = (value, reason = 'apply') => {
         const id = normalize(value);
-        const root = document.documentElement;
+        const root = __dcufThemeHost.findAnchor('root');
         if (root) root.setAttribute(ROOT_ATTRIBUTE, id);
         else if (!domReadyApplyScheduled) {
             domReadyApplyScheduled = true;
-            document.addEventListener('DOMContentLoaded', () => {
+            __dcufThemeHost.invokeNative('on-dom-ready', () => {
                 domReadyApplyScheduled = false;
                 apply(committedId, 'dom-ready');
             }, { once: true });
         }
-        window.__dcufActivePalette = id;
-        window.dispatchEvent(new CustomEvent('dcuf:palette-change', { detail: { id, reason } }));
+        __dcufThemeHost.invokeNative('palette-change', { id, reason });
         return id;
     };
 
@@ -1252,10 +1251,10 @@ const ThemeModule = (() => {
     `;
 
     const ensureStyle = () => {
-        if (document.getElementById(STYLE_ID)) return true;
-        const mount = document.head || document.documentElement;
+        if (__dcufThemeHost.invokeNative('get-by-id', STYLE_ID)) return true;
+        const mount = __dcufThemeHost.findAnchor('head') || __dcufThemeHost.findAnchor('root');
         if (!mount) return false;
-        const style = document.createElement('style');
+        const style = __dcufThemeHost.invokeNative('create-element', 'style');
         style.id = STYLE_ID;
         style.textContent = buildCss();
         mount.appendChild(style);
@@ -1266,12 +1265,19 @@ const ThemeModule = (() => {
         if (initialReadPromise) return initialReadPromise;
         const revisionAtStart = writeRevision;
         initialReadPromise = Promise.resolve()
-            .then(() => GM_getValue(STORAGE_KEY, DEFAULT_ID))
-            .then((value) => {
+            .then(() => __dcufUiPort.dispatch({
+                type: DCUF_UI_CONTRACTS.UI_INTENT_TYPES.PALETTE_LOAD,
+                defaultValue: DEFAULT_ID
+            }))
+            .then((result) => {
+                if (!result.ok) throw new Error(`palette load failed: ${result.code}`);
+                const value = result.committedSnapshot?.palette?.value
+                    ?? __dcufUiPort.getSnapshot().palette?.value
+                    ?? DEFAULT_ID;
                 initialReadSettled = true;
                 if (writeRevision !== revisionAtStart) return committedId;
                 committedId = normalize(value);
-                if (!document.getElementById(OVERLAY_ID)) apply(committedId, 'storage-load');
+                if (!__dcufThemeHost.invokeNative('get-by-id', OVERLAY_ID)) apply(committedId, 'storage-load');
                 return committedId;
             })
             .catch((error) => {
@@ -1410,7 +1416,7 @@ const ThemeModule = (() => {
     };
 
     const closePaletteDialog = ({ restore = true } = {}) => {
-        const overlay = document.getElementById(OVERLAY_ID);
+        const overlay = __dcufThemeHost.invokeNative('get-by-id', OVERLAY_ID);
         if (!overlay) return false;
         const returnFocus = overlay.__dcufReturnFocus;
         if (restore) apply(committedId, 'preview-cancel');
@@ -1422,17 +1428,17 @@ const ThemeModule = (() => {
 
     const openPaletteDialog = () => {
         ensureStyle();
-        const existing = document.getElementById(PANEL_ID);
+        const existing = __dcufThemeHost.invokeNative('get-by-id', PANEL_ID);
         if (existing) {
             existing.focus({ preventScroll: true });
             return existing;
         }
 
-        const overlay = document.createElement('div');
+        const overlay = __dcufThemeHost.invokeNative('create-element', 'div');
         overlay.id = OVERLAY_ID;
-        overlay.__dcufReturnFocus = document.activeElement;
+        overlay.__dcufReturnFocus = __dcufThemeHost.findAnchor('active-element');
 
-        const panel = document.createElement('section');
+        const panel = __dcufThemeHost.invokeNative('create-element', 'section');
         panel.id = PANEL_ID;
         panel.setAttribute('role', 'dialog');
         panel.setAttribute('aria-modal', 'true');
@@ -1468,7 +1474,7 @@ const ThemeModule = (() => {
             <div class="dcuf-palette-resize-handle" role="separator" aria-label="UI 색상 설정 크기 조절"></div>
         `;
         overlay.appendChild(panel);
-        (document.body || document.documentElement).appendChild(overlay);
+        __dcufThemeHost.findAnchor('mount').appendChild(overlay);
         attachPanelPointerGeometry(panel);
         if (typeof PersonalBlockModule !== 'undefined' && typeof PersonalBlockModule.attachPopupPinchResize === 'function') {
             PersonalBlockModule.attachPopupPinchResize(panel, { minWidth: 300, minHeight: 320 });
@@ -1496,7 +1502,11 @@ const ThemeModule = (() => {
             actionButtons.forEach((button) => { button.disabled = true; });
             status.textContent = '';
             try {
-                await GM_setValue(STORAGE_KEY, selectedId);
+                const result = await __dcufUiPort.dispatch({
+                    type: DCUF_UI_CONTRACTS.UI_INTENT_TYPES.PALETTE_COMMIT,
+                    value: selectedId
+                });
+                if (!result.ok) throw new Error(`palette commit failed: ${result.code}`);
                 writeRevision += 1;
                 committedId = selectedId;
                 apply(committedId, 'save');
@@ -1522,10 +1532,10 @@ const ThemeModule = (() => {
             if (focusable.length === 0) return;
             const first = focusable[0];
             const last = focusable[focusable.length - 1];
-            if (event.shiftKey && document.activeElement === first) {
+            if (event.shiftKey && __dcufThemeHost.findAnchor('active-element') === first) {
                 event.preventDefault();
                 last.focus();
-            } else if (!event.shiftKey && document.activeElement === last) {
+            } else if (!event.shiftKey && __dcufThemeHost.findAnchor('active-element') === last) {
                 event.preventDefault();
                 first.focus();
             }
@@ -1536,8 +1546,8 @@ const ThemeModule = (() => {
     };
 
     apply(DEFAULT_ID, 'default');
-    document.addEventListener('DOMContentLoaded', () => apply(committedId, 'dom-ready-sync'), { once: true });
-    if (!ensureStyle()) document.addEventListener('DOMContentLoaded', ensureStyle, { once: true });
+    __dcufThemeHost.invokeNative('on-dom-ready', () => apply(committedId, 'dom-ready-sync'), { once: true });
+    if (!ensureStyle()) __dcufThemeHost.invokeNative('on-dom-ready', ensureStyle, { once: true });
     beginInitialRead();
 
     return Object.freeze({

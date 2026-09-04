@@ -21,6 +21,7 @@ import { resolveBuiltUserscript } from './harness/userscript-loader.mjs';
 const args = new Set(process.argv.slice(2));
 const selectedGroup = process.argv.includes('--group') ? process.argv[process.argv.indexOf('--group') + 1] : null;
 const selectedName = process.argv.includes('--filter') ? process.argv[process.argv.indexOf('--filter') + 1] : null;
+const excludedName = process.argv.includes('--exclude-filter') ? process.argv[process.argv.indexOf('--exclude-filter') + 1] : null;
 const headed = args.has('--headed');
 const requestedTarget = String(process.env.DCUF_TESTBED_TARGET || '').trim().toLowerCase();
 if (requestedTarget && !['mobile', 'pc'].includes(requestedTarget)) {
@@ -883,6 +884,155 @@ mobileTest('page context registers only the runtime subscribers owned by each su
             assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
         } finally { await session.close(); }
     }
+});
+
+test('UiPort snapshots intents subscriptions and disposable scopes preserve their boundary contract', 'functional', async ({ browser, server }) => {
+    const session = await createTestPage(browser, server.baseUrl, { storage: noStatsStorage });
+    try {
+        await session.goto('/board/lists?id=test');
+        const result = await session.page.evaluate(async () => {
+            const port = window.__dcufUiPort;
+            const debug = window.__dcufUiPortDebug;
+            if (!port || !debug) return { missing: true };
+
+            const initial = port.getSnapshot();
+            const notifications = [];
+            const unsubscribe = port.subscribe((snapshot, metadata) => {
+                notifications.push({ revision: snapshot.revision, reason: metadata.reason });
+            });
+            const opened = await port.dispatch({ type: 'surface/open', surface: 'contract-test' });
+            const afterOpen = port.getSnapshot();
+            const repeated = await port.dispatch({ type: 'surface/open', surface: 'contract-test' });
+            const invalidSurface = await port.dispatch({ type: 'surface/open', surface: '' });
+            const invalidIntent = await port.dispatch({ type: 'not-a-real-intent' });
+            const unsupportedIntent = await port.dispatch({ type: 'filter-settings/commit', value: {} });
+            const afterNoops = port.getSnapshot();
+            unsubscribe();
+            unsubscribe();
+            const closed = await port.dispatch({ type: 'surface/close', surface: 'contract-test' });
+            const afterClose = port.getSnapshot();
+
+            const revisionBeforeFilter = afterClose.revision;
+            window.__dcufFilterModule?.runSyncRefilterPass?.('all');
+            await Promise.resolve();
+            const revisionAfterFilter = port.getSnapshot().revision;
+
+            const root = document.createElement('div');
+            const button = document.createElement('button');
+            root.appendChild(button);
+            document.body.appendChild(root);
+            const scope = debug.createDisposableScope('contract-test');
+            let eventCalls = 0;
+            let mutationCalls = 0;
+            let timerCalls = 0;
+            let manualDisposeCalls = 0;
+            scope.listen(button, 'click', () => { eventCalls += 1; });
+            scope.timeout(() => { timerCalls += 1; }, 5000);
+            scope.observeOwnedRoot(root, () => { mutationCalls += 1; }, { childList: true });
+            const releaseManual = scope.own(() => { manualDisposeCalls += 1; });
+            releaseManual();
+            releaseManual();
+            button.click();
+            root.appendChild(document.createElement('i'));
+            await new Promise((resolve) => setTimeout(resolve, 0));
+            const beforeDispose = { eventCalls, mutationCalls, timerCalls, manualDisposeCalls, size: scope.size };
+            scope.dispose();
+            scope.dispose();
+            button.click();
+            root.appendChild(document.createElement('b'));
+            await new Promise((resolve) => setTimeout(resolve, 20));
+            const afterDispose = {
+                eventCalls,
+                mutationCalls,
+                timerCalls,
+                manualDisposeCalls,
+                size: scope.size,
+                disposed: scope.disposed,
+            };
+            root.remove();
+
+            const surface = debug.createUiSurface({ mount() {}, render() {}, unmount() {} });
+            let invalidSurfaceFactory = '';
+            try { debug.createUiSurface({ mount() {}, render() {} }); }
+            catch (error) { invalidSurfaceFactory = error?.name || 'error'; }
+
+            return {
+                missing: false,
+                methods: ['getSnapshot', 'subscribe', 'dispatch'].map((key) => typeof port[key]),
+                frozen: {
+                    initial: Object.isFrozen(initial),
+                    palette: Object.isFrozen(initial.palette),
+                    surfaces: Object.isFrozen(initial.surfaces),
+                    committed: Object.isFrozen(opened.committedSnapshot),
+                    committedSurfaces: Object.isFrozen(opened.committedSnapshot?.surfaces),
+                    surface: Object.isFrozen(surface),
+                },
+                revisions: {
+                    initial: initial.revision,
+                    afterOpen: afterOpen.revision,
+                    afterNoops: afterNoops.revision,
+                    afterClose: afterClose.revision,
+                    beforeFilter: revisionBeforeFilter,
+                    afterFilter: revisionAfterFilter,
+                },
+                notifications,
+                results: {
+                    opened: { ok: opened.ok, code: opened.code },
+                    repeated: { ok: repeated.ok, code: repeated.code, hasSnapshot: Boolean(repeated.committedSnapshot) },
+                    invalidSurface: { ok: invalidSurface.ok, code: invalidSurface.code },
+                    invalidIntent: { ok: invalidIntent.ok, code: invalidIntent.code },
+                    unsupportedIntent: { ok: unsupportedIntent.ok, code: unsupportedIntent.code },
+                    closed: { ok: closed.ok, code: closed.code },
+                },
+                beforeDispose,
+                afterDispose,
+                invalidSurfaceFactory,
+                debugCounts: { listeners: debug.listenerCount(), handlers: debug.handlerCount() },
+            };
+        });
+
+        assert.equal(result.missing, false, JSON.stringify(result));
+        assert.deepEqual(result.methods, ['function', 'function', 'function']);
+        assert.deepEqual(result.frozen, {
+            initial: true,
+            palette: true,
+            surfaces: true,
+            committed: true,
+            committedSurfaces: true,
+            surface: true,
+        });
+        assert.equal(result.revisions.afterOpen, result.revisions.initial + 1, JSON.stringify(result.revisions));
+        assert.equal(result.revisions.afterNoops, result.revisions.afterOpen, JSON.stringify(result.revisions));
+        assert.equal(result.revisions.afterClose, result.revisions.afterOpen + 1, JSON.stringify(result.revisions));
+        assert.equal(result.revisions.beforeFilter, result.revisions.afterFilter, JSON.stringify(result.revisions));
+        assert.deepEqual(result.notifications, [{ revision: result.revisions.afterOpen, reason: 'surface-open:contract-test' }]);
+        assert.deepEqual(result.results, {
+            opened: { ok: true, code: 'surface-opened' },
+            repeated: { ok: true, code: 'surface-opened', hasSnapshot: false },
+            invalidSurface: { ok: false, code: 'invalid-surface' },
+            invalidIntent: { ok: false, code: 'invalid-intent' },
+            unsupportedIntent: { ok: false, code: 'unsupported-intent' },
+            closed: { ok: true, code: 'surface-closed' },
+        });
+        assert.deepEqual(result.beforeDispose, {
+            eventCalls: 1,
+            mutationCalls: 1,
+            timerCalls: 0,
+            manualDisposeCalls: 1,
+            size: 3,
+        });
+        assert.deepEqual(result.afterDispose, {
+            eventCalls: 1,
+            mutationCalls: 1,
+            timerCalls: 0,
+            manualDisposeCalls: 1,
+            size: 0,
+            disposed: true,
+        });
+        assert.equal(result.invalidSurfaceFactory, 'TypeError');
+        assert.deepEqual(result.debugCounts, { listeners: 0, handlers: 4 });
+        assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
+    } finally { await session.close(); }
 });
 
 mobileTest('filter UI CSS stays lazy until the first interactive surface opens', 'functional', async ({ browser, server }) => {
@@ -7108,7 +7258,8 @@ const browser = await launchBrowser({ headed });
 let failures = 0;
 const selected = tests.filter((item) => item.targets.includes(activeTarget)
     && (!selectedGroup || item.group === selectedGroup)
-    && (!selectedName || item.name.includes(selectedName)));
+    && (!selectedName || item.name.includes(selectedName))
+    && (!excludedName || !item.name.includes(excludedName)));
 console.log(`DCUF testbed: ${selected.length} ${activeTarget} tests, ${server.baseUrl}`);
 try {
     for (const item of selected) {
