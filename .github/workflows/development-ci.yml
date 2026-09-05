@@ -16,6 +16,7 @@ concurrency:
 env:
   NODE_VERSION: 22.17.0
   PNPM_VERSION: 10.33.1
+  CANDIDATE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
 
 jobs:
   policy:
@@ -25,8 +26,15 @@ jobs:
       - name: Checkout exact candidate
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
+          ref: ${{ env.CANDIDATE_SHA }}
           fetch-depth: 0
           persist-credentials: false
+      - name: Verify exact candidate checkout
+        env:
+          EXPECTED_SHA: ${{ env.CANDIDATE_SHA }}
+        run: |
+          [[ "${EXPECTED_SHA}" =~ ^[0-9a-f]{40}$ ]]
+          test "$(git rev-parse HEAD)" = "${EXPECTED_SHA}"
       - name: Set up Node
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
@@ -52,8 +60,15 @@ jobs:
       - name: Checkout exact candidate
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
+          ref: ${{ env.CANDIDATE_SHA }}
           fetch-depth: 0
           persist-credentials: false
+      - name: Verify exact candidate checkout
+        env:
+          EXPECTED_SHA: ${{ env.CANDIDATE_SHA }}
+        run: |
+          [[ "${EXPECTED_SHA}" =~ ^[0-9a-f]{40}$ ]]
+          test "$(git rev-parse HEAD)" = "${EXPECTED_SHA}"
       - name: Set up Node
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
@@ -79,7 +94,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: affected-${{ github.sha }}
+          name: affected-${{ env.CANDIDATE_SHA }}
           path: |
             artifacts/impact.json
             artifacts/affected-result.json
@@ -96,8 +111,15 @@ jobs:
       - name: Checkout exact candidate
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
+          ref: ${{ env.CANDIDATE_SHA }}
           fetch-depth: 0
           persist-credentials: false
+      - name: Verify exact candidate checkout
+        env:
+          EXPECTED_SHA: ${{ env.CANDIDATE_SHA }}
+        run: |
+          [[ "${EXPECTED_SHA}" =~ ^[0-9a-f]{40}$ ]]
+          test "$(git rev-parse HEAD)" = "${EXPECTED_SHA}"
       - name: Set up Node
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
@@ -142,7 +164,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: acceptance-${{ github.sha }}
+          name: acceptance-${{ env.CANDIDATE_SHA }}
           path: |
             artifacts/*.json
             Dc_UserFilter_Mobile_v*.user.js
