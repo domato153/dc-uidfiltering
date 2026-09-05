@@ -1,5 +1,5 @@
 import { spawnSync } from 'node:child_process';
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { copyFile, mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -8,6 +8,7 @@ const receiptPath = path.resolve(rootDir, process.argv[2] || 'artifacts/impact.j
 const receipt = JSON.parse(await readFile(receiptPath, 'utf8'));
 const auditDir = path.join(rootDir, 'artifacts', 'proof-audit');
 await mkdir(auditDir, { recursive: true });
+const guardedRuntime = path.join(rootDir, 'testbed', 'artifacts', 'runtime-under-test.user.js');
 
 function expectFailure(label, command, args, { env = {}, pattern } = {}) {
     const result = spawnSync(command, args, {
@@ -43,6 +44,8 @@ expectFailure('stale harness receipt is rejected', 'node', [
     '--verify-receipt-only',
 ], { pattern: /Stale evidence receipt: harnessSha256/ });
 
+const nonGuardedRuntime = path.join(auditDir, 'non-guarded-runtime.user.js');
+await copyFile(guardedRuntime, nonGuardedRuntime);
 expectFailure('non-guarded artifact path is rejected', 'node', [
     'testbed/run-tests.mjs',
     '--group',
@@ -50,13 +53,12 @@ expectFailure('non-guarded artifact path is rejected', 'node', [
     '--require-runtime-under-test',
 ], {
     env: {
-        DCUF_TESTBED_USERSCRIPT: path.join(rootDir, 'dcinside_user_filter.user.js'),
+        DCUF_TESTBED_USERSCRIPT: nonGuardedRuntime,
         DCUF_TESTBED_TARGET: 'mobile',
     },
     pattern: /Runtime guard rejected non-source artifact/,
 });
 
-const guardedRuntime = path.join(rootDir, 'testbed', 'artifacts', 'runtime-under-test.user.js');
 expectFailure('control=candidate differential is rejected', 'node', [
     'tools/run-semantic-differential.mjs',
     '--control', guardedRuntime,

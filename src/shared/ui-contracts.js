@@ -50,7 +50,6 @@ export function createUiPortRuntime(initialSnapshot = {}) {
     let snapshot = freezeUiValue({ revision: 0, ...cloneUiValue(initialSnapshot) });
     const listeners = new Set();
     const handlers = new Map();
-    let commandTail = Promise.resolve();
 
     const getSnapshot = () => snapshot;
     const subscribe = (listener) => {
@@ -99,11 +98,7 @@ export function createUiPortRuntime(initialSnapshot = {}) {
             return createCommandResult(false, 'handler-error');
         }
     };
-    const dispatch = (intent) => {
-        const result = commandTail.then(() => execute(intent));
-        commandTail = result.catch(() => {});
-        return result;
-    };
+    const dispatch = (intent) => execute(intent);
 
     return Object.freeze({
         port: Object.freeze({ getSnapshot, subscribe, dispatch }),

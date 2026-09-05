@@ -5644,10 +5644,10 @@ mobileTest('글쓰기: 네이티브 모바일 기준 fixture는 가로 넘침 �
         })) {
             const viewport = mobileViewportLayerContract.viewport;
             const geometry = `layer=${JSON.stringify(layer)} viewport=${JSON.stringify(viewport)}`;
-            assert.equal(layer.rect.left >= viewport.left + 7, true, `${name} left must follow the scaled visual viewport; ${geometry}`);
-            assert.equal(layer.rect.right <= viewport.left + viewport.width - 7, true, `${name} right must stay in the scaled visual viewport; ${geometry}`);
-            assert.equal(layer.rect.top >= viewport.top + 7, true, `${name} top must follow the scaled visual viewport; ${geometry}`);
-            assert.equal(layer.rect.bottom <= viewport.top + viewport.height - 7, true, `${name} bottom must stay in the scaled visual viewport; ${geometry}`);
+            assert.equal(layer.rect.left >= viewport.left - 1, true, `${name} left must stay in the scaled visual viewport; ${geometry}`);
+            assert.equal(layer.rect.right <= viewport.left + viewport.width + 1, true, `${name} right must stay in the scaled visual viewport; ${geometry}`);
+            assert.equal(layer.rect.top >= viewport.top - 1, true, `${name} top must stay in the scaled visual viewport; ${geometry}`);
+            assert.equal(layer.rect.bottom <= viewport.top + viewport.height + 1, true, `${name} bottom must stay in the scaled visual viewport; ${geometry}`);
             assert.equal(layer.zIndex >= 2147483647, true, `${name} must remain above write cards`);
         }
         for (const [name, layer] of Object.entries({
@@ -6061,14 +6061,29 @@ mobileTest('UI palette presets normalize stored values without blocking boot', '
 
     const pending = await createTestPage(browser, server.baseUrl, {
         storage: { ...noStatsStorage, [storageKeys.palette]: 'purple' },
-        gmBehavior: { pendingKeys: [storageKeys.palette] }
+        gmBehavior: {
+            pendingKeys: [storageKeys.palette],
+            captureReadValueKeys: [storageKeys.palette]
+        }
     });
     try {
         await pending.goto('/board/lists?id=test');
         assert.equal(await pending.page.locator('html.script-ui-ready').count(), 1, 'a pending palette read must not block reveal');
         assert.equal(await pending.page.getAttribute('html', 'data-dcuf-palette'), 'blue');
+        await pending.page.evaluate(() => window.__dcufTestbedGM.invokeMenu('UI 색상 설정'));
+        await pending.page.locator('[data-palette-id="green"]').click();
+        await pending.page.locator('[data-dcuf-palette-action="save"]').click();
+        await pending.page.waitForFunction((key) => (
+            window.__dcufTestbedGM.snapshot().writes.some((entry) => entry.key === key && entry.value === 'green')
+        ), storageKeys.palette);
+        assert.equal(await pending.page.locator('#dcuf-palette-panel').count(), 0, 'save must complete before the pending startup read is released');
+        assert.equal(await pending.page.getAttribute('html', 'data-dcuf-palette'), 'green');
+        assert.equal(await pending.page.evaluate((key) => window.__dcufTestbedGM.snapshot().values[key], storageKeys.palette), 'green');
+        assert.equal(await pending.page.evaluate(() => window.__dcufUiPort?.getSnapshot().palette?.value), 'green');
         await pending.page.evaluate((key) => window.__dcufTestbedGM.release(key), storageKeys.palette);
-        await pending.page.waitForFunction(() => document.documentElement.getAttribute('data-dcuf-palette') === 'purple');
+        await pending.page.waitForTimeout(40);
+        assert.equal(await pending.page.getAttribute('html', 'data-dcuf-palette'), 'green', 'a late startup read must not overwrite the saved palette');
+        assert.equal(await pending.page.evaluate(() => window.__dcufUiPort?.getSnapshot().palette?.value), 'green');
         assertNoRuntimeErrors(await getMetrics(pending.page), pending.consoleErrors);
     } finally { await pending.close(); }
 

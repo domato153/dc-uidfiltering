@@ -8,15 +8,21 @@
     const __dcufUiApplication = __dcufUiRuntime.control;
     const __dcufPaletteStorageKey = 'dcuf_mobile_ui_palette';
     const __dcufValidUiString = (value) => typeof value === 'string' && value.trim().length > 0;
+    let __dcufPaletteWriteRevision = 0;
 
     __dcufUiApplication.registerIntentHandler(DCUF_UI_CONTRACTS.UI_INTENT_TYPES.PALETTE_LOAD, async (intent, context) => {
+        const revisionAtStart = __dcufPaletteWriteRevision;
         const value = await GM_getValue(__dcufPaletteStorageKey, intent.defaultValue || 'blue');
+        if (__dcufPaletteWriteRevision !== revisionAtStart) {
+            return { ok: true, code: 'palette-load-superseded' };
+        }
         context.commit({ palette: { value, status: 'ready' } }, 'palette-load');
         return { ok: true, code: 'palette-loaded' };
     });
     __dcufUiApplication.registerIntentHandler(DCUF_UI_CONTRACTS.UI_INTENT_TYPES.PALETTE_COMMIT, async (intent, context) => {
         if (!__dcufValidUiString(intent.value)) return { ok: false, code: 'invalid-palette' };
         await GM_setValue(__dcufPaletteStorageKey, intent.value);
+        __dcufPaletteWriteRevision += 1;
         context.commit({ palette: { value: intent.value, status: 'ready' } }, 'palette-commit');
         return { ok: true, code: 'palette-committed' };
     });

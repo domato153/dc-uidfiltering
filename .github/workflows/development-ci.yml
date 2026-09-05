@@ -45,12 +45,28 @@ jobs:
           corepack prepare pnpm@${PNPM_VERSION} --activate
       - name: Install locked dependencies
         run: pnpm install --frozen-lockfile
-      - name: Verify policy, skills, registry, and UI boundaries
+      - name: Resolve declared policy gates
+        env:
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: |
-          node tools/architecture-registry.mjs validate
-          node tools/verify-skills.mjs
-          node tools/verify-ui-boundaries.mjs
-          node tools/verify-repo.mjs guidance
+          BASE_SHA="${PR_BASE_SHA}"
+          if [ -z "${BASE_SHA}" ]; then BASE_SHA="$(git rev-parse HEAD^)"; fi
+          node tools/resolve-impact.mjs --base "${BASE_SHA}" --head HEAD --output artifacts/impact.json
+      - name: Build guarded runtime for proof mutations
+        run: node tools/build-userscript.mjs --testbed-output testbed/artifacts/runtime-under-test.user.js
+      - name: Run declared policy profile
+        run: node tools/run-gates.mjs artifacts/impact.json artifacts/policy-result.json --only policy
+      - name: Upload policy receipts
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: policy-${{ env.CANDIDATE_SHA }}
+          path: |
+            artifacts/impact.json
+            artifacts/policy-result.json
+            artifacts/proof-audit/*.json
+          if-no-files-found: error
+          retention-days: 30
 
   affected:
     name: affected-tests

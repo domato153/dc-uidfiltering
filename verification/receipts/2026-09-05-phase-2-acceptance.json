@@ -44,5 +44,6 @@
     { "gate": "windows-2025", "reason": "Runs on the pushed PR candidate in GitHub-hosted promotion workflow." },
     { "gate": "live-canary", "reason": "Manual Tampermonkey canary begins after shared filter and personal-block UI separation." }
   ],
-  "status": "local-accepted"
+  "status": "stale",
+  "staleReason": "Bound to e46a8122712d13a700fa6c69ebf9581833f816d5 and superseded by later runtime, oracle, harness, registry, and workflow changes; retained only as historical evidence."
 }

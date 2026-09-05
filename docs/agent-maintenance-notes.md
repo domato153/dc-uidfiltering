@@ -31,7 +31,7 @@ This is the active, compact maintenance index. It records reusable causes and co
 - Authenticated delete keeps its confirmation-only content and native submit button, but shares the nonmember modify/delete page chrome, centered form geometry, card width, typography, and action-button material. Do not add a password input or replace the host form to achieve that visual parity.
 - The live authenticated-delete host gives `.empty_pagewrap` a large vertical auto margin and `.pop_wrap.type5` its own square border/background/z-index. Reset that exact shell before centering the shared card geometry, and make the outer popup wrapper transparent and borderless so `.dcuf-delete-confirm-content` remains the only visual card owner.
 - Popup tests must close and reopen the same native node and prove the delegated handler and submit count remain singular.
-- Under desktop-site mobile zoom, compute a fixed editor layer's local coordinate scale from the layer's own rect/offset dimensions. A small anchor's integer `offsetWidth` amplifies rounding error across a wide menu; reserve measured outer chrome when converting visual max dimensions back to content-box CSS values.
+- Do not replace the preserved anchor-based editor-layer scale calculation inside a semantic-delta-zero refactor. The discarded layer-scale/content-box correction changed visible geometry. Characterization should assert positive viewport containment with a 1px rendering tolerance; an exact inset change requires its own declared behavior fix and live evidence.
 
 ## Recommendation and palette contracts
 

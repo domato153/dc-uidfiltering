@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "registryVersion": 4,
+  "registryVersion": 5,
   "authorities": [
     {
       "id": "behavior-baselines",
@@ -341,8 +341,8 @@
       "status": "accepted",
       "classification": "presentation-source",
       "layer": "presentation-ui",
-      "boundaryState": "conforming",
-      "responsibility": "Renders palette tokens and the existing palette dialog from UiPort snapshots and typed intents without direct GM access.",
+      "boundaryState": "mixed",
+      "responsibility": "Renders palette tokens and the existing palette dialog from UiPort snapshots and typed intents without direct GM access; legacy pinch geometry and touch listeners still delegate to the mixed personal-block module.",
       "sourceRefs": [
         "src/targets/mobile/theme-module.js"
       ],
@@ -767,7 +767,7 @@
       "classification": "runtime-source",
       "layer": "application-runtime",
       "boundaryState": "conforming",
-      "responsibility": "Owns immutable UI snapshots, serialized intent effects, GM-backed palette state, semantic-change notifications, and surface state.",
+      "responsibility": "Owns immutable UI snapshots, independently dispatched intent effects, GM-backed palette state with stale-read suppression, semantic-change notifications, and surface state.",
       "sourceRefs": [
         "src/runtime/ui-state-store.js"
       ],
@@ -844,6 +844,12 @@
       "from": "mobile-personal-block-module",
       "to": "pc-build",
       "kind": "compat-copy-input"
+    },
+    {
+      "id": "rel-personal-popup-geometry-theme",
+      "from": "mobile-personal-block-module",
+      "to": "mobile-theme-module",
+      "kind": "legacy-geometry-helper"
     },
     {
       "id": "rel-registry-impact",
@@ -934,8 +940,12 @@
     },
     {
       "id": "invariant-one-visual-owner",
-      "state": "enforced",
-      "summary": "Each surface has one final visual owner and no additive global correction layer."
+      "state": "target-with-debt",
+      "summary": "Each surface must converge on one final visual owner; palette pinch geometry is still delegated to a mixed legacy module.",
+      "exceptions": [
+        "mobile-personal-block-module",
+        "mobile-theme-module"
+      ]
     },
     {
       "id": "invariant-pc-host-style-isolation",

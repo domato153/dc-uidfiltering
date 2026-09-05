@@ -4,30 +4,30 @@
   "target": "pc",
   "controlSource": "cef5f71381116d2746b0319b2f8e609e8d7eae85",
   "controlSha256": "D3A95C479D8D50F88D97700DE91FA17D1D338B3AEBB488F53D865F445B656212",
-  "candidateSha256": "20509CA38DD4227F350FCFFD9A8544E7EC158A5761E7119AFD96292C437907DF",
-  "observerSha256": "5C8D4157F2137BD565FE8CA2EB999F3ECFB0229E78745600314667E433A46517",
+  "candidateSha256": "F0B419CAF3214DED3CD9502CD1BB4C789B12F2E4E7DFDEAF80B3C11CBACFD259",
+  "observerSha256": "9876CC6F43A1866FDFF2E1B1A52FC8FE1802FC0B3C89944F63531D9668E357A2",
   "evidenceBinding": {
-    "registrySha256": "353157572edf4a2d04f702befb68a47ccf2411cfa7de691555b676f29a01d6e8",
-    "architectureStateSha256": "6f5d694378c5bcc15d770317787201d110820c5452dc59afa736e54c17e8c127",
+    "registrySha256": "397ea0bc9551613ba4c92aadcf800ffa6aceb54270d74f2cb69a301c47fa1b5c",
+    "architectureStateSha256": "e991851bb1efb0ee4a8965cf2412b41eb15574df379f702c06e21e19be409fcb",
     "gatesSha256": "25f1457ad2199a553507bb91e0224afac3444c68a1a831985221d180f2b59227",
-    "harnessSha256": "e00c00381c4101deb39adb309d2bc9acddb552d0476304350130eb63903ca460",
+    "harnessSha256": "b2d9964e115f0db7c76dfce7d6df0809246f1a381e01e3f12de7c4ccc24ae9d2",
     "fixturesSha256": "bd0be281145eeaebc62af58ff1ef518db506327da14a429946068d971b52929d",
     "toolchainSha256": "4c46f80e0d7d3247faedf3a1ec33362a3d246b0a993a9705d332c3868f412d4f",
     "node": "v22.17.0"
   },
-  "scope": "pc palette preview/cancel/save/write-failure-retry after initialization; settled resource equivalence compares active ownership while retaining cumulative startup churn as raw evidence; no claim about startup ordering or other surfaces",
+  "scope": "pc palette preview/cancel/save/write-failure-retry plus save-before-pending-startup-read-release ordering; settled resource equivalence compares active ownership while retaining cumulative startup churn as raw evidence; no claim about other surfaces",
   "observationEvidence": {
     "control": {
       "artifactSha256": "D3A95C479D8D50F88D97700DE91FA17D1D338B3AEBB488F53D865F445B656212",
       "browser": "149.0.7827.55",
-      "observationCount": 13,
-      "observationsSha256": "A700695C8BD243C409B2D256C65E7A9CE3AF609468445DA50365672DE20D4747"
+      "observationCount": 16,
+      "observationsSha256": "F10CC625538EC2D3C12B4370C02F97C747BF3D9BA56712667EBD300CA95850FD"
     },
     "candidate": {
-      "artifactSha256": "20509CA38DD4227F350FCFFD9A8544E7EC158A5761E7119AFD96292C437907DF",
+      "artifactSha256": "F0B419CAF3214DED3CD9502CD1BB4C789B12F2E4E7DFDEAF80B3C11CBACFD259",
       "browser": "149.0.7827.55",
-      "observationCount": 13,
-      "observationsSha256": "BC481F00C0C0468BF500570F8F40C3C91CD7BD838EFBFD294EA082DC35346FFA"
+      "observationCount": 16,
+      "observationsSha256": "62CD259C4B9DE6C47F9058B269A40C9868C34A6BEE43F2E0C096FB787B0CB9C5"
     }
   },
   "rawDifferences": [

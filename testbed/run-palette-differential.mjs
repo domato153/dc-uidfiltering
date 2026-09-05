@@ -115,6 +115,41 @@ if (args.includes('--side')) {
                 if (session.consoleErrors.length) throw new Error(session.consoleErrors.join('\n'));
             } finally { await session.close(); }
         }
+        const pending = await createTestPage(browser, server.baseUrl, {
+            storage: { [storageKeys.threshold]: 0, [storageKeys.palette]: 'purple', [storageKeys.personalEnabled]: true,
+                [storageKeys.personalList]: { uids: [], nicknames: [], ips: [] } },
+            gmBehavior: {
+                pendingKeys: [storageKeys.palette],
+                captureReadValueKeys: [storageKeys.palette],
+            },
+            ...(target === 'pc' ? { viewport: { width: 1280, height: 900 }, hasTouch: false, isMobile: false } : {}),
+        });
+        try {
+            await pending.goto('/board/lists?id=test');
+            const capturePending = async (step) => {
+                observations.push({ scenario: 'pending-read-save', step, value: await pending.page.evaluate(() => {
+                    const gm = window.__dcufTestbedGM.snapshot();
+                    return {
+                        palette: document.documentElement.getAttribute('data-dcuf-palette'),
+                        stored: gm.values.dcuf_mobile_ui_palette,
+                        writes: gm.writes.filter((entry) => entry.key === 'dcuf_mobile_ui_palette').map(({ key, value }) => ({ key, value })),
+                        panelCount: document.querySelectorAll('#dcuf-palette-panel').length,
+                    };
+                }) });
+            };
+            await capturePending('pending-initial');
+            await pending.page.evaluate(() => window.__dcufTestbedGM.invokeMenu('UI 색상 설정'));
+            await pending.page.locator('[data-palette-id=green]').click();
+            await pending.page.locator('[data-dcuf-palette-action=save]').click();
+            await pending.page.waitForFunction(() => window.__dcufTestbedGM.snapshot().writes.some((entry) => (
+                entry.key === 'dcuf_mobile_ui_palette' && entry.value === 'green'
+            )));
+            await capturePending('saved-before-read-release');
+            await pending.page.evaluate((key) => window.__dcufTestbedGM.release(key), storageKeys.palette);
+            await pending.page.waitForTimeout(40);
+            await capturePending('after-stale-read-release');
+            if (pending.consoleErrors.length) throw new Error(pending.consoleErrors.join('\n'));
+        } finally { await pending.close(); }
         await writeFile(output, JSON.stringify({ sha256: hash(bytes), browser: browser.version(), observations }, null, 2) + '\n');
     } finally { await browser.close(); await server.close(); }
 } else {
@@ -174,7 +209,7 @@ if (args.includes('--side')) {
     await writeFile(output, JSON.stringify({ schemaVersion: 1, kind: 'observed-palette-differential',
         target, controlSource: baseline[target].behaviorSourceCommit, controlSha256: controlHash, candidateSha256: candidateHash,
         observerSha256: hash(await readFile(scriptPath)), evidenceBinding: await createEvidenceBinding(root),
-        scope: `${target} palette preview/cancel/save/write-failure-retry after initialization; settled resource equivalence compares active ownership while retaining cumulative startup churn as raw evidence; no claim about startup ordering or other surfaces`,
+        scope: `${target} palette preview/cancel/save/write-failure-retry plus save-before-pending-startup-read-release ordering; settled resource equivalence compares active ownership while retaining cumulative startup churn as raw evidence; no claim about other surfaces`,
         observationEvidence, ...(compact ? {} : { sides }), rawDifferences, differences, equivalent }, null, 2) + '\n');
     console.log('Observed palette comparison: ' + (equivalent ? 'PASS' : 'FAIL') + '; ' + differences.length + ' semantic and ' + rawDifferences.length + ' raw differing snapshots');
     if (!equivalent) process.exitCode = 1;
