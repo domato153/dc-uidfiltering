@@ -4,13 +4,15 @@ This is the active, compact maintenance index. It records reusable causes and co
 
 ## Scope and evidence
 
-- Stable `3.5.3` behavior is the product baseline for the `3.5.4-beta` correction cycle. Do not revive the discarded broad UI-renewal runtime by copying later style or adapter modules wholesale.
+- `cef5f71`'s exact `3.5.4-beta` artifact is the behavior authority for the current meaning-preservation work; its version-only `3.5.5` normalization and PC 1.9.9 build are separate exact-digest controls. Do not revive the discarded broad UI-renewal runtime by copying later style or adapter modules wholesale.
 - Maintain the compact live-root map in [`ui-surface-contracts.md`](ui-surface-contracts.md). Before a UI correction, trace every matching injected phase and selector specificity, then assign one final visual owner to the affected surface.
 - Add a failing positive contract before the fix. Geometry and hit-testing assertions require rendered positive-area controls; a zero-area or merely present node is not a pass.
 - Source-work Testbed runs inject `testbed/artifacts/runtime-under-test.user.js`, require the source-runtime guard, and print the absolute path and SHA-256. Screenshots remain evidence, not approval.
 - At Chromium document-start, the parser can replace the provisional `html`/`head` after the boot controller exists. A timer-only lock repair can expose one frame; observe the document only while locked/preparing, reinstall the attribute/style/overlay in the mutation checkpoint, and disconnect at ready/degraded.
 - Test target applicability is selection metadata, not an early return inside a test body. Otherwise mobile-only or PC-only cases can be reported as zero-duration passes for the wrong artifact.
 - A fixture must preserve the host's form, hidden inputs, original buttons, delegated handlers, route variant, popup close/reopen behavior, and relevant CSS conflict. A visual stand-in cannot prove host compatibility.
+- A control and candidate both passing the same test proves matching outcomes only. Semantic equivalence requires independently injected artifacts and compared observations for storage, events, host identity/order, geometry, requests/errors, and settled lifecycle ownership; retain raw startup churn even when active ownership is equal.
+- Reproduce baseline artifacts from the immutable source commit in an isolated export. A baseline verifier that invokes candidate build inputs is a false oracle, even when the expected digest happens to match.
 
 ## Filter, storage, and convenience contracts
 
@@ -28,6 +30,7 @@ This is the active, compact maintenance index. It records reusable causes and co
 - Authenticated delete keeps its confirmation-only content and native submit button, but shares the nonmember modify/delete page chrome, centered form geometry, card width, typography, and action-button material. Do not add a password input or replace the host form to achieve that visual parity.
 - The live authenticated-delete host gives `.empty_pagewrap` a large vertical auto margin and `.pop_wrap.type5` its own square border/background/z-index. Reset that exact shell before centering the shared card geometry, and make the outer popup wrapper transparent and borderless so `.dcuf-delete-confirm-content` remains the only visual card owner.
 - Popup tests must close and reopen the same native node and prove the delegated handler and submit count remain singular.
+- Under desktop-site mobile zoom, compute a fixed editor layer's local coordinate scale from the layer's own rect/offset dimensions. A small anchor's integer `offsetWidth` amplifies rounding error across a wide menu; reserve measured outer chrome when converting visual max dimensions back to content-box CSS values.
 
 ## Recommendation and palette contracts
 
