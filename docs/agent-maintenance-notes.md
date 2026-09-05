@@ -13,6 +13,7 @@ This is the active, compact maintenance index. It records reusable causes and co
 - A fixture must preserve the host's form, hidden inputs, original buttons, delegated handlers, route variant, popup close/reopen behavior, and relevant CSS conflict. A visual stand-in cannot prove host compatibility.
 - A control and candidate both passing the same test proves matching outcomes only. Semantic equivalence requires independently injected artifacts and compared observations for storage, events, host identity/order, geometry, requests/errors, and settled lifecycle ownership; retain raw startup churn even when active ownership is equal.
 - Reproduce baseline artifacts from the immutable source commit in an isolated export. A baseline verifier that invokes candidate build inputs is a false oracle, even when the expected digest happens to match.
+- On `pull_request`, the default checkout is GitHub's synthetic merge ref. A job claiming exact candidate lineage must explicitly checkout `github.event.pull_request.head.sha`, verify `git rev-parse HEAD`, and use that same SHA in receipts and artifact names; a green merge-ref run is integration evidence only.
 
 ## Filter, storage, and convenience contracts
 

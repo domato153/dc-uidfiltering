@@ -2,7 +2,7 @@
 
 ## Accepted baseline
 
-- Development branch: `codex/mobile-development`; Phase 2 work branch candidate is `fb262fbf02e1bc5dabfd12b7a606ec294b9602a8`, based on `e7fa4385b7fc65e7db40464df0dafd98b8391e4e`.
+- Development branch: `codex/mobile-development`; Phase 2 runtime/evidence candidate is `fb262fbf02e1bc5dabfd12b7a606ec294b9602a8`, with the exact-head workflow correction at `28cc9c97d707c6d4449e240b96cad15b44dd3d51`, based on `e7fa4385b7fc65e7db40464df0dafd98b8391e4e`.
 - Behavior source: `cef5f71381116d2746b0319b2f8e609e8d7eae85`.
 - Mobile beta SHA-256: `A03038FE68126B62054EBA11244D4EE2E1766D308983FC5C27127FD3794CB343`.
 - Mobile stable 3.5.5 SHA-256: `32BA208DDD9973A7EEC343F01E963A833AB4F0C084987077EDAE46844383C25D`.
@@ -37,8 +37,9 @@
 - Current verification changes default to Playwright-managed Chromium, reject invalid explicit browser paths, reject wrong target metadata and empty selection, read build target metadata from the manifest, and preserve per-gate JSON results.
 - Body replacement compares subscriber keys and gauge from one diagnostics snapshot. Its observer limit remains unchanged.
 - Editor geometry assertions remain unchanged. The product now derives inherited zoom from the layer rather than a small anchor's rounded `offsetWidth`, and reserves border-box chrome before applying max dimensions. This directly addresses the Ubuntu evidence without weakening containment.
-- A fresh-context independent upper-layer audit is still required before Phase 2 merge.
-- Windows hosted-runner promotion and refreshed local/Ubuntu acceptance remain pending.
+- Ubuntu run `33962623626` passed all three jobs and the corrected geometry, but its default `pull_request` checkout tested a synthetic merge commit while naming the step “exact candidate”. It is integration evidence, not accepted exact-head evidence.
+- Independent `gpt-5.6-sol max` review confirmed that wrong-head lineage defect before its session ended without a final report because of usage/network exhaustion. Commit `28cc9c9` explicitly checks out and verifies the PR head in every job and names uploaded evidence with the same SHA; a fresh exact-head run and a completed independent audit remain required before merge.
+- Exact-head Ubuntu acceptance and Windows hosted-runner promotion remain pending.
 - No live canary has been claimed. July live evidence is historical and may be stale.
 
 ## Resume rule
