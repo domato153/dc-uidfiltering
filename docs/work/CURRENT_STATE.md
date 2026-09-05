@@ -2,44 +2,42 @@
 
 ## Accepted baseline
 
-- Development branch: `codex/mobile-development`; Phase 2 runtime/evidence candidate is `fb262fbf02e1bc5dabfd12b7a606ec294b9602a8`, with the exact-head workflow correction at `28cc9c97d707c6d4449e240b96cad15b44dd3d51`, based on `e7fa4385b7fc65e7db40464df0dafd98b8391e4e`.
+- Protected development branch: `codex/mobile-development` at `e7fa4385b7fc65e7db40464df0dafd98b8391e4e`.
+- Phase 2 implementation/audit-fix commit: `74816c8068ba279c773efb7b0835fda0f939b7c0` on PR #3 (`codex/ui-port-boundary`); it is not yet accepted or merged.
+- Exact-head workflow correction: `28cc9c9496791bfaf959e31cada9cb10b9d8aa0e`.
 - Behavior source: `cef5f71381116d2746b0319b2f8e609e8d7eae85`.
 - Mobile beta SHA-256: `A03038FE68126B62054EBA11244D4EE2E1766D308983FC5C27127FD3794CB343`.
 - Mobile stable 3.5.5 SHA-256: `32BA208DDD9973A7EEC343F01E963A833AB4F0C084987077EDAE46844383C25D`.
 - PC 1.9.9 baseline SHA-256: `D3A95C479D8D50F88D97700DE91FA17D1D338B3AEBB488F53D865F445B656212`.
 
-## Phase 2 candidate architecture (PR #3; not yet accepted)
+## Phase 2 candidate architecture
 
-- Registry version 4 contains the internal `UiPort`, immutable snapshot and typed intent contracts, application-owned palette state, `HostSurfacePort`, target-adapter-owned `DisposableScope`, and the observed palette oracle mapping.
-- `ThemeModule` remains the single palette visual owner but no longer reads or writes GM storage or accesses `document` directly.
+- Registry version 5 contains `UiPort`, immutable snapshots and typed intents, application-owned palette state, `HostSurfacePort`, target-adapter-owned `DisposableScope`, and the observed palette oracle mapping.
+- `ThemeModule` no longer reads or writes GM storage or accesses `document` directly. It owns palette markup/CSS but still delegates pinch geometry and touch listeners to the mixed `PersonalBlockModule`; registry relation and one-owner debt now record that fact.
+- Palette effects dispatch independently. Application-owned write revision suppresses a stale startup read only after a successful write, preserving the original read/write ordering and final state.
 - The palette GM key, 14 values, menu/dialog DOM and CSS, preview/cancel/save/default behavior, focus return, and `dcuf:palette-change` event remain unchanged.
 - Impact resolution and UI-boundary verification consume accepted plus candidate overlays; evidence binding includes candidate state.
 - Differential execution rejects equal control/candidate digests and runs each artifact in a separate process and fresh browser contexts.
 
 ## Current candidate artifacts
 
-- Mobile 3.5.5: `498113B09260D6E86655414D81223401668A08AA8B2E1B9A9F46D7DC73D7692B`.
-- PC 1.9.9: `20509CA38DD4227F350FCFFD9A8544E7EC158A5761E7119AFD96292C437907DF`.
-- The mobile digest also contains the editor-layer scale correction described below. DOM-dependent disposal remains in the target-adapter layer; these are the exact digests used by current local acceptance.
+- Mobile 3.5.5: `14669BD113E97925507B4311625827D087E8CA3736583F9A16303FA03FF77448`.
+- PC 1.9.9: `F0B419CAF3214DED3CD9502CD1BB4C789B12F2E4E7DFDEAF80B3C11CBACFD259`.
+- Root and `dist` outputs are generated validation artifacts and remain untracked.
 
 ## Evidence status
 
-- Exact beta/stable normalization and repository release contracts: passed.
+- Exact beta/stable normalization and repository release contracts: passed locally at `74816c8`.
 - Phase 1 characterization: `verification/receipts/2026-09-05-characterization.json`.
-- Phase 2 registry folds: `verification/receipts/2026-09-05-phase-2-registry-fold.json` and `verification/receipts/2026-09-05-phase-2-layer-fold.json`.
-- Immutable baseline verification now reproduces mobile beta, version-only stable, and PC 1.9.9 from `cef5f71` without consuming candidate sources.
-- Observed mobile and PC palette receipts compare preview/cancel/save/write-failure-retry state, storage, custom events, host node identity, geometry, requests/errors, and settled ownership in independent browser contexts. Both have zero semantic differences. One additional startup observer is created and disconnected by the candidate, so active ownership remains equal; the raw churn is retained in each receipt.
-- The older palette receipts are marked stale and now claim only matching test outcomes, not semantic equivalence.
-- Current managed-Chromium 149 local acceptance on `fb262fb`: mobile 97/97, host compatibility 11/11, PC functional 14/14, and repository policy/artifact checks passed.
-- The acceptance receipt for the older runtime is historical and must not be reused for `fb262fb`.
-- PR #3 (`codex/ui-port-boundary` -> `codex/mobile-development`) is open. The protected development head remains `e7fa4385b7fc65e7db40464df0dafd98b8391e4e`.
-- Ubuntu runs `33916550119` and `33944330515` are historical failures and are not accepted Phase 2 evidence. The latter proved the immutable baseline passed while candidate editor-layer geometry failed under the same managed Chromium 149 browser.
-- Current verification changes default to Playwright-managed Chromium, reject invalid explicit browser paths, reject wrong target metadata and empty selection, read build target metadata from the manifest, and preserve per-gate JSON results.
-- Body replacement compares subscriber keys and gauge from one diagnostics snapshot. Its observer limit remains unchanged.
-- Editor geometry assertions remain unchanged. The product now derives inherited zoom from the layer rather than a small anchor's rounded `offsetWidth`, and reserves border-box chrome before applying max dimensions. This directly addresses the Ubuntu evidence without weakening containment.
-- Ubuntu run `33962623626` passed all three jobs and the corrected geometry, but its default `pull_request` checkout tested a synthetic merge commit while naming the step “exact candidate”. It is integration evidence, not accepted exact-head evidence.
-- Independent `gpt-5.6-sol max` review confirmed that wrong-head lineage defect before its session ended without a final report because of usage/network exhaustion. Commit `28cc9c9` explicitly checks out and verifies the PR head in every job and names uploaded evidence with the same SHA; a fresh exact-head run and a completed independent audit remain required before merge.
-- Exact-head Ubuntu acceptance and Windows hosted-runner promotion remain pending.
+- Phase 2 registry folds: `verification/receipts/2026-09-05-phase-2-registry-fold.json`, `verification/receipts/2026-09-05-phase-2-layer-fold.json`, and `verification/receipts/2026-09-06-phase-2-audit-truth-fold.json`.
+- The tracked Phase 2 acceptance receipt bound to `e46a812` is machine-marked stale and must not authorize the current candidate.
+- Current observed mobile and PC receipts compare preview/cancel/save/write-failure-retry and save-before-pending-startup-read-release ordering. Both contain 16 observations, zero semantic differences, and two raw startup-observer churn differences; settled active ownership is equal.
+- Local policy at `74816c8` ran architecture, proof audit, UI boundaries, skills, and workflow verification. All four wrong-head/stale-binding/non-guarded-runtime/control-equals-candidate mutations were rejected for the intended reason.
+- Local acceptance at `74816c8` passed mobile 97/97, host compatibility 11/11, PC functional 14/14, both observed differentials, immutable baseline verification, generated artifact identity, metadata, and repository contracts.
+- The editor-layer product correction from `fb262fb` was removed because it changed visible geometry inside a semantic-delta-zero phase. The preserved implementation passes the positive no-overflow contract with 1px rendering tolerance; exact inset changes require a separate declared behavior fix and live evidence.
+- Hosted run `33979996163` proved exact-head checkout and artifact lineage for superseded head `a05184e`, but it is stale after the runtime, harness, registry, and policy workflow changes in `74816c8`.
+- A completed independent `gpt-5.6-sol max` audit of `a05184e` found three merge blockers: undeclared geometry change, pending-read/save ordering regression, and an unexecuted declared proof gate. `74816c8` addresses all three plus registry/receipt/document truth findings, but a fresh independent audit of the latest pushed head is still required.
+- Fresh exact-head Ubuntu policy/affected/full acceptance and Windows hosted promotion for the latest head remain pending.
 - No live canary has been claimed. July live evidence is historical and may be stale.
 
 ## Resume rule
