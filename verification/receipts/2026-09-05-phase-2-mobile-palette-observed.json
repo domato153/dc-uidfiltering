@@ -1,0 +1,147 @@
+{
+  "schemaVersion": 1,
+  "kind": "observed-palette-differential",
+  "target": "mobile",
+  "controlSource": "cef5f71381116d2746b0319b2f8e609e8d7eae85",
+  "controlSha256": "A03038FE68126B62054EBA11244D4EE2E1766D308983FC5C27127FD3794CB343",
+  "candidateSha256": "498113B09260D6E86655414D81223401668A08AA8B2E1B9A9F46D7DC73D7692B",
+  "observerSha256": "5C8D4157F2137BD565FE8CA2EB999F3ECFB0229E78745600314667E433A46517",
+  "evidenceBinding": {
+    "registrySha256": "353157572edf4a2d04f702befb68a47ccf2411cfa7de691555b676f29a01d6e8",
+    "architectureStateSha256": "6f5d694378c5bcc15d770317787201d110820c5452dc59afa736e54c17e8c127",
+    "gatesSha256": "25f1457ad2199a553507bb91e0224afac3444c68a1a831985221d180f2b59227",
+    "harnessSha256": "e00c00381c4101deb39adb309d2bc9acddb552d0476304350130eb63903ca460",
+    "fixturesSha256": "bd0be281145eeaebc62af58ff1ef518db506327da14a429946068d971b52929d",
+    "toolchainSha256": "4c46f80e0d7d3247faedf3a1ec33362a3d246b0a993a9705d332c3868f412d4f",
+    "node": "v22.17.0"
+  },
+  "scope": "mobile palette preview/cancel/save/write-failure-retry after initialization; settled resource equivalence compares active ownership while retaining cumulative startup churn as raw evidence; no claim about startup ordering or other surfaces",
+  "observationEvidence": {
+    "control": {
+      "artifactSha256": "A03038FE68126B62054EBA11244D4EE2E1766D308983FC5C27127FD3794CB343",
+      "browser": "149.0.7827.55",
+      "observationCount": 13,
+      "observationsSha256": "1CDCD4965F06F4AA958ED660098E42A2149BC5B917F8AA6A649C64F5543A2AEF"
+    },
+    "candidate": {
+      "artifactSha256": "498113B09260D6E86655414D81223401668A08AA8B2E1B9A9F46D7DC73D7692B",
+      "browser": "149.0.7827.55",
+      "observationCount": 13,
+      "observationsSha256": "B903B57C07F64B92C4BEE72E4E4E4FBEF46866DADD4563A213653C13837C7ACB"
+    }
+  },
+  "rawDifferences": [
+    {
+      "index": 5,
+      "control": {
+        "rejectWrite": false,
+        "step": "settled-resources",
+        "value": {
+          "timers": 0,
+          "frames": 0,
+          "intervals": 0,
+          "observerCreations": 5,
+          "observerDisconnects": 0,
+          "listeners": 188,
+          "subscribers": [
+            "filter-universal-observer",
+            "ui-list-runtime",
+            "header-drawer",
+            "list-memo-popup"
+          ],
+          "pendingMutations": 0,
+          "pendingMutationRaf": false,
+          "pendingMutationTimer": false,
+          "taskQueues": 0,
+          "filterPassKinds": [
+            "observed-items"
+          ],
+          "errors": []
+        }
+      },
+      "candidate": {
+        "rejectWrite": false,
+        "step": "settled-resources",
+        "value": {
+          "timers": 0,
+          "frames": 0,
+          "intervals": 0,
+          "observerCreations": 6,
+          "observerDisconnects": 1,
+          "listeners": 188,
+          "subscribers": [
+            "filter-universal-observer",
+            "ui-list-runtime",
+            "header-drawer",
+            "list-memo-popup"
+          ],
+          "pendingMutations": 0,
+          "pendingMutationRaf": false,
+          "pendingMutationTimer": false,
+          "taskQueues": 0,
+          "filterPassKinds": [
+            "observed-items"
+          ],
+          "errors": []
+        }
+      }
+    },
+    {
+      "index": 12,
+      "control": {
+        "rejectWrite": true,
+        "step": "settled-resources",
+        "value": {
+          "timers": 0,
+          "frames": 0,
+          "intervals": 0,
+          "observerCreations": 5,
+          "observerDisconnects": 0,
+          "listeners": 188,
+          "subscribers": [
+            "filter-universal-observer",
+            "ui-list-runtime",
+            "header-drawer",
+            "list-memo-popup"
+          ],
+          "pendingMutations": 0,
+          "pendingMutationRaf": false,
+          "pendingMutationTimer": false,
+          "taskQueues": 0,
+          "filterPassKinds": [
+            "observed-items"
+          ],
+          "errors": []
+        }
+      },
+      "candidate": {
+        "rejectWrite": true,
+        "step": "settled-resources",
+        "value": {
+          "timers": 0,
+          "frames": 0,
+          "intervals": 0,
+          "observerCreations": 6,
+          "observerDisconnects": 1,
+          "listeners": 188,
+          "subscribers": [
+            "filter-universal-observer",
+            "ui-list-runtime",
+            "header-drawer",
+            "list-memo-popup"
+          ],
+          "pendingMutations": 0,
+          "pendingMutationRaf": false,
+          "pendingMutationTimer": false,
+          "taskQueues": 0,
+          "filterPassKinds": [
+            "observed-items"
+          ],
+          "errors": []
+        }
+      }
+    }
+  ],
+  "differences": [],
+  "equivalent": true
+}

@@ -76,7 +76,7 @@ if (failures.length) throw new Error(`Differential oracle observed ${failures.le
 
 const receipt = {
     schemaVersion: 1,
-    kind: 'semantic-differential',
+    kind: 'test-outcome-differential',
     generatedAt: new Date().toISOString(),
     target,
     selection: { group: group || null, filter: filter || null, excludeFilter: excludeFilter || null },
@@ -91,9 +91,9 @@ const receipt = {
     },
     evidenceBinding: await createEvidenceBinding(rootDir),
     results: { control: controlResults, candidate: candidateResults },
-    equivalent: true,
+    sameTestOutcomes: true,
 };
 await mkdir(path.dirname(outputPath), { recursive: true });
 await writeFile(outputPath, `${JSON.stringify(receipt, null, 2)}\n`, 'utf8');
-console.log(`Semantic differential passed: ${target}, ${controlResults.length} tests per artifact.`);
+console.log(`Test-outcome differential passed: ${target}, ${controlResults.length} tests per artifact.`);
 console.log(`Receipt: ${path.relative(rootDir, outputPath)}`);

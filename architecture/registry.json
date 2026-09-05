@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "registryVersion": 3,
+  "registryVersion": 4,
   "authorities": [
     {
       "id": "behavior-baselines",
@@ -706,7 +706,8 @@
         "testbed/server/**",
         "testbed/run-tests.mjs",
         "testbed/run-host-compatibility.mjs",
-        "testbed/run-bfcache.mjs"
+        "testbed/run-bfcache.mjs",
+        "testbed/run-palette-differential.mjs"
       ],
       "contractRefs": [
         "proof-integrity",

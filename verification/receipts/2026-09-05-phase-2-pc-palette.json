@@ -1,6 +1,8 @@
 {
   "schemaVersion": 1,
-  "kind": "semantic-differential",
+  "kind": "historical-test-outcome-differential",
+  "evidenceStatus": "stale",
+  "staleBecause": "The harness/browser binding and differential oracle changed; this receipt compared only test identity and status.",
   "generatedAt": "2026-09-04T20:26:52.595Z",
   "target": "pc",
   "selection": {
@@ -51,5 +53,6 @@
       }
     ]
   },
-  "equivalent": true
+  "sameTestOutcomes": true,
+  "semanticEquivalenceClaimed": false
 }

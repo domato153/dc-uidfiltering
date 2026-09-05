@@ -24,6 +24,7 @@ function digest(bytes) { return createHash('sha256').update(bytes).digest('hex')
 const files = run('git', ['ls-tree', '-r', '--name-only', '-z', sourceSha, '--', 'src', 'tools'])
     .toString('utf8').split('\0').filter(Boolean);
 if (!files.includes('tools/build-userscript.mjs')) throw new Error('Baseline build tool is missing');
+if (!files.includes('tools/build-pc-filter-userscript.mjs')) throw new Error('Baseline PC build tool is missing');
 for (const file of files) {
     const destination = path.resolve(exportDir, file);
     if (!destination.startsWith(exportDir + path.sep)) throw new Error('Invalid baseline input: ' + file);
@@ -43,10 +44,17 @@ const stableBytes = Buffer.from(betaText.split(normalization.from).join(normaliz
 const stableHash = digest(stableBytes);
 if (stableHash !== baseline.mobile.stable.sha256) throw new Error('Baseline stable digest mismatch: ' + stableHash);
 await writeFile(path.join(outputDir, 'baseline-mobile-stable.user.js'), stableBytes);
+process.stdout.write(run(process.execPath, ['tools/build-pc-filter-userscript.mjs'], exportDir));
+const pcGeneratedPath = path.join(exportDir, `dcinside_user_filter_v${baseline.pc.version}.user.js`);
+const pcBytes = await readFile(pcGeneratedPath);
+const pcHash = digest(pcBytes);
+if (pcHash !== baseline.pc.sha256AtBehaviorSource) throw new Error('Baseline PC digest mismatch: ' + pcHash);
+await writeFile(path.join(outputDir, 'baseline-pc.user.js'), pcBytes);
 const receipt = {
     schemaVersion: 1, sourceSha, exportDir: path.relative(rootDir, exportDir),
     betaSha256: betaHash, normalizedStableSha256: stableHash, normalizedOccurrences: occurrences,
+    pcSha256: pcHash,
     candidateSourcesConsumed: false, status: 'passed'
 };
 await writeFile(path.join(outputDir, 'baseline-lineage.json'), JSON.stringify(receipt, null, 2) + '\n');
-console.log('\nBaseline verified from ' + sourceSha + ': ' + betaHash + ' -> ' + stableHash);
+console.log('\nBaseline verified from ' + sourceSha + ': mobile ' + betaHash + ' -> ' + stableHash + '; PC ' + pcHash);

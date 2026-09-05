@@ -3192,9 +3192,19 @@
                         // Fixed Summernote dropdowns still inherit the desktop-site mobile
                         // zoom. Convert viewport coordinates back into that local CSS space
                         // while keeping the host menu's intended physical size.
-                        const measuredLocalScale = isDropdown && anchor.offsetWidth > 0
+                        // Derive the fixed layer's coordinate scale from the layer itself.
+                        // A small anchor's integer offsetWidth can accumulate enough rounding
+                        // error under the desktop-site mobile zoom to push a wide menu past the
+                        // viewport edge (for example 47 local px expanded to ~111 visual px).
+                        const measuredLayerScale = isDropdown && layer.offsetWidth > 0
+                            ? layerRect.width / layer.offsetWidth
+                            : 0;
+                        const measuredAnchorScale = isDropdown && anchor.offsetWidth > 0
                             ? anchorRect.width / anchor.offsetWidth
                             : 1;
+                        const measuredLocalScale = Number.isFinite(measuredLayerScale) && measuredLayerScale > 0
+                            ? measuredLayerScale
+                            : measuredAnchorScale;
                         const localCoordinateScale = Number.isFinite(measuredLocalScale) && measuredLocalScale > 0
                             ? measuredLocalScale
                             : 1;
@@ -3237,8 +3247,21 @@
                         );
                         const positionedLeft = isDropdown ? left / localCoordinateScale : left;
                         const positionedTop = isDropdown ? top / localCoordinateScale : top;
-                        const localMaxWidth = isDropdown ? maxWidth / localCoordinateScale : maxWidth;
-                        const localMaxHeight = isDropdown ? maxHeight / localCoordinateScale : maxHeight;
+                        // max-width/max-height constrain the content box for these host menus.
+                        // Reserve the measured outer chrome so the visual border box still
+                        // respects edgePadding after the inherited zoom is applied.
+                        const localWidthChrome = isDropdown
+                            ? Math.max(0, layer.offsetWidth - layer.clientWidth)
+                            : 0;
+                        const localHeightChrome = isDropdown
+                            ? Math.max(0, layer.offsetHeight - layer.clientHeight)
+                            : 0;
+                        const localMaxWidth = isDropdown
+                            ? Math.max(1, (maxWidth / localCoordinateScale) - localWidthChrome)
+                            : maxWidth;
+                        const localMaxHeight = isDropdown
+                            ? Math.max(1, (maxHeight / localCoordinateScale) - localHeightChrome)
+                            : maxHeight;
                         layer.style.setProperty('--dcuf-editor-layer-left', `${positionedLeft.toFixed(3)}px`);
                         layer.style.setProperty('--dcuf-editor-layer-top', `${positionedTop.toFixed(3)}px`);
                         layer.style.setProperty('--dcuf-editor-layer-max-width', `${Math.floor(localMaxWidth)}px`);
