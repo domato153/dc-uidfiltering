@@ -83,6 +83,7 @@ jobs:
           path: |
             artifacts/impact.json
             artifacts/affected-result.json
+            testbed/artifacts/*.json
             testbed/test-results/**
           if-no-files-found: error
           retention-days: 30
@@ -109,6 +110,22 @@ jobs:
         run: |
           pnpm install --frozen-lockfile
           node testbed/node_modules/playwright/cli.js install --with-deps chromium
+      - name: Reproduce immutable beta and stable lineage
+        run: node tools/verify-baseline.mjs
+      # Diagnostic control runs retain failures for comparison. They cannot
+      # make the candidate acceptance green or authorize a behavioral change.
+      - name: Characterize baseline editor geometry
+        continue-on-error: true
+        env:
+          DCUF_TESTBED_USERSCRIPT: testbed/artifacts/baseline-mobile-beta.user.js
+          DCUF_TESTBED_REPORT: testbed/artifacts/baseline-editor-results.json
+        run: node testbed/run-tests.mjs --filter '네이티브 모바일 기준 fixture'
+      - name: Characterize baseline body replacement
+        continue-on-error: true
+        env:
+          DCUF_TESTBED_USERSCRIPT: testbed/artifacts/baseline-mobile-beta.user.js
+          DCUF_TESTBED_REPORT: testbed/artifacts/baseline-body-results.json
+        run: node testbed/run-tests.mjs --filter 'body 교체 후 mutation bus'
       - name: Resolve full acceptance
         env:
           PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
@@ -132,6 +149,7 @@ jobs:
             dcinside_user_filter_v*.user.js
             dist/*.user.js
             testbed/artifacts/runtime-under-test.user.js
+            testbed/artifacts/*.json
             testbed/test-results/**
           if-no-files-found: error
           retention-days: 30

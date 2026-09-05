@@ -723,7 +723,7 @@ mobileTest('boot: body 교체 후 mutation bus가 새 body에 재연결되고 �
     try {
         await session.goto('/board/lists?id=test');
         const before = await getMetrics(session.page);
-        const beforeSubscribers = await session.page.evaluate(() => Array.from(window.__dcufRuntimeCoordinator?._mutationSubscribers?.keys?.() || []));
+        const beforeSubscribers = before.dcuf.subscribers || [];
         await session.page.evaluate(() => {
             const replacement = document.createElement('body');
             replacement.dataset.fixturePage = 'list';
@@ -737,12 +737,17 @@ mobileTest('boot: body 교체 후 mutation bus가 새 body에 재연결되고 �
             return item && getComputedStyle(item).display === 'none';
         });
         const after = await getMetrics(session.page);
-        const afterSubscribers = await session.page.evaluate(() => Array.from(window.__dcufRuntimeCoordinator?._mutationSubscribers?.keys?.() || []));
+        // Keep the gauge and subscriber keys from one diagnostics snapshot. A
+        // short-lived subscriber may legitimately unsubscribe between two
+        // separate page.evaluate calls on a slower hosted runner.
+        const afterSubscribers = after.dcuf.subscribers || [];
         assert.equal(beforeSubscribers.includes('filter-universal-observer'), true, JSON.stringify(beforeSubscribers));
         assert.equal(afterSubscribers.includes('filter-universal-observer'), true, JSON.stringify(afterSubscribers));
         assert.equal(afterSubscribers.includes('ui-list-runtime'), true, JSON.stringify(afterSubscribers));
         assert.equal(after.dcuf.gauges['mutation.subscribers'], afterSubscribers.length);
-        assert.equal(after.mutationObserversCreated - before.mutationObserversCreated <= 2, true);
+        const observerDelta = after.mutationObserversCreated - before.mutationObserversCreated;
+        const newObserverStacks = after.mutationObserverCreationStacks.slice(before.mutationObserverCreationStacks.length);
+        assert.equal(observerDelta <= 2, true, `mutation observer delta=${observerDelta}; stacks=${newObserverStacks.join('\n---\n')}`);
         assert.equal(await session.page.locator('#dcuf-boot-overlay').count(), 0);
         assert.equal(await session.page.locator('.custom-mobile-list').count(), isPcUserscript ? 0 : 1);
         assertNoRuntimeErrors(after, session.consoleErrors);
@@ -5544,7 +5549,13 @@ mobileTest('글쓰기: 네이티브 모바일 기준 fixture는 가로 넘침 �
                 const style = getComputedStyle(layer);
                 return {
                     rect: { left: rect.left, top: rect.top, right: rect.right, bottom: rect.bottom, width: rect.width, height: rect.height },
+                    offsetWidth: layer.offsetWidth,
                     position: style.position,
+                    zoom: style.zoom,
+                    positionedLeft: style.getPropertyValue('--dcuf-editor-layer-left').trim(),
+                    positionedTop: style.getPropertyValue('--dcuf-editor-layer-top').trim(),
+                    positionedMaxWidth: style.getPropertyValue('--dcuf-editor-layer-max-width').trim(),
+                    positionedMaxHeight: style.getPropertyValue('--dcuf-editor-layer-max-height').trim(),
                     zIndex: Number(style.zIndex),
                     overflowX: style.overflowX,
                     overflowY: style.overflowY,
@@ -5554,8 +5565,9 @@ mobileTest('글쓰기: 네이티브 모바일 기준 fixture는 가로 넘침 �
                     clientHeight: layer.clientHeight,
                     itemCount: layer.querySelectorAll('.note-dropdown-item').length,
                     anchorRect: (() => {
-                        const rect = layer.closest('.note-btn-group').getBoundingClientRect();
-                        return { left: rect.left, top: rect.top, right: rect.right, bottom: rect.bottom, width: rect.width, height: rect.height };
+                        const anchor = layer.closest('.note-btn-group');
+                        const rect = anchor.getBoundingClientRect();
+                        return { left: rect.left, top: rect.top, right: rect.right, bottom: rect.bottom, width: rect.width, height: rect.height, offsetWidth: anchor.offsetWidth };
                     })()
                 };
             };
@@ -5631,7 +5643,7 @@ mobileTest('글쓰기: 네이티브 모바일 기준 fixture는 가로 넘침 �
             color: mobileViewportLayerContract.color
         })) {
             const viewport = mobileViewportLayerContract.viewport;
-            const geometry = `rect=${JSON.stringify(layer.rect)} viewport=${JSON.stringify(viewport)}`;
+            const geometry = `layer=${JSON.stringify(layer)} viewport=${JSON.stringify(viewport)}`;
             assert.equal(layer.rect.left >= viewport.left + 7, true, `${name} left must follow the scaled visual viewport; ${geometry}`);
             assert.equal(layer.rect.right <= viewport.left + viewport.width - 7, true, `${name} right must stay in the scaled visual viewport; ${geometry}`);
             assert.equal(layer.rect.top >= viewport.top + 7, true, `${name} top must follow the scaled visual viewport; ${geometry}`);
@@ -7246,6 +7258,13 @@ mobileTest('single-tone UI palette keeps mobile write actions readable', 'write'
 const userscriptUnderTest = await resolveBuiltUserscript();
 const userscriptBytes = await readFile(userscriptUnderTest);
 const userscriptSha256 = createHash('sha256').update(userscriptBytes).digest('hex').toUpperCase();
+const userscriptName = userscriptBytes.toString('utf8').match(/^\/\/\s*@name\s+(.+)$/m)?.[1]?.trim();
+const userscriptVersion = userscriptBytes.toString('utf8').match(/^\/\/\s*@version\s+(.+)$/m)?.[1]?.trim();
+const metadataTarget = userscriptName === 'DC_UserFilter_Mobile' ? 'mobile'
+    : userscriptName === 'DCInside PC User Filter' ? 'pc' : null;
+if (metadataTarget !== activeTarget) {
+    throw new Error(`Runtime target mismatch: selected ${activeTarget}, metadata ${userscriptName || '<missing>'}`);
+}
 if (args.has('--require-runtime-under-test')
     && !/[\\/]testbed[\\/]artifacts[\\/]runtime-under-test\.user\.js$/i.test(userscriptUnderTest)) {
     throw new Error(`Runtime guard rejected non-source artifact: ${userscriptUnderTest}`);
@@ -7253,13 +7272,15 @@ if (args.has('--require-runtime-under-test')
 console.log(`Runtime under test: ${path.resolve(userscriptUnderTest)}`);
 console.log(`Runtime SHA-256: ${userscriptSha256}`);
 
-const server = await startServer();
-const browser = await launchBrowser({ headed });
-let failures = 0;
 const selected = tests.filter((item) => item.targets.includes(activeTarget)
     && (!selectedGroup || item.group === selectedGroup)
     && (!selectedName || item.name.includes(selectedName))
     && (!excludedName || !item.name.includes(excludedName)));
+if (selected.length === 0) throw new Error(`No tests selected for ${activeTarget}`);
+const server = await startServer();
+const browser = await launchBrowser({ headed });
+const browserVersion = browser.version();
+let failures = 0;
 console.log(`DCUF testbed: ${selected.length} ${activeTarget} tests, ${server.baseUrl}`);
 try {
     for (const item of selected) {
@@ -7283,7 +7304,19 @@ try {
 
 const artifactDir = path.join(testbedDir, 'artifacts');
 await mkdir(artifactDir, { recursive: true });
-await writeFile(path.join(artifactDir, 'test-results-latest.json'), `${JSON.stringify({ generatedAt: new Date().toISOString(), results: testResults }, null, 2)}\n`, 'utf8');
+const resultReport = {
+    generatedAt: new Date().toISOString(),
+    runtime: { path: path.resolve(userscriptUnderTest), sha256: userscriptSha256, target: activeTarget, version: userscriptVersion },
+    browser: { version: browserVersion, executableOverride: process.env.DCUF_BROWSER_PATH || null },
+    selection: { group: selectedGroup, filter: selectedName, excludeFilter: excludedName },
+    results: testResults
+};
+await writeFile(path.join(artifactDir, 'test-results-latest.json'), `${JSON.stringify(resultReport, null, 2)}\n`, 'utf8');
+if (process.env.DCUF_TESTBED_REPORT) {
+    const reportPath = path.resolve(process.env.DCUF_TESTBED_REPORT);
+    await mkdir(path.dirname(reportPath), { recursive: true });
+    await writeFile(reportPath, `${JSON.stringify(resultReport, null, 2)}\n`, 'utf8');
+}
 if (performanceReports.length > 0) {
     const artifactPath = path.join(artifactDir, 'performance-latest.json');
     let previous = null;

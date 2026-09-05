@@ -43,6 +43,7 @@ for (const item of receipt.resolvedCommands || []) {
         env: {
             ...process.env,
             DCUF_TESTBED_USERSCRIPT: path.join(rootDir, 'testbed', 'artifacts', 'runtime-under-test.user.js'),
+            DCUF_TESTBED_REPORT: path.join(rootDir, 'testbed', 'artifacts', `${item.profile}-${item.id}-results.json`),
             ...(item.env || {}),
         },
     });

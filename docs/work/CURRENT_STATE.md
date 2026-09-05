@@ -8,7 +8,7 @@
 - Mobile stable 3.5.5 SHA-256: `32BA208DDD9973A7EEC343F01E963A833AB4F0C084987077EDAE46844383C25D`.
 - PC 1.9.9 baseline SHA-256: `D3A95C479D8D50F88D97700DE91FA17D1D338B3AEBB488F53D865F445B656212`.
 
-## Accepted architecture work
+## Phase 2 candidate architecture (PR #3; not yet accepted)
 
 - Registry version 3 contains the internal `UiPort`, immutable snapshot and typed intent contracts, application-owned palette state, `HostSurfacePort`, and target-adapter-owned `DisposableScope`.
 - `ThemeModule` remains the single palette visual owner but no longer reads or writes GM storage or accesses `document` directly.
@@ -30,7 +30,15 @@
 - Distinct-artifact mobile and PC palette differential receipts bind the final artifact digests above.
 - Final local acceptance on `e46a812`: mobile 97/97, host compatibility 11/11, PC functional 14/14, proof mutations 4/4 rejected, and repository policy/artifact checks passed.
 - Acceptance receipt: `verification/receipts/2026-09-05-phase-2-acceptance.json`.
-- Windows hosted-runner promotion checks remain pending until the branch is pushed.
+- PR #3 (`codex/ui-port-boundary` -> `codex/mobile-development`) is open. The protected development head remains `e7fa4385b7fc65e7db40464df0dafd98b8391e4e`.
+- Ubuntu run `33916550119` failed full acceptance: a non-atomic subscriber observation and an editor color-layer geometry assertion. Policy and focused checks passed. This is not accepted Phase 2 evidence.
+- The local acceptance above used installed Chrome automatically; it does not establish acceptance on pinned Chromium. Its old harness binding is historical after the harness changes below.
+- Current verification changes default to Playwright-managed Chromium, reject invalid explicit browser paths, reject wrong target metadata and empty selection, read build target metadata from the manifest, and preserve per-gate JSON results.
+- Body replacement now compares subscriber keys and gauge from one diagnostics snapshot. Its observer creation limit remains unchanged; a separate intermittent creation-count failure needs classification if it recurs under the pinned browser.
+- Editor geometry assertions remain unchanged. Additional layer/anchor measurements are recorded on failure. The speculative product scale change was withdrawn; both candidate artifact digests above remain unchanged.
+- Baseline verification now builds immutable `cef5f71` inputs in an isolated export, verifies the beta digest, and verifies version-only normalization. Baseline editor/body diagnostics on Ubuntu accompany candidate acceptance; baseline failures remain visible and do not approve behavior changes.
+- A fresh-context `gpt-5.6-sol max` upper-layer audit is in progress. Existing palette differential receipts compare test identities/status only; they are not full semantic observation equivalence.
+- Windows hosted-runner promotion and refreshed local/Ubuntu acceptance remain pending.
 - No live canary has been claimed. July live evidence is historical and may be stale.
 
 ## Resume rule
