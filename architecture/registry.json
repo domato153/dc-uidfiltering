@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "registryVersion": 5,
+  "registryVersion": 6,
   "authorities": [
     {
       "id": "behavior-baselines",
@@ -164,7 +164,11 @@
         "invariant-storage-compatibility",
         "invariant-ui-port-boundary",
         "invariant-build-inputs-mapped"
-      ]
+      ],
+      "transition": {
+        "targetBoundaryState": "conforming",
+        "exitCriteria": "Convenience state and effects are runtime-owned, every convenience surface uses snapshot/intent ports, and this module owns no visual markup, CSS, or host listener."
+      }
     },
     {
       "id": "mobile-filter-module",
@@ -189,7 +193,11 @@
         "invariant-ui-port-boundary",
         "invariant-hot-path-stability",
         "invariant-build-inputs-mapped"
-      ]
+      ],
+      "transition": {
+        "targetBoundaryState": "conforming",
+        "exitCriteria": "Filter decisions, state, and GM effects are separated from settings presentation; UI uses only snapshot/intent ports and PC consumes explicit shared inputs without source extraction."
+      }
     },
     {
       "id": "mobile-legacy-app",
@@ -248,7 +256,11 @@
         "invariant-shared-target-semantics",
         "invariant-ui-port-boundary",
         "invariant-build-inputs-mapped"
-      ]
+      ],
+      "transition": {
+        "targetBoundaryState": "conforming",
+        "exitCriteria": "Personal-block state, GM writes, and filter effects are runtime-owned; management and pinch surfaces have explicit presentation/adapter owners and PC consumes explicit shared inputs."
+      }
     },
     {
       "id": "mobile-post-main-fixes",
@@ -270,7 +282,11 @@
         "invariant-one-visual-owner",
         "invariant-ui-port-boundary",
         "invariant-build-inputs-mapped"
-      ]
+      ],
+      "transition": {
+        "targetBoundaryState": "conforming",
+        "exitCriteria": "Every late bridge, listener, observer, and style rule is assigned to one target adapter or presentation surface, with no residual mixed correction owner."
+      }
     },
     {
       "id": "mobile-release-control",
@@ -356,7 +372,11 @@
         "invariant-pc-host-style-isolation",
         "invariant-ui-port-boundary",
         "invariant-build-inputs-mapped"
-      ]
+      ],
+      "transition": {
+        "targetBoundaryState": "conforming",
+        "exitCriteria": "Pinch geometry and touch listeners move behind an owned target adapter and DisposableScope so ThemeModule has no dependency on the mixed personal-block implementation."
+      }
     },
     {
       "id": "mobile-ui-module",
@@ -378,7 +398,11 @@
         "invariant-one-visual-owner",
         "invariant-ui-port-boundary",
         "invariant-build-inputs-mapped"
-      ]
+      ],
+      "transition": {
+        "targetBoundaryState": "conforming",
+        "exitCriteria": "Shell, list, article, comments, write, and popup families each have one explicit surface owner; host DOM/events live in adapters and this mixed source is retired or contains presentation only."
+      }
     },
     {
       "id": "pc-adapter-contract",
@@ -416,7 +440,11 @@
       "fitnessRefs": [
         "invariant-pc-host-style-isolation",
         "invariant-build-inputs-mapped"
-      ]
+      ],
+      "transition": {
+        "targetBoundaryState": "conforming",
+        "exitCriteria": "PC assembly uses manifest-declared shared modules and adapters only, performs no marker slicing or source transformation, and excludes all mobile host CSS."
+      }
     },
     {
       "id": "pc-filter-entry",

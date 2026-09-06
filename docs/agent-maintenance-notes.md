@@ -14,6 +14,8 @@ This is the active, compact maintenance index. It records reusable causes and co
 - A control and candidate both passing the same test proves matching outcomes only. Semantic equivalence requires independently injected artifacts and compared observations for storage, events, host identity/order, geometry, requests/errors, and settled lifecycle ownership; retain raw startup churn even when active ownership is equal.
 - Reproduce baseline artifacts from the immutable source commit in an isolated export. A baseline verifier that invokes candidate build inputs is a false oracle, even when the expected digest happens to match.
 - On `pull_request`, the default checkout is GitHub's synthetic merge ref. A job claiming exact candidate lineage must explicitly checkout `github.event.pull_request.head.sha`, verify `git rev-parse HEAD`, and use that same SHA in receipts and artifact names; a green merge-ref run is integration evidence only.
+- Evidence binding must be portable across Git checkout policy: canonicalize CRLF/LF only for declared text sources, keep binaries and built userscripts byte-exact, bind product/build inputs and the proof/oracle implementation itself, and reject asymmetric receipt fields. `.gitattributes` is preventive checkout policy, not the sole proof of portable identity.
+- Incremental UI replacement is transitional architecture, not a permanent dual path. Every registry `mixed` component requires a concrete exit contract; activate one surface owner at composition time and remove the superseded CSS/listener/observer/render path in the same PR.
 
 ## Filter, storage, and convenience contracts
 

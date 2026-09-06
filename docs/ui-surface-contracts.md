@@ -15,6 +15,14 @@ This compact map covers the preserved 3.5.5 surfaces and the active UI-boundary 
 | Palette documentation | Existing 3.5.3 palette data and `dcuf_mobile_ui_palette` | Preserve all 14 IDs, light/dark values, and stored-value compatibility; documentation lists the same IDs | Runtime/document ID equality and login/main lookup behavior |
 | Palette UI boundary | `ThemeModule` owns palette DOM/CSS; application runtime owns GM palette reads/writes; `theme-host-port` owns document anchors and host event emission. Pinch geometry/touch listeners still delegate to the mixed `PersonalBlockModule` and remain explicit ownership debt | Preserve the same menu, dialog DOM/CSS, preview/cancel/save/default behavior, focus return, storage key, startup read/write ordering, and `dcuf:palette-change` event while presentation uses only `UiPort` and `HostSurfacePort` | AST boundary check, immutable snapshot/intent contract, pending-read save ordering, save-failure behavior, mobile palette suite, and PC palette isolation |
 
+## Migration execution contract
+
+- Apply the evidence-to-practice protocol in [`refactoring-evidence.md`](refactoring-evidence.md). The accepted registry records current ownership; target ownership is not claimed until its candidate overlay is validated and promoted.
+- Migrate one surface family at a time behind the stable port. Build the immutable control and candidate separately and compare them in independent fresh contexts; never mount two mutating owners into one page.
+- Select exactly one visual/event owner at composition time. The PR that activates a replacement also removes its old CSS, listener, observer, and render path.
+- Every `mixed` component must carry a registry transition with a concrete `conforming` or `retired` exit. A temporary bridge without that exit is invalid architecture state.
+- Before accepting a slice, cover its meaningful ordering and failure states: duplicate initialization, host rerender, delayed nodes/popups, pending or rejected GM operations, visibility/pageshow, teardown, and reopen.
+
 ## Ownership and selector rules
 
 - Preserve site-owned nodes in place. Do not wrap, clone, move, replace, or portal the affected controls.

@@ -45,9 +45,9 @@ function renderIndex(registry) {
         '',
         '## Components',
         '',
-        '| ID | Status | Layer | Boundary | Responsibility |',
-        '| --- | --- | --- | --- | --- |',
-        ...registry.components.map((item) => `| ${item.id} | ${item.status} | ${item.layer} | ${item.boundaryState} | ${item.responsibility} |`),
+        '| ID | Status | Layer | Boundary | Responsibility | Transition exit |',
+        '| --- | --- | --- | --- | --- | --- |',
+        ...registry.components.map((item) => `| ${item.id} | ${item.status} | ${item.layer} | ${item.boundaryState} | ${item.responsibility} | ${item.transition?.exitCriteria || '—'} |`),
         '',
         '## Contracts',
         '',
@@ -101,6 +101,20 @@ async function validateRegistry(registry, { checkIndex = true, checkExternalMapp
         if (!allowedClassifications.has(component.classification)) failures.push(`${component.id}: unknown classification ${component.classification}`);
         if (!allowedLayers.has(component.layer)) failures.push(`${component.id}: unknown layer ${component.layer}`);
         if (!allowedBoundaryStates.has(component.boundaryState)) failures.push(`${component.id}: unknown boundaryState ${component.boundaryState}`);
+        if (component.boundaryState === 'mixed') {
+            if (!component.transition || typeof component.transition !== 'object') {
+                failures.push(`${component.id}: mixed boundary requires a transition exit contract`);
+            } else {
+                if (!['conforming', 'retired'].includes(component.transition.targetBoundaryState)) {
+                    failures.push(`${component.id}: transition targetBoundaryState must be conforming or retired`);
+                }
+                if (typeof component.transition.exitCriteria !== 'string' || !component.transition.exitCriteria.trim()) {
+                    failures.push(`${component.id}: transition exitCriteria is missing`);
+                }
+            }
+        } else if (component.transition !== undefined) {
+            failures.push(`${component.id}: only mixed boundaries may carry a transition contract`);
+        }
         if (!component.responsibility) failures.push(`${component.id}: responsibility is missing`);
         if (!Array.isArray(component.sourceRefs) || component.sourceRefs.length === 0) failures.push(`${component.id}: sourceRefs are missing`);
         if (!Array.isArray(component.contractRefs) || component.contractRefs.length === 0) failures.push(`${component.id}: contractRefs are missing`);
@@ -166,9 +180,17 @@ async function main() {
     }
 
     if (command === 'validate') {
+        const auditDropIndex = process.argv.indexOf('--audit-drop-transition');
+        const effective = structuredClone(state.effective);
+        if (auditDropIndex !== -1) {
+            const componentId = process.argv[auditDropIndex + 1];
+            const component = effective.components.find((item) => item.id === componentId);
+            if (!component) throw new Error(`Unknown audit component: ${componentId || '<missing>'}`);
+            delete component.transition;
+        }
         const failures = await validateRegistry(accepted, { checkExternalMappings: false });
         failures.push(...state.candidateFailures);
-        failures.push(...(await validateRegistry(state.effective, { checkIndex: false })).map((failure) => `effective: ${failure}`));
+        failures.push(...(await validateRegistry(effective, { checkIndex: false })).map((failure) => `effective: ${failure}`));
         if (failures.length) {
             console.error('Architecture validation failed:');
             for (const failure of [...new Set(failures)]) console.error(` - ${failure}`);

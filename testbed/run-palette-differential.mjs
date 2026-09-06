@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { isDeepStrictEqual } from 'node:util';
 import { startServer } from './server/server.mjs';
 import { createTestPage, launchBrowser, storageKeys } from './harness/runner-utils.mjs';
-import { createEvidenceBinding } from '../tools/evidence-binding.mjs';
+import { createEvidenceBinding, digestEvidenceBytes } from '../tools/evidence-binding.mjs';
 
 const scriptPath = fileURLToPath(import.meta.url);
 const root = path.resolve(path.dirname(scriptPath), '..');
@@ -208,7 +208,7 @@ if (args.includes('--side')) {
     }]));
     await writeFile(output, JSON.stringify({ schemaVersion: 1, kind: 'observed-palette-differential',
         target, controlSource: baseline[target].behaviorSourceCommit, controlSha256: controlHash, candidateSha256: candidateHash,
-        observerSha256: hash(await readFile(scriptPath)), evidenceBinding: await createEvidenceBinding(root),
+        observerSha256: digestEvidenceBytes('testbed/run-palette-differential.mjs', await readFile(scriptPath)).toUpperCase(), evidenceBinding: await createEvidenceBinding(root),
         scope: `${target} palette preview/cancel/save/write-failure-retry plus save-before-pending-startup-read-release ordering; settled resource equivalence compares active ownership while retaining cumulative startup churn as raw evidence; no claim about other surfaces`,
         observationEvidence, ...(compact ? {} : { sides }), rawDifferences, differences, equivalent }, null, 2) + '\n');
     console.log('Observed palette comparison: ' + (equivalent ? 'PASS' : 'FAIL') + '; ' + differences.length + ' semantic and ' + rawDifferences.length + ' raw differing snapshots');

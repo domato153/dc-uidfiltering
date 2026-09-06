@@ -2,9 +2,9 @@
 
 Close Phase 2, then begin shared filter and personal-block UI separation without visual redesign:
 
-1. Commit and push the proof-hardening change that scans mixed-boundary `presentation-source` files, adversarially mutates `ThemeModule`, retains immutable-control editor geometry separately, and refreshes compact observed receipts on PR #3.
-2. Require fresh exact-head Ubuntu policy, affected, and full-acceptance jobs. Confirm the immutable baseline and candidate both satisfy the recorded 2px toolbar-anchor tracking contract in distinct report files, the policy artifact proves all five mutations ran, and every artifact name, impact `head`, result `sourceHead`, manifest `sourceHead`, and checked-out `HEAD` equals the latest PR head.
-3. Run a completed fresh-context independent `gpt-5.6-sol max` upper-layer audit against that latest head. The completed audit of `a05184e` and interrupted audit of `0bd2c93` are blocker-discovery reports, not passes for the corrected candidate.
+1. Commit and push the evidence-portability and migration-exit hardening on PR #3: canonical text/source/proof binding, byte-exact artifacts, strict cross-platform tool manifest, registry version 6 transition exits, six proof mutations, refreshed observed receipts, and external evidence-to-practice guidance.
+2. Require fresh exact-head Ubuntu policy, affected, and full-acceptance jobs. Confirm Linux reports the same canonical harness/fixture binding as Windows, the manifest records Node 22.17.0, pnpm 10.33.1, Playwright 1.61.1 and no missing files, all six mutations run, and every receipt/artifact identity equals the latest PR head.
+3. Run a completed fresh-context independent `gpt-5.6-sol max` upper-layer audit against that latest head. Earlier interrupted audits are blocker-discovery reports, not passes for the corrected candidate.
 4. Merge Phase 2 only when the fresh hosted run and completed audit have no material finding or unresolved evidence gap. Windows promotion remains a separate pre-promotion gate.
 5. Map GM/storage/filter side effects versus filter-settings and personal-block rendering/event ownership in a new candidate overlay. Include the palette pinch-geometry dependency now recorded as one-owner debt.
 6. Move state/effects into application handlers and leave presentation on immutable snapshots and typed intents; preserve every GM key, stored shape, startup ordering, and failure behavior.
