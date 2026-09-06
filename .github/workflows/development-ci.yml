@@ -16,6 +16,7 @@ concurrency:
 env:
   NODE_VERSION: 22.17.0
   PNPM_VERSION: 10.33.1
+  CANDIDATE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
 
 jobs:
   policy:
@@ -25,8 +26,15 @@ jobs:
       - name: Checkout exact candidate
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
+          ref: ${{ env.CANDIDATE_SHA }}
           fetch-depth: 0
           persist-credentials: false
+      - name: Verify exact candidate checkout
+        env:
+          EXPECTED_SHA: ${{ env.CANDIDATE_SHA }}
+        run: |
+          [[ "${EXPECTED_SHA}" =~ ^[0-9a-f]{40}$ ]]
+          test "$(git rev-parse HEAD)" = "${EXPECTED_SHA}"
       - name: Set up Node
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
@@ -37,12 +45,28 @@ jobs:
           corepack prepare pnpm@${PNPM_VERSION} --activate
       - name: Install locked dependencies
         run: pnpm install --frozen-lockfile
-      - name: Verify policy, skills, registry, and UI boundaries
+      - name: Resolve declared policy gates
+        env:
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: |
-          node tools/architecture-registry.mjs validate
-          node tools/verify-skills.mjs
-          node tools/verify-ui-boundaries.mjs
-          node tools/verify-repo.mjs guidance
+          BASE_SHA="${PR_BASE_SHA}"
+          if [ -z "${BASE_SHA}" ]; then BASE_SHA="$(git rev-parse HEAD^)"; fi
+          node tools/resolve-impact.mjs --base "${BASE_SHA}" --head HEAD --output artifacts/impact.json
+      - name: Build guarded runtime for proof mutations
+        run: node tools/build-userscript.mjs --testbed-output testbed/artifacts/runtime-under-test.user.js
+      - name: Run declared policy profile
+        run: node tools/run-gates.mjs artifacts/impact.json artifacts/policy-result.json --only policy
+      - name: Upload policy receipts
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: policy-${{ env.CANDIDATE_SHA }}
+          path: |
+            artifacts/impact.json
+            artifacts/policy-result.json
+            artifacts/proof-audit/*.json
+          if-no-files-found: error
+          retention-days: 30
 
   affected:
     name: affected-tests
@@ -52,8 +76,15 @@ jobs:
       - name: Checkout exact candidate
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
+          ref: ${{ env.CANDIDATE_SHA }}
           fetch-depth: 0
           persist-credentials: false
+      - name: Verify exact candidate checkout
+        env:
+          EXPECTED_SHA: ${{ env.CANDIDATE_SHA }}
+        run: |
+          [[ "${EXPECTED_SHA}" =~ ^[0-9a-f]{40}$ ]]
+          test "$(git rev-parse HEAD)" = "${EXPECTED_SHA}"
       - name: Set up Node
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
@@ -79,10 +110,11 @@ jobs:
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: affected-${{ github.sha }}
+          name: affected-${{ env.CANDIDATE_SHA }}
           path: |
             artifacts/impact.json
             artifacts/affected-result.json
+            testbed/artifacts/*.json
             testbed/test-results/**
           if-no-files-found: error
           retention-days: 30
@@ -95,8 +127,15 @@ jobs:
       - name: Checkout exact candidate
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
+          ref: ${{ env.CANDIDATE_SHA }}
           fetch-depth: 0
           persist-credentials: false
+      - name: Verify exact candidate checkout
+        env:
+          EXPECTED_SHA: ${{ env.CANDIDATE_SHA }}
+        run: |
+          [[ "${EXPECTED_SHA}" =~ ^[0-9a-f]{40}$ ]]
+          test "$(git rev-parse HEAD)" = "${EXPECTED_SHA}"
       - name: Set up Node
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
@@ -109,6 +148,23 @@ jobs:
         run: |
           pnpm install --frozen-lockfile
           node testbed/node_modules/playwright/cli.js install --with-deps chromium
+      - name: Reproduce immutable beta and stable lineage
+        run: node tools/verify-baseline.mjs
+      # Diagnostic control runs retain failures for comparison. They cannot
+      # make the candidate acceptance green or authorize a behavioral change.
+      - name: Characterize baseline editor geometry
+        continue-on-error: true
+        env:
+          DCUF_TESTBED_USERSCRIPT: testbed/artifacts/baseline-mobile-beta.user.js
+          DCUF_TESTBED_REPORT: testbed/artifacts/baseline-editor-results.json
+          DCUF_WRITE_LAYOUT_REPORT: testbed/artifacts/baseline-editor-layout.json
+        run: node testbed/run-tests.mjs --filter '네이티브 모바일 기준 fixture'
+      - name: Characterize baseline body replacement
+        continue-on-error: true
+        env:
+          DCUF_TESTBED_USERSCRIPT: testbed/artifacts/baseline-mobile-beta.user.js
+          DCUF_TESTBED_REPORT: testbed/artifacts/baseline-body-results.json
+        run: node testbed/run-tests.mjs --filter 'body 교체 후 mutation bus'
       - name: Resolve full acceptance
         env:
           PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
@@ -125,13 +181,14 @@ jobs:
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: acceptance-${{ github.sha }}
+          name: acceptance-${{ env.CANDIDATE_SHA }}
           path: |
             artifacts/*.json
             Dc_UserFilter_Mobile_v*.user.js
             dcinside_user_filter_v*.user.js
             dist/*.user.js
             testbed/artifacts/runtime-under-test.user.js
+            testbed/artifacts/*.json
             testbed/test-results/**
           if-no-files-found: error
           retention-days: 30

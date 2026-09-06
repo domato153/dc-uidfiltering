@@ -126,6 +126,10 @@ async function buildSharedRuntimePrelude() {
     const ipSource = stripEsmSyntax(await readPart(inputForRole('shared-ip')));
     const storageCoreSource = stripEsmSyntax(await readPart(inputForRole('shared-storage')));
     const filterCoreSource = stripEsmSyntax(await readPart(inputForRole('shared-filter')));
+    const uiContractsSource = stripEsmSyntax(await readPart(inputForRole('shared-ui-contracts')));
+    const uiDisposableScopeSource = stripEsmSyntax(await readPart(inputForRole('ui-disposable-scope')));
+    const uiStateStoreSource = await readPart(inputForRole('ui-state-store'));
+    const themeHostPortSource = await readPart(inputForRole('theme-host-port'));
 
     return [
         '    // PC filter port shared prelude',
@@ -155,6 +159,23 @@ async function buildSharedRuntimePrelude() {
         '        createDefaultFilterSettings,',
         '        normalizeStoredFilterSettings,',
         '    });',
+        '',
+        uiContractsSource.trimEnd(),
+        '',
+        uiDisposableScopeSource.trimEnd(),
+        '',
+        '    const DCUF_UI_CONTRACTS = Object.freeze({',
+        '        UI_INTENT_TYPES,',
+        '        createCommandResult,',
+        '        createDisposableScope,',
+        '        createUiSurface,',
+        '        createHostSurfacePort,',
+        '        createUiPortRuntime,',
+        '    });',
+        '',
+        uiStateStoreSource.trimEnd(),
+        '',
+        themeHostPortSource.trimEnd(),
         '',
         filterCoreSource.trimEnd(),
         '',

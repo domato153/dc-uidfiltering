@@ -16,12 +16,12 @@ if (gitHead.status !== 0) throw new Error(gitHead.stderr.trim() || 'Unable to re
 if (gitHead.stdout.trim() !== receipt.head) {
     throw new Error(`Wrong-head receipt: expected ${receipt.head}, actual ${gitHead.stdout.trim()}`);
 }
+assertEvidenceBinding(receipt.evidenceBinding, await createEvidenceBinding(rootDir));
 const trackedStatus = spawnSync('git', ['status', '--porcelain', '--untracked-files=no'], { cwd: rootDir, encoding: 'utf8' });
 if (trackedStatus.status !== 0) throw new Error(trackedStatus.stderr.trim() || 'Unable to inspect worktree status');
 if (trackedStatus.stdout.trim()) {
     throw new Error(`Dirty tracked worktree cannot consume a commit receipt:\n${trackedStatus.stdout.trim()}`);
 }
-assertEvidenceBinding(receipt.evidenceBinding, await createEvidenceBinding(rootDir));
 if (process.argv.includes('--verify-receipt-only')) {
     console.log(`Evidence receipt is current for ${receipt.head}.`);
     process.exit(0);
@@ -43,6 +43,7 @@ for (const item of receipt.resolvedCommands || []) {
         env: {
             ...process.env,
             DCUF_TESTBED_USERSCRIPT: path.join(rootDir, 'testbed', 'artifacts', 'runtime-under-test.user.js'),
+            DCUF_TESTBED_REPORT: path.join(rootDir, 'testbed', 'artifacts', `${item.profile}-${item.id}-results.json`),
             ...(item.env || {}),
         },
     });

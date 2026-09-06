@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "candidateId": "phase-2-audit-truth-correction",
+  "candidateSha256": "2d2b13268fc75b06ebf3faf04b79ad5762317d1e17b9ea085c4358c74a93ada5",
+  "beforeRegistrySha256": "353157572edf4a2d04f702befb68a47ccf2411cfa7de691555b676f29a01d6e8",
+  "afterRegistrySha256": "397ea0bc9551613ba4c92aadcf800ffa6aceb54270d74f2cb69a301c47fa1b5c",
+  "resultingRegistryVersion": 5,
+  "candidateRemoved": true,
+  "idempotencyReplayMatched": true,
+  "temporaryRefLeakDetected": false
+}

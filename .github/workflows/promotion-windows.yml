@@ -71,6 +71,7 @@ jobs:
             dcinside_user_filter_v*.user.js
             dist/*.user.js
             testbed/artifacts/runtime-under-test.user.js
+            testbed/artifacts/*.json
             testbed/test-results/**
           if-no-files-found: error
           retention-days: 30

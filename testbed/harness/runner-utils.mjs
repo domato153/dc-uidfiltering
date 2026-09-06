@@ -8,20 +8,16 @@ const require = createRequire(import.meta.url);
 const { chromium } = require('./playwright-loader.cjs');
 const testbedDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
-const knownBrowsers = [
-    process.env.DCUF_BROWSER_PATH,
-    'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
-    'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe',
-    'C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe'
-].filter(Boolean);
-
 export async function launchBrowser({ headed = false } = {}) {
-    const executablePath = knownBrowsers.find((candidate) => {
-        try { return require('node:fs').existsSync(candidate); } catch { return false; }
-    });
+    const executablePath = process.env.DCUF_BROWSER_PATH;
+    if (executablePath && !require('node:fs').existsSync(executablePath)) {
+        throw new Error(`Explicit DCUF_BROWSER_PATH does not exist: ${executablePath}`);
+    }
     const options = { headless: !headed, args: ['--disable-background-timer-throttling'] };
     if (executablePath) options.executablePath = executablePath;
-    return chromium.launch(options);
+    const browser = await chromium.launch(options);
+    console.log(`Test browser: ${browser.version()} (${executablePath || 'Playwright-managed Chromium'})`);
+    return browser;
 }
 
 export async function createTestPage(browser, baseUrl, {

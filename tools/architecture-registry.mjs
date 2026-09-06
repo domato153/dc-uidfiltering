@@ -1,12 +1,16 @@
-import { createHash } from 'node:crypto';
-import { readdir, readFile, stat, unlink, writeFile } from 'node:fs/promises';
+import { readFile, stat, unlink, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import {
+    applyArchitectureOverlay,
+    loadArchitectureState,
+    sha256,
+    stableSortRegistry,
+} from './architecture-state.mjs';
 
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const registryPath = path.join(rootDir, 'architecture', 'registry.json');
 const indexPath = path.join(rootDir, 'architecture', 'INDEX.md');
-const candidatesDir = path.join(rootDir, 'architecture', 'candidates');
 const gatesPath = path.join(rootDir, 'verification', 'gates.json');
 const buildTargetsPath = path.join(rootDir, 'build', 'targets.json');
 const command = process.argv[2] || 'validate';
@@ -25,18 +29,6 @@ const allowedClassifications = new Set([
 ]);
 const allowedBoundaryStates = new Set(['conforming', 'mixed', 'retired', 'verification']);
 
-function sha256(bytes) {
-    return createHash('sha256').update(bytes).digest('hex');
-}
-
-function stableSortRegistry(registry) {
-    const next = structuredClone(registry);
-    for (const section of ['authorities', 'contracts', 'components', 'relations', 'invariants']) {
-        next[section] = [...(next[section] || [])].sort((a, b) => a.id.localeCompare(b.id));
-    }
-    return next;
-}
-
 function renderIndex(registry) {
     const lines = [
         '# DCUF Semantic Architecture',
@@ -53,9 +45,9 @@ function renderIndex(registry) {
         '',
         '## Components',
         '',
-        '| ID | Status | Layer | Boundary | Responsibility |',
-        '| --- | --- | --- | --- | --- |',
-        ...registry.components.map((item) => `| ${item.id} | ${item.status} | ${item.layer} | ${item.boundaryState} | ${item.responsibility} |`),
+        '| ID | Status | Layer | Boundary | Responsibility | Transition exit |',
+        '| --- | --- | --- | --- | --- | --- |',
+        ...registry.components.map((item) => `| ${item.id} | ${item.status} | ${item.layer} | ${item.boundaryState} | ${item.responsibility} | ${item.transition?.exitCriteria || '—'} |`),
         '',
         '## Contracts',
         '',
@@ -89,7 +81,7 @@ async function pathReferenceExists(reference) {
     }
 }
 
-async function validateRegistry(registry, { checkIndex = true } = {}) {
+async function validateRegistry(registry, { checkIndex = true, checkExternalMappings = true } = {}) {
     const failures = [];
     const requiredSections = ['authorities', 'contracts', 'components', 'relations', 'invariants'];
     if (registry.schemaVersion !== 1) failures.push('schemaVersion must be 1');
@@ -109,6 +101,20 @@ async function validateRegistry(registry, { checkIndex = true } = {}) {
         if (!allowedClassifications.has(component.classification)) failures.push(`${component.id}: unknown classification ${component.classification}`);
         if (!allowedLayers.has(component.layer)) failures.push(`${component.id}: unknown layer ${component.layer}`);
         if (!allowedBoundaryStates.has(component.boundaryState)) failures.push(`${component.id}: unknown boundaryState ${component.boundaryState}`);
+        if (component.boundaryState === 'mixed') {
+            if (!component.transition || typeof component.transition !== 'object') {
+                failures.push(`${component.id}: mixed boundary requires a transition exit contract`);
+            } else {
+                if (!['conforming', 'retired'].includes(component.transition.targetBoundaryState)) {
+                    failures.push(`${component.id}: transition targetBoundaryState must be conforming or retired`);
+                }
+                if (typeof component.transition.exitCriteria !== 'string' || !component.transition.exitCriteria.trim()) {
+                    failures.push(`${component.id}: transition exitCriteria is missing`);
+                }
+            }
+        } else if (component.transition !== undefined) {
+            failures.push(`${component.id}: only mixed boundaries may carry a transition contract`);
+        }
         if (!component.responsibility) failures.push(`${component.id}: responsibility is missing`);
         if (!Array.isArray(component.sourceRefs) || component.sourceRefs.length === 0) failures.push(`${component.id}: sourceRefs are missing`);
         if (!Array.isArray(component.contractRefs) || component.contractRefs.length === 0) failures.push(`${component.id}: contractRefs are missing`);
@@ -131,23 +137,25 @@ async function validateRegistry(registry, { checkIndex = true } = {}) {
         for (const exception of invariant.exceptions || []) if (!componentIds.has(exception)) failures.push(`${invariant.id}: unknown exception ${exception}`);
     }
 
-    const targets = JSON.parse(await readFile(buildTargetsPath, 'utf8')).targets;
-    for (const [targetName, target] of Object.entries(targets)) {
-        for (const input of target.inputs || []) {
-            const owners = (registry.components || []).filter((component) => component.sourceRefs.includes(input.path));
-            if (owners.length !== 1) failures.push(`${targetName}: build input ${input.path} maps to ${owners.length} components`);
+    if (checkExternalMappings) {
+        const targets = JSON.parse(await readFile(buildTargetsPath, 'utf8')).targets;
+        for (const [targetName, target] of Object.entries(targets)) {
+            for (const input of target.inputs || []) {
+                const owners = (registry.components || []).filter((component) => component.sourceRefs.includes(input.path));
+                if (owners.length !== 1) failures.push(`${targetName}: build input ${input.path} maps to ${owners.length} components`);
+            }
         }
-    }
 
-    const gates = JSON.parse(await readFile(gatesPath, 'utf8'));
-    const profileIds = new Set(Object.keys(gates.profiles || {}));
-    for (const [componentId, profiles] of Object.entries(gates.componentProfiles || {})) {
-        if (!componentIds.has(componentId)) failures.push(`gates: unknown component ${componentId}`);
-        for (const profile of profiles) if (!profileIds.has(profile)) failures.push(`gates: ${componentId} references unknown profile ${profile}`);
-    }
-    for (const [invariantId, profiles] of Object.entries(gates.invariantProfiles || {})) {
-        if (!invariantIds.has(invariantId)) failures.push(`gates: unknown invariant ${invariantId}`);
-        for (const profile of profiles) if (!profileIds.has(profile)) failures.push(`gates: ${invariantId} references unknown profile ${profile}`);
+        const gates = JSON.parse(await readFile(gatesPath, 'utf8'));
+        const profileIds = new Set(Object.keys(gates.profiles || {}));
+        for (const [componentId, profiles] of Object.entries(gates.componentProfiles || {})) {
+            if (!componentIds.has(componentId)) failures.push(`gates: unknown component ${componentId}`);
+            for (const profile of profiles) if (!profileIds.has(profile)) failures.push(`gates: ${componentId} references unknown profile ${profile}`);
+        }
+        for (const [invariantId, profiles] of Object.entries(gates.invariantProfiles || {})) {
+            if (!invariantIds.has(invariantId)) failures.push(`gates: unknown invariant ${invariantId}`);
+            for (const profile of profiles) if (!profileIds.has(profile)) failures.push(`gates: ${invariantId} references unknown profile ${profile}`);
+        }
     }
 
     if (checkIndex) {
@@ -161,46 +169,9 @@ async function validateRegistry(registry, { checkIndex = true } = {}) {
     return failures;
 }
 
-function upsertById(items, updates = []) {
-    const map = new Map(items.map((item) => [item.id, item]));
-    for (const item of updates) map.set(item.id, item);
-    return [...map.values()];
-}
-
-function removeById(items, ids = []) {
-    const removed = new Set(ids);
-    return items.filter((item) => !removed.has(item.id));
-}
-
-function applyOverlay(registry, overlay) {
-    const next = structuredClone(registry);
-    const changes = overlay.changes || {};
-    const operationNames = {
-        authorities: ['upsertAuthorities', 'removeAuthorities'],
-        contracts: ['upsertContracts', 'removeContracts'],
-        components: ['upsertComponents', 'removeComponents'],
-        relations: ['upsertRelations', 'removeRelations'],
-        invariants: ['upsertInvariants', 'removeInvariants'],
-    };
-    for (const [section, [upsertName, removeName]] of Object.entries(operationNames)) {
-        next[section] = upsertById(next[section] || [], changes[upsertName] || []);
-        next[section] = removeById(next[section], changes[removeName] || []);
-    }
-    return stableSortRegistry(next);
-}
-
-async function readCandidates() {
-    const entries = await readdir(candidatesDir, { withFileTypes: true });
-    const files = entries.filter((entry) => entry.isFile() && entry.name.endsWith('.json')).map((entry) => entry.name).sort();
-    return Promise.all(files.map(async (name) => ({
-        path: path.join(candidatesDir, name),
-        value: JSON.parse(await readFile(path.join(candidatesDir, name), 'utf8')),
-    })));
-}
-
 async function main() {
-    const registryBytes = await readFile(registryPath);
-    const accepted = stableSortRegistry(JSON.parse(registryBytes.toString('utf8')));
+    const state = await loadArchitectureState(rootDir);
+    const { registryBytes, accepted } = state;
 
     if (command === 'generate-index') {
         await writeFile(indexPath, renderIndex(accepted), 'utf8');
@@ -209,13 +180,16 @@ async function main() {
     }
 
     if (command === 'validate') {
-        const failures = await validateRegistry(accepted);
-        let effective = accepted;
-        for (const candidate of await readCandidates()) {
-            if (candidate.value.schemaVersion !== 1 || !candidate.value.id) failures.push(`${path.basename(candidate.path)}: invalid candidate header`);
-            if (candidate.value.baseRegistrySha256 !== sha256(registryBytes)) failures.push(`${path.basename(candidate.path)}: baseRegistrySha256 does not match accepted registry`);
-            effective = applyOverlay(effective, candidate.value);
+        const auditDropIndex = process.argv.indexOf('--audit-drop-transition');
+        const effective = structuredClone(state.effective);
+        if (auditDropIndex !== -1) {
+            const componentId = process.argv[auditDropIndex + 1];
+            const component = effective.components.find((item) => item.id === componentId);
+            if (!component) throw new Error(`Unknown audit component: ${componentId || '<missing>'}`);
+            delete component.transition;
         }
+        const failures = await validateRegistry(accepted, { checkExternalMappings: false });
+        failures.push(...state.candidateFailures);
         failures.push(...(await validateRegistry(effective, { checkIndex: false })).map((failure) => `effective: ${failure}`));
         if (failures.length) {
             console.error('Architecture validation failed:');
@@ -233,13 +207,24 @@ async function main() {
         if (!candidateArg || !receiptArg) throw new Error('Usage: node tools/architecture-registry.mjs promote <candidate.json> <receipt.json>');
         const candidatePath = path.resolve(rootDir, candidateArg);
         const receiptPath = path.resolve(rootDir, receiptArg);
-        const candidate = JSON.parse(await readFile(candidatePath, 'utf8'));
+        const candidateRoot = `${path.resolve(rootDir, 'architecture', 'candidates')}${path.sep}`;
+        if (!candidatePath.startsWith(candidateRoot)) throw new Error('candidate must be inside architecture/candidates');
+        const candidateBytes = await readFile(candidatePath);
+        const candidate = JSON.parse(candidateBytes.toString('utf8'));
+        if (/refs\/pull\/|refs\/merge-requests\/|\/merge\b/i.test(candidateBytes.toString('utf8'))) {
+            throw new Error('candidate contains a temporary pull-request or merge ref');
+        }
         const beforeHash = sha256(registryBytes);
         if (candidate.baseRegistrySha256 !== beforeHash) throw new Error('candidate baseRegistrySha256 does not match accepted registry');
-        const promoted = applyOverlay(accepted, candidate);
+        const promoted = applyArchitectureOverlay(accepted, candidate);
         promoted.registryVersion = accepted.registryVersion + 1;
         const failures = await validateRegistry(promoted, { checkIndex: false });
         if (failures.length) throw new Error(`promoted registry is invalid:\n${failures.join('\n')}`);
+        const replayed = applyArchitectureOverlay(promoted, candidate);
+        replayed.registryVersion = promoted.registryVersion;
+        if (JSON.stringify(replayed) !== JSON.stringify(promoted)) {
+            throw new Error('candidate promotion is not idempotent when replayed');
+        }
         const promotedText = `${JSON.stringify(promoted, null, 2)}\n`;
         const afterHash = sha256(Buffer.from(promotedText));
         await writeFile(registryPath, promotedText, 'utf8');
@@ -247,10 +232,13 @@ async function main() {
         await writeFile(receiptPath, `${JSON.stringify({
             schemaVersion: 1,
             candidateId: candidate.id,
+            candidateSha256: sha256(candidateBytes),
             beforeRegistrySha256: beforeHash,
             afterRegistrySha256: afterHash,
             resultingRegistryVersion: promoted.registryVersion,
             candidateRemoved: true,
+            idempotencyReplayMatched: true,
+            temporaryRefLeakDetected: false,
         }, null, 2)}\n`, 'utf8');
         await unlink(candidatePath);
         console.log(`Promoted ${candidate.id}: ${beforeHash} -> ${afterHash}`);
