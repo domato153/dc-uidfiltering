@@ -33,6 +33,7 @@ check((development.match(/test "\$\(git rev-parse HEAD\)" = "\$\{EXPECTED_SHA\}"
 check(!development.includes('affected-${{ github.sha }}') && !development.includes('acceptance-${{ github.sha }}'), 'development evidence must not be named after the synthetic merge SHA');
 check(development.includes('node tools/run-gates.mjs artifacts/impact.json artifacts/policy-result.json --only policy'), 'development policy job must execute the declared policy profile');
 check(development.includes('name: policy-${{ env.CANDIDATE_SHA }}'), 'policy evidence must be named after the exact candidate SHA');
+check(development.includes('DCUF_WRITE_LAYOUT_REPORT: testbed/artifacts/baseline-editor-layout.json'), 'baseline editor geometry must use a non-overwritten evidence path');
 
 const promotion = await readFile(path.join(workflowsDir, 'promotion-windows.yml'), 'utf8');
 check(promotion.includes('runs-on: windows-2025'), 'promotion verification must run on windows-2025');

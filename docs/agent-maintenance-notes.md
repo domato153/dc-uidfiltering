@@ -32,6 +32,7 @@ This is the active, compact maintenance index. It records reusable causes and co
 - The live authenticated-delete host gives `.empty_pagewrap` a large vertical auto margin and `.pop_wrap.type5` its own square border/background/z-index. Reset that exact shell before centering the shared card geometry, and make the outer popup wrapper transparent and borderless so `.dcuf-delete-confirm-content` remains the only visual card owner.
 - Popup tests must close and reopen the same native node and prove the delegated handler and submit count remain singular.
 - Do not replace the preserved anchor-based editor-layer scale calculation inside a semantic-delta-zero refactor. The discarded layer-scale/content-box correction changed visible geometry. Characterization should assert positive viewport containment with a 1px rendering tolerance and record before/after anchor gaps. Because the immutable baseline derives transform coordinates from integer `offsetWidth`, allow at most 2px of toolbar-scroll tracking drift across Chromium platforms; a wider tolerance or exact inset change requires its own declared behavior fix and live evidence.
+- Give immutable-control and candidate write-layout runs distinct report paths. A shared `write-layout-latest.json` lets the candidate overwrite the control rectangles while leaving only a control PASS marker, which is insufficient geometry evidence.
 
 ## Recommendation and palette contracts
 

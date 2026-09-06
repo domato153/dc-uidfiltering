@@ -68,4 +68,10 @@ expectFailure('control=candidate differential is rejected', 'node', [
     '--output', path.join(auditDir, 'control-equals-candidate.json'),
 ], { pattern: /Differential oracle rejected control=candidate digest/ });
 
-console.log('Proof-system adversarial audit passed: 4 mutations rejected.');
+expectFailure('presentation-source forbidden GM mutation is rejected', 'node', [
+    'tools/verify-ui-boundaries.mjs',
+    '--audit-inject-forbidden',
+    'mobile-theme-module',
+], { pattern: /theme-module\.js:\d+: presentation directly references GM_setValue/ });
+
+console.log('Proof-system adversarial audit passed: 5 mutations rejected.');

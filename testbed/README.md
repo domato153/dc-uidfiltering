@@ -121,7 +121,7 @@ browser performed a synchronous layout on that individual access.
 The wrappers add test-only overhead, so timing comparisons are meaningful only
 between runs using the same Testbed instrumentation revision.
 
-Write-layout measurements are written to `testbed/artifacts/write-layout-latest.json`. The native reference must remain free of horizontal overflow; major/minor desktop-host overflow is recorded as a comparison metric rather than an absolute timing-style gate. This lets a future mobile write UI prove improvement without preserving a cramped layout.
+Write-layout measurements are written to `testbed/artifacts/write-layout-latest.json`, or to the explicit `DCUF_WRITE_LAYOUT_REPORT` path when a control run must retain evidence independently from the candidate. The native reference must remain free of horizontal overflow; major/minor desktop-host overflow is recorded as a comparison metric rather than an absolute timing-style gate. This lets a future mobile write UI prove improvement without preserving a cramped layout.
 
 ## GM shim differences
 

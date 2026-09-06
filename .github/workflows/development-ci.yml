@@ -157,6 +157,7 @@ jobs:
         env:
           DCUF_TESTBED_USERSCRIPT: testbed/artifacts/baseline-mobile-beta.user.js
           DCUF_TESTBED_REPORT: testbed/artifacts/baseline-editor-results.json
+          DCUF_WRITE_LAYOUT_REPORT: testbed/artifacts/baseline-editor-layout.json
         run: node testbed/run-tests.mjs --filter '네이티브 모바일 기준 fixture'
       - name: Characterize baseline body replacement
         continue-on-error: true

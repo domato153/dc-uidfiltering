@@ -7394,7 +7394,10 @@ if (performanceReports.length > 0) {
     console.log(`Performance report: ${artifactPath}`);
 }
 if (writeLayoutReports.length > 0) {
-    const artifactPath = path.join(artifactDir, 'write-layout-latest.json');
+    const artifactPath = process.env.DCUF_WRITE_LAYOUT_REPORT
+        ? path.resolve(process.env.DCUF_WRITE_LAYOUT_REPORT)
+        : path.join(artifactDir, 'write-layout-latest.json');
+    await mkdir(path.dirname(artifactPath), { recursive: true });
     let previous = null;
     try { previous = JSON.parse(await readFile(artifactPath, 'utf8')); } catch { /* first write layout run */ }
     const comparisons = writeLayoutReports.map((current) => {
