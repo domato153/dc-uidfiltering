@@ -3,7 +3,7 @@
 ## Accepted baseline
 
 - Protected development branch: `codex/mobile-development` at `e7fa4385b7fc65e7db40464df0dafd98b8391e4e`.
-- Latest pushed Phase 2 proof-hardening commit: `1c1480f5aee5535f69ffba4ffbdaa40e1c578495`. It is on PR #3 (`codex/ui-port-boundary`) and is not yet accepted or merged.
+- Latest pushed Phase 2 evidence-hardening commit: `08446dba7ff9d9e0bc6a438b7ae8b04c387013cd`. It is on PR #3 (`codex/ui-port-boundary`) and is not yet accepted or merged.
 - Exact-head workflow correction: `28cc9c9496791bfaf959e31cada9cb10b9d8aa0e`.
 - Behavior source: `cef5f71381116d2746b0319b2f8e609e8d7eae85`.
 - Mobile beta SHA-256: `A03038FE68126B62054EBA11244D4EE2E1766D308983FC5C27127FD3794CB343`.
@@ -42,9 +42,9 @@
 - Exact-head run `33983421079` at `0bd2c93` passed Ubuntu policy, affected, and full acceptance: mobile 97/97, host 11/11, PC 14/14, both observed differentials, immutable lineage, and artifact-manifest checks. It is now historical evidence because the proof route, workflow, and harness changed after that head.
 - A completed independent `gpt-5.6-sol max` audit of `a05184e` found three merge blockers: undeclared geometry change, pending-read/save ordering regression, and an unexecuted declared proof gate. `74816c8` addresses all three plus registry/receipt/document truth findings, but a fresh independent audit of the latest pushed head is still required.
 - A fresh independent max audit of `0bd2c93` was interrupted before verdict by the audit task's usage limit. Its partial review exposed two real proof gaps now corrected locally: `ThemeModule` was skipped when `boundaryState` was mixed, and the control editor geometry report was overwritten by the candidate run. An interrupted audit is not a pass.
-- Exact-head Ubuntu run `34015955884` at `1c1480f` passed policy, affected, and full acceptance: mobile 97/97, host 11/11, PC 14/14, both observed differentials, immutable lineage, six expected artifact manifests, and separate control/candidate editor geometry. It is historical after the evidence-binding and registry hardening in the working change.
-- A later interrupted independent audit of `1c1480f` exposed a real cross-platform receipt flaw: with `core.autocrlf=true`, the same commit produced different harness/fixture/toolchain hashes. The working change fixes the root cause and adds transition exits plus external case-to-implementation guidance; a completed fresh audit is still required.
-- Fresh exact-head Ubuntu policy/affected/full acceptance for the evidence-portability head and Windows hosted promotion remain pending.
+- Exact-head Ubuntu run `34015955884` at `1c1480f` passed but is historical. A later interrupted independent audit of that head exposed a real cross-platform receipt flaw: with `core.autocrlf=true`, the same commit produced different harness/fixture/toolchain hashes.
+- Exact-head Ubuntu run `34030546334` at `08446db` passed policy, affected, and full acceptance: mobile 97/97, host 11/11, PC 14/14, both observed differentials with zero semantic differences, immutable lineage, all eight manifest entries, and separate control/candidate editor geometry. The Linux harness and fixture hashes equal the canonical Windows hashes; the manifest records Node 22.17.0, pnpm 10.33.1, Playwright 1.61.1, no missing files, and the exact source head.
+- `08446db` fixes the cross-platform receipt root cause, binds source/proof inputs, requires and adversarially checks transition exits, and records the external case-to-implementation protocol. A completed fresh independent max audit and Windows hosted promotion remain pending.
 - No live canary has been claimed. July live evidence is historical and may be stale.
 
 ## Resume rule
