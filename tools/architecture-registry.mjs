@@ -1,4 +1,6 @@
-import { readFile, stat, unlink, writeFile } from 'node:fs/promises';
+import { randomUUID } from 'node:crypto';
+import { spawnSync } from 'node:child_process';
+import { link, readdir, readFile, rename, stat, unlink, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
@@ -7,6 +9,7 @@ import {
     sha256,
     stableSortRegistry,
 } from './architecture-state.mjs';
+import { createEvidenceBinding, digestArchitecturePlan, digestEvidenceBytes } from './evidence-binding.mjs';
 
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const registryPath = path.join(rootDir, 'architecture', 'registry.json');
@@ -28,6 +31,57 @@ const allowedClassifications = new Set([
     'retired-source',
 ]);
 const allowedBoundaryStates = new Set(['conforming', 'mixed', 'retired', 'verification']);
+const minimumExitCriteriaLength = 40;
+const minimumExitCriteriaTerms = 6;
+const placeholderExitCriteria = /^\s*(?:todo|tbd|fixme|later|pending|unknown|n\/a)(?:\s*[:.\-]?\s*)*$/i;
+const transitionBindingOmissions = new Set(['architectureStateSha256']);
+
+const normalizePath = (value) => value.replace(/\\/g, '/');
+const deterministicBytes = (value) => Buffer.from(`${JSON.stringify(value, null, 2)}\n`, 'utf8');
+
+async function removeIfPresent(filePath) {
+    try {
+        await unlink(filePath);
+    } catch (error) {
+        if (error.code !== 'ENOENT') throw error;
+    }
+}
+
+function partialPayload(value) {
+    const partialLength = Math.max(1, Math.floor(value.length / 3));
+    return Buffer.isBuffer(value) ? value.subarray(0, partialLength) : value.slice(0, partialLength);
+}
+
+async function preparePromotionFile(targetName, targetPath, value, options, auditPartialWriteTarget) {
+    const temporaryPath = `${targetPath}.${process.pid}.${randomUUID()}.tmp`;
+    try {
+        const injectedFailure = auditPartialWriteTarget === targetName;
+        await writeFile(temporaryPath, injectedFailure ? partialPayload(value) : value, {
+            ...options,
+            flag: 'wx',
+        });
+        if (injectedFailure) throw new Error(`audit injected partial ${targetName} write failure`);
+        return temporaryPath;
+    } catch (error) {
+        try {
+            await removeIfPresent(temporaryPath);
+        } catch (cleanupError) {
+            throw new Error(`${error.message}; temporary-file cleanup also failed (${cleanupError.message})`);
+        }
+        throw error;
+    }
+}
+
+async function replaceFileAtomically(targetName, targetPath, value, options = {}) {
+    let temporaryPath;
+    try {
+        temporaryPath = await preparePromotionFile(targetName, targetPath, value, options, null);
+        await rename(temporaryPath, targetPath);
+        temporaryPath = null;
+    } finally {
+        if (temporaryPath) await removeIfPresent(temporaryPath);
+    }
+}
 
 function renderIndex(registry) {
     const lines = [
@@ -81,6 +135,285 @@ async function pathReferenceExists(reference) {
     }
 }
 
+function transitionCriteriaSha256(component) {
+    return sha256(Buffer.from(component.transition?.exitCriteria?.trim() || '', 'utf8'));
+}
+
+function currentHead() {
+    const result = spawnSync('git', ['rev-parse', 'HEAD'], { cwd: rootDir, encoding: 'utf8', shell: false });
+    if (result.status !== 0) throw new Error(result.stderr.trim() || 'Unable to resolve HEAD for transition evidence');
+    return result.stdout.trim();
+}
+
+function commitExists(commit) {
+    if (!/^[0-9a-f]{40}$/i.test(commit || '')) return false;
+    return spawnSync('git', ['cat-file', '-e', `${commit}^{commit}`], {
+        cwd: rootDir,
+        encoding: 'utf8',
+        shell: false,
+    }).status === 0;
+}
+
+function concreteExitCriteria(value) {
+    if (typeof value !== 'string') return false;
+    const criteria = value.trim();
+    if (criteria.length < minimumExitCriteriaLength || placeholderExitCriteria.test(criteria)) return false;
+    const terms = criteria.toLocaleLowerCase().match(/[\p{L}\p{N}]+/gu) || [];
+    return new Set(terms).size >= minimumExitCriteriaTerms;
+}
+
+function transitionBindingFailures(expected, actual) {
+    const expectedKeys = Object.keys(expected || {}).filter((key) => !transitionBindingOmissions.has(key)).sort();
+    const actualKeys = Object.keys(actual || {}).filter((key) => !transitionBindingOmissions.has(key)).sort();
+    const failures = [];
+    if (JSON.stringify(expectedKeys) !== JSON.stringify(actualKeys)) {
+        failures.push(`binding keys expected ${expectedKeys.join(',') || '<missing>'}, actual ${actualKeys.join(',') || '<missing>'}`);
+        return failures;
+    }
+    for (const key of actualKeys) {
+        if (expected[key] !== actual[key]) failures.push(`${key} expected ${expected[key] || '<missing>'}, actual ${actual[key]}`);
+    }
+    return failures;
+}
+
+function validatePresentationOwnership(before, after) {
+    const failures = [];
+    for (const component of before.components || []) {
+        if (component.status === 'retired' || component.layer !== 'presentation-ui' || component.classification !== 'presentation-source') continue;
+        const next = after.components?.find((item) => item.id === component.id);
+        if (!next) {
+            failures.push(`${component.id}: active presentation source must be retired explicitly, not removed`);
+        } else if (next.status !== 'retired'
+            && (next.layer !== 'presentation-ui' || next.classification !== 'presentation-source')) {
+            failures.push(`${component.id}: active presentation source cannot be relabeled to bypass UI boundary enforcement`);
+        }
+    }
+    return failures;
+}
+
+function requiredTransitionProfiles(component, registry, gates) {
+    const profiles = new Set(['policy', ...(gates.componentProfiles?.[component.id] || [])]);
+    for (const invariantId of component.fitnessRefs || []) {
+        for (const profile of gates.invariantProfiles?.[invariantId] || []) profiles.add(profile);
+    }
+    return [...profiles].sort();
+}
+
+function receiptMatchesCommand(result, profile, command) {
+    return result?.profile === profile
+        && result.id === command.id
+        && result.command === command.command
+        && JSON.stringify(result.args || []) === JSON.stringify(command.args || [])
+        && JSON.stringify(result.env || {}) === JSON.stringify(command.env || {})
+        && result.exitCode === 0;
+}
+
+async function validateTransitionExits(before, after, candidateRecords, options = {}) {
+    const failures = [];
+    const gates = options.gates || JSON.parse(await readFile(gatesPath, 'utf8'));
+    const expectedHead = options.expectedHead || currentHead();
+    const actualBinding = options.actualBinding === undefined ? await createEvidenceBinding(rootDir) : options.actualBinding;
+    const evidenceEntries = candidateRecords.flatMap((record) => record.value.transitionExits || []);
+    const evidenceByComponent = new Map();
+    for (const evidence of evidenceEntries) {
+        if (!evidence?.componentId) {
+            failures.push('transition exit evidence is missing componentId');
+            continue;
+        }
+        if (evidenceByComponent.has(evidence.componentId)) {
+            failures.push(`${evidence.componentId}: duplicate transition exit evidence`);
+            continue;
+        }
+        evidenceByComponent.set(evidence.componentId, evidence);
+    }
+
+    const beforeMixed = new Map(before.components
+        .filter((component) => component.boundaryState === 'mixed')
+        .map((component) => [component.id, component]));
+    const exitedIds = new Set();
+    for (const [componentId, component] of beforeMixed) {
+        const next = after.components.find((item) => item.id === componentId);
+        if (next?.boundaryState === 'mixed') continue;
+        exitedIds.add(componentId);
+        const evidence = evidenceByComponent.get(componentId);
+        if (!next) {
+            failures.push(`${componentId}: mixed component must remain in the registry as conforming or retired`);
+            continue;
+        }
+        if (next.boundaryState !== component.transition?.targetBoundaryState) {
+            failures.push(`${componentId}: boundary exit must reach declared target ${component.transition?.targetBoundaryState}`);
+        }
+        if (!evidence) {
+            failures.push(`${componentId}: mixed boundary exit requires verified transition evidence`);
+            continue;
+        }
+        if (evidence.fromBoundaryState !== 'mixed' || evidence.toBoundaryState !== next.boundaryState) {
+            failures.push(`${componentId}: transition evidence boundary states do not match the registry change`);
+        }
+        if (evidence.exitCriteriaSha256 !== transitionCriteriaSha256(component)) {
+            failures.push(`${componentId}: transition evidence does not bind the accepted exit criteria`);
+        }
+        const receiptRef = normalizePath(String(evidence.gateReceipt || ''));
+        const receiptPath = path.resolve(rootDir, receiptRef);
+        const receiptsRoot = `${path.resolve(rootDir, 'verification', 'receipts')}${path.sep}`;
+        if (!receiptRef.startsWith('verification/receipts/') || !receiptPath.startsWith(receiptsRoot)) {
+            failures.push(`${componentId}: transition gateReceipt must be inside verification/receipts`);
+            continue;
+        }
+        let receiptBytes;
+        let receipt;
+        try {
+            receiptBytes = await readFile(receiptPath);
+            receipt = JSON.parse(receiptBytes.toString('utf8'));
+        } catch (error) {
+            failures.push(`${componentId}: transition gateReceipt is unreadable: ${receiptRef} (${error.message})`);
+            continue;
+        }
+        if (evidence.gateReceiptSha256 !== digestEvidenceBytes(receiptRef, receiptBytes)) {
+            failures.push(`${componentId}: transition gateReceipt digest does not match ${receiptRef}`);
+        }
+        if (!Number.isInteger(receipt.schemaVersion) || receipt.schemaVersion < 1 || receipt.status !== 'passed' || !Array.isArray(receipt.results)) {
+            failures.push(`${componentId}: transition gateReceipt is not a passed run-gates receipt`);
+        }
+        if (receipt.sourceHead !== expectedHead) {
+            failures.push(`${componentId}: transition gateReceipt is not bound to expected promotion HEAD`);
+        }
+        if (actualBinding) {
+            for (const bindingFailure of transitionBindingFailures(receipt.evidenceBinding, actualBinding)) {
+                failures.push(`${componentId}: transition gateReceipt has stale ${bindingFailure}`);
+            }
+        }
+        if (options.expectedArchitecturePlanSha256
+            && receipt.evidenceBinding?.architecturePlanSha256 !== options.expectedArchitecturePlanSha256) {
+            failures.push(`${componentId}: transition gateReceipt is not bound to the replayed architecture plan`);
+        }
+        if (options.expectedGatesSha256 && receipt.evidenceBinding?.gatesSha256 !== options.expectedGatesSha256) {
+            failures.push(`${componentId}: transition gateReceipt is not bound to the embedded gate definitions`);
+        }
+        for (const profile of requiredTransitionProfiles(component, before, gates)) {
+            const profileDefinition = gates.profiles?.[profile];
+            if (!profileDefinition) {
+                failures.push(`${componentId}: required transition profile is undefined: ${profile}`);
+                continue;
+            }
+            for (const gateCommand of profileDefinition.commands || []) {
+                if (!receipt.results.some((result) => receiptMatchesCommand(result, profile, gateCommand))) {
+                    failures.push(`${componentId}: transition gateReceipt is missing passed command ${profile}/${gateCommand.id}`);
+                }
+            }
+        }
+    }
+
+    for (const componentId of evidenceByComponent.keys()) {
+        if (!beforeMixed.has(componentId)) failures.push(`${componentId}: transition evidence does not reference an accepted mixed component`);
+        else if (!exitedIds.has(componentId)) failures.push(`${componentId}: transition evidence was supplied without a boundary exit`);
+    }
+    return failures;
+}
+
+async function validateFoldLineage(registry, registryBytes) {
+    const failures = [];
+    const receiptsDir = path.join(rootDir, 'verification', 'receipts');
+    const names = (await readdir(receiptsDir))
+        .filter((name) => /-fold\.json$/.test(name))
+        .sort();
+    const receipts = [];
+    for (const name of names) {
+        try {
+            receipts.push({ name, value: JSON.parse(await readFile(path.join(receiptsDir, name), 'utf8')) });
+        } catch (error) {
+            failures.push(`${name}: invalid fold receipt (${error.message})`);
+        }
+    }
+    receipts.sort((a, b) => a.value.resultingRegistryVersion - b.value.resultingRegistryVersion);
+    if (receipts.length !== Math.max(0, registry.registryVersion - 1)) {
+        failures.push(`fold lineage has ${receipts.length} receipts for registry version ${registry.registryVersion}`);
+    }
+    let previousAfter = null;
+    for (let index = 0; index < receipts.length; index += 1) {
+        const { name, value } = receipts[index];
+        const expectedVersion = index + 2;
+        if (value.resultingRegistryVersion !== expectedVersion) {
+            failures.push(`${name}: resultingRegistryVersion must be ${expectedVersion}`);
+        }
+        if (previousAfter && value.beforeRegistrySha256 !== previousAfter) {
+            failures.push(`${name}: beforeRegistrySha256 does not continue the fold chain`);
+        }
+        if (value.candidateRemoved !== true || value.idempotencyReplayMatched !== true || value.temporaryRefLeakDetected !== false) {
+            failures.push(`${name}: fold safety flags are invalid`);
+        }
+        if (expectedVersion > 6 && value.schemaVersion < 3) {
+            failures.push(`${name}: registry versions after 6 require replayable schema 3 fold receipts`);
+        }
+        if (value.schemaVersion >= 2) {
+            if (value.kind !== 'architecture-fold' || !value.beforeRegistry || !value.candidate) {
+                failures.push(`${name}: schema 2 fold receipt is missing replay inputs`);
+            } else {
+                const before = stableSortRegistry(value.beforeRegistry);
+                if (sha256(deterministicBytes(before)) !== value.beforeRegistrySha256) {
+                    failures.push(`${name}: embedded beforeRegistry digest is invalid`);
+                }
+                if (sha256(deterministicBytes(value.candidate)) !== value.candidateCanonicalSha256) {
+                    failures.push(`${name}: embedded candidate digest is invalid`);
+                }
+                if (value.candidate.baseRegistrySha256 !== value.beforeRegistrySha256) {
+                    failures.push(`${name}: embedded candidate is bound to the wrong registry`);
+                }
+                const replayed = applyArchitectureOverlay(before, value.candidate);
+                replayed.registryVersion = before.registryVersion + 1;
+                for (const registryFailure of await validateRegistry(replayed, {
+                    checkIndex: false,
+                    checkExternalMappings: false,
+                })) failures.push(`${name}: replayed registry is invalid: ${registryFailure}`);
+                if (sha256(deterministicBytes(replayed)) !== value.afterRegistrySha256) {
+                    failures.push(`${name}: embedded promotion does not reproduce afterRegistrySha256`);
+                }
+                for (const ownershipFailure of validatePresentationOwnership(before, replayed)) {
+                    failures.push(`${name}: ${ownershipFailure}`);
+                }
+                if (JSON.stringify(value.transitionExits || []) !== JSON.stringify(value.candidate.transitionExits || [])) {
+                    failures.push(`${name}: fold receipt transition evidence differs from its candidate`);
+                }
+                if (value.transitionEvidenceValidated !== true) {
+                    failures.push(`${name}: transition evidence was not validated during promotion`);
+                }
+                if (!commitExists(value.promotionHead)) {
+                    failures.push(`${name}: promotionHead is missing or does not resolve to a commit`);
+                }
+                if (value.schemaVersion >= 3) {
+                    if (!value.gates || digestEvidenceBytes('verification/gates.json', deterministicBytes(value.gates)) !== value.gatesSha256) {
+                        failures.push(`${name}: embedded gate definitions are missing or have an invalid digest`);
+                    } else {
+                        const candidateFile = normalizePath(String(value.candidateFile || ''));
+                        const replayedPlanSha256 = /^architecture\/candidates\/[^/]+\.json$/.test(candidateFile)
+                            ? digestArchitecturePlan(deterministicBytes(before), [{ relativePath: candidateFile, value: value.candidate }])
+                            : null;
+                        if (!replayedPlanSha256 || replayedPlanSha256 !== value.architecturePlanSha256) {
+                            failures.push(`${name}: embedded candidate does not reproduce architecturePlanSha256`);
+                        }
+                        const transitionFailures = await validateTransitionExits(before, replayed, [{
+                            path: name,
+                            value: value.candidate,
+                        }], {
+                            gates: value.gates,
+                            expectedHead: value.promotionHead,
+                            actualBinding: null,
+                            expectedArchitecturePlanSha256: replayedPlanSha256,
+                            expectedGatesSha256: value.gatesSha256,
+                        });
+                        for (const transitionFailure of transitionFailures) failures.push(`${name}: ${transitionFailure}`);
+                    }
+                }
+            }
+        }
+        previousAfter = value.afterRegistrySha256;
+    }
+    if (previousAfter !== sha256(registryBytes)) {
+        failures.push('accepted registry bytes do not match the final fold receipt');
+    }
+    return failures;
+}
+
 async function validateRegistry(registry, { checkIndex = true, checkExternalMappings = true } = {}) {
     const failures = [];
     const requiredSections = ['authorities', 'contracts', 'components', 'relations', 'invariants'];
@@ -101,6 +434,12 @@ async function validateRegistry(registry, { checkIndex = true, checkExternalMapp
         if (!allowedClassifications.has(component.classification)) failures.push(`${component.id}: unknown classification ${component.classification}`);
         if (!allowedLayers.has(component.layer)) failures.push(`${component.id}: unknown layer ${component.layer}`);
         if (!allowedBoundaryStates.has(component.boundaryState)) failures.push(`${component.id}: unknown boundaryState ${component.boundaryState}`);
+        if ((component.status === 'retired') !== (component.boundaryState === 'retired')) {
+            failures.push(`${component.id}: retired status and boundaryState must change together`);
+        }
+        if (component.boundaryState === 'conforming' && component.classification === 'mixed-runtime-source') {
+            failures.push(`${component.id}: a conforming boundary cannot retain mixed-runtime-source classification`);
+        }
         if (component.boundaryState === 'mixed') {
             if (!component.transition || typeof component.transition !== 'object') {
                 failures.push(`${component.id}: mixed boundary requires a transition exit contract`);
@@ -110,6 +449,8 @@ async function validateRegistry(registry, { checkIndex = true, checkExternalMapp
                 }
                 if (typeof component.transition.exitCriteria !== 'string' || !component.transition.exitCriteria.trim()) {
                     failures.push(`${component.id}: transition exitCriteria is missing`);
+                } else if (!concreteExitCriteria(component.transition.exitCriteria)) {
+                    failures.push(`${component.id}: transition exitCriteria must be concrete and non-placeholder`);
                 }
             }
         } else if (component.transition !== undefined) {
@@ -146,7 +487,8 @@ async function validateRegistry(registry, { checkIndex = true, checkExternalMapp
             }
         }
 
-        const gates = JSON.parse(await readFile(gatesPath, 'utf8'));
+        const gatesBytes = await readFile(gatesPath);
+        const gates = JSON.parse(gatesBytes.toString('utf8'));
         const profileIds = new Set(Object.keys(gates.profiles || {}));
         for (const [componentId, profiles] of Object.entries(gates.componentProfiles || {})) {
             if (!componentIds.has(componentId)) failures.push(`gates: unknown component ${componentId}`);
@@ -181,6 +523,13 @@ async function main() {
 
     if (command === 'validate') {
         const auditDropIndex = process.argv.indexOf('--audit-drop-transition');
+        const auditPlaceholderIndex = process.argv.indexOf('--audit-placeholder-transition');
+        const auditVagueIndex = process.argv.indexOf('--audit-vague-transition');
+        const auditValidPendingIndex = process.argv.indexOf('--audit-valid-pending-transition');
+        const auditBypassIndex = process.argv.indexOf('--audit-bypass-transition');
+        const auditRelabelIndex = process.argv.indexOf('--audit-relabel-presentation');
+        const auditForgedFoldIndex = process.argv.indexOf('--audit-forged-fold-transition');
+        const auditDirectRegistryEdit = process.argv.includes('--audit-direct-registry-edit');
         const effective = structuredClone(state.effective);
         if (auditDropIndex !== -1) {
             const componentId = process.argv[auditDropIndex + 1];
@@ -188,9 +537,60 @@ async function main() {
             if (!component) throw new Error(`Unknown audit component: ${componentId || '<missing>'}`);
             delete component.transition;
         }
+        if (auditPlaceholderIndex !== -1) {
+            const componentId = process.argv[auditPlaceholderIndex + 1];
+            const component = effective.components.find((item) => item.id === componentId);
+            if (!component) throw new Error(`Unknown audit component: ${componentId || '<missing>'}`);
+            component.transition.exitCriteria = 'TODO';
+        }
+        if (auditVagueIndex !== -1) {
+            const componentId = process.argv[auditVagueIndex + 1];
+            const component = effective.components.find((item) => item.id === componentId);
+            if (!component) throw new Error(`Unknown audit component: ${componentId || '<missing>'}`);
+            component.transition.exitCriteria = 'ready '.repeat(20);
+        }
+        if (auditValidPendingIndex !== -1) {
+            const componentId = process.argv[auditValidPendingIndex + 1];
+            const component = effective.components.find((item) => item.id === componentId);
+            if (!component) throw new Error(`Unknown audit component: ${componentId || '<missing>'}`);
+            component.transition.exitCriteria = 'No pending duplicate owner remains after the adapter path, lifecycle cleanup, and focused regression checks all pass.';
+        }
+        if (auditBypassIndex !== -1) {
+            const componentId = process.argv[auditBypassIndex + 1];
+            const component = effective.components.find((item) => item.id === componentId);
+            if (!component) throw new Error(`Unknown audit component: ${componentId || '<missing>'}`);
+            component.boundaryState = component.transition.targetBoundaryState;
+            component.classification = component.boundaryState === 'retired' ? 'retired-source' : 'runtime-source';
+            component.status = component.boundaryState === 'retired' ? 'retired' : 'accepted';
+            delete component.transition;
+        }
+        if (auditRelabelIndex !== -1) {
+            const componentId = process.argv[auditRelabelIndex + 1];
+            const component = effective.components.find((item) => item.id === componentId);
+            if (!component) throw new Error(`Unknown audit component: ${componentId || '<missing>'}`);
+            component.layer = 'application-runtime';
+            component.classification = 'runtime-source';
+        }
         const failures = await validateRegistry(accepted, { checkExternalMappings: false });
+        const lineageBytes = auditDirectRegistryEdit ? Buffer.concat([registryBytes, Buffer.from(' ')]) : registryBytes;
+        failures.push(...(await validateFoldLineage(accepted, lineageBytes)));
         failures.push(...state.candidateFailures);
         failures.push(...(await validateRegistry(effective, { checkIndex: false })).map((failure) => `effective: ${failure}`));
+        failures.push(...validatePresentationOwnership(accepted, effective).map((failure) => `effective: ${failure}`));
+        failures.push(...(await validateTransitionExits(accepted, effective, state.candidates)).map((failure) => `effective: ${failure}`));
+        if (auditForgedFoldIndex !== -1) {
+            const componentId = process.argv[auditForgedFoldIndex + 1];
+            const forged = structuredClone(accepted);
+            const component = forged.components.find((item) => item.id === componentId);
+            if (!component?.transition) throw new Error(`Unknown mixed audit component: ${componentId || '<missing>'}`);
+            component.boundaryState = component.transition.targetBoundaryState;
+            component.classification = component.boundaryState === 'retired' ? 'retired-source' : 'runtime-source';
+            component.status = component.boundaryState === 'retired' ? 'retired' : 'accepted';
+            delete component.transition;
+            failures.push(...(await validateTransitionExits(accepted, forged, [{ value: { transitionExits: [] } }], {
+                actualBinding: null,
+            })).map((failure) => `historical fold replay: ${failure}`));
+        }
         if (failures.length) {
             console.error('Architecture validation failed:');
             for (const failure of [...new Set(failures)]) console.error(` - ${failure}`);
@@ -204,21 +604,46 @@ async function main() {
     if (command === 'promote') {
         const candidateArg = process.argv[3];
         const receiptArg = process.argv[4];
+        const auditPartialWriteIndex = process.argv.indexOf('--audit-partial-write');
+        const auditPartialWriteTarget = auditPartialWriteIndex === -1 ? null : process.argv[auditPartialWriteIndex + 1];
         if (!candidateArg || !receiptArg) throw new Error('Usage: node tools/architecture-registry.mjs promote <candidate.json> <receipt.json>');
+        if (auditPartialWriteTarget && !['receipt', 'index', 'registry'].includes(auditPartialWriteTarget)) {
+            throw new Error(`Unknown audit partial-write target: ${auditPartialWriteTarget}`);
+        }
         const candidatePath = path.resolve(rootDir, candidateArg);
         const receiptPath = path.resolve(rootDir, receiptArg);
         const candidateRoot = `${path.resolve(rootDir, 'architecture', 'candidates')}${path.sep}`;
+        const receiptRoot = `${path.resolve(rootDir, 'verification', 'receipts')}${path.sep}`;
         if (!candidatePath.startsWith(candidateRoot)) throw new Error('candidate must be inside architecture/candidates');
+        if (!receiptPath.startsWith(receiptRoot) || !/-fold\.json$/i.test(receiptPath)) {
+            throw new Error('fold receipt must be a *-fold.json file inside verification/receipts');
+        }
+        const receiptParent = await stat(path.dirname(receiptPath));
+        if (!receiptParent.isDirectory()) throw new Error('fold receipt parent must be an existing directory');
+        try {
+            await stat(receiptPath);
+            throw new Error('fold receipt target already exists and cannot be overwritten');
+        } catch (error) {
+            if (error.code !== 'ENOENT') throw error;
+        }
         const candidateBytes = await readFile(candidatePath);
         const candidate = JSON.parse(candidateBytes.toString('utf8'));
+        const loadedCandidate = state.candidates.find((record) => path.resolve(record.path) === candidatePath);
+        if (!loadedCandidate || state.candidates.length !== 1) {
+            throw new Error('promotion requires exactly one loaded candidate overlay, matching the requested file');
+        }
         if (/refs\/pull\/|refs\/merge-requests\/|\/merge\b/i.test(candidateBytes.toString('utf8'))) {
             throw new Error('candidate contains a temporary pull-request or merge ref');
         }
         const beforeHash = sha256(registryBytes);
+        const lineageFailures = await validateFoldLineage(accepted, registryBytes);
+        if (lineageFailures.length) throw new Error(`accepted registry fold lineage is invalid:\n${lineageFailures.join('\n')}`);
         if (candidate.baseRegistrySha256 !== beforeHash) throw new Error('candidate baseRegistrySha256 does not match accepted registry');
         const promoted = applyArchitectureOverlay(accepted, candidate);
         promoted.registryVersion = accepted.registryVersion + 1;
         const failures = await validateRegistry(promoted, { checkIndex: false });
+        failures.push(...validatePresentationOwnership(accepted, promoted));
+        failures.push(...(await validateTransitionExits(accepted, promoted, [{ path: candidatePath, value: candidate }])));
         if (failures.length) throw new Error(`promoted registry is invalid:\n${failures.join('\n')}`);
         const replayed = applyArchitectureOverlay(promoted, candidate);
         replayed.registryVersion = promoted.registryVersion;
@@ -227,20 +652,77 @@ async function main() {
         }
         const promotedText = `${JSON.stringify(promoted, null, 2)}\n`;
         const afterHash = sha256(Buffer.from(promotedText));
-        await writeFile(registryPath, promotedText, 'utf8');
-        await writeFile(indexPath, renderIndex(promoted), 'utf8');
-        await writeFile(receiptPath, `${JSON.stringify({
-            schemaVersion: 1,
+        const gatesBytes = await readFile(gatesPath);
+        const gates = JSON.parse(gatesBytes.toString('utf8'));
+        const evidenceBinding = await createEvidenceBinding(rootDir);
+        const promotionHead = currentHead();
+        if (!commitExists(promotionHead)) throw new Error('promotion HEAD does not resolve to a commit');
+        const receiptText = `${JSON.stringify({
+            schemaVersion: 3,
+            kind: 'architecture-fold',
             candidateId: candidate.id,
             candidateSha256: sha256(candidateBytes),
+            candidateCanonicalSha256: sha256(deterministicBytes(candidate)),
+            candidate,
+            candidateFile: normalizePath(path.relative(rootDir, candidatePath)),
+            beforeRegistry: accepted,
             beforeRegistrySha256: beforeHash,
             afterRegistrySha256: afterHash,
             resultingRegistryVersion: promoted.registryVersion,
+            promotionHead,
+            gates,
+            gatesSha256: digestEvidenceBytes('verification/gates.json', gatesBytes),
+            architecturePlanSha256: evidenceBinding.architecturePlanSha256,
+            transitionExits: candidate.transitionExits || [],
+            transitionEvidenceValidated: true,
             candidateRemoved: true,
             idempotencyReplayMatched: true,
             temporaryRefLeakDetected: false,
-        }, null, 2)}\n`, 'utf8');
-        await unlink(candidatePath);
+        }, null, 2)}\n`;
+        const originalIndex = await readFile(indexPath, 'utf8');
+        const indexMode = (await stat(indexPath)).mode;
+        const registryMode = (await stat(registryPath)).mode;
+        let receiptWritten = false;
+        let indexWritten = false;
+        let registryWritten = false;
+        let receiptTemporaryPath;
+        let indexTemporaryPath;
+        let registryTemporaryPath;
+        try {
+            receiptTemporaryPath = await preparePromotionFile('receipt', receiptPath, receiptText, { encoding: 'utf8' }, auditPartialWriteTarget);
+            indexTemporaryPath = await preparePromotionFile('index', indexPath, renderIndex(promoted), { encoding: 'utf8', mode: indexMode }, auditPartialWriteTarget);
+            registryTemporaryPath = await preparePromotionFile('registry', registryPath, promotedText, { encoding: 'utf8', mode: registryMode }, auditPartialWriteTarget);
+            await link(receiptTemporaryPath, receiptPath);
+            receiptWritten = true;
+            await removeIfPresent(receiptTemporaryPath);
+            receiptTemporaryPath = null;
+            await rename(indexTemporaryPath, indexPath);
+            indexTemporaryPath = null;
+            indexWritten = true;
+            await rename(registryTemporaryPath, registryPath);
+            registryTemporaryPath = null;
+            registryWritten = true;
+            await unlink(candidatePath);
+        } catch (error) {
+            const rollbackFailures = [];
+            if (registryWritten) {
+                try { await replaceFileAtomically('registry rollback', registryPath, registryBytes, { mode: registryMode }); } catch (rollbackError) { rollbackFailures.push(`registry: ${rollbackError.message}`); }
+            }
+            if (indexWritten) {
+                try { await replaceFileAtomically('index rollback', indexPath, originalIndex, { encoding: 'utf8', mode: indexMode }); } catch (rollbackError) { rollbackFailures.push(`index: ${rollbackError.message}`); }
+            }
+            if (receiptWritten) {
+                try { await removeIfPresent(receiptPath); } catch (rollbackError) { rollbackFailures.push(`receipt: ${rollbackError.message}`); }
+            }
+            if (rollbackFailures.length) {
+                throw new Error(`${error.message}; promotion rollback also failed (${rollbackFailures.join('; ')})`);
+            }
+            throw error;
+        } finally {
+            for (const temporaryPath of [receiptTemporaryPath, indexTemporaryPath, registryTemporaryPath]) {
+                if (temporaryPath) await removeIfPresent(temporaryPath);
+            }
+        }
         console.log(`Promoted ${candidate.id}: ${beforeHash} -> ${afterHash}`);
         return;
     }

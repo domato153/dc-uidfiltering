@@ -23,6 +23,14 @@ const compact = args.includes('--compact');
 if (!['mobile', 'pc'].includes(target)) throw new Error('Unsupported target: ' + target);
 await mkdir(path.dirname(output), { recursive: true });
 
+const surfaceManifest = JSON.parse(await readFile(path.join(root, 'architecture', 'ui-surfaces.json'), 'utf8'));
+const intendedDeltas = JSON.parse(await readFile(path.join(root, 'verification', 'intended-deltas.json'), 'utf8'));
+const paletteSurface = surfaceManifest.surfaces.find((surface) => surface.id === 'tokens-settings-palette');
+const paletteDelta = intendedDeltas.contracts.find((contract) => contract.id === paletteSurface?.intendedDelta);
+const declaredPaletteGeometryAllowed = paletteDelta?.status === 'active'
+    && paletteDelta.surfaces.includes('tokens-settings-palette')
+    && paletteDelta.allowed.some((entry) => entry.kind === 'geometry' && entry.surface === 'tokens-settings-palette');
+
 if (args.includes('--side')) {
     const runtimePath = path.resolve(root, required('--side'));
     const bytes = await readFile(runtimePath);
@@ -35,11 +43,13 @@ if (args.includes('--side')) {
     const browser = await launchBrowser();
     const observations = [];
     try {
-        for (const rejectWrite of [false, true]) {
+        for (const failureMode of ['none', 'write', 'read']) {
             const session = await createTestPage(browser, server.baseUrl, {
                 storage: { [storageKeys.threshold]: 0, [storageKeys.palette]: 'blue', [storageKeys.personalEnabled]: true,
                     [storageKeys.personalList]: { uids: [], nicknames: [], ips: [] } },
-                gmBehavior: rejectWrite ? { rejectWriteOnceKeys: [storageKeys.palette] } : {},
+                gmBehavior: failureMode === 'write'
+                    ? { rejectWriteOnceKeys: [storageKeys.palette] }
+                    : failureMode === 'read' ? { rejectOnceKeys: [storageKeys.palette] } : {},
                 ...(target === 'pc' ? { viewport: { width: 1280, height: 900 }, hasTouch: false, isMobile: false } : {}),
             });
             try {
@@ -52,7 +62,7 @@ if (args.includes('--side')) {
                     window.addEventListener('dcuf:palette-change', event => window.__paletteObservation.events.push(event.detail));
                 });
                 const capture = async (step) => {
-                    observations.push({ rejectWrite, step, value: await session.page.evaluate(() => {
+                    const value = await session.page.evaluate(() => {
                         const panel = document.querySelector('#dcuf-palette-panel');
                         const gm = window.__dcufTestbedGM.snapshot();
                         const metrics = window.__dcufTestbedMetrics.snapshot();
@@ -78,7 +88,14 @@ if (args.includes('--side')) {
                             errors: metrics.errors,
                             requests: metrics.xhrRequests.map(({ method, url, body, status }) => ({ method, path: new URL(url, location.href).pathname, body, status })),
                         };
-                    }) });
+                    });
+                    const warnings = session.consoleMessages
+                        .filter((message) => message.type === 'warning' && /\[DCUF(?: UI)?\].*palette/i.test(message.text));
+                    value.paletteWarnings = {
+                        semantic: warnings.map((message) => ({ type: message.type, firstLine: message.text.split('\n', 1)[0] })),
+                        raw: warnings.map((message) => ({ type: message.type, text: message.text })),
+                    };
+                    observations.push({ failureMode, step, value });
                 };
                 await capture('initial');
                 await session.page.evaluate(() => window.__dcufTestbedGM.invokeMenu('UI 색상 설정'));
@@ -90,7 +107,7 @@ if (args.includes('--side')) {
                 await session.page.evaluate(() => window.__dcufTestbedGM.invokeMenu('UI 색상 설정'));
                 await session.page.locator('[data-palette-id=green]').click();
                 await session.page.locator('[data-dcuf-palette-action=save]').click();
-                if (rejectWrite) {
+                if (failureMode === 'write') {
                     await session.page.waitForFunction(() => document.querySelector('.dcuf-palette-status')?.textContent.includes('저장하지 못했습니다'));
                     await capture('write-rejected');
                     await session.page.locator('[data-dcuf-palette-action=save]').click();
@@ -101,7 +118,7 @@ if (args.includes('--side')) {
                     const m = window.__dcufTestbedMetrics.snapshot();
                     return m.activeTimeouts === 0 && m.activeAnimationFrames === 0;
                 });
-                observations.push({ rejectWrite, step: 'settled-resources', value: await session.page.evaluate(() => {
+                observations.push({ failureMode, step: 'settled-resources', value: await session.page.evaluate(() => {
                     const m = window.__dcufTestbedMetrics.snapshot();
                     return { timers: m.activeTimeouts, frames: m.activeAnimationFrames, intervals: m.activeIntervals,
                         observerCreations: m.mutationObserversCreated, observerDisconnects: m.mutationDisconnectCalls,
@@ -171,10 +188,17 @@ if (args.includes('--side')) {
         sides[side] = JSON.parse(await readFile(sidePath, 'utf8'));
     }
     const semanticProjection = (entry) => {
-        if (entry?.step !== 'settled-resources') return entry;
+        if (entry?.step !== 'settled-resources') {
+            const projected = structuredClone(entry);
+            if (projected?.value?.paletteWarnings) projected.value.paletteWarnings = projected.value.paletteWarnings.semantic;
+            if (declaredPaletteGeometryAllowed && projected?.value?.geometry) {
+                projected.value.geometry = { contained: projected.value.geometry.contained };
+            }
+            return projected;
+        }
         const value = entry.value || {};
         return {
-            rejectWrite: entry.rejectWrite,
+            failureMode: entry.failureMode,
             step: entry.step,
             value: {
                 timers: value.timers,
@@ -192,10 +216,34 @@ if (args.includes('--side')) {
             },
         };
     };
+    const semanticallyEquivalent = (controlEntry, candidateEntry) => {
+        const controlProjection = semanticProjection(controlEntry);
+        const candidateProjection = semanticProjection(candidateEntry);
+        if (controlProjection?.step !== 'settled-resources' || candidateProjection?.step !== 'settled-resources') {
+            return isDeepStrictEqual(controlProjection, candidateProjection);
+        }
+        const controlValue = controlProjection.value || {};
+        const candidateValue = candidateProjection.value || {};
+        const monotoneResourceKeys = ['timers', 'frames', 'intervals', 'activeObservers', 'listeners'];
+        if (monotoneResourceKeys.some((key) => (
+            !Number.isFinite(controlValue[key])
+            || !Number.isFinite(candidateValue[key])
+            || candidateValue[key] > controlValue[key]
+        ))) return false;
+        const withoutMonotoneResources = (projection) => {
+            const clone = structuredClone(projection);
+            for (const key of monotoneResourceKeys) delete clone.value[key];
+            return clone;
+        };
+        return isDeepStrictEqual(
+            withoutMonotoneResources(controlProjection),
+            withoutMonotoneResources(candidateProjection),
+        );
+    };
     const rawDifferences = sides.control.observations.flatMap((entry, index) => isDeepStrictEqual(entry, sides.candidate.observations[index]) ? [] : [{ index, control: entry, candidate: sides.candidate.observations[index] }]);
     const differences = sides.control.observations.flatMap((entry, index) => {
         const candidateEntry = sides.candidate.observations[index];
-        return isDeepStrictEqual(semanticProjection(entry), semanticProjection(candidateEntry))
+        return semanticallyEquivalent(entry, candidateEntry)
             ? []
             : [{ index, control: semanticProjection(entry), candidate: semanticProjection(candidateEntry) }];
     });
@@ -209,7 +257,7 @@ if (args.includes('--side')) {
     await writeFile(output, JSON.stringify({ schemaVersion: 1, kind: 'observed-palette-differential',
         target, controlSource: baseline[target].behaviorSourceCommit, controlSha256: controlHash, candidateSha256: candidateHash,
         observerSha256: digestEvidenceBytes('testbed/run-palette-differential.mjs', await readFile(scriptPath)).toUpperCase(), evidenceBinding: await createEvidenceBinding(root),
-        scope: `${target} palette preview/cancel/save/write-failure-retry plus save-before-pending-startup-read-release ordering; settled resource equivalence compares active ownership while retaining cumulative startup churn as raw evidence; no claim about other surfaces`,
+        scope: `${target} palette preview/cancel/save plus read-failure fallback and write-failure retry (semantic warning type/first-line, full warning text retained as raw evidence), plus save-before-pending-startup-read-release ordering; settled resource equivalence compares active ownership while retaining cumulative startup churn as raw evidence; declared palette geometry may normalize exact rectangles to containment while raw rectangles remain retained; no claim about other surfaces`,
         observationEvidence, ...(compact ? {} : { sides }), rawDifferences, differences, equivalent }, null, 2) + '\n');
     console.log('Observed palette comparison: ' + (equivalent ? 'PASS' : 'FAIL') + '; ' + differences.length + ' semantic and ' + rawDifferences.length + ' raw differing snapshots');
     if (!equivalent) process.exitCode = 1;

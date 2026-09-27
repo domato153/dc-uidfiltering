@@ -10,6 +10,15 @@
         invokeNative(action, value, options = null) {
             if (action === 'get-by-id') return document.getElementById(value);
             if (action === 'create-element') return document.createElement(value);
+            if (action === 'mark-owned-surface') {
+                const { element, surface, role, state = 'open', presentation = '' } = value || {};
+                if (!(element instanceof Element)) throw new TypeError('mark-owned-surface requires an element');
+                element.setAttribute('data-dcuf-surface', String(surface));
+                element.setAttribute('data-dcuf-role', String(role));
+                element.setAttribute('data-dcuf-state', String(state));
+                if (presentation) element.setAttribute('data-dcuf-presentation', String(presentation));
+                return element;
+            }
             if (action === 'on-dom-ready') {
                 document.addEventListener('DOMContentLoaded', value, options || { once: true });
                 return () => document.removeEventListener('DOMContentLoaded', value, options || { once: true });

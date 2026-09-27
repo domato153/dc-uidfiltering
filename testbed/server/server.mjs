@@ -128,7 +128,7 @@ export async function startServer({ port = 0 } = {}) {
                     return;
                 }
                 const page = url.searchParams.get('stage') === 'editor'
-                    ? writePage({ variant, formMode: 'modify' })
+                    ? writePage({ variant, formMode: 'modify', authenticated: url.searchParams.get('auth') === '1' })
                     : modifyPasswordPage();
                 send(response, 200, await withManualHarness(page, url), 'text/html; charset=utf-8', headers);
                 return;
@@ -144,7 +144,11 @@ export async function startServer({ port = 0 } = {}) {
                     }), 'text/html; charset=utf-8', headers);
                     return;
                 }
-                send(response, 200, await withManualHarness(writePage({ variant, showGuide: url.searchParams.get('guide') === '1' }), url), 'text/html; charset=utf-8', headers);
+                send(response, 200, await withManualHarness(writePage({
+                    variant,
+                    showGuide: url.searchParams.get('guide') === '1',
+                    authenticated: url.searchParams.get('auth') === '1'
+                }), url), 'text/html; charset=utf-8', headers);
                 return;
             }
             if (url.pathname.includes('/board/lists')) {
@@ -164,7 +168,8 @@ export async function startServer({ port = 0 } = {}) {
                     long: url.searchParams.get('long') === '1',
                     massComments: Number(url.searchParams.get('comments')) || 0,
                     darkAtStart: url.searchParams.get('dark-start') === '1',
-                    brokenTheme: url.searchParams.get('broken-theme') === '1'
+                    brokenTheme: url.searchParams.get('broken-theme') === '1',
+                    withHeader: url.searchParams.get('header') === '1'
                 }), url), 'text/html; charset=utf-8', headers);
                 return;
             }

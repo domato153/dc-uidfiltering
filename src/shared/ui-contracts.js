@@ -13,6 +13,20 @@ function cloneUiValue(value) {
     return JSON.parse(JSON.stringify(value));
 }
 
+function assertSerializableUiValue(value, path = 'snapshot', seen = new WeakSet()) {
+    if (value === null || ['string', 'number', 'boolean'].includes(typeof value)) return;
+    if (typeof value !== 'object') throw new TypeError(`${path}: SurfaceSnapshot values must be JSON-serializable`);
+    if (typeof Node !== 'undefined' && value instanceof Node) throw new TypeError(`${path}: SurfaceSnapshot cannot contain DOM nodes`);
+    if (seen.has(value)) throw new TypeError(`${path}: SurfaceSnapshot cannot contain cycles`);
+    if (!Array.isArray(value) && Object.getPrototypeOf(value) !== Object.prototype && Object.getPrototypeOf(value) !== null) {
+        throw new TypeError(`${path}: SurfaceSnapshot can contain only plain objects and arrays`);
+    }
+    seen.add(value);
+    if (Array.isArray(value)) value.forEach((child, index) => assertSerializableUiValue(child, `${path}[${index}]`, seen));
+    else Object.entries(value).forEach(([key, child]) => assertSerializableUiValue(child, `${path}.${key}`, seen));
+    seen.delete(value);
+}
+
 function freezeUiValue(value, seen = new WeakSet()) {
     if (!value || typeof value !== 'object' || seen.has(value)) return value;
     seen.add(value);
@@ -39,6 +53,18 @@ export function createUiSurface({ mount, render, unmount }) {
     return Object.freeze({ mount, render, unmount });
 }
 
+export function createSurfaceSnapshot(value = {}) {
+    assertSerializableUiValue(value);
+    return freezeUiValue(cloneUiValue(value));
+}
+
+export function createHostSurfaceAdapter({ connect, refresh, mountOwnedRoot, invokeNative, dispose }) {
+    if (![connect, refresh, mountOwnedRoot, invokeNative, dispose].every((entry) => typeof entry === 'function')) {
+        throw new TypeError('HostSurfaceAdapter requires connect, refresh, mountOwnedRoot, invokeNative, and dispose functions');
+    }
+    return Object.freeze({ connect, refresh, mountOwnedRoot, invokeNative, dispose });
+}
+
 export function createHostSurfacePort({ findAnchor, invokeNative }) {
     if (typeof findAnchor !== 'function' || typeof invokeNative !== 'function') {
         throw new TypeError('HostSurfacePort requires findAnchor and invokeNative functions');
@@ -47,7 +73,7 @@ export function createHostSurfacePort({ findAnchor, invokeNative }) {
 }
 
 export function createUiPortRuntime(initialSnapshot = {}) {
-    let snapshot = freezeUiValue({ revision: 0, ...cloneUiValue(initialSnapshot) });
+    let snapshot = createSurfaceSnapshot({ revision: 0, ...cloneUiValue(initialSnapshot) });
     const listeners = new Set();
     const handlers = new Map();
 
@@ -63,7 +89,7 @@ export function createUiPortRuntime(initialSnapshot = {}) {
         if (comparableSnapshot(snapshot) === JSON.stringify(candidate)) {
             return Object.freeze({ changed: false, reason, snapshot });
         }
-        snapshot = freezeUiValue({ revision: snapshot.revision + 1, ...candidate });
+        snapshot = createSurfaceSnapshot({ revision: snapshot.revision + 1, ...candidate });
         listeners.forEach((listener) => {
             try { listener(snapshot, Object.freeze({ reason })); }
             catch (error) { console.warn('[DCUF UI] subscriber failed:', error); }
@@ -88,15 +114,10 @@ export function createUiPortRuntime(initialSnapshot = {}) {
         }
         const handler = handlers.get(intent.type);
         if (!handler) return createCommandResult(false, 'unsupported-intent');
-        try {
-            const before = snapshot;
-            const value = await handler(freezeUiValue(cloneUiValue(intent)), Object.freeze({ getSnapshot, commit }));
-            if (value?.ok === false) return createCommandResult(false, value.code || 'rejected');
-            return createCommandResult(true, value?.code || 'committed', snapshot !== before ? snapshot : null);
-        } catch (error) {
-            console.warn(`[DCUF UI] intent failed: ${intent.type}`, error);
-            return createCommandResult(false, 'handler-error');
-        }
+        const before = snapshot;
+        const value = await handler(freezeUiValue(cloneUiValue(intent)), Object.freeze({ getSnapshot, commit }));
+        if (value?.ok === false) return createCommandResult(false, value.code || 'rejected');
+        return createCommandResult(true, value?.code || 'committed', snapshot !== before ? snapshot : null);
     };
     const dispatch = (intent) => execute(intent);
 

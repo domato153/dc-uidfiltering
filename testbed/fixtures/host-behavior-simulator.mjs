@@ -12,13 +12,26 @@ export function hostBehaviorSimulatorScript({
         submitCalls: 0,
         closeCalls: 0,
         reopenCalls: 0,
+        originalRoot: null,
+        originalRecommendBox: null,
         originalPopup: null,
-        originalButtons: []
+        originalButtons: [],
+        originalButtonTopology: []
     };
     const root = document.querySelector(config.delegatedRootSelector);
     const popup = config.popupSelector ? document.querySelector(config.popupSelector) : null;
+    state.originalRoot = root;
+    state.originalRecommendBox = root?.querySelector('[data-host-recommend-box]') || null;
     state.originalPopup = popup;
     state.originalButtons = Array.from(root?.querySelectorAll('button') || []);
+    state.originalButtonTopology = state.originalButtons.map((button) => ({
+        button,
+        parent: button.parentNode,
+        nextSibling: button.nextSibling,
+        type: button.getAttribute('type'),
+        name: button.getAttribute('name'),
+        value: button.getAttribute('value')
+    }));
     root?.addEventListener('click', (event) => {
         const control = event.target instanceof Element ? event.target.closest('[data-host-action]') : null;
         if (!(control instanceof HTMLButtonElement) || !root.contains(control)) return;

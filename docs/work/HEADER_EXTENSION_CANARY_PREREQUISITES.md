@@ -1,0 +1,30 @@
+# Header actual-extension Canary — prerequisites, not a run receipt
+
+Status: `PREPARED / NOT RUN`. This checklist does not authorize installing, replacing, enabling, or disabling a userscript in the user's Tampermonkey instance. No route below has an actual-extension `PASS`.
+
+## Exact bytes and isolation before a future run
+
+- Published mobile `3.5.5` control SHA-256: `32BA208DDD9973A7EEC343F01E963A833AB4F0C084987077EDAE46844383C25D` (`testbed/artifacts/baseline-mobile-stable.user.js`). Local candidate/guarded root/`dist/` SHA-256: `C84AD9220A060CC3AF91F3039F07B13FAD75521DA63201046E3693F875DC03C7`. Recheck these bytes immediately before use; a rebuild changes the test target and invalidates the planned receipt. The unchanged PC artifact is not a header-extension Canary.
+- Before any future change to the user's extension, agree on a recoverable copy of the currently installed script and its private Tampermonkey storage/settings. Tampermonkey documents Dashboard → Utilities export/import ([official FAQ](https://www.tampermonkey.net/faq.php?locale=en&q=Q106)); any export can contain private data and stays outside this repository and test evidence. Verify a rollback path to the previous script and settings before enabling the candidate.
+- Use distinct browser profiles or equivalent isolated Tampermonkey/GM and browser stores for published control and candidate. Never run both userscripts on one DCInside page. Keep their starting settings equivalent, record the exact keys/options used without exporting private values, and compare equivalent routes close in time. Do not reset the user's normal profile to make a test pass.
+- Record browser, Tampermonkey version, extension injection/Content Script API mode, script enabled state, URL family, viewport, theme, authentication state, and time. Tampermonkey documents mode-dependent `document-start` behavior ([official documentation](https://www.tampermonkey.net/documentation.php?locale=en&q=content_script_api)); record the actual mode rather than silently changing it.
+- Use only a separately approved test account/content for a real submit, modify, or delete. Without that safe setup, the corresponding live row remains `UNKNOWN`; merely opening a form does not prove submit semantics. Do not include credentials, personal content, or raw GM exports in receipts.
+
+## Route/action matrix to execute on the exact candidate
+
+Each row requires a nearby published-control observation in the separate profile, the original host node/form/handler where relevant, and an unforced pointer action plus keyboard/focus check. For popups, record positive visible bounds, multi-point `elementFromPoint`/real hit target, stacking/clipping, native effect, close, reopen, and disposal. A screenshot or programmatic `.click()` alone is not a positive action receipt. Light/dark and 390px narrow versus 750/1280px wider states must be explicitly sampled; the 390×500 short viewport is needed for the minor rank close path. Mark an unavailable state `UNKNOWN`, not a silent skip.
+
+| Route family and state | Positive actions and failure-sensitive checks | Actual extension |
+| --- | --- | --- |
+| Major list, anonymous, light/dark, 390/750/1280px | Header/GNB and title search pointer/Enter; list tabs/search/paging hit and focus; original `#gall_top_recom` carousel pointer/Enter and parent/handler identity; settings open/close without changing unrelated stored options. | `UNKNOWN` |
+| Minor list, anonymous, light/dark, 390/750/1280px plus 390×500 | Title and issue-heading actions; original issue/rank/tip open, close, reopen, popup-only after drawer close, short-viewport rank close/last column; original `#relation_popup` hit above the list page-size control; toolbar/search and drawer-toggle mutual reachability. | `UNKNOWN` |
+| Mini list, anonymous, light/dark, narrow/wide | Header/GNB/search, list tabs/search/paging, no covered controls; do not infer that a missing fixture gallery door is absent on the live host. | `UNKNOWN` |
+| Major/minor/mini view, anonymous and authenticated where applicable | Header/navigation and search; article/recommendation and comment controls; native PUM/other owned popup containment and close/reopen; dynamic host content or replacement if naturally encountered. | `UNKNOWN` |
+| Write/modify/delete, authenticated or non-member as applicable | Original form action/method/hidden fields/button types, focus, headtext/editor/menu and leave-confirm popup; pointer/Enter submit and cancellation only on controlled test content. Opening without a safe submit path is partial evidence, not `PASS`. | `UNKNOWN` |
+| Settings and palette in the applicable routes | Existing settings values before/after, preview → cancel, light → dark → light, reopen, filter/convenience independence, and no cross-profile storage leakage. Keep any personal data out of the receipt. | `UNKNOWN` |
+
+## Receipt and stop rule
+
+For each attempted row, record feature/state ID, exact control and candidate SHA-256, browser/extension/mode, route/time/auth/theme/viewport, action and expected native outcome, observed control/candidate outcome, hit/focus/popup evidence, `PASS`/`FAIL`/`UNKNOWN`/justified `N/A`, and `product`/`oracle`/`fixture-harness`/`verifier-routing`/`environment-live` failure classification. An artifact mismatch, simultaneous scripts, unknown storage isolation, changed host shape, covered popup, missing handler, or unsafe write/delete setup stops the affected row. A site-wide change on both sides is investigated as host drift, not normalized to `PASS`.
+
+The isolated Chromium public-host run with a GM shim is prior context only; it is not this actual-extension Canary. Completing this checklist later still does not replace the final all-feature inventory, full settled-runtime suite, or Layer-3 upper assurance.

@@ -1,0 +1,95 @@
+{
+  "schemaVersion": 1,
+  "kind": "modernization-stage-assurance",
+  "stage": "write-edit-delete-popup",
+  "status": "PASS",
+  "sourceHead": "b2818a1ab651b2992bf51f35f47ae3d6647808a4",
+  "candidateFingerprint": "14f1eff219760bc8387895d113d008afcf73581249ddf064fe9279028030daaa",
+  "evidenceBinding": {
+    "bindingSchemaVersion": 4,
+    "registrySha256": "2275e39d9fd10662c755354df6e8c8161d9a6e19924de12a9e8d83cc0971f191",
+    "architectureStateSha256": "5c8cf8f9095dd6767c56f4959e6c12912a8df0db5d8d1d79a8900adc1171abe1",
+    "architecturePlanSha256": "f46b68885dda5c6495ba525f0fc270b144c3bfc9b753c34d985845ba5ee7c31b",
+    "modernizationContractSha256": "bffca4fbf88452e2ee416baef293f0be815ee1c16d2c2086817a88aca68db610",
+    "gatesSha256": "369afcfdea761ba5cc2f0309249a97dfa2284cbd68311594621e041c12e28dbd",
+    "sourceInputsSha256": "5c30a2e3b7cb834464bc9609c7f80a98459034a93b6b7e7975e88ae9980e2817",
+    "harnessSha256": "f0aa6e27bbd86a209e950d1d6953708c31c4460052e5f67ef46a41f639e75156",
+    "fixturesSha256": "2480f8d00f3b5de3169cde1bc7b93a66789e79bd1f8e461a6fcfdbb77b38f3c2",
+    "toolchainSha256": "9c077234e2b0d40af938bb0e07f52164afea157664f1b040f512744355fe80f4",
+    "proofSystemSha256": "78332378e8d7f7bd5c5cb0da3de76181037e5c5b64fb41356eddab3fe0dfea6e",
+    "node": "v22.17.0"
+  },
+  "artifacts": {
+    "mobile": {
+      "version": "3.5.5",
+      "sha256": "6BEF6C4AAB0531E59936094B68067181CCB7B33100046B510476B38BC349ABA4"
+    },
+    "pc": {
+      "version": "1.9.9",
+      "sha256": "1A7A00468F4DCFB57C7341063098B827743091FD7593BA3FBA86A17E282BDC33"
+    }
+  },
+  "evidence": [
+    {
+      "id": "mobile",
+      "path": "artifacts/write-edit-delete-popup-mobile-results.json",
+      "sha256": "e4e27d14204fd933271ede69bbd604a1242ce64b3fef241164af297ac5e8931a",
+      "applicability": "applicable"
+    },
+    {
+      "id": "host",
+      "path": "artifacts/write-edit-delete-popup-host-results.json",
+      "sha256": "bb7286fb76b9afcb7e449ae661506973871622b38ed490320882f6e8382370ea",
+      "applicability": "applicable"
+    },
+    {
+      "id": "pc",
+      "path": "artifacts/write-edit-delete-popup-pc-results.json",
+      "sha256": "c4f9494d21105c47b5dcbfc98e779c2e5b1d0dfc9ba2c3458bf2e00060ac02b5",
+      "applicability": "applicable"
+    },
+    {
+      "id": "mobileDifferential",
+      "path": "artifacts/write-edit-delete-popup-mobile-differential.json",
+      "sha256": "c5d7cae27bdef8d284cd13bdf99ece95a8e09c39050b523e995f6ca405d39a16",
+      "applicability": "applicable"
+    },
+    {
+      "id": "pcDifferential",
+      "path": "artifacts/write-edit-delete-popup-pc-differential.json",
+      "sha256": "d66ad09fe359d2015270cbd039240b8abbee6292c04e3ac3ffa9ecd2a461d519",
+      "applicability": "applicable"
+    },
+    {
+      "id": "nativeFormDifferential",
+      "path": "artifacts/write-edit-delete-popup-native-form-differential.json",
+      "sha256": "e8c53d69357c298f9b2a500957f5d94aedc54ac311dcf04789ddd1055f27a1cf",
+      "applicability": "applicable"
+    },
+    {
+      "id": "proof",
+      "path": "artifacts/write-edit-delete-popup-proof-audit.json",
+      "sha256": "abd3e49de336febc75e325ba60f211e84646dd4ed4df0eacbf4666302c25994b",
+      "applicability": "applicable"
+    }
+  ],
+  "results": {
+    "mobile": {
+      "passed": 115,
+      "failed": 0
+    },
+    "host": {
+      "passed": 11,
+      "failed": 0
+    },
+    "pc": {
+      "passed": 14,
+      "failed": 0
+    },
+    "semanticDifferences": 0,
+    "rawDifferencesPreserved": 28,
+    "rejectedMutations": 119,
+    "acceptedControls": 26
+  },
+  "liveCanary": "UNKNOWN"
+}

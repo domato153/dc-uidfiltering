@@ -41,7 +41,9 @@ export async function createTestPage(browser, baseUrl, {
     await context.addInitScript({ content: harnessSource });
     const page = await context.newPage();
     const consoleErrors = [];
+    const consoleMessages = [];
     page.on('console', (message) => {
+        consoleMessages.push({ type: message.type(), text: message.text() });
         if (message.type() === 'error') consoleErrors.push(message.text());
     });
     page.on('pageerror', (error) => consoleErrors.push(error.stack || error.message));
@@ -49,6 +51,7 @@ export async function createTestPage(browser, baseUrl, {
         context,
         page,
         consoleErrors,
+        consoleMessages,
         async goto(pathname, { waitForReady = true } = {}) {
             await page.goto(`${baseUrl}${pathname}`, { waitUntil: 'domcontentloaded' });
             if (waitForReady) {

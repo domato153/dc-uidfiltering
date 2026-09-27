@@ -1,0 +1,21 @@
+# Context-free DCUF handoff contract
+
+Use this only for a new task/operator with no prior chat context. This is a method, not a time-stamped handoff packet. The canonical repository locator is `docs/work/INDEX.md` **in the active worktree**; its current packet is `CURRENT_STATE.md` plus `NEXT_TASK.md`. A chat prompt is only a pointer to that locator, never a second authority. This adapts the cold-receiver and situation-model tests in the read-only `translation:main` `handoff-continuity.md`, but not its cross-ref transport/permit machinery.
+
+## Sender
+
+1. Fresh-read the active worktree root, branch, HEAD, dirty state, candidate fingerprint, artifact digests, current contracts, and exactly one next task. Do not assume the saved project root is the active worktree. Record the repository-relative value `.` under `Workspace path` in `CURRENT_STATE.md`; keep its machine-specific absolute path out of tracked files and use it only in the private new-task prompt.
+2. State the last accepted baseline and its receipt separately from the current candidate's audit state. Identify pushed source versus local-only artifacts/reports and whether a new local task can read them; if not, dependent claims become `UNKNOWN`. Preserve decision-critical hazards and negative boundaries, not the entire transcript.
+3. In `NEXT_TASK.md`, preserve the objective, why this is the next discriminating action, expected information/state transition, and a concrete stop/replan result. Do not invent a hypothesis when none is needed.
+4. Update the current projection and rationale only where necessary. Run `node tools/inspect-continuity.mjs` and `node tools/verify-repo.mjs guidance`; verify the recorded fingerprint, source-checkpoint HEAD ancestry, current branch/artifacts, and that the handoff gate rejects wrong-worktree and missing-situation controls. A tracked document cannot contain the SHA of the commit that contains itself, so the recorded source-checkpoint HEAD is an ancestor, not an assertion that it equals the current HEAD.
+5. Create a **new project task**, not a fork/side chat, with a short prompt containing only the exact active-worktree locator, the command to cold-read it, and a request for receiver reconciliation. Do not copy prior conversation or a long independent summary into the prompt. Never infer release/commit permission from a handoff.
+
+## Receiver cold start
+
+1. Open the exact locator from the prompt and resolve its governing skill/contract from that same current worktree. Confirm the prompt's root with `git rev-parse --show-toplevel` and the document's repository-relative `Workspace path` value `.`; do not substitute the parent project's older checkout.
+2. Independently run fresh Git/status/diff and `node tools/inspect-continuity.mjs`; compare the current HEAD's ancestry from the recorded source-checkpoint HEAD, branch, fingerprint, and artifact identity with `CURRENT_STATE.md`. Re-derive the minimal next-action dependencies from current source, contracts, and relevant receipts rather than trusting the listed paths alone.
+3. Challenge the active situation: can the objective, one next action, rationale, expected transition, and stop/replan condition still be justified? Recheck known blockers and selected/not-adopted/deferred boundaries against fresh authority. Do not promote an old receipt to the current candidate.
+4. Report `ACCEPTED` only when one next action remains valid and any local-only evidence needed for it is readable in the exact worktree. Otherwise report `STALE_REPLAN` with the specific discrepancy and reconstruct a safe task. An unrelated historical change alone does not make the handoff stale.
+5. Explain the practical result first, then technical evidence. Proceed with scoped source changes only after acceptance. A new task's creation or receipt of a prompt is not acceptance.
+
+For this same-host local project, do not invent a remote ref, packet commit, or transport URL. An authorized working-branch checkpoint preserves committed sources, but ignored generated artifacts and raw reports remain local-only; if their exact path disappears, do not pretend HEAD recreates them. A high-risk/dense transfer may rehearse these steps from the locator alone, but ordinary local UI slices do not need a second event-log or multi-agent ceremony.

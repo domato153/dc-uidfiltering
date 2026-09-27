@@ -1,0 +1,93 @@
+{
+  "schemaVersion": 1,
+  "topClaim": {
+    "id": "mobile-modernization-semantic-preservation",
+    "status": "UNKNOWN",
+    "scope": "Exact mobile candidate and PC artifact identified by a current assurance receipt"
+  },
+  "allowedStatuses": ["PASS", "BLOCKED", "UNKNOWN"],
+  "evidenceFamilies": [
+    "differential",
+    "specification",
+    "characterization",
+    "metamorphic",
+    "static-architecture",
+    "live-shaped",
+    "live-canary"
+  ],
+  "claims": [
+    {
+      "id": "declared-visual-delta-only",
+      "status": "UNKNOWN",
+      "requiredEvidenceFamilies": ["differential", "specification", "characterization"],
+      "evidence": [],
+      "assumptions": ["The intended-delta contract enumerates every permitted visual change."],
+      "defeaters": ["normalizer-erased-difference", "delta-allowlist-laundering"]
+    },
+    {
+      "id": "storage-filter-network-pc-preserved",
+      "status": "UNKNOWN",
+      "requiredEvidenceFamilies": ["differential", "specification", "metamorphic"],
+      "evidence": [],
+      "assumptions": ["Control lineage is the exact accepted 3.5.5 mobile and 1.9.9 PC runtime."],
+      "defeaters": ["control-equals-candidate", "pc-mobile-style-leak"]
+    },
+    {
+      "id": "host-dom-event-form-popup-lifecycle-preserved",
+      "status": "UNKNOWN",
+      "requiredEvidenceFamilies": ["characterization", "metamorphic", "live-shaped"],
+      "evidence": [],
+      "assumptions": ["Fixtures model the currently observed host node and event shapes."],
+      "defeaters": ["host-fixture-shape-stale", "zero-applicability-pass"]
+    },
+    {
+      "id": "presentation-boundary-one-owner-realized",
+      "status": "UNKNOWN",
+      "requiredEvidenceFamilies": ["static-architecture", "specification"],
+      "evidence": [],
+      "assumptions": ["Build topology includes every runtime source that can own visual behavior."],
+      "defeaters": ["routing-omitted-changed-owner", "second-style-owner"]
+    },
+    {
+      "id": "accessibility-geometry-performance-bounded",
+      "status": "UNKNOWN",
+      "requiredEvidenceFamilies": ["specification", "metamorphic", "live-shaped"],
+      "evidence": [],
+      "assumptions": ["Declared geometry tolerances are derived from immutable control evidence."],
+      "defeaters": ["geometry-tolerance-widened", "visual-assertion-weakened"]
+    },
+    {
+      "id": "evidence-bound-to-current-system",
+      "status": "UNKNOWN",
+      "requiredEvidenceFamilies": ["static-architecture", "differential"],
+      "evidence": [],
+      "assumptions": ["Every producer records SUT, oracle, fixture, harness, toolchain, route, and normalization digests."],
+      "defeaters": ["stale-receipt-reuse", "shared-producer-double-counted"]
+    },
+    {
+      "id": "synthetic-evidence-live-applicable",
+      "status": "UNKNOWN",
+      "requiredEvidenceFamilies": ["live-shaped", "live-canary"],
+      "evidence": [],
+      "assumptions": ["Canary executes the exact locally audited artifact."],
+      "defeaters": ["live-artifact-substitution", "unmodeled-live-state"]
+    }
+  ],
+  "defeaters": [
+    { "id": "normalizer-erased-difference", "status": "OPEN", "mandatory": true },
+    { "id": "delta-allowlist-laundering", "status": "OPEN", "mandatory": true },
+    { "id": "control-equals-candidate", "status": "OPEN", "mandatory": true },
+    { "id": "pc-mobile-style-leak", "status": "OPEN", "mandatory": true },
+    { "id": "host-fixture-shape-stale", "status": "OPEN", "mandatory": true },
+    { "id": "zero-applicability-pass", "status": "OPEN", "mandatory": true },
+    { "id": "routing-omitted-changed-owner", "status": "OPEN", "mandatory": true },
+    { "id": "second-style-owner", "status": "OPEN", "mandatory": true },
+    { "id": "geometry-tolerance-widened", "status": "OPEN", "mandatory": true },
+    { "id": "visual-assertion-weakened", "status": "OPEN", "mandatory": true },
+    { "id": "stale-receipt-reuse", "status": "OPEN", "mandatory": true },
+    { "id": "shared-producer-double-counted", "status": "OPEN", "mandatory": true },
+    { "id": "live-artifact-substitution", "status": "OPEN", "mandatory": true },
+    { "id": "unmodeled-live-state", "status": "OPEN", "mandatory": true }
+  ],
+  "receipts": []
+}

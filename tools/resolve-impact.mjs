@@ -38,12 +38,28 @@ if (architectureState.candidateFailures.length) {
 }
 const registry = architectureState.effective;
 const gates = JSON.parse(gatesBytes);
+const worktree = args.includes('--worktree');
 const head = valueAfter('--head') || 'HEAD';
-const base = valueAfter('--base') || `${head}^`;
+const base = valueAfter('--base') || (worktree ? head : `${head}^`);
 const explicitFiles = valueAfter('--files');
+if (worktree && explicitFiles) throw new Error('--worktree and --files cannot be combined');
+const full = args.includes('--full');
+const worktreeExclusions = [
+    /^(?:artifacts|dist|testbed\/artifacts|verification\/receipts)\//,
+    /^docs\/work\/(?:CURRENT_STATE|NEXT_TASK)\.md$/,
+    /^(?:Dc_UserFilter_Mobile_v[^/]+|dcinside_user_filter_v[^/]+)\.user\.js$/,
+    /^debug\.log$/,
+];
+const worktreeFiles = () => [...new Set([
+    ...git(['diff', '--name-only', '-z']).split('\0'),
+    ...git(['diff', '--cached', '--name-only', '-z']).split('\0'),
+    ...git(['ls-files', '--others', '--exclude-standard', '-z']).split('\0'),
+].map(normalize).filter(Boolean).filter((file) => !worktreeExclusions.some((pattern) => pattern.test(file))))].sort();
 const changedFiles = explicitFiles
     ? explicitFiles.split(',').map(normalize).filter(Boolean)
-    : git(['diff', '--name-only', `${base}...${head}`]).split(/\r?\n/).map(normalize).filter(Boolean);
+    : worktree
+        ? worktreeFiles()
+        : git(['diff', '--name-only', `${base}...${head}`]).split(/\r?\n/).map(normalize).filter(Boolean);
 const selectedComponents = new Set();
 const selectedProfiles = new Set(['policy']);
 const unmappedFiles = [];
@@ -80,13 +96,19 @@ while (queue.length) {
 
 for (const componentId of selectedComponents) {
     for (const profile of gates.componentProfiles[componentId] || [gates.fallbackProfile]) selectedProfiles.add(profile);
+    const component = registry.components.find((item) => item.id === componentId);
+    for (const invariantId of component?.fitnessRefs || []) {
+        for (const profile of gates.invariantProfiles?.[invariantId] || []) selectedProfiles.add(profile);
+    }
 }
-if (args.includes('--full')) selectedProfiles.add('acceptance');
+if (full) selectedProfiles.add('acceptance');
 
 const profileOrder = ['policy', 'mobile-focused', 'pc-focused', 'acceptance', 'promotion-windows', 'live-canary'];
 const profiles = [...selectedProfiles].sort((a, b) => profileOrder.indexOf(a) - profileOrder.indexOf(b));
 const receipt = {
-    schemaVersion: 1,
+    schemaVersion: 2,
+    routeSource: explicitFiles ? 'explicit-files' : worktree ? 'worktree' : 'git-diff',
+    full,
     base: git(['rev-parse', base]),
     head: git(['rev-parse', head]),
     changedFiles,

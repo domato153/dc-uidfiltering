@@ -103,8 +103,10 @@ async function verifyGuidance() {
         'dcuf-release: references/manual-smoke.md is missing');
 
     const governanceInvariants = [
-        ['protected_development_branch', /codex\/mobile-development[\s\S]*protected accepted development branch/i],
-        ['fresh_remote_authority', /verify the origin URL and live `refs\/heads\/<branch>`/i],
+        ['fresh_local_authority', /Local tree\/history are authoritative/i],
+        ['authorized_checkpoint_boundary', /Standing instruction:[\s\S]*non-force push[\s\S]*origin\/codex\/ui-port-boundary/i],
+        ['official_branch_boundary', /do not switch branches, push `main`\/`Mobile`[\s\S]*without a separate request/i],
+        ['relative_tracked_paths', /Tracked instructions and continuity documents use repository-relative paths, never local absolute paths\/usernames/i],
         ['semantic_registry_authority', /architecture\/registry\.json[\s\S]*semantic\/layer authority/i],
         ['candidate_promotion', /candidate overlay[\s\S]*deterministic promotion/i],
         ['impact_graph', /merge-base paths[\s\S]*downstream registry relations/i],
@@ -118,11 +120,15 @@ async function verifyGuidance() {
 
     for (const [label, script] of [
         ['architecture', 'tools/architecture-registry.mjs'],
+        ['live architecture links', 'tools/inspect-live-architecture.mjs'],
+        ['live architecture negative controls', 'tools/test-live-architecture.mjs'],
+        ['modernization assurance', 'tools/verify-modernization-assurance.mjs'],
+        ['research selection', 'tools/verify-research-selection.mjs'],
         ['skills', 'tools/verify-skills.mjs'],
         ['UI boundaries', 'tools/verify-ui-boundaries.mjs'],
         ['workflows', 'tools/verify-workflows.mjs']
     ]) {
-        const result = spawnSync(process.execPath, [script, ...(label === 'architecture' ? ['validate'] : [])], {
+        const result = spawnSync(process.execPath, [script, ...(label === 'architecture' ? ['validate'] : label === 'live architecture links' ? ['--check'] : [])], {
             cwd: rootDir,
             encoding: 'utf8'
         });
@@ -164,11 +170,12 @@ async function readBuildTargets() {
 }
 
 async function verifyMobileSourceContracts() {
-    const [bootstrap, postMain, coordinator, theme, convenience, mobileHeader, pcHeader] = await Promise.all([
+    const [bootstrap, postMain, coordinator, themePresenter, themeHostStyle, convenience, mobileHeader, pcHeader] = await Promise.all([
         readFile(path.join(rootDir, 'src', 'runtime', 'bootstrap.js'), 'utf8'),
         readFile(path.join(rootDir, 'src', 'targets', 'mobile', 'post-main-fixes.js'), 'utf8'),
         readFile(path.join(rootDir, 'src', 'targets', 'mobile', 'runtime-coordinator.js'), 'utf8'),
-        readFile(path.join(rootDir, 'src', 'targets', 'mobile', 'theme-module.js'), 'utf8'),
+        readFile(path.join(rootDir, 'src', 'targets', 'shared', 'theme-presenter.js'), 'utf8'),
+        readFile(path.join(rootDir, 'src', 'targets', 'mobile', 'theme-host-style.js'), 'utf8'),
         readFile(path.join(rootDir, 'src', 'targets', 'mobile', 'convenience-module.js'), 'utf8'),
         readFile(path.join(rootDir, 'src', 'meta', 'userscript-header.txt'), 'utf8'),
         readFile(path.join(rootDir, 'src', 'meta', 'pc-filter-userscript-header.txt'), 'utf8')
@@ -212,16 +219,16 @@ async function verifyMobileSourceContracts() {
         '--dcuf-theme-surface-raised',
         '--dcuf-theme-surface-muted'
     ]) {
-        check(theme.includes(token), `mobile source: palette token is missing: ${token}`);
+        check(themePresenter.includes(token), `mobile source: palette token is missing: ${token}`);
     }
     for (const selector of [
         '.list_array_option .btn_write',
         '.custom-bottom-controls .bottom_paging_box > em',
         '.custom-bottom-controls .dcuf-search-card form[name="frmSearch"] .bnt_search',
         '#container.gallery_view .view_bottom_btnbox .btn_blue',
-        'form.dcuf-write-form .btn_bottom_box .btn_blue'
+        '[data-dcuf-native-form-role="form"][data-dcuf-native-form-state="write-editor"] [data-dcuf-native-form-role="outer-action-primary"][data-dcuf-native-form-state="write-editor"]'
     ]) {
-        check(theme.includes(selector), `mobile source: palette selector is missing: ${selector}`);
+        check(themeHostStyle.includes(selector), `mobile source: palette selector is missing: ${selector}`);
     }
 
     console.log('Mobile source contracts');

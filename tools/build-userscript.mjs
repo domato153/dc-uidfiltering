@@ -45,20 +45,18 @@ const replacements = [
             return text.replace(/__DCUF_DELETE_SURFACE__/g, 'mobile');
         },
     },
+    {
+        description: 'mobile target capability token',
+        apply(text) {
+            return text.replace(/__DCUF_TARGET_IS_MOBILE__/g, 'true');
+        },
+    },
 ];
 
 async function readPart(relativePath) {
     const absolutePath = path.join(rootDir, relativePath);
     const content = await readFile(absolutePath, 'utf8');
     return content.replace(/^\uFEFF/, '').replace(/\r\n/g, '\n');
-}
-
-function replaceOrThrow(source, pattern, replacement, label) {
-    const next = source.replace(pattern, replacement);
-    if (next === source) {
-        throw new Error(`Legacy transform failed: ${label}`);
-    }
-    return next;
 }
 
 function stripEsmSyntax(source) {
@@ -77,6 +75,7 @@ async function buildSharedRuntimePrelude() {
     const uiDisposableScopeSource = stripEsmSyntax(await readPart(inputForRole('ui-disposable-scope')));
     const uiStateStoreSource = await readPart(inputForRole('ui-state-store'));
     const themeHostPortSource = await readPart(inputForRole('theme-host-port'));
+    const popupGeometryHostAdapterSource = await readPart(inputForRole('popup-geometry-host-adapter'));
 
     return [
         '    // Phase 2 runtime shared prelude',
@@ -115,7 +114,9 @@ async function buildSharedRuntimePrelude() {
         '        UI_INTENT_TYPES,',
         '        createCommandResult,',
         '        createDisposableScope,',
+        '        createSurfaceSnapshot,',
         '        createUiSurface,',
+        '        createHostSurfaceAdapter,',
         '        createHostSurfacePort,',
         '        createUiPortRuntime,',
         '    });',
@@ -123,6 +124,8 @@ async function buildSharedRuntimePrelude() {
         uiStateStoreSource.trimEnd(),
         '',
         themeHostPortSource.trimEnd(),
+        '',
+        popupGeometryHostAdapterSource.trimEnd(),
         '',
         filterCoreSource.trimEnd(),
         '',
@@ -137,51 +140,43 @@ async function buildSharedRuntimePrelude() {
     ].join('\n');
 }
 
-function transformLegacyAppForPhaseTwo(source) {
-    let text = source;
-
-    text = replaceOrThrow(
-        text,
-        /TELECOM:\s*\[[\s\S]*?BLOCK_UID_EXPIRE:/,
-        [
-            'TELECOM: DCUF_SHARED_IP.TELECOM,',
-            '',
-            '        CONSTANTS: DCUF_SHARED_SCHEMA.FILTER_CONSTANTS,',
-            '        BLOCK_UID_EXPIRE:',
-        ].join('\n'),
-        'shared data/constants block'
-    );
-
-    text = replaceOrThrow(
-        text,
-        /PROXY_MODE:\s*\{[\s\S]*?KR_IP_RANGES:\s*\{[\s\S]*?\},/,
-        [
-            'PROXY_MODE: DCUF_SHARED_IP.PROXY_MODE,',
-            '        PROXY_STRICT_PREFIXES: DCUF_SHARED_IP.PROXY_STRICT_PREFIXES,',
-            '        PROXY_AGGRESSIVE_EXTRA_PREFIXES: DCUF_SHARED_IP.PROXY_AGGRESSIVE_EXTRA_PREFIXES,',
-            '        KR_IP_RANGES: DCUF_SHARED_IP.KR_IP_RANGES,',
-        ].join('\n'),
-        'shared proxy and KR range block'
-    );
-
-    return text;
-}
-
 function applyReplacements(source) {
     return replacements.reduce((acc, step) => step.apply(acc), source);
 }
 
 async function main() {
-    const [header, bootstrap, styleBanner, sharedPrelude, ...mobileLegacyParts] = await Promise.all([
+    const [header, bootstrap, styleBanner, sharedPrelude, sharedSettingsPresenter, mobileListPresenter, mobileListHostAdapter, mobileArticlePresenter, mobileArticleHostAdapter, mobileCommentPresenter, mobileCommentHostAdapter, mobileNativeFormPresenter, mobileNativeFormHostAdapter, mobileWriteDraftHostAdapter, mobileWriteAdHostAdapter, mobileWriteFontPresenter, mobileWriteEditorHostAdapter, mobileHeaderShellPresenter, mobileHeaderShellHostAdapter, mobileGalleryPageHeadPresenter, mobileGalleryPageHeadHostAdapter, mobileHeaderGnbPresenter, mobileHeaderGnbHostAdapter, mobileHeaderRecentVisitPresenter, mobileHeaderRecentVisitHostAdapter, mobileHeaderDrawerPresenter, mobileHeaderDrawerHostAdapter, ...mobileLegacyParts] = await Promise.all([
         readPart(inputForRole('header')),
         readPart(inputForRole('bootstrap')),
         readPart(inputForRole('style-banner')),
         buildSharedRuntimePrelude(),
+        readPart(inputForRole('shared-settings-presenter')),
+        readPart(inputForRole('mobile-list-presenter')),
+        readPart(inputForRole('mobile-list-host-adapter')),
+        readPart(inputForRole('mobile-article-presenter')),
+        readPart(inputForRole('mobile-article-host-adapter')),
+        readPart(inputForRole('mobile-comment-presenter')),
+        readPart(inputForRole('mobile-comment-host-adapter')),
+        readPart(inputForRole('mobile-native-form-presenter')),
+        readPart(inputForRole('mobile-native-form-host-adapter')),
+        readPart(inputForRole('mobile-write-draft-host-adapter')),
+        readPart(inputForRole('mobile-write-ad-host-adapter')),
+        readPart(inputForRole('mobile-write-font-presenter')),
+        readPart(inputForRole('mobile-write-editor-host-adapter')),
+        readPart(inputForRole('mobile-header-shell-presenter')),
+        readPart(inputForRole('mobile-header-shell-host-adapter')),
+        readPart(inputForRole('mobile-gallery-page-head-presenter')),
+        readPart(inputForRole('mobile-gallery-page-head-host-adapter')),
+        readPart(inputForRole('mobile-header-gnb-presenter')),
+        readPart(inputForRole('mobile-header-gnb-host-adapter')),
+        readPart(inputForRole('mobile-header-recent-visit-presenter')),
+        readPart(inputForRole('mobile-header-recent-visit-host-adapter')),
+        readPart(inputForRole('mobile-header-drawer-presenter')),
+        readPart(inputForRole('mobile-header-drawer-host-adapter')),
         ...MOBILE_LEGACY_PARTS.map(readPart),
     ]);
     const legacyApp = mobileLegacyParts.join('');
-    const transformedLegacyApp = transformLegacyAppForPhaseTwo(legacyApp);
-    const combined = `${header}\n${bootstrap}${sharedPrelude}${styleBanner}${transformedLegacyApp}`;
+    const combined = `${header}\n${bootstrap}${sharedPrelude}${styleBanner}${sharedSettingsPresenter}${mobileListPresenter}${mobileListHostAdapter}${mobileArticlePresenter}${mobileArticleHostAdapter}${mobileCommentPresenter}${mobileCommentHostAdapter}${mobileNativeFormPresenter}${mobileNativeFormHostAdapter}${mobileWriteDraftHostAdapter}${mobileWriteAdHostAdapter}${mobileWriteFontPresenter}${mobileWriteEditorHostAdapter}${mobileHeaderShellPresenter}${mobileHeaderShellHostAdapter}${mobileGalleryPageHeadPresenter}${mobileGalleryPageHeadHostAdapter}${mobileHeaderGnbPresenter}${mobileHeaderGnbHostAdapter}${mobileHeaderRecentVisitPresenter}${mobileHeaderRecentVisitHostAdapter}${mobileHeaderDrawerPresenter}${mobileHeaderDrawerHostAdapter}${legacyApp}`;
     const built = applyReplacements(combined)
         .replace(/[ \t]+$/gm, '')
         .replace(/\n+$/, '\n')

@@ -133,6 +133,10 @@
                 '#um_picker_lay'
             ];
             const list = [
+                '.dcheader.typea',
+                '.page_head',
+                '.gnb_bar',
+                '.newvisit_history',
                 '.list_wrap',
                 '.gall_listwrap',
                 '.gall_list',
@@ -213,6 +217,9 @@
 
         isCommentImmediateMutationRecord(record) {
             if (record?.type === 'attributes') {
+                if (record.attributeName === 'class'
+                    && record.target instanceof Element
+                    && record.target.matches('div[id^="comment_wrap_"], .comment_wrap')) return true;
                 return ['data-uid', 'data-nick', 'data-ip'].includes(record.attributeName)
                     && this.isCommentVisibilityElement(record.target);
             }
@@ -580,7 +587,7 @@
                 subtree: true,
                 attributes: true,
                 characterData: true,
-                attributeFilter: ['class', 'style', 'src', 'id', 'data-uid', 'data-nick', 'data-ip', 'data-no', 'p-no']
+                attributeFilter: ['class', 'style', 'src', 'id', 'disabled', 'aria-disabled', 'aria-pressed', 'data-uid', 'data-nick', 'data-ip', 'data-no', 'p-no']
             });
             this._mutationObserverTarget = observerTarget;
             this._mutationObserverReady = true;

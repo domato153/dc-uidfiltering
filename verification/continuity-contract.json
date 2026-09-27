@@ -1,0 +1,172 @@
+{
+  "schemaVersion": 1,
+  "authorityOrder": [
+    {
+      "id": "fresh-local-state",
+      "rank": 1,
+      "sources": ["git-head", "git-status", "worktree-diff", "generated-artifact-digests"]
+    },
+    {
+      "id": "tracked-current-projection",
+      "rank": 2,
+      "sources": ["docs/work/CURRENT_STATE.md", "docs/work/NEXT_TASK.md"]
+    },
+    {
+      "id": "machine-contracts-and-receipts",
+      "rank": 3,
+      "sources": ["architecture/registry.json", "architecture/candidates", "verification", "build/targets.json"]
+    },
+    {
+      "id": "plans-and-history",
+      "rank": 4,
+      "sources": ["docs/work/MOBILE_UI_MODERNIZATION.md", "docs/agent-maintenance-notes.md", "docs/archive"]
+    },
+    {
+      "id": "conversation-context",
+      "rank": 5,
+      "sources": ["chat-summary", "memory", "assumptions"]
+    }
+  ],
+  "requiredStateFields": [
+    { "id": "active-plan", "markdownLabel": "Active plan" },
+    { "id": "workspace-path", "markdownLabel": "Workspace path" },
+    { "id": "active-stage", "markdownLabel": "Active stage" },
+    { "id": "source-state", "markdownLabel": "Source state" },
+    { "id": "local-only-state", "markdownLabel": "Local-only state" },
+    { "id": "candidate-fingerprint", "markdownLabel": "Candidate fingerprint" },
+    { "id": "last-current-audit", "markdownLabel": "Last current audit" },
+    { "id": "accepted-baseline", "markdownLabel": "Accepted baseline" },
+    { "id": "current-artifact", "markdownLabel": "Current artifact" },
+    { "id": "blockers", "markdownLabel": "Blockers" },
+    { "id": "pending-live-checks", "markdownLabel": "Pending live checks" }
+  ],
+  "allowedStatuses": ["PASS", "READY", "BLOCKED", "UNKNOWN"],
+  "updateTriggers": [
+    {
+      "id": "resume-or-compaction",
+      "alternativeLabels": ["resume", "continue", "이어서", "재개", "컨텍스트 압축", "context compaction"],
+      "requiredActions": ["fresh-state-read", "impact-route-refresh", "stale-evidence-check"]
+    },
+    {
+      "id": "stage-start",
+      "alternativeLabels": ["phase start", "stage start", "단계 시작", "surface start"],
+      "requiredActions": ["set-active-stage", "set-one-next-task", "mark-current-audit-unknown"]
+    },
+    {
+      "id": "evidence-input-change",
+      "alternativeLabels": ["source change", "harness change", "fixture change", "oracle change", "toolchain change", "route change"],
+      "requiredActions": ["invalidate-dependent-evidence", "refresh-candidate-fingerprint", "retain-last-accepted-baseline"]
+    },
+    {
+      "id": "audit-completion",
+      "alternativeLabels": ["audit complete", "receipt written", "감사 완료", "검증 완료"],
+      "requiredActions": ["bind-receipt-sha", "bind-artifact-sha", "record-evidence-scope"]
+    },
+    {
+      "id": "failure-reclassification",
+      "alternativeLabels": ["reclassify failure", "product failure", "oracle failure", "fixture failure", "environment failure", "실패 재분류"],
+      "requiredActions": ["record-failure-class", "mark-unsupported-claims-unknown", "set-recovery-task"]
+    },
+    {
+      "id": "canary-result",
+      "alternativeLabels": ["canary", "live check", "실사이트", "카나리", "현장 확인"],
+      "requiredActions": ["bind-exact-artifact", "record-live-scope", "update-defeater-state"]
+    },
+    {
+      "id": "completion-or-archive",
+      "alternativeLabels": ["complete", "archive", "완료", "보관", "promotion boundary"],
+      "requiredActions": ["verify-terminal-claims", "archive-superseded-plan", "point-current-state-to-final-receipt"]
+    }
+  ],
+  "retrievalConcepts": [
+    {
+      "id": "current-state",
+      "preferredLabel": "current state",
+      "alternativeLabels": ["현재 상태", "진행도", "어디까지", "몇 퍼센트", "status", "resume", "continue", "이어서"],
+      "hiddenLabels": ["컨텍스트 압축", "기억해둬", "continuity", "컨티뉴이티"],
+      "relatedPaths": ["docs/work/CURRENT_STATE.md", "docs/work/NEXT_TASK.md"],
+      "routingCaseIds": ["continuity-positive", "continuity-paraphrase", "continuity-status-held-out", "continuity-compaction-held-out"]
+    },
+    {
+      "id": "next-task",
+      "preferredLabel": "next bounded task",
+      "alternativeLabels": ["다음 작업", "next step", "bounded task", "이어 할 일"],
+      "hiddenLabels": ["뭘 하면 돼", "다음거", "계속 진행"],
+      "relatedPaths": ["docs/work/NEXT_TASK.md", "docs/work/MOBILE_UI_MODERNIZATION.md"],
+      "routingCaseIds": ["continuity-positive", "continuity-paraphrase"]
+    },
+    {
+      "id": "evidence-and-audit",
+      "preferredLabel": "evidence and audit",
+      "alternativeLabels": ["receipt", "증거", "감사", "audit", "PASS", "READY", "SHA-256"],
+      "hiddenLabels": ["증명", "교차검증", "상층감사", "레드팀"],
+      "relatedPaths": ["verification/assurance-case.json", "verification/receipts", "tools/verify-modernization-assurance.mjs"],
+      "routingCaseIds": ["continuity-audit-overlap", "continuity-memory-held-out"]
+    },
+    {
+      "id": "semantic-preservation",
+      "preferredLabel": "semantic preservation",
+      "alternativeLabels": ["회귀", "드리프트", "동작 보존", "원본 DOM", "기능 유지"],
+      "hiddenLabels": ["망치지 않게", "의미 보존", "semantic drift", "regression"],
+      "relatedPaths": ["docs/work/MOBILE_UI_MODERNIZATION.md", "docs/ui-surface-contracts.md", ".agents/skills/dcuf-semantic-preservation/SKILL.md"],
+      "routingCaseIds": ["continuity-memory-held-out", "ui-overlap"]
+    },
+    {
+      "id": "live-architecture",
+      "preferredLabel": "live architecture",
+      "alternativeLabels": ["semantic layer map", "소유권 지도", "레이어 지도", "표면 소유권", "architecture drift"],
+      "hiddenLabels": ["아키텍처 현재 지도", "visual owner", "style owner", "map drift"],
+      "relatedPaths": ["architecture/registry.json", "architecture/candidates", "architecture/ui-surfaces.json", "build/targets.json", "tools/inspect-live-architecture.mjs"],
+      "routingCaseIds": ["architecture-live-overlap"]
+    },
+    {
+      "id": "failure-and-blocker",
+      "preferredLabel": "failure and blocker",
+      "alternativeLabels": ["실패", "blocker", "BLOCKED", "UNKNOWN", "재분류"],
+      "hiddenLabels": ["막힘", "왜 실패", "증거 만료", "stale evidence"],
+      "relatedPaths": ["docs/work/CURRENT_STATE.md", "docs/agent-maintenance-notes.md", "verification/gates.json"],
+      "routingCaseIds": ["continuity-failure-held-out", "continuity-audit-overlap"]
+    },
+    {
+      "id": "canary-and-release",
+      "preferredLabel": "canary and release",
+      "alternativeLabels": ["canary", "beta", "zip", "release", "배포", "롤백"],
+      "hiddenLabels": ["다운로드", "정식", "프로모션", "stable"],
+      "relatedPaths": ["docs/work/CURRENT_STATE.md", "docs/work/MOBILE_UI_MODERNIZATION.md", ".agents/skills/dcuf-release/SKILL.md"],
+      "routingCaseIds": ["continuity-release-overlap", "release-overlap"]
+    },
+    {
+      "id": "decision-rationale",
+      "preferredLabel": "decision rationale",
+      "alternativeLabels": ["채택·비채택·보류", "선택 근거", "버린 방법", "research decision", "revisit trigger"],
+      "hiddenLabels": ["왜 골랐나", "왜 안 썼나", "선택된 것과 버린 것", "재검토 조건"],
+      "relatedPaths": ["docs/work/DECISION_RATIONALE.md", "verification/research-selection.json", ".agents/skills/dcuf-evidence-adversarial-selection/references/research-contract.md"],
+      "routingCaseIds": ["continuity-decision-overlap", "continuity-decision-held-out"]
+    },
+    {
+      "id": "context-free-handoff",
+      "preferredLabel": "context-free handoff",
+      "alternativeLabels": ["새 대화 인계", "빈 새 작업", "cold-start receiver", "handoff acceptance"],
+      "hiddenLabels": ["대화 이력 없이", "저장소만 보고 재개", "의미손실 없는 인계", "fork 말고 새 작업"],
+      "relatedPaths": ["docs/work/INDEX.md", "docs/work/CURRENT_STATE.md", "docs/work/NEXT_TASK.md", ".agents/skills/dcuf-long-work-continuity/references/handoff-contract.md"],
+      "routingCaseIds": ["continuity-handoff-overlap", "continuity-handoff-held-out"]
+    }
+  ],
+  "handoff": {
+    "canonicalLocator": "docs/work/INDEX.md",
+    "currentPacket": ["docs/work/CURRENT_STATE.md", "docs/work/NEXT_TASK.md"],
+    "methodReference": ".agents/skills/dcuf-long-work-continuity/references/handoff-contract.md",
+    "requiredTaskFields": ["Objective", "Why next", "Expected transition", "Stop/replan"],
+    "receiverOutcomes": ["ACCEPTED", "STALE_REPLAN"],
+    "localStateLabel": "LOCAL_ONLY_EVIDENCE",
+    "workspacePathPolicy": "repo-relative-dot-private-prompt-locator",
+    "requiresFreshContext": true
+  },
+  "thinRouter": {
+    "skillPath": ".agents/skills/dcuf-long-work-continuity/SKILL.md",
+    "detailReference": ".agents/skills/dcuf-long-work-continuity/references/retrieval-contract.md",
+    "inspectionCommand": ["node", "tools/inspect-continuity.mjs"],
+    "maxEntrypointCharacters": 2600,
+    "forbiddenEmbeddedFacts": ["commit-sha", "artifact-sha", "current-stage", "current-status"]
+  }
+}

@@ -23,6 +23,8 @@ performance reasoning here.
 
 ## Runtime Hot-Path Contracts
 
+- A list/view gallery-heading role subscriber sees unrelated article/comment mutation batches. Test the moved subtree for `.page_head` with native class traversal instead of calling `querySelector` on every added node; keep root/descendant replacement coverage. In the 5,500-node fixture, the first extraction increased element selector calls from the immediate control's 137,426 to 138,679 and failed the `<25` calls/node gate; the narrowed path measured 137,353 calls and passed. The real-site cost remains unmeasured, so a later live performance concern should be profiled rather than inferred from this selector counter alone.
+- The 5,500-node steady-state performance fixture must wait for the bounded post-reveal recovery subscriber to release before taking its baseline. Otherwise its legitimate periodic check can be sampled with one active animation frame, making a strict zero-frame assertion dependent on timing; both frozen control and candidate pass after the same readiness gate. Do not erase the zero-frame assertion or use an arbitrary longer sleep.
 - Gate mutation subscribers by page context before subscribing; a subscriber for one surface must not receive another surface's immediate records.
 - Keep ordinary mutation work batched through the shared runtime scheduler. Use an immediate path only for content that must be transformed or hidden before its first paint.
 - A direct pre-paint list sync must suppress or cancel the equivalent queued initial sync and update its generation marker.

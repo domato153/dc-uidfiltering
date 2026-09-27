@@ -37,6 +37,68 @@ if (document.body.dataset.fixturePage === 'view') {
     }
 }
 
+{
+    const listWrap = document.querySelector('.fixture-view-list') || document.querySelector('.gall_listwrap');
+    const scope = listWrap?.parentElement;
+    const elements = {
+        listWrap,
+        toolbar: document.body.dataset.fixturePage === 'list' ? document.querySelector('.list_array_option') : null,
+        actionBar: scope?.querySelector(':scope > .list_bottom_btnbox') || null,
+        pagination: scope?.querySelector(':scope > .bottom_paging_wrap') || null,
+        searchForm: scope?.querySelector(':scope > form[name="frmSearch"]') || null,
+        searchLayer: scope?.querySelector(':scope > form[name="frmSearch"] #searchTypeLayer') || scope?.querySelector(':scope > #searchTypeLayer') || null,
+        searchSelect: scope?.querySelector(':scope > form[name="frmSearch"] select[name="search_type"]') || null,
+        searchField: scope?.querySelector(':scope > form[name="frmSearch"] input[name="search_keyword"]') || null,
+        searchButton: scope?.querySelector(':scope > form[name="frmSearch"] .bnt_search') || null,
+        viewActionBar: document.querySelector('#container > .view_bottom_btnbox'),
+    };
+    const topology = Object.fromEntries(Object.entries(elements).map(([key, element]) => [key, element ? {
+        element,
+        parent: element.parentNode,
+        nextSibling: element.nextSibling,
+        style: element.getAttribute('style'),
+    } : null]));
+    window.__fixtureListControlBaseline = {
+        topology,
+        formSignature: elements.searchForm ? Array.from(elements.searchForm.elements).map((field) => ({
+            tag: field.tagName,
+            type: field.getAttribute('type'),
+            name: field.getAttribute('name'),
+            value: field.value,
+        })) : [],
+    };
+}
+
+{
+    const articleRoot = document.querySelector('article.view_content_wrap');
+    const recommendBox = articleRoot?.querySelector('.btn_recommend_box') || null;
+    const header = articleRoot?.querySelector('.gallview_head') || null;
+    const body = articleRoot?.querySelector('.gallview_contents, .writing_view_box') || null;
+    const content = articleRoot?.querySelector('.write_div') || null;
+    const buttons = Array.from(recommendBox?.querySelectorAll('button') || []);
+    const capture = (element) => element ? {
+        element,
+        parent: element.parentNode,
+        nextSibling: element.nextSibling,
+        style: element.getAttribute('style'),
+    } : null;
+    window.__fixtureArticleBaseline = articleRoot ? {
+        topology: {
+            articleRoot: capture(articleRoot),
+            header: capture(header),
+            body: capture(body),
+            content: capture(content),
+            recommendBox: capture(recommendBox),
+            buttons: buttons.map(capture),
+        },
+        buttonFields: buttons.map((button) => ({
+            type: button.getAttribute('type'),
+            name: button.getAttribute('name'),
+            value: button.getAttribute('value'),
+        })),
+    } : null;
+}
+
 </script></body></html>`;
 
 const tableHead = (variant) => `<thead><tr><th>번호</th>${variant === 'minor' ? '<th>구분</th>' : ''}<th>제목</th><th>작성자</th><th>날짜</th><th>조회</th><th>추천</th></tr></thead>`;
@@ -111,7 +173,7 @@ window.Pum = {
 document.querySelector('.recom_bottom_box')?.insertAdjacentHTML('afterbegin', '<button type="button" class="btn_cloned btn_svc" onclick="Pum.write_open()">펌</button>');
 </script>`;
 
-export function viewPage({ long = false, massComments = 0, variant = 'major', darkAtStart = false, brokenTheme = false } = {}) {
+export function viewPage({ long = false, massComments = 0, variant = 'major', darkAtStart = false, brokenTheme = false, withHeader = false } = {}) {
     const isMinor = variant === 'minor';
     const isMini = variant === 'mini';
     const comments = liveCommentRows(variant, massComments);
@@ -123,7 +185,7 @@ export function viewPage({ long = false, massComments = 0, variant = 'major', da
     const miniButtons = isMini ? `<div class="view_bottom_btnbox clear"><div class="fr"><button type="button" class="btn_grey modify" onclick="window.__fixtureMiniButtonClicks=(window.__fixtureMiniButtonClicks||0)+1">수정</button><button type="button" class="btn_grey cancle" onclick="window.__fixtureMiniButtonClicks=(window.__fixtureMiniButtonClicks||0)+1">삭제</button><button type="button" id="btn_write" class="btn_lightpurple write" onclick="window.__fixtureMiniButtonClicks=(window.__fixtureMiniButtonClicks||0)+1">글쓰기</button></div></div><div class="fixture-mini-absolute-obstruction" aria-hidden="true"></div>` : '';
     const darkBootstrap = darkAtStart ? `<script>document.documentElement.classList.add('dc-filter-dark-mode')</script>` : '';
     const brokenThemeBootstrap = brokenTheme ? `<script>document.querySelector('.gallview_head')?.style.setProperty('box-shadow','none','important')</script>` : '';
-    return `${baseHead(`DCUF ${variant} view fixture`, { dark: darkAtStart })}<body class="${darkAtStart ? 'dc-filter-dark-mode' : ''}" data-fixture-page="view" data-fixture-variant="${variant}">${darkBootstrap}${controls}<main id="container" class="clear ${viewClass}"><article class="view_content_wrap"><header class="view_content_wrap"><div class="gallview_head"><span class="title_subject">테스트 본문</span></div></header><section class="writing_view_box"><div class="write_div"><p>본문 시작</p>${long ? longArticleNodes(1600) : ''}<div id="fixture-long-article"></div></div></section><div class="view_ad_wrap" id="fixture-initial-ad"><iframe id="google_ads_iframe_fixture" title="advertisement"></iframe></div><div class="gall_exposure_list fixture-synthetic-related"><ul><li><span class="ub-writer" data-uid="safe-related-1" data-nick="관련글작성자"></span><a href="${viewPath}?id=test&no=2001">관련 글 1</a></li><li><span class="ub-writer" data-uid="blocked-related-user" data-nick="관련차단"></span><a href="${viewPath}?id=test&no=2002">관련 글 2</a></li></ul></div>${recommendBox}${pumPopupBootstrap}${miniButtons}</article><section id="focus_cmt"><div id="comment_wrap_1" class="gall_comment comment_wrap show"><div class="comment_count"><span class="num_box"><span class="font_red">${massComments || baseCommentCount}</span></span><div class="fr"><button type="button" class="btn_cmt_refresh" data-no="1001" data-sort="">새로고침</button></div></div><div class="comment_box"><ul class="cmt_list add">${comments}</ul></div></div>${normalCommentComposer}${replyCommentComposer}</section><section class="view_comment image_comment fixture-synthetic-image-comments"><div class="comment_wrap"><div class="comment_box img_comment_box"><ul class="cmt_list">${imageCommentItem(1, { uid: 'safe-image-user' })}${imageCommentItem(2, { uid: 'blocked-image-user' })}</ul></div>${imageCommentComposer}</div></section><div class="view_bottom"><a href="${listPath}?id=test">목록</a><section class="gall_listwrap fixture-view-list">${listTable(variant, 'fixture-view-table')}</section></div></main><a id="fixture-to-list" href="${listPath}?id=test">목록으로 이동</a>${brokenThemeBootstrap}${scripts}`;
+    return `${baseHead(`DCUF ${variant} view fixture`, { dark: darkAtStart })}<body class="${darkAtStart ? 'dc-filter-dark-mode' : ''}" data-fixture-page="view" data-fixture-variant="${variant}">${darkBootstrap}${withHeader ? hostChrome + galleryHeading(variant) : ''}${controls}<main id="container" class="clear ${viewClass}"><article class="view_content_wrap"><header class="view_content_wrap"><div class="gallview_head"><span class="title_subject">테스트 본문</span></div></header><section class="writing_view_box"><div class="write_div"><p>본문 시작</p>${long ? longArticleNodes(1600) : ''}<div id="fixture-long-article"></div></div></section><div class="view_ad_wrap" id="fixture-initial-ad"><iframe id="google_ads_iframe_fixture" title="advertisement"></iframe></div><div class="gall_exposure_list fixture-synthetic-related"><ul><li><span class="ub-writer" data-uid="safe-related-1" data-nick="관련글작성자"></span><a href="${viewPath}?id=test&no=2001">관련 글 1</a></li><li><span class="ub-writer" data-uid="blocked-related-user" data-nick="관련차단"></span><a href="${viewPath}?id=test&no=2002">관련 글 2</a></li></ul></div>${recommendBox}${pumPopupBootstrap}${miniButtons}</article><section id="focus_cmt"><div id="comment_wrap_1" class="gall_comment comment_wrap show"><div class="comment_count"><span class="num_box"><span class="font_red">${massComments || baseCommentCount}</span></span><div class="fr"><button type="button" class="btn_cmt_refresh" data-no="1001" data-sort="">새로고침</button></div></div><div class="comment_box"><ul class="cmt_list add">${comments}</ul></div></div>${normalCommentComposer}${replyCommentComposer}</section><section class="view_comment image_comment fixture-synthetic-image-comments"><div class="comment_wrap"><div class="comment_box img_comment_box"><ul class="cmt_list">${imageCommentItem(1, { uid: 'safe-image-user' })}${imageCommentItem(2, { uid: 'blocked-image-user' })}</ul></div>${imageCommentComposer}</div></section><div class="view_bottom"><a href="${listPath}?id=test">목록</a><section class="gall_listwrap fixture-view-list">${listTable(variant, 'fixture-view-table')}</section></div></main><a id="fixture-to-list" href="${listPath}?id=test">목록으로 이동</a>${brokenThemeBootstrap}${scripts}`;
 }
 
 export function blankPage() {
