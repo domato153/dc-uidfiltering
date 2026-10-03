@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
 import { currentSection, STATE_LABELS, parseNextAction, reconcileNextAction, selectContinuityProfile, repositoryPath } from './continuity-state.mjs';
 import { validateCheckpointPolicy, validateCheckpointPaths, validateCheckpointFiles, assertCheckpointContext, reconcilePush, publishCheckpoint, pushCheckpoint, qualifyCheckpointCI } from './checkpoint-core.mjs';
+import { GOVERNANCE_PROOF_PATHS, hashPaths, assertEvidenceBinding } from './evidence-binding.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const policy = validateCheckpointPolicy(JSON.parse(readFileSync(path.join(root, 'verification/checkpoint-policy.json'))));
@@ -53,6 +54,19 @@ mkdirSync(local); mkdirSync(bare);
 const command = (cwd,args) => { const result=spawnSync('git',args,{cwd,encoding:'utf8',shell:false}); if(result.status!==0) throw new Error(result.stderr); return result.stdout; };
 const git = args => command(local,args);
 try {
+    await test('governance proof inputs bind helper-only edits to evidence validity',async()=> {
+        const fixture=path.join(temp,'proof-inputs');
+        for(const relative of GOVERNANCE_PROOF_PATHS) {
+            mkdirSync(path.dirname(path.join(fixture,relative)),{recursive:true});
+            writeFileSync(path.join(fixture,relative),readFileSync(path.join(root,relative)));
+        }
+        for(const relative of ['tools/git-tree-state.mjs','tools/continuity-state.mjs','tools/checkpoint-core.mjs','verification/checkpoint-policy.json'])assert.ok(GOVERNANCE_PROOF_PATHS.includes(relative));
+        const original={proofSystemSha256:await hashPaths(fixture,GOVERNANCE_PROOF_PATHS)};
+        const helper=path.join(fixture,'tools/git-tree-state.mjs');
+        writeFileSync(helper,readFileSync(helper,'utf8')+'\n// isolated proof-input negative\n');
+        const changed={proofSystemSha256:await hashPaths(fixture,GOVERNANCE_PROOF_PATHS)};
+        assert.throws(()=>assertEvidenceBinding(original,changed),/Stale evidence receipt: proofSystemSha256/);
+    });
     command(bare,['init','--bare']); git(['init','-b',policy.branch]); git(['config','user.name','Governance Test']); git(['config','user.email','test@example.invalid']); git(['config','core.autocrlf','false']);
     writeFileSync(path.join(local,'input.txt'),'base\n'); git(['add','--','input.txt']); git(['commit','-m','base']); git(['remote','add','origin',bare]); git(['push','-u','origin',policy.branch]);
     const base=git(['rev-parse','HEAD']).trim();

@@ -9,6 +9,19 @@ const CANONICAL_TEXT_EXTENSIONS = new Set([
     '.cjs', '.css', '.html', '.js', '.json', '.md', '.mjs', '.sh', '.svg', '.toml', '.txt', '.xml', '.yaml', '.yml',
 ]);
 const CANONICAL_TEXT_BASENAMES = new Set(['.gitattributes', '.gitignore', '.gitkeep']);
+export const GOVERNANCE_PROOF_PATHS = Object.freeze([
+    'AGENTS.md',
+    '.github/workflows/development-ci.yml',
+    'verification/checkpoint-policy.json',
+    'tools/continuity-state.mjs',
+    'tools/verify-governance.mjs',
+    'tools/test-governance.mjs',
+    'tools/checkpoint-core.mjs',
+    'tools/checkpoint.mjs',
+    'tools/git-tree-state.mjs',
+    'tools/verify-checkpoint-ci.mjs',
+    'tools/test-checkpoint-artifacts.mjs',
+]);
 const CANDIDATE_EXCLUSIONS = Object.freeze([
     /^(?:artifacts|dist|node_modules|testbed\/artifacts|verification\/receipts)\//,
     /^docs\/work\/(?:CURRENT_STATE|NEXT_TASK)\.md$/,
@@ -153,6 +166,7 @@ export async function createEvidenceBinding(rootDir) {
             'testbed/package.json',
         ]),
         proofSystemSha256: await hashPaths(rootDir, [
+            ...GOVERNANCE_PROOF_PATHS,
             'tools/architecture-state.mjs',
             'tools/architecture-registry.mjs',
             'tools/evidence-binding.mjs',

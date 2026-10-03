@@ -3,6 +3,7 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { assertEvidenceBinding, createEvidenceBinding, digestEvidenceBytes } from './evidence-binding.mjs';
+import { assertTrackedContentClean } from './git-tree-state.mjs';
 
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const receiptArg = process.argv[2];
@@ -52,11 +53,7 @@ if (process.argv.includes('--verify-receipt-only')) {
     console.log(`Evidence receipt and git-derived route are current for ${receipt.head}.`);
     process.exit(0);
 }
-const trackedStatus = spawnSync('git', ['status', '--porcelain', '--untracked-files=no'], { cwd: rootDir, encoding: 'utf8' });
-if (trackedStatus.status !== 0) throw new Error(trackedStatus.stderr.trim() || 'Unable to inspect worktree status');
-if (trackedStatus.stdout.trim()) {
-    throw new Error(`Dirty tracked worktree cannot consume a commit receipt:\n${trackedStatus.stdout.trim()}`);
-}
+assertTrackedContentClean(rootDir, receipt.head);
 const results = [];
 
 for (const item of receipt.resolvedCommands || []) {
