@@ -1,6 +1,7 @@
 import { readdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { policyBrowserSequenceIsValid } from './workflow-sequence.mjs';
 
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const workflowsDir = path.join(rootDir, '.github', 'workflows');
@@ -32,6 +33,7 @@ check((development.match(/if: github.event_name != 'push'/g) || []).length === 3
 check(development.includes('path: artifacts/checkpoint-ci.json'), 'checkpoint uploads must stay narrowly scoped');
 check(development.includes('node tools/build-userscript.mjs\n          node tools/build-userscript.mjs --testbed-output testbed/artifacts/runtime-under-test.user.js\n          node tools/build-pc-filter-userscript.mjs'), 'checkpoint must rebuild canonical CRLF artifacts as well as the mobile guard');
 check(development.includes('Prepare canonical outputs and immutable proof inputs') && development.includes('node tools/verify-baseline.mjs'), 'proof mutations must prepare canonical and immutable baseline inputs');
+check(policyBrowserSequenceIsValid(development), 'policy browser-dependent mutation controls require one executable locked-install, Chromium-install, gate sequence');
 check(development.includes('permissions:\n  contents: read'), 'development CI default permission must be contents: read');
 check(development.includes('CANDIDATE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}'), 'development CI must bind pull requests to the exact head SHA');
 check((development.match(/ref: \$\{\{ env\.CANDIDATE_SHA \}\}/g) || []).length === 4, 'every development job must checkout the exact candidate SHA');

@@ -100,6 +100,8 @@ jobs:
           BASE_SHA="${PR_BASE_SHA}"
           if [ -z "${BASE_SHA}" ]; then BASE_SHA="$(git rev-parse HEAD^)"; fi
           node tools/resolve-impact.mjs --base "${BASE_SHA}" --head HEAD --output artifacts/impact.json
+      - name: Install Chromium for proof mutation controls
+        run: node testbed/node_modules/playwright/cli.js install --with-deps chromium
       - name: Prepare canonical outputs and immutable proof inputs
         run: |
           node tools/build-userscript.mjs

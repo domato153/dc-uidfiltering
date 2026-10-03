@@ -8,6 +8,7 @@ import { createHash } from 'node:crypto';
 import { currentSection, STATE_LABELS, parseNextAction, reconcileNextAction, selectContinuityProfile, repositoryPath } from './continuity-state.mjs';
 import { validateCheckpointPolicy, validateCheckpointPaths, validateCheckpointFiles, assertCheckpointContext, reconcilePush, publishCheckpoint, pushCheckpoint, qualifyCheckpointCI } from './checkpoint-core.mjs';
 import { GOVERNANCE_PROOF_PATHS, hashPaths, assertEvidenceBinding } from './evidence-binding.mjs';
+import { policyBrowserSequenceIsValid } from './workflow-sequence.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const policy = validateCheckpointPolicy(JSON.parse(readFileSync(path.join(root, 'verification/checkpoint-policy.json'))));
@@ -43,6 +44,15 @@ await test('directory/symlink sweeps rejected; explicit file/deletion accepted',
 const context = {cwd:'root',toolRoot:'root',gitRoot:'root',branch:policy.branch,remote:policy.remoteUrl,upstream:`origin/${policy.branch}`};
 await test('root/branch/remote/upstream guards cannot be waived by CI', () => { assertCheckpointContext(context,policy); for(const key of ['cwd','gitRoot','branch','remote','upstream']) assert.throws(() => assertCheckpointContext({...context,[key]:'wrong'},policy)); });
 await test('policy cannot widen to official publication', () => { assert.throws(() => validateCheckpointPolicy({...policy,branch:'main'})); assert.throws(() => validateCheckpointPolicy({...policy,workSuccessCertified:true})); assert.throws(() => validateCheckpointPolicy({...policy,extra:true})); });
+await test('policy Chromium prerequisites reject missing, commented, duplicate and misordered commands',()=> {
+    const command = '        run: node testbed/node_modules/playwright/cli.js install --with-deps chromium\n';
+    const locked = '        run: pnpm install --frozen-lockfile\n';
+    const gate = '        run: node tools/run-gates.mjs artifacts/impact.json artifacts/policy-result.json --only policy\n';
+    const fixture = '\n  policy:\n'+locked+command+gate+'\n  affected:\n';
+    assert.equal(policyBrowserSequenceIsValid(readFileSync(path.join(root,'.github/workflows/development-ci.yml'),'utf8')),true);
+    assert.equal(policyBrowserSequenceIsValid(fixture),true);
+    for(const changed of [fixture.replace(command,''),fixture.replace(command,'        # '+command.trim()+'\n        run: echo skipped\n'),fixture.replace(command,command+command),'\n  policy:\n'+command+locked+gate+'\n  affected:\n','\n  policy:\n'+locked+gate+command+'\n  affected:\n',fixture.replace(command,'')+command,fixture.replace(locked,'')])assert.equal(policyBrowserSequenceIsValid(changed),false);
+});
 await test('push acknowledgement and unknown transport are separate', () => { assert.equal(reconcilePush('base','commit','commit'),'REMOTE_SYNCED_CI_PENDING'); assert.equal(reconcilePush('base','commit',null),'COMMITTED_PENDING_PUSH'); assert.equal(reconcilePush('base','commit','base'),'COMMITTED_PENDING_PUSH'); assert.throws(() => reconcilePush('base','commit','other'),/REMOTE_DRIFT/); });
 const sha = 'a'.repeat(40);
 const run = {id:1,run_attempt:1,name:policy.workflowName,event:'push',head_sha:sha,head_branch:policy.branch,status:'completed',conclusion:'success',html_url:'https://github.com/example/run/1'};

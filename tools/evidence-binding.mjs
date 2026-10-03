@@ -21,6 +21,7 @@ export const GOVERNANCE_PROOF_PATHS = Object.freeze([
     'tools/git-tree-state.mjs',
     'tools/verify-checkpoint-ci.mjs',
     'tools/test-checkpoint-artifacts.mjs',
+    'tools/workflow-sequence.mjs',
 ]);
 const CANDIDATE_EXCLUSIONS = Object.freeze([
     /^(?:artifacts|dist|node_modules|testbed\/artifacts|verification\/receipts)\//,
