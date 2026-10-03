@@ -13,6 +13,10 @@ const required = (flag) => {
     return args[index + 1];
 };
 const runtime = path.resolve(root, required('--runtime'));
+if (args.includes('--require-runtime-under-test')
+    && runtime !== path.join(root, 'testbed/artifacts/runtime-under-test.user.js')) {
+    throw new Error('Source-work runtime must be testbed/artifacts/runtime-under-test.user.js');
+}
 const output = path.resolve(root, required('--output'));
 const screenshotStem = path.basename(output, path.extname(output));
 const bytes = await readFile(runtime);
@@ -20,6 +24,7 @@ const sha256 = createHash('sha256').update(bytes).digest('hex').toUpperCase();
 if (bytes.toString('utf8').match(/^\/\/\s*@name\s+(.+)$/m)?.[1]?.trim() !== 'DC_UserFilter_Mobile') {
     throw new Error('Mobile userscript required');
 }
+console.log(`Header hit runtime: ${runtime}; SHA-256 ${sha256}`);
 process.env.DCUF_TESTBED_USERSCRIPT = runtime;
 process.env.DCUF_TESTBED_TARGET = 'mobile';
 

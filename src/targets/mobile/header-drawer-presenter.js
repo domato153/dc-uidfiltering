@@ -1,3 +1,23 @@
+    // Palette accents apply to the original host issue root, including before
+    // drawer roles are projected. Keep that timing and native ancestry intact.
+    function __dcufBuildHeaderDrawerThemeCss(ROOT_ATTRIBUTE) {
+        return `
+        html[${ROOT_ATTRIBUTE}] body .issue_wrap {
+            border-top-color: var(--dcuf-theme-accent) !important;
+            box-shadow: inset 0 2px 0 color-mix(in srgb, var(--dcuf-theme-accent) 78%, transparent) !important;
+        }
+`;
+    }
+    // Preserve initial concealment before roles project and popup-only state:
+    // the adapter keeps the exact open marker while an original popup is open.
+    function __dcufBuildHeaderDrawerVisibilityCss() {
+        return `
+        .issue_contentbox:not([data-dcuf-header-native-door-open="1"]),
+        #gall_top_recom.concept_wrap:not([data-dcuf-header-native-recom-open="1"]) {
+            display: none !important;
+        }
+`;
+    }
     const __dcufHeaderDrawerPresenter = (() => {
         const style = Object.freeze({
             key: 'header-drawer',
@@ -201,6 +221,6 @@
         
 `
         });
-        return Object.freeze({ style });
+        return Object.freeze({ style, buildThemeCss: __dcufBuildHeaderDrawerThemeCss, buildVisibilityCss: __dcufBuildHeaderDrawerVisibilityCss });
     })();
     __dcufRoot.__dcufHeaderDrawerPresenter = __dcufHeaderDrawerPresenter;

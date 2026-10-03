@@ -273,7 +273,10 @@
                 `;
             }
             if (drawer.getAttribute(DRAWER_SCOPE_ATTR) !== '1') drawer.setAttribute(DRAWER_SCOPE_ATTR, '1');
-            if (drawer.parentElement !== mount.parent || drawer.nextSibling !== mount.before) {
+            // insertBefore(node, node) still detaches/reinserts in Chromium,
+            // dropping a focused descendant during otherwise-idempotent sync.
+            if (drawer.parentElement !== mount.parent
+                || (mount.before !== drawer && drawer.nextSibling !== mount.before)) {
                 mount.parent.insertBefore(drawer, mount.before);
             }
             ownedDrawers.add(drawer);

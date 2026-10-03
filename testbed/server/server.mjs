@@ -169,7 +169,8 @@ export async function startServer({ port = 0 } = {}) {
                     massComments: Number(url.searchParams.get('comments')) || 0,
                     darkAtStart: url.searchParams.get('dark-start') === '1',
                     brokenTheme: url.searchParams.get('broken-theme') === '1',
-                    withHeader: url.searchParams.get('header') === '1'
+                    withHeader: url.searchParams.get('header') === '1',
+                    liveShape: url.searchParams.get('live-shape') === '1'
                 }), url), 'text/html; charset=utf-8', headers);
                 return;
             }

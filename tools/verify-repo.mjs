@@ -126,7 +126,9 @@ async function verifyGuidance() {
         ['research selection', 'tools/verify-research-selection.mjs'],
         ['skills', 'tools/verify-skills.mjs'],
         ['UI boundaries', 'tools/verify-ui-boundaries.mjs'],
-        ['workflows', 'tools/verify-workflows.mjs']
+        ['workflows', 'tools/verify-workflows.mjs'],
+        ['live site contracts', 'tools/test-live-site-canary.mjs'],
+        ['header palette ownership', 'tools/test-header-palette-ownership.mjs']
     ]) {
         const result = spawnSync(process.execPath, [script, ...(label === 'architecture' ? ['validate'] : label === 'live architecture links' ? ['--check'] : [])], {
             cwd: rootDir,

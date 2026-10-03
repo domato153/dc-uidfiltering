@@ -46,7 +46,7 @@
 
 
         /* [수정] 불필요한 PC버전 요소 및 사이트 광고 아이콘 숨김 */
-        #dc_header, #dc_gnb, .adv_area, .right_content, .dc_all, .dcfoot, .info_policy, .copyrigh, .ad_bottom_list, .bottom_paging_box + div, .intro_bg, .fixed_write_btn, .bottom_movebox, #zzbang_ad ,#zzbang_div,#zzbang_div .my_zzal, .my_dccon, .issue_contentbox:not([data-dcuf-header-native-door-open="1"]), #gall_top_recom.concept_wrap:not([data-dcuf-header-native-recom-open="1"]),
+        #dc_header, #dc_gnb, .adv_area, .right_content, .dc_all, .dcfoot, .info_policy, .copyrigh, .ad_bottom_list, .bottom_paging_box + div, .intro_bg, .fixed_write_btn, .bottom_movebox, #zzbang_ad ,#zzbang_div,#zzbang_div .my_zzal, .my_dccon,
         .gall_exposure, .stickyunit, #kakao_search, .banner_box, #ad-layer,#ad-layer-closer, #ad_floating, .__dcNewsWidgetTypeB__, .dctrend_ranking, .cm_ad, .con_banner.writing_banbox, [id^="criteo-"], .ad_left_wing_right_top._BTN_AD_, .ad_left_wing_list_top._BTN_AD_,
         .ad_left_wing_list_top, div:has(> script[src*="list@right_wing_game"]),
         .adv_bottom_write, ins.kakao_ad_area, em.icon_ad {
@@ -55,6 +55,7 @@
 
 
         /* --- 기본 레이아웃 재정의 --- */
+        ${__dcufBuildHeaderDrawerVisibilityCss()}
         /* [개선] 마이너 갤러리 상단 링크 영역 모바일 최적화 */
         .minor_intro_area {
             display: block !important; /* 숨김 처리를 확실히 무효화 */
@@ -79,7 +80,7 @@
         html, body { overflow-x: hidden !important; }
 
 
-        html, body, #top, .dcheader, .gnb_bar, #container, .wrap_inner, .visit_bookmark,
+        html, body, #top, #container, .wrap_inner, .visit_bookmark,
         .list_array_option, .left_content,
         .view_content_wrap, .gall_content, .gall_comment, .comment_box {
             width: 100% !important; /* 100vw 대신 100% 사용 */
@@ -87,6 +88,8 @@
             position: relative !important; box-sizing: border-box !important;
             margin: 0 !important; padding: 0 !important;
         }
+        ${__dcufBuildHeaderShellResetCss()}
+        ${__dcufBuildHeaderGnbResetCss()}
         #container { padding-top: 5px; }
 
 

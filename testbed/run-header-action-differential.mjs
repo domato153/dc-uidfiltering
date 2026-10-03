@@ -135,7 +135,9 @@ if (args.includes('--side')) {
                         };
                         window.__dcufHeaderDrawerHostAdapter?.refresh();
                     });
-                    if (side === 'candidate') {
+                    // Immediate controls may already own the native door. Compare
+                    // the same open state, not a closed control against an open candidate.
+                    if (side === 'candidate' || await session.page.locator('.issue_wrap .issue_contentbox[data-dcuf-header-native-door="1"]').count()) {
                         await session.page.waitForFunction(() => document.querySelector('.issue_wrap .issue_contentbox')
                             ?.getAttribute('data-dcuf-header-native-door') === '1');
                         await session.page.locator('.dcuf-header-drawer__toggle').click();
@@ -264,7 +266,7 @@ if (args.includes('--side')) {
                         });
                         window.__dcufHeaderDrawerHostAdapter?.refresh();
                     });
-                    if (side === 'candidate') {
+                    if (side === 'candidate' || await session.page.locator('#gall_top_recom[data-dcuf-header-native-recom="1"]').count()) {
                         await session.page.waitForFunction(() => document.querySelector('#gall_top_recom')
                             ?.getAttribute('data-dcuf-header-native-recom') === '1');
                         await session.page.locator('.dcuf-header-drawer__toggle').click();
@@ -333,10 +335,16 @@ if (args.includes('--side')) {
 } else {
     const control = path.resolve(root, required('--control'));
     const candidate = path.resolve(root, required('--candidate'));
+    if (args.includes('--require-runtime-under-test')
+        && candidate !== path.join(root, 'testbed/artifacts/runtime-under-test.user.js')) {
+        throw new Error('Source-work candidate must be testbed/artifacts/runtime-under-test.user.js');
+    }
     const controlSha256 = hash(await readFile(control));
     const candidateSha256 = hash(await readFile(candidate));
     assert.equal(controlSha256, required('--expected-control-sha').toUpperCase());
     assert.notEqual(controlSha256, candidateSha256);
+    console.log(`Control runtime: ${control}; SHA-256 ${controlSha256}`);
+    console.log(`Candidate runtime: ${candidate}; SHA-256 ${candidateSha256}`);
     const sides = {};
     for (const [role, runtime] of Object.entries({ control, candidate })) {
         const sideOutput = path.join(root, 'testbed/artifacts', `header-action-${role}-side.json`);

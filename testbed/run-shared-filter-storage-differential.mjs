@@ -16,7 +16,7 @@ const paths = Object.freeze({
 });
 const expectedHashes = Object.freeze({
     mobile: { control: '32BA208DDD9973A7EEC343F01E963A833AB4F0C084987077EDAE46844383C25D',
-        candidate: 'C84AD9220A060CC3AF91F3039F07B13FAD75521DA63201046E3693F875DC03C7' },
+        candidate: '0C3076699E696AD3C252B5DF21D216F9B6EA32928B4C8A7C160DE0888926450A' },
     pc: { control: 'D3A95C479D8D50F88D97700DE91FA17D1D338B3AEBB488F53D865F445B656212',
         candidate: '1A7A00468F4DCFB57C7341063098B827743091FD7593BA3FBA86A17E282BDC33' },
 });
@@ -56,7 +56,7 @@ function summarizeRawObservation(observation) {
             contentVisible: comment.contentVisible, parent: comment.parent },
         uidRequests: uidRequests.map(({ uid, body, mode }) => ({ uid, body, mode })),
         xhrRequests: xhrRequests.map(({ method, path: requestPath, body, status }) => ({ method, path: requestPath, body, status })),
-        errors: runtime.errors, consoleErrors,
+        errors: runtime.errors, recovery: runtime.recovery, consoleErrors,
     } };
 }
 
@@ -122,6 +122,12 @@ export function compareSharedObservations(sides) {
                 if (Object.entries(seed).some(([key, value]) => !isDeepStrictEqual(gm.values[key], value))
                     || gm.writes.some((entry) => Object.hasOwn(seed, entry.key))) {
                     positiveFailures.push({ target, role, caseId: scenario.id, reason: 'seeded GM value changed or implicitly rewritten' });
+                }
+                if (target === 'mobile' && (after.value.runtime.recovery?.status !== 'completed'
+                    || after.value.runtime.recovery?.ready !== true
+                    || after.value.runtime.recovery?.reason !== 'ready'
+                    || after.value.runtime.recovery?.active !== false)) {
+                    positiveFailures.push({ target, role, caseId: scenario.id, reason: 'view post-reveal recovery did not complete ready' });
                 }
             }
         }
@@ -189,7 +195,12 @@ async function observeSide(target, role, output) {
                                 parent: li.parentElement?.className || '' } : null,
                             xhrRequests: m.xhrRequests.map(({ method, url, body, status }) =>
                                 ({ method, path: new URL(url, location.href).pathname, body, status })),
-                            runtime: { errors: m.errors, resources: {
+                            runtime: { errors: m.errors,
+                                recovery: window.__dcufRevealDebug?.recovery
+                                    ? Object.fromEntries(['status', 'ready', 'reason', 'active'].map((key) => (
+                                        [key, window.__dcufRevealDebug.recovery[key]]
+                                    ))) : null,
+                                resources: {
                                 timers: m.activeTimeouts, frames: m.activeAnimationFrames, intervals: m.activeIntervals,
                                 activeObservers: m.mutationObserversCreated - m.mutationDisconnectCalls,
                                 listeners: m.activeListenerKeys, subscribers: m.dcuf?.subscribers || [],
@@ -240,7 +251,7 @@ async function main() {
         await observeSide(target, role, output);
         return;
     }
-    const output = path.join(root, 'testbed/artifacts/final-shared-filter-storage-C84-1A7.json');
+    const output = path.join(root, 'testbed/artifacts/final-shared-filter-storage-0C30-1A7.json');
     const sides = {};
     for (const target of ['mobile', 'pc']) {
         sides[target] = {};

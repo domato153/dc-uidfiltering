@@ -77,7 +77,7 @@
         "classification": "presentation-source",
         "layer": "presentation-ui",
         "boundaryState": "mixed",
-        "responsibility": "Contains only the legacy mobile host palette selector rail selected explicitly by the mobile build; semantic-marker conversion remains pending.",
+        "responsibility": "Contains the remaining legacy mobile host palette rail and composes the five existing header presentation owners' hoisted pure palette builders at the unchanged early theme phase; no raw header palette selector remains here. Semantic-marker conversion remains pending.",
         "sourceRefs": ["src/targets/mobile/theme-host-style.js"],
         "contractRefs": ["host-dom-events", "target-isolation", "ui-ownership"],
         "fitnessRefs": ["invariant-one-visual-owner", "invariant-pc-host-style-isolation", "invariant-build-inputs-mapped"],
@@ -103,7 +103,7 @@
         "classification": "mixed-runtime-source",
         "layer": "target-adapter",
         "boundaryState": "mixed",
-        "responsibility": "Owns mobile-only filter host CSS partitioning and legacy lazy style injection; shared FilterModule runtime no longer lives in this source.",
+        "responsibility": "Owns mobile-only filter host CSS partitioning and legacy lazy injection; composes the shell/GNB reset and drawer native-door concealment pure payloads into the unchanged core phase rather than owning their raw selectors. Shared FilterModule runtime is separate; page-canvas and minor-intro dark rules remain here.",
         "sourceRefs": ["src/targets/mobile/filter-module.js"],
         "contractRefs": ["filter-semantics", "host-dom-events", "ui-ownership", "target-isolation"],
         "fitnessRefs": ["invariant-ui-port-boundary", "invariant-one-visual-owner", "invariant-pc-host-style-isolation", "invariant-build-inputs-mapped"],
@@ -269,7 +269,7 @@
         "classification": "presentation-source",
         "layer": "presentation-ui",
         "boundaryState": "mixed",
-        "responsibility": "Owns only the zero-delta typea header shell, inner head, logo, search-wrap, top-search, login-links, and matching dark-shell rules through reversible host roles; inherited important declarations and one typea host-class qualifier retain the exact prior cascade as transitional debt.",
+        "responsibility": "Owns zero-delta typea shell/head/logo/search/login/dark layout, shell palette rules, and the inherited broad dcheader reset through pure hoisted builders at the original theme/core phases. The reset preserves unprojected and non-typea host coverage. Inherited important declarations, raw selectors, and the typea qualifier remain transitional cascade debt.",
         "sourceRefs": ["src/targets/mobile/header-shell-presenter.js"],
         "contractRefs": ["ui-ownership", "semantic-preservation", "host-dom-events"],
         "fitnessRefs": ["invariant-one-visual-owner", "invariant-ui-port-boundary", "invariant-build-inputs-mapped"],
@@ -295,7 +295,7 @@
         "classification": "presentation-source",
         "layer": "presentation-ui",
         "boundaryState": "mixed",
-        "responsibility": "Owns only the zero-delta list/view gallery page-head geometry, direct left/right alignment, and clearfix pseudo-element through reversible host roles; inherited important declarations remain transitional host-cascade debt until the full header visual transition.",
+        "responsibility": "Owns zero-delta list/view page-head geometry, left/right alignment, and clearfix through reversible roles, plus page-head border/search/title/badge/sprite palette rules via a hoisted pure builder. Raw palette selectors and inherited important declarations remain transitional host-cascade debt until full-header promotion.",
         "sourceRefs": ["src/targets/mobile/gallery-page-head-presenter.js"],
         "contractRefs": ["ui-ownership", "semantic-preservation", "host-dom-events"],
         "fitnessRefs": ["invariant-one-visual-owner", "invariant-ui-port-boundary", "invariant-build-inputs-mapped"],
@@ -321,7 +321,7 @@
         "classification": "presentation-source",
         "layer": "presentation-ui",
         "boundaryState": "mixed",
-        "responsibility": "Owns only the three zero-delta GNB layout rules through adapter-projected semantic roles; inherited important declarations remain transitional host-cascade debt until the full header visual transition.",
+        "responsibility": "Owns zero-delta GNB semantic layout, accent/next-icon palette rules, and the inherited broad GNB reset through pure hoisted builders at the original theme/core phases. Unprojected host coverage, raw selectors, and inherited important declarations remain transitional cascade debt.",
         "sourceRefs": ["src/targets/mobile/header-gnb-presenter.js"],
         "contractRefs": ["ui-ownership", "semantic-preservation", "host-dom-events"],
         "fitnessRefs": ["invariant-one-visual-owner", "invariant-ui-port-boundary", "invariant-build-inputs-mapped"],
@@ -347,7 +347,7 @@
         "classification": "presentation-source",
         "layer": "presentation-ui",
         "boundaryState": "mixed",
-        "responsibility": "Owns the single zero-delta recent-visit light/dark CSS payload through adapter-projected semantic roles; inherited important declarations remain transitional cascade debt until the full header visual transition.",
+        "responsibility": "Owns zero-delta recent-visit light/dark layout through semantic roles and its title/open/active-link palette payload via a hoisted pure builder at the unchanged theme phase. Raw palette selectors and inherited important declarations remain transitional cascade debt.",
         "sourceRefs": ["src/targets/mobile/header-recent-visit-presenter.js"],
         "contractRefs": ["ui-ownership", "semantic-preservation", "host-dom-events"],
         "fitnessRefs": ["invariant-one-visual-owner", "invariant-ui-port-boundary", "invariant-build-inputs-mapped"],
@@ -373,7 +373,7 @@
         "classification": "presentation-source",
         "layer": "presentation-ui",
         "boundaryState": "mixed",
-        "responsibility": "Owns one list gallery-door style payload for the DCUF toggle and adapter-marked original issue and top-recommendation roots, their original rank/tip popup states, and native relation popup. It provides viewport-bound stacking, narrow and short popup containment, and responsive top-recommendation child layout without repainting native popup interiors or adding important declarations. Inherited header cascade debt remains pending a full visual-owner audit.",
+        "responsibility": "Owns gallery-door presentation for the DCUF toggle, original issue/recommendation roots, rank/tip states, and relation popup, plus the original issue root's palette accent and the inherited pre-projection closed-state concealment via hoisted pure builders. Concealment composes into the original core phase on all prior routes; open/popup-only styling retains its existing list phase. It preserves viewport-bound stacking, popup containment, native ancestry/interiors, and recommendation layout. Raw selectors and inherited header cascade debt remain pending full promotion.",
         "sourceRefs": ["src/targets/mobile/header-drawer-presenter.js"],
         "contractRefs": ["ui-ownership", "semantic-preservation", "host-dom-events"],
         "fitnessRefs": ["invariant-one-visual-owner", "invariant-ui-port-boundary", "invariant-build-inputs-mapped"],
@@ -509,8 +509,8 @@
         "classification": "verification",
         "layer": "verification",
         "boundaryState": "verification",
-        "responsibility": "Runs exact immediate-control and candidate browsers separately for header shell, gallery page head, GNB, recent visits, and gallery drawer, preserving native topology, events, focus, hit-testing, computed style, responsive geometry, replacement, and artifact-bound zero-delta observations.",
-        "sourceRefs": ["testbed/run-header-shell-differential.mjs", "testbed/run-gallery-page-head-differential.mjs", "testbed/run-header-gnb-differential.mjs", "testbed/run-header-recent-visit-differential.mjs", "testbed/run-header-drawer-differential.mjs"],
+        "responsibility": "Runs exact immediate-control and candidate browsers separately for header shell, gallery page head, GNB, recent visits, and gallery drawer, preserving native topology, events, focus, hit-testing, computed style, responsive geometry, replacement, and artifact-bound zero-delta observations; records guarded cascade-debt inventories, all-palette recent-title fallback/projection/recovery, and GNB reset phase/recovery contracts with reversible negative controls, without promoting a mixed owner.",
+        "sourceRefs": ["testbed/run-header-shell-differential.mjs", "testbed/run-gallery-page-head-differential.mjs", "testbed/run-header-gnb-differential.mjs", "testbed/run-header-recent-visit-differential.mjs", "testbed/run-header-drawer-differential.mjs", "testbed/run-header-cascade-audit.mjs"],
         "contractRefs": ["proof-integrity", "semantic-preservation", "artifact-lineage", "host-dom-events"],
         "fitnessRefs": ["invariant-proof-binding", "invariant-runtime-guard", "invariant-host-node-preservation", "invariant-hot-path-stability"]
       },
@@ -814,6 +814,54 @@
         "from": "mobile-theme-host-style",
         "to": "mobile-theme-module",
         "kind": "target-style-input"
+      },
+      {
+        "id": "rel-header-shell-palette-composition",
+        "from": "mobile-header-shell-presenter",
+        "to": "mobile-theme-host-style",
+        "kind": "explicit-style-input"
+      },
+      {
+        "id": "rel-header-shell-reset-composition",
+        "from": "mobile-header-shell-presenter",
+        "to": "mobile-filter-module",
+        "kind": "explicit-style-input"
+      },
+      {
+        "id": "rel-header-gnb-reset-composition",
+        "from": "mobile-header-gnb-presenter",
+        "to": "mobile-filter-module",
+        "kind": "explicit-style-input"
+      },
+      {
+        "id": "rel-gallery-page-head-palette-composition",
+        "from": "mobile-gallery-page-head-presenter",
+        "to": "mobile-theme-host-style",
+        "kind": "explicit-style-input"
+      },
+      {
+        "id": "rel-header-gnb-palette-composition",
+        "from": "mobile-header-gnb-presenter",
+        "to": "mobile-theme-host-style",
+        "kind": "explicit-style-input"
+      },
+      {
+        "id": "rel-header-recent-visit-palette-composition",
+        "from": "mobile-header-recent-visit-presenter",
+        "to": "mobile-theme-host-style",
+        "kind": "explicit-style-input"
+      },
+      {
+        "id": "rel-header-drawer-palette-composition",
+        "from": "mobile-header-drawer-presenter",
+        "to": "mobile-theme-host-style",
+        "kind": "explicit-style-input"
+      },
+      {
+        "id": "rel-header-drawer-visibility-composition",
+        "from": "mobile-header-drawer-presenter",
+        "to": "mobile-filter-module",
+        "kind": "explicit-style-input"
       },
       {
         "id": "rel-pc-theme-style-presenter",

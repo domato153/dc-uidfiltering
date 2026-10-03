@@ -1,3 +1,13 @@
+    // Hoisted to preserve the existing early palette injection phase.
+    function __dcufBuildHeaderRecentVisitThemeCss(ROOT_ATTRIBUTE) {
+        return `
+        html[${ROOT_ATTRIBUTE}] body .newvisit_history > .tit,
+        html[${ROOT_ATTRIBUTE}] body .newvisit_history > :is(.btn_open, .bnt_newvisit_more),
+        html[${ROOT_ATTRIBUTE}] body .newvisit_history .newvisit_list a.on {
+            color: var(--dcuf-theme-accent) !important;
+        }
+`;
+    }
     const __dcufHeaderRecentVisitPresenter = (() => {
         const style = Object.freeze({
             key: 'header-recent-visit',
@@ -16,6 +26,6 @@
         .dc-filter-dark-mode [data-dcuf-header-recent-visit-role="root"] > [data-dcuf-header-recent-visit-role="title"] { color: #e0e0e0 !important; }
 `
         });
-        return Object.freeze({ style });
+        return Object.freeze({ style, buildThemeCss: __dcufBuildHeaderRecentVisitThemeCss });
     })();
     __dcufRoot.__dcufHeaderRecentVisitPresenter = __dcufHeaderRecentVisitPresenter;

@@ -147,101 +147,11 @@
             color: var(--dcuf-theme-accent) !important;
         }
         /* Host chrome uses the palette only where DCInside itself uses its fixed blue accent. */
-        html[${ROOT_ATTRIBUTE}] body .dcheader.typea,
-        html[${ROOT_ATTRIBUTE}] body .page_head {
-            border-color: var(--dcuf-theme-border-strong) !important;
-        }
-        html[${ROOT_ATTRIBUTE}] body .gnb_bar,
-        html[${ROOT_ATTRIBUTE}] body .dchead .top_search,
-        html[${ROOT_ATTRIBUTE}] body .dchead .top_search .bnt_search,
-        html[${ROOT_ATTRIBUTE}] body .dchead .top_search button.sp_img.bnt_search,
-        html[${ROOT_ATTRIBUTE}] body .dchead .area_links .btn_login,
-        html[${ROOT_ATTRIBUTE}] body .dchead .area_links .btn_top_loginout,
-        html[${ROOT_ATTRIBUTE}] body .page_head :is(.gall_search, .gall_search_box, .inner_search) :is(.btn_search, .bnt_search, button[type="submit"]),
-        html[${ROOT_ATTRIBUTE}] body .page_head > .fl form :is(.btn_search, .bnt_search, button[type="submit"]) {
-            border-color: var(--dcuf-theme-accent-strong) !important;
-            background-color: var(--dcuf-theme-accent-strong) !important;
-            background-image: none !important;
-            color: var(--dcuf-theme-on-accent) !important;
-        }
-        html[${ROOT_ATTRIBUTE}] body .dchead .top_search {
-            box-shadow: inset 0 0 0 1px var(--dcuf-theme-accent-strong) !important;
-        }
-        html[${ROOT_ATTRIBUTE}] body .dchead .top_search :is(input, .inner_search) {
-            border-color: var(--dcuf-theme-accent-strong) !important;
-        }
-        html[${ROOT_ATTRIBUTE}] body .dchead .top_search .bnt_search::before,
-        html[${ROOT_ATTRIBUTE}] body .dchead .top_search button.sp_img.bnt_search::before {
-            content: "" !important;
-            display: block !important;
-            width: 12px !important;
-            height: 12px !important;
-            margin: auto !important;
-            border: 3px solid var(--dcuf-theme-on-accent) !important;
-            border-radius: 50% !important;
-            box-shadow: 7px 7px 0 -5px var(--dcuf-theme-on-accent) !important;
-        }
-        html[${ROOT_ATTRIBUTE}] body .page_head :is(h2, h2 a, .gall_tit, .gall_tit a, .gallery_title, .gallery_title a),
-        html[${ROOT_ATTRIBUTE}] body .newvisit_history > .tit,
-        html[${ROOT_ATTRIBUTE}] body .newvisit_history > :is(.btn_open, .bnt_newvisit_more),
-        html[${ROOT_ATTRIBUTE}] body .newvisit_history .newvisit_list a.on {
-            color: var(--dcuf-theme-accent) !important;
-        }
-        html[${ROOT_ATTRIBUTE}] body .page_head :is(.icon_mini, .mini_icon, .gallery_badge) {
-            border-color: var(--dcuf-theme-accent) !important;
-            color: var(--dcuf-theme-accent) !important;
-        }
-        html[${ROOT_ATTRIBUTE}] body .page_head .pagehead_titicon:is(.mgall, .ngall).sp_img,
-        html[${ROOT_ATTRIBUTE}] body .page_head h2 a > .pagehead_titicon:is(.mgall, .ngall).sp_img {
-            display: inline-flex !important;
-            width: 26px !important;
-            height: 20px !important;
-            margin-left: 5px !important;
-            align-items: center !important;
-            justify-content: center !important;
-            border: 2px solid var(--dcuf-theme-accent) !important;
-            border-radius: 2px !important;
-            background: none !important;
-            background-image: none !important;
-            background-position: 0 0 !important;
-            text-indent: 0 !important;
-            overflow: hidden !important;
-            color: var(--dcuf-theme-accent) !important;
-            font-size: 0 !important;
-            line-height: 1 !important;
-            box-sizing: border-box !important;
-            vertical-align: middle !important;
-        }
-        html[${ROOT_ATTRIBUTE}] body .page_head .pagehead_titicon:is(.mgall, .ngall).sp_img::before,
-        html[${ROOT_ATTRIBUTE}] body .page_head h2 a > .pagehead_titicon:is(.mgall, .ngall).sp_img::before {
-            content: "m" !important;
-            font: 900 12px/1 Arial, sans-serif !important;
-            text-transform: lowercase !important;
-        }
-        html[${ROOT_ATTRIBUTE}] body[data-fixture-variant="mini"] .page_head .pagehead_titicon:is(.mgall, .ngall).sp_img::before,
-        html[${ROOT_ATTRIBUTE}] body:has(#top.miniwrap) .page_head .pagehead_titicon:is(.mgall, .ngall).sp_img::before,
-        html[${ROOT_ATTRIBUTE}] body .miniwrap .page_head .pagehead_titicon:is(.mgall, .ngall).sp_img::before,
-        html[${ROOT_ATTRIBUTE}] body .page_head .pagehead_titicon.ngall.sp_img::before {
-            content: "mi" !important;
-            font-size: 10px !important;
-        }
-        html[${ROOT_ATTRIBUTE}] body .gnb_bar .sp_img.icon_next {
-            display: inline-block !important;
-            width: 0 !important;
-            height: 0 !important;
-            margin-left: 8px !important;
-            border: 0 solid transparent !important;
-            border-right-width: 7px !important;
-            border-left-width: 7px !important;
-            border-top: 10px solid var(--dcuf-theme-on-accent) !important;
-            background: none !important;
-            filter: none !important;
-            vertical-align: middle !important;
-        }
-        html[${ROOT_ATTRIBUTE}] body .issue_wrap {
-            border-top-color: var(--dcuf-theme-accent) !important;
-            box-shadow: inset 0 2px 0 color-mix(in srgb, var(--dcuf-theme-accent) 78%, transparent) !important;
-        }
+        ${__dcufBuildHeaderShellThemeCss(ROOT_ATTRIBUTE)}
+        ${__dcufBuildHeaderGnbThemeCss(ROOT_ATTRIBUTE)}
+        ${__dcufBuildGalleryPageHeadThemeCss(ROOT_ATTRIBUTE)}
+        ${__dcufBuildHeaderRecentVisitThemeCss(ROOT_ATTRIBUTE)}
+        ${__dcufBuildHeaderDrawerThemeCss(ROOT_ATTRIBUTE)}
 
         html[${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode #dc-personal-block-fab {
             border-color: color-mix(in srgb, var(--dcuf-theme-accent) 45%, transparent) !important;

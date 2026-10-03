@@ -146,13 +146,26 @@
             return result;
         }
 
-        const item = items[0];
+        let representativeIndex = 0;
+        let itemStyle = window.getComputedStyle(items[0]);
+        if (itemStyle.display === 'none') {
+            for (let index = 1; index < items.length; index += 1) {
+                const candidateStyle = window.getComputedStyle(items[index]);
+                if (candidateStyle.display !== 'none') {
+                    representativeIndex = index;
+                    itemStyle = candidateStyle;
+                    break;
+                }
+            }
+        }
+        const item = items[representativeIndex];
         const listStyle = window.getComputedStyle(list);
-        const itemStyle = window.getComputedStyle(item);
         const detail = {
             reason,
             itemCount: items.length,
             listSurface: list.getAttribute('data-dcuf-surface'),
+            firstItemSurface: items[0].getAttribute('data-dcuf-surface'),
+            representativeIndex,
             itemSurface: item.getAttribute('data-dcuf-surface'),
             listDisplay: listStyle.display,
             itemDisplay: itemStyle.display,
@@ -163,13 +176,13 @@
         };
 
         let failureReason = null;
-        if (detail.listSurface !== 'list-container' || detail.itemSurface !== 'list-item') {
+        if (detail.listSurface !== 'list-container' || detail.firstItemSurface !== 'list-item' || detail.itemSurface !== 'list-item') {
             failureReason = 'missing-semantic-owner';
         } else if (detail.listDisplay === 'none' || detail.itemDisplay === 'none') {
             failureReason = 'hidden-list-surface';
         } else if (detail.itemRadius > 1 || detail.itemMarginBottom > 1) {
             failureReason = 'row-card-drift';
-        } else if (detail.itemCount > 1 && detail.itemBorderBottom < 1) {
+        } else if (representativeIndex < items.length - 1 && detail.itemBorderBottom < 1) {
             failureReason = 'missing-row-separator';
         } else if (detail.semanticControls === 0) {
             failureReason = 'missing-semantic-controls';
@@ -2567,6 +2580,10 @@
         const wrapStyle = window.getComputedStyle(viewWrap);
         const headStyle = window.getComputedStyle(head);
         const contentStyle = window.getComputedStyle(content);
+        const contentIsModernBody = !contentIsWritingBox
+            && viewWrap.getAttribute('data-dcuf-surface') === 'article-recommendation'
+            && content.getAttribute('data-dcuf-role') === 'article-body';
+        const contentStyleOwnerPresent = document.getElementById('dcuf-article-presenter') instanceof HTMLStyleElement;
         const includeExtendedSurfaces = mode !== 'core';
         const recommendBox = includeExtendedSurfaces ? viewWrap.querySelector('.btn_recommend_box') : null;
         const recommendBoxStyle = recommendBox instanceof HTMLElement ? window.getComputedStyle(recommendBox) : null;
@@ -2593,6 +2610,10 @@
             headBoxShadow: headStyle.boxShadow,
             headHasRenderableBorder: hasRenderableBorder(headStyle),
             contentVariant: contentIsWritingBox ? 'writing-view-box' : 'gallview-contents',
+            contentOwner: content.getAttribute('data-dcuf-role'),
+            contentStyleOwnerPresent,
+            contentPaddingTop: toPixelValue(contentStyle.paddingTop),
+            contentPaddingBottom: toPixelValue(contentStyle.paddingBottom),
             contentRadius: toPixelValue(contentStyle.borderRadius),
             contentBackgroundColor: contentStyle.backgroundColor,
             contentBackgroundImage: contentStyle.backgroundImage,
@@ -2624,7 +2645,11 @@
         };
 
         let failureReason = null;
-        if (Math.max(detail.wrapPaddingLeft, detail.wrapPaddingRight) < 8) {
+        if (!contentIsWritingBox && !contentIsModernBody) {
+            failureReason = 'missing-content-owner';
+        } else if (!contentIsWritingBox && !contentStyleOwnerPresent) {
+            failureReason = 'missing-content-style-owner';
+        } else if (Math.max(detail.wrapPaddingLeft, detail.wrapPaddingRight) < 8) {
             failureReason = 'insufficient-wrap-padding';
         } else if (detail.headRadius < 16) {
             failureReason = 'insufficient-head-radius';
@@ -2632,12 +2657,12 @@
             failureReason = 'missing-head-elevation';
         } else if (headStyle.backgroundImage === 'none' && isTransparentColor(detail.headBackgroundColor)) {
             failureReason = 'transparent-head-background';
-        } else if (!contentIsWritingBox && detail.contentRadius < 16) {
-            failureReason = 'insufficient-content-radius';
-        } else if (!contentIsWritingBox && contentStyle.boxShadow === 'none') {
-            failureReason = 'missing-content-elevation';
-        } else if (!contentIsWritingBox && contentStyle.backgroundImage === 'none' && isTransparentColor(detail.contentBackgroundColor)) {
-            failureReason = 'transparent-content-background';
+        } else if (!contentIsWritingBox && (detail.contentPaddingTop < 16 || detail.contentPaddingBottom < 16)) {
+            failureReason = 'insufficient-content-padding';
+        } else if (!contentIsWritingBox && (detail.contentRadius > 1 || contentStyle.boxShadow !== 'none'
+            || contentStyle.backgroundImage !== 'none' || !isTransparentColor(detail.contentBackgroundColor)
+            || detail.contentHasRenderableBorder)) {
+            failureReason = 'content-card-drift';
         } else if (includeExtendedSurfaces && recommendBox instanceof HTMLElement && detail.recommendBoxRadius < 16) {
             failureReason = 'insufficient-recommend-radius';
         } else if (includeExtendedSurfaces && recommendBox instanceof HTMLElement && recommendBoxStyle.boxShadow === 'none') {

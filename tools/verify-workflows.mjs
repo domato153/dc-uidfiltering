@@ -11,7 +11,7 @@ function check(condition, message) {
     if (!condition) failures.push(message);
 }
 
-check(JSON.stringify(files) === JSON.stringify(['development-ci.yml', 'promotion-windows.yml', 'release-mobile.yml']), `unexpected workflow set: ${files.join(', ')}`);
+check(JSON.stringify(files) === JSON.stringify(['development-ci.yml', 'live-site-canary.yml', 'promotion-windows.yml', 'release-mobile.yml']), `unexpected workflow set: ${files.join(', ')}`);
 for (const file of files) {
     const text = await readFile(path.join(workflowsDir, file), 'utf8');
     check(!/pull_request_target\s*:/.test(text), `${file}: pull_request_target is forbidden`);
@@ -39,6 +39,17 @@ const promotion = await readFile(path.join(workflowsDir, 'promotion-windows.yml'
 check(promotion.includes('runs-on: windows-2025'), 'promotion verification must run on windows-2025');
 check(promotion.includes('source_sha:'), 'promotion verification requires an exact source_sha input');
 
+const live = await readFile(path.join(workflowsDir, 'live-site-canary.yml'), 'utf8');
+check(live.includes('workflow_dispatch:') && !/^  (?:push|pull_request|schedule):/m.test(live), 'live site is manual-only, not a network-dependent deterministic gate');
+check(live.includes('runs-on: ubuntu-24.04') && live.includes('timeout-minutes: 20'), 'live canary requires a bounded hosted runner');
+check(live.includes('permissions:\n  contents: read') && !live.includes('contents: write') && !live.includes('secrets.'), 'live canary must not publish or receive secrets');
+check(live.includes('persist-credentials: false') && live.includes('ref: ${{ env.CANDIDATE_SHA }}'), 'live canary checkout must be exact and credential-free');
+check(live.includes('test "$(git rev-parse HEAD)" = "${EXPECTED_SHA}"') && live.includes('^[0-9a-f]{40}$'), 'live canary requires exact SHA validation');
+check(live.includes('node tools/prepare-live-extension.mjs') && !live.includes('--discover'), 'live extension package must be explicitly pinned');
+check(live.includes('xvfb-run -a node testbed/run-live-site-canary.mjs') && live.includes('--headed'), 'live canary must run the actual full desktop browser');
+check(!live.includes('continue-on-error:'), 'live failures cannot be hidden as success');
+check(live.includes('testbed/artifacts/live-site-canary/*.png') && !live.includes('testbed/artifacts/**'), 'live evidence upload must exclude profiles, extension payloads, and raw stores');
+
 const release = await readFile(path.join(workflowsDir, 'release-mobile.yml'), 'utf8');
 check(release.includes('environment: mobile-release'), 'release publication must use the mobile-release environment');
 check(release.includes('contents: write'), 'release publish job must explicitly request contents: write');
@@ -46,6 +57,24 @@ check(release.includes("if: inputs.publish_confirmation == 'PUBLISH'"), 'release
 check(release.includes('persist-credentials: false'), 'release prepare checkout must not persist write credentials');
 check(release.includes('WORKFLOW_REF') && release.includes('refs/heads/main'), 'release workflow must reject a non-main control plane');
 check(release.includes('actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093'), 'release artifact download action pin changed');
+
+const gates = JSON.parse(await readFile(path.join(rootDir, 'verification/gates.json'), 'utf8'));
+for (const [profile, buildId, output] of [
+    ['acceptance', 'mobile-build', 'testbed/artifacts/acceptance-header-recent-title-contract.json'],
+    ['promotion-windows', 'mobile-build-runtime', 'testbed/artifacts/windows-header-recent-title-contract.json'],
+]) {
+    const commands = gates.profiles?.[profile]?.commands || [];
+    const index = commands.findIndex(({ id }) => id === 'header-recent-title-contract');
+    const mobileBuildIndex = commands.findIndex(({ id }) => id === buildId);
+    const pcBuildIndex = commands.findIndex(({ id }) => id === 'pc-build-runtime');
+    check(index >= 0 && commands.filter(({ id }) => id === 'header-recent-title-contract').length === 1,
+        `${profile}: exactly one recent-title contract gate is required`);
+    check(mobileBuildIndex >= 0 && pcBuildIndex >= 0 && index === mobileBuildIndex + 1 && index < pcBuildIndex,
+        `${profile}: recent-title contract must run immediately after the mobile guard build, before PC replaces it`);
+    check(commands[index]?.command === 'node' && JSON.stringify(commands[index]?.args)
+        === JSON.stringify(['testbed/run-header-cascade-audit.mjs', '--recent-title-contract', '--gnb-reset-contract', '--require-runtime-under-test', '--output', output]),
+    `${profile}: recent-title/GNB gate modes, runtime guard, and separate report path must be preserved`);
+}
 
 const packages = JSON.parse(await readFile(path.join(rootDir, 'package.json'), 'utf8'));
 const testbed = JSON.parse(await readFile(path.join(rootDir, 'testbed', 'package.json'), 'utf8'));

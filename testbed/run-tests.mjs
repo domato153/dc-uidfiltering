@@ -1763,6 +1763,208 @@ mobileTest('호스트 숨김 설문·광고 행이 미러 목록에 노출되지
     } finally { await session.close(); }
 });
 
+mobileTest('숨김 첫 행을 보존해도 목록 테마와 뷰 복구가 완료된다', 'functional', async ({ browser, server }) => {
+    for (const pathname of ['/board/view?id=test&no=1001', '/mgallery/board/view?id=test&no=1001', '/board/lists?id=test']) {
+        const session = await createTestPage(browser, server.baseUrl, { storage: noStatsStorage });
+        try {
+            await session.goto(pathname);
+            await session.page.waitForFunction(() => document.querySelectorAll('.custom-mobile-list .custom-post-item').length > 0);
+            const state = await session.page.evaluate(() => {
+                const hostFirst = document.querySelector('tr[data-fixture-host-css-hidden="1"]');
+                const list = document.querySelector('.custom-mobile-list');
+                const items = Array.from(list?.querySelectorAll('.custom-post-item') || []);
+                const first = items[0];
+                const positiveAreaItems = items.filter((item) => {
+                    const rect = item.getBoundingClientRect();
+                    return getComputedStyle(item).display !== 'none' && rect.width > 0 && rect.height > 0;
+                }).length;
+                return {
+                    hostId: hostFirst?.getAttribute('data-custom-row-id'),
+                    mirrorId: first?.getAttribute('data-custom-row-id'),
+                    hostDisplay: hostFirst ? getComputedStyle(hostFirst).display : null,
+                    mirrorDisplay: first ? getComputedStyle(first).display : null,
+                    itemCount: items.length,
+                    positiveAreaItems,
+                    verify: window.__dcufPhase1Theme?.verify(list)
+                };
+            });
+            assert.equal(state.hostId && state.hostId === state.mirrorId, true, `${pathname}: ${JSON.stringify(state)}`);
+            assert.equal(state.hostDisplay, 'none', `${pathname}: ${JSON.stringify(state)}`);
+            assert.equal(state.mirrorDisplay, 'none', `${pathname}: ${JSON.stringify(state)}`);
+            assert.equal(state.positiveAreaItems > 0, true, `${pathname}: ${JSON.stringify(state)}`);
+            assert.equal(state.verify?.ready, true, `${pathname}: ${JSON.stringify(state)}`);
+            if (pathname.includes('/view')) {
+                await session.page.waitForFunction(() => ['completed', 'timeout'].includes(window.__dcufRevealDebug?.recovery?.status), null, { timeout: 7000 });
+                const recovery = await session.page.evaluate(() => window.__dcufRevealDebug.recovery);
+                assert.equal(recovery.status, 'completed', `${pathname}: ${JSON.stringify(recovery)}`);
+                assert.equal(recovery.reason, 'ready', `${pathname}: ${JSON.stringify(recovery)}`);
+                assert.equal(recovery.active, false, `${pathname}: ${JSON.stringify(recovery)}`);
+            }
+            assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
+        } finally { await session.close(); }
+    }
+});
+
+mobileTest('목록 테마 검증은 비어 있거나 전부 숨긴 목록과 스타일 누락을 거부한다', 'functional', async ({ browser, server }) => {
+    const session = await createTestPage(browser, server.baseUrl, { storage: noStatsStorage });
+    try {
+        await session.goto('/board/view?id=test&no=1001');
+        await session.page.waitForFunction(() => document.querySelectorAll('.custom-mobile-list .custom-post-item').length === 51);
+        const result = await session.page.evaluate(() => {
+            const verify = window.__dcufPhase1Theme.verify;
+            const list = document.querySelector('.custom-mobile-list');
+            const items = Array.from(list.querySelectorAll('.custom-post-item'));
+            const initialOrder = items.map((item) => item.getAttribute('data-custom-row-id'));
+            const absent = verify(document.createElement('section'));
+            const emptyList = document.createElement('div');
+            emptyList.className = 'custom-mobile-list';
+            const empty = verify(emptyList);
+            const visibleItem = items.find((item) => getComputedStyle(item).display !== 'none');
+            const visibleStyle = visibleItem.style.cssText;
+            visibleItem.style.setProperty('border-bottom-width', '0px', 'important');
+            const unstyled = verify(list);
+            visibleItem.style.cssText = visibleStyle;
+            const firstSurface = items[0].getAttribute('data-dcuf-surface');
+            items[0].removeAttribute('data-dcuf-surface');
+            const missingHiddenOwner = verify(list);
+            items[0].setAttribute('data-dcuf-surface', firstSurface);
+            const originalStyles = items.map((item) => item.style.cssText);
+            items.slice(0, -1).forEach((item) => item.style.setProperty('display', 'none', 'important'));
+            const onlyLastVisible = verify(list);
+            items.forEach((item, index) => { item.style.cssText = originalStyles[index]; });
+            items.forEach((item) => item.style.setProperty('display', 'none', 'important'));
+            const allHidden = verify(list);
+            items.forEach((item, index) => { item.style.cssText = originalStyles[index]; });
+            const restored = verify(list);
+            return {
+                absent: absent.reason,
+                empty: empty.reason,
+                unstyled: { reason: unstyled.reason, borderBottom: unstyled.detail?.itemBorderBottom },
+                missingHiddenOwner: missingHiddenOwner.reason,
+                onlyLastVisible: { reason: onlyLastVisible.reason, borderBottom: onlyLastVisible.detail?.itemBorderBottom },
+                allHidden: allHidden.reason,
+                restored: restored.reason,
+                orderPreserved: items.every((item, index) => item.getAttribute('data-custom-row-id') === initialOrder[index]),
+                firstDisplay: getComputedStyle(items[0]).display
+            };
+        });
+        assert.equal(result.absent, 'waiting-list', JSON.stringify(result));
+        assert.equal(result.empty, 'waiting-items', JSON.stringify(result));
+        assert.equal(result.unstyled.borderBottom < 1, true, JSON.stringify(result));
+        assert.equal(result.unstyled.reason, 'missing-row-separator', JSON.stringify(result));
+        assert.equal(result.missingHiddenOwner, 'missing-semantic-owner', JSON.stringify(result));
+        assert.equal(result.onlyLastVisible.borderBottom < 1, true, JSON.stringify(result));
+        assert.equal(result.onlyLastVisible.reason, 'ready', JSON.stringify(result));
+        assert.equal(result.allHidden, 'hidden-list-surface', JSON.stringify(result));
+        assert.equal(result.restored, 'ready', JSON.stringify(result));
+        assert.equal(result.orderPreserved, true, JSON.stringify(result));
+        assert.equal(result.firstDisplay, 'none', JSON.stringify(result));
+        assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
+    } finally { await session.close(); }
+});
+
+mobileTest('현재 공개 뷰 형태의 평평한 본문과 하단 목록도 복구를 완료한다', 'functional', async ({ browser, server }) => {
+    for (const variant of ['major', 'minor']) {
+        const route = variant === 'minor' ? '/mgallery/board/view' : '/board/view';
+        for (const { width, dark } of [{ width: 390, dark: false }, { width: 1120, dark: false }, { width: 390, dark: true }]) {
+            const session = await createTestPage(browser, server.baseUrl, {
+                storage: noStatsStorage, viewport: { width, height: 900 }
+            });
+            const pathname = `${route}?id=test&no=1001&live-shape=1${dark ? '&dark-start=1' : ''}`;
+            try {
+                await session.goto(pathname, { waitForReady: false });
+                await session.page.waitForFunction(() => ['completed', 'timeout'].includes(window.__dcufRevealDebug?.recovery?.status), null, { timeout: 8000 });
+                const state = await session.page.evaluate(() => {
+                    const view = document.querySelector('#container > article > div.view_content_wrap');
+                    const content = view?.querySelector('.gallview_contents');
+                    const listWrap = document.querySelector('#bottom_listwrap .gall_listwrap.list');
+                    const host = Array.from(listWrap?.querySelectorAll('table.gall_list tbody tr.ub-content') || []);
+                    const mirror = Array.from(listWrap?.querySelectorAll('.custom-mobile-list .custom-post-item') || []);
+                    const firstBox = mirror[0]?.getBoundingClientRect();
+                    return {
+                        hasViewBottom: Boolean(document.querySelector('.view_bottom')),
+                        hasView: Boolean(view),
+                        contentRole: content?.getAttribute('data-dcuf-role'),
+                        contentRadius: content ? getComputedStyle(content).borderRadius : null,
+                        hasBottomList: Boolean(listWrap),
+                        hostCount: host.length,
+                        mirrorCount: mirror.length,
+                        firstHostDisplay: host[0] ? getComputedStyle(host[0]).display : null,
+                        firstMirrorDisplay: mirror[0] ? getComputedStyle(mirror[0]).display : null,
+                        firstMirrorArea: firstBox ? [firstBox.width, firstBox.height] : null,
+                        sameOrder: host.length === mirror.length && host.every((row, index) =>
+                            row.getAttribute('data-custom-row-id') === mirror[index]?.getAttribute('data-custom-row-id')),
+                        positiveMirrors: mirror.filter((item) => {
+                            const box = item.getBoundingClientRect();
+                            return getComputedStyle(item).display !== 'none' && box.width > 0 && box.height > 0;
+                        }).length,
+                        listVerify: window.__dcufPhase1Theme?.verify(listWrap)?.reason,
+                        viewVerify: window.__dcufPhase1ViewTheme?.verify(document, { mode: 'core' })?.reason,
+                        recovery: window.__dcufRevealDebug?.recovery
+                    };
+                });
+                const context = `${pathname} @ ${width} dark=${dark}: ${JSON.stringify(state)}`;
+                assert.equal(state.hasViewBottom, false, context);
+                assert.equal(state.hasView && state.hasBottomList, true, context);
+                assert.equal(state.contentRole, 'article-body', context);
+                assert.equal(state.contentRadius, '0px', context);
+                assert.equal(state.hostCount, 52, context);
+                assert.equal(state.mirrorCount, 52, context);
+                assert.equal(state.firstHostDisplay, 'table-row', context);
+                assert.equal(state.firstMirrorDisplay, 'block', context);
+                assert.equal(state.firstMirrorArea?.every((value) => value > 0), true, context);
+                assert.equal(state.sameOrder && state.positiveMirrors > 0, true, context);
+                assert.equal(state.listVerify, 'ready', context);
+                assert.equal(state.viewVerify, 'ready', context);
+                assert.equal(state.recovery?.status, 'completed', context);
+                assert.equal(state.recovery?.reason, 'ready', context);
+                assert.equal(state.recovery?.active, false, context);
+                assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
+            } finally { await session.close(); }
+        }
+    }
+});
+
+mobileTest('평평한 뷰 본문 검증은 소유권과 실제 스타일 누락을 거부한다', 'functional', async ({ browser, server }) => {
+    const session = await createTestPage(browser, server.baseUrl, { storage: noStatsStorage });
+    try {
+        await session.goto('/board/view?id=test&no=1001&live-shape=1', { waitForReady: false });
+        await session.page.waitForFunction(() => document.querySelector('.gallview_contents')?.getAttribute('data-dcuf-role') === 'article-body'
+            && document.getElementById('dcuf-article-presenter'), null, { timeout: 8000 });
+        const results = await session.page.evaluate(() => {
+            const verify = () => window.__dcufPhase1ViewTheme.verify(document, { mode: 'core' }).reason;
+            const content = document.querySelector('.gallview_contents');
+            const ownerStyle = document.getElementById('dcuf-article-presenter');
+            const ownerParent = ownerStyle.parentNode;
+            const ownerNext = ownerStyle.nextSibling;
+            const originalInline = content.style.cssText;
+            const ready = verify();
+            content.removeAttribute('data-dcuf-role');
+            const missingRole = verify();
+            content.setAttribute('data-dcuf-role', 'article-body');
+            ownerStyle.remove();
+            const missingStyle = verify();
+            ownerParent.insertBefore(ownerStyle, ownerNext);
+            content.style.setProperty('padding-top', '0px', 'important');
+            const missingPadding = verify();
+            content.style.cssText = originalInline;
+            content.style.setProperty('border-radius', '18px', 'important');
+            const cardDrift = verify();
+            content.style.cssText = originalInline;
+            return { ready, missingRole, missingStyle, missingPadding, cardDrift, restored: verify() };
+        });
+        assert.deepEqual(results, {
+            ready: 'ready',
+            missingRole: 'missing-content-owner',
+            missingStyle: 'missing-content-style-owner',
+            missingPadding: 'insufficient-content-padding',
+            cardDrift: 'content-card-drift',
+            restored: 'ready'
+        });
+        assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
+    } finally { await session.close(); }
+});
+
 test('observer와 이벤트 리스너는 중복 사용자 스크립트 주입에도 늘지 않는다', 'functional', async ({ browser, server }) => {
     const session = await createTestPage(browser, server.baseUrl, { storage: noStatsStorage });
     try {
@@ -2158,6 +2360,146 @@ mobileTest('shared popup geometry adapter exclusively owns settings and manageme
         assert.equal(metrics.activeAnimationFrames, 0, JSON.stringify(metrics.activeAnimationFrameDetails));
         assertNoRuntimeErrors(metrics, session.consoleErrors);
     } finally { await session.close(); }
+});
+
+mobileTest('header reset payloads retain one core phase and unmarked host inline collision coverage', 'functional', async ({ browser, server }) => {
+    for (const [route, dark] of [['/mgallery/board/lists?id=test', false], ['/board/view?id=test&no=1001&header=1', true]]) {
+        const session = await createTestPage(browser, server.baseUrl, {
+            storage: noStatsStorage, viewport: { width: 1280, height: 900 },
+        });
+        try {
+            await session.goto(route);
+            await session.page.waitForFunction(() => document.querySelector('.dcheader.typea')
+                ?.getAttribute('data-dcuf-header-shell-role') === 'root'
+                && document.querySelector('.gnb_bar')?.getAttribute('data-dcuf-header-gnb-role') === 'root');
+            if (dark) {
+                await session.page.evaluate(() => window.__dcufFixture.toggleDark(true));
+                await session.page.waitForFunction(() => document.body.classList.contains('dc-filter-dark-mode'));
+            }
+            const state = await session.page.evaluate(() => {
+                const builders = [window.__dcufHeaderShellPresenter?.buildResetCss,
+                    window.__dcufHeaderGnbPresenter?.buildResetCss];
+                if (!builders.every((builder) => typeof builder === 'function')) return { presenterOwned: false };
+                const roots = [document.querySelector('.dcheader.typea'), document.querySelector('.gnb_bar')];
+                const properties = ['width', 'min-width', 'float', 'position', 'box-sizing', 'margin', 'padding'];
+                const matches = (selector) => Array.from(document.styleSheets).flatMap((sheet) => {
+                    try {
+                        return Array.from(sheet.cssRules).filter((rule) => rule.selectorText?.split(',')
+                            .some((part) => part.trim() === selector)).map((rule) => ({ sheet, rule }));
+                    } catch { return []; }
+                });
+                const resetRules = ['.dcheader', '.gnb_bar'].map(matches);
+                const coreRule = matches('#top').find(({ rule }) => rule.selectorText.split(',')
+                    .some((part) => part.trim() === 'html'));
+                const computed = (element) => {
+                    const style = getComputedStyle(element);
+                    const box = element.getBoundingClientRect();
+                    return { positive: box.width > 0 && box.height > 0,
+                        minWidth: style.minWidth, float: style.cssFloat, position: style.position,
+                        boxSizing: style.boxSizing, margin: style.margin, padding: style.padding };
+                };
+                // No semantic/typea marker: the inherited raw reset must cover
+                // host insertion before projection and non-typea compatibility.
+                const probe = document.createElement('div');
+                probe.className = 'dcheader';
+                probe.style.cssText = 'height:24px;width:250px;min-width:1800px;float:right;position:static;box-sizing:content-box;margin:17px;padding:19px';
+                document.body.appendChild(probe);
+                const probeState = computed(probe);
+                const probeWidth = probe.getBoundingClientRect().width;
+                const bodyWidth = document.body.getBoundingClientRect().width;
+                const result = {
+                    presenterOwned: true,
+                    singleCorePhase: resetRules.every((entries) => entries.length === 1 && entries[0].sheet === coreRule?.sheet),
+                    inheritedImportant: resetRules.every((entries) => properties.every((property) =>
+                        entries[0]?.rule.style.getPropertyPriority(property) === 'important')),
+                    roots: roots.map(computed), probe: probeState,
+                    rawCoverage: !probe.hasAttribute('data-dcuf-header-shell-role') && Math.abs(probeWidth - bodyWidth) < 1,
+                    unchangedRoots: roots[0] === document.querySelector('.dcheader.typea') && roots[1] === document.querySelector('.gnb_bar'),
+                };
+                probe.remove();
+                return result;
+            });
+            assert.equal(state.presenterOwned, true, 'reset CSS must be exported by the actual presentation owners');
+            assert.equal(state.singleCorePhase, true, JSON.stringify(state));
+            assert.equal(state.inheritedImportant, true, JSON.stringify(state));
+            assert.equal(state.rawCoverage, true, JSON.stringify(state));
+            assert.equal(state.unchangedRoots, true);
+            for (const entry of [...state.roots, state.probe]) assert.deepEqual(entry, {
+                positive: true, minWidth: '0px', float: 'none', position: 'relative',
+                boxSizing: 'border-box', margin: '0px', padding: '0px',
+            });
+            assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
+        } finally { await session.close(); }
+    }
+});
+
+mobileTest('header native-door visibility stays presenter-owned in the original core phase before projection', 'functional', async ({ browser, server }) => {
+    for (const [route, dark] of [['/mgallery/board/lists?id=test', false], ['/mgallery/board/lists?id=test', true],
+        ['/board/lists?id=test', false], ['/board/view?id=test&no=1001&header=1', true]]) {
+        const session = await createTestPage(browser, server.baseUrl, {
+            storage: noStatsStorage, viewport: { width: 1280, height: 900 },
+        });
+        try {
+            await session.goto(route);
+            if (dark) {
+                await session.page.evaluate(() => window.__dcufFixture.toggleDark(true));
+                await session.page.waitForFunction(() => document.body.classList.contains('dc-filter-dark-mode'));
+            }
+            const state = await session.page.evaluate(() => {
+                const presenter = window.__dcufHeaderDrawerPresenter;
+                if (typeof presenter?.buildVisibilityCss !== 'function') return { presenterOwned: false };
+                const selectors = ['.issue_contentbox:not([data-dcuf-header-native-door-open="1"])',
+                    '#gall_top_recom.concept_wrap:not([data-dcuf-header-native-recom-open="1"])'];
+                const matches = (selector) => Array.from(document.styleSheets).flatMap((sheet) => {
+                    try {
+                        return Array.from(sheet.cssRules).filter((rule) => rule.selectorText?.split(',')
+                            .some((branch) => branch.trim() === selector)).map((rule) => ({ sheet, rule }));
+                    } catch { return []; }
+                });
+                const visibilityRules = selectors.map(matches);
+                const core = matches('.adv_area')[0];
+                // Synchronous, test-local insertion/removal: no projected roles,
+                // drawer ancestry, or native controls are needed for early concealment.
+                const probes = ['door', 'recom'].map((kind) => {
+                    const probe = document.createElement('section');
+                    probe.className = kind === 'door' ? 'issue_contentbox' : 'concept_wrap';
+                    if (kind === 'recom') probe.id = 'gall_top_recom';
+                    probe.style.cssText = 'display:block;width:140px;height:28px';
+                    document.body.appendChild(probe);
+                    const attribute = `data-dcuf-header-native-${kind}-open`;
+                    const hidden = () => getComputedStyle(probe).display === 'none'
+                        && probe.getBoundingClientRect().width === 0 && probe.getBoundingClientRect().height === 0;
+                    const initialHidden = hidden();
+                    probe.setAttribute(attribute, '0');
+                    const zeroHidden = hidden();
+                    probe.setAttribute(attribute, 'true');
+                    const malformedHidden = hidden();
+                    probe.setAttribute(attribute, '1');
+                    const box = probe.getBoundingClientRect();
+                    const openVisible = getComputedStyle(probe).display === 'block' && box.width > 0 && box.height > 0;
+                    probe.removeAttribute(attribute);
+                    const reclosedHidden = hidden();
+                    probe.remove();
+                    return { initialHidden, zeroHidden, malformedHidden, openVisible, reclosedHidden };
+                });
+                return {
+                    presenterOwned: Object.isFrozen(presenter),
+                    singleCorePhase: visibilityRules.every((rules) => rules.length === 1 && rules[0].sheet === core?.sheet),
+                    exactVisibility: visibilityRules.every((rules) => rules[0]?.rule.style.length === 1
+                        && rules[0].rule.style.getPropertyValue('display') === 'none'
+                        && rules[0].rule.style.getPropertyPriority('display') === 'important'),
+                    probes,
+                };
+            });
+            assert.equal(state.presenterOwned, true, 'native-door concealment must be exported by the drawer presentation owner');
+            assert.equal(state.singleCorePhase, true, JSON.stringify(state));
+            assert.equal(state.exactVisibility, true, JSON.stringify(state));
+            for (const probe of state.probes) assert.deepEqual(probe, {
+                initialHidden: true, zeroHidden: true, malformedHidden: true, openVisible: true, reclosedHidden: true,
+            });
+            assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
+        } finally { await session.close(); }
+    }
 });
 
 mobileTest('header drawer style has one projected owner and reversible host context', 'functional', async ({ browser, server }) => {
@@ -2632,6 +2974,166 @@ mobileTest('gallery native popups remain reachable after the drawer closes', 'fu
         assert.equal(await session.page.evaluate(() => window.__fixtureHotTipCalls), 2);
         assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
     } finally { await session.close(); }
+});
+
+mobileTest('gallery drawer refresh preserves focused native keyboard activation without remounting', 'functional', async ({ browser, server }) => {
+    for (const dark of [false, true]) {
+        const session = await createTestPage(browser, server.baseUrl, { storage: noStatsStorage, viewport: { width: 1280, height: 900 } });
+        try {
+            await session.goto('/mgallery/board/lists?id=test');
+            if (dark) await session.page.evaluate(() => window.__dcufFixture.toggleDark(true));
+            await session.page.waitForFunction(() => window.__dcufHeaderDrawerHostAdapter?.snapshotResources().mutationSubscribers === 1
+                && document.querySelector('.issue_contentbox[data-dcuf-header-native-door="1"]'));
+            await session.page.locator('#dcuf-testbed-controls').evaluate(el => { el.style.display = 'none'; });
+            const original = await session.page.evaluateHandle(() => {
+                const selectors = ['.dcuf-header-drawer', '.dcuf-header-drawer__toggle', '.issue_contentbox', '#hot_rank_pop2', '.btn_hotall_list', '#hot_rank_pop2 .poply_close'];
+                const nodes = selectors.map(selector => document.querySelector(selector));
+                return { selectors, nodes, topology: nodes.map(node => [node.parentNode, node.nextSibling, node.getAttribute('onclick')]),
+                    resources: window.__dcufHeaderDrawerHostAdapter.snapshotResources(), gm: window.__dcufTestbedGM.snapshot(), events: [] };
+            });
+            try {
+                await session.page.locator('.dcuf-header-drawer__toggle').click();
+                await session.page.locator('.btn_hotall_list').click();
+                await session.page.locator('.dcuf-header-drawer__toggle').focus();
+                const refreshed = await session.page.evaluate(saved => {
+                    const [drawer, toggle] = saved.nodes;
+                    const parent = drawer.parentNode;
+                    const insertBefore = parent.insertBefore;
+                    const hadOwn = Object.hasOwn(parent, 'insertBefore');
+                    const descriptor = Object.getOwnPropertyDescriptor(parent, 'insertBefore');
+                    let mountCalls = 0;
+                    parent.insertBefore = function (...args) { if (args[0] === drawer) mountCalls += 1; return insertBefore.apply(this, args); };
+                    try {
+                        window.__dcufHeaderDrawerHostAdapter.refresh();
+                        window.__dcufHeaderDrawerHostAdapter.connect();
+                    } finally {
+                        if (hadOwn) Object.defineProperty(parent, 'insertBefore', descriptor);
+                        else delete parent.insertBefore;
+                    }
+                    saved.keyListener = e => {
+                        if (e.target === toggle || toggle.contains(e.target)) saved.events.push({ type: e.type, trusted: e.isTrusted, key: e.key || null,
+                            toggleTarget: e.target === toggle, prevented: e.defaultPrevented });
+                    };
+                    for (const type of ['keydown', 'keyup', 'click']) document.addEventListener(type, saved.keyListener, true);
+                    return { mountCalls, focused: document.activeElement === toggle };
+                }, original);
+                assert.deepEqual(refreshed, { mountCalls: 0, focused: true }, 'refresh/duplicate connect must not reinsert an already-correct focused mount');
+                // Exercise the actual existing RAF/delayed scheduler after focus,
+                // then press without a locator silently refocusing the control.
+                await session.page.evaluate(() => window.dispatchEvent(new Event('resize')));
+                await session.page.waitForFunction(() => {
+                    const m = window.__dcufTestbedMetrics.snapshot();
+                    return m.activeAnimationFrames === 0 && m.activeTimeouts === 0;
+                });
+                assert.equal(await session.page.evaluate(saved => document.activeElement === saved.nodes[1], original), true);
+                await session.page.keyboard.press('Enter');
+                const afterEnter = await session.page.evaluate(saved => ({
+                    focused: document.activeElement === saved.nodes[1], open: saved.nodes[0].getAttribute('data-open'),
+                    popupOnly: saved.nodes[2].getAttribute('data-dcuf-header-native-door-popup-only'),
+                    callbacks: window.__fixtureHotRankToggles, events: saved.events,
+                }), original);
+                assert.equal(afterEnter.focused, true);
+                assert.equal(afterEnter.open, '0');
+                assert.equal(afterEnter.popupOnly, '1');
+                assert.equal(afterEnter.callbacks, 1);
+                assert.deepEqual(afterEnter.events, [
+                    { type: 'keydown', trusted: true, key: 'Enter', toggleTarget: true, prevented: false },
+                    { type: 'click', trusted: true, key: null, toggleTarget: true, prevented: true },
+                    { type: 'keyup', trusted: true, key: 'Enter', toggleTarget: true, prevented: false },
+                ]);
+                const popupHit = await session.page.locator('#hot_rank_pop2 .poply_close').evaluate(node => {
+                    const rect = node.getBoundingClientRect();
+                    const hit = document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2);
+                    return rect.width > 0 && rect.height > 0 && (hit === node || node.contains(hit));
+                });
+                assert.equal(popupHit, true);
+                await session.page.locator('#hot_rank_pop2 .poply_close').click();
+                await session.page.waitForFunction(() => getComputedStyle(document.querySelector('.issue_contentbox')).display === 'none'
+                    && window.__dcufTestbedMetrics.snapshot().activeAnimationFrames === 0 && window.__dcufTestbedMetrics.snapshot().activeTimeouts === 0);
+                const restored = await session.page.evaluate(saved => {
+                    for (const type of ['keydown', 'keyup', 'click']) document.removeEventListener(type, saved.keyListener, true);
+                    const gm = window.__dcufTestbedGM.snapshot();
+                    return { identity: saved.nodes.every((node, i) => node === document.querySelector(saved.selectors[i])
+                        && node.parentNode === saved.topology[i][0] && node.nextSibling === saved.topology[i][1]
+                        && node.getAttribute('onclick') === saved.topology[i][2]),
+                        callbacks: window.__fixtureHotRankToggles,
+                        resources: window.__dcufHeaderDrawerHostAdapter.snapshotResources(),
+                        values: gm.values, writes: gm.writes, beforeValues: saved.gm.values, beforeWrites: saved.gm.writes };
+                }, original);
+                assert.equal(restored.identity, true);
+                assert.equal(restored.callbacks, 2);
+                assert.deepEqual(restored.resources, await session.page.evaluate(saved => saved.resources, original));
+                assert.deepEqual(restored.values, restored.beforeValues);
+                assert.deepEqual(restored.writes, restored.beforeWrites);
+                // A real slot disturbance is not mistaken for an idempotent mount.
+                const slotRepair = await session.page.evaluate(saved => {
+                    const drawer = saved.nodes[0];
+                    const parent = drawer.parentNode;
+                    parent.appendChild(drawer);
+                    window.__dcufHeaderDrawerHostAdapter.refresh();
+                    return drawer === parent.firstChild && document.querySelector('.dcuf-header-drawer') === drawer;
+                }, original);
+                assert.equal(slotRepair, true);
+                assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
+            } finally { await original.dispose(); }
+        } finally { await session.close(); }
+    }
+});
+
+mobileTest('major gallery drawer refresh preserves focus and recommendation native topology', 'functional', async ({ browser, server }) => {
+    for (const dark of [false, true]) {
+        const session = await createTestPage(browser, server.baseUrl, { storage: noStatsStorage, viewport: { width: 1280, height: 900 } });
+        try {
+            await session.goto('/board/lists?id=test');
+            if (dark) await session.page.evaluate(() => window.__dcufFixture.toggleDark(true));
+            // Base major-list has no native recommendation door. Reuse the
+            // existing carousel test's sampled parent/root/control shape.
+            await session.page.evaluate(() => {
+                const issueWrap = document.createElement('div');
+                issueWrap.className = 'issue_wrap';
+                issueWrap.innerHTML = '<div class="issuebox gallery_box"><section id="gall_top_recom" class="concept_wrap">'
+                    + '<div class="pageing_box"><button type="button" class="btn_bluenext">다음</button></div>'
+                    + '<ul class="concept_txtlist"><li><a href="/board/view?id=test&no=1001">추천글</a></li></ul></section></div>';
+                document.querySelector('#container article').prepend(issueWrap);
+                window.__dcufHeaderDrawerHostAdapter.refresh();
+            });
+            await session.page.waitForFunction(() => document.querySelector('#gall_top_recom[data-dcuf-header-native-recom="1"]'));
+            await session.page.locator('#dcuf-testbed-controls').evaluate(el => { el.style.display = 'none'; });
+            await session.page.locator('.dcuf-header-drawer__toggle').click();
+            const before = await session.page.evaluateHandle(() => {
+                const root = document.getElementById('gall_top_recom');
+                const nodes = [root, ...root.querySelectorAll('a,button')];
+                return { nodes, topology: nodes.map(node => [node.parentNode, node.nextSibling, node.getAttribute('onclick')]),
+                    resources: window.__dcufHeaderDrawerHostAdapter.snapshotResources(), gm: window.__dcufTestbedGM.snapshot() };
+            });
+            try {
+                await session.page.locator('.dcuf-header-drawer__toggle').focus();
+                await session.page.evaluate(() => {
+                    window.__dcufHeaderDrawerHostAdapter.refresh();
+                    window.__dcufHeaderDrawerHostAdapter.connect();
+                    window.dispatchEvent(new Event('resize'));
+                });
+                await session.page.waitForFunction(() => window.__dcufTestbedMetrics.snapshot().activeTimeouts === 0
+                    && window.__dcufTestbedMetrics.snapshot().activeAnimationFrames === 0);
+                assert.equal(await session.page.evaluate(() => document.activeElement === document.querySelector('.dcuf-header-drawer__toggle')), true);
+                await session.page.keyboard.press('Enter');
+                assert.equal(await session.page.locator('#gall_top_recom').evaluate(node => getComputedStyle(node).display), 'none');
+                const after = await session.page.evaluate(saved => {
+                    const gm = window.__dcufTestbedGM.snapshot();
+                    return { identity: saved.nodes[0] === document.getElementById('gall_top_recom') && saved.nodes.every((node, i) =>
+                        node.isConnected && node.parentNode === saved.topology[i][0] && node.nextSibling === saved.topology[i][1]
+                        && node.getAttribute('onclick') === saved.topology[i][2]),
+                        resources: window.__dcufHeaderDrawerHostAdapter.snapshotResources(), beforeResources: saved.resources,
+                        values: gm.values, writes: gm.writes, beforeValues: saved.gm.values, beforeWrites: saved.gm.writes };
+                }, before);
+                assert.equal(after.identity, true);
+                assert.deepEqual(after.resources, after.beforeResources);
+                assert.deepEqual(after.values, after.beforeValues);
+                assert.deepEqual(after.writes, after.beforeWrites);
+                assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
+            } finally { await before.dispose(); }
+        } finally { await session.close(); }
+    }
 });
 
 mobileTest('gallery native door keeps trusted controls and both popups across viewport and theme', 'functional', async ({ browser, server }) => {

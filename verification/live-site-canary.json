@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "scope": "anonymous DCInside pages in a normal wide desktop browser",
+  "extension": {
+    "storeId": "dhdgffkkebhmkfjojejmpbldmpobfkfo",
+    "version": "5.5.0",
+    "sha256": "BCAEC082C439E11C4DF683F43D07E9AC3D4439251D72B91C5B452F977DAC15D5"
+  },
+  "control": {
+    "path": "testbed/artifacts/baseline-mobile-stable.user.js",
+    "sha256": "32BA208DDD9973A7EEC343F01E963A833AB4F0C084987077EDAE46844383C25D"
+  },
+  "candidatePath": "testbed/artifacts/runtime-under-test.user.js",
+  "viewports": [
+    { "id": "wide", "width": 1280, "height": 900 }
+  ],
+  "routes": [
+    { "id": "major-list", "kind": "list", "url": "https://gall.dcinside.com/board/lists/?id=programming" },
+    { "id": "minor-list", "kind": "list", "url": "https://gall.dcinside.com/mgallery/board/lists/?id=aoegame" },
+    { "id": "major-view", "kind": "view", "url": "https://gall.dcinside.com/board/view/?id=programming&no=1476608&page=1" },
+    { "id": "minor-view", "kind": "view", "url": "https://gall.dcinside.com/mgallery/board/view/?id=aoegame&no=31646568&page=1" }
+  ],
+  "smokeCases": ["major-list-wide", "minor-list-wide", "major-view-wide"],
+  "unselected": ["mini-gallery", "authenticated", "write-modify-delete", "dark-theme", "storage-failure-injection", "PC-userscript"]
+}

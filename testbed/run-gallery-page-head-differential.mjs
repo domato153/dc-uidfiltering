@@ -253,6 +253,12 @@ if (args.includes('--side')) {
     const candidateSha256 = hash(await readFile(candidate));
     if (controlSha256 !== expectedControlSha256) throw new Error('Control does not match frozen immediate pre-extraction artifact');
     if (candidateSha256 === controlSha256) throw new Error('Candidate must differ from control');
+    if (args.includes('--require-runtime-under-test')
+        && candidate !== path.join(root, 'testbed', 'artifacts', 'runtime-under-test.user.js')) {
+        throw new Error(`Source-work runtime guard rejected ${candidate}`);
+    }
+    console.log(`Control runtime: ${control}\nControl SHA-256: ${controlSha256}`);
+    console.log(`Candidate runtime: ${candidate}\nCandidate SHA-256: ${candidateSha256}`);
     const sides = {};
     for (const [name, runtime] of Object.entries({ control, candidate })) {
         const sideOutput = path.join(root, 'testbed/artifacts', `gallery-page-head-${name}-side.json`);

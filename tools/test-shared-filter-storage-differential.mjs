@@ -8,12 +8,12 @@ import { compareSharedObservations } from '../testbed/run-shared-filter-storage-
 import { assertEvidenceBinding, createEvidenceBinding, digestEvidenceBytes } from './evidence-binding.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const reportPath = path.join(root, 'testbed/artifacts/final-shared-filter-storage-C84-1A7.json');
+const reportPath = path.join(root, 'testbed/artifacts/final-shared-filter-storage-0C30-1A7.json');
 const observerPath = 'testbed/run-shared-filter-storage-differential.mjs';
 const artifacts = {
     mobile: {
         control: ['testbed/artifacts/baseline-mobile-stable.user.js', '32BA208DDD9973A7EEC343F01E963A833AB4F0C084987077EDAE46844383C25D'],
-        candidate: ['testbed/artifacts/runtime-under-test.user.js', 'C84AD9220A060CC3AF91F3039F07B13FAD75521DA63201046E3693F875DC03C7'],
+        candidate: ['testbed/artifacts/runtime-under-test.user.js', '0C3076699E696AD3C252B5DF21D216F9B6EA32928B4C8A7C160DE0888926450A'],
     },
     pc: {
         control: ['testbed/artifacts/baseline-pc.user.js', 'D3A95C479D8D50F88D97700DE91FA17D1D338B3AEBB488F53D865F445B656212'],
@@ -62,7 +62,7 @@ async function verifyCurrentReport(value) {
 const baseline = await verifyCurrentReport(report);
 assert.equal(baseline.functionalDifferences.length, 0);
 assert.equal(baseline.positiveFailures.length, 0);
-assert.equal(baseline.resourceDifferences.length, 48);
+assert.equal(baseline.resourceDifferences.length, 42);
 assert.equal(baseline.rawDifferences.length, 12);
 let rejected = 0;
 
@@ -92,6 +92,10 @@ detects('filter visibility changes', (sides) => {
     sides.mobile.candidate.observations[5].value.comment.contentVisible = true;
 }, (result) => result.functionalDifferences.some((entry) => entry.field.includes('contentVisible'))
     && result.positiveFailures.some((entry) => entry.caseId === 'personal-block-positive'));
+detects('recovery timeout', (sides) => {
+    sides.mobile.candidate.observations[1].value.runtime.recovery.status = 'timeout';
+}, (result) => result.functionalDifferences.some((entry) => entry.field.includes('recovery.status'))
+    && result.positiveFailures.some((entry) => entry.reason.includes('recovery did not complete')));
 detects('PC resource changes', (sides) => {
     sides.pc.candidate.observations[1].value.runtime.resources.timers += 1;
 }, (result) => result.resourceDifferences.some((entry) => entry.target === 'pc' && entry.field.endsWith('.timers')));

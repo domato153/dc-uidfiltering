@@ -40,6 +40,7 @@
       "commands": [
         { "id": "baseline-verify", "command": "node", "args": ["tools/verify-baseline.mjs"] },
         { "id": "mobile-build", "command": "node", "args": ["tools/build-userscript.mjs", "--testbed-output", "testbed/artifacts/runtime-under-test.user.js"] },
+        { "id": "header-recent-title-contract", "command": "node", "args": ["testbed/run-header-cascade-audit.mjs", "--recent-title-contract", "--gnb-reset-contract", "--require-runtime-under-test", "--output", "testbed/artifacts/acceptance-header-recent-title-contract.json"] },
         { "id": "mobile-observed-palette", "command": "node", "args": ["testbed/run-palette-differential.mjs", "--target", "mobile", "--control", "testbed/artifacts/baseline-mobile-beta.user.js", "--candidate", "testbed/artifacts/runtime-under-test.user.js", "--output", "artifacts/acceptance-observed-mobile-palette.json"] },
         { "id": "mobile-observed-list", "command": "node", "args": ["testbed/run-list-differential.mjs", "--control", "testbed/artifacts/baseline-mobile-beta.user.js", "--candidate", "testbed/artifacts/runtime-under-test.user.js", "--output", "artifacts/acceptance-observed-mobile-list.json"] },
         { "id": "mobile-observed-article", "command": "node", "args": ["testbed/run-article-differential.mjs", "--control", "testbed/artifacts/baseline-mobile-beta.user.js", "--candidate", "testbed/artifacts/runtime-under-test.user.js", "--output", "artifacts/acceptance-observed-mobile-article.json"] },
@@ -60,6 +61,7 @@
       "commands": [
         { "id": "baseline-verify", "command": "node", "args": ["tools/verify-baseline.mjs"] },
         { "id": "mobile-build-runtime", "command": "node", "args": ["tools/build-userscript.mjs", "--testbed-output", "testbed/artifacts/runtime-under-test.user.js"] },
+        { "id": "header-recent-title-contract", "command": "node", "args": ["testbed/run-header-cascade-audit.mjs", "--recent-title-contract", "--gnb-reset-contract", "--require-runtime-under-test", "--output", "testbed/artifacts/windows-header-recent-title-contract.json"] },
         { "id": "mobile-observed-palette", "command": "node", "args": ["testbed/run-palette-differential.mjs", "--target", "mobile", "--control", "testbed/artifacts/baseline-mobile-beta.user.js", "--candidate", "testbed/artifacts/runtime-under-test.user.js", "--output", "artifacts/windows-observed-mobile-palette.json"] },
         { "id": "mobile-observed-list", "command": "node", "args": ["testbed/run-list-differential.mjs", "--control", "testbed/artifacts/baseline-mobile-beta.user.js", "--candidate", "testbed/artifacts/runtime-under-test.user.js", "--output", "artifacts/windows-observed-mobile-list.json"] },
         { "id": "mobile-observed-article", "command": "node", "args": ["testbed/run-article-differential.mjs", "--control", "testbed/artifacts/baseline-mobile-beta.user.js", "--candidate", "testbed/artifacts/runtime-under-test.user.js", "--output", "artifacts/windows-observed-mobile-article.json"] },

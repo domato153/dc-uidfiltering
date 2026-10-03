@@ -96,6 +96,7 @@ if (args.includes('--side')) {
                         return {
                             display: computed.display,
                             position: computed.position,
+                            float: computed.cssFloat,
                             width: computed.width,
                             minWidth: computed.minWidth,
                             height: computed.height,
@@ -188,11 +189,17 @@ if (args.includes('--side')) {
 } else {
     const control = path.resolve(root, required('--control'));
     const candidate = path.resolve(root, required('--candidate'));
+    if (args.includes('--require-runtime-under-test')
+        && candidate !== path.join(root, 'testbed/artifacts/runtime-under-test.user.js')) {
+        throw new Error('Source-work candidate must be testbed/artifacts/runtime-under-test.user.js');
+    }
     const expectedControlSha256 = required('--expected-control-sha').toUpperCase();
     const controlSha256 = hash(await readFile(control));
     const candidateSha256 = hash(await readFile(candidate));
     if (controlSha256 !== expectedControlSha256) throw new Error('Control does not match frozen immediate pre-extraction artifact');
     if (candidateSha256 === controlSha256) throw new Error('Candidate must differ from control');
+    console.log(`Control runtime: ${control}; SHA-256 ${controlSha256}`);
+    console.log(`Candidate runtime: ${candidate}; SHA-256 ${candidateSha256}`);
     const sides = {};
     for (const [name, runtime] of Object.entries({ control, candidate })) {
         const sideOutput = path.join(root, 'testbed/artifacts', `header-gnb-${name}-side.json`);

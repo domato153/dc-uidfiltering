@@ -8,7 +8,7 @@ import { createEvidenceBinding } from './evidence-binding.mjs';
 const scriptPath = fileURLToPath(import.meta.url);
 const root = path.resolve(path.dirname(scriptPath), '..');
 const CONTROL_SHA = '32BA208DDD9973A7EEC343F01E963A833AB4F0C084987077EDAE46844383C25D';
-const CANDIDATE_SHA = 'C84AD9220A060CC3AF91F3039F07B13FAD75521DA63201046E3693F875DC03C7';
+const CANDIDATE_SHA = '0C3076699E696AD3C252B5DF21D216F9B6EA32928B4C8A7C160DE0888926450A';
 const LIST_GEOMETRY_SCOPE = 'Only the native list toolbar `.list_array_option::after` pseudo-element on list routes: `display,width,minWidth,height,minHeight,content,clear` transition from the retired clearfix to no generated content; no heading or interactive host node.';
 const LIST_COLOR_SCOPE = "Only the non-rendered `.list_array_option::after` pseudo-element's computed `color,borderColor` after its `content:none` transition, in light and dark list states.";
 const RELATION_SCOPE = 'Only the original list-route `.issue_wrap > #relation_popup`: `position:static→relative` and `z-index:auto→3` on the popup itself, with unchanged box/parent/descendants/handlers and positive open-state hit reachability.';
@@ -225,7 +225,7 @@ export function classifyPageHeadDelta(input) {
 
 export async function readCurrentInputs() {
     const paths = {
-        report: 'testbed/artifacts/header-stable-to-current-page-head-differential-D12.json',
+        report: 'testbed/artifacts/header-page-head-raw-0C30.json',
         controlSide: 'testbed/artifacts/gallery-page-head-control-side.json',
         candidateSide: 'testbed/artifacts/gallery-page-head-candidate-side.json',
         control: 'testbed/artifacts/baseline-mobile-stable.user.js',
@@ -245,7 +245,7 @@ export async function readCurrentInputs() {
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === scriptPath) {
-    const output = path.join(root, 'testbed/artifacts/header-page-head-visual-classification.json');
+    const output = path.join(root, 'testbed/artifacts/header-page-head-visual-classification-0C30.json');
     try {
         const input = await readCurrentInputs();
         const result = classifyPageHeadDelta(input);

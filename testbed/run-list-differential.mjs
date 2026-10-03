@@ -266,6 +266,10 @@ if (args.includes('--side')) {
 } else {
     const control = path.resolve(root, required('--control'));
     const candidate = path.resolve(root, required('--candidate'));
+    if (args.includes('--require-runtime-under-test')
+        && candidate !== path.join(root, 'testbed/artifacts/runtime-under-test.user.js')) {
+        throw new Error('Source-work candidate must be testbed/artifacts/runtime-under-test.user.js');
+    }
     const baseline = JSON.parse(await readFile(path.join(root, 'verification', 'baselines.json'), 'utf8'));
     const controlHash = hash(await readFile(control));
     const candidateHash = hash(await readFile(candidate));
@@ -273,6 +277,8 @@ if (args.includes('--side')) {
         throw new Error('Control must match an authoritative mobile baseline');
     }
     if (controlHash === candidateHash) throw new Error('Control and candidate must have distinct digests');
+    console.log(`Control runtime: ${control}; SHA-256 ${controlHash}`);
+    console.log(`Candidate runtime: ${candidate}; SHA-256 ${candidateHash}`);
     const sides = {};
     for (const [side, runtime] of Object.entries({ control, candidate })) {
         const sidePath = path.join(root, 'testbed', 'artifacts', `${path.basename(output)}.${side}.json`);
