@@ -53,6 +53,7 @@
         { "id": "pc-functional", "command": "node", "args": ["testbed/run-tests.mjs", "--group", "functional", "--require-runtime-under-test"], "env": { "DCUF_TESTBED_TARGET": "pc" } },
         { "id": "mobile-build-release", "command": "node", "args": ["tools/build-userscript.mjs"] },
         { "id": "pc-build-release", "command": "node", "args": ["tools/build-pc-filter-userscript.mjs"] },
+        { "id": "restore-mobile-guard", "command": "node", "args": ["tools/build-userscript.mjs", "--testbed-output", "testbed/artifacts/runtime-under-test.user.js"] },
         { "id": "repository-all", "command": "node", "args": ["tools/verify-repo.mjs", "all"] }
       ]
     },
@@ -73,6 +74,7 @@
         { "id": "pc-build-runtime", "command": "node", "args": ["tools/build-pc-filter-userscript.mjs", "--testbed-output", "testbed/artifacts/runtime-under-test.user.js"] },
         { "id": "pc-observed-palette", "command": "node", "args": ["testbed/run-palette-differential.mjs", "--target", "pc", "--control", "testbed/artifacts/baseline-pc.user.js", "--candidate", "testbed/artifacts/runtime-under-test.user.js", "--output", "artifacts/windows-observed-pc-palette.json"] },
         { "id": "pc-functional", "command": "node", "args": ["testbed/run-tests.mjs", "--group", "functional", "--require-runtime-under-test"], "env": { "DCUF_TESTBED_TARGET": "pc" } },
+        { "id": "restore-mobile-guard", "command": "node", "args": ["tools/build-userscript.mjs", "--testbed-output", "testbed/artifacts/runtime-under-test.user.js"] },
         { "id": "repository-all", "command": "node", "args": ["tools/verify-repo.mjs", "all"] }
       ]
     },

@@ -25,6 +25,8 @@ Existing skill/routing validation and meaningful forward tests pass. The Skill C
 
 ## Remaining boundaries
 
+First real checkpoint CI at `b1c7ae7f0988aebd8d55e8d354d17423c250b573` failed closed: Git checkout normalizes generated userscripts to LF, while canonical builders emit BOM+CRLF. The mobile guard was rebuilt but root/dist were not. `tools/test-checkpoint-artifacts.mjs` reproduced this in an isolated fresh checkout and confirmed canonical root/dist/guard preparation restores exact 689A/1A7 bytes without normalized source changes. The follow-up workflow prepares all outputs; PR policy also prepares its previously missing immutable baseline, and final acceptance/promotion checks restore the mobile guard after PC probes. No product bytes or hash requirements are weakened. Old failed runs are retained as failures; the follow-up exact-SHA run must be observed separately.
+
 The new push workflow must be observed on the exact published commit. Its receipt and local publisher record bind the final source/tree/run externally, avoiding a self-referential commit SHA. Unconfirmed transport/CI remains pending or failed. This local audit document cannot certify a future workflow run.
 
 No official branch, PR, merge/rebase/force push, tag/release, live dispatch, extension/profile/account/content write or local dependency install is authorized or performed by this governance change. Git hooks remain ordinary user-controlled execution; these checks detect indexed/tracked and untracked source changes at observed boundaries, not cryptographically attest arbitrary hook behavior. A checkpoint is recoverability and deterministic repository validity, not UI-stage completion.

@@ -53,6 +53,7 @@ jobs:
         run: pnpm install --frozen-lockfile
       - name: Build exact outputs and mobile guard
         run: |
+          node tools/build-userscript.mjs
           node tools/build-userscript.mjs --testbed-output testbed/artifacts/runtime-under-test.user.js
           node tools/build-pc-filter-userscript.mjs
       - name: Qualify deterministic checkpoint only
@@ -99,8 +100,12 @@ jobs:
           BASE_SHA="${PR_BASE_SHA}"
           if [ -z "${BASE_SHA}" ]; then BASE_SHA="$(git rev-parse HEAD^)"; fi
           node tools/resolve-impact.mjs --base "${BASE_SHA}" --head HEAD --output artifacts/impact.json
-      - name: Build guarded runtime for proof mutations
-        run: node tools/build-userscript.mjs --testbed-output testbed/artifacts/runtime-under-test.user.js
+      - name: Prepare canonical outputs and immutable proof inputs
+        run: |
+          node tools/build-userscript.mjs
+          node tools/build-userscript.mjs --testbed-output testbed/artifacts/runtime-under-test.user.js
+          node tools/build-pc-filter-userscript.mjs
+          node tools/verify-baseline.mjs
       - name: Run declared policy profile
         run: node tools/run-gates.mjs artifacts/impact.json artifacts/policy-result.json --only policy
       - name: Upload policy receipts

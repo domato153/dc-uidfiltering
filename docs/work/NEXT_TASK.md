@@ -222,7 +222,7 @@ This is a declared dependency/entry inventory, not proof of semantic completenes
     {
       "path": "testbed/artifacts/runtime-under-test.user.js",
       "disposition": "REGENERATE",
-      "recovery": "Build mobile --testbed-output here and confirm exact 689A root/dist/guard; do not run PC guard builder concurrently."
+      "recovery": "In a new LF checkout, run mobile canonical build, mobile --testbed-output, then PC canonical build serially here; confirm exact 689A root/dist/guard and 1A7 PC bytes. Do not normalize expected hashes or run PC guard builder concurrently."
     },
     {
       "path": "testbed/artifacts/header-keyboard-validation-final-2026-10-04.json",
