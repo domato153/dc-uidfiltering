@@ -25,11 +25,15 @@ for (const file of files) {
 
 const development = await readFile(path.join(workflowsDir, 'development-ci.yml'), 'utf8');
 check(development.includes('ubuntu-24.04'), 'development CI must run on ubuntu-24.04');
-check(development.includes('branches:\n      - codex/mobile-development'), 'development CI must target codex/mobile-development');
+check(development.includes('push:\n    branches:\n      - codex/ui-port-boundary'), 'checkpoint push must target only the designated branch');
+check(development.includes('pull_request:\n    branches:\n      - codex/mobile-development\n      - codex/ui-port-boundary'), 'PR acceptance targets must retain the old target and current working branch');
+check(development.includes("name: working-checkpoint\n    if: github.event_name == 'push'") && development.includes('node tools/verify-checkpoint-ci.mjs'), 'push CI must qualify checkpoint only');
+check((development.match(/if: github.event_name != 'push'/g) || []).length === 3, 'all full acceptance jobs must remain separate from push checkpoints');
+check(development.includes('path: artifacts/checkpoint-ci.json'), 'checkpoint uploads must stay narrowly scoped');
 check(development.includes('permissions:\n  contents: read'), 'development CI default permission must be contents: read');
 check(development.includes('CANDIDATE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}'), 'development CI must bind pull requests to the exact head SHA');
-check((development.match(/ref: \$\{\{ env\.CANDIDATE_SHA \}\}/g) || []).length === 3, 'every development job must checkout the exact candidate SHA');
-check((development.match(/test "\$\(git rev-parse HEAD\)" = "\$\{EXPECTED_SHA\}"/g) || []).length === 3, 'every development job must verify the exact candidate checkout');
+check((development.match(/ref: \$\{\{ env\.CANDIDATE_SHA \}\}/g) || []).length === 4, 'every development job must checkout the exact candidate SHA');
+check((development.match(/test "\$\(git rev-parse HEAD\)" = "\$\{EXPECTED_SHA\}"/g) || []).length === 4, 'every development job must verify the exact candidate checkout');
 check(!development.includes('affected-${{ github.sha }}') && !development.includes('acceptance-${{ github.sha }}'), 'development evidence must not be named after the synthetic merge SHA');
 check(development.includes('node tools/run-gates.mjs artifacts/impact.json artifacts/policy-result.json --only policy'), 'development policy job must execute the declared policy profile');
 check(development.includes('name: policy-${{ env.CANDIDATE_SHA }}'), 'policy evidence must be named after the exact candidate SHA');

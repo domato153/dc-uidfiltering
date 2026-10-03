@@ -1,27 +1,25 @@
 # DCUF work continuity
 
-This file is the canonical repository-relative locator for a context-free local-task handoff **only in the exact active worktree located by the private new-task prompt**. The packet is the current state plus the single next task, not the chat or a timestamped brief. A receiving task must fresh-check its worktree/contract and return `ACCEPTED` or `STALE_REPLAN` before treating the task as executable; see `.agents/skills/dcuf-long-work-continuity/references/handoff-contract.md`.
+This is the canonical repository-relative locator only in the exact development Git root supplied by the private prompt. Read `AGENTS.md` for the single basic policy. Fresh observations test projections against machine contracts; history/chat never creates permission or fills missing current fields.
 
-- `CURRENT_STATE.md` is the accepted phase and evidence summary.
-- `NEXT_TASK.md` contains exactly one bounded next task.
-- `DECISION_RATIONALE.md` records consequential `SELECTED` / `NOT ADOPTED` / `DEFERRED` choices and revisit triggers; its cold-reader precedence section distinguishes the current D-11–D-18 choices from D-04/D-07–D-10's historical next actions. Read that precedence before executing `NEXT_TASK.md`; this rationale is not an acceptance receipt or a second current-state authority.
-- `MOBILE_UI_MODERNIZATION.md` is the active, durable plan for the mobile presentation replacement and three-layer assurance system.
-- `HEADER_NAVIGATION_INVENTORY.md` holds the renewed 0C30 stable/candidate shell/GNB/recent/page-head/action/list matrix and runtime-SHA-bound 95-hit audit. Raw page-head `FAIL` is narrowly classified, not a header-stage PASS or extension receipt.
-- `testbed/run-header-cascade-audit.mjs` records current guarded header cascade debt: five source inventories, eight desktop contexts, 32 priority controls, native popup-only input traces and retained partial failures. `--recent-title-contract` covers 14 palettes/112 cases/392 negatives; `--gnb-reset-contract` covers selected width/min-width/box-sizing ordering in 96 states/168 negatives/16 trusted native actions. The registered acceptance/promotion-windows commands select both modes after the mobile build. The focused keyboard tests reject redundant self-insertion/focus loss on the immediate 1E24 control and verify 689A refresh/scheduled recovery without refocusing. The compact map separates tested contracts from shell/other cascade debt and synthetic host-important probes. No production priority is removed or mixed owner promoted; local passes are not full-profile, live or hosted receipts.
-- `FINAL_FEATURE_STATE_INVENTORY.md` is the 34-ID working cross-surface applicability/evidence-gap matrix; every final disposition remains `UNKNOWN` until row-level current comparison, live, and upper gates close.
-- `SHARED_SETTINGS_PC_CROSS_AUDIT.md` separates current 0C30/1A7 four-artifact view observations from prior-binding palette/outcome and 93AE lineage. All remain bounded local evidence, not a stage receipt.
-- `testbed/run-shared-filter-storage-differential.mjs` produces the current 0C30/1A7 raw/field-level view comparison with explicit recovery status; `tools/test-shared-filter-storage-differential.mjs` checks its exact binding and ten negative controls. Neither exercises the user's extension.
-- `tools/probe-view-resource-owner-lifecycle.mjs` records the current exact-artifact guarded view-route lifecycle sidecar; `tools/classify-view-resource-owner-delta.mjs` narrowly classifies its 42 subscriber differences while six current timer-count pairs match; `tools/test-view-resource-owner-delta.mjs` checks that binding and 22 negative controls. Historical C84 timer sets remain unclassified; no final row or stage becomes PASS.
-- `testbed/run-view-public-recovery.mjs` samples major/minor public view recovery at 390/1120px in isolated anonymous Chromium with a GM shim on the exact guarded runtime. Its 0C30 four-case pass is current-host applicability evidence, not the user's actual extension.
-- `tools/reobserve-view-timer-phase.mjs` and `tools/verify-view-timer-phase.mjs` retain a historical event-traced C84 replay with 26 negative controls. That replay's 7→4 and candidate timeout motivated the visible-representative correction but do not identify the original six pending timer sets. They are not current 0C30 verification.
-- `tools/classify-palette-owner-split.mjs` and `tools/test-palette-owner-split.mjs` reproduce the exact raw-FAIL owner classification and its negative controls; `tools/probe-palette-owner-lifecycle.mjs` checks dispose/reconnect in an isolated guarded browser. They do not install the userscript or convert a feature row to PASS.
-- `HEADER_EXTENSION_CANARY_PREREQUISITES.md` is the route/state and rollback checklist for a later actual-Tampermonkey-extension check; every live row remains `UNKNOWN` until executed.
-- `docs/live-site-canary.md` and `.github/workflows/live-site-canary.yml` define the separate manual desktop startup runner: real full Chromium plus pinned official Tampermonkey, four anonymous wide desktop routes, distinct control/candidate profiles, exact hashes, fail-closed statuses, and screenshots. Local headed coverage is not a GitHub-hosted run or full checklist acceptance. Adding this driver/verifier changes broad harness/proof bindings; earlier comparisons require binding renewal before stage acceptance, though product bytes remain unchanged.
-- `tools/classify-page-head-visual-delta.mjs` classifies only the exact current 0C30 raw page-head visual differences, with unchanged field/value/matrix/positive requirements and 10 classifier tests. It never converts raw `FAIL` into a header-stage `PASS`.
-- `verification/continuity-contract.json` owns the authority order, mandatory update triggers, generalized retrieval vocabulary, and thin-router limits. The Markdown files remain the human-readable current projection.
-- `verification/research-selection.json` and `tools/verify-research-selection.mjs` define/test proportional external-evidence tiers; the skill's `references/research-contract.md` explains source appraisal and local transfer.
-- Architecture candidates live under `architecture/candidates/` and are not accepted state.
-- `node tools/inspect-live-architecture.mjs --surface <id>` derives the current repository UI ownership/layer view; `--check` fails on declared source/build/style/test link drift. It is not a live-site canary.
-- Historical briefs live under `docs/archive/` and never override fresh refs or current machine authorities.
+## Current packet
 
-Authority order: fresh local HEAD/status/diff and generated artifact digests → tracked current projection → machine contracts and receipts → plans/history → conversation context. Remote refs enter only an explicitly requested remote or publishing boundary.
+- `CURRENT_STATE.md`: one compact Current execution section, accepted baseline versus current candidate, exact artifacts and evidence gaps.
+- `NEXT_TASK.md`: one bounded product action, typed LIVE/FROZEN dependencies, required ADOPTED entry decisions, hazards and local recovery. A declared dependency check does not establish semantic completeness.
+- `.agents/skills/dcuf-long-work-continuity/references/handoff-contract.md`: routine/closure and receiver ACCEPTED/STALE_REPLAN method; creating a new task requires an explicit user request.
+- `verification/continuity-contract.json`: mandatory fields/triggers/retrieval/profile rules, not independent authorization.
+- `node tools/inspect-continuity.mjs` reads fresh local Git/fingerprint/artifacts. `node tools/verify-governance.mjs` reconciles declared files; closure also needs an independent execution-path/permission/evidence audit.
+
+## Read only when relevant
+
+- `DECISION_RATIONALE.md`: current D-11–D-18 scope/negative choices; prior rationales do not revive an old task queue. NOT ADOPTED is not automatically REJECTED.
+- `MOBILE_UI_MODERNIZATION.md`, `docs/ui-surface-contracts.md`, `architecture/ui-surfaces.json`: durable plan and surface contracts. Accepted registry versus candidate overlays remains distinct.
+- `HEADER_NAVIGATION_INVENTORY.md`, `SHARED_SETTINGS_PC_CROSS_AUDIT.md`, `HEADER_EXTENSION_CANARY_PREREQUISITES.md`: historical exact-artifact observations and unexecuted live checklist; renew bindings for current use rather than treating their filenames as a current receipt.
+- `FINAL_FEATURE_STATE_INVENTORY.md`, `verification/assurance-case.json`: unfinished per-feature/stage/product upper claims, not checkpoint CI.
+- `testbed/run-header-cascade-audit.mjs`, `tools/inspect-live-architecture.mjs`: current repository probes; the latter derives owner/source/build links and is not live-site evidence.
+- `docs/live-site-canary.md`, `.github/workflows/live-site-canary.yml`: separate manual wide-desktop actual-extension runner. No automatic live dispatch follows checkpoint publication.
+- `docs/checkpoint-workflow.md`, `verification/checkpoint-policy.json`: explicit-path/tree commit/push reconciliation and exact-SHA checkpoint CI, not official publication.
+- `GOVERNANCE_PLAN.md`: research, selected transfers, lossless rule mapping and governance closure scope.
+- `docs/archive/continuity/README.md`: immutable old packets for a specific unresolved historical question only.
+
+Local reports/controls may be absent in another checkout. Rebuild/rerun only declared recoverable inputs; do not reconstruct an old trace or inherit old PASS. Routine resume is not a full acceptance ceremony; policy/routing/material failure/stage/high-risk/explicit closure requires closure qualification.

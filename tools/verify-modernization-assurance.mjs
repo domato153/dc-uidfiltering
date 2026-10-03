@@ -4,6 +4,7 @@ import { mkdir, readFile, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createCandidateFingerprint, digestEvidenceBytes } from './evidence-binding.mjs';
+import { currentSection, parseNextAction, reconcileNextAction, CLOSURE_TRIGGERS } from './continuity-state.mjs';
 
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const readyMode = process.argv.includes('--ready');
@@ -301,9 +302,14 @@ function validateStateModel(model) {
 async function validateContinuityContract(contract, continuity, nextTask) {
     exactKeys(contract, [
         'schemaVersion', 'authorityOrder', 'requiredStateFields', 'allowedStatuses', 'updateTriggers',
-        'retrievalConcepts', 'handoff', 'thinRouter',
+        'retrievalConcepts', 'handoff', 'thinRouter', 'profileRouting',
     ], 'continuity-contract');
-    if (contract.schemaVersion !== 1) fail('continuity-contract: schemaVersion must be 1');
+    if (contract.schemaVersion !== 2) fail('continuity-contract: schemaVersion must be 2');
+    exactKeys(contract.profileRouting, ['default', 'closureTriggers', 'qualificationScope', 'workSuccessCertified'], 'continuity-contract.profileRouting');
+    if (contract.profileRouting.default !== 'routine' || JSON.stringify(contract.profileRouting.closureTriggers) !== JSON.stringify(CLOSURE_TRIGGERS)
+        || contract.profileRouting.qualificationScope !== 'CONTINUITY_ONLY' || contract.profileRouting.workSuccessCertified !== false) fail('continuity-contract: profile/evidence boundary changed');
+    try { reconcileNextAction(parseNextAction(nextTask), rootDir); }
+    catch (error) { fail(error.message); }
 
     const authorityIds = [];
     for (const [index, authority] of (contract.authorityOrder || []).entries()) {
@@ -451,7 +457,10 @@ async function validateContinuityContract(contract, continuity, nextTask) {
         const actualBranch = runGit(['branch', '--show-current']);
         const ancestry = spawnSync('git', ['merge-base', '--is-ancestor', sourceState[1], actualHead], { cwd: rootDir, encoding: 'utf8', shell: false });
         if (ancestry.status !== 0) fail('continuity: recorded source checkpoint HEAD is not an ancestor of current HEAD');
-        if (sourceState[2] !== actualBranch) fail('continuity: recorded source branch is stale');
+        const ciBranch = process.env.GITHUB_HEAD_REF || process.env.GITHUB_REF_NAME;
+        const exactReadOnlyCI = !actualBranch && process.env.GITHUB_ACTIONS === 'true'
+            && process.env.CANDIDATE_SHA === actualHead && ciBranch === sourceState[2];
+        if (sourceState[2] !== actualBranch && !exactReadOnlyCI) fail('continuity: recorded source branch is stale');
     }
     const fingerprint = continuity.match(/^- Candidate fingerprint:\s*`(UNKNOWN|[a-f0-9]{64})`/mi)?.[1];
     if (!fingerprint) fail('continuity: candidate fingerprint is missing or malformed');
@@ -586,8 +595,10 @@ validateObservations(values.observations);
 validateDeltas(values.deltas, values.observations);
 validateSurfaces(values.surfaces, values.deltas);
 const matrices = validateStateModel(values.states);
-await validateContinuityContract(values.continuityContract, values.continuity, values.nextTask);
-await validateAssuranceCase(values.assurance, values.continuity);
+// Parse after audit mutations: historical fields must never become current authority.
+const activeContinuity = currentSection(values.continuity);
+await validateContinuityContract(values.continuityContract, activeContinuity, values.nextTask);
+await validateAssuranceCase(values.assurance, activeContinuity);
 
 if (failures.length) {
     throw new Error(`Modernization assurance verification failed:\n${failures.map((item) => ` - ${item}`).join('\n')}`);
@@ -662,6 +673,8 @@ function applyAuditMutation(id, state) {
         'continuity-missing-route': () => { state.continuityContract.retrievalConcepts[0].relatedPaths.push('docs/work/does-not-exist.md'); },
         'handoff-wrong-worktree': () => { state.continuity = state.continuity.replace(/^- Workspace path:.*$/m, '- Workspace path: `C:\\wrong-checkout`'); },
         'handoff-missing-rationale': () => { state.nextTask = state.nextTask.replace(/^- Why next:.*\r?\n/m, ''); },
+        'continuity-history-fallback': () => { state.continuity = state.continuity.replace(/^- Active stage:.*\r?\n/m, '') + '\n## Historical\n- Active stage: `header-navigation`\n'; },
+        'continuity-duplicate-current': () => { state.continuity += '\n## Historical\n- Active stage: `header-navigation`\n'; },
         'handoff-stale-artifact': () => {
             state.continuity = state.continuity.replace(/(^- Current artifact:.*?SHA-256 `)[a-f0-9]{64}(`)/mi, `$1${'0'.repeat(64)}$2`);
         },

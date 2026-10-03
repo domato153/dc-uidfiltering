@@ -1848,6 +1848,8 @@ for (const [variant, pattern] of [
     ['non-applicable-pass', /non-applicable evidence cannot support a claim/],
     ['nonexistent-pass-receipt', /receipt does not exist/],
     ['continuity-false-ready', /PASS\/READY has no current stage receipt and SHA-256/],
+    ['continuity-history-fallback', /never fall back to history/],
+    ['continuity-duplicate-current', /must occur once in the current section/],
     ['continuity-missing-trigger', /mandatory trigger set or order changed/],
     ['continuity-label-collision', /retrieval label collision status/],
     ['continuity-missing-route', /related path does not exist/],

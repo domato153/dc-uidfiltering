@@ -5,7 +5,7 @@ description: Resume, summarize, or hand off long DCUF work from fresh local stat
 
 # DCUF Long-work Continuity
 
-Run `node tools/inspect-continuity.mjs`, then use `verification/continuity-contract.json` as the retrieval/update contract. Resolve authority from fresh local state, tracked current projections, machine contracts and receipts, plans/history, then conversation context. Check remote refs only for a requested remote or publishing boundary.
+Read the development root's single `AGENTS.md`, run `node tools/inspect-continuity.mjs`, then use `verification/continuity-contract.json`. Fresh observations test current projections against governing contracts; neither history nor a test grants permission. Remote reads belong to the authorized checkpoint/remote boundary.
 
 ## Thin router
 
@@ -17,6 +17,6 @@ Run `node tools/inspect-continuity.mjs`, then use `verification/continuity-contr
 - Canary, beta, ZIP, release, or rollback: add `dcuf-release`; Continuity does not grant that authority.
 - New context-free task handoff: use [the cold-start handoff contract](references/handoff-contract.md); a fork inherits history and is not a fresh-context test.
 
-Re-run skill and impact routing at every contract trigger. Keep accepted, candidate, stale, blocked, and UNKNOWN facts distinct. PASS/READY must bind an existing receipt and exact artifact digest. Maintain exactly one bounded next task and omit command diaries or sensitive live data.
+Routine resume uses scoped reconciliation; policy/routing change, material handoff failure, stage closure, high-risk transfer or explicit closure uses closure qualification. Re-route applicable skills/impact at contract triggers. Keep accepted/candidate/stale/blocked/UNKNOWN distinct. PASS/READY needs a receipt and exact artifact. Maintain one typed next-action dependency/entry inventory; omit command diaries/sensitive data.
 
 Read [the detailed retrieval contract](references/retrieval-contract.md) only when updating Continuity, resolving ambiguous retrieval, or repairing detected drift.

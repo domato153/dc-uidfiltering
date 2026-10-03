@@ -1,5 +1,9 @@
 # AGENTS.md
 
+## Governing workspace
+- This root owns the single basic policy; run commands here. Parent/archive rules are historical. `docs/work/INDEX.md` routes facts; skills/contracts are methods, not authorization.
+- Inspect fresh files/Git against purpose, constraints and success criteria; independently verify premises and distinguish facts/inference/unknowns. Preserve user changes. Investigation is read-only; implementation includes proportionate checks. Ask for material missing choices/new authority. Review diff/normal/failure/edge paths; report actual checks and limits, not unqualified success.
+
 ## Priorities
 - Preserve visible behavior, stored settings, and release output.
 - Make the smallest complete change covering directly affected states, surfaces, contracts, and validation; avoid unrelated redesign.
@@ -11,7 +15,7 @@
 - Release sources are `src/`, build tools, and `build/targets.json`; root userscripts and `dist/` are generated. Site layout/UI is mobile-only; PC receives shared filter/management UI, not mobile host styling.
 - Put shared logic/data in `src/shared/` and host DOM/visibility work in adapters. Treat bootstrap, mobile filter, and personal-block inputs as cross-target unless isolated.
 - `architecture/registry.json` is the semantic/layer authority. Its generated index is a view, and `verification/gates.json` owns impact-to-test routing.
-- For a current UI owner/layer question, query `node tools/inspect-live-architecture.mjs --surface <id>`; run `--check` before and after changing the surface/architecture map. It derives from the effective registry, manifest, build, and source, and is not live-site evidence.
+- Query UI ownership with `node tools/inspect-live-architecture.mjs --surface <id>`; run `--check` around map changes. Derived registry/manifest/build/source links are not live-site evidence.
 
 ## Build and release
 - Rebuild affected artifacts at the current `build/targets.json` version. Only authorized working-branch checkpoints may commit/push; bump, promote, or publish need separate requests.
@@ -24,33 +28,33 @@
 
 ## Testbed fidelity
 - Model stable, non-sensitive live differences in fixtures and assertions. Inspect code, fixtures, and evidence before requesting redacted probes/screenshots/viewport/steps.
-- An approved redesign may update obsolete visual expectations, but never weaken behavior, storage, accessibility, geometry, lifecycle, or containment merely to pass.
+- Approved redesign may update obsolete visuals, never weaken behavior/storage/accessibility/geometry/lifecycle/containment to pass.
 - Source tests inject `testbed/artifacts/runtime-under-test.user.js`, require the guard, and confirm absolute path/SHA-256; name release-artifact verification separately.
 - Screenshots are evidence, not approval; encode composition as geometry, adjacency, visibility, material role, and hit-testing.
-- Before synthetic interaction, wait for the owner class/subscriber. For lifecycle closure, wait for timers/frames to return to baseline, not an arbitrary sleep.
+- Wait for the owner class/subscriber before interaction; lifecycle closure requires baseline timers/frames, not arbitrary sleep.
 - Before broad UI work, update `docs/ui-surface-contracts.md`; do not build a stale full-DOM database.
 
 ## Semantic architecture and proof
 - Map current ownership honestly. A mixed legacy file remains `mixed` until forbidden dependencies are actually removed.
-- Responsibility, owner, relation, invariant, public contract, lifecycle, state, or build-topology changes require a candidate overlay. A `mixed` exit also requires an exact-criteria-bound, current-head gate receipt. Validate the effective graph, then use deterministic promotion so the final PR contains the accepted registry/index, no overlay, and a replayable fold receipt; direct accepted-registry edits are invalid.
-- Impact routing uses merge-base paths plus downstream registry relations and component invariant profiles. Gate execution recomputes the Git-derived route, rejects unknown profile selectors, records non-applicable selections distinctly from passes, and never reuses a stateful command across profiles. Unknown source, shared runtime, bootstrap, build, harness, or fixture changes expand to full acceptance.
+- Ownership, relation, invariant, contract, lifecycle, state or build-topology changes require a candidate overlay; `mixed` exit requires an exact-criteria/current-head receipt. Validate the effective graph, then deterministic promotion yields accepted registry/index, no overlay and a replayable fold receipt. No direct accepted-registry edits.
+- Impact routing uses merge-base paths plus downstream registry relations/invariant profiles. Recompute Git routes; reject unknown selectors, distinguish non-applicable from pass, never reuse stateful commands across profiles. Unknown source/shared runtime/bootstrap/build/harness/fixture changes expand to full acceptance.
 - Behavior-preserving refactors bind control and candidate source/artifact SHAs and run them in separate fresh browser contexts. Compare semantic receipts, not only DOM text or screenshots.
 - Invalidate evidence when its SUT, oracle dependency, fixture, harness, toolchain, or route changes. Classify product, oracle, fixture/harness, verifier/routing/workflow, and environment/live failures separately.
 - Skill selection and passing tests never grant commit, push, merge, live-state, or release authority.
-- Before a consequential solution/method choice, decide whether current external authority, empirical evidence, or a comparable repository could change the design or verification plan. Research proportionately, test transferability against DCUF, and retain contrary evidence; skip broad research for exact repository-owned facts. At ownership, evidence, stage, or release transitions, reroute only the applicable skills; `verification/skill-routing-cases.json` is a static trigger corpus, not proof of model-level recall.
+- Research consequential methods proportionately using current primary/comparable evidence; test transfer and retain contrary evidence. Exact repo facts need no broad research. Reroute applicable skills at ownership/evidence/stage/release transitions; `verification/skill-routing-cases.json` is static, not proof of recall.
 
 ## Maintenance notes
 - Record reusable causes, discarded fixes, contracts, coverage, recurring live regressions, viewport/target divergence, and fragile host behavior in `docs/agent-maintenance-notes.md`.
 
 ## Local development workflow
 - Local tree/history are authoritative; remote refs matter only for authorized checkpoints. PR, release, and official branches are separate.
-- Standing instruction: after each bounded, validated unit, commit and non-force push only the designated branch, now `origin/codex/ui-port-boundary`. First check branch/upstream/remote, staged diff, sensitive data, validation, and fast-forward. Stop on conflicts; do not switch branches, push `main`/`Mobile`, open PRs, or merge without a separate request.
+- Standing instruction: after each bounded, validated unit, commit and non-force push only `origin/codex/ui-port-boundary`. Use `tools/checkpoint.mjs` / `docs/checkpoint-workflow.md` for exact paths/tree, fresh refs, sensitive-data review, validation, fast-forward and same-commit retry. Stop on drift; do not switch branches, push `main`/`Mobile`, open PRs, or merge without a separate request. Remote sync/checkpoint CI are not product acceptance or release authority.
 - Tracked instructions and continuity documents use repository-relative paths, never local absolute paths/usernames. Absolute runtime paths belong only in local diagnostics or private new-task locators.
-- Keep tracked current state precise: accepted runtime SHA, phase, candidate overlay, validation receipts, stale evidence, unresolved live checks, and one next bounded task. Mark superseded current-looking briefs historical.
+- Current state records accepted SHA/phase, overlay, receipts/staleness, live gaps and one next task. Superseded briefs are historical.
 - Stage exact paths. Exclude local archives, attachments, raw audits/downloads, credentials, user data, ignored artifacts, and unrelated generated userscripts.
 
 ## Git publishing
-- `origin`: `https://github.com/domato153/dc-uidfiltering.git`. Standing checkpoints push only `codex/ui-port-boundary` without force; verify the remote result. PR, merge, tag, official publication, and promotion need separate requests.
+- `origin`: `https://github.com/domato153/dc-uidfiltering.git`; checkpoint target/safety is machine-checked in `verification/checkpoint-policy.json`. PR, merge, tag, official publication and promotion need separate requests.
 - `Mobile` owns `Dc_UserFilter_Mobile.user.js`; `main` owns PC/site. Mirror README and images to `Mobile`.
 - Stable updates target version in `main:README.md` and label in `main:index.html`; verify the canonical download version.
 - Stable publication uses the trusted `main` manual workflow, an exact source/artifact SHA, the `mobile-release` environment approval, compare-and-swap expected heads, a draft Release, attached userscript and checksum, nonempty patch notes, and post-publication verification. Never merge the source branch wholesale or report success when an asset is missing or mismatched.
@@ -61,4 +65,4 @@
 - Reuse observers/rerun hooks; prevent duplicates, bound retries, and retain delayed-content coverage.
 - Keep one final visual owner per surface. Inspect phase order and specificity before overrides, especially `!important`, `:is()`, IDs, and popup ancestors.
 - Scope CSS to owned containers and check affected states, themes, viewports/targets, stacking, clipping, pointer input, and popup context.
-- Presentation consumes immutable snapshots and emits typed intents through `UiPort`; it does not own GM storage, network calls, filter decisions, document-wide observers, or shared mutable state. Expected rejections return `CommandResult`; unexpected handler failures reject dispatch so the existing surface owner logs the original failure exactly once.
+- Presentation consumes immutable snapshots/emits typed `UiPort` intents, never owns GM/network/filter/document observers/shared mutable state. Expected rejection returns `CommandResult`; unexpected failure rejects dispatch for the existing owner to log the original error exactly once.

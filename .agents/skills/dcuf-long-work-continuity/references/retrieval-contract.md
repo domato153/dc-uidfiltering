@@ -6,10 +6,13 @@ Read this reference only when Continuity is being changed, a retrieval route is 
 
 - `docs/work/CURRENT_STATE.md` is the compact read projection: active plan/stage, source state, candidate fingerprint, last audit, accepted baseline, current artifact, blockers, and pending live checks.
 - `docs/work/NEXT_TASK.md` contains one task ID and one bounded completion scope.
+- Its single typed block binds declared action dependencies and adopted entry decisions, hazards and local recovery. Reconcile declarations, then independently derive omitted execution inputs at closure. Current required fields are parsed only from `## Current execution`, never history.
 - Receipts and exact digests are immutable evidence events. The projection may summarize them but cannot make them current after source, oracle, fixture, harness, toolchain, or routing changes.
 - The plan explains the intended sequence. Maintenance notes retain reusable causes and contracts. Neither overrides fresh local state or exact evidence.
 
 This is a selective projection-and-receipt pattern, not a general event store. Do not add a chronological command diary or replay infrastructure.
+
+AGENTS governs permission; machine contracts govern semantic/build/evidence rules; fresh observations determine whether the human projection is still true. The authorityOrder is a retrieval/freshness order, not permission precedence. Routine/closure routing is signal-driven in the machine contract; an unrelated HEAD movement or new thread alone does not expire unchanged narrow SUT/oracle evidence or demand full acceptance.
 
 ## Retrieval routes
 

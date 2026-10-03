@@ -123,6 +123,8 @@ async function verifyGuidance() {
         ['live architecture links', 'tools/inspect-live-architecture.mjs'],
         ['live architecture negative controls', 'tools/test-live-architecture.mjs'],
         ['modernization assurance', 'tools/verify-modernization-assurance.mjs'],
+        ['governance controls', 'tools/test-governance.mjs'],
+        ['governance contract', 'tools/verify-governance.mjs'],
         ['research selection', 'tools/verify-research-selection.mjs'],
         ['skills', 'tools/verify-skills.mjs'],
         ['UI boundaries', 'tools/verify-ui-boundaries.mjs'],

@@ -1,5 +1,11 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
+  "profileRouting": {
+    "default": "routine",
+    "closureTriggers": ["policy-change", "routing-change", "material-handoff-failure", "stage-close", "high-risk-transfer", "explicit-closure"],
+    "qualificationScope": "CONTINUITY_ONLY",
+    "workSuccessCertified": false
+  },
   "authorityOrder": [
     {
       "id": "fresh-local-state",
