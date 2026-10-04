@@ -6,6 +6,7 @@ This is the canonical repository-relative locator only in the exact development 
 
 - `CURRENT_STATE.md`: one compact Current execution section, accepted baseline versus current candidate, exact artifacts and evidence gaps.
 - `NEXT_TASK.md`: one bounded next action, typed LIVE/FROZEN dependencies, required ADOPTED entry decisions, hazards and local recovery. A declared dependency check does not establish semantic completeness.
+- `PALETTE_RESOURCE_ADJUDICATION.md`: completed bounded A030/689A reconciliation, new candidate lifecycle observation and unresolved listener/native-input provenance; no product receipt.
 - `HOSTED_ACCEPTANCE_OBSERVATION.md`: exact cda1087 failed synthetic acceptance, positive split coverage, raw identities/recovery, and unclassified resource-owner delta; not a product receipt.
 - `.agents/skills/dcuf-long-work-continuity/references/handoff-contract.md`: routine/closure and receiver ACCEPTED/STALE_REPLAN method; creating a new task requires an explicit user request.
 - `verification/continuity-contract.json`: mandatory fields/triggers/retrieval/profile rules, not independent authorization.
