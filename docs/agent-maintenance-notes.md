@@ -124,6 +124,9 @@ This is the active, compact maintenance index. It records reusable causes and co
 
 ## Recommendation and palette contracts
 
+- Listener metrics are registration history, not a callable census: the accepted wrapper removes keys only on explicit `removeEventListener`. A030/689A's newly reproduced 188→170 consists of sixteen closed-palette pointer/touch registrations explicitly removed by the candidate and two already-consumed header `once` registrations omitted there. Fresh CDP reachable-target counts are 175→159; connected type/capture/once counts match. This does not identify the original CI callbacks or measure heap leakage. Keep source/role/removal traces and native positives separate from count equality; see `docs/work/PALETTE_LISTENER_PROVENANCE.md`.
+- Listener diagnostics must preserve callback/options identity and callback receivers, avoid strong DOM references, and distinguish automatic once/signal removal from explicit removal. Set a CDP object group when requesting handler objects; optional handler fields can otherwise be absent. Match event/resource phases, retain failed attempts, and preserve raw GM timestamps while excluding only timestamp metadata from comparisons between fresh contexts. Never compensate for an unreachable original control with a synthetic fallback click.
+
 - The live article root is `#container > article > div.view_content_wrap` on major, minor, and mini routes.
 - Only `div.btn_recommend_box.recomuse_y.morebox` owns the centered width correction. It is capped at 680px, contained at narrow widths, and leaves overflow visible for host popups and CAPTCHA content. Do not use `100vw` or move/replace the box.
 - Recommendation tests cover normal and CAPTCHA states, wide and narrow viewports, containment, and native click counts on all three routes.

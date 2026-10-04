@@ -2,6 +2,8 @@
 
 ## Result and boundary
 
+This is the preceding reconciliation at b71e60a. Its next provenance slice is now recorded in `PALETTE_LISTENER_PROVENANCE.md`: a new execution explains the reproduced ledger delta and observes native actions. The original CI listener identities and original FAILED acceptance are unchanged; read the new document for current bounded evidence.
+
 At source HEAD `b71e60ac719956454595f02e029f04dbb6b81965`, bounded evidence reconciliation supports the four explicit header mutation-subscriber registrations and one current-candidate disposal/reconnect/duplicate-connect observation. The original listener difference remains `UNKNOWN`; no complete exact-pair owner-split classification, header acceptance, or product receipt is issued. Original cda1087 full acceptance remains **FAILED**.
 
 Control is `A03038FE68126B62054EBA11244D4EE2E1766D308983FC5C27127FD3794CB343`; candidate mobile root/dist/guard is `689A66DFBA738CC3325BE85CD3E1EA53E4AE3089A3454CAF5CC69BC657D3E0DD`. PC root/dist remains `1A7A00468F4DCFB57C7341063098B827743091FD7593BA3FBA86A17E282BDC33`. Versions, production source, fixtures, observer, harness and historical classifier were not changed by this task. External research tier is ER0: the findings concern current repository code and exact local evidence, with no new API or generalized solution claim.
