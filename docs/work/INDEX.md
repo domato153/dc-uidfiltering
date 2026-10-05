@@ -6,7 +6,8 @@ This is the canonical repository-relative locator only in the exact development 
 
 - `CURRENT_STATE.md`: one compact Current execution section, accepted baseline versus current candidate, exact artifacts and evidence gaps.
 - `NEXT_TASK.md`: one bounded next action, typed LIVE/FROZEN dependencies, required ADOPTED entry decisions, hazards and local recovery. A declared dependency check does not establish semantic completeness.
-- `HEADER_BOUNDARY_GAPS.md`: current source/build/evidence gap inventory, separation versus visual-promotion debt, and the selected drawer template/label extraction; no stage or mixed-owner promotion.
+- `HEADER_DRAWER_OWNED_SHELL.md`: current frozen template/state boundary, exact immediate-control/candidate observations, raw startup-order variance, fresh split checks and remaining mixed/admission limits.
+- `HEADER_BOUNDARY_GAPS.md`: historical 689A source/build/evidence gap inventory; current template/label result is separate, while remaining structural/visual debt stays open.
 - `HEADER_SHELL_RESET_CONTRACT.md`: current candidate width/min-width phase/scope characterization, native positives, contrary controls and explicit diagnostic rollback; both rules retained, no stage admission.
 - `PALETTE_LISTENER_PROVENANCE.md`: newly bound A030/689A listener attribution, hook transparency, native actions and contrary controls; original CI identities/full-header admission remain unresolved.
 - `PALETTE_RESOURCE_ADJUDICATION.md`: preceding bounded reconciliation and candidate lifecycle observation; its former next step is now characterized separately, without changing original acceptance.
@@ -17,7 +18,7 @@ This is the canonical repository-relative locator only in the exact development 
 
 ## Read only when relevant
 
-- `DECISION_RATIONALE.md`: current D-11–D-21 scope/negative choices; prior rationales do not revive an old task queue. NOT ADOPTED is not automatically REJECTED.
+- `DECISION_RATIONALE.md`: current D-11–D-22 scope/negative choices; prior rationales do not revive an old task queue. NOT ADOPTED is not automatically REJECTED.
 - `MOBILE_UI_MODERNIZATION.md`, `docs/ui-surface-contracts.md`, `architecture/ui-surfaces.json`: durable plan and surface contracts. Accepted registry versus candidate overlays remains distinct.
 - `HEADER_NAVIGATION_INVENTORY.md`, `SHARED_SETTINGS_PC_CROSS_AUDIT.md`, `HEADER_EXTENSION_CANARY_PREREQUISITES.md`: historical exact-artifact observations and unexecuted live checklist; renew bindings for current use rather than treating their filenames as a current receipt.
 - `FINAL_FEATURE_STATE_INVENTORY.md`, `verification/assurance-case.json`: unfinished per-feature/stage/product upper claims, not checkpoint CI.

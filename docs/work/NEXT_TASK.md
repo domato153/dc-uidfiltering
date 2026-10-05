@@ -1,15 +1,15 @@
 # Next bounded task
 
 - Task ID: `header-navigation`.
-- Status: `READY_FOR_BOUNDED_IMPLEMENTATION`; the inventory selects one source-owned extraction. Original full acceptance remains FAILED and full-header admission UNKNOWN.
-- Bounded slice: `header-drawer-owned-shell-presenter-boundary`.
-- Why next: Fresh source/build inspection confirms five CSS owners but finds DCUF drawer HTML and open/closed label-state definition still in the host adapter. Moving that exact owned template/descriptor to the existing presenter directly reduces current presentation coupling; early raw scope and future priority/design debt are separate, explicitly retained work.
-- Expected transition: Fresh-check exact nested worktree/Git/689A runtime and continuity, including HEADER_BOUNDARY_GAPS.md. Freeze an exact 689A immediate control with source/binding before editing. Update the existing architecture candidate and affected surface contract for only this zero visual/behavior delta; keep drawer presenter/adapter mixed. Move existing owned shell construction description/template and label/ARIA descriptor into the presenter, consuming immutable serializable state. Keep original-node discovery, adapter mounting, native state/geometry, event/resource lifecycle, raw theme/reset/concealment payloads and the self-insertion focus guard unchanged. Rebuild at the current version, compare separate fresh control/candidate contexts, renew directly affected evidence, and record one next unit from actual results.
-- Objective: One zero-delta DCUF drawer owned-template/label presenter extraction, preserving exact button type, class/attribute/text values, descendant order/template semantics, native host topology/default input, 689A focus behavior, GM/settings/metadata/versions and PC isolation. No per-refresh shell replacement, new framework/global owner, cascade redesign, priority cleanup, portal/clone or mixed-owner promotion. Owned-body inline presentation and toggle intent separation remain explicitly outside this unit.
-- Validation: Fresh architecture/impact routing before and after ownership changes; pure/frozen serializable template/descriptor checks; exact immediate-control/candidate artifacts and bindings; existing drawer style/host lifecycle, minor rank/tip/popup-only, major native recommendation, replacement, duplicate connect, dispose/reconnect and retained-focus Enter checks in applicable light/dark/viewport states. Detect selected missing/incorrect descriptor and duplicate-shell faults with positive input afterward. Run impact-selected checks on the settled built runtime and verify-repo all; do not inherit invalidated source/contract/harness evidence or call the old full gate PASS. Lifecycle closure uses baseline resources, not an arbitrary wait.
+- Status: `READY_FOR_BOUNDED_IMPLEMENTATION`; the 79FC owned-shell unit is complete within its recorded scope. Original/new palette comparison FAIL and full-header UNKNOWN remain.
+- Bounded slice: `header-drawer-owned-body-presentation-boundary`.
+- Why next: HTML/construction and label/ARIA descriptions now belong to the presenter, but `setDrawerOpenState` still defines owned body display/visibility/opacity/pointer/overflow/max-height styles. Extracting those value policies next reduces the remaining current presentation coupling without redesigning native geometry or event ownership.
+- Expected transition: Fresh-check nested worktree/Git/79FC runtime and HEADER_DRAWER_OWNED_SHELL.md. Freeze exact 79FC with fresh source HEAD/binding before editing; update the existing overlay/surface contract for zero visual/behavior delta. Move only owned-body open/closed inline value policies into an immutable presenter description consuming adapter-measured serializable geometry. Keep DOM reads, native root state/geometry, mounting/focus, scheduling/listeners/disposal, remaining direct toggle handling and raw CSS phases in their owners. Do not batch or reorder existing measurements/writes. Build at current version and compare a new exact pair in separate contexts.
+- Objective: One owned-body presentation description, preserving CSS values/priorities/order and measured max-height/inline-start, owned node identity/default input/focus, original issue/recommendation/popup topology/handlers, settings/metadata/versions and PC isolation. No generic renderer, new owner/resource, new geometry algorithm, native clone/portal, priority removal or mixed promotion. Scope body-inner padding/direct toggle/native variables separately if moving them requires a new contract.
+- Validation: Fresh architecture/impact before/after; pure frozen serializable value descriptions plus independent geometry/hit oracles; current immediate-control/candidate minor rank/tip/popup-only and major recommendation across light/dark/narrow/short/wide states; retained-focus Enter, replacement, duplicate connect, dispose/reconnect, storage and baseline timers/frames. Detect selected wrong visibility/priority/measurement/omission faults and restore native positives. The current owned-shell observer's legacy-template input is 689A-specific: retain its historical oracle or adapt a new applicable current-control oracle before claiming a 79FC body differential. Keep raw startup orders and original/new palette FAIL separate; run fresh selected checks and verify-repo all, report incomplete full profiles honestly.
 - Known limits: Original CI listeners and six historical C84 timer fields cannot be identified from later traces. A030 original minor/major door controls are unreachable in the new observation; retain the approved D-11 distinction and do not infer equality from callback counts. The 2026-10-03 popup-only timeout still lacks an event trace; its cause remains UNKNOWN despite the independently repaired focus defect.
 - Publication boundary: Validated bounded checkpoints/non-force push only to `origin/codex/ui-port-boundary`; live dispatch, PR, release, dependency install, user-profile install and account/content writes remain separate requests.
-- Stop/replan: Missing/stale control or required source/contract, absent build input, lost template/descriptor meaning, per-refresh owned-node replacement, native input/focus/topology/lifecycle/geometry drift, surviving selected negative, PC impact or a newly observed higher-priority partial-startup defect. Preserve UNKNOWN and failed raw evidence; do not broaden the unit or weaken assertions to make it pass.
+- Stop/replan: Missing/stale current control/oracle, changed measurement/write order, lost style value/priority, per-refresh remount, native focus/input/topology/geometry/resource drift, a selected survivor, uncharacterized style phase, PC impact or a newly observed higher-priority boot/live defect. Preserve UNKNOWN/raw failures; do not broaden or weaken contracts to pass.
 
 Fresh-read `docs/work/CURRENT_STATE.md`, `docs/work/INDEX.md`, the compact surface map, Git and `node tools/inspect-continuity.mjs` first. Work only in the exact active nested worktree. The standing checkpoint instruction does not authorize official publication or live execution.
 
@@ -19,7 +19,7 @@ This is a declared dependency/entry inventory, not proof of semantic completenes
 
 ```dcuf-next-action
 {
-  "id": "header-drawer-owned-shell-presenter-boundary",
+  "id": "header-drawer-owned-body-presentation-boundary",
   "stageId": "header-navigation",
   "requiredDependencies": [
     {
@@ -154,7 +154,7 @@ This is a declared dependency/entry inventory, not proof of semantic completenes
       "id": "mobile-candidate",
       "path": "Dc_UserFilter_Mobile_v3.5.5.user.js",
       "mode": "FROZEN",
-      "sha256": "689a66dfba738cc3325be85cd3e1ea53e4ae3089a3454caf5cc69bc657d3e0dd"
+      "sha256": "79fcbc260fdcd43febe62b56bf4ee29d8e4c09f9a061663dadf550ec3f1f87da"
     },
     {"id":"current-adjudication","path":"docs/work/PALETTE_RESOURCE_ADJUDICATION.md","mode":"LIVE","sha256":null},
     {"id":"runtime-instrumentation","path":"testbed/harness/runtime-instrumentation.js","mode":"LIVE","sha256":null},
@@ -172,7 +172,9 @@ This is a declared dependency/entry inventory, not proof of semantic completenes
     {"id":"shell-width-probe","path":"tools/probe-header-shell-reset.mjs","mode":"LIVE","sha256":null},
     {"id":"current-boundary-inventory","path":"docs/work/HEADER_BOUNDARY_GAPS.md","mode":"LIVE","sha256":null},
     {"id":"ui-boundary-checker","path":"tools/verify-ui-boundaries.mjs","mode":"LIVE","sha256":null},
-    {"id":"phase-ownership-checker","path":"tools/test-header-palette-ownership.mjs","mode":"LIVE","sha256":null}
+    {"id":"phase-ownership-checker","path":"tools/test-header-palette-ownership.mjs","mode":"LIVE","sha256":null},
+    {"id":"owned-shell-result","path":"docs/work/HEADER_DRAWER_OWNED_SHELL.md","mode":"LIVE","sha256":null},
+    {"id":"owned-shell-observer","path":"testbed/run-header-drawer-owned-shell-differential.mjs","mode":"LIVE","sha256":null}
   ],
   "requiredDecisions": [
     "working-checkpoint",
@@ -180,7 +182,8 @@ This is a declared dependency/entry inventory, not proof of semantic completenes
     "D-12-layered-comparison",
     "D-19-listener-evidence",
     "D-20-shell-phase-evidence",
-    "D-21-owned-drawer-boundary"
+    "D-21-owned-drawer-boundary",
+    "D-22-bounded-order-admission"
   ],
   "decisions": [
     {
@@ -215,7 +218,8 @@ This is a declared dependency/entry inventory, not proof of semantic completenes
     },
     {"id":"D-19-listener-evidence","status":"ADOPTED","boundary":"New provenance supports bounded current observation only; no original CI identity, native-door equivalence, or full-header admission.","source":"docs/work/DECISION_RATIONALE.md"},
     {"id":"D-20-shell-phase-evidence","status":"ADOPTED","boundary":"Retain both shell width pairs; characterize early scope and later conflict protection separately. Public reconnect order and diagnostic rollback are distinct; no full-header or order-independence admission.","source":"docs/work/DECISION_RATIONALE.md"},
-    {"id":"D-21-owned-drawer-boundary","status":"ADOPTED","boundary":"Move only the existing owned template/label descriptor to the presenter, updating overlay/contract first; preserve native adapter mounting and focus guard, keep mixed labels and all original admission gaps.","source":"docs/work/DECISION_RATIONALE.md"}
+    {"id":"D-21-owned-drawer-boundary","status":"ADOPTED","boundary":"The existing owned template/label descriptor now belongs to the presenter; preserve native adapter mounting/focus, mixed labels and admission gaps when continuing body separation.","source":"docs/work/DECISION_RATIONALE.md"},
+    {"id":"D-22-bounded-order-admission","status":"ADOPTED","boundary":"Keep bounded owned-shell/native equality, raw control startup-order variance and original/new palette FAIL distinct; freeze the exact current control and retain applicable oracles before the next body-value move.","source":"docs/work/DECISION_RATIONALE.md"}
   ],
   "hazards": [
     {
@@ -241,7 +245,7 @@ This is a declared dependency/entry inventory, not proof of semantic completenes
     {
       "id": "live-gap",
       "status": "ACTIVE",
-      "effect": "Current 689A has no actual-extension/public/hosted-live result; hosted synthetic FAIL is separate. 0C30 startup is historical and not full header."
+      "effect": "Current 79FC has no actual-extension/public/hosted-live result; old 689A/public and 0C30 startup evidence is historical. Hosted/original/new synthetic palette FAIL stays separate."
     },
     {
       "id": "resource-guard",
@@ -252,7 +256,8 @@ This is a declared dependency/entry inventory, not proof of semantic completenes
     {"id":"transition-scope","status":"ACTIVE","effect":"Several mixed-header component exits name full visual promotion, while the plan first requires zero-delta separation. Distinguish structural gaps, retained compatibility debt and absent evidence; a mixed label alone does not choose a code change."},
     {"id":"public-reconnect-order","status":"ACTIVE","effect":"Shell public reconnect reinserts its subscription at the Map end. Selected native actions pass before explicit test-only order rollback; arbitrary mutation-order equivalence remains unproved."},
     {"id":"owned-shell-focus","status":"ACTIVE","effect":"Recreating the DCUF shell or inserting a current first child into itself drops retained native focus. Preserve the source guard and original mounted owned nodes through refresh; template extraction is not permission to rewrite mounting."},
-    {"id":"partial-startup-gap","status":"ACTIVE","effect":"Drawer is absent from the inspected UIModule boot callbacks and separately connects on lists. Partial-startup behavior is unobserved; do not infer a product bug, global order equivalence or successful boot disposal from manual adapter tests."}
+    {"id":"partial-startup-gap","status":"ACTIVE","effect":"Drawer is absent from the inspected UIModule boot callbacks and separately connects on lists. Partial-startup behavior is unobserved; do not infer a product bug, global order equivalence or successful boot disposal from manual adapter tests."},
+    {"id":"raw-startup-order","status":"ACTIVE","effect":"Unchanged control has early/late drawer-style insertion and current raw order differs. Preserve raw evidence/source phase and other-owner ordering checks; bounded computed/native equality is not arbitrary phase independence. Drawer absence on write is not global resource closure."}
   ],
   "localEvidence": [
     {
@@ -278,7 +283,7 @@ This is a declared dependency/entry inventory, not proof of semantic completenes
     {
       "path": "testbed/artifacts/runtime-under-test.user.js",
       "disposition": "REGENERATE",
-      "recovery": "In a new LF checkout, run mobile canonical build, mobile --testbed-output, then PC canonical build serially here; confirm exact 689A root/dist/guard and 1A7 PC bytes. Do not normalize expected hashes or run PC guard builder concurrently."
+      "recovery": "In a new LF checkout, run mobile canonical build, mobile --testbed-output, then PC canonical build serially here; confirm exact 79FC root/dist/guard and 1A7 PC bytes. Do not normalize expected hashes or run PC guard builder concurrently."
     },
     {
       "path": "testbed/artifacts/header-keyboard-validation-final-2026-10-04.json",
@@ -306,9 +311,14 @@ This is a declared dependency/entry inventory, not proof of semantic completenes
     {"path":"docs/work/HEADER_SHELL_RESET_CONTRACT.md","disposition":"DURABLE","recovery":"Tracked candidate-only projection, exact final/partial report and tool hashes, native/negative scope and explicit rollback. It is sufficient as a limited inventory locator, never a full-header receipt."},
     {"path":"artifacts/header-shell-reset-2026-10-05/report-2026-10-05T10-53-10-641Z.json","disposition":"REGENERATE","recovery":"Final local observation SHA A3B1D89FECAA001B99109148BA83DF0FB18D749D3280A103AC3129999D312880. If absent/stale, run the tracked probe with --require-runtime-under-test for a new bound report; do not recreate old bytes or inherit execution. Inventory missing coverage as UNKNOWN until renewed."},
     {"path":"artifacts/header-shell-reset-2026-10-05/report-2026-10-05T10-50-40-116Z.json","disposition":"UNRECOVERABLE","recovery":"Initial PARTIAL attempt SHA F8EC176C700CEF2423715111DAEF45196256C343F34DABDA280C448650D7EAF0 is tied to an earlier uncommitted diagnostic hash. If absent, retain durable failure attribution only; never replay a current tool as this old attempt."},
-    {"path":"docs/work/HEADER_BOUNDARY_GAPS.md","disposition":"DURABLE","recovery":"Tracked current source/evidence scope and selected implementation boundary. Recheck source, effective overlay and exact dependencies; it is not a component/stage conformance receipt."},
+    {"path":"docs/work/HEADER_BOUNDARY_GAPS.md","disposition":"DURABLE","recovery":"Tracked historical 689A source/evidence scope and selected implementation boundary; current result is in HEADER_DRAWER_OWNED_SHELL.md. Recheck source, effective overlay and exact dependencies; it is not a component/stage conformance receipt."},
     {"path":"artifacts/header-boundary-inventory-2026-10-05/inspection.json","disposition":"REGENERATE","recovery":"Local source/evidence inspection SHA 2B99BB54A73531282BD388F790CE0783F8B9AC90AE63688FA3FF8E8A08DAA9EA. If absent, re-inspect current source/build and report hashes for a new inventory, not reconstruction of old bytes. No browser execution is inherited."},
-    {"path":"Dc_UserFilter_Mobile_v3.5.5.user.js","disposition":"REGENERATE","recovery":"Before editing, freeze exact 689A bytes with source db40ed1bb2e178e979c1785b02aabcb267f8787f and current pre-change binding into a local immediate-control file. If these bytes are missing, build from their exact historical source/build inputs and require SHA 689A66DFBA738CC3325BE85CD3E1EA53E4AE3089A3454CAF5CC69BC657D3E0DD. A rebuilt artifact does not recreate old event traces."}
+    {"path":"Dc_UserFilter_Mobile_v3.5.5.user.js","disposition":"REGENERATE","recovery":"Before editing, freeze exact 79FC bytes with fresh source HEAD/current pre-change binding for the body unit. Require SHA 79FCBC260FDCD43FEBE62B56BF4EE29D8E4C09F9A061663DADF550EC3F1F87DA; do not substitute legacy 689A as the next immediate control. A rebuilt artifact does not recreate old event traces."},
+    {"path":"docs/work/HEADER_DRAWER_OWNED_SHELL.md","disposition":"DURABLE","recovery":"Tracked current source result, exact report identities, oracle corrections/raw-order variance and incomplete admission. Recheck inputs; it is not a header-stage receipt."},
+    {"path":"artifacts/header-drawer-owned-shell-2026-10-05/control.user.js","disposition":"REGENERATE","recovery":"Historical pre-template 689A control frozen at d4540c6902509b5d61d8c8800a76e4bc1d7835b9. Recover exact bytes from that source or the local archive and require SHA 689A66DFBA738CC3325BE85CD3E1EA53E4AE3089A3454CAF5CC69BC657D3E0DD. Never recreate its old execution/binding or use it as the next body control."},
+    {"path":"artifacts/header-drawer-owned-shell-2026-10-05/differential-2026-10-05-final-v2.json","disposition":"REGENERATE","recovery":"Bounded report SHA 5B09B88C75ABEE52DD4807439543492096ADC958EB9DFB52070BA54DBFAF013B. If missing/stale, replay an applicable exact pair into a new path or retain UNKNOWN. Raw phase differences and the observer's legacy-control precondition remain in the durable projection."},
+    {"path":"artifacts/header-drawer-owned-shell-2026-10-05/proof-audit-port-excluded.json","disposition":"REGENERATE","recovery":"Proof-system report SHA C09D29FEA8FD37399921094CFA968C087F36A96A6F913ADFE033D91E5FC04CDD. If missing/stale, resolve a fresh impact route and run tools/audit-proof-system.mjs with a new output at the current guarded runtime. A new audit is not the old execution or a full product/profile receipt."},
+    {"path":"artifacts/header-drawer-owned-shell-2026-10-05/environment-port-reservation.json","disposition":"UNRECOVERABLE","recovery":"Local execution record SHA 9B2EC8484F5C4BEF607F8B067F52A04146D8E729E5BB491AC370FD63C59CE909 binds the observed port-5061 failure workaround, unchanged child checks and ignored wrapper/logs. If absent, retain only the durable limited projection; do not recreate this old record. New environmental failures require their own observation and bounded remedy."}
   ],
   "qualificationScope": "CONTINUITY_ONLY",
   "workSuccessCertified": false

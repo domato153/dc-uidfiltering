@@ -19,6 +19,22 @@
 `;
     }
     const __dcufHeaderDrawerPresenter = (() => {
+        const closedState = Object.freeze({ dataOpen: '0', ariaExpanded: 'false', label: '갤러리 대문 열기' });
+        const openState = Object.freeze({ dataOpen: '1', ariaExpanded: 'true', label: '갤러리 대문 닫기' });
+        const describeOpenState = (snapshot) => snapshot.open ? openState : closedState;
+        const shell = Object.freeze({
+            tagName: 'div',
+            className: 'dcuf-header-drawer',
+            initialState: closedState,
+            html: `
+                    <button type="button" class="dcuf-header-drawer__toggle" aria-expanded="false">
+                        <span class="dcuf-header-drawer__toggle-label">${closedState.label}</span>
+                    </button>
+                    <div class="dcuf-header-drawer__body">
+                        <div class="dcuf-header-drawer__body-inner"></div>
+                    </div>
+                `
+        });
         const style = Object.freeze({
             key: 'header-drawer',
             id: 'dcuf-header-drawer-style',
@@ -221,6 +237,6 @@
         
 `
         });
-        return Object.freeze({ style, buildThemeCss: __dcufBuildHeaderDrawerThemeCss, buildVisibilityCss: __dcufBuildHeaderDrawerVisibilityCss });
+        return Object.freeze({ shell, describeOpenState, style, buildThemeCss: __dcufBuildHeaderDrawerThemeCss, buildVisibilityCss: __dcufBuildHeaderDrawerVisibilityCss });
     })();
     __dcufRoot.__dcufHeaderDrawerPresenter = __dcufHeaderDrawerPresenter;

@@ -1,5 +1,7 @@
 # Header boundary gaps at the current candidate
 
+Historical 689A inventory: the template/label gap below is now addressed by `HEADER_DRAWER_OWNED_SHELL.md` at 79FC. The other structural/admission gaps remain; this document's source and reused report bindings have not been relabeled as the new candidate.
+
 This is a source/evidence inventory at checkpoint base `db40ed1bb2e178e979c1785b02aabcb267f8787f`, not a header receipt, runtime change or architecture promotion. Mobile 3.5.5 remains `689A66DFBA738CC3325BE85CD3E1EA53E4AE3089A3454CAF5CC69BC657D3E0DD`; PC 1.9.9 remains `1A7A00468F4DCFB57C7341063098B827743091FD7593BA3FBA86A17E282BDC33`. The accepted registry is `2275e39d9fd10662c755354df6e8c8161d9a6e19924de12a9e8d83cc0971f191`, with the existing modernization candidate overlay still active.
 
 ## Current source ownership

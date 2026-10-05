@@ -13,8 +13,6 @@
         const DRAWER_SCOPE_ATTR = 'data-dcuf-header-drawer';
         const DRAWER_SELECTOR = '.dcuf-header-drawer';
         const DRAWER_BODY_SELECTOR = '.dcuf-header-drawer__body-inner';
-        const CLOSED_LABEL = '갤러리 대문 열기';
-        const OPEN_LABEL = '갤러리 대문 닫기';
         const MUTATION_SELECTOR = '.page_head, .list_array_option, .gall_listwrap, .list_wrap, .issue_contentbox, #hot_rank_pop2, #hot_tip_pop, #gall_top_recom.concept_wrap, #relation_popup';
         const ownedDrawers = new Set();
         let connected = false;
@@ -155,9 +153,10 @@
             const label = drawer.querySelector('.dcuf-header-drawer__toggle-label');
             const body = drawer.querySelector('.dcuf-header-drawer__body');
             const bodyInner = drawer.querySelector(DRAWER_BODY_SELECTOR);
-            drawer.setAttribute('data-open', nextOpen ? '1' : '0');
-            if (toggle instanceof HTMLElement) toggle.setAttribute('aria-expanded', nextOpen ? 'true' : 'false');
-            if (label instanceof HTMLElement) label.textContent = nextOpen ? OPEN_LABEL : CLOSED_LABEL;
+            const presentation = __dcufHeaderDrawerPresenter.describeOpenState(Object.freeze({ open: nextOpen }));
+            drawer.setAttribute('data-open', presentation.dataOpen);
+            if (toggle instanceof HTMLElement) toggle.setAttribute('aria-expanded', presentation.ariaExpanded);
+            if (label instanceof HTMLElement) label.textContent = presentation.label;
             if (body instanceof HTMLElement) {
                 if (nextOpen) {
                     const drawerRect = drawer.getBoundingClientRect();
@@ -260,17 +259,11 @@
             if (!mount?.parent) return null;
             let drawer = document.querySelector(DRAWER_SELECTOR);
             if (!(drawer instanceof HTMLElement)) {
-                drawer = document.createElement('div');
-                drawer.className = 'dcuf-header-drawer';
-                drawer.setAttribute('data-open', '0');
-                drawer.innerHTML = `
-                    <button type="button" class="dcuf-header-drawer__toggle" aria-expanded="false">
-                        <span class="dcuf-header-drawer__toggle-label">${CLOSED_LABEL}</span>
-                    </button>
-                    <div class="dcuf-header-drawer__body">
-                        <div class="dcuf-header-drawer__body-inner"></div>
-                    </div>
-                `;
+                const definition = __dcufHeaderDrawerPresenter.shell;
+                drawer = document.createElement(definition.tagName);
+                drawer.className = definition.className;
+                drawer.setAttribute('data-open', definition.initialState.dataOpen);
+                drawer.innerHTML = definition.html;
             }
             if (drawer.getAttribute(DRAWER_SCOPE_ATTR) !== '1') drawer.setAttribute(DRAWER_SCOPE_ATTR, '1');
             // insertBefore(node, node) still detaches/reinserts in Chromium,
