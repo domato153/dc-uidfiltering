@@ -1,15 +1,15 @@
 # Next bounded task
 
 - Task ID: `header-navigation`.
-- Status: `READY_FOR_LOCAL_CHARACTERIZATION`; new palette provenance/current native positives support this bounded entry, while original raw acceptance remains FAILED and full-header admission UNKNOWN.
-- Bounded slice: `header-shell-reset-overlap-contract`.
-- Why next: The newly bound 22-context A030/689A diagnostic attributes the reproduced ledger delta and checks current native actions/default input/lifecycle. Recent-title/GNB selected contracts and the 689A focus fix remain qualified evidence; shell width/min-width overlap is still uncharacterized. Its typea/non-typea scope and specificity differ from GNB. Mounted duplication cannot justify deletion.
-- Expected transition: Fresh-check exact nested worktree/Git/689A runtime and continuity, including the new diagnostic projection/bindings. Inspect shell presenter reset/semantic/theme payloads, adapter projection/mount/disposal, original core phase and native header roots. Characterize only inherited root width/min-width in eight existing wide desktop light/dark list/view contexts at 1280×900, plus synchronous unmarked/non-typea controls and shell-adapter disposal/reconnect/duplicate connect. Derive the parent-content geometry independently; use positive original native controls/default input, normal-inline conflicts, targeted declaration/priority/selector/phase negatives and an intervening host-important control only where source order/specificity requires it. Restore exact original attributes/CSSOM/phase/topology/handlers/storage and settled resources after each probe. Report synthetic conditions separately from live prevalence; retain early raw coverage unless negatives/recovery justify a smaller rule.
-- Objective: One shell reset-overlap contract, preserving locking/reveal, original DOM/default input, 689A focus fix, settings/metadata/versions, PC isolation and existing palette/door/reset owners. No redesign, correction rail, observer, clone/portal, framework or blanket priority quota.
-- Validation: Guarded runtime absolute path/SHA, exact positive/nonempty computed coverage, normal/absent/recovery ordering, strict rollback, targeted negatives, affected checks and repository validation. Renew only directly invalidated evidence; rebuild at unchanged version only if authorized runtime changes become necessary. Source/fixtures/harness unchanged is required for reuse. No audit creates a full-header receipt or changes the original failed gate.
+- Status: `READY_FOR_BOUNDARY_INVENTORY`; palette provenance and shell characterization are bounded observations, while original raw acceptance remains FAILED and full-header admission UNKNOWN.
+- Bounded slice: `header-boundary-gap-inventory`.
+- Why next: Shell width/min-width now has applicable early/reconnect/conflict controls; both pairs stay. Five separated header owners still have transitional raw selector/priority debt and the effective surface remains legacy-debt. The active plan requires a complete zero-delta boundary before visual assembly, while some component exit criteria explicitly apply only at full visual promotion. A source/evidence gap inventory must distinguish those boundaries before another implementation or property audit is chosen.
+- Expected transition: Fresh-check exact nested worktree/Git/689A runtime and continuity. Query current header source/build ownership and effective candidate overlay; trace shell, page-head, GNB, recent visits and drawer through their presenters/adapters, early core/theme composition, UIModule/post-main-fixes and bootstrap/coordinator lifecycle. Map every remaining header boundary claim to its actual source and current evidence applicability/binding, including original-node/default input, whole-root replacement, disposal/recovery, raw scope and the failed palette gate. Record structural gaps separately from future visual-promotion debt and unavailable/live/Layer-2 evidence. Select one smallest executable next unit with a declared delta, required overlay if ownership changes, and proportionate validation. Do not revive historical queues from filenames.
+- Objective: One durable header boundary/evidence gap inventory and one concrete next unit toward the existing zero-delta header stage. Preserve source/artifacts, original DOM/default input, 689A focus fix, settings/metadata/versions and PC isolation during this read-only inventory. No new runtime abstraction, redesign, arbitrary property cleanup, clone/portal or registry promotion.
+- Validation: Fresh architecture query/check, traced current source/build and applicable exit criteria, exact artifact/evidence identities where reused, independent omitted-dependency review, and guidance/repository checks for any durable inventory. Missing raw evidence stays UNKNOWN; re-observation is required only for a claim that needs it. Do not label checkpoint CI or old broad suites as a current full-header receipt.
 - Known limits: Original CI listeners and six historical C84 timer fields cannot be identified from later traces. A030 original minor/major door controls are unreachable in the new observation; retain the approved D-11 distinction and do not infer equality from callback counts. The 2026-10-03 popup-only timeout still lacks an event trace; its cause remains UNKNOWN despite the independently repaired focus defect.
 - Publication boundary: Validated bounded checkpoints/non-force push only to `origin/codex/ui-port-boundary`; live dispatch, PR, release, dependency install, user-profile install and account/content writes remain separate requests.
-- Stop/replan: Stale/missing required input bindings, ambiguous oracle/product/fixture attribution, lost native identity/default behavior, altered focus/callback/storage, unsettled resources, PC impact, or proposed deletion based only on selector counts. Preserve UNKNOWN and failed raw evidence; never extend timeouts or weaken a contract to pass.
+- Stop/replan: Missing current source/contract dependencies, unsupported admission from historical reports, conflation of zero-delta separation with future visual promotion, ambiguous failure attribution, or a proposed change without its affected normal/failure/recovery paths and validation. Preserve UNKNOWN and failed raw evidence; never extend timeouts or weaken a contract to pass.
 
 Fresh-read `docs/work/CURRENT_STATE.md`, `docs/work/INDEX.md`, the compact surface map, Git and `node tools/inspect-continuity.mjs` first. Work only in the exact active nested worktree. The standing checkpoint instruction does not authorize official publication or live execution.
 
@@ -19,7 +19,7 @@ This is a declared dependency/entry inventory, not proof of semantic completenes
 
 ```dcuf-next-action
 {
-  "id": "header-shell-reset-overlap-contract",
+  "id": "header-boundary-gap-inventory",
   "stageId": "header-navigation",
   "requiredDependencies": [
     {
@@ -164,13 +164,19 @@ This is a declared dependency/entry inventory, not proof of semantic completenes
     {"id":"listener-provenance","path":"docs/work/PALETTE_LISTENER_PROVENANCE.md","mode":"LIVE","sha256":null},
     {"id":"listener-diagnostic-hook","path":"tools/palette-listener-diagnostic.js","mode":"LIVE","sha256":null},
     {"id":"listener-diagnostic-probe","path":"tools/probe-palette-listener-provenance.mjs","mode":"LIVE","sha256":null},
-    {"id":"popup-geometry-adapter","path":"src/targets/shared/popup-geometry-host-adapter.js","mode":"LIVE","sha256":null}
+    {"id":"popup-geometry-adapter","path":"src/targets/shared/popup-geometry-host-adapter.js","mode":"LIVE","sha256":null},
+    {"id":"header-overlay","path":"architecture/candidates/mobile-ui-modernization-assurance.json","mode":"LIVE","sha256":null},
+    {"id":"active-plan","path":"docs/work/MOBILE_UI_MODERNIZATION.md","mode":"LIVE","sha256":null},
+    {"id":"post-main-composition","path":"src/targets/mobile/post-main-fixes.js","mode":"LIVE","sha256":null},
+    {"id":"shell-width-projection","path":"docs/work/HEADER_SHELL_RESET_CONTRACT.md","mode":"LIVE","sha256":null},
+    {"id":"shell-width-probe","path":"tools/probe-header-shell-reset.mjs","mode":"LIVE","sha256":null}
   ],
   "requiredDecisions": [
     "working-checkpoint",
     "D-11-original-node",
     "D-12-layered-comparison",
-    "D-19-listener-evidence"
+    "D-19-listener-evidence",
+    "D-20-shell-phase-evidence"
   ],
   "decisions": [
     {
@@ -203,7 +209,8 @@ This is a declared dependency/entry inventory, not proof of semantic completenes
       "boundary": "Await current stage/34-ID/live and upper evidence; no promotion from checkpoint CI.",
       "source": "architecture/ui-surfaces.json"
     },
-    {"id":"D-19-listener-evidence","status":"ADOPTED","boundary":"New provenance supports bounded current observation only; no original CI identity, native-door equivalence, or full-header admission.","source":"docs/work/DECISION_RATIONALE.md"}
+    {"id":"D-19-listener-evidence","status":"ADOPTED","boundary":"New provenance supports bounded current observation only; no original CI identity, native-door equivalence, or full-header admission.","source":"docs/work/DECISION_RATIONALE.md"},
+    {"id":"D-20-shell-phase-evidence","status":"ADOPTED","boundary":"Retain both shell width pairs; characterize early scope and later conflict protection separately. Public reconnect order and diagnostic rollback are distinct; no full-header or order-independence admission.","source":"docs/work/DECISION_RATIONALE.md"}
   ],
   "hazards": [
     {
@@ -236,7 +243,9 @@ This is a declared dependency/entry inventory, not proof of semantic completenes
       "status": "ACTIVE",
       "effect": "Serialize builders/probes; PC can overwrite the generic guard. Require mobile SHA before each header probe."
     },
-    {"id":"listener-ledger","status":"ACTIVE","effect":"Registration ledger and actual reachable callbacks differ. New 22-context observation is separately bound to both tools; original identities, complete callback equivalence and live/extension coverage remain UNKNOWN. Control original doors are unreachable; do not force or forward their actions."}
+    {"id":"listener-ledger","status":"ACTIVE","effect":"Registration ledger and actual reachable callbacks differ. New 22-context observation is separately bound to both tools; original identities, complete callback equivalence and live/extension coverage remain UNKNOWN. Control original doors are unreachable; do not force or forward their actions."},
+    {"id":"transition-scope","status":"ACTIVE","effect":"Several mixed-header component exits name full visual promotion, while the plan first requires zero-delta separation. Distinguish structural gaps, retained compatibility debt and absent evidence; a mixed label alone does not choose a code change."},
+    {"id":"public-reconnect-order","status":"ACTIVE","effect":"Shell public reconnect reinserts its subscription at the Map end. Selected native actions pass before explicit test-only order rollback; arbitrary mutation-order equivalence remains unproved."}
   ],
   "localEvidence": [
     {
@@ -286,7 +295,10 @@ This is a declared dependency/entry inventory, not proof of semantic completenes
     },
     {"path":"artifacts/palette-adjudication-2026-10-04/owner-lifecycle.json","disposition":"REGENERATE","recovery":"Existing new 689A candidate-only observation SHA 431548D6A0ED5001F3930229B9B044E044C10D9B7226E46911F28FB74B88353B. If missing, run the unchanged lifecycle probe for a new bound observation; do not reconstruct these exact old bytes or original CI phase."},
     {"path":"artifacts/palette-adjudication-2026-10-04/reconciliation.json","disposition":"REGENERATE","recovery":"Existing audit summary SHA 13F8CAD29ED8A23D08A264B83D58BCFC8F267A914A51E064761DDDC8E3AA56A6. Durable scope/gaps are in PALETTE_RESOURCE_ADJUDICATION.md. If absent, reconcile original raw and fresh inputs again; no inherited PASS or old summary recreation."},
-    {"path":"artifacts/palette-listener-provenance-2026-10-04/report-2026-10-04T07-39-32-511Z.json","disposition":"REGENERATE","recovery":"New local observation SHA 43EC31702111E9E9A759FB945FA73D3D7C2110A104160016FC938990C0293D47; tool SHAs/scope are in PALETTE_LISTENER_PROVENANCE.md. If missing/stale, retain the durable limited projection and rerun the diagnostic with original raw/control preconditions for new evidence. Never reconstruct this report or original CI identities. Full stage/owner-split admission remains UNKNOWN."}
+    {"path":"artifacts/palette-listener-provenance-2026-10-04/report-2026-10-04T07-39-32-511Z.json","disposition":"REGENERATE","recovery":"New local observation SHA 43EC31702111E9E9A759FB945FA73D3D7C2110A104160016FC938990C0293D47; tool SHAs/scope are in PALETTE_LISTENER_PROVENANCE.md. If missing/stale, retain the durable limited projection and rerun the diagnostic with original raw/control preconditions for new evidence. Never reconstruct this report or original CI identities. Full stage/owner-split admission remains UNKNOWN."},
+    {"path":"docs/work/HEADER_SHELL_RESET_CONTRACT.md","disposition":"DURABLE","recovery":"Tracked candidate-only projection, exact final/partial report and tool hashes, native/negative scope and explicit rollback. It is sufficient as a limited inventory locator, never a full-header receipt."},
+    {"path":"artifacts/header-shell-reset-2026-10-05/report-2026-10-05T10-53-10-641Z.json","disposition":"REGENERATE","recovery":"Final local observation SHA A3B1D89FECAA001B99109148BA83DF0FB18D749D3280A103AC3129999D312880. If absent/stale, run the tracked probe with --require-runtime-under-test for a new bound report; do not recreate old bytes or inherit execution. Inventory missing coverage as UNKNOWN until renewed."},
+    {"path":"artifacts/header-shell-reset-2026-10-05/report-2026-10-05T10-50-40-116Z.json","disposition":"UNRECOVERABLE","recovery":"Initial PARTIAL attempt SHA F8EC176C700CEF2423715111DAEF45196256C343F34DABDA280C448650D7EAF0 is tied to an earlier uncommitted diagnostic hash. If absent, retain durable failure attribution only; never replay a current tool as this old attempt."}
   ],
   "qualificationScope": "CONTINUITY_ONLY",
   "workSuccessCertified": false
