@@ -9,6 +9,11 @@ on:
       - codex/mobile-development
       - codex/ui-port-boundary
   workflow_dispatch:
+    inputs:
+      full_acceptance:
+        description: Run full product and adversarial acceptance for a stage boundary
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -21,6 +26,7 @@ env:
   NODE_VERSION: 22.17.0
   PNPM_VERSION: 10.33.1
   CANDIDATE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+  FULL_ACCEPTANCE: ${{ github.event_name == 'workflow_dispatch' && inputs.full_acceptance || false }}
 
 jobs:
   working-checkpoint:
@@ -49,6 +55,14 @@ jobs:
         run: |
           corepack enable
           corepack prepare pnpm@${PNPM_VERSION} --activate
+      - name: Locate pnpm store
+        id: pnpm-store
+        run: echo "path=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
+      - name: Cache locked pnpm downloads
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: ${{ steps.pnpm-store.outputs.path }}
+          key: ${{ runner.os }}-pnpm-${{ env.NODE_VERSION }}-${{ env.PNPM_VERSION }}-${{ hashFiles('pnpm-lock.yaml') }}
       - name: Install locked dependencies
         run: pnpm install --frozen-lockfile
       - name: Build exact outputs and mobile guard
@@ -69,6 +83,9 @@ jobs:
   policy:
     name: policy-contracts
     if: github.event_name != 'push'
+    outputs:
+      acceptance: ${{ steps.route.outputs.acceptance }}
+      focused: ${{ steps.route.outputs.focused }}
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout exact candidate
@@ -91,16 +108,28 @@ jobs:
         run: |
           corepack enable
           corepack prepare pnpm@${PNPM_VERSION} --activate
+      - name: Locate pnpm store
+        id: pnpm-store
+        run: echo "path=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
+      - name: Cache locked pnpm downloads
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: ${{ steps.pnpm-store.outputs.path }}
+          key: ${{ runner.os }}-pnpm-${{ env.NODE_VERSION }}-${{ env.PNPM_VERSION }}-${{ hashFiles('pnpm-lock.yaml') }}
       - name: Install locked dependencies
         run: pnpm install --frozen-lockfile
       - name: Resolve declared policy gates
+        id: route
         env:
           PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: |
           BASE_SHA="${PR_BASE_SHA}"
           if [ -z "${BASE_SHA}" ]; then BASE_SHA="$(git rev-parse HEAD^)"; fi
-          node tools/resolve-impact.mjs --base "${BASE_SHA}" --head HEAD --output artifacts/impact.json
+          EXTRA_ARGS=()
+          if [ "${FULL_ACCEPTANCE}" = "true" ]; then EXTRA_ARGS+=(--full); fi
+          node tools/resolve-impact.mjs --base "${BASE_SHA}" --head HEAD --output artifacts/impact.json "${EXTRA_ARGS[@]}" --ci-output "$GITHUB_OUTPUT"
       - name: Install Chromium for proof mutation controls
+        if: steps.route.outputs.proofRuntime == 'true'
         run: node testbed/node_modules/playwright/cli.js install --with-deps chromium
       - name: Prepare canonical outputs and immutable proof inputs
         run: |
@@ -109,7 +138,7 @@ jobs:
           node tools/build-pc-filter-userscript.mjs
           node tools/verify-baseline.mjs
       - name: Run declared policy profile
-        run: node tools/run-gates.mjs artifacts/impact.json artifacts/policy-result.json --only policy
+        run: node tools/run-gates.mjs artifacts/impact.json artifacts/policy-result.json --only policy,proof-core,proof-runtime
       - name: Upload policy receipts
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
@@ -124,7 +153,7 @@ jobs:
 
   affected:
     name: affected-tests
-    if: github.event_name != 'push'
+    if: github.event_name != 'push' && needs.policy.outputs.focused == 'true'
     needs: policy
     runs-on: ubuntu-24.04
     steps:
@@ -148,6 +177,14 @@ jobs:
         run: |
           corepack enable
           corepack prepare pnpm@${PNPM_VERSION} --activate
+      - name: Locate pnpm store
+        id: pnpm-store
+        run: echo "path=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
+      - name: Cache locked pnpm downloads
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: ${{ steps.pnpm-store.outputs.path }}
+          key: ${{ runner.os }}-pnpm-${{ env.NODE_VERSION }}-${{ env.PNPM_VERSION }}-${{ hashFiles('pnpm-lock.yaml') }}
       - name: Install locked dependencies and Chromium
         run: |
           pnpm install --frozen-lockfile
@@ -158,9 +195,11 @@ jobs:
         run: |
           BASE_SHA="${PR_BASE_SHA}"
           if [ -z "${BASE_SHA}" ]; then BASE_SHA="$(git rev-parse HEAD^)"; fi
-          node tools/resolve-impact.mjs --base "${BASE_SHA}" --head HEAD --output artifacts/impact.json
+          EXTRA_ARGS=()
+          if [ "${FULL_ACCEPTANCE}" = "true" ]; then EXTRA_ARGS+=(--full); fi
+          node tools/resolve-impact.mjs --base "${BASE_SHA}" --head HEAD --output artifacts/impact.json "${EXTRA_ARGS[@]}"
       - name: Run focused affected profiles
-        run: node tools/run-gates.mjs artifacts/impact.json artifacts/affected-result.json --only mobile-focused,pc-focused
+        run: node tools/run-gates.mjs artifacts/impact.json artifacts/affected-result.json --only mobile-focused,pc-focused,header-focused
       - name: Upload affected receipts
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
@@ -176,8 +215,8 @@ jobs:
 
   acceptance:
     name: full-acceptance
-    if: github.event_name != 'push'
-    needs: affected
+    if: always() && github.event_name != 'push' && needs.policy.result == 'success' && needs.policy.outputs.acceptance == 'true' && (needs.affected.result == 'success' || needs.affected.result == 'skipped')
+    needs: [policy, affected]
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout exact candidate
@@ -200,6 +239,14 @@ jobs:
         run: |
           corepack enable
           corepack prepare pnpm@${PNPM_VERSION} --activate
+      - name: Locate pnpm store
+        id: pnpm-store
+        run: echo "path=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
+      - name: Cache locked pnpm downloads
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: ${{ steps.pnpm-store.outputs.path }}
+          key: ${{ runner.os }}-pnpm-${{ env.NODE_VERSION }}-${{ env.PNPM_VERSION }}-${{ hashFiles('pnpm-lock.yaml') }}
       - name: Install locked dependencies and Chromium
         run: |
           pnpm install --frozen-lockfile
@@ -227,7 +274,9 @@ jobs:
         run: |
           BASE_SHA="${PR_BASE_SHA}"
           if [ -z "${BASE_SHA}" ]; then BASE_SHA="$(git rev-parse HEAD^)"; fi
-          node tools/resolve-impact.mjs --base "${BASE_SHA}" --head HEAD --full --output artifacts/impact.json
+          EXTRA_ARGS=()
+          if [ "${FULL_ACCEPTANCE}" = "true" ]; then EXTRA_ARGS+=(--full); fi
+          node tools/resolve-impact.mjs --base "${BASE_SHA}" --head HEAD --output artifacts/impact.json "${EXTRA_ARGS[@]}"
       - name: Run full deterministic gates
         run: node tools/run-gates.mjs artifacts/impact.json artifacts/acceptance-result.json --only acceptance
       - name: Write exact artifact manifest

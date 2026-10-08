@@ -3,7 +3,7 @@ import { readFileSync, existsSync, realpathSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
-import { currentSection, parseNextAction, reconcileNextAction, selectContinuityProfile } from './continuity-state.mjs';
+import { currentSection, parseCurrentArtifacts, parseNextAction, reconcileNextAction, selectContinuityProfile } from './continuity-state.mjs';
 import { validateCheckpointPolicy } from './checkpoint-core.mjs';
 
 const root = realpathSync(path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..'));
@@ -21,7 +21,9 @@ if (existsSync(path.join(locatorParent,'DEV_WORKSPACE.md'))) {
 }
 const current=readFileSync(path.join(root,'docs/work/CURRENT_STATE.md'),'utf8');
 assert.ok(current.length <= 12000,'current projection must stay compact'); currentSection(current);
+parseCurrentArtifacts(current);
 const next=readFileSync(path.join(root,'docs/work/NEXT_TASK.md'),'utf8');
+assert.ok(next.length <= 9000, 'next action must contain direct dependencies; retrieve historical evidence by link');
 const reconciliation=reconcileNextAction(parseNextAction(next),root);
 const policy=validateCheckpointPolicy(JSON.parse(readFileSync(path.join(root,'verification/checkpoint-policy.json'))));
 assert.ok(agents.includes(`origin/${policy.branch}`),'checkpoint target detached from basic policy');

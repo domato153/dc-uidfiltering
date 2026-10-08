@@ -1,7 +1,7 @@
 import { readdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { policyBrowserSequenceIsValid } from './workflow-sequence.mjs';
+import { policyBrowserSequenceIsValid, developmentJobRoutingIsValid } from './workflow-sequence.mjs';
 
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const workflowsDir = path.join(rootDir, '.github', 'workflows');
@@ -29,7 +29,7 @@ check(development.includes('ubuntu-24.04'), 'development CI must run on ubuntu-2
 check(development.includes('push:\n    branches:\n      - codex/ui-port-boundary'), 'checkpoint push must target only the designated branch');
 check(development.includes('pull_request:\n    branches:\n      - codex/mobile-development\n      - codex/ui-port-boundary'), 'PR acceptance targets must retain the old target and current working branch');
 check(development.includes("name: working-checkpoint\n    if: github.event_name == 'push'") && development.includes('node tools/verify-checkpoint-ci.mjs'), 'push CI must qualify checkpoint only');
-check((development.match(/if: github.event_name != 'push'/g) || []).length === 3, 'all full acceptance jobs must remain separate from push checkpoints');
+check(developmentJobRoutingIsValid(development), 'PR/manual jobs must follow the Git route, preserve exact checkpoint isolation and locked dependency caching');
 check(development.includes('path: artifacts/checkpoint-ci.json'), 'checkpoint uploads must stay narrowly scoped');
 check(development.includes('node tools/build-userscript.mjs\n          node tools/build-userscript.mjs --testbed-output testbed/artifacts/runtime-under-test.user.js\n          node tools/build-pc-filter-userscript.mjs'), 'checkpoint must rebuild canonical CRLF artifacts as well as the mobile guard');
 check(development.includes('Prepare canonical outputs and immutable proof inputs') && development.includes('node tools/verify-baseline.mjs'), 'proof mutations must prepare canonical and immutable baseline inputs');
@@ -39,7 +39,7 @@ check(development.includes('CANDIDATE_SHA: ${{ github.event.pull_request.head.sh
 check((development.match(/ref: \$\{\{ env\.CANDIDATE_SHA \}\}/g) || []).length === 4, 'every development job must checkout the exact candidate SHA');
 check((development.match(/test "\$\(git rev-parse HEAD\)" = "\$\{EXPECTED_SHA\}"/g) || []).length === 4, 'every development job must verify the exact candidate checkout');
 check(!development.includes('affected-${{ github.sha }}') && !development.includes('acceptance-${{ github.sha }}'), 'development evidence must not be named after the synthetic merge SHA');
-check(development.includes('node tools/run-gates.mjs artifacts/impact.json artifacts/policy-result.json --only policy'), 'development policy job must execute the declared policy profile');
+check(development.includes('node tools/run-gates.mjs artifacts/impact.json artifacts/policy-result.json --only policy,proof-core,proof-runtime'), 'development policy job must execute selected policy and adversarial profiles');
 check(development.includes('name: policy-${{ env.CANDIDATE_SHA }}'), 'policy evidence must be named after the exact candidate SHA');
 check(development.includes('DCUF_WRITE_LAYOUT_REPORT: testbed/artifacts/baseline-editor-layout.json'), 'baseline editor geometry must use a non-overwritten evidence path');
 

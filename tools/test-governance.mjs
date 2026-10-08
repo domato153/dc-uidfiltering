@@ -47,8 +47,9 @@ await test('policy cannot widen to official publication', () => { assert.throws(
 await test('policy Chromium prerequisites reject missing, commented, duplicate and misordered commands',()=> {
     const command = '        run: node testbed/node_modules/playwright/cli.js install --with-deps chromium\n';
     const locked = '        run: pnpm install --frozen-lockfile\n';
-    const gate = '        run: node tools/run-gates.mjs artifacts/impact.json artifacts/policy-result.json --only policy\n';
-    const fixture = '\n  policy:\n'+locked+command+gate+'\n  affected:\n';
+    const gate = '        run: node tools/run-gates.mjs artifacts/impact.json artifacts/policy-result.json --only policy,proof-core,proof-runtime\n';
+    const condition = "        if: steps.route.outputs.proofRuntime == 'true'\n";
+    const fixture = '\n  policy:\n'+locked+condition+command+gate+'\n  affected:\n';
     assert.equal(policyBrowserSequenceIsValid(readFileSync(path.join(root,'.github/workflows/development-ci.yml'),'utf8')),true);
     assert.equal(policyBrowserSequenceIsValid(fixture),true);
     for(const changed of [fixture.replace(command,''),fixture.replace(command,'        # '+command.trim()+'\n        run: echo skipped\n'),fixture.replace(command,command+command),'\n  policy:\n'+command+locked+gate+'\n  affected:\n','\n  policy:\n'+locked+gate+command+'\n  affected:\n',fixture.replace(command,'')+command,fixture.replace(locked,'')])assert.equal(policyBrowserSequenceIsValid(changed),false);

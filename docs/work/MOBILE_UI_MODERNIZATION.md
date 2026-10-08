@@ -161,6 +161,8 @@ Report an evidence vector rather than a made-up regression-probability percentag
 
 ## Execution sequence and gates
 
+The 2026-10-08 user-approved tooling change is recorded in `VERIFICATION_EFFICIENCY.md`. Before owned drawer-body separation, routing now distinguishes runtime from verification relations, supports bounded header coverage, selects mutation groups and removes focused suites covered by acceptance. Checkpoint CI stays narrow; PR/manual full acceptance follows impact or explicit full mode. Batch related owner changes into one reviewable unit. Continuity keeps current situation/direct inputs and retrieves historical diagnostics on demand. Existing FAIL/UNKNOWN and surface/final/live admission remain.
+
 1. **Seal the foundation with zero visual delta.** Record fresh Git/artifact/tool hashes, freeze `3.5.5` mobile and `1.9.9` PC controls, pass policy/acceptance/proof-system/upper audits, and mark all evidence invalidated by later source, harness, fixture, normalizer, toolchain, or route changes.
 2. **Complete the shared UI boundary with zero visual delta.** Move palette pinch geometry/touch handling to an adapter; separate filter settings, personal block, and convenience state/effects/listeners; replace PC source-string extraction with explicit shared inputs; prove mobile/PC semantic equivalence and storage-order faults.
 3. **Replace surfaces in slices.** Tokens/settings/palette → list/search/paging → article/recommendation → comments/replies → write/edit/delete/native popup → header/navigation. Each slice follows contract → legacy separation → Layer 1 → Layer 2 → modern presenter → Layer 1 → Layer 2 → Continuity update. The same composition change removes the superseded legacy CSS/listener/observer/render path.

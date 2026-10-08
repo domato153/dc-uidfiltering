@@ -7,6 +7,7 @@ Read this reference only when Continuity is being changed, a retrieval route is 
 - `docs/work/CURRENT_STATE.md` is the compact read projection: active plan/stage, source state, candidate fingerprint, last audit, accepted baseline, current artifact, blockers, and pending live checks.
 - `docs/work/NEXT_TASK.md` contains one task ID and one bounded completion scope.
 - Its single typed block binds declared action dependencies and adopted entry decisions, hazards and local recovery. Reconcile declarations, then independently derive omitted execution inputs at closure. Current required fields are parsed only from `## Current execution`, never history.
+- Exact artifact identities live in the closed `dcuf-current-artifacts` JSON block in that section; prose is not a parser API. NEXT declares direct entry dependencies, not all historical sources/reports. A LIVE directory is a retrieval pointer; inspect only the affected execution path.
 - Receipts and exact digests are immutable evidence events. The projection may summarize them but cannot make them current after source, oracle, fixture, harness, toolchain, or routing changes.
 - The plan explains the intended sequence. Maintenance notes retain reusable causes and contracts. Neither overrides fresh local state or exact evidence.
 

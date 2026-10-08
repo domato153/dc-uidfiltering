@@ -112,3 +112,17 @@ export function qualifyCheckpointCI(run, jobs, commit, observedRemote) {
     assert.equal(selected[0].conclusion, 'success', 'checkpoint job did not succeed');
     return { status: 'CI_VERIFIED_CHECKPOINT', scope: 'CHECKPOINT_ONLY', workSuccessCertified: false, commit, runId: run.id, runAttempt: run.run_attempt, url: run.html_url };
 }
+export function observeCheckpointCI(run, jobs, commit, observedRemote) {
+    assert.equal(observedRemote, commit, 'fresh identical remote observation required for CI qualification');
+    if (run) {
+        assert.equal(run.head_sha, commit, 'CI is for a different commit');
+        assert.equal(run.event, 'push', 'CI must be a push checkpoint');
+        assert.equal(run.name, 'DCUF development CI', 'wrong CI workflow');
+        assert.equal(run.head_branch, 'codex/ui-port-boundary', 'wrong CI branch');
+    }
+    if (!run || run.status !== 'completed') {
+        return { status: 'REMOTE_SYNCED_CI_PENDING', scope: 'CHECKPOINT_ONLY', workSuccessCertified: false,
+            commit, runId: run?.id || null, url: run?.html_url || null, reason: run ? run.status : 'run-not-visible' };
+    }
+    return qualifyCheckpointCI(run, jobs, commit, observedRemote);
+}

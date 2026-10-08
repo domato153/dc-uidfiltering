@@ -4,7 +4,7 @@ import { mkdir, readFile, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createCandidateFingerprint, digestEvidenceBytes } from './evidence-binding.mjs';
-import { currentSection, parseNextAction, reconcileNextAction, CLOSURE_TRIGGERS } from './continuity-state.mjs';
+import { currentSection, parseCurrentArtifacts, parseNextAction, reconcileNextAction, CLOSURE_TRIGGERS } from './continuity-state.mjs';
 
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const readyMode = process.argv.includes('--ready');
@@ -468,17 +468,17 @@ async function validateContinuityContract(contract, continuity, nextTask) {
         const actualFingerprint = await createCandidateFingerprint(rootDir);
         if (fingerprint.toLowerCase() !== actualFingerprint.toLowerCase()) fail('continuity: recorded candidate fingerprint is stale');
     }
-    const artifact = continuity.match(/^- Current artifact:\s*mobile root\/`dist\/` and guarded runtime SHA-256 `([a-f0-9]{64})`;\s*PC root\/`dist\/` SHA-256 `([a-f0-9]{64})`/mi);
-    if (!artifact) fail('continuity: current mobile/PC artifact digests are missing or malformed');
-    else {
+    let artifact;
+    try { artifact = parseCurrentArtifacts(`## Current execution\n${continuity}`); } catch (error) { fail(error.message); }
+    if (artifact) {
         const buildTargets = JSON.parse(await readFile(path.join(rootDir, 'build/targets.json'), 'utf8')).targets;
         const outputName = (target) => buildTargets[target].outputPattern.replace('{version}', buildTargets[target].version);
         const artifacts = [
-            { target: 'mobile', relative: outputName('mobile'), recorded: artifact[1] },
-            { target: 'mobile', relative: path.join('dist', outputName('mobile')), recorded: artifact[1] },
-            { target: 'mobile', relative: 'testbed/artifacts/runtime-under-test.user.js', recorded: artifact[1] },
-            { target: 'PC', relative: outputName('pc'), recorded: artifact[2] },
-            { target: 'PC', relative: path.join('dist', outputName('pc')), recorded: artifact[2] },
+            { target: 'mobile', relative: outputName('mobile'), recorded: artifact.mobile.sha256 },
+            { target: 'mobile', relative: path.join('dist', outputName('mobile')), recorded: artifact.mobile.sha256 },
+            { target: 'mobile', relative: 'testbed/artifacts/runtime-under-test.user.js', recorded: artifact.mobile.sha256 },
+            { target: 'PC', relative: outputName('pc'), recorded: artifact.pc.sha256 },
+            { target: 'PC', relative: path.join('dist', outputName('pc')), recorded: artifact.pc.sha256 },
         ];
         for (const entry of artifacts) {
             try {
@@ -676,7 +676,9 @@ function applyAuditMutation(id, state) {
         'continuity-history-fallback': () => { state.continuity = state.continuity.replace(/^- Active stage:.*\r?\n/m, '') + '\n## Historical\n- Active stage: `header-navigation`\n'; },
         'continuity-duplicate-current': () => { state.continuity += '\n## Historical\n- Active stage: `header-navigation`\n'; },
         'handoff-stale-artifact': () => {
-            state.continuity = state.continuity.replace(/(^- Current artifact:.*?SHA-256 `)[a-f0-9]{64}(`)/mi, `$1${'0'.repeat(64)}$2`);
+            const artifacts = parseCurrentArtifacts(state.continuity);
+            artifacts.mobile.sha256 = '0'.repeat(64);
+            state.continuity = state.continuity.replace(/```dcuf-current-artifacts\r?\n[\s\S]*?\r?\n```/, `\`\`\`dcuf-current-artifacts\n${JSON.stringify(artifacts, null, 2)}\n\`\`\``);
         },
     };
     if (!Object.hasOwn(mutations, id)) throw new Error(`Unknown modernization assurance audit mutation: ${id}`);

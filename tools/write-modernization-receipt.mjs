@@ -156,6 +156,7 @@ if (stageConfig.nativeFormDifferential) {
     assertEvidenceBinding(report.evidenceBinding, evidenceBinding);
 }
 if (records.proof.status !== 'passed'
+    || (records.proof.schemaVersion >= 2 && records.proof.completeAudit !== true)
     || records.proof.rejectedMutations < stageConfig.minimumRejectedMutations
     || records.proof.acceptedControls < stageConfig.minimumAcceptedControls) {
     throw new Error('proof: adversarial audit result is incomplete');

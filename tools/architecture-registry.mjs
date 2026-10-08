@@ -10,6 +10,7 @@ import {
     stableSortRegistry,
 } from './architecture-state.mjs';
 import { createEvidenceBinding, digestArchitecturePlan, digestEvidenceBytes } from './evidence-binding.mjs';
+import { minimizeProfiles, validateImpactPolicy } from './impact-routing.mjs';
 
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const registryPath = path.join(rootDir, 'architecture', 'registry.json');
@@ -196,7 +197,7 @@ function requiredTransitionProfiles(component, registry, gates) {
     for (const invariantId of component.fitnessRefs || []) {
         for (const profile of gates.invariantProfiles?.[invariantId] || []) profiles.add(profile);
     }
-    return [...profiles].sort();
+    return minimizeProfiles(profiles, gates).sort();
 }
 
 function receiptMatchesCommand(result, profile, command) {
@@ -489,6 +490,7 @@ async function validateRegistry(registry, { checkIndex = true, checkExternalMapp
 
         const gatesBytes = await readFile(gatesPath);
         const gates = JSON.parse(gatesBytes.toString('utf8'));
+        try { validateImpactPolicy(registry, gates); } catch (error) { failures.push(`gates: ${error.message}`); }
         const profileIds = new Set(Object.keys(gates.profiles || {}));
         for (const [componentId, profiles] of Object.entries(gates.componentProfiles || {})) {
             if (!componentIds.has(componentId)) failures.push(`gates: unknown component ${componentId}`);

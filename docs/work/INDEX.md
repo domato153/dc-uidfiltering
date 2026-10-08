@@ -1,31 +1,24 @@
-# DCUF work continuity
+# DCUF current work locator
 
-This is the canonical repository-relative locator only in the exact development Git root supplied by the private prompt. Read `AGENTS.md` for the single basic policy. Fresh observations test projections against machine contracts; history/chat never creates permission or fills missing current fields.
+This locator belongs only to the exact active nested worktree supplied by the private prompt. Parent checkout/history/chat are not current authority. Tracked paths are repository-relative.
 
-## Current packet
+## Read first
 
-- `CURRENT_STATE.md`: one compact Current execution section, accepted baseline versus current candidate, exact artifacts and evidence gaps.
-- `NEXT_TASK.md`: one bounded next action, typed LIVE/FROZEN dependencies, required ADOPTED entry decisions, hazards and local recovery. A declared dependency check does not establish semantic completeness.
-- `HEADER_DRAWER_OWNED_SHELL.md`: current frozen template/state boundary, exact immediate-control/candidate observations, raw startup-order variance, fresh split checks and remaining mixed/admission limits.
-- `HEADER_BOUNDARY_GAPS.md`: historical 689A source/build/evidence gap inventory; current template/label result is separate, while remaining structural/visual debt stays open.
-- `HEADER_SHELL_RESET_CONTRACT.md`: current candidate width/min-width phase/scope characterization, native positives, contrary controls and explicit diagnostic rollback; both rules retained, no stage admission.
-- `PALETTE_LISTENER_PROVENANCE.md`: newly bound A030/689A listener attribution, hook transparency, native actions and contrary controls; original CI identities/full-header admission remain unresolved.
-- `PALETTE_RESOURCE_ADJUDICATION.md`: preceding bounded reconciliation and candidate lifecycle observation; its former next step is now characterized separately, without changing original acceptance.
-- `HOSTED_ACCEPTANCE_OBSERVATION.md`: exact cda1087 failed synthetic acceptance, positive split coverage, raw identities/recovery, and unclassified resource-owner delta; not a product receipt.
-- `.agents/skills/dcuf-long-work-continuity/references/handoff-contract.md`: routine/closure and receiver ACCEPTED/STALE_REPLAN method; creating a new task requires an explicit user request.
-- `verification/continuity-contract.json`: mandatory fields/triggers/retrieval/profile rules, not independent authorization.
-- `node tools/inspect-continuity.mjs` reads fresh local Git/fingerprint/artifacts. `node tools/verify-governance.mjs` reconciles declared files; closure also needs an independent execution-path/permission/evidence audit.
+1. `AGENTS.md`: single policy, authorized checkpoint and product/release constraints.
+2. `CURRENT_STATE.md`: purpose, accepted/candidate state, typed artifacts, known failures, local control and current process.
+3. `NEXT_TASK.md`: one bounded action, why next, direct inputs, adopted boundaries, hazards, recovery and stop/replan.
 
-## Read only when relevant
+Run `node tools/inspect-continuity.mjs`; compare fresh root/branch/HEAD ancestry, worktree, fingerprint and artifacts. `node tools/verify-governance.mjs` reconciles declared entry only; it cannot certify product success or prove no input was omitted. A new chat alone does not require full acceptance.
 
-- `DECISION_RATIONALE.md`: current D-11–D-22 scope/negative choices; prior rationales do not revive an old task queue. NOT ADOPTED is not automatically REJECTED.
-- `MOBILE_UI_MODERNIZATION.md`, `docs/ui-surface-contracts.md`, `architecture/ui-surfaces.json`: durable plan and surface contracts. Accepted registry versus candidate overlays remains distinct.
-- `HEADER_NAVIGATION_INVENTORY.md`, `SHARED_SETTINGS_PC_CROSS_AUDIT.md`, `HEADER_EXTENSION_CANARY_PREREQUISITES.md`: historical exact-artifact observations and unexecuted live checklist; renew bindings for current use rather than treating their filenames as a current receipt.
-- `FINAL_FEATURE_STATE_INVENTORY.md`, `verification/assurance-case.json`: unfinished per-feature/stage/product upper claims, not checkpoint CI.
-- `testbed/run-header-cascade-audit.mjs`, `tools/inspect-live-architecture.mjs`: current repository probes; the latter derives owner/source/build links and is not live-site evidence.
-- `docs/live-site-canary.md`, `.github/workflows/live-site-canary.yml`: separate manual wide-desktop actual-extension runner. No automatic live dispatch follows checkpoint publication.
-- `docs/checkpoint-workflow.md`, `verification/checkpoint-policy.json`: explicit-path/tree commit/push reconciliation and exact-SHA checkpoint CI, not official publication.
-- `GOVERNANCE_PLAN.md`: research, selected transfers, lossless rule mapping and governance closure scope.
-- `docs/archive/continuity/README.md`: immutable old packets for a specific unresolved historical question only.
+## Retrieve for the current question
 
-Local reports/controls may be absent in another checkout. Rebuild/rerun only declared recoverable inputs; do not reconstruct an old trace or inherit old PASS. Routine resume is not a full acceptance ceremony; policy/routing/material failure/stage/high-risk/explicit closure requires closure qualification.
+- `VERIFICATION_EFFICIENCY.md`: researched process change, checks/counts/limits.
+- `MOBILE_UI_MODERNIZATION.md`: durable product sequence and surface/final gates.
+- `HEADER_DRAWER_OWNED_SHELL.md`: preceding extraction and focus/order/oracle counterexamples.
+- `docs/ui-surface-contracts.md`, `architecture/ui-surfaces.json`, registry plus candidate: affected event/geometry/ownership contracts. `node tools/inspect-live-architecture.mjs --surface header-navigation` is a source/build view, not live-site proof.
+- `DECISION_RATIONALE.md`, `docs/agent-maintenance-notes.md`: selected methods and matching recurring failures.
+- `docs/checkpoint-workflow.md`, `verification/checkpoint-policy.json`: exact-tree publication and narrow exact-SHA CI.
+- `verification/assurance-case.json`, `FINAL_FEATURE_STATE_INVENTORY.md`: unfinished upper/product proof.
+- `docs/archive/continuity/2026-10-08-before-efficiency.md`: old raw locators for a specific historical question only. Never resume its superseded task or require old traces for unrelated body work.
+
+Context-free method: `.agents/skills/dcuf-long-work-continuity/references/handoff-contract.md`; machine contract: `verification/continuity-contract.json`. Receiver derives direct execution/permission/evidence inputs from this packet and current sources, then reports `ACCEPTED` or `STALE_REPLAN`. Same-host control/reports can be local-only; missing required bytes require recovery, never guessed PASS. Policy/routing/stage closure gets scoped closure controls; routine continuation remains proportional.

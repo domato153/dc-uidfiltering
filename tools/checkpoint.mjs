@@ -4,7 +4,7 @@ import { spawnSync } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import assert from 'node:assert/strict';
-import { validateCheckpointPolicy, validateCheckpointFiles, assertCheckpointContext, publishCheckpoint, pushCheckpoint, qualifyCheckpointCI } from './checkpoint-core.mjs';
+import { validateCheckpointPolicy, validateCheckpointFiles, assertCheckpointContext, publishCheckpoint, pushCheckpoint, observeCheckpointCI } from './checkpoint-core.mjs';
 
 const toolRoot = realpathSync(path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..'));
 const git = args => {
@@ -120,13 +120,13 @@ if (command === 'inspect') {
     };
     const runs = api(`repos/${policy.repository}/actions/runs?head_sha=${receipt.commit}&event=push&per_page=100`).workflow_runs;
     const run = runs.filter(item => item.name === policy.workflowName).sort((a, b) => b.id - a.id)[0];
-    assert.ok(run, 'checkpoint CI not visible yet');
-    const jobs=api(`repos/${policy.repository}/actions/runs/${run.id}/jobs?per_page=100`).jobs;
+    const jobs=run ? api(`repos/${policy.repository}/actions/runs/${run.id}/jobs?per_page=100`).jobs : [];
     receipt.observedRemote=await remoteHead();
     checkBoundary();
     assert.equal(git(['rev-parse','HEAD']).trim(),receipt.commit,'HEAD moved during CI verification');
-    receipt.ci = qualifyCheckpointCI(run, jobs, receipt.commit, receipt.observedRemote);
+    receipt.ci = observeCheckpointCI(run, jobs, receipt.commit, receipt.observedRemote);
     receipt.status = receipt.ci.status;
     await save(receipt);
     console.log(JSON.stringify(receipt, null, 2));
+    if (receipt.status === 'REMOTE_SYNCED_CI_PENDING') process.exitCode = 2;
 } else throw new Error('Use inspect, publish, resume or verify-ci. No release/dispatch operation exists.');

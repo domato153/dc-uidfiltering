@@ -1,5 +1,13 @@
 # Agent Maintenance Notes
 
+## Verification, checkpoint and continuity cost
+
+- Runtime impact must not follow verification/transition relations as product dependencies. Bounded header coverage is mobile-only; unknown/shared/bootstrap/build/harness impact remains broader. Full acceptance replaces covered focused profiles at selection, not by arbitrarily reusing stateful results. Retain independent native control/candidate contexts and target restores.
+- Git receipts require clean tracked content. Pre-commit worktree receipts bind candidate and continuity inputs, checked around every command. Requiring commit cleanliness for them defeats local validation and tempts dummy commits. Empty/non-applicable selections never mean pass.
+- Audit groups retain existing assertions; wrong-reason errors are failures. Resume partial diagnostics only with unchanged proof/runtime/baseline/browser/OS/environment/receipt inputs and fresh positive preflight. Malformed/truncated diagnostics cannot supply passes. Standalone preflight explicitly selects the source guard and its own report path, rather than the default release artifact.
+- Current artifact identity is typed data, not prescribed prose. NEXT lists direct entry inputs; retrieve old traces only when relevant. Bind the tracked current candidate in CI and freeze its exact bytes locally before edits, so clean-checkout governance does not depend on ignored controls. Parser acceptance requires independent cold-reader qualification here.
+- Let publication own the final exact-tree repository check. Pending CI permits independent work but stays pending in reports; query with backoff. Only locked dependency downloads are cached. Existing globally bound stage receipts are not silently narrowed or made current.
+
 ## Header palette ownership and initialization
 
 - Mounted header rules can look redundant without being safely removable. All 14 recent-title palettes win when active, but absence/deactivation requires the light #333 and dark #e0e0e0 fallback. Removing fallback color fails; dark priority protects against normal inline color, and narrowing palette to late roles fails before projection. Preserve these rules. Both palette/projection absent is host-owned: assert native identity/positive geometry without inventing a fixed color. Shell reset overlap remains separate unclosed debt.

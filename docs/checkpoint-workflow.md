@@ -26,3 +26,9 @@ node tools/checkpoint.mjs verify-ci --commit <same-commit>
 `COMMITTED_PENDING_PUSH` means publication is unconfirmed. `REMOTE_SYNCED_CI_PENDING` requires an observed identical remote SHA. `CI_VERIFIED_CHECKPOINT` additionally requires the exact commit's successful push run and `working-checkpoint` job; failed/pending/skipped or different-SHA runs do not qualify. Remote drift requires investigation, not overwrite. After completing a unit, report commit SHA, remote result and CI pending/failure/success separately; this standing cadence is not an unattended daemon.
 
 Push CI is a cheap deterministic governance/build checkpoint. PR/manual acceptance remains separate. Manual desktop live-site execution and trusted-main release approval are unchanged and are never automatically dispatched by a checkpoint. Header/feature/live/upper product claims remain UNKNOWN until their own evidence closes.
+
+## Proportionate cadence
+
+A unit is a coherent owner/behavior change, not each edited file or validation attempt. Run related local product checks without a commit. Let the publisher run the final exact-tree `verify-repo all`; do not immediately run the same final command again before invoking it. CI pending does not prevent independent next work, but the final report must distinguish pending from qualified success. Query once, back off while unchanged, and qualify the final exact checkpoint before handoff. No dummy commit is needed; transport retry reuses the original commit.
+
+PR/manual jobs follow the fresh Git impact route. Full acceptance supersedes focused suites; manual full acceptance is explicit. The locked pnpm store is cached by OS/Node/pnpm/lock, never test results. Browsers remain freshly installed when selected. See `docs/work/VERIFICATION_EFFICIENCY.md` for scope and adversarial recovery.

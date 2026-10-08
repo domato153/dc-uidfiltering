@@ -602,6 +602,56 @@
         "sourceRefs": ["src/targets/pc/filter-ui-style-mount.js"],
         "contractRefs": ["target-isolation", "ui-ownership"],
         "fitnessRefs": ["invariant-pc-host-style-isolation", "invariant-one-visual-owner", "invariant-build-inputs-mapped"]
+      },
+      {
+        "id": "architecture-governance",
+        "status": "accepted",
+        "classification": "governance",
+        "layer": "verification",
+        "boundaryState": "verification",
+        "responsibility": "Validates accepted and candidate architecture, impact/evidence binding, adversarial proof checks, UI boundaries, skills, workflows, and vendored source pins. Separates runtime and verification impact, selected adversarial groups, exact-input diagnostic resume, prerequisite failure handling and scoped checkpoint CI; no product acceptance from governance alone.",
+        "sourceRefs": [
+          "architecture/**",
+          "verification/gates.json",
+          "verification/skill-routing-cases.json",
+          "tools/architecture-state.mjs",
+          "tools/architecture-registry.mjs",
+          "tools/resolve-impact.mjs",
+          "tools/evidence-binding.mjs",
+          "tools/run-gates.mjs",
+          "tools/audit-proof-system.mjs",
+          "tools/run-semantic-differential.mjs",
+          "tools/verify-ui-boundaries.mjs",
+          "tools/verify-skills.mjs",
+          "tools/verify-workflows.mjs",
+          ".github/workflows/development-ci.yml",
+          ".github/workflows/promotion-windows.yml",
+          ".agents/skills/**",
+          "vendor/agent-method-sectors/**",
+          "tools/impact-routing.mjs",
+          "tools/gate-execution.mjs",
+          "tools/proof-audit-progress.mjs",
+          "tools/test-verification-efficiency.mjs",
+          "tools/workflow-sequence.mjs",
+          "tools/continuity-state.mjs",
+          "tools/checkpoint-core.mjs",
+          "tools/checkpoint.mjs",
+          "tools/test-governance.mjs",
+          "tools/verify-governance.mjs",
+          "tools/git-tree-state.mjs",
+          "tools/verify-checkpoint-ci.mjs",
+          "tools/test-checkpoint-artifacts.mjs",
+          "verification/checkpoint-policy.json"
+        ],
+        "contractRefs": [
+          "proof-integrity",
+          "artifact-lineage",
+          "ui-ownership"
+        ],
+        "fitnessRefs": [
+          "invariant-registry-integrity",
+          "invariant-proof-binding"
+        ]
       }
     ],
     "upsertRelations": [

@@ -3,8 +3,11 @@ import { spawnSync } from 'node:child_process';
 import { copyFile, mkdir, readFile, readdir, stat, unlink, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { createRequire } from 'node:module';
+import { release } from 'node:os';
 import { sha256 } from './architecture-state.mjs';
-import { createEvidenceBinding, digestEvidenceBytes } from './evidence-binding.mjs';
+import { createEvidenceBinding, assertEvidenceBinding, digestEvidenceBytes, hashPaths } from './evidence-binding.mjs';
+import { createAuditProgress, parseAuditGroups, AUDIT_GROUPS } from './proof-audit-progress.mjs';
 
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const receiptPath = path.resolve(rootDir, process.argv[2] || 'artifacts/impact.json');
@@ -13,6 +16,12 @@ const receipt = JSON.parse(receiptBytes.toString('utf8'));
 const outputIndex = process.argv.indexOf('--output');
 const outputArg = outputIndex >= 0 ? process.argv[outputIndex + 1] : null;
 if (outputIndex >= 0 && (!outputArg || outputArg.startsWith('--'))) throw new Error('--output requires a report path');
+const groupsIndex = process.argv.indexOf('--groups');
+const groups = parseAuditGroups(groupsIndex >= 0 ? process.argv[groupsIndex + 1] || '' : undefined);
+const selectedGroups = new Set(groups);
+const resumeIndex = process.argv.indexOf('--resume');
+const resumeArg = resumeIndex >= 0 ? process.argv[resumeIndex + 1] : null;
+if (resumeIndex >= 0 && (!resumeArg || resumeArg.startsWith('--'))) throw new Error('--resume requires an existing progress report');
 const auditDir = path.join(rootDir, 'artifacts', 'proof-audit');
 await mkdir(auditDir, { recursive: true });
 const guardedRuntime = path.join(rootDir, 'testbed', 'artifacts', 'runtime-under-test.user.js');
@@ -23,6 +32,37 @@ const guardedTarget = guardedName === 'DC_UserFilter_Mobile'
 if (!guardedTarget) throw new Error(`Proof audit requires a recognized guarded runtime, received ${guardedName || '<missing>'}`);
 let rejectedMutations = 0;
 let acceptedControls = 0;
+let currentGroup = null;
+const initialBinding = await createEvidenceBinding(rootDir);
+const initialRuntimeSha256 = sha256(await readFile(guardedRuntime));
+const browserExecutable = selectedGroups.has('native-ui')
+    ? createRequire(path.join(rootDir, 'testbed/package.json'))('playwright').chromium.executablePath() : null;
+const identity = {
+    evidenceBinding: initialBinding,
+    impactReceiptSha256: digestEvidenceBytes(path.relative(rootDir, receiptPath), receiptBytes),
+    head: receipt.head,
+    runtimeSha256: initialRuntimeSha256,
+    baselinesSha256: await hashPaths(rootDir, ['testbed/artifacts/baseline-mobile-beta.user.js', 'testbed/artifacts/baseline-mobile-stable.user.js', 'testbed/artifacts/baseline-pc.user.js']),
+    groups, platform: process.platform, arch: process.arch, osRelease: release(),
+    browserSha256: browserExecutable ? sha256(await readFile(browserExecutable)) : null,
+    environmentSha256: sha256(Buffer.from(JSON.stringify(Object.entries(process.env).sort(([a], [b]) => a.localeCompare(b))))),
+};
+// Always execute the current positive preflight, including when prior cases are reused.
+for (const args of [
+    ['tools/run-gates.mjs', path.relative(rootDir, receiptPath), '--verify-receipt-only'],
+    ['tools/architecture-registry.mjs', 'validate'], ['tools/verify-modernization-assurance.mjs'],
+    ['tools/verify-ui-boundaries.mjs'], ['tools/verify-baseline.mjs'],
+    ...(selectedGroups.has('native-ui') ? [['testbed/run-tests.mjs', '--group', 'smoke', '--require-runtime-under-test']] : []),
+]) {
+    const result = spawnSync(process.execPath, args, { cwd: rootDir, encoding: 'utf8', shell: false, env: {
+        ...process.env, DCUF_TESTBED_TARGET: guardedTarget, DCUF_TESTBED_USERSCRIPT: guardedRuntime,
+        DCUF_TESTBED_REPORT: path.join(auditDir, 'preflight-smoke.json'),
+    } });
+    if (result.status !== 0) throw new Error(`Proof audit positive preflight failed: ${args.join(' ')}\n${result.stdout || ''}\n${result.stderr || ''}`);
+}
+const progress = createAuditProgress({ identity,
+    outputPath: path.resolve(rootDir, outputArg ? `${outputArg}.progress.json` : `artifacts/proof-audit/${groups.join('-')}.progress.json`),
+    resumePath: resumeArg ? path.resolve(rootDir, resumeArg) : null });
 
 async function removeIfPresent(filePath) {
     try {
@@ -33,34 +73,31 @@ async function removeIfPresent(filePath) {
 }
 
 function expectFailure(label, command, args, { env = {}, pattern } = {}) {
-    const result = spawnSync(command, args, {
+    progress.execute(currentGroup, label, 'negative', command, args, { env, pattern }, () => spawnSync(command, args, {
         cwd: rootDir,
         encoding: 'utf8',
         shell: false,
         env: { ...process.env, ...env },
-    });
-    const output = `${result.stdout || ''}\n${result.stderr || ''}`;
-    if (result.status === 0) throw new Error(`${label}: mutation was not rejected`);
-    if (pattern && !pattern.test(output)) {
-        throw new Error(`${label}: failed for the wrong reason\n${output}`);
-    }
+    }));
     rejectedMutations += 1;
     console.log(`PASS ${label}`);
 }
 
 function expectSuccess(label, command, args, { env = {} } = {}) {
-    const result = spawnSync(command, args, {
+    const result = progress.execute(currentGroup, label, 'positive', command, args, { env }, () => spawnSync(command, args, {
         cwd: rootDir,
         encoding: 'utf8',
         shell: false,
         env: { ...process.env, ...env },
-    });
-    if (result.status !== 0) throw new Error(`${label}: valid control was rejected\n${result.stdout || ''}\n${result.stderr || ''}`);
+    }));
     acceptedControls += 1;
     console.log(`PASS ${label}`);
     return result;
 }
 
+try {
+if (selectedGroups.has('routing')) {
+currentGroup = 'routing';
 const wrongHeadPath = path.join(auditDir, 'wrong-head.json');
 await writeFile(wrongHeadPath, `${JSON.stringify({ ...receipt, head: '0'.repeat(40) }, null, 2)}\n`, 'utf8');
 expectFailure('wrong-head receipt is rejected', 'node', [
@@ -123,7 +160,10 @@ const invariantRouteReceipt = JSON.parse(invariantRoute.stdout);
 if (!invariantRouteReceipt.selectedProfiles.includes('acceptance')) {
     throw new Error('invariant profile routing omitted acceptance for mobile-adapter-contract');
 }
+}
 
+if (selectedGroups.has('runtime-oracles')) {
+currentGroup = 'runtime-oracles';
 const nonGuardedRuntime = path.join(auditDir, 'non-guarded-runtime.user.js');
 await copyFile(guardedRuntime, nonGuardedRuntime);
 expectFailure('non-guarded artifact path is rejected', 'node', [
@@ -176,7 +216,9 @@ expectFailure('native form control=candidate differential is rejected', 'node', 
     '--output', path.join(auditDir, 'native-form-control-equals-candidate.json'),
 ], { pattern: /Control and candidate must have distinct digests/ });
 
-if (guardedTarget === 'mobile') {
+}
+if (selectedGroups.has('native-ui') && guardedTarget === 'mobile') {
+    currentGroup = 'native-ui';
     const editorRuntimeBefore = await readFile(guardedRuntime);
     const disposalNeedle = '            activeScope?.dispose();\n            activeScope = null;';
     const editorRuntimeSource = editorRuntimeBefore.toString('utf8').replace(/\r\n/g, '\n');
@@ -1755,6 +1797,8 @@ if (guardedTarget === 'mobile') {
     });
 }
 
+if (selectedGroups.has('presentation')) {
+currentGroup = 'presentation';
 for (const [variant, identifier] of [
     ['bare-gm', 'GM_setValue'],
     ['member-gm', 'GM_setValue'],
@@ -1831,6 +1875,9 @@ for (const [component, variant, source, policy, identifier] of [
     ], { pattern: new RegExp(`${source.replace('.', '\\.')}\\:\\d+\\: ${policy} directly references ${identifier}`) });
 }
 
+}
+if (selectedGroups.has('assurance')) {
+currentGroup = 'assurance';
 for (const [variant, pattern] of [
     ['unknown-surface-field', /unknown or missing fields/],
     ['missing-host-operation', /forbidden host operation missing: replace/],
@@ -1867,7 +1914,10 @@ for (const [variant, pattern] of [
 expectSuccess('modernization assurance positive control is accepted', 'node', [
     'tools/verify-modernization-assurance.mjs',
 ]);
+}
 
+if (selectedGroups.has('architecture')) {
+currentGroup = 'architecture';
 expectFailure('mixed architecture without an exit contract is rejected', 'node', [
     'tools/architecture-registry.mjs',
     'validate',
@@ -2005,6 +2055,7 @@ try {
     }
 }
 
+}
 const lfText = Buffer.from('first\nsecond\n', 'utf8');
 const crlfText = Buffer.from('first\r\nsecond\r\n', 'utf8');
 for (const textPath of ['fixture.mjs', 'playwright-loader.cjs', '.gitattributes']) {
@@ -2016,15 +2067,21 @@ if (digestEvidenceBytes('fixture.bin', lfText) === digestEvidenceBytes('fixture.
     throw new Error('binary evidence hashing silently normalized distinct bytes');
 }
 console.log('PASS text evidence binding is LF/CRLF portable while binary binding remains byte-exact');
+assertEvidenceBinding(initialBinding, await createEvidenceBinding(rootDir));
+if (sha256(await readFile(guardedRuntime)) !== initialRuntimeSha256) throw new Error('Proof audit did not restore the initial guarded runtime');
+progress.finish();
 
 if (outputArg) {
     const outputPath = path.resolve(rootDir, outputArg);
     await mkdir(path.dirname(outputPath), { recursive: true });
     const runtimeBytes = await readFile(guardedRuntime);
     await writeFile(outputPath, `${JSON.stringify({
-        schemaVersion: 1,
+        schemaVersion: 2,
         kind: 'proof-system-adversarial-audit',
         status: 'passed',
+        groups,
+        completeAudit: AUDIT_GROUPS.every(group => selectedGroups.has(group)),
+        reusedCases: progress.snapshot().cases.filter(item => item.reused).length,
         impactReceipt: path.relative(rootDir, receiptPath).replace(/\\/g, '/'),
         impactReceiptSha256: digestEvidenceBytes(path.relative(rootDir, receiptPath), receiptBytes),
         runtime: {
@@ -2039,3 +2096,7 @@ if (outputArg) {
 }
 
 console.log(`Proof-system adversarial audit passed: ${rejectedMutations} mutations rejected, ${acceptedControls} valid controls accepted, and portable evidence hashing verified.`);
+} catch (error) {
+    progress.fail(error);
+    throw error;
+}

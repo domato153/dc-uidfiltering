@@ -33,6 +33,19 @@ export function currentSection(text) {
     }
     return section;
 }
+export function parseCurrentArtifacts(text) {
+    const section = currentSection(text);
+    const blocks = [...section.matchAll(/```dcuf-current-artifacts\r?\n([\s\S]*?)\r?\n```/g)];
+    requireValue(blocks.length === 1, 'continuity: exactly one typed current artifact identity required');
+    const artifacts = JSON.parse(blocks[0][1]);
+    exactKeys(artifacts, ['schemaVersion', 'mobile', 'pc'], 'current artifacts');
+    requireValue(artifacts.schemaVersion === 1, 'invalid artifact identity schema');
+    for (const target of ['mobile', 'pc']) {
+        exactKeys(artifacts[target], ['sha256'], `${target} artifact`);
+        requireValue(/^[a-f0-9]{64}$/i.test(artifacts[target].sha256), 'invalid current artifact digest');
+    }
+    return artifacts;
+}
 export function selectContinuityProfile(signals = []) {
     requireValue(signals.every(signal => CLOSURE_TRIGGERS.includes(signal)), 'unknown continuity trigger');
     return signals.length ? 'closure' : 'routine';
