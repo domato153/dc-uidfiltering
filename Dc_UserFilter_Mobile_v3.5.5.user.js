@@ -9928,7 +9928,7 @@ const __dcufSettingsPresenter = (() => {
                 const preferredTop = issueRect?.height
                     ? Math.ceil(issueRect.bottom + 8) : Math.max(12, Math.round(bodyRect.top));
                 setDoorBodyVar('--dcuf-header-native-door-left', `${left}px`);
-                setDoorBodyVar('--dcuf-header-native-recom-top', `${preferredTop}px`);
+                // Only write the final top: a transient preferred top retriggers body mutations.
                 const height = Math.ceil(recomSource.getBoundingClientRect().height);
                 const top = Math.max(12, Math.min(preferredTop, window.innerHeight - height - 12));
                 setDoorBodyVar('--dcuf-header-native-recom-top', `${top}px`);

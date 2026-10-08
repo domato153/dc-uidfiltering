@@ -17,6 +17,7 @@ import {
     waitForSettled
 } from './harness/runner-utils.mjs';
 import { resolveBuiltUserscript } from './harness/userscript-loader.mjs';
+import { captureBodyPhase, validateBodyPhase } from './header-drawer-body-contract.mjs';
 
 const args = new Set(process.argv.slice(2));
 const selectedGroup = process.argv.includes('--group') ? process.argv[process.argv.indexOf('--group') + 1] : null;
@@ -47,6 +48,129 @@ const statsStorage = {
     [storageKeys.personalList]: { uids: [], nicknames: [], ips: [] }
 };
 const noStatsStorage = { ...statsStorage, [storageKeys.threshold]: 0 };
+
+mobileTest('header recommendation final top is stable across mixed resize and replacement', 'functional', async ({ browser, server }) => {
+    const cases = [
+        { mixed: true }, { mixed: true, dark: true },
+        { mixed: true, short: true }, { mixed: true, short: true, dark: true },
+        { short: true }, {}, { mixed: true, tall: 350 }, { tall: 650 }
+    ];
+    for (const scenario of cases) {
+        const session = await createTestPage(browser, server.baseUrl, {
+            viewport: scenario.short ? { width: 390, height: 480 } : { width: 1280, height: 900 },
+            storage: { [storageKeys.threshold]: 0, [storageKeys.ratioEnabled]: false }
+        });
+        try {
+            const page = session.page;
+            await session.goto(scenario.mixed ? '/mgallery/board/lists?id=test' : '/board/lists?id=test');
+            if (scenario.dark) await page.evaluate(() => window.__dcufFixture.toggleDark(true));
+            await page.evaluate(tall => {
+                const wrap = document.createElement('div'); wrap.className = 'issue_wrap';
+                // Sampled native shape, also used by the owned-shell differential.
+                wrap.innerHTML = '<div class="issuebox gallery_box"><section id="gall_top_recom" class="concept_wrap"><div class="pageing_box"><button type="button" class="btn_bluenext">다음</button></div><ul class="concept_txtlist"><li><a href="/board/view?id=test&no=1001">추천글</a></li></ul></section></div>';
+                document.querySelector('#container article').prepend(wrap);
+                const recom = wrap.querySelector('#gall_top_recom');
+                if (tall) recom.style.height = `${tall}px`;
+                window.__finalTopCalls = 0;
+                recom.querySelector('button').addEventListener('click', () => window.__finalTopCalls++);
+                window.__finalTopSaved = {
+                    recom, parent: recom.parentNode, next: recom.nextSibling,
+                    gm: JSON.stringify(window.__dcufTestbedGM.snapshot().values),
+                    writes: window.__dcufTestbedGM.snapshot().writes.length
+                };
+                window.__dcufHeaderDrawerHostAdapter.refresh();
+            }, scenario.tall);
+            await page.locator('#dcuf-testbed-controls').evaluate(el => { el.style.display = 'none'; });
+            await page.waitForFunction(() => window.__dcufHeaderDrawerHostAdapter?.snapshotResources().mutationSubscribers === 1
+                && document.querySelector('.dcuf-header-drawer__toggle'));
+            const settle = () => page.waitForFunction(() => {
+                const m = window.__dcufTestbedMetrics.snapshot();
+                return m.activeTimeouts === 0 && m.activeAnimationFrames === 0 && m.activeIntervals === 0
+                    && document.getAnimations().every(a => a.playState !== 'running');
+            });
+            await settle();
+            await page.evaluate(() => {
+                ['--dcuf-header-native-door-left', '--dcuf-header-native-door-top', '--dcuf-header-native-recom-top']
+                    .forEach((name, i) => document.body.style.setProperty(name, `${17 + i * 6}px`, 'important'));
+                window.__traceFinalTopRefresh = () => {
+                    const style = document.body.style, recom = document.querySelector('#gall_top_recom');
+                    const set = style.setProperty, rect = recom.getBoundingClientRect;
+                    const setDescriptor = Object.getOwnPropertyDescriptor(style, 'setProperty');
+                    const rectDescriptor = Object.getOwnPropertyDescriptor(recom, 'getBoundingClientRect');
+                    const trace = [];
+                    Object.defineProperty(style, 'setProperty', { configurable: true, value(name, value, priority = '') {
+                        if (name === '--dcuf-header-native-recom-top') trace.push(['write', value]);
+                        return set.call(this, name, value, priority);
+                    } });
+                    Object.defineProperty(recom, 'getBoundingClientRect', { configurable: true, value() {
+                        const r = rect.call(this); trace.push(['read', r.height]); return r;
+                    } });
+                    try { window.__dcufHeaderDrawerHostAdapter.refresh(); }
+                    finally {
+                        if (setDescriptor) Object.defineProperty(style, 'setProperty', setDescriptor); else delete style.setProperty;
+                        if (rectDescriptor) Object.defineProperty(recom, 'getBoundingClientRect', rectDescriptor); else delete recom.getBoundingClientRect;
+                    }
+                    const r = recom.getBoundingClientRect(), issue = document.querySelector('.issue_contentbox');
+                    const body = document.querySelector('.dcuf-header-drawer__body').getBoundingClientRect();
+                    return { trace, rect: [r.x, r.y, r.width, r.height], issueBottom: issue?.getBoundingClientRect().bottom ?? null,
+                        bodyTop: body.top, viewport: [innerWidth, innerHeight], top: style.getPropertyValue('--dcuf-header-native-recom-top') };
+                };
+            });
+            const check = async () => {
+                const observed = await page.evaluate(() => window.__traceFinalTopRefresh());
+                const writes = observed.trace.filter(entry => entry[0] === 'write');
+                assert.ok(writes.length <= 1, `recommendation top must be written at most once per refresh: ${JSON.stringify(observed)}`);
+                const preferred = observed.issueBottom === null ? Math.max(12, Math.round(observed.bodyTop)) : Math.ceil(observed.issueBottom + 8);
+                const expected = Math.max(12, Math.min(preferred, observed.viewport[1] - Math.ceil(observed.rect[3]) - 12));
+                assert.equal(observed.top, `${expected}px`, 'final recommendation clamp');
+                assert.equal(observed.rect[1], expected, 'native final top');
+                assert.equal(observed.rect[2], Math.min(640, observed.viewport[0] - 24), 'unchanged native width');
+                assert.ok(writes.every(entry => entry[1] === observed.top), 'never write an intermediate recommendation top');
+                if (writes.length) assert.equal(observed.trace[0][0], 'read', 'measure native height before final top write');
+                validateBodyPhase(await page.evaluate(captureBodyPhase));
+                await settle();
+            };
+            await page.locator('.dcuf-header-drawer__toggle-label').click();
+            await check();
+            await page.locator('#gall_top_recom button').click();
+            assert.equal(await page.evaluate(() => window.__finalTopCalls), 1, 'original recommendation pointer action');
+            await page.evaluate(() => {
+                const content = document.createElement('div'); content.style.height = '37px';
+                document.querySelector('.dcuf-header-drawer__body-inner').append(content);
+            });
+            await page.setViewportSize({ width: 390, height: 480 });
+            await check();
+            await page.setViewportSize({ width: 1280, height: 900 });
+            await check();
+            assert.equal(await page.evaluate(() => {
+                const s = window.__finalTopSaved, n = document.querySelector('#gall_top_recom');
+                return s.recom === n && s.parent === n.parentNode && s.next === n.nextSibling;
+            }), true, 'original native identity and topology');
+            await page.evaluate(() => {
+                const old = document.querySelector('#gall_top_recom'), next = old.cloneNode(true);
+                next.style.height = '260px'; old.replaceWith(next);
+            });
+            await check();
+            await page.locator('.dcuf-header-drawer__toggle').focus();
+            await page.keyboard.press('Enter');
+            assert.equal(await page.evaluate(() => document.activeElement === document.querySelector('.dcuf-header-drawer__toggle')), true);
+            assert.equal(await page.locator('.dcuf-header-drawer').getAttribute('data-open'), '0');
+            await page.evaluate(() => window.__dcufHeaderDrawerHostAdapter.dispose());
+            await settle();
+            const final = await page.evaluate(() => {
+                const s = window.__finalTopSaved, gm = window.__dcufTestbedGM.snapshot();
+                return { unchanged: s.gm === JSON.stringify(gm.values) && s.writes === gm.writes.length,
+                    resources: window.__dcufHeaderDrawerHostAdapter.snapshotResources(),
+                    vars: ['--dcuf-header-native-door-left', '--dcuf-header-native-door-top', '--dcuf-header-native-recom-top']
+                        .map(name => [document.body.style.getPropertyValue(name), document.body.style.getPropertyPriority(name)]) };
+            });
+            assert.equal(final.unchanged, true);
+            assert.ok(Object.values(final.resources).every(v => v === 0 || v === false));
+            assert.deepEqual(final.vars, [['17px', 'important'], ['23px', 'important'], ['29px', 'important']]);
+            assertNoRuntimeErrors(await getMetrics(page), session.consoleErrors);
+        } finally { await session.close(); }
+    }
+});
 
 mobileTest('boot: 모바일 UID 통계 캐시는 재로드 시 공개 전에 차단하고 서버를 재조회하지 않는다', 'boot', async ({ browser, server }) => {
     const cachedUid = 'safe-comment-2';

@@ -1,5 +1,14 @@
 # DCUF modernization decision rationale
 
+## D-27 — apply only the final native recommendation top
+
+- SELECTED: ER0 exact-source regression first, then remove only the preliminary recommendation-top write. Measure native height after unchanged horizontal placement and apply its final clamp; retain mixed ownership and compare native/body/input semantics in fresh contexts.
+- NOT ADOPTED: Shared mutation filtering, expanded timeouts, arbitrary sleeps, width/CSS changes or a new state/scheduler owner. These hide or exceed the proven local feedback cause.
+- DEFERRED: Analogous issue-top correction until reproduced, unmodeled host height dependence/live applicability, width extraction until this checkpoint, full-header/final replaceability admission.
+- Reason: E786's new regression fails with 411px/read79/389px; candidate passes eight fresh contexts. Exact artifact delta contains only this removal/comment. No external method uncertainty affects this local root-cause fix; D-25/D-26 research remains selected for later replacement work.
+- Evidence: `docs/work/HEADER_DRAWER_FINAL_TOP.md` binds original negative, guarded candidate, exact control/artifact and bounded 92-observation-per-side native/body/input comparison, including contrary raw-order/live limits.
+- Revisit: A native height/geometry/action/phase difference, an ineffective original negative, repeated candidate writes/resources, or a live host shape invalidates the local transfer.
+
 ## D-26 — resolve measured native-position feedback before width extraction
 
 - SELECTED: Characterize exact E786 and local width variants in fresh contexts, retain mixed-state failure, and schedule one prerequisite recommendation final-top-write fix. A frozen presenter max-width input is the selected later value boundary; DOM measurement/clamping remains adapter-owned.

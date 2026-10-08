@@ -1,21 +1,21 @@
 # Next bounded task
 
 - Task ID: `header-navigation`
-- Bounded slice: `header-drawer-recommendation-final-top-write`
-- Objective: stop the measured body-style/mutation feedback by applying the native recommendation's final clamped top once, preserving final native geometry, actions/default input, focus, body phases, restoration, settings and PC bytes.
-- Why next: exact E786 mixed-state narrow resize repeats 411px→389px and cannot reach quiescence. Omitting only the preliminary top write in a fresh diagnostic restores quiescence with the same final rectangle. This correctness prerequisite precedes width-input extraction.
-- Expected transition: meaningful original-failure negative, exact E786/candidate comparison, independent native geometry/input/resource controls, and one bounded adapter correction. Both components stay mixed; no full-header/UiPort/replaceability admission.
-- Stop/replan: changed/missing control, height dependent on interim top, unexplained geometry/native/error/phase difference, required shared/coordinator/lifecycle/width change, wrong root or remote drift. Reproduce analogous issue-top behavior before widening; no timeout expansion, arbitrary sleep or observer filtering.
+- Bounded slice: `header-drawer-width-input-boundary`
+- Objective: make one frozen presenter max-width input the authority for its CSS and existing adapter width calculations, preserving default output and native behavior.
+- Why next: CSS-only 560 leaves an 80px wide minor-list anchor error; CSS-only growth overflows. Recommendation-only/narrow contexts conceal the coupling. The final-top correctness prerequisite is implemented; retain its current regression.
+- Expected transition: one pure frozen numeric value consumed by three CSS sites and three adapter sites. Both owners remain mixed; no final-header/UiPort/replaceability admission.
+- Stop/replan: changed/missing control, default CSS/phase/native behavior difference, need for new DOM geometry reads/state/subscribers/coordinator changes, wrong root or remote drift.
 
-Read INDEX/CURRENT/policy and HEADER_DRAWER_LAYOUT_INPUT. Confirm E786 root/dist/guard/control. Recreate the existing recommendation fixture alongside the minor issue root, open, add the owned test content and resize 1280x900→390x480. Observe bounded preferred/clamped writes and repeating schedules; do not require a perpetually-active old control to settle before recording its failure. Close/dispose it and validate cleanup. Add a regression that distinguishes repeated transient writes from legitimate one-time application, then update candidate/surface contracts before the native placement-phase correction. Measure native height before writing only the final clamped recommendation top; preserve all other reads, calculations, markers, phases, widths, native nodes/actions and error ownership. Validate short/mixed/tall recommendation, viewport restore, replacement/reset, focus/default Enter, variable priorities and quiescent resources on the rebuilt candidate. Refresh the Git route and directly affected proof. Width extraction/presenter replacement remain later work; live applicability and existing failures stay explicit.
+Read INDEX/CURRENT/policy, HEADER_DRAWER_LAYOUT_INPUT and HEADER_DRAWER_FINAL_TOP. Confirm A5EB root/dist/guard/control and unchanged PC. Inventory all six 640/24px width sites and the default style-builder phase. Add failing value/freeze/default-CSS/adapter-consumption controls, update the candidate/surface contract, then expose one frozen maxWidth=640 presenter description. Use it in three existing CSS expressions and three existing adapter calculations without changing rounding, clamping, visibility or measure/apply order. Validate caps below/at/above the viewport on wide/narrow/664px breakpoint, light/dark, minor/recommendation/mixed contexts, native input/focus, final-top idempotency, replacement/reset and disposal. Compare exact A5EB/candidate semantic receipts in fresh contexts and rebuild at current version. Refresh the Git route and affected proof. Width editing effort and full replacement readiness remain unmeasured; no visual redesign, generic layout framework, extra reads or issue-top correction belongs to this unit.
 
 ## Declared entry inventory
 
-LIVE pointers are not completeness proof; derive direct dependencies independently. The tracked candidate is the clean-CI entry identity; local controls/probes are ignored evidence.
+LIVE pointers are not completeness proof; derive direct dependencies independently. The tracked artifact is the clean-CI entry identity; local controls/reports are ignored evidence.
 
 ```dcuf-next-action
 {
-  "id": "header-drawer-recommendation-final-top-write",
+  "id": "header-drawer-width-input-boundary",
   "stageId": "header-navigation",
   "requiredDependencies": [
     {"id":"governing-policy","path":"AGENTS.md","mode":"LIVE","sha256":null},
@@ -40,16 +40,16 @@ LIVE pointers are not completeness proof; derive direct dependencies independent
       "id": "current-candidate",
       "path": "Dc_UserFilter_Mobile_v3.5.5.user.js",
       "mode": "FROZEN",
-      "sha256": "e7869194916a5423ce493a33d5a8c85952ac84ddb07160927b320ed36f775779"
+      "sha256": "a5eb4ba2f05cf17f7857e9dc16741ed5b658ebd84470cda7558eb62e7ef93a32"
     },
     {"id":"replacement-validation-plan","path":"docs/work/UI_REPLACEABILITY_VALIDATION.md","mode":"LIVE","sha256":null},
     {"id":"toggle-contract","path":"testbed/header-drawer-toggle-contract.mjs","mode":"LIVE","sha256":null},
     {"id":"layout-characterization","path":"docs/work/HEADER_DRAWER_LAYOUT_INPUT.md","mode":"LIVE","sha256":null},
-    {"id":"mutation-coordinator","path":"src/targets/mobile/runtime-coordinator.js","mode":"LIVE","sha256":null}
+    {"id":"final-top-correction","path":"docs/work/HEADER_DRAWER_FINAL_TOP.md","mode":"LIVE","sha256":null}
   ],
   "requiredDecisions": [
     "working-checkpoint",
-    "final-top-entry",
+    "width-entry",
     "scope-and-admission"
   ],
   "decisions": [
@@ -60,9 +60,9 @@ LIVE pointers are not completeness proof; derive direct dependencies independent
       "source": "AGENTS.md"
     },
     {
-      "id": "final-top-entry",
+      "id": "width-entry",
       "status": "ADOPTED",
-      "boundary": "First reproduce the exact E786 mixed-state preferred/clamped recommendation-top feedback, then write only final clamped recommendation top once. Preserve native geometry/actions/focus/body phases/resources/restoration/PC. Update candidate/surface contract before changing placement phase. No width/CSS/shared/coordinator/state/subscriber rewrite.",
+      "boundary": "Extract one frozen numeric presenter maxWidth=640 input for its three CSS declarations and three existing adapter calculations. Preserve default CSS bytes, rounding/clamping, body/native read/write phases and native input/focus/restoration/settings/PC. No DOM read, framework, state/subscriber, issue-top or coordinator change. Keep components mixed.",
       "source": "docs/work/HEADER_DRAWER_LAYOUT_INPUT.md"
     },
     {
@@ -74,41 +74,36 @@ LIVE pointers are not completeness proof; derive direct dependencies independent
   ],
   "hazards": [
     {
-      "id": "native-focus",
+      "id": "width-coupling",
       "status": "ACTIVE",
-      "effect": "Retain original controls/default actions, native topology, popup-only closure and owned-shell focus guard."
+      "effect": "Narrow and recommendation-only contexts hide stale placement. Keep wide minor-list CSS-only shrink/grow negatives, containment and breakpoint coverage."
     },
     {
-      "id": "native-top-feedback",
+      "id": "native-contract",
       "status": "ACTIVE",
-      "effect": "Preferred 411px then clamped 389px writes repeat through body mutation scheduling in the narrow mixed fixture. Prove the negative/control and preserve final geometry. Analogous issue-top path is untested; reproduce before widening."
+      "effect": "Preserve original controls/default input/focus, body phases, final native heights/positions, popup-only closure, reset/restoration and quiescence. Retain new final-top regression."
     },
     {
-      "id": "phase-and-height",
+      "id": "existing-gaps",
       "status": "ACTIVE",
-      "effect": "Native height dependence on interim placement is not globally excluded. Preserve both owned-body phases and compare old/candidate final native values, short/tall/resize/replacement/reset. Do not mask perpetual frames with timeout expansion, sleep or observer filtering."
-    },
-    {
-      "id": "existing-failures",
-      "status": "ACTIVE",
-      "effect": "Mixed feedback FAIL, mixed-short fresh startup UNKNOWN, palette FAIL, full header/34-feature/live UNKNOWN. Width/cascade/startup/timer/page-head/popup debt remain."
+      "effect": "Analogous issue-top behavior and live applicability unverified; full-header/34-feature/upper/live UNKNOWN and original palette FAIL remain. Width extraction is not readiness or universal edit-cost proof."
     },
     {
       "id": "guard-and-control",
       "status": "ACTIVE",
-      "effect": "Freeze exact E786; serialize probes/builders and restore mobile guard after PC work."
+      "effect": "Freeze exact A5EB; serialize probes/builders, restore mobile guard after PC work and renew affected proof inputs."
     }
   ],
   "localEvidence": [
     {
-      "path": "artifacts/controls/header-layout-input-E786.user.js",
+      "path": "artifacts/controls/header-final-top-A5EB.user.js",
       "disposition": "REGENERATE",
-      "recovery": "Recover exact E786 generated bytes or rebuild their recorded source checkpoint in an isolated control directory. Require exact SHA; missing bytes remain STALE_REPLAN, never an old substitute or tree reset."
+      "recovery": "Recover exact A5EB generated bytes or rebuild the checkpoint containing this correction in an isolated control directory. Require exact SHA; missing bytes remain STALE_REPLAN, never reset the tree or substitute old E786."
     },
     {
-      "path": "docs/work/HEADER_DRAWER_LAYOUT_INPUT.md",
+      "path": "docs/work/HEADER_DRAWER_FINAL_TOP.md",
       "disposition": "DURABLE",
-      "recovery": "Tracked reproduction, input shape, 411/389 write trace and omitted-preliminary-top causal control. Ignored reports/probe are diagnostics, not mandatory entry. Recreate the failure and fresh exact control/candidate evidence; never regenerate old execution as PASS."
+      "recovery": "Tracked negative/correction and current source/artifact scopes. Ignored old reports are local execution, not required entry and never recreated as PASS; rerun affected evidence on current exact inputs."
     }
   ],
   "qualificationScope": "CONTINUITY_ONLY",

@@ -16,6 +16,7 @@ Run `node tools/inspect-continuity.mjs`; compare fresh root/branch/HEAD ancestry
 - `MOBILE_UI_MODERNIZATION.md`: durable product sequence and surface/final gates.
 - `UI_REPLACEABILITY_VALIDATION.md`: researched real-change scenarios, locality measurements, pilot/final admission and limits; planned, not a readiness PASS.
 - `HEADER_DRAWER_LAYOUT_INPUT.md`: width-coupling baseline, retained mixed-state feedback failure, causal diagnostic and the selected prerequisite fix.
+- `HEADER_DRAWER_FINAL_TOP.md`: recommendation final-top correction, original failure regression, current exact artifacts and bounded native/body/input verification.
 - `HEADER_DRAWER_OWNED_SHELL.md`: preceding extraction and focus/order/oracle counterexamples.
 - `HEADER_DRAWER_OWNED_BODY.md`: current body descriptions, immediate-control comparison, measurement phases and oracle/environment limits.
 - `HEADER_DRAWER_TOGGLE_INTENT.md`: current synchronous input/UiPort characterization, failure/reset counterexamples and the selected next intent-value boundary.
