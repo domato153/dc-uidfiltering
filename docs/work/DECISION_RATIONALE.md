@@ -1,5 +1,14 @@
 # DCUF modernization decision rationale
 
+## D-26 — resolve measured native-position feedback before width extraction
+
+- SELECTED: Characterize exact E786 and local width variants in fresh contexts, retain mixed-state failure, and schedule one prerequisite recommendation final-top-write fix. A frozen presenter max-width input is the selected later value boundary; DOM measurement/clamping remains adapter-owned.
+- NOT ADOPTED: CSS-only width editing as universal replacement proof, new layout frameworks, moving native geometry into presentation, filtering shared body mutation records, widening timeouts or hiding active frames. These respectively miss placement coupling or mask/change the demonstrated feedback mechanism.
+- DEFERRED: Width extraction and presenter replacement pilot, mixed-short fresh startup, analogous issue-top feedback until reproduced, live applicability, full-header/final assurance. No production fix occurs in this investigation.
+- Reason: ER0 repository source/runtime settle this bounded responsibility and failure; the prior D-25 research method is already selected. CSS-only shrink leaves an 80px minor-list anchor error, growth breaks containment, while narrow/recommendation-only cases conceal the issue. A preliminary 411px then clamped 389px recommendation-top write repeats through body mutation scheduling; removing only the preliminary write in a diagnostic artifact restores quiescence with the same final native rectangle.
+- Evidence: `docs/work/HEADER_DRAWER_LAYOUT_INPUT.md` records 55 width contexts/205 observations, exact source/artifact/report identities, 901 repeated write pairs, an independent failed context and fresh causal control, plus contrary/UNKNOWN scopes. This is not a release or readiness receipt.
+- Revisit: Native height depends on interim placement, final geometry/actions/resources differ, another writer/source explains the loop, controls fail their intended reason, or live evidence changes the fixture applicability.
+
 ## D-25 — validate replacement using real change scenarios
 
 - SELECTED: ER2 primary SEI scenario/tactics research and its CONNECT counterexample inform bounded cosmetic/composition/responsive/replacement-and-restore experiments. Measure production edit propagation separately from generated/test/document churn; keep native behavior assertions and current evidence bindings. Pilot after header sealing, final integrated receipts before readiness admission.

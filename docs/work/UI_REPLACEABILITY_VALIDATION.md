@@ -1,6 +1,6 @@
 # UI replacement validation
 
-Status: `PLANNED_NOT_EXECUTED`. This supplements `MOBILE_UI_MODERNIZATION.md`; it does not introduce a second implementation queue or authorize a visual redesign now.
+Status: readiness experiments `PLANNED_NOT_EXECUTED`; width baseline characterized with a retained mixed-state failure. This supplements `MOBILE_UI_MODERNIZATION.md`; it does not introduce a second implementation queue or authorize a visual redesign now.
 
 ## Research and transfer
 
@@ -33,4 +33,4 @@ PASS is bounded to the selected real changes. All selected scenarios must have c
 
 ## Current execution
 
-Continue `header-drawer-toggle-intent-description-boundary` first: pure frozen typed intent values, same synchronous adapter callback, zero declared visual/behavior delta. No new dispatch/subscriber/state owner. Keep both components mixed. After that unit, characterize the remaining responsive presentation/host-geometry input boundary before moving it; this is a dependency toward the pilot above.
+Typed toggle extraction is complete. `HEADER_DRAWER_LAYOUT_INPUT.md` records the width baseline and a new mixed-state position feedback failure. First resolve the recommendation's repeated preferred/clamped top writes through the existing adapter, preserving final native geometry and resource contracts. Then extract the frozen width input while retaining DOM measurement/containment in the adapter. Keep both components mixed. These diagnostic variants do not execute the readiness pilot or real presenter replacement/restoration; those remain after header sealing.

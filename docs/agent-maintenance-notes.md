@@ -1,5 +1,7 @@
 # Agent Maintenance Notes
 
+- Native top clamping can feed its own mutation bus: in E786's narrow mixed issue/recommendation fixture, writing preferred recommendation top 411px before clamped 389px on every refresh caused repeated body-style mutations and header/list frames. An isolated omission control preserved the final rectangle and reached quiescence. Resolve final-position write idempotency before layout-policy extraction; do not mask it with timeout expansion or shared observer filtering. Live applicability and the analogous issue-top path remain unverified; see `docs/work/HEADER_DRAWER_LAYOUT_INPUT.md`.
+
 - UI replaceability needs real change and replacement/restoration scenarios alongside preservation evidence. Count production layer propagation separately from generated/test/doc churn; pure presenters or file counts alone do not prove editing speed. Drawer width coupling across CSS/adapter geometry is a counterexample; `docs/work/UI_REPLACEABILITY_VALIDATION.md` records the researched pilot/final obligations.
 - Drawer reconnect schedules shell creation. Timing observers must wait for its owner/subscriber and actual shell. Window capture and a later document listener distinguish same-stack application from microtask deferral; trusted pointer/Enter and an untrusted same-task burst support distinct input claims. Preserve direct guards/cancellation and native reset semantics when extracting intent values.
 
