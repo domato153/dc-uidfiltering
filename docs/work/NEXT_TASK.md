@@ -1,13 +1,13 @@
 # Next bounded task
 
 - Task ID: `header-navigation`
-- Bounded slice: `header-drawer-toggle-intent-characterization`
-- Objective: characterize the existing synchronous toggle against the immutable snapshot/UiPort contract, then select the smallest valid intent boundary. Record behavior/design before changing application or shared ownership. Preserve native pointer/default Enter, focus, rapid toggle ordering, popup-only closure, settings, geometry and PC bytes.
-- Why next: template/labels/ARIA and owned-body presentation are separated at 2FB3; direct toggle remains in the adapter. Existing SURFACE_OPEN/CLOSE handlers commit application snapshots but do not drive the drawer. Establish timing/ownership before moving this responsibility.
-- Expected transition: exact 2FB3 guarded characterization and an adopted bounded intent design, or an explicit larger-scope dependency/stop result. Keep mixed/full-header admission and original FAIL/UNKNOWN separate.
-- Stop/replan: missing/changed control, unclassified native/default/focus/order difference, required shared/PC/storage/lifecycle redesign, wrong-root/remote drift or unavailable oracle. Recover exact inputs or bound a design task; no asynchronous indirection or weakened assertions by assumption.
+- Bounded slice: `header-drawer-toggle-intent-description-boundary`
+- Objective: extract the pure frozen typed toggle description into the current presenter, consuming an immutable current-open snapshot. The existing adapter applies it in the same native callback/stack. Preserve native pointer/default Enter, cancellation, focus, rapid ordering, popup-only closure, reset semantics, settings, geometry and PC bytes.
+- Why next: exact 2FB3 characterization confirms same-stack native updates, while general UiPort snapshots lack a drawer driver and have different subscriber-error/no-op/reset/result semantics. Separate intent values without introducing those differences.
+- Expected transition: exact 2FB3 control/candidate comparison and a bounded intent-value extraction with selected descriptor/order negatives. Keep native command/state ownership in the adapter, both owners mixed, and full UiPort/header admission separate.
+- Stop/replan: missing/changed control, unclassified native/default/focus/order/failure difference, required new shared/PC/state/lifecycle owner, wrong-root/remote drift or unavailable oracle. Recover exact inputs or re-scope the larger driver design; no new subscriber/async indirection or weakened assertions.
 
-Read INDEX/CURRENT/policy, the current body boundary, drawer callers and actual shared intent/application handlers. Confirm 2FB3 root/dist/guard and local frozen next-control before source edits. Use existing native functional cases and sampled host fixtures; old listener/timer reports are not entry prerequisites. Refresh the Git route when a concrete owner/contract change is selected. Managed Chromium exists on the host; sandbox localhost denial is an environment failure.
+Read INDEX/CURRENT/policy and the selected boundary in HEADER_DRAWER_TOGGLE_INTENT. Confirm exact 2FB3 root/dist/guard and local control before source edits. Match the frozen surface/open and surface/close description vocabulary to the actual shared constants in a pure test; do not dispatch through the general snapshot store. Retain existing adapter guards/cancellation, setDrawerOpenState phases and native reset semantics. Update candidate responsibility/surface contract at implementation, refresh the Git route, and extend the existing guarded observer with independent timing/value negatives. The disposable characterization probe is not an implementation prerequisite.
 
 ## Declared entry inventory
 
@@ -15,7 +15,7 @@ LIVE pointers are not completeness proof; derive direct dependencies independent
 
 ```dcuf-next-action
 {
-  "id": "header-drawer-toggle-intent-characterization",
+  "id": "header-drawer-toggle-intent-description-boundary",
   "stageId": "header-navigation",
   "requiredDependencies": [
     {"id":"governing-policy","path":"AGENTS.md","mode":"LIVE","sha256":null},
@@ -31,7 +31,8 @@ LIVE pointers are not completeness proof; derive direct dependencies independent
     {"id":"composition","path":"src/targets/mobile/post-main-fixes.js","mode":"LIVE","sha256":null},
     {"id":"intent-contract","path":"src/shared/ui-contracts.js","mode":"LIVE","sha256":null},
     {"id":"intent-application","path":"src/runtime/ui-state-store.js","mode":"LIVE","sha256":null},
-    {"id":"current-boundary","path":"docs/work/HEADER_DRAWER_OWNED_BODY.md","mode":"LIVE","sha256":null},
+    {"id":"current-boundary","path":"docs/work/HEADER_DRAWER_TOGGLE_INTENT.md","mode":"LIVE","sha256":null},
+    {"id":"body-boundary","path":"docs/work/HEADER_DRAWER_OWNED_BODY.md","mode":"LIVE","sha256":null},
     {"id":"body-observer","path":"testbed/run-header-drawer-owned-shell-differential.mjs","mode":"LIVE","sha256":null},
     {"id":"body-contract","path":"testbed/header-drawer-body-contract.mjs","mode":"LIVE","sha256":null},
     {"id":"behavior-tests","path":"testbed/run-tests.mjs","mode":"LIVE","sha256":null},
@@ -44,19 +45,19 @@ LIVE pointers are not completeness proof; derive direct dependencies independent
   "requiredDecisions": ["working-checkpoint", "intent-entry", "scope-and-admission"],
   "decisions": [
     {"id":"working-checkpoint","status":"ADOPTED","boundary":"Only bounded validated commits/non-force pushes to origin/codex/ui-port-boundary; no official/live/release authority.","source":"AGENTS.md"},
-    {"id":"intent-entry","status":"ADOPTED","boundary":"Characterize synchronous native/default toggle before selecting a typed intent path. Surface snapshot commits are not a drawer host driver.","source":"docs/work/HEADER_DRAWER_OWNED_BODY.md"},
+    {"id":"intent-entry","status":"ADOPTED","boundary":"Extract frozen typed intent values only; preserve same-stack native adapter execution. No generic snapshot subscriber, awaited host application or new state owner. Full UiPort separation remains deferred.","source":"docs/work/HEADER_DRAWER_TOGGLE_INTENT.md"},
     {"id":"scope-and-admission","status":"ADOPTED","boundary":"Body equality is bounded/synthetic, not mixed exit or full profile/stage/live admission. Preserve palette FAIL and upper/final UNKNOWN.","source":"docs/work/VERIFICATION_EFFICIENCY.md"}
   ],
   "hazards": [
     {"id":"native-focus","status":"ACTIVE","effect":"Retain self-insertion focus guard, trusted default events; no forced input or key forwarding."},
-    {"id":"intent-order","status":"ACTIVE","effect":"Direct toggle applies synchronously; UiPort dispatch/handlers are async. Do not infer equal rapid/default timing."},
+    {"id":"intent-order","status":"ACTIVE","effect":"Current commits notify before dispatch returns, but generic snapshots do not drive drawer; subscribers catch errors, no-ops do not notify, and awaited burst results hold latest state. Preserve direct native order/reset/failure behavior."},
     {"id":"phase-scope","status":"ACTIVE","effect":"Preserve both body phases, early raw rules, both widths and startup variance. Refresh traces do not prove arbitrary order equivalence."},
     {"id":"existing-failures","status":"ACTIVE","effect":"Original acceptance/palette FAIL; header/34-feature/live UNKNOWN. Timer/page-head/popup explanations remain unresolved."},
     {"id":"guard-and-control","status":"ACTIVE","effect":"Serialize builders/probes; PC replaces generic guard. Freeze 2FB3 and restore mobile guard after PC work."}
   ],
   "localEvidence": [
     {"path":"artifacts/controls/header-toggle-intent-2FB3.user.js","disposition":"REGENERATE","recovery":"Recover exact 2FB3 generated bytes or rebuild their source in an isolated control directory. Require declared SHA; no old substitute/tree reset. STALE_REPLAN until recovered."},
-    {"path":"docs/work/HEADER_DRAWER_OWNED_BODY.md","disposition":"DURABLE","recovery":"Tracked scoped result/oracle limits. Missing raw reports never recreate old execution; characterize exact current runtime afresh."}
+    {"path":"docs/work/HEADER_DRAWER_TOGGLE_INTENT.md","disposition":"DURABLE","recovery":"Tracked observations and selected boundary. Missing disposable probe/report never recreate old execution; implementation requires a fresh exact control/candidate comparison."}
   ],
   "qualificationScope": "CONTINUITY_ONLY",
   "workSuccessCertified": false

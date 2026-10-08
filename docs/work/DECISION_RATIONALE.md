@@ -1,5 +1,14 @@
 # DCUF modernization decision rationale
 
+## D-24 — characterize the command path before extracting drawer intent values
+
+- SELECTED: Preserve the existing synchronous native command path and extract only an immutable typed toggle description in the next bounded presenter unit. The adapter retains command execution, DOM state, cancellation, refresh/reset and failures. This is a partial value boundary, not full application/UiPort separation.
+- NOT ADOPTED: Driving host application through a generic snapshot subscriber, applying an awaited concurrent command's latest snapshot as its own result, or assuming async syntax implies delayed commits. These respectively change the error channel, collapse per-command state, or contradict actual current behavior.
+- DEFERRED: A full host-command driver and application state owner, shared-port/interface changes, broader lifecycle/reset semantics and complete header/live admission. Re-scope that transition explicitly when its driver contract is concrete.
+- Reason: ER0 current source settles ownership/no-op/reset/failure details. ER2 compares direct same-stack execution, synchronous subscription and awaited-result application; current ECMAScript/DOM primary mechanisms and local positive/deferred controls test the transfer. Four fresh minor-list contexts preserve trusted pointer/default Enter, burst ordering, popup-only focus, native identity, settings and adapter resources. The local probe is disposable investigation code.
+- Evidence: `docs/work/HEADER_DRAWER_TOGGLE_INTENT.md`, exact 2FB3 runtime, current drawer/UiPort/application sources, [ECMAScript AsyncBlockStart/Await](https://tc39.es/ecma262/multipage/control-abstraction-objects.html#sec-async-functions-abstract-operations-async-block-start), and [DOM event invocation](https://dom.spec.whatwg.org/#concept-event-listener-inner-invoke), inspected 2026-10-08. Standards explain mechanisms; bound local executions supply DCUF observations.
+- Revisit: A descriptor extraction needs a new shared/runtime/state/lifecycle owner, changes default/focus/order/reset/exception behavior, or fails an exact control comparison. Missing local reports never manufacture historical PASS; produce fresh relevant evidence.
+
 ## D-23 — proportionate verification, CI and continuity
 
 - SELECTED: the researched implementation in `VERIFICATION_EFFICIENCY.md`: runtime/verification relation separation, conservative shared/unknown fallback, bounded header coverage, selected mutation groups with exact-input retry and fresh preflight, failed-prerequisite blocking with restoration, risk-selected CI and pnpm download caching, coherent checkpoint units, typed artifact identities and direct-action continuity. This governs method, not a product PASS.

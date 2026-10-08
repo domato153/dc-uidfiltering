@@ -16,6 +16,7 @@ Run `node tools/inspect-continuity.mjs`; compare fresh root/branch/HEAD ancestry
 - `MOBILE_UI_MODERNIZATION.md`: durable product sequence and surface/final gates.
 - `HEADER_DRAWER_OWNED_SHELL.md`: preceding extraction and focus/order/oracle counterexamples.
 - `HEADER_DRAWER_OWNED_BODY.md`: current body descriptions, immediate-control comparison, measurement phases and oracle/environment limits.
+- `HEADER_DRAWER_TOGGLE_INTENT.md`: current synchronous input/UiPort characterization, failure/reset counterexamples and the selected next intent-value boundary.
 - `docs/ui-surface-contracts.md`, `architecture/ui-surfaces.json`, registry plus candidate: affected event/geometry/ownership contracts. `node tools/inspect-live-architecture.mjs --surface header-navigation` is a source/build view, not live-site proof.
 - `DECISION_RATIONALE.md`, `docs/agent-maintenance-notes.md`: selected methods and matching recurring failures.
 - `docs/checkpoint-workflow.md`, `verification/checkpoint-policy.json`: exact-tree publication and narrow exact-SHA CI.
