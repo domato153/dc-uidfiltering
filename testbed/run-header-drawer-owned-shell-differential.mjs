@@ -8,9 +8,11 @@ import { fileURLToPath } from 'node:url';
 import { startServer } from './server/server.mjs';
 import { createTestPage, launchBrowser, storageKeys, getMetrics, assertNoRuntimeErrors } from './harness/runner-utils.mjs';
 import { createCandidateFingerprint, createEvidenceBinding } from '../tools/evidence-binding.mjs';
+import { loadDrawerPresenter, validateBodyPresenterFaults, validateBodyObservation, captureBodyPhase, validateBodyPhase } from './header-drawer-body-contract.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const args = process.argv.slice(2);
+const bodyBoundary = args.includes('--body-boundary');
 const value = flag => {
     const index = args.indexOf(flag);
     assert.ok(index >= 0 && args[index + 1] && !args[index + 1].startsWith('--'), `Missing ${flag}`);
@@ -33,10 +35,19 @@ const canonical = text => text.replace(/^\uFEFF/, '').replace(/\r\n/g, '\n').rep
 assert.ok(canonical(candidateBytes.toString()).includes(canonical(presenterSource)), 'Built presenter drift');
 const oldAdapter = controlBytes.toString().split('const __dcufHeaderDrawerHostAdapter = (() => {')[1]
     ?.split('__dcufRoot.__dcufHeaderDrawerHostAdapter =')[0];
-const oldTemplate = oldAdapter?.match(/drawer\.innerHTML = (`[\s\S]*?`);/)?.[1];
-assert.ok(oldTemplate, 'Immediate control owned template required');
-const oldLabel = oldAdapter.match(/const CLOSED_LABEL = ('[^']*');/)?.[1];
-const expectedHtml = vm.runInNewContext(oldTemplate, { CLOSED_LABEL: vm.runInNewContext(oldLabel) });
+let expectedHtml;
+if (bodyBoundary) {
+    const text = controlBytes.toString();
+    const start = text.indexOf('function __dcufBuildHeaderDrawerThemeCss(');
+    const end = text.indexOf('__dcufRoot.__dcufHeaderDrawerPresenter =');
+    assert.ok(start >= 0 && end > start, 'Immediate owned-shell control presenter required');
+    expectedHtml = loadDrawerPresenter(text.slice(start, end) + '__dcufRoot.__dcufHeaderDrawerPresenter = __dcufHeaderDrawerPresenter;').shell.html;
+} else {
+    const oldTemplate = oldAdapter?.match(/drawer\.innerHTML = (`[\s\S]*?`);/)?.[1];
+    assert.ok(oldTemplate, 'Immediate control owned template required');
+    const oldLabel = oldAdapter.match(/const CLOSED_LABEL = ('[^']*');/)?.[1];
+    expectedHtml = vm.runInNewContext(oldTemplate, { CLOSED_LABEL: vm.runInNewContext(oldLabel) });
+}
 const adapterSource = await readFile(path.join(root, 'src/targets/mobile/header-drawer-host-adapter.js'), 'utf8');
 assert.ok(canonical(candidateBytes.toString()).includes(canonical(adapterSource)), 'Built adapter drift');
 const styleMount = source => canonical(source.slice(source.indexOf('const ensureDrawerStyle ='), source.indexOf('const resolveDrawerMount =')));
@@ -63,6 +74,7 @@ const validatePresenter = presenter => {
     }
 };
 validatePresenter(loadPresenter(presenterSource));
+const bodyDescriptorFaults = bodyBoundary ? validateBodyPresenterFaults(presenterSource) : 0;
 const descriptorFaults = [
     ["label: '갤러리 대문 닫기'", "label: '잘못된 문구'"],
     ["ariaExpanded: 'true'", "ariaExpanded: 'false'"],
@@ -82,15 +94,20 @@ const validateOwned = (owned, open) => {
 };
 const cases = [390, 750, 1280].flatMap(width => [false, true].map(dark => ({ id: `minor-${width}-${dark}`, width, dark,
     route: '/mgallery/board/lists?id=test', list: true })));
+if (bodyBoundary) cases.push({ id: 'minor-short', width: 390, height: 480, route: '/mgallery/board/lists?id=test', list: true });
+if (bodyBoundary) cases.push(...[false, true].map(dark => ({ id: `major-recom-${dark}`, width: 1280, dark,
+    route: '/board/lists?id=test', list: true, recom: true })));
 cases.push({ id: 'view', width: 750, route: '/mgallery/board/view?id=test&no=1001&header=1' },
     { id: 'write', width: 1280, route: '/mgallery/board/write?id=test' });
 const report = {
-    kind: 'header-drawer-owned-shell-zero-delta', scope: 'BOUNDED_SYNTHETIC_NOT_HEADER_STAGE_RECEIPT', status: 'PARTIAL',
+    kind: bodyBoundary ? 'header-drawer-owned-body-zero-delta' : 'header-drawer-owned-shell-zero-delta', scope: 'BOUNDED_SYNTHETIC_NOT_HEADER_STAGE_RECEIPT', status: 'PARTIAL',
     sourceBaseHead: spawnSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).stdout.trim(),
     candidateFingerprint: await createCandidateFingerprint(root), evidenceBinding: await createEvidenceBinding(root),
     sourceHashes: { [presenterPath]: sha(presenterSource), 'src/targets/mobile/header-drawer-host-adapter.js': sha(adapterSource) },
     controlBinding, candidate: { path: candidate, sha256: sha(candidateBytes) }, descriptorFaults: descriptorFaults.length,
-    observerSha256: sha(await readFile(fileURLToPath(import.meta.url))), sides: {}, differences: [], rawStyleOrderDifferences: [], domFaults: 0
+    observerSha256: sha(await readFile(fileURLToPath(import.meta.url))),
+    bodyContractSha256: sha(await readFile(path.join(root, 'testbed/header-drawer-body-contract.mjs'))),
+    bodyDescriptorFaults, bodyDomFaults: 0, sides: {}, differences: [], rawStyleOrderDifferences: [], domFaults: 0
 };
 await mkdir(path.dirname(output), { recursive: true });
 const server = await startServer();
@@ -108,13 +125,24 @@ try {
         process.env.DCUF_TESTBED_TARGET = 'mobile';
         const observations = report.sides[side] = [];
         for (const testCase of cases) {
-            const session = await createTestPage(browser, server.baseUrl, { viewport: { width: testCase.width, height: 900 },
+            const session = await createTestPage(browser, server.baseUrl, { viewport: { width: testCase.width, height: testCase.height || 900 },
                 storage: { [storageKeys.threshold]: 0, [storageKeys.ratioEnabled]: false,
                     [storageKeys.personalEnabled]: true, [storageKeys.personalList]: { uids: [], nicknames: [], ips: [] } } });
             try {
                 const page = session.page;
                 await session.goto(testCase.route);
                 if (testCase.dark) await page.evaluate(() => window.__dcufFixture.toggleDark(true));
+                if (testCase.recom) await page.evaluate(() => {
+                    // Same sampled major recommendation parent/root shape as the existing native tests.
+                    const wrap = document.createElement('div'); wrap.className = 'issue_wrap';
+                    wrap.innerHTML = '<div class="issuebox gallery_box"><section id="gall_top_recom" class="concept_wrap">'
+                        + '<div class="pageing_box"><button type="button" class="btn_bluenext">다음</button></div>'
+                        + '<ul class="concept_txtlist"><li><a href="/board/view?id=test&no=1001">추천글</a></li></ul></section></div>';
+                    document.querySelector('#container article').prepend(wrap);
+                    window.__bodyRecomCalls = 0;
+                    wrap.querySelector('button').addEventListener('click', () => { window.__bodyRecomCalls += 1; });
+                    window.__dcufHeaderDrawerHostAdapter.refresh();
+                });
                 await page.locator('#dcuf-testbed-controls').evaluate(el => { el.style.display = 'none'; });
                 if (!testCase.list) {
                     const absent = await page.evaluate(() => ({ drawerCount: document.querySelectorAll('.dcuf-header-drawer').length,
@@ -127,7 +155,8 @@ try {
                     && document.querySelector('.dcuf-header-drawer__toggle'));
                 await settle(page);
                 await page.evaluate(() => {
-                    const selectors = ['.dcuf-header-drawer', '.dcuf-header-drawer__toggle', '.issue_contentbox', '#hot_rank_pop2'];
+                    const selectors = ['.dcuf-header-drawer', '.dcuf-header-drawer__toggle', '.issue_contentbox', '#hot_rank_pop2',
+                        '.dcuf-header-drawer__body', '.dcuf-header-drawer__body-inner', '#gall_top_recom', '#gall_top_recom button'];
                     const nodes = selectors.map(selector => document.querySelector(selector));
                     window.__ownedShellBaseline = { selectors, nodes, topology: nodes.map(node => node ? [node.parentNode, node.nextSibling] : []),
                         gm: window.__dcufTestbedGM.snapshot(), resources: window.__dcufHeaderDrawerHostAdapter?.snapshotResources() };
@@ -137,6 +166,22 @@ try {
                             bodyCount: drawer?.querySelectorAll('.dcuf-header-drawer__body-inner').length ?? 0,
                             dataOpen: drawer?.getAttribute('data-open') ?? null, aria: toggle?.getAttribute('aria-expanded') ?? null,
                             label: toggle?.textContent.trim() ?? null, html: drawer?.innerHTML ?? null };
+                    };
+                    window.__readOwnedBody = () => {
+                        const body = document.querySelector('.dcuf-header-drawer__body');
+                        const inner = body?.querySelector('.dcuf-header-drawer__body-inner');
+                        if (!body || !inner) return null;
+                        const rect = body.getBoundingClientRect(), c = getComputedStyle(body);
+                        const source = document.querySelector('.issue_contentbox');
+                        const names = ['display', 'visibility', 'opacity', 'pointer-events', 'overflow', 'max-height', '--dcuf-header-drawer-inline-start'];
+                        return { inline: names.map(name => ({ name, value: body.style.getPropertyValue(name), priority: body.style.getPropertyPriority(name) })),
+                            rawInlineOrder: [...body.style], rawInlineText: body.style.cssText,
+                            rect: [rect.x, rect.y, rect.width, rect.height],
+                            computed: { display: c.display, visibility: c.visibility, opacity: c.opacity, pointerEvents: c.pointerEvents, overflow: c.overflow },
+                            paddingTop: inner.style.paddingTop, hasChildren: inner.childElementCount > 0,
+                            sourceRect: source ? [source.getBoundingClientRect().x, source.getBoundingClientRect().y, source.getBoundingClientRect().width, source.getBoundingClientRect().height] : null,
+                            innerScrollHeight: inner.scrollHeight, sourceHeight: source?.getBoundingClientRect().height ?? null,
+                            viewportWidth: window.innerWidth };
                     };
                 });
                 const capture = async step => {
@@ -151,7 +196,7 @@ try {
                                 return { rect: [r.x, r.y, r.width, r.height].map(n => Math.round(n * 10) / 10),
                                     display: c.display, visibility: c.visibility, color: c.color, background: c.backgroundColor,
                                     position: c.position, opacity: c.opacity, pointerEvents: c.pointerEvents };
-                            }), nativeCalls: window.__fixtureHotRankToggles ?? 0,
+                            }), nativeCalls: window.__fixtureHotRankToggles ?? 0, recomCalls: window.__bodyRecomCalls ?? 0,
                             resources: window.__dcufHeaderDrawerHostAdapter?.snapshotResources(),
                             gm: { values: gm.values, writes: gm.writes.map(({ key, value }) => ({ key, value })) },
                             pending: [m.activeTimeouts, m.activeAnimationFrames, m.activeIntervals], listenerCount: m.activeListenerKeys,
@@ -160,7 +205,15 @@ try {
                             stylesheets: [...document.querySelectorAll('style[id]')].map(node => [node.id, node.textContent]).sort((a, b) => a[0].localeCompare(b[0])),
                             errors: m.errors };
                     });
+                    if (bodyBoundary) {
+                        if (['open', 'open-with-content', 'open-empty'].includes(step)) {
+                            observation.bodyPhase = await page.evaluate(captureBodyPhase);
+                            validateBodyPhase(observation.bodyPhase);
+                        }
+                        observation.body = await page.evaluate(() => window.__readOwnedBody());
+                    }
                     observations.push({ caseId: testCase.id, step, ...observation });
+                    if (bodyBoundary && step !== 'disposed') validateBodyObservation(observation.body, observation.owned.dataOpen === '1');
                     return observation;
                 };
                 const initial = await capture('initial');
@@ -192,8 +245,9 @@ try {
                 }
                 await page.locator('.dcuf-header-drawer__toggle').click();
                 validateOwned((await capture('open')).owned, true);
-                await page.locator('.issue_contentbox .btn_hotall_list').click();
-                await capture('rank-open');
+                if (testCase.recom) await page.locator('#gall_top_recom .btn_bluenext').click();
+                else await page.locator('.issue_contentbox .btn_hotall_list').click();
+                await capture(testCase.recom ? 'recom-native-action' : 'rank-open');
                 await page.locator('.dcuf-header-drawer__toggle').focus();
                 await page.evaluate(() => {
                     window.__dcufHeaderDrawerHostAdapter.refresh(); window.__dcufHeaderDrawerHostAdapter.connect();
@@ -202,11 +256,31 @@ try {
                 await settle(page);
                 assert.equal(await page.evaluate(() => document.activeElement === document.querySelector('.dcuf-header-drawer__toggle')), true);
                 await page.keyboard.press('Enter');
-                await page.waitForFunction(() => document.querySelector('.issue_contentbox').getAttribute('data-dcuf-header-native-door-popup-only') === '1');
-                validateOwned((await capture('popup-only')).owned, false);
-                await page.locator('#hot_rank_pop2 .poply_close').click();
+                if (!testCase.recom) await page.waitForFunction(() => document.querySelector('.issue_contentbox').getAttribute('data-dcuf-header-native-door-popup-only') === '1');
+                validateOwned((await capture(testCase.recom ? 'closed-by-enter' : 'popup-only')).owned, false);
+                if (!testCase.recom) await page.locator('#hot_rank_pop2 .poply_close').click();
                 const closed = await capture('reclosed');
-                assert.equal(closed.nativeCalls, 2); assert.ok(closed.identity.every(Boolean));
+                if (testCase.recom) assert.equal(closed.recomCalls, 1); else assert.equal(closed.nativeCalls, 2);
+                assert.ok(closed.identity.every(Boolean));
+                if (bodyBoundary) {
+                    await page.locator('.dcuf-header-drawer__toggle').click();
+                    await page.evaluate(() => {
+                        const content = document.createElement('div'); content.className = 'dcuf-body-contract-content';
+                        content.style.height = '37px'; content.textContent = 'Body content';
+                        document.querySelector('.dcuf-header-drawer__body-inner').append(content);
+                        window.__dcufHeaderDrawerHostAdapter.refresh();
+                    });
+                    const content = await capture('open-with-content');
+                    assert.ok(content.body.hasChildren);
+                    if (!testCase.recom) assert.ok(parseFloat(content.body.paddingTop) > 0);
+                    await page.evaluate(() => {
+                        document.querySelector('.dcuf-body-contract-content').remove();
+                        window.__dcufHeaderDrawerHostAdapter.refresh();
+                    });
+                    await capture('open-empty');
+                    await page.locator('.dcuf-header-drawer__toggle').click();
+                    await capture('empty-reclosed');
+                }
                 await page.evaluate(() => window.__dcufHeaderDrawerHostAdapter.dispose());
                 const disposed = await capture('disposed');
                 assert.ok(Object.values(disposed.resources).every(value => value === false || value === 0));
@@ -215,6 +289,49 @@ try {
                 validateOwned(restored.owned, false); assert.deepEqual(restored.resources, initial.resources);
                 assert.deepEqual(restored.gm, initial.gm); assert.deepEqual(restored.pending, [0, 0, 0]);
                 assertNoRuntimeErrors(await getMetrics(page), session.consoleErrors);
+                if (bodyBoundary && side === 'candidate' && testCase.id === cases[0].id) {
+                    // Faults run after all clean paired observations. Restoring a custom property
+                    // through setAttribute can reorder CSSOM declarations in Chromium; never
+                    // normalize that away or contaminate the clean exact-order comparison.
+                    await page.locator('.dcuf-header-drawer__toggle').click();
+                    await page.evaluate(() => {
+                        const content = document.createElement('div'); content.style.height = '37px';
+                        document.querySelector('.dcuf-header-drawer__body-inner').append(content);
+                        window.__dcufHeaderDrawerHostAdapter.refresh();
+                    });
+                    await settle(page);
+                    validateBodyObservation(await page.evaluate(() => window.__readOwnedBody()), true);
+                    for (const fault of ['display', 'pointer', 'height', 'offset', 'padding']) {
+                        const broken = await page.evaluate(fault => {
+                            const body = document.querySelector('.dcuf-header-drawer__body'), inner = body.firstElementChild;
+                            const bodyStyle = body.getAttribute('style'), innerStyle = inner.getAttribute('style');
+                            if (fault === 'display') body.style.setProperty('display', 'none', 'important');
+                            if (fault === 'pointer') body.style.setProperty('pointer-events', 'none', 'important');
+                            if (fault === 'height') body.style.setProperty('max-height', '0px', 'important');
+                            if (fault === 'offset') body.style.removeProperty('--dcuf-header-drawer-inline-start');
+                            if (fault === 'padding') inner.style.removeProperty('padding-top');
+                            const result = window.__readOwnedBody();
+                            if (bodyStyle === null) body.removeAttribute('style'); else body.setAttribute('style', bodyStyle);
+                            if (innerStyle === null) inner.removeAttribute('style'); else inner.setAttribute('style', innerStyle);
+                            return result;
+                        }, fault);
+                        assert.throws(() => validateBodyObservation(broken, true), assert.AssertionError, `Surviving body ${fault} fault`);
+                        validateBodyObservation(await page.evaluate(() => window.__readOwnedBody()), true);
+                        report.bodyDomFaults += 1;
+                    }
+                    await page.locator('.dcuf-header-drawer__toggle').focus();
+                    await page.evaluate(() => { window.__dcufHeaderDrawerHostAdapter.refresh(); window.__dcufHeaderDrawerHostAdapter.connect(); });
+                    assert.equal(await page.evaluate(() => document.activeElement === document.querySelector('.dcuf-header-drawer__toggle')), true);
+                    await page.keyboard.press('Enter');
+                    await settle(page);
+                    validateOwned(await page.evaluate(() => window.__readOwnedShell()), false);
+                    await page.evaluate(() => window.__dcufHeaderDrawerHostAdapter.dispose());
+                    await settle(page);
+                    const resources = await page.evaluate(() => window.__dcufHeaderDrawerHostAdapter.snapshotResources());
+                    assert.ok(Object.values(resources).every(value => value === false || value === 0));
+                    assertNoRuntimeErrors(await getMetrics(page), session.consoleErrors);
+                    report.bodyFaultRecovery = 'NATIVE_FOCUS_DEFAULT_ENTER_AND_DISPOSAL_PASS';
+                }
             } finally { await session.close(); }
         }
     }
@@ -240,11 +357,11 @@ try {
     });
     assert.equal(report.sides.control.length, report.sides.candidate.length);
     assert.deepEqual(report.differences, [], 'Immediate control/candidate differential');
-    report.status = 'OWNED_SHELL_PASS';
+    report.status = bodyBoundary ? 'OWNED_BODY_PASS' : 'OWNED_SHELL_PASS';
     report.rawStyleOrderStatus = report.rawStyleOrderDifferences.length ? 'DIFFERENT_NOT_GLOBAL_PHASE_EQUIVALENCE' : 'EQUAL_IN_THIS_RUN';
 } catch (error) { report.error = error.stack; throw error; }
 finally {
     await writeFile(output, JSON.stringify(report, null, 2) + '\n');
     await browser?.close(); await server.close();
 }
-console.log(`Owned-shell differential ${report.status}: ${report.sides.candidate.length} observations/side; ${report.descriptorFaults + report.domFaults} selected faults rejected; raw style-order differences ${report.rawStyleOrderDifferences.length} (${report.rawStyleOrderStatus}).`);
+console.log(`Owned drawer differential ${report.status}: ${report.sides.candidate.length} observations/side; ${report.descriptorFaults + report.domFaults + report.bodyDescriptorFaults + report.bodyDomFaults} selected faults rejected; raw style-order differences ${report.rawStyleOrderDifferences.length} (${report.rawStyleOrderStatus}).`);

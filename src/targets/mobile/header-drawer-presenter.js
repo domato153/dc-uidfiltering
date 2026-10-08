@@ -22,6 +22,31 @@
         const closedState = Object.freeze({ dataOpen: '0', ariaExpanded: 'false', label: '갤러리 대문 열기' });
         const openState = Object.freeze({ dataOpen: '1', ariaExpanded: 'true', label: '갤러리 대문 닫기' });
         const describeOpenState = (snapshot) => snapshot.open ? openState : closedState;
+        const openBodyStyles = Object.freeze([
+            { name: 'display', value: 'block', priority: 'important' },
+            { name: 'visibility', value: 'visible', priority: 'important' },
+            { name: 'opacity', value: '1', priority: 'important' },
+            { name: 'pointer-events', value: 'auto', priority: 'important' },
+            { name: 'overflow', value: 'visible', priority: 'important' },
+        ].map(Object.freeze));
+        const closedBodyStyles = Object.freeze([
+            { name: 'max-height', value: '0px', priority: 'important' },
+            { name: 'opacity', value: '0', priority: 'important' },
+            { name: 'visibility', value: 'hidden', priority: 'important' },
+            { name: 'pointer-events', value: 'none', priority: 'important' },
+            { name: 'overflow', value: 'hidden', priority: 'important' },
+            { name: 'display', value: 'none', priority: 'important' },
+        ].map(Object.freeze));
+        const describeBodyVisibility = (snapshot) => snapshot.open ? openBodyStyles : closedBodyStyles;
+        const describeBodyOffset = (snapshot) => Object.freeze({
+            name: '--dcuf-header-drawer-inline-start', value: `${snapshot.inlineStart}px`, priority: ''
+        });
+        const describeBodyHeight = (snapshot) => Object.freeze({
+            name: 'max-height', value: `${snapshot.height}px`, priority: 'important'
+        });
+        const describeBodyPadding = (snapshot) => Object.freeze({
+            paddingTop: snapshot.hasChildren ? `${snapshot.height}px` : ''
+        });
         const shell = Object.freeze({
             tagName: 'div',
             className: 'dcuf-header-drawer',
@@ -237,6 +262,6 @@
         
 `
         });
-        return Object.freeze({ shell, describeOpenState, style, buildThemeCss: __dcufBuildHeaderDrawerThemeCss, buildVisibilityCss: __dcufBuildHeaderDrawerVisibilityCss });
+        return Object.freeze({ shell, describeOpenState, describeBodyVisibility, describeBodyOffset, describeBodyHeight, describeBodyPadding, style, buildThemeCss: __dcufBuildHeaderDrawerThemeCss, buildVisibilityCss: __dcufBuildHeaderDrawerVisibilityCss });
     })();
     __dcufRoot.__dcufHeaderDrawerPresenter = __dcufHeaderDrawerPresenter;

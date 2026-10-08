@@ -9451,6 +9451,31 @@ const __dcufSettingsPresenter = (() => {
         const closedState = Object.freeze({ dataOpen: '0', ariaExpanded: 'false', label: '갤러리 대문 열기' });
         const openState = Object.freeze({ dataOpen: '1', ariaExpanded: 'true', label: '갤러리 대문 닫기' });
         const describeOpenState = (snapshot) => snapshot.open ? openState : closedState;
+        const openBodyStyles = Object.freeze([
+            { name: 'display', value: 'block', priority: 'important' },
+            { name: 'visibility', value: 'visible', priority: 'important' },
+            { name: 'opacity', value: '1', priority: 'important' },
+            { name: 'pointer-events', value: 'auto', priority: 'important' },
+            { name: 'overflow', value: 'visible', priority: 'important' },
+        ].map(Object.freeze));
+        const closedBodyStyles = Object.freeze([
+            { name: 'max-height', value: '0px', priority: 'important' },
+            { name: 'opacity', value: '0', priority: 'important' },
+            { name: 'visibility', value: 'hidden', priority: 'important' },
+            { name: 'pointer-events', value: 'none', priority: 'important' },
+            { name: 'overflow', value: 'hidden', priority: 'important' },
+            { name: 'display', value: 'none', priority: 'important' },
+        ].map(Object.freeze));
+        const describeBodyVisibility = (snapshot) => snapshot.open ? openBodyStyles : closedBodyStyles;
+        const describeBodyOffset = (snapshot) => Object.freeze({
+            name: '--dcuf-header-drawer-inline-start', value: `${snapshot.inlineStart}px`, priority: ''
+        });
+        const describeBodyHeight = (snapshot) => Object.freeze({
+            name: 'max-height', value: `${snapshot.height}px`, priority: 'important'
+        });
+        const describeBodyPadding = (snapshot) => Object.freeze({
+            paddingTop: snapshot.hasChildren ? `${snapshot.height}px` : ''
+        });
         const shell = Object.freeze({
             tagName: 'div',
             className: 'dcuf-header-drawer',
@@ -9666,7 +9691,7 @@ const __dcufSettingsPresenter = (() => {
 
 `
         });
-        return Object.freeze({ shell, describeOpenState, style, buildThemeCss: __dcufBuildHeaderDrawerThemeCss, buildVisibilityCss: __dcufBuildHeaderDrawerVisibilityCss });
+        return Object.freeze({ shell, describeOpenState, describeBodyVisibility, describeBodyOffset, describeBodyHeight, describeBodyPadding, style, buildThemeCss: __dcufBuildHeaderDrawerThemeCss, buildVisibilityCss: __dcufBuildHeaderDrawerVisibilityCss });
     })();
     __dcufRoot.__dcufHeaderDrawerPresenter = __dcufHeaderDrawerPresenter;
     const __dcufHeaderDrawerHostAdapter = (() => {
@@ -9818,13 +9843,17 @@ const __dcufSettingsPresenter = (() => {
             return null;
         };
 
+        const applyBodyStyle = (body, description) => body.style.setProperty(description.name, description.value, description.priority);
+        const applyBodyVisibility = (body, snapshot) => __dcufHeaderDrawerPresenter.describeBodyVisibility(snapshot)
+            .forEach((description) => applyBodyStyle(body, description));
         const setDrawerOpenState = (drawer, nextOpen) => {
             if (!(drawer instanceof HTMLElement)) return;
             const toggle = drawer.querySelector('.dcuf-header-drawer__toggle');
             const label = drawer.querySelector('.dcuf-header-drawer__toggle-label');
             const body = drawer.querySelector('.dcuf-header-drawer__body');
             const bodyInner = drawer.querySelector(DRAWER_BODY_SELECTOR);
-            const presentation = __dcufHeaderDrawerPresenter.describeOpenState(Object.freeze({ open: nextOpen }));
+            const snapshot = Object.freeze({ open: nextOpen });
+            const presentation = __dcufHeaderDrawerPresenter.describeOpenState(snapshot);
             drawer.setAttribute('data-open', presentation.dataOpen);
             if (toggle instanceof HTMLElement) toggle.setAttribute('aria-expanded', presentation.ariaExpanded);
             if (label instanceof HTMLElement) label.textContent = presentation.label;
@@ -9834,26 +9863,17 @@ const __dcufSettingsPresenter = (() => {
                     const bodyWidth = Math.min(640, Math.max(0, window.innerWidth - 24));
                     const maxLeft = Math.max(12, window.innerWidth - bodyWidth - 12);
                     const viewportLeft = Math.min(Math.max(12, drawerRect.right - bodyWidth), maxLeft);
-                    body.style.setProperty('--dcuf-header-drawer-inline-start', `${viewportLeft - drawerRect.left}px`);
-                    body.style.setProperty('display', 'block', 'important');
-                    body.style.setProperty('visibility', 'visible', 'important');
-                    body.style.setProperty('opacity', '1', 'important');
-                    body.style.setProperty('pointer-events', 'auto', 'important');
-                    body.style.setProperty('overflow', 'visible', 'important');
+                    applyBodyStyle(body, __dcufHeaderDrawerPresenter.describeBodyOffset(Object.freeze({ inlineStart: viewportLeft - drawerRect.left })));
+                    applyBodyVisibility(body, snapshot);
                     const measuredHeight = Math.max(
                         Math.ceil(bodyInner instanceof HTMLElement ? bodyInner.scrollHeight : 0),
                         Math.ceil(bodyInner instanceof HTMLElement ? bodyInner.getBoundingClientRect().height : 0),
                         Math.ceil(body.scrollHeight || 0),
                         1
                     );
-                    body.style.setProperty('max-height', `${measuredHeight}px`, 'important');
+                    applyBodyStyle(body, __dcufHeaderDrawerPresenter.describeBodyHeight(Object.freeze({ height: measuredHeight })));
                 } else {
-                    body.style.setProperty('max-height', '0px', 'important');
-                    body.style.setProperty('opacity', '0', 'important');
-                    body.style.setProperty('visibility', 'hidden', 'important');
-                    body.style.setProperty('pointer-events', 'none', 'important');
-                    body.style.setProperty('overflow', 'hidden', 'important');
-                    body.style.setProperty('display', 'none', 'important');
+                    applyBodyVisibility(body, snapshot);
                 }
             }
             const source = findOutsideDrawer('.issue_contentbox');
@@ -9889,13 +9909,13 @@ const __dcufSettingsPresenter = (() => {
                 setDoorBodyVar('--dcuf-header-native-door-top', `${top}px`);
                 const bodyInner = drawer.querySelector(DRAWER_BODY_SELECTOR);
                 if (bodyInner instanceof HTMLElement) {
-                    bodyInner.style.paddingTop = bodyInner.childElementCount ? `${height}px` : '';
+                    bodyInner.style.paddingTop = __dcufHeaderDrawerPresenter.describeBodyPadding(Object.freeze({ hasChildren: bodyInner.childElementCount > 0, height })).paddingTop;
                     const measuredHeight = Math.max(Math.ceil(bodyInner.scrollHeight), 1);
-                    body.style.setProperty('max-height', `${measuredHeight}px`, 'important');
+                    applyBodyStyle(body, __dcufHeaderDrawerPresenter.describeBodyHeight(Object.freeze({ height: measuredHeight })));
                 }
             } else {
                 const bodyInner = drawer.querySelector(DRAWER_BODY_SELECTOR);
-                if (bodyInner instanceof HTMLElement) bodyInner.style.paddingTop = '';
+                if (bodyInner instanceof HTMLElement) bodyInner.style.paddingTop = __dcufHeaderDrawerPresenter.describeBodyPadding(Object.freeze({ hasChildren: false, height: 0 })).paddingTop;
             }
             if (nextOpen && recomSource instanceof HTMLElement && body instanceof HTMLElement) {
                 const bodyRect = body.getBoundingClientRect();
