@@ -4,6 +4,8 @@ This compact map covers the preserved 3.5.5 surfaces and the active UI-boundary 
 
 ## Surface map
 
+Header drawer typed-toggle boundary: the presenter consumes a frozen current-open snapshot and returns a reused frozen scalar-only `{type, surface}` description matching shared `surface/open` or `surface/close` vocabulary for `header-drawer`. The adapter retains target/button/drawer guards, cancellation, current DOM state, reset semantics and direct synchronous application in the same native callback. No general UiPort dispatch, subscriber, new state/resource/error owner or asynchronous indirection is introduced. Native default pointer/Enter, focus, rapid ordering, popup-only closure, body measurement phases and PC bytes are preserved. Both components remain mixed. Bind exact 2FB3 control/candidate in fresh contexts and test wrong vocabulary/surface/direction/mutability plus capture timing, cancellation, burst, replacement/reset and resource counterexamples.
+
 | Surface | Live root / owner | Required result | Regression gate |
 | --- | --- | --- | --- |
 | Filter master | Existing DCUF filter settings control | Disables filter/statistics decisions only; convenience settings remain independently effective | Master-off convenience behavior and unchanged stored setting shapes |

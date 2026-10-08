@@ -9451,6 +9451,9 @@ const __dcufSettingsPresenter = (() => {
         const closedState = Object.freeze({ dataOpen: '0', ariaExpanded: 'false', label: '갤러리 대문 열기' });
         const openState = Object.freeze({ dataOpen: '1', ariaExpanded: 'true', label: '갤러리 대문 닫기' });
         const describeOpenState = (snapshot) => snapshot.open ? openState : closedState;
+        const openIntent = Object.freeze({ type: 'surface/open', surface: 'header-drawer' });
+        const closeIntent = Object.freeze({ type: 'surface/close', surface: 'header-drawer' });
+        const describeToggleIntent = (snapshot) => snapshot.open ? closeIntent : openIntent;
         const openBodyStyles = Object.freeze([
             { name: 'display', value: 'block', priority: 'important' },
             { name: 'visibility', value: 'visible', priority: 'important' },
@@ -9691,7 +9694,7 @@ const __dcufSettingsPresenter = (() => {
 
 `
         });
-        return Object.freeze({ shell, describeOpenState, describeBodyVisibility, describeBodyOffset, describeBodyHeight, describeBodyPadding, style, buildThemeCss: __dcufBuildHeaderDrawerThemeCss, buildVisibilityCss: __dcufBuildHeaderDrawerVisibilityCss });
+        return Object.freeze({ shell, describeOpenState, describeToggleIntent, describeBodyVisibility, describeBodyOffset, describeBodyHeight, describeBodyPadding, style, buildThemeCss: __dcufBuildHeaderDrawerThemeCss, buildVisibilityCss: __dcufBuildHeaderDrawerVisibilityCss });
     })();
     __dcufRoot.__dcufHeaderDrawerPresenter = __dcufHeaderDrawerPresenter;
     const __dcufHeaderDrawerHostAdapter = (() => {
@@ -10058,7 +10061,8 @@ const __dcufSettingsPresenter = (() => {
             if (!(drawer instanceof HTMLElement)) return;
             event.preventDefault();
             event.stopPropagation();
-            setDrawerOpenState(drawer, drawer.getAttribute('data-open') !== '1');
+            const intent = __dcufHeaderDrawerPresenter.describeToggleIntent(Object.freeze({ open: drawer.getAttribute('data-open') === '1' }));
+            setDrawerOpenState(drawer, intent.type === 'surface/open');
         };
 
         const connect = () => {

@@ -9,10 +9,12 @@ import { startServer } from './server/server.mjs';
 import { createTestPage, launchBrowser, storageKeys, getMetrics, assertNoRuntimeErrors } from './harness/runner-utils.mjs';
 import { createCandidateFingerprint, createEvidenceBinding } from '../tools/evidence-binding.mjs';
 import { loadDrawerPresenter, validateBodyPresenterFaults, validateBodyObservation, captureBodyPhase, validateBodyPhase } from './header-drawer-body-contract.mjs';
+import { validateTogglePresenterFaults, observeToggleTiming, validateToggleTimingFaults } from './header-drawer-toggle-contract.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const args = process.argv.slice(2);
-const bodyBoundary = args.includes('--body-boundary');
+const intentBoundary = args.includes('--intent-boundary');
+const bodyBoundary = args.includes('--body-boundary') || intentBoundary;
 const value = flag => {
     const index = args.indexOf(flag);
     assert.ok(index >= 0 && args[index + 1] && !args[index + 1].startsWith('--'), `Missing ${flag}`);
@@ -75,6 +77,7 @@ const validatePresenter = presenter => {
 };
 validatePresenter(loadPresenter(presenterSource));
 const bodyDescriptorFaults = bodyBoundary ? validateBodyPresenterFaults(presenterSource) : 0;
+const toggleDescriptorFaults = intentBoundary ? await validateTogglePresenterFaults(presenterSource) : 0;
 const descriptorFaults = [
     ["label: '갤러리 대문 닫기'", "label: '잘못된 문구'"],
     ["ariaExpanded: 'true'", "ariaExpanded: 'false'"],
@@ -100,14 +103,16 @@ if (bodyBoundary) cases.push(...[false, true].map(dark => ({ id: `major-recom-${
 cases.push({ id: 'view', width: 750, route: '/mgallery/board/view?id=test&no=1001&header=1' },
     { id: 'write', width: 1280, route: '/mgallery/board/write?id=test' });
 const report = {
-    kind: bodyBoundary ? 'header-drawer-owned-body-zero-delta' : 'header-drawer-owned-shell-zero-delta', scope: 'BOUNDED_SYNTHETIC_NOT_HEADER_STAGE_RECEIPT', status: 'PARTIAL',
+    kind: intentBoundary ? 'header-drawer-toggle-description-zero-delta' : bodyBoundary ? 'header-drawer-owned-body-zero-delta' : 'header-drawer-owned-shell-zero-delta', scope: 'BOUNDED_SYNTHETIC_NOT_HEADER_STAGE_RECEIPT', status: 'PARTIAL',
     sourceBaseHead: spawnSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).stdout.trim(),
     candidateFingerprint: await createCandidateFingerprint(root), evidenceBinding: await createEvidenceBinding(root),
     sourceHashes: { [presenterPath]: sha(presenterSource), 'src/targets/mobile/header-drawer-host-adapter.js': sha(adapterSource) },
     controlBinding, candidate: { path: candidate, sha256: sha(candidateBytes) }, descriptorFaults: descriptorFaults.length,
     observerSha256: sha(await readFile(fileURLToPath(import.meta.url))),
     bodyContractSha256: sha(await readFile(path.join(root, 'testbed/header-drawer-body-contract.mjs'))),
-    bodyDescriptorFaults, bodyDomFaults: 0, sides: {}, differences: [], rawStyleOrderDifferences: [], domFaults: 0
+    bodyDescriptorFaults, bodyDomFaults: 0, toggleDescriptorFaults, toggleTimingFaults: 0,
+    toggleContractSha256: sha(await readFile(path.join(root, 'testbed/header-drawer-toggle-contract.mjs'))),
+    toggleTiming: { control: [], candidate: [] }, sides: {}, differences: [], rawStyleOrderDifferences: [], domFaults: 0
 };
 await mkdir(path.dirname(output), { recursive: true });
 const server = await startServer();
@@ -332,7 +337,34 @@ try {
                     assertNoRuntimeErrors(await getMetrics(page), session.consoleErrors);
                     report.bodyFaultRecovery = 'NATIVE_FOCUS_DEFAULT_ENTER_AND_DISPOSAL_PASS';
                 }
+                if (intentBoundary) {
+                    const timing = await observeToggleTiming(page, settle);
+                    report.toggleTiming[side].push({ caseId: testCase.id, ...timing });
+                    if (side === 'candidate' && testCase.id === cases[0].id) report.toggleTimingFaults = validateToggleTimingFaults(timing);
+                    assertNoRuntimeErrors(await getMetrics(page), session.consoleErrors);
+                }
             } finally { await session.close(); }
+        }
+    }
+    if (intentBoundary) {
+        const immediate = "setDrawerOpenState(drawer, intent.type === 'surface/open');";
+        assert.ok(candidateBytes.toString().includes(immediate), 'Timing negative requires the exact application point');
+        const delayedBytes = candidateBytes.toString().replace(immediate,
+            "queueMicrotask(() => setDrawerOpenState(drawer, intent.type === 'surface/open'));" );
+        const delayedPath = path.join(path.dirname(output), 'delayed-toggle-negative.user.js');
+        await writeFile(delayedPath, delayedBytes);
+        process.env.DCUF_TESTBED_USERSCRIPT = delayedPath;
+        const session = await createTestPage(browser, server.baseUrl, { viewport: { width: 390, height: 900 } });
+        try {
+            await session.goto('/mgallery/board/lists?id=test');
+            await session.page.locator('#dcuf-testbed-controls').evaluate(el => { el.style.display = 'none'; });
+            await assert.rejects(() => observeToggleTiming(session.page, settle),
+                error => error instanceof assert.AssertionError && error.message.includes('Native capture order and same-stack application'),
+                'Deferred application must fail its timing contract');
+            report.delayedApplicationNegative = { status: 'REJECTED_FOR_NATIVE_CAPTURE_TIMING', sha256: sha(delayedBytes) };
+        } finally {
+            await session.close();
+            process.env.DCUF_TESTBED_USERSCRIPT = candidate;
         }
     }
     report.sides.control.forEach((observation, i) => {
@@ -357,11 +389,12 @@ try {
     });
     assert.equal(report.sides.control.length, report.sides.candidate.length);
     assert.deepEqual(report.differences, [], 'Immediate control/candidate differential');
-    report.status = bodyBoundary ? 'OWNED_BODY_PASS' : 'OWNED_SHELL_PASS';
+    if (intentBoundary) assert.deepEqual(report.toggleTiming.control, report.toggleTiming.candidate, 'Native toggle timing differential');
+    report.status = intentBoundary ? 'TOGGLE_DESCRIPTION_PASS' : bodyBoundary ? 'OWNED_BODY_PASS' : 'OWNED_SHELL_PASS';
     report.rawStyleOrderStatus = report.rawStyleOrderDifferences.length ? 'DIFFERENT_NOT_GLOBAL_PHASE_EQUIVALENCE' : 'EQUAL_IN_THIS_RUN';
 } catch (error) { report.error = error.stack; throw error; }
 finally {
     await writeFile(output, JSON.stringify(report, null, 2) + '\n');
     await browser?.close(); await server.close();
 }
-console.log(`Owned drawer differential ${report.status}: ${report.sides.candidate.length} observations/side; ${report.descriptorFaults + report.domFaults + report.bodyDescriptorFaults + report.bodyDomFaults} selected faults rejected; raw style-order differences ${report.rawStyleOrderDifferences.length} (${report.rawStyleOrderStatus}).`);
+console.log(`Owned drawer differential ${report.status}: ${report.sides.candidate.length} observations/side; ${report.descriptorFaults + report.domFaults + report.bodyDescriptorFaults + report.bodyDomFaults + report.toggleDescriptorFaults + report.toggleTimingFaults} selected faults rejected; raw style-order differences ${report.rawStyleOrderDifferences.length} (${report.rawStyleOrderStatus}); toggle contexts/side ${report.toggleTiming.candidate.length}.`);

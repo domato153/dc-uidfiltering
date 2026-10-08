@@ -1,5 +1,14 @@
 # DCUF modernization decision rationale
 
+## D-25 — validate replacement using real change scenarios
+
+- SELECTED: ER2 primary SEI scenario/tactics research and its CONNECT counterexample inform bounded cosmetic/composition/responsive/replacement-and-restore experiments. Measure production edit propagation separately from generated/test/document churn; keep native behavior assertions and current evidence bindings. Pilot after header sealing, final integrated receipts before readiness admission.
+- NOT ADOPTED: Module/file counts alone, screenshots or label-only demos as proof of replaceability, a new metric framework/full ATAM process, or unsupported editing-speed percentages. These do not test the requested practical change boundary.
+- DEFERRED: Executing visual variants until the header boundary is sealed; comparable human editing-speed studies. Current work continues the approved synchronous typed-toggle extraction.
+- Reason: Preservation and aggregate code metrics do not settle practical replacement readiness. The current 640px drawer policy spans CSS and adapter geometry, disproving an inference from pure-body tests to universal presentation-only edits. Enterprise case metrics do not establish userscript effect sizes.
+- Evidence: `docs/work/UI_REPLACEABILITY_VALIDATION.md` gives dated primary sources, retrieval limits, local counterexample and concrete acceptance/falsification steps.
+- Revisit: Pilot requires adapter/runtime edits, an alternative presenter fails preserved semantics, a negative survives, or final assurance attempts to cite stale/zero-applicability evidence.
+
 ## D-24 — characterize the command path before extracting drawer intent values
 
 - SELECTED: Preserve the existing synchronous native command path and extract only an immutable typed toggle description in the next bounded presenter unit. The adapter retains command execution, DOM state, cancellation, refresh/reset and failures. This is a partial value boundary, not full application/UiPort separation.

@@ -9,6 +9,7 @@ This tracked document is the durable implementation plan for replacing the mobil
 The work is complete only when all of the following are true for the same exact candidate artifact:
 
 - mobile presentation can be selected or replaced without changing application-runtime or host-adapter behavior;
+- representative cosmetic, owned-composition, responsive-layout and actual replacement/restoration scenarios have current receipts proving local presentation edits and preserved behavior, following `docs/work/UI_REPLACEABILITY_VALIDATION.md`; static separation alone does not satisfy this condition;
 - all declared semantic contracts pass and every undeclared difference is rejected as drift;
 - differential, specification, characterization, metamorphic, static, live-shaped, and live-canary evidence agree without being double-counted when they share an oracle or producer;
 - targeted negative mutations fail for their intended reason and positive controls remain accepted;

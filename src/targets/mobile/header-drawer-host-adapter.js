@@ -362,7 +362,8 @@
             if (!(drawer instanceof HTMLElement)) return;
             event.preventDefault();
             event.stopPropagation();
-            setDrawerOpenState(drawer, drawer.getAttribute('data-open') !== '1');
+            const intent = __dcufHeaderDrawerPresenter.describeToggleIntent(Object.freeze({ open: drawer.getAttribute('data-open') === '1' }));
+            setDrawerOpenState(drawer, intent.type === 'surface/open');
         };
 
         const connect = () => {

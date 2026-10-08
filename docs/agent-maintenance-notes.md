@@ -1,5 +1,8 @@
 # Agent Maintenance Notes
 
+- UI replaceability needs real change and replacement/restoration scenarios alongside preservation evidence. Count production layer propagation separately from generated/test/doc churn; pure presenters or file counts alone do not prove editing speed. Drawer width coupling across CSS/adapter geometry is a counterexample; `docs/work/UI_REPLACEABILITY_VALIDATION.md` records the researched pilot/final obligations.
+- Drawer reconnect schedules shell creation. Timing observers must wait for its owner/subscriber and actual shell. Window capture and a later document listener distinguish same-stack application from microtask deferral; trusted pointer/Enter and an untrusted same-task burst support distinct input claims. Preserve direct guards/cancellation and native reset semantics when extracting intent values.
+
 ## Verification, checkpoint and continuity cost
 
 - Runtime impact must not follow verification/transition relations as product dependencies. Bounded header coverage is mobile-only; unknown/shared/bootstrap/build/harness impact remains broader. Full acceptance replaces covered focused profiles at selection, not by arbitrarily reusing stateful results. Retain independent native control/candidate contexts and target restores.
