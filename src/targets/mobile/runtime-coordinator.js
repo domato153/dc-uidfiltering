@@ -124,7 +124,7 @@
             });
         },
 
-        getMutationSurfaceSelector() {
+        getMutationSurfaceSelector({includeHeaderProjection = true} = {}) {
             const pageContext = this.getPageContext();
             const shared = [
                 '#user_data_lyr',
@@ -141,7 +141,12 @@
                 '.gall_listwrap',
                 '.gall_list',
                 '.issue_contentbox',
-                '#gall_top_recom'
+                '#gall_top_recom',
+                ...(includeHeaderProjection ? [
+                    '[data-dcuf-header-native-door]', '[data-dcuf-header-native-recom]',
+                    '[data-dcuf-header-native-parts]', '[data-dcuf-header-relation-popup]',
+                    '[data-dcuf-header-relation-static]'
+                ] : [])
             ];
             if (pageContext.isList) return [...shared, ...list].join(', ');
             if (pageContext.isView) {
@@ -166,25 +171,25 @@
             return shared.join(', ');
         },
 
-        isMutationSurfaceElement(element) {
+        isMutationSurfaceElement(element, options) {
             if (!(element instanceof Element) || this.isScriptOwnedElement(element)) return false;
             if (element === document.body) return true;
-            const selector = this.getMutationSurfaceSelector();
+            const selector = this.getMutationSurfaceSelector(options);
             return Boolean(selector && (element.matches(selector) || element.closest(selector)));
         },
 
-        mutationNodeTouchesSurface(node) {
+        mutationNodeTouchesSurface(node, options) {
             const element = node instanceof Element ? node : node?.parentElement;
             if (!(element instanceof Element) || this.isScriptOwnedElement(element)) return false;
             if (element === document.body) return true;
-            const selector = this.getMutationSurfaceSelector();
+            const selector = this.getMutationSurfaceSelector(options);
             if (!selector) return false;
             return element.matches(selector)
                 || Boolean(element.closest(selector))
                 || Boolean(element.querySelector?.(selector));
         },
 
-        prefilterMutationRecords(records) {
+        prefilterMutationRecords(records, options) {
             if (!Array.isArray(records) || records.length === 0) return [];
             return records.filter((record) => {
                 if (!record) return false;
@@ -192,17 +197,23 @@
                     if (this.isScriptOwnedElement(record.target)) return false;
                     if (record.target instanceof Element
                         && record.target !== document.body
-                        && this.isMutationSurfaceElement(record.target)) return true;
+                        && this.isMutationSurfaceElement(record.target, options)) return true;
                     return [...record.addedNodes, ...record.removedNodes]
-                        .some((node) => this.mutationNodeTouchesSurface(node));
+                        .some((node) => this.mutationNodeTouchesSurface(node, options));
                 }
                 if (record.type === 'attributes') {
                     if (this.isScriptOwnedElement(record.target)) return false;
                     if (this.IDENTITY_ATTRIBUTE_NAMES.has(record.attributeName)) return true;
-                    return this.isMutationSurfaceElement(record.target);
+                    if (this.isMutationSurfaceElement(record.target, options)) return true;
+                    // An ancestor can lose its host class while its native descendants
+                    // remain. Admit only that list-header applicability change, after
+                    // the normal surface fast path has rejected it.
+                    return options?.includeHeaderProjection !== false
+                        && record.attributeName === 'class' && this.getPageContext().isList
+                        && Boolean(record.target.querySelector('.issue_contentbox, #gall_top_recom, #relation_popup'));
                 }
                 if (record.type === 'characterData') {
-                    return this.isMutationSurfaceElement(record.target?.parentElement || null);
+                    return this.isMutationSurfaceElement(record.target?.parentElement || null, options);
                 }
                 return false;
             });
@@ -449,8 +460,9 @@
             const measureDispatch = this._diagnosticsEnabled && typeof performance?.now === 'function';
             const dispatchStartedAt = measureDispatch ? performance.now() : 0;
 
-            this._mutationSubscribers.forEach((listener, key) => {
+            this._mutationSubscribers.forEach((subscriber, key) => {
                 try {
+                    const listener = typeof subscriber === 'function' ? subscriber : subscriber.listener;
                     listener(payload);
                 } catch (error) {
                     console.error('[DCUF runtime] mutation subscriber failed:', key, error);
@@ -504,6 +516,13 @@
             this.incrementDiagnostic('mutation.rawRecords', records.length);
             if (skippedRecords > 0) this.incrementDiagnostic('mutation.skippedRecords', skippedRecords);
             if (filteredRecords.length === 0) return;
+            // Small attribute projections must precede paint without moving their owner's
+            // heavier ordinary callback or allocating another subscription/observer.
+            this._mutationSubscribers.forEach((subscriber, key) => {
+                if (typeof subscriber?.beforePaint !== 'function') return;
+                try { subscriber.beforePaint(filteredRecords); }
+                catch (error) { console.error('[DCUF runtime] before-paint mutation subscriber failed:', key, error); }
+            });
             // MutationObserver callbacks run before the next paint. Critical visibility
             // subscribers must see the fresh records here; the ordinary bus remains
             // animation-frame batched for heavier UI and async work.
@@ -612,7 +631,8 @@
                 return () => {};
             }
             this.ensureMutationBus();
-            this._mutationSubscribers.set(key, listener);
+            this._mutationSubscribers.set(key, typeof options.beforePaint === 'function'
+                ? {listener, beforePaint: options.beforePaint} : listener);
             this.setDiagnosticGauge('mutation.subscribers', this._mutationSubscribers.size);
             return () => {
                 this._mutationSubscribers.delete(key);

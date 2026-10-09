@@ -125,6 +125,7 @@ async function verifyGuidance() {
         ['modernization assurance', 'tools/verify-modernization-assurance.mjs'],
         ['governance controls', 'tools/test-governance.mjs'],
         ['verification efficiency controls', 'tools/test-verification-efficiency.mjs'],
+        ['mobile source-contract controls', 'tools/test-mobile-source-contracts.mjs'],
         ['governance contract', 'tools/verify-governance.mjs'],
         ['research selection', 'tools/verify-research-selection.mjs'],
         ['skills', 'tools/verify-skills.mjs'],
@@ -211,7 +212,7 @@ async function verifyMobileSourceContracts() {
     check(!/\bmasterDisabled\b|_masterDisabledSnapshot/.test(convenience),
         'mobile source: convenience features must not reference the filter master-disabled state');
 
-    check(coordinator.includes('mutationNodeTouchesSurface(node)'),
+    check(/(?:^|\n)\s*mutationNodeTouchesSurface\s*\(\s*node(?:\s*,\s*options)?\s*\)\s*\{/.test(coordinator),
         'mobile source: child-list surface prefilter helper is missing');
     check(!coordinator.includes("if (record.type === 'childList') return !this.isScriptOwnedElement(record.target);"),
         'mobile source: broad child-list pass-through returned');

@@ -9,11 +9,13 @@ import { startServer } from './server/server.mjs';
 import { createTestPage, launchBrowser, storageKeys, getMetrics, assertNoRuntimeErrors } from './harness/runner-utils.mjs';
 import { createCandidateFingerprint, createEvidenceBinding } from '../tools/evidence-binding.mjs';
 import { loadDrawerPresenter, validateBodyPresenterFaults, validateLayoutPresenterFaults, validateBodyObservation, captureBodyPhase, validateBodyPhase } from './header-drawer-body-contract.mjs';
+import {validateNativePresenter, captureNativeParts, readNativeProjection, validateNativeProjection, exerciseNativeLifecycle} from './header-drawer-native-contract.mjs';
 import { validateTogglePresenterFaults, observeToggleTiming, validateToggleTimingFaults } from './header-drawer-toggle-contract.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const args = process.argv.slice(2);
 const intentBoundary = args.includes('--intent-boundary');
+const nativeBoundary=args.includes('--native-boundary');
 const layoutBoundary = args.includes('--layout-boundary');
 const bodyBoundary = args.includes('--body-boundary') || intentBoundary;
 const value = flag => {
@@ -77,6 +79,7 @@ const validatePresenter = presenter => {
     }
 };
 validatePresenter(loadPresenter(presenterSource));
+if(nativeBoundary) validateNativePresenter(presenterSource);
 const bodyDescriptorFaults = bodyBoundary ? validateBodyPresenterFaults(presenterSource) : 0;
 const layoutDescriptorFaults = layoutBoundary ? validateLayoutPresenterFaults(presenterSource) : 0;
 const toggleDescriptorFaults = intentBoundary ? await validateTogglePresenterFaults(presenterSource) : 0;
@@ -114,7 +117,8 @@ const report = {
     bodyContractSha256: sha(await readFile(path.join(root, 'testbed/header-drawer-body-contract.mjs'))),
     bodyDescriptorFaults, layoutDescriptorFaults, bodyDomFaults: 0, toggleDescriptorFaults, toggleTimingFaults: 0,
     toggleContractSha256: sha(await readFile(path.join(root, 'testbed/header-drawer-toggle-contract.mjs'))),
-    toggleTiming: { control: [], candidate: [] }, sides: {}, differences: [], rawStyleOrderDifferences: [], domFaults: 0
+    nativeContractSha256: sha(await readFile(path.join(root, 'testbed/header-drawer-native-contract.mjs'))), nativeDomFaults: 0,
+    toggleTiming: { control: [], candidate: [] }, sides: {}, differences: [], rawStyleOrderDifferences: [], declaredSelectorChanges: [], domFaults: 0
 };
 await mkdir(path.dirname(output), { recursive: true });
 const server = await startServer();
@@ -160,6 +164,29 @@ try {
                 }
                 if (testCase.list) await page.waitForFunction(() => window.__dcufHeaderDrawerHostAdapter?.snapshotResources().mutationSubscribers === 1
                     && document.querySelector('.dcuf-header-drawer__toggle'));
+
+                if (nativeBoundary && testCase.list) {
+                    await page.evaluate(() => {
+                        window.__dcufHeaderDrawerHostAdapter.dispose();
+                        const source=document.querySelector('.issue_contentbox');
+                        if(source) {
+                            window.__nativeTipCalls=0;
+                            source.setAttribute('data-dcuf-header-native-door','1');
+                            source.querySelector('.minor_intro_box').setAttribute('data-dcuf-header-door-intro','host-original');
+                            source.insertAdjacentHTML('beforeend','<div class="minor_ranking_box">Native ranking</div><button type="button" class="btn_mgall_dcp" onclick="window.__nativeTipCalls+=1;document.getElementById(\'hot_tip_pop\').style.display=\'block\'">Native tip</button><div id="hot_tip_pop" style="display:none"><button type="button" class="under_poply_close" onclick="window.__nativeTipCalls+=1;document.getElementById(\'hot_tip_pop\').style.display=\'none\'">Close tip</button></div>');
+                        }
+                        const recom=document.querySelector('#gall_top_recom');
+                        if(recom) recom.insertAdjacentHTML('beforeend','<div class="concept_img">Native image part</div>');
+                        const style=document.createElement('style');
+                        style.id='native-contract-host-decoration';
+                        style.textContent='.btn_mgall_dcp::before,.under_poply_close::before {content:"Host decoration";display:block}';
+                        document.head.append(style);
+                        window.__nativeOriginalNodes=[...document.querySelectorAll(".issue_contentbox, .issue_contentbox *, #gall_top_recom, #gall_top_recom *")].map(node=>({node,parent:node.parentNode,next:node.nextSibling,handler:node.onclick}));
+                        window.__dcufHeaderDrawerHostAdapter.connect();
+                        window.__dcufHeaderDrawerHostAdapter.refresh();
+                    });
+                }
+
                 await settle(page);
                 await page.evaluate(() => {
                     const selectors = ['.dcuf-header-drawer', '.dcuf-header-drawer__toggle', '.issue_contentbox', '#hot_rank_pop2',
@@ -219,6 +246,22 @@ try {
                         }
                         observation.body = await page.evaluate(() => window.__readOwnedBody());
                     }
+
+                    if(nativeBoundary) {
+                        observation.nativeParts=await page.evaluate(captureNativeParts);
+                        assert.ok(observation.nativeParts.topology.every(Boolean),'All original native nodes, siblings and direct handlers preserved');
+                        observation.nativeTipCalls=await page.evaluate(() => window.__nativeTipCalls ?? null);
+                        observation.nativeDeclarations=await page.evaluate(() => {
+                            const read=rules=>Array.from(rules,rule=>({declaration:rule.style?.cssText ?? null,condition:rule.conditionText ?? null,children:rule.cssRules ? read(rule.cssRules) : null}));
+                            return read(document.getElementById('dcuf-header-drawer-style')?.sheet?.cssRules || []);
+                        });
+                        if(side==='candidate' && step!=='disposed') validateNativeProjection(await page.evaluate(readNativeProjection));
+                        if(step==='disposed' && !testCase.recom) {
+                            assert.equal(await page.locator('.minor_intro_box').getAttribute('data-dcuf-header-door-intro'),'host-original','Preexisting attribute restored exactly');
+                            assert.equal(await page.locator('[data-dcuf-header-door-fluid],[data-dcuf-header-door-popup],[data-dcuf-header-recom-part]').count(),0,'Native part projections disposed');
+                        }
+                    }
+
                     observations.push({ caseId: testCase.id, step, ...observation });
                     if (bodyBoundary && step !== 'disposed') validateBodyObservation(observation.body, observation.owned.dataOpen === '1');
                     return observation;
@@ -269,6 +312,19 @@ try {
                 const closed = await capture('reclosed');
                 if (testCase.recom) assert.equal(closed.recomCalls, 1); else assert.equal(closed.nativeCalls, 2);
                 assert.ok(closed.identity.every(Boolean));
+                if(nativeBoundary && !testCase.recom) {
+                    await page.locator('.dcuf-header-drawer__toggle').click();
+                    await capture('tip-door-open');
+                    await page.locator('.btn_mgall_dcp').focus();
+                    await page.keyboard.press('Enter');
+                    assert.equal((await capture('tip-native-enter')).nativeTipCalls,1);
+                    await page.locator('.dcuf-header-drawer__toggle').focus();
+                    await page.keyboard.press('Enter');
+                    await page.waitForFunction(() => document.querySelector('.issue_contentbox').getAttribute('data-dcuf-header-native-door-popup-only') === '1');
+                    validateOwned((await capture('tip-popup-only')).owned,false);
+                    await page.locator('#hot_tip_pop .under_poply_close').click();
+                    assert.equal((await capture('tip-native-pointer-close')).nativeTipCalls,2);
+                }
                 if (bodyBoundary) {
                     await page.locator('.dcuf-header-drawer__toggle').click();
                     await page.evaluate(() => {
@@ -339,6 +395,26 @@ try {
                     assertNoRuntimeErrors(await getMetrics(page), session.consoleErrors);
                     report.bodyFaultRecovery = 'NATIVE_FOCUS_DEFAULT_ENTER_AND_DISPOSAL_PASS';
                 }
+
+                if(nativeBoundary && side==='candidate' && testCase.id===cases[0].id) {
+                    // Body-fault recovery deliberately disposes the owner. Native checks need a fresh connection.
+                    await page.evaluate(() => window.__dcufHeaderDrawerHostAdapter.connect());
+                    await page.waitForFunction(() => window.__dcufHeaderDrawerHostAdapter.snapshotResources().mutationSubscribers === 1
+                        && document.querySelector('[data-dcuf-header-door-intro="1"]'));
+                    const rowsBefore=await page.evaluate(readNativeProjection);
+                    validateNativeProjection(rowsBefore);
+                    for(const [selector,attribute,value] of [['.minor_intro_box','data-dcuf-header-door-intro',null],['#hot_rank_pop2','data-dcuf-header-door-popup',null],['#hot_rank_pop2 .pop_content','data-dcuf-header-door-fluid','1']]) {
+                        const original=await page.locator(selector).getAttribute(attribute);
+                        await page.locator(selector).evaluate((node,{attribute,value})=>value===null?node.removeAttribute(attribute):node.setAttribute(attribute,value),{attribute,value});
+                        const broken=await page.evaluate(readNativeProjection);
+                        assert.throws(()=>validateNativeProjection(broken),assert.AssertionError,'Missing role/wrong rank scope negative');
+                        await page.locator(selector).evaluate((node,{attribute,original})=>original===null?node.removeAttribute(attribute):node.setAttribute(attribute,original),{attribute,original});
+                        report.nativeDomFaults += 1;
+                    }
+                    assert.deepEqual(await page.evaluate(readNativeProjection),rowsBefore);
+                    report.nativeLifecycle=await exerciseNativeLifecycle(page,settle);
+                }
+
                 if (intentBoundary) {
                     const timing = await observeToggleTiming(page, settle);
                     report.toggleTiming[side].push({ caseId: testCase.id, ...timing });
@@ -387,16 +463,24 @@ try {
                 assert.ok(position === -1 || position === 0 || position === runtimeOrder.length - 1, 'Uncharacterized drawer style position');
             }
         }
+        if(nativeBoundary && controlState.stylesheets && candidateState.stylesheets) {
+            const oldSheet=controlState.stylesheets.find(([id])=>id==='dcuf-header-drawer-style');
+            const newSheet=candidateState.stylesheets.find(([id])=>id==='dcuf-header-drawer-style');
+            assert.deepEqual(controlState.nativeDeclarations,candidateState.nativeDeclarations,'Native declaration values/media/order changed');
+            if(JSON.stringify(oldSheet)!==JSON.stringify(newSheet)) report.declaredSelectorChanges.push({index:i,control:oldSheet,candidate:newSheet});
+            controlState.stylesheets=controlState.stylesheets.filter(([id])=>id!=='dcuf-header-drawer-style');
+            candidateState.stylesheets=candidateState.stylesheets.filter(([id])=>id!=='dcuf-header-drawer-style');
+        }
         if (JSON.stringify(controlState) !== JSON.stringify(candidateState)) report.differences.push({ index: i, caseId: observation.caseId, step: observation.step });
     });
     assert.equal(report.sides.control.length, report.sides.candidate.length);
     assert.deepEqual(report.differences, [], 'Immediate control/candidate differential');
     if (intentBoundary) assert.deepEqual(report.toggleTiming.control, report.toggleTiming.candidate, 'Native toggle timing differential');
-    report.status = intentBoundary ? 'TOGGLE_DESCRIPTION_PASS' : bodyBoundary ? 'OWNED_BODY_PASS' : 'OWNED_SHELL_PASS';
+    report.status = nativeBoundary ? 'LATE_NATIVE_SELECTOR_PASS' : intentBoundary ? 'TOGGLE_DESCRIPTION_PASS' : bodyBoundary ? 'OWNED_BODY_PASS' : 'OWNED_SHELL_PASS';
     report.rawStyleOrderStatus = report.rawStyleOrderDifferences.length ? 'DIFFERENT_NOT_GLOBAL_PHASE_EQUIVALENCE' : 'EQUAL_IN_THIS_RUN';
 } catch (error) { report.error = error.stack; throw error; }
 finally {
     await writeFile(output, JSON.stringify(report, null, 2) + '\n');
     await browser?.close(); await server.close();
 }
-console.log(`Owned drawer differential ${report.status}: ${report.sides.candidate.length} observations/side; ${report.descriptorFaults + report.domFaults + report.bodyDescriptorFaults + report.layoutDescriptorFaults + report.bodyDomFaults + report.toggleDescriptorFaults + report.toggleTimingFaults} selected faults rejected; raw style-order differences ${report.rawStyleOrderDifferences.length} (${report.rawStyleOrderStatus}); toggle contexts/side ${report.toggleTiming.candidate.length}.`);
+console.log(`Owned drawer differential ${report.status}: ${report.sides.candidate.length} observations/side; ${report.descriptorFaults + report.domFaults + report.bodyDescriptorFaults + report.layoutDescriptorFaults + report.bodyDomFaults + report.toggleDescriptorFaults + report.toggleTimingFaults + report.nativeDomFaults} selected faults rejected; raw style-order differences ${report.rawStyleOrderDifferences.length} (${report.rawStyleOrderStatus}); toggle contexts/side ${report.toggleTiming.candidate.length}.`);

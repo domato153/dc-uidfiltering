@@ -1,13 +1,13 @@
 # Next bounded task
 
 - Task ID: `header-navigation`
-- Bounded slice: `header-drawer-semantic-selector-boundary`
-- Objective: replace remaining drawer presentation host-selector knowledge with adapter-projected semantic roles while preserving early concealment, late native/popup specificity and original behavior.
-- Why next: owned markup/body/intent and width descriptions are separated, but the presenter still names issue ancestry, native child classes/IDs and early concealment targets. This blocks the planned semantic presentation boundary and real replacement.
-- Expected transition: a bounded semantic projection/selector change with current negative and control/candidate evidence. Keep mixed labels and legacy-debt surface until full criteria/Layer-1/2 admission; do not start additional visual assembly yet.
-- Stop/replan: missing/changed 2AA1 control, early unmarked coverage cannot be preserved by the existing projection/lifecycle hooks, changed native topology/actions/default input/focus/geometry/body phases, unexpected cascade or resource delta, wrong root or remote drift. Characterize before changing a phase; do not hide failure with an override or new global observer.
+- Bounded slice: `header-drawer-native-selector-binding`
+- Objective: After finishing the current 3036 verification/checkpoint, implement an explicit named-slot target binding for late native drawer CSS and prove selected synchronous/first-frame/settled behavior while preserving native actions, original nodes, layout phases and presenter-only width locality.
+- Why next: 3036 repairs the reviewed delivery/relation and fallback exit defects, but semantic descendant projection cannot preserve same-stack native class/ID matching. The static/six-read binding prototype establishes feasibility and exposes positional slot fragility. Address the real retained FAIL before further early conversion or visual assembly.
+- Expected transition: Named immutable presenter slots with adapter-owned native selector knowledge, unchanged declarations/specificity/media/injection phase, and removal of superseded projection only after exact applicable evidence. Update the existing overlay/surface contract before implementation; keep mixed/legacy-debt until complete exit criteria are proved.
+- Stop/replan: missing/changed exact control, ambiguous/missing/unknown slot, changed selector specificity/media/declaration/phase, native topology/action/default input/focus/geometry/body delta, unexpected cascade/resource cost, failed restoration, surviving negative, wrong root or remote drift. Characterize before changing a phase; do not hide failure with an override or global observer.
 
-Fresh-read INDEX/CURRENT, policy, current drawer source, theme/filter build composition and effective header ownership. Independently enumerate raw selectors, actual matching roots/children, specificity and initial/delayed/replacement/rollback applicability. Characterize early accent/concealment before role projection plus open/closed/popup-only native issue/recommendation states. Select the smallest complete set of adapter-projected semantics that preserves original phase and scope; update candidate/surface contract before source, reuse existing subscriber/scheduler and exact restoration. Require a meaningful missing-role/wrong-scope/cascade negative and positive native pointer/default keyboard/focus, original identity/order, width/body phases and bounded disposal. Compare exact 2AA1/candidate in fresh contexts, rebuild at unchanged version, refresh Git routing and affected evidence. Do not remove known early rules solely because mounted values match. Width cap variants, prior final-top regression and unrelated PC bytes remain intact. This unit is not full header sealing, visual redesign, actual-extension admission or release authority.
+Fresh-read INDEX/CURRENT, policy, HEADER_DRAWER_NATIVE_SELECTORS.md and HEADER_DRAWER_SELECTOR_BINDING.md. Policy/proof renewal is complete; finish the authorized bounded checkpoint before new source edits. Freeze 3036 as the immediate control; retain exact 2AA1 as the original selector/phase reference and 4225/E923/BD9D as meaningful negatives. Follow the named-slot steps in the binding packet; its ordered string prototype is not production. Require missing/duplicate/unknown-slot rejection, exact selector/declaration/media/priority/phase checks and independent native/input/storage/resource evidence. Preserve original root/open lifetime and legacy geometry admission. Current same-stack FAIL remains until an actual candidate repairs it; synthetic six-read success does not close early/live/full-header or real-replacement admission. Normal back-forward has persisted=false; actual bfcache UNKNOWN. Keep palette FAIL and final/upper/live UNKNOWN; no visual assembly or mixed promotion yet.
 
 ## Declared entry inventory
 
@@ -15,13 +15,12 @@ LIVE pointers are retrieval inputs, not completeness proof; derive direct depend
 
 ```dcuf-next-action
 {
-  "id": "header-drawer-semantic-selector-boundary",
+  "id": "header-drawer-native-selector-binding",
   "stageId": "header-navigation",
   "requiredDependencies": [
     {"id":"governing-policy","path":"AGENTS.md","mode":"LIVE","sha256":null},
     {"id":"accepted-plan","path":"docs/work/MOBILE_UI_MODERNIZATION.md","mode":"LIVE","sha256":null},
     {"id":"replacement-plan","path":"docs/work/UI_REPLACEABILITY_VALIDATION.md","mode":"LIVE","sha256":null},
-    {"id":"efficient-verification","path":"docs/work/VERIFICATION_EFFICIENCY.md","mode":"LIVE","sha256":null},
     {"id":"build-targets","path":"build/targets.json","mode":"LIVE","sha256":null},
     {"id":"architecture","path":"architecture/registry.json","mode":"LIVE","sha256":null},
     {"id":"candidate-overlay","path":"architecture/candidates/mobile-ui-modernization-assurance.json","mode":"LIVE","sha256":null},
@@ -30,20 +29,21 @@ LIVE pointers are retrieval inputs, not completeness proof; derive direct depend
     {"id":"gate-routing","path":"verification/gates.json","mode":"LIVE","sha256":null},
     {"id":"drawer-adapter","path":"src/targets/mobile/header-drawer-host-adapter.js","mode":"LIVE","sha256":null},
     {"id":"drawer-presenter","path":"src/targets/mobile/header-drawer-presenter.js","mode":"LIVE","sha256":null},
-    {"id":"theme-composition","path":"src/targets/mobile/theme-host-style.js","mode":"LIVE","sha256":null},
-    {"id":"visibility-composition","path":"src/targets/mobile/filter-module.js","mode":"LIVE","sha256":null},
-    {"id":"composition","path":"src/targets/mobile/post-main-fixes.js","mode":"LIVE","sha256":null},
-    {"id":"bootstrap-recovery","path":"src/targets/mobile/ui-module.js","mode":"LIVE","sha256":null},
-    {"id":"native-observer","path":"testbed/run-header-drawer-differential.mjs","mode":"LIVE","sha256":null},
+    {"id":"mutation-routing","path":"src/targets/mobile/runtime-coordinator.js","mode":"LIVE","sha256":null},
+    {"id":"native-contract","path":"testbed/header-drawer-native-contract.mjs","mode":"LIVE","sha256":null},
+    {"id":"native-lifecycle","path":"testbed/run-header-drawer-native-lifecycle.mjs","mode":"LIVE","sha256":null},
+    {"id":"native-first-frame","path":"testbed/run-header-drawer-native-first-frame.mjs","mode":"LIVE","sha256":null},
+    {"id":"native-delivery","path":"testbed/run-header-drawer-native-delivery.mjs","mode":"LIVE","sha256":null},
+    {"id":"native-evidence","path":"docs/work/HEADER_DRAWER_NATIVE_SELECTORS.md","mode":"LIVE","sha256":null},
     {"id":"owned-observer","path":"testbed/run-header-drawer-owned-shell-differential.mjs","mode":"LIVE","sha256":null},
     {"id":"cascade-observer","path":"testbed/run-header-cascade-audit.mjs","mode":"LIVE","sha256":null},
     {"id":"body-contract","path":"testbed/header-drawer-body-contract.mjs","mode":"LIVE","sha256":null},
     {"id":"fixtures","path":"testbed/fixtures","mode":"LIVE","sha256":null},
     {"id":"harness","path":"testbed/harness","mode":"LIVE","sha256":null},
     {"id":"width-evidence","path":"docs/work/HEADER_DRAWER_WIDTH_INPUT.md","mode":"LIVE","sha256":null},
-    {"id":"current-candidate","path":"Dc_UserFilter_Mobile_v3.5.5.user.js","mode":"FROZEN","sha256":"2aa122e15ee3521500c06bcfcda5fe280edf54ee05571a32ade2c88d29c7fd56"}
-  ],
-  "requiredDecisions": [
+    {"id":"current-candidate","path":"Dc_UserFilter_Mobile_v3.5.5.user.js","mode":"FROZEN","sha256":"3036057928ed88f6c4e205a20e8aabcbcde4c1fbb58b5b2f53c61096c8c3d239"},
+    {"id":"selector-binding-feasibility","path":"docs/work/HEADER_DRAWER_SELECTOR_BINDING.md","mode":"LIVE","sha256":null}
+  ],  "requiredDecisions": [
     "working-checkpoint",
     "semantic-entry",
     "scope-and-admission"
@@ -58,8 +58,8 @@ LIVE pointers are retrieval inputs, not completeness proof; derive direct depend
     {
       "id": "semantic-entry",
       "status": "ADOPTED",
-      "boundary": "Characterize drawer raw early/late selectors and project adapter-owned meaning through existing lifecycle before a zero-visual-delta conversion. Preserve phase/scope/specificity, original nodes/handlers/geometry/focus and rollback. No clone/portal/new global observer; keep mixed.",
-      "source": "docs/work/MOBILE_UI_MODERNIZATION.md"
+      "boundary": "The next named-slot binding is not adopted yet: update candidate/surface contract before production, preserve exact native selector specificity and synchronous matching, and keep declarations/layout values in the presenter. No dependency, global DOM patch, new observer, topology change or mixed promotion.",
+      "source": "docs/work/HEADER_DRAWER_SELECTOR_BINDING.md"
     },
     {
       "id": "scope-and-admission",
@@ -97,9 +97,9 @@ LIVE pointers are retrieval inputs, not completeness proof; derive direct depend
       "recovery": "Recover exact 2AA1 generated bytes or rebuild its checkpoint in an isolated control directory; require exact SHA. Missing bytes are STALE_REPLAN, never reset or substitute an older runtime."
     },
     {
-      "path": "docs/work/HEADER_DRAWER_WIDTH_INPUT.md",
-      "disposition": "DURABLE",
-      "recovery": "Tracked bounded source/evidence summary; ignored reports are local executions and never recreated as PASS."
+      "path": "artifacts/controls/header-native-3036.user.js",
+      "disposition": "REGENERATE",
+      "recovery": "Recover exact 3036 bytes from this bounded checkpoint or isolated build; require the typed current digest before comparing. Do not substitute a version string or reset the worktree."
     }
   ],
   "qualificationScope": "CONTINUITY_ONLY",

@@ -140,7 +140,7 @@
                 background: #fff !important;
                 box-shadow: 0 10px 22px rgba(12, 22, 40, 0.12) !important;
             }
-            [data-dcuf-header-drawer-scope="1"] .issue_wrap .issue_contentbox[data-dcuf-header-native-door="1"][data-dcuf-header-native-door-open="1"] {
+            [data-dcuf-header-drawer-scope="1"] [data-dcuf-header-native-door="1"][data-dcuf-header-door-context="1"][data-dcuf-header-native-door-open="1"] {
                 display: block;
                 visibility: visible;
                 opacity: 1;
@@ -160,48 +160,48 @@
                 overflow: visible;
                 z-index: 60;
             }
-            [data-dcuf-header-drawer-scope="1"] .issue_wrap .issue_contentbox[data-dcuf-header-native-door="1"][data-dcuf-header-native-door-popup-only="1"] {
+            [data-dcuf-header-drawer-scope="1"] [data-dcuf-header-native-door="1"][data-dcuf-header-door-context="1"][data-dcuf-header-native-door-popup-only="1"] {
                 visibility: hidden;
                 pointer-events: none;
                 border-color: transparent;
                 background: transparent;
                 box-shadow: none;
             }
-            [data-dcuf-header-drawer-scope="1"] .issue_wrap .issue_contentbox[data-dcuf-header-native-door="1"][data-dcuf-header-native-door-popup-only="1"] #hot_rank_pop2,
-            [data-dcuf-header-drawer-scope="1"] .issue_wrap .issue_contentbox[data-dcuf-header-native-door="1"][data-dcuf-header-native-door-popup-only="1"] #hot_tip_pop {
+            [data-dcuf-header-drawer-scope="1"] [data-dcuf-header-native-door="1"][data-dcuf-header-door-context="1"][data-dcuf-header-native-door-popup-only="1"] [data-dcuf-header-door-popup="rank"],
+            [data-dcuf-header-drawer-scope="1"] [data-dcuf-header-native-door="1"][data-dcuf-header-door-context="1"][data-dcuf-header-native-door-popup-only="1"] [data-dcuf-header-door-popup="tip"] {
                 visibility: visible;
                 pointer-events: auto;
             }
-            [data-dcuf-header-drawer-scope="1"] .issue_wrap .issue_contentbox[data-dcuf-header-native-door="1"][data-dcuf-header-native-door-open="1"] *:not(#hot_rank_pop2):not(#hot_rank_pop2 *) {
+            [data-dcuf-header-drawer-scope="1"] [data-dcuf-header-native-door="1"][data-dcuf-header-door-context="1"][data-dcuf-header-native-door-open="1"] [data-dcuf-header-door-fluid="1"] {
                 box-sizing: border-box;
                 max-width: 100%;
             }
-            [data-dcuf-header-drawer-scope="1"] .issue_wrap .issue_contentbox[data-dcuf-header-native-door="1"][data-dcuf-header-native-door-open="1"] .minor_intro_box,
-            [data-dcuf-header-drawer-scope="1"] .issue_wrap .issue_contentbox[data-dcuf-header-native-door="1"][data-dcuf-header-native-door-open="1"] .minor_ranking_box {
+            [data-dcuf-header-drawer-scope="1"] [data-dcuf-header-native-door="1"][data-dcuf-header-door-context="1"][data-dcuf-header-native-door-open="1"] [data-dcuf-header-door-intro="1"],
+            [data-dcuf-header-drawer-scope="1"] [data-dcuf-header-native-door="1"][data-dcuf-header-door-context="1"][data-dcuf-header-native-door-open="1"] [data-dcuf-header-door-ranking="1"] {
                 width: 100%;
             }
-            [data-dcuf-header-drawer-scope="1"] .issue_wrap .issue_contentbox[data-dcuf-header-native-door="1"][data-dcuf-header-native-door-open="1"] .btn_mgall_dcp::before,
-            [data-dcuf-header-drawer-scope="1"] .issue_wrap .issue_contentbox[data-dcuf-header-native-door="1"][data-dcuf-header-native-door-open="1"] .under_poply_close::before {
+            [data-dcuf-header-drawer-scope="1"] [data-dcuf-header-native-door="1"][data-dcuf-header-door-context="1"][data-dcuf-header-native-door-open="1"] [data-dcuf-header-door-no-decoration="1"]::before,
+            [data-dcuf-header-drawer-scope="1"] [data-dcuf-header-native-door="1"][data-dcuf-header-door-context="1"][data-dcuf-header-native-door-open="1"] [data-dcuf-header-door-no-decoration="1"]::before {
                 content: none;
                 display: none;
             }
             @media (max-width: 420px), (max-height: 600px) {
-                [data-dcuf-header-drawer-scope="1"] .issue_wrap .issue_contentbox[data-dcuf-header-native-door="1"][data-dcuf-header-native-door-open="1"] #hot_tip_pop {
+                [data-dcuf-header-drawer-scope="1"] [data-dcuf-header-native-door="1"][data-dcuf-header-door-context="1"][data-dcuf-header-native-door-open="1"] [data-dcuf-header-door-popup="tip"] {
                     right: auto;
                     left: 12px;
                 }
             }
-            [data-dcuf-header-drawer-scope="1"].dc-filter-dark-mode .issue_wrap .issue_contentbox[data-dcuf-header-native-door="1"][data-dcuf-header-native-door-open="1"],
-            [data-dcuf-header-drawer-scope="1"].dc-filter-dark-mode .issue_wrap .issue_contentbox[data-dcuf-header-native-door="1"][data-dcuf-header-native-door-open="1"] .minor_ranking_box {
+            [data-dcuf-header-drawer-scope="1"].dc-filter-dark-mode [data-dcuf-header-native-door="1"][data-dcuf-header-door-context="1"][data-dcuf-header-native-door-open="1"],
+            [data-dcuf-header-drawer-scope="1"].dc-filter-dark-mode [data-dcuf-header-native-door="1"][data-dcuf-header-door-context="1"][data-dcuf-header-native-door-open="1"] [data-dcuf-header-door-ranking="1"] {
                 background: #1a222e;
                 border-color: #3d4c60;
                 color: #d2dced;
             }
-            [data-dcuf-header-drawer-scope="1"].dc-filter-dark-mode .issue_wrap .issue_contentbox[data-dcuf-header-native-door="1"][data-dcuf-header-native-door-open="1"] .minor_intro_box {
+            [data-dcuf-header-drawer-scope="1"].dc-filter-dark-mode [data-dcuf-header-native-door="1"][data-dcuf-header-door-context="1"][data-dcuf-header-native-door-open="1"] [data-dcuf-header-door-intro="1"] {
                 background: linear-gradient(180deg, #233044 0%, #203044 100%);
                 color: #d2dced;
             }
-            [data-dcuf-header-drawer-scope="1"] .issue_wrap #gall_top_recom.concept_wrap[data-dcuf-header-native-recom="1"][data-dcuf-header-native-recom-open="1"] {
+            [data-dcuf-header-drawer-scope="1"] [data-dcuf-header-native-recom="1"][data-dcuf-header-recom-context="1"][data-dcuf-header-native-recom-open="1"] {
                 display: block;
                 visibility: visible;
                 position: fixed;
@@ -220,15 +220,15 @@
                 overflow: auto;
                 z-index: 60;
             }
-            [data-dcuf-header-drawer-scope="1"] .issue_wrap #gall_top_recom.concept_wrap[data-dcuf-header-native-recom="1"][data-dcuf-header-native-recom-open="1"] > .pageing_box,
-            [data-dcuf-header-drawer-scope="1"] .issue_wrap #gall_top_recom.concept_wrap[data-dcuf-header-native-recom="1"][data-dcuf-header-native-recom-open="1"] > .concept_txtlist,
-            [data-dcuf-header-drawer-scope="1"] .issue_wrap #gall_top_recom.concept_wrap[data-dcuf-header-native-recom="1"][data-dcuf-header-native-recom-open="1"] > .concept_img {
+            [data-dcuf-header-drawer-scope="1"] [data-dcuf-header-native-recom="1"][data-dcuf-header-recom-context="1"][data-dcuf-header-native-recom-open="1"] > [data-dcuf-header-recom-part="paging"],
+            [data-dcuf-header-drawer-scope="1"] [data-dcuf-header-native-recom="1"][data-dcuf-header-recom-context="1"][data-dcuf-header-native-recom-open="1"] > [data-dcuf-header-recom-part="text"],
+            [data-dcuf-header-drawer-scope="1"] [data-dcuf-header-native-recom="1"][data-dcuf-header-recom-context="1"][data-dcuf-header-native-recom-open="1"] > [data-dcuf-header-recom-part="image"] {
                 box-sizing: border-box;
                 width: 100%;
                 max-width: 100%;
                 float: none;
             }
-            [data-dcuf-header-drawer-scope="1"].dc-filter-dark-mode .issue_wrap #gall_top_recom.concept_wrap[data-dcuf-header-native-recom="1"][data-dcuf-header-native-recom-open="1"] {
+            [data-dcuf-header-drawer-scope="1"].dc-filter-dark-mode [data-dcuf-header-native-recom="1"][data-dcuf-header-recom-context="1"][data-dcuf-header-native-recom-open="1"] {
                 background: #1a222e;
                 border-color: #3d4c60;
                 color: #d2dced;
@@ -251,10 +251,10 @@
                     overflow: auto;
                 }
             }
-            [data-dcuf-header-drawer-scope="1"] .issue_wrap > #relation_popup[data-dcuf-header-relation-popup="1"] {
+            [data-dcuf-header-drawer-scope="1"] [data-dcuf-header-relation-popup="1"][data-dcuf-header-relation-context="1"] {
                 z-index: 3;
             }
-            [data-dcuf-header-drawer-scope="1"] .issue_wrap > #relation_popup[data-dcuf-header-relation-static="1"] {
+            [data-dcuf-header-drawer-scope="1"] [data-dcuf-header-relation-static="1"][data-dcuf-header-relation-context="1"] {
                 position: relative;
             }
             [data-dcuf-header-drawer-scope="1"].dc-filter-dark-mode [data-dcuf-header-drawer="1"] .dcuf-header-drawer__toggle {
