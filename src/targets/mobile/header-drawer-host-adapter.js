@@ -164,7 +164,7 @@
             if (body instanceof HTMLElement) {
                 if (nextOpen) {
                     const drawerRect = drawer.getBoundingClientRect();
-                    const bodyWidth = Math.min(640, Math.max(0, window.innerWidth - 24));
+                    const bodyWidth = Math.min(__dcufHeaderDrawerPresenter.layout.maxWidth, Math.max(0, window.innerWidth - 24));
                     const maxLeft = Math.max(12, window.innerWidth - bodyWidth - 12);
                     const viewportLeft = Math.min(Math.max(12, drawerRect.right - bodyWidth), maxLeft);
                     applyBodyStyle(body, __dcufHeaderDrawerPresenter.describeBodyOffset(Object.freeze({ inlineStart: viewportLeft - drawerRect.left })));
@@ -203,7 +203,7 @@
             nativeRecomOpenScope = project(nativeRecomOpenScope, nextOpen ? recomSource : null, NATIVE_RECOM_OPEN_ATTR);
             if (nextOpen && source instanceof HTMLElement && body instanceof HTMLElement) {
                 const rect = body.getBoundingClientRect();
-                const width = Math.min(640, Math.max(0, window.innerWidth - 24));
+                const width = Math.min(__dcufHeaderDrawerPresenter.layout.maxWidth, Math.max(0, window.innerWidth - 24));
                 const left = Math.max(12, Math.min(Math.round(rect.left), window.innerWidth - width - 12));
                 const preferredTop = Math.max(12, Math.round(rect.top));
                 setDoorBodyVar('--dcuf-header-native-door-left', `${left}px`);
@@ -223,7 +223,7 @@
             }
             if (nextOpen && recomSource instanceof HTMLElement && body instanceof HTMLElement) {
                 const bodyRect = body.getBoundingClientRect();
-                const width = Math.min(640, Math.max(0, window.innerWidth - 24));
+                const width = Math.min(__dcufHeaderDrawerPresenter.layout.maxWidth, Math.max(0, window.innerWidth - 24));
                 const left = Math.max(12, Math.min(Math.round(bodyRect.left), window.innerWidth - width - 12));
                 const issueRect = source instanceof HTMLElement ? source.getBoundingClientRect() : null;
                 const preferredTop = issueRect?.height

@@ -9448,6 +9448,7 @@ const __dcufSettingsPresenter = (() => {
 `;
     }
     const __dcufHeaderDrawerPresenter = (() => {
+        const layout = Object.freeze({ maxWidth: 640 });
         const closedState = Object.freeze({ dataOpen: '0', ariaExpanded: 'false', label: '갤러리 대문 열기' });
         const openState = Object.freeze({ dataOpen: '1', ariaExpanded: 'true', label: '갤러리 대문 닫기' });
         const describeOpenState = (snapshot) => snapshot.open ? openState : closedState;
@@ -9544,7 +9545,7 @@ const __dcufSettingsPresenter = (() => {
                 top: calc(100% + 8px) !important;
                 left: var(--dcuf-header-drawer-inline-start, 0px);
                 right: auto;
-                width: min(640px, calc(100vw - 24px)) !important;
+                width: min(${layout.maxWidth}px, calc(100vw - 24px)) !important;
                 max-width: calc(100vw - 24px) !important;
                 overflow: hidden !important;
                 pointer-events: none !important;
@@ -9575,7 +9576,7 @@ const __dcufSettingsPresenter = (() => {
                 position: fixed;
                 left: var(--dcuf-header-native-door-left, 12px);
                 top: var(--dcuf-header-native-door-top, 12px);
-                width: min(640px, calc(100vw - 24px));
+                width: min(${layout.maxWidth}px, calc(100vw - 24px));
                 max-width: calc(100vw - 24px);
                 min-width: 0;
                 height: auto;
@@ -9635,7 +9636,7 @@ const __dcufSettingsPresenter = (() => {
                 position: fixed;
                 left: var(--dcuf-header-native-door-left, 12px);
                 top: var(--dcuf-header-native-recom-top, 12px);
-                width: min(640px, calc(100vw - 24px));
+                width: min(${layout.maxWidth}px, calc(100vw - 24px));
                 max-width: calc(100vw - 24px);
                 min-width: 0;
                 max-height: min(70vh, 520px);
@@ -9694,7 +9695,7 @@ const __dcufSettingsPresenter = (() => {
 
 `
         });
-        return Object.freeze({ shell, describeOpenState, describeToggleIntent, describeBodyVisibility, describeBodyOffset, describeBodyHeight, describeBodyPadding, style, buildThemeCss: __dcufBuildHeaderDrawerThemeCss, buildVisibilityCss: __dcufBuildHeaderDrawerVisibilityCss });
+        return Object.freeze({ shell, layout, describeOpenState, describeToggleIntent, describeBodyVisibility, describeBodyOffset, describeBodyHeight, describeBodyPadding, style, buildThemeCss: __dcufBuildHeaderDrawerThemeCss, buildVisibilityCss: __dcufBuildHeaderDrawerVisibilityCss });
     })();
     __dcufRoot.__dcufHeaderDrawerPresenter = __dcufHeaderDrawerPresenter;
     const __dcufHeaderDrawerHostAdapter = (() => {
@@ -9863,7 +9864,7 @@ const __dcufSettingsPresenter = (() => {
             if (body instanceof HTMLElement) {
                 if (nextOpen) {
                     const drawerRect = drawer.getBoundingClientRect();
-                    const bodyWidth = Math.min(640, Math.max(0, window.innerWidth - 24));
+                    const bodyWidth = Math.min(__dcufHeaderDrawerPresenter.layout.maxWidth, Math.max(0, window.innerWidth - 24));
                     const maxLeft = Math.max(12, window.innerWidth - bodyWidth - 12);
                     const viewportLeft = Math.min(Math.max(12, drawerRect.right - bodyWidth), maxLeft);
                     applyBodyStyle(body, __dcufHeaderDrawerPresenter.describeBodyOffset(Object.freeze({ inlineStart: viewportLeft - drawerRect.left })));
@@ -9902,7 +9903,7 @@ const __dcufSettingsPresenter = (() => {
             nativeRecomOpenScope = project(nativeRecomOpenScope, nextOpen ? recomSource : null, NATIVE_RECOM_OPEN_ATTR);
             if (nextOpen && source instanceof HTMLElement && body instanceof HTMLElement) {
                 const rect = body.getBoundingClientRect();
-                const width = Math.min(640, Math.max(0, window.innerWidth - 24));
+                const width = Math.min(__dcufHeaderDrawerPresenter.layout.maxWidth, Math.max(0, window.innerWidth - 24));
                 const left = Math.max(12, Math.min(Math.round(rect.left), window.innerWidth - width - 12));
                 const preferredTop = Math.max(12, Math.round(rect.top));
                 setDoorBodyVar('--dcuf-header-native-door-left', `${left}px`);
@@ -9922,7 +9923,7 @@ const __dcufSettingsPresenter = (() => {
             }
             if (nextOpen && recomSource instanceof HTMLElement && body instanceof HTMLElement) {
                 const bodyRect = body.getBoundingClientRect();
-                const width = Math.min(640, Math.max(0, window.innerWidth - 24));
+                const width = Math.min(__dcufHeaderDrawerPresenter.layout.maxWidth, Math.max(0, window.innerWidth - 24));
                 const left = Math.max(12, Math.min(Math.round(bodyRect.left), window.innerWidth - width - 12));
                 const issueRect = source instanceof HTMLElement ? source.getBoundingClientRect() : null;
                 const preferredTop = issueRect?.height

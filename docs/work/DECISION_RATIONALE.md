@@ -1,5 +1,14 @@
 # DCUF modernization decision rationale
 
+## D-28 — one frozen width value drives presentation and placement
+
+- SELECTED: Export frozen numeric maxWidth=640 from the existing drawer presenter; consume it in three CSS and three existing adapter calculations without changing read/write phases. Prove default compiled CSS equality and presenter-only cap variants with an independently derived anchor/containment oracle. Keep the 80px hardcoded-adapter negative and mixed labels.
+- NOT ADOPTED: CSS-only editing with stale adapter values, arbitrary layout frameworks/new DOM reads, treating narrow/recommendation-only equality as sufficient, or removing native geometry from the adapter. No live/release or final readiness authority follows.
+- DEFERRED: Early/native raw-selector boundary, complete header Layer-1/2 admission, cosmetic/composition and actual replacement/restoration pilot, human cost study, final feature/upper/live proof and issue-top behavior remain unfinished.
+- Reason: ER0 repository source/runtime and the adopted D-25/D-26 contract settle this bounded choice. 53 fresh contexts/201 observations pass for one-value variants; reverting adapter sites exposes 80px error. A raw-source/compiled CSS comparison first failed on builder whitespace normalization; matching compiled layers retain strict equality without a product workaround.
+- Evidence: `docs/work/HEADER_DRAWER_WIDTH_INPUT.md`, current presenter/adapter, body/layout contract and the exact A5EB/2AA1 comparison. The local evidence proves selected width locality, not universal replacement or phase equivalence.
+- Revisit: A value variant edits adapter/application bytes, a selected negative survives, default compiled CSS or body/native phases differ, host geometry/input/restoration fails, or current live shape changes the contract. Renew affected evidence before admission.
+
 ## D-27 — apply only the final native recommendation top
 
 - SELECTED: ER0 exact-source regression first, then remove only the preliminary recommendation-top write. Measure native height after unchanged horizontal placement and apply its final clamp; retain mixed ownership and compare native/body/input semantics in fresh contexts.

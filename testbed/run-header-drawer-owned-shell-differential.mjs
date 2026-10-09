@@ -8,12 +8,13 @@ import { fileURLToPath } from 'node:url';
 import { startServer } from './server/server.mjs';
 import { createTestPage, launchBrowser, storageKeys, getMetrics, assertNoRuntimeErrors } from './harness/runner-utils.mjs';
 import { createCandidateFingerprint, createEvidenceBinding } from '../tools/evidence-binding.mjs';
-import { loadDrawerPresenter, validateBodyPresenterFaults, validateBodyObservation, captureBodyPhase, validateBodyPhase } from './header-drawer-body-contract.mjs';
+import { loadDrawerPresenter, validateBodyPresenterFaults, validateLayoutPresenterFaults, validateBodyObservation, captureBodyPhase, validateBodyPhase } from './header-drawer-body-contract.mjs';
 import { validateTogglePresenterFaults, observeToggleTiming, validateToggleTimingFaults } from './header-drawer-toggle-contract.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const args = process.argv.slice(2);
 const intentBoundary = args.includes('--intent-boundary');
+const layoutBoundary = args.includes('--layout-boundary');
 const bodyBoundary = args.includes('--body-boundary') || intentBoundary;
 const value = flag => {
     const index = args.indexOf(flag);
@@ -77,6 +78,7 @@ const validatePresenter = presenter => {
 };
 validatePresenter(loadPresenter(presenterSource));
 const bodyDescriptorFaults = bodyBoundary ? validateBodyPresenterFaults(presenterSource) : 0;
+const layoutDescriptorFaults = layoutBoundary ? validateLayoutPresenterFaults(presenterSource) : 0;
 const toggleDescriptorFaults = intentBoundary ? await validateTogglePresenterFaults(presenterSource) : 0;
 const descriptorFaults = [
     ["label: '갤러리 대문 닫기'", "label: '잘못된 문구'"],
@@ -110,7 +112,7 @@ const report = {
     controlBinding, candidate: { path: candidate, sha256: sha(candidateBytes) }, descriptorFaults: descriptorFaults.length,
     observerSha256: sha(await readFile(fileURLToPath(import.meta.url))),
     bodyContractSha256: sha(await readFile(path.join(root, 'testbed/header-drawer-body-contract.mjs'))),
-    bodyDescriptorFaults, bodyDomFaults: 0, toggleDescriptorFaults, toggleTimingFaults: 0,
+    bodyDescriptorFaults, layoutDescriptorFaults, bodyDomFaults: 0, toggleDescriptorFaults, toggleTimingFaults: 0,
     toggleContractSha256: sha(await readFile(path.join(root, 'testbed/header-drawer-toggle-contract.mjs'))),
     toggleTiming: { control: [], candidate: [] }, sides: {}, differences: [], rawStyleOrderDifferences: [], domFaults: 0
 };
@@ -397,4 +399,4 @@ finally {
     await writeFile(output, JSON.stringify(report, null, 2) + '\n');
     await browser?.close(); await server.close();
 }
-console.log(`Owned drawer differential ${report.status}: ${report.sides.candidate.length} observations/side; ${report.descriptorFaults + report.domFaults + report.bodyDescriptorFaults + report.bodyDomFaults + report.toggleDescriptorFaults + report.toggleTimingFaults} selected faults rejected; raw style-order differences ${report.rawStyleOrderDifferences.length} (${report.rawStyleOrderStatus}); toggle contexts/side ${report.toggleTiming.candidate.length}.`);
+console.log(`Owned drawer differential ${report.status}: ${report.sides.candidate.length} observations/side; ${report.descriptorFaults + report.domFaults + report.bodyDescriptorFaults + report.layoutDescriptorFaults + report.bodyDomFaults + report.toggleDescriptorFaults + report.toggleTimingFaults} selected faults rejected; raw style-order differences ${report.rawStyleOrderDifferences.length} (${report.rawStyleOrderStatus}); toggle contexts/side ${report.toggleTiming.candidate.length}.`);

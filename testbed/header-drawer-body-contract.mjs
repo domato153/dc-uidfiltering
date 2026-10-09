@@ -17,6 +17,39 @@ const assertFrozen = value => {
     if (Array.isArray(value)) value.forEach(assertFrozen);
 };
 
+export function validateLayoutPresenter(presenter, maxWidth = 640) {
+    assert.ok(presenter.layout, 'Frozen drawer layout input required');
+    assert.ok(Object.isFrozen(presenter.layout), 'Drawer layout input must be immutable');
+    assert.deepEqual(plain(presenter.layout), { maxWidth }, 'Numeric-only layout input');
+    const widths = [...presenter.style.css.matchAll(/width: min\((\d+)px, calc\(100vw - 24px\)\)/g)];
+    assert.equal(widths.length, 3, 'Owned body and both native roots use layout width');
+    assert.ok(widths.every(match => Number(match[1]) === maxWidth), 'All CSS widths consume the same layout input');
+}
+
+export function validateLayoutPresenterFaults(source) {
+    validateLayoutPresenter(loadDrawerPresenter(source));
+    const input = 'const layout = Object.freeze({ maxWidth: 640 });';
+    assert.ok(source.includes(input), 'One selected numeric layout input required');
+    const check = candidate => {
+        validateLayoutPresenter(loadDrawerPresenter(candidate));
+        for (const width of [560, 664, 1280]) {
+            const variant = candidate.replace(input, `const layout = Object.freeze({ maxWidth: ${width} });`);
+            validateLayoutPresenter(loadDrawerPresenter(variant), width);
+        }
+    };
+    check(source);
+    const faults = [
+        [input, 'const layout = { maxWidth: 640 };'],
+        ['width: min(${layout.maxWidth}px, calc(100vw - 24px))', 'width: min(640px, calc(100vw - 24px))'],
+        ['{ shell, layout,', '{ shell,'],
+    ];
+    for (const [from, to] of faults) {
+        assert.ok(source.includes(from), `Layout fault missing: ${from}`);
+        assert.throws(() => check(source.replace(from, to)), assert.AssertionError);
+    }
+    return faults.length;
+}
+
 export function validateBodyPresenter(presenter) {
     assert.equal(typeof presenter.describeBodyVisibility, 'function', 'Body visibility description required');
     for (const open of [false, true, false]) {
@@ -151,5 +184,6 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
     const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
     const source = await readFile(path.join(root, 'src/targets/mobile/header-drawer-presenter.js'), 'utf8');
     const faults = validateBodyPresenterFaults(source);
-    console.log(`Drawer body pure contract: PASS; ${faults} wrong-value/omission faults rejected.`);
+    const layoutFaults = validateLayoutPresenterFaults(source);
+    console.log(`Drawer body/layout pure contract: PASS; ${faults + layoutFaults} wrong-value/omission faults rejected.`);
 }

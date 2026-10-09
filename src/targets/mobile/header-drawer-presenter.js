@@ -19,6 +19,7 @@
 `;
     }
     const __dcufHeaderDrawerPresenter = (() => {
+        const layout = Object.freeze({ maxWidth: 640 });
         const closedState = Object.freeze({ dataOpen: '0', ariaExpanded: 'false', label: '갤러리 대문 열기' });
         const openState = Object.freeze({ dataOpen: '1', ariaExpanded: 'true', label: '갤러리 대문 닫기' });
         const describeOpenState = (snapshot) => snapshot.open ? openState : closedState;
@@ -115,7 +116,7 @@
                 top: calc(100% + 8px) !important;
                 left: var(--dcuf-header-drawer-inline-start, 0px);
                 right: auto;
-                width: min(640px, calc(100vw - 24px)) !important;
+                width: min(${layout.maxWidth}px, calc(100vw - 24px)) !important;
                 max-width: calc(100vw - 24px) !important;
                 overflow: hidden !important;
                 pointer-events: none !important;
@@ -146,7 +147,7 @@
                 position: fixed;
                 left: var(--dcuf-header-native-door-left, 12px);
                 top: var(--dcuf-header-native-door-top, 12px);
-                width: min(640px, calc(100vw - 24px));
+                width: min(${layout.maxWidth}px, calc(100vw - 24px));
                 max-width: calc(100vw - 24px);
                 min-width: 0;
                 height: auto;
@@ -206,7 +207,7 @@
                 position: fixed;
                 left: var(--dcuf-header-native-door-left, 12px);
                 top: var(--dcuf-header-native-recom-top, 12px);
-                width: min(640px, calc(100vw - 24px));
+                width: min(${layout.maxWidth}px, calc(100vw - 24px));
                 max-width: calc(100vw - 24px);
                 min-width: 0;
                 max-height: min(70vh, 520px);
@@ -265,6 +266,6 @@
         
 `
         });
-        return Object.freeze({ shell, describeOpenState, describeToggleIntent, describeBodyVisibility, describeBodyOffset, describeBodyHeight, describeBodyPadding, style, buildThemeCss: __dcufBuildHeaderDrawerThemeCss, buildVisibilityCss: __dcufBuildHeaderDrawerVisibilityCss });
+        return Object.freeze({ shell, layout, describeOpenState, describeToggleIntent, describeBodyVisibility, describeBodyOffset, describeBodyHeight, describeBodyPadding, style, buildThemeCss: __dcufBuildHeaderDrawerThemeCss, buildVisibilityCss: __dcufBuildHeaderDrawerVisibilityCss });
     })();
     __dcufRoot.__dcufHeaderDrawerPresenter = __dcufHeaderDrawerPresenter;
