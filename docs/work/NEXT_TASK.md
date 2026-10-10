@@ -9,6 +9,8 @@
 
 Current authorization and split evidence live in CURRENT_STATE.md and HEADER_DRAWER_PROJECTION_REMOVAL.md. Derive the input list from the actual source before implementation; no direct accepted-registry edits. Update affected surface contracts/candidate responsibility before edits. Keep original palette FAIL, split runtime environment retry and all mandatory UNKNOWN. Refresh canonical impact before checks; report selected promotion as unexecuted.
 
+User stop on 2026-10-10: complete/report the projection-removal unit, then wait for resume before this next implementation. The first early-binding RED probe is preserved only in ignored artifacts/header-drawer-removal-2026-10-10/prepared-early-selector-binding.mjs; no early-binding production source was changed.
+
 ## Declared entry inventory
 
 Tracked/build-recoverable dependencies qualify entry only. Cold execution additionally needs the exact local control below; CI does not certify it.
@@ -65,7 +67,7 @@ Tracked/build-recoverable dependencies qualify entry only. Cold execution additi
     {"id":"working-checkpoint","status":"ADOPTED","boundary":"Only validated bounded commit/non-force push to origin/codex/ui-port-boundary. No official/live-write/release/version change.","source":"AGENTS.md"},
     {"id":"semantic-entry","status":"ADOPTED","boundary":"Host adapters own explicit native selector inputs. Preserve exact early CSS, unmarked/delayed roots, hoisted initialization and mount order. Keep mixed until exact exit criteria pass.","source":"docs/ui-surface-contracts.md"},
     {"id":"scope-and-admission","status":"ADOPTED","boundary":"Early binding is zero visual delta. Retain original palette FAIL, runtime environment failure and split retry; four real change/replace/restore scenarios follow header sealing.","source":"docs/work/UI_REPLACEABILITY_VALIDATION.md"},
-    {"id":"continuous-goal","status":"ADOPTED","boundary":"User Goal authorizes continuous remaining-plan execution; mandatory final/live evidence and separate release/write authority remain.","source":"docs/work/CURRENT_STATE.md"}
+    {"id":"continuous-goal","status":"ADOPTED","boundary":"User requested stopping after the current unit on 2026-10-10. Resume remaining-plan execution only when the user resumes; mandatory final/live evidence and separate release/write authority remain.","source":"docs/work/CURRENT_STATE.md"}
   ],
   "hazards": [
     {"id":"hoisted-startup","status":"ACTIVE","effect":"Theme and core styles execute before presenter/adapter objects initialize. Factories and inputs must work at that exact phase without TDZ or deferred projection."},
