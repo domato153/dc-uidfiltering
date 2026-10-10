@@ -24,11 +24,15 @@
     const rejectOnceKeys = new Set(Array.isArray(behavior.rejectOnceKeys) ? behavior.rejectOnceKeys : []);
     const rejectWriteOnceKeys = new Set(Array.isArray(behavior.rejectWriteOnceKeys) ? behavior.rejectWriteOnceKeys : []);
     const pendingKeys = new Set(Array.isArray(behavior.pendingKeys) ? behavior.pendingKeys : []);
+    const captureReadValueKeys = new Set(Array.isArray(behavior.captureReadValueKeys) ? behavior.captureReadValueKeys : []);
     const pendingResolvers = new Map();
 
     globalThis.unsafeWindow = globalThis;
     globalThis.GM_getValue = async (key, fallbackValue) => {
         reads.push({ key, ts: Date.now() });
+        const capturedValue = captureReadValueKeys.has(key)
+            ? clone(values.has(key) ? values.get(key) : fallbackValue)
+            : undefined;
         if (rejectOnceKeys.delete(key)) throw new Error(`GM_getValue rejected once: ${key}`);
         const delayMs = Math.max(0, Number(delayByKey[key]) || 0);
         if (delayMs > 0) await new Promise((resolve) => setTimeout(resolve, delayMs));
@@ -39,7 +43,9 @@
                 pendingResolvers.set(key, resolvers);
             });
         }
-        return clone(values.has(key) ? values.get(key) : fallbackValue);
+        return captureReadValueKeys.has(key)
+            ? capturedValue
+            : clone(values.has(key) ? values.get(key) : fallbackValue);
     };
     globalThis.GM_setValue = async (key, value) => {
         if (rejectWriteOnceKeys.delete(key)) throw new Error(`GM_setValue rejected once: ${key}`);

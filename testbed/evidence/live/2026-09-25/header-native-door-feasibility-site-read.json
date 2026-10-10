@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "kind": "public-host-native-door-feasibility-read",
+  "observedDateUtc": "2026-09-25",
+  "page": "https://gall.dcinside.com/mgallery/board/lists/?id=aoegame",
+  "environment": "Codex in-app browser, public logged-out page, no DCUF candidate injected",
+  "scope": "Redacted DOM ancestry, computed CSS, and control signatures only; no post or account content",
+  "source": {
+    "selector": ".issue_wrap .issuebox.gallery_box > .issue_contentbox.clear",
+    "ancestors": [".issuebox.gallery_box", ".issue_wrap", "article", ".left_content", ".listwrap.clear", ".wrap_inner"],
+    "computedRectPx": [178, 255, 840, 153],
+    "interactiveDescendants": 14,
+    "interactiveOutsideRankPopup": 11,
+    "ancestorClipTransformContain": "none observed in the sampled chain; overflow visible",
+    "issueWrapStacking": "position:relative; z-index:13"
+  },
+  "rankPopup": {
+    "selector": "#hot_rank_pop2.pop_wrap.type2",
+    "parent": ".minor_ranking_box",
+    "computedWhenClosed": "display:none; position:absolute; top:139px; right:-1px; z-index:4001"
+  },
+  "tipPopup": {
+    "selector": "#hot_tip_pop.pop_tipbox.minor_tip",
+    "parent": ".minor_ranking_box",
+    "computedWhenClosed": "display:none; position:absolute; top:15px; right:15px; z-index:999",
+    "triggerHandler": "toggle_hot_tip_pop()",
+    "closeHandler": "toggle_hot_tip_pop()"
+  },
+  "topRecommendation": {
+    "selector": "#gall_top_recom.concept_wrap",
+    "presentOnSampledPage": false,
+    "otherRoutes": "not checked"
+  },
+  "interactionLimit": "Clicking the public-page tip trigger in this browser left the popup at display:none; no live open geometry or candidate behavior was established.",
+  "candidateLimit": "The local browser-only in-place feasibility diagnostic is separate Testbed evidence, not a live-site Canary."
+}

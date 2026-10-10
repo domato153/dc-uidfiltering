@@ -27,22 +27,15 @@ const PC_PARTS = target.inputs
     .filter((input) => input.role === 'pc-runtime')
     .map((input) => input.path);
 
-const SHARED_FILTER_UI_STYLE_RANGES = [
-    ['/* DCUF_SHARED_FILTER_UI_START */', '/* DCUF_SHARED_FILTER_UI_END */'],
-    ['/* DCUF_SHARED_FILTER_UI_DARK_START */', '/* DCUF_SHARED_FILTER_UI_DARK_END */'],
-];
-
 const REQUIRED_SHARED_FILTER_UI_SELECTORS = [
-    '#dcinside-filter-setting',
-    '#dcinside-shortcut-modal',
-    '#dc-personal-block-controls',
-    '#dc-personal-block-fab',
-    '#dc-personal-block-drawer',
-    '#dc-personal-block-size-panel',
-    '#dc-manual-block-panel',
-    '#dc-selection-popup',
-    '#dc-block-management-panel',
-    '#dc-backup-popup',
+    'data-dcuf-surface="filter-settings"',
+    'data-dcuf-surface="shortcut-settings"',
+    'data-dcuf-surface="personal-menu"',
+    'data-dcuf-surface="personal-size"',
+    'data-dcuf-surface="personal-manual"',
+    'data-dcuf-surface="personal-selection"',
+    'data-dcuf-surface="personal-management"',
+    'data-dcuf-surface="personal-backup"',
 ];
 
 const FORBIDDEN_MOBILE_UI_TOKENS = [
@@ -53,36 +46,6 @@ const FORBIDDEN_MOBILE_UI_TOKENS = [
     '.writing_view_box',
     '.comment_box',
     '.img_comment',
-];
-
-const MOBILE_THEME_CSS_RANGE = [
-    '/* DCUF_MOBILE_THEME_CSS_START */',
-    '/* DCUF_MOBILE_THEME_CSS_END */',
-];
-
-const REQUIRED_PC_PALETTE_UI_SELECTORS = [
-    '#dcinside-filter-setting',
-    '#dcinside-shortcut-modal',
-    '#dc-personal-block-size-panel',
-    '#dc-personal-block-drawer',
-    '#dc-selection-popup',
-    '#dc-block-management-panel',
-    '#dc-backup-popup',
-    '#dc-personal-block-fab',
-    '#dc-manual-block-panel',
-];
-
-const FORBIDDEN_PC_PALETTE_HOST_TOKENS = [
-    '.custom-mobile-list',
-    '.custom-post-item',
-    '.custom-bottom-controls',
-    '.gnb_bar',
-    '.page_head',
-    '.view_content_wrap',
-    '.writing_view_box',
-    '#focus_cmt',
-    'form#write',
-    'form.dcuf-write-form',
 ];
 
 const replacements = [
@@ -98,15 +61,13 @@ const replacements = [
             return text.replace(/__DCUF_DELETE_SURFACE__/g, 'off');
         },
     },
+    {
+        description: 'PC target capability token',
+        apply(text) {
+            return text.replace(/__DCUF_TARGET_IS_MOBILE__/g, 'false');
+        },
+    },
 ];
-
-function replaceOrThrow(source, pattern, replacement, label) {
-    const next = source.replace(pattern, replacement);
-    if (next === source) {
-        throw new Error(`PC build transform failed: ${label}`);
-    }
-    return next;
-}
 
 async function readPart(relativePath) {
     const absolutePath = path.join(rootDir, relativePath);
@@ -126,6 +87,11 @@ async function buildSharedRuntimePrelude() {
     const ipSource = stripEsmSyntax(await readPart(inputForRole('shared-ip')));
     const storageCoreSource = stripEsmSyntax(await readPart(inputForRole('shared-storage')));
     const filterCoreSource = stripEsmSyntax(await readPart(inputForRole('shared-filter')));
+    const uiContractsSource = stripEsmSyntax(await readPart(inputForRole('shared-ui-contracts')));
+    const uiDisposableScopeSource = stripEsmSyntax(await readPart(inputForRole('ui-disposable-scope')));
+    const uiStateStoreSource = await readPart(inputForRole('ui-state-store'));
+    const themeHostPortSource = await readPart(inputForRole('theme-host-port'));
+    const popupGeometryHostAdapterSource = await readPart(inputForRole('popup-geometry-host-adapter'));
 
     return [
         '    // PC filter port shared prelude',
@@ -156,6 +122,27 @@ async function buildSharedRuntimePrelude() {
         '        normalizeStoredFilterSettings,',
         '    });',
         '',
+        uiContractsSource.trimEnd(),
+        '',
+        uiDisposableScopeSource.trimEnd(),
+        '',
+        '    const DCUF_UI_CONTRACTS = Object.freeze({',
+        '        UI_INTENT_TYPES,',
+        '        createCommandResult,',
+        '        createDisposableScope,',
+        '        createSurfaceSnapshot,',
+        '        createUiSurface,',
+        '        createHostSurfaceAdapter,',
+        '        createHostSurfacePort,',
+        '        createUiPortRuntime,',
+        '    });',
+        '',
+        uiStateStoreSource.trimEnd(),
+        '',
+        themeHostPortSource.trimEnd(),
+        '',
+        popupGeometryHostAdapterSource.trimEnd(),
+        '',
         filterCoreSource.trimEnd(),
         '',
         '    const DCUF_SHARED_FILTER_CORE = Object.freeze({',
@@ -169,139 +156,42 @@ async function buildSharedRuntimePrelude() {
     ].join('\n');
 }
 
-function extractFilterModuleSource(source) {
-    const startMarker = 'const FilterModule = {';
-    const endMarker = 'window.__dcufFilterModule = FilterModule;';
-    const startIndex = source.indexOf(startMarker);
-    const endIndex = source.indexOf(endMarker);
-    if (startIndex === -1 || endIndex === -1 || endIndex < startIndex) {
-        throw new Error('Failed to extract FilterModule block from mobile filter-module.js');
-    }
-    return `${source.slice(startIndex, endIndex + endMarker.length)}\n`;
-}
-
-function extractSharedFilterUiStyle(source) {
-    const cssParts = SHARED_FILTER_UI_STYLE_RANGES.map(([startMarker, endMarker]) => {
-        const startIndex = source.indexOf(startMarker);
-        const endIndex = source.indexOf(endMarker, startIndex + startMarker.length);
-        if (startIndex === -1 || endIndex === -1 || endIndex < startIndex) {
-            throw new Error(`Failed to extract shared filter UI style range: ${startMarker}`);
-        }
-        return source.slice(startIndex + startMarker.length, endIndex).trim();
-    });
-    const css = cssParts.join('\n\n');
-
-    REQUIRED_SHARED_FILTER_UI_SELECTORS.forEach((selector) => {
-        if (!css.includes(selector)) {
-            throw new Error(`Shared filter UI style is missing required selector: ${selector}`);
-        }
-    });
-    FORBIDDEN_MOBILE_UI_TOKENS.forEach((token) => {
-        if (css.includes(token)) {
-            throw new Error(`Mobile-only UI token leaked into shared filter UI style: ${token}`);
-        }
-    });
-    if (css.includes('`') || css.includes('${')) {
-        throw new Error('Shared filter UI style cannot contain template literal syntax');
-    }
-
-    return `    // Extracted verbatim from the mobile-owned filter UI style rail.\n    GM_addStyle(\`\n${css}\n    \`);\n`;
-}
-
-function transformFilterModuleForSharedPort(source) {
-    let text = source;
-
-    text = replaceOrThrow(
-        text,
-        /TELECOM:\s*\[[\s\S]*?BLOCK_UID_EXPIRE:/,
-        [
-            'TELECOM: DCUF_SHARED_IP.TELECOM,',
-            '',
-            '        CONSTANTS: DCUF_SHARED_SCHEMA.FILTER_CONSTANTS,',
-            '        BLOCK_UID_EXPIRE:',
-        ].join('\n'),
-        'shared data/constants block'
-    );
-
-    text = replaceOrThrow(
-        text,
-        /PROXY_MODE:\s*\{[\s\S]*?\r?\n\s*isMobile:/,
-        [
-            'PROXY_MODE: DCUF_SHARED_IP.PROXY_MODE,',
-            '        PROXY_STRICT_PREFIXES: DCUF_SHARED_IP.PROXY_STRICT_PREFIXES,',
-            '        PROXY_AGGRESSIVE_EXTRA_PREFIXES: DCUF_SHARED_IP.PROXY_AGGRESSIVE_EXTRA_PREFIXES,',
-            '        KR_IP_RANGES: DCUF_SHARED_IP.KR_IP_RANGES,',
-            '        isMobile:',
-        ].join('\n'),
-        'shared proxy and KR range block'
-    );
-
-    text = replaceOrThrow(
-        text,
-        'isMobile: () => true,',
-        'isMobile: () => false,',
-        'PC target flag'
-    );
-
-    return text;
-}
-
-function transformThemeModuleForPc(source) {
-    const [startMarker, endMarker] = MOBILE_THEME_CSS_RANGE;
-    const startIndex = source.indexOf(startMarker);
-    const endIndex = source.indexOf(endMarker, startIndex + startMarker.length);
-    if (startIndex === -1 || endIndex === -1 || endIndex < startIndex) {
-        throw new Error('Failed to locate the mobile-only palette CSS range');
-    }
-
-    const transformed = [
-        source.slice(0, startIndex + startMarker.length),
-        '\n        /* Mobile host palette CSS removed by the PC port rail. */\n        ',
-        source.slice(endIndex),
-    ].join('');
-
-    REQUIRED_PC_PALETTE_UI_SELECTORS.forEach((selector) => {
-        if (!transformed.includes(selector)) {
-            throw new Error(`PC palette UI rail is missing required selector: ${selector}`);
-        }
-    });
-    FORBIDDEN_PC_PALETTE_HOST_TOKENS.forEach((token) => {
-        if (transformed.includes(token)) {
-            throw new Error(`Mobile/host palette token leaked into the PC palette rail: ${token}`);
-        }
-    });
-
-    return transformed;
-}
-
 function applyReplacements(source) {
     return replacements.reduce((acc, step) => step.apply(acc), source);
 }
 
 async function main() {
-    const [header, bootstrap, sharedPrelude, writeDefaults, rawThemeModule, rawFilterModule, rawPersonalBlockModule, ...pcParts] = await Promise.all([
+    const [header, bootstrap, sharedPrelude, writeDefaults, targetThemeHostStyle, sharedSettingsPresenter, sharedThemePresenter, sharedFilterUiStyle, pcFilterUiStyleMount, sharedFilterRuntime, filterSettingsHostAdapter, rawPersonalBlockModule, personalBlockHostAdapter, filterHostAdapter, ...pcParts] = await Promise.all([
         readPart(inputForRole('header')),
         readPart(inputForRole('bootstrap')),
         buildSharedRuntimePrelude(),
         readPart(inputForRole('shared-write-defaults')),
-        readPart(inputForRole('compat-theme-source')),
-        readPart(inputForRole('compat-filter-source')),
-        readPart(inputForRole('compat-personal-block-source')),
+        readPart(inputForRole('pc-theme-host-style')),
+        readPart(inputForRole('shared-settings-presenter')),
+        readPart(inputForRole('shared-theme-presenter')),
+        readPart(inputForRole('shared-filter-ui-style')),
+        readPart(inputForRole('pc-filter-ui-style-mount')),
+        readPart(inputForRole('shared-filter-runtime')),
+        readPart(inputForRole('filter-settings-host-adapter')),
+        readPart(inputForRole('shared-personal-block-module')),
+        readPart(inputForRole('personal-block-host-adapter')),
+        readPart(inputForRole('filter-host-adapter')),
         ...PC_PARTS.map(readPart),
     ]);
 
     const teardown = await readPart(inputForRole('teardown'));
-    const extractedFilterModule = extractFilterModuleSource(rawFilterModule);
-    const sharedFilterUiStyle = extractSharedFilterUiStyle(rawFilterModule);
-    const transformedThemeModule = transformThemeModuleForPc(rawThemeModule);
-    const transformedFilterModule = transformFilterModuleForSharedPort(extractedFilterModule);
+    REQUIRED_SHARED_FILTER_UI_SELECTORS.forEach((selector) => {
+        if (!sharedSettingsPresenter.includes(selector)) throw new Error(`Shared settings presenter is missing required selector: ${selector}`);
+    });
+    FORBIDDEN_MOBILE_UI_TOKENS.forEach((token) => {
+        if (`${sharedSettingsPresenter}\n${sharedFilterUiStyle}`.includes(token)) throw new Error(`Mobile-only UI token leaked into shared settings presentation: ${token}`);
+    });
     const [filterStyle, filterEntry] = pcParts;
-    const combined = `${header}\n${bootstrap}${sharedPrelude}${writeDefaults}${filterStyle}${sharedFilterUiStyle}${transformedThemeModule}${transformedFilterModule}${rawPersonalBlockModule}${filterEntry}${teardown}`;
+    const combined = `${header}\n${bootstrap}${sharedPrelude}${writeDefaults}${filterStyle}${targetThemeHostStyle}${sharedSettingsPresenter}${sharedThemePresenter}${sharedFilterUiStyle}${pcFilterUiStyleMount}${sharedFilterRuntime}${filterSettingsHostAdapter}${rawPersonalBlockModule}${personalBlockHostAdapter}${filterHostAdapter}${filterEntry}${teardown}`;
     const built = applyReplacements(combined)
         .replace(/[ \t]+$/gm, '')
         .replace(/\n+$/, '\n')
         .replace(/\r?\n/g, '\r\n');
-
     const bomText = `\uFEFF${built}`;
     if (testbedOutput) {
         await mkdir(path.dirname(testbedOutput), { recursive: true });
@@ -320,7 +210,7 @@ async function main() {
 
     process.stdout.write([
         `Built ${OUTPUT_NAME}`,
-        ' - source: latest mobile FilterModule + shared palette/UI rail + shared core + PC adapter entry',
+        ' - source: explicit shared FilterModule, ThemePresenter, and management style inputs + target adapters + shared core',
         ` - dist: ${distPath}`,
         ` - root: ${rootCopyPath}`,
     ].join('\n'));

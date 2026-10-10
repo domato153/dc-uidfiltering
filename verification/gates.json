@@ -1,6 +1,33 @@
 {
   "schemaVersion": 1,
   "fallbackProfile": "acceptance",
+  "relationImpact": {
+    "snapshot-and-intent-port": "runtime", "schedules": "runtime", "consumed-by": "runtime",
+    "explicit-style-input": "runtime", "semantic-host-boundary": "runtime", "rendered-through": "runtime",
+    "verified-by": "verification", "staged-by": "runtime", "partial-boundary-extraction": "runtime",
+    "executed-by": "verification", "target-style-input": "runtime", "routes-and-falsifies": "verification",
+    "constrains-transition": "constraint", "explicit-build-input": "runtime", "compat-copy-input": "runtime",
+    "legacy-geometry-helper": "runtime", "owns-pinch-geometry": "runtime", "selects-verification": "verification",
+    "feeds": "runtime", "snapshot-and-native-port": "runtime", "uses-target-presentation": "runtime",
+    "mounted-by": "runtime", "exported-by": "runtime", "anchors-and-native-events": "runtime",
+    "implemented-by": "runtime", "snapshots-and-intents": "runtime"
+  },
+  "profileSupersedence": {
+    "acceptance": ["mobile-focused", "pc-focused", "header-focused"],
+    "header-focused": ["mobile-focused"]
+  },
+  "boundedScopes": {
+    "header-navigation": {
+      "profile": "header-focused",
+      "sourcePaths": [
+        "src/targets/mobile/header-shell-presenter.js", "src/targets/mobile/header-shell-host-adapter.js",
+        "src/targets/mobile/gallery-page-head-presenter.js", "src/targets/mobile/gallery-page-head-host-adapter.js",
+        "src/targets/mobile/header-gnb-presenter.js", "src/targets/mobile/header-gnb-host-adapter.js",
+        "src/targets/mobile/header-recent-visit-presenter.js", "src/targets/mobile/header-recent-visit-host-adapter.js",
+        "src/targets/mobile/header-drawer-presenter.js", "src/targets/mobile/header-drawer-host-adapter.js"
+      ]
+    }
+  },
   "failureClasses": [
     "product-runtime",
     "oracle-generator",
@@ -12,50 +39,90 @@
     "policy": {
       "runsOn": ["ubuntu-24.04", "windows-2025"],
       "commands": [
-        { "id": "architecture", "command": "node", "args": ["tools/architecture-registry.mjs", "validate"] },
-        { "id": "proof-audit", "command": "node", "args": ["tools/audit-proof-system.mjs", "artifacts/impact.json"] },
-        { "id": "guidance", "command": "node", "args": ["tools/verify-repo.mjs", "guidance"] }
+        { "id": "architecture", "command": "node", "args": ["tools/architecture-registry.mjs", "validate"], "prerequisite": true },
+        { "id": "modernization-assurance", "command": "node", "args": ["tools/verify-modernization-assurance.mjs"], "prerequisite": true },
+        { "id": "ui-boundaries", "command": "node", "args": ["tools/verify-ui-boundaries.mjs"], "prerequisite": true },
+        { "id": "guidance", "command": "node", "args": ["tools/verify-repo.mjs", "guidance"], "prerequisite": true }
+      ]
+    },
+    "proof-core": {
+      "runsOn": ["ubuntu-24.04", "windows-2025"],
+      "commands": [
+        { "id": "core-audit", "command": "node", "args": ["tools/audit-proof-system.mjs", "artifacts/impact.json", "--groups", "routing,presentation,assurance,architecture", "--output", "artifacts/proof-audit/core.json"] }
+      ]
+    },
+    "proof-runtime": {
+      "runsOn": ["ubuntu-24.04", "windows-2025"],
+      "commands": [
+        { "id": "runtime-audit", "command": "node", "args": ["tools/audit-proof-system.mjs", "artifacts/impact.json", "--groups", "runtime-oracles,native-ui", "--output", "artifacts/proof-audit/runtime.json"] }
+      ]
+    },
+    "header-focused": {
+      "runsOn": ["ubuntu-24.04"],
+      "commands": [
+        { "id": "mobile-build", "command": "node", "args": ["tools/build-userscript.mjs", "--testbed-output", "testbed/artifacts/runtime-under-test.user.js"], "prerequisite": true },
+        { "id": "mobile-smoke", "command": "node", "args": ["testbed/run-tests.mjs", "--group", "smoke", "--require-runtime-under-test"] },
+        { "id": "header-native", "command": "node", "args": ["testbed/run-tests.mjs", "--group", "functional", "--filter", "header", "--require-runtime-under-test"] },
+        { "id": "header-recent-title-contract", "command": "node", "args": ["testbed/run-header-cascade-audit.mjs", "--recent-title-contract", "--gnb-reset-contract", "--require-runtime-under-test", "--output", "testbed/artifacts/header-focused-cascade.json"] }
       ]
     },
     "mobile-focused": {
       "runsOn": ["ubuntu-24.04"],
       "commands": [
-        { "id": "mobile-build", "command": "node", "args": ["tools/build-userscript.mjs", "--testbed-output", "testbed/artifacts/runtime-under-test.user.js"] },
+        { "id": "mobile-build", "command": "node", "args": ["tools/build-userscript.mjs", "--testbed-output", "testbed/artifacts/runtime-under-test.user.js"], "prerequisite": true },
         { "id": "mobile-smoke", "command": "node", "args": ["testbed/run-tests.mjs", "--group", "smoke", "--require-runtime-under-test"] }
       ]
     },
     "pc-focused": {
       "runsOn": ["ubuntu-24.04"],
       "commands": [
-        { "id": "pc-build-runtime", "command": "node", "args": ["tools/build-pc-filter-userscript.mjs", "--testbed-output", "testbed/artifacts/runtime-under-test.user.js"] },
+        { "id": "pc-build-runtime", "command": "node", "args": ["tools/build-pc-filter-userscript.mjs", "--testbed-output", "testbed/artifacts/runtime-under-test.user.js"], "prerequisite": true },
         { "id": "pc-functional", "command": "node", "args": ["testbed/run-tests.mjs", "--group", "functional", "--require-runtime-under-test"], "env": { "DCUF_TESTBED_TARGET": "pc" } },
-        { "id": "pc-build-release", "command": "node", "args": ["tools/build-pc-filter-userscript.mjs"] },
+        { "id": "pc-build-release", "command": "node", "args": ["tools/build-pc-filter-userscript.mjs"], "prerequisite": true },
         { "id": "release-contracts", "command": "node", "args": ["tools/verify-repo.mjs", "release"] }
       ]
     },
     "acceptance": {
       "runsOn": ["ubuntu-24.04"],
       "commands": [
-        { "id": "mobile-build", "command": "node", "args": ["tools/build-userscript.mjs", "--testbed-output", "testbed/artifacts/runtime-under-test.user.js"] },
+        { "id": "baseline-verify", "command": "node", "args": ["tools/verify-baseline.mjs"], "prerequisite": true },
+        { "id": "mobile-build", "command": "node", "args": ["tools/build-userscript.mjs", "--testbed-output", "testbed/artifacts/runtime-under-test.user.js"], "prerequisite": true },
+        { "id": "header-recent-title-contract", "command": "node", "args": ["testbed/run-header-cascade-audit.mjs", "--recent-title-contract", "--gnb-reset-contract", "--require-runtime-under-test", "--output", "testbed/artifacts/acceptance-header-recent-title-contract.json"] },
+        { "id": "mobile-observed-palette", "command": "node", "args": ["testbed/run-palette-differential.mjs", "--target", "mobile", "--control", "testbed/artifacts/baseline-mobile-beta.user.js", "--candidate", "testbed/artifacts/runtime-under-test.user.js", "--output", "artifacts/acceptance-observed-mobile-palette.json"] },
+        { "id": "mobile-observed-list", "command": "node", "args": ["testbed/run-list-differential.mjs", "--control", "testbed/artifacts/baseline-mobile-beta.user.js", "--candidate", "testbed/artifacts/runtime-under-test.user.js", "--output", "artifacts/acceptance-observed-mobile-list.json"] },
+        { "id": "mobile-observed-article", "command": "node", "args": ["testbed/run-article-differential.mjs", "--control", "testbed/artifacts/baseline-mobile-beta.user.js", "--candidate", "testbed/artifacts/runtime-under-test.user.js", "--output", "artifacts/acceptance-observed-mobile-article.json"] },
+        { "id": "mobile-observed-comments", "command": "node", "args": ["testbed/run-comment-differential.mjs", "--control", "testbed/artifacts/baseline-mobile-beta.user.js", "--candidate", "testbed/artifacts/runtime-under-test.user.js", "--output", "artifacts/acceptance-observed-mobile-comments.json"] },
+        { "id": "mobile-observed-native-forms", "command": "node", "args": ["testbed/run-native-form-differential.mjs", "--control", "testbed/artifacts/baseline-mobile-stable.user.js", "--candidate", "testbed/artifacts/runtime-under-test.user.js", "--output", "artifacts/acceptance-observed-mobile-native-forms.json"] },
         { "id": "full-testbed", "command": "node", "args": ["testbed/run-tests.mjs", "--require-runtime-under-test"] },
         { "id": "host-compatibility", "command": "node", "args": ["testbed/run-host-compatibility.mjs", "--require-runtime-under-test"] },
-        { "id": "pc-build-runtime", "command": "node", "args": ["tools/build-pc-filter-userscript.mjs", "--testbed-output", "testbed/artifacts/runtime-under-test.user.js"] },
+        { "id": "pc-build-runtime", "command": "node", "args": ["tools/build-pc-filter-userscript.mjs", "--testbed-output", "testbed/artifacts/runtime-under-test.user.js"], "prerequisite": true },
+        { "id": "pc-observed-palette", "command": "node", "args": ["testbed/run-palette-differential.mjs", "--target", "pc", "--control", "testbed/artifacts/baseline-pc.user.js", "--candidate", "testbed/artifacts/runtime-under-test.user.js", "--output", "artifacts/acceptance-observed-pc-palette.json"] },
         { "id": "pc-functional", "command": "node", "args": ["testbed/run-tests.mjs", "--group", "functional", "--require-runtime-under-test"], "env": { "DCUF_TESTBED_TARGET": "pc" } },
-        { "id": "mobile-build-release", "command": "node", "args": ["tools/build-userscript.mjs"] },
-        { "id": "pc-build-release", "command": "node", "args": ["tools/build-pc-filter-userscript.mjs"] },
+        { "id": "mobile-build-release", "command": "node", "args": ["tools/build-userscript.mjs"], "prerequisite": true },
+        { "id": "pc-build-release", "command": "node", "args": ["tools/build-pc-filter-userscript.mjs"], "prerequisite": true },
+        { "id": "restore-mobile-guard", "command": "node", "args": ["tools/build-userscript.mjs", "--testbed-output", "testbed/artifacts/runtime-under-test.user.js"], "always": true },
         { "id": "repository-all", "command": "node", "args": ["tools/verify-repo.mjs", "all"] }
       ]
     },
     "promotion-windows": {
       "runsOn": ["windows-2025"],
       "commands": [
-        { "id": "mobile-build-runtime", "command": "node", "args": ["tools/build-userscript.mjs", "--testbed-output", "testbed/artifacts/runtime-under-test.user.js"] },
-        { "id": "mobile-build-release", "command": "node", "args": ["tools/build-userscript.mjs"] },
-        { "id": "pc-build", "command": "node", "args": ["tools/build-pc-filter-userscript.mjs"] },
-        { "id": "pc-build-runtime", "command": "node", "args": ["tools/build-pc-filter-userscript.mjs", "--testbed-output", "testbed/artifacts/runtime-under-test.user.js"] },
+        { "id": "baseline-verify", "command": "node", "args": ["tools/verify-baseline.mjs"], "prerequisite": true },
+        { "id": "mobile-build-runtime", "command": "node", "args": ["tools/build-userscript.mjs", "--testbed-output", "testbed/artifacts/runtime-under-test.user.js"], "prerequisite": true },
+        { "id": "header-recent-title-contract", "command": "node", "args": ["testbed/run-header-cascade-audit.mjs", "--recent-title-contract", "--gnb-reset-contract", "--require-runtime-under-test", "--output", "testbed/artifacts/windows-header-recent-title-contract.json"] },
+        { "id": "mobile-observed-palette", "command": "node", "args": ["testbed/run-palette-differential.mjs", "--target", "mobile", "--control", "testbed/artifacts/baseline-mobile-beta.user.js", "--candidate", "testbed/artifacts/runtime-under-test.user.js", "--output", "artifacts/windows-observed-mobile-palette.json"] },
+        { "id": "mobile-observed-list", "command": "node", "args": ["testbed/run-list-differential.mjs", "--control", "testbed/artifacts/baseline-mobile-beta.user.js", "--candidate", "testbed/artifacts/runtime-under-test.user.js", "--output", "artifacts/windows-observed-mobile-list.json"] },
+        { "id": "mobile-observed-article", "command": "node", "args": ["testbed/run-article-differential.mjs", "--control", "testbed/artifacts/baseline-mobile-beta.user.js", "--candidate", "testbed/artifacts/runtime-under-test.user.js", "--output", "artifacts/windows-observed-mobile-article.json"] },
+        { "id": "mobile-observed-comments", "command": "node", "args": ["testbed/run-comment-differential.mjs", "--control", "testbed/artifacts/baseline-mobile-beta.user.js", "--candidate", "testbed/artifacts/runtime-under-test.user.js", "--output", "artifacts/windows-observed-mobile-comments.json"] },
+        { "id": "mobile-observed-native-forms", "command": "node", "args": ["testbed/run-native-form-differential.mjs", "--control", "testbed/artifacts/baseline-mobile-stable.user.js", "--candidate", "testbed/artifacts/runtime-under-test.user.js", "--output", "artifacts/windows-observed-mobile-native-forms.json"] },
+        { "id": "mobile-smoke", "command": "node", "args": ["testbed/run-tests.mjs", "--group", "smoke", "--require-runtime-under-test"] },
+        { "id": "mobile-build-release", "command": "node", "args": ["tools/build-userscript.mjs"], "prerequisite": true },
+        { "id": "pc-build", "command": "node", "args": ["tools/build-pc-filter-userscript.mjs"], "prerequisite": true },
+        { "id": "pc-build-runtime", "command": "node", "args": ["tools/build-pc-filter-userscript.mjs", "--testbed-output", "testbed/artifacts/runtime-under-test.user.js"], "prerequisite": true },
+        { "id": "pc-observed-palette", "command": "node", "args": ["testbed/run-palette-differential.mjs", "--target", "pc", "--control", "testbed/artifacts/baseline-pc.user.js", "--candidate", "testbed/artifacts/runtime-under-test.user.js", "--output", "artifacts/windows-observed-pc-palette.json"] },
         { "id": "pc-functional", "command": "node", "args": ["testbed/run-tests.mjs", "--group", "functional", "--require-runtime-under-test"], "env": { "DCUF_TESTBED_TARGET": "pc" } },
-        { "id": "repository-all", "command": "node", "args": ["tools/verify-repo.mjs", "all"] },
-        { "id": "mobile-smoke", "command": "node", "args": ["testbed/run-tests.mjs", "--group", "smoke", "--require-runtime-under-test"] }
+        { "id": "restore-mobile-guard", "command": "node", "args": ["tools/build-userscript.mjs", "--testbed-output", "testbed/artifacts/runtime-under-test.user.js"], "always": true },
+        { "id": "repository-all", "command": "node", "args": ["tools/verify-repo.mjs", "all"] }
       ]
     },
     "live-canary": {
@@ -71,6 +138,15 @@
     "shared-ip-data": ["acceptance"],
     "shared-storage-core": ["acceptance"],
     "shared-filter-core": ["acceptance"],
+    "shared-filter-runtime": ["acceptance"],
+    "filter-settings-host-adapter": ["acceptance"],
+    "filter-host-adapter": ["acceptance"],
+    "shared-filter-ui-style": ["acceptance"],
+    "shared-ui-contracts": ["acceptance"],
+    "ui-disposable-scope": ["acceptance"],
+    "ui-state-store": ["acceptance"],
+    "theme-host-port": ["acceptance"],
+    "popup-geometry-host-adapter": ["acceptance"],
     "shared-write-defaults": ["acceptance"],
     "runtime-bootstrap": ["acceptance"],
     "runtime-teardown": ["acceptance"],
@@ -78,21 +154,37 @@
     "mobile-runtime-coordinator": ["acceptance"],
     "mobile-style-banner": ["mobile-focused"],
     "mobile-theme-module": ["acceptance"],
+    "mobile-theme-host-style": ["acceptance"],
     "mobile-filter-module": ["acceptance"],
     "mobile-convenience-module": ["acceptance"],
+    "mobile-convenience-host-adapter": ["acceptance"],
     "mobile-personal-block-module": ["acceptance"],
+    "personal-block-host-adapter": ["acceptance"],
     "mobile-ui-module": ["acceptance"],
+    "mobile-native-form-host-adapter": ["acceptance"],
+    "mobile-write-ad-host-adapter": ["acceptance"],
+    "mobile-write-font-presenter": ["acceptance"],
+    "mobile-write-editor-host-adapter": ["acceptance"],
     "mobile-post-main-fixes": ["acceptance"],
     "mobile-legacy-app": ["policy"],
     "pc-adapter-contract": ["pc-focused"],
     "pc-filter-style": ["pc-focused"],
+    "pc-theme-host-style": ["pc-focused"],
+    "pc-filter-ui-style-mount": ["pc-focused"],
     "pc-filter-entry": ["pc-focused"],
     "mobile-build": ["acceptance"],
+    "mobile-release-control": ["acceptance", "promotion-windows"],
     "pc-build": ["acceptance"],
-    "repository-verifier": ["acceptance"],
+    "repository-verifier": ["policy"],
     "testbed-harness": ["acceptance"],
+    "testbed-list-differential": ["acceptance", "promotion-windows"],
+    "testbed-article-differential": ["acceptance", "promotion-windows"],
+    "testbed-comment-differential": ["acceptance", "promotion-windows"],
+    "testbed-native-form-differential": ["acceptance", "promotion-windows"],
+    "testbed-header-differentials": ["acceptance", "promotion-windows"],
     "testbed-fixtures": ["acceptance"],
     "architecture-governance": ["policy"]
+    ,"modernization-assurance": ["policy"]
   },
   "invariantProfiles": {
     "invariant-registry-integrity": ["policy"],
@@ -108,5 +200,6 @@
     "invariant-proof-binding": ["policy"],
     "invariant-ui-port-boundary": ["acceptance"],
     "invariant-hot-path-stability": ["acceptance"]
+    ,"invariant-modernization-assurance": ["policy"]
   }
 }

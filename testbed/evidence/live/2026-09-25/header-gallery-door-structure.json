@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "kind": "public-host-header-structure-characterization",
+  "observedAtUtc": "2026-09-25T11:14:00Z",
+  "page": "https://gall.dcinside.com/mgallery/board/lists/?id=aoegame",
+  "environment": "Codex in-app browser, public logged-out page, no DCUF candidate injected",
+  "scope": "redacted selector, handler, and ancestry facts only; no post or account content",
+  "sourceAncestry": [".issue_wrap", ".issuebox.gallery_box", ".issue_contentbox.clear"],
+  "sourceInteractiveOutsideRankPopup": {
+    "total": 11,
+    "links": 1,
+    "buttons": 10,
+    "notes": "The copied source contains rank-tip, management-history, absence-tip, rank-list, and close actions; rank is not its only inline handler."
+  },
+  "rankAction": {
+    "selector": ".minor_ranking_box > .btn_hotall_list",
+    "inlineHandler": "toggle_hot_rank_pop()",
+    "hostFunctionEffect": "Targets #hot_rank_pop2 by ID, loads rank data on demand, then calls toggle_layer."
+  },
+  "rankPopup": {
+    "selector": "#hot_rank_pop2.pop_wrap.type2",
+    "parent": ".minor_ranking_box",
+    "insideSource": true
+  },
+  "rankTipAction": {
+    "selector": ".minor_ranking_box > .btn_mgall_dcp",
+    "inlineHandler": "toggle_hot_tip_pop()",
+    "hostFunctionEffect": "Calls toggle_layer on #hot_tip_pop by ID."
+  },
+  "rankTipPopup": {
+    "selector": "#hot_tip_pop.pop_tipbox.minor_tip",
+    "parent": ".minor_ranking_box",
+    "insideSource": true,
+    "removedByCurrentClonePrune": false,
+    "idStrippedInCurrentClone": true
+  },
+  "limits": "Host structure and handler source were read on the live public page. Candidate reachability was not tested on that page; the separate live-shaped Testbed audit reproduces the suspected hidden-original failure."
+}

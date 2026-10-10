@@ -56,6 +56,8 @@ for (const skill of actualSkills) {
 }
 
 const routing = JSON.parse(await readFile(path.join(rootDir, 'verification', 'skill-routing-cases.json'), 'utf8'));
+const continuity = JSON.parse(await readFile(path.join(rootDir, 'verification', 'continuity-contract.json'), 'utf8'));
+check(new Set(routing.cases.map((item) => item.id)).size === routing.cases.length, 'routing corpus has duplicate case ids');
 const categories = new Set(routing.cases.map((item) => item.category));
 for (const required of ['positive', 'negative', 'overlap', 'paraphrase', 'held-out']) check(categories.has(required), `routing corpus lacks ${required} cases`);
 for (const item of routing.cases) {
@@ -66,6 +68,54 @@ for (const item of routing.cases) {
 for (const skill of expectedSkills) {
     check(routing.cases.some((item) => item.expectedSkills.includes(skill)), `${skill}: no positive routing case`);
     check(routing.cases.some((item) => item.excludedSkills.includes(skill)), `${skill}: no negative routing case`);
+}
+const routingById = new Map(routing.cases.map((item) => [item.id, item]));
+for (const [caseId, requiredSkills, excludedSkills] of [
+    ['architecture-live-positive', ['dcuf-semantic-architecture'], ['dcuf-release']],
+    ['architecture-live-overlap', ['dcuf-semantic-architecture', 'dcuf-ui-surface-maintainer', 'dom-safety-audit', 'dcuf-long-work-continuity'], ['dcuf-release']],
+    ['architecture-live-held-out', ['dcuf-semantic-architecture', 'dcuf-ui-surface-maintainer'], ['dcuf-release']],
+    ['architecture-local-negative', ['dcuf-ui-surface-maintainer'], ['dcuf-semantic-architecture']],
+    ['evidence-research-overlap', ['dcuf-evidence-adversarial-selection', 'dcuf-semantic-architecture'], ['dcuf-release']],
+    ['evidence-local-negative', [], ['dcuf-evidence-adversarial-selection']],
+    ['evidence-research-held-out', ['dcuf-evidence-adversarial-selection', 'dcuf-ui-surface-maintainer'], ['dcuf-release']],
+    ['continuity-decision-overlap', ['dcuf-long-work-continuity', 'dcuf-evidence-adversarial-selection'], ['dcuf-release']],
+    ['continuity-decision-held-out', ['dcuf-long-work-continuity', 'dcuf-evidence-adversarial-selection'], ['dcuf-release']],
+    ['continuity-handoff-overlap', ['dcuf-long-work-continuity', 'dcuf-semantic-preservation'], ['dcuf-release']],
+    ['continuity-handoff-held-out', ['dcuf-long-work-continuity'], ['dcuf-release']],
+]) {
+    const item = routingById.get(caseId);
+    check(Boolean(item), `required routing case is missing: ${caseId}`);
+    for (const skill of requiredSkills) check(item?.expectedSkills.includes(skill), `${caseId}: expected skill missing: ${skill}`);
+    for (const skill of excludedSkills) check(item?.excludedSkills.includes(skill), `${caseId}: excluded skill missing: ${skill}`);
+}
+const architectureSkill = await readFile(path.join(skillsDir, 'dcuf-semantic-architecture', 'SKILL.md'), 'utf8');
+check(architectureSkill.includes('live architecture map') && architectureSkill.includes('tools/inspect-live-architecture.mjs --check'),
+    'semantic architecture skill no longer routes live map inspection and its gate');
+
+const continuityCases = routing.cases.filter((item) => item.expectedSkills.includes('dcuf-long-work-continuity'));
+for (const category of ['positive', 'paraphrase', 'held-out', 'overlap']) {
+    check(continuityCases.some((item) => item.category === category), `dcuf-long-work-continuity: no ${category} routing case`);
+}
+const continuitySkillPath = path.join(rootDir, continuity.thinRouter.skillPath);
+const continuitySkillText = await readFile(continuitySkillPath, 'utf8');
+check(continuitySkillText.length <= continuity.thinRouter.maxEntrypointCharacters,
+    'dcuf-long-work-continuity: thin router exceeds its machine limit');
+check(continuitySkillText.includes('(references/retrieval-contract.md)'),
+    'dcuf-long-work-continuity: detail reference is not routed from SKILL.md');
+check(continuitySkillText.includes('(references/handoff-contract.md)'),
+    'dcuf-long-work-continuity: cold-start handoff reference is not routed from SKILL.md');
+check(!/[a-f0-9]{40}(?:[a-f0-9]{24})?/i.test(continuitySkillText),
+    'dcuf-long-work-continuity: current commit or artifact fact leaked into the thin router');
+const evidenceSkillText = await readFile(path.join(skillsDir, 'dcuf-evidence-adversarial-selection', 'SKILL.md'), 'utf8');
+check(evidenceSkillText.includes('(references/research-contract.md)'),
+    'dcuf-evidence-adversarial-selection: research detail reference is not routed from SKILL.md');
+for (const concept of continuity.retrievalConcepts || []) {
+    for (const caseId of concept.routingCaseIds || []) {
+        const item = routing.cases.find((candidate) => candidate.id === caseId);
+        check(Boolean(item), `dcuf-long-work-continuity: missing routed case ${caseId}`);
+        check(item?.expectedSkills.includes('dcuf-long-work-continuity'),
+            `dcuf-long-work-continuity: ${caseId} does not select the continuity skill`);
+    }
 }
 
 const vendorRoot = path.join(rootDir, 'vendor', 'agent-method-sectors', 'mattpocock-skills', '6654f6b60cd9d5be8b54c6fafe44346dabeb3b76');
@@ -87,5 +137,5 @@ if (failures.length) {
     for (const failure of failures) console.error(` - ${failure}`);
     process.exitCode = 1;
 } else {
-    console.log(`Skill verification passed: ${actualSkills.length} active DCUF skills, ${routing.cases.length} routing cases, ${manifest.files.length} pinned vendor files.`);
+    console.log(`Skill verification passed: ${actualSkills.length} active DCUF skills, ${routing.cases.length} routing cases, ${continuity.retrievalConcepts.length} continuity concepts, ${manifest.files.length} pinned vendor files.`);
 }

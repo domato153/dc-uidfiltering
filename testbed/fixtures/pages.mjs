@@ -31,16 +31,78 @@ if (document.body.dataset.fixturePage === 'list') {
 if (document.body.dataset.fixturePage === 'view') {
     const embeddedList = document.querySelector('.fixture-view-list');
     embeddedList?.insertAdjacentHTML('beforebegin', '<div class="list_bottom_btnbox"><div class="fl"><button type="button" class="list_bottom btn_blue">All</button><button type="button" class="list_bottom btn_white">Concept</button></div><div class="fr"><a class="btn_write write" href="/board/write?id=test">Write</a></div></div><div class="bottom_paging_wrap"><div class="bottom_paging_box"><a href="?id=test&page=1" class="sp_pagingicon page_first">First</a><a href="?id=test&page=15" class="sp_pagingicon page_prev">Previous</a><em>16</em><a href="?id=test&page=17">17</a><a href="?id=test&page=18">18</a><a href="?id=test&page=19">19</a><a href="?id=test&page=20">20</a><a href="?id=test&page=21">21</a><a href="?id=test&page=22">22</a><a href="?id=test&page=23">23</a><a href="?id=test&page=24">24</a><a href="?id=test&page=25">25</a><a href="?id=test&page=26">26</a><a href="?id=test&page=27">27</a><a href="?id=test&page=28">28</a><a href="?id=test&page=29">29</a><a href="?id=test&page=30">30</a><a href="?id=test&page=31" class="sp_pagingicon page_next">Next</a><a href="?id=test&page=999" class="sp_pagingicon page_end">End</a></div><div class="bottom_movebox"><button class="btn_grey_roundbg btn_schmove" type="button">Go to page</button></div></div><form name="frmSearch"><fieldset><legend>Search posts</legend><div class="bottom_search_wrap"><div class="search_left_box"><div class="select_box bottom_array"><button class="select_area" type="button">Title and content</button><span class="inner"></span></div><select name="search_type" aria-label="search type"><option value="title_content">Title and content</option><option value="title">Title</option></select></div><div class="search_right_box"><div class="bottom_search" style="position:absolute;right:0;top:0;border:4px solid #3b4890;background:#3b4890;box-shadow:inset 0 0 0 1px #3b4890"><div class="inner_search"><input class="in_keyword" type="text" name="search_keyword" aria-label="search keyword"></div><button class="sp_img bnt_search" style="background-image:linear-gradient(#243d91,#243d91);background-position:center;background-repeat:no-repeat" type="button" aria-label="search">Go</button></div></div></div></fieldset><div id="searchTypeLayer"></div></form>');
-    const viewActionAnchor = document.querySelector('.view_bottom');
+    const viewActionAnchor = document.querySelector('.view_bottom, #bottom_listwrap');
     if (document.body.dataset.fixtureVariant !== 'mini') {
         viewActionAnchor?.insertAdjacentHTML('beforebegin', '<div class="view_bottom_btnbox clear" style="height:35px"><div class="fl"><button type="button" class="btn_blue concept">All</button><button type="button" class="btn_white concept">Concept</button></div><div class="fr" style="position:absolute;right:0"><button type="button" class="btn_grey modify">Edit</button><button type="button" class="btn_grey cancle">Delete</button><a class="btn_write write" href="/board/write?id=test">Write</a></div></div>');
     }
 }
 
+{
+    const listWrap = document.querySelector('.fixture-view-list') || document.querySelector('.gall_listwrap');
+    const scope = listWrap?.parentElement;
+    const elements = {
+        listWrap,
+        toolbar: document.body.dataset.fixturePage === 'list' ? document.querySelector('.list_array_option') : null,
+        actionBar: scope?.querySelector(':scope > .list_bottom_btnbox') || null,
+        pagination: scope?.querySelector(':scope > .bottom_paging_wrap') || null,
+        searchForm: scope?.querySelector(':scope > form[name="frmSearch"]') || null,
+        searchLayer: scope?.querySelector(':scope > form[name="frmSearch"] #searchTypeLayer') || scope?.querySelector(':scope > #searchTypeLayer') || null,
+        searchSelect: scope?.querySelector(':scope > form[name="frmSearch"] select[name="search_type"]') || null,
+        searchField: scope?.querySelector(':scope > form[name="frmSearch"] input[name="search_keyword"]') || null,
+        searchButton: scope?.querySelector(':scope > form[name="frmSearch"] .bnt_search') || null,
+        viewActionBar: document.querySelector('#container > .view_bottom_btnbox'),
+    };
+    const topology = Object.fromEntries(Object.entries(elements).map(([key, element]) => [key, element ? {
+        element,
+        parent: element.parentNode,
+        nextSibling: element.nextSibling,
+        style: element.getAttribute('style'),
+    } : null]));
+    window.__fixtureListControlBaseline = {
+        topology,
+        formSignature: elements.searchForm ? Array.from(elements.searchForm.elements).map((field) => ({
+            tag: field.tagName,
+            type: field.getAttribute('type'),
+            name: field.getAttribute('name'),
+            value: field.value,
+        })) : [],
+    };
+}
+
+{
+    const articleRoot = document.querySelector('article.view_content_wrap, #container > article > div.view_content_wrap');
+    const recommendBox = articleRoot?.querySelector('.btn_recommend_box') || null;
+    const header = articleRoot?.querySelector('.gallview_head') || null;
+    const body = articleRoot?.querySelector('.gallview_contents, .writing_view_box') || null;
+    const content = articleRoot?.querySelector('.write_div') || null;
+    const buttons = Array.from(recommendBox?.querySelectorAll('button') || []);
+    const capture = (element) => element ? {
+        element,
+        parent: element.parentNode,
+        nextSibling: element.nextSibling,
+        style: element.getAttribute('style'),
+    } : null;
+    window.__fixtureArticleBaseline = articleRoot ? {
+        topology: {
+            articleRoot: capture(articleRoot),
+            header: capture(header),
+            body: capture(body),
+            content: capture(content),
+            recommendBox: capture(recommendBox),
+            buttons: buttons.map(capture),
+        },
+        buttonFields: buttons.map((button) => ({
+            type: button.getAttribute('type'),
+            name: button.getAttribute('name'),
+            value: button.getAttribute('value'),
+        })),
+    } : null;
+}
+
 </script></body></html>`;
 
 const tableHead = (variant) => `<thead><tr><th>번호</th>${variant === 'minor' ? '<th>구분</th>' : ''}<th>제목</th><th>작성자</th><th>날짜</th><th>조회</th><th>추천</th></tr></thead>`;
-const listTable = (variant, className = '') => `<table class="gall_list ${className}">${tableHead(variant)}<tbody class="${className ? '' : 'listwrap2'}">${liveListRows(variant)}</tbody></table>`;
+const listTable = (variant, className = '', rowOptions = {}) => `<table class="gall_list ${className}">${tableHead(variant)}<tbody class="${className ? '' : 'listwrap2'}">${liveListRows(variant, rowOptions)}</tbody></table>`;
 const headtextNav = (variant) => variant === 'major' ? '' : `<nav class="fixture-headtext-nav" aria-label="말머리 탐색">
     <a href="#" onclick="return listSearchHead(this)" data-fixture-headtext-nav="1">일반</a>
     <a href="#" onclick="return listSearchHead(this)" data-fixture-headtext-nav="1">🌳🌳</a>
@@ -111,7 +173,7 @@ window.Pum = {
 document.querySelector('.recom_bottom_box')?.insertAdjacentHTML('afterbegin', '<button type="button" class="btn_cloned btn_svc" onclick="Pum.write_open()">펌</button>');
 </script>`;
 
-export function viewPage({ long = false, massComments = 0, variant = 'major', darkAtStart = false, brokenTheme = false } = {}) {
+export function viewPage({ long = false, massComments = 0, variant = 'major', darkAtStart = false, brokenTheme = false, withHeader = false, liveShape = false } = {}) {
     const isMinor = variant === 'minor';
     const isMini = variant === 'mini';
     const comments = liveCommentRows(variant, massComments);
@@ -123,7 +185,17 @@ export function viewPage({ long = false, massComments = 0, variant = 'major', da
     const miniButtons = isMini ? `<div class="view_bottom_btnbox clear"><div class="fr"><button type="button" class="btn_grey modify" onclick="window.__fixtureMiniButtonClicks=(window.__fixtureMiniButtonClicks||0)+1">수정</button><button type="button" class="btn_grey cancle" onclick="window.__fixtureMiniButtonClicks=(window.__fixtureMiniButtonClicks||0)+1">삭제</button><button type="button" id="btn_write" class="btn_lightpurple write" onclick="window.__fixtureMiniButtonClicks=(window.__fixtureMiniButtonClicks||0)+1">글쓰기</button></div></div><div class="fixture-mini-absolute-obstruction" aria-hidden="true"></div>` : '';
     const darkBootstrap = darkAtStart ? `<script>document.documentElement.classList.add('dc-filter-dark-mode')</script>` : '';
     const brokenThemeBootstrap = brokenTheme ? `<script>document.querySelector('.gallview_head')?.style.setProperty('box-shadow','none','important')</script>` : '';
-    return `${baseHead(`DCUF ${variant} view fixture`, { dark: darkAtStart })}<body class="${darkAtStart ? 'dc-filter-dark-mode' : ''}" data-fixture-page="view" data-fixture-variant="${variant}">${darkBootstrap}${controls}<main id="container" class="clear ${viewClass}"><article class="view_content_wrap"><header class="view_content_wrap"><div class="gallview_head"><span class="title_subject">테스트 본문</span></div></header><section class="writing_view_box"><div class="write_div"><p>본문 시작</p>${long ? longArticleNodes(1600) : ''}<div id="fixture-long-article"></div></div></section><div class="view_ad_wrap" id="fixture-initial-ad"><iframe id="google_ads_iframe_fixture" title="advertisement"></iframe></div><div class="gall_exposure_list fixture-synthetic-related"><ul><li><span class="ub-writer" data-uid="safe-related-1" data-nick="관련글작성자"></span><a href="${viewPath}?id=test&no=2001">관련 글 1</a></li><li><span class="ub-writer" data-uid="blocked-related-user" data-nick="관련차단"></span><a href="${viewPath}?id=test&no=2002">관련 글 2</a></li></ul></div>${recommendBox}${pumPopupBootstrap}${miniButtons}</article><section id="focus_cmt"><div id="comment_wrap_1" class="gall_comment comment_wrap show"><div class="comment_count"><span class="num_box"><span class="font_red">${massComments || baseCommentCount}</span></span><div class="fr"><button type="button" class="btn_cmt_refresh" data-no="1001" data-sort="">새로고침</button></div></div><div class="comment_box"><ul class="cmt_list add">${comments}</ul></div></div>${normalCommentComposer}${replyCommentComposer}</section><section class="view_comment image_comment fixture-synthetic-image-comments"><div class="comment_wrap"><div class="comment_box img_comment_box"><ul class="cmt_list">${imageCommentItem(1, { uid: 'safe-image-user' })}${imageCommentItem(2, { uid: 'blocked-image-user' })}</ul></div>${imageCommentComposer}</div></section><div class="view_bottom"><a href="${listPath}?id=test">목록</a><section class="gall_listwrap fixture-view-list">${listTable(variant, 'fixture-view-table')}</section></div></main><a id="fixture-to-list" href="${listPath}?id=test">목록으로 이동</a>${brokenThemeBootstrap}${scripts}`;
+    const articleOpen = liveShape ? '<article><div class="view_content_wrap">' : '<article class="view_content_wrap">';
+    const articleClose = liveShape ? '</div></article>' : '</article>';
+    const contentOpen = liveShape ? '<div class="gallview_contents"><div class="inner">' : '<section class="writing_view_box"><div class="write_div">';
+    const contentClose = liveShape ? '</div></div>' : '</div></section>';
+    const listOpen = liveShape
+        ? '<article><div id="bottom_listwrap" class="listwrap clear"><section class="left_content"><article>'
+        : '<div class="view_bottom">';
+    const listClose = liveShape ? '</article></section></div></article>' : '</div>';
+    const listClass = liveShape ? 'gall_listwrap list fixture-view-list' : 'gall_listwrap fixture-view-list';
+    const rowOptions = liveShape ? { totalRows: 52, firstRowsVisible: true } : {};
+    return `${baseHead(`DCUF ${variant} view fixture`, { dark: darkAtStart })}<body class="${darkAtStart ? 'dc-filter-dark-mode' : ''}" data-fixture-page="view" data-fixture-variant="${variant}"${liveShape ? ' data-fixture-live-shape="1"' : ''}>${darkBootstrap}${withHeader ? hostChrome + galleryHeading(variant) : ''}${controls}<main id="container" class="clear ${viewClass}">${articleOpen}<header class="view_content_wrap"><div class="gallview_head"><span class="title_subject">테스트 본문</span></div></header>${contentOpen}<p>본문 시작</p>${long ? longArticleNodes(1600) : ''}<div id="fixture-long-article"></div>${contentClose}<div class="view_ad_wrap" id="fixture-initial-ad"><iframe id="google_ads_iframe_fixture" title="advertisement"></iframe></div><div class="gall_exposure_list fixture-synthetic-related"><ul><li><span class="ub-writer" data-uid="safe-related-1" data-nick="관련글작성자"></span><a href="${viewPath}?id=test&no=2001">관련 글 1</a></li><li><span class="ub-writer" data-uid="blocked-related-user" data-nick="관련차단"></span><a href="${viewPath}?id=test&no=2002">관련 글 2</a></li></ul></div>${recommendBox}${pumPopupBootstrap}${miniButtons}${articleClose}<section id="focus_cmt"><div id="comment_wrap_1" class="gall_comment comment_wrap show"><div class="comment_count"><span class="num_box"><span class="font_red">${massComments || baseCommentCount}</span></span><div class="fr"><button type="button" class="btn_cmt_refresh" data-no="1001" data-sort="">새로고침</button></div></div><div class="comment_box"><ul class="cmt_list add">${comments}</ul></div></div>${normalCommentComposer}${replyCommentComposer}</section><section class="view_comment image_comment fixture-synthetic-image-comments"><div class="comment_wrap"><div class="comment_box img_comment_box"><ul class="cmt_list">${imageCommentItem(1, { uid: 'safe-image-user' })}${imageCommentItem(2, { uid: 'blocked-image-user' })}</ul></div>${imageCommentComposer}</div></section>${listOpen}<a href="${listPath}?id=test">목록</a><section class="${listClass}">${listTable(variant, 'fixture-view-table', rowOptions)}</section>${listClose}</main><a id="fixture-to-list" href="${listPath}?id=test">목록으로 이동</a>${brokenThemeBootstrap}${scripts}`;
 }
 
 export function blankPage() {

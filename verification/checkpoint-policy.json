@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "governingOwner": "AGENTS.md",
+  "repository": "domato153/dc-uidfiltering",
+  "remoteUrl": "https://github.com/domato153/dc-uidfiltering.git",
+  "branch": "codex/ui-port-boundary",
+  "scope": "WORKING_CHECKPOINT_ONLY",
+  "workflowName": "DCUF development CI",
+  "requiredJob": "working-checkpoint",
+  "localValidation": ["node", "tools/verify-repo.mjs", "all"],
+  "forbiddenActions": ["force-push", "merge", "rebase", "branch-switch", "official-branch", "tag", "release", "live-dispatch"],
+  "evidenceScope": "CHECKPOINT_ONLY",
+  "workSuccessCertified": false
+}

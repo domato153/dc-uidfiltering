@@ -1,35 +1,43 @@
-# DCUF current state
+# DCUF current situation
 
-## Accepted baseline
+## Current execution
 
-- Development branch: `codex/mobile-development`.
-- Behavior source: `cef5f71381116d2746b0319b2f8e609e8d7eae85`.
-- Accepted characterization commit: `b3e247f78d67bca4ad46bf7b35e7dd07c008cf3d`.
-- Mobile beta SHA-256: `A03038FE68126B62054EBA11244D4EE2E1766D308983FC5C27127FD3794CB343`.
-- Mobile stable 3.5.5 SHA-256: `32BA208DDD9973A7EEC343F01E963A833AB4F0C084987077EDAE46844383C25D`.
-- PC 1.9.9 baseline SHA-256 at the behavior source: `D3A95C479D8D50F88D97700DE91FA17D1D338B3AEBB488F53D865F445B656212`.
+- Active plan: docs/work/MOBILE_UI_MODERNIZATION.md and UI_REPLACEABILITY_VALIDATION.md. On 2026-10-10 the user authorized verified context-free local handoff and a new receiver Goal to complete the remaining plan without waiting after each unit. This supersedes the preceding named-binding-only scope, including historical scope prose in its packet. Preserve the plan's header-sealing prerequisite, four real presentation-change/replacement/restore experiments, final feature/state inventory, independent/upper assurance and mandatory exact-artifact live evidence. Release/version/official-publication and actual account/content writes still need separate authority.
+- Workspace path: `.`. Use the exact nested worktree from the private locator; parent checkout/history is historical. `AGENTS.md` is the single policy.
+- Active stage: `header-navigation`. Cold receiver ACCEPTED. On 2026-10-10 the user requested completion of the current unit and a status report, then no further implementation until resume. The projection-removal unit is validated, pushed and exact-SHA checkpoint CI verified at fb5f495f1df026d9dabea17968ae20e3fcc05655. Early-binding RED preparation is ignored local scratch only; no next-unit product changes. No header-stage admission.
+- Source state: source checkpoint base HEAD `fb5f495f1df026d9dabea17968ae20e3fcc05655` on `codex/ui-port-boundary`; projection-removal product checkpoint is remote-synced and exact-SHA CI verified. Subsequent pause/owner wording is guidance only; source and D52D runtime are unchanged. Fresh Git and the exact checkpoint receipt own the latest published guidance SHA/state. Prior c158e73 named-binding checkpoint remains accepted only within its recorded scope.
+- Local-only state: `LOCAL_ONLY_EVIDENCE`. Frozen next control artifacts/controls/header-removal-D52D.user.js is D52D8C7C9AE46A2BD3D37974B929D36952B9E3F55EB5D19F5C3680602B9E1B59; removal comparison EFF remains readable. Original selector/phase control 2AA1 and synchronous failure 3036 remain readable. New ignored reports are artifacts/header-drawer-removal-2026-10-10/. Actual cold receiver record artifacts/handoff-2026-10-10/receiver-qualification.json includes independently derived inputs, exact local hashes and create_goal/get_goal active results; CONTINUITY_ONLY, not product admission. Preserve debug.log without reading/staging.
+- Candidate fingerprint: `9f6907ec66d604b449b29fdc9e2a5c5bbf7f9704009db24a0e05a5da0231110a`; pause/closeout guidance differs from executed removal fingerprint d115cd88f9a2d548cffac9b4f53f969d4aab4441c3755c708052c137d4270a08. Reports keep actual input bindings, not a relabeled whole-proof PASS.
+- Last current audit: UNKNOWN for header-stage admission. Bounded removal factory/native/lifecycle/input/width checks PASS; mobile full 138/138, host 11/11 and unchanged-PC 14/14 PASS. Core proof 71 negatives/9 positives PASS. Original routed execution ran 23 commands with palette FAIL and runtime environment failure (ERR_UNSAFE_PORT 3659). Identity-checked runtime retry passed 53 negatives/17 positives, with 49 passed cases reused and fresh preflight. Original palette FAIL is retained. Read-only independent review found no blocking product defect and verified corrected restoration/continuity oracles; it did not run browsers/live. Header/final/upper/live UNKNOWN and unexecuted promotion remain. Exact reports/hashes and reuse scope: HEADER_DRAWER_PROJECTION_REMOVAL.md.
+- Accepted baseline: native-form stage fingerprint `14f1eff219760bc8387895d113d008afcf73581249ddf064fe9279028030daaa`; receipt `verification/receipts/2026-09-23-write-edit-delete-popup.json`, SHA-256 `61AFD57B1C368501121DBB5B6FD41A810B1669C5D6870DEA7624825856206BE6`. This accepted stage is separate from the current header candidate.
+- Current artifact: mobile root/dist/guard SHA-256 `D52D8C7C9AE46A2BD3D37974B929D36952B9E3F55EB5D19F5C3680602B9E1B59` at version 3.5.5; PC root/dist unchanged at version 1.9.9. The production stylesheet still uses exact named native inputs at the original mount. Descendant/context attributes are no longer written; root/open/relation lifetime and before-paint copied root/relation cleanup remain. Accepted registry unchanged; owners stay mixed.
+- Blockers: Remaining header early-scope/driver/cascade/startup debt and unmodeled native-height/live applicability. Five header presenters/drawer adapter remain mixed. Analogous issue-top risk, original palette FAIL, full-header/34-feature/upper/live gaps remain. New fixture RED was an initially open settings popup blocking a pointer click; seed threshold/ratio storage instead of forcing input.
+- Pending live checks: EFF actual-extension/public-site/authenticated/hosted-live coverage is absent. Earlier public/canary/normal-navigation observations are historical; persisted=false did not prove actual bfcache. No mandatory live UNKNOWN can become final completion. Prepare concrete recoverable execution before requesting any missing install/account/content/release authority; continue independent local work while waiting. The sender Goal is active for the user-authorized handoff; the new context-free receiver must create its own Goal only after ACCEPTED, without an invented token budget. Sender and receiver must not concurrently edit product files. Handoff/CI success is separate from full product completion.
 
-## Accepted characterization
+Sender qualification: initial guidance checkpoint 46d2ad66682446c10da34a15929db13aa99f3be4 pushed but its CI failed because ignored immediate-control/report assets were declared as remote entry dependencies. Keep artifacts/handoff-2026-10-10/ci-46d2-failed.log. The corrected typed entry uses tracked/build-recoverable inputs; cold acceptance additionally requires every localEvidence file at its stated SHA. Neither CI nor the declared-entry parser certifies cold transfer. Sender-qualification.json records scoped readability, independently derived inputs and missing-situation/decision/control/evidence/wrong-root controls; the actual new reader must still adjudicate ACCEPTED or STALE_REPLAN.
 
-- Phase 1 governance, registry, impact routing, skills, locked toolchain, and hosted-runner workflows are committed.
-- Mobile guarded runtime `BB9A847B5FBB76CADC87D7CA6BFC97AB639D77E4BC2E1C9C4F11B53425FCB296`: 96/96 full and 11/11 host compatibility passed.
-- PC guarded runtime `5852A579F00D83E3C166B78B09B4843E11AE2A19E1BBAD48F8CC94DB28636104`: 13/13 target-applicable functional tests passed.
-- Wrong-head, stale-harness, and wrong-artifact mutations were rejected.
-- One narrow pre-existing contract repair is declared: Chromium parser replacement can remove the provisional document-start lock; bootstrap now restores it before paint and disconnects its repair observer at terminal state.
+```dcuf-current-artifacts
+{
+  "schemaVersion": 1,
+  "mobile": {
+    "sha256": "D52D8C7C9AE46A2BD3D37974B929D36952B9E3F55EB5D19F5C3680602B9E1B59"
+  },
+  "pc": {
+    "sha256": "1A7A00468F4DCFB57C7341063098B827743091FD7593BA3FBA86A17E282BDC33"
+  }
+}
+```
 
-## Active phase
+## Historical width evidence and practical boundaries
 
-- Phase 2: introduce `UiPort`, immutable snapshots, typed intents, disposable UI scopes, and a legacy adapter before moving owners.
-- Current mixed ownership is recorded in the accepted registry; UI-port debt remains explicit.
-- The discarded broad UI/login redesign and dirty checkout are excluded.
+`HEADER_DRAWER_WIDTH_INPUT.md` binds the preimplementation missing-layout negative, one-value cap variants and stale-adapter 80px negative. Width probe covers baseline/560/664/1280 across 13 minor/recommendation/mixed contexts each plus one negative, 201 observations, original pointer/default Enter/focus, content/resize, body phases, geometry/containment, GM no-write and disposal/restored priorities. Default compiled CSS equality is strict; comparing raw source to compiled output first exposed builder whitespace normalization, an oracle-layer error rather than product drift.
 
-## Evidence status
+The immediate A5EB/2AA1 comparison covers 92 observations and nine input contexts per side, zero selected semantic differences and 31 rejected faults, including real microtask deferral. It retains 32 raw style-order differences and explicitly does not prove global phase equivalence. Both owners remain mixed. Prior original feedback/short mixed overlap/issue-top and native-height applicability limitations remain in `HEADER_DRAWER_LAYOUT_INPUT.md` and `HEADER_DRAWER_FINAL_TOP.md`.
 
-- Exact beta/stable normalization and repository release checks: passed.
-- Characterization receipt: `verification/receipts/2026-09-05-characterization.json`.
-- July live evidence is historical and may be stale.
-- No live canary has been claimed for this refactor.
+Fresh 2AA1 mobile full 138/138, host 11/11 and unchanged-PC functional 14/14 pass. Core/runtime proof covers all six groups with 124 rejected negatives/26 accepted controls and no reused cases. Header cascade, list/article/comment/native-form and PC palette comparisons pass; all 23 selected local commands executed and only original mobile palette fails. Exact report hashes are in HEADER_DRAWER_WIDTH_INPUT.md and ignored unit-result.json. Fresh read-only review found no actionable width defect; it did not rerun browser/live checks. Original old-baseline palette FAIL and full-header/34-feature/upper/live UNKNOWN remain; accepted native-form baseline stays separate. Selected `promotion-windows` profile is not executed or passed merely by selection; no release promotion follows.
 
-## Resume rule
+`UI_REPLACEABILITY_VALIDATION.md` pilot/final admission remains unfinished. Width locality is now observed for selected numeric variants; generalized UI ease, cosmetic/composition and genuinely distinct presenter replacement/restoration are not yet proven. Human editing-speed savings remain unmeasured.
 
-Recheck fresh refs, HEAD, worktree status, active candidate overlay, impact receipt, fixture/harness hashes, and generated artifacts before continuing.
+Current removal evidence uses explicit EFF frozen control; verification/baselines.json is a final/stable comparison reference, and becomes a direct input of the selected routed baseline/palette validation, not of the removal lifecycle or selector probes.
+
+Operating sequence: fresh Git route, applicable current runtime/oracle checks, coherent validated checkpoint and exact-SHA push CI, then the one next implementation. Split checks or checkpoint CI never mean every stage/final/live claim passed. No clone/portal, shared state/subscriber/lifecycle owner or unrelated issue-top/cascade redesign in the width unit.
