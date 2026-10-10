@@ -43,6 +43,102 @@ export function validateNativeProjection(rows) {
     assert.ok(rows.every(row => row.actual === row.expected), 'Native projection role/scope mismatch');
 }
 
+// The named native binding makes descendant/context writes unnecessary. Keep the
+// old role oracle above for historical controls; this oracle checks host data and
+// actual selector effects without requiring the removed implementation.
+export async function exerciseNativeUnprojectedLifecycle(page, settle) {
+    const steps = [];
+    await page.evaluate(() => {
+        window.__dcufHeaderDrawerHostAdapter.dispose();
+        const source = document.querySelector('.issue_wrap .issue_contentbox');
+        const intro = source.querySelector('.minor_intro_box');
+        source.setAttribute('data-dcuf-header-native-door','1');
+        let ranking = source.querySelector('.minor_ranking_box');
+        if (!ranking) {ranking=document.createElement('div');ranking.className='minor_ranking_box';source.append(ranking);}
+        const hostStyle=document.createElement('style');
+        hostStyle.textContent='.native-lifecycle-button::before { content: "Native host decoration"; }';
+        document.head.append(hostStyle);
+        intro.setAttribute('data-dcuf-header-door-intro', 'host-original');
+        ranking.setAttribute('data-dcuf-header-door-ranking', '1');
+        source.setAttribute('data-dcuf-header-door-context', 'host-context');
+        const relation=document.querySelector('.issue_wrap > #relation_popup');
+        relation.setAttribute('data-dcuf-header-relation-popup','host-relation');
+        relation.setAttribute('data-dcuf-header-relation-static','host-static');
+        const attributes = ['data-dcuf-header-door-fluid','data-dcuf-header-door-intro',
+            'data-dcuf-header-door-ranking','data-dcuf-header-door-no-decoration',
+            'data-dcuf-header-door-popup','data-dcuf-header-recom-part',
+            'data-dcuf-header-door-context','data-dcuf-header-recom-context',
+            'data-dcuf-header-relation-context','data-dcuf-header-native-parts'];
+        const nodes = [source, ...source.querySelectorAll('*'), document.querySelector('.issue_wrap > #relation_popup')].filter(Boolean);
+        const before = nodes.map(node => attributes.map(name => node.getAttribute(name)));
+        const writes = [];
+        const observer = new MutationObserver(records => writes.push(...records.map(record => record.attributeName)));
+        observer.observe(document.body, {subtree:true,attributes:true,attributeFilter:attributes});
+        window.__nativeUnprojected = {source, intro, ranking, relation, attributes, nodes, before, writes, observer};
+        window.__dcufHeaderDrawerHostAdapter.connect();
+    });
+    const unchanged = async name => {
+        await settle(page);
+        const state = await page.evaluate(() => {
+            const s = window.__nativeUnprojected;
+            return {before:s.before, after:s.nodes.map(node => s.attributes.map(name => node.getAttribute(name))), writes:s.writes};
+        });
+        assert.deepEqual(state.after, state.before, `${name}: host descendant/context data must remain untouched`);
+        assert.deepEqual(state.writes, [], `${name}: no obsolete role or provenance writes`);
+        steps.push(name);
+    };
+    await page.waitForFunction(() => window.__dcufHeaderDrawerHostAdapter.snapshotResources().mutationSubscribers === 1
+        && document.querySelector('.dcuf-header-drawer__toggle'));
+    await unchanged('connect-host-values');
+    await page.locator('.dcuf-header-drawer__toggle').click();
+    await unchanged('native-open');
+    await page.evaluate(() => {
+        const s = window.__nativeUnprojected, container = document.createElement('div');
+        const button = document.createElement('button'); button.textContent = 'Native lifecycle control';button.className='native-lifecycle-button';
+        container.append(button); s.intro.append(container); s.container=container; s.button=button;
+        button.classList.add('btn_mgall_dcp');
+    });
+    await unchanged('nested-class-add');
+    assert.equal(await page.evaluate(() => getComputedStyle(window.__nativeUnprojected.button,'::before').content), 'none', 'Native binding suppresses decoration on an inserted control');
+    await page.evaluate(() => window.__nativeUnprojected.button.classList.remove('btn_mgall_dcp'));
+    await unchanged('nested-class-remove');
+    assert.notEqual(await page.evaluate(() => getComputedStyle(window.__nativeUnprojected.button,'::before').content), 'none', 'Role loss restores native decoration behavior');
+    await page.evaluate(() => {
+        const s=window.__nativeUnprojected; s.copy=s.intro.cloneNode(true);
+        const wrapper=document.createElement('div'); wrapper.append(s.copy); document.body.append(wrapper); s.wrapper=wrapper;
+        s.cached=s.copy.cloneNode(true);
+    });
+    await unchanged('wrapped-host-copy');
+    assert.equal(await page.evaluate(() => window.__nativeUnprojected.copy.getAttribute('data-dcuf-header-door-intro')), 'host-original');
+    await page.evaluate(() => {
+        const s=window.__nativeUnprojected; s.replacement=s.source.cloneNode(true); s.source.replaceWith(s.replacement);
+    });
+    await unchanged('source-replacement-detached-data');
+    assert.equal(await page.evaluate(() => window.__nativeUnprojected.replacement.querySelector('.minor_intro_box').getAttribute('data-dcuf-header-door-intro')), 'host-original');
+    await page.evaluate(() => window.__dcufHeaderDrawerHostAdapter.dispose());
+    await unchanged('dispose-host-values');
+    assert.ok(Object.values(await page.evaluate(() => window.__dcufHeaderDrawerHostAdapter.snapshotResources())).every(value => value === false || value === 0));
+    const roots=await page.evaluate(() => {
+        const s=window.__nativeUnprojected;
+        return {original:s.source.getAttribute('data-dcuf-header-native-door'),
+            replacement:['data-dcuf-header-native-door','data-dcuf-header-native-door-open','data-dcuf-header-native-door-popup-only']
+                .map(name=>s.replacement.getAttribute(name)),
+            relation:['data-dcuf-header-relation-popup','data-dcuf-header-relation-static'].map(name=>s.relation.getAttribute(name))};
+    });
+    assert.deepEqual(roots,{original:'1',replacement:[null,null,null],relation:['host-relation','host-static']},
+        'Root ledger preserves preexisting 1, releases owned replacement markers, and restores exact relation data');
+    await page.evaluate(() => {
+        const s=window.__nativeUnprojected; s.wrapper.remove(); document.body.append(s.cached);
+        window.__dcufHeaderDrawerHostAdapter.connect();
+    });
+    await unchanged('cached-copy-and-reconnect');
+    assert.equal(await page.evaluate(() => window.__nativeUnprojected.cached.getAttribute('data-dcuf-header-door-intro')), 'host-original');
+    await page.evaluate(() => {window.__dcufHeaderDrawerHostAdapter.dispose();window.__nativeUnprojected.observer.disconnect();});
+    await unchanged('final-dispose');
+    assert.ok(Object.values(await page.evaluate(() => window.__dcufHeaderDrawerHostAdapter.snapshotResources())).every(value => value === false || value === 0));
+    return {status:'PASS',steps};
+}
+
 // Exercise the production mutation subscription. refresh() is intentionally absent from these transitions.
 export async function exerciseNativeLifecycle(page, settle) {
     const steps = [];

@@ -38,7 +38,20 @@ await test('missing decision owner dependency rejected', () => { const value = s
 await test('unrecoverable required local evidence rejected', () => { const value = structuredClone(action); value.localEvidence.push({path:value.requiredDependencies[0].path,disposition:'UNRECOVERABLE',recovery:'No recovery'}); assert.throws(() => parseNextAction(withAction(value)), /unrecoverable/); });
 await test('handoff cannot certify product success', () => { const value = structuredClone(action); value.workSuccessCertified = true; assert.throws(() => parseNextAction(withAction(value)), /certify/); });
 await test('stage disagreement rejected', () => assert.throws(() => parseNextAction(packet.replace(/^- Task ID:.*$/m, '- Task ID: `other-stage`')), /stage mismatch/));
-await test('missing dependency/frozen drift rejected', () => { const value = structuredClone(action); value.requiredDependencies.push({id:'missing',path:'not-present',mode:'LIVE',sha256:null}); assert.throws(() => reconcileNextAction(value,root), /missing dependency/); const frozen = structuredClone(action); frozen.requiredDependencies.find(item => item.mode === 'FROZEN').sha256 = '0'.repeat(64); assert.throws(() => reconcileNextAction(frozen,root), /changed frozen/); });
+await test('missing dependency/frozen drift rejected', () => {
+    const value = structuredClone(action);
+    value.requiredDependencies.push({id:'missing',path:'not-present',mode:'LIVE',sha256:null});
+    assert.throws(() => reconcileNextAction(value,root), /missing dependency/);
+    const frozen = structuredClone(action);
+    const input = frozen.requiredDependencies.find(item => item.mode === 'FROZEN')
+        || frozen.requiredDependencies.find(item => item.path === 'AGENTS.md');
+    assert.ok(input, 'A tracked input must be available for the frozen-drift control');
+    input.mode='FROZEN';
+    input.sha256=createHash('sha256').update(readFileSync(path.join(root,input.path))).digest('hex');
+    assert.equal(reconcileNextAction(frozen,root).outcome,'ACCEPTED','Exact frozen positive control');
+    input.sha256='0'.repeat(64);
+    assert.throws(() => reconcileNextAction(frozen,root), /changed frozen/);
+});
 await test('literal safe paths only', () => { for (const value of ['../x', '/x', 'C:/x', 'a\\b', 'a//b']) assert.throws(() => repositoryPath(value)); for(const value of ['src/*','artifacts/a.json','.env','debug.log','-x']) assert.throws(() => validateCheckpointPaths([value])); assert.throws(() => validateCheckpointPaths(['x','x'])); });
 await test('directory/symlink sweeps rejected; explicit file/deletion accepted', () => { assert.throws(()=>validateCheckpointFiles(['src'],()=>({file:false})),/regular file/); assert.throws(()=>validateCheckpointFiles(['src/link'],()=>({file:true,symlink:true})),/regular file/); validateCheckpointFiles(['src/file'],()=>({file:true})); validateCheckpointFiles(['src/deleted'],()=>({deletedTrackedFile:true})); });
 const context = {cwd:'root',toolRoot:'root',gitRoot:'root',branch:policy.branch,remote:policy.remoteUrl,upstream:`origin/${policy.branch}`};

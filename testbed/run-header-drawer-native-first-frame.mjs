@@ -42,7 +42,9 @@ try {
     for (const [side, runtime] of Object.entries({control, candidate, ...(negative ? {negative} : {})})) {
         const bytes = await readFile(runtime);
         report.runtimes[side] = {path:runtime, sha256:sha(bytes)};
-        if (side === 'control') assert.equal(sha(bytes), '2AA122E15EE3521500C06BCFCDA5FE280EDF54EE05571A32ADE2C88D29C7FD56');
+        if (side === 'control') assert.equal(sha(bytes), process.argv.includes('--binding-control')
+            ? 'EFF9876F41C382A49702285BFAB0A91B8E3A27196A4D7B3D28F6086805EE1689'
+            : '2AA122E15EE3521500C06BCFCDA5FE280EDF54EE05571A32ADE2C88D29C7FD56');
         if (side === 'negative') assert.equal(sha(bytes), 'BD9D564B03471C0028558942AE9804E387352F1C9E0638FAFF6C681C4686321B');
         console.log(`First-frame ${side}: ${runtime}; SHA-256 ${sha(bytes)}`);
         process.env.DCUF_TESTBED_USERSCRIPT = runtime; process.env.DCUF_TESTBED_TARGET = 'mobile';

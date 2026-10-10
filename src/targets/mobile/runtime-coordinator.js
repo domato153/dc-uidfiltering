@@ -124,7 +124,7 @@
             });
         },
 
-        getMutationSurfaceSelector({includeHeaderProjection = true} = {}) {
+        getMutationSurfaceSelector({includeHeaderCopyCleanup = true} = {}) {
             const pageContext = this.getPageContext();
             const shared = [
                 '#user_data_lyr',
@@ -142,9 +142,9 @@
                 '.gall_list',
                 '.issue_contentbox',
                 '#gall_top_recom',
-                ...(includeHeaderProjection ? [
+                ...(includeHeaderCopyCleanup ? [
                     '[data-dcuf-header-native-door]', '[data-dcuf-header-native-recom]',
-                    '[data-dcuf-header-native-parts]', '[data-dcuf-header-relation-popup]',
+                    '[data-dcuf-header-relation-popup]',
                     '[data-dcuf-header-relation-static]'
                 ] : [])
             ];
@@ -205,12 +205,7 @@
                     if (this.isScriptOwnedElement(record.target)) return false;
                     if (this.IDENTITY_ATTRIBUTE_NAMES.has(record.attributeName)) return true;
                     if (this.isMutationSurfaceElement(record.target, options)) return true;
-                    // An ancestor can lose its host class while its native descendants
-                    // remain. Admit only that list-header applicability change, after
-                    // the normal surface fast path has rejected it.
-                    return options?.includeHeaderProjection !== false
-                        && record.attributeName === 'class' && this.getPageContext().isList
-                        && Boolean(record.target.querySelector('.issue_contentbox, #gall_top_recom, #relation_popup'));
+                    return false;
                 }
                 if (record.type === 'characterData') {
                     return this.isMutationSurfaceElement(record.target?.parentElement || null, options);

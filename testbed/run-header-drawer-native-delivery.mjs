@@ -35,7 +35,9 @@ try {
     browser = await launchBrowser(); report.browser = browser.version();
     for (const [side,runtime] of Object.entries({control,candidate,...(negative ? {negative} : {}),...(exitNegative ? {exitNegative} : {})})) {
         const bytes = await readFile(runtime); report.runtimes[side]={path:runtime,sha256:sha(bytes)};
-        if(side==='control') assert.equal(sha(bytes),'2AA122E15EE3521500C06BCFCDA5FE280EDF54EE05571A32ADE2C88D29C7FD56');
+        if(side==='control') assert.equal(sha(bytes),process.argv.includes('--binding-control')
+            ? 'EFF9876F41C382A49702285BFAB0A91B8E3A27196A4D7B3D28F6086805EE1689'
+            : '2AA122E15EE3521500C06BCFCDA5FE280EDF54EE05571A32ADE2C88D29C7FD56');
         if(side==='negative') assert.equal(sha(bytes),'4225DFC52C27BA64332015FE70F304543C0CC61D1DF9E434049E37D815C3EE0A');
         if(side==='exitNegative') assert.equal(sha(bytes),'E9237687695C27C2BE58E0108FAE236261152EBFC2BDF763B4A0C204EA9BA5AD');
         process.env.DCUF_TESTBED_USERSCRIPT=runtime; process.env.DCUF_TESTBED_TARGET='mobile';

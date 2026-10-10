@@ -93,10 +93,13 @@ await test('CI pending is an observation and never qualifies another SHA or inco
 await test('typed artifact identity is independent of prose and rejects missing/extra/malformed fields', () => {
     const text = readFileSync(path.join(root, 'docs/work/CURRENT_STATE.md'), 'utf8');
     const artifacts = parseCurrentArtifacts(text);
+    const withArtifacts = value => text.replace(/```dcuf-current-artifacts[\s\S]*?```/,
+        '```dcuf-current-artifacts\n'+JSON.stringify(value,null,2)+'\n```');
+    assert.deepEqual(parseCurrentArtifacts(withArtifacts(artifacts)),artifacts,'Reformatted typed positive control');
     assert.deepEqual(parseCurrentArtifacts(text.replace(/^- Current artifact:.*$/m, '- Current artifact: human explanation changed')), artifacts);
     assert.throws(() => parseCurrentArtifacts(text.replace(/```dcuf-current-artifacts[\s\S]*?```/, '')), /typed current artifact/);
-    assert.throws(() => parseCurrentArtifacts(text.replace('"schemaVersion": 1,', '"schemaVersion": 1, "unexpected": true,')), /closed fields/);
-    assert.throws(() => parseCurrentArtifacts(text.replace(artifacts.mobile.sha256, 'bad')), /digest/);
+    assert.throws(() => parseCurrentArtifacts(withArtifacts({...artifacts,unexpected:true})), /closed fields/);
+    assert.throws(() => parseCurrentArtifacts(withArtifacts({...artifacts,mobile:{sha256:'bad'}})), /digest/);
 });
 await test('CI rejects unconditional acceptance, forced full routing and absent dependency cache', () => {
     const workflow = readFileSync(path.join(root, '.github/workflows/development-ci.yml'), 'utf8');

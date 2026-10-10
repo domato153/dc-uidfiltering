@@ -9,7 +9,7 @@ import { startServer } from './server/server.mjs';
 import { createTestPage, launchBrowser, storageKeys, getMetrics, assertNoRuntimeErrors } from './harness/runner-utils.mjs';
 import { createCandidateFingerprint, createEvidenceBinding } from '../tools/evidence-binding.mjs';
 import { loadDrawerPresenter, validateBodyPresenterFaults, validateLayoutPresenterFaults, validateBodyObservation, captureBodyPhase, validateBodyPhase } from './header-drawer-body-contract.mjs';
-import {validateNativePresenter, captureNativeParts, readNativeProjection, validateNativeProjection, exerciseNativeLifecycle} from './header-drawer-native-contract.mjs';
+import {validateNativePresenter, captureNativeParts, readNativeProjection, validateNativeProjection, exerciseNativeLifecycle, exerciseNativeUnprojectedLifecycle} from './header-drawer-native-contract.mjs';
 import { validateTogglePresenterFaults, observeToggleTiming, validateToggleTimingFaults } from './header-drawer-toggle-contract.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -17,6 +17,8 @@ const args = process.argv.slice(2);
 const intentBoundary = args.includes('--intent-boundary');
 const nativeBoundary=args.includes('--native-boundary');
 const selectorBinding = args.includes('--selector-binding');
+const projectionRemoval = args.includes('--projection-removal');
+assert.ok(!projectionRemoval || nativeBoundary, 'Projection removal requires independent native observations');
 const layoutBoundary = args.includes('--layout-boundary');
 const bodyBoundary = args.includes('--body-boundary') || intentBoundary;
 const value = flag => {
@@ -61,7 +63,7 @@ let candidateStyleMount = styleMount(adapterSource);
 if (selectorBinding) {
     const seam = 'const definition = nativeStyleDefinition;';
     assert.equal(candidateStyleMount.split(seam).length - 1, 1, 'One cached descriptor input at the original style mount');
-    candidateStyleMount = candidateStyleMount.replace(seam, 'const definition = __dcufHeaderDrawerPresenter?.style;');
+    if (!oldAdapter.includes(seam)) candidateStyleMount = candidateStyleMount.replace(seam, 'const definition = __dcufHeaderDrawerPresenter?.style;');
 }
 assert.equal(candidateStyleMount, styleMount(oldAdapter), 'Style mounting phase changed outside the declared descriptor input');
 const loadPresenter = source => {
@@ -116,7 +118,7 @@ cases.push({ id: 'view', width: 750, route: '/mgallery/board/view?id=test&no=100
     { id: 'write', width: 1280, route: '/mgallery/board/write?id=test' });
 const report = {
     kind: intentBoundary ? 'header-drawer-toggle-description-zero-delta' : bodyBoundary ? 'header-drawer-owned-body-zero-delta' : 'header-drawer-owned-shell-zero-delta', scope: 'BOUNDED_SYNTHETIC_NOT_HEADER_STAGE_RECEIPT', status: 'PARTIAL',
-    selectorBinding,
+    selectorBinding, projectionRemoval,
     sourceBaseHead: spawnSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).stdout.trim(),
     candidateFingerprint: await createCandidateFingerprint(root), evidenceBinding: await createEvidenceBinding(root),
     sourceHashes: { [presenterPath]: sha(presenterSource), 'src/targets/mobile/header-drawer-host-adapter.js': sha(adapterSource) },
@@ -263,7 +265,7 @@ try {
                             const read=rules=>Array.from(rules,rule=>({declaration:rule.style?.cssText ?? null,condition:rule.conditionText ?? null,children:rule.cssRules ? read(rule.cssRules) : null}));
                             return read(document.getElementById('dcuf-header-drawer-style')?.sheet?.cssRules || []);
                         });
-                        if(side==='candidate' && step!=='disposed') validateNativeProjection(await page.evaluate(readNativeProjection));
+                        if(side==='candidate' && step!=='disposed' && !projectionRemoval) validateNativeProjection(await page.evaluate(readNativeProjection));
                         if(step==='disposed' && !testCase.recom) {
                             assert.equal(await page.locator('.minor_intro_box').getAttribute('data-dcuf-header-door-intro'),'host-original','Preexisting attribute restored exactly');
                             assert.equal(await page.locator('[data-dcuf-header-door-fluid],[data-dcuf-header-door-popup],[data-dcuf-header-recom-part]').count(),0,'Native part projections disposed');
@@ -404,7 +406,11 @@ try {
                     report.bodyFaultRecovery = 'NATIVE_FOCUS_DEFAULT_ENTER_AND_DISPOSAL_PASS';
                 }
 
-                if(nativeBoundary && side==='candidate' && testCase.id===cases[0].id) {
+                if(nativeBoundary && projectionRemoval && side==='candidate' && testCase.id===cases[0].id) {
+                    report.nativeLifecycle=await exerciseNativeUnprojectedLifecycle(page,settle);
+                    await page.evaluate(() => window.__dcufHeaderDrawerHostAdapter.connect());
+                }
+                if(nativeBoundary && !projectionRemoval && side==='candidate' && testCase.id===cases[0].id) {
                     // Body-fault recovery deliberately disposes the owner. Native checks need a fresh connection.
                     await page.evaluate(() => window.__dcufHeaderDrawerHostAdapter.connect());
                     await page.waitForFunction(() => window.__dcufHeaderDrawerHostAdapter.snapshotResources().mutationSubscribers === 1

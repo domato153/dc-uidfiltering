@@ -4,8 +4,8 @@ import {readFile, writeFile} from 'node:fs/promises';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {startServer} from './server/server.mjs';
-import {createTestPage, launchBrowser, getMetrics, assertNoRuntimeErrors} from './harness/runner-utils.mjs';
-import {exerciseNativeLifecycle} from './header-drawer-native-contract.mjs';
+import {createTestPage, launchBrowser, getMetrics, assertNoRuntimeErrors, storageKeys} from './harness/runner-utils.mjs';
+import {exerciseNativeLifecycle, exerciseNativeUnprojectedLifecycle} from './header-drawer-native-contract.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 assert.ok(process.argv.includes('--require-runtime-under-test'), 'Guarded source runtime required');
@@ -34,7 +34,8 @@ const settle = page => page.waitForFunction(() => {
 });
 try {
     browser = await launchBrowser(); report.browser = browser.version();
-    session = await createTestPage(browser, server.baseUrl, {viewport: {width: 390, height: 900}});
+    session = await createTestPage(browser, server.baseUrl, {viewport: {width: 390, height: 900},
+        storage:{[storageKeys.threshold]:0,[storageKeys.ratioEnabled]:false}});
     const page = session.page;
     await session.goto('/mgallery/board/lists?id=test');
     await page.waitForFunction(() => window.__dcufHeaderDrawerHostAdapter?.snapshotResources().mutationSubscribers === 1);
@@ -45,7 +46,8 @@ try {
         window.__dcufHeaderDrawerHostAdapter.connect();
     });
     await settle(page);
-    report.lifecycle = await exerciseNativeLifecycle(page, settle);
+    report.lifecycle = await (process.argv.includes('--projection-removal')
+        ? exerciseNativeUnprojectedLifecycle : exerciseNativeLifecycle)(page, settle);
     assertNoRuntimeErrors(await getMetrics(page), session.consoleErrors);
     report.status = 'PASS';
 } catch (error) { report.error = error.stack; throw error; }
