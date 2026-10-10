@@ -1,49 +1,193 @@
 # Next bounded task
 
 - Task ID: `header-navigation`
-- Bounded slice: `header-drawer-native-selector-binding`
-- Objective: After finishing the current 3036 verification/checkpoint, implement an explicit named-slot target binding for late native drawer CSS and prove selected synchronous/first-frame/settled behavior while preserving native actions, original nodes, layout phases and presenter-only width locality.
-- Why next: 3036 repairs the reviewed delivery/relation and fallback exit defects, but semantic descendant projection cannot preserve same-stack native class/ID matching. The static/six-read binding prototype establishes feasibility and exposes positional slot fragility. Address the real retained FAIL before further early conversion or visual assembly.
-- Expected transition: Named immutable presenter slots with adapter-owned native selector knowledge, unchanged declarations/specificity/media/injection phase, and removal of superseded projection only after exact applicable evidence. Update the existing overlay/surface contract before implementation; keep mixed/legacy-debt until complete exit criteria are proved.
-- Stop/replan: missing/changed exact control, ambiguous/missing/unknown slot, changed selector specificity/media/declaration/phase, native topology/action/default input/focus/geometry/body delta, unexpected cascade/resource cost, failed restoration, surviving negative, wrong root or remote drift. Characterize before changing a phase; do not hide failure with an override or global observer.
+- Bounded slice: `header-drawer-superseded-projection-removal`
+- Objective: In the next separately requested work unit, trace consumers of descendant projection/admission and remove only machinery proved obsolete after named native binding. Preserve native root/open ownership, geometry phases, original nodes/actions, restoration and resource closure.
+- Why next: Native CSS now matches synchronous class/ID/ancestry changes directly. The previous projection remains and keeps owner debt mixed; its removal needs consumer tracing and actual applicable controls.
+- Expected transition: A smaller mixed adapter/coordinator implementation with exact EFF control/candidate native/input/layout/resource and width-locality evidence. Early raw style/driver separation, full-header sealing and visual assembly remain later requirements.
+- Stop/replan: A remaining consumer, changed ordinary geometry admission, root/open lifetime, native topology/action/input/focus/storage/resource effect, failed restoration, surviving negative, missing applicability or remote drift. Keep existing machinery where evidence does not justify removal.
 
-Fresh-read INDEX/CURRENT, policy, HEADER_DRAWER_NATIVE_SELECTORS.md and HEADER_DRAWER_SELECTOR_BINDING.md. Policy/proof renewal is complete; finish the authorized bounded checkpoint before new source edits. Freeze 3036 as the immediate control; retain exact 2AA1 as the original selector/phase reference and 4225/E923/BD9D as meaningful negatives. Follow the named-slot steps in the binding packet; its ordered string prototype is not production. Require missing/duplicate/unknown-slot rejection, exact selector/declaration/media/priority/phase checks and independent native/input/storage/resource evidence. Preserve original root/open lifetime and legacy geometry admission. Current same-stack FAIL remains until an actual candidate repairs it; synthetic six-read success does not close early/live/full-header or real-replacement admission. Normal back-forward has persisted=false; actual bfcache UNKNOWN. Keep palette FAIL and final/upper/live UNKNOWN; no visual assembly or mixed promotion yet.
+This is the recorded next unit after named-binding closeout, not authorization to execute it during the current request. The user removed the Goal and authorized validation/records/checkpoint only. Return after that unit. Read fresh Git and binding-unit-result.json; recover exact EFF as control before future source edits. Recompute canonical artifacts/impact.json for proof gates, serialize guard/build/browser work and retain original palette FAIL and final/upper/live UNKNOWN. No visual redesign, mixed promotion, release, live writes or version change.
 
 ## Declared entry inventory
 
-LIVE pointers are retrieval inputs, not completeness proof; derive direct dependencies independently. Ignored control is same-host evidence; tracked artifact is the clean-CI identity.
+LIVE pointers are retrieval inputs, not completeness proof. Controls/reports are same-host local evidence.
 
 ```dcuf-next-action
 {
-  "id": "header-drawer-native-selector-binding",
+  "id": "header-drawer-superseded-projection-removal",
   "stageId": "header-navigation",
   "requiredDependencies": [
-    {"id":"governing-policy","path":"AGENTS.md","mode":"LIVE","sha256":null},
-    {"id":"accepted-plan","path":"docs/work/MOBILE_UI_MODERNIZATION.md","mode":"LIVE","sha256":null},
-    {"id":"replacement-plan","path":"docs/work/UI_REPLACEABILITY_VALIDATION.md","mode":"LIVE","sha256":null},
-    {"id":"build-targets","path":"build/targets.json","mode":"LIVE","sha256":null},
-    {"id":"architecture","path":"architecture/registry.json","mode":"LIVE","sha256":null},
-    {"id":"candidate-overlay","path":"architecture/candidates/mobile-ui-modernization-assurance.json","mode":"LIVE","sha256":null},
-    {"id":"surface-map","path":"architecture/ui-surfaces.json","mode":"LIVE","sha256":null},
-    {"id":"surface-contract","path":"docs/ui-surface-contracts.md","mode":"LIVE","sha256":null},
-    {"id":"gate-routing","path":"verification/gates.json","mode":"LIVE","sha256":null},
-    {"id":"drawer-adapter","path":"src/targets/mobile/header-drawer-host-adapter.js","mode":"LIVE","sha256":null},
-    {"id":"drawer-presenter","path":"src/targets/mobile/header-drawer-presenter.js","mode":"LIVE","sha256":null},
-    {"id":"mutation-routing","path":"src/targets/mobile/runtime-coordinator.js","mode":"LIVE","sha256":null},
-    {"id":"native-contract","path":"testbed/header-drawer-native-contract.mjs","mode":"LIVE","sha256":null},
-    {"id":"native-lifecycle","path":"testbed/run-header-drawer-native-lifecycle.mjs","mode":"LIVE","sha256":null},
-    {"id":"native-first-frame","path":"testbed/run-header-drawer-native-first-frame.mjs","mode":"LIVE","sha256":null},
-    {"id":"native-delivery","path":"testbed/run-header-drawer-native-delivery.mjs","mode":"LIVE","sha256":null},
-    {"id":"native-evidence","path":"docs/work/HEADER_DRAWER_NATIVE_SELECTORS.md","mode":"LIVE","sha256":null},
-    {"id":"owned-observer","path":"testbed/run-header-drawer-owned-shell-differential.mjs","mode":"LIVE","sha256":null},
-    {"id":"cascade-observer","path":"testbed/run-header-cascade-audit.mjs","mode":"LIVE","sha256":null},
-    {"id":"body-contract","path":"testbed/header-drawer-body-contract.mjs","mode":"LIVE","sha256":null},
-    {"id":"fixtures","path":"testbed/fixtures","mode":"LIVE","sha256":null},
-    {"id":"harness","path":"testbed/harness","mode":"LIVE","sha256":null},
-    {"id":"width-evidence","path":"docs/work/HEADER_DRAWER_WIDTH_INPUT.md","mode":"LIVE","sha256":null},
-    {"id":"current-candidate","path":"Dc_UserFilter_Mobile_v3.5.5.user.js","mode":"FROZEN","sha256":"3036057928ed88f6c4e205a20e8aabcbcde4c1fbb58b5b2f53c61096c8c3d239"},
-    {"id":"selector-binding-feasibility","path":"docs/work/HEADER_DRAWER_SELECTOR_BINDING.md","mode":"LIVE","sha256":null}
-  ],  "requiredDecisions": [
+    {
+      "id": "governing-policy",
+      "path": "AGENTS.md",
+      "mode": "LIVE",
+      "sha256": null
+    },
+    {
+      "id": "accepted-plan",
+      "path": "docs/work/MOBILE_UI_MODERNIZATION.md",
+      "mode": "LIVE",
+      "sha256": null
+    },
+    {
+      "id": "replacement-plan",
+      "path": "docs/work/UI_REPLACEABILITY_VALIDATION.md",
+      "mode": "LIVE",
+      "sha256": null
+    },
+    {
+      "id": "build-targets",
+      "path": "build/targets.json",
+      "mode": "LIVE",
+      "sha256": null
+    },
+    {
+      "id": "architecture",
+      "path": "architecture/registry.json",
+      "mode": "LIVE",
+      "sha256": null
+    },
+    {
+      "id": "candidate-overlay",
+      "path": "architecture/candidates/mobile-ui-modernization-assurance.json",
+      "mode": "LIVE",
+      "sha256": null
+    },
+    {
+      "id": "surface-map",
+      "path": "architecture/ui-surfaces.json",
+      "mode": "LIVE",
+      "sha256": null
+    },
+    {
+      "id": "surface-contract",
+      "path": "docs/ui-surface-contracts.md",
+      "mode": "LIVE",
+      "sha256": null
+    },
+    {
+      "id": "gate-routing",
+      "path": "verification/gates.json",
+      "mode": "LIVE",
+      "sha256": null
+    },
+    {
+      "id": "drawer-adapter",
+      "path": "src/targets/mobile/header-drawer-host-adapter.js",
+      "mode": "LIVE",
+      "sha256": null
+    },
+    {
+      "id": "drawer-presenter",
+      "path": "src/targets/mobile/header-drawer-presenter.js",
+      "mode": "LIVE",
+      "sha256": null
+    },
+    {
+      "id": "mutation-routing",
+      "path": "src/targets/mobile/runtime-coordinator.js",
+      "mode": "LIVE",
+      "sha256": null
+    },
+    {
+      "id": "native-contract",
+      "path": "testbed/header-drawer-native-contract.mjs",
+      "mode": "LIVE",
+      "sha256": null
+    },
+    {
+      "id": "native-lifecycle",
+      "path": "testbed/run-header-drawer-native-lifecycle.mjs",
+      "mode": "LIVE",
+      "sha256": null
+    },
+    {
+      "id": "native-first-frame",
+      "path": "testbed/run-header-drawer-native-first-frame.mjs",
+      "mode": "LIVE",
+      "sha256": null
+    },
+    {
+      "id": "native-delivery",
+      "path": "testbed/run-header-drawer-native-delivery.mjs",
+      "mode": "LIVE",
+      "sha256": null
+    },
+    {
+      "id": "native-evidence",
+      "path": "docs/work/HEADER_DRAWER_NATIVE_SELECTORS.md",
+      "mode": "LIVE",
+      "sha256": null
+    },
+    {
+      "id": "owned-observer",
+      "path": "testbed/run-header-drawer-owned-shell-differential.mjs",
+      "mode": "LIVE",
+      "sha256": null
+    },
+    {
+      "id": "cascade-observer",
+      "path": "testbed/run-header-cascade-audit.mjs",
+      "mode": "LIVE",
+      "sha256": null
+    },
+    {
+      "id": "body-contract",
+      "path": "testbed/header-drawer-body-contract.mjs",
+      "mode": "LIVE",
+      "sha256": null
+    },
+    {
+      "id": "fixtures",
+      "path": "testbed/fixtures",
+      "mode": "LIVE",
+      "sha256": null
+    },
+    {
+      "id": "harness",
+      "path": "testbed/harness",
+      "mode": "LIVE",
+      "sha256": null
+    },
+    {
+      "id": "width-evidence",
+      "path": "docs/work/HEADER_DRAWER_WIDTH_INPUT.md",
+      "mode": "LIVE",
+      "sha256": null
+    },
+    {
+      "id": "current-candidate",
+      "path": "Dc_UserFilter_Mobile_v3.5.5.user.js",
+      "mode": "FROZEN",
+      "sha256": "eff9876f41c382a49702285bfab0a91b8e3a27196a4d7b3d28f6086805ee1689"
+    },
+    {
+      "id": "selector-binding-feasibility",
+      "path": "docs/work/HEADER_DRAWER_SELECTOR_BINDING.md",
+      "mode": "LIVE",
+      "sha256": null
+    },
+    {
+      "id": "named-binding-contract",
+      "path": "testbed/run-header-drawer-selector-binding.mjs",
+      "mode": "LIVE",
+      "sha256": null
+    },
+    {
+      "id": "cascade-oracle",
+      "path": "testbed/run-header-cascade-audit.mjs",
+      "mode": "LIVE",
+      "sha256": null
+    },
+    {
+      "id": "functional-runner",
+      "path": "testbed/run-tests.mjs",
+      "mode": "LIVE",
+      "sha256": null
+    }
+  ],
+  "requiredDecisions": [
     "working-checkpoint",
     "semantic-entry",
     "scope-and-admission"
@@ -58,7 +202,7 @@ LIVE pointers are retrieval inputs, not completeness proof; derive direct depend
     {
       "id": "semantic-entry",
       "status": "ADOPTED",
-      "boundary": "The next named-slot binding is not adopted yet: update candidate/surface contract before production, preserve exact native selector specificity and synchronous matching, and keep declarations/layout values in the presenter. No dependency, global DOM patch, new observer, topology change or mixed promotion.",
+      "boundary": "Named-selector binding is an implemented mixed candidate. A later separately requested unit may trace/remove only demonstrably superseded descendant projection/admission; preserve native root/open lifetime, geometry, original DOM/events and early phases. Do not promote mixed owners or redesign the UI.",
       "source": "docs/work/HEADER_DRAWER_SELECTOR_BINDING.md"
     },
     {
@@ -99,7 +243,7 @@ LIVE pointers are retrieval inputs, not completeness proof; derive direct depend
     {
       "path": "artifacts/controls/header-native-3036.user.js",
       "disposition": "REGENERATE",
-      "recovery": "Recover exact 3036 bytes from this bounded checkpoint or isolated build; require the typed current digest before comparing. Do not substitute a version string or reset the worktree."
+      "recovery": "Recover exact 3036 from the preceding checkpoint as the retained synchronous failure control; do not substitute current EFF or a matching version string."
     }
   ],
   "qualificationScope": "CONTINUITY_ONLY",

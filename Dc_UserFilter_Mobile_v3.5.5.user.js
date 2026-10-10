@@ -9493,7 +9493,22 @@ const __dcufSettingsPresenter = (() => {
                     </div>
                 `
         });
-        const style = Object.freeze({
+        const nativeStyleSlots = Object.freeze(["door","recommendation","relationPopup","relationStatic","fluid","intro","ranking","buttonDecoration","closeDecoration","rankPopup","tipPopup","recommendationPaging","recommendationText","recommendationImage"]);
+        const describeNativeStyle = (bindings) => {
+            if (!Array.isArray(bindings) || !Object.isFrozen(bindings) || bindings.length !== nativeStyleSlots.length) {
+                throw new TypeError('A complete frozen native selector binding is required');
+            }
+            const selectors = Object.create(null);
+            for (const entry of bindings) {
+                if (!entry || typeof entry !== 'object' || !Object.isFrozen(entry)
+                    || Object.keys(entry).length !== 2 || !Object.hasOwn(entry, 'slot') || !Object.hasOwn(entry, 'selector')
+                    || !nativeStyleSlots.includes(entry.slot) || Object.hasOwn(selectors, entry.slot)
+                    || typeof entry.selector !== 'string' || !entry.selector.trim()) {
+                    throw new TypeError('Invalid, duplicate or unknown native selector slot');
+                }
+                selectors[entry.slot] = entry.selector;
+            }
+            return Object.freeze({
             key: 'header-drawer',
             id: 'dcuf-header-drawer-style',
             css: `
@@ -9569,7 +9584,7 @@ const __dcufSettingsPresenter = (() => {
                 background: #fff !important;
                 box-shadow: 0 10px 22px rgba(12, 22, 40, 0.12) !important;
             }
-            [data-dcuf-header-drawer-scope="1"] [data-dcuf-header-native-door="1"][data-dcuf-header-door-context="1"][data-dcuf-header-native-door-open="1"] {
+            [data-dcuf-header-drawer-scope="1"] ${selectors.door}[data-dcuf-header-native-door-open="1"] {
                 display: block;
                 visibility: visible;
                 opacity: 1;
@@ -9589,48 +9604,48 @@ const __dcufSettingsPresenter = (() => {
                 overflow: visible;
                 z-index: 60;
             }
-            [data-dcuf-header-drawer-scope="1"] [data-dcuf-header-native-door="1"][data-dcuf-header-door-context="1"][data-dcuf-header-native-door-popup-only="1"] {
+            [data-dcuf-header-drawer-scope="1"] ${selectors.door}[data-dcuf-header-native-door-popup-only="1"] {
                 visibility: hidden;
                 pointer-events: none;
                 border-color: transparent;
                 background: transparent;
                 box-shadow: none;
             }
-            [data-dcuf-header-drawer-scope="1"] [data-dcuf-header-native-door="1"][data-dcuf-header-door-context="1"][data-dcuf-header-native-door-popup-only="1"] [data-dcuf-header-door-popup="rank"],
-            [data-dcuf-header-drawer-scope="1"] [data-dcuf-header-native-door="1"][data-dcuf-header-door-context="1"][data-dcuf-header-native-door-popup-only="1"] [data-dcuf-header-door-popup="tip"] {
+            [data-dcuf-header-drawer-scope="1"] ${selectors.door}[data-dcuf-header-native-door-popup-only="1"] ${selectors.rankPopup},
+            [data-dcuf-header-drawer-scope="1"] ${selectors.door}[data-dcuf-header-native-door-popup-only="1"] ${selectors.tipPopup} {
                 visibility: visible;
                 pointer-events: auto;
             }
-            [data-dcuf-header-drawer-scope="1"] [data-dcuf-header-native-door="1"][data-dcuf-header-door-context="1"][data-dcuf-header-native-door-open="1"] [data-dcuf-header-door-fluid="1"] {
+            [data-dcuf-header-drawer-scope="1"] ${selectors.door}[data-dcuf-header-native-door-open="1"] ${selectors.fluid} {
                 box-sizing: border-box;
                 max-width: 100%;
             }
-            [data-dcuf-header-drawer-scope="1"] [data-dcuf-header-native-door="1"][data-dcuf-header-door-context="1"][data-dcuf-header-native-door-open="1"] [data-dcuf-header-door-intro="1"],
-            [data-dcuf-header-drawer-scope="1"] [data-dcuf-header-native-door="1"][data-dcuf-header-door-context="1"][data-dcuf-header-native-door-open="1"] [data-dcuf-header-door-ranking="1"] {
+            [data-dcuf-header-drawer-scope="1"] ${selectors.door}[data-dcuf-header-native-door-open="1"] ${selectors.intro},
+            [data-dcuf-header-drawer-scope="1"] ${selectors.door}[data-dcuf-header-native-door-open="1"] ${selectors.ranking} {
                 width: 100%;
             }
-            [data-dcuf-header-drawer-scope="1"] [data-dcuf-header-native-door="1"][data-dcuf-header-door-context="1"][data-dcuf-header-native-door-open="1"] [data-dcuf-header-door-no-decoration="1"]::before,
-            [data-dcuf-header-drawer-scope="1"] [data-dcuf-header-native-door="1"][data-dcuf-header-door-context="1"][data-dcuf-header-native-door-open="1"] [data-dcuf-header-door-no-decoration="1"]::before {
+            [data-dcuf-header-drawer-scope="1"] ${selectors.door}[data-dcuf-header-native-door-open="1"] ${selectors.buttonDecoration}::before,
+            [data-dcuf-header-drawer-scope="1"] ${selectors.door}[data-dcuf-header-native-door-open="1"] ${selectors.closeDecoration}::before {
                 content: none;
                 display: none;
             }
             @media (max-width: 420px), (max-height: 600px) {
-                [data-dcuf-header-drawer-scope="1"] [data-dcuf-header-native-door="1"][data-dcuf-header-door-context="1"][data-dcuf-header-native-door-open="1"] [data-dcuf-header-door-popup="tip"] {
+                [data-dcuf-header-drawer-scope="1"] ${selectors.door}[data-dcuf-header-native-door-open="1"] ${selectors.tipPopup} {
                     right: auto;
                     left: 12px;
                 }
             }
-            [data-dcuf-header-drawer-scope="1"].dc-filter-dark-mode [data-dcuf-header-native-door="1"][data-dcuf-header-door-context="1"][data-dcuf-header-native-door-open="1"],
-            [data-dcuf-header-drawer-scope="1"].dc-filter-dark-mode [data-dcuf-header-native-door="1"][data-dcuf-header-door-context="1"][data-dcuf-header-native-door-open="1"] [data-dcuf-header-door-ranking="1"] {
+            [data-dcuf-header-drawer-scope="1"].dc-filter-dark-mode ${selectors.door}[data-dcuf-header-native-door-open="1"],
+            [data-dcuf-header-drawer-scope="1"].dc-filter-dark-mode ${selectors.door}[data-dcuf-header-native-door-open="1"] ${selectors.ranking} {
                 background: #1a222e;
                 border-color: #3d4c60;
                 color: #d2dced;
             }
-            [data-dcuf-header-drawer-scope="1"].dc-filter-dark-mode [data-dcuf-header-native-door="1"][data-dcuf-header-door-context="1"][data-dcuf-header-native-door-open="1"] [data-dcuf-header-door-intro="1"] {
+            [data-dcuf-header-drawer-scope="1"].dc-filter-dark-mode ${selectors.door}[data-dcuf-header-native-door-open="1"] ${selectors.intro} {
                 background: linear-gradient(180deg, #233044 0%, #203044 100%);
                 color: #d2dced;
             }
-            [data-dcuf-header-drawer-scope="1"] [data-dcuf-header-native-recom="1"][data-dcuf-header-recom-context="1"][data-dcuf-header-native-recom-open="1"] {
+            [data-dcuf-header-drawer-scope="1"] ${selectors.recommendation}[data-dcuf-header-native-recom-open="1"] {
                 display: block;
                 visibility: visible;
                 position: fixed;
@@ -9649,15 +9664,15 @@ const __dcufSettingsPresenter = (() => {
                 overflow: auto;
                 z-index: 60;
             }
-            [data-dcuf-header-drawer-scope="1"] [data-dcuf-header-native-recom="1"][data-dcuf-header-recom-context="1"][data-dcuf-header-native-recom-open="1"] > [data-dcuf-header-recom-part="paging"],
-            [data-dcuf-header-drawer-scope="1"] [data-dcuf-header-native-recom="1"][data-dcuf-header-recom-context="1"][data-dcuf-header-native-recom-open="1"] > [data-dcuf-header-recom-part="text"],
-            [data-dcuf-header-drawer-scope="1"] [data-dcuf-header-native-recom="1"][data-dcuf-header-recom-context="1"][data-dcuf-header-native-recom-open="1"] > [data-dcuf-header-recom-part="image"] {
+            [data-dcuf-header-drawer-scope="1"] ${selectors.recommendation}[data-dcuf-header-native-recom-open="1"] > ${selectors.recommendationPaging},
+            [data-dcuf-header-drawer-scope="1"] ${selectors.recommendation}[data-dcuf-header-native-recom-open="1"] > ${selectors.recommendationText},
+            [data-dcuf-header-drawer-scope="1"] ${selectors.recommendation}[data-dcuf-header-native-recom-open="1"] > ${selectors.recommendationImage} {
                 box-sizing: border-box;
                 width: 100%;
                 max-width: 100%;
                 float: none;
             }
-            [data-dcuf-header-drawer-scope="1"].dc-filter-dark-mode [data-dcuf-header-native-recom="1"][data-dcuf-header-recom-context="1"][data-dcuf-header-native-recom-open="1"] {
+            [data-dcuf-header-drawer-scope="1"].dc-filter-dark-mode ${selectors.recommendation}[data-dcuf-header-native-recom-open="1"] {
                 background: #1a222e;
                 border-color: #3d4c60;
                 color: #d2dced;
@@ -9680,10 +9695,10 @@ const __dcufSettingsPresenter = (() => {
                     overflow: auto;
                 }
             }
-            [data-dcuf-header-drawer-scope="1"] [data-dcuf-header-relation-popup="1"][data-dcuf-header-relation-context="1"] {
+            [data-dcuf-header-drawer-scope="1"] ${selectors.relationPopup} {
                 z-index: 3;
             }
-            [data-dcuf-header-drawer-scope="1"] [data-dcuf-header-relation-static="1"][data-dcuf-header-relation-context="1"] {
+            [data-dcuf-header-drawer-scope="1"] ${selectors.relationStatic} {
                 position: relative;
             }
             [data-dcuf-header-drawer-scope="1"].dc-filter-dark-mode [data-dcuf-header-drawer="1"] .dcuf-header-drawer__toggle {
@@ -9695,11 +9710,44 @@ const __dcufSettingsPresenter = (() => {
 
 `
         });
-        return Object.freeze({ shell, layout, describeOpenState, describeToggleIntent, describeBodyVisibility, describeBodyOffset, describeBodyHeight, describeBodyPadding, style, buildThemeCss: __dcufBuildHeaderDrawerThemeCss, buildVisibilityCss: __dcufBuildHeaderDrawerVisibilityCss });
+        };
+        const style = describeNativeStyle(Object.freeze([
+            { slot: "door", selector: "[data-dcuf-header-native-door=\"1\"][data-dcuf-header-door-context=\"1\"]" },
+            { slot: "recommendation", selector: "[data-dcuf-header-native-recom=\"1\"][data-dcuf-header-recom-context=\"1\"]" },
+            { slot: "relationPopup", selector: "[data-dcuf-header-relation-popup=\"1\"][data-dcuf-header-relation-context=\"1\"]" },
+            { slot: "relationStatic", selector: "[data-dcuf-header-relation-static=\"1\"][data-dcuf-header-relation-context=\"1\"]" },
+            { slot: "fluid", selector: "[data-dcuf-header-door-fluid=\"1\"]" },
+            { slot: "intro", selector: "[data-dcuf-header-door-intro=\"1\"]" },
+            { slot: "ranking", selector: "[data-dcuf-header-door-ranking=\"1\"]" },
+            { slot: "buttonDecoration", selector: "[data-dcuf-header-door-no-decoration=\"1\"]" },
+            { slot: "closeDecoration", selector: "[data-dcuf-header-door-no-decoration=\"1\"]" },
+            { slot: "rankPopup", selector: "[data-dcuf-header-door-popup=\"rank\"]" },
+            { slot: "tipPopup", selector: "[data-dcuf-header-door-popup=\"tip\"]" },
+            { slot: "recommendationPaging", selector: "[data-dcuf-header-recom-part=\"paging\"]" },
+            { slot: "recommendationText", selector: "[data-dcuf-header-recom-part=\"text\"]" },
+            { slot: "recommendationImage", selector: "[data-dcuf-header-recom-part=\"image\"]" }
+        ].map(Object.freeze)));
+        return Object.freeze({ shell, layout, describeOpenState, describeToggleIntent, describeBodyVisibility, describeBodyOffset, describeBodyHeight, describeBodyPadding, style, nativeStyleSlots, describeNativeStyle, buildThemeCss: __dcufBuildHeaderDrawerThemeCss, buildVisibilityCss: __dcufBuildHeaderDrawerVisibilityCss });
     })();
     __dcufRoot.__dcufHeaderDrawerPresenter = __dcufHeaderDrawerPresenter;
     const __dcufHeaderDrawerHostAdapter = (() => {
         const STYLE_ID = 'dcuf-header-drawer-style';
+        const nativeStyleDefinition = __dcufHeaderDrawerPresenter.describeNativeStyle(Object.freeze([
+            { slot: "door", selector: ".issue_wrap .issue_contentbox[data-dcuf-header-native-door=\"1\"]" },
+            { slot: "recommendation", selector: ".issue_wrap #gall_top_recom.concept_wrap[data-dcuf-header-native-recom=\"1\"]" },
+            { slot: "relationPopup", selector: ".issue_wrap > #relation_popup[data-dcuf-header-relation-popup=\"1\"]" },
+            { slot: "relationStatic", selector: ".issue_wrap > #relation_popup[data-dcuf-header-relation-static=\"1\"]" },
+            { slot: "fluid", selector: "*:not(#hot_rank_pop2):not(#hot_rank_pop2 *)" },
+            { slot: "intro", selector: ".minor_intro_box" },
+            { slot: "ranking", selector: ".minor_ranking_box" },
+            { slot: "buttonDecoration", selector: ".btn_mgall_dcp" },
+            { slot: "closeDecoration", selector: ".under_poply_close" },
+            { slot: "rankPopup", selector: "#hot_rank_pop2" },
+            { slot: "tipPopup", selector: "#hot_tip_pop" },
+            { slot: "recommendationPaging", selector: ".pageing_box" },
+            { slot: "recommendationText", selector: ".concept_txtlist" },
+            { slot: "recommendationImage", selector: ".concept_img" }
+        ].map(Object.freeze)));
         const BODY_SCOPE_ATTR = 'data-dcuf-header-drawer-scope';
         const ACTIONS_SCOPE_ATTR = 'data-dcuf-header-drawer-actions';
         const NATIVE_DOOR_ATTR = 'data-dcuf-header-native-door';
@@ -9908,7 +9956,7 @@ const __dcufSettingsPresenter = (() => {
                 return popup instanceof HTMLElement && getComputedStyle(popup).display !== 'none';
             });
         const ensureDrawerStyle = () => {
-            const definition = __dcufHeaderDrawerPresenter?.style;
+            const definition = nativeStyleDefinition;
             if (definition?.id !== STYLE_ID) return false;
             if (document.getElementById(STYLE_ID)) return true;
             const target = document.head || document.documentElement;

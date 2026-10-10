@@ -16,6 +16,7 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const args = process.argv.slice(2);
 const intentBoundary = args.includes('--intent-boundary');
 const nativeBoundary=args.includes('--native-boundary');
+const selectorBinding = args.includes('--selector-binding');
 const layoutBoundary = args.includes('--layout-boundary');
 const bodyBoundary = args.includes('--body-boundary') || intentBoundary;
 const value = flag => {
@@ -56,7 +57,13 @@ if (bodyBoundary) {
 const adapterSource = await readFile(path.join(root, 'src/targets/mobile/header-drawer-host-adapter.js'), 'utf8');
 assert.ok(canonical(candidateBytes.toString()).includes(canonical(adapterSource)), 'Built adapter drift');
 const styleMount = source => canonical(source.slice(source.indexOf('const ensureDrawerStyle ='), source.indexOf('const resolveDrawerMount =')));
-assert.equal(styleMount(adapterSource), styleMount(oldAdapter), 'Style mounting phase changed');
+let candidateStyleMount = styleMount(adapterSource);
+if (selectorBinding) {
+    const seam = 'const definition = nativeStyleDefinition;';
+    assert.equal(candidateStyleMount.split(seam).length - 1, 1, 'One cached descriptor input at the original style mount');
+    candidateStyleMount = candidateStyleMount.replace(seam, 'const definition = __dcufHeaderDrawerPresenter?.style;');
+}
+assert.equal(candidateStyleMount, styleMount(oldAdapter), 'Style mounting phase changed outside the declared descriptor input');
 const loadPresenter = source => {
     const context = { __dcufRoot: {} }; // No DOM, GM, network or scheduler globals.
     vm.runInNewContext(source, context, { timeout: 1000 });
@@ -109,6 +116,7 @@ cases.push({ id: 'view', width: 750, route: '/mgallery/board/view?id=test&no=100
     { id: 'write', width: 1280, route: '/mgallery/board/write?id=test' });
 const report = {
     kind: intentBoundary ? 'header-drawer-toggle-description-zero-delta' : bodyBoundary ? 'header-drawer-owned-body-zero-delta' : 'header-drawer-owned-shell-zero-delta', scope: 'BOUNDED_SYNTHETIC_NOT_HEADER_STAGE_RECEIPT', status: 'PARTIAL',
+    selectorBinding,
     sourceBaseHead: spawnSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).stdout.trim(),
     candidateFingerprint: await createCandidateFingerprint(root), evidenceBinding: await createEvidenceBinding(root),
     sourceHashes: { [presenterPath]: sha(presenterSource), 'src/targets/mobile/header-drawer-host-adapter.js': sha(adapterSource) },

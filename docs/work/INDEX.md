@@ -19,7 +19,7 @@ Run `node tools/inspect-continuity.mjs`; compare fresh root/branch/HEAD ancestry
 - `HEADER_DRAWER_FINAL_TOP.md`: recommendation final-top correction, original failure regression, current exact artifacts and bounded native/body/input verification.
 - `HEADER_DRAWER_WIDTH_INPUT.md`: frozen presenter width input, one-value width variants, retained hardcoded-adapter negative and current bounded evidence.
 - `HEADER_DRAWER_NATIVE_SELECTORS.md`: working late-native semantic selectors, nested/copied mutation admission, per-role restoration and current counterexamples/checks; not full-header admission.
-- `HEADER_DRAWER_SELECTOR_BINDING.md`: not-adopted synchronous selector-binding feasibility and the next named-slot implementation; current same-stack FAIL remains.
+- `HEADER_DRAWER_SELECTOR_BINDING.md`: named native selector binding candidate, retained synchronous failure control, bounded evidence and remaining validation; not full-header admission.
 - `HEADER_DRAWER_OWNED_SHELL.md`: preceding extraction and focus/order/oracle counterexamples.
 - `HEADER_DRAWER_OWNED_BODY.md`: current body descriptions, immediate-control comparison, measurement phases and oracle/environment limits.
 - `HEADER_DRAWER_TOGGLE_INTENT.md`: current synchronous input/UiPort characterization, failure/reset counterexamples and the selected next intent-value boundary.

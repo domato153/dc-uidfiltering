@@ -126,13 +126,33 @@ try {
                 const names = ['HeaderShell', 'HeaderGnb', 'GalleryPageHead', 'HeaderRecentVisit', 'HeaderDrawer'];
                 const inventory = names.map((name) => {
                     const presenter = window[`__dcuf${name}Presenter`];
-                    const element = document.getElementById(presenter.style.id);
+                    const namedSelectorBinding = name === 'HeaderDrawer' && typeof presenter.describeNativeStyle === 'function';
+                    const bindings = namedSelectorBinding ? Object.freeze([
+                        ['door', '.issue_wrap .issue_contentbox[data-dcuf-header-native-door="1"]'],
+                        ['recommendation', '.issue_wrap #gall_top_recom.concept_wrap[data-dcuf-header-native-recom="1"]'],
+                        ['relationPopup', '.issue_wrap > #relation_popup[data-dcuf-header-relation-popup="1"]'],
+                        ['relationStatic', '.issue_wrap > #relation_popup[data-dcuf-header-relation-static="1"]'],
+                        ['fluid', '*:not(#hot_rank_pop2):not(#hot_rank_pop2 *)'],
+                        ['intro', '.minor_intro_box'], ['ranking', '.minor_ranking_box'],
+                        ['buttonDecoration', '.btn_mgall_dcp'], ['closeDecoration', '.under_poply_close'],
+                        ['rankPopup', '#hot_rank_pop2'], ['tipPopup', '#hot_tip_pop'],
+                        ['recommendationPaging', '.pageing_box'], ['recommendationText', '.concept_txtlist'],
+                        ['recommendationImage', '.concept_img']
+                    ].map(([slot, selector]) => Object.freeze({slot, selector}))) : null;
+                    // Expected target strings are independent of the mounted node and adapter producer.
+                    const style = namedSelectorBinding ? presenter.describeNativeStyle(bindings) : presenter.style;
+                    const wrongStyle = namedSelectorBinding ? presenter.describeNativeStyle(Object.freeze(bindings.map(entry =>
+                        Object.freeze({...entry, selector: entry.slot === 'closeDecoration' ? '.missing_native_close' : entry.selector})))) : null;
+                    const element = document.getElementById(style.id);
                     const sourceSheet = new CSSStyleSheet();
-                    sourceSheet.replaceSync(presenter.style.css);
+                    sourceSheet.replaceSync(style.css);
                     const rules = walk(sourceSheet.cssRules);
                     return { name, owner: element?.getAttribute('data-dcuf-style-owner') || null,
-                        mountedIdentity: element ? element.textContent === presenter.style.css : null,
-                        authoredImportant: (presenter.style.css.match(/!important/g) || []).length,
+                        mountedIdentity: element ? element.textContent === style.css : null,
+                        namedSelectorBinding,
+                        rejectsUnboundDescriptor: namedSelectorBinding && element ? element.textContent !== presenter.style.css : null,
+                        rejectsWrongNativeBinding: namedSelectorBinding && element ? element.textContent !== wrongStyle.css : null,
+                        authoredImportant: (style.css.match(/!important/g) || []).length,
                         baseRules: rules.map(({ rule, context }) => ({ selector: rule.selectorText, context, cssText: rule.style.cssText,
                             important: Array.from(rule.style).filter((property) => rule.style.getPropertyPriority(property) === 'important') })),
                         paletteImportant: (presenter.buildThemeCss('data-dcuf-palette').match(/!important/g) || []).length,
@@ -145,6 +165,10 @@ try {
             assert.equal(initial.inventory.length, 5);
             for (const item of initial.inventory) {
                 assert.ok(item.baseRules.length > 0);
+                if (item.namedSelectorBinding && item.mountedIdentity !== null) {
+                    assert.equal(item.rejectsUnboundDescriptor, true, 'Unbound semantic descriptor must be rejected');
+                    assert.equal(item.rejectsWrongNativeBinding, true, 'Wrong native-close binding must be rejected');
+                }
                 assert.equal(item.mountedIdentity, id === 'minor-view' && item.name === 'HeaderDrawer' ? null : true,
                     `${id}: route-specific ${item.name} mount contract`);
             }

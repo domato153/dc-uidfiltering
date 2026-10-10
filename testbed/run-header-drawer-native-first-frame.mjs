@@ -191,6 +191,9 @@ try {
         assert.ok(report.negativeDifferences.some(row => row.action === 'class-add' && row.actual.before === '"Native host decoration"'), 'Frozen negative must expose the known first-frame decoration failure');
     }
     assert.deepEqual(report.differences, [], 'Native first-frame computed-style drift');
+    if (process.argv.includes('--require-same-stack-preservation')) {
+        assert.deepEqual(report.sameStackDifferences, [], 'Native same-stack computed-style drift');
+    }
     assert.deepEqual(report.relationExits.candidate,report.relationExits.control,'Still-owned relation styles survive drawer-only owner exits');
     report.status='PASS';
 } catch (error) {report.error=error.stack; throw error;}

@@ -1,5 +1,21 @@
     const __dcufHeaderDrawerHostAdapter = (() => {
         const STYLE_ID = 'dcuf-header-drawer-style';
+        const nativeStyleDefinition = __dcufHeaderDrawerPresenter.describeNativeStyle(Object.freeze([
+            { slot: "door", selector: ".issue_wrap .issue_contentbox[data-dcuf-header-native-door=\"1\"]" },
+            { slot: "recommendation", selector: ".issue_wrap #gall_top_recom.concept_wrap[data-dcuf-header-native-recom=\"1\"]" },
+            { slot: "relationPopup", selector: ".issue_wrap > #relation_popup[data-dcuf-header-relation-popup=\"1\"]" },
+            { slot: "relationStatic", selector: ".issue_wrap > #relation_popup[data-dcuf-header-relation-static=\"1\"]" },
+            { slot: "fluid", selector: "*:not(#hot_rank_pop2):not(#hot_rank_pop2 *)" },
+            { slot: "intro", selector: ".minor_intro_box" },
+            { slot: "ranking", selector: ".minor_ranking_box" },
+            { slot: "buttonDecoration", selector: ".btn_mgall_dcp" },
+            { slot: "closeDecoration", selector: ".under_poply_close" },
+            { slot: "rankPopup", selector: "#hot_rank_pop2" },
+            { slot: "tipPopup", selector: "#hot_tip_pop" },
+            { slot: "recommendationPaging", selector: ".pageing_box" },
+            { slot: "recommendationText", selector: ".concept_txtlist" },
+            { slot: "recommendationImage", selector: ".concept_img" }
+        ].map(Object.freeze)));
         const BODY_SCOPE_ATTR = 'data-dcuf-header-drawer-scope';
         const ACTIONS_SCOPE_ATTR = 'data-dcuf-header-drawer-actions';
         const NATIVE_DOOR_ATTR = 'data-dcuf-header-native-door';
@@ -208,7 +224,7 @@
                 return popup instanceof HTMLElement && getComputedStyle(popup).display !== 'none';
             });
         const ensureDrawerStyle = () => {
-            const definition = __dcufHeaderDrawerPresenter?.style;
+            const definition = nativeStyleDefinition;
             if (definition?.id !== STYLE_ID) return false;
             if (document.getElementById(STYLE_ID)) return true;
             const target = document.head || document.documentElement;

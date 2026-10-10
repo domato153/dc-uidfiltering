@@ -2637,6 +2637,22 @@ mobileTest('header drawer style has one projected owner and reversible host cont
         const initial = await session.page.evaluate(() => {
             const presenter = window.__dcufHeaderDrawerPresenter;
             const style = document.getElementById('dcuf-header-drawer-style');
+            const bindings = Object.freeze([
+                ['door', '.issue_wrap .issue_contentbox[data-dcuf-header-native-door="1"]'],
+                ['recommendation', '.issue_wrap #gall_top_recom.concept_wrap[data-dcuf-header-native-recom="1"]'],
+                ['relationPopup', '.issue_wrap > #relation_popup[data-dcuf-header-relation-popup="1"]'],
+                ['relationStatic', '.issue_wrap > #relation_popup[data-dcuf-header-relation-static="1"]'],
+                ['fluid', '*:not(#hot_rank_pop2):not(#hot_rank_pop2 *)'],
+                ['intro', '.minor_intro_box'], ['ranking', '.minor_ranking_box'],
+                ['buttonDecoration', '.btn_mgall_dcp'], ['closeDecoration', '.under_poply_close'],
+                ['rankPopup', '#hot_rank_pop2'], ['tipPopup', '#hot_tip_pop'],
+                ['recommendationPaging', '.pageing_box'], ['recommendationText', '.concept_txtlist'],
+                ['recommendationImage', '.concept_img']
+            ].map(([slot, selector]) => Object.freeze({slot, selector})));
+            const expectedStyle = presenter.describeNativeStyle(bindings);
+            const wrongStyle = presenter.describeNativeStyle(Object.freeze(bindings.map(entry => Object.freeze({
+                ...entry, selector: entry.slot === 'closeDecoration' ? '.missing_native_close' : entry.selector
+            }))));
             const actions = document.querySelector('.page_head > .fr');
             const popup = document.querySelector('#hot_rank_pop2');
             const relation = document.querySelector('.issue_wrap > #relation_popup');
@@ -2648,7 +2664,10 @@ mobileTest('header drawer style has one projected owner and reversible host cont
                 frozen: Object.isFrozen(presenter) && Object.isFrozen(presenter?.style),
                 styleCount: document.querySelectorAll('#dcuf-header-drawer-style').length,
                 styleOwner: style?.getAttribute('data-dcuf-style-owner'),
-                cssIdentity: style?.textContent === presenter?.style?.css,
+                cssIdentity: style?.textContent === expectedStyle.css,
+                frozenBound: Object.isFrozen(expectedStyle),
+                unboundDescriptorRejected: style?.textContent !== presenter.style.css,
+                wrongNativeBindingRejected: style?.textContent !== wrongStyle.css,
                 cssScoped: selectors.length > 0 && selectors.every((selector) => selector.split(',')
                     .every((branch) => branch.trim().startsWith('[data-dcuf-header-drawer-scope="1"]'))),
                 bodyScope: document.body.getAttribute('data-dcuf-header-drawer-scope'),
@@ -2663,6 +2682,7 @@ mobileTest('header drawer style has one projected owner and reversible host cont
         assert.deepEqual(initial, {
             presenter: true, frozen: true, styleCount: 1,
             styleOwner: 'header-drawer-presenter', cssIdentity: true, cssScoped: true,
+            frozenBound: true, unboundDescriptorRejected: true, wrongNativeBindingRejected: true,
             bodyScope: '1', actionsScope: '1', popupScope: '1',
             relationScope: '1', relationStatic: '1', relationPosition: 'relative', drawerScope: '1'
         });
