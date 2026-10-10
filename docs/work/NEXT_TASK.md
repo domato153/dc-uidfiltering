@@ -11,7 +11,7 @@ User Goal authorizes cold-receiver ACCEPTED then continuous remaining-plan work;
 
 ## Declared entry inventory
 
-LIVE entries route retrieval; local controls/reports are not completeness proof.
+Typed dependencies qualify tracked/build-recoverable entry. Cold acceptance also requires localEvidence bytes at the stated SHAs; remote CI cannot certify their availability.
 
 ```dcuf-next-action
 {
@@ -41,7 +41,7 @@ LIVE entries route retrieval; local controls/reports are not completeness proof.
     {"id":"fixtures","path":"testbed/fixtures","mode":"LIVE","sha256":null},
     {"id":"harness","path":"testbed/harness","mode":"LIVE","sha256":null},
     {"id":"width-evidence","path":"docs/work/HEADER_DRAWER_WIDTH_INPUT.md","mode":"LIVE","sha256":null},
-    {"id":"immediate-control","path":"artifacts/controls/header-binding-EFF9.user.js","mode":"FROZEN","sha256":"eff9876f41c382a49702285bfab0a91b8e3a27196a4d7b3d28f6086805ee1689"},
+    {"id":"immediate-control","path":"Dc_UserFilter_Mobile_v3.5.5.user.js","mode":"FROZEN","sha256":"eff9876f41c382a49702285bfab0a91b8e3a27196a4d7b3d28f6086805ee1689"},
     {"id":"selector-binding-feasibility","path":"docs/work/HEADER_DRAWER_SELECTOR_BINDING.md","mode":"LIVE","sha256":null},
     {"id":"named-binding-contract","path":"testbed/run-header-drawer-selector-binding.mjs","mode":"LIVE","sha256":null},
     {"id":"functional-runner","path":"testbed/run-tests.mjs","mode":"LIVE","sha256":null},
@@ -51,10 +51,7 @@ LIVE entries route retrieval; local controls/reports are not completeness proof.
     {"id":"gate-runner","path":"tools/run-gates.mjs","mode":"LIVE","sha256":null},
     {"id":"server","path":"testbed/server/server.mjs","mode":"LIVE","sha256":null},
     {"id":"checkpoint-workflow","path":"docs/checkpoint-workflow.md","mode":"LIVE","sha256":null},
-    {"id":"checkpoint-policy","path":"verification/checkpoint-policy.json","mode":"LIVE","sha256":null},
-    {"id":"native-css-control","path":"artifacts/controls/header-width-2AA1.user.js","mode":"FROZEN","sha256":"2aa122e15ee3521500c06bcfcda5fe280edf54ee05571a32ade2c88d29c7fd56"},
-    {"id":"same-stack-negative","path":"artifacts/controls/header-native-3036.user.js","mode":"FROZEN","sha256":"3036057928ed88f6c4e205a20e8aabcbcde4c1fbb58b5b2f53c61096c8c3d239"},
-    {"id":"binding-closeout","path":"artifacts/header-drawer-native-2026-10-09/binding-unit-result.json","mode":"FROZEN","sha256":"ac5e8298bcfb45f7a5f246fc96f6a5407be871b0584d34574eda5a44bda004f6"}
+    {"id":"checkpoint-policy","path":"verification/checkpoint-policy.json","mode":"LIVE","sha256":null}
   ],
   "requiredDecisions": ["working-checkpoint","semantic-entry","scope-and-admission","continuous-goal"],
   "decisions": [
@@ -71,10 +68,10 @@ LIVE entries route retrieval; local controls/reports are not completeness proof.
     {"id":"oracle-coupling","status":"ACTIVE","effect":"Default semantic CSS and native characterization/lifecycle tests consume old roles. Declare any role-owner delta while preserving independent native/style/input/geometry/restoration/resource checks."}
   ],
   "localEvidence": [
-    {"path":"artifacts/controls/header-binding-EFF9.user.js","disposition":"REGENERATE","recovery":"Recover exact EFF from unchanged root/dist or isolated rebuild of c158e73. Require SHA; never reset the active tree or substitute a matching version."},
-    {"path":"artifacts/controls/header-width-2AA1.user.js","disposition":"REGENERATE","recovery":"Recover exact 2AA1 via HEADER_DRAWER_WIDTH_INPUT.md and isolated build; missing exact bytes is STALE_REPLAN."},
-    {"path":"artifacts/controls/header-native-3036.user.js","disposition":"REGENERATE","recovery":"Recover exact 3036 from preceding 894d369 checkpoint in isolation; retain it as the synchronous negative, never substitute EFF."},
-    {"path":"artifacts/header-drawer-native-2026-10-09/binding-unit-result.json","disposition":"REGENERATE","recovery":"Report and hashed references are same-host local. Missing bytes require recovery or new bounded characterization, never guessed PASS; Git cannot recreate reports."}
+    {"path":"artifacts/controls/header-binding-EFF9.user.js","disposition":"REGENERATE","recovery":"Required SHA-256: EFF9876F41C382A49702285BFAB0A91B8E3A27196A4D7B3D28F6086805EE1689. Recover exact EFF from unchanged root/dist or isolated rebuild of c158e73. Require SHA; never reset the active tree or substitute a matching version."},
+    {"path":"artifacts/controls/header-width-2AA1.user.js","disposition":"REGENERATE","recovery":"Required SHA-256: 2AA122E15EE3521500C06BCFCDA5FE280EDF54EE05571A32ADE2C88D29C7FD56. Recover exact 2AA1 via HEADER_DRAWER_WIDTH_INPUT.md and isolated build; missing exact bytes is STALE_REPLAN."},
+    {"path":"artifacts/controls/header-native-3036.user.js","disposition":"REGENERATE","recovery":"Required SHA-256: 3036057928ED88F6C4E205A20E8AABCBCDE4C1FBB58B5B2F53C61096C8C3D239. Recover exact 3036 from preceding 894d369 checkpoint in isolation; retain it as the synchronous negative, never substitute EFF."},
+    {"path":"artifacts/header-drawer-native-2026-10-09/binding-unit-result.json","disposition":"REGENERATE","recovery":"Required SHA-256: AC5E8298BCFB45F7A5F246FC96F6A5407BE871B0584D34574EDA5A44BDA004F6. Report and hashed references are same-host local. Missing bytes require recovery or new bounded characterization, never guessed PASS; Git cannot recreate reports."}
   ],
   "qualificationScope": "CONTINUITY_ONLY",
   "workSuccessCertified": false
