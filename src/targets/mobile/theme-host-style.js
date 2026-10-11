@@ -147,11 +147,11 @@
             color: var(--dcuf-theme-accent) !important;
         }
         /* Host chrome uses the palette only where DCInside itself uses its fixed blue accent. */
-        ${__dcufBuildHeaderShellThemeCss(ROOT_ATTRIBUTE)}
-        ${__dcufBuildHeaderGnbThemeCss(ROOT_ATTRIBUTE)}
-        ${__dcufBuildGalleryPageHeadThemeCss(ROOT_ATTRIBUTE)}
-        ${__dcufBuildHeaderRecentVisitThemeCss(ROOT_ATTRIBUTE)}
-        ${__dcufBuildHeaderDrawerThemeCss(ROOT_ATTRIBUTE)}
+        ${__dcufBuildHeaderShellThemeCss(__dcufDescribeHeaderShellThemeSelectors(ROOT_ATTRIBUTE))}
+        ${__dcufBuildHeaderGnbThemeCss(__dcufDescribeHeaderGnbThemeSelectors(ROOT_ATTRIBUTE))}
+        ${__dcufBuildGalleryPageHeadThemeCss(__dcufDescribeGalleryPageHeadThemeSelectors(ROOT_ATTRIBUTE))}
+        ${__dcufBuildHeaderRecentVisitThemeCss(__dcufDescribeHeaderRecentVisitThemeSelectors(ROOT_ATTRIBUTE))}
+        ${__dcufBuildHeaderDrawerThemeCss(__dcufDescribeHeaderDrawerThemeSelectors(ROOT_ATTRIBUTE))}
 
         html[${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode #dc-personal-block-fab {
             border-color: color-mix(in srgb, var(--dcuf-theme-accent) 45%, transparent) !important;

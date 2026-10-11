@@ -1,5 +1,9 @@
 # Agent Maintenance Notes
 
+## Hoisted header native inputs and equal-selector oracle gap
+
+Keep full early host selectors in immutable named adapter records and presentation declarations in hoisted pure builders. Theme/core composition runs before const presenter/adapter initialization; preserve exact phase and unmarked-root coverage. Equal native strings in different slots can hide an ignored input: baseline equality and first-slot mutation are insufficient. Mutate all 33 slots independently and compare complete theme/core order as well as grouped digests. Update actual exported-builder consumers and adapter-source mutation targets; retain old-argument oracle RED and original behavior/digests. Current bounded evidence and retained palette FAIL are in docs/work/HEADER_EARLY_SELECTOR_BINDING.md.
+
 ## Drawer late-native semantic roles: mutation and rollback traps
 
 Root-only `collectMatches` misses a generic nested insertion/class mutation; the shared coordinator may also discard an out-of-context copied part before the subscriber sees it. Admit only native-part/relation projection markers through the existing list/view surface filter, then check both native ancestors and marked descendants. A generic wrapper containing a copy needs the downward marker selector too. Keep the existing scheduler/subscriber; no new global observer is necessary.

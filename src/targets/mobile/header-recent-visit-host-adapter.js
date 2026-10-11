@@ -1,3 +1,12 @@
+    // Hoisted input: preserve native coverage before objects initialize or connect.
+    function __dcufDescribeHeaderRecentVisitThemeSelectors(ROOT_ATTRIBUTE) {
+        return Object.freeze({
+            title: `html[${ROOT_ATTRIBUTE}] body .newvisit_history > .tit`,
+            open: `html[${ROOT_ATTRIBUTE}] body .newvisit_history > :is(.btn_open, .bnt_newvisit_more)`,
+            activeLink: `html[${ROOT_ATTRIBUTE}] body .newvisit_history .newvisit_list a.on`
+        });
+    }
+
     const __dcufHeaderRecentVisitHostAdapter = (() => {
         const ROOT_SELECTOR = '.newvisit_history';
         const STYLE_ID = 'dcuf-header-recent-visit-style';
@@ -358,7 +367,7 @@
             });
         };
 
-        return Object.freeze({
+        return Object.freeze({ describeThemeSelectors: __dcufDescribeHeaderRecentVisitThemeSelectors,
             connect,
             refresh,
             dispose,

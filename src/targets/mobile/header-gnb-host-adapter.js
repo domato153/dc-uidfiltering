@@ -1,3 +1,18 @@
+    // Hoisted input: preserve native coverage before objects initialize or connect.
+    function __dcufDescribeHeaderGnbThemeSelectors(ROOT_ATTRIBUTE) {
+        return Object.freeze({
+            root: `html[${ROOT_ATTRIBUTE}] body .gnb_bar`,
+            nextIcon: `html[${ROOT_ATTRIBUTE}] body .gnb_bar .sp_img.icon_next`
+        });
+    }
+
+    // Hoisted input: preserve native coverage before objects initialize or connect.
+    function __dcufDescribeHeaderGnbResetSelectors() {
+        return Object.freeze({
+            root: `.gnb_bar`
+        });
+    }
+
     const __dcufHeaderGnbHostAdapter = (() => {
         const ROOT_SELECTOR = '.gnb_bar';
         const ROLE_ATTRIBUTE = 'data-dcuf-header-gnb-role';
@@ -141,6 +156,6 @@
             mutationSubscribers: typeof mutationUnsubscribe === 'function' ? 1 : 0,
         });
 
-        return Object.freeze({ connect, refresh, dispose, ensureStyle, snapshot, snapshotResources });
+        return Object.freeze({ describeThemeSelectors: __dcufDescribeHeaderGnbThemeSelectors, describeResetSelectors: __dcufDescribeHeaderGnbResetSelectors, connect, refresh, dispose, ensureStyle, snapshot, snapshotResources });
     })();
     __dcufRoot.__dcufHeaderGnbHostAdapter = __dcufHeaderGnbHostAdapter;

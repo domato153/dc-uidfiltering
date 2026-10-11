@@ -1,3 +1,26 @@
+    // Hoisted input: preserve native coverage before objects initialize or connect.
+    function __dcufDescribeHeaderShellThemeSelectors(ROOT_ATTRIBUTE) {
+        return Object.freeze({
+            root: `html[${ROOT_ATTRIBUTE}] body .dcheader.typea`,
+            search: `html[${ROOT_ATTRIBUTE}] body .dchead .top_search`,
+            searchButton: `html[${ROOT_ATTRIBUTE}] body .dchead .top_search .bnt_search`,
+            spriteButton: `html[${ROOT_ATTRIBUTE}] body .dchead .top_search button.sp_img.bnt_search`,
+            login: `html[${ROOT_ATTRIBUTE}] body .dchead .area_links .btn_login`,
+            logout: `html[${ROOT_ATTRIBUTE}] body .dchead .area_links .btn_top_loginout`,
+            searchInset: `html[${ROOT_ATTRIBUTE}] body .dchead .top_search`,
+            searchField: `html[${ROOT_ATTRIBUTE}] body .dchead .top_search :is(input, .inner_search)`,
+            buttonDecoration: `html[${ROOT_ATTRIBUTE}] body .dchead .top_search .bnt_search::before`,
+            spriteDecoration: `html[${ROOT_ATTRIBUTE}] body .dchead .top_search button.sp_img.bnt_search::before`
+        });
+    }
+
+    // Hoisted input: preserve native coverage before objects initialize or connect.
+    function __dcufDescribeHeaderShellResetSelectors() {
+        return Object.freeze({
+            root: `.dcheader`
+        });
+    }
+
     const __dcufHeaderShellHostAdapter = (() => {
         const ROOT_SELECTOR = '.dcheader.typea';
         const ROLE_ATTRIBUTE = 'data-dcuf-header-shell-role';
@@ -153,6 +176,6 @@
             mutationSubscribers: typeof mutationUnsubscribe === 'function' ? 1 : 0,
         });
 
-        return Object.freeze({ connect, refresh, dispose, ensureStyle, snapshot, snapshotResources });
+        return Object.freeze({ describeThemeSelectors: __dcufDescribeHeaderShellThemeSelectors, describeResetSelectors: __dcufDescribeHeaderShellResetSelectors, connect, refresh, dispose, ensureStyle, snapshot, snapshotResources });
     })();
     __dcufRoot.__dcufHeaderShellHostAdapter = __dcufHeaderShellHostAdapter;

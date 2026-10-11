@@ -1,8 +1,16 @@
     // Palette accents apply to the original host issue root, including before
     // drawer roles are projected. Keep that timing and native ancestry intact.
-    function __dcufBuildHeaderDrawerThemeCss(ROOT_ATTRIBUTE) {
+    function __dcufBuildHeaderDrawerThemeCss(selectors) {
+        if (!selectors || typeof selectors !== 'object' || !Object.isFrozen(selectors)
+            || Reflect.ownKeys(selectors).length !== 1
+            || !["issue"].every(slot => {
+                const field = Object.getOwnPropertyDescriptor(selectors, slot);
+                return field && typeof field.value === 'string' && field.value.trim();
+            })) {
+            throw new TypeError('A complete frozen header-drawer theme selector record is required');
+        }
         return `
-        html[${ROOT_ATTRIBUTE}] body .issue_wrap {
+        ${selectors.issue} {
             border-top-color: var(--dcuf-theme-accent) !important;
             box-shadow: inset 0 2px 0 color-mix(in srgb, var(--dcuf-theme-accent) 78%, transparent) !important;
         }
@@ -10,10 +18,18 @@
     }
     // Preserve initial concealment before roles project and popup-only state:
     // the adapter keeps the exact open marker while an original popup is open.
-    function __dcufBuildHeaderDrawerVisibilityCss() {
+    function __dcufBuildHeaderDrawerVisibilityCss(selectors) {
+        if (!selectors || typeof selectors !== 'object' || !Object.isFrozen(selectors)
+            || Reflect.ownKeys(selectors).length !== 2
+            || !["door","recommendation"].every(slot => {
+                const field = Object.getOwnPropertyDescriptor(selectors, slot);
+                return field && typeof field.value === 'string' && field.value.trim();
+            })) {
+            throw new TypeError('A complete frozen header-drawer visibility selector record is required');
+        }
         return `
-        .issue_contentbox:not([data-dcuf-header-native-door-open="1"]),
-        #gall_top_recom.concept_wrap:not([data-dcuf-header-native-recom-open="1"]) {
+        ${selectors.door},
+        ${selectors.recommendation} {
             display: none !important;
         }
 `;

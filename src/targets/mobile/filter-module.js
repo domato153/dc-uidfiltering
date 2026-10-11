@@ -55,7 +55,7 @@
 
 
         /* --- 기본 레이아웃 재정의 --- */
-        ${__dcufBuildHeaderDrawerVisibilityCss()}
+        ${__dcufBuildHeaderDrawerVisibilityCss(__dcufDescribeHeaderDrawerVisibilitySelectors())}
         /* [개선] 마이너 갤러리 상단 링크 영역 모바일 최적화 */
         .minor_intro_area {
             display: block !important; /* 숨김 처리를 확실히 무효화 */
@@ -88,8 +88,8 @@
             position: relative !important; box-sizing: border-box !important;
             margin: 0 !important; padding: 0 !important;
         }
-        ${__dcufBuildHeaderShellResetCss()}
-        ${__dcufBuildHeaderGnbResetCss()}
+        ${__dcufBuildHeaderShellResetCss(__dcufDescribeHeaderShellResetSelectors())}
+        ${__dcufBuildHeaderGnbResetCss(__dcufDescribeHeaderGnbResetSelectors())}
         #container { padding-top: 5px; }
 
 

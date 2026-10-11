@@ -1,28 +1,36 @@
-    // Hoisted: the palette mounts before presenter objects initialize. Keep its
-    // original selectors/cascade until the separate semantic-marker transition.
-    function __dcufBuildHeaderShellThemeCss(ROOT_ATTRIBUTE) {
+    // Hoisted: the palette mounts before presenter objects initialize.
+    // The target adapter supplies native selector knowledge explicitly.
+    function __dcufBuildHeaderShellThemeCss(selectors) {
+        if (!selectors || typeof selectors !== 'object' || !Object.isFrozen(selectors)
+            || Reflect.ownKeys(selectors).length !== 10
+            || !["root","search","searchButton","spriteButton","login","logout","searchInset","searchField","buttonDecoration","spriteDecoration"].every(slot => {
+                const field = Object.getOwnPropertyDescriptor(selectors, slot);
+                return field && typeof field.value === 'string' && field.value.trim();
+            })) {
+            throw new TypeError('A complete frozen header-shell theme selector record is required');
+        }
         return `
-        html[${ROOT_ATTRIBUTE}] body .dcheader.typea {
+        ${selectors.root} {
             border-color: var(--dcuf-theme-border-strong) !important;
         }
-        html[${ROOT_ATTRIBUTE}] body .dchead .top_search,
-        html[${ROOT_ATTRIBUTE}] body .dchead .top_search .bnt_search,
-        html[${ROOT_ATTRIBUTE}] body .dchead .top_search button.sp_img.bnt_search,
-        html[${ROOT_ATTRIBUTE}] body .dchead .area_links .btn_login,
-        html[${ROOT_ATTRIBUTE}] body .dchead .area_links .btn_top_loginout {
+        ${selectors.search},
+        ${selectors.searchButton},
+        ${selectors.spriteButton},
+        ${selectors.login},
+        ${selectors.logout} {
             border-color: var(--dcuf-theme-accent-strong) !important;
             background-color: var(--dcuf-theme-accent-strong) !important;
             background-image: none !important;
             color: var(--dcuf-theme-on-accent) !important;
         }
-        html[${ROOT_ATTRIBUTE}] body .dchead .top_search {
+        ${selectors.searchInset} {
             box-shadow: inset 0 0 0 1px var(--dcuf-theme-accent-strong) !important;
         }
-        html[${ROOT_ATTRIBUTE}] body .dchead .top_search :is(input, .inner_search) {
+        ${selectors.searchField} {
             border-color: var(--dcuf-theme-accent-strong) !important;
         }
-        html[${ROOT_ATTRIBUTE}] body .dchead .top_search .bnt_search::before,
-        html[${ROOT_ATTRIBUTE}] body .dchead .top_search button.sp_img.bnt_search::before {
+        ${selectors.buttonDecoration},
+        ${selectors.spriteDecoration} {
             content: "" !important;
             display: block !important;
             width: 12px !important;
@@ -36,9 +44,17 @@
     }
     // Keep the legacy reset at its original core-filter phase, including roots
     // not yet projected or not matching typea. This is inherited cascade debt.
-    function __dcufBuildHeaderShellResetCss() {
+    function __dcufBuildHeaderShellResetCss(selectors) {
+        if (!selectors || typeof selectors !== 'object' || !Object.isFrozen(selectors)
+            || Reflect.ownKeys(selectors).length !== 1
+            || !["root"].every(slot => {
+                const field = Object.getOwnPropertyDescriptor(selectors, slot);
+                return field && typeof field.value === 'string' && field.value.trim();
+            })) {
+            throw new TypeError('A complete frozen header-shell reset selector record is required');
+        }
         return `
-        .dcheader {
+        ${selectors.root} {
             width: 100% !important;
             min-width: 0 !important; float: none !important;
             position: relative !important; box-sizing: border-box !important;

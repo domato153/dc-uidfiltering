@@ -1,3 +1,18 @@
+    // Hoisted input: preserve native coverage before objects initialize or connect.
+    function __dcufDescribeHeaderDrawerThemeSelectors(ROOT_ATTRIBUTE) {
+        return Object.freeze({
+            issue: `html[${ROOT_ATTRIBUTE}] body .issue_wrap`
+        });
+    }
+
+    // Hoisted input: preserve native coverage before objects initialize or connect.
+    function __dcufDescribeHeaderDrawerVisibilitySelectors() {
+        return Object.freeze({
+            door: `.issue_contentbox:not([data-dcuf-header-native-door-open="1"])`,
+            recommendation: `#gall_top_recom.concept_wrap:not([data-dcuf-header-native-recom-open="1"])`
+        });
+    }
+
     const __dcufHeaderDrawerHostAdapter = (() => {
         const STYLE_ID = 'dcuf-header-drawer-style';
         const nativeStyleDefinition = __dcufHeaderDrawerPresenter.describeNativeStyle(Object.freeze([
@@ -499,7 +514,7 @@
             fallbackObservers: Number(Boolean(fallbackObserver))
         });
 
-        return Object.freeze({ connect, refresh: syncHeaderDrawer, dispose, snapshot, snapshotResources });
+        return Object.freeze({ describeThemeSelectors: __dcufDescribeHeaderDrawerThemeSelectors, describeVisibilitySelectors: __dcufDescribeHeaderDrawerVisibilitySelectors, connect, refresh: syncHeaderDrawer, dispose, snapshot, snapshotResources });
     })();
 
     const __dcufHeaderDrawerFallbackScheduler = (run) => {

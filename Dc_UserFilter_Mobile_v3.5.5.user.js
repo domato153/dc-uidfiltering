@@ -8359,31 +8359,39 @@ const __dcufSettingsPresenter = (() => {
         });
     })();
     __dcufRoot.__dcufWriteEditorHostAdapter = __dcufWriteEditorHostAdapter;
-    // Hoisted: the palette mounts before presenter objects initialize. Keep its
-    // original selectors/cascade until the separate semantic-marker transition.
-    function __dcufBuildHeaderShellThemeCss(ROOT_ATTRIBUTE) {
+    // Hoisted: the palette mounts before presenter objects initialize.
+    // The target adapter supplies native selector knowledge explicitly.
+    function __dcufBuildHeaderShellThemeCss(selectors) {
+        if (!selectors || typeof selectors !== 'object' || !Object.isFrozen(selectors)
+            || Reflect.ownKeys(selectors).length !== 10
+            || !["root","search","searchButton","spriteButton","login","logout","searchInset","searchField","buttonDecoration","spriteDecoration"].every(slot => {
+                const field = Object.getOwnPropertyDescriptor(selectors, slot);
+                return field && typeof field.value === 'string' && field.value.trim();
+            })) {
+            throw new TypeError('A complete frozen header-shell theme selector record is required');
+        }
         return `
-        html[${ROOT_ATTRIBUTE}] body .dcheader.typea {
+        ${selectors.root} {
             border-color: var(--dcuf-theme-border-strong) !important;
         }
-        html[${ROOT_ATTRIBUTE}] body .dchead .top_search,
-        html[${ROOT_ATTRIBUTE}] body .dchead .top_search .bnt_search,
-        html[${ROOT_ATTRIBUTE}] body .dchead .top_search button.sp_img.bnt_search,
-        html[${ROOT_ATTRIBUTE}] body .dchead .area_links .btn_login,
-        html[${ROOT_ATTRIBUTE}] body .dchead .area_links .btn_top_loginout {
+        ${selectors.search},
+        ${selectors.searchButton},
+        ${selectors.spriteButton},
+        ${selectors.login},
+        ${selectors.logout} {
             border-color: var(--dcuf-theme-accent-strong) !important;
             background-color: var(--dcuf-theme-accent-strong) !important;
             background-image: none !important;
             color: var(--dcuf-theme-on-accent) !important;
         }
-        html[${ROOT_ATTRIBUTE}] body .dchead .top_search {
+        ${selectors.searchInset} {
             box-shadow: inset 0 0 0 1px var(--dcuf-theme-accent-strong) !important;
         }
-        html[${ROOT_ATTRIBUTE}] body .dchead .top_search :is(input, .inner_search) {
+        ${selectors.searchField} {
             border-color: var(--dcuf-theme-accent-strong) !important;
         }
-        html[${ROOT_ATTRIBUTE}] body .dchead .top_search .bnt_search::before,
-        html[${ROOT_ATTRIBUTE}] body .dchead .top_search button.sp_img.bnt_search::before {
+        ${selectors.buttonDecoration},
+        ${selectors.spriteDecoration} {
             content: "" !important;
             display: block !important;
             width: 12px !important;
@@ -8397,9 +8405,17 @@ const __dcufSettingsPresenter = (() => {
     }
     // Keep the legacy reset at its original core-filter phase, including roots
     // not yet projected or not matching typea. This is inherited cascade debt.
-    function __dcufBuildHeaderShellResetCss() {
+    function __dcufBuildHeaderShellResetCss(selectors) {
+        if (!selectors || typeof selectors !== 'object' || !Object.isFrozen(selectors)
+            || Reflect.ownKeys(selectors).length !== 1
+            || !["root"].every(slot => {
+                const field = Object.getOwnPropertyDescriptor(selectors, slot);
+                return field && typeof field.value === 'string' && field.value.trim();
+            })) {
+            throw new TypeError('A complete frozen header-shell reset selector record is required');
+        }
         return `
-        .dcheader {
+        ${selectors.root} {
             width: 100% !important;
             min-width: 0 !important; float: none !important;
             position: relative !important; box-sizing: border-box !important;
@@ -8438,6 +8454,29 @@ const __dcufSettingsPresenter = (() => {
         return Object.freeze({ style, buildThemeCss: __dcufBuildHeaderShellThemeCss, buildResetCss: __dcufBuildHeaderShellResetCss });
     })();
     __dcufRoot.__dcufHeaderShellPresenter = __dcufHeaderShellPresenter;
+    // Hoisted input: preserve native coverage before objects initialize or connect.
+    function __dcufDescribeHeaderShellThemeSelectors(ROOT_ATTRIBUTE) {
+        return Object.freeze({
+            root: `html[${ROOT_ATTRIBUTE}] body .dcheader.typea`,
+            search: `html[${ROOT_ATTRIBUTE}] body .dchead .top_search`,
+            searchButton: `html[${ROOT_ATTRIBUTE}] body .dchead .top_search .bnt_search`,
+            spriteButton: `html[${ROOT_ATTRIBUTE}] body .dchead .top_search button.sp_img.bnt_search`,
+            login: `html[${ROOT_ATTRIBUTE}] body .dchead .area_links .btn_login`,
+            logout: `html[${ROOT_ATTRIBUTE}] body .dchead .area_links .btn_top_loginout`,
+            searchInset: `html[${ROOT_ATTRIBUTE}] body .dchead .top_search`,
+            searchField: `html[${ROOT_ATTRIBUTE}] body .dchead .top_search :is(input, .inner_search)`,
+            buttonDecoration: `html[${ROOT_ATTRIBUTE}] body .dchead .top_search .bnt_search::before`,
+            spriteDecoration: `html[${ROOT_ATTRIBUTE}] body .dchead .top_search button.sp_img.bnt_search::before`
+        });
+    }
+
+    // Hoisted input: preserve native coverage before objects initialize or connect.
+    function __dcufDescribeHeaderShellResetSelectors() {
+        return Object.freeze({
+            root: `.dcheader`
+        });
+    }
+
     const __dcufHeaderShellHostAdapter = (() => {
         const ROOT_SELECTOR = '.dcheader.typea';
         const ROLE_ATTRIBUTE = 'data-dcuf-header-shell-role';
@@ -8593,32 +8632,40 @@ const __dcufSettingsPresenter = (() => {
             mutationSubscribers: typeof mutationUnsubscribe === 'function' ? 1 : 0,
         });
 
-        return Object.freeze({ connect, refresh, dispose, ensureStyle, snapshot, snapshotResources });
+        return Object.freeze({ describeThemeSelectors: __dcufDescribeHeaderShellThemeSelectors, describeResetSelectors: __dcufDescribeHeaderShellResetSelectors, connect, refresh, dispose, ensureStyle, snapshot, snapshotResources });
     })();
     __dcufRoot.__dcufHeaderShellHostAdapter = __dcufHeaderShellHostAdapter;
-    // Hoisted because theme composition precedes this presenter object. These
-    // inherited host selectors stay unchanged in this zero-delta owner move.
-    function __dcufBuildGalleryPageHeadThemeCss(ROOT_ATTRIBUTE) {
+    // Hoisted because theme composition precedes this presenter object.
+    // The target adapter supplies native selector knowledge explicitly.
+    function __dcufBuildGalleryPageHeadThemeCss(selectors) {
+        if (!selectors || typeof selectors !== 'object' || !Object.isFrozen(selectors)
+            || Reflect.ownKeys(selectors).length !== 13
+            || !["root","search","directSearch","title","badge","titleIcon","linkedTitleIcon","titleDecoration","linkedTitleDecoration","miniFixtureDecoration","miniRootDecoration","nestedMiniDecoration","miniDecoration"].every(slot => {
+                const field = Object.getOwnPropertyDescriptor(selectors, slot);
+                return field && typeof field.value === 'string' && field.value.trim();
+            })) {
+            throw new TypeError('A complete frozen gallery-page-head theme selector record is required');
+        }
         return `
-        html[${ROOT_ATTRIBUTE}] body .page_head {
+        ${selectors.root} {
             border-color: var(--dcuf-theme-border-strong) !important;
         }
-        html[${ROOT_ATTRIBUTE}] body .page_head :is(.gall_search, .gall_search_box, .inner_search) :is(.btn_search, .bnt_search, button[type="submit"]),
-        html[${ROOT_ATTRIBUTE}] body .page_head > .fl form :is(.btn_search, .bnt_search, button[type="submit"]) {
+        ${selectors.search},
+        ${selectors.directSearch} {
             border-color: var(--dcuf-theme-accent-strong) !important;
             background-color: var(--dcuf-theme-accent-strong) !important;
             background-image: none !important;
             color: var(--dcuf-theme-on-accent) !important;
         }
-        html[${ROOT_ATTRIBUTE}] body .page_head :is(h2, h2 a, .gall_tit, .gall_tit a, .gallery_title, .gallery_title a) {
+        ${selectors.title} {
             color: var(--dcuf-theme-accent) !important;
         }
-        html[${ROOT_ATTRIBUTE}] body .page_head :is(.icon_mini, .mini_icon, .gallery_badge) {
+        ${selectors.badge} {
             border-color: var(--dcuf-theme-accent) !important;
             color: var(--dcuf-theme-accent) !important;
         }
-        html[${ROOT_ATTRIBUTE}] body .page_head .pagehead_titicon:is(.mgall, .ngall).sp_img,
-        html[${ROOT_ATTRIBUTE}] body .page_head h2 a > .pagehead_titicon:is(.mgall, .ngall).sp_img {
+        ${selectors.titleIcon},
+        ${selectors.linkedTitleIcon} {
             display: inline-flex !important;
             width: 26px !important;
             height: 20px !important;
@@ -8638,16 +8685,16 @@ const __dcufSettingsPresenter = (() => {
             box-sizing: border-box !important;
             vertical-align: middle !important;
         }
-        html[${ROOT_ATTRIBUTE}] body .page_head .pagehead_titicon:is(.mgall, .ngall).sp_img::before,
-        html[${ROOT_ATTRIBUTE}] body .page_head h2 a > .pagehead_titicon:is(.mgall, .ngall).sp_img::before {
+        ${selectors.titleDecoration},
+        ${selectors.linkedTitleDecoration} {
             content: "m" !important;
             font: 900 12px/1 Arial, sans-serif !important;
             text-transform: lowercase !important;
         }
-        html[${ROOT_ATTRIBUTE}] body[data-fixture-variant="mini"] .page_head .pagehead_titicon:is(.mgall, .ngall).sp_img::before,
-        html[${ROOT_ATTRIBUTE}] body:has(#top.miniwrap) .page_head .pagehead_titicon:is(.mgall, .ngall).sp_img::before,
-        html[${ROOT_ATTRIBUTE}] body .miniwrap .page_head .pagehead_titicon:is(.mgall, .ngall).sp_img::before,
-        html[${ROOT_ATTRIBUTE}] body .page_head .pagehead_titicon.ngall.sp_img::before {
+        ${selectors.miniFixtureDecoration},
+        ${selectors.miniRootDecoration},
+        ${selectors.nestedMiniDecoration},
+        ${selectors.miniDecoration} {
             content: "mi" !important;
             font-size: 10px !important;
         }
@@ -8683,6 +8730,25 @@ const __dcufSettingsPresenter = (() => {
         return Object.freeze({ style, buildThemeCss: __dcufBuildGalleryPageHeadThemeCss });
     })();
     __dcufRoot.__dcufGalleryPageHeadPresenter = __dcufGalleryPageHeadPresenter;
+    // Hoisted input: preserve native coverage before objects initialize or connect.
+    function __dcufDescribeGalleryPageHeadThemeSelectors(ROOT_ATTRIBUTE) {
+        return Object.freeze({
+            root: `html[${ROOT_ATTRIBUTE}] body .page_head`,
+            search: `html[${ROOT_ATTRIBUTE}] body .page_head :is(.gall_search, .gall_search_box, .inner_search) :is(.btn_search, .bnt_search, button[type="submit"])`,
+            directSearch: `html[${ROOT_ATTRIBUTE}] body .page_head > .fl form :is(.btn_search, .bnt_search, button[type="submit"])`,
+            title: `html[${ROOT_ATTRIBUTE}] body .page_head :is(h2, h2 a, .gall_tit, .gall_tit a, .gallery_title, .gallery_title a)`,
+            badge: `html[${ROOT_ATTRIBUTE}] body .page_head :is(.icon_mini, .mini_icon, .gallery_badge)`,
+            titleIcon: `html[${ROOT_ATTRIBUTE}] body .page_head .pagehead_titicon:is(.mgall, .ngall).sp_img`,
+            linkedTitleIcon: `html[${ROOT_ATTRIBUTE}] body .page_head h2 a > .pagehead_titicon:is(.mgall, .ngall).sp_img`,
+            titleDecoration: `html[${ROOT_ATTRIBUTE}] body .page_head .pagehead_titicon:is(.mgall, .ngall).sp_img::before`,
+            linkedTitleDecoration: `html[${ROOT_ATTRIBUTE}] body .page_head h2 a > .pagehead_titicon:is(.mgall, .ngall).sp_img::before`,
+            miniFixtureDecoration: `html[${ROOT_ATTRIBUTE}] body[data-fixture-variant="mini"] .page_head .pagehead_titicon:is(.mgall, .ngall).sp_img::before`,
+            miniRootDecoration: `html[${ROOT_ATTRIBUTE}] body:has(#top.miniwrap) .page_head .pagehead_titicon:is(.mgall, .ngall).sp_img::before`,
+            nestedMiniDecoration: `html[${ROOT_ATTRIBUTE}] body .miniwrap .page_head .pagehead_titicon:is(.mgall, .ngall).sp_img::before`,
+            miniDecoration: `html[${ROOT_ATTRIBUTE}] body .page_head .pagehead_titicon.ngall.sp_img::before`
+        });
+    }
+
     const __dcufGalleryPageHeadHostAdapter = (() => {
         const ROOT_SELECTOR = '.page_head';
         const ROLE_ATTRIBUTE = 'data-dcuf-gallery-page-head-role';
@@ -8829,19 +8895,27 @@ const __dcufSettingsPresenter = (() => {
             mutationSubscribers: typeof mutationUnsubscribe === 'function' ? 1 : 0,
         });
 
-        return Object.freeze({ connect, refresh, dispose, ensureStyle, snapshot, snapshotResources });
+        return Object.freeze({ describeThemeSelectors: __dcufDescribeGalleryPageHeadThemeSelectors, connect, refresh, dispose, ensureStyle, snapshot, snapshotResources });
     })();
     __dcufRoot.__dcufGalleryPageHeadHostAdapter = __dcufGalleryPageHeadHostAdapter;
     // Hoisted to preserve the existing early palette injection phase.
-    function __dcufBuildHeaderGnbThemeCss(ROOT_ATTRIBUTE) {
+    function __dcufBuildHeaderGnbThemeCss(selectors) {
+        if (!selectors || typeof selectors !== 'object' || !Object.isFrozen(selectors)
+            || Reflect.ownKeys(selectors).length !== 2
+            || !["root","nextIcon"].every(slot => {
+                const field = Object.getOwnPropertyDescriptor(selectors, slot);
+                return field && typeof field.value === 'string' && field.value.trim();
+            })) {
+            throw new TypeError('A complete frozen header-gnb theme selector record is required');
+        }
         return `
-        html[${ROOT_ATTRIBUTE}] body .gnb_bar {
+        ${selectors.root} {
             border-color: var(--dcuf-theme-accent-strong) !important;
             background-color: var(--dcuf-theme-accent-strong) !important;
             background-image: none !important;
             color: var(--dcuf-theme-on-accent) !important;
         }
-        html[${ROOT_ATTRIBUTE}] body .gnb_bar .sp_img.icon_next {
+        ${selectors.nextIcon} {
             display: inline-block !important;
             width: 0 !important;
             height: 0 !important;
@@ -8857,9 +8931,17 @@ const __dcufSettingsPresenter = (() => {
 `;
     }
     // Hoisted, pure, and consumed by the existing core phase before projection.
-    function __dcufBuildHeaderGnbResetCss() {
+    function __dcufBuildHeaderGnbResetCss(selectors) {
+        if (!selectors || typeof selectors !== 'object' || !Object.isFrozen(selectors)
+            || Reflect.ownKeys(selectors).length !== 1
+            || !["root"].every(slot => {
+                const field = Object.getOwnPropertyDescriptor(selectors, slot);
+                return field && typeof field.value === 'string' && field.value.trim();
+            })) {
+            throw new TypeError('A complete frozen header-gnb reset selector record is required');
+        }
         return `
-        .gnb_bar {
+        ${selectors.root} {
             width: 100% !important;
             min-width: 0 !important; float: none !important;
             position: relative !important; box-sizing: border-box !important;
@@ -8880,6 +8962,21 @@ const __dcufSettingsPresenter = (() => {
         return Object.freeze({ style, buildThemeCss: __dcufBuildHeaderGnbThemeCss, buildResetCss: __dcufBuildHeaderGnbResetCss });
     })();
     __dcufRoot.__dcufHeaderGnbPresenter = __dcufHeaderGnbPresenter;
+    // Hoisted input: preserve native coverage before objects initialize or connect.
+    function __dcufDescribeHeaderGnbThemeSelectors(ROOT_ATTRIBUTE) {
+        return Object.freeze({
+            root: `html[${ROOT_ATTRIBUTE}] body .gnb_bar`,
+            nextIcon: `html[${ROOT_ATTRIBUTE}] body .gnb_bar .sp_img.icon_next`
+        });
+    }
+
+    // Hoisted input: preserve native coverage before objects initialize or connect.
+    function __dcufDescribeHeaderGnbResetSelectors() {
+        return Object.freeze({
+            root: `.gnb_bar`
+        });
+    }
+
     const __dcufHeaderGnbHostAdapter = (() => {
         const ROOT_SELECTOR = '.gnb_bar';
         const ROLE_ATTRIBUTE = 'data-dcuf-header-gnb-role';
@@ -9023,15 +9120,23 @@ const __dcufSettingsPresenter = (() => {
             mutationSubscribers: typeof mutationUnsubscribe === 'function' ? 1 : 0,
         });
 
-        return Object.freeze({ connect, refresh, dispose, ensureStyle, snapshot, snapshotResources });
+        return Object.freeze({ describeThemeSelectors: __dcufDescribeHeaderGnbThemeSelectors, describeResetSelectors: __dcufDescribeHeaderGnbResetSelectors, connect, refresh, dispose, ensureStyle, snapshot, snapshotResources });
     })();
     __dcufRoot.__dcufHeaderGnbHostAdapter = __dcufHeaderGnbHostAdapter;
     // Hoisted to preserve the existing early palette injection phase.
-    function __dcufBuildHeaderRecentVisitThemeCss(ROOT_ATTRIBUTE) {
+    function __dcufBuildHeaderRecentVisitThemeCss(selectors) {
+        if (!selectors || typeof selectors !== 'object' || !Object.isFrozen(selectors)
+            || Reflect.ownKeys(selectors).length !== 3
+            || !["title","open","activeLink"].every(slot => {
+                const field = Object.getOwnPropertyDescriptor(selectors, slot);
+                return field && typeof field.value === 'string' && field.value.trim();
+            })) {
+            throw new TypeError('A complete frozen header-recent-visit theme selector record is required');
+        }
         return `
-        html[${ROOT_ATTRIBUTE}] body .newvisit_history > .tit,
-        html[${ROOT_ATTRIBUTE}] body .newvisit_history > :is(.btn_open, .bnt_newvisit_more),
-        html[${ROOT_ATTRIBUTE}] body .newvisit_history .newvisit_list a.on {
+        ${selectors.title},
+        ${selectors.open},
+        ${selectors.activeLink} {
             color: var(--dcuf-theme-accent) !important;
         }
 `;
@@ -9057,6 +9162,15 @@ const __dcufSettingsPresenter = (() => {
         return Object.freeze({ style, buildThemeCss: __dcufBuildHeaderRecentVisitThemeCss });
     })();
     __dcufRoot.__dcufHeaderRecentVisitPresenter = __dcufHeaderRecentVisitPresenter;
+    // Hoisted input: preserve native coverage before objects initialize or connect.
+    function __dcufDescribeHeaderRecentVisitThemeSelectors(ROOT_ATTRIBUTE) {
+        return Object.freeze({
+            title: `html[${ROOT_ATTRIBUTE}] body .newvisit_history > .tit`,
+            open: `html[${ROOT_ATTRIBUTE}] body .newvisit_history > :is(.btn_open, .bnt_newvisit_more)`,
+            activeLink: `html[${ROOT_ATTRIBUTE}] body .newvisit_history .newvisit_list a.on`
+        });
+    }
+
     const __dcufHeaderRecentVisitHostAdapter = (() => {
         const ROOT_SELECTOR = '.newvisit_history';
         const STYLE_ID = 'dcuf-header-recent-visit-style';
@@ -9417,7 +9531,7 @@ const __dcufSettingsPresenter = (() => {
             });
         };
 
-        return Object.freeze({
+        return Object.freeze({ describeThemeSelectors: __dcufDescribeHeaderRecentVisitThemeSelectors,
             connect,
             refresh,
             dispose,
@@ -9429,9 +9543,17 @@ const __dcufSettingsPresenter = (() => {
     __dcufRoot.__dcufHeaderRecentVisitHostAdapter = __dcufHeaderRecentVisitHostAdapter;
     // Palette accents apply to the original host issue root, including before
     // drawer roles are projected. Keep that timing and native ancestry intact.
-    function __dcufBuildHeaderDrawerThemeCss(ROOT_ATTRIBUTE) {
+    function __dcufBuildHeaderDrawerThemeCss(selectors) {
+        if (!selectors || typeof selectors !== 'object' || !Object.isFrozen(selectors)
+            || Reflect.ownKeys(selectors).length !== 1
+            || !["issue"].every(slot => {
+                const field = Object.getOwnPropertyDescriptor(selectors, slot);
+                return field && typeof field.value === 'string' && field.value.trim();
+            })) {
+            throw new TypeError('A complete frozen header-drawer theme selector record is required');
+        }
         return `
-        html[${ROOT_ATTRIBUTE}] body .issue_wrap {
+        ${selectors.issue} {
             border-top-color: var(--dcuf-theme-accent) !important;
             box-shadow: inset 0 2px 0 color-mix(in srgb, var(--dcuf-theme-accent) 78%, transparent) !important;
         }
@@ -9439,10 +9561,18 @@ const __dcufSettingsPresenter = (() => {
     }
     // Preserve initial concealment before roles project and popup-only state:
     // the adapter keeps the exact open marker while an original popup is open.
-    function __dcufBuildHeaderDrawerVisibilityCss() {
+    function __dcufBuildHeaderDrawerVisibilityCss(selectors) {
+        if (!selectors || typeof selectors !== 'object' || !Object.isFrozen(selectors)
+            || Reflect.ownKeys(selectors).length !== 2
+            || !["door","recommendation"].every(slot => {
+                const field = Object.getOwnPropertyDescriptor(selectors, slot);
+                return field && typeof field.value === 'string' && field.value.trim();
+            })) {
+            throw new TypeError('A complete frozen header-drawer visibility selector record is required');
+        }
         return `
-        .issue_contentbox:not([data-dcuf-header-native-door-open="1"]),
-        #gall_top_recom.concept_wrap:not([data-dcuf-header-native-recom-open="1"]) {
+        ${selectors.door},
+        ${selectors.recommendation} {
             display: none !important;
         }
 `;
@@ -9730,6 +9860,21 @@ const __dcufSettingsPresenter = (() => {
         return Object.freeze({ shell, layout, describeOpenState, describeToggleIntent, describeBodyVisibility, describeBodyOffset, describeBodyHeight, describeBodyPadding, style, nativeStyleSlots, describeNativeStyle, buildThemeCss: __dcufBuildHeaderDrawerThemeCss, buildVisibilityCss: __dcufBuildHeaderDrawerVisibilityCss });
     })();
     __dcufRoot.__dcufHeaderDrawerPresenter = __dcufHeaderDrawerPresenter;
+    // Hoisted input: preserve native coverage before objects initialize or connect.
+    function __dcufDescribeHeaderDrawerThemeSelectors(ROOT_ATTRIBUTE) {
+        return Object.freeze({
+            issue: `html[${ROOT_ATTRIBUTE}] body .issue_wrap`
+        });
+    }
+
+    // Hoisted input: preserve native coverage before objects initialize or connect.
+    function __dcufDescribeHeaderDrawerVisibilitySelectors() {
+        return Object.freeze({
+            door: `.issue_contentbox:not([data-dcuf-header-native-door-open="1"])`,
+            recommendation: `#gall_top_recom.concept_wrap:not([data-dcuf-header-native-recom-open="1"])`
+        });
+    }
+
     const __dcufHeaderDrawerHostAdapter = (() => {
         const STYLE_ID = 'dcuf-header-drawer-style';
         const nativeStyleDefinition = __dcufHeaderDrawerPresenter.describeNativeStyle(Object.freeze([
@@ -10231,7 +10376,7 @@ const __dcufSettingsPresenter = (() => {
             fallbackObservers: Number(Boolean(fallbackObserver))
         });
 
-        return Object.freeze({ connect, refresh: syncHeaderDrawer, dispose, snapshot, snapshotResources });
+        return Object.freeze({ describeThemeSelectors: __dcufDescribeHeaderDrawerThemeSelectors, describeVisibilitySelectors: __dcufDescribeHeaderDrawerVisibilitySelectors, connect, refresh: syncHeaderDrawer, dispose, snapshot, snapshotResources });
     })();
 
     const __dcufHeaderDrawerFallbackScheduler = (run) => {
@@ -11362,11 +11507,11 @@ const __dcufSettingsPresenter = (() => {
             color: var(--dcuf-theme-accent) !important;
         }
         /* Host chrome uses the palette only where DCInside itself uses its fixed blue accent. */
-        ${__dcufBuildHeaderShellThemeCss(ROOT_ATTRIBUTE)}
-        ${__dcufBuildHeaderGnbThemeCss(ROOT_ATTRIBUTE)}
-        ${__dcufBuildGalleryPageHeadThemeCss(ROOT_ATTRIBUTE)}
-        ${__dcufBuildHeaderRecentVisitThemeCss(ROOT_ATTRIBUTE)}
-        ${__dcufBuildHeaderDrawerThemeCss(ROOT_ATTRIBUTE)}
+        ${__dcufBuildHeaderShellThemeCss(__dcufDescribeHeaderShellThemeSelectors(ROOT_ATTRIBUTE))}
+        ${__dcufBuildHeaderGnbThemeCss(__dcufDescribeHeaderGnbThemeSelectors(ROOT_ATTRIBUTE))}
+        ${__dcufBuildGalleryPageHeadThemeCss(__dcufDescribeGalleryPageHeadThemeSelectors(ROOT_ATTRIBUTE))}
+        ${__dcufBuildHeaderRecentVisitThemeCss(__dcufDescribeHeaderRecentVisitThemeSelectors(ROOT_ATTRIBUTE))}
+        ${__dcufBuildHeaderDrawerThemeCss(__dcufDescribeHeaderDrawerThemeSelectors(ROOT_ATTRIBUTE))}
 
         html[${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode #dc-personal-block-fab {
             border-color: color-mix(in srgb, var(--dcuf-theme-accent) 45%, transparent) !important;
@@ -12121,7 +12266,7 @@ const ThemeModule = (() => {
 
 
         /* --- 기본 레이아웃 재정의 --- */
-        ${__dcufBuildHeaderDrawerVisibilityCss()}
+        ${__dcufBuildHeaderDrawerVisibilityCss(__dcufDescribeHeaderDrawerVisibilitySelectors())}
         /* [개선] 마이너 갤러리 상단 링크 영역 모바일 최적화 */
         .minor_intro_area {
             display: block !important; /* 숨김 처리를 확실히 무효화 */
@@ -12154,8 +12299,8 @@ const ThemeModule = (() => {
             position: relative !important; box-sizing: border-box !important;
             margin: 0 !important; padding: 0 !important;
         }
-        ${__dcufBuildHeaderShellResetCss()}
-        ${__dcufBuildHeaderGnbResetCss()}
+        ${__dcufBuildHeaderShellResetCss(__dcufDescribeHeaderShellResetSelectors())}
+        ${__dcufBuildHeaderGnbResetCss(__dcufDescribeHeaderGnbResetSelectors())}
         #container { padding-top: 5px; }
 
 

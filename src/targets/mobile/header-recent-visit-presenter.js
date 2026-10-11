@@ -1,9 +1,17 @@
     // Hoisted to preserve the existing early palette injection phase.
-    function __dcufBuildHeaderRecentVisitThemeCss(ROOT_ATTRIBUTE) {
+    function __dcufBuildHeaderRecentVisitThemeCss(selectors) {
+        if (!selectors || typeof selectors !== 'object' || !Object.isFrozen(selectors)
+            || Reflect.ownKeys(selectors).length !== 3
+            || !["title","open","activeLink"].every(slot => {
+                const field = Object.getOwnPropertyDescriptor(selectors, slot);
+                return field && typeof field.value === 'string' && field.value.trim();
+            })) {
+            throw new TypeError('A complete frozen header-recent-visit theme selector record is required');
+        }
         return `
-        html[${ROOT_ATTRIBUTE}] body .newvisit_history > .tit,
-        html[${ROOT_ATTRIBUTE}] body .newvisit_history > :is(.btn_open, .bnt_newvisit_more),
-        html[${ROOT_ATTRIBUTE}] body .newvisit_history .newvisit_list a.on {
+        ${selectors.title},
+        ${selectors.open},
+        ${selectors.activeLink} {
             color: var(--dcuf-theme-accent) !important;
         }
 `;

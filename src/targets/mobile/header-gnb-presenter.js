@@ -1,13 +1,21 @@
     // Hoisted to preserve the existing early palette injection phase.
-    function __dcufBuildHeaderGnbThemeCss(ROOT_ATTRIBUTE) {
+    function __dcufBuildHeaderGnbThemeCss(selectors) {
+        if (!selectors || typeof selectors !== 'object' || !Object.isFrozen(selectors)
+            || Reflect.ownKeys(selectors).length !== 2
+            || !["root","nextIcon"].every(slot => {
+                const field = Object.getOwnPropertyDescriptor(selectors, slot);
+                return field && typeof field.value === 'string' && field.value.trim();
+            })) {
+            throw new TypeError('A complete frozen header-gnb theme selector record is required');
+        }
         return `
-        html[${ROOT_ATTRIBUTE}] body .gnb_bar {
+        ${selectors.root} {
             border-color: var(--dcuf-theme-accent-strong) !important;
             background-color: var(--dcuf-theme-accent-strong) !important;
             background-image: none !important;
             color: var(--dcuf-theme-on-accent) !important;
         }
-        html[${ROOT_ATTRIBUTE}] body .gnb_bar .sp_img.icon_next {
+        ${selectors.nextIcon} {
             display: inline-block !important;
             width: 0 !important;
             height: 0 !important;
@@ -23,9 +31,17 @@
 `;
     }
     // Hoisted, pure, and consumed by the existing core phase before projection.
-    function __dcufBuildHeaderGnbResetCss() {
+    function __dcufBuildHeaderGnbResetCss(selectors) {
+        if (!selectors || typeof selectors !== 'object' || !Object.isFrozen(selectors)
+            || Reflect.ownKeys(selectors).length !== 1
+            || !["root"].every(slot => {
+                const field = Object.getOwnPropertyDescriptor(selectors, slot);
+                return field && typeof field.value === 'string' && field.value.trim();
+            })) {
+            throw new TypeError('A complete frozen header-gnb reset selector record is required');
+        }
         return `
-        .gnb_bar {
+        ${selectors.root} {
             width: 100% !important;
             min-width: 0 !important; float: none !important;
             position: relative !important; box-sizing: border-box !important;

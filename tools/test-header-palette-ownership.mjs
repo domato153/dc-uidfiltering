@@ -23,6 +23,21 @@ const sources = Object.fromEntries(await Promise.all(owners.map(async ([id]) => 
     await readFile(path.join(root, 'src/targets/mobile', `${id}.js`), 'utf8'),
 ])));
 const hostSource = await readFile(path.join(root, 'src/targets/mobile/theme-host-style.js'), 'utf8');
+const adapterSources = Object.fromEntries(await Promise.all(owners.map(async ([id]) => [id,
+    await readFile(path.join(root, 'src/targets/mobile', id.replace('-presenter', '-host-adapter') + '.js'), 'utf8'),
+])));
+const inputName = builder => builder.replace('__dcufBuild', '__dcufDescribe').replace('Css', 'Selectors');
+const declarationOf = (source, name) => {
+    const node = parse(source, { ecmaVersion: 'latest' }).body.find(entry =>
+        entry.type === 'FunctionDeclaration' && entry.id.name === name);
+    assert.ok(node && !node.async && !node.generator, `${name}: synchronous hoisted input required`);
+    return source.slice(node.start, node.end);
+};
+const inputDeclarations = candidates => Object.values(candidates).flatMap(source =>
+    parse(source, { ecmaVersion: 'latest' }).body.filter(node => node.type === 'FunctionDeclaration')
+        .map(node => source.slice(node.start, node.end))).join('\n');
+const themeCall = name => `${name}(${inputName(name)}(ROOT_ATTRIBUTE))`;
+const coreCall = name => `${name}(${inputName(name)}())`;
 
 function expandedRules(css) {
     assert.equal(typeof css, 'string');
@@ -55,7 +70,7 @@ function digest(rows) {
         JSON.stringify(a[0]).localeCompare(JSON.stringify(b[0]), 'en')))).digest('hex').toUpperCase();
 }
 
-function verify(candidateSources, composition) {
+function verify(candidateSources, composition, candidateAdapters = adapterSources) {
     assert.ok(!rawHeaderSelector.test(composition), 'generic theme must not own raw header rules');
     const allRows = [];
     for (const [id, functionName, ownerSelector] of owners) {
@@ -64,13 +79,15 @@ function verify(candidateSources, composition) {
             entry.type === 'FunctionDeclaration' && entry.id.name === functionName);
         assert.ok(node && !node.async && !node.generator, `${id}: requires a synchronous hoisted builder`);
         const declaration = source.slice(node.start, node.end);
-        const css = vm.runInNewContext(`${declaration}\n${functionName}('data-dcuf-palette')`, {}, { timeout: 1000 });
+        assert.ok(!rawHeaderSelector.test(declaration), `${id}: early presentation cannot own native selectors`);
+        const input = declarationOf(candidateAdapters[id], inputName(functionName));
+        const css = vm.runInNewContext(`${declaration}\n${input}\n${functionName}(${inputName(functionName)}('data-dcuf-palette'))`, {}, { timeout: 1000 });
         const rows = expandedRules(css);
         assert.ok(rows.length > 0);
         assert.ok(rows.every(([selector]) => ownerSelector.test(selector)), `${id}: wrong palette owner`);
-        const alternate = vm.runInNewContext(`${declaration}\n${functionName}('data-dcuf-audit-palette')`, {}, { timeout: 1000 });
+        const alternate = vm.runInNewContext(`${declaration}\n${input}\n${functionName}(${inputName(functionName)}('data-dcuf-audit-palette'))`, {}, { timeout: 1000 });
         assert.equal(alternate, css.replaceAll('data-dcuf-palette', 'data-dcuf-audit-palette'));
-        assert.equal((composition.match(new RegExp(`${functionName}\\(ROOT_ATTRIBUTE\\)`, 'g')) || []).length, 1);
+        assert.equal(composition.split(themeCall(functionName)).length - 1, 1);
         allRows.push(...rows);
     }
     assert.equal(allRows.length, 29);
@@ -79,7 +96,7 @@ function verify(candidateSources, composition) {
     // presenter const initializes. Do not mask a temporal-dead-zone regression.
     const sandbox = { __dcufRoot: {} };
     const css = vm.runInNewContext(`${composition}\nconst earlyCss = __dcufBuildTargetThemeCss('data-dcuf-palette');
-        ${Object.values(candidateSources).join('\n')}\nearlyCss`, sandbox, { timeout: 1000 });
+        ${Object.values(candidateSources).join('\n')}\n${inputDeclarations(candidateAdapters)}\nearlyCss`, sandbox, { timeout: 1000 });
     const start = css.indexOf('/* Host chrome');
     const end = css.indexOf('html[data-dcuf-palette] body.dc-filter-dark-mode #dc-personal-block-fab', start);
     assert.ok(start >= 0 && end > start);
@@ -90,14 +107,14 @@ function verify(candidateSources, composition) {
 verify(sources, hostSource);
 const mutations = [
     [{ ...sources, 'header-shell-presenter': sources['header-shell-presenter'].replace('width: 12px', 'width: 13px') }, hostSource],
-    [{ ...sources, 'header-shell-presenter': sources['header-shell-presenter'].replace('.dcheader.typea', '.gnb_bar') }, hostSource],
+    [sources, hostSource, { ...adapterSources, 'header-shell-presenter': adapterSources['header-shell-presenter'].replace('.dcheader.typea', '.gnb_bar') }],
     [{ ...sources, 'header-shell-presenter': sources['header-shell-presenter'].replace('function __dcufBuildHeaderShellThemeCss', 'async function __dcufBuildHeaderShellThemeCss') }, hostSource],
     [{ ...sources, 'header-shell-presenter': sources['header-shell-presenter'].replace('return `', 'document.body; return `') }, hostSource],
-    [sources, hostSource.replace('${__dcufBuildHeaderShellThemeCss(ROOT_ATTRIBUTE)}', '')],
-    [sources, hostSource.replace('__dcufBuildHeaderShellThemeCss(ROOT_ATTRIBUTE)', '__dcufHeaderShellPresenter.buildThemeCss(ROOT_ATTRIBUTE)')],
+    [sources, hostSource.replace('${' + themeCall('__dcufBuildHeaderShellThemeCss') + '}', '')],
+    [sources, hostSource.replace('__dcufBuildHeaderShellThemeCss(', '__dcufHeaderShellPresenter.buildThemeCss(')],
     [sources, `${hostSource}\nvoid '.dcheader { color: red; }';`],
 ];
-for (const [candidateSources, composition] of mutations) assert.throws(() => verify(candidateSources, composition));
+for (const [candidateSources, composition, candidateAdapters] of mutations) assert.throws(() => verify(candidateSources, composition, candidateAdapters));
 // Positive formatting control: do not equate source bytes with behavior.
 verify(sources, hostSource.replace('Host chrome uses', 'Host chrome safely uses'));
 const targets = JSON.parse(await readFile(path.join(root, 'build/targets.json'), 'utf8'));
@@ -112,7 +129,7 @@ const resetOwners = [
     ['header-shell-presenter', '__dcufBuildHeaderShellResetCss', '.dcheader'],
     ['header-gnb-presenter', '__dcufBuildHeaderGnbResetCss', '.gnb_bar'],
 ];
-function verifyReset(candidateSources, composition) {
+function verifyReset(candidateSources, composition, candidateAdapters = adapterSources) {
     assert.ok(!/\.(?:dcheader|gnb_bar)\b/.test(composition), 'filter source must not own raw header reset selectors');
     const rows = [];
     for (const [id, name, selector] of resetOwners) {
@@ -120,11 +137,13 @@ function verifyReset(candidateSources, composition) {
             entry.type === 'FunctionDeclaration' && entry.id.name === name);
         assert.ok(node && !node.async && !node.generator, `${id}: reset requires a pure hoisted builder`);
         const declaration = candidateSources[id].slice(node.start, node.end);
-        const css = vm.runInNewContext(`${declaration}\n${name}()`, {}, { timeout: 1000 });
+        assert.ok(!rawHeaderSelector.test(declaration), `${id}: reset presentation cannot own native selectors`);
+        const input = declarationOf(candidateAdapters[id], inputName(name));
+        const css = vm.runInNewContext(`${declaration}\n${input}\n${name}(${inputName(name)}())`, {}, { timeout: 1000 });
         const ownerRows = expandedRules(css);
         assert.equal(ownerRows.length, 1);
         assert.equal(ownerRows[0][0], selector);
-        assert.equal((composition.match(new RegExp(`${name}\\(\\)`, 'g')) || []).length, 1);
+        assert.equal(composition.split(coreCall(name)).length - 1, 1);
         rows.push(...ownerRows);
     }
     assert.equal(digest(rows), resetDigest, 'inherited reset declaration drift');
@@ -134,7 +153,7 @@ function verifyReset(candidateSources, composition) {
     const expression = composition.slice(declaration.init.start, declaration.init.end);
     const sandbox = { __dcufRoot: {} };
     const css = vm.runInNewContext(`const earlyResetCss = ${expression};
-        ${Object.values(candidateSources).join('\n')}\nearlyResetCss`, sandbox, { timeout: 1000 });
+        ${Object.values(candidateSources).join('\n')}\n${inputDeclarations(candidateAdapters)}\nearlyResetCss`, sandbox, { timeout: 1000 });
     const mountedRules = Array.from(css.matchAll(/\.(?:dcheader|gnb_bar)\s*\{[^{}]*\}/g))
         .flatMap(([rule]) => expandedRules(rule));
     assert.equal(digest(mountedRules), resetDigest);
@@ -146,15 +165,15 @@ function verifyReset(candidateSources, composition) {
 verifyReset(sources, filterSource);
 const resetMutations = [
     [{ ...sources, 'header-shell-presenter': sources['header-shell-presenter'].replace('float: none', 'float: left') }, filterSource],
-    [{ ...sources, 'header-shell-presenter': sources['header-shell-presenter'].replace('.dcheader {', '.gnb_bar {') }, filterSource],
+    [sources, filterSource, { ...adapterSources, 'header-shell-presenter': adapterSources['header-shell-presenter'].replace('root: `.dcheader`', 'root: `.gnb_bar`') }],
     [{ ...sources, 'header-shell-presenter': sources['header-shell-presenter'].replace('function __dcufBuildHeaderShellResetCss', 'async function __dcufBuildHeaderShellResetCss') }, filterSource],
-    [{ ...sources, 'header-shell-presenter': sources['header-shell-presenter'].replace('function __dcufBuildHeaderShellResetCss() {', 'function __dcufBuildHeaderShellResetCss() { document.body;') }, filterSource],
-    [sources, filterSource.replace('${__dcufBuildHeaderShellResetCss()}', '')],
-    [sources, filterSource.replace('${__dcufBuildHeaderShellResetCss()}', '${__dcufBuildHeaderShellResetCss()} ${__dcufBuildHeaderShellResetCss()}')],
-    [sources, filterSource.replace('__dcufBuildHeaderShellResetCss()', '__dcufHeaderShellPresenter.buildResetCss()')],
+    [{ ...sources, 'header-shell-presenter': sources['header-shell-presenter'].replace('function __dcufBuildHeaderShellResetCss(selectors) {', 'function __dcufBuildHeaderShellResetCss(selectors) { document.body;') }, filterSource],
+    [sources, filterSource.replace('${' + coreCall('__dcufBuildHeaderShellResetCss') + '}', '')],
+    [sources, filterSource.replace('${' + coreCall('__dcufBuildHeaderShellResetCss') + '}', '${' + coreCall('__dcufBuildHeaderShellResetCss') + '} ${' + coreCall('__dcufBuildHeaderShellResetCss') + '}')],
+    [sources, filterSource.replace('__dcufBuildHeaderShellResetCss(', '__dcufHeaderShellPresenter.buildResetCss(')],
     [sources, filterSource.replace('html, body, #top, #container', 'html, body, #top, .dcheader, #container')],
 ];
-for (const [candidateSources, composition] of resetMutations) assert.throws(() => verifyReset(candidateSources, composition));
+for (const [candidateSources, composition, candidateAdapters] of resetMutations) assert.throws(() => verifyReset(candidateSources, composition, candidateAdapters));
 verifyReset(sources, filterSource.replace('기본 레이아웃 재정의', '기본 레이아웃 재정의 (표현 책임 분리)'));
 console.log('Header reset ownership PASS: 14 inherited selector/property pairs; original early core phase; 8 rejected mutations; formatting control.');
 
@@ -163,23 +182,26 @@ const visibilityDigest = '40476C411ED3B1FB98F5D51EFF9C3165E320944FDB0C880F19580F
 const visibilityName = '__dcufBuildHeaderDrawerVisibilityCss';
 const visibilitySelectors = ['.issue_contentbox:not([data-dcuf-header-native-door-open="1"])',
     '#gall_top_recom.concept_wrap:not([data-dcuf-header-native-recom-open="1"])'];
-function verifyVisibility(candidateSources, composition) {
+function verifyVisibility(candidateSources, composition, candidateAdapters = adapterSources) {
     assert.ok(!/(?:\.issue_contentbox\b|#gall_top_recom\b)/.test(composition), 'generic filter must not own native-door visibility selectors');
     const source = candidateSources['header-drawer-presenter'];
     const node = parse(source, { ecmaVersion: 'latest' }).body.find((entry) =>
         entry.type === 'FunctionDeclaration' && entry.id.name === visibilityName);
     assert.ok(node && !node.async && !node.generator, 'drawer visibility requires a synchronous hoisted builder');
-    const css = vm.runInNewContext(`${source.slice(node.start, node.end)}\n${visibilityName}()`, {}, { timeout: 1000 });
+    const builder = source.slice(node.start, node.end);
+    assert.ok(!/(?:\.issue_contentbox\b|#gall_top_recom\b)/.test(builder), 'visibility presentation cannot own native selectors');
+    const input = declarationOf(candidateAdapters['header-drawer-presenter'], inputName(visibilityName));
+    const css = vm.runInNewContext(`${builder}\n${input}\n${visibilityName}(${inputName(visibilityName)}())`, {}, { timeout: 1000 });
     const rows = expandedRules(css);
     assert.equal(rows.length, 2);
     assert.equal(digest(rows), visibilityDigest, 'inherited visibility selector/declaration drift');
-    assert.equal((composition.match(new RegExp(`${visibilityName}\\(\\)`, 'g')) || []).length, 1);
+    assert.equal(composition.split(coreCall(visibilityName)).length - 1, 1);
     const declaration = parse(composition, { ecmaVersion: 'latest' }).body
         .flatMap((entry) => entry.declarations || []).find((entry) => entry.id?.name === '__dcufAllFilterCss');
     const expression = composition.slice(declaration.init.start, declaration.init.end);
     const sandbox = { __dcufRoot: {} };
     const earlyCss = vm.runInNewContext(`const css = ${expression};
-        ${Object.values(candidateSources).join('\n')}\ncss`, sandbox, { timeout: 1000 });
+        ${Object.values(candidateSources).join('\n')}\n${inputDeclarations(candidateAdapters)}\ncss`, sandbox, { timeout: 1000 });
     const mounted = Array.from(earlyCss.matchAll(/[^{}]*\{[^{}]*\}/g))
         .filter(([rule]) => visibilitySelectors.some((selector) => rule.includes(selector)))
         .flatMap(([rule]) => expandedRules(rule)).filter(([selector]) => visibilitySelectors.includes(selector));
@@ -190,21 +212,21 @@ function verifyVisibility(candidateSources, composition) {
     const presenter = sandbox.__dcufRoot.__dcufHeaderDrawerPresenter;
     assert.ok(Object.isFrozen(presenter));
     assert.equal(typeof presenter.buildVisibilityCss, 'function');
-    assert.equal(presenter.buildVisibilityCss(), css);
+    assert.equal(presenter.buildVisibilityCss(sandbox[inputName(visibilityName)]()), css);
 }
 verifyVisibility(sources, filterSource);
 const visibilityMutations = [
     [{ ...sources, 'header-drawer-presenter': sources['header-drawer-presenter'].replace('display: none !important;', 'display: block !important;') }, filterSource],
     [{ ...sources, 'header-drawer-presenter': sources['header-drawer-presenter'].replace('display: none !important;', 'display: none;') }, filterSource],
-    [{ ...sources, 'header-drawer-presenter': sources['header-drawer-presenter'].replace('.issue_contentbox:not(', '.issue_contentbox[data-dcuf-header-native-door="1"]:not(') }, filterSource],
-    [{ ...sources, 'header-drawer-presenter': sources['header-drawer-presenter'].replace('data-dcuf-header-native-door-open="1"', 'data-dcuf-header-native-door-open="0"') }, filterSource],
+    [sources, filterSource, { ...adapterSources, 'header-drawer-presenter': adapterSources['header-drawer-presenter'].replace('.issue_contentbox:not(', '.issue_contentbox[data-dcuf-header-native-door="1"]:not(') }],
+    [sources, filterSource, { ...adapterSources, 'header-drawer-presenter': adapterSources['header-drawer-presenter'].replace('data-dcuf-header-native-door-open="1"', 'data-dcuf-header-native-door-open="0"') }],
     [{ ...sources, 'header-drawer-presenter': sources['header-drawer-presenter'].replace(`function ${visibilityName}`, `async function ${visibilityName}`) }, filterSource],
-    [{ ...sources, 'header-drawer-presenter': sources['header-drawer-presenter'].replace(`function ${visibilityName}() {`, `function ${visibilityName}() { document.body;`) }, filterSource],
-    [sources, filterSource.replace('${__dcufBuildHeaderDrawerVisibilityCss()}', '')],
-    [sources, filterSource.replace('${__dcufBuildHeaderDrawerVisibilityCss()}', '${__dcufBuildHeaderDrawerVisibilityCss()} ${__dcufBuildHeaderDrawerVisibilityCss()}')],
-    [sources, filterSource.replace('__dcufBuildHeaderDrawerVisibilityCss()', '__dcufHeaderDrawerPresenter.buildVisibilityCss()')],
+    [{ ...sources, 'header-drawer-presenter': sources['header-drawer-presenter'].replace(`function ${visibilityName}(selectors) {`, `function ${visibilityName}(selectors) { document.body;`) }, filterSource],
+    [sources, filterSource.replace('${' + coreCall(visibilityName) + '}', '')],
+    [sources, filterSource.replace('${' + coreCall(visibilityName) + '}', '${' + coreCall(visibilityName) + '} ${' + coreCall(visibilityName) + '}')],
+    [sources, filterSource.replace(visibilityName + '(', '__dcufHeaderDrawerPresenter.buildVisibilityCss(')],
     [sources, `${filterSource}\nvoid '.issue_contentbox:not([data-dcuf-header-native-door-open="1"]) { display:none!important; }';`],
 ];
-for (const [candidateSources, composition] of visibilityMutations) assert.throws(() => verifyVisibility(candidateSources, composition));
+for (const [candidateSources, composition, candidateAdapters] of visibilityMutations) assert.throws(() => verifyVisibility(candidateSources, composition, candidateAdapters));
 verifyVisibility(sources, filterSource.replace('기본 레이아웃 재정의', '기본 레이아웃 재정의 (소유권 분리)'));
 console.log('Header native-door visibility ownership PASS: 2 inherited selector/property pairs; original pre-projection core phase; 10 rejected mutations; formatting control; PC isolation.');

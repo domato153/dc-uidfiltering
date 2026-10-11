@@ -45,10 +45,8 @@ const dependencyPaths = [
     'testbed/harness/playwright-loader.cjs', 'testbed/public/fixture.css', 'testbed/public/fixture-client.js',
     'testbed/server/server.mjs', 'testbed/fixtures/builders.mjs', 'testbed/fixtures/pages.mjs',
     ...sourceIds.map((id) => `src/targets/mobile/${id}-presenter.js`),
+    ...sourceIds.map((id) => `src/targets/mobile/${id}-host-adapter.js`),
     'src/targets/mobile/filter-module.js', 'src/targets/mobile/theme-host-style.js',
-    'src/targets/mobile/header-recent-visit-host-adapter.js',
-    'src/targets/mobile/header-gnb-host-adapter.js',
-    'src/targets/mobile/header-drawer-host-adapter.js',
     'src/targets/mobile/runtime-coordinator.js',
     'src/targets/shared/theme-presenter.js', 'src/targets/shared/theme-host-port.js',
 ];
@@ -126,6 +124,12 @@ try {
                 const names = ['HeaderShell', 'HeaderGnb', 'GalleryPageHead', 'HeaderRecentVisit', 'HeaderDrawer'];
                 const inventory = names.map((name) => {
                     const presenter = window[`__dcuf${name}Presenter`];
+                    const adapter = window[`__dcuf${name}HostAdapter`];
+                    // Historical controls keep their original argument shape.
+                    // Current source builders consume the actual immutable target input.
+                    const themeInput = adapter?.describeThemeSelectors?.('data-dcuf-palette') ?? 'data-dcuf-palette';
+                    const resetInput = adapter?.describeResetSelectors?.();
+                    const visibilityInput = adapter?.describeVisibilitySelectors?.();
                     const namedSelectorBinding = name === 'HeaderDrawer' && typeof presenter.describeNativeStyle === 'function';
                     const bindings = namedSelectorBinding ? Object.freeze([
                         ['door', '.issue_wrap .issue_contentbox[data-dcuf-header-native-door="1"]'],
@@ -155,9 +159,9 @@ try {
                         authoredImportant: (style.css.match(/!important/g) || []).length,
                         baseRules: rules.map(({ rule, context }) => ({ selector: rule.selectorText, context, cssText: rule.style.cssText,
                             important: Array.from(rule.style).filter((property) => rule.style.getPropertyPriority(property) === 'important') })),
-                        paletteImportant: (presenter.buildThemeCss('data-dcuf-palette').match(/!important/g) || []).length,
-                        resetImportant: (presenter.buildResetCss?.().match(/!important/g) || []).length,
-                        visibilityImportant: (presenter.buildVisibilityCss?.().match(/!important/g) || []).length };
+                        paletteImportant: (presenter.buildThemeCss(themeInput).match(/!important/g) || []).length,
+                        resetImportant: (presenter.buildResetCss?.(resetInput).match(/!important/g) || []).length,
+                        visibilityImportant: (presenter.buildVisibilityCss?.(visibilityInput).match(/!important/g) || []).length };
                 });
                 return { elements, inventory };
             });

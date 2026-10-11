@@ -1,3 +1,22 @@
+    // Hoisted input: preserve native coverage before objects initialize or connect.
+    function __dcufDescribeGalleryPageHeadThemeSelectors(ROOT_ATTRIBUTE) {
+        return Object.freeze({
+            root: `html[${ROOT_ATTRIBUTE}] body .page_head`,
+            search: `html[${ROOT_ATTRIBUTE}] body .page_head :is(.gall_search, .gall_search_box, .inner_search) :is(.btn_search, .bnt_search, button[type="submit"])`,
+            directSearch: `html[${ROOT_ATTRIBUTE}] body .page_head > .fl form :is(.btn_search, .bnt_search, button[type="submit"])`,
+            title: `html[${ROOT_ATTRIBUTE}] body .page_head :is(h2, h2 a, .gall_tit, .gall_tit a, .gallery_title, .gallery_title a)`,
+            badge: `html[${ROOT_ATTRIBUTE}] body .page_head :is(.icon_mini, .mini_icon, .gallery_badge)`,
+            titleIcon: `html[${ROOT_ATTRIBUTE}] body .page_head .pagehead_titicon:is(.mgall, .ngall).sp_img`,
+            linkedTitleIcon: `html[${ROOT_ATTRIBUTE}] body .page_head h2 a > .pagehead_titicon:is(.mgall, .ngall).sp_img`,
+            titleDecoration: `html[${ROOT_ATTRIBUTE}] body .page_head .pagehead_titicon:is(.mgall, .ngall).sp_img::before`,
+            linkedTitleDecoration: `html[${ROOT_ATTRIBUTE}] body .page_head h2 a > .pagehead_titicon:is(.mgall, .ngall).sp_img::before`,
+            miniFixtureDecoration: `html[${ROOT_ATTRIBUTE}] body[data-fixture-variant="mini"] .page_head .pagehead_titicon:is(.mgall, .ngall).sp_img::before`,
+            miniRootDecoration: `html[${ROOT_ATTRIBUTE}] body:has(#top.miniwrap) .page_head .pagehead_titicon:is(.mgall, .ngall).sp_img::before`,
+            nestedMiniDecoration: `html[${ROOT_ATTRIBUTE}] body .miniwrap .page_head .pagehead_titicon:is(.mgall, .ngall).sp_img::before`,
+            miniDecoration: `html[${ROOT_ATTRIBUTE}] body .page_head .pagehead_titicon.ngall.sp_img::before`
+        });
+    }
+
     const __dcufGalleryPageHeadHostAdapter = (() => {
         const ROOT_SELECTOR = '.page_head';
         const ROLE_ATTRIBUTE = 'data-dcuf-gallery-page-head-role';
@@ -144,6 +163,6 @@
             mutationSubscribers: typeof mutationUnsubscribe === 'function' ? 1 : 0,
         });
 
-        return Object.freeze({ connect, refresh, dispose, ensureStyle, snapshot, snapshotResources });
+        return Object.freeze({ describeThemeSelectors: __dcufDescribeGalleryPageHeadThemeSelectors, connect, refresh, dispose, ensureStyle, snapshot, snapshotResources });
     })();
     __dcufRoot.__dcufGalleryPageHeadHostAdapter = __dcufGalleryPageHeadHostAdapter;

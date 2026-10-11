@@ -280,7 +280,7 @@
         "classification": "presentation-source",
         "layer": "presentation-ui",
         "boundaryState": "mixed",
-        "responsibility": "Owns zero-delta typea shell/head/logo/search/login/dark layout, shell palette rules, and the inherited broad dcheader reset through pure hoisted builders at the original theme/core phases. The reset preserves unprojected and non-typea host coverage. Inherited important declarations, raw selectors, and the typea qualifier remain transitional cascade debt.",
+        "responsibility": "Owns zero-delta typea shell/head/logo/search/login/dark layout, shell palette rules, and the inherited broad dcheader reset through pure hoisted builders at the original theme/core phases. The reset preserves unprojected and non-typea host coverage. Inherited important declarations and the remaining typea qualifier remain transitional cascade debt. Owns unchanged early declaration factories consuming frozen named adapter selector records at the original hoisted theme/core phase, without raw native selectors in those early builders.",
         "sourceRefs": ["src/targets/mobile/header-shell-presenter.js"],
         "contractRefs": ["ui-ownership", "semantic-preservation", "host-dom-events"],
         "fitnessRefs": ["invariant-one-visual-owner", "invariant-ui-port-boundary", "invariant-build-inputs-mapped"],
@@ -295,7 +295,7 @@
         "classification": "adapter-contract",
         "layer": "target-adapter",
         "boundaryState": "conforming",
-        "responsibility": "Projects reversible roles onto the site-owned typea header shell and its logo, search, and link descendants; mounts one presenter stylesheet at the former core phase; reuses the shared list/view mutation bus for descendant and root replacement, and disposes roles, style, and subscription without changing host nodes, forms, links, or events.",
+        "responsibility": "Projects reversible roles onto the site-owned typea header shell and its logo, search, and link descendants; mounts one presenter stylesheet at the former core phase; reuses the shared list/view mutation bus for descendant and root replacement, and disposes roles, style, and subscription without changing host nodes, forms, links, or events. Supplies pure hoisted immutable named full native selector inputs for its early palette and applicable reset/concealment builders, independent of DOM connection and presenter/adapter object initialization.",
         "sourceRefs": ["src/targets/mobile/header-shell-host-adapter.js"],
         "contractRefs": ["host-dom-events", "initialization-lifecycle", "ui-ownership", "semantic-preservation"],
         "fitnessRefs": ["invariant-host-node-preservation", "invariant-initialization-recovery", "invariant-ui-port-boundary", "invariant-build-inputs-mapped"]
@@ -306,7 +306,7 @@
         "classification": "presentation-source",
         "layer": "presentation-ui",
         "boundaryState": "mixed",
-        "responsibility": "Owns zero-delta list/view page-head geometry, left/right alignment, and clearfix through reversible roles, plus page-head border/search/title/badge/sprite palette rules via a hoisted pure builder. Raw palette selectors and inherited important declarations remain transitional host-cascade debt until full-header promotion.",
+        "responsibility": "Owns zero-delta list/view page-head geometry, left/right alignment, and clearfix through reversible roles, plus page-head border/search/title/badge/sprite palette rules via a hoisted pure builder. Inherited important declarations and remaining late cascade qualifiers retain their transitional scope. Owns unchanged early declaration factories consuming frozen named adapter selector records at the original hoisted theme/core phase, without raw native selectors in those early builders.",
         "sourceRefs": ["src/targets/mobile/gallery-page-head-presenter.js"],
         "contractRefs": ["ui-ownership", "semantic-preservation", "host-dom-events"],
         "fitnessRefs": ["invariant-one-visual-owner", "invariant-ui-port-boundary", "invariant-build-inputs-mapped"],
@@ -321,7 +321,7 @@
         "classification": "adapter-contract",
         "layer": "target-adapter",
         "boundaryState": "conforming",
-        "responsibility": "Projects reversible roles onto each site-owned list/view gallery heading and its direct left/right children, including a child matching both classes; mounts one presenter stylesheet at the former core phase; reuses the shared mutation bus for descendant and whole-heading replacement and disposes roles, style, and subscription without changing native forms, issue actions, popup, or handlers.",
+        "responsibility": "Projects reversible roles onto each site-owned list/view gallery heading and its direct left/right children, including a child matching both classes; mounts one presenter stylesheet at the former core phase; reuses the shared mutation bus for descendant and whole-heading replacement and disposes roles, style, and subscription without changing native forms, issue actions, popup, or handlers. Supplies pure hoisted immutable named full native selector inputs for its early palette and applicable reset/concealment builders, independent of DOM connection and presenter/adapter object initialization.",
         "sourceRefs": ["src/targets/mobile/gallery-page-head-host-adapter.js"],
         "contractRefs": ["host-dom-events", "initialization-lifecycle", "ui-ownership", "semantic-preservation"],
         "fitnessRefs": ["invariant-host-node-preservation", "invariant-initialization-recovery", "invariant-ui-port-boundary", "invariant-build-inputs-mapped"]
@@ -332,7 +332,7 @@
         "classification": "presentation-source",
         "layer": "presentation-ui",
         "boundaryState": "mixed",
-        "responsibility": "Owns zero-delta GNB semantic layout, accent/next-icon palette rules, and the inherited broad GNB reset through pure hoisted builders at the original theme/core phases. Unprojected host coverage, raw selectors, and inherited important declarations remain transitional cascade debt.",
+        "responsibility": "Owns zero-delta GNB semantic layout, accent/next-icon palette rules, and the inherited broad GNB reset through pure hoisted builders at the original theme/core phases. Unprojected host coverage and inherited important declarations remain transitional cascade debt. Owns unchanged early declaration factories consuming frozen named adapter selector records at the original hoisted theme/core phase, without raw native selectors in those early builders.",
         "sourceRefs": ["src/targets/mobile/header-gnb-presenter.js"],
         "contractRefs": ["ui-ownership", "semantic-preservation", "host-dom-events"],
         "fitnessRefs": ["invariant-one-visual-owner", "invariant-ui-port-boundary", "invariant-build-inputs-mapped"],
@@ -347,7 +347,7 @@
         "classification": "adapter-contract",
         "layer": "target-adapter",
         "boundaryState": "conforming",
-        "responsibility": "Projects reversible roles onto site-owned GNB root, nav, and list; mounts one presenter stylesheet at the former core phase; reuses the shared list/view mutation bus for replacement and disposes roles, style, and subscription without changing host nodes or events.",
+        "responsibility": "Projects reversible roles onto site-owned GNB root, nav, and list; mounts one presenter stylesheet at the former core phase; reuses the shared list/view mutation bus for replacement and disposes roles, style, and subscription without changing host nodes or events. Supplies pure hoisted immutable named full native selector inputs for its early palette and applicable reset/concealment builders, independent of DOM connection and presenter/adapter object initialization.",
         "sourceRefs": ["src/targets/mobile/header-gnb-host-adapter.js"],
         "contractRefs": ["host-dom-events", "initialization-lifecycle", "ui-ownership", "semantic-preservation"],
         "fitnessRefs": ["invariant-host-node-preservation", "invariant-initialization-recovery", "invariant-ui-port-boundary", "invariant-build-inputs-mapped"]
@@ -358,7 +358,7 @@
         "classification": "presentation-source",
         "layer": "presentation-ui",
         "boundaryState": "mixed",
-        "responsibility": "Owns zero-delta recent-visit light/dark layout through semantic roles and its title/open/active-link palette payload via a hoisted pure builder at the unchanged theme phase. Raw palette selectors and inherited important declarations remain transitional cascade debt.",
+        "responsibility": "Owns zero-delta recent-visit light/dark layout through semantic roles and its title/open/active-link palette payload via a hoisted pure builder at the unchanged theme phase. Inherited important declarations and remaining late cascade qualifiers retain their transitional scope. Owns unchanged early declaration factories consuming frozen named adapter selector records at the original hoisted theme/core phase, without raw native selectors in those early builders.",
         "sourceRefs": ["src/targets/mobile/header-recent-visit-presenter.js"],
         "contractRefs": ["ui-ownership", "semantic-preservation", "host-dom-events"],
         "fitnessRefs": ["invariant-one-visual-owner", "invariant-ui-port-boundary", "invariant-build-inputs-mapped"],
@@ -373,7 +373,7 @@
         "classification": "adapter-contract",
         "layer": "target-adapter",
         "boundaryState": "conforming",
-        "responsibility": "Owns recent-visit previous and next host scrolling, control state, one delegated document click listener, one shared mutation-bus subscription for list and view replacement, reversible semantic-role and inline-geometry cleanup, and mounting of the presenter's single stylesheet at the prior core phase without replacing host nodes or owning presentation, storage, filter, or network effects.",
+        "responsibility": "Owns recent-visit previous and next host scrolling, control state, one delegated document click listener, one shared mutation-bus subscription for list and view replacement, reversible semantic-role and inline-geometry cleanup, and mounting of the presenter's single stylesheet at the prior core phase without replacing host nodes or owning presentation, storage, filter, or network effects. Supplies pure hoisted immutable named full native selector inputs for its early palette and applicable reset/concealment builders, independent of DOM connection and presenter/adapter object initialization.",
         "sourceRefs": ["src/targets/mobile/header-recent-visit-host-adapter.js"],
         "contractRefs": ["host-dom-events", "initialization-lifecycle", "ui-ownership", "semantic-preservation"],
         "fitnessRefs": ["invariant-host-node-preservation", "invariant-initialization-recovery", "invariant-ui-port-boundary", "invariant-build-inputs-mapped"]
@@ -384,7 +384,7 @@
         "classification": "presentation-source",
         "layer": "presentation-ui",
         "boundaryState": "mixed",
-        "responsibility": "Candidate change: provides a pure immutable named-selector style factory; late CSS declarations/layout remain presentation-owned while exact native selector strings come from the target adapter. The default semantic-role descriptor remains available. Native bindings must reject missing/duplicate/unknown slots and preserve selector specificity, declaration/media order and injection phase. Early raw accent/concealment remain transitional; mixed exit is not claimed. Owns the frozen numeric max-width layout input consumed by its three width declarations and the existing adapter calculations. Owns gallery-door presentation for the DCUF toggle, including its immutable owned-shell construction description/template, pure open-state label/ARIA descriptor, frozen typed toggle intents from immutable current-open snapshots, and immutable ordered owned-body visibility/offset/height/padding descriptions, plus original issue/recommendation roots, rank/tip states, relation popup, the issue root's palette accent and inherited pre-projection concealment via hoisted pure builders. The adapter measures and applies descriptions at the existing phases without replacing an already-correct shell. Core/list style phases, viewport-bound stacking, native ancestry/interiors and recommendation layout are preserved. Raw selectors and inherited header cascade debt remain pending full promotion.",
+        "responsibility": "Candidate change: provides a pure immutable named-selector style factory; late CSS declarations/layout remain presentation-owned while exact native selector strings come from the target adapter. The default semantic-role descriptor remains available. Native bindings must reject missing/duplicate/unknown slots and preserve selector specificity, declaration/media order and injection phase. Early accent/concealment consumes explicit adapter native inputs; mixed exit is not claimed. Owns the frozen numeric max-width layout input consumed by its three width declarations and the existing adapter calculations. Owns gallery-door presentation for the DCUF toggle, including its immutable owned-shell construction description/template, pure open-state label/ARIA descriptor, frozen typed toggle intents from immutable current-open snapshots, and immutable ordered owned-body visibility/offset/height/padding descriptions, plus original issue/recommendation roots, rank/tip states, relation popup, the issue root's palette accent and inherited pre-projection concealment via hoisted pure builders. The adapter measures and applies descriptions at the existing phases without replacing an already-correct shell. Core/list style phases, viewport-bound stacking, native ancestry/interiors and recommendation layout are preserved. Remaining late qualifiers and inherited header cascade debt remain pending full promotion. Owns unchanged early declaration factories consuming frozen named adapter selector records at the original hoisted theme/core phase, without raw native selectors in those early builders.",
         "sourceRefs": ["src/targets/mobile/header-drawer-presenter.js"],
         "contractRefs": ["ui-ownership", "semantic-preservation", "host-dom-events"],
         "fitnessRefs": ["invariant-one-visual-owner", "invariant-ui-port-boundary", "invariant-build-inputs-mapped"],
@@ -399,7 +399,7 @@
         "classification": "adapter-contract",
         "layer": "target-adapter",
         "boundaryState": "mixed",
-        "responsibility": "Candidate change: owns a closed frozen native selector binding consumed by the pure presenter style factory, with exact original native ancestry/classes/IDs and unchanged CSS injection phase. Removes superseded descendant/context role writes and their provenance ledger; named native CSS supplies synchronous ancestry/class/ID applicability and host attributes remain untouched. Legacy root/open projections retain their control lifetime. The before-paint callback remains only for copied native-root/relation cleanup, including post-exit relation markers. Ordinary geometry delivery preserves centralized legacy admission; the existing fallback cleans ID changes without ID-only geometry schedules. No new observer or DOM mutation interception; retains original nodes and early raw style phases. Consumes the presenter-owned frozen numeric max-width input at the three existing width calculation sites, preserving rounding/clamping and measure/apply order. Owns recommendation height measurement after existing horizontal placement and applies only its final clamped top, without a transient preferred-top write that feeds body mutations; final geometry and both owned-body phases are preserved while that repeated scheduling delta is explicitly removed. Issue-top placement stays unchanged. Owns list-only gallery-door discovery, mounting/application of the presenter's immutable owned-shell, label/ARIA and owned-body descriptions, viewport-clamped measurements and the existing measure/apply phases, event lifecycle, one shared mutation subscription or fallback observer, reversible original issue/recommendation and rank/tip popup-only markers, copied-marker cleanup and the single presenter stylesheet at the legacy order. Native state/geometry/positioning values and synchronous guarded/cancelled toggle execution remain here; the presenter describes typed surface/open and surface/close values applied in the same stack without general UiPort dispatch or a new state owner; already-correct mounts retain their node/focus guard. It does not define the owned shell template/labels/body presentation values or clone/portal host controls.",
+        "responsibility": "Candidate change: owns a closed frozen native selector binding consumed by the pure presenter style factory, with exact original native ancestry/classes/IDs and unchanged CSS injection phase. Removes superseded descendant/context role writes and their provenance ledger; named native CSS supplies synchronous ancestry/class/ID applicability and host attributes remain untouched. Legacy root/open projections retain their control lifetime. The before-paint callback remains only for copied native-root/relation cleanup, including post-exit relation markers. Ordinary geometry delivery preserves centralized legacy admission; the existing fallback cleans ID changes without ID-only geometry schedules. No new observer or DOM mutation interception; retains original nodes and early raw style phases. Consumes the presenter-owned frozen numeric max-width input at the three existing width calculation sites, preserving rounding/clamping and measure/apply order. Owns recommendation height measurement after existing horizontal placement and applies only its final clamped top, without a transient preferred-top write that feeds body mutations; final geometry and both owned-body phases are preserved while that repeated scheduling delta is explicitly removed. Issue-top placement stays unchanged. Owns list-only gallery-door discovery, mounting/application of the presenter's immutable owned-shell, label/ARIA and owned-body descriptions, viewport-clamped measurements and the existing measure/apply phases, event lifecycle, one shared mutation subscription or fallback observer, reversible original issue/recommendation and rank/tip popup-only markers, copied-marker cleanup and the single presenter stylesheet at the legacy order. Native state/geometry/positioning values and synchronous guarded/cancelled toggle execution remain here; the presenter describes typed surface/open and surface/close values applied in the same stack without general UiPort dispatch or a new state owner; already-correct mounts retain their node/focus guard. It does not define the owned shell template/labels/body presentation values or clone/portal host controls. Supplies pure hoisted immutable named full native selector inputs for its early palette and applicable reset/concealment builders, independent of DOM connection and presenter/adapter object initialization.",
         "sourceRefs": ["src/targets/mobile/header-drawer-host-adapter.js"],
         "contractRefs": ["host-dom-events", "initialization-lifecycle", "ui-ownership", "semantic-preservation"],
         "fitnessRefs": ["invariant-host-node-preservation", "invariant-initialization-recovery", "invariant-ui-port-boundary", "invariant-build-inputs-mapped"],
@@ -979,6 +979,54 @@
         "from": "pc-filter-ui-style-mount",
         "to": "pc-build",
         "kind": "explicit-build-input"
+      },
+      {
+        "id": "rel-header-shell-palette-composition-native-selectors",
+        "from": "mobile-header-shell-host-adapter",
+        "to": "mobile-theme-host-style",
+        "kind": "explicit-style-input"
+      },
+      {
+        "id": "rel-header-shell-reset-composition-native-selectors",
+        "from": "mobile-header-shell-host-adapter",
+        "to": "mobile-filter-module",
+        "kind": "explicit-style-input"
+      },
+      {
+        "id": "rel-header-gnb-reset-composition-native-selectors",
+        "from": "mobile-header-gnb-host-adapter",
+        "to": "mobile-filter-module",
+        "kind": "explicit-style-input"
+      },
+      {
+        "id": "rel-gallery-page-head-palette-composition-native-selectors",
+        "from": "mobile-gallery-page-head-host-adapter",
+        "to": "mobile-theme-host-style",
+        "kind": "explicit-style-input"
+      },
+      {
+        "id": "rel-header-gnb-palette-composition-native-selectors",
+        "from": "mobile-header-gnb-host-adapter",
+        "to": "mobile-theme-host-style",
+        "kind": "explicit-style-input"
+      },
+      {
+        "id": "rel-header-recent-visit-palette-composition-native-selectors",
+        "from": "mobile-header-recent-visit-host-adapter",
+        "to": "mobile-theme-host-style",
+        "kind": "explicit-style-input"
+      },
+      {
+        "id": "rel-header-drawer-palette-composition-native-selectors",
+        "from": "mobile-header-drawer-host-adapter",
+        "to": "mobile-theme-host-style",
+        "kind": "explicit-style-input"
+      },
+      {
+        "id": "rel-header-drawer-visibility-composition-native-selectors",
+        "from": "mobile-header-drawer-host-adapter",
+        "to": "mobile-filter-module",
+        "kind": "explicit-style-input"
       }
     ],
     "removeRelations": ["rel-filter-mobile-filter", "rel-filter-pc-build", "rel-storage-mobile-filter", "rel-theme-pc-build"],

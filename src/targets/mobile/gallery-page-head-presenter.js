@@ -1,26 +1,34 @@
-    // Hoisted because theme composition precedes this presenter object. These
-    // inherited host selectors stay unchanged in this zero-delta owner move.
-    function __dcufBuildGalleryPageHeadThemeCss(ROOT_ATTRIBUTE) {
+    // Hoisted because theme composition precedes this presenter object.
+    // The target adapter supplies native selector knowledge explicitly.
+    function __dcufBuildGalleryPageHeadThemeCss(selectors) {
+        if (!selectors || typeof selectors !== 'object' || !Object.isFrozen(selectors)
+            || Reflect.ownKeys(selectors).length !== 13
+            || !["root","search","directSearch","title","badge","titleIcon","linkedTitleIcon","titleDecoration","linkedTitleDecoration","miniFixtureDecoration","miniRootDecoration","nestedMiniDecoration","miniDecoration"].every(slot => {
+                const field = Object.getOwnPropertyDescriptor(selectors, slot);
+                return field && typeof field.value === 'string' && field.value.trim();
+            })) {
+            throw new TypeError('A complete frozen gallery-page-head theme selector record is required');
+        }
         return `
-        html[${ROOT_ATTRIBUTE}] body .page_head {
+        ${selectors.root} {
             border-color: var(--dcuf-theme-border-strong) !important;
         }
-        html[${ROOT_ATTRIBUTE}] body .page_head :is(.gall_search, .gall_search_box, .inner_search) :is(.btn_search, .bnt_search, button[type="submit"]),
-        html[${ROOT_ATTRIBUTE}] body .page_head > .fl form :is(.btn_search, .bnt_search, button[type="submit"]) {
+        ${selectors.search},
+        ${selectors.directSearch} {
             border-color: var(--dcuf-theme-accent-strong) !important;
             background-color: var(--dcuf-theme-accent-strong) !important;
             background-image: none !important;
             color: var(--dcuf-theme-on-accent) !important;
         }
-        html[${ROOT_ATTRIBUTE}] body .page_head :is(h2, h2 a, .gall_tit, .gall_tit a, .gallery_title, .gallery_title a) {
+        ${selectors.title} {
             color: var(--dcuf-theme-accent) !important;
         }
-        html[${ROOT_ATTRIBUTE}] body .page_head :is(.icon_mini, .mini_icon, .gallery_badge) {
+        ${selectors.badge} {
             border-color: var(--dcuf-theme-accent) !important;
             color: var(--dcuf-theme-accent) !important;
         }
-        html[${ROOT_ATTRIBUTE}] body .page_head .pagehead_titicon:is(.mgall, .ngall).sp_img,
-        html[${ROOT_ATTRIBUTE}] body .page_head h2 a > .pagehead_titicon:is(.mgall, .ngall).sp_img {
+        ${selectors.titleIcon},
+        ${selectors.linkedTitleIcon} {
             display: inline-flex !important;
             width: 26px !important;
             height: 20px !important;
@@ -40,16 +48,16 @@
             box-sizing: border-box !important;
             vertical-align: middle !important;
         }
-        html[${ROOT_ATTRIBUTE}] body .page_head .pagehead_titicon:is(.mgall, .ngall).sp_img::before,
-        html[${ROOT_ATTRIBUTE}] body .page_head h2 a > .pagehead_titicon:is(.mgall, .ngall).sp_img::before {
+        ${selectors.titleDecoration},
+        ${selectors.linkedTitleDecoration} {
             content: "m" !important;
             font: 900 12px/1 Arial, sans-serif !important;
             text-transform: lowercase !important;
         }
-        html[${ROOT_ATTRIBUTE}] body[data-fixture-variant="mini"] .page_head .pagehead_titicon:is(.mgall, .ngall).sp_img::before,
-        html[${ROOT_ATTRIBUTE}] body:has(#top.miniwrap) .page_head .pagehead_titicon:is(.mgall, .ngall).sp_img::before,
-        html[${ROOT_ATTRIBUTE}] body .miniwrap .page_head .pagehead_titicon:is(.mgall, .ngall).sp_img::before,
-        html[${ROOT_ATTRIBUTE}] body .page_head .pagehead_titicon.ngall.sp_img::before {
+        ${selectors.miniFixtureDecoration},
+        ${selectors.miniRootDecoration},
+        ${selectors.nestedMiniDecoration},
+        ${selectors.miniDecoration} {
             content: "mi" !important;
             font-size: 10px !important;
         }
