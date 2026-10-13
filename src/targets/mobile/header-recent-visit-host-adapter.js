@@ -1,3 +1,20 @@
+    // Full native predicates and role relations belong to the target adapter.
+    function __dcufDescribeHeaderRecentVisitStyleSelectors() {
+        return Object.freeze({
+            root: "[data-dcuf-header-recent-visit-role=\"root\"]",
+            decoration: "[data-dcuf-header-recent-visit-role=\"root\"]::before",
+            title: "[data-dcuf-header-recent-visit-role=\"root\"] > [data-dcuf-header-recent-visit-role=\"title\"]",
+            box: "[data-dcuf-header-recent-visit-role=\"root\"] > [data-dcuf-header-recent-visit-role=\"box\"]",
+            list: "[data-dcuf-header-recent-visit-role=\"root\"] [data-dcuf-header-recent-visit-role=\"list\"]",
+            scrollbar: "[data-dcuf-header-recent-visit-role=\"root\"] [data-dcuf-header-recent-visit-role=\"list\"]::-webkit-scrollbar",
+            item: "[data-dcuf-header-recent-visit-role=\"root\"] [data-dcuf-header-recent-visit-role=\"item\"]",
+            controls: "[data-dcuf-header-recent-visit-role=\"root\"] > :is([data-dcuf-header-recent-visit-role=\"control\"], [data-dcuf-header-recent-visit-role=\"arrow\"])",
+            arrow: "[data-dcuf-header-recent-visit-role=\"root\"] > [data-dcuf-header-recent-visit-role=\"arrow\"]",
+            darkRoot: ".dc-filter-dark-mode [data-dcuf-header-recent-visit-role=\"root\"]",
+            darkTitle: ".dc-filter-dark-mode [data-dcuf-header-recent-visit-role=\"root\"] > [data-dcuf-header-recent-visit-role=\"title\"]"
+        });
+    }
+
     // Hoisted input: preserve native coverage before objects initialize or connect.
     function __dcufDescribeHeaderRecentVisitThemeSelectors(ROOT_ATTRIBUTE) {
         return Object.freeze({
@@ -172,10 +189,11 @@
             const next = getControl(state.root, 'next');
             const canPrev = state.list.scrollLeft > 1;
             const canNext = state.list.scrollLeft < max - 1;
-            prev?.classList.toggle('on', canPrev);
-            next?.classList.toggle('on', canNext);
-            prev?.setAttribute('aria-disabled', String(!canPrev));
-            next?.setAttribute('aria-disabled', String(!canNext));
+            const presentation = __dcufHeaderRecentVisitPresenter.describeControls(Object.freeze({ canPrev, canNext }));
+            prev?.classList.toggle('on', presentation.prev.on);
+            next?.classList.toggle('on', presentation.next.on);
+            prev?.setAttribute('aria-disabled', presentation.prev.ariaDisabled);
+            next?.setAttribute('aria-disabled', presentation.next.ariaDisabled);
         };
 
         const cancelPending = (state) => {
@@ -210,8 +228,9 @@
             const baseline = makeBaseline(root, list);
             list.setAttribute(BASELINE_ATTRIBUTE, encodeURIComponent(JSON.stringify(baseline)));
             list.setAttribute(BOUND_ATTRIBUTE, '1');
-            list.style.setProperty('left', '0px', 'important');
-            list.style.setProperty('margin-left', '0px', 'important');
+            __dcufHeaderRecentVisitPresenter.describeListStyle().forEach(description => {
+                list.style.setProperty(description.name, description.value, description.priority);
+            });
             const state = {
                 root,
                 list,
@@ -367,7 +386,7 @@
             });
         };
 
-        return Object.freeze({ describeThemeSelectors: __dcufDescribeHeaderRecentVisitThemeSelectors,
+        return Object.freeze({ describeStyleSelectors: __dcufDescribeHeaderRecentVisitStyleSelectors, describeThemeSelectors: __dcufDescribeHeaderRecentVisitThemeSelectors,
             connect,
             refresh,
             dispose,

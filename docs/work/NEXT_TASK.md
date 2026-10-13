@@ -1,13 +1,13 @@
-# Next bounded task
+# Next: formal header admission evidence
 
 - Task ID: `header-navigation`
-- Bounded slice: `header-shell-late-native-selector-binding`
-- Objective: Supply the shell's five complete qualifier-bearing late selectors through frozen adapter inputs to a pure presenter builder. Preserve exact CSS, .style diagnostic consumers and mount phase; no rule deletion or visual change.
-- Why next: Audit confirms selected raw/late reset duties and a typea applicability counterexample. Explicit late input ownership is a smaller safe step than deleting predicates/priorities; other driver/startup debt remains.
-- Expected transition: Zero-delta late shell selector ownership with independent slot/strict-input controls and current native/phase evidence. No mixed promotion or header admission.
+- Bounded slice: `header-formal-admission`
+- Objective: Qualify formal header admission with exact-artifact priority/exit evidence and separately authorized actual-extension execution. Local implementation is complete; do not revive another header implementation slice.
+- Why next: Current local implementation, native comparisons, full regression and public GM-shim checks are validated. Formal promotion requires evidence and authority outside that completed scope.
+- Expected transition: Current criterion-bound admission only if every required receipt qualifies; retain original palette FAIL and no automatic registry fold/release.
 - Stop/replan: Missing exact control, unexpected raw coverage/phase difference, unmodeled native heights/live states, surviving negative or remote drift. Preserve original palette FAIL and final/live UNKNOWN.
 
-The current user request ends with the read-only cascade audit's checkpoint/report. Implement only on the next user instruction. CURRENT_STATE.md and HEADER_CASCADE_EXIT_AUDIT.md own current findings; early-binding evidence retains its original scope. Preserve complete native predicates and construction timing; do not infer every priority's necessity from the inventory.
+The continuous instruction was fulfilled for local header implementation and validation in HEADER_FINISH.md. Checkpoint receipt owns final publication/CI. Actual-extension installation/live execution still requires separate authority; do not treat the completed local unit as that authorization.
 
 ## Declared entry inventory
 
@@ -15,7 +15,7 @@ Tracked/build-recoverable inputs qualify entry only. Cold execution also require
 
 ```dcuf-next-action
 {
-  "id": "header-shell-late-native-selector-binding",
+  "id": "header-formal-admission",
   "stageId": "header-navigation",
   "requiredDependencies": [
     {"id":"governing-policy","path":"AGENTS.md","mode":"LIVE","sha256":null},
@@ -49,12 +49,17 @@ Tracked/build-recoverable inputs qualify entry only. Cold execution also require
     {"id":"fixtures","path":"testbed/fixtures","mode":"LIVE","sha256":null},
     {"id":"harness","path":"testbed/harness","mode":"LIVE","sha256":null},
     {"id":"server","path":"testbed/server/server.mjs","mode":"LIVE","sha256":null},
-    {"id":"cascade-exit-audit","path":"docs/work/HEADER_CASCADE_EXIT_AUDIT.md","mode":"LIVE","sha256":null},
+    {"id":"header-finish-contract","path":"docs/work/HEADER_FINISH.md","mode":"LIVE","sha256":null},
+    {"id":"live-contract","path":"verification/live-site-canary.json","mode":"LIVE","sha256":null},
+    {"id":"live-driver","path":"testbed/run-live-site-canary.mjs","mode":"LIVE","sha256":null},
+    {"id":"live-replay","path":"tools/verify-live-site-canary.mjs","mode":"LIVE","sha256":null},
+    {"id":"extension-package-verifier","path":"tools/prepare-live-extension.mjs","mode":"LIVE","sha256":null},
     {"id":"checkpoint-workflow","path":"docs/checkpoint-workflow.md","mode":"LIVE","sha256":null},
     {"id":"checkpoint-policy","path":"verification/checkpoint-policy.json","mode":"LIVE","sha256":null},
     {"id":"early-factory-contract","path":"testbed/run-header-early-selector-binding.mjs","mode":"LIVE","sha256":null},
     {"id":"early-ownership-oracle","path":"tools/test-header-palette-ownership.mjs","mode":"LIVE","sha256":null},
-    {"id":"early-unit-contract","path":"docs/work/HEADER_EARLY_SELECTOR_BINDING.md","mode":"LIVE","sha256":null}
+    {"id":"final-boundary-test","path":"testbed/run-header-final-boundary.mjs","mode":"LIVE","sha256":null},
+    {"id":"issue-top-contract","path":"testbed/run-header-issue-top-contract.mjs","mode":"LIVE","sha256":null}
   ],
   "requiredDecisions": [
     "working-checkpoint",
@@ -65,8 +70,8 @@ Tracked/build-recoverable inputs qualify entry only. Cold execution also require
   "decisions": [
     {"id":"working-checkpoint","status":"ADOPTED","boundary":"Only validated bounded commit/non-force push to origin/codex/ui-port-boundary. No official/live-write/release/version change.","source":"AGENTS.md"},
     {"id":"semantic-entry","status":"ADOPTED","boundary":"Adapters supply full immutable native predicates. Preserve typea/tag/body/roles, complete CSS, .style interface and mount order. No mixed exit without its exact criteria.","source":"docs/ui-surface-contracts.md"},
-    {"id":"scope-and-admission","status":"ADOPTED","boundary":"Late shell binding is zero visual delta, not reset/priority deletion. Original palette FAIL and header/final/live gaps remain; four real replacement scenarios follow sealing.","source":"docs/work/HEADER_CASCADE_EXIT_AUDIT.md"},
-    {"id":"continuous-goal","status":"ADOPTED","boundary":"Current request ends with the completed read-only audit checkpoint/report. Next implementation needs the next user instruction; no revived continuous Goal or release/write authority.","source":"docs/work/CURRENT_STATE.md"}
+    {"id":"scope-and-admission","status":"ADOPTED","boundary":"Exact CSS/native behavior preservation plus declared issue-top scheduling correction. Formal priority/extension/live gates and original palette FAIL remain mandatory.","source":"docs/work/HEADER_FINISH.md"},
+    {"id":"continuous-goal","status":"ADOPTED","boundary":"User explicitly authorized continuous header completion on 2026-10-13. Do not pause between phases; preserve checkpoint-only publishing and separate install/account/content/release authority.","source":"docs/work/CURRENT_STATE.md"}
   ],
   "hazards": [
     {"id":"hoisted-startup","status":"ACTIVE","effect":"Preserve early before-const composition and late construction/mount phase. Inputs stay literal, frozen and DOM-free; avoid TDZ or executable caller closures."},
@@ -75,7 +80,7 @@ Tracked/build-recoverable inputs qualify entry only. Cold execution also require
     {"id":"control-and-guard","status":"ACTIVE","effect":"Freeze 6028; serialize builds/probes and restore mobile guard. Historical reports retain original fingerprints and are reusable only within unchanged dependency scope."}
   ],
   "localEvidence": [
-    {"path":"artifacts/controls/header-early-6028.user.js","disposition":"REGENERATE","recovery":"Required SHA-256: 602810EB816C7FBED63386E0713E3CE8C07772DC90E3BB5F0893B40061FE3017. Recover exact current mobile root/dist bytes or build the early-binding checkpoint in isolation from its exact source/receipt; never reset the active tree or substitute a matching version."}
+    {"path":"artifacts/controls/header-early-6028.user.js","disposition":"REGENERATE","recovery":"Required SHA-256: 602810EB816C7FBED63386E0713E3CE8C07772DC90E3BB5F0893B40061FE3017. Recover/build exact 2e168f40477b14d8b29e8fa7ab6aad80c8323e45 bytes in isolation from its source/receipt; never reset the active tree or substitute a matching version."}
   ],
   "qualificationScope": "CONTINUITY_ONLY",
   "workSuccessCertified": false

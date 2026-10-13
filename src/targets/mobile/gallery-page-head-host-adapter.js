@@ -1,3 +1,13 @@
+    // Full native predicates and role relations belong to the target adapter.
+    function __dcufDescribeGalleryPageHeadStyleSelectors() {
+        return Object.freeze({
+            root: "[data-dcuf-gallery-page-head-role=\"root\"]",
+            left: "[data-dcuf-gallery-page-head-role=\"root\"] > :is([data-dcuf-gallery-page-head-role=\"left\"], [data-dcuf-gallery-page-head-role=\"both\"])",
+            right: "[data-dcuf-gallery-page-head-role=\"root\"] > :is([data-dcuf-gallery-page-head-role=\"right\"], [data-dcuf-gallery-page-head-role=\"both\"])",
+            clearfix: "[data-dcuf-gallery-page-head-role=\"root\"]::after"
+        });
+    }
+
     // Hoisted input: preserve native coverage before objects initialize or connect.
     function __dcufDescribeGalleryPageHeadThemeSelectors(ROOT_ATTRIBUTE) {
         return Object.freeze({
@@ -163,6 +173,6 @@
             mutationSubscribers: typeof mutationUnsubscribe === 'function' ? 1 : 0,
         });
 
-        return Object.freeze({ describeThemeSelectors: __dcufDescribeGalleryPageHeadThemeSelectors, connect, refresh, dispose, ensureStyle, snapshot, snapshotResources });
+        return Object.freeze({ describeStyleSelectors: __dcufDescribeGalleryPageHeadStyleSelectors, describeThemeSelectors: __dcufDescribeGalleryPageHeadThemeSelectors, connect, refresh, dispose, ensureStyle, snapshot, snapshotResources });
     })();
     __dcufRoot.__dcufGalleryPageHeadHostAdapter = __dcufGalleryPageHeadHostAdapter;

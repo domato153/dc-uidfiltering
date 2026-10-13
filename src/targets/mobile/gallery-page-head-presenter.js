@@ -63,12 +63,21 @@
         }
 `;
     }
-    const __dcufGalleryPageHeadPresenter = (() => {
-        const style = Object.freeze({
+    // Pure and hoisted: preserve complete late CSS before adapter objects initialize.
+    function __dcufBuildGalleryPageHeadStyle(selectors) {
+        if (!selectors || typeof selectors !== 'object' || !Object.isFrozen(selectors)
+            || Reflect.ownKeys(selectors).length !== 4
+            || !["root","left","right","clearfix"].every(slot => {
+                const field = Object.getOwnPropertyDescriptor(selectors, slot);
+                return field && typeof field.value === 'string' && field.value.trim();
+            })) {
+            throw new TypeError('A complete frozen gallery-page-head style selector record is required');
+        }
+        return Object.freeze({
             key: 'gallery-page-head',
             id: 'dcuf-gallery-page-head-style',
             css: `
-        [data-dcuf-gallery-page-head-role="root"] {
+        ${selectors.root} {
             display: flex !important;
             justify-content: space-between !important;
             align-items: center !important;
@@ -79,17 +88,20 @@
             flex-wrap: wrap;
             gap: 10px;
         }
-        [data-dcuf-gallery-page-head-role="root"] > :is([data-dcuf-gallery-page-head-role="left"], [data-dcuf-gallery-page-head-role="both"]) { float: none !important; }
-        [data-dcuf-gallery-page-head-role="root"] > :is([data-dcuf-gallery-page-head-role="right"], [data-dcuf-gallery-page-head-role="both"]) {
+        ${selectors.left} { float: none !important; }
+        ${selectors.right} {
             float: none !important;
             margin-left: auto;
             display: flex;
             align-items: center;
             gap: 8px;
         }
-        [data-dcuf-gallery-page-head-role="root"]::after { content: ""; display: table; clear: both; }
+        ${selectors.clearfix} { content: ""; display: table; clear: both; }
 `
         });
-        return Object.freeze({ style, buildThemeCss: __dcufBuildGalleryPageHeadThemeCss });
+    }
+    const __dcufGalleryPageHeadPresenter = (() => {
+        const style = __dcufBuildGalleryPageHeadStyle(__dcufDescribeGalleryPageHeadStyleSelectors());
+        return Object.freeze({ style, buildStyle: __dcufBuildGalleryPageHeadStyle, buildThemeCss: __dcufBuildGalleryPageHeadThemeCss });
     })();
     __dcufRoot.__dcufGalleryPageHeadPresenter = __dcufGalleryPageHeadPresenter;

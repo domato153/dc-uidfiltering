@@ -1,3 +1,18 @@
+    // Full native predicates and role relations belong to the target adapter.
+    function __dcufDescribeHeaderShellStyleSelectors() {
+        return Object.freeze({
+            root: "[data-dcuf-header-shell-role=\"root\"].typea",
+            head: "[data-dcuf-header-shell-role=\"head\"]",
+            logo: "[data-dcuf-header-shell-role=\"head\"] h1[data-dcuf-header-shell-role=\"logo\"]",
+            logoImage: "[data-dcuf-header-shell-role=\"head\"] h1[data-dcuf-header-shell-role=\"logo\"] img:is([data-dcuf-header-shell-role=\"logo-image\"], [data-dcuf-header-shell-role=\"logo-image-both\"])",
+            logoImageAlt: "[data-dcuf-header-shell-role=\"head\"] h1[data-dcuf-header-shell-role=\"logo\"] img:is([data-dcuf-header-shell-role=\"logo-image-alt\"], [data-dcuf-header-shell-role=\"logo-image-both\"])",
+            searchWrap: "[data-dcuf-header-shell-role=\"head\"] [data-dcuf-header-shell-role=\"search-wrap\"]",
+            topSearch: "[data-dcuf-header-shell-role=\"head\"] [data-dcuf-header-shell-role=\"top-search\"]",
+            links: "[data-dcuf-header-shell-role=\"head\"] [data-dcuf-header-shell-role=\"links\"]",
+            darkRoot: "body.dc-filter-dark-mode [data-dcuf-header-shell-role=\"root\"].typea"
+        });
+    }
+
     // Hoisted input: preserve native coverage before objects initialize or connect.
     function __dcufDescribeHeaderShellThemeSelectors(ROOT_ATTRIBUTE) {
         return Object.freeze({
@@ -176,6 +191,6 @@
             mutationSubscribers: typeof mutationUnsubscribe === 'function' ? 1 : 0,
         });
 
-        return Object.freeze({ describeThemeSelectors: __dcufDescribeHeaderShellThemeSelectors, describeResetSelectors: __dcufDescribeHeaderShellResetSelectors, connect, refresh, dispose, ensureStyle, snapshot, snapshotResources });
+        return Object.freeze({ describeStyleSelectors: __dcufDescribeHeaderShellStyleSelectors, describeThemeSelectors: __dcufDescribeHeaderShellThemeSelectors, describeResetSelectors: __dcufDescribeHeaderShellResetSelectors, connect, refresh, dispose, ensureStyle, snapshot, snapshotResources });
     })();
     __dcufRoot.__dcufHeaderShellHostAdapter = __dcufHeaderShellHostAdapter;

@@ -243,7 +243,7 @@
                 const left = Math.max(12, Math.min(Math.round(rect.left), window.innerWidth - width - 12));
                 const preferredTop = Math.max(12, Math.round(rect.top));
                 setDoorBodyVar('--dcuf-header-native-door-left', `${left}px`);
-                setDoorBodyVar('--dcuf-header-native-door-top', `${preferredTop}px`);
+                // Measure once and apply only the final top, avoiding body-mutation feedback.
                 const height = Math.ceil(source.getBoundingClientRect().height);
                 const top = Math.max(12, Math.min(preferredTop, window.innerHeight - height - 12));
                 setDoorBodyVar('--dcuf-header-native-door-top', `${top}px`);

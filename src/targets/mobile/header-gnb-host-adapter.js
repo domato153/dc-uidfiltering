@@ -1,3 +1,12 @@
+    // Full native predicates and role relations belong to the target adapter.
+    function __dcufDescribeHeaderGnbStyleSelectors() {
+        return Object.freeze({
+            root: "[data-dcuf-header-gnb-role=\"root\"]",
+            nav: "[data-dcuf-header-gnb-role=\"root\"] nav[data-dcuf-header-gnb-role=\"nav\"]",
+            list: "[data-dcuf-header-gnb-role=\"root\"] [data-dcuf-header-gnb-role=\"list\"]"
+        });
+    }
+
     // Hoisted input: preserve native coverage before objects initialize or connect.
     function __dcufDescribeHeaderGnbThemeSelectors(ROOT_ATTRIBUTE) {
         return Object.freeze({
@@ -156,6 +165,6 @@
             mutationSubscribers: typeof mutationUnsubscribe === 'function' ? 1 : 0,
         });
 
-        return Object.freeze({ describeThemeSelectors: __dcufDescribeHeaderGnbThemeSelectors, describeResetSelectors: __dcufDescribeHeaderGnbResetSelectors, connect, refresh, dispose, ensureStyle, snapshot, snapshotResources });
+        return Object.freeze({ describeStyleSelectors: __dcufDescribeHeaderGnbStyleSelectors, describeThemeSelectors: __dcufDescribeHeaderGnbThemeSelectors, describeResetSelectors: __dcufDescribeHeaderGnbResetSelectors, connect, refresh, dispose, ensureStyle, snapshot, snapshotResources });
     })();
     __dcufRoot.__dcufHeaderGnbHostAdapter = __dcufHeaderGnbHostAdapter;

@@ -49,16 +49,28 @@
         }
 `;
     }
-    const __dcufHeaderGnbPresenter = (() => {
-        const style = Object.freeze({
+    // Pure and hoisted: preserve complete late CSS before adapter objects initialize.
+    function __dcufBuildHeaderGnbStyle(selectors) {
+        if (!selectors || typeof selectors !== 'object' || !Object.isFrozen(selectors)
+            || Reflect.ownKeys(selectors).length !== 3
+            || !["root","nav","list"].every(slot => {
+                const field = Object.getOwnPropertyDescriptor(selectors, slot);
+                return field && typeof field.value === 'string' && field.value.trim();
+            })) {
+            throw new TypeError('A complete frozen header-gnb style selector record is required');
+        }
+        return Object.freeze({
             key: 'header-gnb',
             id: 'dcuf-header-gnb-style',
             css: `
-        [data-dcuf-header-gnb-role="root"] { display: block !important; width: 100% !important; min-width: 0 !important; height: auto !important; box-sizing: border-box !important; background: #3b4890 !important; }
-        [data-dcuf-header-gnb-role="root"] nav[data-dcuf-header-gnb-role="nav"] { width: auto !important; min-width: 0 !important; padding: 0 15px !important; display: flex !important; justify-content: center !important; }
-        [data-dcuf-header-gnb-role="root"] [data-dcuf-header-gnb-role="list"] { display: flex; flex-wrap: wrap; justify-content: space-around; width: 100% !important; }
+        ${selectors.root} { display: block !important; width: 100% !important; min-width: 0 !important; height: auto !important; box-sizing: border-box !important; background: #3b4890 !important; }
+        ${selectors.nav} { width: auto !important; min-width: 0 !important; padding: 0 15px !important; display: flex !important; justify-content: center !important; }
+        ${selectors.list} { display: flex; flex-wrap: wrap; justify-content: space-around; width: 100% !important; }
 `
         });
-        return Object.freeze({ style, buildThemeCss: __dcufBuildHeaderGnbThemeCss, buildResetCss: __dcufBuildHeaderGnbResetCss });
+    }
+    const __dcufHeaderGnbPresenter = (() => {
+        const style = __dcufBuildHeaderGnbStyle(__dcufDescribeHeaderGnbStyleSelectors());
+        return Object.freeze({ style, buildStyle: __dcufBuildHeaderGnbStyle, buildThemeCss: __dcufBuildHeaderGnbThemeCss, buildResetCss: __dcufBuildHeaderGnbResetCss });
     })();
     __dcufRoot.__dcufHeaderGnbPresenter = __dcufHeaderGnbPresenter;

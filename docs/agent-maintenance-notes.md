@@ -1,5 +1,13 @@
 # Agent Maintenance Notes
 
+## Final header inputs and native issue-top feedback
+
+Keep all four late header CSS builders hoisted with frozen named full adapter selectors; preserve complete CSS, specificity, mount phase and `.style` diagnostic consumers. Vary all 27 inputs independently and reject mutable/accessor/inherited/extra records without evaluating getters. The cold snapshot-contract gate proves fixed control-derived CSS hashes; it does not replace the exact-control differential.
+
+Native issue placement had the same preferred-top feedback as recommendation placement. Two same-state refreshes wrote transient and final values four times for a selected 420px native-height fixture. Measure after the existing horizontal write and apply only the final clamped top. Compare frozen control and candidate in separate contexts: final native geometry/body style must match while idempotent top writes disappear. Current eight side observations expose the original write fault in three contexts. Preserve native-height/live applicability limits and bind fixture, harness, runtime, observer and toolchain in the evidence index. Historical palette classifiers hardcode older artifacts/test counts; they cannot admit a changed runtime.
+
+`--testbed-output` builds only the guarded runtime; rebuild ordinary root/dist separately before typed-artifact qualification. New gate commands must preserve the existing recent-title contract immediately after the mobile guard build. Proof profiles read the canonical artifacts/impact.json, so copy the freshly resolved route there. Random Testbed ports can hit Chromium's restricted ports (observed 6566); retain the environment failure and use strict exact-input progress resume, never relax the oracle or repeat already valid cases indiscriminately.
+
 ## Hoisted header native inputs and equal-selector oracle gap
 
 Keep full early host selectors in immutable named adapter records and presentation declarations in hoisted pure builders. Theme/core composition runs before const presenter/adapter initialization; preserve exact phase and unmarked-root coverage. Equal native strings in different slots can hide an ignored input: baseline equality and first-slot mutation are insufficient. Mutate all 33 slots independently and compare complete theme/core order as well as grouped digests. Update actual exported-builder consumers and adapter-source mutation targets; retain old-argument oracle RED and original behavior/digests. Current bounded evidence and retained palette FAIL are in docs/work/HEADER_EARLY_SELECTOR_BINDING.md.

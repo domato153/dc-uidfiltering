@@ -12,6 +12,7 @@ Run `node tools/inspect-continuity.mjs`; compare fresh root/branch/HEAD ancestry
 
 ## Retrieve for the current question
 
+- `HEADER_FINISH.md`: current integrated header implementation and final verification; supersedes per-phase/audit-only continuation boundaries.
 - `VERIFICATION_EFFICIENCY.md`: researched process change, checks/counts/limits.
 - `MOBILE_UI_MODERNIZATION.md`: durable product sequence and surface/final gates.
 - `UI_REPLACEABILITY_VALIDATION.md`: researched real-change scenarios, locality measurements, pilot/final admission and limits; planned, not a readiness PASS.
@@ -20,7 +21,7 @@ Run `node tools/inspect-continuity.mjs`; compare fresh root/branch/HEAD ancestry
 - `HEADER_DRAWER_WIDTH_INPUT.md`: frozen presenter width input, one-value width variants, retained hardcoded-adapter negative and current bounded evidence.
 - `HEADER_DRAWER_NATIVE_SELECTORS.md`: working late-native semantic selectors, nested/copied mutation admission, per-role restoration and current counterexamples/checks; not full-header admission.
 - `HEADER_EARLY_SELECTOR_BINDING.md`: eight hoisted builders/33 immutable adapter inputs, exact CSS/order, per-slot negative correction and current split evidence; no header admission.
-- `HEADER_CASCADE_EXIT_AUDIT.md`: current five-owner inventory, shell reset/typea applicability and exact restoration evidence; read-only product audit, next late shell selector binding, no mixed/header admission.
+- `HEADER_CASCADE_EXIT_AUDIT.md`: preceding five-owner inventory and shell reset/typea restoration evidence. Its audit-only stop and next binding task are superseded by HEADER_FINISH.md; no mixed/header admission follows.
 - `HEADER_DRAWER_PROJECTION_REMOVAL.md`: obsolete descendant/context projection removal, exact native/restoration/input/width evidence and retained failure/admission limits.
 - `HEADER_DRAWER_SELECTOR_BINDING.md`: named native selector binding candidate, retained synchronous failure control, bounded evidence and remaining validation; not full-header admission.
 - `HEADER_DRAWER_OWNED_SHELL.md`: preceding extraction and focus/order/oracle counterexamples.

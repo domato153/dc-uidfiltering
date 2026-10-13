@@ -8423,13 +8423,22 @@ const __dcufSettingsPresenter = (() => {
         }
 `;
     }
-    const __dcufHeaderShellPresenter = (() => {
-        const style = Object.freeze({
+    // Pure and hoisted: preserve complete late CSS before adapter objects initialize.
+    function __dcufBuildHeaderShellStyle(selectors) {
+        if (!selectors || typeof selectors !== 'object' || !Object.isFrozen(selectors)
+            || Reflect.ownKeys(selectors).length !== 9
+            || !["root","head","logo","logoImage","logoImageAlt","searchWrap","topSearch","links","darkRoot"].every(slot => {
+                const field = Object.getOwnPropertyDescriptor(selectors, slot);
+                return field && typeof field.value === 'string' && field.value.trim();
+            })) {
+            throw new TypeError('A complete frozen header-shell style selector record is required');
+        }
+        return Object.freeze({
             key: 'header-shell',
             id: 'dcuf-header-shell-style',
             css: `
-        [data-dcuf-header-shell-role="root"].typea { min-width: 0 !important; width: 100% !important; height: auto !important; background: #fff; border-bottom: 1px solid #e5e5e5; }
-        [data-dcuf-header-shell-role="head"] {
+        ${selectors.root} { min-width: 0 !important; width: 100% !important; height: auto !important; background: #fff; border-bottom: 1px solid #e5e5e5; }
+        ${selectors.head} {
             display: flex !important;
             justify-content: space-between !important;
             align-items: center !important;
@@ -8439,21 +8448,39 @@ const __dcufSettingsPresenter = (() => {
             box-sizing: border-box !important;
             width: 100% !important;
         }
-        [data-dcuf-header-shell-role="head"] h1[data-dcuf-header-shell-role="logo"] { flex-shrink: 0 !important; margin: 0 !important; display: block !important; }
-        [data-dcuf-header-shell-role="head"] h1[data-dcuf-header-shell-role="logo"] img:is([data-dcuf-header-shell-role="logo-image"], [data-dcuf-header-shell-role="logo-image-both"]) { height: 22px !important; width: auto !important; }
-        [data-dcuf-header-shell-role="head"] h1[data-dcuf-header-shell-role="logo"] img:is([data-dcuf-header-shell-role="logo-image-alt"], [data-dcuf-header-shell-role="logo-image-both"]) { display: none !important; }
-        [data-dcuf-header-shell-role="head"] [data-dcuf-header-shell-role="search-wrap"] { flex-grow: 1 !important; min-width: 100px !important; max-width: 600px; }
-        [data-dcuf-header-shell-role="head"] [data-dcuf-header-shell-role="top-search"] { width: 100% !important; }
-        [data-dcuf-header-shell-role="head"] [data-dcuf-header-shell-role="links"] { display: block !important; flex-shrink: 0 !important; white-space: nowrap !important; }
-        body.dc-filter-dark-mode [data-dcuf-header-shell-role="root"].typea {
+        ${selectors.logo} { flex-shrink: 0 !important; margin: 0 !important; display: block !important; }
+        ${selectors.logoImage} { height: 22px !important; width: auto !important; }
+        ${selectors.logoImageAlt} { display: none !important; }
+        ${selectors.searchWrap} { flex-grow: 1 !important; min-width: 100px !important; max-width: 600px; }
+        ${selectors.topSearch} { width: 100% !important; }
+        ${selectors.links} { display: block !important; flex-shrink: 0 !important; white-space: nowrap !important; }
+        ${selectors.darkRoot} {
             background: #1c1c1e !important;
             border-bottom-color: #3a3a3c !important;
         }
 `
         });
-        return Object.freeze({ style, buildThemeCss: __dcufBuildHeaderShellThemeCss, buildResetCss: __dcufBuildHeaderShellResetCss });
+    }
+    const __dcufHeaderShellPresenter = (() => {
+        const style = __dcufBuildHeaderShellStyle(__dcufDescribeHeaderShellStyleSelectors());
+        return Object.freeze({ style, buildStyle: __dcufBuildHeaderShellStyle, buildThemeCss: __dcufBuildHeaderShellThemeCss, buildResetCss: __dcufBuildHeaderShellResetCss });
     })();
     __dcufRoot.__dcufHeaderShellPresenter = __dcufHeaderShellPresenter;
+    // Full native predicates and role relations belong to the target adapter.
+    function __dcufDescribeHeaderShellStyleSelectors() {
+        return Object.freeze({
+            root: "[data-dcuf-header-shell-role=\"root\"].typea",
+            head: "[data-dcuf-header-shell-role=\"head\"]",
+            logo: "[data-dcuf-header-shell-role=\"head\"] h1[data-dcuf-header-shell-role=\"logo\"]",
+            logoImage: "[data-dcuf-header-shell-role=\"head\"] h1[data-dcuf-header-shell-role=\"logo\"] img:is([data-dcuf-header-shell-role=\"logo-image\"], [data-dcuf-header-shell-role=\"logo-image-both\"])",
+            logoImageAlt: "[data-dcuf-header-shell-role=\"head\"] h1[data-dcuf-header-shell-role=\"logo\"] img:is([data-dcuf-header-shell-role=\"logo-image-alt\"], [data-dcuf-header-shell-role=\"logo-image-both\"])",
+            searchWrap: "[data-dcuf-header-shell-role=\"head\"] [data-dcuf-header-shell-role=\"search-wrap\"]",
+            topSearch: "[data-dcuf-header-shell-role=\"head\"] [data-dcuf-header-shell-role=\"top-search\"]",
+            links: "[data-dcuf-header-shell-role=\"head\"] [data-dcuf-header-shell-role=\"links\"]",
+            darkRoot: "body.dc-filter-dark-mode [data-dcuf-header-shell-role=\"root\"].typea"
+        });
+    }
+
     // Hoisted input: preserve native coverage before objects initialize or connect.
     function __dcufDescribeHeaderShellThemeSelectors(ROOT_ATTRIBUTE) {
         return Object.freeze({
@@ -8632,7 +8659,7 @@ const __dcufSettingsPresenter = (() => {
             mutationSubscribers: typeof mutationUnsubscribe === 'function' ? 1 : 0,
         });
 
-        return Object.freeze({ describeThemeSelectors: __dcufDescribeHeaderShellThemeSelectors, describeResetSelectors: __dcufDescribeHeaderShellResetSelectors, connect, refresh, dispose, ensureStyle, snapshot, snapshotResources });
+        return Object.freeze({ describeStyleSelectors: __dcufDescribeHeaderShellStyleSelectors, describeThemeSelectors: __dcufDescribeHeaderShellThemeSelectors, describeResetSelectors: __dcufDescribeHeaderShellResetSelectors, connect, refresh, dispose, ensureStyle, snapshot, snapshotResources });
     })();
     __dcufRoot.__dcufHeaderShellHostAdapter = __dcufHeaderShellHostAdapter;
     // Hoisted because theme composition precedes this presenter object.
@@ -8700,12 +8727,21 @@ const __dcufSettingsPresenter = (() => {
         }
 `;
     }
-    const __dcufGalleryPageHeadPresenter = (() => {
-        const style = Object.freeze({
+    // Pure and hoisted: preserve complete late CSS before adapter objects initialize.
+    function __dcufBuildGalleryPageHeadStyle(selectors) {
+        if (!selectors || typeof selectors !== 'object' || !Object.isFrozen(selectors)
+            || Reflect.ownKeys(selectors).length !== 4
+            || !["root","left","right","clearfix"].every(slot => {
+                const field = Object.getOwnPropertyDescriptor(selectors, slot);
+                return field && typeof field.value === 'string' && field.value.trim();
+            })) {
+            throw new TypeError('A complete frozen gallery-page-head style selector record is required');
+        }
+        return Object.freeze({
             key: 'gallery-page-head',
             id: 'dcuf-gallery-page-head-style',
             css: `
-        [data-dcuf-gallery-page-head-role="root"] {
+        ${selectors.root} {
             display: flex !important;
             justify-content: space-between !important;
             align-items: center !important;
@@ -8716,20 +8752,33 @@ const __dcufSettingsPresenter = (() => {
             flex-wrap: wrap;
             gap: 10px;
         }
-        [data-dcuf-gallery-page-head-role="root"] > :is([data-dcuf-gallery-page-head-role="left"], [data-dcuf-gallery-page-head-role="both"]) { float: none !important; }
-        [data-dcuf-gallery-page-head-role="root"] > :is([data-dcuf-gallery-page-head-role="right"], [data-dcuf-gallery-page-head-role="both"]) {
+        ${selectors.left} { float: none !important; }
+        ${selectors.right} {
             float: none !important;
             margin-left: auto;
             display: flex;
             align-items: center;
             gap: 8px;
         }
-        [data-dcuf-gallery-page-head-role="root"]::after { content: ""; display: table; clear: both; }
+        ${selectors.clearfix} { content: ""; display: table; clear: both; }
 `
         });
-        return Object.freeze({ style, buildThemeCss: __dcufBuildGalleryPageHeadThemeCss });
+    }
+    const __dcufGalleryPageHeadPresenter = (() => {
+        const style = __dcufBuildGalleryPageHeadStyle(__dcufDescribeGalleryPageHeadStyleSelectors());
+        return Object.freeze({ style, buildStyle: __dcufBuildGalleryPageHeadStyle, buildThemeCss: __dcufBuildGalleryPageHeadThemeCss });
     })();
     __dcufRoot.__dcufGalleryPageHeadPresenter = __dcufGalleryPageHeadPresenter;
+    // Full native predicates and role relations belong to the target adapter.
+    function __dcufDescribeGalleryPageHeadStyleSelectors() {
+        return Object.freeze({
+            root: "[data-dcuf-gallery-page-head-role=\"root\"]",
+            left: "[data-dcuf-gallery-page-head-role=\"root\"] > :is([data-dcuf-gallery-page-head-role=\"left\"], [data-dcuf-gallery-page-head-role=\"both\"])",
+            right: "[data-dcuf-gallery-page-head-role=\"root\"] > :is([data-dcuf-gallery-page-head-role=\"right\"], [data-dcuf-gallery-page-head-role=\"both\"])",
+            clearfix: "[data-dcuf-gallery-page-head-role=\"root\"]::after"
+        });
+    }
+
     // Hoisted input: preserve native coverage before objects initialize or connect.
     function __dcufDescribeGalleryPageHeadThemeSelectors(ROOT_ATTRIBUTE) {
         return Object.freeze({
@@ -8895,7 +8944,7 @@ const __dcufSettingsPresenter = (() => {
             mutationSubscribers: typeof mutationUnsubscribe === 'function' ? 1 : 0,
         });
 
-        return Object.freeze({ describeThemeSelectors: __dcufDescribeGalleryPageHeadThemeSelectors, connect, refresh, dispose, ensureStyle, snapshot, snapshotResources });
+        return Object.freeze({ describeStyleSelectors: __dcufDescribeGalleryPageHeadStyleSelectors, describeThemeSelectors: __dcufDescribeGalleryPageHeadThemeSelectors, connect, refresh, dispose, ensureStyle, snapshot, snapshotResources });
     })();
     __dcufRoot.__dcufGalleryPageHeadHostAdapter = __dcufGalleryPageHeadHostAdapter;
     // Hoisted to preserve the existing early palette injection phase.
@@ -8949,19 +8998,40 @@ const __dcufSettingsPresenter = (() => {
         }
 `;
     }
-    const __dcufHeaderGnbPresenter = (() => {
-        const style = Object.freeze({
+    // Pure and hoisted: preserve complete late CSS before adapter objects initialize.
+    function __dcufBuildHeaderGnbStyle(selectors) {
+        if (!selectors || typeof selectors !== 'object' || !Object.isFrozen(selectors)
+            || Reflect.ownKeys(selectors).length !== 3
+            || !["root","nav","list"].every(slot => {
+                const field = Object.getOwnPropertyDescriptor(selectors, slot);
+                return field && typeof field.value === 'string' && field.value.trim();
+            })) {
+            throw new TypeError('A complete frozen header-gnb style selector record is required');
+        }
+        return Object.freeze({
             key: 'header-gnb',
             id: 'dcuf-header-gnb-style',
             css: `
-        [data-dcuf-header-gnb-role="root"] { display: block !important; width: 100% !important; min-width: 0 !important; height: auto !important; box-sizing: border-box !important; background: #3b4890 !important; }
-        [data-dcuf-header-gnb-role="root"] nav[data-dcuf-header-gnb-role="nav"] { width: auto !important; min-width: 0 !important; padding: 0 15px !important; display: flex !important; justify-content: center !important; }
-        [data-dcuf-header-gnb-role="root"] [data-dcuf-header-gnb-role="list"] { display: flex; flex-wrap: wrap; justify-content: space-around; width: 100% !important; }
+        ${selectors.root} { display: block !important; width: 100% !important; min-width: 0 !important; height: auto !important; box-sizing: border-box !important; background: #3b4890 !important; }
+        ${selectors.nav} { width: auto !important; min-width: 0 !important; padding: 0 15px !important; display: flex !important; justify-content: center !important; }
+        ${selectors.list} { display: flex; flex-wrap: wrap; justify-content: space-around; width: 100% !important; }
 `
         });
-        return Object.freeze({ style, buildThemeCss: __dcufBuildHeaderGnbThemeCss, buildResetCss: __dcufBuildHeaderGnbResetCss });
+    }
+    const __dcufHeaderGnbPresenter = (() => {
+        const style = __dcufBuildHeaderGnbStyle(__dcufDescribeHeaderGnbStyleSelectors());
+        return Object.freeze({ style, buildStyle: __dcufBuildHeaderGnbStyle, buildThemeCss: __dcufBuildHeaderGnbThemeCss, buildResetCss: __dcufBuildHeaderGnbResetCss });
     })();
     __dcufRoot.__dcufHeaderGnbPresenter = __dcufHeaderGnbPresenter;
+    // Full native predicates and role relations belong to the target adapter.
+    function __dcufDescribeHeaderGnbStyleSelectors() {
+        return Object.freeze({
+            root: "[data-dcuf-header-gnb-role=\"root\"]",
+            nav: "[data-dcuf-header-gnb-role=\"root\"] nav[data-dcuf-header-gnb-role=\"nav\"]",
+            list: "[data-dcuf-header-gnb-role=\"root\"] [data-dcuf-header-gnb-role=\"list\"]"
+        });
+    }
+
     // Hoisted input: preserve native coverage before objects initialize or connect.
     function __dcufDescribeHeaderGnbThemeSelectors(ROOT_ATTRIBUTE) {
         return Object.freeze({
@@ -9120,7 +9190,7 @@ const __dcufSettingsPresenter = (() => {
             mutationSubscribers: typeof mutationUnsubscribe === 'function' ? 1 : 0,
         });
 
-        return Object.freeze({ describeThemeSelectors: __dcufDescribeHeaderGnbThemeSelectors, describeResetSelectors: __dcufDescribeHeaderGnbResetSelectors, connect, refresh, dispose, ensureStyle, snapshot, snapshotResources });
+        return Object.freeze({ describeStyleSelectors: __dcufDescribeHeaderGnbStyleSelectors, describeThemeSelectors: __dcufDescribeHeaderGnbThemeSelectors, describeResetSelectors: __dcufDescribeHeaderGnbResetSelectors, connect, refresh, dispose, ensureStyle, snapshot, snapshotResources });
     })();
     __dcufRoot.__dcufHeaderGnbHostAdapter = __dcufHeaderGnbHostAdapter;
     // Hoisted to preserve the existing early palette injection phase.
@@ -9141,27 +9211,66 @@ const __dcufSettingsPresenter = (() => {
         }
 `;
     }
-    const __dcufHeaderRecentVisitPresenter = (() => {
-        const style = Object.freeze({
+    // Pure and hoisted: preserve complete late CSS before adapter objects initialize.
+    function __dcufBuildHeaderRecentVisitStyle(selectors) {
+        if (!selectors || typeof selectors !== 'object' || !Object.isFrozen(selectors)
+            || Reflect.ownKeys(selectors).length !== 11
+            || !["root","decoration","title","box","list","scrollbar","item","controls","arrow","darkRoot","darkTitle"].every(slot => {
+                const field = Object.getOwnPropertyDescriptor(selectors, slot);
+                return field && typeof field.value === 'string' && field.value.trim();
+            })) {
+            throw new TypeError('A complete frozen header-recent-visit style selector record is required');
+        }
+        return Object.freeze({
             key: 'header-recent-visit',
             id: 'dcuf-header-recent-visit-style',
             css: `
-        [data-dcuf-header-recent-visit-role="root"] { display: flex !important; align-items: center; width: 100% !important; min-width: 0 !important; height: auto !important; padding: 8px 10px !important; background: #f8f9fa !important; border: none !important; box-sizing: border-box !important; gap: 5px; }
-        [data-dcuf-header-recent-visit-role="root"]::before { display: none !important; }
-        [data-dcuf-header-recent-visit-role="root"] > [data-dcuf-header-recent-visit-role="title"] { flex-shrink: 0; margin: 0 !important; padding-right: 5px; font-size: 14px !important; font-weight: bold; color: #333; }
-        [data-dcuf-header-recent-visit-role="root"] > [data-dcuf-header-recent-visit-role="box"] { flex: 1; min-width: 0; overflow: hidden; }
-        [data-dcuf-header-recent-visit-role="root"] [data-dcuf-header-recent-visit-role="list"] { display: flex; flex-wrap: nowrap; position: relative !important; left: 0 !important; margin-left: 0 !important; width: 100% !important; box-sizing: border-box; overflow-x: auto; scroll-behavior: smooth; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
-        [data-dcuf-header-recent-visit-role="root"] [data-dcuf-header-recent-visit-role="list"]::-webkit-scrollbar { display: none; }
-        [data-dcuf-header-recent-visit-role="root"] [data-dcuf-header-recent-visit-role="item"] { white-space: nowrap; flex-shrink: 0; }
-        [data-dcuf-header-recent-visit-role="root"] > :is([data-dcuf-header-recent-visit-role="control"], [data-dcuf-header-recent-visit-role="arrow"]) { display: inline-flex !important; align-items: center; justify-content: center; flex: 0 0 auto; position: static !important; inset: auto !important; transform: none !important; margin: 0 !important; padding: 0 4px; overflow: visible !important; }
-        [data-dcuf-header-recent-visit-role="root"] > [data-dcuf-header-recent-visit-role="arrow"] { min-width: 22px; min-height: 24px; }
-        .dc-filter-dark-mode [data-dcuf-header-recent-visit-role="root"] { background: #1c1c1e !important; border-bottom-color: #3a3a3c !important; }
-        .dc-filter-dark-mode [data-dcuf-header-recent-visit-role="root"] > [data-dcuf-header-recent-visit-role="title"] { color: #e0e0e0 !important; }
+        ${selectors.root} { display: flex !important; align-items: center; width: 100% !important; min-width: 0 !important; height: auto !important; padding: 8px 10px !important; background: #f8f9fa !important; border: none !important; box-sizing: border-box !important; gap: 5px; }
+        ${selectors.decoration} { display: none !important; }
+        ${selectors.title} { flex-shrink: 0; margin: 0 !important; padding-right: 5px; font-size: 14px !important; font-weight: bold; color: #333; }
+        ${selectors.box} { flex: 1; min-width: 0; overflow: hidden; }
+        ${selectors.list} { display: flex; flex-wrap: nowrap; position: relative !important; left: 0 !important; margin-left: 0 !important; width: 100% !important; box-sizing: border-box; overflow-x: auto; scroll-behavior: smooth; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+        ${selectors.scrollbar} { display: none; }
+        ${selectors.item} { white-space: nowrap; flex-shrink: 0; }
+        ${selectors.controls} { display: inline-flex !important; align-items: center; justify-content: center; flex: 0 0 auto; position: static !important; inset: auto !important; transform: none !important; margin: 0 !important; padding: 0 4px; overflow: visible !important; }
+        ${selectors.arrow} { min-width: 22px; min-height: 24px; }
+        ${selectors.darkRoot} { background: #1c1c1e !important; border-bottom-color: #3a3a3c !important; }
+        ${selectors.darkTitle} { color: #e0e0e0 !important; }
 `
         });
-        return Object.freeze({ style, buildThemeCss: __dcufBuildHeaderRecentVisitThemeCss });
+    }
+    const __dcufHeaderRecentVisitPresenter = (() => {
+        const style = __dcufBuildHeaderRecentVisitStyle(__dcufDescribeHeaderRecentVisitStyleSelectors());
+        const listStyle = Object.freeze([
+            Object.freeze({ name: 'left', value: '0px', priority: 'important' }),
+            Object.freeze({ name: 'margin-left', value: '0px', priority: 'important' }),
+        ]);
+        const controlStates = Object.freeze([false, true].flatMap(canPrev => [false, true].map(canNext => Object.freeze({
+            prev: Object.freeze({ on: canPrev, ariaDisabled: String(!canPrev) }),
+            next: Object.freeze({ on: canNext, ariaDisabled: String(!canNext) }),
+        }))));
+        const describeListStyle = () => listStyle;
+        const describeControls = snapshot => controlStates[(snapshot.canPrev ? 2 : 0) + (snapshot.canNext ? 1 : 0)];
+        return Object.freeze({ style, buildStyle: __dcufBuildHeaderRecentVisitStyle, describeListStyle, describeControls, buildThemeCss: __dcufBuildHeaderRecentVisitThemeCss });
     })();
     __dcufRoot.__dcufHeaderRecentVisitPresenter = __dcufHeaderRecentVisitPresenter;
+    // Full native predicates and role relations belong to the target adapter.
+    function __dcufDescribeHeaderRecentVisitStyleSelectors() {
+        return Object.freeze({
+            root: "[data-dcuf-header-recent-visit-role=\"root\"]",
+            decoration: "[data-dcuf-header-recent-visit-role=\"root\"]::before",
+            title: "[data-dcuf-header-recent-visit-role=\"root\"] > [data-dcuf-header-recent-visit-role=\"title\"]",
+            box: "[data-dcuf-header-recent-visit-role=\"root\"] > [data-dcuf-header-recent-visit-role=\"box\"]",
+            list: "[data-dcuf-header-recent-visit-role=\"root\"] [data-dcuf-header-recent-visit-role=\"list\"]",
+            scrollbar: "[data-dcuf-header-recent-visit-role=\"root\"] [data-dcuf-header-recent-visit-role=\"list\"]::-webkit-scrollbar",
+            item: "[data-dcuf-header-recent-visit-role=\"root\"] [data-dcuf-header-recent-visit-role=\"item\"]",
+            controls: "[data-dcuf-header-recent-visit-role=\"root\"] > :is([data-dcuf-header-recent-visit-role=\"control\"], [data-dcuf-header-recent-visit-role=\"arrow\"])",
+            arrow: "[data-dcuf-header-recent-visit-role=\"root\"] > [data-dcuf-header-recent-visit-role=\"arrow\"]",
+            darkRoot: ".dc-filter-dark-mode [data-dcuf-header-recent-visit-role=\"root\"]",
+            darkTitle: ".dc-filter-dark-mode [data-dcuf-header-recent-visit-role=\"root\"] > [data-dcuf-header-recent-visit-role=\"title\"]"
+        });
+    }
+
     // Hoisted input: preserve native coverage before objects initialize or connect.
     function __dcufDescribeHeaderRecentVisitThemeSelectors(ROOT_ATTRIBUTE) {
         return Object.freeze({
@@ -9336,10 +9445,11 @@ const __dcufSettingsPresenter = (() => {
             const next = getControl(state.root, 'next');
             const canPrev = state.list.scrollLeft > 1;
             const canNext = state.list.scrollLeft < max - 1;
-            prev?.classList.toggle('on', canPrev);
-            next?.classList.toggle('on', canNext);
-            prev?.setAttribute('aria-disabled', String(!canPrev));
-            next?.setAttribute('aria-disabled', String(!canNext));
+            const presentation = __dcufHeaderRecentVisitPresenter.describeControls(Object.freeze({ canPrev, canNext }));
+            prev?.classList.toggle('on', presentation.prev.on);
+            next?.classList.toggle('on', presentation.next.on);
+            prev?.setAttribute('aria-disabled', presentation.prev.ariaDisabled);
+            next?.setAttribute('aria-disabled', presentation.next.ariaDisabled);
         };
 
         const cancelPending = (state) => {
@@ -9374,8 +9484,9 @@ const __dcufSettingsPresenter = (() => {
             const baseline = makeBaseline(root, list);
             list.setAttribute(BASELINE_ATTRIBUTE, encodeURIComponent(JSON.stringify(baseline)));
             list.setAttribute(BOUND_ATTRIBUTE, '1');
-            list.style.setProperty('left', '0px', 'important');
-            list.style.setProperty('margin-left', '0px', 'important');
+            __dcufHeaderRecentVisitPresenter.describeListStyle().forEach(description => {
+                list.style.setProperty(description.name, description.value, description.priority);
+            });
             const state = {
                 root,
                 list,
@@ -9531,7 +9642,7 @@ const __dcufSettingsPresenter = (() => {
             });
         };
 
-        return Object.freeze({ describeThemeSelectors: __dcufDescribeHeaderRecentVisitThemeSelectors,
+        return Object.freeze({ describeStyleSelectors: __dcufDescribeHeaderRecentVisitStyleSelectors, describeThemeSelectors: __dcufDescribeHeaderRecentVisitThemeSelectors,
             connect,
             refresh,
             dispose,
@@ -10105,7 +10216,7 @@ const __dcufSettingsPresenter = (() => {
                 const left = Math.max(12, Math.min(Math.round(rect.left), window.innerWidth - width - 12));
                 const preferredTop = Math.max(12, Math.round(rect.top));
                 setDoorBodyVar('--dcuf-header-native-door-left', `${left}px`);
-                setDoorBodyVar('--dcuf-header-native-door-top', `${preferredTop}px`);
+                // Measure once and apply only the final top, avoiding body-mutation feedback.
                 const height = Math.ceil(source.getBoundingClientRect().height);
                 const top = Math.max(12, Math.min(preferredTop, window.innerHeight - height - 12));
                 setDoorBodyVar('--dcuf-header-native-door-top', `${top}px`);
