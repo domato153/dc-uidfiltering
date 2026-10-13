@@ -1,13 +1,13 @@
 # Next bounded task
 
 - Task ID: `header-navigation`
-- Bounded slice: `header-cascade-exit-audit`
-- Objective: Audit the remaining five header presenters' inherited cascade, native qualifiers and adapter driver/startup exit obligations against the exact early-binding artifact; begin with shell/typea. Identify one concrete smallest next change or explicit contract proof.
-- Why next: Early palette/reset/concealment ownership is now explicit and preserves complete CSS/phase output. Mixed exit still requires actual collision reasons and native input/geometry/phase evidence, not another marker substitution.
-- Expected transition: A bounded read-only debt/applicability result linked to current source and exact exit criteria. No mixed promotion or visual redesign before the header gate closes.
+- Bounded slice: `header-shell-late-native-selector-binding`
+- Objective: Supply the shell's five complete qualifier-bearing late selectors through frozen adapter inputs to a pure presenter builder. Preserve exact CSS, .style diagnostic consumers and mount phase; no rule deletion or visual change.
+- Why next: Audit confirms selected raw/late reset duties and a typea applicability counterexample. Explicit late input ownership is a smaller safe step than deleting predicates/priorities; other driver/startup debt remains.
+- Expected transition: Zero-delta late shell selector ownership with independent slot/strict-input controls and current native/phase evidence. No mixed promotion or header admission.
 - Stop/replan: Missing exact control, unexpected raw coverage/phase difference, unmodeled native heights/live states, surviving negative or remote drift. Preserve original palette FAIL and final/live UNKNOWN.
 
-The current user request ends with the early-binding unit's checkpoint/report. Resume another phase only on the next user instruction. CURRENT_STATE.md and HEADER_EARLY_SELECTOR_BINDING.md own current results; old briefs are history. Derive selectors, driver writes and collision evidence from fresh code, fixtures and actual receipts before choosing a change.
+The current user request ends with the read-only cascade audit's checkpoint/report. Implement only on the next user instruction. CURRENT_STATE.md and HEADER_CASCADE_EXIT_AUDIT.md own current findings; early-binding evidence retains its original scope. Preserve complete native predicates and construction timing; do not infer every priority's necessity from the inventory.
 
 ## Declared entry inventory
 
@@ -15,7 +15,7 @@ Tracked/build-recoverable inputs qualify entry only. Cold execution also require
 
 ```dcuf-next-action
 {
-  "id": "header-cascade-exit-audit",
+  "id": "header-shell-late-native-selector-binding",
   "stageId": "header-navigation",
   "requiredDependencies": [
     {"id":"governing-policy","path":"AGENTS.md","mode":"LIVE","sha256":null},
@@ -49,7 +49,7 @@ Tracked/build-recoverable inputs qualify entry only. Cold execution also require
     {"id":"fixtures","path":"testbed/fixtures","mode":"LIVE","sha256":null},
     {"id":"harness","path":"testbed/harness","mode":"LIVE","sha256":null},
     {"id":"server","path":"testbed/server/server.mjs","mode":"LIVE","sha256":null},
-    {"id":"removal-evidence","path":"docs/work/HEADER_DRAWER_PROJECTION_REMOVAL.md","mode":"LIVE","sha256":null},
+    {"id":"cascade-exit-audit","path":"docs/work/HEADER_CASCADE_EXIT_AUDIT.md","mode":"LIVE","sha256":null},
     {"id":"checkpoint-workflow","path":"docs/checkpoint-workflow.md","mode":"LIVE","sha256":null},
     {"id":"checkpoint-policy","path":"verification/checkpoint-policy.json","mode":"LIVE","sha256":null},
     {"id":"early-factory-contract","path":"testbed/run-header-early-selector-binding.mjs","mode":"LIVE","sha256":null},
@@ -64,14 +64,14 @@ Tracked/build-recoverable inputs qualify entry only. Cold execution also require
   ],
   "decisions": [
     {"id":"working-checkpoint","status":"ADOPTED","boundary":"Only validated bounded commit/non-force push to origin/codex/ui-port-boundary. No official/live-write/release/version change.","source":"AGENTS.md"},
-    {"id":"semantic-entry","status":"ADOPTED","boundary":"Host adapters own explicit native selector inputs. Preserve exact early CSS, unmarked/delayed roots, hoisted initialization and mount order. Keep mixed until exact exit criteria pass.","source":"docs/ui-surface-contracts.md"},
-    {"id":"scope-and-admission","status":"ADOPTED","boundary":"Early binding is zero visual delta. Retain original palette FAIL, runtime environment failure and split retry; four real change/replace/restore scenarios follow header sealing.","source":"docs/work/UI_REPLACEABILITY_VALIDATION.md"},
-    {"id":"continuous-goal","status":"ADOPTED","boundary":"Current user request covers the completed early-binding unit and its report. A further implementation phase needs the next user instruction. Final/live and separate release/write authority remain mandatory.","source":"docs/work/CURRENT_STATE.md"}
+    {"id":"semantic-entry","status":"ADOPTED","boundary":"Adapters supply full immutable native predicates. Preserve typea/tag/body/roles, complete CSS, .style interface and mount order. No mixed exit without its exact criteria.","source":"docs/ui-surface-contracts.md"},
+    {"id":"scope-and-admission","status":"ADOPTED","boundary":"Late shell binding is zero visual delta, not reset/priority deletion. Original palette FAIL and header/final/live gaps remain; four real replacement scenarios follow sealing.","source":"docs/work/HEADER_CASCADE_EXIT_AUDIT.md"},
+    {"id":"continuous-goal","status":"ADOPTED","boundary":"Current request ends with the completed read-only audit checkpoint/report. Next implementation needs the next user instruction; no revived continuous Goal or release/write authority.","source":"docs/work/CURRENT_STATE.md"}
   ],
   "hazards": [
-    {"id":"hoisted-startup","status":"ACTIVE","effect":"Theme and core styles execute before presenter/adapter objects initialize. Factories and inputs must work at that exact phase without TDZ or deferred projection."},
-    {"id":"native-specificity","status":"ACTIVE","effect":"Keep original html/body prefix, ancestry, selector specificity, declarations, media and style order; exact output equality alone needs positive same-stack/first-frame input and startup paths."},
-    {"id":"existing-gaps","status":"ACTIVE","effect":"Inherited important/typea/late qualifiers and driver/startup exit obligations remain. Original palette FAIL and header/final/upper/live UNKNOWN cannot be waived by this audit."},
+    {"id":"hoisted-startup","status":"ACTIVE","effect":"Preserve early before-const composition and late construction/mount phase. Inputs stay literal, frozen and DOM-free; avoid TDZ or executable caller closures."},
+    {"id":"native-specificity","status":"ACTIVE","effect":"Preserve complete typea/body/tag/role predicates and declarations/order. CSS equality also needs native identity/input/geometry/resource evidence; stale-role negative is synthetic."},
+    {"id":"existing-gaps","status":"ACTIVE","effect":"Selected phase proof does not justify all priorities, live conflicts or driver/startup exit. Original palette FAIL and header/final/upper/live UNKNOWN remain."},
     {"id":"control-and-guard","status":"ACTIVE","effect":"Freeze 6028; serialize builds/probes and restore mobile guard. Historical reports retain original fingerprints and are reusable only within unchanged dependency scope."}
   ],
   "localEvidence": [
