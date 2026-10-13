@@ -487,6 +487,72 @@ try {
                 assert.equal(recentTitle.pendingReadRecovery.positiveGeometry, true);
                 assert.equal(recentTitle.pendingReadRecovery.writes.includes(storageKeys.palette), false);
             }
+            let gnbBackground;
+            if (gnbResetContract) {
+                gnbBackground = await session.page.evaluate(({ presets, darkMode }) => {
+                    const check = (condition, message) => { if (!condition) throw new Error(message); };
+                    const root = document.querySelector('[data-dcuf-header-gnb-role="root"]');
+                    const walk = rules => Array.from(rules).flatMap(rule => rule.selectorText && rule.style
+                        ? [rule] : rule.cssRules ? walk(rule.cssRules) : []);
+                    const base = walk(document.getElementById('dcuf-header-gnb-style').sheet.cssRules)
+                        .find(rule => rule.selectorText === '[data-dcuf-header-gnb-role="root"]');
+                    const palette = document.getElementById('dcuf-mobile-palette-style');
+                    const theme = walk(palette.sheet.cssRules).find(rule => rule.selectorText === 'html[data-dcuf-palette] body .gnb_bar');
+                    check(base && theme, 'exact GNB background owners required');
+                    const saved = [base.style.cssText, theme.style.cssText];
+                    const initialPalette = document.documentElement.getAttribute('data-dcuf-palette');
+                    const topology = [root, ...root.querySelectorAll('*')].map(node => [node, node.parentNode, node.nextSibling]);
+                    const gmWrites = window.__dcufTestbedGM.snapshot().writes.length;
+                    const resources = window.__dcufHeaderGnbHostAdapter.snapshotResources();
+                    const sample = () => {
+                        const style = getComputedStyle(root), box = root.getBoundingClientRect();
+                        return { background: style.backgroundColor, image: style.backgroundImage,
+                            box: [box.x, box.y, box.width, box.height] };
+                    };
+                    const lowerTheme = () => ['background-color', 'background-image'].forEach(property =>
+                        theme.style.setProperty(property, theme.style.getPropertyValue(property), ''));
+                    const cases = [];
+                    try {
+                        for (const { id, light, dark } of presets) {
+                            document.documentElement.setAttribute('data-dcuf-palette', id);
+                            const expected = darkMode ? dark : light;
+                            const before = sample();
+                            check(before.background === expected && before.image === 'none' && before.box[2] > 0 && before.box[3] > 0,
+                                `positive GNB ${id} palette`);
+                            lowerTheme();
+                            check(JSON.stringify(sample()) === JSON.stringify(before), 'GNB palette must not depend on important base/theme competition');
+                            theme.style.cssText = saved[1];
+                            check(base.style.getPropertyPriority('background') === ''
+                                && theme.style.getPropertyPriority('background-color') === ''
+                                && theme.style.getPropertyPriority('background-image') === '', 'GNB background priorities must be jointly normal');
+                            base.style.setProperty('background', base.style.getPropertyValue('background'), 'important');
+                            check(sample().background !== expected, 'reintroduced important base must be detected');
+                            base.style.cssText = saved[0];
+                            palette.sheet.disabled = true;
+                            check(sample().background === 'rgb(59, 72, 144)', 'GNB base fallback when palette sheet is absent');
+                            palette.sheet.disabled = false;
+                            check(JSON.stringify(sample()) === JSON.stringify(before), 'palette restoration preserves GNB');
+                            cases.push({ id, expected, states: 4, rejectedPriorityMutation: true });
+                        }
+                        document.documentElement.removeAttribute('data-dcuf-palette');
+                        check(sample().background === 'rgb(59, 72, 144)', 'GNB pending/missing palette fallback');
+                    } finally {
+                        base.style.cssText = saved[0]; theme.style.cssText = saved[1]; palette.sheet.disabled = false;
+                        if (initialPalette === null) document.documentElement.removeAttribute('data-dcuf-palette');
+                        else document.documentElement.setAttribute('data-dcuf-palette', initialPalette);
+                    }
+                    check(topology.every(([node, parent, next]) => node.parentNode === parent && node.nextSibling === next), 'GNB native topology retained');
+                    check(window.__dcufTestbedGM.snapshot().writes.length === gmWrites, 'background contract must not write GM');
+                    check(JSON.stringify(window.__dcufHeaderGnbHostAdapter.snapshotResources()) === JSON.stringify(resources), 'background contract must not change resources');
+                    return { cases, restored: true, nativeTopology: true, noGmWrite: true };
+                }, { darkMode: dark, presets: [
+                    ['blue', '#245bda', '#3868df'], ['purple', '#6d28d9', '#7c3aed'], ['green', '#047857', '#047857'],
+                    ['orange', '#9a3412', '#c2410c'], ['mono', '#374151', '#475569'], ['indigo', '#4338ca', '#3730a3'],
+                    ['sky', '#0369a1', '#075985'], ['cyan', '#0e7490', '#155e75'], ['teal', '#115e59', '#115e59'],
+                    ['lime', '#4d7c0f', '#3f6212'], ['amber', '#b45309', '#92400e'], ['red', '#b91c1c', '#991b1b'],
+                    ['rose', '#be123c', '#9f1239'], ['pink', '#be185d', '#9d174d'],
+                ].map(([id, light, dark]) => ({ id, light: hexToRgb(light), dark: hexToRgb(dark) })) });
+            }
             let gnbReset;
             if (gnbResetContract) {
                 gnbReset = await session.page.evaluate(() => {
@@ -700,7 +766,7 @@ try {
             assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
             observations.push({ id, route, dark, viewport: { width: 1280, height: 900 }, probes, states,
                 ...(nativeKeyboard ? { nativeKeyboard } : {}),
-                ...(recentTitle ? { recentTitle } : {}), ...(gnbReset ? { gnbReset } : {}) });
+                ...(recentTitle ? { recentTitle } : {}), ...(gnbReset ? { gnbReset } : {}), ...(gnbBackground ? { gnbBackground } : {}) });
             console.log(`PASS ${id}/${dark ? 'dark' : 'light'}: ${probes.length} priority-removal controls; ${states.length} states`
                 + (recentTitle ? `; ${recentTitle.cases.length} title palettes; ${recentTitle.mutations.length} title mutations` : '')
                 + (gnbReset ? `; ${gnbReset.states.length} GNB states; ${gnbReset.mutations.length} GNB mutations` : ''));
@@ -740,6 +806,9 @@ try {
                 recentTitleMutations: observations.reduce((sum, item) => sum + item.recentTitle.mutations.length, 0),
             } : {}),
             ...(gnbResetContract ? {
+                gnbBackgroundCases: observations.reduce((sum, item) => sum + item.gnbBackground.cases.length, 0),
+                gnbBackgroundStates: observations.reduce((sum, item) => sum + item.gnbBackground.cases.reduce((count, entry) => count + entry.states, 0), 0),
+                gnbBackgroundMutations: observations.reduce((sum, item) => sum + item.gnbBackground.cases.length, 0),
                 gnbResetStates: observations.reduce((sum, item) => sum + item.gnbReset.states.length, 0),
                 gnbResetMutations: observations.reduce((sum, item) => sum + item.gnbReset.mutations.length, 0),
                 gnbNativeActions: observations.reduce((sum, item) => sum + item.gnbReset.nativeActions.events.length, 0),

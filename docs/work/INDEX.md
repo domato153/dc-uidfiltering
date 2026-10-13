@@ -13,6 +13,7 @@ Run `node tools/inspect-continuity.mjs`; compare fresh root/branch/HEAD ancestry
 ## Retrieve for the current question
 
 - `HEADER_FINAL_ADMISSION.md`: item-1 authorization, palette/priority scope and recovered installed-Chrome actual-extension startup. `docs/live-site-canary.md` owns the reusable `--browser installed-chrome` method and replay. Retrieve exact successful paths before declaring a blocker; the recurrence rule is in `docs/agent-maintenance-notes.md` under Live-test capability scope.
+- `HEADER_GNB_BACKGROUND.md`: current three-declaration GNB background normalization, strict historical oracle delta, RED/GREEN and immediate/live evidence; native actual-extension actions are next.
 - `HEADER_FINISH.md`: completed integrated header implementation and local verification; supersedes per-phase/audit-only continuation boundaries.
 - `VERIFICATION_EFFICIENCY.md`: researched process change, checks/counts/limits.
 - `MOBILE_UI_MODERNIZATION.md`: durable product sequence and surface/final gates.

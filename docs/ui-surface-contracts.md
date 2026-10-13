@@ -53,6 +53,8 @@ Current header evidence (0C30, 2026-09-30): shell/GNB/recent remain zero-delta a
 
 ## Header cascade debt — current 6028 inventory, not conformance
 
+GNB background normalization (2026-10-14): preserve the existing early palette and late base phases, adapter selectors and native nodes. Only the late `background: #3b4890` and early theme `background-color`/`background-image` use normal priority jointly. The scoped theme selector wins normally over the late semantic base; missing/pending palette retains the base fallback. Other values, priorities, selectors and order remain exact. The historical 6028 inventory below stays historical; current GNB base/palette priority counts become 11/13, with reset unchanged. Compare all 14 palettes in light/dark, narrow/short/wide, positive geometry/native links, palette loss/restoration and original topology/GM/resources; reintroducing important base must fail. This preserves ownership and observed presentation, and grants no mixed exit or full-header admission.
+
 The guarded desktop audit records all five base CSS payloads' CSSOM rule/context/property inventories and matching sheet order, inline declarations, computed values, and positive native geometry in eight major/minor/mini list and minor-view light/dark contexts at 1280×900. Counts below are authored `!important` occurrences, not expanded selector/longhand pairs or a removal quota.
 
 | Source owner | Base / palette / raw reset / concealment counts | Required coverage and unresolved debt |

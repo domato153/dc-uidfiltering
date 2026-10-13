@@ -5,6 +5,7 @@ import path from 'node:path';
 import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
 import { parse } from 'acorn';
+import { restoreHistoricalGnbPriorities } from './header-gnb-priority-contract.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 // Captured before extraction from the exact 0C307669… immediate control.
@@ -91,7 +92,9 @@ function verify(candidateSources, composition, candidateAdapters = adapterSource
         allRows.push(...rows);
     }
     assert.equal(allRows.length, 29);
-    assert.equal(digest(allRows), referenceDigest, 'pre-extraction selector/declaration drift');
+    const historicalRows = rows => rows.map(([selector, declarations]) => [selector,
+        selector === 'html[data-dcuf-palette] body .gnb_bar' ? restoreHistoricalGnbPriorities(declarations, 'theme') : declarations]);
+    assert.equal(digest(historicalRows(allRows)), referenceDigest, 'pre-extraction drift beyond declared GNB priorities');
     // Execute at the real assembly phase: target CSS is consumed BEFORE any
     // presenter const initializes. Do not mask a temporal-dead-zone regression.
     const sandbox = { __dcufRoot: {} };
@@ -100,7 +103,7 @@ function verify(candidateSources, composition, candidateAdapters = adapterSource
     const start = css.indexOf('/* Host chrome');
     const end = css.indexOf('html[data-dcuf-palette] body.dc-filter-dark-mode #dc-personal-block-fab', start);
     assert.ok(start >= 0 && end > start);
-    assert.equal(digest(expandedRules(css.slice(start, end))), referenceDigest);
+    assert.equal(digest(historicalRows(expandedRules(css.slice(start, end)))), referenceDigest);
     return allRows;
 }
 
@@ -113,13 +116,15 @@ const mutations = [
     [sources, hostSource.replace('${' + themeCall('__dcufBuildHeaderShellThemeCss') + '}', '')],
     [sources, hostSource.replace('__dcufBuildHeaderShellThemeCss(', '__dcufHeaderShellPresenter.buildThemeCss(')],
     [sources, `${hostSource}\nvoid '.dcheader { color: red; }';`],
+    [{ ...sources, 'header-gnb-presenter': sources['header-gnb-presenter'].replace('background-color: var(--dcuf-theme-accent-strong);', 'background-color: var(--dcuf-theme-accent-strong) !important;') }, hostSource],
+    [{ ...sources, 'header-gnb-presenter': sources['header-gnb-presenter'].replace('background-image: none;', 'background-image: none !important;') }, hostSource],
 ];
 for (const [candidateSources, composition, candidateAdapters] of mutations) assert.throws(() => verify(candidateSources, composition, candidateAdapters));
 // Positive formatting control: do not equate source bytes with behavior.
 verify(sources, hostSource.replace('Host chrome uses', 'Host chrome safely uses'));
 const targets = JSON.parse(await readFile(path.join(root, 'build/targets.json'), 'utf8'));
 assert.ok(targets.targets.pc.inputs.every(({ path: input }) => !owners.some(([id]) => input.endsWith(`/${id}.js`))));
-console.log('Header palette ownership PASS: 29 unchanged selector/declaration pairs; unchanged early phase; 7 rejected mutations; formatting control; PC isolation.');
+console.log('Header palette ownership PASS: 29 historical pairs except two declared GNB background priorities; unchanged early phase; 9 rejected mutations; formatting control; PC isolation.');
 
 // Captured independently from exact 81E48's grouped core reset. Preserve all
 // seven declarations for both raw roots, including before semantic projection.

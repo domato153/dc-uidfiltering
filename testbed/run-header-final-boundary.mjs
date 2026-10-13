@@ -3,6 +3,7 @@ import {readFile,writeFile,mkdir} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
 import vm from 'node:vm';
 import {parse} from 'acorn';
+import {restoreHistoricalGnbPriorities} from '../tools/header-gnb-priority-contract.mjs';
 
 const dir='artifacts/header-finish-2026-10-13';
 const sha=b=>createHash('sha256').update(b).digest('hex').toUpperCase();
@@ -29,7 +30,9 @@ const cases=[
  ['header-recent-visit','HeaderRecentVisit',['root','decoration','title','box','list','scrollbar','item','controls','arrow','darkRoot','darkTitle']],
 ];
 const canonical=s=>s.replace(/\r\n/g,'\n');
+const historicalCss=(surface,css)=>surface==='header-gnb'?restoreHistoricalGnbPriorities(css,'base'):css;
 const originalFunctions=control===null?new Map():functions(control), results=[], dependencies={};
+dependencies['tools/header-gnb-priority-contract.mjs']=sha(await readFile('tools/header-gnb-priority-contract.mjs'));
 for(const [surface,family,slots] of cases){
  const file=`src/targets/mobile/${surface}-presenter.js`,adapterFile=`src/targets/mobile/${surface}-host-adapter.js`;
  const source=await readFile(file,'utf8'),adapter=await readFile(adapterFile,'utf8');dependencies[file]=sha(source);dependencies[adapterFile]=sha(adapter);
@@ -41,11 +44,11 @@ for(const [surface,family,slots] of cases){
  const oldPrelude=[...originalFunctions].filter(([name])=>name.startsWith(`__dcufBuild${family}`)).map(([,text])=>text).join('\n');
  const old=control===null?null:vm.runInNewContext(`${oldPrelude}\n(${initializer(control,`__dcuf${family}Presenter`)}).style`,{}, {timeout:1000});
  const style=run(`${builder}(${producer}());`);assert.ok(Object.isFrozen(style));
- assert.equal(style.key,surface);assert.equal(style.id,`dcuf-${surface}-style`);assert.equal(sha(canonical(style.css)),frozenCss[surface],'Independent frozen full CSS contract');
- if(old!==null){assert.equal(style.key,old.key);assert.equal(style.id,old.id);assert.equal(canonical(style.css),canonical(old.css),'Complete original CSS including native predicates, declaration and rule order');}
+ assert.equal(style.key,surface);assert.equal(style.id,`dcuf-${surface}-style`);assert.equal(sha(canonical(historicalCss(surface,style.css))),frozenCss[surface],'Independent frozen full CSS except declared GNB background priority');
+ if(old!==null){assert.equal(style.key,old.key);assert.equal(style.id,old.id);assert.equal(canonical(historicalCss(surface,style.css)),canonical(old.css),'Complete original CSS except declared GNB background priority');}
  const realm={__dcufRoot:{}};
  vm.runInNewContext(`${input}\n${source}`,realm,{timeout:1000});
- assert.equal(sha(canonical(realm.__dcufRoot[`__dcuf${family}Presenter`].style.css)),frozenCss[surface],'Existing .style diagnostic consumer preserved');
+ assert.equal(sha(canonical(historicalCss(surface,realm.__dcufRoot[`__dcuf${family}Presenter`].style.css))),frozenCss[surface],'Existing .style diagnostic consumer preserved');
  assert.equal(run(`${builder}(Object.freeze(Object.fromEntries(Object.entries(${producer}()).reverse()))).css;`),style.css,'Slots bind by name');
  for(const slot of slots){
   const css=vm.runInNewContext(`${build}\n${builder}(input).css`,{input:Object.freeze({...record,[slot]:`.changed-${slot}`})},{timeout:1000});
@@ -56,7 +59,7 @@ for(const [surface,family,slots] of cases){
  const malformed=[null,{...record},Object.freeze({...record,extra:'.extra'}),Object.freeze(Object.fromEntries(Object.entries(record).slice(1))),Object.freeze({...record,[slots[0]]:''}),Object.freeze({...record,[slots[0]]:'  '}),Object.freeze({...record,[slots[0]]:42}),accessor,inherited,Object.freeze({...record,[Symbol('extra')]:'.extra'})];
  for(const input of malformed)assert.throws(()=>vm.runInNewContext(`${build}\n${builder}(input)`,{input},{timeout:1000}),{name:'TypeError'});
  assert.equal(accessed,false);assert.ok(!/\.typea|\bbody\s|\b(?:h1|img|nav)\[|\.dc-filter-dark-mode/.test(build),'No native predicate construction in presentation builder');
- results.push({surface,slots:slots.length,independentNegatives:slots.length,malformedNegatives:malformed.length,cssSha256:frozenCss[surface],exactCss:true,preInitialization:true,diagnosticInterface:true});
+ results.push({surface,slots:slots.length,independentNegatives:slots.length,malformedNegatives:malformed.length,cssSha256:sha(canonical(style.css)),historicalCssSha256:frozenCss[surface],declaredPriorityChanges:surface==='header-gnb'?1:0,exactCss:surface!=='header-gnb',preInitialization:true,diagnosticInterface:true});
 }
 const recentFile='src/targets/mobile/header-recent-visit-presenter.js',recentAdapter='src/targets/mobile/header-recent-visit-host-adapter.js';
 const recent=await readFile(recentFile,'utf8'),recentInputs=functions(await readFile(recentAdapter,'utf8')).get('__dcufDescribeHeaderRecentVisitStyleSelectors');
