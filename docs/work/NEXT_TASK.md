@@ -1,86 +1,73 @@
-# Next: formal header admission evidence
+# Next: recover header live admission
 
 - Task ID: `header-navigation`
-- Bounded slice: `header-formal-admission`
-- Objective: Qualify formal header admission with exact-artifact priority/exit evidence and separately authorized actual-extension execution. Local implementation is complete; do not revive another header implementation slice.
-- Why next: Current local implementation, native comparisons, full regression and public GM-shim checks are validated. Formal promotion requires evidence and authority outside that completed scope.
-- Expected transition: Current criterion-bound admission only if every required receipt qualifies; retain original palette FAIL and no automatic registry fold/release.
-- Stop/replan: Missing exact control, unexpected raw coverage/phase difference, unmodeled native heights/live states, surviving negative or remote drift. Preserve original palette FAIL and final/live UNKNOWN.
+- Bounded slice: `header-live-admission-recovery`
+- Objective: Complete the missing actual-extension/native-header and remaining property-specific live priority packet in HEADER_FINAL_ADMISSION.md. Local implementation and current palette adjudication are complete.
+- Why next: Pinned full Chromium fails before extension installation (`spawn UNKNOWN`); headless-shell Testbed checks cannot substitute for actual-extension receipt. Selected priority reasons pass, while other declarations' necessity remains UNKNOWN.
+- Expected transition: Formal admission only when exact current mixed criteria and all required receipts qualify; preserve raw palette FAIL and no automatic registry fold/release.
+- Stop/replan: Missing exact local evidence, changed runtime/oracle/toolchain, live drift, surviving negative or remote drift. Report a concrete environment blocker; do not lower the oracle.
 
-The continuous instruction was fulfilled for local header implementation and validation in HEADER_FINISH.md. Checkpoint receipt owns final publication/CI. Actual-extension installation/live execution still requires separate authority; do not treat the completed local unit as that authorization.
+The latest user item-1 request authorizes pinned extension and exact script installation in isolated temporary profiles. Normal browser/account settings and content writes remain outside scope. Completed source checkpoint is 1ab24282f5ab675a48d129a9f3718c1a8188a51e. The current evidence/checker unit's checkpoint receipt owns its future publication identity.
 
 ## Declared entry inventory
 
-Tracked/build-recoverable inputs qualify entry only. Cold execution also requires exact local control bytes; CI certifies neither their availability nor product success.
+Tracked/build-recoverable inputs qualify entry only. Ignored evidence must be recovered at its exact digest or replaced by fresh execution with a reviewed exact-artifact profile; CI cannot certify local availability.
 
 ```dcuf-next-action
 {
-  "id": "header-formal-admission",
+  "id": "header-live-admission-recovery",
   "stageId": "header-navigation",
   "requiredDependencies": [
     {"id":"governing-policy","path":"AGENTS.md","mode":"LIVE","sha256":null},
     {"id":"accepted-plan","path":"docs/work/MOBILE_UI_MODERNIZATION.md","mode":"LIVE","sha256":null},
-    {"id":"replacement-plan","path":"docs/work/UI_REPLACEABILITY_VALIDATION.md","mode":"LIVE","sha256":null},
     {"id":"current-authorization","path":"docs/work/CURRENT_STATE.md","mode":"LIVE","sha256":null},
+    {"id":"current-admission","path":"docs/work/HEADER_FINAL_ADMISSION.md","mode":"LIVE","sha256":null},
+    {"id":"completed-source-unit","path":"docs/work/HEADER_FINISH.md","mode":"LIVE","sha256":null},
+    {"id":"surface-contract","path":"docs/ui-surface-contracts.md","mode":"LIVE","sha256":null},
     {"id":"build-targets","path":"build/targets.json","mode":"LIVE","sha256":null},
     {"id":"source-builder","path":"tools/build-userscript.mjs","mode":"LIVE","sha256":null},
+    {"id":"runtime-sources","path":"src","mode":"LIVE","sha256":null},
     {"id":"architecture","path":"architecture/registry.json","mode":"LIVE","sha256":null},
     {"id":"candidate-overlay","path":"architecture/candidates/mobile-ui-modernization-assurance.json","mode":"LIVE","sha256":null},
     {"id":"surface-map","path":"architecture/ui-surfaces.json","mode":"LIVE","sha256":null},
-    {"id":"surface-contract","path":"docs/ui-surface-contracts.md","mode":"LIVE","sha256":null},
     {"id":"gate-routing","path":"verification/gates.json","mode":"LIVE","sha256":null},
     {"id":"routed-baselines","path":"verification/baselines.json","mode":"LIVE","sha256":null},
     {"id":"impact-resolver","path":"tools/resolve-impact.mjs","mode":"LIVE","sha256":null},
     {"id":"gate-runner","path":"tools/run-gates.mjs","mode":"LIVE","sha256":null},
-    {"id":"early-theme-composition","path":"src/targets/mobile/theme-host-style.js","mode":"LIVE","sha256":null},
-    {"id":"early-core-composition","path":"src/targets/mobile/filter-module.js","mode":"LIVE","sha256":null},
-    {"id":"header-shell-presenter","path":"src/targets/mobile/header-shell-presenter.js","mode":"LIVE","sha256":null},
-    {"id":"header-shell-adapter","path":"src/targets/mobile/header-shell-host-adapter.js","mode":"LIVE","sha256":null},
-    {"id":"gallery-page-head-presenter","path":"src/targets/mobile/gallery-page-head-presenter.js","mode":"LIVE","sha256":null},
-    {"id":"gallery-page-head-adapter","path":"src/targets/mobile/gallery-page-head-host-adapter.js","mode":"LIVE","sha256":null},
-    {"id":"header-gnb-presenter","path":"src/targets/mobile/header-gnb-presenter.js","mode":"LIVE","sha256":null},
-    {"id":"header-gnb-adapter","path":"src/targets/mobile/header-gnb-host-adapter.js","mode":"LIVE","sha256":null},
-    {"id":"header-recent-visit-presenter","path":"src/targets/mobile/header-recent-visit-presenter.js","mode":"LIVE","sha256":null},
-    {"id":"header-recent-visit-adapter","path":"src/targets/mobile/header-recent-visit-host-adapter.js","mode":"LIVE","sha256":null},
-    {"id":"header-drawer-presenter","path":"src/targets/mobile/header-drawer-presenter.js","mode":"LIVE","sha256":null},
-    {"id":"header-drawer-adapter","path":"src/targets/mobile/header-drawer-host-adapter.js","mode":"LIVE","sha256":null},
-    {"id":"phase-observer","path":"testbed/run-header-cascade-audit.mjs","mode":"LIVE","sha256":null},
+    {"id":"evidence-binding","path":"tools/evidence-binding.mjs","mode":"LIVE","sha256":null},
+    {"id":"palette-observer","path":"testbed/run-palette-differential.mjs","mode":"LIVE","sha256":null},
+    {"id":"palette-classifier","path":"tools/classify-palette-owner-split.mjs","mode":"LIVE","sha256":null},
+    {"id":"palette-negative-controls","path":"tools/test-palette-owner-split.mjs","mode":"LIVE","sha256":null},
+    {"id":"palette-lifecycle","path":"tools/probe-palette-owner-lifecycle.mjs","mode":"LIVE","sha256":null},
+    {"id":"cascade-observer","path":"testbed/run-header-cascade-audit.mjs","mode":"LIVE","sha256":null},
     {"id":"native-observer","path":"testbed/run-header-drawer-owned-shell-differential.mjs","mode":"LIVE","sha256":null},
     {"id":"fixtures","path":"testbed/fixtures","mode":"LIVE","sha256":null},
     {"id":"harness","path":"testbed/harness","mode":"LIVE","sha256":null},
     {"id":"server","path":"testbed/server/server.mjs","mode":"LIVE","sha256":null},
-    {"id":"header-finish-contract","path":"docs/work/HEADER_FINISH.md","mode":"LIVE","sha256":null},
     {"id":"live-contract","path":"verification/live-site-canary.json","mode":"LIVE","sha256":null},
     {"id":"live-driver","path":"testbed/run-live-site-canary.mjs","mode":"LIVE","sha256":null},
+    {"id":"live-verdict","path":"testbed/harness/live-site-contract.mjs","mode":"LIVE","sha256":null},
     {"id":"live-replay","path":"tools/verify-live-site-canary.mjs","mode":"LIVE","sha256":null},
     {"id":"extension-package-verifier","path":"tools/prepare-live-extension.mjs","mode":"LIVE","sha256":null},
     {"id":"checkpoint-workflow","path":"docs/checkpoint-workflow.md","mode":"LIVE","sha256":null},
-    {"id":"checkpoint-policy","path":"verification/checkpoint-policy.json","mode":"LIVE","sha256":null},
-    {"id":"early-factory-contract","path":"testbed/run-header-early-selector-binding.mjs","mode":"LIVE","sha256":null},
-    {"id":"early-ownership-oracle","path":"tools/test-header-palette-ownership.mjs","mode":"LIVE","sha256":null},
-    {"id":"final-boundary-test","path":"testbed/run-header-final-boundary.mjs","mode":"LIVE","sha256":null},
-    {"id":"issue-top-contract","path":"testbed/run-header-issue-top-contract.mjs","mode":"LIVE","sha256":null}
+    {"id":"checkpoint-policy","path":"verification/checkpoint-policy.json","mode":"LIVE","sha256":null}
   ],
-  "requiredDecisions": [
-    "working-checkpoint",
-    "semantic-entry",
-    "scope-and-admission",
-    "continuous-goal"
-  ],
+  "requiredDecisions": ["working-checkpoint","semantic-entry","scope-and-admission","live-authorization"],
   "decisions": [
-    {"id":"working-checkpoint","status":"ADOPTED","boundary":"Only validated bounded commit/non-force push to origin/codex/ui-port-boundary. No official/live-write/release/version change.","source":"AGENTS.md"},
-    {"id":"semantic-entry","status":"ADOPTED","boundary":"Adapters supply full immutable native predicates. Preserve typea/tag/body/roles, complete CSS, .style interface and mount order. No mixed exit without its exact criteria.","source":"docs/ui-surface-contracts.md"},
-    {"id":"scope-and-admission","status":"ADOPTED","boundary":"Exact CSS/native behavior preservation plus declared issue-top scheduling correction. Formal priority/extension/live gates and original palette FAIL remain mandatory.","source":"docs/work/HEADER_FINISH.md"},
-    {"id":"continuous-goal","status":"ADOPTED","boundary":"User explicitly authorized continuous header completion on 2026-10-13. Do not pause between phases; preserve checkpoint-only publishing and separate install/account/content/release authority.","source":"docs/work/CURRENT_STATE.md"}
+    {"id":"working-checkpoint","status":"ADOPTED","boundary":"Validated bounded commit/non-force push only to origin/codex/ui-port-boundary; official/release/version changes remain separate.","source":"AGENTS.md"},
+    {"id":"semantic-entry","status":"ADOPTED","boundary":"Preserve immutable full predicates, complete CSS and native DOM/events/forms/order/settings. No mixed exit without exact current criteria.","source":"docs/ui-surface-contracts.md"},
+    {"id":"scope-and-admission","status":"ADOPTED","boundary":"Current palette classification is a sidecar; original raw FAIL remains. Selected priority reasons do not justify every declaration or close header/live/upper admission.","source":"docs/work/HEADER_FINAL_ADMISSION.md"},
+    {"id":"live-authorization","status":"ADOPTED","boundary":"User authorized isolated temporary-profile extension/script installation and read-only public native actions for item 1. Preserve normal profiles/accounts; no content writes or release authority.","source":"docs/work/CURRENT_STATE.md"}
   ],
   "hazards": [
-    {"id":"hoisted-startup","status":"ACTIVE","effect":"Preserve early before-const composition and late construction/mount phase. Inputs stay literal, frozen and DOM-free; avoid TDZ or executable caller closures."},
-    {"id":"native-specificity","status":"ACTIVE","effect":"Preserve complete typea/body/tag/role predicates and declarations/order. CSS equality also needs native identity/input/geometry/resource evidence; stale-role negative is synthetic."},
-    {"id":"existing-gaps","status":"ACTIVE","effect":"Selected phase proof does not justify all priorities, live conflicts or driver/startup exit. Original palette FAIL and header/final/upper/live UNKNOWN remain."},
-    {"id":"control-and-guard","status":"ACTIVE","effect":"Freeze 6028; serialize builds/probes and restore mobile guard. Historical reports retain original fingerprints and are reusable only within unchanged dependency scope."}
+    {"id":"full-browser-environment","status":"ACTIVE","effect":"Full Chromium cannot launch; actual extension remains unavailable before installation. Headless-shell success is only Testbed capability."},
+    {"id":"cascade-applicability","status":"ACTIVE","effect":"Selected typea/reset/palette negatives pass, but remaining priorities and live conflict prevalence are unknown; never invent collision reasons."},
+    {"id":"evidence-reuse","status":"ACTIVE","effect":"Exact artifact/report/source/build/fixture/harness/toolchain/node/browser identity qualifies reuse. Old global fingerprints keep their original scopes."}
   ],
   "localEvidence": [
-    {"path":"artifacts/controls/header-early-6028.user.js","disposition":"REGENERATE","recovery":"Required SHA-256: 602810EB816C7FBED63386E0713E3CE8C07772DC90E3BB5F0893B40061FE3017. Recover/build exact 2e168f40477b14d8b29e8fa7ab6aad80c8323e45 bytes in isolation from its source/receipt; never reset the active tree or substitute a matching version."}
+    {"path":"artifacts/header-finish-2026-10-13/unit-result.json","disposition":"REGENERATE","recovery":"Recover exact SHA-256 055BE1CDBB8E3BEAFC61B0C6898ED9626E78C768E1E4FA15BD16A03244A08E60 and its pinned reports. If unavailable, rerun coverage and add a reviewed exact-artifact profile; never fabricate an old unit."},
+    {"path":"artifacts/header-finish-2026-10-13/full-mobile.json","disposition":"REGENERATE","recovery":"Recover exact SHA-256 44826C6625C662397084A3A13DEA3ED4E5B4F6C99D78720CA98687BDF41B35DE for current classifier reuse, or rerun and review a new profile."},
+    {"path":"artifacts/controls/header-early-6028.user.js","disposition":"REGENERATE","recovery":"Recover exact 602810EB816C7FBED63386E0713E3CE8C07772DC90E3BB5F0893B40061FE3017 bytes from its source/receipt in isolation; never reset the active tree."}
   ],
   "qualificationScope": "CONTINUITY_ONLY",
   "workSuccessCertified": false

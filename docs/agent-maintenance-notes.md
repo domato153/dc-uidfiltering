@@ -1,5 +1,13 @@
 # Agent Maintenance Notes
 
+## Current header admission and retained mobile evidence
+
+The A030/6869 palette pair reproduces exactly three declared-header-subscriber settled differences. Keep the strict raw FAIL and use an exact-artifact sidecar; do not broaden the comparator or claim actual-extension coverage. Four owners dispose/reconnect without duplicate subscribers/styles/listeners; registration-ledger counts alone are not callable-handler or heap census evidence.
+
+For retained full-mobile coverage, exact report and unit hashes plus source/fixture hashes are insufficient if builder, lock/package, Node or browser identity changed. Compare current sourceInputs/harness/fixtures/toolchain/node bindings to the immutable unit and require fresh raw/lifecycle browser equality with its full-mobile run. A stale-source-input counterexample exposed the missing boundary. Negative tests must reach the intended guard: changing the pinned full-mobile browser field only tests its report digest; changing fresh side/evidence/probe browser together independently tests browser equality. Preserve unchanged report bytes in mutation helpers; JSON reserialization otherwise invalidates exact-byte evidence before the intended negative.
+
+Full Chromium launch can fail before extension installation even while installed headless-shell works. A nonexistent sandbox default path was one issue; explicit installed full Chromium still returned spawn UNKNOWN. Preserve separate raw environment attempts and never substitute GM-shim/headless-shell PASS for actual Tampermonkey. Existing source/build/versions remain unchanged. Selected reset/typea/colour priority counterexamples qualify only their named properties; inventories and hypothetical conflicts cannot justify every inherited priority.
+
 ## Final header inputs and native issue-top feedback
 
 Keep all four late header CSS builders hoisted with frozen named full adapter selectors; preserve complete CSS, specificity, mount phase and `.style` diagnostic consumers. Vary all 27 inputs independently and reject mutable/accessor/inherited/extra records without evaluating getters. The cold snapshot-contract gate proves fixed control-derived CSS hashes; it does not replace the exact-control differential.

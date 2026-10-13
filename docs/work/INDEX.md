@@ -12,7 +12,8 @@ Run `node tools/inspect-continuity.mjs`; compare fresh root/branch/HEAD ancestry
 
 ## Retrieve for the current question
 
-- `HEADER_FINISH.md`: current integrated header implementation and final verification; supersedes per-phase/audit-only continuation boundaries.
+- `HEADER_FINAL_ADMISSION.md`: current item-1 authorization, palette/priority adjudication and actual-extension execution/blockers.
+- `HEADER_FINISH.md`: completed integrated header implementation and local verification; supersedes per-phase/audit-only continuation boundaries.
 - `VERIFICATION_EFFICIENCY.md`: researched process change, checks/counts/limits.
 - `MOBILE_UI_MODERNIZATION.md`: durable product sequence and surface/final gates.
 - `UI_REPLACEABILITY_VALIDATION.md`: researched real-change scenarios, locality measurements, pilot/final admission and limits; planned, not a readiness PASS.

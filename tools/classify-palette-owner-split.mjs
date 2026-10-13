@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { readFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { isDeepStrictEqual } from 'node:util';
@@ -10,6 +10,13 @@ const scriptPath = fileURLToPath(import.meta.url);
 const root = path.resolve(path.dirname(scriptPath), '..');
 const CONTROL_SHA = '32BA208DDD9973A7EEC343F01E963A833AB4F0C084987077EDAE46844383C25D';
 const CANDIDATE_SHA = 'C84AD9220A060CC3AF91F3039F07B13FAD75521DA63201046E3693F875DC03C7';
+const PROFILES = Object.freeze({
+    historical: Object.freeze({ control: CONTROL_SHA, candidate: CANDIDATE_SHA, mobileCount: 129 }),
+    'header-6869': Object.freeze({
+        control: 'A03038FE68126B62054EBA11244D4EE2E1766D308983FC5C27127FD3794CB343',
+        candidate: '6869B58682E7B4159785C1B7E1F5FD6E8CD597CA602AECAB71904A77B7C00CD5', mobileCount: 138,
+    }),
+});
 const BASE_OWNERS = ['filter-universal-observer', 'ui-list-runtime', 'header-drawer', 'list-memo-popup'];
 const ADDED_OWNERS = ['header-shell-style', 'gallery-page-head-style', 'header-gnb-style', 'header-recent-visit-navigation'];
 const CANDIDATE_OWNERS = [...BASE_OWNERS.slice(0, 2), ...ADDED_OWNERS, ...BASE_OWNERS.slice(2)];
@@ -30,6 +37,18 @@ const STEPS = [
 const SETTLED_INDEXES = [5, 12, 18];
 const sha = (bytes) => createHash('sha256').update(bytes).digest('hex').toUpperCase();
 const check = (condition, message) => { if (!condition) throw new Error(message); };
+
+export function assertRetainedMobileReuse({ unitBytes, fullMobileBytes, currentBinding }) {
+    check(unitBytes && fullMobileBytes, 'retained full-mobile evidence missing');
+    check(sha(unitBytes) === '055BE1CDBB8E3BEAFC61B0C6898ED9626E78C768E1E4FA15BD16A03244A08E60',
+        'retained full-mobile unit identity changed');
+    const unit = JSON.parse(unitBytes);
+    check(sha(fullMobileBytes) === unit.reports['full-mobile.json'], 'retained full-mobile report changed');
+    for (const field of ['sourceInputsSha256', 'harnessSha256', 'fixturesSha256', 'toolchainSha256', 'node']) {
+        check(unit.evidenceBinding[field] === currentBinding?.[field], `retained full-mobile binding changed: ${field}`);
+    }
+    return unit;
+}
 
 function projected(entry) {
     const clone = structuredClone(entry);
@@ -106,6 +125,9 @@ function checkLifecycleProbe(probe, browser) {
 }
 
 export function classifyPaletteOwnerSplit(input) {
+    const profileId = input.profileId || 'historical';
+    check(Object.hasOwn(PROFILES, profileId), 'unknown exact-artifact profile');
+    const { control: CONTROL_SHA, candidate: CANDIDATE_SHA, mobileCount } = PROFILES[profileId];
     const { report, reportBytes, controlSideBytes, candidateSideBytes, controlBytes, candidateBytes,
         observerBytes, currentBinding, fullMobile, architecture, classifierBytes, probe,
         surfaceManifest, surfaceManifestBytes, deltas, deltasBytes } = input;
@@ -134,10 +156,14 @@ export function classifyPaletteOwnerSplit(input) {
     'declared header style owners are missing');
     check(isDeepStrictEqual(JSON.parse(input.fullMobileBytes), fullMobile), 'mobile owner test bytes/object mismatch');
     check(fullMobile?.runtime?.sha256 === CANDIDATE_SHA && fullMobile.runtime.target === 'mobile'
-        && fullMobile.results?.length === 129 && fullMobile.results.every((entry) => entry.status === 'passed'),
+        && fullMobile.results?.length === mobileCount && fullMobile.results.every((entry) => entry.status === 'passed'),
     'exact-candidate mobile owner test run is unavailable');
     for (const name of OWNER_TESTS) check(fullMobile.results.filter((entry) => entry.name === name && entry.status === 'passed').length === 1,
         `owner lifecycle test missing or duplicated: ${name}`);
+    if (profileId === 'header-6869') {
+        assertRetainedMobileReuse({ unitBytes: input.retainedUnitBytes, fullMobileBytes: input.fullMobileBytes, currentBinding });
+        check(fullMobile.browser?.version === report.sides?.candidate?.browser, 'full-mobile browser identity changed');
+    }
 
     const sideBytes = { control: controlSideBytes, candidate: candidateSideBytes };
     const expectedSha = { control: CONTROL_SHA, candidate: CANDIDATE_SHA };
@@ -196,7 +222,7 @@ export function classifyPaletteOwnerSplit(input) {
         check(isDeepStrictEqual(strip(a), strip(b)), `${STEPS[index]}: non-owner resource changed`);
     }
     return {
-        schemaVersion: 1, kind: 'palette-header-owner-split-classification',
+        schemaVersion: 1, kind: 'palette-header-owner-split-classification', profileId,
         rawStatus: 'FAIL', classificationStatus: 'DECLARED_OWNER_SPLIT_ONLY', stageStatus: 'UNKNOWN',
         controlSha256: CONTROL_SHA, candidateSha256: CANDIDATE_SHA,
         rawReportSha256: sha(reportBytes), controlSideSha256: sha(controlSideBytes),
@@ -220,7 +246,10 @@ export function classifyPaletteOwnerSplit(input) {
     };
 }
 
-export async function readCurrentInputs() {
+export async function readCurrentInputs(profileId = 'historical') {
+    check(Object.hasOwn(PROFILES, profileId), 'unknown exact-artifact profile');
+    const currentBinding = await createEvidenceBinding(root);
+    let retainedUnitBytes;
     const files = {
         report: 'testbed/artifacts/final-mobile-palette-C84AD922.json',
         controlSide: 'testbed/artifacts/final-mobile-palette-C84AD922.json.control.json',
@@ -232,13 +261,32 @@ export async function readCurrentInputs() {
         surfaceManifest: 'architecture/ui-surfaces.json',
         deltas: 'verification/intended-deltas.json',
     };
+    if (profileId === 'header-6869') {
+        Object.assign(files, {
+            report: 'testbed/artifacts/header-admission-2026-10-13/palette-current.json',
+            controlSide: 'testbed/artifacts/palette-current.json.control.json',
+            candidateSide: 'testbed/artifacts/palette-current.json.candidate.json',
+            control: 'testbed/artifacts/baseline-mobile-beta.user.js',
+            fullMobile: 'artifacts/header-finish-2026-10-13/full-mobile.json',
+        });
+        retainedUnitBytes = await readFile(path.join(root, 'artifacts/header-finish-2026-10-13/unit-result.json'));
+        const unit = assertRetainedMobileReuse({ unitBytes: retainedUnitBytes,
+            fullMobileBytes: await readFile(path.join(root, files.fullMobile)), currentBinding });
+        // Reuse only unchanged runtime/build and the complete recorded Testbed inputs.
+        for (const [relative, expected] of Object.entries(unit.dependencies)) {
+            if (/^(src\/|build\/|testbed\/|tools\/build-)/.test(relative)) {
+                check(sha(await readFile(path.join(root, relative))) === expected,
+                    `retained full-mobile dependency changed: ${relative}`);
+            }
+        }
+    }
     const bytes = Object.fromEntries(await Promise.all(Object.entries(files).map(async ([key, relative]) =>
         [key, await readFile(path.join(root, relative))])));
     const { spawnSync } = await import('node:child_process');
     const archResult = spawnSync(process.execPath, ['tools/inspect-live-architecture.mjs', '--surface', 'header-navigation'],
         { cwd: root, encoding: 'utf8', shell: false });
     check(archResult.status === 0, 'effective architecture inspection failed');
-    return { report: JSON.parse(bytes.report), reportBytes: bytes.report,
+    return { profileId, retainedUnitBytes, report: JSON.parse(bytes.report), reportBytes: bytes.report,
         controlSideBytes: bytes.controlSide, candidateSideBytes: bytes.candidateSide,
         controlBytes: bytes.control, candidateBytes: bytes.candidate, observerBytes: bytes.observer,
         fullMobile: JSON.parse(bytes.fullMobile), fullMobileBytes: bytes.fullMobile,
@@ -247,12 +295,20 @@ export async function readCurrentInputs() {
         architecture: JSON.parse(archResult.stdout), classifierBytes: await readFile(scriptPath),
         probeScriptBytes: await readFile(path.join(root, 'tools/probe-palette-owner-lifecycle.mjs')),
         probe: await probePaletteOwnerLifecycle(),
-        currentBinding: await createEvidenceBinding(root), files };
+        currentBinding, files };
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === scriptPath) {
     try {
-        const result = classifyPaletteOwnerSplit(await readCurrentInputs());
+        const result = classifyPaletteOwnerSplit(await readCurrentInputs(process.argv.includes('--current') ? 'header-6869' : 'historical'));
+        if (process.argv.includes('--output')) {
+            const requested = process.argv[process.argv.indexOf('--output') + 1];
+            check(requested && !requested.startsWith('--'), 'missing classification output');
+            const output = path.resolve(root, requested);
+            check(output.startsWith(path.join(root, 'testbed/artifacts') + path.sep), 'classification output must stay in testbed/artifacts');
+            await mkdir(path.dirname(output), { recursive: true });
+            await writeFile(output, JSON.stringify(result, null, 2) + '\n');
+        }
         console.log(JSON.stringify(result, null, 2));
     } catch (error) {
         console.error(`Palette owner classification BLOCKED: ${error.message}`);

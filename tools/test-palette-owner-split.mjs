@@ -5,7 +5,7 @@ import { classifyPaletteOwnerSplit, readCurrentInputs } from './classify-palette
 
 const sha = (bytes) => createHash('sha256').update(bytes).digest('hex').toUpperCase();
 const clone = (value) => JSON.parse(JSON.stringify(value));
-const input = await readCurrentInputs();
+const input = await readCurrentInputs(process.argv.includes('--current') ? 'header-6869' : 'historical');
 assert.equal(classifyPaletteOwnerSplit(input).classificationStatus, 'DECLARED_OWNER_SPLIT_ONLY');
 let rejected = 0;
 
@@ -40,7 +40,8 @@ function rebuild(mutator) {
         return isDeepStrictEqual(control, candidate) ? [] : [{ index, control, candidate }];
     });
     next.reportBytes = Buffer.from(JSON.stringify(next.report));
-    next.fullMobileBytes = Buffer.from(JSON.stringify(next.fullMobile));
+    next.fullMobileBytes = isDeepStrictEqual(next.fullMobile, input.fullMobile)
+        ? input.fullMobileBytes : Buffer.from(JSON.stringify(next.fullMobile));
     return next;
 }
 
@@ -122,5 +123,30 @@ rejects('inactive geometry contract', (next) => {
 rejects('control/candidate identity substitution', (next) => {
     next.candidateBytes = next.controlBytes;
 }, /control\/candidate bytes changed/);
+rejects('unknown identity profile', (next) => { next.profileId = 'unreviewed'; }, /unknown exact-artifact profile/);
+rejects('historical profile cannot classify current artifacts', (next) => {
+    next.profileId = input.profileId === 'historical' ? 'header-6869' : 'historical';
+}, /control\/candidate bytes changed/);
+rejects('missing full-mobile observation', (next) => { next.fullMobile.results.pop(); }, /exact-candidate mobile owner test run is unavailable/);
+if (input.profileId === 'header-6869') {
+    for (const field of ['sourceInputsSha256', 'harnessSha256', 'fixturesSha256', 'toolchainSha256', 'node']) {
+        rejects(`retained mobile evidence after ${field} change`, (next) => {
+            next.currentBinding[field] = 'changed';
+            next.report.evidenceBinding = clone(next.currentBinding);
+        }, /retained full-mobile binding changed/);
+    }
+    rejects('retained mobile browser identity changed', (next) => {
+        next.fullMobile.browser.version = 'different-browser';
+    }, /retained full-mobile report changed|full-mobile browser identity changed/);
+    rejects('fresh observation browser differs from retained mobile run', (next) => {
+        for (const side of ['control', 'candidate']) {
+            next.report.sides[side].browser = 'different-browser';
+            next.report.observationEvidence[side].browser = 'different-browser';
+        }
+        next.probe.browser = 'different-browser';
+    }, /full-mobile browser identity changed/);
+    rejects('missing retained unit', (next) => { next.retainedUnitBytes = undefined; }, /retained full-mobile evidence missing/);
+    rejects('substituted retained unit', (next) => { next.retainedUnitBytes = Buffer.from('{}'); }, /retained full-mobile unit identity changed/);
+}
 
 console.log(`Palette owner classifier: positive accepted; ${rejected} negative controls rejected`);
