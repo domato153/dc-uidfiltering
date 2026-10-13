@@ -2,12 +2,16 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
+import { spawn, spawnSync } from 'node:child_process';
+import { once } from 'node:events';
 import { CHECKS, selectCases, caseVerdict, reportVerdict } from '../testbed/harness/live-site-contract.mjs';
 import { sha256, unpackCrx, verifyPackage } from './prepare-live-extension.mjs';
+import { browserFlavor, launchLiveBrowser, closeOwnedBrowser } from '../testbed/harness/live-site-browser.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const contract = JSON.parse(await readFile(path.join(root, 'verification/live-site-canary.json')));
 const driver = await readFile(path.join(root, 'testbed/run-live-site-canary.mjs'), 'utf8');
+const browserAdapter = await readFile(path.join(root, 'testbed/harness/live-site-browser.mjs'), 'utf8');
 let count = 0;
 const test = (name, run) => { run(); count++; console.log(`PASS ${name}`); };
 const copy = value => structuredClone(value);
@@ -25,6 +29,41 @@ for (const mutation of [c => { c.routes[0].url = 'https://example.org/board/list
     test('unsafe or undeclared contract rejected', () => { const changed = copy(contract); mutation(changed); assert.throws(() => selectCases(changed, 'smoke')); });
 }
 test('unknown suite rejected', () => assert.throws(() => selectCases(contract, 'skip')));
+test('explicit browser routes; no silent fallback', () => {
+    assert.equal(browserFlavor(), 'chromium');
+    assert.equal(browserFlavor('installed-chrome'), 'installed-chrome');
+    assert.throws(() => browserFlavor('headless-shell'));
+    assert.throws(() => browserFlavor('other-browser'));
+});
+await assert.rejects(launchLiveBrowser({ flavor: 'invalid' }), /Unknown live browser/);
+count++; console.log('PASS rejected browser cannot launch or install');
+
+test('missing explicit browser value rejected before setup', () => {
+    for (const args of [['--browser'], ['--browser', '--suite', 'full']]) {
+        const result = spawnSync(process.execPath, ['testbed/run-live-site-canary.mjs', ...args], { cwd: root, encoding: 'utf8' });
+        assert.notEqual(result.status, 0);
+        assert.match(result.stderr, /Missing --browser value/);
+    }
+});
+
+for (const stalled of ['cdp', 'browser']) {
+    const child = spawn(process.execPath, ['-e', 'setInterval(() => {}, 1000)'], { stdio: 'ignore', windowsHide: true });
+    let watchdog;
+    try {
+        await once(child, 'spawn');
+        const never = () => new Promise(() => {});
+        await Promise.race([
+            closeOwnedBrowser({ child, cdp: { send: stalled === 'cdp' ? never : async () => {} }, browser: { close: never } }, 50),
+            new Promise((_, reject) => { watchdog = setTimeout(() => { child.kill(); reject(new Error('Cleanup watchdog expired')); }, 5000); })
+        ]);
+        assert.ok(child.exitCode !== null || child.signalCode, 'Unresponsive browser left its owned process alive');
+        count++; console.log(`PASS bounded cleanup after unresponsive ${stalled}`);
+    } finally {
+        clearTimeout(watchdog);
+        if (child.pid && child.exitCode === null && !child.signalCode) child.kill();
+    }
+}
+
 test('complete actual-extension result passes', () => assert.equal(reportVerdict(good), 'PASS'));
 for (const key of CHECKS) test(`candidate missing positive ${key} fails`, () => {
     const changed = copy(good); delete changed.results[0].checks[key]; assert.equal(reportVerdict(changed), 'FAIL');
@@ -79,5 +118,9 @@ test('symlink/encrypted/duplicate/truncated archive rejected', () => {
 test('driver never uses injected runtime or GM shim', () => {
     // Names in the documentation comment are permitted; invocation/import is forbidden.
     assert.ok(!/\.addInitScript\s*\(|gm-shim\.js|createTestPage\s*\(|eval\s*\(/.test(driver), 'Synthetic script injection is forbidden');
+});
+test('browser adapter never injects script or changes enterprise policy', () => {
+    // Package load belongs to Chrome; script installation remains in Tampermonkey UI.
+    assert.ok(!/\.addInitScript\s*\(|gm-shim\.js|createTestPage\s*\(|eval\s*\(|reg\.exe|ExtensionInstallForcelist/.test(browserAdapter));
 });
 console.log(`Live-site Canary contracts: ${count} offline tests passed. No live-site PASS is implied.`);

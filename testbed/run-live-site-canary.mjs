@@ -8,6 +8,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { sha256, verifyPackage } from '../tools/prepare-live-extension.mjs';
 import { selectCases, caseVerdict, reportVerdict } from './harness/live-site-contract.mjs';
+import { browserFlavor, launchLiveBrowser } from './harness/live-site-browser.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const require = createRequire(import.meta.url);
@@ -18,6 +19,8 @@ const output = path.resolve(root, option('--output', 'testbed/artifacts/live-sit
 assert.ok(output.startsWith(path.join(root, 'testbed/artifacts') + path.sep), 'Evidence must stay in testbed/artifacts');
 const suite = option('--suite', 'smoke');
 const headed = args.includes('--headed');
+if (args.includes('--browser')) assert.ok(option('--browser') && !option('--browser').startsWith('--'), 'Missing --browser value');
+const flavor = browserFlavor(option('--browser', 'chromium'));
 const git = (...values) => {
     const result = spawnSync('git', values, { cwd: root, encoding: 'utf8', shell: false });
     assert.equal(result.status, 0, result.stderr);
@@ -26,7 +29,8 @@ const git = (...values) => {
 const report = { schemaVersion: 1, kind: 'actual-tampermonkey-desktop-startup-canary',
     startedAt: new Date().toISOString(), suite, status: 'UNAVAILABLE', profiles: {}, results: [],
     environment: { platform: process.platform, node: process.version, playwright: require('playwright/package.json').version,
-        browser: 'Playwright bundled full Chromium / Chrome for Testing; not headless-shell', headed,
+        browser: flavor === 'installed-chrome' ? 'Installed Google Chrome; isolated profile; CDP extension load'
+            : 'Playwright bundled full Chromium / Chrome for Testing; not headless-shell', browserFlavor: flavor, headed,
         desktopUA: true, isMobile: false, viewport: { width: 1280, height: 900 }, theme: 'fresh default/light', authenticated: false,
         provider: process.env.GITHUB_ACTIONS === 'true' ? 'github-hosted' : 'local',
         githubRun: process.env.GITHUB_RUN_ID || null, githubAttempt: process.env.GITHUB_RUN_ATTEMPT || null },
@@ -179,6 +183,7 @@ try {
     report.binding = { head: git('rev-parse', 'HEAD'), branch: git('branch', '--show-current'), dirty: Boolean(git('status', '--porcelain')),
         candidatePath: path.join(root, contract.candidatePath), candidateSha256: sha256(candidate), controlSha256: sha256(control),
         extensionSha256: contract.extension.sha256, extensionVersion: verified.manifest.version,
+        browserAdapterSha256: sha256(await readFile(path.join(root, 'testbed/harness/live-site-browser.mjs'))),
         contractSha256: sha256(contractBytes), driverSha256: sha256(await readFile(fileURLToPath(import.meta.url))),
         contractDriverSha256: sha256(await readFile(path.join(root, 'testbed/harness/live-site-contract.mjs'))) };
     console.log(`Actual-extension desktop canary: ${report.binding.candidatePath}\nCandidate SHA-256: ${report.binding.candidateSha256}`);
@@ -195,17 +200,17 @@ try {
         }
         assert.equal((await files(extensionDirectory)).length, verified.entries.size, 'Unexpected extension files');
         const profile = await mkdtemp(path.join(os.tmpdir(), 'dcuf-live-'));
-        const context = await chromium.launchPersistentContext(profile, { channel: 'chromium', headless: !headed,
-            viewport: { width: 1280, height: 900 }, locale: 'en-US', colorScheme: 'light',
-            ignoreDefaultArgs: ['--disable-extensions'],
-            args: ['--lang=en-US', `--disable-extensions-except=${extensionDirectory}`, `--load-extension=${extensionDirectory}`] });
+        let session;
         try {
+            session = await launchLiveBrowser({ chromium, flavor, profile, extensionDirectory, headed });
+            const { context } = session;
             report.environment.browserVersion = context.browser().version();
-            const worker = context.serviceWorkers().find(w => w.url().startsWith('chrome-extension://'))
-                || await context.waitForEvent('serviceworker', { timeout: 20000 });
+            const worker = await until(() => context.serviceWorkers().find(w => w.url().startsWith(
+                session.extensionId ? `chrome-extension://${session.extensionId}/` : 'chrome-extension://')), 'pinned extension service worker');
             const extensionId = new URL(worker.url()).hostname;
             assert.equal(await worker.evaluate(() => chrome.runtime.getManifest().version), contract.extension.version);
-            report.profiles[role] = { ...await install(context, worker, extensionId, bytes), extensionId, isolated: true };
+            report.profiles[role] = { ...await install(context, worker, extensionId, bytes), extensionId, isolated: true,
+                browser: session.metadata };
             for (const testCase of cases) {
                 const result = await observe(context, role, testCase);
                 report.results.push(result);
@@ -213,11 +218,12 @@ try {
                 await writeFile(path.join(output, 'report.json'), JSON.stringify(report, null, 2) + '\n');
             }
         } finally {
-            await context.close();
+            if (session) await session.close();
             // Only this invocation's freshly allocated temporary profile is removed.
             assert.equal(path.dirname(profile), path.resolve(os.tmpdir()));
             assert.ok(path.basename(profile).startsWith('dcuf-live-'));
             await rm(profile, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 });
+            if (report.profiles[role]) report.profiles[role].cleanup = { browserClosed: true, profileRemoved: true };
         }
     }
 } catch (error) { report.setupFailure = boundedError(error); console.error(`Canary unavailable: ${report.setupFailure}`); }

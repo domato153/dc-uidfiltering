@@ -17,7 +17,21 @@ Official constraints: [Playwright extension support](https://playwright.dev/docs
 
 ## Local reproduction
 
-Run from the active worktree, after locked dependencies and full Chromium are available:
+Run from the active worktree with the existing locked dependencies. On this Windows host, the qualified local route is installed Google Chrome with a new temporary profile:
+
+```text
+node tools/verify-baseline.mjs
+node tools/build-userscript.mjs --testbed-output testbed/artifacts/runtime-under-test.user.js
+node tools/prepare-live-extension.mjs
+node testbed/run-live-site-canary.mjs --browser installed-chrome --suite full --output testbed/artifacts/<fresh-run>
+node tools/verify-live-site-canary.mjs testbed/artifacts/<fresh-run>
+```
+
+This uses `testbed/harness/live-site-browser.mjs`: spawn installed Chrome, connect to its profile-specific loopback CDP endpoint, load a freshly extracted pinned Tampermonkey package through `Extensions.loadUnpacked`, select that exact extension ID's worker, then run the same Allow User Scripts and Tampermonkey Utilities/Install UI and startup predicates. The Chrome executable digest/version and browser-adapter digest are bound in the receipt. No registry/enterprise policy change, normal-profile reuse, vendor patch, injected userscript or GM shim is used. Unsupported API, changed executable/package/driver, failed installation or incomplete observations fail closed. Installation by the agent into a test browser is actual-extension verification; personal human use is not a prerequisite for these sampled checks.
+
+The method was researched from the read-only [anima installed-browser route at b95fdd7](https://github.com/domato153/anima/blob/b95fdd7b686f0948bfac74b2726227764095335c/aio-rewrite/working/LIVE_BROWSER_ACCEPTANCE_EXECUTION.md). Its temporary enterprise policies and Actions executor plans were not copied: current [Chrome CDP extension loading](https://chromedevtools.github.io/devtools-protocol/tot/Extensions/#method-loadUnpacked) supports the profile-only installation used here, and a fresh DCUF full startup run plus independent receipt replay qualified it on Chrome 155.0.8059.40 / Tampermonkey 5.5.0. The discarded generic-worker attempt remains UNAVAILABLE; loading an extension alone is not script execution proof.
+
+The default `--browser chromium` route remains the hosted/full Chromium path. On a host where that executable works:
 
 ```text
 node tools/verify-baseline.mjs
@@ -27,9 +41,11 @@ node testbed/run-live-site-canary.mjs --suite full --headed
 node tools/verify-live-site-canary.mjs
 ```
 
-Omit `--headed` for local headless full-Chromium execution; that is recorded separately from the hosted headed path. `--output` may select a fresh evidence directory only under `testbed/artifacts/`. A local dirty source tree is explicitly recorded and must not be described as the clean committed source SHA alone.
+Omit `--headed` for local headless execution; that is recorded separately from the hosted headed path. Browser choice is explicit, with no silent fallback. `--output` may select a fresh evidence directory only under `testbed/artifacts/`. A local dirty source tree is explicitly recorded and must not be described as the clean committed source SHA alone.
 
 `node tools/test-live-site-canary.mjs` is the offline safety/verdict suite, also run by repository guidance verification. It does not contact DCInside and cannot establish a live pass. `tools/verify-live-site-canary.mjs [report-directory]` independently replays artifact/driver/contract hashes, selected cases, positive fields, statuses, and screenshot presence against the current local inputs.
+
+Installed-Chrome cleanup bounds the complete graceful CDP/browser-close sequence to three seconds, then terminates only the child created by that invocation and allows three seconds to confirm exit. A cleanup failure cannot produce a passing receipt. Offline regressions use disposable processes and an independent watchdog to cover stalled CDP and browser-close responses; they do not depend on a responsive Chrome failure path.
 
 ## Fail-closed interpretation
 

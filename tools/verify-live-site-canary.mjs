@@ -14,11 +14,25 @@ assert.equal(report.schemaVersion, 1);
 assert.equal(report.kind, 'actual-tampermonkey-desktop-startup-canary');
 assert.equal(report.binding?.contractSha256, sha256(bytes), 'Stale live contract');
 assert.equal(report.binding?.driverSha256, sha256(await readFile(path.join(root, 'testbed/run-live-site-canary.mjs'))), 'Stale live driver');
+assert.equal(report.binding?.browserAdapterSha256, sha256(await readFile(path.join(root, 'testbed/harness/live-site-browser.mjs'))), 'Stale live browser adapter');
 assert.equal(report.binding?.contractDriverSha256, sha256(await readFile(path.join(root, 'testbed/harness/live-site-contract.mjs'))), 'Stale verdict contract');
 assert.equal(report.binding?.candidateSha256, sha256(await readFile(path.join(root, contract.candidatePath))), 'Stale candidate');
 assert.equal(report.binding?.controlSha256, contract.control.sha256);
 assert.equal(report.binding?.extensionSha256, contract.extension.sha256);
 assert.equal(report.binding?.extensionVersion, contract.extension.version);
+assert.ok(['chromium', 'installed-chrome'].includes(report.environment.browserFlavor), 'Unknown browser provenance');
+for (const role of ['control', 'candidate']) {
+    const metadata = report.profiles?.[role]?.browser;
+    assert.deepEqual(report.profiles?.[role]?.cleanup, { browserClosed: true, profileRemoved: true }, 'Missing profile cleanup');
+    assert.equal(metadata?.flavor, report.environment.browserFlavor, 'Browser flavor mismatch');
+    if (metadata.flavor === 'installed-chrome') {
+        assert.equal(metadata.registryChanged, false, 'Profile-only route must not change registry');
+        assert.equal(metadata.installRoute, 'CDP Extensions.loadUnpacked');
+        assert.equal(metadata.extensionVersion, contract.extension.version);
+        assert.equal(metadata.browserVersion, report.environment.browserVersion);
+        assert.equal(metadata.executableSha256, sha256(await readFile(metadata.executable)), 'Installed Chrome executable changed');
+    }
+}
 const cases = selectCases(contract, report.suite);
 assert.deepEqual(report.selectedCases, cases.map(c => c.id));
 for (const result of report.results) {
