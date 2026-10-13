@@ -12,7 +12,7 @@ Run `node tools/inspect-continuity.mjs`; compare fresh root/branch/HEAD ancestry
 
 ## Retrieve for the current question
 
-- `HEADER_FINAL_ADMISSION.md`: current item-1 authorization, palette/priority adjudication and actual-extension execution/blockers.
+- `HEADER_FINAL_ADMISSION.md`: current item-1 authorization, palette/priority adjudication and test-path capability scope. Retrieve the successful public-site runner/report before generalizing an actual-extension blocker; the recurrence rule is in `docs/agent-maintenance-notes.md` under Live-test capability scope.
 - `HEADER_FINISH.md`: completed integrated header implementation and local verification; supersedes per-phase/audit-only continuation boundaries.
 - `VERIFICATION_EFFICIENCY.md`: researched process change, checks/counts/limits.
 - `MOBILE_UI_MODERNIZATION.md`: durable product sequence and surface/final gates.

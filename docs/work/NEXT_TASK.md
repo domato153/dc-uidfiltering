@@ -1,13 +1,13 @@
-# Next: recover header live admission
+# Next: normalize the bounded GNB base/theme priority dependency
 
 - Task ID: `header-navigation`
-- Bounded slice: `header-live-admission-recovery`
-- Objective: Complete the missing actual-extension/native-header and remaining property-specific live priority packet in HEADER_FINAL_ADMISSION.md. Local implementation and current palette adjudication are complete.
-- Why next: Pinned full Chromium fails before extension installation (`spawn UNKNOWN`); headless-shell Testbed checks cannot substitute for actual-extension receipt. Selected priority reasons pass, while other declarations' necessity remains UNKNOWN.
+- Bounded slice: `header-gnb-priority-normalization`
+- Objective: Test a joint scoped GNB base/theme background priority adjustment against the observed internal competitor, preserving normal fallback, theme/palette, native links, geometry and restoration. Apply only a proven minimal change and bind new runtime evidence. Actual-extension recovery remains separate.
+- Why next: The current 11-context public-site packet proves the theme background loses to our own important base background when lowered alone. A single-declaration removal is unsafe; normal-priority joint behavior must be observed before production edits. Public-site CSS work is executable despite the separate full-browser pre-install failure.
 - Expected transition: Formal admission only when exact current mixed criteria and all required receipts qualify; preserve raw palette FAIL and no automatic registry fold/release.
 - Stop/replan: Missing exact local evidence, changed runtime/oracle/toolchain, live drift, surviving negative or remote drift. Report a concrete environment blocker; do not lower the oracle.
 
-The latest user item-1 request authorizes pinned extension and exact script installation in isolated temporary profiles. Normal browser/account settings and content writes remain outside scope. Completed source checkpoint is 1ab24282f5ab675a48d129a9f3718c1a8188a51e. The current evidence/checker unit's checkpoint receipt owns its future publication identity.
+Item 1 authorizes isolated extension/script installation and read-only public native actions. The 2026-10-14 request additionally authorizes the durable scope correction and continuation. Preserve normal profiles/accounts; no content writes. Current base checkpoint is 40e6e302c1d4ff0026401bafc9c3fb28be1c8598. The new continuity/public-evidence unit's receipt owns its future publication identity.
 
 ## Declared entry inventory
 
@@ -15,7 +15,7 @@ Tracked/build-recoverable inputs qualify entry only. Ignored evidence must be re
 
 ```dcuf-next-action
 {
-  "id": "header-live-admission-recovery",
+  "id": "header-gnb-priority-normalization",
   "stageId": "header-navigation",
   "requiredDependencies": [
     {"id":"governing-policy","path":"AGENTS.md","mode":"LIVE","sha256":null},
@@ -45,6 +45,7 @@ Tracked/build-recoverable inputs qualify entry only. Ignored evidence must be re
     {"id":"harness","path":"testbed/harness","mode":"LIVE","sha256":null},
     {"id":"server","path":"testbed/server/server.mjs","mode":"LIVE","sha256":null},
     {"id":"live-contract","path":"verification/live-site-canary.json","mode":"LIVE","sha256":null},
+    {"id":"public-site-observer","path":"testbed/run-header-public-canary.mjs","mode":"LIVE","sha256":null},
     {"id":"live-driver","path":"testbed/run-live-site-canary.mjs","mode":"LIVE","sha256":null},
     {"id":"live-verdict","path":"testbed/harness/live-site-contract.mjs","mode":"LIVE","sha256":null},
     {"id":"live-replay","path":"tools/verify-live-site-canary.mjs","mode":"LIVE","sha256":null},
@@ -60,11 +61,12 @@ Tracked/build-recoverable inputs qualify entry only. Ignored evidence must be re
     {"id":"live-authorization","status":"ADOPTED","boundary":"User authorized isolated temporary-profile extension/script installation and read-only public native actions for item 1. Preserve normal profiles/accounts; no content writes or release authority.","source":"docs/work/CURRENT_STATE.md"}
   ],
   "hazards": [
-    {"id":"full-browser-environment","status":"ACTIVE","effect":"Full Chromium cannot launch; actual extension remains unavailable before installation. Headless-shell success is only Testbed capability."},
-    {"id":"cascade-applicability","status":"ACTIVE","effect":"Selected typea/reset/palette negatives pass, but remaining priorities and live conflict prevalence are unknown; never invent collision reasons."},
+    {"id":"full-browser-environment","status":"ACTIVE","effect":"Last actual-extension full-Chromium attempts failed before installation. Headless-shell still supports local Testbed and real public-site GM-shim/native/CSS checks; do not generalize this blocker."},
+    {"id":"cascade-applicability","status":"ACTIVE","effect":"Current public packet observes selected host/internal collisions only. No-change/unmatched/hidden and joint-removal states remain unknown; never invent collision reasons."},
     {"id":"evidence-reuse","status":"ACTIVE","effect":"Exact artifact/report/source/build/fixture/harness/toolchain/node/browser identity qualifies reuse. Old global fingerprints keep their original scopes."}
   ],
   "localEvidence": [
+    {"path":"artifacts/header-public-css-2026-10-14/unit-result.json","disposition":"REGENERATE","recovery":"Recover exact SHA-256 CC49919125E94AFE6F166852653F6A4A83FB79812E996C4F0C341F239733EF0B and its bound local probes/reports. Otherwise make a fresh reviewed public-site packet; do not invent missing receipts or extend rejected longhand/GM metric claims."},
     {"path":"artifacts/header-finish-2026-10-13/unit-result.json","disposition":"REGENERATE","recovery":"Recover exact SHA-256 055BE1CDBB8E3BEAFC61B0C6898ED9626E78C768E1E4FA15BD16A03244A08E60 and its pinned reports. If unavailable, rerun coverage and add a reviewed exact-artifact profile; never fabricate an old unit."},
     {"path":"artifacts/header-finish-2026-10-13/full-mobile.json","disposition":"REGENERATE","recovery":"Recover exact SHA-256 44826C6625C662397084A3A13DEA3ED4E5B4F6C99D78720CA98687BDF41B35DE for current classifier reuse, or rerun and review a new profile."},
     {"path":"artifacts/controls/header-early-6028.user.js","disposition":"REGENERATE","recovery":"Recover exact 602810EB816C7FBED63386E0713E3CE8C07772DC90E3BB5F0893B40061FE3017 bytes from its source/receipt in isolation; never reset the active tree."}
