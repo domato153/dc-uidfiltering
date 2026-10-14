@@ -6,6 +6,8 @@ Base HEAD: `1ab24282f5ab675a48d129a9f3718c1a8188a51e`, branch `codex/ui-port-bou
 
 Current GNB priority unit (2026-10-14): HEADER_GNB_BACKGROUND.md supersedes the background-only next investigation below. Guarded/root/dist mobile now DA63AC42DDB4F7B50FDAD74082DE580DF7DB03CFAA3E2869F6593733358D02C8; PC unchanged. Three jointly normalized declarations preserve 240 Testbed/120 public preimplementation CSS states and zero selected differences across 33 immediate-control observations. Genuine installed-Chrome startup/replay is renewed 8/8 on DA63 (testbed/artifacts/header-gnb-priority-2026-10-14/startup/report.json, SHA-256 67A10C0435014731FE9BD97BA265B8D67E855218EE8ABEDBED607CDCB7491798). Historical palette ruling/priority rows keep their original 6869 scope; header-6869 does not qualify DA63. Native actual-extension actions and formal admission remain open.
 
+Current actual-extension native unit: HEADER_INSTALLED_NATIVE.md supersedes startup-only execution gaps. Both exact 6869 and unchanged DA63 execute 16 cases: 9 PASS/7 FAIL from original narrow tip-close, major short carousel and narrow native-theme entry reachability. Startup is renewed 8/8. This is observed product FAIL, not an extension blocker. Remaining downstream dark/article/mini/palette/account/device/relation states stay unclosed.
+
 ## Bounded plan
 
 - [x] Recover and qualify pinned actual-extension startup through installed Chrome; retain earlier environment and wrong-worker failures. Four routes per control/candidate pass; header native-action coverage is separate.

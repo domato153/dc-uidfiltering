@@ -58,3 +58,14 @@ The official extension service serves the current package, so an extension updat
 Anonymous read-only scope excludes login, posting, modifying, deleting, private data import, dark themes, mini galleries, storage fault injection, and the PC userscript. Article URLs can disappear; update those public route samples only after identifying host unavailability and preserving the old receipt. This startup pass does not close the broader header popup/action matrix, final 34-ID inventory, manual `live-canary` acceptance gate, release readiness, or authenticated behavior. No schedule, commit, push, release, or user-profile installation is implied.
 
 Route renewal (2026-09-30): major-view post `2940311` returned HTTP 404 in both the published control and candidate extension profiles. That unavailable report and its old contract are retained in `testbed/artifacts/live-site-header-palette-approved-2026-09-30/`. The same gallery's live list exposed public post `1476608`, independently checked as HTTP 200; only the major-view sample URL was renewed. A fresh full startup run is required for the new contract; the old 404 is not reclassified as PASS.
+
+## Registered native header profile
+
+The separately authorized header expansion runs the same real vendor installation/isolation/cleanup with `--suite full --header-native`. verification/header-live-canary.json declares 16 public list cases across four desktop-UA viewports and native light/dark. Exact immediate 6869 control replaces the startup profile's published control only for this matrix; guarded candidate remains the same. No phone UA/device, private GM import or injected dark class is used. Native theme entry uses the original darkonoff pointer; a blocked entry fails and leaves later requested states unobserved.
+
+```text
+node testbed/run-live-site-canary.mjs --browser installed-chrome --suite full --header-native --output testbed/artifacts/<fresh-native-run>
+node tools/verify-live-site-canary.mjs testbed/artifacts/<fresh-native-run>
+```
+
+The replay recognizes native receipt kind, exact cases/current imported observer/control/driver hashes and observation-derived predicates. A verified FAIL receipt exits nonzero; replay consistency is not product PASS. Current three failures, geometry and recovery are in docs/work/HEADER_INSTALLED_NATIVE.md. Do not use forced pointer, programmatic click, stylesheet injection or a passed container center to erase an unreachable original control. Startup remains its original four-route wide/light scope.

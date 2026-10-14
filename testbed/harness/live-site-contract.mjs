@@ -33,7 +33,7 @@ export function caseVerdict(result) {
 
 // Control failures stay visible; they do not bless a candidate or fail an improved candidate.
 // A missing control prevents an observed comparison. Every selected candidate must pass.
-export function reportVerdict(report) {
+export function reportVerdict(report, evaluateCase = caseVerdict) {
     if (report.setupFailure || !report.selectedCases?.length) return 'UNAVAILABLE';
     if (!['candidateSha256', 'controlSha256', 'extensionSha256'].every(key => /^[A-F0-9]{64}$/.test(report.binding?.[key] || ''))) return 'UNAVAILABLE';
     if (report.results?.length !== report.selectedCases.length * 2 || new Set(report.selectedCases).size !== report.selectedCases.length) return 'UNAVAILABLE';
@@ -43,8 +43,8 @@ export function reportVerdict(report) {
             || setup.servedSha256 !== report.binding[role + 'Sha256']) return 'UNAVAILABLE';
         for (const id of report.selectedCases) {
             const matches = report.results.filter(r => r.role === role && r.id === id);
-            if (matches.length !== 1 || caseVerdict(matches[0]) === 'UNAVAILABLE') return 'UNAVAILABLE';
+            if (matches.length !== 1 || evaluateCase(matches[0]) === 'UNAVAILABLE') return 'UNAVAILABLE';
         }
     }
-    return report.results.filter(r => r.role === 'candidate').every(r => caseVerdict(r) === 'PASS') ? 'PASS' : 'FAIL';
+    return report.results.filter(r => r.role === 'candidate').every(r => evaluateCase(r) === 'PASS') ? 'PASS' : 'FAIL';
 }

@@ -124,3 +124,4 @@ test('browser adapter never injects script or changes enterprise policy', () => 
     assert.ok(!/\.addInitScript\s*\(|gm-shim\.js|createTestPage\s*\(|eval\s*\(|reg\.exe|ExtensionInstallForcelist/.test(browserAdapter));
 });
 console.log(`Live-site Canary contracts: ${count} offline tests passed. No live-site PASS is implied.`);
+await import('./test-header-live-canary.mjs');

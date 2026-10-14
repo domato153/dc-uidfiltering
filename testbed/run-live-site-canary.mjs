@@ -9,6 +9,7 @@ import { fileURLToPath } from 'node:url';
 import { sha256, verifyPackage } from '../tools/prepare-live-extension.mjs';
 import { selectCases, caseVerdict, reportVerdict } from './harness/live-site-contract.mjs';
 import { browserFlavor, launchLiveBrowser } from './harness/live-site-browser.mjs';
+import { selectHeaderCases, headerCaseVerdict, observeHeader } from './harness/header-live-canary.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const require = createRequire(import.meta.url);
@@ -18,6 +19,8 @@ const option = (name, fallback) => args.includes(name) ? args[args.indexOf(name)
 const output = path.resolve(root, option('--output', 'testbed/artifacts/live-site-canary'));
 assert.ok(output.startsWith(path.join(root, 'testbed/artifacts') + path.sep), 'Evidence must stay in testbed/artifacts');
 const suite = option('--suite', 'smoke');
+const headerNative = args.includes('--header-native');
+if (headerNative) assert.equal(suite, 'full', 'Header native matrix requires --suite full');
 const headed = args.includes('--headed');
 if (args.includes('--browser')) assert.ok(option('--browser') && !option('--browser').startsWith('--'), 'Missing --browser value');
 const flavor = browserFlavor(option('--browser', 'chromium'));
@@ -35,6 +38,12 @@ const report = { schemaVersion: 1, kind: 'actual-tampermonkey-desktop-startup-ca
         provider: process.env.GITHUB_ACTIONS === 'true' ? 'github-hosted' : 'local',
         githubRun: process.env.GITHUB_RUN_ID || null, githubAttempt: process.env.GITHUB_RUN_ATTEMPT || null },
     scope: 'Read-only desktop startup, rendered list/article, title hit and focus. Not full-feature or release acceptance.' };
+if (headerNative) {
+    report.kind = 'actual-tampermonkey-header-native-canary';
+    report.environment.viewport = null;
+    report.environment.theme = 'native site light/dark button; per-case desktop-UA viewport';
+    report.scope = 'Read-only original header drawer/rank/tip/carousel; responsive desktop-UA and native light/dark. Not all palettes, authenticated/device or header admission.';
+}
 await mkdir(output, { recursive: true });
 const boundedError = error => String(error?.message || error).split('\n')[0].slice(0, 300);
 async function files(directory) {
@@ -170,22 +179,28 @@ async function observe(context, role, testCase) {
 try {
     const contractBytes = await readFile(path.join(root, 'verification/live-site-canary.json'));
     const contract = JSON.parse(contractBytes);
-    const cases = selectCases(contract, suite);
+    const headerBytes = headerNative ? await readFile(path.join(root, 'verification/header-live-canary.json')) : null;
+    const runtimeContract = headerNative ? JSON.parse(headerBytes) : contract;
+    const cases = headerNative ? selectHeaderCases(runtimeContract, contract) : selectCases(contract, suite);
     report.selectedCases = cases.map(c => c.id);
-    report.unselected = [...contract.unselected, ...selectCases(contract, 'full').filter(c => !report.selectedCases.includes(c.id)).map(c => c.id)];
-    const candidate = await readFile(path.join(root, contract.candidatePath));
-    const control = await readFile(path.join(root, contract.control.path));
+    report.unselected = headerNative ? runtimeContract.unselected : [...contract.unselected, ...selectCases(contract, 'full').filter(c => !report.selectedCases.includes(c.id)).map(c => c.id)];
+    const candidate = await readFile(path.join(root, runtimeContract.candidatePath));
+    const control = await readFile(path.join(root, runtimeContract.control.path));
     assert.match(candidate.toString('utf8'), /^\/\/\s*@name\s+DC_UserFilter_Mobile\s*$/m, 'Guarded mobile runtime required');
-    assert.equal(sha256(control), contract.control.sha256, 'Published control hash mismatch');
+    assert.equal(sha256(control), runtimeContract.control.sha256, 'Exact control hash mismatch');
     const receipt = JSON.parse(await readFile(path.join(root, 'testbed/artifacts/live-site-extension/extension-receipt.json')));
     assert.equal(receipt.pinned, true, 'Discovery package cannot be tested as a pinned extension');
     const verified = verifyPackage(await readFile(receipt.packagePath), contract.extension);
     report.binding = { head: git('rev-parse', 'HEAD'), branch: git('branch', '--show-current'), dirty: Boolean(git('status', '--porcelain')),
-        candidatePath: path.join(root, contract.candidatePath), candidateSha256: sha256(candidate), controlSha256: sha256(control),
+        candidatePath: path.join(root, runtimeContract.candidatePath), candidateSha256: sha256(candidate), controlSha256: sha256(control),
         extensionSha256: contract.extension.sha256, extensionVersion: verified.manifest.version,
         browserAdapterSha256: sha256(await readFile(path.join(root, 'testbed/harness/live-site-browser.mjs'))),
+        headerObserverSha256: sha256(await readFile(path.join(root, 'testbed/harness/header-live-canary.mjs'))),
         contractSha256: sha256(contractBytes), driverSha256: sha256(await readFile(fileURLToPath(import.meta.url))),
         contractDriverSha256: sha256(await readFile(path.join(root, 'testbed/harness/live-site-contract.mjs'))) };
+    if (headerNative) Object.assign(report.binding, {
+        headerContractSha256: sha256(headerBytes)
+    });
     console.log(`Actual-extension desktop canary: ${report.binding.candidatePath}\nCandidate SHA-256: ${report.binding.candidateSha256}`);
     for (const [role, bytes] of [['control', control], ['candidate', candidate]]) {
         // Chromium removes Web Store verification metadata when loading unpacked packages.
@@ -212,7 +227,7 @@ try {
             report.profiles[role] = { ...await install(context, worker, extensionId, bytes), extensionId, isolated: true,
                 browser: session.metadata };
             for (const testCase of cases) {
-                const result = await observe(context, role, testCase);
+                const result = headerNative ? await observeHeader(context, role, testCase, output) : await observe(context, role, testCase);
                 report.results.push(result);
                 console.log(`${role}/${result.id}: ${result.status}${result.failure ? ' — ' + result.failure : ''}`);
                 await writeFile(path.join(output, 'report.json'), JSON.stringify(report, null, 2) + '\n');
@@ -229,7 +244,7 @@ try {
 } catch (error) { report.setupFailure = boundedError(error); console.error(`Canary unavailable: ${report.setupFailure}`); }
 finally {
     report.finishedAt = new Date().toISOString();
-    report.status = reportVerdict(report);
+    report.status = reportVerdict(report, headerNative ? headerCaseVerdict : caseVerdict);
     await writeFile(path.join(output, 'report.json'), JSON.stringify(report, null, 2) + '\n');
     const summary = `Desktop actual-Tampermonkey canary: **${report.status}**\n\nCandidate: ${report.binding?.candidateSha256 || 'not bound'}\n\nSelected: ${(report.selectedCases || []).join(', ')}\n\n${report.results.map(r => `- ${r.role}/${r.id}: ${r.status}`).join('\n')}\n\nUnselected: ${(report.unselected || []).join(', ')}\n\n${report.setupFailure || ''}\n\n${report.scope}\n`;
     await writeFile(path.join(output, 'summary.md'), summary);
