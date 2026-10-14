@@ -21,9 +21,10 @@ export function validateLayoutPresenter(presenter, maxWidth = 640) {
     assert.ok(presenter.layout, 'Frozen drawer layout input required');
     assert.ok(Object.isFrozen(presenter.layout), 'Drawer layout input must be immutable');
     assert.deepEqual(plain(presenter.layout), { maxWidth }, 'Numeric-only layout input');
-    const widths = [...presenter.style.css.matchAll(/width: min\((\d+)px, calc\(100vw - 24px\)\)/g)];
+    const widths = [...presenter.style.css.matchAll(/width: min\((\d+)px, calc\(var\(--dcuf-header-drawer-viewport-width, 100vw\) - 24px\)\)/g)];
     assert.equal(widths.length, 3, 'Owned body and both native roots use layout width');
     assert.ok(widths.every(match => Number(match[1]) === maxWidth), 'All CSS widths consume the same layout input');
+    assert.equal(presenter.style.css.split('var(--dcuf-header-drawer-viewport-width, 100vw)').length-1,7,'All owned/native width constraints share viewport input');
 }
 
 export function validateLayoutPresenterFaults(source) {
@@ -40,7 +41,8 @@ export function validateLayoutPresenterFaults(source) {
     check(source);
     const faults = [
         [input, 'const layout = { maxWidth: 640 };'],
-        ['width: min(${layout.maxWidth}px, calc(100vw - 24px))', 'width: min(640px, calc(100vw - 24px))'],
+        ['width: min(${layout.maxWidth}px, calc(var(--dcuf-header-drawer-viewport-width, 100vw) - 24px))', 'width: min(640px, calc(var(--dcuf-header-drawer-viewport-width, 100vw) - 24px))'],
+        ['var(--dcuf-header-drawer-viewport-width, 100vw)', '100vw'],
         ['{ shell, layout,', '{ shell,'],
     ];
     for (const [from, to] of faults) {

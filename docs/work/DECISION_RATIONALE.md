@@ -288,3 +288,12 @@ The format adapts the explicit “adapted / not adopted wholesale” separation 
 - Reason: ER0 source responsibility and the existing immutable presentation contract settle this small implementation; no external source is needed. The empirical differential rejects seven selected faults. Independent unchanged-control observations falsify the new oracle's assumption of one total stylesheet order; retaining that raw difference while bounding the unchanged source phase and current computed/native values does not establish safety for arbitrary future ordering. The unrelated write-quiescence assertion was an oracle applicability error, not a product repair.
 - Evidence: `docs/work/HEADER_DRAWER_OWNED_SHELL.md`, current presenter/adapter/candidate/surface contract, the tracked owned-shell observer, exact 689A/79FC artifacts, six unmodified-control order contexts, and current mobile/host/PC/cascade reports. Original and new palette comparisons stay FAILED; current coverage is split, not every required full profile.
 - Revisit: Template/state/source phase/CSS text or other-owner order changes; a descriptor fault survives; focused native topology/input/geometry/storage/resources differ; an unobserved style position appears; or a real boot/live failure changes priority. Renew the directly affected evidence and preserve raw failures.
+
+## D-32 — Repair native close from actual scrollbar and offset-parent evidence
+
+- SELECTED: Existing reversible client-width input for JS/CSS plus narrow/short tip-inner minimum containment; faithful causal RED/GREEN and registered actual-extension pointer transfer.
+- NOT ADOPTED: Outer-only fixture or viewport-only proof, cloned/relocated button, forced clicks, new global observer/root-scroll policy or unrelated carousel/theme changes.
+- DEFERRED: Continuous root/unrelated-content width, five native FAILs and formal admission.
+- Reason: ER1 primary CSSOM View/CSS Values authority and WPT comparison establish the platform input; local minimum and actual Chrome establish transfer. The first fixture passed while actual extension failed; actual365 minimum and original offset parent drove the correction. These are measured local causes; no new generalized architecture or whole-header claim.
+- Evidence: HEADER_POPUP_CLIENT_VIEWPORT.md links the primary sources and exact local minimum, native offset-parent/CDP diagnostic, faithful RED/GREEN and actual-extension packets.
+- Revisit: Native minimum/parent, refresh triggers or contract changes, a surviving negative, or live/input/resource/storage/remote drift.

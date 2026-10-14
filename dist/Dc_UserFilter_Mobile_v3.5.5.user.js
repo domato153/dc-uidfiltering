@@ -9801,8 +9801,8 @@ const __dcufSettingsPresenter = (() => {
                 top: calc(100% + 8px) !important;
                 left: var(--dcuf-header-drawer-inline-start, 0px);
                 right: auto;
-                width: min(${layout.maxWidth}px, calc(100vw - 24px)) !important;
-                max-width: calc(100vw - 24px) !important;
+                width: min(${layout.maxWidth}px, calc(var(--dcuf-header-drawer-viewport-width, 100vw) - 24px)) !important;
+                max-width: calc(var(--dcuf-header-drawer-viewport-width, 100vw) - 24px) !important;
                 overflow: hidden !important;
                 pointer-events: none !important;
                 z-index: 60 !important;
@@ -9832,8 +9832,8 @@ const __dcufSettingsPresenter = (() => {
                 position: fixed;
                 left: var(--dcuf-header-native-door-left, 12px);
                 top: var(--dcuf-header-native-door-top, 12px);
-                width: min(${layout.maxWidth}px, calc(100vw - 24px));
-                max-width: calc(100vw - 24px);
+                width: min(${layout.maxWidth}px, calc(var(--dcuf-header-drawer-viewport-width, 100vw) - 24px));
+                max-width: calc(var(--dcuf-header-drawer-viewport-width, 100vw) - 24px);
                 min-width: 0;
                 height: auto;
                 margin: 0;
@@ -9875,6 +9875,9 @@ const __dcufSettingsPresenter = (() => {
                     right: auto;
                     left: 12px;
                 }
+                [data-dcuf-header-drawer-scope="1"] ${selectors.door}[data-dcuf-header-native-door-open="1"] ${selectors.tipPopup} > ${selectors.fluid} {
+                    min-width: 0;
+                }
             }
             [data-dcuf-header-drawer-scope="1"].dc-filter-dark-mode ${selectors.door}[data-dcuf-header-native-door-open="1"],
             [data-dcuf-header-drawer-scope="1"].dc-filter-dark-mode ${selectors.door}[data-dcuf-header-native-door-open="1"] ${selectors.ranking} {
@@ -9892,8 +9895,8 @@ const __dcufSettingsPresenter = (() => {
                 position: fixed;
                 left: var(--dcuf-header-native-door-left, 12px);
                 top: var(--dcuf-header-native-recom-top, 12px);
-                width: min(${layout.maxWidth}px, calc(100vw - 24px));
-                max-width: calc(100vw - 24px);
+                width: min(${layout.maxWidth}px, calc(var(--dcuf-header-drawer-viewport-width, 100vw) - 24px));
+                max-width: calc(var(--dcuf-header-drawer-viewport-width, 100vw) - 24px);
                 min-width: 0;
                 max-height: min(70vh, 520px);
                 box-sizing: border-box;
@@ -9931,7 +9934,7 @@ const __dcufSettingsPresenter = (() => {
             @media (max-width: 997px) {
                 [data-dcuf-header-drawer-scope="1"] [data-dcuf-header-drawer-popup="1"] {
                     box-sizing: border-box;
-                    max-width: calc(100vw - 24px);
+                    max-width: calc(var(--dcuf-header-drawer-viewport-width, 100vw) - 24px);
                     max-height: calc(100vh - 24px);
                     overflow: auto;
                 }
@@ -10161,6 +10164,8 @@ const __dcufSettingsPresenter = (() => {
             const label = drawer.querySelector('.dcuf-header-drawer__toggle-label');
             const body = drawer.querySelector('.dcuf-header-drawer__body');
             const bodyInner = drawer.querySelector(DRAWER_BODY_SELECTOR);
+            const viewportWidth = document.documentElement.clientWidth || window.innerWidth;
+            setDoorBodyVar('--dcuf-header-drawer-viewport-width', `${viewportWidth}px`);
             const snapshot = Object.freeze({ open: nextOpen });
             const presentation = __dcufHeaderDrawerPresenter.describeOpenState(snapshot);
             drawer.setAttribute('data-open', presentation.dataOpen);
@@ -10169,8 +10174,8 @@ const __dcufSettingsPresenter = (() => {
             if (body instanceof HTMLElement) {
                 if (nextOpen) {
                     const drawerRect = drawer.getBoundingClientRect();
-                    const bodyWidth = Math.min(__dcufHeaderDrawerPresenter.layout.maxWidth, Math.max(0, window.innerWidth - 24));
-                    const maxLeft = Math.max(12, window.innerWidth - bodyWidth - 12);
+                    const bodyWidth = Math.min(__dcufHeaderDrawerPresenter.layout.maxWidth, Math.max(0, viewportWidth - 24));
+                    const maxLeft = Math.max(12, viewportWidth - bodyWidth - 12);
                     const viewportLeft = Math.min(Math.max(12, drawerRect.right - bodyWidth), maxLeft);
                     applyBodyStyle(body, __dcufHeaderDrawerPresenter.describeBodyOffset(Object.freeze({ inlineStart: viewportLeft - drawerRect.left })));
                     applyBodyVisibility(body, snapshot);
@@ -10212,8 +10217,8 @@ const __dcufSettingsPresenter = (() => {
             nativeRecomOpenScope = project(nativeRecomOpenScope, nextOpen ? recomSource : null, NATIVE_RECOM_OPEN_ATTR);
             if (nextOpen && source instanceof HTMLElement && body instanceof HTMLElement) {
                 const rect = body.getBoundingClientRect();
-                const width = Math.min(__dcufHeaderDrawerPresenter.layout.maxWidth, Math.max(0, window.innerWidth - 24));
-                const left = Math.max(12, Math.min(Math.round(rect.left), window.innerWidth - width - 12));
+                const width = Math.min(__dcufHeaderDrawerPresenter.layout.maxWidth, Math.max(0, viewportWidth - 24));
+                const left = Math.max(12, Math.min(Math.round(rect.left), viewportWidth - width - 12));
                 const preferredTop = Math.max(12, Math.round(rect.top));
                 setDoorBodyVar('--dcuf-header-native-door-left', `${left}px`);
                 // Measure once and apply only the final top, avoiding body-mutation feedback.
@@ -10232,8 +10237,8 @@ const __dcufSettingsPresenter = (() => {
             }
             if (nextOpen && recomSource instanceof HTMLElement && body instanceof HTMLElement) {
                 const bodyRect = body.getBoundingClientRect();
-                const width = Math.min(__dcufHeaderDrawerPresenter.layout.maxWidth, Math.max(0, window.innerWidth - 24));
-                const left = Math.max(12, Math.min(Math.round(bodyRect.left), window.innerWidth - width - 12));
+                const width = Math.min(__dcufHeaderDrawerPresenter.layout.maxWidth, Math.max(0, viewportWidth - 24));
+                const left = Math.max(12, Math.min(Math.round(bodyRect.left), viewportWidth - width - 12));
                 const issueRect = source instanceof HTMLElement ? source.getBoundingClientRect() : null;
                 const preferredTop = issueRect?.height
                     ? Math.ceil(issueRect.bottom + 8) : Math.max(12, Math.round(bodyRect.top));

@@ -188,6 +188,8 @@
             const label = drawer.querySelector('.dcuf-header-drawer__toggle-label');
             const body = drawer.querySelector('.dcuf-header-drawer__body');
             const bodyInner = drawer.querySelector(DRAWER_BODY_SELECTOR);
+            const viewportWidth = document.documentElement.clientWidth || window.innerWidth;
+            setDoorBodyVar('--dcuf-header-drawer-viewport-width', `${viewportWidth}px`);
             const snapshot = Object.freeze({ open: nextOpen });
             const presentation = __dcufHeaderDrawerPresenter.describeOpenState(snapshot);
             drawer.setAttribute('data-open', presentation.dataOpen);
@@ -196,8 +198,8 @@
             if (body instanceof HTMLElement) {
                 if (nextOpen) {
                     const drawerRect = drawer.getBoundingClientRect();
-                    const bodyWidth = Math.min(__dcufHeaderDrawerPresenter.layout.maxWidth, Math.max(0, window.innerWidth - 24));
-                    const maxLeft = Math.max(12, window.innerWidth - bodyWidth - 12);
+                    const bodyWidth = Math.min(__dcufHeaderDrawerPresenter.layout.maxWidth, Math.max(0, viewportWidth - 24));
+                    const maxLeft = Math.max(12, viewportWidth - bodyWidth - 12);
                     const viewportLeft = Math.min(Math.max(12, drawerRect.right - bodyWidth), maxLeft);
                     applyBodyStyle(body, __dcufHeaderDrawerPresenter.describeBodyOffset(Object.freeze({ inlineStart: viewportLeft - drawerRect.left })));
                     applyBodyVisibility(body, snapshot);
@@ -239,8 +241,8 @@
             nativeRecomOpenScope = project(nativeRecomOpenScope, nextOpen ? recomSource : null, NATIVE_RECOM_OPEN_ATTR);
             if (nextOpen && source instanceof HTMLElement && body instanceof HTMLElement) {
                 const rect = body.getBoundingClientRect();
-                const width = Math.min(__dcufHeaderDrawerPresenter.layout.maxWidth, Math.max(0, window.innerWidth - 24));
-                const left = Math.max(12, Math.min(Math.round(rect.left), window.innerWidth - width - 12));
+                const width = Math.min(__dcufHeaderDrawerPresenter.layout.maxWidth, Math.max(0, viewportWidth - 24));
+                const left = Math.max(12, Math.min(Math.round(rect.left), viewportWidth - width - 12));
                 const preferredTop = Math.max(12, Math.round(rect.top));
                 setDoorBodyVar('--dcuf-header-native-door-left', `${left}px`);
                 // Measure once and apply only the final top, avoiding body-mutation feedback.
@@ -259,8 +261,8 @@
             }
             if (nextOpen && recomSource instanceof HTMLElement && body instanceof HTMLElement) {
                 const bodyRect = body.getBoundingClientRect();
-                const width = Math.min(__dcufHeaderDrawerPresenter.layout.maxWidth, Math.max(0, window.innerWidth - 24));
-                const left = Math.max(12, Math.min(Math.round(bodyRect.left), window.innerWidth - width - 12));
+                const width = Math.min(__dcufHeaderDrawerPresenter.layout.maxWidth, Math.max(0, viewportWidth - 24));
+                const left = Math.max(12, Math.min(Math.round(bodyRect.left), viewportWidth - width - 12));
                 const issueRect = source instanceof HTMLElement ? source.getBoundingClientRect() : null;
                 const preferredTop = issueRect?.height
                     ? Math.ceil(issueRect.bottom + 8) : Math.max(12, Math.round(bodyRect.top));
