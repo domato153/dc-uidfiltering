@@ -80,7 +80,7 @@
                     </div>
                 `
         });
-        const nativeStyleSlots = Object.freeze(["door","recommendation","relationPopup","relationStatic","fluid","intro","ranking","buttonDecoration","closeDecoration","rankPopup","tipPopup","recommendationPaging","recommendationText","recommendationImage"]);
+        const nativeStyleSlots = Object.freeze(["door","recommendation","relationPopup","relationStatic","fluid","intro","ranking","buttonDecoration","closeDecoration","rankPopup","tipPopup","recommendationPaging","recommendationText","recommendationImage","recommendationStack"]);
         const describeNativeStyle = (bindings) => {
             if (!Array.isArray(bindings) || !Object.isFrozen(bindings) || bindings.length !== nativeStyleSlots.length) {
                 throw new TypeError('A complete frozen native selector binding is required');
@@ -235,6 +235,9 @@
                 background: linear-gradient(180deg, #233044 0%, #203044 100%);
                 color: #d2dced;
             }
+            [data-dcuf-header-drawer-scope="1"] ${selectors.recommendationStack} {
+                z-index: 1002;
+            }
             [data-dcuf-header-drawer-scope="1"] ${selectors.recommendation}[data-dcuf-header-native-recom-open="1"] {
                 display: block;
                 visibility: visible;
@@ -315,7 +318,8 @@
             { slot: "tipPopup", selector: "[data-dcuf-header-door-popup=\"tip\"]" },
             { slot: "recommendationPaging", selector: "[data-dcuf-header-recom-part=\"paging\"]" },
             { slot: "recommendationText", selector: "[data-dcuf-header-recom-part=\"text\"]" },
-            { slot: "recommendationImage", selector: "[data-dcuf-header-recom-part=\"image\"]" }
+            { slot: "recommendationImage", selector: "[data-dcuf-header-recom-part=\"image\"]" },
+            { slot: "recommendationStack", selector: "[data-dcuf-header-recom-stack=\"1\"]" }
         ].map(Object.freeze)));
         return Object.freeze({ shell, layout, describeOpenState, describeToggleIntent, describeBodyVisibility, describeBodyOffset, describeBodyHeight, describeBodyPadding, style, nativeStyleSlots, describeNativeStyle, buildThemeCss: __dcufBuildHeaderDrawerThemeCss, buildVisibilityCss: __dcufBuildHeaderDrawerVisibilityCss });
     })();

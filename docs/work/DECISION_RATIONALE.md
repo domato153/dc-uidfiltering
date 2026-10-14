@@ -297,3 +297,12 @@ The format adapts the explicit “adapted / not adopted wholesale” separation 
 - Reason: ER1 primary CSSOM View/CSS Values authority and WPT comparison establish the platform input; local minimum and actual Chrome establish transfer. The first fixture passed while actual extension failed; actual365 minimum and original offset parent drove the correction. These are measured local causes; no new generalized architecture or whole-header claim.
 - Evidence: HEADER_POPUP_CLIENT_VIEWPORT.md links the primary sources and exact local minimum, native offset-parent/CDP diagnostic, faithful RED/GREEN and actual-extension packets.
 - Revisit: Native minimum/parent, refresh triggers or contract changes, a surviving negative, or live/input/resource/storage/remote drift.
+
+## D-33 — Correct the native carousel containing stack without relocating controls
+
+- SELECTED: One complete immutable adapter selector for the marked/open recommendation ancestor; existing presenter raises only that containing context1002; causal hit RED/GREEN and actual-extension renewal. Add the internal contract to the existing candidate overlay and preserve all other CSS against exact F272.
+- NOT ADOPTED: Raising the child alone, global GNB isolation/downgrade, original node moves/clones/portals, forced clicks, new observers or unrelated dark-entry/viewport fixes.
+- DEFERRED: Four native-dark entry FAILs, prior root-only viewport scalar limit, all palettes/authenticated/device and formal header/feature/upper admission.
+- Reason: ER0 repository and current runtime facts settle the choice: native nav1001 competes with issue ancestor13; child2147483646 remains blocked while ancestor1002 restores the same original hit. Existing :has predicates and marker/style cleanup provide the state condition without a new resource owner.
+- Evidence: HEADER_CAROUSEL_STACK.md binds the fresh graph/control/candidate artifacts, eight-context causal fixture, strict whole-CSS oracle, live startup/native receipts and current registry/candidate checks.
+- Revisit: Host GNB/ancestor layer, selector/marker cleanup or geometry changes, a surviving negative, source/input/storage/resource/live/remote drift.

@@ -13,8 +13,9 @@ Run `node tools/inspect-continuity.mjs`; compare fresh root/branch/HEAD ancestry
 ## Retrieve for the current question
 
 - `HEADER_FINAL_ADMISSION.md`: item-1 authorization, palette/priority scope and recovered installed-Chrome actual-extension startup. `docs/live-site-canary.md` owns the reusable `--browser installed-chrome` method and replay. Retrieve exact successful paths before declaring a blocker; the recurrence rule is in `docs/agent-maintenance-notes.md` under Live-test capability scope.
+- `HEADER_CAROUSEL_STACK.md`: current original major-carousel context correction, native12/16 scope, strict fifteen-slot input/CSS proof and unchanged source-loss lifecycle; native dark entry is next.
 - `HEADER_POPUP_CLIENT_VIEWPORT.md`: actual minor tip-close correction, failed viewport-only transfer, faithful inner-minimum regression, final native11/16 scope and retained root-only width limit.
-- `HEADER_INSTALLED_NATIVE.md`: registered actual-extension native header matrix, three reproduced reachability defects and the bounded client-viewport fix next.
+- `HEADER_INSTALLED_NATIVE.md`: registered actual-extension native header matrix, three reproduced reachability defects; its next viewport task is superseded by the later viewport/carousel units.
 - `HEADER_GNB_BACKGROUND.md`: current three-declaration GNB background normalization, strict historical oracle delta, RED/GREEN and immediate/live evidence; native actual-extension actions are next.
 - `HEADER_FINISH.md`: completed integrated header implementation and local verification; supersedes per-phase/audit-only continuation boundaries.
 - `VERIFICATION_EFFICIENCY.md`: researched process change, checks/counts/limits.

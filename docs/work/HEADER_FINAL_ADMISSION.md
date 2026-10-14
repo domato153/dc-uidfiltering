@@ -81,3 +81,7 @@ Local evidence lives in artifacts/header-admission-2026-10-13 and testbed/artifa
 ## Native tip-close follow-up
 
 HEADER_POPUP_CLIENT_VIEWPORT.md supersedes the viewport-only cause hypothesis: actual host inner minimum365 also kept the close outside client375. Final F272 root/dist/guard3.5.5 fixes minor390×900/500 light tip and rank pointer workflows; installed Chrome/Tampermonkey candidate11/16 PASS versus historical control9/16. Five candidate carousel/native-theme FAILs and unobserved downstream dark states remain. Actual startup8/8 and independent startup PASS/native FAIL replay renew the exact runtime. Root-only width refresh and unrelated-content/cross-platform limits remain explicit. Source/oracle/gates changed; old blanket coverage/classifier reuse is invalid. No formal mixed/header/feature/upper or release admission.
+
+## Native carousel stack follow-up
+
+HEADER_CAROUSEL_STACK.md records the original short major-carousel containing-context correction. Final C9F native candidate12/16 PASS versus historical control9/16; four narrow/short native-dark entries still fail under search and their later states remain unobserved. Actual startup8/8 and independent startup PASS/native FAIL replay qualify the sampled path. The additive selector contract stays in the existing candidate overlay, accepted registry/mixed unchanged. Strict F272 full CSS except one1002 rule, causal fixture and unchanged source-loss control support the bounded delta; no formal header/feature/upper/release admission or old classifier reuse.

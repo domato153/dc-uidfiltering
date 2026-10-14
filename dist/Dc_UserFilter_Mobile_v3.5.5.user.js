@@ -9734,7 +9734,7 @@ const __dcufSettingsPresenter = (() => {
                     </div>
                 `
         });
-        const nativeStyleSlots = Object.freeze(["door","recommendation","relationPopup","relationStatic","fluid","intro","ranking","buttonDecoration","closeDecoration","rankPopup","tipPopup","recommendationPaging","recommendationText","recommendationImage"]);
+        const nativeStyleSlots = Object.freeze(["door","recommendation","relationPopup","relationStatic","fluid","intro","ranking","buttonDecoration","closeDecoration","rankPopup","tipPopup","recommendationPaging","recommendationText","recommendationImage","recommendationStack"]);
         const describeNativeStyle = (bindings) => {
             if (!Array.isArray(bindings) || !Object.isFrozen(bindings) || bindings.length !== nativeStyleSlots.length) {
                 throw new TypeError('A complete frozen native selector binding is required');
@@ -9889,6 +9889,9 @@ const __dcufSettingsPresenter = (() => {
                 background: linear-gradient(180deg, #233044 0%, #203044 100%);
                 color: #d2dced;
             }
+            [data-dcuf-header-drawer-scope="1"] ${selectors.recommendationStack} {
+                z-index: 1002;
+            }
             [data-dcuf-header-drawer-scope="1"] ${selectors.recommendation}[data-dcuf-header-native-recom-open="1"] {
                 display: block;
                 visibility: visible;
@@ -9969,7 +9972,8 @@ const __dcufSettingsPresenter = (() => {
             { slot: "tipPopup", selector: "[data-dcuf-header-door-popup=\"tip\"]" },
             { slot: "recommendationPaging", selector: "[data-dcuf-header-recom-part=\"paging\"]" },
             { slot: "recommendationText", selector: "[data-dcuf-header-recom-part=\"text\"]" },
-            { slot: "recommendationImage", selector: "[data-dcuf-header-recom-part=\"image\"]" }
+            { slot: "recommendationImage", selector: "[data-dcuf-header-recom-part=\"image\"]" },
+            { slot: "recommendationStack", selector: "[data-dcuf-header-recom-stack=\"1\"]" }
         ].map(Object.freeze)));
         return Object.freeze({ shell, layout, describeOpenState, describeToggleIntent, describeBodyVisibility, describeBodyOffset, describeBodyHeight, describeBodyPadding, style, nativeStyleSlots, describeNativeStyle, buildThemeCss: __dcufBuildHeaderDrawerThemeCss, buildVisibilityCss: __dcufBuildHeaderDrawerVisibilityCss });
     })();
@@ -10005,7 +10009,8 @@ const __dcufSettingsPresenter = (() => {
             { slot: "tipPopup", selector: "#hot_tip_pop" },
             { slot: "recommendationPaging", selector: ".pageing_box" },
             { slot: "recommendationText", selector: ".concept_txtlist" },
-            { slot: "recommendationImage", selector: ".concept_img" }
+            { slot: "recommendationImage", selector: ".concept_img" },
+            { slot: "recommendationStack", selector: ".issue_wrap:has(#gall_top_recom.concept_wrap[data-dcuf-header-native-recom=\"1\"][data-dcuf-header-native-recom-open=\"1\"])" }
         ].map(Object.freeze)));
         const BODY_SCOPE_ATTR = 'data-dcuf-header-drawer-scope';
         const ACTIONS_SCOPE_ATTR = 'data-dcuf-header-drawer-actions';

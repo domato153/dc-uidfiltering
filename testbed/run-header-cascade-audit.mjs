@@ -141,7 +141,8 @@ try {
                         ['buttonDecoration', '.btn_mgall_dcp'], ['closeDecoration', '.under_poply_close'],
                         ['rankPopup', '#hot_rank_pop2'], ['tipPopup', '#hot_tip_pop'],
                         ['recommendationPaging', '.pageing_box'], ['recommendationText', '.concept_txtlist'],
-                        ['recommendationImage', '.concept_img']
+                        ['recommendationImage', '.concept_img'],
+                        ...(presenter.nativeStyleSlots.includes('recommendationStack') ? [['recommendationStack', '.issue_wrap:has(#gall_top_recom.concept_wrap[data-dcuf-header-native-recom="1"][data-dcuf-header-native-recom-open="1"])']] : [])
                     ].map(([slot, selector]) => Object.freeze({slot, selector}))) : null;
                     // Expected target strings are independent of the mounted node and adapter producer.
                     const style = namedSelectorBinding ? presenter.describeNativeStyle(bindings) : presenter.style;

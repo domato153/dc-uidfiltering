@@ -29,7 +29,8 @@
             { slot: "tipPopup", selector: "#hot_tip_pop" },
             { slot: "recommendationPaging", selector: ".pageing_box" },
             { slot: "recommendationText", selector: ".concept_txtlist" },
-            { slot: "recommendationImage", selector: ".concept_img" }
+            { slot: "recommendationImage", selector: ".concept_img" },
+            { slot: "recommendationStack", selector: ".issue_wrap:has(#gall_top_recom.concept_wrap[data-dcuf-header-native-recom=\"1\"][data-dcuf-header-native-recom-open=\"1\"])" }
         ].map(Object.freeze)));
         const BODY_SCOPE_ATTR = 'data-dcuf-header-drawer-scope';
         const ACTIONS_SCOPE_ATTR = 'data-dcuf-header-drawer-actions';
