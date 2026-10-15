@@ -16,6 +16,10 @@ const PROFILES = Object.freeze({
         control: 'A03038FE68126B62054EBA11244D4EE2E1766D308983FC5C27127FD3794CB343',
         candidate: '6869B58682E7B4159785C1B7E1F5FD6E8CD597CA602AECAB71904A77B7C00CD5', mobileCount: 138,
     }),
+    'header-6b8b': Object.freeze({
+        control: 'A03038FE68126B62054EBA11244D4EE2E1766D308983FC5C27127FD3794CB343',
+        candidate: '6B8B76C69B18A62C628CE8FB7C6BAB8D3AE95F978BC5F1A940E94B09A8579D67', mobileCount: 138,
+    }),
 });
 const BASE_OWNERS = ['filter-universal-observer', 'ui-list-runtime', 'header-drawer', 'list-memo-popup'];
 const ADDED_OWNERS = ['header-shell-style', 'gallery-page-head-style', 'header-gnb-style', 'header-recent-visit-navigation'];
@@ -38,14 +42,33 @@ const SETTLED_INDEXES = [5, 12, 18];
 const sha = (bytes) => createHash('sha256').update(bytes).digest('hex').toUpperCase();
 const check = (condition, message) => { if (!condition) throw new Error(message); };
 
-export function assertRetainedMobileReuse({ unitBytes, fullMobileBytes, currentBinding }) {
+export function assertRetainedMobileReuse({ unitBytes, fullMobileBytes, currentBinding,
+    profileId = 'header-6869', routeBytes, mobileOracleBytes }) {
     check(unitBytes && fullMobileBytes, 'retained full-mobile evidence missing');
-    check(sha(unitBytes) === '055BE1CDBB8E3BEAFC61B0C6898ED9626E78C768E1E4FA15BD16A03244A08E60',
+    check(['header-6869', 'header-6b8b'].includes(profileId), 'unknown retained full-mobile profile');
+    const current = profileId === 'header-6b8b';
+    check(sha(unitBytes) === (current
+        ? 'B16EB823A96006B89456F691D3FC63D48A74DDF1F414F0690525E36E68DA7C50'
+        : '055BE1CDBB8E3BEAFC61B0C6898ED9626E78C768E1E4FA15BD16A03244A08E60'),
         'retained full-mobile unit identity changed');
     const unit = JSON.parse(unitBytes);
-    check(sha(fullMobileBytes) === unit.reports['full-mobile.json'], 'retained full-mobile report changed');
+    const reportHash = current ? unit.reports.find(entry => entry.original === 'testbed/artifacts/acceptance-full-testbed-results.json')?.sha256
+        : unit.reports['full-mobile.json'];
+    check(sha(fullMobileBytes) === reportHash, 'retained full-mobile report changed');
+    let binding = unit.evidenceBinding;
+    if (current) {
+        check(routeBytes && sha(routeBytes) === unit.route.sha256, 'retained full-mobile route changed');
+        const route = JSON.parse(routeBytes);
+        check(route.candidateFingerprint === unit.candidateFingerprint && route.head === unit.sourceBaseHead,
+            'retained full-mobile route identity changed');
+        binding = route.evidenceBinding;
+        // run-tests imports this helper outside harness/fixtures. Other direct
+        // source, harness, fixture, loader/package and Node inputs are bound below.
+        check(mobileOracleBytes && sha(mobileOracleBytes) === 'B4A1EB7F147BB851B1B4245F14ABE3E5C3AACE4547DB413D394D09FFBEB25ECC',
+            'retained full-mobile oracle dependency changed');
+    }
     for (const field of ['sourceInputsSha256', 'harnessSha256', 'fixturesSha256', 'toolchainSha256', 'node']) {
-        check(unit.evidenceBinding[field] === currentBinding?.[field], `retained full-mobile binding changed: ${field}`);
+        check(binding[field] === currentBinding?.[field], `retained full-mobile binding changed: ${field}`);
     }
     return unit;
 }
@@ -137,6 +160,14 @@ export function classifyPaletteOwnerSplit(input) {
         'wrong palette raw report');
     check(report.controlSha256 === CONTROL_SHA && report.candidateSha256 === CANDIDATE_SHA && report.equivalent === false,
         'raw FAIL or artifact identity changed');
+    if (profileId === 'header-6b8b') {
+        check(input.baselineBytes && digestEvidenceBytes('verification/baselines.json', input.baselineBytes).toUpperCase()
+            === '0ADAED6B58532372E7B6354410BAD23DCCCD0236D11166939764EE1A21588B5F',
+        'palette baseline authority changed');
+        const baseline = JSON.parse(input.baselineBytes);
+        check(baseline.mobile.beta.sha256 === CONTROL_SHA && report.controlSource === baseline.mobile.behaviorSourceCommit,
+            'palette baseline source identity changed');
+    }
     check(report.observerSha256 === digestEvidenceBytes('testbed/run-palette-differential.mjs', observerBytes).toUpperCase(),
         'palette observer changed after raw report');
     check(isDeepStrictEqual(report.evidenceBinding, currentBinding), 'raw report evidence binding is stale');
@@ -160,8 +191,9 @@ export function classifyPaletteOwnerSplit(input) {
     'exact-candidate mobile owner test run is unavailable');
     for (const name of OWNER_TESTS) check(fullMobile.results.filter((entry) => entry.name === name && entry.status === 'passed').length === 1,
         `owner lifecycle test missing or duplicated: ${name}`);
-    if (profileId === 'header-6869') {
-        assertRetainedMobileReuse({ unitBytes: input.retainedUnitBytes, fullMobileBytes: input.fullMobileBytes, currentBinding });
+    if (profileId !== 'historical') {
+        assertRetainedMobileReuse({ profileId, unitBytes: input.retainedUnitBytes, fullMobileBytes: input.fullMobileBytes, currentBinding,
+            routeBytes: input.retainedRouteBytes, mobileOracleBytes: input.mobileOracleBytes });
         check(fullMobile.browser?.version === report.sides?.candidate?.browser, 'full-mobile browser identity changed');
     }
 
@@ -228,6 +260,13 @@ export function classifyPaletteOwnerSplit(input) {
         rawReportSha256: sha(reportBytes), controlSideSha256: sha(controlSideBytes),
         candidateSideSha256: sha(candidateSideBytes), observerSha256: sha(observerBytes),
         classifierSha256: sha(classifierBytes), fullMobileRunSha256: sha(input.fullMobileBytes),
+        ...(profileId === 'header-6b8b' ? { baselineSha256: digestEvidenceBytes('verification/baselines.json', input.baselineBytes).toUpperCase() } : {}),
+        ...(input.retainedUnitBytes ? { retainedEvidence: {
+            unitSha256: sha(input.retainedUnitBytes),
+            ...(input.retainedRouteBytes ? { routeSha256: sha(input.retainedRouteBytes) } : {}),
+            ...(input.mobileOracleBytes ? { mobileOracleSha256: sha(input.mobileOracleBytes) } : {}),
+            unchangedBindings: ['sourceInputsSha256', 'harnessSha256', 'fixturesSha256', 'toolchainSha256', 'node', 'browser'],
+        } } : {}),
         lifecycleProbeScriptSha256: sha(input.probeScriptBytes), lifecycleProbeSha256: sha(Buffer.from(JSON.stringify(probe))),
         evidenceBinding: currentBinding, observationCountPerSide: 22, rawDifferenceCount: 14,
         classifiedSemanticIndexes: SETTLED_INDEXES, addedOwners: ADDED_OWNERS,
@@ -249,7 +288,7 @@ export function classifyPaletteOwnerSplit(input) {
 export async function readCurrentInputs(profileId = 'historical') {
     check(Object.hasOwn(PROFILES, profileId), 'unknown exact-artifact profile');
     const currentBinding = await createEvidenceBinding(root);
-    let retainedUnitBytes;
+    let retainedUnitBytes, retainedRouteBytes, mobileOracleBytes;
     const files = {
         report: 'testbed/artifacts/final-mobile-palette-C84AD922.json',
         controlSide: 'testbed/artifacts/final-mobile-palette-C84AD922.json.control.json',
@@ -280,27 +319,60 @@ export async function readCurrentInputs(profileId = 'historical') {
             }
         }
     }
+    if (profileId === 'header-6b8b') {
+        Object.assign(files, {
+            report: 'testbed/artifacts/header-palette-2026-10-15/header-palette-6B8B.json',
+            controlSide: 'testbed/artifacts/header-palette-6B8B.json.control.json',
+            candidateSide: 'testbed/artifacts/header-palette-6B8B.json.candidate.json',
+            control: 'testbed/artifacts/baseline-mobile-beta.user.js',
+            fullMobile: 'artifacts/header-dark-2026-10-15/reports/acceptance-full-testbed-results.json',
+            baseline: 'verification/baselines.json',
+        });
+        retainedUnitBytes = await readFile(path.join(root, 'artifacts/header-dark-2026-10-15/unit-result.json'));
+        retainedRouteBytes = await readFile(path.join(root, 'artifacts/header-dark-2026-10-15/impact.json'));
+        mobileOracleBytes = await readFile(path.join(root, 'testbed/header-drawer-body-contract.mjs'));
+        assertRetainedMobileReuse({ profileId, unitBytes: retainedUnitBytes,
+            fullMobileBytes: await readFile(path.join(root, files.fullMobile)), currentBinding,
+            routeBytes: retainedRouteBytes, mobileOracleBytes });
+    }
     const bytes = Object.fromEntries(await Promise.all(Object.entries(files).map(async ([key, relative]) =>
         [key, await readFile(path.join(root, relative))])));
     const { spawnSync } = await import('node:child_process');
     const archResult = spawnSync(process.execPath, ['tools/inspect-live-architecture.mjs', '--surface', 'header-navigation'],
         { cwd: root, encoding: 'utf8', shell: false });
     check(archResult.status === 0, 'effective architecture inspection failed');
-    return { profileId, retainedUnitBytes, report: JSON.parse(bytes.report), reportBytes: bytes.report,
+    const classifierBytes = await readFile(scriptPath);
+    const probeScriptBytes = await readFile(path.join(root, 'tools/probe-palette-owner-lifecycle.mjs'));
+    const probe = await probePaletteOwnerLifecycle();
+    for (const [key, relative] of Object.entries(files)) {
+        check(sha(await readFile(path.join(root, relative))) === sha(bytes[key]),
+            `palette input changed during lifecycle probe: ${key}`);
+    }
+    if (profileId === 'header-6b8b') check(sha(await readFile(path.join(root, 'testbed/header-drawer-body-contract.mjs'))) === sha(mobileOracleBytes),
+        'retained full-mobile oracle changed during lifecycle probe');
+    check(sha(await readFile(scriptPath)) === sha(classifierBytes)
+        && sha(await readFile(path.join(root, 'tools/probe-palette-owner-lifecycle.mjs'))) === sha(probeScriptBytes),
+    'classifier or lifecycle observer changed during probe');
+    check(isDeepStrictEqual(await createEvidenceBinding(root), currentBinding),
+        'evidence binding changed during lifecycle probe');
+    return { profileId, retainedUnitBytes, retainedRouteBytes, mobileOracleBytes, report: JSON.parse(bytes.report), reportBytes: bytes.report,
         controlSideBytes: bytes.controlSide, candidateSideBytes: bytes.candidateSide,
         controlBytes: bytes.control, candidateBytes: bytes.candidate, observerBytes: bytes.observer,
         fullMobile: JSON.parse(bytes.fullMobile), fullMobileBytes: bytes.fullMobile,
         surfaceManifest: JSON.parse(bytes.surfaceManifest), surfaceManifestBytes: bytes.surfaceManifest,
         deltas: JSON.parse(bytes.deltas), deltasBytes: bytes.deltas,
-        architecture: JSON.parse(archResult.stdout), classifierBytes: await readFile(scriptPath),
-        probeScriptBytes: await readFile(path.join(root, 'tools/probe-palette-owner-lifecycle.mjs')),
-        probe: await probePaletteOwnerLifecycle(),
+        baselineBytes: bytes.baseline,
+        architecture: JSON.parse(archResult.stdout), classifierBytes, probeScriptBytes,
+        probe,
         currentBinding, files };
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === scriptPath) {
     try {
-        const result = classifyPaletteOwnerSplit(await readCurrentInputs(process.argv.includes('--current') ? 'header-6869' : 'historical'));
+        const at = process.argv.indexOf('--profile');
+        const profileId = at < 0 ? (process.argv.includes('--current') ? 'header-6869' : 'historical') : process.argv[at + 1];
+        check(profileId && !profileId.startsWith('--'), 'missing exact-artifact profile');
+        const result = classifyPaletteOwnerSplit(await readCurrentInputs(profileId));
         if (process.argv.includes('--output')) {
             const requested = process.argv[process.argv.indexOf('--output') + 1];
             check(requested && !requested.startsWith('--'), 'missing classification output');

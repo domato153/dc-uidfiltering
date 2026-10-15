@@ -1,5 +1,7 @@
 # Header final admission
 
+Latest current ruling: HEADER_CURRENT_PALETTE.md qualifies unchanged6B8B's exact palette owner split after fresh raw/lifecycle observations and40 rejection controls. Original raw FAIL remains, with no observed palette effect/storage/focus/network regression in this scope. Registered actual native candidate16/16 and startup8/8 independently replay. Six exact mixed-owner exit criteria still need their remaining inherited-cascade/applicability disposition and current promotion receipts; formal header/feature/upper admission remains UNKNOWN. The dated units below retain their original runtime scope.
+
 The user authorized completion of remaining item 1 on 2026-10-13: actual Tampermonkey validation, retained header priority/typea adjudication, and the three palette resource differences. This includes installing the pinned extension and exact scripts in fresh isolated temporary profiles. Normal browser/account settings, release/version changes, official branches and content writes remain outside this task.
 
 Base HEAD: `1ab24282f5ab675a48d129a9f3718c1a8188a51e`, branch `codex/ui-port-boundary`. Mobile root/dist/guard remain `6869B58682E7B4159785C1B7E1F5FD6E8CD597CA602AECAB71904A77B7C00CD5`; PC remains `1A7A00468F4DCFB57C7341063098B827743091FD7593BA3FBA86A17E282BDC33`. Preserve unrelated debug.log without reading or staging it.
@@ -11,7 +13,7 @@ Current actual-extension native unit: HEADER_INSTALLED_NATIVE.md supersedes star
 ## Bounded plan
 
 - [x] Recover and qualify pinned actual-extension startup through installed Chrome; retain earlier environment and wrong-worker failures. Four routes per control/candidate pass; header native-action coverage is separate.
-- [ ] Execute actual-extension native header actions and narrow/short/theme states using the qualified installed Chrome route.
+- [x] Execute the registered actual-extension native header narrow/short/theme matrix using installed Chrome:6B8B candidate16/16. Unselected live contexts remain separate.
 - [x] Bind current exact palette observations and owner lifecycle to a strict classification with wrong-owner, unsettled-resource, changed-effect and stale-evidence rejection. Preserve the raw FAIL and historical classifier.
 - [x] Adjudicate retained priority/typea by phase, selector applicability and current guarded cascade/native evidence. The selected reasons below qualify only their named properties; other declarations retain UNKNOWN necessity.
 - Independent read-only review found no remaining classifier/test code finding after the reuse/browser corrections. Current positive plus 34 negative controls pass. The checkpoint publisher owns final exact-tree validation, commit/push and CI identity; selected header checks supply no registry fold or full-feature admission.

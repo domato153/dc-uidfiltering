@@ -5,7 +5,10 @@ import { classifyPaletteOwnerSplit, readCurrentInputs } from './classify-palette
 
 const sha = (bytes) => createHash('sha256').update(bytes).digest('hex').toUpperCase();
 const clone = (value) => JSON.parse(JSON.stringify(value));
-const input = await readCurrentInputs(process.argv.includes('--current') ? 'header-6869' : 'historical');
+const profileAt = process.argv.indexOf('--profile');
+const profileId = profileAt < 0 ? (process.argv.includes('--current') ? 'header-6869' : 'historical') : process.argv[profileAt + 1];
+assert.ok(profileId && !profileId.startsWith('--'), 'Missing exact-artifact profile');
+const input = await readCurrentInputs(profileId);
 assert.equal(classifyPaletteOwnerSplit(input).classificationStatus, 'DECLARED_OWNER_SPLIT_ONLY');
 let rejected = 0;
 
@@ -128,7 +131,7 @@ rejects('historical profile cannot classify current artifacts', (next) => {
     next.profileId = input.profileId === 'historical' ? 'header-6869' : 'historical';
 }, /control\/candidate bytes changed/);
 rejects('missing full-mobile observation', (next) => { next.fullMobile.results.pop(); }, /exact-candidate mobile owner test run is unavailable/);
-if (input.profileId === 'header-6869') {
+if (input.profileId !== 'historical') {
     for (const field of ['sourceInputsSha256', 'harnessSha256', 'fixturesSha256', 'toolchainSha256', 'node']) {
         rejects(`retained mobile evidence after ${field} change`, (next) => {
             next.currentBinding[field] = 'changed';
@@ -147,6 +150,14 @@ if (input.profileId === 'header-6869') {
     }, /full-mobile browser identity changed/);
     rejects('missing retained unit', (next) => { next.retainedUnitBytes = undefined; }, /retained full-mobile evidence missing/);
     rejects('substituted retained unit', (next) => { next.retainedUnitBytes = Buffer.from('{}'); }, /retained full-mobile unit identity changed/);
+}
+if (input.profileId === 'header-6b8b') {
+    rejects('current profile rejects changed baseline authority', next => { next.baselineBytes = Buffer.from('{}'); }, /palette baseline authority changed/);
+    rejects('current profile rejects substituted baseline source', next => { next.report.controlSource = 'unreviewed'; }, /palette baseline source identity changed/);
+    rejects('current profile rejects absent retained route', next => { next.retainedRouteBytes = undefined; }, /retained full-mobile route changed/);
+    rejects('current profile rejects substituted retained route', next => { next.retainedRouteBytes = Buffer.from('{}'); }, /retained full-mobile route changed/);
+    rejects('current profile rejects changed external mobile oracle', next => { next.mobileOracleBytes = Buffer.from('changed'); }, /retained full-mobile oracle dependency changed/);
+    rejects('current profile cannot reuse older header scope', next => { next.profileId = 'header-6869'; }, /control\/candidate bytes changed/);
 }
 
 console.log(`Palette owner classifier: positive accepted; ${rejected} negative controls rejected`);
