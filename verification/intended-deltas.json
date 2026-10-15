@@ -78,6 +78,13 @@
         {
           "kind": "geometry",
           "surface": "header-navigation",
+          "scope": "List-only projected original shell `.area_links` changes display:block to flex; native UL contents may wrap while its original darkmodebox remains adjacent above the native search input. Every other shell declaration, full selector, original node/form/event and resource owner remains unchanged.",
+          "reason": "At390px native floated link groups put the original darkonoff center under preSWord. Correct the same final owner's group flow rather than raising or replacing native controls.",
+          "contractTests": ["header-dark-toggle-contract trusted pointer/default Enter/search/form/restoration and old-layout negative", "header-final-boundary frozen CSS except one links display", "actual installed-Chrome Tampermonkey native header matrix"]
+        },
+        {
+          "kind": "geometry",
+          "surface": "header-navigation",
           "scope": "List-only original issue and top-recommendation host roots appear as viewport-bound native-control cards while the DCUF toggle is open; the original rank/tip popup alone remains visible after the toggle closes; the tip is inset on narrow or short viewports",
           "reason": "The former cloned controls and rank body portal left the original tip unreachable and could not preserve direct handlers on the recommendation carousel. The original nodes, handlers, parents, sibling order, popup descendants, and closed-state hiding stay intact.",
           "contractTests": ["gallery native door and popup-only pointer/keyboard/replacement coverage", "major original recommendation carousel coverage", "header public isolated-browser canary", "header hit audit"]

@@ -8453,7 +8453,7 @@ const __dcufSettingsPresenter = (() => {
         ${selectors.logoImageAlt} { display: none !important; }
         ${selectors.searchWrap} { flex-grow: 1 !important; min-width: 100px !important; max-width: 600px; }
         ${selectors.topSearch} { width: 100% !important; }
-        ${selectors.links} { display: block !important; flex-shrink: 0 !important; white-space: nowrap !important; }
+        ${selectors.links} { display: flex !important; flex-shrink: 0 !important; white-space: nowrap !important; }
         ${selectors.darkRoot} {
             background: #1c1c1e !important;
             border-bottom-color: #3a3a3c !important;

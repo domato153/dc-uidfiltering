@@ -306,3 +306,12 @@ The format adapts the explicit “adapted / not adopted wholesale” separation 
 - Reason: ER0 repository and current runtime facts settle the choice: native nav1001 competes with issue ancestor13; child2147483646 remains blocked while ancestor1002 restores the same original hit. Existing :has predicates and marker/style cleanup provide the state condition without a new resource owner.
 - Evidence: HEADER_CAROUSEL_STACK.md binds the fresh graph/control/candidate artifacts, eight-context causal fixture, strict whole-CSS oracle, live startup/native receipts and current registry/candidate checks.
 - Revisit: Host GNB/ancestor layer, selector/marker cleanup or geometry changes, a surviving negative, source/input/storage/resource/live/remote drift.
+
+## D-34 — Keep original native dark control adjacent to its link group
+
+- SELECTED: One existing shell links display declaration becomes flex; preserve nine full immutable inputs and frozen remaining CSS; causal hit RED/GREEN, trusted native theme/search fixture and actual-extension16-state renewal.
+- NOT ADOPTED: Lower-specificity extra override, redundant min-width/shrink rules, native node moves/clones/portals, search relocation, z-index inflation, forced theme or new observer/resource owner.
+- DEFERRED: Original raw palette reconciliation, retained root-only width/composition/dropdown and authenticated/device/all-palette gaps, mixed/header/feature/upper admission.
+- Reason: ER0 current public DOM/matched CSS and exact C9F runtime show the floated UL wraps and drops darkonoff under native searchz4000; same-owner flex keeps the original group in the first row. Broader rules add no selected benefit. Actual-extension transfer observes formerly blocked downstream dark actions.
+- Evidence: HEADER_NATIVE_DARK_TOGGLE.md binds original graph/control artifact, four narrow RED/four wide PASS, eight-context candidate/old-layout regression, strict whole-CSS oracle, actual native16/16 and startup8/8 with independent replay.
+- Revisit: Native link/search graph or matching CSS changes, a surviving negative, original form/focus/theme/geometry/storage/resource regression, live/direct-input or remote drift.

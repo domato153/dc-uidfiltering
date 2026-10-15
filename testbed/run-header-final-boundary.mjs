@@ -30,7 +30,15 @@ const cases=[
  ['header-recent-visit','HeaderRecentVisit',['root','decoration','title','box','list','scrollbar','item','controls','arrow','darkRoot','darkTitle']],
 ];
 const canonical=s=>s.replace(/\r\n/g,'\n');
-const historicalCss=(surface,css)=>surface==='header-gnb'?restoreHistoricalGnbPriorities(css,'base'):css;
+const historicalCss=(surface,css)=>{
+ if(surface==='header-gnb')return restoreHistoricalGnbPriorities(css,'base');
+ if(surface==='header-shell'){
+  const changed='[data-dcuf-header-shell-role="head"] [data-dcuf-header-shell-role="links"] { display: flex !important; flex-shrink: 0 !important; white-space: nowrap !important; }';
+  assert.equal(css.split(changed).length,2,'Exactly one declared native links display correction');
+  return css.replace(changed,changed.replace('display: flex','display: block'));
+ }
+ return css;
+};
 const originalFunctions=control===null?new Map():functions(control), results=[], dependencies={};
 dependencies['tools/header-gnb-priority-contract.mjs']=sha(await readFile('tools/header-gnb-priority-contract.mjs'));
 for(const [surface,family,slots] of cases){
@@ -44,8 +52,13 @@ for(const [surface,family,slots] of cases){
  const oldPrelude=[...originalFunctions].filter(([name])=>name.startsWith(`__dcufBuild${family}`)).map(([,text])=>text).join('\n');
  const old=control===null?null:vm.runInNewContext(`${oldPrelude}\n(${initializer(control,`__dcuf${family}Presenter`)}).style`,{}, {timeout:1000});
  const style=run(`${builder}(${producer}());`);assert.ok(Object.isFrozen(style));
- assert.equal(style.key,surface);assert.equal(style.id,`dcuf-${surface}-style`);assert.equal(sha(canonical(historicalCss(surface,style.css))),frozenCss[surface],'Independent frozen full CSS except declared GNB background priority');
- if(old!==null){assert.equal(style.key,old.key);assert.equal(style.id,old.id);assert.equal(canonical(historicalCss(surface,style.css)),canonical(old.css),'Complete original CSS except declared GNB background priority');}
+ assert.equal(style.key,surface);assert.equal(style.id,`dcuf-${surface}-style`);assert.equal(sha(canonical(historicalCss(surface,style.css))),frozenCss[surface],'Independent frozen full CSS except declared GNB priority and shell links display');
+ if(old!==null){assert.equal(style.key,old.key);assert.equal(style.id,old.id);assert.equal(canonical(historicalCss(surface,style.css)),canonical(old.css),'Complete original CSS except declared GNB priority and shell links display');}
+ if(surface==='header-shell'){
+  for(const changed of [style.css.replace('display: flex !important; flex-shrink','display: grid !important; flex-shrink'),style.css.replace('white-space: nowrap !important','white-space: normal !important'),style.css.replace('min-width: 320px','min-width: 321px')]){
+   assert.throws(()=>assert.equal(sha(canonical(historicalCss(surface,changed))),frozenCss[surface]),'Reject changes outside the one links display declaration');
+  }
+ }
  const realm={__dcufRoot:{}};
  vm.runInNewContext(`${input}\n${source}`,realm,{timeout:1000});
  assert.equal(sha(canonical(historicalCss(surface,realm.__dcufRoot[`__dcuf${family}Presenter`].style.css))),frozenCss[surface],'Existing .style diagnostic consumer preserved');
@@ -59,7 +72,7 @@ for(const [surface,family,slots] of cases){
  const malformed=[null,{...record},Object.freeze({...record,extra:'.extra'}),Object.freeze(Object.fromEntries(Object.entries(record).slice(1))),Object.freeze({...record,[slots[0]]:''}),Object.freeze({...record,[slots[0]]:'  '}),Object.freeze({...record,[slots[0]]:42}),accessor,inherited,Object.freeze({...record,[Symbol('extra')]:'.extra'})];
  for(const input of malformed)assert.throws(()=>vm.runInNewContext(`${build}\n${builder}(input)`,{input},{timeout:1000}),{name:'TypeError'});
  assert.equal(accessed,false);assert.ok(!/\.typea|\bbody\s|\b(?:h1|img|nav)\[|\.dc-filter-dark-mode/.test(build),'No native predicate construction in presentation builder');
- results.push({surface,slots:slots.length,independentNegatives:slots.length,malformedNegatives:malformed.length,cssSha256:sha(canonical(style.css)),historicalCssSha256:frozenCss[surface],declaredPriorityChanges:surface==='header-gnb'?1:0,exactCss:surface!=='header-gnb',preInitialization:true,diagnosticInterface:true});
+ results.push({surface,slots:slots.length,independentNegatives:slots.length,malformedNegatives:malformed.length,cssSha256:sha(canonical(style.css)),historicalCssSha256:frozenCss[surface],declaredPriorityChanges:surface==='header-gnb'?1:0,declaredDisplayChanges:surface==='header-shell'?1:0,exactCss:!['header-gnb','header-shell'].includes(surface),preInitialization:true,diagnosticInterface:true});
 }
 const recentFile='src/targets/mobile/header-recent-visit-presenter.js',recentAdapter='src/targets/mobile/header-recent-visit-host-adapter.js';
 const recent=await readFile(recentFile,'utf8'),recentInputs=functions(await readFile(recentAdapter,'utf8')).get('__dcufDescribeHeaderRecentVisitStyleSelectors');

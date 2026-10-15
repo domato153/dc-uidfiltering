@@ -67,7 +67,8 @@
         { "id": "header-issue-top-contract", "command": "node", "args": ["testbed/run-header-issue-top-contract.mjs", "--require-runtime-under-test"] },
         { "id": "header-recent-title-contract", "command": "node", "args": ["testbed/run-header-cascade-audit.mjs", "--recent-title-contract", "--gnb-reset-contract", "--require-runtime-under-test", "--output", "testbed/artifacts/header-focused-cascade.json"] },
         { "id": "header-viewport-contract", "command": "node", "args": ["testbed/run-header-viewport-contract.mjs", "--require-runtime-under-test", "--output", "testbed/artifacts/header-focused-viewport-contract.json"] },
-        { "id": "header-carousel-contract", "command": "node", "args": ["testbed/run-header-carousel-contract.mjs", "--require-runtime-under-test", "--output", "testbed/artifacts/header-focused-carousel-contract.json"] }
+        { "id": "header-carousel-contract", "command": "node", "args": ["testbed/run-header-carousel-contract.mjs", "--require-runtime-under-test", "--output", "testbed/artifacts/header-focused-carousel-contract.json"] },
+        { "id": "header-dark-toggle-contract", "command": "node", "args": ["testbed/run-header-dark-toggle-contract.mjs", "--require-runtime-under-test", "--output", "testbed/artifacts/header-focused-dark-toggle-contract.json"] }
       ]
     },
     "mobile-focused": {
@@ -94,6 +95,7 @@
         { "id": "header-recent-title-contract", "command": "node", "args": ["testbed/run-header-cascade-audit.mjs", "--recent-title-contract", "--gnb-reset-contract", "--require-runtime-under-test", "--output", "testbed/artifacts/acceptance-header-recent-title-contract.json"] },
         { "id": "header-viewport-contract", "command": "node", "args": ["testbed/run-header-viewport-contract.mjs", "--require-runtime-under-test", "--output", "testbed/artifacts/acceptance-header-viewport-contract.json"] },
         { "id": "header-carousel-contract", "command": "node", "args": ["testbed/run-header-carousel-contract.mjs", "--require-runtime-under-test", "--output", "testbed/artifacts/acceptance-header-carousel-contract.json"] },
+        { "id": "header-dark-toggle-contract", "command": "node", "args": ["testbed/run-header-dark-toggle-contract.mjs", "--require-runtime-under-test", "--output", "testbed/artifacts/acceptance-header-dark-toggle-contract.json"] },
         { "id": "header-final-boundary", "command": "node", "args": ["testbed/run-header-final-boundary.mjs", "--snapshot-contract"] },
         { "id": "header-issue-top-contract", "command": "node", "args": ["testbed/run-header-issue-top-contract.mjs", "--require-runtime-under-test"] },
         { "id": "mobile-observed-palette", "command": "node", "args": ["testbed/run-palette-differential.mjs", "--target", "mobile", "--control", "testbed/artifacts/baseline-mobile-beta.user.js", "--candidate", "testbed/artifacts/runtime-under-test.user.js", "--output", "artifacts/acceptance-observed-mobile-palette.json"] },
@@ -120,6 +122,7 @@
         { "id": "header-recent-title-contract", "command": "node", "args": ["testbed/run-header-cascade-audit.mjs", "--recent-title-contract", "--gnb-reset-contract", "--require-runtime-under-test", "--output", "testbed/artifacts/windows-header-recent-title-contract.json"] },
         { "id": "header-viewport-contract", "command": "node", "args": ["testbed/run-header-viewport-contract.mjs", "--require-runtime-under-test", "--output", "testbed/artifacts/windows-header-viewport-contract.json"] },
         { "id": "header-carousel-contract", "command": "node", "args": ["testbed/run-header-carousel-contract.mjs", "--require-runtime-under-test", "--output", "testbed/artifacts/windows-header-carousel-contract.json"] },
+        { "id": "header-dark-toggle-contract", "command": "node", "args": ["testbed/run-header-dark-toggle-contract.mjs", "--require-runtime-under-test", "--output", "testbed/artifacts/windows-header-dark-toggle-contract.json"] },
         { "id": "header-final-boundary", "command": "node", "args": ["testbed/run-header-final-boundary.mjs", "--snapshot-contract"] },
         { "id": "header-issue-top-contract", "command": "node", "args": ["testbed/run-header-issue-top-contract.mjs", "--require-runtime-under-test"] },
         { "id": "mobile-observed-palette", "command": "node", "args": ["testbed/run-palette-differential.mjs", "--target", "mobile", "--control", "testbed/artifacts/baseline-mobile-beta.user.js", "--candidate", "testbed/artifacts/runtime-under-test.user.js", "--output", "artifacts/windows-observed-mobile-palette.json"] },

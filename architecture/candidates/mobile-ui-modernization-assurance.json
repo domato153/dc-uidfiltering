@@ -17,6 +17,10 @@
     ],
     "upsertContracts": [
       {
+        "id": "header-native-dark-toggle-hit",
+        "summary": "The existing shell links row uses flex instead of block so the original floated darkmodebox stays beside its native UL above search at390px. Preserve nine immutable full selectors, other shell CSS and mount order, native nodes/forms/events/default pointer and Enter theme/search actions, settings and existing resources; the old declaration must reproduce the hit failure."
+      },
+      {
         "id": "header-native-recommendation-stack",
         "summary": "The drawer adapter supplies one immutable full selector for the original issue ancestor only while its owned recommendation is open; the existing presenter raises that context above the native GNB1001 layer using1002, preserving closed stacking, original nodes/events, geometry and existing cleanup without a new state or observer owner."
       },
@@ -284,9 +288,9 @@
         "classification": "presentation-source",
         "layer": "presentation-ui",
         "boundaryState": "mixed",
-        "responsibility": "Owns zero-delta typea shell/head/logo/search/login/dark layout, shell palette rules, and the inherited broad dcheader reset through pure hoisted builders at the original theme/core phases. The reset preserves unprojected and non-typea host coverage. Inherited important declarations and the remaining typea qualifier remain transitional cascade debt. Owns unchanged early declaration factories consuming frozen named adapter selector records at the original hoisted theme/core phase, without raw native selectors in those early builders. Complete late style declarations now consume explicit frozen named full adapter selector inputs through a pure hoisted builder, retaining exact default CSS and the existing style diagnostic interface; native predicate construction is adapter-owned.",
+        "responsibility": "Owns typea shell/head/logo/search/login/dark layout, shell palette rules, and the inherited broad dcheader reset at the original theme/core phases. The existing links display becomes flex for original native dark-toggle reachability; all other shell CSS and resources remain preserved. The reset preserves unprojected and non-typea host coverage. Inherited important declarations and the remaining typea qualifier remain transitional cascade debt. Owns unchanged early declaration factories consuming frozen named adapter selector records at the original hoisted theme/core phase, without raw native selectors in those early builders. Complete late style declarations now consume explicit frozen named full adapter selector inputs through a pure hoisted builder, retaining exact default CSS and the existing style diagnostic interface; native predicate construction is adapter-owned.",
         "sourceRefs": ["src/targets/mobile/header-shell-presenter.js"],
-        "contractRefs": ["ui-ownership", "semantic-preservation", "host-dom-events"],
+        "contractRefs": ["ui-ownership", "semantic-preservation", "host-dom-events", "header-native-dark-toggle-hit"],
         "fitnessRefs": ["invariant-one-visual-owner", "invariant-ui-port-boundary", "invariant-build-inputs-mapped"],
         "transition": {
           "targetBoundaryState": "conforming",
