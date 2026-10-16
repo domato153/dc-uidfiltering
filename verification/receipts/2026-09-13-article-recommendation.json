@@ -1,0 +1,95 @@
+{
+  "schemaVersion": 1,
+  "kind": "modernization-stage-assurance",
+  "stage": "article-recommendation",
+  "status": "PASS",
+  "sourceHead": "b2818a1ab651b2992bf51f35f47ae3d6647808a4",
+  "candidateFingerprint": "8abbece1cb8f3e1137a20df574d691effbda7a9d82aad50ab7bd703ceb7d523f",
+  "evidenceBinding": {
+    "bindingSchemaVersion": 4,
+    "registrySha256": "2275e39d9fd10662c755354df6e8c8161d9a6e19924de12a9e8d83cc0971f191",
+    "architectureStateSha256": "13a7476cb8dc1d089850a9c52812cb1e64a0d7ff8e3e8cbc170c292b7af51d13",
+    "architecturePlanSha256": "d10bb0274bbee5d84be805c66be2256ee75769050b3aac6a7d14a4910ae321ec",
+    "modernizationContractSha256": "2ae71ebf5e2f786f22d61ac489e7afee3aa9d9998dbbdf082b9af991efa444a2",
+    "gatesSha256": "45b27e8b9bc23fe7cdf1a5a4d872d61eb8f17511839b667231e0f0d9f4955494",
+    "sourceInputsSha256": "903309e25919a96db3e20b8b4f007faddb2c264591a9a446a81cf5434b81b293",
+    "harnessSha256": "7f7d22f32327a9051cf85ea634188c4edf712c353fff74c328f0b772bb69daf4",
+    "fixturesSha256": "a5a39c51553eae1d7060f06310387d0f71e5f54712503028e15a81fa6b237856",
+    "toolchainSha256": "9c077234e2b0d40af938bb0e07f52164afea157664f1b040f512744355fe80f4",
+    "proofSystemSha256": "c09e93ccbd373f7ef6c888bad9e8c74be54e69e9de32f6ec58b20c0eb3945bb7",
+    "node": "v22.17.0"
+  },
+  "artifacts": {
+    "mobile": {
+      "version": "3.5.5",
+      "sha256": "A3450208A72F7FAEA7C97D3D050A4CA1467F80B01339CD6FC1BFA3FA4F1C4AD7"
+    },
+    "pc": {
+      "version": "1.9.9",
+      "sha256": "1A7A00468F4DCFB57C7341063098B827743091FD7593BA3FBA86A17E282BDC33"
+    }
+  },
+  "evidence": [
+    {
+      "id": "mobile",
+      "path": "artifacts/article-recommendation-mobile-results.json",
+      "sha256": "80532339fc5e97b4b77d9e6827331d0e6d6e4478e77aa75f98c663d019dfab65",
+      "applicability": "applicable"
+    },
+    {
+      "id": "host",
+      "path": "artifacts/article-recommendation-host-results.json",
+      "sha256": "b5394da3cf5b0342ac8dd34f2a7e17cb7b36ab866b212a7d49475cccc6634f21",
+      "applicability": "applicable"
+    },
+    {
+      "id": "pc",
+      "path": "artifacts/article-recommendation-pc-results.json",
+      "sha256": "d9179c5c40fb4360937925f961fa355a291cc7298e8a9bcfa2b0782b22ea6ee1",
+      "applicability": "applicable"
+    },
+    {
+      "id": "mobileDifferential",
+      "path": "artifacts/article-recommendation-mobile-differential.json",
+      "sha256": "5a4142dae61d2baa1ae3779421a7a7b59c04f459eecd1b98cc6bdb2029ab9f5e",
+      "applicability": "applicable"
+    },
+    {
+      "id": "pcDifferential",
+      "path": "artifacts/article-recommendation-pc-differential.json",
+      "sha256": "565f7f9f844388dac569be9af730732c0fe3081bc7e167d62a26a841bead1c50",
+      "applicability": "applicable"
+    },
+    {
+      "id": "articleDifferential",
+      "path": "artifacts/article-recommendation-article-differential.json",
+      "sha256": "64e3f7be879679294df7d06f9ac16c0197437beaa87af990a7bc2bc0c37ca0b0",
+      "applicability": "applicable"
+    },
+    {
+      "id": "proof",
+      "path": "artifacts/article-recommendation-proof-audit.json",
+      "sha256": "3c9f39fe719c5db7ffe1ca4c9c0973203fb091a1722f0341c7adbb4719bc4811",
+      "applicability": "applicable"
+    }
+  ],
+  "results": {
+    "mobile": {
+      "passed": 99,
+      "failed": 0
+    },
+    "host": {
+      "passed": 11,
+      "failed": 0
+    },
+    "pc": {
+      "passed": 14,
+      "failed": 0
+    },
+    "semanticDifferences": 0,
+    "rawDifferencesPreserved": 50,
+    "rejectedMutations": 59,
+    "acceptedControls": 9
+  },
+  "liveCanary": "UNKNOWN"
+}

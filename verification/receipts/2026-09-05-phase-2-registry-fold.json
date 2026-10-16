@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "candidateId": "phase-2-ui-port",
+  "candidateSha256": "3439c975d73aa931b57a927187ab96aac48e71c085c0789c6937586905e1c6cd",
+  "beforeRegistrySha256": "eb9b0571be3616ee466869e2d7afab980fce34a0abe698319cf0e30ace94fcdd",
+  "afterRegistrySha256": "e0381681ca24dc74aae1062ee99027b2a2d14bb1ba64d303d5630397c1578374",
+  "resultingRegistryVersion": 2,
+  "candidateRemoved": true,
+  "idempotencyReplayMatched": true,
+  "temporaryRefLeakDetected": false
+}

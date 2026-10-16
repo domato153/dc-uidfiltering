@@ -10,7 +10,10 @@
     "build:mobile": "node tools/build-userscript.mjs",
     "build:pc": "node tools/build-pc-filter-userscript.mjs",
     "verify:architecture": "node tools/architecture-registry.mjs validate",
+    "inspect:architecture": "node tools/inspect-live-architecture.mjs",
+    "verify:architecture-links": "node tools/inspect-live-architecture.mjs --check && node tools/test-live-architecture.mjs",
     "verify:boundaries": "node tools/verify-ui-boundaries.mjs",
+    "verify:assurance": "node tools/verify-modernization-assurance.mjs",
     "verify:skills": "node tools/verify-skills.mjs",
     "verify:all": "node tools/verify-repo.mjs all"
   },

@@ -1,0 +1,89 @@
+{
+  "schemaVersion": 1,
+  "kind": "modernization-stage-assurance",
+  "stage": "shared-ui-boundary",
+  "status": "PASS",
+  "sourceHead": "b2818a1ab651b2992bf51f35f47ae3d6647808a4",
+  "candidateFingerprint": "6e09ccdb698b2a69524963b1deb21e4b4bc28e1de2fc9cc2f69afbdfe0e0d73d",
+  "evidenceBinding": {
+    "bindingSchemaVersion": 4,
+    "registrySha256": "2275e39d9fd10662c755354df6e8c8161d9a6e19924de12a9e8d83cc0971f191",
+    "architectureStateSha256": "40b8b24119ba6fc5baf5742ef4347308efc947823d89fd2024dec4702656af7a",
+    "architecturePlanSha256": "eeb5197bb0463fed37fa76050404c8705a19345f4e6327acedf14ab1fb5bc7d8",
+    "modernizationContractSha256": "bd91c87cf4bfcbb85a5de4fcd6a0d1d875b51ee9346f1c9ceacb5f86e596ae56",
+    "gatesSha256": "aa7908804e5953f68ac9a62112749e634df1db29730079870881a89eba217916",
+    "sourceInputsSha256": "6d514576ae802b03be9ec765892a6aa3dda8748125d4323dfe1691873cb8348c",
+    "harnessSha256": "c2402f2fceec81d155033cd0fc9c5a1fc0d942d36d06aeec100ba241c97ca081",
+    "fixturesSha256": "bd2156717d5e264eeb35ede447a2f7e39b39a6f1f6ab7625b1ad4c3c87d5e09d",
+    "toolchainSha256": "9c077234e2b0d40af938bb0e07f52164afea157664f1b040f512744355fe80f4",
+    "proofSystemSha256": "59661ce0a57a7e1b7d4fd8745983ea9b0f525b88d521f2b2c7fd16d28bb6b6dc",
+    "node": "v22.17.0"
+  },
+  "artifacts": {
+    "mobile": {
+      "version": "3.5.5",
+      "sha256": "AB7FB0D91C658AD7D428E3C934AD34BC6E0774DAD1075EBD54852031E8C7CF8E"
+    },
+    "pc": {
+      "version": "1.9.9",
+      "sha256": "93C9F7BF4099A2E8F0E3CEE79CC02B781E1297AAE381C41B0B22F3BB645ABCD0"
+    }
+  },
+  "evidence": [
+    {
+      "id": "mobile",
+      "path": "artifacts/shared-boundary-mobile-results.json",
+      "sha256": "139b8f8a627513fd2e7a0bb434b732fdacc44b38aa48ac32d8aea059705ab518",
+      "applicability": "applicable"
+    },
+    {
+      "id": "host",
+      "path": "artifacts/shared-boundary-host-results.json",
+      "sha256": "8f966f6ab86a5ff1b795804a3ca664df392a0fe13e08e5240a8d2b404871a88a",
+      "applicability": "applicable"
+    },
+    {
+      "id": "pc",
+      "path": "artifacts/shared-boundary-pc-results.json",
+      "sha256": "6d4a54a7ffddb19429008f3b9cfd649b812b2e8ca35b03c281cddc237340dca3",
+      "applicability": "applicable"
+    },
+    {
+      "id": "mobileDifferential",
+      "path": "artifacts/shared-boundary-mobile-differential.json",
+      "sha256": "2fb45be851a0a571c468fda98c4860d7fddc67d06fe3be34896c027b06aa942f",
+      "applicability": "applicable"
+    },
+    {
+      "id": "pcDifferential",
+      "path": "artifacts/shared-boundary-pc-differential.json",
+      "sha256": "c68e75ec4cf1238d3ab34ea4392830e308472b589cec9d8969745aad7f8f7015",
+      "applicability": "applicable"
+    },
+    {
+      "id": "proof",
+      "path": "artifacts/shared-boundary-proof-audit.json",
+      "sha256": "ac990fcb17149d75b4cbd7dae663746b1f47d6034cced2ab23691d99dc7600aa",
+      "applicability": "applicable"
+    }
+  ],
+  "results": {
+    "mobile": {
+      "passed": 97,
+      "failed": 0
+    },
+    "host": {
+      "passed": 11,
+      "failed": 0
+    },
+    "pc": {
+      "passed": 14,
+      "failed": 0
+    },
+    "semanticDifferences": 0,
+    "rawDifferencesPreserved": 20,
+    "rejectedMutations": 54,
+    "acceptedControls": 9
+  },
+  "liveCanary": "UNKNOWN"
+}
