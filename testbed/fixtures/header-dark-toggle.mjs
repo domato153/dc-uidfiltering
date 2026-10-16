@@ -4,6 +4,11 @@ import assert from 'node:assert/strict';
 // row. At390px the first UL wraps; darkmodebox then drops under search z4000.
 // Preserve native parent order, fieldset/input identity and default form input.
 export function withHeaderDarkToggleFixture(html) {
+    // The live width1160 ancestor gives the native head a higher-specificity
+    // fixed width; its auto margins move search when semantic width loses.
+    const shellRoot = 'class="dcheader typea fixture-host-chrome"';
+    assert.equal(html.split(shellRoot).length, 2);
+    html = html.replace(shellRoot, 'class="dcheader typea fixture-host-chrome width1160"');
     const original=/<div class="dchead">[\s\S]*?<\/div><div class="gnb_bar">/;
     assert.equal([...html.matchAll(new RegExp(original.source,'g'))].length,1);
     html=html.replace(original,`<div class="dchead">
@@ -19,6 +24,7 @@ export function withHeaderDarkToggleFixture(html) {
         body { min-height:2000px; }
         #dcuf-testbed-controls { display:none !important; }
         .dchead { position:relative; height:105px; }
+        .width1160 .dchead { width:1160px; margin:0 auto; }
         .dchead .dc_logo { position:absolute; left:0; top:40px; }
         .dchead .wrap_search { position:absolute; left:50%; top:37px; margin-left:-182px; width:364px; }
         .dchead .sch_smit, .dchead fieldset { margin:0; padding:0; border:0; }

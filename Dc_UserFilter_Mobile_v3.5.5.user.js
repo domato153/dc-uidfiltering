@@ -8440,23 +8440,23 @@ const __dcufSettingsPresenter = (() => {
         ${selectors.root} { min-width: 0 !important; width: 100% !important; height: auto !important; background: #fff; border-bottom: 1px solid #e5e5e5; }
         ${selectors.head} {
             display: flex !important;
-            justify-content: space-between !important;
-            align-items: center !important;
-            padding: 8px 15px !important;
-            gap: 15px !important;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 15px;
+            gap: 15px;
             min-width: 320px;
-            box-sizing: border-box !important;
+            box-sizing: border-box;
             width: 100% !important;
         }
-        ${selectors.logo} { flex-shrink: 0 !important; margin: 0 !important; display: block !important; }
-        ${selectors.logoImage} { height: 22px !important; width: auto !important; }
-        ${selectors.logoImageAlt} { display: none !important; }
-        ${selectors.searchWrap} { flex-grow: 1 !important; min-width: 100px !important; max-width: 600px; }
-        ${selectors.topSearch} { width: 100% !important; }
-        ${selectors.links} { display: flex !important; flex-shrink: 0 !important; white-space: nowrap !important; }
+        ${selectors.logo} { flex-shrink: 0; margin: 0; display: block; }
+        ${selectors.logoImage} { height: 22px; width: auto; }
+        ${selectors.logoImageAlt} { display: none; }
+        ${selectors.searchWrap} { flex-grow: 1; min-width: 100px; max-width: 600px; }
+        ${selectors.topSearch} { width: 100%; }
+        ${selectors.links} { display: flex; flex-shrink: 0; white-space: nowrap; }
         ${selectors.darkRoot} {
-            background: #1c1c1e !important;
-            border-bottom-color: #3a3a3c !important;
+            background: #1c1c1e;
+            border-bottom-color: #3a3a3c;
         }
 `
         });

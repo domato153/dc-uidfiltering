@@ -1,6 +1,16 @@
 import assert from 'node:assert/strict';
 
 const layoutChanges = Object.freeze({
+    'header-shell': [
+        ['[data-dcuf-header-shell-role="head"]', ['justify-content: space-between;', 'align-items: center;', 'padding: 8px 15px;', 'gap: 15px;', 'box-sizing: border-box;']],
+        ['[data-dcuf-header-shell-role="head"] h1[data-dcuf-header-shell-role="logo"]', ['flex-shrink: 0;', 'margin: 0;', 'display: block;']],
+        ['[data-dcuf-header-shell-role="head"] h1[data-dcuf-header-shell-role="logo"] img:is([data-dcuf-header-shell-role="logo-image"], [data-dcuf-header-shell-role="logo-image-both"])', ['height: 22px;', 'width: auto;']],
+        ['[data-dcuf-header-shell-role="head"] h1[data-dcuf-header-shell-role="logo"] img:is([data-dcuf-header-shell-role="logo-image-alt"], [data-dcuf-header-shell-role="logo-image-both"])', ['display: none;']],
+        ['[data-dcuf-header-shell-role="head"] [data-dcuf-header-shell-role="search-wrap"]', ['flex-grow: 1;', 'min-width: 100px;']],
+        ['[data-dcuf-header-shell-role="head"] [data-dcuf-header-shell-role="top-search"]', ['width: 100%;']],
+        ['[data-dcuf-header-shell-role="head"] [data-dcuf-header-shell-role="links"]', ['display: flex;', 'flex-shrink: 0;', 'white-space: nowrap;']],
+        ['body.dc-filter-dark-mode [data-dcuf-header-shell-role="root"].typea', ['background: #1c1c1e;', 'border-bottom-color: #3a3a3c;']],
+    ],
     'header-gnb': [
         ['[data-dcuf-header-gnb-role="root"]', ['display: block;', 'height: auto;']],
         ['[data-dcuf-header-gnb-role="root"] nav[data-dcuf-header-gnb-role="nav"]',
@@ -15,7 +25,7 @@ const layoutChanges = Object.freeze({
     ],
 });
 
-// Restore only fourteen declared late-layout priorities for the immutable
+// Restore only declared late-layout priorities for the immutable
 // historical CSS oracle. Exact selector/value/count checks reject wider deltas.
 export function restoreHistoricalHeaderLayoutPriorities(css, surface) {
     assert.ok(Object.hasOwn(layoutChanges, surface), 'Unknown header layout priority contract');

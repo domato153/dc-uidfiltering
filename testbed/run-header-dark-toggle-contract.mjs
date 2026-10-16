@@ -29,6 +29,20 @@ try{for(const [width,height]of [[390,500],[390,900],[750,900],[1280,900]])for(co
  const original=await session.page.evaluateHandle(()=>['a.darkonoff','#preSWord','#searchSubmit','#searchform'].map(s=>{const n=document.querySelector(s);return{node:n,parent:n.parentNode,next:n.nextSibling,attributes:Array.from(n.attributes).filter(a=>!a.name.startsWith('data-dcuf')).map(a=>[a.name,a.value]),handler:n.onclick||n.onsubmit||n.onfocus};}));
  const baseline=await session.page.evaluate(()=>({storage:window.__dcufTestbedGM.snapshot(),resources:window.__dcufHeaderShellHostAdapter.snapshotResources()}));
  result.light=await sample();const dark=result.light.nodes[0];assert.ok(dark.box.width>0&&dark.box.height>0);assert.ok(dark.box.left>=0&&dark.box.right<=result.light.clientWidth);assert.ok(dark.reachable,'Original dark toggle must be hit-reachable above native search');
+ // Independent native width/auto-margin counterexample. Lowering the one
+ // semantic width priority must recover the measured1160px host result.
+ result.shellWidth=await session.page.evaluate(()=>{
+  const head=document.querySelector('.dchead'),root=head.closest('.dcheader'),node=document.getElementById('dcuf-header-shell-style');
+  const rule=Array.from(node.sheet.cssRules).find(r=>r.selectorText==='[data-dcuf-header-shell-role="head"]');
+  const saved=rule.style.cssText,inline=head.getAttribute('style'),parent=head.parentNode,next=head.nextSibling;
+  const read=()=>{const r=head.getBoundingClientRect(),s=getComputedStyle(head);return{width:r.width,x:r.x,marginLeft:s.marginLeft,marginRight:s.marginRight};};
+  const before=read();let removed;
+  try{rule.style.setProperty('width','100%','');removed=read();}finally{rule.style.cssText=saved;}
+  return{before,removed,after:read(),expectedWidth:root.clientWidth,restored:rule.style.cssText===saved&&head.getAttribute('style')===inline&&head.parentNode===parent&&head.nextSibling===next};
+ });
+ assert.equal(result.shellWidth.before.width,result.shellWidth.expectedWidth);assert.equal(result.shellWidth.before.x,0);
+ assert.equal(result.shellWidth.removed.width,1160);assert.notEqual(result.shellWidth.removed.marginRight,result.shellWidth.before.marginRight);
+ assert.deepEqual(result.shellWidth.after,result.shellWidth.before);assert.ok(result.shellWidth.restored);
  assert.ok(result.light.nodes.every(n=>n.box.width>0&&n.box.height>0&&n.reachable),'Search and native login must also remain reachable');
  const toggle=session.page.locator('a.darkonoff');await toggle.click();await session.page.waitForFunction(()=>document.body.classList.contains('dc-filter-dark-mode'));await settle(session.page);result.dark=await sample();assert.ok(result.dark.nodes.every(n=>n.box.width>0&&n.box.height>0&&n.reachable),'Native dark state keeps original theme/search/login input reachable');
  await toggle.focus();await toggle.press('Enter');await session.page.waitForFunction(()=>!document.body.classList.contains('dc-filter-dark-mode'));await settle(session.page);
