@@ -32,7 +32,7 @@ const cases=[
 const canonical=s=>s.replace(/\r\n/g,'\n');
 const historicalCss=(surface,css)=>{
  if(surface==='header-gnb')return restoreHistoricalGnbPriorities(css,'base');
- if(surface==='gallery-page-head')return restoreHistoricalHeaderLayoutPriorities(css,surface);
+ if(['gallery-page-head','header-recent-visit'].includes(surface))return restoreHistoricalHeaderLayoutPriorities(css,surface);
  if(surface==='header-shell'){
   css=restoreHistoricalHeaderLayoutPriorities(css,surface);
   const changed='[data-dcuf-header-shell-role="head"] [data-dcuf-header-shell-role="links"] { display: flex !important; flex-shrink: 0 !important; white-space: nowrap !important; }';
@@ -62,10 +62,11 @@ for(const [surface,family,slots] of cases){
    assert.throws(()=>assert.equal(sha(canonical(historicalCss(surface,changed))),frozenCss[surface]),'Reject changes outside the one links display declaration');
   }
  }
- if(['header-gnb','gallery-page-head','header-shell'].includes(surface)){
+ if(['header-gnb','gallery-page-head','header-shell','header-recent-visit'].includes(surface)){
   // Reintroducing any selected old priority must fail before the immutable
   // historical digest is compared; an unrelated value/rule change also fails.
   const targets=surface==='header-shell'?['justify-content: space-between;','align-items: center;','padding: 8px 15px;','gap: 15px;','box-sizing: border-box;','flex-shrink: 0;','margin: 0;','display: block;','height: 22px;','width: auto;','display: none;','flex-grow: 1;','min-width: 100px;','width: 100%;','display: flex;','white-space: nowrap;','background: #1c1c1e;','border-bottom-color: #3a3a3c;']
+   :surface==='header-recent-visit'?['min-width: 0;','height: auto;','padding: 8px 10px;','background: #f8f9fa;','border: none;','box-sizing: border-box;','margin: 0;','font-size: 14px;','width: 100%;','transform: none;','overflow: visible;','background: #1c1c1e;','border-bottom-color: #3a3a3c;']
    :surface==='header-gnb'?['display: block;','height: auto;','width: auto;','min-width: 0;','padding: 0 15px;','justify-content: center;','width: 100%;']
    :['display: flex;','justify-content: space-between;','align-items: center;','box-sizing: border-box;','width: 100%;','float: none;'];
   for(const declaration of targets){
@@ -94,7 +95,7 @@ for(const [surface,family,slots] of cases){
  const malformed=[null,{...record},Object.freeze({...record,extra:'.extra'}),Object.freeze(Object.fromEntries(Object.entries(record).slice(1))),Object.freeze({...record,[slots[0]]:''}),Object.freeze({...record,[slots[0]]:'  '}),Object.freeze({...record,[slots[0]]:42}),accessor,inherited,Object.freeze({...record,[Symbol('extra')]:'.extra'})];
  for(const input of malformed)assert.throws(()=>vm.runInNewContext(`${build}\n${builder}(input)`,{input},{timeout:1000}),{name:'TypeError'});
  assert.equal(accessed,false);assert.ok(!/\.typea|\bbody\s|\b(?:h1|img|nav)\[|\.dc-filter-dark-mode/.test(build),'No native predicate construction in presentation builder');
- results.push({surface,slots:slots.length,independentNegatives:slots.length,malformedNegatives:malformed.length,cssSha256:sha(canonical(style.css)),historicalCssSha256:frozenCss[surface],declaredPriorityChanges:surface==='header-shell'?19:surface==='header-gnb'?8:surface==='gallery-page-head'?7:0,declaredDisplayChanges:surface==='header-shell'?1:0,exactCss:!['header-gnb','header-shell','gallery-page-head'].includes(surface),preInitialization:true,diagnosticInterface:true});
+ results.push({surface,slots:slots.length,independentNegatives:slots.length,malformedNegatives:malformed.length,cssSha256:sha(canonical(style.css)),historicalCssSha256:frozenCss[surface],declaredPriorityChanges:surface==='header-shell'?19:surface==='header-recent-visit'?13:surface==='header-gnb'?8:surface==='gallery-page-head'?7:0,declaredDisplayChanges:surface==='header-shell'?1:0,exactCss:false,preInitialization:true,diagnosticInterface:true});
 }
 const recentFile='src/targets/mobile/header-recent-visit-presenter.js',recentAdapter='src/targets/mobile/header-recent-visit-host-adapter.js';
 const recent=await readFile(recentFile,'utf8'),recentInputs=functions(await readFile(recentAdapter,'utf8')).get('__dcufDescribeHeaderRecentVisitStyleSelectors');

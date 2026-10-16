@@ -1,5 +1,7 @@
 # Header final admission
 
+Current recent-history disposition: HEADER_RECENT_PRIORITIES.md removes thirteen late priorities while retaining eleven visibility/containment/inline/control/fallback guards. Exact normal native button conflicts and masked width ancestry are causally modeled. Current208D requires its own results; old CD3E/87C6/6B8B receipts retain their original scope. Formal mixed/header admission remains UNKNOWN.
+
 Current shell disposition: HEADER_SHELL_PRIORITIES.md removes nineteen late priorities and binds the measured1160px native width conflict to a causal fixture while retaining five late guards. CD3E requires its own current immediate/routed/native evidence; prior87C6/6B8B packets keep their exact scopes. Formal mixed/header admission remains UNKNOWN.
 
 Current retained-cascade work: HEADER_LAYOUT_PRIORITIES.md removes fourteen late GNB/page-head priorities while retaining tested inline/reset protection. New87C6 artifact requires its own current immediate/routed/live evidence; the older6B8B palette ruling remains exact to its own pair. Five presenters and drawer adapter stay mixed; no formal header admission follows a selected cleanup.

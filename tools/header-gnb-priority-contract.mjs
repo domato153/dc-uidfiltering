@@ -1,6 +1,13 @@
 import assert from 'node:assert/strict';
 
 const layoutChanges = Object.freeze({
+    'header-recent-visit': [
+        ['[data-dcuf-header-recent-visit-role="root"]', ['min-width: 0;', 'height: auto;', 'padding: 8px 10px;', 'background: #f8f9fa;', 'border: none;', 'box-sizing: border-box;']],
+        ['[data-dcuf-header-recent-visit-role="root"] > [data-dcuf-header-recent-visit-role="title"]', ['margin: 0;', 'font-size: 14px;']],
+        ['[data-dcuf-header-recent-visit-role="root"] [data-dcuf-header-recent-visit-role="list"]', ['width: 100%;']],
+        ['[data-dcuf-header-recent-visit-role="root"] > :is([data-dcuf-header-recent-visit-role="control"], [data-dcuf-header-recent-visit-role="arrow"])', ['transform: none;', 'overflow: visible;']],
+        ['.dc-filter-dark-mode [data-dcuf-header-recent-visit-role="root"]', ['background: #1c1c1e;', 'border-bottom-color: #3a3a3c;']],
+    ],
     'header-shell': [
         ['[data-dcuf-header-shell-role="head"]', ['justify-content: space-between;', 'align-items: center;', 'padding: 8px 15px;', 'gap: 15px;', 'box-sizing: border-box;']],
         ['[data-dcuf-header-shell-role="head"] h1[data-dcuf-header-shell-role="logo"]', ['flex-shrink: 0;', 'margin: 0;', 'display: block;']],
@@ -30,9 +37,10 @@ const layoutChanges = Object.freeze({
 export function restoreHistoricalHeaderLayoutPriorities(css, surface) {
     assert.ok(Object.hasOwn(layoutChanges, surface), 'Unknown header layout priority contract');
     for (const [selector, declarations] of layoutChanges[surface]) {
-        const start = `${selector} {`;
-        assert.equal(css.split(start).length - 1, 1, `Exactly one ${selector} rule required`);
-        const from = css.indexOf(start) + start.length;
+        const matches = Array.from(css.matchAll(/([^{}]+)\{([^{}]*)\}/g))
+            .filter(match => match[1].trim() === selector);
+        assert.equal(matches.length, 1, `Exactly one ${selector} rule required`);
+        const from = matches[0].index + matches[0][0].indexOf('{') + 1;
         const to = css.indexOf('}', from);
         assert.ok(to >= from, 'Complete layout rule required');
         let body = css.slice(from, to);

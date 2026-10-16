@@ -342,3 +342,12 @@ The format adapts the explicit “adapted / not adopted wholesale” separation 
 - Reason: ER0 current runtime and public CDP matched styles settle this repository-owned cause. Head-width lowering restores the host1160px rule, producing negative narrow or centered wide margins. Nineteen joint removals retain sampled effects; existing inline/reset/typea counterexamples remain causally distinct.
 - Evidence: HEADER_SHELL_PRIORITIES.md records sixteen Testbed and sixteen public CSS selection states, original dark-sheet limitations,49-entry immediate comparison, current root112-state/136-negative scope and the faithful width/margin negative. CURRENT_STATE.md owns final routed and native results.
 - Revisit: Host width/selector/inline behavior, direct runtime/oracle/harness/fixture/toolchain/browser changes, surviving negative or input/storage/resource/geometry/live/remote drift.
+
+## D-38 — Preserve recent native controls while normalizing paired cascade debt
+
+- SELECTED: Thirteen exact late priority removals after fixed joint selection; preserve eleven late guards and ordered inline descriptions, model actual normal button specificity and the separately masked native width ancestry, retain historical full CSS and renew current differential/routed/live evidence.
+- NOT ADOPTED: Whole-group removal, per-state changing deletion sets, confusing expanded border groups with authored tokens, treating normal specificity as an important exception, selector escalation, new CSS phases or changed scroll/control semantics.
+- DEFERRED: Drawer/early shell/reset/native-applicability disposition, public populated recent-scroll matrix, exact six mixed exit receipts and formal header/feature/upper admission.
+- Reason: ER0 exact current source/runtime and public CDP measurements settle this repository-owned selection. Four native button properties have measured contrary results; background/border must be lowered as paired base/dark declarations. Same-valued important width needs a separate ancestry counterexample.
+- Evidence: HEADER_RECENT_PRIORITIES.md binds sixteen Testbed/sixteen public controlled CSS states, thirteen fixed joint removals,29 immediate observations and eight-context/64-negative before/after causal audits. CURRENT_STATE.md owns final exact reports and limits.
+- Revisit: Native ancestor/rules/inline writes, runtime/oracle/harness/fixture/toolchain/browser changes, surviving negative or original input/scroll/geometry/storage/resource/live/remote drift.

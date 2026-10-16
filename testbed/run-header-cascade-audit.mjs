@@ -5,6 +5,8 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { assertNoRuntimeErrors, createTestPage, getMetrics, launchBrowser, storageKeys } from './harness/runner-utils.mjs';
 import { startServer } from './server/server.mjs';
+import { withHeaderRecentLayoutFixture } from './fixtures/header-recent-layout.mjs';
+import { probeHeaderRecentLayout } from './harness/header-recent-layout.mjs';
 
 // A scoped compatibility/debt observation, not a header acceptance receipt.
 // Every mutation is synchronous and restored before native interactions resume.
@@ -39,6 +41,7 @@ const output = path.resolve(root, args[outputIndex + 1]);
 assert.ok(output.startsWith(path.join(root, 'testbed/artifacts') + path.sep), 'Output must stay in testbed/artifacts');
 const sourceIds = ['header-shell', 'header-gnb', 'gallery-page-head', 'header-recent-visit', 'header-drawer'];
 const dependencyPaths = [
+    'testbed/fixtures/header-recent-layout.mjs', 'testbed/harness/header-recent-layout.mjs',
     'testbed/run-header-cascade-audit.mjs', 'testbed/harness/runner-utils.mjs',
     'testbed/harness/userscript-loader.mjs', 'testbed/harness/gm-shim.js',
     'testbed/harness/boot-probe.js', 'testbed/harness/runtime-instrumentation.js',
@@ -73,6 +76,10 @@ try {
         });
         let nativeKeyboardProbe;
         try {
+            if (recentTitleContract) await session.page.route(`**${route}`, async request => {
+                const response = await request.fetch();
+                await request.fulfill({ response, body: withHeaderRecentLayoutFixture(await response.text()) });
+            });
             await session.goto(route);
             if (dark) {
                 await session.page.evaluate(() => window.__dcufFixture.toggleDark(true));
@@ -764,8 +771,9 @@ try {
                     await original.dispose();
                 }
             }
+            const recentLayout = recentTitleContract ? await probeHeaderRecentLayout(session.page) : null;
             assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
-            observations.push({ id, route, dark, viewport: { width: 1280, height: 900 }, probes, states,
+            observations.push({ id, route, dark, viewport: { width: 1280, height: 900 }, probes, states, recentLayout,
                 ...(nativeKeyboard ? { nativeKeyboard } : {}),
                 ...(recentTitle ? { recentTitle } : {}), ...(gnbReset ? { gnbReset } : {}), ...(gnbBackground ? { gnbBackground } : {}) });
             console.log(`PASS ${id}/${dark ? 'dark' : 'light'}: ${probes.length} priority-removal controls; ${states.length} states`
