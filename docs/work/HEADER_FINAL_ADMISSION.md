@@ -1,5 +1,7 @@
 # Header final admission
 
+Current retained-cascade work: HEADER_LAYOUT_PRIORITIES.md removes fourteen late GNB/page-head priorities while retaining tested inline/reset protection. New87C6 artifact requires its own current immediate/routed/live evidence; the older6B8B palette ruling remains exact to its own pair. Five presenters and drawer adapter stay mixed; no formal header admission follows a selected cleanup.
+
 Latest current ruling: HEADER_CURRENT_PALETTE.md qualifies unchanged6B8B's exact palette owner split after fresh raw/lifecycle observations and40 rejection controls. Original raw FAIL remains, with no observed palette effect/storage/focus/network regression in this scope. Registered actual native candidate16/16 and startup8/8 independently replay. Six exact mixed-owner exit criteria still need their remaining inherited-cascade/applicability disposition and current promotion receipts; formal header/feature/upper admission remains UNKNOWN. The dated units below retain their original runtime scope.
 
 The user authorized completion of remaining item 1 on 2026-10-13: actual Tampermonkey validation, retained header priority/typea adjudication, and the three palette resource differences. This includes installing the pinned extension and exact scripts in fresh isolated temporary profiles. Normal browser/account settings, release/version changes, official branches and content writes remain outside this task.

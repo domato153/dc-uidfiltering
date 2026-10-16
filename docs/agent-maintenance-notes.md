@@ -46,6 +46,10 @@ Temporary recommendation removal retains one open shell in both exact F272 contr
 
 Lowering only the early theme priority exposes our late important base background, not a host-important collision. Before removal, jointly test base background and theme background-color/image across active palettes, missing/disabled palette fallback, dark and viewport states. The 2026-10-14 GNB unit removes exactly those three priorities; selectors/values/phases remain fixed. Strict historical comparisons reconstruct only the declared tokens and still compare complete CSS/order/digests. Apply the same normalization to order negatives so an allowed delta cannot accidentally make an unrelated mutant fail. Retain preimplementation probes at their old-runtime scope and renew current runtime/oracle evidence; genuine wide extension startup does not close native all-palette workflow. See docs/work/HEADER_GNB_BACKGROUND.md.
 
+## Header retained priority selection
+
+A whole-group CSSOM equality on fixtures is insufficient for priority deletion: the6B8B public probe exposes shell width/margins and recent display/insets/width differences despite fixture equality. Conversely the drawer owned group looks equal publicly but has a fixture border/geometry counterexample. Keep both contrary scopes. The selected GNB/page-head cleanup removes only14 late tokens, retains causal inline/reset controls and keeps unchanged historical full-CSS hashes through exact selector/value/count restoration. CSSOM expands shorthands; distinguish expanded properties from authored important-token counts. See docs/work/HEADER_LAYOUT_PRIORITIES.md.
+
 ## Final header inputs and native issue-top feedback
 
 Keep all four late header CSS builders hoisted with frozen named full adapter selectors; preserve complete CSS, specificity, mount phase and `.style` diagnostic consumers. Vary all 27 inputs independently and reject mutable/accessor/inherited/extra records without evaluating getters. The cold snapshot-contract gate proves fixed control-derived CSS hashes; it does not replace the exact-control differential.

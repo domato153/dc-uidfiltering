@@ -63,9 +63,9 @@
             key: 'header-gnb',
             id: 'dcuf-header-gnb-style',
             css: `
-        ${selectors.root} { display: block !important; width: 100% !important; min-width: 0 !important; height: auto !important; box-sizing: border-box !important; background: #3b4890; }
-        ${selectors.nav} { width: auto !important; min-width: 0 !important; padding: 0 15px !important; display: flex !important; justify-content: center !important; }
-        ${selectors.list} { display: flex; flex-wrap: wrap; justify-content: space-around; width: 100% !important; }
+        ${selectors.root} { display: block; width: 100% !important; min-width: 0 !important; height: auto; box-sizing: border-box !important; background: #3b4890; }
+        ${selectors.nav} { width: auto; min-width: 0; padding: 0 15px; display: flex !important; justify-content: center; }
+        ${selectors.list} { display: flex; flex-wrap: wrap; justify-content: space-around; width: 100%; }
 `
         });
     }

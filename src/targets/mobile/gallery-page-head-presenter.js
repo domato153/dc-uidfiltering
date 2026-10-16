@@ -78,19 +78,19 @@
             id: 'dcuf-gallery-page-head-style',
             css: `
         ${selectors.root} {
-            display: flex !important;
-            justify-content: space-between !important;
-            align-items: center !important;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             padding: 10px 15px !important;
-            box-sizing: border-box !important;
-            width: 100% !important;
+            box-sizing: border-box;
+            width: 100%;
             min-height: 50px;
             flex-wrap: wrap;
             gap: 10px;
         }
-        ${selectors.left} { float: none !important; }
+        ${selectors.left} { float: none; }
         ${selectors.right} {
-            float: none !important;
+            float: none;
             margin-left: auto;
             display: flex;
             align-items: center;
