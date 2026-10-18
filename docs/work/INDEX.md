@@ -12,6 +12,8 @@ Run `node tools/inspect-continuity.mjs`; compare fresh root/branch/HEAD ancestry
 
 ## Retrieve for the current question
 
+- `PHONE_VIEWPORT_PROFILE.md`: measured phone screen412×1006, layout980×2306 and scale0.420684; tested native980 layout/input proxy, preserved scale/client-height/engine mismatches. This supersedes earlier unmeasured width/scale assumptions, not full device admission.
+
 - `UI_REVIEW_CHECKLIST.md`: complete code-derived UI design review list, entry paths, child states, source router and uncaptured/host-unknown distinctions; all menus/popups/comment/editor/notification variants must be individually viewable before whole-UI review is complete. Functional evidence remains in `FINAL_FEATURE_STATE_INVENTORY.md`.
 
 - Future UI changes: `docs/ui-surface-contracts.md` routes to `UI_REVIEW_CHECKLIST.md`; select affected IDs and relevant common states for local changes, all applicable children for broad redesign/completion.

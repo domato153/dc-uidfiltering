@@ -318,3 +318,9 @@ Future UI entry: docs/ui-surface-contracts.md → docs/work/UI_REVIEW_CHECKLIST.
 - Before changing viewport geometry, prove the trigger actually crosses the usable edge. A fixed left1100 plus130.03125px width is inside1253; alignment at1230.03125 is correct. Pair non-overflow alignment and real-overflow clamp assertions in both themes, retain original failed evidence and classify the oracle error separately.
 - Compose accepted CSS deltas through exact frozen ledgers; do not refresh an expected full-CSS hash merely to pass. Carousel proof restores exactly56 priorities against208D before checking the original F272-minus-one-rule digest.
 - Current palette qualification is an exact local certificate, not allow-current or admission. Pin imported helper modules outside harness/fixtures, explicit full-suite count/report, original control effects and browser/platform; preserve raw FAIL and generic raw gates. See docs/work/HEADER_CASCADE_FINALIZATION.md.
+
+## Observed phone viewport supersedes narrow-layout assumption (2026-10-18)
+
+- Actual user reading: screen412×1006, layout980×2306, client980×2002, visual scale0.420684278011322, DPR2.625;390 is stress only. Never interchange screenshot pixels, screen size, layout width and page scale.
+- Coarse true and hover true are both observed with touch5; do not normalize them from assumptions about phones. The standard Playwright touch option changes these readings; the bounded native renderer proxy and its remaining limitations are in docs/work/PHONE_VIEWPORT_PROFILE.md.
+- Preserve observed height/scale discrepancies. Do not synthesize getters/meta/CSS or call screenshot scaling exact phone emulation. Read browser outputs and qualify native input separately.

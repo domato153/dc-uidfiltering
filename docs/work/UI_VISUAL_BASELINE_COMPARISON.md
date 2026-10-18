@@ -4,7 +4,11 @@ Status: VIEWPORT_SCOPE_CORRECTED; selected wide-layout defects confirmed; implem
 
 Follow-up cause investigation: UI_BREAKAGE_CAUSE_AUDIT.md supersedes the selected-only triage for current diagnosis. It records15 symptom/contract findings, actual CSS/DOM causes, isolated temporary-style experiments, additional dialogs, fixture differences and setup failures. No product fix was made in that investigation.
 
-## Mobile viewport correction
+## Later measured phone input (2026-10-18)
+
+PHONE_VIEWPORT_PROFILE.md now records user-supplied actual screen412×1006, inner980×2306, client980×2002, visual scale0.420684278011322 and DPR2.625. The earlier980 proxy was directionally correct for layout width but did not reproduce zoom or the full screen/height condition. Preserve the historical observations below; exact browser/height/zoom fidelity is still incomplete.
+
+## Mobile viewport correction (historical proxy)
 
 The user's real Lemur mobile screenshot contradicts the earlier assumption that a390px desktop-context capture represents their normal mobile layout. Its wide header, single-row toolbar and full-width cards resemble a wide page scaled to the phone. Exact Lemur layout width, DPR and page scale cannot be recovered from the image alone. Do not treat physical screenshot width, screen.width and CSS layout width as interchangeable.
 
