@@ -83,10 +83,10 @@ if (command === 'inspect') {
         return {deletedTrackedFile:/^(100644|100755) /.test(git(['ls-files','--stage','--',relative]))};
     });
     const receipt = await publishCheckpoint({ git, remoteHead, checkBoundary, save, paths, message: options['--message'], expectedRemote: options['--expected-remote'], policySha256,
-        validate: async (_paths, base) => {
+        validate: async (_paths, validationBase) => {
             verifyFiles();
             git(['diff', '--cached', '--check']);
-            const result = spawnSync(process.execPath, [...policy.localValidation.slice(1), '--base', base], { cwd: toolRoot, encoding: 'utf8', shell: false, maxBuffer: 16 * 1024 * 1024 });
+            const result = spawnSync(process.execPath, [...policy.localValidation.slice(1), '--base', validationBase], { cwd: toolRoot, encoding: 'utf8', shell: false, maxBuffer: 16 * 1024 * 1024 });
             process.stdout.write(result.stdout || ''); process.stderr.write(result.stderr || '');
             assert.equal(result.status, 0, 'checkpoint validation failed; intentional paths remain staged');
             verifyFiles();

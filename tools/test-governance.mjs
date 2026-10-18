@@ -145,8 +145,10 @@ try {
     const saved=[]; const save=async receipt=>saved.push(structuredClone(receipt));
     writeFileSync(path.join(local,'input.txt'),'candidate\n');
     await test('real temporary Git exact-tree commit/push and no duplicate resume', async()=> {
+        git(['add','--','input.txt']); git(['commit','-m','unpublished runtime fixture']);
+        writeFileSync(path.join(local,'input.txt'),'candidate after unpublished work\n');
         const beforeCount=Number(git(['rev-list','--count','HEAD']).trim());
-        const receipt=await publishCheckpoint({git,remoteHead,checkBoundary:async()=>{},save,paths:['input.txt'],message:'candidate',expectedRemote:base,policySha256:'0'.repeat(64),validate:async()=>assert.equal(git(['diff','--name-only']).trim(),'')});
+        const receipt=await publishCheckpoint({git,remoteHead,checkBoundary:async()=>{},save,paths:['input.txt'],message:'candidate',expectedRemote:base,policySha256:'0'.repeat(64),validate:async(_paths,validationBase)=>{assert.equal(validationBase,base,'Validate all unpublished commits from the expected remote');assert.equal(git(['diff','--name-only']).trim(),'');}});
         assert.equal(receipt.status,'REMOTE_SYNCED_CI_PENDING'); assert.equal(receipt.commit,await remoteHead()); assert.equal(receipt.tree,git(['rev-parse','HEAD^{tree}']).trim()); assert.equal(saved[0].status,'COMMITTED_PENDING_PUSH');
         await pushCheckpoint({git,remoteHead,checkBoundary:async()=>{},save,receipt}); assert.equal(Number(git(['rev-list','--count','HEAD']).trim()),beforeCount+1);
     });

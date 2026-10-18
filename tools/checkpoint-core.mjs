@@ -89,7 +89,7 @@ export async function publishCheckpoint({ git, remoteHead, validate, checkBounda
     git(['add', '--', ...paths]);
     const tree = git(['write-tree']).trim();
     assert.notEqual(tree, git(['rev-parse', 'HEAD^{tree}']).trim(), 'empty checkpoint');
-    await validate(paths, base);
+    await validate(paths, expectedRemote);
     await checkBoundary();
     assert.equal(git(['rev-parse', 'HEAD']).trim(), base, 'HEAD changed during validation');
     assert.equal(git(['write-tree']).trim(), tree, 'index changed during validation');
