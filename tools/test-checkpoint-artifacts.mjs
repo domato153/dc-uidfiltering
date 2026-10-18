@@ -57,6 +57,13 @@ try {
     assert.equal(readFileSync(fixtureEnv.GITHUB_OUTPUT,'utf8'),'needs_build=false\n');
     assert.equal(existsSync(path.join(checkout,'node_modules')),false,'No dependency installation in the fresh fixture');
     unlinkSync(path.join(checkout,'testbed/artifacts/runtime-under-test.user.js'));
+    const missingArtifact=spawnSync(process.execPath,['tools/verify-modernization-assurance.mjs'],{cwd:checkout,env:fixtureEnv,encoding:'utf8',shell:false,maxBuffer:16*1024*1024});
+    assert.notEqual(missingArtifact.status,0,'Default assurance still requires artifact bytes');
+    assert.ok((missingArtifact.stdout+missingArtifact.stderr).includes('recorded current artifact does not exist'));
+    // Return generated files to ordinary LF checkout bytes: the fast route must need no build.
+    for (const file of [files.mobile, `dist/${files.mobile}`, files.pc, `dist/${files.pc}`]) {
+        writeFileSync(path.join(checkout,file),run('git',['show',`${docSha}:${file}`],checkout));
+    }
     const qualified=ci(); assert.equal(qualified.status,0,qualified.stdout+qualified.stderr);
     const receiptPath=path.join(checkout,'artifacts/checkpoint-ci.json');
     const receipt=JSON.parse(readFileSync(receiptPath,'utf8'));

@@ -8,6 +8,10 @@ import { currentSection, parseCurrentArtifacts, parseNextAction, reconcileNextAc
 
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const readyMode = process.argv.includes('--ready');
+const continuityDocsMode = process.argv.includes('--continuity-docs');
+if (continuityDocsMode && (process.argv.length !== 3 || process.argv[2] !== '--continuity-docs')) {
+    throw new Error('--continuity-docs is a standalone document check, not a READY/audit/matrix mode');
+}
 const mutationIndex = process.argv.indexOf('--audit-mutation');
 const mutation = mutationIndex >= 0 ? process.argv[mutationIndex + 1] : null;
 const matrixIndex = process.argv.indexOf('--write-matrix');
@@ -487,7 +491,7 @@ async function validateContinuityContract(contract, continuity, nextTask) {
     }
     let artifact;
     try { artifact = parseCurrentArtifacts(`## Current execution\n${continuity}`); } catch (error) { fail(error.message); }
-    if (artifact) {
+    if (artifact && !continuityDocsMode) {
         const buildTargets = JSON.parse(await readFile(path.join(rootDir, 'build/targets.json'), 'utf8')).targets;
         const outputName = (target) => buildTargets[target].outputPattern.replace('{version}', buildTargets[target].version);
         const artifacts = [
@@ -608,10 +612,13 @@ async function validateAssuranceCase(assurance, continuity) {
     }
 }
 
-validateObservations(values.observations);
-validateDeltas(values.deltas, values.observations);
-validateSurfaces(values.surfaces, values.deltas);
-const matrices = validateStateModel(values.states);
+let matrices = [];
+if (!continuityDocsMode) {
+    validateObservations(values.observations);
+    validateDeltas(values.deltas, values.observations);
+    validateSurfaces(values.surfaces, values.deltas);
+    matrices = validateStateModel(values.states);
+}
 // Parse after audit mutations: historical fields must never become current authority.
 const activeContinuity = currentSection(values.continuity);
 await validateContinuityContract(values.continuityContract, activeContinuity, values.nextTask);
@@ -639,7 +646,8 @@ if (matrixOutput) {
     await mkdir(path.dirname(outputPath), { recursive: true });
     await writeFile(outputPath, `${JSON.stringify(output, null, 2)}\n`, 'utf8');
 }
-console.log(`Modernization assurance contracts ${output.status}: ${matrices.map((item) => `${item.id} ${item.strength}-way ${item.generatedCases}/${item.validCombinations}`).join(', ')}`);
+if (continuityDocsMode) console.log('Continuity documents VALID; artifact files NOT_CHECKED; no product acceptance.');
+else console.log(`Modernization assurance contracts ${output.status}: ${matrices.map((item) => `${item.id} ${item.strength}-way ${item.generatedCases}/${item.validCombinations}`).join(', ')}`);
 console.log(`Authority SHA-256: ${output.authoritySha256}`);
 
 function applyAuditMutation(id, state) {

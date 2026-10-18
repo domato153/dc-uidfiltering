@@ -329,7 +329,7 @@ async function main() {
         }
         if (mode === 'continuity') {
             for (const script of ['tools/verify-governance.mjs', 'tools/verify-modernization-assurance.mjs', 'tools/verify-research-selection.mjs', 'tools/verify-skills.mjs']) {
-                const result = spawnSync(process.execPath, [script], {cwd: rootDir, encoding: 'utf8', shell: false});
+                const result = spawnSync(process.execPath, [script, ...(script === 'tools/verify-modernization-assurance.mjs' ? ['--continuity-docs'] : [])], {cwd: rootDir, encoding: 'utf8', shell: false});
                 if (result.stdout) process.stdout.write(result.stdout);
                 if (result.stderr) process.stderr.write(result.stderr);
                 check(result.status === 0, `${script} verification failed`);
