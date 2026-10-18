@@ -1,21 +1,42 @@
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { isDeepStrictEqual } from 'node:util';
+import { readFile } from 'node:fs/promises';
+import path from 'node:path';
 import { classifyPaletteOwnerSplit, readCurrentInputs } from './classify-palette-owner-split.mjs';
+import { readQualifiedPaletteInputs, assertQualifiedInputsUnchanged } from './run-qualified-mobile-palette.mjs';
 
 const sha = (bytes) => createHash('sha256').update(bytes).digest('hex').toUpperCase();
 const clone = (value) => JSON.parse(JSON.stringify(value));
 const profileAt = process.argv.indexOf('--profile');
 const profileId = profileAt < 0 ? (process.argv.includes('--current') ? 'header-6869' : 'historical') : process.argv[profileAt + 1];
 assert.ok(profileId && !profileId.startsWith('--'), 'Missing exact-artifact profile');
-const input = await readCurrentInputs(profileId);
+const qualifiedAt = process.argv.indexOf('--qualification');
+let input;
+if (qualifiedAt >= 0) {
+    assert.equal(profileId, 'qualified-header', 'Reviewed qualification requires the qualified-header profile');
+    const at = name => process.argv[process.argv.indexOf(name) + 1];
+    for (const name of ['--qualification', '--qualification-sha256', '--report']) {
+        assert.ok(process.argv.includes(name) && at(name) && !at(name).startsWith('--'), `Missing ${name}`);
+    }
+    input = await readQualifiedPaletteInputs({ qualificationPath: at('--qualification'), qualificationSha256: at('--qualification-sha256') });
+    const reportPath = path.resolve(at('--report'));
+    const sidePath = side => path.resolve('testbed/artifacts', `${path.basename(reportPath)}.${side}.json`);
+    input.reportBytes = await readFile(reportPath);
+    input.report = JSON.parse(input.reportBytes);
+    input.controlSideBytes = await readFile(sidePath('control'));
+    input.candidateSideBytes = await readFile(sidePath('candidate'));
+    input.probe = JSON.parse(await readFile(reportPath + '.lifecycle.json'));
+    await assertQualifiedInputsUnchanged(input);
+} else input = await readCurrentInputs(profileId);
 assert.equal(classifyPaletteOwnerSplit(input).classificationStatus, 'DECLARED_OWNER_SPLIT_ONLY');
 let rejected = 0;
 
 function rebuild(mutator) {
     const next = { ...input, report: clone(input.report), fullMobile: clone(input.fullMobile), probe: clone(input.probe),
         surfaceManifest: clone(input.surfaceManifest), deltas: clone(input.deltas),
-        currentBinding: clone(input.currentBinding) };
+        currentBinding: clone(input.currentBinding),
+        ...(input.qualification ? { qualification: clone(input.qualification) } : {}) };
     mutator(next);
     const sides = next.report.sides;
     next.controlSideBytes = Buffer.from(JSON.stringify(sides.control));
@@ -95,7 +116,7 @@ rejects('palette containment lost', (next) => {
 }, /palette open\/focus\/containment is not positive/);
 rejects('owner lifecycle test failed', (next) => {
     next.fullMobile.results.find((entry) => entry.name.startsWith('헤더 셸 CSS')).status = 'failed';
-}, /exact-candidate mobile owner test run is unavailable/);
+}, /exact-candidate mobile owner test run is unavailable|qualified full-mobile report changed/);
 rejects('subscription survives disposal', (next) => {
     next.probe.lifecycle.disposed.allSubscriberKeys.push('header-shell-style');
 }, /disposed: lifecycle subscriber ownership changed/);
@@ -122,7 +143,7 @@ rejects('inactive geometry contract', (next) => {
     next.deltas.contracts.find((entry) => entry.id === next.surfaceManifest.surfaces
         .find((surface) => surface.id === 'tokens-settings-palette').intendedDelta).status = 'retired';
     next.deltasBytes = Buffer.from(JSON.stringify(next.deltas));
-}, /palette geometry normalization has no active contract/);
+}, /palette geometry normalization has no active contract|qualified dependency bytes mismatch: deltas/);
 rejects('control/candidate identity substitution', (next) => {
     next.candidateBytes = next.controlBytes;
 }, /control\/candidate bytes changed/);
@@ -130,8 +151,8 @@ rejects('unknown identity profile', (next) => { next.profileId = 'unreviewed'; }
 rejects('historical profile cannot classify current artifacts', (next) => {
     next.profileId = input.profileId === 'historical' ? 'header-6869' : 'historical';
 }, /control\/candidate bytes changed/);
-rejects('missing full-mobile observation', (next) => { next.fullMobile.results.pop(); }, /exact-candidate mobile owner test run is unavailable/);
-if (input.profileId !== 'historical') {
+rejects('missing full-mobile observation', (next) => { next.fullMobile.results.pop(); }, /exact-candidate mobile owner test run is unavailable|qualified full-mobile report changed/);
+if (input.profileId !== 'historical' && input.profileId !== 'qualified-header') {
     for (const field of ['sourceInputsSha256', 'harnessSha256', 'fixturesSha256', 'toolchainSha256', 'node']) {
         rejects(`retained mobile evidence after ${field} change`, (next) => {
             next.currentBinding[field] = 'changed';
@@ -150,6 +171,33 @@ if (input.profileId !== 'historical') {
     }, /full-mobile browser identity changed/);
     rejects('missing retained unit', (next) => { next.retainedUnitBytes = undefined; }, /retained full-mobile evidence missing/);
     rejects('substituted retained unit', (next) => { next.retainedUnitBytes = Buffer.from('{}'); }, /retained full-mobile unit identity changed/);
+}
+if (input.profileId === 'qualified-header') {
+    for (const field of ['sourceInputsSha256', 'harnessSha256', 'fixturesSha256', 'toolchainSha256', 'node']) {
+        rejects(`qualified evidence after ${field} change`, next => {
+            next.currentBinding[field] = 'changed';
+            next.report.evidenceBinding = clone(next.currentBinding);
+        }, /qualified direct input changed/);
+    }
+    rejects('reviewed qualification swapped', next => { next.qualificationBytes = Buffer.from('{}'); }, /qualification bytes\/object mismatch/);
+    rejects('reviewed qualification digest swapped', next => { next.qualificationSha256 = '0'.repeat(64); }, /reviewed qualification digest changed/);
+    rejects('unqualified artifact profile input', next => { delete next.qualification; }, /qualification fields changed/);
+    rejects('wrong baseline source', next => { next.report.controlSource = 'unreviewed'; }, /palette baseline source identity changed/);
+    rejects('changed browser', next => { next.report.sides.candidate.browser = 'different'; }, /qualified browser changed/);
+    rejects('effects changed on both sides', next => {
+        for (const side of ['control', 'candidate']) next.report.sides[side].observations[2].value.menuLabels.push('unknown-effect');
+    }, /qualified original control effects changed/);
+    for (const dependency of Object.keys(input.qualification.dependencies)) {
+        rejects(`changed ${dependency} input`, next => {
+            next.qualificationDependencyBytes = { ...next.qualificationDependencyBytes, [dependency]: Buffer.from('changed') };
+        }, /qualified dependency changed/);
+    }
+    for (const phase of ['before', 'disposed', 'reconnected', 'repeated']) {
+        rejects(`${phase} unfinished timer`, next => { next.probe.lifecycle[phase].settled.timers = 1; }, /lifecycle work did not settle/);
+        rejects(`${phase} pending observer work`, next => { next.probe.lifecycle[phase].settled.pendingMutationRaf = true; }, /lifecycle work did not settle/);
+        rejects(`${phase} unknown work field`, next => { next.probe.lifecycle[phase].settled.hiddenWork = 1; }, /lifecycle settled fields changed/);
+        rejects(`${phase} unknown adapter resource`, next => { next.probe.lifecycle[phase].adapterResources[0].hiddenWork = 1; }, /exact adapter lifecycle resources changed/);
+    }
 }
 if (input.profileId === 'header-6b8b') {
     rejects('current profile rejects changed baseline authority', next => { next.baselineBytes = Buffer.from('{}'); }, /palette baseline authority changed/);

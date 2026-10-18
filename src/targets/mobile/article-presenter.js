@@ -96,6 +96,24 @@
                 flex-wrap: nowrap;
                 gap: 12px;
             }
+            [data-dcuf-role="article-stat-group"] > :is(
+                [data-dcuf-role="article-view-count"],
+                [data-dcuf-role="article-recommend-count"],
+                [data-dcuf-role="article-comment-count"]
+            ) {
+                display: inline-flex;
+                align-items: center;
+                gap: 3px;
+                white-space: nowrap;
+            }
+            [data-dcuf-role="article-stat-group"] > [data-dcuf-role="article-comment-count"] {
+                inline-size: auto;
+                block-size: auto;
+                margin: 0;
+                padding: 0;
+                border: 0;
+                background: transparent;
+            }
             [data-dcuf-role="article-author"],
             [data-dcuf-role="article-author-ip"] {
                 display: inline-block;
@@ -120,7 +138,7 @@
                 font-size: 13px;
             }
             [data-dcuf-role="article-scrap"] { background: transparent; }
-            [data-dcuf-role="native-article-scrap"] {
+            [data-dcuf-role="article-header"] [data-dcuf-role="article-scrap"] > [data-dcuf-role="native-article-scrap"] {
                 display: inline-flex;
                 align-items: center;
                 justify-content: center;
@@ -163,6 +181,14 @@
                 font-size: var(--dcuf-article-body-font-size, 26px);
                 line-height: var(--dcuf-article-body-line-height, 1.9);
                 word-break: break-all;
+            }
+            [data-dcuf-role="article"][data-dcuf-state="dark"] [data-dcuf-role="article-content"] {
+                color: var(--dcuf-view-fg);
+                filter: none;
+                -webkit-filter: none;
+            }
+            [data-dcuf-role="article"][data-dcuf-state="dark"] [data-dcuf-role="article-content"] > :is(p, div, span, font, b, strong, em, i, a, li, td, th, pre, blockquote) {
+                color: var(--dcuf-view-fg);
             }
             [data-dcuf-role="article-media"],
             [data-dcuf-role="article-content"] :is(img, picture, video, canvas) {
@@ -388,7 +414,7 @@
                 outline: 2px solid var(--dcuf-theme-accent, var(--dcuf-view-accent));
                 outline-offset: 3px;
             }
-            [data-dcuf-role="recommend-up-icon"] {
+            [data-dcuf-role="recommendation"] [data-dcuf-role="native-recommend-up"] > [data-dcuf-role="recommend-up-icon"] {
                 position: relative;
                 display: inline-flex;
                 inline-size: 100%;
@@ -414,13 +440,14 @@
                 letter-spacing: -.04em;
                 text-shadow: 0 1px 1px rgba(0, 0, 0, .12);
             }
-            [data-dcuf-role="recommendation-actions"] {
+            [data-dcuf-surface="article-recommendation"][data-dcuf-role="recommendation"] > [data-dcuf-role="recommendation-actions"] {
                 display: flex;
                 flex-wrap: wrap;
                 align-items: center;
                 justify-content: center;
                 gap: 10px;
                 inline-size: 100%;
+                block-size: auto;
                 margin: 14px 0 6px;
                 padding: 14px 0 10px;
                 border-block-start: 1px solid var(--dcuf-theme-border, var(--dcuf-view-border));
@@ -433,13 +460,17 @@
                 align-items: center;
                 justify-content: center;
                 min-block-size: 34px;
+                block-size: auto;
                 padding-inline: 12px;
                 border: 1px solid var(--dcuf-theme-border-strong, var(--dcuf-view-border-strong));
                 border-radius: 999px;
                 background-color: var(--dcuf-theme-card-top, transparent);
                 background-image: linear-gradient(180deg, var(--dcuf-theme-card-top, transparent), var(--dcuf-theme-surface-input, transparent));
                 color: var(--dcuf-theme-fg-muted, var(--dcuf-view-fg-sub));
+                font-size: 13px;
+                line-height: 1.3;
                 white-space: nowrap;
+                box-sizing: border-box;
                 transition: transform 110ms ease, filter 110ms ease;
             }
             [data-dcuf-role="native-recommendation-action"]:active {

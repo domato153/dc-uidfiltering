@@ -100,76 +100,76 @@
             id: 'dcuf-header-drawer-style',
             css: `
             [data-dcuf-header-drawer-scope="1"] [data-dcuf-header-drawer-actions="1"] {
-                position: relative !important;
-                overflow: visible !important;
+                position: relative;
+                overflow: visible;
             }
             [data-dcuf-header-drawer-scope="1"] [data-dcuf-header-drawer="1"] {
-                position: relative !important;
+                position: relative;
                 z-index: 3;
-                margin: 0 !important;
-                padding: 0 !important;
-                display: inline-flex !important;
-                align-items: center !important;
-                flex: 0 0 auto !important;
+                margin: 0;
+                padding: 0;
+                display: inline-flex;
+                align-items: center;
+                flex: 0 0 auto;
             }
             [data-dcuf-header-drawer-scope="1"] [data-dcuf-header-drawer="1"] .dcuf-header-drawer__toggle {
-                display: inline-flex !important;
-                align-items: center !important;
-                justify-content: center !important;
-                gap: 8px !important;
-                min-height: 32px !important;
-                padding: 0 12px !important;
-                border: 1px solid var(--dcuf-border) !important;
-                border-radius: 999px !important;
-                background: rgba(255, 255, 255, 0.94) !important;
-                color: var(--dcuf-fg-sub) !important;
-                font-size: 12px !important;
-                font-weight: 700 !important;
-                letter-spacing: -0.01em !important;
-                box-shadow: none !important;
-                white-space: nowrap !important;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                gap: 8px;
+                min-height: 32px;
+                padding: 0 12px;
+                border: 1px solid var(--dcuf-border);
+                border-radius: 999px;
+                background: rgba(255, 255, 255, 0.94);
+                color: var(--dcuf-fg-sub);
+                font-size: 12px;
+                font-weight: 700;
+                letter-spacing: -0.01em;
+                box-shadow: none;
+                white-space: nowrap;
             }
             [data-dcuf-header-drawer-scope="1"] [data-dcuf-header-drawer="1"] .dcuf-header-drawer__toggle::after {
                 content: "\\25be";
-                font-size: 10px !important;
-                transition: transform 0.18s ease !important;
+                font-size: 10px;
+                transition: transform 0.18s ease;
             }
             [data-dcuf-header-drawer-scope="1"] [data-dcuf-header-drawer="1"][data-open="1"] .dcuf-header-drawer__toggle::after {
-                transform: rotate(180deg) !important;
+                transform: rotate(180deg);
             }
             [data-dcuf-header-drawer-scope="1"] [data-dcuf-header-drawer="1"] .dcuf-header-drawer__body {
-                display: none !important;
-                max-height: 0 !important;
-                opacity: 0 !important;
-                visibility: hidden !important;
-                margin-top: 0 !important;
-                position: absolute !important;
-                top: calc(100% + 8px) !important;
+                display: none;
+                max-height: 0;
+                opacity: 0;
+                visibility: hidden;
+                margin-top: 0;
+                position: absolute;
+                top: calc(100% + 8px);
                 left: var(--dcuf-header-drawer-inline-start, 0px);
                 right: auto;
-                width: min(${layout.maxWidth}px, calc(var(--dcuf-header-drawer-viewport-width, 100vw) - 24px)) !important;
-                max-width: calc(var(--dcuf-header-drawer-viewport-width, 100vw) - 24px) !important;
-                overflow: hidden !important;
-                pointer-events: none !important;
-                z-index: 60 !important;
-                transition: opacity 0.18s ease !important;
+                width: min(${layout.maxWidth}px, calc(var(--dcuf-header-drawer-viewport-width, 100vw) - 24px));
+                max-width: calc(var(--dcuf-header-drawer-viewport-width, 100vw) - 24px);
+                overflow: hidden;
+                pointer-events: none;
+                z-index: 60;
+                transition: opacity 0.18s ease;
             }
             [data-dcuf-header-drawer-scope="1"] [data-dcuf-header-drawer="1"][data-open="1"] .dcuf-header-drawer__body {
-                display: block !important;
-                opacity: 1 !important;
-                visibility: visible !important;
-                margin-top: 0 !important;
-                pointer-events: auto !important;
-                overflow: visible !important;
+                display: block;
+                opacity: 1;
+                visibility: visible;
+                margin-top: 0;
+                pointer-events: auto;
+                overflow: visible;
             }
             [data-dcuf-header-drawer-scope="1"] [data-dcuf-header-drawer="1"] .dcuf-header-drawer__body-inner:not(:empty) {
-                min-height: 0 !important;
-                overflow: visible !important;
-                display: grid !important;
-                gap: 0 !important;
-                border: 1px solid var(--dcuf-border, #dfe5ee) !important;
-                background: #fff !important;
-                box-shadow: 0 10px 22px rgba(12, 22, 40, 0.12) !important;
+                min-height: 0;
+                overflow: visible;
+                display: grid;
+                gap: 0;
+                border: 1px solid var(--dcuf-border, #dfe5ee);
+                background: #fff;
+                box-shadow: 0 10px 22px rgba(12, 22, 40, 0.12);
             }
             [data-dcuf-header-drawer-scope="1"] ${selectors.door}[data-dcuf-header-native-door-open="1"] {
                 display: block;
@@ -295,10 +295,10 @@
                 position: relative;
             }
             [data-dcuf-header-drawer-scope="1"].dc-filter-dark-mode [data-dcuf-header-drawer="1"] .dcuf-header-drawer__toggle {
-                background: rgba(26, 34, 46, 0.92) !important;
-                border-color: #3d4c60 !important;
-                color: #d2dced !important;
-                box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3) !important;
+                background: rgba(26, 34, 46, 0.92);
+                border-color: #3d4c60;
+                color: #d2dced;
+                box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
             }
         
 `

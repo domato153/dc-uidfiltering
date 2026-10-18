@@ -3,6 +3,7 @@ import {readFile} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
 import vm from 'node:vm';
 import {loadDrawerPresenter} from './header-drawer-body-contract.mjs';
+import {drawerPriorityControl,restoreHistoricalDrawerPriorities} from '../tools/header-drawer-priority-contract.mjs';
 
 export const recommendationStackSelector='.issue_wrap:has(#gall_top_recom.concept_wrap[data-dcuf-header-native-recom="1"][data-dcuf-header-native-recom-open="1"])';
 const entries=[
@@ -22,7 +23,8 @@ const historicalHash='90B5E8E00C5FA2835915AD3D8F6267655FC43A247615FA26C44FD24183
 const validate=style=>{
  const rule=`            [data-dcuf-header-drawer-scope="1"] ${recommendationStackSelector} {\n                z-index: 1002;\n            }\n`;
  assert.equal(style.css.split(rule).length,2,'Exactly one declared open-ancestor rule');
- assert.equal(hash(style.css.replace(rule,'')),historicalHash,'All other native CSS, media, predicates, priorities and order equal frozen F272');
+ const historicalCss=restoreHistoricalDrawerPriorities(style.css);
+ assert.equal(hash(historicalCss.replace(rule,'')),historicalHash,'After exactly the declared56 priority restorations, all other CSS, media, predicates and order equal frozen F272');
 };
 export async function validateCarouselStackBoundary(){
  const source=await readFile('src/targets/mobile/header-drawer-presenter.js','utf8'),adapter=await readFile('src/targets/mobile/header-drawer-host-adapter.js','utf8');
@@ -33,8 +35,9 @@ export async function validateCarouselStackBoundary(){
  const production=vm.runInNewContext(`(()=>{${adapter.slice(start,end)}return nativeStyleDefinition;})()`,{__dcufHeaderDrawerPresenter:presenter});validate(production);
  for(const [slot]of entries){const changed=presenter.describeNativeStyle(freeze(entries.map(([s,selector])=>[s,s===slot?`.negative-${s}`:selector])));
   assert.ok(changed.css.includes(`.negative-${slot}`));assert.notEqual(canonical(changed.css),canonical(style.css));}
- let rejected=0;for(const css of [style.css.replace('z-index: 1002;','z-index: 1001;'),style.css.replace(recommendationStackSelector,'.wrong-native-stack'),style.css.replace('z-index: 60;','z-index: 59;')]){
+ let rejected=0;for(const css of [style.css.replace('z-index: 1002;','z-index: 1001;'),style.css.replace(recommendationStackSelector,'.wrong-native-stack'),style.css.replace('z-index: 60;','z-index: 59;'),
+  style.css.replace('position: relative;','position: relative !important;'),style.css.replace('left: 50% !important;','left: 50%;'),style.css+'\n.dcuf-unlisted-carousel-rule { color:red; }']){
   assert.throws(()=>validate({...style,css}));rejected++;}
  for(const malformed of [bindings.slice(0,-1),Object.freeze(bindings.slice(0,-1)),Object.freeze([...bindings,{slot:'extra',selector:'.extra'}]),Object.freeze(bindings.map(x=>({...x})))]){assert.throws(()=>presenter.describeNativeStyle(malformed));rejected++;}
- return {historicalControlSha256:'F272E4FE3A915FA7C0C41D4A46ED7743647751521EFB06AF9004E33593114036',historicalCssSha256:historicalHash,slots:entries.length,independentSelectorInputs:entries.length,rejectedFaults:rejected,scope:'one declared stacking rule; otherwise full frozen CSS'};
+ return {historicalControlSha256:'F272E4FE3A915FA7C0C41D4A46ED7743647751521EFB06AF9004E33593114036',historicalCssSha256:historicalHash,priorityControl:drawerPriorityControl,slots:entries.length,independentSelectorInputs:entries.length,rejectedFaults:rejected,scope:'one declared stacking rule and exact56 priority delta; otherwise full frozen CSS'};
 }

@@ -99,6 +99,7 @@ function validateSurfaces(manifest, deltas) {
         exactKeys(surface, [
             'id', 'sequence', 'risk', 'state', 'routeFamilies', 'currentVisualOwner', 'sourceRefs', 'adapter', 'presenter',
             'styleIds', 'allowedRoots', 'states', 'intendedDelta', 'cascadeExceptions', 'cascadeExceptionProfiles', 'testRefs', 'canaryCheckpoint',
+            ...(Object.hasOwn(surface, 'generatedCssPayloads') ? ['generatedCssPayloads'] : []),
         ], label);
         ids.push(surface.id);
         if (!Number.isInteger(surface.sequence) || surface.sequence !== index + 1) fail(`${label}: sequence must be contiguous and ordered`);
@@ -134,6 +135,22 @@ function validateSurfaces(manifest, deltas) {
             if (!profile.requiredSelectorPrefix.startsWith('[data-dcuf-')) fail(`${profileLabel}: requiredSelectorPrefix must be semantic-marker scoped`);
             nonEmptyStrings(profile.testRefs, `${profileLabel}.testRefs`);
             if (surface.state !== 'adapted-zero-delta') fail(`${profileLabel}: profiles are transitional and require adapted-zero-delta state`);
+        }
+        if (Object.hasOwn(surface, 'generatedCssPayloads')) {
+            if (!Array.isArray(surface.generatedCssPayloads) || !surface.generatedCssPayloads.length) fail(`${label}: generatedCssPayloads must be non-empty`);
+            const payloadKeys = new Set();
+            for (const [payloadIndex, payload] of (Array.isArray(surface.generatedCssPayloads) ? surface.generatedCssPayloads : []).entries()) {
+                const payloadLabel = `${label}.generatedCssPayloads[${payloadIndex}]`;
+                exactKeys(payload, ['sourceRef', 'styleKey', 'declarationCount', 'declarationLedgerSha256'], payloadLabel);
+                if (!isPlainObject(payload)) continue;
+                if (![payload.sourceRef, payload.styleKey].every(item => typeof item === 'string' && item.trim())) fail(`${payloadLabel}: sourceRef and styleKey are required`);
+                if (!surface.sourceRefs.includes(payload.sourceRef)) fail(`${payloadLabel}: sourceRef is not owned by the surface`);
+                if (!Number.isInteger(payload.declarationCount) || payload.declarationCount < 0) fail(`${payloadLabel}: declarationCount must be nonnegative`);
+                if (typeof payload.declarationLedgerSha256 !== 'string' || !/^[a-f0-9]{64}$/i.test(payload.declarationLedgerSha256)) fail(`${payloadLabel}: declarationLedgerSha256 must be SHA-256`);
+                const key = JSON.stringify([payload.sourceRef, payload.styleKey]);
+                if (payloadKeys.has(key)) fail(`${payloadLabel}: duplicate generated CSS payload`);
+                payloadKeys.add(key);
+            }
         }
         if (surface.state === 'modern-candidate' || surface.state === 'modern') {
             if (surface.adapter.startsWith('planned-') || surface.presenter.startsWith('planned-')) fail(`${label}: modern surface still references a planned owner`);

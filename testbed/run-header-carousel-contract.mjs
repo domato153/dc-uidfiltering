@@ -16,7 +16,7 @@ process.env.DCUF_TESTBED_USERSCRIPT=runtime;process.env.DCUF_TESTBED_TARGET='mob
 const index=args.indexOf('--output'),output=index<0?'testbed/artifacts/header-carousel-contract.json':args[index+1];
 const report={kind:'header-native-carousel-stack-contract',scope:'guarded live-shaped fixture, not actual-extension evidence',runtime,sha256:sha(bytes),
  observerSha256:sha(await readFile('testbed/run-header-carousel-contract.mjs')),fixtureSha256:sha(await readFile('testbed/fixtures/header-carousel.mjs')),evidenceBinding:await createEvidenceBinding(process.cwd()),results:[]};
-report.oracleDependencies=Object.fromEntries(await Promise.all(['testbed/header-carousel-stack-contract.mjs','testbed/header-drawer-body-contract.mjs'].map(async p=>[p,sha(await readFile(p))])));
+report.oracleDependencies=Object.fromEntries(await Promise.all(['testbed/header-carousel-stack-contract.mjs','testbed/header-drawer-body-contract.mjs','tools/header-drawer-priority-contract.mjs'].map(async p=>[p,sha(await readFile(p))])));
 console.log(`Carousel runtime: ${runtime}; SHA-256 ${report.sha256}`);
 report.pureBoundary=await validateCarouselStackBoundary();
 const settle=page=>page.waitForFunction(()=>{const m=window.__dcufTestbedMetrics.snapshot();return m.activeTimeouts===0&&m.activeAnimationFrames===0&&m.activeIntervals===0&&document.getAnimations({subtree:true}).every(a=>a.playState!=='running');},null,{timeout:12000});

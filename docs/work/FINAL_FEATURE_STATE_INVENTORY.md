@@ -1,6 +1,8 @@
 # Final feature/state comparison — local gap matrix
 
-Status: `DRAFT / FINAL DISPOSITION UNKNOWN`. This is a gap map, not a final feature receipt, header-stage PASS, or release gate. The exact published mobile control is `32BA208DDD9973A7EEC343F01E963A833AB4F0C084987077EDAE46844383C25D`; the working-branch mobile candidate is `0C3076699E696AD3C252B5DF21D216F9B6EA32928B4C8A7C160DE0888926450A`; the PC control/candidate are `D3A95C479D8D50F88D97700DE91FA17D1D338B3AEBB488F53D865F445B656212` / `1A7A00468F4DCFB57C7341063098B827743091FD7593BA3FBA86A17E282BDC33`. No final disposition is inferred from source hashes, old stage receipts, screenshots, or broad suites.
+Status: `DRAFT / FINAL DISPOSITION UNKNOWN`. This is a gap map, not a final feature receipt, header-stage PASS, or release gate. The exact published mobile control is `32BA208DDD9973A7EEC343F01E963A833AB4F0C084987077EDAE46844383C25D`; the historical snapshot mobile candidate is `0C3076699E696AD3C252B5DF21D216F9B6EA32928B4C8A7C160DE0888926450A`; the snapshot PC control/candidate are `D3A95C479D8D50F88D97700DE91FA17D1D338B3AEBB488F53D865F445B656212` / `1A7A00468F4DCFB57C7341063098B827743091FD7593BA3FBA86A17E282BDC33`. No final disposition is inferred from source hashes, old stage receipts, screenshots, or broad suites.
+
+Freshness and visual expansion (2026-10-18): the evidence legend and table below retain their0C30 snapshot scope; their word "current" must not be read as the latest artifact. Retrieve fresh identities and live limits from `CURRENT_STATE.md`. `UI_REVIEW_CHECKLIST.md` expands the broad feature rows into the complete code-derived UI review queue, including C-01~18 for normal/reply/detached/inline-media/image-specific comments, composers, native menus and state combinations. All applicable child states need visible review evidence. This inventory update ran no product tests or new live actions and renews no historical PASS.
 
 ## Evidence status and reading rule
 

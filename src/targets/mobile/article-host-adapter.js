@@ -180,7 +180,7 @@
             markAll(articleRoot, '.gallview_head .gall_writer .ip', 'article-author-ip');
             markAll(articleRoot, '.gallview_head .gall_writer .gall_date', 'article-date');
             markAll(articleRoot, '.gallview_head .gall_writer .gall_count', 'article-view-count');
-            markAll(articleRoot, '.gallview_head .gall_writer .gall_recommend', 'article-recommend-count');
+            markAll(articleRoot, '.gallview_head .gall_writer .gall_recommend, .gallview_head .gall_writer .gall_reply_num', 'article-recommend-count');
             markAll(articleRoot, '.gallview_head .gall_writer .gall_comment', 'article-comment-count');
             markAll(articleRoot, '.gallview_head .gall_writer .gall_scrap', 'article-scrap');
             markAll(articleRoot, '.gallview_head .gall_writer .gall_scrap button', 'native-article-scrap');

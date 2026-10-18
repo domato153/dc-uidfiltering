@@ -18,11 +18,18 @@ async function installedChrome() {
     throw new Error('Installed Google Chrome executable not found');
 }
 
+function ownedProcessExited(child) {
+    if (!child?.pid || child.exitCode !== null || child.signalCode) return true;
+    try { process.kill(child.pid, 0); return false; }
+    catch (error) { return error.code === 'ESRCH'; }
+}
+
 async function waitForExit(child, timeout = 3000) {
-    if (!child?.pid || child.exitCode !== null || child.signalCode) return;
+    if (ownedProcessExited(child)) return;
     await new Promise(resolve => {
-        const done = () => { clearTimeout(timer); child.off('exit', done); resolve(); };
+        const done = () => { clearTimeout(timer); clearInterval(poll); child.off('exit', done); resolve(); };
         const timer = setTimeout(done, timeout);
+        const poll = setInterval(() => { if (ownedProcessExited(child)) done(); }, 100);
         child.once('exit', done);
     });
 }
@@ -32,6 +39,7 @@ export async function closeOwnedBrowser({ cdp, browser, child }, gracefulTimeout
     const graceful = (async () => {
         if (cdp) await cdp.send('Browser.close').catch(() => {});
         if (browser) await browser.close().catch(() => {});
+        await waitForExit(child, gracefulTimeout);
     })().catch(() => {});
     try {
         await Promise.race([graceful, new Promise(resolve => { timer = setTimeout(resolve, gracefulTimeout); })]);
@@ -42,7 +50,14 @@ export async function closeOwnedBrowser({ cdp, browser, child }, gracefulTimeout
         child.kill();
         await waitForExit(child);
     }
-    assert.ok(!child?.pid || child.exitCode !== null || child.signalCode, 'Owned Chrome process failed to stop');
+    assert.ok(ownedProcessExited(child), 'Owned Chrome process failed to stop');
+    // Windows can remove the process before Node receives its exit event.
+    // Release only this child's pipes/handle after positive OS absence proof.
+    if (child?.pid && child.exitCode === null && !child.signalCode) {
+        child.stdout?.destroy();
+        child.stderr?.destroy();
+        child.unref();
+    }
 }
 
 export async function launchLiveBrowser({ chromium, flavor, profile, extensionDirectory, headed }) {

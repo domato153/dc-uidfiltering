@@ -2,6 +2,8 @@
 
 Status: `ACTIVE`
 
+Current corrective prerequisite (2026-10-17): **finish the remaining separation and repair/verify all15 confirmed UI defects, then run the real UI-change trial**, following `UI_REPAIR_GATE.md` and `UI_REPLACEABILITY_VALIDATION.md`. All15 original defects have current scoped integrated repair evidence in UI_ALL_REPAIRS.md. Remaining header separation/right-mount/cascade/palette admission is still open; the repair result is not overall readiness. Corrective repairs retain priority over the historical surface order below. The user selected unified Concept01 in `UI_DESIGN_REFERENCES.md` for that later trial: implement the common design across list/article/write/popup and measure locality, coupled edits and preserved behavior. This selection does not start redesign now or certify header/visual/replacement readiness.
+
 This tracked document is the durable implementation plan for replacing the mobile DCInside presentation with a balanced Fluid/Tactile UI while preserving product semantics. Chat plans, screenshots, and historical receipts are context only. Fresh Git state, current machine contracts, exact artifacts, and reproducible evidence take precedence.
 
 ## Success condition
@@ -151,6 +153,7 @@ Report an evidence vector rather than a made-up regression-probability percentag
 
 ## Design contract
 
+- Use `UI_REVIEW_CHECKLIST.md` as the code-derived visual review scope. Every applicable UI and child state, including native popups and all comment/editor variants, must be openable and individually indexed in the comparison gallery. Missing/unknown states block whole-UI visual completion; the four-panel concept cannot substitute for that coverage.
 - Preserve all 14 palette IDs and stored values, mapped to semantic tokens.
 - Keep list information density; do not turn every row into an isolated card.
 - Use 90–120 ms button feedback, 160 ms state transitions, and 200–220 ms popup transitions.

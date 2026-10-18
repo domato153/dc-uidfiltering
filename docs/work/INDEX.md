@@ -12,7 +12,16 @@ Run `node tools/inspect-continuity.mjs`; compare fresh root/branch/HEAD ancestry
 
 ## Retrieve for the current question
 
+- `UI_REVIEW_CHECKLIST.md`: complete code-derived UI design review list, entry paths, child states, source router and uncaptured/host-unknown distinctions; all menus/popups/comment/editor/notification variants must be individually viewable before whole-UI review is complete. Functional evidence remains in `FINAL_FEATURE_STATE_INVENTORY.md`.
+
+- Future UI changes: `docs/ui-surface-contracts.md` routes to `UI_REVIEW_CHECKLIST.md`; select affected IDs and relevant common states for local changes, all applicable children for broad redesign/completion.
+
+- Mandatory prerequisite: finish remaining separation and `UI_REPAIR_GATE.md`. All15 original confirmed defects have scoped repair evidence; `UI_ALL_REPAIRS.md` owns the integrated source/evidence record, final results and remaining header failures. `UI_LIST_TOOLBAR_REPAIR.md` retains preceding UI-01 evidence. Causes/limits: `UI_BREAKAGE_CAUSE_AUDIT.md`. `UI_DESIGN_REFERENCES.md` binds selected unified Concept01; `UI_REPLACEABILITY_VALIDATION.md` applies it in a later real implementation/measurement trial. Selection is not execution or readiness acceptance.
+
+- `UI_VISUAL_BASELINE_COMPARISON.md`: current user-prioritized published-control/current visual triage;100 paired captures, five P1 regressions, shared header defects and misleading write fixture. This supersedes priority cleanup as the next action; no visual/header admission.
+
 - `HEADER_FINAL_ADMISSION.md`: item-1 authorization, palette/priority scope and recovered installed-Chrome actual-extension startup. `docs/live-site-canary.md` owns the reusable `--browser installed-chrome` method and replay. Retrieve exact successful paths before declaring a blocker; the recurrence rule is in `docs/agent-maintenance-notes.md` under Live-test capability scope.
+- `HEADER_CASCADE_FINALIZATION.md`: current FD58 viewport failure reclassification, strict carousel/56-priority lineage and exact local palette qualification; raw FAIL and full-stage UNKNOWN remain. This supersedes the three local validation blockers in UI_ALL_REPAIRS.md.
 - `HEADER_CURRENT_PALETTE.md`: current6B8B exact owner-split ruling, unchanged raw FAIL, fresh lifecycle/40 rejection controls and strict retained-input/baseline bindings; inherited cascade finalization is next.
 - `HEADER_LAYOUT_PRIORITIES.md`: first retained-cascade cleanup, fourteen GNB/page-head priorities removed, current immediate/native evidence and contrary shell/recent/drawer observations; five presenters and drawer adapter remain mixed.
 - `HEADER_SHELL_PRIORITIES.md`: nineteen late shell priorities removed after per-declaration/joint probes; measured native1160px width/auto-margin cause, five retained declarations and faithful causal fixture; remaining early/mixed criteria stay open.
@@ -25,7 +34,7 @@ Run `node tools/inspect-continuity.mjs`; compare fresh root/branch/HEAD ancestry
 - `HEADER_FINISH.md`: completed integrated header implementation and local verification; supersedes per-phase/audit-only continuation boundaries.
 - `VERIFICATION_EFFICIENCY.md`: researched process change, checks/counts/limits.
 - `MOBILE_UI_MODERNIZATION.md`: durable product sequence and surface/final gates.
-- `UI_REPLACEABILITY_VALIDATION.md`: researched real-change scenarios, locality measurements, pilot/final admission and limits; planned, not a readiness PASS.
+- `UI_REPLACEABILITY_VALIDATION.md`: selected Concept01 trial after separation/repair, four-surface implementation, file/layer/coupling/override measurements, same-adapter replacement/restoration and actual-extension checks; planned, not a readiness PASS.
 - `HEADER_DRAWER_LAYOUT_INPUT.md`: width-coupling baseline, retained mixed-state feedback failure, causal diagnostic and the selected prerequisite fix.
 - `HEADER_DRAWER_FINAL_TOP.md`: recommendation final-top correction, original failure regression, current exact artifacts and bounded native/body/input verification.
 - `HEADER_DRAWER_WIDTH_INPUT.md`: frozen presenter width input, one-value width variants, retained hardcoded-adapter negative and current bounded evidence.

@@ -18,6 +18,10 @@ const indexPath = path.join(rootDir, 'architecture', 'INDEX.md');
 const gatesPath = path.join(rootDir, 'verification', 'gates.json');
 const buildTargetsPath = path.join(rootDir, 'build', 'targets.json');
 const command = process.argv[2] || 'validate';
+const transitionPlanOnly = process.argv.includes('--transition-plan');
+if (transitionPlanOnly && command !== 'validate') {
+    throw new Error('--transition-plan is allowed only with validate; promotion and fold replay require completed receipts');
+}
 const allowedLayers = new Set(['domain-shared', 'application-runtime', 'target-adapter', 'presentation-ui', 'composition-build', 'verification']);
 const allowedStatuses = new Set(['accepted', 'candidate', 'retired']);
 const allowedClassifications = new Set([
@@ -261,6 +265,14 @@ async function validateTransitionExits(before, after, candidateRecords, options 
             failures.push(`${componentId}: transition gateReceipt must be inside verification/receipts`);
             continue;
         }
+        const requiredProfiles = requiredTransitionProfiles(component, before, gates);
+        for (const profile of requiredProfiles) {
+            if (!gates.profiles?.[profile]) failures.push(`${componentId}: required transition profile is undefined: ${profile}`);
+        }
+        // The policy gate validates the frozen exit plan before its own result
+        // exists. Default validation, promotion and historical replay still
+        // consume the completed receipt, bound to this exact architecture plan.
+        if (options.planOnly) continue;
         let receiptBytes;
         let receipt;
         try {
@@ -291,12 +303,9 @@ async function validateTransitionExits(before, after, candidateRecords, options 
         if (options.expectedGatesSha256 && receipt.evidenceBinding?.gatesSha256 !== options.expectedGatesSha256) {
             failures.push(`${componentId}: transition gateReceipt is not bound to the embedded gate definitions`);
         }
-        for (const profile of requiredTransitionProfiles(component, before, gates)) {
+        for (const profile of requiredProfiles) {
             const profileDefinition = gates.profiles?.[profile];
-            if (!profileDefinition) {
-                failures.push(`${componentId}: required transition profile is undefined: ${profile}`);
-                continue;
-            }
+            if (!profileDefinition) continue;
             for (const gateCommand of profileDefinition.commands || []) {
                 if (!receipt.results.some((result) => receiptMatchesCommand(result, profile, gateCommand))) {
                     failures.push(`${componentId}: transition gateReceipt is missing passed command ${profile}/${gateCommand.id}`);
@@ -579,7 +588,9 @@ async function main() {
         failures.push(...state.candidateFailures);
         failures.push(...(await validateRegistry(effective, { checkIndex: false })).map((failure) => `effective: ${failure}`));
         failures.push(...validatePresentationOwnership(accepted, effective).map((failure) => `effective: ${failure}`));
-        failures.push(...(await validateTransitionExits(accepted, effective, state.candidates)).map((failure) => `effective: ${failure}`));
+        failures.push(...(await validateTransitionExits(accepted, effective, state.candidates, {
+            planOnly: transitionPlanOnly,
+        })).map((failure) => `effective: ${failure}`));
         if (auditForgedFoldIndex !== -1) {
             const componentId = process.argv[auditForgedFoldIndex + 1];
             const forged = structuredClone(accepted);
@@ -599,7 +610,11 @@ async function main() {
             process.exitCode = 1;
             return;
         }
-        console.log(`Architecture validation passed: ${accepted.components.length} components, ${accepted.contracts.length} contracts, ${accepted.relations.length} relations, ${accepted.invariants.length} invariants.`);
+        if (transitionPlanOnly) {
+            console.log('Architecture transition plan validation passed: finished gate receipts deferred; no boundary exit or promotion certified.');
+        } else {
+            console.log(`Architecture validation passed: ${accepted.components.length} components, ${accepted.contracts.length} contracts, ${accepted.relations.length} relations, ${accepted.invariants.length} invariants.`);
+        }
         return;
     }
 

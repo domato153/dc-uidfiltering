@@ -46,6 +46,19 @@ test('missing explicit browser value rejected before setup', () => {
     }
 });
 
+{
+    const child = spawn(process.execPath, ['-e', "process.on('message', () => setTimeout(() => process.exit(0), 50))"], { stdio: ['ignore', 'ignore', 'ignore', 'ipc'], windowsHide: true });
+    await once(child, 'spawn');
+    let forced = 0;
+    const kill = child.kill.bind(child);
+    child.kill = (...args) => { forced++; return kill(...args); };
+    try {
+        await closeOwnedBrowser({ child, browser: { close: async () => { child.send('close'); } } }, 1000);
+        assert.equal(forced, 0, 'Graceful shutdown must wait for process exit before forced termination');
+        count++; console.log('PASS graceful response does not preempt process shutdown');
+    } finally { if (child.exitCode === null && !child.signalCode) kill(); }
+}
+
 for (const stalled of ['cdp', 'browser']) {
     const child = spawn(process.execPath, ['-e', 'setInterval(() => {}, 1000)'], { stdio: 'ignore', windowsHide: true });
     let watchdog;
@@ -56,13 +69,33 @@ for (const stalled of ['cdp', 'browser']) {
             closeOwnedBrowser({ child, cdp: { send: stalled === 'cdp' ? never : async () => {} }, browser: { close: never } }, 50),
             new Promise((_, reject) => { watchdog = setTimeout(() => { child.kill(); reject(new Error('Cleanup watchdog expired')); }, 5000); })
         ]);
-        assert.ok(child.exitCode !== null || child.signalCode, 'Unresponsive browser left its owned process alive');
+        if (child.exitCode === null && !child.signalCode) {
+            assert.throws(() => process.kill(child.pid, 0), error => error.code === 'ESRCH', 'Unresponsive browser left its owned process alive');
+        }
         count++; console.log(`PASS bounded cleanup after unresponsive ${stalled}`);
     } finally {
         clearTimeout(watchdog);
         if (child.pid && child.exitCode === null && !child.signalCode) child.kill();
     }
 }
+
+{
+    const child = spawn(process.execPath, ['-e', 'setInterval(() => {}, 1000)'], { stdio: 'ignore', windowsHide: true });
+    await once(child, 'spawn');
+    const delayed = new Proxy(child, { get(target, key) {
+        if (key === 'exitCode' || key === 'signalCode') return null;
+        const value = Reflect.get(target, key); return typeof value === 'function' ? value.bind(target) : value;
+    } });
+    try {
+        await closeOwnedBrowser({ child: delayed }, 1);
+        assert.throws(() => process.kill(child.pid, 0), error => error.code === 'ESRCH');
+        count++; console.log('PASS OS absence proves exit when child event is delayed');
+    } finally { if (child.exitCode === null && !child.signalCode) child.kill(); }
+}
+await assert.rejects(closeOwnedBrowser({ child: {
+    pid: process.pid, exitCode: null, signalCode: null, kill: () => false, once() {}, off() {}
+} }, 1), /Owned Chrome process failed to stop/);
+count++; console.log('PASS still-live owned PID cannot pass cleanup');
 
 test('complete actual-extension result passes', () => assert.equal(reportVerdict(good), 'PASS'));
 for (const key of CHECKS) test(`candidate missing positive ${key} fails`, () => {

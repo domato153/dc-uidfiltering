@@ -45,7 +45,7 @@ Omit `--headed` for local headless execution; that is recorded separately from t
 
 `node tools/test-live-site-canary.mjs` is the offline safety/verdict suite, also run by repository guidance verification. It does not contact DCInside and cannot establish a live pass. `tools/verify-live-site-canary.mjs [report-directory]` independently replays artifact/driver/contract hashes, selected cases, positive fields, statuses, and screenshot presence against the current local inputs.
 
-Installed-Chrome cleanup bounds the complete graceful CDP/browser-close sequence to three seconds, then terminates only the child created by that invocation and allows three seconds to confirm exit. A cleanup failure cannot produce a passing receipt. Offline regressions use disposable processes and an independent watchdog to cover stalled CDP and browser-close responses; they do not depend on a responsive Chrome failure path.
+Installed-Chrome cleanup bounds the complete graceful CDP/browser-close sequence to three seconds, then terminates only the child created by that invocation and allows three seconds to confirm exit. Node's exit event may arrive after Windows has already removed that PID; only OS `ESRCH` is accepted as an additional positive exit proof, after which only the owned child's pipes/handle are released. A live PID, permission error or cleanup failure cannot produce a passing receipt. Offline regressions cover stalled CDP/browser-close responses, delayed exit events, and a still-live PID; they do not depend on a responsive Chrome failure path.
 
 ## Fail-closed interpretation
 

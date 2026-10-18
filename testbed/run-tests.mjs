@@ -18,6 +18,10 @@ import {
 } from './harness/runner-utils.mjs';
 import { resolveBuiltUserscript } from './harness/userscript-loader.mjs';
 import { captureBodyPhase, validateBodyPhase } from './header-drawer-body-contract.mjs';
+import { runCommentRepairContract } from './ui-repair-comment-contract.mjs';
+import { runListRepairContract } from './ui-repair-list-contract.mjs';
+import { runArticleRepairContract } from './ui-repair-article-contract.mjs';
+import { runDialogRepairContract } from './ui-repair-dialog-contract.mjs';
 
 const args = new Set(process.argv.slice(2));
 const selectedGroup = process.argv.includes('--group') ? process.argv[process.argv.indexOf('--group') + 1] : null;
@@ -48,6 +52,11 @@ const statsStorage = {
     [storageKeys.personalList]: { uids: [], nicknames: [], ips: [] }
 };
 const noStatsStorage = { ...statsStorage, [storageKeys.threshold]: 0 };
+
+mobileTest('confirmed UI repair: native comment composer cascade and original input', 'functional', runCommentRepairContract);
+mobileTest('confirmed UI repair: list author media search paging and write controls', 'functional', runListRepairContract);
+mobileTest('confirmed UI repair: article metadata scrap media and recommendation', 'functional', runArticleRepairContract);
+test('confirmed UI repair: shared dialog backdrops widths and headtext row', 'functional', context => runDialogRepairContract({ ...context, target: activeTarget }));
 
 mobileTest('header recommendation final top is stable across mixed resize and replacement', 'functional', async ({ browser, server }) => {
     const cases = [
@@ -1701,6 +1710,101 @@ mobileTest('list toolbar never covers the gallery heading search input', 'functi
                     assert.equal(rollback.owned, false, JSON.stringify(rollback));
                 }
             } finally { await session.close(); }
+        }
+    }
+});
+
+mobileTest('native list toolbar contains tabs categories and actions without overlap', 'functional', async ({ browser, server }) => {
+    const presenter = await readFile(path.join(testbedDir, '../src/targets/mobile/list-presenter.js'), 'utf8');
+    const css = presenter.match(/const CSS = `([\s\S]*?)`;/)?.[1];
+    assert.ok(css, 'list presenter CSS must exist');
+    assert.doesNotMatch(css, /\.(?!dcuf-)[A-Za-z_][\w-]*/,
+        'List presentation uses semantic attributes/owned classes; native discovery stays in the adapter');
+    for (const width of [980, 320, 390, 412, 750, 1280]) {
+        for (const variant of ['major', 'minor', 'mini']) {
+            for (const dark of [false, true]) {
+                const prefix = variant === 'major' ? '' : variant === 'minor' ? '/mgallery' : '/mini';
+                const session = await createTestPage(browser, server.baseUrl, {
+                    storage: noStatsStorage, viewport: { width, height: 900 }
+                });
+                try {
+                    await session.goto(`${prefix}/board/lists?id=test&nativeToolbar=1`);
+                    await session.page.waitForSelector('[data-dcuf-surface="list-toolbar"] [data-dcuf-role="tablist"]');
+                    await session.page.locator('#dcuf-testbed-controls').evaluate(element => { element.style.display = 'none'; });
+                    if (dark) await session.page.evaluate(() => window.__dcufFixture.toggleDark(true));
+                    const report = await session.page.evaluate(() => {
+                        const toolbar = document.querySelector('[data-dcuf-surface="list-toolbar"]');
+                        const rect = element => element.getBoundingClientRect().toJSON();
+                        const box = rect(toolbar);
+                        const controls = Array.from(toolbar.querySelectorAll('.array_tab button, .center_box a, select, .btn_write'));
+                        const boxes = controls.map(rect);
+                        const contained = r => r.width >= 1 && r.height >= 1 && r.left >= box.left - 1
+                            && r.right <= box.right + 1 && r.top >= box.top - 1 && r.bottom <= box.bottom + 1;
+                        return {
+                            box, parent: rect(toolbar.parentElement), boxes,
+                            tablist: rect(toolbar.querySelector('.array_tab')),
+                            allContained: boxes.every(contained),
+                            categoryFlow: Array.from(toolbar.querySelectorAll('.center_box a')).every(element => {
+                                const r = rect(element), parent = rect(element.closest('ul'));
+                                return r.left >= parent.left - 1 && r.right <= parent.right + 1
+                                    && r.top >= parent.top - 1 && r.bottom <= parent.bottom + 1;
+                            }),
+                            writeLabel: (() => {
+                                const link = toolbar.querySelector('.btn_write');
+                                const range = document.createRange(); range.selectNodeContents(link);
+                                const text = range.getBoundingClientRect(), r = rect(link);
+                                return text.width > 0 && text.left >= r.left - 1 && text.right <= r.right + 1
+                                    && text.top >= r.top - 1 && text.bottom <= r.bottom + 1;
+                            })(),
+                            allHit: controls.every((element, i) => {
+                                const r = boxes[i];
+                                const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+                                return hit === element || element.contains(hit);
+                            }),
+                            overlap: boxes.some((a, i) => boxes.some((b, j) => i < j
+                                && Math.min(a.right, b.right) - Math.max(a.left, b.left) > 1
+                                && Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top) > 1)),
+                            identity: window.__fixtureNativeToolbarControls.every(({element, parent, next}) =>
+                                element.isConnected && element.parentNode === parent && element.nextSibling === next)
+                        };
+                    });
+                    const label = `${variant}@${width}/${dark ? 'dark' : 'light'}: ${JSON.stringify(report)}`;
+                    assert.equal(Math.abs(report.box.width - report.parent.width) <= 1, true, label);
+                    assert.equal(report.allContained, true, label);
+                    assert.equal(report.categoryFlow, true, label);
+                    assert.equal(report.writeLabel, true, label);
+                    assert.equal(report.allHit, true, label);
+                    assert.equal(report.overlap, false, label);
+                    assert.equal(report.identity, true, label);
+                    assert.equal(report.tablist.width >= 200, true, label);
+                    await session.page.locator('.array_tab button').first().click();
+                    await session.page.locator('.array_tab button').nth(1).focus();
+                    await session.page.keyboard.press('Enter');
+                    assert.equal(await session.page.evaluate(() => window.__fixtureNativeTabClicks), 2, label);
+                    if (variant !== 'major') {
+                        await session.page.locator('.center_box a').first().click();
+                        assert.equal(await session.page.evaluate(() => window.__fixtureNativeCategoryClicks), 1, label);
+                    }
+                    await session.page.locator('#sarray_numbers').selectOption('30');
+                    assert.equal(await session.page.evaluate(() => window.__fixtureNativeCountChanges), 1, label);
+                    await session.page.locator('[data-dcuf-surface="list-toolbar"] .btn_write').click();
+                    assert.equal(await session.page.evaluate(() => window.__fixtureWriteClicks), 1, label);
+                    assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
+                    if (width === 980 && variant === 'minor' && dark) {
+                        const restored = await session.page.evaluate(() => {
+                            const toolbar = document.querySelector('.list_array_option');
+                            window.__dcufListHostAdapter.dispose(document.querySelector('.gall_listwrap'));
+                            return {
+                                roles: toolbar.querySelectorAll('[data-dcuf-role]').length,
+                                style: toolbar.getAttribute('style'),
+                                identity: window.__fixtureNativeToolbarControls.every(({element,parent,next}) =>
+                                    element.isConnected && element.parentNode === parent && element.nextSibling === next)
+                            };
+                        });
+                        assert.deepEqual(restored, {roles:0,style:'height:36px',identity:true}, label);
+                    }
+                } finally { await session.close(); }
+            }
         }
     }
 });

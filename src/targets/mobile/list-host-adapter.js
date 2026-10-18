@@ -26,6 +26,21 @@
             Object.values(value).forEach(deepFreeze);
             return Object.freeze(value);
         };
+        const describeImageAttributes = (node) => {
+            const attributes = { alt: node.getAttribute('alt') || '' };
+            const source = node.getAttribute('src');
+            if (source?.trim()) {
+                try {
+                    const url = new URL(source, document.baseURI);
+                    if (url.protocol === 'https:' || url.protocol === 'http:') attributes.src = url.href;
+                } catch (_) { /* Invalid host media has no renderable source. */ }
+            }
+            ['width', 'height'].forEach((name) => {
+                const value = node.getAttribute(name);
+                if (/^[1-9]\d{0,3}$/.test(value || '') && Number(value) <= 4096) attributes[name] = value;
+            });
+            return attributes;
+        };
         const describeNode = (node) => {
             if (node?.nodeType === Node.TEXT_NODE) return { kind: 'text', text: node.textContent || '' };
             if (!(node instanceof Element)) return null;
@@ -33,6 +48,13 @@
             Array.from(node.attributes).forEach(({ name, value }) => {
                 if (/^(?:aria-[a-z0-9_-]+|data-[a-z0-9_-]+|href|target|title)$/.test(name)) attributes[name] = value;
             });
+            if (node.localName === 'img') Object.assign(attributes, describeImageAttributes(node));
+            const role = node.matches('.gall_writer') ? 'author-identity'
+                : node.matches('.addbox') ? 'author-group'
+                : node.matches('.nickname') ? 'author-name'
+                : node.matches('.ip') ? 'author-ip'
+                : null;
+            if (role) attributes['data-dcuf-role'] = role;
             return {
                 kind: 'element',
                 tag: node.localName,
@@ -338,6 +360,9 @@
                 mark(listWrap, toolbar, { surface: 'list-toolbar', role: 'toolbar', state: 'ready' });
                 releaseInlineGeometry(listWrap, toolbar, ['height']);
                 const tabGroup = toolbar.querySelector('.array_tab');
+                const categories = toolbar.querySelector(':scope > .center_box');
+                const categoryShell = categories?.querySelector(':scope > .inner');
+                const categoryList = categoryShell?.querySelector(':scope > ul');
                 const rightBox = toolbar.querySelector(':scope > .right_box');
                 const outputArray = toolbar.querySelector('.output_array');
                 const pageSizeShell = toolbar.querySelector('.select_box.array_num');
@@ -346,6 +371,9 @@
                 const pageSizePopup = pageSizeShell?.querySelector(':scope > .option_box');
                 const primaryGroup = toolbar.querySelector('.switch_btnbox');
                 mark(listWrap, tabGroup, { role: 'tablist' });
+                mark(listWrap, categories, { role: 'toolbar-categories' });
+                mark(listWrap, categoryShell, { role: 'category-shell' });
+                mark(listWrap, categoryList, { role: 'category-list' });
                 mark(listWrap, rightBox, { role: 'toolbar-actions' });
                 mark(listWrap, outputArray, { role: 'toolbar-cluster' });
                 mark(listWrap, pageSizeShell, { role: 'page-size-shell' });
@@ -391,7 +419,7 @@
                 const queryGroup = searchForm.querySelector('.search_right_box');
                 const queryControls = searchForm.querySelector('.bottom_search');
                 const fieldShell = searchForm.querySelector('.inner_search');
-                const nativeSelect = searchForm.querySelector('select[name="search_type"], #search_type');
+                const nativeSelect = searchForm.querySelector('select[name="search_type"], select#search_type');
                 const legacySelect = searchForm.querySelector('.select_box.bottom_array');
                 const keyword = searchForm.querySelector('input.in_keyword, input[type="text"]');
                 const submit = searchForm.querySelector('.bnt_search, button[type="submit"], button:not([type])');
@@ -399,7 +427,17 @@
                 mark(listWrap, controls, { role: 'controls' });
                 mark(listWrap, selectGroup, { role: 'select-group' });
                 mark(listWrap, nativeSelect, { role: 'select' });
-                mark(listWrap, legacySelect, { role: 'legacy-select', state: nativeSelect ? 'superseded' : 'active' });
+                // The real SELECT may be inside the legacy shell. Preserve its
+                // ancestor and hide only a separate obsolete visual trigger.
+                const containsNativeSelect = nativeSelect instanceof HTMLSelectElement && legacySelect?.contains(nativeSelect);
+                mark(listWrap, legacySelect, containsNativeSelect
+                    ? { role: 'select-shell', state: 'active' }
+                    : { role: 'legacy-select', state: nativeSelect ? 'superseded' : 'active' });
+                if (containsNativeSelect) {
+                    legacySelect.querySelectorAll(':scope > .select_area').forEach((trigger) => {
+                        if (!trigger.contains(nativeSelect)) mark(listWrap, trigger, { role: 'legacy-select', state: 'superseded' });
+                    });
+                }
                 mark(listWrap, queryGroup, { role: 'query-group' });
                 mark(listWrap, queryControls, { role: 'query-controls' });
                 mark(listWrap, fieldShell, { role: 'field-shell' });

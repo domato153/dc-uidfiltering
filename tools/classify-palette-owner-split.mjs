@@ -41,6 +41,90 @@ const STEPS = [
 const SETTLED_INDEXES = [5, 12, 18];
 const sha = (bytes) => createHash('sha256').update(bytes).digest('hex').toUpperCase();
 const check = (condition, message) => { if (!condition) throw new Error(message); };
+const DIRECT_BINDINGS = ['sourceInputsSha256', 'harnessSha256', 'fixturesSha256', 'toolchainSha256', 'node'];
+export const PALETTE_QUALIFICATION_DEPENDENCIES = Object.freeze({
+    baseline: 'verification/baselines.json',
+    observer: 'testbed/run-palette-differential.mjs',
+    classifier: 'tools/classify-palette-owner-split.mjs',
+    probe: 'tools/probe-palette-owner-lifecycle.mjs',
+    gate: 'tools/run-qualified-mobile-palette.mjs',
+    mobileOracle: 'testbed/header-drawer-body-contract.mjs',
+    listOracle: 'testbed/ui-repair-list-contract.mjs',
+    articleOracle: 'testbed/ui-repair-article-contract.mjs',
+    commentOracle: 'testbed/ui-repair-comment-contract.mjs',
+    dialogOracle: 'testbed/ui-repair-dialog-contract.mjs',
+    surfaceManifest: 'architecture/ui-surfaces.json',
+    deltas: 'verification/intended-deltas.json',
+});
+
+function exactKeys(value, keys, label) {
+    check(value && typeof value === 'object' && !Array.isArray(value)
+        && isDeepStrictEqual(Object.keys(value).sort(), [...keys].sort()), `${label} fields changed`);
+}
+
+// This is a reviewed exact-artifact certificate, never an allow-current policy.
+// The gate command separately pins its canonical digest in verification/gates.json.
+export function assertPaletteQualification(value) {
+    exactKeys(value, ['schemaVersion', 'kind', 'controlSha256', 'candidateSha256', 'controlSemanticSha256', 'browser', 'platform',
+        'evidenceBinding', 'dependencies', 'fullMobile'], 'qualification');
+    check(value.schemaVersion === 1 && value.kind === 'exact-header-palette-owner-qualification', 'wrong qualification kind');
+    check(value.controlSha256 === PROFILES['header-6b8b'].control, 'qualification controlSha256 must be the original beta baseline');
+    check(/^[A-F0-9]{64}$/.test(value.candidateSha256), 'invalid qualification candidateSha256');
+    check(value.candidateSha256 !== value.controlSha256, 'qualification artifacts must be distinct');
+    check(/^[A-F0-9]{64}$/.test(value.controlSemanticSha256), 'invalid qualification controlSemanticSha256');
+    check(typeof value.browser === 'string' && value.browser.trim().length > 0, 'qualification browser missing');
+    check(/^(?:win32|linux|darwin)\/(?:x64|arm64)$/.test(value.platform), 'invalid qualification platform');
+    exactKeys(value.evidenceBinding, DIRECT_BINDINGS, 'qualification evidenceBinding');
+    for (const field of DIRECT_BINDINGS.filter(key => key !== 'node')) {
+        check(/^[a-f0-9]{64}$/.test(value.evidenceBinding[field]), `invalid qualification evidenceBinding.${field}`);
+    }
+    check(/^v\d+\.\d+\.\d+$/.test(value.evidenceBinding.node), 'invalid qualification evidenceBinding.node');
+    exactKeys(value.dependencies, Object.keys(PALETTE_QUALIFICATION_DEPENDENCIES), 'qualification dependencies');
+    for (const [key, digest] of Object.entries(value.dependencies)) {
+        check(/^[A-F0-9]{64}$/.test(digest), `invalid qualification dependency ${key}`);
+    }
+    exactKeys(value.fullMobile, ['path', 'sha256', 'testCount'], 'qualification fullMobile');
+    check(typeof value.fullMobile.path === 'string'
+        && /^(?:artifacts|testbed\/artifacts)\/[A-Za-z0-9_./-]+\.json$/.test(value.fullMobile.path)
+        && !value.fullMobile.path.split('/').some(part => part === '.' || part === '..' || part === ''),
+    'invalid qualification fullMobile.path');
+    check(/^[A-F0-9]{64}$/.test(value.fullMobile.sha256), 'invalid qualification fullMobile.sha256');
+    check(Number.isSafeInteger(value.fullMobile.testCount) && value.fullMobile.testCount >= OWNER_TESTS.length,
+        'invalid qualification fullMobile.testCount');
+    return value;
+}
+
+function assertQualifiedInputs(input) {
+    const qualification = assertPaletteQualification(input.qualification);
+    check(qualification.platform === `${process.platform}/${process.arch}`, 'qualified platform changed');
+    check(isDeepStrictEqual(JSON.parse(input.qualificationBytes), qualification), 'qualification bytes/object mismatch');
+    check(/^[A-F0-9]{64}$/.test(input.qualificationSha256)
+        && digestEvidenceBytes('qualification.json', input.qualificationBytes).toUpperCase() === input.qualificationSha256,
+    'reviewed qualification digest changed');
+    for (const field of DIRECT_BINDINGS) {
+        check(input.currentBinding?.[field] === qualification.evidenceBinding[field], `qualified direct input changed: ${field}`);
+    }
+    for (const [key, relative] of Object.entries(PALETTE_QUALIFICATION_DEPENDENCIES)) {
+        check(input.qualificationDependencyBytes?.[key]
+            && digestEvidenceBytes(relative, input.qualificationDependencyBytes[key]).toUpperCase() === qualification.dependencies[key],
+        `qualified dependency changed: ${key}`);
+    }
+    for (const [key, inputKey] of [['baseline', 'baselineBytes'], ['observer', 'observerBytes'],
+        ['classifier', 'classifierBytes'], ['probe', 'probeScriptBytes'],
+        ['surfaceManifest', 'surfaceManifestBytes'], ['deltas', 'deltasBytes']]) {
+        check(input[inputKey] && Buffer.from(input[inputKey]).equals(Buffer.from(input.qualificationDependencyBytes[key])),
+            `qualified dependency bytes mismatch: ${key}`);
+    }
+    check(sha(input.fullMobileBytes) === qualification.fullMobile.sha256, 'qualified full-mobile report changed');
+    check(isDeepStrictEqual(input.fullMobile?.selection, { group: null, filter: null, excludeFilter: null }),
+        'qualified full-mobile run must be unfiltered');
+    check(input.fullMobile?.browser?.version === qualification.browser
+        && input.report?.sides?.control?.browser === qualification.browser
+        && input.report?.sides?.candidate?.browser === qualification.browser, 'qualified browser changed');
+    check(input.fullMobile?.runtime?.path === path.join(root, 'testbed/artifacts/runtime-under-test.user.js'),
+        'qualified full-mobile runtime path changed');
+    return qualification;
+}
 
 export function assertRetainedMobileReuse({ unitBytes, fullMobileBytes, currentBinding,
     profileId = 'header-6869', routeBytes, mobileOracleBytes }) {
@@ -84,6 +168,11 @@ function projected(entry) {
     return { ...clone, value: { ...value, activeObservers: observerCreations - observerDisconnects } };
 }
 
+export function digestPaletteSemanticObservations(observations) {
+    check(Array.isArray(observations) && observations.length === 22, 'palette semantic observations missing');
+    return sha(Buffer.from(JSON.stringify(observations.map(projected))));
+}
+
 function positivePalettePath(observations, mode) {
     const at = (step) => observations.find((entry) => entry.failureMode === mode && entry.step === step)?.value;
     const initial = at('initial');
@@ -107,7 +196,7 @@ function positivePalettePath(observations, mode) {
     if (mode === 'read') check(initial.paletteWarnings?.semantic?.length > 0, 'read-failure warning is missing');
 }
 
-function checkLifecycleProbe(probe, browser) {
+function checkLifecycleProbe(probe, browser, requireSettled = false) {
     check(probe?.browser === browser && probe.runtime === path.join(root, 'testbed/artifacts/runtime-under-test.user.js'),
         'lifecycle probe browser/runtime identity changed');
     const phases = probe.lifecycle || {};
@@ -129,6 +218,20 @@ function checkLifecycleProbe(probe, browser) {
                 && (subscriberCount ? entry.activeRoots > 0 : entry.activeRoots === 0)),
         `${name}: lifecycle styles or adapter resources changed`);
         check(phase.activeObservers === 5, `${name}: lifecycle observer count changed`);
+        if (requireSettled) {
+            exactKeys(phase.settled, ['timers', 'frames', 'intervals', 'pendingMutations',
+                'pendingMutationRaf', 'pendingMutationTimer', 'taskQueues', 'errors'], `${name}: lifecycle settled`);
+            check(phase.settled.timers === 0 && phase.settled.frames === 0
+                && phase.settled.intervals === 0 && phase.settled.pendingMutations === 0
+                && phase.settled.pendingMutationRaf === false && phase.settled.pendingMutationTimer === false
+                && phase.settled.taskQueues === 0 && isDeepStrictEqual(phase.settled.errors, []),
+            `${name}: lifecycle work did not settle`);
+            const roots = subscriberCount ? 1 : 0;
+            const expected = Array.from({ length: 3 }, () => ({ activeRoots: roots, mutationSubscribers: subscriberCount }));
+            expected.push({ activeRoots: roots, scrollListeners: subscriberCount, documentListeners: subscriberCount,
+                mutationSubscribers: subscriberCount, timers: 0, animationFrames: 0 });
+            check(isDeepStrictEqual(phase.adapterResources, expected), `${name}: exact adapter lifecycle resources changed`);
+        }
     }
     check(phases.disposed.adapterResources[3].documentListeners === 0
         && phases.disposed.adapterResources[3].scrollListeners === 0
@@ -149,8 +252,11 @@ function checkLifecycleProbe(probe, browser) {
 
 export function classifyPaletteOwnerSplit(input) {
     const profileId = input.profileId || 'historical';
-    check(Object.hasOwn(PROFILES, profileId), 'unknown exact-artifact profile');
-    const { control: CONTROL_SHA, candidate: CANDIDATE_SHA, mobileCount } = PROFILES[profileId];
+    const qualification = profileId === 'qualified-header' ? assertQualifiedInputs(input) : null;
+    check(qualification || Object.hasOwn(PROFILES, profileId), 'unknown exact-artifact profile');
+    const { control: CONTROL_SHA, candidate: CANDIDATE_SHA, mobileCount } = qualification
+        ? { control: qualification.controlSha256, candidate: qualification.candidateSha256, mobileCount: qualification.fullMobile.testCount }
+        : PROFILES[profileId];
     const { report, reportBytes, controlSideBytes, candidateSideBytes, controlBytes, candidateBytes,
         observerBytes, currentBinding, fullMobile, architecture, classifierBytes, probe,
         surfaceManifest, surfaceManifestBytes, deltas, deltasBytes } = input;
@@ -160,7 +266,7 @@ export function classifyPaletteOwnerSplit(input) {
         'wrong palette raw report');
     check(report.controlSha256 === CONTROL_SHA && report.candidateSha256 === CANDIDATE_SHA && report.equivalent === false,
         'raw FAIL or artifact identity changed');
-    if (profileId === 'header-6b8b') {
+    if (profileId === 'header-6b8b' || qualification) {
         check(input.baselineBytes && digestEvidenceBytes('verification/baselines.json', input.baselineBytes).toUpperCase()
             === '0ADAED6B58532372E7B6354410BAD23DCCCD0236D11166939764EE1A21588B5F',
         'palette baseline authority changed');
@@ -191,7 +297,7 @@ export function classifyPaletteOwnerSplit(input) {
     'exact-candidate mobile owner test run is unavailable');
     for (const name of OWNER_TESTS) check(fullMobile.results.filter((entry) => entry.name === name && entry.status === 'passed').length === 1,
         `owner lifecycle test missing or duplicated: ${name}`);
-    if (profileId !== 'historical') {
+    if (profileId !== 'historical' && !qualification) {
         assertRetainedMobileReuse({ profileId, unitBytes: input.retainedUnitBytes, fullMobileBytes: input.fullMobileBytes, currentBinding,
             routeBytes: input.retainedRouteBytes, mobileOracleBytes: input.mobileOracleBytes });
         check(fullMobile.browser?.version === report.sides?.candidate?.browser, 'full-mobile browser identity changed');
@@ -217,7 +323,9 @@ export function classifyPaletteOwnerSplit(input) {
         `${sideName} pending-read ordering is not positive`);
     }
     check(report.sides.control.browser === report.sides.candidate.browser, 'browser versions differ');
-    checkLifecycleProbe(probe, report.sides.candidate.browser);
+    if (qualification) check(digestPaletteSemanticObservations(report.sides.control.observations)
+        === qualification.controlSemanticSha256, 'qualified original control effects changed');
+    checkLifecycleProbe(probe, report.sides.candidate.browser, Boolean(qualification));
     const rawDifferences = report.sides.control.observations.flatMap((entry, index) =>
         isDeepStrictEqual(entry, report.sides.candidate.observations[index]) ? []
             : [{ index, control: entry, candidate: report.sides.candidate.observations[index] }]);
@@ -260,7 +368,9 @@ export function classifyPaletteOwnerSplit(input) {
         rawReportSha256: sha(reportBytes), controlSideSha256: sha(controlSideBytes),
         candidateSideSha256: sha(candidateSideBytes), observerSha256: sha(observerBytes),
         classifierSha256: sha(classifierBytes), fullMobileRunSha256: sha(input.fullMobileBytes),
-        ...(profileId === 'header-6b8b' ? { baselineSha256: digestEvidenceBytes('verification/baselines.json', input.baselineBytes).toUpperCase() } : {}),
+        ...(profileId === 'header-6b8b' || qualification ? { baselineSha256: digestEvidenceBytes('verification/baselines.json', input.baselineBytes).toUpperCase() } : {}),
+        ...(qualification ? { qualificationSha256: input.qualificationSha256,
+            qualificationScope: 'exact-artifact-owner-split-only' } : {}),
         ...(input.retainedUnitBytes ? { retainedEvidence: {
             unitSha256: sha(input.retainedUnitBytes),
             ...(input.retainedRouteBytes ? { routeSha256: sha(input.retainedRouteBytes) } : {}),

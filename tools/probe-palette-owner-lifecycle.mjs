@@ -7,7 +7,7 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const runtime = path.join(root, 'testbed/artifacts/runtime-under-test.user.js');
 const expectedKeys = ['header-shell-style', 'gallery-page-head-style', 'header-gnb-style', 'header-recent-visit-navigation'];
 
-export async function probePaletteOwnerLifecycle() {
+export async function probePaletteOwnerLifecycle({ settleEachPhase = false } = {}) {
     process.env.DCUF_TESTBED_USERSCRIPT = runtime;
     process.env.DCUF_TESTBED_TARGET = 'mobile';
     const server = await startServer();
@@ -26,7 +26,7 @@ export async function probePaletteOwnerLifecycle() {
                     && !bus.has('ui-post-reveal-recovery')
                     && document.querySelector('.newvisit_list')?.dataset.dcufRecentNavigationBound === '1';
             }, expectedKeys);
-            const lifecycle = await session.page.evaluate((keys) => {
+            const samplePhase = (name) => session.page.evaluate(({ keys, name }) => {
                 const bus = window.__dcufRuntimeCoordinator;
                 const adapters = [
                     window.__dcufHeaderShellHostAdapter,
@@ -50,15 +50,38 @@ export async function probePaletteOwnerLifecycle() {
                         return metrics.mutationObserversCreated - metrics.mutationDisconnectCalls;
                     })(),
                 });
-                const before = sample();
-                adapters.forEach((adapter) => adapter.dispose());
-                const disposed = sample();
-                adapters.forEach((adapter) => adapter.connect(document, { runtimeCoordinator: bus }));
-                const reconnected = sample();
-                adapters.forEach((adapter) => adapter.connect(document, { runtimeCoordinator: bus }));
-                const repeated = sample();
-                return { before, disposed, reconnected, repeated };
-            }, expectedKeys);
+                const act = (phase) => {
+                    if (phase === 'disposed') adapters.forEach((adapter) => adapter.dispose());
+                    if (phase === 'reconnected' || phase === 'repeated') {
+                        adapters.forEach((adapter) => adapter.connect(document, { runtimeCoordinator: bus }));
+                    }
+                };
+                if (name === 'all') return Object.fromEntries(['before', 'disposed', 'reconnected', 'repeated']
+                    .map((phase) => { act(phase); return [phase, sample()]; }));
+                act(name);
+                return sample();
+            }, { keys: expectedKeys, name });
+            const lifecycle = settleEachPhase ? {} : await samplePhase('all');
+            for (const name of settleEachPhase ? ['before', 'disposed', 'reconnected', 'repeated'] : []) {
+                lifecycle[name] = await samplePhase(name);
+                    await session.page.waitForFunction(() => {
+                        const metrics = window.__dcufTestbedMetrics.snapshot();
+                        return metrics.activeTimeouts === 0 && metrics.activeAnimationFrames === 0
+                            && metrics.activeIntervals === 0 && !metrics.dcuf?.pendingMutations
+                            && !metrics.dcuf?.pendingMutationRaf && !metrics.dcuf?.pendingMutationTimer
+                            && !metrics.dcuf?.taskQueues;
+                    });
+                    const settledSample = await samplePhase('sample');
+                    const settled = await session.page.evaluate(() => {
+                        const m = window.__dcufTestbedMetrics.snapshot();
+                        return { timers: m.activeTimeouts, frames: m.activeAnimationFrames, intervals: m.activeIntervals,
+                            pendingMutations: m.dcuf?.pendingMutations || 0,
+                            pendingMutationRaf: Boolean(m.dcuf?.pendingMutationRaf),
+                            pendingMutationTimer: Boolean(m.dcuf?.pendingMutationTimer),
+                            taskQueues: m.dcuf?.taskQueues || 0, errors: m.errors };
+                    });
+                    lifecycle[name] = { ...settledSample, settled };
+            }
             await session.page.evaluate(() => {
                 window.__paletteOwnerProbeEvents = [];
                 window.addEventListener('dcuf:palette-change', (event) => window.__paletteOwnerProbeEvents.push(event.detail));

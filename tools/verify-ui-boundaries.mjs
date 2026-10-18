@@ -1,9 +1,9 @@
 import { parse } from 'acorn';
-import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadArchitectureState } from './architecture-state.mjs';
+import { generatedHeaderCssReferences, importantLedger, resolveGeneratedHeaderCss, verifyGeneratedCssRegistrations, verifyGeneratedCssSources } from './header-generated-css.mjs';
 
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const mutationFlagIndex = process.argv.indexOf('--audit-inject-forbidden');
@@ -98,6 +98,7 @@ const adapterEffectForbiddenIdentifiers = new Set([
     'EventSource',
 ]);
 const failures = [];
+failures.push(...verifyGeneratedCssSources(uiSurfaces.surfaces || []));
 let filesChecked = 0;
 let mutationInjected = false;
 const globalRoots = new Set(['globalThis', 'window', 'self', 'unsafeWindow']);
@@ -382,26 +383,11 @@ function extractStaticCssPayloads(ast) {
     return payloads;
 }
 
-function importantLedger(css) {
-    const normalizeSelector = (value) => value.replace(/\s+/g, ' ').trim();
-    const normalizedCss = css.replace(/\/\*[\s\S]*?\*\//g, '');
-    const declarations = [];
-    const matches = Array.from(normalizedCss.matchAll(/([\w-]+)\s*:\s*[^;{}]*!important/g));
-    for (const match of matches) {
-        const openingBrace = normalizedCss.lastIndexOf('{', match.index);
-        const selectorStart = Math.max(normalizedCss.lastIndexOf('{', openingBrace - 1), normalizedCss.lastIndexOf('}', openingBrace - 1));
-        const selector = openingBrace > selectorStart ? normalizeSelector(normalizedCss.slice(selectorStart + 1, openingBrace)) : '';
-        declarations.push({ selector, property: match[1].toLowerCase() });
-    }
-    return {
-        declarations,
-        totalCount: normalizedCss.match(/!important/g)?.length || 0,
-        sha256: createHash('sha256').update(JSON.stringify(declarations)).digest('hex'),
-    };
-}
-
-function verifyConformingPresentationCss(component, reference, source, ast) {
-    if (component.classification !== 'presentation-source' || component.boundaryState !== 'conforming') return;
+async function verifyConformingPresentationCss(component, reference, source, ast) {
+    const generatedRegistered = (uiSurfaces.surfaces || []).some(surface => surface.generatedCssPayloads?.some(item => item.sourceRef === reference));
+    const checkGenerated = generatedHeaderCssReferences.includes(reference)
+        && (process.argv.includes('--check-generated-css') || generatedRegistered);
+    if (component.classification !== 'presentation-source' || (component.boundaryState !== 'conforming' && !checkGenerated)) return;
     const normalizeSelector = (value) => value.replace(/\s+/g, ' ').trim();
     const matchingSurfaces = (uiSurfaces.surfaces || []).filter((surface) => surface.sourceRefs?.includes(reference));
     const registeredExceptions = matchingSurfaces
@@ -415,6 +401,18 @@ function verifyConformingPresentationCss(component, reference, source, ast) {
             .filter((profile) => profile.sourceRef === reference)
             .map((profile) => ({ surface, profile }))
     ));
+    let generatedPayloads;
+    try {
+        generatedPayloads = await resolveGeneratedHeaderCss({ reference, source,
+            readSource: relative => readFile(path.join(rootDir, relative), 'utf8') });
+    } catch (error) {
+        failures.push(`${reference}: generated CSS resolution failed: ${error.message}`);
+        return;
+    }
+    if (generatedPayloads) {
+        if (registeredProfiles.length) failures.push(`${reference}: generated header CSS requires exact exceptions, not transitional cascade profiles`);
+        failures.push(...verifyGeneratedCssRegistrations(reference, generatedPayloads, matchingSurfaces));
+    }
     const cssPayloads = extractStaticCssPayloads(ast);
     const profiledStyleKeys = new Set();
     let profiledImportantCount = 0;
@@ -450,7 +448,10 @@ function verifyConformingPresentationCss(component, reference, source, ast) {
     }
     const importantMatches = Array.from(source.matchAll(/([\w-]+)\s*:\s*[^;{}]*!important/g));
     const importantCount = source.match(/!important/g)?.length || 0;
-    if (registeredProfiles.length) {
+    if (generatedPayloads) {
+        // All authored priorities are already counted and checked against the
+        // actual emitted selectors, including early unprojected native roots.
+    } else if (registeredProfiles.length) {
         if (profiledImportantCount !== importantCount) {
             failures.push(`${reference}: conforming presentation source contains an unregistered !important declaration outside its exact cascade profiles`);
         }
@@ -536,7 +537,7 @@ for (const { component, policyLabel, forbidden, mutationVariants } of boundaryPo
         filesChecked += 1;
         componentFilesChecked += 1;
         visit(ast, null, null, nodeScopes, (identifier, line) => failures.push(`${reference}:${line}: ${policyLabel} directly references ${identifier}`), forbidden);
-        verifyConformingPresentationCss(component, reference, source, ast);
+        await verifyConformingPresentationCss(component, reference, source, ast);
     }
     if (componentFilesChecked === 0) failures.push(`${component.id}: no concrete ${policyLabel} source file was checked`);
 }

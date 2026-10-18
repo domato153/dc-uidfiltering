@@ -39,7 +39,7 @@
     "policy": {
       "runsOn": ["ubuntu-24.04", "windows-2025"],
       "commands": [
-        { "id": "architecture", "command": "node", "args": ["tools/architecture-registry.mjs", "validate"], "prerequisite": true },
+        { "id": "architecture", "command": "node", "args": ["tools/architecture-registry.mjs", "validate", "--transition-plan"], "prerequisite": true },
         { "id": "modernization-assurance", "command": "node", "args": ["tools/verify-modernization-assurance.mjs"], "prerequisite": true },
         { "id": "ui-boundaries", "command": "node", "args": ["tools/verify-ui-boundaries.mjs"], "prerequisite": true },
         { "id": "guidance", "command": "node", "args": ["tools/verify-repo.mjs", "guidance"], "prerequisite": true }
@@ -138,6 +138,12 @@
         { "id": "pc-functional", "command": "node", "args": ["testbed/run-tests.mjs", "--group", "functional", "--require-runtime-under-test"], "env": { "DCUF_TESTBED_TARGET": "pc" } },
         { "id": "restore-mobile-guard", "command": "node", "args": ["tools/build-userscript.mjs", "--testbed-output", "testbed/artifacts/runtime-under-test.user.js"], "always": true },
         { "id": "repository-all", "command": "node", "args": ["tools/verify-repo.mjs", "all"] }
+      ]
+    },
+    "qualified-header-palette": {
+      "runsOn": ["manual-qualified-windows"],
+      "commands": [
+        { "id": "fd58-declared-owner-split", "command": "node", "args": ["tools/run-qualified-mobile-palette.mjs", "--qualification", "verification/header-palette-fd58-qualification.json", "--qualification-sha256", "3432349980E83013D1A606ED1670EAF0EC4C074BD158E98F97F1B17AF6583E49", "--output", "artifacts/header-finalization-2026-10-18/mobile-palette.json"] }
       ]
     },
     "live-canary": {

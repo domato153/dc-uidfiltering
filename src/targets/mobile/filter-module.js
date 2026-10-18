@@ -82,7 +82,7 @@
 
         html, body, #top, #container, .wrap_inner, .visit_bookmark,
         .list_array_option, .left_content,
-        .view_content_wrap, .gall_content, .gall_comment, .comment_box {
+        .view_content_wrap, .gall_content, .gall_comment:not([data-dcuf-role="article-comment-count"]), .comment_box {
             width: 100% !important; /* 100vw 대신 100% 사용 */
             min-width: 0 !important; float: none !important;
             position: relative !important; box-sizing: border-box !important;
@@ -390,7 +390,7 @@
         
         /* --- 글 보기/댓글 UI --- */
         /* DCUF_VIEW_SURFACE_START */
-        .gall_content, .gall_tit_box, .gall_writer_info, .view_bottom, .gall_comment {
+        .gall_content, .gall_tit_box, .gall_writer_info, .view_bottom, .gall_comment:not([data-dcuf-role="article-comment-count"]) {
             background: #fff !important;
             padding: 15px !important;
             border-bottom: 1px solid #ddd;
@@ -532,7 +532,7 @@
         body.dc-filter-dark-mode,
         body.dc-filter-dark-mode #container,
         body.dc-filter-dark-mode .gall_content,
-        body.dc-filter-dark-mode .gall_comment {
+        body.dc-filter-dark-mode .gall_comment:not([data-dcuf-role="article-comment-count"]) {
             background: #121212 !important;
             color: #e0e0e0 !important;
         }
@@ -608,6 +608,9 @@
         ['.list_array_option', '.dcuf-retired-list-array-option'],
         ['.post-title', '.dcuf-retired-post-title'],
         ['.post-meta', '.dcuf-retired-post-meta'],
+        // Unmarked/native (including PC) composers retain fallback styling; the
+        // semantic composer has one final visual owner in CommentPresenter.
+        ['.cmt_write_box', '.cmt_write_box:not([data-dcuf-role="comment-composer"])'],
     ].reduce((css, [legacySelector, retiredSelector]) => css.replaceAll(legacySelector, retiredSelector), __dcufAllFilterCss);
     const __dcufCssMarkers = Object.freeze({
         view: '/* DCUF_VIEW_SURFACE_START */',

@@ -80,8 +80,18 @@ try{
       await settle(session.page);assert.ok((await sample()).hits.every(Boolean));
       result.rejectedOuterWidth=true;
      }
-     if(classic&&!dark&&width===1280){
-      await session.page.locator('.dcuf-header-drawer').evaluate(node=>{node.style.position='fixed';node.style.left='1100px';node.style.top='120px';});
+     if(classic&&width===1280){
+      const drawer=session.page.locator('.dcuf-header-drawer');
+      await drawer.evaluate(node=>{const width=node.getBoundingClientRect().width;node.style.position='fixed';node.style.left=`${document.documentElement.clientWidth-width-24}px`;node.style.top='120px';});
+      await session.page.evaluate(()=>window.__dcufHeaderDrawerHostAdapter.refresh());await settle(session.page);result.rightAligned=await sample();
+      const alignedTrigger=await drawer.boundingBox();
+      assert.ok(alignedTrigger&&alignedTrigger.x+alignedTrigger.width<=result.rightAligned.clientWidth-12,'Non-overflow control stays inside the usable edge');
+      assert.ok(Math.abs(result.rightAligned.body.right-(alignedTrigger.x+alignedTrigger.width))<1,'Inside-viewport mount aligns the owned body to the original toggle');
+      assert.ok(Math.abs(result.rightAligned.source.right-result.rightAligned.body.right)<1,'Native and owned non-overflow alignment agree');
+      assert.ok(result.rightAligned.hits.every(Boolean));
+      await drawer.evaluate(node=>node.style.left=`${document.documentElement.clientWidth-1}px`);
+      const overflowingTrigger=await drawer.boundingBox();
+      assert.ok(overflowingTrigger&&overflowingTrigger.x+overflowingTrigger.width>result.rightAligned.clientWidth-12,'Clamp control actually extends past the usable edge');
       await session.page.evaluate(()=>window.__dcufHeaderDrawerHostAdapter.refresh());await settle(session.page);result.rightMount=await sample();
       assert.equal(result.rightMount.body.right,result.rightMount.clientWidth-12,'Right mount clamps to usable viewport');
       assert.equal(result.rightMount.source.right,result.rightMount.clientWidth-12,'Native and owned right clamps agree');
