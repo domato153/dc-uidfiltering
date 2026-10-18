@@ -2,6 +2,33 @@ import assert from 'node:assert/strict';
 import { repositoryPath } from './continuity-state.mjs';
 
 export const POLICY_KEYS = ['schemaVersion', 'governingOwner', 'repository', 'remoteUrl', 'branch', 'scope', 'workflowName', 'requiredJob', 'localValidation', 'forbiddenActions', 'evidenceScope', 'workSuccessCertified'];
+// Exact paths only: executable policy, UI contracts, unknown docs and mixed changes stay on all.
+const CONTINUITY_PATHS = new Set([
+    'docs/work/INDEX.md', 'docs/work/CURRENT_STATE.md', 'docs/work/NEXT_TASK.md',
+    'docs/work/PHONE_VIEWPORT_PROFILE.md', 'docs/work/VERIFICATION_EFFICIENCY.md',
+    'docs/work/DECISION_RATIONALE.md', 'docs/agent-maintenance-notes.md',
+    '.agents/skills/dcuf-long-work-continuity/references/handoff-contract.md',
+    '.agents/skills/dcuf-long-work-continuity/references/retrieval-contract.md',
+]);
+export function selectCheckpointValidation(changedPaths) {
+    return changedPaths.length > 0 && changedPaths.every(relative => CONTINUITY_PATHS.has(relative)) ? 'continuity' : 'all';
+}
+export function resolveCheckpointValidation(git, base) {
+    const head = git(['rev-parse', 'HEAD']).trim();
+    try {
+        assert.match(base || '', /^[a-f0-9]{40}$/);
+        git(['merge-base', '--is-ancestor', base, head]);
+        // Compare the whole actual worktree/index with base, not a caller's selected file list.
+        // --no-renames retains the old path of a source renamed into an allowed document.
+        const changedPaths = [...new Set([
+            ...git(['diff', '--name-only', '--no-renames', '-z', base, '--']).split('\0'),
+            ...git(['diff', '--cached', '--name-only', '--no-renames', '-z', base, '--']).split('\0'),
+        ].filter(Boolean))].sort();
+        return {mode: selectCheckpointValidation(changedPaths), base, head, changedPaths};
+    } catch {
+        return {mode: 'all', base: null, head, changedPaths: null, reason: 'base-or-diff-unavailable'};
+    }
+}
 export function validateCheckpointPolicy(policy) {
     assert.deepEqual(Object.keys(policy).sort(), [...POLICY_KEYS].sort(), 'checkpoint policy fields');
     assert.equal(policy.schemaVersion, 1);
@@ -14,7 +41,7 @@ export function validateCheckpointPolicy(policy) {
     assert.equal(policy.workSuccessCertified, false);
     assert.equal(policy.workflowName, 'DCUF development CI');
     assert.equal(policy.requiredJob, 'working-checkpoint');
-    assert.deepEqual(policy.localValidation, ['node', 'tools/verify-repo.mjs', 'all']);
+    assert.deepEqual(policy.localValidation, ['node', 'tools/verify-repo.mjs', 'checkpoint']);
     assert.deepEqual(policy.forbiddenActions, ['force-push', 'merge', 'rebase', 'branch-switch', 'official-branch', 'tag', 'release', 'live-dispatch']);
     return policy;
 }
@@ -62,7 +89,7 @@ export async function publishCheckpoint({ git, remoteHead, validate, checkBounda
     git(['add', '--', ...paths]);
     const tree = git(['write-tree']).trim();
     assert.notEqual(tree, git(['rev-parse', 'HEAD^{tree}']).trim(), 'empty checkpoint');
-    await validate(paths);
+    await validate(paths, base);
     await checkBoundary();
     assert.equal(git(['rev-parse', 'HEAD']).trim(), base, 'HEAD changed during validation');
     assert.equal(git(['write-tree']).trim(), tree, 'index changed during validation');

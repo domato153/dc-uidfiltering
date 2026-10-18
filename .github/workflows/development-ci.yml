@@ -34,6 +34,8 @@ jobs:
     if: github.event_name == 'push'
     runs-on: ubuntu-24.04
     timeout-minutes: 10
+    env:
+      CHECKPOINT_BASE_SHA: ${{ github.event.before }}
     steps:
       - name: Checkout exact candidate
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -51,21 +53,29 @@ jobs:
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: ${{ env.NODE_VERSION }}
+      - name: Select checkpoint validation
+        id: checkpoint-scope
+        run: node tools/verify-checkpoint-ci.mjs --plan
       - name: Activate pinned pnpm
+        if: steps.checkpoint-scope.outputs.needs_build == 'true'
         run: |
           corepack enable
           corepack prepare pnpm@${PNPM_VERSION} --activate
       - name: Locate pnpm store
+        if: steps.checkpoint-scope.outputs.needs_build == 'true'
         id: pnpm-store
         run: echo "path=$(pnpm store path --silent)" >> "$GITHUB_OUTPUT"
       - name: Cache locked pnpm downloads
+        if: steps.checkpoint-scope.outputs.needs_build == 'true'
         uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
           path: ${{ steps.pnpm-store.outputs.path }}
           key: ${{ runner.os }}-pnpm-${{ env.NODE_VERSION }}-${{ env.PNPM_VERSION }}-${{ hashFiles('pnpm-lock.yaml') }}
       - name: Install locked dependencies
+        if: steps.checkpoint-scope.outputs.needs_build == 'true'
         run: pnpm install --frozen-lockfile
       - name: Build exact outputs and mobile guard
+        if: steps.checkpoint-scope.outputs.needs_build == 'true'
         run: |
           node tools/build-userscript.mjs
           node tools/build-userscript.mjs --testbed-output testbed/artifacts/runtime-under-test.user.js

@@ -23,3 +23,20 @@ export function developmentJobRoutingIsValid(development) {
         && (text.match(/uses: actions\/cache@0057852bfaa89a56745cba8c7296529d2fc39830/g) || []).length === 4
         && (text.match(/run: pnpm install --frozen-lockfile/g) || []).length === 2;
 }
+
+export function checkpointJobRoutingIsValid(development) {
+    const text = development.replace(/\r\n/g, '\n');
+    const job = text.split('\n  working-checkpoint:\n')[1]?.split('\n  policy:\n')[0] || '';
+    const steps = job.split(/^ {6}- name: /m).slice(1);
+    const named = name => steps.filter(step => step.startsWith(name + '\n'));
+    const plan = named('Select checkpoint validation');
+    const qualify = named('Qualify deterministic checkpoint only');
+    if (!job.includes('CHECKPOINT_BASE_SHA: ${{ github.event.before }}') || plan.length !== 1 || qualify.length !== 1
+        || !plan[0].includes('id: checkpoint-scope\n') || !plan[0].includes('run: node tools/verify-checkpoint-ci.mjs --plan\n')
+        || !qualify[0].includes('run: node tools/verify-checkpoint-ci.mjs\n') || qualify[0].includes('        if:')) return false;
+    const condition = "        if: steps.checkpoint-scope.outputs.needs_build == 'true'\n";
+    return ['Activate pinned pnpm', 'Locate pnpm store', 'Cache locked pnpm downloads', 'Install locked dependencies', 'Build exact outputs and mobile guard'].every(name => {
+        const selected = named(name);
+        return selected.length === 1 && selected[0].includes(condition) && steps.indexOf(selected[0]) > steps.indexOf(plan[0]) && steps.indexOf(selected[0]) < steps.indexOf(qualify[0]);
+    });
+}

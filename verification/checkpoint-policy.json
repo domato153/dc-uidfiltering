@@ -7,7 +7,7 @@
   "scope": "WORKING_CHECKPOINT_ONLY",
   "workflowName": "DCUF development CI",
   "requiredJob": "working-checkpoint",
-  "localValidation": ["node", "tools/verify-repo.mjs", "all"],
+  "localValidation": ["node", "tools/verify-repo.mjs", "checkpoint"],
   "forbiddenActions": ["force-push", "merge", "rebase", "branch-switch", "official-branch", "tag", "release", "live-dispatch"],
   "evidenceScope": "CHECKPOINT_ONLY",
   "workSuccessCertified": false

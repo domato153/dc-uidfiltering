@@ -329,4 +329,9 @@ Future UI entry: docs/ui-surface-contracts.md → docs/work/UI_REVIEW_CHECKLIST.
 
 - Entry is docs/work/INDEX.md → CURRENT_STATE.md / NEXT_TASK.md, then only action-relevant details. Keep accepted progress and one next task; remove completed dependencies and historical next-step wording from the entry packet. docs/work/VERIFICATION_EFFICIENCY.md owns the check matrix and short retired-assumption guards.
 - A rejected/superseded approach stays historical. Record the replacement/reason and concrete reopen trigger; do not turn it back into active work because old prose says next. A new user decision or contrary current evidence requires an explicit replacement decision.
-- Fresh root/branch/HEAD/status/artifact checks are continuity, not a reason to repeat unchanged product suites. Exact comparison bytes are required when used; absent optional raw history is UNKNOWN, not a global development blocker. The checkpoint publisher owns final verify-repo all; do not duplicate its bundled guidance checks immediately before it.
+- Fresh root/branch/HEAD/status/artifact checks are continuity, not a reason to repeat unchanged product suites. Exact comparison bytes are required when used; absent optional raw history is UNKNOWN, not a global development blocker. The checkpoint publisher owns final Git-scoped validation; do not duplicate its selected checks immediately before it.
+
+## Continuity-only checkpoint validation (2026-10-19)
+
+- docs/checkpoint-workflow.md and D-40 describe the shared local/CI exact-path selector. Actual working plus staged changes decide; renames retain old paths. CI uses the whole push range, so a final docs commit cannot conceal earlier runtime changes. Unknown/unavailable/mixed/tool/runtime paths use all; there is no manual skip flag.
+- Fast means four document checks and a receipt explicitly lacking artifact/product certification. Missing required state still fails. Installed dependencies and the mobile guard are unnecessary for this path; verify-checkpoint-ci's existing disposable fixture tests that combination and malformed-state rejection. Never generalize continuity PASS to UI/device/release readiness.

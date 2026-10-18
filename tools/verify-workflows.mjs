@@ -1,7 +1,7 @@
 import { readdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { policyBrowserSequenceIsValid, developmentJobRoutingIsValid } from './workflow-sequence.mjs';
+import { policyBrowserSequenceIsValid, developmentJobRoutingIsValid, checkpointJobRoutingIsValid } from './workflow-sequence.mjs';
 
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const workflowsDir = path.join(rootDir, '.github', 'workflows');
@@ -31,6 +31,7 @@ check(development.includes('pull_request:\n    branches:\n      - codex/mobile-d
 check(development.includes("name: working-checkpoint\n    if: github.event_name == 'push'") && development.includes('node tools/verify-checkpoint-ci.mjs'), 'push CI must qualify checkpoint only');
 check(developmentJobRoutingIsValid(development), 'PR/manual jobs must follow the Git route, preserve exact checkpoint isolation and locked dependency caching');
 check(development.includes('path: artifacts/checkpoint-ci.json'), 'checkpoint uploads must stay narrowly scoped');
+check(checkpointJobRoutingIsValid(development), 'checkpoint must select actual push scope before conditional setup/build and always qualify the exact commit');
 check(development.includes('node tools/build-userscript.mjs\n          node tools/build-userscript.mjs --testbed-output testbed/artifacts/runtime-under-test.user.js\n          node tools/build-pc-filter-userscript.mjs'), 'checkpoint must rebuild canonical CRLF artifacts as well as the mobile guard');
 check(development.includes('Prepare canonical outputs and immutable proof inputs') && development.includes('node tools/verify-baseline.mjs'), 'proof mutations must prepare canonical and immutable baseline inputs');
 check(policyBrowserSequenceIsValid(development), 'policy browser-dependent mutation controls require one executable locked-install, Chromium-install, gate sequence');

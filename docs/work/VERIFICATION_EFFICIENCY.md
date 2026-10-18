@@ -1,6 +1,6 @@
 # Practical verification and continuity
 
-Current operating method, adopted2026-10-18 (D-39). This streamlines retrieval/check cadence; it changes no runtime, product acceptance predicate, release authority or machine schema. The single policy remains AGENTS.md. Retrieval terms: 연속성, 압축, 새 스레드, 진행도, 검증 과잉, 폐기안, continuity, compaction, handoff, retired decisions.
+Current operating method: practical retrieval adopted2026-10-18 (D-39), Git-scoped checkpoint validation added2026-10-19 (D-40). No product runtime/acceptance predicate/release authority change. The single policy remains AGENTS.md. Retrieval terms: 연속성, 압축, 새 스레드, 진행도, 검증 과잉, 폐기안, continuity, compaction, handoff, retired decisions.
 
 ## Findings and applied changes
 
@@ -27,10 +27,12 @@ For a new thread, give its private prompt the exact active worktree's INDEX path
 | State/prose/retrieval update | Review diff and links; validate changed typed state with verify-governance. Refresh fingerprint after final tracked edits. | A malformed field, missing entry decision, wrong route or changed method. |
 | Continuity method/routing change | Inspect changed dependency/decision routes; use existing governance/skill controls and a few concrete normal/stale/missing-evidence cases. | A changed parser/verifier, observed handoff failure or high-risk authority transfer: add targeted negatives for that failure. The closure label alone does not require every proof-audit group. |
 | Local UI/source change | Fresh impact route; affected deterministic states/adjacent controls and relevant live/semantic evidence. PHONE_VIEWPORT_PROFILE is the default; select checklist IDs. | Actual runtime/owner/lifecycle/shared/storage impact or broad UI claims per AGENTS/gates. All128 child states are not required for every local edit. |
-| Coherent authorized checkpoint | Review exact paths/diff/sensitive data and fresh remote; publisher runs final verify-repo all once, then exact-SHA checkpoint CI. | An actual validation/transport/CI failure. Transport retry reuses the same commit. |
+| Coherent authorized checkpoint | Review exact paths/diff/sensitive data and fresh remote; publisher selects final continuity/all checks from the actual Git diff, then exact-SHA checkpoint CI. | Mixed/unknown/tool/runtime changes retain all. Failure retry reuses the same commit where safe. |
 | Stage exit / release / broad product claim | Existing exact scope, runtime/receipt binding and required final gates. | This document grants no exemption or new authority. |
 
-Do not run verify-repo guidance plus its bundled assurance/skills checks and then immediately repeat them through publisher all on the same tree. A quick focused preflight is useful when it can catch a specific error. Reuse a recorded narrow pass only with unchanged direct runtime/oracle/fixture/harness/toolchain inputs; a prose fingerprint alone is not those inputs. Recompute global stage admission honestly instead of relabeling old receipts.
+Do not run verify-repo guidance plus its bundled assurance/skills checks and then immediately repeat the selected publisher checks on the same tree. A quick focused preflight is useful when it can catch a specific error. Reuse a recorded narrow pass only with unchanged direct runtime/oracle/fixture/harness/toolchain inputs; a prose fingerprint alone is not those inputs. Recompute global stage admission honestly instead of relabeling old receipts.
+
+The checkpoint selector uses an exact continuity-document allowlist, not every .md file. Continuity-only checkpoints run governance, assurance/fingerprint, rationale and skill checks (four commands), without nested mutation/transport suites or artifact validation. CI also skips pnpm setup/install/cache, canonical builds and the cloned artifact replay. Unknown paths, UI/machine contracts, executable policy, tooling/runtime/build changes and mixed or unavailable ranges retain all. Working and staged changes are both included, renames retain their original paths, and CI compares the whole push range. Exact-tree/branch/remote/CI identity guards remain. See docs/checkpoint-workflow.md; no user-supplied skip/fast flag exists.
 
 ## Do not revive / 폐기·대체 기록
 

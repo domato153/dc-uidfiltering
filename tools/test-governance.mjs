@@ -7,13 +7,20 @@ import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
 import { currentSection, STATE_LABELS, parseNextAction, reconcileNextAction, selectContinuityProfile, repositoryPath } from './continuity-state.mjs';
 import { validateCheckpointPolicy, validateCheckpointPaths, validateCheckpointFiles, assertCheckpointContext, reconcilePush, publishCheckpoint, pushCheckpoint, qualifyCheckpointCI } from './checkpoint-core.mjs';
+import * as checkpointCore from './checkpoint-core.mjs';
 import { GOVERNANCE_PROOF_PATHS, hashPaths, assertEvidenceBinding } from './evidence-binding.mjs';
-import { policyBrowserSequenceIsValid } from './workflow-sequence.mjs';
+import { policyBrowserSequenceIsValid, checkpointJobRoutingIsValid } from './workflow-sequence.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const policy = validateCheckpointPolicy(JSON.parse(readFileSync(path.join(root, 'verification/checkpoint-policy.json'))));
 let checks = 0;
 const test = async (name, action) => { await action(); checks++; console.log(`PASS ${name}`); };
+await test('checkpoint policy selects validation from the actual Git diff', () => {
+    assert.deepEqual(policy.localValidation, ['node', 'tools/verify-repo.mjs', 'checkpoint']);
+    const select = checkpointCore.selectCheckpointValidation;
+    assert.equal(select(['docs/work/CURRENT_STATE.md', 'docs/work/NEXT_TASK.md']), 'continuity');
+    for (const paths of [[], ['docs/unknown.md'], ['AGENTS.md'], ['src/runtime/bootstrap.js'], ['verification/gates.json'], ['tools/verify-repo.mjs'], ['.github/workflows/development-ci.yml'], ['docs/ui-surface-contracts.md'], ['docs/work/CURRENT_STATE.md', 'src/new.js'], [' docs/work/CURRENT_STATE.md'], ['docs/work/CURRENT_STATE.md\n']]) assert.equal(select(paths), 'all');
+});
 await test('retired dirty parent policy is losslessly recoverable, not executable',()=> {
     const archive=readFileSync(path.join(root,'docs/archive/policy/parent-agent-policy-2026-10-04.md'),'utf8').replace(/\r\n/g,'\n');
     const original=archive.split('<!-- preserved original begins -->\n')[1];
@@ -57,6 +64,16 @@ await test('directory/symlink sweeps rejected; explicit file/deletion accepted',
 const context = {cwd:'root',toolRoot:'root',gitRoot:'root',branch:policy.branch,remote:policy.remoteUrl,upstream:`origin/${policy.branch}`};
 await test('root/branch/remote/upstream guards cannot be waived by CI', () => { assertCheckpointContext(context,policy); for(const key of ['cwd','gitRoot','branch','remote','upstream']) assert.throws(() => assertCheckpointContext({...context,[key]:'wrong'},policy)); });
 await test('policy cannot widen to official publication', () => { assert.throws(() => validateCheckpointPolicy({...policy,branch:'main'})); assert.throws(() => validateCheckpointPolicy({...policy,workSuccessCertified:true})); assert.throws(() => validateCheckpointPolicy({...policy,extra:true})); });
+await test('checkpoint CI guards setup/build without allowing skipped qualification', () => {
+    const original=readFileSync(path.join(root,'.github/workflows/development-ci.yml'),'utf8').replace(/\r\n/g,'\n');
+    assert.equal(checkpointJobRoutingIsValid(original),true);
+    const guard="        if: steps.checkpoint-scope.outputs.needs_build == 'true'\n";
+    const prefix=original.split('\n  policy:\n')[0], suffix=original.slice(prefix.length);
+    const guards=[...prefix.matchAll(new RegExp(guard.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'g'))];
+    assert.equal(guards.length,5);
+    for (const match of guards) assert.equal(checkpointJobRoutingIsValid(prefix.slice(0,match.index)+prefix.slice(match.index+guard.length)+suffix),false);
+    for (const changed of [original.replace('CHECKPOINT_BASE_SHA: ${{ github.event.before }}','CHECKPOINT_BASE_SHA: HEAD^'),original.replace('run: node tools/verify-checkpoint-ci.mjs --plan','run: echo skipped'),original.replace('      - name: Qualify deterministic checkpoint only\n','      - name: Qualify deterministic checkpoint only\n        if: false\n')]) assert.equal(checkpointJobRoutingIsValid(changed),false);
+});
 await test('policy Chromium prerequisites reject missing, commented, duplicate and misordered commands',()=> {
     const command = '        run: node testbed/node_modules/playwright/cli.js install --with-deps chromium\n';
     const locked = '        run: pnpm install --frozen-lockfile\n';
@@ -93,14 +110,45 @@ try {
     });
     command(bare,['init','--bare']); git(['init','-b',policy.branch]); git(['config','user.name','Governance Test']); git(['config','user.email','test@example.invalid']); git(['config','core.autocrlf','false']);
     writeFileSync(path.join(local,'input.txt'),'base\n'); git(['add','--','input.txt']); git(['commit','-m','base']); git(['remote','add','origin',bare]); git(['push','-u','origin',policy.branch]);
-    const base=git(['rev-parse','HEAD']).trim();
+    let base=git(['rev-parse','HEAD']).trim();
+    await test('actual Git scope catches mixed, renamed, cancelled-index and multi-commit changes', () => {
+        const resolve=baseSha=>checkpointCore.resolveCheckpointValidation(git,baseSha);
+        assert.equal(resolve(base).mode,'all','Empty diff is not a continuity exemption');
+        assert.equal(resolve('0'.repeat(40)).mode,'all','Unavailable base is conservative');
+        assert.equal(resolve('--unsafe').mode,'all');
+        mkdirSync(path.join(local,'docs/work'),{recursive:true});
+        const doc=path.join(local,'docs/work/CURRENT_STATE.md');
+        writeFileSync(doc,'document\n'); git(['add','--','docs/work/CURRENT_STATE.md']);
+        assert.equal(resolve(base).mode,'continuity');
+        writeFileSync(path.join(local,'input.txt'),'staged source\n'); git(['add','--','input.txt']);
+        writeFileSync(path.join(local,'input.txt'),'base\n');
+        assert.equal(resolve(base).mode,'all','Working bytes cannot conceal changed index bytes');
+        git(['commit','-m','mixed fixture']);
+        const intermediate=git(['rev-parse','HEAD']).trim();
+        writeFileSync(doc,'later document\n'); git(['add','--','docs/work/CURRENT_STATE.md']); git(['commit','-m','docs fixture']);
+        assert.equal(resolve(intermediate).mode,'all','Unstaged source restoration still counts');
+        writeFileSync(path.join(local,'input.txt'),'staged source\n');
+        assert.equal(resolve(intermediate).mode,'continuity');
+        assert.equal(resolve(base).mode,'all','The entire push, not only the last doc commit');
+        const sourceHead=git(['rev-parse','HEAD']).trim();
+        git(['rm','--','docs/work/CURRENT_STATE.md']); mkdirSync(path.join(local,'docs/work'),{recursive:true});
+        git(['mv','--','input.txt','docs/work/CURRENT_STATE.md']);
+        assert.equal(resolve(sourceHead).mode,'all','Rename cannot hide the original non-document path');
+        // Return only this newly created disposable fixture to its initial content.
+        git(['commit','-m','rename fixture']);
+        git(['rm','--','docs/work/CURRENT_STATE.md']);
+        writeFileSync(path.join(local,'input.txt'),'base\n'); git(['add','--','input.txt']);
+        git(['commit','-m','restore transport fixture']); git(['push','origin',policy.branch]);
+        base=git(['rev-parse','HEAD']).trim();
+    });
     const remoteHead=async()=>git(['ls-remote','origin',`refs/heads/${policy.branch}`]).split(/\s+/)[0];
     const saved=[]; const save=async receipt=>saved.push(structuredClone(receipt));
     writeFileSync(path.join(local,'input.txt'),'candidate\n');
     await test('real temporary Git exact-tree commit/push and no duplicate resume', async()=> {
+        const beforeCount=Number(git(['rev-list','--count','HEAD']).trim());
         const receipt=await publishCheckpoint({git,remoteHead,checkBoundary:async()=>{},save,paths:['input.txt'],message:'candidate',expectedRemote:base,policySha256:'0'.repeat(64),validate:async()=>assert.equal(git(['diff','--name-only']).trim(),'')});
         assert.equal(receipt.status,'REMOTE_SYNCED_CI_PENDING'); assert.equal(receipt.commit,await remoteHead()); assert.equal(receipt.tree,git(['rev-parse','HEAD^{tree}']).trim()); assert.equal(saved[0].status,'COMMITTED_PENDING_PUSH');
-        await pushCheckpoint({git,remoteHead,checkBoundary:async()=>{},save,receipt}); assert.equal(git(['rev-list','--count','HEAD']).trim(),'2');
+        await pushCheckpoint({git,remoteHead,checkBoundary:async()=>{},save,receipt}); assert.equal(Number(git(['rev-list','--count','HEAD']).trim()),beforeCount+1);
     });
     writeFileSync(path.join(local,'input.txt'),'next\n');
     await test('validation worktree drift prevents commit', async()=> {

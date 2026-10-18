@@ -1,5 +1,14 @@
 # DCUF modernization decision rationale
 
+## D-40 — scope checkpoint validation to actual continuity-only changes
+
+- SELECTED: One exact-path selector shared by local and push CI; only a nonempty actual continuity-document diff uses four structural/freshness checks. Keep unchanged all validation for tooling, policy, contracts, unknown/mixed changes or unavailable history. Preserve exact-tree/branch/remote/receipt guards and product acceptance scope.
+- NOT ADOPTED: Blanket Markdown skipping, caller-provided file lists as proof of scope, manual fast/skip flags, last-commit-only CI routing, test-result caching or a second CI qualification framework.
+- DEFERRED: Broader optimization of unrelated docs and PR/manual acceptance routing. They remain conservative until a concrete repeated cost justifies changes.
+- Reason: Fixed all validation repeated unrelated test-of-tool and artifact transport checks for CURRENT/NEXT updates. Existing Node-only consumers provide the relevant continuity checks; actual staged/worktree and full-push diffs keep broader changes out of that path.
+- Evidence: tools/test-governance.mjs exercises exact allowlist/fallback, mixed/rename/cancelled-index/multi-commit scope and existing publication guards. tools/test-checkpoint-artifacts.mjs extends its disposable committed fixture with dependency/guard-free continuity CI and missing-field rejection. These are tooling checks, not product/live acceptance.
+- Revisit: A changed input escapes selection, an unknown range selects continuity, malformed state emits PASS, exact-source/remote guards regress, or measured routine cost remains material. Add a targeted regression for the concrete failure.
+
 ## D-39 — practical continuity after compaction or a new thread
 
 - SELECTED: Compact CURRENT/NEXT plus an on-demand INDEX; adopt the measured phone default; update accepted progress, one next action and explicit limits. VERIFICATION_EFFICIENCY.md owns proportional checks and short retired-assumption guards. This supersedes mandatory full historical/closure reading for routine resume.

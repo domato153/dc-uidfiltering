@@ -3,10 +3,11 @@ import { spawnSync } from 'node:child_process';
 import { access, readdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { resolveCheckpointValidation } from './checkpoint-core.mjs';
 
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const requestedMode = process.argv[2] || 'all';
-const validModes = new Set(['guidance', 'release', 'all']);
+const validModes = new Set(['guidance', 'release', 'all', 'checkpoint']);
 const failures = [];
 const AGENTS_CHAR_LIMIT = 9000;
 const SKILLS_CHAR_LIMIT = 24000;
@@ -307,15 +308,35 @@ async function verifyRelease() {
 }
 
 async function main() {
-    if (!validModes.has(requestedMode)) {
-        console.error('Usage: node tools/verify-repo.mjs [guidance|release|all]');
+    const options = process.argv.slice(3);
+    if (!validModes.has(requestedMode) || (options.length && (requestedMode !== 'checkpoint' || options.length !== 2 || options[0] !== '--base'))) {
+        console.error('Usage: node tools/verify-repo.mjs [guidance|release|all|checkpoint [--base SHA]]');
         process.exitCode = 2;
         return;
     }
 
     try {
-        if (requestedMode === 'guidance' || requestedMode === 'all') await verifyGuidance();
-        if (requestedMode === 'release' || requestedMode === 'all') await verifyRelease();
+        let mode = requestedMode;
+        if (mode === 'checkpoint') {
+            const git = args => {
+                const result = spawnSync('git', args, {cwd: rootDir, encoding: 'utf8', shell: false});
+                if (result.status !== 0) throw new Error(result.stderr || 'Git diff unavailable');
+                return result.stdout;
+            };
+            const plan = resolveCheckpointValidation(git, options[1] || git(['rev-parse', 'HEAD']).trim());
+            mode = plan.mode;
+            console.log(`Checkpoint validation: ${mode}; ${plan.changedPaths?.length ?? 'unknown'} changed paths; base ${plan.base || 'unavailable'}.`);
+        }
+        if (mode === 'continuity') {
+            for (const script of ['tools/verify-governance.mjs', 'tools/verify-modernization-assurance.mjs', 'tools/verify-research-selection.mjs', 'tools/verify-skills.mjs']) {
+                const result = spawnSync(process.execPath, [script], {cwd: rootDir, encoding: 'utf8', shell: false});
+                if (result.stdout) process.stdout.write(result.stdout);
+                if (result.stderr) process.stderr.write(result.stderr);
+                check(result.status === 0, `${script} verification failed`);
+            }
+        }
+        if (mode === 'guidance' || mode === 'all') await verifyGuidance();
+        if (mode === 'release' || mode === 'all') await verifyRelease();
     } catch (error) {
         failures.push(error instanceof Error ? error.message : String(error));
     }
