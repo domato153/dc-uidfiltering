@@ -1,5 +1,14 @@
 # DCUF modernization decision rationale
 
+## D-39 — practical continuity after compaction or a new thread
+
+- SELECTED: Compact CURRENT/NEXT plus an on-demand INDEX; adopt the measured phone default; update accepted progress, one next action and explicit limits. VERIFICATION_EFFICIENCY.md owns proportional checks and short retired-assumption guards. This supersedes mandatory full historical/closure reading for routine resume.
+- NOT ADOPTED: A command diary, new event store/framework, automatic revival of historical next tasks, repeated product suites for prose-only changes, or multi-agent/pressure-test ceremony on each handoff.
+- DEFERRED: General migration of old receipts and automated semantic-recall evaluation. A genuinely changed policy/verifier or failed handoff gets focused controls for that failure, not an unrelated full audit.
+- Reason: The user requests practical continuity, adopted facts only, and no laboratory-level procedure. The existing parser already permits direct dependencies and routine reconciliation; bloat came from accumulated historical inputs and duplicated instructions.
+- Evidence: Current implementation and before/after measurements are in VERIFICATION_EFFICIENCY.md. OpenAI's durable-project-memory and on-demand skill references there support the tips; the local selection and limits are our adaptation, not a Codex recall guarantee or product PASS.
+- Revisit: A receiver cannot locate a valid next action, a retired decision resurfaces, a direct dependency is missed, or changed authority/runtime invalidates the recorded scope. Correct that route/field and test the affected case.
+
 ## D-31 — recover actual extension testing with installed Chrome
 
 - SELECTED: Explicit Windows `installed-chrome` route in the existing canary, with a fresh profile, pinned unmodified CRX, browser-level CDP extension loading, exact returned extension-ID worker selection, unchanged vendor script-install UI and unchanged startup oracle. Bind the browser executable and adapter as well as script/contract/driver identities; verify cleanup and independent receipt replay.

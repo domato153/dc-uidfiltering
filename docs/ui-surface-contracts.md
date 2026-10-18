@@ -6,6 +6,8 @@ This compact map covers the preserved 3.5.5 surfaces and the active UI-boundary 
 
 Use `docs/work/UI_REVIEW_CHECKLIST.md` as the durable UI/state inventory. The UI-maintainer skill reads this contract at entry, so this route applies beyond the current Concept01 trial. Select affected checklist IDs from the changed owner, selectors, shared tokens and rerun paths; include adjacent controls and relevant common X states. Record selected IDs, excluded unrelated families, runtime/fixture identity, results and limits in the bounded task evidence. Ordinary local changes do not run all128 items. Expand to other consumers when a shared selector/token/owner changes; use the full applicable inventory at a broad redesign or whole-UI completion. Unknown native child states remain UNKNOWN. Update the inventory when UI branches are added/removed; screenshots or a generic popup selector cannot stand in for unobserved children.
 
+Default mobile environment: the user adopted `docs/work/PHONE_VIEWPORT_PROFILE.md`. Retrieve it before mobile UI capture/review: observed screen412×1006, layout980×2306, visual scale0.420684278011322, DPR2.625 and its exact input/media conditions. Keep the tested proxy's scale/client-height/engine gaps explicit. A390/412px layout is stress only; aspect ratio alone does not reproduce the default. The checklist's X-02 routes these conditions for local and future redesign work; PC checks remain separate.
+
 UI-01 repair scope: L-05/L-06/L-09 (upper write action), adjacent H-04/H-05, and affected X theme/viewport/input/native-identity states. Qualify native840px toolbar/1%-wide tab/table-cell flow at980 CSS pixels, plus narrow stress and existing route/rollback cases. Preserve all native controls and center categories; the existing adapter supplies reversible category-group/shell/list markers and the presenter owns width/height/internal flow through semantic selectors, without native-class coupling or another global correction phase. Current scoped evidence and limits: `docs/work/UI_LIST_TOOLBAR_REPAIR.md`.
 
 L-05 long-toolbar specimen: the user designated `https://gall.dcinside.com/mgallery/board/lists/?id=wutheringwaves` for long `list_array_option clear` category lists, elision and arrow-drawer states. Retrieve the checklist's live specimen router when toolbar/category layout changes. Observe original closed/open/select/resize/theme behavior before modeling the stable shape; registration is not a passed live case. Do not replace overflow/drawer coverage with a short category list or run unrelated full-site checks merely because this specimen exists.
@@ -135,7 +137,7 @@ Historical drawer/popup hit repair: the frozen pre-hit control failed 40 positiv
 
 - Logged-in and logged-out states where applicable.
 - Normal, minor, and mini gallery routes.
-- Narrow mobile and wider desktop-site mobile layouts.
+- The adopted default mobile profile in `docs/work/PHONE_VIEWPORT_PROFILE.md`, plus proportionate separately labeled narrow/short/orientation/keyboard stress contexts; retain actual readbacks and proxy differences.
 - Recommendation variants with and without CAPTCHA/extra actions.
 - Popup closed, open, closed-after-use, and reopened states.
 

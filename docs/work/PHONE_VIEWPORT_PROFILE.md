@@ -4,6 +4,18 @@ Observed 2026-10-18; source checkpoint base `d4b164fbe60a122a65121b6c864cc43fe7f
 
 The user supplied the output of the delayed `dcuf-viewport-v2` console probe. The probe measures after the developer tools/keyboard can be closed, then exports a local JSON. It does not collect cookies, account data, page text or full URLs. The original input is preserved locally as `artifacts/phone-calibration-2026-10-18/input-original.json`, raw SHA-256 `FD9FD10E0D06033F7E112A21B8B9A0882DACC1C646E3A3960C8B4111CF9A6443`. Its `topFrame` is true; exact route/script identity and document compatibility mode were not included. Do not invent these missing fields.
 
+## User-adopted default mobile environment
+
+On 2026-10-18 the user explicitly adopted this observed phone condition as the default for future DCUF mobile work and requested continuity/retrieval routing. For requests about mobile, phone, desktop-mode mobile, phone proportions, or normal mobile UI, retrieve this document before selecting screenshots, viewport settings or visual acceptance conditions. Korean retrieval terms: 모바일, 폰, 휴대폰, 데스크톱 모드, 폰 비율, 화면비, 모바일 환경.
+
+- Default reference: screen412×1006, inner980×2306, client980×2002, visual scale0.420684278011322 and DPR2.625, with the exact input/media/meta readings below. Keep screen pixels, CSS layout and visual scale distinct. An aspect ratio alone is not this profile.
+- Use the tested980 layout proxy where applicable, record its actual readback and retain the scale/client-height/engine differences below. The proxy's scale1 is not a replacement for the adopted phone scale, and the desktop UA does not make the browser engine127.
+- A390px or412px **layout** is a separately labeled stress case, not the normal mobile reference. Screen width412 with layout width980 remains the default. Extra orientations, keyboard, pinch and short-height cases may be added proportionately; they do not silently replace the default or require all128 UI rows every time.
+- The tracked readings remain the adopted reference if ignored raw files are absent. Recover the recorded evidence or rerun applicable proxy readback; do not return to an invented390 default or ask the user to measure again without a changed device/setting, contradictory evidence or a specific unresolved measurement need.
+- This default chooses the test environment, not UI approval, full phone emulation or release authority. PC-target checks remain separate.
+
+Retrieval entry points are `docs/work/INDEX.md`, `CURRENT_STATE.md`, the typed dependency/decision in `NEXT_TASK.md`, and `docs/ui-surface-contracts.md` → `UI_REVIEW_CHECKLIST.md` → this document.
+
 ## Actual readings
 
 All sizes below are browser-reported CSS pixels, not physical screenshot dimensions.

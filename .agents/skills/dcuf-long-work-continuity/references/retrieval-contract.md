@@ -6,7 +6,7 @@ Read this reference only when Continuity is being changed, a retrieval route is 
 
 - `docs/work/CURRENT_STATE.md` is the compact read projection: active plan/stage, source state, candidate fingerprint, last audit, accepted baseline, current artifact, blockers, and pending live checks.
 - `docs/work/NEXT_TASK.md` contains one task ID and one bounded completion scope.
-- Its single typed block binds declared action dependencies and adopted entry decisions, hazards and local recovery. Reconcile declarations, then independently derive omitted execution inputs at closure. Current required fields are parsed only from `## Current execution`, never history.
+- Its single typed block binds direct action dependencies and adopted entry decisions, hazards and local recovery. Inspect actual inputs for the selected operation; a listed directory is not a full-reading requirement. Remove completed dependencies when advancing the task. Current required fields are parsed only from `## Current execution`, never history.
 - Exact artifact identities live in the closed `dcuf-current-artifacts` JSON block in that section; prose is not a parser API. NEXT declares direct entry dependencies, not all historical sources/reports. A LIVE directory is a retrieval pointer; inspect only the affected execution path.
 - Receipts and exact digests are immutable evidence events. The projection may summarize them but cannot make them current after source, oracle, fixture, harness, toolchain, or routing changes.
 - The plan explains the intended sequence. Maintenance notes retain reusable causes and contracts. Neither overrides fresh local state or exact evidence.
@@ -24,15 +24,15 @@ AGENTS governs permission; machine contracts govern semantic/build/evidence rule
 - Regression, drift, DOM, or behavior preservation: add the semantic-preservation skill and the affected machine contract or surface map.
 - Live architecture or UI owner drift: inspect the effective registry/build/source/surface view through `node tools/inspect-live-architecture.mjs --surface <id>`; add the semantic-architecture skill and only the host-UI/DOM skills justified by the affected surface. This repository view does not replace a real-site canary.
 - Canary, beta, ZIP, release, or rollback: add the release skill. Continuity supplies state but grants no release authority.
-- Selection, rejection, deferral, or research rationale: read `docs/work/DECISION_RATIONALE.md`, then the cited current contract/evidence and only the relevant external source. Its decisions do not override fresh status or imply PASS. For recurring host failure, search maintenance notes by concept label. Do not load archives unless current sources leave a specific question unresolved.
+- Selection, rejection, deferral, or research rationale: start with the short retired-assumption guards in `docs/work/VERIFICATION_EFFICIENCY.md`, then retrieve only the matching `DECISION_RATIONALE.md` entry/current contract if it could change the action. Historical next tasks are inactive. A replaced decision needs an explicit new decision and a concrete reopen reason; repetition is not new evidence. For recurring host failure, search maintenance notes by concept label.
 
 ## Update rules
 
 Apply the trigger named in `verification/continuity-contract.json`. A state update must keep confirmed, candidate, stale, UNKNOWN, and blocked facts distinct. PASS/READY requires an existing receipt digest and exact artifact digest. After a source or evidence-input change, mark dependent evidence historical before writing any new success claim.
 
-At each checkpoint, run `node tools/verify-modernization-assurance.mjs` and `node tools/verify-skills.mjs`. The first checks the state projection and trigger vocabulary; the second checks that the thin router remains discoverable and its positive, negative, paraphrase, overlap, and held-out routing cases remain present.
+Use the proportionate check matrix in `docs/work/VERIFICATION_EFFICIENCY.md`. For a changed typed packet, a focused `node tools/verify-governance.mjs` preflight is sufficient before the final checkpoint path. The publisher's `verify-repo all` already includes assurance, governance and skill checks; do not immediately duplicate those commands on the same tree. Routine resume does not run product suites or proof audits simply because the thread/HEAD changed.
 
-When a consequential method choice changes, add or explicitly supersede its rationale entry and run `node tools/verify-research-selection.mjs`. Keep `SELECTED`, `NOT ADOPTED`, and `DEFERRED` separate; none is an assurance status. An unresolved item cannot be silently rewritten as accepted state.
+When a consequential method choice changes, add or explicitly supersede its rationale entry. Its structural check (`tools/verify-research-selection.mjs`) is also included in final guidance/all validation; a separate early run is useful only for a specific preflight. Keep `SELECTED`, `NOT ADOPTED`, and `DEFERRED` separate; none is an assurance status. An unresolved item cannot be silently rewritten as accepted state. Practical continuity tips need only relevant primary guidance and a clear local adaptation, not a new research program.
 
 When source, build inputs, the effective architecture overlay, or `architecture/ui-surfaces.json` changes, run the live-architecture `--check` gate before reporting the map current. If the gate fails, classify the discrepancy and keep the old accepted evidence; do not silently rename a visual owner or infer a live-site PASS.
 

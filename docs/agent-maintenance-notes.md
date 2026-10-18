@@ -319,8 +319,14 @@ Future UI entry: docs/ui-surface-contracts.md → docs/work/UI_REVIEW_CHECKLIST.
 - Compose accepted CSS deltas through exact frozen ledgers; do not refresh an expected full-CSS hash merely to pass. Carousel proof restores exactly56 priorities against208D before checking the original F272-minus-one-rule digest.
 - Current palette qualification is an exact local certificate, not allow-current or admission. Pin imported helper modules outside harness/fixtures, explicit full-suite count/report, original control effects and browser/platform; preserve raw FAIL and generic raw gates. See docs/work/HEADER_CASCADE_FINALIZATION.md.
 
-## Observed phone viewport supersedes narrow-layout assumption (2026-10-18)
+## Default mobile environment adopted by the user (2026-10-18)
 
-- Actual user reading: screen412×1006, layout980×2306, client980×2002, visual scale0.420684278011322, DPR2.625;390 is stress only. Never interchange screenshot pixels, screen size, layout width and page scale.
+- Standing user choice: use docs/work/PHONE_VIEWPORT_PROFILE.md as the default for future mobile UI work. Retrieve through INDEX/CURRENT/NEXT and the UI contract/checklist, even after a context reset. Actual user reading: screen412×1006, layout980×2306, client980×2002, visual scale0.420684278011322, DPR2.625;390/412 layouts are stress only. Never interchange screenshot pixels, screen size, layout width and page scale.
 - Coarse true and hover true are both observed with touch5; do not normalize them from assumptions about phones. The standard Playwright touch option changes these readings; the bounded native renderer proxy and its remaining limitations are in docs/work/PHONE_VIEWPORT_PROFILE.md.
 - Preserve observed height/scale discrepancies. Do not synthesize getters/meta/CSS or call screenshot scaling exact phone emulation. Read browser outputs and qualify native input separately.
+
+## Practical continuity and decision retirement (2026-10-18)
+
+- Entry is docs/work/INDEX.md → CURRENT_STATE.md / NEXT_TASK.md, then only action-relevant details. Keep accepted progress and one next task; remove completed dependencies and historical next-step wording from the entry packet. docs/work/VERIFICATION_EFFICIENCY.md owns the check matrix and short retired-assumption guards.
+- A rejected/superseded approach stays historical. Record the replacement/reason and concrete reopen trigger; do not turn it back into active work because old prose says next. A new user decision or contrary current evidence requires an explicit replacement decision.
+- Fresh root/branch/HEAD/status/artifact checks are continuity, not a reason to repeat unchanged product suites. Exact comparison bytes are required when used; absent optional raw history is UNKNOWN, not a global development blocker. The checkpoint publisher owns final verify-repo all; do not duplicate its bundled guidance checks immediately before it.
