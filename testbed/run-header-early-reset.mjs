@@ -8,11 +8,13 @@ import { loadHarnessSource } from './harness/userscript-loader.mjs';
 import { storageKeys } from './harness/runner-utils.mjs';
 import { startServer } from './server/server.mjs';
 import { withHeaderDarkToggleFixture } from './fixtures/header-dark-toggle.mjs';
+import { runHeaderTypeaContract } from './header-typea-contract.mjs';
 
 // A bounded early-reset contract. It does not admit the whole header or emulate
 // the observed phone's visual scale/client height/engine. Never submit publicly.
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const args = process.argv.slice(2);
+const typeaContract = args.includes('--typea-contract');
 const required = flag => { const i = args.indexOf(flag); assert.ok(i >= 0 && args[i + 1], flag); return args[i + 1]; };
 assert.ok(args.includes('--require-runtime-under-test'), 'Source runtime guard required');
 const candidate = path.join(root, 'testbed/artifacts/runtime-under-test.user.js');
@@ -29,7 +31,10 @@ const server = await startServer();
 const routes = ['/board/lists?id=test', '/mgallery/board/lists?id=test', '/mini/board/lists?id=test', '/mgallery/board/view?id=test&no=1001&header=1'];
 const cases = routes.flatMap(route => [false, true].map(dark => ({ route, dark, width: 980, height: 2306 })))
     .concat([{ route: routes[1], dark: false, width: 390, height: 844 }, { route: routes[1], dark: true, width: 1280, height: 900 }]);
-const report = { scope: 'EARLY_RESET_ONLY', browser: browser.version(), control: { path: control, sha256: sha(await readFile(control)) },
+const report = { scope: typeaContract ? 'EARLY_RESET_AND_TYPEA_APPLICABILITY_ONLY' : 'EARLY_RESET_ONLY', browser: browser.version(),
+    inputs: Object.fromEntries(await Promise.all(['testbed/run-header-early-reset.mjs', 'testbed/header-typea-contract.mjs',
+        'testbed/fixtures/header-dark-toggle.mjs'].map(async file => [file, sha(await readFile(path.join(root, file)))]))),
+    control: { path: control, sha256: sha(await readFile(control)) },
     candidate: { path: candidate, sha256: sha(await readFile(candidate)) }, observations: [] };
 console.log(JSON.stringify({ control: report.control, candidate: report.candidate, browser: report.browser }));
 try {
@@ -65,6 +70,7 @@ try {
                     await page.evaluate(() => { const s = document.createElement('style'); s.id = 'css-darkmode'; document.head.append(s); });
                     await page.waitForFunction(() => document.body.classList.contains('dc-filter-dark-mode'));
                 }
+                const typea = typeaContract ? await runHeaderTypeaContract(page) : null;
                 const observations = await page.evaluate(side => {
                     const check = (ok, message) => { if (!ok) throw Error(message); };
                     const normalized = ['float', 'position', 'margin', 'padding'];
@@ -168,7 +174,7 @@ try {
                 });
                 assert.equal(after.links.length, 4); assert.ok(after.links.every(e => e.trusted && !e.prevented));
                 assert.equal(after.focus, true); assert.deepEqual(after.errors, []);
-                sides[side] = { ...observations, native, after };
+                sides[side] = { ...observations, native, after, ...(typeaContract ? { typea } : {}) };
                 if (side === 'candidate' && testCase.width === 980 && testCase.route === routes[1])
                     await page.screenshot({ path: path.join(path.dirname(output), `early-reset-${testCase.dark ? 'dark' : 'light'}.png`), fullPage: false });
             } finally { await context.close(); }
