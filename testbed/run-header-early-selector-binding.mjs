@@ -6,10 +6,14 @@ import {parse} from 'acorn';
 import path from 'node:path';
 import {restoreHistoricalGnbPriorities} from '../tools/header-gnb-priority-contract.mjs';
 
-const controlPath='artifacts/controls/header-removal-D52D.user.js';
+const currentIndex=process.argv.indexOf('--current-control');
+const currentControl=currentIndex>=0;
+const controlPath=currentControl?process.argv[currentIndex+1]:'artifacts/controls/header-removal-D52D.user.js';
+assert.ok(controlPath,'Missing current control path');
 const control=await readFile(controlPath);
 const sha=b=>createHash('sha256').update(b).digest('hex').toUpperCase();
-assert.equal(sha(control),'D52D8C7C9AE46A2BD3D37974B929D36952B9E3F55EB5D19F5C3680602B9E1B59');
+assert.equal(sha(control),currentControl?'FD58B82236AC08D0208FD7982E7083945B6A79F132B257C04C56C79BF1B2C1E2'
+ :'D52D8C7C9AE46A2BD3D37974B929D36952B9E3F55EB5D19F5C3680602B9E1B59');
 const cases=[
  ['header-shell','HeaderShell','Theme',['root','search','searchButton','spriteButton','login','logout','searchInset','searchField','buttonDecoration','spriteDecoration']],
  ['header-shell','HeaderShell','Reset',['root']],
@@ -39,15 +43,17 @@ for(const [surface,family,kind,slots] of cases){
  assert.ok(input&&!input.node.async&&!input.node.generator,`${surface}/${kind}: hoisted adapter selector input required`);
  const declaration=`${build.text}\n${input.text}`;
  const old=original.get(buildName);assert.ok(old,`Exact control builder ${buildName}`);
- candidateDeclarations.push(declaration);controlDeclarations.push(old.text);
+ const oldInput=currentControl?original.get(inputName):null;
+ if(currentControl)assert.ok(oldInput,`Exact current control input ${inputName}`);
+ candidateDeclarations.push(declaration);controlDeclarations.push(old.text+(oldInput?`\n${oldInput.text}`:''));
  // Invoke BEFORE either declaration. No const presenter/adapter, DOM, theme
  // owner or mutable global is available to rescue an initialization regression.
  const run=(prefix,declarations=declaration)=>vm.runInNewContext(`${prefix}\n${declarations}`,{}, {timeout:1000});
  for(const attribute of ['data-dcuf-palette','data-dcuf-audit-palette']){
-  const oldCss=vm.runInNewContext(`${old.text}\n${buildName}(${JSON.stringify(attribute)})`,{}, {timeout:1000});
+  const oldCss=vm.runInNewContext(`${old.text}\n${oldInput?.text||''}\n${buildName}(${oldInput?`${inputName}(${JSON.stringify(attribute)})`:JSON.stringify(attribute)})`,{}, {timeout:1000});
   const css=run(`${buildName}(${inputName}(${JSON.stringify(attribute)}));`);
-  const historical=surface==='header-gnb'&&kind==='Theme'?restoreHistoricalGnbPriorities(css,'theme'):css;
-  assert.equal(canonical(historical),canonical(oldCss),`${surface}/${kind}: exact CSS except declared GNB background priorities`);
+  const historical=!currentControl&&surface==='header-gnb'&&kind==='Theme'?restoreHistoricalGnbPriorities(css,'theme'):css;
+  assert.equal(canonical(historical),canonical(oldCss),`${surface}/${kind}: exact CSS except declared priorities`);
  }
  const record=run(`${inputName}('data-dcuf-palette');`);
  assert.ok(Object.isFrozen(record));assert.deepEqual(Object.keys(record),slots);
@@ -70,7 +76,8 @@ for(const [surface,family,kind,slots] of cases){
   Object.freeze({...record,[slots[0]]:42}),accessor];
  for(const input of malformed)assert.throws(()=>vm.runInNewContext(`${build.text}\n${buildName}(input)`,{input},{timeout:1000}),{name:'TypeError'});
  assert.equal(accessed,false,'Accessor input rejected without executing its getter');
- results.push({surface,kind,slots:slots.length,independentInputNegatives:slots.length,exactControlCss:surface!=='header-gnb'||kind!=='Theme',declaredPriorityChanges:surface==='header-gnb'&&kind==='Theme'?2:0,hoistedBeforeInitialization:true,rejectedInputs:malformed.length});
+ const changes=!currentControl&&surface==='header-gnb'&&kind==='Theme'?2:0;
+ results.push({surface,kind,slots:slots.length,independentInputNegatives:slots.length,exactControlCss:changes===0,declaredPriorityChanges:changes,hoistedBeforeInitialization:true,rejectedInputs:malformed.length});
 }
 function initializer(source,name){let found;walk(parse(source,{ecmaVersion:'latest'}),node=>{if(node.type==='VariableDeclarator'&&node.id?.name===name){assert.equal(found,undefined,`Duplicate ${name}`);found=source.slice(node.init.start,node.init.end);}});assert.ok(found,`Missing ${name}`);return found;}
 const composition={};
@@ -80,15 +87,17 @@ for(const [kind,file,name] of [['theme','src/targets/mobile/theme-host-style.js'
  const evaluate=(expr,declarations,attribute)=>vm.runInNewContext(`const value=${expr};\n${kind==='theme'?`value(${JSON.stringify(attribute)})`:'value'};\n${declarations.join('\n')}`,{}, {timeout:1000});
  for(const attribute of kind==='theme'?['data-dcuf-palette','data-dcuf-audit-palette']:[null]){
   const current=evaluate(expression,candidateDeclarations,attribute);
-  assert.equal(canonical(kind==='theme'?restoreHistoricalGnbPriorities(current,'theme'):current),canonical(evaluate(baselineExpression,controlDeclarations,attribute)),`Complete ${kind} stylesheet except declared GNB priorities`);
+  const historical=kind==='theme'&&!currentControl?restoreHistoricalGnbPriorities(current,'theme'):current;
+  assert.equal(canonical(historical),canonical(evaluate(baselineExpression,controlDeclarations,attribute)),`Complete ${kind} stylesheet except declared priorities`);
  }
  if(kind==='theme'){
   const reordered=expression.replace('__dcufBuildHeaderShellThemeCss','__swapTheme').replace('__dcufBuildHeaderGnbThemeCss','__dcufBuildHeaderShellThemeCss').replace('__swapTheme','__dcufBuildHeaderGnbThemeCss')
    .replace('__dcufDescribeHeaderShellThemeSelectors','__swapInput').replace('__dcufDescribeHeaderGnbThemeSelectors','__dcufDescribeHeaderShellThemeSelectors').replace('__swapInput','__dcufDescribeHeaderGnbThemeSelectors');
-  assert.notEqual(canonical(restoreHistoricalGnbPriorities(evaluate(reordered,candidateDeclarations,'data-dcuf-palette'),'theme')),canonical(evaluate(baselineExpression,controlDeclarations,'data-dcuf-palette')),'Cross-surface phase order cannot hide in grouped palette digest');
+  const reorderedCss=evaluate(reordered,candidateDeclarations,'data-dcuf-palette');
+  assert.notEqual(canonical(currentControl?reorderedCss:restoreHistoricalGnbPriorities(reorderedCss,'theme')),canonical(evaluate(baselineExpression,controlDeclarations,'data-dcuf-palette')),'Cross-surface phase order cannot hide in grouped palette digest');
  }
- composition[kind]={exactCompleteCss:kind!=='theme',declaredPriorityChanges:kind==='theme'?2:0,attributes:kind==='theme'?2:0,invokedBeforePresenterAdapterInitialization:true};
+ composition[kind]={exactCompleteCss:kind!=='theme'||currentControl,declaredPriorityChanges:kind==='theme'&&!currentControl?2:0,attributes:kind==='theme'?2:0,invokedBeforePresenterAdapterInitialization:true};
 }
 const report={kind:'header-early-native-selector-contract',status:'PASS',scope:'PURE_FACTORY_AND_INPUT_NOT_BROWSER_OR_STAGE_ADMISSION',control:{path:controlPath,sha256:sha(control)},observerSha256:sha(await readFile(new URL(import.meta.url))),inputs:bindings,results,composition,compositionOrderNegative:true};
 const index=process.argv.indexOf('--output');if(index>=0){await mkdir(path.dirname(process.argv[index+1]),{recursive:true});await writeFile(process.argv[index+1],JSON.stringify(report,null,2)+'\n');}
-console.log(`Header early binding PASS: ${results.length} builders, ${results.reduce((n,r)=>n+r.slots,0)} named inputs; exact control CSS except two GNB priorities and hoisted execution; ${results.reduce((n,r)=>n+r.rejectedInputs,0)} malformed controls rejected.`);
+console.log(`Header early binding PASS: ${results.length} builders, ${results.reduce((n,r)=>n+r.slots,0)} named inputs; ${currentControl?'exact current control CSS':'historical CSS except two GNB priorities'} and hoisted execution; ${results.reduce((n,r)=>n+r.rejectedInputs,0)} malformed controls rejected.`);

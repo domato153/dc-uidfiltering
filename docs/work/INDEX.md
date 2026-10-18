@@ -16,7 +16,7 @@ Use this file in the exact active nested worktree supplied by the private prompt
 | 모바일, 폰, 휴대폰, 데스크톱 모드, 폰 비율, 화면비, mobile viewport | PHONE_VIEWPORT_PROFILE.md: adopted reference, tested proxy and scale/height/engine gaps. |
 | UI 변경, 전체 UI, 메뉴/팝업, 일반/대댓글/이미지댓글, editor | docs/ui-surface-contracts.md → UI_REVIEW_CHECKLIST.md. Local change: affected IDs/adjacent/X states; whole-UI completion: all applicable children. |
 | 깨짐 복구 결과, stable UI comparison | UI_ALL_REPAIRS.md (all15 scoped repairs) → HEADER_CASCADE_FINALIZATION.md (supersedes its three local blockers). Earlier UI_BREAKAGE_CAUSE_AUDIT.md / UI_VISUAL_BASELINE_COMPARISON.md are diagnosis history. |
-| Current header applicability / mixed exit | HEADER_CASCADE_FINALIZATION.md → HEADER_FINAL_ADMISSION.md and affected source/contract. Older HEADER_* next-task wording is historical. |
+| Current header applicability / mixed exit | HEADER_EARLY_RESET_ADMISSION.md → HEADER_CASCADE_FINALIZATION.md / HEADER_FINAL_ADMISSION.md for historical scopes, plus affected source/contract. Older HEADER_* next-task wording is historical. |
 | 실제 Chrome/Tampermonkey, 실사이트 테스트 막힘 | docs/live-site-canary.md (working installed-chrome route); maintenance notes: Live-test capability scope. Read success path before declaring unavailable. |
 | 디자인, 통일감, Concept01, UI 교체 | UI_DESIGN_REFERENCES.md → UI_REPLACEABILITY_VALIDATION.md. Planned after separation/repair; no readiness claim. |
 | 소유권, architecture, cascade | architecture/registry.json + candidates, architecture/ui-surfaces.json; `node tools/inspect-live-architecture.mjs --surface header-navigation`. Repository map is not live-site evidence. |
