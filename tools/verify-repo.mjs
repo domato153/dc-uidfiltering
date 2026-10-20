@@ -133,7 +133,8 @@ async function verifyGuidance() {
         ['UI boundaries', 'tools/verify-ui-boundaries.mjs'],
         ['workflows', 'tools/verify-workflows.mjs'],
         ['live site contracts', 'tools/test-live-site-canary.mjs'],
-        ['header palette ownership', 'tools/test-header-palette-ownership.mjs']
+        ['header palette ownership', 'tools/test-header-palette-ownership.mjs'],
+        ['header stage admission', 'tools/test-header-stage-admission.mjs']
     ]) {
         const result = spawnSync(process.execPath, [script, ...(label === 'architecture' ? ['validate'] : label === 'live architecture links' ? ['--check'] : [])], {
             cwd: rootDir,

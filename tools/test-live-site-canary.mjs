@@ -47,8 +47,10 @@ test('missing explicit browser value rejected before setup', () => {
 });
 
 {
-    const child = spawn(process.execPath, ['-e', "process.on('message', () => setTimeout(() => process.exit(0), 50))"], { stdio: ['ignore', 'ignore', 'ignore', 'ipc'], windowsHide: true });
+    const child = spawn(process.execPath, ['-e', "process.on('message', () => setTimeout(() => process.exit(0), 50)); process.send('ready')"], { stdio: ['ignore', 'ignore', 'ignore', 'ipc'], windowsHide: true });
+    const ready = once(child, 'message');
     await once(child, 'spawn');
+    assert.deepEqual(await ready, ['ready', undefined], 'Measure shutdown only after the child handler is ready');
     let forced = 0;
     const kill = child.kill.bind(child);
     child.kill = (...args) => { forced++; return kill(...args); };

@@ -13,6 +13,12 @@ const outputArg = outputIndex >= 0 ? process.argv[outputIndex + 1] : null;
 if (!stage || stage.startsWith('--') || !outputArg || outputArg.startsWith('--')) {
     throw new Error('Usage: node tools/write-modernization-receipt.mjs --stage <id> --output <verification/receipts/*.json>');
 }
+if (stage === 'header-navigation') {
+    const gateIndex = process.argv.indexOf('--gate-receipt');
+    const { writeHeaderStageReceipt } = await import('./header-stage-admission.mjs');
+    await writeHeaderStageReceipt(rootDir, { gateReceiptPath: gateIndex < 0 ? null : process.argv[gateIndex + 1], outputPath: outputArg });
+    process.exit(0);
+}
 const stageConfigs = Object.freeze({
     'foundation-sealing': Object.freeze({
         inputPrefix: 'foundation',
