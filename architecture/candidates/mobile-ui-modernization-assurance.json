@@ -17,6 +17,10 @@
     ],
     "upsertContracts": [
       {
+        "id": "header-native-row-composition",
+        "summary": "Only four normal CSS additions in the existing GNB/page-head presenters: nav/list height:auto and page-head height:auto/right flex-wrap:wrap. Preserve980/wide GNB geometry, grow the heading to contain native actions and keep separate390 stress rows adjacent to recent visits. No native node/event/settings/resource, selector, observer or owner change."
+      },
+      {
         "id": "header-native-dark-toggle-hit",
         "summary": "The existing shell links row uses flex instead of block so the original floated darkmodebox stays beside its native UL above search at390px. Preserve nine immutable full selectors, other shell CSS and mount order, native nodes/forms/events/default pointer and Enter theme/search actions, settings and existing resources; the old declaration must reproduce the hit failure."
       },
@@ -314,9 +318,9 @@
         "classification": "presentation-source",
         "layer": "presentation-ui",
         "boundaryState": "mixed",
-        "responsibility": "Owns zero-delta list/view page-head geometry, left/right alignment, and clearfix through reversible roles, plus page-head border/search/title/badge/sprite palette rules via a hoisted pure builder. Inherited important declarations and remaining late cascade qualifiers retain their transitional scope. Owns unchanged early declaration factories consuming frozen named adapter selector records at the original hoisted theme/core phase, without raw native selectors in those early builders. Complete late style declarations now consume explicit frozen named full adapter selector inputs through a pure hoisted builder, retaining exact default CSS and the existing style diagnostic interface; native predicate construction is adapter-owned.",
+        "responsibility": "Owns list/view page-head geometry with the declared auto-height/action-wrap repair, left/right alignment, and clearfix through reversible roles, plus page-head border/search/title/badge/sprite palette rules via a hoisted pure builder. Inherited important declarations and remaining late cascade qualifiers retain their transitional scope. Owns unchanged early declaration factories consuming frozen named adapter selector records at the original hoisted theme/core phase, without raw native selectors in those early builders. Complete late style declarations now consume explicit frozen named full adapter selector inputs through a pure hoisted builder, preserving all other default CSS and the existing style diagnostic interface; native predicate construction is adapter-owned.",
         "sourceRefs": ["src/targets/mobile/gallery-page-head-presenter.js"],
-        "contractRefs": ["ui-ownership", "semantic-preservation", "host-dom-events"],
+        "contractRefs": ["header-native-row-composition", "ui-ownership", "semantic-preservation", "host-dom-events"],
         "fitnessRefs": ["invariant-one-visual-owner", "invariant-ui-port-boundary", "invariant-build-inputs-mapped"],
         "transition": {
           "targetBoundaryState": "conforming",
@@ -340,9 +344,9 @@
         "classification": "presentation-source",
         "layer": "presentation-ui",
         "boundaryState": "mixed",
-        "responsibility": "Owns zero-delta GNB semantic layout, accent/next-icon palette rules, and the inherited broad GNB reset through pure hoisted builders at the original theme/core phases. Unprojected host coverage and inherited important declarations remain transitional cascade debt. Owns unchanged early declaration factories consuming frozen named adapter selector records at the original hoisted theme/core phase, without raw native selectors in those early builders. Complete late style declarations now consume explicit frozen named full adapter selector inputs through a pure hoisted builder, retaining exact default CSS and the existing style diagnostic interface; native predicate construction is adapter-owned.",
+        "responsibility": "Owns GNB semantic layout with the declared nav/list auto-height repair, accent/next-icon palette rules, and the inherited broad GNB reset through pure hoisted builders at the original theme/core phases. Unprojected host coverage and inherited important declarations remain transitional cascade debt. Owns unchanged early declaration factories consuming frozen named adapter selector records at the original hoisted theme/core phase, without raw native selectors in those early builders. Complete late style declarations now consume explicit frozen named full adapter selector inputs through a pure hoisted builder, preserving all other default CSS and the existing style diagnostic interface; native predicate construction is adapter-owned.",
         "sourceRefs": ["src/targets/mobile/header-gnb-presenter.js"],
-        "contractRefs": ["ui-ownership", "semantic-preservation", "host-dom-events"],
+        "contractRefs": ["header-native-row-composition", "ui-ownership", "semantic-preservation", "host-dom-events"],
         "fitnessRefs": ["invariant-one-visual-owner", "invariant-ui-port-boundary", "invariant-build-inputs-mapped"],
         "transition": {
           "targetBoundaryState": "conforming",

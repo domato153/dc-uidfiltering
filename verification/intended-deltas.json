@@ -78,6 +78,13 @@
         {
           "kind": "geometry",
           "surface": "header-navigation",
+          "scope": "Only four normal declarations on the original owned list/view header: GNB nav/list height:auto, page-head root height:auto and its right action group flex-wrap:wrap. Keep980/wide GNB item positions exact; allow heading growth for native actions and extra wrapped-menu height at separately labeled390 stress width.",
+          "reason": "Measured980 fixed50px heading cannot contain44px actions plus20px padding; native44px nav/list also fail to contain two rows at390 stress. Repair current presenter flow without a new selector, priority, node, handler, observer or resource owner.",
+          "contractTests": ["header-composition six control RED/candidate PASS pairs", "header-exit-inputs eight980 native search/menu/recent pairs", "header-final-boundary exact historical CSS after four declared restorations"]
+        },
+        {
+          "kind": "geometry",
+          "surface": "header-navigation",
           "scope": "List-only projected original shell `.area_links` changes display:block to flex; native UL contents may wrap while its original darkmodebox remains adjacent above the native search input. Every other shell declaration, full selector, original node/form/event and resource owner remains unchanged.",
           "reason": "At390px native floated link groups put the original darkonoff center under preSWord. Correct the same final owner's group flow rather than raising or replacing native controls.",
           "contractTests": ["header-dark-toggle-contract trusted pointer/default Enter/search/form/restoration and old-layout negative", "header-final-boundary frozen CSS except one links display", "actual installed-Chrome Tampermonkey native header matrix"]

@@ -31,3 +31,5 @@ Final local report digests (SHA-256):
 - testbed/artifacts/header-composition-2026-10-20/green/report.json: `6668B9805959CC2769A2A98545A59A3CCFA58723189EDA8A178FBE5C98D43448`.
 - testbed/artifacts/header-composition-2026-10-20/actual-extension/report.json: `B122BD6F2D65A08D115E69AE54E4FC65AB1E95A0A2E5171207CB97E7263564B5`.
 - testbed/artifacts/header-composition-2026-10-20/actual-startup/report.json: `958A36F0B393168763074F1EC9875B9732A665DA845DDF747BE1A538045FDEC5`.
+
+2026-10-20 continuation: the six-criterion qualification above is completed by HEADER_EXIT_QUALIFICATION.md. Its one remaining owner-delta admission route supersedes this historical next-task wording; no new product patch or full-suite rerun was needed.

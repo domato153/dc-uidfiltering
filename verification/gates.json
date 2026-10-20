@@ -143,7 +143,7 @@
     "qualified-header-palette": {
       "runsOn": ["manual-qualified-windows"],
       "commands": [
-        { "id": "fd58-declared-owner-split", "command": "node", "args": ["tools/run-qualified-mobile-palette.mjs", "--qualification", "verification/header-palette-fd58-qualification.json", "--qualification-sha256", "3432349980E83013D1A606ED1670EAF0EC4C074BD158E98F97F1B17AF6583E49", "--output", "artifacts/header-finalization-2026-10-18/mobile-palette.json"] }
+        { "id": "478a-declared-owner-split", "command": "node", "args": ["tools/run-qualified-mobile-palette.mjs", "--qualification", "verification/header-palette-478a-qualification.json", "--qualification-sha256", "2D5B62379F3C6C0278E8B11D7D9D4519E8F406053D9098714A83E90FA5CC9AF5", "--output", "artifacts/header-exit-2026-10-20/mobile-palette.json"] }
       ]
     },
     "live-canary": {
