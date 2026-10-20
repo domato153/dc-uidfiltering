@@ -5,7 +5,7 @@
 - Active plan: docs/work/MOBILE_UI_MODERNIZATION.md → source separation closed → bounded docs/work/UI_REPLACEABILITY_VALIDATION.md pilot → Concept01 trial. Preserve native behavior/settings/PC and one visual owner per surface. Isolated installed-Chrome/Tampermonkey read-only public native actions are authorized; anima remains read-only. No normal-profile/account/content writes or release/version authority.
 - Workspace path: `.`. Use the private prompt's exact nested worktree; AGENTS.md is the single policy.
 - Active stage: `header-navigation`. Header UI/function source separation PASS at478A; next: `header-replaceability-pilot`. Six mixed labels/full-visual-promotion criteria remain unchanged, not a reopened source-separation task. Actual replacement readiness and Concept01 remain unproved.
-- Source state: Source checkpoint base HEAD `5ccc5d5045dadbdf2aae24e6c0a5cd7250df19ec` on `codex/ui-port-boundary`. This unit closes source separation with fresh existing source/VM checks, same-input product evidence and a frozen478A pilot control. Only closeout/plan/continuity records change; product source/artifacts/versions and architecture registry/candidate are unchanged. Exact commit/push/CI state belongs to the checkpoint receipt.
+- Source state: Source checkpoint base HEAD `b89f3ae26bb216ad39f1202fcb1c0cc738b3348b` on `codex/ui-port-boundary`. This is the draft-complete code baseline. Header source separation is closed with fresh existing source/VM checks, same-input product evidence and a frozen478A pilot control. This milestone record changes continuity only; product source/artifacts/versions and architecture registry/candidate are unchanged. Exact commit/push/CI state belongs to the checkpoint receipt.
 - Local-only state: `LOCAL_ONLY_EVIDENCE`. Raw captures/reports under artifacts/ and testbed/artifacts/ are ignored. The progress table names their tracked summaries. Missing old reports neither certify their claims nor block unrelated fresh work. Preserve debug.log unread/unstaged.
 - Candidate fingerprint: `b9b31bf5c9c75cbb60ae72facf52c320147ff5bec698759bf32c98611ab0d9e5`
 - Last current audit: PASS for HEADER_SOURCE_SEPARATION_ONLY. HEADER_SEPARATION_CLOSEOUT.md and current receipt bind38 source boundaries,13 generated outputs,8 early/4 late builders, body/layout and drawer checks, and6 fresh forbidden-dependency rejections. Previous exact143 mobile/11 host/15 PC functional and scoped extension evidence is reused with unchanged direct inputs; no full suite repeated. Visual promotion, replaceability and whole UI remain unclaimed.
@@ -18,6 +18,13 @@
 ```dcuf-current-artifacts
 {"schemaVersion":1,"mobile":{"sha256":"478A440F133D80A813124069BD82B043B960EAB0156098223286C325975170B5"},"pc":{"sha256":"C14D163F2757DB02117E3F93204B56B6AA22D464541729315A6B40C4128C7D37"}}
 ```
+
+## Draft-complete checkpoint — 2026-10-21
+
+- User-requested milestone: **초안 완성 / draft complete**, immediately before the actual UI replacement pilot. Code baseline: `b89f3ae26bb216ad39f1202fcb1c0cc738b3348b`; Mobile478A and PC C14D retain the exact artifact digests above.
+- Completed scope: Initial UI/function source separation, including the header closeout, and the diagnosed UI defect repairs within the recorded evidence scopes. `verification/receipts/2026-10-21-header-source-separation.json` and the progress routes below retain their actual checks and limits.
+- Remaining scope: Execute `header-replaceability-pilot`, then the unified Concept01 trial and applicable visual/native/live review. Actual replacement readiness, whole-UI completion and release readiness are not certified. All six mixed visual-promotion criteria and the original raw palette FAIL remain unchanged.
+- Resume from this milestone using INDEX → CURRENT/NEXT. The next bounded task remains `header-replaceability-pilot`; this checkpoint adds no product behavior, version or release change.
 
 ## Meaningful progress retained
 
