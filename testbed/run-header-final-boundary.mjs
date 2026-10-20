@@ -4,6 +4,7 @@ import {createHash} from 'node:crypto';
 import vm from 'node:vm';
 import {parse} from 'acorn';
 import {restoreHistoricalGnbPriorities,restoreHistoricalHeaderLayoutPriorities} from '../tools/header-gnb-priority-contract.mjs';
+import {restoreHeaderCompositionCss} from '../tools/header-composition-contract.mjs';
 
 const dir='artifacts/header-finish-2026-10-13';
 const sha=b=>createHash('sha256').update(b).digest('hex').toUpperCase();
@@ -31,6 +32,7 @@ const cases=[
 ];
 const canonical=s=>s.replace(/\r\n/g,'\n');
 const historicalCss=(surface,css)=>{
+ css=restoreHeaderCompositionCss(surface,css);
  if(surface==='header-gnb')return restoreHistoricalGnbPriorities(css,'base');
  if(['gallery-page-head','header-recent-visit'].includes(surface))return restoreHistoricalHeaderLayoutPriorities(css,surface);
  if(surface==='header-shell'){
@@ -44,6 +46,7 @@ const historicalCss=(surface,css)=>{
 };
 const originalFunctions=control===null?new Map():functions(control), results=[], dependencies={};
 dependencies['tools/header-gnb-priority-contract.mjs']=sha(await readFile('tools/header-gnb-priority-contract.mjs'));
+dependencies['tools/header-composition-contract.mjs']=sha(await readFile('tools/header-composition-contract.mjs'));
 for(const [surface,family,slots] of cases){
  const file=`src/targets/mobile/${surface}-presenter.js`,adapterFile=`src/targets/mobile/${surface}-host-adapter.js`;
  const source=await readFile(file,'utf8'),adapter=await readFile(adapterFile,'utf8');dependencies[file]=sha(source);dependencies[adapterFile]=sha(adapter);
@@ -95,7 +98,7 @@ for(const [surface,family,slots] of cases){
  const malformed=[null,{...record},Object.freeze({...record,extra:'.extra'}),Object.freeze(Object.fromEntries(Object.entries(record).slice(1))),Object.freeze({...record,[slots[0]]:''}),Object.freeze({...record,[slots[0]]:'  '}),Object.freeze({...record,[slots[0]]:42}),accessor,inherited,Object.freeze({...record,[Symbol('extra')]:'.extra'})];
  for(const input of malformed)assert.throws(()=>vm.runInNewContext(`${build}\n${builder}(input)`,{input},{timeout:1000}),{name:'TypeError'});
  assert.equal(accessed,false);assert.ok(!/\.typea|\bbody\s|\b(?:h1|img|nav)\[|\.dc-filter-dark-mode/.test(build),'No native predicate construction in presentation builder');
- results.push({surface,slots:slots.length,independentNegatives:slots.length,malformedNegatives:malformed.length,cssSha256:sha(canonical(style.css)),historicalCssSha256:frozenCss[surface],declaredPriorityChanges:surface==='header-shell'?19:surface==='header-recent-visit'?13:surface==='header-gnb'?8:surface==='gallery-page-head'?7:0,declaredDisplayChanges:surface==='header-shell'?1:0,exactCss:false,preInitialization:true,diagnosticInterface:true});
+ results.push({surface,slots:slots.length,independentNegatives:slots.length,malformedNegatives:malformed.length,cssSha256:sha(canonical(style.css)),historicalCssSha256:frozenCss[surface],declaredPriorityChanges:surface==='header-shell'?19:surface==='header-recent-visit'?13:surface==='header-gnb'?8:surface==='gallery-page-head'?7:0,declaredDisplayChanges:surface==='header-shell'?1:0,declaredCompositionChanges:['header-gnb','gallery-page-head'].includes(surface)?2:0,exactCss:false,preInitialization:true,diagnosticInterface:true});
 }
 const recentFile='src/targets/mobile/header-recent-visit-presenter.js',recentAdapter='src/targets/mobile/header-recent-visit-host-adapter.js';
 const recent=await readFile(recentFile,'utf8'),recentInputs=functions(await readFile(recentAdapter,'utf8')).get('__dcufDescribeHeaderRecentVisitStyleSelectors');

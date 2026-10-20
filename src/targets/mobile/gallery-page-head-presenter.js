@@ -84,6 +84,7 @@
             padding: 10px 15px !important;
             box-sizing: border-box;
             width: 100%;
+            height: auto;
             min-height: 50px;
             flex-wrap: wrap;
             gap: 10px;
@@ -93,6 +94,7 @@
             float: none;
             margin-left: auto;
             display: flex;
+            flex-wrap: wrap;
             align-items: center;
             gap: 8px;
         }
