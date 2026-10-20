@@ -12,7 +12,7 @@
         return `
         ${selectors.issue} {
             border-top-color: var(--dcuf-theme-accent) !important;
-            box-shadow: inset 0 2px 0 color-mix(in srgb, var(--dcuf-theme-accent) 78%, transparent) !important;
+            box-shadow: inset 0 2px 0 color-mix(in srgb, var(--dcuf-theme-accent) 78%, transparent);
         }
 `;
     }

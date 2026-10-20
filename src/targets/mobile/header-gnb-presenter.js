@@ -10,23 +10,23 @@
         }
         return `
         ${selectors.root} {
-            border-color: var(--dcuf-theme-accent-strong) !important;
+            border-color: var(--dcuf-theme-accent-strong);
             background-color: var(--dcuf-theme-accent-strong);
             background-image: none;
-            color: var(--dcuf-theme-on-accent) !important;
+            color: var(--dcuf-theme-on-accent);
         }
         ${selectors.nextIcon} {
-            display: inline-block !important;
-            width: 0 !important;
-            height: 0 !important;
-            margin-left: 8px !important;
-            border: 0 solid transparent !important;
-            border-right-width: 7px !important;
-            border-left-width: 7px !important;
-            border-top: 10px solid var(--dcuf-theme-on-accent) !important;
+            display: inline-block;
+            width: 0;
+            height: 0;
+            margin-left: 8px;
+            border: 0 solid transparent;
+            border-right-width: 7px;
+            border-left-width: 7px;
+            border-top: 10px solid var(--dcuf-theme-on-accent);
             background: none !important;
-            filter: none !important;
-            vertical-align: middle !important;
+            filter: none;
+            vertical-align: middle;
         }
 `;
     }

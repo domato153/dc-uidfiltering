@@ -6,9 +6,13 @@ import { parse } from 'acorn';
 import { resolveGeneratedHeaderCss } from './header-generated-css.mjs';
 import { loadDrawerPresenter } from '../testbed/header-drawer-body-contract.mjs';
 import { canonicalDrawerCss, drawerCssSha256, drawerPriorityControl, drawerPriorityChanges, restoreHistoricalDrawerPriorities } from './header-drawer-priority-contract.mjs';
+import { transformHeaderPalettePriorities } from './header-palette-priority-contract.mjs';
 
 const reference = 'src/targets/mobile/header-drawer-presenter.js';
-const source = await readFile(reference, 'utf8');
+const rawSource = await readFile(reference, 'utf8');
+const paletteRestoration = transformHeaderPalettePriorities(rawSource);
+assert.equal(paletteRestoration.changed, 1, 'Only one new drawer palette priority delta');
+const source = paletteRestoration.source;
 const sha = value => createHash('sha256').update(value).digest('hex');
 const actual = (await resolveGeneratedHeaderCss({ reference, source, readSource: file => readFile(file, 'utf8') }))
     .find(payload => payload.styleKey === 'header-drawer').css;
@@ -90,14 +94,16 @@ assert.equal(cssNodes.length, 1);
 const cssNode = cssNodes[0];
 const nonCss = source.slice(0, cssNode.start) + '__DRAWER_CSS_LITERAL__' + source.slice(cssNode.end);
 assert.equal(sha(canonicalDrawerCss(nonCss)), drawerPriorityControl.nonCssSourceSha256,
-    'Early palette/concealment and all JS descriptions/input/binding defaults remain exact');
+    'After one declared palette restoration, concealment and all JS descriptions/input/binding defaults remain exact');
 
 const runtimeStatus = actual.match(/!important/g)?.length === 8 ? 'NORMALIZED_CANDIDATE' : 'RED_CURRENT_SOURCE_NOT_NORMALIZED';
 const report = { kind: 'header-drawer-owned-priority-contract', scope: 'PURE_CSS_NOT_BROWSER_OR_HEADER_ADMISSION',
     status: runtimeStatus === 'NORMALIZED_CANDIDATE' ? 'PASS' : 'RED', runtimeStatus,
-    control: drawerPriorityControl, sourceSha256: sha(source), actualCssSha256: drawerCssSha256(actual), diagnosticCssSha256: drawerCssSha256(diagnostic),
+    control: drawerPriorityControl, sourceSha256: sha(rawSource), palettePriorityRestorations: paletteRestoration.changed,
+    actualCssSha256: drawerCssSha256(actual), diagnosticCssSha256: drawerCssSha256(diagnostic),
     selectedRemovals: 56, retainedLatePriorities: 8, unchangedNonCssSource: true, simulatedPositiveBindings: 2, rejectedMutations: negatives,
-    observerSha256: sha(await readFile(new URL(import.meta.url))), contractSha256: sha(await readFile(new URL('./header-drawer-priority-contract.mjs', import.meta.url))) };
+    observerSha256: sha(await readFile(new URL(import.meta.url))), contractSha256: sha(await readFile(new URL('./header-drawer-priority-contract.mjs', import.meta.url))),
+    paletteContractSha256: sha(await readFile(new URL('./header-palette-priority-contract.mjs', import.meta.url))) };
 const outputIndex = process.argv.indexOf('--output');
 if (outputIndex >= 0) {
     const destination = process.argv[outputIndex + 1];

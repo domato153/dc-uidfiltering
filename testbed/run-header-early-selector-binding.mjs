@@ -5,6 +5,7 @@ import vm from 'node:vm';
 import {parse} from 'acorn';
 import path from 'node:path';
 import {restoreHistoricalGnbPriorities} from '../tools/header-gnb-priority-contract.mjs';
+import {palettePriorityProfile,transformHeaderPalettePriorities} from '../tools/header-palette-priority-contract.mjs';
 
 const currentIndex=process.argv.indexOf('--current-control');
 const currentControl=currentIndex>=0;
@@ -38,7 +39,8 @@ for(const [surface,family,kind,slots] of cases){
  const presenter=await readFile(presenterPath,'utf8'),adapter=await readFile(adapterPath,'utf8');
  bindings[presenterPath]=sha(presenter);bindings[adapterPath]=sha(adapter);
  const buildName=`__dcufBuild${family}${kind}Css`,inputName=`__dcufDescribe${family}${kind}Selectors`;
- const build=functions(presenter).get(buildName),input=functions(adapter).get(inputName);
+ const restoredPresenter=kind==='Theme'?transformHeaderPalettePriorities(presenter).source:presenter;
+ const build=functions(restoredPresenter).get(buildName),input=functions(adapter).get(inputName);
  assert.ok(build&&!build.node.async&&!build.node.generator,`${surface}/${kind}: synchronous hoisted presentation builder`);
  assert.ok(input&&!input.node.async&&!input.node.generator,`${surface}/${kind}: hoisted adapter selector input required`);
  const declaration=`${build.text}\n${input.text}`;
@@ -76,7 +78,7 @@ for(const [surface,family,kind,slots] of cases){
   Object.freeze({...record,[slots[0]]:42}),accessor];
  for(const input of malformed)assert.throws(()=>vm.runInNewContext(`${build.text}\n${buildName}(input)`,{input},{timeout:1000}),{name:'TypeError'});
  assert.equal(accessed,false,'Accessor input rejected without executing its getter');
- const changes=!currentControl&&surface==='header-gnb'&&kind==='Theme'?2:0;
+ const changes=kind==='Theme'?palettePriorityProfile[surface].rules.reduce((n,r)=>n+r.declarations.length,0)+(!currentControl&&surface==='header-gnb'?2:0):0;
  results.push({surface,kind,slots:slots.length,independentInputNegatives:slots.length,exactControlCss:changes===0,declaredPriorityChanges:changes,hoistedBeforeInitialization:true,rejectedInputs:malformed.length});
 }
 function initializer(source,name){let found;walk(parse(source,{ecmaVersion:'latest'}),node=>{if(node.type==='VariableDeclarator'&&node.id?.name===name){assert.equal(found,undefined,`Duplicate ${name}`);found=source.slice(node.init.start,node.init.end);}});assert.ok(found,`Missing ${name}`);return found;}
@@ -96,8 +98,9 @@ for(const [kind,file,name] of [['theme','src/targets/mobile/theme-host-style.js'
   const reorderedCss=evaluate(reordered,candidateDeclarations,'data-dcuf-palette');
   assert.notEqual(canonical(currentControl?reorderedCss:restoreHistoricalGnbPriorities(reorderedCss,'theme')),canonical(evaluate(baselineExpression,controlDeclarations,'data-dcuf-palette')),'Cross-surface phase order cannot hide in grouped palette digest');
  }
- composition[kind]={exactCompleteCss:kind!=='theme'||currentControl,declaredPriorityChanges:kind==='theme'&&!currentControl?2:0,attributes:kind==='theme'?2:0,invokedBeforePresenterAdapterInitialization:true};
+ composition[kind]={exactCompleteCss:kind!=='theme',exactAfterDeclaredRestoration:true,declaredPriorityChanges:kind==='theme'?55+(currentControl?0:2):0,attributes:kind==='theme'?2:0,invokedBeforePresenterAdapterInitialization:true};
 }
+bindings['tools/header-palette-priority-contract.mjs']=sha(await readFile(new URL('../tools/header-palette-priority-contract.mjs',import.meta.url)));
 const report={kind:'header-early-native-selector-contract',status:'PASS',scope:'PURE_FACTORY_AND_INPUT_NOT_BROWSER_OR_STAGE_ADMISSION',control:{path:controlPath,sha256:sha(control)},observerSha256:sha(await readFile(new URL(import.meta.url))),inputs:bindings,results,composition,compositionOrderNegative:true};
 const index=process.argv.indexOf('--output');if(index>=0){await mkdir(path.dirname(process.argv[index+1]),{recursive:true});await writeFile(process.argv[index+1],JSON.stringify(report,null,2)+'\n');}
-console.log(`Header early binding PASS: ${results.length} builders, ${results.reduce((n,r)=>n+r.slots,0)} named inputs; ${currentControl?'exact current control CSS':'historical CSS except two GNB priorities'} and hoisted execution; ${results.reduce((n,r)=>n+r.rejectedInputs,0)} malformed controls rejected.`);
+console.log(`Header early binding PASS: ${results.length} builders, ${results.reduce((n,r)=>n+r.slots,0)} named inputs; exact CSS after55 declared restorations${currentControl?'':' plus two previous GNB priorities'} and hoisted execution; ${results.reduce((n,r)=>n+r.rejectedInputs,0)} malformed controls rejected.`);

@@ -8565,34 +8565,34 @@ const __dcufSettingsPresenter = (() => {
         }
         return `
         ${selectors.root} {
-            border-color: var(--dcuf-theme-border-strong) !important;
+            border-color: var(--dcuf-theme-border-strong);
         }
         ${selectors.search},
         ${selectors.searchButton},
         ${selectors.spriteButton},
         ${selectors.login},
         ${selectors.logout} {
-            border-color: var(--dcuf-theme-accent-strong) !important;
+            border-color: var(--dcuf-theme-accent-strong);
             background-color: var(--dcuf-theme-accent-strong) !important;
             background-image: none !important;
             color: var(--dcuf-theme-on-accent) !important;
         }
         ${selectors.searchInset} {
-            box-shadow: inset 0 0 0 1px var(--dcuf-theme-accent-strong) !important;
+            box-shadow: inset 0 0 0 1px var(--dcuf-theme-accent-strong);
         }
         ${selectors.searchField} {
-            border-color: var(--dcuf-theme-accent-strong) !important;
+            border-color: var(--dcuf-theme-accent-strong);
         }
         ${selectors.buttonDecoration},
         ${selectors.spriteDecoration} {
-            content: "" !important;
-            display: block !important;
-            width: 12px !important;
-            height: 12px !important;
-            margin: auto !important;
-            border: 3px solid var(--dcuf-theme-on-accent) !important;
-            border-radius: 50% !important;
-            box-shadow: 7px 7px 0 -5px var(--dcuf-theme-on-accent) !important;
+            content: "";
+            display: block;
+            width: 12px;
+            height: 12px;
+            margin: auto;
+            border: 3px solid var(--dcuf-theme-on-accent);
+            border-radius: 50%;
+            box-shadow: 7px 7px 0 -5px var(--dcuf-theme-on-accent);
         }
 `;
     }
@@ -8868,55 +8868,55 @@ const __dcufSettingsPresenter = (() => {
         }
         return `
         ${selectors.root} {
-            border-color: var(--dcuf-theme-border-strong) !important;
+            border-color: var(--dcuf-theme-border-strong);
         }
         ${selectors.search},
         ${selectors.directSearch} {
-            border-color: var(--dcuf-theme-accent-strong) !important;
-            background-color: var(--dcuf-theme-accent-strong) !important;
-            background-image: none !important;
-            color: var(--dcuf-theme-on-accent) !important;
+            border-color: var(--dcuf-theme-accent-strong);
+            background-color: var(--dcuf-theme-accent-strong);
+            background-image: none;
+            color: var(--dcuf-theme-on-accent);
         }
         ${selectors.title} {
-            color: var(--dcuf-theme-accent) !important;
+            color: var(--dcuf-theme-accent);
         }
         ${selectors.badge} {
-            border-color: var(--dcuf-theme-accent) !important;
-            color: var(--dcuf-theme-accent) !important;
+            border-color: var(--dcuf-theme-accent);
+            color: var(--dcuf-theme-accent);
         }
         ${selectors.titleIcon},
         ${selectors.linkedTitleIcon} {
-            display: inline-flex !important;
-            width: 26px !important;
-            height: 20px !important;
-            margin-left: 5px !important;
-            align-items: center !important;
-            justify-content: center !important;
-            border: 2px solid var(--dcuf-theme-accent) !important;
-            border-radius: 2px !important;
-            background: none !important;
+            display: inline-flex;
+            width: 26px;
+            height: 20px;
+            margin-left: 5px;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid var(--dcuf-theme-accent);
+            border-radius: 2px;
+            background: none;
             background-image: none !important;
-            background-position: 0 0 !important;
-            text-indent: 0 !important;
-            overflow: hidden !important;
-            color: var(--dcuf-theme-accent) !important;
-            font-size: 0 !important;
-            line-height: 1 !important;
-            box-sizing: border-box !important;
-            vertical-align: middle !important;
+            background-position: 0 0;
+            text-indent: 0;
+            overflow: hidden;
+            color: var(--dcuf-theme-accent);
+            font-size: 0;
+            line-height: 1;
+            box-sizing: border-box;
+            vertical-align: middle;
         }
         ${selectors.titleDecoration},
         ${selectors.linkedTitleDecoration} {
-            content: "m" !important;
-            font: 900 12px/1 Arial, sans-serif !important;
-            text-transform: lowercase !important;
+            content: "m";
+            font: 900 12px/1 Arial, sans-serif;
+            text-transform: lowercase;
         }
         ${selectors.miniFixtureDecoration},
         ${selectors.miniRootDecoration},
         ${selectors.nestedMiniDecoration},
         ${selectors.miniDecoration} {
-            content: "mi" !important;
-            font-size: 10px !important;
+            content: "mi";
+            font-size: 10px;
         }
 `;
     }
@@ -9152,23 +9152,23 @@ const __dcufSettingsPresenter = (() => {
         }
         return `
         ${selectors.root} {
-            border-color: var(--dcuf-theme-accent-strong) !important;
+            border-color: var(--dcuf-theme-accent-strong);
             background-color: var(--dcuf-theme-accent-strong);
             background-image: none;
-            color: var(--dcuf-theme-on-accent) !important;
+            color: var(--dcuf-theme-on-accent);
         }
         ${selectors.nextIcon} {
-            display: inline-block !important;
-            width: 0 !important;
-            height: 0 !important;
-            margin-left: 8px !important;
-            border: 0 solid transparent !important;
-            border-right-width: 7px !important;
-            border-left-width: 7px !important;
-            border-top: 10px solid var(--dcuf-theme-on-accent) !important;
+            display: inline-block;
+            width: 0;
+            height: 0;
+            margin-left: 8px;
+            border: 0 solid transparent;
+            border-right-width: 7px;
+            border-left-width: 7px;
+            border-top: 10px solid var(--dcuf-theme-on-accent);
             background: none !important;
-            filter: none !important;
-            vertical-align: middle !important;
+            filter: none;
+            vertical-align: middle;
         }
 `;
     }
@@ -9859,7 +9859,7 @@ const __dcufSettingsPresenter = (() => {
         return `
         ${selectors.issue} {
             border-top-color: var(--dcuf-theme-accent) !important;
-            box-shadow: inset 0 2px 0 color-mix(in srgb, var(--dcuf-theme-accent) 78%, transparent) !important;
+            box-shadow: inset 0 2px 0 color-mix(in srgb, var(--dcuf-theme-accent) 78%, transparent);
         }
 `;
     }
