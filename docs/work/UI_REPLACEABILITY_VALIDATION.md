@@ -2,6 +2,8 @@
 
 Status: readiness experiments `PLANNED_NOT_EXECUTED`; width baseline characterized with a retained mixed-state failure. This supplements `MOBILE_UI_MODERNIZATION.md`; it does not introduce a second implementation queue or authorize a visual redesign now.
 
+2026-10-21 source prerequisite: HEADER_SEPARATION_CLOSEOUT.md closes header UI/function separation at mobile478A while retaining full-visual-promotion criteria and mixed labels. The next bounded work is this final pilot on that exact repaired control; experimental results and whole-UI readiness are still unclaimed.
+
 Selected future trial (2026-10-17): the user chose the generated unified UI **Concept 01** as the concrete presentation-change exercise after the remaining separation and all15 defect repairs are verified. `UI_DESIGN_REFERENCES.md` binds the reference image and visual intent. This records the later trial; it does not begin product implementation or certify replacement readiness.
 
 ## Research and transfer
@@ -12,7 +14,7 @@ ER2, researched 2026-10-08. The missing proposition is whether the resulting bou
 - SEI's [Modifiability Tactics](https://www.sei.cmu.edu/library/modifiability-tactics/), 2007, relates tactics to coupling, cohesion and cost. This supports measuring propagation across our existing layers; it does not prove that an extracted presenter is replaceable.
 - Nord/Ozkaya's original [CONNECT case analysis](https://insights.sei.cmu.edu/blog/using-scenario-based-architecture-analysis-to-inform-code-quality-measures/), 2013, reports that aggregate code metrics can conceal the relevant dependency change. Its enterprise case differs from this userscript. Transfer only the requirement to interpret metrics against the selected change and layer; do not import its tools or claimed effect size.
 
-Local counterexample: drawer width policy occurs in presenter CSS and adapter geometry (the 640px limit). A responsive-width request may require both owners today even though pure body descriptions pass. Record that limitation; do not remove the adapter's containment responsibility to improve a file count. Existing frozen presenter VM tests establish purity of selected descriptions, not replacement readiness.
+Historical counterexample: the640px width cap was duplicated between presenter CSS and adapter geometry. The implemented frozen presenter layout input now supplies all three CSS sites and all three adapter calculations, as characterized in HEADER_DRAWER_WIDTH_INPUT.md. Keep the old hardcoded-adapter negative and native containment responsibility; renew the browser experiment on the final pilot control. VM purity and source locality alone are not replacement readiness.
 
 Retrieval limit: the 2003 PDF fetch timed out; the primary-source indexed tables 9–10 supplied the scenario fields above. The 2007 publication page/abstract and the 2013 original case article were accessible. No claim about the unread remainder of either report is used.
 

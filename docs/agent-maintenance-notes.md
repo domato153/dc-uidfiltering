@@ -352,6 +352,8 @@ Future UI entry: docs/ui-surface-contracts.md → docs/work/UI_REVIEW_CHECKLIST.
 
 ## Header criterion and admission distinction (2026-10-20)
 
+- HEADER_SEPARATION_CLOSEOUT.md (2026-10-21) closes actual presenter/native-adapter source separation while preserving six mixed full-visual-promotion criteria. Do not require completing a future skin's cascade promotion to begin the already planned bounded replaceability experiment, or silently claim mixed→conforming to skip those criteria. The current width cap is already a frozen presenter input consumed by all three adapter calculations; duplicated640 is historical. Retain containment and the meaningful hardcoded-adapter negative.51 authored CSS priorities remain an inventory, not proof that every retained priority is justified.
+
 - HEADER_STAGE_ADMISSION.md supersedes the workflow-conflict next step below. The explicit header consumer retains the raw failed gate and requires every other routed command to pass, then re-executes the existing exact owner qualifier and checks the original raw observation too. A stage receipt is separate from accepted-registry promotion and whole-UI readiness; no human approval procedure is required.
 - The offline graceful-shutdown positive test must wait for the child IPC-ready signal before starting its1s shutdown budget. Process spawn does not prove that its message handler is installed. A delayed-start reproduction forces the old version to kill a healthy child and the ready-handshake version to exit normally. Keep the production timeout, forced-exit assertion and stalled-process negatives; do not classify this test timing failure as a product or Tampermonkey capability failure.
 

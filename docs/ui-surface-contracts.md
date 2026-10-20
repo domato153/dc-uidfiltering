@@ -2,6 +2,8 @@
 
 This compact map covers the preserved 3.5.5 surfaces and the active UI-boundary extraction. DCInside owns its DOM, forms, events, and native popup lifecycle. DCUF owns only its existing settings UI and the narrow style rules named below.
 
+Current header source separation is closed by `docs/work/HEADER_SEPARATION_CLOSEOUT.md`. Presenter/adapter responsibilities and exact repaired runtime are sealed for the next bounded replacement experiment. Historical mixed/cascade qualifications below remain visual-promotion constraints, not permission to weaken native behavior or label the whole UI complete. Component mixed labels and accepted registry remain unchanged.
+
 ## UI review routing for every future change
 
 Use `docs/work/UI_REVIEW_CHECKLIST.md` as the durable UI/state inventory. The UI-maintainer skill reads this contract at entry, so this route applies beyond the current Concept01 trial. Select affected checklist IDs from the changed owner, selectors, shared tokens and rerun paths; include adjacent controls and relevant common X states. Record selected IDs, excluded unrelated families, runtime/fixture identity, results and limits in the bounded task evidence. Ordinary local changes do not run all128 items. Expand to other consumers when a shared selector/token/owner changes; use the full applicable inventory at a broad redesign or whole-UI completion. Unknown native child states remain UNKNOWN. Update the inventory when UI branches are added/removed; screenshots or a generic popup selector cannot stand in for unobserved children.
