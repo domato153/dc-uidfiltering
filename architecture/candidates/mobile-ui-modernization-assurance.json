@@ -17,6 +17,10 @@
     ],
     "upsertContracts": [
       {
+        "id": "live-native-control-composition",
+        "summary": "Existing list/comment/article presenters own selected palette states, single sprite-free decorations, category overflow/subject descriptions, credential shells, distinct composer tools/submits and action-group composition. Adapters only classify original nodes and preserve native events/forms/settings. Article actions remain outside list ownership; recent-state behavior remains in convenience while its row decoration moves to the list presenter. No new DOM/event/resource owner or mixed exit."
+      },
+      {
         "id": "header-native-row-composition",
         "summary": "Only four normal CSS additions in the existing GNB/page-head presenters: nav/list height:auto and page-head height:auto/right flex-wrap:wrap. Preserve980/wide GNB geometry, grow the heading to contain native actions and keep separate390 stress rows adjacent to recent visits. No native node/event/settings/resource, selector, observer or owner change."
       },
@@ -128,7 +132,7 @@
         "boundaryState": "mixed",
         "responsibility": "Owns mobile-only filter host CSS partitioning and legacy lazy injection; composes the shell/GNB reset and drawer native-door concealment pure payloads into the unchanged core phase rather than owning their raw selectors. Shared FilterModule runtime is separate; page-canvas and minor-intro dark rules remain here.",
         "sourceRefs": ["src/targets/mobile/filter-module.js"],
-        "contractRefs": ["filter-semantics", "host-dom-events", "ui-ownership", "target-isolation"],
+        "contractRefs": ["filter-semantics", "host-dom-events", "ui-ownership", "target-isolation", "live-native-control-composition"],
         "fitnessRefs": ["invariant-ui-port-boundary", "invariant-one-visual-owner", "invariant-pc-host-style-isolation", "invariant-build-inputs-mapped"],
         "transition": {
           "targetBoundaryState": "conforming",
@@ -156,9 +160,9 @@
         "classification": "adapter-contract",
         "layer": "target-adapter",
         "boundaryState": "mixed",
-        "responsibility": "Owns convenience settings, preview, draft-form DOM, session lifecycle, input listeners, geometry, and current legacy CSS while consuming application snapshots and effects.",
+        "responsibility": "Owns convenience settings, preview, draft-form DOM, session lifecycle, input listeners, geometry, and legacy preview/settings CSS while consuming application snapshots and effects. Recent-row state/session behavior remains here; its decoration is owned only by the list presenter.",
         "sourceRefs": ["src/targets/mobile/convenience-host-adapter.js"],
-        "contractRefs": ["host-dom-events", "initialization-lifecycle", "ui-ownership", "semantic-preservation"],
+        "contractRefs": ["host-dom-events", "initialization-lifecycle", "ui-ownership", "semantic-preservation", "live-native-control-composition"],
         "fitnessRefs": ["invariant-host-node-preservation", "invariant-initialization-recovery", "invariant-one-visual-owner", "invariant-build-inputs-mapped"],
         "transition": {
           "targetBoundaryState": "conforming",
@@ -171,9 +175,9 @@
         "classification": "presentation-source",
         "layer": "presentation-ui",
         "boundaryState": "conforming",
-        "responsibility": "Pure serializable list-row projection markup and semantic list/control CSS; it owns no host DOM, storage, network, observer, timer, or lifecycle effect.",
+        "responsibility": "Pure serializable list-row projection markup, recent-row decoration and semantic list/control/category-popup CSS; it owns no host DOM, storage, network, observer, timer, or lifecycle effect. Article-native action bars remain under the article presenter/adapter.",
         "sourceRefs": ["src/targets/mobile/list-presenter.js"],
-        "contractRefs": ["ui-ownership", "semantic-preservation", "host-dom-events"],
+        "contractRefs": ["ui-ownership", "semantic-preservation", "host-dom-events", "live-native-control-composition"],
         "fitnessRefs": ["invariant-one-visual-owner", "invariant-host-node-preservation", "invariant-ui-port-boundary", "invariant-build-inputs-mapped"]
       },
       {
@@ -184,7 +188,7 @@
         "boundaryState": "conforming",
         "responsibility": "Reads DCInside list rows into deep-frozen serializable snapshots and mounts presenter-owned projections without cloning, moving, replacing, reordering, wrapping, or portaling a host node.",
         "sourceRefs": ["src/targets/mobile/list-host-adapter.js"],
-        "contractRefs": ["host-dom-events", "ui-ownership", "semantic-preservation"],
+        "contractRefs": ["host-dom-events", "ui-ownership", "semantic-preservation", "live-native-control-composition"],
         "fitnessRefs": ["invariant-host-node-preservation", "invariant-one-visual-owner", "invariant-ui-port-boundary", "invariant-build-inputs-mapped"]
       },
       {
@@ -195,7 +199,7 @@
         "boundaryState": "conforming",
         "responsibility": "Discovers DCInside article header, content, recommendation, adjacent native action, media, and popup nodes; applies reversible semantic markers; exposes frozen serializable observations and native invocation; and reconnects host-owned replacements without owning visual presentation or a separate mutation observer.",
         "sourceRefs": ["src/targets/mobile/article-host-adapter.js"],
-        "contractRefs": ["host-dom-events", "ui-ownership", "semantic-preservation"],
+        "contractRefs": ["host-dom-events", "ui-ownership", "semantic-preservation", "live-native-control-composition"],
         "fitnessRefs": ["invariant-host-node-preservation", "invariant-one-visual-owner", "invariant-ui-port-boundary", "invariant-build-inputs-mapped"]
       },
       {
@@ -206,7 +210,7 @@
         "boundaryState": "conforming",
         "responsibility": "Owns semantic-role-first article header, flat rich-content shell, media compatibility, recommendation card, CAPTCHA, adjacent native actions, focus, tactile motion, dark-state, and reduced-motion CSS without DOM, storage, network, selector discovery, or lifecycle effects.",
         "sourceRefs": ["src/targets/mobile/article-presenter.js"],
-        "contractRefs": ["ui-ownership", "semantic-preservation", "host-dom-events"],
+        "contractRefs": ["ui-ownership", "semantic-preservation", "host-dom-events", "live-native-control-composition"],
         "fitnessRefs": ["invariant-one-visual-owner", "invariant-host-node-preservation", "invariant-ui-port-boundary", "invariant-build-inputs-mapped"]
       },
       {
@@ -217,7 +221,7 @@
         "boundaryState": "conforming",
         "responsibility": "Discovers DCInside normal, focus, image, reply, detached-reply, composer, native action, and popup nodes; applies reversible semantic markers; exposes frozen serializable observations and native invocation; and reconnects host-owned replacements through the shared mutation bus without moving host nodes or owning visual presentation.",
         "sourceRefs": ["src/targets/mobile/comment-host-adapter.js"],
-        "contractRefs": ["host-dom-events", "ui-ownership", "semantic-preservation"],
+        "contractRefs": ["host-dom-events", "ui-ownership", "semantic-preservation", "live-native-control-composition"],
         "fitnessRefs": ["invariant-host-node-preservation", "invariant-one-visual-owner", "invariant-ui-port-boundary", "invariant-build-inputs-mapped"]
       },
       {
@@ -228,7 +232,7 @@
         "boundaryState": "conforming",
         "responsibility": "Owns semantic-role-first comment, reply, detached-reply continuation, image-comment, composer, focus, popup, tactile motion, dark-state, and reduced-motion CSS without DOM, storage, network, selector discovery, or lifecycle effects.",
         "sourceRefs": ["src/targets/mobile/comment-presenter.js"],
-        "contractRefs": ["ui-ownership", "semantic-preservation", "host-dom-events"],
+        "contractRefs": ["ui-ownership", "semantic-preservation", "host-dom-events", "live-native-control-composition"],
         "fitnessRefs": ["invariant-one-visual-owner", "invariant-host-node-preservation", "invariant-ui-port-boundary", "invariant-build-inputs-mapped"]
       },
       {

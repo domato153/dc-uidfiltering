@@ -53,6 +53,7 @@
                 : node.matches('.addbox') ? 'author-group'
                 : node.matches('.nickname') ? 'author-name'
                 : node.matches('.ip') ? 'author-ip'
+                : node.matches('.subject_inner') ? 'subject-description'
                 : null;
             if (role) attributes['data-dcuf-role'] = role;
             return {
@@ -74,7 +75,7 @@
             const reply = titleContainer.querySelector('.reply_num');
             const subjectDescriptor = describeNode(subject);
             if (subjectDescriptor && subject instanceof HTMLElement && !subjectDescriptor.attributes.title) {
-                subjectDescriptor.attributes.title = subject.textContent.trim();
+                subjectDescriptor.attributes.title = subject.querySelector('.subject_inner')?.textContent?.trim() || subject.textContent.trim();
             }
             const decorations = Array.from(titleContainer.childNodes).filter((node) => {
                 if (node === originalLink || node === subject) return false;
@@ -384,9 +385,18 @@
                 releaseInlineGeometry(listWrap, rightBox, ['position', 'right', 'top', 'bottom', 'left']);
                 releaseInlineGeometry(listWrap, outputArray, ['position', 'right', 'top', 'bottom', 'left', 'margin-top']);
                 markActionChildren(listWrap, toolbar);
+                mark(listWrap, categoryShell?.querySelector(':scope > .btn_subject_more'), { role: 'category-toggle' });
+                mark(listWrap, categoryShell?.querySelector(':scope > .btn_subject_more .icon_subject_more'), { role: 'category-toggle-icon' });
+                const categoryPopup = categoryShell?.querySelector(':scope > .subject_morelist');
+                mark(listWrap, categoryPopup, { role: 'category-popup' });
+                mark(listWrap, categoryPopup?.querySelector(':scope > ul'), { role: 'category-popup-list' });
+                categoryPopup?.querySelectorAll(':scope > ul > li').forEach((item) => {
+                    mark(listWrap, item, { role: 'category-popup-item' });
+                    item.querySelectorAll(':scope > a').forEach((action) => mark(listWrap, action, { role: 'category-option' }));
+                });
             }
 
-            if (actionBar instanceof HTMLElement) {
+            if (actionBar instanceof HTMLElement && !actionBar.matches('.view_bottom_btnbox')) {
                 mark(listWrap, actionBar, { surface: 'list-actions', role: 'toolbar', state: 'ready' });
                 mark(listWrap, actionBar.querySelector(':scope > .fl'), { role: 'action-start' });
                 mark(listWrap, actionBar.querySelector(':scope > .fr'), { role: 'action-end' });
@@ -403,7 +413,7 @@
                     const current = page.matches('em, strong, .on, [aria-current="page"]');
                     mark(listWrap, page, {
                         role: direction ? 'page-direction' : 'page',
-                        state: current ? 'current' : 'default',
+                        state: direction ? ['first', 'prev', 'next', 'end'].find((name) => page.classList.contains(`page_${name}`)) : current ? 'current' : 'default',
                     });
                     if (current) page.setAttribute('aria-current', 'page');
                 });

@@ -22,6 +22,7 @@ import { runCommentRepairContract } from './ui-repair-comment-contract.mjs';
 import { runListRepairContract } from './ui-repair-list-contract.mjs';
 import { runArticleRepairContract } from './ui-repair-article-contract.mjs';
 import { runDialogRepairContract } from './ui-repair-dialog-contract.mjs';
+import { runLiveControlContract } from './ui-live-control-contract.mjs';
 
 const args = new Set(process.argv.slice(2));
 const selectedGroup = process.argv.includes('--group') ? process.argv[process.argv.indexOf('--group') + 1] : null;
@@ -52,6 +53,8 @@ const statsStorage = {
     [storageKeys.personalList]: { uids: [], nicknames: [], ips: [] }
 };
 const noStatsStorage = { ...statsStorage, [storageKeys.threshold]: 0 };
+
+mobileTest('live native controls: palette category sprites comment and action ownership', 'functional', runLiveControlContract);
 
 mobileTest('confirmed UI repair: native comment composer cascade and original input', 'functional', runCommentRepairContract);
 mobileTest('confirmed UI repair: list author media search paging and write controls', 'functional', runListRepairContract);
@@ -1718,7 +1721,18 @@ mobileTest('native list toolbar contains tabs categories and actions without ove
     const presenter = await readFile(path.join(testbedDir, '../src/targets/mobile/list-presenter.js'), 'utf8');
     const css = presenter.match(/const CSS = `([\s\S]*?)`;/)?.[1];
     assert.ok(css, 'list presenter CSS must exist');
-    assert.doesNotMatch(css, /\.(?!dcuf-)[A-Za-z_][\w-]*/,
+    const parserPage = await browser.newPage();
+    let selectors;
+    try {
+        selectors = await parserPage.evaluate((source) => {
+            const sheet = new CSSStyleSheet();
+            sheet.replaceSync(source);
+            const walk = (rules) => Array.from(rules).flatMap((rule) => rule.selectorText
+                ? [rule.selectorText] : rule.cssRules ? walk(rule.cssRules) : []);
+            return walk(sheet.cssRules).join('\n');
+        }, css);
+    } finally { await parserPage.close(); }
+    assert.doesNotMatch(selectors, /\.(?!dcuf-)[A-Za-z_][\w-]*/,
         'List presentation uses semantic attributes/owned classes; native discovery stays in the adapter');
     for (const width of [980, 320, 390, 412, 750, 1280]) {
         for (const variant of ['major', 'minor', 'mini']) {

@@ -109,6 +109,7 @@ export async function runListRepairContract({ browser, server, scenarios = defau
                 return { authors:rows.map(row => ({ rect:box(row), nickname:box(row.querySelector('.nickname')), text:rangeBox(row.querySelector('.nickname em')) })), media,
                     form:box(form), select:box(select), query:box(query), button:box(button), queryPosition:getComputedStyle(query).position,
                     submitIcon:getComputedStyle(button, '::before').content, submitText:getComputedStyle(button).fontSize,
+                    submitMask:{image:getComputedStyle(button,'::before').maskImage,width:parseFloat(getComputedStyle(button,'::before').width),height:parseFloat(getComputedStyle(button,'::before').height)},
                     write:box(write), writeText:rangeBox(write), writeWhiteSpace:getComputedStyle(write).whiteSpace,
                     viewport:{ width:innerWidth, height:innerHeight, screenWidth:screen.width, dpr:devicePixelRatio, scale:visualViewport.scale } };
             });
@@ -119,7 +120,7 @@ export async function runListRepairContract({ browser, server, scenarios = defau
             check('UI-03 author images preserved', geometry.media.length === 4 && geometry.media.every(img => img.loaded && img.src?.includes('/__testbed/ui-repair-') && (img.alt === '고정닉' ? img.rect.width === 12 && img.rect.height === 11 : img.rect.width === 24 && img.rect.height === 24)), geometry.media);
             check('UI-04 original nested select visible', geometry.select.width >= 80 && geometry.select.height >= 40, geometry.select);
             check('UI-05 query contained', geometry.queryPosition === 'static' && geometry.query.x >= geometry.form.x && geometry.query.right <= geometry.form.right + 1 && geometry.query.y >= geometry.form.y && geometry.query.bottom <= geometry.form.bottom + 1, { form:geometry.form, query:geometry.query, position:geometry.queryPosition });
-            check('UI-05 visible search affordance', geometry.submitIcon && !['none', 'normal', '""'].includes(geometry.submitIcon) || Number.parseFloat(geometry.submitText) >= 10, { content:geometry.submitIcon, fontSize:geometry.submitText });
+            check('UI-05 visible search affordance', geometry.submitIcon && !['none', 'normal', '""'].includes(geometry.submitIcon) || Number.parseFloat(geometry.submitText) >= 10 || geometry.submitMask.image !== 'none' && geometry.submitMask.width >= 16 && geometry.submitMask.height >= 16, { content:geometry.submitIcon, fontSize:geometry.submitText, mask:geometry.submitMask });
             check('UI-07 bottom write single line', geometry.write.width >= 80 && geometry.write.height >= 40 && geometry.writeText.height <= 22 && geometry.writeWhiteSpace === 'nowrap', { rect:geometry.write, text:geometry.writeText, whiteSpace:geometry.writeWhiteSpace });
 
             const hit = async selector => {

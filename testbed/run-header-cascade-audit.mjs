@@ -89,6 +89,7 @@ try {
                 && document.querySelector('[data-dcuf-header-gnb-role="nav"]')
                 && document.querySelector('[data-dcuf-gallery-page-head-role="root"]')
                 && document.querySelector('[data-dcuf-header-recent-visit-role="list"]'));
+            if (id !== 'minor-view') await session.page.waitForSelector('#dcuf-header-drawer-style', { state: 'attached' });
             await session.page.locator('#dcuf-testbed-controls').evaluate((element) => { element.style.display = 'none'; });
             const capture = () => session.page.evaluate(() => {
                 // Test style on a rule BEFORE considering nested rules: some

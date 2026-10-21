@@ -170,11 +170,15 @@
             root.querySelectorAll('.cmt_write_box').forEach((composer) => {
                 mark(root, composer, { role: 'comment-composer', state: composerState(composer) });
                 mark(root, composer.querySelector(':scope > .fl, .user_info_input'), { role: 'comment-identity-fields' });
+                composer.querySelectorAll('.user_info_input').forEach((shell) => mark(root, shell, { role: 'comment-field-shell' }));
                 mark(root, composer.querySelector('.cmt_txt_cont'), { role: 'comment-editor' });
                 mark(root, composer.querySelector('.cmt_cont_bottm, .cmt_btn_bot'), { role: 'comment-composer-actions' });
-                composer.querySelectorAll('input:not([type="hidden"]), select').forEach((field) => mark(root, field, { role: 'native-comment-field' }));
+                mark(root, composer.querySelector('.cmt_cont_bottm > .fr, .cmt_btn_bot'), { role: 'comment-submit-group' });
+                mark(root, composer.querySelector('.dccon_guidebox'), { role: 'comment-tool-group' });
+                composer.querySelectorAll('input:not([type="hidden"]):not([type="submit"]):not([type="button"]), select').forEach((field) => mark(root, field, { role: 'native-comment-field' }));
                 composer.querySelectorAll('textarea').forEach((field) => mark(root, field, { role: 'native-comment-textarea' }));
-                composer.querySelectorAll('button, input[type="submit"]').forEach((action) => mark(root, action, { role: 'native-comment-submit' }));
+                composer.querySelectorAll('.dccon_guidebox > button').forEach((action) => mark(root, action, { role: 'native-comment-tool' }));
+                composer.querySelectorAll('.cmt_cont_bottm > .fr > button, .cmt_btn_bot > button, button[type="submit"], input[type="submit"]').forEach((action) => mark(root, action, { role: 'native-comment-submit' }));
             });
         };
 

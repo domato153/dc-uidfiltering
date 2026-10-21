@@ -66,6 +66,10 @@
                 if (value === null) element.removeAttribute(name);
                 else element.setAttribute(name, value);
             });
+            if (Object.prototype.hasOwnProperty.call(snapshot, 'inlineStyle')) {
+                if (snapshot.inlineStyle === null) element.removeAttribute('style');
+                else element.setAttribute('style', snapshot.inlineStyle);
+            }
         };
 
         const getActionBars = (articleRoot) => {
@@ -100,6 +104,14 @@
             if (role) element.setAttribute('data-dcuf-role', role);
             if (state) element.setAttribute('data-dcuf-state', state);
             return element;
+        };
+
+        const releaseActionGeometry = (articleRoot, element, properties) => {
+            if (!(element instanceof HTMLElement) || !properties.some((property) => element.style.getPropertyValue(property))) return;
+            remember(articleRoot, element);
+            const snapshot = getTransaction(articleRoot).get(element);
+            if (!Object.prototype.hasOwnProperty.call(snapshot, 'inlineStyle')) snapshot.inlineStyle = element.getAttribute('style');
+            properties.forEach((property) => element.style.removeProperty(property));
         };
 
         const pruneDetachedElements = (articleRoot) => {
@@ -195,6 +207,12 @@
 
             getActionBars(articleRoot).forEach((actionBar) => {
                 mark(articleRoot, actionBar, { role: 'article-native-actions' });
+                releaseActionGeometry(articleRoot, actionBar, ['height']);
+                [['.fl', 'article-action-start'], ['.fr', 'article-action-end']].forEach(([selector, role]) => {
+                    const group = actionBar.querySelector(`:scope > ${selector}`);
+                    if (!mark(articleRoot, group, { role })) return;
+                    releaseActionGeometry(articleRoot, group, ['position', 'right', 'left', 'top', 'bottom', 'inset']);
+                });
                 actionBar.querySelectorAll('button, a').forEach((action) => {
                     mark(articleRoot, action, {
                         role: 'native-article-action',

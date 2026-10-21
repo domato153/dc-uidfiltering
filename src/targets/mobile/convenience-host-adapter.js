@@ -86,10 +86,6 @@
             const style = document.createElement('style');
             style.id = 'dcuf-mobile-convenience-style';
             style.textContent = `
-                @keyframes dcuf-recent-pulse { 0%,100%{box-shadow:inset 6px 0 0 var(--dcuf-theme-accent,#5574e8),0 0 0 2px var(--dcuf-theme-accent,#5574e8)} 45%{box-shadow:inset 6px 0 0 var(--dcuf-theme-accent,#5574e8),0 0 0 5px var(--dcuf-theme-focus-ring,rgba(85,116,232,.3))} }
-                .custom-post-item.dcuf-recent-post { background:color-mix(in srgb,var(--dcuf-theme-accent,#5574e8) 18%,var(--dcuf-theme-card-top,#fff))!important;box-shadow:inset 6px 0 0 var(--dcuf-theme-accent,#5574e8),0 0 0 2px var(--dcuf-theme-accent,#5574e8)!important; }
-                .custom-post-item .dcuf-recent-label { display:inline-flex;align-items:center;vertical-align:middle;flex:0 0 auto;margin:0 7px 0 0;padding:2px 7px;border-radius:999px;background:var(--dcuf-theme-accent-strong,#315fdb);color:var(--dcuf-theme-on-accent,#fff);font-size:10px;font-weight:800;line-height:1.45;letter-spacing:-.02em; }
-                .custom-post-item.dcuf-recent-pulse { animation:dcuf-recent-pulse .55s ease-in-out 3; }
                 #dcuf-post-preview { position:fixed;z-index:2147483645;display:flex;flex-direction:column;box-sizing:border-box;background:linear-gradient(155deg,var(--dcuf-theme-card-top,#fff),var(--dcuf-theme-canvas,#f6f7f9));color:var(--dcuf-theme-fg,#1f2937);border:1px solid var(--dcuf-theme-border-strong,#cbd5e1);border-radius:14px;box-shadow:var(--dcuf-theme-panel-shadow,0 18px 55px #0007);overflow:hidden;overscroll-behavior:contain;color-scheme:light dark; }
                 #dcuf-post-preview .dcuf-preview-head { flex:none;display:flex;align-items:center;gap:9px;padding:10px 11px 10px 13px;border-bottom:1px solid var(--dcuf-theme-border,#e4e7ec);background:linear-gradient(180deg,var(--dcuf-theme-card-top,#fff),var(--dcuf-theme-surface-raised,#f8fafc)); }
                 #dcuf-post-preview .dcuf-preview-head strong { flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:var(--dcuf-article-title-font-size,21px);line-height:1.4; }

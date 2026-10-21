@@ -611,6 +611,8 @@
         // Unmarked/native (including PC) composers retain fallback styling; the
         // semantic composer has one final visual owner in CommentPresenter.
         ['.cmt_write_box', '.cmt_write_box:not([data-dcuf-role="comment-composer"])'],
+        ['.comment_box', '.comment_box:not([data-dcuf-role="comment-box"])'],
+        ['.cmt_nickbox', '.cmt_nickbox:not([data-dcuf-role="comment-author-group"])'],
     ].reduce((css, [legacySelector, retiredSelector]) => css.replaceAll(legacySelector, retiredSelector), __dcufAllFilterCss);
     const __dcufCssMarkers = Object.freeze({
         view: '/* DCUF_VIEW_SURFACE_START */',

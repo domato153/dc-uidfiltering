@@ -314,8 +314,7 @@
 
 
         createBottomControls(listWrap) {
-            const gallTabs = this.findBottomControlElement(listWrap, this.SELECTORS.GALL_TABS)
-                || this.findAdjacentViewListActionBar(listWrap);
+            const gallTabs = this.findBottomControlElement(listWrap, this.SELECTORS.GALL_TABS);
             const pagination = this.findBottomControlElement(listWrap, this.SELECTORS.PAGINATION);
             const pageMoveBox = this.findBottomControlElement(listWrap, this.SELECTORS.PAGE_MOVE_BOX);
             const searchForm = this.findBottomControlElement(listWrap, this.SELECTORS.SEARCH_FORM);

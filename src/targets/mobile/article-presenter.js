@@ -226,12 +226,27 @@
                 box-shadow: var(--dcuf-theme-card-shadow, var(--dcuf-view-shadow));
                 box-sizing: border-box;
             }
-            [data-dcuf-role="native-article-action"] {
+            [data-dcuf-role="article-native-actions"]::after { content: none; display: none; }
+            [data-dcuf-role="article-native-actions"] [data-dcuf-role="article-action-start"],
+            [data-dcuf-role="article-native-actions"] [data-dcuf-role="article-action-end"] {
+                position: static;
+                display: flex;
+                flex-wrap: wrap;
+                float: none;
+                align-items: center;
+                gap: 8px;
+            }
+            [data-dcuf-role="article-native-actions"] [data-dcuf-role="article-action-end"] { margin-inline-start: auto; }
+            [data-dcuf-role="article-native-actions"] [data-dcuf-role="native-article-action"] {
                 display: inline-flex;
                 align-items: center;
                 justify-content: center;
                 min-block-size: 38px;
+                inline-size: auto;
+                block-size: auto;
                 padding-inline: 16px;
+                white-space: nowrap;
+                text-shadow: none;
                 border: 1px solid var(--dcuf-theme-border-strong, var(--dcuf-view-border-strong));
                 border-radius: 11px;
                 background-color: var(--dcuf-theme-surface-input, var(--dcuf-view-surface-muted));
@@ -240,7 +255,8 @@
                 box-shadow: 0 3px 8px color-mix(in srgb, var(--dcuf-theme-accent-strong, var(--dcuf-view-accent)) 6%, transparent), inset 0 1px 0 color-mix(in srgb, white 72%, transparent);
                 transition: transform 110ms ease, filter 110ms ease;
             }
-            [data-dcuf-role="native-article-action"][data-dcuf-state="primary"] {
+            [data-dcuf-role="article-native-actions"] [data-dcuf-role="native-article-action"][data-dcuf-state="primary"],
+            [data-dcuf-role="article-native-actions"] [data-dcuf-role="native-article-action"][data-dcuf-state="primary"]:visited {
                 border-color: var(--dcuf-theme-accent-strong, var(--dcuf-view-accent));
                 background-color: var(--dcuf-theme-accent-strong, var(--dcuf-view-accent));
                 background-image: linear-gradient(145deg, var(--dcuf-theme-accent, var(--dcuf-view-accent)), var(--dcuf-theme-accent-strong, var(--dcuf-view-accent)));
