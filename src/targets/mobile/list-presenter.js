@@ -391,7 +391,7 @@
             [data-dcuf-surface="list-pagination"][data-dcuf-role="navigation"] [data-dcuf-role="pages"] {
                 display: flex;
                 align-items: center;
-                justify-content: flex-start;
+                justify-content: safe center;
                 gap: 4px;
                 overflow-x: auto;
                 scrollbar-width: none;

@@ -68,6 +68,7 @@ const nativeShape = () => {
 
 const shapeScript = `<script>(${nativeShape.toString()})();</script>`;
 const defaultScenarios = [
+    { route: '/board/lists?id=test', width: 1660, height: 900 },
     { route: '/mgallery/board/lists?id=test&bareSearch=1', width: 980, height: 900 },
     { route: '/mgallery/board/lists?id=test&bareSearch=1', width: 390, height: 480 },
     { route: '/board/lists?id=test', width: 980, height: 900 },
@@ -145,10 +146,13 @@ export async function runListRepairContract({ browser, server, scenarios = defau
                 const first=pages.firstElementChild,last=pages.lastElementChild;
                 const visible = element => { const r=element.getBoundingClientRect(),p=pages.getBoundingClientRect(),hit=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2); return r.width>=40&&r.height>=40&&r.x>=p.x-1&&r.right<=p.right+1&&(hit===element||element.contains(hit)); };
                 pages.scrollLeft=0; const leading=visible(first), overflow=pages.scrollWidth>pages.clientWidth;
+                const p=pages.getBoundingClientRect(),a=first.getBoundingClientRect(),z=last.getBoundingClientRect();
+                const centerError=Math.abs((a.x+z.right)/2-(p.x+p.right)/2);
                 pages.scrollLeft=pages.scrollWidth; const trailing=visible(last);
-                pages.scrollLeft=0; return {leading,trailing,overflow};
+                pages.scrollLeft=0; return {leading,trailing,overflow,centerError};
             });
             check('UI-06 both pagination ends reachable', ends.leading && ends.trailing, ends);
+            check('UI-06 fitting pagination group centered', ends.overflow || ends.centerError <= 1, ends);
             if (geometry.select.width > 0 && geometry.select.height > 0) {
                 check('UI-04 select hit', await hit('select[name="search_type"]'));
                 await page.locator('select[name="search_type"]').focus();

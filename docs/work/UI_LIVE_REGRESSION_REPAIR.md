@@ -1,6 +1,6 @@
 # Live UI regression repair
 
-2026-10-21. Reported-defect repair complete before `header-replaceability-pilot`; source base `35a07563e37003e26b72fec784a1f721884a04f2`. Frozen pre-repair draft478A and published stable32BA remain separate controls. Final mobile3.5.5 is1677; PC C14D is unchanged. Exact identities, observations and limits: `verification/receipts/2026-10-21-ui-live-regression-repair.json`. This scoped closeout is not full header admission or whole-UI approval.
+2026-10-21. Reported-defect repair complete before `header-replaceability-pilot`; source base `35a07563e37003e26b72fec784a1f721884a04f2`. Frozen pre-repair draft478A and published stable32BA remain separate controls. The batch artifact is mobile3.5.5/1677; pagination-only follow-up08BC is recorded at the end. PC C14D is unchanged. Exact identities, observations and limits: `verification/receipts/2026-10-21-ui-live-regression-repair.json`. This scoped closeout is not full header admission or whole-UI approval.
 
 Goal: Repair the user's list/category/search/comment/action findings at their causes, preserving native functionality and UI replacement boundaries. No new design system, feature, setting/storage migration, observer, scheduler, version or publication.
 
@@ -40,3 +40,7 @@ Next is only `header-replaceability-pilot`, using frozen1677 as the repaired tri
 The first public article probe selected an archived comic gallery and did not expose a composer. The user's current `comic_new6` article does expose it through ordinary GET navigation with all POST blocked. This resolves access for this investigation; do not revive an alleged POST/approval prerequisite. An attempted POST allowance was rejected by automatic review and was removed before further execution.
 
 Local diagnostic evidence: `artifacts/ui-user-report-2026-10-21/`; these captures/DOM/CSS traces are ignored and never staged. The previous15-finding checks did not cover the newly observed native specificity, wrapper, auxiliary-button and overflow-popup branches; their historical scoped passes remain historical, not proof of these branches.
+
+## Pagination centering follow-up — 2026-10-21
+
+The user requested only centering the page-number group. One existing presenter declaration now uses `justify-content: safe center`: fitting groups center, while narrow overflow stays start-aligned and scrollable. Exact08BC evidence: `verification/receipts/2026-10-21-pagination-center.json`. Existing list coverage passes266 checks in14 light/dark/width/route states, including both ends and fitting-group center geometry; the public1660 capture has zero center error and was visually reviewed. No function/adapter/storage change. Broad1677 checks and actual-extension evidence retain their historical identity; they were not repeated or relabeled for this small visual delta. The next pilot freezes08BC.
