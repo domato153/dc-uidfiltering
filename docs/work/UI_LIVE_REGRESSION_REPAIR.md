@@ -44,3 +44,9 @@ Local diagnostic evidence: `artifacts/ui-user-report-2026-10-21/`; these capture
 ## Pagination centering follow-up — 2026-10-21
 
 The user requested only centering the page-number group. One existing presenter declaration now uses `justify-content: safe center`: fitting groups center, while narrow overflow stays start-aligned and scrollable. Exact08BC evidence: `verification/receipts/2026-10-21-pagination-center.json`. Existing list coverage passes266 checks in14 light/dark/width/route states, including both ends and fitting-group center geometry; the public1660 capture has zero center error and was visually reviewed. No function/adapter/storage change. Broad1677 checks and actual-extension evidence retain their historical identity; they were not repeated or relabeled for this small visual delta. The next pilot freezes08BC.
+
+## Outer comment frame and main-work transition — 2026-10-21
+
+The subsequent request removes only the frame surrounding the full comment list. The existing comment-box presenter changes one border declaration to0; the official native `.comment_box` blue top-border rule is modeled in the focused test.12 route/theme/width contexts pass with main/reply/image composer inputs, individual card borders and keyboard focus retained. The source is9889; sampled public GETs did not expose a comment container in this run, so the reviewed frame capture is explicitly local/live-shaped, not an actual visible-public-comment claim.
+
+The user also authorized moving to the next main step once corrected. HEADER_REPLACEABILITY_PILOT.md closes the four planned header-only scenarios on9889 with30 fresh contexts and exact original restoration. Parent08BC/1677 receipts keep their identities. The next single task is now the integrated Concept01 trial, not another source-separation or historical blocker task. `verification/receipts/2026-10-21-comment-frame-header-pilot.json` owns the exact scope and limits.

@@ -4257,7 +4257,7 @@ const __dcufSettingsPresenter = (() => {
             [data-dcuf-role="comment-box"] {
                 position: relative;
                 overflow: visible;
-                border: 1px solid var(--dcuf-comment-border);
+                border: 0;
                 border-radius: 18px;
                 background-color: var(--dcuf-comment-surface);
                 background-image: linear-gradient(180deg, var(--dcuf-theme-card-top, #fff), var(--dcuf-theme-card-bottom, #fafbfc));

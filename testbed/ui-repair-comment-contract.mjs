@@ -12,7 +12,7 @@ export async function runCommentRepairContract({ browser, server }) {
                 await session.page.waitForSelector('[data-dcuf-role="comment-composer"]');
                 await session.page.evaluate(() => {
                     const style = document.createElement('style');
-                    style.textContent = '.cmt_write_box{padding:12px;background:#fafafa}.cmt_txt_cont textarea{width:956px;height:78px;padding:13px;border:1px solid #cecdce;font-size:13px;background:#fff;color:#333}.cmt_write_box .user_info_input input{width:140px;height:30px;border:1px solid #cecdce;background:#fff;color:#333}';
+                    style.textContent = '.comment_box{border-top:2px solid #3b4890}.cmt_write_box{padding:12px;background:#fafafa}.cmt_txt_cont textarea{width:956px;height:78px;padding:13px;border:1px solid #cecdce;font-size:13px;background:#fff;color:#333}.cmt_write_box .user_info_input input{width:140px;height:30px;border:1px solid #cecdce;background:#fff;color:#333}';
                     document.head.prepend(style);
                     window.__repairCommentControls = Array.from(document.querySelectorAll('[data-dcuf-role="comment-composer"] input:not([type="hidden"]), [data-dcuf-role="comment-composer"] textarea, [data-dcuf-role="comment-composer"] button'), element => ({ element, parent: element.parentNode, next: element.nextSibling }));
                     window.__repairCommentClicks = 0;
@@ -42,6 +42,12 @@ export async function runCommentRepairContract({ browser, server }) {
                     if (width === 980) assert.ok(composer.identityWidth <= 151, label);
                     assert.ok(composer.controls.every(c => c.contained && c.themed), label);
                 }
+                const commentShells = await session.page.locator('[data-dcuf-role="comment-box"]').evaluateAll(boxes => boxes.map(box => {
+                    const style = getComputedStyle(box);
+                    return [style.borderTopWidth, style.borderRightWidth, style.borderBottomWidth, style.borderLeftWidth];
+                }));
+                assert.ok(commentShells.length > 0 && commentShells.every(sides => sides.every(width => width === '0px')), `Outer comment shell has no frame: ${label}`);
+                assert.ok(await session.page.locator('[data-dcuf-role="comment-item"]').evaluateAll(items => items.some(item => parseFloat(getComputedStyle(item).borderTopWidth) > 0)), `Individual comment cards keep their border: ${label}`);
                 const editors = session.page.locator('[data-dcuf-role="native-comment-textarea"]');
                 for (let i = 0; i < await editors.count(); i++) {
                     const editor = editors.nth(i); await editor.fill('댓글 입력 보존 확인');
