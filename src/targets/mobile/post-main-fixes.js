@@ -2644,50 +2644,17 @@
             commentTextContainerHasRenderableBorder: commentTextContainerStyle ? hasRenderableBorder(commentTextContainerStyle) : false
         };
 
-        let failureReason = null;
-        if (!contentIsWritingBox && !contentIsModernBody) {
-            failureReason = 'missing-content-owner';
-        } else if (!contentIsWritingBox && !contentStyleOwnerPresent) {
-            failureReason = 'missing-content-style-owner';
-        } else if (Math.max(detail.wrapPaddingLeft, detail.wrapPaddingRight) < 8) {
-            failureReason = 'insufficient-wrap-padding';
-        } else if (detail.headRadius < 16) {
-            failureReason = 'insufficient-head-radius';
-        } else if (headStyle.boxShadow === 'none') {
-            failureReason = 'missing-head-elevation';
-        } else if (headStyle.backgroundImage === 'none' && isTransparentColor(detail.headBackgroundColor)) {
-            failureReason = 'transparent-head-background';
-        } else if (!contentIsWritingBox && (detail.contentPaddingTop < 16 || detail.contentPaddingBottom < 16)) {
-            failureReason = 'insufficient-content-padding';
-        } else if (!contentIsWritingBox && (detail.contentRadius > 1 || contentStyle.boxShadow !== 'none'
-            || contentStyle.backgroundImage !== 'none' || !isTransparentColor(detail.contentBackgroundColor)
-            || detail.contentHasRenderableBorder)) {
-            failureReason = 'content-card-drift';
-        } else if (includeExtendedSurfaces && recommendBox instanceof HTMLElement && detail.recommendBoxRadius < 16) {
-            failureReason = 'insufficient-recommend-radius';
-        } else if (includeExtendedSurfaces && recommendBox instanceof HTMLElement && recommendBoxStyle.boxShadow === 'none') {
-            failureReason = 'missing-recommend-elevation';
-        } else if (includeExtendedSurfaces && recommendBox instanceof HTMLElement && recommendBoxStyle.backgroundImage === 'none' && isTransparentColor(detail.recommendBoxBackgroundColor)) {
-            failureReason = 'transparent-recommend-background';
-        } else if (includeExtendedSurfaces && commentBox instanceof HTMLElement && detail.commentBoxRadius < 16) {
-            failureReason = 'insufficient-comment-radius';
-        } else if (includeExtendedSurfaces && commentBox instanceof HTMLElement && commentBoxStyle.boxShadow === 'none') {
-            failureReason = 'missing-comment-elevation';
-        } else if (includeExtendedSurfaces && commentBox instanceof HTMLElement && commentBoxStyle.backgroundImage === 'none' && isTransparentColor(detail.commentBoxBackgroundColor)) {
-            failureReason = 'transparent-comment-background';
-        } else if (includeExtendedSurfaces && commentWriteBox instanceof HTMLElement && detail.commentWriteBoxRadius < 16) {
-            failureReason = 'insufficient-comment-write-radius';
-        } else if (includeExtendedSurfaces && commentWriteBox instanceof HTMLElement && commentWriteBoxStyle.boxShadow === 'none') {
-            failureReason = 'missing-comment-write-elevation';
-        } else if (includeExtendedSurfaces && commentWriteBox instanceof HTMLElement && commentWriteBoxStyle.backgroundImage === 'none' && isTransparentColor(detail.commentWriteBoxBackgroundColor)) {
-            failureReason = 'transparent-comment-write-background';
-        } else if (includeExtendedSurfaces && commentTextContainer instanceof HTMLElement && detail.commentTextContainerRadius < 12) {
-            failureReason = 'insufficient-comment-input-radius';
-        } else if (includeExtendedSurfaces && commentTextContainer instanceof HTMLElement && commentTextContainerStyle.backgroundImage === 'none' && isTransparentColor(detail.commentTextContainerBackgroundColor)) {
-            failureReason = 'transparent-comment-input-background';
-        } else if (includeExtendedSurfaces && commentTextContainer instanceof HTMLElement && !detail.commentTextContainerHasRenderableBorder) {
-            failureReason = 'missing-comment-input-border';
-        }
+        const snapshot = Object.freeze({
+            ...detail, contentIsWritingBox, contentIsModernBody, includeExtendedSurfaces,
+            headTransparent: detail.headBackgroundImage === 'none' && isTransparentColor(detail.headBackgroundColor),
+            contentTransparent: isTransparentColor(detail.contentBackgroundColor),
+            recommendBoxTransparent: detail.recommendBoxBackgroundImage === 'none' && isTransparentColor(detail.recommendBoxBackgroundColor),
+            commentBoxTransparent: detail.commentBoxBackgroundImage === 'none' && isTransparentColor(detail.commentBoxBackgroundColor),
+            commentWriteBoxTransparent: detail.commentWriteBoxBackgroundImage === 'none' && isTransparentColor(detail.commentWriteBoxBackgroundColor),
+            commentTextContainerTransparent: detail.commentTextContainerBackgroundImage === 'none' && isTransparentColor(detail.commentTextContainerBackgroundColor)
+        });
+        const failureReason = __dcufArticlePresenter.describeReadiness(snapshot)
+            || __dcufCommentPresenter.describeReadiness(snapshot);
 
         const result = {
             ready: !failureReason,

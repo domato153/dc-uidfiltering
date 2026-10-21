@@ -1,0 +1,122 @@
+{
+  "schemaVersion": 1,
+  "kind": "concept01-integrated-presentation-trial",
+  "status": "PASS",
+  "scope": "BOUNDED_IMPLEMENTED_PROTOTYPE_AND_SELECTED_NATIVE_REGRESSIONS",
+  "sourceBaseHead": "023e01d5b9266226741a68253f77652989fb7dba",
+  "artifact": {
+    "mobileVersion": "3.5.5",
+    "mobileSha256": "39D560C2D52E9F11067525E649EE7F5D3DC3653216AD7020EED2971849647DBC",
+    "pcVersion": "1.9.9",
+    "pcSha256": "5FA25756C43864AA8C90C1347AE6A03652D901862F83ABEAEDDEBF6382CFA740"
+  },
+  "control": {
+    "mobileSha256": "9889C9A9270880F01A3A813611442C1A2AD59AA8B60E4A7928C74F660535DA29",
+    "functionalReference": "32BA208DDD9973A7EEC343F01E963A833AB4F0C084987077EDAE46844383C25D"
+  },
+  "sourceLocality": {
+    "sourceFilesChanged": 13,
+    "presentationOwners": 10,
+    "prerequisites": [
+      "Existing list host adapter owns approved direction-aware navigation behavior and exact disposal",
+      "View preparation delegates aesthetic readiness to pure article/comment presenter policies over frozen measurements",
+      "Mobile legacy DCUF dialog ID palette selectors retire through the existing pipeline; shared SettingsPresenter is final owner"
+    ],
+    "preserved": [
+      "Palette IDs/values/default and persisted keys/shapes",
+      "Native original DOM/control/form handlers",
+      "Existing build inputs and versions",
+      "Filter/network/storage behavior"
+    ]
+  },
+  "verification": {
+    "mobile": {
+      "path": "artifacts/concept01-2026-10-22/mobile-qualified.json",
+      "sha256": "CEBD9AAA005019F113E5EA8AE0D087A1B61C20981F23C4E21DBA52F97CBD305F",
+      "passed": 144,
+      "failed": 0
+    },
+    "pc": {
+      "path": "artifacts/concept01-2026-10-22/pc-complete.json",
+      "sha256": "66967BD4FC4B9E4693DBDD496A5483C1D37C84F148F807B2E254287D2323913A",
+      "passed": 26,
+      "failed": 0,
+      "runtimeUnchangedSinceRun": true
+    },
+    "scroll": {
+      "path": "testbed/artifacts/concept01-scroll-2026-10-22/report.json",
+      "sha256": "69E57141D63310454A433E9AEBEEFD7E455E331353F859FB6D2351914F0B898D",
+      "contexts": 5,
+      "coverage": [
+        "980 light/dark",
+        "390 stress",
+        "1280 wide",
+        "980x2306 adopted layout-height proxy",
+        "direction accumulation/jitter",
+        "native popup pointer handler",
+        "select/button focus and keyboard reveal",
+        "reduced motion",
+        "resize/topology/disposal/custom-property restoration"
+      ]
+    },
+    "actualExtension": {
+      "path": "testbed/artifacts/concept01-extension-qualified-2026-10-22/report.json",
+      "sha256": "7D06837C457265FE7CC4DD4108E4E6C9D2E2A5D8FD1842C53436283F0BAA6189",
+      "candidatePassed": 4,
+      "candidateFailed": 0,
+      "controlPassed": 3,
+      "controlFailures": [
+        {
+          "id": "minor-view-wide",
+          "status": "FAIL",
+          "classification": "public control loading timeout"
+        }
+      ],
+      "retry": {
+        "path": "artifacts/concept01-2026-10-22/control-read-retry.json",
+        "sha256": "EC5AE9E31FD23D0A77A29A0324C71E4B0855E41BCD526D6223192739FD0BCA8E"
+      },
+      "retryScope": "PUBLIC_GET_CONTROL_GM_SHIM_RETRY_ONLY; distinct from actual-extension acceptance"
+    },
+    "static": [
+      "38 UI boundaries",
+      "Historical header ownership after exact declared CSS inverse; combined-source and rejected-mutation checks",
+      "Effective architecture links; no accepted registry promotion"
+    ],
+    "independentReadOnlyReview": "Focus and primary-fill findings fixed; final scoped review found no additional source-proven defect",
+    "host": {
+      "path": "artifacts/concept01-2026-10-22/host-qualified.log",
+      "sha256": "479C68BA9A307A375695B59C828353E2B1A30F5115EE8F520ADC3F6C98BB4D21",
+      "passed": 11,
+      "failed": 0,
+      "runtimeSha256": "39D560C2D52E9F11067525E649EE7F5D3DC3653216AD7020EED2971849647DBC"
+    }
+  },
+  "visualScope": {
+    "selectedFamilies": [
+      "H-01/H-02/H-04",
+      "L-01/L-04/L-05/L-06",
+      "A-01/A-07/A-09",
+      "C-01/C-02/C-03/C-04/C-06/C-08/C-09/C-10/C-14",
+      "W-01/W-02/W-03/W-04 and existing editor popup geometry",
+      "Shared filter/management/palette/dialog families",
+      "Relevant X-01..X-08"
+    ],
+    "observed": "Public wutheringwaves list before/after light/dark, down/up toolbar; controlled shared settings/management/palette panels. Existing full/native fixtures cover remaining behavioral states, not every visual child.",
+    "preview": "artifacts/ui-overview-2026-10-17/concept01/index.html",
+    "all128VisualChildrenApproved": false
+  },
+  "discardedEvidence": [
+    "9C/748 preliminary product and obsolete-visual assertion failures are diagnostic only",
+    "20D broad run read across a guard update and is not final exact-runtime evidence; use39D qualified run"
+  ],
+  "limitations": [
+    "No formal raw header admission or mixed visual promotion",
+    "No all128 child visual approval",
+    "980x2306 is a layout proxy; actual scale/DPR/Lemur/phone input and authenticated/content-write paths remain unverified",
+    "Actual-extension final candidate4/4; original control3/4 with one timeout and separate GET/shim recovery",
+    "Representative controlled article/write captures have partial native CSS and do not certify live visuals"
+  ],
+  "nextTask": "concept01-child-visual-review",
+  "architectureTransitionAdmitted": false
+}

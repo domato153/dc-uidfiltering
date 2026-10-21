@@ -98,7 +98,7 @@ export async function runLiveControlContract({browser,server}) {
                 const response=await route.fetch();await route.fulfill({response,body:(await response.text()).replace('</body>',`${shapeScript}</body>`)});
             });
             await session.goto(`${scenario.prefix}/board/${kind}?id=test&no=1001&comments=4`);
-            if(scenario.dark)await page.evaluate(()=>window.__dcufFixture.toggleDark(true));
+            if(scenario.dark)await page.evaluate(()=>{window.__dcufFixture.toggleDark(true);document.querySelectorAll('[data-dcuf-surface="list-toolbar"] *').forEach(el=>el.getAnimations().forEach(animation=>animation.finish()));});
             await page.waitForSelector('[data-dcuf-surface="list-item"]:visible');
             const observations=await page.evaluate(()=>{
                 const box=e=>{const r=e.getBoundingClientRect();return {x:r.x,y:r.y,right:r.right,bottom:r.bottom,width:r.width,height:r.height};};
@@ -113,7 +113,7 @@ export async function runLiveControlContract({browser,server}) {
                 const composers=Array.from(document.querySelectorAll('.cmt_write_box'));
                 const submit=search?.querySelector('.bnt_search');
                 return {
-                    selected:selected&&{actual:getComputedStyle(selected).backgroundColor,expected:expected(selected,'backgroundColor','var(--dcuf-theme-accent-strong)')},
+                    selected:selected&&{actual:getComputedStyle(selected).backgroundColor,expected:expected(selected,'backgroundColor','var(--dcuf-theme-accent-soft)'),color:getComputedStyle(selected).color,ink:expected(selected,'color','var(--dcuf-theme-accent-ink)')},
                     writes:writes.map(e=>({color:getComputedStyle(e).color,expected:expected(e,'color','var(--dcuf-theme-on-accent)'),image:getComputedStyle(e,'::before').backgroundImage})),
                     bars:bars.map(e=>{const end=e.querySelector(':scope>.fr');return {root:box(e),end:end&&box(end),padding:parseFloat(getComputedStyle(e).paddingRight),after:getComputedStyle(e,'::after').content};}),
                     shell:shell&&{border:getComputedStyle(shell).borderTopWidth,background:getComputedStyle(shell).backgroundColor},
@@ -134,7 +134,7 @@ export async function runLiveControlContract({browser,server}) {
                 };
             });
             if(kind==='lists') {
-                check('selected native tab follows palette',observations.selected?.actual===observations.selected?.expected,observations.selected);
+                check('selected native tab follows palette',observations.selected?.actual===observations.selected?.expected&&observations.selected?.color===observations.selected?.ink,observations.selected);
                 check('mini write uses on-accent and one decoration',observations.writes.length>0&&observations.writes.every(w=>w.color===w.expected&&w.image==='none'),observations.writes);
                 check('native search select shell has no second frame',observations.shell?.border==='0px'&&observations.shell?.background==='rgba(0, 0, 0, 0)',observations.shell);
                 check('search glyph has a centered square box',observations.searchIcon?.width==='20px'&&observations.searchIcon?.height==='20px'&&observations.searchIcon?.mask!=='none'&&observations.searchIcon?.align==='center'&&observations.searchIcon?.justify==='center',observations.searchIcon);
@@ -144,7 +144,7 @@ export async function runLiveControlContract({browser,server}) {
                     const link=Array.from(list.querySelectorAll('a.post-title-link')).find(e=>e.getBoundingClientRect().width>0);
                     window.__dcufMobileConvenienceModule.markRecentCard(list,new URL(link.href).searchParams.get('no'));
                     const label=list.querySelector('.dcuf-recent-label'),card=label.closest('.custom-post-item');
-                    const probe=document.createElement('span');probe.style.color='var(--dcuf-theme-accent-strong)';label.append(probe);const color=getComputedStyle(probe).color;probe.remove();
+                    const probe=document.createElement('span');probe.style.color='var(--dcuf-theme-accent-ink)';label.append(probe);const color=getComputedStyle(probe).color;probe.remove();
                     return {color:getComputedStyle(label).color,expected:color,font:parseFloat(getComputedStyle(label).fontSize),state:card.classList.contains('dcuf-recent-post')};
                 });
                 check('recent state uses readable restrained badge',recent.state&&recent.color===recent.expected&&recent.font>=11,recent);

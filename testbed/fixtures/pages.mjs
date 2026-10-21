@@ -201,7 +201,7 @@ export function viewPage({ long = false, massComments = 0, variant = 'major', da
     const viewPath = `${routeRoot}/board/view`;
     const miniButtons = isMini ? `<div class="view_bottom_btnbox clear"><div class="fr"><button type="button" class="btn_grey modify" onclick="window.__fixtureMiniButtonClicks=(window.__fixtureMiniButtonClicks||0)+1">수정</button><button type="button" class="btn_grey cancle" onclick="window.__fixtureMiniButtonClicks=(window.__fixtureMiniButtonClicks||0)+1">삭제</button><button type="button" id="btn_write" class="btn_lightpurple write" onclick="window.__fixtureMiniButtonClicks=(window.__fixtureMiniButtonClicks||0)+1">글쓰기</button></div></div><div class="fixture-mini-absolute-obstruction" aria-hidden="true"></div>` : '';
     const darkBootstrap = darkAtStart ? `<script>document.documentElement.classList.add('dc-filter-dark-mode')</script>` : '';
-    const brokenThemeBootstrap = brokenTheme ? `<script>document.querySelector('.gallview_head')?.style.setProperty('box-shadow','none','important')</script>` : '';
+    const brokenThemeBootstrap = brokenTheme ? `<script>document.querySelector('.gallview_head')?.style.setProperty('background','transparent','important')</script>` : '';
     const articleOpen = liveShape ? '<article><div class="view_content_wrap">' : '<article class="view_content_wrap">';
     const articleClose = liveShape ? '</div></article>' : '</article>';
     const contentOpen = liveShape ? '<div class="gallview_contents"><div class="inner">' : '<section class="writing_view_box"><div class="write_div">';

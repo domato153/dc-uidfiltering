@@ -43,6 +43,32 @@
     ],
     "upsertComponents": [
       {
+        "id": "mobile-post-main-fixes",
+        "status": "candidate",
+        "classification": "mixed-runtime-source",
+        "layer": "target-adapter",
+        "boundaryState": "mixed",
+        "responsibility": "Late mobile host corrections remain mixed. Measures view computed styles and passes frozen serializable observations to article/comment presenter readiness policies; retains preparation, debug and recovery without owning their aesthetic thresholds.",
+        "sourceRefs": [
+          "src/targets/mobile/post-main-fixes.js"
+        ],
+        "contractRefs": [
+          "host-dom-events",
+          "ui-ownership",
+          "initialization-lifecycle"
+        ],
+        "fitnessRefs": [
+          "invariant-host-node-preservation",
+          "invariant-one-visual-owner",
+          "invariant-ui-port-boundary",
+          "invariant-build-inputs-mapped"
+        ],
+        "transition": {
+          "targetBoundaryState": "conforming",
+          "exitCriteria": "Every late bridge, listener, observer, and style rule is assigned to one target adapter or presentation surface, with no residual mixed correction owner."
+        }
+      },
+      {
         "id": "mobile-runtime-coordinator",
         "status": "candidate",
         "classification": "runtime-source",
@@ -104,7 +130,7 @@
         "classification": "presentation-source",
         "layer": "presentation-ui",
         "boundaryState": "mixed",
-        "responsibility": "Contains the remaining legacy mobile host palette rail and composes the five existing header presentation owners' hoisted pure palette builders at the unchanged early theme phase; no raw header palette selector remains here. Semantic-marker conversion remains pending.",
+        "responsibility": "Retires legacy DCUF-owned dialog palette selectors so shared SettingsPresenter is their final owner; contains the remaining legacy mobile host palette rail and composes the five existing header presentation owners' hoisted pure palette builders at the unchanged early theme phase; no raw header palette selector remains here. Semantic-marker conversion remains pending.",
         "sourceRefs": ["src/targets/mobile/theme-host-style.js"],
         "contractRefs": ["host-dom-events", "target-isolation", "ui-ownership"],
         "fitnessRefs": ["invariant-one-visual-owner", "invariant-pc-host-style-isolation", "invariant-build-inputs-mapped"],
@@ -175,7 +201,7 @@
         "classification": "presentation-source",
         "layer": "presentation-ui",
         "boundaryState": "conforming",
-        "responsibility": "Pure serializable list-row projection markup, recent-row decoration and semantic list/control/category-popup CSS; it owns no host DOM, storage, network, observer, timer, or lifecycle effect. Article-native action bars remain under the article presenter/adapter.",
+        "responsibility": "Pure serializable list-row projection markup, recent-row decoration and semantic list/control/category-popup CSS including Concept01 sticky/reveal presentation. It owns no host DOM, storage, network, observer, timer, or lifecycle effect. Article-native action bars remain under the article presenter/adapter.",
         "sourceRefs": ["src/targets/mobile/list-presenter.js"],
         "contractRefs": ["ui-ownership", "semantic-preservation", "host-dom-events", "live-native-control-composition"],
         "fitnessRefs": ["invariant-one-visual-owner", "invariant-host-node-preservation", "invariant-ui-port-boundary", "invariant-build-inputs-mapped"]
@@ -186,7 +212,7 @@
         "classification": "adapter-contract",
         "layer": "target-adapter",
         "boundaryState": "conforming",
-        "responsibility": "Reads DCInside list rows into deep-frozen serializable snapshots and mounts presenter-owned projections without cloning, moving, replacing, reordering, wrapping, or portaling a host node.",
+        "responsibility": "Reads DCInside list rows into deep-frozen serializable snapshots and mounts presenter-owned projections without cloning, moving, replacing, reordering, wrapping, or portaling a host node. Owns list-only direction-aware toolbar measurement/state, cumulative travel, focus/popup/pointer hold and bounded scroll/resize/listener cleanup; presentation consumes projected state and owns all visual rules.",
         "sourceRefs": ["src/targets/mobile/list-host-adapter.js"],
         "contractRefs": ["host-dom-events", "ui-ownership", "semantic-preservation", "live-native-control-composition"],
         "fitnessRefs": ["invariant-host-node-preservation", "invariant-one-visual-owner", "invariant-ui-port-boundary", "invariant-build-inputs-mapped"]
@@ -208,7 +234,7 @@
         "classification": "presentation-source",
         "layer": "presentation-ui",
         "boundaryState": "conforming",
-        "responsibility": "Owns semantic-role-first article header, flat rich-content shell, media compatibility, recommendation card, CAPTCHA, adjacent native actions, focus, tactile motion, dark-state, and reduced-motion CSS without DOM, storage, network, selector discovery, or lifecycle effects.",
+        "responsibility": "Owns pure immutable-snapshot article visual readiness policy and semantic-role-first article header, flat rich-content shell, media compatibility, recommendation card, CAPTCHA, adjacent native actions, focus, tactile motion, dark-state, and reduced-motion CSS without DOM, storage, network, selector discovery, or lifecycle effects.",
         "sourceRefs": ["src/targets/mobile/article-presenter.js"],
         "contractRefs": ["ui-ownership", "semantic-preservation", "host-dom-events", "live-native-control-composition"],
         "fitnessRefs": ["invariant-one-visual-owner", "invariant-host-node-preservation", "invariant-ui-port-boundary", "invariant-build-inputs-mapped"]
@@ -230,7 +256,7 @@
         "classification": "presentation-source",
         "layer": "presentation-ui",
         "boundaryState": "conforming",
-        "responsibility": "Owns semantic-role-first comment, reply, detached-reply continuation, image-comment, composer, focus, popup, tactile motion, dark-state, and reduced-motion CSS without DOM, storage, network, selector discovery, or lifecycle effects.",
+        "responsibility": "Owns pure immutable-snapshot comment visual readiness policy and semantic-role-first comment, reply, detached-reply continuation, image-comment, composer, focus, popup, tactile motion, dark-state, and reduced-motion CSS without DOM, storage, network, selector discovery, or lifecycle effects.",
         "sourceRefs": ["src/targets/mobile/comment-presenter.js"],
         "contractRefs": ["ui-ownership", "semantic-preservation", "host-dom-events", "live-native-control-composition"],
         "fitnessRefs": ["invariant-one-visual-owner", "invariant-host-node-preservation", "invariant-ui-port-boundary", "invariant-build-inputs-mapped"]
@@ -684,6 +710,8 @@
       }
     ],
     "upsertRelations": [
+      {"id":"rel-mobile-article-readiness-consumed-by-preparation","from":"mobile-article-presenter","to":"mobile-post-main-fixes","kind":"consumed-by"},
+      {"id":"rel-mobile-comment-readiness-consumed-by-preparation","from":"mobile-comment-presenter","to":"mobile-post-main-fixes","kind":"consumed-by"},
       {
         "id": "rel-mobile-list-presenter-adapter",
         "from": "mobile-list-presenter",

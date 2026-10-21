@@ -41,7 +41,7 @@
                 padding: 10px 14px;
                 border: 1px solid var(--dcuf-comment-border);
                 border-block-end: 0;
-                border-radius: 16px 16px 0 0;
+                border-radius: 12px 16px 0 0;
                 background: var(--dcuf-comment-surface-muted);
                 color: var(--dcuf-comment-fg);
                 box-sizing: border-box;
@@ -53,7 +53,7 @@
                 color: var(--dcuf-comment-fg);
                 font-weight: 750;
             }
-            [data-dcuf-role="comment-count-accent"] { color: var(--dcuf-comment-accent); }
+            [data-dcuf-role="comment-count-accent"] { color: var(--dcuf-theme-accent-ink, var(--dcuf-comment-accent)); }
             [data-dcuf-role="comment-header-actions"] {
                 display: inline-flex;
                 align-items: center;
@@ -78,9 +78,9 @@
                 position: relative;
                 overflow: visible;
                 border: 0;
-                border-radius: 18px;
+                border-radius: 12px;
                 background-color: var(--dcuf-comment-surface);
-                background-image: linear-gradient(180deg, var(--dcuf-theme-card-top, #fff), var(--dcuf-theme-card-bottom, #fafbfc));
+                background-image: none;
                 box-shadow: var(--dcuf-comment-shadow);
                 box-sizing: border-box;
             }
@@ -101,7 +101,7 @@
                 border: 1px solid color-mix(in srgb, var(--dcuf-comment-border) 86%, transparent);
                 border-radius: 15px;
                 background-color: var(--dcuf-theme-card-top, var(--dcuf-comment-surface));
-                background-image: linear-gradient(180deg, var(--dcuf-theme-card-top, var(--dcuf-comment-surface)), var(--dcuf-theme-card-bottom, var(--dcuf-comment-surface)));
+                background-image: none;
                 box-shadow: 0 4px 12px color-mix(in srgb, var(--dcuf-comment-accent-strong) 7%, transparent);
                 box-sizing: border-box;
                 overflow: visible;
@@ -148,7 +148,7 @@
                 white-space: nowrap;
                 vertical-align: middle;
             }
-            [data-dcuf-comment-role="author"][data-dcuf-comment-state="self"] { color: var(--dcuf-comment-accent); }
+            [data-dcuf-comment-role="author"][data-dcuf-comment-state="self"] { color: var(--dcuf-theme-accent-ink, var(--dcuf-comment-accent)); }
             [data-dcuf-role="comment-meta"] {
                 display: inline-flex;
                 align-items: center;
@@ -212,7 +212,7 @@
                 border-inline-start: 3px solid var(--dcuf-comment-border-strong);
                 border-radius: 12px;
                 background-color: var(--dcuf-comment-reply);
-                background-image: linear-gradient(180deg, var(--dcuf-comment-reply), color-mix(in srgb, var(--dcuf-comment-reply) 92%, var(--dcuf-comment-input)));
+                background-image: none;
                 overflow: visible;
                 box-sizing: border-box;
             }
@@ -258,9 +258,9 @@
                 margin-block-start: 14px;
                 padding: 14px;
                 border: 1px solid var(--dcuf-comment-border);
-                border-radius: 18px;
+                border-radius: 12px;
                 background-color: var(--dcuf-theme-surface, var(--dcuf-comment-surface));
-                background-image: linear-gradient(180deg, var(--dcuf-theme-card-top, #fff), var(--dcuf-theme-card-bottom, #fafbfc));
+                background-image: none;
                 box-shadow: var(--dcuf-comment-shadow);
                 box-sizing: border-box;
                 overflow: visible;
@@ -379,7 +379,7 @@
                 border: 1px solid var(--dcuf-comment-accent-strong);
                 border-radius: 10px;
                 background-color: var(--dcuf-comment-accent-strong);
-                background-image: linear-gradient(145deg, var(--dcuf-comment-accent), var(--dcuf-comment-accent-strong));
+                background-image: none;
                 color: var(--dcuf-theme-on-accent, #fff);
                 font-weight: 800;
                 white-space: nowrap;
@@ -414,14 +414,14 @@
                 [data-dcuf-role="comment-item"] {
                     margin-inline: 8px;
                     padding: 13px 14px;
-                    border-radius: 14px;
+                    border-radius: 10px;
                 }
                 [data-dcuf-surface="comments-replies"][data-dcuf-role="comments-root"] [data-dcuf-role="comment-composer"],
                 [data-dcuf-surface="comments-replies"][data-dcuf-role="comments-root"] [data-dcuf-role="comment-composer"][data-dcuf-state="reply"] {
                     grid-template-columns: minmax(0, 1fr);
                     gap: 8px;
                     padding: 12px;
-                    border-radius: 16px;
+                    border-radius: 12px;
                 }
                 [data-dcuf-surface="comments-replies"][data-dcuf-role="comments-root"] [data-dcuf-role="comment-identity-fields"],
                 [data-dcuf-surface="comments-replies"][data-dcuf-role="comments-root"] [data-dcuf-role="comment-editor"] {
@@ -434,6 +434,24 @@
                 [data-dcuf-surface="comments-replies"][data-dcuf-role="comments-root"] [data-dcuf-role="native-comment-submit"] { transition: none; }
             }
         `;
-        return Object.freeze({ STYLE_ID, cssText });
+        // Flat surfaces need no elevation; measured appearance is immutable input.
+        const describeReadiness = (s) => {
+            if (!s.includeExtendedSurfaces) return null;
+            if (s.hasCommentBox) {
+                if (s.commentBoxRadius < 10) return 'insufficient-comment-radius';
+                if (s.commentBoxTransparent) return 'transparent-comment-background';
+            }
+            if (s.hasCommentWriteBox) {
+                if (s.commentWriteBoxRadius < 10) return 'insufficient-comment-write-radius';
+                if (s.commentWriteBoxTransparent) return 'transparent-comment-write-background';
+            }
+            if (s.hasCommentTextContainer) {
+                if (s.commentTextContainerRadius < 10) return 'insufficient-comment-input-radius';
+                if (s.commentTextContainerTransparent) return 'transparent-comment-input-background';
+                if (!s.commentTextContainerHasRenderableBorder) return 'missing-comment-input-border';
+            }
+            return null;
+        };
+        return Object.freeze({ STYLE_ID, cssText, describeReadiness });
     })();
     __dcufRoot.__dcufCommentPresenter = __dcufCommentPresenter;

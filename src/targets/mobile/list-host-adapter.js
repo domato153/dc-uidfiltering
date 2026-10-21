@@ -6,6 +6,7 @@
             'data-dcuf-controls-ready',
             'data-dcuf-search-layer-bound',
             'data-dcuf-force-refresh-bound',
+            'data-dcuf-scroll',
             'aria-current',
         ]);
         const controlTransactions = new WeakMap();
@@ -21,6 +22,137 @@
         let searchDrawerHandlersBound = false;
         let searchDrawerRafId = 0;
         let searchDrawerTimerId = 0;
+        const scrollToolbars = new Map();
+        let scrollFrameId = 0;
+        let scrollEventsBound = false;
+        let pointerHeld = false;
+        let keyboardNavigation = false;
+        let scrollMeasurePending = false;
+        let scrollPopupPending = false;
+        const scrollPosition = () => window.scrollY || 0;
+        const measureScrollToolbar = (state) => {
+            state.spacer.removeAttribute('data-dcuf-scroll-active');
+            state.toolbar.setAttribute('data-dcuf-scroll', 'measuring');
+            const rect = state.toolbar.getBoundingClientRect();
+            state.origin = rect.top + scrollPosition();
+            state.height = rect.height;
+            state.spacer.style.setProperty('--dcuf-scroll-size', `${rect.height}px`);
+            state.lastY = scrollPosition();
+            state.direction = 0;
+            state.travel = 0;
+            state.mode = state.lastY <= state.origin + state.height ? 'top' : 'shown';
+            state.toolbar.setAttribute('data-dcuf-scroll', state.mode);
+        };
+        const updatePopupHold = (state) => {
+            state.popupOpen = Array.from(state.toolbar.querySelectorAll('[data-dcuf-role="category-popup"], [data-dcuf-role="page-size-popup"]'))
+                .some(popup => !(popup.matches('[data-dcuf-role="page-size-popup"]') && popup.parentElement?.querySelector('select'))
+                    && popup.getClientRects().length > 0 && getComputedStyle(popup).visibility !== 'hidden');
+        };
+        const syncScrollToolbars = () => {
+            scrollFrameId = 0;
+            const y = scrollPosition();
+            const max = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+            scrollToolbars.forEach(state => {
+                if (!state.toolbar.isConnected || !state.owner.isConnected) { disconnectScrollToolbar(state.owner); return; }
+                if (scrollMeasurePending) measureScrollToolbar(state);
+                if (scrollPopupPending) updatePopupHold(state);
+                if (y < 0 || y > max + 1) return;
+                const active = document.activeElement;
+                const focused = state.toolbar.contains(active);
+                const held = pointerHeld || keyboardNavigation || state.popupOpen || focused;
+                const delta = y - state.lastY;
+                state.lastY = y;
+                if (held || state.held !== held) {
+                    state.direction = 0; state.travel = 0;
+                    state.mode = y <= state.origin + state.height ? 'top' : 'shown';
+                } else if (y <= state.origin + state.height) {
+                    state.mode = 'top'; state.direction = 0; state.travel = 0;
+                } else if (delta) {
+                    const direction = Math.sign(delta);
+                    state.travel = direction === state.direction ? state.travel + Math.abs(delta) : Math.abs(delta);
+                    state.direction = direction;
+                    const threshold = direction > 0 ? 24 : 12;
+                    if (state.travel >= threshold) state.mode = direction > 0 ? 'hidden' : 'shown';
+                }
+                state.held = held;
+                const floating = state.mode !== 'top';
+                state.spacer.toggleAttribute('data-dcuf-scroll-active', floating);
+                // Commit both flow changes before measuring: a layout read with
+                // spacer AND toolbar in flow would trigger scroll anchoring.
+                if (state.toolbar.getAttribute('data-dcuf-scroll') !== state.mode) state.toolbar.setAttribute('data-dcuf-scroll', state.mode);
+                if (floating) {
+                    const rect = state.spacer.getBoundingClientRect();
+                    const left = `${rect.left}px`, width = `${rect.width}px`;
+                    if (state.toolbar.style.getPropertyValue('--dcuf-scroll-left') !== left) state.toolbar.style.setProperty('--dcuf-scroll-left', left);
+                    if (state.toolbar.style.getPropertyValue('--dcuf-scroll-width') !== width) state.toolbar.style.setProperty('--dcuf-scroll-width', width);
+                }
+            });
+            scrollMeasurePending = false;
+            scrollPopupPending = false;
+        };
+        const scheduleScrollToolbars = () => {
+            if (!scrollFrameId && scrollToolbars.size) scrollFrameId = requestAnimationFrame(syncScrollToolbars);
+        };
+        const handleScrollResize = () => { scrollMeasurePending = true; scheduleScrollToolbars(); };
+        const handleToolbarInteraction = (event) => {
+            if (event.type === 'keydown' && event.key === 'Tab') keyboardNavigation = true;
+            if (event.type === 'pointerdown') {
+                keyboardNavigation = false;
+                pointerHeld = Array.from(scrollToolbars.values()).some(state => state.toolbar.contains(event.target));
+            }
+            if (event.type === 'pointerup' || event.type === 'pointercancel') pointerHeld = false;
+            scrollPopupPending = true;
+            if (event.type === 'keydown' && event.key === 'Tab') {
+                cancelAnimationFrame(scrollFrameId); scrollFrameId = 0;
+                syncScrollToolbars();
+                return;
+            }
+            scheduleScrollToolbars();
+        };
+        const SCROLL_INTERACTIONS = ['keydown', 'focusin', 'focusout', 'click', 'pointerdown', 'pointerup', 'pointercancel'];
+        const restoreScrollGeometry = (state) => {
+            state.geometry.forEach(({ name, value, priority }) => {
+                if (value) state.toolbar.style.setProperty(name, value, priority);
+                else state.toolbar.style.removeProperty(name);
+            });
+            if (!state.hadStyle && !state.toolbar.style.length) state.toolbar.removeAttribute('style');
+        };
+        const connectScrollToolbar = (owner, toolbar) => {
+            if (!/\/board\/lists\/?$/.test(location.pathname)) return;
+            const previous = scrollToolbars.get(owner);
+            if (previous?.toolbar === toolbar) { updatePopupHold(previous); scheduleScrollToolbars(); return; }
+            if (previous) { restoreScrollGeometry(previous); previous.toolbar.removeAttribute('data-dcuf-scroll'); previous.spacer.remove(); }
+            const spacer = document.createElement('div');
+            spacer.setAttribute('data-dcuf-scroll-space', '1');
+            spacer.setAttribute('aria-hidden', 'true');
+            toolbar.before(spacer);
+            const geometry = ['--dcuf-scroll-left', '--dcuf-scroll-width'].map(name => ({ name, value: toolbar.style.getPropertyValue(name), priority: toolbar.style.getPropertyPriority(name) }));
+            const state = { owner, toolbar, spacer, geometry, hadStyle: toolbar.hasAttribute('style'), lastY: scrollPosition(), direction: 0, travel: 0, held: false, popupOpen: false, mode: 'top' };
+            scrollToolbars.set(owner, state);
+            measureScrollToolbar(state); updatePopupHold(state);
+            if (!scrollEventsBound) {
+                window.addEventListener('scroll', scheduleScrollToolbars, { passive: true });
+                window.addEventListener('resize', handleScrollResize);
+                window.addEventListener('pageshow', handleScrollResize);
+                SCROLL_INTERACTIONS.forEach(type => document.addEventListener(type, handleToolbarInteraction, true));
+                scrollEventsBound = true;
+            }
+            scheduleScrollToolbars();
+        };
+        const disconnectScrollToolbar = (owner) => {
+            const state = scrollToolbars.get(owner);
+            if (state) restoreScrollGeometry(state);
+            state?.spacer.remove();
+            state?.toolbar.removeAttribute('data-dcuf-scroll');
+            scrollToolbars.delete(owner);
+            if (scrollToolbars.size || !scrollEventsBound) return;
+            window.removeEventListener('scroll', scheduleScrollToolbars);
+            window.removeEventListener('resize', handleScrollResize);
+            window.removeEventListener('pageshow', handleScrollResize);
+            SCROLL_INTERACTIONS.forEach(type => document.removeEventListener(type, handleToolbarInteraction, true));
+            cancelAnimationFrame(scrollFrameId); scrollFrameId = 0;
+            scrollEventsBound = false; pointerHeld = false; keyboardNavigation = false; scrollMeasurePending = false; scrollPopupPending = false;
+        };
         const deepFreeze = (value) => {
             if (!value || typeof value !== 'object' || Object.isFrozen(value)) return value;
             Object.values(value).forEach(deepFreeze);
@@ -394,6 +526,7 @@
                     mark(listWrap, item, { role: 'category-popup-item' });
                     item.querySelectorAll(':scope > a').forEach((action) => mark(listWrap, action, { role: 'category-option' }));
                 });
+                connectScrollToolbar(listWrap, toolbar);
             }
 
             if (actionBar instanceof HTMLElement && !actionBar.matches('.view_bottom_btnbox')) {
@@ -467,6 +600,7 @@
         };
         const disconnectControls = (listWrap) => {
             if (!(listWrap instanceof HTMLElement)) return;
+            disconnectScrollToolbar(listWrap);
             disconnectSearchDrawers(listWrap);
             disconnectPaginationNavigation(listWrap);
             const transaction = controlTransactions.get(listWrap);
@@ -511,6 +645,9 @@
             return false;
         };
         const snapshotResources = () => Object.freeze({
+            scrollToolbars: scrollToolbars.size,
+            scrollFrameActive: Boolean(scrollFrameId),
+            scrollListeners: scrollEventsBound ? SCROLL_INTERACTIONS.length + 3 : 0,
             searchDrawerRoots: searchDrawerRoots.size,
             searchDrawerGlobalHandlersBound: searchDrawerHandlersBound,
             searchDrawerRafActive: Boolean(searchDrawerRafId),

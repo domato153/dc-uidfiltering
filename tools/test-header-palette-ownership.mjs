@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { parse } from 'acorn';
 import { restoreHistoricalGnbPriorities } from './header-gnb-priority-contract.mjs';
 import { palettePriorityProfile, transformHeaderPalettePriorities } from './header-palette-priority-contract.mjs';
+import { restoreConcept01HeaderVisualDelta } from './concept01-header-visual-delta.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 // Captured before extraction from the exact 0C307669… immediate control.
@@ -21,9 +22,24 @@ const owners = [
     ['header-drawer-presenter', '__dcufBuildHeaderDrawerThemeCss', /\.issue_wrap\b/],
 ];
 const rawHeaderSelector = /\.(?:dcheader|dchead|gnb_bar|page_head|newvisit_history|issue_wrap)\b/;
-const sources = Object.fromEntries(await Promise.all(owners.map(async ([id]) => [id,
+const currentSources = Object.fromEntries(await Promise.all(owners.map(async ([id]) => [id,
     await readFile(path.join(root, 'src/targets/mobile', `${id}.js`), 'utf8'),
 ])));
+const sources = Object.fromEntries(Object.entries(currentSources).map(([id,source])=>[id,restoreConcept01HeaderVisualDelta(source)]));
+for(const id of ['header-shell-presenter','header-gnb-presenter','gallery-page-head-presenter']) {
+    const current=currentSources[id];
+    assert.ok(current.includes('// dcuf-concept01-visual-v1:'));
+    assert.notEqual(current,sources[id]);
+    const changed=current.replace('var(--dcuf-theme-fg)', 'var(--dcuf-unapproved-fg)');
+    // The shell's approved fragment uses border tokens instead of foreground.
+    const mutation=id==='header-shell-presenter'?current.replace('border-radius: 8px;', 'border-radius: 80px;'):changed;
+    assert.throws(()=>restoreConcept01HeaderVisualDelta(mutation),'Unregistered visual change must fail normalization');
+}
+// Combined build input must restore every owner, with repeated CSS fragments scoped locally.
+const combinedVisualSources = Object.values(currentSources).join('\n');
+const combinedRestored = restoreConcept01HeaderVisualDelta(combinedVisualSources);
+assert.equal(combinedRestored.includes('// dcuf-concept01-visual-v1:'), false);
+assert.equal(combinedRestored, Object.values(sources).join('\n'));
 const hostSource = await readFile(path.join(root, 'src/targets/mobile/theme-host-style.js'), 'utf8');
 const adapterSources = Object.fromEntries(await Promise.all(owners.map(async ([id]) => [id,
     await readFile(path.join(root, 'src/targets/mobile', id.replace('-presenter', '-host-adapter') + '.js'), 'utf8'),
@@ -104,7 +120,7 @@ function verify(candidateSources, composition, candidateAdapters = adapterSource
     const css = vm.runInNewContext(`${composition}\nconst earlyCss = __dcufBuildTargetThemeCss('data-dcuf-palette');
         ${Object.values(candidateSources).join('\n')}\n${inputDeclarations(candidateAdapters)}\nearlyCss`, sandbox, { timeout: 1000 });
     const start = css.indexOf('/* Host chrome');
-    const end = css.indexOf('html[data-dcuf-palette] body.dc-filter-dark-mode #dc-personal-block-fab', start);
+    const end = css.indexOf('html[data-dcuf-palette] body.dc-filter-dark-mode #dcuf-retired-dc-personal-block-fab', start);
     assert.ok(start >= 0 && end > start);
     assert.equal(digest(historicalRows(expandedRules(css.slice(start, end)))), referenceDigest);
     return allRows;

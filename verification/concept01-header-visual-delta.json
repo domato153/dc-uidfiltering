@@ -1,0 +1,95 @@
+{
+  "schemaVersion": 1,
+  "base": "023e01d5b9266226741a68253f77652989fb7dba",
+  "scope": "Exact approved visual fragments only. Historical hashes remain unchanged; no behavior or raw-admission waiver.",
+  "sources": [
+    {
+      "sourceRef": "src/targets/mobile/header-shell-presenter.js",
+      "family": "HeaderShell",
+      "patches": [
+        {
+          "candidate": "    // dcuf-concept01-visual-v1: approved presentation delta; see CONCEPT01_TRIAL.md.\n    // Hoisted: the palette mounts before presenter objects initialize.\n",
+          "control": "    // Hoisted: the palette mounts before presenter objects initialize.\n"
+        },
+        {
+          "candidate": "        }\n        ${selectors.searchButton},\n",
+          "control": "        }\n        ${selectors.search},\n        ${selectors.searchButton},\n"
+        },
+        {
+          "candidate": "        ${selectors.logout} {\n            border-color: var(--dcuf-theme-accent-ink);\n            background-color: var(--dcuf-theme-accent-strong) !important;\n",
+          "control": "        ${selectors.logout} {\n            border-color: var(--dcuf-theme-accent-strong);\n            background-color: var(--dcuf-theme-accent-strong) !important;\n"
+        },
+        {
+          "candidate": "        ${selectors.searchInset} {\n            border: 1px solid var(--dcuf-theme-border-strong);\n            border-radius: 8px;\n            background: var(--dcuf-theme-surface-input);\n            box-shadow: none;\n        }\n        ${selectors.searchField} {\n            border-color: transparent;\n            background-color: var(--dcuf-theme-surface-input);\n            color: var(--dcuf-theme-fg);\n        }\n",
+          "control": "        ${selectors.searchInset} {\n            box-shadow: inset 0 0 0 1px var(--dcuf-theme-accent-strong);\n        }\n        ${selectors.searchField} {\n            border-color: var(--dcuf-theme-accent-strong);\n        }\n"
+        },
+        {
+          "candidate": "            css: `\n        ${selectors.root} { min-width: 0 !important; width: 100% !important; height: auto !important; background: var(--dcuf-theme-surface, #fff); border-bottom: 1px solid var(--dcuf-theme-border, #e2e7e5); }\n        ${selectors.head} {\n",
+          "control": "            css: `\n        ${selectors.root} { min-width: 0 !important; width: 100% !important; height: auto !important; background: #fff; border-bottom: 1px solid #e5e5e5; }\n        ${selectors.head} {\n"
+        },
+        {
+          "candidate": "            align-items: center;\n            padding: 16px 20px;\n            gap: 24px;\n            min-width: 320px;\n",
+          "control": "            align-items: center;\n            padding: 8px 15px;\n            gap: 15px;\n            min-width: 320px;\n"
+        },
+        {
+          "candidate": "        ${selectors.links} { display: flex; flex-shrink: 0; white-space: nowrap; }\n        ${selectors.links} a { font-size: 12px; color: var(--dcuf-theme-fg-muted); }\n        ${selectors.darkRoot} {\n            background: var(--dcuf-theme-surface, #1b2021);\n            border-bottom-color: var(--dcuf-theme-border, #343c3d);\n        }\n",
+          "control": "        ${selectors.links} { display: flex; flex-shrink: 0; white-space: nowrap; }\n        ${selectors.darkRoot} {\n            background: #1c1c1e;\n            border-bottom-color: #3a3a3c;\n        }\n"
+        }
+      ]
+    },
+    {
+      "sourceRef": "src/targets/mobile/header-gnb-presenter.js",
+      "family": "HeaderGnb",
+      "patches": [
+        {
+          "candidate": "    // dcuf-concept01-visual-v1: approved presentation delta; see CONCEPT01_TRIAL.md.\n    // Hoisted to preserve the existing early palette injection phase.\n",
+          "control": "    // Hoisted to preserve the existing early palette injection phase.\n"
+        },
+        {
+          "candidate": "        ${selectors.root} {\n            border-color: var(--dcuf-theme-border);\n            background-color: var(--dcuf-theme-surface);\n            background-image: none;\n            color: var(--dcuf-theme-fg);\n        }\n",
+          "control": "        ${selectors.root} {\n            border-color: var(--dcuf-theme-accent-strong);\n            background-color: var(--dcuf-theme-accent-strong);\n            background-image: none;\n            color: var(--dcuf-theme-on-accent);\n        }\n"
+        },
+        {
+          "candidate": "            border-left-width: 7px;\n            border-top: 10px solid var(--dcuf-theme-fg-muted);\n            background: none !important;\n",
+          "control": "            border-left-width: 7px;\n            border-top: 10px solid var(--dcuf-theme-on-accent);\n            background: none !important;\n"
+        },
+        {
+          "candidate": "            css: `\n        ${selectors.root} { display: block; width: 100% !important; min-width: 0 !important; height: auto; box-sizing: border-box !important; background: var(--dcuf-theme-surface, #fff); border-bottom: 1px solid var(--dcuf-theme-border, #e2e7e5); }\n        ${selectors.nav} { width: auto; min-width: 0; height: auto; padding: 0 15px; display: flex !important; justify-content: center; }\n        ${selectors.list} { display: flex; flex-wrap: wrap; height: auto; justify-content: space-around; width: 100%; }\n        ${selectors.list} a { color: var(--dcuf-theme-fg); text-shadow: none; }\n        ${selectors.list} a:is(:hover, :focus-visible) { color: var(--dcuf-theme-accent-ink); }\n`\n",
+          "control": "            css: `\n        ${selectors.root} { display: block; width: 100% !important; min-width: 0 !important; height: auto; box-sizing: border-box !important; background: #3b4890; }\n        ${selectors.nav} { width: auto; min-width: 0; height: auto; padding: 0 15px; display: flex !important; justify-content: center; }\n        ${selectors.list} { display: flex; flex-wrap: wrap; height: auto; justify-content: space-around; width: 100%; }\n`\n"
+        }
+      ]
+    },
+    {
+      "sourceRef": "src/targets/mobile/gallery-page-head-presenter.js",
+      "family": "GalleryPageHead",
+      "patches": [
+        {
+          "candidate": "    // dcuf-concept01-visual-v1: approved presentation delta; see CONCEPT01_TRIAL.md.\n    // Hoisted because theme composition precedes this presenter object.\n",
+          "control": "    // Hoisted because theme composition precedes this presenter object.\n"
+        },
+        {
+          "candidate": "        ${selectors.title} {\n            color: var(--dcuf-theme-fg);\n            font-weight: 750;\n        }\n",
+          "control": "        ${selectors.title} {\n            color: var(--dcuf-theme-accent);\n        }\n"
+        }
+      ]
+    },
+    {
+      "sourceRef": "src/targets/mobile/header-recent-visit-presenter.js",
+      "family": "HeaderRecentVisit",
+      "patches": [
+        {
+          "candidate": "    // dcuf-concept01-visual-v1: approved presentation delta; see CONCEPT01_TRIAL.md.\n    // Hoisted to preserve the existing early palette injection phase.\n",
+          "control": "    // Hoisted to preserve the existing early palette injection phase.\n"
+        },
+        {
+          "candidate": "        ${selectors.activeLink} {\n            color: var(--dcuf-theme-accent-ink) !important;\n        }\n",
+          "control": "        ${selectors.activeLink} {\n            color: var(--dcuf-theme-accent) !important;\n        }\n"
+        },
+        {
+          "candidate": "        ${selectors.item} { white-space: nowrap; flex-shrink: 0; }\n        ${selectors.list} a { color: var(--dcuf-theme-fg-muted); text-decoration: none; }\n        ${selectors.controls} { display: inline-flex !important; align-items: center; justify-content: center; flex: 0 0 auto; position: static !important; inset: auto !important; transform: none; margin: 0 !important; padding: 0 4px; overflow: visible; }\n",
+          "control": "        ${selectors.item} { white-space: nowrap; flex-shrink: 0; }\n        ${selectors.controls} { display: inline-flex !important; align-items: center; justify-content: center; flex: 0 0 auto; position: static !important; inset: auto !important; transform: none; margin: 0 !important; padding: 0 4px; overflow: visible; }\n"
+        }
+      ]
+    }
+  ]
+}

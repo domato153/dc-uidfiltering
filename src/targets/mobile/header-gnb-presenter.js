@@ -1,3 +1,4 @@
+    // dcuf-concept01-visual-v1: approved presentation delta; see CONCEPT01_TRIAL.md.
     // Hoisted to preserve the existing early palette injection phase.
     function __dcufBuildHeaderGnbThemeCss(selectors) {
         if (!selectors || typeof selectors !== 'object' || !Object.isFrozen(selectors)
@@ -10,10 +11,10 @@
         }
         return `
         ${selectors.root} {
-            border-color: var(--dcuf-theme-accent-strong);
-            background-color: var(--dcuf-theme-accent-strong);
+            border-color: var(--dcuf-theme-border);
+            background-color: var(--dcuf-theme-surface);
             background-image: none;
-            color: var(--dcuf-theme-on-accent);
+            color: var(--dcuf-theme-fg);
         }
         ${selectors.nextIcon} {
             display: inline-block;
@@ -23,7 +24,7 @@
             border: 0 solid transparent;
             border-right-width: 7px;
             border-left-width: 7px;
-            border-top: 10px solid var(--dcuf-theme-on-accent);
+            border-top: 10px solid var(--dcuf-theme-fg-muted);
             background: none !important;
             filter: none;
             vertical-align: middle;
@@ -63,9 +64,11 @@
             key: 'header-gnb',
             id: 'dcuf-header-gnb-style',
             css: `
-        ${selectors.root} { display: block; width: 100% !important; min-width: 0 !important; height: auto; box-sizing: border-box !important; background: #3b4890; }
+        ${selectors.root} { display: block; width: 100% !important; min-width: 0 !important; height: auto; box-sizing: border-box !important; background: var(--dcuf-theme-surface, #fff); border-bottom: 1px solid var(--dcuf-theme-border, #e2e7e5); }
         ${selectors.nav} { width: auto; min-width: 0; height: auto; padding: 0 15px; display: flex !important; justify-content: center; }
         ${selectors.list} { display: flex; flex-wrap: wrap; height: auto; justify-content: space-around; width: 100%; }
+        ${selectors.list} a { color: var(--dcuf-theme-fg); text-shadow: none; }
+        ${selectors.list} a:is(:hover, :focus-visible) { color: var(--dcuf-theme-accent-ink); }
 `
         });
     }

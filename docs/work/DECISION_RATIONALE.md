@@ -369,3 +369,12 @@ The format adapts the explicit “adapted / not adopted wholesale” separation 
 - Reason: ER0 exact current source/runtime and public CDP measurements settle this repository-owned selection. Four native button properties have measured contrary results; background/border must be lowered as paired base/dark declarations. Same-valued important width needs a separate ancestry counterexample.
 - Evidence: HEADER_RECENT_PRIORITIES.md binds sixteen Testbed/sixteen public controlled CSS states, thirteen fixed joint removals,29 immediate observations and eight-context/64-negative before/after causal audits. CURRENT_STATE.md owns final exact reports and limits.
 - Revisit: Native ancestor/rules/inline writes, runtime/oracle/harness/fixture/toolchain/browser changes, surviving negative or original input/scroll/geometry/storage/resource/live/remote drift.
+
+## D-41 — Concept01 unified presentation and bounded navigation motion
+
+- SELECTED: Existing neutral/charcoal presentation owners, preserved14 palettes, cumulative direction-aware full-width original list toolbar with focus/popup hold, bounded existing-adapter lifecycle and reduced-motion support. Primary sources and transfer limits are in CONCEPT01_TRIAL.md.
+- NOT ADOPTED: Aceternity40% width/800px minimum, duplicate React navigation, external animation library, per-frame-only jitter threshold, global override phase or shadow/radius aesthetics in functional readiness.
+- DEFERRED: Partial continuous toolbar reveal and authenticated/actual-phone/all-child visual qualification.
+- Reason: Long native category controls and popup anchors need stable width and original handlers. The actual root overflow contract defeated sticky; measured fixed positioning with inert flow space preserves native topology. Readiness policies moved separately to presenters after the candidate exposed the16px/shadow coupling.
+- Evidence: Current Concept01 receipt binds the final runtime and actual tests. Exact header CSS inverse retains the historical ownership oracle; it does not waive raw admission or promote mixed components.
+- Revisit: Native layout, focus, popup, lifecycle or actual-phone scale evidence changes.

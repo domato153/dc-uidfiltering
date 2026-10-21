@@ -2,6 +2,7 @@
         const VERSION = 'list-snapshot-v1';
         const CSS = `
             [data-dcuf-surface="list-container"] {
+                font-family: system-ui, -apple-system, "Segoe UI", "Malgun Gothic", sans-serif;
                 --dcuf-list-border: var(--dcuf-theme-border, #dfe5ee);
                 --dcuf-list-surface: var(--dcuf-theme-surface, #fff);
                 --dcuf-list-muted: var(--dcuf-theme-surface-muted, #f6f8fb);
@@ -77,7 +78,7 @@
                 padding: 3px 6px;
                 border-radius: 6px;
                 background: var(--dcuf-theme-accent-soft, #e9efff);
-                color: var(--dcuf-theme-accent-strong, #245bda);
+                color: var(--dcuf-theme-accent-ink, #245bda);
                 font-size: 11px;
                 font-weight: 700;
                 line-height: 1.4;
@@ -92,7 +93,7 @@
             [data-dcuf-surface="list-item"] .dcuf-title-decoration { flex: none; }
             [data-dcuf-surface="list-item"] .dcuf-list-subject,
             [data-dcuf-surface="list-item"] .dcuf-list-reply,
-            [data-dcuf-surface="list-item"] .dcuf-title-decoration { color: var(--dcuf-list-accent); }
+            [data-dcuf-surface="list-item"] .dcuf-title-decoration { color: var(--dcuf-theme-accent-ink, var(--dcuf-list-accent)); }
             [data-dcuf-surface="list-item"] .dcuf-list-meta {
                 display: flex;
                 min-width: 0;
@@ -146,7 +147,7 @@
                 margin: 10px 0;
                 padding: 8px 10px;
                 border: 1px solid var(--dcuf-theme-border, #dfe5ee);
-                border-radius: 14px;
+                border-radius: 10px;
                 background: var(--dcuf-theme-surface-raised, #fff);
                 box-shadow: var(--dcuf-theme-card-shadow, 0 5px 16px rgba(20, 39, 75, .07));
             }
@@ -168,6 +169,32 @@
                 height: auto;
                 box-sizing: border-box;
                 flex-wrap: wrap;
+            }
+            [data-dcuf-surface="list-toolbar"][data-dcuf-scroll]:not([data-dcuf-scroll="measuring"]) {
+                transform: none;
+                transition: transform 200ms ease, visibility 200ms;
+            }
+            [data-dcuf-scroll-space="1"] { display: none; }
+            [data-dcuf-scroll-space="1"][data-dcuf-scroll-active] {
+                display: block;
+                height: var(--dcuf-scroll-size);
+                margin: 10px 0;
+            }
+            [data-dcuf-surface="list-toolbar"]:is([data-dcuf-scroll="shown"], [data-dcuf-scroll="hidden"]) {
+                position: fixed;
+                z-index: 1003;
+                top: 0;
+                left: var(--dcuf-scroll-left);
+                width: var(--dcuf-scroll-width);
+                margin: 0;
+            }
+            [data-dcuf-surface="list-toolbar"][data-dcuf-scroll="hidden"] {
+                transform: translateY(calc(-100% - 12px));
+                visibility: hidden;
+                pointer-events: none;
+            }
+            @media (prefers-reduced-motion: reduce) {
+                [data-dcuf-surface="list-toolbar"][data-dcuf-scroll]:not([data-dcuf-scroll="measuring"]) { transition: none; }
             }
             [data-dcuf-surface="list-toolbar"] [data-dcuf-role="toolbar-actions"] {
                 width: auto;
@@ -352,14 +379,18 @@
             [data-dcuf-surface="list-actions"] [data-dcuf-role="primary-action"]:active { transform: scale(.98); }
             [data-dcuf-surface="list-toolbar"] [data-dcuf-state="current"],
             [data-dcuf-surface="list-toolbar"] [data-dcuf-role="tablist"] button[data-dcuf-state="current"],
-            [data-dcuf-surface="list-actions"] [data-dcuf-state="current"],
+            [data-dcuf-surface="list-actions"] [data-dcuf-state="current"] {
+                border-color: var(--dcuf-theme-border-strong);
+                background: var(--dcuf-theme-accent-soft);
+                color: var(--dcuf-theme-accent-ink);
+            }
             [data-dcuf-surface="list-toolbar"] [data-dcuf-role="primary-action"],
             [data-dcuf-surface="list-toolbar"] [data-dcuf-role="primary-group"] [data-dcuf-role="primary-action"],
             [data-dcuf-surface="list-toolbar"] [data-dcuf-role="primary-group"] [data-dcuf-role="primary-action"]:visited,
             [data-dcuf-surface="list-actions"] [data-dcuf-role="action-end"] [data-dcuf-role="primary-action"],
             [data-dcuf-surface="list-actions"] [data-dcuf-role="action-end"] [data-dcuf-role="primary-action"]:visited,
             [data-dcuf-surface="list-actions"] [data-dcuf-role="primary-action"] {
-                border-color: var(--dcuf-theme-accent-strong, #245bda);
+                border-color: var(--dcuf-theme-accent-ink, #245bda);
                 background: var(--dcuf-theme-accent-strong, #245bda);
                 color: var(--dcuf-theme-on-accent, #fff);
             }
@@ -384,7 +415,7 @@
                 margin: 10px 0;
                 padding: 12px;
                 border: 1px solid var(--dcuf-theme-border, #dfe5ee);
-                border-radius: 14px;
+                border-radius: 10px;
                 background: var(--dcuf-theme-surface-raised, #fff);
                 box-shadow: var(--dcuf-theme-card-shadow, 0 5px 16px rgba(20, 39, 75, .07));
             }
@@ -435,9 +466,9 @@
             [data-dcuf-surface="list-actions"] [data-dcuf-role="action-end"] { float: none; flex-wrap: wrap; }
             [data-dcuf-surface="list-actions"] [data-dcuf-role="action-end"] { margin-inline-start: auto; }
             [data-dcuf-surface="list-pagination"] [data-dcuf-role="page"][data-dcuf-state="current"] {
-                border-color: var(--dcuf-theme-accent, #245bda);
+                border-color: var(--dcuf-theme-accent-ink, #245bda);
                 background: var(--dcuf-theme-accent-soft, #e9efff);
-                color: var(--dcuf-theme-accent-strong, #245bda);
+                color: var(--dcuf-theme-accent-ink, #245bda);
                 font-weight: 800;
             }
             [data-dcuf-surface="list-pagination"] [data-dcuf-role="page-jump"] {

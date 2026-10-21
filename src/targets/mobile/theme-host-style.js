@@ -599,6 +599,19 @@
         }
 
         `
+            // Modern DCUF dialogs have one shared presentation owner.
+            .replaceAll('#dc-backup-popup', '#dcuf-retired-dc-backup-popup')
+            .replaceAll('#dc-block-management-panel', '#dcuf-retired-dc-block-management-panel')
+            .replaceAll('#dc-manual-block-panel', '#dcuf-retired-dc-manual-block-panel')
+            .replaceAll('#dc-personal-block-drawer', '#dcuf-retired-dc-personal-block-drawer')
+            .replaceAll('#dc-personal-block-fab', '#dcuf-retired-dc-personal-block-fab')
+            .replaceAll('#dc-personal-block-size-panel', '#dcuf-retired-dc-personal-block-size-panel')
+            .replaceAll('#dc-selection-popup', '#dcuf-retired-dc-selection-popup')
+            .replaceAll('#dcinside-filter-setting', '#dcuf-retired-dcinside-filter-setting')
+            .replaceAll('#dcinside-proxy-ip-block-mode-group', '#dcuf-retired-dcinside-proxy-ip-block-mode-group')
+            .replaceAll('#dcinside-save-shortcut-btn', '#dcuf-retired-dcinside-save-shortcut-btn')
+            .replaceAll('#dcinside-shortcut-modal', '#dcuf-retired-dcinside-shortcut-modal')
+            .replaceAll('#dcinside-threshold-save', '#dcuf-retired-dcinside-threshold-save')
             .replaceAll('.custom-mobile-list', '.dcuf-retired-custom-mobile-list')
             .replaceAll('.custom-post-item', '.dcuf-retired-custom-post-item')
             .replaceAll('.custom-bottom-controls', '.dcuf-retired-custom-bottom-controls')

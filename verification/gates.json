@@ -93,6 +93,7 @@
         { "id": "baseline-verify", "command": "node", "args": ["tools/verify-baseline.mjs"], "prerequisite": true },
         { "id": "mobile-build", "command": "node", "args": ["tools/build-userscript.mjs", "--testbed-output", "testbed/artifacts/runtime-under-test.user.js"], "prerequisite": true },
         { "id": "header-recent-title-contract", "command": "node", "args": ["testbed/run-header-cascade-audit.mjs", "--recent-title-contract", "--gnb-reset-contract", "--require-runtime-under-test", "--output", "testbed/artifacts/acceptance-header-recent-title-contract.json"] },
+        { "id": "concept01-scroll-contract", "command": "node", "args": ["testbed/run-concept01-scroll.mjs", "--require-runtime-under-test"] },
         { "id": "header-viewport-contract", "command": "node", "args": ["testbed/run-header-viewport-contract.mjs", "--require-runtime-under-test", "--output", "testbed/artifacts/acceptance-header-viewport-contract.json"] },
         { "id": "header-carousel-contract", "command": "node", "args": ["testbed/run-header-carousel-contract.mjs", "--require-runtime-under-test", "--output", "testbed/artifacts/acceptance-header-carousel-contract.json"] },
         { "id": "header-dark-toggle-contract", "command": "node", "args": ["testbed/run-header-dark-toggle-contract.mjs", "--require-runtime-under-test", "--output", "testbed/artifacts/acceptance-header-dark-toggle-contract.json"] },

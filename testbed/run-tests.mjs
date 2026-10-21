@@ -810,7 +810,7 @@ mobileTest('boot: 야간모드의 시각 테마 판정 실패는 필터 완료 �
         assert.equal(result.events[0]?.reason, 'ready:filtered-native-style-fallback', JSON.stringify(result.events));
         assert.equal(result.revealDebug?.initial?.reason, 'waiting-style', JSON.stringify(result.revealDebug));
         assert.equal(result.revealDebug?.initial?.fallback, 'filtered-native-style', JSON.stringify(result.revealDebug));
-        assert.equal(result.viewThemeDebug?.lastFailureReason, 'missing-head-elevation', JSON.stringify(result.viewThemeDebug));
+        assert.equal(result.viewThemeDebug?.lastFailureReason, 'transparent-head-background', JSON.stringify(result.viewThemeDebug));
         assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
     } finally { await session.close(); }
 });
@@ -859,6 +859,9 @@ mobileTest('boot: 목록 준비 실패는 의미 표식과 host style을 롤백�
             searchStyleRestored: true,
             searchStyleEvidence: rolledBack.searchStyleEvidence,
             adapterResources: {
+                scrollToolbars: 0,
+                scrollListeners: 0,
+                scrollFrameActive: false,
                 searchDrawerRoots: 0,
                 searchDrawerGlobalHandlersBound: false,
                 searchDrawerRafActive: false,
@@ -5288,7 +5291,7 @@ mobileTest('모바일 편의기능 설정은 선택 팔레트와 밝은·어두�
             };
         });
         assert.equal(inspect.inlineStyle, null, '편의 설정 레이아웃은 고정 인라인 색상에 의존하면 안 된다');
-        assert.notEqual(inspect.backgroundImage, 'none');
+        assert.equal(inspect.backgroundImage, 'none', 'Concept01 uses a flat settings surface');
         assert.equal(inspect.rowRadius >= 10, true);
         assert.deepEqual(inspect.toggle, { width: 42, height: 24 });
         assert.equal(inspect.saveBorder, inspect.accent, '저장 버튼은 선택한 팔레트 강조색을 사용해야 한다');
@@ -5429,7 +5432,7 @@ mobileTest('title decorations mirror generically, tooltips pre-place within the 
             const futureLink = decorations.find((item) => item.querySelector('.fixture-future-linked-title-marker'));
             const style = pum ? getComputedStyle(pum) : null;
             const accentProbe = document.createElement('span');
-            accentProbe.style.color = 'var(--dcuf-theme-accent)';
+            accentProbe.style.color = 'var(--dcuf-theme-accent-ink)';
             document.body.appendChild(accentProbe);
             const accent = getComputedStyle(accentProbe).color;
             accentProbe.remove();
@@ -8556,15 +8559,15 @@ mobileTest('글쓰기: 네이티브 모바일 기준 fixture는 가로 넘침 �
                 assert.equal(target.height >= 38, true, `${variant} ${id} touch target height: ${target.height}`);
             }
             assert.equal(report.touchTargets.filter((item) => item.height >= 38).length >= 12, true);
-            assert.equal(report.visual.actionRadius >= 12, true);
-            assert.equal(report.visual.submitRadius >= 12, true);
+            assert.equal(report.visual.actionRadius >= 10, true);
+            assert.equal(report.visual.submitRadius >= 10, true);
             assert.notEqual(report.visual.submitBackground, report.visual.cancelBackground);
             assert.equal(report.visual.submitColor, 'rgb(255, 255, 255)');
             assert.equal(['none', 'normal', '""'].includes(report.visual.htmlBeforeContent), true);
             assert.equal(report.visual.htmlContained, true);
             if (variant === 'minor') {
                 assert.equal(report.visual.subjectBackground, report.visual.expectedSubjectBackground);
-                assert.equal(report.visual.subjectRadius >= 12, true);
+                assert.equal(report.visual.subjectRadius >= 10, true);
                 assert.equal(report.visual.headtextLabelInset.top >= 5, true);
                 assert.equal(report.visual.headtextLabelInset.left >= 5, true);
                 assert.equal(report.visual.headtextLabelInset.bottom >= 5, true);
@@ -9011,8 +9014,8 @@ mobileTest('modify password surface uses the mobile card UI and removes trailing
         assert.deepEqual(contract.presentationPayloads.map((css) => (
             createHash('sha256').update(css, 'utf8').digest('hex').toUpperCase()
         )), [
-            'FBCF72630C6509C99A791D32E0B41AFC99D88D4E5F32E89C68F110839BB301D3',
-            '7B643749BC34CD2EC9DE833B442C84D0F83F10AA61A27343140E96A06025A025'
+            'C4B11B6665A0E20AE85270CF5256630AA8B5A1DB55B681755D2947B03DCB2544',
+            'F115ECD658CD800DE14438DF75060F7CC6729FFC1DF5C6C259C75D6810E93053'
         ], 'native-form presentation payloads must match the registered semantic modify/delete, write-shell, write-popup, write-fields, write-headtext, write-editor-shell, write-toolbar-shell, editor-layer, and attachment contracts');
         assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
     } finally { await session.close(); }
@@ -9197,7 +9200,7 @@ mobileTest('modify/delete presentation uses only adapter-applied semantic select
         assert.equal(contract.computed.actionsColumns.split(' ').length, 2);
         assert.equal(
             createHash('sha256').update(contract.writePayloadShaSource, 'utf8').digest('hex').toUpperCase(),
-            '7B643749BC34CD2EC9DE833B442C84D0F83F10AA61A27343140E96A06025A025',
+            'F115ECD658CD800DE14438DF75060F7CC6729FFC1DF5C6C259C75D6810E93053',
             'write/modify-editor payload must match the registered page/form-shell, popup, field, editor, toolbar, and editor-layer semantic contract'
         );
         assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
@@ -9962,7 +9965,7 @@ mobileTest('write editor shell presentation uses adapter semantic selectors', 'w
         assert.equal(initial.selectionPreserved, true);
         assert.deepEqual(initial.style, {
             frameBorder: '1px',
-            frameRadius: '14px',
+            frameRadius: '10px',
             areaOverflow: 'hidden',
             editableDisplay: 'block',
             editableMinHeight: '320px',
@@ -11610,7 +11613,7 @@ mobileTest('UI palette presets normalize stored values without blocking boot', '
     const contrastRatio = (foreground, background) => {
         const luminance = (value) => {
             const channels = (value.match(/[\d.]+/g) || []).slice(0, 3).map(Number).map((channel) => {
-                const normalized = channel / 255;
+                const normalized = channel / (value.startsWith('color(srgb ') ? 1 : 255);
                 return normalized <= 0.03928 ? normalized / 12.92 : ((normalized + 0.055) / 1.055) ** 2.4;
             });
             return 0.2126 * channels[0] + 0.7152 * channels[1] + 0.0722 * channels[2];
@@ -11661,13 +11664,16 @@ mobileTest('UI palette presets normalize stored values without blocking boot', '
                         const element = document.querySelector(selector);
                         const style = element ? getComputedStyle(element) : null;
                         const foreground = style?.color || null;
-                        return { selector, color: style?.backgroundColor || null, foreground };
+                        const probe = document.createElement('i');
+                        probe.style.backgroundColor = selector.includes('current') ? 'var(--dcuf-theme-accent-soft)' : 'var(--dcuf-theme-accent-strong)';
+                        element.append(probe);const expected = getComputedStyle(probe).backgroundColor;probe.remove();
+                        return { selector, color: style?.backgroundColor || null, foreground, expected };
                     })
                 };
             });
             assert.equal(lightColors.strong, strongColors[expected].light, JSON.stringify(lightColors));
-            lightColors.controls.forEach(({ selector, color, foreground }) => {
-                assert.equal(color, hexToRgb(strongColors[expected].light), `${expected} light ${selector}: ${color}`);
+            lightColors.controls.forEach(({ selector, color, foreground, expected: controlColor }) => {
+                assert.equal(color, controlColor, `${expected} light ${selector}: ${color}`);
                 if (strictContrastPalettes.has(expected)) {
                     assert.equal(contrastRatio(foreground, color) >= 4.5, true, `${expected} light ${selector} contrast: ${contrastRatio(foreground, color)}`);
                 }
@@ -11710,13 +11716,16 @@ mobileTest('UI palette presets normalize stored values without blocking boot', '
                         const element = document.querySelector(selector);
                         const style = element ? getComputedStyle(element) : null;
                         const foreground = style?.color || null;
-                        return { selector, color: style?.backgroundColor || null, foreground };
+                        const probe = document.createElement('i');
+                        probe.style.backgroundColor = selector.includes('current') ? 'var(--dcuf-theme-accent-soft)' : 'var(--dcuf-theme-accent-strong)';
+                        element.append(probe);const expected = getComputedStyle(probe).backgroundColor;probe.remove();
+                        return { selector, color: style?.backgroundColor || null, foreground, expected };
                     })
                 };
             });
             assert.equal(darkColors.strong, strongColors[expected].dark, JSON.stringify(darkColors));
-            darkColors.controls.forEach(({ selector, color, foreground }) => {
-                assert.equal(color, hexToRgb(strongColors[expected].dark), `${expected} dark ${selector}: ${color}`);
+            darkColors.controls.forEach(({ selector, color, foreground, expected: controlColor }) => {
+                assert.equal(color, controlColor, `${expected} dark ${selector}: ${color}`);
                 if (strictContrastPalettes.has(expected)) {
                     assert.equal(contrastRatio(foreground, color) >= 4.5, true, `${expected} dark ${selector} contrast: ${contrastRatio(foreground, color)}`);
                 }
@@ -11873,14 +11882,14 @@ mobileTest('UI palette surfaces cover list canvas, comments, image comments, and
             };
         });
         assert.deepEqual(hostChromeContract, {
-            gnb: 'rgb(154, 52, 18)',
-            topSearch: 'rgb(154, 52, 18)',
+            gnb: 'rgb(255, 255, 255)',
+            topSearch: 'rgb(255, 255, 255)',
             topSearchButton: 'rgb(154, 52, 18)',
             login: 'rgb(154, 52, 18)',
-            galleryTitle: 'rgb(194, 65, 12)',
+            galleryTitle: 'rgb(39, 49, 63)',
             gallerySearch: 'rgb(154, 52, 18)',
-            recentTitle: 'rgb(194, 65, 12)',
-            recentAll: 'rgb(194, 65, 12)'
+            recentTitle: 'rgb(154, 52, 18)',
+            recentAll: 'rgb(154, 52, 18)'
         });
 
         await session.goto('/board/view?id=test&no=1001&comments=4');
@@ -11919,6 +11928,7 @@ mobileTest('UI palette surfaces cover list canvas, comments, image comments, and
                 innerShadow: getComputedStyle(inner).boxShadow,
                 bottomBackground: getComputedStyle(bottom).backgroundImage,
                 buttonBackground: getComputedStyle(button).backgroundImage,
+                buttonFill: getComputedStyle(button).backgroundColor,
                 numberColor: getComputedStyle(number).color,
                 fixedNumberColor: getComputedStyle(fixedNumber).color,
                 iconBackgroundImage: getComputedStyle(icon).backgroundImage,
@@ -11927,14 +11937,14 @@ mobileTest('UI palette surfaces cover list canvas, comments, image comments, and
                 labelColor: getComputedStyle(icon, '::after').color
             };
         });
-        assert.equal(recommendationContract.boxBackground.includes('linear-gradient'), true, JSON.stringify(recommendationContract));
-        assert.equal(recommendationContract.innerBackground.includes('linear-gradient'), true, JSON.stringify(recommendationContract));
+        assert.equal(recommendationContract.boxBackground, 'none', JSON.stringify(recommendationContract));
+        assert.equal(recommendationContract.innerBackground, 'none', JSON.stringify(recommendationContract));
         assert.notEqual(recommendationContract.innerShadow, 'none', JSON.stringify(recommendationContract));
         assert.equal(recommendationContract.bottomBackground, 'none', JSON.stringify(recommendationContract));
         assert.equal(recommendationContract.buttonBackground.includes('rgb(194, 65, 12)'), true, JSON.stringify(recommendationContract));
         assert.equal(recommendationContract.buttonBackground.includes('rgb(154, 52, 18)'), true, JSON.stringify(recommendationContract));
-        assert.equal(recommendationContract.numberColor, 'rgb(194, 65, 12)', JSON.stringify(recommendationContract));
-        assert.equal(recommendationContract.fixedNumberColor, 'rgb(194, 65, 12)', JSON.stringify(recommendationContract));
+        assert.equal(recommendationContract.numberColor, 'rgb(154, 52, 18)', JSON.stringify(recommendationContract));
+        assert.equal(recommendationContract.fixedNumberColor, 'rgb(154, 52, 18)', JSON.stringify(recommendationContract));
         assert.equal(recommendationContract.iconBackgroundImage, 'none', JSON.stringify(recommendationContract));
         assert.equal(recommendationContract.starColor, 'rgb(255, 255, 255)', JSON.stringify(recommendationContract));
         assert.equal(recommendationContract.labelContent, '"개념"', JSON.stringify(recommendationContract));
@@ -12040,7 +12050,7 @@ mobileTest('UI palette replaces live-shaped host blue and keeps continuous list,
         assert.equal(listContract.badgeColor, listContract.accent, JSON.stringify(listContract));
         assert.equal(listContract.badgeLabel, '"m"', JSON.stringify(listContract));
         assert.equal(listContract.nextBackground, 'none', JSON.stringify(listContract));
-        assert.equal(listContract.nextColor, 'rgb(255, 255, 255)', JSON.stringify(listContract));
+        assert.equal(listContract.nextColor, 'rgb(104, 115, 132)', JSON.stringify(listContract));
         assert.equal(listContract.issueBorder, listContract.accent, JSON.stringify(listContract));
         assert.equal(listContract.inactiveColor, listContract.foreground, JSON.stringify(listContract));
         assert.equal(listContract.cardBackground, 'none', JSON.stringify(listContract));
@@ -12166,7 +12176,7 @@ mobileTest('UI palette replaces live-shaped host blue and keeps continuous list,
             window.__dcufPaletteDetachedTopology.reply.remove();
             delete window.__dcufPaletteDetachedTopology;
         });
-        assert.equal(viewContract.titleBackground.includes('linear-gradient'), true, JSON.stringify(viewContract));
+        assert.equal(viewContract.titleBackground, 'none', JSON.stringify(viewContract));
         assert.notEqual(viewContract.titleShadow, 'none', JSON.stringify(viewContract));
         assert.equal(viewContract.articleBackground, 'none', JSON.stringify(viewContract));
         assert.equal(viewContract.articleShadow, 'none', JSON.stringify(viewContract));
@@ -12174,9 +12184,9 @@ mobileTest('UI palette replaces live-shaped host blue and keeps continuous list,
         assert.equal(viewContract.articleOuterShadow, 'none', JSON.stringify(viewContract));
         assert.equal(viewContract.articleInnerRadius, '0px', JSON.stringify(viewContract));
         assert.equal(viewContract.articleInnerShadow, 'none', JSON.stringify(viewContract));
-        assert.equal(viewContract.commentBackground.includes('linear-gradient'), true, JSON.stringify(viewContract));
+        assert.equal(viewContract.commentBackground, 'none', JSON.stringify(viewContract));
         assert.notEqual(viewContract.commentShadow, 'none', JSON.stringify(viewContract));
-        assert.equal(viewContract.replyBackground.includes('linear-gradient'), true, JSON.stringify(viewContract));
+        assert.equal(viewContract.replyBackground, 'none', JSON.stringify(viewContract));
         assert.equal(viewContract.replyShadow.includes('inset'), false, JSON.stringify(viewContract));
         assert.equal(viewContract.replyIndent >= 18, true, JSON.stringify(viewContract));
         assert.equal(viewContract.groupedParentBottom, 'auto', JSON.stringify(viewContract));
@@ -12192,7 +12202,7 @@ mobileTest('UI palette replaces live-shaped host blue and keeps continuous list,
         assert.equal(viewContract.normalFooter, viewContract.inputSurface, JSON.stringify(viewContract));
         assert.equal(viewContract.replyBody, viewContract.inputSurface, JSON.stringify(viewContract));
         assert.equal(viewContract.replyFits, true, JSON.stringify(viewContract));
-        assert.equal(viewContract.imageBackground.includes('linear-gradient'), true, JSON.stringify(viewContract));
+        assert.equal(viewContract.imageBackground, 'none', JSON.stringify(viewContract));
         assert.equal(viewContract.imageBody, viewContract.inputSurface, JSON.stringify(viewContract));
 
         await session.page.evaluate(() => {
@@ -12222,7 +12232,7 @@ mobileTest('UI palette replaces live-shaped host blue and keeps continuous list,
             };
         });
         assert.equal(darkContract.replyFits, true, JSON.stringify(darkContract));
-        assert.equal(darkContract.replyBackground.includes('linear-gradient'), true, JSON.stringify(darkContract));
+        assert.equal(darkContract.replyBackground, 'none', JSON.stringify(darkContract));
         assert.notEqual(darkContract.commentShadow, 'none', JSON.stringify(darkContract));
         assert.equal(darkContract.articleInnerRadius, '0px', JSON.stringify(darkContract));
         assert.equal(darkContract.articleInnerImage, 'none', JSON.stringify(darkContract));
@@ -12398,13 +12408,24 @@ mobileTest('UI palette reaches settings, block management, and backup card surfa
                 };
             });
             assert.notEqual(settingsSwitch.background, 'rgb(204, 204, 204)', JSON.stringify(settingsSwitch));
-            assert.notEqual(settingsSwitch.image, 'none', JSON.stringify(settingsSwitch));
-            assert.equal(settingsSwitch.image.includes(settingsSwitch.expected), true, JSON.stringify(settingsSwitch));
+            assert.equal(settingsSwitch.image, 'none', JSON.stringify(settingsSwitch));
+            assert.equal(settingsSwitch.background, settingsSwitch.expected, JSON.stringify(settingsSwitch));
             assert.equal(settingsSwitch.knob, 'rgb(255, 255, 255)', JSON.stringify(settingsSwitch));
             await session.page.locator('#dcinside-filter-setting').evaluate((element) => element.remove());
 
             await session.page.evaluate(() => window.__dcufTestbedGM.invokeMenu('차단 유저 관리'));
             await session.page.locator('#dc-block-management-panel').waitFor({ state: 'attached' });
+            const dialogInk = await session.page.locator('#dc-block-management-panel').evaluate(panel => {
+                const kicker=panel.querySelector('.panel-kicker'), add=panel.querySelector('.panel-add-btn');
+                const probe=document.createElement('span');probe.style.color='var(--dcuf-theme-accent-ink)';panel.append(probe);
+                const expected=getComputedStyle(probe).color;probe.remove();
+                return {kicker:getComputedStyle(kicker).color,add:getComputedStyle(add).color,expected,
+                    legacyCollision:document.querySelector('#dcuf-mobile-palette-style').textContent.includes('body #dc-block-management-panel')};
+            });
+            assert.equal(dialogInk.kicker,dialogInk.expected,JSON.stringify(dialogInk));
+            assert.equal(dialogInk.add,dialogInk.expected,JSON.stringify(dialogInk));
+            assert.equal(dialogInk.legacyCollision,false,'Shared dialog presenter is the final visual owner');
+
             assert.deepEqual(await session.page.locator('#dc-block-management-panel').evaluate((element) => ({
                 surface: element.getAttribute('data-dcuf-surface'),
                 role: element.getAttribute('data-dcuf-role'),
@@ -12443,8 +12464,8 @@ mobileTest('UI palette reaches settings, block management, and backup card surfa
                 };
             });
             assert.notEqual(managementSwitch.background, 'rgb(204, 204, 204)', JSON.stringify(managementSwitch));
-            assert.notEqual(managementSwitch.image, 'none', JSON.stringify(managementSwitch));
-            assert.equal(managementSwitch.image.includes(managementSwitch.expected), true, JSON.stringify(managementSwitch));
+            assert.equal(managementSwitch.image, 'none', JSON.stringify(managementSwitch));
+            assert.equal(managementSwitch.background, managementSwitch.expected, JSON.stringify(managementSwitch));
             assert.equal(managementSwitch.knob, 'rgb(255, 255, 255)', JSON.stringify(managementSwitch));
             await session.page.locator('#dc-block-management-panel .panel-backup-btn').click();
             await session.page.locator('#dc-backup-popup').waitFor({ state: 'attached' });
@@ -12646,15 +12667,15 @@ mobileTest('UI palette colors reach view actions and embedded list controls', 'f
                 inactiveShadow: getComputedStyle(inactive).boxShadow
             };
         });
-        assert.equal(lightBar.background.includes('linear-gradient'), true, JSON.stringify(lightBar));
+        assert.equal(lightBar.background, 'none', JSON.stringify(lightBar));
         assert.notEqual(lightBar.shadow, 'none', JSON.stringify(lightBar));
-        assert.equal(lightBar.inactiveBackground.includes('linear-gradient'), true, JSON.stringify(lightBar));
+        assert.equal(lightBar.inactiveBackground, 'none', JSON.stringify(lightBar));
         assert.notEqual(lightBar.inactiveShadow, 'none', JSON.stringify(lightBar));
         await session.page.evaluate(() => window.__dcufFixture.toggleDark(true));
         await session.page.waitForTimeout(190);
         const dark = await collectColors();
         dark.forEach(({ selector, color }) => assert.equal(color, 'rgb(194, 65, 12)', `orange dark ${selector}: ${color}`));
-        assert.equal(await session.page.locator('#container.gallery_view .view_bottom_btnbox').evaluate((bar) => getComputedStyle(bar).backgroundImage.includes('linear-gradient')), true);
+        assert.equal(await session.page.locator('#container.gallery_view .view_bottom_btnbox').evaluate((bar) => getComputedStyle(bar).backgroundImage), 'none');
         assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
     } finally { await session.close(); }
 });
@@ -12853,9 +12874,8 @@ pcTest('PC palette port themes only DCUF-owned controls and dialogs', 'functiona
             image: getComputedStyle(slider).backgroundImage,
             knob: getComputedStyle(slider, '::before').backgroundColor
         }));
-        assert.notEqual(blueSwitch.background, 'rgb(204, 204, 204)', JSON.stringify(blueSwitch));
-        assert.notEqual(blueSwitch.image, 'none', JSON.stringify(blueSwitch));
-        assert.equal(blueSwitch.image.includes('rgb(36, 91, 218)'), true, JSON.stringify(blueSwitch));
+        assert.equal(blueSwitch.background, 'rgb(36, 91, 218)', JSON.stringify(blueSwitch));
+        assert.equal(blueSwitch.image, 'none', 'Concept01 uses a flat selected surface');
         assert.equal(blueSwitch.knob, 'rgb(255, 255, 255)', JSON.stringify(blueSwitch));
         await session.page.locator('#dcinside-filter-setting').evaluate((element) => element.remove());
 
@@ -12918,7 +12938,7 @@ pcTest('PC palette port themes only DCUF-owned controls and dialogs', 'functiona
         const drawer = session.page.locator('#dc-personal-block-drawer');
         await fab.click();
         const drawerIconColor = await drawer.locator('.dcuf-menu-icon').first().evaluate((element) => getComputedStyle(element).color);
-        assert.equal(drawerIconColor, 'rgb(194, 65, 12)');
+        assert.equal(drawerIconColor, 'rgb(154, 52, 18)');
         await drawer.locator('[data-dcuf-fab-action="quick-block"]').click();
         const prompt = session.page.locator('#dc-selection-popup.dcuf-selection-prompt');
         await prompt.waitFor({ state: 'visible' });
@@ -12926,7 +12946,7 @@ pcTest('PC palette port themes only DCUF-owned controls and dialogs', 'functiona
             backgroundImage: getComputedStyle(element).backgroundImage,
             iconColor: getComputedStyle(element.querySelector('.dcuf-selection-prompt-icon')).color
         }));
-        assert.equal(promptContract.iconColor, 'rgb(194, 65, 12)', JSON.stringify(promptContract));
+        assert.equal(promptContract.iconColor, 'rgb(154, 52, 18)', JSON.stringify(promptContract));
         assert.equal(promptContract.backgroundImage.includes('59, 113, 253'), false, JSON.stringify(promptContract));
         await prompt.locator('.popup-buttons button').click();
 
@@ -12941,9 +12961,9 @@ pcTest('PC palette port themes only DCUF-owned controls and dialogs', 'functiona
             inputBorder: getComputedStyle(element.querySelector('#dc-manual-block-value')).borderColor
         }));
         assert.deepEqual(manualContract, {
-            kicker: 'rgb(194, 65, 12)',
+            kicker: 'rgb(154, 52, 18)',
             activeType: 'rgb(154, 52, 18)',
-            inputBorder: 'rgb(194, 65, 12)'
+            inputBorder: 'rgb(154, 52, 18)'
         });
         await manual.locator('[data-manual-block-action="close"]').click();
 
@@ -12966,11 +12986,11 @@ pcTest('PC palette port themes only DCUF-owned controls and dialogs', 'functiona
             switchImage: getComputedStyle(element.querySelector('#personal-block-toggle + .switch-slider')).backgroundImage,
             switchKnob: getComputedStyle(element.querySelector('#personal-block-toggle + .switch-slider'), '::before').backgroundColor
         }));
-        assert.equal(managementAccent.kicker, 'rgb(194, 65, 12)', JSON.stringify(managementAccent));
+        assert.equal(managementAccent.kicker, 'rgb(154, 52, 18)', JSON.stringify(managementAccent));
         assert.equal(managementAccent.addBackground, 'rgb(255, 240, 231)', JSON.stringify(managementAccent));
         assert.notEqual(managementAccent.switchBackground, 'rgb(204, 204, 204)', JSON.stringify(managementAccent));
-        assert.notEqual(managementAccent.switchImage, 'none', JSON.stringify(managementAccent));
-        assert.equal(managementAccent.switchImage.includes('rgb(154, 52, 18)'), true, JSON.stringify(managementAccent));
+        assert.equal(managementAccent.switchImage, 'none', JSON.stringify(managementAccent));
+        assert.equal(managementAccent.switchBackground, 'rgb(154, 52, 18)', JSON.stringify(managementAccent));
         assert.equal(managementAccent.switchKnob, 'rgb(255, 255, 255)', JSON.stringify(managementAccent));
         await session.page.locator('#dc-block-management-panel .panel-backup-btn').click();
         const backupContract = await session.page.locator('#dc-backup-popup').evaluate((element) => ({

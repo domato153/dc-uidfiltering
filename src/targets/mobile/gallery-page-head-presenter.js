@@ -1,3 +1,4 @@
+    // dcuf-concept01-visual-v1: approved presentation delta; see CONCEPT01_TRIAL.md.
     // Hoisted because theme composition precedes this presenter object.
     // The target adapter supplies native selector knowledge explicitly.
     function __dcufBuildGalleryPageHeadThemeCss(selectors) {
@@ -21,7 +22,8 @@
             color: var(--dcuf-theme-on-accent);
         }
         ${selectors.title} {
-            color: var(--dcuf-theme-accent);
+            color: var(--dcuf-theme-fg);
+            font-weight: 750;
         }
         ${selectors.badge} {
             border-color: var(--dcuf-theme-accent);

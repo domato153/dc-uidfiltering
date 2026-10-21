@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { parse } from 'acorn';
+import { restoreConcept01HeaderVisualDelta } from './concept01-header-visual-delta.mjs';
 
 // Frozen FD58 palette delta: only these55 important tokens may become normal.
 // Restore them before the independent historical/full-artifact comparisons.
@@ -170,6 +171,7 @@ export const retainedPalettePriorities = Object.freeze([
 ]);
 
 export function transformHeaderPalettePriorities(source, direction = 'restore') {
+    source = restoreConcept01HeaderVisualDelta(source);
     assert.ok(['restore', 'normalize'].includes(direction), 'Unknown palette direction');
     const offset = source.charCodeAt(0) === 0xFEFF ? 1 : 0;
     const parsed = parse(source.slice(offset), { ecmaVersion: 'latest' });

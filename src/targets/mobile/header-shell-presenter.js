@@ -1,3 +1,4 @@
+    // dcuf-concept01-visual-v1: approved presentation delta; see CONCEPT01_TRIAL.md.
     // Hoisted: the palette mounts before presenter objects initialize.
     // The target adapter supplies native selector knowledge explicitly.
     function __dcufBuildHeaderShellThemeCss(selectors) {
@@ -13,21 +14,25 @@
         ${selectors.root} {
             border-color: var(--dcuf-theme-border-strong);
         }
-        ${selectors.search},
         ${selectors.searchButton},
         ${selectors.spriteButton},
         ${selectors.login},
         ${selectors.logout} {
-            border-color: var(--dcuf-theme-accent-strong);
+            border-color: var(--dcuf-theme-accent-ink);
             background-color: var(--dcuf-theme-accent-strong) !important;
             background-image: none !important;
             color: var(--dcuf-theme-on-accent) !important;
         }
         ${selectors.searchInset} {
-            box-shadow: inset 0 0 0 1px var(--dcuf-theme-accent-strong);
+            border: 1px solid var(--dcuf-theme-border-strong);
+            border-radius: 8px;
+            background: var(--dcuf-theme-surface-input);
+            box-shadow: none;
         }
         ${selectors.searchField} {
-            border-color: var(--dcuf-theme-accent-strong);
+            border-color: transparent;
+            background-color: var(--dcuf-theme-surface-input);
+            color: var(--dcuf-theme-fg);
         }
         ${selectors.buttonDecoration},
         ${selectors.spriteDecoration} {
@@ -76,13 +81,13 @@
             key: 'header-shell',
             id: 'dcuf-header-shell-style',
             css: `
-        ${selectors.root} { min-width: 0 !important; width: 100% !important; height: auto !important; background: #fff; border-bottom: 1px solid #e5e5e5; }
+        ${selectors.root} { min-width: 0 !important; width: 100% !important; height: auto !important; background: var(--dcuf-theme-surface, #fff); border-bottom: 1px solid var(--dcuf-theme-border, #e2e7e5); }
         ${selectors.head} {
             display: flex !important;
             justify-content: space-between;
             align-items: center;
-            padding: 8px 15px;
-            gap: 15px;
+            padding: 16px 20px;
+            gap: 24px;
             min-width: 320px;
             box-sizing: border-box;
             width: 100% !important;
@@ -93,9 +98,10 @@
         ${selectors.searchWrap} { flex-grow: 1; min-width: 100px; max-width: 600px; }
         ${selectors.topSearch} { width: 100%; }
         ${selectors.links} { display: flex; flex-shrink: 0; white-space: nowrap; }
+        ${selectors.links} a { font-size: 12px; color: var(--dcuf-theme-fg-muted); }
         ${selectors.darkRoot} {
-            background: #1c1c1e;
-            border-bottom-color: #3a3a3c;
+            background: var(--dcuf-theme-surface, #1b2021);
+            border-bottom-color: var(--dcuf-theme-border, #343c3d);
         }
 `
         });

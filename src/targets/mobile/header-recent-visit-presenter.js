@@ -1,3 +1,4 @@
+    // dcuf-concept01-visual-v1: approved presentation delta; see CONCEPT01_TRIAL.md.
     // Hoisted to preserve the existing early palette injection phase.
     function __dcufBuildHeaderRecentVisitThemeCss(selectors) {
         if (!selectors || typeof selectors !== 'object' || !Object.isFrozen(selectors)
@@ -12,7 +13,7 @@
         ${selectors.title},
         ${selectors.open},
         ${selectors.activeLink} {
-            color: var(--dcuf-theme-accent) !important;
+            color: var(--dcuf-theme-accent-ink) !important;
         }
 `;
     }
@@ -37,6 +38,7 @@
         ${selectors.list} { display: flex; flex-wrap: nowrap; position: relative !important; left: 0 !important; margin-left: 0 !important; width: 100%; box-sizing: border-box; overflow-x: auto; scroll-behavior: smooth; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
         ${selectors.scrollbar} { display: none; }
         ${selectors.item} { white-space: nowrap; flex-shrink: 0; }
+        ${selectors.list} a { color: var(--dcuf-theme-fg-muted); text-decoration: none; }
         ${selectors.controls} { display: inline-flex !important; align-items: center; justify-content: center; flex: 0 0 auto; position: static !important; inset: auto !important; transform: none; margin: 0 !important; padding: 0 4px; overflow: visible; }
         ${selectors.arrow} { min-width: 22px; min-height: 24px; }
         ${selectors.darkRoot} { background: #1c1c1e; border-bottom-color: #3a3a3c; }

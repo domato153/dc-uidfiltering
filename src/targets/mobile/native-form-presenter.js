@@ -36,8 +36,8 @@
             width: 100% !important;
             margin: 0 !important;
             padding: 12px 4px !important;
-            border-bottom-color: var(--dcuf-theme-accent, #3f6de0) !important;
-            color: var(--dcuf-theme-accent, #3f6de0) !important;
+            border-bottom-color: var(--dcuf-theme-accent-ink, #3f6de0) !important;
+            color: var(--dcuf-theme-accent-ink, #3f6de0) !important;
         }
         [data-dcuf-native-form-role="form"][data-dcuf-native-form-state="password"] {
             box-sizing: border-box !important;
@@ -104,7 +104,7 @@
             box-shadow: inset 0 2px 5px color-mix(in srgb, var(--dcuf-theme-accent) 6%, transparent) !important;
         }
         [data-dcuf-native-form-role="password-field"][data-dcuf-native-form-state="password"]:focus {
-            border-color: var(--dcuf-theme-accent, #3f6de0) !important;
+            border-color: var(--dcuf-theme-accent-ink, #3f6de0) !important;
             box-shadow: 0 0 0 3px var(--dcuf-theme-focus-ring, rgba(63, 109, 224, .18)) !important;
         }
         [data-dcuf-native-form-role="actions"][data-dcuf-native-form-state="password"] {
@@ -225,9 +225,9 @@
         }
         [data-dcuf-native-form-role="actions"][data-dcuf-native-form-state="password"] > [data-dcuf-native-form-role="submit"][data-dcuf-native-form-state="password"],
         [data-dcuf-native-form-role="actions"][data-dcuf-native-form-state="delete-confirm"] > [data-dcuf-native-form-role="submit"][data-dcuf-native-form-state="delete-confirm"] {
-            border-color: var(--dcuf-theme-accent-strong, #245bda) !important;
+            border-color: var(--dcuf-theme-accent-ink, #245bda) !important;
             background-color: var(--dcuf-theme-accent-strong, #245bda) !important;
-            background-image: linear-gradient(180deg, var(--dcuf-theme-primary-top, #5d87f0), var(--dcuf-theme-accent-strong, #245bda)) !important;
+            background-image: none !important;
             color: var(--dcuf-theme-on-accent, #fff) !important;
             box-shadow: 0 8px 18px var(--dcuf-theme-accent-shadow, rgba(36, 91, 218, .25)) !important;
         }
@@ -942,7 +942,7 @@
         /* Visual refinement: match the mobile list/article card language. */
         [data-dcuf-native-form-role="form"][data-dcuf-native-form-state="write-editor"] {
             border-color: var(--dcuf-write-border) !important;
-            border-radius: 16px !important;
+            border-radius: 12px !important;
             box-shadow: 0 12px 30px color-mix(in srgb, var(--dcuf-write-accent) 10%, transparent) !important;
         }
         [data-dcuf-native-form-role="subject-input"][data-dcuf-native-form-state="write-editor"],
@@ -1016,7 +1016,7 @@
         [data-dcuf-native-form-role="editor-wrapper"][data-dcuf-native-form-state="write-editor"],
         [data-dcuf-native-form-role="editor-frame"][data-dcuf-native-form-state="write-editor"] {
             border-color: var(--dcuf-write-border) !important;
-            border-radius: 14px !important;
+            border-radius: 10px !important;
             box-shadow: 0 5px 16px color-mix(in srgb, var(--dcuf-write-accent) 7%, transparent) !important;
         }
         [data-dcuf-native-form-role="form"][data-dcuf-native-form-state="write-editor"] [data-dcuf-native-form-role="editor-toolbar"][data-dcuf-native-form-state="write-editor"] {
@@ -1136,7 +1136,7 @@
             margin: 12px 0 0 !important;
             padding: 10px !important;
             border: 1px solid #dbe6f3 !important;
-            border-radius: 14px !important;
+            border-radius: 10px !important;
             background: linear-gradient(180deg, #f8fbff 0%, #f3f7fd 100%) !important;
             box-shadow: 0 4px 12px rgba(25, 50, 92, 0.06) !important;
         }
@@ -1170,7 +1170,7 @@
             margin: 0 !important;
             padding: 0 !important;
             border: 1px solid var(--dcuf-write-border-strong) !important;
-            border-radius: 16px !important;
+            border-radius: 12px !important;
             background: var(--dcuf-write-surface) !important;
             color: var(--dcuf-write-fg) !important;
             transform: translate(-50%, -50%) !important;
@@ -1325,7 +1325,7 @@
             [data-dcuf-native-form-role="popup-shell"][data-dcuf-native-form-state="write-editor"] {
                 width: calc(100vw - 24px) !important;
                 max-width: calc(100vw - 24px) !important;
-                border-radius: 14px !important;
+                border-radius: 10px !important;
             }
             [data-dcuf-native-form-role="popup-heading"][data-dcuf-native-form-state="write-editor"] {
                 height: 48px !important;
