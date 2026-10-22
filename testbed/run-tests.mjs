@@ -6268,7 +6268,7 @@ mobileTest('헤더 셸 CSS는 단일 presenter 소유와 교체·해제 가능�
             return [image.getAttribute('data-dcuf-header-shell-role'), getComputedStyle(image).height, getComputedStyle(image).display];
         }));
         assert.deepEqual(logoImages, [
-            ['logo-image', '22px', 'inline'],
+            ['logo-image', '22px', 'block'], // Flex brand row blockifies original images.
             ['logo-image-alt', 'auto', 'none'],
             ['logo-image-both', '22px', 'none']
         ]);
@@ -6352,7 +6352,7 @@ mobileTest('갤러리 page-head CSS는 두 host 헤더의 단일 소유자와 �
             return result;
         });
         assert.deepEqual(overlap, {
-            role: 'both', display: 'none', float: 'none', marginLeft: 'auto', alignItems: 'center', gap: '8px'
+            role: 'both', display: 'none', float: 'none', marginLeft: '0px', alignItems: 'center', gap: '8px'
         });
 
         await session.page.evaluate(() => {

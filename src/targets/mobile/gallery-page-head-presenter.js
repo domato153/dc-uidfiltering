@@ -80,27 +80,46 @@
             id: 'dcuf-gallery-page-head-style',
             css: `
         ${selectors.root} {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px 15px !important;
+            display: grid;
+            grid-template-columns: minmax(0, 1fr);
+            align-items: stretch;
+            gap: 14px;
+            padding: 22px 24px !important;
+            margin: 16px auto 20px;
             box-sizing: border-box;
-            width: 100%;
+            width: calc(100% - 40px);
+            max-width: 1120px;
             height: auto;
-            min-height: 50px;
-            flex-wrap: wrap;
-            gap: 10px;
+            min-height: 0;
+            border: 1px solid var(--dcuf-theme-border);
+            border-radius: 18px;
+            background: var(--dcuf-theme-surface-muted);
         }
-        ${selectors.left} { float: none; }
+        ${selectors.left} { position: static; float: none; display: flex; align-items: baseline; flex-wrap: wrap; gap: 12px; min-width: 0; margin: 0; }
+        ${selectors.left} > h2 { float: none; margin: 0; max-width: 100%; font-size: 30px; line-height: 1.3; letter-spacing: -.8px; overflow-wrap: anywhere; }
+        ${selectors.left} > h2 a { font: inherit; }
+        ${selectors.left} > form { float: none; margin: 0; }
         ${selectors.right} {
+            position: static;
+            inset: auto;
             float: none;
-            margin-left: auto;
+            margin: 0;
+            padding: 12px 0 0;
+            border-top: 1px solid var(--dcuf-theme-border);
+            width: 100%;
+            min-width: 0;
             display: flex;
+            justify-content: flex-start;
             flex-wrap: wrap;
             align-items: center;
             gap: 8px;
         }
-        ${selectors.clearfix} { content: ""; display: table; clear: both; }
+        ${selectors.clearfix} { content: none; display: none; }
+        @media (max-width: 759px) {
+            ${selectors.root} { width: calc(100% - 24px); padding: 18px !important; }
+            ${selectors.left} > h2 { font-size: 26px; }
+        }
+
 `
         });
     }

@@ -63,9 +63,10 @@
         { "id": "mobile-build", "command": "node", "args": ["tools/build-userscript.mjs", "--testbed-output", "testbed/artifacts/runtime-under-test.user.js"], "prerequisite": true },
         { "id": "mobile-smoke", "command": "node", "args": ["testbed/run-tests.mjs", "--group", "smoke", "--require-runtime-under-test"] },
         { "id": "header-native", "command": "node", "args": ["testbed/run-tests.mjs", "--group", "functional", "--filter", "header", "--require-runtime-under-test"] },
+        { "id": "header-layout-contract", "command": "node", "args": ["testbed/run-header-layout-redesign.mjs", "--require-runtime-under-test"] },
         { "id": "header-final-boundary", "command": "node", "args": ["testbed/run-header-final-boundary.mjs", "--snapshot-contract"] },
         { "id": "header-issue-top-contract", "command": "node", "args": ["testbed/run-header-issue-top-contract.mjs", "--require-runtime-under-test"] },
-        { "id": "header-recent-title-contract", "command": "node", "args": ["testbed/run-header-cascade-audit.mjs", "--recent-title-contract", "--gnb-reset-contract", "--require-runtime-under-test", "--output", "testbed/artifacts/header-focused-cascade.json"] },
+        { "id": "header-recent-title-contract", "command": "node", "args": ["testbed/run-header-cascade-audit.mjs", "--recent-title-contract", "--gnb-reset-contract", "--historical-visual-projection", "--require-runtime-under-test", "--output", "testbed/artifacts/header-focused-cascade.json"] },
         { "id": "header-viewport-contract", "command": "node", "args": ["testbed/run-header-viewport-contract.mjs", "--require-runtime-under-test", "--output", "testbed/artifacts/header-focused-viewport-contract.json"] },
         { "id": "header-carousel-contract", "command": "node", "args": ["testbed/run-header-carousel-contract.mjs", "--require-runtime-under-test", "--output", "testbed/artifacts/header-focused-carousel-contract.json"] },
         { "id": "header-dark-toggle-contract", "command": "node", "args": ["testbed/run-header-dark-toggle-contract.mjs", "--require-runtime-under-test", "--output", "testbed/artifacts/header-focused-dark-toggle-contract.json"] }
@@ -92,8 +93,9 @@
       "commands": [
         { "id": "baseline-verify", "command": "node", "args": ["tools/verify-baseline.mjs"], "prerequisite": true },
         { "id": "mobile-build", "command": "node", "args": ["tools/build-userscript.mjs", "--testbed-output", "testbed/artifacts/runtime-under-test.user.js"], "prerequisite": true },
-        { "id": "header-recent-title-contract", "command": "node", "args": ["testbed/run-header-cascade-audit.mjs", "--recent-title-contract", "--gnb-reset-contract", "--require-runtime-under-test", "--output", "testbed/artifacts/acceptance-header-recent-title-contract.json"] },
+        { "id": "header-recent-title-contract", "command": "node", "args": ["testbed/run-header-cascade-audit.mjs", "--recent-title-contract", "--gnb-reset-contract", "--historical-visual-projection", "--require-runtime-under-test", "--output", "testbed/artifacts/acceptance-header-recent-title-contract.json"] },
         { "id": "concept01-scroll-contract", "command": "node", "args": ["testbed/run-concept01-scroll.mjs", "--require-runtime-under-test"] },
+        { "id": "header-layout-contract", "command": "node", "args": ["testbed/run-header-layout-redesign.mjs", "--require-runtime-under-test"] },
         { "id": "header-viewport-contract", "command": "node", "args": ["testbed/run-header-viewport-contract.mjs", "--require-runtime-under-test", "--output", "testbed/artifacts/acceptance-header-viewport-contract.json"] },
         { "id": "header-carousel-contract", "command": "node", "args": ["testbed/run-header-carousel-contract.mjs", "--require-runtime-under-test", "--output", "testbed/artifacts/acceptance-header-carousel-contract.json"] },
         { "id": "header-dark-toggle-contract", "command": "node", "args": ["testbed/run-header-dark-toggle-contract.mjs", "--require-runtime-under-test", "--output", "testbed/artifacts/acceptance-header-dark-toggle-contract.json"] },
@@ -120,7 +122,7 @@
       "commands": [
         { "id": "baseline-verify", "command": "node", "args": ["tools/verify-baseline.mjs"], "prerequisite": true },
         { "id": "mobile-build-runtime", "command": "node", "args": ["tools/build-userscript.mjs", "--testbed-output", "testbed/artifacts/runtime-under-test.user.js"], "prerequisite": true },
-        { "id": "header-recent-title-contract", "command": "node", "args": ["testbed/run-header-cascade-audit.mjs", "--recent-title-contract", "--gnb-reset-contract", "--require-runtime-under-test", "--output", "testbed/artifacts/windows-header-recent-title-contract.json"] },
+        { "id": "header-recent-title-contract", "command": "node", "args": ["testbed/run-header-cascade-audit.mjs", "--recent-title-contract", "--gnb-reset-contract", "--historical-visual-projection", "--require-runtime-under-test", "--output", "testbed/artifacts/windows-header-recent-title-contract.json"] },
         { "id": "header-viewport-contract", "command": "node", "args": ["testbed/run-header-viewport-contract.mjs", "--require-runtime-under-test", "--output", "testbed/artifacts/windows-header-viewport-contract.json"] },
         { "id": "header-carousel-contract", "command": "node", "args": ["testbed/run-header-carousel-contract.mjs", "--require-runtime-under-test", "--output", "testbed/artifacts/windows-header-carousel-contract.json"] },
         { "id": "header-dark-toggle-contract", "command": "node", "args": ["testbed/run-header-dark-toggle-contract.mjs", "--require-runtime-under-test", "--output", "testbed/artifacts/windows-header-dark-toggle-contract.json"] },

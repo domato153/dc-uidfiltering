@@ -2,21 +2,21 @@
 
 ## Current execution
 
-- Active plan: docs/work/MOBILE_UI_MODERNIZATION.md → source separation closed → bounded docs/work/UI_REPLACEABILITY_VALIDATION.md pilot → Concept01 trial. Preserve native behavior/settings/PC and one visual owner per surface. Isolated installed-Chrome/Tampermonkey read-only public native actions are authorized; anima remains read-only. No normal-profile/account/content writes or release/version authority.
+- Active plan: docs/work/MOBILE_UI_MODERNIZATION.md → source separation closed → Concept01 prototype → bounded real header layout trial closed. Preserve native behavior/settings/PC and one visual owner per surface. Isolated installed-Chrome/Tampermonkey read-only public native actions are authorized; anima remains read-only. No account/content writes or release/version authority.
 - Workspace path: `.`. Use the private prompt's exact nested worktree; AGENTS.md is the single policy.
-- Active stage: `header-navigation`; Concept01 prototype implemented and scoped validation closed. Next bounded task is `concept01-child-visual-review`. Source separation stays closed; no formal mixed/whole-UI promotion.
-- Source state: Source checkpoint base HEAD `023e01d5b9266226741a68253f77652989fb7dba` on `codex/ui-port-boundary`;13 source files implement the unified presentation plus separately recorded scroll/readiness/legacy-palette prerequisites. Exact checkpoint receipt owns publication state.
+- Active stage: `header-navigation`; header layout trial is implemented and scoped validation closed. Next is `concept01-child-visual-review`. No formal mixed/raw/whole-UI promotion.
+- Source state: Source checkpoint base HEAD `c5faeaba876500a451362b9bf21cd28e4ed6a9ca` on `codex/ui-port-boundary`; four existing presenters and two existing adapters implement the bounded header composition and recorded prerequisites. Exact checkpoint receipt owns publication state.
 - Local-only state: `LOCAL_ONLY_EVIDENCE`. Raw captures/reports under artifacts/ and testbed/artifacts/ are ignored. The progress table names their tracked summaries. Missing old reports neither certify their claims nor block unrelated fresh work. Preserve debug.log unread/unstaged.
-- Candidate fingerprint: `8500894d89e66fa24699409c409f40832421dceebf6e1e40c576717a410953b6`
-- Last current audit: PASS — BOUNDED_CONCEPT01_PROTOTYPE: final mobile144/144, shared PC26/26, scroll5 contexts including980×2306, host11/11, boundaries38; actual Chrome/Tampermonkey candidate4/4. Final control3/4 had one public timeout; separate GET/shim retry passed. This is not all128-child visual approval or raw header admission.
-- Current stage receipt: `verification/receipts/2026-10-22-concept01-trial.json` SHA-256 `06D85282F4A0FA4B881289FED63330752581E79A7DC06B0FEAD699A4A0FF7FD0`. CONCEPT01_TRIAL.md records research, source locality, prerequisites, actual checks and limits. No new library/build input/storage change.
-- Accepted baseline: native-form stage fingerprint `14f1eff219760bc8387895d113d008afcf73581249ddf064fe9279028030daaa`; verification/receipts/2026-09-23-write-edit-delete-popup.json SHA-25661AFD57B1C368501121DBB5B6FD41A810B1669C5D6870DEA7624825856206BE6. This accepted stage is separate from the header candidate.
-- Current artifact: Mobile3.5.5 `39D560C2D52E9F11067525E649EE7F5D3DC3653216AD7020EED2971849647DBC`, root/dist/guard aligned. PC1.9.9 `5FA25756C43864AA8C90C1347AE6A03652D901862F83ABEAEDDEBF6382CFA740`, root/dist aligned.9889 remains trial control;1677/08BC and published32BA retain their prior scopes.
-- Blockers: No known blocker for trying the scoped prototype. Remaining child-state visual consistency and actual-phone review are next work; prior raw header palette FAIL and six mixed visual criteria remain unchanged.
-- Pending live checks: PHONE_VIEWPORT_PROFILE.md remains screen412/layout980×2306/scale0.420684/DPR2.625. Tested980×2306 preserves layout-height but not actual scale/engine/input.390 is stress. Public dynamic comments, authenticated/content writes, every native popup child and all128 visuals remain unqualified.
+- Candidate fingerprint: `151c9b2dc87fa29aeffe763ca4ee9c87aaea8f846ce243a5838da55622cd364e`
+- Last current audit: PASS — BOUNDED_HEADER_LAYOUT_TRIAL: final mobile144/144; layout8; scroll5; public10 before/after captures; actual Chrome/Tampermonkey candidate4/control4; UI boundaries38. Historical cascade8 uses an explicit CSS-only inverse and is not current visual acceptance. PC artifact unchanged; no new PC run.
+- Current stage receipt: `verification/receipts/2026-10-22-header-layout-redesign.json` SHA-256 `A7E14A89B4D26BC2A85BC91B6C92BB3F1F90097508EDED3905B3EC4E3F6E99D1`. HEADER_LAYOUT_REDESIGN.md records actual composition, prerequisites, height cost and current/raw-versus-historical checks.
+- Accepted baseline: Immediate scoped control c5faeab/Concept0139D; its receipt remains historical. Native-form accepted baseline fingerprint14f1eff219760bc8387895d113d008afcf73581249ddf064fe9279028030daaa and verification/receipts/2026-09-23-write-edit-delete-popup.json remain separate from this header candidate.
+- Current artifact: Mobile3.5.5 `478EF59F10B9CF4F1B0E8F8DFB134242BB4967FD955A4EC0ABD1567E77D026C4`, root/dist/guard aligned. PC1.9.9 `5FA25756C43864AA8C90C1347AE6A03652D901862F83ABEAEDDEBF6382CFA740`, root/dist unchanged.39D is the immediate header-layout control; older artifacts retain only their original scopes.
+- Blockers: No known technical blocker for the scoped header trial. Remaining article/comment/write/popup child visuals and actual-phone review are next; historical raw palette FAIL and six mixed visual criteria remain unchanged.
+- Pending live checks: PHONE_VIEWPORT_PROFILE.md remains screen412/layout980×2306/scale0.420684/DPR2.625.980×2306 is a layout-height proxy,390 stress. Actual phone scale/engine/input, authenticated/content writes, dynamic public comment combinations and every native popup child remain unqualified.
 
 ```dcuf-current-artifacts
-{"schemaVersion":1,"mobile":{"sha256":"39D560C2D52E9F11067525E649EE7F5D3DC3653216AD7020EED2971849647DBC"},"pc":{"sha256":"5FA25756C43864AA8C90C1347AE6A03652D901862F83ABEAEDDEBF6382CFA740"}}
+{"schemaVersion":1,"mobile":{"sha256":"478EF59F10B9CF4F1B0E8F8DFB134242BB4967FD955A4EC0ABD1567E77D026C4"},"pc":{"sha256":"5FA25756C43864AA8C90C1347AE6A03652D901862F83ABEAEDDEBF6382CFA740"}}
 ```
 
 ## Draft-complete checkpoint — 2026-10-21
@@ -32,6 +32,7 @@ These are scoped recorded results with explicit runtime identities. The composit
 
 | Adopted result | Evidence route and limits |
 | --- | --- |
+| Real header layout trial implemented; native controls remain in place. | HEADER_LAYOUT_REDESIGN.md/current receipt: final144 mobile,8 layout,5 scroll,10 public images and actual-extension4+4. Larger title card costs height; all-child visuals remain separate. |
 | Concept01 prototype and direction-aware original toolbar implemented. | CONCEPT01_TRIAL.md/current receipt: final144 mobile,26 PC,5 scroll contexts and actual-extension candidate4; separate readiness/palette prerequisites. Remaining child visuals are not approved. |
 | Comment outer frame removed; four header replacement scenarios demonstrated on9889. | HEADER_REPLACEABILITY_PILOT.md + current receipt:12 comment contexts/30 fresh variant contexts, unchanged non-presenter bytes/native input/storage/resources,−80px negative and exact restore. Build-time header scope only. |
 | Reported native UI batch and centered paging repaired. | UI_LIVE_REGRESSION_REPAIR.md:1677 broad repair (mobile144,203 focused checks, four semantic comparisons,16 image pairs, actual TM startup4+4);08BC paging follow-up (14/266). Each receipt keeps its own runtime scope. |

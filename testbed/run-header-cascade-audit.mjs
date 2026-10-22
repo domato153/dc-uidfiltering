@@ -7,6 +7,7 @@ import { assertNoRuntimeErrors, createTestPage, getMetrics, launchBrowser, stora
 import { startServer } from './server/server.mjs';
 import { withHeaderRecentLayoutFixture } from './fixtures/header-recent-layout.mjs';
 import { probeHeaderRecentLayout } from './harness/header-recent-layout.mjs';
+import { restoreConcept01HeaderVisualDelta } from '../tools/concept01-header-visual-delta.mjs';
 
 // A scoped compatibility/debt observation, not a header acceptance receipt.
 // Every mutation is synchronous and restored before native interactions resume.
@@ -39,10 +40,23 @@ process.env.DCUF_TESTBED_TARGET = 'mobile';
 console.log(`Header cascade runtime: ${runtime}; SHA-256 ${sha(runtimeBytes)}`);
 const output = path.resolve(root, args[outputIndex + 1]);
 assert.ok(output.startsWith(path.join(root, 'testbed/artifacts') + path.sep), 'Output must stay in testbed/artifacts');
+let visualProjection = null;
+if (args.includes('--historical-visual-projection')) {
+    const projected = restoreConcept01HeaderVisualDelta(runtimeBytes.toString());
+    const projectedPath = output.replace(/\.json$/, '') + '.historical-visual.user.js';
+    await mkdir(path.dirname(projectedPath), { recursive: true });
+    await writeFile(projectedPath, projected);
+    process.env.DCUF_TESTBED_USERSCRIPT = projectedPath;
+    visualProjection = { scope: 'HISTORICAL_CSS_ONLY_NOT_CURRENT_VISUAL_ACCEPTANCE',
+        sourceSha256: sha(runtimeBytes), projectedSha256: sha(projected),
+        registrationSha256: sha(await readFile(path.join(root, 'verification/concept01-header-visual-delta.json'))) };
+    console.log(`Historical approved-CSS inverse: ${visualProjection.projectedSha256}; current visuals are checked separately`);
+}
 const sourceIds = ['header-shell', 'header-gnb', 'gallery-page-head', 'header-recent-visit', 'header-drawer'];
 const dependencyPaths = [
     'testbed/fixtures/header-recent-layout.mjs', 'testbed/harness/header-recent-layout.mjs',
     'testbed/run-header-cascade-audit.mjs', 'testbed/harness/runner-utils.mjs',
+    'tools/concept01-header-visual-delta.mjs', 'verification/concept01-header-visual-delta.json',
     'testbed/harness/userscript-loader.mjs', 'testbed/harness/gm-shim.js',
     'testbed/harness/boot-probe.js', 'testbed/harness/runtime-instrumentation.js',
     'testbed/harness/playwright-loader.cjs', 'testbed/public/fixture.css', 'testbed/public/fixture-client.js',
@@ -787,7 +801,7 @@ try {
             const failureOutput = output.replace(/\.json$/, '') + `.failed-${Date.now()}.json`;
             await mkdir(path.dirname(failureOutput), { recursive: true });
             await writeFile(failureOutput, JSON.stringify({ schemaVersion: 1, scope: 'failed-partial-audit-not-stage-receipt',
-                runtime, sha256: sha(runtimeBytes), dependencyHashes, node: process.version, browser: browser.version(),
+                runtime, sha256: sha(runtimeBytes), visualProjection, dependencyHashes, node: process.version, browser: browser.version(),
                 completedContexts: observations.map(item => `${item.id}/${item.dark ? 'dark' : 'light'}`),
                 failedContext: { id, route, dark }, failure: error.stack || String(error), nativeKeyboard: trace,
                 metrics: await getMetrics(session.page).catch(() => null), consoleErrors: session.consoleErrors }, null, 2) + '\n');
@@ -807,7 +821,7 @@ try {
     }
     await mkdir(path.dirname(output), { recursive: true });
     await writeFile(output, JSON.stringify({ schemaVersion: 1, scope: 'header-cascade-debt-observation-not-stage-receipt',
-        runtime, sha256: sha(runtimeBytes), dependencyHashes, node: process.version, browser: browser.version(), observations,
+        runtime, sha256: sha(runtimeBytes), visualProjection, dependencyHashes, node: process.version, browser: browser.version(), observations,
         summary: { contexts: observations.length, priorityRemovalControls: observations.reduce((sum, item) => sum + item.probes.length, 0),
             states: observations.reduce((sum, item) => sum + item.states.length, 0),
             ...(recentTitleContract ? {

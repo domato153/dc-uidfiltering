@@ -825,6 +825,63 @@
       "normalizer": "semantic-observation-v1",
       "unknownDifferencePolicy": "fail",
       "missingApplicabilityPolicy": "fail"
+    },
+    {
+      "id": "header-layout-redesign-v1",
+      "status": "active",
+      "surfaces": [
+        "header-navigation"
+      ],
+      "allowed": [
+        {
+          "kind": "geometry",
+          "surface": "header-navigation",
+          "scope": "Original native header controls remain in place; grid brand/search/utility rows, capsule navigation and separate stacked title/tool workspace card",
+          "reason": "User-approved visible structural redesign and layout-freedom trial",
+          "contractTests": [
+            "testbed/run-header-layout-redesign.mjs",
+            "native header functional and popup reachability"
+          ]
+        },
+        {
+          "kind": "spacing",
+          "surface": "header-navigation",
+          "scope": "Original native header controls remain in place; grid brand/search/utility rows, capsule navigation and separate stacked title/tool workspace card",
+          "reason": "User-approved visible structural redesign and layout-freedom trial",
+          "contractTests": [
+            "testbed/run-header-layout-redesign.mjs",
+            "native header functional and popup reachability"
+          ]
+        },
+        {
+          "kind": "typography",
+          "surface": "header-navigation",
+          "scope": "Original native header controls remain in place; grid brand/search/utility rows, capsule navigation and separate stacked title/tool workspace card",
+          "reason": "User-approved visible structural redesign and layout-freedom trial",
+          "contractTests": [
+            "testbed/run-header-layout-redesign.mjs",
+            "native header functional and popup reachability"
+          ]
+        }
+      ],
+      "invariants": [
+        "filter-result",
+        "storage-trace",
+        "network-trace",
+        "host-node-identity",
+        "host-node-order",
+        "native-handler",
+        "native-form-fields",
+        "native-submit-trace",
+        "focus",
+        "lifecycle-resources",
+        "pc-result",
+        "accessibility",
+        "geometry-containment"
+      ],
+      "normalizer": "semantic-observation-v1",
+      "unknownDifferencePolicy": "fail",
+      "missingApplicabilityPolicy": "fail"
     }
   ]
 }

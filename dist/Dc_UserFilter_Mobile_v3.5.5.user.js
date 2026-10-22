@@ -9093,22 +9093,39 @@ const __dcufSettingsPresenter = (() => {
             css: `
         ${selectors.root} { min-width: 0 !important; width: 100% !important; height: auto !important; background: var(--dcuf-theme-surface, #fff); border-bottom: 1px solid var(--dcuf-theme-border, #e2e7e5); }
         ${selectors.head} {
-            display: flex !important;
-            justify-content: space-between;
+            display: grid !important;
+            grid-template-columns: minmax(180px, .7fr) minmax(240px, 1.3fr);
+            grid-template-areas: "brand search" "utilities utilities";
             align-items: center;
-            padding: 16px 20px;
-            gap: 24px;
-            min-width: 320px;
+            gap: 8px 28px;
+            padding: 18px 24px 10px;
+            position: relative;
+            height: auto;
+            min-width: 0;
+            max-width: 1180px;
+            margin-inline: auto;
             box-sizing: border-box;
             width: 100% !important;
         }
-        ${selectors.logo} { flex-shrink: 0; margin: 0; display: block; }
+        ${selectors.logo} { grid-area: brand; position: static; inset: auto; float: none; margin: 0; display: flex; align-items: center; gap: 10px; min-width: 0; font: 800 24px/1.2 system-ui, sans-serif; letter-spacing: -.6px; }
+        ${selectors.logo} > a { position: static; margin: 0; flex: none; color: var(--dcuf-theme-fg); text-decoration: none; }
+        ${selectors.root} ${selectors.logo} > a + a { font-size: 12px; font-weight: 600; color: var(--dcuf-theme-fg-muted); }
         ${selectors.logoImage} { height: 22px; width: auto; }
         ${selectors.logoImageAlt} { display: none; }
-        ${selectors.searchWrap} { flex-grow: 1; min-width: 100px; max-width: 600px; }
-        ${selectors.topSearch} { width: 100%; }
-        ${selectors.links} { display: flex; flex-shrink: 0; white-space: nowrap; }
-        ${selectors.links} a { font-size: 12px; color: var(--dcuf-theme-fg-muted); }
+        ${selectors.searchWrap} { grid-area: search; position: relative; inset: auto; margin: 0; width: 100%; min-width: 0; max-width: none; }
+        ${selectors.topSearch} { display: flex; align-items: center; width: 100%; height: 44px; box-sizing: border-box; }
+        ${selectors.topSearch} > div { flex: 1; min-width: 0; }
+        ${selectors.topSearch} button { flex: none; width: 44px; height: 42px; margin: 0; }
+        ${selectors.links} { grid-area: utilities; position: static; inset: auto; display: flex; justify-content: flex-end; align-items: center; flex-wrap: wrap; gap: 8px; width: 100%; min-width: 0; margin: 0; white-space: normal; }
+        ${selectors.links} > ul { display: flex; align-items: center; flex-wrap: wrap; gap: 3px; list-style: none; margin: 0; padding: 0; }
+        ${selectors.links} > ul > li { float: none; }
+        ${selectors.links} > div { flex: none; }
+        ${selectors.links} a { display: inline-flex; align-items: center; min-height: 26px; padding-inline: 4px; font-size: 11px; color: var(--dcuf-theme-fg-muted); }
+        @media (max-width: 759px) {
+            ${selectors.head} { grid-template-columns: minmax(0, 1fr); grid-template-areas: "brand" "search" "utilities"; padding: 16px; gap: 10px; }
+            ${selectors.links} { justify-content: flex-start; }
+        }
+        ${selectors.darkRoot} ${selectors.logo} > a:first-child { filter: brightness(0) invert(1); }
         ${selectors.darkRoot} {
             background: var(--dcuf-theme-surface, #1b2021);
             border-bottom-color: var(--dcuf-theme-border, #343c3d);
@@ -9205,7 +9222,7 @@ const __dcufSettingsPresenter = (() => {
             const desired = new Map([[state.root, 'root']]);
             state.root.querySelectorAll('.dchead').forEach((head) => {
                 desired.set(head, 'head');
-                head.querySelectorAll('h1.dc_logo').forEach((logo) => {
+                head.querySelectorAll('h1:is(.dc_logo,.dclogo)').forEach((logo) => {
                     desired.set(logo, 'logo');
                     logo.querySelectorAll('img.logo_img,img.logo_img2').forEach((image) => {
                         const primary = image.classList.contains('logo_img');
@@ -9399,27 +9416,46 @@ const __dcufSettingsPresenter = (() => {
             id: 'dcuf-gallery-page-head-style',
             css: `
         ${selectors.root} {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px 15px !important;
+            display: grid;
+            grid-template-columns: minmax(0, 1fr);
+            align-items: stretch;
+            gap: 14px;
+            padding: 22px 24px !important;
+            margin: 16px auto 20px;
             box-sizing: border-box;
-            width: 100%;
+            width: calc(100% - 40px);
+            max-width: 1120px;
             height: auto;
-            min-height: 50px;
-            flex-wrap: wrap;
-            gap: 10px;
+            min-height: 0;
+            border: 1px solid var(--dcuf-theme-border);
+            border-radius: 18px;
+            background: var(--dcuf-theme-surface-muted);
         }
-        ${selectors.left} { float: none; }
+        ${selectors.left} { position: static; float: none; display: flex; align-items: baseline; flex-wrap: wrap; gap: 12px; min-width: 0; margin: 0; }
+        ${selectors.left} > h2 { float: none; margin: 0; max-width: 100%; font-size: 30px; line-height: 1.3; letter-spacing: -.8px; overflow-wrap: anywhere; }
+        ${selectors.left} > h2 a { font: inherit; }
+        ${selectors.left} > form { float: none; margin: 0; }
         ${selectors.right} {
+            position: static;
+            inset: auto;
             float: none;
-            margin-left: auto;
+            margin: 0;
+            padding: 12px 0 0;
+            border-top: 1px solid var(--dcuf-theme-border);
+            width: 100%;
+            min-width: 0;
             display: flex;
+            justify-content: flex-start;
             flex-wrap: wrap;
             align-items: center;
             gap: 8px;
         }
-        ${selectors.clearfix} { content: ""; display: table; clear: both; }
+        ${selectors.clearfix} { content: none; display: none; }
+        @media (max-width: 759px) {
+            ${selectors.root} { width: calc(100% - 24px); padding: 18px !important; }
+            ${selectors.left} > h2 { font-size: 26px; }
+        }
+
 `
         });
     }
@@ -9661,8 +9697,8 @@ const __dcufSettingsPresenter = (() => {
     // Pure and hoisted: preserve complete late CSS before adapter objects initialize.
     function __dcufBuildHeaderGnbStyle(selectors) {
         if (!selectors || typeof selectors !== 'object' || !Object.isFrozen(selectors)
-            || Reflect.ownKeys(selectors).length !== 3
-            || !["root","nav","list"].every(slot => {
+            || Reflect.ownKeys(selectors).length !== 4
+            || !["root","nav","list","darkList"].every(slot => {
                 const field = Object.getOwnPropertyDescriptor(selectors, slot);
                 return field && typeof field.value === 'string' && field.value.trim();
             })) {
@@ -9672,11 +9708,16 @@ const __dcufSettingsPresenter = (() => {
             key: 'header-gnb',
             id: 'dcuf-header-gnb-style',
             css: `
-        ${selectors.root} { display: block; width: 100% !important; min-width: 0 !important; height: auto; box-sizing: border-box !important; background: var(--dcuf-theme-surface, #fff); border-bottom: 1px solid var(--dcuf-theme-border, #e2e7e5); }
-        ${selectors.nav} { width: auto; min-width: 0; height: auto; padding: 0 15px; display: flex !important; justify-content: center; }
-        ${selectors.list} { display: flex; flex-wrap: wrap; height: auto; justify-content: space-around; width: 100%; }
-        ${selectors.list} a { color: var(--dcuf-theme-fg); text-shadow: none; }
-        ${selectors.list} a:is(:hover, :focus-visible) { color: var(--dcuf-theme-accent-ink); }
+        ${selectors.root} { display: block; width: 100% !important; max-width: 1180px; min-width: 0 !important; height: auto; margin: 0 auto 10px; padding: 0 24px; box-sizing: border-box !important; background: transparent; border: 0; }
+        ${selectors.nav} { width: 100%; min-width: 0; height: auto; padding: 0 24px; box-sizing: border-box; display: flex !important; justify-content: flex-start; }
+        ${selectors.list} { display: flex; flex-wrap: wrap; gap: 6px; height: auto; justify-content: flex-start; width: 100%; padding: 0; margin: 0; list-style: none; }
+        ${selectors.list} > li { flex: none; float: none; width: auto; height: auto; margin: 0; }
+        ${selectors.list} > li > a { display: inline-flex; align-items: center; min-height: 34px; height: auto; padding: 0 14px; border: 1px solid var(--dcuf-theme-border); border-radius: 999px; background: var(--dcuf-theme-surface-muted); color: var(--dcuf-theme-fg); font-size: 12px; line-height: 1.4; text-shadow: none; text-decoration: none; }
+        ${selectors.list} > li > a[data-dcuf-header-gnb-role="current-link"],
+        ${selectors.list} > li > a:is(:hover, :focus-visible) { background: var(--dcuf-theme-accent-soft); border-color: var(--dcuf-theme-accent-ink); color: var(--dcuf-theme-accent-ink); }
+        ${selectors.darkList} > li > a[data-dcuf-header-gnb-role="current-link"] { color: var(--dcuf-theme-accent-ink); }
+        @media (max-width: 759px) { ${selectors.root} { padding-inline: 16px; } }
+
 `
         });
     }
@@ -9690,7 +9731,8 @@ const __dcufSettingsPresenter = (() => {
         return Object.freeze({
             root: "[data-dcuf-header-gnb-role=\"root\"]",
             nav: "[data-dcuf-header-gnb-role=\"root\"] nav[data-dcuf-header-gnb-role=\"nav\"]",
-            list: "[data-dcuf-header-gnb-role=\"root\"] [data-dcuf-header-gnb-role=\"list\"]"
+            list: "[data-dcuf-header-gnb-role=\"root\"] [data-dcuf-header-gnb-role=\"list\"]",
+            darkList: "body.dc-filter-dark-mode [data-dcuf-header-gnb-role=\"root\"] [data-dcuf-header-gnb-role=\"list\"]"
         });
     }
 
@@ -9712,7 +9754,7 @@ const __dcufSettingsPresenter = (() => {
     const __dcufHeaderGnbHostAdapter = (() => {
         const ROOT_SELECTOR = '.gnb_bar';
         const ROLE_ATTRIBUTE = 'data-dcuf-header-gnb-role';
-        const OWNED_ROLES = new Set(['root', 'nav', 'list']);
+        const OWNED_ROLES = new Set(['root', 'nav', 'list', 'current-link']);
         const STYLE_ID = 'dcuf-header-gnb-style';
         const SUBSCRIBER_KEY = 'header-gnb-style';
         const states = new Map();
@@ -9755,6 +9797,11 @@ const __dcufSettingsPresenter = (() => {
             const desired = new Map([[state.root, 'root']]);
             state.root.querySelectorAll('nav.gnb').forEach((nav) => desired.set(nav, 'nav'));
             state.root.querySelectorAll('.gnb_list').forEach((list) => desired.set(list, 'list'));
+            state.root.querySelectorAll('.gnb_list > li > a.on, .gnb_list > li.on > a').forEach(link => desired.set(link, 'current-link'));
+            // A native replacement can copy our previous selection without its class.
+            state.root.querySelectorAll('[data-dcuf-header-gnb-role="current-link"]').forEach((link) => {
+                if (!desired.has(link) && !state.baselines.has(link)) link.removeAttribute(ROLE_ATTRIBUTE);
+            });
             state.baselines.forEach((original, element) => {
                 if (desired.has(element)) return;
                 if (original === null) element.removeAttribute(ROLE_ATTRIBUTE);
@@ -9824,7 +9871,9 @@ const __dcufSettingsPresenter = (() => {
                     const changedInsideRoot = (payload.childListTargets || []).some((node) => (
                         node instanceof Element && (node.matches(ROOT_SELECTOR) || node.closest(ROOT_SELECTOR) instanceof HTMLElement)
                     ));
-                    if (movedRoot || changedInsideRoot) refresh(document);
+                    const selectedClassChanged = (payload.records || []).some(record => record.type === 'attributes' && record.attributeName === 'class'
+                        && record.target instanceof Element && record.target.matches('.gnb_list > li, .gnb_list > li > a') && record.target.closest(ROOT_SELECTOR));
+                    if (movedRoot || changedInsideRoot || selectedClassChanged) refresh(document);
                 },
                 { contexts: ['list-surface'] }
             );
@@ -10316,6 +10365,7 @@ const __dcufSettingsPresenter = (() => {
         });
     })();
     __dcufRoot.__dcufHeaderRecentVisitHostAdapter = __dcufHeaderRecentVisitHostAdapter;
+    // dcuf-concept01-visual-v1: approved presentation delta; see HEADER_LAYOUT_REDESIGN.md.
     // Palette accents apply to the original host issue root, including before
     // drawer roles are projected. Keep that timing and native ancestry intact.
     function __dcufBuildHeaderDrawerThemeCss(selectors) {
@@ -10536,8 +10586,15 @@ const __dcufSettingsPresenter = (() => {
             }
             @media (max-width: 420px), (max-height: 600px) {
                 [data-dcuf-header-drawer-scope="1"] ${selectors.door}[data-dcuf-header-native-door-open="1"] ${selectors.tipPopup} {
+                    position: fixed;
+                    top: 50%;
                     right: auto;
-                    left: 12px;
+                    left: 50%;
+                    margin: 0;
+                    transform: translate(-50%, -50%);
+                    max-width: calc(100vw - 24px);
+                    max-height: calc(100vh - 24px);
+                    overflow: auto;
                 }
                 [data-dcuf-header-drawer-scope="1"] ${selectors.door}[data-dcuf-header-native-door-open="1"] ${selectors.tipPopup} > ${selectors.fluid} {
                     min-width: 0;

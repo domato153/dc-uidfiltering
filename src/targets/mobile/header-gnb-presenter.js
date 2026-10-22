@@ -53,8 +53,8 @@
     // Pure and hoisted: preserve complete late CSS before adapter objects initialize.
     function __dcufBuildHeaderGnbStyle(selectors) {
         if (!selectors || typeof selectors !== 'object' || !Object.isFrozen(selectors)
-            || Reflect.ownKeys(selectors).length !== 3
-            || !["root","nav","list"].every(slot => {
+            || Reflect.ownKeys(selectors).length !== 4
+            || !["root","nav","list","darkList"].every(slot => {
                 const field = Object.getOwnPropertyDescriptor(selectors, slot);
                 return field && typeof field.value === 'string' && field.value.trim();
             })) {
@@ -64,11 +64,16 @@
             key: 'header-gnb',
             id: 'dcuf-header-gnb-style',
             css: `
-        ${selectors.root} { display: block; width: 100% !important; min-width: 0 !important; height: auto; box-sizing: border-box !important; background: var(--dcuf-theme-surface, #fff); border-bottom: 1px solid var(--dcuf-theme-border, #e2e7e5); }
-        ${selectors.nav} { width: auto; min-width: 0; height: auto; padding: 0 15px; display: flex !important; justify-content: center; }
-        ${selectors.list} { display: flex; flex-wrap: wrap; height: auto; justify-content: space-around; width: 100%; }
-        ${selectors.list} a { color: var(--dcuf-theme-fg); text-shadow: none; }
-        ${selectors.list} a:is(:hover, :focus-visible) { color: var(--dcuf-theme-accent-ink); }
+        ${selectors.root} { display: block; width: 100% !important; max-width: 1180px; min-width: 0 !important; height: auto; margin: 0 auto 10px; padding: 0 24px; box-sizing: border-box !important; background: transparent; border: 0; }
+        ${selectors.nav} { width: 100%; min-width: 0; height: auto; padding: 0 24px; box-sizing: border-box; display: flex !important; justify-content: flex-start; }
+        ${selectors.list} { display: flex; flex-wrap: wrap; gap: 6px; height: auto; justify-content: flex-start; width: 100%; padding: 0; margin: 0; list-style: none; }
+        ${selectors.list} > li { flex: none; float: none; width: auto; height: auto; margin: 0; }
+        ${selectors.list} > li > a { display: inline-flex; align-items: center; min-height: 34px; height: auto; padding: 0 14px; border: 1px solid var(--dcuf-theme-border); border-radius: 999px; background: var(--dcuf-theme-surface-muted); color: var(--dcuf-theme-fg); font-size: 12px; line-height: 1.4; text-shadow: none; text-decoration: none; }
+        ${selectors.list} > li > a[data-dcuf-header-gnb-role="current-link"],
+        ${selectors.list} > li > a:is(:hover, :focus-visible) { background: var(--dcuf-theme-accent-soft); border-color: var(--dcuf-theme-accent-ink); color: var(--dcuf-theme-accent-ink); }
+        ${selectors.darkList} > li > a[data-dcuf-header-gnb-role="current-link"] { color: var(--dcuf-theme-accent-ink); }
+        @media (max-width: 759px) { ${selectors.root} { padding-inline: 16px; } }
+
 `
         });
     }

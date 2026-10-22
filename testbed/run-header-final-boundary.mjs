@@ -5,6 +5,7 @@ import vm from 'node:vm';
 import {parse} from 'acorn';
 import {restoreHistoricalGnbPriorities,restoreHistoricalHeaderLayoutPriorities} from '../tools/header-gnb-priority-contract.mjs';
 import {restoreHeaderCompositionCss} from '../tools/header-composition-contract.mjs';
+import {restoreConcept01HeaderVisualDelta} from '../tools/concept01-header-visual-delta.mjs';
 
 const dir='artifacts/header-finish-2026-10-13';
 const sha=b=>createHash('sha256').update(b).digest('hex').toUpperCase();
@@ -27,7 +28,7 @@ const initializer=(source,name)=>{let value;walk(parse(source,{ecmaVersion:'late
 const cases=[
  ['header-shell','HeaderShell',['root','head','logo','logoImage','logoImageAlt','searchWrap','topSearch','links','darkRoot']],
  ['gallery-page-head','GalleryPageHead',['root','left','right','clearfix']],
- ['header-gnb','HeaderGnb',['root','nav','list']],
+ ['header-gnb','HeaderGnb',['root','nav','list','darkList']],
  ['header-recent-visit','HeaderRecentVisit',['root','decoration','title','box','list','scrollbar','item','controls','arrow','darkRoot','darkTitle']],
 ];
 const canonical=s=>s.replace(/\r\n/g,'\n');
@@ -47,9 +48,11 @@ const historicalCss=(surface,css)=>{
 const originalFunctions=control===null?new Map():functions(control), results=[], dependencies={};
 dependencies['tools/header-gnb-priority-contract.mjs']=sha(await readFile('tools/header-gnb-priority-contract.mjs'));
 dependencies['tools/header-composition-contract.mjs']=sha(await readFile('tools/header-composition-contract.mjs'));
+dependencies['tools/concept01-header-visual-delta.mjs']=sha(await readFile('tools/concept01-header-visual-delta.mjs'));
+dependencies['verification/concept01-header-visual-delta.json']=sha(await readFile('verification/concept01-header-visual-delta.json'));
 for(const [surface,family,slots] of cases){
  const file=`src/targets/mobile/${surface}-presenter.js`,adapterFile=`src/targets/mobile/${surface}-host-adapter.js`;
- const source=await readFile(file,'utf8'),adapter=await readFile(adapterFile,'utf8');dependencies[file]=sha(source);dependencies[adapterFile]=sha(adapter);
+ const source=await readFile(file,'utf8'),historicalSource=restoreConcept01HeaderVisualDelta(source),adapter=await readFile(adapterFile,'utf8');dependencies[file]=sha(source);dependencies[adapterFile]=sha(adapter);
  const builder=`__dcufBuild${family}Style`,producer=`__dcufDescribe${family}StyleSelectors`;
  const build=functions(source).get(builder),input=functions(adapter).get(producer);
  assert.ok(build,`${surface}: pure late style builder required`);assert.ok(input,`${surface}: adapter selector input required`);
@@ -58,10 +61,12 @@ for(const [surface,family,slots] of cases){
  const oldPrelude=[...originalFunctions].filter(([name])=>name.startsWith(`__dcufBuild${family}`)).map(([,text])=>text).join('\n');
  const old=control===null?null:vm.runInNewContext(`${oldPrelude}\n(${initializer(control,`__dcuf${family}Presenter`)}).style`,{}, {timeout:1000});
  const style=run(`${builder}(${producer}());`);assert.ok(Object.isFrozen(style));
- assert.equal(style.key,surface);assert.equal(style.id,`dcuf-${surface}-style`);assert.equal(sha(canonical(historicalCss(surface,style.css))),frozenCss[surface],'Independent frozen full CSS except declared GNB priority and shell links display');
- if(old!==null){assert.equal(style.key,old.key);assert.equal(style.id,old.id);assert.equal(canonical(historicalCss(surface,style.css)),canonical(old.css),'Complete original CSS except declared GNB priority and shell links display');}
+ const historicalBuild=functions(historicalSource).get(builder);
+ const historicalStyle=vm.runInNewContext(`${historicalBuild}\n${input}\n${builder}(${producer}());`,{}, {timeout:1000});
+ assert.equal(style.key,surface);assert.equal(style.id,`dcuf-${surface}-style`);assert.equal(sha(canonical(historicalCss(surface,historicalStyle.css))),frozenCss[surface],'Independent frozen full CSS except declared GNB priority and shell links display');
+ if(old!==null){assert.equal(style.key,old.key);assert.equal(style.id,old.id);assert.equal(canonical(historicalCss(surface,historicalStyle.css)),canonical(old.css),'Complete original CSS except declared GNB priority and shell links display');}
  if(surface==='header-shell'){
-  for(const changed of [style.css.replace('display: flex; flex-shrink','display: grid; flex-shrink'),style.css.replace('white-space: nowrap;','white-space: normal;'),style.css.replace('min-width: 320px','min-width: 321px')]){
+  for(const changed of [historicalStyle.css.replace('display: flex; flex-shrink','display: grid; flex-shrink'),historicalStyle.css.replace('white-space: nowrap;','white-space: normal;'),historicalStyle.css.replace('min-width: 320px','min-width: 321px')]){
    assert.throws(()=>assert.equal(sha(canonical(historicalCss(surface,changed))),frozenCss[surface]),'Reject changes outside the one links display declaration');
   }
  }
@@ -73,21 +78,21 @@ for(const [surface,family,slots] of cases){
    :surface==='header-gnb'?['display: block;','height: auto;','width: auto;','min-width: 0;','padding: 0 15px;','justify-content: center;','width: 100%;']
    :['display: flex;','justify-content: space-between;','align-items: center;','box-sizing: border-box;','width: 100%;','float: none;'];
   for(const declaration of targets){
-   let at=style.css.indexOf(declaration);
+   let at=historicalStyle.css.indexOf(declaration);
    assert.ok(at>=0,declaration);
    while(at>=0){
-    const changed=style.css.slice(0,at)+declaration.replace(';',' !important;')+style.css.slice(at+declaration.length);
+    const changed=historicalStyle.css.slice(0,at)+declaration.replace(';',' !important;')+historicalStyle.css.slice(at+declaration.length);
     assert.throws(()=>assert.equal(sha(canonical(historicalCss(surface,changed))),frozenCss[surface]),'Reject undeclared restored priority');
-    at=style.css.indexOf(declaration,at+declaration.length);
+    at=historicalStyle.css.indexOf(declaration,at+declaration.length);
    }
   }
-  for(const changed of [style.css.replace('width: 100%;','width: 99%;'),style.css+'\n.changed { color: red; }']){
+  for(const changed of [historicalStyle.css.replace('width: 100%;','width: 99%;'),historicalStyle.css+'\n.changed { color: red; }']){
    assert.throws(()=>assert.equal(sha(canonical(historicalCss(surface,changed))),frozenCss[surface]),'Reject value or extra rule beyond declared priorities');
   }
  }
  const realm={__dcufRoot:{}};
  vm.runInNewContext(`${input}\n${source}`,realm,{timeout:1000});
- assert.equal(sha(canonical(historicalCss(surface,realm.__dcufRoot[`__dcuf${family}Presenter`].style.css))),frozenCss[surface],'Existing .style diagnostic consumer preserved');
+ assert.equal(realm.__dcufRoot[`__dcuf${family}Presenter`].style.css,style.css,'Current .style diagnostic consumer preserved');
  assert.equal(run(`${builder}(Object.freeze(Object.fromEntries(Object.entries(${producer}()).reverse()))).css;`),style.css,'Slots bind by name');
  for(const slot of slots){
   const css=vm.runInNewContext(`${build}\n${builder}(input).css`,{input:Object.freeze({...record,[slot]:`.changed-${slot}`})},{timeout:1000});
@@ -114,6 +119,6 @@ for(const canPrev of [false,true])for(const canNext of [false,true]){
 }
 const adapter=await readFile(recentAdapter,'utf8');assert.ok(!/setProperty\('(?:left|margin-left)',\s*'0px'/.test(adapter),'No owned fixed list presentation literals in adapter');
 await mkdir(dir,{recursive:true});
-const report={kind:'header-final-pure-boundary',status:'PASS',controlSha256,controlArtifactAvailable:control!==null,mode:snapshotContract?'FROZEN_CSS_SNAPSHOT_CONTRACT':'EXACT_CONTROL_CSS_COMPARISON',observerSha256:sha(await readFile('testbed/run-header-final-boundary.mjs')),dependencies,results,recentControlStates:4,recentListDescriptions:2,scope:'PURE_BOUNDARY_NOT_HEADER_STAGE_ADMISSION'};
+const report={kind:'header-final-pure-boundary',status:'PASS',controlSha256,controlArtifactAvailable:control!==null,mode:snapshotContract?'FROZEN_CSS_SNAPSHOT_CONTRACT':'EXACT_CONTROL_CSS_COMPARISON',visualProjection:'EXACT_REGISTERED_CSS_INVERSE_NOT_CURRENT_VISUAL_ACCEPTANCE',observerSha256:sha(await readFile('testbed/run-header-final-boundary.mjs')),dependencies,results,recentControlStates:4,recentListDescriptions:2,scope:'PURE_BOUNDARY_NOT_HEADER_STAGE_ADMISSION'};
 await writeFile(`${dir}/pure-boundary.json`,JSON.stringify(report,null,2)+'\n');
 console.log(`Header final pure boundary PASS: ${results.length} builders/${results.reduce((n,x)=>n+x.slots,0)} slots; recent list/control descriptions.`);

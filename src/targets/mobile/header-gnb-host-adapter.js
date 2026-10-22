@@ -3,7 +3,8 @@
         return Object.freeze({
             root: "[data-dcuf-header-gnb-role=\"root\"]",
             nav: "[data-dcuf-header-gnb-role=\"root\"] nav[data-dcuf-header-gnb-role=\"nav\"]",
-            list: "[data-dcuf-header-gnb-role=\"root\"] [data-dcuf-header-gnb-role=\"list\"]"
+            list: "[data-dcuf-header-gnb-role=\"root\"] [data-dcuf-header-gnb-role=\"list\"]",
+            darkList: "body.dc-filter-dark-mode [data-dcuf-header-gnb-role=\"root\"] [data-dcuf-header-gnb-role=\"list\"]"
         });
     }
 
@@ -25,7 +26,7 @@
     const __dcufHeaderGnbHostAdapter = (() => {
         const ROOT_SELECTOR = '.gnb_bar';
         const ROLE_ATTRIBUTE = 'data-dcuf-header-gnb-role';
-        const OWNED_ROLES = new Set(['root', 'nav', 'list']);
+        const OWNED_ROLES = new Set(['root', 'nav', 'list', 'current-link']);
         const STYLE_ID = 'dcuf-header-gnb-style';
         const SUBSCRIBER_KEY = 'header-gnb-style';
         const states = new Map();
@@ -68,6 +69,11 @@
             const desired = new Map([[state.root, 'root']]);
             state.root.querySelectorAll('nav.gnb').forEach((nav) => desired.set(nav, 'nav'));
             state.root.querySelectorAll('.gnb_list').forEach((list) => desired.set(list, 'list'));
+            state.root.querySelectorAll('.gnb_list > li > a.on, .gnb_list > li.on > a').forEach(link => desired.set(link, 'current-link'));
+            // A native replacement can copy our previous selection without its class.
+            state.root.querySelectorAll('[data-dcuf-header-gnb-role="current-link"]').forEach((link) => {
+                if (!desired.has(link) && !state.baselines.has(link)) link.removeAttribute(ROLE_ATTRIBUTE);
+            });
             state.baselines.forEach((original, element) => {
                 if (desired.has(element)) return;
                 if (original === null) element.removeAttribute(ROLE_ATTRIBUTE);
@@ -137,7 +143,9 @@
                     const changedInsideRoot = (payload.childListTargets || []).some((node) => (
                         node instanceof Element && (node.matches(ROOT_SELECTOR) || node.closest(ROOT_SELECTOR) instanceof HTMLElement)
                     ));
-                    if (movedRoot || changedInsideRoot) refresh(document);
+                    const selectedClassChanged = (payload.records || []).some(record => record.type === 'attributes' && record.attributeName === 'class'
+                        && record.target instanceof Element && record.target.matches('.gnb_list > li, .gnb_list > li > a') && record.target.closest(ROOT_SELECTOR));
+                    if (movedRoot || changedInsideRoot || selectedClassChanged) refresh(document);
                 },
                 { contexts: ['list-surface'] }
             );

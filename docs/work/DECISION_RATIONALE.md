@@ -1,5 +1,14 @@
 # DCUF modernization decision rationale
 
+## D-42 — Demonstrate layout freedom inside the existing header owners
+
+- SELECTED: Grid masthead, utility row, top-level capsule navigation and stacked gallery title/tools card; minimal native-logo and selected-link projection prerequisites. Narrow/short native tip positioning stays in its existing presenter. Current visual/input tests run on the exact candidate; historical CSS contracts use the existing exact approved-fragment inverse and explicitly report that projection.
+- NOT ADOPTED: More color-only changes, native node cloning/reparenting, a new shell/framework/global override phase, adding important priorities to normal native dark conflicts, or changing frozen historical expectations to certify new visuals.
+- DEFERRED: Whole-UI composition, all128-child visual approval, reducing overall header height, authenticated writes and actual-phone scale/input qualification.
+- Reason: ER0 repository/public DOM evidence identified the unprojected dclogo shape, native selected state and normal dark specificity. Replacement negatives exposed copied selection markers; the full suite exposed absolute tip overflow under a taller header. These are concrete local prerequisites, not a need for new external research or architecture.
+- Evidence: HEADER_LAYOUT_REDESIGN.md and verification/receipts/2026-10-22-header-layout-redesign.json bind red/green, current layout/function observations and historical-projection limits. Native handlers, original parents, settings and accepted registry stay preserved.
+- Revisit: Native control ancestry/state changes, popup containment/hit failures, an unregistered fragment passes inversion, or actual-phone evidence changes the composition choice.
+
 ## D-40 — scope checkpoint validation to actual continuity-only changes
 
 - SELECTED: One exact-path selector shared by local and push CI; only a nonempty actual continuity-document diff uses four structural/freshness checks. Keep unchanged all validation for tooling, policy, contracts, unknown/mixed changes or unavailable history. Preserve exact-tree/branch/remote/receipt guards and product acceptance scope.

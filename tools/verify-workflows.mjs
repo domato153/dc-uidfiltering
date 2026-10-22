@@ -83,7 +83,7 @@ for (const [profile, buildId, output] of [
     check(mobileBuildIndex >= 0 && pcBuildIndex >= 0 && index === mobileBuildIndex + 1 && index < pcBuildIndex,
         `${profile}: recent-title contract must run immediately after the mobile guard build, before PC replaces it`);
     check(commands[index]?.command === 'node' && JSON.stringify(commands[index]?.args)
-        === JSON.stringify(['testbed/run-header-cascade-audit.mjs', '--recent-title-contract', '--gnb-reset-contract', '--require-runtime-under-test', '--output', output]),
+        === JSON.stringify(['testbed/run-header-cascade-audit.mjs', '--recent-title-contract', '--gnb-reset-contract', '--historical-visual-projection', '--require-runtime-under-test', '--output', output]),
     `${profile}: recent-title/GNB gate modes, runtime guard, and separate report path must be preserved`);
 }
 

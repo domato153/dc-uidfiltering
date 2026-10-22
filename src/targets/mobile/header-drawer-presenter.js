@@ -1,3 +1,4 @@
+    // dcuf-concept01-visual-v1: approved presentation delta; see HEADER_LAYOUT_REDESIGN.md.
     // Palette accents apply to the original host issue root, including before
     // drawer roles are projected. Keep that timing and native ancestry intact.
     function __dcufBuildHeaderDrawerThemeCss(selectors) {
@@ -218,8 +219,15 @@
             }
             @media (max-width: 420px), (max-height: 600px) {
                 [data-dcuf-header-drawer-scope="1"] ${selectors.door}[data-dcuf-header-native-door-open="1"] ${selectors.tipPopup} {
+                    position: fixed;
+                    top: 50%;
                     right: auto;
-                    left: 12px;
+                    left: 50%;
+                    margin: 0;
+                    transform: translate(-50%, -50%);
+                    max-width: calc(100vw - 24px);
+                    max-height: calc(100vh - 24px);
+                    overflow: auto;
                 }
                 [data-dcuf-header-drawer-scope="1"] ${selectors.door}[data-dcuf-header-native-door-open="1"] ${selectors.tipPopup} > ${selectors.fluid} {
                     min-width: 0;

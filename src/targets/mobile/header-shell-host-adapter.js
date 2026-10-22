@@ -82,7 +82,7 @@
             const desired = new Map([[state.root, 'root']]);
             state.root.querySelectorAll('.dchead').forEach((head) => {
                 desired.set(head, 'head');
-                head.querySelectorAll('h1.dc_logo').forEach((logo) => {
+                head.querySelectorAll('h1:is(.dc_logo,.dclogo)').forEach((logo) => {
                     desired.set(logo, 'logo');
                     logo.querySelectorAll('img.logo_img,img.logo_img2').forEach((image) => {
                         const primary = image.classList.contains('logo_img');

@@ -1,5 +1,7 @@
 # DCUF mobile host-surface contracts
 
+Header layout trial (2026-10-22): docs/work/HEADER_LAYOUT_REDESIGN.md owns the approved grid masthead, capsule navigation and stacked gallery title/tools composition. Extend shell logo discovery for observed native h1.dclogo as well as h1.dc_logo. Preserve original control ancestry, handlers, form fields, search completion layers, utility/dark controls, drawer/popup anchors and narrow containment. The native tip popup uses the existing drawer presenter to center and constrain itself in narrow/short viewports, independently of header height. This is an explicit layout delta, not raw historical visual equality.
+
 Concept01 trial (2026-10-22): `docs/work/CONCEPT01_TRIAL.md` owns the approved visual/motion design. The existing list adapter additionally owns list-only directional toolbar state, focus/popup/pointer hold, scroll/resize history and bounded disposal. The list presenter alone owns fixed original-toolbar reveal CSS; preserve original toolbar/control ancestry, width, native handlers, no content jump and no hidden focus/hit targets. This behavior addition is distinct from presenter-only visual replacement. Preserve all14 palette values/settings; shared neutral tokens require PC checks. No source/mixed promotion follows from this trial.
 
 This compact map covers the preserved 3.5.5 surfaces and the active UI-boundary extraction. DCInside owns its DOM, forms, events, and native popup lifecycle. DCUF owns only its existing settings UI and the narrow style rules named below.
