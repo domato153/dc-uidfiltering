@@ -2,7 +2,7 @@
 
 Status: `ACTIVE`
 
-Current visual choice (2026-10-22, selection only): **B compact header/recent-visits menu + B1 Prism Glass feel** for a later trial, with the curated tracked image in `UI_DESIGN_REFERENCES.md`. B2 is not adopted; the user judged these boards as mostly material/color variations, not a substantial silhouette redesign. Record the choice now; do not automatically implement. On a later continuation, use CURRENT/NEXT for the bounded motion/composition preview. This supersedes the historical next-action/prerequisite wording below; prior technical results and unfinished whole-UI criteria keep their own scope.
+Current visual choice and preview (2026-10-22): **B compact header/recent-visits menu + B1 Prism Glass feel** is selected. The user subsequently approved the bounded list-page interaction preview; B1_LIST_PREVIEW.md owns its viewable local implementation and focused checks. Product sources/artifacts remain unchanged and appearance feedback is pending. B2 and the earlier large-card header are not adopted. CURRENT/NEXT own the next bounded action; technical history and unfinished whole-UI criteria below retain their original scopes.
 
 Current header source-separation closeout (2026-10-21): `HEADER_SEPARATION_CLOSEOUT.md` and its exact receipt supersede the remaining-separation prerequisite below. UI declarations and immutable descriptions are presenter-owned; original DOM/events/measurement/lifecycle are adapter-owned. The next action is the existing bounded replaceability pilot. The six mixed exits remain full-visual-promotion obligations; they are not waived, relabeled conforming or used as a reason to postpone the empirical pilot. Whole-UI/visual promotion and release remain unclaimed.
 
