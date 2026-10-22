@@ -2,19 +2,19 @@
 
 ## Current execution
 
-- Active plan: docs/work/MOBILE_UI_MODERNIZATION.md → B compact/B1 native header/list repair complete within B1_VISUAL_REPAIR.md. Other UI surfaces remain later.
+- Active plan: docs/work/MOBILE_UI_MODERNIZATION.md → B compact/B1. Researched detail-review/refinement method is routed in UI_DESIGN_DETAIL_REVIEW.md; B1 polish remains next.
 - Workspace path: `.`. Use the private prompt's exact nested worktree; AGENTS.md is the single policy.
-- Active stage: `header-navigation`; diagnosed repair batch closed in exact8606114F evidence. Next bounded slice `b1-design-detail-review`: review feasible design-detail differences before selecting another surface. No new approval ceremony or blanket rerun.
+- Active stage: `header-navigation`; next bounded slice `b1-design-detail-polish`: first search/toolbar/type-hierarchy anchors in the new guide. The method is established; this unit changes no UI.
 - Accepted visual preference: B compact/recent menu + B1 Prism Glass. B2/large-title-card stay inactive. Preserve14 palettes/settings, original controls and original toolbar motion.
-- Source state: Source checkpoint base HEAD `e837eb62e9c0eb42db504218cc42dcf4672bc0da` on `codex/ui-port-boundary`; mobile8606114F, PC5FA25756 unchanged. Existing owners/overlay retained; no accepted-registry/owner transition.
+- Source state: Source checkpoint base HEAD `42c39a88b73b31a67a706e87f562867c5434ea07` on `codex/ui-port-boundary`; guidance/review only, mobile8606114F and PC5FA25756 unchanged. Existing architecture overlay retained; no owner transition.
 - Local-only state: `LOCAL_ONLY_EVIDENCE`. Reports/captures under artifacts/ and testbed/artifacts/ are ignored. Preserve debug.log unread/unstaged.
-- Candidate fingerprint: `fce37608ca75e2c58dbd7a02c00fe8c06d11fbb37c1723f682a5850be88cb7ac`
-- Last current audit: PASS — B1_REPAIR_SCOPED. Final mobile144/144, seven B1/28 palette bindings, eight layout/five scroll, four pure builders/46 slots,16 immediate semantic/four settled-resource records, actual-extension3+3 with replay and direct visual comparison. This does not approve all UI or user aesthetics.
-- Current stage receipt: `verification/receipts/2026-10-23-b1-visual-repair.json` SHA-256 `9BEBEF9A8084D28ADA9BE73F0B905654AD761439C011C25944693FE93D4B3FFA`; scope B1_REPAIR_ONLY, design-detail fidelity remains incomplete.
-- Accepted baseline: Immediate e837eb6/mobile945C3DE7 is the before-repair control; published32BA208D remains separate actual-extension control. Historical published raw +8-listener failure is not waived.
+- Candidate fingerprint: `53d8200f12d65c020e5b1ec7600eb24ba6807786bb03f6a32da744b4614586c2`
+- Last current audit: UNKNOWN — B1_DESIGN_DETAIL_INCOMPLETE. Research/method routing and retrospective transfer are checked; prior144 runtime passes retain their exact8606114F historical scope, not design fidelity or fresh execution.
+- Current stage receipt: `verification/receipts/2026-10-23-ui-detail-review-method.json` SHA-256 `D53EBC7DC6E1D4CAB5D23F97E6A8B2B8BA15F9E84F84AAD33F9059DD75EC2EDB`; METHOD_ONLY, no product/aesthetic approval. Prior B1 repair receipt remains historical and unchanged.
+- Accepted baseline: 42c39a8/mobile8606114F is the pre-polish native baseline; the selected B1 preview is the design reference. Historical published-control raw +8-listener failure remains separate and unwaived.
 - Current artifact: Mobile3.5.5 `8606114FA2A2D7E242197A711277F375EFD626F77CEA22759D951B58A15310C2`, root/dist/guard aligned. PC1.9.9 `5FA25756C43864AA8C90C1347AE6A03652D901862F83ABEAEDDEBF6382CFA740` root/dist unchanged.
-- Blockers: No known remaining diagnosed breakage. B1 design-detail fidelity is unfinished and unaccepted; user aesthetic feedback and other child surfaces and formal raw/mixed/upper/release gates remain outside this repair, not capability/permission blockers.
-- Pending live checks: Review feasible typography/spacing/icon/button/material differences in this slice; authenticated/actual-phone input and later article/comments/write/dialog states remain separate. Layout980×2306 is the phone proxy,390 is stress. Local10064 now serves the repaired public design report; six pixel differences reflect native/prototype/content adaptation, not automatic approval or six unresolved regressions.
+- Blockers: No known implementation/capability blocker. Three feasible B1 detail gaps remain open; the researched method does not certify beauty, user preference or unreviewed child states.
+- Pending live checks: After the next actual polish, recapture affected light/dark native controls/rows and relevant open/input states;980 phone-layout proxy remains primary and390 stress. This guidance unit uses existing frozen images, adds no live run or automatic golden, and does not reopen unchanged full runtime testing.
 
 ```dcuf-current-artifacts
 {"schemaVersion":1,"mobile":{"sha256":"8606114FA2A2D7E242197A711277F375EFD626F77CEA22759D951B58A15310C2"},"pc":{"sha256":"5FA25756C43864AA8C90C1347AE6A03652D901862F83ABEAEDDEBF6382CFA740"}}

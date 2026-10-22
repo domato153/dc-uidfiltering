@@ -2,6 +2,8 @@
 
 Current repair: [B1_VISUAL_REPAIR.md](B1_VISUAL_REPAIR.md) and its exact8606114F receipt supersede the defective945C3DE7 result for the diagnosed batch. The findings below remain diagnosis history and method guidance, not current unresolved defects. Use `verification/visual/b1-repaired-native-list.json` for the repaired public design comparison; retain the original manifest as historical evidence.
 
+For design adoption/polish as well as defect complaints, follow [UI_DESIGN_DETAIL_REVIEW.md](UI_DESIGN_DETAIL_REVIEW.md): explicit detail anchors, whole/component comparison, actionable difference dispositions, same-owner refinement and affected-state recheck. This is the existing UI-maintainer skill's visual-review route, not an optional skill installation. A visual handoff must distinguish behavior, reference-detail fidelity and user preference; native/prototype differences cannot waive feasible polish.
+
 ## Historical finding — 2026-10-23
 
 The native945C3DE7 B1 trial is visually **not accepted**. Prior function/geometry/extension-startup results retain their own scope; they did not establish visual fidelity. No product runtime changed during this investigation.

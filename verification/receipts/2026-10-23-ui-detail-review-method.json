@@ -1,0 +1,129 @@
+{
+  "schemaVersion": 1,
+  "kind": "proportionate-ui-design-detail-review-method",
+  "status": "METHOD_ADOPTED_SCOPED_TRANSFER_ONLY",
+  "sourceBaseHead": "42c39a88b73b31a67a706e87f562867c5434ea07",
+  "scope": "GUIDANCE_AND_RETROSPECTIVE_REVIEW_NO_PRODUCT_CHANGE_OR_AESTHETIC_APPROVAL",
+  "artifact": {
+    "mobileSha256": "8606114FA2A2D7E242197A711277F375EFD626F77CEA22759D951B58A15310C2",
+    "pcSha256": "5FA25756C43864AA8C90C1347AE6A03652D901862F83ABEAEDDEBF6382CFA740",
+    "runtimeChanged": false
+  },
+  "research": {
+    "tier": "ER2",
+    "reason": "Explicit user request for external empirical/practice support and proportionate workflow improvement",
+    "sources": [
+      {
+        "url": "https://www.uni-muenster.de/OWMS/uploads/drafts_thielsch/pdf/moshagen_2010.pdf",
+        "kind": "Peer-reviewed research; university author manuscript",
+        "take": "Four qualitative aesthetic lenses",
+        "limit": "No validated score from our adaptation; sampling/cultural and concrete-prescription limits retained"
+      },
+      {
+        "url": "https://handbook.gitlab.com/handbook/upstream-studios/product-design/workflow/mr-reviews/",
+        "kind": "Official product-team operating practice",
+        "take": "Running implementation plus expected/actual comparison and actionable dispositions",
+        "limit": "No claim of universal standard or experimentally measured DCUF benefit; no imported approval hierarchy"
+      },
+      {
+        "url": "https://www.chromatic.com/docs/review/",
+        "kind": "Official vendor workflow",
+        "take": "Intentional design review separate from regression tests",
+        "limit": "No independent beauty proof, install/cloud upload/second engine"
+      }
+    ],
+    "checkedOn": "2026-10-23"
+  },
+  "localTransfer": {
+    "type": "Retrospective direct inspection of frozen existing evidence; no new live run",
+    "reference": "Approved B1 preview Chromium149",
+    "candidate": "Native8606114F public Chrome155; content differs",
+    "needsWork": [
+      "Search secondary emphasis and magnifier weight/proportion",
+      "Toolbar grouping/spacing/material finish",
+      "Equivalent-row title/metadata/separator hierarchy"
+    ],
+    "matched": [
+      "Opaque reading-surface role only"
+    ],
+    "intentional": [
+      "Original extra service/brand/content and declared metadata structure; feasible polish not waived"
+    ],
+    "unknown": [
+      "Unseen whole-masthead motion; previously deferred"
+    ],
+    "scope": "Identifies concrete residuals despite prior functional PASS without rejecting every structural difference or approving unseen states. Not proof of exhaustive autonomous judgement."
+  },
+  "workflow": [
+    "Select affected checklist IDs and observable reference anchors",
+    "Inspect aligned whole composition then readable details",
+    "Record expected/actual and MATCHED/NEEDS_WORK/INTENTIONAL/UNKNOWN with reasons",
+    "Refine related declarations in the existing owner",
+    "Retake/review affected states and run existing impact-routed checks"
+  ],
+  "proportionality": {
+    "normalAnchors": "Usually3-5 planning anchors; no ceiling on fixing confirmed defects",
+    "local": "Affected region/adjacent/X states, theme and viewport selected by impact",
+    "shared": "Expand downstream coverage; whole-UI claim retains full applicable inventory",
+    "documentation": "No runtime build/full144/extension reinstall solely for this method change",
+    "excluded": [
+      "Numeric beauty certification",
+      "Mandatory questionnaires/AB studies/statistical cutoffs",
+      "All128 checks for every edit",
+      "Automatic golden updates",
+      "New stack, approval ceremony or full-DOM/style database"
+    ]
+  },
+  "routing": "Existing UI-maintainer skill -> UI_VISUAL_REVIEW -> UI_DESIGN_DETAIL_REVIEW; INDEX/checklist/contracts/next-action links",
+  "inputs": {
+    "docs/work/UI_DESIGN_DETAIL_REVIEW.md": "66c5ba9ad20891bff7c2c6195e8e17d14e3acf9c8ed3adfab9e3bd4ff0faf078",
+    "docs/work/UI_VISUAL_REVIEW.md": "03d90271500b66946c826dfec5734863f8744a2bcf26b6bd52b866adb5c709e4",
+    "docs/ui-surface-contracts.md": "2dacaac0bc9c272f1629808af2bd9a9117f66773e7bc60412fd655f688528be3",
+    "docs/work/UI_REVIEW_CHECKLIST.md": "d9b4993ac4e4f582c5f5968275da3d2951f3d25b678577742419991d2d8e8458",
+    "docs/work/INDEX.md": "04adfe3a6154fd1f5b2de3f446cd766ef6abb8695f170ecf5707129d09799405",
+    "docs/work/DECISION_RATIONALE.md": "5b9922a2f003cf289a09167b2c6a0db08ef66805de35dd9f7043e0735ee5b4e1",
+    "docs/agent-maintenance-notes.md": "f45981cdee944436cda7ccb153a5079f443364a7e6577b811068ba200b6df423",
+    ".agents/skills/dcuf-ui-surface-maintainer/SKILL.md": "adb1e83dfe28ce85c4d47f3466f09fda63996d49650b42ddbd2fde614edd1269",
+    "tools/visual-review.mjs": "dbedb45fac68ffae988ba1bb04e3bfae86bb002cee14956ee6c739864c5220bb",
+    "design-prototypes/b1-list/presentation.css": "302b51b34eb9cebbf4d6add0f4a856866a7b63888b72f45794339d5016f33e59"
+  },
+  "evidence": {
+    "artifacts/ui-overview-2026-10-17/b1-list/top-980-900-light.png": {
+      "sha256": "6fb4038ab7d477f32e533d11d8146d164afc04634b3e8b784f124322645eab28",
+      "width": 980,
+      "height": 900,
+      "theme": "light",
+      "kind": "reference"
+    },
+    "artifacts/b1-repair-2026-10-23/public/public-980-900-light.png": {
+      "sha256": "0df315f584ad0c3f3788ea321ac18969b9766e08c2d1a7afb2c9fc9b0e891e2c",
+      "width": 980,
+      "height": 900,
+      "theme": "light",
+      "kind": "candidate"
+    },
+    "artifacts/ui-overview-2026-10-17/b1-list/top-980-900-dark.png": {
+      "sha256": "8dad7932f61e3274ae829fe39bfdb804719d2a5f150a769feac6e07a7d17e377",
+      "width": 980,
+      "height": 900,
+      "theme": "dark",
+      "kind": "reference"
+    },
+    "artifacts/b1-repair-2026-10-23/public/public-980-900-dark.png": {
+      "sha256": "a112ee71959aecad4f8029e5df1e913f5bd48ee4bedf03f956ef865709f4cb96",
+      "width": 980,
+      "height": 900,
+      "theme": "dark",
+      "kind": "candidate"
+    }
+  },
+  "checks": {
+    "artifactIdentity": "PASS_UNCHANGED",
+    "existingSkillRoute": "PASS",
+    "frozenComparisonImageHashes": "PASS",
+    "nextAction": "Checked by existing parser/reconciliation after writing",
+    "productTests": "NOT_RUN_GUIDANCE_ONLY",
+    "designDetailCompletion": "INCOMPLETE"
+  },
+  "decision": "D-45"
+}
