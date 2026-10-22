@@ -10,15 +10,14 @@ Use for an appearance change or a fidelity complaint, through UI_VISUAL_REVIEW.m
 | [GitLab Product Design MR reviews](https://handbook.gitlab.com/handbook/upstream-studios/product-design/workflow/mr-reviews/) | A real product-team procedure: inspect the running implementation, compare actual/expected images, make feedback actionable, and distinguish outstanding/non-mandatory work. | Published operational practice, not experimental proof of effectiveness here or a universal industry standard. No mandatory staff, approval hierarchy, PR, meeting or account integration. |
 | [Chromatic UI Review](https://www.chromatic.com/docs/review/) | Intentional visual changes need review and specific follow-up as well as regression tests. Reuse the existing Playwright side-by-side/diff viewer. | Vendor workflow documentation, not an independent beauty benchmark. No Chromatic/Storybook subscription, dependency, cloud upload or second comparison engine. |
 
-The exact workflow and scope defaults below are our proportionate adaptation, not rules experimentally validated by those sources. The selected B1 reference and native contracts supply the concrete target.
+The exact workflow and scope defaults below are our adaptation, not rules experimentally validated by those sources. The selected B1 reference and native contracts supply the concrete target. The review-only preflight below found no added detection from the original structured version, so the default is now reduced. End-to-end refinement efficiency remains untested.
 
 ## One short loop per coherent change
 
-1. **Define the target before editing.** Select affected checklist IDs and name a few observable design anchors, normally3–5 for one coherent batch. Write expected appearance and the intended difference, not “modern/clean enough.” This is a planning aid, not a cap that permits leaving confirmed defects behind. Reuse the existing brief; no second inventory.
-2. **Compare the whole and the detail.** Inspect an aligned full view first, then affected controls/rows at readable equal scale; return to the full composition after refinement. Match viewport, theme, open/scroll state, fonts and content where feasible. If galleries, text or engines differ, declare the mismatch and use corresponding stable details/source values; do not treat whole-image pixel percentage as fidelity or beauty. Never mask the detail under review.
-3. **Give each material difference a disposition.** Record expected → actual → reason/action in a compact table. Use `NEEDS_WORK`, `INTENTIONAL` with a specific native/user constraint, or `UNKNOWN` for unseen/unsettled evidence; use `MATCHED` only after inspecting that detail. Optional work can be explicitly deferred with its effect on the claim. “It is a mock,” “native DOM,” or “tests pass” alone cannot excuse feasible typography/spacing/icon/material differences. Extra prototype controls need not be invented, but their visual language can still be carried over.
-4. **Refine through the existing owner.** Change related presentation declarations/tokens together; preserve original controls, events, palette semantics and UI/function boundaries. Fix a shared cause in its owner rather than layering unrelated overrides. Use reference measurements as design evidence, not universal pixel laws. Keep readable content opaque and effects subordinate to reading.
-5. **Retake and review the affected result.** Run the existing comparator, inspect the result against both reference and before-state, and revisit the declared anchors. Open/focus/hover/scroll the actual UI when those states changed; a still cannot prove motion or input. Run existing impact-routed functional checks. Unresolved important anchors keep design fidelity incomplete, even with green tests; resolved scoped anchors do not approve other surfaces or the user's taste. No automatic golden update or endless cosmetic loops: fix actionable mismatches, or state what decision/evidence is missing.
+1. **Reuse the target and compare.** State the intended appearance in one sentence using the existing brief and affected checklist IDs. Inspect an aligned whole view and readable, equal-scale affected details. Match viewport/theme/state/fonts/content where feasible; declare differences that affect interpretation. No mandatory3–5-anchor inventory, category walkthrough or second brief. Never mask the detail under review or use pixel percentage as beauty.
+2. **Record actionable differences briefly.** Use expected → actual → fix bullets for material gaps. Explain intentional native/content differences or unknown evidence only when relevant; no table or MATCHED paragraph for every item. “Mock,” “native DOM” and functional PASS alone do not waive feasible detail gaps. Do not invent prototype-only controls. Use the optional prompts below when a mismatch is hard to locate or important finish remains unresolved.
+3. **Refine through the existing owner.** Change related presentation declarations/tokens together; preserve original controls, events, palette semantics and UI/function boundaries. Fix a shared cause in its owner rather than layering unrelated overrides. Use reference measurements as evidence, not universal pixel laws. Keep reading content opaque and effects subordinate to reading.
+4. **Retake the affected result and compare again.** Reuse the existing comparator and inspect reference/before/after whole and detail views. Reopen an unchanged image only for a concrete uncertainty. Exercise changed input/open/motion states and run existing impact-routed functional checks. Unresolved important gaps keep fidelity incomplete; scoped success does not approve other surfaces or user taste. No automatic golden update or endless cosmetic loop: fix an actionable gap, or state the missing decision/evidence.
 
 ## Detail prompts — select what changed
 
@@ -30,14 +29,34 @@ The exact workflow and scope defaults below are our proportionate adaptation, no
 | Color and material | Neutral/accent balance, border strength, opaque reading surface vs glass chrome, rim/shadow/depth and dark counterparts. Preserve all palette IDs/settings. |
 | Character and motion | Retain the chosen B1 character without making everything flat or adding effects everywhere. Check actual movement/reduced motion only when affected. |
 
-These prompts adapt the research facets into inspectable details; they are not a new scored questionnaire or a requirement to change every category.
+These are optional diagnostic prompts, not a scored questionnaire or mandatory per-change checklist. Research is retrieved for a new consequential method question, not reread for routine polish.
 
 ## Keep the cost proportional
 
 - Local polish: changed region plus adjacent controls and relevant X states. Reuse unaffected evidence. For this project use980 layout/phone980×2306 as relevant;390 is narrow stress, never the default phone. Select light/dark where theme/material/type roles change; one unchanged dimension does not require another matrix.
-- Shared token/style: inspect its downstream surfaces and a representative open popup; do not hide spillover behind a3–5-anchor budget. Whole-UI completion still follows all applicable children in UI_REVIEW_CHECKLIST.md.
+- Shared token/style: inspect downstream surfaces and a representative open popup. Whole-UI completion still follows all applicable children in UI_REVIEW_CHECKLIST.md.
 - Documentation/method change: check links/routing and try the rule on existing evidence. No userscript rebuild, full144 runtime suite, actual extension reinstall, repeated negative-control suite or fresh live capture merely because the guide changed. Existing impact routing still governs an actual runtime change.
 - Keep only the target, important difference dispositions and final affected images/results. No permanent full-DOM/style database, numeric beauty score, arbitrary pixel-perfect threshold or additional approval ritual. Reserve user questions for real preference changes or tradeoffs that available evidence cannot resolve.
+- Do not repeat the two-reviewer experiment for normal changes. The preflight does not establish a benefit from extra reviewers, repeated full-image viewing or elaborate recording.
+
+## Review-only efficiency preflight — 2026-10-23
+
+Two fresh-context reviewers received identical frozen980×900 light images: search, toolbar and unchanged rows; two regions contained four predeclared difference families, and a30/50 content difference was explicitly allowed. A used careful simple comparison; B used this guide's original anchor/disposition workflow. Neither saw the hidden CSS oracle or sibling result. Preparation used the existing isolated preview; product source/runtime stayed unchanged.
+
+| Observed result | A: simple comparison | B: original structured workflow |
+| --- | --- | --- |
+| Review including packet reading/planning/recording |28sec |70sec |
+| Predeclared difference families found |4/4 |4/4 |
+| Unsupported findings / control or allowed-content false alarms |0 |0 |
+| Actionable component/property/direction |All four families |All four families |
+| Image inspections / reopens |12 /0 |16 /4 |
+| Reported top-level / nested tool calls |5 /15 |10 /19 |
+
+Both found the selected-tab border change but neither explicitly identified the removed subtle shadow within that family. Family4/4 is not complete property-level detection. No additional actionable finding justified B's observed42sec overhead in this trial. Shared preparation cost148.121sec; orchestration/grading/recording adds further one-time cost, recorded separately in the receipt. Initial repository-entry time and token cost were not measured.
+
+Decision: remove mandatory anchor counts, per-item tables/MATCHED prose and automatic full-view reopens. Retain simple whole/detail comparison and short actionable findings; existing owner, recapture and functional obligations continue. This is a conservative cost reduction, not proof that the reduced workflow is more effective. One reviewer per arm, same model family, seeded fixed light images and nonblind root grading prevent generalizing the timing or claiming statistical superiority. Actual fixes, retakes, rework savings, live behavior and aesthetic preference were not tested. Next: use the reduced loop for the already-declared first B1 polish batch and observe actual refinement/recheck cost; no larger experiment is required now.
+
+Exact frozen protocol/material/result hashes and grading: `verification/receipts/2026-10-23-ui-detail-review-preflight.json`. The earlier method receipt remains historical and is not an efficiency result.
 
 ## B1 retrospective transfer check — 2026-10-23
 
