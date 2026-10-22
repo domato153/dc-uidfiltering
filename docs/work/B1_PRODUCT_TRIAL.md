@@ -1,5 +1,7 @@
 # B1 first native list trial
 
+**2026-10-23 correction:** Native B1 appearance is unaccepted. UI_VISUAL_REVIEW.md records the user's visual complaint, six design comparisons, missing fixture cascade/state coverage and fresh native CSS causes. Previous scoped function/geometry/startup checks below remain historical evidence for those claims only. Do not use them as visual fidelity approval or register945C3DE7 as a golden. Runtime unchanged during the diagnostic/tooling correction.
+
 The user approved the runnable preview and requested actual adoption. Implemented through the existing shell/GNB/recent/page-head/list owners; native nodes/parents/handlers/forms, filter-owned row display,14 palettes/settings and PC bytes stay preserved. The prototype simulator is excluded. No release/version/official promotion. Source checkpoint base 80cfd2459985dac0117fae9812c4171238d1db45; mobile945C3DE7, PC5FA25756.
 
 The shell adapter marks existing common/bridge parents and adds a browser-native popover invoker to the original service UL. One local toggle listener is accounted and cleaned. The original recent-history popup owns its tabs/actions/display; a missing popup retains the old horizontal fallback. The presenter owns glass/geometry/colors and list child layout. Source-boundary38 and pure-header38-slot checks passed. No accepted registry promotion.

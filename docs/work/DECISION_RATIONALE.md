@@ -1,5 +1,14 @@
 # DCUF modernization decision rationale
 
+## D-43 — Retain an established image comparator and reject the current B1 visuals
+
+- SELECTED: Existing Playwright Test1.61.1 native PNG/pixelmatch/HTML expected-actual-diff-slider workflow, a small input/provenance wrapper, same-size pairs and explicit manual composition review through the current UI skill. Current native B1 output stays unaccepted and cannot seed a regression golden automatically.
+- NOT ADOPTED: A new generic screenshot skill as the fix, a custom image engine, auto-approval from functional test counts, masking broken controls, or treating mock/live pixel mismatch as a calibrated design-quality score. Anthropic webapp-testing alone lacks the missing baseline/diff disposition. BackstopJS duplicates the installed stack and currently seeks a maintainer.
+- DEFERRED: Native UI repair and then reviewed same-environment deterministic regression baselines; whole-UI visual coverage and actual-phone input remain outside this investigation.
+- Reason: ER2 explicit external-reuse request and internal false-green gap. Official Playwright comparison guidance supplies the engine and environment/baseline constraints; current upstream skill/tool sources and limits are compared in UI_VISUAL_REVIEW.md. Keep the complete comparator/report and review lifecycle rather than extracting only screenshots. Public documentation does not prove skill effectiveness; local negative controls test the adopted mechanism.
+- Evidence: Unchanged rendered control passes;25px control shift fails; missing reference/wrong dimensions reject; originals remain intact. Six mock/native pairs report differences and the delivered native report's images decode. Fresh Chrome155 matches identify native dark tab and recent-sprite cascade conflicts. Current runtime945C3DE7 is unchanged.
+- Revisit: Comparator/browser/fixture changes, a missed known defect, baseline source or approval ambiguity, asset/decode/scale failures, or a different host topology. Sources and exact checks: UI_VISUAL_REVIEW.md and verification/receipts/2026-10-23-b1-visual-review.json.
+
 ## D-42 — Demonstrate layout freedom inside the existing header owners
 
 - SELECTED: Grid masthead, utility row, top-level capsule navigation and stacked gallery title/tools card; minimal native-logo and selected-link projection prerequisites. Narrow/short native tip positioning stays in its existing presenter. Current visual/input tests run on the exact candidate; historical CSS contracts use the existing exact approved-fragment inverse and explicitly report that projection.

@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "purpose": "design-comparison",
+  "provenance": {
+    "reference": "User-approved isolated B1 preview; design-prototypes/b1-list, not a native regression golden",
+    "candidate": "0a9f727 native trial, Mobile 3.5.5 945C3DE7D4A6EDC94829EC6D7DA5A8C54CC8077237E5F11B967906A69E63EC77",
+    "environment": "Reference Playwright Chromium149; candidate installed Chrome155. Dynamic gallery/content and native structures differ. Pixel deltas locate review areas, not automatic aesthetic failures or approval.",
+    "recovery": "Reference: node testbed/run-b1-list-preview.mjs. Candidate captures are local-only historical barca GET/HEAD evidence; if missing, recapture the guarded runtime on an available public list in the declared viewport/theme/open state. Never relabel a fresh runtime as945C3DE7. See docs/work/UI_VISUAL_REVIEW.md."
+  },
+  "cases": [
+    { "id": "list-980-light", "width": 980, "height": 900, "theme": "light", "reference": "artifacts/ui-overview-2026-10-17/b1-list/top-980-900-light.png", "candidate": "artifacts/b1-product-2026-10-22/public-980-900-light.png" },
+    { "id": "list-980-dark", "width": 980, "height": 900, "theme": "dark", "reference": "artifacts/ui-overview-2026-10-17/b1-list/top-980-900-dark.png", "candidate": "artifacts/b1-product-2026-10-22/public-980-900-dark.png" },
+    { "id": "phone-layout-light", "width": 980, "height": 2306, "theme": "light", "reference": "artifacts/ui-overview-2026-10-17/b1-list/top-980-2306-light.png", "candidate": "artifacts/b1-product-2026-10-22/public-980-2306-light.png" },
+    { "id": "narrow-stress-light", "width": 390, "height": 900, "theme": "light", "reference": "artifacts/ui-overview-2026-10-17/b1-list/top-390-900-light.png", "candidate": "artifacts/b1-product-2026-10-22/public-390-900-light.png" },
+    { "id": "recent-open-light", "width": 980, "height": 900, "theme": "light", "reference": "artifacts/ui-overview-2026-10-17/b1-list/recent-light.png", "candidate": "artifacts/b1-product-2026-10-22/public-menu-980-900-light.png" },
+    { "id": "recent-open-dark", "width": 980, "height": 900, "theme": "dark", "reference": "artifacts/ui-overview-2026-10-17/b1-list/recent-dark.png", "candidate": "artifacts/b1-product-2026-10-22/public-menu-980-900-dark.png" }
+  ]
+}

@@ -2,19 +2,19 @@
 
 ## Current execution
 
-- Active plan: docs/work/MOBILE_UI_MODERNIZATION.md → B compact/B1 preview approved → first native list/header trial implemented. See B1_PRODUCT_TRIAL.md for exact scope and review limits.
+- Active plan: docs/work/MOBILE_UI_MODERNIZATION.md → B compact/B1 preview approved → native trial visually rejected. UI_VISUAL_REVIEW.md owns the diagnosed batch and official comparator route.
 - Workspace path: `.`. Use the private prompt's exact nested worktree; AGENTS.md is the single policy.
-- Active stage: `header-navigation`; bounded slice `b1-native-list-trial`. User approved the runnable B1 preview and actual implementation. Existing owners now provide compact chrome, original recent/service menus, glass controls and quiet opaque rows. Actual product appearance remains reviewable, not whole-UI approval.
+- Active stage: `header-navigation`; bounded slice `b1-visual-repair-batch` is next. Investigation/tooling is complete; actual UI repair remains open. Do not advance to article/comments/write yet.
 - Accepted visual preference: B compact/recent menu + B1 Prism Glass. B2 and rejected large-title-card remain inactive. Preserve14 palettes/settings and native controls. The original toolbar scroll behavior stays; prototype whole-masthead return is a later enhancement.
-- Source state: Source checkpoint base HEAD `80cfd2459985dac0117fae9812c4171238d1db45` on `codex/ui-port-boundary`; current mobile945C3DE7/PC5FA25756. Product mobile sources/root/dist/guard changed; shared/PC/version unchanged. Existing modernization overlay retained, no accepted-registry promotion.
+- Source state: Source checkpoint base HEAD `0a9f727840a36e904e96a09776aec2b988d955ea` on `codex/ui-port-boundary`; mobile945C3DE7/PC5FA25756 unchanged. This unit changes visual-review tools/skill/routing/docs only. Existing overlay retained; no owner or accepted-registry transition.
 - Local-only state: `LOCAL_ONLY_EVIDENCE`. Reports/captures/trial installer under artifacts/ and testbed/artifacts/ are ignored. Preserve debug.log unread/unstaged.
-- Candidate fingerprint: `fd553b07c744b9934d58d717d66bae090ffd59671e5d4a12cd3382130b2abbff`
-- Last current audit: UNKNOWN — B1_SCOPED_TRIAL_PASS:144 covered mobile identities from full140/144 plus targeted visual-oracle renewals, B1 7/28 palette bindings, layout8, scroll5, semantic16, actual Chrome/Tampermonkey3+3 and barca4. This is bounded trial evidence, not raw/mixed/header/all-child/release admission.
-- Current receipt: `verification/receipts/2026-10-22-b1-native-list.json`; B1_PRODUCT_TRIAL.md owns evidence recovery and limits. Published raw list comparison retains its inherited +8-listener FAIL, separately adjudicated by immediate478 exact-resource equality.
+- Candidate fingerprint: `d1fbb7269ce46483c8fdebd1f06c3e5523868f9258002b7275d4d2a9efa51a9c`
+- Last current audit: UNKNOWN — B1_VISUAL_REVIEW_REJECTED. Six preview/native pairs differ; actual vision review and fresh native CSS confirm unmodeled cascade, duplicate sprite and composition gaps. Comparator controls pass for unchanged/shifted/missing/size/corrupt/baseline-preservation cases. Previous functional/native-startup passes do not approve appearance.
+- Current receipt: `verification/receipts/2026-10-23-b1-visual-review.json`; prior B1_PRODUCT_TRIAL.md/receipt retain exact functional scope and published raw +8-listener failure. No new runtime acceptance follows.
 - Accepted baseline: Immediate source control80cfd24/mobile478EF59F; published stable32BA208D remains the separate real-extension control. Previous milestone receipts remain historical, not current evidence.
 - Current artifact: Mobile3.5.5 `945C3DE7D4A6EDC94829EC6D7DA5A8C54CC8077237E5F11B967906A69E63EC77`, root/dist/guard aligned. PC1.9.9 `5FA25756C43864AA8C90C1347AE6A03652D901862F83ABEAEDDEBF6382CFA740` root/dist unchanged.
-- Blockers: No known blocker for this bounded native list trial. Formal raw/mixed criteria and whole-UI design remain outside it. No user content/account writes or release/version change.
-- Pending live checks: Anonymous startup/public list scope is verified; actual-phone input/scale, authenticated, full popup/all-child and article/comment/write redesign remain separate. Current actual-capture viewer port10063 differs from original isolated preview port10062. PHONE_VIEWPORT_PROFILE.md remains the mobile authority.
+- Blockers: Current B1 visuals are unaccepted, not ready for the next UI surface. No known capability/permission blocker for the diagnosed repair. Product runtime and both generated targets are unchanged.
+- Pending live checks: Restore B1 native composition through existing owners, model actual dark/sprite/visible-tip branches, then compare affected light/dark/phone980/open states. 390 remains stress. Report viewer port10064 uses native Playwright diff; old10063 miniature gallery is not acceptance. Authenticated/actual-phone input/all-child/release remain separate.
 
 ```dcuf-current-artifacts
 {"schemaVersion":1,"mobile":{"sha256":"945C3DE7D4A6EDC94829EC6D7DA5A8C54CC8077237E5F11B967906A69E63EC77"},"pc":{"sha256":"5FA25756C43864AA8C90C1347AE6A03652D901862F83ABEAEDDEBF6382CFA740"}}
