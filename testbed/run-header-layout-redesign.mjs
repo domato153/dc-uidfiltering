@@ -45,13 +45,14 @@ try{
    const geometry=await e.page.evaluate(()=>{
     const q=s=>document.querySelector(s),rect=s=>{const r=q(s).getBoundingClientRect();return {x:r.x,y:r.y,right:r.right,bottom:r.bottom,width:r.width,height:r.height}};
     const head=q('[data-dcuf-header-shell-role="head"]'),tools=q('[data-dcuf-gallery-page-head-role="right"]');
-    return {display:getComputedStyle(head).display,logo:rect('.dclogo'),search:rect('.wrap_search'),links:rect('.area_links'),title:rect('[data-dcuf-gallery-page-head-role="left"]'),tools:tools?rect('[data-dcuf-gallery-page-head-role="right"]'):null,boardRadius:parseFloat(getComputedStyle(q('.page_head')).borderRadius),overflow:document.documentElement.scrollWidth>innerWidth+1};
+    return {display:getComputedStyle(head).display,layout:getComputedStyle(q('[data-dcuf-header-layout]')).display,logo:rect('.dclogo'),search:rect('.wrap_search'),links:rect('.area_links'),title:rect('[data-dcuf-gallery-page-head-role="left"]'),tools:tools?rect('[data-dcuf-gallery-page-head-role="right"]'):null,boardRadius:parseFloat(getComputedStyle(q('.page_head')).borderRadius),overflow:document.documentElement.scrollWidth>innerWidth+1};
    });
-   assert.equal(geometry.display,'grid','Masthead uses a new composition');
+   assert.equal(geometry.display,'contents','Native head keeps its children in the common B1 grid');
+   assert.equal(geometry.layout,'grid','Existing ancestor owns the B1 composition');
    assert.equal(geometry.overflow,false,JSON.stringify(geometry));
-   assert.ok(geometry.boardRadius>=16,JSON.stringify(geometry));
-   assert.ok(geometry.tools&&geometry.tools.y>=geometry.title.bottom+6,'Gallery tools have their own row');
-   assert.ok(geometry.links.y>=Math.max(geometry.logo.bottom,geometry.search.bottom)+3,'Utility links have their own row');
+   assert.equal(geometry.boardRadius,0,'Approved B1 removes the rejected large title card');
+   assert.ok(geometry.tools&&geometry.tools.y>=geometry.title.bottom,'Gallery tools remain below the title');
+   if(width>=760)assert.ok(geometry.links.x>=geometry.search.right,'Original utilities remain beside search');
    if(width>=760)assert.ok(geometry.search.x>geometry.logo.right+8,'Search beside the compact brand');
    else assert.ok(geometry.search.y>=geometry.logo.bottom+6,'Narrow search stacks below brand');
    const search=e.page.locator('.wrap_search input');await search.fill('재배치 검색');await search.press('Enter');assert.equal(await e.page.evaluate(()=>window.__layoutSearchCount),1);

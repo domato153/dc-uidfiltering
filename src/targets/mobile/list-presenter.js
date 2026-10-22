@@ -10,13 +10,14 @@
                 --dcuf-list-subtle: var(--dcuf-theme-fg-muted, #697386);
                 --dcuf-list-accent: var(--dcuf-theme-accent, #245bda);
                 overflow: clip;
-                border-block: 1px solid var(--dcuf-list-border);
+                border: 1px solid var(--dcuf-list-border);
+                border-radius: 12px;
                 background: var(--dcuf-list-surface);
             }
             [data-dcuf-surface="list-item"] {
                 position: relative;
                 display: block;
-                padding: 13px 16px 12px;
+                padding: 12px 16px;
                 border-bottom: 1px solid var(--dcuf-list-border);
                 background: var(--dcuf-list-surface);
                 color: var(--dcuf-list-fg);
@@ -29,7 +30,7 @@
             [data-dcuf-surface="list-item"][data-dcuf-state="notice"],
             [data-dcuf-surface="list-item"][data-dcuf-state="concept"] {
                 padding-left: 58px;
-                background: color-mix(in srgb, var(--dcuf-list-accent) 6%, var(--dcuf-list-surface));
+                background: var(--dcuf-list-surface);
             }
             [data-dcuf-surface="list-item"][data-dcuf-state="notice"]::before,
             [data-dcuf-surface="list-item"][data-dcuf-state="concept"]::before {
@@ -37,14 +38,14 @@
                 left: 14px;
                 top: 13px;
                 padding: 3px 7px;
-                border-radius: 999px;
-                background: var(--dcuf-list-accent);
-                color: var(--dcuf-theme-on-accent, #fff);
+                border-radius: 6px;
+                background: var(--dcuf-theme-accent-soft);
+                color: var(--dcuf-theme-accent-ink);
                 font-size: 11px;
-                font-weight: 800;
+                font-weight: 600;
                 line-height: 1.4;
             }
-            [data-dcuf-surface="list-item"][data-dcuf-state="notice"]::before { content: "공지"; background: #d93c4a; }
+            [data-dcuf-surface="list-item"][data-dcuf-state="notice"]::before { content: "공지"; }
             [data-dcuf-surface="list-item"][data-dcuf-state="concept"]::before { content: "개념"; }
             [data-dcuf-surface="list-item"] .dcuf-list-title {
                 display: flex;
@@ -53,8 +54,8 @@
                 gap: 6px;
                 margin-bottom: 7px;
                 color: var(--dcuf-list-fg);
-                font-size: clamp(15px, 3.9vw, 17px);
-                font-weight: 650;
+                font-size: 15px;
+                font-weight: 550;
                 line-height: 1.42;
                 word-break: break-all;
             }
@@ -135,6 +136,13 @@
             [data-dcuf-surface="list-item"] .dcuf-list-author img,
             [data-dcuf-surface="list-item"] .dcuf-list-author [data-dcuf-role="author-ip"] { flex: none; }
             [data-dcuf-surface="list-item"] .dcuf-list-stats { flex: none; white-space: nowrap; }
+            @media (min-width: 760px) {
+                /* Filtering owns row inline display; arrange its children instead. */
+                [data-dcuf-surface="list-item"] { padding-right: 250px; min-height: 54px; box-sizing: border-box; }
+                [data-dcuf-surface="list-item"] .dcuf-list-title { margin: 0; min-height: 29px; align-items: center; font-size: 14px; }
+                [data-dcuf-surface="list-item"] .dcuf-list-meta { position: absolute; right: 16px; top: 50%; transform: translateY(-50%); width: 220px; flex-direction: column; align-items: flex-end; gap: 3px; font-size: 10px; }
+                [data-dcuf-surface="list-item"] .dcuf-list-author { flex: none; }
+            }
             [data-dcuf-surface="list-toolbar"],
             [data-dcuf-surface="list-actions"] {
                 position: relative;
@@ -147,9 +155,10 @@
                 margin: 10px 0;
                 padding: 8px 10px;
                 border: 1px solid var(--dcuf-theme-border, #dfe5ee);
-                border-radius: 10px;
-                background: var(--dcuf-theme-surface-raised, #fff);
-                box-shadow: var(--dcuf-theme-card-shadow, 0 5px 16px rgba(20, 39, 75, .07));
+                border-radius: 12px;
+                background: color-mix(in srgb, var(--dcuf-theme-surface-raised, #fff) 90%, transparent);
+                box-shadow: 0 6px 20px #284c4d09, inset 0 1px 0 #ffffff28;
+                backdrop-filter: blur(20px) saturate(1.1);
             }
             [data-dcuf-surface="list-toolbar"] [data-dcuf-role="tablist"],
             [data-dcuf-surface="list-toolbar"] [data-dcuf-role="toolbar-actions"],
@@ -295,7 +304,7 @@
             }
             [data-dcuf-surface="list-toolbar"] [data-dcuf-role="category-option"] {
                 display: flex;
-                min-height: 36px;
+                min-height: 40px;
                 align-items: center;
                 padding: 6px 10px;
                 border-radius: 8px;
@@ -341,7 +350,7 @@
                 box-sizing: border-box;
                 padding: 0 9px;
                 border: 1px solid var(--dcuf-theme-border-strong, #cbd5e1);
-                border-radius: 10px;
+                border-radius: 8px;
                 background: var(--dcuf-theme-surface-input, #fff);
                 color: var(--dcuf-theme-fg, #273142);
                 font: inherit;
@@ -356,11 +365,11 @@
                 align-items: center;
                 justify-content: center;
                 padding: 0 12px;
-                border: 1px solid var(--dcuf-theme-border-strong, #cbd5e1);
-                border-radius: 11px;
-                background: var(--dcuf-theme-surface-input, #fff);
-                color: var(--dcuf-theme-fg, #273142);
-                font-weight: 700;
+                border: 1px solid transparent;
+                border-radius: 8px;
+                background: transparent;
+                color: var(--dcuf-theme-fg-muted, #697386);
+                font-weight: 600;
                 text-decoration: none;
                 text-shadow: none;
                 box-shadow: none;
@@ -391,7 +400,7 @@
             [data-dcuf-surface="list-actions"] [data-dcuf-role="action-end"] [data-dcuf-role="primary-action"]:visited,
             [data-dcuf-surface="list-actions"] [data-dcuf-role="primary-action"] {
                 border-color: var(--dcuf-theme-accent-ink, #245bda);
-                background: var(--dcuf-theme-accent-strong, #245bda);
+                background: linear-gradient(150deg, #ffffff16, transparent), var(--dcuf-theme-accent-strong, #245bda);
                 color: var(--dcuf-theme-on-accent, #fff);
             }
             [data-dcuf-surface="list-toolbar"] [data-dcuf-role="primary-action"]::before,

@@ -1,5 +1,7 @@
 # B1 list interaction preview
 
+Current disposition: user approved this preview and requested actual application. B1_PRODUCT_TRIAL.md owns the resulting native product trial. Historical preview-only limits below still describe this isolated artifact, not current product state.
+
 Status: `VIEWABLE_DESIGN_PREVIEW / VISUAL_FEEDBACK_PENDING`, 2026-10-22. The user approved trying the proposed list-page preview after choosing B composition + B1 material. This advances the earlier selection-only request; it does not approve the resulting appearance or activate a product redesign.
 
 ## Bounded result

@@ -882,6 +882,144 @@
       "normalizer": "semantic-observation-v1",
       "unknownDifferencePolicy": "fail",
       "missingApplicabilityPolicy": "fail"
+    },
+    {
+      "id": "b1-native-list-trial-v1",
+      "status": "active",
+      "surfaces": [
+        "header-navigation",
+        "list-search-paging"
+      ],
+      "allowed": [
+        {
+          "kind": "geometry",
+          "surface": "header-navigation",
+          "scope": "Approved B1 compact existing-parent header grid, original recent-history popover, original service UL native popover/invoker, quiet glass controls and opaque compact list rows. Native links/forms/parents/handlers/settings/filter-owned display stay intact; one local utility toggle listener is cleaned exactly. Original toolbar motion retained; whole-masthead scroll-return remains later.",
+          "reason": "User approved the runnable B1 list preview and actual product trial.",
+          "contractTests": [
+            "testbed/run-b1-product.mjs",
+            "testbed/run-header-layout-redesign.mjs",
+            "testbed/run-concept01-scroll.mjs"
+          ]
+        },
+        {
+          "kind": "geometry",
+          "surface": "list-search-paging",
+          "scope": "Approved B1 compact existing-parent header grid, original recent-history popover, original service UL native popover/invoker, quiet glass controls and opaque compact list rows. Native links/forms/parents/handlers/settings/filter-owned display stay intact; one local utility toggle listener is cleaned exactly. Original toolbar motion retained; whole-masthead scroll-return remains later.",
+          "reason": "User approved the runnable B1 list preview and actual product trial.",
+          "contractTests": [
+            "testbed/run-b1-product.mjs",
+            "testbed/run-header-layout-redesign.mjs",
+            "testbed/run-concept01-scroll.mjs"
+          ]
+        },
+        {
+          "kind": "spacing",
+          "surface": "header-navigation",
+          "scope": "Approved B1 compact existing-parent header grid, original recent-history popover, original service UL native popover/invoker, quiet glass controls and opaque compact list rows. Native links/forms/parents/handlers/settings/filter-owned display stay intact; one local utility toggle listener is cleaned exactly. Original toolbar motion retained; whole-masthead scroll-return remains later.",
+          "reason": "User approved the runnable B1 list preview and actual product trial.",
+          "contractTests": [
+            "testbed/run-b1-product.mjs",
+            "testbed/run-header-layout-redesign.mjs",
+            "testbed/run-concept01-scroll.mjs"
+          ]
+        },
+        {
+          "kind": "spacing",
+          "surface": "list-search-paging",
+          "scope": "Approved B1 compact existing-parent header grid, original recent-history popover, original service UL native popover/invoker, quiet glass controls and opaque compact list rows. Native links/forms/parents/handlers/settings/filter-owned display stay intact; one local utility toggle listener is cleaned exactly. Original toolbar motion retained; whole-masthead scroll-return remains later.",
+          "reason": "User approved the runnable B1 list preview and actual product trial.",
+          "contractTests": [
+            "testbed/run-b1-product.mjs",
+            "testbed/run-header-layout-redesign.mjs",
+            "testbed/run-concept01-scroll.mjs"
+          ]
+        },
+        {
+          "kind": "radius",
+          "surface": "header-navigation",
+          "scope": "Approved B1 compact existing-parent header grid, original recent-history popover, original service UL native popover/invoker, quiet glass controls and opaque compact list rows. Native links/forms/parents/handlers/settings/filter-owned display stay intact; one local utility toggle listener is cleaned exactly. Original toolbar motion retained; whole-masthead scroll-return remains later.",
+          "reason": "User approved the runnable B1 list preview and actual product trial.",
+          "contractTests": [
+            "testbed/run-b1-product.mjs",
+            "testbed/run-header-layout-redesign.mjs",
+            "testbed/run-concept01-scroll.mjs"
+          ]
+        },
+        {
+          "kind": "radius",
+          "surface": "list-search-paging",
+          "scope": "Approved B1 compact existing-parent header grid, original recent-history popover, original service UL native popover/invoker, quiet glass controls and opaque compact list rows. Native links/forms/parents/handlers/settings/filter-owned display stay intact; one local utility toggle listener is cleaned exactly. Original toolbar motion retained; whole-masthead scroll-return remains later.",
+          "reason": "User approved the runnable B1 list preview and actual product trial.",
+          "contractTests": [
+            "testbed/run-b1-product.mjs",
+            "testbed/run-header-layout-redesign.mjs",
+            "testbed/run-concept01-scroll.mjs"
+          ]
+        },
+        {
+          "kind": "typography",
+          "surface": "header-navigation",
+          "scope": "Approved B1 compact existing-parent header grid, original recent-history popover, original service UL native popover/invoker, quiet glass controls and opaque compact list rows. Native links/forms/parents/handlers/settings/filter-owned display stay intact; one local utility toggle listener is cleaned exactly. Original toolbar motion retained; whole-masthead scroll-return remains later.",
+          "reason": "User approved the runnable B1 list preview and actual product trial.",
+          "contractTests": [
+            "testbed/run-b1-product.mjs",
+            "testbed/run-header-layout-redesign.mjs",
+            "testbed/run-concept01-scroll.mjs"
+          ]
+        },
+        {
+          "kind": "typography",
+          "surface": "list-search-paging",
+          "scope": "Approved B1 compact existing-parent header grid, original recent-history popover, original service UL native popover/invoker, quiet glass controls and opaque compact list rows. Native links/forms/parents/handlers/settings/filter-owned display stay intact; one local utility toggle listener is cleaned exactly. Original toolbar motion retained; whole-masthead scroll-return remains later.",
+          "reason": "User approved the runnable B1 list preview and actual product trial.",
+          "contractTests": [
+            "testbed/run-b1-product.mjs",
+            "testbed/run-header-layout-redesign.mjs",
+            "testbed/run-concept01-scroll.mjs"
+          ]
+        },
+        {
+          "kind": "color-role",
+          "surface": "header-navigation",
+          "scope": "Approved B1 compact existing-parent header grid, original recent-history popover, original service UL native popover/invoker, quiet glass controls and opaque compact list rows. Native links/forms/parents/handlers/settings/filter-owned display stay intact; one local utility toggle listener is cleaned exactly. Original toolbar motion retained; whole-masthead scroll-return remains later.",
+          "reason": "User approved the runnable B1 list preview and actual product trial.",
+          "contractTests": [
+            "testbed/run-b1-product.mjs",
+            "testbed/run-header-layout-redesign.mjs",
+            "testbed/run-concept01-scroll.mjs"
+          ]
+        },
+        {
+          "kind": "color-role",
+          "surface": "list-search-paging",
+          "scope": "Approved B1 compact existing-parent header grid, original recent-history popover, original service UL native popover/invoker, quiet glass controls and opaque compact list rows. Native links/forms/parents/handlers/settings/filter-owned display stay intact; one local utility toggle listener is cleaned exactly. Original toolbar motion retained; whole-masthead scroll-return remains later.",
+          "reason": "User approved the runnable B1 list preview and actual product trial.",
+          "contractTests": [
+            "testbed/run-b1-product.mjs",
+            "testbed/run-header-layout-redesign.mjs",
+            "testbed/run-concept01-scroll.mjs"
+          ]
+        }
+      ],
+      "invariants": [
+        "filter-result",
+        "storage-trace",
+        "network-trace",
+        "host-node-identity",
+        "host-node-order",
+        "native-handler",
+        "native-form-fields",
+        "native-submit-trace",
+        "focus",
+        "lifecycle-resources",
+        "pc-result",
+        "accessibility",
+        "geometry-containment"
+      ],
+      "normalizer": "semantic-observation-v1",
+      "unknownDifferencePolicy": "fail",
+      "missingApplicabilityPolicy": "fail"
     }
   ]
 }

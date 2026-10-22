@@ -6192,7 +6192,7 @@ mobileTest('헤더 셸 CSS는 단일 presenter 소유와 교체·해제 가능�
             roles: ['root', 'head', 'logo', 'search-wrap', 'top-search', 'links'],
             originalNodes: true, resources: undefined, visual: undefined
         });
-        assert.deepEqual(initial.resources, { activeRoots: 1, mutationSubscribers: 1 });
+        assert.deepEqual(initial.resources, { activeRoots: 1, mutationSubscribers: 1, utilityToggleListeners: 0 });
         await session.page.evaluate(() => {
             const search = document.querySelector('.dcheader.typea .wrap_search');
             const replacement = search.cloneNode(true);
@@ -6247,7 +6247,7 @@ mobileTest('헤더 셸 CSS는 단일 presenter 소유와 교체·해제 가능�
             };
         });
         assert.deepEqual(lifecycle, {
-            disposed: { styleCount: 0, ownedMarkers: 0, resources: { activeRoots: 0, mutationSubscribers: 0 } },
+            disposed: { styleCount: 0, ownedMarkers: 0, resources: { activeRoots: 0, mutationSubscribers: 0, utilityToggleListeners: 0 } },
             reconnectedStyleCount: 1, reconnectedRootRole: 'root', originalRootRestored: true,
             visual: initial.visual
         });
@@ -8876,22 +8876,23 @@ mobileTest('글쓰기: 네이티브 모바일 기준 fixture는 가로 넘침 �
 
 const collectPaletteSurfaceContract = (page, entries) => page.evaluate((items) => {
     const probes = new Map();
-    const resolveToken = (token) => {
-        if (probes.has(token)) return probes.get(token);
+    const resolveToken = (token, alpha) => {
+        const key = `${token}:${alpha ?? 100}`;
+        if (probes.has(key)) return probes.get(key);
         const probe = document.createElement('span');
-        probe.style.cssText = `position:fixed;left:-9999px;background-color:var(${token})`;
+        probe.style.cssText = `position:fixed;left:-9999px;background-color:${alpha ? `color-mix(in srgb,var(${token}) ${alpha}%,transparent)` : `var(${token})`}`;
         document.documentElement.appendChild(probe);
         const value = getComputedStyle(probe).backgroundColor;
         probe.remove();
-        probes.set(token, value);
+        probes.set(key, value);
         return value;
     };
-    return items.map(({ selector, token }) => {
+    return items.map(({ selector, token, alpha }) => {
         const element = document.querySelector(selector);
         return {
             selector,
             token,
-            expected: resolveToken(token),
+            expected: resolveToken(token, alpha),
             actual: element ? getComputedStyle(element).backgroundColor : null
         };
     });
@@ -11680,8 +11681,8 @@ mobileTest('UI palette presets normalize stored values without blocking boot', '
             });
             assertPaletteSurfaces(await collectPaletteSurfaceContract(session.page, [
                 { selector: '[data-dcuf-surface="list-container"]', token: '--dcuf-theme-surface' },
-                { selector: '[data-dcuf-surface="list-toolbar"]', token: '--dcuf-theme-surface-raised' },
-                { selector: '[data-dcuf-surface="list-actions"]', token: '--dcuf-theme-surface-raised' },
+                { selector: '[data-dcuf-surface="list-toolbar"]', token: '--dcuf-theme-surface-raised', alpha: 90 },
+                { selector: '[data-dcuf-surface="list-actions"]', token: '--dcuf-theme-surface-raised', alpha: 90 },
                 { selector: '[data-dcuf-surface="list-pagination"]', token: '--dcuf-theme-surface-raised' },
                 { selector: '[data-dcuf-surface="list-search"]', token: '--dcuf-theme-surface-raised' }
             ]), `${expected} light list surfaces`);
@@ -11732,7 +11733,7 @@ mobileTest('UI palette presets normalize stored values without blocking boot', '
             });
             assertPaletteSurfaces(await collectPaletteSurfaceContract(session.page, [
                 { selector: '[data-dcuf-surface="list-container"]', token: '--dcuf-theme-surface' },
-                { selector: '[data-dcuf-surface="list-toolbar"]', token: '--dcuf-theme-surface-raised' },
+                { selector: '[data-dcuf-surface="list-toolbar"]', token: '--dcuf-theme-surface-raised', alpha: 90 },
                 { selector: '[data-dcuf-surface="list-pagination"]', token: '--dcuf-theme-surface-raised' },
                 { selector: '[data-dcuf-surface="list-search"]', token: '--dcuf-theme-surface-raised' }
             ]), `${expected} dark list surfaces`);
@@ -11789,8 +11790,8 @@ mobileTest('UI palette surfaces cover list canvas, comments, image comments, and
         await session.goto('/board/lists?id=test');
         assertPaletteSurfaces(await collectPaletteSurfaceContract(session.page, [
             { selector: '[data-dcuf-surface="list-container"]', token: '--dcuf-theme-surface' },
-            { selector: '[data-dcuf-surface="list-toolbar"]', token: '--dcuf-theme-surface-raised' },
-            { selector: '[data-dcuf-surface="list-actions"]', token: '--dcuf-theme-surface-raised' },
+            { selector: '[data-dcuf-surface="list-toolbar"]', token: '--dcuf-theme-surface-raised', alpha: 90 },
+            { selector: '[data-dcuf-surface="list-actions"]', token: '--dcuf-theme-surface-raised', alpha: 90 },
             { selector: '[data-dcuf-surface="list-pagination"]', token: '--dcuf-theme-surface-raised' },
             { selector: '[data-dcuf-surface="list-search"]', token: '--dcuf-theme-surface-raised' }
         ]), 'orange list');
@@ -11804,6 +11805,8 @@ mobileTest('UI palette surfaces cover list canvas, comments, image comments, and
                 normal: surface('.custom-post-item:not(.notice):not(.concept)'),
                 concept: surface('.custom-post-item.concept'),
                 notice: surface('.custom-post-item.notice'),
+                conceptBadge: getComputedStyle(document.querySelector('.custom-post-item.concept'), '::before').backgroundColor,
+                noticeBadge: getComputedStyle(document.querySelector('.custom-post-item.notice'), '::before').backgroundColor,
                 action: surface('[data-dcuf-surface="list-actions"]'),
                 pagination: surface('[data-dcuf-surface="list-pagination"]'),
                 search: surface('[data-dcuf-surface="list-search"]'),
@@ -11811,10 +11814,12 @@ mobileTest('UI palette surfaces cover list canvas, comments, image comments, and
             };
         });
         assert.equal(listHierarchy.canvas.color, listHierarchy.normal.color, JSON.stringify(listHierarchy));
-        assert.notEqual(listHierarchy.normal.color, listHierarchy.concept.color, JSON.stringify(listHierarchy));
-        assert.notEqual(listHierarchy.normal.color, listHierarchy.notice.color, JSON.stringify(listHierarchy));
+        assert.equal(listHierarchy.normal.color, listHierarchy.concept.color, JSON.stringify(listHierarchy));
+        assert.equal(listHierarchy.normal.color, listHierarchy.notice.color, JSON.stringify(listHierarchy));
+        assert.notEqual(listHierarchy.conceptBadge, listHierarchy.normal.color, 'B1 keeps opaque rows and distinct status badges');
+        assert.notEqual(listHierarchy.noticeBadge, listHierarchy.normal.color, 'B1 notice badge remains distinct');
         assert.equal(listHierarchy.concept.color, listHierarchy.notice.color, JSON.stringify(listHierarchy));
-        assert.equal(listHierarchy.action.color, listHierarchy.pagination.color, JSON.stringify(listHierarchy));
+        assert.notEqual(listHierarchy.action.color, listHierarchy.pagination.color, 'B1 glass action layer differs from opaque reading/navigation');
         assert.equal(listHierarchy.pagination.color, listHierarchy.search.color, JSON.stringify(listHierarchy));
         assert.equal(listHierarchy.normal.shadow, 'none', JSON.stringify(listHierarchy));
         assert.equal(listHierarchy.titleBackground, 'none', JSON.stringify(listHierarchy));
@@ -11832,8 +11837,8 @@ mobileTest('UI palette surfaces cover list canvas, comments, image comments, and
                 titleShadow: getComputedStyle(normal.querySelector('.post-title')).boxShadow
             };
         });
-        assert.notEqual(darkListHierarchy.normal, darkListHierarchy.concept, JSON.stringify(darkListHierarchy));
-        assert.notEqual(darkListHierarchy.normal, darkListHierarchy.notice, JSON.stringify(darkListHierarchy));
+        assert.equal(darkListHierarchy.normal, darkListHierarchy.concept, JSON.stringify(darkListHierarchy));
+        assert.equal(darkListHierarchy.normal, darkListHierarchy.notice, JSON.stringify(darkListHierarchy));
         assert.equal(darkListHierarchy.titleBackground, 'none', JSON.stringify(darkListHierarchy));
         assert.equal(darkListHierarchy.titleShadow, 'none', JSON.stringify(darkListHierarchy));
         await session.page.evaluate(() => window.__dcufFixture.toggleDark(false));
@@ -11882,7 +11887,7 @@ mobileTest('UI palette surfaces cover list canvas, comments, image comments, and
             };
         });
         assert.deepEqual(hostChromeContract, {
-            gnb: 'rgb(255, 255, 255)',
+            gnb: 'rgba(0, 0, 0, 0)',
             topSearch: 'rgb(255, 255, 255)',
             topSearchButton: 'rgb(154, 52, 18)',
             login: 'rgb(154, 52, 18)',
@@ -12032,6 +12037,7 @@ mobileTest('UI palette replaces live-shaped host blue and keeps continuous list,
             return {
                 accent: tokenColor('--dcuf-theme-accent'),
                 foreground: tokenColor('--dcuf-theme-fg'),
+                muted: tokenColor('--dcuf-theme-fg-muted'),
                 login: getComputedStyle(document.querySelector('.btn_top_loginout')).backgroundColor,
                 badgeBackground: getComputedStyle(badge).backgroundImage,
                 badgeColor: getComputedStyle(badge).color,
@@ -12052,7 +12058,7 @@ mobileTest('UI palette replaces live-shaped host blue and keeps continuous list,
         assert.equal(listContract.nextBackground, 'none', JSON.stringify(listContract));
         assert.equal(listContract.nextColor, 'rgb(104, 115, 132)', JSON.stringify(listContract));
         assert.equal(listContract.issueBorder, listContract.accent, JSON.stringify(listContract));
-        assert.equal(listContract.inactiveColor, listContract.foreground, JSON.stringify(listContract));
+        assert.equal(listContract.inactiveColor, listContract.muted, JSON.stringify(listContract));
         assert.equal(listContract.cardBackground, 'none', JSON.stringify(listContract));
         assert.equal(listContract.cardShadow, 'none', JSON.stringify(listContract));
         assert.equal(listContract.titleHighlight, 'none', JSON.stringify(listContract));

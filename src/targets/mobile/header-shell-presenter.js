@@ -70,8 +70,8 @@
     // Pure and hoisted: preserve complete late CSS before adapter objects initialize.
     function __dcufBuildHeaderShellStyle(selectors) {
         if (!selectors || typeof selectors !== 'object' || !Object.isFrozen(selectors)
-            || Reflect.ownKeys(selectors).length !== 9
-            || !["root","head","logo","logoImage","logoImageAlt","searchWrap","topSearch","links","darkRoot"].every(slot => {
+            || Reflect.ownKeys(selectors).length !== 13
+            || !["root","head","logo","logoImage","logoImageAlt","searchWrap","topSearch","links","darkRoot","layout","bridge","brandMark","searchField"].every(slot => {
                 const field = Object.getOwnPropertyDescriptor(selectors, slot);
                 return field && typeof field.value === 'string' && field.value.trim();
             })) {
@@ -81,14 +81,20 @@
             key: 'header-shell',
             id: 'dcuf-header-shell-style',
             css: `
-        ${selectors.root} { min-width: 0 !important; width: 100% !important; height: auto !important; background: var(--dcuf-theme-surface, #fff); border-bottom: 1px solid var(--dcuf-theme-border, #e2e7e5); }
+        ${selectors.layout} {
+            display: grid; grid-template-columns: 160px minmax(160px, 1fr) 124px 174px;
+            align-items: center; gap: 0 14px; isolation: isolate;
+            background: radial-gradient(ellipse at 50% 0, var(--dcuf-theme-accent-soft) 0, transparent 560px), var(--dcuf-theme-canvas);
+            --dcuf-b1-glass: color-mix(in srgb, var(--dcuf-theme-surface-raised, #fff) 88%, transparent);
+            --dcuf-b1-rim: color-mix(in srgb, var(--dcuf-theme-border, #dfe5ee) 55%, var(--dcuf-theme-surface, #fff));
+        }
+        ${selectors.layout} > * { grid-column: 1 / -1; min-width: 0; }
+        ${selectors.layout}::before { content: ""; grid-area: 1 / 1 / 3 / -1; align-self: stretch; margin: 12px 10px; border: 1px solid var(--dcuf-b1-rim); border-radius: 15px; background: linear-gradient(120deg, #ffffff12, transparent 60%), var(--dcuf-b1-glass); box-shadow: 0 8px 28px #284c4d0b, inset 0 1px 0 #ffffff24; backdrop-filter: blur(22px) saturate(1.15); z-index: -1; }
+        ${selectors.root} { display: contents; min-width: 0 !important; width: 100% !important; height: auto !important; background: transparent; border: 0; }
+        ${selectors.root}[data-dcuf-header-layout="self"] { display: grid; }
         ${selectors.head} {
-            display: grid !important;
-            grid-template-columns: minmax(180px, .7fr) minmax(240px, 1.3fr);
-            grid-template-areas: "brand search" "utilities utilities";
-            align-items: center;
-            gap: 8px 28px;
-            padding: 18px 24px 10px;
+            display: contents !important;
+            padding: 0;
             position: relative;
             height: auto;
             min-width: 0;
@@ -97,34 +103,46 @@
             box-sizing: border-box;
             width: 100% !important;
         }
-        ${selectors.logo} { grid-area: brand; position: static; inset: auto; float: none; margin: 0; display: flex; align-items: center; gap: 10px; min-width: 0; font: 800 24px/1.2 system-ui, sans-serif; letter-spacing: -.6px; }
-        ${selectors.logo} > a { position: static; margin: 0; flex: none; color: var(--dcuf-theme-fg); text-decoration: none; }
+        ${selectors.logo} { grid-area: 1 / 1; position: static; inset: auto; float: none; margin: 28px 0 12px 26px; display: flex; align-items: center; flex-wrap: wrap; gap: 4px; min-width: 0; max-width: 148px; height: auto; overflow: visible; font: italic 850 22px/1.2 system-ui, sans-serif; letter-spacing: -1px; }
+        ${selectors.logo} > a { position: static; margin: 0; flex: none; width: auto; height: auto; background: none; color: var(--dcuf-theme-fg); text-decoration: none; }
+        ${selectors.brandMark} { width: 124px; height: 22px; background-size: contain; }
         ${selectors.root} ${selectors.logo} > a + a { font-size: 12px; font-weight: 600; color: var(--dcuf-theme-fg-muted); }
-        ${selectors.logoImage} { height: 22px; width: auto; }
+        ${selectors.logoImage} { height: 22px; width: auto; max-width: 100%; }
         ${selectors.logoImageAlt} { display: none; }
-        ${selectors.searchWrap} { grid-area: search; position: relative; inset: auto; margin: 0; width: 100%; min-width: 0; max-width: none; }
-        ${selectors.topSearch} { display: flex; align-items: center; width: 100%; height: 44px; box-sizing: border-box; }
-        ${selectors.topSearch} > div { flex: 1; min-width: 0; }
-        ${selectors.topSearch} button { flex: none; width: 44px; height: 42px; margin: 0; }
-        ${selectors.links} { grid-area: utilities; position: static; inset: auto; display: flex; justify-content: flex-end; align-items: center; flex-wrap: wrap; gap: 8px; width: 100%; min-width: 0; margin: 0; white-space: normal; }
+        ${selectors.searchWrap} { grid-area: 1 / 2; position: relative; inset: auto; margin: 24px 0 10px; width: 100%; min-width: 0; max-width: none; }
+        ${selectors.searchWrap} form, ${selectors.searchWrap} fieldset { min-width: 0; width: 100%; padding: 0; margin: 0; border: 0; box-sizing: border-box; }
+        ${selectors.topSearch} { display: flex; align-items: center; width: 100%; height: 38px; box-sizing: border-box; }
+        ${selectors.topSearch} > div { flex: 1; min-width: 0; height: 100%; margin: 0; float: none; }
+        ${selectors.searchField} { width: 100%; min-width: 0; height: 100%; box-sizing: border-box; font-size: 12px; }
+        ${selectors.topSearch} button { flex: none; width: 36px; height: 36px; margin: 0; border-radius: 0 7px 7px 0; }
+        ${selectors.links} { grid-area: 1 / 4; position: static; inset: auto; display: flex; justify-content: flex-end; align-items: center; flex-wrap: wrap; gap: 4px; width: auto; min-width: 0; margin: 24px 26px 10px 0; white-space: normal; }
         ${selectors.links} > ul { display: flex; align-items: center; flex-wrap: wrap; gap: 3px; list-style: none; margin: 0; padding: 0; }
         ${selectors.links} > ul > li { float: none; }
+        ${selectors.links} > ul[popover]:not(:popover-open) { display: none; }
+        ${selectors.links} > ul[popover]:popover-open { position: fixed; inset: 76px 22px auto auto; width: min(280px, calc(100vw - 28px)); max-height: calc(100vh - 100px); overflow: auto; box-sizing: border-box; margin: 0; padding: 12px; flex-direction: column; align-items: stretch; gap: 3px; border: 1px solid var(--dcuf-theme-border); border-radius: 12px; background: var(--dcuf-theme-surface-raised); color: var(--dcuf-theme-fg); box-shadow: var(--dcuf-theme-popup-shadow); }
+        ${selectors.links} > ul[popover] a { display: flex; min-height: 34px; font-size: 12px; }
+        ${selectors.links} > [data-dcuf-header-utility-toggle] { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 34px; border: 1px solid var(--dcuf-theme-border); border-radius: 9px; background: var(--dcuf-theme-surface-input); color: var(--dcuf-theme-fg-muted); font: 700 13px/1 system-ui, sans-serif; cursor: pointer; }
         ${selectors.links} > div { flex: none; }
-        ${selectors.links} a { display: inline-flex; align-items: center; min-height: 26px; padding-inline: 4px; font-size: 11px; color: var(--dcuf-theme-fg-muted); }
+        ${selectors.links} a { display: inline-flex; align-items: center; min-height: 24px; padding-inline: 3px; font-size: 10px; color: var(--dcuf-theme-fg-muted); }
+        ${selectors.bridge} { grid-area: 1 / 3; min-width: 0; align-self: center; }
         @media (max-width: 759px) {
-            ${selectors.head} { grid-template-columns: minmax(0, 1fr); grid-template-areas: "brand" "search" "utilities"; padding: 16px; gap: 10px; }
-            ${selectors.links} { justify-content: flex-start; }
+            ${selectors.layout} { grid-template-columns: minmax(0, 1fr) 124px; gap: 0 12px; }
+            ${selectors.layout}::before { grid-area: 1 / 1 / 4 / -1; margin: 8px; }
+            ${selectors.logo} { grid-area: 1 / 1; margin: 22px 0 8px 22px; }
+            ${selectors.links} { grid-area: 1 / 2; margin: 18px 18px 4px 0; }
+            ${selectors.searchWrap} { grid-area: 2 / 1; width: calc(100% - 22px); margin: 0 0 8px 22px; }
+            ${selectors.bridge} { grid-area: 2 / 2; }
         }
         ${selectors.darkRoot} ${selectors.logo} > a:first-child { filter: brightness(0) invert(1); }
         ${selectors.darkRoot} {
-            background: var(--dcuf-theme-surface, #1b2021);
-            border-bottom-color: var(--dcuf-theme-border, #343c3d);
+            background: transparent;
         }
 `
         });
     }
     const __dcufHeaderShellPresenter = (() => {
         const style = __dcufBuildHeaderShellStyle(__dcufDescribeHeaderShellStyleSelectors());
-        return Object.freeze({ style, buildStyle: __dcufBuildHeaderShellStyle, buildThemeCss: __dcufBuildHeaderShellThemeCss, buildResetCss: __dcufBuildHeaderShellResetCss });
+        const utilityToggle = Object.freeze({ text: '•••', label: '서비스 메뉴' });
+        return Object.freeze({ style, buildStyle: __dcufBuildHeaderShellStyle, buildThemeCss: __dcufBuildHeaderShellThemeCss, buildResetCss: __dcufBuildHeaderShellResetCss, describeUtilityToggle: () => utilityToggle });
     })();
     __dcufRoot.__dcufHeaderShellPresenter = __dcufHeaderShellPresenter;

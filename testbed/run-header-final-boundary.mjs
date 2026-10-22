@@ -26,10 +26,10 @@ const walk=(node,fn)=>{if(!node||typeof node!=='object')return;if(node.type)fn(n
 const functions=source=>{const out=new Map();walk(parse(source,{ecmaVersion:'latest'}),n=>{if(n.type==='FunctionDeclaration'&&n.id?.name.startsWith('__dcuf'))out.set(n.id.name,source.slice(n.start,n.end));});return out;};
 const initializer=(source,name)=>{let value;walk(parse(source,{ecmaVersion:'latest'}),n=>{if(n.type==='VariableDeclarator'&&n.id?.name===name)value=source.slice(n.init.start,n.init.end);});assert.ok(value,name);return value;};
 const cases=[
- ['header-shell','HeaderShell',['root','head','logo','logoImage','logoImageAlt','searchWrap','topSearch','links','darkRoot']],
+ ['header-shell','HeaderShell',['root','head','logo','logoImage','logoImageAlt','searchWrap','topSearch','links','darkRoot','layout','bridge','brandMark','searchField']],
  ['gallery-page-head','GalleryPageHead',['root','left','right','clearfix']],
  ['header-gnb','HeaderGnb',['root','nav','list','darkList']],
- ['header-recent-visit','HeaderRecentVisit',['root','decoration','title','box','list','scrollbar','item','controls','arrow','darkRoot','darkTitle']],
+ ['header-recent-visit','HeaderRecentVisit',['root','decoration','title','box','list','scrollbar','item','controls','arrow','darkRoot','darkTitle','trigger','popup','menuRoot','menuTitle','menuBox','menuControls']],
 ];
 const canonical=s=>s.replace(/\r\n/g,'\n');
 const historicalCss=(surface,css)=>{
@@ -50,6 +50,7 @@ dependencies['tools/header-gnb-priority-contract.mjs']=sha(await readFile('tools
 dependencies['tools/header-composition-contract.mjs']=sha(await readFile('tools/header-composition-contract.mjs'));
 dependencies['tools/concept01-header-visual-delta.mjs']=sha(await readFile('tools/concept01-header-visual-delta.mjs'));
 dependencies['verification/concept01-header-visual-delta.json']=sha(await readFile('verification/concept01-header-visual-delta.json'));
+dependencies['verification/b1-header-visual-delta.json']=sha(await readFile('verification/b1-header-visual-delta.json'));
 for(const [surface,family,slots] of cases){
  const file=`src/targets/mobile/${surface}-presenter.js`,adapterFile=`src/targets/mobile/${surface}-host-adapter.js`;
  const source=await readFile(file,'utf8'),historicalSource=restoreConcept01HeaderVisualDelta(source),adapter=await readFile(adapterFile,'utf8');dependencies[file]=sha(source);dependencies[adapterFile]=sha(adapter);

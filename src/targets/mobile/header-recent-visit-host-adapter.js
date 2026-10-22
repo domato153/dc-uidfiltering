@@ -11,7 +11,13 @@
             controls: "[data-dcuf-header-recent-visit-role=\"root\"] > :is([data-dcuf-header-recent-visit-role=\"control\"], [data-dcuf-header-recent-visit-role=\"arrow\"])",
             arrow: "[data-dcuf-header-recent-visit-role=\"root\"] > [data-dcuf-header-recent-visit-role=\"arrow\"]",
             darkRoot: ".dc-filter-dark-mode [data-dcuf-header-recent-visit-role=\"root\"]",
-            darkTitle: ".dc-filter-dark-mode [data-dcuf-header-recent-visit-role=\"root\"] > [data-dcuf-header-recent-visit-role=\"title\"]"
+            darkTitle: ".dc-filter-dark-mode [data-dcuf-header-recent-visit-role=\"root\"] > [data-dcuf-header-recent-visit-role=\"title\"]",
+            trigger: ":is(.visit_bookmark [data-dcuf-header-recent-visit-role=\"root\"], [data-dcuf-header-recent-visit-role=\"root\"]):has(> :where(#visit_history_lyr)) > .btn_open",
+            popup: "[data-dcuf-header-recent-visit-role=\"root\"] > #visit_history_lyr",
+            menuRoot: "[data-dcuf-header-recent-visit-role=\"root\"]:has(> :where(#visit_history_lyr))",
+            menuTitle: "[data-dcuf-header-recent-visit-role=\"root\"]:has(> :where(#visit_history_lyr)) > [data-dcuf-header-recent-visit-role=\"title\"]",
+            menuBox: "[data-dcuf-header-recent-visit-role=\"root\"]:has(> :where(#visit_history_lyr)) > [data-dcuf-header-recent-visit-role=\"box\"]",
+            menuControls: "[data-dcuf-header-recent-visit-role=\"root\"]:has(> :where(#visit_history_lyr)) > :is([data-dcuf-header-recent-visit-role=\"control\"], [data-dcuf-header-recent-visit-role=\"arrow\"])"
         });
     }
 
@@ -93,9 +99,8 @@
         const syncStyleRoles = (state) => {
             const { root, list } = state;
             const desired = new Map([[root, 'root'], [list, 'list']]);
-            const title = root.querySelector(':scope > .tit');
             const box = root.querySelector(':scope > .newvisit_box');
-            if (title instanceof HTMLElement) desired.set(title, 'title');
+            root.querySelectorAll(':scope > .tit').forEach(title => desired.set(title, 'title'));
             if (box instanceof HTMLElement) desired.set(box, 'box');
             list.querySelectorAll('li').forEach((item) => desired.set(item, 'item'));
             root.querySelectorAll(':scope > :is(.btn_open,.btn_visit_prev,.btn_visit_next,.bnt_visit_prev,.bnt_visit_next,.btn_newvisit_more,.bnt_newvisit_more)')
