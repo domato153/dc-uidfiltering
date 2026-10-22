@@ -26,10 +26,10 @@ const walk=(node,fn)=>{if(!node||typeof node!=='object')return;if(node.type)fn(n
 const functions=source=>{const out=new Map();walk(parse(source,{ecmaVersion:'latest'}),n=>{if(n.type==='FunctionDeclaration'&&n.id?.name.startsWith('__dcuf'))out.set(n.id.name,source.slice(n.start,n.end));});return out;};
 const initializer=(source,name)=>{let value;walk(parse(source,{ecmaVersion:'latest'}),n=>{if(n.type==='VariableDeclarator'&&n.id?.name===name)value=source.slice(n.init.start,n.init.end);});assert.ok(value,name);return value;};
 const cases=[
- ['header-shell','HeaderShell',['root','head','logo','logoImage','logoImageAlt','searchWrap','topSearch','links','darkRoot','layout','bridge','brandMark','searchField']],
+ ['header-shell','HeaderShell',['root','head','logo','logoImage','logoImageAlt','searchWrap','topSearch','links','darkRoot','layout','bridge','brandMark','searchField','nativeTip']],
  ['gallery-page-head','GalleryPageHead',['root','left','right','clearfix']],
  ['header-gnb','HeaderGnb',['root','nav','list','darkList']],
- ['header-recent-visit','HeaderRecentVisit',['root','decoration','title','box','list','scrollbar','item','controls','arrow','darkRoot','darkTitle','trigger','popup','menuRoot','menuTitle','menuBox','menuControls']],
+ ['header-recent-visit','HeaderRecentVisit',['root','decoration','title','box','list','scrollbar','item','controls','arrow','darkRoot','darkTitle','trigger','popup','menuRoot','menuTitle','menuBox','menuControls','triggerDecoration','popupTabs','popupCurrent','popupContent','popupList','popupRow','popupFooter']],
 ];
 const canonical=s=>s.replace(/\r\n/g,'\n');
 const historicalCss=(surface,css)=>{

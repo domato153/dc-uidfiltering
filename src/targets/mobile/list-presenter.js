@@ -13,6 +13,11 @@
                 border: 1px solid var(--dcuf-list-border);
                 border-radius: 12px;
                 background: var(--dcuf-list-surface);
+                width: calc(100% - 40px);
+                max-width: 1120px;
+                margin: 10px auto;
+                padding: 0 12px;
+                box-sizing: border-box;
             }
             [data-dcuf-surface="list-item"] {
                 position: relative;
@@ -140,7 +145,7 @@
                 /* Filtering owns row inline display; arrange its children instead. */
                 [data-dcuf-surface="list-item"] { padding-right: 250px; min-height: 54px; box-sizing: border-box; }
                 [data-dcuf-surface="list-item"] .dcuf-list-title { margin: 0; min-height: 29px; align-items: center; font-size: 14px; }
-                [data-dcuf-surface="list-item"] .dcuf-list-meta { position: absolute; right: 16px; top: 50%; transform: translateY(-50%); width: 220px; flex-direction: column; align-items: flex-end; gap: 3px; font-size: 10px; }
+                [data-dcuf-surface="list-item"] .dcuf-list-meta { position: absolute; right: 16px; top: 50%; transform: translateY(-50%); width: 220px; flex-direction: column; align-items: flex-end; gap: 4px; font-size: 11px; }
                 [data-dcuf-surface="list-item"] .dcuf-list-author { flex: none; }
             }
             [data-dcuf-surface="list-toolbar"],
@@ -152,7 +157,7 @@
                 justify-content: space-between;
                 gap: 10px;
                 min-height: 48px;
-                margin: 10px 0;
+                margin: 10px auto;
                 padding: 8px 10px;
                 border: 1px solid var(--dcuf-theme-border, #dfe5ee);
                 border-radius: 12px;
@@ -174,7 +179,10 @@
                 margin: 0;
             }
             [data-dcuf-surface="list-toolbar"] {
-                width: 100%;
+                display: grid;
+                grid-template-columns: auto minmax(0, 1fr) auto;
+                width: calc(100% - 40px);
+                max-width: 1120px;
                 height: auto;
                 box-sizing: border-box;
                 flex-wrap: wrap;
@@ -206,17 +214,20 @@
                 [data-dcuf-surface="list-toolbar"][data-dcuf-scroll]:not([data-dcuf-scroll="measuring"]) { transition: none; }
             }
             [data-dcuf-surface="list-toolbar"] [data-dcuf-role="toolbar-actions"] {
+                grid-area: 1 / 3;
                 width: auto;
                 height: auto;
                 padding: 0;
                 margin-left: auto;
             }
             [data-dcuf-surface="list-toolbar"] [data-dcuf-role="tablist"] {
+                grid-area: 1 / 1;
                 width: auto;
                 min-width: 0;
                 flex: none;
             }
             [data-dcuf-surface="list-toolbar"] [data-dcuf-role="toolbar-categories"] {
+                grid-area: 1 / 2;
                 position: static;
                 display: flex;
                 width: auto;
@@ -233,21 +244,27 @@
                 gap: 7px;
                 height: auto;
                 min-width: 0;
+                width: 100%;
                 max-width: 100%;
             }
             [data-dcuf-surface="list-toolbar"] [data-dcuf-role="toolbar-categories"] [data-dcuf-role="category-list"] {
                 float: none;
-                display: flex;
-                flex-wrap: wrap;
+                display: grid;
+                grid-auto-flow: column;
+                grid-auto-columns: calc((100% - 14px) / 3);
+                flex-wrap: nowrap;
                 gap: 7px;
                 height: auto;
                 margin: 0;
                 padding: 0;
-                overflow: visible;
+                overflow-x: auto;
+                scrollbar-width: thin;
+                scroll-snap-type: x proximity;
                 min-width: 0;
                 flex: 1 1 auto;
             }
-            [data-dcuf-surface="list-toolbar"] [data-dcuf-role="category-list"] > li { padding: 0; }
+            [data-dcuf-surface="list-toolbar"] [data-dcuf-role="category-list"] > li { min-width: 0; padding: 0; scroll-snap-align: start; }
+            [data-dcuf-surface="list-toolbar"] [data-dcuf-role="category-list"] > li > a { display: block; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
             [data-dcuf-surface="list-toolbar"] [data-dcuf-role="category-toggle"] {
                 position: static;
                 display: inline-flex;
@@ -339,8 +356,18 @@
                 padding: 0;
                 list-style: none;
             }
-            @media (max-width: 600px) {
-                [data-dcuf-surface="list-toolbar"] [data-dcuf-role="tablist"] { flex: 1 1 100%; }
+            @media (max-width: 759px) {
+                [data-dcuf-surface="list-toolbar"] { width: calc(100% - 24px); grid-template-columns: minmax(0, 1fr) auto; padding: 8px; gap: 8px; }
+                [data-dcuf-surface="list-toolbar"] [data-dcuf-role="toolbar-actions"] { grid-area: 1 / 2; }
+                [data-dcuf-surface="list-toolbar"] [data-dcuf-role="toolbar-categories"] { grid-area: 2 / 1 / 3 / -1; }
+                [data-dcuf-surface="list-toolbar"] [data-dcuf-role="tablist"] { gap: 2px; }
+                [data-dcuf-surface="list-toolbar"] [data-dcuf-role="tablist"] button[data-dcuf-role="action"] { width: auto; padding: 0 8px; font-size: 12px; }
+                [data-dcuf-surface="list-container"] { width: calc(100% - 24px); padding: 0 4px; }
+            }
+            @media (max-width: 359px) {
+                [data-dcuf-surface="list-toolbar"] { grid-template-columns: minmax(0, 1fr); }
+                [data-dcuf-surface="list-toolbar"] [data-dcuf-role="toolbar-actions"] { grid-area: 2 / 1; justify-self: end; }
+                [data-dcuf-surface="list-toolbar"] [data-dcuf-role="toolbar-categories"] { grid-area: 3 / 1; }
             }
             [data-dcuf-surface="list-toolbar"] [data-dcuf-role="legacy-page-size"][data-dcuf-state="superseded"] { display: none; }
             [data-dcuf-surface="list-toolbar"] [data-dcuf-role="page-size"] {
@@ -356,6 +383,7 @@
                 font: inherit;
             }
             [data-dcuf-surface="list-toolbar"] [data-dcuf-role="action"],
+            [data-dcuf-surface="list-toolbar"] [data-dcuf-role="tablist"] button[data-dcuf-role="action"],
             [data-dcuf-surface="list-toolbar"] [data-dcuf-role="primary-action"],
             [data-dcuf-surface="list-actions"] [data-dcuf-role="action"],
             [data-dcuf-surface="list-actions"] [data-dcuf-role="primary-action"] {

@@ -16,7 +16,7 @@
       }
     ],
     "upsertContracts": [
-      {"id":"b1-native-list-trial","summary":"Approved B1 list presentation through existing owners. Shell adapter reversibly marks existing common/bridge parents and supplies native-brand selector; it adds an HTML popover invoker to the original service UL, preserving its children/parents/handlers and restoring id/popover/copy state on cleanup. Native recent-history display, tabs and actions remain host-owned; presenter styles that original popup. List presenter arranges children without changing filter-owned inline row display. Existing scroll scheduler remains; no new global observer. Preserve14 palettes, settings, PC and native forms."},
+      {"id":"b1-native-list-trial","summary":"Approved B1 list presentation through existing owners. Shell adapter reversibly marks existing common/bridge parents and supplies native-brand selector; it adds an HTML popover invoker to the original service UL, preserving its children/parents/handlers and restoring id/popover/copy state on cleanup. Native recent-history display, tabs and actions remain host-owned; presenter styles that original popup. List presenter arranges children without changing filter-owned inline row display. Existing scroll scheduler remains; no new global observer. Preserve14 palettes, settings, PC and native forms. Repair batch: native shell and recent presenters consume extended immutable adapter selector slots for the existing visible native tip, sprite and original recent interiors. Five-column desktop/two-column narrow chrome, compact responsive category grid, original tip containment/dismissal, quiet dark tabs and readable inset list metadata are presentation deltas only; no new observer, event, storage, network, filter or release owner."},
       {
         "id": "live-native-control-composition",
         "summary": "Existing list/comment/article presenters own selected palette states, single sprite-free decorations, category overflow/subject descriptions, credential shells, distinct composer tools/submits and action-group composition. Adapters only classify original nodes and preserve native events/forms/settings. Article actions remain outside list ownership; recent-state behavior remains in convenience while its row decoration moves to the list presenter. No new DOM/event/resource owner or mixed exit."
@@ -325,7 +325,7 @@
         "boundaryState": "mixed",
         "responsibility": "Owns typea shell/head/logo/search/login/dark layout, shell palette rules, and the inherited broad dcheader reset at the original theme/core phases. The existing links display becomes flex for original native dark-toggle reachability; all other shell CSS and resources remain preserved. The reset preserves unprojected and non-typea host coverage. Inherited important declarations and the remaining typea qualifier remain transitional cascade debt. Owns unchanged early declaration factories consuming frozen named adapter selector records at the original hoisted theme/core phase, without raw native selectors in those early builders. Complete late style declarations now consume explicit frozen named full adapter selector inputs through a pure hoisted builder, retaining exact default CSS and the existing style diagnostic interface; native predicate construction is adapter-owned.",
         "sourceRefs": ["src/targets/mobile/header-shell-presenter.js"],
-        "contractRefs": ["ui-ownership", "semantic-preservation", "host-dom-events", "header-native-dark-toggle-hit"],
+        "contractRefs": ["ui-ownership","semantic-preservation","host-dom-events","header-native-dark-toggle-hit","b1-native-list-trial"],
         "fitnessRefs": ["invariant-one-visual-owner", "invariant-ui-port-boundary", "invariant-build-inputs-mapped"],
         "transition": {
           "targetBoundaryState": "conforming",
@@ -340,7 +340,7 @@
         "boundaryState": "conforming",
         "responsibility": "Projects reversible roles onto the site-owned typea header shell and its logo, search, and link descendants; mounts one presenter stylesheet at the former core phase; reuses the shared list/view mutation bus for descendant and root replacement, and disposes roles, style, and subscription without changing host nodes, forms, links, or events. Supplies pure hoisted immutable named full native selector inputs for its early palette and applicable reset/concealment builders, independent of DOM connection and presenter/adapter object initialization. Supplies immutable named full late selector inputs, preserving native tags, typea/body/dark conditions, role relations, specificity and the original style mount phase. Covers both native h1.dclogo anchor-logo and retained h1.dc_logo image-logo shapes with reversible roles; native controls are never moved. B1 trial: reversible existing-parent layout projection, native brand marker and browser-native service-UL popover/invoker with copy/attribute/listener cleanup; original links remain in place.",
         "sourceRefs": ["src/targets/mobile/header-shell-host-adapter.js"],
-        "contractRefs": ["host-dom-events", "initialization-lifecycle", "ui-ownership", "semantic-preservation"],
+        "contractRefs": ["host-dom-events","initialization-lifecycle","ui-ownership","semantic-preservation","b1-native-list-trial"],
         "fitnessRefs": ["invariant-host-node-preservation", "invariant-initialization-recovery", "invariant-ui-port-boundary", "invariant-build-inputs-mapped"]
       },
       {
@@ -403,7 +403,7 @@
         "boundaryState": "mixed",
         "responsibility": "Owns zero-delta recent-visit light/dark layout through semantic roles and its title/open/active-link palette payload via a hoisted pure builder at the unchanged theme phase. Inherited important declarations and remaining late cascade qualifiers retain their transitional scope. Owns unchanged early declaration factories consuming frozen named adapter selector records at the original hoisted theme/core phase, without raw native selectors in those early builders. Complete late style declarations now consume explicit frozen named full adapter selector inputs through a pure hoisted builder, retaining exact default CSS and the existing style diagnostic interface; native predicate construction is adapter-owned. Owns immutable ordered list inline declarations and previous/next visual and ARIA descriptions from adapter-measured boolean snapshots; native reads, scrolling and baseline restoration remain adapter-owned.",
         "sourceRefs": ["src/targets/mobile/header-recent-visit-presenter.js"],
-        "contractRefs": ["ui-ownership", "semantic-preservation", "host-dom-events"],
+        "contractRefs": ["ui-ownership","semantic-preservation","host-dom-events","b1-native-list-trial"],
         "fitnessRefs": ["invariant-one-visual-owner", "invariant-ui-port-boundary", "invariant-build-inputs-mapped"],
         "transition": {
           "targetBoundaryState": "conforming",
@@ -418,7 +418,7 @@
         "boundaryState": "conforming",
         "responsibility": "Owns recent-visit previous and next host scrolling, control state, one delegated document click listener, one shared mutation-bus subscription for list and view replacement, reversible semantic-role and inline-geometry cleanup, and mounting of the presenter's single stylesheet at the prior core phase without replacing host nodes or owning presentation, storage, filter, or network effects. Supplies pure hoisted immutable named full native selector inputs for its early palette and applicable reset/concealment builders, independent of DOM connection and presenter/adapter object initialization. Supplies immutable named full late selector inputs, preserving native tags, typea/body/dark conditions, role relations, specificity and the original style mount phase.",
         "sourceRefs": ["src/targets/mobile/header-recent-visit-host-adapter.js"],
-        "contractRefs": ["host-dom-events", "initialization-lifecycle", "ui-ownership", "semantic-preservation"],
+        "contractRefs": ["host-dom-events","initialization-lifecycle","ui-ownership","semantic-preservation","b1-native-list-trial"],
         "fitnessRefs": ["invariant-host-node-preservation", "invariant-initialization-recovery", "invariant-ui-port-boundary", "invariant-build-inputs-mapped"]
       },
       {

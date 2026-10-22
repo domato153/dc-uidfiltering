@@ -1,6 +1,8 @@
 # Visual comparison and the B1 inspection gap
 
-## Current finding — 2026-10-23
+Current repair: [B1_VISUAL_REPAIR.md](B1_VISUAL_REPAIR.md) and its exact8606114F receipt supersede the defective945C3DE7 result for the diagnosed batch. The findings below remain diagnosis history and method guidance, not current unresolved defects. Use `verification/visual/b1-repaired-native-list.json` for the repaired public design comparison; retain the original manifest as historical evidence.
+
+## Historical finding — 2026-10-23
 
 The native945C3DE7 B1 trial is visually **not accepted**. Prior function/geometry/extension-startup results retain their own scope; they did not establish visual fidelity. No product runtime changed during this investigation.
 

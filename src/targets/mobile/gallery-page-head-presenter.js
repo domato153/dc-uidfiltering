@@ -81,11 +81,11 @@
             css: `
         ${selectors.root} {
             display: grid;
-            grid-template-columns: minmax(0, 1fr);
+            grid-template-columns: minmax(0, 1fr) auto;
             align-items: stretch;
             gap: 8px;
-            padding: 14px 22px !important;
-            margin: 8px auto 14px;
+            padding: 16px 4px !important;
+            margin: 0 auto 4px;
             box-sizing: border-box;
             width: calc(100% - 40px);
             max-width: 1120px;
@@ -109,14 +109,15 @@
             width: 100%;
             min-width: 0;
             display: flex;
-            justify-content: flex-start;
+            justify-content: flex-end;
             flex-wrap: wrap;
             align-items: center;
             gap: 8px;
         }
         ${selectors.clearfix} { content: none; display: none; }
         @media (max-width: 759px) {
-            ${selectors.root} { width: calc(100% - 24px); padding: 18px !important; }
+            ${selectors.root} { grid-template-columns: minmax(0, 1fr); width: calc(100% - 24px); padding: 14px 4px !important; }
+            ${selectors.right} { justify-content: flex-start; }
             ${selectors.left} > h2 { font-size: 22px; }
         }
 

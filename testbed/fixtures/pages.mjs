@@ -33,6 +33,8 @@ if (document.body.dataset.fixturePage === 'list') {
         const nativeCSS = document.createElement('style');
         nativeCSS.textContent = '.list_array_option{display:table;width:840px;height:32px}.array_tab{display:table-cell;width:1%;white-space:nowrap}.array_tab.left_box{font-size:0}.array_tab button{width:82px;height:32px;font-size:14px}.center_box{position:relative;display:table-cell;line-height:0}.center_box .inner{position:relative;display:inline-block;height:32px}.center_box .inner>ul{float:left;overflow:hidden;height:26px;padding-top:6px;padding-right:10px;margin-left:7px;line-height:32px;list-style:none}.center_box .inner>ul li{display:inline-block;padding-left:12px}.center_box .inner>ul li:first-of-type{padding-left:4px}.switch_btnbox{width:1%;display:table-cell;white-space:nowrap;font-size:0}.btn_write.txt{width:66px;height:21px;box-sizing:border-box;font-size:12px;line-height:19px}.right_box{float:right;min-width:90px;height:21px;width:max-content}.list_array_option .right_box{position:relative;z-index:1}';
         document.head.prepend(nativeCSS);
+        // Native option layers start closed; an open layer is tested explicitly.
+        nativeCSS.textContent += '.list_array_option .option_box{display:none}';
         const toolbar = document.querySelector('.list_array_option');
         toolbar.classList.add('clear');
         toolbar.querySelector('.array_tab').innerHTML = ['전체글', '개념글', '공지'].map((text, i) => '<button type="button" class="'+(i ? '' : 'on')+'" onclick="window.__fixtureNativeTabClicks=(window.__fixtureNativeTabClicks||0)+1">'+text+'</button>').join('');

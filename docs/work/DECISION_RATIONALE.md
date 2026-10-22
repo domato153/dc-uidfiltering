@@ -396,3 +396,12 @@ The format adapts the explicit “adapted / not adopted wholesale” separation 
 - Reason: Long native category controls and popup anchors need stable width and original handlers. The actual root overflow contract defeated sticky; measured fixed positioning with inert flow space preserves native topology. Readiness policies moved separately to presenters after the candidate exposed the16px/shadow coupling.
 - Evidence: Current Concept01 receipt binds the final runtime and actual tests. Exact header CSS inverse retains the historical ownership oracle; it does not waive raw admission or promote mixed components.
 - Revisit: Native layout, focus, popup, lifecycle or actual-phone scale evidence changes.
+
+## D-44 — Repair native B1 through existing owners and use visual differences to find omissions
+
+- SELECTED: Compact existing native header/list geometry, themed original recent interiors, actual host dark/sprite/visible-tip fixtures, and official aligned reference/current/diff plus direct visual inspection. Native-only controls/metadata remain; prototype-only table/simulator UI is not invented. B1_VISUAL_REPAIR.md and its exact receipt own the bounded result.
+- NOT ADOPTED: Pixel equality as beauty approval, automatic golden updates, copying mock-only controls, a second CSS override owner, or installing another generic screenshot skill before exercising the existing comparator.
+- DEFERRED: Article/comments/write/dialog design, whole-masthead motion, all-child/device/authenticated/raw/mixed/release qualification.
+- Reason: Initial focused PASS missed native selected-tab pseudo/empty-space defects that direct image comparison found. Independent review found a visible accessible-label fixture gap. Preserve native CSS, timing and scrollport reachability in the harness rather than changing behavior to satisfy obsolete visual expectations. Current CSS/selector descriptions add no function/resource owner.
+- Evidence: B1_VISUAL_REPAIR.md and verification/receipts/2026-10-23-b1-visual-repair.json bind the exact8606114F runtime, final144 mobile checks, affected native/palette/scroll/layout/extension states and both visual comparison sources. User feedback retains unfinished aesthetic-detail fidelity separately from the repaired breakages.
+- Revisit: Concrete visual feedback, changed native shape/cascade, failed input/hit/containment/state/resource tests or changed evidence inputs. Current effectiveness is a demonstrated bounded improvement, not autonomous comprehensive vision.

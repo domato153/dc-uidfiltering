@@ -14,10 +14,17 @@
             darkTitle: ".dc-filter-dark-mode [data-dcuf-header-recent-visit-role=\"root\"] > [data-dcuf-header-recent-visit-role=\"title\"]",
             trigger: ":is(.visit_bookmark [data-dcuf-header-recent-visit-role=\"root\"], [data-dcuf-header-recent-visit-role=\"root\"]):has(> :where(#visit_history_lyr)) > .btn_open",
             popup: "[data-dcuf-header-recent-visit-role=\"root\"] > #visit_history_lyr",
-            menuRoot: "[data-dcuf-header-recent-visit-role=\"root\"]:has(> :where(#visit_history_lyr))",
+            menuRoot: ":is(.dc-filter-dark-mode [data-dcuf-header-recent-visit-role=\"root\"], [data-dcuf-header-recent-visit-role=\"root\"]):has(> :where(#visit_history_lyr))",
             menuTitle: "[data-dcuf-header-recent-visit-role=\"root\"]:has(> :where(#visit_history_lyr)) > [data-dcuf-header-recent-visit-role=\"title\"]",
             menuBox: "[data-dcuf-header-recent-visit-role=\"root\"]:has(> :where(#visit_history_lyr)) > [data-dcuf-header-recent-visit-role=\"box\"]",
-            menuControls: "[data-dcuf-header-recent-visit-role=\"root\"]:has(> :where(#visit_history_lyr)) > :is([data-dcuf-header-recent-visit-role=\"control\"], [data-dcuf-header-recent-visit-role=\"arrow\"])"
+            menuControls: "[data-dcuf-header-recent-visit-role=\"root\"]:has(> :where(#visit_history_lyr)) > :is([data-dcuf-header-recent-visit-role=\"control\"], [data-dcuf-header-recent-visit-role=\"arrow\"])",
+            triggerDecoration: ":is(.visit_bookmark [data-dcuf-header-recent-visit-role=\"root\"], [data-dcuf-header-recent-visit-role=\"root\"]):has(> :where(#visit_history_lyr)) > .btn_open > em.icon_listmore",
+            popupTabs: "[data-dcuf-header-recent-visit-role=\"root\"] > #visit_history_lyr .tabslist",
+            popupCurrent: "[data-dcuf-header-recent-visit-role=\"root\"] > #visit_history_lyr .tabslist > .on",
+            popupContent: "[data-dcuf-header-recent-visit-role=\"root\"] > #visit_history_lyr :is(.toptab_content,.visit_div,.visit_tablist)",
+            popupList: "[data-dcuf-header-recent-visit-role=\"root\"] > #visit_history_lyr .under_listbox",
+            popupRow: "[data-dcuf-header-recent-visit-role=\"root\"] > #visit_history_lyr .under_listbox > li",
+            popupFooter: "[data-dcuf-header-recent-visit-role=\"root\"] > #visit_history_lyr .tabcon_bottom"
         });
     }
 

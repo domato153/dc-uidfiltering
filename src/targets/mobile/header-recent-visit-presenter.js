@@ -20,8 +20,8 @@
     // Pure and hoisted: preserve complete late CSS before adapter objects initialize.
     function __dcufBuildHeaderRecentVisitStyle(selectors) {
         if (!selectors || typeof selectors !== 'object' || !Object.isFrozen(selectors)
-            || Reflect.ownKeys(selectors).length !== 17
-            || !["root","decoration","title","box","list","scrollbar","item","controls","arrow","darkRoot","darkTitle","trigger","popup","menuRoot","menuTitle","menuBox","menuControls"].every(slot => {
+            || Reflect.ownKeys(selectors).length !== 24
+            || !["root","decoration","title","box","list","scrollbar","item","controls","arrow","darkRoot","darkTitle","trigger","popup","menuRoot","menuTitle","menuBox","menuControls","triggerDecoration","popupTabs","popupCurrent","popupContent","popupList","popupRow","popupFooter"].every(slot => {
                 const field = Object.getOwnPropertyDescriptor(selectors, slot);
                 return field && typeof field.value === 'string' && field.value.trim();
             })) {
@@ -45,7 +45,7 @@
         ${selectors.darkTitle} { color: #e0e0e0 !important; }
         /* Keep the horizontal fallback until the original native layer exists. */
 
-        ${selectors.menuRoot} { grid-area: 1 / 3; position: relative; z-index: 1004; display: flex !important; align-items: center; width: 100% !important; min-width: 0; height: auto; padding: 0; margin-top: 14px; background: transparent; border: none; box-sizing: border-box; gap: 5px; }
+        ${selectors.menuRoot} { grid-area: 1 / 4; position: relative; z-index: 1004; display: flex !important; align-items: center; width: 100% !important; min-width: 0; height: auto; padding: 0; margin: 0; background: transparent; border: none; box-sizing: border-box; gap: 5px; }
         ${selectors.decoration} { display: none !important; }
         /* Native tabLately writes display:block inline on the title. */
         ${selectors.menuTitle} { display: none !important; }
@@ -58,15 +58,27 @@
         ${selectors.trigger} { display: inline-flex !important; gap: 7px; width: 116px; min-height: 38px; border: 1px solid var(--dcuf-b1-rim, var(--dcuf-theme-border)); border-radius: 10px; background: linear-gradient(150deg, #ffffff20, transparent), var(--dcuf-theme-accent-soft); box-shadow: inset 0 1px 0 #ffffff28; color: var(--dcuf-theme-accent-ink); font: 600 12px/1.3 system-ui, sans-serif; }
         ${selectors.trigger}::before { content: "◷ 최근 방문"; }
         ${selectors.trigger}::after { content: "⌄"; }
-        ${selectors.trigger} > em { display: none; }
+        ${selectors.triggerDecoration} { display: none; }
         /* The host writes inline left/top; keep its display and event lifecycle. */
         ${selectors.popup} { position: absolute; left: auto !important; top: 46px !important; right: 0; width: min(320px, calc(100vw - 24px)); max-width: calc(100vw - 24px); max-height: min(480px, calc(100vh - 120px)); overflow: auto; box-sizing: border-box; border: 1px solid var(--dcuf-theme-border); border-radius: 14px; background: color-mix(in srgb, var(--dcuf-theme-surface-raised) 97%, transparent); color: var(--dcuf-theme-fg); box-shadow: var(--dcuf-theme-popup-shadow); backdrop-filter: blur(24px); }
-        ${selectors.popup} > div { min-width: 0; width: 100%; box-sizing: border-box; }
+        ${selectors.popup} > div { min-width: 0; min-height: 0; height: auto; width: 100%; padding: 10px; box-sizing: border-box; }
         ${selectors.popup} a { color: var(--dcuf-theme-fg); }
         ${selectors.popup} button { color: var(--dcuf-theme-accent-ink); }
+        ${selectors.popupContent} { min-height: 0; height: auto; padding: 0; border: 0; background: transparent; box-sizing: border-box; }
+        ${selectors.popupTabs} { display: flex; width: 100%; height: auto; padding: 0; margin: 0 0 8px; gap: 4px; border: 0; list-style: none; }
+        ${selectors.popupTabs} > li { flex: 1; float: none; width: auto; margin: 0; border: 0; border-radius: 8px; background: transparent; }
+        ${selectors.popupTabs} button { width: 100%; min-height: 36px; border: 0; background: transparent; color: var(--dcuf-theme-fg-muted); font: 600 12px/1.3 system-ui, sans-serif; }
+        ${selectors.popupTabs}::after, ${selectors.popupTabs} button::before { content: none; display: none; }
+        ${selectors.popupCurrent} { border: 0; background: var(--dcuf-theme-accent-soft); }
+        ${selectors.popupCurrent} button { color: var(--dcuf-theme-accent-ink); }
+        ${selectors.popupList} { min-height: 0; height: auto; width: 100%; padding: 0; margin: 0; box-sizing: border-box; }
+        ${selectors.popupRow} { display: flex; align-items: center; width: 100%; min-height: 40px; margin: 0; padding: 0 4px; gap: 5px; box-sizing: border-box; }
+        ${selectors.popupRow} a { flex: 1; min-width: 0; padding: 8px 2px; font: 12px/1.5 system-ui, sans-serif; white-space: normal; }
+        ${selectors.popupFooter} { position: static; display: flex; justify-content: flex-end; height: auto; margin: 8px 0 0; padding: 8px 0 0; border-top: 1px solid var(--dcuf-theme-border); background: transparent; }
+        ${selectors.popupFooter} button { position: static; min-height: 32px; color: var(--dcuf-theme-fg-muted); font-size: 11px; }
         ${selectors.arrow} { min-width: 22px; min-height: 24px; }
         ${selectors.darkTitle} { color: #e0e0e0 !important; }
-        @media (max-width: 759px) { ${selectors.menuRoot} { grid-area: 2 / 2; margin-top: 0; margin-bottom: 8px; } }
+        @media (max-width: 899px) { ${selectors.menuRoot} { grid-area: 2 / 2; margin-top: 0; margin-bottom: 8px; } }
 `
         });
     }

@@ -2,22 +2,22 @@
 
 ## Current execution
 
-- Active plan: docs/work/MOBILE_UI_MODERNIZATION.md → B compact/B1 preview approved → native trial visually rejected. UI_VISUAL_REVIEW.md owns the diagnosed batch and official comparator route.
+- Active plan: docs/work/MOBILE_UI_MODERNIZATION.md → B compact/B1 native header/list repair complete within B1_VISUAL_REPAIR.md. Other UI surfaces remain later.
 - Workspace path: `.`. Use the private prompt's exact nested worktree; AGENTS.md is the single policy.
-- Active stage: `header-navigation`; bounded slice `b1-visual-repair-batch` is next. Investigation/tooling is complete; actual UI repair remains open. Do not advance to article/comments/write yet.
-- Accepted visual preference: B compact/recent menu + B1 Prism Glass. B2 and rejected large-title-card remain inactive. Preserve14 palettes/settings and native controls. The original toolbar scroll behavior stays; prototype whole-masthead return is a later enhancement.
-- Source state: Source checkpoint base HEAD `0a9f727840a36e904e96a09776aec2b988d955ea` on `codex/ui-port-boundary`; mobile945C3DE7/PC5FA25756 unchanged. This unit changes visual-review tools/skill/routing/docs only. Existing overlay retained; no owner or accepted-registry transition.
-- Local-only state: `LOCAL_ONLY_EVIDENCE`. Reports/captures/trial installer under artifacts/ and testbed/artifacts/ are ignored. Preserve debug.log unread/unstaged.
-- Candidate fingerprint: `d1fbb7269ce46483c8fdebd1f06c3e5523868f9258002b7275d4d2a9efa51a9c`
-- Last current audit: UNKNOWN — B1_VISUAL_REVIEW_REJECTED. Six preview/native pairs differ; actual vision review and fresh native CSS confirm unmodeled cascade, duplicate sprite and composition gaps. Comparator controls pass for unchanged/shifted/missing/size/corrupt/baseline-preservation cases. Previous functional/native-startup passes do not approve appearance.
-- Current receipt: `verification/receipts/2026-10-23-b1-visual-review.json`; prior B1_PRODUCT_TRIAL.md/receipt retain exact functional scope and published raw +8-listener failure. No new runtime acceptance follows.
-- Accepted baseline: Immediate source control80cfd24/mobile478EF59F; published stable32BA208D remains the separate real-extension control. Previous milestone receipts remain historical, not current evidence.
-- Current artifact: Mobile3.5.5 `945C3DE7D4A6EDC94829EC6D7DA5A8C54CC8077237E5F11B967906A69E63EC77`, root/dist/guard aligned. PC1.9.9 `5FA25756C43864AA8C90C1347AE6A03652D901862F83ABEAEDDEBF6382CFA740` root/dist unchanged.
-- Blockers: Current B1 visuals are unaccepted, not ready for the next UI surface. No known capability/permission blocker for the diagnosed repair. Product runtime and both generated targets are unchanged.
-- Pending live checks: Restore B1 native composition through existing owners, model actual dark/sprite/visible-tip branches, then compare affected light/dark/phone980/open states. 390 remains stress. Report viewer port10064 uses native Playwright diff; old10063 miniature gallery is not acceptance. Authenticated/actual-phone input/all-child/release remain separate.
+- Active stage: `header-navigation`; diagnosed repair batch closed in exact8606114F evidence. Next bounded slice `b1-design-detail-review`: review feasible design-detail differences before selecting another surface. No new approval ceremony or blanket rerun.
+- Accepted visual preference: B compact/recent menu + B1 Prism Glass. B2/large-title-card stay inactive. Preserve14 palettes/settings, original controls and original toolbar motion.
+- Source state: Source checkpoint base HEAD `e837eb62e9c0eb42db504218cc42dcf4672bc0da` on `codex/ui-port-boundary`; mobile8606114F, PC5FA25756 unchanged. Existing owners/overlay retained; no accepted-registry/owner transition.
+- Local-only state: `LOCAL_ONLY_EVIDENCE`. Reports/captures under artifacts/ and testbed/artifacts/ are ignored. Preserve debug.log unread/unstaged.
+- Candidate fingerprint: `fce37608ca75e2c58dbd7a02c00fe8c06d11fbb37c1723f682a5850be88cb7ac`
+- Last current audit: PASS — B1_REPAIR_SCOPED. Final mobile144/144, seven B1/28 palette bindings, eight layout/five scroll, four pure builders/46 slots,16 immediate semantic/four settled-resource records, actual-extension3+3 with replay and direct visual comparison. This does not approve all UI or user aesthetics.
+- Current stage receipt: `verification/receipts/2026-10-23-b1-visual-repair.json` SHA-256 `9BEBEF9A8084D28ADA9BE73F0B905654AD761439C011C25944693FE93D4B3FFA`; scope B1_REPAIR_ONLY, design-detail fidelity remains incomplete.
+- Accepted baseline: Immediate e837eb6/mobile945C3DE7 is the before-repair control; published32BA208D remains separate actual-extension control. Historical published raw +8-listener failure is not waived.
+- Current artifact: Mobile3.5.5 `8606114FA2A2D7E242197A711277F375EFD626F77CEA22759D951B58A15310C2`, root/dist/guard aligned. PC1.9.9 `5FA25756C43864AA8C90C1347AE6A03652D901862F83ABEAEDDEBF6382CFA740` root/dist unchanged.
+- Blockers: No known remaining diagnosed breakage. B1 design-detail fidelity is unfinished and unaccepted; user aesthetic feedback and other child surfaces and formal raw/mixed/upper/release gates remain outside this repair, not capability/permission blockers.
+- Pending live checks: Review feasible typography/spacing/icon/button/material differences in this slice; authenticated/actual-phone input and later article/comments/write/dialog states remain separate. Layout980×2306 is the phone proxy,390 is stress. Local10064 now serves the repaired public design report; six pixel differences reflect native/prototype/content adaptation, not automatic approval or six unresolved regressions.
 
 ```dcuf-current-artifacts
-{"schemaVersion":1,"mobile":{"sha256":"945C3DE7D4A6EDC94829EC6D7DA5A8C54CC8077237E5F11B967906A69E63EC77"},"pc":{"sha256":"5FA25756C43864AA8C90C1347AE6A03652D901862F83ABEAEDDEBF6382CFA740"}}
+{"schemaVersion":1,"mobile":{"sha256":"8606114FA2A2D7E242197A711277F375EFD626F77CEA22759D951B58A15310C2"},"pc":{"sha256":"5FA25756C43864AA8C90C1347AE6A03652D901862F83ABEAEDDEBF6382CFA740"}}
 ```
 
 ## Draft-complete checkpoint — 2026-10-21

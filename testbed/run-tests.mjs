@@ -54,6 +54,13 @@ const statsStorage = {
 };
 const noStatsStorage = { ...statsStorage, [storageKeys.threshold]: 0 };
 
+// Color contracts sample the settled theme, independent of frame scheduling.
+async function settleThemeTransitions(page) {
+    await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+    await page.waitForFunction(() => !document.getAnimations().some(animation =>
+        animation instanceof CSSTransition && animation.playState === 'running'));
+}
+
 mobileTest('live native controls: palette category sprites comment and action ownership', 'functional', runLiveControlContract);
 
 mobileTest('confirmed UI repair: native comment composer cascade and original input', 'functional', runCommentRepairContract);
@@ -1754,17 +1761,24 @@ mobileTest('native list toolbar contains tabs categories and actions without ove
                         const rect = element => element.getBoundingClientRect().toJSON();
                         const box = rect(toolbar);
                         const controls = Array.from(toolbar.querySelectorAll('.array_tab button, .center_box a, select, .btn_write'));
-                        const boxes = controls.map(rect);
+                        // Categories intentionally scroll in their original list. Compare the
+                        // painted intersection, then prove every original link is reachable below.
+                        const boxes = controls.map(element => {
+                            const r = rect(element), list = element.closest('[data-dcuf-role="category-list"]');
+                            if (!list) return r;
+                            const clip = rect(list), left = Math.max(r.left, clip.left), right = Math.min(r.right, clip.right);
+                            return { ...r, x: left, left, right, width: Math.max(0, right - left) };
+                        });
                         const contained = r => r.width >= 1 && r.height >= 1 && r.left >= box.left - 1
                             && r.right <= box.right + 1 && r.top >= box.top - 1 && r.bottom <= box.bottom + 1;
                         return {
                             box, parent: rect(toolbar.parentElement), boxes,
                             tablist: rect(toolbar.querySelector('.array_tab')),
-                            allContained: boxes.every(contained),
+                            allContained: boxes.filter(r => r.width > 0).every(contained),
                             categoryFlow: Array.from(toolbar.querySelectorAll('.center_box a')).every(element => {
                                 const r = rect(element), parent = rect(element.closest('ul'));
-                                return r.left >= parent.left - 1 && r.right <= parent.right + 1
-                                    && r.top >= parent.top - 1 && r.bottom <= parent.bottom + 1;
+                                return r.width <= parent.width + 1 && r.top >= parent.top - 1
+                                    && r.bottom <= parent.bottom + 1;
                             }),
                             writeLabel: (() => {
                                 const link = toolbar.querySelector('.btn_write');
@@ -1775,10 +1789,11 @@ mobileTest('native list toolbar contains tabs categories and actions without ove
                             })(),
                             allHit: controls.every((element, i) => {
                                 const r = boxes[i];
+                                if (r.width <= 0) return true;
                                 const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
                                 return hit === element || element.contains(hit);
                             }),
-                            overlap: boxes.some((a, i) => boxes.some((b, j) => i < j
+                            overlap: boxes.some((a, i) => boxes.some((b, j) => i < j && a.width > 0 && b.width > 0
                                 && Math.min(a.right, b.right) - Math.max(a.left, b.left) > 1
                                 && Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top) > 1)),
                             identity: window.__fixtureNativeToolbarControls.every(({element, parent, next}) =>
@@ -1786,14 +1801,21 @@ mobileTest('native list toolbar contains tabs categories and actions without ove
                         };
                     });
                     const label = `${variant}@${width}/${dark ? 'dark' : 'light'}: ${JSON.stringify(report)}`;
-                    assert.equal(Math.abs(report.box.width - report.parent.width) <= 1, true, label);
+                    const inset = width <= 759 ? 24 : 40;
+                    assert.equal(Math.abs(report.box.width - Math.min(1120, report.parent.width - inset)) <= 1, true, label);
+                    assert.equal(Math.abs((report.box.left + report.box.right) / 2 - (report.parent.left + report.parent.right) / 2) <= 1, true, label);
                     assert.equal(report.allContained, true, label);
                     assert.equal(report.categoryFlow, true, label);
                     assert.equal(report.writeLabel, true, label);
                     assert.equal(report.allHit, true, label);
                     assert.equal(report.overlap, false, label);
                     assert.equal(report.identity, true, label);
-                    assert.equal(report.tablist.width >= 200, true, label);
+                    for (const link of await session.page.locator('.center_box a').all()) {
+                        await link.scrollIntoViewIfNeeded();
+                        await link.click({ trial: true });
+                    }
+                    // Compact narrow tabs keep three44px targets; desktop uses the wider group.
+                    assert.equal(report.tablist.width >= (width >= 760 ? 200 : 132), true, label);
                     await session.page.locator('.array_tab button').first().click();
                     await session.page.locator('.array_tab button').nth(1).focus();
                     await session.page.keyboard.press('Enter');
@@ -11702,7 +11724,7 @@ mobileTest('UI palette presets normalize stored values without blocking boot', '
             assert.equal(listCardContract.titleHighlight, 'none', JSON.stringify(listCardContract));
 
             await session.page.evaluate(() => window.__dcufFixture.toggleDark(true));
-            await session.page.waitForTimeout(190);
+            await settleThemeTransitions(session.page);
             const darkColors = await session.page.evaluate(() => {
                 const selectors = [
                     '[data-dcuf-surface="list-toolbar"] [data-dcuf-state="current"]',
@@ -11824,7 +11846,7 @@ mobileTest('UI palette surfaces cover list canvas, comments, image comments, and
         assert.equal(listHierarchy.normal.shadow, 'none', JSON.stringify(listHierarchy));
         assert.equal(listHierarchy.titleBackground, 'none', JSON.stringify(listHierarchy));
         await session.page.evaluate(() => window.__dcufFixture.toggleDark(true));
-        await session.page.waitForTimeout(190);
+        await settleThemeTransitions(session.page);
         const darkListHierarchy = await session.page.evaluate(() => {
             const normal = document.querySelector('.custom-post-item:not(.notice):not(.concept)');
             const concept = document.querySelector('.custom-post-item.concept');
@@ -12045,6 +12067,8 @@ mobileTest('UI palette replaces live-shaped host blue and keeps continuous list,
                 nextBackground: getComputedStyle(next).backgroundImage,
                 nextColor: getComputedStyle(next).borderTopColor,
                 issueBorder: getComputedStyle(document.querySelector('.issue_wrap')).borderTopColor,
+                issueBorderWidth: getComputedStyle(document.querySelector('.issue_wrap')).borderTopWidth,
+                issueShadow: getComputedStyle(document.querySelector('.issue_wrap')).boxShadow,
                 inactiveColor: getComputedStyle(inactive).color,
                 cardBackground: getComputedStyle(card).backgroundImage,
                 cardShadow: getComputedStyle(card).boxShadow,
@@ -12057,7 +12081,8 @@ mobileTest('UI palette replaces live-shaped host blue and keeps continuous list,
         assert.equal(listContract.badgeLabel, '"m"', JSON.stringify(listContract));
         assert.equal(listContract.nextBackground, 'none', JSON.stringify(listContract));
         assert.equal(listContract.nextColor, 'rgb(104, 115, 132)', JSON.stringify(listContract));
-        assert.equal(listContract.issueBorder, listContract.accent, JSON.stringify(listContract));
+        assert.equal(listContract.issueBorderWidth, '0px', JSON.stringify(listContract));
+        assert.equal(listContract.issueShadow, 'none', JSON.stringify(listContract));
         assert.equal(listContract.inactiveColor, listContract.muted, JSON.stringify(listContract));
         assert.equal(listContract.cardBackground, 'none', JSON.stringify(listContract));
         assert.equal(listContract.cardShadow, 'none', JSON.stringify(listContract));

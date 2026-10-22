@@ -51,7 +51,7 @@ try{
    assert.equal(geometry.layout,'grid','Existing ancestor owns the B1 composition');
    assert.equal(geometry.overflow,false,JSON.stringify(geometry));
    assert.equal(geometry.boardRadius,0,'Approved B1 removes the rejected large title card');
-   assert.ok(geometry.tools&&geometry.tools.y>=geometry.title.bottom,'Gallery tools remain below the title');
+   assert.ok(geometry.tools&&(width>=900?geometry.tools.x>=geometry.title.right:geometry.tools.y>=geometry.title.bottom),'Gallery tools share the wide title row and stack in narrow layouts');
    if(width>=760)assert.ok(geometry.links.x>=geometry.search.right,'Original utilities remain beside search');
    if(width>=760)assert.ok(geometry.search.x>geometry.logo.right+8,'Search beside the compact brand');
    else assert.ok(geometry.search.y>=geometry.logo.bottom+6,'Narrow search stacks below brand');

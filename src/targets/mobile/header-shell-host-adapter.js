@@ -13,7 +13,8 @@
             layout: "[data-dcuf-header-layout]",
             bridge: "[data-dcuf-header-bridge]",
             brandMark: "[data-dcuf-header-shell-role=\"head\"] h1[data-dcuf-header-shell-role=\"logo\"] > a[data-dcuf-header-shell-role=\"brand-mark\"]",
-            searchField: "[data-dcuf-header-shell-role=\"head\"] [data-dcuf-header-shell-role=\"top-search\"] :is(input.in_keyword, input)"
+            searchField: "[data-dcuf-header-shell-role=\"head\"] [data-dcuf-header-shell-role=\"top-search\"] :is(input.in_keyword, input)",
+            nativeTip: "[data-dcuf-header-shell-role=\"head\"] [data-dcuf-header-shell-role=\"links\"] .darkmodebox > .pop_tipbox"
         });
     }
 

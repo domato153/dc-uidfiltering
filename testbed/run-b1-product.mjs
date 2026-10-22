@@ -3,6 +3,7 @@ import {createHash} from 'node:crypto';
 import path from 'node:path';
 import {assert,createTestPage,launchBrowser,storageKeys,getMetrics,assertNoRuntimeErrors} from './harness/runner-utils.mjs';
 import {startServer} from './server/server.mjs';
+import {mountB1NativeFixture} from './fixtures/b1-native-list.mjs';
 assert.ok(process.argv.includes('--require-runtime-under-test'),'Guard required');
 process.env.DCUF_TESTBED_USERSCRIPT='testbed/artifacts/runtime-under-test.user.js';
 const runtime=path.resolve(process.env.DCUF_TESTBED_USERSCRIPT),sha256=createHash('sha256').update(await readFile(runtime)).digest('hex');
@@ -12,36 +13,7 @@ try{
  for(const [width,height,dark,siblings] of [[980,900,false,true],[980,900,true,true],[980,2306,false,true],[1280,900,false,true],[390,900,false,true],[390,900,true,true],[980,900,false,false]]){
   const e=await createTestPage(browser,server.baseUrl,{viewport:{width,height},storage:{[storageKeys.threshold]:0,[storageKeys.palette]:'teal'}});
   try{
-   await e.page.route(url=>url.origin===server.baseUrl&&/\/board\/lists$/.test(url.pathname),async route=>{
-    const response=await route.fetch();let html=await response.text();
-    html=html.replace(/(<div class="wrap_search"><form>)([\s\S]*?)(<\/form>)/,'$1<fieldset>$2</fieldset>$3');
-    html=html.replace('<div class="inner_search"><input','<div class="inner_search"><input class="in_keyword"').replace('</head>','<style>.dchead .top_search .in_keyword{width:297px;height:38px}.typea .inner_search{width:315px}.typea .top_search{width:364px}.visit_bookmark .newvisit_history .btn_open{width:15px;height:15px}</style></head>');
-    html=html.replace(/<div class="area_links">([\s\S]*?)<\/div>/,'<div class="area_links"><ul><li>$1</li><li><a href="#native-service">서비스 링크</a></li></ul><div class="darkmodebox"><button type="button" aria-label="네이티브 테마">◐</button></div></div>');
-    if(siblings){
-    const start=html.indexOf('<header class="dcheader'),end=html.indexOf('</header>',start)+9;
-    const chrome=html.slice(start,end-9).replace('<div class="gnb_bar">','</header><div class="gnb_bar">').replace('<div class="newvisit_history">','<div class="visit_bookmark"><div class="newvisit_history">');
-    html=html.slice(0,start)+'<div class="dcwrap width1160 list_wrap">'+chrome+'</div></div>'+html.slice(end);
-    }
-    await route.fulfill({response,body:html});
-   });
-   await e.goto('/mgallery/board/lists?id=test&nativeToolbar=1');
-   await e.page.waitForSelector('[data-dcuf-header-layout]');
-   await e.page.evaluate(()=>{
-    document.getElementById('dcuf-testbed-controls')?.remove();
-    // Native-shaped layer: the original button and original source handlers own
-    // display/tab/delete semantics. Product adds no replacement popup/controller.
-    const root=document.querySelector('.newvisit_history'),trigger=root.querySelector('.btn_open');
-    root.insertAdjacentHTML('afterbegin','<h3 class="tit bookmark_title" style="display:block">즐겨찾기 갤러리</h3>');
-    root.insertAdjacentHTML('beforeend','<div class="pop_wrap gray1px" id="visit_history_lyr" style="left:0;top:37px;display:none"><div class="pop_content newvisit_layer"><ul class="tabslist"><li><button type="button">최근 방문</button></li><li><button type="button">즐겨찾기</button></li></ul><ul class="under_listbox"><li><a href="#native-recent">명조 워더링 웨이브</a><button type="button" aria-label="목록에서 삭제">×</button></li></ul></div></div>');
-    const layer=root.querySelector('#visit_history_lyr');
-    trigger.onclick=()=>{layer.style.display=layer.style.display==='none'?'block':'none';window.__b1RecentOpens=(window.__b1RecentOpens||0)+1};
-    layer.querySelector('a').onclick=ev=>{ev.preventDefault();window.__b1RecentClicks=(window.__b1RecentClicks||0)+1};
-    layer.querySelector('[aria-label="목록에서 삭제"]').onclick=()=>window.__b1DeleteClicks=(window.__b1DeleteClicks||0)+1;
-    window.__b1Originals=Array.from(document.querySelectorAll('.dcheader a,.dcheader button,.dcheader input,.gnb_bar a,.newvisit_history button,#visit_history_lyr a')).map(node=>({node,parent:node.parentNode,handler:node.onclick}));
-    document.querySelector('#listSizeLayer')?.style.setProperty('display','none');
-    window.dispatchEvent(new Event('resize'));
-   });
-   if(dark)await e.page.evaluate(()=>window.__dcufFixture.toggleDark(true));
+   await mountB1NativeFixture(e,server.baseUrl,{siblings,dark});
    await e.page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
    const utility=e.page.getByRole('button',{name:'서비스 메뉴',exact:true});
    await utility.click();await e.page.getByRole('link',{name:'서비스 링크',exact:true}).waitFor({state:'visible'});
@@ -52,6 +24,17 @@ try{
     return {overflow:document.documentElement.scrollWidth>innerWidth+1,logo:rect('[data-dcuf-header-shell-role="logo"]'),search:rect('.wrap_search'),field:rect('.top_search'),recent:rect('.newvisit_history .btn_open'),nav:rect('.gnb_bar'),toolbar:rect('[data-dcuf-surface="list-toolbar"]'),row:rect('[data-dcuf-surface="list-item"]')};
    });
    assert.equal(top.overflow,false,JSON.stringify(top));
+   const fidelity=await e.page.evaluate(()=>{
+    const rect=n=>n.getBoundingClientRect().toJSON(),tip=document.querySelector('.darkmodebox .pop_tipbox'),sprite=document.querySelector('.newvisit_history > .btn_open > em'),tab=document.querySelector('.array_tab button:not(.on)');
+    return {tip:rect(tip),tipHit:tip.contains(document.elementFromPoint(rect(tip).x+rect(tip).width/2,rect(tip).y+rect(tip).height/2)),hitClass:document.elementFromPoint(rect(tip).x+rect(tip).width/2,rect(tip).y+rect(tip).height/2)?.className,ancestors:[tip.parentElement,tip.parentElement.parentElement].map(n=>({class:n.className,z:getComputedStyle(n).zIndex,transform:getComputedStyle(n).transform})),sprite:getComputedStyle(sprite).display,tabBg:getComputedStyle(tab).backgroundColor};
+   });
+   assert.equal(fidelity.sprite,'none','Original sprite cannot duplicate the owned recent chevron');
+   assert.equal(await e.page.locator('.newvisit_history .blind').evaluate(n=>getComputedStyle(n).position==='absolute'&&n.getBoundingClientRect().width<=1),true,'Native accessible label stays clipped rather than duplicating the visible recent label');
+   assert.equal(fidelity.tabBg,'rgba(0, 0, 0, 0)','Native dark sheet cannot replace quiet inactive tabs');
+   assert.ok(fidelity.tip.x>=0&&fidelity.tip.right<=width&&fidelity.tipHit,'Visible original tip remains contained and dismissible '+JSON.stringify(fidelity));
+   await e.page.locator('.darkmodebox .pop_tipbox').click();
+   assert.equal(await e.page.locator('.darkmodebox .pop_tipbox').isVisible(),false,'Original tip dismissal remains intact');
+   assert.ok(top.toolbar.height<=(width>=760?110:180),'Categories cannot inflate the native toolbar into a tall empty block');
    assert.ok(top.nav.bottom<=260,'Compact native navigation must leave room for content');
    assert.ok(top.toolbar.filter.includes('blur'),'Glass belongs to the existing toolbar owner');
    assert.ok(top.search.right<=top.recent.x,'Native search field does not invade recent-menu hit area');
@@ -61,6 +44,8 @@ try{
    const trigger=e.page.locator('.newvisit_history > .btn_open');await trigger.click();
    const popup=await e.page.locator('#visit_history_lyr').evaluate(el=>{const r=el.getBoundingClientRect();return {x:r.x,right:r.right,y:r.y,bottom:r.bottom,width:r.width,height:r.height,hit:el.contains(document.elementFromPoint(r.x+Math.min(25,r.width/2),r.y+Math.min(20,r.height/2)))}});
    assert.ok(popup.width>=250&&popup.height>0&&popup.x>=0&&popup.right<=width&&popup.hit,JSON.stringify(popup));
+   assert.ok(popup.height<240,'One-entry native menu cannot retain the old minimum-height whitespace');
+   assert.equal(await e.page.locator('#visit_history_lyr .on button').evaluate(n=>getComputedStyle(n,'::before').content),'none','Native blue selected-tab pseudo decoration is retired in the existing presenter');
    await e.page.getByRole('link',{name:'명조 워더링 웨이브',exact:true}).click();
    await e.page.getByRole('button',{name:'목록에서 삭제',exact:true}).click();
    assert.equal(await e.page.evaluate(()=>window.__b1RecentClicks),1);assert.equal(await e.page.evaluate(()=>window.__b1DeleteClicks),1);
