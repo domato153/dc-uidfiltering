@@ -244,5 +244,17 @@
 
 ## 실사이트 표본 라우터
 
+- A-01~12/C-01~18/W-20~22 **주 표본**: [6778319 본문](https://gall.dcinside.com/board/view/?id=comic_new6&no=6778319&exception_mode=recommend&page=1). 사용자가 2026-10-24 본문 버튼·댓글/이미지댓글·수정/삭제를 함께 볼 표본으로 지정했다. 이전 [6782494](https://gall.dcinside.com/board/view/?id=comic_new6&no=6782494&exception_mode=recommend&page=1)와 [6786251](https://gall.dcinside.com/board/view/?id=comic_new6&no=6786251&page=1)은 주 표본에 없는 상태의 보조다. 실제 관찰/미확인은 B1_UI_EXPANSION_PREFLIGHT.md에 분리했다. 게시물별 고정 이미지/댓글 개수를 기대값으로 삼지 않는다.
 - L-05 긴 말머리/툴바: [명조 워더링 웨이브 목록](https://gall.dcinside.com/mgallery/board/lists/?id=wutheringwaves). 사용자가 2026-10-18에 지정한 `list_array_option clear`의 긴 목록 표본이다. 길이 증가 시 생략 상태, 화살표형 서랍의 닫힘/열림, 마지막 항목 접근·선택, 폭·테마 변경 후 복구를 확인한다. 원래 노드·필터 동작을 보존한다. 툴바/말머리 변경에 이 표본을 선택하며, 무관한 UI 변경마다 전체 사이트를 검사하지 않는다.
 - 이 표본 등록과 URL 접근 확인은 동작 검증 PASS가 아니다. 실제 overflow/서랍 상태를 관측하고, 안정적인 비민감 구조만 fixture로 반영한 뒤 근거를 기록한다. 다른 갤러리의 짧은 탭 통과로 대체하지 않는다.
+
+### B1 확장의 이름 있는 자식 상태
+
+B1_UI_EXPANSION_PREFLIGHT.md의 범위를 기존 부모 ID 아래에서 고른다. 아래 이름은 별도 부모 행/새 전체 체크리스트가 아니며, 기존128개 부모 수나 검토 상태를 바꾸지 않는다. 각 실제 자식은 진입/열림/선택/닫힘/재열기를 따로 기록한다. 존재/권한이 미확인이면 그대로 미확인으로 남긴다.
+
+- H-01: `search-history`, `search-suggestions`, `search-empty`, `search-clear-gate`, `login-gate`, `sign-login-page`. 통합검색 기록과 L-08의 하단 검색 레이어를 구별한다. 실제 로그인은 sign의 별도 문서이며 현재 gall 메타데이터/초기화 범위 밖이다. 전용 진입 구현 전 통과로 표시하지 않는다.
+- H-05~10: `door-open`, `door-child-rank`, `door-child-help`, `door-child-related`, `door-child-settings`. 실제로 제공되는 내부 팝업/메뉴마다 원래 트리거와 루트를 확인한다.
+- A-07~12: `silbe-request`, `scrap-login-gate`, `scrap-folder`, `scrap-result`, `share-options`, `pum`, `report-kind`, `report-reason`, `report-gate`. 대표 창 하나로 권한/결과 분기를 완료하지 않는다. 제출/신고/추천 등 live 쓰기는 하지 않는다.
+- C-06/C-10: `image-comment-fold`, `image-comment-full`, `image-comment-compose-if-native`. 이미지 hover→원래 버튼→별도 이미지 루트를 구별한다. 접힌 미리보기에 입력창이 없다는 이유로 새 입력창을 만들거나 전체 상태를 N/A로 처리하지 않는다.
+- C-11~13: `textcon`, `dccon`, `comment-password`, `reply-password`. 글자콘/디시콘은 별개 내부 선택기이며 공용 루트는 활성 문맥의 소유자 하나만 꾸민다.
+- W-01~24/S-01~12/P-01~14/V-01~08: 기존 행의 각 편집 도구, 비밀번호 페이지/확인창, FAB→설정/관리→추가/백업, 미리보기/초안을 그대로 재사용한다. N-01~07 브라우저/OS 창은 웹 CSS 적용 대상과 구별한다.

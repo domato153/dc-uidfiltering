@@ -2,6 +2,8 @@
 
 Status: `ACTIVE`
 
+Current B1 expansion preflight (2026-10-24): the user selected the finished list at2dcd960/BCB96852 as the expansion baseline. B1_UI_EXPANSION_PREFLIGHT.md records article/comments/image-comments, all named native/owned popup children, write/edit/delete, settings and the separate sign-login entry.6778319 is the primary article specimen; earlier links are supplemental. This is planning only: review scope/order/material roles first, then the first article/comments unit. Runtime/metadata/registry/build artifacts are unchanged. CURRENT/NEXT own the one next action; no whole-UI acceptance or release follows.
+
 Current B1 repair (2026-10-23): B1_VISUAL_REPAIR.md supersedes the rejected945 native appearance for the diagnosed header/list batch. Existing owners implement compact native B1 composition and themed menus; reference/current/diff plus direct visual review are exercised, with prototype-only UI differences explicitly retained. Other surfaces remain later. CURRENT/NEXT own the next bounded action; historical prerequisites below cannot revive a completed repair.
 
 Current B1 product trial (2026-10-22): the user approved the runnable B1 preview and authorized actual adoption. B1_PRODUCT_TRIAL.md owns the first native list/header implementation and exact checks. Existing parents/controls/filter/settings/palettes remain; native service/recent menus are retained. B1_LIST_PREVIEW.md is the approved isolated reference. Other article/comments/write/dialog redesign and whole-masthead scroll-return remain later; B2/large-card header stay inactive. CURRENT/NEXT own the next bounded action.
