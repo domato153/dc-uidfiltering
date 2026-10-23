@@ -1,6 +1,6 @@
 # Visual comparison and the B1 inspection gap
 
-Current AF6C98F0 application: B1_VISUAL_REVIEW_GAP.md records the actual toolbar/header repair and verified backstop effect. Complete reference/before/after comparison is ready; header material remains a subtle, user-reviewed preference. CURRENT/NEXT and the toolbar-header-detail receipt own current identity. The90EEEBFF miss remains diagnosis history, not a new next task.
+Current96B933A1 follow-up: B1_VISUAL_REVIEW_GAP.md records the user-rejected AF6 write-button texture, same-owner material refinement and fresh focused checks. Complete button/toolbar reference-before-after is ready; user judgement remains pending. The earlier AF6 alignment/clearfix result and144 report retain their historical exact scope.
 
 Current repair: [B1_VISUAL_REPAIR.md](B1_VISUAL_REPAIR.md) and its exact8606114F receipt supersede the defective945C3DE7 result for the diagnosed batch. The findings below remain diagnosis history and method guidance, not current unresolved defects. Use `verification/visual/b1-repaired-native-list.json` for the repaired public design comparison; retain the original manifest as historical evidence.
 

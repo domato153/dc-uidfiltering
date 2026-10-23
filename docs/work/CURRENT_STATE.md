@@ -2,22 +2,22 @@
 
 ## Current execution
 
-- Active plan: docs/work/MOBILE_UI_MODERNIZATION.md → B compact/B1; actual toolbar/header detail application is review-ready. B1_VISUAL_REVIEW_GAP.md retains cause, repairs and bounded method evidence.
+- Active plan: docs/work/MOBILE_UI_MODERNIZATION.md → B compact/B1; user-reported write-button material follow-up is ready for review. B1_VISUAL_REVIEW_GAP.md owns current and historical scopes.
 - Workspace path: `.` (repository root). Use the private prompt's exact nested worktree; AGENTS.md is the single policy.
 - Active stage: `header-navigation`; next bounded slice `b1-detail-user-review`. Review actual chosen-reference/before/after with the user before another visual family.
 - Accepted visual preference: B compact/recent menu + B1 Prism Glass; B2/large-title-card remain inactive.14 palettes/settings, native controls and toolbar motion preserved.
-- Source state: Source checkpoint base HEAD `246a2b0488de1a011a89e3338f67c4fecdb9f687` on `codex/ui-port-boundary`; CSS-only refinement in list/header-shell/theme-host owners. Accepted registry/overlay and responsibilities unchanged; no native DOM/event/storage/observer changes.
+- Source state: Source checkpoint base HEAD `6d2841638dcbae960b3808e7fd14224d451df8c6` on `codex/ui-port-boundary`; one list-presenter primary-action CSS block refined. Registry/overlay/owners, native DOM/events/UiPort/state/observers and PC unchanged.
 - Local-only state: `LOCAL_ONLY_EVIDENCE`; captures/reports/viewer under ignored artifacts/. Preserve debug.log unread/unstaged.
-- Candidate fingerprint: `3a69d306c5c55be9ce2ce84a7b547999ef9b21f02d02364b11dc44e9e9a8bc01`
-- Last current audit: UNKNOWN — B1_COMPONENT_REFINEMENT_REVIEW_READY.144/144 mobile,8 B1 functional contexts/28 palette bindings,8 layout/5 scroll and16 immediate semantic/four settled records pass. Same-row maximum offset0.703125px; no clearfix finding across8 contexts. No beauty/upper approval.
-- Current stage receipt: `verification/receipts/2026-10-23-b1-toolbar-header-detail.json` SHA-256 `733A5A8F1C825CD4D8E883F7E51EE995351C5247C28E196608A3982BF8CDC97D`; exact implementation/affected-state evidence. Header glass difference is subtle and user judgement remains pending.
-- Accepted baseline: 90EEEBFF is this unit's exact immediate control; chosen B1 preview is the design reference, not a native golden. Published raw +8-listener difference remains unwaived.
-- Current artifact: Mobile3.5.5 `AF6C98F0ECD7351B3A4C2EFF47BC23636B8AAE9C47DFD2A9F16D3AA76187C589`, root/dist/guard aligned. PC1.9.9 `5FA25756C43864AA8C90C1347AE6A03652D901862F83ABEAEDDEBF6382CFA740` root/dist unchanged.
+- Candidate fingerprint: `13e19141967980dad3546a0a5d4feebb6f1074721e33c73ef7cb92ec99daf3fb`
+- Last current audit: UNKNOWN — B1_WRITE_BUTTON_MATERIAL_REVIEW_READY.8 B1 contexts/28 palette bindings,36 native-toolbar contexts,28 rendered contrast samples (minimum5.05:1), keyboard focus and16 immediate semantic/four settled records pass. User appearance/upper approval pending; AF6 full144 is historical.
+- Current stage receipt: `verification/receipts/2026-10-23-b1-write-button-material.json` SHA-256 `1EA57820AD069DF00722D7D8AE6EA78E05D1F65E51EF9DADB7AB489E2D533325`; exact focused refinement evidence and equal-scale button/full-toolbar comparison. User beauty judgement remains pending.
+- Accepted baseline: AF6C98F0 is this unit's exact immediate control; its write-button texture was rejected by the user. Chosen B1 preview remains design reference, not native golden. Published raw +8-listener difference remains unwaived.
+- Current artifact: Mobile3.5.5 `96B933A1A47849885D83D42290B54E3AE33181846DF244606A9063F9E4083BFD`, root/dist/guard aligned. PC1.9.9 `5FA25756C43864AA8C90C1347AE6A03652D901862F83ABEAEDDEBF6382CFA740` root/dist unchanged.
 - Blockers: No engineering/capability blocker. User visual preference, especially sufficient header glass, remains pending; one unconfirmed dynamic-img detector warning retains no ignore.
-- Pending live checks: Public Chrome155 light/dark GET/HEAD with GM shim, visible broken images0 and overflow0; no new actual Tampermonkey/device/authenticated qualification.980×2306 is layout proxy,390 stress. Raw/mixed/upper/release and article/comment/write/dialog redesign remain separate.
+- Pending live checks: Fresh public Chrome155 light/dark GET/HEAD with GM shim returns200/overflow0; no new actual Tampermonkey/device/authenticated qualification.980×2306 is layout proxy,390 stress. Other UI families and raw/mixed/upper/release remain separate.
 
 ```dcuf-current-artifacts
-{"schemaVersion":1,"mobile":{"sha256":"AF6C98F0ECD7351B3A4C2EFF47BC23636B8AAE9C47DFD2A9F16D3AA76187C589"},"pc":{"sha256":"5FA25756C43864AA8C90C1347AE6A03652D901862F83ABEAEDDEBF6382CFA740"}}
+{"schemaVersion":1,"mobile":{"sha256":"96B933A1A47849885D83D42290B54E3AE33181846DF244606A9063F9E4083BFD"},"pc":{"sha256":"5FA25756C43864AA8C90C1347AE6A03652D901862F83ABEAEDDEBF6382CFA740"}}
 ```
 
 ## Draft-complete checkpoint — 2026-10-21

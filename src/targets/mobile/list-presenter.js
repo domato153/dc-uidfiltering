@@ -443,9 +443,11 @@
             [data-dcuf-surface="list-actions"] [data-dcuf-role="action-end"] [data-dcuf-role="primary-action"]:visited,
             [data-dcuf-surface="list-actions"] [data-dcuf-role="primary-action"] {
                 min-width: 80px;
-                border-color: var(--dcuf-theme-accent-ink, #245bda);
-                background: linear-gradient(150deg, #ffffff16, transparent), var(--dcuf-theme-accent-strong, #245bda);
+                border-color: color-mix(in srgb, var(--dcuf-theme-on-accent) 20%, var(--dcuf-theme-accent-strong));
+                border-radius: 9px;
+                background: linear-gradient(180deg, #ffffff1f, transparent 36%), linear-gradient(155deg, var(--dcuf-theme-accent-strong), color-mix(in srgb, var(--dcuf-theme-accent-strong) 84%, black));
                 color: var(--dcuf-theme-on-accent, #fff);
+                box-shadow: inset 0 1px 0 #ffffff4d, inset 0 -1px 0 #00000018, 0 3px 7px var(--dcuf-theme-accent-shadow);
             }
             [data-dcuf-surface="list-toolbar"] [data-dcuf-role="primary-action"]::before,
             [data-dcuf-surface="list-actions"] [data-dcuf-role="primary-action"]::before {

@@ -1,8 +1,17 @@
 # B1 visual-review miss and bounded backstop
 
+## User feedback: write-button material —96B933A1
+
+The user rejected AF6C98F0's write-button texture after the whole-component review. Geometry and function passing did not approve that material. Actual computed CSS showed the correct list owner was active: only a weak glaze, a border close to the fill and no shadow. This was incomplete local polish, not another native-style collision.
+
+The existing list presenter now gives top/bottom list write actions a thin bright rim, a fading top glaze, darker lower face, soft elevation and9px corners. Native nodes/events,80×40 minimum,14 palettes and the outline icon remain. The new viewer shows equal-scale whole-button context plus the complete toolbar, selected B1/before/after, light/dark and original100%; same-fixture diff stays DIFFERENCES_REQUIRE_REVIEW. Material sufficient for the user's taste is still pending.
+
+Exact receipt: verification/receipts/2026-10-23-b1-write-button-material.json. Current96B933A1 passes8 B1 contexts/28 palette bindings, the existing36-context native toolbar test,28 rendered label-band contrast samples (minimum5.05:1), keyboard focus and16 immediate semantic/four settled-resource observations. Public anonymous Chrome155 light/dark returns200 with overflow0. The earlier144 result stays bound to AF6; this small paint-only follow-up does not rerun or inherit that as a new full-runtime claim. PC/version/owners unchanged. Original detector warning remains unconfirmed.
+
+
 ## Actual application — AF6C98F0, 2026-10-23
 
-Current implementation is ready for user visual review; it is not a beauty approval. The sections below retain the pre-repair90EEEBFF diagnosis. The exact result is bound by verification/receipts/2026-10-23-b1-toolbar-header-detail.json and CURRENT/NEXT.
+This earlier implementation was delivered for user visual review, not beauty approval; the write-button follow-up above supersedes its rejected material. The sections below retain the pre-repair90EEEBFF diagnosis. The exact result is bound by verification/receipts/2026-10-23-b1-toolbar-header-detail.json and CURRENT/NEXT.
 
 - In the existing list owner, category labels now occupy the same40px control band as tabs; box sizing and padding override the observed host anchor rules. Final rendered text-centre drift is below1px versus the earlier13.296875px. Tabs use their label width while preserving44×40px targets and the80px primary action. A single SVG-mask pencil avoids font-dependent glyph weight. Native links, overflow menu, ellipsis, handlers and order remain.
 - Whole-component review then caught a second real issue: native float clearfix becomes an empty grid row plus10px gap. The live toolbar was70px, then68px after label repair; its final height is58px. The live-shaped fixture and existing visual gate now reject that pseudo item in wide and narrow layouts. The ready-state semantic selector removes it in the existing owner, without coupling to native classes. An attempted native-class selector failed the original boundary check; a guessed list-host ancestor failed the new gate and was discarded because the toolbar can be its sibling.
