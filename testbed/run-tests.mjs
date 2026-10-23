@@ -1566,6 +1566,8 @@ mobileTest('mobile list presentation preserves native control topology behind se
                     const box = element.getBoundingClientRect();
                     const style = getComputedStyle(element);
                     return {
+                        x: box.x,
+                        right: box.right,
                         width: box.width,
                         height: box.height,
                         display: style.display,
@@ -1610,6 +1612,7 @@ mobileTest('mobile list presentation preserves native control topology behind se
                     searchSelect: rect(searchSelect),
                     searchButton: rect(searchButton),
                     pagination: rect(paging),
+                    listActions: rect(document.querySelector('[data-dcuf-surface="list-actions"]')),
                     toolbar: rect(toolbar),
                     toolbarPrimary: rect(toolbarPrimary),
                     pageSize: rect(pageSize),
@@ -1640,6 +1643,15 @@ mobileTest('mobile list presentation preserves native control topology behind se
             assert.equal(report.searchSelect?.height >= 44, true, JSON.stringify(report));
             assert.equal(report.searchButton?.height >= 44, true, JSON.stringify(report));
             assert.equal(report.pagination?.radius >= 10, true, JSON.stringify(report));
+            if (testCase.path.includes('/lists')) {
+                for (const box of [report.listActions, report.pagination]) {
+                    assert.ok(Math.abs(box.x - report.list.x) <= 1 && Math.abs(box.right - report.list.right) <= 1,
+                        'B1 bottom controls follow the reading column gutter: ' + JSON.stringify(report));
+                }
+                assert.ok(report.searchControls.width <= 640, 'Search stays a bounded secondary control: ' + JSON.stringify(report));
+                assert.ok(Math.abs((report.searchControls.x + report.searchControls.right) / 2
+                    - (report.list.x + report.list.right) / 2) <= 1, 'Search remains centered in the reading column');
+            }
             assert.equal(report.pageLinkHref.includes('page='), true);
             assert.equal(report.horizontalOverflow <= 1, true, JSON.stringify(report));
             if (report.toolbarRightPosition !== null) assert.equal(report.toolbarRightPosition, 'static');
@@ -1654,6 +1666,19 @@ mobileTest('mobile list presentation preserves native control topology behind se
                 assert.equal(await session.page.evaluate(() => window.__fixtureWriteClicks || 0), 2);
                 assert.equal(await session.page.evaluate(() => window.__fixtureSearchClicks || 0), 1);
             }
+            // Public dark sheet: its two classes plus the native A beat a two-attribute page rule.
+            await session.page.addStyleTag({ content: '.darkmode .bottom_paging_box a { color: #888; }' });
+            await session.page.evaluate(() => document.documentElement.classList.add('darkmode'));
+            const pageInk = await session.page.evaluate(() => {
+                const page = document.querySelector('[data-dcuf-role="page"]:not([data-dcuf-state="current"])');
+                const probe = document.createElement('span');
+                probe.style.color = 'var(--dcuf-theme-fg)';
+                page.append(probe);
+                const result = { actual: getComputedStyle(page).color, expected: getComputedStyle(probe).color };
+                probe.remove();
+                return result;
+            });
+            assert.equal(pageInk.actual, pageInk.expected, 'Native dark paging cannot override the owned navigation ink');
             assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
         } finally { await session.close(); }
     }
@@ -8903,7 +8928,8 @@ const collectPaletteSurfaceContract = (page, entries) => page.evaluate((items) =
         const key = `${token}:${alpha ?? 100}`;
         if (probes.has(key)) return probes.get(key);
         const probe = document.createElement('span');
-        probe.style.cssText = `position:fixed;left:-9999px;background-color:${alpha ? `color-mix(in srgb,var(${token}) ${alpha}%,transparent)` : `var(${token})`}`;
+        const color = token.startsWith('--') ? `var(${token})` : token;
+        probe.style.cssText = `position:fixed;left:-9999px;background-color:${alpha ? `color-mix(in srgb,${color} ${alpha}%,transparent)` : color}`;
         document.documentElement.appendChild(probe);
         const value = getComputedStyle(probe).backgroundColor;
         probe.remove();
@@ -11689,25 +11715,28 @@ mobileTest('UI palette presets normalize stored values without blocking boot', '
                         const style = element ? getComputedStyle(element) : null;
                         const foreground = style?.color || null;
                         const probe = document.createElement('i');
-                        probe.style.backgroundColor = selector.includes('current') ? 'var(--dcuf-theme-accent-soft)' : 'var(--dcuf-theme-accent-strong)';
+                        probe.style.backgroundColor = selector.includes('current') ? 'var(--dcuf-theme-accent-soft)'
+                            : selector.includes('submit') ? 'var(--dcuf-theme-surface-input)' : 'var(--dcuf-theme-accent-strong)';
                         element.append(probe);const expected = getComputedStyle(probe).backgroundColor;probe.remove();
-                        return { selector, color: style?.backgroundColor || null, foreground, expected };
+                        const primary = selector.includes('primary-action');
+                        return { selector, color: primary ? getComputedStyle(element, '::after').backgroundImage : style?.backgroundColor || null, foreground, expected, primary };
                     })
                 };
             });
             assert.equal(lightColors.strong, strongColors[expected].light, JSON.stringify(lightColors));
-            lightColors.controls.forEach(({ selector, color, foreground, expected: controlColor }) => {
-                assert.equal(color, controlColor, `${expected} light ${selector}: ${color}`);
+            lightColors.controls.forEach(({ selector, color, foreground, expected: controlColor, primary }) => {
+                if (primary) assert.ok(color.includes(controlColor), `${expected} light primary face retains the palette base: ${color}`);
+                else assert.equal(color, controlColor, `${expected} light ${selector}: ${color}`);
                 if (strictContrastPalettes.has(expected)) {
-                    assert.equal(contrastRatio(foreground, color) >= 4.5, true, `${expected} light ${selector} contrast: ${contrastRatio(foreground, color)}`);
+                    assert.equal(contrastRatio(foreground, primary ? controlColor : color) >= 4.5, true, `${expected} light ${selector} base contrast`);
                 }
             });
             assertPaletteSurfaces(await collectPaletteSurfaceContract(session.page, [
                 { selector: '[data-dcuf-surface="list-container"]', token: '--dcuf-b1-paper' },
                 { selector: '[data-dcuf-surface="list-toolbar"]', token: '--dcuf-b1-glass' },
                 { selector: '[data-dcuf-surface="list-actions"]', token: '--dcuf-b1-glass' },
-                { selector: '[data-dcuf-surface="list-pagination"]', token: '--dcuf-theme-surface-raised' },
-                { selector: '[data-dcuf-surface="list-search"]', token: '--dcuf-theme-surface-raised' }
+                { selector: '[data-dcuf-surface="list-pagination"]', token: 'transparent' },
+                { selector: '[data-dcuf-surface="list-search"]', token: 'transparent' }
             ]), `${expected} light list surfaces`);
             const listCardContract = await session.page.locator('.custom-post-item').first().evaluate((element) => ({
                 background: getComputedStyle(element).backgroundImage,
@@ -11741,24 +11770,27 @@ mobileTest('UI palette presets normalize stored values without blocking boot', '
                         const style = element ? getComputedStyle(element) : null;
                         const foreground = style?.color || null;
                         const probe = document.createElement('i');
-                        probe.style.backgroundColor = selector.includes('current') ? 'var(--dcuf-theme-accent-soft)' : 'var(--dcuf-theme-accent-strong)';
+                        probe.style.backgroundColor = selector.includes('current') ? 'var(--dcuf-theme-accent-soft)'
+                            : selector.includes('submit') ? 'var(--dcuf-theme-surface-input)' : 'var(--dcuf-theme-accent-strong)';
                         element.append(probe);const expected = getComputedStyle(probe).backgroundColor;probe.remove();
-                        return { selector, color: style?.backgroundColor || null, foreground, expected };
+                        const primary = selector.includes('primary-action');
+                        return { selector, color: primary ? getComputedStyle(element, '::after').backgroundImage : style?.backgroundColor || null, foreground, expected, primary };
                     })
                 };
             });
             assert.equal(darkColors.strong, strongColors[expected].dark, JSON.stringify(darkColors));
-            darkColors.controls.forEach(({ selector, color, foreground, expected: controlColor }) => {
-                assert.equal(color, controlColor, `${expected} dark ${selector}: ${color}`);
+            darkColors.controls.forEach(({ selector, color, foreground, expected: controlColor, primary }) => {
+                if (primary) assert.ok(color.includes(controlColor), `${expected} dark primary face retains the palette base: ${color}`);
+                else assert.equal(color, controlColor, `${expected} dark ${selector}: ${color}`);
                 if (strictContrastPalettes.has(expected)) {
-                    assert.equal(contrastRatio(foreground, color) >= 4.5, true, `${expected} dark ${selector} contrast: ${contrastRatio(foreground, color)}`);
+                    assert.equal(contrastRatio(foreground, primary ? controlColor : color) >= 4.5, true, `${expected} dark ${selector} base contrast`);
                 }
             });
             assertPaletteSurfaces(await collectPaletteSurfaceContract(session.page, [
                 { selector: '[data-dcuf-surface="list-container"]', token: '--dcuf-b1-paper' },
                 { selector: '[data-dcuf-surface="list-toolbar"]', token: '--dcuf-b1-glass' },
-                { selector: '[data-dcuf-surface="list-pagination"]', token: '--dcuf-theme-surface-raised' },
-                { selector: '[data-dcuf-surface="list-search"]', token: '--dcuf-theme-surface-raised' }
+                { selector: '[data-dcuf-surface="list-pagination"]', token: 'transparent' },
+                { selector: '[data-dcuf-surface="list-search"]', token: 'transparent' }
             ]), `${expected} dark list surfaces`);
             assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
         } finally { await session.close(); }
@@ -11815,8 +11847,8 @@ mobileTest('UI palette surfaces cover list canvas, comments, image comments, and
             { selector: '[data-dcuf-surface="list-container"]', token: '--dcuf-b1-paper' },
             { selector: '[data-dcuf-surface="list-toolbar"]', token: '--dcuf-b1-glass' },
             { selector: '[data-dcuf-surface="list-actions"]', token: '--dcuf-b1-glass' },
-            { selector: '[data-dcuf-surface="list-pagination"]', token: '--dcuf-theme-surface-raised' },
-            { selector: '[data-dcuf-surface="list-search"]', token: '--dcuf-theme-surface-raised' }
+            { selector: '[data-dcuf-surface="list-pagination"]', token: 'transparent' },
+            { selector: '[data-dcuf-surface="list-search"]', token: 'transparent' }
         ]), 'orange list');
         const listHierarchy = await session.page.evaluate(() => {
             const surface = (selector) => {
@@ -11842,7 +11874,7 @@ mobileTest('UI palette surfaces cover list canvas, comments, image comments, and
         assert.notEqual(listHierarchy.conceptBadge, listHierarchy.normal.color, 'B1 keeps opaque rows and distinct status badges');
         assert.notEqual(listHierarchy.noticeBadge, listHierarchy.normal.color, 'B1 notice badge remains distinct');
         assert.equal(listHierarchy.concept.color, listHierarchy.notice.color, JSON.stringify(listHierarchy));
-        assert.notEqual(listHierarchy.action.color, listHierarchy.pagination.color, 'B1 glass action layer differs from opaque reading/navigation');
+        assert.notEqual(listHierarchy.action.color, listHierarchy.pagination.color, 'B1 glass action layer differs from quiet canvas navigation');
         assert.equal(listHierarchy.pagination.color, listHierarchy.search.color, JSON.stringify(listHierarchy));
         assert.equal(listHierarchy.normal.shadow, 'none', JSON.stringify(listHierarchy));
         assert.equal(listHierarchy.titleBackground, 'none', JSON.stringify(listHierarchy));

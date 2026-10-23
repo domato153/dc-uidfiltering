@@ -1,5 +1,7 @@
 # B1 visual-review miss and bounded backstop
 
+Current follow-through: the user accepted8A's button and requested whole-list cohesion. B1_LIST_COHESION.md/current receipt own BCB96852. Inspecting the actual lower controls and open menus caught inconsistent full-width cards, native dark paging ink and utility pipe pseudo-elements. Existing owners now correct them; positive geometry/cascade/menu checks and readable public/fixture comparisons confirm this bounded change. The8-pair supplied judgement is REVIEWED, not user whole-list or autonomous beauty approval. Other UI families and historical contrary evidence remain separate.
+
 ## User feedback: write-button material —96B933A1
 
 The user rejected AF6C98F0's write-button texture after the whole-component review. Geometry and function passing did not approve that material. Actual computed CSS showed the correct list owner was active: only a weak glaze, a border close to the fill and no shadow. This was incomplete local polish, not another native-style collision.

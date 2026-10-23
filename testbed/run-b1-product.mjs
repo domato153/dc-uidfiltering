@@ -18,6 +18,9 @@ try{
    await e.page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
    const utility=e.page.getByRole('button',{name:'서비스 메뉴',exact:true});
    await utility.click();await e.page.getByRole('link',{name:'서비스 링크',exact:true}).waitFor({state:'visible'});
+   const utilityItems=await e.page.locator('.area_links > ul:popover-open > li').evaluateAll(items=>items.map(n=>{const a=n.querySelector('a'),r=a.getBoundingClientRect();return {separator:getComputedStyle(n,'::before').content,height:r.height,hit:a.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2))}}));
+   assert.ok(utilityItems.length>0&&utilityItems.every(n=>n.separator==='none'&&n.height>=34&&n.hit),'Vertical utility menu retires native horizontal pipes and keeps each original link reachable: '+JSON.stringify(utilityItems));
+   report.utilityChecks=(report.utilityChecks||[]).concat({width,height,dark,items:utilityItems});
    await e.page.keyboard.press('Escape');await e.page.waitForFunction(()=>document.querySelector('[data-dcuf-header-utility-toggle]')?.getAttribute('aria-expanded')==='false');
    assert.equal(await utility.getAttribute('aria-expanded'),'false','Native popover Escape closes utilities');
    const top=await e.page.evaluate(()=>{

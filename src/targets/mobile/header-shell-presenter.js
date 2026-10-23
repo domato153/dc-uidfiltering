@@ -149,8 +149,10 @@
         ${selectors.links} > ul { display: flex; align-items: center; flex-wrap: wrap; gap: 3px; list-style: none; margin: 0; padding: 0; }
         ${selectors.links} > ul > li { float: none; }
         ${selectors.links} > ul[popover]:not(:popover-open) { display: none; }
-        ${selectors.links} > ul[popover]:popover-open { position: fixed; inset: 76px 22px auto auto; width: min(280px, calc(100vw - 28px)); max-height: calc(100vh - 100px); overflow: auto; box-sizing: border-box; margin: 0; padding: 12px; flex-direction: column; align-items: stretch; gap: 3px; border: 1px solid var(--dcuf-theme-border); border-radius: 12px; background: var(--dcuf-theme-surface-raised); color: var(--dcuf-theme-fg); box-shadow: var(--dcuf-theme-popup-shadow); }
-        ${selectors.links} > ul[popover] a { display: flex; min-height: 34px; font-size: 12px; }
+        ${selectors.links} > ul[popover]:popover-open { position: fixed; inset: 76px 22px auto auto; width: min(280px, calc(100vw - 28px)); max-height: calc(100vh - 100px); overflow: auto; box-sizing: border-box; margin: 0; padding: 12px; flex-direction: column; align-items: stretch; gap: 3px; border: 1px solid var(--dcuf-b1-rim); border-radius: 14px; background: color-mix(in srgb, var(--dcuf-b1-paper) 96%, transparent); color: var(--dcuf-theme-fg); box-shadow: var(--dcuf-b1-shadow), inset 0 1px 0 var(--dcuf-b1-rim); backdrop-filter: blur(24px); }
+        ${selectors.links} > ul[popover] > li::before { content: none; display: none; }
+        ${selectors.links} > ul[popover] a { display: flex; min-height: 34px; padding-inline: 10px; border-radius: 8px; font: 500 12px/1.4 system-ui, sans-serif; text-decoration: none; }
+        ${selectors.links} > ul[popover] a:is(:hover, :focus-visible) { background: var(--dcuf-theme-accent-soft); color: var(--dcuf-theme-accent-ink); }
         ${selectors.links} > [data-dcuf-header-utility-toggle] { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 34px; border: 1px solid var(--dcuf-theme-border); border-radius: 9px; background: var(--dcuf-theme-surface-input); color: var(--dcuf-theme-fg-muted); font: 700 13px/1 system-ui, sans-serif; cursor: pointer; }
         ${selectors.links} > div { flex: none; position: relative; }
         ${selectors.links} a { display: inline-flex; align-items: center; min-height: 24px; padding-inline: 3px; font-size: 10px; color: var(--dcuf-theme-fg-muted); }

@@ -1,6 +1,6 @@
 # Visual comparison and the B1 inspection gap
 
-Current8A5C8209 refinement: button proportion/material/icon corrections are implemented and reference-reviewed in both themes; user preference remains pending. See B1_VISUAL_REVIEW_GAP.md and `verification/receipts/2026-10-23-b1-button-reference-refinement.json`. The96 NEEDS_WORK finding is historical control evidence, not silently erased.
+Current BCB96852 list cohesion: the user accepted8A5C8209's button, then authorized whole-list finishing. B1_LIST_COHESION.md and verification/receipts/2026-10-24-b1-list-cohesion.json own aligned quiet lower controls, consistent owned menu material and the two live cascade/pseudo-element repairs.8 image-bound comparisons are REVIEWED with native differences declared; user whole-list preference remains open. The96 NEEDS_WORK finding and exact8A button receipt remain history, not erased or broadened into current approval.
 
 Current repair: [B1_VISUAL_REPAIR.md](B1_VISUAL_REPAIR.md) and its exact8606114F receipt supersede the defective945C3DE7 result for the diagnosed batch. The findings below remain diagnosis history and method guidance, not current unresolved defects. Use `verification/visual/b1-repaired-native-list.json` for the repaired public design comparison; retain the original manifest as historical evidence.
 
