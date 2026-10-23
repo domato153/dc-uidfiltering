@@ -2,22 +2,22 @@
 
 ## Current execution
 
-- Active plan: docs/work/MOBILE_UI_MODERNIZATION.md → B compact/B1. Review-only preflight found no extra detection from the heavier detail workflow; UI_DESIGN_DETAIL_REVIEW.md now defaults to a reduced loop. Actual B1 polish remains next.
+- Active plan: docs/work/MOBILE_UI_MODERNIZATION.md → B compact/B1. Official Impeccable polish trial is implemented/checked; fine color/material matching remains open in B1_IMPECCABLE_POLISH.md.
 - Workspace path: `.`. Use the private prompt's exact nested worktree; AGENTS.md is the single policy.
-- Active stage: `header-navigation`; next bounded slice `b1-design-detail-polish`: search/toolbar/type hierarchy, using the reduced loop while observing actual refinement/recheck cost. End-to-end method efficiency is untested; this preflight changes no UI.
+- Active stage: `header-navigation`; next bounded slice `b1-material-fidelity`: trace canvas/panel ownership and refine pearl/charcoal hue, glass rim and shadow before another surface.
 - Accepted visual preference: B compact/recent menu + B1 Prism Glass. B2/large-title-card stay inactive. Preserve14 palettes/settings, original controls and original toolbar motion.
-- Source state: Source checkpoint base HEAD `7fcc70b692b49bf333e786ccabd316ca62b38202` on `codex/ui-port-boundary`; guidance/offline preflight only, mobile8606114F and PC5FA25756 unchanged. Existing architecture overlay retained; no owner transition.
+- Source state: Source checkpoint base HEAD `ce979057c6ecf7c6eae89a2787bd95b49c5f7c40` on `codex/ui-port-boundary`; only existing mobile presenter CSS and relevant visual assertions/inverse changed. Existing architecture overlay retained; no owner/interface transition.
 - Local-only state: `LOCAL_ONLY_EVIDENCE`. Reports/captures under artifacts/ and testbed/artifacts/ are ignored. Preserve debug.log unread/unstaged.
-- Candidate fingerprint: `512477f873504f0dae545ea77093c56f0f094f91fd89f8ad4515d95929555984`
-- Last current audit: UNKNOWN — B1_DESIGN_DETAIL_INCOMPLETE; END_TO_END_EFFICIENCY_UNTESTED. Frozen review-only A/B:28/70sec, both4/4 seeded families and0 false alarms; both missed explicitly naming the lost subtle shadow. No added detection justified the heavier process here. Prior144 runtime checks remain exact8606114F historical scope.
-- Current stage receipt: `verification/receipts/2026-10-23-ui-detail-review-preflight.json` SHA-256 `38B6A15B6536832FD90A50066B07C00B9AC452BA66174EBB33EA2833C320C8FE`; REVIEW_ONLY, reduced-default decision with limits; no product/aesthetic/whole-workflow efficiency approval. Earlier method/repair receipts remain historical and unchanged.
-- Accepted baseline: 42c39a8/mobile8606114F is the pre-polish native baseline; the selected B1 preview is the design reference. Historical published-control raw +8-listener failure remains separate and unwaived.
-- Current artifact: Mobile3.5.5 `8606114FA2A2D7E242197A711277F375EFD626F77CEA22759D951B58A15310C2`, root/dist/guard aligned. PC1.9.9 `5FA25756C43864AA8C90C1347AE6A03652D901862F83ABEAEDDEBF6382CFA740` root/dist unchanged.
-- Blockers: No known implementation/capability blocker. Three feasible B1 detail gaps remain open. The reduced loop has not yet been exercised through actual refinement/recheck and does not certify beauty or unreviewed states.
-- Pending live checks: After the next actual polish, recapture affected light/dark native controls/rows and relevant open/input states;980 phone-layout proxy remains primary and390 stress. This guidance unit uses existing frozen images, adds no live run or automatic golden, and does not reopen unchanged full runtime testing.
+- Candidate fingerprint: `dccfe94fb324b41dda4503757c562dfbcd16a43031cf301f2f128515c0c94815`
+- Last current audit: UNKNOWN — B1_FINE_MATERIAL_FIDELITY_INCOMPLETE.079ED46D:144 mobile,7 B1/28 palette bindings,8 layout,5 scroll, pure4/46, immediate16/four-settled checks pass within scope. Full raw/mixed/upper and Impeccable comparative efficiency are not qualified.
+- Current stage receipt: `verification/receipts/2026-10-23-b1-impeccable-polish.json` SHA-256 `FC991D178AC7B37F1A8E2F52400F4826116511BB958F0A9EBC70A33C4ADB3864`; scoped polish trial, not whole-B1 appearance approval. Earlier method/preflight/repair receipts remain historical and unchanged.
+- Accepted baseline: 8606114F fromce97905 remains the exact immediate pre-polish control; current079ED46D is the bounded polished implementation. The B1 preview is the design reference. Historical published-control raw +8-listener failure remains unwaived.
+- Current artifact: Mobile3.5.5 `079ED46D3C21BB4D4DF3A008A83260C532A70215D8F2F7DE3D474A89AD981EF0`, root/dist/guard aligned. PC1.9.9 `5FA25756C43864AA8C90C1347AE6A03652D901862F83ABEAEDDEBF6382CFA740` root/dist unchanged.
+- Blockers: No known implementation/capability blocker. Pearl/charcoal canvas and glass rim/shadow differences are visible and unfinished. One static dynamic-img warning is unconfirmed; no ignore rule or clean-detector claim.
+- Pending live checks: Two anonymous public Chrome155 light/dark list/recent captures use a GM shim, not a new Tampermonkey run.980×2306 phone-layout is checked in the fixture;390 stress. Next material work selects affected tone/contrast/open states, not every UI. No authenticated/actual-device/new extension qualification.
 
 ```dcuf-current-artifacts
-{"schemaVersion":1,"mobile":{"sha256":"8606114FA2A2D7E242197A711277F375EFD626F77CEA22759D951B58A15310C2"},"pc":{"sha256":"5FA25756C43864AA8C90C1347AE6A03652D901862F83ABEAEDDEBF6382CFA740"}}
+{"schemaVersion":1,"mobile":{"sha256":"079ED46D3C21BB4D4DF3A008A83260C532A70215D8F2F7DE3D474A89AD981EF0"},"pc":{"sha256":"5FA25756C43864AA8C90C1347AE6A03652D901862F83ABEAEDDEBF6382CFA740"}}
 ```
 
 ## Draft-complete checkpoint — 2026-10-21

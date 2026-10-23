@@ -11901,6 +11901,7 @@ mobileTest('UI palette surfaces cover list canvas, comments, image comments, and
                 gnb: color('.gnb_bar', 'backgroundColor'),
                 topSearch: color('.dchead .top_search', 'backgroundColor'),
                 topSearchButton: color('.dchead .top_search .bnt_search', 'backgroundColor'),
+                topSearchInk: color('.dchead .top_search .bnt_search', 'color'),
                 login: color('.dchead .btn_top_loginout', 'backgroundColor'),
                 galleryTitle: color('.page_head h2 a', 'color'),
                 gallerySearch: color('.page_head .btn_search', 'backgroundColor'),
@@ -11911,7 +11912,8 @@ mobileTest('UI palette surfaces cover list canvas, comments, image comments, and
         assert.deepEqual(hostChromeContract, {
             gnb: 'rgba(0, 0, 0, 0)',
             topSearch: 'rgb(255, 255, 255)',
-            topSearchButton: 'rgb(154, 52, 18)',
+            topSearchButton: 'rgba(0, 0, 0, 0)',
+            topSearchInk: 'rgb(39, 49, 63)',
             login: 'rgb(154, 52, 18)',
             galleryTitle: 'rgb(39, 49, 63)',
             gallerySearch: 'rgb(154, 52, 18)',

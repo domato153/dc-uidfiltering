@@ -2,6 +2,8 @@
 
 Use for an appearance change or a fidelity complaint, through UI_VISUAL_REVIEW.md. The chosen design remains B compact/B1; this method does not select another style. Functional correctness, reference fidelity, and user aesthetic preference are separate conclusions. A working arrangement is not a finished design.
 
+User-selected external implementation aid: **Impeccable4.7.0 `polish`**, installed unmodified user-wide at pinned upstream commit; see B1_IMPECCABLE_POLISH.md for original context/manual-detector use, actual first batch and remaining fine color/material differences. Invoke its own installed skill when using it; do not substitute this reduced comparison loop for its required setup/verification. The trial is not a measured efficiency win or whole-B1 approval.
+
 ## External basis and limits — checked 2026-10-23
 
 | Primary source | Take into DCUF | Limit / do not import |
@@ -71,4 +73,4 @@ Applied to the existing980×900 light/dark B1 preview versus exact8606114F publi
 | Native has additional service links, original branding and a combined author/statistics column; mock has fewer links and table headings/simulator controls. | INTENTIONAL for those declared structural/content differences. This does not waive icon, type, spacing or material fidelity inside the retained structure. |
 | The selected whole-masthead animation is not demonstrated in these still images; only original toolbar motion was implemented/verified previously. | UNKNOWN for full-masthead motion and explicitly deferred. Do not mark it MATCHED or add a fresh motion suite for this documentation task. |
 
-The method retained actionable detail gaps despite prior144 functional passes, did not reject legitimate native extra content, and did not approve unseen motion. This is a bounded transfer example, not independent evidence that the method will catch every issue or make the result beautiful. No production UI changed here. Next bounded work: the first three detail anchors as one related B1 polish batch, then affected-state recapture/review.
+The method retained actionable detail gaps despite prior144 functional passes, did not reject legitimate native extra content, and did not approve unseen motion. This is a historical bounded transfer example, not independent evidence that the method catches every issue or makes the result beautiful. The later first actual polish is recorded in B1_IMPECCABLE_POLISH.md; its fine color/material gap remains open.

@@ -24,6 +24,19 @@ try{
     return {overflow:document.documentElement.scrollWidth>innerWidth+1,logo:rect('[data-dcuf-header-shell-role="logo"]'),search:rect('.wrap_search'),field:rect('.top_search'),recent:rect('.newvisit_history .btn_open'),nav:rect('.gnb_bar'),toolbar:rect('[data-dcuf-surface="list-toolbar"]'),row:rect('[data-dcuf-surface="list-item"]')};
    });
    assert.equal(top.overflow,false,JSON.stringify(top));
+   const detail=await e.page.evaluate(()=>{
+    const button=document.querySelector('.top_search .bnt_search'),icon=getComputedStyle(button,'::before');
+    const tab=document.querySelector('.array_tab button.on'),category=document.querySelector('[data-dcuf-role="category-list"] > li');
+    const title=state=>document.querySelector(`[data-dcuf-surface="list-item"][data-dcuf-state="${state}"] .dcuf-list-title`);
+    const ordinary=document.querySelector('[data-dcuf-surface="list-item"]:not([data-dcuf-state="notice"]):not([data-dcuf-state="concept"]) .dcuf-list-title');
+    return {searchFill:getComputedStyle(button).backgroundColor,iconStroke:parseFloat(icon.borderTopWidth),tabSize:parseFloat(getComputedStyle(tab).fontSize),tabShadow:getComputedStyle(tab).boxShadow,categoryWidth:category?.getBoundingClientRect().width,ordinaryWeight:ordinary?Number(getComputedStyle(ordinary).fontWeight):null,noticeWeight:title('notice')?Number(getComputedStyle(title('notice')).fontWeight):null};
+   });
+   assert.equal(detail.searchFill,'rgba(0, 0, 0, 0)','Search is a quiet secondary action inside the original field');
+   assert.ok(detail.iconStroke>0&&detail.iconStroke<=2,'Search glyph has the thin weight of the B1 control family');
+   assert.ok(detail.tabSize>=12&&detail.tabSize<=13&&detail.tabShadow!=='none','Compact selected tabs retain their subtle rim/depth');
+   if(width>=760)assert.ok(detail.categoryWidth<125,'Short category labels remain a tight group rather than equal-width columns');
+   assert.ok(detail.ordinaryWeight!==null&&detail.noticeWeight>detail.ordinaryWeight,'Notice and ordinary reading hierarchy remain distinct');
+   report.detailChecks=(report.detailChecks||[]).concat({width,height,dark,siblings,...detail});
    const fidelity=await e.page.evaluate(()=>{
     const rect=n=>n.getBoundingClientRect().toJSON(),tip=document.querySelector('.darkmodebox .pop_tipbox'),sprite=document.querySelector('.newvisit_history > .btn_open > em'),tab=document.querySelector('.array_tab button:not(.on)');
     return {tip:rect(tip),tipHit:tip.contains(document.elementFromPoint(rect(tip).x+rect(tip).width/2,rect(tip).y+rect(tip).height/2)),hitClass:document.elementFromPoint(rect(tip).x+rect(tip).width/2,rect(tip).y+rect(tip).height/2)?.className,ancestors:[tip.parentElement,tip.parentElement.parentElement].map(n=>({class:n.className,z:getComputedStyle(n).zIndex,transform:getComputedStyle(n).transform})),sprite:getComputedStyle(sprite).display,tabBg:getComputedStyle(tab).backgroundColor};

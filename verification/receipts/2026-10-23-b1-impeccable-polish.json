@@ -1,0 +1,386 @@
+{
+  "schemaVersion": 1,
+  "kind": "b1-official-impeccable-polish-trial",
+  "status": "SCOPED_IMPLEMENTATION_CHECKED_FINE_MATERIAL_FIDELITY_INCOMPLETE",
+  "sourceBaseHead": "ce979057c6ecf7c6eae89a2787bd95b49c5f7c40",
+  "artifact": {
+    "mobileSha256": "079ED46D3C21BB4D4DF3A008A83260C532A70215D8F2F7DE3D474A89AD981EF0",
+    "pcSha256": "5FA25756C43864AA8C90C1347AE6A03652D901862F83ABEAEDDEBF6382CFA740",
+    "controlMobileSha256": "8606114FA2A2D7E242197A711277F375EFD626F77CEA22759D951B58A15310C2",
+    "versionChanged": false
+  },
+  "upstream": {
+    "repository": "https://github.com/pbakaus/impeccable",
+    "commit": "5b8c8e56bf3b0d22635f97f41d3777cb5acb9ad5",
+    "path": ".agents/skills/impeccable",
+    "version": "4.7.0",
+    "engineVersion": "0.1.16",
+    "installation": "Complete unmodified official Codex skill, user-wide; no automatic hook installed",
+    "files": {
+      "SKILL.md": "88e9a46a91b6ddd1059f03f578bd0f9bbe6d212d6a395124379b9bb5c97c5cf2",
+      "reference/polish.md": "81666fc7f783b4e3514db6554e713dc0479bd9cdedb06e93d15f8b579aae869a",
+      "reference/craft-floor.md": "52b523e92b76daff71be2ec8c732c374c670f8d03e1296388738e581479ec1bb",
+      "reference/operate.md": "a9d2203acd45ca33a13d5c68b02b23ed512425ac15f0e8438318ed124b43729d",
+      "scripts/VERSION": "7470694a0b5af87394b523c1a640e2ad099efbe0e6d9e6d2f7a70703e4d04457"
+    }
+  },
+  "originalProcedure": {
+    "contextRunCount": 1,
+    "target": "src/targets/mobile/list-presenter.js",
+    "observedDirectives": [
+      "SCOPED_EXISTING_ALLOWED",
+      "EXISTING_VISUAL_SYSTEM",
+      "MANUAL_DETECTOR_REQUIRED"
+    ],
+    "contextEvidence": "Observed tool output; no raw context file was persisted and command was not repeated for logging",
+    "referencesRead": [
+      "polish",
+      "operate",
+      "craft-floor"
+    ],
+    "manualDetector": {
+      "invocations": 1,
+      "exitCode": 2,
+      "findings": 1,
+      "rule": "broken-image",
+      "location": "src/targets/mobile/list-presenter.js:685",
+      "disposition": "UNCONFIRMED_STATIC_DYNAMIC_ATTRIBUTE_WARNING; no ignore rule, no claim of clean scan. Serializer unchanged; inspected affected images and existing image tests do not establish a new rendered failure."
+    }
+  },
+  "changes": {
+    "owners": [
+      "src/targets/mobile/header-shell-presenter.js",
+      "src/targets/mobile/list-presenter.js"
+    ],
+    "productionNonCssBytes": "EXACTLY_UNCHANGED_AFTER_REMOVING_ONLY_CSS_TEMPLATES",
+    "selectorSlots": "UNCHANGED; pure4 builders/46 slots",
+    "description": [
+      "Quiet original search, thin glyph, transparent inner field/rounded shell, focus",
+      "Compact labels, variable category grouping/divider and selected rim/shadow",
+      "Ordinary400 vs notice/concept600 and softened separators"
+    ],
+    "preserved": [
+      "Original host nodes/forms/handlers",
+      "14 palettes/settings",
+      "Original toolbar scroll/lifecycle",
+      "Minimum40px list hit height and80px primary width",
+      "PC bytes"
+    ],
+    "frozenInverse": "Exact approved B1 CSS inverse extended; historical reference not rewritten"
+  },
+  "checks": {
+    "mobile": {
+      "passed": 144,
+      "failed": 0
+    },
+    "b1": {
+      "contexts": 7,
+      "paletteThemeBindings": 28
+    },
+    "headerLayout": {
+      "contexts": 8,
+      "status": "PASS"
+    },
+    "scroll": {
+      "contexts": 5,
+      "status": "PASS"
+    },
+    "pureBoundary": {
+      "builders": 4,
+      "slots": 46,
+      "status": "PASS"
+    },
+    "uiBoundaries": {
+      "files": 38,
+      "status": "PASS"
+    },
+    "immediateSemantic": {
+      "observations": 16,
+      "settledResourceRecords": 4,
+      "status": "PASS",
+      "scope": "IMMEDIATE_PRE_POLISH_DEVELOPMENT_CONTROL_NOT_PUBLISHED_RAW_ADMISSION",
+      "rawDifferences": [
+        {
+          "observation": 0,
+          "key": "renderedHtml"
+        },
+        {
+          "observation": 0,
+          "key": "geometry"
+        },
+        {
+          "observation": 1,
+          "key": "renderedHtml"
+        },
+        {
+          "observation": 1,
+          "key": "geometry"
+        },
+        {
+          "observation": 2,
+          "key": "renderedHtml"
+        },
+        {
+          "observation": 2,
+          "key": "geometry"
+        },
+        {
+          "observation": 3,
+          "key": "renderedHtml"
+        },
+        {
+          "observation": 3,
+          "key": "geometry"
+        },
+        {
+          "observation": 4,
+          "key": "renderedHtml"
+        },
+        {
+          "observation": 5,
+          "key": "renderedHtml"
+        },
+        {
+          "observation": 6,
+          "key": "renderedHtml"
+        },
+        {
+          "observation": 7,
+          "key": "renderedHtml"
+        },
+        {
+          "observation": 8,
+          "key": "renderedHtml"
+        },
+        {
+          "observation": 9,
+          "key": "renderedHtml"
+        },
+        {
+          "observation": 10,
+          "key": "renderedHtml"
+        },
+        {
+          "observation": 11,
+          "key": "renderedHtml"
+        },
+        {
+          "observation": 12,
+          "key": "renderedHtml"
+        },
+        {
+          "observation": 13,
+          "key": "renderedHtml"
+        },
+        {
+          "observation": 13,
+          "key": "resources"
+        },
+        {
+          "observation": 14,
+          "key": "renderedHtml"
+        },
+        {
+          "observation": 15,
+          "key": "renderedHtml"
+        }
+      ]
+    },
+    "public": {
+      "browser": "155.0.8059.85",
+      "contexts": 2,
+      "statesPerContext": 2,
+      "scope": "ANONYMOUS_GET_HEAD_PUBLIC_CHROME_GM_SHIM_NOT_EXTENSION",
+      "status": "CAPTURED_WITH_POSITIVE_SEARCH_HIT_AND_ZERO_OVERFLOW"
+    },
+    "canonicalBuildAndArtifactVerification": "PASS; unchanged versions and PC",
+    "broaderRawMixedUpperAdmission": "NOT_QUALIFIED; published baseline listener failure remains historical/unwaived; exact full impact profile closure is not claimed"
+  },
+  "visual": {
+    "reference": "Selected B1 prototype, different content/structure/Chromium149",
+    "current": "Native public Chrome155 plus live-shaped same-fixture before/after",
+    "comparator": {
+      "designPairs": 2,
+      "beforeAfterPairs": 6,
+      "status": "DIFFERENCES_REQUIRE_REVIEW",
+      "productApproved": false
+    },
+    "inspected": [
+      "Full light/dark native compositions",
+      "Natural-scale search/tab/ordinary-row/header-material crops",
+      "Recent open, narrow stress, phone-layout captures"
+    ],
+    "remaining": [
+      "Cool pearl canvas hue and restrained bright rim/spread-shadow appearance",
+      "Charcoal canvas/panel hue and material layering",
+      "Whole-B1/all-child/user aesthetic approval"
+    ],
+    "materialSamples": {
+      "light": [
+        {
+          "role": "reference",
+          "path": "artifacts/ui-overview-2026-10-17/b1-list/top-980-900-light.png",
+          "canvasPixel": [
+            236,
+            244,
+            243
+          ],
+          "readingPixel": [
+            255,
+            255,
+            255
+          ]
+        },
+        {
+          "role": "before",
+          "path": "artifacts/b1-repair-2026-10-23/public/public-980-900-light.png",
+          "canvasPixel": [
+            245,
+            248,
+            248
+          ],
+          "readingPixel": [
+            247,
+            250,
+            250
+          ]
+        },
+        {
+          "role": "after",
+          "path": "artifacts/b1-impeccable-2026-10-23/public-final/light.png",
+          "canvasPixel": [
+            245,
+            248,
+            248
+          ],
+          "readingPixel": [
+            247,
+            250,
+            250
+          ]
+        }
+      ],
+      "dark": [
+        {
+          "role": "reference",
+          "path": "artifacts/ui-overview-2026-10-17/b1-list/top-980-900-dark.png",
+          "canvasPixel": [
+            26,
+            37,
+            39
+          ],
+          "readingPixel": [
+            32,
+            41,
+            44
+          ]
+        },
+        {
+          "role": "before",
+          "path": "artifacts/b1-repair-2026-10-23/public/public-980-900-dark.png",
+          "canvasPixel": [
+            18,
+            18,
+            18
+          ],
+          "readingPixel": [
+            26,
+            34,
+            35
+          ]
+        },
+        {
+          "role": "after",
+          "path": "artifacts/b1-impeccable-2026-10-23/public-final/dark.png",
+          "canvasPixel": [
+            18,
+            18,
+            18
+          ],
+          "readingPixel": [
+            26,
+            34,
+            35
+          ]
+        }
+      ]
+    },
+    "limits": "Pixel samples are locations in differing browser/content images, not design tokens, beauty scores or a demand to hardcode colors"
+  },
+  "failureHistory": [
+    {
+      "runtime": "0EFA582C",
+      "result": "First focused pass; visual inspection led to transparent inner-field correction"
+    },
+    {
+      "runtime": "642D8690",
+      "result": "141/144; product hit-size regressions repaired without weakening size tests; obsolete primary-search fill expectation updated with foreground assertion"
+    },
+    {
+      "runtime": "079ED46D",
+      "result": "144/144 final; all focused/capture/semantic evidence above uses this exact runtime"
+    }
+  ],
+  "efficiency": {
+    "measuredRefinementFromUtc": "2026-10-23T00:05:42Z",
+    "recordedAtUtc": "2026-10-23T00:36:34.300Z",
+    "elapsedThroughRecordSeconds": 1852.3,
+    "includes": "Editing, failed checks, correction, full recheck, actual capture, analysis and documentation; setup before explicit clock is not instrumented",
+    "comparison": "No equivalent no-skill implementation arm; no comparative speed/quality superiority established",
+    "preflight": "Prior28/70sec review-only result is historical and cannot qualify this implementation"
+  },
+  "decision": "D-47",
+  "nextTask": "b1-material-fidelity",
+  "inputs": {
+    "src/targets/mobile/header-shell-presenter.js": "7cfd5bfd73e9a471fb5d1497a450444b5947dfd8ef3e2fa2998bf299317fce19",
+    "src/targets/mobile/list-presenter.js": "1130b56ab0f59ee2964bbf24b25ec68ec6ffccdd5c66ffd4345acc3a9381a116",
+    "testbed/run-tests.mjs": "58257139e223a8a320fb8be2b1417012daf9bddd8e2b8c898c1a9ab28c227cbe",
+    "testbed/run-b1-product.mjs": "2b76cb6edf7f097e81616baab7d18923bececa1509189d2fd80168d95a6c91ff",
+    "verification/b1-header-visual-delta.json": "06954b835b8ff7cd4eba4c846ff27c03fe42c2503b4c9c8e9ddb8893c9ef16d4",
+    "docs/work/B1_IMPECCABLE_POLISH.md": "00a36c6dbfbc7b28c76294fb3f671606062c6977cb2ca44ff312b9a504756f56",
+    "docs/work/UI_DESIGN_DETAIL_REVIEW.md": "2b4fa701a3b7e33ad20baaefa02d0caa96574060185670da79d5e5d27152c4eb",
+    "docs/work/UI_VISUAL_REVIEW.md": "7a3938b53cde2799639231453d1c52676f32f4dfaea97e60af9109fab35e8dea",
+    "docs/ui-surface-contracts.md": "69a4ba12ead46631481795fa5500a2d7aee8efdc725d74bb4b8b33aa9867d159",
+    "docs/work/DECISION_RATIONALE.md": "7e8ab567a0c8f04d908154fe44b5f96d63388315220150e6d5a33669a2c8f462",
+    "docs/agent-maintenance-notes.md": "6ed68c3ae4466c3563b1fafd83be6d5626584aeef13f332df71a1cc5c054725e"
+  },
+  "evidence": {
+    "artifacts/b1-impeccable-2026-10-23/red-before.json": "e0a24cbdf686e1f0b7c2df16a886c5c85557fa17bde8ee66f37ebd139c5d826b",
+    "artifacts/b1-impeccable-2026-10-23/full-first-141-144.json": "7fb60ae16e546dabc2a2f0a31ed3c2dc2df28132a477a4a4bedc88194093d46a",
+    "artifacts/b1-impeccable-2026-10-23/full-final.json": "6c54967d21f851e2502f1b08f4c6b575425f1734810bba76ad7bd3253331ff6e",
+    "artifacts/b1-impeccable-2026-10-23/immediate-semantic.json": "c502486522bb0a79f1ccc8dde2111b217e328e1db59861b19933e14f07152148",
+    "artifacts/b1-impeccable-2026-10-23/control-side.json": "c585a5131df536f70ca4b8cf5b52bf89399dd45803dee27b0023189343c84464",
+    "artifacts/b1-impeccable-2026-10-23/candidate-side.json": "a8f357df71916ea4da5d234e30f5ca19d7e3af72133662bc90dae03b88a3dad4",
+    "artifacts/b1-impeccable-2026-10-23/impeccable-detect.json": "d827dc4391bf551c950dd9e230b96882e75be340564b2d7ffe58220a98a33484",
+    "artifacts/b1-impeccable-2026-10-23/public-final/report.json": "74d9f6e9a48f89063991ca72416b264c8765222fd95b5bd769611f929b4c77d5",
+    "artifacts/b1-impeccable-2026-10-23/paired-final/pairs.json": "e00c787eefb13ebb9f387069cbbc84cfe2e0f445f868639b84535b4895482af4",
+    "artifacts/b1-impeccable-2026-10-23/paired-final-report/review.json": "f9b865234526d0ec5969e23fa1e8aa336485e3bc1d82b268e3d5847e93d80593",
+    "artifacts/b1-impeccable-2026-10-23/design-pairs.json": "cc897f1056ca867d6a8105fef9243c4d68e05e87259b1315c8ff4969a8d293a7",
+    "artifacts/b1-impeccable-2026-10-23/design-report/review.json": "6a62cd0800e7c33e927e5284958de76b9ceb984c71cd5f8bfbe77da7731e0471",
+    "artifacts/b1-impeccable-2026-10-23/details-light.png": "833501d15000c9212e7f1de1ed28fab36c4893d3710e94a1a0b74210da7203ec",
+    "artifacts/b1-impeccable-2026-10-23/details-dark.png": "04485357dc05c05ffb38042a64393d500f09847a4032c307d2e0a28180680076",
+    "artifacts/b1-impeccable-2026-10-23/material-samples.json": "f6e4a83ec8e59d574bff19dabe0eeda6a9533ddd450ea23af125a4728d6dd492",
+    "testbed/artifacts/b1-product/report.json": "3609e76ae13fe41f8d374405516aff04d0eaaf4a5a4d73fe3c34d7a50a4ad620",
+    "testbed/artifacts/header-layout-redesign/report.json": "47727de3d6399ba5e8131f37fe80496119411cb2c05cf1e5007566ce409745fa",
+    "testbed/artifacts/concept01-scroll-2026-10-22/report.json": "a7bee0368438b27109b3e9c1c654a97c86b940a2b7929aaa6666ef1459a8e978",
+    "artifacts/b1-impeccable-2026-10-23/paired-final/list-light-reference.png": "e0e39d2cbd6c724d2ad4568427b82b8831f7bdc48b8b98f0d707a41e80228097",
+    "artifacts/b1-impeccable-2026-10-23/paired-final/list-light-candidate.png": "def5b66b8cd615f2b1ea8490ee5cbf78ba3e9b312f15c16aa72101136ad67514",
+    "artifacts/b1-impeccable-2026-10-23/paired-final/list-dark-reference.png": "3df9e4393162f544a0621fb7796bec84b27cf5d29017a21675099b76f6ab6fb4",
+    "artifacts/b1-impeccable-2026-10-23/paired-final/list-dark-candidate.png": "6e140d90ff9b137f323ce787d0435983dc513202a937efb4b33094d600a314cf",
+    "artifacts/b1-impeccable-2026-10-23/paired-final/phone-layout-reference.png": "c10b320a741ac2d55b3024349875df07c01b4bfd8a0e39c6b8c7acf5bdbde424",
+    "artifacts/b1-impeccable-2026-10-23/paired-final/phone-layout-candidate.png": "23017e461eeb47d4c1ffc04f6178622e2d75dcdd58b99e940b9c8d9be09e2124",
+    "artifacts/b1-impeccable-2026-10-23/paired-final/stress-narrow-reference.png": "535edca517dc201a79840675b977d2a671dfad9b4a218ccc00a990de7998aa6f",
+    "artifacts/b1-impeccable-2026-10-23/paired-final/stress-narrow-candidate.png": "a742dc4d934397022efd83a333600a9f6cd2e391b4dcebcb0c5e4a2bfe86a78e",
+    "artifacts/b1-impeccable-2026-10-23/paired-final/recent-light-reference.png": "7a1e45f90758758ba93ff6eedf91396fb4eb4300fc7960fd3fa92659b32d867e",
+    "artifacts/b1-impeccable-2026-10-23/paired-final/recent-light-candidate.png": "8ddb4d9d77d416f325e9a51f0ee8deb56b3c9666af4b6a52d679a7a603361a79",
+    "artifacts/b1-impeccable-2026-10-23/paired-final/recent-dark-reference.png": "a0eb7accf12b4cd6262e0c896a7e21bcf5491a6725b189aef2fbbbee40c3061d",
+    "artifacts/b1-impeccable-2026-10-23/paired-final/recent-dark-candidate.png": "6b2816e3720dae38909b11bdabdd3e2fc0217f1e8b81b87526062e175d1e0be1",
+    "artifacts/b1-impeccable-2026-10-23/public-final/light.png": "65726f3c6d9c5153dee0fb467aa1bce69030ac2bab46ac193cd450bbec734995",
+    "artifacts/b1-impeccable-2026-10-23/public-final/light-recent.png": "52e085951378619730aff3d7f3a9d03ab955bfad7408561cce20a38a43985f09",
+    "artifacts/ui-overview-2026-10-17/b1-list/top-980-900-light.png": "6fb4038ab7d477f32e533d11d8146d164afc04634b3e8b784f124322645eab28",
+    "artifacts/b1-impeccable-2026-10-23/public-final/dark.png": "a2c127ff1840f5a1db940b508e62b8c2c5bbcfba30e7349b1e35cd9cabcfdbef",
+    "artifacts/b1-impeccable-2026-10-23/public-final/dark-recent.png": "f053b4e2ed59850f71bf893fef5b5b62ab58061246f2bccda0351b4273203199",
+    "artifacts/ui-overview-2026-10-17/b1-list/top-980-900-dark.png": "8dad7932f61e3274ae829fe39bfdb804719d2a5f150a769feac6e07a7d17e377"
+  },
+  "localEvidence": "Ignored local files: hashes and observations retain historical result, not guaranteed availability. Recapture under a new runtime identity if missing; never relabel."
+}
