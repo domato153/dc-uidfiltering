@@ -1,6 +1,6 @@
 # Visual comparison and the B1 inspection gap
 
-Current96B933A1 follow-up: B1_VISUAL_REVIEW_GAP.md records the user-rejected AF6 write-button texture, same-owner material refinement and fresh focused checks. Complete button/toolbar reference-before-after is ready; user judgement remains pending. The earlier AF6 alignment/clearfix result and144 report retain their historical exact scope.
+Current96B933A1 follow-up: reference-first review records `NEEDS_WORK` for remaining button proportion/material/icon differences in both themes. See UI_DESIGN_DETAIL_REVIEW.md and `verification/receipts/2026-10-23-b1-reference-verdict.json`. Earlier focused function/alignment checks retain their exact scopes; they do not close this appearance gap.
 
 Current repair: [B1_VISUAL_REPAIR.md](B1_VISUAL_REPAIR.md) and its exact8606114F receipt supersede the defective945C3DE7 result for the diagnosed batch. The findings below remain diagnosis history and method guidance, not current unresolved defects. Use `verification/visual/b1-repaired-native-list.json` for the repaired public design comparison; retain the original manifest as historical evidence.
 
@@ -37,6 +37,34 @@ node testbed/node_modules/playwright/cli.js show-report artifacts/<new-review-di
 ```
 
 Exit0 means pixel match,1 means differences requiring review,2 means invalid input/runner failure. Every receipt keeps `productApproved:false`. Output must be a new empty artifacts directory; originals stay intact and snapshot updates are disabled. Inputs bind SHA/dimensions/theme/provenance. The B1 manifest is a recoverable local-capture locator, not a golden approval or a live-site claim.
+
+### Bind the actual visual judgement
+
+Initial comparison may omit `assessment`; output then explicitly says `referenceFidelity.status: NOT_REVIEWED`, even for pixel equality. After viewing the images, add a short assessment to the same manifest and run into a new output directory. Reuse unchanged captures; there is no new capture/full runtime suite merely to attach a judgement.
+
+```json
+{
+  "assessment": {
+    "reviewer": "who actually viewed the images",
+    "basis": "selected reference and current appearance, before patch/test credit",
+    "limitations": "relevant browser/content/viewing or judgement limits",
+    "cases": [{
+      "id": "the-existing-case-id",
+      "referenceSha256": "exact-lowercase-sha256-from-the-comparison",
+      "candidateSha256": "exact-lowercase-sha256-from-the-comparison",
+      "summary": "concrete visual judgement in context",
+      "findings": [{
+        "disposition": "FIX",
+        "expected": "the chosen visible treatment",
+        "actual": "the observed difference",
+        "action": "the bounded correction or missing evidence"
+      }]
+    }]
+  }
+}
+```
+
+Every pair needs exactly one review, bound to both current image hashes. Findings use `FIX`, `INTENTIONAL` or `UNKNOWN`; an empty findings array is allowed when actually reviewed with no observed gap. No mandatory item count. The tool derives `NEEDS_WORK` for any `FIX`, otherwise `UNVERIFIED` for any `UNKNOWN`, otherwise `REVIEWED`; it emits `fidelity.md` beside `review.json` and the unchanged native pixel report. Stale/partial/duplicate/unknown-case input is invalid. The exit code remains the pixel/runner result, so read the separate fidelity status explicitly. `REVIEWED` is not a beauty pass, and the tool cannot validate a dishonest or mistaken visual judgement.
 
 For a future **regression** golden, first repair and visually review an actual native state, capture a deterministic live-shaped fixture in the same browser/OS/font/DPR/viewport/theme/open state, then retain that reviewed baseline. Use Playwright's `toHaveScreenshot` directly for stable browser capture (two matching frames, disabled animations/caret); this offline pair tool does not implement readiness or prove motion. Wait for the actual owner, fonts and needed visible media to load, not whole-site networkidle. Preserve native timing tests separately.
 

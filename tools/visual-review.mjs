@@ -9,7 +9,7 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const require = createRequire(new URL('../testbed/harness/playwright-loader.cjs', import.meta.url));
 const args = process.argv.slice(2);
 if (args.includes('--help')) {
-    console.log('node tools/visual-review.mjs --manifest <JSON> --output <new artifacts/ directory>\nCompares existing same-size PNG pairs with installed Playwright Test and its native HTML diff report.\nExit 0: pixel match; 1: differences; 2: invalid inputs/runner failure. No baseline approval/update.');
+    console.log('node tools/visual-review.mjs --manifest <JSON> --output <new artifacts/ directory>\nCompares existing same-size PNG pairs with installed Playwright Test and its native HTML diff report.\nOptional manifest.assessment binds a reference-first visual judgement to every exact image pair; omitted means NOT_REVIEWED. See docs/work/UI_VISUAL_REVIEW.md.\nExit 0: pixel match; 1: differences; 2: invalid inputs/runner failure. No baseline approval/update.');
     process.exit(0);
 }
 const value = flag => args[args.indexOf(flag) + 1];
@@ -21,7 +21,7 @@ if (!['artifacts', 'testbed/artifacts'].some(prefix => {
 })) throw new Error('Output must be a new child directory under artifacts/ or testbed/artifacts/');
 await mkdir(output, { recursive: true });
 if ((await readdir(output)).length) throw new Error('Choose an empty output directory; previous evidence is never overwritten');
-const receipt = { schemaVersion: 1, status: 'INVALID_INPUT', productApproved: false, engine: `playwright@${require('playwright/package.json').version}`, cases: [] };
+const receipt = { schemaVersion: 1, status: 'INVALID_INPUT', productApproved: false, referenceFidelity: { status: 'NOT_REVIEWED' }, engine: `playwright@${require('playwright/package.json').version}`, cases: [] };
 const digest = bytes => createHash('sha256').update(bytes).digest('hex');
 try {
     const manifestBytes = await readFile(path.resolve(value('--manifest')));
@@ -50,6 +50,26 @@ try {
         }
         receipt.cases.push(recorded);
     }
+    if (manifest.assessment !== undefined) {
+        const assessment = manifest.assessment;
+        const nonempty = value => typeof value === 'string' && value.trim().length > 0;
+        if (!assessment || !['reviewer', 'basis', 'limitations'].every(key => nonempty(assessment[key])) || !Array.isArray(assessment.cases) || assessment.cases.length !== receipt.cases.length) throw new Error('Assessment requires reviewer/basis/limitations and exactly one review per case');
+        const reviewedIds = new Set();
+        const cases = assessment.cases.map(review => {
+            const item = receipt.cases.find(item => item.id === review.id);
+            if (!item || reviewedIds.has(review.id)) throw new Error(`Missing/duplicate/unknown reviewed case ${review.id}`);
+            reviewedIds.add(review.id);
+            if (review.referenceSha256 !== item.files.reference.sha256 || review.candidateSha256 !== item.files.candidate.sha256) throw new Error(`${review.id}: stale assessment image binding`);
+            if (!nonempty(review.summary) || !Array.isArray(review.findings)) throw new Error(`${review.id}: assessment requires a visual summary and findings array`);
+            for (const finding of review.findings) {
+                if (!['FIX', 'INTENTIONAL', 'UNKNOWN'].includes(finding.disposition) || !['expected', 'actual', 'action'].every(key => nonempty(finding[key]))) throw new Error(`${review.id}: invalid finding disposition/expected/actual/action`);
+            }
+            const status = review.findings.some(item => item.disposition === 'FIX') ? 'NEEDS_WORK' : review.findings.some(item => item.disposition === 'UNKNOWN') ? 'UNVERIFIED' : 'REVIEWED';
+            return { id: review.id, referenceSha256: review.referenceSha256, candidateSha256: review.candidateSha256, status, summary: review.summary, findings: review.findings };
+        });
+        const status = cases.some(item => item.status === 'NEEDS_WORK') ? 'NEEDS_WORK' : cases.some(item => item.status === 'UNVERIFIED') ? 'UNVERIFIED' : 'REVIEWED';
+        receipt.referenceFidelity = { status, reviewer: assessment.reviewer, basis: assessment.basis, limitations: assessment.limitations, cases };
+    }
     await writeFile(path.join(output, 'inputs.json'), JSON.stringify(receipt, null, 2));
     const cli = path.join(path.dirname(require.resolve('playwright/package.json')), 'cli.js');
     const result = spawnSync(process.execPath, [cli, 'test', '--config', path.join(root, 'testbed/visual/playwright.config.mjs')], {
@@ -76,8 +96,16 @@ try {
     process.exitCode = result.status === 0 ? 0 : 1;
 } catch (error) {
     receipt.status = 'INVALID_INPUT';
+    receipt.referenceFidelity.status = 'INVALID_INPUT';
     receipt.error = String(error);
     process.exitCode = 2;
 }
 await writeFile(path.join(output, 'review.json'), JSON.stringify(receipt, null, 2));
-console.log(`${receipt.status}; productApproved=false; ${path.relative(root, output).replaceAll('\\', '/')}/review.json`);
+const fidelity = receipt.referenceFidelity;
+const notes = [`# Reference fidelity: ${receipt.status === 'INVALID_INPUT' ? 'INVALID_INPUT' : fidelity.status}`, '', `Pixel comparison: ${receipt.status}. Product approved: false.`, '', fidelity.basis || 'No image-bound visual judgement supplied; inspect the reference and candidate before making an appearance claim.', fidelity.limitations || 'Pixel results cannot assess aesthetic fidelity or user preference.'];
+if (receipt.status !== 'INVALID_INPUT') for (const item of fidelity.cases || []) {
+    notes.push('', `## ${item.id}: ${item.status}`, '', item.summary);
+    for (const finding of item.findings) notes.push('', `- ${finding.disposition}: expected ${finding.expected}; actual ${finding.actual}; next ${finding.action}`);
+}
+await writeFile(path.join(output, 'fidelity.md'), notes.join('\n') + '\n');
+console.log(`${receipt.status}; referenceFidelity=${receipt.status === 'INVALID_INPUT' ? 'INVALID_INPUT' : fidelity.status}; productApproved=false; ${path.relative(root, output).replaceAll('\\', '/')}/review.json`);

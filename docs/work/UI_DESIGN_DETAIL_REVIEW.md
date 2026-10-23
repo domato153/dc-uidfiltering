@@ -23,6 +23,14 @@ The exact workflow and scope defaults below are our adaptation, not rules experi
 
 ## Detail prompts — select what changed
 
+### Reference-first verdict, before implementation credit
+
+For a fidelity complaint, look at the selected reference and the current render **before** considering the patch explanation, effect names or functional test counts. Ask whether the result is closer to the selected appearance, not whether it has more gradients/rims/shadows than the previous implementation. Compare the complete component and a readable equal-scale detail together. Record only the important observed gaps and their next action; no fixed count, beauty score or per-property survey.
+
+Attach that short judgement to the existing image-pair manifest as `assessment` (format in UI_VISUAL_REVIEW.md). The comparator records `NOT_REVIEWED` when absent, derives `NEEDS_WORK` from any `FIX`, and retains `UNVERIFIED` for unknown evidence. It rejects missing cases and stale reference/candidate hashes. `REVIEWED` describes the supplied judgement only; it is never product/user approval. Review again only after relevant inputs change or a concrete uncertainty remains. This small backstop prevents omitted/stale/unresolved review from disappearing in the output; it cannot verify the truth or completeness of AI perception.
+
+Applied to the actual button: AF6 flatness and96B933A1's narrower/taller body, thin pencil and concentrated rim/darker material remain `NEEDS_WORK` against the selected B1 preview in both themes. Retaining a40px hit target does not require the same painted proportion. Native content/count differences are intentional, not waivers for feasible material detail. `verification/receipts/2026-10-23-b1-reference-verdict.json` binds the known-case trial. It is retrospective, by the same implementing agent, not a blind detection/efficiency experiment. No product repaint, new engine, recurring multi-reviewer critique or full runtime suite is part of this method correction.
+
 ### Coherent-component closure after a detail change
 
 Review the complete affected component at readable scale, including adjacent groups; a crop that cuts off categories or the primary action does not satisfy the whole/detail step. Even a color-only patch needs a brief check of that component's grouping/baselines, hierarchy and material in context. This is a missing part of the existing loop, not another survey or full-UI audit.
