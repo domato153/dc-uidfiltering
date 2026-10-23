@@ -1,5 +1,7 @@
 # B1 Impeccable polish trial — 2026-10-23
 
+Historical079ED46D trial. Follow-up material/canvas and native utility-absence startup repair are tracked in B1_MATERIAL_FIDELITY.md; use CURRENT/NEXT for the active runtime and exact receipt. Unfinished gaps below describe this frozen trial, not a permanent blocker.
+
 The user selected Impeccable after reviewing external candidates. The official Codex skill was installed user-wide, unmodified, from `pbakaus/impeccable` commit `5b8c8e56bf3b0d22635f97f41d3777cb5acb9ad5`, path `.agents/skills/impeccable`, version4.7.0. This is the whole skill package, not a copied checklist. Source: [pinned SKILL.md](https://github.com/pbakaus/impeccable/blob/5b8c8e56bf3b0d22635f97f41d3777cb5acb9ad5/.agents/skills/impeccable/SKILL.md).
 
 ## Actual use and transfer limits

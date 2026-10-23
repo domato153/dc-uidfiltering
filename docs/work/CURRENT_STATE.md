@@ -2,22 +2,22 @@
 
 ## Current execution
 
-- Active plan: docs/work/MOBILE_UI_MODERNIZATION.md → B compact/B1. Official Impeccable polish trial is implemented/checked; fine color/material matching remains open in B1_IMPECCABLE_POLISH.md.
+- Active plan: docs/work/MOBILE_UI_MODERNIZATION.md → B compact/B1.90EEEBFF material/startup changes are functionally checked; user-reported toolbar/header detail remains visually unfinished. B1_VISUAL_REVIEW_GAP.md owns the repaired review route.
 - Workspace path: `.`. Use the private prompt's exact nested worktree; AGENTS.md is the single policy.
-- Active stage: `header-navigation`; next bounded slice `b1-material-fidelity`: trace canvas/panel ownership and refine pearl/charcoal hue, glass rim and shadow before another surface.
-- Accepted visual preference: B compact/recent menu + B1 Prism Glass. B2/large-title-card stay inactive. Preserve14 palettes/settings, original controls and original toolbar motion.
-- Source state: Source checkpoint base HEAD `ce979057c6ecf7c6eae89a2787bd95b49c5f7c40` on `codex/ui-port-boundary`; only existing mobile presenter CSS and relevant visual assertions/inverse changed. Existing architecture overlay retained; no owner/interface transition.
-- Local-only state: `LOCAL_ONLY_EVIDENCE`. Reports/captures under artifacts/ and testbed/artifacts/ are ignored. Preserve debug.log unread/unstaged.
-- Candidate fingerprint: `dccfe94fb324b41dda4503757c562dfbcd16a43031cf301f2f128515c0c94815`
-- Last current audit: UNKNOWN — B1_FINE_MATERIAL_FIDELITY_INCOMPLETE.079ED46D:144 mobile,7 B1/28 palette bindings,8 layout,5 scroll, pure4/46, immediate16/four-settled checks pass within scope. Full raw/mixed/upper and Impeccable comparative efficiency are not qualified.
-- Current stage receipt: `verification/receipts/2026-10-23-b1-impeccable-polish.json` SHA-256 `FC991D178AC7B37F1A8E2F52400F4826116511BB958F0A9EBC70A33C4ADB3864`; scoped polish trial, not whole-B1 appearance approval. Earlier method/preflight/repair receipts remain historical and unchanged.
-- Accepted baseline: 8606114F fromce97905 remains the exact immediate pre-polish control; current079ED46D is the bounded polished implementation. The B1 preview is the design reference. Historical published-control raw +8-listener failure remains unwaived.
-- Current artifact: Mobile3.5.5 `079ED46D3C21BB4D4DF3A008A83260C532A70215D8F2F7DE3D474A89AD981EF0`, root/dist/guard aligned. PC1.9.9 `5FA25756C43864AA8C90C1347AE6A03652D901862F83ABEAEDDEBF6382CFA740` root/dist unchanged.
-- Blockers: No known implementation/capability blocker. Pearl/charcoal canvas and glass rim/shadow differences are visible and unfinished. One static dynamic-img warning is unconfirmed; no ignore rule or clean-detector claim.
-- Pending live checks: Two anonymous public Chrome155 light/dark list/recent captures use a GM shim, not a new Tampermonkey run.980×2306 phone-layout is checked in the fixture;390 stress. Next material work selects affected tone/contrast/open states, not every UI. No authenticated/actual-device/new extension qualification.
+- Active stage: `header-navigation`; next bounded slice `b1-toolbar-and-header-detail`: repair coherent toolbar composition and header glass, then compare the complete affected components. Review-system repair completed first as requested; no further product edits after that request.
+- Accepted visual preference: B compact/recent menu + B1 Prism Glass. B2/large-title-card remain inactive. Preserve14 palettes/settings, original controls and toolbar motion.
+- Source state: Source checkpoint base HEAD `31905e1a0fb6aa0cb39d436d97cc25e7a9e70d05` on `codex/ui-port-boundary`; current accepted registry/overlay unchanged. Five owners have CSS-only changes; one adapter guard fixes the absent-utility startup failure. No owner/interface transition.
+- Local-only state: `LOCAL_ONLY_EVIDENCE`. Reports/images under artifacts/ and testbed/artifacts/ are ignored. Preserve debug.log unread/unstaged.
+- Candidate fingerprint: `436d4e8c606a75d3f02b04e8a558365588df1db8a972193c102078a9232111e5`
+- Last current audit: UNKNOWN — B1_TOOLBAR_AND_HEADER_DETAIL_NEEDS_WORK.144 mobile/11 compatibility pass; B1 eight functional contexts/28 palette bindings pass, while six same-row composition contexts correctly reject13.296875px drift. Two chosen-reference themes pass and shifted negatives reject. Header glass is a separate unresolved manual finding.
+- Current stage receipt: `verification/receipts/2026-10-23-b1-material-review-gap.json` SHA-256 `D017F60575194716CE98A3EA8F6F83967739B1895AC91583D2F1E19367002FBD`; bounded implementation and review-backstop evidence, not visual approval. Raw/mixed/upper/release and comparative efficiency remain unqualified.
+- Accepted baseline: 079ED46D is the exact immediate control; B1 preview is the design reference.90EEEBFF is the current unaccepted-appearance candidate. Published raw +8-listener failure remains unwaived.
+- Current artifact: Mobile3.5.5 `90EEEBFF27DC7C1B585A56D74F7AE4B27E34609806C38254AC54460DBA8F444F`, root/dist/guard aligned. PC1.9.9 `5FA25756C43864AA8C90C1347AE6A03652D901862F83ABEAEDDEBF6382CFA740` root/dist unchanged.
+- Blockers: No capability blocker. Toolbar alignment/density/control balance and header glass remain NEEDS_WORK; do not close them using functional counts or token/blur presence. One dynamic-img warning remains unconfirmed with no ignore.
+- Pending live checks: Current public Chrome155 GET/HEAD uses GM shim; no new actual Tampermonkey/device/authenticated qualification.980×2306 is layout proxy;390 stress. Existing8 layout/5 scroll and16 semantic/four-settled observations retain their exact90EEEBFF scopes.
 
 ```dcuf-current-artifacts
-{"schemaVersion":1,"mobile":{"sha256":"079ED46D3C21BB4D4DF3A008A83260C532A70215D8F2F7DE3D474A89AD981EF0"},"pc":{"sha256":"5FA25756C43864AA8C90C1347AE6A03652D901862F83ABEAEDDEBF6382CFA740"}}
+{"schemaVersion":1,"mobile":{"sha256":"90EEEBFF27DC7C1B585A56D74F7AE4B27E34609806C38254AC54460DBA8F444F"},"pc":{"sha256":"5FA25756C43864AA8C90C1347AE6A03652D901862F83ABEAEDDEBF6382CFA740"}}
 ```
 
 ## Draft-complete checkpoint — 2026-10-21

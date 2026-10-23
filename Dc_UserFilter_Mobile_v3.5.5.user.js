@@ -1916,8 +1916,8 @@ const __dcufSettingsPresenter = (() => {
         const CSS = `
             [data-dcuf-surface="list-container"] {
                 font-family: system-ui, -apple-system, "Segoe UI", "Malgun Gothic", sans-serif;
-                --dcuf-list-border: color-mix(in srgb, var(--dcuf-theme-border, #dfe5ee) 60%, var(--dcuf-theme-surface, #fff));
-                --dcuf-list-surface: var(--dcuf-theme-surface, #fff);
+                --dcuf-list-border: var(--dcuf-b1-line, var(--dcuf-theme-border, #dfe5ee));
+                --dcuf-list-surface: var(--dcuf-b1-paper, var(--dcuf-theme-surface, #fff));
                 --dcuf-list-muted: var(--dcuf-theme-surface-muted, #f6f8fb);
                 --dcuf-list-fg: var(--dcuf-theme-fg, #273142);
                 --dcuf-list-subtle: var(--dcuf-theme-fg-muted, #697386);
@@ -2074,10 +2074,10 @@ const __dcufSettingsPresenter = (() => {
                 min-height: 48px;
                 margin: 10px auto;
                 padding: 8px 10px;
-                border: 1px solid var(--dcuf-theme-border, #dfe5ee);
+                border: 1px solid var(--dcuf-b1-rim, var(--dcuf-theme-border, #dfe5ee));
                 border-radius: 12px;
-                background: color-mix(in srgb, var(--dcuf-theme-surface-raised, #fff) 90%, transparent);
-                box-shadow: 0 6px 20px #284c4d09, inset 0 1px 0 #ffffff28;
+                background: var(--dcuf-b1-glass);
+                box-shadow: var(--dcuf-b1-shadow), inset 0 1px 0 var(--dcuf-b1-rim);
                 backdrop-filter: blur(20px) saturate(1.1);
             }
             [data-dcuf-surface="list-toolbar"] [data-dcuf-role="tablist"],
@@ -2337,10 +2337,10 @@ const __dcufSettingsPresenter = (() => {
             [data-dcuf-surface="list-toolbar"] [data-dcuf-state="current"],
             [data-dcuf-surface="list-toolbar"] [data-dcuf-role="tablist"] button[data-dcuf-state="current"],
             [data-dcuf-surface="list-actions"] [data-dcuf-state="current"] {
-                border-color: color-mix(in srgb, var(--dcuf-theme-border) 35%, var(--dcuf-theme-surface-raised));
+                border-color: var(--dcuf-b1-rim);
                 background: linear-gradient(140deg, #ffffff20, transparent), var(--dcuf-theme-accent-soft);
                 color: var(--dcuf-theme-accent-ink);
-                box-shadow: inset 0 1px 0 #ffffff28, 0 2px 6px #1b696710;
+                box-shadow: inset 0 1px 0 var(--dcuf-b1-rim), 0 2px 6px #1b696710;
             }
             [data-dcuf-surface="list-toolbar"] [data-dcuf-role="primary-action"],
             [data-dcuf-surface="list-toolbar"] [data-dcuf-role="primary-group"] [data-dcuf-role="primary-action"],
@@ -9171,14 +9171,13 @@ const __dcufSettingsPresenter = (() => {
         ${selectors.layout} {
             display: grid; grid-template-columns: 142px minmax(180px, 1fr) minmax(190px, 1fr) 116px 132px;
             grid-template-rows: 92px; align-items: center; gap: 0 10px; isolation: isolate;
-            background: radial-gradient(ellipse at 50% 0, var(--dcuf-theme-accent-soft) 0, transparent 560px), var(--dcuf-theme-canvas);
-            --dcuf-b1-glass: color-mix(in srgb, var(--dcuf-theme-surface-raised, #fff) 88%, transparent);
-            --dcuf-b1-rim: color-mix(in srgb, var(--dcuf-theme-border, #dfe5ee) 55%, var(--dcuf-theme-surface, #fff));
+            --dcuf-b1-backdrop: radial-gradient(ellipse at 50% -240px, color-mix(in srgb, var(--dcuf-theme-accent-soft) 60%, transparent), transparent 900px), var(--dcuf-b1-canvas);
+            background: var(--dcuf-b1-backdrop);
         }
         ${selectors.layout} > * { grid-column: 1 / -1; min-width: 0; }
-        ${selectors.layout}::before { content: ""; grid-area: 1 / 1 / 2 / -1; align-self: stretch; margin: 12px 10px; border: 1px solid var(--dcuf-b1-rim); border-radius: 15px; background: linear-gradient(120deg, #ffffff12, transparent 60%), var(--dcuf-b1-glass); box-shadow: 0 8px 28px #284c4d0b, inset 0 1px 0 #ffffff24; backdrop-filter: blur(22px) saturate(1.15); z-index: -1; }
+        ${selectors.layout}::before { content: ""; grid-area: 1 / 1 / 2 / -1; align-self: stretch; margin: 12px 10px; border: 1px solid var(--dcuf-b1-rim); border-radius: 15px; background: linear-gradient(120deg, #ffffff12, transparent 60%), var(--dcuf-b1-glass); box-shadow: var(--dcuf-b1-shadow), inset 0 1px 0 var(--dcuf-b1-rim); backdrop-filter: blur(22px) saturate(1.15); z-index: -1; }
         ${selectors.root} { display: contents; min-width: 0 !important; width: 100% !important; height: auto !important; background: transparent; border: 0; }
-        ${selectors.root}[data-dcuf-header-layout="self"] { display: grid; z-index: 1005; }
+        ${selectors.root}[data-dcuf-header-layout="self"] { display: grid; z-index: 1005; background: var(--dcuf-b1-backdrop); }
         ${selectors.head} {
             display: contents !important;
             padding: 0;
@@ -9226,9 +9225,6 @@ const __dcufSettingsPresenter = (() => {
             ${selectors.bridge} { grid-area: 2 / 2; }
         }
         ${selectors.darkRoot} ${selectors.logo} > a:first-child { filter: brightness(0) invert(1); }
-        ${selectors.darkRoot} {
-            background: transparent;
-        }
 `
         });
     }
@@ -9314,7 +9310,7 @@ const __dcufSettingsPresenter = (() => {
             links?.querySelectorAll(':scope > [data-dcuf-header-utility-toggle="1"]').forEach(button => {
                 if (state.utility?.list !== list || button !== state.utility?.button) button.remove();
             });
-            if (state.utility?.list === list && state.utility.button.parentNode === links) {
+            if (state.utility && state.utility.list === list && state.utility.button.parentNode === links) {
                 if (!list.id) list.id = state.utility.button.getAttribute('popovertarget');
                 if (!list.hasAttribute('popover')) list.setAttribute('popover', 'auto');
                 state.utility.button.setAttribute('popovertarget', list.id);
@@ -10159,8 +10155,8 @@ const __dcufSettingsPresenter = (() => {
         ${selectors.trigger}::after { content: "⌄"; }
         ${selectors.triggerDecoration} { display: none; }
         /* The host writes inline left/top; keep its display and event lifecycle. */
-        ${selectors.popup} { position: absolute; left: auto !important; top: 46px !important; right: 0; width: min(320px, calc(100vw - 24px)); max-width: calc(100vw - 24px); max-height: min(480px, calc(100vh - 120px)); overflow: auto; box-sizing: border-box; border: 1px solid var(--dcuf-theme-border); border-radius: 14px; background: color-mix(in srgb, var(--dcuf-theme-surface-raised) 97%, transparent); color: var(--dcuf-theme-fg); box-shadow: var(--dcuf-theme-popup-shadow); backdrop-filter: blur(24px); }
-        ${selectors.popup} > div { min-width: 0; min-height: 0; height: auto; width: 100%; padding: 10px; box-sizing: border-box; }
+        ${selectors.popup} { position: absolute; left: auto !important; top: 46px !important; right: 0; width: min(320px, calc(100vw - 24px)); max-width: calc(100vw - 24px); max-height: min(480px, calc(100vh - 120px)); overflow: auto; box-sizing: border-box; border: 1px solid var(--dcuf-b1-rim); border-radius: 14px; background: color-mix(in srgb, var(--dcuf-b1-paper) 96%, transparent); color: var(--dcuf-theme-fg); box-shadow: var(--dcuf-b1-shadow), inset 0 1px 0 var(--dcuf-b1-rim); backdrop-filter: blur(24px); }
+        ${selectors.popup} > div { min-width: 0; min-height: 0; height: auto; width: 100%; padding: 10px; background: transparent; box-sizing: border-box; }
         ${selectors.popup} a { color: var(--dcuf-theme-fg); }
         ${selectors.popup} button { color: var(--dcuf-theme-accent-ink); }
         ${selectors.popupContent} { min-height: 0; height: auto; padding: 0; border: 0; background: transparent; box-sizing: border-box; }
@@ -12442,6 +12438,25 @@ const __dcufSettingsPresenter = (() => {
         });
     }
     const __dcufBuildTargetThemeCss = (ROOT_ATTRIBUTE) => `
+        /* Mobile B1 material roles from the selected preview. Shared palette
+           IDs/accent values and the PC theme remain unchanged. */
+        html[${ROOT_ATTRIBUTE}] {
+            --dcuf-b1-canvas: #f1f5f5;
+            --dcuf-b1-paper: var(--dcuf-theme-surface);
+            --dcuf-b1-glass: color-mix(in srgb, var(--dcuf-b1-paper) 83%, transparent);
+            --dcuf-b1-rim: #fffffff2;
+            --dcuf-b1-line: color-mix(in srgb, var(--dcuf-theme-border) 55%, var(--dcuf-b1-paper));
+            --dcuf-b1-shadow: 0 10px 30px #2e5a5f0c, 0 1px 3px #36515608;
+        }
+        html[${ROOT_ATTRIBUTE}].dc-filter-dark-mode,
+        html[${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode {
+            --dcuf-b1-canvas: #171e21;
+            --dcuf-b1-paper: #20292c;
+            --dcuf-b1-glass: color-mix(in srgb, var(--dcuf-b1-paper) 90%, transparent);
+            --dcuf-b1-rim: color-mix(in srgb, var(--dcuf-theme-fg) 9%, transparent);
+            --dcuf-b1-line: color-mix(in srgb, var(--dcuf-theme-fg) 5%, var(--dcuf-b1-paper));
+            --dcuf-b1-shadow: 0 14px 34px #0003, 0 1px 2px #0003;
+        }
         html[${ROOT_ATTRIBUTE}] #dcuf-boot-overlay .dcuf-boot-bar::before {
             background: linear-gradient(90deg, var(--dcuf-theme-accent-strong), var(--dcuf-theme-accent)) !important;
         }
@@ -13837,11 +13852,15 @@ const ThemeModule = (() => {
 
         /* 1. 전역 및 기본 레이웃 다크 테마 */
         body.dc-filter-dark-mode,
-        body.dc-filter-dark-mode #container,
         body.dc-filter-dark-mode .gall_content,
         body.dc-filter-dark-mode .gall_comment:not([data-dcuf-role="article-comment-count"]) {
             background: #121212 !important;
             color: #e0e0e0 !important;
+        }
+        /* The layout paints the page canvas; the native container must not
+           cover it with an independent black plate. */
+        body.dc-filter-dark-mode #container {
+            background: transparent !important;
         }
 
         body.dc-filter-dark-mode .minor_intro_area {

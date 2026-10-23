@@ -1,4 +1,23 @@
     const __dcufBuildTargetThemeCss = (ROOT_ATTRIBUTE) => `
+        /* Mobile B1 material roles from the selected preview. Shared palette
+           IDs/accent values and the PC theme remain unchanged. */
+        html[${ROOT_ATTRIBUTE}] {
+            --dcuf-b1-canvas: #f1f5f5;
+            --dcuf-b1-paper: var(--dcuf-theme-surface);
+            --dcuf-b1-glass: color-mix(in srgb, var(--dcuf-b1-paper) 83%, transparent);
+            --dcuf-b1-rim: #fffffff2;
+            --dcuf-b1-line: color-mix(in srgb, var(--dcuf-theme-border) 55%, var(--dcuf-b1-paper));
+            --dcuf-b1-shadow: 0 10px 30px #2e5a5f0c, 0 1px 3px #36515608;
+        }
+        html[${ROOT_ATTRIBUTE}].dc-filter-dark-mode,
+        html[${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode {
+            --dcuf-b1-canvas: #171e21;
+            --dcuf-b1-paper: #20292c;
+            --dcuf-b1-glass: color-mix(in srgb, var(--dcuf-b1-paper) 90%, transparent);
+            --dcuf-b1-rim: color-mix(in srgb, var(--dcuf-theme-fg) 9%, transparent);
+            --dcuf-b1-line: color-mix(in srgb, var(--dcuf-theme-fg) 5%, var(--dcuf-b1-paper));
+            --dcuf-b1-shadow: 0 14px 34px #0003, 0 1px 2px #0003;
+        }
         html[${ROOT_ATTRIBUTE}] #dcuf-boot-overlay .dcuf-boot-bar::before {
             background: linear-gradient(90deg, var(--dcuf-theme-accent-strong), var(--dcuf-theme-accent)) !important;
         }

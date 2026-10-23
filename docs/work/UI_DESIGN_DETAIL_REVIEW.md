@@ -23,6 +23,14 @@ The exact workflow and scope defaults below are our adaptation, not rules experi
 
 ## Detail prompts — select what changed
 
+### Coherent-component closure after a detail change
+
+Review the complete affected component at readable scale, including adjacent groups; a crop that cuts off categories or the primary action does not satisfy the whole/detail step. Even a color-only patch needs a brief check of that component's grouping/baselines, hierarchy and material in context. This is a missing part of the existing loop, not another survey or full-UI audit.
+
+Use geometry for objective relationships and visual comparison for perception. Blur/alpha/token equality and sampled RGB values cannot approve glass: compare the complete backing, glaze/rim and shadow, including the dark counterpart. Record concrete unresolved differences; do not invent a universal texture/beauty score. Functional PASS, visual NEEDS_WORK and manual-review-required stay separate. No numerical pass automatically closes appearance.
+
+The concrete miss/backstop is B1_VISUAL_REVIEW_GAP.md. The routed B1 runner now rejects observed category-label drift and always leaves final reference review explicit; the transfer test admits the selected reference and rejects shifted negatives. Header-glass quality is separately open. Reuse unchanged evidence and run only affected checks for later corrections.
+
 | Area | Concrete comparison |
 | --- | --- |
 | Type and hierarchy | Loaded font/fallback, size, weight, line height, tracking; title/author/stats emphasis and reading density. Compare equivalent row types. |

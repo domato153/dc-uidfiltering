@@ -74,7 +74,7 @@
             links?.querySelectorAll(':scope > [data-dcuf-header-utility-toggle="1"]').forEach(button => {
                 if (state.utility?.list !== list || button !== state.utility?.button) button.remove();
             });
-            if (state.utility?.list === list && state.utility.button.parentNode === links) {
+            if (state.utility && state.utility.list === list && state.utility.button.parentNode === links) {
                 if (!list.id) list.id = state.utility.button.getAttribute('popovertarget');
                 if (!list.hasAttribute('popover')) list.setAttribute('popover', 'auto');
                 state.utility.button.setAttribute('popovertarget', list.id);

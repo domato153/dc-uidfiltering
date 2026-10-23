@@ -530,11 +530,15 @@
 
         /* 1. 전역 및 기본 레이웃 다크 테마 */
         body.dc-filter-dark-mode,
-        body.dc-filter-dark-mode #container,
         body.dc-filter-dark-mode .gall_content,
         body.dc-filter-dark-mode .gall_comment:not([data-dcuf-role="article-comment-count"]) {
             background: #121212 !important;
             color: #e0e0e0 !important;
+        }
+        /* The layout paints the page canvas; the native container must not
+           cover it with an independent black plate. */
+        body.dc-filter-dark-mode #container {
+            background: transparent !important;
         }
 
         body.dc-filter-dark-mode .minor_intro_area {

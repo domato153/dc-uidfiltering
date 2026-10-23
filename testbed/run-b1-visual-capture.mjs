@@ -20,6 +20,9 @@ try{for(const [id,width,height,dark,open]of [['list-light',980,900,false,false],
   const e=await createTestPage(browser,server.baseUrl,{viewport:{width,height},storage:{[storageKeys.threshold]:0,[storageKeys.palette]:'teal'}});
   try{await mountB1NativeFixture(e,server.baseUrl,{dark});await e.page.evaluate(()=>document.fonts.ready);if(open)await e.page.locator('.newvisit_history>.btn_open').click();await e.page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
    const image=path.join(output,`${id}-${role}.png`);await e.page.screenshot({path:image,animations:'disabled'});item[role]=path.relative(process.cwd(),image).replaceAll('\\','/');
+   const toolbar=e.page.locator('[data-dcuf-surface="list-toolbar"]'),regionImage=path.join(output,`${id}-${role}-toolbar.png`);
+   await toolbar.screenshot({path:regionImage,animations:'disabled'});
+   (item.regions||= {})[role]={toolbar:path.relative(process.cwd(),regionImage).replaceAll('\\','/'),bounds:await toolbar.boundingBox()};
   }finally{await e.close()}
  }cases.push(item);
 }const manifest={schemaVersion:1,purpose:'design-comparison',provenance:{scope:'Before-repair defective control versus current; same fixture/browser/viewport/theme/open state. Reference is not an approved golden.',browser:browser.version(),bindings,fixtureSha256:hash(await readFile('testbed/fixtures/b1-native-list.mjs'))},cases};await writeFile(path.join(output,'pairs.json'),JSON.stringify(manifest,null,2));console.log(`Captured ${cases.length} matched states in separate contexts. ${output}`);

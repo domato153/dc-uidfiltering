@@ -115,14 +115,13 @@
         ${selectors.layout} {
             display: grid; grid-template-columns: 142px minmax(180px, 1fr) minmax(190px, 1fr) 116px 132px;
             grid-template-rows: 92px; align-items: center; gap: 0 10px; isolation: isolate;
-            background: radial-gradient(ellipse at 50% 0, var(--dcuf-theme-accent-soft) 0, transparent 560px), var(--dcuf-theme-canvas);
-            --dcuf-b1-glass: color-mix(in srgb, var(--dcuf-theme-surface-raised, #fff) 88%, transparent);
-            --dcuf-b1-rim: color-mix(in srgb, var(--dcuf-theme-border, #dfe5ee) 55%, var(--dcuf-theme-surface, #fff));
+            --dcuf-b1-backdrop: radial-gradient(ellipse at 50% -240px, color-mix(in srgb, var(--dcuf-theme-accent-soft) 60%, transparent), transparent 900px), var(--dcuf-b1-canvas);
+            background: var(--dcuf-b1-backdrop);
         }
         ${selectors.layout} > * { grid-column: 1 / -1; min-width: 0; }
-        ${selectors.layout}::before { content: ""; grid-area: 1 / 1 / 2 / -1; align-self: stretch; margin: 12px 10px; border: 1px solid var(--dcuf-b1-rim); border-radius: 15px; background: linear-gradient(120deg, #ffffff12, transparent 60%), var(--dcuf-b1-glass); box-shadow: 0 8px 28px #284c4d0b, inset 0 1px 0 #ffffff24; backdrop-filter: blur(22px) saturate(1.15); z-index: -1; }
+        ${selectors.layout}::before { content: ""; grid-area: 1 / 1 / 2 / -1; align-self: stretch; margin: 12px 10px; border: 1px solid var(--dcuf-b1-rim); border-radius: 15px; background: linear-gradient(120deg, #ffffff12, transparent 60%), var(--dcuf-b1-glass); box-shadow: var(--dcuf-b1-shadow), inset 0 1px 0 var(--dcuf-b1-rim); backdrop-filter: blur(22px) saturate(1.15); z-index: -1; }
         ${selectors.root} { display: contents; min-width: 0 !important; width: 100% !important; height: auto !important; background: transparent; border: 0; }
-        ${selectors.root}[data-dcuf-header-layout="self"] { display: grid; z-index: 1005; }
+        ${selectors.root}[data-dcuf-header-layout="self"] { display: grid; z-index: 1005; background: var(--dcuf-b1-backdrop); }
         ${selectors.head} {
             display: contents !important;
             padding: 0;
@@ -170,9 +169,6 @@
             ${selectors.bridge} { grid-area: 2 / 2; }
         }
         ${selectors.darkRoot} ${selectors.logo} > a:first-child { filter: brightness(0) invert(1); }
-        ${selectors.darkRoot} {
-            background: transparent;
-        }
 `
         });
     }

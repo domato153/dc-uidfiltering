@@ -1,5 +1,7 @@
 # Visual comparison and the B1 inspection gap
 
+Current90EEEBFF review gap: B1_VISUAL_REVIEW_GAP.md owns the user-reported unfinished toolbar and header glass, why existing checks/manual crops missed them, and the validated bounded backstop. Functional checks do not close this candidate's appearance. CURRENT/NEXT own its exact receipt and repair task; older8606114F/079ED46D results below remain historical scopes.
+
 Current repair: [B1_VISUAL_REPAIR.md](B1_VISUAL_REPAIR.md) and its exact8606114F receipt supersede the defective945C3DE7 result for the diagnosed batch. The findings below remain diagnosis history and method guidance, not current unresolved defects. Use `verification/visual/b1-repaired-native-list.json` for the repaired public design comparison; retain the original manifest as historical evidence.
 
 For design adoption/polish as well as defect complaints, follow [UI_DESIGN_DETAIL_REVIEW.md](UI_DESIGN_DETAIL_REVIEW.md): explicit detail anchors, whole/component comparison, actionable difference dispositions, same-owner refinement and affected-state recheck. This is the existing UI-maintainer skill's visual-review route, not an optional skill installation. A visual handoff must distinguish behavior, reference-detail fidelity and user preference; native/prototype differences cannot waive feasible polish.

@@ -11702,9 +11702,9 @@ mobileTest('UI palette presets normalize stored values without blocking boot', '
                 }
             });
             assertPaletteSurfaces(await collectPaletteSurfaceContract(session.page, [
-                { selector: '[data-dcuf-surface="list-container"]', token: '--dcuf-theme-surface' },
-                { selector: '[data-dcuf-surface="list-toolbar"]', token: '--dcuf-theme-surface-raised', alpha: 90 },
-                { selector: '[data-dcuf-surface="list-actions"]', token: '--dcuf-theme-surface-raised', alpha: 90 },
+                { selector: '[data-dcuf-surface="list-container"]', token: '--dcuf-b1-paper' },
+                { selector: '[data-dcuf-surface="list-toolbar"]', token: '--dcuf-b1-glass' },
+                { selector: '[data-dcuf-surface="list-actions"]', token: '--dcuf-b1-glass' },
                 { selector: '[data-dcuf-surface="list-pagination"]', token: '--dcuf-theme-surface-raised' },
                 { selector: '[data-dcuf-surface="list-search"]', token: '--dcuf-theme-surface-raised' }
             ]), `${expected} light list surfaces`);
@@ -11754,8 +11754,8 @@ mobileTest('UI palette presets normalize stored values without blocking boot', '
                 }
             });
             assertPaletteSurfaces(await collectPaletteSurfaceContract(session.page, [
-                { selector: '[data-dcuf-surface="list-container"]', token: '--dcuf-theme-surface' },
-                { selector: '[data-dcuf-surface="list-toolbar"]', token: '--dcuf-theme-surface-raised', alpha: 90 },
+                { selector: '[data-dcuf-surface="list-container"]', token: '--dcuf-b1-paper' },
+                { selector: '[data-dcuf-surface="list-toolbar"]', token: '--dcuf-b1-glass' },
                 { selector: '[data-dcuf-surface="list-pagination"]', token: '--dcuf-theme-surface-raised' },
                 { selector: '[data-dcuf-surface="list-search"]', token: '--dcuf-theme-surface-raised' }
             ]), `${expected} dark list surfaces`);
@@ -11811,9 +11811,9 @@ mobileTest('UI palette surfaces cover list canvas, comments, image comments, and
     try {
         await session.goto('/board/lists?id=test');
         assertPaletteSurfaces(await collectPaletteSurfaceContract(session.page, [
-            { selector: '[data-dcuf-surface="list-container"]', token: '--dcuf-theme-surface' },
-            { selector: '[data-dcuf-surface="list-toolbar"]', token: '--dcuf-theme-surface-raised', alpha: 90 },
-            { selector: '[data-dcuf-surface="list-actions"]', token: '--dcuf-theme-surface-raised', alpha: 90 },
+            { selector: '[data-dcuf-surface="list-container"]', token: '--dcuf-b1-paper' },
+            { selector: '[data-dcuf-surface="list-toolbar"]', token: '--dcuf-b1-glass' },
+            { selector: '[data-dcuf-surface="list-actions"]', token: '--dcuf-b1-glass' },
             { selector: '[data-dcuf-surface="list-pagination"]', token: '--dcuf-theme-surface-raised' },
             { selector: '[data-dcuf-surface="list-search"]', token: '--dcuf-theme-surface-raised' }
         ]), 'orange list');

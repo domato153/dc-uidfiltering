@@ -3,8 +3,8 @@
         const CSS = `
             [data-dcuf-surface="list-container"] {
                 font-family: system-ui, -apple-system, "Segoe UI", "Malgun Gothic", sans-serif;
-                --dcuf-list-border: color-mix(in srgb, var(--dcuf-theme-border, #dfe5ee) 60%, var(--dcuf-theme-surface, #fff));
-                --dcuf-list-surface: var(--dcuf-theme-surface, #fff);
+                --dcuf-list-border: var(--dcuf-b1-line, var(--dcuf-theme-border, #dfe5ee));
+                --dcuf-list-surface: var(--dcuf-b1-paper, var(--dcuf-theme-surface, #fff));
                 --dcuf-list-muted: var(--dcuf-theme-surface-muted, #f6f8fb);
                 --dcuf-list-fg: var(--dcuf-theme-fg, #273142);
                 --dcuf-list-subtle: var(--dcuf-theme-fg-muted, #697386);
@@ -161,10 +161,10 @@
                 min-height: 48px;
                 margin: 10px auto;
                 padding: 8px 10px;
-                border: 1px solid var(--dcuf-theme-border, #dfe5ee);
+                border: 1px solid var(--dcuf-b1-rim, var(--dcuf-theme-border, #dfe5ee));
                 border-radius: 12px;
-                background: color-mix(in srgb, var(--dcuf-theme-surface-raised, #fff) 90%, transparent);
-                box-shadow: 0 6px 20px #284c4d09, inset 0 1px 0 #ffffff28;
+                background: var(--dcuf-b1-glass);
+                box-shadow: var(--dcuf-b1-shadow), inset 0 1px 0 var(--dcuf-b1-rim);
                 backdrop-filter: blur(20px) saturate(1.1);
             }
             [data-dcuf-surface="list-toolbar"] [data-dcuf-role="tablist"],
@@ -424,10 +424,10 @@
             [data-dcuf-surface="list-toolbar"] [data-dcuf-state="current"],
             [data-dcuf-surface="list-toolbar"] [data-dcuf-role="tablist"] button[data-dcuf-state="current"],
             [data-dcuf-surface="list-actions"] [data-dcuf-state="current"] {
-                border-color: color-mix(in srgb, var(--dcuf-theme-border) 35%, var(--dcuf-theme-surface-raised));
+                border-color: var(--dcuf-b1-rim);
                 background: linear-gradient(140deg, #ffffff20, transparent), var(--dcuf-theme-accent-soft);
                 color: var(--dcuf-theme-accent-ink);
-                box-shadow: inset 0 1px 0 #ffffff28, 0 2px 6px #1b696710;
+                box-shadow: inset 0 1px 0 var(--dcuf-b1-rim), 0 2px 6px #1b696710;
             }
             [data-dcuf-surface="list-toolbar"] [data-dcuf-role="primary-action"],
             [data-dcuf-surface="list-toolbar"] [data-dcuf-role="primary-group"] [data-dcuf-role="primary-action"],
