@@ -2,22 +2,22 @@
 
 ## Current execution
 
-- Active plan: docs/work/MOBILE_UI_MODERNIZATION.md → B compact/B1; reference-first judgement correction implemented. Current write-button proportion/material/icon finish remains NEEDS_WORK.
+- Active plan: docs/work/MOBILE_UI_MODERNIZATION.md → B compact/B1; scoped button reference refinement implemented. User preference remains pending.
 - Workspace path: `.` (repository root). Use the private prompt's exact nested worktree; AGENTS.md is the single policy.
-- Active stage: `header-navigation`; next bounded slice `b1-reference-fidelity-refinement`. Refine the concrete current button gaps through the existing list owner, then recompare against selected B1.
+- Active stage: `header-navigation`; next bounded slice `b1-button-polish-user-review`. Compare selected reference/96/8A complete toolbar and equal-scale button.
 - Accepted visual preference: B compact/recent menu + B1 Prism Glass; B2/large-title-card remain inactive.14 palettes/settings, native controls and toolbar motion preserved.
-- Source state: Source checkpoint base HEAD `69efb60321931ec40ca4e8b0636b80417cd5b3a9` on `codex/ui-port-boundary`; image-comparator review binding/tests and guidance changed. Product source/runtime, registry/overlay/owners and PC unchanged.
+- Source state: Source checkpoint base HEAD `369d60cf4f8132737ca90762dce2ad3359fad2a0` on `codex/ui-port-boundary`; existing list-presenter button CSS/mask and affected Mobile generated artifacts changed. Native DOM/events/UiPort/storage/observers, registry/overlay/owners and PC unchanged.
 - Local-only state: `LOCAL_ONLY_EVIDENCE`; captures/reports/viewer under ignored artifacts/. Preserve debug.log unread/unstaged. User-authorized cache/extraction cleanup is inventoried under artifacts/workspace-cleanup-2026-10-23; current runtime, rollback, evidence, controls and viewer retained.
-- Candidate fingerprint: `e4cd57e6776ffc425036c309b1a963f7cd3cdf2680c36b16acb8a3b2b05085fb`
-- Last current audit: UNKNOWN — B1_REFERENCE_VERDICT_BACKSTOP_VALIDATED. Existing transfer checks pass; two selected-reference positives and four known current/control examples retain image-bound review. Product96 is NEEDS_WORK. Prior focused function checks retain exact scope only.
-- Current stage receipt: `verification/receipts/2026-10-23-b1-reference-verdict.json` SHA-256 `5B4A710D05531AF433A6A5D54137704779B65D6F9A78EE45DEDA1A6D91C60C8D`; actual known-case review and binding/closure checks, not autonomous aesthetic or product approval.
-- Accepted baseline: selected B1 preview remains design target; AF6 flat and96 proportion/material/icon gaps remain open. No new native golden. Published raw +8-listener difference remains unwaived.
-- Current artifact: Mobile3.5.5 `96B933A1A47849885D83D42290B54E3AE33181846DF244606A9063F9E4083BFD`, root/dist/guard aligned. PC1.9.9 `5FA25756C43864AA8C90C1347AE6A03652D901862F83ABEAEDDEBF6382CFA740` root/dist unchanged.
-- Blockers: No engineering/capability blocker. Concrete button-fidelity gaps remain; sufficient header glass and user taste are also open. One unconfirmed dynamic-img detector warning has no ignore.
-- Pending live checks: Fresh public Chrome155 light/dark GET/HEAD with GM shim returns200/overflow0; no new actual Tampermonkey/device/authenticated qualification.980×2306 is layout proxy,390 stress. Other UI families and raw/mixed/upper/release remain separate.
+- Candidate fingerprint: `16f7ec6086c7ea530ae160853de475c687a1e9ce3172af5b49f8cf49a75d446c`
+- Last current audit: UNKNOWN — B1_BUTTON_REFERENCE_REVIEWED.8 B1/28 bindings,36 native-toolbar contexts,28 rendered contrast samples (minimum4.63:1), keyboard focus,16 immediate semantic/four settled records pass. Appearance/user and broader acceptance remain separate.
+- Current stage receipt: `verification/receipts/2026-10-23-b1-button-reference-refinement.json` SHA-256 `54D76C63000D3AFEE1BBF3FEE40C927294B8AE8751F1B3E474BDC0FC3077C982`; scoped function/contrast/input/reference evidence and retained failed alternatives.
+- Accepted baseline: Selected B1 preview is the design target;96 is exact immediate rejected-look control.8A5C correction is reference-reviewed with palette hue declared, not a new native golden or user approval. Published raw +8-listener difference remains unwaived.
+- Current artifact: Mobile3.5.5 `8A5C8209AFA4BF951C9DC38D58EBB0A1C630212859C92C4690BF070C8E12BE1D`, root/dist/guard aligned. PC1.9.9 `5FA25756C43864AA8C90C1347AE6A03652D901862F83ABEAEDDEBF6382CFA740` root/dist unchanged.
+- Blockers: No engineering/capability blocker. User button preference and sufficient header glass remain open; one unconfirmed dynamic-img detector warning has no ignore.
+- Pending live checks: Fresh public Chrome155 anonymous GET/HEAD in light/dark returns200/overflow0 with GM shim. No new actual extension/device/authenticated/older-phone-engine qualification.980×2306 is layout proxy;390 stress. Other UI families and raw/mixed/upper/release remain separate.
 
 ```dcuf-current-artifacts
-{"schemaVersion":1,"mobile":{"sha256":"96B933A1A47849885D83D42290B54E3AE33181846DF244606A9063F9E4083BFD"},"pc":{"sha256":"5FA25756C43864AA8C90C1347AE6A03652D901862F83ABEAEDDEBF6382CFA740"}}
+{"schemaVersion":1,"mobile":{"sha256":"8A5C8209AFA4BF951C9DC38D58EBB0A1C630212859C92C4690BF070C8E12BE1D"},"pc":{"sha256":"5FA25756C43864AA8C90C1347AE6A03652D901862F83ABEAEDDEBF6382CFA740"}}
 ```
 
 ## Draft-complete checkpoint — 2026-10-21

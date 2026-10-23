@@ -1,6 +1,6 @@
 # Visual comparison and the B1 inspection gap
 
-Current96B933A1 follow-up: reference-first review records `NEEDS_WORK` for remaining button proportion/material/icon differences in both themes. See UI_DESIGN_DETAIL_REVIEW.md and `verification/receipts/2026-10-23-b1-reference-verdict.json`. Earlier focused function/alignment checks retain their exact scopes; they do not close this appearance gap.
+Current8A5C8209 refinement: button proportion/material/icon corrections are implemented and reference-reviewed in both themes; user preference remains pending. See B1_VISUAL_REVIEW_GAP.md and `verification/receipts/2026-10-23-b1-button-reference-refinement.json`. The96 NEEDS_WORK finding is historical control evidence, not silently erased.
 
 Current repair: [B1_VISUAL_REPAIR.md](B1_VISUAL_REPAIR.md) and its exact8606114F receipt supersede the defective945C3DE7 result for the diagnosed batch. The findings below remain diagnosis history and method guidance, not current unresolved defects. Use `verification/visual/b1-repaired-native-list.json` for the repaired public design comparison; retain the original manifest as historical evidence.
 

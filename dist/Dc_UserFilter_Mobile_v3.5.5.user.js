@@ -2355,22 +2355,43 @@ const __dcufSettingsPresenter = (() => {
             [data-dcuf-surface="list-actions"] [data-dcuf-role="action-end"] [data-dcuf-role="primary-action"],
             [data-dcuf-surface="list-actions"] [data-dcuf-role="action-end"] [data-dcuf-role="primary-action"]:visited,
             [data-dcuf-surface="list-actions"] [data-dcuf-role="primary-action"] {
-                min-width: 80px;
-                border-color: color-mix(in srgb, var(--dcuf-theme-on-accent) 20%, var(--dcuf-theme-accent-strong));
-                border-radius: 9px;
-                background: linear-gradient(180deg, #ffffff1f, transparent 36%), linear-gradient(155deg, var(--dcuf-theme-accent-strong), color-mix(in srgb, var(--dcuf-theme-accent-strong) 84%, black));
+                position: relative;
+                isolation: isolate;
+                min-width: 88px;
+                height: 40px;
+                box-sizing: border-box;
+                padding-inline: 15px;
+                border: 0;
+                border-radius: 8px;
+                background: transparent;
                 color: var(--dcuf-theme-on-accent, #fff);
-                box-shadow: inset 0 1px 0 #ffffff4d, inset 0 -1px 0 #00000018, 0 3px 7px var(--dcuf-theme-accent-shadow);
+                font-weight: 650;
+                box-shadow: none;
+            }
+            /* A36px painted face preserves the original40px native hit target. */
+            [data-dcuf-surface="list-toolbar"] [data-dcuf-role="primary-action"]::after,
+            [data-dcuf-surface="list-actions"] [data-dcuf-role="primary-action"]::after {
+                content: "";
+                position: absolute;
+                inset: 2px 0;
+                z-index: -1;
+                pointer-events: none;
+                border: 1px solid color-mix(in srgb, var(--dcuf-theme-on-accent) 16%, transparent);
+                border-radius: 8px;
+                /* Keep a legible fallback for older phone color parsers. */
+                background: linear-gradient(155deg, color-mix(in srgb, var(--dcuf-theme-accent-strong) 94%, white), var(--dcuf-theme-accent-strong));
+                background: linear-gradient(155deg, hsl(from var(--dcuf-theme-accent-strong) h s calc(l + clamp(1, calc(27.5 - l), 9))), var(--dcuf-theme-accent-strong));
+                box-shadow: inset 0 1px 0 #ffffff42, 0 4px 9px color-mix(in srgb, var(--dcuf-theme-accent-strong) 12%, transparent);
             }
             [data-dcuf-surface="list-toolbar"] [data-dcuf-role="primary-action"]::before,
             [data-dcuf-surface="list-actions"] [data-dcuf-role="primary-action"]::before {
                 content: "";
                 display: inline-block;
-                width: 14px;
-                height: 14px;
-                margin: 0 6px 0 0;
+                width: 16px;
+                height: 16px;
+                margin: 0 7px 0 0;
                 background: currentColor;
-                mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='m16 3 5 5L8 21H3v-5L16 3Zm-3 3 5 5' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat;
+                mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M3.9 7.5a2.5 2.5 0 0 1 0-3.6l.4-.4a2.5 2.5 0 0 1 3.6 0L19 14.6l-3.6 3.6L3.9 7.5Zm12.6 11.8 4.8 1.4-1.4-4.8-3.4 3.4Z' fill='black'/%3E%3C/svg%3E") center / contain no-repeat;
                 color: currentColor;
                 font-size: 14px;
                 line-height: 1;
