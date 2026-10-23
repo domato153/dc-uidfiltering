@@ -18,8 +18,11 @@ try{for(const theme of ['light','dark']){
   assert.deepEqual(assessToolbarVisualContract(snapshot),[],`Selected ${theme} reference must be admitted`);
   const shifted=structuredClone(snapshot);for(const label of shifted.categories)label.textCenter-=10;
   assert.equal(assessToolbarVisualContract(shifted)[0].code,'CATEGORY_LABEL_ALIGNMENT','A shifted label group must be rejected');
+  const clearfix=structuredClone(snapshot);clearfix.layout='grid';clearfix.clearfix={display:'block',content:'""'};
+  assert.equal(assessToolbarVisualContract(clearfix)[0].code,'LEGACY_CLEARFIX_GRID_ITEM','A native float clearfix must be rejected in a grid');
+  assert.equal(assessToolbarVisualContract(clearfix,{sameRow:false})[0].code,'LEGACY_CLEARFIX_GRID_ITEM','Separate responsive rows still reject a legacy clearfix');
   await toolbar.screenshot({path:`${output}/reference-${theme}-toolbar.png`,animations:'disabled'});
-  cases.push({theme,snapshot,reference:'PASS',shiftedNegative:'REJECTED'});
+  cases.push({theme,snapshot,reference:'PASS',shiftedNegative:'REJECTED',clearfixNegative:'REJECTED'});
  }finally{await context.close()}
-}}finally{await browser.close();await writeFile(`${output}/report.json`,JSON.stringify({scope:'ALIGNED_LABEL_COMPOSITION_ONLY_NOT_BEAUTY_OR_MATERIAL',cases},null,2)+'\n')}
-console.log(`Toolbar visual contract: ${cases.length} selected-reference positives; shifted negatives rejected`);
+}}finally{await browser.close();await writeFile(`${output}/report.json`,JSON.stringify({scope:'TOOLBAR_ALIGNMENT_AND_CLEARFIX_NOT_BEAUTY_OR_MATERIAL',cases},null,2)+'\n')}
+console.log(`Toolbar visual contract: ${cases.length} selected-reference positives; shifted-label and clearfix negatives rejected`);

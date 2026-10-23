@@ -1,5 +1,18 @@
 # B1 visual-review miss and bounded backstop
 
+## Actual application — AF6C98F0, 2026-10-23
+
+Current implementation is ready for user visual review; it is not a beauty approval. The sections below retain the pre-repair90EEEBFF diagnosis. The exact result is bound by verification/receipts/2026-10-23-b1-toolbar-header-detail.json and CURRENT/NEXT.
+
+- In the existing list owner, category labels now occupy the same40px control band as tabs; box sizing and padding override the observed host anchor rules. Final rendered text-centre drift is below1px versus the earlier13.296875px. Tabs use their label width while preserving44×40px targets and the80px primary action. A single SVG-mask pencil avoids font-dependent glyph weight. Native links, overflow menu, ellipsis, handlers and order remain.
+- Whole-component review then caught a second real issue: native float clearfix becomes an empty grid row plus10px gap. The live toolbar was70px, then68px after label repair; its final height is58px. The live-shaped fixture and existing visual gate now reject that pseudo item in wide and narrow layouts. The ready-state semantic selector removes it in the existing owner, without coupling to native classes. An attempted native-class selector failed the original boundary check; a guessed list-host ancestor failed the new gate and was discarded because the toolbar can be its sibling.
+- Header material uses the existing theme-aware translucent tint, diagonal glaze, fine lower rim and shadow. Readable complete-header comparisons show a subtle change. Sufficient glass/texture remains a user judgement; blur, sampled colors, automatic counts or the detector cannot approve it. Native extra links intentionally keep their compact two-line group rather than copying the mock's four links.
+- Final guarded source runtime passes144/144 mobile tests,8 B1 functional contexts/28 palette-theme bindings,8 header-layout and5 scroll contexts. Immediate90-control comparison preserves16 behavior/invariant observations and four settled-resource records. Public anonymous Chrome155 GET/HEAD captures in light/dark have no visible broken images or horizontal overflow; this is a GM-shim run, not a new actual-extension/device test. Exact reports and hashes live in the receipt.
+- Selected-reference light/dark positives and shifted-label/clearfix negatives pass in the existing transfer test. The native pixel reports still say DIFFERENCES_REQUIRE_REVIEW/productApproved:false. The final viewer shows selected reference/before/after at complete component width, supports original100%, light/dark and recent-open views, and retains same-fixture/phone-layout/stress evidence.
+
+This real application demonstrates useful defect detection and repair feedback, including a defect missed by the label-only check. It does not establish causal efficiency superiority or reliable autonomous beauty judgement. No new review role, repeated broad audit, new engine or dependency was added. Earlier intermediate/interrupted runs are preserved and are not final coverage. The original Impeccable detector still warns on the unchanged dynamic img serializer; no ignore or clean-scan claim was added.
+
+
 The user identified an unfinished toolbar and weaker header glass in the90EEEBFF candidate. The material pass is **not visually complete**. Functional144/144, native compatibility11/11 and palette bindings retain their own scopes; they cannot approve either appearance issue.
 
 ## Why it escaped

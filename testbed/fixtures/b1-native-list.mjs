@@ -2,6 +2,8 @@
 export async function mountB1NativeFixture(e,baseUrl,{siblings=true,dark=false}={}) {
    await e.page.route(url=>url.origin===baseUrl&&/\/board\/lists$/.test(url.pathname),async route=>{
     const response=await route.fetch();let html=await response.text();
+    // Native float clearfix becomes a zero-height extra grid row plus row gap.
+    html=html.replace('class="list_array_option"','class="list_array_option clear"').replace('</head>','<style>.list_array_option.clear::after{content:"";display:block;clear:both}</style></head>');
     // The native accessible label is clipped by host CSS, not a visible caption.
     html=html.replace('</head>','<style>.blind{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}</style></head>');
     html=html.replace(/(<div class="wrap_search"><form>)([\s\S]*?)(<\/form>)/,'$1<fieldset>$2</fieldset>$3');

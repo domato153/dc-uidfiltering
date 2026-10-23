@@ -4,16 +4,18 @@
         html[${ROOT_ATTRIBUTE}] {
             --dcuf-b1-canvas: #f1f5f5;
             --dcuf-b1-paper: var(--dcuf-theme-surface);
-            --dcuf-b1-glass: color-mix(in srgb, var(--dcuf-b1-paper) 83%, transparent);
+            --dcuf-b1-glass: color-mix(in srgb, color-mix(in srgb, var(--dcuf-b1-paper) 80%, var(--dcuf-theme-accent-soft)) 76%, transparent);
+            --dcuf-b1-sheen: linear-gradient(120deg, #ffffff70, #ffffff12 42%, transparent 65%);
             --dcuf-b1-rim: #fffffff2;
             --dcuf-b1-line: color-mix(in srgb, var(--dcuf-theme-border) 55%, var(--dcuf-b1-paper));
-            --dcuf-b1-shadow: 0 10px 30px #2e5a5f0c, 0 1px 3px #36515608;
+            --dcuf-b1-shadow: 0 12px 32px #2e5a5f12, 0 1px 3px #3651560b;
         }
         html[${ROOT_ATTRIBUTE}].dc-filter-dark-mode,
         html[${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode {
             --dcuf-b1-canvas: #171e21;
             --dcuf-b1-paper: #20292c;
-            --dcuf-b1-glass: color-mix(in srgb, var(--dcuf-b1-paper) 90%, transparent);
+            --dcuf-b1-glass: color-mix(in srgb, color-mix(in srgb, var(--dcuf-b1-paper) 85%, var(--dcuf-theme-accent-soft)) 90%, transparent);
+            --dcuf-b1-sheen: linear-gradient(120deg, #ffffff16, transparent 58%);
             --dcuf-b1-rim: color-mix(in srgb, var(--dcuf-theme-fg) 9%, transparent);
             --dcuf-b1-line: color-mix(in srgb, var(--dcuf-theme-fg) 5%, var(--dcuf-b1-paper));
             --dcuf-b1-shadow: 0 14px 34px #0003, 0 1px 2px #0003;

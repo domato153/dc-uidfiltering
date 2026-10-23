@@ -189,6 +189,8 @@
                 box-sizing: border-box;
                 flex-wrap: wrap;
             }
+            /* Once the adapter is ready, grid replaces the host's float clearfix. */
+            [data-dcuf-surface="list-toolbar"][data-dcuf-state="ready"]::after { content: none; display: none; }
             [data-dcuf-surface="list-toolbar"][data-dcuf-scroll]:not([data-dcuf-scroll="measuring"]) {
                 transform: none;
                 transition: transform 200ms ease, visibility 200ms;
@@ -236,6 +238,7 @@
                 width: auto;
                 min-width: 0;
                 max-width: 100%;
+                align-items: center;
                 margin: 0;
                 line-height: normal;
                 transform: none;
@@ -257,9 +260,10 @@
                 display: grid;
                 grid-auto-flow: column;
                 grid-auto-columns: max-content;
+                align-items: center;
                 flex-wrap: nowrap;
                 gap: 2px;
-                height: auto;
+                height: 40px;
                 margin: 0;
                 padding: 0;
                 overflow-x: auto;
@@ -268,8 +272,8 @@
                 min-width: 0;
                 flex: 1 1 auto;
             }
-            [data-dcuf-surface="list-toolbar"] [data-dcuf-role="category-list"] > li { min-width: 0; max-width: 200px; padding: 0; scroll-snap-align: start; }
-            [data-dcuf-surface="list-toolbar"] [data-dcuf-role="category-list"] > li > a { display: block; max-width: 100%; padding-inline: 10px; font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+            [data-dcuf-surface="list-toolbar"] [data-dcuf-role="toolbar-categories"] [data-dcuf-role="category-list"] > li { display: flex; align-items: center; min-width: 0; max-width: 200px; height: 40px; padding: 0; scroll-snap-align: start; }
+            [data-dcuf-surface="list-toolbar"] [data-dcuf-role="toolbar-categories"] [data-dcuf-role="category-list"] > li > a { display: block; box-sizing: border-box; height: 40px; max-width: 100%; padding: 0 10px; border-radius: 6px; font-size: 11px; line-height: 40px; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
             [data-dcuf-surface="list-toolbar"] [data-dcuf-role="category-toggle"] {
                 position: static;
                 display: inline-flex;
@@ -421,6 +425,9 @@
             [data-dcuf-surface="list-toolbar"] [data-dcuf-role="primary-action"]:active,
             [data-dcuf-surface="list-actions"] [data-dcuf-role="action"]:active,
             [data-dcuf-surface="list-actions"] [data-dcuf-role="primary-action"]:active { transform: scale(.98); }
+            @media (min-width: 760px) {
+                [data-dcuf-surface="list-toolbar"] [data-dcuf-role="tablist"] button[data-dcuf-role="action"] { width: auto; padding-inline: 13px; }
+            }
             [data-dcuf-surface="list-toolbar"] [data-dcuf-state="current"],
             [data-dcuf-surface="list-toolbar"] [data-dcuf-role="tablist"] button[data-dcuf-state="current"],
             [data-dcuf-surface="list-actions"] [data-dcuf-state="current"] {
@@ -442,12 +449,13 @@
             }
             [data-dcuf-surface="list-toolbar"] [data-dcuf-role="primary-action"]::before,
             [data-dcuf-surface="list-actions"] [data-dcuf-role="primary-action"]::before {
-                content: "✎";
+                content: "";
                 display: inline-block;
-                width: auto;
-                height: auto;
+                width: 14px;
+                height: 14px;
                 margin: 0 6px 0 0;
-                background: none;
+                background: currentColor;
+                mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='m16 3 5 5L8 21H3v-5L16 3Zm-3 3 5 5' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat;
                 color: currentColor;
                 font-size: 14px;
                 line-height: 1;

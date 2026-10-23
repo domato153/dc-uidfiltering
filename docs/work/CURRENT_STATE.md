@@ -2,22 +2,22 @@
 
 ## Current execution
 
-- Active plan: docs/work/MOBILE_UI_MODERNIZATION.md → B compact/B1.90EEEBFF material/startup changes are functionally checked; user-reported toolbar/header detail remains visually unfinished. B1_VISUAL_REVIEW_GAP.md owns the repaired review route.
-- Workspace path: `.`. Use the private prompt's exact nested worktree; AGENTS.md is the single policy.
-- Active stage: `header-navigation`; next bounded slice `b1-toolbar-and-header-detail`: repair coherent toolbar composition and header glass, then compare the complete affected components. Review-system repair completed first as requested; no further product edits after that request.
-- Accepted visual preference: B compact/recent menu + B1 Prism Glass. B2/large-title-card remain inactive. Preserve14 palettes/settings, original controls and toolbar motion.
-- Source state: Source checkpoint base HEAD `31905e1a0fb6aa0cb39d436d97cc25e7a9e70d05` on `codex/ui-port-boundary`; current accepted registry/overlay unchanged. Five owners have CSS-only changes; one adapter guard fixes the absent-utility startup failure. No owner/interface transition.
-- Local-only state: `LOCAL_ONLY_EVIDENCE`. Reports/images under artifacts/ and testbed/artifacts/ are ignored. Preserve debug.log unread/unstaged.
-- Candidate fingerprint: `436d4e8c606a75d3f02b04e8a558365588df1db8a972193c102078a9232111e5`
-- Last current audit: UNKNOWN — B1_TOOLBAR_AND_HEADER_DETAIL_NEEDS_WORK.144 mobile/11 compatibility pass; B1 eight functional contexts/28 palette bindings pass, while six same-row composition contexts correctly reject13.296875px drift. Two chosen-reference themes pass and shifted negatives reject. Header glass is a separate unresolved manual finding.
-- Current stage receipt: `verification/receipts/2026-10-23-b1-material-review-gap.json` SHA-256 `D017F60575194716CE98A3EA8F6F83967739B1895AC91583D2F1E19367002FBD`; bounded implementation and review-backstop evidence, not visual approval. Raw/mixed/upper/release and comparative efficiency remain unqualified.
-- Accepted baseline: 079ED46D is the exact immediate control; B1 preview is the design reference.90EEEBFF is the current unaccepted-appearance candidate. Published raw +8-listener failure remains unwaived.
-- Current artifact: Mobile3.5.5 `90EEEBFF27DC7C1B585A56D74F7AE4B27E34609806C38254AC54460DBA8F444F`, root/dist/guard aligned. PC1.9.9 `5FA25756C43864AA8C90C1347AE6A03652D901862F83ABEAEDDEBF6382CFA740` root/dist unchanged.
-- Blockers: No capability blocker. Toolbar alignment/density/control balance and header glass remain NEEDS_WORK; do not close them using functional counts or token/blur presence. One dynamic-img warning remains unconfirmed with no ignore.
-- Pending live checks: Current public Chrome155 GET/HEAD uses GM shim; no new actual Tampermonkey/device/authenticated qualification.980×2306 is layout proxy;390 stress. Existing8 layout/5 scroll and16 semantic/four-settled observations retain their exact90EEEBFF scopes.
+- Active plan: docs/work/MOBILE_UI_MODERNIZATION.md → B compact/B1; actual toolbar/header detail application is review-ready. B1_VISUAL_REVIEW_GAP.md retains cause, repairs and bounded method evidence.
+- Workspace path: `.` (repository root). Use the private prompt's exact nested worktree; AGENTS.md is the single policy.
+- Active stage: `header-navigation`; next bounded slice `b1-detail-user-review`. Review actual chosen-reference/before/after with the user before another visual family.
+- Accepted visual preference: B compact/recent menu + B1 Prism Glass; B2/large-title-card remain inactive.14 palettes/settings, native controls and toolbar motion preserved.
+- Source state: Source checkpoint base HEAD `246a2b0488de1a011a89e3338f67c4fecdb9f687` on `codex/ui-port-boundary`; CSS-only refinement in list/header-shell/theme-host owners. Accepted registry/overlay and responsibilities unchanged; no native DOM/event/storage/observer changes.
+- Local-only state: `LOCAL_ONLY_EVIDENCE`; captures/reports/viewer under ignored artifacts/. Preserve debug.log unread/unstaged.
+- Candidate fingerprint: `3a69d306c5c55be9ce2ce84a7b547999ef9b21f02d02364b11dc44e9e9a8bc01`
+- Last current audit: UNKNOWN — B1_COMPONENT_REFINEMENT_REVIEW_READY.144/144 mobile,8 B1 functional contexts/28 palette bindings,8 layout/5 scroll and16 immediate semantic/four settled records pass. Same-row maximum offset0.703125px; no clearfix finding across8 contexts. No beauty/upper approval.
+- Current stage receipt: `verification/receipts/2026-10-23-b1-toolbar-header-detail.json` SHA-256 `733A5A8F1C825CD4D8E883F7E51EE995351C5247C28E196608A3982BF8CDC97D`; exact implementation/affected-state evidence. Header glass difference is subtle and user judgement remains pending.
+- Accepted baseline: 90EEEBFF is this unit's exact immediate control; chosen B1 preview is the design reference, not a native golden. Published raw +8-listener difference remains unwaived.
+- Current artifact: Mobile3.5.5 `AF6C98F0ECD7351B3A4C2EFF47BC23636B8AAE9C47DFD2A9F16D3AA76187C589`, root/dist/guard aligned. PC1.9.9 `5FA25756C43864AA8C90C1347AE6A03652D901862F83ABEAEDDEBF6382CFA740` root/dist unchanged.
+- Blockers: No engineering/capability blocker. User visual preference, especially sufficient header glass, remains pending; one unconfirmed dynamic-img detector warning retains no ignore.
+- Pending live checks: Public Chrome155 light/dark GET/HEAD with GM shim, visible broken images0 and overflow0; no new actual Tampermonkey/device/authenticated qualification.980×2306 is layout proxy,390 stress. Raw/mixed/upper/release and article/comment/write/dialog redesign remain separate.
 
 ```dcuf-current-artifacts
-{"schemaVersion":1,"mobile":{"sha256":"90EEEBFF27DC7C1B585A56D74F7AE4B27E34609806C38254AC54460DBA8F444F"},"pc":{"sha256":"5FA25756C43864AA8C90C1347AE6A03652D901862F83ABEAEDDEBF6382CFA740"}}
+{"schemaVersion":1,"mobile":{"sha256":"AF6C98F0ECD7351B3A4C2EFF47BC23636B8AAE9C47DFD2A9F16D3AA76187C589"},"pc":{"sha256":"5FA25756C43864AA8C90C1347AE6A03652D901862F83ABEAEDDEBF6382CFA740"}}
 ```
 
 ## Draft-complete checkpoint — 2026-10-21

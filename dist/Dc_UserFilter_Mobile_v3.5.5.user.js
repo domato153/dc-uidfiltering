@@ -2102,6 +2102,8 @@ const __dcufSettingsPresenter = (() => {
                 box-sizing: border-box;
                 flex-wrap: wrap;
             }
+            /* Once the adapter is ready, grid replaces the host's float clearfix. */
+            [data-dcuf-surface="list-toolbar"][data-dcuf-state="ready"]::after { content: none; display: none; }
             [data-dcuf-surface="list-toolbar"][data-dcuf-scroll]:not([data-dcuf-scroll="measuring"]) {
                 transform: none;
                 transition: transform 200ms ease, visibility 200ms;
@@ -2149,6 +2151,7 @@ const __dcufSettingsPresenter = (() => {
                 width: auto;
                 min-width: 0;
                 max-width: 100%;
+                align-items: center;
                 margin: 0;
                 line-height: normal;
                 transform: none;
@@ -2170,9 +2173,10 @@ const __dcufSettingsPresenter = (() => {
                 display: grid;
                 grid-auto-flow: column;
                 grid-auto-columns: max-content;
+                align-items: center;
                 flex-wrap: nowrap;
                 gap: 2px;
-                height: auto;
+                height: 40px;
                 margin: 0;
                 padding: 0;
                 overflow-x: auto;
@@ -2181,8 +2185,8 @@ const __dcufSettingsPresenter = (() => {
                 min-width: 0;
                 flex: 1 1 auto;
             }
-            [data-dcuf-surface="list-toolbar"] [data-dcuf-role="category-list"] > li { min-width: 0; max-width: 200px; padding: 0; scroll-snap-align: start; }
-            [data-dcuf-surface="list-toolbar"] [data-dcuf-role="category-list"] > li > a { display: block; max-width: 100%; padding-inline: 10px; font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+            [data-dcuf-surface="list-toolbar"] [data-dcuf-role="toolbar-categories"] [data-dcuf-role="category-list"] > li { display: flex; align-items: center; min-width: 0; max-width: 200px; height: 40px; padding: 0; scroll-snap-align: start; }
+            [data-dcuf-surface="list-toolbar"] [data-dcuf-role="toolbar-categories"] [data-dcuf-role="category-list"] > li > a { display: block; box-sizing: border-box; height: 40px; max-width: 100%; padding: 0 10px; border-radius: 6px; font-size: 11px; line-height: 40px; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
             [data-dcuf-surface="list-toolbar"] [data-dcuf-role="category-toggle"] {
                 position: static;
                 display: inline-flex;
@@ -2334,6 +2338,9 @@ const __dcufSettingsPresenter = (() => {
             [data-dcuf-surface="list-toolbar"] [data-dcuf-role="primary-action"]:active,
             [data-dcuf-surface="list-actions"] [data-dcuf-role="action"]:active,
             [data-dcuf-surface="list-actions"] [data-dcuf-role="primary-action"]:active { transform: scale(.98); }
+            @media (min-width: 760px) {
+                [data-dcuf-surface="list-toolbar"] [data-dcuf-role="tablist"] button[data-dcuf-role="action"] { width: auto; padding-inline: 13px; }
+            }
             [data-dcuf-surface="list-toolbar"] [data-dcuf-state="current"],
             [data-dcuf-surface="list-toolbar"] [data-dcuf-role="tablist"] button[data-dcuf-state="current"],
             [data-dcuf-surface="list-actions"] [data-dcuf-state="current"] {
@@ -2355,12 +2362,13 @@ const __dcufSettingsPresenter = (() => {
             }
             [data-dcuf-surface="list-toolbar"] [data-dcuf-role="primary-action"]::before,
             [data-dcuf-surface="list-actions"] [data-dcuf-role="primary-action"]::before {
-                content: "✎";
+                content: "";
                 display: inline-block;
-                width: auto;
-                height: auto;
+                width: 14px;
+                height: 14px;
                 margin: 0 6px 0 0;
-                background: none;
+                background: currentColor;
+                mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='m16 3 5 5L8 21H3v-5L16 3Zm-3 3 5 5' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat;
                 color: currentColor;
                 font-size: 14px;
                 line-height: 1;
@@ -9175,7 +9183,7 @@ const __dcufSettingsPresenter = (() => {
             background: var(--dcuf-b1-backdrop);
         }
         ${selectors.layout} > * { grid-column: 1 / -1; min-width: 0; }
-        ${selectors.layout}::before { content: ""; grid-area: 1 / 1 / 2 / -1; align-self: stretch; margin: 12px 10px; border: 1px solid var(--dcuf-b1-rim); border-radius: 15px; background: linear-gradient(120deg, #ffffff12, transparent 60%), var(--dcuf-b1-glass); box-shadow: var(--dcuf-b1-shadow), inset 0 1px 0 var(--dcuf-b1-rim); backdrop-filter: blur(22px) saturate(1.15); z-index: -1; }
+        ${selectors.layout}::before { content: ""; grid-area: 1 / 1 / 2 / -1; align-self: stretch; margin: 12px 10px; border: 1px solid var(--dcuf-b1-rim); border-radius: 15px; background: var(--dcuf-b1-sheen), var(--dcuf-b1-glass); box-shadow: var(--dcuf-b1-shadow), inset 0 1px 0 var(--dcuf-b1-rim), inset 0 -1px 0 color-mix(in srgb, var(--dcuf-theme-fg) 4%, transparent); backdrop-filter: blur(22px) saturate(1.2); z-index: -1; }
         ${selectors.root} { display: contents; min-width: 0 !important; width: 100% !important; height: auto !important; background: transparent; border: 0; }
         ${selectors.root}[data-dcuf-header-layout="self"] { display: grid; z-index: 1005; background: var(--dcuf-b1-backdrop); }
         ${selectors.head} {
@@ -12443,16 +12451,18 @@ const __dcufSettingsPresenter = (() => {
         html[${ROOT_ATTRIBUTE}] {
             --dcuf-b1-canvas: #f1f5f5;
             --dcuf-b1-paper: var(--dcuf-theme-surface);
-            --dcuf-b1-glass: color-mix(in srgb, var(--dcuf-b1-paper) 83%, transparent);
+            --dcuf-b1-glass: color-mix(in srgb, color-mix(in srgb, var(--dcuf-b1-paper) 80%, var(--dcuf-theme-accent-soft)) 76%, transparent);
+            --dcuf-b1-sheen: linear-gradient(120deg, #ffffff70, #ffffff12 42%, transparent 65%);
             --dcuf-b1-rim: #fffffff2;
             --dcuf-b1-line: color-mix(in srgb, var(--dcuf-theme-border) 55%, var(--dcuf-b1-paper));
-            --dcuf-b1-shadow: 0 10px 30px #2e5a5f0c, 0 1px 3px #36515608;
+            --dcuf-b1-shadow: 0 12px 32px #2e5a5f12, 0 1px 3px #3651560b;
         }
         html[${ROOT_ATTRIBUTE}].dc-filter-dark-mode,
         html[${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode {
             --dcuf-b1-canvas: #171e21;
             --dcuf-b1-paper: #20292c;
-            --dcuf-b1-glass: color-mix(in srgb, var(--dcuf-b1-paper) 90%, transparent);
+            --dcuf-b1-glass: color-mix(in srgb, color-mix(in srgb, var(--dcuf-b1-paper) 85%, var(--dcuf-theme-accent-soft)) 90%, transparent);
+            --dcuf-b1-sheen: linear-gradient(120deg, #ffffff16, transparent 58%);
             --dcuf-b1-rim: color-mix(in srgb, var(--dcuf-theme-fg) 9%, transparent);
             --dcuf-b1-line: color-mix(in srgb, var(--dcuf-theme-fg) 5%, var(--dcuf-b1-paper));
             --dcuf-b1-shadow: 0 14px 34px #0003, 0 1px 2px #0003;

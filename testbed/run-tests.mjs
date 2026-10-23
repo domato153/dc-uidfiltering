@@ -1814,8 +1814,9 @@ mobileTest('native list toolbar contains tabs categories and actions without ove
                         await link.scrollIntoViewIfNeeded();
                         await link.click({ trial: true });
                     }
-                    // Compact narrow tabs keep three44px targets; desktop uses the wider group.
-                    assert.equal(report.tablist.width >= (width >= 760 ? 200 : 132), true, label);
+                    // B1 tabs size to their labels; preserve each target rather than a legacy group width.
+                    assert.equal(report.tablist.width >= 132, true, label);
+                    assert.equal(report.boxes.slice(0, 3).every(r => r.width >= 44 && r.height >= 40), true, label);
                     await session.page.locator('.array_tab button').first().click();
                     await session.page.locator('.array_tab button').nth(1).focus();
                     await session.page.keyboard.press('Enter');
