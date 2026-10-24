@@ -100,6 +100,11 @@ export async function runLiveControlContract({browser,server}) {
             await session.goto(`${scenario.prefix}/board/${kind}?id=test&no=1001&comments=4`);
             if(scenario.dark)await page.evaluate(()=>{window.__dcufFixture.toggleDark(true);document.querySelectorAll('[data-dcuf-surface="list-toolbar"] *').forEach(el=>el.getAnimations().forEach(animation=>animation.finish()));});
             await page.waitForSelector('[data-dcuf-surface="list-item"]:visible');
+            // The native fixture replaces tab nodes after startup. Await their
+            // current-role projection rather than observing the old blue sheet.
+            await page.waitForFunction(()=>{const tab=document.querySelector('.list_array_option .array_tab button.on');return !tab||tab.getAttribute('data-dcuf-state')==='current';});
+            await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+            await page.waitForFunction(()=>!document.getAnimations().some(animation=>animation instanceof CSSTransition&&animation.playState==='running'));
             const observations=await page.evaluate(()=>{
                 const box=e=>{const r=e.getBoundingClientRect();return {x:r.x,y:r.y,right:r.right,bottom:r.bottom,width:r.width,height:r.height};};
                 const expected=(element,property,value)=>{const probe=document.createElement('span');probe.style[property]=value;element.append(probe);const actual=getComputedStyle(probe)[property];probe.remove();return actual;};
@@ -118,7 +123,7 @@ export async function runLiveControlContract({browser,server}) {
                     bars:bars.map(e=>{const end=e.querySelector(':scope>.fr');return {root:box(e),end:end&&box(end),padding:parseFloat(getComputedStyle(e).paddingRight),after:getComputedStyle(e,'::after').content};}),
                     shell:shell&&{border:getComputedStyle(shell).borderTopWidth,background:getComputedStyle(shell).backgroundColor},
                     searchIcon:submit&&{width:getComputedStyle(submit,'::before').width,height:getComputedStyle(submit,'::before').height,mask:getComputedStyle(submit,'::before').maskImage,align:getComputedStyle(submit).alignItems,justify:getComputedStyle(submit).justifyContent},
-                    searchFlow:search&&{root:box(search),query:box(search.querySelector('.bottom_search'))},
+                    searchFlow:search&&{root:box(search),controls:box(search.querySelector('[data-dcuf-role="controls"]')),query:box(search.querySelector('.bottom_search'))},
                     directions:directions.map(e=>({box:box(e),image:getComputedStyle(e).backgroundImage,before:getComputedStyle(e,'::before').content,font:getComputedStyle(e,'::before').fontSize})),
                     paging:document.querySelector('.bottom_paging_wrap')&&{padding:parseFloat(getComputedStyle(document.querySelector('.bottom_paging_wrap')).paddingLeft),first:box(document.querySelector('.bottom_paging_box')).x-box(document.querySelector('.bottom_paging_wrap')).x},
                     descriptions:descriptions.map(e=>({display:getComputedStyle(e).display,box:box(e)})),
@@ -138,7 +143,8 @@ export async function runLiveControlContract({browser,server}) {
                 check('mini write uses on-accent and one decoration',observations.writes.length>0&&observations.writes.every(w=>w.color===w.expected&&w.image==='none'),observations.writes);
                 check('native search select shell has no second frame',observations.shell?.border==='0px'&&observations.shell?.background==='rgba(0, 0, 0, 0)',observations.shell);
                 check('search glyph has a centered square box',observations.searchIcon?.width==='20px'&&observations.searchIcon?.height==='20px'&&observations.searchIcon?.mask!=='none'&&observations.searchIcon?.align==='center'&&observations.searchIcon?.justify==='center',observations.searchIcon);
-                check('wrapped search query fills the available row',observations.searchFlow.query.right>=observations.searchFlow.root.right-20,observations.searchFlow);
+                const flow=observations.searchFlow;
+                check('bounded search is centered and query fills its control row',flow.controls.width>0&&flow.controls.width<=641&&Math.abs((flow.controls.x+flow.controls.right)-(flow.root.x+flow.root.right))<=2&&flow.controls.x>=flow.root.x&&flow.controls.right<=flow.root.right&&flow.query.right>=flow.controls.right-1,flow);
                 const recent=await page.evaluate(()=>{
                     const list=document.querySelector('.custom-mobile-list');
                     const link=Array.from(list.querySelectorAll('a.post-title-link')).find(e=>e.getBoundingClientRect().width>0);

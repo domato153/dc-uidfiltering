@@ -23,6 +23,7 @@ import { runListRepairContract } from './ui-repair-list-contract.mjs';
 import { runArticleRepairContract } from './ui-repair-article-contract.mjs';
 import { runDialogRepairContract } from './ui-repair-dialog-contract.mjs';
 import { runLiveControlContract } from './ui-live-control-contract.mjs';
+import { runB1ContentContract } from './ui-b1-content-contract.mjs';
 
 const args = new Set(process.argv.slice(2));
 const selectedGroup = process.argv.includes('--group') ? process.argv[process.argv.indexOf('--group') + 1] : null;
@@ -62,6 +63,7 @@ async function settleThemeTransitions(page) {
 }
 
 mobileTest('live native controls: palette category sprites comment and action ownership', 'functional', runLiveControlContract);
+mobileTest('B1 content: native picker isolation glass and original input', 'functional', runB1ContentContract);
 
 mobileTest('confirmed UI repair: native comment composer cascade and original input', 'functional', runCommentRepairContract);
 mobileTest('confirmed UI repair: list author media search paging and write controls', 'functional', runListRepairContract);
@@ -11959,11 +11961,11 @@ mobileTest('UI palette surfaces cover list canvas, comments, image comments, and
         assertPaletteSurfaces(await collectPaletteSurfaceContract(session.page, [
             { selector: '#focus_cmt .comment_box .cmt_list > li', token: '--dcuf-theme-card-top' },
             { selector: '#focus_cmt .comment_box .reply_box', token: '--dcuf-theme-reply-surface' },
-            { selector: '#focus_cmt > .fixture-normal-comment-composer', token: '--dcuf-theme-surface' },
+            { selector: '#focus_cmt > .fixture-normal-comment-composer', token: '--dcuf-b1-paper' },
             { selector: '#focus_cmt > .fixture-normal-comment-composer .cmt_txt_cont', token: '--dcuf-theme-surface-input' },
             { selector: '.view_comment.image_comment .comment_wrap', token: '--dcuf-theme-canvas' },
             { selector: '.view_comment.image_comment .comment_box.img_comment_box .cmt_list > li', token: '--dcuf-theme-card-top' },
-            { selector: '.view_comment.image_comment .cmt_write_box', token: '--dcuf-theme-surface' },
+            { selector: '.view_comment.image_comment .cmt_write_box', token: '--dcuf-b1-paper' },
             { selector: '.view_comment.image_comment .cmt_write_box .cmt_txt_cont', token: '--dcuf-theme-surface-input' }
         ]), 'orange view');
         assert.equal(
@@ -12016,8 +12018,8 @@ mobileTest('UI palette surfaces cover list canvas, comments, image comments, and
         await session.page.waitForTimeout(40);
         assertPaletteSurfaces(await collectPaletteSurfaceContract(session.page, [
             { selector: '#focus_cmt .comment_box .reply_box', token: '--dcuf-theme-reply-surface' },
-            { selector: '#focus_cmt > .fixture-normal-comment-composer', token: '--dcuf-theme-surface' },
-            { selector: '.view_comment.image_comment .cmt_write_box', token: '--dcuf-theme-surface' }
+            { selector: '#focus_cmt > .fixture-normal-comment-composer', token: '--dcuf-b1-paper' },
+            { selector: '.view_comment.image_comment .cmt_write_box', token: '--dcuf-b1-paper' }
         ]), 'orange dark view');
         assert.equal(
             await session.page.locator('#focus_cmt').evaluate((element) => getComputedStyle(element).backgroundColor),
@@ -12718,11 +12720,26 @@ mobileTest('UI palette colors reach view actions and embedded list controls', 'f
             ];
             return selectors.map((selector) => {
                 const element = document.querySelector(selector);
-                return { selector, color: element ? getComputedStyle(element).backgroundColor : null };
+                if (!element) return {selector,missing:true};
+                const style=getComputedStyle(element),face=getComputedStyle(element,'::after');
+                const probe=document.createElement('span');element.append(probe);
+                probe.style.color='var(--dcuf-theme-accent-strong)';const accent=getComputedStyle(probe).color;
+                probe.style.color='var(--dcuf-theme-on-accent)';const onAccent=getComputedStyle(probe).color;
+                probe.style.color='var(--dcuf-theme-accent-ink)';const ink=getComputedStyle(probe).color;probe.remove();
+                return {selector,role:element.getAttribute('data-dcuf-role'),color:style.backgroundColor,ink:style.color,face:face.backgroundImage,accent,onAccent,accentInk:ink,hitHeight:element.getBoundingClientRect().height};
             });
         });
+        const assertRoles=(items,theme)=>items.forEach(item=>{
+            assert.ok(!item.missing,`${theme} missing ${item.selector}`);
+            if(item.role==='primary-action'){
+                assert.ok(item.face.includes(item.accent),`${theme} painted face follows palette: ${JSON.stringify(item)}`);
+                assert.equal(item.ink,item.onAccent);assert.ok(item.hitHeight>=40);
+            }else if(item.role==='submit'){
+                assert.equal(item.ink,item.accentInk,'Quiet B1 search follows the accent ink');assert.ok(item.hitHeight>=44);
+            }else assert.equal(item.color,item.accent,`${theme} native article action palette: ${JSON.stringify(item)}`);
+        });
         const light = await collectColors();
-        light.forEach(({ selector, color }) => assert.equal(color, 'rgb(154, 52, 18)', `orange light ${selector}: ${color}`));
+        assertRoles(light,'orange light');
         const lightBar = await session.page.evaluate(() => {
             const bar = document.querySelector('#container.gallery_view .view_bottom_btnbox');
             const inactive = bar.querySelector('.btn_grey');
@@ -12734,13 +12751,13 @@ mobileTest('UI palette colors reach view actions and embedded list controls', 'f
             };
         });
         assert.equal(lightBar.background, 'none', JSON.stringify(lightBar));
-        assert.notEqual(lightBar.shadow, 'none', JSON.stringify(lightBar));
-        assert.equal(lightBar.inactiveBackground, 'none', JSON.stringify(lightBar));
+        assert.equal(lightBar.shadow, 'none', JSON.stringify(lightBar));
+        assert.notEqual(lightBar.inactiveBackground, 'none', JSON.stringify(lightBar));
         assert.notEqual(lightBar.inactiveShadow, 'none', JSON.stringify(lightBar));
         await session.page.evaluate(() => window.__dcufFixture.toggleDark(true));
         await session.page.waitForTimeout(190);
         const dark = await collectColors();
-        dark.forEach(({ selector, color }) => assert.equal(color, 'rgb(194, 65, 12)', `orange dark ${selector}: ${color}`));
+        assertRoles(dark,'orange dark');
         assert.equal(await session.page.locator('#container.gallery_view .view_bottom_btnbox').evaluate((bar) => getComputedStyle(bar).backgroundImage), 'none');
         assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
     } finally { await session.close(); }

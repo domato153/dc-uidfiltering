@@ -1,6 +1,12 @@
 # Visual comparison and the B1 inspection gap
 
-Current BCB96852 list cohesion: the user accepted8A5C8209's button, then authorized whole-list finishing. B1_LIST_COHESION.md and verification/receipts/2026-10-24-b1-list-cohesion.json own aligned quiet lower controls, consistent owned menu material and the two live cascade/pseudo-element repairs.8 image-bound comparisons are REVIEWED with native differences declared; user whole-list preference remains open. The96 NEEDS_WORK finding and exact8A button receipt remain history, not erased or broadened into current approval.
+Current BCB96852 list cohesion: the user adopted the finished list as the expansion reference. B1_LIST_COHESION.md and verification/receipts/2026-10-24-b1-list-cohesion.json retain its8 image-bound comparisons and scoped checks. B1_CONTENT_TRIAL.md owns the new article/comment/glass trial; its proposal and candidate remain distinct. Historical preference-pending text is not the current decision.
+
+## Surfaces without a chosen reference
+
+Capture the original window first, including its actual controls and open child state. Make a separate B1-consistent proposal from that capture, then compare the implementation against it at readable scale. Small menus, confirmation/input dialogs and large pickers can reuse an adopted family reference; produce another proposal only for a materially different composition. Label original/proposal/current separately, and native/fixture/generated provenance explicitly. Never turn current output into its own expected target. Generated extra controls or changed content colors are excluded unless actually present and authorized. An unapproved proposal remains a proposal, even when the implementation already exists as a trial.
+
+Glass review includes a real or labeled synthetic colored backing: visible transmitted color/shape, readable foreground, rim and shadow. A blur declaration, nominal alpha or an all-white backing alone is insufficient. Keep the normal-content capture beside the backing probe; do not mistake the synthetic probe for product decoration.
 
 Current repair: [B1_VISUAL_REPAIR.md](B1_VISUAL_REPAIR.md) and its exact8606114F receipt supersede the defective945C3DE7 result for the diagnosed batch. The findings below remain diagnosis history and method guidance, not current unresolved defects. Use `verification/visual/b1-repaired-native-list.json` for the repaired public design comparison; retain the original manifest as historical evidence.
 

@@ -16,6 +16,7 @@
       }
     ],
     "upsertContracts": [
+      {"id":"b1-content-glass-trial","summary":"Approved B1 content first trial: existing article/comment presenters refine reading/control material. The comment adapter reversibly classifies original nested textcon/DCCon picker panels/fields/actions, separating picker inputs from composer geometry, through its current transaction/mutation subscriber. Native media/swatch/preview colors, nodes, parents, forms, events, selection, display lifecycle and rollback remain native. Explicit visual delta centers and constrains the two actual nested pickers with CSS; no portal/new observer or UI state owner. Existing mobile theme/recent owners refine glass on recent tabs/list/footer. The shared menu presenter consumes optional mobile material variables with exact incumbent PC fallbacks. PC behavior/appearance and authentication remain unchanged; build/check both outputs. Unopened account-gated branches remain unverified."},
       {"id":"b1-native-list-trial","summary":"Approved B1 list presentation through existing owners. Shell adapter reversibly marks existing common/bridge parents and supplies native-brand selector; it adds an HTML popover invoker to the original service UL, preserving its children/parents/handlers and restoring id/popover/copy state on cleanup. Native recent-history display, tabs and actions remain host-owned; presenter styles that original popup. List presenter arranges children without changing filter-owned inline row display. Existing scroll scheduler remains; no new global observer. Preserve14 palettes, settings, PC and native forms. Repair batch: native shell and recent presenters consume extended immutable adapter selector slots for the existing visible native tip, sprite and original recent interiors. Five-column desktop/two-column narrow chrome, compact responsive category grid, original tip containment/dismissal, quiet dark tabs and readable inset list metadata are presentation deltas only; no new observer, event, storage, network, filter or release owner."},
       {
         "id": "live-native-control-composition",
@@ -43,6 +44,17 @@
       }
     ],
     "upsertComponents": [
+      {
+        "id": "testbed-harness",
+        "status": "candidate",
+        "classification": "verification",
+        "layer": "verification",
+        "boundaryState": "verification",
+        "responsibility": "Loads guarded runtimes, shims GM APIs, instruments lifecycle resources, and runs Playwright contexts. The registered B1 content contract checks original nested pickers and media/composer isolation without owning product UI.",
+        "sourceRefs": ["testbed/harness/**", "testbed/server/**", "testbed/run-tests.mjs", "testbed/run-host-compatibility.mjs", "testbed/run-bfcache.mjs", "testbed/run-palette-differential.mjs", "testbed/ui-b1-content-contract.mjs", "testbed/ui-live-control-contract.mjs"],
+        "contractRefs": ["proof-integrity", "initialization-lifecycle", "artifact-lineage"],
+        "fitnessRefs": ["invariant-proof-binding", "invariant-runtime-guard"]
+      },
       {
         "id": "mobile-post-main-fixes",
         "status": "candidate",
@@ -248,7 +260,7 @@
         "boundaryState": "conforming",
         "responsibility": "Discovers DCInside normal, focus, image, reply, detached-reply, composer, native action, and popup nodes; applies reversible semantic markers; exposes frozen serializable observations and native invocation; and reconnects host-owned replacements through the shared mutation bus without moving host nodes or owning visual presentation.",
         "sourceRefs": ["src/targets/mobile/comment-host-adapter.js"],
-        "contractRefs": ["host-dom-events", "ui-ownership", "semantic-preservation", "live-native-control-composition"],
+        "contractRefs": ["host-dom-events", "ui-ownership", "semantic-preservation", "live-native-control-composition", "b1-content-glass-trial"],
         "fitnessRefs": ["invariant-host-node-preservation", "invariant-one-visual-owner", "invariant-ui-port-boundary", "invariant-build-inputs-mapped"]
       },
       {
@@ -259,7 +271,7 @@
         "boundaryState": "conforming",
         "responsibility": "Owns pure immutable-snapshot comment visual readiness policy and semantic-role-first comment, reply, detached-reply continuation, image-comment, composer, focus, popup, tactile motion, dark-state, and reduced-motion CSS without DOM, storage, network, selector discovery, or lifecycle effects.",
         "sourceRefs": ["src/targets/mobile/comment-presenter.js"],
-        "contractRefs": ["ui-ownership", "semantic-preservation", "host-dom-events", "live-native-control-composition"],
+        "contractRefs": ["ui-ownership", "semantic-preservation", "host-dom-events", "live-native-control-composition", "b1-content-glass-trial"],
         "fitnessRefs": ["invariant-one-visual-owner", "invariant-host-node-preservation", "invariant-ui-port-boundary", "invariant-build-inputs-mapped"]
       },
       {
@@ -632,7 +644,7 @@
         "boundaryState": "conforming",
         "responsibility": "Pure shared settings, palette, management, backup, shortcut, and floating-control markup and semantic-role CSS; it consumes serializable values only and owns no host DOM, storage, network, observer, timer, or lifecycle effect.",
         "sourceRefs": ["src/targets/shared/settings-presenter.js"],
-        "contractRefs": ["ui-ownership", "semantic-preservation", "target-isolation"],
+        "contractRefs": ["ui-ownership", "semantic-preservation", "target-isolation", "b1-content-glass-trial"],
         "fitnessRefs": ["invariant-one-visual-owner", "invariant-pc-host-style-isolation", "invariant-ui-port-boundary", "invariant-build-inputs-mapped"]
       },
       {

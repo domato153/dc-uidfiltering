@@ -1792,8 +1792,8 @@ const __dcufSettingsPresenter = (() => {
 
     const PERSONAL_MENU_CSS = `
         [data-dcuf-surface="personal-menu"] { position:fixed;z-index:2147483640;width:max-content;height:var(--dcuf-fab-height,76px);overflow:visible; }
-        [data-dcuf-surface="personal-menu"] .dcuf-fab-button { appearance:none;box-sizing:border-box;min-width:var(--dcuf-fab-width,152px);height:var(--dcuf-fab-height,76px);padding:0 var(--dcuf-fab-padding-x,28px);border:1px solid var(--dcuf-theme-border-strong,#cbd2db);border-radius:999px;background:linear-gradient(180deg,var(--dcuf-theme-card-top,#fff),var(--dcuf-theme-surface-raised,#f7f8fa));color:var(--dcuf-theme-accent-ink,#315fdb);box-shadow:0 10px 24px var(--dcuf-theme-accent-shadow,rgba(49,95,219,.2));font-family:inherit;font-size:var(--dcuf-fab-font-size,32px);font-weight:800;line-height:1;cursor:pointer;touch-action:none; }
-        [data-dcuf-surface="personal-menu"] .dcuf-menu-drawer { position:absolute;z-index:2147483641;display:grid;gap:5px;width:260px;padding:7px;border:1px solid var(--dcuf-theme-border-strong,#cbd2db);border-radius:16px;background:var(--dcuf-theme-card-top,#fff);box-shadow:var(--dcuf-theme-panel-shadow,0 18px 42px #0003); }
+        [data-dcuf-surface="personal-menu"] .dcuf-fab-button { appearance:none;box-sizing:border-box;min-width:var(--dcuf-fab-width,152px);height:var(--dcuf-fab-height,76px);padding:0 var(--dcuf-fab-padding-x,28px);border:1px solid var(--dcuf-b1-rim,var(--dcuf-theme-border-strong,#cbd2db));border-radius:999px;background:var(--dcuf-menu-button-background,linear-gradient(180deg,var(--dcuf-theme-card-top,#fff),var(--dcuf-theme-surface-raised,#f7f8fa)));color:var(--dcuf-theme-accent-ink,#315fdb);box-shadow:var(--dcuf-menu-shadow,0 10px 24px var(--dcuf-theme-accent-shadow,rgba(49,95,219,.2)));backdrop-filter:var(--dcuf-menu-backdrop,none);font-family:inherit;font-size:var(--dcuf-fab-font-size,32px);font-weight:800;line-height:1;cursor:pointer;touch-action:none; }
+        [data-dcuf-surface="personal-menu"] .dcuf-menu-drawer { position:absolute;z-index:2147483641;display:grid;gap:5px;width:260px;padding:7px;border:1px solid var(--dcuf-b1-rim,var(--dcuf-theme-border-strong,#cbd2db));border-radius:16px;background:var(--dcuf-menu-background,var(--dcuf-theme-card-top,#fff));box-shadow:var(--dcuf-menu-shadow,var(--dcuf-theme-panel-shadow,0 18px 42px #0003));backdrop-filter:var(--dcuf-menu-backdrop,none); }
         [data-dcuf-surface="personal-menu"] .dcuf-menu-drawer[hidden] { display:none; }
         [data-dcuf-surface="personal-menu"] .dcuf-menu-item { display:grid;grid-template-columns:38px minmax(0,1fr);align-items:center;gap:10px;min-height:56px;padding:7px 9px;border:1px solid transparent;border-radius:12px;background:transparent;color:var(--dcuf-theme-fg,#27313f);text-align:left;cursor:pointer; }
         [data-dcuf-surface="personal-menu"] .dcuf-menu-icon { display:grid;width:34px;height:34px;place-items:center;border-radius:10px;background:var(--dcuf-theme-accent-soft,#e9efff);color:var(--dcuf-theme-accent-ink,#4263eb); }
@@ -3373,16 +3373,16 @@ const __dcufSettingsPresenter = (() => {
             }
             [data-dcuf-role="article-header"] {
                 padding: 18px 18px 14px;
-                border: 1px solid var(--dcuf-theme-border-strong, var(--dcuf-view-border-strong));
-                border-radius: 12px;
-                background-color: var(--dcuf-theme-surface-raised, var(--dcuf-view-surface));
+                border: 1px solid var(--dcuf-b1-line, var(--dcuf-view-border));
+                border-radius: 16px;
+                background-color: var(--dcuf-b1-paper, var(--dcuf-view-surface));
                 background-image: none;
-                box-shadow: inset 0 1px 0 color-mix(in srgb, white 70%, transparent), var(--dcuf-theme-card-shadow, var(--dcuf-view-shadow));
+                box-shadow: 0 2px 8px color-mix(in srgb, var(--dcuf-view-fg) 4%, transparent);
                 box-sizing: border-box;
             }
             [data-dcuf-role="article"][data-dcuf-state="dark"] [data-dcuf-role="article-header"] {
                 background-image: none;
-                box-shadow: inset 0 1px 0 rgba(255, 255, 255, .07), 0 5px 14px rgba(0, 0, 0, .22);
+                box-shadow: 0 2px 8px #0002;
             }
             [data-dcuf-role="article-title-row"] {
                 margin: 0;
@@ -3406,8 +3406,8 @@ const __dcufSettingsPresenter = (() => {
             [data-dcuf-role="article-title"] {
                 color: var(--dcuf-view-fg);
                 font-size: var(--dcuf-article-title-font-size, 21px);
-                font-weight: 800;
-                letter-spacing: -.03em;
+                font-weight: 750;
+                letter-spacing: -.025em;
             }
             [data-dcuf-role="article-title-device"] {
                 margin-inline-start: 6px;
@@ -3416,7 +3416,7 @@ const __dcufSettingsPresenter = (() => {
                 block-size: auto;
                 margin-block-start: 14px;
                 padding-block-start: 11px;
-                border-block-start: 1px solid var(--dcuf-view-border);
+                border-block-start: 1px solid var(--dcuf-b1-line, var(--dcuf-view-border));
                 background: transparent;
                 color: var(--dcuf-view-fg-sub);
                 overflow: visible;
@@ -3561,10 +3561,10 @@ const __dcufSettingsPresenter = (() => {
                 flex-wrap: wrap;
                 gap: 8px;
                 padding: 10px;
-                border: 1px solid var(--dcuf-theme-border, var(--dcuf-view-border));
-                border-radius: 10px;
+                border: 0;
+                border-radius: 12px;
                 background-image: none;
-                box-shadow: var(--dcuf-theme-card-shadow, var(--dcuf-view-shadow));
+                box-shadow: none;
                 box-sizing: border-box;
             }
             [data-dcuf-role="article-native-actions"]::after { content: none; display: none; }
@@ -3589,18 +3589,18 @@ const __dcufSettingsPresenter = (() => {
                 white-space: nowrap;
                 text-shadow: none;
                 border: 1px solid var(--dcuf-theme-border-strong, var(--dcuf-view-border-strong));
-                border-radius: 11px;
-                background-color: var(--dcuf-theme-surface-input, var(--dcuf-view-surface-muted));
-                background-image: none;
+                border-radius: 8px;
+                background-color: var(--dcuf-b1-paper, var(--dcuf-view-surface-muted));
+                background-image: var(--dcuf-b1-sheen, none);
                 color: var(--dcuf-theme-fg, var(--dcuf-view-fg));
-                box-shadow: 0 3px 8px color-mix(in srgb, var(--dcuf-theme-accent-strong, var(--dcuf-view-accent)) 6%, transparent), inset 0 1px 0 color-mix(in srgb, white 72%, transparent);
+                box-shadow: 0 1px 2px color-mix(in srgb, var(--dcuf-theme-fg, var(--dcuf-view-fg)) 5%, transparent), inset 0 1px 0 var(--dcuf-b1-rim, #ffffff70);
                 transition: transform 110ms ease, filter 110ms ease;
             }
             [data-dcuf-role="article-native-actions"] [data-dcuf-role="native-article-action"][data-dcuf-state="primary"],
             [data-dcuf-role="article-native-actions"] [data-dcuf-role="native-article-action"][data-dcuf-state="primary"]:visited {
                 border-color: var(--dcuf-theme-accent-ink, var(--dcuf-view-accent));
                 background-color: var(--dcuf-theme-accent-strong, var(--dcuf-view-accent));
-                background-image: none;
+                background-image: linear-gradient(180deg, #ffffff14, transparent 72%);
                 color: var(--dcuf-theme-on-accent, #fff);
             }
             [data-dcuf-role="native-article-action"]:active {
@@ -3629,16 +3629,16 @@ const __dcufSettingsPresenter = (() => {
                 min-inline-size: 0;
                 margin: 14px auto 6px;
                 padding: 14px 16px 28px;
-                border: 1px solid var(--dcuf-theme-border, var(--dcuf-view-border));
-                border-radius: 12px;
-                background-color: var(--dcuf-theme-article-surface, var(--dcuf-view-surface));
+                border: 1px solid var(--dcuf-b1-line, var(--dcuf-view-border));
+                border-radius: 16px;
+                background-color: var(--dcuf-b1-paper, var(--dcuf-view-surface));
                 background-image: none;
-                box-shadow: 0 2px 7px rgba(31, 41, 55, .07);
+                box-shadow: none;
                 box-sizing: border-box;
                 overflow: visible;
             }
             [data-dcuf-role="article"][data-dcuf-state="dark"] [data-dcuf-role="recommendation"] {
-                box-shadow: 0 4px 12px rgba(0, 0, 0, .18), inset 0 1px 0 rgba(255, 255, 255, .035);
+                box-shadow: none;
             }
             [data-dcuf-role="recommendation-score"],
             [data-dcuf-role="recommendation-actions"],
@@ -3820,9 +3820,9 @@ const __dcufSettingsPresenter = (() => {
                 block-size: auto;
                 padding-inline: 12px;
                 border: 1px solid var(--dcuf-theme-border-strong, var(--dcuf-view-border-strong));
-                border-radius: 999px;
-                background-color: var(--dcuf-theme-card-top, transparent);
-                background-image: none;
+                border-radius: 8px;
+                background-color: var(--dcuf-b1-paper, transparent);
+                background-image: var(--dcuf-b1-sheen, none);
                 color: var(--dcuf-theme-fg-muted, var(--dcuf-view-fg-sub));
                 font-size: 13px;
                 line-height: 1.3;
@@ -4462,15 +4462,15 @@ const __dcufSettingsPresenter = (() => {
             [data-dcuf-surface="comments-replies"][data-dcuf-role="comments-root"] {
                 --dcuf-comment-fg: var(--dcuf-theme-fg, #27313f);
                 --dcuf-comment-muted: var(--dcuf-theme-fg-muted, #687384);
-                --dcuf-comment-border: var(--dcuf-theme-border, #d9dde3);
+                --dcuf-comment-border: var(--dcuf-b1-line, var(--dcuf-theme-border, #d9dde3));
                 --dcuf-comment-border-strong: var(--dcuf-theme-border-strong, #cbd2db);
-                --dcuf-comment-surface: var(--dcuf-theme-surface-raised, #fbfcfd);
+                --dcuf-comment-surface: var(--dcuf-b1-paper, var(--dcuf-theme-surface-raised, #fbfcfd));
                 --dcuf-comment-surface-muted: var(--dcuf-theme-surface-muted, #f1f3f6);
                 --dcuf-comment-input: var(--dcuf-theme-surface-input, #fff);
                 --dcuf-comment-reply: var(--dcuf-theme-reply-surface, #f4f6f8);
                 --dcuf-comment-accent: var(--dcuf-theme-accent, #3f6de0);
                 --dcuf-comment-accent-strong: var(--dcuf-theme-accent-strong, #315bc1);
-                --dcuf-comment-shadow: var(--dcuf-theme-card-shadow, 0 1px 3px rgba(31, 41, 55, .07), 0 6px 16px rgba(31, 41, 55, .075));
+                --dcuf-comment-shadow: 0 2px 8px color-mix(in srgb, var(--dcuf-comment-fg) 4%, transparent);
                 position: relative;
                 margin-block: 14px;
                 color: var(--dcuf-comment-fg);
@@ -4499,8 +4499,8 @@ const __dcufSettingsPresenter = (() => {
                 padding: 10px 14px;
                 border: 1px solid var(--dcuf-comment-border);
                 border-block-end: 0;
-                border-radius: 12px 16px 0 0;
-                background: var(--dcuf-comment-surface-muted);
+                border-radius: 14px 14px 0 0;
+                background: var(--dcuf-b1-sheen, none), var(--dcuf-b1-glass, var(--dcuf-comment-surface-muted));
                 color: var(--dcuf-comment-fg);
                 box-sizing: border-box;
             }
@@ -4526,7 +4526,7 @@ const __dcufSettingsPresenter = (() => {
                 min-block-size: 32px;
                 padding-inline: 11px;
                 border: 1px solid var(--dcuf-comment-border-strong);
-                border-radius: 999px;
+                border-radius: 8px;
                 background: var(--dcuf-comment-input);
                 color: var(--dcuf-comment-muted);
                 font-weight: 700;
@@ -4557,10 +4557,10 @@ const __dcufSettingsPresenter = (() => {
                 margin: 0 10px 10px;
                 padding: 14px 16px;
                 border: 1px solid color-mix(in srgb, var(--dcuf-comment-border) 86%, transparent);
-                border-radius: 15px;
-                background-color: var(--dcuf-theme-card-top, var(--dcuf-comment-surface));
+                border-radius: 14px;
+                background-color: var(--dcuf-comment-surface);
                 background-image: none;
-                box-shadow: 0 4px 12px color-mix(in srgb, var(--dcuf-comment-accent-strong) 7%, transparent);
+                box-shadow: 0 1px 3px color-mix(in srgb, var(--dcuf-comment-fg) 3%, transparent);
                 box-sizing: border-box;
                 overflow: visible;
             }
@@ -4667,7 +4667,7 @@ const __dcufSettingsPresenter = (() => {
                 margin-inline-start: 18px;
                 padding: 9px 12px 10px 14px;
                 border: 1px solid var(--dcuf-comment-border);
-                border-inline-start: 3px solid var(--dcuf-comment-border-strong);
+                border-inline-start: 1px solid var(--dcuf-comment-border-strong);
                 border-radius: 12px;
                 background-color: var(--dcuf-comment-reply);
                 background-image: none;
@@ -4716,8 +4716,8 @@ const __dcufSettingsPresenter = (() => {
                 margin-block-start: 14px;
                 padding: 14px;
                 border: 1px solid var(--dcuf-comment-border);
-                border-radius: 12px;
-                background-color: var(--dcuf-theme-surface, var(--dcuf-comment-surface));
+                border-radius: 16px;
+                background-color: var(--dcuf-comment-surface);
                 background-image: none;
                 box-shadow: var(--dcuf-comment-shadow);
                 box-sizing: border-box;
@@ -4760,7 +4760,7 @@ const __dcufSettingsPresenter = (() => {
                 inline-size: 100%;
                 min-inline-size: 0;
                 border: 1px solid var(--dcuf-comment-border);
-                border-radius: 10px;
+                border-radius: 8px;
                 background: var(--dcuf-comment-input);
                 color: var(--dcuf-comment-fg);
                 box-sizing: border-box;
@@ -4835,9 +4835,9 @@ const __dcufSettingsPresenter = (() => {
                 block-size: auto;
                 padding: 8px 14px;
                 border: 1px solid var(--dcuf-comment-accent-strong);
-                border-radius: 10px;
+                border-radius: 8px;
                 background-color: var(--dcuf-comment-accent-strong);
-                background-image: none;
+                background-image: linear-gradient(180deg, #ffffff14, transparent 72%);
                 color: var(--dcuf-theme-on-accent, #fff);
                 font-weight: 800;
                 white-space: nowrap;
@@ -4862,10 +4862,83 @@ const __dcufSettingsPresenter = (() => {
                 z-index: 2147483647;
                 overflow: visible;
             }
+            [data-dcuf-role="comments-root"] [data-dcuf-role="native-comment-popup"] {
+                border: 1px solid var(--dcuf-b1-rim, var(--dcuf-comment-border));
+                border-radius: 16px;
+                background: var(--dcuf-b1-sheen, none), var(--dcuf-b1-floating, var(--dcuf-comment-surface));
+                color: var(--dcuf-comment-fg);
+                box-shadow: var(--dcuf-b1-shadow), inset 0 1px 0 var(--dcuf-b1-rim);
+                backdrop-filter: blur(24px) saturate(1.15);
+                box-sizing: border-box;
+            }
+            [data-dcuf-role="native-comment-popup"][data-dcuf-comment-role="comment-picker"] {
+                /* Native textcon/DCCon write inline left:0;top:38px.
+                   Only these verified pickers use the centered dialog geometry. */
+                position: fixed;
+                left: 50% !important;
+                top: 50% !important;
+                bottom: auto;
+                right: auto;
+                transform: translate(-50%, -50%);
+                inline-size: min(520px, calc(100vw - 32px));
+                max-inline-size: calc(100vw - 32px);
+                max-block-size: calc(100dvh - 32px);
+                overflow: auto;
+                overscroll-behavior: contain;
+                scrollbar-color: var(--dcuf-comment-border-strong) transparent;
+            }
+            [data-dcuf-role="native-comment-popup"][data-dcuf-comment-role="comment-picker"] [data-dcuf-comment-role="popup-panel"] {
+                inline-size: 100%;
+                min-inline-size: 0;
+                max-inline-size: 100%;
+                padding: 20px;
+                border: 0;
+                border-radius: inherit;
+                background: transparent;
+                color: inherit;
+                box-sizing: border-box;
+            }
+            [data-dcuf-comment-role="popup-title"] { color: inherit; font: 700 16px/1.5 system-ui, sans-serif; }
+            [data-dcuf-role="native-comment-popup"] [data-dcuf-comment-role="popup-media-wrap"],
+            [data-dcuf-role="native-comment-popup"] [data-dcuf-comment-role="popup-media-list"] { inline-size: 100%; max-inline-size: 100%; min-inline-size: 0; margin-inline: 0; padding-inline: 0; box-sizing: border-box; }
+            [data-dcuf-role="native-comment-popup"] [data-dcuf-comment-role="popup-media-list"] { line-height: 0; }
+            [data-dcuf-role="native-comment-popup"] [data-dcuf-comment-role="popup-media-item"] { display: inline-block; float: none; inline-size: 25%; min-inline-size: 0; margin: 0; padding: 4px; vertical-align: top; box-sizing: border-box; }
+            [data-dcuf-role="native-comment-popup"] [data-dcuf-comment-role="popup-media-button"] { inline-size: 100%; block-size: auto; min-block-size: 44px; padding: 0; border: 0; border-radius: 8px; background: transparent; }
+            [data-dcuf-comment-role="popup-media-button"] img { max-inline-size: 100%; block-size: auto; }
+            [data-dcuf-role="native-comment-picker-field"] {
+                display: block;
+                inline-size: 100%;
+                min-inline-size: 0;
+                min-block-size: 40px;
+                margin-block: 12px;
+                padding: 10px 12px;
+                border: 1px solid var(--dcuf-comment-border-strong);
+                border-radius: 8px;
+                background: var(--dcuf-comment-input);
+                color: var(--dcuf-comment-fg);
+                caret-color: var(--dcuf-comment-accent);
+                box-sizing: border-box;
+            }
+            [data-dcuf-role="native-comment-picker-option"] { inline-size: 16px; block-size: 16px; min-inline-size: 0; accent-color: var(--dcuf-comment-accent-strong); }
+            [data-dcuf-comment-role="popup-action"], [data-dcuf-comment-role="popup-primary-action"] {
+                min-block-size: 36px;
+                padding-inline: 12px;
+                border: 1px solid var(--dcuf-comment-border-strong);
+                border-radius: 8px;
+                background: var(--dcuf-b1-paper);
+                color: var(--dcuf-comment-fg);
+                font: 600 13px/1.4 system-ui, sans-serif;
+                cursor: pointer;
+            }
+            [data-dcuf-comment-role="popup-primary-action"] { background: var(--dcuf-comment-accent-strong); color: var(--dcuf-theme-on-accent); border-color: transparent; }
+            [data-dcuf-role="native-comment-picker-field"]:focus-visible,
+            [data-dcuf-role="native-comment-picker-option"]:focus-visible,
+            [data-dcuf-comment-role="popup-action"]:focus-visible,
+            [data-dcuf-comment-role="popup-primary-action"]:focus-visible { outline: 2px solid var(--dcuf-comment-accent); outline-offset: 2px; }
             [data-dcuf-role="comments-root"][data-dcuf-state="dark"] [data-dcuf-role="comment-item"],
             [data-dcuf-role="comments-root"][data-dcuf-state="dark"] [data-dcuf-role="comment-box"],
             [data-dcuf-surface="comments-replies"][data-dcuf-role="comments-root"][data-dcuf-state="dark"] [data-dcuf-role="comment-composer"] {
-                box-shadow: 0 7px 18px rgba(0, 0, 0, .22), inset 0 1px 0 rgba(255, 255, 255, .035);
+                box-shadow: 0 2px 8px #0002;
             }
             @media screen and (max-width: 640px) {
                 [data-dcuf-surface="comments-replies"][data-dcuf-role="comments-root"] { margin-block: 10px; }
@@ -5097,6 +5170,33 @@ const __dcufSettingsPresenter = (() => {
             });
         };
 
+        const markPopups = (root) => {
+            root.querySelectorAll('#user_data_lyr, .user_data, .user_data_add, .pop_wrap.type2, .pop_wrap.type3, .cmt_delpw_box, [id$="_delpw_box"]').forEach((popup) => {
+                mark(root, popup, { role: 'native-comment-popup', state: popup.hidden || popup.style.display === 'none' ? 'closed' : 'open' });
+                const picker = popup.id === 'div_con' || popup.id === 'div_txtcon';
+                markCommentContext(root, popup, picker ? 'comment-picker' : 'comment-popup');
+                popup.querySelectorAll(':scope > .pop_content').forEach(panel => markCommentContext(root, panel, 'popup-panel'));
+                popup.querySelectorAll('.tit, .pop_tit').forEach(title => markCommentContext(root, title, 'popup-title'));
+                if (!picker) return;
+                popup.querySelectorAll('.dccon_list_wrap').forEach(list => markCommentContext(root, list, 'popup-media-wrap'));
+                popup.querySelectorAll('.dccon_list').forEach(list => {
+                    markCommentContext(root, list, 'popup-media-list');
+                    list.querySelectorAll(':scope > li').forEach(item => markCommentContext(root, item, 'popup-media-item'));
+                });
+                popup.querySelectorAll('.img_dccon').forEach(button => markCommentContext(root, button, 'popup-media-button'));
+                // Pickers are nested in the native composer. Project their own
+                // fields after composer discovery so credential/textarea sizing
+                // cannot affect swatches, options or the native preview.
+                popup.querySelectorAll('textarea, input:not([type="hidden"])').forEach(field => mark(root, field, {
+                    role: field.matches('[type="checkbox"], [type="radio"]') ? 'native-comment-picker-option' : 'native-comment-picker-field',
+                }));
+                popup.querySelectorAll('button').forEach(button => {
+                    if (button.matches('.btn_color, .img_dccon')) return;
+                    markCommentContext(root, button, button.matches('.btn_blue') ? 'popup-primary-action' : 'popup-action');
+                });
+            });
+        };
+
         const markRoot = (root) => {
             ensurePresentationStyle();
             activeRoots.add(root);
@@ -5122,9 +5222,7 @@ const __dcufSettingsPresenter = (() => {
             markAll(root, '.cmt_list', 'comment-list');
             markCommentItems(root);
             markComposers(root);
-            markAll(root, '#user_data_lyr, .user_data, .user_data_add, .pop_wrap.type2, .pop_wrap.type3, .cmt_delpw_box, [id$="_delpw_box"]', 'native-comment-popup', (popup) => (
-                popup.hidden || popup.style.display === 'none' ? 'closed' : 'open'
-            ));
+            markPopups(root);
             return root;
         };
 
@@ -10205,7 +10303,7 @@ const __dcufSettingsPresenter = (() => {
         ${selectors.trigger}::after { content: "⌄"; }
         ${selectors.triggerDecoration} { display: none; }
         /* The host writes inline left/top; keep its display and event lifecycle. */
-        ${selectors.popup} { position: absolute; left: auto !important; top: 46px !important; right: 0; width: min(320px, calc(100vw - 24px)); max-width: calc(100vw - 24px); max-height: min(480px, calc(100vh - 120px)); overflow: auto; box-sizing: border-box; border: 1px solid var(--dcuf-b1-rim); border-radius: 14px; background: color-mix(in srgb, var(--dcuf-b1-paper) 96%, transparent); color: var(--dcuf-theme-fg); box-shadow: var(--dcuf-b1-shadow), inset 0 1px 0 var(--dcuf-b1-rim); backdrop-filter: blur(24px); }
+        ${selectors.popup} { position: absolute; left: auto !important; top: 46px !important; right: 0; width: min(320px, calc(100vw - 24px)); max-width: calc(100vw - 24px); max-height: min(480px, calc(100vh - 120px)); overflow: auto; box-sizing: border-box; border: 1px solid var(--dcuf-b1-rim); border-radius: 14px; background: var(--dcuf-b1-sheen), var(--dcuf-b1-floating); color: var(--dcuf-theme-fg); box-shadow: var(--dcuf-b1-shadow), inset 0 1px 0 var(--dcuf-b1-rim); backdrop-filter: blur(24px) saturate(1.15); }
         ${selectors.popup} > div { min-width: 0; min-height: 0; height: auto; width: 100%; padding: 10px; background: transparent; box-sizing: border-box; }
         ${selectors.popup} a { color: var(--dcuf-theme-fg); }
         ${selectors.popup} button { color: var(--dcuf-theme-accent-ink); }
@@ -12494,6 +12592,11 @@ const __dcufSettingsPresenter = (() => {
             --dcuf-b1-canvas: #f1f5f5;
             --dcuf-b1-paper: var(--dcuf-theme-surface);
             --dcuf-b1-glass: color-mix(in srgb, color-mix(in srgb, var(--dcuf-b1-paper) 80%, var(--dcuf-theme-accent-soft)) 76%, transparent);
+            --dcuf-b1-floating: color-mix(in srgb, var(--dcuf-b1-paper) 78%, transparent);
+            --dcuf-menu-button-background: var(--dcuf-b1-sheen), var(--dcuf-b1-glass);
+            --dcuf-menu-background: var(--dcuf-b1-sheen), var(--dcuf-b1-floating);
+            --dcuf-menu-shadow: var(--dcuf-b1-shadow), inset 0 1px 0 var(--dcuf-b1-rim);
+            --dcuf-menu-backdrop: blur(24px) saturate(1.15);
             --dcuf-b1-sheen: linear-gradient(120deg, #ffffff70, #ffffff12 42%, transparent 65%);
             --dcuf-b1-rim: #fffffff2;
             --dcuf-b1-line: color-mix(in srgb, var(--dcuf-theme-border) 55%, var(--dcuf-b1-paper));
@@ -12504,6 +12607,7 @@ const __dcufSettingsPresenter = (() => {
             --dcuf-b1-canvas: #171e21;
             --dcuf-b1-paper: #20292c;
             --dcuf-b1-glass: color-mix(in srgb, color-mix(in srgb, var(--dcuf-b1-paper) 85%, var(--dcuf-theme-accent-soft)) 90%, transparent);
+            --dcuf-b1-floating: color-mix(in srgb, var(--dcuf-b1-paper) 84%, transparent);
             --dcuf-b1-sheen: linear-gradient(120deg, #ffffff16, transparent 58%);
             --dcuf-b1-rim: color-mix(in srgb, var(--dcuf-theme-fg) 9%, transparent);
             --dcuf-b1-line: color-mix(in srgb, var(--dcuf-theme-fg) 5%, var(--dcuf-b1-paper));

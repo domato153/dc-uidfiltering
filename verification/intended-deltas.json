@@ -1020,6 +1020,216 @@
       "normalizer": "semantic-observation-v1",
       "unknownDifferencePolicy": "fail",
       "missingApplicabilityPolicy": "fail"
+    },
+    {
+      "id": "b1-comments-reading-and-native-picker-glass-v1",
+      "status": "active",
+      "surfaces": [
+        "comments-replies",
+        "article-recommendation",
+        "header-navigation",
+        "tokens-settings-palette"
+      ],
+      "allowed": [
+        {
+          "kind": "color-role",
+          "surface": "comments-replies",
+          "scope": "B1 paper/radii/quiet shadows; reversible original nested textcon/DCCon field/media roles, visibly translucent floating shell, transparent original inner panel and centered viewport-contained picker. Native colors/forms/events/topology remain intact.",
+          "reason": "User authorized B1 expansion trial and visible backing transmission; final reference fidelity remains unverified.",
+          "contractTests": [
+            "testbed/ui-b1-content-contract.mjs",
+            "testbed/run-tests.mjs",
+            "testbed/run-article-differential.mjs",
+            "testbed/run-comment-differential.mjs"
+          ]
+        },
+        {
+          "kind": "spacing",
+          "surface": "comments-replies",
+          "scope": "B1 paper/radii/quiet shadows; reversible original nested textcon/DCCon field/media roles, visibly translucent floating shell, transparent original inner panel and centered viewport-contained picker. Native colors/forms/events/topology remain intact.",
+          "reason": "User authorized B1 expansion trial and visible backing transmission; final reference fidelity remains unverified.",
+          "contractTests": [
+            "testbed/ui-b1-content-contract.mjs",
+            "testbed/run-tests.mjs",
+            "testbed/run-article-differential.mjs",
+            "testbed/run-comment-differential.mjs"
+          ]
+        },
+        {
+          "kind": "radius",
+          "surface": "comments-replies",
+          "scope": "B1 paper/radii/quiet shadows; reversible original nested textcon/DCCon field/media roles, visibly translucent floating shell, transparent original inner panel and centered viewport-contained picker. Native colors/forms/events/topology remain intact.",
+          "reason": "User authorized B1 expansion trial and visible backing transmission; final reference fidelity remains unverified.",
+          "contractTests": [
+            "testbed/ui-b1-content-contract.mjs",
+            "testbed/run-tests.mjs",
+            "testbed/run-article-differential.mjs",
+            "testbed/run-comment-differential.mjs"
+          ]
+        },
+        {
+          "kind": "geometry",
+          "surface": "comments-replies",
+          "scope": "B1 paper/radii/quiet shadows; reversible original nested textcon/DCCon field/media roles, visibly translucent floating shell, transparent original inner panel and centered viewport-contained picker. Native colors/forms/events/topology remain intact.",
+          "reason": "User authorized B1 expansion trial and visible backing transmission; final reference fidelity remains unverified.",
+          "contractTests": [
+            "testbed/ui-b1-content-contract.mjs",
+            "testbed/run-tests.mjs",
+            "testbed/run-article-differential.mjs",
+            "testbed/run-comment-differential.mjs"
+          ]
+        },
+        {
+          "kind": "color-role",
+          "surface": "article-recommendation",
+          "scope": "B1 article header, meta separator, quiet native action band/button treatment and recommendation paper/radii. Native body/media/actions remain intact.",
+          "reason": "User authorized B1 expansion trial and visible backing transmission; final reference fidelity remains unverified.",
+          "contractTests": [
+            "testbed/ui-b1-content-contract.mjs",
+            "testbed/run-tests.mjs",
+            "testbed/run-article-differential.mjs",
+            "testbed/run-comment-differential.mjs"
+          ]
+        },
+        {
+          "kind": "spacing",
+          "surface": "article-recommendation",
+          "scope": "B1 article header, meta separator, quiet native action band/button treatment and recommendation paper/radii. Native body/media/actions remain intact.",
+          "reason": "User authorized B1 expansion trial and visible backing transmission; final reference fidelity remains unverified.",
+          "contractTests": [
+            "testbed/ui-b1-content-contract.mjs",
+            "testbed/run-tests.mjs",
+            "testbed/run-article-differential.mjs",
+            "testbed/run-comment-differential.mjs"
+          ]
+        },
+        {
+          "kind": "radius",
+          "surface": "article-recommendation",
+          "scope": "B1 article header, meta separator, quiet native action band/button treatment and recommendation paper/radii. Native body/media/actions remain intact.",
+          "reason": "User authorized B1 expansion trial and visible backing transmission; final reference fidelity remains unverified.",
+          "contractTests": [
+            "testbed/ui-b1-content-contract.mjs",
+            "testbed/run-tests.mjs",
+            "testbed/run-article-differential.mjs",
+            "testbed/run-comment-differential.mjs"
+          ]
+        },
+        {
+          "kind": "geometry",
+          "surface": "article-recommendation",
+          "scope": "B1 article header, meta separator, quiet native action band/button treatment and recommendation paper/radii. Native body/media/actions remain intact.",
+          "reason": "User authorized B1 expansion trial and visible backing transmission; final reference fidelity remains unverified.",
+          "contractTests": [
+            "testbed/ui-b1-content-contract.mjs",
+            "testbed/run-tests.mjs",
+            "testbed/run-article-differential.mjs",
+            "testbed/run-comment-differential.mjs"
+          ]
+        },
+        {
+          "kind": "color-role",
+          "surface": "header-navigation",
+          "scope": "Existing recent-visit popup gains B1 floating sheen/transmission with unchanged original tabs/list/footer/events/placement.",
+          "reason": "User authorized B1 expansion trial and visible backing transmission; final reference fidelity remains unverified.",
+          "contractTests": [
+            "testbed/ui-b1-content-contract.mjs",
+            "testbed/run-tests.mjs",
+            "testbed/run-article-differential.mjs",
+            "testbed/run-comment-differential.mjs"
+          ]
+        },
+        {
+          "kind": "color-role",
+          "surface": "tokens-settings-palette",
+          "scope": "Mobile-only floating/menu material variables consumed by the sole shared FAB/drawer presenter. Exact existing PC fallback appearance/geometry retained; settings/storage/filter behavior unchanged.",
+          "reason": "User authorized B1 expansion trial and visible backing transmission; final reference fidelity remains unverified.",
+          "contractTests": [
+            "testbed/ui-b1-content-contract.mjs",
+            "testbed/run-tests.mjs",
+            "testbed/run-article-differential.mjs",
+            "testbed/run-comment-differential.mjs"
+          ]
+        },
+        {
+          "kind": "spacing",
+          "surface": "tokens-settings-palette",
+          "scope": "Mobile-only floating/menu material variables consumed by the sole shared FAB/drawer presenter. Exact existing PC fallback appearance/geometry retained; settings/storage/filter behavior unchanged.",
+          "reason": "User authorized B1 expansion trial and visible backing transmission; final reference fidelity remains unverified.",
+          "contractTests": [
+            "testbed/ui-b1-content-contract.mjs",
+            "testbed/run-tests.mjs",
+            "testbed/run-article-differential.mjs",
+            "testbed/run-comment-differential.mjs"
+          ]
+        },
+        {
+          "kind": "radius",
+          "surface": "tokens-settings-palette",
+          "scope": "Mobile-only floating/menu material variables consumed by the sole shared FAB/drawer presenter. Exact existing PC fallback appearance/geometry retained; settings/storage/filter behavior unchanged.",
+          "reason": "User authorized B1 expansion trial and visible backing transmission; final reference fidelity remains unverified.",
+          "contractTests": [
+            "testbed/ui-b1-content-contract.mjs",
+            "testbed/run-tests.mjs",
+            "testbed/run-article-differential.mjs",
+            "testbed/run-comment-differential.mjs"
+          ]
+        },
+        {
+          "kind": "geometry",
+          "surface": "tokens-settings-palette",
+          "scope": "Mobile-only floating/menu material variables consumed by the sole shared FAB/drawer presenter. Exact existing PC fallback appearance/geometry retained; settings/storage/filter behavior unchanged.",
+          "reason": "User authorized B1 expansion trial and visible backing transmission; final reference fidelity remains unverified.",
+          "contractTests": [
+            "testbed/ui-b1-content-contract.mjs",
+            "testbed/run-tests.mjs",
+            "testbed/run-article-differential.mjs",
+            "testbed/run-comment-differential.mjs"
+          ]
+        },
+        {
+          "kind": "typography",
+          "surface": "comments-replies",
+          "scope": "B1 paper/radii/quiet shadows; reversible original nested textcon/DCCon field/media roles, visibly translucent floating shell, transparent original inner panel and centered viewport-contained picker. Native colors/forms/events/topology remain intact.",
+          "reason": "User authorized B1 expansion trial and visible backing transmission; final reference fidelity remains unverified.",
+          "contractTests": [
+            "testbed/ui-b1-content-contract.mjs",
+            "testbed/run-tests.mjs",
+            "testbed/run-article-differential.mjs",
+            "testbed/run-comment-differential.mjs"
+          ]
+        },
+        {
+          "kind": "typography",
+          "surface": "article-recommendation",
+          "scope": "B1 article header, meta separator, quiet native action band/button treatment and recommendation paper/radii. Native body/media/actions remain intact.",
+          "reason": "User authorized B1 expansion trial and visible backing transmission; final reference fidelity remains unverified.",
+          "contractTests": [
+            "testbed/ui-b1-content-contract.mjs",
+            "testbed/run-tests.mjs",
+            "testbed/run-article-differential.mjs",
+            "testbed/run-comment-differential.mjs"
+          ]
+        }
+      ],
+      "invariants": [
+        "filter-result",
+        "storage-trace",
+        "network-trace",
+        "host-node-identity",
+        "host-node-order",
+        "native-handler",
+        "native-form-fields",
+        "native-submit-trace",
+        "focus",
+        "lifecycle-resources",
+        "pc-result",
+        "accessibility",
+        "geometry-containment"
+      ],
+      "normalizer": "semantic-observation-v1",
+      "unknownDifferencePolicy": "fail",
+      "missingApplicabilityPolicy": "fail"
     }
   ]
 }

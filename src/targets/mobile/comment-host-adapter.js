@@ -182,6 +182,33 @@
             });
         };
 
+        const markPopups = (root) => {
+            root.querySelectorAll('#user_data_lyr, .user_data, .user_data_add, .pop_wrap.type2, .pop_wrap.type3, .cmt_delpw_box, [id$="_delpw_box"]').forEach((popup) => {
+                mark(root, popup, { role: 'native-comment-popup', state: popup.hidden || popup.style.display === 'none' ? 'closed' : 'open' });
+                const picker = popup.id === 'div_con' || popup.id === 'div_txtcon';
+                markCommentContext(root, popup, picker ? 'comment-picker' : 'comment-popup');
+                popup.querySelectorAll(':scope > .pop_content').forEach(panel => markCommentContext(root, panel, 'popup-panel'));
+                popup.querySelectorAll('.tit, .pop_tit').forEach(title => markCommentContext(root, title, 'popup-title'));
+                if (!picker) return;
+                popup.querySelectorAll('.dccon_list_wrap').forEach(list => markCommentContext(root, list, 'popup-media-wrap'));
+                popup.querySelectorAll('.dccon_list').forEach(list => {
+                    markCommentContext(root, list, 'popup-media-list');
+                    list.querySelectorAll(':scope > li').forEach(item => markCommentContext(root, item, 'popup-media-item'));
+                });
+                popup.querySelectorAll('.img_dccon').forEach(button => markCommentContext(root, button, 'popup-media-button'));
+                // Pickers are nested in the native composer. Project their own
+                // fields after composer discovery so credential/textarea sizing
+                // cannot affect swatches, options or the native preview.
+                popup.querySelectorAll('textarea, input:not([type="hidden"])').forEach(field => mark(root, field, {
+                    role: field.matches('[type="checkbox"], [type="radio"]') ? 'native-comment-picker-option' : 'native-comment-picker-field',
+                }));
+                popup.querySelectorAll('button').forEach(button => {
+                    if (button.matches('.btn_color, .img_dccon')) return;
+                    markCommentContext(root, button, button.matches('.btn_blue') ? 'popup-primary-action' : 'popup-action');
+                });
+            });
+        };
+
         const markRoot = (root) => {
             ensurePresentationStyle();
             activeRoots.add(root);
@@ -207,9 +234,7 @@
             markAll(root, '.cmt_list', 'comment-list');
             markCommentItems(root);
             markComposers(root);
-            markAll(root, '#user_data_lyr, .user_data, .user_data_add, .pop_wrap.type2, .pop_wrap.type3, .cmt_delpw_box, [id$="_delpw_box"]', 'native-comment-popup', (popup) => (
-                popup.hidden || popup.style.display === 'none' ? 'closed' : 'open'
-            ));
+            markPopups(root);
             return root;
         };
 

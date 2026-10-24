@@ -32,16 +32,16 @@
             }
             [data-dcuf-role="article-header"] {
                 padding: 18px 18px 14px;
-                border: 1px solid var(--dcuf-theme-border-strong, var(--dcuf-view-border-strong));
-                border-radius: 12px;
-                background-color: var(--dcuf-theme-surface-raised, var(--dcuf-view-surface));
+                border: 1px solid var(--dcuf-b1-line, var(--dcuf-view-border));
+                border-radius: 16px;
+                background-color: var(--dcuf-b1-paper, var(--dcuf-view-surface));
                 background-image: none;
-                box-shadow: inset 0 1px 0 color-mix(in srgb, white 70%, transparent), var(--dcuf-theme-card-shadow, var(--dcuf-view-shadow));
+                box-shadow: 0 2px 8px color-mix(in srgb, var(--dcuf-view-fg) 4%, transparent);
                 box-sizing: border-box;
             }
             [data-dcuf-role="article"][data-dcuf-state="dark"] [data-dcuf-role="article-header"] {
                 background-image: none;
-                box-shadow: inset 0 1px 0 rgba(255, 255, 255, .07), 0 5px 14px rgba(0, 0, 0, .22);
+                box-shadow: 0 2px 8px #0002;
             }
             [data-dcuf-role="article-title-row"] {
                 margin: 0;
@@ -65,8 +65,8 @@
             [data-dcuf-role="article-title"] {
                 color: var(--dcuf-view-fg);
                 font-size: var(--dcuf-article-title-font-size, 21px);
-                font-weight: 800;
-                letter-spacing: -.03em;
+                font-weight: 750;
+                letter-spacing: -.025em;
             }
             [data-dcuf-role="article-title-device"] {
                 margin-inline-start: 6px;
@@ -75,7 +75,7 @@
                 block-size: auto;
                 margin-block-start: 14px;
                 padding-block-start: 11px;
-                border-block-start: 1px solid var(--dcuf-view-border);
+                border-block-start: 1px solid var(--dcuf-b1-line, var(--dcuf-view-border));
                 background: transparent;
                 color: var(--dcuf-view-fg-sub);
                 overflow: visible;
@@ -220,10 +220,10 @@
                 flex-wrap: wrap;
                 gap: 8px;
                 padding: 10px;
-                border: 1px solid var(--dcuf-theme-border, var(--dcuf-view-border));
-                border-radius: 10px;
+                border: 0;
+                border-radius: 12px;
                 background-image: none;
-                box-shadow: var(--dcuf-theme-card-shadow, var(--dcuf-view-shadow));
+                box-shadow: none;
                 box-sizing: border-box;
             }
             [data-dcuf-role="article-native-actions"]::after { content: none; display: none; }
@@ -248,18 +248,18 @@
                 white-space: nowrap;
                 text-shadow: none;
                 border: 1px solid var(--dcuf-theme-border-strong, var(--dcuf-view-border-strong));
-                border-radius: 11px;
-                background-color: var(--dcuf-theme-surface-input, var(--dcuf-view-surface-muted));
-                background-image: none;
+                border-radius: 8px;
+                background-color: var(--dcuf-b1-paper, var(--dcuf-view-surface-muted));
+                background-image: var(--dcuf-b1-sheen, none);
                 color: var(--dcuf-theme-fg, var(--dcuf-view-fg));
-                box-shadow: 0 3px 8px color-mix(in srgb, var(--dcuf-theme-accent-strong, var(--dcuf-view-accent)) 6%, transparent), inset 0 1px 0 color-mix(in srgb, white 72%, transparent);
+                box-shadow: 0 1px 2px color-mix(in srgb, var(--dcuf-theme-fg, var(--dcuf-view-fg)) 5%, transparent), inset 0 1px 0 var(--dcuf-b1-rim, #ffffff70);
                 transition: transform 110ms ease, filter 110ms ease;
             }
             [data-dcuf-role="article-native-actions"] [data-dcuf-role="native-article-action"][data-dcuf-state="primary"],
             [data-dcuf-role="article-native-actions"] [data-dcuf-role="native-article-action"][data-dcuf-state="primary"]:visited {
                 border-color: var(--dcuf-theme-accent-ink, var(--dcuf-view-accent));
                 background-color: var(--dcuf-theme-accent-strong, var(--dcuf-view-accent));
-                background-image: none;
+                background-image: linear-gradient(180deg, #ffffff14, transparent 72%);
                 color: var(--dcuf-theme-on-accent, #fff);
             }
             [data-dcuf-role="native-article-action"]:active {
@@ -288,16 +288,16 @@
                 min-inline-size: 0;
                 margin: 14px auto 6px;
                 padding: 14px 16px 28px;
-                border: 1px solid var(--dcuf-theme-border, var(--dcuf-view-border));
-                border-radius: 12px;
-                background-color: var(--dcuf-theme-article-surface, var(--dcuf-view-surface));
+                border: 1px solid var(--dcuf-b1-line, var(--dcuf-view-border));
+                border-radius: 16px;
+                background-color: var(--dcuf-b1-paper, var(--dcuf-view-surface));
                 background-image: none;
-                box-shadow: 0 2px 7px rgba(31, 41, 55, .07);
+                box-shadow: none;
                 box-sizing: border-box;
                 overflow: visible;
             }
             [data-dcuf-role="article"][data-dcuf-state="dark"] [data-dcuf-role="recommendation"] {
-                box-shadow: 0 4px 12px rgba(0, 0, 0, .18), inset 0 1px 0 rgba(255, 255, 255, .035);
+                box-shadow: none;
             }
             [data-dcuf-role="recommendation-score"],
             [data-dcuf-role="recommendation-actions"],
@@ -479,9 +479,9 @@
                 block-size: auto;
                 padding-inline: 12px;
                 border: 1px solid var(--dcuf-theme-border-strong, var(--dcuf-view-border-strong));
-                border-radius: 999px;
-                background-color: var(--dcuf-theme-card-top, transparent);
-                background-image: none;
+                border-radius: 8px;
+                background-color: var(--dcuf-b1-paper, transparent);
+                background-image: var(--dcuf-b1-sheen, none);
                 color: var(--dcuf-theme-fg-muted, var(--dcuf-view-fg-sub));
                 font-size: 13px;
                 line-height: 1.3;

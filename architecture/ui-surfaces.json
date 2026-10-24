@@ -61,7 +61,11 @@
       "sequence": 1,
       "risk": "R3",
       "state": "modern-candidate",
-      "routeFamilies": ["list", "view", "write"],
+      "routeFamilies": [
+        "list",
+        "view",
+        "write"
+      ],
       "currentVisualOwner": "shared-settings-presenter",
       "sourceRefs": [
         "src/targets/shared/settings-presenter.js",
@@ -79,13 +83,28 @@
       ],
       "adapter": "shared-settings-host-adapter-composition",
       "presenter": "shared-settings-presenter",
-      "styleIds": ["dcuf-mobile-palette-style"],
-      "allowedRoots": ["dcuf-owned-settings-root", "dcuf-owned-overlay-root"],
-      "states": ["closed", "open", "preview", "saving", "error"],
-      "intendedDelta": "modern-settings-fluid-tactile-v1",
+      "styleIds": [
+        "dcuf-mobile-palette-style"
+      ],
+      "allowedRoots": [
+        "dcuf-owned-settings-root",
+        "dcuf-owned-overlay-root"
+      ],
+      "states": [
+        "closed",
+        "open",
+        "preview",
+        "saving",
+        "error"
+      ],
+      "intendedDelta": "b1-comments-reading-and-native-picker-glass-v1",
       "cascadeExceptions": [],
       "cascadeExceptionProfiles": [],
-      "testRefs": ["testbed/run-palette-differential.mjs", "testbed/run-tests.mjs", "testbed/capture-settings-surfaces.mjs"],
+      "testRefs": [
+        "testbed/run-palette-differential.mjs",
+        "testbed/run-tests.mjs",
+        "testbed/capture-settings-surfaces.mjs"
+      ],
       "canaryCheckpoint": "settings-list"
     },
     {
@@ -93,18 +112,41 @@
       "sequence": 2,
       "risk": "R2",
       "state": "modern-candidate",
-      "routeFamilies": ["list"],
+      "routeFamilies": [
+        "list"
+      ],
       "currentVisualOwner": "mobile-list-presenter",
-      "sourceRefs": ["src/targets/mobile/list-presenter.js", "src/targets/mobile/list-host-adapter.js", "src/targets/mobile/ui-module.js", "src/targets/mobile/post-main-fixes.js"],
+      "sourceRefs": [
+        "src/targets/mobile/list-presenter.js",
+        "src/targets/mobile/list-host-adapter.js",
+        "src/targets/mobile/ui-module.js",
+        "src/targets/mobile/post-main-fixes.js"
+      ],
       "adapter": "mobile-list-host-adapter-partial",
       "presenter": "mobile-list-presenter",
-      "styleIds": ["dcuf-phase1-list-theme", "dcuf-list-memo-popup-fix"],
-      "allowedRoots": ["host-list-root", "adapter-marked-host-list-controls"],
-      "states": ["initial", "filtered", "rerendered", "empty", "search-open"],
+      "styleIds": [
+        "dcuf-phase1-list-theme",
+        "dcuf-list-memo-popup-fix"
+      ],
+      "allowedRoots": [
+        "host-list-root",
+        "adapter-marked-host-list-controls"
+      ],
+      "states": [
+        "initial",
+        "filtered",
+        "rerendered",
+        "empty",
+        "search-open"
+      ],
       "intendedDelta": "modern-list-fluid-tactile-v1",
       "cascadeExceptions": [],
       "cascadeExceptionProfiles": [],
-      "testRefs": ["testbed/run-tests.mjs", "testbed/run-host-compatibility.mjs", "testbed/run-list-differential.mjs"],
+      "testRefs": [
+        "testbed/run-tests.mjs",
+        "testbed/run-host-compatibility.mjs",
+        "testbed/run-list-differential.mjs"
+      ],
       "canaryCheckpoint": "settings-list"
     },
     {
@@ -112,15 +154,35 @@
       "sequence": 3,
       "risk": "R2",
       "state": "modern-candidate",
-      "routeFamilies": ["view"],
+      "routeFamilies": [
+        "view"
+      ],
       "currentVisualOwner": "mobile-article-presenter",
-      "sourceRefs": ["src/targets/mobile/article-presenter.js", "src/targets/mobile/article-host-adapter.js", "src/targets/mobile/ui-module.js", "src/targets/mobile/post-main-fixes.js", "src/targets/mobile/theme-host-style.js"],
+      "sourceRefs": [
+        "src/targets/mobile/article-presenter.js",
+        "src/targets/mobile/article-host-adapter.js",
+        "src/targets/mobile/ui-module.js",
+        "src/targets/mobile/post-main-fixes.js",
+        "src/targets/mobile/theme-host-style.js"
+      ],
       "adapter": "mobile-article-host-adapter",
       "presenter": "mobile-article-presenter",
-      "styleIds": ["dcuf-article-presenter", "dcuf-pum-layer-viewport-style"],
-      "allowedRoots": ["host-article-root", "adapter-marked-host-article-action-bar", "dcuf-owned-article-controls"],
-      "states": ["initial", "recommended", "failed", "rerendered"],
-      "intendedDelta": "modern-article-fluid-tactile-v1",
+      "styleIds": [
+        "dcuf-article-presenter",
+        "dcuf-pum-layer-viewport-style"
+      ],
+      "allowedRoots": [
+        "host-article-root",
+        "adapter-marked-host-article-action-bar",
+        "dcuf-owned-article-controls"
+      ],
+      "states": [
+        "initial",
+        "recommended",
+        "failed",
+        "rerendered"
+      ],
+      "intendedDelta": "b1-comments-reading-and-native-picker-glass-v1",
       "cascadeExceptions": [
         {
           "selector": "[data-dcuf-surface=\"article-recommendation\"][data-dcuf-role=\"article\"]",
@@ -148,7 +210,11 @@
         }
       ],
       "cascadeExceptionProfiles": [],
-      "testRefs": ["testbed/run-tests.mjs", "testbed/run-host-compatibility.mjs", "testbed/run-article-differential.mjs"],
+      "testRefs": [
+        "testbed/run-tests.mjs",
+        "testbed/run-host-compatibility.mjs",
+        "testbed/run-article-differential.mjs"
+      ],
       "canaryCheckpoint": "article-comments"
     },
     {
@@ -156,18 +222,54 @@
       "sequence": 4,
       "risk": "R2",
       "state": "modern-candidate",
-      "routeFamilies": ["view"],
+      "routeFamilies": [
+        "view"
+      ],
       "currentVisualOwner": "mobile-comment-presenter",
-      "sourceRefs": ["src/targets/mobile/comment-presenter.js", "src/targets/mobile/comment-host-adapter.js", "src/targets/mobile/ui-module.js", "src/targets/mobile/post-main-fixes.js"],
+      "sourceRefs": [
+        "src/targets/mobile/comment-presenter.js",
+        "src/targets/mobile/comment-host-adapter.js",
+        "src/targets/mobile/ui-module.js",
+        "src/targets/mobile/post-main-fixes.js"
+      ],
       "adapter": "mobile-comment-host-adapter",
       "presenter": "mobile-comment-presenter",
-      "styleIds": ["dcuf-comment-presenter"],
-      "allowedRoots": ["host-comment-root", "dcuf-owned-comment-controls"],
-      "states": ["loaded", "reply-open", "reply-closed", "dynamic-replaced"],
-      "intendedDelta": "modern-comments-fluid-tactile-v1",
-      "cascadeExceptions": [],
+      "styleIds": [
+        "dcuf-comment-presenter"
+      ],
+      "allowedRoots": [
+        "host-comment-root",
+        "dcuf-owned-comment-controls"
+      ],
+      "states": [
+        "loaded",
+        "reply-open",
+        "reply-closed",
+        "dynamic-replaced",
+        "textcon-open",
+        "dccon-open"
+      ],
+      "intendedDelta": "b1-comments-reading-and-native-picker-glass-v1",
+      "cascadeExceptions": [
+        {
+          "selector": "[data-dcuf-role=\"native-comment-popup\"][data-dcuf-comment-role=\"comment-picker\"]",
+          "property": "left",
+          "hostCollision": "Public6778319 textcon/DCCon write inline left:0px; only those two verified nested pickers use the approved centered dialog geometry. No generic native popup override.",
+          "testRef": "B1 content: native picker isolation glass and original input"
+        },
+        {
+          "selector": "[data-dcuf-role=\"native-comment-popup\"][data-dcuf-comment-role=\"comment-picker\"]",
+          "property": "top",
+          "hostCollision": "Public6778319 textcon/DCCon write inline top:38px; the centered picker must remain inside short/narrow viewports while original display/events stay host-owned.",
+          "testRef": "B1 content: native picker isolation glass and original input"
+        }
+      ],
       "cascadeExceptionProfiles": [],
-      "testRefs": ["testbed/run-tests.mjs", "testbed/run-host-compatibility.mjs", "testbed/run-comment-differential.mjs"],
+      "testRefs": [
+        "testbed/run-tests.mjs",
+        "testbed/run-host-compatibility.mjs",
+        "testbed/run-comment-differential.mjs"
+      ],
       "canaryCheckpoint": "article-comments"
     },
     {
@@ -175,14 +277,47 @@
       "sequence": 5,
       "risk": "R3",
       "state": "adapted-zero-delta",
-      "routeFamilies": ["write", "view"],
+      "routeFamilies": [
+        "write",
+        "view"
+      ],
       "currentVisualOwner": "mobile-native-form-presenter",
-      "sourceRefs": ["src/targets/mobile/native-form-presenter.js", "src/targets/mobile/native-form-host-adapter.js", "src/targets/mobile/write-editor-host-adapter.js", "src/targets/mobile/write-draft-host-adapter.js", "src/targets/mobile/write-ad-host-adapter.js", "src/targets/mobile/write-font-presenter.js", "src/targets/mobile/ui-module.js", "src/targets/mobile/post-main-fixes.js", "src/targets/shared/personal-block-host-adapter.js"],
+      "sourceRefs": [
+        "src/targets/mobile/native-form-presenter.js",
+        "src/targets/mobile/native-form-host-adapter.js",
+        "src/targets/mobile/write-editor-host-adapter.js",
+        "src/targets/mobile/write-draft-host-adapter.js",
+        "src/targets/mobile/write-ad-host-adapter.js",
+        "src/targets/mobile/write-font-presenter.js",
+        "src/targets/mobile/ui-module.js",
+        "src/targets/mobile/post-main-fixes.js",
+        "src/targets/shared/personal-block-host-adapter.js"
+      ],
       "adapter": "mobile-native-form-write-editor-write-draft-and-write-ad-host-adapter-composition",
       "presenter": "mobile-native-form-semantic-presenter-plus-write-font-presenter",
-      "styleIds": ["dcuf-mobile-write-theme", "dcuf-mobile-modify-theme", "dcuf-write-font-presenter"],
-      "allowedRoots": ["host-native-form", "host-native-popup", "host-write-ad-container", "dcuf-owned-popup-shell", "dcuf-owned-write-font-options", "dcuf-owned-draft-banner"],
-      "states": ["write", "modify", "delete-open", "native-popup-open", "draft-recovered", "draft-interrupted", "submitting", "error"],
+      "styleIds": [
+        "dcuf-mobile-write-theme",
+        "dcuf-mobile-modify-theme",
+        "dcuf-write-font-presenter"
+      ],
+      "allowedRoots": [
+        "host-native-form",
+        "host-native-popup",
+        "host-write-ad-container",
+        "dcuf-owned-popup-shell",
+        "dcuf-owned-write-font-options",
+        "dcuf-owned-draft-banner"
+      ],
+      "states": [
+        "write",
+        "modify",
+        "delete-open",
+        "native-popup-open",
+        "draft-recovered",
+        "draft-interrupted",
+        "submitting",
+        "error"
+      ],
       "intendedDelta": "foundation-zero-visual",
       "cascadeExceptions": [
         {
@@ -200,7 +335,11 @@
           "declarationCount": 178,
           "declarationLedgerSha256": "8e52da0b90ec24e7a5c2778a12e5a0f67f904edb385f62d5a98b445f75add8ec",
           "hostCollision": "The zero-visual-delta native password, modify, and delete presenter must retain the extracted host-cascade precedence until its modern presenter replacement removes this transitional profile.",
-          "testRefs": ["testbed/run-tests.mjs", "testbed/run-host-compatibility.mjs", "testbed/run-native-form-differential.mjs"]
+          "testRefs": [
+            "testbed/run-tests.mjs",
+            "testbed/run-host-compatibility.mjs",
+            "testbed/run-native-form-differential.mjs"
+          ]
         },
         {
           "sourceRef": "src/targets/mobile/native-form-presenter.js",
@@ -209,10 +348,18 @@
           "declarationCount": 726,
           "declarationLedgerSha256": "4b5b91beb2ea62381baad4d68be47a506ac26a4f28a90bda50e9527a7d6ec5fc",
           "hostCollision": "The zero-visual-delta native write and modify-editor presenter must retain the extracted host and inline cascade precedence until its modern presenter replacement removes this transitional profile.",
-          "testRefs": ["testbed/run-tests.mjs", "testbed/run-host-compatibility.mjs", "testbed/run-native-form-differential.mjs"]
+          "testRefs": [
+            "testbed/run-tests.mjs",
+            "testbed/run-host-compatibility.mjs",
+            "testbed/run-native-form-differential.mjs"
+          ]
         }
       ],
-      "testRefs": ["testbed/run-tests.mjs", "testbed/run-host-compatibility.mjs", "testbed/run-native-form-differential.mjs"],
+      "testRefs": [
+        "testbed/run-tests.mjs",
+        "testbed/run-host-compatibility.mjs",
+        "testbed/run-native-form-differential.mjs"
+      ],
       "canaryCheckpoint": "native-form-header"
     },
     {
@@ -220,18 +367,70 @@
       "sequence": 6,
       "risk": "R2",
       "state": "legacy-debt",
-      "routeFamilies": ["list", "view", "write"],
+      "routeFamilies": [
+        "list",
+        "view",
+        "write"
+      ],
       "currentVisualOwner": "legacy-shell-composition",
-      "sourceRefs": ["src/targets/mobile/filter-module.js", "src/targets/mobile/header-shell-presenter.js", "src/targets/mobile/header-shell-host-adapter.js", "src/targets/mobile/gallery-page-head-presenter.js", "src/targets/mobile/gallery-page-head-host-adapter.js", "src/targets/mobile/header-gnb-presenter.js", "src/targets/mobile/header-gnb-host-adapter.js", "src/targets/mobile/header-recent-visit-presenter.js", "src/targets/mobile/header-recent-visit-host-adapter.js", "src/targets/mobile/header-drawer-presenter.js", "src/targets/mobile/header-drawer-host-adapter.js", "src/targets/mobile/ui-module.js", "src/targets/mobile/post-main-fixes.js", "src/targets/mobile/theme-host-style.js", "src/targets/shared/theme-presenter.js"],
+      "sourceRefs": [
+        "src/targets/mobile/filter-module.js",
+        "src/targets/mobile/header-shell-presenter.js",
+        "src/targets/mobile/header-shell-host-adapter.js",
+        "src/targets/mobile/gallery-page-head-presenter.js",
+        "src/targets/mobile/gallery-page-head-host-adapter.js",
+        "src/targets/mobile/header-gnb-presenter.js",
+        "src/targets/mobile/header-gnb-host-adapter.js",
+        "src/targets/mobile/header-recent-visit-presenter.js",
+        "src/targets/mobile/header-recent-visit-host-adapter.js",
+        "src/targets/mobile/header-drawer-presenter.js",
+        "src/targets/mobile/header-drawer-host-adapter.js",
+        "src/targets/mobile/ui-module.js",
+        "src/targets/mobile/post-main-fixes.js",
+        "src/targets/mobile/theme-host-style.js",
+        "src/targets/shared/theme-presenter.js"
+      ],
       "adapter": "mobile-header-shell-gallery-page-head-gnb-recent-visit-and-drawer-host-adapters",
       "presenter": "mobile-header-shell-gallery-page-head-gnb-recent-visit-and-drawer-presenters-for-separated-slices; planned-header-presenter-for-full-surface",
-      "styleIds": ["dcuf-header-shell-style", "dcuf-gallery-page-head-style", "dcuf-header-gnb-style", "dcuf-header-recent-visit-style", "dcuf-header-drawer-style", "dcuf-mobile-palette-style"],
-      "allowedRoots": ["host-header-root", "host-issue-contentbox", "host-top-recommendation", "host-native-rank-tip-popups", "dcuf-owned-header-controls"],
-      "states": ["initial", "authenticated", "anonymous", "drawer-open", "native-popup-open", "popup-only", "source-replaced", "rerendered"],
-      "intendedDelta": "header-native-door-v1",
+      "styleIds": [
+        "dcuf-header-shell-style",
+        "dcuf-gallery-page-head-style",
+        "dcuf-header-gnb-style",
+        "dcuf-header-recent-visit-style",
+        "dcuf-header-drawer-style",
+        "dcuf-mobile-palette-style"
+      ],
+      "allowedRoots": [
+        "host-header-root",
+        "host-issue-contentbox",
+        "host-top-recommendation",
+        "host-native-rank-tip-popups",
+        "dcuf-owned-header-controls"
+      ],
+      "states": [
+        "initial",
+        "authenticated",
+        "anonymous",
+        "drawer-open",
+        "native-popup-open",
+        "popup-only",
+        "source-replaced",
+        "rerendered"
+      ],
+      "intendedDelta": "b1-comments-reading-and-native-picker-glass-v1",
       "cascadeExceptions": [],
       "cascadeExceptionProfiles": [],
-      "testRefs": ["testbed/run-tests.mjs", "testbed/run-host-compatibility.mjs", "testbed/run-header-shell-differential.mjs", "testbed/run-gallery-page-head-differential.mjs", "testbed/run-header-gnb-differential.mjs", "testbed/run-header-recent-visit-differential.mjs", "testbed/run-header-live-shape-gap.mjs", "testbed/run-header-hit-audit.mjs", "testbed/run-header-public-canary.mjs"],
+      "testRefs": [
+        "testbed/run-tests.mjs",
+        "testbed/run-host-compatibility.mjs",
+        "testbed/run-header-shell-differential.mjs",
+        "testbed/run-gallery-page-head-differential.mjs",
+        "testbed/run-header-gnb-differential.mjs",
+        "testbed/run-header-recent-visit-differential.mjs",
+        "testbed/run-header-live-shape-gap.mjs",
+        "testbed/run-header-hit-audit.mjs",
+        "testbed/run-header-public-canary.mjs"
+      ],
       "canaryCheckpoint": "native-form-header"
     }
   ]

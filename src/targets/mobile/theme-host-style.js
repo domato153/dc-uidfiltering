@@ -5,6 +5,11 @@
             --dcuf-b1-canvas: #f1f5f5;
             --dcuf-b1-paper: var(--dcuf-theme-surface);
             --dcuf-b1-glass: color-mix(in srgb, color-mix(in srgb, var(--dcuf-b1-paper) 80%, var(--dcuf-theme-accent-soft)) 76%, transparent);
+            --dcuf-b1-floating: color-mix(in srgb, var(--dcuf-b1-paper) 78%, transparent);
+            --dcuf-menu-button-background: var(--dcuf-b1-sheen), var(--dcuf-b1-glass);
+            --dcuf-menu-background: var(--dcuf-b1-sheen), var(--dcuf-b1-floating);
+            --dcuf-menu-shadow: var(--dcuf-b1-shadow), inset 0 1px 0 var(--dcuf-b1-rim);
+            --dcuf-menu-backdrop: blur(24px) saturate(1.15);
             --dcuf-b1-sheen: linear-gradient(120deg, #ffffff70, #ffffff12 42%, transparent 65%);
             --dcuf-b1-rim: #fffffff2;
             --dcuf-b1-line: color-mix(in srgb, var(--dcuf-theme-border) 55%, var(--dcuf-b1-paper));
@@ -15,6 +20,7 @@
             --dcuf-b1-canvas: #171e21;
             --dcuf-b1-paper: #20292c;
             --dcuf-b1-glass: color-mix(in srgb, color-mix(in srgb, var(--dcuf-b1-paper) 85%, var(--dcuf-theme-accent-soft)) 90%, transparent);
+            --dcuf-b1-floating: color-mix(in srgb, var(--dcuf-b1-paper) 84%, transparent);
             --dcuf-b1-sheen: linear-gradient(120deg, #ffffff16, transparent 58%);
             --dcuf-b1-rim: color-mix(in srgb, var(--dcuf-theme-fg) 9%, transparent);
             --dcuf-b1-line: color-mix(in srgb, var(--dcuf-theme-fg) 5%, var(--dcuf-b1-paper));

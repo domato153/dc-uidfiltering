@@ -60,7 +60,7 @@
         ${selectors.trigger}::after { content: "⌄"; }
         ${selectors.triggerDecoration} { display: none; }
         /* The host writes inline left/top; keep its display and event lifecycle. */
-        ${selectors.popup} { position: absolute; left: auto !important; top: 46px !important; right: 0; width: min(320px, calc(100vw - 24px)); max-width: calc(100vw - 24px); max-height: min(480px, calc(100vh - 120px)); overflow: auto; box-sizing: border-box; border: 1px solid var(--dcuf-b1-rim); border-radius: 14px; background: color-mix(in srgb, var(--dcuf-b1-paper) 96%, transparent); color: var(--dcuf-theme-fg); box-shadow: var(--dcuf-b1-shadow), inset 0 1px 0 var(--dcuf-b1-rim); backdrop-filter: blur(24px); }
+        ${selectors.popup} { position: absolute; left: auto !important; top: 46px !important; right: 0; width: min(320px, calc(100vw - 24px)); max-width: calc(100vw - 24px); max-height: min(480px, calc(100vh - 120px)); overflow: auto; box-sizing: border-box; border: 1px solid var(--dcuf-b1-rim); border-radius: 14px; background: var(--dcuf-b1-sheen), var(--dcuf-b1-floating); color: var(--dcuf-theme-fg); box-shadow: var(--dcuf-b1-shadow), inset 0 1px 0 var(--dcuf-b1-rim); backdrop-filter: blur(24px) saturate(1.15); }
         ${selectors.popup} > div { min-width: 0; min-height: 0; height: auto; width: 100%; padding: 10px; background: transparent; box-sizing: border-box; }
         ${selectors.popup} a { color: var(--dcuf-theme-fg); }
         ${selectors.popup} button { color: var(--dcuf-theme-accent-ink); }

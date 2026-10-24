@@ -2,22 +2,22 @@
 
 ## Current execution
 
-- Active plan: docs/work/MOBILE_UI_MODERNIZATION.md → B1_UI_EXPANSION_PREFLIGHT.md. User adopted the finished B1 list as the expansion reference; full-family scope/order/material preflight is recorded, implementation not started.
-- Workspace path: `.` (repository root). Use the private prompt's exact nested worktree; AGENTS.md is the single policy.
-- Active stage: `header-navigation`; next bounded slice `b1-ui-expansion-preflight-review`. Review the requested family/child scope and order; first implementation after review is P1 article/comments/image-comments and representative action/tool popups.
-- Accepted visual preference: B compact/recent menu + B1 Prism Glass; B2/large-title-card remain inactive.14 palettes/settings, native controls and toolbar motion preserved.
-- Source state: Source checkpoint base HEAD `2dcd9603f856cdd28cbabf895c9e982ff5bc559c` on `codex/ui-port-boundary`; expansion preflight/checklist/retrieval documents only. Runtime, metadata, native DOM/events/UiPort/storage/observers, registry/overlay/owners, build outputs and PC unchanged.
-- Local-only state: `LOCAL_ONLY_EVIDENCE`; captures/reports/viewer under ignored artifacts/. Preserve debug.log unread/unstaged. User-authorized cache/extraction cleanup is inventoried under artifacts/workspace-cleanup-2026-10-23; current runtime, rollback, evidence, controls and viewer retained.
-- Candidate fingerprint: `0e4e0e98691ca45736acaaf8b9cddb90a9bb71c3cafe1d51bf352844642286a9`
-- Last current audit: UNKNOWN — B1_UI_EXPANSION_PREFLIGHT_PLAN_ONLY. Native public-site anatomy read confirms the new6778319 specimen's article/actions/image-comment preview; supplemental textcon/modify-password and separate sign login were inspected. Unopened children remain unknown. No new product/extension/design-completion certification.
-- Last product receipt: `verification/receipts/2026-10-24-b1-list-cohesion.json` SHA-256 `E7B1845CF51170C8C90E4CA6909AD4E9817EEDD9EDB64B0E4DF18E91EFB2940A`; frozen prior scoped runtime checks. Its preference-pending text predates the user's current adoption. Do not rewrite historical evidence or infer new family coverage.
-- Accepted baseline: User-selected B compact+B1, accepted8A button and finished BCB96852 list are the expansion reference. Frozen8A remains the immediate control for prior list evidence. No automatic native golden, all-family approval or product release follows. Published raw +8-listener difference remains unwaived.
-- Current artifact: Mobile3.5.5 `BCB968526FE8817D7642C25246E447DCCD3E7D87079CAFC6C2244DB79E5AEA33`, root/dist/guard aligned. PC1.9.9 `5FA25756C43864AA8C90C1347AE6A03652D901862F83ABEAEDDEBF6382CFA740` root/dist unchanged.
-- Blockers: No global live capability blocker. sign login is outside current @match and bootstrap target routes; a dedicated presentation entry is planned, not implemented. Full image-comment/input, account-gated article popups, search history and editor children need their bounded live/fixture audit. Original dynamic-img warning remains unconfirmed. Do not bypass the prior IAB error-tab denial.
-- Pending live checks: 6778319 is now the primary article/comment/image-comment/action/modify-delete specimen; previous URLs are supplemental. Native reading/opening is not candidate extension validation. Prior anonymous Chrome list evidence remains scoped to BCB96852. No new actual extension/device/authenticated/older-engine qualification.980×2306 is phone layout proxy;390 stress. Other UI families and raw/mixed/upper/release remain separate.
+- Active plan: docs/work/MOBILE_UI_MODERNIZATION.md → B1_UI_EXPANSION_PREFLIGHT.md → B1_CONTENT_TRIAL.md. First article/comment/glass trial is reviewable; separate popup-family proposal is unapproved.
+- Workspace path: `.` (repository root). Use the private prompt exact nested worktree; AGENTS.md is the single policy.
+- Active stage: `header-navigation`; next bounded slice `b1-popup-reference-polish`. Review the separate popup proposal and refine this P1 trial, not all P2–P5.
+- Accepted visual preference: B compact/recent menu + B1 Prism Glass; finished BCB96852 list adopted. B2/large-title-card remain inactive.
+- Source state: source checkpoint base HEAD `6b2dba0c5527165dd070046e26b715f53168546e` on `codex/ui-port-boundary`. Existing presenters, reversible comment-picker projection and shared optional menu material changed; native behavior/storage/metadata/owners preserved. Candidate overlay remains active; accepted registry unchanged.
+- Local-only state: `LOCAL_ONLY_EVIDENCE`; frozen controls/reports/captures under artifacts/b1-content-2026-10-24; viewer artifacts/b1-detail-2026-10-23/content/index.html. Preserve debug.log unread/unstaged.
+- Candidate fingerprint: `b864f144a2529e252cd2479e5ff329bff142078cf3656f92831faa1ba8ebe7c2`
+- Last current audit: UNKNOWN — B1_CONTENT_TRIAL_REFERENCE_FIDELITY_UNVERIFIED. Same runtime broad Mobile144 pass/1 stale visual-token expectation; corrected positive assertion and final picker fixture pass separately. PC26 and4 material comparisons pass; immediate article22/comment36 behavior equal. No clean145-run or aesthetic approval claimed.
+- Last product receipt: `verification/receipts/2026-10-24-b1-content-trial.json` SHA-256 `2D698C4706245627ED921E5C41891742597774E4277A0EE7E528129B6F09ED82`. Scope/contrary evidence retained; six image-bound pairs UNVERIFIED, generated proposal not approved.
+- Accepted baseline: Frozen BCB96852 list remains adopted expansion reference; current trial is not its own expected image. UI_VISUAL_REVIEW.md routes original → separate B1 proposal → implementation. Published raw +8-listener difference remains unwaived.
+- Current artifact: Mobile3.5.5 `5E114697F8E7B4DD5968AA2903BC60608D43408103A465F9E53EBA1692B15DE0` root/dist/guard aligned. PC1.9.9 `61C539769BA160A5FC4DCD164B3CD26025244AB6FC1BBC7A4A520416FE5A41A5` root/dist aligned; PC fallback behavior/appearance checked, bytes changed.
+- Blockers: No global live capability blocker. Fine proposal fidelity remains open. sign login entry, editor/gallery/search/account-gated/nested picker children remain later; generic fixture geometry is not a native whole-page design pass. Do not bypass IAB error-tab policy denial.
+- Pending live checks: 6778319 primary; native read/open observation is not current extension proof. Current actual Chrome/Tampermonkey candidate/device/authenticated and unopened children remain unqualified. Layout980×2306 phone proxy,390 stress; no raw/mixed/upper/release closure.
 
 ```dcuf-current-artifacts
-{"schemaVersion":1,"mobile":{"sha256":"BCB968526FE8817D7642C25246E447DCCD3E7D87079CAFC6C2244DB79E5AEA33"},"pc":{"sha256":"5FA25756C43864AA8C90C1347AE6A03652D901862F83ABEAEDDEBF6382CFA740"}}
+{"schemaVersion":1,"mobile":{"sha256":"5E114697F8E7B4DD5968AA2903BC60608D43408103A465F9E53EBA1692B15DE0"},"pc":{"sha256":"61C539769BA160A5FC4DCD164B3CD26025244AB6FC1BBC7A4A520416FE5A41A5"}}
 ```
 
 ## Draft-complete checkpoint — 2026-10-21

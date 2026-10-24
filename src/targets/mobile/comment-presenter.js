@@ -4,15 +4,15 @@
             [data-dcuf-surface="comments-replies"][data-dcuf-role="comments-root"] {
                 --dcuf-comment-fg: var(--dcuf-theme-fg, #27313f);
                 --dcuf-comment-muted: var(--dcuf-theme-fg-muted, #687384);
-                --dcuf-comment-border: var(--dcuf-theme-border, #d9dde3);
+                --dcuf-comment-border: var(--dcuf-b1-line, var(--dcuf-theme-border, #d9dde3));
                 --dcuf-comment-border-strong: var(--dcuf-theme-border-strong, #cbd2db);
-                --dcuf-comment-surface: var(--dcuf-theme-surface-raised, #fbfcfd);
+                --dcuf-comment-surface: var(--dcuf-b1-paper, var(--dcuf-theme-surface-raised, #fbfcfd));
                 --dcuf-comment-surface-muted: var(--dcuf-theme-surface-muted, #f1f3f6);
                 --dcuf-comment-input: var(--dcuf-theme-surface-input, #fff);
                 --dcuf-comment-reply: var(--dcuf-theme-reply-surface, #f4f6f8);
                 --dcuf-comment-accent: var(--dcuf-theme-accent, #3f6de0);
                 --dcuf-comment-accent-strong: var(--dcuf-theme-accent-strong, #315bc1);
-                --dcuf-comment-shadow: var(--dcuf-theme-card-shadow, 0 1px 3px rgba(31, 41, 55, .07), 0 6px 16px rgba(31, 41, 55, .075));
+                --dcuf-comment-shadow: 0 2px 8px color-mix(in srgb, var(--dcuf-comment-fg) 4%, transparent);
                 position: relative;
                 margin-block: 14px;
                 color: var(--dcuf-comment-fg);
@@ -41,8 +41,8 @@
                 padding: 10px 14px;
                 border: 1px solid var(--dcuf-comment-border);
                 border-block-end: 0;
-                border-radius: 12px 16px 0 0;
-                background: var(--dcuf-comment-surface-muted);
+                border-radius: 14px 14px 0 0;
+                background: var(--dcuf-b1-sheen, none), var(--dcuf-b1-glass, var(--dcuf-comment-surface-muted));
                 color: var(--dcuf-comment-fg);
                 box-sizing: border-box;
             }
@@ -68,7 +68,7 @@
                 min-block-size: 32px;
                 padding-inline: 11px;
                 border: 1px solid var(--dcuf-comment-border-strong);
-                border-radius: 999px;
+                border-radius: 8px;
                 background: var(--dcuf-comment-input);
                 color: var(--dcuf-comment-muted);
                 font-weight: 700;
@@ -99,10 +99,10 @@
                 margin: 0 10px 10px;
                 padding: 14px 16px;
                 border: 1px solid color-mix(in srgb, var(--dcuf-comment-border) 86%, transparent);
-                border-radius: 15px;
-                background-color: var(--dcuf-theme-card-top, var(--dcuf-comment-surface));
+                border-radius: 14px;
+                background-color: var(--dcuf-comment-surface);
                 background-image: none;
-                box-shadow: 0 4px 12px color-mix(in srgb, var(--dcuf-comment-accent-strong) 7%, transparent);
+                box-shadow: 0 1px 3px color-mix(in srgb, var(--dcuf-comment-fg) 3%, transparent);
                 box-sizing: border-box;
                 overflow: visible;
             }
@@ -209,7 +209,7 @@
                 margin-inline-start: 18px;
                 padding: 9px 12px 10px 14px;
                 border: 1px solid var(--dcuf-comment-border);
-                border-inline-start: 3px solid var(--dcuf-comment-border-strong);
+                border-inline-start: 1px solid var(--dcuf-comment-border-strong);
                 border-radius: 12px;
                 background-color: var(--dcuf-comment-reply);
                 background-image: none;
@@ -258,8 +258,8 @@
                 margin-block-start: 14px;
                 padding: 14px;
                 border: 1px solid var(--dcuf-comment-border);
-                border-radius: 12px;
-                background-color: var(--dcuf-theme-surface, var(--dcuf-comment-surface));
+                border-radius: 16px;
+                background-color: var(--dcuf-comment-surface);
                 background-image: none;
                 box-shadow: var(--dcuf-comment-shadow);
                 box-sizing: border-box;
@@ -302,7 +302,7 @@
                 inline-size: 100%;
                 min-inline-size: 0;
                 border: 1px solid var(--dcuf-comment-border);
-                border-radius: 10px;
+                border-radius: 8px;
                 background: var(--dcuf-comment-input);
                 color: var(--dcuf-comment-fg);
                 box-sizing: border-box;
@@ -377,9 +377,9 @@
                 block-size: auto;
                 padding: 8px 14px;
                 border: 1px solid var(--dcuf-comment-accent-strong);
-                border-radius: 10px;
+                border-radius: 8px;
                 background-color: var(--dcuf-comment-accent-strong);
-                background-image: none;
+                background-image: linear-gradient(180deg, #ffffff14, transparent 72%);
                 color: var(--dcuf-theme-on-accent, #fff);
                 font-weight: 800;
                 white-space: nowrap;
@@ -404,10 +404,83 @@
                 z-index: 2147483647;
                 overflow: visible;
             }
+            [data-dcuf-role="comments-root"] [data-dcuf-role="native-comment-popup"] {
+                border: 1px solid var(--dcuf-b1-rim, var(--dcuf-comment-border));
+                border-radius: 16px;
+                background: var(--dcuf-b1-sheen, none), var(--dcuf-b1-floating, var(--dcuf-comment-surface));
+                color: var(--dcuf-comment-fg);
+                box-shadow: var(--dcuf-b1-shadow), inset 0 1px 0 var(--dcuf-b1-rim);
+                backdrop-filter: blur(24px) saturate(1.15);
+                box-sizing: border-box;
+            }
+            [data-dcuf-role="native-comment-popup"][data-dcuf-comment-role="comment-picker"] {
+                /* Native textcon/DCCon write inline left:0;top:38px.
+                   Only these verified pickers use the centered dialog geometry. */
+                position: fixed;
+                left: 50% !important;
+                top: 50% !important;
+                bottom: auto;
+                right: auto;
+                transform: translate(-50%, -50%);
+                inline-size: min(520px, calc(100vw - 32px));
+                max-inline-size: calc(100vw - 32px);
+                max-block-size: calc(100dvh - 32px);
+                overflow: auto;
+                overscroll-behavior: contain;
+                scrollbar-color: var(--dcuf-comment-border-strong) transparent;
+            }
+            [data-dcuf-role="native-comment-popup"][data-dcuf-comment-role="comment-picker"] [data-dcuf-comment-role="popup-panel"] {
+                inline-size: 100%;
+                min-inline-size: 0;
+                max-inline-size: 100%;
+                padding: 20px;
+                border: 0;
+                border-radius: inherit;
+                background: transparent;
+                color: inherit;
+                box-sizing: border-box;
+            }
+            [data-dcuf-comment-role="popup-title"] { color: inherit; font: 700 16px/1.5 system-ui, sans-serif; }
+            [data-dcuf-role="native-comment-popup"] [data-dcuf-comment-role="popup-media-wrap"],
+            [data-dcuf-role="native-comment-popup"] [data-dcuf-comment-role="popup-media-list"] { inline-size: 100%; max-inline-size: 100%; min-inline-size: 0; margin-inline: 0; padding-inline: 0; box-sizing: border-box; }
+            [data-dcuf-role="native-comment-popup"] [data-dcuf-comment-role="popup-media-list"] { line-height: 0; }
+            [data-dcuf-role="native-comment-popup"] [data-dcuf-comment-role="popup-media-item"] { display: inline-block; float: none; inline-size: 25%; min-inline-size: 0; margin: 0; padding: 4px; vertical-align: top; box-sizing: border-box; }
+            [data-dcuf-role="native-comment-popup"] [data-dcuf-comment-role="popup-media-button"] { inline-size: 100%; block-size: auto; min-block-size: 44px; padding: 0; border: 0; border-radius: 8px; background: transparent; }
+            [data-dcuf-comment-role="popup-media-button"] img { max-inline-size: 100%; block-size: auto; }
+            [data-dcuf-role="native-comment-picker-field"] {
+                display: block;
+                inline-size: 100%;
+                min-inline-size: 0;
+                min-block-size: 40px;
+                margin-block: 12px;
+                padding: 10px 12px;
+                border: 1px solid var(--dcuf-comment-border-strong);
+                border-radius: 8px;
+                background: var(--dcuf-comment-input);
+                color: var(--dcuf-comment-fg);
+                caret-color: var(--dcuf-comment-accent);
+                box-sizing: border-box;
+            }
+            [data-dcuf-role="native-comment-picker-option"] { inline-size: 16px; block-size: 16px; min-inline-size: 0; accent-color: var(--dcuf-comment-accent-strong); }
+            [data-dcuf-comment-role="popup-action"], [data-dcuf-comment-role="popup-primary-action"] {
+                min-block-size: 36px;
+                padding-inline: 12px;
+                border: 1px solid var(--dcuf-comment-border-strong);
+                border-radius: 8px;
+                background: var(--dcuf-b1-paper);
+                color: var(--dcuf-comment-fg);
+                font: 600 13px/1.4 system-ui, sans-serif;
+                cursor: pointer;
+            }
+            [data-dcuf-comment-role="popup-primary-action"] { background: var(--dcuf-comment-accent-strong); color: var(--dcuf-theme-on-accent); border-color: transparent; }
+            [data-dcuf-role="native-comment-picker-field"]:focus-visible,
+            [data-dcuf-role="native-comment-picker-option"]:focus-visible,
+            [data-dcuf-comment-role="popup-action"]:focus-visible,
+            [data-dcuf-comment-role="popup-primary-action"]:focus-visible { outline: 2px solid var(--dcuf-comment-accent); outline-offset: 2px; }
             [data-dcuf-role="comments-root"][data-dcuf-state="dark"] [data-dcuf-role="comment-item"],
             [data-dcuf-role="comments-root"][data-dcuf-state="dark"] [data-dcuf-role="comment-box"],
             [data-dcuf-surface="comments-replies"][data-dcuf-role="comments-root"][data-dcuf-state="dark"] [data-dcuf-role="comment-composer"] {
-                box-shadow: 0 7px 18px rgba(0, 0, 0, .22), inset 0 1px 0 rgba(255, 255, 255, .035);
+                box-shadow: 0 2px 8px #0002;
             }
             @media screen and (max-width: 640px) {
                 [data-dcuf-surface="comments-replies"][data-dcuf-role="comments-root"] { margin-block: 10px; }
