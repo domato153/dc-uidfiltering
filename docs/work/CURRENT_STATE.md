@@ -2,13 +2,13 @@
 
 ## Current execution
 
-- Active plan: docs/work/MOBILE_UI_MODERNIZATION.md → B1_UI_EXPANSION_PREFLIGHT.md → B1_ARTICLE_ACTION_POPUPS.md. Named article action popup slice is reviewable; next is bounded P2 gallery/search native layers.
+- Active plan: docs/work/MOBILE_UI_MODERNIZATION.md → B1_UI_EXPANSION_PREFLIGHT.md → B1_ARTICLE_ACTION_POPUPS.md. Named article action popup slice is reviewable; next is bounded P2 gallery/search native layers. User adopted D-51 in VERIFICATION_EFFICIENCY.md: reuse B1 recipes/preparation, observe the native styling boundary early and settle affected visuals before broad checks; thin helper consolidation is planned, not already implemented.
 - Workspace path: `.` (repository root; private prompt supplies exact nested worktree). AGENTS.md is the single policy; preserve debug.log unread/unstaged.
 - Active stage: `header-navigation`; next bounded slice `b1-gallery-search-popups`. Observe original gallery cover/info/related and header search layers before extending existing B1 owners.
 - Accepted visual preference: B compact+B1 and adopted BCB96852 list. Popup direction authorized; current article-action implementation preference pending. B2/large-title-card remain inactive.
 - Source state: source checkpoint base HEAD `dd79dcaab0e7a83791c37f146d683559af6244ea` on `codex/ui-port-boundary`. Mobile-only reversible popup kind/parts and same article presenter CSS; accepted registry and native behavior/forms/parents/handlers/settings retained. Overlay active.
 - Local-only state: `LOCAL_ONLY_EVIDENCE`; controls/reports/captures artifacts/b1-article-actions-2026-10-24; viewer artifacts/b1-detail-2026-10-23/article-actions/index.html.
-- Candidate fingerprint: `b9afa15985a58e1d19c0b1a4151171697775463860ed9739ad9402aabe5c4577`
+- Candidate fingerprint: `56bdb6cf4e695158d3408660006abfeba5bd463fce635b0c0ef2aa1a6f7e6f1f`
 - Last current audit: UNKNOWN — SCOPED_REVIEWED_SPLIT_COVERAGE_USER_PREFERENCE_PENDING. 145 passed/1 failed (split coverage);20 affected contexts,22 semantic observations match,4 public source-injected main roots,10 image-bound pairs REVIEWED and rendered backing transmission. No all-child/current-extension/product appearance approval.
 - Last product receipt: `verification/receipts/2026-10-24-b1-article-actions.json` SHA-256 `55388ECA85D587CEF407D7939A7598322F39B6396D851CF9F29FF87BE1380DCD`; exact checks, native-versus-fixture scopes, oracle correction and exclusions retained.
 - Accepted baseline: Adopted BCB list and authorized popup-family direction; current output is not its own expected. Earlier popup-polish split coverage and published raw +8 listener difference remain historical/unwaived, not current77AD certification.
