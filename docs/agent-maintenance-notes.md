@@ -426,3 +426,14 @@ B1 list cohesion (2026-10-24): inspect the actual bottom controls and every chan
 - theme-host-style rewrites old FAB ID blocks to retired names; the actual owner is the shared settings presenter. Mobile-only material variables with exact PC fallbacks avoid editing a dead phase or giving it new priority.
 - Generic logic-fixture decorations are not native visual truth. In the B1 specimen close its deliberately open fake popup, model observed hidden helper text, and remove its synthetic comment-li border rule. Re-capture control and candidate; never compensate in product CSS.
 - A window without a selected design uses original → separate B1 proposal → current, per UI_VISUAL_REVIEW.md. Generated extra controls/content recolors are excluded; visible backing transmission and foreground readability are inspected together. No automatic baseline from the current implementation.
+
+### Native popup polish and completed-scroll comparison —2026-10-24
+
+Textcon actual `.txt_dccon_box > .head/.pop_dccon_tit` was absent from the shallow fixture; its preview is100×100 and native textarea has an ID width344px. Project actual parts and use equal min/max inline bounds rather than another priority. DCCon reuses its hidden semantic heading; no observed top-level X is invented. Keep nested hidden pages/native colors and trigger-close. Empty recent usage alone may collapse via its own semantic parts.
+
+At390/short stress, reserve persistent-menu clearance in the existing picker owner rather than raising unrelated stacking roots or moving nodes. The980 phone layout is distinct. Recent differential sampled after scrollLeft>1 and50ms, producing7 arbitrary smooth-animation differences; wait for browser scrollend and retain original movement checks. Settled29 observations match. This is a harness correction, not a product failure or a blanket timing waiver.
+
+
+## B1 popup native CSS fidelity follow-up (2026-10-24)
+
+A structure-correct synthetic fixture still missed public popup.css/common.css: textcon600px preview shell, floated title, doubled stack padding and `margin:18px auto 0!important` on its primary action. Public source injection exposed the broken composition after the fixture passed. Reproduce those exact rules, then repair existing semantic part styles; preserve the100px native preview and input algorithm. One scoped picker-primary important margin reset is justified by the observed host declaration. Keep title/help adjacency, centered preview and actual child bounds as positive assertions: clipped root scroll bounds are insufficient. Source-injected light textcon now confirms the fix; DCCon did not open with `/dccon/lists` POST blocked and is not a native pass. No extension, auth or whole-family claim.

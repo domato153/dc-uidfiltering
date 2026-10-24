@@ -67,15 +67,21 @@
         ${selectors.popupContent} { min-height: 0; height: auto; padding: 0; border: 0; background: transparent; box-sizing: border-box; }
         ${selectors.popupTabs} { display: flex; width: 100%; height: auto; padding: 0; margin: 0 0 8px; gap: 4px; border: 0; list-style: none; }
         ${selectors.popupTabs} > li { flex: 1; float: none; width: auto; margin: 0; border: 0; border-radius: 8px; background: transparent; }
-        ${selectors.popupTabs} button { width: 100%; min-height: 36px; border: 0; background: transparent; color: var(--dcuf-theme-fg-muted); font: 600 12px/1.3 system-ui, sans-serif; }
+        ${selectors.popupTabs} button { width: 100%; min-height: 40px; padding: 8px 10px; border: 0; border-radius: 8px; background: transparent; color: var(--dcuf-theme-fg-muted); font: 600 12px/1.3 system-ui, sans-serif; cursor: pointer; }
         ${selectors.popupTabs}::after, ${selectors.popupTabs} button::before { content: none; display: none; }
-        ${selectors.popupCurrent} { border: 0; background: var(--dcuf-theme-accent-soft); }
-        ${selectors.popupCurrent} button { color: var(--dcuf-theme-accent-ink); }
+        ${selectors.popupCurrent} { border: 0; background: color-mix(in srgb, var(--dcuf-theme-accent-soft) 65%, transparent); }
+        ${selectors.popupCurrent} button { color: var(--dcuf-theme-accent-ink); box-shadow: inset 0 -2px 0 var(--dcuf-theme-accent-ink); }
         ${selectors.popupList} { min-height: 0; height: auto; width: 100%; padding: 0; margin: 0; box-sizing: border-box; }
-        ${selectors.popupRow} { display: flex; align-items: center; width: 100%; min-height: 40px; margin: 0; padding: 0 4px; gap: 5px; box-sizing: border-box; }
-        ${selectors.popupRow} a { flex: 1; min-width: 0; padding: 8px 2px; font: 12px/1.5 system-ui, sans-serif; white-space: normal; }
+        ${selectors.popupRow} { display: flex; align-items: center; width: 100%; min-height: 44px; margin: 0; padding: 2px 6px; gap: 8px; border-radius: 8px; box-sizing: border-box; }
+        ${selectors.popupRow}:hover { background: color-mix(in srgb, var(--dcuf-theme-accent-soft) 45%, transparent); }
+        ${selectors.popupRow} a { flex: 1; min-width: 0; padding: 9px 2px; color: var(--dcuf-theme-fg); font: 500 12px/1.5 system-ui, sans-serif; white-space: normal; text-decoration: none; }
+        ${selectors.popupRow} > button { appearance: none; display: inline-flex; align-items: center; justify-content: center; flex: 0 0 32px; position: static; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 8px; background: transparent; color: var(--dcuf-theme-fg-muted); font-size: 0; cursor: pointer; }
+        ${selectors.popupRow} > button::before { content: ""; width: 14px; height: 14px; background: currentColor; mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='m4 4 8 8M12 4l-8 8' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E") center / contain no-repeat; }
+        ${selectors.popupRow} > button:hover { background: var(--dcuf-theme-accent-soft); color: var(--dcuf-theme-accent-ink); }
         ${selectors.popupFooter} { position: static; display: flex; justify-content: flex-end; height: auto; margin: 8px 0 0; padding: 8px 0 0; border-top: 1px solid var(--dcuf-theme-border); background: transparent; }
-        ${selectors.popupFooter} button { position: static; min-height: 32px; color: var(--dcuf-theme-fg-muted); font-size: 11px; }
+        ${selectors.popupFooter} button { appearance: none; display: inline-flex; align-items: center; justify-content: flex-start; position: static; width: 100%; min-height: 40px; padding: 8px; border: 0; border-radius: 8px; background: transparent; color: var(--dcuf-theme-fg-muted); font: 500 12px/1.4 system-ui, sans-serif; cursor: pointer; }
+        ${selectors.popupFooter} button:hover { background: var(--dcuf-theme-accent-soft); color: var(--dcuf-theme-accent-ink); }
+        ${selectors.popup} :is(a, button):focus-visible { outline: 2px solid var(--dcuf-theme-accent-ink); outline-offset: 2px; }
         ${selectors.arrow} { min-width: 22px; min-height: 24px; }
         ${selectors.darkTitle} { color: #e0e0e0 !important; }
         @media (max-width: 899px) { ${selectors.menuRoot} { grid-area: 2 / 2; margin-top: 0; margin-bottom: 8px; } }

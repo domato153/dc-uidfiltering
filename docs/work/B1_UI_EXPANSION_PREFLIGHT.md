@@ -85,3 +85,5 @@ UI_REVIEW_CHECKLIST.md의 기존128개 부모 항목을 재사용하고 아래 �
 ## 시안 없는 창의 비교 경로
 
 UI_VISUAL_REVIEW.md의 원본 → 별도 B1 제안 → 구현 비교를 따른다. 현재 제안은 docs/design/b1-popups-proposal-2026-10-24.md에 보존한다. 작은 메뉴·확인/입력 창·큰 픽커는 채택된 가족 시안을 재사용하고, 구성이 달라질 때만 추가한다. 원본/합성 fixture/생성 이미지/구현의 출처와 미확인 자식을 분리한다. 실제로 비치는 배경과 읽기성을 함께 확인하며 구현을 자기 정답으로 삼지 않는다.
+
+P1 progress: B1_POPUP_POLISH.md refines recent/textcon/DCCon against the separately authorized popup-family direction. Article action children and representative confirmation/input branches remain; the P1 checkbox stays open.

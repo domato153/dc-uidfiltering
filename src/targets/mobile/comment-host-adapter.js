@@ -188,8 +188,32 @@
                 const picker = popup.id === 'div_con' || popup.id === 'div_txtcon';
                 markCommentContext(root, popup, picker ? 'comment-picker' : 'comment-popup');
                 popup.querySelectorAll(':scope > .pop_content').forEach(panel => markCommentContext(root, panel, 'popup-panel'));
-                popup.querySelectorAll('.tit, .pop_tit').forEach(title => markCommentContext(root, title, 'popup-title'));
+                popup.querySelectorAll('.tit, .pop_tit, .pop_dccon_tit').forEach(title => markCommentContext(root, title, 'popup-title'));
                 if (!picker) return;
+                const parts = (selector, role) => popup.querySelectorAll(selector).forEach(element => {
+                    if (element.closest('.pop_wrap') === popup) markCommentContext(root, element, role);
+                });
+                parts('.txt_dccon_box', 'popup-content-stack');
+                parts('.txt_dccon_box > .head', 'popup-heading');
+                parts('.head > .tiptxt', 'popup-help');
+                parts('.txtcon_box', 'popup-preview-shell');
+                parts('.coment_dccon_txt', 'popup-preview');
+                parts('.color_section_box', 'popup-color-groups');
+                parts('.color_section', 'popup-color-group');
+                parts('.color_section > h5', 'popup-field-label');
+                parts('.color_options', 'popup-swatches');
+                parts('.btn_color', 'popup-swatch');
+                parts('.txt_section_box', 'popup-input-section');
+                parts('.latest_section_box', 'popup-recent');
+                parts('.latest', 'popup-recent-list');
+                parts('.doublecon_wrap', 'popup-toolbar');
+                parts('.doublecon_wrap > .left, .doublecon_wrap > .right > .fr', 'popup-toolbar-side');
+                parts('.dccon_tab_btnbox', 'popup-pack-controls');
+                if (popup.id === 'div_con') {
+                    const heading = popup.querySelector(':scope > .pop_content > .blind');
+                    markCommentContext(root, heading, 'popup-heading');
+                    markCommentContext(root, heading?.querySelector('h3'), 'popup-title');
+                }
                 popup.querySelectorAll('.dccon_list_wrap').forEach(list => markCommentContext(root, list, 'popup-media-wrap'));
                 popup.querySelectorAll('.dccon_list').forEach(list => {
                     markCommentContext(root, list, 'popup-media-list');

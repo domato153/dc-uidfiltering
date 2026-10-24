@@ -151,8 +151,17 @@ if (args.includes('--side')) {
                 }, { caseId: testCase.id, stepName: step, baselineValue: baseline });
                 observations.push(await capture('initial'));
                 if (!testCase.id.includes('write')) {
+                    // Sampling at scrollLeft>1 captures an arbitrary animation
+                    // frame. Compare the browser's completed original scroll.
+                    await session.page.evaluate(() => {
+                        window.__dcufRecentScrollEnded = false;
+                        document.querySelector('.newvisit_history .newvisit_list').addEventListener('scrollend', () => {
+                            window.__dcufRecentScrollEnded = true;
+                        }, { once: true });
+                    });
                     await session.page.locator('.newvisit_history .bnt_visit_next').click();
                     await session.page.waitForFunction(() => document.querySelector('.newvisit_history .newvisit_list')?.scrollLeft > 1);
+                    await session.page.waitForFunction(() => window.__dcufRecentScrollEnded === true);
                     await waitForSettled(session.page, 50);
                     observations.push(await capture('pointer-next'));
                     await session.page.locator('.newvisit_history .bnt_visit_prev').focus();

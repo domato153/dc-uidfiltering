@@ -2,22 +2,22 @@
 
 ## Current execution
 
-- Active plan: docs/work/MOBILE_UI_MODERNIZATION.md → B1_UI_EXPANSION_PREFLIGHT.md → B1_CONTENT_TRIAL.md. First article/comment/glass trial is reviewable; separate popup-family proposal is unapproved.
+- Active plan: docs/work/MOBILE_UI_MODERNIZATION.md → B1_UI_EXPANSION_PREFLIGHT.md → B1_POPUP_POLISH.md. Recent/textcon/DCCon refinement is reviewable; remaining P1 article action popups are next.
 - Workspace path: `.` (repository root). Use the private prompt exact nested worktree; AGENTS.md is the single policy.
-- Active stage: `header-navigation`; next bounded slice `b1-popup-reference-polish`. Review the separate popup proposal and refine this P1 trial, not all P2–P5.
-- Accepted visual preference: B compact/recent menu + B1 Prism Glass; finished BCB96852 list adopted. B2/large-title-card remain inactive.
-- Source state: source checkpoint base HEAD `6b2dba0c5527165dd070046e26b715f53168546e` on `codex/ui-port-boundary`. Existing presenters, reversible comment-picker projection and shared optional menu material changed; native behavior/storage/metadata/owners preserved. Candidate overlay remains active; accepted registry unchanged.
-- Local-only state: `LOCAL_ONLY_EVIDENCE`; frozen controls/reports/captures under artifacts/b1-content-2026-10-24; viewer artifacts/b1-detail-2026-10-23/content/index.html. Preserve debug.log unread/unstaged.
-- Candidate fingerprint: `b864f144a2529e252cd2479e5ff329bff142078cf3656f92831faa1ba8ebe7c2`
-- Last current audit: UNKNOWN — B1_CONTENT_TRIAL_REFERENCE_FIDELITY_UNVERIFIED. Same runtime broad Mobile144 pass/1 stale visual-token expectation; corrected positive assertion and final picker fixture pass separately. PC26 and4 material comparisons pass; immediate article22/comment36 behavior equal. No clean145-run or aesthetic approval claimed.
-- Last product receipt: `verification/receipts/2026-10-24-b1-content-trial.json` SHA-256 `2D698C4706245627ED921E5C41891742597774E4277A0EE7E528129B6F09ED82`. Scope/contrary evidence retained; six image-bound pairs UNVERIFIED, generated proposal not approved.
-- Accepted baseline: Frozen BCB96852 list remains adopted expansion reference; current trial is not its own expected image. UI_VISUAL_REVIEW.md routes original → separate B1 proposal → implementation. Published raw +8-listener difference remains unwaived.
-- Current artifact: Mobile3.5.5 `5E114697F8E7B4DD5968AA2903BC60608D43408103A465F9E53EBA1692B15DE0` root/dist/guard aligned. PC1.9.9 `61C539769BA160A5FC4DCD164B3CD26025244AB6FC1BBC7A4A520416FE5A41A5` root/dist aligned; PC fallback behavior/appearance checked, bytes changed.
-- Blockers: No global live capability blocker. Fine proposal fidelity remains open. sign login entry, editor/gallery/search/account-gated/nested picker children remain later; generic fixture geometry is not a native whole-page design pass. Do not bypass IAB error-tab policy denial.
-- Pending live checks: 6778319 primary; native read/open observation is not current extension proof. Current actual Chrome/Tampermonkey candidate/device/authenticated and unopened children remain unqualified. Layout980×2306 phone proxy,390 stress; no raw/mixed/upper/release closure.
+- Active stage: `header-navigation`; next bounded slice `b1-article-action-popups`. Capture original scrap/report/real-best/share/Pum windows, then reuse B1 recipes within existing owners.
+- Accepted visual preference: B compact+B1; BCB96852 list adopted. User authorized popup proposal direction for this trial, retaining native-control exclusions. Current implementation preference remains pending; B2/large-title-card inactive.
+- Source state: source checkpoint base HEAD `381d948787e2bdb47ad37fb1da5ea0875a019438` on `codex/ui-port-boundary`. Mobile-only part projection and presenter CSS, exact visual registration and recent differential scrollend waiting changed. Native behavior/parents/events/settings, accepted registry and owners retained; overlay active.
+- Local-only state: `LOCAL_ONLY_EVIDENCE`; controls/reports/captures artifacts/b1-popup-polish-2026-10-24; viewer artifacts/b1-detail-2026-10-23/popup-polish/index.html. Preserve debug.log unread/unstaged.
+- Candidate fingerprint: `9b1c0fc43cee3edb9243851679269456029c47b2a1136c6e88493bbc3aee3f46`
+- Last current audit: UNKNOWN — B1_POPUP_POLISH_SCOPED_REVIEWED_SPLIT_COVERAGE_USER_PREFERENCE_PENDING. Final runtime Mobile144/1 (drawer relation-replacement timeout); unchanged isolated drawer recheck1/0; corrected native CSS included in8 picker/recent contexts; public source-injected textcon checked, DCCon POST-blocked. Immediate comment36/recent29 semantics match, eight image-bound pairs REVIEWED. No all-child/current-extension/product approval.
+- Last product receipt: `verification/receipts/2026-10-24-b1-popup-polish.json` SHA-256 `43A1B5D278E752C67216ECE4B63CD2CB0A804B3CAE0D39B3E3786B5D5AD66856`; retains exact scopes, harness timing correction, contrary evidence and user-preference limit.
+- Accepted baseline: Adopted BCB list and authorized popup-family direction; current output is not its own expected target. Historical first trial receipt retains its UNVERIFIED/split result. Published raw +8 listener difference remains unwaived.
+- Current artifact: Mobile3.5.5 `84AE80337CB73A0DAB0B98EA475C7C11D37C3B654E9EFA907204B7033FADA5D8` root/dist/guard aligned. PC1.9.9 `61C539769BA160A5FC4DCD164B3CD26025244AB6FC1BBC7A4A520416FE5A41A5` root/dist byte-identical to prior checkpoint.
+- Blockers: No global live capability blocker. P1 article action children, native picker interiors, nonempty textcon recents, gallery/search/editor/settings/login remain separate. sign-login entry is not implemented; no all-family/raw/mixed/upper/release closure. Do not bypass IAB error-tab policy denial.
+- Pending live checks: 6778319 primary. Public native anatomy is not candidate extension proof. Current actual Chrome/Tampermonkey candidate/device/authenticated and unopened child states remain unqualified. Phone layout980×2306 proxy;390 stress.
 
 ```dcuf-current-artifacts
-{"schemaVersion":1,"mobile":{"sha256":"5E114697F8E7B4DD5968AA2903BC60608D43408103A465F9E53EBA1692B15DE0"},"pc":{"sha256":"61C539769BA160A5FC4DCD164B3CD26025244AB6FC1BBC7A4A520416FE5A41A5"}}
+{"schemaVersion":1,"mobile":{"sha256":"84AE80337CB73A0DAB0B98EA475C7C11D37C3B654E9EFA907204B7033FADA5D8"},"pc":{"sha256":"61C539769BA160A5FC4DCD164B3CD26025244AB6FC1BBC7A4A520416FE5A41A5"}}
 ```
 
 ## Draft-complete checkpoint — 2026-10-21

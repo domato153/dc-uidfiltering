@@ -1,6 +1,6 @@
 # B1 popup proposal — original / proposal / implementation
 
-Status: **PROPOSAL, not adopted or implemented as a whole**. The user approved making separate B1-consistent references for windows without a chosen design. The current first implementation predates this new board; it must not retroactively become the expected image.
+Status: **REFERENCE DIRECTION AUTHORIZED FOR TRIAL**. On2026-10-24 the user requested the next stage after viewing this proposal. B1_POPUP_POLISH.md applies the direction with the exclusions below; final implementation preference and other family children remain separate. The earlier first implementation predates this board and is not its own expected image.
 
 Image: [b1-popups-proposal-2026-10-24.png](b1-popups-proposal-2026-10-24.png). SHA-256: `A55E92CF4775D0EA5007A8F77EEA746A78283E8EFD14C7AC3AC042EDFC1D6963`.
 
@@ -15,4 +15,4 @@ Prompt direction: six readable light/dark panels for recent visits, textcon and 
 - Current observed recent tabs are recent/favorites; gallery/mini/person taxonomy and account-dependent variants remain separate unverified children. Do not substitute the observed family for the user's wider inventory.
 - Compare shell material, title spacing, field/action grouping and original-control geometry at readable scale. The board is a family proposal, so exact pixels/illustrative text are not a golden. Capture each materially different original window before extending it.
 
-Working review: `artifacts/b1-detail-2026-10-23/content/index.html`; reproducible fixture/capture locators and limits are in `docs/work/B1_CONTENT_TRIAL.md`. The six bound picker/backdrop comparisons remain UNVERIFIED for final reference-detail fidelity and user preference. Other family children have no approval from this board.
+Current review: `artifacts/b1-detail-2026-10-23/popup-polish/index.html`; `docs/work/B1_POPUP_POLISH.md` owns the new eight image-bound comparisons and their actual limits. The earlier six UNVERIFIED pairs retain their historical receipt in B1_CONTENT_TRIAL.md. Other family children have no approval from this board.
