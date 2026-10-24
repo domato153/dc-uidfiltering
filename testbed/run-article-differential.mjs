@@ -151,6 +151,10 @@ if (args.includes('--side')) {
                         const active = document.activeElement;
                         const adapter = window.__dcufArticleHostAdapter || null;
                         const adapterResources = adapter?.snapshotResources?.() || null;
+                        // New reversible popup parts expand the projection, not the runtime owners.
+                        // Keep the prior non-part budget and bind the allowance to live marked nodes.
+                        const popupPartOnlyElements = Array.from(currentRoot?.querySelectorAll('[data-dcuf-article-part]') || [])
+                            .filter((element) => !['data-dcuf-role', 'data-dcuf-surface', 'data-dcuf-state'].some((name) => element.hasAttribute(name))).length;
                         const snapshot = adapter?.snapshotSurface?.(currentRoot) || null;
                         const originalTopology = [
                             ['root', probe.root, probe.root?.parentNode, probe.fixture?.topology?.articleRoot?.parent],
@@ -247,7 +251,7 @@ if (args.includes('--side')) {
                                 boundedAdapterResources: Boolean(adapterResources
                                     && adapterResources.activeRoots === 1
                                     && adapterResources.trackedElements > 0
-                                    && adapterResources.trackedElements < 40
+                                    && adapterResources.trackedElements - popupPartOnlyElements < 40
                                     && adapterResources.observers === 0
                                     && adapterResources.presentationStyleOwners === 1
                                     && adapterResources.listeners <= 3
@@ -273,6 +277,7 @@ if (args.includes('--side')) {
                                 },
                                 styles: Array.from(document.querySelectorAll('style[id]'), (style) => style.id),
                                 adapterResources,
+                                popupPartOnlyElements,
                                 resources: {
                                     activeTimeouts: metrics.activeTimeouts,
                                     activeIntervals: metrics.activeIntervals,

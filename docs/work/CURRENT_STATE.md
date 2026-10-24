@@ -2,22 +2,22 @@
 
 ## Current execution
 
-- Active plan: docs/work/MOBILE_UI_MODERNIZATION.md → B1_UI_EXPANSION_PREFLIGHT.md → B1_POPUP_POLISH.md. Recent/textcon/DCCon refinement is reviewable; remaining P1 article action popups are next.
-- Workspace path: `.` (repository root). Use the private prompt exact nested worktree; AGENTS.md is the single policy.
-- Active stage: `header-navigation`; next bounded slice `b1-article-action-popups`. Capture original scrap/report/real-best/share/Pum windows, then reuse B1 recipes within existing owners.
-- Accepted visual preference: B compact+B1; BCB96852 list adopted. User authorized popup proposal direction for this trial, retaining native-control exclusions. Current implementation preference remains pending; B2/large-title-card inactive.
-- Source state: source checkpoint base HEAD `381d948787e2bdb47ad37fb1da5ea0875a019438` on `codex/ui-port-boundary`. Mobile-only part projection and presenter CSS, exact visual registration and recent differential scrollend waiting changed. Native behavior/parents/events/settings, accepted registry and owners retained; overlay active.
-- Local-only state: `LOCAL_ONLY_EVIDENCE`; controls/reports/captures artifacts/b1-popup-polish-2026-10-24; viewer artifacts/b1-detail-2026-10-23/popup-polish/index.html. Preserve debug.log unread/unstaged.
-- Candidate fingerprint: `9b1c0fc43cee3edb9243851679269456029c47b2a1136c6e88493bbc3aee3f46`
-- Last current audit: UNKNOWN — B1_POPUP_POLISH_SCOPED_REVIEWED_SPLIT_COVERAGE_USER_PREFERENCE_PENDING. Final runtime Mobile144/1 (drawer relation-replacement timeout); unchanged isolated drawer recheck1/0; corrected native CSS included in8 picker/recent contexts; public source-injected textcon checked, DCCon POST-blocked. Immediate comment36/recent29 semantics match, eight image-bound pairs REVIEWED. No all-child/current-extension/product approval.
-- Last product receipt: `verification/receipts/2026-10-24-b1-popup-polish.json` SHA-256 `43A1B5D278E752C67216ECE4B63CD2CB0A804B3CAE0D39B3E3786B5D5AD66856`; retains exact scopes, harness timing correction, contrary evidence and user-preference limit.
-- Accepted baseline: Adopted BCB list and authorized popup-family direction; current output is not its own expected target. Historical first trial receipt retains its UNVERIFIED/split result. Published raw +8 listener difference remains unwaived.
-- Current artifact: Mobile3.5.5 `84AE80337CB73A0DAB0B98EA475C7C11D37C3B654E9EFA907204B7033FADA5D8` root/dist/guard aligned. PC1.9.9 `61C539769BA160A5FC4DCD164B3CD26025244AB6FC1BBC7A4A520416FE5A41A5` root/dist byte-identical to prior checkpoint.
-- Blockers: No global live capability blocker. P1 article action children, native picker interiors, nonempty textcon recents, gallery/search/editor/settings/login remain separate. sign-login entry is not implemented; no all-family/raw/mixed/upper/release closure. Do not bypass IAB error-tab policy denial.
-- Pending live checks: 6778319 primary. Public native anatomy is not candidate extension proof. Current actual Chrome/Tampermonkey candidate/device/authenticated and unopened child states remain unqualified. Phone layout980×2306 proxy;390 stress.
+- Active plan: docs/work/MOBILE_UI_MODERNIZATION.md → B1_UI_EXPANSION_PREFLIGHT.md → B1_ARTICLE_ACTION_POPUPS.md. Named article action popup slice is reviewable; next is bounded P2 gallery/search native layers.
+- Workspace path: `.` (repository root; private prompt supplies exact nested worktree). AGENTS.md is the single policy; preserve debug.log unread/unstaged.
+- Active stage: `header-navigation`; next bounded slice `b1-gallery-search-popups`. Observe original gallery cover/info/related and header search layers before extending existing B1 owners.
+- Accepted visual preference: B compact+B1 and adopted BCB96852 list. Popup direction authorized; current article-action implementation preference pending. B2/large-title-card remain inactive.
+- Source state: source checkpoint base HEAD `dd79dcaab0e7a83791c37f146d683559af6244ea` on `codex/ui-port-boundary`. Mobile-only reversible popup kind/parts and same article presenter CSS; accepted registry and native behavior/forms/parents/handlers/settings retained. Overlay active.
+- Local-only state: `LOCAL_ONLY_EVIDENCE`; controls/reports/captures artifacts/b1-article-actions-2026-10-24; viewer artifacts/b1-detail-2026-10-23/article-actions/index.html.
+- Candidate fingerprint: `b9afa15985a58e1d19c0b1a4151171697775463860ed9739ad9402aabe5c4577`
+- Last current audit: UNKNOWN — SCOPED_REVIEWED_SPLIT_COVERAGE_USER_PREFERENCE_PENDING. 145 passed/1 failed (split coverage);20 affected contexts,22 semantic observations match,4 public source-injected main roots,10 image-bound pairs REVIEWED and rendered backing transmission. No all-child/current-extension/product appearance approval.
+- Last product receipt: `verification/receipts/2026-10-24-b1-article-actions.json` SHA-256 `55388ECA85D587CEF407D7939A7598322F39B6396D851CF9F29FF87BE1380DCD`; exact checks, native-versus-fixture scopes, oracle correction and exclusions retained.
+- Accepted baseline: Adopted BCB list and authorized popup-family direction; current output is not its own expected. Earlier popup-polish split coverage and published raw +8 listener difference remain historical/unwaived, not current77AD certification.
+- Current artifact: Mobile3.5.5 `77AD4210F54B3C6A5028BB530DC2AB19253C3EF3F91B605BB280151F3AD27893` root/dist/guard aligned; PC1.9.9 `61C539769BA160A5FC4DCD164B3CD26025244AB6FC1BBC7A4A520416FE5A41A5` root/dist byte-identical.
+- Blockers: No global live capability blocker. PUM fresh form POST replay was denied by automatic approval review and was not bypassed; already-open native DOM supplied anatomy. Account scrap iframe, native dialogs, PUM history/results, unopened picker children and login remain separate.
+- Pending live checks: 6778319 primary;4 main roots source-injected light only. Actual candidate Chrome/Tampermonkey/device/authenticated and other child states remain unqualified. Screen412/layout980×2306 proxy;390 stress. P1 checkbox remains open; P2 progression is not all-P1 approval. Full-run comment sync counter4 versus3 remains unexplained; isolated control/current each pass, without waiving the full failure.
 
 ```dcuf-current-artifacts
-{"schemaVersion":1,"mobile":{"sha256":"84AE80337CB73A0DAB0B98EA475C7C11D37C3B654E9EFA907204B7033FADA5D8"},"pc":{"sha256":"61C539769BA160A5FC4DCD164B3CD26025244AB6FC1BBC7A4A520416FE5A41A5"}}
+{"schemaVersion":1,"mobile":{"sha256":"77AD4210F54B3C6A5028BB530DC2AB19253C3EF3F91B605BB280151F3AD27893"},"pc":{"sha256":"61C539769BA160A5FC4DCD164B3CD26025244AB6FC1BBC7A4A520416FE5A41A5"}}
 ```
 
 ## Draft-complete checkpoint — 2026-10-21

@@ -3,6 +3,8 @@
             'data-dcuf-surface',
             'data-dcuf-role',
             'data-dcuf-state',
+            'data-dcuf-article-popup',
+            'data-dcuf-article-part',
         ]);
         const ARTICLE_ROOT_SELECTOR = '.view_content_wrap';
         const ARTICLE_SIGNAL_SELECTOR = '.gallview_contents, .writing_view_box, .btn_recommend_box';
@@ -11,6 +13,7 @@
         const PUM_POPUP_SELECTOR = '#write_pum_layer.pop_wrap';
         const PUM_STYLE_ID = 'dcuf-pum-layer-viewport-style';
         const PUM_POSITIONED_CLASS = 'dcuf-pum-layer-viewport-safe';
+        const ACTION_POPUP_SELECTOR = '#sns_share_lyr, #user_dcbest_lyr, #singo_lyr, #scrapdone_non_recom, #scrapdone_recom, #write_pum_layer, #copyright_law, #post_guide';
         const transactions = new WeakMap();
         const activeRoots = new Set();
         const pumTransactions = new Map();
@@ -171,10 +174,56 @@
 
         const markAll = (articleRoot, selector, role, resolveState = null) => {
             articleRoot.querySelectorAll(selector).forEach((element) => {
+                if (element.closest(ACTION_POPUP_SELECTOR)) return;
                 mark(articleRoot, element, {
                     role,
                     state: typeof resolveState === 'function' ? resolveState(element) : undefined,
                 });
+            });
+        };
+
+        const markActionPopups = (articleRoot) => {
+            const kinds = { sns_share_lyr: 'share', user_dcbest_lyr: 'realbest', singo_lyr: 'report', scrapdone_non_recom: 'scrap', scrapdone_recom: 'scrap', write_pum_layer: 'pum', copyright_law: 'guide', post_guide: 'guide' };
+            articleRoot.querySelectorAll(ACTION_POPUP_SELECTOR).forEach((popup) => {
+                if (!remember(articleRoot, popup)) return;
+                if (!popup.hasAttribute('data-dcuf-role')) mark(articleRoot, popup, { role: 'native-article-popup' });
+                popup.setAttribute('data-dcuf-article-popup', kinds[popup.id]);
+                const parts = (selector, part) => popup.querySelectorAll(selector).forEach((element) => {
+                    if (element.closest(ACTION_POPUP_SELECTOR) !== popup || !remember(articleRoot, element)) return;
+                    element.setAttribute('data-dcuf-article-part', part);
+                });
+                parts(':scope > .pop_content', 'panel');
+                parts('.pop_head', 'head');
+                parts('.pop_head > h3', 'title');
+                parts('.pop_head > .fr', 'head-actions');
+                parts('.inner, .hitup_cont', 'body');
+                parts('.pack, .ly_cloned_cont, form, fieldset', 'form-stack');
+                parts('.align', 'field-row');
+                parts('.input_box, .search_wrap', 'field-shell');
+                parts('.search_box', 'search-shell');
+                parts('input:not([type="hidden"]), textarea', 'field');
+                parts('.list_sns, .report_ly_box', 'choices');
+                parts('.list_sns > li', 'choice-item');
+                parts('.list_sns .description', 'choice-label');
+                parts('.btn_box', 'actions');
+                parts('.hitgall_go, .bottombox', 'footnote');
+                parts('.txt, .cont, .guide_txtbox', 'message');
+                parts('.write_infobox', 'guidance');
+                parts('.cloned_card', 'preview');
+                parts('.cloned_card .gallview_head', 'preview-head');
+                parts('.cloned_card .gall_writer', 'preview-meta');
+                parts('.cloned_card_body', 'preview-body');
+                parts('.cloned_media img', 'media');
+                parts('.cmt_write', 'comment');
+                parts('.urlcopy_box', 'copy-row');
+                parts('.auto_wordwrap, .option_box', 'submenu');
+                parts('.auto_wordwrap .word_list', 'submenu-list');
+                parts('.auto_wordwrap .word_list li', 'submenu-item');
+                parts('.auto_wordwrap .word_list a', 'submenu-link');
+                parts('button, .sns_share_btn, .urlcopy_box > label', 'action');
+                parts('.btn_blue', 'primary');
+                parts('.poply_whiteclose, .poply_bgblueclose, .poply_close', 'close');
+                parts('.word_close > a', 'inline-close');
             });
         };
 
@@ -251,13 +300,13 @@
                     box-sizing: border-box !important;
                     position: fixed !important;
                     left: 50% !important;
-                    top: 50% !important;
+                    top: var(--dcuf-article-popup-center, 50%) !important;
                     right: auto !important;
                     bottom: auto !important;
                     width: min(590px, calc(100vw - 16px)) !important;
                     max-width: calc(100vw - 16px) !important;
-                    max-height: calc(100vh - 16px) !important;
-                    max-height: calc(100dvh - 16px) !important;
+                    max-height: calc(100vh - var(--dcuf-article-popup-clearance, 16px)) !important;
+                    max-height: calc(100dvh - var(--dcuf-article-popup-clearance, 16px)) !important;
                     margin: 0 !important;
                     transform: translate(-50%, -50%) !important;
                     overflow: auto !important;
@@ -383,6 +432,7 @@
             });
             markArticleShell(articleRoot);
             markRecommendation(articleRoot, articleRoot.querySelector(RECOMMEND_SELECTOR));
+            markActionPopups(articleRoot);
             if (articleRoot.querySelector(PUM_TRIGGER_SELECTOR)) {
                 ensurePumPopup();
                 bindPumRuntime();

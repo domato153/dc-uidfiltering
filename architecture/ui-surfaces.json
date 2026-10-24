@@ -207,6 +207,18 @@
           "property": "mix-blend-mode",
           "hostCollision": "Arbitrary article HTML can carry an inline blend mode that makes uploaded media unreadable in DCUF dark mode.",
           "testRef": "UI palette replaces live-shaped host blue and keeps continuous list, view, and comment hierarchy"
+        },
+        {
+          "selector": "[data-dcuf-article-popup]:not([data-dcuf-article-popup=\"pum\"]):not([data-dcuf-article-popup=\"guide\"])",
+          "property": "bottom",
+          "hostCollision": "Observed share/real-best/report/guest-scrap roots carry inline bottom and negative centering margins. Only named same-document article action roots use viewport-contained B1 geometry. PUM retains its existing geometry owner; nested guides remain in parent flow.",
+          "testRef": "B1 article actions: native popup glass and nested forms"
+        },
+        {
+          "selector": "[data-dcuf-article-popup]:not([data-dcuf-article-popup=\"pum\"]):not([data-dcuf-article-popup=\"guide\"])",
+          "property": "margin",
+          "hostCollision": "Observed share/real-best/report/guest-scrap roots carry inline bottom and negative centering margins. Only named same-document article action roots use viewport-contained B1 geometry. PUM retains its existing geometry owner; nested guides remain in parent flow.",
+          "testRef": "B1 article actions: native popup glass and nested forms"
         }
       ],
       "cascadeExceptionProfiles": [],

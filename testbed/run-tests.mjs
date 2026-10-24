@@ -24,6 +24,7 @@ import { runArticleRepairContract } from './ui-repair-article-contract.mjs';
 import { runDialogRepairContract } from './ui-repair-dialog-contract.mjs';
 import { runLiveControlContract } from './ui-live-control-contract.mjs';
 import { runB1ContentContract } from './ui-b1-content-contract.mjs';
+import { runB1ArticleActionsContract } from './ui-b1-article-actions-contract.mjs';
 
 const args = new Set(process.argv.slice(2));
 const selectedGroup = process.argv.includes('--group') ? process.argv[process.argv.indexOf('--group') + 1] : null;
@@ -64,6 +65,7 @@ async function settleThemeTransitions(page) {
 
 mobileTest('live native controls: palette category sprites comment and action ownership', 'functional', runLiveControlContract);
 mobileTest('B1 content: native picker isolation glass and original input', 'functional', runB1ContentContract);
+mobileTest('B1 article actions: native popup glass and nested forms', 'functional', runB1ArticleActionsContract);
 
 mobileTest('confirmed UI repair: native comment composer cascade and original input', 'functional', runCommentRepairContract);
 mobileTest('confirmed UI repair: list author media search paging and write controls', 'functional', runListRepairContract);

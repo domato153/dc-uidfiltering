@@ -1082,49 +1082,53 @@
         {
           "kind": "color-role",
           "surface": "article-recommendation",
-          "scope": "B1 article header, meta separator, quiet native action band/button treatment and recommendation paper/radii. Native body/media/actions remain intact.",
+          "scope": "B1 article header, meta separator, quiet native action band/button treatment and recommendation paper/radii. Native body/media/actions remain intact. Authorized article action slice: exact native share/real-best/report/guest-scrap/PUM roots, existing form/media and nested-guide/suggestion parts, B1 floating material/title/action hierarchy, original-node containment and short-screen menu clearance. No native submission or account/iframe claim.",
           "reason": "User authorized B1 expansion trial and visible backing transmission; final reference fidelity remains unverified.",
           "contractTests": [
             "testbed/ui-b1-content-contract.mjs",
             "testbed/run-tests.mjs",
             "testbed/run-article-differential.mjs",
-            "testbed/run-comment-differential.mjs"
+            "testbed/run-comment-differential.mjs",
+            "testbed/ui-b1-article-actions-contract.mjs"
           ]
         },
         {
           "kind": "spacing",
           "surface": "article-recommendation",
-          "scope": "B1 article header, meta separator, quiet native action band/button treatment and recommendation paper/radii. Native body/media/actions remain intact.",
+          "scope": "B1 article header, meta separator, quiet native action band/button treatment and recommendation paper/radii. Native body/media/actions remain intact. Authorized article action slice: exact native share/real-best/report/guest-scrap/PUM roots, existing form/media and nested-guide/suggestion parts, B1 floating material/title/action hierarchy, original-node containment and short-screen menu clearance. No native submission or account/iframe claim.",
           "reason": "User authorized B1 expansion trial and visible backing transmission; final reference fidelity remains unverified.",
           "contractTests": [
             "testbed/ui-b1-content-contract.mjs",
             "testbed/run-tests.mjs",
             "testbed/run-article-differential.mjs",
-            "testbed/run-comment-differential.mjs"
+            "testbed/run-comment-differential.mjs",
+            "testbed/ui-b1-article-actions-contract.mjs"
           ]
         },
         {
           "kind": "radius",
           "surface": "article-recommendation",
-          "scope": "B1 article header, meta separator, quiet native action band/button treatment and recommendation paper/radii. Native body/media/actions remain intact.",
+          "scope": "B1 article header, meta separator, quiet native action band/button treatment and recommendation paper/radii. Native body/media/actions remain intact. Authorized article action slice: exact native share/real-best/report/guest-scrap/PUM roots, existing form/media and nested-guide/suggestion parts, B1 floating material/title/action hierarchy, original-node containment and short-screen menu clearance. No native submission or account/iframe claim.",
           "reason": "User authorized B1 expansion trial and visible backing transmission; final reference fidelity remains unverified.",
           "contractTests": [
             "testbed/ui-b1-content-contract.mjs",
             "testbed/run-tests.mjs",
             "testbed/run-article-differential.mjs",
-            "testbed/run-comment-differential.mjs"
+            "testbed/run-comment-differential.mjs",
+            "testbed/ui-b1-article-actions-contract.mjs"
           ]
         },
         {
           "kind": "geometry",
           "surface": "article-recommendation",
-          "scope": "B1 article header, meta separator, quiet native action band/button treatment and recommendation paper/radii. Native body/media/actions remain intact.",
+          "scope": "B1 article header, meta separator, quiet native action band/button treatment and recommendation paper/radii. Native body/media/actions remain intact. Authorized article action slice: exact native share/real-best/report/guest-scrap/PUM roots, existing form/media and nested-guide/suggestion parts, B1 floating material/title/action hierarchy, original-node containment and short-screen menu clearance. No native submission or account/iframe claim.",
           "reason": "User authorized B1 expansion trial and visible backing transmission; final reference fidelity remains unverified.",
           "contractTests": [
             "testbed/ui-b1-content-contract.mjs",
             "testbed/run-tests.mjs",
             "testbed/run-article-differential.mjs",
-            "testbed/run-comment-differential.mjs"
+            "testbed/run-comment-differential.mjs",
+            "testbed/ui-b1-article-actions-contract.mjs"
           ]
         },
         {
@@ -1202,13 +1206,14 @@
         {
           "kind": "typography",
           "surface": "article-recommendation",
-          "scope": "B1 article header, meta separator, quiet native action band/button treatment and recommendation paper/radii. Native body/media/actions remain intact.",
+          "scope": "B1 article header, meta separator, quiet native action band/button treatment and recommendation paper/radii. Native body/media/actions remain intact. Authorized article action slice: exact native share/real-best/report/guest-scrap/PUM roots, existing form/media and nested-guide/suggestion parts, B1 floating material/title/action hierarchy, original-node containment and short-screen menu clearance. No native submission or account/iframe claim.",
           "reason": "User authorized B1 expansion trial and visible backing transmission; final reference fidelity remains unverified.",
           "contractTests": [
             "testbed/ui-b1-content-contract.mjs",
             "testbed/run-tests.mjs",
             "testbed/run-article-differential.mjs",
-            "testbed/run-comment-differential.mjs"
+            "testbed/run-comment-differential.mjs",
+            "testbed/ui-b1-article-actions-contract.mjs"
           ]
         }
       ],
