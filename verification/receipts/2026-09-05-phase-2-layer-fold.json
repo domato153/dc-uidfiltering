@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "candidateId": "phase-2-layer-correction",
+  "candidateSha256": "ef2c185ed548b1db4832018620e07a3d985d87ebcae34890e0e2685d3ef70d49",
+  "beforeRegistrySha256": "e0381681ca24dc74aae1062ee99027b2a2d14bb1ba64d303d5630397c1578374",
+  "afterRegistrySha256": "b84d22af2a64adaff32403ef036170c0ca874140cac3a78eac0c06c7c97258c8",
+  "resultingRegistryVersion": 3,
+  "candidateRemoved": true,
+  "idempotencyReplayMatched": true,
+  "temporaryRefLeakDetected": false
+}

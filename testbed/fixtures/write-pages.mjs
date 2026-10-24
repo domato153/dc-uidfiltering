@@ -95,27 +95,32 @@ const controls = `<aside id="dcuf-testbed-controls" aria-label="글쓰기 testbe
     <button type="button" data-action="dark">야간모드</button>
 </aside>`;
 
-export function writePage({ variant = 'major', formMode = 'write', showGuide = false } = {}) {
+export function writePage({ variant = 'major', formMode = 'write', showGuide = false, authenticated = false } = {}) {
     const isMinor = variant === 'minor';
     const isModify = formMode === 'modify';
     const formAttributes = isModify
         ? 'name="modify" method="post" action="/board/forms/modify_submit" autocomplete="off"'
         : 'id="write" name="write" method="post" action="/__testbed/write-submit" autocomplete="off"';
-    const captcha = isMinor ? `<td class="fixture-captcha-cell"><div class="captcha"><label for="code">코드 입력</label><span class="fixture-captcha-image" aria-label="캡차 이미지">3D8WA-0</span><button type="button" class="fixture-captcha-refresh" aria-label="공식 캡차 새로고침">새로고침</button><input id="code" name="code" type="text" inputmode="text" autocomplete="off"></div></td>` : '';
+    const captcha = isMinor ? `<td class="fixture-captcha-cell"><div class="captcha"><label for="code">코드 입력</label><span class="fixture-captcha-image" aria-label="캡차 이미지">3D8WA-0</span><button type="button" class="fixture-captcha-refresh" aria-label="공식 캡차 새로고침">새로고침</button><div class="input_box"><input id="code" name="code" type="text" inputmode="text" autocomplete="off"></div></div></td>` : '';
+    const identityRow = authenticated
+        ? '<tr class="member_info_row"><th>작성자</th><td><span class="fixture-member-name">회원 작성자</span></td></tr>'
+        : `<tr class="guest_info_row"><th>작성자</th><td><div class="input_box"><input id="name" name="name" type="text" placeholder="닉네임" autocomplete="off"></div></td><td><div class="input_box"><input id="password" name="password" type="password" placeholder="비밀번호" autocomplete="new-password"></div></td>${captcha}</tr>`;
     return `${head(`DCUF ${variant} ${formMode} fixture`)}<body data-fixture-page="${isModify ? 'modify' : 'write'}" data-fixture-variant="${variant}">${controls}<div id="top" class="dcwrap width1160">
     <header class="fixture-gallery-header"><h1>${isMinor ? '마이너' : '메이저'} 갤러리</h1></header>
-    <main id="container" class="clear ${isMinor ? 'minor_write' : 'gallery_write'}"><section class="center_content gall_write"><article id="write_wrap" class="clear">
+    <main id="container" class="clear ${isMinor ? 'minor_write' : 'gallery_write'}"><section class="center_content gall_write"><article id="write_wrap" class="clear write_box">
         <form ${formAttributes}>
             ${hiddenContract(variant)}
             ${isModify ? '<input type="hidden" name="no" value="1001">' : ''}
             <input class="fixture-decoy-input" type="text" style="width:0;height:0;border:0" value="fixture-redacted">
             <input class="fixture-decoy-input" type="password" style="display:block;width:0;height:0;border:0" value="fixture-redacted">
             <input id="prompt_img_file" type="file" accept="image/*" hidden>
-            <table class="w_top"><tbody>
-                <tr class="write_subject_row"><th><label for="subject">제목</label></th><td><input id="subject" name="subject" type="text" maxlength="100" autocomplete="off"></td></tr>
-                <tr class="guest_info_row"><th>작성자</th><td><input id="name" name="name" type="text" placeholder="닉네임" autocomplete="off"></td><td><input id="password" name="password" type="password" placeholder="비밀번호" autocomplete="new-password"></td>${captcha}</tr>
-            </tbody></table>
-            ${isMinor ? categories : ''}
+            <fieldset><legend>글쓰기 입력</legend>
+                <table class="w_top"><tbody>
+                    <tr class="write_subject_row"><th><label for="subject">제목</label></th><td><div class="input_box"><input id="subject" name="subject" type="text" maxlength="100" autocomplete="off"></div></td></tr>
+                    ${identityRow}
+                </tbody></table>
+                ${isMinor ? categories : ''}
+            </fieldset>
             <section class="editor_wrap">${editor(showGuide)}</section>
             <section class="fixture-attachment-panel"><input id="fixture-file-input" type="file" name="files[]" accept="image/*" multiple><div class="fixture-attachment-list" aria-live="polite"></div></section>
             <section class="ai_easy_wrap fixture-live-ai-prompt"><div class="ai_easy_box">

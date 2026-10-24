@@ -3,10 +3,11 @@ import { spawnSync } from 'node:child_process';
 import { access, readdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { resolveCheckpointValidation } from './checkpoint-core.mjs';
 
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const requestedMode = process.argv[2] || 'all';
-const validModes = new Set(['guidance', 'release', 'all']);
+const validModes = new Set(['guidance', 'release', 'all', 'checkpoint']);
 const failures = [];
 const AGENTS_CHAR_LIMIT = 9000;
 const SKILLS_CHAR_LIMIT = 24000;
@@ -103,8 +104,10 @@ async function verifyGuidance() {
         'dcuf-release: references/manual-smoke.md is missing');
 
     const governanceInvariants = [
-        ['protected_development_branch', /codex\/mobile-development[\s\S]*protected accepted development branch/i],
-        ['fresh_remote_authority', /verify the origin URL and live `refs\/heads\/<branch>`/i],
+        ['fresh_local_authority', /Local tree\/history are authoritative/i],
+        ['authorized_checkpoint_boundary', /Standing instruction:[\s\S]*non-force push[\s\S]*origin\/codex\/ui-port-boundary/i],
+        ['official_branch_boundary', /do not switch branches, push `main`\/`Mobile`[\s\S]*without a separate request/i],
+        ['relative_tracked_paths', /Tracked instructions and continuity documents use repository-relative paths, never local absolute paths\/usernames/i],
         ['semantic_registry_authority', /architecture\/registry\.json[\s\S]*semantic\/layer authority/i],
         ['candidate_promotion', /candidate overlay[\s\S]*deterministic promotion/i],
         ['impact_graph', /merge-base paths[\s\S]*downstream registry relations/i],
@@ -118,11 +121,22 @@ async function verifyGuidance() {
 
     for (const [label, script] of [
         ['architecture', 'tools/architecture-registry.mjs'],
+        ['live architecture links', 'tools/inspect-live-architecture.mjs'],
+        ['live architecture negative controls', 'tools/test-live-architecture.mjs'],
+        ['modernization assurance', 'tools/verify-modernization-assurance.mjs'],
+        ['governance controls', 'tools/test-governance.mjs'],
+        ['verification efficiency controls', 'tools/test-verification-efficiency.mjs'],
+        ['mobile source-contract controls', 'tools/test-mobile-source-contracts.mjs'],
+        ['governance contract', 'tools/verify-governance.mjs'],
+        ['research selection', 'tools/verify-research-selection.mjs'],
         ['skills', 'tools/verify-skills.mjs'],
         ['UI boundaries', 'tools/verify-ui-boundaries.mjs'],
-        ['workflows', 'tools/verify-workflows.mjs']
+        ['workflows', 'tools/verify-workflows.mjs'],
+        ['live site contracts', 'tools/test-live-site-canary.mjs'],
+        ['header palette ownership', 'tools/test-header-palette-ownership.mjs'],
+        ['header stage admission', 'tools/test-header-stage-admission.mjs']
     ]) {
-        const result = spawnSync(process.execPath, [script, ...(label === 'architecture' ? ['validate'] : [])], {
+        const result = spawnSync(process.execPath, [script, ...(label === 'architecture' ? ['validate'] : label === 'live architecture links' ? ['--check'] : [])], {
             cwd: rootDir,
             encoding: 'utf8'
         });
@@ -164,11 +178,12 @@ async function readBuildTargets() {
 }
 
 async function verifyMobileSourceContracts() {
-    const [bootstrap, postMain, coordinator, theme, convenience, mobileHeader, pcHeader] = await Promise.all([
+    const [bootstrap, postMain, coordinator, themePresenter, themeHostStyle, convenience, mobileHeader, pcHeader] = await Promise.all([
         readFile(path.join(rootDir, 'src', 'runtime', 'bootstrap.js'), 'utf8'),
         readFile(path.join(rootDir, 'src', 'targets', 'mobile', 'post-main-fixes.js'), 'utf8'),
         readFile(path.join(rootDir, 'src', 'targets', 'mobile', 'runtime-coordinator.js'), 'utf8'),
-        readFile(path.join(rootDir, 'src', 'targets', 'mobile', 'theme-module.js'), 'utf8'),
+        readFile(path.join(rootDir, 'src', 'targets', 'shared', 'theme-presenter.js'), 'utf8'),
+        readFile(path.join(rootDir, 'src', 'targets', 'mobile', 'theme-host-style.js'), 'utf8'),
         readFile(path.join(rootDir, 'src', 'targets', 'mobile', 'convenience-module.js'), 'utf8'),
         readFile(path.join(rootDir, 'src', 'meta', 'userscript-header.txt'), 'utf8'),
         readFile(path.join(rootDir, 'src', 'meta', 'pc-filter-userscript-header.txt'), 'utf8')
@@ -199,7 +214,7 @@ async function verifyMobileSourceContracts() {
     check(!/\bmasterDisabled\b|_masterDisabledSnapshot/.test(convenience),
         'mobile source: convenience features must not reference the filter master-disabled state');
 
-    check(coordinator.includes('mutationNodeTouchesSurface(node)'),
+    check(/(?:^|\n)\s*mutationNodeTouchesSurface\s*\(\s*node(?:\s*,\s*options)?\s*\)\s*\{/.test(coordinator),
         'mobile source: child-list surface prefilter helper is missing');
     check(!coordinator.includes("if (record.type === 'childList') return !this.isScriptOwnedElement(record.target);"),
         'mobile source: broad child-list pass-through returned');
@@ -212,16 +227,16 @@ async function verifyMobileSourceContracts() {
         '--dcuf-theme-surface-raised',
         '--dcuf-theme-surface-muted'
     ]) {
-        check(theme.includes(token), `mobile source: palette token is missing: ${token}`);
+        check(themePresenter.includes(token), `mobile source: palette token is missing: ${token}`);
     }
     for (const selector of [
         '.list_array_option .btn_write',
         '.custom-bottom-controls .bottom_paging_box > em',
         '.custom-bottom-controls .dcuf-search-card form[name="frmSearch"] .bnt_search',
         '#container.gallery_view .view_bottom_btnbox .btn_blue',
-        'form.dcuf-write-form .btn_bottom_box .btn_blue'
+        '[data-dcuf-native-form-role="form"][data-dcuf-native-form-state="write-editor"] [data-dcuf-native-form-role="outer-action-primary"][data-dcuf-native-form-state="write-editor"]'
     ]) {
-        check(theme.includes(selector), `mobile source: palette selector is missing: ${selector}`);
+        check(themeHostStyle.includes(selector), `mobile source: palette selector is missing: ${selector}`);
     }
 
     console.log('Mobile source contracts');
@@ -294,15 +309,35 @@ async function verifyRelease() {
 }
 
 async function main() {
-    if (!validModes.has(requestedMode)) {
-        console.error('Usage: node tools/verify-repo.mjs [guidance|release|all]');
+    const options = process.argv.slice(3);
+    if (!validModes.has(requestedMode) || (options.length && (requestedMode !== 'checkpoint' || options.length !== 2 || options[0] !== '--base'))) {
+        console.error('Usage: node tools/verify-repo.mjs [guidance|release|all|checkpoint [--base SHA]]');
         process.exitCode = 2;
         return;
     }
 
     try {
-        if (requestedMode === 'guidance' || requestedMode === 'all') await verifyGuidance();
-        if (requestedMode === 'release' || requestedMode === 'all') await verifyRelease();
+        let mode = requestedMode;
+        if (mode === 'checkpoint') {
+            const git = args => {
+                const result = spawnSync('git', args, {cwd: rootDir, encoding: 'utf8', shell: false});
+                if (result.status !== 0) throw new Error(result.stderr || 'Git diff unavailable');
+                return result.stdout;
+            };
+            const plan = resolveCheckpointValidation(git, options[1] || git(['rev-parse', 'HEAD']).trim());
+            mode = plan.mode;
+            console.log(`Checkpoint validation: ${mode}; ${plan.changedPaths?.length ?? 'unknown'} changed paths; base ${plan.base || 'unavailable'}.`);
+        }
+        if (mode === 'continuity') {
+            for (const script of ['tools/verify-governance.mjs', 'tools/verify-modernization-assurance.mjs', 'tools/verify-research-selection.mjs', 'tools/verify-skills.mjs']) {
+                const result = spawnSync(process.execPath, [script, ...(script === 'tools/verify-modernization-assurance.mjs' ? ['--continuity-docs'] : [])], {cwd: rootDir, encoding: 'utf8', shell: false});
+                if (result.stdout) process.stdout.write(result.stdout);
+                if (result.stderr) process.stderr.write(result.stderr);
+                check(result.status === 0, `${script} verification failed`);
+            }
+        }
+        if (mode === 'guidance' || mode === 'all') await verifyGuidance();
+        if (mode === 'release' || mode === 'all') await verifyRelease();
     } catch (error) {
         failures.push(error instanceof Error ? error.message : String(error));
     }

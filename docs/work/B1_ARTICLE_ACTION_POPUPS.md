@@ -1,0 +1,33 @@
+# B1 article action popup slice
+
+Approved P1 continuation from B1_UI_EXPANSION_PREFLIGHT.md / B1_POPUP_POLISH.md. Base dd79dca; immediate Mobile control84AE8033. Preserve one existing article presenter/adapter, native nodes/forms/events/display, settings and PC bytes. No submission, voting, reporting, authentication, release or accepted-registry promotion.
+
+## Native inventory and rulings
+
+- Fresh isolated public6778319 originals: `sns_share_lyr`, `user_dcbest_lyr`, `singo_lyr`, `scrapdone_non_recom`. Share retains three original social options/readonly URL and copy label. Real-best retains native confirmation/result text, link, cancel/OK/close. Report retains actual two/three-option branches and browser-native confirmations. Guest scrap immediately saves in browser storage; inspect only the disposable isolated context, never the user's profile.
+- PUM `write_pum_layer` is already open in the native browser: original header/history, gallery search/suggestions/headtext, guest nickname/password, original title, copyright/post-guide children, article/media preview, comment and footer. Inspect that existing DOM without further endpoint replay. A fresh POST form replay was rejected by automatic approval review; no bypass or permission expansion. Search/history/account-specific content remains synthetic or unobserved. Account scrap iframe `my_scrap_pop` and browser-native dialogs are separate entries, not styled as same-document panels.
+- Reuse the authorized B1 board for equivalent menus/confirmations. Create a separate native-inventory PUM composition proposal before production CSS; original/proposal/current stay distinct. No invented fields, X, page scrim or functional states.
+- Project popup kind/parts in the existing reversible article transaction; reuse its mutation subscriber. Keep existing PUM viewport geometry owner, supplying only the same bounded center/clearance variables. Avoid marking the PUM preview as the main article; nested guide roots own their own parts. No portal, new observer, handlers, storage or network in presentation.
+
+## Bounded steps / evidence ledger
+
+1. Model observed DOM and competing CSS, record original captures. Define visible title/close, child containment, grouped actions, retained original inputs/selection/hidden fields and short-screen reachability; watch control fail.
+2. Render a separate B1 native-inventory proposal and inspect it. Implement in existing owners, then refine whole/details in a batch. Guide disclosures remain inline within the parent scroll area; suggestions preserve native anchored positioning and hidden state.
+3. Run guarded affected contexts (light/dark980, phone980×2306,390/short stress), original callback/node/form/rollback checks and scoped original/candidate semantics. Inspect decoded media and backing transmission at readable scale. Run required final coverage once on settled runtime; retain any failure/recheck separately.
+4. Deliver comparisons and precise native/fixture/auth limitations, update current/next and checkpoint exact files on the authorized branch.
+
+## Recorded result
+
+Mobile3.5.5 77AD4210 is rebuilt; PC1.9.9 61C53976 is unchanged. Final guarded Mobile suite: 145 passed/1 failed (split coverage) in Chrome155.0.8059.85. The affected B1 contract passes20 kind/viewport/theme contexts; article semantics match22 observations against immediate84AE control with all candidate invariants true and persistent resources equal. Public source-injected light share/realbest/report/guest-scrap checks pass4/4; this is not actual Tampermonkey qualification.
+
+Ten independent proposal/current light/dark pairs are image-bound REVIEWED, retaining native social/report graphics, native scrap-view control and original footer links. Four actual public source-injected popups are visually inspected separately. A colored synthetic backing confirms visible hue transmission in light/dark while inputs and article preview remain paper. The backing is test instrumentation, not product decoration. Viewer: artifacts/b1-detail-2026-10-23/article-actions/index.html. Appearance preference/all-family approval remain pending.
+
+Root causes fixed in the same existing owner: original blue title band, history/close overlap, absolute URL-copy overlap, nested share label color and copy-face cascade, default suggestion bullets/blue links, and native type2/type3 outer borders. Preserve native nodes/parents/forms/handlers and hidden states, including CAPTCHA. New kind/part attributes use the existing reversible transaction; no observer, storage, network, handler or portal was added. Two exact priorities reset observed inline bottom/negative margin; no color priority was added.
+
+Ruling: The old differential trackedElements<40 bound rejected40 tracked elements after four legitimate popup-part-only nodes were projected. Retain the old non-part bound, subtract only live marker-only nodes and record that count in raw evidence. All listener/observer/timer/frame/settled invariants remain unchanged. Old false-bound observations are retained locally; do not call them a product leak or delete the oracle failure.
+
+Final independent source review on43BB found no actionable defects; the subsequent same-owner color/suggestion/rim corrections received explicit RED→GREEN contracts and author rendered rechecks, with no second reviewer. Impeccable JS detector is informational and regex-only; no parsed contrast/tiny-text certification. Two broad runs were interrupted when visual findings changed their source and are stale partial evidence, never final passes.
+
+Limitations: PUM is modeled from the already-open original DOM. Its fresh form POST was rejected by automatic approval review, so no replay or bypass occurred. PUM history/headtext/search-result content beyond modeled suggestions, actual registration/result paths, authenticated scrap iframe, browser-native dialogs, device/extension use and other unopened picker children remain unqualified. These are separate checklist entries, not a global test-capability blocker. P1 checkbox remains open for the named remaining children; the next bounded family is P2 gallery/search native layers.
+
+Full-run contrary evidence: the comment add/edit/delete test recorded4 comment sync passes against a <=3 bound; hidden-frame behavior and zero full refilter assertions had passed. Identical isolated control and final candidate each pass1/0. The full failure is retained, its cause remains unproven, and this is not a clean146-pass claim. No threshold or production behavior was changed for that result. Viewer validation decodes36/36 images with no broken files and no horizontal overflow.

@@ -1,0 +1,1240 @@
+{
+  "schemaVersion": 1,
+  "allowedVisualKinds": [
+    "color-role",
+    "spacing",
+    "radius",
+    "typography",
+    "geometry",
+    "motion"
+  ],
+  "invariantKinds": [
+    "filter-result",
+    "storage-trace",
+    "network-trace",
+    "host-node-identity",
+    "host-node-order",
+    "native-handler",
+    "native-form-fields",
+    "native-submit-trace",
+    "focus",
+    "lifecycle-resources",
+    "pc-result",
+    "accessibility",
+    "geometry-containment"
+  ],
+  "contracts": [
+    {
+      "id": "foundation-zero-visual",
+      "status": "accepted",
+      "surfaces": [
+        "tokens-settings-palette",
+        "list-search-paging",
+        "article-recommendation",
+        "comments-replies",
+        "write-edit-delete-popup",
+        "header-navigation"
+      ],
+      "allowed": [],
+      "invariants": [
+        "filter-result",
+        "storage-trace",
+        "network-trace",
+        "host-node-identity",
+        "host-node-order",
+        "native-handler",
+        "native-form-fields",
+        "native-submit-trace",
+        "focus",
+        "lifecycle-resources",
+        "pc-result",
+        "accessibility",
+        "geometry-containment"
+      ],
+      "normalizer": "semantic-observation-v1",
+      "unknownDifferencePolicy": "fail",
+      "missingApplicabilityPolicy": "fail"
+    },
+    {
+      "id": "header-hit-reachability-v1",
+      "status": "retired",
+      "surfaces": [
+        "header-navigation"
+      ],
+      "allowed": [
+        {
+          "kind": "geometry",
+          "surface": "header-navigation",
+          "scope": "List-only DCUF gallery drawer toggle/viewport placement, the original relation popup's own stacking, and viewport containment of the original rank popup at widths below 998px",
+          "reason": "Repair measured pointer interception and off-viewport native actions while preserving original host popup descendants, handler identity, portal rollback, and unaffected wide layout.",
+          "contractTests": [
+            "header hit audit pointer/keyboard/open-close-reopen",
+            "header drawer reversible host context",
+            "gallery door original popup layout"
+          ]
+        }
+      ],
+      "invariants": [
+        "filter-result",
+        "storage-trace",
+        "network-trace",
+        "host-node-identity",
+        "host-node-order",
+        "native-handler",
+        "native-form-fields",
+        "native-submit-trace",
+        "focus",
+        "lifecycle-resources",
+        "pc-result",
+        "accessibility",
+        "geometry-containment"
+      ],
+      "normalizer": "semantic-observation-v1",
+      "unknownDifferencePolicy": "fail",
+      "missingApplicabilityPolicy": "fail"
+    },
+    {
+      "id": "header-native-door-v1",
+      "status": "active",
+      "surfaces": [
+        "header-navigation"
+      ],
+      "allowed": [
+        {
+          "kind": "geometry",
+          "surface": "header-navigation",
+          "scope": "Only four normal declarations on the original owned list/view header: GNB nav/list height:auto, page-head root height:auto and its right action group flex-wrap:wrap. Keep980/wide GNB item positions exact; allow heading growth for native actions and extra wrapped-menu height at separately labeled390 stress width.",
+          "reason": "Measured980 fixed50px heading cannot contain44px actions plus20px padding; native44px nav/list also fail to contain two rows at390 stress. Repair current presenter flow without a new selector, priority, node, handler, observer or resource owner.",
+          "contractTests": [
+            "header-composition six control RED/candidate PASS pairs",
+            "header-exit-inputs eight980 native search/menu/recent pairs",
+            "header-final-boundary exact historical CSS after four declared restorations"
+          ]
+        },
+        {
+          "kind": "geometry",
+          "surface": "header-navigation",
+          "scope": "List-only projected original shell `.area_links` changes display:block to flex; native UL contents may wrap while its original darkmodebox remains adjacent above the native search input. Every other shell declaration, full selector, original node/form/event and resource owner remains unchanged.",
+          "reason": "At390px native floated link groups put the original darkonoff center under preSWord. Correct the same final owner's group flow rather than raising or replacing native controls.",
+          "contractTests": [
+            "header-dark-toggle-contract trusted pointer/default Enter/search/form/restoration and old-layout negative",
+            "header-final-boundary frozen CSS except one links display",
+            "actual installed-Chrome Tampermonkey native header matrix"
+          ]
+        },
+        {
+          "kind": "geometry",
+          "surface": "header-navigation",
+          "scope": "List-only original issue and top-recommendation host roots appear as viewport-bound native-control cards while the DCUF toggle is open; the original rank/tip popup alone remains visible after the toggle closes; the tip is inset on narrow or short viewports",
+          "reason": "The former cloned controls and rank body portal left the original tip unreachable and could not preserve direct handlers on the recommendation carousel. The original nodes, handlers, parents, sibling order, popup descendants, and closed-state hiding stay intact.",
+          "contractTests": [
+            "gallery native door and popup-only pointer/keyboard/replacement coverage",
+            "major original recommendation carousel coverage",
+            "header public isolated-browser canary",
+            "header hit audit"
+          ]
+        },
+        {
+          "kind": "geometry",
+          "surface": "header-navigation",
+          "scope": "Only the original list-route `.issue_wrap > #relation_popup`: `position:static→relative` and `z-index:auto→3` on the popup itself, with unchanged box/parent/descendants/handlers and positive open-state hit reachability.",
+          "reason": "The retained narrow relation-popup hit repair raises only the original popup above the list page-size control; its former standalone contract is retired, so this exact behavior needs active ownership without permitting unrelated header restyling.",
+          "contractTests": [
+            "gallery page-head published-stable visual-delta classifier",
+            "header hit audit relation popup multi-point reachability",
+            "header action inventory native relation handler"
+          ]
+        }
+      ],
+      "invariants": [
+        "filter-result",
+        "storage-trace",
+        "network-trace",
+        "host-node-identity",
+        "host-node-order",
+        "native-handler",
+        "native-form-fields",
+        "native-submit-trace",
+        "focus",
+        "lifecycle-resources",
+        "pc-result",
+        "accessibility",
+        "geometry-containment"
+      ],
+      "normalizer": "semantic-observation-v1",
+      "unknownDifferencePolicy": "fail",
+      "missingApplicabilityPolicy": "fail"
+    },
+    {
+      "id": "modern-settings-fluid-tactile-v1",
+      "status": "active",
+      "surfaces": [
+        "tokens-settings-palette"
+      ],
+      "allowed": [
+        {
+          "kind": "color-role",
+          "surface": "tokens-settings-palette",
+          "scope": "DCUF-owned settings, management, backup, convenience, and palette controls only",
+          "reason": "Replace legacy literal colors with the selected palette's semantic surface, accent, text, border, and status roles.",
+          "contractTests": [
+            "settings semantic material roles",
+            "light-dark-light storage round trip"
+          ]
+        },
+        {
+          "kind": "spacing",
+          "surface": "tokens-settings-palette",
+          "scope": "DCUF-owned panel headers, sections, fields, option grids, and action rows",
+          "reason": "Introduce an 8px-derived compact rhythm without reducing touch targets or list density outside this surface.",
+          "contractTests": [
+            "settings panel viewport containment",
+            "settings minimum touch targets"
+          ]
+        },
+        {
+          "kind": "radius",
+          "surface": "tokens-settings-palette",
+          "scope": "DCUF-owned panels, section groups, controls, chips, and buttons",
+          "reason": "Use nested tactile radii that distinguish panel, group, control, and selected-state hierarchy.",
+          "contractTests": [
+            "settings semantic material roles"
+          ]
+        },
+        {
+          "kind": "typography",
+          "surface": "tokens-settings-palette",
+          "scope": "DCUF-owned headings, labels, helper copy, counters, and action text",
+          "reason": "Use a compact system-font hierarchy with stable Korean wrapping and readable helper text.",
+          "contractTests": [
+            "settings typography and overflow"
+          ]
+        },
+        {
+          "kind": "geometry",
+          "surface": "tokens-settings-palette",
+          "scope": "Panel inline/block size, responsive option columns, sticky action region, and adapter-owned drag/pinch bounds",
+          "reason": "Keep every settings surface fully usable in a 390x844 viewport while allowing deliberate panel re-composition.",
+          "contractTests": [
+            "settings panel viewport containment",
+            "palette pinch geometry",
+            "settings focus reachability"
+          ]
+        },
+        {
+          "kind": "motion",
+          "surface": "tokens-settings-palette",
+          "scope": "DCUF-owned buttons, selection state, and panel enter/leave transitions",
+          "reason": "Use 100ms tactile press, 160ms state feedback, and 210ms panel motion; remove nonessential motion under prefers-reduced-motion.",
+          "contractTests": [
+            "settings motion token contract",
+            "settings reduced-motion contract",
+            "settled lifecycle resources"
+          ]
+        }
+      ],
+      "invariants": [
+        "filter-result",
+        "storage-trace",
+        "network-trace",
+        "host-node-identity",
+        "host-node-order",
+        "native-handler",
+        "native-form-fields",
+        "native-submit-trace",
+        "focus",
+        "lifecycle-resources",
+        "pc-result",
+        "accessibility",
+        "geometry-containment"
+      ],
+      "normalizer": "semantic-observation-v1",
+      "unknownDifferencePolicy": "fail",
+      "missingApplicabilityPolicy": "fail"
+    },
+    {
+      "id": "modern-list-fluid-tactile-v1",
+      "status": "active",
+      "surfaces": [
+        "list-search-paging"
+      ],
+      "allowed": [
+        {
+          "kind": "color-role",
+          "surface": "list-search-paging",
+          "scope": "DCUF-owned list projection plus adapter-marked native toolbar, paging, and search controls",
+          "reason": "Use the active palette's canvas, row, muted, accent, border, selected, and focus roles without styling unrelated host surfaces.",
+          "contractTests": [
+            "list semantic material roles",
+            "list light-dark-light round trip"
+          ]
+        },
+        {
+          "kind": "spacing",
+          "surface": "list-search-paging",
+          "scope": "List rows, title/meta lines, toolbar groups, paging targets, and search fields",
+          "reason": "Apply a compact rhythm while preserving information density; ordinary rows remain one continuous list and are not converted into individual cards.",
+          "contractTests": [
+            "list density budget",
+            "list touch target contract"
+          ]
+        },
+        {
+          "kind": "radius",
+          "surface": "list-search-paging",
+          "scope": "Toolbar groups, selected chips, paging controls, and search controls only",
+          "reason": "Use tactile control radii while keeping ordinary list rows flat with separators rather than per-row card shells.",
+          "contractTests": [
+            "list rows remain continuous",
+            "list control hierarchy"
+          ]
+        },
+        {
+          "kind": "typography",
+          "surface": "list-search-paging",
+          "scope": "Post title, subject, author, statistics, toolbar, paging, and search labels",
+          "reason": "Improve Korean title scanning and metadata hierarchy without truncating host state or changing link meaning.",
+          "contractTests": [
+            "list title overflow",
+            "list metadata preservation"
+          ]
+        },
+        {
+          "kind": "geometry",
+          "surface": "list-search-paging",
+          "scope": "Responsive title/meta columns, toolbar wrapping, horizontally scrollable paging, search layout, and drawer containment",
+          "reason": "Keep native navigation and search controls reachable from narrow mobile through wide layouts without moving their host nodes.",
+          "contractTests": [
+            "list viewport containment",
+            "native controls retain parent and order",
+            "search drawer containment"
+          ]
+        },
+        {
+          "kind": "geometry",
+          "surface": "list-search-paging",
+          "scope": "Only the native list toolbar `.list_array_option::after` pseudo-element on list routes: `display,width,minWidth,height,minHeight,content,clear` transition from the retired clearfix to no generated content; no heading or interactive host node.",
+          "reason": "The modern toolbar owns its wrapping and no longer needs the legacy clearfix pseudo-element; the heading and native controls retain their own geometry and positive hit contracts.",
+          "contractTests": [
+            "gallery page-head published-stable visual-delta classifier",
+            "list toolbar and heading-search positive hit and rollback"
+          ]
+        },
+        {
+          "kind": "color-role",
+          "surface": "list-search-paging",
+          "scope": "Only the non-rendered `.list_array_option::after` pseudo-element's computed `color,borderColor` after its `content:none` transition, in light and dark list states.",
+          "reason": "These inherited computed colors change with the approved list palette, but the retired pseudo-element generates no visible content or interactive target.",
+          "contractTests": [
+            "gallery page-head published-stable visual-delta classifier",
+            "list light-dark semantic material roles"
+          ]
+        },
+        {
+          "kind": "motion",
+          "surface": "list-search-paging",
+          "scope": "Control press/state transitions and a single first-mount reveal for at most the first eight visible rows",
+          "reason": "Use the approved 100ms press and 160ms state feedback without scroll hijacking or repeated rerender animation; remove nonessential motion under reduced-motion.",
+          "contractTests": [
+            "list reveal bounded to eight",
+            "list rerender has no replay",
+            "list reduced-motion contract",
+            "settled lifecycle resources"
+          ]
+        }
+      ],
+      "invariants": [
+        "filter-result",
+        "storage-trace",
+        "network-trace",
+        "host-node-identity",
+        "host-node-order",
+        "native-handler",
+        "native-form-fields",
+        "native-submit-trace",
+        "focus",
+        "lifecycle-resources",
+        "pc-result",
+        "accessibility",
+        "geometry-containment"
+      ],
+      "normalizer": "semantic-observation-v1",
+      "unknownDifferencePolicy": "fail",
+      "missingApplicabilityPolicy": "fail"
+    },
+    {
+      "id": "modern-article-fluid-tactile-v1",
+      "status": "active",
+      "surfaces": [
+        "article-recommendation"
+      ],
+      "allowed": [
+        {
+          "kind": "color-role",
+          "surface": "article-recommendation",
+          "scope": "Adapter-marked recommendation, vote, CAPTCHA, and native article-action roles",
+          "reason": "Map the existing native article controls to the selected palette's surface, accent, muted, border, and focus roles without changing their native meaning.",
+          "contractTests": [
+            "article recommendation semantic material roles",
+            "article palette visual contract"
+          ]
+        },
+        {
+          "kind": "spacing",
+          "surface": "article-recommendation",
+          "scope": "Recommendation groups, score, CAPTCHA, and native article-action control spacing",
+          "reason": "Introduce a compact tactile rhythm while preserving control order, host parentage, and narrow-viewport reachability.",
+          "contractTests": [
+            "article viewport containment",
+            "recommendation host topology"
+          ]
+        },
+        {
+          "kind": "radius",
+          "surface": "article-recommendation",
+          "scope": "Recommendation card, vote controls, CAPTCHA field, and native action controls",
+          "reason": "Use nested radii to distinguish the article action region and interactive controls without adding wrappers or replacing host nodes.",
+          "contractTests": [
+            "article recommendation semantic material roles"
+          ]
+        },
+        {
+          "kind": "typography",
+          "surface": "article-recommendation",
+          "scope": "Recommendation count, labels, CAPTCHA, and native action labels",
+          "reason": "Clarify count and action hierarchy while retaining host text, accessible names, and native button semantics.",
+          "contractTests": [
+            "article native action semantics",
+            "recommendation accessible names"
+          ]
+        },
+        {
+          "kind": "geometry",
+          "surface": "article-recommendation",
+          "scope": "Recommendation grouping, native action layout, focus ring, and adapter-owned native popup viewport containment",
+          "reason": "Keep controls and host popups reachable across narrow, wide, and short viewports without moving, wrapping, cloning, or portaling host nodes.",
+          "contractTests": [
+            "article viewport containment",
+            "native popup open close reopen",
+            "cross-surface overlay hit test"
+          ]
+        },
+        {
+          "kind": "motion",
+          "surface": "article-recommendation",
+          "scope": "Recommendation and native action press and state feedback only",
+          "reason": "Use a 110ms transform/opacity tactile response and remove nonessential transitions under reduced motion without scheduling presenter timers or frames.",
+          "contractTests": [
+            "article reduced-motion contract",
+            "article settled adapter resources"
+          ]
+        }
+      ],
+      "invariants": [
+        "filter-result",
+        "storage-trace",
+        "network-trace",
+        "host-node-identity",
+        "host-node-order",
+        "native-handler",
+        "native-form-fields",
+        "native-submit-trace",
+        "focus",
+        "lifecycle-resources",
+        "pc-result",
+        "accessibility",
+        "geometry-containment"
+      ],
+      "normalizer": "semantic-observation-v1",
+      "unknownDifferencePolicy": "fail",
+      "missingApplicabilityPolicy": "fail"
+    },
+    {
+      "id": "modern-comments-fluid-tactile-v1",
+      "status": "active",
+      "surfaces": [
+        "comments-replies"
+      ],
+      "allowed": [
+        {
+          "kind": "color-role",
+          "surface": "comments-replies",
+          "scope": "Adapter-marked normal, focus, image, reply, composer, and native comment-control roles",
+          "reason": "Map comments and native controls to the selected palette's surface, reply, accent, text, border, and focus roles without changing filter or event meaning.",
+          "contractTests": [
+            "comment semantic material roles",
+            "comment palette visual contract"
+          ]
+        },
+        {
+          "kind": "spacing",
+          "surface": "comments-replies",
+          "scope": "Comment rows, reply continuations, metadata, composers, and native comment actions",
+          "reason": "Apply a compact readable rhythm while retaining comment order, identity, and native field reachability.",
+          "contractTests": [
+            "comment density budget",
+            "comment touch target contract"
+          ]
+        },
+        {
+          "kind": "radius",
+          "surface": "comments-replies",
+          "scope": "Comment groups, reply continuation, composers, fields, and native controls",
+          "reason": "Use nested tactile radii to distinguish parent, reply, and input hierarchy without wrapping, replacing, or moving host nodes.",
+          "contractTests": [
+            "comment semantic material roles"
+          ]
+        },
+        {
+          "kind": "typography",
+          "surface": "comments-replies",
+          "scope": "Author, metadata, comment text, reply text, composer fields, and action labels",
+          "reason": "Improve Korean comment scanning and preserve existing responsive text scaling, content, and accessible names.",
+          "contractTests": [
+            "comment text hierarchy",
+            "comment native action semantics"
+          ]
+        },
+        {
+          "kind": "geometry",
+          "surface": "comments-replies",
+          "scope": "Parent/reply grouping, detached reply continuation, composer layout, focus ring, and native popup containment",
+          "reason": "Keep comments, fields, and host popups reachable across route and viewport states while preserving original node parentage and sibling order.",
+          "contractTests": [
+            "comment viewport containment",
+            "comment topology preservation",
+            "comment popup hit test"
+          ]
+        },
+        {
+          "kind": "motion",
+          "surface": "comments-replies",
+          "scope": "Native comment action press and state feedback only",
+          "reason": "Use a 110ms transform/opacity tactile response and remove nonessential transitions under reduced motion without presenter timers or frames.",
+          "contractTests": [
+            "comment reduced-motion contract",
+            "comment settled adapter resources"
+          ]
+        }
+      ],
+      "invariants": [
+        "filter-result",
+        "storage-trace",
+        "network-trace",
+        "host-node-identity",
+        "host-node-order",
+        "native-handler",
+        "native-form-fields",
+        "native-submit-trace",
+        "focus",
+        "lifecycle-resources",
+        "pc-result",
+        "accessibility",
+        "geometry-containment"
+      ],
+      "normalizer": "semantic-observation-v1",
+      "unknownDifferencePolicy": "fail",
+      "missingApplicabilityPolicy": "fail"
+    },
+    {
+      "id": "concept01-visual-trial-v1",
+      "status": "active",
+      "surfaces": [
+        "tokens-settings-palette",
+        "list-search-paging",
+        "article-recommendation",
+        "comments-replies",
+        "write-edit-delete-popup",
+        "header-navigation"
+      ],
+      "allowed": [
+        {
+          "kind": "color-role",
+          "surface": "tokens-settings-palette",
+          "scope": "Existing presentation owner only; Concept01 neutral light/charcoal dark, restrained accent, modest corners and spacing. Palette identities and saved choices unchanged.",
+          "reason": "User-approved integrated visual trial; concrete source fragments and prerequisites are recorded in docs/work/CONCEPT01_TRIAL.md",
+          "contractTests": [
+            "mobile/PC final runtime contracts",
+            "Concept01 visual receipt"
+          ]
+        },
+        {
+          "kind": "spacing",
+          "surface": "tokens-settings-palette",
+          "scope": "Existing presentation owner only; Concept01 neutral light/charcoal dark, restrained accent, modest corners and spacing. Palette identities and saved choices unchanged.",
+          "reason": "User-approved integrated visual trial; concrete source fragments and prerequisites are recorded in docs/work/CONCEPT01_TRIAL.md",
+          "contractTests": [
+            "mobile/PC final runtime contracts",
+            "Concept01 visual receipt"
+          ]
+        },
+        {
+          "kind": "radius",
+          "surface": "tokens-settings-palette",
+          "scope": "Existing presentation owner only; Concept01 neutral light/charcoal dark, restrained accent, modest corners and spacing. Palette identities and saved choices unchanged.",
+          "reason": "User-approved integrated visual trial; concrete source fragments and prerequisites are recorded in docs/work/CONCEPT01_TRIAL.md",
+          "contractTests": [
+            "mobile/PC final runtime contracts",
+            "Concept01 visual receipt"
+          ]
+        },
+        {
+          "kind": "typography",
+          "surface": "tokens-settings-palette",
+          "scope": "Existing presentation owner only; Concept01 neutral light/charcoal dark, restrained accent, modest corners and spacing. Palette identities and saved choices unchanged.",
+          "reason": "User-approved integrated visual trial; concrete source fragments and prerequisites are recorded in docs/work/CONCEPT01_TRIAL.md",
+          "contractTests": [
+            "mobile/PC final runtime contracts",
+            "Concept01 visual receipt"
+          ]
+        },
+        {
+          "kind": "color-role",
+          "surface": "list-search-paging",
+          "scope": "Existing presentation owner only; Concept01 neutral light/charcoal dark, restrained accent, modest corners and spacing. Palette identities and saved choices unchanged.",
+          "reason": "User-approved integrated visual trial; concrete source fragments and prerequisites are recorded in docs/work/CONCEPT01_TRIAL.md",
+          "contractTests": [
+            "mobile/PC final runtime contracts",
+            "Concept01 visual receipt"
+          ]
+        },
+        {
+          "kind": "spacing",
+          "surface": "list-search-paging",
+          "scope": "Existing presentation owner only; Concept01 neutral light/charcoal dark, restrained accent, modest corners and spacing. Palette identities and saved choices unchanged.",
+          "reason": "User-approved integrated visual trial; concrete source fragments and prerequisites are recorded in docs/work/CONCEPT01_TRIAL.md",
+          "contractTests": [
+            "mobile/PC final runtime contracts",
+            "Concept01 visual receipt"
+          ]
+        },
+        {
+          "kind": "radius",
+          "surface": "list-search-paging",
+          "scope": "Existing presentation owner only; Concept01 neutral light/charcoal dark, restrained accent, modest corners and spacing. Palette identities and saved choices unchanged.",
+          "reason": "User-approved integrated visual trial; concrete source fragments and prerequisites are recorded in docs/work/CONCEPT01_TRIAL.md",
+          "contractTests": [
+            "mobile/PC final runtime contracts",
+            "Concept01 visual receipt"
+          ]
+        },
+        {
+          "kind": "typography",
+          "surface": "list-search-paging",
+          "scope": "Existing presentation owner only; Concept01 neutral light/charcoal dark, restrained accent, modest corners and spacing. Palette identities and saved choices unchanged.",
+          "reason": "User-approved integrated visual trial; concrete source fragments and prerequisites are recorded in docs/work/CONCEPT01_TRIAL.md",
+          "contractTests": [
+            "mobile/PC final runtime contracts",
+            "Concept01 visual receipt"
+          ]
+        },
+        {
+          "kind": "color-role",
+          "surface": "article-recommendation",
+          "scope": "Existing presentation owner only; Concept01 neutral light/charcoal dark, restrained accent, modest corners and spacing. Palette identities and saved choices unchanged.",
+          "reason": "User-approved integrated visual trial; concrete source fragments and prerequisites are recorded in docs/work/CONCEPT01_TRIAL.md",
+          "contractTests": [
+            "mobile/PC final runtime contracts",
+            "Concept01 visual receipt"
+          ]
+        },
+        {
+          "kind": "spacing",
+          "surface": "article-recommendation",
+          "scope": "Existing presentation owner only; Concept01 neutral light/charcoal dark, restrained accent, modest corners and spacing. Palette identities and saved choices unchanged.",
+          "reason": "User-approved integrated visual trial; concrete source fragments and prerequisites are recorded in docs/work/CONCEPT01_TRIAL.md",
+          "contractTests": [
+            "mobile/PC final runtime contracts",
+            "Concept01 visual receipt"
+          ]
+        },
+        {
+          "kind": "radius",
+          "surface": "article-recommendation",
+          "scope": "Existing presentation owner only; Concept01 neutral light/charcoal dark, restrained accent, modest corners and spacing. Palette identities and saved choices unchanged.",
+          "reason": "User-approved integrated visual trial; concrete source fragments and prerequisites are recorded in docs/work/CONCEPT01_TRIAL.md",
+          "contractTests": [
+            "mobile/PC final runtime contracts",
+            "Concept01 visual receipt"
+          ]
+        },
+        {
+          "kind": "typography",
+          "surface": "article-recommendation",
+          "scope": "Existing presentation owner only; Concept01 neutral light/charcoal dark, restrained accent, modest corners and spacing. Palette identities and saved choices unchanged.",
+          "reason": "User-approved integrated visual trial; concrete source fragments and prerequisites are recorded in docs/work/CONCEPT01_TRIAL.md",
+          "contractTests": [
+            "mobile/PC final runtime contracts",
+            "Concept01 visual receipt"
+          ]
+        },
+        {
+          "kind": "color-role",
+          "surface": "comments-replies",
+          "scope": "Existing presentation owner only; Concept01 neutral light/charcoal dark, restrained accent, modest corners and spacing. Palette identities and saved choices unchanged.",
+          "reason": "User-approved integrated visual trial; concrete source fragments and prerequisites are recorded in docs/work/CONCEPT01_TRIAL.md",
+          "contractTests": [
+            "mobile/PC final runtime contracts",
+            "Concept01 visual receipt"
+          ]
+        },
+        {
+          "kind": "spacing",
+          "surface": "comments-replies",
+          "scope": "Existing presentation owner only; Concept01 neutral light/charcoal dark, restrained accent, modest corners and spacing. Palette identities and saved choices unchanged.",
+          "reason": "User-approved integrated visual trial; concrete source fragments and prerequisites are recorded in docs/work/CONCEPT01_TRIAL.md",
+          "contractTests": [
+            "mobile/PC final runtime contracts",
+            "Concept01 visual receipt"
+          ]
+        },
+        {
+          "kind": "radius",
+          "surface": "comments-replies",
+          "scope": "Existing presentation owner only; Concept01 neutral light/charcoal dark, restrained accent, modest corners and spacing. Palette identities and saved choices unchanged.",
+          "reason": "User-approved integrated visual trial; concrete source fragments and prerequisites are recorded in docs/work/CONCEPT01_TRIAL.md",
+          "contractTests": [
+            "mobile/PC final runtime contracts",
+            "Concept01 visual receipt"
+          ]
+        },
+        {
+          "kind": "typography",
+          "surface": "comments-replies",
+          "scope": "Existing presentation owner only; Concept01 neutral light/charcoal dark, restrained accent, modest corners and spacing. Palette identities and saved choices unchanged.",
+          "reason": "User-approved integrated visual trial; concrete source fragments and prerequisites are recorded in docs/work/CONCEPT01_TRIAL.md",
+          "contractTests": [
+            "mobile/PC final runtime contracts",
+            "Concept01 visual receipt"
+          ]
+        },
+        {
+          "kind": "color-role",
+          "surface": "write-edit-delete-popup",
+          "scope": "Existing presentation owner only; Concept01 neutral light/charcoal dark, restrained accent, modest corners and spacing. Palette identities and saved choices unchanged.",
+          "reason": "User-approved integrated visual trial; concrete source fragments and prerequisites are recorded in docs/work/CONCEPT01_TRIAL.md",
+          "contractTests": [
+            "mobile/PC final runtime contracts",
+            "Concept01 visual receipt"
+          ]
+        },
+        {
+          "kind": "spacing",
+          "surface": "write-edit-delete-popup",
+          "scope": "Existing presentation owner only; Concept01 neutral light/charcoal dark, restrained accent, modest corners and spacing. Palette identities and saved choices unchanged.",
+          "reason": "User-approved integrated visual trial; concrete source fragments and prerequisites are recorded in docs/work/CONCEPT01_TRIAL.md",
+          "contractTests": [
+            "mobile/PC final runtime contracts",
+            "Concept01 visual receipt"
+          ]
+        },
+        {
+          "kind": "radius",
+          "surface": "write-edit-delete-popup",
+          "scope": "Existing presentation owner only; Concept01 neutral light/charcoal dark, restrained accent, modest corners and spacing. Palette identities and saved choices unchanged.",
+          "reason": "User-approved integrated visual trial; concrete source fragments and prerequisites are recorded in docs/work/CONCEPT01_TRIAL.md",
+          "contractTests": [
+            "mobile/PC final runtime contracts",
+            "Concept01 visual receipt"
+          ]
+        },
+        {
+          "kind": "typography",
+          "surface": "write-edit-delete-popup",
+          "scope": "Existing presentation owner only; Concept01 neutral light/charcoal dark, restrained accent, modest corners and spacing. Palette identities and saved choices unchanged.",
+          "reason": "User-approved integrated visual trial; concrete source fragments and prerequisites are recorded in docs/work/CONCEPT01_TRIAL.md",
+          "contractTests": [
+            "mobile/PC final runtime contracts",
+            "Concept01 visual receipt"
+          ]
+        },
+        {
+          "kind": "color-role",
+          "surface": "header-navigation",
+          "scope": "Existing presentation owner only; Concept01 neutral light/charcoal dark, restrained accent, modest corners and spacing. Palette identities and saved choices unchanged.",
+          "reason": "User-approved integrated visual trial; concrete source fragments and prerequisites are recorded in docs/work/CONCEPT01_TRIAL.md",
+          "contractTests": [
+            "mobile/PC final runtime contracts",
+            "Concept01 visual receipt"
+          ]
+        },
+        {
+          "kind": "spacing",
+          "surface": "header-navigation",
+          "scope": "Existing presentation owner only; Concept01 neutral light/charcoal dark, restrained accent, modest corners and spacing. Palette identities and saved choices unchanged.",
+          "reason": "User-approved integrated visual trial; concrete source fragments and prerequisites are recorded in docs/work/CONCEPT01_TRIAL.md",
+          "contractTests": [
+            "mobile/PC final runtime contracts",
+            "Concept01 visual receipt"
+          ]
+        },
+        {
+          "kind": "radius",
+          "surface": "header-navigation",
+          "scope": "Existing presentation owner only; Concept01 neutral light/charcoal dark, restrained accent, modest corners and spacing. Palette identities and saved choices unchanged.",
+          "reason": "User-approved integrated visual trial; concrete source fragments and prerequisites are recorded in docs/work/CONCEPT01_TRIAL.md",
+          "contractTests": [
+            "mobile/PC final runtime contracts",
+            "Concept01 visual receipt"
+          ]
+        },
+        {
+          "kind": "typography",
+          "surface": "header-navigation",
+          "scope": "Existing presentation owner only; Concept01 neutral light/charcoal dark, restrained accent, modest corners and spacing. Palette identities and saved choices unchanged.",
+          "reason": "User-approved integrated visual trial; concrete source fragments and prerequisites are recorded in docs/work/CONCEPT01_TRIAL.md",
+          "contractTests": [
+            "mobile/PC final runtime contracts",
+            "Concept01 visual receipt"
+          ]
+        },
+        {
+          "kind": "motion",
+          "surface": "list-search-paging",
+          "scope": "Original list toolbar fully hides/reveals with cumulative direction, stable width and focus/popup hold; reduced motion immediate",
+          "reason": "User-approved researched navigation behavior; adapter-owned state and presenter-owned animation",
+          "contractTests": [
+            "testbed/run-concept01-scroll.mjs"
+          ]
+        },
+        {
+          "kind": "geometry",
+          "surface": "list-search-paging",
+          "scope": "Original list toolbar changes from flow to fixed reveal with measured width and inert flow spacer; native topology preserved",
+          "reason": "Preserve reading position and popup anchoring under the inherited root overflow contract",
+          "contractTests": [
+            "testbed/run-concept01-scroll.mjs"
+          ]
+        }
+      ],
+      "invariants": [
+        "filter-result",
+        "storage-trace",
+        "network-trace",
+        "host-node-identity",
+        "host-node-order",
+        "native-handler",
+        "native-form-fields",
+        "native-submit-trace",
+        "focus",
+        "lifecycle-resources",
+        "pc-result",
+        "accessibility",
+        "geometry-containment"
+      ],
+      "normalizer": "semantic-observation-v1",
+      "unknownDifferencePolicy": "fail",
+      "missingApplicabilityPolicy": "fail"
+    },
+    {
+      "id": "header-layout-redesign-v1",
+      "status": "active",
+      "surfaces": [
+        "header-navigation"
+      ],
+      "allowed": [
+        {
+          "kind": "geometry",
+          "surface": "header-navigation",
+          "scope": "Original native header controls remain in place; grid brand/search/utility rows, capsule navigation and separate stacked title/tool workspace card",
+          "reason": "User-approved visible structural redesign and layout-freedom trial",
+          "contractTests": [
+            "testbed/run-header-layout-redesign.mjs",
+            "native header functional and popup reachability"
+          ]
+        },
+        {
+          "kind": "spacing",
+          "surface": "header-navigation",
+          "scope": "Original native header controls remain in place; grid brand/search/utility rows, capsule navigation and separate stacked title/tool workspace card",
+          "reason": "User-approved visible structural redesign and layout-freedom trial",
+          "contractTests": [
+            "testbed/run-header-layout-redesign.mjs",
+            "native header functional and popup reachability"
+          ]
+        },
+        {
+          "kind": "typography",
+          "surface": "header-navigation",
+          "scope": "Original native header controls remain in place; grid brand/search/utility rows, capsule navigation and separate stacked title/tool workspace card",
+          "reason": "User-approved visible structural redesign and layout-freedom trial",
+          "contractTests": [
+            "testbed/run-header-layout-redesign.mjs",
+            "native header functional and popup reachability"
+          ]
+        }
+      ],
+      "invariants": [
+        "filter-result",
+        "storage-trace",
+        "network-trace",
+        "host-node-identity",
+        "host-node-order",
+        "native-handler",
+        "native-form-fields",
+        "native-submit-trace",
+        "focus",
+        "lifecycle-resources",
+        "pc-result",
+        "accessibility",
+        "geometry-containment"
+      ],
+      "normalizer": "semantic-observation-v1",
+      "unknownDifferencePolicy": "fail",
+      "missingApplicabilityPolicy": "fail"
+    },
+    {
+      "id": "b1-native-list-trial-v1",
+      "status": "active",
+      "surfaces": [
+        "header-navigation",
+        "list-search-paging"
+      ],
+      "allowed": [
+        {
+          "kind": "geometry",
+          "surface": "header-navigation",
+          "scope": "Approved B1 compact existing-parent header grid, original recent-history popover, original service UL native popover/invoker, quiet glass controls and opaque compact list rows. Native links/forms/parents/handlers/settings/filter-owned display stay intact; one local utility toggle listener is cleaned exactly. Original toolbar motion retained; whole-masthead scroll-return remains later.",
+          "reason": "User approved the runnable B1 list preview and actual product trial.",
+          "contractTests": [
+            "testbed/run-b1-product.mjs",
+            "testbed/run-header-layout-redesign.mjs",
+            "testbed/run-concept01-scroll.mjs"
+          ]
+        },
+        {
+          "kind": "geometry",
+          "surface": "list-search-paging",
+          "scope": "Approved B1 compact existing-parent header grid, original recent-history popover, original service UL native popover/invoker, quiet glass controls and opaque compact list rows. Native links/forms/parents/handlers/settings/filter-owned display stay intact; one local utility toggle listener is cleaned exactly. Original toolbar motion retained; whole-masthead scroll-return remains later.",
+          "reason": "User approved the runnable B1 list preview and actual product trial.",
+          "contractTests": [
+            "testbed/run-b1-product.mjs",
+            "testbed/run-header-layout-redesign.mjs",
+            "testbed/run-concept01-scroll.mjs"
+          ]
+        },
+        {
+          "kind": "spacing",
+          "surface": "header-navigation",
+          "scope": "Approved B1 compact existing-parent header grid, original recent-history popover, original service UL native popover/invoker, quiet glass controls and opaque compact list rows. Native links/forms/parents/handlers/settings/filter-owned display stay intact; one local utility toggle listener is cleaned exactly. Original toolbar motion retained; whole-masthead scroll-return remains later.",
+          "reason": "User approved the runnable B1 list preview and actual product trial.",
+          "contractTests": [
+            "testbed/run-b1-product.mjs",
+            "testbed/run-header-layout-redesign.mjs",
+            "testbed/run-concept01-scroll.mjs"
+          ]
+        },
+        {
+          "kind": "spacing",
+          "surface": "list-search-paging",
+          "scope": "Approved B1 compact existing-parent header grid, original recent-history popover, original service UL native popover/invoker, quiet glass controls and opaque compact list rows. Native links/forms/parents/handlers/settings/filter-owned display stay intact; one local utility toggle listener is cleaned exactly. Original toolbar motion retained; whole-masthead scroll-return remains later.",
+          "reason": "User approved the runnable B1 list preview and actual product trial.",
+          "contractTests": [
+            "testbed/run-b1-product.mjs",
+            "testbed/run-header-layout-redesign.mjs",
+            "testbed/run-concept01-scroll.mjs"
+          ]
+        },
+        {
+          "kind": "radius",
+          "surface": "header-navigation",
+          "scope": "Approved B1 compact existing-parent header grid, original recent-history popover, original service UL native popover/invoker, quiet glass controls and opaque compact list rows. Native links/forms/parents/handlers/settings/filter-owned display stay intact; one local utility toggle listener is cleaned exactly. Original toolbar motion retained; whole-masthead scroll-return remains later.",
+          "reason": "User approved the runnable B1 list preview and actual product trial.",
+          "contractTests": [
+            "testbed/run-b1-product.mjs",
+            "testbed/run-header-layout-redesign.mjs",
+            "testbed/run-concept01-scroll.mjs"
+          ]
+        },
+        {
+          "kind": "radius",
+          "surface": "list-search-paging",
+          "scope": "Approved B1 compact existing-parent header grid, original recent-history popover, original service UL native popover/invoker, quiet glass controls and opaque compact list rows. Native links/forms/parents/handlers/settings/filter-owned display stay intact; one local utility toggle listener is cleaned exactly. Original toolbar motion retained; whole-masthead scroll-return remains later.",
+          "reason": "User approved the runnable B1 list preview and actual product trial.",
+          "contractTests": [
+            "testbed/run-b1-product.mjs",
+            "testbed/run-header-layout-redesign.mjs",
+            "testbed/run-concept01-scroll.mjs"
+          ]
+        },
+        {
+          "kind": "typography",
+          "surface": "header-navigation",
+          "scope": "Approved B1 compact existing-parent header grid, original recent-history popover, original service UL native popover/invoker, quiet glass controls and opaque compact list rows. Native links/forms/parents/handlers/settings/filter-owned display stay intact; one local utility toggle listener is cleaned exactly. Original toolbar motion retained; whole-masthead scroll-return remains later.",
+          "reason": "User approved the runnable B1 list preview and actual product trial.",
+          "contractTests": [
+            "testbed/run-b1-product.mjs",
+            "testbed/run-header-layout-redesign.mjs",
+            "testbed/run-concept01-scroll.mjs"
+          ]
+        },
+        {
+          "kind": "typography",
+          "surface": "list-search-paging",
+          "scope": "Approved B1 compact existing-parent header grid, original recent-history popover, original service UL native popover/invoker, quiet glass controls and opaque compact list rows. Native links/forms/parents/handlers/settings/filter-owned display stay intact; one local utility toggle listener is cleaned exactly. Original toolbar motion retained; whole-masthead scroll-return remains later.",
+          "reason": "User approved the runnable B1 list preview and actual product trial.",
+          "contractTests": [
+            "testbed/run-b1-product.mjs",
+            "testbed/run-header-layout-redesign.mjs",
+            "testbed/run-concept01-scroll.mjs"
+          ]
+        },
+        {
+          "kind": "color-role",
+          "surface": "header-navigation",
+          "scope": "Approved B1 compact existing-parent header grid, original recent-history popover, original service UL native popover/invoker, quiet glass controls and opaque compact list rows. Native links/forms/parents/handlers/settings/filter-owned display stay intact; one local utility toggle listener is cleaned exactly. Original toolbar motion retained; whole-masthead scroll-return remains later.",
+          "reason": "User approved the runnable B1 list preview and actual product trial.",
+          "contractTests": [
+            "testbed/run-b1-product.mjs",
+            "testbed/run-header-layout-redesign.mjs",
+            "testbed/run-concept01-scroll.mjs"
+          ]
+        },
+        {
+          "kind": "color-role",
+          "surface": "list-search-paging",
+          "scope": "Approved B1 compact existing-parent header grid, original recent-history popover, original service UL native popover/invoker, quiet glass controls and opaque compact list rows. Native links/forms/parents/handlers/settings/filter-owned display stay intact; one local utility toggle listener is cleaned exactly. Original toolbar motion retained; whole-masthead scroll-return remains later.",
+          "reason": "User approved the runnable B1 list preview and actual product trial.",
+          "contractTests": [
+            "testbed/run-b1-product.mjs",
+            "testbed/run-header-layout-redesign.mjs",
+            "testbed/run-concept01-scroll.mjs"
+          ]
+        }
+      ],
+      "invariants": [
+        "filter-result",
+        "storage-trace",
+        "network-trace",
+        "host-node-identity",
+        "host-node-order",
+        "native-handler",
+        "native-form-fields",
+        "native-submit-trace",
+        "focus",
+        "lifecycle-resources",
+        "pc-result",
+        "accessibility",
+        "geometry-containment"
+      ],
+      "normalizer": "semantic-observation-v1",
+      "unknownDifferencePolicy": "fail",
+      "missingApplicabilityPolicy": "fail"
+    },
+    {
+      "id": "b1-comments-reading-and-native-picker-glass-v1",
+      "status": "active",
+      "surfaces": [
+        "comments-replies",
+        "article-recommendation",
+        "header-navigation",
+        "tokens-settings-palette"
+      ],
+      "allowed": [
+        {
+          "kind": "color-role",
+          "surface": "comments-replies",
+          "scope": "B1 paper/radii/quiet shadows; reversible original nested textcon/DCCon field/media roles, visibly translucent floating shell, transparent original inner panel and centered viewport-contained picker. Native colors/forms/events/topology remain intact. Authorized popup polish: visible existing title/help, native color groups, trailing primary action, empty-recent collapse and narrow persistent-menu clearance; hidden child pages remain hidden.",
+          "reason": "User authorized B1 expansion trial and visible backing transmission; final reference fidelity remains unverified.",
+          "contractTests": [
+            "testbed/ui-b1-content-contract.mjs",
+            "testbed/run-tests.mjs",
+            "testbed/run-article-differential.mjs",
+            "testbed/run-comment-differential.mjs"
+          ]
+        },
+        {
+          "kind": "spacing",
+          "surface": "comments-replies",
+          "scope": "B1 paper/radii/quiet shadows; reversible original nested textcon/DCCon field/media roles, visibly translucent floating shell, transparent original inner panel and centered viewport-contained picker. Native colors/forms/events/topology remain intact. Authorized popup polish: visible existing title/help, native color groups, trailing primary action, empty-recent collapse and narrow persistent-menu clearance; hidden child pages remain hidden.",
+          "reason": "User authorized B1 expansion trial and visible backing transmission; final reference fidelity remains unverified.",
+          "contractTests": [
+            "testbed/ui-b1-content-contract.mjs",
+            "testbed/run-tests.mjs",
+            "testbed/run-article-differential.mjs",
+            "testbed/run-comment-differential.mjs"
+          ]
+        },
+        {
+          "kind": "radius",
+          "surface": "comments-replies",
+          "scope": "B1 paper/radii/quiet shadows; reversible original nested textcon/DCCon field/media roles, visibly translucent floating shell, transparent original inner panel and centered viewport-contained picker. Native colors/forms/events/topology remain intact. Authorized popup polish: visible existing title/help, native color groups, trailing primary action, empty-recent collapse and narrow persistent-menu clearance; hidden child pages remain hidden.",
+          "reason": "User authorized B1 expansion trial and visible backing transmission; final reference fidelity remains unverified.",
+          "contractTests": [
+            "testbed/ui-b1-content-contract.mjs",
+            "testbed/run-tests.mjs",
+            "testbed/run-article-differential.mjs",
+            "testbed/run-comment-differential.mjs"
+          ]
+        },
+        {
+          "kind": "geometry",
+          "surface": "comments-replies",
+          "scope": "B1 paper/radii/quiet shadows; reversible original nested textcon/DCCon field/media roles, visibly translucent floating shell, transparent original inner panel and centered viewport-contained picker. Native colors/forms/events/topology remain intact. Authorized popup polish: visible existing title/help, native color groups, trailing primary action, empty-recent collapse and narrow persistent-menu clearance; hidden child pages remain hidden.",
+          "reason": "User authorized B1 expansion trial and visible backing transmission; final reference fidelity remains unverified.",
+          "contractTests": [
+            "testbed/ui-b1-content-contract.mjs",
+            "testbed/run-tests.mjs",
+            "testbed/run-article-differential.mjs",
+            "testbed/run-comment-differential.mjs"
+          ]
+        },
+        {
+          "kind": "color-role",
+          "surface": "article-recommendation",
+          "scope": "B1 article header, meta separator, quiet native action band/button treatment and recommendation paper/radii. Native body/media/actions remain intact. Authorized article action slice: exact native share/real-best/report/guest-scrap/PUM roots, existing form/media and nested-guide/suggestion parts, B1 floating material/title/action hierarchy, original-node containment and short-screen menu clearance. No native submission or account/iframe claim.",
+          "reason": "User authorized B1 expansion trial and visible backing transmission; final reference fidelity remains unverified.",
+          "contractTests": [
+            "testbed/ui-b1-content-contract.mjs",
+            "testbed/run-tests.mjs",
+            "testbed/run-article-differential.mjs",
+            "testbed/run-comment-differential.mjs",
+            "testbed/ui-b1-article-actions-contract.mjs"
+          ]
+        },
+        {
+          "kind": "spacing",
+          "surface": "article-recommendation",
+          "scope": "B1 article header, meta separator, quiet native action band/button treatment and recommendation paper/radii. Native body/media/actions remain intact. Authorized article action slice: exact native share/real-best/report/guest-scrap/PUM roots, existing form/media and nested-guide/suggestion parts, B1 floating material/title/action hierarchy, original-node containment and short-screen menu clearance. No native submission or account/iframe claim.",
+          "reason": "User authorized B1 expansion trial and visible backing transmission; final reference fidelity remains unverified.",
+          "contractTests": [
+            "testbed/ui-b1-content-contract.mjs",
+            "testbed/run-tests.mjs",
+            "testbed/run-article-differential.mjs",
+            "testbed/run-comment-differential.mjs",
+            "testbed/ui-b1-article-actions-contract.mjs"
+          ]
+        },
+        {
+          "kind": "radius",
+          "surface": "article-recommendation",
+          "scope": "B1 article header, meta separator, quiet native action band/button treatment and recommendation paper/radii. Native body/media/actions remain intact. Authorized article action slice: exact native share/real-best/report/guest-scrap/PUM roots, existing form/media and nested-guide/suggestion parts, B1 floating material/title/action hierarchy, original-node containment and short-screen menu clearance. No native submission or account/iframe claim.",
+          "reason": "User authorized B1 expansion trial and visible backing transmission; final reference fidelity remains unverified.",
+          "contractTests": [
+            "testbed/ui-b1-content-contract.mjs",
+            "testbed/run-tests.mjs",
+            "testbed/run-article-differential.mjs",
+            "testbed/run-comment-differential.mjs",
+            "testbed/ui-b1-article-actions-contract.mjs"
+          ]
+        },
+        {
+          "kind": "geometry",
+          "surface": "article-recommendation",
+          "scope": "B1 article header, meta separator, quiet native action band/button treatment and recommendation paper/radii. Native body/media/actions remain intact. Authorized article action slice: exact native share/real-best/report/guest-scrap/PUM roots, existing form/media and nested-guide/suggestion parts, B1 floating material/title/action hierarchy, original-node containment and short-screen menu clearance. No native submission or account/iframe claim.",
+          "reason": "User authorized B1 expansion trial and visible backing transmission; final reference fidelity remains unverified.",
+          "contractTests": [
+            "testbed/ui-b1-content-contract.mjs",
+            "testbed/run-tests.mjs",
+            "testbed/run-article-differential.mjs",
+            "testbed/run-comment-differential.mjs",
+            "testbed/ui-b1-article-actions-contract.mjs"
+          ]
+        },
+        {
+          "kind": "color-role",
+          "surface": "header-navigation",
+          "scope": "Existing recent-visit popup gains B1 floating sheen/transmission with unchanged original tabs/list/footer/events/placement. Authorized popup polish: original active tabs, row/remove hit targets, vector decoration for original remove button and quiet full-width native footer control.",
+          "reason": "User authorized B1 expansion trial and visible backing transmission; final reference fidelity remains unverified.",
+          "contractTests": [
+            "testbed/ui-b1-content-contract.mjs",
+            "testbed/run-tests.mjs",
+            "testbed/run-article-differential.mjs",
+            "testbed/run-comment-differential.mjs"
+          ]
+        },
+        {
+          "kind": "color-role",
+          "surface": "tokens-settings-palette",
+          "scope": "Mobile-only floating/menu material variables consumed by the sole shared FAB/drawer presenter. Exact existing PC fallback appearance/geometry retained; settings/storage/filter behavior unchanged.",
+          "reason": "User authorized B1 expansion trial and visible backing transmission; final reference fidelity remains unverified.",
+          "contractTests": [
+            "testbed/ui-b1-content-contract.mjs",
+            "testbed/run-tests.mjs",
+            "testbed/run-article-differential.mjs",
+            "testbed/run-comment-differential.mjs"
+          ]
+        },
+        {
+          "kind": "spacing",
+          "surface": "tokens-settings-palette",
+          "scope": "Mobile-only floating/menu material variables consumed by the sole shared FAB/drawer presenter. Exact existing PC fallback appearance/geometry retained; settings/storage/filter behavior unchanged.",
+          "reason": "User authorized B1 expansion trial and visible backing transmission; final reference fidelity remains unverified.",
+          "contractTests": [
+            "testbed/ui-b1-content-contract.mjs",
+            "testbed/run-tests.mjs",
+            "testbed/run-article-differential.mjs",
+            "testbed/run-comment-differential.mjs"
+          ]
+        },
+        {
+          "kind": "radius",
+          "surface": "tokens-settings-palette",
+          "scope": "Mobile-only floating/menu material variables consumed by the sole shared FAB/drawer presenter. Exact existing PC fallback appearance/geometry retained; settings/storage/filter behavior unchanged.",
+          "reason": "User authorized B1 expansion trial and visible backing transmission; final reference fidelity remains unverified.",
+          "contractTests": [
+            "testbed/ui-b1-content-contract.mjs",
+            "testbed/run-tests.mjs",
+            "testbed/run-article-differential.mjs",
+            "testbed/run-comment-differential.mjs"
+          ]
+        },
+        {
+          "kind": "geometry",
+          "surface": "tokens-settings-palette",
+          "scope": "Mobile-only floating/menu material variables consumed by the sole shared FAB/drawer presenter. Exact existing PC fallback appearance/geometry retained; settings/storage/filter behavior unchanged.",
+          "reason": "User authorized B1 expansion trial and visible backing transmission; final reference fidelity remains unverified.",
+          "contractTests": [
+            "testbed/ui-b1-content-contract.mjs",
+            "testbed/run-tests.mjs",
+            "testbed/run-article-differential.mjs",
+            "testbed/run-comment-differential.mjs"
+          ]
+        },
+        {
+          "kind": "typography",
+          "surface": "comments-replies",
+          "scope": "B1 paper/radii/quiet shadows; reversible original nested textcon/DCCon field/media roles, visibly translucent floating shell, transparent original inner panel and centered viewport-contained picker. Native colors/forms/events/topology remain intact. Authorized popup polish: visible existing title/help, native color groups, trailing primary action, empty-recent collapse and narrow persistent-menu clearance; hidden child pages remain hidden.",
+          "reason": "User authorized B1 expansion trial and visible backing transmission; final reference fidelity remains unverified.",
+          "contractTests": [
+            "testbed/ui-b1-content-contract.mjs",
+            "testbed/run-tests.mjs",
+            "testbed/run-article-differential.mjs",
+            "testbed/run-comment-differential.mjs"
+          ]
+        },
+        {
+          "kind": "typography",
+          "surface": "article-recommendation",
+          "scope": "B1 article header, meta separator, quiet native action band/button treatment and recommendation paper/radii. Native body/media/actions remain intact. Authorized article action slice: exact native share/real-best/report/guest-scrap/PUM roots, existing form/media and nested-guide/suggestion parts, B1 floating material/title/action hierarchy, original-node containment and short-screen menu clearance. No native submission or account/iframe claim.",
+          "reason": "User authorized B1 expansion trial and visible backing transmission; final reference fidelity remains unverified.",
+          "contractTests": [
+            "testbed/ui-b1-content-contract.mjs",
+            "testbed/run-tests.mjs",
+            "testbed/run-article-differential.mjs",
+            "testbed/run-comment-differential.mjs",
+            "testbed/ui-b1-article-actions-contract.mjs"
+          ]
+        }
+      ],
+      "invariants": [
+        "filter-result",
+        "storage-trace",
+        "network-trace",
+        "host-node-identity",
+        "host-node-order",
+        "native-handler",
+        "native-form-fields",
+        "native-submit-trace",
+        "focus",
+        "lifecycle-resources",
+        "pc-result",
+        "accessibility",
+        "geometry-containment"
+      ],
+      "normalizer": "semantic-observation-v1",
+      "unknownDifferencePolicy": "fail",
+      "missingApplicabilityPolicy": "fail"
+    }
+  ]
+}

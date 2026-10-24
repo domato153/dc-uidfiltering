@@ -1,6 +1,6 @@
 import { execFile } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { readFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { promisify } from 'node:util';
 import { fileURLToPath } from 'node:url';
@@ -178,8 +178,8 @@ try {
     });
 
     for (const scenario of [
-        { name: 'non-member modify', path: '/board/modify/?id=test&host-compat=password', action: '/__testbed/modify_password_submit', method: 'post' },
-        { name: 'non-member delete', path: '/mini/board/delete/?id=test&host-compat=password', action: '/__testbed/delete_password_submit', method: 'post' }
+        { name: 'non-member modify', path: '/board/modify/?id=test&host-compat=password', action: '/__testbed/modify_password_submit', method: 'post', kind: 'modify-password' },
+        { name: 'non-member delete', path: '/mini/board/delete/?id=test&host-compat=password', action: '/__testbed/delete_password_submit', method: 'post', kind: 'delete-password' }
     ]) {
         await run(`${scenario.name} preserves form and original popup/button lifecycle`, async () => {
             const session = await createTestPage(browser, server.baseUrl, { storage: noStatsStorage, viewport: { width: 390, height: 844 } });
@@ -191,12 +191,34 @@ try {
                     method: element.getAttribute('method'),
                     hidden: Array.from(element.querySelectorAll('input[type="hidden"]')).map((input) => input.name),
                     originalButtons: window.__dcufHostSimulator.originalButtons.every((button) => button.isConnected),
-                    originalParents: window.__dcufHostSimulator.originalButtons.every((button) => button.parentElement?.matches('[data-host-action-row]'))
+                    originalParents: window.__dcufHostSimulator.originalButtons.every((button) => button.parentElement?.matches('[data-host-action-row]')),
+                    adapterRoot: {
+                        surface: element.getAttribute('data-dcuf-surface'),
+                        role: element.getAttribute('data-dcuf-role'),
+                        state: element.getAttribute('data-dcuf-state')
+                    },
+                    adapterSnapshot: window.__dcufNativeFormHostAdapter?.snapshotSurface(element),
+                    adapterResources: window.__dcufNativeFormHostAdapter?.snapshotResources()
                 }));
                 assert.equal(form.action, scenario.action);
                 assert.equal(form.method, scenario.method);
                 assert.deepEqual(form.hidden, ['ci_t', 'id', 'no', 'key', 'dcc_key', 'auth_token']);
                 assert.equal(form.originalButtons && form.originalParents, true);
+                assert.deepEqual(form.adapterRoot, {
+                    surface: 'write-edit-delete-popup',
+                    role: 'native-form',
+                    state: scenario.kind
+                });
+                assert.equal(Object.isFrozen(form.adapterSnapshot), false, 'Playwright serialization returns a plain clone');
+                assert.equal(form.adapterSnapshot.kind, scenario.kind);
+                assert.deepEqual(form.adapterSnapshot.hiddenFieldNames, ['ci_t', 'id', 'no', 'key', 'dcc_key', 'auth_token']);
+                assert.deepEqual({
+                    activeRoots: form.adapterResources.activeRoots,
+                    observers: form.adapterResources.observers,
+                    listeners: form.adapterResources.listeners,
+                    timers: form.adapterResources.timers,
+                    animationFrames: form.adapterResources.animationFrames
+                }, { activeRoots: 1, observers: 0, listeners: 0, timers: 0, animationFrames: 0 });
                 assert.equal(contract.cancelRight < contract.confirmLeft, true, JSON.stringify(contract));
                 assert.equal(contract.confirmWidth > 0 && contract.confirmHeight > 0, true, JSON.stringify(contract));
                 assert.equal(contract.hitCount, 5, JSON.stringify(contract));
@@ -210,6 +232,42 @@ try {
                     reopenCalls: window.__dcufHostSimulator.reopenCalls
                 }));
                 assert.deepEqual(reopened, { samePopup: true, display: 'block', closeCalls: 1, reopenCalls: 1 });
+                const disposed = await session.page.evaluate(() => {
+                    const simulator = window.__dcufHostSimulator;
+                    const formElement = document.querySelector('form');
+                    const cancel = formElement.querySelector('[data-host-action="cancel"]');
+                    const invoked = window.__dcufNativeFormHostAdapter.invokeNative(cancel, 'click');
+                    window.__dcufNativeFormHostAdapter.dispose();
+                    return {
+                        invoked,
+                        sameForm: simulator.originalRoot === formElement.querySelector('[data-host-delegation-root]'),
+                        samePopup: simulator.originalPopup === document.querySelector('[data-host-popup]'),
+                        sameButtons: simulator.originalButtons.every((button) => button.isConnected),
+                        surface: formElement.getAttribute('data-dcuf-surface'),
+                        role: formElement.getAttribute('data-dcuf-role'),
+                        activeRoots: window.__dcufNativeFormHostAdapter.snapshotResources().activeRoots,
+                        popupDisplay: getComputedStyle(simulator.originalPopup).display
+                    };
+                });
+                assert.deepEqual(disposed, {
+                    invoked: true,
+                    sameForm: true,
+                    samePopup: true,
+                    sameButtons: true,
+                    surface: null,
+                    role: null,
+                    activeRoots: 0,
+                    popupDisplay: 'none'
+                });
+                await session.page.evaluate(() => {
+                    window.__dcufHostReopenPopup();
+                    window.__dcufNativeFormHostAdapter.refresh();
+                });
+                assert.deepEqual(await session.page.locator('form').evaluate((element) => ({
+                    state: element.getAttribute('data-dcuf-state'),
+                    popupState: element.querySelector('[data-host-popup]')?.getAttribute('data-dcuf-state'),
+                    samePopup: window.__dcufHostSimulator.originalPopup === element.querySelector('[data-host-popup]')
+                })), { state: scenario.kind, popupState: 'open', samePopup: true });
                 await assertCleanPage(session);
             } finally { await session.close(); }
         });
@@ -254,15 +312,25 @@ try {
                 method: element.getAttribute('method'),
                 hidden: Array.from(element.querySelectorAll('input[type="hidden"]')).map((input) => input.name),
                 surface: document.documentElement.getAttribute('data-dcuf-delete-surface'),
-                bodyClass: document.body.className
+                bodyClass: document.body.className,
+                adapterState: element.getAttribute('data-dcuf-state'),
+                adapterSnapshot: window.__dcufNativeFormHostAdapter?.snapshotSurface(element)
             }));
             assert.deepEqual(form, {
                 action: '/__testbed/delete_confirm_submit',
                 method: 'post',
                 hidden: ['ci_t', 'id', 'no', 'key', 'dcc_key'],
                 surface: 'confirm',
-                bodyClass: form.bodyClass
+                bodyClass: form.bodyClass,
+                adapterState: 'delete-confirm',
+                adapterSnapshot: form.adapterSnapshot
             });
+            assert.equal(form.adapterSnapshot.kind, 'delete-confirm');
+            assert.deepEqual(form.adapterSnapshot.hiddenFieldNames, ['ci_t', 'id', 'no', 'key', 'dcc_key']);
+            assert.deepEqual(form.adapterSnapshot.actions.map(({ role, type }) => ({ role, type })), [
+                { role: 'native-cancel', type: 'button' },
+                { role: 'native-submit', type: 'submit' }
+            ]);
             assert.equal(form.bodyClass.includes('is-delete-confirm-page'), true);
             const formCenter = (geometry.form.top + geometry.form.bottom) / 2;
             const cardCenter = (geometry.card.top + geometry.card.bottom) / 2;
@@ -308,9 +376,118 @@ try {
                     assert.equal(geometry.box.left >= geometry.parent.left - 1 && geometry.box.right <= geometry.parent.right + 1, true, JSON.stringify(geometry));
                     if (viewport.width > 900) assert.equal(geometry.box.width < geometry.parent.width * 0.8, true, JSON.stringify(geometry));
                     assert.equal(geometry.captcha.left >= geometry.box.left - 1 && geometry.captcha.right <= geometry.box.right + 1, true, JSON.stringify(geometry));
+                    const preservation = await session.page.evaluate(() => {
+                        const simulator = window.__dcufHostSimulator;
+                        const root = document.querySelector('[data-host-delegation-root]');
+                        const box = document.querySelector('[data-host-recommend-box]');
+                        const snapshot = window.__dcufArticleHostAdapter?.snapshotSurface(root);
+                        return {
+                            sameRoot: simulator.originalRoot === root,
+                            sameBox: simulator.originalRecommendBox === box,
+                            sameButtons: simulator.originalButtons.every((button) => button.isConnected),
+                            sameTopology: simulator.originalButtonTopology.every((entry) => (
+                                entry.button.parentNode === entry.parent
+                                && entry.button.nextSibling === entry.nextSibling
+                                && entry.button.getAttribute('type') === entry.type
+                                && entry.button.getAttribute('name') === entry.name
+                                && entry.button.getAttribute('value') === entry.value
+                            )),
+                            rootMarker: root?.getAttribute('data-dcuf-role'),
+                            boxMarker: box?.getAttribute('data-dcuf-role'),
+                            boxState: box?.getAttribute('data-dcuf-state'),
+                            captchaMarker: box?.querySelector('[data-host-captcha]')?.getAttribute('data-dcuf-role'),
+                            snapshotFrozen: Object.isFrozen(snapshot) && Object.isFrozen(snapshot?.recommendation),
+                            snapshotRoundTrip: snapshot ? JSON.stringify(JSON.parse(JSON.stringify(snapshot))) === JSON.stringify(snapshot) : false,
+                            resources: window.__dcufArticleHostAdapter?.snapshotResources()
+                        };
+                    });
+                    assert.deepEqual(preservation, {
+                        sameRoot: true,
+                        sameBox: true,
+                        sameButtons: true,
+                        sameTopology: true,
+                        rootMarker: 'article',
+                        boxMarker: 'recommendation',
+                        boxState: 'captcha',
+                        captchaMarker: 'recommendation-captcha',
+                        snapshotFrozen: true,
+                        snapshotRoundTrip: true,
+                        resources: {
+                            activeRoots: 1,
+                            trackedElements: preservation.resources.trackedElements,
+                            observers: 0,
+                            presentationStyleOwners: 1,
+                            pumPopups: 0,
+                            listeners: 0,
+                            timers: 0,
+                            animationFrames: 0
+                        }
+                    });
+                    assert.equal(preservation.resources.trackedElements >= 8, true, JSON.stringify(preservation));
                     await session.page.locator('[data-host-action="recommend-up"]').click();
                     await session.page.locator('[data-host-action="recommend-down"]').click();
                     assert.deepEqual(await session.page.evaluate(() => ({ ...window.__dcufHostSimulator.delegatedClicks })), { 'recommend-up': 1, 'recommend-down': 1 });
+                    assert.equal(await session.page.evaluate(() => document.activeElement?.getAttribute('data-host-action')), 'recommend-down');
+
+                    if (route === '/board/view' && viewport.width === 390) {
+                        await session.page.evaluate(() => {
+                            const oldBox = document.querySelector('[data-host-recommend-box]');
+                            const replacement = oldBox.cloneNode(true);
+                            replacement.querySelectorAll('[data-dcuf-surface], [data-dcuf-role], [data-dcuf-state]').forEach((element) => {
+                                element.removeAttribute('data-dcuf-surface');
+                                element.removeAttribute('data-dcuf-role');
+                                element.removeAttribute('data-dcuf-state');
+                            });
+                            replacement.removeAttribute('data-dcuf-surface');
+                            replacement.removeAttribute('data-dcuf-role');
+                            replacement.removeAttribute('data-dcuf-state');
+                            window.__fixtureDetachedRecommendBox = oldBox;
+                            oldBox.replaceWith(replacement);
+                        });
+                        await session.page.waitForFunction(() => document.querySelector('[data-host-recommend-box]')?.getAttribute('data-dcuf-role') === 'recommendation');
+                        const replacementState = await session.page.evaluate(() => ({
+                            oldRestored: !window.__fixtureDetachedRecommendBox.hasAttribute('data-dcuf-surface')
+                                && !window.__fixtureDetachedRecommendBox.hasAttribute('data-dcuf-role')
+                                && !window.__fixtureDetachedRecommendBox.hasAttribute('data-dcuf-state'),
+                            newConnected: document.querySelector('[data-host-recommend-box]')?.getAttribute('data-dcuf-state') === 'captcha',
+                            resources: window.__dcufArticleHostAdapter.snapshotResources()
+                        }));
+                        assert.equal(replacementState.oldRestored, true, JSON.stringify(replacementState));
+                        assert.equal(replacementState.newConnected, true, JSON.stringify(replacementState));
+                        assert.equal(replacementState.resources.activeRoots, 1, JSON.stringify(replacementState));
+                        assert.equal(replacementState.resources.trackedElements, preservation.resources.trackedElements, JSON.stringify(replacementState));
+                        await session.page.locator('[data-host-action="recommend-up"]').click();
+                        assert.deepEqual(await session.page.evaluate(() => ({ ...window.__dcufHostSimulator.delegatedClicks })), { 'recommend-up': 2, 'recommend-down': 1 });
+
+                        const rollback = await session.page.evaluate(() => {
+                            const root = document.querySelector('[data-host-delegation-root]');
+                            const box = document.querySelector('[data-host-recommend-box]');
+                            window.__dcufArticleHostAdapter.dispose(document);
+                            const restored = {
+                                sameRoot: window.__dcufHostSimulator.originalRoot === root,
+                                cleanRoot: !root.hasAttribute('data-dcuf-surface') && !root.hasAttribute('data-dcuf-role') && !root.hasAttribute('data-dcuf-state'),
+                                cleanBox: !box.hasAttribute('data-dcuf-surface') && !box.hasAttribute('data-dcuf-role') && !box.hasAttribute('data-dcuf-state'),
+                                resources: window.__dcufArticleHostAdapter.snapshotResources()
+                            };
+                            window.__dcufArticleHostAdapter.connect(document);
+                            return restored;
+                        });
+                        assert.deepEqual(rollback, {
+                            sameRoot: true,
+                            cleanRoot: true,
+                            cleanBox: true,
+                            resources: {
+                                activeRoots: 0,
+                                trackedElements: 0,
+                                observers: 0,
+                                presentationStyleOwners: 0,
+                                pumPopups: 0,
+                                listeners: 0,
+                                timers: 0,
+                                animationFrames: 0
+                            }
+                        });
+                    }
                     await assertCleanPage(session);
                 } finally { await session.close(); }
             }
@@ -319,7 +496,7 @@ try {
 
     await run('runtime palette registry and README/index documentation expose the same 14 palettes', async () => {
         const [themeSource, readme, index] = await Promise.all([
-            readFile(path.join(rootDir, 'src', 'targets', 'mobile', 'theme-module.js'), 'utf8'),
+            readFile(path.join(rootDir, 'src', 'targets', 'shared', 'theme-presenter.js'), 'utf8'),
             readFile(path.join(rootDir, 'README.md'), 'utf8'),
             readFile(path.join(rootDir, 'index.html'), 'utf8')
         ]);
@@ -336,5 +513,14 @@ try {
 }
 
 const failed = results.filter((result) => result.status === 'failed');
+if (process.env.DCUF_TESTBED_REPORT) {
+    const reportPath = path.resolve(process.env.DCUF_TESTBED_REPORT);
+    await mkdir(path.dirname(reportPath), { recursive: true });
+    await writeFile(reportPath, `${JSON.stringify({
+        schemaVersion: 1,
+        runtime: { path: path.resolve(runtimePath), sha256, target: 'mobile' },
+        results,
+    }, null, 2)}\n`, 'utf8');
+}
 process.stdout.write(`Host compatibility result: ${results.length - failed.length} passed, ${failed.length} failed\nHost compatibility runtime SHA-256: ${sha256}\n`);
 if (failed.length > 0) process.exitCode = 1;

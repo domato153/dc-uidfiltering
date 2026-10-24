@@ -1,0 +1,41 @@
+# Continuity retrieval and update contract
+
+Read this reference only when Continuity is being changed, a retrieval route is ambiguous, or a resume/audit check finds drift. The live vocabulary and mandatory triggers are machine-owned by `verification/continuity-contract.json`.
+
+## State model
+
+- `docs/work/CURRENT_STATE.md` is the compact read projection: active plan/stage, source state, candidate fingerprint, last audit, accepted baseline, current artifact, blockers, and pending live checks.
+- `docs/work/NEXT_TASK.md` contains one task ID and one bounded completion scope.
+- Its single typed block binds direct action dependencies and adopted entry decisions, hazards and local recovery. Inspect actual inputs for the selected operation; a listed directory is not a full-reading requirement. Remove completed dependencies when advancing the task. Current required fields are parsed only from `## Current execution`, never history.
+- Exact artifact identities live in the closed `dcuf-current-artifacts` JSON block in that section; prose is not a parser API. NEXT declares direct entry dependencies, not all historical sources/reports. A LIVE directory is a retrieval pointer; inspect only the affected execution path.
+- Receipts and exact digests are immutable evidence events. The projection may summarize them but cannot make them current after source, oracle, fixture, harness, toolchain, or routing changes.
+- The plan explains the intended sequence. Maintenance notes retain reusable causes and contracts. Neither overrides fresh local state or exact evidence.
+
+This is a selective projection-and-receipt pattern, not a general event store. Do not add a chronological command diary or replay infrastructure.
+
+AGENTS governs permission; machine contracts govern semantic/build/evidence rules; fresh observations determine whether the human projection is still true. The authorityOrder is a retrieval/freshness order, not permission precedence. Routine/closure routing is signal-driven in the machine contract; an unrelated HEAD movement or new thread alone does not expire unchanged narrow SUT/oracle evidence or demand full acceptance.
+
+## Retrieval routes
+
+- Resume, compaction, status, or percentage: run `node tools/inspect-continuity.mjs`, then read `CURRENT_STATE.md` and `NEXT_TASK.md`. Report accepted progress separately from the active unaccepted candidate.
+- Context-free new-task handoff: use `references/handoff-contract.md` after the current projection; verify the private prompt's exact worktree locator against fresh Git and the tracked repository-relative root, then require receiver `ACCEPTED` or `STALE_REPLAN` before consequential continuation. A fork's inherited chat is not this test.
+- Audit, PASS/READY, SHA, or evidence: additionally read the referenced receipt, assurance case, and the changed oracle/fixture/harness inputs. Recompute staleness; never inherit a conclusion from prose.
+- Failure, UNKNOWN, or blocker: read the failing output and gate route, classify it, then consult only matching maintenance notes. Preserve the last accepted baseline.
+- Regression, drift, DOM, or behavior preservation: add the semantic-preservation skill and the affected machine contract or surface map.
+- Live architecture or UI owner drift: inspect the effective registry/build/source/surface view through `node tools/inspect-live-architecture.mjs --surface <id>`; add the semantic-architecture skill and only the host-UI/DOM skills justified by the affected surface. This repository view does not replace a real-site canary.
+- Canary, beta, ZIP, release, or rollback: add the release skill. Continuity supplies state but grants no release authority.
+- Selection, rejection, deferral, or research rationale: start with the short retired-assumption guards in `docs/work/VERIFICATION_EFFICIENCY.md`, then retrieve only the matching `DECISION_RATIONALE.md` entry/current contract if it could change the action. Historical next tasks are inactive. A replaced decision needs an explicit new decision and a concrete reopen reason; repetition is not new evidence. For recurring host failure, search maintenance notes by concept label.
+
+## Update rules
+
+Apply the trigger named in `verification/continuity-contract.json`. A state update must keep confirmed, candidate, stale, UNKNOWN, and blocked facts distinct. PASS/READY requires an existing receipt digest and exact artifact digest. After a source or evidence-input change, mark dependent evidence historical before writing any new success claim.
+
+Use the proportionate check matrix in `docs/work/VERIFICATION_EFFICIENCY.md`. For a changed typed packet, a focused `node tools/verify-governance.mjs` preflight is sufficient before the final checkpoint path. The publisher selects final validation from the actual Git diff: exact continuity-only paths get four document checks; mixed/unknown/tool/runtime changes retain all. Both include assurance, governance and skill checks; do not immediately duplicate them on the same tree. Routine resume does not run product suites or proof audits simply because the thread/HEAD changed.
+
+When a consequential method choice changes, add or explicitly supersede its rationale entry. Its structural check (`tools/verify-research-selection.mjs`) is also included in final guidance/all validation; a separate early run is useful only for a specific preflight. Keep `SELECTED`, `NOT ADOPTED`, and `DEFERRED` separate; none is an assurance status. An unresolved item cannot be silently rewritten as accepted state. Practical continuity tips need only relevant primary guidance and a clear local adaptation, not a new research program.
+
+When source, build inputs, the effective architecture overlay, or `architecture/ui-surfaces.json` changes, run the live-architecture `--check` gate before reporting the map current. If the gate fails, classify the discrepancy and keep the old accepted evidence; do not silently rename a visual owner or infer a live-site PASS.
+
+## Vocabulary discipline
+
+Use one preferred concept label plus alternative and hidden labels for Korean, English, abbreviations, common paraphrases, and likely misspellings. Labels help retrieval; they do not change authority. Keep a label in exactly one concept to avoid ambiguous routing, and connect concepts through paths or multi-skill routing cases instead of duplicating labels.

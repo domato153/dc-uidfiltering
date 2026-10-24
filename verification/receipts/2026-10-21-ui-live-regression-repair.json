@@ -1,0 +1,341 @@
+{
+  "schemaVersion": 1,
+  "kind": "scoped-ui-live-regression-repair",
+  "scope": "USER_REPORTED_NATIVE_UI_DEFECTS_ONLY",
+  "status": "PASS",
+  "date": "2026-10-21",
+  "sourceBaseHead": "35a07563e37003e26b72fec784a1f721884a04f2",
+  "testedCandidateFingerprint": "9f8965179c4ab5bf260d0084a17f761106b2604d148e875f9748ed8186ebec4a",
+  "evidenceBinding": {
+    "bindingSchemaVersion": 4,
+    "registrySha256": "2275e39d9fd10662c755354df6e8c8161d9a6e19924de12a9e8d83cc0971f191",
+    "architectureStateSha256": "87f5288bc499eeeef659cff1b973160719ee0dbde2ae23f9b5047fbab9bc95d9",
+    "architecturePlanSha256": "911ede593e19b5cc04e3273758e4550dfae1c7c3fb65154bd623c17829b8d9e9",
+    "modernizationContractSha256": "e449d28d8c2f87bb641ab0921b634b9e9ce84b820f101d6761f1401d53b7ab6e",
+    "gatesSha256": "65979922b8e4c1b1b3b4e50e27d135afda54d0f718a92f8ea9ea984efcebfb17",
+    "sourceInputsSha256": "1f0a850c0047d06510a9b72f19733c207a47edc6c2e9323ec5b5235e082f757d",
+    "harnessSha256": "a3c3d971140559f5a9aecaab0b3c145c2f4e0c1d0ec4b0dcbfa226001b49c167",
+    "fixturesSha256": "9f30dd3b0b0f4341073437d30858ce908d687991f7d35abd87c02c987fd892cf",
+    "toolchainSha256": "2b92aea0dbb71304c0f366284248263cab4cf315443c530edf49a431ff56f559",
+    "proofSystemSha256": "564d5cacd5e3c6b90aa69732d60b5ca5f861fe12c7a63c07ee1bdfb5c7c10006",
+    "node": "v22.17.0"
+  },
+  "sourceFiles": [
+    {
+      "path": "src/targets/mobile/article-host-adapter.js",
+      "canonicalSha256": "18e1e79d39f0c56790ac128575ba11493ecce1e678af99f6f89497e396d44fca"
+    },
+    {
+      "path": "src/targets/mobile/article-presenter.js",
+      "canonicalSha256": "29d9d6675e6ed153dedf5b32a134bead22de2ea0c0b5d4b376ae575a9f85cdb1"
+    },
+    {
+      "path": "src/targets/mobile/comment-host-adapter.js",
+      "canonicalSha256": "aba35ecc0d87ced70aa26d1b04e0d45aa6846279ad28c6bdc5e2fb564fd636bc"
+    },
+    {
+      "path": "src/targets/mobile/comment-presenter.js",
+      "canonicalSha256": "0b220bb90a07b23a9b222031ce7abbcefe5f64f7882840f96f32feb60ae61e11"
+    },
+    {
+      "path": "src/targets/mobile/convenience-host-adapter.js",
+      "canonicalSha256": "c416c729ff357ba559e6ad7a0694d7a3039247d9bffab4557635f8f26c9e55b7"
+    },
+    {
+      "path": "src/targets/mobile/filter-module.js",
+      "canonicalSha256": "4c3a6915e3016280b55c25ca58a4663bdee76db58463f18b182703799793c206"
+    },
+    {
+      "path": "src/targets/mobile/list-host-adapter.js",
+      "canonicalSha256": "83a65349231419a41fad6cf3645fe30a36da757d86fbf5eb62e8a44d23e11cab"
+    },
+    {
+      "path": "src/targets/mobile/list-presenter.js",
+      "canonicalSha256": "48e19b96ab5c3cadc483d7e22a3abfeab32f72881202cce700be788acd5cdd76"
+    },
+    {
+      "path": "src/targets/mobile/ui-module.js",
+      "canonicalSha256": "06e01c9b1149863c96d6537d4eb421879ede1c3b6b4a5d9e1094a25edb2897d0"
+    },
+    {
+      "path": "testbed/run-tests.mjs",
+      "canonicalSha256": "f6e646d116a0e4eabb74e706fa3f81d68b9fcb4aec7bf6dff0a05a07f52178c2"
+    },
+    {
+      "path": "testbed/run-header-cascade-audit.mjs",
+      "canonicalSha256": "d6025e18dd49cf06a79fca3e387bcab030727a582738b75032d84b208405af00"
+    },
+    {
+      "path": "testbed/ui-live-control-contract.mjs",
+      "canonicalSha256": "6ea880706c41f720b5b5864ae43f265e38f2502c0d088709f5bff221ae34bdad"
+    },
+    {
+      "path": "testbed/ui-repair-list-contract.mjs",
+      "canonicalSha256": "208c04defdc9b4cbe4053fef26b7a08f918d54286a644c5fdf6f12f1f5ba4c0c"
+    },
+    {
+      "path": "architecture/candidates/mobile-ui-modernization-assurance.json",
+      "canonicalSha256": "f02af795f6213751d2395d56cea5b0f961d1f1b6562f984b6344b9fb1771da21"
+    }
+  ],
+  "artifacts": {
+    "mobile": {
+      "version": "3.5.5",
+      "sha256": "16773D66FFBF6F0EC85B991E507A93E61EABEBB9F4A3ADADC016EC054DF758AF"
+    },
+    "pc": {
+      "version": "1.9.9",
+      "sha256": "C14D163F2757DB02117E3F93204B56B6AA22D464541729315A6B40C4128C7D37",
+      "changed": false
+    }
+  },
+  "controls": {
+    "preRepairDraft": {
+      "sha256": "478A440F133D80A813124069BD82B043B960EAB0156098223286C325975170B5"
+    },
+    "publishedStable": {
+      "sha256": "32BA208DDD9973A7EEC343F01E963A833AB4F0C084987077EDAE46844383C25D"
+    },
+    "registeredBetaSemanticControl": {
+      "sha256": "A03038FE68126B62054EBA11244D4EE2E1766D308983FC5C27127FD3794CB343",
+      "authority": "verification/baselines.json; five version-token replacements produce published stable"
+    }
+  },
+  "selectedChecklistIds": [
+    "L-01",
+    "L-04",
+    "L-05",
+    "L-07",
+    "L-08",
+    "L-09",
+    "A-12",
+    "C-01",
+    "C-02",
+    "C-03",
+    "C-08",
+    "C-09",
+    "C-10",
+    "C-11"
+  ],
+  "regression": {
+    "controlStates": 14,
+    "originalControlChecks": 175,
+    "originalControlFailures": 147,
+    "candidateStates": 14,
+    "candidateChecks": 203,
+    "candidateFailures": 0,
+    "controlEvidence": {
+      "path": "artifacts/ui-user-report-2026-10-21/red-details-final.json",
+      "sha256": "3EDAF0ECDD866B61F21406FB170329D34DB820BFF737FB55DB1934FF7F1815D4"
+    },
+    "candidateEvidence": {
+      "path": "artifacts/ui-user-report-2026-10-21/live-control-final-1677.json",
+      "sha256": "2E176EBB9823C952B1BB004DD02788778D5CE75AF082A1545FAE81B94E65F410"
+    }
+  },
+  "validation": {
+    "mobileFull": {
+      "passed": 144,
+      "failed": 0,
+      "profile": "acceptance",
+      "command": "full-testbed"
+    },
+    "hostCompatibility": {
+      "passed": 11,
+      "failed": 0
+    },
+    "pcFunctional": {
+      "passed": 15,
+      "failed": 0
+    },
+    "commandEvidence": {
+      "path": "artifacts/ui-user-report-2026-10-21/gate-results-1677.json",
+      "sha256": "47A2B3F2D459A583BD50BAC170D5DC8A4B485F0AAE4785B8A3139C99BB889651"
+    },
+    "logEvidence": {
+      "path": "artifacts/ui-user-report-2026-10-21/gates-1677.log",
+      "sha256": "026042E5D07913FB2696F90520ACB3ED74838BF8BAFDBBF7DC9655447A557F60"
+    },
+    "rawRunnerStatus": "in-progress",
+    "rawRunnerLimit": "No terminal result was captured for the last promotion-windows repository command; the overall runner remains in-progress and unqualified. Individual current-runtime command results are retained. Acceptance repository-all passed; final checkpoint independently validates the exact final tree.",
+    "proofRenewal": {
+      "status": "passed",
+      "evidence": {
+        "path": "artifacts/ui-user-report-2026-10-21/proof-renewal-1677.json",
+        "sha256": "E57CB5D83352BA93011908588E564D0DB18046F1B0026C996898CE8C1A2D1017"
+      },
+      "note": "Only proof-core/runtime re-executed after correcting the stale artifacts/impact.json preflight input."
+    },
+    "headerContract": {
+      "status": "PASS",
+      "evidence": {
+        "path": "testbed/artifacts/ui-live-repair-header-final.json",
+        "sha256": "A3652B20CFB2DA117A5BE914E389C0E4B3E3F33A50B97EF8C3AD83204294C10B"
+      },
+      "note": "Same1677 runtime. Standalone and later promotion-windows run pass; earlier readiness/scroll sampling failures retained."
+    },
+    "semanticDifferentials": [
+      {
+        "surface": "list",
+        "status": "PASS",
+        "evidence": {
+          "path": "artifacts/acceptance-observed-mobile-list.json",
+          "sha256": "AA18296A66D7A7D48379281E9C354BB8CB6C9B20C5BDAE73C5CC5943583DD759"
+        }
+      },
+      {
+        "surface": "article",
+        "status": "PASS",
+        "evidence": {
+          "path": "artifacts/acceptance-observed-mobile-article.json",
+          "sha256": "C41EA01D0F543DB5D530ADE585BF0DC6BFB85F954B66F3C35BB5B71EE5E59F5E"
+        }
+      },
+      {
+        "surface": "comments",
+        "status": "PASS",
+        "evidence": {
+          "path": "artifacts/acceptance-observed-mobile-comments.json",
+          "sha256": "F652E4427304D0FF81B3654D246F7B3E7D47D774109D021AFBA5217213C3498B"
+        }
+      },
+      {
+        "surface": "native-forms",
+        "status": "PASS",
+        "evidence": {
+          "path": "artifacts/acceptance-observed-mobile-native-forms.json",
+          "sha256": "EA115251E003D57B4D5FF068B3C0BA97A650DDEFA726B4C424FD27BC39AB4559"
+        }
+      }
+    ],
+    "rawPalette": {
+      "status": "FAIL",
+      "equivalent": false,
+      "evidence": {
+        "path": "artifacts/acceptance-observed-mobile-palette.json",
+        "sha256": "EBA493F8387FB704AC892A0A9AC3266F96C6FA1725BBAC7EFCDDBF4827F1C627"
+      },
+      "differingSnapshots": [
+        5,
+        12,
+        18
+      ],
+      "observedDelta": {
+        "listeners": [
+          188,
+          170
+        ],
+        "subscriberCount": [
+          4,
+          8
+        ],
+        "activeObservers": [
+          5,
+          5
+        ],
+        "timers": [
+          0,
+          0
+        ],
+        "frames": [
+          0,
+          0
+        ],
+        "intervals": [
+          0,
+          0
+        ],
+        "pendingWork": [
+          0,
+          0
+        ],
+        "errors": [
+          0,
+          0
+        ]
+      },
+      "classification": "Previously declared header ownership split only; no new difference observed. Historical478A certificate does not qualify1677. Formal full-stage admission UNKNOWN."
+    }
+  },
+  "visual": {
+    "publishedControl": "32BA",
+    "candidate": "1677",
+    "publicGetCases": [
+      "mini1660",
+      "minor980-wutheringwaves",
+      "article1660-comic_new6"
+    ],
+    "publicPairs": 12,
+    "publicCaptures": 24,
+    "controlledPairs": 20,
+    "controlledCaptures": 40,
+    "reviewGalleryPairs": 16,
+    "captureMode": "Installed Chrome with test GM shim, fresh separate contexts; same frozen public GET documents. All external POST blocked. Controlled native-shape fixtures supply comment/reply/recent states.",
+    "visionReview": "Representative final public toolbar/category/search/composer/actions and controlled light/dark normal/reply/recent images; not every capture or whole-UI approval.",
+    "publicEvidence": {
+      "path": "artifacts/ui-user-report-2026-10-21/public-comparison/report.json",
+      "sha256": "B87685A54A0B88258FFDC0D2E09140C7A90E39D1C6DED76F146130E245DD5809"
+    },
+    "controlledEvidence": {
+      "path": "artifacts/ui-user-report-2026-10-21/comparison/report.json",
+      "sha256": "126EA12FED7136CD8EC617563AC850E8DDE3C84C3C11DD86C9B88FE1882811E4"
+    },
+    "galleryEvidence": {
+      "path": "artifacts/ui-overview-2026-10-17/repairs/live-fix-20261021/comparison-manifest.json",
+      "sha256": "A07440B4C81656168D7C33FF41577B3D0A6F517519295993EF4A8037132DCEB9"
+    }
+  },
+  "actualExtension": {
+    "status": "PASS",
+    "candidateCases": 4,
+    "controlCases": 4,
+    "browser": "155.0.8059.85",
+    "extensionVersion": "5.5.0",
+    "registeredAtDocumentStart": true,
+    "cleanup": {
+      "browserClosed": true,
+      "profileRemoved": true
+    },
+    "evidence": {
+      "path": "testbed/artifacts/ui-live-repair-startup-final-2026-10-21/report.json",
+      "sha256": "2D5EF8A874456C6F212B679A13994A2BB1FF169150397B9D5A37576BC09E63C7"
+    },
+    "replayLog": {
+      "path": "artifacts/ui-user-report-2026-10-21/actual-extension-final.log",
+      "sha256": "F834C79B4726D1457AA4916B01DB982FB0AA508F6B76FB8F370314DA9D4D0BB1"
+    },
+    "scope": "Four public desktop wide/light startup routes, isolated official pinned extension; separate from GM-shim screenshots, mini-specific interactions and actual phone."
+  },
+  "testInstaller": {
+    "path": "artifacts/manual-install-2026-10-21/DC_UserFilter_Mobile_Draft_Test_UIFix_20261021.user.js",
+    "runtimeSha256": "16773D66FFBF6F0EC85B991E507A93E61EABEBB9F4A3ADADC016EC054DF758AF",
+    "sha256": "054FF61AF9B51D1E35BD635F3E13B5A91A574EE4D8D26782F6B6792C47F041E6",
+    "metadataOnly": [
+      "name",
+      "namespace"
+    ],
+    "bodyEquality": true,
+    "syntax": true
+  },
+  "preserved": [
+    "native nodes/order/events/forms/submission contracts",
+    "stored keys/shapes and filter behavior",
+    "UiPort/function/presentation separation",
+    "PC runtime",
+    "all six mixed full-visual criteria",
+    "original release installation and prior separate test identity"
+  ],
+  "limitations": [
+    "No full raw acceptance or mixed visual promotion",
+    "No all128-child-state or Concept01 readiness claim",
+    "No actual phone/Lemur or authenticated/content-write certification",
+    "980 is adopted layout proxy;390 is stress",
+    "Checkpoint remote/CI disposition is separate"
+  ],
+  "nextTask": "header-replaceability-pilot",
+  "pilotControl": {
+    "path": "artifacts/header-replaceability-pilot-2026-10-21/control-1677.user.js",
+    "sha256": "16773D66FFBF6F0EC85B991E507A93E61EABEBB9F4A3ADADC016EC054DF758AF"
+  },
+  "architectureTransitionAdmitted": false
+}

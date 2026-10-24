@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "candidateId": "phase-2-transition-exits",
+  "candidateSha256": "db9ba47223c0255bd86d3a06a9d0d82537723f049ca5b9d08ac2f1a868e2e2b5",
+  "beforeRegistrySha256": "397ea0bc9551613ba4c92aadcf800ffa6aceb54270d74f2cb69a301c47fa1b5c",
+  "afterRegistrySha256": "2275e39d9fd10662c755354df6e8c8161d9a6e19924de12a9e8d83cc0971f191",
+  "resultingRegistryVersion": 6,
+  "candidateRemoved": true,
+  "idempotencyReplayMatched": true,
+  "temporaryRefLeakDetected": false
+}
