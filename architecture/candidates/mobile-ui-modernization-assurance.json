@@ -17,6 +17,10 @@
     ],
     "upsertContracts": [
       {
+        "id": "b1-native-form-header-reuse",
+        "summary": "Existing four header adapters/presenters serve anonymous modify/delete password pages through UIModule composition. Keep hasListSurface false and native form/filters/storage/network unchanged. Reuse existing mutation bus with four header subscribers in the current native route; prefilter only original header subtrees while native password context exists. Dispose added header owners when leaving that native context and reuse existing boot rollback/recovery. Footer remains hidden by its current native-form owner. Editor activation is deferred. Existing page-head owns original top-row utility-control/utility-icon roles and quiet/themed decoration; native-form owns password-card gutters without constraining the shared heading. Recent presenter hides the old decorative remove em, preserving the native button/label/handler. Authenticated delete-confirm branch values remain unchanged. Native class/aria projection is idempotent; existing modify/delete subscribers consume matching removed subtrees so owners dispose/reconnect without perpetual refresh."
+      },
+      {
         "id": "b1-native-password-trial",
         "summary": "Authorized anonymous password-page B1 material in the existing native-form presenter. Native adapter, initialization, forms/fields/nodes/handlers, cancel, empty and keyboard-confirm remain unchanged; authenticated delete-confirm and editor are outside this bounded slice. Preserve original native browser alerts and reject real submissions during live observation."
       },
@@ -70,7 +74,7 @@
           "testbed/ui-b1-content-contract.mjs",
           "testbed/ui-live-control-contract.mjs",
           "testbed/ui-b1-gallery-search-contract.mjs",
-          "testbed/ui-b1-password-contract.mjs"
+          "testbed/ui-b1-password-contract.mjs", "testbed/ui-b1-form-header-contract.mjs"
         ],
         "contractRefs": [
           "proof-integrity",

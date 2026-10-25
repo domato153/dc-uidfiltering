@@ -21,16 +21,18 @@
             min-width: 0 !important;
             min-height: calc(100dvh - 170px) !important;
             margin: 0 !important;
-            padding: 6px 12px 28px !important;
             background: transparent !important;
         }
+        [data-dcuf-native-form-role="page-container"][data-dcuf-native-form-state="password"] { padding: 6px 0 28px !important; }
+        [data-dcuf-native-form-role="page-container"][data-dcuf-native-form-state="delete-confirm"] { padding: 6px 12px 28px !important; }
         [data-dcuf-native-form-role="page-section"][data-dcuf-native-form-state="password"],
         [data-dcuf-native-form-role="page-section"][data-dcuf-native-form-state="delete-confirm"] {
             box-sizing: border-box !important;
-            width: min(760px, 100%) !important;
             min-width: 0 !important;
             margin: 0 auto !important;
         }
+        [data-dcuf-native-form-role="page-section"][data-dcuf-native-form-state="password"] { width: 100% !important; }
+        [data-dcuf-native-form-role="page-section"][data-dcuf-native-form-state="delete-confirm"] { width: min(760px, 100%) !important; }
         [data-dcuf-native-form-role="page-header"][data-dcuf-native-form-state="password"],
         [data-dcuf-native-form-role="page-header"][data-dcuf-native-form-state="delete-confirm"] {
             width: 100% !important;
@@ -45,7 +47,7 @@
             width: 100% !important;
             min-height: min(520px, calc(100dvh - 250px)) !important;
             margin: 0 !important;
-            padding: 24px 0 !important;
+            padding: 24px 12px !important;
             place-items: center !important;
         }
         [data-dcuf-native-form-role="content"][data-dcuf-native-form-state="password"],
@@ -246,13 +248,14 @@
             box-shadow: var(--dcuf-b1-shadow) !important;
         }
         @media screen and (max-width: 480px) {
-            [data-dcuf-native-form-role="page-container"][data-dcuf-native-form-state="password"],
+            [data-dcuf-native-form-role="page-container"][data-dcuf-native-form-state="password"] { padding: 4px 0 20px !important; }
             [data-dcuf-native-form-role="page-container"][data-dcuf-native-form-state="delete-confirm"] { padding: 4px 10px 20px !important; }
             [data-dcuf-native-form-role="form"][data-dcuf-native-form-state="password"],
             [data-dcuf-native-form-role="form"][data-dcuf-native-form-state="delete-confirm"] {
                 min-height: calc(100dvh - 220px) !important;
-                padding: 16px 0 !important;
             }
+            [data-dcuf-native-form-role="form"][data-dcuf-native-form-state="password"] { padding: 16px 10px !important; }
+            [data-dcuf-native-form-role="form"][data-dcuf-native-form-state="delete-confirm"] { padding: 16px 0 !important; }
             [data-dcuf-native-form-role="panel"][data-dcuf-native-form-state="password"] {
                 padding: 24px 18px 18px !important;
             }

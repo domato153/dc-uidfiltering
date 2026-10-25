@@ -127,7 +127,7 @@
                     const original = element.getAttribute(ROLE_ATTRIBUTE);
                     state.roleBaselines.set(element, OWNED_ROLES.has(original) ? null : original);
                 }
-                element.setAttribute(ROLE_ATTRIBUTE, role);
+                if (element.getAttribute(ROLE_ATTRIBUTE) !== role) element.setAttribute(ROLE_ATTRIBUTE, role);
             });
         };
 
@@ -204,8 +204,8 @@
             const presentation = __dcufHeaderRecentVisitPresenter.describeControls(Object.freeze({ canPrev, canNext }));
             prev?.classList.toggle('on', presentation.prev.on);
             next?.classList.toggle('on', presentation.next.on);
-            prev?.setAttribute('aria-disabled', presentation.prev.ariaDisabled);
-            next?.setAttribute('aria-disabled', presentation.next.ariaDisabled);
+            if (prev && prev.getAttribute('aria-disabled') !== presentation.prev.ariaDisabled) prev.setAttribute('aria-disabled', presentation.prev.ariaDisabled);
+            if (next && next.getAttribute('aria-disabled') !== presentation.next.ariaDisabled) next.setAttribute('aria-disabled', presentation.next.ariaDisabled);
         };
 
         const cancelPending = (state) => {
@@ -331,7 +331,11 @@
 
         const ensureMutationSubscription = (runtimeCoordinator) => {
             if (!runtimeCoordinator || typeof runtimeCoordinator.subscribeMutations !== 'function') return;
-            if (runtimeCoordinator.pageSupports?.(['list-surface']) === false) return;
+            const password = (window.__dcufPageContext?.isModify || window.__dcufPageContext?.isDelete)
+                && document.body?.getAttribute('data-dcuf-native-form-state') === 'password';
+            const contexts = window.__dcufPageContext?.hasListSurface ? ['list-surface']
+                : password ? [window.__dcufPageContext.type] : [];
+            if (!contexts.length || runtimeCoordinator.pageSupports?.(contexts) === false) return;
             if (activeCoordinator === runtimeCoordinator && typeof mutationUnsubscribe === 'function') return;
             mutationUnsubscribe?.();
             mutationUnsubscribe = null;
@@ -350,7 +354,7 @@
                     ));
                     if (movedRoot || changedInsideRoot) refresh(document);
                 },
-                { contexts: ['list-surface'] }
+                { contexts }
             );
         };
 

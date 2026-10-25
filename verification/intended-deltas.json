@@ -1385,6 +1385,70 @@
       "normalizer": "semantic-observation-v1",
       "unknownDifferencePolicy": "fail",
       "missingApplicabilityPolicy": "fail"
+    },
+    {
+      "id": "b1-native-form-header-reuse-v1",
+      "status": "active",
+      "surfaces": [
+        "header-navigation",
+        "write-edit-delete-popup"
+      ],
+      "allowed": [
+        {
+          "kind": "geometry",
+          "surface": "header-navigation",
+          "scope": "Reuse the existing list B1 shell/GNB/recent/page-head on anonymous native password routes; preserve hasListSurface=false and form/filter/network behavior. Header bridge owns its fixed-width reset and GNB owns the same hidden statistics preparation as the list; heading utility ink uses the existing theme. Existing footer concealment retained. No new navigation design, menu, native-node relocation or editor activation. User follow-up: center the shared recent-visit trigger chevron with a font-independent symmetric SVG mask; preserve the original trigger and popup lifecycle across list/view/password routes. Finish reuse: password card gutters belong to its form rather than constraining the shared gallery title/tools parent. Native top-row utilities get quiet controls and theme-aware chevrons through the existing page-head adapter/presenter; hide only the recent remove button decorative em while retaining its native label/handler. Same major-gallery list also had the residual icon/background defect.",
+          "reason": "User requested exact reuse of the existing list header and footer category concealment, not a separate header redesign.",
+          "contractTests": [
+            "testbed/ui-b1-form-header-contract.mjs",
+            "testbed/ui-b1-password-contract.mjs",
+            "testbed/run-tests.mjs",
+            "testbed/run-native-form-differential.mjs"
+          ]
+        },
+        {
+          "kind": "color-role",
+          "surface": "header-navigation",
+          "scope": "Reuse the existing list B1 shell/GNB/recent/page-head on anonymous native password routes; preserve hasListSurface=false and form/filter/network behavior. Header bridge owns its fixed-width reset and GNB owns the same hidden statistics preparation as the list; heading utility ink uses the existing theme. Existing footer concealment retained. No new navigation design, menu, native-node relocation or editor activation. Finish reuse: password card gutters belong to its form rather than constraining the shared gallery title/tools parent. Native top-row utilities get quiet controls and theme-aware chevrons through the existing page-head adapter/presenter; hide only the recent remove button decorative em while retaining its native label/handler. Same major-gallery list also had the residual icon/background defect.",
+          "reason": "User requested exact reuse of the existing list header and footer category concealment, not a separate header redesign.",
+          "contractTests": [
+            "testbed/ui-b1-form-header-contract.mjs",
+            "testbed/ui-b1-password-contract.mjs",
+            "testbed/run-tests.mjs",
+            "testbed/run-native-form-differential.mjs"
+          ]
+        },
+        {
+          "kind": "spacing",
+          "surface": "header-navigation",
+          "scope": "Reuse the existing list B1 shell/GNB/recent/page-head on anonymous native password routes; preserve hasListSurface=false and form/filter/network behavior. Header bridge owns its fixed-width reset and GNB owns the same hidden statistics preparation as the list; heading utility ink uses the existing theme. Existing footer concealment retained. No new navigation design, menu, native-node relocation or editor activation. Finish reuse: password card gutters belong to its form rather than constraining the shared gallery title/tools parent. Native top-row utilities get quiet controls and theme-aware chevrons through the existing page-head adapter/presenter; hide only the recent remove button decorative em while retaining its native label/handler. Same major-gallery list also had the residual icon/background defect.",
+          "reason": "User requested exact reuse of the existing list header and footer category concealment, not a separate header redesign.",
+          "contractTests": [
+            "testbed/ui-b1-form-header-contract.mjs",
+            "testbed/ui-b1-password-contract.mjs",
+            "testbed/run-tests.mjs",
+            "testbed/run-native-form-differential.mjs"
+          ]
+        }
+      ],
+      "invariants": [
+        "filter-result",
+        "storage-trace",
+        "network-trace",
+        "host-node-identity",
+        "host-node-order",
+        "native-handler",
+        "native-form-fields",
+        "native-submit-trace",
+        "focus",
+        "lifecycle-resources",
+        "pc-result",
+        "accessibility",
+        "geometry-containment"
+      ],
+      "normalizer": "semantic-observation-v1",
+      "unknownDifferencePolicy": "fail",
+      "missingApplicabilityPolicy": "fail"
     }
   ]
 }

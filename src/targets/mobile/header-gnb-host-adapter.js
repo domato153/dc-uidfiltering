@@ -26,7 +26,7 @@
     const __dcufHeaderGnbHostAdapter = (() => {
         const ROOT_SELECTOR = '.gnb_bar';
         const ROLE_ATTRIBUTE = 'data-dcuf-header-gnb-role';
-        const OWNED_ROLES = new Set(['root', 'nav', 'list', 'current-link']);
+        const OWNED_ROLES = new Set(['root', 'nav', 'list', 'current-link', 'summary']);
         const STYLE_ID = 'dcuf-header-gnb-style';
         const SUBSCRIBER_KEY = 'header-gnb-style';
         const states = new Map();
@@ -34,7 +34,9 @@
         let mutationUnsubscribe = null;
         let styleOwner = null;
 
-        const supportsSurface = () => window.__dcufPageContext?.hasListSurface === true;
+        const supportsSurface = () => window.__dcufPageContext?.hasListSurface === true
+            || ((window.__dcufPageContext?.isModify || window.__dcufPageContext?.isDelete)
+                && document.body?.getAttribute('data-dcuf-native-form-state') === 'password');
 
         const ensureStyle = () => {
             if (!supportsSurface()) return false;
@@ -69,6 +71,7 @@
             const desired = new Map([[state.root, 'root']]);
             state.root.querySelectorAll('nav.gnb').forEach((nav) => desired.set(nav, 'nav'));
             state.root.querySelectorAll('.gnb_list').forEach((list) => desired.set(list, 'list'));
+            state.root.querySelectorAll('.gall_exposure').forEach((summary) => desired.set(summary, 'summary'));
             state.root.querySelectorAll('.gnb_list > li > a.on, .gnb_list > li.on > a').forEach(link => desired.set(link, 'current-link'));
             // A native replacement can copy our previous selection without its class.
             state.root.querySelectorAll('[data-dcuf-header-gnb-role="current-link"]').forEach((link) => {
@@ -129,7 +132,9 @@
 
         const ensureMutationSubscription = (runtimeCoordinator) => {
             if (!runtimeCoordinator || typeof runtimeCoordinator.subscribeMutations !== 'function') return;
-            if (runtimeCoordinator.pageSupports?.(['list-surface']) === false) return;
+            const contexts = window.__dcufPageContext?.hasListSurface ? ['list-surface']
+                : supportsSurface() ? [window.__dcufPageContext.type] : [];
+            if (!contexts.length || runtimeCoordinator.pageSupports?.(contexts) === false) return;
             if (activeCoordinator === runtimeCoordinator && typeof mutationUnsubscribe === 'function') return;
             mutationUnsubscribe?.();
             activeCoordinator = runtimeCoordinator;
@@ -147,7 +152,7 @@
                         && record.target instanceof Element && record.target.matches('.gnb_list > li, .gnb_list > li > a') && record.target.closest(ROOT_SELECTOR));
                     if (movedRoot || changedInsideRoot || selectedClassChanged) refresh(document);
                 },
-                { contexts: ['list-surface'] }
+                { contexts }
             );
         };
 

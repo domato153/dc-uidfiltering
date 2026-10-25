@@ -57,3 +57,5 @@ When reporting a performance patch, state:
 - whether the patch was local or required a broader refactor
 - which flows were checked, such as list, article, comments, settings, popup, boot overlay, or PC filtering
 - any remaining regression risk or manual check that still matters
+
+- Password-header reuse exposed inherited native-form class churn: same-fixture control generation3→83/500ms, intermediate candidate10→138/500ms from the same class loop plus repeated recent aria writes. Desired-state projection removed the work; final AEF0633C modify/delete stay generation1/pending0 at rest, dispose/reconnect on actual form removal/reinsertion and settle again. This is a narrow correctness/idle-cost repair, not a broad site performance claim.

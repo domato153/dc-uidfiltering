@@ -181,7 +181,7 @@
         ${selectors.links} > [data-dcuf-header-utility-toggle] { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 34px; border: 1px solid var(--dcuf-theme-border); border-radius: 9px; background: var(--dcuf-theme-surface-input); color: var(--dcuf-theme-fg-muted); font: 700 13px/1 system-ui, sans-serif; cursor: pointer; }
         ${selectors.links} > div { flex: none; position: relative; }
         ${selectors.links} a { display: inline-flex; align-items: center; min-height: 24px; padding-inline: 3px; font-size: 10px; color: var(--dcuf-theme-fg-muted); }
-        ${selectors.bridge} { grid-area: 1 / 4; min-width: 0; align-self: center; }
+        ${selectors.layout} > ${selectors.bridge} { grid-area: 1 / 4; width: 100%; max-width: 100%; min-width: 0; margin: 0; align-self: center; }
         /* The native promotion writes inline top/left; preserve its dismiss handler. */
         ${selectors.nativeTip} { position: fixed; top: auto !important; left: 20px !important; bottom: 20px; right: auto; z-index: 1008; width: max-content; max-width: min(280px, calc(100vw - 40px)); height: auto; padding: 8px 10px; border: 1px solid var(--dcuf-theme-border); border-radius: 10px; background: var(--dcuf-theme-surface-raised); color: var(--dcuf-theme-fg-muted); font: 11px/1.5 system-ui, sans-serif; white-space: normal; box-shadow: var(--dcuf-theme-popup-shadow); box-sizing: border-box; }
         ${selectors.nativeTip} > div { height: auto; padding: 0; border: 0; background: transparent; color: inherit; }
@@ -193,7 +193,7 @@
             ${selectors.logo} { grid-area: 1 / 1; margin: 0 0 0 22px; }
             ${selectors.links} { grid-area: 1 / 2; margin: 0 16px 0 0; }
             ${selectors.searchWrap} { grid-area: 2 / 1; width: calc(100% - 22px); margin: 0 0 8px 22px; }
-            ${selectors.bridge} { grid-area: 2 / 2; }
+            ${selectors.layout} > ${selectors.bridge} { grid-area: 2 / 2; }
         }
         ${selectors.darkRoot} ${selectors.logo} > a:first-child { filter: brightness(0) invert(1); }
 `

@@ -66,6 +66,7 @@
             css: `
         ${selectors.root} { grid-area: 1 / 2; display: block; width: 100% !important; max-width: 1180px; min-width: 0 !important; height: auto; margin: 0; padding: 0; box-sizing: border-box !important; background: transparent; border: 0; }
         ${selectors.nav} { width: 100%; min-width: 0; height: auto; padding: 0; box-sizing: border-box; display: flex !important; justify-content: flex-start; }
+        ${selectors.nav} > [data-dcuf-header-gnb-role="summary"] { display: none; }
         ${selectors.list} { display: flex; flex-wrap: wrap; gap: 0 12px; height: auto; justify-content: flex-start; width: 100%; padding: 0; margin: 0; list-style: none; }
         ${selectors.list} > li { flex: none; float: none; width: auto; height: auto; margin: 0; }
         ${selectors.list} > li > a { display: inline-flex; align-items: center; min-height: 28px; height: auto; padding: 0 2px; border: 0; border-bottom: 2px solid transparent; border-radius: 0; background: transparent; color: var(--dcuf-theme-fg-muted); font-size: 11px; line-height: 1.4; text-shadow: none; text-decoration: none; }

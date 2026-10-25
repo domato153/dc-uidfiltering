@@ -161,16 +161,10 @@
             }
 
             if (!(form instanceof HTMLFormElement)) return;
-            OWNED_FORM_CLASSES.forEach((className) => toggleClass(form, className, false));
-            if (kind === 'modify-password') {
-                toggleClass(form, 'dcuf-modify-password-form', true);
-                toggleClass(form, 'dcuf-password-form', true);
-            } else if (kind === 'delete-password') {
-                toggleClass(form, 'dcuf-delete-password-form', true);
-                toggleClass(form, 'dcuf-password-form', true);
-            } else if (kind === 'delete-confirm') {
-                toggleClass(form, 'dcuf-delete-confirm-page', true);
-            }
+            toggleClass(form, 'dcuf-modify-password-form', kind === 'modify-password');
+            toggleClass(form, 'dcuf-delete-password-form', kind === 'delete-password');
+            toggleClass(form, 'dcuf-password-form', kind === 'modify-password' || kind === 'delete-password');
+            toggleClass(form, 'dcuf-delete-confirm-page', kind === 'delete-confirm');
         };
 
         const mark = (element, role, state = '') => {

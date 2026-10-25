@@ -163,10 +163,14 @@
                 ].join(', ');
             }
             if (pageContext.isWriteSurface) {
-                return 'form#write, form[name="modify"][action*="modify_submit"], #write_wrap, .gall_write, .write_box, form[name="password_confirm"], form[action*="modify_password_submit"], .no_memberwrap';
+                const header = document.body?.getAttribute('data-dcuf-native-form-state') === 'password'
+                    ? '.dcheader.typea, .page_head, .gnb_bar, .newvisit_history, .visit_bookmark, ' : '';
+                return header + 'form#write, form[name="modify"][action*="modify_submit"], #write_wrap, .gall_write, .write_box, form[name="password_confirm"], form[action*="modify_password_submit"], .no_memberwrap';
             }
             if (pageContext.isDelete) {
-                return 'form[name="delete"], form[action*="delete_password_submit"], .no_memberwrap';
+                const header = document.body?.getAttribute('data-dcuf-native-form-state') === 'password'
+                    ? '.dcheader.typea, .page_head, .gnb_bar, .newvisit_history, .visit_bookmark, ' : '';
+                return header + 'form[name="delete"], form[action*="delete_password_submit"], .no_memberwrap';
             }
             return shared.join(', ');
         },

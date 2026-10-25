@@ -5566,16 +5566,18 @@ const __dcufSettingsPresenter = (() => {
             min-width: 0 !important;
             min-height: calc(100dvh - 170px) !important;
             margin: 0 !important;
-            padding: 6px 12px 28px !important;
             background: transparent !important;
         }
+        [data-dcuf-native-form-role="page-container"][data-dcuf-native-form-state="password"] { padding: 6px 0 28px !important; }
+        [data-dcuf-native-form-role="page-container"][data-dcuf-native-form-state="delete-confirm"] { padding: 6px 12px 28px !important; }
         [data-dcuf-native-form-role="page-section"][data-dcuf-native-form-state="password"],
         [data-dcuf-native-form-role="page-section"][data-dcuf-native-form-state="delete-confirm"] {
             box-sizing: border-box !important;
-            width: min(760px, 100%) !important;
             min-width: 0 !important;
             margin: 0 auto !important;
         }
+        [data-dcuf-native-form-role="page-section"][data-dcuf-native-form-state="password"] { width: 100% !important; }
+        [data-dcuf-native-form-role="page-section"][data-dcuf-native-form-state="delete-confirm"] { width: min(760px, 100%) !important; }
         [data-dcuf-native-form-role="page-header"][data-dcuf-native-form-state="password"],
         [data-dcuf-native-form-role="page-header"][data-dcuf-native-form-state="delete-confirm"] {
             width: 100% !important;
@@ -5590,7 +5592,7 @@ const __dcufSettingsPresenter = (() => {
             width: 100% !important;
             min-height: min(520px, calc(100dvh - 250px)) !important;
             margin: 0 !important;
-            padding: 24px 0 !important;
+            padding: 24px 12px !important;
             place-items: center !important;
         }
         [data-dcuf-native-form-role="content"][data-dcuf-native-form-state="password"],
@@ -5791,13 +5793,14 @@ const __dcufSettingsPresenter = (() => {
             box-shadow: var(--dcuf-b1-shadow) !important;
         }
         @media screen and (max-width: 480px) {
-            [data-dcuf-native-form-role="page-container"][data-dcuf-native-form-state="password"],
+            [data-dcuf-native-form-role="page-container"][data-dcuf-native-form-state="password"] { padding: 4px 0 20px !important; }
             [data-dcuf-native-form-role="page-container"][data-dcuf-native-form-state="delete-confirm"] { padding: 4px 10px 20px !important; }
             [data-dcuf-native-form-role="form"][data-dcuf-native-form-state="password"],
             [data-dcuf-native-form-role="form"][data-dcuf-native-form-state="delete-confirm"] {
                 min-height: calc(100dvh - 220px) !important;
-                padding: 16px 0 !important;
             }
+            [data-dcuf-native-form-role="form"][data-dcuf-native-form-state="password"] { padding: 16px 10px !important; }
+            [data-dcuf-native-form-role="form"][data-dcuf-native-form-state="delete-confirm"] { padding: 16px 0 !important; }
             [data-dcuf-native-form-role="panel"][data-dcuf-native-form-state="password"] {
                 padding: 24px 18px 18px !important;
             }
@@ -7160,16 +7163,10 @@ const __dcufSettingsPresenter = (() => {
             }
 
             if (!(form instanceof HTMLFormElement)) return;
-            OWNED_FORM_CLASSES.forEach((className) => toggleClass(form, className, false));
-            if (kind === 'modify-password') {
-                toggleClass(form, 'dcuf-modify-password-form', true);
-                toggleClass(form, 'dcuf-password-form', true);
-            } else if (kind === 'delete-password') {
-                toggleClass(form, 'dcuf-delete-password-form', true);
-                toggleClass(form, 'dcuf-password-form', true);
-            } else if (kind === 'delete-confirm') {
-                toggleClass(form, 'dcuf-delete-confirm-page', true);
-            }
+            toggleClass(form, 'dcuf-modify-password-form', kind === 'modify-password');
+            toggleClass(form, 'dcuf-delete-password-form', kind === 'delete-password');
+            toggleClass(form, 'dcuf-password-form', kind === 'modify-password' || kind === 'delete-password');
+            toggleClass(form, 'dcuf-delete-confirm-page', kind === 'delete-confirm');
         };
 
         const mark = (element, role, state = '') => {
@@ -9576,7 +9573,7 @@ const __dcufSettingsPresenter = (() => {
         ${selectors.links} > [data-dcuf-header-utility-toggle] { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 34px; border: 1px solid var(--dcuf-theme-border); border-radius: 9px; background: var(--dcuf-theme-surface-input); color: var(--dcuf-theme-fg-muted); font: 700 13px/1 system-ui, sans-serif; cursor: pointer; }
         ${selectors.links} > div { flex: none; position: relative; }
         ${selectors.links} a { display: inline-flex; align-items: center; min-height: 24px; padding-inline: 3px; font-size: 10px; color: var(--dcuf-theme-fg-muted); }
-        ${selectors.bridge} { grid-area: 1 / 4; min-width: 0; align-self: center; }
+        ${selectors.layout} > ${selectors.bridge} { grid-area: 1 / 4; width: 100%; max-width: 100%; min-width: 0; margin: 0; align-self: center; }
         /* The native promotion writes inline top/left; preserve its dismiss handler. */
         ${selectors.nativeTip} { position: fixed; top: auto !important; left: 20px !important; bottom: 20px; right: auto; z-index: 1008; width: max-content; max-width: min(280px, calc(100vw - 40px)); height: auto; padding: 8px 10px; border: 1px solid var(--dcuf-theme-border); border-radius: 10px; background: var(--dcuf-theme-surface-raised); color: var(--dcuf-theme-fg-muted); font: 11px/1.5 system-ui, sans-serif; white-space: normal; box-shadow: var(--dcuf-theme-popup-shadow); box-sizing: border-box; }
         ${selectors.nativeTip} > div { height: auto; padding: 0; border: 0; background: transparent; color: inherit; }
@@ -9588,7 +9585,7 @@ const __dcufSettingsPresenter = (() => {
             ${selectors.logo} { grid-area: 1 / 1; margin: 0 0 0 22px; }
             ${selectors.links} { grid-area: 1 / 2; margin: 0 16px 0 0; }
             ${selectors.searchWrap} { grid-area: 2 / 1; width: calc(100% - 22px); margin: 0 0 8px 22px; }
-            ${selectors.bridge} { grid-area: 2 / 2; }
+            ${selectors.layout} > ${selectors.bridge} { grid-area: 2 / 2; }
         }
         ${selectors.darkRoot} ${selectors.logo} > a:first-child { filter: brightness(0) invert(1); }
 `
@@ -9714,7 +9711,9 @@ const __dcufSettingsPresenter = (() => {
             state.utility = {list, button, attributes, onToggle};
         };
 
-        const supportsSurface = () => window.__dcufPageContext?.hasListSurface === true;
+        const supportsSurface = () => window.__dcufPageContext?.hasListSurface === true
+            || ((window.__dcufPageContext?.isModify || window.__dcufPageContext?.isDelete)
+                && document.body?.getAttribute('data-dcuf-native-form-state') === 'password');
 
         const ensureStyle = () => {
             if (!supportsSurface()) return false;
@@ -9852,7 +9851,9 @@ const __dcufSettingsPresenter = (() => {
 
         const ensureMutationSubscription = (runtimeCoordinator) => {
             if (!runtimeCoordinator || typeof runtimeCoordinator.subscribeMutations !== 'function') return;
-            if (runtimeCoordinator.pageSupports?.(['list-surface']) === false) return;
+            const contexts = window.__dcufPageContext?.hasListSurface ? ['list-surface']
+                : supportsSurface() ? [window.__dcufPageContext.type] : [];
+            if (!contexts.length || runtimeCoordinator.pageSupports?.(contexts) === false) return;
             if (activeCoordinator === runtimeCoordinator && typeof mutationUnsubscribe === 'function') return;
             mutationUnsubscribe?.();
             activeCoordinator = runtimeCoordinator;
@@ -9868,7 +9869,7 @@ const __dcufSettingsPresenter = (() => {
                     ));
                     if (movedRoot || changedInsideRoot) refresh(document);
                 },
-                { contexts: ['list-surface'] }
+                { contexts }
             );
         };
 
@@ -10012,8 +10013,12 @@ const __dcufSettingsPresenter = (() => {
             flex-wrap: wrap;
             align-items: center;
             gap: 8px;
+            color: var(--dcuf-theme-fg-muted);
         }
         ${selectors.clearfix} { content: none; display: none; }
+        ${selectors.right} [data-dcuf-gallery-page-head-role="utility-control"] { display: inline-flex; align-items: center; justify-content: center; gap: 5px; min-width: 28px; min-height: 28px; height: auto; padding: 0 4px; border: 0; border-radius: 6px; background: transparent; color: var(--dcuf-theme-fg-muted); font: 500 12px/1.4 system-ui,sans-serif; cursor: pointer; }
+        ${selectors.right} [data-dcuf-gallery-page-head-role="utility-control"]:is(:hover,:focus-visible) { background: var(--dcuf-theme-accent-soft); color: var(--dcuf-theme-accent-ink); }
+        ${selectors.right} [data-dcuf-gallery-page-head-role="utility-icon"] { position: static; inset: auto; display: block; flex: 0 0 10px; width: 10px; height: 10px; margin: 0; background: currentColor; mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='m4 6 4 4 4-4' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat; }
         [data-dcuf-gallery-page-head-role="settings-anchor"] { position: relative; }
         ${selectors.root} [data-dcuf-gallery-page-head-role="settings-layer"] { position: absolute; inset: calc(100% + 8px) 0 auto auto; box-sizing: border-box; width: 240px; max-width: calc(100vw - 24px); margin: 0; padding: 8px; border: 1px solid var(--dcuf-b1-rim); border-radius: 14px; background: var(--dcuf-b1-sheen),var(--dcuf-b1-floating); color: var(--dcuf-theme-fg); backdrop-filter: blur(24px); box-shadow: var(--dcuf-b1-shadow); z-index: 1020; }
         [data-dcuf-gallery-page-head-role="settings-layer"] > .inner { margin: 0; padding: 0; border: 0; background: transparent; }
@@ -10092,7 +10097,7 @@ const __dcufSettingsPresenter = (() => {
     const __dcufGalleryPageHeadHostAdapter = (() => {
         const ROOT_SELECTOR = '.page_head';
         const ROLE_ATTRIBUTE = 'data-dcuf-gallery-page-head-role';
-        const OWNED_ROLES = new Set(['root', 'left', 'right', 'both', 'settings-anchor', 'settings-layer', 'menu-list', 'menu-control', 'menu-toggle', 'guide-layer', 'guide-backdrop', 'layer-anchor', 'layer-panel', 'layer-head', 'layer-title', 'layer-body', 'layer-close', 'layer-actions']);
+        const OWNED_ROLES = new Set(['root', 'left', 'right', 'both', 'utility-control', 'utility-icon', 'settings-anchor', 'settings-layer', 'menu-list', 'menu-control', 'menu-toggle', 'guide-layer', 'guide-backdrop', 'layer-anchor', 'layer-panel', 'layer-head', 'layer-title', 'layer-body', 'layer-close', 'layer-actions']);
         const EXTERNAL_LAYER_SELECTOR = '.user_guide_popup.pop_wrap, .user_guide_popup.pop_bg';
         const STYLE_ID = 'dcuf-gallery-page-head-style';
         const SUBSCRIBER_KEY = 'gallery-page-head-style';
@@ -10101,7 +10106,9 @@ const __dcufSettingsPresenter = (() => {
         let mutationUnsubscribe = null;
         let styleOwner = null;
 
-        const supportsSurface = () => window.__dcufPageContext?.hasListSurface === true;
+        const supportsSurface = () => window.__dcufPageContext?.hasListSurface === true
+            || ((window.__dcufPageContext?.isModify || window.__dcufPageContext?.isDelete)
+                && document.body?.getAttribute('data-dcuf-native-form-state') === 'password');
 
         const ensureStyle = () => {
             if (!supportsSurface()) return false;
@@ -10141,6 +10148,13 @@ const __dcufSettingsPresenter = (() => {
                 if (left || right) desired.set(element, left && right ? 'both' : left ? 'left' : 'right');
             });
             const parts = (root, selector, role) => root?.querySelectorAll(selector).forEach((element) => desired.set(element, role));
+            Array.from(state.root.children).filter(element => element.classList.contains('fr')).forEach(right => {
+                right.querySelectorAll(':scope > button, :scope > span > button, :scope > div > button').forEach(button => {
+                    if (button.classList.contains('dcuf-header-drawer__toggle') || button.closest('.pop_tipbox, .pop_wrap, .pop_bg')) return;
+                    desired.set(button, 'utility-control');
+                    parts(button, 'em.icon_relate_more, em.icon_listmore', 'utility-icon');
+                });
+            });
             const menu = state.root.querySelector('#setting_list');
             if (menu) {
                 if (menu.parentElement) desired.set(menu.parentElement, 'settings-anchor');
@@ -10214,7 +10228,9 @@ const __dcufSettingsPresenter = (() => {
 
         const ensureMutationSubscription = (runtimeCoordinator) => {
             if (!runtimeCoordinator || typeof runtimeCoordinator.subscribeMutations !== 'function') return;
-            if (runtimeCoordinator.pageSupports?.(['list-surface']) === false) return;
+            const contexts = window.__dcufPageContext?.hasListSurface ? ['list-surface']
+                : supportsSurface() ? [window.__dcufPageContext.type] : [];
+            if (!contexts.length || runtimeCoordinator.pageSupports?.(contexts) === false) return;
             if (activeCoordinator === runtimeCoordinator && typeof mutationUnsubscribe === 'function') return;
             mutationUnsubscribe?.();
             activeCoordinator = runtimeCoordinator;
@@ -10232,7 +10248,7 @@ const __dcufSettingsPresenter = (() => {
                     ));
                     if (movedRoot || changedInsideRoot) refresh(document);
                 },
-                { contexts: ['list-surface'] }
+                { contexts }
             );
         };
 
@@ -10328,6 +10344,7 @@ const __dcufSettingsPresenter = (() => {
             css: `
         ${selectors.root} { grid-area: 1 / 2; display: block; width: 100% !important; max-width: 1180px; min-width: 0 !important; height: auto; margin: 0; padding: 0; box-sizing: border-box !important; background: transparent; border: 0; }
         ${selectors.nav} { width: 100%; min-width: 0; height: auto; padding: 0; box-sizing: border-box; display: flex !important; justify-content: flex-start; }
+        ${selectors.nav} > [data-dcuf-header-gnb-role="summary"] { display: none; }
         ${selectors.list} { display: flex; flex-wrap: wrap; gap: 0 12px; height: auto; justify-content: flex-start; width: 100%; padding: 0; margin: 0; list-style: none; }
         ${selectors.list} > li { flex: none; float: none; width: auto; height: auto; margin: 0; }
         ${selectors.list} > li > a { display: inline-flex; align-items: center; min-height: 28px; height: auto; padding: 0 2px; border: 0; border-bottom: 2px solid transparent; border-radius: 0; background: transparent; color: var(--dcuf-theme-fg-muted); font-size: 11px; line-height: 1.4; text-shadow: none; text-decoration: none; }
@@ -10372,7 +10389,7 @@ const __dcufSettingsPresenter = (() => {
     const __dcufHeaderGnbHostAdapter = (() => {
         const ROOT_SELECTOR = '.gnb_bar';
         const ROLE_ATTRIBUTE = 'data-dcuf-header-gnb-role';
-        const OWNED_ROLES = new Set(['root', 'nav', 'list', 'current-link']);
+        const OWNED_ROLES = new Set(['root', 'nav', 'list', 'current-link', 'summary']);
         const STYLE_ID = 'dcuf-header-gnb-style';
         const SUBSCRIBER_KEY = 'header-gnb-style';
         const states = new Map();
@@ -10380,7 +10397,9 @@ const __dcufSettingsPresenter = (() => {
         let mutationUnsubscribe = null;
         let styleOwner = null;
 
-        const supportsSurface = () => window.__dcufPageContext?.hasListSurface === true;
+        const supportsSurface = () => window.__dcufPageContext?.hasListSurface === true
+            || ((window.__dcufPageContext?.isModify || window.__dcufPageContext?.isDelete)
+                && document.body?.getAttribute('data-dcuf-native-form-state') === 'password');
 
         const ensureStyle = () => {
             if (!supportsSurface()) return false;
@@ -10415,6 +10434,7 @@ const __dcufSettingsPresenter = (() => {
             const desired = new Map([[state.root, 'root']]);
             state.root.querySelectorAll('nav.gnb').forEach((nav) => desired.set(nav, 'nav'));
             state.root.querySelectorAll('.gnb_list').forEach((list) => desired.set(list, 'list'));
+            state.root.querySelectorAll('.gall_exposure').forEach((summary) => desired.set(summary, 'summary'));
             state.root.querySelectorAll('.gnb_list > li > a.on, .gnb_list > li.on > a').forEach(link => desired.set(link, 'current-link'));
             // A native replacement can copy our previous selection without its class.
             state.root.querySelectorAll('[data-dcuf-header-gnb-role="current-link"]').forEach((link) => {
@@ -10475,7 +10495,9 @@ const __dcufSettingsPresenter = (() => {
 
         const ensureMutationSubscription = (runtimeCoordinator) => {
             if (!runtimeCoordinator || typeof runtimeCoordinator.subscribeMutations !== 'function') return;
-            if (runtimeCoordinator.pageSupports?.(['list-surface']) === false) return;
+            const contexts = window.__dcufPageContext?.hasListSurface ? ['list-surface']
+                : supportsSurface() ? [window.__dcufPageContext.type] : [];
+            if (!contexts.length || runtimeCoordinator.pageSupports?.(contexts) === false) return;
             if (activeCoordinator === runtimeCoordinator && typeof mutationUnsubscribe === 'function') return;
             mutationUnsubscribe?.();
             activeCoordinator = runtimeCoordinator;
@@ -10493,7 +10515,7 @@ const __dcufSettingsPresenter = (() => {
                         && record.target instanceof Element && record.target.matches('.gnb_list > li, .gnb_list > li > a') && record.target.closest(ROOT_SELECTOR));
                     if (movedRoot || changedInsideRoot || selectedClassChanged) refresh(document);
                 },
-                { contexts: ['list-surface'] }
+                { contexts }
             );
         };
 
@@ -10581,7 +10603,7 @@ const __dcufSettingsPresenter = (() => {
         ${selectors.menuControls} { display: none !important; align-items: center; justify-content: center; flex: 0 0 auto; position: static !important; inset: auto !important; transform: none; margin: 0 !important; padding: 0 4px; overflow: visible; }
         ${selectors.trigger} { display: inline-flex !important; gap: 7px; width: 116px; min-height: 38px; border: 1px solid var(--dcuf-b1-rim, var(--dcuf-theme-border)); border-radius: 10px; background: linear-gradient(150deg, #ffffff20, transparent), var(--dcuf-theme-accent-soft); box-shadow: inset 0 1px 0 #ffffff28; color: var(--dcuf-theme-accent-ink); font: 600 12px/1.3 system-ui, sans-serif; }
         ${selectors.trigger}::before { content: "◷ 최근 방문"; }
-        ${selectors.trigger}::after { content: "⌄"; }
+        ${selectors.trigger}::after { content: ""; display: block; flex: 0 0 12px; width: 12px; height: 12px; background: currentColor; mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='m4 6 4 4 4-4' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat; }
         ${selectors.triggerDecoration} { display: none; }
         /* The host writes inline left/top; keep its display and event lifecycle. */
         ${selectors.popup} { position: absolute; left: auto !important; top: 46px !important; right: 0; width: min(320px, calc(100vw - 24px)); max-width: calc(100vw - 24px); max-height: min(480px, calc(100vh - 120px)); overflow: auto; box-sizing: border-box; border: 1px solid var(--dcuf-b1-rim); border-radius: 14px; background: var(--dcuf-b1-sheen), var(--dcuf-b1-floating); color: var(--dcuf-theme-fg); box-shadow: var(--dcuf-b1-shadow), inset 0 1px 0 var(--dcuf-b1-rim); backdrop-filter: blur(24px) saturate(1.15); }
@@ -10601,6 +10623,7 @@ const __dcufSettingsPresenter = (() => {
         ${selectors.popupRow} a { flex: 1; min-width: 0; padding: 9px 2px; color: var(--dcuf-theme-fg); font: 500 12px/1.5 system-ui, sans-serif; white-space: normal; text-decoration: none; }
         ${selectors.popupRow} > button { appearance: none; display: inline-flex; align-items: center; justify-content: center; flex: 0 0 32px; position: static; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 8px; background: transparent; color: var(--dcuf-theme-fg-muted); font-size: 0; cursor: pointer; }
         ${selectors.popupRow} > button::before { content: ""; width: 14px; height: 14px; background: currentColor; mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='m4 4 8 8M12 4l-8 8' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E") center / contain no-repeat; }
+        ${selectors.popupRow} > button > em { display: none; }
         ${selectors.popupRow} > button:hover { background: var(--dcuf-theme-accent-soft); color: var(--dcuf-theme-accent-ink); }
         ${selectors.popupFooter} { position: static; display: flex; justify-content: flex-end; height: auto; margin: 8px 0 0; padding: 8px 0 0; border-top: 1px solid var(--dcuf-theme-border); background: transparent; }
         ${selectors.popupFooter} button { appearance: none; display: inline-flex; align-items: center; justify-content: flex-start; position: static; width: 100%; min-height: 40px; padding: 8px; border: 0; border-radius: 8px; background: transparent; color: var(--dcuf-theme-fg-muted); font: 500 12px/1.4 system-ui, sans-serif; cursor: pointer; }
@@ -10756,7 +10779,7 @@ const __dcufSettingsPresenter = (() => {
                     const original = element.getAttribute(ROLE_ATTRIBUTE);
                     state.roleBaselines.set(element, OWNED_ROLES.has(original) ? null : original);
                 }
-                element.setAttribute(ROLE_ATTRIBUTE, role);
+                if (element.getAttribute(ROLE_ATTRIBUTE) !== role) element.setAttribute(ROLE_ATTRIBUTE, role);
             });
         };
 
@@ -10833,8 +10856,8 @@ const __dcufSettingsPresenter = (() => {
             const presentation = __dcufHeaderRecentVisitPresenter.describeControls(Object.freeze({ canPrev, canNext }));
             prev?.classList.toggle('on', presentation.prev.on);
             next?.classList.toggle('on', presentation.next.on);
-            prev?.setAttribute('aria-disabled', presentation.prev.ariaDisabled);
-            next?.setAttribute('aria-disabled', presentation.next.ariaDisabled);
+            if (prev && prev.getAttribute('aria-disabled') !== presentation.prev.ariaDisabled) prev.setAttribute('aria-disabled', presentation.prev.ariaDisabled);
+            if (next && next.getAttribute('aria-disabled') !== presentation.next.ariaDisabled) next.setAttribute('aria-disabled', presentation.next.ariaDisabled);
         };
 
         const cancelPending = (state) => {
@@ -10960,7 +10983,11 @@ const __dcufSettingsPresenter = (() => {
 
         const ensureMutationSubscription = (runtimeCoordinator) => {
             if (!runtimeCoordinator || typeof runtimeCoordinator.subscribeMutations !== 'function') return;
-            if (runtimeCoordinator.pageSupports?.(['list-surface']) === false) return;
+            const password = (window.__dcufPageContext?.isModify || window.__dcufPageContext?.isDelete)
+                && document.body?.getAttribute('data-dcuf-native-form-state') === 'password';
+            const contexts = window.__dcufPageContext?.hasListSurface ? ['list-surface']
+                : password ? [window.__dcufPageContext.type] : [];
+            if (!contexts.length || runtimeCoordinator.pageSupports?.(contexts) === false) return;
             if (activeCoordinator === runtimeCoordinator && typeof mutationUnsubscribe === 'function') return;
             mutationUnsubscribe?.();
             mutationUnsubscribe = null;
@@ -10979,7 +11006,7 @@ const __dcufSettingsPresenter = (() => {
                     ));
                     if (movedRoot || changedInsideRoot) refresh(document);
                 },
-                { contexts: ['list-surface'] }
+                { contexts }
             );
         };
 
@@ -12383,10 +12410,14 @@ const __dcufSettingsPresenter = (() => {
                 ].join(', ');
             }
             if (pageContext.isWriteSurface) {
-                return 'form#write, form[name="modify"][action*="modify_submit"], #write_wrap, .gall_write, .write_box, form[name="password_confirm"], form[action*="modify_password_submit"], .no_memberwrap';
+                const header = document.body?.getAttribute('data-dcuf-native-form-state') === 'password'
+                    ? '.dcheader.typea, .page_head, .gnb_bar, .newvisit_history, .visit_bookmark, ' : '';
+                return header + 'form#write, form[name="modify"][action*="modify_submit"], #write_wrap, .gall_write, .write_box, form[name="password_confirm"], form[action*="modify_password_submit"], .no_memberwrap';
             }
             if (pageContext.isDelete) {
-                return 'form[name="delete"], form[action*="delete_password_submit"], .no_memberwrap';
+                const header = document.body?.getAttribute('data-dcuf-native-form-state') === 'password'
+                    ? '.dcheader.typea, .page_head, .gnb_bar, .newvisit_history, .visit_bookmark, ' : '';
+                return header + 'form[name="delete"], form[action*="delete_password_submit"], .no_memberwrap';
             }
             return shared.join(', ');
         },
@@ -21691,9 +21722,31 @@ init() {
             this.scheduleArticleNativeAdHidePasses();
         },
 
+        syncNativeFormHeader(snapshot) {
+            const password = snapshot?.kind === 'modify-password' || snapshot?.kind === 'delete-password';
+            if (!password) {
+                if (this._nativeFormHeaderConnected) {
+                    __dcufHeaderShellHostAdapter.dispose();
+                    __dcufGalleryPageHeadHostAdapter.dispose();
+                    __dcufHeaderGnbHostAdapter.dispose();
+                    __dcufHeaderRecentVisitHostAdapter.dispose();
+                    this._nativeFormHeaderConnected = false;
+                }
+                return false;
+            }
+            const options = { runtimeCoordinator: this.getRuntimeCoordinator() };
+            __dcufHeaderShellHostAdapter.connect(document, options);
+            __dcufGalleryPageHeadHostAdapter.connect(document, options);
+            __dcufHeaderGnbHostAdapter.connect(document, options);
+            __dcufHeaderRecentVisitHostAdapter.connect(document, options);
+            this._nativeFormHeaderConnected = true;
+            return true;
+        },
+
         syncModifySurface(reason = 'sync') {
             if (!this.isModifyPage() || !document.body) return 'not-modify';
             const snapshot = __dcufNativeFormHostAdapter.refresh();
+            this.syncNativeFormHeader(snapshot);
             if (snapshot?.kind === 'modify-editor') {
                 this.transformWritePage();
                 this.recordDiagnostic('ui.modifySurface.editor', { reason });
@@ -21711,18 +21764,15 @@ init() {
             const runtimeCoordinator = this.getRuntimeCoordinator();
             if (!runtimeCoordinator || typeof runtimeCoordinator.subscribeMutations !== 'function') return;
 
+            const selectors = ['form#write', 'form[name="modify"][action*="modify_submit"]', 'form[name="password_confirm"]', 'form[action*="modify_password_submit"]', '.no_memberwrap', '#leave_confirm_box'];
+            const selectorText = selectors.join(',');
             const unsubscribe = runtimeCoordinator.subscribeMutations('ui-modify-surface', (payload) => {
                 const candidates = typeof payload?.collectMatches === 'function'
-                    ? payload.collectMatches([
-                        'form#write',
-                        'form[name="modify"][action*="modify_submit"]',
-                        'form[name="password_confirm"]',
-                        'form[action*="modify_password_submit"]',
-                        '.no_memberwrap',
-                        '#leave_confirm_box'
-                    ], { includeRoots: true })
+                    ? payload.collectMatches(selectors, { includeRoots: true })
                     : [];
-                if (candidates.length > 0 || document.body?.dataset.dcufModifySurface === 'pending') {
+                const removedSurface = payload?.removedElements?.some(element => element instanceof Element
+                    && (element.matches(selectorText) || element.querySelector(selectorText)));
+                if (candidates.length > 0 || removedSurface || document.body?.dataset.dcufModifySurface === 'pending') {
                     this.syncModifySurface('mutation');
                 }
             });
@@ -21732,6 +21782,7 @@ init() {
         syncDeleteSurface(reason = 'sync') {
             if (!this.isDeletePage() || !document.body) return 'not-delete';
             const snapshot = __dcufNativeFormHostAdapter.refresh();
+            this.syncNativeFormHeader(snapshot);
             if (snapshot?.kind === 'delete-confirm') {
                 this.recordDiagnostic('ui.deleteSurface.confirm', { reason });
                 return 'confirm';
@@ -21748,17 +21799,15 @@ init() {
             const runtimeCoordinator = this.getRuntimeCoordinator();
             if (!runtimeCoordinator || typeof runtimeCoordinator.subscribeMutations !== 'function') return;
 
+            const selectors = ['form#delete', 'form[name="delete"]', '.no_memberwrap', '.empty_pagewrap', '.pop_wrap.type5'];
+            const selectorText = selectors.join(',');
             const unsubscribe = runtimeCoordinator.subscribeMutations('ui-delete-surface', (payload) => {
                 const candidates = typeof payload?.collectMatches === 'function'
-                    ? payload.collectMatches([
-                        'form#delete',
-                        'form[name="delete"]',
-                        '.no_memberwrap',
-                        '.empty_pagewrap',
-                        '.pop_wrap.type5'
-                    ], { includeRoots: true })
+                    ? payload.collectMatches(selectors, { includeRoots: true })
                     : [];
-                if (candidates.length > 0 || document.body?.dataset.dcufDeleteSurface === 'pending') {
+                const removedSurface = payload?.removedElements?.some(element => element instanceof Element
+                    && (element.matches(selectorText) || element.querySelector(selectorText)));
+                if (candidates.length > 0 || removedSurface || document.body?.dataset.dcufDeleteSurface === 'pending') {
                     this.syncDeleteSurface('mutation');
                 }
             });
@@ -21876,6 +21925,7 @@ init() {
                     __dcufGalleryPageHeadHostAdapter.dispose();
                     __dcufHeaderGnbHostAdapter.dispose();
                     __dcufHeaderRecentVisitHostAdapter.dispose();
+                    this._nativeFormHeaderConnected = false;
                 });
                 bootController.registerRecovery(() => {
                     __dcufHeaderShellHostAdapter.connect(document, {
@@ -21896,7 +21946,8 @@ init() {
                         __dcufCommentHostAdapter.refresh(document);
                     }
                     if (this.getPageContext().isWrite || this.isModifyPage() || this.isDeletePage()) {
-                        __dcufNativeFormHostAdapter.refresh(document);
+                        const snapshot = __dcufNativeFormHostAdapter.refresh(document);
+                        this.syncNativeFormHeader(snapshot);
                     }
                     if (this.getPageContext().isWrite) {
                         void MobileConvenienceModule.attachDraftForm(this.getWriteForm());

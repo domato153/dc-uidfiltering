@@ -30,7 +30,7 @@
     const __dcufGalleryPageHeadHostAdapter = (() => {
         const ROOT_SELECTOR = '.page_head';
         const ROLE_ATTRIBUTE = 'data-dcuf-gallery-page-head-role';
-        const OWNED_ROLES = new Set(['root', 'left', 'right', 'both', 'settings-anchor', 'settings-layer', 'menu-list', 'menu-control', 'menu-toggle', 'guide-layer', 'guide-backdrop', 'layer-anchor', 'layer-panel', 'layer-head', 'layer-title', 'layer-body', 'layer-close', 'layer-actions']);
+        const OWNED_ROLES = new Set(['root', 'left', 'right', 'both', 'utility-control', 'utility-icon', 'settings-anchor', 'settings-layer', 'menu-list', 'menu-control', 'menu-toggle', 'guide-layer', 'guide-backdrop', 'layer-anchor', 'layer-panel', 'layer-head', 'layer-title', 'layer-body', 'layer-close', 'layer-actions']);
         const EXTERNAL_LAYER_SELECTOR = '.user_guide_popup.pop_wrap, .user_guide_popup.pop_bg';
         const STYLE_ID = 'dcuf-gallery-page-head-style';
         const SUBSCRIBER_KEY = 'gallery-page-head-style';
@@ -39,7 +39,9 @@
         let mutationUnsubscribe = null;
         let styleOwner = null;
 
-        const supportsSurface = () => window.__dcufPageContext?.hasListSurface === true;
+        const supportsSurface = () => window.__dcufPageContext?.hasListSurface === true
+            || ((window.__dcufPageContext?.isModify || window.__dcufPageContext?.isDelete)
+                && document.body?.getAttribute('data-dcuf-native-form-state') === 'password');
 
         const ensureStyle = () => {
             if (!supportsSurface()) return false;
@@ -79,6 +81,13 @@
                 if (left || right) desired.set(element, left && right ? 'both' : left ? 'left' : 'right');
             });
             const parts = (root, selector, role) => root?.querySelectorAll(selector).forEach((element) => desired.set(element, role));
+            Array.from(state.root.children).filter(element => element.classList.contains('fr')).forEach(right => {
+                right.querySelectorAll(':scope > button, :scope > span > button, :scope > div > button').forEach(button => {
+                    if (button.classList.contains('dcuf-header-drawer__toggle') || button.closest('.pop_tipbox, .pop_wrap, .pop_bg')) return;
+                    desired.set(button, 'utility-control');
+                    parts(button, 'em.icon_relate_more, em.icon_listmore', 'utility-icon');
+                });
+            });
             const menu = state.root.querySelector('#setting_list');
             if (menu) {
                 if (menu.parentElement) desired.set(menu.parentElement, 'settings-anchor');
@@ -152,7 +161,9 @@
 
         const ensureMutationSubscription = (runtimeCoordinator) => {
             if (!runtimeCoordinator || typeof runtimeCoordinator.subscribeMutations !== 'function') return;
-            if (runtimeCoordinator.pageSupports?.(['list-surface']) === false) return;
+            const contexts = window.__dcufPageContext?.hasListSurface ? ['list-surface']
+                : supportsSurface() ? [window.__dcufPageContext.type] : [];
+            if (!contexts.length || runtimeCoordinator.pageSupports?.(contexts) === false) return;
             if (activeCoordinator === runtimeCoordinator && typeof mutationUnsubscribe === 'function') return;
             mutationUnsubscribe?.();
             activeCoordinator = runtimeCoordinator;
@@ -170,7 +181,7 @@
                     ));
                     if (movedRoot || changedInsideRoot) refresh(document);
                 },
-                { contexts: ['list-surface'] }
+                { contexts }
             );
         };
 

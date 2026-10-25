@@ -350,9 +350,9 @@
           "sourceRef": "src/targets/mobile/native-form-presenter.js",
           "styleKey": "modify-delete",
           "requiredSelectorPrefix": "[data-dcuf-native-form-",
-          "declarationCount": 183,
-          "declarationLedgerSha256": "178f61354933121ecd8128c311ab78d4a487a8f062a5b43e01db61a624552741",
-          "hostCollision": "Existing extracted native-form geometry/visibility precedence retained. Only anonymous password material/type/radius values adopt B1; authenticated delete-confirm keeps the prior declarations. Splitting the shared primary selector preserves its original priority per branch. This exact transitional profile is not whole-surface modernization.",
+          "declarationCount": 187,
+          "declarationLedgerSha256": "0f08da15de809ade0297b88704304d544629b3c06c69edcbd24572144787ddba",
+          "hostCollision": "Existing native-form geometry/visibility precedence retained. Password form owns its horizontal card gutters while its section permits the shared page-head width; splitting grouped password/delete-confirm rules adds four exact priority declarations without changing authenticated delete-confirm branch values. Original password fields/actions remain native. This exact transitional profile is not whole-surface modernization.",
           "testRefs": [
             "testbed/run-tests.mjs",
             "testbed/run-host-compatibility.mjs",
@@ -428,7 +428,8 @@
         "host-header-search-layers",
         "host-gallery-setting-menu",
         "host-external-gallery-usage-guide",
-        "host-issue-wrap-stack"
+        "host-issue-wrap-stack",
+        "host-native-password-page-chrome"
       ],
       "states": [
         "initial",
@@ -445,9 +446,11 @@
         "external-guide-open",
         "rank-page-replaced",
         "long-guide-last-item",
-        "native-child-layer-open"
+        "native-child-layer-open",
+        "native-password-header",
+        "native-password-header-rerender"
       ],
-      "intendedDelta": "b1-gallery-search-native-glass-v1",
+      "intendedDelta": "b1-native-form-header-reuse-v1",
       "cascadeExceptions": [
         {
           "selector": "[data-dcuf-gallery-page-head-role=\"layer-anchor\"] > div[data-dcuf-gallery-page-head-role=\"guide-layer\"]",
@@ -504,7 +507,8 @@
         "testbed/run-header-hit-audit.mjs",
         "testbed/run-header-public-canary.mjs",
         "testbed/ui-b1-gallery-search-contract.mjs",
-        "testbed/harness/surface-observation-contract.mjs"
+        "testbed/harness/surface-observation-contract.mjs",
+        "testbed/ui-b1-form-header-contract.mjs"
       ],
       "canaryCheckpoint": "native-form-header"
     }

@@ -112,7 +112,9 @@
             state.utility = {list, button, attributes, onToggle};
         };
 
-        const supportsSurface = () => window.__dcufPageContext?.hasListSurface === true;
+        const supportsSurface = () => window.__dcufPageContext?.hasListSurface === true
+            || ((window.__dcufPageContext?.isModify || window.__dcufPageContext?.isDelete)
+                && document.body?.getAttribute('data-dcuf-native-form-state') === 'password');
 
         const ensureStyle = () => {
             if (!supportsSurface()) return false;
@@ -250,7 +252,9 @@
 
         const ensureMutationSubscription = (runtimeCoordinator) => {
             if (!runtimeCoordinator || typeof runtimeCoordinator.subscribeMutations !== 'function') return;
-            if (runtimeCoordinator.pageSupports?.(['list-surface']) === false) return;
+            const contexts = window.__dcufPageContext?.hasListSurface ? ['list-surface']
+                : supportsSurface() ? [window.__dcufPageContext.type] : [];
+            if (!contexts.length || runtimeCoordinator.pageSupports?.(contexts) === false) return;
             if (activeCoordinator === runtimeCoordinator && typeof mutationUnsubscribe === 'function') return;
             mutationUnsubscribe?.();
             activeCoordinator = runtimeCoordinator;
@@ -266,7 +270,7 @@
                     ));
                     if (movedRoot || changedInsideRoot) refresh(document);
                 },
-                { contexts: ['list-surface'] }
+                { contexts }
             );
         };
 

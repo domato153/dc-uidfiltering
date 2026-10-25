@@ -454,3 +454,11 @@ Run the existing affected gallery/ownership tests along with a new slice test be
 
 - Password-page headers: actual6801789 modify/6778319 delete retain original chrome but have no projected header roles; ui-module native-form early returns precede header connections. Reproduced on828A control and7718 candidate. Do not bless a synthetic card-only fixture as a whole-page pass or start list filtering to style a header.
 - Native hidden fields may encode opaque data in nonstandard attribute names/IDs as well as values. The read-only surface observer now strips nonstandard hidden attributes and redacts opaque names/IDs on its clone only; product DOM/handlers stay untouched. Fixtures use synthetic fields.
+
+## Reusing the B1 header outside list/view — 2026-10-25
+
+Reuse requires its existing owner lifecycle and actual parent anatomy, not a copy of header CSS. A password page-section760px constrained the shared heading; let the form/card own its gutters and keep the heading at shared page width. Native top-row utility sprites and recent remove em can survive beside new icons. Compare the same gallery/type before calling a defect route-specific: the major-gallery list had the same duplicate X/white fragments. Keep popup interiors out of top-row control projection.
+
+Do not clear and re-add native form classes on each refresh. Project desired booleans and changed aria values only, or the existing mutation bus sees its own writes forever. Once churn stops, explicitly cover removedElements: disappearing original forms must dispose owners, and reinsertion must reconnect without relying on accidental repeated refresh. The final8-context mutation checks and read-only review bind this repair to AEF0633C; no global resource-free claim.
+
+The source loader rereads its userscript for each context. Freeze the guarded runtime while a full suite runs; if source changes, abort/invalidate the attempt instead of using its initial printed SHA for mixed-context evidence. See docs/work/B1_FORM_HEADER_REUSE.md and its receipt for the retained failures and final150/150.

@@ -2,22 +2,22 @@
 
 ## Current execution
 
-- Active plan: docs/work/MOBILE_UI_MODERNIZATION.md → B1_UI_EXPANSION_PREFLIGHT.md → B1_PASSWORD_PAGES.md. Anonymous password cards reviewable; next fix the observed password-page header initialization gap before editor/tools.
+- Active plan: docs/work/MOBILE_UI_MODERNIZATION.md → B1_UI_EXPANSION_PREFLIGHT.md. Bounded native password-header reuse is closed; P3 write/editor shell is next.
 - Workspace path: `.` (repository root; private prompt supplies exact nested worktree). AGENTS.md owns policy; preserve debug.log unread/unstaged.
-- Active stage: `header-navigation` (formal admission remains open). Bounded next slice `b1-password-header-owner`; no promotion.
-- Accepted visual preference: compact B+B1 and adopted BCB96852 list; popup direction authorized. Current password appearance preference pending. B2/large-title-card inactive.
-- Source state: source checkpoint base HEAD `994f3ee4e2ba85e7e0b04538c2f1d419519390bf` on `codex/ui-port-boundary`. Existing native-form presenter password material only; adapter/geometry/fields/events unchanged. Accepted registry unchanged; overlay active. Read resulting checkpoint identity fresh from Git.
-- Local-only state: `LOCAL_ONLY_EVIDENCE`; artifacts/b1-password-2026-10-25; viewer artifacts/b1-detail-2026-10-23/password/index.html.
-- Candidate fingerprint: `ba616e0ada4494bff890672b78b3c1fb166f0a43c8418a34f73aa67e31056821`
-- Last current audit: UNKNOWN — SCOPED_PASSWORD_CARD_PASS_HEADER_GAP_OPEN. Full Mobile148/149 with one obsolete radius oracle; reconciled semantic-owner case passes separately, plus final capture-hygiene1/1 and affected password3/3.8 contexts,25 semantic observations,4 public source states,4 reviewed image pairs and22 decoded images. Split coverage, not whole-page approval.
-- Last product receipt: `verification/receipts/2026-10-25-b1-password-pages.json` SHA-256 `8D0A83E6B937CBE5772BA457A4AF10227584F1E57505A8C53EDD3F07632B544D`. Prior full148/1 retained; current targeted passes and limits separate.
-- Accepted baseline: Adopted BCB list/B1 family direction; independent password proposal remains separate from current output. P2 receipt retains its own148/148/PC15 scopes.
-- Current artifact: Mobile3.5.5 `7718A9B425E6E131823D3628C59AC2353F0FEE88A7BAE0EF5FE65719BB0FF30B` root/dist/guard aligned; PC1.9.9 `61C539769BA160A5FC4DCD164B3CD26025244AB6FC1BBC7A4A520416FE5A41A5` root/dist unchanged.
-- Blockers: No global live/authorization blocker. Native concept-post modify restriction on6778319 is expected; use user6801789 for modify and6778319 for delete. No actual modify/delete/authentication or new POST authority. Prior47965 relation-read authorization remains exact and separate.
-- Pending live checks: Actual final extension/device/account, unopened native children and whole-page appearance remain unqualified. Native password header roles absent in control/current; ui-module early-return path is next.980×2306 is the phone-layout proxy;390 is stress.
+- Active stage: `header-navigation` formal admission remains open. Last bounded slice `b1-password-header-owner` closed without registry promotion; next `b1-write-editor-shell`.
+- Accepted visual preference: compact B+B1 and adopted BCB96852 list, popup direction authorized. Current password/header appearance preference pending. B2/large-title-card inactive.
+- Source state: source checkpoint base HEAD `066993a40e0543a6cd5076fb3d1526c3e5139f44` on `codex/ui-port-boundary`; working unit reuses existing four header owners, resolves native parent/decorations and stabilizes native-form mutation transitions. Accepted registry unchanged; overlay active. Read resulting checkpoint identity fresh from Git.
+- Local-only state: `LOCAL_ONLY_EVIDENCE`; artifacts/b1-form-header-2026-10-25/completed; viewer artifacts/b1-detail-2026-10-23/form-header/index.html. Exact tracked receipt below supplies recoverable scope; ignored screenshots are not publication.
+- Candidate fingerprint: `8532c427a735676267db3579740a160086175ceb775294cf90f0cffcee6822bd`
+- Last current audit: PASS — SCOPED_PASSWORD_HEADER_PASS. Final AEF0633C Mobile150/150, header8 contexts with idle/removal/reinsert checks,25 native-form semantic observations equal,4 public source states,4 reviewed B1 pairs and12 decoded images. No whole-UI/formal-stage/user-preference approval.
+- Current stage receipt: `verification/receipts/2026-10-25-b1-form-header-reuse.json` SHA-256 `96E836CDB5194A44DE693F0CCE301DB8C263863EBF0E5CB9F83917740B528603`. Bounded password-header scope only. Earlier password-card receipt and intermediate failures remain historical; this receipt binds final source and explicit four-header-key resource delta.
+- Accepted baseline: Adopted BCB list/B1 family direction plus the scoped password-card/header implementation and behavior evidence. Write/editor, account/login and unopened native children remain separate.
+- Current artifact: Mobile3.5.5 `AEF0633CC474E67756B3E68FCFE6CE92652E5515E37A6B00DBE3446258CACEDB` root/dist/guard aligned; PC1.9.9 `61C539769BA160A5FC4DCD164B3CD26025244AB6FC1BBC7A4A520416FE5A41A5` root/dist unchanged.
+- Blockers: No global live/authorization blocker. Modify specimen6801789 and delete6778319; older concept-post modify restriction is native. No actual modify/delete/authentication or new POST authority. Relation-read47965 authorization remains exact and separate.
+- Pending live checks: Actual final extension/device/account and unobserved native children remain unqualified. Dark images are source-theme proxies; empty public search history stayed closed.980×2306 is the phone-layout proxy and390 is stress. Password-header defects are repaired; do not revive the former missing-owner blocker.
 
 ```dcuf-current-artifacts
-{"schemaVersion":1,"mobile":{"sha256":"7718A9B425E6E131823D3628C59AC2353F0FEE88A7BAE0EF5FE65719BB0FF30B"},"pc":{"sha256":"61C539769BA160A5FC4DCD164B3CD26025244AB6FC1BBC7A4A520416FE5A41A5"}}
+{"schemaVersion":1,"mobile":{"sha256":"AEF0633CC474E67756B3E68FCFE6CE92652E5515E37A6B00DBE3446258CACEDB"},"pc":{"sha256":"61C539769BA160A5FC4DCD164B3CD26025244AB6FC1BBC7A4A520416FE5A41A5"}}
 ```
 
 ## Draft-complete checkpoint — 2026-10-21

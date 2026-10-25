@@ -28,6 +28,7 @@ import { runB1ArticleActionsContract } from './ui-b1-article-actions-contract.mj
 import { runSurfaceObservationContract } from './harness/surface-observation-contract.mjs';
 import { runB1GallerySearchContract } from './ui-b1-gallery-search-contract.mjs';
 import { runB1PasswordContract } from './ui-b1-password-contract.mjs';
+import { runB1FormHeaderContract } from './ui-b1-form-header-contract.mjs';
 
 const args = new Set(process.argv.slice(2));
 const selectedGroup = process.argv.includes('--group') ? process.argv[process.argv.indexOf('--group') + 1] : null;
@@ -72,6 +73,7 @@ mobileTest('B1 article actions: native popup glass and nested forms', 'functiona
 mobileTest('surface observation captures native root and ancestor CSS without mutation', 'functional', runSurfaceObservationContract);
 mobileTest('B1 gallery search: native door children and header layers', 'functional', runB1GallerySearchContract);
 mobileTest('B1 password pages: glass and original native form actions', 'write', runB1PasswordContract);
+mobileTest('B1 form header: reuse list chrome without list runtime', 'write', runB1FormHeaderContract);
 
 mobileTest('confirmed UI repair: native comment composer cascade and original input', 'functional', runCommentRepairContract);
 mobileTest('confirmed UI repair: list author media search paging and write controls', 'functional', runListRepairContract);
@@ -9077,7 +9079,7 @@ mobileTest('modify password surface uses the mobile card UI and removes trailing
         assert.deepEqual(contract.presentationPayloads.map((css) => (
             createHash('sha256').update(css, 'utf8').digest('hex').toUpperCase()
         )), [
-            '3B521C767FBDD1A3424CA7565641972ACB7C13C15A620CA53292723D5F7D7250',
+            'ECC615764559A66FC6386984D0214412E55A7D57384E8C0A1A2D10EF8CF87663',
             'F115ECD658CD800DE14438DF75060F7CC6729FFC1DF5C6C259C75D6810E93053'
         ], 'native-form presentation payloads must match the registered semantic modify/delete, write-shell, write-popup, write-fields, write-headtext, write-editor-shell, write-toolbar-shell, editor-layer, and attachment contracts');
         assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);

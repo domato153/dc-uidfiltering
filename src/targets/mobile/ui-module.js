@@ -2069,9 +2069,31 @@
             this.scheduleArticleNativeAdHidePasses();
         },
 
+        syncNativeFormHeader(snapshot) {
+            const password = snapshot?.kind === 'modify-password' || snapshot?.kind === 'delete-password';
+            if (!password) {
+                if (this._nativeFormHeaderConnected) {
+                    __dcufHeaderShellHostAdapter.dispose();
+                    __dcufGalleryPageHeadHostAdapter.dispose();
+                    __dcufHeaderGnbHostAdapter.dispose();
+                    __dcufHeaderRecentVisitHostAdapter.dispose();
+                    this._nativeFormHeaderConnected = false;
+                }
+                return false;
+            }
+            const options = { runtimeCoordinator: this.getRuntimeCoordinator() };
+            __dcufHeaderShellHostAdapter.connect(document, options);
+            __dcufGalleryPageHeadHostAdapter.connect(document, options);
+            __dcufHeaderGnbHostAdapter.connect(document, options);
+            __dcufHeaderRecentVisitHostAdapter.connect(document, options);
+            this._nativeFormHeaderConnected = true;
+            return true;
+        },
+
         syncModifySurface(reason = 'sync') {
             if (!this.isModifyPage() || !document.body) return 'not-modify';
             const snapshot = __dcufNativeFormHostAdapter.refresh();
+            this.syncNativeFormHeader(snapshot);
             if (snapshot?.kind === 'modify-editor') {
                 this.transformWritePage();
                 this.recordDiagnostic('ui.modifySurface.editor', { reason });
@@ -2089,18 +2111,15 @@
             const runtimeCoordinator = this.getRuntimeCoordinator();
             if (!runtimeCoordinator || typeof runtimeCoordinator.subscribeMutations !== 'function') return;
 
+            const selectors = ['form#write', 'form[name="modify"][action*="modify_submit"]', 'form[name="password_confirm"]', 'form[action*="modify_password_submit"]', '.no_memberwrap', '#leave_confirm_box'];
+            const selectorText = selectors.join(',');
             const unsubscribe = runtimeCoordinator.subscribeMutations('ui-modify-surface', (payload) => {
                 const candidates = typeof payload?.collectMatches === 'function'
-                    ? payload.collectMatches([
-                        'form#write',
-                        'form[name="modify"][action*="modify_submit"]',
-                        'form[name="password_confirm"]',
-                        'form[action*="modify_password_submit"]',
-                        '.no_memberwrap',
-                        '#leave_confirm_box'
-                    ], { includeRoots: true })
+                    ? payload.collectMatches(selectors, { includeRoots: true })
                     : [];
-                if (candidates.length > 0 || document.body?.dataset.dcufModifySurface === 'pending') {
+                const removedSurface = payload?.removedElements?.some(element => element instanceof Element
+                    && (element.matches(selectorText) || element.querySelector(selectorText)));
+                if (candidates.length > 0 || removedSurface || document.body?.dataset.dcufModifySurface === 'pending') {
                     this.syncModifySurface('mutation');
                 }
             });
@@ -2110,6 +2129,7 @@
         syncDeleteSurface(reason = 'sync') {
             if (!this.isDeletePage() || !document.body) return 'not-delete';
             const snapshot = __dcufNativeFormHostAdapter.refresh();
+            this.syncNativeFormHeader(snapshot);
             if (snapshot?.kind === 'delete-confirm') {
                 this.recordDiagnostic('ui.deleteSurface.confirm', { reason });
                 return 'confirm';
@@ -2126,17 +2146,15 @@
             const runtimeCoordinator = this.getRuntimeCoordinator();
             if (!runtimeCoordinator || typeof runtimeCoordinator.subscribeMutations !== 'function') return;
 
+            const selectors = ['form#delete', 'form[name="delete"]', '.no_memberwrap', '.empty_pagewrap', '.pop_wrap.type5'];
+            const selectorText = selectors.join(',');
             const unsubscribe = runtimeCoordinator.subscribeMutations('ui-delete-surface', (payload) => {
                 const candidates = typeof payload?.collectMatches === 'function'
-                    ? payload.collectMatches([
-                        'form#delete',
-                        'form[name="delete"]',
-                        '.no_memberwrap',
-                        '.empty_pagewrap',
-                        '.pop_wrap.type5'
-                    ], { includeRoots: true })
+                    ? payload.collectMatches(selectors, { includeRoots: true })
                     : [];
-                if (candidates.length > 0 || document.body?.dataset.dcufDeleteSurface === 'pending') {
+                const removedSurface = payload?.removedElements?.some(element => element instanceof Element
+                    && (element.matches(selectorText) || element.querySelector(selectorText)));
+                if (candidates.length > 0 || removedSurface || document.body?.dataset.dcufDeleteSurface === 'pending') {
                     this.syncDeleteSurface('mutation');
                 }
             });
@@ -2254,6 +2272,7 @@
                     __dcufGalleryPageHeadHostAdapter.dispose();
                     __dcufHeaderGnbHostAdapter.dispose();
                     __dcufHeaderRecentVisitHostAdapter.dispose();
+                    this._nativeFormHeaderConnected = false;
                 });
                 bootController.registerRecovery(() => {
                     __dcufHeaderShellHostAdapter.connect(document, {
@@ -2274,7 +2293,8 @@
                         __dcufCommentHostAdapter.refresh(document);
                     }
                     if (this.getPageContext().isWrite || this.isModifyPage() || this.isDeletePage()) {
-                        __dcufNativeFormHostAdapter.refresh(document);
+                        const snapshot = __dcufNativeFormHostAdapter.refresh(document);
+                        this.syncNativeFormHeader(snapshot);
                     }
                     if (this.getPageContext().isWrite) {
                         void MobileConvenienceModule.attachDraftForm(this.getWriteForm());
