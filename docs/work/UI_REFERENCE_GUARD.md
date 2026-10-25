@@ -2,7 +2,7 @@
 
 User direction2026-10-25: repair continuity/reference retrieval and material review with existing skill logic, preserving proportionate verification. Scope: review tooling and tracked routing; no product runtime/style change in this unit.
 
-## Cause confirmed
+## Historical cause confirmed
 
 The adopted B1 raster already contains a write form in its lower-left panel. The previous comparison used a newly authored HTML proposal as its primary image and did not bind that proposal to the raster's write/material region. NEXT pointed to UI_DESIGN_REFERENCES.md as LIVE text, but did not freeze the actual selected image. Existing instructions required visible glass transmission, yet the writer contract only asserted a gradient; the known omitted blur was recorded as user-preference pending. This was a reference-selection/application failure, not proof that continuity files were unavailable. The earlier151 functional passes remain their own exact scope and do not certify material.
 
@@ -22,7 +22,7 @@ Preparation returns explicit `requirementsStatus`; its legacy `reviewed` flag on
 
 Passed evidence must be a hash-bound current PNG in a declared comparison case. This reuses the existing Playwright decoder rather than trusting a functional log, unused image or adding another image validator.
 
-The native Playwright report also attaches the exact selected original to every comparison. Thus a secondary matching-size proposal cannot make the original disappear from the report; the selected original remains the authority above expected/current/diff. The local viewer opens the original B1 writer region first.
+The native Playwright report also attaches the exact selected original to every comparison. Thus a secondary matching-size proposal cannot make the original disappear from the report; the selected original remains the authority above expected/current/diff. That unit's viewer opened the early B1 writer region first; the later user-authorized D-53 refresh now shows the new DRAFT with current-header/native/published inputs. Historical receipts keep their original source identity.
 
 Cost: a few local files/hashes per design comparison, no daemon/network/model call and no new product test on an unchanged runtime. Reuse normal light/dark and one relevant backing probe; do not repeat the whole checklist or invent a beauty score. Final reports keep functional result, reference/material fidelity and user preference separate.
 
@@ -30,6 +30,6 @@ Cost: a few local files/hashes per design comparison, no daemon/network/model ca
 
 ## Current disposition
 
-CE3C4D1B writer material is NEEDS_WORK. Its old HTML proposal is secondary evidence only. Next is the write-form material repair against B1's lower-left panel, the adopted header material, light/dark and a labeled colored-backing probe; preserve native popup coordinates and readable editing paper. Popup-interior expansion follows this repair. Do not advance because a gradient/token or functional count passes.
+CE3C4D1B writer material is NEEDS_WORK. User steering after this guard unit explicitly requested a current-theme writer proposal: D-53/UI_DESIGN_REFERENCES.md supersedes the early raster writer composition as the rigid target. The frozen selected source is now the adopted current masthead; the new generated writer is DRAFT pending selection. After selection, bind that proposal/hash/region before implementation comparison. Preserve normal/backing light-dark material evidence, readable paper and native popup coordinates. Popup interiors follow the repair. The guard blocks silent substitution, not user-authorized reference updates; a gradient/token or functional count still cannot settle material.
 
 Transfer checks: nine existing/expanded unit tests pass; the real comparator's identical-image optimistic judgement first escaped as REVIEWED/exit0, then was correctly capped to NEEDS_WORK/exit1 after integration. A valid synthetic image-evidence case still returns REVIEWED/exit0 with productApproved=false. The old writer manifest is rejected for missing source lineage; selected original bytes match the adopted hash in the report. Viewer original-first/image loading and four light/dark/source controls pass. Product runtime/PC bytes are unchanged, so no new151-test run is claimed. Exact receipt: verification/receipts/2026-10-25-ui-reference-guard.json.

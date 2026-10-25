@@ -2,19 +2,19 @@
 
 ## Current execution
 
-- Active plan: docs/work/MOBILE_UI_MODERNIZATION.md → B1_UI_EXPANSION_PREFLIGHT.md. Lightweight reference/claim repair closed; repair writer material before popup expansion.
+- Active plan: docs/work/MOBILE_UI_MODERNIZATION.md → B1_UI_EXPANSION_PREFLIGHT.md. D-53 current-theme family proposal preparation recorded; writer draft material needs refinement before implementation/popups.
 - Workspace path: `.` (repository root; private prompt supplies exact nested worktree). AGENTS.md owns policy; preserve debug.log unread/unstaged.
-- Active stage: `header-navigation` formal admission remains open. Reference guard has scoped tool evidence; writer material is NEEDS_WORK, not preference-only pending. Next `b1-write-material-repair`.
-- Accepted visual preference: Compact B+B1/adopted list and prior password/header. Original B1 already contains lower-left writer and dialog/header material. The old HTML writer proposal is secondary; the current flat material was not accepted.
-- Source state: source checkpoint base HEAD `47ce903137d4d20f624fe2c5f86dc9d8c147abbe` on `codex/ui-port-boundary`; only review tools/docs/routing changed. Native runtime/presentation, accepted registry and versions remain unchanged; overlay active. Read resulting checkpoint identity fresh from Git.
-- Local-only state: `LOCAL_ONLY_EVIDENCE`; artifacts/ui-reference-guard-2026-10-25/ and original-first write-shell viewer. Historical manifests without the selected-source fields are not current visual authority.
-- Candidate fingerprint: `53e43f0b9a04259863b0623b664d6ed389b2a6da4182909c00202f96d1b8d24e`
-- Last current audit: PASS — REVIEW_GUARD_ONLY; writer material NEEDS_WORK. Unit9/9; actual CLI false-green RED→GREEN, valid positive control, old-manifest rejection, selected-original attachment and viewer decode/control checks. This does not certify beauty or whole UI.
-- Current stage receipt: `verification/receipts/2026-10-25-ui-reference-guard.json` SHA-256 `C95DACF356F9A6C1E668DEE97001880D1CED2BF20591ED27A28CA24DDEDC317A`. Exact-tree checkpoint validation/CI are separate records; no product acceptance follows.
-- Accepted baseline: Adopted B1/list and prior password/header; writer native-function evidence is historical47ce151/151 on unchanged CE3. Original-reference material repair is outstanding.
-- Current artifact: Mobile3.5.5 `CE3C4D1B09A52408F0F10C96FB0B4362AE74E3AC8000C9149DE83A9E76A30EDD` root/dist/guard unchanged; PC1.9.9 `61C539769BA160A5FC4DCD164B3CD26025244AB6FC1BBC7A4A520416FE5A41A5` unchanged. No rebuild/version change in this tool-only unit.
-- Blockers: No global live/authorization blocker. No real submit/upload/AI/authentication or new POST authority. Exact relation-read47965 authorization remains separate.
-- Pending live checks: Writer glass must be repaired and compared to original B1 writer region in normal/backing light-dark renders. Native popup interiors, actual final extension/device/account and formal broad profiles/header admission remain separate.980×2306 is phone-layout proxy;390 stress. Existing fixture font click bootstrap limitation remains explicit.
+- Active stage: `header-navigation` formal admission remains open. Next `b1-write-draft-material-refine`; exterior/cancel/register glass is insufficient in the new DRAFT. Current runtime also remains NEEDS_WORK.
+- Accepted visual preference: Compact B+B1/adopted list and password/header. User requested current adopted header as style authority plus native/published controls for tailored proposals. Early B1 writer is historical direction. New light/dark writer image is DRAFT, not adopted.
+- Source state: source checkpoint base HEAD `c8752677a5ebe3c5ccd502db921d8da7482f1884` on `codex/ui-port-boundary`; only curated design assets/docs/routing changed. Product runtime, guard, accepted registry and versions unchanged; overlay active. Read resulting checkpoint fresh from Git.
+- Local-only state: `LOCAL_ONLY_EVIDENCE`; artifacts/b1-write-refresh-2026-10-25/ raw current/native/published captures and updated write-shell viewer. Curated header references and generated DRAFT/brief/prompt are tracked; raw controls/audits remain local.
+- Candidate fingerprint: `b1f5b75cc14cf77bd96b4cad4351604946e0a0b46abb280be319dc6d23a51373`
+- Last current audit: PASS — REFERENCE_INPUT_AND_VIEWER_HEALTH_ONLY; draft exterior/actions and runtime writer material NEEDS_WORK. Four public capture contexts; full-resolution image review; viewer proposal/four source switches decode without JS errors; reference guard9/9. No beauty or implementation acceptance.
+- Current stage receipt: `verification/receipts/2026-10-26-b1-writer-adapted-draft.json` SHA-256 `EF526160160B98269B4EAC270DF71F38D7DF1D4EE406345CADDEE9C276463DD8`. Prior guard receipt remains historical/exact; checkpoint validation/CI is separate.
+- Accepted baseline: Adopted B1/list and password/header retained. CE3 native-function evidence is historical151/151; no new runtime run for design-only work. Draft glass refinement and actual implementation remain outstanding.
+- Current artifact: Mobile3.5.5 `CE3C4D1B09A52408F0F10C96FB0B4362AE74E3AC8000C9149DE83A9E76A30EDD` root/dist/guard unchanged; PC1.9.9 `61C539769BA160A5FC4DCD164B3CD26025244AB6FC1BBC7A4A520416FE5A41A5` unchanged. No build/version change.
+- Blockers: No global live/authorization blocker. User's latest request was material review, so no second generation/product edit was performed. No real submit/upload/AI/authentication or new POST authority; exact relation-read47965 authorization remains separate.
+- Pending live checks: After draft refinement/selection, bind proposal/hash/region and repair exterior/tool chrome/cancel/register glass with actual normal/backing light-dark evidence, opaque editor paper and native fixed-popup/input preservation. Native popup interiors, actual final extension/device/account and formal broad/header admission remain separate.980×2306 phone-layout proxy;390 stress. Existing fixture font-click bootstrap limit retained.
 
 ```dcuf-current-artifacts
 {"schemaVersion":1,"mobile":{"sha256":"CE3C4D1B09A52408F0F10C96FB0B4362AE74E3AC8000C9149DE83A9E76A30EDD"},"pc":{"sha256":"61C539769BA160A5FC4DCD164B3CD26025244AB6FC1BBC7A4A520416FE5A41A5"}}

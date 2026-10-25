@@ -31,6 +31,6 @@ History is retrieved only for a specific unresolved cause: follow the named curr
 
 Context-free method: .agents/skills/dcuf-long-work-continuity/references/handoff-contract.md. Receiver checks the exact root and one task, then reports ACCEPTED or STALE_REPLAN. Missing optional history is not a blocker; missing exact bytes needed for a comparison requires recovery or a newly bounded task. Machine contract: verification/continuity-contract.json.
 
-Current B1 P3: [UI_REFERENCE_GUARD.md](UI_REFERENCE_GUARD.md) owns the lightweight reference/claim repair. Writer material is NEEDS_WORK; CURRENT/NEXT route its repair against the original B1 writer panel before popup expansion. B1_WRITE_EDITOR_SHELL.md retains prior scoped source checks.
+Current B1 P3: [UI_REFERENCE_GUARD.md](UI_REFERENCE_GUARD.md) owns the lightweight reference/claim repair. Writer material is NEEDS_WORK; D-53/UI_DESIGN_REFERENCES.md routes new family proposals from current adopted theme + native/published controls. The new writer DRAFT needs exterior/cancel/register glass refinement, then user judgement before implementation; the early B1 writer is history, not the current rigid target. B1_WRITE_EDITOR_SHELL.md retains prior scoped source checks.
 
 - Prior B1 password/header: [B1_PASSWORD_PAGES.md](B1_PASSWORD_PAGES.md), [B1_FORM_HEADER_REUSE.md](B1_FORM_HEADER_REUSE.md). Their scoped results remain; unobserved tool/account children are separate.

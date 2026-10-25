@@ -1,5 +1,14 @@
 # DCUF modernization decision rationale
 
+## D-53 — Derive family proposals from the current adopted UI
+
+- SELECTED: ER0 user steering2026-10-25. Current adopted theme/header is the style authority; original native and published stable UI supply real composition/controls. New or structurally different families get a tailored coherent DRAFT; equivalent windows reuse the adopted family. After user selection freeze the exact proposal/hash/region for actual comparison.
+- NOT ADOPTED: Rigidly copying the early B1 writer sketch, silently replacing a selected design, generating an image per button/state, inventing raster-only controls or treating the new DRAFT as accepted implementation.
+- DEFERRED: User judgement of the new writer draft, actual writer material repair, then native popup interiors. The current runtime remains NEEDS_WORK; D-52's reference/claim guard stays in force.
+- Reason: The user identified the initial writer board as different from the current adopted header/native UI. Preserve the guard's source identity while allowing this explicit authorized adaptation. A new external research cycle cannot resolve this user-specific visual choice more directly.
+- Evidence: UI_DESIGN_REFERENCES.md and docs/design/b1-write-current-theme-2026-10-25.md bind fresh current/native/published captures, selected header and separately generated light/dark DRAFT. Receipt records source roles and scope; no product runtime changes or efficiency claim.
+- Revisit: The user selects another proposal, the adopted theme or native composition changes, or a new mismatch escapes reference/requirement binding. Keep immutable earlier receipts historical.
+
 ## D-52 — Bind visual authority at the existing comparison boundary
 
 - SELECTED: ER2,2026-10-25. Impeccable polish's existing-system/render inspection and Superpowers verification-before-completion's claim-specific evidence. Primary upstream skill texts are linked/appraised in UI_REFERENCE_GUARD.md. Bind NEXT's frozen original image/region in the existing preparation/comparator; known omission outranks an optimistic assessment. Surface-specific rendering remains necessary; these instructions are not empirical proof of universal visual judgement.
