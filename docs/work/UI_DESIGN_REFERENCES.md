@@ -1,6 +1,6 @@
 # UI design references for the next visual pass
 
-Status: `B1_LIST_ADOPTED_AS_EXPANSION_BASELINE / EXPANSION_IN_PROGRESS`. CURRENT_STATE.md/NEXT_TASK.md own current progress and order; B1_UI_EXPANSION_PREFLIGHT.md owns the broad requested scope. The current adopted header/list is the visual authority; the early raster supplies historical family direction. This reference page is not a completion receipt.
+Status: `B1_LIST_ADOPTED_AS_EXPANSION_BASELINE / EXPANSION_IN_PROGRESS`. CURRENT_STATE.md/NEXT_TASK.md own current progress and order; B1_UI_EXPANSION_PREFLIGHT.md owns the broad requested scope. The coherent B1 theme and current user direction govern the design; current header/list are revisable working references. The early raster supplies historical family direction. This reference page is not a completion receipt.
 
 ## Current choice: B composition + B1 Prism Glass
 
@@ -14,6 +14,10 @@ Status: `B1_LIST_ADOPTED_AS_EXPANSION_BASELINE / EXPANSION_IN_PROGRESS`. CURRENT
 - Local comparison, optional: `artifacts/ui-overview-2026-10-17/b-glass-refinement-2026-10-22/index.html`. B2 stays an unadopted alternative; the tracked B1 image and this decision are the durable baseline.
 
 ![Early B1 family direction](../design/b1-prism-2026-10-22.png)
+
+## Current authority boundary — user clarification2026-10-26
+
+The list UI/button is **not a canonical or immutable design authority**. It is a current comparison/example that can also improve when a more refined, coherent glass treatment fits. Develop the shared action material across writer and list together; retain adequate tint/readability rather than excessive transparency. Native/published stable controls remain behavior/coverage references. Frozen hashes identify the exact input being compared; they do not forbid an authorized design revision. Writer v3 is still only a proposal. Adopt a coherent revised family before product-wide implementation; do not revive the rejected B2 palette or weaken native behavior to copy a raster.
 
 ## Tailored proposals for new UI families — D-53
 
