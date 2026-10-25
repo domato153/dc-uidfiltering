@@ -35,6 +35,15 @@ for(const id of ['header-shell-presenter','header-gnb-presenter','gallery-page-h
     const mutation=id==='header-shell-presenter'?current.replace('border-radius: 8px;', 'border-radius: 80px;'):changed;
     assert.throws(()=>restoreConcept01HeaderVisualDelta(mutation),'Unregistered visual change must fail normalization');
 }
+// P2 popup additions remain exact registered deltas, never wildcard exclusions.
+for (const [id,from,to] of [
+    ['header-shell-presenter','data-dcuf-header-shell-role="search-layer"','data-dcuf-header-shell-role="unregistered-search-layer"'],
+    ['gallery-page-head-presenter','data-dcuf-gallery-page-head-role="settings-layer"','data-dcuf-gallery-page-head-role="unregistered-settings-layer"'],
+    ['header-drawer-presenter','top: 50% !important;','top: 51% !important;'],
+]) {
+    assert.ok(currentSources[id].includes(from));
+    assert.throws(()=>restoreConcept01HeaderVisualDelta(currentSources[id].replace(from,to)), 'Unregistered P2 delta must fail normalization');
+}
 // Combined build input must restore every owner, with repeated CSS fragments scoped locally.
 const combinedVisualSources = Object.values(currentSources).join('\n');
 const combinedRestored = restoreConcept01HeaderVisualDelta(combinedVisualSources);

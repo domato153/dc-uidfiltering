@@ -25,6 +25,8 @@ import { runDialogRepairContract } from './ui-repair-dialog-contract.mjs';
 import { runLiveControlContract } from './ui-live-control-contract.mjs';
 import { runB1ContentContract } from './ui-b1-content-contract.mjs';
 import { runB1ArticleActionsContract } from './ui-b1-article-actions-contract.mjs';
+import { runSurfaceObservationContract } from './harness/surface-observation-contract.mjs';
+import { runB1GallerySearchContract } from './ui-b1-gallery-search-contract.mjs';
 
 const args = new Set(process.argv.slice(2));
 const selectedGroup = process.argv.includes('--group') ? process.argv[process.argv.indexOf('--group') + 1] : null;
@@ -66,6 +68,8 @@ async function settleThemeTransitions(page) {
 mobileTest('live native controls: palette category sprites comment and action ownership', 'functional', runLiveControlContract);
 mobileTest('B1 content: native picker isolation glass and original input', 'functional', runB1ContentContract);
 mobileTest('B1 article actions: native popup glass and nested forms', 'functional', runB1ArticleActionsContract);
+mobileTest('surface observation captures native root and ancestor CSS without mutation', 'functional', runSurfaceObservationContract);
+mobileTest('B1 gallery search: native door children and header layers', 'functional', runB1GallerySearchContract);
 
 mobileTest('confirmed UI repair: native comment composer cascade and original input', 'functional', runCommentRepairContract);
 mobileTest('confirmed UI repair: list author media search paging and write controls', 'functional', runListRepairContract);
@@ -1944,14 +1948,14 @@ mobileTest('gallery door keeps the original hot-rank popup DOM and layout', 'fun
                 popupRect: { width: Math.round(rect.width), height: Math.round(rect.height) },
                 parentDisplay: getComputedStyle(popup.parentElement).display,
                 parentVisibility: getComputedStyle(popup.parentElement).visibility,
-                columns: getComputedStyle(list).gridTemplateColumns.split(' ').filter(Boolean).length,
+                columns: Array.from(list.children).filter(n=>n.tagName==='LI'&&n.getBoundingClientRect().width>0&&Math.abs(n.getBoundingClientRect().top-list.firstElementChild.getBoundingClientRect().top)<1).length,
                 internalMaxWidth: getComputedStyle(content).maxWidth
             };
         });
         assert.equal(popupContract.visible, true);
         assert.equal(popupContract.position, 'fixed');
         assert.equal(popupContract.insideViewport, true);
-        assert.equal(popupContract.contentWidth >= 970, true, `hot-rank contract: ${JSON.stringify(popupContract)}`);
+        assert.equal(popupContract.popupRect.width <= 860 && popupContract.contentWidth >= popupContract.popupRect.width - 2, true, `hot-rank contract: ${JSON.stringify(popupContract)}`);
         assert.equal(popupContract.columns, 5);
         assert.equal(popupContract.internalMaxWidth, 'none');
         assert.equal(await session.page.evaluate(() => window.__fixtureHotRankToggles), 1);
@@ -1964,7 +1968,10 @@ mobileTest('gallery door keeps the original hot-rank popup DOM and layout', 'fun
             const style = getComputedStyle(element);
             return { background: style.backgroundColor, color: style.color, boxSizing: style.boxSizing, maxWidth: style.maxWidth };
         });
-        assert.deepEqual(darkInternalStyle, originalInternalStyle, 'dark mode must not repaint the host hot-rank popup');
+        assert.equal(originalInternalStyle.background, 'rgba(0, 0, 0, 0)');
+        assert.equal(darkInternalStyle.background, 'rgba(0, 0, 0, 0)');
+        assert.notEqual(darkInternalStyle.color, originalInternalStyle.color, 'Authorized B1 rank content follows the current reading theme');
+        assert.deepEqual({boxSizing:darkInternalStyle.boxSizing,maxWidth:darkInternalStyle.maxWidth},{boxSizing:originalInternalStyle.boxSizing,maxWidth:originalInternalStyle.maxWidth});
         assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
     } finally { await session.close(); }
 });
@@ -2813,9 +2820,9 @@ mobileTest('header drawer style has one projected owner and reversible host cont
             const bindings = Object.freeze([
                 ['door', '.issue_wrap .issue_contentbox[data-dcuf-header-native-door="1"]'],
                 ['recommendation', '.issue_wrap #gall_top_recom.concept_wrap[data-dcuf-header-native-recom="1"]'],
-                ['relationPopup', '.issue_wrap > #relation_popup[data-dcuf-header-relation-popup="1"]'],
-                ['relationStatic', '.issue_wrap > #relation_popup[data-dcuf-header-relation-static="1"]'],
-                ['fluid', '*:not(#hot_rank_pop2):not(#hot_rank_pop2 *)'],
+                ['relationPopup', '.issue_wrap #relation_popup[data-dcuf-header-relation-popup="1"]'],
+                ['relationStatic', '.issue_wrap #relation_popup[data-dcuf-header-relation-static="1"]'],
+                ['fluid', '*:not(#hot_rank_pop2):not(#hot_rank_pop2 *):where(:not(#hot_tip_pop):not(#hot_tip_pop *))'],
                 ['intro', '.minor_intro_box'], ['ranking', '.minor_ranking_box'],
                 ['buttonDecoration', '.btn_mgall_dcp'], ['closeDecoration', '.under_poply_close'],
                 ['rankPopup', '#hot_rank_pop2'], ['tipPopup', '#hot_tip_pop'],
@@ -3537,7 +3544,7 @@ mobileTest('gallery native door keeps trusted controls and both popups across vi
             assert.equal([tipOpen.sourceParent, tipOpen.popupParents, tipOpen.noClone, tipOpen.noPortal,
                 tipOpen.tipHit, tipOpen.sourceHit].every(Boolean), true, `${width}x${height} dark=${dark}: ${JSON.stringify(tipOpen)}`);
             assert.equal(tipOpen.inViewport, true, `${width}x${height}: ${JSON.stringify(tipOpen)}`);
-            assert.equal(tipOpen.background, dark ? 'rgb(26, 34, 46)' : 'rgb(255, 255, 255)');
+            assert.equal(tipOpen.background, dark ? 'color(srgb 0.12549 0.160784 0.172549 / 0.84)' : 'color(srgb 1 1 1 / 0.78)', 'Authorized B1 floating material in this pinned Chrome environment');
             await session.page.locator('#hot_tip_pop .btn_tipclose').click();
             await session.page.locator('.issue_wrap .btn_mgall_dcp').focus();
             await session.page.locator('.issue_wrap .btn_mgall_dcp').press('Enter');

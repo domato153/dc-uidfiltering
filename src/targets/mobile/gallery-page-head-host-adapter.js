@@ -30,7 +30,8 @@
     const __dcufGalleryPageHeadHostAdapter = (() => {
         const ROOT_SELECTOR = '.page_head';
         const ROLE_ATTRIBUTE = 'data-dcuf-gallery-page-head-role';
-        const OWNED_ROLES = new Set(['root', 'left', 'right', 'both']);
+        const OWNED_ROLES = new Set(['root', 'left', 'right', 'both', 'settings-anchor', 'settings-layer', 'menu-list', 'menu-control', 'menu-toggle', 'guide-layer', 'guide-backdrop', 'layer-anchor', 'layer-panel', 'layer-head', 'layer-title', 'layer-body', 'layer-close', 'layer-actions']);
+        const EXTERNAL_LAYER_SELECTOR = '.user_guide_popup.pop_wrap, .user_guide_popup.pop_bg';
         const STYLE_ID = 'dcuf-gallery-page-head-style';
         const SUBSCRIBER_KEY = 'gallery-page-head-style';
         const states = new Map();
@@ -77,6 +78,25 @@
                 const right = element.classList.contains('fr');
                 if (left || right) desired.set(element, left && right ? 'both' : left ? 'left' : 'right');
             });
+            const parts = (root, selector, role) => root?.querySelectorAll(selector).forEach((element) => desired.set(element, role));
+            const menu = state.root.querySelector('#setting_list');
+            if (menu) {
+                if (menu.parentElement) desired.set(menu.parentElement, 'settings-anchor');
+                desired.set(menu, 'settings-layer');
+                parts(menu, 'ul', 'menu-list');
+                parts(menu, 'li > button, li > .checkbox > label', 'menu-control');
+                parts(menu, 'li > .checkbox', 'menu-toggle');
+            }
+            if (state.root === document.querySelector(ROOT_SELECTOR)) document.querySelectorAll(EXTERNAL_LAYER_SELECTOR).forEach((layer) => {
+                desired.set(layer, layer.classList.contains('pop_wrap') ? 'guide-layer' : 'guide-backdrop');
+                if (layer.parentElement) desired.set(layer.parentElement, 'layer-anchor');
+                parts(layer, ':scope > .pop_content', 'layer-panel');
+                parts(layer, '.pop_head', 'layer-head');
+                parts(layer, '.pop_head > h3', 'layer-title');
+                parts(layer, '.caption_box', 'layer-body');
+                parts(layer, '.btn_box', 'layer-actions');
+                parts(layer, '.poply_whiteclose, .poply_close', 'layer-close');
+            });
             state.baselines.forEach((original, element) => {
                 if (desired.has(element)) return;
                 if (original === null) element.removeAttribute(ROLE_ATTRIBUTE);
@@ -88,7 +108,7 @@
                     const original = element.getAttribute(ROLE_ATTRIBUTE);
                     state.baselines.set(element, OWNED_ROLES.has(original) ? null : original);
                 }
-                element.setAttribute(ROLE_ATTRIBUTE, role);
+                if (element.getAttribute(ROLE_ATTRIBUTE) !== role) element.setAttribute(ROLE_ATTRIBUTE, role);
             });
         };
 
@@ -142,9 +162,11 @@
                     const movedRoot = [...(payload.addedElements || []), ...(payload.removedElements || [])]
                         .some((node) => node instanceof Element && (
                             node.classList.contains('page_head') || node.getElementsByClassName('page_head').length > 0
+                            || node.matches(EXTERNAL_LAYER_SELECTOR) || node.querySelector(EXTERNAL_LAYER_SELECTOR)
                         ));
                     const changedInsideRoot = (payload.childListTargets || []).some((node) => (
-                        node instanceof Element && (node.matches(ROOT_SELECTOR) || node.closest(ROOT_SELECTOR) instanceof HTMLElement)
+                        node instanceof Element && (node.matches(ROOT_SELECTOR) || node.closest(ROOT_SELECTOR) instanceof HTMLElement
+                            || node.matches(EXTERNAL_LAYER_SELECTOR) || node.closest(EXTERNAL_LAYER_SELECTOR) instanceof HTMLElement)
                     ));
                     if (movedRoot || changedInsideRoot) refresh(document);
                 },

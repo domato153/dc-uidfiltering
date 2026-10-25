@@ -44,7 +44,7 @@
     const __dcufHeaderShellHostAdapter = (() => {
         const ROOT_SELECTOR = '.dcheader.typea';
         const ROLE_ATTRIBUTE = 'data-dcuf-header-shell-role';
-        const OWNED_ROLES = new Set(['root', 'head', 'logo', 'brand-mark', 'logo-image', 'logo-image-alt', 'logo-image-both', 'search-wrap', 'top-search', 'links']);
+        const OWNED_ROLES = new Set(['root', 'head', 'logo', 'brand-mark', 'logo-image', 'logo-image-alt', 'logo-image-both', 'search-wrap', 'top-search', 'links', 'search-layer', 'search-panel', 'search-box', 'search-title', 'search-list', 'search-link', 'search-remove', 'search-clear', 'search-footer', 'search-close', 'search-save']);
         const STYLE_ID = 'dcuf-header-shell-style';
         const SUBSCRIBER_KEY = 'header-shell-style';
         const states = new Map();
@@ -183,6 +183,15 @@
                 });
                 head.querySelectorAll('.wrap_search').forEach((search) => desired.set(search, 'search-wrap'));
                 head.querySelectorAll('.top_search').forEach((search) => desired.set(search, 'top-search'));
+                head.querySelectorAll('.wrap_search .auto_wordwrap').forEach((layer) => {
+                    desired.set(layer, 'search-layer');
+                    const parts = (selector, role) => layer.querySelectorAll(selector).forEach((element) => desired.set(element, role));
+                    parts('.auto_word', 'search-panel');
+                    parts('.word_box', 'search-box'); parts('.word_tit', 'search-title');
+                    parts('.word_list', 'search-list'); parts('.word_list > li > a', 'search-link');
+                    parts('.btn_autoword_del', 'search-remove'); parts('.btn_latelydel, .txtbtn_more', 'search-clear');
+                    parts('.word_close', 'search-footer'); parts('.btn_close', 'search-close'); parts('.round_label', 'search-save');
+                });
                 head.querySelectorAll('.area_links').forEach((links) => desired.set(links, 'links'));
             });
             state.baselines.forEach((original, element) => {
@@ -197,7 +206,7 @@
                     const original = element.getAttribute(ROLE_ATTRIBUTE);
                     state.baselines.set(element, OWNED_ROLES.has(original) ? null : original);
                 }
-                element.setAttribute(ROLE_ATTRIBUTE, role);
+                if (element.getAttribute(ROLE_ATTRIBUTE) !== role) element.setAttribute(ROLE_ATTRIBUTE, role);
             });
         };
 

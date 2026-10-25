@@ -423,7 +423,11 @@
         "host-issue-contentbox",
         "host-top-recommendation",
         "host-native-rank-tip-popups",
-        "dcuf-owned-header-controls"
+        "dcuf-owned-header-controls",
+        "host-header-search-layers",
+        "host-gallery-setting-menu",
+        "host-external-gallery-usage-guide",
+        "host-issue-wrap-stack"
       ],
       "states": [
         "initial",
@@ -433,10 +437,60 @@
         "native-popup-open",
         "popup-only",
         "source-replaced",
-        "rerendered"
+        "rerendered",
+        "search-history-open",
+        "search-suggestions-replaced",
+        "settings-menu-open",
+        "external-guide-open",
+        "rank-page-replaced",
+        "long-guide-last-item",
+        "native-child-layer-open"
       ],
-      "intendedDelta": "b1-comments-reading-and-native-picker-glass-v1",
-      "cascadeExceptions": [],
+      "intendedDelta": "b1-gallery-search-native-glass-v1",
+      "cascadeExceptions": [
+        {
+          "selector": "[data-dcuf-gallery-page-head-role=\"layer-anchor\"] > div[data-dcuf-gallery-page-head-role=\"guide-layer\"]",
+          "property": "top",
+          "hostCollision": "Observed native usage guide writes fixed top, negative centering margin and z-index inline. Center only the original guide and preserve its external native parent/backdrop and close.",
+          "testRef": "B1 gallery search: native door children and header layers"
+        },
+        {
+          "selector": "[data-dcuf-gallery-page-head-role=\"layer-anchor\"] > div[data-dcuf-gallery-page-head-role=\"guide-layer\"]",
+          "property": "margin",
+          "hostCollision": "Observed native usage guide writes fixed top, negative centering margin and z-index inline. Center only the original guide and preserve its external native parent/backdrop and close.",
+          "testRef": "B1 gallery search: native door children and header layers"
+        },
+        {
+          "selector": "[data-dcuf-gallery-page-head-role=\"layer-anchor\"] > div[data-dcuf-gallery-page-head-role=\"guide-layer\"]",
+          "property": "z-index",
+          "hostCollision": "Observed native usage guide writes fixed top, negative centering margin and z-index inline. Center only the original guide and preserve its external native parent/backdrop and close.",
+          "testRef": "B1 gallery search: native door children and header layers"
+        },
+        {
+          "selector": "[data-dcuf-header-drawer-scope=\"1\"] .issue_wrap #relation_popup[data-dcuf-header-relation-popup=\"1\"]:not([data-dcuf-header-relation-static=\"1\"])",
+          "property": "left",
+          "hostCollision": "Observed related-gallery root is nested under issuebox and writes left:0 and top:-2px inline. Center the original non-static popup in the viewport without moving nodes.",
+          "testRef": "B1 gallery search: native door children and header layers"
+        },
+        {
+          "selector": "[data-dcuf-header-drawer-scope=\"1\"] .issue_wrap #relation_popup[data-dcuf-header-relation-popup=\"1\"]:not([data-dcuf-header-relation-static=\"1\"])",
+          "property": "top",
+          "hostCollision": "Observed related-gallery root is nested under issuebox and writes left:0 and top:-2px inline. Center the original non-static popup in the viewport without moving nodes.",
+          "testRef": "B1 gallery search: native door children and header layers"
+        },
+        {
+          "selector": "[data-dcuf-header-drawer-scope=\"1\"] .issue_wrap .issue_contentbox[data-dcuf-header-native-door=\"1\"][data-dcuf-header-native-door-open=\"1\"] #hot_tip_pop",
+          "property": "top",
+          "hostCollision": "Native hot-tip writes top:15px inline. Only narrow/short viewport fallback uses centered fixed placement; normal anchoring remains unchanged.",
+          "testRef": "B1 gallery search: native door children and header layers"
+        },
+        {
+          "selector": "[data-dcuf-header-drawer-scope=\"1\"] .issue_wrap[data-dcuf-header-native-door-layer-open=\"1\"]",
+          "property": "z-index",
+          "hostCollision": "Popup-only regression places the original issue wrapper in an inline z-index:13 stacking context. Lift that actual ancestor only while its original rank/help layer is open; restore the marker without mutating its inline style. Lifting only the inner door cannot escape the ancestor.",
+          "testRef": "gallery native popups remain reachable after the drawer closes"
+        }
+      ],
       "cascadeExceptionProfiles": [],
       "testRefs": [
         "testbed/run-tests.mjs",
@@ -447,7 +501,9 @@
         "testbed/run-header-recent-visit-differential.mjs",
         "testbed/run-header-live-shape-gap.mjs",
         "testbed/run-header-hit-audit.mjs",
-        "testbed/run-header-public-canary.mjs"
+        "testbed/run-header-public-canary.mjs",
+        "testbed/ui-b1-gallery-search-contract.mjs",
+        "testbed/harness/surface-observation-contract.mjs"
       ],
       "canaryCheckpoint": "native-form-header"
     }

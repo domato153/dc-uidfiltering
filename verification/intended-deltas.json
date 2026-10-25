@@ -1235,6 +1235,93 @@
       "normalizer": "semantic-observation-v1",
       "unknownDifferencePolicy": "fail",
       "missingApplicabilityPolicy": "fail"
+    },
+    {
+      "id": "b1-gallery-search-native-glass-v1",
+      "status": "active",
+      "surfaces": [
+        "header-navigation"
+      ],
+      "allowed": [
+        {
+          "kind": "color-role",
+          "surface": "header-navigation",
+          "scope": "Observed native gallery door, ranking/help/related, settings/usage guide and header search history/suggestion roots: B1 frame/material, readable original ranking labels, original media fitting its frame, grouped manager rows, full-width related names, internal scrolling/close and narrow persistent-menu clearance. Existing owners project reversible parts; native nodes, events, form fields, display states and settings remain host-owned.",
+          "reason": "User authorized adopted B1 expansion and visible background transmission; no new action or authentication scope.",
+          "contractTests": [
+            "testbed/ui-b1-gallery-search-contract.mjs",
+            "testbed/harness/surface-observation-contract.mjs",
+            "testbed/run-header-shell-differential.mjs",
+            "testbed/run-gallery-page-head-differential.mjs"
+          ]
+        },
+        {
+          "kind": "spacing",
+          "surface": "header-navigation",
+          "scope": "Observed native gallery door, ranking/help/related, settings/usage guide and header search history/suggestion roots: B1 frame/material, readable original ranking labels, original media fitting its frame, grouped manager rows, full-width related names, internal scrolling/close and narrow persistent-menu clearance. Existing owners project reversible parts; native nodes, events, form fields, display states and settings remain host-owned.",
+          "reason": "User authorized adopted B1 expansion and visible background transmission; no new action or authentication scope.",
+          "contractTests": [
+            "testbed/ui-b1-gallery-search-contract.mjs",
+            "testbed/harness/surface-observation-contract.mjs",
+            "testbed/run-header-shell-differential.mjs",
+            "testbed/run-gallery-page-head-differential.mjs"
+          ]
+        },
+        {
+          "kind": "radius",
+          "surface": "header-navigation",
+          "scope": "Observed native gallery door, ranking/help/related, settings/usage guide and header search history/suggestion roots: B1 frame/material, readable original ranking labels, original media fitting its frame, grouped manager rows, full-width related names, internal scrolling/close and narrow persistent-menu clearance. Existing owners project reversible parts; native nodes, events, form fields, display states and settings remain host-owned.",
+          "reason": "User authorized adopted B1 expansion and visible background transmission; no new action or authentication scope.",
+          "contractTests": [
+            "testbed/ui-b1-gallery-search-contract.mjs",
+            "testbed/harness/surface-observation-contract.mjs",
+            "testbed/run-header-shell-differential.mjs",
+            "testbed/run-gallery-page-head-differential.mjs"
+          ]
+        },
+        {
+          "kind": "typography",
+          "surface": "header-navigation",
+          "scope": "Observed native gallery door, ranking/help/related, settings/usage guide and header search history/suggestion roots: B1 frame/material, readable original ranking labels, original media fitting its frame, grouped manager rows, full-width related names, internal scrolling/close and narrow persistent-menu clearance. Existing owners project reversible parts; native nodes, events, form fields, display states and settings remain host-owned.",
+          "reason": "User authorized adopted B1 expansion and visible background transmission; no new action or authentication scope.",
+          "contractTests": [
+            "testbed/ui-b1-gallery-search-contract.mjs",
+            "testbed/harness/surface-observation-contract.mjs",
+            "testbed/run-header-shell-differential.mjs",
+            "testbed/run-gallery-page-head-differential.mjs"
+          ]
+        },
+        {
+          "kind": "geometry",
+          "surface": "header-navigation",
+          "scope": "Observed native gallery door, ranking/help/related, settings/usage guide and header search history/suggestion roots: B1 frame/material, readable original ranking labels, original media fitting its frame, grouped manager rows, full-width related names, internal scrolling/close and narrow persistent-menu clearance. Existing owners project reversible parts; native nodes, events, form fields, display states and settings remain host-owned.",
+          "reason": "User authorized adopted B1 expansion and visible background transmission; no new action or authentication scope.",
+          "contractTests": [
+            "testbed/ui-b1-gallery-search-contract.mjs",
+            "testbed/harness/surface-observation-contract.mjs",
+            "testbed/run-header-shell-differential.mjs",
+            "testbed/run-gallery-page-head-differential.mjs"
+          ]
+        }
+      ],
+      "invariants": [
+        "filter-result",
+        "storage-trace",
+        "network-trace",
+        "host-node-identity",
+        "host-node-order",
+        "native-handler",
+        "native-form-fields",
+        "native-submit-trace",
+        "focus",
+        "lifecycle-resources",
+        "pc-result",
+        "accessibility",
+        "geometry-containment"
+      ],
+      "normalizer": "semantic-observation-v1",
+      "unknownDifferencePolicy": "fail",
+      "missingApplicabilityPolicy": "fail"
     }
   ]
 }

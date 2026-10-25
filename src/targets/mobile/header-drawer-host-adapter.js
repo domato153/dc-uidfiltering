@@ -18,9 +18,9 @@
         const nativeStyleDefinition = __dcufHeaderDrawerPresenter.describeNativeStyle(Object.freeze([
             { slot: "door", selector: ".issue_wrap .issue_contentbox[data-dcuf-header-native-door=\"1\"]" },
             { slot: "recommendation", selector: ".issue_wrap #gall_top_recom.concept_wrap[data-dcuf-header-native-recom=\"1\"]" },
-            { slot: "relationPopup", selector: ".issue_wrap > #relation_popup[data-dcuf-header-relation-popup=\"1\"]" },
-            { slot: "relationStatic", selector: ".issue_wrap > #relation_popup[data-dcuf-header-relation-static=\"1\"]" },
-            { slot: "fluid", selector: "*:not(#hot_rank_pop2):not(#hot_rank_pop2 *)" },
+            { slot: "relationPopup", selector: ".issue_wrap #relation_popup[data-dcuf-header-relation-popup=\"1\"]" },
+            { slot: "relationStatic", selector: ".issue_wrap #relation_popup[data-dcuf-header-relation-static=\"1\"]" },
+            { slot: "fluid", selector: "*:not(#hot_rank_pop2):not(#hot_rank_pop2 *):where(:not(#hot_tip_pop):not(#hot_tip_pop *))" },
             { slot: "intro", selector: ".minor_intro_box" },
             { slot: "ranking", selector: ".minor_ranking_box" },
             { slot: "buttonDecoration", selector: ".btn_mgall_dcp" },
@@ -37,6 +37,7 @@
         const NATIVE_DOOR_ATTR = 'data-dcuf-header-native-door';
         const NATIVE_DOOR_OPEN_ATTR = 'data-dcuf-header-native-door-open';
         const NATIVE_DOOR_POPUP_ONLY_ATTR = 'data-dcuf-header-native-door-popup-only';
+        const NATIVE_DOOR_LAYER_OPEN_ATTR = 'data-dcuf-header-native-door-layer-open';
         const NATIVE_RECOM_ATTR = 'data-dcuf-header-native-recom';
         const NATIVE_RECOM_OPEN_ATTR = 'data-dcuf-header-native-recom-open';
         const POPUP_SCOPE_ATTR = 'data-dcuf-header-drawer-popup';
@@ -47,12 +48,15 @@
         const DRAWER_BODY_SELECTOR = '.dcuf-header-drawer__body-inner';
         const MUTATION_SELECTOR = '.page_head, .list_array_option, .gall_listwrap, .list_wrap, .issue_contentbox, #hot_rank_pop2, #hot_tip_pop, #gall_top_recom.concept_wrap, #relation_popup';
         const ownedDrawers = new Set();
+        const PART_ATTRIBUTE = 'data-dcuf-header-drawer-part';
+        const partBaselines = new Map();
         let connected = false;
         let bodyScope = null;
         let actionsScope = null;
         let nativeDoorScope = null;
         let nativeDoorOpenScope = null;
         let nativeDoorPopupOnlyScope = null;
+        let nativeDoorLayerOpenScope = null;
         let nativeRecomScope = null;
         let nativeRecomOpenScope = null;
         let doorBodyVars = null;
@@ -71,6 +75,51 @@
         const findOutsideDrawer = (selector) => Array.from(document.querySelectorAll(selector))
             .find((element) => element instanceof HTMLElement && !isInsideDrawer(element));
         const isListPage = () => !document.querySelector('.view_content_wrap');
+        const syncParts = () => {
+            const desired = new Map();
+            const parts = (root, selector, role) => root?.querySelectorAll(selector).forEach((element) => desired.set(element, role));
+            const door = findOutsideDrawer('.issue_contentbox');
+            parts(door, '.minor_intro_box', 'intro'); parts(door, '.img_contbox', 'hero');
+            parts(door, '.mintro_imgbox', 'image'); parts(door, '.mintro_txtbox', 'description');
+            parts(door, '.img_contbox > .bgcover', 'image-frame'); parts(door, '.mintro_imgbox > .cover', 'image-cover');
+            parts(door, '.info_contbox', 'info'); parts(door, '.minor_ranking_box:has(> .ranking)', 'ranking');
+            parts(door, '.info_cont', 'info-row'); parts(door, '.info_cont > .tit', 'info-label'); parts(door, '.info_cont > .cont', 'info-value');
+            parts(door, '.ranking_tit', 'rank-title'); parts(door, '.rank_img', 'rank-digits');
+            parts(door, '.num_img', 'rank-digit'); parts(door, '.btn_hotall_list', 'rank-trigger');
+            parts(door, '.rank_img > .txt_img', 'rank-suffix'); parts(door, '.minor_ranking_box:has(> .ranking) > .btn_mgall_dcp', 'tip-trigger');
+            parts(door, '.ranking_tit .blind, .num_img .blind, .rank_img > .blind, .btn_hotall_list .blind', 'visible-label');
+            parts(door, '.rank_img > .txt_img > .blind', 'visible-label');
+            for (const root of [door?.querySelector('#hot_rank_pop2'), door?.querySelector('#hot_tip_pop'), document.querySelector('#relation_popup')]) {
+                if (!root) continue;
+                parts(root, ':scope > .pop_content, :scope > .inner', 'panel');
+                parts(root, '.pop_head', 'head'); parts(root, '.pop_head > h3, .pop_head > strong', 'title');
+                parts(root, '.inner_txt, .pop_info, .minor_tip_txt', 'message');
+                parts(root, '.following.inner, .follow.inner, .followed.inner, .follower.inner', 'relation-group');
+                parts(root, '.list_box', 'relation-list'); parts(root, '.pop_hotmgall_listbox', 'rank-list');
+                parts(root, '.list_box > li > a', 'relation-link');
+                parts(root, '.hot_rank_list_wrap', 'rank-body'); parts(root, '.btn_box', 'actions');
+                parts(root, '.btn_prev', 'previous'); parts(root, '.btn_next', 'next');
+                parts(root, '.page_num', 'page-counter');
+                parts(root, '.pop_hotmgall_listbox .num', 'rank-number');
+                parts(root, '.poply_bgblueclose, .poply_close, .btn_tipclose', 'close');
+            }
+            partBaselines.forEach((original, element) => {
+                if (desired.has(element)) return;
+                if (original === null) element.removeAttribute(PART_ATTRIBUTE); else element.setAttribute(PART_ATTRIBUTE, original);
+                partBaselines.delete(element);
+            });
+            desired.forEach((role, element) => {
+                if (!partBaselines.has(element)) {
+                    const original = element.getAttribute(PART_ATTRIBUTE);
+                    partBaselines.set(element, original === role ? null : original);
+                }
+                if (element.getAttribute(PART_ATTRIBUTE) !== role) element.setAttribute(PART_ATTRIBUTE, role);
+            });
+        };
+        const restoreParts = () => {
+            partBaselines.forEach((original, element) => original === null ? element.removeAttribute(PART_ATTRIBUTE) : element.setAttribute(PART_ATTRIBUTE, original));
+            partBaselines.clear();
+        };
 
         const restoreProjection = (projection) => {
             if (!projection) return;
@@ -124,19 +173,23 @@
         };
 
         const clearNativeDoor = () => {
+            restoreParts();
             removeCopiedMarkers('.issue_wrap .issue_contentbox', NATIVE_DOOR_ATTR, nativeDoorScope);
             removeCopiedMarkers('.issue_wrap .issue_contentbox', NATIVE_DOOR_OPEN_ATTR, nativeDoorOpenScope);
             removeCopiedMarkers('.issue_wrap .issue_contentbox', NATIVE_DOOR_POPUP_ONLY_ATTR, nativeDoorPopupOnlyScope);
+            removeCopiedMarkers('.issue_wrap', NATIVE_DOOR_LAYER_OPEN_ATTR, nativeDoorLayerOpenScope);
             removeCopiedMarkers('#gall_top_recom.concept_wrap', NATIVE_RECOM_ATTR, nativeRecomScope);
             removeCopiedMarkers('#gall_top_recom.concept_wrap', NATIVE_RECOM_OPEN_ATTR, nativeRecomOpenScope);
             restoreProjection(nativeRecomOpenScope);
             restoreProjection(nativeRecomScope);
             restoreProjection(nativeDoorPopupOnlyScope);
+            restoreProjection(nativeDoorLayerOpenScope);
             restoreProjection(nativeDoorOpenScope);
             restoreProjection(nativeDoorScope);
             nativeRecomOpenScope = null;
             nativeRecomScope = null;
             nativeDoorPopupOnlyScope = null;
+            nativeDoorLayerOpenScope = null;
             nativeDoorOpenScope = null;
             nativeDoorScope = null;
             restoreDoorBodyVars();
@@ -216,7 +269,8 @@
                 }
             }
             const source = findOutsideDrawer('.issue_contentbox');
-            const popupOnly = !nextOpen && hasOpenNativePopup(source);
+            const popupOpen = hasOpenNativePopup(source);
+            const popupOnly = !nextOpen && popupOpen;
             if (!nextOpen && !popupOnly && source !== nativeDoorOpenScope?.element
                 && source?.getAttribute(NATIVE_DOOR_OPEN_ATTR) === '1') {
                 // A host replacement may clone our open marker while the drawer is closed.
@@ -231,6 +285,10 @@
             nativeDoorScope = project(nativeDoorScope, source, NATIVE_DOOR_ATTR);
             nativeDoorOpenScope = project(nativeDoorOpenScope, nextOpen || popupOnly ? source : null, NATIVE_DOOR_OPEN_ATTR);
             nativeDoorPopupOnlyScope = project(nativeDoorPopupOnlyScope, popupOnly ? source : null, NATIVE_DOOR_POPUP_ONLY_ATTR);
+            const issueLayer = source?.closest('.issue_wrap');
+            if (issueLayer !== nativeDoorLayerOpenScope?.element && issueLayer?.getAttribute(NATIVE_DOOR_LAYER_OPEN_ATTR) === '1') issueLayer.removeAttribute(NATIVE_DOOR_LAYER_OPEN_ATTR);
+            removeCopiedMarkers('.issue_wrap', NATIVE_DOOR_LAYER_OPEN_ATTR, nativeDoorLayerOpenScope || {element: issueLayer});
+            nativeDoorLayerOpenScope = project(nativeDoorLayerOpenScope, popupOpen ? issueLayer : null, NATIVE_DOOR_LAYER_OPEN_ATTR);
             const recomSource = findOutsideDrawer('#gall_top_recom.concept_wrap');
             if (!nextOpen && recomSource !== nativeRecomOpenScope?.element
                 && recomSource?.getAttribute(NATIVE_RECOM_OPEN_ATTR) === '1') {
@@ -334,7 +392,7 @@
             if (!(body instanceof HTMLElement)) return;
 
             popupScope = project(popupScope, document.getElementById('hot_rank_pop2'), POPUP_SCOPE_ATTR);
-            const relationPopup = document.querySelector('.issue_wrap > #relation_popup');
+            const relationPopup = document.querySelector('.issue_wrap #relation_popup');
             const relationStatic = relationPopup instanceof HTMLElement && (
                 relationStaticScope?.element === relationPopup
                 || relationPopup.getAttribute(RELATION_STATIC_ATTR) === '1'
@@ -353,6 +411,7 @@
                 return;
             }
             setDrawerOpenState(drawer, drawer.getAttribute('data-open') === '1');
+            syncParts();
         };
 
         const schedule = () => scheduler?.schedule();
@@ -372,7 +431,7 @@
             // Exempt original roots until their legacy clear phase releases ownership.
             const source = listPage || nativeDoorScope ? findOutsideDrawer('.issue_contentbox') : null;
             const recomSource = listPage || nativeRecomScope ? findOutsideDrawer('#gall_top_recom.concept_wrap') : null;
-            const relationPopup = document.querySelector('.issue_wrap > #relation_popup');
+            const relationPopup = document.querySelector('.issue_wrap #relation_popup');
             removeCopiedMarkers('[data-dcuf-header-native-door]', NATIVE_DOOR_ATTR,
                 nativeDoorScope, source);
             removeCopiedMarkers('[data-dcuf-header-native-recom]', NATIVE_RECOM_ATTR,
@@ -471,6 +530,7 @@
         };
 
         const dispose = () => {
+            restoreParts();
             scheduler?.cancel();
             scheduler = null;
             mutationUnsubscribe?.();

@@ -1,0 +1,181 @@
+{
+  "schemaVersion": 1,
+  "kind": "b1-gallery-search-popup-family",
+  "status": "SCOPED_CHECKS_PASS_REFERENCE_REVIEWED_USER_PREFERENCE_PENDING",
+  "sourceBaseHead": "7fed89e4c6742a1848679d3b8c6da5ee921d85ba",
+  "candidateFingerprint": "5320773549643d0eb723618a80506f64355924bb0ecd7ab9f7feac5b45d185a0",
+  "artifact": {
+    "mobileSha256": "828AEA69530F33E8396C2374A1B8F521C995BBAEA641492850CB7D69F18E831F",
+    "controlMobileSha256": "77AD4210F54B3C6A5028BB530DC2AB19253C3EF3F91B605BB280151F3AD27893",
+    "pcSha256": "61C539769BA160A5FC4DCD164B3CD26025244AB6FC1BBC7A4A520416FE5A41A5",
+    "pcBytesChanged": false,
+    "versionChanged": false
+  },
+  "scope": {
+    "surfaces": [
+      "door",
+      "settings",
+      "rank",
+      "tip",
+      "related",
+      "search-history",
+      "guide",
+      "search-suggestions"
+    ],
+    "owners": [
+      "mobile-header-drawer-host-adapter/presenter",
+      "mobile-header-shell-host-adapter/presenter",
+      "mobile-gallery-page-head-host-adapter/presenter"
+    ],
+    "acceptedRegistryChanged": false,
+    "overlayActive": true,
+    "appearanceApproved": false
+  },
+  "checks": {
+    "mobile": {
+      "passed": 148,
+      "failed": 0
+    },
+    "pc": {
+      "selection": "functional",
+      "passed": 15,
+      "failed": 0
+    },
+    "focused": {
+      "tests": 1,
+      "contexts": 36,
+      "passed": true
+    },
+    "affectedLegacy": {
+      "gallery": 10,
+      "ownership": 1,
+      "passed": true
+    },
+    "semantics": {
+      "controlSha256": "77AD4210F54B3C6A5028BB530DC2AB19253C3EF3F91B605BB280151F3AD27893",
+      "candidateSha256": "828AEA69530F33E8396C2374A1B8F521C995BBAEA641492850CB7D69F18E831F",
+      "browser": "155.0.8059.85",
+      "observations": 20,
+      "semanticDifferences": 0,
+      "persistentResourcesEqual": true,
+      "normalization": "Only instrumentation reads/writes ts fields omitted; stored values and ordered key/value traces remain exact",
+      "limits": "Fresh processes and browser contexts; native-shaped synthetic callback equivalence, not control pointer/appearance equivalence. Candidate hit-testing and public native pointer actions are separate evidence."
+    },
+    "publicSourceInjected": {
+      "mainRoots": 8,
+      "rankOnly": true,
+      "rankPaging": true,
+      "theme": "light",
+      "extension": false,
+      "onlyAllowedPost": "relation read for gallery47965/typeM; actual validation value excluded"
+    },
+    "visual": {
+      "pairs": 8,
+      "status": "REVIEWED",
+      "pixelStatus": "DIFFERENCES_REQUIRE_REVIEW",
+      "productApproved": false,
+      "viewer": {
+        "images": 54,
+        "decoded": 54,
+        "broken": [],
+        "overflow": 0
+      },
+      "backingTransmission": "Actual sibling backing rendered/inspected light/dark; inputs and long reading retain paper"
+    },
+    "independentReview": {
+      "findings": [
+        "guide fixed-height clipping",
+        "hidden original manager identities in synthetic tips"
+      ],
+      "addressed": true,
+      "finalHeadReview": false,
+      "limits": "One read-only working-slice source review; later author visual/regression fixes tested separately"
+    },
+    "releaseVerification": "node tools/verify-repo.mjs release passed; no release/publication authority",
+    "contraryEvidence": {
+      "earlyBroad": "interrupted before visual settlement; no result accepted",
+      "priorFull": {
+        "runtime": "2FCDADE9FC2382520BCBF79EFA46031D0246E541625CEDDFCCFF0A2FDC90FA56",
+        "passed": 144,
+        "failed": 4,
+        "disposition": "Obsolete visual/binding criteria reconciled and actual ancestor/shape regressions fixed; full rerun required and passed"
+      },
+      "oldArticleCounter": "Retained in prior immutable receipt; current148 run passes unchanged threshold"
+    },
+    "verifierReconciliation": {
+      "initialCheckpoint": "Stopped before commit on next-document length and unregistered exact P2 visual fragments",
+      "changes": "Shorten prose; register exact additions before unchanged historical inversion; add three mutation-rejection controls",
+      "governance": "VALID",
+      "headerOwnership": "PASS existing palette/reset/native-visibility and phase checks",
+      "runtimeChanged": false
+    }
+  },
+  "limits": [
+    "Not whole P2/all-child approval",
+    "No final actual-extension/device/account qualification",
+    "Settings subpages, authenticated children and native browser dialogs remain separate",
+    "No raw/mixed/upper/header admission, release, PR or merge claim"
+  ],
+  "localEvidence": [
+    {
+      "path": "artifacts/b1-gallery-search-2026-10-24/mobile-final-repaired.json",
+      "sha256": "57CEC45820166FAED1FB07ADF80B0444A966DDC2E9DDA71455FD0990C4BCB48F"
+    },
+    {
+      "path": "artifacts/b1-gallery-search-2026-10-24/pc-final.json",
+      "sha256": "912C4E420316D0C2D5E1E881A5A1942786703F161901A749A5216C60DD17FC8D"
+    },
+    {
+      "path": "artifacts/b1-gallery-search-2026-10-24/focused-repaired.json",
+      "sha256": "DBDCE9B3159FEDCF42759C6B9555CEB09166AB990290F62D0DD3DF922D83491F"
+    },
+    {
+      "path": "artifacts/b1-gallery-search-2026-10-24/regression-gallery-fixed.json",
+      "sha256": "538AE88919A2904D47962186625B6B80B02A31B9F0E70434A1038E87872492D2"
+    },
+    {
+      "path": "artifacts/b1-gallery-search-2026-10-24/regression-owner-fixed.json",
+      "sha256": "B486DA08247546320ECD3E5FCBD0A1DA0F0BDAB4FB99B818C9CAFB4C45833866"
+    },
+    {
+      "path": "artifacts/b1-gallery-search-2026-10-24/semantic-summary.json",
+      "sha256": "A07C65AD56B30682B23235CE6C6692D88CF44F7A5044BF9B0C4D293621806459"
+    },
+    {
+      "path": "artifacts/b1-gallery-search-2026-10-24/semantic-control-final.json",
+      "sha256": "34238FD3C56A622C1CCDE343671A2400E018678623BFB079C1018B197AFA3CCE"
+    },
+    {
+      "path": "artifacts/b1-gallery-search-2026-10-24/semantic-candidate-final.json",
+      "sha256": "12B5CFB30E303EB4F7581002D8E9CBD616940CCEED400D15EEE58CE58BF1D269"
+    },
+    {
+      "path": "artifacts/b1-gallery-search-2026-10-24/canary-repaired/native-states.json",
+      "sha256": "6561F11DCC310954DD18F15EEFA3EED4FA8A33610AA9BA4009E3A86D436BE7EC"
+    },
+    {
+      "path": "artifacts/b1-gallery-search-2026-10-24/comparison-final/review.json",
+      "sha256": "4F9F95A263A3326AF2063A89D1EE0F8EAD6C90E239190323EDAFE758D22E360A"
+    },
+    {
+      "path": "artifacts/b1-gallery-search-2026-10-24/review-final-manifest.json",
+      "sha256": "607629337F5D9492944D1AC2D91DEAD52E2BFFC8D643A25795E22CD1FC8F735A"
+    },
+    {
+      "path": "artifacts/b1-gallery-search-2026-10-24/material.json",
+      "sha256": "0DC54D0EDF8B0561D35F70CD93F4C8F323B3FBF45EB6ECFD71B3AC0DD2F3F049"
+    },
+    {
+      "path": "artifacts/b1-gallery-search-2026-10-24/viewer.json",
+      "sha256": "3D55CCECEF14B2BA6886FD492B2CFC17777762ACCD15EB897192220A77872495"
+    },
+    {
+      "path": "artifacts/b1-gallery-search-2026-10-24/mobile-qualified.json",
+      "sha256": "4C9B42461CDC4C95E7DD9DAFA8ACF51B26B4C1A168BCA45B94096938BB4533C3"
+    },
+    {
+      "path": "artifacts/b1-gallery-search-2026-10-24/interrupted-broad.json",
+      "sha256": "F80E43C79636273D16B00191B9F115BAB8F0847B2A1B41E992DEF77CE0C7EF40"
+    }
+  ]
+}
