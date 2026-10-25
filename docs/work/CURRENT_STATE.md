@@ -2,22 +2,22 @@
 
 ## Current execution
 
-- Active plan: docs/work/MOBILE_UI_MODERNIZATION.md → B1_UI_EXPANSION_PREFLIGHT.md. Small UI reuse preparation is closed; next P3 write/editor shell uses the shared header policy and preparation helper.
+- Active plan: docs/work/MOBILE_UI_MODERNIZATION.md → B1_UI_EXPANSION_PREFLIGHT.md. P3 write/editor shell source is validated; next native editor tool/popup family.
 - Workspace path: `.` (repository root; private prompt supplies exact nested worktree). AGENTS.md owns policy; preserve debug.log unread/unstaged.
-- Active stage: `header-navigation` formal admission remains open. Bounded `ui-reuse-preparation` closed with no visual/behavior delta or registry promotion; next `b1-write-editor-shell`.
-- Accepted visual preference: Compact B+B1 and adopted BCB96852 list; user accepted the repaired password/header appearance after97fc1f2. Popup direction authorized. B2/large-title-card inactive. This cleanup makes no new appearance choice.
-- Source state: source checkpoint base HEAD `97fc1f2ee7efad7d90f4b66d780c0132215117aa` on `codex/ui-port-boundary`; four adapters consume one context policy, Testbed capture/manifest preparation is reused. Accepted registry unchanged; overlay active. Read resulting checkpoint identity fresh from Git.
-- Local-only state: `LOCAL_ONLY_EVIDENCE`; artifacts/ui-reuse-prep-2026-10-25/; prior form-header viewer remains valid for the unchanged appearance. Tracked receipt below records scope; ignored screenshots are recoverable evidence.
-- Candidate fingerprint: `674ef8a01cd56c78c107d8e2541c6089bc8219ed441ef239a4d924ce15cdb91c`
-- Last current audit: PASS — SCOPED_UI_REUSE_PREPARATION_PASS. Mobile150/150, helper/context7/7, CSS13 byte-identical, native-form25 observations equal, four header context comparisons equal and image5/5 PIXEL_MATCH. Default visual fidelity NOT_REVIEWED/productApproved=false remains intentional; no formal-stage or whole-UI approval.
-- Current stage receipt: `verification/receipts/2026-10-25-ui-reuse-preparation.json` SHA-256 `B916EA97DAE925162ED1EF16BA0AA1FA3071162A01E4E7127FA79EC7A585443F`. Bounded preparation/output-preservation scope only; prior password/header receipt remains its own historical feature evidence.
-- Accepted baseline: Adopted BCB list/B1 family direction plus the scoped password-card/header implementation and behavior evidence. Write/editor, account/login and unopened native children remain separate.
-- Current artifact: Mobile3.5.5 `62F1BAE62F3CDC5E2640B8331D603D86465DB7111B4379E11D249C395CE3C87A` root/dist/guard aligned; PC1.9.9 `61C539769BA160A5FC4DCD164B3CD26025244AB6FC1BBC7A4A520416FE5A41A5` root/dist unchanged.
-- Blockers: No global live/authorization blocker. Modify specimen6801789 and delete6778319; older concept-post modify restriction is native. No actual modify/delete/authentication or new POST authority. Relation-read47965 authorization remains exact and separate.
-- Pending live checks: Actual final extension/device/account and unobserved native children remain unqualified. Dark images are source-theme proxies; empty public search history stayed closed.980×2306 is the phone-layout proxy and390 is stress. Password-header defects are repaired; do not revive the former missing-owner blocker.
+- Active stage: `header-navigation` formal admission remains open. Bounded `b1-write-editor-shell` has source/runtime evidence; revised glass texture preference is pending user review. Next `b1-write-tool-popups`.
+- Accepted visual preference: Compact B+B1/adopted BCB list and prior password/header appearance. User flagged the first write frame as flat; revised B1 glass/sheen/rim is reviewable, not automatically accepted. B2/large-title-card inactive.
+- Source state: source checkpoint base HEAD `9cf43fdaa914c8d34d57c3efdca8e7997b5fb292` on `codex/ui-port-boundary`; native-form remains sole write owner; four common headers serve supported editor state without a list runtime. Accepted registry unchanged; overlay active. Read resulting checkpoint fresh from Git.
+- Local-only state: `LOCAL_ONLY_EVIDENCE`; artifacts/b1-write-shell-2026-10-25/ and write-shell viewer. No raw capture is a baseline approval.
+- Candidate fingerprint: `0cbe15444f9acf620aa5ee56c3216f52bfd45dfa13c99dc7f76fd8428a72b509`
+- Last current audit: PASS — SCOPED_WRITE_EDITOR_SOURCE_PASS_VISUAL_PREFERENCE_PENDING. Mobile151/151, shared-policy1/1, five editor interaction/idle/wrapper-reinsert contexts, native25 behavior observations equal. Four proposal/current pairs remain visual UNVERIFIED pending user texture preference; no whole-UI or upper-stage approval.
+- Current stage receipt: `verification/receipts/2026-10-25-b1-write-editor-shell.json` SHA-256 `BEC3D5D4D32262C7E43CBC8839078D816CAED3C7D337DC7BFC805C58A6964F23`. Bounded source/behavior scope; exact-tree checkpoint validation/CI remain their own record.
+- Accepted baseline: Adopted B1 list and prior password/header. New writer retains original native fields/forms/events and readable paper; individual tool/popup/attachment/AI/account children remain separate.
+- Current artifact: Mobile3.5.5 `CE3C4D1B09A52408F0F10C96FB0B4362AE74E3AC8000C9149DE83A9E76A30EDD` root/dist/guard aligned; PC1.9.9 `61C539769BA160A5FC4DCD164B3CD26025244AB6FC1BBC7A4A520416FE5A41A5` unchanged. No version change.
+- Blockers: No global live/authorization blocker. Public major/minor write load via GET. No actual submit/upload/AI/authentication or new POST authority. Exact relation-read47965 authorization remains separate.
+- Pending live checks: Actual final extension/device/account and native popup interiors remain unqualified. Dark is source proxy;980×2306 is phone-layout proxy,390 stress. Screen412/layout980 zoom/font-hit proxy passes after explicit fixture opening. Direct font click-open is not wired in that fixture on either control or candidate; do not call it a product failure or actual-native success. Formal broad impact profiles/header admission remain open.
 
 ```dcuf-current-artifacts
-{"schemaVersion":1,"mobile":{"sha256":"62F1BAE62F3CDC5E2640B8331D603D86465DB7111B4379E11D249C395CE3C87A"},"pc":{"sha256":"61C539769BA160A5FC4DCD164B3CD26025244AB6FC1BBC7A4A520416FE5A41A5"}}
+{"schemaVersion":1,"mobile":{"sha256":"CE3C4D1B09A52408F0F10C96FB0B4362AE74E3AC8000C9149DE83A9E76A30EDD"},"pc":{"sha256":"61C539769BA160A5FC4DCD164B3CD26025244AB6FC1BBC7A4A520416FE5A41A5"}}
 ```
 
 ## Draft-complete checkpoint — 2026-10-21

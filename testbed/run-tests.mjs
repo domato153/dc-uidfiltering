@@ -29,6 +29,7 @@ import { runSurfaceObservationContract } from './harness/surface-observation-con
 import { runB1GallerySearchContract } from './ui-b1-gallery-search-contract.mjs';
 import { runB1PasswordContract } from './ui-b1-password-contract.mjs';
 import { runB1FormHeaderContract } from './ui-b1-form-header-contract.mjs';
+import { runB1WriteShellContract } from './ui-b1-write-shell-contract.mjs';
 
 const args = new Set(process.argv.slice(2));
 const selectedGroup = process.argv.includes('--group') ? process.argv[process.argv.indexOf('--group') + 1] : null;
@@ -74,6 +75,7 @@ mobileTest('surface observation captures native root and ancestor CSS without mu
 mobileTest('B1 gallery search: native door children and header layers', 'functional', runB1GallerySearchContract);
 mobileTest('B1 password pages: glass and original native form actions', 'write', runB1PasswordContract);
 mobileTest('B1 form header: reuse list chrome without list runtime', 'write', runB1FormHeaderContract);
+mobileTest('B1 write shell: shared header and native editor preservation', 'write', runB1WriteShellContract);
 
 mobileTest('confirmed UI repair: native comment composer cascade and original input', 'functional', runCommentRepairContract);
 mobileTest('confirmed UI repair: list author media search paging and write controls', 'functional', runListRepairContract);
@@ -9080,7 +9082,7 @@ mobileTest('modify password surface uses the mobile card UI and removes trailing
             createHash('sha256').update(css, 'utf8').digest('hex').toUpperCase()
         )), [
             'ECC615764559A66FC6386984D0214412E55A7D57384E8C0A1A2D10EF8CF87663',
-            'F115ECD658CD800DE14438DF75060F7CC6729FFC1DF5C6C259C75D6810E93053'
+            '69AED0D37EA0640EF6F17F386E5D29F25C7D0A9313B505E8CDDD17F31A80B504'
         ], 'native-form presentation payloads must match the registered semantic modify/delete, write-shell, write-popup, write-fields, write-headtext, write-editor-shell, write-toolbar-shell, editor-layer, and attachment contracts');
         assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
     } finally { await session.close(); }
@@ -9265,7 +9267,7 @@ mobileTest('modify/delete presentation uses only adapter-applied semantic select
         assert.equal(contract.computed.actionsColumns.split(' ').length, 2);
         assert.equal(
             createHash('sha256').update(contract.writePayloadShaSource, 'utf8').digest('hex').toUpperCase(),
-            'F115ECD658CD800DE14438DF75060F7CC6729FFC1DF5C6C259C75D6810E93053',
+            '69AED0D37EA0640EF6F17F386E5D29F25C7D0A9313B505E8CDDD17F31A80B504',
             'write/modify-editor payload must match the registered page/form-shell, popup, field, editor, toolbar, and editor-layer semantic contract'
         );
         assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
@@ -9365,7 +9367,7 @@ mobileTest('write page and form shell presentation uses adapter semantic selecto
         });
         assert.deepEqual(contract.restored, roles);
         assert.deepEqual(contract.computed, {
-            bodyBackground: 'rgb(242, 246, 251)',
+            bodyBackground: 'rgb(241, 245, 245)',
             bodyOverflowX: contract.computed.bodyOverflowX,
             containerPadding: '6px',
             formPadding: '10px',

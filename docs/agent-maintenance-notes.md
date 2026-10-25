@@ -1,5 +1,13 @@
 # Agent Maintenance Notes
 
+## B1 write/editor reuse — 2026-10-25
+
+Public desktop write has DIV fields and a visible gall_nick_name in addition to hidden name; the older Testbed table is another supported shape, not the live oracle. Project both native nickname controls onto the existing input role; do not rename/replace fields. Preserve the default table fixture and add native DIV/CAPTCHA/category anatomy. A fields table must span the field grid. Credential wrapper and editor-wrapper decoration must not double the input/frame edge.
+
+The existing write cancel compatibility class had no CSS consumer but restore/readd on every refresh generated class mutations. Remove that unused write, retain semantic popup roles, and guard same-value write-form/body class adds before the modify early return. Four idle frames plus actual form/wrapper removal and reinsertion expose this; input/geometry alone missed it. Native-form mutation relevance must detect disconnected active forms and forms inside delivered candidate subtrees. Lookup cost is confined to existing write/modify/delete candidate roots, with no new observer/polling or list/filter hot-path work.
+
+Use B1 glass on the outer frame and paper inside. Do not add backdrop-filter/transform to the editor ancestor to imitate a popup: fixed native dropdowns would gain a containing block. Popup interiors remain separate named work. Keep original/proposal/current and image-bound judgement; a correctly loaded screenshot or gradient token does not establish a convincing glass finish. Local Chrome network restrictions can deny even Testbed CSS/scripts; retry the approved normal browser environment and classify that fixture/environment result separately instead of hiding failed images or weakening tests.
+
 ## B1 visual false-green / image comparison / 시각 검사 누락
 
 Review-gap follow-up: B1_VISUAL_REVIEW_GAP.md records13.296875px same-row category drift despite valid height/hit/token checks. A330px left-only toolbar crop excluded most categories and the write group; retain the whole component at readable scale. The routed B1 check now reports functional and visual outcomes separately and rejects this drift; even a numerical pass requires reference review. For glass inspect backing, glaze/rim and shadow in context, not blur/RGB alone. Current toolbar and header material remain NEEDS_WORK after user feedback.

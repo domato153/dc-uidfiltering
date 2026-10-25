@@ -244,6 +244,7 @@
             const writeFields = writeSurface ? form.querySelector('fieldset') : null;
             const writeSubject = writeSurface ? form.querySelector('#subject, input[name="subject"]') : null;
             const writeName = writeSurface ? form.querySelector('#name, input:not([type="hidden"])[name="name"]') : null;
+            const writeGalleryName = writeSurface ? form.querySelector('#gall_nick_name') : null;
             const writePassword = writeSurface ? form.querySelector('#password, input:not([type="hidden"])[name="password"]') : null;
             const writeCaptcha = writeSurface ? form.querySelector('#code, input:not([type="hidden"])[name="code"]') : null;
             const writeSubjectRow = writeSubject?.closest('tr');
@@ -407,10 +408,11 @@
                         }
                     });
                 });
-                [writeName, writePassword, writeCaptcha].forEach((field) => {
+                [writeName, writeGalleryName, writePassword, writeCaptcha].forEach((field) => {
                     markNativeContext(field?.closest('.input_box'), 'guest-field', nativeContextState);
                 });
                 markNativeContext(writeName, 'name-input', nativeContextState);
+                markNativeContext(writeGalleryName, 'name-input', nativeContextState);
                 markNativeContext(writePassword, 'password-input', nativeContextState);
                 markNativeContext(writeCaptcha, 'captcha-input', nativeContextState);
                 markNativeContext(writeCaptchaPanel, 'captcha-panel', nativeContextState);
@@ -577,7 +579,6 @@
                 toggleClass(popup, 'dcuf-delete-confirm-card', true);
             }
             if (writeSurface && popup instanceof HTMLElement) {
-                toggleClass(popup, 'dcuf-write-leave-confirm', true);
             }
             mark(panel, 'native-form-panel');
             if (kind === 'delete-confirm' && panel instanceof HTMLElement) {
@@ -691,6 +692,7 @@
 
         const refreshFromMutation = (payload) => {
             if (!['write', 'modify', 'delete'].includes(pageType())) return null;
+            if (activeForm instanceof HTMLFormElement && !activeForm.isConnected) return refresh();
             const candidates = [
                 ...(payload?.attributeTargets || []),
                 ...(payload?.addedElements || []),
@@ -703,6 +705,7 @@
                 return element === activeForm
                     || activeForm?.contains(element)
                     || element.matches('form#write, form#delete, form[name="modify"], form[name="password_confirm"], form[name="delete"], .no_memberwrap, .empty_pagewrap, .pop_wrap.type5')
+                      || element.querySelector('form#write, form#delete, form[name="modify"], form[name="password_confirm"], form[name="delete"]') instanceof HTMLFormElement
                     || element.closest('form#write, form#delete, form[name="modify"], form[name="password_confirm"], form[name="delete"]') instanceof HTMLFormElement;
             });
             return relevant ? refresh() : snapshotCurrent();

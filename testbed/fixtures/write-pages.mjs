@@ -95,7 +95,7 @@ const controls = `<aside id="dcuf-testbed-controls" aria-label="글쓰기 testbe
     <button type="button" data-action="dark">야간모드</button>
 </aside>`;
 
-export function writePage({ variant = 'major', formMode = 'write', showGuide = false, authenticated = false } = {}) {
+export function writePage({ variant = 'major', formMode = 'write', showGuide = false, authenticated = false, fieldLayout = 'table' } = {}) {
     const isMinor = variant === 'minor';
     const isModify = formMode === 'modify';
     const formAttributes = isModify
@@ -105,6 +105,13 @@ export function writePage({ variant = 'major', formMode = 'write', showGuide = f
     const identityRow = authenticated
         ? '<tr class="member_info_row"><th>작성자</th><td><span class="fixture-member-name">회원 작성자</span></td></tr>'
         : `<tr class="guest_info_row"><th>작성자</th><td><div class="input_box"><input id="name" name="name" type="text" placeholder="닉네임" autocomplete="off"></div></td><td><div class="input_box"><input id="password" name="password" type="password" placeholder="비밀번호" autocomplete="new-password"></div></td>${captcha}</tr>`;
+    // Public desktop write anatomy observed2026-10-25. Keep the existing table
+    // fixture as the default so earlier behavior coverage retains its oracle.
+    const fields = fieldLayout === 'native'
+        ? `${authenticated ? '<span class="fixture-member-name">회원 작성자</span>' : '<div class="input_box input_infotxt nomem_nick"><input id="name" name="name" type="text" placeholder="닉네임" autocomplete="off" hidden><input id="gall_nick_name" name="gall_nick_name" class="put_inquiry" type="text" placeholder="갤러리 닉네임" autocomplete="off"></div><div class="input_box input_infotxt"><input id="password" name="password" type="password" placeholder="비밀번호" autocomplete="new-password"></div>'}
+           ${isMinor ? '<div class="kap_codeimg"><img id="kcaptcha" src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22160%22 height=%2238%22%3E%3Crect width=%22160%22 height=%2238%22 fill=%22white%22/%3E%3Ctext x=%2218%22 y=%2226%22 fill=%22%23334655%22 font-size=%2220%22%3E3D8WA-0%3C/text%3E%3C/svg%3E" alt="합성 CAPTCHA"></div><div class="input_box input_infotxt input_kcapcode"><input id="code" name="kcaptcha_code" type="text" placeholder="코드 8자리 입력" autocomplete="off"></div>' + categories : ''}
+           <div class="input_box input_write_tit"><input id="subject" name="subject" type="text" maxlength="100" placeholder="제목을 입력해 주세요." autocomplete="off"></div>`
+        : `<table class="w_top"><tbody><tr class="write_subject_row"><th><label for="subject">제목</label></th><td><div class="input_box"><input id="subject" name="subject" type="text" maxlength="100" autocomplete="off"></div></td></tr>${identityRow}</tbody></table>${isMinor ? categories : ''}`;
     return `${head(`DCUF ${variant} ${formMode} fixture`)}<body data-fixture-page="${isModify ? 'modify' : 'write'}" data-fixture-variant="${variant}">${controls}<div id="top" class="dcwrap width1160">
     <header class="fixture-gallery-header"><h1>${isMinor ? '마이너' : '메이저'} 갤러리</h1></header>
     <main id="container" class="clear ${isMinor ? 'minor_write' : 'gallery_write'}"><section class="center_content gall_write"><article id="write_wrap" class="clear write_box">
@@ -115,11 +122,7 @@ export function writePage({ variant = 'major', formMode = 'write', showGuide = f
             <input class="fixture-decoy-input" type="password" style="display:block;width:0;height:0;border:0" value="fixture-redacted">
             <input id="prompt_img_file" type="file" accept="image/*" hidden>
             <fieldset><legend>글쓰기 입력</legend>
-                <table class="w_top"><tbody>
-                    <tr class="write_subject_row"><th><label for="subject">제목</label></th><td><div class="input_box"><input id="subject" name="subject" type="text" maxlength="100" autocomplete="off"></div></td></tr>
-                    ${identityRow}
-                </tbody></table>
-                ${isMinor ? categories : ''}
+                ${fields}
             </fieldset>
             <section class="editor_wrap">${editor(showGuide)}</section>
             <section class="fixture-attachment-panel"><input id="fixture-file-input" type="file" name="files[]" accept="image/*" multiple><div class="fixture-attachment-list" aria-live="polite"></div></section>

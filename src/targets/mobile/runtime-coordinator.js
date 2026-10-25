@@ -163,7 +163,7 @@
                 ].join(', ');
             }
             if (pageContext.isWriteSurface) {
-                const header = document.body?.getAttribute('data-dcuf-native-form-state') === 'password'
+                const header = ['password', 'write-editor'].includes(document.body?.getAttribute('data-dcuf-native-form-state'))
                     ? '.dcheader.typea, .page_head, .gnb_bar, .newvisit_history, .visit_bookmark, ' : '';
                 return header + 'form#write, form[name="modify"][action*="modify_submit"], #write_wrap, .gall_write, .write_box, form[name="password_confirm"], form[action*="modify_password_submit"], .no_memberwrap';
             }

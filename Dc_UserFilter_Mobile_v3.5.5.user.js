@@ -5824,29 +5824,29 @@ const __dcufSettingsPresenter = (() => {
             min-width: 0 !important;
             margin: 0 !important;
             padding: 0 !important;
-            --dcuf-write-fg: #22324c;
-            --dcuf-write-fg-sub: #5f6f86;
+            --dcuf-write-fg: var(--dcuf-theme-fg, #27313f);
+            --dcuf-write-fg-sub: var(--dcuf-theme-fg-sub, #62747b);
             --dcuf-write-accent: var(--dcuf-theme-accent, #3f6de0);
             --dcuf-write-accent-strong: var(--dcuf-theme-accent-strong, #245bda);
-            --dcuf-write-surface: #ffffff;
+            --dcuf-write-surface: var(--dcuf-b1-paper, #ffffff);
             --dcuf-write-surface-muted: var(--dcuf-theme-surface-muted, #f6f8fb);
-            --dcuf-write-border: var(--dcuf-theme-border, #d7e0ec);
+            --dcuf-write-border: var(--dcuf-b1-line, #d7e0ec);
             --dcuf-write-border-strong: var(--dcuf-theme-border-strong, #c7d3e4);
-            --dcuf-write-shadow: 0 8px 24px rgba(18, 35, 69, 0.08);
-            background: #f2f6fb !important;
+            --dcuf-write-shadow: var(--dcuf-b1-shadow);
+            background: var(--dcuf-b1-canvas, #f1f5f5) !important;
             overflow-x: clip !important;
         }
         [data-dcuf-native-form-role="page"][data-dcuf-native-form-state="write-editor"].dc-filter-dark-mode {
-            --dcuf-write-fg: #edf3ff;
-            --dcuf-write-fg-sub: #b6c4d9;
+            --dcuf-write-fg: var(--dcuf-theme-fg, #edf3ff);
+            --dcuf-write-fg-sub: var(--dcuf-theme-fg-sub, #b6c4d9);
             --dcuf-write-accent: var(--dcuf-theme-accent, #8cb4ff);
             --dcuf-write-accent-strong: var(--dcuf-theme-accent-strong, #6f9dff);
-            --dcuf-write-surface: #18212d;
+            --dcuf-write-surface: var(--dcuf-b1-paper, #20292c);
             --dcuf-write-surface-muted: var(--dcuf-theme-surface-muted, #1e2a39);
-            --dcuf-write-border: var(--dcuf-theme-border, #314258);
+            --dcuf-write-border: var(--dcuf-b1-line, #314258);
             --dcuf-write-border-strong: var(--dcuf-theme-border-strong, #45607c);
-            --dcuf-write-shadow: 0 10px 24px rgba(0, 0, 0, 0.32);
-            background: #121922 !important;
+            --dcuf-write-shadow: var(--dcuf-b1-shadow);
+            background: var(--dcuf-b1-canvas, #171e21) !important;
         }
         [data-dcuf-native-form-role="page-container"][data-dcuf-native-form-state="write-editor"],
         [data-dcuf-native-form-role="top-shell"][data-dcuf-native-form-state="write-editor"],
@@ -5866,7 +5866,7 @@ const __dcufSettingsPresenter = (() => {
             min-width: 0 !important;
         }
         [data-dcuf-native-form-role="page-container"][data-dcuf-native-form-state="write-editor"] {
-            padding: 8px !important;
+            padding: 0 20px 24px !important;
             background: transparent !important;
             overflow: visible !important;
         }
@@ -5897,11 +5897,11 @@ const __dcufSettingsPresenter = (() => {
             max-width: 100% !important;
             min-width: 0 !important;
             margin: 0 auto !important;
-            padding: 12px !important;
-            border: 1px solid var(--dcuf-write-border) !important;
-            border-radius: 12px !important;
-            background: var(--dcuf-write-surface) !important;
-            box-shadow: var(--dcuf-write-shadow) !important;
+            padding: 20px !important;
+            border: 1px solid var(--dcuf-b1-rim) !important;
+            border-radius: 16px !important;
+            background: var(--dcuf-b1-sheen), var(--dcuf-b1-glass) !important;
+            box-shadow: var(--dcuf-write-shadow), inset 0 1px 0 var(--dcuf-b1-rim) !important;
             overflow: visible !important;
         }
         [data-dcuf-native-form-role="form"][data-dcuf-native-form-state="write-editor"] [data-dcuf-native-form-box-sizing="border-box"],
@@ -5946,6 +5946,13 @@ const __dcufSettingsPresenter = (() => {
             margin: 0 !important;
             float: none !important;
         }
+        [data-dcuf-native-form-role="guest-field"][data-dcuf-native-form-state="write-editor"],
+        [data-dcuf-native-form-role="subject-field"][data-dcuf-native-form-state="write-editor"] {
+            height: auto !important;
+            padding: 0 !important;
+            border: 0 !important;
+            background: transparent !important;
+        }
         [data-dcuf-native-form-role="subject-field"][data-dcuf-native-form-state="write-editor"],
         [data-dcuf-native-form-role="fields"][data-dcuf-native-form-state="write-editor"] > [data-dcuf-native-form-role="headtext-shell"][data-dcuf-native-form-state="write-editor"],
         [data-dcuf-native-form-role="field-clear"][data-dcuf-native-form-state="write-editor"] {
@@ -5974,6 +5981,7 @@ const __dcufSettingsPresenter = (() => {
         [data-dcuf-native-form-role="fields-table"][data-dcuf-native-form-state="write-editor"],
         [data-dcuf-native-form-role="fields-table-body"][data-dcuf-native-form-state="write-editor"] {
             display: block !important;
+            grid-column: 1 / -1;
             width: 100% !important;
             min-width: 0 !important;
             margin: 0 !important;
@@ -6179,13 +6187,18 @@ const __dcufSettingsPresenter = (() => {
             max-width: 100% !important;
             min-width: 0 !important;
         }
-        [data-dcuf-native-form-role="editor-wrapper"][data-dcuf-native-form-state="write-editor"],
         [data-dcuf-native-form-role="editor-frame"][data-dcuf-native-form-state="write-editor"] {
             border: 1px solid var(--dcuf-write-border-strong) !important;
+            margin-top: 20px !important;
             border-radius: 10px !important;
             background: var(--dcuf-write-surface) !important;
             position: relative !important;
             overflow: visible !important;
+        }
+        [data-dcuf-native-form-role="editor-wrapper"][data-dcuf-native-form-state="write-editor"] {
+            border: 0 !important;
+            background: transparent !important;
+            box-shadow: none !important;
         }
         [data-dcuf-native-form-role="form"][data-dcuf-native-form-state="write-editor"] [data-dcuf-native-form-role="editor-toolbar"][data-dcuf-native-form-toolbar-kind~="primary"],
         [data-dcuf-native-form-role="form"][data-dcuf-native-form-state="write-editor"] [data-dcuf-native-form-role="editor-toolbar"][data-dcuf-native-form-toolbar-kind~="media"] {
@@ -6494,20 +6507,15 @@ const __dcufSettingsPresenter = (() => {
             background: linear-gradient(180deg, var(--dcuf-theme-primary-top, #426fe4) 0%, var(--dcuf-write-accent-strong) 100%) !important;
             color: var(--dcuf-theme-on-accent, #fff) !important;
         }
-        /* Visual refinement: match the mobile list/article card language. */
-        [data-dcuf-native-form-role="form"][data-dcuf-native-form-state="write-editor"] {
-            border-color: var(--dcuf-write-border) !important;
-            border-radius: 12px !important;
-            box-shadow: 0 12px 30px color-mix(in srgb, var(--dcuf-write-accent) 10%, transparent) !important;
-        }
+        /* B1 fields stay readable paper; the outer frame carries glass depth. */
         [data-dcuf-native-form-role="subject-input"][data-dcuf-native-form-state="write-editor"],
         [data-dcuf-native-form-role="name-input"][data-dcuf-native-form-state="write-editor"],
         [data-dcuf-native-form-role="password-input"][data-dcuf-native-form-state="write-editor"],
         [data-dcuf-native-form-role="captcha-input"][data-dcuf-native-form-state="write-editor"] {
             border-color: var(--dcuf-write-border) !important;
             border-radius: 11px !important;
-            background: #fff !important;
-            box-shadow: 0 2px 7px color-mix(in srgb, var(--dcuf-write-accent) 6%, transparent) !important;
+            background: var(--dcuf-write-surface) !important;
+            box-shadow: inset 0 1px 2px #27313f04 !important;
         }
         [data-dcuf-native-form-role="captcha-image-shell"][data-dcuf-native-form-state="write-editor"],
         [data-dcuf-native-form-role="captcha-panel"][data-dcuf-native-form-state="write-editor"] {
@@ -6521,10 +6529,10 @@ const __dcufSettingsPresenter = (() => {
         [data-dcuf-native-form-role="form"][data-dcuf-native-form-state="write-editor"] [data-dcuf-native-form-role="headtext-shell"][data-dcuf-native-form-state="write-editor"] {
             min-height: 52px !important;
             padding: 7px 9px !important;
-            border-color: #d7e2f0 !important;
-            border-radius: 13px !important;
-            background: #fff !important;
-            box-shadow: 0 3px 10px rgba(25, 50, 92, 0.05) !important;
+            border-color: var(--dcuf-write-border) !important;
+            border-radius: 10px !important;
+            background: transparent !important;
+            box-shadow: none !important;
         }
         [data-dcuf-native-form-role="headtext-label"][data-dcuf-native-form-state="write-editor"],
         [data-dcuf-native-form-role="headtext-label"][data-dcuf-native-form-state="write-editor"]::before,
@@ -6552,8 +6560,8 @@ const __dcufSettingsPresenter = (() => {
             padding: 0 12px !important;
             border: 0 !important;
             border-radius: 9px !important;
-            background: #eef2f7 !important;
-            color: #4d5e76 !important;
+            background: var(--dcuf-write-surface-muted) !important;
+            color: var(--dcuf-write-fg-sub) !important;
             box-shadow: none !important;
             line-height: 1 !important;
         }
@@ -6566,9 +6574,8 @@ const __dcufSettingsPresenter = (() => {
             border-color: var(--dcuf-write-accent-strong) !important;
             background: var(--dcuf-write-accent-strong) !important;
             color: var(--dcuf-theme-on-accent, #fff) !important;
-            box-shadow: 0 4px 10px var(--dcuf-theme-accent-shadow, rgba(36, 91, 218, 0.2)) !important;
+            box-shadow: inset 0 1px 0 #ffffff30 !important;
         }
-        [data-dcuf-native-form-role="editor-wrapper"][data-dcuf-native-form-state="write-editor"],
         [data-dcuf-native-form-role="editor-frame"][data-dcuf-native-form-state="write-editor"] {
             border-color: var(--dcuf-write-border) !important;
             border-radius: 10px !important;
@@ -6907,7 +6914,6 @@ const __dcufSettingsPresenter = (() => {
                 width: 20px !important;
             }
         }
-        [data-dcuf-native-form-role="page"][data-dcuf-native-form-state="write-editor"].dc-filter-dark-mode [data-dcuf-native-form-role="form"][data-dcuf-native-form-state="write-editor"],
         [data-dcuf-native-form-role="page"][data-dcuf-native-form-state="write-editor"].dc-filter-dark-mode [data-dcuf-native-form-role="headtext-shell"][data-dcuf-native-form-state="write-editor"],
         [data-dcuf-native-form-role="page"][data-dcuf-native-form-state="write-editor"].dc-filter-dark-mode [data-dcuf-native-form-role="captcha-image-shell"][data-dcuf-native-form-state="write-editor"],
         [data-dcuf-native-form-role="page"][data-dcuf-native-form-state="write-editor"].dc-filter-dark-mode [data-dcuf-native-form-role="captcha-panel"][data-dcuf-native-form-state="write-editor"],
@@ -6924,13 +6930,13 @@ const __dcufSettingsPresenter = (() => {
             background: var(--dcuf-write-surface-muted) !important;
         }
         [data-dcuf-native-form-role="page"][data-dcuf-native-form-state="write-editor"].dc-filter-dark-mode [data-dcuf-native-form-role="headtext-label"][data-dcuf-native-form-state="write-editor"] {
-            background: #273446 !important;
-            color: #d2dced !important;
+            background: var(--dcuf-write-surface-muted) !important;
+            color: var(--dcuf-write-fg-sub) !important;
         }
         [data-dcuf-native-form-role="page"][data-dcuf-native-form-state="write-editor"].dc-filter-dark-mode [data-dcuf-native-form-toolbar-control~="ordinary"][data-dcuf-native-form-state="write-editor"],
         [data-dcuf-native-form-role="page"][data-dcuf-native-form-state="write-editor"].dc-filter-dark-mode [data-dcuf-native-form-role="form-select"][data-dcuf-native-form-state="write-editor"] {
-            border-color: #40526b !important;
-            background: #233044 !important;
+            border-color: var(--dcuf-write-border-strong) !important;
+            background: var(--dcuf-write-surface-muted) !important;
             color: #edf3ff !important;
             -webkit-text-fill-color: #edf3ff !important;
             box-shadow: 0 2px 7px rgba(0, 0, 0, 0.2) !important;
@@ -7246,6 +7252,7 @@ const __dcufSettingsPresenter = (() => {
             const writeFields = writeSurface ? form.querySelector('fieldset') : null;
             const writeSubject = writeSurface ? form.querySelector('#subject, input[name="subject"]') : null;
             const writeName = writeSurface ? form.querySelector('#name, input:not([type="hidden"])[name="name"]') : null;
+            const writeGalleryName = writeSurface ? form.querySelector('#gall_nick_name') : null;
             const writePassword = writeSurface ? form.querySelector('#password, input:not([type="hidden"])[name="password"]') : null;
             const writeCaptcha = writeSurface ? form.querySelector('#code, input:not([type="hidden"])[name="code"]') : null;
             const writeSubjectRow = writeSubject?.closest('tr');
@@ -7409,10 +7416,11 @@ const __dcufSettingsPresenter = (() => {
                         }
                     });
                 });
-                [writeName, writePassword, writeCaptcha].forEach((field) => {
+                [writeName, writeGalleryName, writePassword, writeCaptcha].forEach((field) => {
                     markNativeContext(field?.closest('.input_box'), 'guest-field', nativeContextState);
                 });
                 markNativeContext(writeName, 'name-input', nativeContextState);
+                markNativeContext(writeGalleryName, 'name-input', nativeContextState);
                 markNativeContext(writePassword, 'password-input', nativeContextState);
                 markNativeContext(writeCaptcha, 'captcha-input', nativeContextState);
                 markNativeContext(writeCaptchaPanel, 'captcha-panel', nativeContextState);
@@ -7579,7 +7587,6 @@ const __dcufSettingsPresenter = (() => {
                 toggleClass(popup, 'dcuf-delete-confirm-card', true);
             }
             if (writeSurface && popup instanceof HTMLElement) {
-                toggleClass(popup, 'dcuf-write-leave-confirm', true);
             }
             mark(panel, 'native-form-panel');
             if (kind === 'delete-confirm' && panel instanceof HTMLElement) {
@@ -7693,6 +7700,7 @@ const __dcufSettingsPresenter = (() => {
 
         const refreshFromMutation = (payload) => {
             if (!['write', 'modify', 'delete'].includes(pageType())) return null;
+            if (activeForm instanceof HTMLFormElement && !activeForm.isConnected) return refresh();
             const candidates = [
                 ...(payload?.attributeTargets || []),
                 ...(payload?.addedElements || []),
@@ -7705,6 +7713,7 @@ const __dcufSettingsPresenter = (() => {
                 return element === activeForm
                     || activeForm?.contains(element)
                     || element.matches('form#write, form#delete, form[name="modify"], form[name="password_confirm"], form[name="delete"], .no_memberwrap, .empty_pagewrap, .pop_wrap.type5')
+                      || element.querySelector('form#write, form#delete, form[name="modify"], form[name="password_confirm"], form[name="delete"]') instanceof HTMLFormElement
                     || element.closest('form#write, form#delete, form[name="modify"], form[name="password_confirm"], form[name="delete"]') instanceof HTMLFormElement;
             });
             return relevant ? refresh() : snapshotCurrent();
@@ -9643,12 +9652,17 @@ const __dcufSettingsPresenter = (() => {
     // Shared applicability input for the four existing header adapters.
     const __dcufHeaderContextSets = Object.freeze({
         list: Object.freeze(['list-surface']),
+        write: Object.freeze(['write']),
         modify: Object.freeze(['modify']),
         delete: Object.freeze(['delete']),
         none: Object.freeze([]),
     });
     function __dcufHeaderPresentationContexts(pageContext, nativeFormState) {
         if (pageContext?.hasListSurface === true) return __dcufHeaderContextSets.list;
+        if (nativeFormState === 'write-editor') {
+            if (pageContext?.isWrite) return __dcufHeaderContextSets.write;
+            if (pageContext?.isModify) return __dcufHeaderContextSets.modify;
+        }
         if (nativeFormState !== 'password' || !(pageContext?.isModify || pageContext?.isDelete)) return __dcufHeaderContextSets.none;
         return pageContext.type === 'modify' ? __dcufHeaderContextSets.modify
             : pageContext.type === 'delete' ? __dcufHeaderContextSets.delete : Object.freeze([pageContext.type]);
@@ -12420,7 +12434,7 @@ const __dcufSettingsPresenter = (() => {
                 ].join(', ');
             }
             if (pageContext.isWriteSurface) {
-                const header = document.body?.getAttribute('data-dcuf-native-form-state') === 'password'
+                const header = ['password', 'write-editor'].includes(document.body?.getAttribute('data-dcuf-native-form-state'))
                     ? '.dcheader.typea, .page_head, .gnb_bar, .newvisit_history, .visit_bookmark, ' : '';
                 return header + 'form#write, form[name="modify"][action*="modify_submit"], #write_wrap, .gall_write, .write_box, form[name="password_confirm"], form[action*="modify_password_submit"], .no_memberwrap';
             }
@@ -21733,8 +21747,8 @@ init() {
         },
 
         syncNativeFormHeader(snapshot) {
-            const password = snapshot?.kind === 'modify-password' || snapshot?.kind === 'delete-password';
-            if (!password) {
+            const supported = ['write', 'modify-editor', 'modify-password', 'delete-password'].includes(snapshot?.kind);
+            if (!supported) {
                 if (this._nativeFormHeaderConnected) {
                     __dcufHeaderShellHostAdapter.dispose();
                     __dcufGalleryPageHeadHostAdapter.dispose();
@@ -21834,7 +21848,8 @@ init() {
                     ? payload.collectMatches(['form#write', '#leave_confirm_box'], { includeRoots: true })
                     : [];
                 if (candidates.length > 0 || document.body?.classList.contains('is-write-page')) {
-                    __dcufNativeFormHostAdapter.refreshFromMutation(payload);
+                    const snapshot = __dcufNativeFormHostAdapter.refreshFromMutation(payload);
+                    this.syncNativeFormHeader(snapshot);
                     const writeForm = this.getWriteForm();
                     if (writeForm instanceof HTMLFormElement) {
                         void MobileConvenienceModule.attachDraftForm(writeForm);
@@ -21853,8 +21868,8 @@ init() {
             const writeForm = this.getWriteForm();
             if (!(writeForm instanceof HTMLFormElement)) return false;
             const writeBox = writeForm.closest('.write_box') || document.querySelector('.write_box');
-            writeForm.classList.add('dcuf-write-form');
-            document.body.classList.add('is-write-page');
+            if (!writeForm.classList.contains('dcuf-write-form')) writeForm.classList.add('dcuf-write-form');
+            if (!document.body.classList.contains('is-write-page')) document.body.classList.add('is-write-page');
             void MobileConvenienceModule.attachDraftForm(writeForm);
             const runtimeCoordinator = this.getRuntimeCoordinator();
             if (writeForm.dataset.dcufWriteTransformed === '1') {
@@ -22011,7 +22026,8 @@ init() {
             }
 
             if (this.isWritePage()) {
-                __dcufNativeFormHostAdapter.refresh(document);
+                const snapshot = __dcufNativeFormHostAdapter.refresh(document);
+                this.syncNativeFormHeader(snapshot);
                 this.transformWritePage();
                 this.subscribeWriteSurfaceUpdates();
                 return 'non-list';

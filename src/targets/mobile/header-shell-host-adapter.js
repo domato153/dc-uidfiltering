@@ -44,12 +44,17 @@
     // Shared applicability input for the four existing header adapters.
     const __dcufHeaderContextSets = Object.freeze({
         list: Object.freeze(['list-surface']),
+        write: Object.freeze(['write']),
         modify: Object.freeze(['modify']),
         delete: Object.freeze(['delete']),
         none: Object.freeze([]),
     });
     function __dcufHeaderPresentationContexts(pageContext, nativeFormState) {
         if (pageContext?.hasListSurface === true) return __dcufHeaderContextSets.list;
+        if (nativeFormState === 'write-editor') {
+            if (pageContext?.isWrite) return __dcufHeaderContextSets.write;
+            if (pageContext?.isModify) return __dcufHeaderContextSets.modify;
+        }
         if (nativeFormState !== 'password' || !(pageContext?.isModify || pageContext?.isDelete)) return __dcufHeaderContextSets.none;
         return pageContext.type === 'modify' ? __dcufHeaderContextSets.modify
             : pageContext.type === 'delete' ? __dcufHeaderContextSets.delete : Object.freeze([pageContext.type]);

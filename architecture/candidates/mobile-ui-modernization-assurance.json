@@ -17,8 +17,12 @@
     ],
     "upsertContracts": [
       {
+        "id": "b1-write-editor-shell",
+        "summary": "Authorized B1 write/modify-editor outer presentation through existing native-form presenter and four shared header owners. Canonical write-editor state admits write/modify header mutation contexts without hasListSurface, new observer or filter/network startup. Existing write/modify subscriptions reconcile header owners on form loss/replacement. Preserve original native DIV/table fields, form actions/method/hidden shape, editor selection/authored colors, draft and desktop-site-mobile scale. Native-form projects the existing name-input role onto the original gallery-nickname input too. Remove the unused dcuf-write-leave-confirm compatibility class write: no source CSS consumes it, and restoring/readding it on each refresh caused mutation feedback. Semantic popup roles remain. Outer glass/paper/spacing is the visual delta; individual native tool/popup interiors remain separate."
+      },
+      {
         "id": "header-context-reuse-cleanup",
-        "summary": "Behavior-preserving reuse preparation: one pure target-adapter policy maps the canonical page-context plus native-form state to the existing list-surface or modify/delete password mutation contexts. Four adapters consume it; keep native recent root-present style fallback, exact CSS, unsupported/editor states, subscriptions and lifecycle unchanged. No new build input or observer."
+        "summary": "One pure target-adapter policy maps canonical list/view, modify/delete password and authorized write/modify-editor state to existing header mutation contexts. Four adapters consume it; keep native recent root-present style fallback and unsupported/pending cleanup. UI_REUSE_PREPARATION records the earlier zero-delta consolidation; b1-write-editor-shell declares the subsequent editor applicability/lifecycle extension. No new build input or observer."
       },
       {
         "id": "ui-review-preparation",
@@ -82,7 +86,7 @@
           "testbed/ui-b1-content-contract.mjs",
           "testbed/ui-live-control-contract.mjs",
           "testbed/ui-b1-gallery-search-contract.mjs",
-          "testbed/ui-b1-password-contract.mjs", "testbed/ui-b1-form-header-contract.mjs"
+          "testbed/ui-b1-password-contract.mjs", "testbed/ui-b1-form-header-contract.mjs", "testbed/ui-b1-write-shell-contract.mjs"
         ],
         "contractRefs": ["proof-integrity","initialization-lifecycle","artifact-lineage","ui-review-preparation"],
         "fitnessRefs": [
@@ -315,9 +319,9 @@
         "classification": "presentation-source",
         "layer": "presentation-ui",
         "boundaryState": "conforming",
-        "responsibility": "Owns semantic-role-only modify/delete and write/modify-editor CSS for page/form shell, native leave-confirm popup, fields, headtext, editor shell/content, toolbar controls and floating layers, attachments, AI prompt, write options, adult control, final host action rows, generic form controls, font labels, and hidden host chrome; its extracted zero-delta cascade payloads are bound by exact transitional selector/property ledgers; the host adapters alone discover raw host structure, project reversible meaning, mount styles, and own DOM lifecycle.",
+        "responsibility": "Owns semantic-role-only modify/delete and write/modify-editor CSS for page/form shell, native leave-confirm popup, fields, headtext, editor shell/content, toolbar controls and floating layers, attachments, AI prompt, write options, adult control, final host action rows, generic form controls, font labels, and hidden host chrome. Authorized B1 password/write-shell presentation consumes existing material tokens; exact transitional selector/property ledgers retain native precedence. Host adapters alone discover raw host structure, project reversible meaning, mount styles, and own DOM lifecycle.",
         "sourceRefs": ["src/targets/mobile/native-form-presenter.js"],
-        "contractRefs": ["ui-ownership", "semantic-preservation", "host-dom-events"],
+        "contractRefs": ["ui-ownership", "semantic-preservation", "host-dom-events", "b1-write-editor-shell"],
         "fitnessRefs": ["invariant-one-visual-owner", "invariant-host-node-preservation", "invariant-ui-port-boundary", "invariant-build-inputs-mapped"]
       },
       {
@@ -328,7 +332,7 @@
         "boundaryState": "conforming",
         "responsibility": "Discovers write and modify-editor forms, page/top/container/content/write shells, fields and captcha, headtext, editor and toolbar controls, attachments, AI prompt, write options, adult control, final action-row variants, generic controls, font labels, hidden host chrome, and the in-place leave-confirm popup, plus non-member modify/delete and authenticated delete confirmation; applies reversible semantic roles and properties through a complete owned-marker ledger; mounts presenter-owned styles with idempotent cleanup and rollback recovery; exposes deep-frozen serializable observations and typed native invocation; and reconnects host-owned replacements through the shared mutation bus without replacing, moving, cloning, wrapping, or reordering host nodes.",
         "sourceRefs": ["src/targets/mobile/native-form-host-adapter.js"],
-        "contractRefs": ["host-dom-events", "ui-ownership", "semantic-preservation"],
+        "contractRefs": ["host-dom-events", "ui-ownership", "semantic-preservation", "b1-write-editor-shell"],
         "fitnessRefs": ["invariant-host-node-preservation", "invariant-ui-port-boundary", "invariant-build-inputs-mapped"]
       },
       {
@@ -387,7 +391,7 @@
         "boundaryState": "conforming",
         "responsibility": "Projects reversible roles onto the site-owned typea header shell and its logo, search, and link descendants; mounts one presenter stylesheet at the former core phase; reuses the shared list/view mutation bus for descendant and root replacement, and disposes roles, style, and subscription without changing host nodes, forms, links, or events. Supplies pure hoisted immutable named full native selector inputs for its early palette and applicable reset/concealment builders, independent of DOM connection and presenter/adapter object initialization. Supplies immutable named full late selector inputs, preserving native tags, typea/body/dark conditions, role relations, specificity and the original style mount phase. Covers both native h1.dclogo anchor-logo and retained h1.dc_logo image-logo shapes with reversible roles; native controls are never moved. B1 trial: reversible existing-parent layout projection, native brand marker and browser-native service-UL popover/invoker with copy/attribute/listener cleanup; original links remain in place. Supplies one pure immutable header applicability/mutation-context policy consumed by the four existing header adapters; no DOM discovery or state ownership moves.",
         "sourceRefs": ["src/targets/mobile/header-shell-host-adapter.js"],
-        "contractRefs": ["host-dom-events","initialization-lifecycle","ui-ownership","semantic-preservation","b1-native-list-trial","header-context-reuse-cleanup"],
+        "contractRefs": ["host-dom-events","initialization-lifecycle","ui-ownership","semantic-preservation","b1-native-list-trial","header-context-reuse-cleanup", "b1-write-editor-shell"],
         "fitnessRefs": ["invariant-host-node-preservation", "invariant-initialization-recovery", "invariant-ui-port-boundary", "invariant-build-inputs-mapped"]
       },
       {
@@ -413,7 +417,7 @@
         "boundaryState": "conforming",
         "responsibility": "Projects reversible roles onto each site-owned list/view gallery heading and its direct left/right children, including a child matching both classes; mounts one presenter stylesheet at the former core phase; reuses the shared mutation bus for descendant and whole-heading replacement and disposes roles, style, and subscription without changing native forms, issue actions, popup, or handlers. Supplies pure hoisted immutable named full native selector inputs for its early palette and applicable reset/concealment builders, independent of DOM connection and presenter/adapter object initialization. Supplies immutable named full late selector inputs, preserving native tags, typea/body/dark conditions, role relations, specificity and the original style mount phase.",
         "sourceRefs": ["src/targets/mobile/gallery-page-head-host-adapter.js"],
-        "contractRefs": ["host-dom-events","initialization-lifecycle","ui-ownership","semantic-preservation","header-context-reuse-cleanup"],
+        "contractRefs": ["host-dom-events","initialization-lifecycle","ui-ownership","semantic-preservation","header-context-reuse-cleanup", "b1-write-editor-shell"],
         "fitnessRefs": ["invariant-host-node-preservation", "invariant-initialization-recovery", "invariant-ui-port-boundary", "invariant-build-inputs-mapped"]
       },
       {
@@ -439,7 +443,7 @@
         "boundaryState": "conforming",
         "responsibility": "Projects reversible roles onto site-owned GNB root, nav, and list; mounts one presenter stylesheet at the former core phase; reuses the shared list/view mutation bus for replacement and disposes roles, style, and subscription without changing host nodes or events. Supplies pure hoisted immutable named full native selector inputs for its early palette and applicable reset/concealment builders, independent of DOM connection and presenter/adapter object initialization. Supplies immutable named full late selector inputs, preserving native tags, typea/body/dark conditions, role relations, specificity and the original style mount phase. Projects the native top-level selected link through a reversible current-link role; class changes reuse the existing mutation records and subscription. Supplies the full native dark-list predicate as a fourth immutable late selector input; the presenter does not construct host/theme context.",
         "sourceRefs": ["src/targets/mobile/header-gnb-host-adapter.js"],
-        "contractRefs": ["host-dom-events","initialization-lifecycle","ui-ownership","semantic-preservation","header-context-reuse-cleanup"],
+        "contractRefs": ["host-dom-events","initialization-lifecycle","ui-ownership","semantic-preservation","header-context-reuse-cleanup", "b1-write-editor-shell"],
         "fitnessRefs": ["invariant-host-node-preservation", "invariant-initialization-recovery", "invariant-ui-port-boundary", "invariant-build-inputs-mapped"]
       },
       {
@@ -465,7 +469,7 @@
         "boundaryState": "conforming",
         "responsibility": "Owns recent-visit previous and next host scrolling, control state, one delegated document click listener, one shared mutation-bus subscription for list and view replacement, reversible semantic-role and inline-geometry cleanup, and mounting of the presenter's single stylesheet at the prior core phase without replacing host nodes or owning presentation, storage, filter, or network effects. Supplies pure hoisted immutable named full native selector inputs for its early palette and applicable reset/concealment builders, independent of DOM connection and presenter/adapter object initialization. Supplies immutable named full late selector inputs, preserving native tags, typea/body/dark conditions, role relations, specificity and the original style mount phase.",
         "sourceRefs": ["src/targets/mobile/header-recent-visit-host-adapter.js"],
-        "contractRefs": ["host-dom-events","initialization-lifecycle","ui-ownership","semantic-preservation","b1-native-list-trial","header-context-reuse-cleanup"],
+        "contractRefs": ["host-dom-events","initialization-lifecycle","ui-ownership","semantic-preservation","b1-native-list-trial","header-context-reuse-cleanup", "b1-write-editor-shell"],
         "fitnessRefs": ["invariant-host-node-preservation", "invariant-initialization-recovery", "invariant-ui-port-boundary", "invariant-build-inputs-mapped"]
       },
       {

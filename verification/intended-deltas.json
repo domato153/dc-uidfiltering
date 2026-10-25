@@ -1449,6 +1449,55 @@
       "normalizer": "semantic-observation-v1",
       "unknownDifferencePolicy": "fail",
       "missingApplicabilityPolicy": "fail"
+    },
+    {
+      "id": "b1-write-editor-shell-v1",
+      "status": "active",
+      "surfaces": [
+        "write-edit-delete-popup",
+        "header-navigation"
+      ],
+      "allowed": [
+        {
+          "kind": "color-role",
+          "surface": "write-edit-delete-popup",
+          "scope": "Existing native-form owner adopts B1 canvas, translucent frame, paper inputs/editor, category/toolbar edges; gallery nickname receives the same input role. Native controls, colors inside authored content and child tool interiors remain native.",
+          "reason": "User-authorized next B1 P3 slice; readable editing paper inside the shared glass family.",
+          "contractTests": [
+            "testbed/ui-b1-write-shell-contract.mjs",
+            "testbed/run-tests.mjs",
+            "testbed/run-native-form-differential.mjs"
+          ]
+        },
+        {
+          "kind": "spacing",
+          "surface": "header-navigation",
+          "scope": "Reuse existing four headers in canonical write-editor states; hasListSurface remains false. Existing route subscriptions reconcile header form loss/reinsert. Remove unused leave-confirm compatibility class churn and guard repeated write-form/body class adds.",
+          "reason": "Same shared header and stable existing native lifecycle, without a new runtime owner.",
+          "contractTests": [
+            "testbed/ui-b1-write-shell-contract.mjs",
+            "testbed/ui-b1-form-header-contract.mjs",
+            "testbed/harness/header-presentation-context.test.mjs"
+          ]
+        }
+      ],
+      "invariants": [
+        "filter-result",
+        "storage-trace",
+        "network-trace",
+        "host-node-identity",
+        "host-node-order",
+        "native-handler",
+        "native-form-fields",
+        "native-submit-trace",
+        "focus",
+        "pc-result",
+        "accessibility",
+        "geometry-containment"
+      ],
+      "normalizer": "semantic-observation-v1",
+      "unknownDifferencePolicy": "fail",
+      "missingApplicabilityPolicy": "fail"
     }
   ]
 }

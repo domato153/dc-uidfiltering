@@ -2070,8 +2070,8 @@
         },
 
         syncNativeFormHeader(snapshot) {
-            const password = snapshot?.kind === 'modify-password' || snapshot?.kind === 'delete-password';
-            if (!password) {
+            const supported = ['write', 'modify-editor', 'modify-password', 'delete-password'].includes(snapshot?.kind);
+            if (!supported) {
                 if (this._nativeFormHeaderConnected) {
                     __dcufHeaderShellHostAdapter.dispose();
                     __dcufGalleryPageHeadHostAdapter.dispose();
@@ -2171,7 +2171,8 @@
                     ? payload.collectMatches(['form#write', '#leave_confirm_box'], { includeRoots: true })
                     : [];
                 if (candidates.length > 0 || document.body?.classList.contains('is-write-page')) {
-                    __dcufNativeFormHostAdapter.refreshFromMutation(payload);
+                    const snapshot = __dcufNativeFormHostAdapter.refreshFromMutation(payload);
+                    this.syncNativeFormHeader(snapshot);
                     const writeForm = this.getWriteForm();
                     if (writeForm instanceof HTMLFormElement) {
                         void MobileConvenienceModule.attachDraftForm(writeForm);
@@ -2190,8 +2191,8 @@
             const writeForm = this.getWriteForm();
             if (!(writeForm instanceof HTMLFormElement)) return false;
             const writeBox = writeForm.closest('.write_box') || document.querySelector('.write_box');
-            writeForm.classList.add('dcuf-write-form');
-            document.body.classList.add('is-write-page');
+            if (!writeForm.classList.contains('dcuf-write-form')) writeForm.classList.add('dcuf-write-form');
+            if (!document.body.classList.contains('is-write-page')) document.body.classList.add('is-write-page');
             void MobileConvenienceModule.attachDraftForm(writeForm);
             const runtimeCoordinator = this.getRuntimeCoordinator();
             if (writeForm.dataset.dcufWriteTransformed === '1') {
@@ -2348,7 +2349,8 @@
             }
 
             if (this.isWritePage()) {
-                __dcufNativeFormHostAdapter.refresh(document);
+                const snapshot = __dcufNativeFormHostAdapter.refresh(document);
+                this.syncNativeFormHeader(snapshot);
                 this.transformWritePage();
                 this.subscribeWriteSurfaceUpdates();
                 return 'non-list';
