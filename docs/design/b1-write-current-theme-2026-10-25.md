@@ -1,6 +1,6 @@
 # B1 writer — current-theme adapted proposal
 
-Status: **DRAFT / MATERIAL NEEDS_WORK / USER PREFERENCE PENDING**. This is a newly generated design, not an implementation screenshot or accepted replacement. Product CE3 writer material remains NEEDS_WORK. The user requested this refresh after identifying the early B1 writer panel as too initial/different.
+Status: **SUPERSEDED V2 / MATERIAL NEEDS_WORK**. Current proposal: [writer v3](b1-writer-material-v3-2026-10-26.md), pending user selection. This is a newly generated design, not an implementation screenshot or accepted replacement. Product CE3 writer material remains NEEDS_WORK. The user requested this refresh after identifying the early B1 writer panel as too initial/different.
 
 ## Reference roles
 
