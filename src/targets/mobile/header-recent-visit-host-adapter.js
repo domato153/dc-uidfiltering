@@ -331,10 +331,7 @@
 
         const ensureMutationSubscription = (runtimeCoordinator) => {
             if (!runtimeCoordinator || typeof runtimeCoordinator.subscribeMutations !== 'function') return;
-            const password = (window.__dcufPageContext?.isModify || window.__dcufPageContext?.isDelete)
-                && document.body?.getAttribute('data-dcuf-native-form-state') === 'password';
-            const contexts = window.__dcufPageContext?.hasListSurface ? ['list-surface']
-                : password ? [window.__dcufPageContext.type] : [];
+            const contexts = __dcufReadHeaderPresentationContexts();
             if (!contexts.length || runtimeCoordinator.pageSupports?.(contexts) === false) return;
             if (activeCoordinator === runtimeCoordinator && typeof mutationUnsubscribe === 'function') return;
             mutationUnsubscribe?.();

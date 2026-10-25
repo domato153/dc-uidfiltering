@@ -34,9 +34,8 @@
         let mutationUnsubscribe = null;
         let styleOwner = null;
 
-        const supportsSurface = () => window.__dcufPageContext?.hasListSurface === true
-            || ((window.__dcufPageContext?.isModify || window.__dcufPageContext?.isDelete)
-                && document.body?.getAttribute('data-dcuf-native-form-state') === 'password');
+        const surfaceContexts = __dcufReadHeaderPresentationContexts;
+        const supportsSurface = () => surfaceContexts().length > 0;
 
         const ensureStyle = () => {
             if (!supportsSurface()) return false;
@@ -132,8 +131,7 @@
 
         const ensureMutationSubscription = (runtimeCoordinator) => {
             if (!runtimeCoordinator || typeof runtimeCoordinator.subscribeMutations !== 'function') return;
-            const contexts = window.__dcufPageContext?.hasListSurface ? ['list-surface']
-                : supportsSurface() ? [window.__dcufPageContext.type] : [];
+            const contexts = surfaceContexts();
             if (!contexts.length || runtimeCoordinator.pageSupports?.(contexts) === false) return;
             if (activeCoordinator === runtimeCoordinator && typeof mutationUnsubscribe === 'function') return;
             mutationUnsubscribe?.();

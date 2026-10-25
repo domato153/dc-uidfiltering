@@ -41,6 +41,25 @@
         });
     }
 
+    // Shared applicability input for the four existing header adapters.
+    const __dcufHeaderContextSets = Object.freeze({
+        list: Object.freeze(['list-surface']),
+        modify: Object.freeze(['modify']),
+        delete: Object.freeze(['delete']),
+        none: Object.freeze([]),
+    });
+    function __dcufHeaderPresentationContexts(pageContext, nativeFormState) {
+        if (pageContext?.hasListSurface === true) return __dcufHeaderContextSets.list;
+        if (nativeFormState !== 'password' || !(pageContext?.isModify || pageContext?.isDelete)) return __dcufHeaderContextSets.none;
+        return pageContext.type === 'modify' ? __dcufHeaderContextSets.modify
+            : pageContext.type === 'delete' ? __dcufHeaderContextSets.delete : Object.freeze([pageContext.type]);
+    }
+    function __dcufReadHeaderPresentationContexts() {
+        const pageContext = window.__dcufPageContext;
+        return __dcufHeaderPresentationContexts(pageContext, pageContext?.hasListSurface === true
+            ? null : document.body?.getAttribute('data-dcuf-native-form-state'));
+    }
+
     const __dcufHeaderShellHostAdapter = (() => {
         const ROOT_SELECTOR = '.dcheader.typea';
         const ROLE_ATTRIBUTE = 'data-dcuf-header-shell-role';
@@ -112,9 +131,8 @@
             state.utility = {list, button, attributes, onToggle};
         };
 
-        const supportsSurface = () => window.__dcufPageContext?.hasListSurface === true
-            || ((window.__dcufPageContext?.isModify || window.__dcufPageContext?.isDelete)
-                && document.body?.getAttribute('data-dcuf-native-form-state') === 'password');
+        const surfaceContexts = __dcufReadHeaderPresentationContexts;
+        const supportsSurface = () => surfaceContexts().length > 0;
 
         const ensureStyle = () => {
             if (!supportsSurface()) return false;
@@ -252,8 +270,7 @@
 
         const ensureMutationSubscription = (runtimeCoordinator) => {
             if (!runtimeCoordinator || typeof runtimeCoordinator.subscribeMutations !== 'function') return;
-            const contexts = window.__dcufPageContext?.hasListSurface ? ['list-surface']
-                : supportsSurface() ? [window.__dcufPageContext.type] : [];
+            const contexts = surfaceContexts();
             if (!contexts.length || runtimeCoordinator.pageSupports?.(contexts) === false) return;
             if (activeCoordinator === runtimeCoordinator && typeof mutationUnsubscribe === 'function') return;
             mutationUnsubscribe?.();

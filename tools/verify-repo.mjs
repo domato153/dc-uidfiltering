@@ -131,6 +131,8 @@ async function verifyGuidance() {
         ['research selection', 'tools/verify-research-selection.mjs'],
         ['skills', 'tools/verify-skills.mjs'],
         ['UI boundaries', 'tools/verify-ui-boundaries.mjs'],
+        ['header context reuse', 'testbed/harness/header-presentation-context.test.mjs'],
+        ['UI review preparation', 'testbed/harness/ui-review-preparation.test.mjs'],
         ['workflows', 'tools/verify-workflows.mjs'],
         ['live site contracts', 'tools/test-live-site-canary.mjs'],
         ['header palette ownership', 'tools/test-header-palette-ownership.mjs'],

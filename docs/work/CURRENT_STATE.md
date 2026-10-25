@@ -2,22 +2,22 @@
 
 ## Current execution
 
-- Active plan: docs/work/MOBILE_UI_MODERNIZATION.md → B1_UI_EXPANSION_PREFLIGHT.md. Bounded native password-header reuse is closed; P3 write/editor shell is next.
+- Active plan: docs/work/MOBILE_UI_MODERNIZATION.md → B1_UI_EXPANSION_PREFLIGHT.md. Small UI reuse preparation is closed; next P3 write/editor shell uses the shared header policy and preparation helper.
 - Workspace path: `.` (repository root; private prompt supplies exact nested worktree). AGENTS.md owns policy; preserve debug.log unread/unstaged.
-- Active stage: `header-navigation` formal admission remains open. Last bounded slice `b1-password-header-owner` closed without registry promotion; next `b1-write-editor-shell`.
-- Accepted visual preference: compact B+B1 and adopted BCB96852 list, popup direction authorized. Current password/header appearance preference pending. B2/large-title-card inactive.
-- Source state: source checkpoint base HEAD `066993a40e0543a6cd5076fb3d1526c3e5139f44` on `codex/ui-port-boundary`; working unit reuses existing four header owners, resolves native parent/decorations and stabilizes native-form mutation transitions. Accepted registry unchanged; overlay active. Read resulting checkpoint identity fresh from Git.
-- Local-only state: `LOCAL_ONLY_EVIDENCE`; artifacts/b1-form-header-2026-10-25/completed; viewer artifacts/b1-detail-2026-10-23/form-header/index.html. Exact tracked receipt below supplies recoverable scope; ignored screenshots are not publication.
-- Candidate fingerprint: `8532c427a735676267db3579740a160086175ceb775294cf90f0cffcee6822bd`
-- Last current audit: PASS — SCOPED_PASSWORD_HEADER_PASS. Final AEF0633C Mobile150/150, header8 contexts with idle/removal/reinsert checks,25 native-form semantic observations equal,4 public source states,4 reviewed B1 pairs and12 decoded images. No whole-UI/formal-stage/user-preference approval.
-- Current stage receipt: `verification/receipts/2026-10-25-b1-form-header-reuse.json` SHA-256 `96E836CDB5194A44DE693F0CCE301DB8C263863EBF0E5CB9F83917740B528603`. Bounded password-header scope only. Earlier password-card receipt and intermediate failures remain historical; this receipt binds final source and explicit four-header-key resource delta.
+- Active stage: `header-navigation` formal admission remains open. Bounded `ui-reuse-preparation` closed with no visual/behavior delta or registry promotion; next `b1-write-editor-shell`.
+- Accepted visual preference: Compact B+B1 and adopted BCB96852 list; user accepted the repaired password/header appearance after97fc1f2. Popup direction authorized. B2/large-title-card inactive. This cleanup makes no new appearance choice.
+- Source state: source checkpoint base HEAD `97fc1f2ee7efad7d90f4b66d780c0132215117aa` on `codex/ui-port-boundary`; four adapters consume one context policy, Testbed capture/manifest preparation is reused. Accepted registry unchanged; overlay active. Read resulting checkpoint identity fresh from Git.
+- Local-only state: `LOCAL_ONLY_EVIDENCE`; artifacts/ui-reuse-prep-2026-10-25/; prior form-header viewer remains valid for the unchanged appearance. Tracked receipt below records scope; ignored screenshots are recoverable evidence.
+- Candidate fingerprint: `674ef8a01cd56c78c107d8e2541c6089bc8219ed441ef239a4d924ce15cdb91c`
+- Last current audit: PASS — SCOPED_UI_REUSE_PREPARATION_PASS. Mobile150/150, helper/context7/7, CSS13 byte-identical, native-form25 observations equal, four header context comparisons equal and image5/5 PIXEL_MATCH. Default visual fidelity NOT_REVIEWED/productApproved=false remains intentional; no formal-stage or whole-UI approval.
+- Current stage receipt: `verification/receipts/2026-10-25-ui-reuse-preparation.json` SHA-256 `B916EA97DAE925162ED1EF16BA0AA1FA3071162A01E4E7127FA79EC7A585443F`. Bounded preparation/output-preservation scope only; prior password/header receipt remains its own historical feature evidence.
 - Accepted baseline: Adopted BCB list/B1 family direction plus the scoped password-card/header implementation and behavior evidence. Write/editor, account/login and unopened native children remain separate.
-- Current artifact: Mobile3.5.5 `AEF0633CC474E67756B3E68FCFE6CE92652E5515E37A6B00DBE3446258CACEDB` root/dist/guard aligned; PC1.9.9 `61C539769BA160A5FC4DCD164B3CD26025244AB6FC1BBC7A4A520416FE5A41A5` root/dist unchanged.
+- Current artifact: Mobile3.5.5 `62F1BAE62F3CDC5E2640B8331D603D86465DB7111B4379E11D249C395CE3C87A` root/dist/guard aligned; PC1.9.9 `61C539769BA160A5FC4DCD164B3CD26025244AB6FC1BBC7A4A520416FE5A41A5` root/dist unchanged.
 - Blockers: No global live/authorization blocker. Modify specimen6801789 and delete6778319; older concept-post modify restriction is native. No actual modify/delete/authentication or new POST authority. Relation-read47965 authorization remains exact and separate.
 - Pending live checks: Actual final extension/device/account and unobserved native children remain unqualified. Dark images are source-theme proxies; empty public search history stayed closed.980×2306 is the phone-layout proxy and390 is stress. Password-header defects are repaired; do not revive the former missing-owner blocker.
 
 ```dcuf-current-artifacts
-{"schemaVersion":1,"mobile":{"sha256":"AEF0633CC474E67756B3E68FCFE6CE92652E5515E37A6B00DBE3446258CACEDB"},"pc":{"sha256":"61C539769BA160A5FC4DCD164B3CD26025244AB6FC1BBC7A4A520416FE5A41A5"}}
+{"schemaVersion":1,"mobile":{"sha256":"62F1BAE62F3CDC5E2640B8331D603D86465DB7111B4379E11D249C395CE3C87A"},"pc":{"sha256":"61C539769BA160A5FC4DCD164B3CD26025244AB6FC1BBC7A4A520416FE5A41A5"}}
 ```
 
 ## Draft-complete checkpoint — 2026-10-21
