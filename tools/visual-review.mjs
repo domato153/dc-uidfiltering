@@ -4,12 +4,13 @@ import { createHash } from 'node:crypto';
 import { mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { validateVisualReference, applyVisualRequirementStatus } from '../testbed/harness/visual-reference-policy.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const require = createRequire(new URL('../testbed/harness/playwright-loader.cjs', import.meta.url));
 const args = process.argv.slice(2);
 if (args.includes('--help')) {
-    console.log('node tools/visual-review.mjs --manifest <JSON> --output <new artifacts/ directory>\nCompares existing same-size PNG pairs with installed Playwright Test and its native HTML diff report.\nOptional manifest.assessment binds a reference-first visual judgement to every exact image pair; omitted means NOT_REVIEWED. See docs/work/UI_VISUAL_REVIEW.md.\nExit 0: pixel match; 1: differences; 2: invalid inputs/runner failure. No baseline approval/update.');
+    console.log('node tools/visual-review.mjs --manifest <JSON> --output <new artifacts/ directory>\nCompares existing same-size PNG pairs with installed Playwright Test and its native HTML diff report.\nOptional manifest.assessment binds a reference-first visual judgement to every exact image pair; omitted means NOT_REVIEWED. See docs/work/UI_VISUAL_REVIEW.md.\nExit 0: pixel match with no declared failure; 1: differences or known visual gap; 2: invalid inputs/runner failure. No baseline approval/update.');
     process.exit(0);
 }
 const value = flag => args[args.indexOf(flag) + 1];
@@ -27,7 +28,16 @@ try {
     const manifestBytes = await readFile(path.resolve(value('--manifest')));
     const manifest = JSON.parse(manifestBytes);
     if (manifest.schemaVersion !== 1 || !['design-comparison', 'regression'].includes(manifest.purpose) || !manifest.provenance || !manifest.cases?.length) throw new Error('Invalid manifest schema/purpose/provenance/cases');
+    const visualContract = await validateVisualReference(manifest, root);
     receipt.purpose = manifest.purpose;
+    if (visualContract) {
+        receipt.designReference = visualContract.designReference;
+        receipt.visualRequirements = visualContract.visualRequirements;
+        const selectedBytes = await readFile(path.join(root, visualContract.designReference.path));
+        if (digest(selectedBytes) !== visualContract.designReference.sha256) throw new Error('Selected design changed before report copy');
+        await writeFile(path.join(output, 'selected-design.png'), selectedBytes);
+        receipt.designReference.preview = 'selected-design.png';
+    }
     receipt.provenance = manifest.provenance;
     receipt.manifestSha256 = digest(manifestBytes);
     const ids = new Set();
@@ -70,6 +80,7 @@ try {
         const status = cases.some(item => item.status === 'NEEDS_WORK') ? 'NEEDS_WORK' : cases.some(item => item.status === 'UNVERIFIED') ? 'UNVERIFIED' : 'REVIEWED';
         receipt.referenceFidelity = { status, reviewer: assessment.reviewer, basis: assessment.basis, limitations: assessment.limitations, cases };
     }
+    receipt.referenceFidelity = applyVisualRequirementStatus(receipt.referenceFidelity, visualContract);
     await writeFile(path.join(output, 'inputs.json'), JSON.stringify(receipt, null, 2));
     const cli = path.join(path.dirname(require.resolve('playwright/package.json')), 'cli.js');
     const result = spawnSync(process.execPath, [cli, 'test', '--config', path.join(root, 'testbed/visual/playwright.config.mjs')], {
@@ -93,7 +104,7 @@ try {
     receipt.passed = nativeReport.stats.expected;
     receipt.failed = nativeReport.stats.unexpected;
     receipt.report = 'report/index.html';
-    process.exitCode = result.status === 0 ? 0 : 1;
+    process.exitCode = result.status === 0 && receipt.referenceFidelity.status !== 'NEEDS_WORK' ? 0 : 1;
 } catch (error) {
     receipt.status = 'INVALID_INPUT';
     receipt.referenceFidelity.status = 'INVALID_INPUT';
@@ -107,5 +118,7 @@ if (receipt.status !== 'INVALID_INPUT') for (const item of fidelity.cases || [])
     notes.push('', `## ${item.id}: ${item.status}`, '', item.summary);
     for (const finding of item.findings) notes.push('', `- ${finding.disposition}: expected ${finding.expected}; actual ${finding.actual}; next ${finding.action}`);
 }
+if (receipt.designReference) notes.push('', `Selected design: ${receipt.designReference.path}; region: ${receipt.designReference.region}.`);
+for (const requirement of receipt.visualRequirements || []) notes.push('', `- ${requirement.id}: implementation=${requirement.implementation}; verification=${requirement.verification}; expected ${requirement.expected}`);
 await writeFile(path.join(output, 'fidelity.md'), notes.join('\n') + '\n');
 console.log(`${receipt.status}; referenceFidelity=${receipt.status === 'INVALID_INPUT' ? 'INVALID_INPUT' : fidelity.status}; productApproved=false; ${path.relative(root, output).replaceAll('\\', '/')}/review.json`);

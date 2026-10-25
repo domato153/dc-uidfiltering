@@ -2,6 +2,7 @@ import {mkdir,readFile,readdir,writeFile} from 'node:fs/promises';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {createHash} from 'node:crypto';
+import {validateVisualReference} from './visual-reference-policy.mjs';
 
 const repositoryRoot=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../..');
 const digest=bytes=>createHash('sha256').update(bytes).digest('hex');
@@ -18,7 +19,7 @@ async function png(root,file){
 
 // Preparation only: callers retain their guarded browser setup, interactions,
 // reference choice and judgement. visual-review.mjs owns decoding/diff/report.
-export async function createUiReviewPreparation({outputDir,provenance,expectedRuntimeSha256,rootDir=repositoryRoot}){
+export async function createUiReviewPreparation({outputDir,provenance,expectedRuntimeSha256,designReference,rootDir=repositoryRoot}){
  const root=path.resolve(rootDir),output=within(root,outputDir),relative=path.relative(root,output).replaceAll('\\','/');
  if(!relative.startsWith('artifacts/')&&!relative.startsWith('testbed/artifacts/'))throw Error('Review output must be an artifacts child');
  if(typeof provenance!=='string'||!provenance.trim())throw Error('State the capture provenance');
@@ -39,12 +40,13 @@ export async function createUiReviewPreparation({outputDir,provenance,expectedRu
     captures.set(id,record);await save();return Object.freeze({...record});
    }catch(error){failed=error;throw error}
   },
-  async writeManifest(cases,{assessment}={}){
+  async writeManifest(cases,{assessment,visualRequirements}={}){
    await unchanged();if(!cases?.length)throw Error('Comparison cases are required');const seen=new Set(),records=[],bindings=[];
    for(const item of cases){safeId(item.id);if(seen.has(item.id))throw Error('Duplicate case id');seen.add(item.id);const current=captures.get(item.captureId);if(!current)throw Error('Capture is missing: '+item.captureId);const reference=await png(root,item.reference),candidate=await png(root,current.path);if(candidate.sha256!==current.sha256)throw Error('Captured image changed: '+item.captureId);if(reference.width!==candidate.width||reference.height!==candidate.height)throw Error('Reference/current dimensions differ: '+item.id);records.push({id:item.id,theme:current.theme,width:candidate.width,height:candidate.height,reference:reference.path,candidate:candidate.path});bindings.push({id:item.id,referenceSha256:reference.sha256,candidateSha256:candidate.sha256})}
-   const manifest={schemaVersion:1,purpose:'design-comparison',provenance:{description:provenance,runtime:{path:runtimePath,sha256:runtimeSha256}},cases:records};
+   const manifest={schemaVersion:1,purpose:'design-comparison',designReference,visualRequirements,provenance:{description:provenance,runtime:{path:runtimePath,sha256:runtimeSha256}},cases:records};
+   const visualContract=await validateVisualReference(manifest,root);
    if(assessment){if(assessment.cases?.length!==records.length||!['reviewer','basis','limitations'].every(k=>typeof assessment[k]==='string'&&assessment[k].trim()))throw Error('Explicit complete image review required');manifest.assessment={...assessment,cases:records.map((item,i)=>{const review=assessment.cases.find(r=>r.id===item.id);if(!review?.summary||!Array.isArray(review.findings))throw Error('Missing image judgement: '+item.id);return{...review,...bindings[i]}})}}
-   await unchanged();const file=path.join(output,'comparison.json');await writeFile(file,JSON.stringify(manifest,null,2)+'\n');return Object.freeze({path:file,cases:records.length,reviewed:Boolean(assessment)});
+   await unchanged();const file=path.join(output,'comparison.json');await writeFile(file,JSON.stringify(manifest,null,2)+'\n');return Object.freeze({path:file,cases:records.length,reviewed:Boolean(assessment),requirementsStatus:visualContract.status});
   },
  });
 }

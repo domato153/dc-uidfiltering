@@ -22,16 +22,27 @@ Illustrative editor paths below must be replaced by the selected independent ref
 const review = await createUiReviewPreparation({
     outputDir: 'artifacts/write-review-01',
     provenance: 'Write/editor fixture, Chrome source injection, light,980 layout',
+    designReference: {
+        path: 'docs/design/b1-prism-2026-10-22.png',
+        sha256: '83D73F768193FC594536448500B7DC6671653CE1CDE498606698C2FF06CDF296',
+        decisionPath: 'docs/work/UI_DESIGN_REFERENCES.md',
+        region: '<copy the active NEXT_TASK Design reference region exactly>',
+    },
 });
 await review.capture(page, { id: 'write-light', theme: 'light' });
 await review.writeManifest([{
     id: 'write-light', reference: 'artifacts/editor-reference.png', captureId: 'write-light',
-}]);
+}], {visualRequirements: [{
+    id: 'changed-material', expected: '<selected visible treatment>',
+    implementation: 'present', verification: 'unverified',
+}]});
 ```
 
 Then use `node tools/visual-review.mjs --manifest artifacts/write-review-01/comparison.json --output artifacts/write-review-01/visual`. Its native report remains the comparison viewer/decoder. With no explicit `assessment`, fidelity stays NOT_REVIEWED even when pixels match. After inspecting the real images, the optional assessment takes the existing reviewer/basis/limitations and per-case summary/findings format; the helper binds its reference/current hashes. A changed runtime, duplicate capture id, changed current image or different dimensions is an error, not a reason to update a golden.
 
 This helper records a declared guarded runtime; it does not independently attest what was injected into a page. The existing guarded harness, exact source path/SHA, original handlers and explicit live request policy remain required. It has no product DOM, state, event, network or judgement owner.
+
+Reference guard2026-10-25: design comparisons require the active frozen source/region and changed visual requirements; UI_REFERENCE_GUARD.md defines the small schema. Passed requirements need rendered-evidence path/SHA bindings. Known missing implementation cannot be softened into preference pending. Metadata/pixel equality still cannot certify aesthetics; capture-only preparation is unaffected.
 
 ## Completed — 2026-10-25
 

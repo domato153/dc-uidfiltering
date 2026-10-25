@@ -1,5 +1,14 @@
 # DCUF modernization decision rationale
 
+## D-52 — Bind visual authority at the existing comparison boundary
+
+- SELECTED: ER2,2026-10-25. Impeccable polish's existing-system/render inspection and Superpowers verification-before-completion's claim-specific evidence. Primary upstream skill texts are linked/appraised in UI_REFERENCE_GUARD.md. Bind NEXT's frozen original image/region in the existing preparation/comparator; known omission outranks an optimistic assessment. Surface-specific rendering remains necessary; these instructions are not empirical proof of universal visual judgement.
+- NOT ADOPTED: A new skill install, extra image engine, blanket context-reading/full-UI gate, repeated model scoring or research-style trial. None directly fixes replacing the available original B1 writer panel with a weaker secondary proposal.
+- DEFERRED: Actual writer glass repair and then popup children. Revisit the guard only on a reproduced escaping failure, not every new component. Local transfer uses stale/wrong reference and missing-effect counterexamples; known gap plus identical pixels must remain NEEDS_WORK.
+- Reason: The original B1 writer panel was available but the operation substituted a weaker proposal; another broad reading or scoring procedure would not directly prevent that substitution.
+- Evidence: UI_REFERENCE_GUARD.md and its receipt record nine unit passes, actual CLI false-green RED→GREEN, a valid positive control, original attachment identity and viewer checks. Product runtime is unchanged.
+- Revisit: A reproduced reference/claim escape or changed comparison schema; retain manual perception limits and proportionate affected-state rendering.
+
 ## D-43 — Retain an established image comparator and reject the current B1 visuals
 
 - SELECTED: Existing Playwright Test1.61.1 native PNG/pixelmatch/HTML expected-actual-diff-slider workflow, a small input/provenance wrapper, same-size pairs and explicit manual composition review through the current UI skill. Current native B1 output stays unaccepted and cannot seed a regression golden automatically.

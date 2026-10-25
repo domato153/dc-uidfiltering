@@ -26,7 +26,7 @@
       },
       {
         "id": "ui-review-preparation",
-        "summary": "Testbed-only preparation binds the guarded runtime SHA before/after browser screenshot delegation, records actual browser/image metadata and prepares equal-size PNG comparison manifests. Existing visual-review tool owns decoding/diff/report behavior. Default stays unreviewed; explicit image-bound judgement remains required. Never auto-approve output, mutate product DOM or enable live requests."
+        "summary": "Testbed-only preparation binds guarded runtime/capture identity; existing visual-review owns decoding/diff/report. Both require the original design/region to match NEXT's frozen-image dependency and authority hash. Changed visual claims carry implementation/verification/evidence; known missing work overrides optimistic assessment even on pixel equality. Regression pixels cannot certify design fidelity. Continuity inspection exposes the selected source/hash/region. This validates declarations, not AI perception or beauty; no product DOM/network owner, new image engine or auto-approval."
       },
       {
         "id": "b1-native-form-header-reuse",
@@ -80,6 +80,8 @@
           "testbed/harness/**",
           "testbed/server/**",
           "testbed/run-tests.mjs",
+          "testbed/visual/**",
+          "tools/visual-review.mjs",
           "testbed/run-host-compatibility.mjs",
           "testbed/run-bfcache.mjs",
           "testbed/run-palette-differential.mjs",

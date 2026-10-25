@@ -1,6 +1,6 @@
 # UI design references for the next visual pass
 
-Status: `B1_LIST_ADOPTED_AS_EXPANSION_BASELINE / EXPANSION_PREFLIGHT_ONLY` — on2026-10-24 the user selected the finished B1 list as the basis for article/comments, write, native/owned popups and settings. B1_LIST_COHESION.md/BCB96852 owns the current list implementation/evidence; B1_UI_EXPANSION_PREFLIGHT.md owns the requested scope and proposed order. No expansion runtime is implemented by this planning decision.
+Status: `B1_LIST_ADOPTED_AS_EXPANSION_BASELINE / EXPANSION_IN_PROGRESS`. CURRENT_STATE.md/NEXT_TASK.md own current progress and order; B1_UI_EXPANSION_PREFLIGHT.md owns the broad requested scope. The original B1 raster and adopted list remain the visual authority; this reference page is not a completion receipt.
 
 ## Current choice: B composition + B1 Prism Glass
 
@@ -9,11 +9,11 @@ Status: `B1_LIST_ADOPTED_AS_EXPANSION_BASELINE / EXPANSION_PREFLIGHT_ONLY` — o
 - **User's judgment retained:** B1/B2 largely changed material/color, not the underlying UI silhouette. B2 was overcolored and is **not adopted**. The previous large-title-card header was also visually rejected; its technical feasibility result does not approve its appearance. Do not revive either as an active design.
 - **Common language:** compact quiet navigation, a frosted elevated recent/menu/control layer, gentle edge light, restrained primary/selected accents, clear opaque reading surfaces, and shared typography/spacing/radius/material roles across list, article/comments, write, settings and native/owned popups.
 - **Limits:** choosing B1 adopts a trial direction, not every raster dimension, example control/text, duplicate tab, avatar or omitted input. Preserve the real checklist, native branding/nodes/events/forms, comment/reply/image-comment states, editor tools and existing palette IDs/settings. No new moderator/account capabilities or default-color change is implied. The board does not demonstrate substantial shape freedom, actual motion, dark mode, measured phone geometry, complete feature coverage or working UI.
-- **Current sequence:** review B1_UI_EXPANSION_PREFLIGHT.md first; its first implementation unit is integrated article/comments/image-comments and representative action/tool popups on the user's6778319 specimen. Reuse current list/material controls, existing presenters/adapters, affected checklist/adjacent states and light/dark at the adopted phone layout. Other families follow the preflight, with dedicated sign-login entry work included. Do not implement all families or rerun all product tests merely to record this plan.
+- **Current sequence and write reference:** follow CURRENT/NEXT. The original B1 image already contains the write form in its lower-left panel; its header and lower-right dialog also supply material references. Inspect these before making a derived proposal. UI_REFERENCE_GUARD.md records why the earlier independent HTML writer proposal is secondary and cannot replace the adopted reference. Preserve native extra controls and measured phone constraints; no automatic all-family approval.
 - **Research used:** [Raycast current UI](https://www.raycast.com/new) for layered compact controls; [Craft's 2025-09-15 glass update](https://www.craft.do/blog/craft-update-3-2-6) for selective material and cross-screen unity; [Things' official glass/control examples](https://culturedcode.com/things/blog/) for restrained light/scale feedback; [Apple material/motion principles](https://developer.apple.com/videos/play/wwdc2025/219/) for a distinct navigation/control layer; [Linear's 2026-03-12 refresh](https://linear.app/now/behind-the-latest-design-refresh) for hierarchy/compactness. These are references, not separately adopted skins or a promise of native optical refraction in a browser.
 - Local comparison, optional: `artifacts/ui-overview-2026-10-17/b-glass-refinement-2026-10-22/index.html`. B2 stays an unadopted alternative; the tracked B1 image and this decision are the durable baseline.
 
-![Selected B1 reference for a later trial](../design/b1-prism-2026-10-22.png)
+![Selected B1 reference](../design/b1-prism-2026-10-22.png)
 
 ## Historical Concept01 research — retained context
 

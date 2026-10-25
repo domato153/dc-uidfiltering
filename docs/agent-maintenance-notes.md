@@ -1,5 +1,9 @@
 # Agent Maintenance Notes
 
+## Existing reference mistaken for missing —2026-10-25
+
+B1's lower-left panel already contains the writer. The old HTML proposal was separate but became the primary comparator, losing the original material target. Continuity listed the design-reference document, not the selected image itself; it did not enforce that the comparison actually used the adopted source. A known missing backdrop effect was treated as taste pending and a gradient assertion passed. UI_REFERENCE_GUARD.md now binds frozen image/region through NEXT and both existing comparison entry points, with missing/failed visual requirements overriding optimistic assessment even on PIXEL_MATCH. This validates provenance/declared gaps, not whether an AI understood an image; read the selected region and inspect actual renders. Keep functional/material/preference results separate and repair writer material before popup expansion.
+
 ## B1 write/editor reuse — 2026-10-25
 
 Public desktop write has DIV fields and a visible gall_nick_name in addition to hidden name; the older Testbed table is another supported shape, not the live oracle. Project both native nickname controls onto the existing input role; do not rename/replace fields. Preserve the default table fixture and add native DIV/CAPTCHA/category anatomy. A fields table must span the field grid. Credential wrapper and editor-wrapper decoration must not double the input/frame edge.

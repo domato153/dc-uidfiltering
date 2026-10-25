@@ -2,19 +2,19 @@
 
 ## Current execution
 
-- Active plan: docs/work/MOBILE_UI_MODERNIZATION.md → B1_UI_EXPANSION_PREFLIGHT.md. P3 write/editor shell source is validated; next native editor tool/popup family.
+- Active plan: docs/work/MOBILE_UI_MODERNIZATION.md → B1_UI_EXPANSION_PREFLIGHT.md. Lightweight reference/claim repair closed; repair writer material before popup expansion.
 - Workspace path: `.` (repository root; private prompt supplies exact nested worktree). AGENTS.md owns policy; preserve debug.log unread/unstaged.
-- Active stage: `header-navigation` formal admission remains open. Bounded `b1-write-editor-shell` has source/runtime evidence; revised glass texture preference is pending user review. Next `b1-write-tool-popups`.
-- Accepted visual preference: Compact B+B1/adopted BCB list and prior password/header appearance. User flagged the first write frame as flat; revised B1 glass/sheen/rim is reviewable, not automatically accepted. B2/large-title-card inactive.
-- Source state: source checkpoint base HEAD `9cf43fdaa914c8d34d57c3efdca8e7997b5fb292` on `codex/ui-port-boundary`; native-form remains sole write owner; four common headers serve supported editor state without a list runtime. Accepted registry unchanged; overlay active. Read resulting checkpoint fresh from Git.
-- Local-only state: `LOCAL_ONLY_EVIDENCE`; artifacts/b1-write-shell-2026-10-25/ and write-shell viewer. No raw capture is a baseline approval.
-- Candidate fingerprint: `0cbe15444f9acf620aa5ee56c3216f52bfd45dfa13c99dc7f76fd8428a72b509`
-- Last current audit: PASS — SCOPED_WRITE_EDITOR_SOURCE_PASS_VISUAL_PREFERENCE_PENDING. Mobile151/151, shared-policy1/1, five editor interaction/idle/wrapper-reinsert contexts, native25 behavior observations equal. Four proposal/current pairs remain visual UNVERIFIED pending user texture preference; no whole-UI or upper-stage approval.
-- Current stage receipt: `verification/receipts/2026-10-25-b1-write-editor-shell.json` SHA-256 `BEC3D5D4D32262C7E43CBC8839078D816CAED3C7D337DC7BFC805C58A6964F23`. Bounded source/behavior scope; exact-tree checkpoint validation/CI remain their own record.
-- Accepted baseline: Adopted B1 list and prior password/header. New writer retains original native fields/forms/events and readable paper; individual tool/popup/attachment/AI/account children remain separate.
-- Current artifact: Mobile3.5.5 `CE3C4D1B09A52408F0F10C96FB0B4362AE74E3AC8000C9149DE83A9E76A30EDD` root/dist/guard aligned; PC1.9.9 `61C539769BA160A5FC4DCD164B3CD26025244AB6FC1BBC7A4A520416FE5A41A5` unchanged. No version change.
-- Blockers: No global live/authorization blocker. Public major/minor write load via GET. No actual submit/upload/AI/authentication or new POST authority. Exact relation-read47965 authorization remains separate.
-- Pending live checks: Actual final extension/device/account and native popup interiors remain unqualified. Dark is source proxy;980×2306 is phone-layout proxy,390 stress. Screen412/layout980 zoom/font-hit proxy passes after explicit fixture opening. Direct font click-open is not wired in that fixture on either control or candidate; do not call it a product failure or actual-native success. Formal broad impact profiles/header admission remain open.
+- Active stage: `header-navigation` formal admission remains open. Reference guard has scoped tool evidence; writer material is NEEDS_WORK, not preference-only pending. Next `b1-write-material-repair`.
+- Accepted visual preference: Compact B+B1/adopted list and prior password/header. Original B1 already contains lower-left writer and dialog/header material. The old HTML writer proposal is secondary; the current flat material was not accepted.
+- Source state: source checkpoint base HEAD `47ce903137d4d20f624fe2c5f86dc9d8c147abbe` on `codex/ui-port-boundary`; only review tools/docs/routing changed. Native runtime/presentation, accepted registry and versions remain unchanged; overlay active. Read resulting checkpoint identity fresh from Git.
+- Local-only state: `LOCAL_ONLY_EVIDENCE`; artifacts/ui-reference-guard-2026-10-25/ and original-first write-shell viewer. Historical manifests without the selected-source fields are not current visual authority.
+- Candidate fingerprint: `53e43f0b9a04259863b0623b664d6ed389b2a6da4182909c00202f96d1b8d24e`
+- Last current audit: PASS — REVIEW_GUARD_ONLY; writer material NEEDS_WORK. Unit9/9; actual CLI false-green RED→GREEN, valid positive control, old-manifest rejection, selected-original attachment and viewer decode/control checks. This does not certify beauty or whole UI.
+- Current stage receipt: `verification/receipts/2026-10-25-ui-reference-guard.json` SHA-256 `C95DACF356F9A6C1E668DEE97001880D1CED2BF20591ED27A28CA24DDEDC317A`. Exact-tree checkpoint validation/CI are separate records; no product acceptance follows.
+- Accepted baseline: Adopted B1/list and prior password/header; writer native-function evidence is historical47ce151/151 on unchanged CE3. Original-reference material repair is outstanding.
+- Current artifact: Mobile3.5.5 `CE3C4D1B09A52408F0F10C96FB0B4362AE74E3AC8000C9149DE83A9E76A30EDD` root/dist/guard unchanged; PC1.9.9 `61C539769BA160A5FC4DCD164B3CD26025244AB6FC1BBC7A4A520416FE5A41A5` unchanged. No rebuild/version change in this tool-only unit.
+- Blockers: No global live/authorization blocker. No real submit/upload/AI/authentication or new POST authority. Exact relation-read47965 authorization remains separate.
+- Pending live checks: Writer glass must be repaired and compared to original B1 writer region in normal/backing light-dark renders. Native popup interiors, actual final extension/device/account and formal broad profiles/header admission remain separate.980×2306 is phone-layout proxy;390 stress. Existing fixture font click bootstrap limitation remains explicit.
 
 ```dcuf-current-artifacts
 {"schemaVersion":1,"mobile":{"sha256":"CE3C4D1B09A52408F0F10C96FB0B4362AE74E3AC8000C9149DE83A9E76A30EDD"},"pc":{"sha256":"61C539769BA160A5FC4DCD164B3CD26025244AB6FC1BBC7A4A520416FE5A41A5"}}

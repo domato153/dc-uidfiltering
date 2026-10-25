@@ -1,0 +1,111 @@
+{
+  "schemaVersion": 1,
+  "kind": "ui-reference-claim-guard",
+  "status": "REVIEW_GUARD_PASS_WRITER_MATERIAL_NEEDS_WORK",
+  "sourceBaseHead": "47ce903137d4d20f624fe2c5f86dc9d8c147abbe",
+  "candidateFingerprint": "53e43f0b9a04259863b0623b664d6ed389b2a6da4182909c00202f96d1b8d24e",
+  "artifact": {
+    "mobileSha256": "CE3C4D1B09A52408F0F10C96FB0B4362AE74E3AC8000C9149DE83A9E76A30EDD",
+    "pcSha256": "61C539769BA160A5FC4DCD164B3CD26025244AB6FC1BBC7A4A520416FE5A41A5",
+    "runtimeBytesChanged": false,
+    "versionChanged": false
+  },
+  "scope": {
+    "reviewPipelineOnly": true,
+    "productUiChanged": false,
+    "newObservers": 0,
+    "newDependencies": 0,
+    "newImageEngine": false,
+    "acceptedRegistryChanged": false,
+    "overlayActive": true,
+    "claim": "Bind declared reference and known visual gaps; not a proof of AI image comprehension or universal aesthetic quality."
+  },
+  "findings": {
+    "originalReference": "Adopted B1 already contains lower-left writer; old HTML proposal was insufficient primary authority.",
+    "continuity": "NEXT had a LIVE design-document pointer but no frozen selected-image binding; existing instructions did not enforce the selected original in comparison.",
+    "classification": "Known omitted effect was incorrectly softened to user-preference pending; writer remains NEEDS_WORK."
+  },
+  "adoptedMethods": [
+    {
+      "source": "https://github.com/pbakaus/impeccable/blob/main/skill/reference/polish.md",
+      "principle": "Preserve actual visual authority and inspect rendered output, not detector approval."
+    },
+    {
+      "source": "https://github.com/obra/superpowers/blob/main/skills/verification-before-completion/SKILL.md",
+      "principle": "Match completion claims to relevant evidence; functional counts do not certify material."
+    }
+  ],
+  "changes": [
+    "Existing inspector exposes selected source/actual-expected hash/region.",
+    "Existing preparation/comparator enforce active NEXT frozen source and region plus authority hash.",
+    "Selected original is attached to every native image report; secondary proposals cannot hide it.",
+    "Known missing implementation cannot become unverified preference or pass; current PNG evidence is required for passed claims and decoded by the existing comparator.",
+    "Existing viewer now opens original B1 writer region first; product writer styling unchanged."
+  ],
+  "checks": {
+    "unit": {
+      "passed": 9,
+      "failed": 0,
+      "latestDurationMs": 310.5796
+    },
+    "cliRed": {
+      "pixel": "PIXEL_MATCH",
+      "fidelity": "REVIEWED",
+      "exit": 0,
+      "expectedFailureObserved": true,
+      "path": "artifacts/ui-reference-guard-2026-10-25/red-report/review.json"
+    },
+    "cliGreen": {
+      "pixel": "PIXEL_MATCH",
+      "fidelity": "NEEDS_WORK",
+      "exit": 1,
+      "knownGapCapped": true,
+      "path": "artifacts/ui-reference-guard-2026-10-25/closing-report/review.json"
+    },
+    "positiveControl": {
+      "pixel": "PIXEL_MATCH",
+      "fidelity": "REVIEWED",
+      "exit": 0,
+      "productApproved": false,
+      "path": "artifacts/ui-reference-guard-2026-10-25/closing-positive/review.json"
+    },
+    "oldManifest": {
+      "result": "INVALID_INPUT",
+      "reason": "Selected original lineage/requirements absent",
+      "path": "artifacts/ui-reference-guard-2026-10-25/old-manifest-rejected/review.json"
+    },
+    "sourceAttachment": {
+      "sha256": "83D73F768193FC594536448500B7DC6671653CE1CDE498606698C2FF06CDF296",
+      "hashMatches": true
+    },
+    "viewer": {
+      "originalFirst": true,
+      "originalAndCurrentDecoded": true,
+      "themeSourceControls": 4,
+      "jsErrors": 0
+    },
+    "graph": {
+      "surfaces": 6,
+      "pass": true
+    },
+    "nativeProductSuite": "NOT_RERUN: product runtime and native fixtures unchanged; earlier151/151 is historical function evidence, not material acceptance.",
+    "publisher": "Exact staged-tree validation/transport/CI recorded separately by checkpoint tool."
+  },
+  "cost": {
+    "runtimeWorkAdded": false,
+    "perComparison": "A few local reads/hashes plus existing image comparison; no network/model/daemon.",
+    "unitCost": "Nine tests about0.31 seconds in the observed run; not a performance guarantee."
+  },
+  "limits": [
+    "Checks validate evidence identity and declared omissions; truthful source/render inspection remains required.",
+    "No new cold-reader model test or claim that every visual mistake is detected.",
+    "Writer material is still NEEDS_WORK; next is original-reference repair, then popup interiors.",
+    "Formal broad proof/acceptance/header promotion and actual device/account qualification remain separate."
+  ],
+  "localEvidence": {
+    "path": "artifacts/ui-reference-guard-2026-10-25/",
+    "disposition": "LOCAL_ONLY_EVIDENCE",
+    "viewer": "artifacts/b1-detail-2026-10-23/write-shell/index.html"
+  },
+  "next": "b1-write-material-repair"
+}
