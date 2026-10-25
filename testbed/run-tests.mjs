@@ -27,6 +27,7 @@ import { runB1ContentContract } from './ui-b1-content-contract.mjs';
 import { runB1ArticleActionsContract } from './ui-b1-article-actions-contract.mjs';
 import { runSurfaceObservationContract } from './harness/surface-observation-contract.mjs';
 import { runB1GallerySearchContract } from './ui-b1-gallery-search-contract.mjs';
+import { runB1PasswordContract } from './ui-b1-password-contract.mjs';
 
 const args = new Set(process.argv.slice(2));
 const selectedGroup = process.argv.includes('--group') ? process.argv[process.argv.indexOf('--group') + 1] : null;
@@ -70,6 +71,7 @@ mobileTest('B1 content: native picker isolation glass and original input', 'func
 mobileTest('B1 article actions: native popup glass and nested forms', 'functional', runB1ArticleActionsContract);
 mobileTest('surface observation captures native root and ancestor CSS without mutation', 'functional', runSurfaceObservationContract);
 mobileTest('B1 gallery search: native door children and header layers', 'functional', runB1GallerySearchContract);
+mobileTest('B1 password pages: glass and original native form actions', 'write', runB1PasswordContract);
 
 mobileTest('confirmed UI repair: native comment composer cascade and original input', 'functional', runCommentRepairContract);
 mobileTest('confirmed UI repair: list author media search paging and write controls', 'functional', runListRepairContract);
@@ -9037,7 +9039,7 @@ mobileTest('modify password surface uses the mobile card UI and removes trailing
         assert.equal(contract.inputAutocomplete, 'current-password');
         assert.equal(contract.inputAriaLabel, '비밀번호');
         assert.equal(contract.cardWidth <= contract.viewportWidth - 20, true, JSON.stringify(contract));
-        assert.equal(contract.cardRadius, '20px');
+        assert.equal(contract.cardRadius, '16px', 'Adopted B1 password-card radius');
         assert.equal(contract.confirmBackground, 'rgb(154, 52, 18)');
         assert.equal(contract.footerDisplay, 'none');
         assert.equal(contract.dataInfoDisplay, 'none');
@@ -9075,7 +9077,7 @@ mobileTest('modify password surface uses the mobile card UI and removes trailing
         assert.deepEqual(contract.presentationPayloads.map((css) => (
             createHash('sha256').update(css, 'utf8').digest('hex').toUpperCase()
         )), [
-            'C4B11B6665A0E20AE85270CF5256630AA8B5A1DB55B681755D2947B03DCB2544',
+            '3B521C767FBDD1A3424CA7565641972ACB7C13C15A620CA53292723D5F7D7250',
             'F115ECD658CD800DE14438DF75060F7CC6729FFC1DF5C6C259C75D6810E93053'
         ], 'native-form presentation payloads must match the registered semantic modify/delete, write-shell, write-popup, write-fields, write-headtext, write-editor-shell, write-toolbar-shell, editor-layer, and attachment contracts');
         assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
@@ -9256,7 +9258,7 @@ mobileTest('modify/delete presentation uses only adapter-applied semantic select
             confirmBackground: 'rgb(154, 52, 18)',
             actionsDisplay: 'grid',
             actionsColumns: contract.computed.actionsColumns,
-            shellRadius: '20px'
+            shellRadius: '16px'
         });
         assert.equal(contract.computed.actionsColumns.split(' ').length, 2);
         assert.equal(
@@ -11585,7 +11587,7 @@ mobileTest('delete password surface reuses the password card without changing na
         assert.equal(contract.inputAutocomplete, 'current-password');
         assert.equal(contract.inputAriaLabel, '비밀번호');
         assert.equal(contract.cardWidth <= contract.viewportWidth - 20, true, JSON.stringify(contract));
-        assert.equal(contract.cardRadius, '20px');
+        assert.equal(contract.cardRadius, '16px', 'Adopted B1 password-card radius');
         assert.equal(contract.confirmBackground, 'rgb(154, 52, 18)');
         assert.equal(contract.footerDisplay, 'none');
         assert.equal(contract.dataInfoDisplay, 'none');

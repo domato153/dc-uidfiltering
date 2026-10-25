@@ -336,7 +336,7 @@
         "submitting",
         "error"
       ],
-      "intendedDelta": "foundation-zero-visual",
+      "intendedDelta": "b1-native-password-glass-v1",
       "cascadeExceptions": [
         {
           "selector": "[data-dcuf-surface=\"write-font-menu\"][data-dcuf-role=\"host-font-menu\"] > [data-dcuf-role=\"native-font-option\"]",
@@ -350,9 +350,9 @@
           "sourceRef": "src/targets/mobile/native-form-presenter.js",
           "styleKey": "modify-delete",
           "requiredSelectorPrefix": "[data-dcuf-native-form-",
-          "declarationCount": 178,
-          "declarationLedgerSha256": "8e52da0b90ec24e7a5c2778a12e5a0f67f904edb385f62d5a98b445f75add8ec",
-          "hostCollision": "The zero-visual-delta native password, modify, and delete presenter must retain the extracted host-cascade precedence until its modern presenter replacement removes this transitional profile.",
+          "declarationCount": 183,
+          "declarationLedgerSha256": "178f61354933121ecd8128c311ab78d4a487a8f062a5b43e01db61a624552741",
+          "hostCollision": "Existing extracted native-form geometry/visibility precedence retained. Only anonymous password material/type/radius values adopt B1; authenticated delete-confirm keeps the prior declarations. Splitting the shared primary selector preserves its original priority per branch. This exact transitional profile is not whole-surface modernization.",
           "testRefs": [
             "testbed/run-tests.mjs",
             "testbed/run-host-compatibility.mjs",
@@ -376,7 +376,8 @@
       "testRefs": [
         "testbed/run-tests.mjs",
         "testbed/run-host-compatibility.mjs",
-        "testbed/run-native-form-differential.mjs"
+        "testbed/run-native-form-differential.mjs",
+        "testbed/ui-b1-password-contract.mjs"
       ],
       "canaryCheckpoint": "native-form-header"
     },

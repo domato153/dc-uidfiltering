@@ -2,22 +2,22 @@
 
 ## Current execution
 
-- Active plan: docs/work/MOBILE_UI_MODERNIZATION.md → B1_UI_EXPANSION_PREFLIGHT.md → B1_GALLERY_SEARCH_POPUPS.md. Observed P2 gallery/search family is reviewable; next bounded UI work is P3 anonymous modify/delete password pages.
-- Workspace path: `.` (repository root; private prompt supplies exact nested worktree). AGENTS.md is the single policy; preserve debug.log unread/unstaged.
-- Active stage: `header-navigation` (formal admission remains open); next bounded slice `b1-native-password-pages` belongs to the authorized B1 expansion, not a formal stage promotion.
-- Accepted visual preference: B compact+B1 and adopted BCB96852 list. Popup direction authorized; current P2 appearance preference pending. B2/large-title-card remain inactive.
-- Source state: source checkpoint base HEAD `7fed89e4c6742a1848679d3b8c6da5ee921d85ba` on `codex/ui-port-boundary`. Bounded Mobile-only gallery/search implementation; existing three adapter/presenter pairs retain native DOM/forms/events/settings. Accepted registry unchanged; overlay active. Read the resulting checkpoint identity fresh from Git.
-- Local-only state: `LOCAL_ONLY_EVIDENCE`; artifacts/b1-gallery-search-2026-10-24; viewer artifacts/b1-detail-2026-10-23/gallery-search/index.html.
-- Candidate fingerprint: `5320773549643d0eb723618a80506f64355924bb0ecd7ab9f7feac5b45d185a0`
-- Last current audit: UNKNOWN — SCOPED_CHECKS_PASS_REFERENCE_REVIEWED_USER_PREFERENCE_PENDING. Mobile148/148; PC functional15/15;36 focused contexts;20 callback/form/storage comparisons;8 public main roots plus rank-only/paging;8 image-bound REVIEWED pairs and54 decoded images/zero overflow. Not whole-UI approval.
-- Last product receipt: `verification/receipts/2026-10-25-b1-gallery-search.json` SHA-256 `90D4AAA228565893A7352A90D0DDE9E13F5C70D43D76BDD0FD793A4ABFE671EC`. It retains prior failures, exact scopes and limits.
-- Accepted baseline: Adopted BCB list and authorized B1 popup-family direction. Current output is not its own expected; independent native-inventory proposals remain separate.
-- Current artifact: Mobile3.5.5 `828AEA69530F33E8396C2374A1B8F521C995BBAEA641492850CB7D69F18E831F` root/dist/guard aligned; PC1.9.9 `61C539769BA160A5FC4DCD164B3CD26025244AB6FC1BBC7A4A520416FE5A41A5` root/dist unchanged.
-- Blockers: No global live/authorization blocker. Only the explicitly approved relation-read POST for gallery47965/typeM is permitted by the public probe; no write/report/vote/settings/account permission follows. PUM prior fresh-form exclusion remains separate.
-- Pending live checks: Actual final Chrome/Tampermonkey/device/account and unopened settings/native children remain unqualified. Screen412/layout980×2306 proxy;390 stress. P1/P2 checkboxes are not all-child approvals. Current full counter test passes unchanged; prior article failure stays in its own receipt.
+- Active plan: docs/work/MOBILE_UI_MODERNIZATION.md → B1_UI_EXPANSION_PREFLIGHT.md → B1_PASSWORD_PAGES.md. Anonymous password cards reviewable; next fix the observed password-page header initialization gap before editor/tools.
+- Workspace path: `.` (repository root; private prompt supplies exact nested worktree). AGENTS.md owns policy; preserve debug.log unread/unstaged.
+- Active stage: `header-navigation` (formal admission remains open). Bounded next slice `b1-password-header-owner`; no promotion.
+- Accepted visual preference: compact B+B1 and adopted BCB96852 list; popup direction authorized. Current password appearance preference pending. B2/large-title-card inactive.
+- Source state: source checkpoint base HEAD `994f3ee4e2ba85e7e0b04538c2f1d419519390bf` on `codex/ui-port-boundary`. Existing native-form presenter password material only; adapter/geometry/fields/events unchanged. Accepted registry unchanged; overlay active. Read resulting checkpoint identity fresh from Git.
+- Local-only state: `LOCAL_ONLY_EVIDENCE`; artifacts/b1-password-2026-10-25; viewer artifacts/b1-detail-2026-10-23/password/index.html.
+- Candidate fingerprint: `ba616e0ada4494bff890672b78b3c1fb166f0a43c8418a34f73aa67e31056821`
+- Last current audit: UNKNOWN — SCOPED_PASSWORD_CARD_PASS_HEADER_GAP_OPEN. Full Mobile148/149 with one obsolete radius oracle; reconciled semantic-owner case passes separately, plus final capture-hygiene1/1 and affected password3/3.8 contexts,25 semantic observations,4 public source states,4 reviewed image pairs and22 decoded images. Split coverage, not whole-page approval.
+- Last product receipt: `verification/receipts/2026-10-25-b1-password-pages.json` SHA-256 `8D0A83E6B937CBE5772BA457A4AF10227584F1E57505A8C53EDD3F07632B544D`. Prior full148/1 retained; current targeted passes and limits separate.
+- Accepted baseline: Adopted BCB list/B1 family direction; independent password proposal remains separate from current output. P2 receipt retains its own148/148/PC15 scopes.
+- Current artifact: Mobile3.5.5 `7718A9B425E6E131823D3628C59AC2353F0FEE88A7BAE0EF5FE65719BB0FF30B` root/dist/guard aligned; PC1.9.9 `61C539769BA160A5FC4DCD164B3CD26025244AB6FC1BBC7A4A520416FE5A41A5` root/dist unchanged.
+- Blockers: No global live/authorization blocker. Native concept-post modify restriction on6778319 is expected; use user6801789 for modify and6778319 for delete. No actual modify/delete/authentication or new POST authority. Prior47965 relation-read authorization remains exact and separate.
+- Pending live checks: Actual final extension/device/account, unopened native children and whole-page appearance remain unqualified. Native password header roles absent in control/current; ui-module early-return path is next.980×2306 is the phone-layout proxy;390 is stress.
 
 ```dcuf-current-artifacts
-{"schemaVersion":1,"mobile":{"sha256":"828AEA69530F33E8396C2374A1B8F521C995BBAEA641492850CB7D69F18E831F"},"pc":{"sha256":"61C539769BA160A5FC4DCD164B3CD26025244AB6FC1BBC7A4A520416FE5A41A5"}}
+{"schemaVersion":1,"mobile":{"sha256":"7718A9B425E6E131823D3628C59AC2353F0FEE88A7BAE0EF5FE65719BB0FF30B"},"pc":{"sha256":"61C539769BA160A5FC4DCD164B3CD26025244AB6FC1BBC7A4A520416FE5A41A5"}}
 ```
 
 ## Draft-complete checkpoint — 2026-10-21

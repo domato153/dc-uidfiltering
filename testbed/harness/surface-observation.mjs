@@ -27,7 +27,12 @@ export function readSurfaceInPage({selector,styles=[],ancestorDepth=3,maxNodes=5
  const ancestors=[];let parent=root.parentElement;
  for(let i=0;parent&&i<Math.min(Math.max(ancestorDepth,0),5);i++,parent=parent.parentElement)ancestors.push(inspect(parent));
  const clone=root.cloneNode(true);clone.querySelectorAll('script').forEach(n=>n.remove());
- clone.querySelectorAll('input[type="hidden"],input[type="password"]').forEach(n=>n.setAttribute('value','[redacted]'));
+ clone.querySelectorAll('input[type="hidden"]').forEach(n=>{
+  for(const a of [...n.attributes])if(!['type','name','id','class','disabled','value'].includes(a.name))n.removeAttribute(a.name);
+  for(const key of ['name','id','class'])if(/[a-f0-9]{32,}/i.test(n.getAttribute(key)||''))n.setAttribute(key,'[redacted]');
+  n.setAttribute('value','[redacted]');
+ });
+ clone.querySelectorAll('input[type="password"]').forEach(n=>n.setAttribute('value','[redacted]'));
  return {selector,html:clone.outerHTML,nodes:all.slice(0,maxNodes).map(inspect),ancestors,truncated:all.length>maxNodes,unreadableStyleSheets};
 }
 

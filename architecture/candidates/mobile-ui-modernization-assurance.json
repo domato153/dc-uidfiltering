@@ -17,6 +17,10 @@
     ],
     "upsertContracts": [
       {
+        "id": "b1-native-password-trial",
+        "summary": "Authorized anonymous password-page B1 material in the existing native-form presenter. Native adapter, initialization, forms/fields/nodes/handlers, cancel, empty and keyboard-confirm remain unchanged; authenticated delete-confirm and editor are outside this bounded slice. Preserve original native browser alerts and reject real submissions during live observation."
+      },
+      {
         "id": "b1-gallery-search-popup-trial",
         "summary": "Authorized P2 native gallery/search slice: existing header drawer, shell and gallery-page-head adapters/presenters reversibly project original door/rank/help/related, search-history/suggestion, setting-menu and usage-guide parts. The gallery-head mutation subscriber also recognizes its externally appended original guide/backdrop under visit_history; no additional observer/subscriber, portal or action/state owner. Preserve native DOM/parents/forms/handlers, hidden pages, media and stored settings; expose only existing hidden ranking/trigger text when replacing decorative sprites. Geometry remains in existing owners. Thin read-only test observation reuses native root/ancestor CSS and redacts private values; captures do not grant approval. User authorization is limited to relation-read POST for gallery47965; no other external mutation or authentication scope. Original ranking keeps its five-column DOM order and inline block/none paging; narrow list scrolling stays internal. The existing drawer projection raises the original door stacking context only while an original child layer is open, restoring that marker on closure/disposal. Fixed descendants do not acquire a filtered containing block; door glass uses a decoration plane."
       },
@@ -65,7 +69,8 @@
           "testbed/run-palette-differential.mjs",
           "testbed/ui-b1-content-contract.mjs",
           "testbed/ui-live-control-contract.mjs",
-          "testbed/ui-b1-gallery-search-contract.mjs"
+          "testbed/ui-b1-gallery-search-contract.mjs",
+          "testbed/ui-b1-password-contract.mjs"
         ],
         "contractRefs": [
           "proof-integrity",

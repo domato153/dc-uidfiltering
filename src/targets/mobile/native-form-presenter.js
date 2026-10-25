@@ -63,10 +63,11 @@
         }
         [data-dcuf-native-form-role="popup-shell"][data-dcuf-native-form-state="password"] {
             overflow: hidden !important;
-            border: 1px solid var(--dcuf-theme-border-strong, #cbd2db) !important;
-            border-radius: 20px !important;
-            background: linear-gradient(160deg, var(--dcuf-theme-card-top, #fff), var(--dcuf-theme-card-bottom, #fafbfc)) !important;
-            box-shadow: var(--dcuf-theme-panel-shadow, 0 18px 42px rgba(31, 45, 68, .16)) !important;
+            border: 1px solid var(--dcuf-b1-rim) !important;
+            border-radius: 16px !important;
+            background: var(--dcuf-b1-sheen), var(--dcuf-b1-floating) !important;
+            box-shadow: var(--dcuf-b1-shadow) !important;
+            backdrop-filter: blur(24px) saturate(1.12);
         }
         [data-dcuf-native-form-role="panel"][data-dcuf-native-form-state="password"] {
             box-sizing: border-box !important;
@@ -84,7 +85,7 @@
             margin: 0 !important;
             color: var(--dcuf-theme-fg, #27313f) !important;
             font-size: 17px !important;
-            font-weight: 800 !important;
+            font-weight: 650 !important;
             line-height: 1.45 !important;
         }
         [data-dcuf-native-form-role="password-field"][data-dcuf-native-form-state="password"] {
@@ -96,12 +97,12 @@
             margin: 0 !important;
             padding: 0 14px !important;
             border: 1px solid var(--dcuf-theme-border-strong, #cbd2db) !important;
-            border-radius: 12px !important;
+            border-radius: 10px !important;
             outline: 0 !important;
             background: var(--dcuf-theme-surface-input, #fff) !important;
             color: var(--dcuf-theme-fg, #27313f) !important;
-            font: 700 17px/1 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
-            box-shadow: inset 0 2px 5px color-mix(in srgb, var(--dcuf-theme-accent) 6%, transparent) !important;
+            font: 500 17px/1 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+            box-shadow: none !important;
         }
         [data-dcuf-native-form-role="password-field"][data-dcuf-native-form-state="password"]:focus {
             border-color: var(--dcuf-theme-accent-ink, #3f6de0) !important;
@@ -129,11 +130,11 @@
             margin: 0 !important;
             padding: 10px 12px !important;
             border: 1px solid var(--dcuf-theme-border-strong, #cbd2db) !important;
-            border-radius: 12px !important;
-            background: linear-gradient(180deg, var(--dcuf-theme-card-top, #fff), var(--dcuf-theme-surface-input, #f7f8fa)) !important;
+            border-radius: 10px !important;
+            background: var(--dcuf-b1-paper) !important;
             color: var(--dcuf-theme-fg, #27313f) !important;
             font-size: 15px !important;
-            font-weight: 800 !important;
+            font-weight: 650 !important;
             line-height: 1.2 !important;
             cursor: pointer !important;
         }
@@ -223,7 +224,13 @@
             line-height: 1.2 !important;
             cursor: pointer !important;
         }
-        [data-dcuf-native-form-role="actions"][data-dcuf-native-form-state="password"] > [data-dcuf-native-form-role="submit"][data-dcuf-native-form-state="password"],
+        [data-dcuf-native-form-role="actions"][data-dcuf-native-form-state="password"] > [data-dcuf-native-form-role="submit"][data-dcuf-native-form-state="password"] {
+            border-color: var(--dcuf-theme-accent-ink, #245bda) !important;
+            background-color: var(--dcuf-theme-accent-strong, #245bda) !important;
+            background-image: linear-gradient(165deg, #ffffff1f, transparent 70%) !important;
+            color: var(--dcuf-theme-on-accent, #fff) !important;
+            box-shadow: inset 0 1px 0 #ffffff35, 0 3px 7px color-mix(in srgb, var(--dcuf-theme-accent) 10%, transparent) !important;
+        }
         [data-dcuf-native-form-role="actions"][data-dcuf-native-form-state="delete-confirm"] > [data-dcuf-native-form-role="submit"][data-dcuf-native-form-state="delete-confirm"] {
             border-color: var(--dcuf-theme-accent-ink, #245bda) !important;
             background-color: var(--dcuf-theme-accent-strong, #245bda) !important;
@@ -236,7 +243,7 @@
             display: none !important;
         }
         [data-dcuf-native-form-role="page"][data-dcuf-native-form-state="password"].dc-filter-dark-mode [data-dcuf-native-form-role="popup-shell"][data-dcuf-native-form-state="password"] {
-            box-shadow: 0 20px 46px rgba(0, 0, 0, .44) !important;
+            box-shadow: var(--dcuf-b1-shadow) !important;
         }
         @media screen and (max-width: 480px) {
             [data-dcuf-native-form-role="page-container"][data-dcuf-native-form-state="password"],

@@ -32,3 +32,5 @@ History is retrieved only for a specific unresolved cause: follow the named curr
 Context-free method: .agents/skills/dcuf-long-work-continuity/references/handoff-contract.md. Receiver checks the exact root and one task, then reports ACCEPTED or STALE_REPLAN. Missing optional history is not a blocker; missing exact bytes needed for a comparison requires recovery or a newly bounded task. Machine contract: verification/continuity-contract.json.
 
 Current B1 gallery/search family: B1_GALLERY_SEARCH_POPUPS.md → verification/receipts/2026-10-25-b1-gallery-search.json. It records native source/stacking/paging/material evidence and exclusions. CURRENT/NEXT route the next bounded P3 password-page task; old P2 discovery is historical.
+
+- B1 anonymous password cards and observed native-form header gap: [B1_PASSWORD_PAGES.md](B1_PASSWORD_PAGES.md); next header initialization before editor/tools.

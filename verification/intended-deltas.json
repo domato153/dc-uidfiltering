@@ -1322,6 +1322,69 @@
       "normalizer": "semantic-observation-v1",
       "unknownDifferencePolicy": "fail",
       "missingApplicabilityPolicy": "fail"
+    },
+    {
+      "id": "b1-native-password-glass-v1",
+      "status": "active",
+      "surfaces": [
+        "write-edit-delete-popup"
+      ],
+      "allowed": [
+        {
+          "kind": "color-role",
+          "surface": "write-edit-delete-popup",
+          "scope": "Anonymous modify/delete password card material, rim, shadow, blur, text weights and input/action radii in the existing native-form presenter. Preserve original geometry, prompt, DOM/parents, fields, method/action, callbacks, cancel, empty and keyboard-confirm behavior. Authenticated confirmation and write/editor declarations stay unchanged.",
+          "reason": "User authorized adopted B1 popup expansion; native forms remain authoritative.",
+          "contractTests": [
+            "testbed/ui-b1-password-contract.mjs",
+            "testbed/run-tests.mjs",
+            "testbed/run-host-compatibility.mjs",
+            "testbed/run-native-form-differential.mjs"
+          ]
+        },
+        {
+          "kind": "radius",
+          "surface": "write-edit-delete-popup",
+          "scope": "Anonymous modify/delete password card material, rim, shadow, blur, text weights and input/action radii in the existing native-form presenter. Preserve original geometry, prompt, DOM/parents, fields, method/action, callbacks, cancel, empty and keyboard-confirm behavior. Authenticated confirmation and write/editor declarations stay unchanged.",
+          "reason": "User authorized adopted B1 popup expansion; native forms remain authoritative.",
+          "contractTests": [
+            "testbed/ui-b1-password-contract.mjs",
+            "testbed/run-tests.mjs",
+            "testbed/run-host-compatibility.mjs",
+            "testbed/run-native-form-differential.mjs"
+          ]
+        },
+        {
+          "kind": "typography",
+          "surface": "write-edit-delete-popup",
+          "scope": "Anonymous modify/delete password card material, rim, shadow, blur, text weights and input/action radii in the existing native-form presenter. Preserve original geometry, prompt, DOM/parents, fields, method/action, callbacks, cancel, empty and keyboard-confirm behavior. Authenticated confirmation and write/editor declarations stay unchanged.",
+          "reason": "User authorized adopted B1 popup expansion; native forms remain authoritative.",
+          "contractTests": [
+            "testbed/ui-b1-password-contract.mjs",
+            "testbed/run-tests.mjs",
+            "testbed/run-host-compatibility.mjs",
+            "testbed/run-native-form-differential.mjs"
+          ]
+        }
+      ],
+      "invariants": [
+        "filter-result",
+        "storage-trace",
+        "network-trace",
+        "host-node-identity",
+        "host-node-order",
+        "native-handler",
+        "native-form-fields",
+        "native-submit-trace",
+        "focus",
+        "lifecycle-resources",
+        "pc-result",
+        "accessibility",
+        "geometry-containment"
+      ],
+      "normalizer": "semantic-observation-v1",
+      "unknownDifferencePolicy": "fail",
+      "missingApplicabilityPolicy": "fail"
     }
   ]
 }
