@@ -1,5 +1,12 @@
 # Agent Maintenance Notes
 
+## B1 editor menu boundaries — 2026-10-26
+
+- Native media toolbar buttons open separate `/upload/image`, `/upload/movie`, `/upload/youtube`, `/upload/media` documents. The image page requires its original opener; a directly opened URL can legitimately show an invalid-path alert. Do not forge parent fields, add metadata scope, or call this a global live/Tampermonkey failure. The user accepted deferral; in-document menus remain independent work.
+- Preserve the existing color palette's horizontal internal scroll. A wrapping/shrinking proposal removed that contract; discard that layout rather than relax its assertion. It also exposed unwrapped measurement versus wrapped display height drift, but its measuring-state workaround was removed with the rejected layout. Current code adds only material/row styles to the existing presenter; no adapter algorithm or priorities change.
+- The fixture has no Summernote opener. For font reopen after the adapter's native close, the test restores the display property as the absent native opener would, then uses the existing fixture toggle. This is test setup, not real Summernote/Tampermonkey proof. Keep native palette subwindows, paragraph-list controls and table feedback as explicit gaps.
+- Whole-frame comparisons can expose the unchanged category auto-reveal at different capture offsets. Retain those diffs, inspect whole context and compare readable menu crops separately. Do not widen pixel thresholds or claim full-frame equality from a scoped menu verdict.
+
 ## B1 control material masked by legacy palette paint —2026-10-26
 
 The native-form presenter had the new material declarations, but mobile palette CSS still painted semantic write form/card/toolbar/primary/secondary roles with higher-specificity important rules. The initial positive declaration/coordinate check passed while a rendered backing probe showed zero transmission: the decorative blur existed behind opaque paint. Remove the competing write paint from the palette builder; keep palette values/focus inputs and the existing form owner. Do not raise selector priority or add another correction phase. Root blur is decorative/pointer-transparent inside the existing isolated header layout, preserving fixed native popup coordinates; no-header pages retain their old safe backing. Native controls/events/fields/handlers stay intact.

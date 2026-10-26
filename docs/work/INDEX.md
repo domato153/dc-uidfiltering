@@ -36,3 +36,5 @@ Current B1 P3: [B1_CONTROL_MATERIAL.md](B1_CONTROL_MATERIAL.md) owns the scoped 
 - Prior B1 password/header: [B1_PASSWORD_PAGES.md](B1_PASSWORD_PAGES.md), [B1_FORM_HEADER_REUSE.md](B1_FORM_HEADER_REUSE.md). Their scoped results remain; unobserved tool/account children are separate.
 
 - Native 개죽이/gaejuk: [GAEJUK_BLOCK.md](GAEJUK_BLOCK.md) routes the development-only exact mascot/click-blocker CSS, primary native/filter evidence and authored-media preservation. Current identities remain in CURRENT_STATE.md.
+
+- Editor in-document menus / 글꼴·크기·색상·정렬·줄 간격·표: [B1_EDITOR_MENUS.md](B1_EDITOR_MENUS.md). Existing-owner glass; original palette scrolling and callbacks remain. Separate upload windows are user-accepted deferrals, not a global live-test blocker. Current/next own exact scope and the following menu/settings task.

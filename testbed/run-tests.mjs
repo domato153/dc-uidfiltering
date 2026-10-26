@@ -32,6 +32,7 @@ import { runB1FormHeaderContract } from './ui-b1-form-header-contract.mjs';
 import { runB1WriteShellContract } from './ui-b1-write-shell-contract.mjs';
 import { runControlMaterialContract, renderedLabelContrast } from './ui-control-material-contract.mjs';
 import { runGaejukContract } from './ui-gaejuk-contract.mjs';
+import { runB1EditorMenuContract } from './ui-b1-editor-menu-contract.mjs';
 
 const args = new Set(process.argv.slice(2));
 const selectedGroup = process.argv.includes('--group') ? process.argv[process.argv.indexOf('--group') + 1] : null;
@@ -80,6 +81,7 @@ mobileTest('B1 password pages: glass and original native form actions', 'write',
 mobileTest('B1 form header: reuse list chrome without list runtime', 'write', runB1FormHeaderContract);
 mobileTest('B1 write shell: shared header and native editor preservation', 'write', runB1WriteShellContract);
 mobileTest('B1 controls: common material transmission and fixed popup coordinates', 'write', runControlMaterialContract);
+mobileTest('B1 editor menus: glass and original reachable controls', 'write', runB1EditorMenuContract);
 
 mobileTest('confirmed UI repair: native comment composer cascade and original input', 'functional', runCommentRepairContract);
 mobileTest('confirmed UI repair: list author media search paging and write controls', 'functional', runListRepairContract);
@@ -9105,7 +9107,7 @@ mobileTest('modify password surface uses the mobile card UI and removes trailing
             createHash('sha256').update(css, 'utf8').digest('hex').toUpperCase()
         )), [
             '93901D8296842E5A77CDEB1570D002D49CFFDA41AB93347E60DAB20D3F72EA15',
-            '910820440086BC4EFE7C6AB0A1B06F302D9D3AC0F7DE0A89E079A1C797D7C4EA'
+            '09E53BE4760FDB8EA827256EAE57B1F2F5B343872EFDE6C97CC783DF736E3317'
         ], 'native-form presentation payloads must match the registered semantic modify/delete, write-shell, write-popup, write-fields, write-headtext, write-editor-shell, write-toolbar-shell, editor-layer, and attachment contracts');
         assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
     } finally { await session.close(); }
@@ -9290,7 +9292,7 @@ mobileTest('modify/delete presentation uses only adapter-applied semantic select
         assert.equal(contract.computed.actionsColumns.split(' ').length, 2);
         assert.equal(
             createHash('sha256').update(contract.writePayloadShaSource, 'utf8').digest('hex').toUpperCase(),
-            '910820440086BC4EFE7C6AB0A1B06F302D9D3AC0F7DE0A89E079A1C797D7C4EA',
+            '09E53BE4760FDB8EA827256EAE57B1F2F5B343872EFDE6C97CC783DF736E3317',
             'write/modify-editor payload must match the registered page/form-shell, popup, field, editor, toolbar, and editor-layer semantic contract'
         );
         assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);

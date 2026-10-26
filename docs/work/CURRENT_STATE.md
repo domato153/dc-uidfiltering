@@ -2,22 +2,22 @@
 
 ## Current execution
 
-- Active plan: B1_UI_EXPANSION_PREFLIGHT.md → B1_CONTROL_MATERIAL.md. User selected v3 material direction and instructed all button families to share it; per-surface shapes may vary.
+- Active plan: B1_UI_EXPANSION_PREFLIGHT.md → B1_EDITOR_MENUS.md (scoped result). Next: existing script menu/settings preflight; derive its family reference before new styling.
 - Workspace path: `.` (repository root; private prompt supplies exact nested worktree). AGENTS.md owns policy; preserve debug.log unread/unstaged.
-- Active stage: `header-navigation` formal admission open. Simple control rollback and Gaijuk fix are scoped/validated; next `b1-editor-popup-interiors`.
+- Active stage: `header-navigation` formal admission open. Six in-document editor menus are scoped/validated; four external upload windows are user-accepted deferrals.
 - Accepted visual preference: User adopted the simple pre-transparency C885 button design. Higher-transparency face/shading trial is REJECTED; do not revive it. V3 remains overall family context, not a requirement to make these buttons translucent.
-- Source state: Source checkpoint base HEAD `c5d060ad9cd9e38a482347538aef045ba92b5956` on `codex/ui-port-boundary`; read resulting checkpoint/dirty state fresh.159F preserves the adopted C885 material plus bounded semantic-prefix/priority registrations; behavior owners/settings/metadata stay unchanged.
-- Local-only state: `LOCAL_ONLY_EVIDENCE`; artifacts/b1-controls-2026-10-26/ binds immediate CE3/61C5 controls, scoped captures, positive backing probe and split final checks. One browser job at a time, available-memory check before batches and selected-image-only preview. A RAM-pressure complaint is not evidence that unrelated user apps can be terminated.
-- Candidate fingerprint: `2d2b36d5febe2ce360ab91f638c584d078633575f01b7cba11dcdf0c309f2907`
-- Last current audit: PASS — scoped159F Mobile153/PC D73 26/native25, PC six-role light/dark fallback and10 exact C885 rollback pairs. User adopted simple buttons; higher-transparency trials are rejected. Gaijuk four-context input/media checks pass. Whole UI/formal admission/device/account/extension and exact-tree checkpoint CI remain separate.
-- Current stage receipt: `verification/receipts/2026-10-26-b1-control-material.json` SHA-256 `F03F44A7B5B548F4F85A30C75B1635AA4BC0A7F054073B1FAB0A050791A4D788`.
-- Accepted baseline: C885 simple button treatment is user-adopted after rollback. Current candidate retains its appearance and Gaijuk fix; published/native remains functional control.
-- Current artifact: Mobile3.5.5 `159FF7591AE47629017CA5798FB1B825520DF1557FE2C1F3A1429A759D1FD6DF` root/dist/guard; PC1.9.9 `D73A445F9A5013D295C49C199F77084D894E39F4E2455824185FA65D4E2C6212` root/dist. Current versions rebuilt; no release/version/metadata/storage change.
+- Source state: Source checkpoint base HEAD `9134f819b8dc2c501ce91765bb9ed9dae76633fd` on `codex/ui-port-boundary`; DD45 adds only existing-owner menu CSS. Read resulting checkpoint HEAD/status fresh;159F is the immediate behavior control.
+- Local-only state: `LOCAL_ONLY_EVIDENCE`; artifacts/b1-editor-popups-2026-10-26/ owns final menu captures, probes, scoped test ledgers and retained differences. One browser job/4GB floor; no unrelated app termination. Local viewer page/image HTTP200; app opening was queued.
+- Candidate fingerprint: `3983bfe8058ffdadd8acfd1d2b0228fc862c3de4b9971bf32b2e4acaebe4585e`
+- Last current audit: PASS — scoped DD45 Mobile154/PC D73 26/immediate native25; editor-menu detail12 pass, whole-frame category capture-offset differences12 retained (not pixel equality). Reference fidelity reviewed; formal whole UI/header/device/account/extension approval remains separate.
+- Current stage receipt: `verification/receipts/2026-10-26-b1-editor-menus.json` SHA-256 `168E66C91E6E246BB36A3B940B54F9AF1B1343D88646197A2E2A7FAA960B020C`.
+- Accepted baseline: User-adopted C885 simple buttons remain. DD45 menu material is scoped implementation review, not new user aesthetic approval.159F is immediate control; published/native functional authority stays distinct.
+- Current artifact: Mobile3.5.5 `DD457B20E250CF9E16F12862171DF38BF03AA76CC528EDBE5FD6D357A580D7D6` root/dist/guard; PC1.9.9 `D73A445F9A5013D295C49C199F77084D894E39F4E2455824185FA65D4E2C6212` root/dist unchanged. Current-version development rebuild only; no release/version/metadata/storage change.
 - Blockers: No global live/authorization blocker. No real submit/upload/AI/authentication/new POST authority; relation-read47965 remains separate. Local preview HTTP page/image responds; selected-image decoding is checked before handoff.
-- Pending live checks: P3 editor popup originals/derived references/interiors, then P4 full menu/settings glass. Gaijuk is development-only/source-fixture tested. Final device/extension/account, future native nuisance markup and formal whole-UI/header admission remain separate.
+- Pending live checks: Actual Summernote/native nested palette/list/table feedback, device/extension/account and formal whole-UI/header admission remain. Four separate upload windows are DEFERRED_USER_ACCEPTED. Next bounded task: P4 existing script menu/settings preflight.
 
 ```dcuf-current-artifacts
-{"schemaVersion":1,"mobile":{"sha256":"159FF7591AE47629017CA5798FB1B825520DF1557FE2C1F3A1429A759D1FD6DF"},"pc":{"sha256":"D73A445F9A5013D295C49C199F77084D894E39F4E2455824185FA65D4E2C6212"}}
+{"schemaVersion":1,"mobile":{"sha256":"DD457B20E250CF9E16F12862171DF38BF03AA76CC528EDBE5FD6D357A580D7D6"},"pc":{"sha256":"D73A445F9A5013D295C49C199F77084D894E39F4E2455824185FA65D4E2C6212"}}
 ```
 
 ## Draft-complete checkpoint — 2026-10-21
