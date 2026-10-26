@@ -6,7 +6,7 @@
             --dcuf-b1-paper: var(--dcuf-theme-surface);
             --dcuf-b1-glass: color-mix(in srgb, color-mix(in srgb, var(--dcuf-b1-paper) 80%, var(--dcuf-theme-accent-soft)) 76%, transparent);
             --dcuf-b1-floating: color-mix(in srgb, var(--dcuf-b1-paper) 78%, transparent);
-            --dcuf-menu-button-background: var(--dcuf-b1-sheen), var(--dcuf-b1-glass);
+            --dcuf-menu-button-background: var(--dcuf-control-secondary-bg);
             --dcuf-menu-background: var(--dcuf-b1-sheen), var(--dcuf-b1-floating);
             --dcuf-menu-shadow: var(--dcuf-b1-shadow), inset 0 1px 0 var(--dcuf-b1-rim);
             --dcuf-menu-backdrop: blur(24px) saturate(1.15);
@@ -14,6 +14,9 @@
             --dcuf-b1-rim: #fffffff2;
             --dcuf-b1-line: color-mix(in srgb, var(--dcuf-theme-border) 55%, var(--dcuf-b1-paper));
             --dcuf-b1-shadow: 0 12px 32px #2e5a5f12, 0 1px 3px #3651560b;
+            --dcuf-control-highlight: #ffffff38;
+            --dcuf-control-depth: #244d5514;
+            --dcuf-control-opacity: 82%;
         }
         html[${ROOT_ATTRIBUTE}].dc-filter-dark-mode,
         html[${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode {
@@ -25,6 +28,29 @@
             --dcuf-b1-rim: color-mix(in srgb, var(--dcuf-theme-fg) 9%, transparent);
             --dcuf-b1-line: color-mix(in srgb, var(--dcuf-theme-fg) 5%, var(--dcuf-b1-paper));
             --dcuf-b1-shadow: 0 14px 34px #0003, 0 1px 2px #0003;
+            --dcuf-control-highlight: #ffffff24;
+            --dcuf-control-depth: #00000038;
+            --dcuf-control-opacity: 88%;
+        }
+        html[${ROOT_ATTRIBUTE}],
+        html[${ROOT_ATTRIBUTE}].dc-filter-dark-mode,
+        html[${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode {
+            /* Material values only: each existing presenter owns shape,
+               positioning and state. No filtered native-popup ancestors. */
+            /* Keep the specular edge above the label; dense primary tint
+               preserves small white-label contrast in lighter palettes. */
+            --dcuf-control-glaze: linear-gradient(180deg, #ffffff20, #ffffff06 14%, #ffffff00 28%, #0000000c);
+            --dcuf-control-primary-fill: var(--dcuf-theme-accent-strong);
+            --dcuf-control-secondary-fill: color-mix(in srgb, var(--dcuf-b1-paper) var(--dcuf-control-opacity), transparent);
+            --dcuf-control-selected-fill: color-mix(in srgb, var(--dcuf-theme-accent-soft) 90%, transparent);
+            --dcuf-control-primary-bg: var(--dcuf-control-glaze), var(--dcuf-control-primary-fill);
+            --dcuf-control-secondary-bg: var(--dcuf-control-glaze), var(--dcuf-control-secondary-fill);
+            --dcuf-control-selected-bg: var(--dcuf-control-glaze), var(--dcuf-control-selected-fill);
+            --dcuf-control-primary-rim: color-mix(in srgb, var(--dcuf-theme-on-accent) 28%, var(--dcuf-theme-accent-strong));
+            --dcuf-control-rim: color-mix(in srgb, var(--dcuf-b1-rim) 65%, var(--dcuf-theme-border-strong));
+            --dcuf-control-shadow: inset 0 1px 0 var(--dcuf-control-highlight), inset 0 -1px 0 #00000012, 0 3px 8px var(--dcuf-control-depth);
+            --dcuf-control-quiet-shadow: inset 0 1px 0 var(--dcuf-control-highlight);
+            --dcuf-control-danger-bg: var(--dcuf-control-glaze), color-mix(in srgb, color-mix(in srgb, #c43249 12%, var(--dcuf-b1-paper)) 90%, transparent);
         }
         html[${ROOT_ATTRIBUTE}] #dcuf-boot-overlay .dcuf-boot-bar::before {
             background: linear-gradient(90deg, var(--dcuf-theme-accent-strong), var(--dcuf-theme-accent)) !important;
@@ -96,19 +122,21 @@
             background: color-mix(in srgb, var(--dcuf-theme-accent) 18%, var(--dcuf-theme-accent-soft)) !important;
         }
         html[${ROOT_ATTRIBUTE}] body #dc-personal-block-fab {
-            border-color: color-mix(in srgb, var(--dcuf-theme-accent) 38%, transparent) !important;
-            background: linear-gradient(180deg, #fff 0%, var(--dcuf-theme-accent-soft) 100%) !important;
+            border-color: var(--dcuf-control-rim) !important;
             color: var(--dcuf-theme-accent-strong) !important;
-            box-shadow: 0 14px 30px color-mix(in srgb, var(--dcuf-theme-accent) 20%, transparent), 0 3px 8px rgba(40,68,112,.1), inset 0 1px 0 #fff !important;
+            background: var(--dcuf-control-secondary-bg) !important;
+            box-shadow: var(--dcuf-control-shadow) !important;
         }
         html[${ROOT_ATTRIBUTE}] body #dc-personal-block-fab:hover {
-            border-color: color-mix(in srgb, var(--dcuf-theme-accent) 54%, transparent) !important;
-            background: linear-gradient(180deg, #fff 0%, color-mix(in srgb, var(--dcuf-theme-accent) 16%, var(--dcuf-theme-accent-soft)) 100%) !important;
+            border-color: var(--dcuf-control-rim) !important;
+            background: var(--dcuf-control-selected-bg) !important;
+            box-shadow: var(--dcuf-control-shadow) !important;
         }
         html[${ROOT_ATTRIBUTE}] body #dc-personal-block-drawer button:hover,
         html[${ROOT_ATTRIBUTE}] body #dc-personal-block-drawer button:focus-visible {
-            border-color: color-mix(in srgb, var(--dcuf-theme-accent) 28%, transparent) !important;
-            background: linear-gradient(180deg, #fff, var(--dcuf-theme-accent-soft)) !important;
+            border-color: var(--dcuf-control-rim) !important;
+            background: var(--dcuf-control-selected-bg) !important;
+            box-shadow: var(--dcuf-control-shadow) !important;
         }
         html[${ROOT_ATTRIBUTE}] body #dc-personal-block-drawer {
             background: linear-gradient(145deg, rgba(255,255,255,.98), color-mix(in srgb, var(--dcuf-theme-accent-soft) 78%, white)) !important;
@@ -181,10 +209,10 @@
         ${__dcufBuildHeaderDrawerThemeCss(__dcufDescribeHeaderDrawerThemeSelectors(ROOT_ATTRIBUTE))}
 
         html[${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode #dc-personal-block-fab {
-            border-color: color-mix(in srgb, var(--dcuf-theme-accent) 45%, transparent) !important;
-            background: linear-gradient(180deg, color-mix(in srgb, var(--dcuf-theme-accent-soft) 78%, #263347), #202b3a) !important;
+            border-color: var(--dcuf-control-rim) !important;
             color: var(--dcuf-theme-accent) !important;
-            box-shadow: 0 12px 28px rgba(0,0,0,.34), inset 0 1px 0 rgba(255,255,255,.08) !important;
+            background: var(--dcuf-control-secondary-bg) !important;
+            box-shadow: var(--dcuf-control-shadow) !important;
         }
         html[${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode #dc-personal-block-drawer button:hover,
         html[${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode #dc-personal-block-drawer button:focus-visible,
@@ -236,13 +264,10 @@
         html[${ROOT_ATTRIBUTE}] body #container.minor_view .view_bottom_btnbox .write,
         html[${ROOT_ATTRIBUTE}] body #container.mini_view .view_bottom_btnbox .btn_blue,
         html[${ROOT_ATTRIBUTE}] body #container.mini_view .view_bottom_btnbox .write,
-        html[${ROOT_ATTRIBUTE}] [data-dcuf-native-form-role="form"][data-dcuf-native-form-state="write-editor"] [data-dcuf-native-form-role="outer-action-primary"][data-dcuf-native-form-state="write-editor"],
-        html[${ROOT_ATTRIBUTE}] [data-dcuf-native-form-role="form"][data-dcuf-native-form-state="write-editor"] [data-dcuf-native-form-role="ai-prompt-submit"][data-dcuf-native-form-state="write-editor"],
         html[${ROOT_ATTRIBUTE}] body #focus_cmt .cmt_write_box .cmt_btn_bot > button,
         html[${ROOT_ATTRIBUTE}] body #focus_cmt .cmt_write_box .cmt_cont_bottm > .fr > button,
         html[${ROOT_ATTRIBUTE}] body #container .view_comment.image_comment .cmt_write_box .cmt_btn_bot > button,
-        html[${ROOT_ATTRIBUTE}] body #container .view_comment.image_comment .cmt_write_box .cmt_cont_bottm > .fr > button,
-        html[${ROOT_ATTRIBUTE}] [data-dcuf-native-form-role="form"][data-dcuf-native-form-state="write-editor"] [data-dcuf-native-form-role="popup-confirm"][data-dcuf-native-form-state="write-editor"] {
+        html[${ROOT_ATTRIBUTE}] body #container .view_comment.image_comment .cmt_write_box .cmt_cont_bottm > .fr > button {
             border-color: var(--dcuf-theme-accent-strong) !important;
             background-color: var(--dcuf-theme-accent-strong) !important;
             background-image: linear-gradient(180deg, var(--dcuf-theme-primary-top), var(--dcuf-theme-accent-strong)) !important;
@@ -511,87 +536,14 @@
             box-shadow: var(--dcuf-theme-card-shadow) !important;
         }
 
-        /* Write-page card hierarchy. Inputs remain nearly neutral while grouping cards carry the preset tint. */
-        html[${ROOT_ATTRIBUTE}] [data-dcuf-native-form-role="form"][data-dcuf-native-form-state="write-editor"] {
-            border-color: var(--dcuf-theme-border) !important;
-            background-color: var(--dcuf-theme-canvas) !important;
-            background-image: linear-gradient(180deg, color-mix(in srgb, white 5%, var(--dcuf-theme-canvas)), var(--dcuf-theme-canvas)) !important;
-            box-shadow: var(--dcuf-theme-panel-shadow) !important;
-        }
-        html[${ROOT_ATTRIBUTE}] [data-dcuf-native-form-role="form"][data-dcuf-native-form-state="write-editor"] [data-dcuf-native-form-role="headtext-shell"][data-dcuf-native-form-state="write-editor"],
-        html[${ROOT_ATTRIBUTE}] [data-dcuf-native-form-role="form"][data-dcuf-native-form-state="write-editor"] [data-dcuf-native-form-role="outer-actions"][data-dcuf-native-form-state="write-editor"],
-        html[${ROOT_ATTRIBUTE}] [data-dcuf-native-form-role="form"][data-dcuf-native-form-state="write-editor"] [data-dcuf-native-form-role="ai-prompt-shell"][data-dcuf-native-form-state="write-editor"],
-        html[${ROOT_ATTRIBUTE}] [data-dcuf-native-form-role="form"][data-dcuf-native-form-state="write-editor"] [data-dcuf-native-form-role="ai-prompt"][data-dcuf-native-form-state="write-editor"],
-        html[${ROOT_ATTRIBUTE}] [data-dcuf-native-form-role="form"][data-dcuf-native-form-state="write-editor"] [data-dcuf-native-form-role="attachment-shell"][data-dcuf-native-form-state="write-editor"],
-        html[${ROOT_ATTRIBUTE}] [data-dcuf-native-form-role="form"][data-dcuf-native-form-state="write-editor"] [data-dcuf-native-form-role="attachment-info"][data-dcuf-native-form-state="write-editor"],
-        html[${ROOT_ATTRIBUTE}] [data-dcuf-native-form-role="form"][data-dcuf-native-form-state="write-editor"] [data-dcuf-native-form-role="attachment-list-shell"][data-dcuf-native-form-state="write-editor"] {
-            border-color: var(--dcuf-theme-border) !important;
-            background-color: var(--dcuf-theme-surface) !important;
-            background-image: linear-gradient(180deg, var(--dcuf-theme-surface-raised), var(--dcuf-theme-surface)) !important;
-        }
-        html[${ROOT_ATTRIBUTE}] [data-dcuf-native-form-role="subject-input"][data-dcuf-native-form-state="write-editor"],
-        html[${ROOT_ATTRIBUTE}] [data-dcuf-native-form-role="name-input"][data-dcuf-native-form-state="write-editor"],
-        html[${ROOT_ATTRIBUTE}] [data-dcuf-native-form-role="password-input"][data-dcuf-native-form-state="write-editor"],
-        html[${ROOT_ATTRIBUTE}] [data-dcuf-native-form-role="captcha-input"][data-dcuf-native-form-state="write-editor"],
-        html[${ROOT_ATTRIBUTE}] [data-dcuf-native-form-role="captcha-image-shell"][data-dcuf-native-form-state="write-editor"],
-        html[${ROOT_ATTRIBUTE}] [data-dcuf-native-form-role="captcha-panel"][data-dcuf-native-form-state="write-editor"] {
-            border-color: var(--dcuf-theme-border-strong) !important;
-            background-color: var(--dcuf-theme-surface-input) !important;
-            background-image: none !important;
-        }
-        html[${ROOT_ATTRIBUTE}] [data-dcuf-native-form-role="editor-wrapper"][data-dcuf-native-form-state="write-editor"],
-        html[${ROOT_ATTRIBUTE}] [data-dcuf-native-form-role="editor-frame"][data-dcuf-native-form-state="write-editor"] {
-            border-color: var(--dcuf-theme-border) !important;
-            background-color: var(--dcuf-theme-surface-input) !important;
-        }
-        html[${ROOT_ATTRIBUTE}] [data-dcuf-native-form-role="form"][data-dcuf-native-form-state="write-editor"] [data-dcuf-native-form-role="editor-toolbar"][data-dcuf-native-form-state="write-editor"],
-        html[${ROOT_ATTRIBUTE}] [data-dcuf-native-form-role="form"][data-dcuf-native-form-state="write-editor"] [data-dcuf-native-form-role="editor-statusbar"][data-dcuf-native-form-state="write-editor"] {
-            border-color: var(--dcuf-theme-border) !important;
-            background-color: var(--dcuf-theme-surface-muted) !important;
-            background-image: none !important;
-        }
-        html[${ROOT_ATTRIBUTE}] [data-dcuf-native-form-role="editor-area"][data-dcuf-native-form-state="write-editor"],
-        html[${ROOT_ATTRIBUTE}] [data-dcuf-native-form-role="editor-editable"][data-dcuf-native-form-state="write-editor"] {
-            background-color: var(--dcuf-theme-surface-input) !important;
-            background-image: none !important;
-        }
-        html[${ROOT_ATTRIBUTE}] [data-dcuf-native-form-role="editor-area"][data-dcuf-native-form-state="write-editor"],
-        html[${ROOT_ATTRIBUTE}] [data-dcuf-native-form-role="editor-editable"][data-dcuf-native-form-state="write-editor"],
-        html[${ROOT_ATTRIBUTE}] [data-dcuf-native-form-role="editor-source"][data-dcuf-native-form-state="write-editor"],
-        html[${ROOT_ATTRIBUTE}] [data-dcuf-native-form-role="form"][data-dcuf-native-form-state="write-editor"] [data-dcuf-native-form-control-kind="textarea"],
-        html[${ROOT_ATTRIBUTE}] [data-dcuf-native-form-role="subject-input"][data-dcuf-native-form-state="write-editor"],
-        html[${ROOT_ATTRIBUTE}] [data-dcuf-native-form-role="name-input"][data-dcuf-native-form-state="write-editor"],
-        html[${ROOT_ATTRIBUTE}] [data-dcuf-native-form-role="password-input"][data-dcuf-native-form-state="write-editor"],
-        html[${ROOT_ATTRIBUTE}] [data-dcuf-native-form-role="captcha-input"][data-dcuf-native-form-state="write-editor"],
-        html[${ROOT_ATTRIBUTE}] [data-dcuf-native-form-role="form"][data-dcuf-native-form-state="write-editor"] [data-dcuf-native-form-role="outer-action-secondary"][data-dcuf-native-form-state="write-editor"] {
-            border-color: var(--dcuf-theme-border-strong) !important;
-            background-color: var(--dcuf-theme-surface-input) !important;
-            background-image: none !important;
-        }
-        html[${ROOT_ATTRIBUTE}] [data-dcuf-native-form-toolbar-control~="ordinary"][data-dcuf-native-form-state="write-editor"] {
-            border-color: var(--dcuf-theme-border-strong) !important;
-            background-color: var(--dcuf-theme-surface-input) !important;
-            background-image: none !important;
-            box-shadow: none !important;
-        }
-        html[${ROOT_ATTRIBUTE}] [data-dcuf-native-form-toolbar-control~="ordinary"][data-dcuf-native-form-state="write-editor"]:is(:hover, :focus-visible),
-        html[${ROOT_ATTRIBUTE}] [data-dcuf-native-form-toolbar-control~="ordinary"][data-dcuf-native-form-state="write-editor"][data-dcuf-native-form-control-state~="active"] {
-            border-color: var(--dcuf-theme-accent) !important;
-            box-shadow: 0 0 0 1px color-mix(in srgb, var(--dcuf-theme-accent) 28%, transparent) !important;
-        }
-        html[${ROOT_ATTRIBUTE}] [data-dcuf-native-form-role="form"][data-dcuf-native-form-state="write-editor"] [data-dcuf-native-form-role="headtext-label"][data-dcuf-native-form-state="write-editor"] {
-            background-color: var(--dcuf-theme-surface-muted) !important;
-        }
-        html[${ROOT_ATTRIBUTE}] [data-dcuf-native-form-role="popup-heading"][data-dcuf-native-form-state="write-editor"] {
-            background: linear-gradient(135deg, var(--dcuf-theme-accent), var(--dcuf-theme-accent-strong)) !important;
-        }
+        /* Native-form presenter owns write card/control paint. Theme values
+           above remain the palette input; do not repaint its semantic roles. */
 
         /* Inactive navigation/actions are neutral; selected and primary actions keep the preset accent. */
         html[${ROOT_ATTRIBUTE}] body:not(.is-write-page) .list_array_option .array_tab li:not(.on) > a,
         html[${ROOT_ATTRIBUTE}] body:not(.is-write-page) .list_array_option .array_tab :is(button, a):not(.on),
         html[${ROOT_ATTRIBUTE}] body .custom-bottom-controls .dcuf-bottom-action-card :is(button, a):not(.on):not(.btn_write):not(.write),
-        html[${ROOT_ATTRIBUTE}] body #container:is(.gallery_view, .minor_view, .mini_view) .view_bottom_btnbox :is(.btn_white, .btn_grey),
-        html[${ROOT_ATTRIBUTE}] [data-dcuf-native-form-role="form"][data-dcuf-native-form-state="write-editor"] [data-dcuf-native-form-role="outer-action-secondary"][data-dcuf-native-form-state="write-editor"] {
+        html[${ROOT_ATTRIBUTE}] body #container:is(.gallery_view, .minor_view, .mini_view) .view_bottom_btnbox :is(.btn_white, .btn_grey) {
             border-color: var(--dcuf-theme-border-strong) !important;
             background-color: var(--dcuf-theme-surface-input) !important;
             background-image: linear-gradient(180deg, var(--dcuf-theme-card-top), var(--dcuf-theme-surface-input)) !important;

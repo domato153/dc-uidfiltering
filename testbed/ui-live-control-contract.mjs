@@ -118,7 +118,7 @@ export async function runLiveControlContract({browser,server}) {
                 const composers=Array.from(document.querySelectorAll('.cmt_write_box'));
                 const submit=search?.querySelector('.bnt_search');
                 return {
-                    selected:selected&&{actual:getComputedStyle(selected).backgroundColor,expected:expected(selected,'backgroundColor','var(--dcuf-theme-accent-soft)'),color:getComputedStyle(selected).color,ink:expected(selected,'color','var(--dcuf-theme-accent-ink)')},
+                    selected:selected&&{actual:getComputedStyle(selected).backgroundColor,expected:expected(selected,'backgroundColor','var(--dcuf-control-selected-fill)'),color:getComputedStyle(selected).color,ink:expected(selected,'color','var(--dcuf-theme-accent-ink)')},
                     writes:writes.map(e=>({color:getComputedStyle(e).color,expected:expected(e,'color','var(--dcuf-theme-on-accent)'),image:getComputedStyle(e,'::before').backgroundImage})),
                     bars:bars.map(e=>{const end=e.querySelector(':scope>.fr');return {root:box(e),end:end&&box(end),padding:parseFloat(getComputedStyle(e).paddingRight),after:getComputedStyle(e,'::after').content};}),
                     shell:shell&&{border:getComputedStyle(shell).borderTopWidth,background:getComputedStyle(shell).backgroundColor},

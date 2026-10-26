@@ -2,6 +2,8 @@
 
 Current operating method: practical retrieval adopted2026-10-18 (D-39), Git-scoped checkpoint validation added2026-10-19 (D-40). No product runtime/acceptance predicate/release authority change. The single policy remains AGENTS.md. Retrieval terms: 연속성, 압축, 새 스레드, 진행도, 검증 과잉, 폐기안, continuity, compaction, handoff, retired decisions.
 
+Resource limit2026-10-26: the user reported a RAM spike. Run one browser job at a time, close its contexts/browser before the next batch, and check available memory between substantial batches. Current32GB machine: do not launch the next browser batch below4GB available; stop the owned current test if pressure returns. Prefer existing disjoint test groups and reuse one comparison tab with selected-image loading, normally one image or a selected pair; do not keep galleries of full-resolution images or duplicate old preview tabs open. Do not terminate unrelated apps/user browsers or weaken browser isolation/testing behavior with resource flags. Preserve honest split coverage on the same settled runtime; rerun failed affected cases after oracle-only repairs rather than repeating unrelated passes.
+
 ## Findings and applied changes
 
 | Angle | Observed problem | Applied resolution |
@@ -77,3 +79,5 @@ The fresh path-based route also selects proof-core/mobile-focused because shared
 Named-kind verdict: before broad UI checks, finish the existing whole/detail pair assessment for every kind named in the current slice. A geometry PASS or static source review does not stand in for the remaining rendered kinds. Reuse that assessment; add no separate approval ceremony.
 
 Affected legacy coverage: use the existing tests for the touched owner as well as the new slice test before broad execution. Reconcile obsolete appearance expectations against the declared visual delta while retaining native behavior/containment/resource assertions. This reuses targeted coverage and does not require all128 UI states on every edit.
+
+Before broad browser UI checks after changing owned CSS, run the small relevant boundary/source-owner/current-document checks first. Exact priority-ledger or removed-competitor changes must not wait until the final checkpoint to expose stale registrations. Keep full repository validation with the exact-tree publisher; do not duplicate that full suite after every paint tweak.

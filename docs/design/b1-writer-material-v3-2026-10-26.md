@@ -1,6 +1,6 @@
 # B1 writer v3 — adopted list action material
 
-Mode: Operate. Status: **DRAFT_REFINED / USER_SELECTION_PENDING**. New bitmap proposal only; current CE3 writer implementation remains NEEDS_WORK. This supersedes v2 as the proposed writer design, without declaring user adoption.
+Mode: Operate. Status: **IMPLEMENTED_SIMPLE_BUTTON_TREATMENT_ADOPTED**. The user adopted C885 buttons after rejecting higher-transparency trials.159FF759 preserves that appearance; v3 remains overall context. Form glass and unobserved popup interiors are separately scoped. See the current common-control receipt.
 
 ## Actual authority and changes
 
@@ -23,4 +23,4 @@ Judgement: improved coherent proposal, **not accepted implementation or optical 
 - [CodePen original frosted-glass button demo](https://codepen.io/spajk23/pen/wvXzqQE): inspect thin edge/reflection/soft blur cues. Its very low-alpha fill, large pill, glow and hover letter-spacing are not adopted; no source code or external dependency is imported.
 - [Arnold K. primary button example](https://dribbble.com/shots/26567499--Glowing-Action-Button-Assign-Role): depth/edge example only. Neon gradient/glow and near-clear material do not override the existing list style or user opacity constraint.
 
-These are creator examples, not performance/usability evidence or a new global design system. The current list controls remain a concrete comparison; the coherent shared material and current user direction govern further refinements. Next: user selects/revises this v3; after selection freeze exact writer image/hash/regions, then implement through the existing form owner and compare normal/backing light-dark renders plus affected native inputs/popups. Product CSS was not changed in this unit.
+These are creator examples, not performance/usability evidence or a new global design system. The current list controls remain a concrete comparison; the coherent shared material and current user direction govern further refinements. Next: follow B1_CONTROL_MATERIAL.md and the exact selected writer image/hash/regions, then implement through the existing form owner and compare normal/backing light-dark renders plus affected native inputs/popups. Product CSS was not changed in this unit.

@@ -2,22 +2,22 @@
 
 ## Current execution
 
-- Active plan: docs/work/MOBILE_UI_MODERNIZATION.md → B1_UI_EXPANSION_PREFLIGHT.md. Writer v3 material proposal refined against adopted list controls; user selection precedes implementation/popups.
+- Active plan: B1_UI_EXPANSION_PREFLIGHT.md → B1_CONTROL_MATERIAL.md. User selected v3 material direction and instructed all button families to share it; per-surface shapes may vary.
 - Workspace path: `.` (repository root; private prompt supplies exact nested worktree). AGENTS.md owns policy; preserve debug.log unread/unstaged.
-- Active stage: `header-navigation` formal admission open. Next `b1-write-proposal-selection`; v3 DRAFT is refined but not adopted. Current CE3 writer material remains NEEDS_WORK.
-- Accepted visual preference: Coherent compact B+B1 glass with adequate tint/readability. User clarifies list/button is a revisable example, not canonical design authority; improve writer/list together when a more refined treatment fits. Native/published stable remains behavior/coverage control. V3 is DRAFT pending selection.
-- Source state: Source checkpoint base HEAD `96d3699e195a4069f6b98658ddbafae05bf7c7ce` on `codex/ui-port-boundary`; this follow-up records user design-authority clarification only. Product/runtime/guard/assets unchanged. Read resulting checkpoint fresh from Git.
-- Local-only state: `LOCAL_ONLY_EVIDENCE`; artifacts/b1-writer-material-v3-2026-10-26/ and updated write-shell viewer with v2/v3 switch, actual adopted light/dark button crops and four source screens. Refined draft/brief/prompts and curated control references tracked.
-- Candidate fingerprint: `39101ed04d65d14ea853c2b5a8020f442286cfac3edcb43c301620ce07ae15dd`
-- Last current audit: UNKNOWN — user authority clarification only, no new product/fidelity claim. Prior unchanged v3 viewer/reference health remains its exact scope (HTTP200, images decode, JS errors0); material/user selection and actual implementation remain open.
-- Current stage receipt: `verification/receipts/2026-10-26-b1-writer-material-v3.json` SHA-256 `7AECBC47724329EE675603049FD596D2E6345BF143B4492B6E4B99F60754F63A`. Earlier v2 NEEDS_WORK and guard receipts remain historical; exact checkpoint/CI is separate.
-- Accepted baseline: Adopted B1/list and password/header retained; actual list button is the concrete action style anchor. V3 proposed only. CE3 function evidence is historical151/151; no runtime test rerun for a bitmap/design-only change.
-- Current artifact: Mobile3.5.5 `CE3C4D1B09A52408F0F10C96FB0B4362AE74E3AC8000C9149DE83A9E76A30EDD` root/dist/guard and PC1.9.9 `61C539769BA160A5FC4DCD164B3CD26025244AB6FC1BBC7A4A520416FE5A41A5` unchanged. No build/version change.
-- Blockers: No global live/authorization blocker. No real submit/upload/AI/authentication/new POST authority; relation-read47965 remains separate. Local viewer HTTP/image decode checked; isolated server must be live before presenting its URL.
-- Pending live checks: After user selects v3 or a revision, bind exact writer image/hash/regions and implement exterior/tool chrome/cancel/register through the existing owner, with actual normal/backing light-dark material and native popup/input checks. Raster material and painted list controls do not prove transmission. Device/account/extension, other popup interiors and formal broad/header admission remain separate.
+- Active stage: `header-navigation` formal admission open. Simple control rollback and Gaijuk fix are scoped/validated; next `b1-editor-popup-interiors`.
+- Accepted visual preference: User adopted the simple pre-transparency C885 button design. Higher-transparency face/shading trial is REJECTED; do not revive it. V3 remains overall family context, not a requirement to make these buttons translucent.
+- Source state: Source checkpoint base HEAD `c5d060ad9cd9e38a482347538aef045ba92b5956` on `codex/ui-port-boundary`; read resulting checkpoint/dirty state fresh.159F preserves the adopted C885 material plus bounded semantic-prefix/priority registrations; behavior owners/settings/metadata stay unchanged.
+- Local-only state: `LOCAL_ONLY_EVIDENCE`; artifacts/b1-controls-2026-10-26/ binds immediate CE3/61C5 controls, scoped captures, positive backing probe and split final checks. One browser job at a time, available-memory check before batches and selected-image-only preview. A RAM-pressure complaint is not evidence that unrelated user apps can be terminated.
+- Candidate fingerprint: `2d2b36d5febe2ce360ab91f638c584d078633575f01b7cba11dcdf0c309f2907`
+- Last current audit: PASS — scoped159F Mobile153/PC D73 26/native25, PC six-role light/dark fallback and10 exact C885 rollback pairs. User adopted simple buttons; higher-transparency trials are rejected. Gaijuk four-context input/media checks pass. Whole UI/formal admission/device/account/extension and exact-tree checkpoint CI remain separate.
+- Current stage receipt: `verification/receipts/2026-10-26-b1-control-material.json` SHA-256 `F03F44A7B5B548F4F85A30C75B1635AA4BC0A7F054073B1FAB0A050791A4D788`.
+- Accepted baseline: C885 simple button treatment is user-adopted after rollback. Current candidate retains its appearance and Gaijuk fix; published/native remains functional control.
+- Current artifact: Mobile3.5.5 `159FF7591AE47629017CA5798FB1B825520DF1557FE2C1F3A1429A759D1FD6DF` root/dist/guard; PC1.9.9 `D73A445F9A5013D295C49C199F77084D894E39F4E2455824185FA65D4E2C6212` root/dist. Current versions rebuilt; no release/version/metadata/storage change.
+- Blockers: No global live/authorization blocker. No real submit/upload/AI/authentication/new POST authority; relation-read47965 remains separate. Local preview HTTP page/image responds; selected-image decoding is checked before handoff.
+- Pending live checks: P3 editor popup originals/derived references/interiors, then P4 full menu/settings glass. Gaijuk is development-only/source-fixture tested. Final device/extension/account, future native nuisance markup and formal whole-UI/header admission remain separate.
 
 ```dcuf-current-artifacts
-{"schemaVersion":1,"mobile":{"sha256":"CE3C4D1B09A52408F0F10C96FB0B4362AE74E3AC8000C9149DE83A9E76A30EDD"},"pc":{"sha256":"61C539769BA160A5FC4DCD164B3CD26025244AB6FC1BBC7A4A520416FE5A41A5"}}
+{"schemaVersion":1,"mobile":{"sha256":"159FF7591AE47629017CA5798FB1B825520DF1557FE2C1F3A1429A759D1FD6DF"},"pc":{"sha256":"D73A445F9A5013D295C49C199F77084D894E39F4E2455824185FA65D4E2C6212"}}
 ```
 
 ## Draft-complete checkpoint — 2026-10-21

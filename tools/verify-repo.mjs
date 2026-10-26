@@ -180,7 +180,7 @@ async function readBuildTargets() {
 }
 
 async function verifyMobileSourceContracts() {
-    const [bootstrap, postMain, coordinator, themePresenter, themeHostStyle, convenience, mobileHeader, pcHeader] = await Promise.all([
+    const [bootstrap, postMain, coordinator, themePresenter, themeHostStyle, convenience, mobileHeader, pcHeader, nativeFormPresenter] = await Promise.all([
         readFile(path.join(rootDir, 'src', 'runtime', 'bootstrap.js'), 'utf8'),
         readFile(path.join(rootDir, 'src', 'targets', 'mobile', 'post-main-fixes.js'), 'utf8'),
         readFile(path.join(rootDir, 'src', 'targets', 'mobile', 'runtime-coordinator.js'), 'utf8'),
@@ -188,7 +188,8 @@ async function verifyMobileSourceContracts() {
         readFile(path.join(rootDir, 'src', 'targets', 'mobile', 'theme-host-style.js'), 'utf8'),
         readFile(path.join(rootDir, 'src', 'targets', 'mobile', 'convenience-module.js'), 'utf8'),
         readFile(path.join(rootDir, 'src', 'meta', 'userscript-header.txt'), 'utf8'),
-        readFile(path.join(rootDir, 'src', 'meta', 'pc-filter-userscript-header.txt'), 'utf8')
+        readFile(path.join(rootDir, 'src', 'meta', 'pc-filter-userscript-header.txt'), 'utf8'),
+        readFile(path.join(rootDir, 'src', 'targets', 'mobile', 'native-form-presenter.js'), 'utf8')
     ]);
 
     check(!/pageType\s*===\s*['"]list['"]/.test(bootstrap),
@@ -235,11 +236,15 @@ async function verifyMobileSourceContracts() {
         '.list_array_option .btn_write',
         '.custom-bottom-controls .bottom_paging_box > em',
         '.custom-bottom-controls .dcuf-search-card form[name="frmSearch"] .bnt_search',
-        '#container.gallery_view .view_bottom_btnbox .btn_blue',
-        '[data-dcuf-native-form-role="form"][data-dcuf-native-form-state="write-editor"] [data-dcuf-native-form-role="outer-action-primary"][data-dcuf-native-form-state="write-editor"]'
+        '#container.gallery_view .view_bottom_btnbox .btn_blue'
     ]) {
         check(themeHostStyle.includes(selector), `mobile source: palette selector is missing: ${selector}`);
     }
+    const nativeWritePrimary = '[data-dcuf-native-form-role="form"][data-dcuf-native-form-state="write-editor"] [data-dcuf-native-form-role="outer-action-primary"][data-dcuf-native-form-state="write-editor"]';
+    check(nativeFormPresenter.includes(nativeWritePrimary) && nativeFormPresenter.includes('var(--dcuf-control-primary-bg)'),
+        'mobile source: native-form primary material consumer is missing');
+    check(!themeHostStyle.includes(nativeWritePrimary),
+        'mobile source: competing legacy theme write-primary paint returned');
 
     console.log('Mobile source contracts');
     console.log(' - page scope, page type, lifecycle, mutation routing, and palette selectors checked');

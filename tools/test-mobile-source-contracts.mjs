@@ -12,7 +12,7 @@ assert.ok(start >= 0 && end > start, 'Run the actual mobile source-contract cons
 const coordinatorPath = path.join(rootDir, 'src/targets/mobile/runtime-coordinator.js');
 const coordinator = await readFile(coordinatorPath, 'utf8');
 
-async function observe(input) {
+async function observe(input, overrides = {}) {
     const failures = [];
     const context = vm.createContext({
         rootDir, path,
@@ -21,7 +21,8 @@ async function observe(input) {
             'https://gall.dcinside.com/mgallery/board/*',
             'https://gall.dcinside.com/mini/board/*'
         ],
-        readFile: (file, encoding) => file === coordinatorPath ? Promise.resolve(input) : readFile(file, encoding),
+        readFile: (file, encoding) => file === coordinatorPath ? Promise.resolve(input)
+            : Object.hasOwn(overrides, file) ? Promise.resolve(overrides[file]) : readFile(file, encoding),
         check: (condition, message) => { if (!condition) failures.push(message); },
         console: { log() {} }
     });
@@ -45,4 +46,12 @@ for (const [name, input, expected] of cases) {
     expected.forEach((message, index) => assert.ok(failures[index].includes(message), name));
     console.log(`PASS ${name}`);
 }
-console.log(`Mobile source-contract controls: ${cases.length} passed.`);
+const writeSelector = '[data-dcuf-native-form-role="form"][data-dcuf-native-form-state="write-editor"] [data-dcuf-native-form-role="outer-action-primary"][data-dcuf-native-form-state="write-editor"]';
+const nativePath=path.join(rootDir,'src','targets','mobile','native-form-presenter.js');
+const themePath=path.join(rootDir,'src','targets','mobile','theme-host-style.js');
+const nativeSource=await readFile(nativePath,'utf8'),themeSource=await readFile(themePath,'utf8');
+assert.deepEqual(await observe(coordinator,{[nativePath]:nativeSource.replaceAll(writeSelector,'missing-native-primary')}),['mobile source: native-form primary material consumer is missing']);
+console.log('PASS missing actual write owner is rejected');
+assert.deepEqual(await observe(coordinator,{[themePath]:themeSource+'\n'+writeSelector}),['mobile source: competing legacy theme write-primary paint returned']);
+console.log('PASS competing legacy write paint is rejected');
+console.log(`Mobile source-contract controls: ${cases.length+2} passed.`);

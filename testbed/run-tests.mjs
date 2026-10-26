@@ -30,6 +30,8 @@ import { runB1GallerySearchContract } from './ui-b1-gallery-search-contract.mjs'
 import { runB1PasswordContract } from './ui-b1-password-contract.mjs';
 import { runB1FormHeaderContract } from './ui-b1-form-header-contract.mjs';
 import { runB1WriteShellContract } from './ui-b1-write-shell-contract.mjs';
+import { runControlMaterialContract, renderedLabelContrast } from './ui-control-material-contract.mjs';
+import { runGaejukContract } from './ui-gaejuk-contract.mjs';
 
 const args = new Set(process.argv.slice(2));
 const selectedGroup = process.argv.includes('--group') ? process.argv[process.argv.indexOf('--group') + 1] : null;
@@ -60,6 +62,7 @@ const statsStorage = {
     [storageKeys.personalList]: { uids: [], nicknames: [], ips: [] }
 };
 const noStatsStorage = { ...statsStorage, [storageKeys.threshold]: 0 };
+mobileTest('Gaejuk nuisance: exact native targets, late states, clicks and authored media', 'functional', runGaejukContract);
 
 // Color contracts sample the settled theme, independent of frame scheduling.
 async function settleThemeTransitions(page) {
@@ -76,6 +79,7 @@ mobileTest('B1 gallery search: native door children and header layers', 'functio
 mobileTest('B1 password pages: glass and original native form actions', 'write', runB1PasswordContract);
 mobileTest('B1 form header: reuse list chrome without list runtime', 'write', runB1FormHeaderContract);
 mobileTest('B1 write shell: shared header and native editor preservation', 'write', runB1WriteShellContract);
+mobileTest('B1 controls: common material transmission and fixed popup coordinates', 'write', runControlMaterialContract);
 
 mobileTest('confirmed UI repair: native comment composer cascade and original input', 'functional', runCommentRepairContract);
 mobileTest('confirmed UI repair: list author media search paging and write controls', 'functional', runListRepairContract);
@@ -1559,6 +1563,10 @@ mobileTest('mobile list presentation preserves native control topology behind se
         try {
             await session.goto(testCase.path);
             await session.page.waitForSelector('[data-dcuf-surface="list-host"][data-dcuf-controls-ready="1"]');
+            // Role projection can precede the existing initial visibility transition.
+            // Geometry/hit checks describe the usable control, not that transient frame.
+            const toolbarPrimary = session.page.locator('[data-dcuf-surface="list-toolbar"] [data-dcuf-role="primary-action"]');
+            if (await toolbarPrimary.count()) await toolbarPrimary.waitFor({ state: 'visible' });
             const report = await session.page.evaluate(() => {
                 const baseline = window.__fixtureListControlBaseline;
                 const topology = Object.fromEntries(Object.entries(baseline?.topology || {}).map(([key, entry]) => [
@@ -5339,7 +5347,7 @@ mobileTest('모바일 편의기능 설정은 선택 팔레트와 밝은·어두�
             const save = panel.querySelector('.dcuf-convenience-save');
             const body = panel.querySelector('.dcuf-convenience-body');
             const rect = panel.getBoundingClientRect();
-            const probe = document.createElement('span'); probe.style.color = 'var(--dcuf-theme-accent-strong)'; document.body.appendChild(probe);
+            const probe = document.createElement('span'); probe.style.color = 'var(--dcuf-control-primary-rim)'; save.appendChild(probe);
             const accent = getComputedStyle(probe).color; probe.remove();
             return {
                 inlineStyle: panel.getAttribute('style'),
@@ -5359,7 +5367,7 @@ mobileTest('모바일 편의기능 설정은 선택 팔레트와 밝은·어두�
         assert.equal(inspect.backgroundImage, 'none', 'Concept01 uses a flat settings surface');
         assert.equal(inspect.rowRadius >= 10, true);
         assert.deepEqual(inspect.toggle, { width: 42, height: 24 });
-        assert.equal(inspect.saveBorder, inspect.accent, '저장 버튼은 선택한 팔레트 강조색을 사용해야 한다');
+        assert.equal(inspect.saveBorder, inspect.accent, '저장 버튼은 선택한 팔레트의 공통 primary rim을 사용해야 한다');
         assert.equal(inspect.bodyOverflow, 'auto');
         assert.equal(inspect.inViewport, true);
         assert.equal(inspect.rows, 3); assert.equal(inspect.actions, 2);
@@ -8447,20 +8455,29 @@ mobileTest('글쓰기: 입력·말머리·에디터 재렌더·HTML 전환에도
             const inputStyle = getComputedStyle(document.querySelector('#subject'));
             const toolbarButtonStyle = getComputedStyle(document.querySelector('.note-toolbar .note-btn'));
             const inactiveHeadtextStyle = getComputedStyle(document.querySelector('.subject_list > li:not(.active)'));
+            const resolveWriteColor = value => {
+                const probe = document.createElement('span');
+                probe.style.color = value;
+                document.querySelector('form#write').append(probe);
+                const color = getComputedStyle(probe).color;
+                probe.remove();
+                return color;
+            };
             return {
                 accent: bodyStyle.getPropertyValue('--dcuf-write-accent').trim(),
                 formBackground: formStyle.backgroundColor,
                 inputColor: inputStyle.color,
                 toolbarButtonBackground: toolbarButtonStyle.backgroundColor,
                 toolbarButtonColor: toolbarButtonStyle.color,
-                inactiveHeadtextColor: inactiveHeadtextStyle.color
+                inactiveHeadtextColor: inactiveHeadtextStyle.color,
+                expectedToolbarColor: resolveWriteColor('var(--dcuf-write-fg)')
             };
         });
         assert.equal(darkTheme.accent, '#8cb4ff');
         assert.notEqual(darkTheme.formBackground, 'rgb(255, 255, 255)');
         assert.notEqual(darkTheme.inputColor, 'rgb(34, 34, 34)');
         assert.notEqual(darkTheme.toolbarButtonBackground, 'rgb(255, 255, 255)');
-        assert.equal(darkTheme.toolbarButtonColor, 'rgb(237, 243, 255)');
+        assert.equal(darkTheme.toolbarButtonColor, darkTheme.expectedToolbarColor);
         assert.equal(darkTheme.inactiveHeadtextColor, 'rgb(210, 220, 237)');
         assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
     } finally { await session.close(); }
@@ -8570,7 +8587,7 @@ mobileTest('글쓰기: 네이티브 모바일 기준 fixture는 가로 넘침 �
                         const headtextRects = Array.from(headtextList?.querySelectorAll(':scope > li') || [])
                             .map((item) => item.getBoundingClientRect());
                         const surfaceProbe = document.createElement('span');
-                        surfaceProbe.style.cssText = 'position:fixed;visibility:hidden;background:var(--dcuf-theme-surface)';
+                        surfaceProbe.style.cssText = 'position:fixed;visibility:hidden;background:transparent';
                         document.body.appendChild(surfaceProbe);
                         const expectedSubjectBackground = getComputedStyle(surfaceProbe).backgroundColor;
                         surfaceProbe.style.background = 'var(--dcuf-theme-surface-input)';
@@ -8964,6 +8981,12 @@ const collectPaletteSurfaceContract = (page, entries) => page.evaluate((items) =
     });
 }, entries);
 
+const resolveControlFill = (page, selector) => page.locator(selector).first().evaluate(element => {
+    const probe = document.createElement('span');
+    probe.style.backgroundColor = 'var(--dcuf-control-primary-fill)'; element.append(probe);
+    const fill = getComputedStyle(probe).backgroundColor; probe.remove(); return fill;
+});
+
 const assertPaletteSurfaces = (contract, label) => {
     contract.forEach(({ selector, token, expected, actual }) => {
         assert.notEqual(actual, null, `${label}: missing ${selector}`);
@@ -9044,7 +9067,7 @@ mobileTest('modify password surface uses the mobile card UI and removes trailing
         assert.equal(contract.inputAriaLabel, '비밀번호');
         assert.equal(contract.cardWidth <= contract.viewportWidth - 20, true, JSON.stringify(contract));
         assert.equal(contract.cardRadius, '16px', 'Adopted B1 password-card radius');
-        assert.equal(contract.confirmBackground, 'rgb(154, 52, 18)');
+        assert.equal(contract.confirmBackground, await resolveControlFill(session.page, '[data-dcuf-native-form-role="submit"][data-dcuf-native-form-state="password"]'));
         assert.equal(contract.footerDisplay, 'none');
         assert.equal(contract.dataInfoDisplay, 'none');
         assert.equal(contract.modifyStyleCount, 1);
@@ -9081,8 +9104,8 @@ mobileTest('modify password surface uses the mobile card UI and removes trailing
         assert.deepEqual(contract.presentationPayloads.map((css) => (
             createHash('sha256').update(css, 'utf8').digest('hex').toUpperCase()
         )), [
-            'ECC615764559A66FC6386984D0214412E55A7D57384E8C0A1A2D10EF8CF87663',
-            '69AED0D37EA0640EF6F17F386E5D29F25C7D0A9313B505E8CDDD17F31A80B504'
+            '93901D8296842E5A77CDEB1570D002D49CFFDA41AB93347E60DAB20D3F72EA15',
+            '910820440086BC4EFE7C6AB0A1B06F302D9D3AC0F7DE0A89E079A1C797D7C4EA'
         ], 'native-form presentation payloads must match the registered semantic modify/delete, write-shell, write-popup, write-fields, write-headtext, write-editor-shell, write-toolbar-shell, editor-layer, and attachment contracts');
         assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
     } finally { await session.close(); }
@@ -9146,7 +9169,7 @@ mobileTest('modify editor surface reuses the write transformation without changi
             formClass: contract.formClass,
             formTransformed: '1',
             subjectRow: true,
-            submitBackground: 'rgb(154, 52, 18)',
+            submitBackground: await resolveControlFill(session.page, '#write-submit'),
             writeStyleCount: 1,
             modifyStyleCount: 1,
             modifySubscribers: true,
@@ -9259,7 +9282,7 @@ mobileTest('modify/delete presentation uses only adapter-applied semantic select
         assert.deepEqual(contract.computed, {
             confirmPosition: 'static',
             confirmInset: 'auto',
-            confirmBackground: 'rgb(154, 52, 18)',
+            confirmBackground: await resolveControlFill(session.page, '[data-dcuf-native-form-role="submit"][data-dcuf-native-form-state="password"]'),
             actionsDisplay: 'grid',
             actionsColumns: contract.computed.actionsColumns,
             shellRadius: '16px'
@@ -9267,7 +9290,7 @@ mobileTest('modify/delete presentation uses only adapter-applied semantic select
         assert.equal(contract.computed.actionsColumns.split(' ').length, 2);
         assert.equal(
             createHash('sha256').update(contract.writePayloadShaSource, 'utf8').digest('hex').toUpperCase(),
-            '69AED0D37EA0640EF6F17F386E5D29F25C7D0A9313B505E8CDDD17F31A80B504',
+            '910820440086BC4EFE7C6AB0A1B06F302D9D3AC0F7DE0A89E079A1C797D7C4EA',
             'write/modify-editor payload must match the registered page/form-shell, popup, field, editor, toolbar, and editor-layer semantic contract'
         );
         assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
@@ -11143,7 +11166,8 @@ mobileTest('write remaining controls use a reversible semantic presentation boun
         assert.equal(initial.sameNodes, true);
         assert.equal(initial.nativePreserved, true);
         assert.equal(initial.optionState, 'active');
-        assert.deepEqual(initial.primaryBackgrounds, ['rgb(154, 52, 18)', 'rgb(154, 52, 18)']);
+        const primaryFill = await resolveControlFill(session.page, '#write-submit');
+        assert.deepEqual(initial.primaryBackgrounds, [primaryFill, primaryFill]);
         assert.equal(initial.resources.listeners, 0);
         assert.equal(initial.resources.observers, 0);
         assert.equal(initial.resources.timers, 0);
@@ -11592,7 +11616,7 @@ mobileTest('delete password surface reuses the password card without changing na
         assert.equal(contract.inputAriaLabel, '비밀번호');
         assert.equal(contract.cardWidth <= contract.viewportWidth - 20, true, JSON.stringify(contract));
         assert.equal(contract.cardRadius, '16px', 'Adopted B1 password-card radius');
-        assert.equal(contract.confirmBackground, 'rgb(154, 52, 18)');
+        assert.equal(contract.confirmBackground, await resolveControlFill(session.page, '[data-dcuf-native-form-role="submit"][data-dcuf-native-form-state="password"]'));
         assert.equal(contract.footerDisplay, 'none');
         assert.equal(contract.dataInfoDisplay, 'none');
         assert.equal(contract.passwordStyleCount, 1);
@@ -11677,19 +11701,23 @@ mobileTest('UI palette presets normalize stored values without blocking boot', '
         const value = hex.replace('#', '');
         return `rgb(${Number.parseInt(value.slice(0, 2), 16)}, ${Number.parseInt(value.slice(2, 4), 16)}, ${Number.parseInt(value.slice(4, 6), 16)})`;
     };
-    const contrastRatio = (foreground, background) => {
-        const luminance = (value) => {
-            const channels = (value.match(/[\d.]+/g) || []).slice(0, 3).map(Number).map((channel) => {
-                const normalized = channel / (value.startsWith('color(srgb ') ? 1 : 255);
-                return normalized <= 0.03928 ? normalized / 12.92 : ((normalized + 0.055) / 1.055) ** 2.4;
-            });
+    const contrastRatio = (foreground, background, backing) => {
+        const parseColor = value => {
+            const numbers = (value.match(/[\d.]+/g) || []).map(Number);
+            return { rgb: numbers.slice(0, 3).map(v => v / (value.startsWith('color(srgb ') ? 1 : 255)), alpha: numbers[3] ?? 1 };
+        };
+        const composite = (color, under) => color.rgb.map((v, i) => v * color.alpha + under[i] * (1 - color.alpha));
+        const backgroundRgb = composite(parseColor(background), parseColor(backing).rgb);
+        const foregroundRgb = composite(parseColor(foreground), backgroundRgb);
+        const luminance = rgb => {
+            const channels = rgb.map(normalized => normalized <= 0.04045 ? normalized / 12.92 : ((normalized + 0.055) / 1.055) ** 2.4);
             return 0.2126 * channels[0] + 0.7152 * channels[1] + 0.0722 * channels[2];
         };
-        const foregroundLuminance = luminance(foreground);
-        const backgroundLuminance = luminance(background);
+        const foregroundLuminance = luminance(foregroundRgb);
+        const backgroundLuminance = luminance(backgroundRgb);
         return (Math.max(foregroundLuminance, backgroundLuminance) + 0.05) / (Math.min(foregroundLuminance, backgroundLuminance) + 0.05);
     };
-    const strictContrastPalettes = new Set(['indigo', 'sky', 'cyan', 'teal', 'lime', 'amber', 'red', 'rose', 'pink']);
+    const strictContrastPalettes = new Set(Object.keys(strongColors));
     for (const [stored, expected] of [
         [undefined, 'blue'],
         ['blue', 'blue'],
@@ -11732,22 +11760,24 @@ mobileTest('UI palette presets normalize stored values without blocking boot', '
                         const style = element ? getComputedStyle(element) : null;
                         const foreground = style?.color || null;
                         const probe = document.createElement('i');
-                        probe.style.backgroundColor = selector.includes('current') ? 'var(--dcuf-theme-accent-soft)'
-                            : selector.includes('submit') ? 'var(--dcuf-theme-surface-input)' : 'var(--dcuf-theme-accent-strong)';
+                        probe.style.backgroundColor = selector.includes('current') ? 'var(--dcuf-control-selected-fill)'
+                            : selector.includes('submit') ? 'var(--dcuf-theme-surface-input)' : 'var(--dcuf-control-primary-fill)';
                         element.append(probe);const expected = getComputedStyle(probe).backgroundColor;probe.remove();
                         const primary = selector.includes('primary-action');
-                        return { selector, color: primary ? getComputedStyle(element, '::after').backgroundImage : style?.backgroundColor || null, foreground, expected, primary };
+                        probe.style.backgroundColor = 'var(--dcuf-b1-paper)'; element.append(probe);
+                        const contrastBacking = getComputedStyle(probe).backgroundColor; probe.remove();
+                        return { selector, color: primary ? getComputedStyle(element, '::after').backgroundColor : style?.backgroundColor || null, foreground, expected, primary, contrastBacking };
                     })
                 };
             });
             assert.equal(lightColors.strong, strongColors[expected].light, JSON.stringify(lightColors));
-            lightColors.controls.forEach(({ selector, color, foreground, expected: controlColor, primary }) => {
-                if (primary) assert.ok(color.includes(controlColor), `${expected} light primary face retains the palette base: ${color}`);
-                else assert.equal(color, controlColor, `${expected} light ${selector}: ${color}`);
+            for (const { selector, color, foreground, expected: controlColor, contrastBacking, primary } of lightColors.controls) {
+                assert.equal(color, controlColor, `${expected} light ${selector}: ${color}`);
                 if (strictContrastPalettes.has(expected)) {
-                    assert.equal(contrastRatio(foreground, primary ? controlColor : color) >= 4.5, true, `${expected} light ${selector} base contrast`);
+                    const contrast = primary ? (await renderedLabelContrast(session.page, selector)).min : contrastRatio(foreground, color, contrastBacking);
+                    assert.equal(contrast >= 4.5, true, `${expected} light ${selector} rendered/composite contrast: ${contrast}`);
                 }
-            });
+            }
             assertPaletteSurfaces(await collectPaletteSurfaceContract(session.page, [
                 { selector: '[data-dcuf-surface="list-container"]', token: '--dcuf-b1-paper' },
                 { selector: '[data-dcuf-surface="list-toolbar"]', token: '--dcuf-b1-glass' },
@@ -11787,22 +11817,24 @@ mobileTest('UI palette presets normalize stored values without blocking boot', '
                         const style = element ? getComputedStyle(element) : null;
                         const foreground = style?.color || null;
                         const probe = document.createElement('i');
-                        probe.style.backgroundColor = selector.includes('current') ? 'var(--dcuf-theme-accent-soft)'
-                            : selector.includes('submit') ? 'var(--dcuf-theme-surface-input)' : 'var(--dcuf-theme-accent-strong)';
+                        probe.style.backgroundColor = selector.includes('current') ? 'var(--dcuf-control-selected-fill)'
+                            : selector.includes('submit') ? 'var(--dcuf-theme-surface-input)' : 'var(--dcuf-control-primary-fill)';
                         element.append(probe);const expected = getComputedStyle(probe).backgroundColor;probe.remove();
                         const primary = selector.includes('primary-action');
-                        return { selector, color: primary ? getComputedStyle(element, '::after').backgroundImage : style?.backgroundColor || null, foreground, expected, primary };
+                        probe.style.backgroundColor = 'var(--dcuf-b1-paper)'; element.append(probe);
+                        const contrastBacking = getComputedStyle(probe).backgroundColor; probe.remove();
+                        return { selector, color: primary ? getComputedStyle(element, '::after').backgroundColor : style?.backgroundColor || null, foreground, expected, primary, contrastBacking };
                     })
                 };
             });
             assert.equal(darkColors.strong, strongColors[expected].dark, JSON.stringify(darkColors));
-            darkColors.controls.forEach(({ selector, color, foreground, expected: controlColor, primary }) => {
-                if (primary) assert.ok(color.includes(controlColor), `${expected} dark primary face retains the palette base: ${color}`);
-                else assert.equal(color, controlColor, `${expected} dark ${selector}: ${color}`);
+            for (const { selector, color, foreground, expected: controlColor, contrastBacking, primary } of darkColors.controls) {
+                assert.equal(color, controlColor, `${expected} dark ${selector}: ${color}`);
                 if (strictContrastPalettes.has(expected)) {
-                    assert.equal(contrastRatio(foreground, primary ? controlColor : color) >= 4.5, true, `${expected} dark ${selector} base contrast`);
+                    const contrast = primary ? (await renderedLabelContrast(session.page, selector)).min : contrastRatio(foreground, color, contrastBacking);
+                    assert.equal(contrast >= 4.5, true, `${expected} dark ${selector} rendered/composite contrast: ${contrast}`);
                 }
-            });
+            }
             assertPaletteSurfaces(await collectPaletteSurfaceContract(session.page, [
                 { selector: '[data-dcuf-surface="list-container"]', token: '--dcuf-b1-paper' },
                 { selector: '[data-dcuf-surface="list-toolbar"]', token: '--dcuf-b1-glass' },
@@ -11992,7 +12024,11 @@ mobileTest('UI palette surfaces cover list canvas, comments, image comments, and
             '#focus_cmt > .fixture-normal-comment-composer .cmt_cont_bottm > .fr > button',
             '.view_comment.image_comment .cmt_write_box .cmt_cont_bottm > .fr > button'
         ].join(','))).map((button) => getComputedStyle(button).backgroundColor));
-        assert.deepEqual(commentButtons, ['rgb(154, 52, 18)', 'rgb(154, 52, 18)']);
+        assert.equal(commentButtons.length, 2);
+        assertPaletteSurfaces(await collectPaletteSurfaceContract(session.page, [
+            { selector: '#focus_cmt > .fixture-normal-comment-composer .cmt_cont_bottm > .fr > button', token: '--dcuf-control-primary-fill' },
+            { selector: '.view_comment.image_comment .cmt_write_box .cmt_cont_bottm > .fr > button', token: '--dcuf-control-primary-fill' }
+        ]), 'orange comment action material');
         const recommendationContract = await session.page.evaluate(() => {
             const box = document.querySelector('.btn_recommend_box');
             const inner = box.querySelector('.inner_box > .inner');
@@ -12001,7 +12037,12 @@ mobileTest('UI palette surfaces cover list canvas, comments, image comments, and
             const number = document.querySelector('.btn_recommend_box .up_num');
             const fixedNumber = document.querySelector('.btn_recommend_box .font_blue.smallnum');
             const icon = document.querySelector('.btn_recommend_box .icon_recom_up');
+            const probe = document.createElement('span');
+            probe.style.background = 'var(--dcuf-control-primary-bg)'; button.append(probe);
+            const expectedImage = getComputedStyle(probe).backgroundImage;
+            const expectedFill = getComputedStyle(probe).backgroundColor; probe.remove();
             return {
+                expectedImage, expectedFill,
                 boxBackground: getComputedStyle(box).backgroundImage,
                 innerBackground: getComputedStyle(inner).backgroundImage,
                 innerShadow: getComputedStyle(inner).boxShadow,
@@ -12020,8 +12061,8 @@ mobileTest('UI palette surfaces cover list canvas, comments, image comments, and
         assert.equal(recommendationContract.innerBackground, 'none', JSON.stringify(recommendationContract));
         assert.notEqual(recommendationContract.innerShadow, 'none', JSON.stringify(recommendationContract));
         assert.equal(recommendationContract.bottomBackground, 'none', JSON.stringify(recommendationContract));
-        assert.equal(recommendationContract.buttonBackground.includes('rgb(194, 65, 12)'), true, JSON.stringify(recommendationContract));
-        assert.equal(recommendationContract.buttonBackground.includes('rgb(154, 52, 18)'), true, JSON.stringify(recommendationContract));
+        assert.equal(recommendationContract.buttonBackground, recommendationContract.expectedImage);
+        assert.equal(recommendationContract.buttonFill, recommendationContract.expectedFill);
         assert.equal(recommendationContract.numberColor, 'rgb(154, 52, 18)', JSON.stringify(recommendationContract));
         assert.equal(recommendationContract.fixedNumberColor, 'rgb(154, 52, 18)', JSON.stringify(recommendationContract));
         assert.equal(recommendationContract.iconBackgroundImage, 'none', JSON.stringify(recommendationContract));
@@ -12045,17 +12086,19 @@ mobileTest('UI palette surfaces cover list canvas, comments, image comments, and
         await session.goto('/mgallery/board/write/?id=test');
         await session.page.waitForFunction(() => document.querySelector('form#write .note-toolbar')?.getAttribute('data-dcuf-native-form-role') === 'editor-toolbar');
         assertPaletteSurfaces(await collectPaletteSurfaceContract(session.page, [
-            { selector: 'form#write', token: '--dcuf-theme-canvas' },
-            { selector: 'form#write .write_subject', token: '--dcuf-theme-surface' },
-            { selector: 'form#write .note-toolbar', token: '--dcuf-theme-surface-muted' },
+            { selector: 'form#write', token: '--dcuf-b1-glass' },
+            { selector: 'form#write .write_subject', token: 'transparent' },
+            { selector: 'form#write .note-toolbar', token: '--dcuf-control-secondary-fill' },
             { selector: 'form#write .note-editable', token: '--dcuf-theme-surface-input' },
-            { selector: 'form#write .ai_easy_wrap', token: '--dcuf-theme-surface' },
-            { selector: 'form#write > .btn_box.write', token: '--dcuf-theme-surface' }
+            { selector: 'form#write .ai_easy_wrap', token: 'transparent' },
+            { selector: 'form#write > .btn_box.write', token: 'transparent' }
         ]), 'orange write');
-        assert.equal(await session.page.locator('.ai_easy_box > .btn_aigo').evaluate((button) => getComputedStyle(button).backgroundColor), 'rgb(154, 52, 18)');
+        assertPaletteSurfaces(await collectPaletteSurfaceContract(session.page, [
+            { selector: '.ai_easy_box > .btn_aigo', token: '--dcuf-control-primary-fill' }
+        ]), 'orange writer AI action material');
         const toolbarBorderContract = await session.page.evaluate(() => {
             const probe = document.createElement('span');
-            probe.style.cssText = 'position:fixed;visibility:hidden;border:1px solid var(--dcuf-theme-border-strong)';
+            probe.style.cssText = 'position:fixed;visibility:hidden;border:1px solid var(--dcuf-control-rim)';
             document.body.appendChild(probe);
             const expected = getComputedStyle(probe).borderTopColor;
             probe.remove();
@@ -12081,8 +12124,8 @@ mobileTest('UI palette surfaces cover list canvas, comments, image comments, and
         await session.page.waitForTimeout(40);
         assertPaletteSurfaces(await collectPaletteSurfaceContract(session.page, [
             { selector: 'form#write .write_subject', token: '--dcuf-theme-surface' },
-            { selector: 'form#write .note-toolbar', token: '--dcuf-theme-surface-muted' },
-            { selector: 'form#write > .btn_box.write', token: '--dcuf-theme-surface' }
+            { selector: 'form#write .note-toolbar', token: '--dcuf-control-secondary-fill' },
+            { selector: 'form#write > .btn_box.write', token: 'transparent' }
         ]), 'orange dark write');
         assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
     } finally { await session.close(); }
@@ -12741,17 +12784,20 @@ mobileTest('UI palette colors reach view actions and embedded list controls', 'f
                 probe.style.color='var(--dcuf-theme-accent-strong)';const accent=getComputedStyle(probe).color;
                 probe.style.color='var(--dcuf-theme-on-accent)';const onAccent=getComputedStyle(probe).color;
                 probe.style.color='var(--dcuf-theme-accent-ink)';const ink=getComputedStyle(probe).color;probe.remove();
-                return {selector,role:element.getAttribute('data-dcuf-role'),color:style.backgroundColor,ink:style.color,face:face.backgroundImage,accent,onAccent,accentInk:ink,hitHeight:element.getBoundingClientRect().height};
+                element.append(probe);probe.style.background='var(--dcuf-control-primary-bg)';
+                const fill=getComputedStyle(probe).backgroundColor,image=getComputedStyle(probe).backgroundImage;probe.remove();
+                return {selector,role:element.getAttribute('data-dcuf-role'),color:style.backgroundColor,ink:style.color,face:face.backgroundImage,faceFill:face.backgroundColor,fill,image,accent,onAccent,accentInk:ink,hitHeight:element.getBoundingClientRect().height};
             });
         });
         const assertRoles=(items,theme)=>items.forEach(item=>{
             assert.ok(!item.missing,`${theme} missing ${item.selector}`);
             if(item.role==='primary-action'){
-                assert.ok(item.face.includes(item.accent),`${theme} painted face follows palette: ${JSON.stringify(item)}`);
+                assert.equal(item.face,item.image,`${theme} painted face follows common material`);
+                assert.equal(item.faceFill,item.fill);
                 assert.equal(item.ink,item.onAccent);assert.ok(item.hitHeight>=40);
             }else if(item.role==='submit'){
                 assert.equal(item.ink,item.accentInk,'Quiet B1 search follows the accent ink');assert.ok(item.hitHeight>=44);
-            }else assert.equal(item.color,item.accent,`${theme} native article action palette: ${JSON.stringify(item)}`);
+            }else {assert.equal(item.color,item.fill,`${theme} native article action material: ${JSON.stringify(item)}`);assert.equal(item.ink,item.onAccent);}
         });
         const light = await collectColors();
         assertRoles(light,'orange light');
@@ -13122,7 +13168,7 @@ mobileTest('UI palette tokens drive the mobile write surface', 'write', async ({
                 submitBackground: submit.backgroundColor
             };
         });
-        assert.deepEqual(contract, { palette: 'orange', accent: '#c2410c', strong: '#9a3412', submitBackground: 'rgb(154, 52, 18)' });
+        assert.deepEqual(contract, { palette: 'orange', accent: '#c2410c', strong: '#9a3412', submitBackground: await resolveControlFill(session.page, '#write-submit') });
         await session.page.evaluate(() => window.__dcufFixture.toggleDark(true));
         await session.page.waitForTimeout(40);
         const darkContract = await session.page.evaluate(() => {
@@ -13134,7 +13180,7 @@ mobileTest('UI palette tokens drive the mobile write surface', 'write', async ({
                 submitBackground: submit.backgroundColor
             };
         });
-        assert.deepEqual(darkContract, { accent: '#fdba74', strong: '#c2410c', submitBackground: 'rgb(194, 65, 12)' });
+        assert.deepEqual(darkContract, { accent: '#fdba74', strong: '#c2410c', submitBackground: await resolveControlFill(session.page, '#write-submit') });
         assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
     } finally { await session.close(); }
 });
@@ -13147,8 +13193,12 @@ mobileTest('single-tone UI palette keeps mobile write actions readable', 'write'
     const readContract = () => session.page.locator('#write-submit').evaluate((element) => {
         const style = getComputedStyle(element);
         const luminance = (value) => {
-            const channels = (value.match(/[\d.]+/g) || []).slice(0, 3).map(Number).map((channel) => {
-                const normalized = channel / 255;
+            const numbers = (value.match(/[\d.]+/g) || []).map(Number);
+            const alpha = numbers[3] ?? 1;
+            const channels = numbers.slice(0, 3).map((channel) => {
+                // Resolve srgb/rgba alpha over white, the conservative backing
+                // for these white-label primary actions; do not parse srgb as 0..255.
+                const normalized = channel / (value.startsWith('color(srgb ') ? 1 : 255) * alpha + (1 - alpha);
                 return normalized <= 0.03928 ? normalized / 12.92 : ((normalized + 0.055) / 1.055) ** 2.4;
             });
             return 0.2126 * channels[0] + 0.7152 * channels[1] + 0.0722 * channels[2];
@@ -13164,13 +13214,13 @@ mobileTest('single-tone UI palette keeps mobile write actions readable', 'write'
     try {
         await session.goto('/board/write/?id=test');
         const light = await readContract();
-        assert.deepEqual({ background: light.background, color: light.color }, { background: 'rgb(190, 18, 60)', color: 'rgb(255, 255, 255)' });
+        assert.deepEqual({ background: light.background, color: light.color }, { background: await resolveControlFill(session.page, '#write-submit'), color: 'rgb(255, 255, 255)' });
         assert.equal(light.contrast >= 4.5, true, JSON.stringify(light));
 
         await session.page.evaluate(() => window.__dcufFixture.toggleDark(true));
         await session.page.waitForTimeout(40);
         const dark = await readContract();
-        assert.deepEqual({ background: dark.background, color: dark.color }, { background: 'rgb(159, 18, 57)', color: 'rgb(255, 255, 255)' });
+        assert.deepEqual({ background: dark.background, color: dark.color }, { background: await resolveControlFill(session.page, '#write-submit'), color: 'rgb(255, 255, 255)' });
         assert.equal(dark.contrast >= 4.5, true, JSON.stringify(dark));
         assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
     } finally { await session.close(); }

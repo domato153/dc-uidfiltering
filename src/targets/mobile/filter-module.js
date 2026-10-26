@@ -45,6 +45,14 @@
         }
 
 
+        /* Native nuisance markup, independent of authored dog images/DCCon.
+           Keep nodes/listeners intact and cover late insertions without an observer. */
+        body > #gaejukimg,
+        body > #gaejukimg ~ div.click-blocker {
+            display: none !important;
+            pointer-events: none !important;
+        }
+
         /* [수정] 불필요한 PC버전 요소 및 사이트 광고 아이콘 숨김 */
         #dc_header, #dc_gnb, .adv_area, .right_content, .dc_all, .dcfoot, .info_policy, .copyrigh, .ad_bottom_list, .bottom_paging_box + div, .intro_bg, .fixed_write_btn, .bottom_movebox, #zzbang_ad ,#zzbang_div,#zzbang_div .my_zzal, .my_dccon,
         .gall_exposure, .stickyunit, #kakao_search, .banner_box, #ad-layer,#ad-layer-closer, #ad_floating, .__dcNewsWidgetTypeB__, .dctrend_ranking, .cm_ad, .con_banner.writing_banbox, [id^="criteo-"], .ad_left_wing_right_top._BTN_AD_, .ad_left_wing_list_top._BTN_AD_,
