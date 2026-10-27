@@ -2,23 +2,25 @@
 
 ## Current execution
 
-- Active plan: B1_OWNED_INPUT_CHILDREN.md closes the selected shortcut/headtext/author/backup/size input/tool slice. Next: image-specific reply C-07 discovery/parity via B1_IMAGE_COMMENTS.md.
+- Active plan: B1_OWNED_INPUT_CHILDREN.md closes the selected shortcut/headtext/author/backup/size input/tool slice. C-07 is retired as N/A (image comments have no replies). Next: separate login UI entry preflight.
 - Workspace path: `.` (repository root; private prompt supplies exact nested worktree). AGENTS.md owns policy; preserve debug.log unread/unstaged.
 - Active stage: `header-navigation` formal admission open. Common glass and selected P4 default/conditional/input states are scoped/reviewed; all-child/current extension/device/account/upper acceptance remain separate.
 - Accepted visual preference: compact B+B1; moderate normal-page contour transmission,C885 simple button faces and opaque paper retained. No new design world or rejected high-transparency button revival.
-- Source state: Source checkpoint base HEAD `2fc8e0be197cb54a6a24c0395e3cf000e116c20d` on `codex/ui-port-boundary`; existing presenter ink/row hooks and original backup parse guard. No owner/topology change. Read resulting HEAD/status fresh.
+- Source state: Source checkpoint base HEAD `a1f511494d49ffbf03b5fa20ff02aeb203e80257` on `codex/ui-port-boundary`; existing presenter ink/row hooks and original backup parse guard. Subsequent applicability correction changes documents only. No owner/topology change. Read resulting HEAD/status fresh.
 - Local-only state: `LOCAL_ONLY_EVIDENCE`; artifacts/b1-input-children-2026-10-28/ binds independent proposal,72 layout states,16 image pairs and user viewer48 images. One Chrome job/4GB floor.
-- Candidate fingerprint: `9111774d3ce116293604f6045093311f1c4f658e1310d04a5ee29e93694b3903`
+- Candidate fingerprint: `6a213e6507f39f866b53c170e6aa4acd1db4ec22793933a570435a64b6473292`
 - Last current audit: PASS within scope —8 distinct focused Mobile registrations (7 functional+1 writer),15 PC,6 unchanged default PC style contexts,6 normalized immediate Mobile semantic observations,72 layout states and16 reviewed image pairs. Prior107 DC0B functional coverage is historical; no full108/current-device/all-child/aesthetic approval.
 - Current stage receipt: `verification/receipts/2026-10-28-b1-owned-inputs.json` SHA-256 `7348C877E74160DAC99D2A90878F7B3C997FE216B0D6E4B5F4E272BE0DDE26EE`.
 - Accepted baseline: Immediate DC0B/4121 controls;1593/EF24 current selected input result. B1_GLASS_TRANSMISSION.md retains normal-page material evidence; no formal admission certificate follows.
 - Current artifact: Mobile3.5.5 `1593C0F7FA4FFDFCAF1607EFC3D8DC557FED9F4A41CD968C9914814965C5BF5B` root/dist/guard; PC1.9.9 `EF24D41DD44AC13634FC17CEC43B31CD371C6D0F3D8AEA6A6C47CB81ABB832E3` root/dist. Existing-version rebuild; metadata/storage/version/registry/official release unchanged.
 - Blockers: No global live/authorization blocker. Original malformed backup-list shape now reaches existing invalid-format notice,preserving data. Independent review's author-variant/IP-merge coverage gaps are fixed and rerun. Real user settings/files/clipboard/downloads/submit/upload/AI/authentication/new POST untouched.
-- Pending live checks: C-07 image-specific replies,current actual-extension/device/account,formal whole UI/header admission. Rare/unobserved P4 native/OS/clipboard/export/file-read-failure/key variants remain unqualified. Four upload documents remain DEFERRED_USER_ACCEPTED. Do not reopen completed P4 defaults solely for screenshots.
+- Pending live checks: Separate sign-domain login entry,current actual-extension/device/account,formal whole UI/header admission. C-07 is N/A,not pending. Rare/unobserved P4 native/OS/clipboard/export/file-read-failure/key variants remain unqualified. Four upload documents remain DEFERRED_USER_ACCEPTED. Do not reopen completed P4 defaults solely for screenshots.
 
 ```dcuf-current-artifacts
 {"schemaVersion":1,"mobile":{"sha256":"1593C0F7FA4FFDFCAF1607EFC3D8DC557FED9F4A41CD968C9914814965C5BF5B"},"pc":{"sha256":"EF24D41DD44AC13634FC17CEC43B31CD371C6D0F3D8AEA6A6C47CB81ABB832E3"}}
 ```
+
+- Applicability correction: User2026-10-28 confirms no image-comment replies; observed native anatomy is consistent. Shared reply selectors are not feature evidence. The input receipt remains immutable runtime evidence; its C-07 remaining-task wording is superseded. This correction changes documents only.
 
 ## Draft-complete checkpoint — 2026-10-21
 

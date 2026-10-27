@@ -36,3 +36,5 @@ Receipt: verification/receipts/2026-10-28-b1-owned-conditional.json (exact diges
 
 
 Independent review returned one P2 harness finding: a pending capture could finish after the1.8s write. The final contract asserts the original manual write remains disabled with empty feedback, and palette remains saving with three disabled actions, immediately after each capture. Fresh900/560/2306 results pass. No important runtime regression or PC fallback issue was found. This is a bounded review,not a whole-branch or whole-product certificate.
+
+Applicability correction2026-10-28: C-07 image-comment replies do not exist (explicit user correction; original observed rows/composer contain no reply trigger). Generic reply selectors in shared/legacy code do not establish this native feature. Retire that checklist item as N/A and remove it from future work. Earlier immutable receipts retain their historical unqualified wording; it is superseded by this correction,not a new feature or a newly passing reply test.
