@@ -262,6 +262,7 @@
                     return;
                 }
 
+                setStatus();
                 addButton.disabled = true;
                 addButton.textContent = '추가 중…';
                 try {

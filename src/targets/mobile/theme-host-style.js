@@ -14,6 +14,8 @@
             --dcuf-b1-floating-filter: blur(8px) saturate(1.08);
             --dcuf-b1-structural-filter: blur(12px) saturate(1.1);
             --dcuf-panel-scrim: rgba(18,25,35,.22);
+            --dcuf-panel-status-error: #a52b40;
+            --dcuf-panel-status-success: #12694e;
             --dcuf-b1-rim: #fffffff2;
             --dcuf-b1-line: color-mix(in srgb, var(--dcuf-theme-border) 55%, var(--dcuf-b1-paper));
             --dcuf-b1-shadow: 0 12px 32px #2e5a5f12, 0 1px 3px #3651560b;
@@ -29,6 +31,8 @@
             --dcuf-b1-floating: color-mix(in srgb, var(--dcuf-b1-paper) 76%, transparent);
             --dcuf-b1-sheen: linear-gradient(120deg, #ffffff0d, transparent 58%);
             --dcuf-panel-scrim: rgba(18,25,35,.28);
+            --dcuf-panel-status-error: #ff9ba9;
+            --dcuf-panel-status-success: #7cdbb4;
             --dcuf-b1-rim: color-mix(in srgb, var(--dcuf-theme-fg) 9%, transparent);
             --dcuf-b1-line: color-mix(in srgb, var(--dcuf-theme-fg) 5%, var(--dcuf-b1-paper));
             --dcuf-b1-shadow: 0 14px 34px #0003, 0 1px 2px #0003;
@@ -62,6 +66,10 @@
             --dcuf-panel-close-hover: var(--dcuf-control-secondary-bg);
             --dcuf-panel-switch-thumb: #f7fbfa;
             --dcuf-panel-range-margin: 0;
+            --dcuf-panel-status-info: var(--dcuf-theme-fg);
+            --dcuf-panel-empty-ink: var(--dcuf-theme-fg);
+            --dcuf-panel-pending-opacity: 1;
+            --dcuf-panel-pending-decoration: line-through;
             /* Material values only: each existing presenter owns shape,
                positioning and state. No filtered native-popup ancestors. */
             /* Keep the specular edge above the label; dense primary tint

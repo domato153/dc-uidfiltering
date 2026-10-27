@@ -35,6 +35,7 @@ import { runControlMaterialContract, renderedLabelContrast } from './ui-control-
 import { runGaejukContract } from './ui-gaejuk-contract.mjs';
 import { runB1EditorMenuContract } from './ui-b1-editor-menu-contract.mjs';
 import { runOwnedGlassContract } from './ui-b1-owned-glass-contract.mjs';
+import { runOwnedConditionalContract } from './ui-b1-owned-conditional-contract.mjs';
 
 const args = new Set(process.argv.slice(2));
 const selectedGroup = process.argv.includes('--group') ? process.argv[process.argv.indexOf('--group') + 1] : null;
@@ -77,6 +78,7 @@ async function settleThemeTransitions(page) {
 mobileTest('live native controls: palette category sprites comment and action ownership', 'functional', runLiveControlContract);
 mobileTest('B1 content: native picker isolation glass and original input', 'functional', runB1ContentContract);
 mobileTest('B1 glass: ordinary neutral backing through actual scrim', 'functional', runOwnedGlassContract);
+mobileTest('B1 owned panels: readable conditional feedback and nested state', 'functional', runOwnedConditionalContract);
 mobileTest('B1 image comments: full native composer parity and lifecycle', 'functional', runB1ImageCommentsContract);
 mobileTest('B1 comment actions: native delete and nickname clear finish', 'functional', runB1CommentActionsContract);
 mobileTest('B1 article actions: native popup glass and nested forms', 'functional', runB1ArticleActionsContract);

@@ -8,8 +8,33 @@ export async function renderedLabelContrast(page,selector){
  const label=await button.evaluate(n=>{const r=n.getBoundingClientRect(),range=document.createRange();range.selectNodeContents(n);const t=range.getBoundingClientRect();return{foreground:getComputedStyle(n).color,x:t.x-r.x,y:t.y-r.y,width:t.width,height:t.height,buttonWidth:r.width,buttonHeight:r.height}});
  assert.ok(label.width>0&&label.height>0,'Contrast needs an actual positive label rectangle');
  const styles=await button.evaluate(n=>{const nodes=[n,...n.querySelectorAll('*')],saved=nodes.map(e=>e.getAttribute('style'));for(const e of nodes){e.style.setProperty('color','transparent','important');e.style.setProperty('-webkit-text-fill-color','transparent','important');e.style.setProperty('text-shadow','none','important')}return saved});
- let bytes;try{bytes=await button.screenshot({animations:'disabled'})}finally{await button.evaluate((n,saved)=>[n,...n.querySelectorAll('*')].forEach((e,i)=>saved[i]===null?e.removeAttribute('style'):e.setAttribute('style',saved[i])),styles)}
- return page.evaluate(async({data,label})=>{const image=new Image();image.src=data;await image.decode();const c=document.createElement('canvas');c.width=image.width;c.height=image.height;const x=c.getContext('2d');x.drawImage(image,0,0);const luminance=rgb=>rgb.map(v=>{v/=255;return v<=.04045?v/12.92:((v+.055)/1.055)**2.4}).reduce((a,v,i)=>a+v*[.2126,.7152,.0722][i],0),fg=(label.foreground.match(/[\d.]+/g)||[]).slice(0,3).map(Number),foreground=luminance(fg);let min=Infinity,samples=0;const sx=image.width/label.buttonWidth,sy=image.height/label.buttonHeight;for(let py=Math.max(1,Math.floor(label.y*sy));py<Math.min(image.height-1,Math.ceil((label.y+label.height)*sy));py++)for(let px=Math.max(1,Math.floor(label.x*sx));px<Math.min(image.width-1,Math.ceil((label.x+label.width)*sx));px++){const rgb=[...x.getImageData(px,py,1,1).data];if(rgb[3]!==255)throw Error('Contrast screenshot must include the real backing');const b=luminance(rgb.slice(0,3));min=Math.min(min,(Math.max(foreground,b)+.05)/(Math.min(foreground,b)+.05));samples++}return{min,samples}}, {data:'data:image/png;base64,'+bytes.toString('base64'),label});
+ let bytes,foregroundBytes;
+ try{
+  bytes=await button.screenshot({animations:'disabled'});
+  // Render the foreground in its actual opacity/ancestor group. Parsing
+  // color(srgb ...) as 0..255 RGB or ignoring parent opacity produces false passes.
+  await button.evaluate((n,label)=>{
+   if(getComputedStyle(n).position==='static')n.style.position='relative';
+   const patch=document.createElement('span');patch.dataset.dcufContrastWitness='1';
+   patch.style.cssText='position:absolute;inset:0;z-index:2147483647;pointer-events:none;border:0;border-radius:0;opacity:1;background:'+label.foreground;
+   n.append(patch);
+  },label);
+  foregroundBytes=await button.screenshot({animations:'disabled'});
+ }finally{
+  await button.evaluate((n,saved)=>{n.querySelector('[data-dcuf-contrast-witness]')?.remove();[n,...n.querySelectorAll('*')].forEach((e,i)=>saved[i]===null?e.removeAttribute('style'):e.setAttribute('style',saved[i]))},styles);
+ }
+ return page.evaluate(async({data,foregroundData,label})=>{
+  const pixels=async source=>{const image=new Image();image.src=source;await image.decode();const c=document.createElement('canvas');c.width=image.width;c.height=image.height;const x=c.getContext('2d');x.drawImage(image,0,0);return{width:c.width,height:c.height,data:x.getImageData(0,0,c.width,c.height).data}};
+  const image=await pixels(data),foreground=await pixels(foregroundData);
+  const luminance=rgb=>rgb.map(v=>{v/=255;return v<=.04045?v/12.92:((v+.055)/1.055)**2.4}).reduce((a,v,i)=>a+v*[.2126,.7152,.0722][i],0);
+  let min=Infinity,samples=0;const sx=image.width/label.buttonWidth,sy=image.height/label.buttonHeight;
+  for(let py=Math.max(2,Math.ceil(label.y*sy)+1);py<Math.min(image.height-2,Math.floor((label.y+label.height)*sy)-1);py++)for(let px=Math.max(2,Math.ceil(label.x*sx)+1);px<Math.min(image.width-2,Math.floor((label.x+label.width)*sx)-1);px++){
+   const offset=(py*image.width+px)*4,rgb=[...image.data.slice(offset,offset+4)],fg=[...foreground.data.slice(offset,offset+4)];
+   if(rgb[3]!==255||fg[3]!==255)throw Error('Contrast screenshot must include the real backing');
+   const b=luminance(rgb.slice(0,3)),f=luminance(fg.slice(0,3));min=Math.min(min,(Math.max(f,b)+.05)/(Math.min(f,b)+.05));samples++;
+  }
+  if(!samples)throw Error('Contrast requires interior label samples');return{min,samples};
+ },{data:'data:image/png;base64,'+bytes.toString('base64'),foregroundData:'data:image/png;base64,'+foregroundBytes.toString('base64'),label});
 }
 
 export async function runControlMaterialContract({browser,server}) {

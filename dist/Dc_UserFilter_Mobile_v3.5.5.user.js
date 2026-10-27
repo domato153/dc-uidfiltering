@@ -1753,7 +1753,7 @@ const __dcufSettingsPresenter = (() => {
         [data-dcuf-surface] .dcuf-button--primary { border-color:var(--dcuf-control-primary-rim,var(--dcuf-theme-accent-ink,#315fdb));background-color:var(--dcuf-control-primary-fill,var(--dcuf-theme-accent-strong,#315fdb));background-image:var(--dcuf-control-glaze,none);color:var(--dcuf-theme-on-accent,#fff);box-shadow:var(--dcuf-control-shadow,0 7px 16px var(--dcuf-theme-accent-shadow,rgba(49,95,219,.24))); }
         [data-dcuf-surface] .dcuf-button--secondary { border-color:color-mix(in srgb,var(--dcuf-theme-accent,#4263eb) 24%,var(--dcuf-theme-border,#d9dde3));background-color:var(--dcuf-control-secondary-fill,var(--dcuf-theme-accent-soft,#e9efff));color:var(--dcuf-theme-accent-ink,#315fdb); }
         [data-dcuf-surface] .dcuf-button--quiet { background:var(--dcuf-control-selected-bg,var(--dcuf-theme-accent-soft,#e9efff));color:var(--dcuf-theme-accent-ink,#315fdb); }
-        [data-dcuf-surface] .dcuf-button--danger { min-height:36px;padding:6px 10px;border-color:color-mix(in srgb,#c43249 45%,var(--dcuf-theme-border,#d9dde3));background:var(--dcuf-control-danger-bg,color-mix(in srgb,#c43249 12%,var(--dcuf-theme-card-top,#fff)));color:color-mix(in srgb,#c43249 82%,var(--dcuf-theme-fg,#27313f)); }
+        [data-dcuf-surface] .dcuf-button--danger { min-height:36px;padding:6px 10px;border-color:color-mix(in srgb,#c43249 45%,var(--dcuf-theme-border,#d9dde3));background:var(--dcuf-control-danger-bg,color-mix(in srgb,#c43249 12%,var(--dcuf-theme-card-top,#fff)));color:var(--dcuf-panel-status-error,color-mix(in srgb,#c43249 82%,var(--dcuf-theme-fg,#27313f))); }
         [data-dcuf-surface] .dcuf-button--wide { width:100%; }
         [data-dcuf-surface] .dcuf-button:active,[data-dcuf-surface] .dcuf-icon-button:active,[data-dcuf-surface] .dcuf-option-card:active { transform:translateY(1px) scale(.985); }
         [data-dcuf-surface] .dcuf-button:disabled,[data-dcuf-surface] .dcuf-icon-button:disabled { opacity:.56;cursor:wait; }
@@ -1780,7 +1780,7 @@ const __dcufSettingsPresenter = (() => {
         [data-dcuf-surface] .dcuf-segment-button[aria-pressed="true"],[data-dcuf-surface] .dcuf-segment-button[aria-selected="true"],[data-dcuf-surface] .dcuf-segment-button.active { border-color:color-mix(in srgb,var(--dcuf-theme-accent,#4263eb) 30%,var(--dcuf-theme-border,#d9dde3));background:var(--dcuf-control-selected-bg,var(--dcuf-theme-accent-soft,#e9efff));color:var(--dcuf-theme-accent-ink,#315fdb);box-shadow:var(--dcuf-control-shadow,0 3px 8px color-mix(in srgb,var(--dcuf-theme-accent,#4263eb) 12%,transparent)); }
         [data-dcuf-surface] .dcuf-inline-actions,[data-dcuf-surface] .dcuf-footer-actions { display:flex;align-items:center;gap:8px; }
         [data-dcuf-surface] .dcuf-inline-actions > .dcuf-button { flex:1 1 0; }
-        [data-dcuf-surface] .dcuf-status { min-height:20px;margin:8px 0;color:#c43249;font-size:12px;font-weight:720; }
+        [data-dcuf-surface] .dcuf-status { min-height:20px;margin:8px 0;color:var(--dcuf-panel-status-error,#c43249);font-size:12px;font-weight:720; }
         [data-dcuf-surface] .dcuf-resize-handle { position:absolute;right:5px;bottom:5px;width:34px;height:28px;border-radius:9px;background:linear-gradient(135deg,transparent 50%,var(--dcuf-theme-border-strong,#cbd2db) 51% 57%,transparent 58%) 11px 5px/16px 16px no-repeat;cursor:nwse-resize;touch-action:none; }
         [data-dcuf-surface] :focus-visible { outline:3px solid var(--dcuf-theme-focus-ring,rgba(63,109,224,.2));outline-offset:2px; }
         [data-dcuf-surface][data-dcuf-role="panel"] { position:fixed;z-index:2147483646;left:50%;top:50%;display:flex;flex-direction:column;width:min(var(--dcuf-panel-width,540px),calc(100vw - 24px));max-height:calc(100dvh - 24px);overflow:hidden;border:1px solid var(--dcuf-panel-rim,var(--dcuf-theme-border-strong,#cbd2db));border-radius:var(--dcuf-radius-panel);background:var(--dcuf-panel-background,var(--dcuf-theme-canvas,#f6f7f9));backdrop-filter:var(--dcuf-panel-backdrop,none);box-shadow:var(--dcuf-panel-shadow,var(--dcuf-theme-panel-shadow,0 20px 60px #0005));transform:translate(-50%,-50%);animation:dcuf-modern-panel-in var(--dcuf-motion-panel) cubic-bezier(.2,.8,.2,1); }
@@ -1834,10 +1834,11 @@ const __dcufSettingsPresenter = (() => {
         [data-dcuf-surface="personal-management"] .dcuf-management-content { flex:1 1 auto;min-height:0;overflow:auto; }
         [data-dcuf-surface="personal-management"] .dcuf-blocked-list { display:grid;gap:7px;margin:10px 0 0;padding:0;list-style:none; }
         [data-dcuf-surface="personal-management"] .dcuf-blocked-item { display:flex;align-items:center;justify-content:space-between;gap:9px;min-height:50px;padding:8px 10px;border:1px solid var(--dcuf-theme-border,#d9dde3);border-radius:13px;background:var(--dcuf-theme-card-top,#fff); }
-        [data-dcuf-surface="personal-management"] .dcuf-blocked-item.item-to-delete { border-color:color-mix(in srgb,#c43249 45%,var(--dcuf-theme-border,#d9dde3));background:color-mix(in srgb,#c43249 12%,var(--dcuf-theme-card-top,#fff));opacity:.72; }
+        [data-dcuf-surface="personal-management"] .dcuf-blocked-item.item-to-delete { border-color:color-mix(in srgb,#c43249 45%,var(--dcuf-theme-border,#d9dde3));background:color-mix(in srgb,#c43249 12%,var(--dcuf-theme-card-top,#fff));opacity:var(--dcuf-panel-pending-opacity,.72); }
+        [data-dcuf-surface="personal-management"] .dcuf-blocked-item.item-to-delete .dcuf-item-name { text-decoration:var(--dcuf-panel-pending-decoration,none); }
         [data-dcuf-surface="personal-management"] .dcuf-item-name { min-width:0;overflow-wrap:anywhere; }
         [data-dcuf-surface="personal-management"] .dcuf-delete-item { flex:0 0 auto;min-height:36px; }
-        [data-dcuf-surface="personal-management"] .dcuf-blocked-empty { display:grid;min-height:120px;place-items:center;color:var(--dcuf-theme-fg-muted,#687384);text-align:center; }
+        [data-dcuf-surface="personal-management"] .dcuf-blocked-empty { display:grid;min-height:120px;place-items:center;color:var(--dcuf-panel-empty-ink,var(--dcuf-theme-fg-muted,#687384));text-align:center; }
         [data-dcuf-surface="personal-backup"][data-dcuf-role="panel"] { --dcuf-panel-width:560px; }
         [data-dcuf-surface="personal-backup"] .dcuf-backup-body { display:grid;gap:10px; }
         [data-dcuf-surface="personal-backup"] .dcuf-import-controls { display:grid;gap:8px; }
@@ -1851,8 +1852,9 @@ const __dcufSettingsPresenter = (() => {
         [data-dcuf-surface="personal-manual"][data-dcuf-role="panel"] { --dcuf-panel-width:440px; }
         [data-dcuf-surface="personal-manual"] .dcuf-manual-form { display:grid;gap:12px; }
         [data-dcuf-surface="personal-manual"] .dcuf-manual-field[hidden] { display:none; }
-        [data-dcuf-surface="personal-manual"] .dcuf-manual-status[data-state="success"] { color:#16835f; }
-        [data-dcuf-surface="personal-manual"] .dcuf-manual-status[data-state="error"] { color:#c43249; }
+        [data-dcuf-surface="personal-manual"] .dcuf-manual-status[data-state="success"] { color:var(--dcuf-panel-status-success,#16835f); }
+        [data-dcuf-surface="personal-manual"] .dcuf-manual-status[data-state="error"] { color:var(--dcuf-panel-status-error,#c43249); }
+        [data-dcuf-surface="personal-manual"] .dcuf-manual-status[data-state="info"] { color:var(--dcuf-panel-status-info,#c43249); }
         [data-dcuf-surface="personal-selection"] { position:fixed;z-index:2147483646;left:50%;top:18px;width:min(460px,calc(100vw - 24px));padding:12px;border:1px solid var(--dcuf-theme-border-strong,#cbd2db);border-radius:16px;background:linear-gradient(145deg,var(--dcuf-theme-card-top,#fff),var(--dcuf-theme-card-bottom,#fafbfc));box-shadow:var(--dcuf-theme-panel-shadow,0 18px 42px #0003);transform:translateX(-50%); }
         [data-dcuf-surface="personal-selection"].dcuf-selection-prompt { display:grid;grid-template-columns:38px minmax(0,1fr) auto;align-items:center;gap:10px; }
         [data-dcuf-surface="personal-selection"] .dcuf-selection-prompt-icon { display:grid;width:36px;height:36px;place-items:center;border-radius:11px;background:var(--dcuf-theme-accent-soft,#e9efff);color:var(--dcuf-theme-accent-ink,#4263eb); }
@@ -13380,6 +13382,8 @@ const __dcufSettingsPresenter = (() => {
             --dcuf-b1-floating-filter: blur(8px) saturate(1.08);
             --dcuf-b1-structural-filter: blur(12px) saturate(1.1);
             --dcuf-panel-scrim: rgba(18,25,35,.22);
+            --dcuf-panel-status-error: #a52b40;
+            --dcuf-panel-status-success: #12694e;
             --dcuf-b1-rim: #fffffff2;
             --dcuf-b1-line: color-mix(in srgb, var(--dcuf-theme-border) 55%, var(--dcuf-b1-paper));
             --dcuf-b1-shadow: 0 12px 32px #2e5a5f12, 0 1px 3px #3651560b;
@@ -13395,6 +13399,8 @@ const __dcufSettingsPresenter = (() => {
             --dcuf-b1-floating: color-mix(in srgb, var(--dcuf-b1-paper) 76%, transparent);
             --dcuf-b1-sheen: linear-gradient(120deg, #ffffff0d, transparent 58%);
             --dcuf-panel-scrim: rgba(18,25,35,.28);
+            --dcuf-panel-status-error: #ff9ba9;
+            --dcuf-panel-status-success: #7cdbb4;
             --dcuf-b1-rim: color-mix(in srgb, var(--dcuf-theme-fg) 9%, transparent);
             --dcuf-b1-line: color-mix(in srgb, var(--dcuf-theme-fg) 5%, var(--dcuf-b1-paper));
             --dcuf-b1-shadow: 0 14px 34px #0003, 0 1px 2px #0003;
@@ -13428,6 +13434,10 @@ const __dcufSettingsPresenter = (() => {
             --dcuf-panel-close-hover: var(--dcuf-control-secondary-bg);
             --dcuf-panel-switch-thumb: #f7fbfa;
             --dcuf-panel-range-margin: 0;
+            --dcuf-panel-status-info: var(--dcuf-theme-fg);
+            --dcuf-panel-empty-ink: var(--dcuf-theme-fg);
+            --dcuf-panel-pending-opacity: 1;
+            --dcuf-panel-pending-decoration: line-through;
             /* Material values only: each existing presenter owns shape,
                positioning and state. No filtered native-popup ancestors. */
             /* Keep the specular edge above the label; dense primary tint
@@ -17974,6 +17984,7 @@ const ThemeModule = (() => {
                     return;
                 }
 
+                setStatus();
                 addButton.disabled = true;
                 addButton.textContent = '추가 중…';
                 try {
