@@ -260,3 +260,7 @@ B1_UI_EXPANSION_PREFLIGHT.md의 범위를 기존 부모 ID 아래에서 고른�
 - C-06/C-10: `image-comment-fold`, `image-comment-full`, `image-comment-compose-if-native`. 이미지 hover→원래 버튼→별도 이미지 루트를 구별한다. 접힌 미리보기에 입력창이 없다는 이유로 새 입력창을 만들거나 전체 상태를 N/A로 처리하지 않는다.
 - C-11~13: `textcon`, `dccon`, `comment-password`, `reply-password`. 글자콘/디시콘은 별개 내부 선택기이며 공용 루트는 활성 문맥의 소유자 하나만 꾸민다.
 - W-01~24/S-01~12/P-01~14/V-01~08: 기존 행의 각 편집 도구, 비밀번호 페이지/확인창, FAB→설정/관리→추가/백업, 미리보기/초안을 그대로 재사용한다. N-01~07 브라우저/OS 창은 웹 CSS 적용 대상과 구별한다.
+
+## P4 preflight observation — 2026-10-27
+
+B1_OWNED_PANELS_PREFLIGHT.md maps S-01–S-12/P-01–P-14 to12 actual root/entry families. Default light/dark states are observed, with empty/populated management, nested add/backup, palette bottom and16 draft geometry contexts. These are partial-child preflight observations; the original rows remain open for their unobserved behavior/error/geometry children. Product styling is not yet applied. Use that scoped map when changing the common owner; do not repeat all128 items.

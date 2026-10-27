@@ -2,19 +2,19 @@
 
 ## Current execution
 
-- Active plan: B1_IMAGE_COMMENTS.md small-action follow-up is scoped/validated. Next: P4 existing script menu/settings preflight with a tailored family reference before styling.
+- Active plan: B1_OWNED_PANELS_PREFLIGHT.md is observed with a tailored light/dark draft. Next is one common owned-panel material implementation, not twelve independent popup patches.
 - Workspace path: `.` (repository root; private prompt supplies exact nested worktree). AGENTS.md owns policy; preserve debug.log unread/unstaged.
-- Active stage: `header-navigation` formal admission open. General/image comment small actions are polished; whole UI/account/device and image-specific replies remain separate.
-- Accepted visual preference: compact B+B1, paper inputs and user-adopted C885 simple buttons. Higher-transparency button trial remains REJECTED. Small X follows the existing thin B1 mask with borderless rest, secondary hover and accent focus.
-- Source state: Source checkpoint base HEAD `b16eba53e43ffd25f10757c31b7c75716362916d` on `codex/ui-port-boundary`;4BEA changes only existing Mobile comment adapter/presenter. Read resulting checkpoint HEAD/status fresh.675A is the immediate behavior control.
-- Local-only state: `LOCAL_ONLY_EVIDENCE`; artifacts/b1-comment-actions-2026-10-27/ owns native button profiles, focused ledgers, same-context comparisons and viewer checks. One Chrome job/4GB floor; no unrelated app termination. Existing10067 image-comments viewer has current/before/ordinary light-dark images decoded.
-- Candidate fingerprint: `eb637b3335b03b3b942d166374f08c35faf622260af313d35e8e72dbd97dc25e`
-- Last current audit: PASS — scoped4BEA four affected registrations,12 small controls over3 contexts, full-image6 contexts and36 immediate comment observations. Six design pairs are REVIEWED with intended differences retained. Not pixel equality or whole-product/user approval;675A functional104 remains historical, not fresh4BEA coverage.
-- Current stage receipt: `verification/receipts/2026-10-27-b1-comment-actions.json` SHA-256 `7ED50F082A87910B9BD3E9786B0AC59A430B6FC34034ACF526F416B321049FE4`.
-- Accepted baseline: 675A is immediate scoped behavior control. User-reported X finish was missing there; its broad card/composer result never certifies small-action aesthetics. The new thin-X target is a local derived family reference, with user preference review pending.
-- Current artifact: Mobile3.5.5 `4BEA35A6DDDC6618A19BEC61B5A93F6483512B6544D3240F695B07466BDE3860` root/dist/guard; PC1.9.9 `D73A445F9A5013D295C49C199F77084D894E39F4E2455824185FA65D4E2C6212` unchanged, no fresh PC suite claimed. Current-version development rebuild; no metadata/storage/version/release change.
-- Blockers: No global live/authorization blocker. Native ordinary/image delete and clear structure observed read-only; no actual delete/submit/upload/AI/authentication/new mutating POST. Relation-read47965 stays separate.
-- Pending live checks: Current actual-extension/device/account, image-specific replies C-07 and formal whole UI/header admission. Native hidden display remains owned by site; synthetic callbacks prove preservation only within their scope. Four upload documents remain DEFERRED_USER_ACCEPTED. Single next task: P4 script menu/settings preflight.
+- Active stage: `header-navigation` formal admission open. P4 menu/settings preflight is ready; product application and its child-state/PC validation remain.
+- Accepted visual preference: compact B+B1, paper inputs and user-adopted C885 simple buttons. Higher-transparency button trial stays REJECTED. Owned-panel draft uses a thin14px close glyph within the existing44px target; dark inactive switch detail is NEEDS_WORK.
+- Source state: Source checkpoint base HEAD `d88cef8b66a497a50e8a1db236210b0fa6f5225b` on `codex/ui-port-boundary`; product source/runtime unchanged in this preflight. Read resulting checkpoint HEAD/status fresh.
+- Local-only state: `LOCAL_ONLY_EVIDENCE`; artifacts/b1-owned-panels-2026-10-27/ holds current/proposal inventories,16 layout contexts, backing probes and six-pair native comparison.10067 owned-panels viewer decoded48 current/proposal images; two displayed at a time. One Chrome job/4GB floor; no unrelated app termination.
+- Candidate fingerprint: `aad3cf75e455b316e19b19508875a3de0e30e67a2a58fbad433a6abf480178d9`
+- Last current audit: READY — preflight only:12 root families/light-dark,16 draft geometry contexts,14 close and16 footer hits,14 palette options reachable, backing transmission observed. Draft visual comparison retains NEEDS_WORK for dark inactive thumb; no product adoption/full P4 completion claim.
+- Current stage receipt: `verification/receipts/2026-10-27-b1-owned-panels-preflight.json` SHA-256 `3B73989ED9FE8CF5C96118A48D82BA9D7A22FD4F56E50230DD5329B926683C67`.
+- Accepted baseline: d88cef8 Mobile4BEA comment polish remains scoped/validated by its own receipt. P4 target is DRAFT, not a product golden.675A functional104 remains historical; no fresh whole Mobile/PC suite claimed for unchanged runtime.
+- Current artifact: Mobile3.5.5 `4BEA35A6DDDC6618A19BEC61B5A93F6483512B6544D3240F695B07466BDE3860` root/dist/guard; PC1.9.9 `D73A445F9A5013D295C49C199F77084D894E39F4E2455824185FA65D4E2C6212` unchanged. No rebuild, version, metadata, storage, registry or release change.
+- Blockers: No global live/authorization blocker. Product implementation remains separate from the isolated prototype. No real save/delete/import/download/clipboard/submit/upload/AI/authentication/new mutating POST. Relation-read47965 stays separate.
+- Pending live checks: Current actual-extension/device/account, image-specific replies C-07 and formal whole UI/header admission. P4 default/nested observations do not finish all S/P children or PC fallback. Four upload documents remain DEFERRED_USER_ACCEPTED. Single next task: existing-owner common-panel material implementation.
 
 ```dcuf-current-artifacts
 {"schemaVersion":1,"mobile":{"sha256":"4BEA35A6DDDC6618A19BEC61B5A93F6483512B6544D3240F695B07466BDE3860"},"pc":{"sha256":"D73A445F9A5013D295C49C199F77084D894E39F4E2455824185FA65D4E2C6212"}}
