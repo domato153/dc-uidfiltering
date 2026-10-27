@@ -2,22 +2,22 @@
 
 ## Current execution
 
-- Active plan: B1_UI_EXPANSION_PREFLIGHT.md → B1_EDITOR_MENUS.md (scoped result). Next: existing script menu/settings preflight; derive its family reference before new styling.
-- Workspace path: `.` (repository root; private prompt supplies exact nested worktree). AGENTS.md owns policy; preserve debug.log unread/unstaged.
-- Active stage: `header-navigation` formal admission open. Six in-document editor menus are scoped/validated; four external upload windows are user-accepted deferrals.
-- Accepted visual preference: User adopted the simple pre-transparency C885 button design. Higher-transparency face/shading trial is REJECTED; do not revive it. V3 remains overall family context, not a requirement to make these buttons translucent.
-- Source state: Source checkpoint base HEAD `9134f819b8dc2c501ce91765bb9ed9dae76633fd` on `codex/ui-port-boundary`; DD45 adds only existing-owner menu CSS. Read resulting checkpoint HEAD/status fresh;159F is the immediate behavior control.
-- Local-only state: `LOCAL_ONLY_EVIDENCE`; artifacts/b1-editor-popups-2026-10-26/ owns final menu captures, probes, scoped test ledgers and retained differences. One browser job/4GB floor; no unrelated app termination. Local viewer page/image HTTP200; app opening was queued.
-- Candidate fingerprint: `3983bfe8058ffdadd8acfd1d2b0228fc862c3de4b9971bf32b2e4acaebe4585e`
-- Last current audit: PASS — scoped DD45 Mobile154/PC D73 26/immediate native25; editor-menu detail12 pass, whole-frame category capture-offset differences12 retained (not pixel equality). Reference fidelity reviewed; formal whole UI/header/device/account/extension approval remains separate.
-- Current stage receipt: `verification/receipts/2026-10-26-b1-editor-menus.json` SHA-256 `168E66C91E6E246BB36A3B940B54F9AF1B1343D88646197A2E2A7FAA960B020C`.
-- Accepted baseline: User-adopted C885 simple buttons remain. DD45 menu material is scoped implementation review, not new user aesthetic approval.159F is immediate control; published/native functional authority stays distinct.
-- Current artifact: Mobile3.5.5 `DD457B20E250CF9E16F12862171DF38BF03AA76CC528EDBE5FD6D357A580D7D6` root/dist/guard; PC1.9.9 `D73A445F9A5013D295C49C199F77084D894E39F4E2455824185FA65D4E2C6212` root/dist unchanged. Current-version development rebuild only; no release/version/metadata/storage change.
-- Blockers: No global live/authorization blocker. No real submit/upload/AI/authentication/new POST authority; relation-read47965 remains separate. Local preview HTTP page/image responds; selected-image decoding is checked before handoff.
-- Pending live checks: Actual Summernote/native nested palette/list/table feedback, device/extension/account and formal whole-UI/header admission remain. Four separate upload windows are DEFERRED_USER_ACCEPTED. Next bounded task: P4 existing script menu/settings preflight.
+- Active plan: B1_IMAGE_COMMENTS.md scoped result. Next: P4 existing script menu/settings preflight, deriving its current-theme family target before new styling.
+- Workspace path: `.` (repository root; private prompt supplies the exact nested worktree). AGENTS.md owns policy. Preserve debug.log unread/unstaged.
+- Active stage: `header-navigation` formal admission open. Image-comment parity is scoped; image-specific replies/account/device/current installed extension and whole UI remain separate.
+- Accepted visual preference: compact B+B1, paper inputs and user-adopted simple pre-transparency C885 buttons. Higher-transparency button trial is REJECTED; do not revive it.
+- Source state: Source checkpoint base HEAD `31aca8bd9fc7ada8893c54cf3745a808040a1263` on `codex/ui-port-boundary`;675A changes only the existing Mobile comment adapter/presenter. Read resulting checkpoint HEAD/status fresh. DD45 is immediate control.
+- Local-only state: `LOCAL_ONLY_EVIDENCE`; artifacts/b1-image-comments-2026-10-27/ owns native sanitized discovery, final fixtures/ledgers/comparisons and viewer checks. One Chrome job/4GB floor; no unrelated app termination. Existing10067 image-comments viewer decodes all four images.
+- Candidate fingerprint: `c0c9c6c541f2e0e14e6c05bc9c203167914d2209aa1a648bc92aa0cf25e3e57b`
+- Last current audit: PASS — scoped675A Mobile functional104 (new image contract covers six contexts), immediate comment behavior/invariants36, source boundaries38/source controls8. Four whole/composer design comparisons are REVIEWED with intentional pixel differences retained; not pixel equality or product/user approval.
+- Current stage receipt: `verification/receipts/2026-10-27-b1-image-comments.json` SHA-256 `7A63FC5EBD65C06FA66608803A0E92BAA880E1E9026734423446E3C3907EAE0E`.
+- Accepted baseline: DD45 is the prior scoped implementation and behavior control; published/native functional authority is distinct. The ordinary comment-derived image target is a family reference, not a new user design adoption.
+- Current artifact: Mobile3.5.5 `675A711D95060B5FEDE148026F9E7A4F5E4F69D284199A70F34F09161D9EDD92` root/dist/guard; PC1.9.9 `D73A445F9A5013D295C49C199F77084D894E39F4E2455824185FA65D4E2C6212` unchanged (no fresh PC suite claimed). Current-version development rebuild; no release/version/metadata/storage change.
+- Blockers: No global live/authorization blocker. Original real image fold→open was observed read-only. No real submit/upload/AI/authentication/new mutating POST; relation-read47965 remains separate. Backend miscropped discovery images are excluded from evidence.
+- Pending live checks: 675A actual native extension/device/account and image-specific replies C-07; whole UI/header formal admission. Short stress scrolling may be needed to clear persistent FAB, as positively tested. Six editor-menu result remains in its own DD45 receipt; four upload windows remain DEFERRED_USER_ACCEPTED. Single next task: P4 script menu/settings preflight.
 
 ```dcuf-current-artifacts
-{"schemaVersion":1,"mobile":{"sha256":"DD457B20E250CF9E16F12862171DF38BF03AA76CC528EDBE5FD6D357A580D7D6"},"pc":{"sha256":"D73A445F9A5013D295C49C199F77084D894E39F4E2455824185FA65D4E2C6212"}}
+{"schemaVersion":1,"mobile":{"sha256":"675A711D95060B5FEDE148026F9E7A4F5E4F69D284199A70F34F09161D9EDD92"},"pc":{"sha256":"D73A445F9A5013D295C49C199F77084D894E39F4E2455824185FA65D4E2C6212"}}
 ```
 
 ## Draft-complete checkpoint — 2026-10-21

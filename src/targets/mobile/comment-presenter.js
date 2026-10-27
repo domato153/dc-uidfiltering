@@ -23,6 +23,12 @@
                 position: relative;
                 overflow: visible;
             }
+            [data-dcuf-role="image-comment-pane"] {
+                inline-size: 100%;
+                max-inline-size: 100%;
+                border: 0;
+                box-sizing: border-box;
+            }
             [data-dcuf-role="comment-wrapper"]:is([data-dcuf-state="closed"], [data-dcuf-state="image-closed"]) {
                 overflow: hidden;
             }
@@ -129,6 +135,24 @@
                 border-block-start: 0;
             }
             [data-dcuf-role="reply-info"] { flex-wrap: wrap; }
+            [data-dcuf-role="comment-content-stack"] {
+                display: flex;
+                flex-direction: column;
+                min-inline-size: 0;
+                inline-size: 100%;
+                gap: 7px;
+            }
+            [data-dcuf-role="comment-content-stack"] > [data-dcuf-role="comment-author-group"] {
+                float: none;
+                inline-size: auto;
+                margin: 0;
+            }
+            [data-dcuf-role="comments-root"] [data-dcuf-role="comment-content-stack"] [data-dcuf-role="comment-body"],
+            [data-dcuf-role="comments-root"] [data-dcuf-role="comment-content-stack"] [data-dcuf-role="comment-text"] {
+                inline-size: 100%;
+                max-inline-size: 100%;
+                box-sizing: border-box;
+            }
             [data-dcuf-role="reply-info"] > [data-dcuf-role="reply-body"] { flex: 1 1 100%; }
             [data-dcuf-role="comment-author-group"] {
                 position: relative;
@@ -297,6 +321,19 @@
                 background: var(--dcuf-comment-input);
                 overflow: visible;
                 box-sizing: border-box;
+                float: none;
+                margin: 0;
+            }
+            [data-dcuf-surface="comments-replies"][data-dcuf-role="comments-root"] [data-dcuf-role="comment-input-box"] {
+                float: none;
+                min-inline-size: 0;
+                inline-size: 100%;
+                box-sizing: border-box;
+            }
+            [data-dcuf-role="comment-input-hint"] { color: var(--dcuf-comment-muted); }
+            [data-dcuf-comment-role="image-nickname-input"] {
+                /* Existing sync hides the canonical input; native inline style hides this editable one. */
+                display: block !important;
             }
             [data-dcuf-surface="comments-replies"][data-dcuf-role="comments-root"] [data-dcuf-role="native-comment-field"],
             [data-dcuf-surface="comments-replies"][data-dcuf-role="comments-root"] [data-dcuf-role="native-comment-textarea"] {
@@ -335,6 +372,11 @@
                 border-radius: 0 0 12px 12px;
                 box-sizing: border-box;
                 overflow: visible;
+            }
+            [data-dcuf-role="comments-root"] [data-dcuf-role="comment-composer"][data-dcuf-state="image"] [data-dcuf-role="comment-composer-actions"] {
+                float: none;
+                margin: 0;
+                inline-size: 100%;
             }
             [data-dcuf-role="comment-composer-actions"]::after { content: none; display: none; }
             [data-dcuf-role="comment-tool-group"] {
@@ -389,6 +431,12 @@
                 transition: transform 110ms ease, filter 110ms ease;
                 background: var(--dcuf-control-primary-bg);
                 box-shadow: var(--dcuf-control-shadow);
+            }
+            /* Native image composers size this action70x70 through five
+               host classes. The image-state reset changes size, not paint. */
+            [data-dcuf-role="comments-root"] [data-dcuf-role="comment-composer"][data-dcuf-state="image"] [data-dcuf-role="comment-composer-actions"] [data-dcuf-role="native-comment-submit"] {
+                inline-size: auto;
+                block-size: auto;
             }
             [data-dcuf-role="native-comment-header-action"]:active,
             [data-dcuf-surface="comments-replies"][data-dcuf-role="comments-root"] [data-dcuf-role="native-comment-submit"]:active {

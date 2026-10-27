@@ -264,6 +264,12 @@
       "intendedDelta": "b1-comments-reading-and-native-picker-glass-v1",
       "cascadeExceptions": [
         {
+          "selector": "[data-dcuf-comment-role=\"image-nickname-input\"]",
+          "property": "display",
+          "hostCollision": "Public6778319 image editable nickname retains native inline display:none; existing image-comment-nick-sync hides the canonical gallery input. Restore only the editable input in presentation, preserving original inline state and nickname semantics.",
+          "testRef": "B1 image comments: full native composer parity and lifecycle"
+        },
+        {
           "selector": "[data-dcuf-role=\"native-comment-popup\"][data-dcuf-comment-role=\"comment-picker\"]",
           "property": "left",
           "hostCollision": "Public6778319 textcon/DCCon write inline left:0px; only those two verified nested pickers use the approved centered dialog geometry. No generic native popup override.",

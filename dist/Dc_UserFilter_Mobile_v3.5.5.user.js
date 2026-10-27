@@ -4623,6 +4623,12 @@ const __dcufSettingsPresenter = (() => {
                 position: relative;
                 overflow: visible;
             }
+            [data-dcuf-role="image-comment-pane"] {
+                inline-size: 100%;
+                max-inline-size: 100%;
+                border: 0;
+                box-sizing: border-box;
+            }
             [data-dcuf-role="comment-wrapper"]:is([data-dcuf-state="closed"], [data-dcuf-state="image-closed"]) {
                 overflow: hidden;
             }
@@ -4729,6 +4735,24 @@ const __dcufSettingsPresenter = (() => {
                 border-block-start: 0;
             }
             [data-dcuf-role="reply-info"] { flex-wrap: wrap; }
+            [data-dcuf-role="comment-content-stack"] {
+                display: flex;
+                flex-direction: column;
+                min-inline-size: 0;
+                inline-size: 100%;
+                gap: 7px;
+            }
+            [data-dcuf-role="comment-content-stack"] > [data-dcuf-role="comment-author-group"] {
+                float: none;
+                inline-size: auto;
+                margin: 0;
+            }
+            [data-dcuf-role="comments-root"] [data-dcuf-role="comment-content-stack"] [data-dcuf-role="comment-body"],
+            [data-dcuf-role="comments-root"] [data-dcuf-role="comment-content-stack"] [data-dcuf-role="comment-text"] {
+                inline-size: 100%;
+                max-inline-size: 100%;
+                box-sizing: border-box;
+            }
             [data-dcuf-role="reply-info"] > [data-dcuf-role="reply-body"] { flex: 1 1 100%; }
             [data-dcuf-role="comment-author-group"] {
                 position: relative;
@@ -4897,6 +4921,19 @@ const __dcufSettingsPresenter = (() => {
                 background: var(--dcuf-comment-input);
                 overflow: visible;
                 box-sizing: border-box;
+                float: none;
+                margin: 0;
+            }
+            [data-dcuf-surface="comments-replies"][data-dcuf-role="comments-root"] [data-dcuf-role="comment-input-box"] {
+                float: none;
+                min-inline-size: 0;
+                inline-size: 100%;
+                box-sizing: border-box;
+            }
+            [data-dcuf-role="comment-input-hint"] { color: var(--dcuf-comment-muted); }
+            [data-dcuf-comment-role="image-nickname-input"] {
+                /* Existing sync hides the canonical input; native inline style hides this editable one. */
+                display: block !important;
             }
             [data-dcuf-surface="comments-replies"][data-dcuf-role="comments-root"] [data-dcuf-role="native-comment-field"],
             [data-dcuf-surface="comments-replies"][data-dcuf-role="comments-root"] [data-dcuf-role="native-comment-textarea"] {
@@ -4935,6 +4972,11 @@ const __dcufSettingsPresenter = (() => {
                 border-radius: 0 0 12px 12px;
                 box-sizing: border-box;
                 overflow: visible;
+            }
+            [data-dcuf-role="comments-root"] [data-dcuf-role="comment-composer"][data-dcuf-state="image"] [data-dcuf-role="comment-composer-actions"] {
+                float: none;
+                margin: 0;
+                inline-size: 100%;
             }
             [data-dcuf-role="comment-composer-actions"]::after { content: none; display: none; }
             [data-dcuf-role="comment-tool-group"] {
@@ -4989,6 +5031,12 @@ const __dcufSettingsPresenter = (() => {
                 transition: transform 110ms ease, filter 110ms ease;
                 background: var(--dcuf-control-primary-bg);
                 box-shadow: var(--dcuf-control-shadow);
+            }
+            /* Native image composers size this action70x70 through five
+               host classes. The image-state reset changes size, not paint. */
+            [data-dcuf-role="comments-root"] [data-dcuf-role="comment-composer"][data-dcuf-state="image"] [data-dcuf-role="comment-composer-actions"] [data-dcuf-role="native-comment-submit"] {
+                inline-size: auto;
+                block-size: auto;
             }
             [data-dcuf-role="native-comment-header-action"]:active,
             [data-dcuf-surface="comments-replies"][data-dcuf-role="comments-root"] [data-dcuf-role="native-comment-submit"]:active {
@@ -5280,7 +5328,9 @@ const __dcufSettingsPresenter = (() => {
             const transaction = transactions.get(root);
             if (!transaction) return;
             Array.from(transaction.entries()).forEach(([element, snapshot]) => {
-                if (element === root || root.contains(element)) return;
+                // An image root also owns its immediate native fold/open pane.
+                if (element === root || root.contains(element)
+                    || element === root.parentElement && element.matches('.img_comment')) return;
                 restoreElement(element, snapshot);
                 transaction.delete(element);
             });
@@ -5321,6 +5371,7 @@ const __dcufSettingsPresenter = (() => {
             });
             markAll(root, '.reply_list > li', 'reply-item', (item) => itemState(item, 'reply'));
             markAll(root, '.cmt_info', 'comment-info');
+            markAll(root, '.cmt_info > .addbox', 'comment-content-stack');
             markAll(root, '.reply_info', 'reply-info');
             markAll(root, '.cmt_nickbox', 'comment-author-group');
             root.querySelectorAll('.gall_writer, .nickname').forEach((author) => markCommentContext(
@@ -5329,7 +5380,7 @@ const __dcufSettingsPresenter = (() => {
                 'author',
                 author.classList.contains('me') || author.querySelector('.nickname.me') ? 'self' : 'other'
             ));
-            markAll(root, '.cmt_info > .fr, .reply_info > .fr, .date_time, .ip, .txt_del, .cmt_mdf_del', 'comment-meta');
+            markAll(root, '.cmt_info > .fr, .cmt_info > .addbox > .fr, .reply_info > .fr, .date_time, .ip, .txt_del, .cmt_mdf_del', 'comment-meta');
             markAll(root, '.cmt_txtbox', 'comment-body');
             root.querySelectorAll('.reply_list .cmt_txtbox').forEach((body) => mark(root, body, { role: 'reply-body' }));
             markAll(root, '.usertxt', 'comment-text');
@@ -5353,6 +5404,11 @@ const __dcufSettingsPresenter = (() => {
                 mark(root, composer.querySelector(':scope > .fl, .user_info_input'), { role: 'comment-identity-fields' });
                 composer.querySelectorAll('.user_info_input').forEach((shell) => mark(root, shell, { role: 'comment-field-shell' }));
                 mark(root, composer.querySelector('.cmt_txt_cont'), { role: 'comment-editor' });
+                mark(root, composer.querySelector('.cmt_write'), { role: 'comment-input-box' });
+                composer.querySelectorAll('.cmt_textarea_label').forEach(label => mark(root, label, { role: 'comment-input-hint' }));
+                if (composerState(composer) === 'image') {
+                    composer.querySelectorAll('input[id^="img_cmt_name_"]').forEach(field => markCommentContext(root, field, 'image-nickname-input'));
+                }
                 mark(root, composer.querySelector('.cmt_cont_bottm, .cmt_btn_bot'), { role: 'comment-composer-actions' });
                 mark(root, composer.querySelector('.cmt_cont_bottm > .fr, .cmt_btn_bot'), { role: 'comment-submit-group' });
                 mark(root, composer.querySelector('.dccon_guidebox'), { role: 'comment-tool-group' });
@@ -5423,6 +5479,9 @@ const __dcufSettingsPresenter = (() => {
                 role: 'comments-root',
                 state: document.body?.classList.contains('dc-filter-dark-mode') ? 'dark' : 'ready',
             });
+            if (root.matches('.view_comment.image_comment') && root.parentElement?.matches('.img_comment')) {
+                mark(root, root.parentElement, { role: 'image-comment-pane' });
+            }
             root.querySelectorAll('.comment_wrap, div[id^="comment_wrap_"]').forEach((wrapper) => {
                 const image = Boolean(wrapper.closest('.view_comment.image_comment'));
                 mark(root, wrapper, {

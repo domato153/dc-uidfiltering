@@ -1,0 +1,103 @@
+{
+  "schemaVersion": 1,
+  "kind": "B1_IMAGE_COMMENT_SCOPED_RECORD",
+  "status": "SCOPED_IMPLEMENTATION_REVIEWED",
+  "sourceBaseHead": "31aca8bd9fc7ada8893c54cf3745a808040a1263",
+  "candidateFingerprint": "c0c9c6c541f2e0e14e6c05bc9c203167914d2209aa1a648bc92aa0cf25e3e57b",
+  "artifact": {
+    "mobileSha256": "675A711D95060B5FEDE148026F9E7A4F5E4F69D284199A70F34F09161D9EDD92",
+    "pcSha256": "D73A445F9A5013D295C49C199F77084D894E39F4E2455824185FA65D4E2C6212"
+  },
+  "scope": {
+    "checklist": [
+      "C-06",
+      "C-10"
+    ],
+    "originalNativeExpansionObserved": true,
+    "candidateRealSiteInstalledExtension": "NOT_RUN",
+    "actualSubmission": false,
+    "nativeOwnersPreserved": true,
+    "sharedPcRuntimeChanged": false,
+    "wholeUiApproved": false
+  },
+  "reference": {
+    "selectedImage": "docs/design/b1-image-comments-family-light-2026-10-27.png",
+    "selectedImageSha256": "589C78DDB3B5707D6215E55671A385DFDB050520CFBC996A2C308555663549EA",
+    "kind": "INCUMBENT_ORDINARY_FAMILY_DERIVED_TARGET",
+    "controlArtifactSha256": "DD457B20E250CF9E16F12862171DF38BF03AA76CC528EDBE5FD6D357A580D7D6"
+  },
+  "verification": {
+    "mobileFunctional": 104,
+    "imageContractContexts": 6,
+    "immediateCommentSemanticObservations": 36,
+    "semanticDifferences": 0,
+    "candidateInvariantFailures": 0,
+    "finalFixtureControlNegative": "EXPECTED_ADJACENCY_FAILURE",
+    "visualComparisonCases": 4,
+    "pixelDifferencesRetained": 4,
+    "referenceFidelity": "REVIEWED",
+    "productApproved": false,
+    "uiBoundaries": 38,
+    "sourceContractControls": 8,
+    "architectureLinks": "PASS",
+    "currentVersionArtifacts": "PASS",
+    "formalAcceptance": "NOT_RUN",
+    "pcSuite": "NOT_RERUN_UNCHANGED_RUNTIME",
+    "review": "FIXTURE_DUPLICATE_FINDING_FIXED_NO_REMAINING_BLOCKER",
+    "impeccableDetector": "NO_REGEX_FINDINGS"
+  },
+  "resources": {
+    "oneBrowserJobAtATime": true,
+    "startMemoryFloorGb": 4,
+    "unrelatedAppsTerminated": false
+  },
+  "limitations": [
+    "Native full expansion was observed without the candidate userscript; candidate evidence is synthetic native-shaped source testing. No real submit/device/account/current installed-extension qualification.",
+    "Image-specific replies C-07 remain unobserved. External upload documents remain user-accepted deferrals.",
+    "Short stress scrolling may be necessary to put Register clear of the persistent FAB; positive hit test uses normal scrolling.",
+    "Ordinary-derived reference versus native image layout has reviewed metadata/spacing/hint differences; no whole or detail pixel equality claimed.",
+    "Impeccable scan is static/regex, not an aesthetic or rendered quality certificate."
+  ],
+  "evidence": [
+    {
+      "path": "artifacts/b1-image-comments-2026-10-27/final-functional-ledger.json",
+      "sha256": "58DFED65C5771A96D538E291D8B851902F7F74B64558A87369E92F85CC7D5FF6",
+      "disposition": "LOCAL_ONLY_EVIDENCE"
+    },
+    {
+      "path": "artifacts/b1-image-comments-2026-10-27/final-focused-v2.json",
+      "sha256": "53D80B0366EE08FA78FEDD75F96221056853AFAE6AEA25BA98C7A58927F9F589",
+      "disposition": "LOCAL_ONLY_EVIDENCE"
+    },
+    {
+      "path": "artifacts/b1-image-comments-2026-10-27/red-final-fixture.json",
+      "sha256": "09AD9566424DFA8A83060E25BF50B1AC43A98780614FF376FE3C6BADD38D12C0",
+      "disposition": "LOCAL_ONLY_EVIDENCE"
+    },
+    {
+      "path": "artifacts/b1-image-comments-2026-10-27/comment-comparison.json",
+      "sha256": "C48C70666DCCB6F81EF6C11B7595DC5AC9FD63E5ED407E333C9FF8B18342EDB5",
+      "disposition": "LOCAL_ONLY_EVIDENCE"
+    },
+    {
+      "path": "artifacts/b1-image-comments-2026-10-27/visual-manifest.json",
+      "sha256": "AA5D6DD111743088789BED69EA4527D78F99C908F8ECAFA22BE41226BA8725D4",
+      "disposition": "LOCAL_ONLY_EVIDENCE"
+    },
+    {
+      "path": "artifacts/b1-image-comments-2026-10-27/comparison-final/review.json",
+      "sha256": "85BF134508F95E5E8A26684B000446658C4F8FF20658BFADCD3D591B0ACB572D",
+      "disposition": "LOCAL_ONLY_EVIDENCE"
+    },
+    {
+      "path": "artifacts/b1-image-comments-2026-10-27/viewer-check.json",
+      "sha256": "01BC0E3A9CE9CF4FA299466E6B3B27E8B2CE84C61FC8D0CC2BE82FAA5868A7CB",
+      "disposition": "LOCAL_ONLY_EVIDENCE"
+    },
+    {
+      "path": "artifacts/b1-image-comments-2026-10-27/impeccable-detector.json",
+      "sha256": "A5338D955B09046EC0B16F3A9625B7955C763AAE07DC722E474E6078745F932F",
+      "disposition": "LOCAL_ONLY_EVIDENCE"
+    }
+  ]
+}

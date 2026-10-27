@@ -24,6 +24,7 @@ import { runArticleRepairContract } from './ui-repair-article-contract.mjs';
 import { runDialogRepairContract } from './ui-repair-dialog-contract.mjs';
 import { runLiveControlContract } from './ui-live-control-contract.mjs';
 import { runB1ContentContract } from './ui-b1-content-contract.mjs';
+import { runB1ImageCommentsContract } from './ui-b1-image-comments-contract.mjs';
 import { runB1ArticleActionsContract } from './ui-b1-article-actions-contract.mjs';
 import { runSurfaceObservationContract } from './harness/surface-observation-contract.mjs';
 import { runB1GallerySearchContract } from './ui-b1-gallery-search-contract.mjs';
@@ -74,6 +75,7 @@ async function settleThemeTransitions(page) {
 
 mobileTest('live native controls: palette category sprites comment and action ownership', 'functional', runLiveControlContract);
 mobileTest('B1 content: native picker isolation glass and original input', 'functional', runB1ContentContract);
+mobileTest('B1 image comments: full native composer parity and lifecycle', 'functional', runB1ImageCommentsContract);
 mobileTest('B1 article actions: native popup glass and nested forms', 'functional', runB1ArticleActionsContract);
 mobileTest('surface observation captures native root and ancestor CSS without mutation', 'functional', runSurfaceObservationContract);
 mobileTest('B1 gallery search: native door children and header layers', 'functional', runB1GallerySearchContract);

@@ -99,7 +99,9 @@
             const transaction = transactions.get(root);
             if (!transaction) return;
             Array.from(transaction.entries()).forEach(([element, snapshot]) => {
-                if (element === root || root.contains(element)) return;
+                // An image root also owns its immediate native fold/open pane.
+                if (element === root || root.contains(element)
+                    || element === root.parentElement && element.matches('.img_comment')) return;
                 restoreElement(element, snapshot);
                 transaction.delete(element);
             });
@@ -140,6 +142,7 @@
             });
             markAll(root, '.reply_list > li', 'reply-item', (item) => itemState(item, 'reply'));
             markAll(root, '.cmt_info', 'comment-info');
+            markAll(root, '.cmt_info > .addbox', 'comment-content-stack');
             markAll(root, '.reply_info', 'reply-info');
             markAll(root, '.cmt_nickbox', 'comment-author-group');
             root.querySelectorAll('.gall_writer, .nickname').forEach((author) => markCommentContext(
@@ -148,7 +151,7 @@
                 'author',
                 author.classList.contains('me') || author.querySelector('.nickname.me') ? 'self' : 'other'
             ));
-            markAll(root, '.cmt_info > .fr, .reply_info > .fr, .date_time, .ip, .txt_del, .cmt_mdf_del', 'comment-meta');
+            markAll(root, '.cmt_info > .fr, .cmt_info > .addbox > .fr, .reply_info > .fr, .date_time, .ip, .txt_del, .cmt_mdf_del', 'comment-meta');
             markAll(root, '.cmt_txtbox', 'comment-body');
             root.querySelectorAll('.reply_list .cmt_txtbox').forEach((body) => mark(root, body, { role: 'reply-body' }));
             markAll(root, '.usertxt', 'comment-text');
@@ -172,6 +175,11 @@
                 mark(root, composer.querySelector(':scope > .fl, .user_info_input'), { role: 'comment-identity-fields' });
                 composer.querySelectorAll('.user_info_input').forEach((shell) => mark(root, shell, { role: 'comment-field-shell' }));
                 mark(root, composer.querySelector('.cmt_txt_cont'), { role: 'comment-editor' });
+                mark(root, composer.querySelector('.cmt_write'), { role: 'comment-input-box' });
+                composer.querySelectorAll('.cmt_textarea_label').forEach(label => mark(root, label, { role: 'comment-input-hint' }));
+                if (composerState(composer) === 'image') {
+                    composer.querySelectorAll('input[id^="img_cmt_name_"]').forEach(field => markCommentContext(root, field, 'image-nickname-input'));
+                }
                 mark(root, composer.querySelector('.cmt_cont_bottm, .cmt_btn_bot'), { role: 'comment-composer-actions' });
                 mark(root, composer.querySelector('.cmt_cont_bottm > .fr, .cmt_btn_bot'), { role: 'comment-submit-group' });
                 mark(root, composer.querySelector('.dccon_guidebox'), { role: 'comment-tool-group' });
@@ -242,6 +250,9 @@
                 role: 'comments-root',
                 state: document.body?.classList.contains('dc-filter-dark-mode') ? 'dark' : 'ready',
             });
+            if (root.matches('.view_comment.image_comment') && root.parentElement?.matches('.img_comment')) {
+                mark(root, root.parentElement, { role: 'image-comment-pane' });
+            }
             root.querySelectorAll('.comment_wrap, div[id^="comment_wrap_"]').forEach((wrapper) => {
                 const image = Boolean(wrapper.closest('.view_comment.image_comment'));
                 mark(root, wrapper, {
