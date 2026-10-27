@@ -1,0 +1,10 @@
+/* Independent refinement recipe on preserved DC0B; not a product build input. */
+[data-dcuf-surface] .dcuf-settings-help,
+[data-dcuf-surface] .dcuf-field-note {
+    color:color-mix(in srgb,var(--dcuf-theme-fg) 75%,var(--dcuf-theme-fg-muted));
+}
+[data-dcuf-surface="headtext-settings"] .dcuf-saved-rule > .dcuf-button,
+[data-dcuf-surface="personal-selection"] .dcuf-selection-option > .dcuf-button {
+    flex:0 0 auto;
+    white-space:nowrap;
+}

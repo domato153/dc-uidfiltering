@@ -68,6 +68,7 @@
             --dcuf-panel-range-margin: 0;
             --dcuf-panel-status-info: var(--dcuf-theme-fg);
             --dcuf-panel-empty-ink: var(--dcuf-theme-fg);
+            --dcuf-panel-help-ink: color-mix(in srgb,var(--dcuf-theme-fg) 75%,var(--dcuf-theme-fg-muted));
             --dcuf-panel-pending-opacity: 1;
             --dcuf-panel-pending-decoration: line-through;
             /* Material values only: each existing presenter owns shape,

@@ -804,7 +804,7 @@
                 let importedList;
                 try {
                     importedList = JSON.parse(jsonString);
-                    if (typeof importedList !== 'object' || !importedList.uids || !importedList.nicknames || !importedList.ips) {
+                    if (!importedList || !Array.isArray(importedList.uids) || !Array.isArray(importedList.nicknames) || !Array.isArray(importedList.ips)) {
                         throw new Error('Invalid data format');
                     }
                 } catch (err) {

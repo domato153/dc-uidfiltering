@@ -44,4 +44,4 @@ Current B1 P3: [B1_CONTROL_MATERIAL.md](B1_CONTROL_MATERIAL.md) owns the scoped 
 
 - B1 normal-page glass / 뒤 배경·윤곽 확대 비교: B1_GLASS_TRANSMISSION.md owns the current common material, actual scrim ordering, same80×150 region at3×, selected reference and existing-owner implementation. Earlier denser P4 target/above-scrim plates are superseded for material judgment.
 
-- P4 conditional feedback / 오류·중복·빈 목록·삭제 예정·중첩 닫기: [B1_OWNED_CONDITIONAL_FINISH.md](B1_OWNED_CONDITIONAL_FINISH.md) owns the current DC0B/4121 scoped result and107 split functional/72 layout evidence. CURRENT/NEXT own the remaining input/tool child inventory; this does not finish all S/P children.
+- P4 conditional feedback / 오류·중복·빈 목록·삭제 예정·중첩 닫기: [B1_OWNED_CONDITIONAL_FINISH.md](B1_OWNED_CONDITIONAL_FINISH.md) owns the current DC0B/4121 scoped result and107 split functional/72 layout evidence. [B1_OWNED_INPUT_CHILDREN.md](B1_OWNED_INPUT_CHILDREN.md) now closes the selected shortcut/headtext/author/backup/size slice on1593/EF24 with focused8 Mobile/15 PC and72 layout observations. CURRENT/NEXT route image-reply C-07 discovery; neither slice finishes all S/P children.
