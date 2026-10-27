@@ -152,6 +152,7 @@
                 author.classList.contains('me') || author.querySelector('.nickname.me') ? 'self' : 'other'
             ));
             markAll(root, '.cmt_info > .fr, .cmt_info > .addbox > .fr, .reply_info > .fr, .date_time, .ip, .txt_del, .cmt_mdf_del', 'comment-meta');
+            root.querySelectorAll('.cmt_mdf_del > .btn_cmt_delete').forEach(button => markCommentContext(root, button, 'icon-action', 'delete'));
             markAll(root, '.cmt_txtbox', 'comment-body');
             root.querySelectorAll('.reply_list .cmt_txtbox').forEach((body) => mark(root, body, { role: 'reply-body' }));
             markAll(root, '.usertxt', 'comment-text');
@@ -174,6 +175,10 @@
                 mark(root, composer, { role: 'comment-composer', state: composerState(composer) });
                 mark(root, composer.querySelector(':scope > .fl, .user_info_input'), { role: 'comment-identity-fields' });
                 composer.querySelectorAll('.user_info_input').forEach((shell) => mark(root, shell, { role: 'comment-field-shell' }));
+                composer.querySelectorAll('.user_info_input > .btn_circledel').forEach(button => {
+                    markCommentContext(root, button, 'icon-action', 'clear');
+                    markCommentContext(root, button.parentElement, 'nickname-field');
+                });
                 mark(root, composer.querySelector('.cmt_txt_cont'), { role: 'comment-editor' });
                 mark(root, composer.querySelector('.cmt_write'), { role: 'comment-input-box' });
                 composer.querySelectorAll('.cmt_textarea_label').forEach(label => mark(root, label, { role: 'comment-input-hint' }));

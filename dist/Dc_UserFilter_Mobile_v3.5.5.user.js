@@ -4784,6 +4784,45 @@ const __dcufSettingsPresenter = (() => {
                 font-size: 12px;
                 white-space: nowrap;
             }
+            [data-dcuf-surface="comments-replies"][data-dcuf-role="comments-root"] [data-dcuf-comment-role="icon-action"] {
+                position: relative;
+                inline-size: 32px;
+                block-size: 32px;
+                margin: 0;
+                padding: 0;
+                border: 0;
+                border-radius: 8px;
+                appearance: none;
+                background: transparent;
+                box-shadow: none;
+                color: var(--dcuf-comment-muted);
+                font-size: 0;
+                line-height: 0;
+                cursor: pointer;
+                box-sizing: border-box;
+            }
+            [data-dcuf-surface="comments-replies"][data-dcuf-role="comments-root"] [data-dcuf-comment-role="icon-action"]::before {
+                content: "";
+                position: absolute;
+                inset-block-start: 50%;
+                inset-inline-start: 50%;
+                inline-size: 14px;
+                block-size: 14px;
+                background: currentColor;
+                mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='m4 4 8 8M12 4l-8 8' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E") center/contain no-repeat;
+                transform: translate(-50%, -50%);
+            }
+            [data-dcuf-surface="comments-replies"][data-dcuf-role="comments-root"] [data-dcuf-comment-role="icon-action"]:not(:disabled):hover { background: var(--dcuf-control-secondary-bg); }
+            [data-dcuf-comment-role="icon-action"]:focus-visible { outline: 2px solid var(--dcuf-comment-accent); outline-offset: 2px; }
+            [data-dcuf-comment-role="icon-action"]:disabled { opacity: .5; cursor: default; }
+            [data-dcuf-surface="comments-replies"][data-dcuf-role="comments-root"] [data-dcuf-comment-role="icon-action"][hidden] { display: none; }
+            [data-dcuf-comment-role="nickname-field"] { position: relative; }
+            [data-dcuf-surface="comments-replies"][data-dcuf-role="comments-root"] [data-dcuf-comment-role="nickname-field"] [data-dcuf-role="native-comment-field"] { padding-inline-end: 44px; }
+            [data-dcuf-surface="comments-replies"][data-dcuf-role="comments-root"] [data-dcuf-comment-role="icon-action"][data-dcuf-comment-state="clear"] {
+                position: absolute;
+                inset-block-start: 3px;
+                inset-inline-end: 4px;
+            }
             [data-dcuf-role="comment-body"],
             [data-dcuf-role="reply-body"] {
                 position: static;
@@ -5381,6 +5420,7 @@ const __dcufSettingsPresenter = (() => {
                 author.classList.contains('me') || author.querySelector('.nickname.me') ? 'self' : 'other'
             ));
             markAll(root, '.cmt_info > .fr, .cmt_info > .addbox > .fr, .reply_info > .fr, .date_time, .ip, .txt_del, .cmt_mdf_del', 'comment-meta');
+            root.querySelectorAll('.cmt_mdf_del > .btn_cmt_delete').forEach(button => markCommentContext(root, button, 'icon-action', 'delete'));
             markAll(root, '.cmt_txtbox', 'comment-body');
             root.querySelectorAll('.reply_list .cmt_txtbox').forEach((body) => mark(root, body, { role: 'reply-body' }));
             markAll(root, '.usertxt', 'comment-text');
@@ -5403,6 +5443,10 @@ const __dcufSettingsPresenter = (() => {
                 mark(root, composer, { role: 'comment-composer', state: composerState(composer) });
                 mark(root, composer.querySelector(':scope > .fl, .user_info_input'), { role: 'comment-identity-fields' });
                 composer.querySelectorAll('.user_info_input').forEach((shell) => mark(root, shell, { role: 'comment-field-shell' }));
+                composer.querySelectorAll('.user_info_input > .btn_circledel').forEach(button => {
+                    markCommentContext(root, button, 'icon-action', 'clear');
+                    markCommentContext(root, button.parentElement, 'nickname-field');
+                });
                 mark(root, composer.querySelector('.cmt_txt_cont'), { role: 'comment-editor' });
                 mark(root, composer.querySelector('.cmt_write'), { role: 'comment-input-box' });
                 composer.querySelectorAll('.cmt_textarea_label').forEach(label => mark(root, label, { role: 'comment-input-hint' }));

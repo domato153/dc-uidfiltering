@@ -184,6 +184,45 @@
                 font-size: 12px;
                 white-space: nowrap;
             }
+            [data-dcuf-surface="comments-replies"][data-dcuf-role="comments-root"] [data-dcuf-comment-role="icon-action"] {
+                position: relative;
+                inline-size: 32px;
+                block-size: 32px;
+                margin: 0;
+                padding: 0;
+                border: 0;
+                border-radius: 8px;
+                appearance: none;
+                background: transparent;
+                box-shadow: none;
+                color: var(--dcuf-comment-muted);
+                font-size: 0;
+                line-height: 0;
+                cursor: pointer;
+                box-sizing: border-box;
+            }
+            [data-dcuf-surface="comments-replies"][data-dcuf-role="comments-root"] [data-dcuf-comment-role="icon-action"]::before {
+                content: "";
+                position: absolute;
+                inset-block-start: 50%;
+                inset-inline-start: 50%;
+                inline-size: 14px;
+                block-size: 14px;
+                background: currentColor;
+                mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='m4 4 8 8M12 4l-8 8' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E") center/contain no-repeat;
+                transform: translate(-50%, -50%);
+            }
+            [data-dcuf-surface="comments-replies"][data-dcuf-role="comments-root"] [data-dcuf-comment-role="icon-action"]:not(:disabled):hover { background: var(--dcuf-control-secondary-bg); }
+            [data-dcuf-comment-role="icon-action"]:focus-visible { outline: 2px solid var(--dcuf-comment-accent); outline-offset: 2px; }
+            [data-dcuf-comment-role="icon-action"]:disabled { opacity: .5; cursor: default; }
+            [data-dcuf-surface="comments-replies"][data-dcuf-role="comments-root"] [data-dcuf-comment-role="icon-action"][hidden] { display: none; }
+            [data-dcuf-comment-role="nickname-field"] { position: relative; }
+            [data-dcuf-surface="comments-replies"][data-dcuf-role="comments-root"] [data-dcuf-comment-role="nickname-field"] [data-dcuf-role="native-comment-field"] { padding-inline-end: 44px; }
+            [data-dcuf-surface="comments-replies"][data-dcuf-role="comments-root"] [data-dcuf-comment-role="icon-action"][data-dcuf-comment-state="clear"] {
+                position: absolute;
+                inset-block-start: 3px;
+                inset-inline-end: 4px;
+            }
             [data-dcuf-role="comment-body"],
             [data-dcuf-role="reply-body"] {
                 position: static;

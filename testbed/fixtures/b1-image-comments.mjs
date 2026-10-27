@@ -30,14 +30,17 @@ export function mountB1ImageCommentsFixture({ reference = false, imageWidth = 50
       .cmt_textarea_label{position:absolute;top:10px;left:13px;color:#687384;font-size:12px;pointer-events:none}
       .user_info_input{position:relative;width:140px;border:1px solid #cecdce}
       .btn_circledel{position:absolute;right:6px;top:8px}
+      .cmt_mdf_del .btn_cmt_delete{display:inline-block;width:13px;height:13px;padding:0;border:0;background:linear-gradient(#aaa,#aaa);font-size:0;line-height:0}
+      .btn_circledel{width:16px;height:16px;padding:0;border:0;background:none}
+      .btn_circledel::before{content:"";display:block;width:16px;height:16px;background:linear-gradient(#aaa,#aaa)}
       .btn_blue{background:#3b4890;border-color:#29367c;color:#fff}
       .write_div .img_comment .cmt_write_box div,.write_div .img_comment .cmt_txtbox,.write_div .img_comment .cmt_nickbox{padding-bottom:0}
     `;
     document.head.prepend(css);
     const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="500" height="160"><rect width="500" height="160" fill="#d2f0e6"/><circle cx="250" cy="80" r="45" fill="#26736f"/></svg>';
     const media = 'data:image/svg+xml,' + encodeURIComponent(svg);
-    const row = (i) => `<li class="ub-content"><div class="cmt_info clear"><div class="addbox"><div class="cmt_nickbox"><span class="gall_writer ub-writer" data-uid="safe-image-${i}" data-nick="이미지댓글 작성자"><span class="nickname">이미지댓글 작성자</span></span></div><div class="clear cmt_txtbox"><p class="usertxt">이미지마다 연결된 댓글입니다. 긴 문장도 영역 안에서 자연스럽게 이어집니다.</p>${i === 2 ? `<img width="100" height="32" alt="합성 댓글 미디어" src="${media}">` : ''}</div><div class="fr clear"><span class="date_time">10.27 12:30</span><div class="cmt_mdf_del"><button type="button" aria-label="합성 댓글 삭제">×</button></div></div></div></div></li>`;
-    const composer = (i) => `<div id="img_cmt_write_box_${i}" class="cmt_write_box clear"><div class="fl"><div class="user_info_input nomem_nick"><label class="blind" for="gall_nick_name_image_${i}">닉네임</label><input id="gall_nick_name_image_${i}" name="gall_nick_name" type="text" value="ㅇㅇ"><input id="img_cmt_name_${i}" type="text" style="display:${reference ? 'block' : 'none'}" value="ㅇㅇ"><button type="button" class="btn_circledel" aria-label="닉네임 지우기">×</button><button type="button" class="btn_gallnickuse" style="display:none">갤닉 사용</button></div><div class="user_info_input"><label class="blind" for="img_cmt_password_${i}">비밀번호</label><input id="img_cmt_password_${i}" type="password" autocomplete="off"></div></div><div class="cmt_txt_cont"><div class="cmt_write"><label class="cmt_textarea_label" for="img_cmt_memo_${i}">이미지에 대한 댓글을 남겨 주세요.</label><textarea id="img_cmt_memo_${i}" aria-label="이미지댓글 내용"></textarea></div><div class="cmt_cont_bottm clear"><div class="fr"><button type="submit" class="btn_blue small btn_image_comment">등록</button></div></div></div></div>`;
+    const row = (i) => `<li class="ub-content"><div class="cmt_info clear"><div class="addbox"><div class="cmt_nickbox"><span class="gall_writer ub-writer" data-uid="safe-image-${i}" data-nick="이미지댓글 작성자"><span class="nickname">이미지댓글 작성자</span></span></div><div class="clear cmt_txtbox"><p class="usertxt">이미지마다 연결된 댓글입니다. 긴 문장도 영역 안에서 자연스럽게 이어집니다.</p>${i === 2 ? `<img width="100" height="32" alt="합성 댓글 미디어" src="${media}">` : ''}</div><div class="fr clear"><span class="date_time">10.27 12:30</span><div class="cmt_mdf_del"><button type="button" class="btn_cmt_delete image_comment btn_img_cmt_delete">삭제</button></div></div></div></div></li>`;
+    const composer = (i) => `<div id="img_cmt_write_box_${i}" class="cmt_write_box clear"><div class="fl"><div class="user_info_input nomem_nick"><label class="blind" for="gall_nick_name_image_${i}">닉네임</label><input id="gall_nick_name_image_${i}" name="gall_nick_name" type="text" value="ㅇㅇ"><input id="img_cmt_name_${i}" type="text" style="display:${reference ? 'block' : 'none'}" value="ㅇㅇ"><button type="button" class="btn_circledel" aria-label="닉네임 지우기"><span class="blind">삭제</span></button><button type="button" class="btn_gallnickuse" style="display:none">갤닉 사용</button></div><div class="user_info_input"><label class="blind" for="img_cmt_password_${i}">비밀번호</label><input id="img_cmt_password_${i}" type="password" autocomplete="off"></div></div><div class="cmt_txt_cont"><div class="cmt_write"><label class="cmt_textarea_label" for="img_cmt_memo_${i}">이미지에 대한 댓글을 남겨 주세요.</label><textarea id="img_cmt_memo_${i}" aria-label="이미지댓글 내용"></textarea></div><div class="cmt_cont_bottm clear"><div class="fr"><button type="submit" class="btn_blue small btn_image_comment">등록</button></div></div></div></div>`;
     window.__b1ImageCalls = [];
     window.__b1ImageOriginals = [];
     for (const i of [1, 2]) {
@@ -56,4 +59,14 @@ export function mountB1ImageCommentsFixture({ reference = false, imageWidth = 50
         };
         content.append(area);
     }
+}
+
+// Match the ordinary composer's two native field shells and sprite buttons.
+// This prepares synthetic host DOM; it is not product node manipulation.
+export function mountB1CommentActionSpecimen() {
+    const composer=document.querySelector('#focus_cmt > .cmt_write_box'),shell=composer.querySelector('.user_info_input');
+    const password=shell.querySelector('input[type=password]'),passwordShell=document.createElement('div');
+    passwordShell.className='user_info_input';passwordShell.append(password);shell.after(passwordShell);
+    shell.insertAdjacentHTML('beforeend','<button type="button" class="btn_circledel" aria-label="닉네임 지우기"><span class="blind">삭제</span></button>');
+    document.querySelector('#focus_cmt .cmt_info .fr').insertAdjacentHTML('beforeend','<div class="cmt_mdf_del"><button type="button" class="btn_cmt_delete">삭제</button><button type="button" class="fixture-edit-sibling">수정</button></div>');
 }

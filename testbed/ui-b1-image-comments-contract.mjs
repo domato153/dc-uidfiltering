@@ -1,6 +1,6 @@
 import { mkdir } from 'node:fs/promises';
 import { assert, createTestPage, storageKeys, assertNoRuntimeErrors, getMetrics } from './harness/runner-utils.mjs';
-import { mountB1ImageCommentsFixture } from './fixtures/b1-image-comments.mjs';
+import { mountB1ImageCommentsFixture, mountB1CommentActionSpecimen } from './fixtures/b1-image-comments.mjs';
 
 export async function runB1ImageCommentsContract({browser, server}) {
     const records = [];
@@ -70,6 +70,57 @@ export async function runB1ImageCommentsContract({browser, server}) {
             assertNoRuntimeErrors(await getMetrics(e.page),e.consoleErrors);
             records.push({width,height,dark,...shape});
         } finally {await e.close();}
+    }
+    return records;
+}
+
+export async function runB1CommentActionsContract({browser,server}) {
+    const records=[];
+    for(const [width,height,dark]of [[980,900,false],[980,900,true],[390,520,true]]){
+        const e=await createTestPage(browser,server.baseUrl,{viewport:{width,height},storage:{[storageKeys.threshold]:0,[storageKeys.palette]:'teal'}});
+        try{
+            await e.goto('/board/view?id=test&no=1001&comments=4');
+            await e.page.evaluate(mountB1ImageCommentsFixture);
+            await e.page.evaluate(mountB1CommentActionSpecimen);
+            if(dark)await e.page.evaluate(()=>window.__dcufFixture.toggleDark(true));
+            const area=e.page.locator('.img_area.no1');await area.locator('.btn_imgcmt').click();await area.locator('.img_comment').click();
+            await area.locator('[data-dcuf-role="native-comment-submit"]').waitFor();
+            await e.page.evaluate(()=>{
+                window.__commentIconCalls=[];
+                const selectors=['#focus_cmt .btn_cmt_delete','#focus_cmt .btn_circledel','.img_area.no1 .btn_cmt_delete','.img_area.no1 .btn_circledel'];
+                window.__commentIconOriginals=selectors.map((selector,index)=>{const node=document.querySelector(selector);node.onclick=()=>{window.__commentIconCalls.push(index);if(node.matches('.btn_circledel')){const input=node.parentElement.querySelector('input[id^=img_cmt_name],input[type=text]:not([name=gall_nick_name])');if(input)input.value='';}};return{node,parent:node.parentNode,handler:node.onclick,type:node.type,text:node.textContent};});
+            });
+            for(const selector of ['#focus_cmt .btn_cmt_delete','#focus_cmt .btn_circledel','.img_area.no1 .btn_cmt_delete','.img_area.no1 .btn_circledel']){
+                const button=e.page.locator(selector).first();
+                assert.equal(await button.getAttribute('data-dcuf-comment-role'),'icon-action','Every original delete/clear button needs its semantic visual owner');
+                await button.evaluate(n=>n.scrollIntoView({block:'center'}));
+                await e.page.mouse.move(1,1);
+                const state=await button.evaluate(n=>{const r=n.getBoundingClientRect(),s=getComputedStyle(n),p=getComputedStyle(n,'::before');return{width:r.width,height:r.height,radius:s.borderRadius,border:s.borderWidth,color:s.color,background:s.backgroundImage,icon:p.maskImage,iconSize:p.width,hit:n.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2))}});
+                assert.ok(state.width>=28&&state.height>=28&&state.width===state.height,'Tiny native sprite must gain a square usable hit area');
+                assert.equal(state.radius,'8px');assert.equal(state.border,'0px');assert.equal(state.background,'none');
+                assert.ok(state.icon.includes('data:image/svg+xml')&&state.iconSize==='14px','Use the incumbent thin B1 close icon, not the native sprite or a font glyph');
+                assert.ok(state.hit,'Visible button center reaches the original control');
+                await button.hover();
+                assert.notEqual(await button.evaluate(n=>getComputedStyle(n).backgroundImage),'none','Hover exposes the shared secondary control face');
+                await button.focus();await button.press('Tab');await e.page.keyboard.press('Shift+Tab');
+                assert.equal(await button.evaluate(n=>n===document.activeElement&&n.matches(':focus-visible')),true,'Actual keyboard navigation exposes the original focus target');
+                assert.equal(await button.evaluate(n=>getComputedStyle(n).outlineStyle),'solid');
+                await button.press('Enter');
+                await button.evaluate(n=>{n.disabled=true});assert.equal(await button.isDisabled(),true);
+                await button.evaluate(n=>{n.disabled=false;n.hidden=true});assert.equal(await button.isVisible(),false,'Auth/visibility cannot be overridden by icon layout');
+                await button.evaluate(n=>{n.hidden=false;n.style.display='none'});assert.equal(await button.isVisible(),false,'Native inline closed state remains native');
+                await button.evaluate(n=>{n.style.removeProperty('display')});
+                records.push({width,height,dark,selector,...state});
+            }
+            assert.deepEqual(await e.page.evaluate(()=>window.__commentIconCalls),[0,1,2,3],'Original callbacks remain singular');
+            assert.equal(await e.page.locator('.fixture-edit-sibling').getAttribute('data-dcuf-comment-role'),null,'Text edit actions are not painted as X icons');
+            assert.equal(await e.page.evaluate(()=>window.__commentIconOriginals.every(({node,parent,handler,type,text})=>node.parentNode===parent&&node.onclick===handler&&node.type===type&&node.textContent===text)),true,'Nodes, labels, types and callbacks remain original');
+            for(const selector of ['#focus_cmt .user_info_input','.img_area.no1 .user_info_input']){
+                const value=await e.page.locator(selector).first().evaluate(n=>{const b=n.querySelector('.btn_circledel').getBoundingClientRect(),f=[...n.querySelectorAll('input')].find(x=>getComputedStyle(x).display!=='none').getBoundingClientRect();return{offset:Math.abs((b.y+b.height/2)-(f.y+f.height/2)),inset:f.right-b.right,padding:parseFloat(getComputedStyle([...n.querySelectorAll('input')].find(x=>getComputedStyle(x).display!=='none')).paddingRight)}});
+                assert.ok(value.offset<=2&&value.inset>=2&&value.padding>=40,`Nickname clear is centered and never covers typed text: ${JSON.stringify(value)}`);
+            }
+            assertNoRuntimeErrors(await getMetrics(e.page),e.consoleErrors);
+        }finally{await e.close()}
     }
     return records;
 }

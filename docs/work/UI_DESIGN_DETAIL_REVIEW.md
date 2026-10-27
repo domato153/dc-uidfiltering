@@ -49,6 +49,10 @@ The concrete miss/backstop is B1_VISUAL_REVIEW_GAP.md. The routed B1 runner now 
 
 These are optional diagnostic prompts, not a scored questionnaire or mandatory per-change checklist. Research is retrieved for a new consequential method question, not reread for routine polish.
 
+### Small controls inside the changed component
+
+Before closing a changed component, include its visible secondary/icon actions (delete, clear, close) in the same whole/detail look and positive role/hit/focus checks. No whole-app rerun is implied. A generic fixture button does not model a native sprite, pseudo-element or hidden label; match the observed class/children first. If its intended finish is absent, keep that detail NEEDS_WORK rather than waiving it as synthetic/native. This follows the2026-10-27 image-comment miss; the new native delete/clear contract is the narrow executable backstop.
+
 ## Keep the cost proportional
 
 - Local polish: changed region plus adjacent controls and relevant X states. Reuse unaffected evidence. For this project use980 layout/phone980×2306 as relevant;390 is narrow stress, never the default phone. Select light/dark where theme/material/type roles change; one unchanged dimension does not require another matrix.
