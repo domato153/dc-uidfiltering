@@ -264,3 +264,5 @@ B1_UI_EXPANSION_PREFLIGHT.md의 범위를 기존 부모 ID 아래에서 고른�
 ## P4 preflight observation — 2026-10-27
 
 B1_OWNED_PANELS_PREFLIGHT.md maps S-01–S-12/P-01–P-14 to12 actual root/entry families. Default light/dark states are observed, with empty/populated management, nested add/backup, palette bottom and16 draft geometry contexts. These are partial-child preflight observations; the original rows remain open for their unobserved behavior/error/geometry children. Product styling is not yet applied. Use that scoped map when changing the common owner; do not repeat all128 items.
+
+P4 common material2026-10-27: B1_GLASS_TRANSMISSION.md implements shell/close/off-switch and common B1 glass roles.16 layout contexts and106 functional contracts/36 writer contracts/15 PC contracts are scoped coverage; conditional child appearance stays open. Optical judgment uses the normal page plus actual scrim and same-area whole/detail, never a high-contrast plate above the scrim.

@@ -1,5 +1,7 @@
 # UI design references for the next visual pass
 
+Current material/selected ordinary-page reference: B1_GLASS_TRANSMISSION.md → CURRENT/NEXT. Older writer/dense-glass status language below is historical where superseded by the later user decisions.
+
 Status: `B1_LIST_ADOPTED_AS_EXPANSION_BASELINE / EXPANSION_IN_PROGRESS`. CURRENT_STATE.md/NEXT_TASK.md own current progress and order; B1_UI_EXPANSION_PREFLIGHT.md owns the broad requested scope. The coherent B1 theme and current user direction govern the design; current header/list are revisable working references. The early raster supplies historical family direction. This reference page is not a completion receipt.
 
 ## Current choice: B composition + B1 Prism Glass
@@ -74,3 +76,5 @@ The Radix and shadcn images are browser screenshots of the above public official
 Final button decision2026-10-26: user rejected the higher-transparency trials and explicitly adopted the previous C885 simple button treatment. Keep dense primary tint, subdued edge sheen and per-surface shapes; the existing v3 image remains overall context, subordinate to this later preference for buttons. The high-transparency/scrim variants are discarded and must not be revived. C885 action captures and the tracked implemented light/dark samples identify the adopted look. Form/popup glass is a separate surface requirement.
 
 P4 owned-panel draft2026-10-27: B1_OWNED_PANELS_PREFLIGHT.md selects docs/design/b1-owned-panels-target-light-2026-10-27.png (SHA256851D614864C50D62D8C6DF75CAB0E14C9082E84C48180BBA15A2E4BC9171AAF5) and its dark counterpart. Derived from current B1 theme, current actual owned templates and published anatomy; draft target for implementation, not approved runtime/golden. Existing C885 simple button choice remains unchanged.
+
+User steering2026-10-27 supersedes dense/opaque ordinary-page glass: B1_GLASS_TRANSMISSION.md selects independent ordinary-page light target95B99AE7 and dark3B64E6B8 (full hashes in that decision) across existing B1 families. Modest visible contours through the real scrim are required; C885 simple button faces/paper remain. Old P4 target is anatomy context; above-scrim color probes only show optical capability. Same-area3× review is supporting evidence, not automatic aesthetic approval.

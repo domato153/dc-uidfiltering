@@ -499,7 +499,7 @@
                 background: var(--dcuf-b1-sheen, none), var(--dcuf-b1-floating, var(--dcuf-comment-surface));
                 color: var(--dcuf-comment-fg);
                 box-shadow: var(--dcuf-b1-shadow), inset 0 1px 0 var(--dcuf-b1-rim);
-                backdrop-filter: blur(24px) saturate(1.15);
+                backdrop-filter: var(--dcuf-b1-floating-filter,blur(24px) saturate(1.15));
                 box-sizing: border-box;
             }
             [data-dcuf-role="native-comment-popup"][data-dcuf-comment-role="comment-picker"] {

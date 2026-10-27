@@ -165,7 +165,7 @@
                 border-radius: 12px;
                 background: var(--dcuf-b1-glass);
                 box-shadow: var(--dcuf-b1-shadow), inset 0 1px 0 var(--dcuf-b1-rim);
-                backdrop-filter: blur(20px) saturate(1.1);
+                backdrop-filter: var(--dcuf-b1-structural-filter,blur(20px) saturate(1.1));
             }
             [data-dcuf-surface="list-toolbar"] [data-dcuf-role="tablist"],
             [data-dcuf-surface="list-toolbar"] [data-dcuf-role="toolbar-actions"],
@@ -309,7 +309,7 @@
                 border-radius: 14px;
                 background: color-mix(in srgb, var(--dcuf-b1-paper) 96%, transparent);
                 box-shadow: var(--dcuf-b1-shadow), inset 0 1px 0 var(--dcuf-b1-rim);
-                backdrop-filter: blur(24px);
+                backdrop-filter: var(--dcuf-b1-floating-filter,blur(24px));
                 overflow: auto;
                 box-sizing: border-box;
             }
@@ -674,7 +674,7 @@
                 border-radius: 14px;
                 background: color-mix(in srgb, var(--dcuf-b1-paper) 96%, transparent);
                 box-shadow: var(--dcuf-b1-shadow), inset 0 1px 0 var(--dcuf-b1-rim);
-                backdrop-filter: blur(24px);
+                backdrop-filter: var(--dcuf-b1-floating-filter,blur(24px));
             }
             @media (max-width: 759px) {
                 [data-dcuf-surface="list-actions"],

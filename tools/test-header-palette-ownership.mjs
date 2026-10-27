@@ -49,6 +49,13 @@ const combinedVisualSources = Object.values(currentSources).join('\n');
 const combinedRestored = restoreConcept01HeaderVisualDelta(combinedVisualSources);
 assert.equal(combinedRestored.includes('// dcuf-concept01-visual-v1:'), false);
 assert.equal(combinedRestored, Object.values(sources).join('\n'));
+// The approved ordinary-page glass delta is exact. A different filter role
+// must not disappear into historical normalization or a broad CSS exemption.
+for (const id of ['header-shell-presenter','header-recent-visit-presenter','gallery-page-head-presenter']) {
+    const from='var(--dcuf-b1-floating-filter,';
+    assert.ok(currentSources[id].includes(from));
+    assert.throws(()=>restoreConcept01HeaderVisualDelta(currentSources[id].replace(from,'var(--dcuf-unapproved-filter,')), 'Unregistered glass role must fail exact normalization');
+}
 const hostSource = await readFile(path.join(root, 'src/targets/mobile/theme-host-style.js'), 'utf8');
 const adapterSources = Object.fromEntries(await Promise.all(owners.map(async ([id]) => [id,
     await readFile(path.join(root, 'src/targets/mobile', id.replace('-presenter', '-host-adapter') + '.js'), 'utf8'),

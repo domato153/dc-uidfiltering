@@ -69,7 +69,7 @@
             border-radius: 16px !important;
             background: var(--dcuf-b1-sheen), var(--dcuf-b1-floating) !important;
             box-shadow: var(--dcuf-b1-shadow) !important;
-            backdrop-filter: blur(24px) saturate(1.12);
+            backdrop-filter: var(--dcuf-b1-floating-filter,blur(24px) saturate(1.12));
         }
         [data-dcuf-native-form-role="panel"][data-dcuf-native-form-state="password"] {
             box-sizing: border-box !important;
@@ -371,7 +371,7 @@
             inset: 0;
             border-radius: inherit;
             background: var(--dcuf-b1-sheen), var(--dcuf-b1-glass);
-            backdrop-filter: blur(22px) saturate(1.15);
+            backdrop-filter: var(--dcuf-b1-structural-filter,blur(22px) saturate(1.15));
             pointer-events: none;
             z-index: -1;
         }
@@ -740,7 +740,7 @@
             border-radius: 12px;
             background: var(--dcuf-b1-sheen), color-mix(in srgb, var(--dcuf-b1-paper) 72%, transparent);
             box-shadow: var(--dcuf-b1-shadow), inset 0 1px 0 var(--dcuf-b1-rim);
-            backdrop-filter: blur(18px) saturate(1.1);
+            backdrop-filter: var(--dcuf-b1-structural-filter,blur(18px) saturate(1.1));
             color: var(--dcuf-theme-fg);
             font: 500 14px/1.4 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
             scrollbar-width: thin;

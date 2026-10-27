@@ -1,0 +1,157 @@
+{
+  "schemaVersion": 1,
+  "kind": "B1_ORDINARY_GLASS_SCOPED_RECORD",
+  "status": "SCOPED_IMPLEMENTATION_REVIEWED",
+  "sourceBaseHead": "50b4cb016914186efcc947c8d1a92b1f3dbf47a5",
+  "candidateFingerprint": "67ddaa67eeb113254a6c4a47acbab9f024ac523ff060e9566420b275aadb021e",
+  "artifact": {
+    "mobileSha256": "2E99E11A71183CDCC9F516E1E33CF9C28E30B20A5DFBA6FED1319A594D300426",
+    "pcSha256": "AF7FE72FF8EBF7312237D84AD7E2B8C45EAC4918021AE1807C5F37E96BFEFA29"
+  },
+  "control": {
+    "mobileSha256": "4BEA35A6DDDC6618A19BEC61B5A93F6483512B6544D3240F695B07466BDE3860",
+    "pcSha256": "D73A445F9A5013D295C49C199F77084D894E39F4E2455824185FA65D4E2C6212"
+  },
+  "scope": {
+    "existingMobileGlassFamilies": true,
+    "sharedSettingsPresenterOptionalHooks": true,
+    "newRuntimeOwners": false,
+    "newObservers": false,
+    "newPriorityDeclarations": 0,
+    "buttonFaces": "C885_SIMPLE_UNCHANGED",
+    "paper": "OPAQUE",
+    "metadataStorageVersionChanged": false,
+    "officialRelease": false
+  },
+  "reference": {
+    "light": {
+      "path": "docs/design/b1-glass-ordinary-target-light-2026-10-27.png",
+      "sha256": "95B99AE75111ED1C15A374786509EBC548ACADEECC9DD9AA057B46BD6DC3CFEF"
+    },
+    "dark": {
+      "path": "docs/design/b1-glass-ordinary-target-dark-2026-10-27.png",
+      "sha256": "3B64E6B83CEB625B7120222365C5D72125F1AD93DDDF92CCD53BCF5A9ED40E01"
+    },
+    "kind": "INDEPENDENT_4BEA_PLUS_SEPARATE_RECIPE_ON_ORDINARY_PAGE",
+    "recipeSha256": "32FA3FEB358E2E4A75B639657968F080D1CF3E35EA7135C6BCB74F202F34F061",
+    "region": "ordinary-page contours through the owned glass shell and actual scrim, with opaque paper controls"
+  },
+  "verification": {
+    "mobileFunctional": 106,
+    "mobileWrite": 36,
+    "pcFunctional": 15,
+    "allSelectedFinalTestsPassed": true,
+    "uiBoundaries": 38,
+    "headerPaletteOwnership": "PASS; historical controls/reference retained;3 additional exact-role negative tests",
+    "headerPaletteRegistrationSha256": "FD68BFA007F5C7501CCA4D7BC27F1AA7515A5FD29B8FA84F0D37EEC948939E78",
+    "pcStyleRestHoverContexts": 6,
+    "pcStyleDifferences": 0,
+    "mobileImmediateSemanticObservations": 6,
+    "mobileSemanticDifferences": 0,
+    "rawExecutionClockDifferences": 4,
+    "neutralWitness": {
+      "beforeTransmitted": 0,
+      "light": 29,
+      "dark": 20,
+      "underActualScrim": true
+    },
+    "ownedLayoutContexts": 16,
+    "ownedHorizontalOverflow": 0,
+    "ownedCloseAndFooterHits": true,
+    "visualPairs": 10,
+    "referenceFidelity": "REVIEWED",
+    "pixelResult": "DIFFERENCES_REQUIRE_REVIEW",
+    "pixelHashesDifferent": 10,
+    "productApproved": false,
+    "viewerStates": 10,
+    "viewerImages": 22,
+    "viewerFailures": 0,
+    "formalAcceptance": "NOT_RUN",
+    "repositoryValidation": "DELEGATED_TO_CHECKPOINT_PUBLISHER",
+    "impeccableDetector": "NO_REGEX_MATCHES_ONLY; parsed page contrast/tiny text rules not run"
+  },
+  "sameArea": {
+    "viewport": [
+      980,
+      900
+    ],
+    "originalWindow": [
+      50,
+      200,
+      400,
+      500
+    ],
+    "crop": [
+      60,
+      435,
+      80,
+      150
+    ],
+    "displayScale": 3,
+    "normalPageAndActualScrim": true,
+    "coloredBacking": false
+  },
+  "evidence": [
+    {
+      "path": "artifacts/b1-glass-2026-10-27/mobile-functional-final.json",
+      "sha256": "23778696522B0DEE7DE47F393F55AA099E435C825F72C04E10D912BCC86DAEB1"
+    },
+    {
+      "path": "artifacts/b1-glass-2026-10-27/mobile-write-final.json",
+      "sha256": "414C1749C284B9A57930105BBF1BFC43007E7F26CF91A84A6738DA3A1591CA50"
+    },
+    {
+      "path": "artifacts/b1-glass-2026-10-27/pc-functional.json",
+      "sha256": "EBBEFEF902E6002440F90CACF70A9049BEBF4CFE6715FD63C7FF8653358A8651"
+    },
+    {
+      "path": "artifacts/b1-glass-2026-10-27/pc-style-comparison.json",
+      "sha256": "C1B1A1B97FB56B8F7DD3D2EA3574F8A9F826087FA9187F9A53D70F98B569B946"
+    },
+    {
+      "path": "artifacts/b1-glass-2026-10-27/behavior-comparison.json",
+      "sha256": "84F105009D8CFC6D2B3A39043FB447AC9C2B3424E6E62D2E6651A9418E5479E2"
+    },
+    {
+      "path": "artifacts/b1-glass-2026-10-27/implemented-audit.json",
+      "sha256": "A73661F90C306E2D7621BDA721253290345FBD88700E689E6158DCAE53B30D57"
+    },
+    {
+      "path": "artifacts/b1-glass-2026-10-27/roi/manifest.json",
+      "sha256": "6E07FBCF2A49634D3C5B6356C8366691B65F798C80ED0DE48D10AE10C9D0FAF4"
+    },
+    {
+      "path": "artifacts/b1-glass-2026-10-27/roi/target-manifest.json",
+      "sha256": "4FB5CE8AC30C8D5A7F092FE9DB1C1300698F3CD6A04D1F54EF1C534582ABDD18"
+    },
+    {
+      "path": "artifacts/b1-glass-2026-10-27/visual-final/review.json",
+      "sha256": "FD19C4EAABAC603985D5CD98E8E81535BFF8856D35469C9EBA23CBB504F5A36F"
+    },
+    {
+      "path": "artifacts/b1-glass-2026-10-27/viewer-checks.json",
+      "sha256": "0349483C68F2AA07DCF57852B4FDA4A40239242B3572163C8474A8E32868964F"
+    }
+  ],
+  "resources": {
+    "oneBrowserJobAtATime": true,
+    "minAvailableRamFloorGb": 4,
+    "lastObservedStartAvailableGb": 9.47,
+    "unrelatedAppsTerminated": false
+  },
+  "retainedFailures": [
+    "Old above-scrim color plate exaggerates ordinary modal appearance.",
+    "Initial blur-token name collided with existing header canvas-backdrop variable; product aliases separated, original assertions retained.",
+    "Old12px nickname-clear assertion fails on4BEA too; updated narrowly to existing icon-action/clear32px, other auxiliaries remain12px.",
+    "Old flat surface/density/fixed blur and exact CSS payload expectations changed only for approved material; no input/callback/containment/hit/storage assertion weakened.",
+    "Four raw cache execution timestamps differ; only positive ts fields normalized, all other data/topology retained."
+  ],
+  "limitations": [
+    "Source-injected synthetic fixtures, not current installed extension/device/account qualification.",
+    "Eight pixel pairs are within existing matcher threshold despite differing hashes; actual whole/detail review is separate.",
+    "Flat underlays limit visible texture. No artificial decoration was added to make scenes look glassy.",
+    "Phone980x2306 is layout proxy; scale/DPR/engine/input gaps remain.",
+    "Conditional P4 child appearance, image-specific replies, full128 visuals and formal header admission remain separate."
+  ],
+  "nextTask": "b1-owned-panel-conditional-finish"
+}

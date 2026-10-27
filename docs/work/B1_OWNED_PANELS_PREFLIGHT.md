@@ -2,6 +2,8 @@
 
 2026-10-27. Status: **PREFLIGHT_OBSERVED / DRAFT_REFERENCE / PRODUCT_NOT_IMPLEMENTED**. Mode: Operate. Source base `d88cef8b66a497a50e8a1db236210b0fa6f5225b`; guarded Mobile3.5.5 `4BEA35A6DDDC6618A19BEC61B5A93F6483512B6544D3240F695B07466BDE3860`. This unit prepares P4; it does not finish P4 or change product runtime.
 
+Subsequent user steering/implementation: B1_GLASS_TRANSMISSION.md supersedes this draft's dense material. The colored diagnostic plate below was actually inserted above the scrim; it proves optical capability only, not normal modal appearance. Use the new normal-page reference/real-scrim/same-region review and CURRENT/NEXT for current product state. This historical preflight remains the root/anatomy inventory.
+
 ## Finding and one implementation boundary
 
 The existing FAB/drawer already consumes optional B1 menu material. The remaining owned panels use the same settings presenter but paint opaque header, body, footer and nested section backgrounds. Adding blur only to the root cannot show the page through those layers. This is a shared material/composition gap, not a missing filter feature or a need for twelve independent popup engines.

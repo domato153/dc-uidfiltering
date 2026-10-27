@@ -67,7 +67,7 @@ export async function runB1EditorMenuContract({ browser, server }) {
                             bounded: r.width > 0 && r.height > 0 && r.left >= -1 && r.top >= -1 && r.right <= innerWidth + 1 && r.bottom <= innerHeight + 1,
                             fixedChildren: [...n.querySelectorAll('*')].filter(x => getComputedStyle(x).position === 'fixed').length };
                     });
-                    assert.match(material.blur, /blur\(18px\)/, `${anchor}: missing popup glass`);
+                    assert.match(material.blur, /blur\(12px\)/, `${anchor}: missing shared structural glass`);
                     assert.match(material.background, /0\.72\)/, `${anchor}: real backing transmission`);
                     assert.equal(material.radius, 12);
                     assert.equal(material.bounded, true, `${anchor}/${width}/${dark}: viewport containment ${JSON.stringify(material)}`);

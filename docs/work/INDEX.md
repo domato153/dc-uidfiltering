@@ -41,3 +41,5 @@ Current B1 P3: [B1_CONTROL_MATERIAL.md](B1_CONTROL_MATERIAL.md) owns the scoped 
 - Editor in-document menus / 글꼴·크기·색상·정렬·줄 간격·표: [B1_EDITOR_MENUS.md](B1_EDITOR_MENUS.md). Existing-owner glass; original palette scrolling and callbacks remain. Separate upload windows are user-accepted deferrals, not a global live-test blocker. Current/next own exact scope and the following menu/settings task.
 
 - Script-owned 메뉴·설정·개인차단·관리·백업 P4: [B1_OWNED_PANELS_PREFLIGHT.md](B1_OWNED_PANELS_PREFLIGHT.md) owns the12-root current inventory, frozen light/dark draft and one existing-owner implementation boundary. Draft only; CURRENT/NEXT route actual application.
+
+- B1 normal-page glass / 뒤 배경·윤곽 확대 비교: B1_GLASS_TRANSMISSION.md owns the current common material, actual scrim ordering, same80×150 region at3×, selected reference and existing-owner implementation. Earlier denser P4 target/above-scrim plates are superseded for material judgment.

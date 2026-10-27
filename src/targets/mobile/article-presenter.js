@@ -555,7 +555,7 @@
                 box-sizing: border-box; color: var(--dcuf-view-fg); font: 400 14px/1.5 system-ui, sans-serif;
                 border: 1px solid var(--dcuf-b1-rim); border-radius: 16px;
                 background: var(--dcuf-b1-sheen), var(--dcuf-b1-floating);
-                backdrop-filter: blur(24px) saturate(1.15); box-shadow: var(--dcuf-b1-shadow), inset 0 1px 0 var(--dcuf-b1-rim);
+                backdrop-filter: var(--dcuf-b1-floating-filter,blur(24px) saturate(1.15)); box-shadow: var(--dcuf-b1-shadow), inset 0 1px 0 var(--dcuf-b1-rim);
                 scrollbar-color: var(--dcuf-view-border-strong) transparent;
             }
             [data-dcuf-article-popup]:not([data-dcuf-article-popup="pum"]):not([data-dcuf-article-popup="guide"]) {
@@ -624,7 +624,7 @@
             [data-dcuf-article-part="preview-meta"] { display: flex; gap: 12px; margin-block-start: 4px; color: var(--dcuf-view-fg-sub); font: 400 12px/1.5 system-ui,sans-serif; }
             [data-dcuf-article-popup] [data-dcuf-article-part="media"] { display: block; max-inline-size: 100%; block-size: auto; margin-block-start: 8px; border-radius: 6px; }
             [data-dcuf-article-popup] [data-dcuf-article-part="comment"] { inline-size: 100%; margin: 16px 0 0; padding: 0; border: 0; box-sizing: border-box; }
-            [data-dcuf-article-popup] [data-dcuf-article-part="submenu"] { max-inline-size: 100%; padding: 10px; border: 1px solid var(--dcuf-view-border); border-radius: 10px; background: var(--dcuf-b1-sheen),var(--dcuf-b1-floating); color: inherit; backdrop-filter: blur(24px); box-shadow: var(--dcuf-b1-shadow); box-sizing: border-box; z-index: 2; }
+            [data-dcuf-article-popup] [data-dcuf-article-part="submenu"] { max-inline-size: 100%; padding: 10px; border: 1px solid var(--dcuf-view-border); border-radius: 10px; background: var(--dcuf-b1-sheen),var(--dcuf-b1-floating); color: inherit; backdrop-filter: var(--dcuf-b1-floating-filter,blur(24px)); box-shadow: var(--dcuf-b1-shadow); box-sizing: border-box; z-index: 2; }
             [data-dcuf-article-popup] [data-dcuf-article-part="submenu-list"], [data-dcuf-article-part="submenu-list"] > ul, [data-dcuf-article-popup] [data-dcuf-article-part="submenu-item"] { margin: 0; padding: 0; list-style: none; }
             [data-dcuf-article-popup] [data-dcuf-article-part="submenu-link"] { display: block; min-block-size: 40px; padding: 10px 12px; border-radius: 6px; color: var(--dcuf-view-fg); font: 500 13px/1.5 system-ui,sans-serif; text-decoration: none; box-sizing: border-box; }
             [data-dcuf-article-part="submenu-link"]:hover { background: var(--dcuf-theme-accent-soft); }

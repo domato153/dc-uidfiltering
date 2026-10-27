@@ -2,22 +2,22 @@
 
 ## Current execution
 
-- Active plan: B1_OWNED_PANELS_PREFLIGHT.md is observed with a tailored light/dark draft. Next is one common owned-panel material implementation, not twelve independent popup patches.
+- Active plan: B1_GLASS_TRANSMISSION.md implements common normal-page glass across existing B1 families and owned panels. Next: named P4 conditional child appearance, not another default-shell pass.
 - Workspace path: `.` (repository root; private prompt supplies exact nested worktree). AGENTS.md owns policy; preserve debug.log unread/unstaged.
-- Active stage: `header-navigation` formal admission open. P4 menu/settings preflight is ready; product application and its child-state/PC validation remain.
-- Accepted visual preference: compact B+B1, paper inputs and user-adopted C885 simple buttons. Higher-transparency button trial stays REJECTED. Owned-panel draft uses a thin14px close glyph within the existing44px target; dark inactive switch detail is NEEDS_WORK.
-- Source state: Source checkpoint base HEAD `d88cef8b66a497a50e8a1db236210b0fa6f5225b` on `codex/ui-port-boundary`; product source/runtime unchanged in this preflight. Read resulting checkpoint HEAD/status fresh.
-- Local-only state: `LOCAL_ONLY_EVIDENCE`; artifacts/b1-owned-panels-2026-10-27/ holds current/proposal inventories,16 layout contexts, backing probes and six-pair native comparison.10067 owned-panels viewer decoded48 current/proposal images; two displayed at a time. One Chrome job/4GB floor; no unrelated app termination.
-- Candidate fingerprint: `aad3cf75e455b316e19b19508875a3de0e30e67a2a58fbad433a6abf480178d9`
-- Last current audit: READY — preflight only:12 root families/light-dark,16 draft geometry contexts,14 close and16 footer hits,14 palette options reachable, backing transmission observed. Draft visual comparison retains NEEDS_WORK for dark inactive thumb; no product adoption/full P4 completion claim.
-- Current stage receipt: `verification/receipts/2026-10-27-b1-owned-panels-preflight.json` SHA-256 `3B73989ED9FE8CF5C96118A48D82BA9D7A22FD4F56E50230DD5329B926683C67`.
-- Accepted baseline: d88cef8 Mobile4BEA comment polish remains scoped/validated by its own receipt. P4 target is DRAFT, not a product golden.675A functional104 remains historical; no fresh whole Mobile/PC suite claimed for unchanged runtime.
-- Current artifact: Mobile3.5.5 `4BEA35A6DDDC6618A19BEC61B5A93F6483512B6544D3240F695B07466BDE3860` root/dist/guard; PC1.9.9 `D73A445F9A5013D295C49C199F77084D894E39F4E2455824185FA65D4E2C6212` unchanged. No rebuild, version, metadata, storage, registry or release change.
-- Blockers: No global live/authorization blocker. Product implementation remains separate from the isolated prototype. No real save/delete/import/download/clipboard/submit/upload/AI/authentication/new mutating POST. Relation-read47965 stays separate.
-- Pending live checks: Current actual-extension/device/account, image-specific replies C-07 and formal whole UI/header admission. P4 default/nested observations do not finish all S/P children or PC fallback. Four upload documents remain DEFERRED_USER_ACCEPTED. Single next task: existing-owner common-panel material implementation.
+- Active stage: `header-navigation` formal admission open. Common material is scoped/reviewed; P4/all-child, current extension/device/account and upper acceptance remain separate.
+- Accepted visual preference: compact B+B1 with modest ordinary-page contour transmission; real scrim is part of the material. C885 simple button faces and paper stay. Earlier dense P4 target/above-scrim plates are superseded for material judgement. User aesthetic review remains possible.
+- Source state: Source checkpoint base HEAD `50b4cb016914186efcc947c8d1a92b1f3dbf47a5` on `codex/ui-port-boundary`; existing Mobile theme/presenters and optional shared settings hooks only. No callback/state owner or architecture change. Read resulting checkpoint HEAD/status fresh.
+- Local-only state: `LOCAL_ONLY_EVIDENCE`; artifacts/b1-glass-2026-10-27/ contains final tests, same-area crop, independent target recipe,16 layouts and immediate Mobile/PC comparisons.10067 glass-transmission viewer decodes22 images/10 scenes; selected state only. One Chrome job/4GB floor.
+- Candidate fingerprint: `67ddaa67eeb113254a6c4a47acbab9f024ac523ff060e9566420b275aadb021e`
+- Last current audit: PASS — scoped final Mobile functional106/106, write36/36, PC functional15/15;6 PC style contexts unchanged and6 immediate Mobile semantic observations match after execution-clock-only normalization.16 layout contexts/10 visually reviewed design pairs; actual ordinary-page crop at3×. Not all-child/whole-product/user aesthetic approval.
+- Current stage receipt: `verification/receipts/2026-10-27-b1-ordinary-glass.json` SHA-256 `FF421D4F1E668724A7769121D42E7E22A98B50544D385C1E37FEED611039A2E8`.
+- Accepted baseline: 4BEA/D73A are immediate controls. Earlier preflight/colored plate is historical optical capability, not normal-page appearance. Final2E99/AF7F results are current within the new receipt's scope; no formal admission certificate follows.
+- Current artifact: Mobile3.5.5 `2E99E11A71183CDCC9F516E1E33CF9C28E30B20A5DFBA6FED1319A594D300426` root/dist/guard; PC1.9.9 `AF7FE72FF8EBF7312237D84AD7E2B8C45EAC4918021AE1807C5F37E96BFEFA29` root/dist. Existing-version rebuild; metadata/storage/version/registry/official release unchanged.
+- Blockers: No global live/authorization blocker. Synthetic settings commit/cancel used fresh test contexts only; no real save/delete/import/download/clipboard/submit/upload/AI/authentication/new mutating POST. Relation-read47965 stays separate.
+- Pending live checks: Current actual-extension/device/account, image-specific replies C-07 and formal whole UI/header admission. P4 conditional child appearance stays named. Four upload documents remain DEFERRED_USER_ACCEPTED. Single next task: owned-panel conditional finish using existing owners and current normal-page material.
 
 ```dcuf-current-artifacts
-{"schemaVersion":1,"mobile":{"sha256":"4BEA35A6DDDC6618A19BEC61B5A93F6483512B6544D3240F695B07466BDE3860"},"pc":{"sha256":"D73A445F9A5013D295C49C199F77084D894E39F4E2455824185FA65D4E2C6212"}}
+{"schemaVersion":1,"mobile":{"sha256":"2E99E11A71183CDCC9F516E1E33CF9C28E30B20A5DFBA6FED1319A594D300426"},"pc":{"sha256":"AF7FE72FF8EBF7312237D84AD7E2B8C45EAC4918021AE1807C5F37E96BFEFA29"}}
 ```
 
 ## Draft-complete checkpoint — 2026-10-21

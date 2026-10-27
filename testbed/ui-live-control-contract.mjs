@@ -129,7 +129,7 @@ export async function runLiveControlContract({browser,server}) {
                     descriptions:descriptions.map(e=>({display:getComputedStyle(e).display,box:box(e)})),
                     composers:composers.map(composer=>({
                         identity:Array.from(composer.querySelectorAll('.user_info_input')).map(e=>({border:getComputedStyle(e).borderTopWidth,box:box(e),field:box(e.querySelector('input'))})),
-                        auxiliary:Array.from(composer.querySelectorAll('.btn_circledel,.tip_native button')).map(e=>({role:e.getAttribute('data-dcuf-role'),box:box(e)})),
+                        auxiliary:Array.from(composer.querySelectorAll('.btn_circledel,.tip_native button')).map(e=>({role:e.getAttribute('data-dcuf-role'),nativeClear:e.matches('.btn_circledel'),visualRole:e.getAttribute('data-dcuf-comment-role'),visualState:e.getAttribute('data-dcuf-comment-state'),box:box(e)})),
                         submits:Array.from(composer.querySelectorAll('.cmt_cont_bottm>.fr>button')).map(e=>{const range=document.createRange();range.selectNodeContents(e);return {box:box(e),text:box(range),nowrap:getComputedStyle(e).whiteSpace};}),
                         actions:box(composer.querySelector('.cmt_cont_bottm')),
                     })),
@@ -181,7 +181,7 @@ export async function runLiveControlContract({browser,server}) {
                 check('reply separators occur only between siblings',observations.replies.length>0&&observations.replies.every(items=>items.every((r,i)=>r.border===(i===0?'0px':'1px'))),observations.replies);
                 check('legacy reply marker cannot overlap text',observations.replies.every(items=>items.every(r=>r.nativeIcons.every(i=>i.display==='none'||['none','normal','""'].includes(i.content)))),observations.replies);
                 check('credential wrappers have one contained field border',observations.composers.length>0&&observations.composers.every(c=>c.identity.every(i=>i.border==='0px'&&i.field.y>=i.box.y-1&&i.field.bottom<=i.box.bottom+1)),observations.composers.map(c=>c.identity));
-                check('native auxiliary controls remain native-sized',observations.composers.every(c=>c.auxiliary.every(a=>a.role!=='native-comment-submit'&&a.box.width===12&&a.box.height===12)),observations.composers.map(c=>c.auxiliary));
+                check('native auxiliary controls preserve their own target size',observations.composers.every(c=>c.auxiliary.every(a=>{const size=a.nativeClear&&a.visualRole==='icon-action'&&a.visualState==='clear'?32:12;return a.role!=='native-comment-submit'&&a.box.width===size&&a.box.height===size})),observations.composers.map(c=>c.auxiliary));
                 check('submit and recommend labels remain on one line',observations.composers.every(c=>c.submits.every(s=>s.nowrap==='nowrap'&&s.text.height<=20&&s.box.y>=c.actions.y-1&&s.box.bottom<=c.actions.bottom+1)),observations.composers.map(c=>c.submits));
                 await page.locator('.fixture-normal-comment-composer .cmt_cont_bottm>.fr>button').first().click();
                 check('native register listener preserved',await page.evaluate(()=>window.__liveNative.buttonClicks===1));

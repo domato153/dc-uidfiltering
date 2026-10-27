@@ -321,7 +321,7 @@
                 background: var(--dcuf-b1-sheen),var(--dcuf-b1-floating);
                 color: var(--dcuf-theme-fg);
                 box-shadow: var(--dcuf-b1-shadow);
-                backdrop-filter: blur(24px);
+                backdrop-filter: var(--dcuf-b1-floating-filter,blur(24px));
                 z-index: 2147482900;
             }
             [data-dcuf-header-drawer-scope="1"] ${selectors.relationStatic} {
@@ -354,14 +354,14 @@
             [data-dcuf-header-drawer-scope="1"] [data-dcuf-header-drawer-part="tip-trigger"]::after { content: "?"; display: grid; place-items: center; width: 15px; height: 15px; border: 1px solid currentColor; border-radius: 50%; font: 650 11px/1 system-ui,sans-serif; }
             [data-dcuf-header-drawer-scope="1"] [data-dcuf-header-drawer-part="visible-label"] { position: static; overflow: visible; width: auto; height: auto; margin: 0; clip: auto; clip-path: none; visibility: visible; color: inherit; font: inherit; }
             [data-dcuf-header-drawer-scope="1"] [data-dcuf-header-drawer-part="rank-trigger"] { display: inline-flex; align-items: center; justify-content: center; width: auto; min-height: 36px; height: auto; padding: 6px 10px; border: 1px solid var(--dcuf-theme-border); border-radius: 8px; background: transparent; color: var(--dcuf-theme-fg); font: 500 12px/1.5 system-ui,sans-serif; }
-            [data-dcuf-header-drawer-scope="1"] [data-dcuf-header-drawer-popup="1"], [data-dcuf-header-drawer-scope="1"] ${selectors.tipPopup} { box-sizing: border-box; border: 1px solid var(--dcuf-b1-rim); border-radius: 16px; background: var(--dcuf-b1-sheen),var(--dcuf-b1-floating); color: var(--dcuf-theme-fg); box-shadow: var(--dcuf-b1-shadow); backdrop-filter: blur(24px); }
+            [data-dcuf-header-drawer-scope="1"] [data-dcuf-header-drawer-popup="1"], [data-dcuf-header-drawer-scope="1"] ${selectors.tipPopup} { box-sizing: border-box; border: 1px solid var(--dcuf-b1-rim); border-radius: 16px; background: var(--dcuf-b1-sheen),var(--dcuf-b1-floating); color: var(--dcuf-theme-fg); box-shadow: var(--dcuf-b1-shadow); backdrop-filter: var(--dcuf-b1-floating-filter,blur(24px)); }
             [data-dcuf-header-drawer-scope="1"] ${selectors.rankPopup}[data-dcuf-header-drawer-popup="1"] { width: min(860px,calc(100vw - 32px)); max-width: calc(100vw - 32px); max-height: calc(100dvh - var(--dcuf-header-popup-clearance,128px)); overflow: hidden; }
             [data-dcuf-header-drawer-scope="1"] ${selectors.tipPopup} { width: min(380px,calc(100vw - 32px)); max-width: calc(100vw - 32px); }
             [data-dcuf-header-drawer-scope="1"] [data-dcuf-header-drawer-part="panel"] { width: 100%; min-width: 0; margin: 0; padding: 0; border: 0; background: transparent; color: inherit; box-sizing: border-box; }
             [data-dcuf-header-drawer-scope="1"] ${selectors.rankPopup} > [data-dcuf-header-drawer-part="panel"] { width: 100%; min-width: 0; padding: 0; border: 0; background: transparent; color: var(--dcuf-theme-fg); box-sizing: border-box; }
             [data-dcuf-header-drawer-scope="1"] ${selectors.rankPopup} [data-dcuf-header-drawer-part="head"] { flex-direction: column; align-items: flex-start; gap: 6px; }
             /* Glass is a decoration sibling of the original fixed descendants. */
-            [data-dcuf-header-drawer-scope="1"] ${selectors.door}[data-dcuf-header-native-door-open="1"]::before { content: ""; position: absolute; inset: 0; border-radius: inherit; backdrop-filter: blur(24px); pointer-events: none; z-index: -1; }
+            [data-dcuf-header-drawer-scope="1"] ${selectors.door}[data-dcuf-header-native-door-open="1"]::before { content: ""; position: absolute; inset: 0; border-radius: inherit; backdrop-filter: var(--dcuf-b1-floating-filter,blur(24px)); pointer-events: none; z-index: -1; }
             [data-dcuf-header-drawer-scope="1"] [data-dcuf-header-drawer-part="panel"] > [data-dcuf-header-drawer-part="head"] { display: flex; align-items: center; min-height: 70px; height: auto; margin: 0; padding: 20px 62px 18px 20px; border: 0; border-bottom: 1px solid var(--dcuf-b1-line); background: transparent; color: inherit; box-sizing: border-box; }
             [data-dcuf-header-drawer-scope="1"] [data-dcuf-header-drawer-part="head"] > [data-dcuf-header-drawer-part="title"] { margin: 0; color: inherit; font: 750 16px/1.5 system-ui,sans-serif; }
             [data-dcuf-header-drawer-scope="1"] [data-dcuf-header-drawer-part="message"] { margin: 0; padding: 0; color: var(--dcuf-theme-fg-muted); font: 400 12px/1.65 system-ui,sans-serif; }

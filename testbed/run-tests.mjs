@@ -34,6 +34,7 @@ import { runB1WriteShellContract } from './ui-b1-write-shell-contract.mjs';
 import { runControlMaterialContract, renderedLabelContrast } from './ui-control-material-contract.mjs';
 import { runGaejukContract } from './ui-gaejuk-contract.mjs';
 import { runB1EditorMenuContract } from './ui-b1-editor-menu-contract.mjs';
+import { runOwnedGlassContract } from './ui-b1-owned-glass-contract.mjs';
 
 const args = new Set(process.argv.slice(2));
 const selectedGroup = process.argv.includes('--group') ? process.argv[process.argv.indexOf('--group') + 1] : null;
@@ -75,6 +76,7 @@ async function settleThemeTransitions(page) {
 
 mobileTest('live native controls: palette category sprites comment and action ownership', 'functional', runLiveControlContract);
 mobileTest('B1 content: native picker isolation glass and original input', 'functional', runB1ContentContract);
+mobileTest('B1 glass: ordinary neutral backing through actual scrim', 'functional', runOwnedGlassContract);
 mobileTest('B1 image comments: full native composer parity and lifecycle', 'functional', runB1ImageCommentsContract);
 mobileTest('B1 comment actions: native delete and nickname clear finish', 'functional', runB1CommentActionsContract);
 mobileTest('B1 article actions: native popup glass and nested forms', 'functional', runB1ArticleActionsContract);
@@ -3563,7 +3565,7 @@ mobileTest('gallery native door keeps trusted controls and both popups across vi
             assert.equal([tipOpen.sourceParent, tipOpen.popupParents, tipOpen.noClone, tipOpen.noPortal,
                 tipOpen.tipHit, tipOpen.sourceHit].every(Boolean), true, `${width}x${height} dark=${dark}: ${JSON.stringify(tipOpen)}`);
             assert.equal(tipOpen.inViewport, true, `${width}x${height}: ${JSON.stringify(tipOpen)}`);
-            assert.equal(tipOpen.background, dark ? 'color(srgb 0.12549 0.160784 0.172549 / 0.84)' : 'color(srgb 1 1 1 / 0.78)', 'Authorized B1 floating material in this pinned Chrome environment');
+            assert.equal(tipOpen.background, dark ? 'color(srgb 0.12549 0.160784 0.172549 / 0.76)' : 'color(srgb 1 1 1 / 0.64)', 'Authorized B1 floating material in this pinned Chrome environment');
             await session.page.locator('#hot_tip_pop .btn_tipclose').click();
             await session.page.locator('.issue_wrap .btn_mgall_dcp').focus();
             await session.page.locator('.issue_wrap .btn_mgall_dcp').press('Enter');
@@ -5369,8 +5371,8 @@ mobileTest('모바일 편의기능 설정은 선택 팔레트와 밝은·어두�
             };
         });
         assert.equal(inspect.inlineStyle, null, '편의 설정 레이아웃은 고정 인라인 색상에 의존하면 안 된다');
-        assert.equal(inspect.backgroundImage, 'none', 'Concept01 uses a flat settings surface');
-        assert.equal(inspect.rowRadius >= 10, true);
+        assert.ok(inspect.backgroundImage.includes('linear-gradient'), 'B1 settings exterior carries the shared quiet sheen');
+        assert.equal(inspect.rowRadius, 0, 'Owned settings use quiet section grouping inside the common glass shell');
         assert.deepEqual(inspect.toggle, { width: 42, height: 24 });
         assert.equal(inspect.saveBorder, inspect.accent, '저장 버튼은 선택한 팔레트의 공통 primary rim을 사용해야 한다');
         assert.equal(inspect.bodyOverflow, 'auto');
@@ -9109,8 +9111,8 @@ mobileTest('modify password surface uses the mobile card UI and removes trailing
         assert.deepEqual(contract.presentationPayloads.map((css) => (
             createHash('sha256').update(css, 'utf8').digest('hex').toUpperCase()
         )), [
-            '93901D8296842E5A77CDEB1570D002D49CFFDA41AB93347E60DAB20D3F72EA15',
-            '09E53BE4760FDB8EA827256EAE57B1F2F5B343872EFDE6C97CC783DF736E3317'
+            '6EC32CBBB15A2856405A34E86A58372C2E6FB14D49A0A72DCC11FE184C61E9DF',
+            '1AA3EB2836E2C7879691FC5CBCB0C4CFEE598C12D8D3F49E507EB5202FF096E1'
         ], 'native-form presentation payloads must match the registered semantic modify/delete, write-shell, write-popup, write-fields, write-headtext, write-editor-shell, write-toolbar-shell, editor-layer, and attachment contracts');
         assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
     } finally { await session.close(); }
@@ -9295,7 +9297,7 @@ mobileTest('modify/delete presentation uses only adapter-applied semantic select
         assert.equal(contract.computed.actionsColumns.split(' ').length, 2);
         assert.equal(
             createHash('sha256').update(contract.writePayloadShaSource, 'utf8').digest('hex').toUpperCase(),
-            '09E53BE4760FDB8EA827256EAE57B1F2F5B343872EFDE6C97CC783DF736E3317',
+            '1AA3EB2836E2C7879691FC5CBCB0C4CFEE598C12D8D3F49E507EB5202FF096E1',
             'write/modify-editor payload must match the registered page/form-shell, popup, field, editor, toolbar, and editor-layer semantic contract'
         );
         assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
@@ -12517,8 +12519,8 @@ mobileTest('UI palette reaches settings, block management, and backup card surfa
                 sharedStyleOwners: 1
             }, 'settings must have one semantic modern visual owner');
             assertPaletteSurfaces(await collectPaletteSurfaceContract(session.page, [
-                { selector: '#dcinside-filter-setting', token: '--dcuf-theme-canvas' },
-                { selector: '#dcinside-filter-setting .dcuf-settings-section', token: '--dcuf-theme-card-top' },
+                { selector: '#dcinside-filter-setting', token: '--dcuf-b1-floating' },
+                { selector: '#dcinside-filter-setting .dcuf-settings-section', token: 'transparent' },
                 { selector: '#dcinside-filter-setting #dcinside-threshold-input', token: '--dcuf-theme-surface-input' }
             ]), `settings ${dark ? 'dark' : 'light'}`);
             await session.page.locator('#dcinside-filter-setting #dcinside-exclude-recommended-checkbox').evaluate((input) => {
@@ -12572,8 +12574,8 @@ mobileTest('UI palette reaches settings, block management, and backup card surfa
                 };
             }), { leftSafe: true, rightSafe: true, topSafe: true, bottomSafe: true }, 'management panel must stay inside the mobile viewport');
             assertPaletteSurfaces(await collectPaletteSurfaceContract(session.page, [
-                { selector: '#dc-block-management-panel', token: '--dcuf-theme-canvas' },
-                { selector: '#dc-block-management-panel .panel-body', token: '--dcuf-theme-canvas' },
+                { selector: '#dc-block-management-panel', token: '--dcuf-b1-floating' },
+                { selector: '#dc-block-management-panel .panel-body', token: 'transparent' },
                 { selector: '#dc-block-management-panel .panel-list-controls', token: '--dcuf-theme-card-top' },
                 { selector: '#dc-block-management-panel .panel-search-input', token: '--dcuf-theme-surface-input' }
             ]), `management ${dark ? 'dark' : 'light'}`);
@@ -12606,8 +12608,8 @@ mobileTest('UI palette reaches settings, block management, and backup card surfa
                 presentation: element.getAttribute('data-dcuf-presentation')
             })), { surface: 'personal-backup', role: 'panel', presentation: 'modern-fluid-tactile-v1' });
             assertPaletteSurfaces(await collectPaletteSurfaceContract(session.page, [
-                { selector: '#dc-backup-popup', token: '--dcuf-theme-canvas' },
-                { selector: '#dc-backup-popup .export-section', token: '--dcuf-theme-card-top' },
+                { selector: '#dc-backup-popup', token: '--dcuf-b1-floating' },
+                { selector: '#dc-backup-popup .export-section', token: 'transparent' },
                 { selector: '#dc-backup-popup textarea', token: '--dcuf-theme-surface-input' }
             ]), `backup ${dark ? 'dark' : 'light'}`);
             await session.page.locator('#dc-backup-popup, #dc-backup-popup-overlay, #dc-block-management-panel, #dc-block-management-panel-overlay').evaluateAll((elements) => elements.forEach((element) => element.remove()));
