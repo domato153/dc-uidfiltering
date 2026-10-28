@@ -2,22 +2,22 @@
 
 ## Current execution
 
-- Active plan: B1_LOGIN_ENTRY_PREFLIGHT.md closes the original-anatomy/independent-draft/entry-plan preflight. Next: login-only Mobile presentation implementation. Prior named P4 input/tool work remains scoped complete.
+- Active plan: B1_LOGIN_ENTRY_IMPLEMENTATION.md closes the scoped login entry; NEXT_TASK.md selects only remaining integrated B1 child gaps. D-55 requires actual change-impact tests,not routine whole-suite reruns.
 - Workspace path: `.` (repository root; private prompt supplies exact nested worktree). AGENTS.md owns policy; preserve debug.log unread/unstaged.
-- Active stage: `header-navigation` formal admission open. Login preflight READY is not implemented login UI or whole-UI/account/device admission. C-07 image replies remain N/A.
+- Active stage: `header-navigation` formal admission open. Login original-node implementation/replay scope is complete; whole-UI/account/device admission remains separate. C-07 image replies remain N/A.
 - Accepted visual preference: compact B+B1,moderate normal-page glass,C885 simple buttons and opaque fields. Login's native header/card extends that family; its independent draft is provisional,not final user aesthetic adoption.
-- Source state: Source checkpoint base HEAD `484e0900e47b8576cf5203a7a559811fba63ffca` on `codex/ui-port-boundary`; product/source/build/metadata/accepted registry unchanged. This unit changes only preflight/design/continuity records. Read resulting HEAD/status fresh.
-- Local-only state: `LOCAL_ONLY_EVIDENCE`; artifacts/b1-login-preflight-2026-10-28/ binds sanitized public anatomy,CSS,current-entry probe,six proposal-only contexts and two-theme viewer. No credentials,hidden values,cookies or account state captured. One browser job/4GB floor.
-- Candidate fingerprint: `bb1dd1292b10b2acb283c9ff7f1615e2fafc0aa176345ba6065dcb7d609b58e4`
-- Last current audit: READY for login preflight only — public original form/CSS captured,current1593 isolated VM returns other without gallery startup effects,preserved stable32BA lacks sign metadata,six independent-draft contexts have no horizontal overflow and7 positive form-control hits each,viewer4 image instances decode. No implemented-product/authentication/installed-extension/device pass. Prior input8 focused Mobile/15 PC is unchanged1593/EF24 scope,not login coverage.
-- Current stage receipt: `verification/receipts/2026-10-28-b1-login-preflight.json` SHA-256 `44DD908B6223360F35D7E3FA3F7531E5E3FF266520C0CF5D0907DE845B207C5C`.
-- Accepted baseline: 1593/EF24 remain current product; verification/receipts/2026-10-28-b1-owned-inputs.json retains their input scope. Existing normal-page B1 family supplies material context; derived login light 0A3A0981/dark2F4EDE28 are independent provisional comparison targets.
-- Current artifact: Mobile3.5.5 `1593C0F7FA4FFDFCAF1607EFC3D8DC557FED9F4A41CD968C9914814965C5BF5B` root/dist/guard; PC1.9.9 `EF24D41DD44AC13634FC17CEC43B31CD371C6D0F3D8AEA6A6C47CB81ABB832E3` root/dist. No version,storage,metadata or release change.
-- Blockers: No global live/capability blocker. Current missing login entry is diagnosed,not implemented. New early entry must avoid later const/ThemeModule TDZ and gallery boot; candidate overlay before source/build ownership edits. Original-field/authentication behavior remains native.
-- Pending live checks: Exact Mobile login entry/metadata,actual TM5.5 query/hash behavior,current extension/device/account and whole-UI/header admission. Native conditional CAPTCHA/auth errors remain unobserved. Other named child gaps remain; four separate upload documents stay DEFERRED_USER_ACCEPTED. C-07 is N/A and must not revive.
+- Source state: Source checkpoint base HEAD `e01d8a4eac8f7a0c2c83eb669081b5ccf6fb83fd` on `codex/ui-port-boundary`; scoped login/pure-theme/build/metadata changes validated. Candidate overlay active; accepted registry unchanged. Exact working checkpoint disposition belongs to tools/checkpoint.mjs.
+- Local-only state: `LOCAL_ONLY_EVIDENCE`; artifacts/b1-login-implementation-2026-10-28/ retains1593/EF24 controls,RED/final reports/captures and exact-path checkpoint preparation. No raw/account data is published. One Chrome job/4GiB floor retained.
+- Candidate fingerprint: `385b8c6fc3d3bdbedcc6e635cf664b420352a99289d7eeec66c72d689f93a93f`
+- Last current audit: PASS scoped F87E/8915 login entry:48 source observations,10 actual-TM native-replay routes,4 image-bound reviewed comparisons,exact Mobile/PC CSS and14 presets.160 Mobile/11 host checks completed; after user impact steering,only1 affected PC palette check. Formal upper/header/all-child acceptance UNKNOWN.
+- Current stage receipt: `verification/receipts/2026-10-28-b1-login-implementation.json` SHA-256 `CD53D91EDC0AA6B74F49C6E73A2DBA8708A1FD74C7036433FEA73F3D544BE8F8`.
+- Accepted baseline: F87E/8915 are the current scoped implementation;1593/EF24 remain preserved immediate controls. Current B1 material/C885 simple buttons stay selected; independent login targets0A3A0981/2F4EDE28 remain comparison drafts,not automatic final aesthetic approval.
+- Current artifact: Mobile3.5.5 `F87E31ED06E223E066913F5BC0063A8DA38009067BCA57E83CC9FB8CF64D47CB` root/dist/guard; PC1.9.9 `8915F36E5B8887DC58EF9F932E39CCA28CCE1AC1020FD96460CCD10C08913581` root/dist. Existing versions; no official release authorized.
+- Blockers: No current product or global Chrome/TM blocker. CUA tab binding failed this turn,but isolated installed Chrome156/TM5.5 replay works. Compare viewer login-implementation/index.html is decoded. Authentication/native conditional account states are outside this evidence.
+- Pending live checks: Real account submission,password-manager integration,CAPTCHA/auth errors,native dark-script variants and actual phone. Existing named unobserved child/whole-UI/header gaps remain; reconcile before new implementation. Four separate upload documents DEFERRED_USER_ACCEPTED; C-07 N/A. Use impact-selected checks only.
 
 ```dcuf-current-artifacts
-{"schemaVersion":1,"mobile":{"sha256":"1593C0F7FA4FFDFCAF1607EFC3D8DC557FED9F4A41CD968C9914814965C5BF5B"},"pc":{"sha256":"EF24D41DD44AC13634FC17CEC43B31CD371C6D0F3D8AEA6A6C47CB81ABB832E3"}}
+{"schemaVersion":1,"mobile":{"sha256":"F87E31ED06E223E066913F5BC0063A8DA38009067BCA57E83CC9FB8CF64D47CB"},"pc":{"sha256":"8915F36E5B8887DC58EF9F932E39CCA28CCE1AC1020FD96460CCD10C08913581"}}
 ```
 
 ## Draft-complete checkpoint — 2026-10-21

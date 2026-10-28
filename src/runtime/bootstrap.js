@@ -4,6 +4,13 @@
     const __dcufRoot = (typeof unsafeWindow !== 'undefined' && unsafeWindow) ? unsafeWindow : window;
     if (window.top !== window.self) return;
 
+    // Login is an independent presentation entry. No gallery boot, menus,
+    // filtering or body lock may run on the authentication document.
+    if (__DCUF_TARGET_IS_MOBILE__ && __dcufIsLoginRoute(window.location)) {
+        __dcufMountLoginPresentation();
+        return;
+    }
+
     const detectedRouteType = ((window.location.pathname || '').match(/\/board\/(lists|view|write|modify|delete)(?:\/|$)/) || [])[1] || 'other';
     const detectedPageType = detectedRouteType === 'delete' && '__DCUF_DELETE_SURFACE__' !== 'mobile'
         ? 'other'

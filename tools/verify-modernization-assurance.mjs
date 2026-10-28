@@ -89,6 +89,7 @@ function validateSurfaces(manifest, deltas) {
         'data-dcuf-native-form-layer-state',
         'data-dcuf-native-form-box-sizing',
         'data-dcuf-native-form-control-kind',
+        'data-dcuf-login',
     ];
     if (JSON.stringify(manifest.markerAttributes) !== JSON.stringify(exactMarkers)) fail('ui-surfaces: semantic marker set changed');
     const requiredOperations = ['clone', 'replace', 'move', 'reorder', 'wrap', 'portal'];
@@ -113,7 +114,7 @@ function validateSurfaces(manifest, deltas) {
             nonEmptyStrings(items, `${label}.${field}`);
         }
         if (!deltaIds.has(surface.intendedDelta)) fail(`${label}: unknown intended delta ${surface.intendedDelta}`);
-        if (!['settings-list', 'article-comments', 'native-form-header'].includes(surface.canaryCheckpoint)) fail(`${label}: invalid canary checkpoint`);
+        if (!['settings-list', 'article-comments', 'native-form-header', 'login-entry'].includes(surface.canaryCheckpoint)) fail(`${label}: invalid canary checkpoint`);
         if (surface.allowedRoots.some((root) => ['*', 'html', 'body', 'document'].includes(root.toLowerCase()))) fail(`${label}: broad allowed root is forbidden`);
         if (!Array.isArray(surface.cascadeExceptions)) fail(`${label}: cascadeExceptions must be an array`);
         for (const [exceptionIndex, exception] of (surface.cascadeExceptions || []).entries()) {

@@ -66,6 +66,10 @@
       {
         "id": "three-layer-assurance",
         "summary": "Implementation evidence, independent cross-audit, and an upper assurance case must bind distinct evidence families to the exact system under test and expose unresolved defeaters."
+      },
+      {
+        "id": "b1-login-only-presentation",
+        "summary": "Exact Mobile HTTPS sign /login or /login/ presentation before gallery boot,including native query. Preserve original form controls/values/parents/handlers/hidden fields/security/return destination. No credential/cookie reads,authentication submit interception,GM writes,filter/menu/network/document observer/body lock. Pure shared theme factories preserve original gallery/PC values and CSS; login readiness/theme ownership is isolated and disposable."
       }
     ],
     "upsertComponents": [
@@ -140,9 +144,23 @@
         "layer": "presentation-ui",
         "boundaryState": "mixed",
         "responsibility": "Shared palette presenter consumes UiPort snapshots and typed intents; target host CSS is now an explicit separate build input and pinch geometry is adapter-owned.",
-        "sourceRefs": ["src/targets/shared/theme-presenter.js", "src/targets/mobile/theme-module.js"],
-        "contractRefs": ["storage-compatibility", "ui-ownership", "target-isolation", "semantic-preservation"],
-        "fitnessRefs": ["invariant-one-visual-owner", "invariant-pc-host-style-isolation", "invariant-ui-port-boundary", "invariant-build-inputs-mapped"],
+        "sourceRefs": [
+          "src/targets/shared/theme-presenter.js",
+          "src/targets/mobile/theme-module.js"
+        ],
+        "contractRefs": [
+          "storage-compatibility",
+          "ui-ownership",
+          "target-isolation",
+          "semantic-preservation",
+          "b1-login-only-presentation"
+        ],
+        "fitnessRefs": [
+          "invariant-one-visual-owner",
+          "invariant-pc-host-style-isolation",
+          "invariant-ui-port-boundary",
+          "invariant-build-inputs-mapped"
+        ],
         "transition": {
           "targetBoundaryState": "conforming",
           "exitCriteria": "Current mobile and PC differential receipts bind the shared presenter explicit target style inputs popup adapter and zero semantic visual storage focus lifecycle drift."
@@ -185,9 +203,20 @@
         "layer": "presentation-ui",
         "boundaryState": "mixed",
         "responsibility": "Retires legacy DCUF-owned dialog palette selectors so shared SettingsPresenter is their final owner; contains the remaining legacy mobile host palette rail and composes the five existing header presentation owners' hoisted pure palette builders at the unchanged early theme phase; no raw header palette selector remains here. Semantic-marker conversion remains pending.",
-        "sourceRefs": ["src/targets/mobile/theme-host-style.js"],
-        "contractRefs": ["host-dom-events", "target-isolation", "ui-ownership"],
-        "fitnessRefs": ["invariant-one-visual-owner", "invariant-pc-host-style-isolation", "invariant-build-inputs-mapped"],
+        "sourceRefs": [
+          "src/targets/mobile/theme-host-style.js"
+        ],
+        "contractRefs": [
+          "host-dom-events",
+          "target-isolation",
+          "ui-ownership",
+          "b1-login-only-presentation"
+        ],
+        "fitnessRefs": [
+          "invariant-one-visual-owner",
+          "invariant-pc-host-style-isolation",
+          "invariant-build-inputs-mapped"
+        ],
         "transition": {
           "targetBoundaryState": "conforming",
           "exitCriteria": "Every host selector is replaced by adapter-applied semantic markers and each important declaration has a registered collision reason and focused regression test."
@@ -761,6 +790,197 @@
           "invariant-registry-integrity",
           "invariant-proof-binding"
         ]
+      },
+      {
+        "id": "shared-theme-primitives",
+        "status": "candidate",
+        "classification": "presentation-source",
+        "layer": "presentation-ui",
+        "boundaryState": "mixed",
+        "responsibility": "Hoisted pure frozen fourteen-preset data and exact inherited base CSS; no DOM,GM,network or state ownership. Inherited dynamic palette-root/body selectors retain mixed presentation debt.",
+        "sourceRefs": [
+          "src/shared/theme-primitives.js"
+        ],
+        "contractRefs": [
+          "ui-ownership",
+          "target-isolation",
+          "semantic-preservation",
+          "b1-login-only-presentation"
+        ],
+        "fitnessRefs": [
+          "invariant-build-inputs-mapped",
+          "invariant-one-visual-owner",
+          "invariant-host-node-preservation"
+        ],
+        "transition": {
+          "targetBoundaryState": "conforming",
+          "exitCriteria": "Replace inherited dynamic html palette root and body selector strings with a declared generated semantic descriptor while exact fourteen preset CSS and Mobile PC behavior comparisons remain unchanged."
+        }
+      },
+      {
+        "id": "mobile-theme-material-values",
+        "status": "candidate",
+        "classification": "presentation-source",
+        "layer": "presentation-ui",
+        "boundaryState": "mixed",
+        "responsibility": "Hoisted pure existing Mobile B1 material role CSS; consumed by gallery and isolated login without executing gallery initialization. Existing dynamic palette root/body selectors remain debt.",
+        "sourceRefs": [
+          "src/targets/mobile/theme-material-values.js"
+        ],
+        "contractRefs": [
+          "ui-ownership",
+          "target-isolation",
+          "semantic-preservation",
+          "b1-login-only-presentation"
+        ],
+        "fitnessRefs": [
+          "invariant-build-inputs-mapped",
+          "invariant-one-visual-owner",
+          "invariant-host-node-preservation"
+        ],
+        "transition": {
+          "targetBoundaryState": "conforming",
+          "exitCriteria": "Replace inherited dynamic html palette root and body selector strings with a declared generated semantic descriptor while exact fourteen preset CSS and Mobile PC behavior comparisons remain unchanged."
+        }
+      },
+      {
+        "id": "mobile-login-presenter",
+        "status": "candidate",
+        "classification": "presentation-source",
+        "layer": "presentation-ui",
+        "boundaryState": "conforming",
+        "responsibility": "Pure original-node login layout/material descriptor consumes immutable adapter-owned selector bindings and pure theme values; no host APIs or authentication state.",
+        "sourceRefs": [
+          "src/targets/mobile/login-presenter.js"
+        ],
+        "contractRefs": [
+          "ui-ownership",
+          "target-isolation",
+          "semantic-preservation",
+          "b1-login-only-presentation"
+        ],
+        "fitnessRefs": [
+          "invariant-build-inputs-mapped",
+          "invariant-one-visual-owner",
+          "invariant-host-node-preservation"
+        ]
+      },
+      {
+        "id": "mobile-login-host-adapter",
+        "status": "candidate",
+        "classification": "adapter-contract",
+        "layer": "target-adapter",
+        "boundaryState": "conforming",
+        "responsibility": "Validates exact sign login route and public native form anatomy; owns once-only DOM readiness,existing palette read,theme input,original-root styling,duplicate guard and reversible cleanup. Never reads credentials/cookies/hidden values or intercepts authentication.",
+        "sourceRefs": [
+          "src/targets/mobile/login-host-adapter.js"
+        ],
+        "contractRefs": [
+          "ui-ownership",
+          "target-isolation",
+          "semantic-preservation",
+          "b1-login-only-presentation"
+        ],
+        "fitnessRefs": [
+          "invariant-build-inputs-mapped",
+          "invariant-one-visual-owner",
+          "invariant-host-node-preservation"
+        ]
+      },
+      {
+        "id": "login-entry-verification",
+        "status": "candidate",
+        "classification": "verification",
+        "layer": "verification",
+        "boundaryState": "verification",
+        "responsibility": "Guarded isolated native-shaped login route,readiness,theme,geometry,original-form and zero gallery-startup witnesses; no actual authentication.",
+        "sourceRefs": [
+          "testbed/test-login-metadata.mjs",
+          "testbed/ui-b1-login-contract.mjs",
+          "testbed/run-login-entry.mjs",
+          "testbed/fixtures/login-native.html",
+          "testbed/fixtures/login-native.css",
+          "testbed/fixtures/login-wordmark.svg",
+          "testbed/fixtures/login-security-sprite.png",
+          "testbed/run-login-extension.mjs",
+          "testbed/test-login-theme-parity.mjs",
+          "testbed/fixtures/login-native.mjs"
+        ],
+        "contractRefs": [
+          "b1-login-only-presentation",
+          "metadata-scope",
+          "semantic-preservation"
+        ],
+        "fitnessRefs": [
+          "invariant-build-inputs-mapped",
+          "invariant-host-node-preservation"
+        ]
+      },
+      {
+        "id": "runtime-bootstrap",
+        "status": "candidate",
+        "classification": "runtime-source",
+        "layer": "application-runtime",
+        "boundaryState": "conforming",
+        "responsibility": "Document-start scope detection, duplicate guard, boot visibility lock, and shared startup envelope.",
+        "sourceRefs": [
+          "src/runtime/bootstrap.js"
+        ],
+        "contractRefs": [
+          "metadata-scope",
+          "initialization-lifecycle",
+          "artifact-lineage",
+          "b1-login-only-presentation"
+        ],
+        "fitnessRefs": [
+          "invariant-initialization-recovery",
+          "invariant-build-inputs-mapped"
+        ]
+      },
+      {
+        "id": "mobile-build",
+        "status": "candidate",
+        "classification": "build-tool",
+        "layer": "composition-build",
+        "boundaryState": "conforming",
+        "responsibility": "Deterministically assembles the mobile userscript from manifest-ordered inputs.",
+        "sourceRefs": [
+          "tools/build-userscript.mjs"
+        ],
+        "contractRefs": [
+          "artifact-lineage",
+          "metadata-scope",
+          "b1-login-only-presentation"
+        ],
+        "fitnessRefs": [
+          "invariant-exact-mobile-baseline",
+          "invariant-build-inputs-mapped"
+        ]
+      },
+      {
+        "id": "pc-build",
+        "status": "candidate",
+        "classification": "build-tool",
+        "layer": "composition-build",
+        "boundaryState": "mixed",
+        "responsibility": "Assembles PC userscript; currently extracts FilterModule/CSS and transforms the mobile theme source.",
+        "sourceRefs": [
+          "tools/build-pc-filter-userscript.mjs"
+        ],
+        "contractRefs": [
+          "artifact-lineage",
+          "metadata-scope",
+          "target-isolation",
+          "b1-login-only-presentation"
+        ],
+        "fitnessRefs": [
+          "invariant-pc-host-style-isolation",
+          "invariant-build-inputs-mapped"
+        ],
+        "transition": {
+          "targetBoundaryState": "conforming",
+          "exitCriteria": "PC assembly uses manifest-declared shared modules and adapters only, performs no marker slicing or source transformation, and excludes all mobile host CSS."
+        }
       }
     ],
     "upsertRelations": [
@@ -1167,6 +1387,72 @@
         "from": "mobile-header-recent-visit-host-adapter",
         "to": "mobile-header-recent-visit-presenter",
         "kind": "explicit-style-input"
+      },
+      {
+        "id": "rel-runtime-bootstrap-mobile-login-host-adapter",
+        "from": "runtime-bootstrap",
+        "to": "mobile-login-host-adapter",
+        "kind": "uses-target-presentation"
+      },
+      {
+        "id": "rel-mobile-login-host-adapter-mobile-login-presenter",
+        "from": "mobile-login-host-adapter",
+        "to": "mobile-login-presenter",
+        "kind": "explicit-style-input"
+      },
+      {
+        "id": "rel-mobile-login-presenter-shared-theme-primitives",
+        "from": "mobile-login-presenter",
+        "to": "shared-theme-primitives",
+        "kind": "explicit-style-input"
+      },
+      {
+        "id": "rel-mobile-login-presenter-mobile-theme-material-values",
+        "from": "mobile-login-presenter",
+        "to": "mobile-theme-material-values",
+        "kind": "explicit-style-input"
+      },
+      {
+        "id": "rel-mobile-theme-module-shared-theme-primitives",
+        "from": "mobile-theme-module",
+        "to": "shared-theme-primitives",
+        "kind": "explicit-style-input"
+      },
+      {
+        "id": "rel-mobile-theme-host-style-mobile-theme-material-values",
+        "from": "mobile-theme-host-style",
+        "to": "mobile-theme-material-values",
+        "kind": "explicit-style-input"
+      },
+      {
+        "id": "rel-mobile-build-mobile-login-host-adapter",
+        "from": "mobile-build",
+        "to": "mobile-login-host-adapter",
+        "kind": "explicit-build-input"
+      },
+      {
+        "id": "rel-mobile-build-mobile-login-presenter",
+        "from": "mobile-build",
+        "to": "mobile-login-presenter",
+        "kind": "explicit-build-input"
+      },
+      {
+        "id": "rel-mobile-build-shared-theme-primitives",
+        "from": "mobile-build",
+        "to": "shared-theme-primitives",
+        "kind": "explicit-build-input"
+      },
+      {
+        "id": "rel-mobile-build-mobile-theme-material-values",
+        "from": "mobile-build",
+        "to": "mobile-theme-material-values",
+        "kind": "explicit-build-input"
+      },
+      {
+        "id": "rel-pc-build-shared-theme-primitives",
+        "from": "pc-build",
+        "to": "shared-theme-primitives",
+        "kind": "explicit-build-input"
       }
     ],
     "removeRelations": ["rel-filter-mobile-filter", "rel-filter-pc-build", "rel-storage-mobile-filter", "rel-theme-pc-build"],

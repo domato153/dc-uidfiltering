@@ -1,0 +1,79 @@
+/* Observed sign login native cascade2026-10-28; matched rules from public reset/login/common/popup.css. No product styles. */
+html, body, div, span, iframe, h1, h2, h3, h4, h5, h6, p, a, em, img, strong, b, u, center, dl, dt, dd, ol, ul, li, fieldset, form, label, legend, table, caption, tbody, tfoot, thead, tr, th, td, article, aside, embed, figure, figcaption, footer, header, nav, section, summary, audio, video, button { margin: 0px; padding: 0px; border: 0px; vertical-align: baseline; background: transparent; font-style: normal; }
+article, aside, figcaption, figure, footer, header, nav, section, main { display: block; }
+body { width: 100%; height: 100%; }
+button { cursor: pointer; }
+input, select, textarea, button { border-radius: 0px; vertical-align: middle; }
+body, button, input, select, table, textarea { font-size: 12px; font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", "맑은 고딕", arial, Dotum, 돋움, sans-serif; }
+a { color: rgb(51, 51, 51); text-decoration: none; }
+a:active, a:hover { text-decoration: underline; }
+.sp_loginout { background-image: url("https://nstatic.dcinside.com/dc/w/images/sp/sp_loginout.png"); background-repeat: no-repeat; }
+.login_wrap #container { margin-top: 37px; }
+.content.login { margin: 205px auto 233px; }
+.login_wrap .login_page { width: 700px; height: 300px; margin: 0px auto; border: 2px solid rgb(41, 54, 124); border-radius: 3px; }
+.login_inputbox { float: left; background: rgb(255, 255, 255); }
+.login_inputbox .int.bg { height: 41px; border-width: medium; border-style: none; border-color: currentcolor; border-image: none; line-height: 41px; }
+.login_inputbox .inner { width: 290px; padding: 25px 0px 0px 56px; }
+.login_inputbox .inner input:first-of-type, .bg_box .form_box input:first-of-type { margin-top: 0px; }
+.login_inputbox .inner input.id:first-of-type { margin-top: 20px; }
+.login_inputbox .inner input, .bg_box .form_box input { margin-top: 7px; }
+.ban_box { float: right; width: 298px; background: rgb(243, 243, 243); }
+.idip_checkbox { margin-top: 10px; }
+.idip_checkbox .checkbox { float: left; }
+.idip_checkbox .checkbox.type1 label { vertical-align: -2px; }
+.chk_ip { float: right; margin: 0px 0px 0px 3px; color: rgb(85, 85, 85); }
+.chk_ip .ip { display: inline-block; width: 17px; height: 13px; margin-right: 6px; line-height: 11px; vertical-align: -2px; background-position: -27px -73px; }
+.chk_ip .ip.on { background-position: 0px -73px; }
+.logon_option { border-top: 1px dashed rgb(170, 170, 170); margin-top: 16px; padding-top: 15px; text-align: center; }
+.logon_option a { font-size: 14px; color: rgb(0, 0, 0); }
+.logon_option a::before { content: "|"; display: inline-block; font-size: 13px; color: rgb(215, 215, 215); padding: 0px 4px 0px 1px; vertical-align: top; }
+.logon_option a:first-child::before { display: none; }
+.login_wrap .login_page.kap_codewrap { height: 348px; }
+.sp_loginout { background-image: url("https://nstatic.dcinside.com/dc/w/images/sp/sp_loginout.png"); background-repeat: no-repeat; }
+.clear::after { clear: both; display: block; visibility: hidden; content: ""; }
+.blind, .place_blind { position: absolute; overflow: hidden; visibility: hidden; margin: -1px; width: 0px; height: 0px; top: -9999px; font-size: 0px; }
+.ip { font-family: tahoma, sans-serif; font-size: 11px; color: rgb(153, 153, 153); }
+.width868 .dchead, .width868 #container, .width868 .info_policy, .width868 .copyright { width: 868px; }
+.dchead { position: relative; width: 1050px; height: 105px; margin: 0px auto; }
+.dcheader.bg .dchead { height: 85px; }
+.info_policy { width: 1050px; margin: 0px auto; padding-top: 28px; text-align: center; }
+#container { width: 1050px; margin: 20px auto 0px; }
+.copyright { width: 1050px; margin: 10px auto 0px; text-align: center; letter-spacing: 0px; font-size: 12px; font-family: tahoma, sans-serif; color: rgb(51, 51, 51); }
+.dcheader.bg { background: rgb(41, 54, 124); }
+.dchead .dclogo { position: absolute; left: 0px; top: 40px; display: flex; margin-top: 10px; }
+.dcheader.bg .dchead .dclogo { top: 30px; }
+.dchead .dclogo a { display: block; }
+.dchead .dclogo a:hover { text-decoration: none; }
+.dchead .dclogo .logo_img { width: 162px; height: 22px; background: url("https://nstatic.dcinside.com/dc/svg/logo-wordmark.svg") 0px 0px / 100% 100% no-repeat; }
+.dchead .dclogo .logo_img2 { margin: 4px 0px 0px 8px; font-family: Pretendard, sans-serif; letter-spacing: -0.025em; font-size: 18px; color: rgb(59, 72, 144); }
+.bg .dchead .dclogo .logo_img { filter: invert(1); }
+.bg .dchead .dclogo .logo_img2 { color: rgb(255, 255, 255); }
+.dcheader.bg a { color: rgb(255, 255, 255); }
+input::-webkit-input-placeholder { color: rgb(153, 153, 153); }
+.user_info_input input::-webkit-input-placeholder, input.int::-webkit-input-placeholder { color: rgb(153, 153, 153); }
+.btn_whitepurple, .btn_lightpurple, .btn_lightgreen, .btn_yeongrey, .btn_white_ccc, .btn_yeongrey, .btn_blue, .btn_lightblue, .btn_grey, .btn_lightgrey, .btn_white, .btn_red, .btn_jeangrey, .btn_mediumgrey, .btn_lightergrey, .btn_yeondu { width: 85px; height: 40px; padding-right: 2px; line-height: 36px; margin-left: 3px; border-width: 1px 1px 3px; border-style: solid; border-radius: 2px; font-size: 14px; font-weight: bold; }
+.btn_blue { background: rgb(59, 72, 144); border-color: rgb(41, 54, 124); text-shadow: rgb(29, 39, 97) 0px -1px; color: rgb(255, 255, 255); }
+.btn_lightgreen.small, .btn_yeongrey.small, .btn_lightpurple.small, .btn_blue.small, .btn_lightblue.small, .btn_grey.small, .btn_jeangrey.small, .btn_white.small, .btn_red.small, .btn_lightgrey.small, .btn_red.small, .btn_green.small, .btn_yeonpurple.small, .btn_mediumblue.small, .btn_yeongreen.small, .btn_yeonblue.small, .btn_tyeonblue.small, .btn_lighterblue.small, .btn_whiteblack.small { height: 31px; line-height: 29px; margin-left: 3px; border-width: 1px; border-style: solid; border-radius: 2px; font-size: 12px; font-weight: bold; }
+.btn_blue.small.btn_wfull { border-radius: 0px; width: 100%; height: 41px; line-height: 39px; margin: 7px 0px 0px; font-size: 14px; overflow: hidden; }
+button.smaller, button.small { overflow: hidden; }
+.checkmark { background-image: url("https://nstatic.dcinside.com/dc/w/images/sp/sp_img.png"); background-repeat: no-repeat; }
+.checkbox { position: relative; display: inline-block; vertical-align: top; padding-left: 13px; line-height: 14px; }
+.checkbox input[type="checkbox"] { position: absolute; left: 0px; top: 0px; margin: 0px; opacity: 0; z-index: 2; cursor: pointer; }
+.checkbox input + .checkmark { position: absolute; top: 0px; left: 0px; display: block; width: 14px; height: 14px; background-position: -264px -184px; }
+.checkbox input:checked + .checkmark { top: 0px; left: 0px; width: 14px; height: 14px; background-position: -248px -184px; z-index: 1; }
+.checkbox.type1 { padding-left: 23px; }
+.checkbox.type1 input[type="checkbox"] { width: 17px; height: 17px; }
+.checkbox.type1 input + .checkmark { position: absolute; top: 0px; left: 0px; display: block; width: 17px; height: 17px; background-position: -197px -294px; }
+.checkbox.type1 input:checked + .checkmark { top: 0px; left: 0px; width: 17px; height: 17px; background-position: -197px -275px; z-index: 1; }
+input[type="checkbox"]:disabled ~ .checkmark, input[type="radio"]:disabled ~ .checkmark, .disabled ~ .checkmark, .disabled ~ .checkmark { opacity: 0.3; }
+input[type="checkbox"]:disabled, input[type="radio"]:disabled, input[type="checkbox"]:disabled ~ label, input[type="radio"]:disabled ~ label, .disabled, .disabled, .disabled ~ label, .disabled ~ label { color: rgb(153, 153, 153); }
+.int { width: 100%; height: 35px; padding: 0px 9px; line-height: 35px; border: 1px solid rgb(206, 205, 206); box-sizing: border-box; font-size: 14px; color: rgb(85, 85, 85); }
+.int.bg { background: rgb(243, 243, 243); }
+.con_box { margin: 25px 0px 7px; }
+.dcfoot { clear: both; position: relative; padding-bottom: 50px; background: rgb(255, 255, 255); }
+.join_wrap .dcfoot, .login_wrap .dcfoot, .policy_wrap .dcfoot, .adult_wrap .dcfoot, .noaccess_wrap .dcfoot, .delet_wrap .dcfoot, .report_wrap .dcfoot, .woman_wrap .dcfoot, .pwcam_wrap .dcfoot { margin-top: 80px; border-top: 1px solid rgb(41, 54, 124); }
+.info_policy a { color: rgb(51, 51, 51); }
+.info_policy a:hover { text-decoration: underline; }
+.info_policy a::before { content: ""; display: inline-block; width: 1px; height: 11px; margin: 0px 10px; vertical-align: -1px; background: rgb(215, 215, 215); }
+.info_policy a:first-child::before { display: none; }
+@media screen and (-ms-high-contrast: active), (-ms-high-contrast: none){.checkbox.type1 label { line-height: 17px; }}

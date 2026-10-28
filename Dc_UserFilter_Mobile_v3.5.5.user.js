@@ -7,6 +7,7 @@
 // @match        https://gall.dcinside.com/board/*
 // @match        https://gall.dcinside.com/mgallery/board/*
 // @match        https://gall.dcinside.com/mini/board/*
+// @include      /^https:\/\/sign\.dcinside\.com\/login\/?(?:\?[^#]*)?$/
 // @noframes
 // @grant        GM_setValue
 // @grant        GM_getValue
@@ -28,6 +29,13 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
 
     const __dcufRoot = (typeof unsafeWindow !== 'undefined' && unsafeWindow) ? unsafeWindow : window;
     if (window.top !== window.self) return;
+
+    // Login is an independent presentation entry. No gallery boot, menus,
+    // filtering or body lock may run on the authentication document.
+    if (true && __dcufIsLoginRoute(window.location)) {
+        __dcufMountLoginPresentation();
+        return;
+    }
 
     const detectedRouteType = ((window.location.pathname || '').match(/\/board\/(lists|view|write|modify|delete)(?:\/|$)/) || [])[1] || 'other';
     const detectedPageType = detectedRouteType === 'delete' && 'mobile' !== 'mobile'
@@ -376,6 +384,364 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
         startBootUiWatchdog();
     }
     // Phase 2 runtime shared prelude
+// Pure inherited theme values, hoisted for the isolated login entry.
+function __dcufGetThemePresets() {
+    return Object.freeze([
+        Object.freeze({ id: 'blue', label: '기본 블루', light: ['#3f6de0', '#245bda', '#eaf1ff'], dark: ['#8cb4ff', '#3868df', '#243a64'] }),
+        Object.freeze({ id: 'purple', label: '퍼플', light: ['#7c3aed', '#6d28d9', '#f3e8ff'], dark: ['#c4b5fd', '#7c3aed', '#39275a'] }),
+        Object.freeze({ id: 'green', label: '그린', light: ['#16805d', '#047857', '#e7f7ef'], dark: ['#6ee7b7', '#047857', '#173c32'] }),
+        Object.freeze({ id: 'orange', label: '오렌지', light: ['#c2410c', '#9a3412', '#fff0e7'], dark: ['#fdba74', '#c2410c', '#4a2a1b'] }),
+        Object.freeze({ id: 'mono', label: '모노톤', light: ['#526274', '#374151', '#eef2f7'], dark: ['#cbd5e1', '#475569', '#28323f'] }),
+        Object.freeze({ id: 'indigo', label: '인디고', light: ['#4f46e5', '#4338ca', '#eef2ff'], dark: ['#4f46e5', '#3730a3', '#29274f'] }),
+        Object.freeze({ id: 'sky', label: '스카이', light: ['#0284c7', '#0369a1', '#e0f2fe'], dark: ['#0369a1', '#075985', '#17384a'] }),
+        Object.freeze({ id: 'cyan', label: '시안', light: ['#0891b2', '#0e7490', '#ecfeff'], dark: ['#0e7490', '#155e75', '#173b44'] }),
+        Object.freeze({ id: 'teal', label: '틸', light: ['#0f766e', '#115e59', '#e6f7f4'], dark: ['#0f766e', '#115e59', '#173c38'] }),
+        Object.freeze({ id: 'lime', label: '라임', light: ['#65a30d', '#4d7c0f', '#f7fee7'], dark: ['#4d7c0f', '#3f6212', '#2c3918'] }),
+        Object.freeze({ id: 'amber', label: '앰버', light: ['#d97706', '#b45309', '#fffbeb'], dark: ['#b45309', '#92400e', '#493016'] }),
+        Object.freeze({ id: 'red', label: '레드', light: ['#dc2626', '#b91c1c', '#fef2f2'], dark: ['#c62828', '#991b1b', '#4a2020'] }),
+        Object.freeze({ id: 'rose', label: '로즈', light: ['#e11d48', '#be123c', '#fff1f2'], dark: ['#cf234c', '#9f1239', '#4a202d'] }),
+        Object.freeze({ id: 'pink', label: '핑크', light: ['#db2777', '#be185d', '#fce7f3'], dark: ['#c52a72', '#9d174d', '#472138'] }),
+    ]);
+}
+
+function __dcufBuildThemeBaseCss(ROOT_ATTRIBUTE, PRESETS = __dcufGetThemePresets()) {
+    const buildPresetVariables = () => PRESETS.map((preset) => {
+        const [accent, strong, soft, onAccent = '#fff'] = preset.light;
+        const [darkAccent, darkStrong, darkSoft, darkOnAccent = '#fff'] = preset.dark;
+        return `
+            html[${ROOT_ATTRIBUTE}="${preset.id}"] { --dcuf-theme-accent:${accent};--dcuf-theme-accent-strong:${strong};--dcuf-theme-accent-soft:${soft};--dcuf-theme-on-accent:${onAccent}; }
+            html[${ROOT_ATTRIBUTE}="${preset.id}"].dc-filter-dark-mode,
+            html[${ROOT_ATTRIBUTE}="${preset.id}"] body.dc-filter-dark-mode { --dcuf-theme-accent:${darkAccent};--dcuf-theme-accent-strong:${darkStrong};--dcuf-theme-accent-soft:${darkSoft};--dcuf-theme-on-accent:${darkOnAccent}; }
+        `;
+    }).join('\n');
+
+    return `
+        ${buildPresetVariables()}
+        html[${ROOT_ATTRIBUTE}] {
+            --dcuf-theme-accent-ink:var(--dcuf-theme-accent-strong);--dcuf-theme-fg:#27313f;--dcuf-theme-fg-muted:#687384;--dcuf-theme-border:#e2e7e5;--dcuf-theme-border-strong:#cbd5d1;--dcuf-theme-page:#f7f8f8;--dcuf-theme-surface:#ffffff;--dcuf-theme-surface-raised:#ffffff;--dcuf-theme-surface-muted:#f2f5f4;--dcuf-theme-surface-input:#ffffff;--dcuf-theme-canvas:#f7f8f8;--dcuf-theme-card-top:#ffffff;--dcuf-theme-card-bottom:#ffffff;--dcuf-theme-article-surface:#ffffff;--dcuf-theme-concept-surface:#f5f8f7;--dcuf-theme-notice-surface:#f3f6f5;--dcuf-theme-reply-surface:#f3f6f5;--dcuf-theme-card-shadow:0 1px 2px rgba(24,40,34,.035);--dcuf-theme-panel-shadow:0 16px 48px rgba(24,40,34,.14);--dcuf-theme-primary-top:color-mix(in srgb,var(--dcuf-theme-accent) 78%,white);--dcuf-theme-focus-ring:color-mix(in srgb,var(--dcuf-theme-accent) 18%,transparent);--dcuf-theme-accent-shadow:color-mix(in srgb,var(--dcuf-theme-accent-strong) 25%,transparent);
+        }
+        html[${ROOT_ATTRIBUTE}].dc-filter-dark-mode,html[${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode {
+            --dcuf-theme-accent-ink:color-mix(in srgb,var(--dcuf-theme-accent) 55%,white);--dcuf-theme-fg:#edf2f7;--dcuf-theme-fg-muted:#aeb8c4;--dcuf-theme-border:#343c3d;--dcuf-theme-border-strong:#4a5656;--dcuf-theme-page:#141819;--dcuf-theme-surface:#1b2021;--dcuf-theme-surface-raised:#222829;--dcuf-theme-surface-muted:#202728;--dcuf-theme-surface-input:#171c1d;--dcuf-theme-canvas:#171c1d;--dcuf-theme-card-top:#1b2021;--dcuf-theme-card-bottom:#1b2021;--dcuf-theme-article-surface:#1b2021;--dcuf-theme-concept-surface:#202827;--dcuf-theme-notice-surface:#252e2d;--dcuf-theme-reply-surface:#202827;--dcuf-theme-card-shadow:0 1px 2px rgba(0,0,0,.16);--dcuf-theme-panel-shadow:0 16px 48px rgba(0,0,0,.4);--dcuf-theme-primary-top:color-mix(in srgb,var(--dcuf-theme-accent) 68%,white);
+        }
+        `;
+}
+// Existing B1 values only; no gallery DOM rules or initialization.
+function __dcufBuildB1MaterialCss(ROOT_ATTRIBUTE) {
+    return `
+        /* Mobile B1 material roles from the selected preview. Shared palette
+           IDs/accent values and the PC theme remain unchanged. */
+        html[${ROOT_ATTRIBUTE}] {
+            --dcuf-b1-canvas: #f1f5f5;
+            --dcuf-b1-paper: var(--dcuf-theme-surface);
+            --dcuf-b1-glass: color-mix(in srgb, color-mix(in srgb, var(--dcuf-b1-paper) 80%, var(--dcuf-theme-accent-soft)) 58%, transparent);
+            --dcuf-b1-floating: color-mix(in srgb, var(--dcuf-b1-paper) 64%, transparent);
+            --dcuf-menu-button-background: var(--dcuf-control-secondary-bg);
+            --dcuf-menu-background: var(--dcuf-b1-sheen), var(--dcuf-b1-floating);
+            --dcuf-menu-shadow: var(--dcuf-b1-shadow), inset 0 1px 0 var(--dcuf-b1-rim);
+            --dcuf-menu-backdrop: var(--dcuf-b1-floating-filter);
+            --dcuf-b1-sheen: linear-gradient(120deg, #ffffff2e, #ffffff08 42%, transparent 65%);
+            --dcuf-b1-floating-filter: blur(8px) saturate(1.08);
+            --dcuf-b1-structural-filter: blur(12px) saturate(1.1);
+            --dcuf-panel-scrim: rgba(18,25,35,.22);
+            --dcuf-panel-status-error: #a52b40;
+            --dcuf-panel-status-success: #12694e;
+            --dcuf-b1-rim: #fffffff2;
+            --dcuf-b1-line: color-mix(in srgb, var(--dcuf-theme-border) 55%, var(--dcuf-b1-paper));
+            --dcuf-b1-shadow: 0 12px 32px #2e5a5f12, 0 1px 3px #3651560b;
+            --dcuf-control-highlight: #ffffff38;
+            --dcuf-control-depth: #244d5514;
+            --dcuf-control-opacity: 82%;
+        }
+        html[${ROOT_ATTRIBUTE}].dc-filter-dark-mode,
+        html[${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode {
+            --dcuf-b1-canvas: #171e21;
+            --dcuf-b1-paper: #20292c;
+            --dcuf-b1-glass: color-mix(in srgb, color-mix(in srgb, var(--dcuf-b1-paper) 85%, var(--dcuf-theme-accent-soft)) 72%, transparent);
+            --dcuf-b1-floating: color-mix(in srgb, var(--dcuf-b1-paper) 76%, transparent);
+            --dcuf-b1-sheen: linear-gradient(120deg, #ffffff0d, transparent 58%);
+            --dcuf-panel-scrim: rgba(18,25,35,.28);
+            --dcuf-panel-status-error: #ff9ba9;
+            --dcuf-panel-status-success: #7cdbb4;
+            --dcuf-b1-rim: color-mix(in srgb, var(--dcuf-theme-fg) 9%, transparent);
+            --dcuf-b1-line: color-mix(in srgb, var(--dcuf-theme-fg) 5%, var(--dcuf-b1-paper));
+            --dcuf-b1-shadow: 0 14px 34px #0003, 0 1px 2px #0003;
+            --dcuf-control-highlight: #ffffff24;
+            --dcuf-control-depth: #00000038;
+            --dcuf-control-opacity: 88%;
+        }
+        html[${ROOT_ATTRIBUTE}],
+        html[${ROOT_ATTRIBUTE}].dc-filter-dark-mode,
+        html[${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode {
+            /* Optional shared-panel hooks: PC retains each existing fallback. */
+            --dcuf-panel-background: var(--dcuf-b1-sheen), var(--dcuf-b1-floating);
+            --dcuf-panel-backdrop: var(--dcuf-b1-floating-filter);
+            --dcuf-panel-rim: var(--dcuf-b1-rim);
+            --dcuf-panel-shadow: var(--dcuf-b1-shadow), inset 0 1px 0 #ffffff26;
+            --dcuf-panel-header-background: transparent;
+            --dcuf-panel-body-background: transparent;
+            --dcuf-panel-footer-background: transparent;
+            --dcuf-panel-section-background: transparent;
+            --dcuf-panel-section-border: 0;
+            --dcuf-panel-section-divider: 1px solid var(--dcuf-b1-line);
+            --dcuf-panel-section-radius: 0;
+            --dcuf-panel-kicker-display: none;
+            --dcuf-panel-title-size: 20px;
+            --dcuf-panel-close-background: transparent;
+            --dcuf-panel-close-position: relative;
+            --dcuf-panel-close-shadow: none;
+            --dcuf-panel-close-border: transparent;
+            --dcuf-panel-close-font-size: 0;
+            --dcuf-panel-close-content: "";
+            --dcuf-panel-close-hover: var(--dcuf-control-secondary-bg);
+            --dcuf-panel-switch-thumb: #f7fbfa;
+            --dcuf-panel-range-margin: 0;
+            --dcuf-panel-status-info: var(--dcuf-theme-fg);
+            --dcuf-panel-empty-ink: var(--dcuf-theme-fg);
+            --dcuf-panel-help-ink: color-mix(in srgb,var(--dcuf-theme-fg) 75%,var(--dcuf-theme-fg-muted));
+            --dcuf-panel-pending-opacity: 1;
+            --dcuf-panel-pending-decoration: line-through;
+            /* Material values only: each existing presenter owns shape,
+               positioning and state. No filtered native-popup ancestors. */
+            /* Keep the specular edge above the label; dense primary tint
+               preserves small white-label contrast in lighter palettes. */
+            --dcuf-control-glaze: linear-gradient(180deg, #ffffff20, #ffffff06 14%, #ffffff00 28%, #0000000c);
+            --dcuf-control-primary-fill: var(--dcuf-theme-accent-strong);
+            --dcuf-control-secondary-fill: color-mix(in srgb, var(--dcuf-b1-paper) var(--dcuf-control-opacity), transparent);
+            --dcuf-control-selected-fill: color-mix(in srgb, var(--dcuf-theme-accent-soft) 90%, transparent);
+            --dcuf-control-primary-bg: var(--dcuf-control-glaze), var(--dcuf-control-primary-fill);
+            --dcuf-control-secondary-bg: var(--dcuf-control-glaze), var(--dcuf-control-secondary-fill);
+            --dcuf-control-selected-bg: var(--dcuf-control-glaze), var(--dcuf-control-selected-fill);
+            --dcuf-control-primary-rim: color-mix(in srgb, var(--dcuf-theme-on-accent) 28%, var(--dcuf-theme-accent-strong));
+            --dcuf-control-rim: color-mix(in srgb, var(--dcuf-b1-rim) 65%, var(--dcuf-theme-border-strong));
+            --dcuf-control-shadow: inset 0 1px 0 var(--dcuf-control-highlight), inset 0 -1px 0 #00000012, 0 3px 8px var(--dcuf-control-depth);
+            --dcuf-control-quiet-shadow: inset 0 1px 0 var(--dcuf-control-highlight);
+            --dcuf-control-danger-bg: var(--dcuf-control-glaze), color-mix(in srgb, color-mix(in srgb, #c43249 12%, var(--dcuf-b1-paper)) 90%, transparent);
+        }
+`;
+}
+// Pure login presentation. Native selectors and host behavior belong to the adapter.
+function __dcufCreateLoginPresentation(selectors) {
+    const required = ["scope","darkScope","body","page","header","headerInner","logoGroup","logo","darkLogo","loginLink","container","content","card","inputBox","inputInner","fieldset","title","fields","placeholder","primary","primaryHover","options","checkboxGroup","checkbox","checkboxMark","checkboxLabel","security","recovery","recoveryLink","recoverySeparator","advertisement","footer","policy","policyLink","policySeparator","copyright","focus","selection"];
+    if (!selectors || !required.every(key => typeof selectors[key] === 'string' && selectors[key].startsWith('[data-dcuf-login]'))) throw new TypeError('Invalid login presentation bindings');
+    const css = __dcufBuildThemeBaseCss('data-dcuf-palette') + __dcufBuildB1MaterialCss('data-dcuf-palette') + `
+${selectors.scope} { --dcuf-login-input:var(--dcuf-theme-surface-input);--dcuf-login-muted:var(--dcuf-panel-help-ink);color-scheme:light; }
+${selectors.darkScope} { color-scheme:dark; }
+${selectors.body} {
+  min-width:0;margin:0;color:var(--dcuf-theme-fg);
+  background:linear-gradient(135deg,color-mix(in srgb,var(--dcuf-theme-accent-soft) 32%,var(--dcuf-b1-canvas)),var(--dcuf-b1-canvas) 65%);
+  font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+}
+${selectors.page} {width:100%;min-width:0;min-height:100svh;}
+${selectors.header} {
+  width:calc(100% - 32px);max-width:1120px;height:72px;margin:16px auto 0;
+  border:1px solid var(--dcuf-b1-rim);border-radius:16px;
+  background:var(--dcuf-b1-sheen),var(--dcuf-b1-floating);
+  box-shadow:var(--dcuf-b1-shadow);backdrop-filter:blur(12px) saturate(1.1);
+}
+${selectors.headerInner} {width:auto;height:100%;margin:0;padding:0 24px;display:flex;align-items:center;}
+${selectors.logoGroup} {position:static;inset:auto;margin:0;align-items:center;width:100%;}
+${selectors.logo} {filter:none;}
+${selectors.darkLogo} {filter:invert(1);}
+${selectors.loginLink} {margin:0 0 0 auto;color:var(--dcuf-login-muted);font-size:13px;font-weight:650;}
+${selectors.container} {width:100%;min-width:0;margin:0;}
+${selectors.content} {margin:0;padding:clamp(52px,13vh,126px) 20px 64px;}
+${selectors.card} {
+  box-sizing:border-box;width:min(520px,100%);height:auto;margin:0 auto;padding:34px 40px 30px;
+  border:1px solid var(--dcuf-b1-rim);border-radius:16px;
+  background:var(--dcuf-b1-sheen),var(--dcuf-b1-floating);
+  box-shadow:var(--dcuf-b1-shadow);backdrop-filter:blur(12px) saturate(1.1);
+}
+${selectors.inputBox} {float:none;width:100%;background:transparent;}
+${selectors.inputInner} {box-sizing:border-box;width:100%;padding:0;}
+${selectors.fieldset} {min-inline-size:0;border:0;margin:0;padding:0;}
+${selectors.title} {
+  position:static;overflow:visible;clip:auto;visibility:visible;width:auto;height:auto;margin:0 0 26px;
+  font-size:24px;font-weight:750;letter-spacing:-.025em;line-height:1.3;
+}
+${selectors.fields} {
+  box-sizing:border-box;width:100%;height:50px;margin:0 0 12px;padding:0 15px;
+  border:1px solid var(--dcuf-theme-border-strong);border-radius:10px;
+  color:var(--dcuf-theme-fg);background:var(--dcuf-login-input);font:inherit;font-size:15px;line-height:normal;
+  caret-color:var(--dcuf-theme-accent);
+}
+${selectors.placeholder} {color:var(--dcuf-login-muted);opacity:1;}
+${selectors.primary} {
+  box-sizing:border-box;width:100%;height:48px;margin:4px 0 0;padding:0 16px;
+  border:1px solid var(--dcuf-control-primary-rim);border-radius:10px;
+  background:var(--dcuf-control-primary-bg);box-shadow:var(--dcuf-control-shadow);
+  color:var(--dcuf-theme-on-accent);font:inherit;font-size:15px;font-weight:700;line-height:normal;text-shadow:none;
+}
+${selectors.primaryHover} {filter:brightness(1.07);}
+${selectors.options} {display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:17px;color:var(--dcuf-login-muted);font-size:12px;}
+${selectors.checkboxGroup} {float:none;display:flex;align-items:center;gap:7px;padding-left:0;}
+${selectors.checkbox} {position:static;width:16px;height:16px;margin:0;opacity:1;z-index:auto;appearance:auto;accent-color:var(--dcuf-theme-accent);}
+${selectors.checkboxMark} {display:none;}
+${selectors.checkboxLabel} {padding:0;line-height:20px;background:none;color:var(--dcuf-login-muted);}
+${selectors.security} {float:none;margin:0;white-space:nowrap;color:var(--dcuf-login-muted);}
+${selectors.recovery} {display:flex;flex-wrap:wrap;justify-content:center;gap:14px;margin-top:27px;padding-top:22px;border-top:1px solid var(--dcuf-theme-border);}
+${selectors.recoveryLink} {color:var(--dcuf-login-muted);font-size:12px;line-height:1.6;}
+${selectors.recoverySeparator} {display:none;}
+${selectors.advertisement} {display:none;}
+${selectors.footer} {width:100%;height:auto;margin:0;padding:0 20px 28px;box-sizing:border-box;border-top:0;background:transparent;color:var(--dcuf-login-muted);}
+${selectors.policy} {display:flex;width:auto;justify-content:center;flex-wrap:wrap;gap:6px 15px;}
+${selectors.policyLink} {padding:0;color:var(--dcuf-login-muted);font-size:11px;line-height:1.8;}
+${selectors.policySeparator} {display:none;}
+${selectors.copyright} {width:auto;margin-top:16px;color:var(--dcuf-login-muted);font-size:10px;line-height:1.8;}
+${selectors.focus} {outline:2px solid var(--dcuf-theme-accent);outline-offset:3px;}
+${selectors.selection} {background:var(--dcuf-theme-accent-soft);color:var(--dcuf-theme-fg);}
+@media(max-width:560px) {
+  ${selectors.header} {width:calc(100% - 24px);height:64px;margin-top:12px;}
+  ${selectors.headerInner} {padding:0 18px;}
+  ${selectors.content} {padding:48px 16px;}
+  ${selectors.card} {padding:30px 22px 26px;}
+}
+`;
+    return Object.freeze({id:'dcuf-mobile-login-style',css});
+}
+
+// The verified native cascade needs these exact class relationships.
+function __dcufLoginSelectorBindings() {
+    return Object.freeze({
+    "scope": "[data-dcuf-login]",
+    "darkScope": "[data-dcuf-login].dc-filter-dark-mode",
+    "body": "[data-dcuf-login] body",
+    "page": "[data-dcuf-login] .login_wrap",
+    "header": "[data-dcuf-login] .dcheader.bg",
+    "headerInner": "[data-dcuf-login] .login_wrap .dchead",
+    "logoGroup": "[data-dcuf-login] .dcheader.bg .dclogo",
+    "logo": "[data-dcuf-login] .bg .dclogo .logo_img",
+    "darkLogo": "[data-dcuf-login].dc-filter-dark-mode .bg .dclogo .logo_img",
+    "loginLink": "[data-dcuf-login] .bg .dclogo .logo_img2",
+    "container": "[data-dcuf-login] .login_wrap #container",
+    "content": "[data-dcuf-login] .content.login",
+    "card": "[data-dcuf-login] .login_wrap .login_page.kap_codewrap",
+    "inputBox": "[data-dcuf-login] .login_inputbox",
+    "inputInner": "[data-dcuf-login] .login_inputbox .inner",
+    "fieldset": "[data-dcuf-login] .login_inputbox fieldset",
+    "title": "[data-dcuf-login] .login_inputbox legend.blind",
+    "fields": "[data-dcuf-login] .login_inputbox .inner input.int.bg",
+    "placeholder": "[data-dcuf-login] .login_inputbox .int::placeholder",
+    "primary": "[data-dcuf-login] .login_inputbox .btn_wfull",
+    "primaryHover": "[data-dcuf-login] .login_inputbox .btn_wfull:hover",
+    "options": "[data-dcuf-login] .idip_checkbox",
+    "checkboxGroup": "[data-dcuf-login] .idip_checkbox .checkbox",
+    "checkbox": "[data-dcuf-login] .checkbox input[type=\"checkbox\"]",
+    "checkboxMark": "[data-dcuf-login] .checkbox.type1 > .checkmark",
+    "checkboxLabel": "[data-dcuf-login] .checkbox.type1 label",
+    "security": "[data-dcuf-login] .chk_ip",
+    "recovery": "[data-dcuf-login] .logon_option",
+    "recoveryLink": "[data-dcuf-login] .logon_option a",
+    "recoverySeparator": "[data-dcuf-login] .logon_option a::before",
+    "advertisement": "[data-dcuf-login] .login_page .ban_box",
+    "footer": "[data-dcuf-login] .dcfoot",
+    "policy": "[data-dcuf-login] .dcfoot .info_policy",
+    "policyLink": "[data-dcuf-login] .dcfoot .info_policy a",
+    "policySeparator": "[data-dcuf-login] .dcfoot .info_policy a::before",
+    "copyright": "[data-dcuf-login] .dcfoot .copyright",
+    "focus": "[data-dcuf-login] :is(input,button,a):focus-visible",
+    "selection": "[data-dcuf-login] ::selection"
+});
+}
+
+function __dcufIsLoginRoute(location) {
+    return location?.protocol === 'https:' && location.hostname === 'sign.dcinside.com'
+        && (location.pathname === '/login' || location.pathname === '/login/');
+}
+
+function __dcufMountLoginPresentation() {
+    const previous = __dcufRoot.__dcufLoginController;
+    if (typeof previous?.getSnapshot === 'function' && previous.getSnapshot().state !== 'disposed') return previous;
+    const paletteKey = 'dcuf_mobile_ui_palette';
+    const validIds = new Set(__dcufGetThemePresets().map(p => p.id));
+    let state = 'waiting', active = true, palette = 'blue', dark = false, paletteSettled = false;
+    let root = null, style = null, media = null, saved = null, listening = false;
+    const normalize = value => typeof value === 'string' && validIds.has(value) ? value : 'blue';
+    const restoreAttribute = (name, original, expected) => {
+        if (!root || root.getAttribute(name) !== expected) return;
+        if (original === null) root.removeAttribute(name); else root.setAttribute(name, original);
+    };
+    const cleanup = () => {
+        document.removeEventListener('DOMContentLoaded', mount);
+        if (listening) {
+            media?.removeEventListener?.('change', syncTheme);
+            window.removeEventListener('pageshow', syncTheme);
+            listening = false;
+        }
+        style?.remove();
+        style = null;
+        if (saved) {
+            restoreAttribute('data-dcuf-login', saved.login, 'ready');
+            restoreAttribute('data-dcuf-palette', saved.palette, palette);
+            if (root.classList.contains('dc-filter-dark-mode') === dark) root.classList.toggle('dc-filter-dark-mode', saved.dark);
+        }
+    };
+    const dispose = () => {
+        if (!active) return;
+        active = false;
+        cleanup();
+        state = 'disposed';
+    };
+    const controller = Object.freeze({
+        getSnapshot: () => Object.freeze({state, palette, dark, paletteSettled}),
+        dispose,
+    });
+    __dcufRoot.__dcufLoginController = controller;
+
+    function syncTheme() {
+        if (!active || !root) return;
+        dark = Boolean(document.getElementById('css-darkmode')) || Boolean(media?.matches);
+        root.classList.toggle('dc-filter-dark-mode', dark);
+    }
+    function mount() {
+        if (!active) return;
+        try {
+            const page = document.querySelector('#top.login_wrap');
+            const card = page?.querySelector('.login_page');
+            const form = card?.querySelector('.login_inputbox .inner > form');
+            const action = form && new URL(form.getAttribute('action') || '', window.location.href);
+            const valid = form?.getAttribute('method')?.toLowerCase() === 'post'
+                && action?.origin === 'https://sign.dcinside.com' && action.pathname === '/login/member_check'
+                && form.querySelector('input#id[name="user_id"][type="text"]')
+                && form.querySelector('input#pw[name="pw"][type="password"]')
+                && form.querySelector('button[type="submit"]');
+            if (!valid || document.getElementById('dcuf-mobile-login-style')) {
+                state = 'native'; paletteSettled = true; return;
+            }
+            root = document.documentElement;
+            saved = {login:root.getAttribute('data-dcuf-login'), palette:root.getAttribute('data-dcuf-palette'), dark:root.classList.contains('dc-filter-dark-mode')};
+            const descriptor = __dcufCreateLoginPresentation(__dcufLoginSelectorBindings());
+            style = document.createElement('style');
+            style.id = descriptor.id;
+            style.textContent = descriptor.css;
+            (document.head || root).appendChild(style);
+            root.setAttribute('data-dcuf-login', 'ready');
+            root.setAttribute('data-dcuf-palette', palette);
+            media = typeof window.matchMedia === 'function' ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+            syncTheme();
+            media?.addEventListener?.('change', syncTheme);
+            window.addEventListener('pageshow', syncTheme);
+            listening = true;
+            state = 'mounted';
+            Promise.resolve().then(() => typeof GM_getValue === 'function' ? GM_getValue(paletteKey, 'blue') : 'blue')
+                .then(value => {
+                    if (!active || state !== 'mounted') return;
+                    palette = normalize(value);
+                    root.setAttribute('data-dcuf-palette', palette);
+                })
+                .catch(error => {
+                    if (active) console.warn('[DCUF] login palette read failed; using blue:', error);
+                })
+                .finally(() => { paletteSettled = true; });
+        } catch (error) {
+            cleanup();
+            state = 'native'; paletteSettled = true;
+            console.warn('[DCUF] login presentation unavailable; keeping native form:', error);
+        }
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mount, {once:true});
+    else mount();
+    return controller;
+}
 /**
  * Shared storage/schema constants extracted from v2.7.5.4.
  */
@@ -13368,97 +13734,7 @@ const __dcufSettingsPresenter = (() => {
             void RuntimeCoordinator.recoverFromBfcache(event);
         });
     }
-    const __dcufBuildTargetThemeCss = (ROOT_ATTRIBUTE) => `
-        /* Mobile B1 material roles from the selected preview. Shared palette
-           IDs/accent values and the PC theme remain unchanged. */
-        html[${ROOT_ATTRIBUTE}] {
-            --dcuf-b1-canvas: #f1f5f5;
-            --dcuf-b1-paper: var(--dcuf-theme-surface);
-            --dcuf-b1-glass: color-mix(in srgb, color-mix(in srgb, var(--dcuf-b1-paper) 80%, var(--dcuf-theme-accent-soft)) 58%, transparent);
-            --dcuf-b1-floating: color-mix(in srgb, var(--dcuf-b1-paper) 64%, transparent);
-            --dcuf-menu-button-background: var(--dcuf-control-secondary-bg);
-            --dcuf-menu-background: var(--dcuf-b1-sheen), var(--dcuf-b1-floating);
-            --dcuf-menu-shadow: var(--dcuf-b1-shadow), inset 0 1px 0 var(--dcuf-b1-rim);
-            --dcuf-menu-backdrop: var(--dcuf-b1-floating-filter);
-            --dcuf-b1-sheen: linear-gradient(120deg, #ffffff2e, #ffffff08 42%, transparent 65%);
-            --dcuf-b1-floating-filter: blur(8px) saturate(1.08);
-            --dcuf-b1-structural-filter: blur(12px) saturate(1.1);
-            --dcuf-panel-scrim: rgba(18,25,35,.22);
-            --dcuf-panel-status-error: #a52b40;
-            --dcuf-panel-status-success: #12694e;
-            --dcuf-b1-rim: #fffffff2;
-            --dcuf-b1-line: color-mix(in srgb, var(--dcuf-theme-border) 55%, var(--dcuf-b1-paper));
-            --dcuf-b1-shadow: 0 12px 32px #2e5a5f12, 0 1px 3px #3651560b;
-            --dcuf-control-highlight: #ffffff38;
-            --dcuf-control-depth: #244d5514;
-            --dcuf-control-opacity: 82%;
-        }
-        html[${ROOT_ATTRIBUTE}].dc-filter-dark-mode,
-        html[${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode {
-            --dcuf-b1-canvas: #171e21;
-            --dcuf-b1-paper: #20292c;
-            --dcuf-b1-glass: color-mix(in srgb, color-mix(in srgb, var(--dcuf-b1-paper) 85%, var(--dcuf-theme-accent-soft)) 72%, transparent);
-            --dcuf-b1-floating: color-mix(in srgb, var(--dcuf-b1-paper) 76%, transparent);
-            --dcuf-b1-sheen: linear-gradient(120deg, #ffffff0d, transparent 58%);
-            --dcuf-panel-scrim: rgba(18,25,35,.28);
-            --dcuf-panel-status-error: #ff9ba9;
-            --dcuf-panel-status-success: #7cdbb4;
-            --dcuf-b1-rim: color-mix(in srgb, var(--dcuf-theme-fg) 9%, transparent);
-            --dcuf-b1-line: color-mix(in srgb, var(--dcuf-theme-fg) 5%, var(--dcuf-b1-paper));
-            --dcuf-b1-shadow: 0 14px 34px #0003, 0 1px 2px #0003;
-            --dcuf-control-highlight: #ffffff24;
-            --dcuf-control-depth: #00000038;
-            --dcuf-control-opacity: 88%;
-        }
-        html[${ROOT_ATTRIBUTE}],
-        html[${ROOT_ATTRIBUTE}].dc-filter-dark-mode,
-        html[${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode {
-            /* Optional shared-panel hooks: PC retains each existing fallback. */
-            --dcuf-panel-background: var(--dcuf-b1-sheen), var(--dcuf-b1-floating);
-            --dcuf-panel-backdrop: var(--dcuf-b1-floating-filter);
-            --dcuf-panel-rim: var(--dcuf-b1-rim);
-            --dcuf-panel-shadow: var(--dcuf-b1-shadow), inset 0 1px 0 #ffffff26;
-            --dcuf-panel-header-background: transparent;
-            --dcuf-panel-body-background: transparent;
-            --dcuf-panel-footer-background: transparent;
-            --dcuf-panel-section-background: transparent;
-            --dcuf-panel-section-border: 0;
-            --dcuf-panel-section-divider: 1px solid var(--dcuf-b1-line);
-            --dcuf-panel-section-radius: 0;
-            --dcuf-panel-kicker-display: none;
-            --dcuf-panel-title-size: 20px;
-            --dcuf-panel-close-background: transparent;
-            --dcuf-panel-close-position: relative;
-            --dcuf-panel-close-shadow: none;
-            --dcuf-panel-close-border: transparent;
-            --dcuf-panel-close-font-size: 0;
-            --dcuf-panel-close-content: "";
-            --dcuf-panel-close-hover: var(--dcuf-control-secondary-bg);
-            --dcuf-panel-switch-thumb: #f7fbfa;
-            --dcuf-panel-range-margin: 0;
-            --dcuf-panel-status-info: var(--dcuf-theme-fg);
-            --dcuf-panel-empty-ink: var(--dcuf-theme-fg);
-            --dcuf-panel-help-ink: color-mix(in srgb,var(--dcuf-theme-fg) 75%,var(--dcuf-theme-fg-muted));
-            --dcuf-panel-pending-opacity: 1;
-            --dcuf-panel-pending-decoration: line-through;
-            /* Material values only: each existing presenter owns shape,
-               positioning and state. No filtered native-popup ancestors. */
-            /* Keep the specular edge above the label; dense primary tint
-               preserves small white-label contrast in lighter palettes. */
-            --dcuf-control-glaze: linear-gradient(180deg, #ffffff20, #ffffff06 14%, #ffffff00 28%, #0000000c);
-            --dcuf-control-primary-fill: var(--dcuf-theme-accent-strong);
-            --dcuf-control-secondary-fill: color-mix(in srgb, var(--dcuf-b1-paper) var(--dcuf-control-opacity), transparent);
-            --dcuf-control-selected-fill: color-mix(in srgb, var(--dcuf-theme-accent-soft) 90%, transparent);
-            --dcuf-control-primary-bg: var(--dcuf-control-glaze), var(--dcuf-control-primary-fill);
-            --dcuf-control-secondary-bg: var(--dcuf-control-glaze), var(--dcuf-control-secondary-fill);
-            --dcuf-control-selected-bg: var(--dcuf-control-glaze), var(--dcuf-control-selected-fill);
-            --dcuf-control-primary-rim: color-mix(in srgb, var(--dcuf-theme-on-accent) 28%, var(--dcuf-theme-accent-strong));
-            --dcuf-control-rim: color-mix(in srgb, var(--dcuf-b1-rim) 65%, var(--dcuf-theme-border-strong));
-            --dcuf-control-shadow: inset 0 1px 0 var(--dcuf-control-highlight), inset 0 -1px 0 #00000012, 0 3px 8px var(--dcuf-control-depth);
-            --dcuf-control-quiet-shadow: inset 0 1px 0 var(--dcuf-control-highlight);
-            --dcuf-control-danger-bg: var(--dcuf-control-glaze), color-mix(in srgb, color-mix(in srgb, #c43249 12%, var(--dcuf-b1-paper)) 90%, transparent);
-        }
-        html[${ROOT_ATTRIBUTE}] #dcuf-boot-overlay .dcuf-boot-bar::before {
+    const __dcufBuildTargetThemeCss = (ROOT_ATTRIBUTE) => `${__dcufBuildB1MaterialCss(ROOT_ATTRIBUTE)}        html[${ROOT_ATTRIBUTE}] #dcuf-boot-overlay .dcuf-boot-bar::before {
             background: linear-gradient(90deg, var(--dcuf-theme-accent-strong), var(--dcuf-theme-accent)) !important;
         }
 
@@ -14022,22 +14298,7 @@ const ThemeModule = (() => {
     const OVERLAY_ID = 'dcuf-palette-overlay';
     const PANEL_ID = 'dcuf-palette-panel';
     const DEFAULT_ID = 'blue';
-    const PRESETS = Object.freeze([
-        Object.freeze({ id: 'blue', label: '기본 블루', light: ['#3f6de0', '#245bda', '#eaf1ff'], dark: ['#8cb4ff', '#3868df', '#243a64'] }),
-        Object.freeze({ id: 'purple', label: '퍼플', light: ['#7c3aed', '#6d28d9', '#f3e8ff'], dark: ['#c4b5fd', '#7c3aed', '#39275a'] }),
-        Object.freeze({ id: 'green', label: '그린', light: ['#16805d', '#047857', '#e7f7ef'], dark: ['#6ee7b7', '#047857', '#173c32'] }),
-        Object.freeze({ id: 'orange', label: '오렌지', light: ['#c2410c', '#9a3412', '#fff0e7'], dark: ['#fdba74', '#c2410c', '#4a2a1b'] }),
-        Object.freeze({ id: 'mono', label: '모노톤', light: ['#526274', '#374151', '#eef2f7'], dark: ['#cbd5e1', '#475569', '#28323f'] }),
-        Object.freeze({ id: 'indigo', label: '인디고', light: ['#4f46e5', '#4338ca', '#eef2ff'], dark: ['#4f46e5', '#3730a3', '#29274f'] }),
-        Object.freeze({ id: 'sky', label: '스카이', light: ['#0284c7', '#0369a1', '#e0f2fe'], dark: ['#0369a1', '#075985', '#17384a'] }),
-        Object.freeze({ id: 'cyan', label: '시안', light: ['#0891b2', '#0e7490', '#ecfeff'], dark: ['#0e7490', '#155e75', '#173b44'] }),
-        Object.freeze({ id: 'teal', label: '틸', light: ['#0f766e', '#115e59', '#e6f7f4'], dark: ['#0f766e', '#115e59', '#173c38'] }),
-        Object.freeze({ id: 'lime', label: '라임', light: ['#65a30d', '#4d7c0f', '#f7fee7'], dark: ['#4d7c0f', '#3f6212', '#2c3918'] }),
-        Object.freeze({ id: 'amber', label: '앰버', light: ['#d97706', '#b45309', '#fffbeb'], dark: ['#b45309', '#92400e', '#493016'] }),
-        Object.freeze({ id: 'red', label: '레드', light: ['#dc2626', '#b91c1c', '#fef2f2'], dark: ['#c62828', '#991b1b', '#4a2020'] }),
-        Object.freeze({ id: 'rose', label: '로즈', light: ['#e11d48', '#be123c', '#fff1f2'], dark: ['#cf234c', '#9f1239', '#4a202d'] }),
-        Object.freeze({ id: 'pink', label: '핑크', light: ['#db2777', '#be185d', '#fce7f3'], dark: ['#c52a72', '#9d174d', '#472138'] }),
-    ]);
+    const PRESETS = __dcufGetThemePresets();
     const VALID_IDS = new Set(PRESETS.map((preset) => preset.id));
 
     let committedId = DEFAULT_ID;
@@ -14070,25 +14331,7 @@ const ThemeModule = (() => {
         return id;
     };
 
-    const buildPresetVariables = () => PRESETS.map((preset) => {
-        const [accent, strong, soft, onAccent = '#fff'] = preset.light;
-        const [darkAccent, darkStrong, darkSoft, darkOnAccent = '#fff'] = preset.dark;
-        return `
-            html[${ROOT_ATTRIBUTE}="${preset.id}"] { --dcuf-theme-accent:${accent};--dcuf-theme-accent-strong:${strong};--dcuf-theme-accent-soft:${soft};--dcuf-theme-on-accent:${onAccent}; }
-            html[${ROOT_ATTRIBUTE}="${preset.id}"].dc-filter-dark-mode,
-            html[${ROOT_ATTRIBUTE}="${preset.id}"] body.dc-filter-dark-mode { --dcuf-theme-accent:${darkAccent};--dcuf-theme-accent-strong:${darkStrong};--dcuf-theme-accent-soft:${darkSoft};--dcuf-theme-on-accent:${darkOnAccent}; }
-        `;
-    }).join('\n');
-
-    const buildCss = () => `
-        ${buildPresetVariables()}
-        html[${ROOT_ATTRIBUTE}] {
-            --dcuf-theme-accent-ink:var(--dcuf-theme-accent-strong);--dcuf-theme-fg:#27313f;--dcuf-theme-fg-muted:#687384;--dcuf-theme-border:#e2e7e5;--dcuf-theme-border-strong:#cbd5d1;--dcuf-theme-page:#f7f8f8;--dcuf-theme-surface:#ffffff;--dcuf-theme-surface-raised:#ffffff;--dcuf-theme-surface-muted:#f2f5f4;--dcuf-theme-surface-input:#ffffff;--dcuf-theme-canvas:#f7f8f8;--dcuf-theme-card-top:#ffffff;--dcuf-theme-card-bottom:#ffffff;--dcuf-theme-article-surface:#ffffff;--dcuf-theme-concept-surface:#f5f8f7;--dcuf-theme-notice-surface:#f3f6f5;--dcuf-theme-reply-surface:#f3f6f5;--dcuf-theme-card-shadow:0 1px 2px rgba(24,40,34,.035);--dcuf-theme-panel-shadow:0 16px 48px rgba(24,40,34,.14);--dcuf-theme-primary-top:color-mix(in srgb,var(--dcuf-theme-accent) 78%,white);--dcuf-theme-focus-ring:color-mix(in srgb,var(--dcuf-theme-accent) 18%,transparent);--dcuf-theme-accent-shadow:color-mix(in srgb,var(--dcuf-theme-accent-strong) 25%,transparent);
-        }
-        html[${ROOT_ATTRIBUTE}].dc-filter-dark-mode,html[${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode {
-            --dcuf-theme-accent-ink:color-mix(in srgb,var(--dcuf-theme-accent) 55%,white);--dcuf-theme-fg:#edf2f7;--dcuf-theme-fg-muted:#aeb8c4;--dcuf-theme-border:#343c3d;--dcuf-theme-border-strong:#4a5656;--dcuf-theme-page:#141819;--dcuf-theme-surface:#1b2021;--dcuf-theme-surface-raised:#222829;--dcuf-theme-surface-muted:#202728;--dcuf-theme-surface-input:#171c1d;--dcuf-theme-canvas:#171c1d;--dcuf-theme-card-top:#1b2021;--dcuf-theme-card-bottom:#1b2021;--dcuf-theme-article-surface:#1b2021;--dcuf-theme-concept-surface:#202827;--dcuf-theme-notice-surface:#252e2d;--dcuf-theme-reply-surface:#202827;--dcuf-theme-card-shadow:0 1px 2px rgba(0,0,0,.16);--dcuf-theme-panel-shadow:0 16px 48px rgba(0,0,0,.4);--dcuf-theme-primary-top:color-mix(in srgb,var(--dcuf-theme-accent) 68%,white);
-        }
-        ${__dcufBuildTargetThemeCss(ROOT_ATTRIBUTE)}
+    const buildCss = () => `${__dcufBuildThemeBaseCss(ROOT_ATTRIBUTE, PRESETS)}${__dcufBuildTargetThemeCss(ROOT_ATTRIBUTE)}
         ${__dcufSettingsPresenter.PALETTE_CSS}
     `;
 

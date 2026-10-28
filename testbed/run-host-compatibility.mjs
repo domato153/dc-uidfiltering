@@ -495,11 +495,13 @@ try {
     }
 
     await run('runtime palette registry and README/index documentation expose the same 14 palettes', async () => {
-        const [themeSource, readme, index] = await Promise.all([
+        const [themeSource, presenterSource, readme, index] = await Promise.all([
+            readFile(path.join(rootDir, 'src', 'shared', 'theme-primitives.js'), 'utf8'),
             readFile(path.join(rootDir, 'src', 'targets', 'shared', 'theme-presenter.js'), 'utf8'),
             readFile(path.join(rootDir, 'README.md'), 'utf8'),
             readFile(path.join(rootDir, 'index.html'), 'utf8')
         ]);
+        assert.match(presenterSource, /const PRESETS = __dcufGetThemePresets\(\)/, 'Theme presenter must consume the shared preset authority');
         const entries = Array.from(themeSource.matchAll(/Object\.freeze\(\{\s*id:\s*'([^']+)',\s*label:\s*'([^']+)'/g), (match) => ({ id: match[1], label: match[2] }));
         assert.deepEqual(entries.map((entry) => entry.id), expectedPaletteIds);
         assert.deepEqual(entries.map((entry) => entry.label), expectedPaletteLabels);

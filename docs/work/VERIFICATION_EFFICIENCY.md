@@ -35,6 +35,8 @@ Treat two different risks separately: multiple DCUF presentation phases competin
 
 ## Proportionate checks
 
+User directive2026-10-28 supersedes routine full-suite defaults: first map the actual changed declarations/branches and their consumers,then select tests for those effects. A shared filename,bootstrap edit or conservative acceptance fallback is a reason to inspect the dependency,not automatically rerun unchanged filter/storage/editor paths. Exact preserved CSS/value comparisons can bound a pure extraction; test its actual consumer/startup and new entry separately. Expand only when causal impact remains broad/uncertain,a relevant failure exposes another dependency,or the user explicitly requests full testing. Record omissions as scoped/not-run,never as formal acceptance. The160-test login run was already completed before this steering; it is evidence from that run,not a template for the next UI change. Existing exact-tree checkpoint packaging/governance checks remain distinct from product-wide browser tests.
+
 | Situation | Minimum useful work | Expand only for |
 | --- | --- | --- |
 | Routine resume / compaction / new thread | Fresh root/branch/HEAD/status/diff and continuity inspector; read CURRENT/NEXT and actual inputs for the next action. | A real mismatch or missing required input. New thread/HEAD alone is not a full-suite trigger. |

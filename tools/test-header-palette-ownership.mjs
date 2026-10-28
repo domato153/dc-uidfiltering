@@ -57,6 +57,7 @@ for (const id of ['header-shell-presenter','header-recent-visit-presenter','gall
     assert.throws(()=>restoreConcept01HeaderVisualDelta(currentSources[id].replace(from,'var(--dcuf-unapproved-filter,')), 'Unregistered glass role must fail exact normalization');
 }
 const hostSource = await readFile(path.join(root, 'src/targets/mobile/theme-host-style.js'), 'utf8');
+const materialSource = await readFile(path.join(root, 'src/targets/mobile/theme-material-values.js'), 'utf8');
 const adapterSources = Object.fromEntries(await Promise.all(owners.map(async ([id]) => [id,
     await readFile(path.join(root, 'src/targets/mobile', id.replace('-presenter', '-host-adapter') + '.js'), 'utf8'),
 ])));
@@ -133,7 +134,7 @@ function verify(candidateSources, composition, candidateAdapters = adapterSource
     // Execute at the real assembly phase: target CSS is consumed BEFORE any
     // presenter const initializes. Do not mask a temporal-dead-zone regression.
     const sandbox = { __dcufRoot: {} };
-    const css = vm.runInNewContext(`${composition}\nconst earlyCss = __dcufBuildTargetThemeCss('data-dcuf-palette');
+    const css = vm.runInNewContext(`${materialSource}\n${composition}\nconst earlyCss = __dcufBuildTargetThemeCss('data-dcuf-palette');
         ${Object.values(candidateSources).join('\n')}\n${inputDeclarations(candidateAdapters)}\nearlyCss`, sandbox, { timeout: 1000 });
     const start = css.indexOf('/* Host chrome');
     const end = css.indexOf('html[data-dcuf-palette] body.dc-filter-dark-mode #dcuf-retired-dc-personal-block-fab', start);

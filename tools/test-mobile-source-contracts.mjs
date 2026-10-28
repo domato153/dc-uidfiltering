@@ -9,6 +9,8 @@ const verifier = await readFile(path.join(rootDir, 'tools/verify-repo.mjs'), 'ut
 const start = verifier.indexOf('async function verifyMobileSourceContracts() {');
 const end = verifier.indexOf('async function verifyReleaseTarget(', start);
 assert.ok(start >= 0 && end > start, 'Run the actual mobile source-contract consumer');
+const loginIncludeDeclaration = verifier.match(/^const LOGIN_INCLUDE = .+;$/m)?.[0];
+assert.ok(loginIncludeDeclaration, 'Use the actual precise login include authority');
 const coordinatorPath = path.join(rootDir, 'src/targets/mobile/runtime-coordinator.js');
 const coordinator = await readFile(coordinatorPath, 'utf8');
 
@@ -26,7 +28,7 @@ async function observe(input, overrides = {}) {
         check: (condition, message) => { if (!condition) failures.push(message); },
         console: { log() {} }
     });
-    await vm.runInContext(`${verifier.slice(start, end)}\nverifyMobileSourceContracts();`, context);
+    await vm.runInContext(`${loginIncludeDeclaration}\n${verifier.slice(start, end)}\nverifyMobileSourceContracts();`, context);
     return failures;
 }
 

@@ -21,7 +21,8 @@
     "data-dcuf-native-form-layer-anchor",
     "data-dcuf-native-form-layer-state",
     "data-dcuf-native-form-box-sizing",
-    "data-dcuf-native-form-control-kind"
+    "data-dcuf-native-form-control-kind",
+    "data-dcuf-login"
   ],
   "presentationSelectorPrefixes": [
     ".dcuf-",
@@ -45,7 +46,8 @@
     "[data-dcuf-native-form-layer-anchor]",
     "[data-dcuf-native-form-layer-state]",
     "[data-dcuf-native-form-box-sizing]",
-    "[data-dcuf-native-form-control-kind]"
+    "[data-dcuf-native-form-control-kind]",
+    "[data-dcuf-login]"
   ],
   "forbiddenHostOperations": [
     "clone",
@@ -517,6 +519,50 @@
         "testbed/ui-b1-form-header-contract.mjs"
       ],
       "canaryCheckpoint": "native-form-header"
+    },
+    {
+      "id": "login-authentication",
+      "sequence": 7,
+      "risk": "R3",
+      "state": "modern-candidate",
+      "routeFamilies": [
+        "login"
+      ],
+      "currentVisualOwner": "mobile-login-presenter",
+      "sourceRefs": [
+        "src/targets/mobile/login-presenter.js",
+        "src/targets/mobile/login-host-adapter.js",
+        "src/shared/theme-primitives.js",
+        "src/targets/mobile/theme-material-values.js"
+      ],
+      "adapter": "mobile-login-host-adapter",
+      "presenter": "mobile-login-presenter",
+      "styleIds": [
+        "dcuf-mobile-login-style"
+      ],
+      "allowedRoots": [
+        "host-sign-login"
+      ],
+      "states": [
+        "waiting",
+        "mounted",
+        "native-fallback",
+        "palette-read-pending",
+        "disposed",
+        "native-dark",
+        "system-dark"
+      ],
+      "intendedDelta": "b1-login-only-presentation-v1",
+      "cascadeExceptions": [],
+      "cascadeExceptionProfiles": [],
+      "testRefs": [
+        "testbed/ui-b1-login-contract.mjs",
+        "testbed/test-login-metadata.mjs",
+        "testbed/test-login-theme-parity.mjs",
+        "testbed/run-login-entry.mjs",
+        "testbed/run-login-extension.mjs"
+      ],
+      "canaryCheckpoint": "login-entry"
     }
   ]
 }

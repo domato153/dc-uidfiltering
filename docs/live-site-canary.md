@@ -69,3 +69,9 @@ node tools/verify-live-site-canary.mjs testbed/artifacts/<fresh-native-run>
 ```
 
 The replay recognizes native receipt kind, exact cases/current imported observer/control/driver hashes and observation-derived predicates. A verified FAIL receipt exits nonzero; replay consistency is not product PASS. Current three failures, geometry and recovery are in docs/work/HEADER_INSTALLED_NATIVE.md. Do not use forced pointer, programmatic click, stylesheet injection or a passed container center to erase an unreachable original control. Startup remains its original four-route wide/light scope.
+
+## Login-only actual extension replay
+
+`testbed/run-login-extension.mjs --require-runtime-under-test` reuses the pinned official package and installed-Chrome adapter,extracts/verifies a fresh vendor directory and installs exact guarded bytes through Utilities/Import from URL/Install in a fresh profile. Public native-shaped login HTML/CSS/assets replace navigation locally; no userscript injection,GM shim,private RPC,real data or authentication request. Ten named positive/negative URLs include query/fragment execution. Its report is actual metadata/isolated-entry evidence on replay,not a live-account or generic-canary PASS. Close only owned Chrome and remove only allocated profile/vendor copies. See B1_LOGIN_ENTRY_IMPLEMENTATION.md for current hashes and gaps; do not reuse the generic canary exclusions to declare this proven route globally unavailable.
+
+Login replay must record both requested and resolved URLs. The2026-10-28 Chrome run resolves an HTTP attempt to exact HTTPS; treat direct HTTP applicability as N/A,then strictly assert the exact final HTTPS entry. Do not infer a metadata/runtime leak from the original request string or weaken negative auth/recovery/foreign-origin assertions. B1_LOGIN_ENTRY_IMPLEMENTATION.md retains the observed mismatch and bounded oracle repair.

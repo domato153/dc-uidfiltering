@@ -493,7 +493,17 @@ D-49 application result (2026-10-23): whole-component review found the native cl
 
 - SELECTED: Exact Mobile sign login route,original-node presentation adapter and pure B1 palette/material reuse before gallery boot. Use the independent original-shaped login proposal; prepare a candidate overlay before ownership/build edits.
 - NOT ADOPTED: Metadata-only expansion,starting gallery filtering/menus/body locks on sign,duplicated palette/theme owners,a separate login userscript,or treating a static draft as authentication/product success.
-- DEFERRED: Runtime/metadata/registry changes,installed-extension login entry,conditional CAPTCHA/authentication and final user aesthetic adoption. Existing upload deferrals and C-07 N/A remain.
+- IMPLEMENTED: B1_LOGIN_ENTRY_IMPLEMENTATION.md closes exact Mobile entry/pure-theme reuse and actual-TM native-replay transfer.
+- DEFERRED: Conditional CAPTCHA/real authentication,actual phone and final user aesthetic adoption. Existing upload deferrals and C-07 N/A remain.
 - Reason: ER0 current source/VM/native anatomy establishes the missing entry. ER1 official Tampermonkey metadata guidance supports anchored regex includes and warns against imprecise wildcard includes; it does not establish this build's startup or pinned-extension behavior. Restrict the login document and keep authentication native.
-- Evidence: B1_LOGIN_ENTRY_PREFLIGHT.md,current1593 other-return/no-startup-effects probe,stable32BA metadata,original sign structure and six independent-draft geometry contexts. Official source: https://www.tampermonkey.net/documentation.php?locale=en&q=include (read2026-10-28). Actual TM5.5 query/hash transfer remains the next exact check,not independent corroboration.
+- Evidence: B1_LOGIN_ENTRY_PREFLIGHT.md,current1593 other-return/no-startup-effects probe,stable32BA metadata,original sign structure and six independent-draft geometry contexts. Official source: https://www.tampermonkey.net/documentation.php?locale=en&q=include (read2026-10-28). Actual TM5.5 query/hash transfer is now recorded in the implementation receipt; it is a replay execution witness,not real authentication.
 - Revisit: Changed native login route/form/handler,new auth document,theme reuse changing gallery/PC,or contrary extension execution. Reopen the implicated boundary; do not broaden all sign pages or invent image replies.
+
+## D-55 — Select product tests by actual change impact
+
+- SELECTED: User2026-10-28: inspect changed branches/declarations and their direct/downstream consumers,then run only related checks. No automatic full run for a shared filename,context reset,UI unit or conservative acceptance fallback. Expand for demonstrated broad/unknown impact or an explicit request; preserve formal unexecuted gaps.
+- NOT ADOPTED: Routine whole-product reruns,weakening assertions or claiming skipped formal acceptance passed.
+- DEFERRED: A new routing framework or numeric cost study; the existing impact map and explicit causal selection are sufficient for this directive.
+- Reason: User explicitly rejected repeating tests of unchanged,unaffected code. Login's160 Mobile tests had already finished before this steering. Remaining validation was reduced to the actual PC palette consumer; no full PC/filter suite or unrelated semantic scenarios were added.
+- Evidence: AGENTS.md and VERIFICATION_EFFICIENCY.md own the standing rule. Login's pure extraction retains byte-identical Mobile/PC CSS and14 presets; its new route/native form has separate focused witnesses. This is scope selection,not a weakened assertion or a claim that skipped acceptance passed.
+- Revisit: A changed dependency,unbounded impact or relevant failure reveals another path. Extend that affected set; do not revive routine whole-product reruns.

@@ -9,7 +9,7 @@
 - Make the smallest complete change covering directly affected states, surfaces, contracts, and validation; avoid unrelated redesign.
 - Measure performance work first and consult `docs/agent-performance-notes.md`. Preserve measured hot paths; record any correctness fallback's trigger, scope, cost, and coverage.
 - For long work, keep accepted state and the next bounded task in tracked `docs/work/`; `.codex/` is scratch only. Recheck fresh local HEAD, worktree status/diff, artifact digests, evidence validity, and impact routing after resumes or stages.
-- Context-free handoff uses the active worktree's `docs/work/INDEX.md`; the private prompt supplies its exact path. A fork inherits history; the receiver rechecks and returns `ACCEPTED` or `STALE_REPLAN`.
+- Context-free handoff starts at the exact worktree's `docs/work/INDEX.md`. Forks inherit history; receivers fresh-check and return `ACCEPTED` or `STALE_REPLAN`.
 
 ## Source and targets
 - Release sources are `src/`, build tools, and `build/targets.json`; root userscripts and `dist/` are generated. Site layout/UI is mobile-only; PC receives shared filter/management UI, not mobile host styling.
@@ -22,7 +22,7 @@
 - Mobile: `node tools/build-userscript.mjs`; PC: `node tools/build-pc-filter-userscript.mjs`; build both for shared filter/storage/identity changes.
 - After builds run `node tools/verify-repo.mjs release`; use `guidance` for guidance-only work and `all` when both targets changed.
 - Run the smallest deterministic Testbed coverage for changed behavior, states, surfaces, and dependencies; reuse a pass only while runtime, code, fixtures, and harness are unchanged.
-- Use full suites for broad/requested runtime impact once per final runtime; bfcache only for lifecycle work. Report split coverage honestly.
+- User2026-10-28: select tests by actual change/dependency impact; no routine full suite or unaffected-code repeat. Expand for proven broad/unknown impact or explicit request. Record omissions; formal gaps stay UNKNOWN. Bfcache only for lifecycle work.
 - Reuse beta coverage for stable only when runtime is unchanged, only `-beta` is removed, and live beta use is confirmed.
 - Archive superseded userscripts in `Legacy유저스크립트storage/`; if root/`dist/` match, keep one archive copy. Repair divergence in source/build tooling, never generated files.
 
@@ -37,7 +37,7 @@
 ## Semantic architecture and proof
 - Map current ownership honestly. A mixed legacy file remains `mixed` until forbidden dependencies are actually removed.
 - Ownership, relation, invariant, contract, lifecycle, state or build-topology changes require a candidate overlay; `mixed` exit requires an exact-criteria/current-head receipt. Validate the effective graph, then deterministic promotion yields accepted registry/index, no overlay and a replayable fold receipt. No direct accepted-registry edits.
-- Impact routing uses merge-base paths plus downstream registry relations/invariant profiles. Recompute Git routes; reject unknown selectors, distinguish non-applicable from pass, never reuse stateful commands across profiles. Unknown source/shared runtime/bootstrap/build/harness/fixture changes expand to full acceptance.
+- Impact routing uses merge-base paths plus downstream registry relations/invariant profiles. Recompute routes; reject unknown selectors, distinguish N/A from pass, never reuse stateful commands across profiles. Acceptance fallback prompts impact inspection,not unrelated product tests.
 - Behavior-preserving refactors bind control and candidate source/artifact SHAs and run them in separate fresh browser contexts. Compare semantic receipts, not only DOM text or screenshots.
 - Invalidate evidence when its SUT, oracle dependency, fixture, harness, toolchain, or route changes. Classify product, oracle, fixture/harness, verifier/routing/workflow, and environment/live failures separately.
 - Skill selection and passing tests never grant commit, push, merge, live-state, or release authority.

@@ -16,6 +16,7 @@ const BOARD_MATCHES = [
     'https://gall.dcinside.com/mgallery/board/*',
     'https://gall.dcinside.com/mini/board/*'
 ];
+const LOGIN_INCLUDE = String.raw`/^https:\/\/sign\.dcinside\.com\/login\/?(?:\?[^#]*)?$/`;
 
 function check(condition, message) {
     if (!condition) failures.push(message);
@@ -180,7 +181,7 @@ async function readBuildTargets() {
 }
 
 async function verifyMobileSourceContracts() {
-    const [bootstrap, postMain, coordinator, themePresenter, themeHostStyle, convenience, mobileHeader, pcHeader, nativeFormPresenter] = await Promise.all([
+    const [bootstrap, postMain, coordinator, themePresenter, themeHostStyle, convenience, mobileHeader, pcHeader, nativeFormPresenter, themePrimitives] = await Promise.all([
         readFile(path.join(rootDir, 'src', 'runtime', 'bootstrap.js'), 'utf8'),
         readFile(path.join(rootDir, 'src', 'targets', 'mobile', 'post-main-fixes.js'), 'utf8'),
         readFile(path.join(rootDir, 'src', 'targets', 'mobile', 'runtime-coordinator.js'), 'utf8'),
@@ -189,7 +190,8 @@ async function verifyMobileSourceContracts() {
         readFile(path.join(rootDir, 'src', 'targets', 'mobile', 'convenience-module.js'), 'utf8'),
         readFile(path.join(rootDir, 'src', 'meta', 'userscript-header.txt'), 'utf8'),
         readFile(path.join(rootDir, 'src', 'meta', 'pc-filter-userscript-header.txt'), 'utf8'),
-        readFile(path.join(rootDir, 'src', 'targets', 'mobile', 'native-form-presenter.js'), 'utf8')
+        readFile(path.join(rootDir, 'src', 'targets', 'mobile', 'native-form-presenter.js'), 'utf8'),
+        readFile(path.join(rootDir, 'src', 'shared', 'theme-primitives.js'), 'utf8')
     ]);
 
     check(!/pageType\s*===\s*['"]list['"]/.test(bootstrap),
@@ -206,6 +208,8 @@ async function verifyMobileSourceContracts() {
         check(JSON.stringify(matches) === JSON.stringify(BOARD_MATCHES),
             `${label} metadata: @match scope is [${matches.join(', ')}]; expected board routes only`);
         check(!header.includes('https://gall.dcinside.com/*'), `${label} metadata: broad origin @match returned`);
+        const includes = Array.from(header.matchAll(/^\/\/ @include\s+([^\r\n]+)$/gm), match => match[1].trim());
+        check(JSON.stringify(includes) === JSON.stringify(label === 'mobile' ? [LOGIN_INCLUDE] : []), `${label} metadata: unexpected include scope`);
     }
 
     const listGuardIndex = postMain.indexOf("if (!__dcufPageSupports('list-surface')) return;");
@@ -230,7 +234,7 @@ async function verifyMobileSourceContracts() {
         '--dcuf-theme-surface-raised',
         '--dcuf-theme-surface-muted'
     ]) {
-        check(themePresenter.includes(token), `mobile source: palette token is missing: ${token}`);
+        check(themePrimitives.includes(token) && themePresenter.includes('__dcufBuildThemeBaseCss'), `mobile source: shared palette token/consumer is missing: ${token}`);
     }
     for (const selector of [
         '.list_array_option .btn_write',
@@ -280,6 +284,8 @@ async function verifyReleaseTarget(target, buildTarget) {
         `${target.name}: @version is ${metadataVersion || '(missing)'}; expected ${version}`);
     check(JSON.stringify(metadataMatches) === JSON.stringify(target.expectedMatches),
         `${target.name}: @match scope is [${metadataMatches.join(', ')}]; expected [${target.expectedMatches.join(', ')}]`);
+    const metadataIncludes = Array.from(text.matchAll(/^\/\/ @include\s+([^\r\n]+)$/gm), match => match[1].trim());
+    check(JSON.stringify(metadataIncludes) === JSON.stringify(target.key === 'mobile' ? [LOGIN_INCLUDE] : []), `${target.name}: unexpected login include scope`);
     check(!text.includes('__VERSION__'), `${target.name}: unresolved __VERSION__ token remains`);
     check(text.includes(`v${version}`), `${target.name}: versioned init text v${version} is missing`);
     check(/DEBUG_ENABLED:\s*false/.test(text), `${target.name}: DEBUG_ENABLED is not false`);
