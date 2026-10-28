@@ -60,7 +60,7 @@ V-02–V-08의 두 root는 B1_PREVIEW_DRAFT_FINISH.md에서 마감했다. B1_INT
 | --- | --- | --- | --- | --- | --- |
 | L-01 | 게시물 행/카드 | 목록과 본문 하단 목록 | 일반/공지/설문/개념/말머리/댓글 수/이미지·영상 표시, 긴 제목 | LIST | 범위 근거 → B1_LIST_COHESION.md + B1_CONTROL_MATERIAL.md; 명명된 상태 한정 |
 | L-02 | 작성자·고닉 배지·닉네임/IP | 게시물 작성자 영역 | 짧은/긴 이름, 고정닉/유동, 아이콘·배지 보존 | LIST, PERSONAL | 범위 근거 → B1_LIST_COHESION.md + B1_CONTROL_MATERIAL.md; 명명된 상태 한정 |
-| L-03 | 작성자 원래 메뉴·메모 팝업 | 작성자 이름 클릭 | 메모/사용자 메뉴의 실제 분기, 닫기/재열기, 차단 선택 모드와 구분 | LIST, HOSTFIX | 원본 사용자/메모 내부 미확인 → B1_INTEGRATED_UI_GAPS.md; native 조회 POST는 전송 전 중단 |
+| L-03 | 작성자 원래 메뉴·메모 팝업 | 작성자 이름 클릭 | 메모/사용자 메뉴의 실제 분기, 닫기/재열기, 차단 선택 모드와 구분 | LIST, HOSTFIX | 원본 메뉴·메모·색상창 확보,목록 위치/겹침·B1 누락 확인 → B1_NATIVE_AUTHOR_PREFLIGHT.md; 구현 전 |
 | L-04 | 말머리 툴팁 | 말머리에 제목이 있는 행에 포인터 | 짧은/긴 설명, 화면 네 모서리, 사라짐 | LIST | 툴팁 경합 복구 → UI_LIVE_REGRESSION_REPAIR.md; 모든 화면 끝 변형 판정 아님 |
 | L-05 | 전체/개념/공지·말머리 탭 | 목록 상단 | 선택·비선택, 많은/긴 항목, 작은 폭, 생략 상태·화살표 서랍 열기/닫기·항목 선택·폭 변경 후 복구, 원래 필터 동작. 긴 목록 실사이트 표본은 아래 참조 | LIST | 범위 근거 → B1_LIST_COHESION.md + B1_CONTROL_MATERIAL.md; 명명된 상태 한정 |
 | L-06 | 페이지당 개수 선택 | 원래 개수 SELECT 열기 | 각 옵션, 현재 값, 네이티브 선택 UI·키보드 | LIST | 범위 근거 → B1_LIST_COHESION.md + B1_CONTROL_MATERIAL.md; 명명된 상태 한정 |
@@ -74,7 +74,7 @@ V-02–V-08의 두 root는 B1_PREVIEW_DRAFT_FINISH.md에서 마감했다. B1_INT
 | ID | UI | 여는 방법·조건 | 펼쳐볼 상태 | 근거 | 검토 상태 |
 | --- | --- | --- | --- | --- | --- |
 | A-01 | 제목·말머리·작성자·날짜·조회/추천/댓글 | 본문 진입 | 긴 제목/작성자, 작은 폭, 버튼 인접 관계 | ARTICLE | 본문/액션 범위 → B1_CONTENT_TRIAL.md + B1_ARTICLE_ACTION_POPUPS.md; 전 자식 완료 아님 |
-| A-02 | 본문 작성자 원래 팝업 | 본문 작성자 클릭 | 사용자 정보/메모 등 실제 메뉴, 화면 끝·다른 레이어와 겹침 | ARTICLE, HOSTFIX | 원본 작성자/메모 내부 미확인 → B1_INTEGRATED_UI_GAPS.md |
+| A-02 | 본문 작성자 원래 팝업 | 본문 작성자 클릭 | 사용자 정보/메모 등 실제 메뉴, 화면 끝·다른 레이어와 겹침 | ARTICLE, HOSTFIX | 본문 회원 메뉴 원본-JS 재생(통계 합성),메모 공통 구조 확보 → B1_NATIVE_AUTHOR_PREFLIGHT.md; 실계정/전 자식 판정 아님 |
 | A-03 | 본문 텍스트·링크·서식 | 짧은/긴 리치 콘텐츠 fixture | 줄바꿈/긴 URL/인용/표, 기본·작성자 지정 서식, 다크 가독성 | ARTICLE | 본문/액션 범위 → B1_CONTENT_TRIAL.md + B1_ARTICLE_ACTION_POPUPS.md; 전 자식 완료 아님 |
 | A-04 | 이미지·GIF·동영상 등 본문 미디어 | 실제 크기 미디어가 있는 본문 | 작은/큰/늦게 로드/실패, 원래 색상, 화면 넘침 | ARTICLE, HOSTFIX | 본문 미디어 paper/원색 범위 → B1_CONTENT_TRIAL.md; 모든 형식·지연·실패 외형 미확인 |
 | A-05 | 이미지 원래 뷰어·확대·이미지댓글 진입 | 본문 이미지의 원래 동작 | 실제 뷰어·이전/다음·닫기·이미지별 댓글 연결; 존재 여부 실사이트 확인 | ARTICLE, COMMENTS, HOSTFIX | 이미지댓글 진입/full → B1_IMAGE_COMMENTS.md; 원본 이미지 뷰어 자식은 미확인 |
@@ -101,8 +101,8 @@ V-02–V-08의 두 root는 B1_PREVIEW_DRAFT_FINISH.md에서 마감했다. B1_INT
 | C-09 | 답글 입력창 | 특정 댓글의 답글 선택 | 대상 표시, 작은 composer, 취소/다른 대상/재열기, 원래 필드 | COMMENTS | 입력/대댓글 composer·지우기 액션 범위 → B1_CONTENT_TRIAL.md + B1_IMAGE_COMMENTS.md; 모든 권한/오류 자식 별도 |
 | C-10 | 이미지댓글 입력창 | 해당 이미지댓글 열기 | 이름·원래 숨김 값·입력/등록, 일반/답글 창과 독립된 대상 | COMMENTS | 원본 fold→full/composer 관찰·합성 parity/작은 액션 마감 → B1_IMAGE_COMMENTS.md; 실제 전송/기기 별도 |
 | C-11 | 댓글 디시콘 선택·첨부 관련 원래 도구 | 실제 댓글 입력 도구가 있는 경로 | 도구별 열린 창/선택/닫기/미리보기·제거가 실제 제공되면 각각 | COMMENTS, HOSTFIX | 글자콘/DCCon root → B1_POPUP_POLISH.md; native 탭/최근사용/계정 자식 미확인 |
-| C-12 | 댓글 작성자 메뉴·메모 | 일반/대댓글/이미지댓글 작성자 클릭 | `user_data_lyr`·사용자 메뉴·추가 메뉴, 화면 가장자리, 차단 선택과 충돌 | COMMENTS, HOSTFIX | 공통 popup shell은 있으나 원본 작성자/메모 내부 미확인 → B1_INTEGRATED_UI_GAPS.md |
-| C-13 | 댓글 수정·삭제·비밀번호 팝업 | 원래 댓글 수정/삭제 버튼 | 본인/비회원 권한, 비밀번호 입력·닫기·재열기, 배경 위 양의 히트 영역 | COMMENTS, HOSTFIX | 작은 삭제/clear 마감 → B1_IMAGE_COMMENTS.md; native 비밀번호/권한 자식 미확인 |
+| C-12 | 댓글 작성자 메뉴·메모 | 일반/대댓글/이미지댓글 작성자 클릭 | `user_data_lyr`·사용자 메뉴·추가 메뉴, 화면 가장자리, 차단 선택과 충돌 | COMMENTS, HOSTFIX | 공통 native 템플릿/메모 구조 확보 → B1_NATIVE_AUTHOR_PREFLIGHT.md; 실제 댓글 진입·권한은 미확인 |
+| C-13 | 댓글 수정·삭제·비밀번호 팝업 | 원래 댓글 수정/삭제 버튼 | 본인/비회원 권한, 비밀번호 입력·닫기·재열기, 배경 위 양의 히트 영역 | COMMENTS, HOSTFIX | 작은 삭제/clear 마감 → B1_IMAGE_COMMENTS.md; 비밀번호 정적 구조만 확보 → B1_NATIVE_AUTHOR_PREFLIGHT.md,실제 권한/입력 미확인 |
 | C-14 | 정렬·새로고침·더보기/페이징 | 해당 원래 댓글 제어 | 실제 제공되는 제어별 창/선택/로딩/새 댓글·카운트, 적용 여부 기록 | COMMENTS | 기존 정렬/새로고침/카운트 기능 경계 보존; 모든 native 로딩·더보기 분기 외형 미확인 |
 | C-15 | 차단 댓글과 남은 대댓글 | 개인 차단·필터 fixture | 원댓글만 차단/대댓글만 차단/혼합, 숨겨진 부모 때문에 답글을 잃지 않음 | COMMENTS, PERSONAL | 기존 필터/재연결 기능 및 명명된 UI 범위 보존; 모든 상태 조합의 B1 미관 판정 아님 |
 | C-16 | 빈/전체 차단/로딩·실패 댓글 | 빈 데이터·부분 실패 fixture | 안내·입력 가능 상태·재시도, 원래 실패 UI의 실제 형태 | COMMENTS | 빈/차단/실패의 모든 native 안내 외형 미확인; 대표 정상 댓글로 대체 안 함 |
