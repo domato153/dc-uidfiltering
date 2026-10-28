@@ -29,8 +29,9 @@
                 transition: background-color 160ms ease, transform 100ms ease;
             }
             [data-dcuf-surface="list-item"]:last-child { border-bottom: 0; }
-            [data-dcuf-surface="list-item"]:active,
-            [data-dcuf-surface="list-item"]:has(.dcuf-list-title-link:active) { transform: scale(.997); }
+            [data-dcuf-surface="list-item"]:has(.dcuf-native-author-open) { z-index: 10001; }
+            [data-dcuf-surface="list-item"]:not(:has(.dcuf-native-author-open)):active,
+            [data-dcuf-surface="list-item"]:not(:has(.dcuf-native-author-open)):has(.dcuf-list-title-link:active) { transform: scale(.997); }
             [data-dcuf-surface="list-item"][data-dcuf-state="advertisement"] { display: none; }
             [data-dcuf-surface="list-item"][data-dcuf-state="notice"],
             [data-dcuf-surface="list-item"][data-dcuf-state="concept"] {
@@ -147,7 +148,7 @@
                 /* Filtering owns row inline display; arrange its children instead. */
                 [data-dcuf-surface="list-item"] { padding-right: 250px; min-height: 54px; box-sizing: border-box; }
                 [data-dcuf-surface="list-item"] .dcuf-list-title { margin: 0; min-height: 29px; align-items: center; font-size: 14px; }
-                [data-dcuf-surface="list-item"] .dcuf-list-meta { position: absolute; right: 16px; top: 50%; transform: translateY(-50%); width: 220px; flex-direction: column; align-items: flex-end; gap: 4px; font-size: 11px; }
+                [data-dcuf-surface="list-item"] .dcuf-list-meta { position: absolute; right: 16px; top: 0; bottom: 0; transform: none; justify-content: center; width: 220px; flex-direction: column; align-items: flex-end; gap: 4px; font-size: 11px; }
                 [data-dcuf-surface="list-item"] .dcuf-list-author { flex: none; }
             }
             [data-dcuf-surface="list-toolbar"],
@@ -682,8 +683,8 @@
                 [data-dcuf-surface="list-search"] { width: calc(100% - 24px); }
             }
             @media (prefers-reduced-motion: no-preference) {
-                [data-dcuf-surface="list-container"] > [data-dcuf-surface="list-item"]:nth-child(-n + 8) {
-                    animation: dcuf-list-reveal 180ms both;
+                [data-dcuf-surface="list-container"] > [data-dcuf-surface="list-item"]:nth-child(-n + 8):not(:has(.dcuf-native-author-open)) {
+                    animation: dcuf-list-reveal 180ms backwards;
                     animation-delay: calc((var(--dcuf-list-index, 0)) * 18ms);
                 }
                 @keyframes dcuf-list-reveal {

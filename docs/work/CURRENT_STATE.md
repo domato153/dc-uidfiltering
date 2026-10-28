@@ -2,22 +2,22 @@
 
 ## Current execution
 
-- Active plan: B1_NATIVE_AUTHOR_PREFLIGHT.md acquires native author/menu/memo/picker anatomy and confirms a bounded repair. NEXT_TASK.md selects that family finish after a separate current-theme proposal. D-55 impact-selected tests apply.
+- Active plan: B1_NATIVE_AUTHOR_FINISH.md closes the acquired native menu/memo/picker slice. NEXT_TASK.md selects H-10 gallery-setting child anatomy only. D-55 impact-selected tests apply.
 - Workspace path: `.` (repository root; private prompt supplies exact nested worktree). AGENTS.md owns policy; preserve debug.log unread/unstaged.
-- Active stage: `header-navigation` formal admission open. P6 selected omissions finished; native author/editor/settings/account/media children remain unobserved where named. Whole-UI/account/device acceptance UNKNOWN; C-07 N/A.
+- Active stage: `header-navigation` formal admission open. Native-author and prior selected families are finished only within named scopes; settings/editor/account/media children remain where unobserved. Whole-UI/account/device acceptance UNKNOWN; C-07 N/A.
 - Accepted visual preference: compact B+B1,moderate normal-page glass,C885 simple buttons and opaque fields. Login's native header/card extends that family; its independent draft is provisional,not final user aesthetic adoption.
-- Source state: Source checkpoint base HEAD `06ddc183d6043b4980808061a3170c6c7b8fcfd9` on `codex/ui-port-boundary`; that source checkpoint is CI_VERIFIED_CHECKPOINT. This preflight changes only tracked anatomy/continuity evidence,not runtime/build/architecture. Exact checkpoint disposition belongs to tools/checkpoint.mjs.
-- Local-only state: `LOCAL_ONLY_EVIDENCE`; artifacts/b1-native-author-2026-10-29/ retains public static discovery,16 native/current captures,sanitized memo trees and partial causal experiment. No raw author data/captures published. One browser at a time; debug.log unread/unstaged.
-- Candidate fingerprint: `d998010056fb12912dfaa388257c32a12ceca5bb3a94d977031ba4ecad6dc4e1`
-- Last current audit: UNKNOWN implementation/whole-UI completion; ANATOMY_ACQUIRED_REPAIR_REQUIRED on unchanged06CA/8915:16 original/current list/article captures,native member counts locally synthetic. Menu overflow/row stacking and fixed memo containing-block causes confirmed by partial capture-only experiments. Later physical color click failed; no implementation/all-path pass. Previous preview/draft/vote finish retains its scoped receipt.
-- Current stage receipt: `verification/receipts/2026-10-29-b1-native-author-preflight.json` SHA-256 `F54BDAD9545C84944BBA8934C281BE6875F90FDC207FF608CDE613E4ACB63C16`. Prior preview/draft/vote06CA and F87E inventory retain their own scopes.
-- Accepted baseline: 06CA scoped implementation; F87E immediate control preserved. Current B1 ordinary-page glass,C885 simple controls and opaque reading stay selected. Four tailored frozen targets are provisional composition references,not final user aesthetic approval.
-- Current artifact: Mobile3.5.5 `06CA05EC44A1F8B46966425780CAF6249CAE041518623C80AAEEACAC2869BE4A` root/dist/guard; PC1.9.9 `8915F36E5B8887DC58EF9F932E39CCA28CCE1AC1020FD96460CCD10C08913581` root/dist unchanged. No version/metadata/official release change.
-- Blockers: No global runtime/Chrome/TM or anatomy-read blocker. Guest menus are client-side; memo/color use GET; native member counts can be locally synthetic. Actual backend/account state remains unqualified. Current list menus/memo/color need geometry/layer/material repair; physical color click is not passed.
-- Pending live checks: Native menu/memo/picker implementation and physical nested controls next; actual C-12/C-13 comments/permissions and other named checklist children remain UNKNOWN. Real authentication/device/account states separate. Four uploads DEFERRED_USER_ACCEPTED; C-07 N/A. Guidebook consolidation only discussed after whole UI work ends.
+- Source state: Source checkpoint base HEAD `4baa9e2a76fd2eadbd8ee7a9578623c298837a82` on `codex/ui-port-boundary`; that preflight checkpoint is CI_VERIFIED_CHECKPOINT. Current Mobile native-author/list/proxy/build/candidate changes are scoped and validated; accepted registry unchanged. Exact checkpoint disposition belongs to tools/checkpoint.mjs.
+- Local-only state: `LOCAL_ONLY_EVIDENCE`; artifacts/b1-native-author-2026-10-29/ retains06CA control,public/native/frozen/current/diff/contrast evidence. Account values only in the ignored local continuity locator named by the finish plan;no Git values. One browser at a time;debug.log unread/unstaged.
+- Candidate fingerprint: `b7c84c109364d51f5b9cf529990afa7aed4fd480602d7db788619b590228086b`
+- Last current audit: PASS scoped8AC7/8915 native-author finish:9 direct states+2 adjacent tests,2 public pointer contexts and synthetic-count member-header hits;8 label samples,min7.5835.4 image pairs reviewed:2 memo matches,2 retained menu differences/1px flow. No whole-UI/account/device/actual-extension claim.
+- Current stage receipt: `verification/receipts/2026-10-29-b1-native-author-finish.json` SHA-256 `2377F10C740C29BE3BAE447A021FAAF28CC3CE485F552D4069296EE109574B88`. Preflight and prior preview/draft/vote receipts retain their own scopes.
+- Accepted baseline: 8AC7 native-author family implementation;06CA immediate control retained. Current B1 ordinary-page glass,C885 simple controls and opaque fields remain selected. Independent targets are provisional composition references,not final user aesthetic adoption.
+- Current artifact: Mobile3.5.5 `8AC7B0A744922125BAAEE4B9561EBF1601A5C60DD1AD6F546B471C2F46120609` root/dist/guard;PC1.9.9 `8915F36E5B8887DC58EF9F932E39CCA28CCE1AC1020FD96460CCD10C08913581` root/dist unchanged. No version/metadata/official release change.
+- Blockers: No global runtime/Chrome/TM or anatomy-read blocker. Reported native-author geometry/material/collapse and nested-pointer gaps are repaired within scope. Real backend/member statistics/account states are unqualified;member UI used local synthetic counts.
+- Pending live checks: Named H-10 native settings descendants next;actual C-12/C-13 comment/permission/account and other checklist children remain UNKNOWN. User permits later test-account UI inspection;credentials stay local and were not used. Four uploads DEFERRED_USER_ACCEPTED;C-07 N/A;guidebook discussion only after whole UI work ends.
 
 ```dcuf-current-artifacts
-{"schemaVersion":1,"mobile":{"sha256":"06CA05EC44A1F8B46966425780CAF6249CAE041518623C80AAEEACAC2869BE4A"},"pc":{"sha256":"8915F36E5B8887DC58EF9F932E39CCA28CCE1AC1020FD96460CCD10C08913581"}}
+{"schemaVersion":1,"mobile":{"sha256":"8AC7B0A744922125BAAEE4B9561EBF1601A5C60DD1AD6F546B471C2F46120609"},"pc":{"sha256":"8915F36E5B8887DC58EF9F932E39CCA28CCE1AC1020FD96460CCD10C08913581"}}
 ```
 
 ## Draft-complete checkpoint — 2026-10-21

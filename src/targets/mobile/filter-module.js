@@ -499,10 +499,12 @@
             left: 0 !important;   /* 왼쪽 정렬 */
             margin-top: 5px !important;
             z-index: 10001 !important;
+            display: none; /* 기본은 숨김 (JS에서 제어) */
+        }
+        #user_data_lyr:not(.dcuf-native-author-anchor) {
             background: #fff !important;
             border: 1px solid #ccc !important;
             box-shadow: 2px 2px 8px rgba(0,0,0,0.2) !important;
-            display: none; /* 기본은 숨김 (JS에서 제어) */
         }
         /* 이미지 댓글 내에서의 위치 미세 조정 */
         .img_comment #user_data_lyr {

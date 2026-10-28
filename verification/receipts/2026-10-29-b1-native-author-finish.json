@@ -1,0 +1,230 @@
+{
+  "schemaVersion": 1,
+  "kind": "B1_NATIVE_AUTHOR_FINISH",
+  "status": "SCOPED_IMPLEMENTATION_VALIDATED",
+  "sourceBaseHead": "4baa9e2a76fd2eadbd8ee7a9578623c298837a82",
+  "candidateFingerprint": "b7c84c109364d51f5b9cf529990afa7aed4fd480602d7db788619b590228086b",
+  "artifact": {
+    "mobileSha256": "8AC7B0A744922125BAAEE4B9561EBF1601A5C60DD1AD6F546B471C2F46120609",
+    "pcSha256": "8915F36E5B8887DC58EF9F932E39CCA28CCE1AC1020FD96460CCD10C08913581",
+    "mobileVersion": "3.5.5",
+    "pcVersion": "1.9.9",
+    "rootDistGuardMatch": true,
+    "pcUnchanged": true,
+    "officialRelease": false
+  },
+  "scope": {
+    "ids": [
+      "L-03",
+      "A-02",
+      "C-12"
+    ],
+    "c13": "Existing behavior retained;actual permission/password states remain UNKNOWN",
+    "nativeSources": "Original guest/menu/memo/color GETs and member native-JS synthetic0,0 statistics;no author POST transmitted",
+    "credentialsUsed": false,
+    "wholeUiAcceptance": "UNKNOWN",
+    "formalHeaderAdmission": "OPEN",
+    "registryPromoted": false,
+    "postMainMixedExit": false
+  },
+  "checks": [
+    {
+      "name": "B1 native author original menu memo palette and nested pointer paths",
+      "status": "PASS",
+      "selectedTests": 1,
+      "internalStates": 9,
+      "runtimeSha256": "8AC7B0A744922125BAAEE4B9561EBF1601A5C60DD1AD6F546B471C2F46120609",
+      "guardRequired": true,
+      "assertions": [
+        "viewport/row/action bounds",
+        "B1 material",
+        "24px collapse",
+        "vertical nested close",
+        "physical color/cancel/help/bulk/close/reopen",
+        "original nodes/parents/handlers and unsaved input",
+        "view-only hidden legacy layer stays projected and hidden",
+        "nested tools do not replay mirror proxy"
+      ]
+    },
+    {
+      "name": "B1 content native picker isolation glass and original input",
+      "status": "PASS",
+      "selectedTests": 1,
+      "runtimeSha256": "8AC7B0A744922125BAAEE4B9561EBF1601A5C60DD1AD6F546B471C2F46120609"
+    },
+    {
+      "name": "title decorations/native action popup proxy isolation",
+      "status": "PASS",
+      "selectedTests": 1,
+      "runtimeSha256": "8AC7B0A744922125BAAEE4B9561EBF1601A5C60DD1AD6F546B471C2F46120609"
+    },
+    {
+      "name": "public anonymous native pointer paths",
+      "status": "PASS",
+      "contexts": 2,
+      "runtimeSha256": "8AC7B0A744922125BAAEE4B9561EBF1601A5C60DD1AD6F546B471C2F46120609",
+      "memberHeader": "PASS_NATIVE_JS_SYNTHETIC_COUNTS",
+      "actualExtension": false
+    },
+    {
+      "name": "rendered label contrast",
+      "status": "PASS",
+      "samples": 8,
+      "themes": 2,
+      "minimum": 7.583501565900062
+    },
+    {
+      "name": "independent visual comparison",
+      "status": "REVIEWED",
+      "pairs": 4,
+      "pixelMatches": [
+        "memo-light",
+        "memo-dark"
+      ],
+      "retainedMenuDifferences": [
+        1231,
+        1348
+      ],
+      "menuHeightReference": 212,
+      "menuHeightCurrent": 213,
+      "unscaledComparisonCanvas": [
+        240,
+        240
+      ],
+      "goldenUpdated": false,
+      "userAestheticAdoption": "PENDING"
+    },
+    {
+      "name": "UI boundaries/effective live-source map",
+      "status": "PASS",
+      "boundaryFiles": 43,
+      "surfaces": 9
+    },
+    {
+      "name": "release-artifact verification",
+      "status": "PASS",
+      "mobileSha256": "8AC7B0A744922125BAAEE4B9561EBF1601A5C60DD1AD6F546B471C2F46120609",
+      "pcSha256": "8915F36E5B8887DC58EF9F932E39CCA28CCE1AC1020FD96460CCD10C08913581"
+    }
+  ],
+  "review": {
+    "independentReviewer": "native_author_finish_review",
+    "findingsFixed": [
+      "nested compact offset applied twice",
+      "legacy display/geometry accidentally narrowed with paint"
+    ],
+    "remainingBlockers": 0,
+    "mechanicalScan": "One unchanged dynamic img renderer warning;no unrelated rewrite"
+  },
+  "impact": {
+    "policy": "User2026-10-28 actual change/consumer selection",
+    "route": "artifacts/b1-native-author-2026-10-29/final-impact.json",
+    "conservativeProfilesNotExecuted": [
+      "proof-core",
+      "proof-runtime",
+      "acceptance",
+      "promotion-windows"
+    ],
+    "omissions": [
+      "No full Mobile/PC/login/filter suite",
+      "No actual-extension rerun or real account/device qualification",
+      "No repeated unchanged14-palette matrix",
+      "C-07 N/A;four external upload documents deferred"
+    ],
+    "profileQualification": "No complete resolver-profile product claim;executed commands are the named scoped checks and exact-tree checkpoint validation."
+  },
+  "sources": [
+    {
+      "path": "src/targets/mobile/native-author-presenter.js",
+      "sha256": "DC2D1C0AE4F14ECAF9F9161644A9D6D63E5F8CE8128392948AE17A0E8F9FB036",
+      "textNormalization": "LF"
+    },
+    {
+      "path": "src/targets/mobile/post-main-fixes.js",
+      "sha256": "FDD50A63C1C20D35BEF88832812282133D66541AF46CBB838A906FC9BA56170B",
+      "textNormalization": "LF"
+    },
+    {
+      "path": "src/targets/mobile/list-presenter.js",
+      "sha256": "A8CAEBCAC32F85FC57185EB180DAEB1CB4D2EC2B9A3472141FE2F09CA1222CCC",
+      "textNormalization": "LF"
+    },
+    {
+      "path": "src/targets/mobile/ui-module.js",
+      "sha256": "456CF57BA0E17AC2C2C9A4A96B729A08B2BAA751D5FA03B0F7AD7BBBA2CFDCC2",
+      "textNormalization": "LF"
+    },
+    {
+      "path": "src/targets/mobile/comment-presenter.js",
+      "sha256": "C86AC281AF57C60591A90F61EB7B775AC3F2192F35D8B70C5EC3811B715A0010",
+      "textNormalization": "LF"
+    },
+    {
+      "path": "src/targets/mobile/filter-module.js",
+      "sha256": "367D140174E6AF28F26C49C803D76DFA55E7313E76D5839F47B47E4F701B44F3",
+      "textNormalization": "LF"
+    },
+    {
+      "path": "tools/build-userscript.mjs",
+      "sha256": "09294A98629D7EED846C4A3EB36017B06EFAF20CBC9A73CE8539B3CE46ED7BFA",
+      "textNormalization": "LF"
+    },
+    {
+      "path": "build/targets.json",
+      "sha256": "B1B1AFD0DF7DD159AC845A3DE2B50D0E748E87E5178C2EDE01C19CAB16D46F3C",
+      "textNormalization": "LF"
+    },
+    {
+      "path": "testbed/ui-b1-native-author-contract.mjs",
+      "sha256": "AB239861A7945FF20583C0CD801823E460E1E89CC6244E7B8A09A256D5F05BE0",
+      "textNormalization": "LF"
+    },
+    {
+      "path": "testbed/fixtures/b1-native-author.mjs",
+      "sha256": "2123F6100F889641DCCC7245AF7F345FB5363ACBC309F9091ADD7A8B6B85DAAB",
+      "textNormalization": "LF"
+    }
+  ],
+  "localEvidence": [
+    {
+      "path": "artifacts/b1-native-author-2026-10-29/public-final.json",
+      "sha256": "1262D483F78F72D10B50DAE5852355A9D7D680982816F7EC593A47C86BA19275",
+      "localOnly": true
+    },
+    {
+      "path": "artifacts/b1-native-author-2026-10-29/public-smoke.mjs",
+      "sha256": "4ABA0AF423E054B77937970DA592A5B19BE40481AD5448023D5AC20D94BF895D",
+      "localOnly": true
+    },
+    {
+      "path": "artifacts/b1-native-author-2026-10-29/menu-cascade.json",
+      "sha256": "FE5FE8305F1C6988110FD50FD41FA038361BB0DF0CAEDE19BFE1A0A6E4F542A0",
+      "localOnly": true
+    },
+    {
+      "path": "artifacts/b1-native-author-2026-10-29/final-review/captures.json",
+      "sha256": "CE81CEB6D9AE6C7F4FB02C4E8595B9B0DD09A25A0D6DFFD3B1249353D39A37C9",
+      "localOnly": true
+    },
+    {
+      "path": "artifacts/b1-native-author-2026-10-29/final-review/comparison.json",
+      "sha256": "55BEBC6030C723931625A54FC7FA3E37DA3C6359FBE1CF983651571BBD8B2920",
+      "localOnly": true
+    },
+    {
+      "path": "artifacts/b1-native-author-2026-10-29/final-review/contrast.json",
+      "sha256": "AFEE3EB64B467A9B9C0B6D1D8DCD1DFB0A1FEB67F08E859BAB37647001037B57",
+      "localOnly": true
+    },
+    {
+      "path": "artifacts/b1-native-author-2026-10-29/visual/review.json",
+      "sha256": "8F2F331802D46F9A6A8B630E0E5F66E7208CDE686FE4B3F01852CACC8E7DC58F",
+      "localOnly": true
+    },
+    {
+      "path": "artifacts/b1-native-author-2026-10-29/impeccable-detect.json",
+      "sha256": "2E1A19E67FB036776DDD2F436D74C37C0FEF5C1EA3B15263C9BBEA37A8A3388C",
+      "localOnly": true
+    }
+  ]
+}

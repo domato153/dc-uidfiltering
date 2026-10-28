@@ -1,5 +1,7 @@
 # B1 native author/menu/memo preflight —2026-10-29
 
+Follow-up: B1_NATIVE_AUTHOR_FINISH.md/8AC7 closes the acquired family within its recorded scope. This packet retains diagnosis history; CURRENT/NEXT own the next task.
+
 Status: **ANATOMY_ACQUIRED_REPAIR_REQUIRED**. Source base 06ddc183d6043b4980808061a3170c6c7b8fcfd9; Mobile3.5.5 06CA / PC1.9.9 8915 remain unchanged. This unit acquires actual native children and identifies a bounded correction; it does not implement or visually approve them.
 
 ## Acquired scope

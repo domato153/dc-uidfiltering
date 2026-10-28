@@ -1,5 +1,7 @@
 # B1 integrated UI gap reconciliation — 2026-10-28
 
+Follow-up2026-10-29: B1_NATIVE_AUTHOR_FINISH.md/8AC7 closes the acquired native menu/memo/picker scope; actual account/comment permission and other named children remain separate. Earlier native-author acquisition blockers below are historical.
+
 Follow-up: B1_PREVIEW_DRAFT_FINISH.md/06CA closes the two confirmed roots below and the user-added recommendation-card spacing. This F87E audit remains historical diagnosis/native-child inventory; its preview/draft next-task text is superseded by CURRENT/NEXT.
 
 Status: **GAPS_IDENTIFIED**, not whole-UI completion. Source base `4819044c0912cd37ccf57f659be731f063d79f43`; Mobile3.5.5 `F87E31ED06E223E066913F5BC0063A8DA38009067BCA57E83CC9FB8CF64D47CB`, PC1.9.9 `8915F36E5B8887DC58EF9F932E39CCA28CCE1AC1020FD96460CCD10C08913581`. Product source, artifacts, metadata, versions and accepted architecture are unchanged by this audit.

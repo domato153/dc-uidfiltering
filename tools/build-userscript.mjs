@@ -179,7 +179,15 @@ async function main() {
         readPart(inputForRole('mobile-header-recent-visit-host-adapter')),
         readPart(inputForRole('mobile-header-drawer-presenter')),
         readPart(inputForRole('mobile-header-drawer-host-adapter')),
-        ...MOBILE_LEGACY_PARTS.map(readPart),
+        ...MOBILE_LEGACY_PARTS.map(async (file) => {
+            const source = await readPart(file);
+            // Post-main corrections run outside the main runtime closure.
+            // Emit their pure presentation dependency in that same late scope.
+            if (file === 'src/targets/mobile/post-main-fixes.js') {
+                return (await readPart(inputForRole('mobile-native-author-presenter'))) + '\n' + source;
+            }
+            return source;
+        }),
     ]);
     const legacyApp = mobileLegacyParts.join('');
     const combined = `${header}\n${bootstrap}${sharedPrelude}${styleBanner}${sharedSettingsPresenter}${mobileListPresenter}${mobileListHostAdapter}${mobileArticlePresenter}${mobileArticleHostAdapter}${mobileCommentPresenter}${mobileCommentHostAdapter}${mobileNativeFormPresenter}${mobileNativeFormHostAdapter}${mobileWriteDraftHostAdapter}${mobileWriteAdHostAdapter}${mobileWriteFontPresenter}${mobileWriteEditorHostAdapter}${mobileHeaderShellPresenter}${mobileHeaderShellHostAdapter}${mobileGalleryPageHeadPresenter}${mobileGalleryPageHeadHostAdapter}${mobileHeaderGnbPresenter}${mobileHeaderGnbHostAdapter}${mobileHeaderRecentVisitPresenter}${mobileHeaderRecentVisitHostAdapter}${mobileHeaderDrawerPresenter}${mobileHeaderDrawerHostAdapter}${legacyApp}`;

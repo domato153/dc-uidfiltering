@@ -39,6 +39,7 @@ import { runOwnedConditionalContract } from './ui-b1-owned-conditional-contract.
 import { runOwnedInputContract } from './ui-b1-owned-input-contract.mjs';
 import { runLoginEntryContract } from './ui-b1-login-contract.mjs';
 import { runConveniencePresentationContract, runRecommendationSpacingContract } from './ui-b1-convenience-contract.mjs';
+import { runNativeAuthorContract } from './ui-b1-native-author-contract.mjs';
 
 const args = new Set(process.argv.slice(2));
 const selectedGroup = process.argv.includes('--group') ? process.argv[process.argv.indexOf('--group') + 1] : null;
@@ -84,6 +85,7 @@ mobileTest('B1 glass: ordinary neutral backing through actual scrim', 'functiona
 mobileTest('B1 owned panels: readable conditional feedback and nested state', 'functional', runOwnedConditionalContract);
 mobileTest('B1 owned inputs: shortcut headtext author backup and size children', 'functional', runOwnedInputContract);
 mobileTest('B1 login: isolated original native form and theme entry', 'functional', runLoginEntryContract);
+mobileTest('B1 native author: original menu memo palette and nested pointer paths', 'functional', runNativeAuthorContract);
 mobileTest('B1 finish: preview draft material and original controls', 'functional', runConveniencePresentationContract);
 mobileTest('B1 finish: recommendation card inset and proportion', 'functional', runRecommendationSpacingContract);
 mobileTest('B1 image comments: full native composer parity and lifecycle', 'functional', runB1ImageCommentsContract);

@@ -1665,6 +1665,97 @@
       "normalizer": "semantic-observation-v1",
       "unknownDifferencePolicy": "fail",
       "missingApplicabilityPolicy": "fail"
+    },
+    {
+      "id": "b1-native-author-finish-v1",
+      "status": "active",
+      "surfaces": [
+        "native-author-memo",
+        "list-search-paging"
+      ],
+      "allowed": [
+        {
+          "kind": "color-role",
+          "surface": "native-author-memo",
+          "scope": "Observed author UL/memo-add/picker chrome use B1/C885 with opaque fields and native palette.224px menu/auto rows,24px collapse/36px close,viewport/stacking/compact clearance are presentation deltas; original nodes/parents/fields/handler identity/storage/network remain. Mirror proxy isolation is a separately declared bridge bugfix;no semantic trace normalization or handler waiver.",
+          "reason": "User continued the acquired native-author B1 repair and explicitly requested the collapse-arrow finish.",
+          "contractTests": [
+            "testbed/ui-b1-native-author-contract.mjs"
+          ]
+        },
+        {
+          "kind": "spacing",
+          "surface": "native-author-memo",
+          "scope": "Observed author UL/memo-add/picker chrome use B1/C885 with opaque fields and native palette.224px menu/auto rows,24px collapse/36px close,viewport/stacking/compact clearance are presentation deltas; original nodes/parents/fields/handler identity/storage/network remain. Mirror proxy isolation is a separately declared bridge bugfix;no semantic trace normalization or handler waiver.",
+          "reason": "User continued the acquired native-author B1 repair and explicitly requested the collapse-arrow finish.",
+          "contractTests": [
+            "testbed/ui-b1-native-author-contract.mjs"
+          ]
+        },
+        {
+          "kind": "radius",
+          "surface": "native-author-memo",
+          "scope": "Observed author UL/memo-add/picker chrome use B1/C885 with opaque fields and native palette.224px menu/auto rows,24px collapse/36px close,viewport/stacking/compact clearance are presentation deltas; original nodes/parents/fields/handler identity/storage/network remain. Mirror proxy isolation is a separately declared bridge bugfix;no semantic trace normalization or handler waiver.",
+          "reason": "User continued the acquired native-author B1 repair and explicitly requested the collapse-arrow finish.",
+          "contractTests": [
+            "testbed/ui-b1-native-author-contract.mjs"
+          ]
+        },
+        {
+          "kind": "typography",
+          "surface": "native-author-memo",
+          "scope": "Observed author UL/memo-add/picker chrome use B1/C885 with opaque fields and native palette.224px menu/auto rows,24px collapse/36px close,viewport/stacking/compact clearance are presentation deltas; original nodes/parents/fields/handler identity/storage/network remain. Mirror proxy isolation is a separately declared bridge bugfix;no semantic trace normalization or handler waiver.",
+          "reason": "User continued the acquired native-author B1 repair and explicitly requested the collapse-arrow finish.",
+          "contractTests": [
+            "testbed/ui-b1-native-author-contract.mjs"
+          ]
+        },
+        {
+          "kind": "geometry",
+          "surface": "native-author-memo",
+          "scope": "Observed author UL/memo-add/picker chrome use B1/C885 with opaque fields and native palette.224px menu/auto rows,24px collapse/36px close,viewport/stacking/compact clearance are presentation deltas; original nodes/parents/fields/handler identity/storage/network remain. Mirror proxy isolation is a separately declared bridge bugfix;no semantic trace normalization or handler waiver.",
+          "reason": "User continued the acquired native-author B1 repair and explicitly requested the collapse-arrow finish.",
+          "contractTests": [
+            "testbed/ui-b1-native-author-contract.mjs"
+          ]
+        },
+        {
+          "kind": "geometry",
+          "surface": "list-search-paging",
+          "scope": "Keep original list rows/title/meta arrangement;replace transformed metadata centering with top/bottom flex centering,stop retained reveal transform after completion and suppress row press/reveal transform only during original popup open state. Existing180ms reveal and normal press behavior remain. Raise only original open-popup row.",
+          "reason": "User continued the acquired native-author B1 repair and explicitly requested the collapse-arrow finish.",
+          "contractTests": [
+            "testbed/ui-b1-native-author-contract.mjs"
+          ]
+        },
+        {
+          "kind": "motion",
+          "surface": "list-search-paging",
+          "scope": "Keep original list rows/title/meta arrangement;replace transformed metadata centering with top/bottom flex centering,stop retained reveal transform after completion and suppress row press/reveal transform only during original popup open state. Existing180ms reveal and normal press behavior remain. Raise only original open-popup row.",
+          "reason": "User continued the acquired native-author B1 repair and explicitly requested the collapse-arrow finish.",
+          "contractTests": [
+            "testbed/ui-b1-native-author-contract.mjs"
+          ]
+        }
+      ],
+      "invariants": [
+        "filter-result",
+        "storage-trace",
+        "network-trace",
+        "host-node-identity",
+        "host-node-order",
+        "native-handler",
+        "native-form-fields",
+        "native-submit-trace",
+        "focus",
+        "lifecycle-resources",
+        "pc-result",
+        "accessibility",
+        "geometry-containment"
+      ],
+      "normalizer": "semantic-observation-v1",
+      "unknownDifferencePolicy": "fail",
+      "missingApplicabilityPolicy": "fail"
     }
   ]
 }

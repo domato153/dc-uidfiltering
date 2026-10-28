@@ -1090,8 +1090,8 @@
             color: #9fb0c8 !important;
             -webkit-text-fill-color: #9fb0c8 !important;
         }
-        body.dc-filter-dark-mode .view_comment.image_comment #user_data_lyr .user_data_list,
-        body.dc-filter-dark-mode .view_comment.image_comment .user_data .user_data_list,
+        body.dc-filter-dark-mode .view_comment.image_comment #user_data_lyr .user_data_list:not(.dcuf-native-author-menu),
+        body.dc-filter-dark-mode .view_comment.image_comment .user_data .user_data_list:not(.dcuf-native-author-menu),
         body.dc-filter-dark-mode .view_comment.image_comment .comment_box.img_comment_box .cmt_delpw_box,
         body.dc-filter-dark-mode .view_comment.image_comment .comment_box.img_comment_box [id$="_delpw_box"] {
             background: #1f2937 !important;
@@ -1105,8 +1105,8 @@
             color: #e3ebf8 !important;
             border-color: rgba(120, 144, 175, 0.44) !important;
         }
-        body.dc-filter-dark-mode .view_comment.image_comment #user_data_lyr .user_data_list > li,
-        body.dc-filter-dark-mode .view_comment.image_comment .user_data .user_data_list > li {
+        body.dc-filter-dark-mode .view_comment.image_comment #user_data_lyr .user_data_list:not(.dcuf-native-author-menu) > li,
+        body.dc-filter-dark-mode .view_comment.image_comment .user_data .user_data_list:not(.dcuf-native-author-menu) > li {
             background: linear-gradient(180deg, rgba(34, 45, 60, 0.98) 0%, rgba(27, 37, 50, 0.98) 100%) !important;
             border-top-color: rgba(120, 144, 175, 0.3) !important;
             color: #e3ebf8 !important;
@@ -1116,12 +1116,12 @@
             color: #e3ebf8 !important;
             -webkit-text-fill-color: #e3ebf8 !important;
         }
-        body.dc-filter-dark-mode .view_comment.image_comment #user_data_lyr .user_data_list > li > a,
-        body.dc-filter-dark-mode .view_comment.image_comment #user_data_lyr .user_data_list > li > button,
-        body.dc-filter-dark-mode .view_comment.image_comment .user_data .user_data_list > li > a,
-        body.dc-filter-dark-mode .view_comment.image_comment .user_data .user_data_list > li > button,
-        body.dc-filter-dark-mode .view_comment.image_comment #user_data_lyr .user_data_list > li > span,
-        body.dc-filter-dark-mode .view_comment.image_comment .user_data .user_data_list > li > span {
+        body.dc-filter-dark-mode .view_comment.image_comment #user_data_lyr .user_data_list:not(.dcuf-native-author-menu) > li > a,
+        body.dc-filter-dark-mode .view_comment.image_comment #user_data_lyr .user_data_list:not(.dcuf-native-author-menu) > li > button,
+        body.dc-filter-dark-mode .view_comment.image_comment .user_data .user_data_list:not(.dcuf-native-author-menu) > li > a,
+        body.dc-filter-dark-mode .view_comment.image_comment .user_data .user_data_list:not(.dcuf-native-author-menu) > li > button,
+        body.dc-filter-dark-mode .view_comment.image_comment #user_data_lyr .user_data_list:not(.dcuf-native-author-menu) > li > span,
+        body.dc-filter-dark-mode .view_comment.image_comment .user_data .user_data_list:not(.dcuf-native-author-menu) > li > span {
             color: #e3ebf8 !important;
             -webkit-text-fill-color: #e3ebf8 !important;
         }
@@ -5260,7 +5260,8 @@
     if (!__dcufPageSupports('list-surface')) return;
     const STYLE_ID = 'dcuf-list-memo-popup-fix';
     const CENTER_ATTR = 'data-dcuf-list-memo-centered';
-    const POPUP_SELECTOR = '#user_memo_config.pop_wrap.type3, #um_picker_lay.pop_wrap.type3';
+    const AUTHOR_MENU_SELECTOR = '.user_data.add > .user_data_list, .gall_writer #user_data_lyr > .user_data_list, .user_data_add > .user_data_list';
+    const POPUP_SELECTOR = '#user_memo_config.pop_wrap.type3, #um_picker_lay.pop_wrap.type3, ' + AUTHOR_MENU_SELECTOR;
     const MEMO_CONTEXT_SELECTOR = [POPUP_SELECTOR, '.custom-mobile-list', '.custom-post-item', '.view_content_wrap'].join(', ');
     const MEMO_EVENT_TARGET_SELECTOR = [MEMO_CONTEXT_SELECTOR, '#user_data_lyr', '.user_data', '.pop_wrap.type2', '.pop_wrap.type3'].join(', ');
     const MEMO_FORCE_FULLPASS_EVENT_SELECTOR = '#user_data_lyr, .user_data, .pop_wrap.type2, .pop_wrap.type3';
@@ -5279,12 +5280,52 @@
         '.custom-mobile-list #um_picker_lay.pop_wrap.type3',
         '.custom-post-item #um_picker_lay.pop_wrap.type3'
     ].join(', ');
-    const css = `
+    // Native selectors are immutable target bindings; presentation owns no DOM lookup.
+    const nativeAuthorBindings = Object.freeze({
+    "shells": ".dcuf-native-author-anchor > ul.dcuf-native-author-menu.user_data_list,\n.dcuf-native-memo#user_memo_config,\n.dcuf-native-memo-picker#um_picker_lay",
+    "menu": ".dcuf-native-author-anchor > ul.dcuf-native-author-menu.user_data_list",
+    "menuRows": ".dcuf-native-author-anchor > ul.dcuf-native-author-menu.user_data_list > li",
+    "menuNick": ".dcuf-native-author-anchor > ul.dcuf-native-author-menu.user_data_list > li.nick",
+    "menuLinks": ".dcuf-native-author-anchor > ul.dcuf-native-author-menu.user_data_list > li > a",
+    "menuLinksHover": ".dcuf-native-author-anchor > ul.dcuf-native-author-menu.user_data_list > li > a:hover",
+    "menuStats": ".dcuf-native-author-anchor > ul.dcuf-native-author-menu.user_data_list > li.loaf",
+    "menuArrows": ".dcuf-native-author-anchor > ul.dcuf-native-author-menu.user_data_list > li > a > em",
+    "contents": ".dcuf-native-memo#user_memo_config > .pop_content,\n.dcuf-native-memo-picker#um_picker_lay > .pop_content",
+    "heads": ".dcuf-native-memo#user_memo_config > .pop_content > .pop_head,\n.dcuf-native-memo-picker#um_picker_lay > .pop_content > .pop_head",
+    "titles": ".dcuf-native-memo#user_memo_config > .pop_content > .pop_head > h3,\n.dcuf-native-memo-picker#um_picker_lay > .pop_content > .pop_head > h3",
+    "bodies": ".dcuf-native-memo#user_memo_config #user_memo_setting,.dcuf-native-memo-picker#um_picker_lay > .pop_content > .inner",
+    "sections": ".dcuf-native-memo#user_memo_config #user_memo_setting > .set_cont:not(.noline)",
+    "groups": ".dcuf-native-memo#user_memo_config .set_cont > .inr",
+    "labels": ".dcuf-native-memo#user_memo_config .cont_tit",
+    "fields": ".dcuf-native-memo#user_memo_config #user_memo_setting .intxt",
+    "placeholders": ".dcuf-native-memo#user_memo_config #user_memo_setting .intxt::placeholder",
+    "history": ".dcuf-native-memo#user_memo_config #user_memo_setting .list",
+    "footers": ".dcuf-native-memo#user_memo_config > .pop_content > .btn_box,\n.dcuf-native-memo-picker#um_picker_lay > .pop_content > .btn_box",
+    "buttons": ".dcuf-native-memo#user_memo_config > .pop_content > .btn_box > button,\n.dcuf-native-memo-picker#um_picker_lay > .pop_content > .btn_box > button",
+    "primary": ".dcuf-native-memo#user_memo_config > .pop_content > .btn_box > .btn_blue,.dcuf-native-memo-picker#um_picker_lay > .pop_content > .btn_box > .btn_apply",
+    "close": ".dcuf-native-memo#user_memo_config > .poply_bgblueclose,\n.dcuf-native-memo-picker#um_picker_lay > .poply_bgblueclose",
+    "closeIcon": ".dcuf-native-memo#user_memo_config > .poply_bgblueclose > .sp_img,\n.dcuf-native-memo-picker#um_picker_lay > .poply_bgblueclose > .sp_img",
+    "closeBefore": ".dcuf-native-memo#user_memo_config > .poply_bgblueclose::before,\n.dcuf-native-memo-picker#um_picker_lay > .poply_bgblueclose::before",
+    "closeAfter": ".dcuf-native-memo#user_memo_config > .poply_bgblueclose::after,\n.dcuf-native-memo-picker#um_picker_lay > .poply_bgblueclose::after",
+    "help": ".dcuf-native-memo#user_memo_config .pop_head > .icon_qmark_aaa",
+    "helpBefore": ".dcuf-native-memo#user_memo_config .pop_head > .icon_qmark_aaa::before",
+    "swatches": ".dcuf-native-memo#user_memo_config #user_memo_setting .sel_color",
+    "tips": ".dcuf-native-memo#user_memo_config .pop_tipbox",
+    "focus": ".dcuf-native-memo#user_memo_config :is(button,input):focus-visible,\n.dcuf-native-memo-picker#um_picker_lay :is(button,input):focus-visible,.dcuf-native-author-anchor > ul.dcuf-native-author-menu.user_data_list a:focus-visible",
+    "bulkGroup": ".dcuf-native-memo#user_memo_config .boxt",
+    "bulkToggle": ".dcuf-native-memo#user_memo_config .btn_toggle15",
+    "bulkIcon": ".dcuf-native-memo#user_memo_config .btn_toggle15 > .sp_img",
+    "bulkToggleBefore": ".dcuf-native-memo#user_memo_config .btn_toggle15::before",
+    "menuMetadata": ".dcuf-native-author-anchor > ul.dcuf-native-author-menu.user_data_list > li.nick > .font_grey",
+    "bulkExpanded": ".dcuf-native-memo#user_memo_config #chk_color_toggle:not(.hide) .btn_toggle15::before",
+    "menuIdentity": ".dcuf-native-author-anchor > ul.dcuf-native-author-menu.user_data_list > li.nick .cut"
+});
+    const css = __dcufCreateNativeAuthorPresentation(nativeAuthorBindings).cssText + `
         ${LIST_MEMO_POPUP_IMMEDIATE_SELECTOR},
         .pop_wrap.type3[${CENTER_ATTR}="1"] {
             position: fixed !important;
             left: 50% !important;
-            top: 50% !important;
+            top: var(--dcuf-author-center, 50%) !important;
             right: auto !important;
             bottom: auto !important;
             margin: 0 !important;
@@ -5296,14 +5337,14 @@
         #user_memo_config.pop_wrap.type3[${CENTER_ATTR}="1"] {
             width: min(478px, calc(100vw - 16px)) !important;
             max-width: min(478px, calc(100vw - 16px)) !important;
-            max-height: calc(100vh - 16px) !important;
+            max-height: calc(100vh - var(--dcuf-author-clearance, 16px)) !important;
         }
         .custom-mobile-list #user_memo_config.pop_wrap.type3 .pop_content.memo_sel,
         .custom-post-item #user_memo_config.pop_wrap.type3 .pop_content.memo_sel,
         #user_memo_config.pop_wrap.type3[${CENTER_ATTR}="1"] .pop_content.memo_sel {
             width: 100% !important;
             max-width: 100% !important;
-            max-height: calc(100vh - 16px) !important;
+            max-height: calc(100vh - var(--dcuf-author-clearance, 16px)) !important;
             overflow-y: auto !important;
             box-sizing: border-box !important;
         }
@@ -5342,6 +5383,8 @@
     const isListMemoContext = (popup) => {
         if (!(popup instanceof HTMLElement)) return false;
         if (!isVisible(popup)) return false;
+        if (popup.matches('#user_memo_config') && popup.querySelector(':scope > .pop_content.memo_sel')) return true;
+        if (popup.closest('.custom-mobile-list, .custom-post-item')) return true;
         if (popup.closest('.view_content_wrap, #focus_cmt')) return false;
         if (popup.closest('.custom-mobile-list, .custom-post-item')) return true;
 
@@ -5405,6 +5448,11 @@
         Array.from(elements).forEach((element) => {
             if (!(element instanceof Element)) return;
             if (element.matches?.(MEMO_CONTEXT_SELECTOR)) pendingMemoPopupCandidates.add(element);
+            // A nickname click precedes native insertion. Retain its bounded original
+            // row/context until the existing scheduler runs; owned-list mutations
+            // can be intentionally filtered out of the shared mutation stream.
+            const context = element.closest(MEMO_CONTEXT_SELECTOR);
+            if (context) pendingMemoPopupCandidates.add(context);
             element.querySelectorAll?.(MEMO_CONTEXT_SELECTOR).forEach((candidate) => {
                 if (candidate instanceof Element) pendingMemoPopupCandidates.add(candidate);
             });
@@ -5438,8 +5486,48 @@
         return Array.from(popups);
     };
 
+    const toggleAuthorClass = (element, name, enabled) => {
+        if (element.classList.contains(name) !== enabled) element.classList.toggle(name, enabled);
+    };
+    const setAuthorGeometry = (element, name, value) => {
+        if (element.style.getPropertyValue(name) !== value) element.style.setProperty(name, value);
+    };
+    const syncNativeAuthor = (popup) => {
+        const isMenu = popup.matches(AUTHOR_MENU_SELECTOR);
+        if (isMenu) {
+            toggleAuthorClass(popup, 'dcuf-native-author-menu', true);
+            toggleAuthorClass(popup.parentElement, 'dcuf-native-author-anchor', true);
+        } else if (popup.id === 'user_memo_config' && popup.querySelector(':scope > .pop_content.memo_sel')) {
+            toggleAuthorClass(popup, 'dcuf-native-memo', true);
+        } else if (popup.id === 'um_picker_lay' && popup.closest('#user_memo_config')) {
+            toggleAuthorClass(popup, 'dcuf-native-memo-picker', true);
+        } else return false;
+        const visible = isVisible(popup);
+        toggleAuthorClass(popup, 'dcuf-native-author-open', visible);
+        if (isMenu && visible && popup.closest('.custom-post-item')) {
+            // The original anchor can be0x0; measure the positive UL and original writer.
+            const writer = popup.closest('.gall_writer') || popup.closest('.author');
+            if (!writer) return isMenu;
+            const anchor = writer.getBoundingClientRect();
+            const rect = popup.getBoundingClientRect();
+            const left = Math.max(12, Math.min(anchor.left, innerWidth - rect.width - 12));
+            const below = anchor.bottom + 6;
+            const top = Math.max(12, below + rect.height <= innerHeight - 12 ? below : anchor.top - rect.height - 6);
+            for (const [name,value] of Object.entries({position:'fixed',left:left+'px',top:top+'px',right:'auto',bottom:'auto',transform:'none',margin:'0px'})) setAuthorGeometry(popup,name,value);
+        }
+        if (!isMenu) {
+            // The memo already owns the compact offset. Its transform/backdrop
+            // contains the nested fixed picker,so offsetting that child again
+            // would move its top/close control outside the viewport.
+            const nestedPicker = popup.id === 'um_picker_lay' && popup.closest('#user_memo_config.dcuf-native-memo');
+            const compact = innerWidth <= 640 || innerHeight <= 650;
+            setAuthorGeometry(popup, '--dcuf-author-center', compact && !nestedPicker ? 'calc(50% - 48px)' : '50%');
+        }
+        return isMenu;
+    };
     const syncPopup = (popup) => {
         if (!(popup instanceof HTMLElement)) return;
+        if (syncNativeAuthor(popup)) return;
         const centered = isListMemoContext(popup);
         const nextState = centered ? '1' : '0';
         const previousState = memoPopupStateCache.get(popup);

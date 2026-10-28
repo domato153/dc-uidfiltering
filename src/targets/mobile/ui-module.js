@@ -220,6 +220,8 @@
                     return;
                 }
                 const clickedElement = e.target;
+                // Original child windows own their events,not the mirrored author-entry proxy.
+                if (clickedElement.closest('.user_data, .user_data_add, #user_data_lyr, #user_memo_config, #um_picker_lay')) return;
                 if (clickedElement.closest('span.reply_num')) {
                     e.preventDefault();
                     const originalReplyLink = originalRow.querySelector('a.reply_numbox');

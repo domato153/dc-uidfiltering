@@ -74,6 +74,10 @@
       {
         "id": "b1-convenience-finish",
         "summary": "Authorized pure Mobile preview/draft CSS extraction into one presenter mounted at the same existing style slot; original adapters retain DOM/state/storage/network/cache/sanitizer/geometry/gestures/disposal. Add owned root classes,typed draft-action attribute and accessible close label only. Keep convenience host mixed for unrelated legacy settings fallback. B1 glass chrome,opaque reading,C885 controls and narrow wrapping are declared visual deltas. Existing article presenter separately resets native vote-card height and applies modest centered padding/proportion without moving or replacing buttons/counts."
+      },
+      {
+        "id": "b1-native-author-finish",
+        "summary": "Native author UL/memo/picker B1 presentation in one pure descriptor,rendered through existing post-main list-memo style slot/subscriber. Original menus/fields/parents/events/palette/storage/network remain native. List metadata and completed reveal stop retaining a transformed containing block; press/reveal transforms do not run with a native window open. Existing list-only UL geometry clamps to viewport and original rows expose the layer. Mirror proxy excludes original popup descendants. No new observer,portal or accepted mixed exit."
       }
     ],
     "upsertComponents": [
@@ -110,15 +114,16 @@
         "classification": "mixed-runtime-source",
         "layer": "target-adapter",
         "boundaryState": "mixed",
-        "responsibility": "Late mobile host corrections remain mixed. Measures view computed styles and passes frozen serializable observations to article/comment presenter readiness policies; retains preparation, debug and recovery without owning their aesthetic thresholds.",
+        "responsibility": "Late mobile host corrections remain mixed. Measures view computed styles and passes frozen serializable observations to article/comment presenter readiness policies; retains preparation, debug and recovery without owning their aesthetic thresholds. Existing list-memo scheduler/subscriber also projects observed author/menu/memo/picker classes and list UL geometry; consumes a pure native-author descriptor in the same style slot. Other legacy fixes remain mixed.",
         "sourceRefs": [
           "src/targets/mobile/post-main-fixes.js"
         ],
         "contractRefs": [
           "host-dom-events",
           "ui-ownership",
-          "initialization-lifecycle"
-        ],
+          "initialization-lifecycle",
+            "b1-native-author-finish"
+          ],
         "fitnessRefs": [
           "invariant-host-node-preservation",
           "invariant-one-visual-owner",
@@ -304,7 +309,9 @@
         "boundaryState": "conforming",
         "responsibility": "Pure serializable list-row projection markup, recent-row decoration and semantic list/control/category-popup CSS including Concept01 sticky/reveal presentation. It owns no host DOM, storage, network, observer, timer, or lifecycle effect. Article-native action bars remain under the article presenter/adapter.",
         "sourceRefs": ["src/targets/mobile/list-presenter.js"],
-        "contractRefs": ["ui-ownership", "semantic-preservation", "host-dom-events", "live-native-control-composition"],
+        "contractRefs": ["ui-ownership", "semantic-preservation", "host-dom-events", "live-native-control-composition",
+            "b1-native-author-finish"
+          ],
         "fitnessRefs": ["invariant-one-visual-owner", "invariant-host-node-preservation", "invariant-ui-port-boundary", "invariant-build-inputs-mapped"]
       },
       {
@@ -1035,6 +1042,28 @@
           "invariant-one-visual-owner",
           "invariant-host-node-preservation"
         ]
+      },
+      {
+        "id": "mobile-native-author-presenter",
+        "status": "candidate",
+        "classification": "presentation-source",
+        "layer": "presentation-ui",
+        "boundaryState": "conforming",
+        "responsibility": "Pure CSS descriptor for observed original author menu,memo-add and color-picker chrome/fields/controls; consumes immutable adapter bindings and current B1 values,never owns native state,DOM,network,storage,observers or geometry effects.",
+        "sourceRefs": [
+          "src/targets/mobile/native-author-presenter.js"
+        ],
+        "contractRefs": [
+          "ui-ownership",
+          "target-isolation",
+          "host-dom-events",
+          "b1-native-author-finish"
+        ],
+        "fitnessRefs": [
+          "invariant-build-inputs-mapped",
+          "invariant-one-visual-owner",
+          "invariant-host-node-preservation"
+        ]
       }
     ],
     "upsertRelations": [
@@ -1518,6 +1547,12 @@
         "id": "rel-convenience-presentation-mobile-write-draft-host-adapter",
         "from": "mobile-convenience-presenter",
         "to": "mobile-write-draft-host-adapter",
+        "kind": "rendered-through"
+      },
+      {
+        "id": "rel-native-author-presentation-post-main",
+        "from": "mobile-native-author-presenter",
+        "to": "mobile-post-main-fixes",
         "kind": "rendered-through"
       }
     ],

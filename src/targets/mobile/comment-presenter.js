@@ -493,7 +493,7 @@
                 z-index: 2147483647;
                 overflow: visible;
             }
-            [data-dcuf-role="comments-root"] [data-dcuf-role="native-comment-popup"] {
+            [data-dcuf-role="comments-root"] [data-dcuf-role="native-comment-popup"]:not(.dcuf-native-author-anchor):not(.dcuf-native-author-menu):not(.dcuf-native-memo):not(.dcuf-native-memo-picker) {
                 border: 1px solid var(--dcuf-b1-rim, var(--dcuf-comment-border));
                 border-radius: 16px;
                 background: var(--dcuf-b1-sheen, none), var(--dcuf-b1-floating, var(--dcuf-comment-surface));

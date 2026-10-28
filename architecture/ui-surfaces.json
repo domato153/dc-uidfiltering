@@ -608,6 +608,52 @@
         "testbed/run-tests.mjs"
       ],
       "canaryCheckpoint": "settings-list"
+    },
+    {
+      "id": "native-author-memo",
+      "sequence": 9,
+      "risk": "R2",
+      "state": "modern-candidate",
+      "routeFamilies": [
+        "list",
+        "view"
+      ],
+      "currentVisualOwner": "mobile-native-author-presenter",
+      "sourceRefs": [
+        "src/targets/mobile/native-author-presenter.js",
+        "src/targets/mobile/post-main-fixes.js",
+        "src/targets/mobile/list-presenter.js",
+        "src/targets/mobile/ui-module.js",
+        "src/targets/mobile/comment-presenter.js",
+        "src/targets/mobile/filter-module.js"
+      ],
+      "adapter": "mobile-post-main-fixes",
+      "presenter": "mobile-native-author-presenter",
+      "styleIds": [
+        "dcuf-list-memo-popup-fix"
+      ],
+      "allowedRoots": [
+        "user_memo_config",
+        "um_picker_lay",
+        "dcuf-native-author-menu"
+      ],
+      "states": [
+        "closed",
+        "guest",
+        "member",
+        "memo-add",
+        "color-open",
+        "help-open",
+        "bulk-color"
+      ],
+      "intendedDelta": "b1-native-author-finish-v1",
+      "cascadeExceptions": [],
+      "cascadeExceptionProfiles": [],
+      "testRefs": [
+        "testbed/ui-b1-native-author-contract.mjs",
+        "testbed/run-tests.mjs"
+      ],
+      "canaryCheckpoint": "settings-list"
     }
   ]
 }

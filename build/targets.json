@@ -32,6 +32,7 @@
         { "path": "src/targets/shared/filter-settings-host-adapter.js", "role": "legacy-runtime" },
         { "path": "src/targets/mobile/convenience-module.js", "role": "legacy-runtime" },
         { "path": "src/targets/mobile/convenience-presenter.js", "role": "mobile-convenience-presenter" },
+        { "path": "src/targets/mobile/native-author-presenter.js", "role": "mobile-native-author-presenter" },
         { "path": "src/targets/mobile/convenience-host-adapter.js", "role": "legacy-runtime" },
         { "path": "src/targets/shared/personal-block-module.js", "role": "legacy-runtime" },
         { "path": "src/targets/shared/personal-block-host-adapter.js", "role": "legacy-runtime" },
