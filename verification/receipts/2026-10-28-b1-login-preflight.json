@@ -1,0 +1,265 @@
+{
+  "schemaVersion": 1,
+  "kind": "B1_LOGIN_ENTRY_PREFLIGHT_RECORD",
+  "status": "PREFLIGHT_READY_PRODUCT_UNCHANGED",
+  "sourceBaseHead": "484e0900e47b8576cf5203a7a559811fba63ffca",
+  "candidateFingerprint": "bb1dd1292b10b2acb283c9ff7f1615e2fafc0aa176345ba6065dcb7d609b58e4",
+  "artifact": {
+    "mobileSha256": "1593C0F7FA4FFDFCAF1607EFC3D8DC557FED9F4A41CD968C9914814965C5BF5B",
+    "pcSha256": "EF24D41DD44AC13634FC17CEC43B31CD371C6D0F3D8AEA6A6C47CB81ABB832E3",
+    "changed": false
+  },
+  "scope": {
+    "publicDocument": "https://sign.dcinside.com/login",
+    "redirectPath": "/login",
+    "queryKeys": [
+      "s_url"
+    ],
+    "credentialHiddenCookieAccountValuesRead": false,
+    "authenticationAttempted": false,
+    "productMetadataSourceBuildRegistryChanged": false,
+    "productionLoginStylingImplemented": false,
+    "newGrantsStorageKeysOrVersion": false,
+    "officialRelease": false
+  },
+  "native": {
+    "root": "#top.width868.login_wrap",
+    "viewportMetaPresent": false,
+    "form": {
+      "method": "post",
+      "action": "https://sign.dcinside.com/login/member_check",
+      "onsubmit": "return login_submit();",
+      "hiddenFieldNames": [
+        "ci_t",
+        "s_url",
+        "tieup",
+        "url",
+        "ssl"
+      ],
+      "visibleFieldNames": [
+        "user_id",
+        "pw",
+        "checksaveid"
+      ],
+      "submit": "original button[type=submit]"
+    },
+    "originalNodesPreservation": "Required for next implementation; no credential values copied into proposal or receipt",
+    "dark": "Synthetic B1 draft only; no native dark login observed",
+    "publishedControl": {
+      "path": "testbed/artifacts/baseline-mobile-stable.user.js",
+      "sha256": "32BA208DDD9973A7EEC343F01E963A833AB4F0C084987077EDAE46844383C25D",
+      "version": "3.5.5",
+      "signMetadataPresent": false,
+      "claim": "Preserved exact snapshot,not newly fetched latest release"
+    }
+  },
+  "reference": {
+    "kind": "INDEPENDENT_ORIGINAL_ANATOMY_B1_DRAFT",
+    "productApproved": false,
+    "userAestheticAdoption": false,
+    "regressionGolden": false,
+    "region": "compact native wordmark header,translucent login-card exterior,opaque original fields and C885 primary action",
+    "images": [
+      {
+        "theme": "light",
+        "path": "docs/design/b1-login-proposal-light-2026-10-28.png",
+        "sha256": "0A3A0981B90BEF65909B6F0F34B4CA3143FAAEC422D48736E845A3CAC9E41B6A",
+        "width": 980,
+        "height": 900
+      },
+      {
+        "theme": "dark",
+        "path": "docs/design/b1-login-proposal-dark-2026-10-28.png",
+        "sha256": "2F4EDE282109402C5AF3FFAAF8EF9091ECEB7B9653DB368ED457256EBC4D21C4",
+        "width": 980,
+        "height": 900
+      }
+    ],
+    "recipe": "docs/design/b1-login-proposal-2026-10-28.css",
+    "recipeSha256": "C9E20AF75E1150CB4233AE2C3EB42F8932E2722E91DBF4EBCD15BB9B57F6CC60",
+    "family": {
+      "path": "docs/design/b1-glass-ordinary-target-light-2026-10-27.png",
+      "sha256": "95B99AE75111ED1C15A374786509EBC548ACADEECC9DD9AA057B46BD6DC3CFEF"
+    },
+    "representativePalette": "teal",
+    "actualLocalAuthentication": "All prototype form submissions prevented; original script absent and hidden values blank"
+  },
+  "selectedApproach": {
+    "entry": "Dedicated exact Mobile HTTPS sign login branch before gallery boot",
+    "presentation": "Original-node adapter plus pure presenter/material inputs",
+    "reuse": "Smallest pure14-palette/base-material extraction; do not call uninitialized later const ThemeModule or settings ports",
+    "sourceChanges": "Next task only; candidate overlay first",
+    "routeExclusions": [
+      "/login/member_check",
+      "/myinfo/*",
+      "/join/*",
+      "other origins"
+    ],
+    "newObserverFilterMenuNetworkBodyLock": false,
+    "authority": {
+      "tier": "ER1 metadata/API; ER0 repository/native facts",
+      "primarySource": "https://www.tampermonkey.net/documentation.php?locale=en&q=include",
+      "readDate": "2026-10-28",
+      "transferLimit": "Directive query/hash execution on pinned actual TM5.5 remains untested; no extension proof from a JS pattern/VM"
+    }
+  },
+  "verification": {
+    "nativePublicOriginalCaptured": true,
+    "currentEntryProbe": "Exact1593 isolated VM reaches other; only current page-context attribute,zero style/timer/observer/GM/menu/network effects. Not browser/authentication execution.",
+    "proposalGeometryContexts": 6,
+    "proposalFormControlHits": 42,
+    "widthsAndHeights": [
+      {
+        "width": 980,
+        "height": 900,
+        "role": "same-layout review"
+      },
+      {
+        "width": 980,
+        "height": 2306,
+        "role": "phone layout proxy; no actual scale/DPR/input claim"
+      },
+      {
+        "width": 390,
+        "height": 560,
+        "role": "narrow-short stress"
+      }
+    ],
+    "horizontalOverflow": false,
+    "nativePublicFormChildren": "Captured,not handler-tested",
+    "imagesReviewed": "Readable whole light/dark versus incumbent B1 glass/button family and original anatomy; no implementation image matcher or pixel pass",
+    "viewerThemeStates": 2,
+    "viewerImageInstances": 4,
+    "viewerUniqueImages": 3,
+    "brokenViewerImages": 0,
+    "liveArchitectureLinks": "PASS,accepted6 surfaces unchanged; repository map only",
+    "productTests": "NOT_RERUN_PRODUCT_UNCHANGED; prior input-scoped1593/EF24 checks are not login coverage",
+    "viewportOverrideRestored": true
+  },
+  "observedDraftRepairs": [
+    "Original white/inverted header logo and login link beat a weaker draft selector",
+    "Native blind legend retained visibility:hidden after position/clip reset",
+    "Native checkbox hidden-input/custom-face/padding must be treated together without replacing input",
+    "Copyright had explicit dark-incompatible ink",
+    "Native footer children retained868px after responsive root; initial390 excess498 fixed in draft"
+  ],
+  "sourceInputs": [
+    {
+      "path": "src/meta/userscript-header.txt",
+      "sha256": "504F387DB3C2015313523BECDA9A9F103D0AA7B30DA27F29BF507C1A6C1E6717"
+    },
+    {
+      "path": "src/runtime/bootstrap.js",
+      "sha256": "51F3362AAD37E0A81D40E326BF84E0E225EB4084A1D4EE52F83C5CBF9B2EA2E3"
+    },
+    {
+      "path": "src/targets/shared/theme-presenter.js",
+      "sha256": "045599DE82B3B06FB124E042FD6AF8BBA005B946715D123CCE72F7745C397389"
+    },
+    {
+      "path": "src/targets/mobile/theme-host-style.js",
+      "sha256": "612D2A4DF42D4C648E32C8B3006E77858B57499628B14CCBA4F1E818679E1FFF"
+    },
+    {
+      "path": "src/targets/mobile/ui-module.js",
+      "sha256": "C8B5110E5A77EAD165001EED37C9D97CA5416FC3194B2B2C7C39D2D61FE1B690"
+    },
+    {
+      "path": "build/targets.json",
+      "sha256": "3A2F7AFE0204AEBCA901A79D363E2C55AC40A01040FEF41A5208B98285553294"
+    },
+    {
+      "path": "tools/build-userscript.mjs",
+      "sha256": "C401BCF98A1690DE5581E34A044B785650B88B23845BB41B07B02B685A241FEB"
+    }
+  ],
+  "nativeCss": [
+    {
+      "url": "https://nstatic.dcinside.com/dc/w/css/reset.css",
+      "path": "artifacts/b1-detail-2026-10-23/login-preflight/assets/f89198bee8ac3ceb.css",
+      "sha256": "426DBB6871CD966D8EC6E779C9362863F546850ED850782400A6A2A1B1339382"
+    },
+    {
+      "url": "https://nstatic.dcinside.com/dc/w/css/login.css",
+      "path": "artifacts/b1-detail-2026-10-23/login-preflight/assets/f4ed3aed8128de91.css",
+      "sha256": "EC1CE2E201B1CCC1DBB31A28506F6C416C9F238FBB88C33F1AE3B3C1360C9295"
+    },
+    {
+      "url": "https://nstatic.dcinside.com/dc/w/css/common.css?v=261023",
+      "path": "artifacts/b1-detail-2026-10-23/login-preflight/assets/be4a06a5c72a09aa.css",
+      "sha256": "5B7EB8A4ED359AA9DDEA5B88E2816E5E98FFBDB2CE6B1F84ED9ECF3953D15D6E"
+    },
+    {
+      "url": "https://nstatic.dcinside.com/dc/w/css/popup.css?v=261023",
+      "path": "artifacts/b1-detail-2026-10-23/login-preflight/assets/8911a4e732ec8736.css",
+      "sha256": "D2FE2D85A23CF975E971547E5ED540F13B72E18A9714A8D7B85FA0F8E2E54153"
+    }
+  ],
+  "evidence": [
+    {
+      "path": "artifacts/b1-login-preflight-2026-10-28/native-structure.json",
+      "sha256": "665C98E4747EE81BFF97C1D55FA59CE35750FFD8BEBC9BDD262B6A2F27A34523"
+    },
+    {
+      "path": "artifacts/b1-login-preflight-2026-10-28/native-layout.json",
+      "sha256": "49A07C19DB187293779F8F34892C18820E1362A6274E6328E25061F8153F906E"
+    },
+    {
+      "path": "artifacts/b1-login-preflight-2026-10-28/native-980-900.png",
+      "sha256": "233B21A73F420CD8C1F4BC7BF9B59BD1A287CF12DEEE827520FAE60D8B8F85A7"
+    },
+    {
+      "path": "artifacts/b1-login-preflight-2026-10-28/capture-format.json",
+      "sha256": "F4AD08C354CAEB20CD10FE5E3042EA12FBBBF912FE79E1AAC80ECF1BD8F7A5C9"
+    },
+    {
+      "path": "artifacts/b1-login-preflight-2026-10-28/entry-probe.json",
+      "sha256": "29DF6BE1391C034F45176F0F4A2FD4EC3DA6C5073F1825CFF073E6AB65B50D72"
+    },
+    {
+      "path": "artifacts/b1-login-preflight-2026-10-28/proposal-checks.json",
+      "sha256": "03C0047954EFBA9FE0E349085A2323D790C345078FA578DEF2AF26D099ECC9A7"
+    },
+    {
+      "path": "artifacts/b1-login-preflight-2026-10-28/proposal-checks-before-footer-fix.json",
+      "sha256": "457B5C7E5C5F621FFE14D2B882BB34C688630001446AA326D739A562A00C7957"
+    },
+    {
+      "path": "artifacts/b1-login-preflight-2026-10-28/initial-cascade.json",
+      "sha256": "EDA098F90DDEEFA600E725979068ADE7A4687CF61A2F6474962691992775648D"
+    },
+    {
+      "path": "artifacts/b1-login-preflight-2026-10-28/proposal-initial-light.png",
+      "sha256": "8A483DC816BC81FEBF9A8F4B728821EC8918A02057973B981E4E37D9FD9CF4F0"
+    },
+    {
+      "path": "artifacts/b1-login-preflight-2026-10-28/viewer-checks.json",
+      "sha256": "F811D7CF28A813E5D40D2D726A2C31F5481A44EAED05F767C8BC8A9DA419FC5F"
+    },
+    {
+      "path": "artifacts/b1-login-preflight-2026-10-28/viewer-proof.png",
+      "sha256": "39522034124954F7B13F90DC72718CDC45172841DAEEBF4C5F802DFD9372C2E0"
+    },
+    {
+      "path": "artifacts/b1-login-preflight-2026-10-28/ownership-theme.json",
+      "sha256": "054CA3CEA1930AC0CB8BCEA67343EB35CD62F8B9DA72D46B5B821BE368D415CB"
+    },
+    {
+      "path": "artifacts/b1-login-preflight-2026-10-28/ownership-forms.json",
+      "sha256": "59A4925A445DDD879F128FDCA7B60482552375A18AA6064A02EF907492A8DB10"
+    },
+    {
+      "path": "artifacts/b1-login-preflight-2026-10-28/impact.json",
+      "sha256": "E4122A33CB50BA5D6F2885952BAE9BBA7D586F5111031DFA300A5273FACAFA52"
+    }
+  ],
+  "remaining": [
+    "Actual login source/metadata/build/owner implementation with candidate overlay",
+    "Original authentication/password-manager/hidden-value/return behavior preservation in synthetic native-shaped checks",
+    "Installed Chrome/TM5.5 exact login query/hash execution without real authentication",
+    "Conditional CAPTCHA/auth errors,account/device and final whole-UI/header qualification",
+    "Final user aesthetic adoption; draft is not automatically an approved golden"
+  ],
+  "qualificationScope": "PREFLIGHT_ONLY",
+  "workSuccessCertified": false
+}
