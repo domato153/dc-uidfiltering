@@ -1,6 +1,6 @@
 # B1 전체 UI 확장 preflight
 
-상태: `P6_GAPS_IDENTIFIED / 통합 범위 재조정`. P1–P5의 명명된 구현 결과는 아래 라우터로 재사용한다. B1_INTEGRATED_UI_GAPS.md가 현재 실제 누락2root와 원본 미확인 자식을 구별하며 NEXT_TASK.md가 다음 한 단위를 소유한다. 전체 UI 완료는 아직 주장하지 않는다.
+상태: `P6_PARTIAL_FINISH / preview·draft 마감`. P1–P5의 명명된 구현 결과는 아래 라우터로 재사용한다. B1_PREVIEW_DRAFT_FINISH.md가 누락2root/추천 카드 마감을 완료했고 B1_INTEGRATED_UI_GAPS.md가 원본 미확인 자식을 구별하며 NEXT_TASK.md가 다음 한 단위를 소유한다. 전체 UI 완료는 아직 주장하지 않는다.
 
 ## 채택 기준과 목표
 
@@ -68,9 +68,9 @@ UI_REVIEW_CHECKLIST.md의 기존128개 부모 항목을 재사용하고 아래 �
 - [ ] **P1 본문·댓글:** B1_CONTENT_TRIAL.md/B1_POPUP_POLISH.md/B1_ARTICLE_ACTION_POPUPS.md/B1_IMAGE_COMMENTS.md의 scoped 구현 완료. 작성자/권한/계정/미디어 예외 자식은 체크목록에 남음. C-07은 N/A.
 - [ ] **P2 대문·검색:** B1_GALLERY_SEARCH_POPUPS.md의8root 및 명명된 native 자식 구현 완료. 설정 하위/계정 자식은 미확인.
 - [ ] **P3 작성·수정·삭제:** B1_PASSWORD_PAGES.md/B1_FORM_HEADER_REUSE.md/B1_WRITE_EDITOR_SHELL.md/B1_EDITOR_MENUS.md의 scoped 구현 완료. 실제 editor 내부는 별도; 외부 업로드4문서는 사용자 수용 보류.
-- [ ] **P4 DCUF 메뉴·설정:** B1_GLASS_TRANSMISSION.md/B1_OWNED_CONDITIONAL_FINISH.md/B1_OWNED_INPUT_CHILDREN.md의 root·조건부·입력 범위 완료. preview/draft 두 root는 별도 누락; OS/예외 자식은 분리.
+- [ ] **P4 DCUF 메뉴·설정:** B1_GLASS_TRANSMISSION.md/B1_OWNED_CONDITIONAL_FINISH.md/B1_OWNED_INPUT_CHILDREN.md의 root·조건부·입력 범위 완료. preview/draft 두 root는 B1_PREVIEW_DRAFT_FINISH.md에서 후속 마감; OS/예외 자식은 분리.
 - [x] **P5 로그인 전용 진입:** B1_LOGIN_ENTRY_IMPLEMENTATION.md의 exact entry/원본 노드/theme reuse/source+TM replay 범위 완료. 실제 인증·계정 오류·기기는 별도.
-- [ ] **P6 통합 마감:** B1_INTEGRATED_UI_GAPS.md에서128ID의 실제 근거와 잔여를 대조 완료. 확인된 preview/draft2root 수정이 다음이며 전체 적용/미관 완료는 미확정. release/공식 게시/버전 상승 권한과 구별.
+- [ ] **P6 통합 마감:** B1_INTEGRATED_UI_GAPS.md에서128ID의 실제 근거와 잔여를 대조 완료. 확인된 preview/draft2root 및 추가 추천 카드 수정은 B1_PREVIEW_DRAFT_FINISH.md에서 마감했고 전체 적용/미관 완료는 미확정. release/공식 게시/버전 상승 권한과 구별.
 
 매 수정마다 전체128개를 다시 검사하지 않는다. 각 가족을 바꿀 때 해당 자식+인접/X 상태를 보고, 공통 재질·공유 코드가 바뀐 경우에만 관련 소비자로 넓힌다. 완성 마지막에는 이번에 포함한 모든 적용 자식을 빠뜨리지 않고 한 번 점검한다.
 
@@ -107,3 +107,10 @@ Applicability correction2026-10-28: C-07 image-comment replies do not exist (exp
 2026-10-28 P5 entry preflight: B1_LOGIN_ENTRY_PREFLIGHT.md closes the read-only anatomy/entry decision and independent draft stage. Current/preserved-stable metadata omit sign; current manual-injection probe returns other before gallery startup. The chosen implementation is an exact Mobile login-only branch with minimal pure theme reuse,preserved native authentication and a candidate ownership overlay first. Six draft geometry contexts do not constitute product P5 completion. Source remains1593/EF24; actual login styling/entry and current extension qualification are next.
 
 P5 implementation2026-10-28 supersedes the login-preflight-only projection above: B1_LOGIN_ENTRY_IMPLEMENTATION.md applies the exact isolated original-node skin with pure theme reuse. F87E/8915,48 source observations,10 actual-TM native-replay routes and four reviewed image pairs are scoped evidence; real authentication and conditional auth children remain untested. Next: reconcile existing family/child evidence and investigate only real gaps,with D-55 impact-selected tests.
+
+
+## 전체 UI 작업 종료 후 논의 예약 —2026-10-28
+
+상태: **DEFERRED_DISCUSSION**. 사용자 요청으로 전체 UI 교체·마감 작업이 끝난 뒤, 축적된 경험을 간결한 재사용 가이드북으로 묶을 필요가 있는지 논의한다. 현재 미리보기/초안 단위의 종료와 전체 UI 작업 종료를 구별한다.
+
+이미 UI_REUSE_PREPARATION.md, UI_VISUAL_REVIEW.md/UI_DESIGN_DETAIL_REVIEW.md, docs/agent-maintenance-notes.md에 재사용·비교·원인/폐기안이 있다. 그때 실제 다음 UI 변경에 도움이 되는 부분과 중복/오래된 내용을 살펴, 기존 문서 정리로 충분한지 또는 작은 가이드북이 유용한지 결정한다. 작성 여부·구성·분량은 그 논의에서 정한다. 지금 새 가이드북 구현/문서 체계 확대나 완료 gate를 추가하는 요청은 아니다. CURRENT/NEXT의 현재 UI 작업은 계속 유지한다.

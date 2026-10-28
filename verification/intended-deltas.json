@@ -1584,6 +1584,87 @@
       "normalizer": "semantic-observation-v1",
       "unknownDifferencePolicy": "fail",
       "missingApplicabilityPolicy": "fail"
+    },
+    {
+      "id": "b1-convenience-and-vote-finish-v1",
+      "status": "active",
+      "surfaces": [
+        "convenience-preview-draft",
+        "article-recommendation"
+      ],
+      "allowed": [
+        {
+          "kind": "color-role",
+          "surface": "convenience-preview-draft",
+          "scope": "Preview/draft chrome and controls use B1 glass/C885; reading remains opaque; original callbacks,state and anchored/sheet/banner behavior remain. Add owned root classes/draft action marker and close aria-label; no host fields,storage or network changes.",
+          "reason": "User requested the next confirmed two-root B1 finish.",
+          "contractTests": [
+            "testbed/ui-b1-convenience-contract.mjs"
+          ]
+        },
+        {
+          "kind": "spacing",
+          "surface": "convenience-preview-draft",
+          "scope": "Preview/draft chrome and controls use B1 glass/C885; reading remains opaque; original callbacks,state and anchored/sheet/banner behavior remain. Add owned root classes/draft action marker and close aria-label; no host fields,storage or network changes.",
+          "reason": "User requested the next confirmed two-root B1 finish.",
+          "contractTests": [
+            "testbed/ui-b1-convenience-contract.mjs"
+          ]
+        },
+        {
+          "kind": "radius",
+          "surface": "convenience-preview-draft",
+          "scope": "Preview/draft chrome and controls use B1 glass/C885; reading remains opaque; original callbacks,state and anchored/sheet/banner behavior remain. Add owned root classes/draft action marker and close aria-label; no host fields,storage or network changes.",
+          "reason": "User requested the next confirmed two-root B1 finish.",
+          "contractTests": [
+            "testbed/ui-b1-convenience-contract.mjs"
+          ]
+        },
+        {
+          "kind": "typography",
+          "surface": "convenience-preview-draft",
+          "scope": "Preview/draft chrome and controls use B1 glass/C885; reading remains opaque; original callbacks,state and anchored/sheet/banner behavior remain. Add owned root classes/draft action marker and close aria-label; no host fields,storage or network changes.",
+          "reason": "User requested the next confirmed two-root B1 finish.",
+          "contractTests": [
+            "testbed/ui-b1-convenience-contract.mjs"
+          ]
+        },
+        {
+          "kind": "geometry",
+          "surface": "convenience-preview-draft",
+          "scope": "Preview/draft chrome and controls use B1 glass/C885; reading remains opaque; original callbacks,state and anchored/sheet/banner behavior remain. Add owned root classes/draft action marker and close aria-label; no host fields,storage or network changes.",
+          "reason": "User requested the next confirmed two-root B1 finish.",
+          "contractTests": [
+            "testbed/ui-b1-convenience-contract.mjs"
+          ]
+        },
+        {
+          "kind": "spacing",
+          "surface": "article-recommendation",
+          "scope": "Reset inherited native vote-wrapper fixed height; use148px card basis,centered round controls and14px vertical padding. Preserve original counts,badges,buttons,adjacent actions and events.",
+          "reason": "User2026-10-28 reported cramped/wide recommendation cards.",
+          "contractTests": [
+            "testbed/ui-b1-convenience-contract.mjs"
+          ]
+        }
+      ],
+      "invariants": [
+        "storage-trace",
+        "network-trace",
+        "host-node-identity",
+        "host-node-order",
+        "native-handler",
+        "native-form-fields",
+        "native-submit-trace",
+        "focus",
+        "lifecycle-resources",
+        "pc-result",
+        "accessibility",
+        "geometry-containment"
+      ],
+      "normalizer": "semantic-observation-v1",
+      "unknownDifferencePolicy": "fail",
+      "missingApplicabilityPolicy": "fail"
     }
   ]
 }

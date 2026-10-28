@@ -1,6 +1,6 @@
 # 전체 UI 디자인 검토 체크목록
 
-작성일: 2026-10-18. 범위 재조정: 2026-10-28. 상태: **128개 ID 유지 / 가족별 근거 연결 / 실제 누락2개·미확인 자식 분리**. 현재 판단은 B1_INTEGRATED_UI_GAPS.md와 CURRENT_STATE.md를 따른다.
+작성일: 2026-10-18. 범위 재조정: 2026-10-28. 상태: **128개 ID 유지 / 가족별 근거 연결 / 확인된 두 root 마감·미확인 자식 분리**. 현재 판단은 B1_PREVIEW_DRAFT_FINISH.md와 CURRENT_STATE.md를 따른다. B1_INTEGRATED_UI_GAPS.md는 F87E 진단 범위를 보존한다.
 
 사용자 요구: 대표 화면 네 장으로 끝내지 않고, 코드에 있는 화면·메뉴·팝업·입력창·상태를 전부 펼쳐 볼 수 있게 한다. 이 문서는 향후 UI 변경의 공통 목록이며 `UI_REPLACEABILITY_VALIDATION.md`의 Concept01 실구현 검토에도 사용한다. 기능 의미와 최종 증거 상태는 `FINAL_FEATURE_STATE_INVENTORY.md`, 구조·동작 계약은 `docs/ui-surface-contracts.md`, 과거15개 복구는 `UI_ALL_REPAIRS.md`와 후속 `UI_LIVE_REGRESSION_REPAIR.md`의 해당 runtime 범위로 보존한다. 이를 현재 고장 목록으로 되살리지 않는다. 별도 구현 대기열이나 새 테스트 체계를 만들지 않는다.
 
@@ -19,7 +19,7 @@
 - 전면 디자인 적용·전체 UI 완료 판정: 그때 적용되는 전체 목록과 각 자식 상태를 펼쳐 검토한다. 미확인 네이티브 분기를 생략하거나 대표 팝업 하나로 완료하지 않는다.
 - 증거에는 선택 ID, 제외한 무관 범위, 소스/런타임/fixture, 테마·폭, 실행 결과와 미확인을 남긴다. 변경으로 무효화된 증거만 갱신하며 최종 통합 검증은 별도다.
 
-현재 다음 수정은 V-02–V-08의 두 root뿐이다. B1_INTEGRATED_UI_GAPS.md가 실제 누락과 원본 미확인 자식을 구별하며 NEXT_TASK.md가 하나의 실행 단위를 고른다. 과거 UI-01 복구는 완료된 역사적 범위다.
+V-02–V-08의 두 root는 B1_PREVIEW_DRAFT_FINISH.md에서 마감했다. B1_INTEGRATED_UI_GAPS.md의 F87E 진단은 원인/미확인 자식의 역사적 근거이며 NEXT_TASK.md가 현재 하나의 실행 단위를 고른다. 과거 UI-01 복구는 완료된 역사적 범위다.
 
 ## 조사 범위와 체크 의미
 
@@ -79,7 +79,7 @@
 | A-04 | 이미지·GIF·동영상 등 본문 미디어 | 실제 크기 미디어가 있는 본문 | 작은/큰/늦게 로드/실패, 원래 색상, 화면 넘침 | ARTICLE, HOSTFIX | 본문 미디어 paper/원색 범위 → B1_CONTENT_TRIAL.md; 모든 형식·지연·실패 외형 미확인 |
 | A-05 | 이미지 원래 뷰어·확대·이미지댓글 진입 | 본문 이미지의 원래 동작 | 실제 뷰어·이전/다음·닫기·이미지별 댓글 연결; 존재 여부 실사이트 확인 | ARTICLE, COMMENTS, HOSTFIX | 이미지댓글 진입/full → B1_IMAGE_COMMENTS.md; 원본 이미지 뷰어 자식은 미확인 |
 | A-06 | 첨부 파일·이미지 하단 정보 | 첨부가 있는 본문 | 파일 목록, 긴 파일명, 다운로드 링크, 펼침 상태가 있으면 각각 | ARTICLE | 첨부 외곽 역할 적용 → B1_CONTENT_TRIAL.md; 실제 파일/펼침 변형 미확인 |
-| A-07 | 추천/비추천·숫자·관련 버튼 | 본문 추천 영역 | 기본/상태 전환, 아이콘·네이티브 스프라이트 충돌, 좁은 폭 | ARTICLE | 본문/액션 범위 → B1_CONTENT_TRIAL.md + B1_ARTICLE_ACTION_POPUPS.md; 전 자식 완료 아님 |
+| A-07 | 추천/비추천·숫자·관련 버튼 | 본문 추천 영역 | 기본/상태 전환, 아이콘·네이티브 스프라이트 충돌, 좁은 폭 | ARTICLE | 추천 카드 여백/세로 정렬·폭148 마감 → B1_PREVIEW_DRAFT_FINISH.md; 원본 버튼/숫자·계정별 추천 결과는 보존/별도 |
 | A-08 | 추천 CAPTCHA·관련 원래 팝업 | 제어된 fixture로 표시 | 이미지/입력/닫기/포커스, 실제 투표 없이 원래 동작 경계 | ARTICLE | CAPTCHA 관련 코드/fixture 경계 보존; 모든 native 조건부 외형 미확인 |
 | A-09 | 펌/PUM 레이어 | 원래 펌 버튼/레이어 | `write_pum_layer` 열기·닫기·재열기, 화면 끝·짧은 창 | ARTICLE | PUM root/모델 범위 → B1_ARTICLE_ACTION_POPUPS.md; 원본 이력·말머리·결과 미확인 |
 | A-10 | 스크랩 UI·결과/로그인 전제 창 | 원래 스크랩 버튼 | 라벨/아이콘, 해당 원래 메뉴·결과·로그인 요구 상태 | ARTICLE, HOSTFIX | guest 로그인 안내 범위 → B1_ARTICLE_ACTION_POPUPS.md; 계정 폴더/결과 iframe 미확인 |
@@ -179,13 +179,13 @@
 | ID | UI | 여는 방법·조건 | 펼쳐볼 상태 | 근거 | 검토 상태 |
 | --- | --- | --- | --- | --- | --- |
 | V-01 | 마지막으로 열어본 글 표시 | 글 열기 → 목록 복귀 | 표시/옵션OFF/대상 없음, 목록 교체 후 같은 글·스크롤 복귀 | TOOLS | 읽은 글 표시/옵션 기존 기능·목록 범위 → UI_LIVE_REGRESSION_REPAIR.md + B1_LIST_COHESION.md |
-| V-02 | 글 미리보기 패널·헤더 | 미리보기 ON → hover/터치 길게 누르기 | 포인터/터치·원문 열기·닫기·화면 끝·배경 스크롤 | TOOLS | NEEDS_WORK · 현재 light/dark 확인; 구형 chrome/닫기·dark 링크 대비1.59:1 → B1_INTEGRATED_UI_GAPS.md |
-| V-03 | 미리보기 로딩/내용/빈 상태 | 제어된 fetch/캐시 | 로딩→성공/본문 없음·긴 내용·캐시 적중·다른 글로 전환 | TOOLS | NEEDS_WORK · B1_INTEGRATED_UI_GAPS.md의 현재2root 누락; 각 자식 전부 새 캡처한 것은 아님 |
-| V-04 | 미리보기 이미지·대체 링크 | 미디어가 있는 미리보기 | 실제 크기/지연/실패 이미지·원문 링크, 원문에서 보도록 대체된 미디어 | TOOLS | NEEDS_WORK · B1_INTEGRATED_UI_GAPS.md의 현재2root 누락; 각 자식 전부 새 캡처한 것은 아님 |
-| V-05 | 미리보기 실패·닫은 뒤 응답 | 제어된 fetch 실패/지연 | 오류 안내·긴 오류문·재열기·닫힌 패널에 늦은 응답이 붙지 않음 | TOOLS | NEEDS_WORK · B1_INTEGRATED_UI_GAPS.md의 현재2root 누락; 각 자식 전부 새 캡처한 것은 아님 |
-| V-06 | 초안 자동 복구·중단된 등록 복구 배너 | 저장된 합성 초안으로 작성 진입 | 자동 복구/미완료 등록 복구·닫기·여러 행 메시지 | DRAFT | NEEDS_WORK · B1_INTEGRATED_UI_GAPS.md의 현재2root 누락; 각 자식 전부 새 캡처한 것은 아님 |
-| V-07 | 기존 내용과 저장 초안 충돌 | 내용 있는 폼+다른 저장 초안 | 덮어쓰지 않았다는 안내·복구/삭제 등 코드에 있는 각 액션·닫기 | DRAFT | NEEDS_WORK · 현재 conflict light/dark 확인; 고정 흰 버튼/문자 X → B1_INTEGRATED_UI_GAPS.md |
-| V-08 | 초안 크기 초과·제출 직전 저장 실패 배너 |512KiB 초과/저장 거부 fixture | 각 메시지·긴 오류문·폴백 상태, 입력/등록을 가리지 않음 | DRAFT | NEEDS_WORK · B1_INTEGRATED_UI_GAPS.md의 현재2root 누락; 각 자식 전부 새 캡처한 것은 아님 |
+| V-02 | 글 미리보기 패널·헤더 | 미리보기 ON → hover/터치 길게 누르기 | 포인터/터치·원문 열기·닫기·화면 끝·배경 스크롤 | TOOLS | 미리보기 B1 chrome/링크/닫기 마감 → B1_PREVIEW_DRAFT_FINISH.md; light/dark·anchor/sheet·좁은 proxy 범위 |
+| V-03 | 미리보기 로딩/내용/빈 상태 | 제어된 fetch/캐시 | 로딩→성공/본문 없음·긴 내용·캐시 적중·다른 글로 전환 | TOOLS | 공통 preview root B1 적용·기존 정제/캐시/전환 동작 유지 → B1_PREVIEW_DRAFT_FINISH.md; 모든 로딩/빈 자식 외형 완료 아님 |
+| V-04 | 미리보기 이미지·대체 링크 | 미디어가 있는 미리보기 | 실제 크기/지연/실패 이미지·원문 링크, 원문에서 보도록 대체된 미디어 | TOOLS | decoded640×240 미디어/paper 확인 → B1_PREVIEW_DRAFT_FINISH.md; 모든 형식·지연/실패 시각 변형 별도 |
+| V-05 | 미리보기 실패·닫은 뒤 응답 | 제어된 fetch 실패/지연 | 오류 안내·긴 오류문·재열기·닫힌 패널에 늦은 응답이 붙지 않음 | TOOLS | 기존 close/abort/지연응답 계약 재대조 → B1_PREVIEW_DRAFT_FINISH.md; 모든 오류 문구 시각 완료 아님 |
+| V-06 | 초안 자동 복구·중단된 등록 복구 배너 | 저장된 합성 초안으로 작성 진입 | 자동 복구/미완료 등록 복구·닫기·여러 행 메시지 | DRAFT | 공통 B1 알림/닫기 적용 → B1_PREVIEW_DRAFT_FINISH.md; 실제 자동복구/중단 메시지 전수 시각 판정 아님 |
+| V-07 | 기존 내용과 저장 초안 충돌 | 내용 있는 폼+다른 저장 초안 | 덮어쓰지 않았다는 안내·복구/삭제 등 코드에 있는 각 액션·닫기 | DRAFT | 합성 conflict light/dark·기존 입력/닫기·typed action 보존 확인 → B1_PREVIEW_DRAFT_FINISH.md |
+| V-08 | 초안 크기 초과·제출 직전 저장 실패 배너 |512KiB 초과/저장 거부 fixture | 각 메시지·긴 오류문·폴백 상태, 입력/등록을 가리지 않음 | DRAFT | 공통 B1 피드백/긴 오류390×560 wrap/닫기 확인 → B1_PREVIEW_DRAFT_FINISH.md; 모든 저장 실패 자식 별도 |
 
 ## 브라우저·확장·OS가 소유한 대화상자
 
@@ -265,7 +265,7 @@ B1_UI_EXPANSION_PREFLIGHT.md의 범위를 기존 부모 ID 아래에서 고른�
 
 B1_INTEGRATED_UI_GAPS.md와 verification/receipts/2026-10-28-b1-integrated-ui-gaps.json이 현재128행의 근거 연결과 남은 분류를 소유한다. 기존 가족 문서의 정확한 scope를 재사용하며 일괄 green/전수 재촬영은 하지 않았다. 현재 F87E/8915는 변경하지 않았다.
 
-- 실제 누락: V-02–V-05 preview chrome/control, V-06–V-08 draft feedback/control. 두 root의 current light/dark만 새로 관찰했고 모든 오류 자식을 재촬영하지 않았다.
+- 후속 마감: B1_PREVIEW_DRAFT_FINISH.md/06CA가 V-02–V-08의 두 root 누락을 수정했다. 명명된 light/dark/geometry/behavior 범위이며 모든 오류 자식을 전수 촬영한 것은 아니다.
 - 원본 자식 미확인: 작성자/메모, 갤러리 설정 자식, 실제 editor 내부, 계정/CAPTCHA/결과/미디어 예외. 부모 shell의 통과로 완료하지 않는다.
 - 완료 범위: 목록/본문/댓글/이미지댓글/갤러리·검색/비밀번호·작성 shell/6 editor menu/DCUF panels/login은 위 행의 scoped 문서로 연결한다. 조건부·입력 P4 자식은 B1_OWNED_CONDITIONAL_FINISH.md와 B1_OWNED_INPUT_CHILDREN.md를 우선 읽는다.
 - C-07 이미지댓글 답글은 사용자 정정과 관찰된 native 구조에 따라 N/A.128개 ID는 유지하되 적용 완료 분모에 넣지 않는다. 일반 reply selector를 이유로 되살리지 않는다.

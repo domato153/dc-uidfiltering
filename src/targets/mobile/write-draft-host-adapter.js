@@ -203,6 +203,7 @@
             bannerScope = scope;
             const banner = document.createElement('div');
             banner.id = 'dcuf-draft-banner';
+            banner.className = 'dcuf-draft-banner';
             const text = document.createElement('span');
             text.textContent = String(message || '');
             banner.appendChild(text);
@@ -210,12 +211,15 @@
                 const button = document.createElement('button');
                 button.type = 'button';
                 button.textContent = String(action?.label || '');
+                button.dataset.dcufDraftAction = String(action?.id || '');
                 listen(scope, button, 'click', () => onAction?.(String(action?.id || '')));
                 banner.appendChild(button);
             });
             const close = document.createElement('button');
             close.type = 'button';
             close.textContent = '✕';
+            close.className = 'dcuf-draft-close';
+            close.setAttribute('aria-label', '초안 알림 닫기');
             listen(scope, close, 'click', closeBanner);
             banner.appendChild(close);
             document.body.appendChild(banner);

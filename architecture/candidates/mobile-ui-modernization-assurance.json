@@ -70,6 +70,10 @@
       {
         "id": "b1-login-only-presentation",
         "summary": "Exact Mobile HTTPS sign /login or /login/ presentation before gallery boot,including native query. Preserve original form controls/values/parents/handlers/hidden fields/security/return destination. No credential/cookie reads,authentication submit interception,GM writes,filter/menu/network/document observer/body lock. Pure shared theme factories preserve original gallery/PC values and CSS; login readiness/theme ownership is isolated and disposable."
+      },
+      {
+        "id": "b1-convenience-finish",
+        "summary": "Authorized pure Mobile preview/draft CSS extraction into one presenter mounted at the same existing style slot; original adapters retain DOM/state/storage/network/cache/sanitizer/geometry/gestures/disposal. Add owned root classes,typed draft-action attribute and accessible close label only. Keep convenience host mixed for unrelated legacy settings fallback. B1 glass chrome,opaque reading,C885 controls and narrow wrapping are declared visual deltas. Existing article presenter separately resets native vote-card height and applies modest centered padding/proportion without moving or replacing buttons/counts."
       }
     ],
     "upsertComponents": [
@@ -269,10 +273,24 @@
         "classification": "adapter-contract",
         "layer": "target-adapter",
         "boundaryState": "mixed",
-        "responsibility": "Owns convenience settings, preview, draft-form DOM, session lifecycle, input listeners, geometry, and legacy preview/settings CSS while consuming application snapshots and effects. Recent-row state/session behavior remains here; its decoration is owned only by the list presenter.",
-        "sourceRefs": ["src/targets/mobile/convenience-host-adapter.js"],
-        "contractRefs": ["host-dom-events", "initialization-lifecycle", "ui-ownership", "semantic-preservation", "live-native-control-composition"],
-        "fitnessRefs": ["invariant-host-node-preservation", "invariant-initialization-recovery", "invariant-one-visual-owner", "invariant-build-inputs-mapped"],
+        "responsibility": "Owns convenience settings,preview DOM/session/pointer/geometry/disposal and legacy settings fallback CSS; mounts the pure preview/draft descriptor in the existing style slot. State and fetching remain application-owned; recent-row decoration is list-owned. Still mixed because unrelated fallback presentation remains.",
+        "sourceRefs": [
+          "src/targets/mobile/convenience-host-adapter.js"
+        ],
+        "contractRefs": [
+          "host-dom-events",
+          "initialization-lifecycle",
+          "ui-ownership",
+          "semantic-preservation",
+          "live-native-control-composition",
+          "b1-convenience-finish"
+        ],
+        "fitnessRefs": [
+          "invariant-host-node-preservation",
+          "invariant-initialization-recovery",
+          "invariant-one-visual-owner",
+          "invariant-build-inputs-mapped"
+        ],
         "transition": {
           "targetBoundaryState": "conforming",
           "exitCriteria": "Convenience-owned markup and semantic-role CSS move to a clean presenter while this adapter retains host form, session, pointer, geometry, and disposal work."
@@ -384,9 +402,23 @@
         "layer": "target-adapter",
         "boundaryState": "conforming",
         "responsibility": "Owns write-draft form and editor discovery, native input, submit, visibility and navigation lifecycle listeners, browser session-marker capability, DOM-backed HTML normalization, banner mounting, bounded scheduling, and reversible connection disposal while draft policy, GM persistence, ordering, limits, intent, and success cleanup remain application-owned.",
-        "sourceRefs": ["src/targets/mobile/write-draft-host-adapter.js"],
-        "contractRefs": ["host-dom-events", "storage-compatibility", "initialization-lifecycle", "semantic-preservation"],
-        "fitnessRefs": ["invariant-host-node-preservation", "invariant-storage-compatibility", "invariant-initialization-recovery", "invariant-ui-port-boundary", "invariant-build-inputs-mapped"]
+        "sourceRefs": [
+          "src/targets/mobile/write-draft-host-adapter.js"
+        ],
+        "contractRefs": [
+          "host-dom-events",
+          "storage-compatibility",
+          "initialization-lifecycle",
+          "semantic-preservation",
+          "b1-convenience-finish"
+        ],
+        "fitnessRefs": [
+          "invariant-host-node-preservation",
+          "invariant-storage-compatibility",
+          "invariant-initialization-recovery",
+          "invariant-ui-port-boundary",
+          "invariant-build-inputs-mapped"
+        ]
       },
       {
         "id": "mobile-write-ad-host-adapter",
@@ -981,6 +1013,28 @@
           "targetBoundaryState": "conforming",
           "exitCriteria": "PC assembly uses manifest-declared shared modules and adapters only, performs no marker slicing or source transformation, and excludes all mobile host CSS."
         }
+      },
+      {
+        "id": "mobile-convenience-presenter",
+        "status": "candidate",
+        "classification": "presentation-source",
+        "layer": "presentation-ui",
+        "boundaryState": "conforming",
+        "responsibility": "Pure Mobile preview/draft CSS descriptor; owns shell/control/close paint and responsive presentation only,no DOM,storage,fetch,observer,timer,state or geometry effects.",
+        "sourceRefs": [
+          "src/targets/mobile/convenience-presenter.js"
+        ],
+        "contractRefs": [
+          "ui-ownership",
+          "target-isolation",
+          "semantic-preservation",
+          "b1-convenience-finish"
+        ],
+        "fitnessRefs": [
+          "invariant-build-inputs-mapped",
+          "invariant-one-visual-owner",
+          "invariant-host-node-preservation"
+        ]
       }
     ],
     "upsertRelations": [
@@ -1453,6 +1507,18 @@
         "from": "pc-build",
         "to": "shared-theme-primitives",
         "kind": "explicit-build-input"
+      },
+      {
+        "id": "rel-convenience-presentation-mobile-convenience-host-adapter",
+        "from": "mobile-convenience-presenter",
+        "to": "mobile-convenience-host-adapter",
+        "kind": "rendered-through"
+      },
+      {
+        "id": "rel-convenience-presentation-mobile-write-draft-host-adapter",
+        "from": "mobile-convenience-presenter",
+        "to": "mobile-write-draft-host-adapter",
+        "kind": "rendered-through"
       }
     ],
     "removeRelations": ["rel-filter-mobile-filter", "rel-filter-pc-build", "rel-storage-mobile-filter", "rel-theme-pc-build"],

@@ -313,15 +313,16 @@
                 gap: 10px;
                 inline-size: 100%;
             }
-            [data-dcuf-role="recommendation-vote-group"] {
+            [data-dcuf-role="recommendation"] [data-dcuf-role="recommendation-vote-group"] {
                 display: grid;
                 align-items: center;
                 justify-content: center;
                 column-gap: 10px;
                 row-gap: 0;
-                flex: 0 1 168px;
-                min-block-size: 0;
-                padding: 8px 10px;
+                flex: 0 1 148px;
+                block-size: auto;
+                min-block-size: 86px;
+                padding: 14px 16px;
                 border: 1px solid var(--dcuf-theme-border, var(--dcuf-view-border));
                 border-radius: 10px;
                 background-color: var(--dcuf-theme-card-top, var(--dcuf-view-surface-muted));

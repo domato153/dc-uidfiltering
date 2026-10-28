@@ -2,22 +2,22 @@
 
 ## Current execution
 
-- Active plan: B1_INTEGRATED_UI_GAPS.md reconciles128IDs and confirms preview/draft2root omissions; NEXT_TASK.md selects only their presentation finish. D-55 actual impact testing applies.
+- Active plan: B1_PREVIEW_DRAFT_FINISH.md closes preview/draft and user-added vote-card spacing. NEXT_TASK.md selects only native author/menu anatomy preflight. D-55 impact-selected tests apply.
 - Workspace path: `.` (repository root; private prompt supplies exact nested worktree). AGENTS.md owns policy; preserve debug.log unread/unstaged.
-- Active stage: `header-navigation` formal admission open. Scoped P1–P5 implementations retained; P6 gap inventory complete,actual preview/draft repair next. Whole-UI/account/device acceptance UNKNOWN. C-07 N/A.
+- Active stage: `header-navigation` formal admission open. P6 selected omissions finished; native author/editor/settings/account/media children remain unobserved where named. Whole-UI/account/device acceptance UNKNOWN; C-07 N/A.
 - Accepted visual preference: compact B+B1,moderate normal-page glass,C885 simple buttons and opaque fields. Login's native header/card extends that family; its independent draft is provisional,not final user aesthetic adoption.
-- Source state: Source checkpoint base HEAD `4819044c0912cd37ccf57f659be731f063d79f43` on `codex/ui-port-boundary`; that login checkpoint is CI_VERIFIED_CHECKPOINT. This audit unit changes guidance/receipt only,no product source/build/metadata/version. Candidate overlay active; accepted registry unchanged. Exact audit checkpoint disposition belongs to tools/checkpoint.mjs.
-- Local-only state: `LOCAL_ONLY_EVIDENCE`; artifacts/b1-integrated-gaps-2026-10-28/ has current2root light/dark diagnostics/contrast and limited original-author discovery. No proposed/golden images here. One Chrome job/4GiB floor; preserve debug.log unread/unstaged.
-- Candidate fingerprint: `148cf31a31184eb04cdf7b1b9bb2e917214caec015542dd3a22f121cc7b40876`
-- Last current audit: UNKNOWN whole-UI; scoped gap reconciliation complete on unchanged F87E/8915. Preview dark link1.59:1 and old draft white actions/text X confirmed. Four current theme contexts with positive visible hits,decoded preview media and draft input preservation. No full-suite/build/actual-auth rerun; no new visual approval.
-- Current stage receipt: `verification/receipts/2026-10-28-b1-integrated-ui-gaps.json` SHA-256 `2AB6A9CF35A2862FF4B7C713E4DAE35A0281BC1EB7B1676D0CEFBBEC4882E501`. Prior scoped login result remains in verification/receipts/2026-10-28-b1-login-implementation.json.
-- Accepted baseline: F87E/8915 scoped implementation unchanged. B1 moderate ordinary-page glass/C885 simple buttons/opaque paper retained. Current preview/draft captures are diagnostics; tailored independent proposal is required next. Existing login/family scopes are not all-child aesthetic approval.
-- Current artifact: Mobile3.5.5 `F87E31ED06E223E066913F5BC0063A8DA38009067BCA57E83CC9FB8CF64D47CB` root/dist/guard; PC1.9.9 `8915F36E5B8887DC58EF9F932E39CCA28CCE1AC1020FD96460CCD10C08913581` root/dist. Existing versions; no official release authorized.
-- Blockers: Two confirmed visual omissions are actionable,not a global runtime/Chrome/TM blocker. Native author menu original requires a specific untransmitted read POST; its interiors remain unobserved. Existing relation-read approval is separate.
-- Pending live checks: Named native author/memo,settings/editor/permission/account/result/media children remain UNKNOWN per B1_INTEGRATED_UI_GAPS.md; inspect when implicated. Real authentication,password-manager,CAPTCHA and actual phone are separate. Four external upload documents DEFERRED_USER_ACCEPTED; C-07 N/A.
+- Source state: Source checkpoint base HEAD `1442a1de46c9f907c07ed10b3e6a692be6fe1071` on `codex/ui-port-boundary`; that inventory checkpoint is CI_VERIFIED_CHECKPOINT. Current scoped Mobile presenter/host/article/build/candidate changes validated; accepted registry unchanged. Exact working checkpoint disposition belongs to tools/checkpoint.mjs.
+- Local-only state: `LOCAL_ONLY_EVIDENCE`; artifacts/b1-preview-draft-2026-10-28/ retains F87E control,selected RED/GREEN,public badge/vote observation and four image-bound comparisons. No user/account data published. One browser at a time; debug.log unread/unstaged.
+- Candidate fingerprint: `4aea21e88dab01a9ddeefa82dba8ae5302b4dc2c56b5aad6a64b941ec6011bfb`
+- Last current audit: PASS scoped06CA/8915 preview/draft/vote finish:6 convenience states,2 corrected vote themes/height-reset negative,adjacent settings1; related preview5+draft-host1 PASS in each control/current context.28 palette/theme×3 changed labels,min4.99. Four design pairs reviewed;3 pixel matches,1 retained553-pixel glyph-edge difference. Whole-UI/formal upper acceptance UNKNOWN.
+- Current stage receipt: `verification/receipts/2026-10-28-b1-preview-draft-finish.json` SHA-256 `4246AD4B896865F06716BCCE0132E7FA4137CB70F64D59B1189C0A5755ED830C`. F87E gap diagnosis and prior login evidence retain their own scopes.
+- Accepted baseline: 06CA scoped implementation; F87E immediate control preserved. Current B1 ordinary-page glass,C885 simple controls and opaque reading stay selected. Four tailored frozen targets are provisional composition references,not final user aesthetic approval.
+- Current artifact: Mobile3.5.5 `06CA05EC44A1F8B46966425780CAF6249CAE041518623C80AAEEACAC2869BE4A` root/dist/guard; PC1.9.9 `8915F36E5B8887DC58EF9F932E39CCA28CCE1AC1020FD96460CCD10C08913581` root/dist unchanged. No version/metadata/official release change.
+- Blockers: No global runtime/Chrome/TM blocker. Native author menu read endpoint remains unacquired; relation-read approval is separate. Dark preview has a retained small pixel difference with equal computed styles,not a new product/visual-closure gate.
+- Pending live checks: Native author/memo and other named children remain UNKNOWN per checklist; actual comments were not acquired in the new public badge probe. Real authentication/device/conditional account states are separate. Four uploads DEFERRED_USER_ACCEPTED; C-07 N/A. Guidebook consolidation is only a discussion after the whole UI work ends.
 
 ```dcuf-current-artifacts
-{"schemaVersion":1,"mobile":{"sha256":"F87E31ED06E223E066913F5BC0063A8DA38009067BCA57E83CC9FB8CF64D47CB"},"pc":{"sha256":"8915F36E5B8887DC58EF9F932E39CCA28CCE1AC1020FD96460CCD10C08913581"}}
+{"schemaVersion":1,"mobile":{"sha256":"06CA05EC44A1F8B46966425780CAF6249CAE041518623C80AAEEACAC2869BE4A"},"pc":{"sha256":"8915F36E5B8887DC58EF9F932E39CCA28CCE1AC1020FD96460CCD10C08913581"}}
 ```
 
 ## Draft-complete checkpoint — 2026-10-21

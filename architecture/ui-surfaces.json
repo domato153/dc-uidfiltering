@@ -563,6 +563,51 @@
         "testbed/run-login-extension.mjs"
       ],
       "canaryCheckpoint": "login-entry"
+    },
+    {
+      "id": "convenience-preview-draft",
+      "sequence": 8,
+      "risk": "R2",
+      "state": "modern-candidate",
+      "routeFamilies": [
+        "list",
+        "view",
+        "write"
+      ],
+      "currentVisualOwner": "mobile-convenience-presenter",
+      "sourceRefs": [
+        "src/targets/mobile/convenience-presenter.js",
+        "src/targets/mobile/convenience-host-adapter.js",
+        "src/targets/mobile/write-draft-host-adapter.js"
+      ],
+      "adapter": "mobile-convenience-host-adapter",
+      "presenter": "mobile-convenience-presenter",
+      "styleIds": [
+        "dcuf-mobile-convenience-style"
+      ],
+      "allowedRoots": [
+        "dcuf-post-preview",
+        "dcuf-draft-banner"
+      ],
+      "states": [
+        "closed",
+        "loading",
+        "content",
+        "empty",
+        "error",
+        "conflict",
+        "restored",
+        "too-large",
+        "save-failed"
+      ],
+      "intendedDelta": "b1-convenience-and-vote-finish-v1",
+      "cascadeExceptions": [],
+      "cascadeExceptionProfiles": [],
+      "testRefs": [
+        "testbed/ui-b1-convenience-contract.mjs",
+        "testbed/run-tests.mjs"
+      ],
+      "canaryCheckpoint": "settings-list"
     }
   ]
 }
