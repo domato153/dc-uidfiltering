@@ -2,19 +2,19 @@
 
 ## Current execution
 
-- Active plan: B1_LOGIN_ENTRY_IMPLEMENTATION.md closes the scoped login entry; NEXT_TASK.md selects only remaining integrated B1 child gaps. D-55 requires actual change-impact tests,not routine whole-suite reruns.
+- Active plan: B1_INTEGRATED_UI_GAPS.md reconciles128IDs and confirms preview/draft2root omissions; NEXT_TASK.md selects only their presentation finish. D-55 actual impact testing applies.
 - Workspace path: `.` (repository root; private prompt supplies exact nested worktree). AGENTS.md owns policy; preserve debug.log unread/unstaged.
-- Active stage: `header-navigation` formal admission open. Login original-node implementation/replay scope is complete; whole-UI/account/device admission remains separate. C-07 image replies remain N/A.
+- Active stage: `header-navigation` formal admission open. Scoped P1–P5 implementations retained; P6 gap inventory complete,actual preview/draft repair next. Whole-UI/account/device acceptance UNKNOWN. C-07 N/A.
 - Accepted visual preference: compact B+B1,moderate normal-page glass,C885 simple buttons and opaque fields. Login's native header/card extends that family; its independent draft is provisional,not final user aesthetic adoption.
-- Source state: Source checkpoint base HEAD `e01d8a4eac8f7a0c2c83eb669081b5ccf6fb83fd` on `codex/ui-port-boundary`; scoped login/pure-theme/build/metadata changes validated. Candidate overlay active; accepted registry unchanged. Exact working checkpoint disposition belongs to tools/checkpoint.mjs.
-- Local-only state: `LOCAL_ONLY_EVIDENCE`; artifacts/b1-login-implementation-2026-10-28/ retains1593/EF24 controls,RED/final reports/captures and exact-path checkpoint preparation. No raw/account data is published. One Chrome job/4GiB floor retained.
-- Candidate fingerprint: `385b8c6fc3d3bdbedcc6e635cf664b420352a99289d7eeec66c72d689f93a93f`
-- Last current audit: PASS scoped F87E/8915 login entry:48 source observations,10 actual-TM native-replay routes,4 image-bound reviewed comparisons,exact Mobile/PC CSS and14 presets.160 Mobile/11 host checks completed; after user impact steering,only1 affected PC palette check. Formal upper/header/all-child acceptance UNKNOWN.
-- Current stage receipt: `verification/receipts/2026-10-28-b1-login-implementation.json` SHA-256 `CD53D91EDC0AA6B74F49C6E73A2DBA8708A1FD74C7036433FEA73F3D544BE8F8`.
-- Accepted baseline: F87E/8915 are the current scoped implementation;1593/EF24 remain preserved immediate controls. Current B1 material/C885 simple buttons stay selected; independent login targets0A3A0981/2F4EDE28 remain comparison drafts,not automatic final aesthetic approval.
+- Source state: Source checkpoint base HEAD `4819044c0912cd37ccf57f659be731f063d79f43` on `codex/ui-port-boundary`; that login checkpoint is CI_VERIFIED_CHECKPOINT. This audit unit changes guidance/receipt only,no product source/build/metadata/version. Candidate overlay active; accepted registry unchanged. Exact audit checkpoint disposition belongs to tools/checkpoint.mjs.
+- Local-only state: `LOCAL_ONLY_EVIDENCE`; artifacts/b1-integrated-gaps-2026-10-28/ has current2root light/dark diagnostics/contrast and limited original-author discovery. No proposed/golden images here. One Chrome job/4GiB floor; preserve debug.log unread/unstaged.
+- Candidate fingerprint: `148cf31a31184eb04cdf7b1b9bb2e917214caec015542dd3a22f121cc7b40876`
+- Last current audit: UNKNOWN whole-UI; scoped gap reconciliation complete on unchanged F87E/8915. Preview dark link1.59:1 and old draft white actions/text X confirmed. Four current theme contexts with positive visible hits,decoded preview media and draft input preservation. No full-suite/build/actual-auth rerun; no new visual approval.
+- Current stage receipt: `verification/receipts/2026-10-28-b1-integrated-ui-gaps.json` SHA-256 `2AB6A9CF35A2862FF4B7C713E4DAE35A0281BC1EB7B1676D0CEFBBEC4882E501`. Prior scoped login result remains in verification/receipts/2026-10-28-b1-login-implementation.json.
+- Accepted baseline: F87E/8915 scoped implementation unchanged. B1 moderate ordinary-page glass/C885 simple buttons/opaque paper retained. Current preview/draft captures are diagnostics; tailored independent proposal is required next. Existing login/family scopes are not all-child aesthetic approval.
 - Current artifact: Mobile3.5.5 `F87E31ED06E223E066913F5BC0063A8DA38009067BCA57E83CC9FB8CF64D47CB` root/dist/guard; PC1.9.9 `8915F36E5B8887DC58EF9F932E39CCA28CCE1AC1020FD96460CCD10C08913581` root/dist. Existing versions; no official release authorized.
-- Blockers: No current product or global Chrome/TM blocker. CUA tab binding failed this turn,but isolated installed Chrome156/TM5.5 replay works. Compare viewer login-implementation/index.html is decoded. Authentication/native conditional account states are outside this evidence.
-- Pending live checks: Real account submission,password-manager integration,CAPTCHA/auth errors,native dark-script variants and actual phone. Existing named unobserved child/whole-UI/header gaps remain; reconcile before new implementation. Four separate upload documents DEFERRED_USER_ACCEPTED; C-07 N/A. Use impact-selected checks only.
+- Blockers: Two confirmed visual omissions are actionable,not a global runtime/Chrome/TM blocker. Native author menu original requires a specific untransmitted read POST; its interiors remain unobserved. Existing relation-read approval is separate.
+- Pending live checks: Named native author/memo,settings/editor/permission/account/result/media children remain UNKNOWN per B1_INTEGRATED_UI_GAPS.md; inspect when implicated. Real authentication,password-manager,CAPTCHA and actual phone are separate. Four external upload documents DEFERRED_USER_ACCEPTED; C-07 N/A.
 
 ```dcuf-current-artifacts
 {"schemaVersion":1,"mobile":{"sha256":"F87E31ED06E223E066913F5BC0063A8DA38009067BCA57E83CC9FB8CF64D47CB"},"pc":{"sha256":"8915F36E5B8887DC58EF9F932E39CCA28CCE1AC1020FD96460CCD10C08913581"}}
