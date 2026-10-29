@@ -178,7 +178,8 @@
         ${selectors.links} > ul[popover] > li::before { content: none; display: none; }
         ${selectors.links} > ul[popover] a { display: flex; min-height: 34px; padding-inline: 10px; border-radius: 8px; font: 500 12px/1.4 system-ui, sans-serif; text-decoration: none; }
         ${selectors.links} > ul[popover] a:is(:hover, :focus-visible) { background: var(--dcuf-theme-accent-soft); color: var(--dcuf-theme-accent-ink); }
-        ${selectors.links} > [data-dcuf-header-utility-toggle] { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 34px; border: 1px solid var(--dcuf-control-rim); border-radius: 9px; background: var(--dcuf-control-secondary-bg); box-shadow: var(--dcuf-control-shadow); color: var(--dcuf-theme-fg-muted); font: 700 13px/1 system-ui, sans-serif; cursor: pointer; }
+        ${selectors.links} > [data-dcuf-header-utility-toggle] { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 34px; border: 0; border-radius: 9px; background: transparent; box-shadow: none; color: var(--dcuf-theme-fg-muted); font: 700 13px/1 system-ui, sans-serif; cursor: pointer; }
+        ${selectors.links} > [data-dcuf-header-utility-toggle]:is(:hover,:focus-visible,:active) { background: var(--dcuf-control-selected-bg); color: var(--dcuf-theme-accent-ink); }
         ${selectors.links} > div { flex: none; position: relative; }
         ${selectors.links} a { display: inline-flex; align-items: center; min-height: 24px; padding-inline: 3px; font-size: 10px; color: var(--dcuf-theme-fg-muted); }
         ${selectors.layout} > ${selectors.bridge} { grid-area: 1 / 4; width: 100%; max-width: 100%; min-width: 0; margin: 0; align-self: center; }

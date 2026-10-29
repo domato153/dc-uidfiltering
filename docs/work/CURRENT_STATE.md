@@ -2,22 +2,22 @@
 
 ## Current execution
 
-- Active plan: B1_LIST_V7_MATERIAL.md owns the current list/header proposal/adaptation. V1 was superseded for artificial layout limits. V2 explores useful full-screen changes under the adopted memo tone,with plain text utilities/tabs/categories. B1_MEMO_WORKBENCH.md retains the rollout order;UI_REVIEW_CHECKLIST.md owns generation-scope and theme-accent gates.
+- Active plan: B1_LIST_V7_MATERIAL.md closes the bounded list/header implementation and split evidence. B1_MEMO_WORKBENCH.md retains the family rollout order;UI_REVIEW_CHECKLIST.md owns plain resting controls,theme-accent linkage and purposeful generation rules. NEXT owns article/comments preflight.
 - Workspace path: `.` (private prompt supplies exact worktree). Preserve debug.log unread/unstaged.
 - Active stage: `header-navigation` formal admission remains open. Completed native-author/settings scopes do not certify whole UI/account/device;C-07 N/A.
 - Accepted visual preference: Memo v7 tone adopted. User2026-10-29 explicitly disallows arbitrary layout/shape/spacing locks and change-for-change goals:inspect the whole requested screen,change what helps,keep what works. List V2 is an agent-derived proposal,not user approval of that geometry. All UI accents remain theme-linked.
-- Source state: Source checkpoint base HEAD `0ba865bf877010a5c09510260f8a2e43d2d69009` on `codex/ui-port-boundary`;this preflight changes guidance/proposal images only. Product runtime stays039A;no source/build/registry change.
-- Local-only state: `LOCAL_ONLY_EVIDENCE`;artifacts/b1-native-settings-2026-10-29/ retains8AC7 control,original/proposal/current/public/diff evidence. Account values remain only at the ignored locator in B1_NATIVE_AUTHOR_FINISH.md;not used. One browser at a time;preview server10067 retained.
-- Candidate fingerprint: `729438f8318a72715a56c78c85e1efdb4dd0b782c33a484fc381feee83a5df57`
-- Last current audit: UNKNOWN for the unimplemented list proposal. List preflight observed public200,overflow0 and14 decoded visible images on039A;three fresh local native-fixture captures acquired. No product code changed or product suite rerun. Prior memo/theme receipts retain their exact scoped results. V2 known adaptations are explicitly unresolved,not implementation success.
-- Current stage receipt: `verification/receipts/2026-10-29-b1-list-v7-preflight.json` SHA-256 `F98A208038D4C1244E79EDEA9814E8B90F0F1886A5EF57F64F92EAF0B4B5AC8F` records proposal provenance,scope correction,live read-only observation and known adaptations. Product implementation is pending.
-- Accepted baseline: Native memo management now implements the selected v7 two-pane composition in its existing visual owner. Native fields,callbacks,parents,authored colors and GM settings persist;no new observer,portal or behavior owner.
-- Current artifact: Mobile3.5.5 039A88F9E92E43D55B35983AEB1F45FC87BBFBE2A51A7305CF668A257C7E6577 root/dist/guard;PC1.9.9 8915F36E5B8887DC58EF9F932E39CCA28CCE1AC1020FD96460CCD10C08913581 byte-identical. No version/metadata/official release change.
+- Source state: Source checkpoint base HEAD `b1c3d2803d149936735818357377a967a93162c7` on `codex/ui-port-boundary`;existing Mobile presenters/material values and related tests/contracts changed. No architecture owner/promotion,version,metadata,storage shape or official publication change.
+- Local-only state: `LOCAL_ONLY_EVIDENCE`;artifacts/b1-list-v7-2026-10-29/ retains039A control,5BD paint runtime,final79DD runtime and anonymous captures/differentials/comparator. Raw live data stays ignored. Account locator remains unused;one browser at a time,viewer10067 retained.
+- Candidate fingerprint: `88a025faabc4ac593456879ea34ab54c4822f6a820344c54caf9c601d097d276`
+- Last current audit: READY for the bounded implementation on79DD:five geometry/material states,four list semantic contexts,28 memo role tuples and four anonymous public captures passed. Settled5BD owns the28 actual palette combinations/56 contrast checks,8 product/9 native-author contexts and42 header observations;only spacer geometry changed later. Visual comparator reports differences/UNVERIFIED,not beauty approval. No unaffected full-suite rerun.
+- Current stage receipt: `verification/receipts/2026-10-29-b1-list-v7-implementation.json` SHA-256 `3E37D41865F86638CFB5428CF892CC8FBC5EAD89C63B6C0B117C142E1B8F6C2D` binds exact final and paint-settled scopes,public captures,visual differences and omissions. Final list aesthetic adoption remains pending.
+- Accepted baseline: Memo v7 tone is user-adopted. List/header now reuse its pale primary/plain auxiliary/reading hierarchy through existing owners;native capabilities and settings remain. This is a bounded implementation,not whole-UI or formal header admission.
+- Current artifact: Mobile3.5.5 79DD07831C87C8E02346E31BF5EEB19F4E53FF2D1A221C8A763F109F140D9CCC root/dist/guard;PC1.9.9 8915F36E5B8887DC58EF9F932E39CCA28CCE1AC1020FD96460CCD10C08913581 byte-identical. No version/official release change.
 - Blockers: No global runtime/Chrome/TM or settings anatomy-read blocker. Native settings/account/data-filled/save/upload branches and actual C-13 permissions remain unqualified.
-- Pending live checks: Next: resolve list V2 wide/layout980 adaptation and implement within existing UI owners,preserving the native menu and avoiding duplicate comment counts. Apply generation-scope/theme-accent gates and compare actual captures. Article/comments/write/popup migration follows later;C-13 deferred,C-07 N/A,four uploads deferred.
+- Pending live checks: Next: article/ordinary-and-image-comment v7 preflight from current native/B1 anatomy and a fresh matching image before source edits. List final aesthetics remain user-reviewable. C-13 deferred,C-07 N/A,four upload documents deferred.
 
 ```dcuf-current-artifacts
-{"schemaVersion":1,"mobile":{"sha256":"039A88F9E92E43D55B35983AEB1F45FC87BBFBE2A51A7305CF668A257C7E6577"},"pc":{"sha256":"8915F36E5B8887DC58EF9F932E39CCA28CCE1AC1020FD96460CCD10C08913581"}}
+{"schemaVersion":1,"mobile":{"sha256":"79DD07831C87C8E02346E31BF5EEB19F4E53FF2D1A221C8A763F109F140D9CCC"},"pc":{"sha256":"8915F36E5B8887DC58EF9F932E39CCA28CCE1AC1020FD96460CCD10C08913581"}}
 ```
 
 ## Draft-complete checkpoint — 2026-10-21

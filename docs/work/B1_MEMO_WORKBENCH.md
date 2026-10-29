@@ -27,7 +27,7 @@ For each bounded family: inspect current native UI + incumbent B1 → generate/u
 
 User2026-10-29 clarification: scope limits are not layout locks. Inspect the whole requested screen and allow layout,shape,spacing,grouping and hierarchy changes when they improve it. The adopted memo tone anchors cohesion;do not constrain prompts to color/material-only edits or exact incumbent geometry. Do not maximize difference either. Preserve good existing elements and choose the useful extent of change. UI_REVIEW_CHECKLIST.md owns this generation/review rule.
 
-Before family closeout, apply the theme-accent gate in `UI_REVIEW_CHECKLIST.md`: inventory that family's accent roles, check actual palette-dialog updates in both themes, and preserve authored/semantic colors. A missing binding blocks only its affected slice. First reuse task is list/header preflight and an updated list design image using this adopted material language.
+Before family closeout, apply the theme-accent gate in `UI_REVIEW_CHECKLIST.md`: inventory that family's accent roles, check actual palette-dialog updates in both themes, and preserve authored/semantic colors. A missing binding blocks only its affected slice. B1_LIST_V7_MATERIAL.md now owns the implemented first list/header reuse;NEXT_TASK.md routes the following article/comments preflight. Small auxiliary controls are plain at rest with interaction-only surfaces,as recorded in the checklist.
 
 ## Review focus / boundaries
 

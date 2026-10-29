@@ -143,7 +143,7 @@
             }
             [data-dcuf-surface="list-item"] .dcuf-list-author img,
             [data-dcuf-surface="list-item"] .dcuf-list-author [data-dcuf-role="author-ip"] { flex: none; }
-            [data-dcuf-surface="list-item"] .dcuf-list-stats { flex: none; white-space: nowrap; }
+            [data-dcuf-surface="list-item"] .dcuf-list-stats { flex: none; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
             @media (min-width: 760px) {
                 /* Filtering owns row inline display; arrange its children instead. */
                 [data-dcuf-surface="list-item"] { padding-right: 250px; min-height: 54px; box-sizing: border-box; }
@@ -200,7 +200,10 @@
             [data-dcuf-scroll-space="1"][data-dcuf-scroll-active] {
                 display: block;
                 height: var(--dcuf-scroll-size);
-                margin: 10px 0;
+                width: calc(100% - 40px);
+                max-width: 1120px;
+                margin: 10px auto;
+                box-sizing: border-box;
             }
             [data-dcuf-surface="list-toolbar"]:is([data-dcuf-scroll="shown"], [data-dcuf-scroll="hidden"]) {
                 position: fixed;
@@ -214,6 +217,19 @@
                 transform: translateY(calc(-100% - 12px));
                 visibility: hidden;
                 pointer-events: none;
+            }
+            @media (min-width: 1250px) {
+                /* Row display remains the filter owner's visibility output. */
+                [data-dcuf-surface="list-item"] { padding-right: 478px; min-height: 54px; }
+                [data-dcuf-surface="list-item"] .dcuf-list-title { min-width: 0; margin-bottom: 0; }
+                [data-dcuf-surface="list-item"] .dcuf-list-meta { position: absolute; inset: 0 16px 0 auto; transform: none; display: grid; grid-template-columns: minmax(0,1fr) 90px 96px 96px; align-items: center; gap: 10px; width: 440px; color: color-mix(in srgb,var(--dcuf-theme-fg) 75%,var(--dcuf-theme-fg-muted)); font-size: 12px; }
+                [data-dcuf-surface="list-item"] .dcuf-list-author { grid-column: 1; grid-row: 1; width: auto; min-width: 0; }
+                [data-dcuf-surface="list-item"] .dcuf-list-stats { display: contents; }
+                [data-dcuf-surface="list-item"] [data-dcuf-stat] { grid-row: 1; min-width: 0; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: end; font-variant-numeric: tabular-nums; }
+                [data-dcuf-surface="list-item"] [data-dcuf-stat="date"] { grid-column: 2; }
+                [data-dcuf-surface="list-item"] [data-dcuf-stat="views"] { grid-column: 3; }
+                [data-dcuf-surface="list-item"] [data-dcuf-stat="recommendations"] { grid-column: 4; }
+                [data-dcuf-surface="list-item"] .dcuf-stat-separator { display: none; }
             }
             @media (prefers-reduced-motion: reduce) {
                 [data-dcuf-surface="list-toolbar"][data-dcuf-scroll]:not([data-dcuf-scroll="measuring"]) { transition: none; }
@@ -369,6 +385,7 @@
                 list-style: none;
             }
             @media (max-width: 759px) {
+                [data-dcuf-scroll-space="1"][data-dcuf-scroll-active] { width: calc(100% - 24px); }
                 [data-dcuf-surface="list-toolbar"] { width: calc(100% - 24px); grid-template-columns: minmax(0, 1fr) auto; padding: 8px; gap: 8px; }
                 [data-dcuf-surface="list-toolbar"] [data-dcuf-role="toolbar-actions"] { grid-area: 1 / 2; }
                 [data-dcuf-surface="list-toolbar"] [data-dcuf-role="toolbar-categories"] { grid-area: 2 / 1 / 3 / -1; border-left: 0; border-top: 1px solid var(--dcuf-theme-border); padding: 6px 0 0; }
@@ -415,8 +432,8 @@
                 text-decoration: none;
                 text-shadow: none;
                 transition: transform 100ms ease, border-color 160ms ease, background-color 160ms ease;
-                background: var(--dcuf-control-glaze);
-                box-shadow: var(--dcuf-control-quiet-shadow);
+                background: transparent;
+                box-shadow: none;
             }
             [data-dcuf-surface="list-actions"] [data-dcuf-role="primary-action"] {
                 width: auto;
@@ -435,10 +452,38 @@
             [data-dcuf-surface="list-toolbar"] [data-dcuf-state="current"],
             [data-dcuf-surface="list-toolbar"] [data-dcuf-role="tablist"] button[data-dcuf-state="current"],
             [data-dcuf-surface="list-actions"] [data-dcuf-state="current"] {
-                border-color: var(--dcuf-control-rim);
+                border-color: transparent;
                 color: var(--dcuf-theme-accent-ink);
+                background: transparent;
+                box-shadow: none;
+            }
+            [data-dcuf-surface="list-toolbar"] [data-dcuf-role="tablist"] button[data-dcuf-role="action"],
+            [data-dcuf-surface="list-toolbar"] [data-dcuf-role="toolbar-categories"] [data-dcuf-role="category-list"] > li > a,
+            [data-dcuf-surface="list-actions"] [data-dcuf-role="action"] {
+                border: 0;
+                border-bottom: 2px solid transparent;
+                border-radius: 5px 5px 0 0;
+                background: transparent;
+                box-shadow: none;
+            }
+            [data-dcuf-surface="list-toolbar"] [data-dcuf-role="tablist"] button[data-dcuf-state="current"],
+            [data-dcuf-surface="list-toolbar"] [data-dcuf-role="category-list"] > li.on > a,
+            [data-dcuf-surface="list-toolbar"] [data-dcuf-role="category-list"] > li > a.on,
+            [data-dcuf-surface="list-actions"] [data-dcuf-role="action"][data-dcuf-state="current"] {
+                border-bottom-color: var(--dcuf-theme-accent);
+                color: var(--dcuf-theme-accent-ink);
+            }
+            [data-dcuf-surface="list-toolbar"] [data-dcuf-role="tablist"] button[data-dcuf-role="action"]:is(:hover,:focus-visible,:active),
+            [data-dcuf-surface="list-toolbar"] [data-dcuf-role="category-list"] > li > a:is(:hover,:focus-visible,:active),
+            [data-dcuf-surface="list-actions"] [data-dcuf-role="action"]:is(:hover,:focus-visible,:active) {
                 background: var(--dcuf-control-selected-bg);
-                box-shadow: var(--dcuf-control-shadow);
+                color: var(--dcuf-theme-accent-ink);
+                border-radius: 6px;
+            }
+            [data-dcuf-surface="list-toolbar"] [data-dcuf-role="action"]:focus-visible,
+            [data-dcuf-surface="list-actions"] [data-dcuf-role="action"]:focus-visible {
+                outline: 2px solid var(--dcuf-theme-accent);
+                outline-offset: 2px;
             }
             [data-dcuf-surface="list-toolbar"] [data-dcuf-role="primary-action"],
             [data-dcuf-surface="list-toolbar"] [data-dcuf-role="primary-group"] [data-dcuf-role="primary-action"],
@@ -455,7 +500,7 @@
                 border: 0;
                 border-radius: 8px;
                 background: transparent;
-                color: var(--dcuf-theme-on-accent, #fff);
+                color: var(--dcuf-v7-primary-ink);
                 font-weight: 650;
                 box-shadow: none;
             }
@@ -467,11 +512,11 @@
                 inset: 2px 0;
                 z-index: -1;
                 pointer-events: none;
-                border: 1px solid var(--dcuf-control-primary-rim);
+                border: 1px solid var(--dcuf-v7-primary-rim);
                 border-radius: 8px;
                 /* Keep a legible fallback for older phone color parsers. */
-                background: var(--dcuf-control-primary-bg);
-                box-shadow: var(--dcuf-control-shadow);
+                background: var(--dcuf-v7-primary-bg);
+                box-shadow: var(--dcuf-v7-primary-shadow);
             }
             [data-dcuf-surface="list-toolbar"] [data-dcuf-role="primary-action"]::before,
             [data-dcuf-surface="list-actions"] [data-dcuf-role="primary-action"]::before {
@@ -551,10 +596,10 @@
             [data-dcuf-surface="list-actions"] [data-dcuf-role="action-end"] { margin-inline-start: auto; }
             [data-dcuf-surface="list-pagination"] [data-dcuf-role="page"][data-dcuf-state="current"] {
                 border-color: var(--dcuf-control-rim);
-                color: var(--dcuf-theme-accent-ink, #245bda);
+                color: var(--dcuf-v7-primary-ink);
                 font-weight: 650;
-                background: var(--dcuf-control-selected-bg);
-                box-shadow: var(--dcuf-control-shadow);
+                background: var(--dcuf-v7-primary-bg);
+                box-shadow: var(--dcuf-v7-primary-shadow);
             }
             [data-dcuf-surface="list-pagination"]:is([data-dcuf-role="navigation"], [data-dcuf-role="pages"]) a:is(:hover, :focus-visible) { background: var(--dcuf-theme-accent-soft); color: var(--dcuf-theme-accent-ink); }
             [data-dcuf-surface="list-pagination"] [data-dcuf-role="page-jump"] {
@@ -695,6 +740,7 @@
             @media (max-width: 520px) {
                 [data-dcuf-surface="list-item"] { padding-inline: 13px; }
                 [data-dcuf-surface="list-item"] .dcuf-list-meta { align-items: flex-start; flex-direction: column; gap: 3px; }
+                [data-dcuf-surface="list-item"] .dcuf-list-stats { white-space: normal; overflow-wrap: anywhere; }
                 [data-dcuf-surface="list-search"] [data-dcuf-role="controls"] { grid-template-columns: 1fr; }
             }
             @media (prefers-reduced-motion: reduce) {
@@ -747,9 +793,13 @@
                 .join('');
             const reply = renderDescriptor(snapshot?.title?.reply);
             const author = renderDescriptor(snapshot?.author);
+            const views = `조회 ${snapshot?.stats?.views || '0'}`;
+            const recommendations = `추천 ${snapshot?.stats?.recommendations || '0'}`;
+            const date = String(snapshot?.stats?.date || '');
+            const stats = `${views} | ${recommendations} | ${date}`;
             return `<div class="${rowClasses}" data-custom-row-id="${escapeHtml(snapshot?.rowId)}" data-dcuf-surface="list-item" data-dcuf-role="row" data-dcuf-state="${escapeHtml(snapshot?.state || 'normal')}">
                 <div class="post-title dcuf-list-title"><span class="dcuf-list-subject">${subject}</span>${link.replace('class="post-title-link"', 'class="post-title-link dcuf-list-title-link"')}${decorations}<span class="dcuf-list-reply">${reply}</span></div>
-                <div class="post-meta dcuf-list-meta"><span class="author dcuf-list-author">${author}</span><span class="stats dcuf-list-stats">조회 ${escapeHtml(snapshot?.stats?.views || '0')} | 추천 ${escapeHtml(snapshot?.stats?.recommendations || '0')} | ${escapeHtml(snapshot?.stats?.date || '')}</span></div>
+                <div class="post-meta dcuf-list-meta"><span class="author dcuf-list-author">${author}</span><span class="stats dcuf-list-stats" title="${escapeHtml(stats)}"><span data-dcuf-stat="views" title="${escapeHtml(views)}">${escapeHtml(views)}</span><span class="dcuf-stat-separator"> | </span><span data-dcuf-stat="recommendations" title="${escapeHtml(recommendations)}">${escapeHtml(recommendations)}</span><span class="dcuf-stat-separator"> | </span><span data-dcuf-stat="date" title="${escapeHtml(date)}">${escapeHtml(date)}</span></span></div>
             </div>`;
         };
         return Object.freeze({ VERSION, CSS, renderPostItem });

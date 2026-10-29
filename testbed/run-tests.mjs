@@ -43,6 +43,7 @@ import { runNativeAuthorContract } from './ui-b1-native-author-contract.mjs';
 import { runNativeSettingsContract } from './ui-b1-native-settings-contract.mjs';
 import { runMemoWorkbenchContract } from './ui-b1-memo-workbench-contract.mjs';
 import { runMemoPaletteContract } from './ui-b1-memo-palette-contract.mjs';
+import { runListV7Contract, runListV7PaletteContract } from './ui-b1-list-v7-contract.mjs';
 
 const args = new Set(process.argv.slice(2));
 const selectedGroup = process.argv.includes('--group') ? process.argv[process.argv.indexOf('--group') + 1] : null;
@@ -64,6 +65,8 @@ const test = (name, group, run, targets = ['mobile', 'pc']) => tests.push({ name
 test('B1 native settings: six native interiors retain glass geometry and actions', 'functional', async()=>runNativeSettingsContract({browser,server}), ['mobile']);
 test('B1 memo workbench: selected composition preserves native actions', 'functional', async()=>runMemoWorkbenchContract({browser,server}), ['mobile']);
 test('B1 memo palette: all accent roles follow the palette dialog', 'functional', async()=>runMemoPaletteContract({browser,server}), ['mobile']);
+test('B1 list v7: plain controls and responsive material', 'functional', async()=>runListV7Contract({browser,server}), ['mobile']);
+test('B1 list v7 palette: real dialog drives every primary and underline', 'functional', async()=>runListV7PaletteContract({browser,server}), ['mobile']);
 const mobileTest = (name, group, run) => test(name, group, run, ['mobile']);
 // Historical quick-write assertions remain unregistered until the related
 // workstream closes; the production feature itself has been removed.
@@ -11784,8 +11787,8 @@ mobileTest('UI palette presets normalize stored values without blocking boot', '
                         const style = element ? getComputedStyle(element) : null;
                         const foreground = style?.color || null;
                         const probe = document.createElement('i');
-                        probe.style.backgroundColor = selector.includes('current') ? 'var(--dcuf-control-selected-fill)'
-                            : selector.includes('submit') ? 'var(--dcuf-theme-surface-input)' : 'var(--dcuf-control-primary-fill)';
+                        probe.style.backgroundColor = selector.includes('current') ? 'transparent'
+                            : selector.includes('submit') ? 'var(--dcuf-theme-surface-input)' : 'var(--dcuf-v7-primary-fill)';
                         element.append(probe);const expected = getComputedStyle(probe).backgroundColor;probe.remove();
                         const primary = selector.includes('primary-action');
                         probe.style.backgroundColor = 'var(--dcuf-b1-paper)'; element.append(probe);
@@ -11841,8 +11844,8 @@ mobileTest('UI palette presets normalize stored values without blocking boot', '
                         const style = element ? getComputedStyle(element) : null;
                         const foreground = style?.color || null;
                         const probe = document.createElement('i');
-                        probe.style.backgroundColor = selector.includes('current') ? 'var(--dcuf-control-selected-fill)'
-                            : selector.includes('submit') ? 'var(--dcuf-theme-surface-input)' : 'var(--dcuf-control-primary-fill)';
+                        probe.style.backgroundColor = selector.includes('current') ? 'transparent'
+                            : selector.includes('submit') ? 'var(--dcuf-theme-surface-input)' : 'var(--dcuf-v7-primary-fill)';
                         element.append(probe);const expected = getComputedStyle(probe).backgroundColor;probe.remove();
                         const primary = selector.includes('primary-action');
                         probe.style.backgroundColor = 'var(--dcuf-b1-paper)'; element.append(probe);
@@ -12806,9 +12809,9 @@ mobileTest('UI palette colors reach view actions and embedded list controls', 'f
                 const style=getComputedStyle(element),face=getComputedStyle(element,'::after');
                 const probe=document.createElement('span');element.append(probe);
                 probe.style.color='var(--dcuf-theme-accent-strong)';const accent=getComputedStyle(probe).color;
-                probe.style.color='var(--dcuf-theme-on-accent)';const onAccent=getComputedStyle(probe).color;
+                probe.style.color=element.getAttribute('data-dcuf-role')==='primary-action'?'var(--dcuf-v7-primary-ink)':'var(--dcuf-theme-on-accent)';const onAccent=getComputedStyle(probe).color;
                 probe.style.color='var(--dcuf-theme-accent-ink)';const ink=getComputedStyle(probe).color;probe.remove();
-                element.append(probe);probe.style.background='var(--dcuf-control-primary-bg)';
+                element.append(probe);probe.style.background=element.getAttribute('data-dcuf-role')==='primary-action'?'var(--dcuf-v7-primary-bg)':'var(--dcuf-control-primary-bg)';
                 const fill=getComputedStyle(probe).backgroundColor,image=getComputedStyle(probe).backgroundImage;probe.remove();
                 return {selector,role:element.getAttribute('data-dcuf-role'),color:style.backgroundColor,ink:style.color,face:face.backgroundImage,faceFill:face.backgroundColor,fill,image,accent,onAccent,accentInk:ink,hitHeight:element.getBoundingClientRect().height};
             });

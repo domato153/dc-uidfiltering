@@ -90,5 +90,15 @@ function __dcufBuildB1MaterialCss(ROOT_ATTRIBUTE) {
             --dcuf-control-quiet-shadow: inset 0 1px 0 var(--dcuf-control-highlight);
             --dcuf-control-danger-bg: var(--dcuf-control-glaze), color-mix(in srgb, color-mix(in srgb, #c43249 12%, var(--dcuf-b1-paper)) 90%, transparent);
         }
+        /* Adopted memo v7 recipes. Rebind on body as well: body-only dark
+           state changes must resolve composed palette values at that scope. */
+        html[${ROOT_ATTRIBUTE}], html[${ROOT_ATTRIBUTE}] body {
+            --dcuf-v7-reading: color-mix(in srgb, var(--dcuf-theme-fg) 7%, var(--dcuf-b1-paper));
+            --dcuf-v7-primary-fill: color-mix(in srgb, var(--dcuf-b1-paper) 76%, var(--dcuf-theme-accent));
+            --dcuf-v7-primary-ink: color-mix(in srgb, var(--dcuf-theme-fg) 86%, var(--dcuf-theme-accent-strong));
+            --dcuf-v7-primary-bg: linear-gradient(180deg, var(--dcuf-control-highlight), transparent 68%), var(--dcuf-v7-primary-fill);
+            --dcuf-v7-primary-rim: color-mix(in srgb, var(--dcuf-theme-accent) 48%, var(--dcuf-b1-rim));
+            --dcuf-v7-primary-shadow: inset 0 1px 0 var(--dcuf-b1-rim), 0 3px 7px #152e3412;
+        }
 `;
 }
