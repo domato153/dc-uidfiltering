@@ -10,7 +10,7 @@ Use this file in the exact active nested worktree supplied by the private prompt
 
 ## Retrieve only for the question
 
-Current user steering2026-10-29: [B1_GLASS_REFERENCE_BRIEF.md](B1_GLASS_REFERENCE_BRIEF.md) consolidates the external glass/button references and supplied Madia summary. Generate the whole-window image proposal before implementation. CSS-first memo experiments are rejected/unselected history;do not resume them as a target. NEXT_TASK.md owns the next action.
+Current user steering2026-10-29: [B1_MEMO_WORKBENCH.md](B1_MEMO_WORKBENCH.md) owns selected v7 memo implementation and later reuse across list/article/write/popups. [B1_GLASS_REFERENCE_BRIEF.md](B1_GLASS_REFERENCE_BRIEF.md) binds research and the chosen image. Review actual whole/detail captures against it;earlier CSS spikes/v1–v6 stay superseded. NEXT_TASK.md owns one bounded action.
 
 | Question / retrieval terms | Current route |
 | --- | --- |

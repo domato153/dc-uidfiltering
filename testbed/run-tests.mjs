@@ -41,6 +41,7 @@ import { runLoginEntryContract } from './ui-b1-login-contract.mjs';
 import { runConveniencePresentationContract, runRecommendationSpacingContract } from './ui-b1-convenience-contract.mjs';
 import { runNativeAuthorContract } from './ui-b1-native-author-contract.mjs';
 import { runNativeSettingsContract } from './ui-b1-native-settings-contract.mjs';
+import { runMemoWorkbenchContract } from './ui-b1-memo-workbench-contract.mjs';
 
 const args = new Set(process.argv.slice(2));
 const selectedGroup = process.argv.includes('--group') ? process.argv[process.argv.indexOf('--group') + 1] : null;
@@ -60,6 +61,7 @@ const writeLayoutReports = [];
 const testResults = [];
 const test = (name, group, run, targets = ['mobile', 'pc']) => tests.push({ name, group, run, targets });
 test('B1 native settings: six native interiors retain glass geometry and actions', 'functional', async()=>runNativeSettingsContract({browser,server}), ['mobile']);
+test('B1 memo workbench: selected composition preserves native actions', 'functional', async()=>runMemoWorkbenchContract({browser,server}), ['mobile']);
 const mobileTest = (name, group, run) => test(name, group, run, ['mobile']);
 // Historical quick-write assertions remain unregistered until the related
 // workstream closes; the production feature itself has been removed.

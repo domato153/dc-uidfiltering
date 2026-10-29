@@ -87,6 +87,22 @@
   mark('.memo_list,.site_list,.block_list,.scrollarea','list');mark('.cont_tit,.tit,.set_cont.add_text > label','label');mark('.block_setting_box','flow');mark('.info_txt > p,.info_txtbox > p,.pop_info > p,.empty_box > p,.guide_txtbox > p,.set_cont > p','message-copy');mark('.sel_color','swatch');
   mark('.poply_whiteclose,.poply_bgblueclose,.under.poply_close','close');mark('.poply_whiteclose > .sp_img,.poply_bgblueclose > .sp_img,.under.poply_close > .sp_img','close-icon');
   mark('#user_memo_backup,#um_picker_lay,#picker_lay,#another_go,#img_up_info_pop,#autozzal_img_notice_box','popup-nested');mark('.pop_bg','scrim');mark('.pop_info:has(> .setting_onoff)','toggle-group');mark('.set_cont:has(> .setting_onoff)','toggle-section');mark('.setting_onoff','switch-wrap');mark('.checkbox > label','checkbox-label');mark('.sch_box .select_box','select');mark('.sch_box .select_area','select-label');mark('.sch_box .option_box','select-options');mark('.guide_txtbox .font_blue','emphasis');
+  if(kind==='memo'){
+   // Native memo scope tabs refresh this single pane; the empty all_setting
+   // placeholder is not a second editor. Project parts without moving nodes.
+   const body=root.querySelector(':scope > .pop_content > .inner');
+   const pane=body?.querySelector(':scope > #user_memo_setting');
+   const workspace=pane?.querySelector(':scope > .tabbox');
+   const project=(node,part)=>{if(node){OWNED_ROLES.add('settings-memo-'+part);desired.set(node,'settings-memo-'+part);}};
+   project(body,'body');project(pane,'pane');project(workspace,'workspace');
+   if(workspace){
+    const editor=workspace.querySelector(':scope > #user_memo_cont'),table=workspace.querySelector(':scope > #user_memo_table'),search=workspace.querySelector(':scope > #user_memo_search');
+    project(editor,'bridge');project(table,'bridge');project(search,'search');
+    for(const[base,parts]of [[editor,[[':scope > .inr','editor-head'],[':scope > .textarea_box','editor-field'],[':scope > .btn_box','footer-action'],[':scope > .btn_box > button','primary'],[':scope > .info_txt','help'],[':scope > .info_txt > p','help-copy']]],[table,[[':scope > .inr','bridge'],[':scope > .inr > h4','list-head'],[':scope > .inr > .sort','sort'],[':scope > .inr > .copydel','tools'],[':scope > .memo_list','list']]],[search,[[':scope > .intbox','search-input']]]]){
+     if(base)for(const[selector,part]of parts)base.querySelectorAll(selector).forEach(node=>project(node,part));
+    }
+   }
+  }
  }
         };
         const syncRoles = (state) => {

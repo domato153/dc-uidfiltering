@@ -14,7 +14,7 @@ export function mountNativeSettingsFixture({html,css}) {
    if(n.id==='btn_user_memo_backup'){root.querySelector('#user_memo_backup').style.display='block';return;}
    if(n.classList.contains('sel_color')){const p=root.querySelector('#um_picker_lay,#picker_lay');if(p)p.style.display='block';return;}
    if(n.closest('.setting_onoff')){n.classList.toggle('on');return;}
-   if(n.closest('.tab_menubox,.block_tab,.btn_tabbox.sort')){const buttons=[...n.parentElement.children].filter(e=>e.tagName==='BUTTON'),idx=buttons.indexOf(n);buttons.forEach(e=>e.classList.toggle('on',e===n));if(n.closest('.btn_tabbox.sort'))return;const panes=root.querySelectorAll(':scope > .pop_content > .inner > .tabcontent,:scope > .pop_content > .block_setting_box > .inner > .tabcontent');panes.forEach((p,i)=>p.style.display=i===idx?'block':'none');return;}
+   if(n.closest('.tab_menubox,.block_tab,.btn_tabbox.sort')){const buttons=[...n.parentElement.children].filter(e=>e.tagName==='BUTTON'),idx=buttons.indexOf(n);buttons.forEach(e=>e.classList.toggle('on',e===n));if(n.closest('.btn_tabbox.sort')||root.id==='user_memo_config')return;const panes=root.querySelectorAll(':scope > .pop_content > .inner > .tabcontent,:scope > .pop_content > .block_setting_box > .inner > .tabcontent');panes.forEach((p,i)=>p.style.display=i===idx?'block':'none');return;}
    if(n.classList.contains('btn_my_autozzal')||n.id==='btn_image_add'){root.querySelector('#autozzal_setting').style.display='none';root.querySelector('#autozzal_image_upload_form').style.display='block';return;}
   };
   originals.push({node:n,parent:n.parentNode,click:n.onclick});

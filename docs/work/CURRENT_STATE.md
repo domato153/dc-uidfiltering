@@ -2,22 +2,22 @@
 
 ## Current execution
 
-- Active plan: B1_GLASS_REFERENCE_BRIEF.md owns reference consolidation → generated whole-window proposal → user selection → implementation. Latest v6 explores colored-crystal controls and a transmitting list plane within the new wide workbench;user rejects CSS-first work and near-identical v1–v3 retouches. Broad design freedom stays active;no product implementation before the image decision. Completed H-10 remains in B1_NATIVE_SETTINGS_CHILDREN.md;C-13 is deferred behind this design step.
+- Active plan: B1_MEMO_WORKBENCH.md implements user-selected researched v7 in native memo management; then reuse its material roles across list/header → article/comments → write/forms → popups. B1_GLASS_REFERENCE_BRIEF.md retains research and exact selected image. Earlier CSS spikes/v1–v6 are superseded;C-13 remains deferred.
 - Workspace path: `.` (private prompt supplies exact worktree). Preserve debug.log unread/unstaged.
 - Active stage: `header-navigation` formal admission remains open. Completed native-author/settings scopes do not certify whole UI/account/device;C-07 N/A.
-- Accepted visual preference: compact B+B1,moderate ordinary-page glass,C885 simple buttons and opaque fields. Independent settings targets are provisional composition references,not user aesthetic adoption.
-- Source state: Source checkpoint base HEAD `eed0b135c9a6eea0d29d4c64fdf070e027e8e746` on `codex/ui-port-boundary`;native-settings checkpoint is CI_VERIFIED_CHECKPOINT. Current design work changes no product runtime;accepted registry unchanged. Exact new checkpoint disposition belongs to tools/checkpoint.mjs.
+- Accepted visual preference: v7 material direction selected2026-10-29: functional glass frame, stable low-chroma reading/editing paper, compact pale tinted primary/dark palette-derived ink. Other families retain their current B1/C885 implementation until a bounded rollout. Memo rendering is review-ready,not whole-UI/user aesthetic approval.
+- Source state: Source checkpoint base HEAD `741a64a6aedf3d4401479426031225ed9fb160dd` on `codex/ui-port-boundary`; this unit changes Mobile memo adapter projections/presenter only. Accepted registry and existing candidate overlay remain unchanged;checkpoint exact identity belongs to tools/checkpoint.mjs.
 - Local-only state: `LOCAL_ONLY_EVIDENCE`;artifacts/b1-native-settings-2026-10-29/ retains8AC7 control,original/proposal/current/public/diff evidence. Account values remain only at the ignored locator in B1_NATIVE_AUTHOR_FINISH.md;not used. One browser at a time;preview server10067 retained.
-- Candidate fingerprint: `d1b219804aa2522021911942a8eef5622751b8409b0f7c708109a4c9d0d6def7`
-- Last current audit: PASS scoped6BAA/8915 H-10:30 main states plus named nested interactions;two adjacent tests are retained E44C split coverage with explicit nonmatching later paint scope. Six public native pointer roots pass on final source.12 image pairs REVIEWED with intentional differences;10 child captures;22 viewer states decode/no overflow.12 title samples min8.767879:1. No full UI/account/device/actual-extension approval.
-- Current stage receipt: `verification/receipts/2026-10-29-b1-native-settings-children.json` SHA-256 `8859D1E2E27197DE9088B6AE2D901AA89B040DF72AFAA1FC98420BB7C15C7BDC`. Previous native-author receipt retains its exact8AC7 scope.
-- Accepted baseline: six H-10 anonymous native compositions use existing B1/C885/paper family;immediate8AC7 control retained. Native state/fields/callbacks and colors/media preserved;no new observer,portal or persisted-setting change.
-- Current artifact: Mobile3.5.5 `6BAAF92A44761A7D33326A7EE838639BFFE3BCD31DED8F33296FBC4F4036D0CA` root/dist/guard;PC1.9.9 `8915F36E5B8887DC58EF9F932E39CCA28CCE1AC1020FD96460CCD10C08913581` unchanged. No version/metadata/official release change.
+- Candidate fingerprint: `7686166abd22531158c441107cbd153efa1dd5a07aec486f307197b8079c0cc0`
+- Last current audit: PASS scoped039A memo:5 environments,14 palettes×light/dark primary contrast≥4.5/focus,empty/populated/long rows,scope/sort/draft,original parents/callbacks,nested picker/backup and duplicate-ID projection guard. Separate6BAA/039A contexts match native control/parent/action/draft/selection/GM receipts. Adjacent individual-author9-state pass is bound to1EB4;later changes stay in the management-root selector and direct main parts,not that individual owner. No full UI/account/device/actual-extension approval.
+- Current stage receipt: `verification/receipts/2026-10-29-b1-memo-workbench.json` SHA-256 `3CB37E27C64648310EEC71E601A6EED6F0E3B59A2AB757D25B3CAEA92CB6C8A9` records exact scoped runtime/checks and visual review limits. Prior6BAA H-10 receipt is historical,not a final039A all-settings receipt.
+- Accepted baseline: Native memo management now implements the selected v7 two-pane composition in its existing visual owner. Native fields,callbacks,parents,authored colors and GM settings persist;no new observer,portal or behavior owner.
+- Current artifact: Mobile3.5.5 039A88F9E92E43D55B35983AEB1F45FC87BBFBE2A51A7305CF668A257C7E6577 root/dist/guard;PC1.9.9 8915F36E5B8887DC58EF9F932E39CCA28CCE1AC1020FD96460CCD10C08913581 byte-identical. No version/metadata/official release change.
 - Blockers: No global runtime/Chrome/TM or settings anatomy-read blocker. Native settings/account/data-filled/save/upload branches and actual C-13 permissions remain unqualified.
-- Pending live checks: Whole-window generated proposal/selection comes first;C-13 native comment permission/password entry is deferred,not completed. Other unobserved account/media/checklist children remain UNKNOWN. User allows later test-account UI inspection;credentials remain local. Four uploads DEFERRED_USER_ACCEPTED;C-07 N/A;guidebook discussion only after whole UI work ends.
+- Pending live checks: Review actual memo rendering against selected v7,then first list/header reuse slice. Native save/data/account/row-edit interiors and actual extension remain unqualified;C-13 deferred,four uploads DEFERRED_USER_ACCEPTED,C-07 N/A. Guidebook discussion only after whole UI work ends.
 
 ```dcuf-current-artifacts
-{"schemaVersion":1,"mobile":{"sha256":"6BAAF92A44761A7D33326A7EE838639BFFE3BCD31DED8F33296FBC4F4036D0CA"},"pc":{"sha256":"8915F36E5B8887DC58EF9F932E39CCA28CCE1AC1020FD96460CCD10C08913581"}}
+{"schemaVersion":1,"mobile":{"sha256":"039A88F9E92E43D55B35983AEB1F45FC87BBFBE2A51A7305CF668A257C7E6577"},"pc":{"sha256":"8915F36E5B8887DC58EF9F932E39CCA28CCE1AC1020FD96460CCD10C08913581"}}
 ```
 
 ## Draft-complete checkpoint — 2026-10-21
