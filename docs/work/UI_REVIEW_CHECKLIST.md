@@ -51,7 +51,7 @@ V-02–V-08의 두 root는 B1_PREVIEW_DRAFT_FINISH.md에서 마감했다. B1_INT
 | H-07 | 흥한갤 전체 순위 팝업 | 대문 → 전체 순위 | 열림/닫힘/긴 목록/재열기, 대문 닫힌 popup-only | HEADER | 대문/순위/팁/연관 범위 → B1_GALLERY_SEARCH_POPUPS.md; 대표 root 밖 자식은 별도 |
 | H-08 | 순위 도움말/팁 팝업 | 순위 관련 원래 도움말 버튼 | 팁과 닫기, 화면 끝, 다른 대문 레이어 위 | HEADER | 대문/순위/팁/연관 범위 → B1_GALLERY_SEARCH_POPUPS.md; 대표 root 밖 자식은 별도 |
 | H-09 | 연관 갤러리 팝업 | 제목 옆 연관 버튼 | 내용/스크롤/닫기, 목록의 개수 선택기와 겹침 | HEADER | 대문/순위/팁/연관 범위 → B1_GALLERY_SEARCH_POPUPS.md; 대표 root 밖 자식은 별도 |
-| H-10 | 갤러리 이용안내·설정·기타 원래 메뉴 | 원래 제목 영역의 해당 버튼 | 각각의 실제 창·메뉴, 로그인 전제, 취소/닫기 | HEADER | 안내/설정 root 범위 → B1_GALLERY_SEARCH_POPUPS.md; 설정 하위 탭·계정 자식 원본 미확인 |
+| H-10 | 갤러리 이용안내·설정·기타 원래 메뉴 | 원래 제목 영역의 해당 버튼 | 각각의 실제 창·메뉴, 로그인 전제, 취소/닫기 | HEADER | 안내/설정 root 범위 → B1_GALLERY_SEARCH_POPUPS.md; 익명 설정6종/명명된 탭·색상·백업·안내·자짤 empty → B1_NATIVE_SETTINGS_CHILDREN.md;계정·실제 데이터/저장/업로드는 미확인 |
 | H-11 | 메이저 추천 갤러리 캐러셀 | 메이저 대문의 원래 이전/다음 | 첫/중간/끝 페이지, 짧은 폭, 원래 링크 | HEADER | 범위 근거 → B1_LIST_COHESION.md; 나머지 계정/페이지 조합 미확인 |
 
 ## 글목록·검색·페이지 이동
@@ -266,7 +266,7 @@ B1_UI_EXPANSION_PREFLIGHT.md의 범위를 기존 부모 ID 아래에서 고른�
 B1_INTEGRATED_UI_GAPS.md와 verification/receipts/2026-10-28-b1-integrated-ui-gaps.json이 현재128행의 근거 연결과 남은 분류를 소유한다. 기존 가족 문서의 정확한 scope를 재사용하며 일괄 green/전수 재촬영은 하지 않았다. 현재 F87E/8915는 변경하지 않았다.
 
 - 후속 마감: B1_PREVIEW_DRAFT_FINISH.md/06CA가 V-02–V-08의 두 root 누락을 수정했다. 명명된 light/dark/geometry/behavior 범위이며 모든 오류 자식을 전수 촬영한 것은 아니다.
-- 원본 자식 미확인: 작성자/메모, 갤러리 설정 자식, 실제 editor 내부, 계정/CAPTCHA/결과/미디어 예외. 부모 shell의 통과로 완료하지 않는다.
+- 원본 자식 미확인: 실제 댓글 권한/비밀번호와 계정/CAPTCHA/결과/미디어 예외. 작성자/메모와 갤러리 설정의 명명된 익명 범위는 각 FINISH/CHILDREN 문서로 라우팅하며 완료된 범위를 다시 미확인으로 되살리지 않는다. 부모 shell의 통과로 완료하지 않는다.
 - 완료 범위: 목록/본문/댓글/이미지댓글/갤러리·검색/비밀번호·작성 shell/6 editor menu/DCUF panels/login은 위 행의 scoped 문서로 연결한다. 조건부·입력 P4 자식은 B1_OWNED_CONDITIONAL_FINISH.md와 B1_OWNED_INPUT_CHILDREN.md를 우선 읽는다.
 - C-07 이미지댓글 답글은 사용자 정정과 관찰된 native 구조에 따라 N/A.128개 ID는 유지하되 적용 완료 분모에 넣지 않는다. 일반 reply selector를 이유로 되살리지 않는다.
 - 네 외부 업로드 문서는 DEFERRED_USER_ACCEPTED. N 영역의 브라우저/OS 창은 CSS 재디자인 대상 밖이다. 실제 인증/기기·formal whole-UI/header qualification은 UNKNOWN.

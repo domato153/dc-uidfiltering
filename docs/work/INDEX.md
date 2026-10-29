@@ -12,6 +12,7 @@ Use this file in the exact active nested worktree supplied by the private prompt
 
 | Question / retrieval terms | Current route |
 | --- | --- |
+| 갤러리 설정 내부, 자동 짤방, 머리말/꼬리말, 스포일러, 신뢰 사이트, 메모 관리 | B1_NATIVE_SETTINGS_CHILDREN.md:6종 익명 창/명명된 탭·중첩 프레임,기존 B1 재사용. 개별 메모는 B1_NATIVE_AUTHOR_FINISH.md;실제 계정/저장/업로드/전체 상태는 별도. |
 | 진행도, 남은 일, where are we, next | CURRENT_STATE.md → NEXT_TASK.md. Historical files cannot supply another next task. |
 | 남은 UI, 통합 마감, 미리보기, 초안 알림, integrated gaps | B1_PREVIEW_DRAFT_FINISH.md closes preview/draft and native recommendation-card spacing on06CA. B1_NATIVE_AUTHOR_FINISH.md closes the acquired menu/memo/picker family on8AC7 with scoped9-state/2-adjacent/public-pointer and4-image evidence; preflight retains diagnosis history. B1_INTEGRATED_UI_GAPS.md → UI_REVIEW_CHECKLIST.md retain128IDs and other unobserved native children. NEXT owns the one following slice; no routine full-suite recapture. |
 | UI 가이드북, 노하우 정리, UI 종료 후 논의 | B1_UI_EXPANSION_PREFLIGHT.md/전체 UI 작업 종료 후 논의 예약: DEFERRED_DISCUSSION. Existing reuse/visual/maintenance routes already hold evidence; discuss whether to consolidate only after whole UI work ends. No guidebook implementation/gate now. |

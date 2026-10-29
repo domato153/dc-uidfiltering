@@ -437,7 +437,8 @@
         "host-gallery-setting-menu",
         "host-external-gallery-usage-guide",
         "host-issue-wrap-stack",
-        "host-native-password-page-chrome"
+        "host-native-password-page-chrome",
+        "host-native-gallery-settings-children"
       ],
       "states": [
         "initial",
@@ -456,7 +457,10 @@
         "long-guide-last-item",
         "native-child-layer-open",
         "native-password-header",
-        "native-password-header-rerender"
+        "native-password-header-rerender",
+        "settings-interior-open",
+        "settings-nested-palette-backup",
+        "auto-image-library-empty"
       ],
       "intendedDelta": "b1-write-editor-shell-v1",
       "cascadeExceptions": [
@@ -501,6 +505,18 @@
           "property": "z-index",
           "hostCollision": "Popup-only regression places the original issue wrapper in an inline z-index:13 stacking context. Lift that actual ancestor only while its original rank/help layer is open; restore the marker without mutating its inline style. Lifting only the inner door cannot escape the ancestor.",
           "testRef": "gallery native popups remain reachable after the drawer closes"
+        },
+        {
+          "selector": ".pop_wrap:is(.type2,.type3)[data-dcuf-gallery-page-head-role^=\"settings-popup-\"]",
+          "property": "inset",
+          "hostCollision": "Acquired native settings roots write top/left and negative centering margins inline. Only their original roots/nested roots are bounded and centered;native display and callback ownership remain.",
+          "testRef": "B1 native settings: six native interiors retain glass geometry and actions"
+        },
+        {
+          "selector": ".pop_wrap:is(.type2,.type3)[data-dcuf-gallery-page-head-role^=\"settings-popup-\"]",
+          "property": "margin",
+          "hostCollision": "Acquired native settings roots write top/left and negative centering margins inline. Only their original roots/nested roots are bounded and centered;native display and callback ownership remain.",
+          "testRef": "B1 native settings: six native interiors retain glass geometry and actions"
         }
       ],
       "cascadeExceptionProfiles": [],
@@ -516,7 +532,8 @@
         "testbed/run-header-public-canary.mjs",
         "testbed/ui-b1-gallery-search-contract.mjs",
         "testbed/harness/surface-observation-contract.mjs",
-        "testbed/ui-b1-form-header-contract.mjs"
+        "testbed/ui-b1-form-header-contract.mjs",
+        "testbed/ui-b1-native-settings-contract.mjs"
       ],
       "canaryCheckpoint": "native-form-header"
     },

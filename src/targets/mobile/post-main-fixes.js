@@ -5383,6 +5383,8 @@
     const isListMemoContext = (popup) => {
         if (!(popup instanceof HTMLElement)) return false;
         if (!isVisible(popup)) return false;
+        // Gallery memo management has a different composition and visual owner.
+        if (popup.closest('#user_memo_config')?.querySelector(':scope > .pop_content.umome_wrap')) return false;
         if (popup.matches('#user_memo_config') && popup.querySelector(':scope > .pop_content.memo_sel')) return true;
         if (popup.closest('.custom-mobile-list, .custom-post-item')) return true;
         if (popup.closest('.view_content_wrap, #focus_cmt')) return false;
@@ -5499,7 +5501,7 @@
             toggleAuthorClass(popup.parentElement, 'dcuf-native-author-anchor', true);
         } else if (popup.id === 'user_memo_config' && popup.querySelector(':scope > .pop_content.memo_sel')) {
             toggleAuthorClass(popup, 'dcuf-native-memo', true);
-        } else if (popup.id === 'um_picker_lay' && popup.closest('#user_memo_config')) {
+        } else if (popup.id === 'um_picker_lay' && popup.closest('#user_memo_config.dcuf-native-memo')) {
             toggleAuthorClass(popup, 'dcuf-native-memo-picker', true);
         } else return false;
         const visible = isVisible(popup);

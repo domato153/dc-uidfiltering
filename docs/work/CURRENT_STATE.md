@@ -2,22 +2,22 @@
 
 ## Current execution
 
-- Active plan: B1_NATIVE_AUTHOR_FINISH.md closes the acquired native menu/memo/picker slice. NEXT_TASK.md selects H-10 gallery-setting child anatomy only. D-55 impact-selected tests apply.
-- Workspace path: `.` (repository root; private prompt supplies exact nested worktree). AGENTS.md owns policy; preserve debug.log unread/unstaged.
-- Active stage: `header-navigation` formal admission open. Native-author and prior selected families are finished only within named scopes; settings/editor/account/media children remain where unobserved. Whole-UI/account/device acceptance UNKNOWN; C-07 N/A.
-- Accepted visual preference: compact B+B1,moderate normal-page glass,C885 simple buttons and opaque fields. Login's native header/card extends that family; its independent draft is provisional,not final user aesthetic adoption.
-- Source state: Source checkpoint base HEAD `4baa9e2a76fd2eadbd8ee7a9578623c298837a82` on `codex/ui-port-boundary`; that preflight checkpoint is CI_VERIFIED_CHECKPOINT. Current Mobile native-author/list/proxy/build/candidate changes are scoped and validated; accepted registry unchanged. Exact checkpoint disposition belongs to tools/checkpoint.mjs.
-- Local-only state: `LOCAL_ONLY_EVIDENCE`; artifacts/b1-native-author-2026-10-29/ retains06CA control,public/native/frozen/current/diff/contrast evidence. Account values only in the ignored local continuity locator named by the finish plan;no Git values. One browser at a time;debug.log unread/unstaged.
-- Candidate fingerprint: `b7c84c109364d51f5b9cf529990afa7aed4fd480602d7db788619b590228086b`
-- Last current audit: PASS scoped8AC7/8915 native-author finish:9 direct states+2 adjacent tests,2 public pointer contexts and synthetic-count member-header hits;8 label samples,min7.5835.4 image pairs reviewed:2 memo matches,2 retained menu differences/1px flow. No whole-UI/account/device/actual-extension claim.
-- Current stage receipt: `verification/receipts/2026-10-29-b1-native-author-finish.json` SHA-256 `2377F10C740C29BE3BAE447A021FAAF28CC3CE485F552D4069296EE109574B88`. Preflight and prior preview/draft/vote receipts retain their own scopes.
-- Accepted baseline: 8AC7 native-author family implementation;06CA immediate control retained. Current B1 ordinary-page glass,C885 simple controls and opaque fields remain selected. Independent targets are provisional composition references,not final user aesthetic adoption.
-- Current artifact: Mobile3.5.5 `8AC7B0A744922125BAAEE4B9561EBF1601A5C60DD1AD6F546B471C2F46120609` root/dist/guard;PC1.9.9 `8915F36E5B8887DC58EF9F932E39CCA28CCE1AC1020FD96460CCD10C08913581` root/dist unchanged. No version/metadata/official release change.
-- Blockers: No global runtime/Chrome/TM or anatomy-read blocker. Reported native-author geometry/material/collapse and nested-pointer gaps are repaired within scope. Real backend/member statistics/account states are unqualified;member UI used local synthetic counts.
-- Pending live checks: Named H-10 native settings descendants next;actual C-12/C-13 comment/permission/account and other checklist children remain UNKNOWN. User permits later test-account UI inspection;credentials stay local and were not used. Four uploads DEFERRED_USER_ACCEPTED;C-07 N/A;guidebook discussion only after whole UI work ends.
+- Active plan: B1_NATIVE_SETTINGS_CHILDREN.md closes six acquired H-10 anonymous setting interiors. NEXT_TASK.md selects C-13 permission/password anatomy only. Impact-selected tests apply.
+- Workspace path: `.` (private prompt supplies exact worktree). Preserve debug.log unread/unstaged.
+- Active stage: `header-navigation` formal admission remains open. Completed native-author/settings scopes do not certify whole UI/account/device;C-07 N/A.
+- Accepted visual preference: compact B+B1,moderate ordinary-page glass,C885 simple buttons and opaque fields. Independent settings targets are provisional composition references,not user aesthetic adoption.
+- Source state: Source checkpoint base HEAD `5b6f6af27755fa7436c494b0b603b1e1104f0cc3` on `codex/ui-port-boundary`;previous native-author checkpoint is CI_VERIFIED_CHECKPOINT. Current H-10 code/contract/fixture changes are scoped and validated;accepted registry unchanged. Exact new checkpoint disposition belongs to tools/checkpoint.mjs.
+- Local-only state: `LOCAL_ONLY_EVIDENCE`;artifacts/b1-native-settings-2026-10-29/ retains8AC7 control,original/proposal/current/public/diff evidence. Account values remain only at the ignored locator in B1_NATIVE_AUTHOR_FINISH.md;not used. One browser at a time;preview server10067 retained.
+- Candidate fingerprint: `c4eae11e40decd43aacbc2c2f2eccd6fe05a0d9326e63e7e9fda2ab34c131264`
+- Last current audit: PASS scoped6BAA/8915 H-10:30 main states plus named nested interactions;two adjacent tests are retained E44C split coverage with explicit nonmatching later paint scope. Six public native pointer roots pass on final source.12 image pairs REVIEWED with intentional differences;10 child captures;22 viewer states decode/no overflow.12 title samples min8.767879:1. No full UI/account/device/actual-extension approval.
+- Current stage receipt: `verification/receipts/2026-10-29-b1-native-settings-children.json` SHA-256 `8859D1E2E27197DE9088B6AE2D901AA89B040DF72AFAA1FC98420BB7C15C7BDC`. Previous native-author receipt retains its exact8AC7 scope.
+- Accepted baseline: six H-10 anonymous native compositions use existing B1/C885/paper family;immediate8AC7 control retained. Native state/fields/callbacks and colors/media preserved;no new observer,portal or persisted-setting change.
+- Current artifact: Mobile3.5.5 `6BAAF92A44761A7D33326A7EE838639BFFE3BCD31DED8F33296FBC4F4036D0CA` root/dist/guard;PC1.9.9 `8915F36E5B8887DC58EF9F932E39CCA28CCE1AC1020FD96460CCD10C08913581` unchanged. No version/metadata/official release change.
+- Blockers: No global runtime/Chrome/TM or settings anatomy-read blocker. Native settings/account/data-filled/save/upload branches and actual C-13 permissions remain unqualified.
+- Pending live checks: C-13 native comment permission/password entry next;other unobserved account/media/checklist children remain UNKNOWN. User allows later test-account UI inspection;credentials remain local. Four uploads DEFERRED_USER_ACCEPTED;C-07 N/A;guidebook discussion only after whole UI work ends.
 
 ```dcuf-current-artifacts
-{"schemaVersion":1,"mobile":{"sha256":"8AC7B0A744922125BAAEE4B9561EBF1601A5C60DD1AD6F546B471C2F46120609"},"pc":{"sha256":"8915F36E5B8887DC58EF9F932E39CCA28CCE1AC1020FD96460CCD10C08913581"}}
+{"schemaVersion":1,"mobile":{"sha256":"6BAAF92A44761A7D33326A7EE838639BFFE3BCD31DED8F33296FBC4F4036D0CA"},"pc":{"sha256":"8915F36E5B8887DC58EF9F932E39CCA28CCE1AC1020FD96460CCD10C08913581"}}
 ```
 
 ## Draft-complete checkpoint — 2026-10-21

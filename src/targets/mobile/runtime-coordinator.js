@@ -135,6 +135,7 @@
             const list = [
                 '.dcheader.typea',
                 '.page_head',
+                '#user_block',
                 '.gnb_bar',
                 '.newvisit_history',
                 '.list_wrap',

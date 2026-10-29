@@ -1756,6 +1756,78 @@
       "normalizer": "semantic-observation-v1",
       "unknownDifferencePolicy": "fail",
       "missingApplicabilityPolicy": "fail"
+    },
+    {
+      "id": "b1-native-settings-children-v1",
+      "status": "active",
+      "surfaces": [
+        "header-navigation"
+      ],
+      "allowed": [
+        {
+          "kind": "color-role",
+          "surface": "header-navigation",
+          "scope": "Six observed H-10 anonymous native settings compositions and their named in-document children use existing B1 glass/paper/C885 recipes. Preserve native nodes,fields,callbacks,selected/hidden states and settings/upload paths. Bound native inline popup centering and long-content scroll; distinguish management and individual memo owners. No account/submission/storage delta or trace normalization.",
+          "reason": "User2026-10-29 approved reusing B1 for the acquired native gallery setting interiors.",
+          "contractTests": [
+            "testbed/ui-b1-native-settings-contract.mjs"
+          ]
+        },
+        {
+          "kind": "spacing",
+          "surface": "header-navigation",
+          "scope": "Six observed H-10 anonymous native settings compositions and their named in-document children use existing B1 glass/paper/C885 recipes. Preserve native nodes,fields,callbacks,selected/hidden states and settings/upload paths. Bound native inline popup centering and long-content scroll; distinguish management and individual memo owners. No account/submission/storage delta or trace normalization.",
+          "reason": "User2026-10-29 approved reusing B1 for the acquired native gallery setting interiors.",
+          "contractTests": [
+            "testbed/ui-b1-native-settings-contract.mjs"
+          ]
+        },
+        {
+          "kind": "radius",
+          "surface": "header-navigation",
+          "scope": "Six observed H-10 anonymous native settings compositions and their named in-document children use existing B1 glass/paper/C885 recipes. Preserve native nodes,fields,callbacks,selected/hidden states and settings/upload paths. Bound native inline popup centering and long-content scroll; distinguish management and individual memo owners. No account/submission/storage delta or trace normalization.",
+          "reason": "User2026-10-29 approved reusing B1 for the acquired native gallery setting interiors.",
+          "contractTests": [
+            "testbed/ui-b1-native-settings-contract.mjs"
+          ]
+        },
+        {
+          "kind": "typography",
+          "surface": "header-navigation",
+          "scope": "Six observed H-10 anonymous native settings compositions and their named in-document children use existing B1 glass/paper/C885 recipes. Preserve native nodes,fields,callbacks,selected/hidden states and settings/upload paths. Bound native inline popup centering and long-content scroll; distinguish management and individual memo owners. No account/submission/storage delta or trace normalization.",
+          "reason": "User2026-10-29 approved reusing B1 for the acquired native gallery setting interiors.",
+          "contractTests": [
+            "testbed/ui-b1-native-settings-contract.mjs"
+          ]
+        },
+        {
+          "kind": "geometry",
+          "surface": "header-navigation",
+          "scope": "Six observed H-10 anonymous native settings compositions and their named in-document children use existing B1 glass/paper/C885 recipes. Preserve native nodes,fields,callbacks,selected/hidden states and settings/upload paths. Bound native inline popup centering and long-content scroll; distinguish management and individual memo owners. No account/submission/storage delta or trace normalization.",
+          "reason": "User2026-10-29 approved reusing B1 for the acquired native gallery setting interiors.",
+          "contractTests": [
+            "testbed/ui-b1-native-settings-contract.mjs"
+          ]
+        }
+      ],
+      "invariants": [
+        "filter-result",
+        "storage-trace",
+        "network-trace",
+        "host-node-identity",
+        "host-node-order",
+        "native-handler",
+        "native-form-fields",
+        "native-submit-trace",
+        "focus",
+        "lifecycle-resources",
+        "pc-result",
+        "accessibility",
+        "geometry-containment"
+      ],
+      "normalizer": "semantic-observation-v1",
+      "unknownDifferencePolicy": "fail",
+      "missingApplicabilityPolicy": "fail"
     }
   ]
 }
