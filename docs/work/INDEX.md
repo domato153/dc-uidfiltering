@@ -10,6 +10,8 @@ Use this file in the exact active nested worktree supplied by the private prompt
 
 ## Retrieve only for the question
 
+Current user steering2026-10-29: [B1_GLASS_REFERENCE_BRIEF.md](B1_GLASS_REFERENCE_BRIEF.md) consolidates the external glass/button references and supplied Madia summary. Generate the whole-window image proposal before implementation. CSS-first memo experiments are rejected/unselected history;do not resume them as a target. NEXT_TASK.md owns the next action.
+
 | Question / retrieval terms | Current route |
 | --- | --- |
 | 갤러리 설정 내부, 자동 짤방, 머리말/꼬리말, 스포일러, 신뢰 사이트, 메모 관리 | B1_NATIVE_SETTINGS_CHILDREN.md:6종 익명 창/명명된 탭·중첩 프레임,기존 B1 재사용. 개별 메모는 B1_NATIVE_AUTHOR_FINISH.md;실제 계정/저장/업로드/전체 상태는 별도. |

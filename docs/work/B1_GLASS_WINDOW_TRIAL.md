@@ -1,0 +1,11 @@
+# Single-window glass reference trial
+
+User2026-10-29 asks to try the referenced glass design across one whole window, including buttons, and requires the existing theme-color choice to remain effective. This is a proposal experiment, not adoption or a production rollout. The current C885/B1 runtime remains the control.
+
+Use the acquired native memo-management window. Reuse its original nodes, content, callbacks, composition and opaque writing fields. Explore a more translucent tinted shell, softer directional light and fine rims, with matching selected/quiet/primary controls. The tint comes from existing palette roles, never a fixed teal or the reference's purple/cyan. Compare whole window, ordinary page context and enlarged action in light/dark plus teal/purple/orange; check the existing14 palette roles proportionately.
+
+References: [user's dark glass image/MD](https://designmd.app/library/dark-glassmorphism-infographic), [ButtonGlass variants](https://artyhoo.github.io/shadcn-glass-ui-library/?path=/story/components-core-buttonglass--variants), [source/AI guide](https://github.com/artyhoo/shadcn-glass-ui-library/blob/main/docs/AI_USAGE.md). These are material inspiration, not exact composition goldens or evidence that the library's claims transfer to DCUF. Keep the React/ripple/glow machinery out of this userscript experiment. No dependency install or product source/build/metadata/storage changes.
+
+Rejected recipe/renderer/viewer sources are retained locally in `artifacts/b1-glass-window-trial-2026-10-29/discarded-css-spike/`;not a production input. Local captures remain under the same artifact root. The old screenshot viewer is superseded by the generated image and must not be presented as the latest design. Existing phone reference is980 layout;980×900 was a popup composition capture,not actual-phone approval.
+
+Status: SUPERSEDED_EXPERIMENT — user2026-10-29 rejects the CSS-first approach and requests reference consolidation → image-generated proposal → selection → implementation. `B1_GLASS_REFERENCE_BRIEF.md` is the active design route. These prototypes/captures are not selected images or a production recipe. The6BAA runtime and prior product evidence remain unchanged;C-13 is deferred behind this design decision.
