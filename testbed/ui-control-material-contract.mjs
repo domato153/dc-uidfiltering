@@ -3,13 +3,23 @@ import {writeHeaderHtml} from './fixtures/b1-form-header.mjs';
 
 async function stripeSpread(page,bytes){return page.evaluate(async data=>{const image=new Image();image.src=data;await image.decode();const canvas=document.createElement('canvas');canvas.width=image.width;canvas.height=image.height;const context=canvas.getContext('2d');context.drawImage(image,0,0);const samples=[];for(let y=450;y<700;y+=3)samples.push([...context.getImageData(34,y,1,1).data]);return Math.max(...[0,1,2].map(k=>Math.max(...samples.map(v=>v[k]))-Math.min(...samples.map(v=>v[k]))))},'data:image/png;base64,'+bytes.toString('base64'))}
 
-export async function renderedLabelContrast(page,selector){
+export async function renderedLabelContrast(page,selector,{glyphMask=false}={}){
  const button=page.locator(selector).first();
  const label=await button.evaluate(n=>{const r=n.getBoundingClientRect(),range=document.createRange();range.selectNodeContents(n);const t=range.getBoundingClientRect();return{foreground:getComputedStyle(n).color,x:t.x-r.x,y:t.y-r.y,width:t.width,height:t.height,buttonWidth:r.width,buttonHeight:r.height}});
  assert.ok(label.width>0&&label.height>0,'Contrast needs an actual positive label rectangle');
- const styles=await button.evaluate(n=>{const nodes=[n,...n.querySelectorAll('*')],saved=nodes.map(e=>e.getAttribute('style'));for(const e of nodes){e.style.setProperty('color','transparent','important');e.style.setProperty('-webkit-text-fill-color','transparent','important');e.style.setProperty('text-shadow','none','important')}return saved});
- let bytes,foregroundBytes;
+ // A circular control's generated/hidden label range can cover the complete
+ // face and its transparent corners. Locate glyphs with two known ink colors,
+ // independently of candidate ink/background contrast. The caller verifies
+ // generated glyphs use the same foreground as the measured element.
+ const styles=await button.evaluate((n,glyphMask)=>{const nodes=[n,...n.querySelectorAll('*')],saved=nodes.map(e=>e.getAttribute('style'));for(const e of nodes){if(!glyphMask)e.style.setProperty('color','transparent','important');e.style.setProperty('-webkit-text-fill-color','transparent','important');e.style.setProperty('text-shadow','none','important')}return saved},glyphMask);
+ let bytes,foregroundBytes,blackMaskBytes,whiteMaskBytes;
  try{
+  if(glyphMask){
+   const fill=color=>button.evaluate((n,color)=>{for(const e of[n,...n.querySelectorAll('*')])e.style.setProperty('-webkit-text-fill-color',color,'important')},color);
+   await fill('#000');blackMaskBytes=await button.screenshot({animations:'disabled'});
+   await fill('#fff');whiteMaskBytes=await button.screenshot({animations:'disabled'});
+   await fill('transparent');
+  }
   bytes=await button.screenshot({animations:'disabled'});
   // Render the foreground in its actual opacity/ancestor group. Parsing
   // color(srgb ...) as 0..255 RGB or ignoring parent opacity produces false passes.
@@ -23,18 +33,19 @@ export async function renderedLabelContrast(page,selector){
  }finally{
   await button.evaluate((n,saved)=>{n.querySelector('[data-dcuf-contrast-witness]')?.remove();[n,...n.querySelectorAll('*')].forEach((e,i)=>saved[i]===null?e.removeAttribute('style'):e.setAttribute('style',saved[i]))},styles);
  }
- return page.evaluate(async({data,foregroundData,label})=>{
+ return page.evaluate(async({data,foregroundData,blackMaskData,whiteMaskData,label})=>{
   const pixels=async source=>{const image=new Image();image.src=source;await image.decode();const c=document.createElement('canvas');c.width=image.width;c.height=image.height;const x=c.getContext('2d');x.drawImage(image,0,0);return{width:c.width,height:c.height,data:x.getImageData(0,0,c.width,c.height).data}};
-  const image=await pixels(data),foreground=await pixels(foregroundData);
+  const image=await pixels(data),foreground=await pixels(foregroundData),blackMask=blackMaskData?await pixels(blackMaskData):null,whiteMask=whiteMaskData?await pixels(whiteMaskData):null;
   const luminance=rgb=>rgb.map(v=>{v/=255;return v<=.04045?v/12.92:((v+.055)/1.055)**2.4}).reduce((a,v,i)=>a+v*[.2126,.7152,.0722][i],0);
   let min=Infinity,samples=0;const sx=image.width/label.buttonWidth,sy=image.height/label.buttonHeight;
   for(let py=Math.max(2,Math.ceil(label.y*sy)+1);py<Math.min(image.height-2,Math.floor((label.y+label.height)*sy)-1);py++)for(let px=Math.max(2,Math.ceil(label.x*sx)+1);px<Math.min(image.width-2,Math.floor((label.x+label.width)*sx)-1);px++){
    const offset=(py*image.width+px)*4,rgb=[...image.data.slice(offset,offset+4)],fg=[...foreground.data.slice(offset,offset+4)];
+   if(blackMask&&Math.max(...[0,1,2].map(k=>Math.abs(blackMask.data[offset+k]-whiteMask.data[offset+k])))<12)continue;
    if(rgb[3]!==255||fg[3]!==255)throw Error('Contrast screenshot must include the real backing');
    const b=luminance(rgb.slice(0,3)),f=luminance(fg.slice(0,3));min=Math.min(min,(Math.max(f,b)+.05)/(Math.min(f,b)+.05));samples++;
   }
   if(!samples)throw Error('Contrast requires interior label samples');return{min,samples};
- },{data:'data:image/png;base64,'+bytes.toString('base64'),foregroundData:'data:image/png;base64,'+foregroundBytes.toString('base64'),label});
+ },{data:'data:image/png;base64,'+bytes.toString('base64'),foregroundData:'data:image/png;base64,'+foregroundBytes.toString('base64'),blackMaskData:blackMaskBytes?'data:image/png;base64,'+blackMaskBytes.toString('base64'):null,whiteMaskData:whiteMaskBytes?'data:image/png;base64,'+whiteMaskBytes.toString('base64'):null,label});
 }
 
 export async function runControlMaterialContract({browser,server}) {

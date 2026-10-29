@@ -297,3 +297,5 @@ B1_INTEGRATED_UI_GAPS.md와 verification/receipts/2026-10-28-b1-integrated-ui-ga
 - 네 외부 업로드 문서는 DEFERRED_USER_ACCEPTED. N 영역의 브라우저/OS 창은 CSS 재디자인 대상 밖이다. 실제 인증/기기·formal whole-UI/header qualification은 UNKNOWN.
 
 개별 캡처 숫자·예전 preflight next-task는 해당 역사적 문서에 남긴다. 현재 다음 실행은 NEXT_TASK.md 하나를 따른다.
+
+Current v7 reuse2026-10-30: B1_ARTICLE_COMMENTS_V7_IMPLEMENTATION.md/its exact receipt cover the changed article/ordinary/reply/image composer roles and material. This does not recolor every native popup or close all A/C children. Actual memo remains fine-detail reference;NEXT isolates the observed native attachment filename region before writer/forms expansion.

@@ -627,6 +627,7 @@
         ['.cmt_write_box', '.cmt_write_box:not([data-dcuf-role="comment-composer"])'],
         ['.comment_box', '.comment_box:not([data-dcuf-role="comment-box"])'],
         ['.cmt_nickbox', '.cmt_nickbox:not([data-dcuf-role="comment-author-group"])'],
+        ['.view_content_wrap', '.view_content_wrap:not([data-dcuf-role="article"])'],
     ].reduce((css, [legacySelector, retiredSelector]) => css.replaceAll(legacySelector, retiredSelector), __dcufAllFilterCss);
     const __dcufCssMarkers = Object.freeze({
         view: '/* DCUF_VIEW_SURFACE_START */',
@@ -717,9 +718,9 @@
             margin-left: auto !important;
         }
 
-        div[id^="comment_wrap_"] .comment_box .cmt_nickbox,
-        #focus_cmt > div[id^="comment_wrap_"] .comment_box .cmt_nickbox,
-        .gall_comment .comment_box .cmt_nickbox {
+        div[id^="comment_wrap_"] .comment_box .cmt_nickbox:not([data-dcuf-role="comment-author-group"]),
+        #focus_cmt > div[id^="comment_wrap_"] .comment_box .cmt_nickbox:not([data-dcuf-role="comment-author-group"]),
+        .gall_comment .comment_box .cmt_nickbox:not([data-dcuf-role="comment-author-group"]) {
             display: inline-flex !important;
             align-items: center !important;
             flex: 1 1 auto !important;
