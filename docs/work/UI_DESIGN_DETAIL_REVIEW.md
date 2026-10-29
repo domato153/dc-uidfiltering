@@ -2,6 +2,8 @@
 
 Use for an appearance change or a fidelity complaint, through UI_VISUAL_REVIEW.md. The chosen design remains B compact/B1; this method does not select another style. Functional correctness, reference fidelity, and user aesthetic preference are separate conclusions. A working arrangement is not a finished design.
 
+User2026-10-30 priority: follow UI_REFERENCE_GUARD.md / Current reference roles. Compare button/material/type/icon detail with the adopted actual memo implementation;use generated images for composition or explicit geometry only. Adapt popup/page density and elevation to their roles. Older selected-preview trials below retain their historical scope,not authority over this newer choice. Known raster overlap/early enclosure must be corrected or excluded before implementation,not waived as later polish.
+
 User-selected external implementation aid: **Impeccable4.7.0 `polish`**, installed unmodified user-wide at pinned upstream commit; see B1_IMPECCABLE_POLISH.md for original context/manual-detector use, actual first batch and remaining fine color/material differences. Invoke its own installed skill when using it; do not substitute this reduced comparison loop for its required setup/verification. The trial is not a measured efficiency win or whole-B1 approval.
 
 ## External basis and limits — checked 2026-10-23

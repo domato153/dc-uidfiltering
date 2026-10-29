@@ -10,7 +10,7 @@ Use this file in the exact active nested worktree supplied by the private prompt
 
 ## Retrieve only for the question
 
-Current user steering2026-10-29: the actual list/header79DD tone is now user-adopted. [B1_ARTICLE_COMMENTS_V7_PREFLIGHT.md](B1_ARTICLE_COMMENTS_V7_PREFLIGHT.md) owns the new generated article/ordinary/image-comment proposal and explicit native adaptations. No article source change yet. [UI_REVIEW_CHECKLIST.md](UI_REVIEW_CHECKLIST.md) retains plain resting controls,theme-accent linkage and purposeful generation without layout locks/novelty quota. NEXT_TASK.md owns the bounded article/comments implementation;prior V1 omissions are not features.
+Current user steering2026-10-30: [UI_REFERENCE_GUARD.md](UI_REFERENCE_GUARD.md) owns reference roles:actual adopted memo implementation for fine detail;generated article for composition;corrected composer close-up for geometry. Adapt popup/page roles rather than copying modal chrome. [B1_ARTICLE_COMMENTS_V7_PREFLIGHT.md](B1_ARTICLE_COMMENTS_V7_PREFLIGHT.md) records the rejected overlapping composer and correction. NEXT_TASK.md owns article/comments implementation;no source change yet.
 
 | Question / retrieval terms | Current route |
 | --- | --- |

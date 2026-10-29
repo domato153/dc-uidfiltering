@@ -2,6 +2,16 @@
 
 User direction2026-10-25: repair continuity/reference retrieval and material review with existing skill logic, preserving proportionate verification. Scope: review tooling and tracked routing; no product runtime/style change in this unit.
 
+## Current reference roles — user2026-10-30
+
+Native behavior,information,theme/accessibility and explicit user choices remain governing constraints. For visual detail,the adopted **actual memo workbench implementation** is the primary reference: its first039A implementation/receipt and actual light/dark renders,not the generated memo proposal. `docs/design/b1-memo-workbench-light-2026-10-29.png` is the durable light witness;B1_MEMO_WORKBENCH.md and B1_CONTROL_MATERIAL.md route the actual source/current shared v7 recipes. Keep button material,ink/rim/shadow balance,type/icon finish and equivalent control states coherent with that implementation. All14 palettes remain dynamic.
+
+Generated full-page proposals explore composition,grouping and hierarchy. Component close-ups can clarify containment/spacing. Neither outranks the actual adopted memo's fine finish or silently replaces its button material. NEXT freezes the actual memo as `selected-design-image` and binds generated composition/geometry images as separate dependencies. The hash guard protects identity/role;being selected or pixel-similar does not create aesthetic authority.
+
+Adapt by surface role: a popup's scrim,modal elevation,position,max-height and glass enclosure are not a base-page template. Pages need their own reading density,content gutter,paper/background and responsive layout. Reuse the common visual language and material roles through existing owners;choose appropriate sizes/shape/elevation for each role. Record a concrete context adaptation when needed;no new approval ritual or pixel-copy quota.
+
+During review,check material/detail against the actual memo and composition/geometry against the separately named proposal. A plainly overlapping/truncated generated component cannot become the implementation target merely by listing its defect for later. Correct or replace that component reference first. Known native omissions still require preservation;no generated artifact can invent capabilities. This uses existing whole/detail comparison and impact-scoped checks,not another framework/full-product suite.
+
 ## Historical cause confirmed
 
 The adopted B1 raster already contains a write form in its lower-left panel. The previous comparison used a newly authored HTML proposal as its primary image and did not bind that proposal to the raster's write/material region. NEXT pointed to UI_DESIGN_REFERENCES.md as LIVE text, but did not freeze the actual selected image. Existing instructions required visible glass transmission, yet the writer contract only asserted a gradient; the known omitted blur was recorded as user-preference pending. This was a reference-selection/application failure, not proof that continuity files were unavailable. The earlier151 functional passes remain their own exact scope and do not certify material.
@@ -22,13 +32,13 @@ Preparation returns explicit `requirementsStatus`; its legacy `reviewed` flag on
 
 Passed evidence must be a hash-bound current PNG in a declared comparison case. This reuses the existing Playwright decoder rather than trusting a functional log, unused image or adding another image validator.
 
-The native Playwright report also attaches the exact selected original to every comparison. Thus a secondary matching-size proposal cannot make the original disappear from the report; the selected original remains the authority above expected/current/diff. That unit's viewer opened the early B1 writer region first; the later user-authorized D-53 refresh now shows the new DRAFT with current-header/native/published inputs. Historical receipts keep their original source identity.
+The native Playwright report also attaches the exact selected source to every comparison. Thus a secondary matching-size proposal cannot make that source disappear. Interpret its authority only within the declared role above;generated composition is never an automatic fine-detail authority. The historical writer unit's viewer opened its selected writer region first;historical receipts retain that exact identity.
 
 Cost: a few local files/hashes per design comparison, no daemon/network/model call and no new product test on an unchanged runtime. Reuse normal light/dark and one relevant backing probe; do not repeat the whole checklist or invent a beauty score. Final reports keep functional result, reference/material fidelity and user preference separate.
 
 `inspect-continuity` now exposes the selected image's actual/expected hash and region directly. Both consumers compare that active frozen dependency and region, so a stale resume or a newly substituted HTML proposal is rejected at the comparison boundary. This does not prove that an agent actually looked at or understood the image; original-region viewing and rendered inspection remain explicit.
 
-## Current disposition
+## Historical disposition —2026-10-25/26
 
 CE3C4D1B writer material remains the historical NEEDS_WORK control. User steering then selected the current-theme v3 writer material and authorized applying it to all button families, allowing per-surface shapes and list refinement. NEXT now freezes that v3 image/hash/region; selection is no longer pending. B1_CONTROL_MATERIAL.md and CURRENT_STATE.md own the implementation/evidence. Preserve normal/backing light-dark material evidence, readable paper and native popup coordinates. Popup interiors follow the repair. The guard blocks silent substitution, not user-authorized reference updates; a gradient/token or functional count still cannot settle material.
 

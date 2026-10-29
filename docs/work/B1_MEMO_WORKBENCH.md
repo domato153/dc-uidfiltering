@@ -8,6 +8,8 @@
 
 ## Current unit
 
+User2026-10-30 clarified that this **actual first implemented memo popup** is the fine-detail anchor for later UI. Its039A receipt and actual renders outrank generated proposals for button texture and other finish. UI_REFERENCE_GUARD.md records the hierarchy and popup/page adaptation boundary. Do not copy modal scrim/elevation/layout wholesale onto a reading page;do not replace adopted material with a weaker generated button.
+
 - [x] Add a failing positive memo composition contract and retain the incumbent runtime as control.
 - [x] Implement wide list-left/editor-right composition, compact underlined scope tabs, quiet reading paper and pale tinted primary with dark palette-derived ink. Stack safely on narrow/short screens.
 - [x] Preserve original controls/parents/handlers, all14 palette IDs, authored memo swatches, factual guidance, native backup/picker layers and empty/populated states.

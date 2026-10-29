@@ -1,6 +1,6 @@
 # Visual comparison and the B1 inspection gap
 
-Current BCB96852 list cohesion: the user adopted the finished list as the expansion reference. B1_LIST_COHESION.md and verification/receipts/2026-10-24-b1-list-cohesion.json retain its8 image-bound comparisons and scoped checks. B1_CONTENT_TRIAL.md owns the new article/comment/glass trial; its proposal and candidate remain distinct. Historical preference-pending text is not the current decision.
+Current reference priority is `UI_REFERENCE_GUARD.md` / Current reference roles: actual adopted memo implementation for fine detail;generated proposals for composition/geometry only;adapt popup/page roles. Read this before selecting comparison inputs. B1_LIST_COHESION.md/its2026-10-24 receipt retain the historical BCB list scope;CURRENT/NEXT own the latest family and references.
 
 ## Surfaces without a chosen reference
 
