@@ -1,0 +1,95 @@
+{
+  "schemaVersion": 1,
+  "kind": "B1_MEMO_THEME_LINK",
+  "status": "SCOPED_THEME_LINK_VALIDATED",
+  "sourceBaseHead": "dc6535c2592729eb006705a75d96efd88369a758",
+  "artifact": {
+    "mobileSha256": "039A88F9E92E43D55B35983AEB1F45FC87BBFBE2A51A7305CF668A257C7E6577",
+    "mobileVersion": "3.5.5",
+    "runtimeChanged": false,
+    "pcSha256": "8915F36E5B8887DC58EF9F932E39CCA28CCE1AC1020FD96460CCD10C08913581",
+    "officialRelease": false
+  },
+  "adoption": {
+    "authority": "User2026-10-29 accepted rendered memo tone and directed reuse across other UI;mandatory future accent-link gate requested.",
+    "implementationImage": "docs/design/b1-memo-workbench-light-2026-10-29.png",
+    "implementationImageSha256": "F40C243D8789E412D1D59CBA5D0661A6711821BAF3C042082308015136EB0FA5",
+    "wholeUiApproved": false
+  },
+  "inputs": [
+    {
+      "path": "testbed/ui-b1-memo-palette-contract.mjs",
+      "sha256": "87762227878BF58738BCF7996B626197080B7CA6E94A760EE31CF61D2920C74E"
+    },
+    {
+      "path": "testbed/ui-b1-memo-workbench-contract.mjs",
+      "sha256": "E7696DCFDA3BADE782CBC590BB17A9F1322D3C5CF09825E2533243A467464B27"
+    },
+    {
+      "path": "testbed/ui-b1-native-settings-contract.mjs",
+      "sha256": "4C96CA024EE74227C33039A94BA26AB81BDBD4AEB60186C0D580BD764393DFA3"
+    },
+    {
+      "path": "testbed/fixtures/b1-native-settings.mjs",
+      "sha256": "01F8F7AA6A2100B565A987AA926C7FCD44F30C1C3A9E7DFC27AFFDE578E0FCE5"
+    },
+    {
+      "path": "testbed/run-tests.mjs",
+      "sha256": "A1AF1AAB2E3834B1B718D955AAF92294C2B6987C269682938E37AE610DFF0B0F"
+    }
+  ],
+  "verification": {
+    "command": "node testbed/run-tests.mjs --filter \"B1 memo palette\" --require-runtime-under-test",
+    "result": "1 passed,0 failed",
+    "browser": "Installed Chrome156.0.8078.48",
+    "environments": [
+      "980x900 light",
+      "980x900 dark"
+    ],
+    "palettes": [
+      "blue",
+      "purple",
+      "green",
+      "orange",
+      "mono",
+      "indigo",
+      "sky",
+      "cyan",
+      "teal",
+      "lime",
+      "amber",
+      "red",
+      "rose",
+      "pink"
+    ],
+    "accentRoles": [
+      "current-gallery label",
+      "current-gallery underline",
+      "selected sort label",
+      "selected sort background",
+      "checked author checkbox",
+      "selected author row background",
+      "primary label",
+      "primary background"
+    ],
+    "method": "Actual UI 색상 설정 dialog options/preview/save/cancel via existing UiPort with synthetic Testbed GM persistence. No direct root-attribute shortcut.",
+    "assertions": [
+      "All8 role signatures differ for each of14 palettes in light/dark",
+      "Saved appearances equal previews and synthetic palette key matches",
+      "Cancel restores every dependent role",
+      "Authored memo inline/rendered colors remain unchanged",
+      "Native control parents/callbacks preserved",
+      "No native memo submit/delete/copy invoked"
+    ]
+  },
+  "routing": {
+    "productTests": "Only new memo-palette contract;no unchanged geometry/full UI/PC/account tests or product rebuild.",
+    "futureGate": "docs/work/UI_REVIEW_CHECKLIST.md",
+    "nextFamily": "list/header preflight;matching design image before implementation"
+  },
+  "limits": [
+    "Testbed original-shaped synthetic data;no live-user settings changed.",
+    "Raster comparison page is a fixed capture;actual development UI is theme-reactive.",
+    "Existing039A composition evidence retains its original exact-input scope;new test adds theme linkage,not a whole-UI certification."
+  ]
+}

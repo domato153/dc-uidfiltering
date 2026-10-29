@@ -10,7 +10,7 @@ Use this file in the exact active nested worktree supplied by the private prompt
 
 ## Retrieve only for the question
 
-Current user steering2026-10-29: [B1_MEMO_WORKBENCH.md](B1_MEMO_WORKBENCH.md) owns selected v7 memo implementation and later reuse across list/article/write/popups. [B1_GLASS_REFERENCE_BRIEF.md](B1_GLASS_REFERENCE_BRIEF.md) binds research and the chosen image. Review actual whole/detail captures against it;earlier CSS spikes/v1–v6 stay superseded. NEXT_TASK.md owns one bounded action.
+Current user steering2026-10-29: user adopted the rendered memo v7 tone for other UI. [B1_MEMO_WORKBENCH.md](B1_MEMO_WORKBENCH.md) owns rollout order;[UI_REVIEW_CHECKLIST.md](UI_REVIEW_CHECKLIST.md) owns the mandatory impact-scoped theme-accent gate. NEXT_TASK.md is list/header preflight and a matching image before implementation. Earlier CSS spikes/v1–v6 stay superseded.
 
 | Question / retrieval terms | Current route |
 | --- | --- |

@@ -4,6 +4,8 @@
 **Architecture:** Keep native settings discovery in the existing gallery-page-head adapter and presentation in its existing presenter/style slot. Reflow original nodes through CSS; no node moves, new behavior owners, storage or observers.
 **Spec:** `B1_GLASS_REFERENCE_BRIEF.md`; selected image `docs/design/b1-glass-window-researched-proposal-v7-2026-10-29.png` (SHA-256 `4748D2D43A417BA56B5AF8B72CEAEA1B905077793D1D22C9A562A859B7D01B0E`). User selected implementation on2026-10-29.
 
+**Adoption2026-10-29:** User reviewed the rendered implementation, accepted its tone as the reference for other UI, and required all UI accent colors to follow the existing palette setting. The light/dark implementation captures and selected v7 jointly document that direction; it does not approve unimplemented families. The mandatory, impact-scoped accent-link gate is in `UI_REVIEW_CHECKLIST.md`.
+
 ## Current unit
 
 - [x] Add a failing positive memo composition contract and retain the incumbent runtime as control.
@@ -22,6 +24,8 @@ Carry the same **glass frame/header, stable reading/editing paper, quiet seconda
 4. Script-owned menu/settings and native popups/login: apply the validated recipes through each existing visual owner.
 
 For each bounded family: inspect current native UI + incumbent B1 → generate/update a matching image before implementation when composition differs → implement common roles → inspect same-region whole/detail comparisons → run impact-selected checks only. Memo success does not certify other families. Extract shared tokens only for actually repeated roles; no new global override stylesheet. Discuss a concise guidebook only after the whole UI project ends, as previously requested.
+
+Before family closeout, apply the theme-accent gate in `UI_REVIEW_CHECKLIST.md`: inventory that family's accent roles, check actual palette-dialog updates in both themes, and preserve authored/semantic colors. A missing binding blocks only its affected slice. First reuse task is list/header preflight and an updated list design image using this adopted material language.
 
 ## Review focus / boundaries
 

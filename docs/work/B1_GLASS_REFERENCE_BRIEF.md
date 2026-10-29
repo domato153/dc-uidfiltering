@@ -102,3 +102,7 @@ Official example images are local-only material references under `artifacts/glas
 ## Selected v7 implementation — user2026-10-29
 
 User selected the researched v7 image and asked to implement the memo window, then plan reuse across list/article/write/other popups. Selected reference: docs/design/b1-glass-window-researched-proposal-v7-2026-10-29.png, SHA-256 4748D2D43A417BA56B5AF8B72CEAEA1B905077793D1D22C9A562A859B7D01B0E. Earlier v1–v6 proposals and CSS spikes remain superseded. B1_MEMO_WORKBENCH.md owns implementation/coverage/reuse order. V7 is selected as the design direction; rendered implementation aesthetic review remains separate.
+
+## Rendered-tone adoption — user2026-10-29
+
+User accepted the actual memo rendering and directed the same tone across other UI. The selected v7 and docs/design/b1-memo-workbench-light-2026-10-29.png jointly define this material direction. UI_REVIEW_CHECKLIST.md now owns the required accent-link gate;B1_MEMO_WORKBENCH.md owns incremental rollout. The current theme-link receipt proves actual palette UI preview/save/cancel for the listed memo roles,not all other UI.
