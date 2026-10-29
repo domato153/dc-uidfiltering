@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "kind": "B1_LIST_V7_PREFLIGHT",
+  "status": "PROPOSAL_CAPTURED_NOT_IMPLEMENTED",
+  "sourceBaseHead": "0ba865bf877010a5c09510260f8a2e43d2d69009",
+  "artifact": {
+    "mobileSha256": "039A88F9E92E43D55B35983AEB1F45FC87BBFBE2A51A7305CF668A257C7E6577",
+    "runtimeChanged": false,
+    "officialRelease": false
+  },
+  "reference": {
+    "path": "docs/design/b1-list-v7-proposal-v2-2026-10-29.png",
+    "sha256": "B93C94068842F8E87EB1283FC080AEF799E019ED9D41887A771D65B01838B90F",
+    "method": "Built-in ImageGen",
+    "approvedByUser": false,
+    "materialDirection": "User-adopted memo v7 rendering",
+    "memoImageSha256": "F40C243D8789E412D1D59CBA5D0661A6711821BAF3C042082308015136EB0FA5"
+  },
+  "preflight": {
+    "publicUrl": "https://gall.dcinside.com/mgallery/board/lists/?id=wutheringwaves",
+    "scope": "ANONYMOUS_GET_HEAD_GM_SHIM_NOT_EXTENSION",
+    "http": 200,
+    "visibleImagesDecoded": 14,
+    "horizontalOverflow": 0,
+    "localEvidence": "artifacts/b1-list-v7-2026-10-29",
+    "fixtureWarnings": [
+      "Two partial page-head witnesses and unowned headtext nav are not live-site layout defects."
+    ],
+    "noProductRebuild": true,
+    "noProductSuiteRun": true
+  },
+  "steering": {
+    "v1": "SUPERSEDED: artificial exact-layout/spacing/density constraints",
+    "v2": "No arbitrary composition limits and no novelty quota;plain text utilities/tabs/categories;memo tone remains cohesion anchor",
+    "futureGate": "docs/work/UI_REVIEW_CHECKLIST.md"
+  },
+  "knownAdaptations": [
+    "Retain original menu launcher omitted from generated image.",
+    "Consolidate duplicate comment count presentation.",
+    "Wide metadata columns need a separate layout980 phone treatment;do not blindly shrink.",
+    "No unsupported menu/field removal or native interactive node move."
+  ],
+  "next": "Review/resolve responsive adaptation,then implement the list/header family against the working image with theme and impact-selected checks. No claim of implementation or aesthetic approval."
+}

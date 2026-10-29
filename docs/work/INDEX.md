@@ -10,7 +10,7 @@ Use this file in the exact active nested worktree supplied by the private prompt
 
 ## Retrieve only for the question
 
-Current user steering2026-10-29: user adopted the rendered memo v7 tone for other UI. [B1_MEMO_WORKBENCH.md](B1_MEMO_WORKBENCH.md) owns rollout order;[UI_REVIEW_CHECKLIST.md](UI_REVIEW_CHECKLIST.md) owns the mandatory impact-scoped theme-accent gate. NEXT_TASK.md is list/header preflight and a matching image before implementation. Earlier CSS spikes/v1–v6 stay superseded.
+Current user steering2026-10-29: [B1_LIST_V7_MATERIAL.md](B1_LIST_V7_MATERIAL.md) owns revised list V2 preflight. [UI_REVIEW_CHECKLIST.md](UI_REVIEW_CHECKLIST.md) requires no artificial layout locks/no novelty quota,plus actual theme-accent linkage. Memo tone is adopted;list V2 geometry remains a working proposal. NEXT_TASK.md owns responsive adaptation/implementation;V1 stays superseded.
 
 | Question / retrieval terms | Current route |
 | --- | --- |

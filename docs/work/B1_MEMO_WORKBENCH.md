@@ -25,6 +25,8 @@ Carry the same **glass frame/header, stable reading/editing paper, quiet seconda
 
 For each bounded family: inspect current native UI + incumbent B1 → generate/update a matching image before implementation when composition differs → implement common roles → inspect same-region whole/detail comparisons → run impact-selected checks only. Memo success does not certify other families. Extract shared tokens only for actually repeated roles; no new global override stylesheet. Discuss a concise guidebook only after the whole UI project ends, as previously requested.
 
+User2026-10-29 clarification: scope limits are not layout locks. Inspect the whole requested screen and allow layout,shape,spacing,grouping and hierarchy changes when they improve it. The adopted memo tone anchors cohesion;do not constrain prompts to color/material-only edits or exact incumbent geometry. Do not maximize difference either. Preserve good existing elements and choose the useful extent of change. UI_REVIEW_CHECKLIST.md owns this generation/review rule.
+
 Before family closeout, apply the theme-accent gate in `UI_REVIEW_CHECKLIST.md`: inventory that family's accent roles, check actual palette-dialog updates in both themes, and preserve authored/semantic colors. A missing binding blocks only its affected slice. First reuse task is list/header preflight and an updated list design image using this adopted material language.
 
 ## Review focus / boundaries
