@@ -10,7 +10,7 @@ Use this file in the exact active nested worktree supplied by the private prompt
 
 ## Retrieve only for the question
 
-Current user steering2026-10-29: [B1_LIST_V7_MATERIAL.md](B1_LIST_V7_MATERIAL.md) owns the implemented list/header79DD slice and split evidence. [UI_REVIEW_CHECKLIST.md](UI_REVIEW_CHECKLIST.md) requires plain resting auxiliary text/icons with interaction-only surfaces,theme-accent linkage,and purposeful generation without artificial geometry locks or novelty quotas. Memo tone is adopted;final list aesthetics remain user-reviewable. NEXT_TASK.md owns article/comments preflight;V1 stays superseded.
+Current user steering2026-10-29: the actual list/header79DD tone is now user-adopted. [B1_ARTICLE_COMMENTS_V7_PREFLIGHT.md](B1_ARTICLE_COMMENTS_V7_PREFLIGHT.md) owns the new generated article/ordinary/image-comment proposal and explicit native adaptations. No article source change yet. [UI_REVIEW_CHECKLIST.md](UI_REVIEW_CHECKLIST.md) retains plain resting controls,theme-accent linkage and purposeful generation without layout locks/novelty quota. NEXT_TASK.md owns the bounded article/comments implementation;prior V1 omissions are not features.
 
 | Question / retrieval terms | Current route |
 | --- | --- |
