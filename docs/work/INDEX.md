@@ -10,7 +10,7 @@ Use this file in the exact active nested worktree supplied by the private prompt
 
 ## Retrieve only for the question
 
-Current user steering2026-10-30: [UI_REFERENCE_GUARD.md](UI_REFERENCE_GUARD.md) owns reference roles:actual adopted memo implementation for fine detail;generated images for composition/geometry. Adapt popup/page roles. [B1_ARTICLE_COMMENTS_V7_IMPLEMENTATION.md](B1_ARTICLE_COMMENTS_V7_IMPLEMENTATION.md) records the6434 article/comment unit;[B1_ARTICLE_ATTACHMENTS.md](B1_ARTICLE_ATTACHMENTS.md) closes the observed filename overlap and native action separators on2D2A. NEXT owns [B1_WRITE_V7_PREFLIGHT.md](B1_WRITE_V7_PREFLIGHT.md),including native nickname clear/use/recommendation-help states before writer redesign.
+Current user steering2026-10-30: [UI_REFERENCE_GUARD.md](UI_REFERENCE_GUARD.md) owns reference roles:actual adopted memo implementation for fine detail;generated images for composition/geometry. Adapt popup/page roles. [B1_ARTICLE_COMMENTS_V7_IMPLEMENTATION.md](B1_ARTICLE_COMMENTS_V7_IMPLEMENTATION.md) records the6434 article/comment unit;[B1_ARTICLE_ATTACHMENTS.md](B1_ARTICLE_ATTACHMENTS.md) closes the observed filename overlap and native action separators on2D2A. NEXT owns [B1_WRITE_V7_PREFLIGHT.md](B1_WRITE_V7_PREFLIGHT.md):new writer image is composition-only/user-review pending;actual adopted memo remains fine-detail authority. Includes native nickname clear/use/help and later minor/mini security/category adaptation.
 
 | Question / retrieval terms | Current route |
 | --- | --- |

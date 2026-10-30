@@ -2,19 +2,19 @@
 
 ## Current execution
 
-- Active plan: B1_ARTICLE_ATTACHMENTS.md closes the native article filename/separator follow-up. NEXT owns B1_WRITE_V7_PREFLIGHT.md:current memo detail plus a fresh writer composition,including nickname recommendation/direct-input/help compatibility.
+- Active plan: B1_WRITE_V7_PREFLIGHT.md has a new generated major-writer composition for user review. NEXT owns feedback then bounded existing-owner writer implementation. Actual first memo governs detail.
 - Workspace path: `.` (private prompt supplies exact worktree). Preserve debug.log unread/unstaged.
-- Active stage: `header-navigation` formal admission remains open;current bounded writer preflight is not registry promotion or whole-UI certification. C-07 N/A.
-- Accepted visual preference: actual first memo detail and adopted list/header tone;generated composition cannot override finish. Small auxiliaries are plain at rest with local hover/focus feedback.
-- Source state: Source checkpoint base HEAD `6c24d4a76f8a035f551cd9e8f5f40c9c35aa448c` on `codex/ui-port-boundary`;working2D2A changes only existing article-presenter product CSS. Writer/header/shared material/filter/storage/metadata/observers are unchanged. Publisher owns subsequent commit/push/CI identity.
-- Local-only state: `LOCAL_ONLY_EVIDENCE`;artifacts/b1-attachment-2026-10-30/ contains exact control/current and scoped results. Writer native/current/clear-use captures are under artifacts/b1-write-v7-2026-10-30/. No credential use or live writes;one browser job at a time.
-- Candidate fingerprint: `a5770cc286d0674c03beb2ec670d0d7d136e212ed312281806f947e7e55ba3d4`
-- Last current audit: READY for the named2D2A native repairs:5 affected tests pass;article22 immediate6434 observations match. Actual public filename3 states and action2 themes are viewed,with separators absent and icons retained. Diagnostic image differences are intentional,not baseline/user beauty approval. Writer nickname3 native states acquired;writer redesign not implemented. Fresh impact selects conservative acceptance for the new unmapped test path;that broad profile was not executed/passed,while the explicit5 affected tests and semantic comparison own this repair.
-- Current stage receipt: `verification/receipts/2026-10-30-b1-article-native-finish.json` SHA-256 `BCF4B8CCC59630DB1E2D3BF549F65B1B371A617CF077CF3D207E0F80FD183CE2` binds exact source/artifact/tests/native captures and writer-preflight limits. Earlier6434/69EC results retain their own scopes.
-- Accepted baseline: memo039A/list-header79DD and scoped6434 article/comment work remain retained. Native filename/separator defects are closed by this2D2A repair;no other popup family is silently migrated.
+- Active stage: `header-navigation` formal admission remains open;this writer image is not registry promotion or whole-UI certification. C-07 N/A.
+- Accepted visual preference: actual memo detail and adopted compact list/header tone. Generated images supply composition only;small auxiliaries plain at rest. Glass exterior/chrome and stable editing paper remain distinct.
+- Source state: Source checkpoint base HEAD `27cb3d6b96c29f442a4d22a55a362b93cfca16cb` on `codex/ui-port-boundary`;this unit adds image/prompts/continuity only. Product source,build output,versions and current2D2A runtime are unchanged. Publisher owns later commit/push/CI identity.
+- Local-only state: `LOCAL_ONLY_EVIDENCE`;artifacts/b1-write-v7-2026-10-30/ retains native/current/nickname inputs and superseded draft. No credential use or live writes;one browser job at a time.
+- Candidate fingerprint: `03b490e8f91b2cfaa51b3c7602dc68b37e35c5baf3bd22a703774b2ee53fd522`
+- Last current audit: READY for static-image user review only. Whole/readable-detail inspected after one material refinement. Pale registration button,unboxed two-row tools and direct-input/help/use-Y composition are visible;no evident overlap/truncation. This is not implementation,behavior,transmission,dark/responsive/palette qualification or user aesthetic approval. No product test rerun for image-only work.
+- Current stage receipt: `verification/receipts/2026-10-30-b1-write-v7-proposal.json` SHA-256 `9732D674905BAD64ADA3E6DE8FCBB0688AFE1CAFCF6698A47560A5B67419CC6A` binds image/prompts/references and scope. Prior native article finish receipt retains its exact2D2A product evidence.
+- Accepted baseline: memo039A/list-header79DD and scoped6434 article/comment work retained. Filename/separator repairs closed on2D2A at27cb3d6;this proposal does not migrate the writer or any other family.
 - Current artifact: Mobile3.5.5 2D2A0069D32164B6581541D7A257AAAD7366E5353F3800AD5DA7299178197AB8 root/dist/guard;PC1.9.9 8915F36E5B8887DC58EF9F932E39CCA28CCE1AC1020FD96460CCD10C08913581 unchanged. No version/official release change.
-- Blockers: No global Chrome/TM/runtime blocker. Populated public comments/account/device/formal whole-UI remain unqualified;they do not block anonymous writer preflight. Local comparison server may need restarting via its existing helper after host interruption.
-- Pending live checks: NEXT generates the writer composition after necessary variant acquisition;preserve original nickname fields/clear/use/help and native editor menus. Actual authentication,C-13/four uploads,physical phone/extension and formal admission remain separate. No image replies.
+- Blockers: No global Chrome/TM/runtime blocker. User reaction to new composition pending. Minor/mini/modify security/category geometry and actual implementation remain to inspect as affected;not silently qualified by the major raster.
+- Pending live checks: Preserve original nickname readonly/editable fields,clear/use/help and native tool menus. Actual authentication,C-13/four uploads,physical phone/extension and formal admission remain separate. No image replies.
 
 ```dcuf-current-artifacts
 {"schemaVersion":1,"mobile":{"sha256":"2D2A0069D32164B6581541D7A257AAAD7366E5353F3800AD5DA7299178197AB8"},"pc":{"sha256":"8915F36E5B8887DC58EF9F932E39CCA28CCE1AC1020FD96460CCD10C08913581"}}

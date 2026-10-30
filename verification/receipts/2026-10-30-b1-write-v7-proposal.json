@@ -1,0 +1,101 @@
+{
+  "schemaVersion": 1,
+  "kind": "B1_WRITE_V7_GENERATED_COMPOSITION",
+  "status": "IMAGE_READY_FOR_USER_REVIEW",
+  "sourceBaseHead": "27cb3d6b96c29f442a4d22a55a362b93cfca16cb",
+  "candidateFingerprint": "03b490e8f91b2cfaa51b3c7602dc68b37e35c5baf3bd22a703774b2ee53fd522",
+  "sourceChanged": false,
+  "runtimeChanged": false,
+  "artifacts": {
+    "mobileSha256": "2D2A0069D32164B6581541D7A257AAAD7366E5353F3800AD5DA7299178197AB8",
+    "pcSha256": "8915F36E5B8887DC58EF9F932E39CCA28CCE1AC1020FD96460CCD10C08913581",
+    "versionChanged": false,
+    "officialRelease": false
+  },
+  "composition": {
+    "path": "docs/design/b1-write-v7-proposal-2026-10-30.png",
+    "sha256": "ad3ac6e2f439b563595b7bdad69024a7f35c7ec08931906dcd71c1489d201ffa",
+    "width": 1448,
+    "height": 1086
+  },
+  "detailAuthority": {
+    "path": "docs/design/b1-memo-workbench-light-2026-10-29.png",
+    "role": "ACTUAL_MEMO_FINE_DETAIL_LIGHT",
+    "sha256": "f40c243d8789e412d1d59cba5d0661a6711821baf3c042082308015136eb0fa5"
+  },
+  "references": [
+    {
+      "path": "docs/design/b1-memo-workbench-light-2026-10-29.png",
+      "role": "ACTUAL_MEMO_FINE_DETAIL_LIGHT",
+      "sha256": "f40c243d8789e412d1d59cba5d0661a6711821baf3c042082308015136eb0fa5"
+    },
+    {
+      "path": "docs/design/b1-memo-workbench-dark-2026-10-29.png",
+      "role": "ACTUAL_MEMO_FINE_DETAIL_DARK_INSPECTED",
+      "sha256": "bb3932799ddfc1d24ac21c9573ff61f84b86269a1d9036726514f920c955d3ae"
+    },
+    {
+      "path": "artifacts/b1-write-v7-2026-10-30/current.png",
+      "role": "INCUMBENT_MAJOR_69EC_CAPABILITIES_HEADER",
+      "sha256": "b05384f4e4fc429c8819ac7871008a77944ae39a8667389a09e779c766922e24"
+    },
+    {
+      "path": "artifacts/b1-write-v7-2026-10-30/original.png",
+      "role": "ORIGINAL_MAJOR_CAPABILITIES",
+      "sha256": "00bc2170960c871d4d519b46144162be229c09fc8c36dc485aa35546b7bec357"
+    },
+    {
+      "path": "artifacts/b1-write-v7-2026-10-30/nickname-cleared.png",
+      "role": "CURRENT_2D2A_NATIVE_DIRECT_INPUT_HELP",
+      "sha256": "218cd696a2d4938db5151bb519aecfd7af9c46b6ccc5584a48b85cfa18684d6e"
+    },
+    {
+      "path": "artifacts/b1-write-refresh-2026-10-25/published.png",
+      "role": "HISTORICAL_32BA_MINOR_SECURITY_CATEGORY_CONTEXT",
+      "sha256": "9c55d4394c052ca9eeaa51099a0f6669558519e93870293b8d3c9687abc6130f"
+    },
+    {
+      "path": "docs/design/b1-write-v7-proposal-prompt-2026-10-30.txt",
+      "role": "INITIAL_EXACT_PROMPT",
+      "sha256": "a89536451f8f7c9f54e842f150f129357509a498d7471a4113350ac42061ccf2"
+    },
+    {
+      "path": "docs/design/b1-write-v7-proposal-refine-prompt-2026-10-30.txt",
+      "role": "FOCUSED_REFINEMENT_EXACT_PROMPT",
+      "sha256": "17c525bf6f9e06976c9a6e6df1f909fbb260983cdb4039eab457680111c3dc19"
+    }
+  ],
+  "review": {
+    "method": "Manual whole and readable original-resolution static visual comparison;not an implemented browser screenshot.",
+    "builtInImageGeneration": true,
+    "focusedRefinements": 1,
+    "mainVariant": "ANONYMOUS_MAJOR_COMIC_NEW6",
+    "overlapOrTruncationObserved": false,
+    "nativeNicknameDirectUseHelpVisible": true,
+    "nativeMediaAndFormatRowsPresent": true,
+    "primary": "Pale desaturated accent,dark ink,fine rim;actual memo governs finish.",
+    "rasterExclusions": [
+      "Faint per-tool seams are not required;meaningful group/plain-resting policy overrides raster.",
+      "Native copy/glyphs/form states and minor/mini security/category variants override omissions."
+    ],
+    "userAdopted": false,
+    "implemented": false
+  },
+  "checks": {
+    "inputImagesViewed": true,
+    "proposalPngHeaderDecoded": true,
+    "proposalDimensions": [
+      1448,
+      1086
+    ],
+    "productTests": "NOT_RUN_NO_PRODUCT_CHANGE",
+    "browserCapture": "NOT_RUN_EXISTING_INPUTS_REUSED_WITH_PROVENANCE",
+    "darkResponsivePaletteTransmission": "NOT_QUALIFIED_BY_STATIC_LIGHT_IMAGE"
+  },
+  "limits": [
+    "Composition candidate only;actual memo remains fine-detail authority.",
+    "No live submit/upload/auth/account action.",
+    "Original source/header/material/runtime unchanged.",
+    "No new owner,observer,storage,metadata or architecture promotion."
+  ]
+}
