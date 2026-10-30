@@ -1,0 +1,259 @@
+{
+  "schemaVersion": 1,
+  "kind": "B1_OWNED_MANAGEMENT_V7_IMPLEMENTATION",
+  "status": "IMPLEMENTED_SCOPED_VALIDATION_PASSED",
+  "sourceBaseHead": "6c677e1339472a5bfb7aa39f96cbb0d41220429e",
+  "candidateFingerprint": "fac71877e60d30090acb9aeb5e92979384f16cee919d8d29662ff8f2ab850265",
+  "artifacts": {
+    "mobileVersion": "3.5.5",
+    "mobileSha256": "B65001B97EBC8AE6D7B4C3DCD956B4BC8E35B3901D2A8CE951883F2A4DA4FEEA",
+    "rootDistGuardMatch": true,
+    "pcVersion": "1.9.9",
+    "pcSha256": "FEACBA669839690F398A1540EF925C71C078BD646C6C6435DD0EC639585539A3",
+    "pcFallbackAppearanceAndBehaviorPreserved": true,
+    "officialRelease": false
+  },
+  "inputs": [
+    {
+      "path": "src/targets/shared/settings-presenter.js",
+      "sha256": "8eb73c75df0150d084652058e55fc51f27666e4982bb6be42fde39a3c51a6744"
+    },
+    {
+      "path": "src/targets/shared/personal-block-host-adapter.js",
+      "sha256": "7f2e5d3b830f45728b4e52e2d5059d66dac8922bade3dc89bbad1423de74c36c"
+    },
+    {
+      "path": "src/targets/shared/popup-geometry-host-adapter.js",
+      "sha256": "7ffc936b838df4cd34a2ff3c5c7b0c21a259848b8cc9161d766c57d98f8a6073"
+    },
+    {
+      "path": "src/targets/mobile/theme-material-values.js",
+      "sha256": "f4d24cf2211ef9a31dd22010dcff2c4d42e71e7159d58f98e191e05ccc8d7f41"
+    },
+    {
+      "path": "src/targets/mobile/theme-host-style.js",
+      "sha256": "934fb2daccac53fcf76840ef80f0706b216db6395f68362ba12a9933f140dd94"
+    },
+    {
+      "path": "testbed/run-tests.mjs",
+      "sha256": "1315022414b0b682e11e2066f3d502fea46adf645f76ba5b5c1aeb3f9a840acd"
+    },
+    {
+      "path": "testbed/ui-owned-management-v7-contract.mjs",
+      "sha256": "2e0808497ba62a1331aa4af86fc29999cd8bea8d3f3a27614cdca7aa2c89b09c"
+    },
+    {
+      "path": "testbed/fixtures/b1-native-list.mjs",
+      "sha256": "2aee6d3534b3b158f888d0224e79cc48009078a0eec1ee73873a10798a9b056a"
+    },
+    {
+      "path": "testbed/harness/runner-utils.mjs",
+      "sha256": "fd7d7d24c1984e635eed3bc2c83f21a9e274f1f34d5416010a1595fbe3d5a5ab"
+    },
+    {
+      "path": "testbed/harness/visual-reference-policy.mjs",
+      "sha256": "29d00fb4ca7827169a98d72fe12a8a0a5b98deff2725fdabf8da284cbc422ec4"
+    },
+    {
+      "path": "docs/ui-surface-contracts.md",
+      "sha256": "7aed2a8053c54441fcbfc7849cf2fb63b8a773534f08b95ecc511615464c029b"
+    },
+    {
+      "path": "docs/work/B1_OWNED_MANAGEMENT_V7_IMPLEMENTATION.md",
+      "sha256": "3188ea9f025887fa042a27b6b495f9ba475e8b412f5b4c6c06779c1173896a86"
+    }
+  ],
+  "evidence": [
+    {
+      "path": "artifacts/b1-owned-v7-implementation-2026-10-31/composition-second.json",
+      "sha256": "c9365ae24915b0dfd4d4ed61aefadd2fb388be8d2e66dd1d012cacf02039a552"
+    },
+    {
+      "path": "artifacts/b1-owned-v7-implementation-2026-10-31/palette.json",
+      "sha256": "a8f2d36efd489deaf1209879b7bf2ce38344aa09696099f3b2dbda81e052a0b5"
+    },
+    {
+      "path": "artifacts/b1-owned-v7-implementation-2026-10-31/affected-1.json",
+      "sha256": "263bf647b8d24766987db190fb00aa577975862ea717e3f8a8187b240a2d6a04"
+    },
+    {
+      "path": "artifacts/b1-owned-v7-implementation-2026-10-31/affected-2.json",
+      "sha256": "03cac492c8edab3d806e28eff0c6fa13c59716ace324177bdb5af19512b5833c"
+    },
+    {
+      "path": "artifacts/b1-owned-v7-implementation-2026-10-31/affected-3.json",
+      "sha256": "199c5c438e5839c5c2bce2424cc1a574b1650e514f1216ba824bbace0b52d2b3"
+    },
+    {
+      "path": "artifacts/b1-owned-v7-implementation-2026-10-31/legacy-palette-final.json",
+      "sha256": "3744dd8618df3f9467e2d1f4b5c11276be12df302d22b22be89893544b3cb96e"
+    },
+    {
+      "path": "artifacts/b1-owned-v7-implementation-2026-10-31/pc-palette-port.json",
+      "sha256": "7fce540cf4cfd276817bf95a04ef6a6b7fdb7dffc3457962cc1c02061407a2fc"
+    },
+    {
+      "path": "artifacts/b1-owned-v7-implementation-2026-10-31/management-differential.json",
+      "sha256": "dc36e913f267c83a99ba023cf3394c289def8689695be510f0efc8b8bf8a4556"
+    },
+    {
+      "path": "artifacts/b1-owned-v7-implementation-2026-10-31/edge-probe.json",
+      "sha256": "de098d73fda98805f87c9dd95b6a895a1ee6ee35347b1012f382d9e8f4159766"
+    },
+    {
+      "path": "artifacts/b1-owned-v7-implementation-2026-10-31/visual-manifest.json",
+      "sha256": "cdbb836dc87ed8b0dded75e6679df3b0c34f271f5db7b558f9fbbea9ebdf2457"
+    },
+    {
+      "path": "artifacts/b1-owned-v7-implementation-2026-10-31/visual-review-settled/review.json",
+      "sha256": "a74f49a8f648f01ac1e97d3eb49eef9aab0d585cf3141a2758b41592fc4adc6a"
+    },
+    {
+      "path": "artifacts/b1-owned-v7-implementation-2026-10-31/viewer-check.json",
+      "sha256": "62fdb0d29a8d4235b1147df3c31d34fe0265c55fcaeae787405badcb1ad04ef1"
+    },
+    {
+      "path": "artifacts/b1-owned-v7-implementation-2026-10-31/baseline-red.json",
+      "sha256": "88126b2668ba6f75d5fa1a8d55d9bad4fbf55b83eec422212be6d09e10036eba"
+    },
+    {
+      "path": "artifacts/b1-owned-v7-implementation-2026-10-31/composition-first.json",
+      "sha256": "eb6221597cf35b046dfde5519fad914d82f0bfd64df14d7fdcf278029efdd451"
+    },
+    {
+      "path": "artifacts/b1-owned-v7-implementation-2026-10-31/legacy-palette-before-oracle-update.json",
+      "sha256": "dae171e7f85ebea50afc703366c554b0d5f315bbb54bafaaafcde098485dd611"
+    },
+    {
+      "path": "artifacts/b1-owned-v7-implementation-2026-10-31/compare-management.mjs",
+      "sha256": "2928f0ffd53b6cb57347a5daaabf87a48b06c5f32d9cf597567cc592b25b6257"
+    },
+    {
+      "path": "artifacts/b1-owned-v7-implementation-2026-10-31/probe-edges.mjs",
+      "sha256": "25f601b8b97fff8c415c9e70fa854b377daef8fc41f134c7b3cd98b0373011df"
+    },
+    {
+      "path": "docs/design/b1-owned-management-v7-light-2026-10-31.png",
+      "sha256": "fd28d01641c6f0f282a56a8ba062ed97c5af35577d1f56cfd79dfc56556a42d0"
+    },
+    {
+      "path": "docs/design/b1-owned-management-v7-dark-2026-10-31.png",
+      "sha256": "e4e4b063b6aa0fb3aacaa90d354f4a88ba4100aeda0e64e6295904ce0d038760"
+    }
+  ],
+  "reference": {
+    "path": "docs/design/b1-memo-workbench-light-2026-10-29.png",
+    "sha256": "F40C243D8789E412D1D59CBA5D0661A6711821BAF3C042082308015136EB0FA5",
+    "role": "Actual adopted material/button/type/icon detail",
+    "compositionPath": "docs/design/b1-owned-management-v7-proposal-2026-10-30.png",
+    "compositionSha256": "DDD4C17B070F73751717029B0D4EBB8DF81D83EC21427A7AF5E62C4C60103A4E",
+    "userImplementationAuthorized": true,
+    "userAestheticApprovalOfCurrent": false
+  },
+  "scope": {
+    "surfaces": [
+      "personal-management"
+    ],
+    "ids": [
+      "P-07",
+      "P-08",
+      "P-09",
+      "P-10",
+      "P-14"
+    ],
+    "sourceChanges": "Management-specific optional Mobile values,existing presenter CSS,initial geometry inputs;no owner/state/storage/build topology move",
+    "pc": "Shared code rebuilt;optional fallbacks exact frozen-control comparison",
+    "prioritiesAdded": 0,
+    "newObservers": 0
+  },
+  "validation": {
+    "browser": "156.0.8078.76",
+    "registeredTests": [
+      {
+        "target": "mobile",
+        "name": "B1 management v7: composition and original unsaved controls",
+        "status": "passed",
+        "report": "artifacts/b1-owned-v7-implementation-2026-10-31/composition-second.json"
+      },
+      {
+        "target": "mobile",
+        "name": "B1 management v7: palette preview save and cancel",
+        "status": "passed",
+        "report": "artifacts/b1-owned-v7-implementation-2026-10-31/palette.json"
+      },
+      {
+        "target": "mobile",
+        "name": "B1 glass: ordinary neutral backing through actual scrim",
+        "status": "passed",
+        "report": "artifacts/b1-owned-v7-implementation-2026-10-31/affected-1.json"
+      },
+      {
+        "target": "mobile",
+        "name": "B1 owned panels: readable conditional feedback and nested state",
+        "status": "passed",
+        "report": "artifacts/b1-owned-v7-implementation-2026-10-31/affected-2.json"
+      },
+      {
+        "target": "mobile",
+        "name": "shared popup geometry adapter exclusively owns settings and management pointer geometry",
+        "status": "passed",
+        "report": "artifacts/b1-owned-v7-implementation-2026-10-31/affected-3.json"
+      },
+      {
+        "target": "mobile",
+        "name": "UI palette reaches settings, block management, and backup card surfaces in light and dark",
+        "status": "passed",
+        "report": "artifacts/b1-owned-v7-implementation-2026-10-31/legacy-palette-final.json"
+      },
+      {
+        "target": "pc",
+        "name": "PC palette port themes only DCUF-owned controls and dialogs",
+        "status": "passed",
+        "report": "artifacts/b1-owned-v7-implementation-2026-10-31/pc-palette-port.json"
+      }
+    ],
+    "compositionContexts": 5,
+    "paletteCount": 14,
+    "paletteThemes": 2,
+    "conditionalContexts": 24,
+    "ordinaryNeutralTransmissionThemes": 2,
+    "semanticComparisonObservations": 36,
+    "exactPcAppearanceComparisons": 18,
+    "differentialDifferences": [],
+    "largeListMinimumResize": {
+      "rows": 150,
+      "themes": 2,
+      "width": 320,
+      "height": 260,
+      "positiveHits": [
+        "search",
+        "save",
+        "close",
+        "last row after scrolling"
+      ]
+    },
+    "independentReview": "Fresh read-only source review found no actionable issue;its large-list/minimum resize gap followed by explicit probe",
+    "visual": {
+      "pairs": 2,
+      "status": "DIFFERENCES_REQUIRE_REVIEW",
+      "referenceFidelity": "REVIEWED",
+      "productApproved": false
+    },
+    "viewerImagesDecoded": 8,
+    "redEvidence": "Frozen331 material fails before source change",
+    "fixedDefects": [
+      "content-box padding inflated row height",
+      "resize handle overlapped widened primary"
+    ],
+    "oldOracle": "Retired boxed-tools paint assertion changed to transparent tools plus v7 reading;behavior assertions retained",
+    "notRun": [
+      "unrelated full product/filter/network/editor suites",
+      "actual extension or physical phone for this candidate",
+      "real account/save/import/export",
+      "full keyboard and every hover state",
+      "all remaining popup families"
+    ]
+  },
+  "nextAction": "b1-owned-management-children-v7-preflight",
+  "hashMode": "Canonical LF for text;exact binary PNG and runtime bytes"
+}

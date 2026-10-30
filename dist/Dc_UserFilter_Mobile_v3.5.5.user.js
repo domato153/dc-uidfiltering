@@ -526,6 +526,52 @@ function __dcufBuildB1MaterialCss(ROOT_ATTRIBUTE) {
             --dcuf-v7-primary-bg: linear-gradient(180deg, var(--dcuf-control-highlight), transparent 68%), var(--dcuf-v7-primary-fill);
             --dcuf-v7-primary-rim: color-mix(in srgb, var(--dcuf-theme-accent) 48%, var(--dcuf-b1-rim));
             --dcuf-v7-primary-shadow: inset 0 1px 0 var(--dcuf-b1-rim), 0 3px 7px #152e3412;
+            /* Optional management values; shared consumers keep PC fallbacks. */
+            --dcuf-management-default-width: 720;
+            --dcuf-management-default-height: 560;
+            --dcuf-management-panel-radius: 16px;
+            --dcuf-management-inset: 20px;
+            --dcuf-management-title-size: 24px;
+            --dcuf-management-title-weight: 750;
+            --dcuf-management-tabs-display: flex;
+            --dcuf-management-tabs-gap: 4px;
+            --dcuf-management-tabs-margin: 0 20px;
+            --dcuf-management-tabs-padding: 0;
+            --dcuf-management-tabs-border: 0;
+            --dcuf-management-tab-height: 44px;
+            --dcuf-management-tab-padding: 10px 12px;
+            --dcuf-management-tab-size: 13px;
+            --dcuf-management-tab-selected-shadow: inset 0 -2px 0 var(--dcuf-theme-accent);
+            --dcuf-management-body-flex: 1 1 auto;
+            --dcuf-management-tools-padding: 0;
+            --dcuf-management-tools-border: 0;
+            --dcuf-management-quiet-bg: transparent;
+            --dcuf-management-quiet-rim: transparent;
+            --dcuf-management-quiet-shadow: none;
+            --dcuf-management-quiet-radius: 0;
+            --dcuf-management-action-weight: 600;
+            --dcuf-management-action-hover: var(--dcuf-v7-primary-bg);
+            --dcuf-management-danger-hover: var(--dcuf-control-danger-bg);
+            --dcuf-management-delete-height: 44px;
+            --dcuf-management-reading: var(--dcuf-v7-reading);
+            --dcuf-management-list-offset: 12px;
+            --dcuf-management-list-padding: 4px 12px;
+            --dcuf-management-list-border: 1px solid var(--dcuf-b1-rim);
+            --dcuf-management-list-radius: 10px;
+            --dcuf-management-list-gap: 0;
+            --dcuf-management-list-margin: 0;
+            --dcuf-management-row-height: 64px;
+            --dcuf-management-row-sizing: border-box;
+            --dcuf-management-row-padding: 12px 14px;
+            --dcuf-management-row-divider: inset 0 -1px 0 var(--dcuf-b1-line);
+            --dcuf-management-primary-width: 118px;
+            --dcuf-management-primary-radius: 10px;
+            --dcuf-management-primary-weight: 650;
+            --dcuf-management-primary-bg: var(--dcuf-v7-primary-bg);
+            --dcuf-management-primary-ink: var(--dcuf-v7-primary-ink);
+            --dcuf-management-primary-rim: var(--dcuf-v7-primary-rim);
+            --dcuf-management-primary-shadow: var(--dcuf-v7-primary-shadow);
+            --dcuf-management-resize-clearance: 44px;
         }
 `;
 }
@@ -2282,21 +2328,33 @@ const __dcufSettingsPresenter = (() => {
         [data-dcuf-surface="convenience-settings"] .dcuf-option-copy { min-width:0; }
         [data-dcuf-surface="convenience-settings"] .dcuf-option-copy strong,[data-dcuf-surface="convenience-settings"] .dcuf-option-copy small { display:block; }
         [data-dcuf-surface="convenience-settings"] .dcuf-option-copy small { margin-top:3px;color:var(--dcuf-theme-fg-muted,#687384);font-size:11.5px; }
-        [data-dcuf-surface="personal-management"][data-dcuf-role="panel"] { --dcuf-panel-width:600px;height:min(700px,calc(100dvh - 24px)); }
+        [data-dcuf-surface="personal-management"][data-dcuf-role="panel"] { --dcuf-panel-width:600px;--dcuf-radius-panel:var(--dcuf-management-panel-radius,14px);height:min(700px,calc(100dvh - 24px)); }
+        [data-dcuf-surface="personal-management"] .dcuf-panel-header { padding:14px var(--dcuf-management-inset,16px); }
+        [data-dcuf-surface="personal-management"] .dcuf-panel-title { font-size:var(--dcuf-management-title-size,var(--dcuf-panel-title-size,18px));font-weight:var(--dcuf-management-title-weight,820); }
         [data-dcuf-surface="personal-management"] .dcuf-panel-header-actions { display:flex;align-items:center;gap:7px; }
-        [data-dcuf-surface="personal-management"] .dcuf-management-tabs { flex:0 0 auto;margin:10px 12px 0; }
+        [data-dcuf-surface="personal-management"] .dcuf-management-tabs { display:var(--dcuf-management-tabs-display,grid);flex:0 0 auto;gap:var(--dcuf-management-tabs-gap,3px);margin:var(--dcuf-management-tabs-margin,10px 12px 0);padding:var(--dcuf-management-tabs-padding,3px);border:var(--dcuf-management-tabs-border,1px solid var(--dcuf-theme-border,#d9dde3));border-radius:var(--dcuf-management-quiet-radius,14px);background:var(--dcuf-management-quiet-bg,var(--dcuf-theme-surface-muted,#eef1f5)); }
+        [data-dcuf-surface="personal-management"] .panel-tab { min-height:var(--dcuf-management-tab-height,38px);padding:var(--dcuf-management-tab-padding,7px 9px);border-color:var(--dcuf-management-quiet-rim,transparent);border-radius:var(--dcuf-management-quiet-radius,10px);background:var(--dcuf-management-quiet-bg,var(--dcuf-control-secondary-bg,transparent));box-shadow:var(--dcuf-management-quiet-shadow,var(--dcuf-control-shadow,none));font-size:var(--dcuf-management-tab-size,12px); }
+        [data-dcuf-surface="personal-management"] .panel-tab[aria-selected="true"] { border-color:var(--dcuf-management-quiet-rim,color-mix(in srgb,var(--dcuf-theme-accent,#4263eb) 30%,var(--dcuf-theme-border,#d9dde3)));background:var(--dcuf-management-quiet-bg,var(--dcuf-control-selected-bg,var(--dcuf-theme-accent-soft,#e9efff)));box-shadow:var(--dcuf-management-tab-selected-shadow,var(--dcuf-control-shadow,0 3px 8px color-mix(in srgb,var(--dcuf-theme-accent,#4263eb) 12%,transparent))); }
         [data-dcuf-surface="personal-management"] .dcuf-count { display:inline-grid;min-width:20px;place-items:center;margin-left:4px;padding:2px 5px;border-radius:999px;background:color-mix(in srgb,var(--dcuf-theme-accent,#4263eb) 12%,transparent);font-size:10px; }
-        [data-dcuf-surface="personal-management"] .dcuf-management-body { display:flex;flex-direction:column; }
-        [data-dcuf-surface="personal-management"] .dcuf-management-tools { display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center;padding:10px;border:1px solid var(--dcuf-theme-border,#d9dde3);border-radius:14px;background-color:var(--dcuf-theme-card-top,#fff);background-image:none; }
+        [data-dcuf-surface="personal-management"] .dcuf-management-body { display:flex;flex:var(--dcuf-management-body-flex,0 1 auto);flex-direction:column;padding:12px var(--dcuf-management-inset,12px); }
+        [data-dcuf-surface="personal-management"] .dcuf-management-tools { display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center;padding:var(--dcuf-management-tools-padding,10px);border:var(--dcuf-management-tools-border,1px solid var(--dcuf-theme-border,#d9dde3));border-radius:var(--dcuf-management-quiet-radius,14px);background-color:var(--dcuf-management-quiet-bg,var(--dcuf-theme-card-top,#fff));background-image:none; }
         [data-dcuf-surface="personal-management"] .dcuf-search-field { display:flex;align-items:center;gap:7px;padding-left:11px;border:1px solid var(--dcuf-theme-border-strong,#cbd2db);border-radius:var(--dcuf-radius-control);background:var(--dcuf-theme-surface-input,#fff); }
         [data-dcuf-surface="personal-management"] .dcuf-search-field .dcuf-field { border:0;background-color:var(--dcuf-theme-surface-input,#fff);background-image:none;outline:0; }
-        [data-dcuf-surface="personal-management"] .dcuf-management-content { flex:1 1 auto;min-height:0;overflow:auto; }
-        [data-dcuf-surface="personal-management"] .dcuf-blocked-list { display:grid;gap:7px;margin:10px 0 0;padding:0;list-style:none; }
-        [data-dcuf-surface="personal-management"] .dcuf-blocked-item { display:flex;align-items:center;justify-content:space-between;gap:9px;min-height:50px;padding:8px 10px;border:1px solid var(--dcuf-theme-border,#d9dde3);border-radius:13px;background:var(--dcuf-theme-card-top,#fff); }
+        [data-dcuf-surface="personal-management"] .dcuf-management-content { flex:1 1 auto;min-height:0;overflow:auto;margin-top:var(--dcuf-management-list-offset,0);padding:var(--dcuf-management-list-padding,0);border:var(--dcuf-management-list-border,0);border-radius:var(--dcuf-management-list-radius,0);background:var(--dcuf-management-reading,transparent); }
+        [data-dcuf-surface="personal-management"] .dcuf-blocked-list { display:grid;gap:var(--dcuf-management-list-gap,7px);margin:var(--dcuf-management-list-margin,10px 0 0);padding:0;list-style:none; }
+        [data-dcuf-surface="personal-management"] .dcuf-blocked-item { display:flex;box-sizing:var(--dcuf-management-row-sizing,content-box);align-items:center;justify-content:space-between;gap:9px;min-height:var(--dcuf-management-row-height,50px);padding:var(--dcuf-management-row-padding,8px 10px);border:1px solid var(--dcuf-management-quiet-rim,var(--dcuf-theme-border,#d9dde3));border-radius:var(--dcuf-management-quiet-radius,13px);background:var(--dcuf-management-quiet-bg,var(--dcuf-theme-card-top,#fff));box-shadow:var(--dcuf-management-row-divider,none); }
+        [data-dcuf-surface="personal-management"] .dcuf-blocked-item:last-child { box-shadow:none; }
         [data-dcuf-surface="personal-management"] .dcuf-blocked-item.item-to-delete { border-color:color-mix(in srgb,#c43249 45%,var(--dcuf-theme-border,#d9dde3));background:color-mix(in srgb,#c43249 12%,var(--dcuf-theme-card-top,#fff));opacity:var(--dcuf-panel-pending-opacity,.72); }
         [data-dcuf-surface="personal-management"] .dcuf-blocked-item.item-to-delete .dcuf-item-name { text-decoration:var(--dcuf-panel-pending-decoration,none); }
         [data-dcuf-surface="personal-management"] .dcuf-item-name { min-width:0;overflow-wrap:anywhere; }
-        [data-dcuf-surface="personal-management"] .dcuf-delete-item { flex:0 0 auto;min-height:36px; }
+        [data-dcuf-surface="personal-management"] .panel-add-btn { border-color:var(--dcuf-management-quiet-rim,var(--dcuf-control-rim,var(--dcuf-theme-border-strong,#cbd2db)));background:var(--dcuf-management-quiet-bg,var(--dcuf-control-selected-bg,var(--dcuf-theme-accent-soft,#e9efff)));box-shadow:var(--dcuf-management-quiet-shadow,var(--dcuf-control-shadow,none));font-weight:var(--dcuf-management-action-weight,780); }
+        [data-dcuf-surface="personal-management"] .select-all-btn,[data-dcuf-surface="personal-management"] .select-all-global-btn,[data-dcuf-surface="personal-management"] .panel-backup-btn { border-color:var(--dcuf-management-quiet-rim,color-mix(in srgb,var(--dcuf-theme-accent,#4263eb) 24%,var(--dcuf-theme-border,#d9dde3)));background:var(--dcuf-management-quiet-bg,var(--dcuf-control-secondary-bg,var(--dcuf-theme-accent-soft,#e9efff)));box-shadow:var(--dcuf-management-quiet-shadow,var(--dcuf-control-shadow,none));font-weight:var(--dcuf-management-action-weight,780); }
+        [data-dcuf-surface="personal-management"] .dcuf-delete-item { flex:0 0 auto;min-height:var(--dcuf-management-delete-height,36px);border-color:var(--dcuf-management-quiet-rim,color-mix(in srgb,#c43249 45%,var(--dcuf-theme-border,#d9dde3)));background:var(--dcuf-management-quiet-bg,var(--dcuf-control-danger-bg,color-mix(in srgb,#c43249 12%,var(--dcuf-theme-card-top,#fff))));box-shadow:var(--dcuf-management-quiet-shadow,var(--dcuf-control-shadow,none));font-weight:var(--dcuf-management-action-weight,780); }
+        [data-dcuf-surface="personal-management"] .panel-add-btn:hover,[data-dcuf-surface="personal-management"] .panel-add-btn:focus-visible { background:var(--dcuf-management-action-hover,var(--dcuf-control-selected-bg,var(--dcuf-theme-accent-soft,#e9efff))); }
+        [data-dcuf-surface="personal-management"] .select-all-btn:hover,[data-dcuf-surface="personal-management"] .select-all-btn:focus-visible,[data-dcuf-surface="personal-management"] .select-all-global-btn:hover,[data-dcuf-surface="personal-management"] .select-all-global-btn:focus-visible,[data-dcuf-surface="personal-management"] .panel-backup-btn:hover,[data-dcuf-surface="personal-management"] .panel-backup-btn:focus-visible { background:var(--dcuf-management-action-hover,var(--dcuf-control-secondary-bg,var(--dcuf-theme-accent-soft,#e9efff))); }
+        [data-dcuf-surface="personal-management"] .dcuf-delete-item:hover,[data-dcuf-surface="personal-management"] .dcuf-delete-item:focus-visible { background:var(--dcuf-management-danger-hover,var(--dcuf-control-danger-bg,color-mix(in srgb,#c43249 12%,var(--dcuf-theme-card-top,#fff)))); }
+        [data-dcuf-surface="personal-management"] .dcuf-panel-footer { padding:12px var(--dcuf-management-inset,12px);padding-right:var(--dcuf-management-resize-clearance,var(--dcuf-management-inset,12px)); }
+        [data-dcuf-surface="personal-management"] .panel-save-btn { min-width:var(--dcuf-management-primary-width,auto);border-radius:var(--dcuf-management-primary-radius,var(--dcuf-radius-control));border-color:var(--dcuf-management-primary-rim,var(--dcuf-control-primary-rim,var(--dcuf-theme-accent-ink,#315fdb)));background:var(--dcuf-management-primary-bg,var(--dcuf-theme-accent-strong,#315fdb));color:var(--dcuf-management-primary-ink,var(--dcuf-theme-on-accent,#fff));box-shadow:var(--dcuf-management-primary-shadow,var(--dcuf-control-shadow,0 7px 16px var(--dcuf-theme-accent-shadow,rgba(49,95,219,.24))));font-weight:var(--dcuf-management-primary-weight,780); }
         [data-dcuf-surface="personal-management"] .dcuf-blocked-empty { display:grid;min-height:120px;place-items:center;color:var(--dcuf-panel-empty-ink,var(--dcuf-theme-fg-muted,#687384));text-align:center; }
         [data-dcuf-surface="personal-backup"][data-dcuf-role="panel"] { --dcuf-panel-width:560px; }
         [data-dcuf-surface="personal-backup"] .dcuf-backup-body { display:grid;gap:10px; }
@@ -19699,11 +19757,14 @@ const ThemeModule = (() => {
 
             (() => { // async 키워드 제거
                 // 저장된 값을 불러오는 대신 항상 기본값으로 패널 위치와 크기를 설정
+                const presentation = window.getComputedStyle(panel);
+                const preferredWidth = Number.parseFloat(presentation.getPropertyValue('--dcuf-management-default-width')) || 400;
+                const preferredHeight = Number.parseFloat(presentation.getPropertyValue('--dcuf-management-default-height')) || 500;
                 const defaultGeo = {
                     left: '50%',
                     top: '50%',
-                    width: `${Math.min(400, Math.max(280, window.innerWidth - 24))}px`,
-                    height: `${Math.min(500, Math.max(320, window.innerHeight - 24))}px`
+                    width: `${Math.min(preferredWidth, Math.max(280, window.innerWidth - 24))}px`,
+                    height: `${Math.min(preferredHeight, Math.max(320, window.innerHeight - 24))}px`
                 };
                 // 기본값은 항상 % 단위이므로, transform 스타일을 항상 적용하여 정중앙에 배치
                 panel.style.transform = 'translate(-50%, -50%)';

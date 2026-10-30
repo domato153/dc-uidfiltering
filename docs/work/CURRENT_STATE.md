@@ -2,22 +2,22 @@
 
 ## Current execution
 
-- Active plan: B1_OWNED_V7_PREFLIGHT.md records fresh owned menu/settings anatomy and the generated management composition. NEXT owns its user review before product implementation;actual memo remains detail authority.
+- Active plan: B1_OWNED_MANAGEMENT_V7_IMPLEMENTATION.md owns completed scoped management implementation. NEXT inspects manual-add/backup children under the new parent;old proposal-review wait is superseded by the user's implementation request.
 - Workspace path: `.` (private prompt supplies exact worktree). Preserve debug.log unread/unstaged.
-- Active stage: `header-navigation` formal admission remains open;this owned-window image is not registry promotion or whole-UI certification. C-07 N/A.
-- Accepted visual preference: actual memo detail and adopted compact list/header tone. Generated images supply composition only;small auxiliaries plain at rest. Glass exterior/chrome and stable editing paper remain distinct.
-- Source state: Source checkpoint base HEAD `21e82a4f407d3d42f25297bf339940ee82147c37` on `codex/ui-port-boundary`;owned-window preflight changes only reference assets/briefs/retrieval. Product src/build/architecture/testbed and Mobile331336FE/PC8915 bytes remain unchanged. The writer/inventory development checkpoint21e82a4 was remote-synced and CI-verified.
-- Local-only state: `LOCAL_ONLY_EVIDENCE`;artifacts/b1-owned-v7-preflight-2026-10-30/ holds six synthetic captures and viewer decode checks;superseded generation stays ignored. Curated original/proposal PNGs and prompts are tracked. No credentials or real saves;one browser job at a time.
-- Candidate fingerprint: `1f398ba40497edb2d28476033359457e2fc45ff59ac9a714435f8460f19ffdca`
-- Last current audit: READY for composition review only. Six menu/management/filter light-dark observations have0 panel horizontal overflow and unchanged synthetic saved settings;all six viewer images decoded. Proposal DDD4C17B is generated composition,not an implemented/adopted surface or proof of blur/contrast/palette behavior. Unchanged product code had no new product-test/build run.
-- Current stage receipt: `verification/receipts/2026-10-31-b1-owned-v7-preflight.json` SHA-256 `5BA4D862FDEA1CB590642FAE9662EFCBDDA9C49AAD68DF2E6AFDC3499A1C116D` binds the current preflight/images and unchanged331336FE runtime. Writer13 tests/25 semantic observations remain in their exact earlier implementation receipt,not repeated here.
-- Accepted baseline: actual memo039A,list-header79DD,article/comments6434 and native article2D2A retained;writer331336FE is implemented/validated on21e82a4. The refined management proposal is pending user review,with no automatic product adoption.
-- Current artifact: Mobile3.5.5 331336FE15D7951AD3751D0A76AD201CFBB9AB31A209B1A7A747E6331AD976F2 root/dist/guard;PC1.9.9 8915F36E5B8887DC58EF9F932E39CCA28CCE1AC1020FD96460CCD10C08913581 unchanged. No version/official release change.
-- Blockers: None for the completed preflight. User composition decision is pending before management implementation. Its400×500 inline default is a known implementation dependency,not a browser/tool capability blocker;formal/account/device gaps remain separate.
-- Pending live checks: Account/authenticated/external upload/device/extension and whole-UI gaps remain separate. NEXT reviews the management image;future implementation preserves shared PC fallbacks and runs actual-impact checks. Image comments have no replies.
+- Active stage: `header-navigation` formal admission remains open;this management unit is not registry promotion or whole-UI certification. C-07 N/A.
+- Accepted visual preference: Actual memo fine detail;generated images guide grouping/geometry. Glass chrome and stable reading/editing paper remain separate;small auxiliaries plain at rest.
+- Source state: Source checkpoint base HEAD `6c677e1339472a5bfb7aa39f96cbb0d41220429e` on `codex/ui-port-boundary`. Management-only optional Mobile values in shared presenter,existing adapter default geometry and targeted tests changed. PC rebuilt with preserved fallbacks. Authorized exact-path checkpoint follows this validated unit;fresh Git/checkpoint receipt owns final publication disposition.
+- Local-only state: `LOCAL_ONLY_EVIDENCE`;artifacts/b1-owned-v7-implementation-2026-10-31/ holds guarded reports,frozen controls,A/B comparison and visual report. Curated actual light/dark PNGs are tracked. One browser at a time;no credentials/real save/account actions.
+- Candidate fingerprint: `fac71877e60d30090acb9aeb5e92979384f16cee919d8d29662ff8f2ab850265`
+- Last current audit: PASS for scoped implementation validation:6 Mobile/1 PC registered tests,5 composition contexts,14-palette×2-theme preview/save/cancel,36 semantic comparisons and18 exact PC appearance comparisons.150-row/minimum-resize positive-hit probe passed. Two visual diagnostic pairs REVIEWED;no automatic beauty/baseline/whole-UI approval.
+- Current stage receipt: `verification/receipts/2026-10-31-b1-owned-management-v7-implementation.json` SHA-256 `2AACE3947376F1F3FF0915CD5ECF93AE13C919BFF3352C715E8143EDDF7ACE02` binds B65001B9/FEAC candidate and exact input/evidence hashes. Prior preflight receipt is historical;its product-unchanged/proposal-pending status no longer describes current source.
+- Accepted baseline: Actual memo039A,list-header79DD,article/comments6434/native2D2A and writer331336FE retained within their original scopes. User authorized management composition with actual memo material;current implementation aesthetic adoption remains for user review.
+- Current artifact: Mobile3.5.5 B65001B97EBC8AE6D7B4C3DCD956B4BC8E35B3901D2A8CE951883F2A4DA4FEEA root/dist/guard;PC1.9.9 FEACBA669839690F398A1540EF925C71C078BD646C6C6435DD0EC639585539A3 root/dist. No version/official release change.
+- Blockers: None for this scoped implementation. Manual-add/backup/menu/settings visuals are separate remaining slices;formal/account/device gaps remain distinct.
+- Pending live checks: Current candidate actual extension/device,authenticated paths and all-popup certification remain outside this unit.980×2306 is adopted-layout proxy;390 is stress. NEXT is read-only child preflight,not full-suite recapture. Image comments have no replies.
 
 ```dcuf-current-artifacts
-{"schemaVersion":1,"mobile":{"sha256":"331336FE15D7951AD3751D0A76AD201CFBB9AB31A209B1A7A747E6331AD976F2"},"pc":{"sha256":"8915F36E5B8887DC58EF9F932E39CCA28CCE1AC1020FD96460CCD10C08913581"}}
+{"schemaVersion":1,"mobile":{"sha256":"B65001B97EBC8AE6D7B4C3DCD956B4BC8E35B3901D2A8CE951883F2A4DA4FEEA"},"pc":{"sha256":"FEACBA669839690F398A1540EF925C71C078BD646C6C6435DD0EC639585539A3"}}
 ```
 
 ## Draft-complete checkpoint — 2026-10-21

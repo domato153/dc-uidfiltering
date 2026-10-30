@@ -1153,11 +1153,14 @@
 
             (() => { // async 키워드 제거
                 // 저장된 값을 불러오는 대신 항상 기본값으로 패널 위치와 크기를 설정
+                const presentation = window.getComputedStyle(panel);
+                const preferredWidth = Number.parseFloat(presentation.getPropertyValue('--dcuf-management-default-width')) || 400;
+                const preferredHeight = Number.parseFloat(presentation.getPropertyValue('--dcuf-management-default-height')) || 500;
                 const defaultGeo = {
                     left: '50%',
                     top: '50%',
-                    width: `${Math.min(400, Math.max(280, window.innerWidth - 24))}px`,
-                    height: `${Math.min(500, Math.max(320, window.innerHeight - 24))}px`
+                    width: `${Math.min(preferredWidth, Math.max(280, window.innerWidth - 24))}px`,
+                    height: `${Math.min(preferredHeight, Math.max(320, window.innerHeight - 24))}px`
                 };
                 // 기본값은 항상 % 단위이므로, transform 스타일을 항상 적용하여 정중앙에 배치
                 panel.style.transform = 'translate(-50%, -50%)';
