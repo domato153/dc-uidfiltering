@@ -10,7 +10,7 @@ Use this file in the exact active nested worktree supplied by the private prompt
 
 ## Retrieve only for the question
 
-Current user steering2026-10-30: [UI_REFERENCE_GUARD.md](UI_REFERENCE_GUARD.md) owns reference roles:actual adopted memo implementation for fine detail;generated article for composition;corrected composer close-up for geometry. Adapt popup/page roles rather than copying modal chrome. [B1_ARTICLE_COMMENTS_V7_PREFLIGHT.md](B1_ARTICLE_COMMENTS_V7_PREFLIGHT.md) records the rejected overlapping composer and correction. [B1_ARTICLE_COMMENTS_V7_IMPLEMENTATION.md](B1_ARTICLE_COMMENTS_V7_IMPLEMENTATION.md) now records the bounded6434 implementation and exact tests/comparisons. Native attachment-label density is a separate observed follow-up routed by NEXT;writer/forms reuse follows it.
+Current user steering2026-10-30: [UI_REFERENCE_GUARD.md](UI_REFERENCE_GUARD.md) owns reference roles:actual adopted memo implementation for fine detail;generated images for composition/geometry. Adapt popup/page roles. [B1_ARTICLE_COMMENTS_V7_IMPLEMENTATION.md](B1_ARTICLE_COMMENTS_V7_IMPLEMENTATION.md) records the6434 article/comment unit;[B1_ARTICLE_ATTACHMENTS.md](B1_ARTICLE_ATTACHMENTS.md) closes the observed filename overlap and native action separators on2D2A. NEXT owns [B1_WRITE_V7_PREFLIGHT.md](B1_WRITE_V7_PREFLIGHT.md),including native nickname clear/use/recommendation-help states before writer redesign.
 
 | Question / retrieval terms | Current route |
 | --- | --- |

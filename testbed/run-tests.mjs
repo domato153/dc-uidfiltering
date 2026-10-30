@@ -45,6 +45,7 @@ import { runMemoWorkbenchContract } from './ui-b1-memo-workbench-contract.mjs';
 import { runMemoPaletteContract } from './ui-b1-memo-palette-contract.mjs';
 import { runListV7Contract, runListV7PaletteContract } from './ui-b1-list-v7-contract.mjs';
 import { runArticleV7Contract, runArticleV7PaletteContract, runArticleV7ContrastOracleContract } from './ui-b1-article-v7-contract.mjs';
+import { runArticleAttachmentContract, runRecommendationSeparatorContract } from './ui-article-attachment-contract.mjs';
 
 const args = new Set(process.argv.slice(2));
 const selectedGroup = process.argv.includes('--group') ? process.argv[process.argv.indexOf('--group') + 1] : null;
@@ -71,6 +72,8 @@ test('B1 list v7 palette: real dialog drives every primary and underline', 'func
 test('B1 article v7: memo finish and contained native composers', 'functional', async()=>runArticleV7Contract({browser,server}), ['mobile']);
 test('B1 article v7 palette: actual dialog updates native primary roles', 'functional', async()=>runArticleV7PaletteContract({browser,server}), ['mobile']);
 test('B1 article v7 contrast oracle: glyph mask retains mixed-background failures', 'functional', async()=>runArticleV7ContrastOracleContract({browser}), ['mobile']);
+test('Article attachments: filenames wrap without reading-font collisions', 'functional', async()=>runArticleAttachmentContract({browser,server}), ['mobile']);
+test('Article actions: native dark paint has no repeated separators', 'functional', async()=>runRecommendationSeparatorContract({browser,server}), ['mobile']);
 const mobileTest = (name, group, run) => test(name, group, run, ['mobile']);
 // Historical quick-write assertions remain unregistered until the related
 // workstream closes; the production feature itself has been removed.

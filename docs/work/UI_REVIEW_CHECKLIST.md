@@ -298,4 +298,6 @@ B1_INTEGRATED_UI_GAPS.md와 verification/receipts/2026-10-28-b1-integrated-ui-ga
 
 개별 캡처 숫자·예전 preflight next-task는 해당 역사적 문서에 남긴다. 현재 다음 실행은 NEXT_TASK.md 하나를 따른다.
 
-Current v7 reuse2026-10-30: B1_ARTICLE_COMMENTS_V7_IMPLEMENTATION.md/its exact receipt cover the changed article/ordinary/reply/image composer roles and material. This does not recolor every native popup or close all A/C children. Actual memo remains fine-detail reference;NEXT isolates the observed native attachment filename region before writer/forms expansion.
+Current v7 reuse2026-10-30: B1_ARTICLE_COMMENTS_V7_IMPLEMENTATION.md/its exact receipt cover the changed article/ordinary/reply/image composer roles and material. This does not recolor every native popup or close all A/C children. Actual memo remains fine-detail reference;B1_ARTICLE_ATTACHMENTS.md owns the following native-detail repair and NEXT routes the current writer/forms slice.
+
+Article follow-up2D2A: B1_ARTICLE_ATTACHMENTS.md closes the observed file-label overlap and native recommendation separators within its named checks. Writer v7 routes through B1_WRITE_V7_PREFLIGHT.md. Include recommended nickname/readonly,clear-X/direct name/use-button,use-Y restore,and the native recommendation/help layer in the changed writer check set;retain native field identity and allow the parent class to change. Additional real recommendation-list variants require their own acquired anatomy,not invented controls.

@@ -2,22 +2,22 @@
 
 ## Current execution
 
-- Active plan: B1_ARTICLE_COMMENTS_V7_IMPLEMENTATION.md records the completed bounded source unit;UI_REFERENCE_GUARD.md owns actual-memo detail priority. NEXT isolates the observed native attachment filename follow-up;writer/forms reuse follows.
+- Active plan: B1_ARTICLE_ATTACHMENTS.md closes the native article filename/separator follow-up. NEXT owns B1_WRITE_V7_PREFLIGHT.md:current memo detail plus a fresh writer composition,including nickname recommendation/direct-input/help compatibility.
 - Workspace path: `.` (private prompt supplies exact worktree). Preserve debug.log unread/unstaged.
-- Active stage: `header-navigation` formal admission remains open;no registry promotion or whole-UI certificate. C-07 N/A.
-- Accepted visual preference: actual first memo detail and adopted list/header tone;generated images are composition/geometry aids. Current article/comment render awaits user aesthetic review.
-- Source state: Source checkpoint base HEAD `00f03f111a4f914472e147c04d207b3b956134bf` on `codex/ui-port-boundary`;working candidate6434 changes existing article/comment presenters and narrows their legacy competitors. No owner/storage/observer/metadata/build-topology change. Publisher receipt owns subsequent commit/push/CI identity.
-- Local-only state: `LOCAL_ONLY_EVIDENCE`;artifacts/b1-article-v7-implementation-2026-10-30/ contains exact source-injected anonymous/native-shaped captures and scoped results. No credentials/live writes;one browser job at a time.
-- Candidate fingerprint: `26a30f5a494430b4f0af79f7d1bb7c8aa4fcc5434156fc5880e56a26d910cde8`
-- Last current audit: READY for the named6434 material/composer/native semantics scope:7 affected tests pass;article22/comment36 immediate-control observations equivalent. Visual pairs remain DIFFERENCES_REQUIRE_REVIEW/UNVERIFIED/user preference pending. Native attachment filename density is not closed. Fresh impact-final selects conservative acceptance because of new/unmapped test paths;that broad profile was not executed or passed. The explicit dependency-selected7 tests and immediate-control comparison own this slice.
-- Current stage receipt: `verification/receipts/2026-10-30-b1-article-comments-v7-closeout.json` SHA-256 `88E920CE8570BA38F6E33909479479E8D4A1E4EBA5D06AC595096BB0040C6368` binds the final projection and exact underlying v7 validation event;product/runtime/evidence unchanged by checkpoint document-format correction.
-- Accepted baseline: actual memo039A and adopted list/header79DD retain their named acceptance. Article/comment6434 is implemented and review-ready,not user-adopted whole UI. Native popup children remain prior B1 unless separately migrated.
-- Current artifact: Mobile3.5.5 643446C829422B49B740CF73635A7DA5B66C81AD0FBDA0158B80A40A41278F9F root/dist/guard;PC1.9.9 8915F36E5B8887DC58EF9F932E39CCA28CCE1AC1020FD96460CCD10C08913581 byte-identical. No version/official release change.
-- Blockers: No global Chrome/TM/runtime capability blocker. Native public populated comment POST data remains unacquired under GET-only capture;synthetic specimens are not live data.
-- Pending live checks: NEXT classifies observed attachment filename density before writer/forms preflight. User taste,account/data-filled/actual-extension/physical-phone and formal whole-UI checks stay separate. C-13/four uploads deferred;no image replies.
+- Active stage: `header-navigation` formal admission remains open;current bounded writer preflight is not registry promotion or whole-UI certification. C-07 N/A.
+- Accepted visual preference: actual first memo detail and adopted list/header tone;generated composition cannot override finish. Small auxiliaries are plain at rest with local hover/focus feedback.
+- Source state: Source checkpoint base HEAD `6c24d4a76f8a035f551cd9e8f5f40c9c35aa448c` on `codex/ui-port-boundary`;working2D2A changes only existing article-presenter product CSS. Writer/header/shared material/filter/storage/metadata/observers are unchanged. Publisher owns subsequent commit/push/CI identity.
+- Local-only state: `LOCAL_ONLY_EVIDENCE`;artifacts/b1-attachment-2026-10-30/ contains exact control/current and scoped results. Writer native/current/clear-use captures are under artifacts/b1-write-v7-2026-10-30/. No credential use or live writes;one browser job at a time.
+- Candidate fingerprint: `a5770cc286d0674c03beb2ec670d0d7d136e212ed312281806f947e7e55ba3d4`
+- Last current audit: READY for the named2D2A native repairs:5 affected tests pass;article22 immediate6434 observations match. Actual public filename3 states and action2 themes are viewed,with separators absent and icons retained. Diagnostic image differences are intentional,not baseline/user beauty approval. Writer nickname3 native states acquired;writer redesign not implemented. Fresh impact selects conservative acceptance for the new unmapped test path;that broad profile was not executed/passed,while the explicit5 affected tests and semantic comparison own this repair.
+- Current stage receipt: `verification/receipts/2026-10-30-b1-article-native-finish.json` SHA-256 `BCF4B8CCC59630DB1E2D3BF549F65B1B371A617CF077CF3D207E0F80FD183CE2` binds exact source/artifact/tests/native captures and writer-preflight limits. Earlier6434/69EC results retain their own scopes.
+- Accepted baseline: memo039A/list-header79DD and scoped6434 article/comment work remain retained. Native filename/separator defects are closed by this2D2A repair;no other popup family is silently migrated.
+- Current artifact: Mobile3.5.5 2D2A0069D32164B6581541D7A257AAAD7366E5353F3800AD5DA7299178197AB8 root/dist/guard;PC1.9.9 8915F36E5B8887DC58EF9F932E39CCA28CCE1AC1020FD96460CCD10C08913581 unchanged. No version/official release change.
+- Blockers: No global Chrome/TM/runtime blocker. Populated public comments/account/device/formal whole-UI remain unqualified;they do not block anonymous writer preflight. Local comparison server may need restarting via its existing helper after host interruption.
+- Pending live checks: NEXT generates the writer composition after necessary variant acquisition;preserve original nickname fields/clear/use/help and native editor menus. Actual authentication,C-13/four uploads,physical phone/extension and formal admission remain separate. No image replies.
 
 ```dcuf-current-artifacts
-{"schemaVersion":1,"mobile":{"sha256":"643446C829422B49B740CF73635A7DA5B66C81AD0FBDA0158B80A40A41278F9F"},"pc":{"sha256":"8915F36E5B8887DC58EF9F932E39CCA28CCE1AC1020FD96460CCD10C08913581"}}
+{"schemaVersion":1,"mobile":{"sha256":"2D2A0069D32164B6581541D7A257AAAD7366E5353F3800AD5DA7299178197AB8"},"pc":{"sha256":"8915F36E5B8887DC58EF9F932E39CCA28CCE1AC1020FD96460CCD10C08913581"}}
 ```
 
 ## Draft-complete checkpoint — 2026-10-21
