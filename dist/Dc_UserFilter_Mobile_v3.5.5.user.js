@@ -6560,7 +6560,7 @@ const __dcufSettingsPresenter = (() => {
             --dcuf-write-fg-sub: var(--dcuf-theme-fg-sub, #62747b);
             --dcuf-write-accent: var(--dcuf-theme-accent, #3f6de0);
             --dcuf-write-accent-strong: var(--dcuf-theme-accent-strong, #245bda);
-            --dcuf-write-surface: var(--dcuf-b1-paper, #ffffff);
+            --dcuf-write-surface: var(--dcuf-v7-reading, #ffffff);
             --dcuf-write-surface-muted: var(--dcuf-theme-surface-muted, #f6f8fb);
             --dcuf-write-border: var(--dcuf-b1-line, #d7e0ec);
             --dcuf-write-border-strong: var(--dcuf-theme-border-strong, #c7d3e4);
@@ -6573,7 +6573,7 @@ const __dcufSettingsPresenter = (() => {
             --dcuf-write-fg-sub: var(--dcuf-theme-fg-sub, #b6c4d9);
             --dcuf-write-accent: var(--dcuf-theme-accent, #8cb4ff);
             --dcuf-write-accent-strong: var(--dcuf-theme-accent-strong, #6f9dff);
-            --dcuf-write-surface: var(--dcuf-b1-paper, #20292c);
+            --dcuf-write-surface: var(--dcuf-v7-reading, #20292c);
             --dcuf-write-surface-muted: var(--dcuf-theme-surface-muted, #1e2a39);
             --dcuf-write-border: var(--dcuf-b1-line, #314258);
             --dcuf-write-border-strong: var(--dcuf-theme-border-strong, #45607c);
@@ -6676,7 +6676,7 @@ const __dcufSettingsPresenter = (() => {
             width: 100% !important;
             min-width: 0 !important;
             margin: 0 !important;
-            padding: 0 !important;
+            padding: var(--dcuf-write-fields-padding, 0) !important;
             border: 0 !important;
         }
         [data-dcuf-native-form-role="fields"][data-dcuf-native-form-state="write-editor"] > [data-dcuf-native-form-role="fields-legend"][data-dcuf-native-form-state="write-editor"] {
@@ -6787,7 +6787,7 @@ const __dcufSettingsPresenter = (() => {
             max-width: 100% !important;
             min-width: 0 !important;
             height: 46px !important;
-            padding: 0 12px !important;
+            padding: var(--dcuf-write-field-padding, 0 12px) !important;
             border: 1px solid var(--dcuf-write-border-strong) !important;
             border-radius: 9px !important;
             outline: none !important;
@@ -6894,7 +6894,7 @@ const __dcufSettingsPresenter = (() => {
             float: none !important;
             flex: 0 0 auto !important;
             scroll-snap-align: start;
-            border-radius: 999px !important;
+            border-radius: 6px !important;
             cursor: pointer;
         }
         [data-dcuf-native-form-role="headtext-option"][data-dcuf-native-form-state="write-editor"] [data-dcuf-native-form-role="headtext-tooltip"][data-dcuf-native-form-state="write-editor"] {
@@ -6917,17 +6917,18 @@ const __dcufSettingsPresenter = (() => {
             min-width: 48px !important;
             min-height: 38px !important;
             padding: 0 12px !important;
-            border: 1px solid var(--dcuf-write-border) !important;
-            border-radius: 999px !important;
-            background: var(--dcuf-write-surface) !important;
+            border: 1px solid transparent;
+            border-radius: 6px !important;
+            background: transparent !important;
             color: var(--dcuf-write-fg-sub) !important;
         }
         [data-dcuf-native-form-role="headtext-option"][data-dcuf-native-form-state="write-editor"][data-dcuf-native-form-option-state="selected"],
         [data-dcuf-native-form-role="headtext-option-control"][data-dcuf-native-form-state="write-editor"][data-dcuf-native-form-option-state="selected"] {
-            border-color: var(--dcuf-control-primary-rim) !important;
-            color: var(--dcuf-theme-on-accent, #fff) !important;
-            background: var(--dcuf-control-primary-bg) !important;
-            box-shadow: var(--dcuf-control-shadow) !important;
+            border-color: transparent;
+            border-bottom: 2px solid var(--dcuf-write-accent);
+            color: var(--dcuf-v7-primary-ink) !important;
+            background: var(--dcuf-v7-primary-bg) !important;
+            box-shadow: none !important;
         }
         [data-dcuf-native-form-role="editor-wrapper"][data-dcuf-native-form-state="write-editor"],
         [data-dcuf-native-form-role="editor-frame"][data-dcuf-native-form-state="write-editor"],
@@ -7122,14 +7123,14 @@ const __dcufSettingsPresenter = (() => {
             padding: 5px !important;
             border-color: var(--dcuf-control-rim) !important;
             overflow: visible !important;
-            background: var(--dcuf-control-secondary-bg) !important;
-            box-shadow: var(--dcuf-control-shadow) !important;
+            background: var(--dcuf-b1-sheen), color-mix(in srgb, var(--dcuf-write-surface) 68%, transparent) !important;
+            box-shadow: none !important;
         }
         [data-dcuf-native-form-role="editor-toolbar"][data-dcuf-native-form-state="write-editor"] > [data-dcuf-native-form-toolbar-item="1"] {
             flex: 0 0 auto !important;
         }
         [data-dcuf-native-form-role="form"][data-dcuf-native-form-state="write-editor"] [data-dcuf-native-form-role="editor-toolbar"][data-dcuf-native-form-state="write-editor"][data-dcuf-native-form-toolbar-scroll="horizontal"] {
-            flex-wrap: nowrap !important;
+            flex-wrap: var(--dcuf-write-toolbar-wrap, nowrap) !important;
             overflow-x: auto !important;
             overflow-y: hidden !important;
             overscroll-behavior-inline: contain;
@@ -7154,12 +7155,12 @@ const __dcufSettingsPresenter = (() => {
             min-width: 38px !important;
             min-height: 38px !important;
             padding: 0 9px !important;
-            border: 1px solid var(--dcuf-control-rim) !important;
+            border: 1px solid var(--dcuf-write-tool-rim, transparent) !important;
             border-radius: 8px !important;
-            color: var(--dcuf-write-fg) !important;
+            color: var(--dcuf-write-tool-ink, var(--dcuf-write-fg)) !important;
             -webkit-text-fill-color: currentColor !important;
-            background: var(--dcuf-control-secondary-bg) !important;
-            box-shadow: var(--dcuf-control-shadow) !important;
+            background: var(--dcuf-write-tool-bg, transparent) !important;
+            box-shadow: none !important;
         }
         [data-dcuf-native-form-role="editor-html-toggle-label"][data-dcuf-native-form-state="write-editor"] {
             display: inline-flex !important;
@@ -7296,15 +7297,16 @@ const __dcufSettingsPresenter = (() => {
             border-radius: 10px !important;
             color: var(--dcuf-write-fg) !important;
             background: var(--dcuf-control-secondary-bg) !important;
-            box-shadow: var(--dcuf-control-shadow) !important;
+            box-shadow: var(--dcuf-write-ai-shadow, var(--dcuf-control-shadow)) !important;
             font: inherit !important;
             white-space: nowrap !important;
         }
         [data-dcuf-native-form-role="form"][data-dcuf-native-form-state="write-editor"] [data-dcuf-native-form-role="ai-prompt-submit"][data-dcuf-native-form-state="write-editor"] {
             min-width: 72px !important;
-            border-color: var(--dcuf-control-primary-rim) !important;
-            color: var(--dcuf-theme-on-accent, #fff) !important;
-            background: var(--dcuf-control-primary-bg) !important;
+            border-color: var(--dcuf-v7-primary-rim) !important;
+            color: var(--dcuf-v7-primary-ink) !important;
+            background: var(--dcuf-v7-primary-bg) !important;
+            --dcuf-write-ai-shadow: var(--dcuf-v7-primary-shadow);
         }
         [data-dcuf-native-form-role="form"][data-dcuf-native-form-state="write-editor"] [data-dcuf-native-form-role="write-option-shell"][data-dcuf-native-form-state="write-editor"] {
             width: 100% !important;
@@ -7358,12 +7360,161 @@ const __dcufSettingsPresenter = (() => {
             background: var(--dcuf-control-secondary-bg) !important;
             box-shadow: var(--dcuf-control-shadow) !important;
         }
-        [data-dcuf-native-form-role="form"][data-dcuf-native-form-state="write-editor"] [data-dcuf-native-form-role="outer-action-primary"][data-dcuf-native-form-state="write-editor"] {
-            border-color: var(--dcuf-control-primary-rim) !important;
-            color: var(--dcuf-theme-on-accent, #fff) !important;
-            background: var(--dcuf-control-primary-bg) !important;
-            box-shadow: var(--dcuf-control-shadow) !important;
-            width: 132px !important;
+        /* Writer v7 uses the original native break; narrow stress may wrap
+           extra rows rather than hide tools. Existing overflow/drag stays usable. */
+        [data-dcuf-native-form-role="editor-toolbar-break"][data-dcuf-native-form-state="write-editor"] {
+            flex: 0 0 100%;
+            width: 100% !important;
+            height: 0;
+            min-height: 0;
+            margin: 0 !important;
+            padding: 0;
+            border: 0 !important;
+            order: 2;
+        }
+        [data-dcuf-native-form-role="form"][data-dcuf-native-form-state="write-editor"] [data-dcuf-native-form-role="editor-toolbar"][data-dcuf-native-form-state="write-editor"]:has([data-dcuf-native-form-role="editor-toolbar-break"]) { --dcuf-write-toolbar-wrap: wrap; }
+        [data-dcuf-native-form-role="form"][data-dcuf-native-form-state="write-editor"] [data-dcuf-native-form-role="editor-toolbar"][data-dcuf-native-form-state="write-editor"]:has([data-dcuf-native-form-role="editor-toolbar-break"]) [data-dcuf-native-form-toolbar-group="media"] { order: 0; }
+        [data-dcuf-native-form-role="form"][data-dcuf-native-form-state="write-editor"] [data-dcuf-native-form-role="editor-toolbar"][data-dcuf-native-form-state="write-editor"]:has([data-dcuf-native-form-role="editor-toolbar-break"]) [data-dcuf-native-form-toolbar-group="format"] { order: 3; }
+        [data-dcuf-native-form-role="form"][data-dcuf-native-form-state="write-editor"] [data-dcuf-native-form-role="editor-toolbar"][data-dcuf-native-form-state="write-editor"]:has([data-dcuf-native-form-role="editor-toolbar-break"]) [data-dcuf-native-form-role="editor-html-toggle-group"] { --dcuf-write-html-order: 1; }
+        [data-dcuf-native-form-toolbar-control~="ordinary"][data-dcuf-native-form-state="write-editor"]:not([data-dcuf-native-form-toolbar-control~="danger"]):hover,
+        [data-dcuf-native-form-toolbar-control~="ordinary"][data-dcuf-native-form-state="write-editor"]:not([data-dcuf-native-form-toolbar-control~="danger"]):focus-visible {
+            --dcuf-write-tool-bg: var(--dcuf-v7-primary-bg);
+            --dcuf-write-tool-rim: var(--dcuf-v7-primary-rim);
+            --dcuf-write-tool-ink: var(--dcuf-v7-primary-ink);
+        }
+        [data-dcuf-native-form-toolbar-control~="ordinary"][data-dcuf-native-form-state="write-editor"]:focus-visible {
+            outline: 2px solid var(--dcuf-write-accent);
+            outline-offset: -2px;
+        }
+        [data-dcuf-native-form-role="fields"][data-dcuf-native-form-state="write-editor"]:has([data-dcuf-native-form-role="nickname-help"][data-dcuf-native-form-state="write-editor"]:not([hidden]):not([style*="display: none"]):not([style*="display:none"])) {
+            --dcuf-write-fields-padding: 58px 0 0;
+        }
+        [data-dcuf-native-form-role="guest-field"][data-dcuf-native-form-state="write-editor"]:has([data-dcuf-native-form-role="name-input"][data-dcuf-native-form-state="write-editor"]) {
+            position: relative;
+        }
+        [data-dcuf-native-form-role="guest-field"][data-dcuf-native-form-state="write-editor"] [data-dcuf-native-form-role="name-input"][data-dcuf-native-form-state="write-editor"] {
+            --dcuf-write-field-padding: 0 108px 0 12px;
+        }
+        [data-dcuf-native-form-role="nickname-use"][data-dcuf-native-form-state="write-editor"], [data-dcuf-native-form-role="nickname-clear"][data-dcuf-native-form-state="write-editor"] {
+            position: absolute;
+            top: 50%;
+            right: 8px;
+            transform: translateY(-50%);
+            min-height: 30px;
+            margin: 0;
+            padding: 0 6px;
+            border: 0;
+            border-radius: 5px;
+            background: transparent;
+            color: var(--dcuf-theme-accent-ink);
+            font: 500 12px/1.3 system-ui,sans-serif;
+            cursor: pointer;
+        }
+        [data-dcuf-native-form-role="nickname-use"][data-dcuf-native-form-state="write-editor"] { width: 94px; }
+        /* Native #write_wrap .btn_circledel fixes top/right in pixels. */
+        [data-dcuf-native-form-role="nickname-clear"][data-dcuf-native-form-state="write-editor"] { width: 30px; height: 30px; top: 50% !important; right: 8px !important; }
+        [data-dcuf-native-form-role="nickname-clear"][data-dcuf-native-form-state="write-editor"]::before {
+            content: "×";
+            display: block;
+            width: 100%;
+            height: 100%;
+            background: none;
+            font: 20px/30px system-ui,sans-serif;
+        }
+        [data-dcuf-native-form-role="password-image-hint"][data-dcuf-native-form-state="write-editor"] { display: none; }
+        [data-dcuf-native-form-role="nickname-use"][data-dcuf-native-form-state="write-editor"]:hover, [data-dcuf-native-form-role="nickname-clear"][data-dcuf-native-form-state="write-editor"]:hover,
+        [data-dcuf-native-form-role="nickname-help-close"][data-dcuf-native-form-state="write-editor"]:hover { background: var(--dcuf-v7-primary-bg); }
+        [data-dcuf-native-form-role="nickname-use"][data-dcuf-native-form-state="write-editor"]:focus-visible, [data-dcuf-native-form-role="nickname-clear"][data-dcuf-native-form-state="write-editor"]:focus-visible,
+        [data-dcuf-native-form-role="nickname-help-close"][data-dcuf-native-form-state="write-editor"]:focus-visible { outline: 2px solid var(--dcuf-write-accent); outline-offset: 1px; }
+        /* Native .tip_box2 and its inner have important padding; display stays native. */
+        [data-dcuf-native-form-role="nickname-help"][data-dcuf-native-form-state="write-editor"] {
+            position: absolute;
+            inset: auto auto calc(100% + 10px) 0;
+            width: max-content;
+            max-width: min(360px,calc(100vw - 64px));
+            height: auto;
+            margin: 0;
+            padding: 8px 34px 8px 12px !important;
+            border: 1px solid var(--dcuf-v7-primary-rim);
+            border-radius: 7px;
+            background: var(--dcuf-v7-primary-bg);
+            color: var(--dcuf-v7-primary-ink);
+            box-shadow: var(--dcuf-v7-primary-shadow);
+            z-index: 4;
+            white-space: normal;
+        }
+        [data-dcuf-native-form-role="form"][data-dcuf-native-form-state="write-editor"] [data-dcuf-native-form-role="nickname-help-content"][data-dcuf-native-form-state="write-editor"] {
+            position: static;
+            padding: 0 !important;
+            border: 0;
+            background: transparent;
+            width: auto;
+            height: auto;
+        }
+        [data-dcuf-native-form-role="nickname-help-content"][data-dcuf-native-form-state="write-editor"]::before, [data-dcuf-native-form-role="nickname-help-content"][data-dcuf-native-form-state="write-editor"]::after {
+            content: none;
+        }
+        [data-dcuf-native-form-role="form"][data-dcuf-native-form-state="write-editor"] [data-dcuf-native-form-role="nickname-help-copy"][data-dcuf-native-form-state="write-editor"] {
+            margin: 0;
+            color: inherit;
+            width: auto;
+            height: auto;
+            padding: 0;
+            font: 500 12px/1.5 system-ui,sans-serif;
+        }
+        [data-dcuf-native-form-role="nickname-help"][data-dcuf-native-form-state="write-editor"]::before { content: none; }
+        [data-dcuf-native-form-role="nickname-help"][data-dcuf-native-form-state="write-editor"]::after {
+            content: "";
+            position: absolute;
+            inset: 100% auto auto 18px;
+            left: 18px !important;
+            width: 10px;
+            height: 8px;
+            border: 0;
+            background: var(--dcuf-v7-primary-fill);
+            clip-path: polygon(0 0,100% 0,50% 100%);
+        }
+        [data-dcuf-native-form-role="form"][data-dcuf-native-form-state="write-editor"] [data-dcuf-native-form-role="nickname-help-close"][data-dcuf-native-form-state="write-editor"] {
+            position: absolute;
+            inset: 4px 4px auto auto;
+            margin: 0;
+            width: 26px;
+            height: 26px;
+            border: 0;
+            border-radius: 5px;
+            background: transparent;
+            color: inherit;
+        }
+        [data-dcuf-native-form-role="nickname-help-close"][data-dcuf-native-form-state="write-editor"]::before { content: "×"; font: 18px/1 system-ui,sans-serif; }
+        [data-dcuf-native-form-role="write-notice"][data-dcuf-native-form-state="write-editor"] {
+            /* Visibility contract: legacy is-write-page may suppress this native notice. */
+            display: block !important;
+            height: auto;
+            min-height: 0;
+            margin: 12px 0;
+            padding: 0;
+            color: var(--dcuf-write-fg-sub);
+            font: 400 12px/1.65 system-ui,sans-serif;
+        }
+        [data-dcuf-native-form-role="write-notice"][data-dcuf-native-form-state="write-editor"] > p {
+            color: var(--dcuf-write-fg-sub);
+        }
+        [data-dcuf-native-form-role="write-notice"][data-dcuf-native-form-state="write-editor"] > p span,
+        [data-dcuf-native-form-role="write-notice"][data-dcuf-native-form-state="write-editor"] > p strong,
+        [data-dcuf-native-form-role="write-notice"][data-dcuf-native-form-state="write-editor"] > p em {
+            color: inherit;
+        }
+        [data-dcuf-native-form-role="write-notice"][data-dcuf-native-form-state="write-editor"] > p a,
+        [data-dcuf-native-form-role="write-notice"][data-dcuf-native-form-state="write-editor"] > p button {
+            color: var(--dcuf-write-fg-sub);
+        }
+        [data-dcuf-native-form-role="write-option-control"][data-dcuf-native-form-state="write-editor"] { color: var(--dcuf-write-fg); }
+        [data-dcuf-native-form-role="best-preference"][data-dcuf-native-form-state="write-editor"],
+        [data-dcuf-native-form-role="best-preference"][data-dcuf-native-form-state="write-editor"] label,
+        [data-dcuf-native-form-role="best-preference"][data-dcuf-native-form-state="write-editor"] span,
+        [data-dcuf-native-form-role="best-preference"][data-dcuf-native-form-state="write-editor"] strong,
+        [data-dcuf-native-form-role="best-preference"][data-dcuf-native-form-state="write-editor"] a {
+            color: var(--dcuf-write-fg-sub);
         }
         /* B1 fields stay readable paper; the outer frame carries glass depth. */
         [data-dcuf-native-form-role="subject-input"][data-dcuf-native-form-state="write-editor"],
@@ -7424,15 +7575,16 @@ const __dcufSettingsPresenter = (() => {
             line-height: 1 !important;
         }
         [data-dcuf-native-form-role="headtext-list"][data-dcuf-native-form-state="write-editor"] > [data-dcuf-native-form-role="headtext-option"][data-dcuf-native-form-state="write-editor"] {
-            border: 1px solid transparent !important;
+            border: 1px solid transparent;
             background: transparent !important;
             color: var(--dcuf-write-fg-sub) !important;
         }
         [data-dcuf-native-form-role="headtext-list"][data-dcuf-native-form-state="write-editor"] > [data-dcuf-native-form-role="headtext-option"][data-dcuf-native-form-state="write-editor"][data-dcuf-native-form-option-state="selected"] {
-            border-color: var(--dcuf-control-primary-rim) !important;
-            color: var(--dcuf-theme-on-accent, #fff) !important;
-            background: var(--dcuf-control-primary-bg) !important;
-            box-shadow: var(--dcuf-control-shadow) !important;
+            border-color: transparent;
+            border-bottom: 2px solid var(--dcuf-write-accent);
+            color: var(--dcuf-v7-primary-ink) !important;
+            background: var(--dcuf-v7-primary-bg) !important;
+            box-shadow: none !important;
         }
         [data-dcuf-native-form-role="editor-frame"][data-dcuf-native-form-state="write-editor"] {
             border-color: var(--dcuf-write-border) !important;
@@ -7441,8 +7593,8 @@ const __dcufSettingsPresenter = (() => {
         }
         [data-dcuf-native-form-role="form"][data-dcuf-native-form-state="write-editor"] [data-dcuf-native-form-role="editor-toolbar"][data-dcuf-native-form-state="write-editor"] {
             border-bottom: 1px solid var(--dcuf-write-border) !important;
-            background: var(--dcuf-control-secondary-bg) !important;
-            box-shadow: var(--dcuf-control-shadow) !important;
+            background: var(--dcuf-b1-sheen), color-mix(in srgb, var(--dcuf-write-surface) 68%, transparent) !important;
+            box-shadow: none !important;
         }
         [data-dcuf-native-form-role="editor-toolbar-group"][data-dcuf-native-form-state="write-editor"],
         [data-dcuf-native-form-role="editor-html-toggle-group"][data-dcuf-native-form-state="write-editor"] {
@@ -7465,7 +7617,7 @@ const __dcufSettingsPresenter = (() => {
             border: 0 !important;
         }
         [data-dcuf-native-form-role="editor-html-toggle-group"][data-dcuf-native-form-state="write-editor"] {
-            order: 99 !important;
+            order: var(--dcuf-write-html-order, 99) !important;
             margin-left: auto !important;
         }
         [data-dcuf-native-form-role="editor-html-toggle-group"][data-dcuf-native-form-state="write-editor"] {
@@ -7534,12 +7686,6 @@ const __dcufSettingsPresenter = (() => {
             pointer-events: auto !important;
             vertical-align: middle !important;
         }
-        [data-dcuf-native-form-toolbar-control~="ordinary"][data-dcuf-native-form-state="write-editor"] {
-            border-color: var(--dcuf-control-rim) !important;
-            border-radius: 10px !important;
-            background: var(--dcuf-control-secondary-bg) !important;
-            box-shadow: var(--dcuf-control-shadow) !important;
-        }
         [data-dcuf-native-form-toolbar-control~="ordinary"]:not([data-dcuf-native-form-toolbar-control~="danger"])[data-dcuf-native-form-state="write-editor"][data-dcuf-native-form-control-state~="active"] {
             border-color: var(--dcuf-write-accent) !important;
             background: var(--dcuf-control-selected-bg) !important;
@@ -7572,7 +7718,7 @@ const __dcufSettingsPresenter = (() => {
         }
         [data-dcuf-native-form-role="form"][data-dcuf-native-form-state="write-editor"] [data-dcuf-native-form-role="outer-action-primary"][data-dcuf-native-form-state="write-editor"],
         [data-dcuf-native-form-role="form"][data-dcuf-native-form-state="write-editor"] [data-dcuf-native-form-role="outer-action-secondary"][data-dcuf-native-form-state="write-editor"] {
-            min-height: 48px !important;
+            min-height: 44px !important;
             border-radius: 10px !important;
             background: var(--dcuf-control-secondary-bg) !important;
             box-shadow: var(--dcuf-control-shadow) !important;
@@ -7585,11 +7731,18 @@ const __dcufSettingsPresenter = (() => {
             width: 96px !important;
         }
         [data-dcuf-native-form-role="form"][data-dcuf-native-form-state="write-editor"] [data-dcuf-native-form-role="outer-action-primary"][data-dcuf-native-form-state="write-editor"] {
-            border-color: var(--dcuf-control-primary-rim) !important;
-            color: var(--dcuf-theme-on-accent, #fff) !important;
-            background: var(--dcuf-control-primary-bg) !important;
-            box-shadow: var(--dcuf-control-shadow) !important;
-            width: 132px !important;
+            width: 118px !important;
+            border-color: var(--dcuf-v7-primary-rim) !important;
+            color: var(--dcuf-v7-primary-ink) !important;
+            background: var(--dcuf-v7-primary-bg) !important;
+            box-shadow: var(--dcuf-v7-primary-shadow) !important;
+        }
+        [data-dcuf-native-form-role="form"][data-dcuf-native-form-state="write-editor"] [data-dcuf-native-form-role="outer-action-primary"][data-dcuf-native-form-state="write-editor"]:hover {
+            filter: brightness(1.025);
+        }
+        [data-dcuf-native-form-role="form"][data-dcuf-native-form-state="write-editor"] [data-dcuf-native-form-role="outer-action-primary"][data-dcuf-native-form-state="write-editor"]:focus-visible {
+            outline: 2px solid var(--dcuf-write-accent);
+            outline-offset: 3px;
         }
         [data-dcuf-native-form-role="popup-shell"][data-dcuf-native-form-state="write-editor"] {
             box-sizing: border-box !important;
@@ -7757,6 +7910,9 @@ const __dcufSettingsPresenter = (() => {
             box-shadow: var(--dcuf-control-shadow) !important;
         }
         @media screen and (max-width: 480px) {
+            [data-dcuf-native-form-role="fields"][data-dcuf-native-form-state="write-editor"] {
+                grid-template-columns: minmax(0,1fr);
+            }
             [data-dcuf-native-form-role="popup-shell"][data-dcuf-native-form-state="write-editor"] {
                 width: calc(100vw - 24px) !important;
                 max-width: calc(100vw - 24px) !important;
@@ -7796,11 +7952,6 @@ const __dcufSettingsPresenter = (() => {
         [data-dcuf-native-form-role="page"][data-dcuf-native-form-state="write-editor"].dc-filter-dark-mode [data-dcuf-native-form-role="captcha-input"][data-dcuf-native-form-state="write-editor"] {
             border-color: var(--dcuf-write-border) !important;
             background: var(--dcuf-write-surface) !important;
-        }
-        [data-dcuf-native-form-role="page"][data-dcuf-native-form-state="write-editor"].dc-filter-dark-mode [data-dcuf-native-form-role="editor-toolbar"][data-dcuf-native-form-state="write-editor"] {
-            border-color: var(--dcuf-control-rim) !important;
-            background: var(--dcuf-control-secondary-bg) !important;
-            box-shadow: var(--dcuf-control-shadow) !important;
         }
         [data-dcuf-native-form-role="page"][data-dcuf-native-form-state="write-editor"].dc-filter-dark-mode [data-dcuf-native-form-role="headtext-label"][data-dcuf-native-form-state="write-editor"] {
             background: var(--dcuf-write-surface-muted) !important;
@@ -7897,6 +8048,7 @@ const __dcufSettingsPresenter = (() => {
             'data-dcuf-native-form-toolbar-control',
             'data-dcuf-native-form-control-state',
             'data-dcuf-native-form-toolbar-content',
+            'data-dcuf-native-form-toolbar-group',
             'data-dcuf-native-form-box-sizing',
             'data-dcuf-native-form-control-kind',
         ]);
@@ -8237,7 +8389,7 @@ const __dcufSettingsPresenter = (() => {
                 ].filter(outsideEditorLayer))]
                 : [];
             const writeHiddenChrome = writeSurface
-                ? Array.from(form.querySelectorAll('.tx-toolbar-advanced, .write_infobox, .cm_ad, .adv_bottom_write, div[id^="kakao_ad_"]'))
+                ? Array.from(form.querySelectorAll('.tx-toolbar-advanced, .cm_ad, .adv_bottom_write, div[id^="kakao_ad_"]'))
                     .filter(outsideEditorLayer)
                 : [];
             const effectivePopupState = passwordSurface || writeSurface ? popupState(shell) : popupState(popup);
@@ -8293,6 +8445,25 @@ const __dcufSettingsPresenter = (() => {
                 });
                 markNativeContext(writeName, 'name-input', nativeContextState);
                 markNativeContext(writeGalleryName, 'name-input', nativeContextState);
+                // Native clear/use removes nomem_nick; bind the original controls,
+                // not that transient wrapper class. No field or handler replacement.
+                const nicknameField = writeName?.closest('.input_box') || writeGalleryName?.closest('.input_box');
+                const nicknameHelp = nicknameField?.querySelector('#tip_nomem_nick');
+                markNativeContext(nicknameField?.querySelector('#btn_gall_nick_name_x'), 'nickname-clear', nativeContextState);
+                markNativeContext(nicknameField?.querySelector('#btn_gall_nick_name_y'), 'nickname-use', nativeContextState);
+                markNativeContext(nicknameHelp, 'nickname-help', nativeContextState);
+                markNativeContext(nicknameHelp?.querySelector('.inner'), 'nickname-help-content', nativeContextState);
+                markNativeContext(nicknameHelp?.querySelector('.txt'), 'nickname-help-copy', nativeContextState);
+                markNativeContext(nicknameHelp?.querySelector('.btn_tipclose12'), 'nickname-help-close', nativeContextState);
+                markNativeContext(form.querySelector('.write_infobox'), 'write-notice', nativeContextState);
+                markNativeContext(form.querySelector('.dc-best-preference'), 'best-preference', nativeContextState);
+                // Native password hints may be an empty image-backed label.
+                // Keep the field/label and reversibly supply a readable hint.
+                if (writePassword && !writePassword.getAttribute('placeholder') && !writePassword.labels?.[0]?.textContent?.trim()) {
+                    setAttribute(writePassword, 'placeholder', '비밀번호');
+                    if (!writePassword.getAttribute('aria-label')) setAttribute(writePassword, 'aria-label', '비밀번호');
+                    markNativeContext(writePassword.labels?.[0], 'password-image-hint', nativeContextState);
+                }
                 markNativeContext(writePassword, 'password-input', nativeContextState);
                 markNativeContext(writeCaptcha, 'captcha-input', nativeContextState);
                 markNativeContext(writeCaptchaPanel, 'captcha-panel', nativeContextState);
@@ -8339,7 +8510,9 @@ const __dcufSettingsPresenter = (() => {
                         if (group.closest('.note-toolbar, .note-toolbar-media, .tx-toolbar-basic, .btns-box') !== toolbar) return;
                         if (group.closest('.note-dropdown-menu, .pop_wrap, .note-popover, .note-modal')) return;
                         const htmlToggleGroup = group.matches('.fixture-html-group') || group.querySelector('#chk_html');
-                        markNativeContext(group, htmlToggleGroup ? 'editor-html-toggle-group' : 'editor-toolbar-group', nativeContextState);
+                        const rowBreak = group.matches('.note-break');
+                        markNativeContext(group, htmlToggleGroup ? 'editor-html-toggle-group' : rowBreak ? 'editor-toolbar-break' : 'editor-toolbar-group', nativeContextState);
+                        setNativeContextAttribute(group, 'data-dcuf-native-form-toolbar-group', group.matches('.note-mybutton') ? 'media' : 'format');
                         if (group.parentElement === toolbar) setNativeContextAttribute(group, 'data-dcuf-native-form-toolbar-item', '1');
                     });
 

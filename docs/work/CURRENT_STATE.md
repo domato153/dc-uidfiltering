@@ -2,22 +2,22 @@
 
 ## Current execution
 
-- Active plan: B1_WRITE_V7_PREFLIGHT.md has a new generated major-writer composition for user review. NEXT owns feedback then bounded existing-owner writer implementation. Actual first memo governs detail.
+- Active plan: B1_WRITE_V7_IMPLEMENTATION.md closes the scoped writer unit;B1_WRITE_V7_CASCADE_APPROVAL.md records the necessity audit/conditional two-field update. NEXT owns the current script-owned menu/settings v7 preflight,not the historical draft.
 - Workspace path: `.` (private prompt supplies exact worktree). Preserve debug.log unread/unstaged.
 - Active stage: `header-navigation` formal admission remains open;this writer image is not registry promotion or whole-UI certification. C-07 N/A.
 - Accepted visual preference: actual memo detail and adopted compact list/header tone. Generated images supply composition only;small auxiliaries plain at rest. Glass exterior/chrome and stable editing paper remain distinct.
-- Source state: Source checkpoint base HEAD `27cb3d6b96c29f442a4d22a55a362b93cfca16cb` on `codex/ui-port-boundary`;this unit adds image/prompts/continuity only. Product source,build output,versions and current2D2A runtime are unchanged. Publisher owns later commit/push/CI identity.
-- Local-only state: `LOCAL_ONLY_EVIDENCE`;artifacts/b1-write-v7-2026-10-30/ retains native/current/nickname inputs and superseded draft. No credential use or live writes;one browser job at a time.
-- Candidate fingerprint: `03b490e8f91b2cfaa51b3c7602dc68b37e35c5baf3bd22a703774b2ee53fd522`
-- Last current audit: READY for static-image user review only. Whole/readable-detail inspected after one material refinement. Pale registration button,unboxed two-row tools and direct-input/help/use-Y composition are visible;no evident overlap/truncation. This is not implementation,behavior,transmission,dark/responsive/palette qualification or user aesthetic approval. No product test rerun for image-only work.
-- Current stage receipt: `verification/receipts/2026-10-30-b1-write-v7-proposal.json` SHA-256 `9732D674905BAD64ADA3E6DE8FCBB0688AFE1CAFCF6698A47560A5B67419CC6A` binds image/prompts/references and scope. Prior native article finish receipt retains its exact2D2A product evidence.
-- Accepted baseline: memo039A/list-header79DD and scoped6434 article/comment work retained. Filename/separator repairs closed on2D2A at27cb3d6;this proposal does not migrate the writer or any other family.
-- Current artifact: Mobile3.5.5 2D2A0069D32164B6581541D7A257AAAD7366E5353F3800AD5DA7299178197AB8 root/dist/guard;PC1.9.9 8915F36E5B8887DC58EF9F932E39CCA28CCE1AC1020FD96460CCD10C08913581 unchanged. No version/official release change.
-- Blockers: No global Chrome/TM/runtime blocker. User reaction to new composition pending. Minor/mini/modify security/category geometry and actual implementation remain to inspect as affected;not silently qualified by the major raster.
-- Pending live checks: Preserve original nickname readonly/editable fields,clear/use/help and native tool menus. Actual authentication,C-13/four uploads,physical phone/extension and formal admission remain separate. No image replies.
+- Source state: Source checkpoint base HEAD `bde48dc77f8294ed6a1d110b7f81741a2f0e344c` on `codex/ui-port-boundary`;native-form source/tests/docs and Mobile3.5.5 outputs331336FE align. Conditional inventory update changed only write count/hash774→767. Registry,ownership,verifier,PC/storage/metadata unchanged. Standing development checkpoint follows exact-tree validation.
+- Local-only state: `LOCAL_ONLY_EVIDENCE`;artifacts/b1-write-v7-implementation-2026-10-30/ holds scoped subruns,semantic/native captures and visual report;the earlier writer folder retains original inputs. No credential use or live writes;one browser job at a time.
+- Candidate fingerprint: `82f89e89e5cc8f6109eb8c121c24896c02642b48b0beb5262afc9b0f9d0737a8`
+- Last current audit: READY within the bounded writer scope. New priorities66→9,total828→767;all9 removal counterfactuals verified (notice explicitly models the early legacy rule). Writer13 affected tests/25 immediate2D2A semantic observations pass on331336FE/Chrome156.0.8078.76. The conditionally authorized two-field inventory update passes43-file boundaries and source architecture links. No formal whole-UI/user appearance adoption claim.
+- Current stage receipt: `verification/receipts/2026-10-30-b1-write-v7-implementation.json` SHA-256 `E2BF3F4B1D5B1A3FAAEAE193AA57F3A244902B8D85AAA968E03BDB9E1C421F18` binds331336FE evidence and the smaller767-entry inventory. D485/559A and the828 proposal are superseded;earlier unaudited authority rejection is resolved within the later conditional authorization.
+- Accepted baseline: actual memo039A,list-header79DD,article/comments6434 and native article2D2A retained. User adopted the writer composition;331336FE implements that slice and necessary-priority cleanup. User appearance review of the actual implementation remains separate.
+- Current artifact: Mobile3.5.5 331336FE15D7951AD3751D0A76AD201CFBB9AB31A209B1A7A747E6331AD976F2 root/dist/guard;PC1.9.9 8915F36E5B8887DC58EF9F932E39CCA28CCE1AC1020FD96460CCD10C08913581 unchanged. No version/official release change.
+- Blockers: None for the bounded writer/inventory unit. The earlier automatic-review rejection was resolved by necessity audit and conditional two-field authorization;no ownership/verifier relaxation. Formal stage/account/upload/device gaps remain outside this unit.
+- Pending live checks: Existing account/authenticated/external upload/device/extension and formal whole-UI gaps remain separate. No real posting/upload/AI/login;no image replies. NEXT begins current owned menu/settings v7 preflight with actual memo detail and preserved PC fallback.
 
 ```dcuf-current-artifacts
-{"schemaVersion":1,"mobile":{"sha256":"2D2A0069D32164B6581541D7A257AAAD7366E5353F3800AD5DA7299178197AB8"},"pc":{"sha256":"8915F36E5B8887DC58EF9F932E39CCA28CCE1AC1020FD96460CCD10C08913581"}}
+{"schemaVersion":1,"mobile":{"sha256":"331336FE15D7951AD3751D0A76AD201CFBB9AB31A209B1A7A747E6331AD976F2"},"pc":{"sha256":"8915F36E5B8887DC58EF9F932E39CCA28CCE1AC1020FD96460CCD10C08913581"}}
 ```
 
 ## Draft-complete checkpoint — 2026-10-21

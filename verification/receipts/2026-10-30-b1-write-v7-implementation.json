@@ -1,0 +1,296 @@
+{
+  "schemaVersion": 1,
+  "kind": "B1_WRITE_V7_IMPLEMENTATION",
+  "status": "IMPLEMENTED_SCOPED_VALIDATION_PASSED",
+  "sourceBaseHead": "bde48dc77f8294ed6a1d110b7f81741a2f0e344c",
+  "candidateFingerprint": "82f89e89e5cc8f6109eb8c121c24896c02642b48b0beb5262afc9b0f9d0737a8",
+  "artifacts": {
+    "mobileVersion": "3.5.5",
+    "mobileSha256": "331336FE15D7951AD3751D0A76AD201CFBB9AB31A209B1A7A747E6331AD976F2",
+    "rootDistGuardMatch": true,
+    "pcVersion": "1.9.9",
+    "pcSha256": "8915F36E5B8887DC58EF9F932E39CCA28CCE1AC1020FD96460CCD10C08913581",
+    "pcUnchanged": true,
+    "officialRelease": false
+  },
+  "inputs": [
+    {
+      "path": "src/targets/mobile/native-form-presenter.js",
+      "sha256": "f018d979704fd7d12f03c6114303afb7e0f05d2995c1c636f94813028a089364"
+    },
+    {
+      "path": "src/targets/mobile/native-form-host-adapter.js",
+      "sha256": "92bff52b22b42d7e2efe9fac32198579b0017c08c501de859ea7e46409d3677a"
+    },
+    {
+      "path": "src/targets/mobile/theme-material-values.js",
+      "sha256": "430a075b53585a72cbbdb9dc6abc06af4f373201bbf162e724e7372754586491"
+    },
+    {
+      "path": "testbed/ui-b1-write-v7-contract.mjs",
+      "sha256": "8d45f54c6d63653856f47f5222da1ef50c10eedaee77283933ddf6bb992f2b99"
+    },
+    {
+      "path": "testbed/fixtures/b1-write-v7.mjs",
+      "sha256": "64b8d0cbd3ae6af146f3832fe64ee424a62e84cf86ec7736b00b9a831f8e2538"
+    },
+    {
+      "path": "testbed/ui-control-material-contract.mjs",
+      "sha256": "9648c8389e45f4980c5d550e9197994441e2b97b0a0d5f4f33e7e02e56c2c93d"
+    },
+    {
+      "path": "testbed/run-tests.mjs",
+      "sha256": "fc38f2305278022343988e8fcb123c8b597ffb1fb59c77ee5087c2c9c5aa19f5"
+    },
+    {
+      "path": "docs/ui-surface-contracts.md",
+      "sha256": "8d6faa48620ae53a6aca2c736feff0e8bb0eb05be7b6d85eeffbc44dc0b4630e"
+    },
+    {
+      "path": "docs/work/B1_WRITE_V7_IMPLEMENTATION.md",
+      "sha256": "5b5f9c82512d0ad995435bd597e54dc05ea686e5c209175189edcfbb7042b24a"
+    },
+    {
+      "path": "docs/work/B1_WRITE_V7_CASCADE_APPROVAL.md",
+      "sha256": "d3b8484f903113455fa829e5bd8d26f1996f40ab5ad9536ef3fe0c3e1e7cc803"
+    },
+    {
+      "path": "architecture/ui-surfaces.json",
+      "sha256": "400f83ab61209912f421e77c0c4fc2b9828d61ce8abcfeda66497f1bc4aee7fa"
+    }
+  ],
+  "evidence": [
+    {
+      "path": "artifacts/b1-write-v7-implementation-2026-10-30/semantic-summary.json",
+      "sha256": "5e2dc5ee7e807ac8f6d0e1e93b955ed83f59dfc72d34931db3bd22f3313642cf"
+    },
+    {
+      "path": "artifacts/b1-write-v7-implementation-2026-10-30/semantic-control.json",
+      "sha256": "5ea9b9e67ef31fb2cecdb9b031b256f2c12d326a1839c7019a292b0c1cb3fbda"
+    },
+    {
+      "path": "artifacts/b1-write-v7-implementation-2026-10-30/semantic-candidate.json",
+      "sha256": "b0b878611e3fa0f250e52b4f80f78c00c594c31b7758fe23e147574a24780ee0"
+    },
+    {
+      "path": "artifacts/b1-write-v7-implementation-2026-10-30/public-candidate.json",
+      "sha256": "30a9491e73494edd02f7d0a34fb1697991f9449aaa780bbbfbfd526287626c6f"
+    },
+    {
+      "path": "artifacts/b1-write-v7-implementation-2026-10-30/visual-manifest-v3.json",
+      "sha256": "e3c13f82c8979a975fa858d51d0cf448afa20b8785ecf8f9975cf61062138be2"
+    },
+    {
+      "path": "artifacts/b1-write-v7-implementation-2026-10-30/visual-review-v4/review.json",
+      "sha256": "135b9c145ac904e820e598f2aabf406b583ce060b8a0c684c3da698008220000"
+    },
+    {
+      "path": "docs/design/b1-write-v7-implementation-light-2026-10-30.png",
+      "sha256": "e83c840a5251399e28fd9c9b1c120da6c44896eb30e3937fe1b5b338e17376f5"
+    },
+    {
+      "path": "docs/design/b1-write-v7-implementation-dark-2026-10-30.png",
+      "sha256": "7396068ef64d74e131687bcd171546e9bc9c9269ca53af1e9bf636efc1803dc4"
+    },
+    {
+      "path": "artifacts/b1-write-v7-implementation-2026-10-30/priority-final.json",
+      "sha256": "9504baa3d1bcf538450974a753b4889bd46b3016e1d5416555fb7471077b2392"
+    },
+    {
+      "path": "artifacts/b1-write-v7-implementation-2026-10-30/priority-minimum-counterfactual.json",
+      "sha256": "821ec89505c0947979da3b5d02fe47e1f4c5b6f1a85832cf8aad00665acaa46e"
+    },
+    {
+      "path": "artifacts/b1-write-v7-implementation-2026-10-30/audit-priorities.mjs",
+      "sha256": "0aad78cf99e0e8ba3f3fe0979dbfbd99267f71551f13b018a53341eb580b9475"
+    },
+    {
+      "path": "artifacts/b1-write-v7-implementation-2026-10-30/priority-delta.mjs",
+      "sha256": "f56b4e31ef142b75c22d3bffb465423d4550b3ffac0bddfd93afae9577f1fbf4"
+    }
+  ],
+  "changes": {
+    "owners": "Existing native-form adapter/presenter;common v7 recipes unchanged",
+    "nodeOrParentMoves": false,
+    "newObserver": false,
+    "newStylePhase": false,
+    "metadataOrStorageChanged": false,
+    "intendedVisibleDelta": "Adopted rows/material/quiet controls;restored original warning information;readable reversible password hint;native nickname controls/spacing retained."
+  },
+  "validation": {
+    "affectedRegisteredTests": 13,
+    "subruns": [
+      {
+        "path": "artifacts/b1-write-v7-implementation-2026-10-30/affected-0.json",
+        "sha256": "6a2c200146a2bcac3268de73a6e9838499f815a950b620c8a488c853b123edf7",
+        "tests": [
+          "B1 writer v7: adopted composition and native nickname states",
+          "B1 writer v7: actual palette preview save and cancel"
+        ]
+      },
+      {
+        "path": "artifacts/b1-write-v7-implementation-2026-10-30/affected-1.json",
+        "sha256": "7bf8dd084488fd3dbb88551f79db407da3d1a21990d50435b8a0c4f3b02593f9",
+        "tests": [
+          "B1 editor menus: glass and original reachable controls"
+        ]
+      },
+      {
+        "path": "artifacts/b1-write-v7-implementation-2026-10-30/affected-2.json",
+        "sha256": "31171c7c39f21ac231c63eed7389a0e1235563c8819738cb3be4183a134b1a5d",
+        "tests": [
+          "B1 write shell: shared header and native editor preservation"
+        ]
+      },
+      {
+        "path": "artifacts/b1-write-v7-implementation-2026-10-30/affected-3.json",
+        "sha256": "a6ba958338f0f8d1aadcbb37250abead2aa8d396659a8bef2455b11e1f0694e2",
+        "tests": [
+          "B1 controls: common material transmission and fixed popup coordinates"
+        ]
+      },
+      {
+        "path": "artifacts/b1-write-v7-implementation-2026-10-30/affected-4.json",
+        "sha256": "79577064c9d54091f40acb6a1bd01b4449ad561befab8b686faa8510cedcbcdd",
+        "tests": [
+          "글쓰기: 입력·말머리·에디터 재렌더·HTML 전환에도 작성값이 보존된다"
+        ]
+      },
+      {
+        "path": "artifacts/b1-write-v7-implementation-2026-10-30/affected-5.json",
+        "sha256": "13672109510fd16b59c13838c0838c1d794a54b82e2b335b580792e1eea74c22",
+        "tests": [
+          "native form presentation owner is idempotent and disposable without changing the host form"
+        ]
+      },
+      {
+        "path": "artifacts/b1-write-v7-implementation-2026-10-30/affected-6.json",
+        "sha256": "407fea7a8110a502e136b99c36e352f72c2f2a6d4af3d8a8aea4705c97cd268a",
+        "tests": [
+          "UI palette tokens drive the mobile write surface"
+        ]
+      },
+      {
+        "path": "artifacts/b1-write-v7-implementation-2026-10-30/affected-7.json",
+        "sha256": "051d5efaf83ca3e317f15932100ee9857b652a30085bb3146a9f2cb124aef7b0",
+        "tests": [
+          "single-tone UI palette keeps mobile write actions readable"
+        ]
+      },
+      {
+        "path": "artifacts/b1-write-v7-implementation-2026-10-30/affected-8.json",
+        "sha256": "007bbdfd4daeb36513b23337b8f3ff1a697617707e16b069093fcdc7e9cc1934",
+        "tests": [
+          "write editor toolbar shell and controls use reversible semantic selectors"
+        ]
+      },
+      {
+        "path": "artifacts/b1-write-v7-implementation-2026-10-30/affected-9.json",
+        "sha256": "d8f37245bcfb4ad5e31834fa629ceb031cf058ac3c2d258e453c7041ca911c63",
+        "tests": [
+          "write remaining controls use a reversible semantic presentation boundary"
+        ]
+      },
+      {
+        "path": "artifacts/b1-write-v7-implementation-2026-10-30/affected-10.json",
+        "sha256": "d05fff1c0d665912c23147d98c9b020fe4d8241c962bfb99054605193ad4892f",
+        "tests": [
+          "write field presentation uses adapter semantic selectors"
+        ]
+      },
+      {
+        "path": "artifacts/b1-write-v7-implementation-2026-10-30/affected-11.json",
+        "sha256": "56a73b1aea1419a7222bc5ea2f95d161acd940a5b36d32b87c06358a6c6ebebe",
+        "tests": [
+          "modify editor surface reuses the write transformation without changing the route"
+        ]
+      }
+    ],
+    "semanticObservations": 25,
+    "semanticEquivalent": true,
+    "actualPaletteConsumer": {
+      "themes": 2,
+      "palettesEach": 14,
+      "previewSaveCancel": true
+    },
+    "material": {
+      "measuredPrimaryContrastMin": 6.74574037965127,
+      "probeThemesPalettes": "light/dark teal and light lime",
+      "opaquePaper": true,
+      "transmissionAndBlur": true,
+      "fixedNativeMenuCoordinates": true
+    },
+    "public": {
+      "scope": "ANONYMOUS_GET_HEAD_SOURCE_INJECTED_NO_SUBMIT_UPLOAD_ACCOUNT",
+      "states": 3,
+      "fontOptions": 18,
+      "lastHitsAndNativeIdentities": true,
+      "overflow": 0,
+      "physicalPhone": false,
+      "actualExtension": false,
+      "darkSourceThemeProxy": true
+    },
+    "visual": {
+      "pixel": "DIFFERENCES_REQUIRE_REVIEW",
+      "fidelity": "REVIEWED",
+      "cases": 2,
+      "productApproved": false,
+      "reference": "Actual first memo detail;generated writer composition",
+      "userAdoptedComposition": true,
+      "userAdoptedImplementation": false
+    },
+    "buildReleaseVerification": "PASSED current-version artifacts;not publication",
+    "broaderProductAcceptance": "NOT_RUN_IMPACT_INSPECTED",
+    "omissions": [
+      "Full product/PC/bfcache/draft-TTL not repeated",
+      "Real submit/upload/AI/auth/account and physical phone/extension not exercised",
+      "Unopened native legal/pum internals not newly certified"
+    ],
+    "browser": "156.0.8078.76",
+    "boundaryGate": {
+      "status": "PASSED",
+      "previousRegisteredCount": 774,
+      "registeredAndActualCount": 767,
+      "ledgerSha256": "a926aa7f5ca08ce74666292bae5b4f0aef13d7ca54771cbacd98c59466615549",
+      "authorityFileChanged": true,
+      "changedFieldsOnly": [
+        "declarationCount",
+        "declarationLedgerSha256"
+      ],
+      "sourceFilesChecked": 43,
+      "registryOwnershipVerifierChanged": false,
+      "liveArchitectureLinks": "PASSED_REPOSITORY_ONLY"
+    },
+    "cascadeNecessityAudit": {
+      "initialCandidateTotal": 828,
+      "initialAdded": 66,
+      "finalTotal": 767,
+      "finalAdded": 9,
+      "removedBaselineEntries": 16,
+      "retainedBaselineEntries": 758,
+      "scope": "CHANGED_WRITER_RULES_ONLY",
+      "counterfactualContexts": 3,
+      "statesEach": 5,
+      "allNineChangeComputedOutput": true,
+      "noticeContext": "Modeled known early legacy visibility selector before final writer owner",
+      "sameOwnerVariables": true,
+      "verifierChanged": false
+    }
+  },
+  "contraryEvidence": [
+    "Retired white primary RED on2D2A",
+    "Harness repairs:contrast return shape,flat-face signature,zero-box font wrapper,desktop/phone option distinction,native opener and header/writer fieldset ambiguity",
+    "Real footer44/48px mismatch repaired",
+    "Dark marker race capture rejected/replaced;theme-state assertions added",
+    "Automatic review rejected broad whitespace command;it was not executed. Only two exact whitespace-only lines were removed with a patch.",
+    "Closeout EOF-only test cleanup and system Chrome patch update:current13 tests and25 semantic observations are aligned to156.0.8078.76. Historical before images remain.48 diagnostics,not a behavior control.",
+    "Priority necessity audit:most66 additions were unnecessary or same-owner conflicts. Native helper inner padding was losing despite important;form context and correct stylesheet fixture repaired it. The earlier828 proposal is superseded. An after-owner legacy replay modeled the wrong phase;existing early order is now explicit."
+  ],
+  "nextAction": "b1-owned-menu-settings-v7-preflight",
+  "hashMode": "Repository canonical LF for text inputs/evidence;binary artifact/image bytes exact",
+  "authorization": {
+    "basis": "User conditionally authorized the update after selecting necessary items",
+    "conditionMet": "Changed-rule9-property removal counterfactuals plus focused validation",
+    "scope": "Existing writer inventory count/hash only;standing development checkpoint separately authorized"
+  }
+}

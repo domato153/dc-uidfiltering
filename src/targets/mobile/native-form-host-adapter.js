@@ -17,6 +17,7 @@
             'data-dcuf-native-form-toolbar-control',
             'data-dcuf-native-form-control-state',
             'data-dcuf-native-form-toolbar-content',
+            'data-dcuf-native-form-toolbar-group',
             'data-dcuf-native-form-box-sizing',
             'data-dcuf-native-form-control-kind',
         ]);
@@ -357,7 +358,7 @@
                 ].filter(outsideEditorLayer))]
                 : [];
             const writeHiddenChrome = writeSurface
-                ? Array.from(form.querySelectorAll('.tx-toolbar-advanced, .write_infobox, .cm_ad, .adv_bottom_write, div[id^="kakao_ad_"]'))
+                ? Array.from(form.querySelectorAll('.tx-toolbar-advanced, .cm_ad, .adv_bottom_write, div[id^="kakao_ad_"]'))
                     .filter(outsideEditorLayer)
                 : [];
             const effectivePopupState = passwordSurface || writeSurface ? popupState(shell) : popupState(popup);
@@ -413,6 +414,25 @@
                 });
                 markNativeContext(writeName, 'name-input', nativeContextState);
                 markNativeContext(writeGalleryName, 'name-input', nativeContextState);
+                // Native clear/use removes nomem_nick; bind the original controls,
+                // not that transient wrapper class. No field or handler replacement.
+                const nicknameField = writeName?.closest('.input_box') || writeGalleryName?.closest('.input_box');
+                const nicknameHelp = nicknameField?.querySelector('#tip_nomem_nick');
+                markNativeContext(nicknameField?.querySelector('#btn_gall_nick_name_x'), 'nickname-clear', nativeContextState);
+                markNativeContext(nicknameField?.querySelector('#btn_gall_nick_name_y'), 'nickname-use', nativeContextState);
+                markNativeContext(nicknameHelp, 'nickname-help', nativeContextState);
+                markNativeContext(nicknameHelp?.querySelector('.inner'), 'nickname-help-content', nativeContextState);
+                markNativeContext(nicknameHelp?.querySelector('.txt'), 'nickname-help-copy', nativeContextState);
+                markNativeContext(nicknameHelp?.querySelector('.btn_tipclose12'), 'nickname-help-close', nativeContextState);
+                markNativeContext(form.querySelector('.write_infobox'), 'write-notice', nativeContextState);
+                markNativeContext(form.querySelector('.dc-best-preference'), 'best-preference', nativeContextState);
+                // Native password hints may be an empty image-backed label.
+                // Keep the field/label and reversibly supply a readable hint.
+                if (writePassword && !writePassword.getAttribute('placeholder') && !writePassword.labels?.[0]?.textContent?.trim()) {
+                    setAttribute(writePassword, 'placeholder', '비밀번호');
+                    if (!writePassword.getAttribute('aria-label')) setAttribute(writePassword, 'aria-label', '비밀번호');
+                    markNativeContext(writePassword.labels?.[0], 'password-image-hint', nativeContextState);
+                }
                 markNativeContext(writePassword, 'password-input', nativeContextState);
                 markNativeContext(writeCaptcha, 'captcha-input', nativeContextState);
                 markNativeContext(writeCaptchaPanel, 'captcha-panel', nativeContextState);
@@ -459,7 +479,9 @@
                         if (group.closest('.note-toolbar, .note-toolbar-media, .tx-toolbar-basic, .btns-box') !== toolbar) return;
                         if (group.closest('.note-dropdown-menu, .pop_wrap, .note-popover, .note-modal')) return;
                         const htmlToggleGroup = group.matches('.fixture-html-group') || group.querySelector('#chk_html');
-                        markNativeContext(group, htmlToggleGroup ? 'editor-html-toggle-group' : 'editor-toolbar-group', nativeContextState);
+                        const rowBreak = group.matches('.note-break');
+                        markNativeContext(group, htmlToggleGroup ? 'editor-html-toggle-group' : rowBreak ? 'editor-toolbar-break' : 'editor-toolbar-group', nativeContextState);
+                        setNativeContextAttribute(group, 'data-dcuf-native-form-toolbar-group', group.matches('.note-mybutton') ? 'media' : 'format');
                         if (group.parentElement === toolbar) setNativeContextAttribute(group, 'data-dcuf-native-form-toolbar-item', '1');
                     });
 

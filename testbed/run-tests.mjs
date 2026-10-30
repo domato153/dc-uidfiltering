@@ -46,6 +46,7 @@ import { runMemoPaletteContract } from './ui-b1-memo-palette-contract.mjs';
 import { runListV7Contract, runListV7PaletteContract } from './ui-b1-list-v7-contract.mjs';
 import { runArticleV7Contract, runArticleV7PaletteContract, runArticleV7ContrastOracleContract } from './ui-b1-article-v7-contract.mjs';
 import { runArticleAttachmentContract, runRecommendationSeparatorContract } from './ui-article-attachment-contract.mjs';
+import {runWriterV7Contract,runWriterV7PaletteContract} from './ui-b1-write-v7-contract.mjs';
 
 const args = new Set(process.argv.slice(2));
 const selectedGroup = process.argv.includes('--group') ? process.argv[process.argv.indexOf('--group') + 1] : null;
@@ -112,6 +113,8 @@ mobileTest('B1 gallery search: native door children and header layers', 'functio
 mobileTest('B1 password pages: glass and original native form actions', 'write', runB1PasswordContract);
 mobileTest('B1 form header: reuse list chrome without list runtime', 'write', runB1FormHeaderContract);
 mobileTest('B1 write shell: shared header and native editor preservation', 'write', runB1WriteShellContract);
+mobileTest('B1 writer v7: adopted composition and native nickname states', 'write', runWriterV7Contract);
+mobileTest('B1 writer v7: actual palette preview save and cancel', 'write', runWriterV7PaletteContract);
 mobileTest('B1 controls: common material transmission and fixed popup coordinates', 'write', runControlMaterialContract);
 mobileTest('B1 editor menus: glass and original reachable controls', 'write', runB1EditorMenuContract);
 
@@ -8678,7 +8681,7 @@ mobileTest('글쓰기: 네이티브 모바일 기준 fixture는 가로 넘침 �
             assert.equal(report.visual.actionRadius >= 10, true);
             assert.equal(report.visual.submitRadius >= 10, true);
             assert.notEqual(report.visual.submitBackground, report.visual.cancelBackground);
-            assert.equal(report.visual.submitColor, 'rgb(255, 255, 255)');
+            assert.equal(report.visual.submitColor, await resolveWriteInk(session.page));
             assert.equal(['none', 'normal', '""'].includes(report.visual.htmlBeforeContent), true);
             assert.equal(report.visual.htmlContained, true);
             if (variant === 'minor') {
@@ -9015,11 +9018,12 @@ const collectPaletteSurfaceContract = (page, entries) => page.evaluate((items) =
     });
 }, entries);
 
-const resolveControlFill = (page, selector) => page.locator(selector).first().evaluate(element => {
+const resolveControlFill = (page, selector, token = '--dcuf-control-primary-fill') => page.locator(selector).first().evaluate((element, token) => {
     const probe = document.createElement('span');
-    probe.style.backgroundColor = 'var(--dcuf-control-primary-fill)'; element.append(probe);
+    probe.style.backgroundColor = 'var(' + token + ')'; element.append(probe);
     const fill = getComputedStyle(probe).backgroundColor; probe.remove(); return fill;
-});
+}, token);
+const resolveWriteInk = page => page.locator('#write-submit').evaluate(n => { const p=document.createElement('span'); p.style.color='var(--dcuf-v7-primary-ink)'; n.append(p); const color=getComputedStyle(p).color; p.remove(); return color; });
 
 const assertPaletteSurfaces = (contract, label) => {
     contract.forEach(({ selector, token, expected, actual }) => {
@@ -9203,7 +9207,7 @@ mobileTest('modify editor surface reuses the write transformation without changi
             formClass: contract.formClass,
             formTransformed: '1',
             subjectRow: true,
-            submitBackground: await resolveControlFill(session.page, '#write-submit'),
+            submitBackground: await resolveControlFill(session.page, '#write-submit', '--dcuf-v7-primary-fill'),
             writeStyleCount: 1,
             modifyStyleCount: 1,
             modifySubscribers: true,
@@ -10442,11 +10446,13 @@ mobileTest('write editor toolbar shell and controls use reversible semantic sele
             return {
                 background: getComputedStyle(toolbar).backgroundColor,
                 controlBackground: getComputedStyle(control).backgroundColor,
+                active: control.getAttribute('data-dcuf-native-form-control-state')?.includes('active'),
                 controlColor: getComputedStyle(control).color
             };
         });
         assert.notEqual(darkContract.background, 'rgba(0, 0, 0, 0)');
-        assert.notEqual(darkContract.controlBackground, 'rgba(0, 0, 0, 0)');
+        assert.equal(darkContract.active, true, 'This specimen retains the earlier native bold selection');
+        assert.notEqual(darkContract.controlBackground, 'rgba(0, 0, 0, 0)', 'Selected bold retains a visible state; plain resting controls are covered separately');
         assert.notEqual(darkContract.controlColor, 'rgba(0, 0, 0, 0)');
 
         await session.page.setViewportSize({ width: 1280, height: 900 });
@@ -11200,7 +11206,7 @@ mobileTest('write remaining controls use a reversible semantic presentation boun
         assert.equal(initial.sameNodes, true);
         assert.equal(initial.nativePreserved, true);
         assert.equal(initial.optionState, 'active');
-        const primaryFill = await resolveControlFill(session.page, '#write-submit');
+        const primaryFill = await resolveControlFill(session.page, '#write-submit', '--dcuf-v7-primary-fill');
         assert.deepEqual(initial.primaryBackgrounds, [primaryFill, primaryFill]);
         assert.equal(initial.resources.listeners, 0);
         assert.equal(initial.resources.observers, 0);
@@ -11311,13 +11317,13 @@ mobileTest('write remaining controls use a reversible semantic presentation boun
         assert.deepEqual(dynamic.primaryRoles, ['outer-action-primary', 'outer-action-primary']);
         assert.equal(dynamic.rowWidths.every((width) => width > 3), true);
         assert.equal(dynamic.rowBackgrounds.every((color) => color !== 'rgb(255, 0, 0)'), true);
-        assert.equal(dynamic.primaryHeights.every((height) => height >= 48), true);
+        assert.equal(dynamic.primaryHeights.every((height) => height >= 44), true, 'Adopted compact memo-family writer actions retain44px targets');
         assert.equal(dynamic.primaryColors.every((color) => color !== 'rgb(255, 0, 0)'), true);
         assert.deepEqual(dynamic.select.slice(0, 2), ['form-select', 'select']);
         assert.equal(dynamic.select[2] > 3, true);
         assert.notEqual(dynamic.select[3], 'rgb(255, 0, 0)');
         assert.deepEqual(dynamic.hidden, [
-            ['hidden-chrome', 'none'], ['hidden-chrome', 'none'], ['hidden-chrome', 'none'], ['hidden-chrome', 'none']
+            ['hidden-chrome', 'none'], ['write-notice', 'block'], ['hidden-chrome', 'none'], ['hidden-chrome', 'none']
         ]);
 
         await session.page.evaluate(() => window.__dcufFixture.toggleDark(true));
@@ -13202,7 +13208,7 @@ mobileTest('UI palette tokens drive the mobile write surface', 'write', async ({
                 submitBackground: submit.backgroundColor
             };
         });
-        assert.deepEqual(contract, { palette: 'orange', accent: '#c2410c', strong: '#9a3412', submitBackground: await resolveControlFill(session.page, '#write-submit') });
+        assert.deepEqual(contract, { palette: 'orange', accent: '#c2410c', strong: '#9a3412', submitBackground: await resolveControlFill(session.page, '#write-submit', '--dcuf-v7-primary-fill') });
         await session.page.evaluate(() => window.__dcufFixture.toggleDark(true));
         await session.page.waitForTimeout(40);
         const darkContract = await session.page.evaluate(() => {
@@ -13214,7 +13220,7 @@ mobileTest('UI palette tokens drive the mobile write surface', 'write', async ({
                 submitBackground: submit.backgroundColor
             };
         });
-        assert.deepEqual(darkContract, { accent: '#fdba74', strong: '#c2410c', submitBackground: await resolveControlFill(session.page, '#write-submit') });
+        assert.deepEqual(darkContract, { accent: '#fdba74', strong: '#c2410c', submitBackground: await resolveControlFill(session.page, '#write-submit', '--dcuf-v7-primary-fill') });
         assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
     } finally { await session.close(); }
 });
@@ -13248,13 +13254,13 @@ mobileTest('single-tone UI palette keeps mobile write actions readable', 'write'
     try {
         await session.goto('/board/write/?id=test');
         const light = await readContract();
-        assert.deepEqual({ background: light.background, color: light.color }, { background: await resolveControlFill(session.page, '#write-submit'), color: 'rgb(255, 255, 255)' });
+        assert.deepEqual({ background: light.background, color: light.color }, { background: await resolveControlFill(session.page, '#write-submit', '--dcuf-v7-primary-fill'), color: await resolveWriteInk(session.page) });
         assert.equal(light.contrast >= 4.5, true, JSON.stringify(light));
 
         await session.page.evaluate(() => window.__dcufFixture.toggleDark(true));
         await session.page.waitForTimeout(40);
         const dark = await readContract();
-        assert.deepEqual({ background: dark.background, color: dark.color }, { background: await resolveControlFill(session.page, '#write-submit'), color: 'rgb(255, 255, 255)' });
+        assert.deepEqual({ background: dark.background, color: dark.color }, { background: await resolveControlFill(session.page, '#write-submit', '--dcuf-v7-primary-fill'), color: await resolveWriteInk(session.page) });
         assert.equal(dark.contrast >= 4.5, true, JSON.stringify(dark));
         assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
     } finally { await session.close(); }

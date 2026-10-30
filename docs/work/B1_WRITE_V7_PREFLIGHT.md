@@ -2,6 +2,8 @@
 
 Mode:Operate. User authorized the next family after the native article finish. Existing B1 writer/password/editor work remains functional context;this step prepares the latest memo-tone composition before changing writer source. Do not resurrect early writer images as fine-detail authority. Actual first memo workbench controls/material/type are the detail reference;new generated images will describe composition only. Keep the adopted compact header through its existing owners.
 
+Frozen fine-detail witness: docs/design/b1-memo-workbench-light-2026-10-29.png SHA-256 f40c243d8789e412d1d59cba5d0661a6711821baf3c042082308015136eb0fa5. B1_WRITE_V7_IMPLEMENTATION.md owns the subsequent source/evidence;this preflight retains the selected composition and native acquisition rationale.
+
 ## Acquired context and intended scope
 
 - Original anonymous major writer and current69EC major writer were captured GET/HEAD-only at1440×1100,plus980×2306 current. Actual Summernote DIV editor and media/format tools are present;the180 toolbar descendants include hidden menus,not180 visible commands. Existing published32BA writer capture supplies the earlier minor/CAPTCHA/category anatomy;it is historical functional evidence,not a current theme authority. Raw captures remain ignored under artifacts/b1-write-v7-2026-10-30/.
@@ -19,7 +21,7 @@ Observed three native states:recommended-readonly → clear-X/direct input/use-b
 
 ## Generated composition — 2026-10-30
 
-Image: [Writer v7 proposal](../design/b1-write-v7-proposal-2026-10-30.png), 1448×1086, SHA-256 `ad3ac6e2f439b563595b7bdad69024a7f35c7ec08931906dcd71c1489d201ffa`. Built-in image generation, followed by one focused material refinement. Exact prompts: docs/design/b1-write-v7-proposal-prompt-2026-10-30.txt and docs/design/b1-write-v7-proposal-refine-prompt-2026-10-30.txt. This is a composition candidate for user review,not an adopted design or implemented writer screenshot.
+Image: [Writer v7 proposal](../design/b1-write-v7-proposal-2026-10-30.png), 1448×1086, SHA-256 `ad3ac6e2f439b563595b7bdad69024a7f35c7ec08931906dcd71c1489d201ffa`. Built-in image generation, followed by one focused material refinement. Exact prompts: docs/design/b1-write-v7-proposal-prompt-2026-10-30.txt and docs/design/b1-write-v7-proposal-refine-prompt-2026-10-30.txt. User2026-10-30 accepted this composition direction with “괜찮은듯”. It is the adopted layout direction,not an implemented writer screenshot or fine-detail authority.
 
 Inputs directly viewed: actual first memo light/dark;original/current major writer;current2D2A native direct-input nickname state;published32BA minor writer. The generation received actual memo light,current/native major,direct-input nickname and published minor screenshots. Current69EC screenshots are honest historical functional inputs because writer/header code did not change in2D2A. No new live acquisition or mutation was needed in this design-only unit.
 
@@ -33,8 +35,8 @@ Inputs directly viewed: actual first memo light/dark;original/current major writ
 - The raster shows direct-input/help-open composition only. It does not prove readonly recommended→clear-X→direct/use-Y→restored behavior. The native2D2A acquisition already owns that three-state evidence. Keep both original fields/names/callbacks,wrapper-class removal,reserved use-button width and reachable original help.
 - Native warnings/tool capabilities are retained in composition. Actual native copy,original icons and option semantics outrank raster glyphs. This static light proposal does not qualify responsive layout,contrast,hit areas,glass transmission,dark mode,palette binding,menus,submission or extension/device behavior.
 
-## One next bounded task
+## Historical implementation handoff
 
-Review the user's reaction to this composition,then implement the authorized writer v7 slice through the existing native-form presenter/adapter and shared material roles. Do not silently treat generation as user adoption. Actual memo remains the selected fine-detail reference;the new image is frozen separately for composition.
+Implement this user-adopted writer composition through the existing native-form presenter/adapter and shared material roles in the next bounded slice. Adoption covers the composition direction only;actual memo remains the selected fine-detail reference and the new image stays frozen separately. The implemented result is now in B1_WRITE_V7_IMPLEMENTATION.md and the current receipt;CURRENT/NEXT own the following task.
 
 Before implementation,inspect current minor/mini/modify variants as their geometry becomes relevant. Cover native nickname states and relevant security/category fields without transferring a major-only composition blindly. Preserve original media/format/HTML menus,drafts,focus/forms and fixed-popup ancestry. Run only impact-selected source/native geometry,input,popup and actual palette-consumer checks. No routine unrelated/full product/PC/bfcache rerun. No product source,build output or version changed in this proposal unit.

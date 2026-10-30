@@ -371,8 +371,8 @@
           "sourceRef": "src/targets/mobile/native-form-presenter.js",
           "styleKey": "write",
           "requiredSelectorPrefix": "[data-dcuf-native-form-",
-          "declarationCount": 774,
-          "declarationLedgerSha256": "a71e3548c9e377851ab57fd4d293fa5b99173124a98a25b016163667f0143504",
+          "declarationCount": 767,
+          "declarationLedgerSha256": "a926aa7f5ca08ce74666292bae5b4f0aef13d7ca54771cbacd98c59466615549",
           "hostCollision": "B1 write/editor frame and paper fields reuse existing native/inline precedence. The original credential wrapper border is removed so its owned input is the sole face; editor wrapper decoration is removed so its frame is the sole edge. Preserve popup containment without a backdrop-filter ancestor. Named priorities retain native geometry/visibility; exact ledger remains transitional debt, not an expansion allowlist. B1 common control material retains existing native/inline precedence for original actions, state and readable inputs. Current exact ledger covers compact footer, active/danger roles and AI controls. Decorative exterior ancestry is expressed with a semantic form prefix and :where, without broadening this required prefix or adding a filtered popup ancestor.",
           "testRefs": [
             "testbed/run-tests.mjs",
