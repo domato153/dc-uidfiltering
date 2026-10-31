@@ -1,0 +1,27 @@
+Create one polished, high-resolution UI DESIGN PROPOSAL image for the DCInside anonymous desktop-site writer page, in the established DCUF memo-v7 visual world. A single complete straight-on flat interface screenshot, no device mockup, no collage, no explanatory arrows, no floating magnification cards. Landscape 4:3, around 1600 by 1200. Clear Korean typography, small controls still readable.
+
+REFERENCE ROLES:
+Reference 1 is the ACTUAL ADOPTED MEMO IMPLEMENTATION. Its light material, typography, thin rim, pale desaturated tinted primary button with DARK INK, restrained sheen, neutral stable paper, simple text tools, and selection hierarchy are the detail authority. Inherit its calm precision. Do not copy its two-column modal structure or scrim into a base page.
+Reference 2 is the CURRENT incumbent major writer: source of the adopted compact masthead and page capabilities; the old saturated primary and individually boxed toolbar are NOT desired.
+Reference 3 is the ORIGINAL native major writer: capability and tool inventory, not style authority.
+Reference 4 shows the real nickname DIRECT INPUT state with '갤닉네임 사용' and original nickname help; retain these native affordances with clean reserved space.
+Reference 5 is a historical minor-gallery writer for functional context only. The main proposal is the MAJOR '만화 갤러리' writer; do not add minor-only CAPTCHA or category tabs to this major specimen.
+
+DESIGN:
+Preserve the adopted compact frosted global header: dcinside logo, compact text navigation, real search field, recent-visit menu, night-mode action and overflow. Reuse its visual family; fine text utilities rest UNBOXED, selected navigation gets a narrow accent underline. Background neutral cool mist with a faint unsaturated teal ambience, not colorful blobs, not broad fog.
+Below the header show '만화 갤러리' and quiet right-aligned native related-gallery / copy-address / guide links. Spacious enough for the nickname help state without overlapping this heading.
+A carefully composed, broad glass-framed writer at a comfortable centered width: visibly transmitting outer edge/chrome, thin light rim, restrained soft shadow. Inner editing surface stable clean paper, not transparent and NOT blurred. Do not apply a white haze over the screenshot. Readable charcoal type, muted secondary slate.
+The form retains ORIGINAL order: identity, title, media tools, format tools, editing canvas, posting options, cancel/register.
+Identity row: nickname field showing '닉네임' with reserved right-aligned native text action '갤닉네임 사용', and adjacent '비밀번호' field. Show the actual native help/recommendation message in a small tasteful lightly frosted anchored layer beside/below identity, with readable text '갤러리에서 권장하는 비회원 전용 갤닉네임입니다.' and a discrete close X. Give it its own clear space; it must not obscure fields or title. No invented selectable nickname list or new account feature.
+Title field '제목을 입력해 주세요.' has confident slightly larger typography and generous writing room, clear yet understated field edge.
+Retain compact native password warning and posting-guideline notices, with quiet readable styling, not alarming decorative cards.
+TWO distinct disciplined toolbar rows on top of the paper editor, fine separators only where useful:
+media row with simple line icons and Korean text: '이미지', '동영상', '디시콘', '유튜브', '외부 콘텐츠', '시리즈', '투표', 'AI 이미지'; right-aligned native 'HTML' toggle.
+format row: '맑은 고딕', '16', bold / italic / underline / strike / text color / highlight / table / lists / alignment / line spacing / undo / redo / link. Clear grouping, consistent icon baselines. Small tools are plain icons/text at rest, NOT every tool inside a rounded box. Native capabilities must not vanish to create whitespace.
+Broad blank editor paper, generous practical writing area, crisp borders, no fake generated prose or distracting artwork. A thin native resize grip at bottom.
+Below editor retain actual '성인 게시물', '펌 금지', and '실시간 베스트 제외 희망' with its quiet off state and '안내'. Correct spacing, restrained hierarchy.
+Footer actions aligned right: a quiet neutral '취소', and compact '등록' primary, approx 120 by 44 design pixels. Registration MUST look like the actual memo primary: PALE muted teal translucent crystal tint, dark slate/teal text, razor-thin tinted rim, minimal shallow highlight, subtle soft contact shadow. No saturated solid teal slab, no high-gloss bulging bevel, no white shiny stripe, no neon glow, no pill.
+All accent color is an illustrative current theme color, not a fixed brand. Use one restrained accent consistently.
+Small understated legal footer outside form.
+
+Allow meaningful spacing/grouping/shape improvements. Do not merely recolor current screenshot, but do not invent new features, sidebars, progress steps, autosave statuses, upload areas, publishing workflow or promotional decoration. Distinct header glass / outer chrome / readable paper hierarchy. Original editing task and compact common header remain recognizable. No overlaps, no clipped labels, no ambiguous collapsed arrows. Primary aesthetic: elegant, crisp, airy but useful, like the real memo implementation adapted to a full writer page.

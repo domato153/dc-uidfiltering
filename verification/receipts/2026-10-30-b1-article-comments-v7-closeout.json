@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "kind": "B1_ARTICLE_COMMENTS_V7_PROJECTION_CLOSEOUT",
+  "status": "READY_SCOPED_IMPLEMENTATION_REVIEW",
+  "sourceBaseHead": "00f03f111a4f914472e147c04d207b3b956134bf",
+  "candidateFingerprint": "26a30f5a494430b4f0af79f7d1bb7c8aa4fcc5434156fc5880e56a26d910cde8",
+  "validation": {
+    "path": "verification/receipts/2026-10-30-b1-article-comments-v7.json",
+    "sha256": "12B4D3F4D32CCEF450B16A28AA574B3906034CF2193F4AB764942E67756E56B8",
+    "scopeUnchanged": true
+  },
+  "artifact": {
+    "mobileVersion": "3.5.5",
+    "mobileSha256": "643446C829422B49B740CF73635A7DA5B66C81AD0FBDA0158B80A40A41278F9F",
+    "pcVersion": "1.9.9",
+    "pcSha256": "8915F36E5B8887DC58EF9F932E39CCA28CCE1AC1020FD96460CCD10C08913581",
+    "rootDistGuardMatch": true,
+    "pcUnchanged": true,
+    "officialRelease": false
+  },
+  "change": "Checkpoint caught source-state prefix and D-56 field-label format mismatches. Correct only those documentation headings;product/runtime/tests/image evidence unchanged. Preserve the earlier validation event and bind this final projection separately.",
+  "productApproved": false,
+  "remaining": "Native attachment filename follow-up,NEXT;user taste/live populated comments/device/extension/formal UI remain separate."
+}

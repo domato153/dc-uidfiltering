@@ -1,0 +1,120 @@
+{
+  "schemaVersion": 1,
+  "kind": "B1_COMMENT_SMALL_ACTION_SCOPED_RECORD",
+  "status": "SCOPED_POLISH_REVIEWED",
+  "sourceBaseHead": "b16eba53e43ffd25f10757c31b7c75716362916d",
+  "candidateFingerprint": "eb637b3335b03b3b942d166374f08c35faf622260af313d35e8e72dbd97dc25e",
+  "artifact": {
+    "mobileSha256": "4BEA35A6DDDC6618A19BEC61B5A93F6483512B6544D3240F695B07466BDE3860",
+    "pcSha256": "D73A445F9A5013D295C49C199F77084D894E39F4E2455824185FA65D4E2C6212"
+  },
+  "scope": {
+    "surfaces": [
+      "comments-replies"
+    ],
+    "controls": [
+      "native-comment-delete",
+      "native-nickname-clear"
+    ],
+    "normalAndImage": true,
+    "visualOwner": "mobile-comment-presenter",
+    "adapter": "mobile-comment-host-adapter",
+    "newObserversOrCallbackOwners": false,
+    "newPriorityDeclarations": 0,
+    "actualDeleteOrSubmit": false,
+    "wholeUiApproved": false
+  },
+  "reference": {
+    "path": "docs/design/b1-comment-actions-target-2026-10-27.png",
+    "sha256": "FA98FED4938191360256F93E14E1BF2CE648BDC398B37C227F22DEFF34A508FA",
+    "kind": "DERIVED_INCUMBENT_B1_THIN_X_WITHOUT_UA_BEVEL",
+    "controlArtifactSha256": "675A711D95060B5FEDE148026F9E7A4F5E4F69D284199A70F34F09161D9EDD92"
+  },
+  "verification": {
+    "focusedRegistrations": 4,
+    "smallActionContexts": 3,
+    "smallActionControls": 12,
+    "fullImageContexts": 6,
+    "immediateCommentObservations": 36,
+    "semanticDifferences": 0,
+    "candidateInvariantFailures": 0,
+    "visualPairs": 6,
+    "pixelDifferencesRetained": 6,
+    "referenceFidelity": "REVIEWED",
+    "productApproved": false,
+    "uiBoundaries": 38,
+    "sourceContractControls": 8,
+    "architectureLinks": "PASS",
+    "currentVersionArtifacts": "PASS",
+    "formalAcceptance": "NOT_RUN",
+    "fullFunctionalSuite": "NOT_RERUN_FOR_LOCAL_POLISH",
+    "pcSuite": "NOT_RERUN_UNCHANGED_RUNTIME",
+    "finalReadOnlyReview": "NO_BLOCKERS",
+    "impeccableDetector": "NO_REGEX_FINDINGS",
+    "viewerImagesDecoded": 6
+  },
+  "resources": {
+    "oneChromeJobAtATime": true,
+    "startMemoryFloorGb": 4,
+    "unrelatedAppsTerminated": false
+  },
+  "limitations": [
+    "Native controls were observed read-only; candidate evidence uses native-shaped synthetic nodes/callbacks/assets, not actual deletion/account/current installed-extension/device qualification.",
+    "The13px native sprite asset is substituted in the fixture; exact class/child/pseudo structure and dimensions are observed. New14px mask is the adopted B1 icon family.",
+    "Six intentional design differences retain expected hit-area/metadata-height changes; no pixel equality claimed.",
+    "The104 functional pass belongs to675A; new4BEA polish uses the four directly affected registrations and36 scoped observations.",
+    "Image-specific replies, external upload documents and formal whole UI/header admission retain their prior limits."
+  ],
+  "evidence": [
+    {
+      "path": "artifacts/b1-comment-actions-2026-10-27/red.json",
+      "sha256": "609A8DEEDA7DEADDAC3071D391CADB0BFA023686558E770BF1498140A405F397",
+      "disposition": "LOCAL_ONLY_EVIDENCE"
+    },
+    {
+      "path": "artifacts/b1-comment-actions-2026-10-27/final-actions.json",
+      "sha256": "03F4B26160624238342F2F56AE1DDA787E25E575595A584BB4D9A5856BFFF882",
+      "disposition": "LOCAL_ONLY_EVIDENCE"
+    },
+    {
+      "path": "artifacts/b1-comment-actions-2026-10-27/final-image.json",
+      "sha256": "85BAAFC312A0E9050A1381CF0B8965F562C933FEEFA60C31367BFFF5E1FE96B2",
+      "disposition": "LOCAL_ONLY_EVIDENCE"
+    },
+    {
+      "path": "artifacts/b1-comment-actions-2026-10-27/final-comment-repair.json",
+      "sha256": "B7DC54502348CBD40581F9F6B670FC0ACED07ABDAF69A1C2CF21F14D0E195573",
+      "disposition": "LOCAL_ONLY_EVIDENCE"
+    },
+    {
+      "path": "artifacts/b1-comment-actions-2026-10-27/final-content.json",
+      "sha256": "485BEBAAB71557B418E709F4F79EAB23882D203AF63005CD9ABF42115C9B52A2",
+      "disposition": "LOCAL_ONLY_EVIDENCE"
+    },
+    {
+      "path": "artifacts/b1-comment-actions-2026-10-27/comment-comparison.json",
+      "sha256": "893CADFEC45DDC281BE31692EB56935ABD3D974632A86047DB5150E22E59CE5B",
+      "disposition": "LOCAL_ONLY_EVIDENCE"
+    },
+    {
+      "path": "artifacts/b1-comment-actions-2026-10-27/visual-manifest.json",
+      "sha256": "7E3FEDD522B69798BE13F04C1977B8EB399C7D1E9DC803F23FB6F31B3FD98E28",
+      "disposition": "LOCAL_ONLY_EVIDENCE"
+    },
+    {
+      "path": "artifacts/b1-comment-actions-2026-10-27/comparison/review.json",
+      "sha256": "07C80CCD4CFF9690E3EFDFAE93113D09179B01EF96BA230A89260335EDEB3017",
+      "disposition": "LOCAL_ONLY_EVIDENCE"
+    },
+    {
+      "path": "artifacts/b1-comment-actions-2026-10-27/viewer-check.json",
+      "sha256": "EB39F2641254794A0D55BA4A0A2084E470EDF80A0A1398DC0DAEBDEFA94CB1D6",
+      "disposition": "LOCAL_ONLY_EVIDENCE"
+    },
+    {
+      "path": "artifacts/b1-comment-actions-2026-10-27/impeccable-detector.json",
+      "sha256": "A5338D955B09046EC0B16F3A9625B7955C763AAE07DC722E474E6078745F932F",
+      "disposition": "LOCAL_ONLY_EVIDENCE"
+    }
+  ]
+}

@@ -1,0 +1,196 @@
+{
+  "schemaVersion": 1,
+  "kind": "B1_ARTICLE_COMMENTS_V7",
+  "status": "SCOPED_IMPLEMENTATION_VALIDATED_REVIEW_READY",
+  "sourceBaseHead": "00f03f111a4f914472e147c04d207b3b956134bf",
+  "candidateFingerprint": "f87477b8d68956f35822ce8b5c5f5dcad23a76a48e47e1f025a65d579342404e",
+  "artifact": {
+    "mobileVersion": "3.5.5",
+    "mobileSha256": "643446C829422B49B740CF73635A7DA5B66C81AD0FBDA0158B80A40A41278F9F",
+    "pcVersion": "1.9.9",
+    "pcSha256": "8915F36E5B8887DC58EF9F932E39CCA28CCE1AC1020FD96460CCD10C08913581",
+    "rootDistGuardMatch": true,
+    "pcUnchanged": true,
+    "officialRelease": false
+  },
+  "control": {
+    "mobileSha256": "79DD07831C87C8E02346E31BF5EEB19F4E53FF2D1A221C8A763F109F140D9CCC",
+    "comparison": "IMMEDIATE_PREVIOUS_IMPLEMENTATION_NOT_FORMAL_BASELINE"
+  },
+  "inputs": [
+    {
+      "path": "src/targets/mobile/article-presenter.js",
+      "sha256": "AC6D830B255C6670C034464F511E70CD0417F1F966D0F6091B29420A4E6EE005"
+    },
+    {
+      "path": "src/targets/mobile/comment-presenter.js",
+      "sha256": "38D80E928B426160A2F4284650BA765F07AE317915BEAD9861B6FEA818146063"
+    },
+    {
+      "path": "src/targets/mobile/filter-module.js",
+      "sha256": "45E99FE5F92653D956085C2F24B79F37024362B8434330D94F70122A3019A0F6"
+    },
+    {
+      "path": "testbed/ui-b1-article-v7-contract.mjs",
+      "sha256": "8B7A9EA1BAF1647BEFCA4FB50551F5886EFA299DDA98B3F511BA522BDBE6DCE5"
+    },
+    {
+      "path": "testbed/ui-control-material-contract.mjs",
+      "sha256": "90FF413D3DBE373F23F3D21E776317FE8D86A3EAFFD7CB2EEA71032ABD338500"
+    },
+    {
+      "path": "testbed/run-tests.mjs",
+      "sha256": "6A84AB78C44C28864002A0167D8E49B9894BF16ED6FC85D2EE4C5A7E72CF3183"
+    },
+    {
+      "path": "docs/work/B1_ARTICLE_COMMENTS_V7_IMPLEMENTATION.md",
+      "sha256": "4EE1B71E323AB7CE0B3BF890138183024FDB1573F06A3A0D76D7F2E7310A74E8"
+    }
+  ],
+  "references": {
+    "actualMemo": {
+      "path": "docs/design/b1-memo-workbench-light-2026-10-29.png",
+      "sha256": "F40C243D8789E412D1D59CBA5D0661A6711821BAF3C042082308015136EB0FA5"
+    },
+    "darkMemo": {
+      "path": "docs/design/b1-memo-workbench-dark-2026-10-29.png",
+      "sha256": "BB3932799DDFC1D24AC21C9573FF61F84B86269A1D9036726514F920C955D3AE"
+    },
+    "composition": {
+      "path": "docs/design/b1-article-comments-v7-proposal-2026-10-29.png",
+      "sha256": "DD07ACB48766B2691DC2FE8C7B0181E79A3C120F48817DEC84894CFAF8A5EF2D"
+    },
+    "geometry": {
+      "path": "docs/design/b1-comment-composer-corrected-2026-10-30.png",
+      "sha256": "EA385E2220D7792038F7C3EB3D20C53A9CA01869D3FD900FC3BBF2A53E87345F"
+    },
+    "roles": "Actual memo detail;generated composition/geometry only;native constraints and page/popup adaptation retained."
+  },
+  "validation": {
+    "registeredTests": 7,
+    "allPassed": true,
+    "geometryStates": 5,
+    "composerKinds": [
+      "ordinary",
+      "reply",
+      "image"
+    ],
+    "palette": {
+      "themes": 2,
+      "palettesPerTheme": 14,
+      "primaryRoles": 4,
+      "actualContrastChecks": 112,
+      "threshold": 4.5,
+      "previewSaveCancel": true,
+      "negativeControls": [
+        "mixed-backing",
+        "weak-ink",
+        "opacity"
+      ],
+      "universalAccessibilityClaim": false
+    },
+    "semantic": {
+      "articleObservations": 22,
+      "commentObservations": 36,
+      "equivalent": true,
+      "freshContexts": true
+    },
+    "public": {
+      "anonymous": true,
+      "methods": [
+        "GET",
+        "HEAD"
+      ],
+      "states": 3,
+      "http200": 3,
+      "pageOverflow": 0,
+      "livePopulatedComments": false,
+      "postReadsBlocked": true,
+      "actualExtension": false,
+      "physicalPhone": false
+    },
+    "visual": {
+      "report": {
+        "path": "artifacts/b1-article-v7-implementation-2026-10-30/visual-review-bound/review.json",
+        "sha256": "9D5074ADFAA9F265C94E04E8F0A110BB855FAD8A76976F00BB1637461E9233DC"
+      },
+      "pixelStatus": "DIFFERENCES_REQUIRE_REVIEW",
+      "referenceFidelity": "UNVERIFIED",
+      "wholeAndDetailViewed": true,
+      "implementationApprovedByUser": false,
+      "normalizedBoardsNotViewportGoldens": true
+    },
+    "review": {
+      "freshContextReadOnly": true,
+      "findingsFixed": [
+        "candidate-dependent contrast footprint",
+        "reply geometry omission",
+        "tool hover cascade"
+      ],
+      "additionalLiveFinding": "Legacy important margin reset pinned projected article;removed competition and added center invariant."
+    },
+    "omitted": [
+      "unaffected full product/list/PC/bfcache",
+      "real account/save/submission",
+      "whole UI/formal header qualification"
+    ]
+  },
+  "localEvidence": [
+    {
+      "path": "artifacts/b1-article-v7-implementation-2026-10-30/v7-final.json",
+      "sha256": "C2A33B3E2630BE357EF4B10391E36303821CE0637E109FFBEE041665228DFB3D"
+    },
+    {
+      "path": "artifacts/b1-article-v7-implementation-2026-10-30/final-picker.json",
+      "sha256": "B9E03C8A8D0E95EEE97DA47B61E75F4E3D74D7AC461577CA286C974FE27819BA"
+    },
+    {
+      "path": "artifacts/b1-article-v7-implementation-2026-10-30/final-image.json",
+      "sha256": "9BCDA6EB51409B0E0B9B756019C37F319CAA79999F13DCA3B1B2C03944356D1C"
+    },
+    {
+      "path": "artifacts/b1-article-v7-implementation-2026-10-30/final-author.json",
+      "sha256": "40059D9D151C2F61BC8DDBC350CB600199DB6C473F033365E2D0F02B6D700A99"
+    },
+    {
+      "path": "artifacts/b1-article-v7-implementation-2026-10-30/final-recommendation.json",
+      "sha256": "9C68964ED1251557E60A677E2ABDD34BC397810D8082DCB0A4AAA1E72C699086"
+    },
+    {
+      "path": "artifacts/b1-article-v7-implementation-2026-10-30/semantic-summary.json",
+      "sha256": "74FF93D7F597C992F5EA3BCF67524047739EEC9D8A7D1F1AEEA969D818E73EEC"
+    },
+    {
+      "path": "artifacts/b1-article-v7-implementation-2026-10-30/captures.json",
+      "sha256": "3FA8DE7196448846910B3272058D600A1A288C0F70F75267446A9E96655E72D1"
+    },
+    {
+      "path": "artifacts/b1-article-v7-implementation-2026-10-30/public-captures.json",
+      "sha256": "660B19F5DC279FD8581C31773F39FFDF6F529799DAFB73186A55FF54DD80360F"
+    },
+    {
+      "path": "artifacts/b1-article-v7-implementation-2026-10-30/visual-manifest.json",
+      "sha256": "F6E36BA876230C52FEF5F40D188D459691701EC470736165E94A337DF3AE75D1"
+    },
+    {
+      "path": "artifacts/b1-article-v7-implementation-2026-10-30/visual-review-bound/review.json",
+      "sha256": "9D5074ADFAA9F265C94E04E8F0A110BB855FAD8A76976F00BB1637461E9233DC"
+    },
+    {
+      "path": "artifacts/b1-article-v7-implementation-2026-10-30/viewer-check.json",
+      "sha256": "3BCF8F9ACAC08B6B5B814539B0444BA781954F08B129B7E897DFA7C848807551"
+    }
+  ],
+  "remaining": [
+    "Native attachment/download filename density observed;cause/control delta unclassified,NEXT owns follow-up.",
+    "User aesthetic adoption of final render.",
+    "Fresh populated live comments,actual extension and physical phone coverage separate.",
+    "390 element capture may show unchanged fixed menu at its lower edge;hit testing explicitly scrolls submit into view."
+  ],
+  "checkpoint": {
+    "target": "origin/codex/ui-port-boundary",
+    "standingAuthorized": true,
+    "executionReceipt": "artifacts/checkpoints/<commit>.json",
+    "officialPublication": false
+  }
+}

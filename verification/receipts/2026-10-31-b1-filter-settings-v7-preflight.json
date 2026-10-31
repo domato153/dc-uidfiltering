@@ -1,0 +1,186 @@
+{
+  "schemaVersion": 1,
+  "kind": "B1_FILTER_SETTINGS_V7_PREFLIGHT",
+  "status": "READ_ONLY_PREFLIGHT_COMPLETE_IMPLEMENTATION_PENDING",
+  "sourceBaseHead": "bbeaf5ca3c41359cb8af387291a3b9f33fc398ec",
+  "candidateFingerprint": "5ff2c522749098c80fc45c1163f55695b35ad7bead2007f8532e1c81ffb3350a",
+  "artifacts": {
+    "mobileSha256": "1AB7A9DD3B35ABF61634770F3EC7F96C98736096A88C262CDEEEFC7788F61027",
+    "pcSha256": "28096A3FE4F3C48967E4246BBD808AA47095A28A76129267190BC5ED2480D7C0",
+    "unchanged": true,
+    "officialRelease": false
+  },
+  "inputs": [
+    {
+      "path": "docs/work/B1_FILTER_SETTINGS_V7_PREFLIGHT.md",
+      "sha256": "5b23275a06b7e5ef3d84972782750f5d2e6577045cd2fcbb4a79eade80b84111"
+    },
+    {
+      "path": "docs/work/INDEX.md",
+      "sha256": "766696cdb3906093d54b4649ddb6dfd82373fc959182992720cf1bbef2c32ef6"
+    },
+    {
+      "path": "docs/work/NEXT_TASK.md",
+      "sha256": "ec296be10bb2205a3560c099525756e99b7852c6fc532b69a7185b85fc9992cd"
+    },
+    {
+      "path": "docs/ui-surface-contracts.md",
+      "sha256": "38e0d2fc9db27b5bbd7df4e7c102bc97de04f17ba622be99e953f913bad5f09f"
+    },
+    {
+      "path": "docs/agent-maintenance-notes.md",
+      "sha256": "6783febedecf6f182f6301c9c35b09de7e51adb0a2f5c23201f5b4a51c621bbc"
+    },
+    {
+      "path": "docs/work/B1_CONTROL_MATERIAL.md",
+      "sha256": "004daa69e7c375409854a6335a8472d8d0836d0cd9d73e5b106702a59c6f48b7"
+    },
+    {
+      "path": "src/targets/shared/settings-presenter.js",
+      "sha256": "ef1cb2cfce72c8c5438619b2f5e35cfb9eada1d7a2efd4b820ecdf43347661ae"
+    },
+    {
+      "path": "src/targets/shared/filter-settings-host-adapter.js",
+      "sha256": "e46d129ee41b04dcf0c0d7ddeec6af57f3859196e092f5f123d6a84f6dbbf00c"
+    },
+    {
+      "path": "src/targets/shared/popup-geometry-host-adapter.js",
+      "sha256": "7ffc936b838df4cd34a2ff3c5c7b0c21a259848b8cc9161d766c57d98f8a6073"
+    },
+    {
+      "path": "src/targets/mobile/theme-material-values.js",
+      "sha256": "db11d22b200cf2f588870e15d5d3d4347be60a3a0601cdb099b61d0652cdd3c6"
+    },
+    {
+      "path": "src/shared/storage-core.js",
+      "sha256": "1af1c12df554adfbf597cfa12c2bc8b756dac8d6a94d524eb0a7d5070b64c943"
+    },
+    {
+      "path": "testbed/fixtures/b1-native-list.mjs",
+      "sha256": "2aee6d3534b3b158f888d0224e79cc48009078a0eec1ee73873a10798a9b056a"
+    },
+    {
+      "path": "testbed/ui-b1-owned-input-contract.mjs",
+      "sha256": "fcb5407adc5125f24f4a77262982a1b7f7838fe858fc40429178b5cd605d4be2"
+    },
+    {
+      "path": "testbed/harness/runner-utils.mjs",
+      "sha256": "fd7d7d24c1984e635eed3bc2c83f21a9e274f1f34d5416010a1595fbe3d5a5ab"
+    },
+    {
+      "path": "testbed/harness/userscript-loader.mjs",
+      "sha256": "a9da81c03e53b6d25b949fc6993e532830e179e8bad2c73b6d3f6d5a3a92abc0"
+    },
+    {
+      "path": "build/targets.json",
+      "sha256": "b1b1afd0df7dd159ac845a3de2b50d0e748e87e5178c2ede01c19cab16d46f3c"
+    }
+  ],
+  "curatedCurrent": [
+    {
+      "path": "docs/design/b1-filter-v7-preflight-settings-top-light-2026-10-31.png",
+      "sha256": "574e1a0f0da0ead33a71a6f27965812bb798e0fd4181094d5c9b6b94df47f6bc"
+    },
+    {
+      "path": "docs/design/b1-filter-v7-preflight-settings-top-dark-2026-10-31.png",
+      "sha256": "3a625aba6cdc6a6ac4c0cdc0be0776be0f22c931472a9646fd6f64fb0fa7664c"
+    },
+    {
+      "path": "docs/design/b1-filter-v7-preflight-settings-bottom-light-2026-10-31.png",
+      "sha256": "80dd9d1a465b5408196224da54b3b70dabf18c5f072bd3b0ec25b115d338c966"
+    },
+    {
+      "path": "docs/design/b1-filter-v7-preflight-settings-bottom-dark-2026-10-31.png",
+      "sha256": "a0215442abfe1eef8676bd87d009558e2ef5f7a6f5dae06b9b38173a17c5a0a5"
+    },
+    {
+      "path": "docs/design/b1-filter-v7-preflight-headtext-current-light-2026-10-31.png",
+      "sha256": "7574bda629d704869c75232af6e1817d4ecbad11980626040ecd91a8f6dac945"
+    },
+    {
+      "path": "docs/design/b1-filter-v7-preflight-headtext-current-dark-2026-10-31.png",
+      "sha256": "7c1fe2097b3ed6eac1c37c0f7c44db6024a7cab8a0b349faa645762ea122f45c"
+    },
+    {
+      "path": "docs/design/b1-filter-v7-preflight-shortcut-waiting-light-2026-10-31.png",
+      "sha256": "4ba1ca64605703de50355830e78bd9886e7887399722fcf32d68821a540bbef9"
+    },
+    {
+      "path": "docs/design/b1-filter-v7-preflight-shortcut-waiting-dark-2026-10-31.png",
+      "sha256": "c827702e0552d5e4fa07e87725d82a509929306e9774a18a425436927c0f1735"
+    }
+  ],
+  "evidence": [
+    {
+      "path": "artifacts/b1-filter-settings-v7-preflight-2026-10-31/inspect.mjs",
+      "sha256": "6590b4c221c1e4ee704de98c48b5ff8c45f50324ea5255a014ec2c3a4da5b039"
+    },
+    {
+      "path": "artifacts/b1-filter-settings-v7-preflight-2026-10-31/inspection.json",
+      "sha256": "515d86d03eba024de15a7688bc747fe51e4b50aafc2d69ce2e25de125ddaef4f"
+    },
+    {
+      "path": "artifacts/b1-filter-settings-v7-preflight-2026-10-31/initial-input-probe.json",
+      "sha256": "d0717ef60bbe71b948eec4ea9afa11153117baa80754a49d94c82999a4c037b4"
+    },
+    {
+      "path": "artifacts/b1-filter-settings-v7-preflight-2026-10-31/escape-probe.json",
+      "sha256": "d13903ae557f74080339b95e41c752785c2f0128c1f27295efe40c98c0d14768"
+    },
+    {
+      "path": "artifacts/b1-filter-settings-v7-preflight-2026-10-31/viewer-check.json",
+      "sha256": "39662c82aefa24a447c4dd09c248a2582123f8343cf0a81bddaf30a3818f45c6"
+    }
+  ],
+  "observations": {
+    "browser": "Chrome156.0.8078.76",
+    "contexts": 7,
+    "settingsContexts": 5,
+    "capturedStates": 47,
+    "measuredRoots": 45,
+    "insideWithoutHorizontalExcess": 45,
+    "controlObservations": 390,
+    "positiveEnabledPointerHits": 280,
+    "disabledObservations": 65,
+    "emptyStates": 2,
+    "originalShortcutPreviewCancelOverlay": true,
+    "parentPointerRestored": true,
+    "ratioMasterRestored": true,
+    "trackedSettingsUnchanged": true,
+    "defects": [],
+    "viewer": {
+      "decoded": 20,
+      "zoom": true
+    }
+  },
+  "classification": {
+    "switchInputProbe": "Harness-target error:measure/click original label,not transparent1px input",
+    "escapeProbe": "Oracle assumption corrected:shared formatter excludes Escape;empty preview/nonclose is current behavior"
+  },
+  "plan": {
+    "scope": [
+      "S-01",
+      "S-02",
+      "S-03",
+      "S-04",
+      "S-05",
+      "S-06",
+      "S-07",
+      "S-08"
+    ],
+    "existingVisualOwner": "shared-settings-presenter",
+    "optionalMobileValues": true,
+    "newCompositionRequired": false,
+    "implementationPending": true,
+    "noNewOwnerOrStylePhase": true,
+    "pcFallbackPreservedRequired": true
+  },
+  "limits": [
+    "Source-injected synthetic fixtures,not actual extension/device/account",
+    "No main save/headtext mutation or real user settings changed",
+    "980×2306 is layout dimensions only;390 is stress",
+    "Current palettes/contrast/drag/save and full-product acceptance not requalified"
+  ],
+  "nextAction": "b1-filter-settings-v7-implementation",
+  "hashMode": "Canonical LF for tracked text;raw image/runtime bytes"
+}

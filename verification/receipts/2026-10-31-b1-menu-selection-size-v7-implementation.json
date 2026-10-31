@@ -1,0 +1,249 @@
+{
+  "schemaVersion": 1,
+  "kind": "B1_MENU_SELECTION_SIZE_V7_IMPLEMENTATION",
+  "status": "IMPLEMENTED_SCOPED_VALIDATION_PASSED",
+  "sourceBaseHead": "1a9391cf6c077c6a841b41781ebe29fc4bf1a73b",
+  "candidateFingerprint": "5a84e6289375aaa39055043eeb69db914a097ed9aea5736d1ad8fcf7d1fc1708",
+  "artifacts": {
+    "mobileVersion": "3.5.5",
+    "mobileSha256": "1AB7A9DD3B35ABF61634770F3EC7F96C98736096A88C262CDEEEFC7788F61027",
+    "mobileRootDistGuardMatch": true,
+    "pcVersion": "1.9.9",
+    "pcSha256": "28096A3FE4F3C48967E4246BBD808AA47095A28A76129267190BC5ED2480D7C0",
+    "pcRootDistGuardMatch": true,
+    "pcBytesChangedSharedCss": true,
+    "officialRelease": false
+  },
+  "inputs": [
+    {
+      "path": "docs/work/B1_MENU_SELECTION_SIZE_V7_IMPLEMENTATION.md",
+      "sha256": "1d273bef679af752082171a2fb83e08e494f651c589474345804f30bd7b78b72"
+    },
+    {
+      "path": "docs/work/B1_MENU_SELECTION_SIZE_V7_PREFLIGHT.md",
+      "sha256": "3088179e05ce5765e4e61f7a041e12cde24e15a6c6e7d6e2af30b732cb632d4d"
+    },
+    {
+      "path": "docs/work/B1_CONTROL_MATERIAL.md",
+      "sha256": "004daa69e7c375409854a6335a8472d8d0836d0cd9d73e5b106702a59c6f48b7"
+    },
+    {
+      "path": "docs/work/INDEX.md",
+      "sha256": "5222fc30de5a845e338d3d8708338fe934d11a355f08bf37c784f13466181d98"
+    },
+    {
+      "path": "docs/work/NEXT_TASK.md",
+      "sha256": "ba329d41f54e8569811649a05cba16e3b6b872a406a207d1fa8c186223710867"
+    },
+    {
+      "path": "docs/ui-surface-contracts.md",
+      "sha256": "403ebbdd7cb1cce532ccabc87a411f0245d6ce14a5e279965f0a6cb042dbc570"
+    },
+    {
+      "path": "docs/agent-maintenance-notes.md",
+      "sha256": "8e20b8dcb898180f95e6e18fdec4ec9a973a49e5a6d201710af82dc41cb6a77c"
+    },
+    {
+      "path": "src/targets/shared/settings-presenter.js",
+      "sha256": "ef1cb2cfce72c8c5438619b2f5e35cfb9eada1d7a2efd4b820ecdf43347661ae"
+    },
+    {
+      "path": "src/targets/mobile/theme-material-values.js",
+      "sha256": "db11d22b200cf2f588870e15d5d3d4347be60a3a0601cdb099b61d0652cdd3c6"
+    },
+    {
+      "path": "src/targets/shared/personal-block-host-adapter.js",
+      "sha256": "7f2e5d3b830f45728b4e52e2d5059d66dac8922bade3dc89bbad1423de74c36c"
+    },
+    {
+      "path": "src/targets/shared/popup-geometry-host-adapter.js",
+      "sha256": "7ffc936b838df4cd34a2ff3c5c7b0c21a259848b8cc9161d766c57d98f8a6073"
+    },
+    {
+      "path": "testbed/ui-owned-menu-selection-v7-contract.mjs",
+      "sha256": "9bff252652df20e12e59c1c405f557ac68df2dbe0069540fb8e28220292b2013"
+    },
+    {
+      "path": "testbed/run-tests.mjs",
+      "sha256": "49097be581b3061cd7d411a923710f596c290254d5b1a9dd65c68500a6803778"
+    },
+    {
+      "path": "testbed/fixtures/b1-native-list.mjs",
+      "sha256": "2aee6d3534b3b158f888d0224e79cc48009078a0eec1ee73873a10798a9b056a"
+    },
+    {
+      "path": "testbed/harness/runner-utils.mjs",
+      "sha256": "fd7d7d24c1984e635eed3bc2c83f21a9e274f1f34d5416010a1595fbe3d5a5ab"
+    },
+    {
+      "path": "testbed/harness/userscript-loader.mjs",
+      "sha256": "a9da81c03e53b6d25b949fc6993e532830e179e8bad2c73b6d3f6d5a3a92abc0"
+    },
+    {
+      "path": "testbed/ui-control-material-contract.mjs",
+      "sha256": "9648c8389e45f4980c5d550e9197994441e2b97b0a0d5f4f33e7e02e56c2c93d"
+    },
+    {
+      "path": "build/targets.json",
+      "sha256": "b1b1afd0df7dd159ac845a3de2b50d0e748e87e5178c2ede01c19cab16d46f3c"
+    },
+    {
+      "path": "testbed/fixtures/b1-image-comments.mjs",
+      "sha256": "57d5367ff5e074051cbc9f5d12b5e895a17cd2e34537687ca08adb754ff91bb3"
+    }
+  ],
+  "curatedActual": [
+    {
+      "path": "docs/design/b1-selection-prompt-v7-light-2026-10-31.png",
+      "sha256": "13bf3b1b84e39c1c7bc1ce3b2d04778f08ebb697dbffd02c0ce19a8ee781bab5"
+    },
+    {
+      "path": "docs/design/b1-selection-prompt-v7-dark-2026-10-31.png",
+      "sha256": "8ef4cc346d2c02bc6db32a37092820eb6399d354257a881f42e0cb17b5b864ec"
+    },
+    {
+      "path": "docs/design/b1-selection-choice-v7-light-2026-10-31.png",
+      "sha256": "98e7a7e9e3903caccef4161713593d369d9195082eafa776a61d2456eb092748"
+    },
+    {
+      "path": "docs/design/b1-selection-choice-v7-dark-2026-10-31.png",
+      "sha256": "f518a9b442e999e403aba8e944d5edab6ab1ec843271cb113595a63162fe0d94"
+    },
+    {
+      "path": "docs/design/b1-fab-size-v7-light-2026-10-31.png",
+      "sha256": "3de44f429e409fd0826365c1e1b70be1546a56f5bf55dd63c946ab8d52ac3372"
+    },
+    {
+      "path": "docs/design/b1-fab-size-v7-dark-2026-10-31.png",
+      "sha256": "793047e875acef0cb21ef16f206a62f31bae375fd02bbf8b40b41887a7b1cf7c"
+    }
+  ],
+  "evidence": [
+    {
+      "path": "artifacts/b1-menu-selection-size-v7-2026-10-31/red.json",
+      "sha256": "f5a6d1e2d9d4f6ea859a7b33911f06619ed2a15a4cdc5ec97e7047110f600db7"
+    },
+    {
+      "path": "artifacts/b1-menu-selection-size-v7-2026-10-31/focused-first.json",
+      "sha256": "e15cd5801eadc724aa991fd9eb52c1aad962f8e9d2f66ce06535e5ed2ac62ac8"
+    },
+    {
+      "path": "artifacts/b1-menu-selection-size-v7-2026-10-31/focused-final.json",
+      "sha256": "ec8bca635c9f293c93319d20eb2dd4bc829465ede84971a833d934fab2eefe30"
+    },
+    {
+      "path": "artifacts/b1-menu-selection-size-v7-2026-10-31/original-quick-block.json",
+      "sha256": "db4657a60a3eef8f0e0de50213c1ac3bc3e5651ced04812f5b8fbd495b018312"
+    },
+    {
+      "path": "artifacts/b1-menu-selection-size-v7-2026-10-31/original-fab-drag.json",
+      "sha256": "789f0d82f287db15de53d4b55ebe6e049f5dfd5327ab8b73ff235aad95bf99f1"
+    },
+    {
+      "path": "artifacts/b1-menu-selection-size-v7-2026-10-31/differential.json",
+      "sha256": "1c26c7e002ada471b3fc7bd997e92b9cead3feebd047af40b0a87156385a6421"
+    },
+    {
+      "path": "artifacts/b1-menu-selection-size-v7-2026-10-31/differential-observations.json",
+      "sha256": "c83f729aa6cf075c054679cd93c3c1a860a49115b9d56c9fd91d713206801b1c"
+    },
+    {
+      "path": "artifacts/b1-menu-selection-size-v7-2026-10-31/visual-manifest.json",
+      "sha256": "773995f4b7d7c7e781ba5c2d65785745ebc19fc4d18f0fe99e46d0da4eeda414"
+    },
+    {
+      "path": "artifacts/b1-menu-selection-size-v7-2026-10-31/visual-review-bound/review.json",
+      "sha256": "61aac78a58182c72c8a4f40718ddac996d9b3f01a28c3bb318036b5853cf9340"
+    },
+    {
+      "path": "artifacts/b1-menu-selection-size-v7-2026-10-31/viewer-check.json",
+      "sha256": "d6d4f9e3b10c9deae5270ea03ad543e03e8201de796a8e7a715ff2870dd18f5e"
+    },
+    {
+      "path": "artifacts/b1-menu-selection-size-v7-2026-10-31/impact-final.json",
+      "sha256": "9dd2ce3629e546d376a79e1dbe9c66b8ab3b44e6c74b075066296700e5d0633e"
+    },
+    {
+      "path": "artifacts/b1-menu-selection-size-v7-2026-10-31/focused-settled.json",
+      "sha256": "0e4de44396578e3b29314ba69a5e94938eadc4a54715fae3b570e94101f9974e"
+    },
+    {
+      "path": "artifacts/b1-menu-selection-size-v7-2026-10-31/impact-final.json",
+      "sha256": "29e3f27573294893170847edcba07cd4324331987fd6d4bbd419e44b630b220f"
+    }
+  ],
+  "delta": {
+    "scope": [
+      "P-01",
+      "P-02",
+      "P-03",
+      "P-04",
+      "P-13"
+    ],
+    "productionFiles": 2,
+    "ownersChanged": false,
+    "commonV7FormulasChanged": false,
+    "templatesAdaptersStorageGeometryUnchanged": true,
+    "newStylePhase": false,
+    "newImportant": false,
+    "newDependency": false
+  },
+  "validation": {
+    "browser": "156.0.8078.76",
+    "focusedTests": 3,
+    "existingTests": 2,
+    "geometryContexts": 6,
+    "palette": "blue/mono/rose preview/save/cancel;2 themes ×3 children",
+    "labelContrast": {
+      "samples": 18,
+      "min": 6.340815392129919,
+      "threshold": 4.5
+    },
+    "differential": {
+      "freshContexts": 8,
+      "stateObservationsPerTargetSide": 40,
+      "pcAppearancePairs": 38,
+      "differences": 0
+    },
+    "visual": {
+      "cases": 8,
+      "status": "DIFFERENCES_REQUIRE_REVIEW",
+      "referenceFidelity": "REVIEWED",
+      "productApproved": false,
+      "pixelMatches": 2,
+      "intentionalDifferences": 6
+    },
+    "viewer": {
+      "decoded": 16,
+      "zoom": true
+    },
+    "staticReview": "Independent read-only source/test review:no actionable findings",
+    "architecture": "Effective links check passed;no registry/owner change",
+    "buildArtifacts": "Both current-version root/dist/guard match;release verification passed"
+  },
+  "contraryEvidence": [
+    {
+      "artifact": "5BCBDAED",
+      "classification": "product contrast",
+      "finding": "Dark rose quiet prompt cancel2.798",
+      "resolution": "Normal body ink,paired roles preserved;settled18samples min6.3408"
+    },
+    {
+      "classification": "harness transient locator",
+      "finding": "Original leaving prompt and choice share ID during120ms exit",
+      "resolution": "Wait original single-active boundary after author click;no product behavior change"
+    }
+  ],
+  "impact": {
+    "resolver": "Conservative acceptance/proof-runtime fallback for shared presenter/harness and unmapped new test",
+    "actual": "Two scoped CSS/value files;original function/geometry owners unchanged",
+    "omissions": "Unrelated full product/PC/filter/network/writer/128-UI suites;formal broad acceptance UNKNOWN"
+  },
+  "limits": [
+    "Synthetic source injection,not actual extension/device/account/live writes",
+    "980×2306 layout-only;390 stress",
+    "Other older B1 settings/native children remain pending"
+  ],
+  "nextAction": "b1-filter-settings-v7-preflight",
+  "hashMode": "Canonical LF for tracked text;raw image/runtime bytes"
+}

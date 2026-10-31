@@ -1,0 +1,200 @@
+{
+  "schemaVersion": 1,
+  "kind": "b1-popup-reference-polish",
+  "status": "SCOPED_REFERENCE_REVIEWED_FULL_RUN_TIMEOUT_ISOLATED_PASS_USER_PREFERENCE_PENDING",
+  "sourceBaseHead": "381d948787e2bdb47ad37fb1da5ea0875a019438",
+  "candidateFingerprint": "9b1c0fc43cee3edb9243851679269456029c47b2a1136c6e88493bbc3aee3f46",
+  "artifact": {
+    "mobileSha256": "84AE80337CB73A0DAB0B98EA475C7C11D37C3B654E9EFA907204B7033FADA5D8",
+    "controlMobileSha256": "5E114697F8E7B4DD5968AA2903BC60608D43408103A465F9E53EBA1692B15DE0",
+    "pcSha256": "61C539769BA160A5FC4DCD164B3CD26025244AB6FC1BBC7A4A520416FE5A41A5",
+    "pcBytesChanged": false,
+    "versionChanged": false
+  },
+  "scope": {
+    "surfaces": [
+      "H-03",
+      "C-11~13 actually exercised picker parts",
+      "X-theme",
+      "X-viewport",
+      "X-input",
+      "X-open-state"
+    ],
+    "owners": [
+      "mobile-comment-host-adapter",
+      "mobile-comment-presenter",
+      "mobile-header-recent-visit-presenter"
+    ],
+    "productionDelta": "Existing native title/help/preview/color/recent/toolbar/pack projection and same-owner CSS; original100px preview/colors/nodes/events/parents/handlers retained. No portal, observer, storage or authentication change. Observed native fixed-width/float/padding/centered-submit collisions are modeled; one exact picker-primary margin exception is registered against the native important declaration.",
+    "appearanceApproved": false,
+    "acceptedRegistryChanged": false,
+    "overlayActive": true
+  },
+  "checks": {
+    "mobile": {
+      "passed": 144,
+      "failed": 1,
+      "qualification": "SPLIT_COVERAGE_NOT_CLEAN_FULL_PASS",
+      "failure": "Existing header drawer relation-replacement wait timed out; unchanged isolated final-runtime test passed in1042ms. Cause not reproduced.",
+      "isolatedRecheck": {
+        "passed": 1,
+        "failed": 0,
+        "evidence": "artifacts/b1-popup-polish-2026-10-24/drawer-recheck.log"
+      },
+      "finalNativeFixtureRecheck": {
+        "tests": 1,
+        "contexts": 8,
+        "passed": true,
+        "evidence": "artifacts/b1-popup-polish-2026-10-24/focused-native-cascade.log",
+        "note": "Full run includes final native100px preview and observed host CSS. B1 contract passes in both full and focused runs."
+      }
+    },
+    "semantics": {
+      "controlSha256": "5E114697F8E7B4DD5968AA2903BC60608D43408103A465F9E53EBA1692B15DE0",
+      "candidateSha256": "84AE80337CB73A0DAB0B98EA475C7C11D37C3B654E9EFA907204B7033FADA5D8",
+      "comment": {
+        "observations": 36,
+        "behaviorDifferences": 0,
+        "falseCandidateInvariants": 0,
+        "persistentResourcesEqual": true,
+        "transientTimersFrames": "sampled, not an exact-equality claim"
+      },
+      "recent": {
+        "observations": 29,
+        "semanticDifferences": 0,
+        "wait": "browser scrollend before comparison",
+        "earlierMidAnimationDifferences": 7
+      },
+      "limits": "Immediate development control only; no published raw/mixed/upper promotion."
+    },
+    "static": {
+      "uiBoundaries": 38,
+      "liveArchitectureLinks": 6,
+      "historicalHeaderOwnership": true,
+      "buildReleaseVerification": true
+    },
+    "impeccable": {
+      "invocations": 1,
+      "files": 3,
+      "exitCode": 0,
+      "scope": "Regex-only JS; parsed-page contrast/tiny-text rules not run. No clean-bill inference.",
+      "qualification": "PRE_FINAL_INFORMATIONAL_NOT_FINAL_SOURCE_PASS",
+      "runtimeAtInvocation": "04834EDFBB2D42384D71F2057A3EADE82AD49E73CFB999C303B4CC65C1D291AF"
+    },
+    "visual": {
+      "imageBoundPairs": 8,
+      "referenceFidelity": "REVIEWED",
+      "pixelResult": "DIFFERENCES_REQUIRE_REVIEW",
+      "productApproved": false,
+      "viewerImagesDecoded": 17,
+      "horizontalOverflow": 0,
+      "proposalPath": "docs/design/b1-popups-proposal-2026-10-24.png",
+      "proposalSha256": "A55E92CF4775D0EA5007A8F77EEA746A78283E8EFD14C7AC3AC042EDFC1D6963"
+    },
+    "publicSourceInjected": {
+      "kind": "public-source-injected-observation-not-extension",
+      "runtimeSha256": "84AE80337CB73A0DAB0B98EA475C7C11D37C3B654E9EFA907204B7033FADA5D8",
+      "textcon": "LIGHT_RENDER_GEOMETRY_REVIEWED",
+      "dccon": "NOT_OPEN_WITH_DCCON_LISTS_POST_BLOCKED",
+      "actualExtensionQualified": false,
+      "viewport": {
+        "width": 980,
+        "height": 900
+      },
+      "evidence": "artifacts/b1-popup-polish-2026-10-24/native-check.json"
+    }
+  },
+  "evidence": [
+    {
+      "path": "artifacts/b1-popup-polish-2026-10-24/mobile-final.json",
+      "sha256": "67864F6C5406DB815FD9B3A4317CDE016AF04B8610E53428991597C30C5B3E91"
+    },
+    {
+      "path": "artifacts/b1-popup-polish-2026-10-24/focused-native-cascade.log",
+      "sha256": "62C37541C95259608B9BE746BD85D7D48302C0653F08B928329F6A253B32C121"
+    },
+    {
+      "path": "artifacts/b1-popup-polish-2026-10-24/drawer-recheck.log",
+      "sha256": "D318F36907FB9729411F0CE81C7CD02A1BFD0C17D3D345A41D062BE8CE91BE11"
+    },
+    {
+      "path": "artifacts/b1-popup-polish-2026-10-24/semantic-summary.json",
+      "sha256": "C5184ED86F2F4A6F4A6E93E98036E86596DEF530DE4657A87EBC5EB8BE403593"
+    },
+    {
+      "path": "artifacts/b1-popup-polish-2026-10-24/review-manifest.json",
+      "sha256": "4DE9504884DDE0B64EF4C081E9CD01582BD3AF66B63BF1E2DD04302BDEEA48AC"
+    },
+    {
+      "path": "artifacts/b1-popup-polish-2026-10-24/comparison-final/review.json",
+      "sha256": "C5CF5890B0E309934137246592757DC45AC2D075BEC1DE436983AC69D4C1511C"
+    },
+    {
+      "path": "artifacts/b1-popup-polish-2026-10-24/impeccable-detect.log",
+      "sha256": "BFD9CC98F327F633B5E6BDFB704CD352B36B5BAFDA17F0AF50EA64CF1CD44064"
+    },
+    {
+      "path": "artifacts/b1-popup-polish-2026-10-24/native-check.json",
+      "sha256": "C9913850489FD26515FEB2AAF21FF9EE5558CB9F3A774AF23D055BDAD454413A"
+    },
+    {
+      "path": "artifacts/b1-popup-polish-2026-10-24/native-div_txtcon-detail.png",
+      "sha256": "D6026830977110CDEE7FE412C927DFABAB329B4F96D4A7CA264F6EC67BCBA55C"
+    },
+    {
+      "path": "artifacts/b1-popup-polish-2026-10-24/focused-native-cascade-red.log",
+      "sha256": "A35C2112710FEF4833B597E2E79F048DB0C8DD60CF7AC4DBA5D960522D64C345"
+    }
+  ],
+  "directInputs": [
+    {
+      "path": "src/targets/mobile/comment-host-adapter.js",
+      "sha256": "050C8D63A1F41ACFE704AADEF3C9F879BA1A4FDA84D93235E549E3E19ADF446B"
+    },
+    {
+      "path": "src/targets/mobile/comment-presenter.js",
+      "sha256": "2EB27782412D1E7C514746C55FE527D5C9C1DB17DF258E99E3E4E6C94F1B18F9"
+    },
+    {
+      "path": "src/targets/mobile/header-recent-visit-presenter.js",
+      "sha256": "7FAC5ABB4BF49E8AEA14683DB58EE6F43017809158F883A662651E13F9C8240E"
+    },
+    {
+      "path": "testbed/fixtures/b1-content.mjs",
+      "sha256": "719303975366FABF8A3CC6A76C91B39471DB1032793E6F8D7475FEAFA41A2D05"
+    },
+    {
+      "path": "testbed/ui-b1-content-contract.mjs",
+      "sha256": "7A81966B726A7F43757CED1D1BBCCCCAA8BDE4A4DBE273D77B99B45CABCFD164"
+    },
+    {
+      "path": "testbed/run-header-recent-visit-differential.mjs",
+      "sha256": "66C147C4E23445D9326CA1513C25830746EB40E0E601A0AC93CD8CB01EA14DC0"
+    },
+    {
+      "path": "verification/b1-header-visual-delta.json",
+      "sha256": "638B4B86B04A2080D0E7AC47BE0805C3CC188704804ACF6217307FF72027D781"
+    },
+    {
+      "path": "architecture/ui-surfaces.json",
+      "sha256": "82C1F7789FF807D803AA0A4398D7306125E5398A81A20A145D79A8404A346ABD"
+    }
+  ],
+  "contraryEvidence": [
+    "Old runtime fails the native-title positive contract.",
+    "First candidate exposed the hidden DCCon heading collision; scoped panel/heading styling corrected it without new priority.",
+    "Narrow menu overlap corrected with bounded clearance.",
+    "Seven pre-scrollend recent differences retained as harness timing; settled29 semantic observations equal.",
+    "Published raw +8 listener difference remains unwaived.",
+    "Public source injection exposed missing native CSS after fixture PASS;04834EDF fails with the exact host rules. Existing owner repaired and actual textcon rechecked.",
+    "Full final-runtime suite records144/1, not145/0; unchanged isolated drawer test passes. Unreproduced timeout remains explicit."
+  ],
+  "limits": [
+    "Eight comparisons use synthetic content/media/recent rows with observed native anatomy/CSS. Public source-injected light textcon was separately reviewed; actual extension is not qualified.",
+    "No current actual-extension/device/authenticated qualification.",
+    "Native picker subpages, nonempty textcon recent usage, article action children and later P2–P5 are not approved by this unit.",
+    "980×2306 phone layout proxy;390 is stress."
+  ],
+  "nextTask": "b1-article-action-popups",
+  "workSuccessCertified": false
+}

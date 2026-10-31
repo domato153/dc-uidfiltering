@@ -1,0 +1,90 @@
+{
+  "schemaVersion": 1,
+  "kind": "b1-write-button-material-refinement",
+  "status": "FOCUSED_FUNCTIONAL_PASS_USER_VISUAL_REVIEW_PENDING",
+  "sourceBaseHead": "6d2841638dcbae960b3808e7fd14224d451df8c6",
+  "artifact": {
+    "mobileSha256": "96B933A1A47849885D83D42290B54E3AE33181846DF244606A9063F9E4083BFD",
+    "controlMobileSha256": "AF6C98F0ECD7351B3A4C2EFF47BC23636B8AAE9C47DFD2A9F16D3AA76187C589",
+    "pcSha256": "5FA25756C43864AA8C90C1347AE6A03652D901862F83ABEAEDDEBF6382CFA740",
+    "versionChanged": false
+  },
+  "scope": {
+    "surfaces": [
+      "L-09",
+      "L-05",
+      "X-theme",
+      "X-viewport",
+      "X-input"
+    ],
+    "productionChanges": "One existing list-presenter primary-action CSS block; top and bottom native list write actions. No DOM/events/UiPort/state/observer/shared PC changes.",
+    "environment": "980x2306 layout proxy and390 stress within B1; public Chrome155 GET/HEAD with GM shim, not a new actual-extension/device run",
+    "appearanceApproval": false
+  },
+  "finding": "AF6 primary button used a weak diagonal glaze, border close to fill, and box-shadow:none inherited from the common control reset. Its intended owner was active; no new cascade collision was found.",
+  "change": "Thin top rim, vertical top glaze, darker lower face, soft elevation and9px radius. Keep80x40 minimum and palette/ink binding.",
+  "checks": {
+    "b1": {
+      "functionalStatus": "PASS",
+      "contexts": 8,
+      "paletteBindings": 28,
+      "visualStatus": "MANUAL_REFERENCE_REVIEW_REQUIRED"
+    },
+    "nativeToolbar": {
+      "tests": 1,
+      "contexts": 36,
+      "status": "PASS"
+    },
+    "renderedContrast": {
+      "paletteThemeCases": 28,
+      "minimumRatio": 5.050331241809887,
+      "scope": "Rendered padding samples bracket the label band, not a beauty score or full-page a11y audit"
+    },
+    "keyboardFocus": {
+      "active": true,
+      "outline": "solid",
+      "width": 3
+    },
+    "immediateSemantic": {
+      "observations": 16,
+      "settledRecords": 4,
+      "status": "PASS_WITHIN_AF6_SCOPE"
+    },
+    "publicChrome": {
+      "browser": "155.0.8059.85",
+      "themes": 2,
+      "http": [
+        200,
+        200
+      ],
+      "overflow": [
+        0,
+        0
+      ]
+    },
+    "visual": {
+      "status": "DIFFERENCES_REQUIRE_REVIEW",
+      "productApproved": false
+    }
+  },
+  "limits": [
+    "No new full144 claim: that report remains exact AF6 historical coverage; this local paint-only delta uses affected tests.",
+    "Other UI families, raw/mixed/upper/release and user beauty approval remain separate.",
+    "Original detector retains one unconfirmed unchanged dynamic-img serializer warning; no ignore added."
+  ],
+  "evidence": {
+    "artifacts/b1-button-2026-10-23/before/report.json": "F93C7AC081F3E3501AB32FF1269353F184C4A163AEFDC1CF67A08D331B25DBE8",
+    "artifacts/b1-button-2026-10-23/after/report.json": "F719E01C703A257D7D2EFD467BAF5EAA738B2B2A41C570803D7CA87064DD6DF0",
+    "artifacts/b1-button-2026-10-23/b1.json": "71ECF73C7C2A5F3FBF43F0B854BE34E91132389D79BC679CD594A7DF9B2D93C5",
+    "artifacts/b1-button-2026-10-23/native-toolbar.json": "770BC04DEC0399138212A2C6B204AD31B3AF6B7D1A6A9619844D9406CBE7AD6D",
+    "artifacts/b1-button-2026-10-23/material/contrast.json": "515D025EB8FF365F4535BE2DCA7BA98B5C788A51C8628894B9BA39E93AF38B29",
+    "artifacts/b1-button-2026-10-23/material/focus.json": "DD6B66CAA76CE74BB4B0D66D26856D28E83B829A6A371529810F0A332A0F3D70",
+    "artifacts/b1-button-2026-10-23/public/report.json": "88F1AF62F166111FDFFC31EB2EC32DF45E904F69EEC96D019DAE991C10AEB3DA",
+    "artifacts/b1-button-2026-10-23/control-side.json": "1B63BFFF11A4D222A928B12071CC724DD4C67A71482E5E6B489BC207973CE5A8",
+    "artifacts/b1-button-2026-10-23/candidate-side.json": "E81EF02767D295E29325618B827AC70DDEC709CB36529AA3734E51AA2F00A89D",
+    "artifacts/b1-button-2026-10-23/impeccable.json": "3C34667D1C157405B95CF87F1AA2DAD19D42AA9F5DC85E624A903D9D1FF8E337",
+    "artifacts/b1-button-2026-10-23/button-before-after.png": "163E2F9913B6944ACB20CBD841C48E2991F816D94A639B00BBA8617CEBC8A6EE",
+    "artifacts/b1-detail-2026-10-23/button/report-final/review.json": "C7D7BDB885158439D14FA325CC2A6088BF6F6E25397E613E1C91D6EDAFF6D14C",
+    "artifacts/b1-detail-2026-10-23/button/index.html": "CAF71EA5467EB11B6E4095F3F1393A577E933CE75732B710839D05FEA8EDD815"
+  }
+}

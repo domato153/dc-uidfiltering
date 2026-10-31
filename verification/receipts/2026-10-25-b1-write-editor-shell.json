@@ -1,0 +1,121 @@
+{
+  "schemaVersion": 1,
+  "kind": "b1-write-editor-shell",
+  "status": "SCOPED_WRITE_EDITOR_SOURCE_PASS_VISUAL_PREFERENCE_PENDING",
+  "sourceBaseHead": "9cf43fdaa914c8d34d57c3efdca8e7997b5fb292",
+  "candidateFingerprint": "0cbe15444f9acf620aa5ee56c3216f52bfd45dfa13c99dc7f76fd8428a72b509",
+  "artifact": {
+    "mobileSha256": "CE3C4D1B09A52408F0F10C96FB0B4362AE74E3AC8000C9149DE83A9E76A30EDD",
+    "controlMobileSha256": "62F1BAE62F3CDC5E2640B8331D603D86465DB7111B4379E11D249C395CE3C87A",
+    "pcSha256": "61C539769BA160A5FC4DCD164B3CD26025244AB6FC1BBC7A4A520416FE5A41A5",
+    "pcBytesChanged": false,
+    "versionChanged": false
+  },
+  "scope": {
+    "sharedHeaders": 4,
+    "contexts": [
+      "write",
+      "modify-editor"
+    ],
+    "hasListSurface": false,
+    "nativeDomEventsFormsPreserved": true,
+    "newObservers": 0,
+    "newDependencies": 0,
+    "acceptedRegistryChanged": false,
+    "overlayActive": true,
+    "visualDelta": "Shared B1 frame/canvas/paper fields/editor edges; gallery nickname role; existing header reuse. Editor ancestor has no backdrop-filter/transform.",
+    "lifecycleDelta": "Remove unused leave-confirm class churn; guard same-value write/body class adds; detect disconnected forms and form descendants in delivered mutation roots.",
+    "excluded": [
+      "native tool/popup interior redesign",
+      "attachment/AI interiors",
+      "authenticated editor/account",
+      "sign login",
+      "all-UI approval",
+      "actual final extension/device qualification",
+      "release/version/publication"
+    ]
+  },
+  "checks": {
+    "mobile": {
+      "passed": 151,
+      "failed": 0,
+      "runtime": "CE3C4D1B09A52408F0F10C96FB0B4362AE74E3AC8000C9149DE83A9E76A30EDD",
+      "log": "artifacts/b1-write-shell-2026-10-25/mobile-final.log"
+    },
+    "focusedWriteShell": {
+      "contexts": 5,
+      "initialHeaderRed": true,
+      "wrapperRemovalRedThenGreen": true,
+      "idleAndReinsert": true,
+      "originalInteractionNodes": true,
+      "scopeLimit": "Baseline identities are captured after initialization; hidden fields compared. Broader native behavior uses separate side observations."
+    },
+    "nativeComparison": {
+      "observations": 25,
+      "behaviorDifferences": 0,
+      "rawDifferenceCount": 9,
+      "source": "artifacts/b1-write-shell-2026-10-25/native-summary.json",
+      "method": "Separate --side processes for62F1 and candidate. CLI published-baseline entry correctly rejected62F1; this is not authoritative-published differential qualification."
+    },
+    "sharedPolicyUnit": {
+      "passed": 1,
+      "failed": 0
+    },
+    "graph": {
+      "surfaces": 6,
+      "acceptedRegistryUnchanged": true
+    },
+    "visual": {
+      "fixtureStates": 6,
+      "publicGetStates": 4,
+      "pairedReferenceCases": 4,
+      "status": "UNVERIFIED_USER_TEXTURE_PREFERENCE_PENDING",
+      "productApproved": false,
+      "source": "artifacts/b1-write-shell-2026-10-25/settled-visual/review.json",
+      "findings": [
+        "Original/independent proposal/current kept separate; native CAPTCHA/category/tool differences intentional.",
+        "Shared frame glass/rim/sheen revised after user called earlier form flat; opaque editing paper deliberate; revised preference not yet approved.",
+        "Native tool popup/attachment/AI interiors remain separately named, no all-child claim."
+      ]
+    },
+    "phoneProxy": {
+      "screen": [
+        412,
+        1006
+      ],
+      "layout": [
+        980,
+        2306
+      ],
+      "deviceScaleFactor": 2.625,
+      "writeScale": "2.378640776699029",
+      "controlAndCandidateHit": true,
+      "overflow": 0,
+      "directFontOpen": "UNQUALIFIED: fixture lacks native click-open bootstrap on both62F1 and candidate; explicit existing fixture API opens menu, then hit/selection/input checks pass.",
+      "actualDevice": false
+    },
+    "review": {
+      "independent": "write_shell_final_review",
+      "important": "Wrapper-removal lifecycle missed by native-form relevance; reproduced then fixed, reinsertion and idle pass.",
+      "minor": "New test identities begin after init and compare hidden fields, not full FormData; retain exact scope and use independent native observations separately.",
+      "secondReview": false
+    },
+    "checkpointValidation": "Publisher owns final exact staged-tree validation and transport/CI receipt; not a product approval."
+  },
+  "impact": {
+    "profiles": [
+      "policy",
+      "proof-core",
+      "proof-runtime",
+      "acceptance"
+    ],
+    "unmappedFiles": [],
+    "disposition": "Git resolver selects broad formal profiles. This bounded unit ran full Mobile plus named native/UI checks, not every upper gate command; formal header admission/promotion remains open."
+  },
+  "localEvidence": {
+    "root": "artifacts/b1-write-shell-2026-10-25",
+    "viewer": "artifacts/b1-detail-2026-10-23/write-shell/index.html",
+    "disposition": "LOCAL_ONLY_EVIDENCE; regenerate missing captures with guarded runtime, original/proposal/current and explicit native actions."
+  },
+  "next": "b1-write-tool-popups"
+}

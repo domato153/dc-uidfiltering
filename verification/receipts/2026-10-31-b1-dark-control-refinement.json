@@ -1,0 +1,270 @@
+{
+  "schemaVersion": 1,
+  "kind": "B1_DARK_CONTROL_REFINEMENT",
+  "status": "IMPLEMENTED_SCOPED_VALIDATION_PASSED",
+  "sourceBaseHead": "5d69c6df6b64af71677e0cafda88a2d06c754019",
+  "candidateFingerprint": "ea839ed2134a02a72d14e213988074d8cf244405c71a74abf8c7250f248cdcb1",
+  "artifacts": {
+    "mobileVersion": "3.5.5",
+    "mobileSha256": "7E824AD336F6B6173487FB24052D2586184F4F5D169C01BC036D1FDBA9092E7D",
+    "rootDistGuardMatch": true,
+    "pcVersion": "1.9.9",
+    "pcSha256": "FEACBA669839690F398A1540EF925C71C078BD646C6C6435DD0EC639585539A3",
+    "pcUnchanged": true,
+    "officialRelease": false
+  },
+  "inputs": [
+    {
+      "path": "src/targets/mobile/theme-material-values.js",
+      "sha256": "c4f8b253d9376c25cbaa09eaf54cfdaa6623c3489214cfc22039cf8999f1ff08"
+    },
+    {
+      "path": "src/targets/mobile/gallery-page-head-presenter.js",
+      "sha256": "244e43128157e2c86ecc2236c7c9263e6b59a3b6b3eaa1d1360048448db37575"
+    },
+    {
+      "path": "src/targets/mobile/header-recent-visit-presenter.js",
+      "sha256": "490607013a4771bce3919c3460c1fe49aed6ea32bc2cb80316d4c285a75bfdf8"
+    },
+    {
+      "path": "testbed/ui-b1-dark-material-contract.mjs",
+      "sha256": "d88d8757cc5f26af805a2f5146bdf9296eb1dc54f729eead58a9945469fc7a71"
+    },
+    {
+      "path": "testbed/run-tests.mjs",
+      "sha256": "7497ac71376655e7204535a150ce9359c5d9637a0959e7a5544a55cdac331a8d"
+    },
+    {
+      "path": "testbed/ui-b1-memo-workbench-contract.mjs",
+      "sha256": "e7696dcfda3bade782cbc590bb17a9f1322d3c5cf09825e2533243a467464b27"
+    },
+    {
+      "path": "testbed/ui-b1-memo-palette-contract.mjs",
+      "sha256": "87762227878bf58738bcf7996b626197080b7ca6e94a760ee31cf61d2920c74e"
+    },
+    {
+      "path": "testbed/ui-owned-management-v7-contract.mjs",
+      "sha256": "2e0808497ba62a1331aa4af86fc29999cd8bea8d3f3a27614cdca7aa2c89b09c"
+    },
+    {
+      "path": "testbed/ui-control-material-contract.mjs",
+      "sha256": "9648c8389e45f4980c5d550e9197994441e2b97b0a0d5f4f33e7e02e56c2c93d"
+    },
+    {
+      "path": "tools/test-header-palette-ownership.mjs",
+      "sha256": "aed214634acbaf6401ecf48705d7095cddf54a729a6f92933bc2389cdffb63df"
+    },
+    {
+      "path": "verification/b1-header-visual-delta.json",
+      "sha256": "83e42ad05727f506c689cf767e083158c2574b13a922d53721c99445e2533c04"
+    },
+    {
+      "path": "verification/concept01-header-visual-delta.json",
+      "sha256": "7aa2ad47c4d09d3e12aa4eba9ef342aa5e8e92a7f40d4624395410edb62f8982"
+    },
+    {
+      "path": "docs/ui-surface-contracts.md",
+      "sha256": "00ab9664eff12ed78eb4a08bf46f86bd7d4aad4df8f519f135ad931ace0b77f6"
+    },
+    {
+      "path": "docs/work/B1_DARK_CONTROL_REFINEMENT.md",
+      "sha256": "3e9722357bb65f33e4307c9c7e8c4d5bc8241e0c5454cfa18d5a525bb6c99603"
+    },
+    {
+      "path": "docs/work/UI_REFERENCE_GUARD.md",
+      "sha256": "9ea826174d68194fe1afbe52df9e61c67fb7594298aa444424a8d581b10a4317"
+    }
+  ],
+  "evidence": [
+    {
+      "path": "artifacts/b1-dark-refinement-2026-10-31/focused.json",
+      "sha256": "f466358b4253ce8ebe88bb945ba97fa63f025682a929a27658a773ae67c7c150"
+    },
+    {
+      "path": "artifacts/b1-dark-refinement-2026-10-31/memo.json",
+      "sha256": "473f36214596de49dfca043a523b155677d88476694ef4814323b1a9a43e3090"
+    },
+    {
+      "path": "artifacts/b1-dark-refinement-2026-10-31/management-palette.json",
+      "sha256": "444a37d304f0f01f7c0c813fa8c78bc35143d57bc870a8d691e8c39d61028259"
+    },
+    {
+      "path": "artifacts/b1-dark-refinement-2026-10-31/list.json",
+      "sha256": "c94ac5d93615d0eba4e13c0494f1508a3b17285b70561bafb633fb20f5372478"
+    },
+    {
+      "path": "artifacts/b1-dark-refinement-2026-10-31/common.json",
+      "sha256": "a866d651172bf0074f79c536e913932b215493883725db663c590d3c52888e44"
+    },
+    {
+      "path": "artifacts/b1-dark-refinement-2026-10-31/comparison.json",
+      "sha256": "8c760bdf9af6a51f4e73fdecede20391e9eac33528e5a62157acd742e852854f"
+    },
+    {
+      "path": "artifacts/b1-dark-refinement-2026-10-31/capture.mjs",
+      "sha256": "b2d4fbaf020e7bd0b772c22ff65357c6e133e1f29863506cf02edf227ce8cb28"
+    },
+    {
+      "path": "artifacts/b1-dark-refinement-2026-10-31/control/observations.json",
+      "sha256": "f4df030ac099e9bc993a9e93261a5c478e2c61ce12685402969a7f477c0d2bd7"
+    },
+    {
+      "path": "artifacts/b1-dark-refinement-2026-10-31/after/observations.json",
+      "sha256": "bb33c0ba78c5e650ab404a8154f87a9dec3576721bff5fcc965281a265742f31"
+    },
+    {
+      "path": "artifacts/b1-dark-refinement-2026-10-31/header-fragment-necessity.json",
+      "sha256": "2f13850c10522c1ec29455b3bb4e6ad93e138539141e421a6e6a0311bbe07e3f"
+    },
+    {
+      "path": "artifacts/b1-dark-refinement-2026-10-31/visual-manifest.json",
+      "sha256": "e24754b4f6e4f56eaf5fce88f3a9fb8e015ddce2a13a4486c2d7d5ec3d752cc8"
+    },
+    {
+      "path": "artifacts/b1-dark-refinement-2026-10-31/visual-review-final/review.json",
+      "sha256": "181355916f93b09dfc866f28219c5eb39acfe54858b69599bb309b7dca436093"
+    },
+    {
+      "path": "artifacts/b1-dark-refinement-2026-10-31/viewer-check.json",
+      "sha256": "950736fb6cf0dce33765cb7af03fe30776fbfd7d52ca78716ce39b4058885793"
+    },
+    {
+      "path": "artifacts/b1-dark-refinement-2026-10-31/red.json",
+      "sha256": "e7549a763973589518427afb86e6828b43d41e76a9d29cb2daf94aae4faa43c4"
+    },
+    {
+      "path": "artifacts/b1-dark-refinement-2026-10-31/soft-trial-memo.json",
+      "sha256": "679100e5d27dfcf8b492a439370ebc159dbec94ec6868d5bd992bfd3f07cd3b4"
+    },
+    {
+      "path": "docs/design/b1-dark-refinement-memo-light-2026-10-31.png",
+      "sha256": "d6bc30027a68b3d89fddcbdb5529cc925cef8c8e0bb16b8d82a92eb19eb4227c"
+    },
+    {
+      "path": "docs/design/b1-dark-refinement-memo-dark-2026-10-31.png",
+      "sha256": "e0f89cb6bbfd8a44ac1f8154f4258cb36bc9f17a9e76fb263882d7ec4c7de793"
+    },
+    {
+      "path": "docs/design/b1-dark-control-comparison-2026-10-31.png",
+      "sha256": "161216ffb715aac2eaabd17e78ba7f7b3708ba7afdd373fb8b4782fd95245217"
+    }
+  ],
+  "reference": {
+    "path": "docs/design/b1-memo-workbench-light-2026-10-29.png",
+    "sha256": "F40C243D8789E412D1D59CBA5D0661A6711821BAF3C042082308015136EB0FA5",
+    "role": "Adopted light/composition detail;user2026-10-31 supersedes dark gloss/dim trials and row arcs",
+    "currentDark": "docs/design/b1-dark-refinement-memo-dark-2026-10-31.png",
+    "regressionBaselineApproved": false
+  },
+  "research": {
+    "primary": [
+      "https://developer.apple.com/design/human-interface-guidelines/dark-mode",
+      "https://developer.apple.com/design/human-interface-guidelines/color",
+      "https://developer.apple.com/design/human-interface-guidelines/materials",
+      "https://m3.material.io/styles/color/roles"
+    ],
+    "selected": "Bright elevated primary face and paired dark ink;adapt to current theme,not all-dark inversion",
+    "counterEvidence": "Material3 fixed roles can break contrast when mispaired;local14-palette rendered contrast retained",
+    "numericRecipe": "Local design judgement,not a native platform specification",
+    "notAdopted": [
+      "F4 flat dim trial",
+      "3077 gray/white-label trial:mono dark contrast4.4443",
+      "global light panels",
+      "new design framework"
+    ]
+  },
+  "scope": {
+    "targets": [
+      "mobile"
+    ],
+    "owners": [
+      "mobile-theme-material-values",
+      "gallery-page-head-presenter",
+      "header-recent-visit-presenter"
+    ],
+    "change": "Values and existing presenter CSS only;original DOM/events/settings/geometry and owner graph retained",
+    "sharedFamilies": [
+      "memo",
+      "management",
+      "list/recent-header",
+      "article ordinary/image comment composers",
+      "writer"
+    ],
+    "olderFamily": "Password/common controls retain their role with reduced dark secondary glaze",
+    "priorityDeclarationsAdded": 0,
+    "newObservers": 0,
+    "headerProofUpdate": {
+      "candidateFieldsChanged": 2,
+      "historicalControlsUnchanged": true,
+      "normalizerChanged": false,
+      "negativeHookMutationAdded": true
+    }
+  },
+  "validation": {
+    "registeredTests": [
+      {
+        "name": "B1 dark refinement: shared material consumers",
+        "status": "passed",
+        "report": "artifacts/b1-dark-refinement-2026-10-31/focused.json"
+      },
+      {
+        "name": "B1 dark refinement: memo rows and quiet auxiliaries",
+        "status": "passed",
+        "report": "artifacts/b1-dark-refinement-2026-10-31/focused.json"
+      },
+      {
+        "name": "B1 memo workbench: selected composition preserves native actions",
+        "status": "passed",
+        "report": "artifacts/b1-dark-refinement-2026-10-31/memo.json"
+      },
+      {
+        "name": "B1 memo palette: all accent roles follow the palette dialog",
+        "status": "passed",
+        "report": "artifacts/b1-dark-refinement-2026-10-31/memo.json"
+      },
+      {
+        "name": "B1 management v7: palette preview save and cancel",
+        "status": "passed",
+        "report": "artifacts/b1-dark-refinement-2026-10-31/management-palette.json"
+      },
+      {
+        "name": "B1 list v7: plain controls and responsive material",
+        "status": "passed",
+        "report": "artifacts/b1-dark-refinement-2026-10-31/list.json"
+      },
+      {
+        "name": "B1 controls: common material transmission and fixed popup coordinates",
+        "status": "passed",
+        "report": "artifacts/b1-dark-refinement-2026-10-31/common.json"
+      }
+    ],
+    "browser": "156.0.8078.76",
+    "materialFamilyContexts": 12,
+    "memoRowThemes": 2,
+    "paletteCount": 14,
+    "paletteThemes": 2,
+    "contrastThreshold": 4.5,
+    "tealDarkCommonRenderedContrast": 6.276360583709766,
+    "controlCandidateSemanticPairs": 12,
+    "semanticDifferences": [],
+    "lightPrimaryPaintEqualFamilies": 6,
+    "wholeLightPngIdenticalOutsideMemo": 5,
+    "visualPairs": 18,
+    "referenceFidelity": "REVIEWED",
+    "productApproved": false,
+    "independentReview": "No final actionable source/guard issue;earlier3077 contrast finding fixed and existing test passes",
+    "viewer": {
+      "buttonSamples": 3,
+      "mainImages": 7,
+      "zoom": true
+    },
+    "notRun": [
+      "unrelated full product/filter/network suites",
+      "PC product suite:runtime bytes unchanged",
+      "actual extension/physical phone/account/real writes",
+      "all native popup states"
+    ]
+  },
+  "nextAction": "b1-owned-management-children-v7-preflight",
+  "hashMode": "Canonical LF for text;exact runtime/PNG bytes"
+}

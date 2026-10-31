@@ -1,0 +1,167 @@
+{
+  "schemaVersion": 1,
+  "kind": "ui-detail-review-efficiency-preflight",
+  "status": "REVIEW_ONLY_NO_ADDED_DETECTION_OBSERVED_DEFAULT_REDUCED",
+  "sourceBaseHead": "7fcc70b692b49bf333e786ccabd316ca62b38202",
+  "scope": "REVIEW_ONLY_PREFLIGHT_NOT_IMPLEMENTATION_OR_REWORK_BENCHMARK",
+  "artifact": {
+    "mobileSha256": "8606114FA2A2D7E242197A711277F375EFD626F77CEA22759D951B58A15310C2",
+    "pcSha256": "5FA25756C43864AA8C90C1347AE6A03652D901862F83ABEAEDDEBF6382CFA740",
+    "runtimeChanged": false
+  },
+  "protocolSha256": "c9f269752923ed3cb15aa56be876779967e1fc0c19df614114b8c6a5f7f830bc",
+  "design": {
+    "arms": {
+      "A": "Simple reference/current review, actionable findings",
+      "B": "Candidate detail workflow: targets, whole/detail, dispositions, correction/recheck plan"
+    },
+    "assignment": "Two fresh-context reviewers, one per arm; identical frozen cases and output goal; no prior conversation or oracle access",
+    "cases": [
+      "K2",
+      "M7",
+      "R4"
+    ],
+    "browser": "149.0.7827.55",
+    "viewport": {
+      "width": 980,
+      "height": 900
+    },
+    "theme": "light",
+    "frozenFamilies": {
+      "K2": [
+        "Search action fill/emphasis",
+        "Magnifier size/stroke"
+      ],
+      "M7": [
+        "Tab font size/weight",
+        "Selected-tab rim/depth"
+      ],
+      "R4": []
+    },
+    "permittedDifferences": {
+      "M7": [
+        "Rows-per-page wording30 vs50 is content/state, not a styling defect"
+      ]
+    },
+    "methodB": "Original guide loop/prompts/cost section only; no external research or retrospective B1 answer hints",
+    "reviewerContexts": [
+      "/root/detail_pilot_a",
+      "/root/detail_pilot_b"
+    ],
+    "dispatchEnvelope": "Fresh contexts; clock before assigned packet, only assigned packet/PNGs; no oracle/sibling/source access, edits or retakes; max600word result and tool accounting. This envelope is summarized, not a verbatim dispatch transcript."
+  },
+  "results": {
+    "metricProvenance": "Reviewer-returned UTC clock stamps and self-reported call/image counts; root did not independently audit the complete agent tool traces",
+    "A": {
+      "startedUtc": "2026-10-22T18:20:22Z",
+      "finishedUtc": "2026-10-22T18:20:50Z",
+      "elapsedSeconds": 28,
+      "topLevelCalls": 5,
+      "nestedCalls": 15,
+      "imageInspections": 12,
+      "imageReopens": 0
+    },
+    "B": {
+      "startedUtc": "2026-10-22T18:20:29Z",
+      "finishedUtc": "2026-10-22T18:21:39Z",
+      "elapsedSeconds": 70,
+      "topLevelCalls": 10,
+      "nestedCalls": 19,
+      "imageInspections": 16,
+      "imageReopens": 4
+    },
+    "rootAdjudication": {
+      "familyRule": "Predeclared families are the units; relevant property and correction direction counts as family detection, not every changed property. This operational grading interpretation is root adjudication after outputs, not a preregistered subproperty rubric.",
+      "eachArm": {
+        "detectedFamilies": 4,
+        "totalFamilies": 4,
+        "missedWholeFamilies": 0,
+        "unsupportedFindings": 0,
+        "unchangedControlFalseAlarm": false,
+        "permittedContentFalseAlarm": false,
+        "actionableFamilies": 4
+      },
+      "sharedSubdetailMiss": "Neither explicitly named removed subtle selected-tab shadow; both identified the border/rim aspect. No post-hoc fifth defect or exhaustive-detail claim.",
+      "groupingShift": "Actual downstream consequence of larger tab type; not an independent seeded defect or false positive",
+      "unshownStates": "Both retained unknown; no claim of live behavior or fixes",
+      "rootVision": "Direct full/detail inspection during preparation; four K2/M7 detail images rechecked during grading; R4 reference/candidate bytes independently compared"
+    }
+  },
+  "costs": {
+    "preparationMeasuredFromUtc": "2026-10-22T18:17:27Z",
+    "materialsPreparedAtUtc": "2026-10-22T18:19:55.121Z",
+    "sharedPreparationSeconds": 148.121,
+    "captureWindowSeconds": 2.664,
+    "recordCreatedAtUtc": "2026-10-22T18:28:17.059Z",
+    "postReviewsToRecordSeconds": 398.059,
+    "measuredPreparationThroughRecordSeconds": 650.059,
+    "note": "Shared preparation, orchestration, context resume, grading and documentation are one-time trial overhead, not a recurring method cost estimate. Post-review window includes gaps and is not pure active grading time. Final repository validation/checkpoint follows this record and is excluded.",
+    "unmeasured": [
+      "Initial repo-entry/skill reading before explicit preparation clock",
+      "Tokens/monetary cost",
+      "Actual implementation/retake/rework savings"
+    ]
+  },
+  "decision": {
+    "id": "D-46",
+    "criterion": "Compare demonstrated findings/actionability against extra reading/recording cost; remove duplicate/unproductive overhead. No post-hoc claim of superiority from speed alone or arbitrary beauty/ratio cutoff.",
+    "observed": "Same actionable families and false alarms; B42sec slower with4 extra image reopens in this run. No observed additional finding justified heavier mechanics.",
+    "selected": "Reduced whole/detail, short actionable findings, existing-owner refinement and affected-state recheck",
+    "removedAsDefault": [
+      "Mandatory3-5-anchor inventory",
+      "Per-item table/MATCHED boilerplate",
+      "Automatic unchanged full-image reopens",
+      "Recurring two-reviewer experiments"
+    ],
+    "notEstablished": [
+      "General method superiority or statistical effect",
+      "Efficiency/effectiveness of reduced loop",
+      "End-to-end polish/rework efficiency",
+      "Complete property-level detection or user beauty approval"
+    ]
+  },
+  "limitations": [
+    "One reviewer per arm; model variability and concurrent scheduling are not controlled statistically",
+    "Same model family, not independent human participants",
+    "Seeded isolated light-state design preview, not current native-site acceptance",
+    "Only review/planning measured; real refinement/recheck/rework savings remain unknown",
+    "Initial repository-entry time before the explicit preparation clock is not instrumented",
+    "Root grading is unblinded and performed after outputs; same family rubric for both",
+    "No actual fix/recheck comparison, native Chrome/Tampermonkey acceptance, dark/mobile/input/motion qualification"
+  ],
+  "inputs": {
+    "docs/work/UI_DESIGN_DETAIL_REVIEW.md": "4f40cf4f1e5504a59db4c647f7dafc116fa09c1dfd5bf6ca2a1116935b7f2f30",
+    "docs/work/INDEX.md": "d38429e1856c2e650d056856086b8c155bde4a2679bf85a987f9cf9a3a1f02ff",
+    "docs/work/DECISION_RATIONALE.md": "65e569ec2b75c6ca0a9821649b25820d92272ead66d8090a590f13be3211cfc8"
+  },
+  "evidence": {
+    "artifacts/ui-detail-pilot-2026-10-23/cases/K2-reference-full.png": "6fb4038ab7d477f32e533d11d8146d164afc04634b3e8b784f124322645eab28",
+    "artifacts/ui-detail-pilot-2026-10-23/cases/K2-candidate-full.png": "428f1b31846cdc94a3ae607d789dbd0acb1a9c5eca81fcdfea51593999b1440a",
+    "artifacts/ui-detail-pilot-2026-10-23/cases/K2-reference-detail.png": "83e807c528c00660b0390ea510c77a65a6b43e0528b2fc903bd3fc26037f2cd0",
+    "artifacts/ui-detail-pilot-2026-10-23/cases/K2-candidate-detail.png": "80c37e6c95abfd9cd089a836da89ed955d851cf28eb5c9711d3d10e548255542",
+    "artifacts/ui-detail-pilot-2026-10-23/cases/M7-reference-full.png": "6fb4038ab7d477f32e533d11d8146d164afc04634b3e8b784f124322645eab28",
+    "artifacts/ui-detail-pilot-2026-10-23/cases/M7-candidate-full.png": "1d842f2c52a6b6724a25874fb8f3175159fc3f8237348bcf77f4c534a634aa06",
+    "artifacts/ui-detail-pilot-2026-10-23/cases/M7-reference-detail.png": "762f18df7a6a6283812e22b83fbf0e7c1a54d5397fe1779778e11ec76384f1c8",
+    "artifacts/ui-detail-pilot-2026-10-23/cases/M7-candidate-detail.png": "9b60d3be5319b795647189d5c2d08cca98773370eceb7eb8dd615c819907846f",
+    "artifacts/ui-detail-pilot-2026-10-23/cases/R4-reference-full.png": "6fb4038ab7d477f32e533d11d8146d164afc04634b3e8b784f124322645eab28",
+    "artifacts/ui-detail-pilot-2026-10-23/cases/R4-candidate-full.png": "6fb4038ab7d477f32e533d11d8146d164afc04634b3e8b784f124322645eab28",
+    "artifacts/ui-detail-pilot-2026-10-23/cases/R4-reference-detail.png": "bc1a0f743ae86edc367d055cfa1e14359568d8274d21115976923fe27c09f347",
+    "artifacts/ui-detail-pilot-2026-10-23/cases/R4-candidate-detail.png": "bc1a0f743ae86edc367d055cfa1e14359568d8274d21115976923fe27c09f347",
+    "artifacts/ui-detail-pilot-2026-10-23/prepare.mjs": "7762d83717a7dc82e1dbfd97ca0c99850e64961f3b8007b839cca8f85a90106e",
+    "artifacts/ui-detail-pilot-2026-10-23/protocol-before.json": "c9f269752923ed3cb15aa56be876779967e1fc0c19df614114b8c6a5f7f830bc",
+    "artifacts/ui-detail-pilot-2026-10-23/materials.json": "2582bedd796ed5967e4c3e90f5cba07e07f90235088f72e1a8661619efd15322",
+    "artifacts/ui-detail-pilot-2026-10-23/oracle-private.json": "3e4ee8a389c96a71692003e4daa12f52cff1c0eedf2982511b10bda21a17e63b",
+    "artifacts/ui-detail-pilot-2026-10-23/packet-A.md": "e43d35f14f08cf626c8a83ed863b86ba07d69e8e34af72ea8f6e03cd7224aca9",
+    "artifacts/ui-detail-pilot-2026-10-23/packet-B.md": "ffd997ea500f5ebf6936913884809486a453b4c0a6292bf3e6ab4ca74bc39ce6",
+    "artifacts/ui-detail-pilot-2026-10-23/result-A.md": "415be21c22dbb121e920f3f184ccc594ca19aea281e0fd05864c39ad6f3ca4bd",
+    "artifacts/ui-detail-pilot-2026-10-23/result-B.md": "d390c0d1a19a4ddfcff7b94ed0007ea0db8076b1dd73c11e90e44ffc704b062f"
+  },
+  "localEvidence": "Ignored local experiment folder. Tracked receipt retains scoped findings/hashes, not screenshot availability or cryptographic attestation. If local files disappear, retain as historical; do not claim reinspection or overwrite them under old hashes.",
+  "checks": {
+    "frozenProtocolAndImageHashes": "PASS",
+    "unchangedControlByteEquality": "PASS",
+    "artifactIdentity": "PASS_UNCHANGED",
+    "historicalMethodReceipt": "PASS_UNCHANGED",
+    "productTests": "NOT_RUN_REVIEW_ONLY_NO_RUNTIME_CHANGE"
+  }
+}

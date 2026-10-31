@@ -1,0 +1,112 @@
+{
+  "schemaVersion": 1,
+  "kind": "B1_EDITOR_MENU_SCOPED_RECORD",
+  "status": "SCOPED_IMPLEMENTATION_REVIEWED",
+  "sourceBaseHead": "9134f819b8dc2c501ce91765bb9ed9dae76633fd",
+  "candidateFingerprint": "3983bfe8058ffdadd8acfd1d2b0228fc862c3de4b9971bf32b2e4acaebe4585e",
+  "artifact": {
+    "mobileSha256": "DD457B20E250CF9E16F12862171DF38BF03AA76CC528EDBE5FD6D357A580D7D6",
+    "pcSha256": "D73A445F9A5013D295C49C199F77084D894E39F4E2455824185FA65D4E2C6212"
+  },
+  "scope": {
+    "inDocumentMenus": [
+      "fontname",
+      "fontsize",
+      "color",
+      "paragraph",
+      "line-height",
+      "table"
+    ],
+    "existingVisualAndBehaviorOwnersPreserved": true,
+    "metadataStorageNetworkOwnerChanged": false,
+    "nativePaletteHorizontalScrollPreserved": true,
+    "uploadWindows": "DEFERRED_USER_ACCEPTED",
+    "wholeUiApproved": false
+  },
+  "reference": {
+    "selectedImage": "docs/design/b1-editor-menu-target-2026-10-26.png",
+    "selectedImageSha256": "C2EFD60F205B37174CCAB5347218527686ADE8EFBF0E4C3C2226AF3B4C8D0FBC",
+    "independentCss": "docs/design/b1-editor-menu-target-2026-10-26.css",
+    "independentCssSha256": "2D73AD797942B487D5D91694399B4E353AB2D16500B522BA9938A450B03B5A9D"
+  },
+  "verification": {
+    "mobileTotal": 154,
+    "counts": {
+      "write": 36,
+      "boot": 13,
+      "smoke": 1,
+      "performance": 1,
+      "pc": 26,
+      "functional": 103
+    },
+    "nativeImmediateBehaviorObservations": 25,
+    "visualMenuDetailPasses": 12,
+    "wholeFrameDifferencesRetained": 12,
+    "referenceFidelity": "REVIEWED",
+    "productApproved": false,
+    "formalAcceptance": "NOT_RUN",
+    "uiBoundaries": 38,
+    "sourceContractControls": 8,
+    "finalReview": "NO_BLOCKING_FINDINGS"
+  },
+  "resources": {
+    "oneBrowserJobAtATime": true,
+    "startMemoryFloorGb": 4,
+    "unrelatedAppsTerminated": false
+  },
+  "limitations": [
+    "Native-shaped fixtures do not prove actual Summernote editing, palette subwindows/list controls/table feedback or actual phone/Tampermonkey use.",
+    "External upload documents require native opener and a separate entry; user accepted deferral.",
+    "Whole-frame category scroll-offset differences retained; no pixel threshold relaxed or whole-frame equality claimed.",
+    "Regex-only Impeccable detector is not parsed-page quality certification.",
+    "Formal whole-UI/header admission and release authority remain separate."
+  ],
+  "evidence": [
+    {
+      "path": "artifacts/b1-editor-popups-2026-10-26/mobile-write-final.json",
+      "sha256": "4E1FAAA2A7B85948ADAB0224A314F595C14D1FB0A3AC3AE8FD9756E5BFF883CD",
+      "disposition": "LOCAL_ONLY_EVIDENCE"
+    },
+    {
+      "path": "artifacts/b1-editor-popups-2026-10-26/rollback-functional-ledger.json",
+      "sha256": "766749ADBCF97C59F27B4C6D7C06106B7FB6A82C43461F3E04DA5CE296B9B06E",
+      "disposition": "LOCAL_ONLY_EVIDENCE"
+    },
+    {
+      "path": "artifacts/b1-editor-popups-2026-10-26/mobile-boot.json",
+      "sha256": "18146D7E795A6D4C89F1A4346D3265A43074C72262A0814EA56334510B81D410",
+      "disposition": "LOCAL_ONLY_EVIDENCE"
+    },
+    {
+      "path": "artifacts/b1-editor-popups-2026-10-26/mobile-smoke.json",
+      "sha256": "2F6F35FE499BEE64A698515D8927A39142D7C6E79D327525FF2A35CDAAF385F0",
+      "disposition": "LOCAL_ONLY_EVIDENCE"
+    },
+    {
+      "path": "artifacts/b1-editor-popups-2026-10-26/mobile-performance.json",
+      "sha256": "AB728A552304DDF07175406EAA546932EB3904E375C2EB82AB5BFB79FBA2375E",
+      "disposition": "LOCAL_ONLY_EVIDENCE"
+    },
+    {
+      "path": "artifacts/b1-editor-popups-2026-10-26/pc-all.json",
+      "sha256": "B0514769EA387166743A5A9AC66FCC90278EACBB6583B7856E337395A52579D3",
+      "disposition": "LOCAL_ONLY_EVIDENCE"
+    },
+    {
+      "path": "artifacts/b1-editor-popups-2026-10-26/native-comparison.json",
+      "sha256": "8F531C40B65D3FBBFF758679B42B61D44CA706347461F9C24C948D538D06DB78",
+      "disposition": "LOCAL_ONLY_EVIDENCE"
+    },
+    {
+      "path": "artifacts/b1-editor-popups-2026-10-26/current-captures.json",
+      "sha256": "47EF315BD6D3A9B078E547746647890363AF5236AD6C06B88588079FE5842BB3",
+      "disposition": "LOCAL_ONLY_EVIDENCE"
+    },
+    {
+      "path": "artifacts/b1-editor-popups-2026-10-26/visual-review-details/review.json",
+      "sha256": "65454CA01285EA3BF772378E5C174B860FC49CF490A9FC2B735F7E6A09B96A09",
+      "disposition": "LOCAL_ONLY_EVIDENCE"
+    }
+  ],
+  "recovery": "docs/work/B1_EDITOR_MENUS.md; current source/guard and tracked independent target. Checkpoint disposition is read from actual HEAD/remote and the publisher record."
+}

@@ -1,0 +1,316 @@
+{
+  "schemaVersion": 1,
+  "kind": "modernization-stage-assurance",
+  "stage": "header-navigation",
+  "status": "PASS",
+  "scope": "EXACT_HEADER_STAGE_WITH_DECLARED_OWNER_DELTA",
+  "sourceHead": "f3e3832e5718dbd44889fa554ba261a219b3a727",
+  "candidateFingerprint": "9ed9603081278cdd8526374dac67484773f1976b648de8c946f7b627e61f5e25",
+  "evidenceBinding": {
+    "bindingSchemaVersion": 4,
+    "registrySha256": "2275e39d9fd10662c755354df6e8c8161d9a6e19924de12a9e8d83cc0971f191",
+    "architectureStateSha256": "fb2e43f9c5ffa658da096a167274e91742802ff35f90ab880cabc3597aafbc83",
+    "architecturePlanSha256": "f406d6f7fd3cc148f9fc59bf1d838dfef3b2348928380e922d11ebaabfb08855",
+    "modernizationContractSha256": "6c8d0b2dbaa91c9b4ad13e3cc90e43b1b14cbd7ecd1b6741985d69e1bedc4149",
+    "gatesSha256": "65979922b8e4c1b1b3b4e50e27d135afda54d0f718a92f8ea9ea984efcebfb17",
+    "sourceInputsSha256": "23f0adb94e18645d540fd4c68e93c3ef71849ae125136371f5bd97a1af68332c",
+    "harnessSha256": "d627823b960450f62b77d94be33300df7c9d04f6c20a97ea0a754736774aefd1",
+    "fixturesSha256": "9f30dd3b0b0f4341073437d30858ce908d687991f7d35abd87c02c987fd892cf",
+    "toolchainSha256": "2b92aea0dbb71304c0f366284248263cab4cf315443c530edf49a431ff56f559",
+    "proofSystemSha256": "564d5cacd5e3c6b90aa69732d60b5ca5f861fe12c7a63c07ee1bdfb5c7c10006",
+    "node": "v22.17.0"
+  },
+  "artifacts": {
+    "mobile": {
+      "version": "3.5.5",
+      "sha256": "478A440F133D80A813124069BD82B043B960EAB0156098223286C325975170B5"
+    },
+    "pc": {
+      "version": "1.9.9",
+      "sha256": "C14D163F2757DB02117E3F93204B56B6AA22D464541729315A6B40C4128C7D37"
+    }
+  },
+  "criterionAuthority": {
+    "path": "architecture/candidates/mobile-ui-modernization-assurance.json",
+    "sha256": "D835FCD016DA61F98310245DFC6652766440A177126F3659991F5FBD595F0AC1",
+    "acceptedRegistryContainsTheseComponents": false
+  },
+  "components": [
+    {
+      "componentId": "mobile-header-shell-presenter",
+      "criterionSha256": "14AED5520FAE451D07B4B06F74598DE125B0B9BFB9C50D70D49FD032551F9C0A",
+      "sources": [
+        {
+          "path": "src/targets/mobile/header-shell-presenter.js",
+          "sha256": "67191324076EBAC4F531D2E61A0F81176ABCB3F86F6E06E9502AB8EFC7BDD150"
+        }
+      ],
+      "disposition": "SUPPORTED",
+      "boundaryState": "mixed"
+    },
+    {
+      "componentId": "mobile-gallery-page-head-presenter",
+      "criterionSha256": "D565775EE503782B5B567D0E993DB7A7CF9923B8A130B54468A1FC714B76FAD6",
+      "sources": [
+        {
+          "path": "src/targets/mobile/gallery-page-head-presenter.js",
+          "sha256": "49AB632212CB392C8C3A2A2D2B929A0B1B08C4A96DAA2BF5B43DA0506C83FC47"
+        }
+      ],
+      "disposition": "SUPPORTED",
+      "boundaryState": "mixed"
+    },
+    {
+      "componentId": "mobile-header-gnb-presenter",
+      "criterionSha256": "79D691210EA983515E9C1DE5E39C96159CF25056F6B8963525C6A2AFDB730324",
+      "sources": [
+        {
+          "path": "src/targets/mobile/header-gnb-presenter.js",
+          "sha256": "4BDF59540883138766FBCA55AFBCFE0A63BFC971B20851014CB72C45A9768B0C"
+        }
+      ],
+      "disposition": "SUPPORTED",
+      "boundaryState": "mixed"
+    },
+    {
+      "componentId": "mobile-header-recent-visit-presenter",
+      "criterionSha256": "C9EDDB26D1F665891870A31FBD6C5E84EAEE92673ED6FA6A1D5E1F3398B7BED4",
+      "sources": [
+        {
+          "path": "src/targets/mobile/header-recent-visit-presenter.js",
+          "sha256": "4B81EB59A5845C4A3E5F3CB8DA08295B1DE4A5138634A28B3CB776BDA8C4DEEF"
+        }
+      ],
+      "disposition": "SUPPORTED",
+      "boundaryState": "mixed"
+    },
+    {
+      "componentId": "mobile-header-drawer-presenter",
+      "criterionSha256": "7B003F2C8626618D4299034AED67D49B4847E7F7FE7949DF5466A75A2F111E84",
+      "sources": [
+        {
+          "path": "src/targets/mobile/header-drawer-presenter.js",
+          "sha256": "E626BF1DD85342FAC58917A92DBF47101C06397CCFAD67E149825504369DF869"
+        }
+      ],
+      "disposition": "SUPPORTED",
+      "boundaryState": "mixed"
+    },
+    {
+      "componentId": "mobile-header-drawer-host-adapter",
+      "criterionSha256": "38ACED403B945E8FC80EB8D4C2C0D7427571FF470D63A8079CEC6E7FE32985EF",
+      "sources": [
+        {
+          "path": "src/targets/mobile/header-drawer-host-adapter.js",
+          "sha256": "47208A2505592FBB01E8F49FEC95871E65656D9E3552FF87DFFB4C217CC0E540"
+        }
+      ],
+      "disposition": "SUPPORTED",
+      "boundaryState": "mixed"
+    }
+  ],
+  "evidence": [
+    {
+      "id": "nativeInputs",
+      "path": "testbed/artifacts/header-exit-2026-10-20/native-inputs.json",
+      "sha256": "185D7F9D9EAF3A4B7DB786229B208281588FD58F8A84BADA6FB737DE728992B9",
+      "disposition": "REUSED_EXACT_DIRECT_INPUTS"
+    },
+    {
+      "id": "fullMobile",
+      "path": "testbed/artifacts/header-composition-2026-10-20/mobile-full.json",
+      "sha256": "4DFA0C44669EC5658C3E4F231B38DA6BD0039C054520A55408A1A115D721249E",
+      "disposition": "REUSED_EXACT_DIRECT_INPUTS"
+    },
+    {
+      "id": "composition",
+      "path": "testbed/artifacts/header-composition-2026-10-20/green/report.json",
+      "sha256": "6668B9805959CC2769A2A98545A59A3CCFA58723189EDA8A178FBE5C98D43448",
+      "disposition": "REUSED_EXACT_DIRECT_INPUTS"
+    },
+    {
+      "id": "nativeExtension",
+      "path": "testbed/artifacts/header-composition-2026-10-20/actual-extension/report.json",
+      "sha256": "B122BD6F2D65A08D115E69AE54E4FC65AB1E95A0A2E5171207CB97E7263564B5",
+      "disposition": "REUSED_EXACT_DIRECT_INPUTS"
+    },
+    {
+      "id": "startupExtension",
+      "path": "testbed/artifacts/header-composition-2026-10-20/actual-startup/report.json",
+      "sha256": "958A36F0B393168763074F1EC9875B9732A665DA845DDF747BE1A538045FDEC5",
+      "disposition": "REUSED_EXACT_DIRECT_INPUTS"
+    },
+    {
+      "id": "earlyBoundary",
+      "path": "artifacts/header-exit-2026-10-20/early-binding.json",
+      "sha256": "D85279D988CFD06F20D6948A926563F29335F2BCEFEB06DAB0B76CC8CC88C0E1",
+      "disposition": "REUSED_EXACT_DIRECT_INPUTS"
+    },
+    {
+      "id": "lateBoundary",
+      "path": "artifacts/header-finish-2026-10-13/pure-boundary.json",
+      "sha256": "47C94737F39B3738F64275DABA59DFFEC6679B456F412A2648D848D744DFFE98",
+      "disposition": "REUSED_EXACT_DIRECT_INPUTS"
+    },
+    {
+      "id": "drawerPriority",
+      "path": "artifacts/header-exit-2026-10-20/drawer-priorities.json",
+      "sha256": "EF63912A444D7AECAC4088120E8474C0EA0D5D0A5146D13720F1198FAA252FC5",
+      "disposition": "REUSED_EXACT_DIRECT_INPUTS"
+    },
+    {
+      "id": "paletteQualification",
+      "path": "verification/header-palette-478a-qualification.json",
+      "sha256": "2D5B62379F3C6C0278E8B11D7D9D4519E8F406053D9098714A83E90FA5CC9AF5",
+      "disposition": "REUSED_EXACT_DIRECT_INPUTS"
+    },
+    {
+      "id": "qualifiedPalette",
+      "path": "artifacts/header-exit-2026-10-20/mobile-palette.json.qualified.json",
+      "sha256": "6DEBE67074B27E6FFD10639C431118A06C618DFF445195EB298561B827914B38",
+      "disposition": "REUSED_EXACT_DIRECT_INPUTS"
+    },
+    {
+      "id": "rawPalette",
+      "path": "artifacts/header-exit-2026-10-20/mobile-palette.json",
+      "sha256": "584EF233E24E30316E3B779C8B19142C8A87C02082BD066452B87ABD79BC5111",
+      "disposition": "REUSED_EXACT_DIRECT_INPUTS"
+    },
+    {
+      "id": "paletteLifecycle",
+      "path": "artifacts/header-exit-2026-10-20/mobile-palette.json.lifecycle.json",
+      "sha256": "3A1105FDF3F9795ED5DBE2BBD977C56F8F97082F8BC7ACB6ADF17EDA2E47B0E8",
+      "disposition": "REUSED_EXACT_DIRECT_INPUTS"
+    },
+    {
+      "id": "scopedCriteria",
+      "path": "verification/receipts/2026-10-20-header-exit-qualification.json",
+      "sha256": "8C2B9500A7E181F5EC76D9051943F1F682AE0474F98E04279533E2E5201B87E2"
+    },
+    {
+      "id": "currentRawGates",
+      "path": "artifacts/header-admission-2026-10-20/gates-resumed.json",
+      "sha256": "10530168868daddb1a9342c08e18d98a1f658f2cf13fce5071969fc0d5061626",
+      "rawStatus": "failed"
+    },
+    {
+      "id": "currentRawPalette",
+      "path": "artifacts/acceptance-observed-mobile-palette.json",
+      "sha256": "2802494CC8B2A0521C815189DE781A85E10B406547E0037B16477D29F155895F",
+      "rawStatus": "FAIL"
+    },
+    {
+      "id": "freshPaletteRaw",
+      "path": "artifacts/header-admission-2026-10-20/palette.json",
+      "sha256": "2802494cc8b2a0521c815189de781a85e10b406547e0037b16477d29f155895f"
+    },
+    {
+      "id": "freshPalette.qualified.json",
+      "path": "artifacts/header-admission-2026-10-20/palette.json.qualified.json",
+      "sha256": "37823007e9112dc51542f50cd109ac4f5c98008193f57b0df03cbfcaed1da7a7"
+    },
+    {
+      "id": "freshPalette.lifecycle.json",
+      "path": "artifacts/header-admission-2026-10-20/palette.json.lifecycle.json",
+      "sha256": "3a1105fdf3f9795ed5dbe2bbd977c56f8f97082f8bc7acb6adf17eda2e47b0e8"
+    }
+  ],
+  "results": {
+    "rawGateStatus": "failed",
+    "qualifiedCommand": "acceptance/mobile-observed-palette",
+    "otherCommandsPassed": 26
+  },
+  "classification": {
+    "schemaVersion": 1,
+    "kind": "palette-header-owner-split-classification",
+    "profileId": "qualified-header",
+    "rawStatus": "FAIL",
+    "classificationStatus": "DECLARED_OWNER_SPLIT_ONLY",
+    "stageStatus": "UNKNOWN",
+    "controlSha256": "A03038FE68126B62054EBA11244D4EE2E1766D308983FC5C27127FD3794CB343",
+    "candidateSha256": "478A440F133D80A813124069BD82B043B960EAB0156098223286C325975170B5",
+    "rawReportSha256": "2802494CC8B2A0521C815189DE781A85E10B406547E0037B16477D29F155895F",
+    "controlSideSha256": "707141DA268C627A49D468F27FDB2B2E54F94A027DF13E6BCD07E1E4D10D0B0A",
+    "candidateSideSha256": "078B962424B1A2D4F85029E80E5DDA57FA608D02400C1A28F4968FE4EE9BCDC0",
+    "observerSha256": "B26315F882E0FA307712AD8B828147B6DFB31560E4D653486AAF6DFDD48FFDE9",
+    "classifierSha256": "1107F12D633997C99B98A2FBA79A3936FE86EE109E13D8EC4A0867A0A02DAE87",
+    "fullMobileRunSha256": "4DFA0C44669EC5658C3E4F231B38DA6BD0039C054520A55408A1A115D721249E",
+    "baselineSha256": "0ADAED6B58532372E7B6354410BAD23DCCCD0236D11166939764EE1A21588B5F",
+    "qualificationSha256": "2D5B62379F3C6C0278E8B11D7D9D4519E8F406053D9098714A83E90FA5CC9AF5",
+    "qualificationScope": "exact-artifact-owner-split-only",
+    "lifecycleProbeScriptSha256": "9D6B614DB74A5AAF1AD63EDA19354524A766F45DF509C19822B0F664E55B1E35",
+    "lifecycleProbeSha256": "C2C440348C326D0107FA2A214CA6265566C98FBE33FE8623D40E1078B99464A1",
+    "evidenceBinding": {
+      "bindingSchemaVersion": 4,
+      "registrySha256": "2275e39d9fd10662c755354df6e8c8161d9a6e19924de12a9e8d83cc0971f191",
+      "architectureStateSha256": "fb2e43f9c5ffa658da096a167274e91742802ff35f90ab880cabc3597aafbc83",
+      "architecturePlanSha256": "f406d6f7fd3cc148f9fc59bf1d838dfef3b2348928380e922d11ebaabfb08855",
+      "modernizationContractSha256": "6c8d0b2dbaa91c9b4ad13e3cc90e43b1b14cbd7ecd1b6741985d69e1bedc4149",
+      "gatesSha256": "65979922b8e4c1b1b3b4e50e27d135afda54d0f718a92f8ea9ea984efcebfb17",
+      "sourceInputsSha256": "23f0adb94e18645d540fd4c68e93c3ef71849ae125136371f5bd97a1af68332c",
+      "harnessSha256": "d627823b960450f62b77d94be33300df7c9d04f6c20a97ea0a754736774aefd1",
+      "fixturesSha256": "9f30dd3b0b0f4341073437d30858ce908d687991f7d35abd87c02c987fd892cf",
+      "toolchainSha256": "2b92aea0dbb71304c0f366284248263cab4cf315443c530edf49a431ff56f559",
+      "proofSystemSha256": "564d5cacd5e3c6b90aa69732d60b5ca5f861fe12c7a63c07ee1bdfb5c7c10006",
+      "node": "v22.17.0"
+    },
+    "observationCountPerSide": 22,
+    "rawDifferenceCount": 14,
+    "classifiedSemanticIndexes": [
+      5,
+      12,
+      18
+    ],
+    "addedOwners": [
+      "header-shell-style",
+      "gallery-page-head-style",
+      "header-gnb-style",
+      "header-recent-visit-navigation"
+    ],
+    "lifecycleProbe": {
+      "beforeSubscribers": 8,
+      "disposedSubscribers": 4,
+      "reconnectedSubscribers": 8,
+      "listenerCounts": [
+        129,
+        127,
+        129,
+        129
+      ],
+      "activeObservers": [
+        5,
+        5,
+        5,
+        5
+      ],
+      "palettePreviewCancel": "PASS"
+    },
+    "limitations": [
+      "raw palette comparator remains FAIL",
+      "lifecycle is covered by exact-candidate Testbed, not the actual extension",
+      "other settings/filter states and final feature inventory remain UNKNOWN"
+    ]
+  },
+  "proofInputs": [
+    {
+      "path": "tools/header-stage-admission.mjs",
+      "sha256": "4617654c9e0c4fe6856985e697c58569c3b6b0e298bf2a9f2e39ff17784438c2"
+    },
+    {
+      "path": "tools/test-header-stage-admission.mjs",
+      "sha256": "08f9196f98655aa5ebb43ff68f93766b543f4a327d685aafcc42f24560d74f2b"
+    },
+    {
+      "path": "tools/write-modernization-receipt.mjs",
+      "sha256": "93794394696c0789972a45069040e5cf3b3cd4b3b48c4b8acd11f2b1e3cfae69"
+    }
+  ],
+  "architectureTransitionAdmitted": false,
+  "liveCanary": "SCOPED_PUBLIC_NATIVE_AND_STARTUP",
+  "limits": [
+    "Phone proxy layout980 is primary; scale/client-height/engine remain partial.",
+    "Actual-extension desktop-UA reports are distinct from the phone proxy.",
+    "Authenticated, populated live-history, whole-UI and Concept01 readiness remain unclaimed.",
+    "No accepted-registry fold, release, whole-UI or Concept01 completion claim."
+  ]
+}

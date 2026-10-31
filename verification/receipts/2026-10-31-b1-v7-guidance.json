@@ -1,0 +1,84 @@
+{
+  "schemaVersion": 1,
+  "kind": "B1_V7_GUIDANCE_RECONCILIATION",
+  "status": "ADOPTED_RULES_ROUTED_RUNTIME_UNCHANGED",
+  "sourceBaseHead": "75e2c9be1e7083f128498e11752d2ef2563c30f5",
+  "candidateFingerprint": "059e1e35fb7128b84c530d8853ae0a94c8c9f22be8304c06d7e7af5100667778",
+  "artifacts": {
+    "mobileVersion": "3.5.5",
+    "mobileSha256": "7E824AD336F6B6173487FB24052D2586184F4F5D169C01BC036D1FDBA9092E7D",
+    "pcVersion": "1.9.9",
+    "pcSha256": "FEACBA669839690F398A1540EF925C71C078BD646C6C6435DD0EC639585539A3",
+    "unchanged": true,
+    "officialRelease": false
+  },
+  "inputs": [
+    {
+      "path": "docs/work/B1_CONTROL_MATERIAL.md",
+      "sha256": "00e49ce096b8869144a504797550e8c9a4cc3ef127a2b5675bae5c6a1b9d115a"
+    },
+    {
+      "path": "docs/work/INDEX.md",
+      "sha256": "f3ef1b5a74ded3c4e233bd31d7dab4a12adac8d51515bb36be183dcdea2348ef"
+    },
+    {
+      "path": "docs/work/UI_REFERENCE_GUARD.md",
+      "sha256": "e23fc60e018cd7c835130fb7f1eeaf1c8f5d255cb07e0134efb76497c4ff982a"
+    },
+    {
+      "path": "docs/work/UI_REVIEW_CHECKLIST.md",
+      "sha256": "c3ef74e0a93671872d2ab335afbb1855afcbbbfcb35b3d22be33302b585572e5"
+    },
+    {
+      "path": "docs/work/NEXT_TASK.md",
+      "sha256": "dafaa7694b55e6c6cb85788d884316f1c77e709d456e733c89f9b1ffffe46797"
+    }
+  ],
+  "evidence": [
+    {
+      "path": "artifacts/b1-v7-guidance-2026-10-31/reconciliation.json",
+      "sha256": "9cac91eaf856e22f1c93ddb91d073c32903c77c6353a2b2bbf873d8acfe03633"
+    },
+    {
+      "path": "verification/receipts/2026-10-31-b1-dark-control-refinement.json",
+      "sha256": "04622eeaab80a2390749c47e3a1222c3dbf291dcdd3c60756df68bbb264d569f"
+    },
+    {
+      "path": "docs/design/b1-dark-control-comparison-2026-10-31.png",
+      "sha256": "161216ffb715aac2eaabd17e78ba7f7b3708ba7afdd373fb8b4782fd95245217"
+    }
+  ],
+  "adoptedRules": [
+    "Bright tinted dark primary plus paired dark ink;light material retained",
+    "Quiet glass chrome plus stable reading/editing paper",
+    "Plain auxiliary controls grouped by task with state feedback",
+    "One row selection surface;row buttons do not inherit raised-button paint",
+    "Existing per-surface geometry/native behavior and UI/function owners retained",
+    "Current actual detail images and role-specific generated composition;obsolete dark/flat/dim trials cannot revive",
+    "Theme-accent binding and actual-impact checks without a routine full suite"
+  ],
+  "routing": {
+    "entryDocument": "docs/work/B1_CONTROL_MATERIAL.md",
+    "entrySection": "V7 adopted rules",
+    "typedAdoptedDecision": "v7-visual-consistency",
+    "frozenDarkReference": "docs/design/b1-dark-control-comparison-2026-10-31.png",
+    "priorClosedTaskDependenciesRemoved": [
+      "management-v7-result",
+      "current-dark-control-result"
+    ],
+    "nextAction": "b1-owned-management-children-v7-preflight",
+    "machineContractsChanged": false,
+    "newValidationFramework": false
+  },
+  "validation": {
+    "scope": "GUIDANCE_ONLY",
+    "declaredDependencies": "ACCEPTED",
+    "relativeLinksResolved": 6,
+    "productInputsUnchanged": 12,
+    "productTests": "NOT_RUN_DOCS_ONLY",
+    "build": "NOT_RUN_PRODUCT_UNCHANGED",
+    "priorProductEvidence": "Exact7E824AD3 scopes retained;document update is not new product acceptance",
+    "wholeUiCertified": false
+  },
+  "hashMode": "Canonical LF for text;exact image/runtime bytes"
+}

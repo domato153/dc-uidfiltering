@@ -1,0 +1,168 @@
+{
+  "schemaVersion": 1,
+  "kind": "B1_ARTICLE_NATIVE_FINISH",
+  "status": "SCOPED_REPAIRS_VALIDATED",
+  "sourceBaseHead": "6c24d4a76f8a035f551cd9e8f5f40c9c35aa448c",
+  "candidateFingerprint": "a5770cc286d0674c03beb2ec670d0d7d136e212ed312281806f947e7e55ba3d4",
+  "artifact": {
+    "mobileVersion": "3.5.5",
+    "mobileSha256": "2D2A0069D32164B6581541D7A257AAAD7366E5353F3800AD5DA7299178197AB8",
+    "pcVersion": "1.9.9",
+    "pcSha256": "8915F36E5B8887DC58EF9F932E39CCA28CCE1AC1020FD96460CCD10C08913581",
+    "pcUnchanged": true,
+    "rootDistGuardMatch": true,
+    "officialRelease": false
+  },
+  "control": {
+    "mobileSha256": "643446C829422B49B740CF73635A7DA5B66C81AD0FBDA0158B80A40A41278F9F",
+    "kind": "IMMEDIATE_CONTROL_NOT_FORMAL_BASELINE"
+  },
+  "inputs": [
+    {
+      "path": "src/targets/mobile/article-presenter.js",
+      "sha256": "CA7D4E6684F5053A6E3B1594547084336A4149E8B0432BE7102464C5933D7548"
+    },
+    {
+      "path": "testbed/ui-article-attachment-contract.mjs",
+      "sha256": "84CA051DBF6240CC0CC5A68D438460C305D8B9B07DDCC3FF9522A2E36D90054B"
+    },
+    {
+      "path": "testbed/run-tests.mjs",
+      "sha256": "4E3C3C1ABE3BCBA6BF204F50ED1EE3AB690397267BFF1CB1CACF076C0B5C8AC1"
+    },
+    {
+      "path": "docs/work/B1_ARTICLE_ATTACHMENTS.md",
+      "sha256": "85D9E3A198B49C6D43136EE00A7ECCCF7F74E02DC724C45A49F49D97ED3F0D6D"
+    },
+    {
+      "path": "docs/work/B1_WRITE_V7_PREFLIGHT.md",
+      "sha256": "B9DD56D64C953F6C6FE147AA703B829BB280E81DE254F4B42EBF9E51F4D5B60D"
+    }
+  ],
+  "causes": [
+    "Attachment utility inherited26px reading text while native rows remained16px;present in79DD and6434.",
+    "Native three-class ::before separators exempted only first action;native darkmode paint defeated the single-role rule."
+  ],
+  "correction": {
+    "owner": "existing mobile-article-presenter",
+    "newOwnerOrObserver": false,
+    "importantAdded": false,
+    "scope": "Native attachment typography/flow;contextual recommendation paint and decorative pseudo removal;geometry roles/media rules retained.",
+    "originalNodesFormsCallbacksPreserved": true
+  },
+  "validation": {
+    "registeredTests": 5,
+    "allPassed": true,
+    "newContractStates": {
+      "attachments": 5,
+      "actions": 4
+    },
+    "nativeThemeFlagModeled": true,
+    "paletteConsumer": "Actual synthetic teal→purple hover consumer in light/dark;shared factory unchanged,no full14 repeat.",
+    "semantic": {
+      "articleObservations": 22,
+      "equivalent": true,
+      "source": {
+        "path": "artifacts/b1-attachment-2026-10-30/semantic-summary.json",
+        "sha256": "8BDC4F846884D1B4B2AD08DAE86BCA68C5CDDBCD02026DBEC5C9845D7723FB9A"
+      }
+    },
+    "public": {
+      "scope": "ANONYMOUS_GET_HEAD_SOURCE_INJECTED_NOT_EXTENSION",
+      "filenameStates": 3,
+      "fileCount": 16,
+      "actionThemes": 2,
+      "actionsPerTheme": 5,
+      "allSeparatorsAbsent": true,
+      "allOriginalIconsVisible": true,
+      "noRealDownloadOrActionSubmit": true,
+      "physicalPhone": false,
+      "actualExtension": false
+    },
+    "visual": {
+      "report": {
+        "path": "artifacts/b1-attachment-2026-10-30/visual-review-final-2d2a/review.json",
+        "sha256": "A101CCDD7BF94477117764EC100934DF697CBE650476F8C8453215080E44EA5A"
+      },
+      "purpose": "Known-defect control/current regression diagnostics,not aesthetic golden",
+      "pixelStatus": "DIFFERENCES_REQUIRE_REVIEW",
+      "engineFidelity": "NOT_REVIEWED",
+      "manualWholeDetailReviewed": true,
+      "manualDisposition": "Intended filename size/wrapping and removal of native separators/gray faces;native content/loading differences outside changed area retained. No baseline approval."
+    },
+    "review": {
+      "readOnlyIndependent": true,
+      "importantProductFindings": 0,
+      "oracleConcernsAddressed": [
+        "Reading-font change independence",
+        "Original box/UL/LI/loading topology"
+      ],
+      "userAddedSeparatorScopeReviewed": true
+    },
+    "omissions": [
+      "Unrelated full product/list/PC/bfcache",
+      "Shared palette factory rerun",
+      "Real authentication/uploads/downloads/writes",
+      "Formal header/whole-UI admission"
+    ]
+  },
+  "writerPreflight": {
+    "sourceChanged": false,
+    "brief": "docs/work/B1_WRITE_V7_PREFLIGHT.md",
+    "nicknameFlow": {
+      "path": "artifacts/b1-write-v7-2026-10-30/nickname-flow.json",
+      "sha256": "BC551948352448627DEB9F6955591BD2C39D3E13CE41779D604FF6ED30A4EB7F"
+    },
+    "observed": [
+      "recommended readonly field",
+      "native clear-X→custom input/use-Y",
+      "native use-Y→recommended restored",
+      "associated native help layer"
+    ],
+    "newGeneratedComposition": "PENDING",
+    "scope": "Named anonymous major-writer native states only;not all gallery variants."
+  },
+  "localEvidence": [
+    {
+      "path": "artifacts/b1-attachment-2026-10-30/attachments-final.json",
+      "sha256": "160B1E4F7A57A5AF68373E0B1108EC4DC14752D2D4F6DABD9804871DFA63336B"
+    },
+    {
+      "path": "artifacts/b1-attachment-2026-10-30/actions-final.json",
+      "sha256": "40D26681977E8EC48AF26D6E48998ECFE283BB7B6FA84373E579A56B76849E22"
+    },
+    {
+      "path": "artifacts/b1-attachment-2026-10-30/article-repair-final.json",
+      "sha256": "98498DA33F86FF7698B077DCDED5DA98EE720FBDFBB7321C0C4B041B84CB8836"
+    },
+    {
+      "path": "artifacts/b1-attachment-2026-10-30/action-popups-final.json",
+      "sha256": "B4E75460825DECA4EEE067DFB8F7F92B2BCA5E700976E843CDB4E6B3623C3C66"
+    },
+    {
+      "path": "artifacts/b1-attachment-2026-10-30/flat-view-final.json",
+      "sha256": "265C05A5811CFF81F01ADFF06FFB8050FEC5A6AF4401E79C703F85D442430643"
+    },
+    {
+      "path": "artifacts/b1-attachment-2026-10-30/final-captures.json",
+      "sha256": "50BAE7A1EBE16E4AFF250CCCA4EE78FF011E9E1F1B03BDDB25B5056F5952791C"
+    },
+    {
+      "path": "artifacts/b1-attachment-2026-10-30/actions-public-final.json",
+      "sha256": "3CE1EB024A42DA9C67E44CF1A9BC821DF6DD38A33E0F3F416456D520A2068CC2"
+    },
+    {
+      "path": "artifacts/b1-attachment-2026-10-30/finish-viewer-check.json",
+      "sha256": "4E0B6616ED7F54187883F712D7D9EA1C34EB7064B62ACAE368445BE944C530A2"
+    }
+  ],
+  "remaining": [
+    "Writer v7 composition preflight and later existing-owner rollout,including nickname states.",
+    "Account/device/actual-extension/formal whole-UI gaps remain separate."
+  ],
+  "checkpoint": {
+    "target": "origin/codex/ui-port-boundary",
+    "standingAuthorized": true,
+    "executionReceipt": "artifacts/checkpoints/<commit>.json"
+  }
+}

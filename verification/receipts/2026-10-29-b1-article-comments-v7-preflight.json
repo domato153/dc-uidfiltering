@@ -1,0 +1,153 @@
+{
+  "schemaVersion": 1,
+  "kind": "B1_ARTICLE_COMMENTS_V7_PREFLIGHT",
+  "status": "READY_WORKING_PROPOSAL_NOT_IMPLEMENTED",
+  "sourceBaseHead": "b02f0ccb197a07c2dec5b4de5ca314f0da2c3770",
+  "artifact": {
+    "mobileSha256": "79DD07831C87C8E02346E31BF5EEB19F4E53FF2D1A221C8A763F109F140D9CCC",
+    "pcSha256": "8915F36E5B8887DC58EF9F932E39CCA28CCE1AC1020FD96460CCD10C08913581",
+    "runtimeChanged": false,
+    "rebuild": false,
+    "versionChanged": false,
+    "officialRelease": false
+  },
+  "reference": {
+    "path": "docs/design/b1-article-comments-v7-proposal-2026-10-29.png",
+    "sha256": "DD07ACB48766B2691DC2FE8C7B0181E79A3C120F48817DEC84894CFAF8A5EF2D",
+    "width": 1024,
+    "height": 1536,
+    "method": "Built-in ImageGen generation plus one targeted corrective edit",
+    "approvedByUser": false,
+    "direction": "User-adopted actual memo v7 and list/header79DD tone",
+    "promptSet": "docs/work/B1_ARTICLE_COMMENTS_V7_PREFLIGHT.md",
+    "inputs": [
+      "accepted actual list/header79DD",
+      "adopted memo rendering",
+      "fresh public current article1440",
+      "current native-shaped ordinary/reply specimen",
+      "current native-shaped full image-comment/composer specimen"
+    ]
+  },
+  "observation": {
+    "path": "artifacts/b1-article-v7-2026-10-29/preflight.json",
+    "sha256": "9213F14F384474D719AD2B915ABEF9BEA34906733237768E9539E85310B73B2A",
+    "scope": "ANONYMOUS_GET_HEAD_AND_NATIVE_SHAPED_SYNTHETIC_CAPTURE_NOT_PRODUCT_TEST_OR_EXTENSION",
+    "records": [
+      {
+        "kind": "public",
+        "candidate": false,
+        "http": 200,
+        "comments": 0,
+        "imageRoots": 16,
+        "imageToggle": 16,
+        "actions": [
+          "개념 추천",
+          "개념 비추천",
+          "실베추",
+          "펌 0",
+          "공유",
+          "스크랩",
+          "신고",
+          "전체글",
+          "개념글",
+          "수정",
+          "삭제",
+          "글쓰기"
+        ],
+        "overflow": 75,
+        "blockedReadOrOtherPostPaths": [
+          "/board/comment/",
+          "/b",
+          "/g/collect",
+          "/sc2/1/",
+          "/sc2/11/"
+        ]
+      },
+      {
+        "kind": "public",
+        "candidate": true,
+        "http": 200,
+        "comments": 0,
+        "imageRoots": 16,
+        "imageToggle": 16,
+        "actions": [
+          "개념 추천",
+          "개념 비추천",
+          "실베추",
+          "펌 0",
+          "공유",
+          "스크랩",
+          "신고",
+          "전체글",
+          "개념글",
+          "수정",
+          "삭제",
+          "글쓰기"
+        ],
+        "overflow": 0,
+        "blockedReadOrOtherPostPaths": [
+          "/board/comment/",
+          "/b",
+          "/g/collect",
+          "/sc2/1/",
+          "/sc2/11/",
+          "/board/comment/getImageCommentByNos",
+          "/cdb"
+        ]
+      },
+      {
+        "kind": "native-shaped-synthetic",
+        "dark": false,
+        "ordinaryRows": 4,
+        "imageRows": 2,
+        "imageReplies": 0
+      },
+      {
+        "kind": "native-shaped-synthetic",
+        "dark": true,
+        "ordinaryRows": 4,
+        "imageRows": 2,
+        "imageReplies": 0
+      }
+    ]
+  },
+  "corrections": {
+    "v1": "NOT_SELECTED",
+    "removed": [
+      "list-only toolbar over article",
+      "automatic parent-image comment thumbnails",
+      "invented per-comment likes/explicit reply buttons",
+      "fictional recommendation sort",
+      "unbound violet vote accent",
+      "copied public-looking author labels"
+    ]
+  },
+  "nativeAdaptations": [
+    "Keep original media/content;synthetic illustration/copy are examples",
+    "Keep image refresh/fold/ON-OFF/native loading and no replies",
+    "Keep vote symbols/subcounts and all native normal registration actions",
+    "Keep native controls/parents/handlers/forms/popup reachability",
+    "Dark and layout980 require scoped actual adaptation,not raster scaling"
+  ],
+  "checks": {
+    "captureAndImageInspection": "PERFORMED",
+    "viewer": {
+      "status": "PASS_VIEWER_ONLY",
+      "states": 8,
+      "oneImageAtATime": true,
+      "noOverflow": true,
+      "path": "artifacts/b1-article-v7-2026-10-29/viewer-check.json",
+      "sha256": "21D11489065B3FA94F0AFCA931DB41F061FCF3358453D5980AFD2688F7D13843"
+    },
+    "productTests": "NOT_RUN_NO_PRODUCT_CODE_CHANGE",
+    "implementationFidelity": "NOT_APPLICABLE_PRE_IMPLEMENTATION",
+    "themeLinkage": "IMPLEMENTATION_GATE_NOT_YET_RUN"
+  },
+  "limits": [
+    "Public native comment data POST reads blocked before transmission;not a global browser failure",
+    "Synthetic fixture captures are not fresh live populated-comment proof",
+    "No actual extension/physical device/account/post/delete/vote/report/save qualification",
+    "Working proposal is not user approval of article implementation"
+  ],
+  "next": "b1-article-comments-v7-implementation"
+}

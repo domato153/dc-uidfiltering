@@ -1,0 +1,89 @@
+{
+  "schemaVersion": 1,
+  "kind": "modernization-stage-assurance",
+  "stage": "tokens-settings-palette",
+  "status": "PASS",
+  "sourceHead": "b2818a1ab651b2992bf51f35f47ae3d6647808a4",
+  "candidateFingerprint": "ebf21ad466966ae9c659ace30353aedb5d53f5d7b75e9ae74301aae3e5e4364e",
+  "evidenceBinding": {
+    "bindingSchemaVersion": 4,
+    "registrySha256": "2275e39d9fd10662c755354df6e8c8161d9a6e19924de12a9e8d83cc0971f191",
+    "architectureStateSha256": "83abfb66b242b77781dc55e6983b07d29c00ff353cbe168cf10e79176d0e414e",
+    "architecturePlanSha256": "3e87771e32b3eaa698928312cd8ee3eade775f26a9ce1fe169e82326ad36ed04",
+    "modernizationContractSha256": "18c4e3b06b2ca2512b22a08848b228b8304c07f2436cf1837b951dc79f25f279",
+    "gatesSha256": "aa7908804e5953f68ac9a62112749e634df1db29730079870881a89eba217916",
+    "sourceInputsSha256": "5926ff5ae8ba9de31c1870cc25574b925a4fa1590243e766fac7128eb0ecd8a5",
+    "harnessSha256": "10fff1ad262d1848e82d86cd6445210b022bc2ca73c752cb44c5b4ef41ae1551",
+    "fixturesSha256": "bd2156717d5e264eeb35ede447a2f7e39b39a6f1f6ab7625b1ad4c3c87d5e09d",
+    "toolchainSha256": "9c077234e2b0d40af938bb0e07f52164afea157664f1b040f512744355fe80f4",
+    "proofSystemSha256": "fcb42f605e1a94d717c535484158b684c6ce2c31e97edb1b977cba3e7148043e",
+    "node": "v22.17.0"
+  },
+  "artifacts": {
+    "mobile": {
+      "version": "3.5.5",
+      "sha256": "2D8F039A58BF9B5FEA2FB7FE756B2A7E313BCBBB5F714F385D2A53C5FBDEBAF0"
+    },
+    "pc": {
+      "version": "1.9.9",
+      "sha256": "1A7A00468F4DCFB57C7341063098B827743091FD7593BA3FBA86A17E282BDC33"
+    }
+  },
+  "evidence": [
+    {
+      "id": "mobile",
+      "path": "artifacts/tokens-settings-mobile-results.json",
+      "sha256": "5ed6d05eb218457c328c4491e0b42f621f8a1181eb1d350f8eb5e34af6c38b04",
+      "applicability": "applicable"
+    },
+    {
+      "id": "host",
+      "path": "artifacts/tokens-settings-host-results.json",
+      "sha256": "1e5e505c1949a1514228d2172960185b063beefc1b155f42aa3345346fb67881",
+      "applicability": "applicable"
+    },
+    {
+      "id": "pc",
+      "path": "artifacts/tokens-settings-pc-results.json",
+      "sha256": "15c9144758c6be76e31c01a502d7f1afde24fa85f85ea75b27383906e9a835e8",
+      "applicability": "applicable"
+    },
+    {
+      "id": "mobileDifferential",
+      "path": "artifacts/tokens-settings-mobile-differential.json",
+      "sha256": "f4853c3ab0452300e3f4e4bb6868f1d883c47718d2387888438966032a4c5320",
+      "applicability": "applicable"
+    },
+    {
+      "id": "pcDifferential",
+      "path": "artifacts/tokens-settings-pc-differential.json",
+      "sha256": "5c1a2a796c183a39472b1073648a6e44eeefc1654668fbf33da04710a876d3d5",
+      "applicability": "applicable"
+    },
+    {
+      "id": "proof",
+      "path": "artifacts/tokens-settings-proof-audit.json",
+      "sha256": "4eb013c8e08df455ec01235bf0eb31be9554360c5fe5edd99c21541d7ec274c3",
+      "applicability": "applicable"
+    }
+  ],
+  "results": {
+    "mobile": {
+      "passed": 98,
+      "failed": 0
+    },
+    "host": {
+      "passed": 11,
+      "failed": 0
+    },
+    "pc": {
+      "passed": 14,
+      "failed": 0
+    },
+    "semanticDifferences": 0,
+    "rawDifferencesPreserved": 28,
+    "rejectedMutations": 57,
+    "acceptedControls": 9
+  },
+  "liveCanary": "UNKNOWN"
+}

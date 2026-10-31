@@ -1,0 +1,1568 @@
+{
+  "schemaVersion": 1,
+  "id": "mobile-ui-modernization-assurance",
+  "baseRegistrySha256": "2275e39d9fd10662c755354df6e8c8161d9a6e19924de12a9e8d83cc0971f191",
+  "changes": {
+    "upsertAuthorities": [
+      {
+        "id": "modernization-plan",
+        "path": "docs/work/MOBILE_UI_MODERNIZATION.md",
+        "owns": "active mobile UI replacement sequence, success criteria, assurance layers, and release boundary"
+      },
+      {
+        "id": "modernization-machine-contracts",
+        "path": "verification/assurance-case.json",
+        "owns": "surface, intended-delta, semantic-observation, state-interaction, claim, evidence, and defeater status"
+      }
+    ],
+    "upsertContracts": [
+      {
+        "id": "b1-write-editor-shell",
+        "summary": "Authorized B1 write/modify-editor outer presentation through existing native-form presenter and four shared header owners. Canonical write-editor state admits write/modify header mutation contexts without hasListSurface, new observer or filter/network startup. Existing write/modify subscriptions reconcile header owners on form loss/replacement. Preserve original native DIV/table fields, form actions/method/hidden shape, editor selection/authored colors, draft and desktop-site-mobile scale. Native-form projects the existing name-input role onto the original gallery-nickname input too. Remove the unused dcuf-write-leave-confirm compatibility class write: no source CSS consumes it, and restoring/readding it on each refresh caused mutation feedback. Semantic popup roles remain. Outer glass/paper/spacing is the visual delta; individual native tool/popup interiors remain separate."
+      },
+      {
+        "id": "header-context-reuse-cleanup",
+        "summary": "One pure target-adapter policy maps canonical list/view, modify/delete password and authorized write/modify-editor state to existing header mutation contexts. Four adapters consume it; keep native recent root-present style fallback and unsupported/pending cleanup. UI_REUSE_PREPARATION records the earlier zero-delta consolidation; b1-write-editor-shell declares the subsequent editor applicability/lifecycle extension. No new build input or observer."
+      },
+      {
+        "id": "ui-review-preparation",
+        "summary": "Testbed-only preparation binds guarded runtime/capture identity; existing visual-review owns decoding/diff/report. Both require the original design/region to match NEXT's frozen-image dependency and authority hash. Changed visual claims carry implementation/verification/evidence; known missing work overrides optimistic assessment even on pixel equality. Regression pixels cannot certify design fidelity. Continuity inspection exposes the selected source/hash/region. This validates declarations, not AI perception or beauty; no product DOM/network owner, new image engine or auto-approval."
+      },
+      {
+        "id": "b1-native-form-header-reuse",
+        "summary": "Existing four header adapters/presenters serve anonymous modify/delete password pages through UIModule composition. Keep hasListSurface false and native form/filters/storage/network unchanged. Reuse existing mutation bus with four header subscribers in the current native route; prefilter only original header subtrees while native password context exists. Dispose added header owners when leaving that native context and reuse existing boot rollback/recovery. Footer remains hidden by its current native-form owner. Editor activation is deferred. Existing page-head owns original top-row utility-control/utility-icon roles and quiet/themed decoration; native-form owns password-card gutters without constraining the shared heading. Recent presenter hides the old decorative remove em, preserving the native button/label/handler. Authenticated delete-confirm branch values remain unchanged. Native class/aria projection is idempotent; existing modify/delete subscribers consume matching removed subtrees so owners dispose/reconnect without perpetual refresh."
+      },
+      {
+        "id": "b1-native-password-trial",
+        "summary": "Authorized anonymous password-page B1 material in the existing native-form presenter. Native adapter, initialization, forms/fields/nodes/handlers, cancel, empty and keyboard-confirm remain unchanged; authenticated delete-confirm and editor are outside this bounded slice. Preserve original native browser alerts and reject real submissions during live observation."
+      },
+      {
+        "id": "b1-gallery-search-popup-trial",
+        "summary": "Authorized P2 native gallery/search slice: existing header drawer, shell and gallery-page-head adapters/presenters reversibly project original door/rank/help/related, search-history/suggestion, setting-menu and usage-guide parts. The gallery-head mutation subscriber also recognizes its externally appended original guide/backdrop under visit_history; no additional observer/subscriber, portal or action/state owner. Preserve native DOM/parents/forms/handlers, hidden pages, media and stored settings; expose only existing hidden ranking/trigger text when replacing decorative sprites. Geometry remains in existing owners. Thin read-only test observation reuses native root/ancestor CSS and redacts private values; captures do not grant approval. User authorization is limited to relation-read POST for gallery47965; no other external mutation or authentication scope. Original ranking keeps its five-column DOM order and inline block/none paging; narrow list scrolling stays internal. The existing drawer projection raises the original door stacking context only while an original child layer is open, restoring that marker on closure/disposal. Fixed descendants do not acquire a filtered containing block; door glass uses a decoration plane."
+      },
+      {"id":"b1-article-action-popup-trial","summary":"Authorized article action popup slice: existing article adapter reversibly projects exact share/real-best/report/guest-scrap/PUM and nested-guide kind/part attributes through its current transaction/mutation bus. The article presenter owns B1 material, grouping and bounded non-PUM placement. Existing PUM geometry owner consumes center/clearance variables. Exclude popup preview headings from main-article projection. Original nodes, parents, forms, handlers, hidden states, sprite/media colors, storage and native submissions remain native; no portal, observer, dispatcher, network or authentication owner is added. Account scrap iframe, browser-native dialogs and unobserved history/server-result interiors remain separate."},
+      {"id":"b1-content-glass-trial","summary":"Approved B1 content first trial: existing article/comment presenters refine reading/control material. The comment adapter reversibly classifies original nested textcon/DCCon picker panels/fields/actions, separating picker inputs from composer geometry, through its current transaction/mutation subscriber. Native media/swatch/preview colors, nodes, parents, forms, events, selection, display lifecycle and rollback remain native. Explicit visual delta centers and constrains the two actual nested pickers with CSS; no portal/new observer or UI state owner. Existing mobile theme/recent owners refine glass on recent tabs/list/footer. The shared menu presenter consumes optional mobile material variables with exact incumbent PC fallbacks. PC behavior/appearance and authentication remain unchanged; build/check both outputs. Unopened account-gated branches remain unverified. Popup polish projects observed native title/help/preview/color/recent/toolbar/pack parts; exposes only the existing DCCon semantic heading, retains original trigger-close and hidden child pages. Existing CSS bounds the native textarea and reserves the persistent menu area only in narrow stress layouts; the observed picker-primary important margin exception is registered; no runtime state owner."},
+      {"id":"b1-native-list-trial","summary":"Approved B1 list presentation through existing owners. Shell adapter reversibly marks existing common/bridge parents and supplies native-brand selector; it adds an HTML popover invoker to the original service UL, preserving its children/parents/handlers and restoring id/popover/copy state on cleanup. Native recent-history display, tabs and actions remain host-owned; presenter styles that original popup. List presenter arranges children without changing filter-owned inline row display. Existing scroll scheduler remains; no new global observer. Preserve14 palettes, settings, PC and native forms. Repair batch: native shell and recent presenters consume extended immutable adapter selector slots for the existing visible native tip, sprite and original recent interiors. Five-column desktop/two-column narrow chrome, compact responsive category grid, original tip containment/dismissal, quiet dark tabs and readable inset list metadata are presentation deltas only; no new observer, event, storage, network, filter or release owner."},
+      {
+        "id": "live-native-control-composition",
+        "summary": "Existing list/comment/article presenters own selected palette states, single sprite-free decorations, category overflow/subject descriptions, credential shells, distinct composer tools/submits and action-group composition. Adapters only classify original nodes and preserve native events/forms/settings. Article actions remain outside list ownership; recent-state behavior remains in convenience while its row decoration moves to the list presenter. No new DOM/event/resource owner or mixed exit."
+      },
+      {
+        "id": "header-native-row-composition",
+        "summary": "Only four normal CSS additions in the existing GNB/page-head presenters: nav/list height:auto and page-head height:auto/right flex-wrap:wrap. Preserve980/wide GNB geometry, grow the heading to contain native actions and keep separate390 stress rows adjacent to recent visits. No native node/event/settings/resource, selector, observer or owner change."
+      },
+      {
+        "id": "header-native-dark-toggle-hit",
+        "summary": "The existing shell links row uses flex instead of block so the original floated darkmodebox stays beside its native UL above search at390px. Preserve nine immutable full selectors, other shell CSS and mount order, native nodes/forms/events/default pointer and Enter theme/search actions, settings and existing resources; the old declaration must reproduce the hit failure."
+      },
+      {
+        "id": "header-native-recommendation-stack",
+        "summary": "The drawer adapter supplies one immutable full selector for the original issue ancestor only while its owned recommendation is open; the existing presenter raises that context above the native GNB1001 layer using1002, preserving closed stacking, original nodes/events, geometry and existing cleanup without a new state or observer owner."
+      },
+      {
+        "id": "semantic-preservation",
+        "summary": "Every UI slice declares its visual delta while storage, filter, network, host-node, native-event, form, focus, lifecycle, accessibility, geometry, and PC observations remain invariant."
+      },
+      {
+        "id": "three-layer-assurance",
+        "summary": "Implementation evidence, independent cross-audit, and an upper assurance case must bind distinct evidence families to the exact system under test and expose unresolved defeaters."
+      },
+      {
+        "id": "b1-login-only-presentation",
+        "summary": "Exact Mobile HTTPS sign /login or /login/ presentation before gallery boot,including native query. Preserve original form controls/values/parents/handlers/hidden fields/security/return destination. No credential/cookie reads,authentication submit interception,GM writes,filter/menu/network/document observer/body lock. Pure shared theme factories preserve original gallery/PC values and CSS; login readiness/theme ownership is isolated and disposable."
+      },
+      {
+        "id": "b1-convenience-finish",
+        "summary": "Authorized pure Mobile preview/draft CSS extraction into one presenter mounted at the same existing style slot; original adapters retain DOM/state/storage/network/cache/sanitizer/geometry/gestures/disposal. Add owned root classes,typed draft-action attribute and accessible close label only. Keep convenience host mixed for unrelated legacy settings fallback. B1 glass chrome,opaque reading,C885 controls and narrow wrapping are declared visual deltas. Existing article presenter separately resets native vote-card height and applies modest centered padding/proportion without moving or replacing buttons/counts."
+      },
+      {
+        "id": "b1-native-author-finish",
+        "summary": "Native author UL/memo/picker B1 presentation in one pure descriptor,rendered through existing post-main list-memo style slot/subscriber. Original menus/fields/parents/events/palette/storage/network remain native. List metadata and completed reveal stop retaining a transformed containing block; press/reveal transforms do not run with a native window open. Existing list-only UL geometry clamps to viewport and original rows expose the layer. Mirror proxy excludes original popup descendants. No new observer,portal or accepted mixed exit."
+      }
+    ],
+    "upsertComponents": [
+      {
+        "id": "testbed-harness",
+        "status": "candidate",
+        "classification": "verification",
+        "layer": "verification",
+        "boundaryState": "verification",
+        "responsibility": "Loads guarded runtimes, shims GM APIs, instruments lifecycle resources, and runs Playwright contexts. The registered B1 content contract checks original nested pickers and media/composer isolation without owning product UI. Supplies source-runtime-bound screenshot metadata and manifest preparation while delegating browser capture/comparison to existing tools; no product UI, network or visual-approval owner.",
+        "sourceRefs": [
+          "testbed/harness/**",
+          "testbed/server/**",
+          "testbed/run-tests.mjs",
+          "testbed/visual/**",
+          "tools/visual-review.mjs",
+          "testbed/run-host-compatibility.mjs",
+          "testbed/run-bfcache.mjs",
+          "testbed/run-palette-differential.mjs",
+          "testbed/ui-b1-content-contract.mjs",
+          "testbed/ui-live-control-contract.mjs",
+          "testbed/ui-b1-gallery-search-contract.mjs",
+          "testbed/ui-b1-password-contract.mjs", "testbed/ui-b1-form-header-contract.mjs", "testbed/ui-b1-write-shell-contract.mjs"
+        ],
+        "contractRefs": ["proof-integrity","initialization-lifecycle","artifact-lineage","ui-review-preparation"],
+        "fitnessRefs": [
+          "invariant-proof-binding",
+          "invariant-runtime-guard"
+        ]
+      },
+      {
+        "id": "mobile-post-main-fixes",
+        "status": "candidate",
+        "classification": "mixed-runtime-source",
+        "layer": "target-adapter",
+        "boundaryState": "mixed",
+        "responsibility": "Late mobile host corrections remain mixed. Measures view computed styles and passes frozen serializable observations to article/comment presenter readiness policies; retains preparation, debug and recovery without owning their aesthetic thresholds. Existing list-memo scheduler/subscriber also projects observed author/menu/memo/picker classes and list UL geometry; consumes a pure native-author descriptor in the same style slot. Other legacy fixes remain mixed.",
+        "sourceRefs": [
+          "src/targets/mobile/post-main-fixes.js"
+        ],
+        "contractRefs": [
+          "host-dom-events",
+          "ui-ownership",
+          "initialization-lifecycle",
+            "b1-native-author-finish"
+          ],
+        "fitnessRefs": [
+          "invariant-host-node-preservation",
+          "invariant-one-visual-owner",
+          "invariant-ui-port-boundary",
+          "invariant-build-inputs-mapped"
+        ],
+        "transition": {
+          "targetBoundaryState": "conforming",
+          "exitCriteria": "Every late bridge, listener, observer, and style rule is assigned to one target adapter or presentation surface, with no residual mixed correction owner."
+        }
+      },
+      {
+        "id": "mobile-runtime-coordinator",
+        "status": "candidate",
+        "classification": "runtime-source",
+        "layer": "application-runtime",
+        "boundaryState": "conforming",
+        "responsibility": "Shared mutation scheduling, page-surface routing, bounded reruns, and bfcache recovery. Existing list/view page-surface routing admits copied native-root/relation markers for their cleanup. Unused native-part/provenance and ancestor-only role admission are removed. An optional before-paint cleanup callback on the same ordinary subscription retains copied root/relation restoration; ordinary geometry delivery and resource ownership remain unchanged.",
+        "sourceRefs": ["src/targets/mobile/runtime-coordinator.js"],
+        "contractRefs": ["initialization-lifecycle", "host-dom-events"],
+        "fitnessRefs": ["invariant-initialization-recovery", "invariant-hot-path-stability", "invariant-build-inputs-mapped"]
+      },
+      {
+        "id": "mobile-theme-module",
+        "status": "candidate",
+        "classification": "presentation-source",
+        "layer": "presentation-ui",
+        "boundaryState": "mixed",
+        "responsibility": "Shared palette presenter consumes UiPort snapshots and typed intents; target host CSS is now an explicit separate build input and pinch geometry is adapter-owned.",
+        "sourceRefs": [
+          "src/targets/shared/theme-presenter.js",
+          "src/targets/mobile/theme-module.js"
+        ],
+        "contractRefs": [
+          "storage-compatibility",
+          "ui-ownership",
+          "target-isolation",
+          "semantic-preservation",
+          "b1-login-only-presentation"
+        ],
+        "fitnessRefs": [
+          "invariant-one-visual-owner",
+          "invariant-pc-host-style-isolation",
+          "invariant-ui-port-boundary",
+          "invariant-build-inputs-mapped"
+        ],
+        "transition": {
+          "targetBoundaryState": "conforming",
+          "exitCriteria": "Current mobile and PC differential receipts bind the shared presenter explicit target style inputs popup adapter and zero semantic visual storage focus lifecycle drift."
+        }
+      },
+      {
+        "id": "mobile-personal-block-module",
+        "status": "candidate",
+        "classification": "mixed-runtime-source",
+        "layer": "application-runtime",
+        "boundaryState": "mixed",
+        "responsibility": "The candidate source now owns only personal-block GM state, normalized immutable surface snapshots, filtering effects, and typed UI commands; the accepted mixed boundary remains until current transition evidence is receipted.",
+        "sourceRefs": ["src/targets/shared/personal-block-module.js", "src/targets/mobile/personal-block-module.js"],
+        "contractRefs": ["filter-semantics", "storage-compatibility", "host-dom-events", "ui-ownership", "target-isolation", "semantic-preservation"],
+        "fitnessRefs": ["invariant-shared-target-semantics", "invariant-ui-port-boundary", "invariant-storage-compatibility", "invariant-build-inputs-mapped"],
+        "transition": {
+          "targetBoundaryState": "conforming",
+          "exitCriteria": "Current mobile and PC artifacts pass personal-block storage filter UI lifecycle and zero-semantic-difference gates with DOM and host-listener ownership routed only through the explicit adapter."
+        }
+      },
+      {
+        "id": "personal-block-host-adapter",
+        "status": "candidate",
+        "classification": "adapter-contract",
+        "layer": "target-adapter",
+        "boundaryState": "mixed",
+        "responsibility": "Owns personal-block FAB, selection, backup and management DOM, host listeners, geometry, and lifecycle while calling application state/effect methods.",
+        "sourceRefs": ["src/targets/shared/personal-block-host-adapter.js"],
+        "contractRefs": ["host-dom-events", "initialization-lifecycle", "ui-ownership", "semantic-preservation"],
+        "fitnessRefs": ["invariant-host-node-preservation", "invariant-initialization-recovery", "invariant-one-visual-owner", "invariant-build-inputs-mapped"],
+        "transition": {
+          "targetBoundaryState": "conforming",
+          "exitCriteria": "DCUF-owned personal-block markup and visual state move to a clean presenter; adapter retains only host/global input, mounting, geometry, and disposal."
+        }
+      },
+      {
+        "id": "mobile-theme-host-style",
+        "status": "candidate",
+        "classification": "presentation-source",
+        "layer": "presentation-ui",
+        "boundaryState": "mixed",
+        "responsibility": "Retires legacy DCUF-owned dialog palette selectors so shared SettingsPresenter is their final owner; contains the remaining legacy mobile host palette rail and composes the five existing header presentation owners' hoisted pure palette builders at the unchanged early theme phase; no raw header palette selector remains here. Semantic-marker conversion remains pending.",
+        "sourceRefs": [
+          "src/targets/mobile/theme-host-style.js"
+        ],
+        "contractRefs": [
+          "host-dom-events",
+          "target-isolation",
+          "ui-ownership",
+          "b1-login-only-presentation"
+        ],
+        "fitnessRefs": [
+          "invariant-one-visual-owner",
+          "invariant-pc-host-style-isolation",
+          "invariant-build-inputs-mapped"
+        ],
+        "transition": {
+          "targetBoundaryState": "conforming",
+          "exitCriteria": "Every host selector is replaced by adapter-applied semantic markers and each important declaration has a registered collision reason and focused regression test."
+        }
+      },
+      {
+        "id": "pc-theme-host-style",
+        "status": "candidate",
+        "classification": "presentation-source",
+        "layer": "presentation-ui",
+        "boundaryState": "conforming",
+        "responsibility": "Defines the explicit empty PC host palette style capability so mobile host CSS cannot enter PC assembly.",
+        "sourceRefs": ["src/targets/pc/theme-host-style.js"],
+        "contractRefs": ["target-isolation", "ui-ownership"],
+        "fitnessRefs": ["invariant-pc-host-style-isolation", "invariant-build-inputs-mapped"]
+      },
+      {
+        "id": "mobile-filter-module",
+        "status": "candidate",
+        "classification": "mixed-runtime-source",
+        "layer": "target-adapter",
+        "boundaryState": "mixed",
+        "responsibility": "Owns mobile-only filter host CSS partitioning and legacy lazy injection; composes the shell/GNB reset and drawer native-door concealment pure payloads into the unchanged core phase rather than owning their raw selectors. Shared FilterModule runtime is separate; page-canvas and minor-intro dark rules remain here.",
+        "sourceRefs": ["src/targets/mobile/filter-module.js"],
+        "contractRefs": ["filter-semantics", "host-dom-events", "ui-ownership", "target-isolation", "live-native-control-composition"],
+        "fitnessRefs": ["invariant-ui-port-boundary", "invariant-one-visual-owner", "invariant-pc-host-style-isolation", "invariant-build-inputs-mapped"],
+        "transition": {
+          "targetBoundaryState": "conforming",
+          "exitCriteria": "Shared management styles move to an explicit presentation source and mobile host style mounting moves behind an adapter with one registered owner and no marker slicing."
+        }
+      },
+      {
+        "id": "mobile-convenience-module",
+        "status": "candidate",
+        "classification": "mixed-runtime-source",
+        "layer": "application-runtime",
+        "boundaryState": "mixed",
+        "responsibility": "The candidate source now owns convenience GM settings, draft persistence, immutable snapshots, and preview network fetch; the accepted mixed boundary remains until current transition evidence is receipted.",
+        "sourceRefs": ["src/targets/mobile/convenience-module.js"],
+        "contractRefs": ["storage-compatibility", "host-dom-events", "ui-ownership", "semantic-preservation"],
+        "fitnessRefs": ["invariant-storage-compatibility", "invariant-ui-port-boundary", "invariant-build-inputs-mapped"],
+        "transition": {
+          "targetBoundaryState": "conforming",
+          "exitCriteria": "Current mobile artifact passes convenience settings preview draft native-form lifecycle and zero-semantic-difference gates with all DOM and host listeners routed only through the explicit adapter."
+        }
+      },
+      {
+        "id": "mobile-convenience-host-adapter",
+        "status": "candidate",
+        "classification": "adapter-contract",
+        "layer": "target-adapter",
+        "boundaryState": "mixed",
+        "responsibility": "Owns convenience settings,preview DOM/session/pointer/geometry/disposal and legacy settings fallback CSS; mounts the pure preview/draft descriptor in the existing style slot. State and fetching remain application-owned; recent-row decoration is list-owned. Still mixed because unrelated fallback presentation remains.",
+        "sourceRefs": [
+          "src/targets/mobile/convenience-host-adapter.js"
+        ],
+        "contractRefs": [
+          "host-dom-events",
+          "initialization-lifecycle",
+          "ui-ownership",
+          "semantic-preservation",
+          "live-native-control-composition",
+          "b1-convenience-finish"
+        ],
+        "fitnessRefs": [
+          "invariant-host-node-preservation",
+          "invariant-initialization-recovery",
+          "invariant-one-visual-owner",
+          "invariant-build-inputs-mapped"
+        ],
+        "transition": {
+          "targetBoundaryState": "conforming",
+          "exitCriteria": "Convenience-owned markup and semantic-role CSS move to a clean presenter while this adapter retains host form, session, pointer, geometry, and disposal work."
+        }
+      },
+      {
+        "id": "mobile-list-presenter",
+        "status": "candidate",
+        "classification": "presentation-source",
+        "layer": "presentation-ui",
+        "boundaryState": "conforming",
+        "responsibility": "Pure serializable list-row projection markup, recent-row decoration and semantic list/control/category-popup CSS including Concept01 sticky/reveal presentation. It owns no host DOM, storage, network, observer, timer, or lifecycle effect. Article-native action bars remain under the article presenter/adapter.",
+        "sourceRefs": ["src/targets/mobile/list-presenter.js"],
+        "contractRefs": ["ui-ownership", "semantic-preservation", "host-dom-events", "live-native-control-composition",
+            "b1-native-author-finish"
+          ],
+        "fitnessRefs": ["invariant-one-visual-owner", "invariant-host-node-preservation", "invariant-ui-port-boundary", "invariant-build-inputs-mapped"]
+      },
+      {
+        "id": "mobile-list-host-adapter",
+        "status": "candidate",
+        "classification": "adapter-contract",
+        "layer": "target-adapter",
+        "boundaryState": "conforming",
+        "responsibility": "Reads DCInside list rows into deep-frozen serializable snapshots and mounts presenter-owned projections without cloning, moving, replacing, reordering, wrapping, or portaling a host node. Owns list-only direction-aware toolbar measurement/state, cumulative travel, focus/popup/pointer hold and bounded scroll/resize/listener cleanup; presentation consumes projected state and owns all visual rules.",
+        "sourceRefs": ["src/targets/mobile/list-host-adapter.js"],
+        "contractRefs": ["host-dom-events", "ui-ownership", "semantic-preservation", "live-native-control-composition"],
+        "fitnessRefs": ["invariant-host-node-preservation", "invariant-one-visual-owner", "invariant-ui-port-boundary", "invariant-build-inputs-mapped"]
+      },
+      {
+        "id": "mobile-article-host-adapter",
+        "status": "candidate",
+        "classification": "adapter-contract",
+        "layer": "target-adapter",
+        "boundaryState": "conforming",
+        "responsibility": "Discovers DCInside article header, content, recommendation, adjacent native action, media, and popup nodes; applies reversible semantic markers; exposes frozen serializable observations and native invocation; and reconnects host-owned replacements without owning visual presentation or a separate mutation observer.",
+        "sourceRefs": ["src/targets/mobile/article-host-adapter.js"],
+        "contractRefs": ["host-dom-events", "ui-ownership", "semantic-preservation", "live-native-control-composition"],
+        "fitnessRefs": ["invariant-host-node-preservation", "invariant-one-visual-owner", "invariant-ui-port-boundary", "invariant-build-inputs-mapped"]
+      },
+      {
+        "id": "mobile-article-presenter",
+        "status": "candidate",
+        "classification": "presentation-source",
+        "layer": "presentation-ui",
+        "boundaryState": "conforming",
+        "responsibility": "Owns pure immutable-snapshot article visual readiness policy and semantic-role-first article header, flat rich-content shell, media compatibility, recommendation card, CAPTCHA, adjacent native actions, focus, tactile motion, dark-state, and reduced-motion CSS without DOM, storage, network, selector discovery, or lifecycle effects.",
+        "sourceRefs": ["src/targets/mobile/article-presenter.js"],
+        "contractRefs": ["ui-ownership", "semantic-preservation", "host-dom-events", "live-native-control-composition"],
+        "fitnessRefs": ["invariant-one-visual-owner", "invariant-host-node-preservation", "invariant-ui-port-boundary", "invariant-build-inputs-mapped"]
+      },
+      {
+        "id": "mobile-comment-host-adapter",
+        "status": "candidate",
+        "classification": "adapter-contract",
+        "layer": "target-adapter",
+        "boundaryState": "conforming",
+        "responsibility": "Discovers DCInside normal, focus, image, reply, detached-reply, composer, native action, and popup nodes; applies reversible semantic markers; exposes frozen serializable observations and native invocation; and reconnects host-owned replacements through the shared mutation bus without moving host nodes or owning visual presentation.",
+        "sourceRefs": ["src/targets/mobile/comment-host-adapter.js"],
+        "contractRefs": ["host-dom-events", "ui-ownership", "semantic-preservation", "live-native-control-composition", "b1-content-glass-trial"],
+        "fitnessRefs": ["invariant-host-node-preservation", "invariant-one-visual-owner", "invariant-ui-port-boundary", "invariant-build-inputs-mapped"]
+      },
+      {
+        "id": "mobile-comment-presenter",
+        "status": "candidate",
+        "classification": "presentation-source",
+        "layer": "presentation-ui",
+        "boundaryState": "conforming",
+        "responsibility": "Owns pure immutable-snapshot comment visual readiness policy and semantic-role-first comment, reply, detached-reply continuation, image-comment, composer, focus, popup, tactile motion, dark-state, and reduced-motion CSS without DOM, storage, network, selector discovery, or lifecycle effects.",
+        "sourceRefs": ["src/targets/mobile/comment-presenter.js"],
+        "contractRefs": ["ui-ownership", "semantic-preservation", "host-dom-events", "live-native-control-composition", "b1-content-glass-trial"],
+        "fitnessRefs": ["invariant-one-visual-owner", "invariant-host-node-preservation", "invariant-ui-port-boundary", "invariant-build-inputs-mapped"]
+      },
+      {
+        "id": "mobile-native-form-presenter",
+        "status": "candidate",
+        "classification": "presentation-source",
+        "layer": "presentation-ui",
+        "boundaryState": "conforming",
+        "responsibility": "Owns semantic-role-only modify/delete and write/modify-editor CSS for page/form shell, native leave-confirm popup, fields, headtext, editor shell/content, toolbar controls and floating layers, attachments, AI prompt, write options, adult control, final host action rows, generic form controls, font labels, and hidden host chrome. Authorized B1 password/write-shell presentation consumes existing material tokens; exact transitional selector/property ledgers retain native precedence. Host adapters alone discover raw host structure, project reversible meaning, mount styles, and own DOM lifecycle.",
+        "sourceRefs": ["src/targets/mobile/native-form-presenter.js"],
+        "contractRefs": ["ui-ownership", "semantic-preservation", "host-dom-events", "b1-write-editor-shell"],
+        "fitnessRefs": ["invariant-one-visual-owner", "invariant-host-node-preservation", "invariant-ui-port-boundary", "invariant-build-inputs-mapped"]
+      },
+      {
+        "id": "mobile-native-form-host-adapter",
+        "status": "candidate",
+        "classification": "adapter-contract",
+        "layer": "target-adapter",
+        "boundaryState": "conforming",
+        "responsibility": "Discovers write and modify-editor forms, page/top/container/content/write shells, fields and captcha, headtext, editor and toolbar controls, attachments, AI prompt, write options, adult control, final action-row variants, generic controls, font labels, hidden host chrome, and the in-place leave-confirm popup, plus non-member modify/delete and authenticated delete confirmation; applies reversible semantic roles and properties through a complete owned-marker ledger; mounts presenter-owned styles with idempotent cleanup and rollback recovery; exposes deep-frozen serializable observations and typed native invocation; and reconnects host-owned replacements through the shared mutation bus without replacing, moving, cloning, wrapping, or reordering host nodes.",
+        "sourceRefs": ["src/targets/mobile/native-form-host-adapter.js"],
+        "contractRefs": ["host-dom-events", "ui-ownership", "semantic-preservation", "b1-write-editor-shell"],
+        "fitnessRefs": ["invariant-host-node-preservation", "invariant-ui-port-boundary", "invariant-build-inputs-mapped"]
+      },
+      {
+        "id": "mobile-write-editor-host-adapter",
+        "status": "candidate",
+        "classification": "adapter-contract",
+        "layer": "target-adapter",
+        "boundaryState": "conforming",
+        "responsibility": "Owns write-page desktop-site viewport mode, headtext drag/tip geometry, write-editor toolbar drag plus transient semantic drag-state projection and stale replacement-state cleanup, host dropdown/DCCon discovery plus reversible kind/anchor/position-state projection and stale cloned-layer cleanup, native font-command invocation, one shared mutation-bus subscription, dynamic headtext/font/layer reconnect, and reversible listener/frame/timer cleanup without reading storage, performing network effects, replacing host nodes, or owning presentation styles.",
+        "sourceRefs": ["src/targets/mobile/write-editor-host-adapter.js"],
+        "contractRefs": ["host-dom-events", "ui-ownership", "semantic-preservation"],
+        "fitnessRefs": ["invariant-host-node-preservation", "invariant-ui-port-boundary", "invariant-build-inputs-mapped"]
+      },
+      {
+        "id": "mobile-write-draft-host-adapter",
+        "status": "candidate",
+        "classification": "adapter-contract",
+        "layer": "target-adapter",
+        "boundaryState": "conforming",
+        "responsibility": "Owns write-draft form and editor discovery, native input, submit, visibility and navigation lifecycle listeners, browser session-marker capability, DOM-backed HTML normalization, banner mounting, bounded scheduling, and reversible connection disposal while draft policy, GM persistence, ordering, limits, intent, and success cleanup remain application-owned.",
+        "sourceRefs": [
+          "src/targets/mobile/write-draft-host-adapter.js"
+        ],
+        "contractRefs": [
+          "host-dom-events",
+          "storage-compatibility",
+          "initialization-lifecycle",
+          "semantic-preservation",
+          "b1-convenience-finish"
+        ],
+        "fitnessRefs": [
+          "invariant-host-node-preservation",
+          "invariant-storage-compatibility",
+          "invariant-initialization-recovery",
+          "invariant-ui-port-boundary",
+          "invariant-build-inputs-mapped"
+        ]
+      },
+      {
+        "id": "mobile-write-ad-host-adapter",
+        "status": "candidate",
+        "classification": "adapter-contract",
+        "layer": "target-adapter",
+        "boundaryState": "conforming",
+        "responsibility": "Preserves the existing write-page advertisement-removal policy for only the two exact host signatures, removes only their direct div container, reuses the shared mutation bus when available, bounds fallback polling to ten attempts, and releases subscriber, observer, interval, and pagehide ownership on removal, timeout, rollback, disposal, and host-root reconnect.",
+        "sourceRefs": ["src/targets/mobile/write-ad-host-adapter.js"],
+        "contractRefs": ["host-dom-events", "semantic-preservation"],
+        "fitnessRefs": ["invariant-ui-port-boundary", "invariant-build-inputs-mapped"]
+      },
+      {
+        "id": "mobile-header-shell-presenter",
+        "status": "candidate",
+        "classification": "presentation-source",
+        "layer": "presentation-ui",
+        "boundaryState": "mixed",
+        "responsibility": "Owns typea shell/head/logo/search/login/dark layout, shell palette rules, and the inherited broad dcheader reset at the original theme/core phases. The existing links display becomes flex for original native dark-toggle reachability; all other shell CSS and resources remain preserved. The reset preserves unprojected and non-typea host coverage. Inherited important declarations and the remaining typea qualifier remain transitional cascade debt. Owns unchanged early declaration factories consuming frozen named adapter selector records at the original hoisted theme/core phase, without raw native selectors in those early builders. Complete late style declarations now consume explicit frozen named full adapter selector inputs through a pure hoisted builder, retaining exact default CSS and the existing style diagnostic interface; native predicate construction is adapter-owned.",
+        "sourceRefs": ["src/targets/mobile/header-shell-presenter.js"],
+        "contractRefs": ["ui-ownership","semantic-preservation","host-dom-events","header-native-dark-toggle-hit","b1-native-list-trial"],
+        "fitnessRefs": ["invariant-one-visual-owner", "invariant-ui-port-boundary", "invariant-build-inputs-mapped"],
+        "transition": {
+          "targetBoundaryState": "conforming",
+          "exitCriteria": "At full header visual promotion, remove or narrowly justify inherited important declarations and the remaining typea qualifier after live-shaped cascade, responsive geometry, and native search/login input proof."
+        }
+      },
+      {
+        "id": "mobile-header-shell-host-adapter",
+        "status": "candidate",
+        "classification": "adapter-contract",
+        "layer": "target-adapter",
+        "boundaryState": "conforming",
+        "responsibility": "Projects reversible roles onto the site-owned typea header shell and its logo, search, and link descendants; mounts one presenter stylesheet at the former core phase; reuses the shared list/view mutation bus for descendant and root replacement, and disposes roles, style, and subscription without changing host nodes, forms, links, or events. Supplies pure hoisted immutable named full native selector inputs for its early palette and applicable reset/concealment builders, independent of DOM connection and presenter/adapter object initialization. Supplies immutable named full late selector inputs, preserving native tags, typea/body/dark conditions, role relations, specificity and the original style mount phase. Covers both native h1.dclogo anchor-logo and retained h1.dc_logo image-logo shapes with reversible roles; native controls are never moved. B1 trial: reversible existing-parent layout projection, native brand marker and browser-native service-UL popover/invoker with copy/attribute/listener cleanup; original links remain in place. Supplies one pure immutable header applicability/mutation-context policy consumed by the four existing header adapters; no DOM discovery or state ownership moves.",
+        "sourceRefs": ["src/targets/mobile/header-shell-host-adapter.js"],
+        "contractRefs": ["host-dom-events","initialization-lifecycle","ui-ownership","semantic-preservation","b1-native-list-trial","header-context-reuse-cleanup", "b1-write-editor-shell"],
+        "fitnessRefs": ["invariant-host-node-preservation", "invariant-initialization-recovery", "invariant-ui-port-boundary", "invariant-build-inputs-mapped"]
+      },
+      {
+        "id": "mobile-gallery-page-head-presenter",
+        "status": "candidate",
+        "classification": "presentation-source",
+        "layer": "presentation-ui",
+        "boundaryState": "mixed",
+        "responsibility": "Owns list/view page-head geometry with the declared auto-height/action-wrap repair, left/right alignment, and clearfix through reversible roles, plus page-head border/search/title/badge/sprite palette rules via a hoisted pure builder. Inherited important declarations and remaining late cascade qualifiers retain their transitional scope. Owns unchanged early declaration factories consuming frozen named adapter selector records at the original hoisted theme/core phase, without raw native selectors in those early builders. Complete late style declarations now consume explicit frozen named full adapter selector inputs through a pure hoisted builder, preserving all other default CSS and the existing style diagnostic interface; native predicate construction is adapter-owned. H-10 settings descendants consume existing B1/C885/paper tokens in the same style slot; separate glass decoration avoids fixed-child containing blocks.",
+        "sourceRefs": ["src/targets/mobile/gallery-page-head-presenter.js"],
+        "contractRefs": ["header-native-row-composition", "ui-ownership", "semantic-preservation", "host-dom-events"],
+        "fitnessRefs": ["invariant-one-visual-owner", "invariant-ui-port-boundary", "invariant-build-inputs-mapped"],
+        "transition": {
+          "targetBoundaryState": "conforming",
+          "exitCriteria": "At full header visual promotion, remove or narrowly justify inherited important declarations after native gallery-search, issue-action, popup, pointer, keyboard, theme, and responsive geometry proof."
+        }
+      },
+      {
+        "id": "mobile-gallery-page-head-host-adapter",
+        "status": "candidate",
+        "classification": "adapter-contract",
+        "layer": "target-adapter",
+        "boundaryState": "conforming",
+        "responsibility": "Projects reversible roles onto each site-owned list/view gallery heading and its direct left/right children, including a child matching both classes; mounts one presenter stylesheet at the former core phase; reuses the shared mutation bus for descendant and whole-heading replacement and disposes roles, style, and subscription without changing native forms, issue actions, popup, or handlers. Supplies pure hoisted immutable named full native selector inputs for its early palette and applicable reset/concealment builders, independent of DOM connection and presenter/adapter object initialization. Supplies immutable named full late selector inputs, preserving native tags, typea/body/dark conditions, role relations, specificity and the original style mount phase. H-10 native settings: reversible parts for six anonymous native compositions and nested palette/backup/notice; reuse the existing subscriber including the external block root. No event/storage/upload owner.",
+        "sourceRefs": ["src/targets/mobile/gallery-page-head-host-adapter.js"],
+        "contractRefs": ["host-dom-events","initialization-lifecycle","ui-ownership","semantic-preservation","header-context-reuse-cleanup", "b1-write-editor-shell"],
+        "fitnessRefs": ["invariant-host-node-preservation", "invariant-initialization-recovery", "invariant-ui-port-boundary", "invariant-build-inputs-mapped"]
+      },
+      {
+        "id": "mobile-header-gnb-presenter",
+        "status": "candidate",
+        "classification": "presentation-source",
+        "layer": "presentation-ui",
+        "boundaryState": "mixed",
+        "responsibility": "Owns GNB semantic layout with the declared nav/list auto-height repair, accent/next-icon palette rules, and the inherited broad GNB reset through pure hoisted builders at the original theme/core phases. Unprojected host coverage and inherited important declarations remain transitional cascade debt. Owns unchanged early declaration factories consuming frozen named adapter selector records at the original hoisted theme/core phase, without raw native selectors in those early builders. Complete late style declarations now consume explicit frozen named full adapter selector inputs through a pure hoisted builder, preserving all other default CSS and the existing style diagnostic interface; native predicate construction is adapter-owned.",
+        "sourceRefs": ["src/targets/mobile/header-gnb-presenter.js"],
+        "contractRefs": ["header-native-row-composition", "ui-ownership", "semantic-preservation", "host-dom-events"],
+        "fitnessRefs": ["invariant-one-visual-owner", "invariant-ui-port-boundary", "invariant-build-inputs-mapped"],
+        "transition": {
+          "targetBoundaryState": "conforming",
+          "exitCriteria": "At full header visual promotion, remove or narrowly justify inherited important declarations and retain exact GNB native-link, responsive geometry, and pointer/keyboard evidence."
+        }
+      },
+      {
+        "id": "mobile-header-gnb-host-adapter",
+        "status": "candidate",
+        "classification": "adapter-contract",
+        "layer": "target-adapter",
+        "boundaryState": "conforming",
+        "responsibility": "Projects reversible roles onto site-owned GNB root, nav, and list; mounts one presenter stylesheet at the former core phase; reuses the shared list/view mutation bus for replacement and disposes roles, style, and subscription without changing host nodes or events. Supplies pure hoisted immutable named full native selector inputs for its early palette and applicable reset/concealment builders, independent of DOM connection and presenter/adapter object initialization. Supplies immutable named full late selector inputs, preserving native tags, typea/body/dark conditions, role relations, specificity and the original style mount phase. Projects the native top-level selected link through a reversible current-link role; class changes reuse the existing mutation records and subscription. Supplies the full native dark-list predicate as a fourth immutable late selector input; the presenter does not construct host/theme context.",
+        "sourceRefs": ["src/targets/mobile/header-gnb-host-adapter.js"],
+        "contractRefs": ["host-dom-events","initialization-lifecycle","ui-ownership","semantic-preservation","header-context-reuse-cleanup", "b1-write-editor-shell"],
+        "fitnessRefs": ["invariant-host-node-preservation", "invariant-initialization-recovery", "invariant-ui-port-boundary", "invariant-build-inputs-mapped"]
+      },
+      {
+        "id": "mobile-header-recent-visit-presenter",
+        "status": "candidate",
+        "classification": "presentation-source",
+        "layer": "presentation-ui",
+        "boundaryState": "mixed",
+        "responsibility": "Owns zero-delta recent-visit light/dark layout through semantic roles and its title/open/active-link palette payload via a hoisted pure builder at the unchanged theme phase. Inherited important declarations and remaining late cascade qualifiers retain their transitional scope. Owns unchanged early declaration factories consuming frozen named adapter selector records at the original hoisted theme/core phase, without raw native selectors in those early builders. Complete late style declarations now consume explicit frozen named full adapter selector inputs through a pure hoisted builder, retaining exact default CSS and the existing style diagnostic interface; native predicate construction is adapter-owned. Owns immutable ordered list inline declarations and previous/next visual and ARIA descriptions from adapter-measured boolean snapshots; native reads, scrolling and baseline restoration remain adapter-owned.",
+        "sourceRefs": ["src/targets/mobile/header-recent-visit-presenter.js"],
+        "contractRefs": ["ui-ownership","semantic-preservation","host-dom-events","b1-native-list-trial"],
+        "fitnessRefs": ["invariant-one-visual-owner", "invariant-ui-port-boundary", "invariant-build-inputs-mapped"],
+        "transition": {
+          "targetBoundaryState": "conforming",
+          "exitCriteria": "At full header visual promotion, remove or narrowly justify inherited important declarations and retain exact computed cascade, scroll, native event, and pointer/keyboard evidence."
+        }
+      },
+      {
+        "id": "mobile-header-recent-visit-host-adapter",
+        "status": "candidate",
+        "classification": "adapter-contract",
+        "layer": "target-adapter",
+        "boundaryState": "conforming",
+        "responsibility": "Owns recent-visit previous and next host scrolling, control state, one delegated document click listener, one shared mutation-bus subscription for list and view replacement, reversible semantic-role and inline-geometry cleanup, and mounting of the presenter's single stylesheet at the prior core phase without replacing host nodes or owning presentation, storage, filter, or network effects. Supplies pure hoisted immutable named full native selector inputs for its early palette and applicable reset/concealment builders, independent of DOM connection and presenter/adapter object initialization. Supplies immutable named full late selector inputs, preserving native tags, typea/body/dark conditions, role relations, specificity and the original style mount phase.",
+        "sourceRefs": ["src/targets/mobile/header-recent-visit-host-adapter.js"],
+        "contractRefs": ["host-dom-events","initialization-lifecycle","ui-ownership","semantic-preservation","b1-native-list-trial","header-context-reuse-cleanup", "b1-write-editor-shell"],
+        "fitnessRefs": ["invariant-host-node-preservation", "invariant-initialization-recovery", "invariant-ui-port-boundary", "invariant-build-inputs-mapped"]
+      },
+      {
+        "id": "mobile-header-drawer-presenter",
+        "status": "candidate",
+        "classification": "presentation-source",
+        "layer": "presentation-ui",
+        "boundaryState": "mixed",
+        "responsibility": "Candidate change: provides a pure immutable named-selector style factory; late CSS declarations/layout remain presentation-owned while exact native selector strings come from the target adapter. The default semantic-role descriptor remains available. Native bindings must reject missing/duplicate/unknown slots and preserve selector specificity, declaration/media order and injection phase. Early accent/concealment consumes explicit adapter native inputs; mixed exit is not claimed. Owns the frozen numeric max-width layout input consumed by its three width declarations and the existing adapter calculations. Owns gallery-door presentation for the DCUF toggle, including its immutable owned-shell construction description/template, pure open-state label/ARIA descriptor, frozen typed toggle intents from immutable current-open snapshots, and immutable ordered owned-body visibility/offset/height/padding descriptions, plus original issue/recommendation roots, rank/tip states, relation popup, the issue root's palette accent and inherited pre-projection concealment via hoisted pure builders. The adapter measures and applies descriptions at the existing phases without replacing an already-correct shell. Core/list style phases, viewport-bound stacking, native ancestry/interiors and recommendation layout are preserved. Remaining late qualifiers and inherited header cascade debt remain pending full promotion. Owns unchanged early declaration factories consuming frozen named adapter selector records at the original hoisted theme/core phase, without raw native selectors in those early builders.",
+        "sourceRefs": ["src/targets/mobile/header-drawer-presenter.js"],
+        "contractRefs": ["header-native-recommendation-stack", "ui-ownership", "semantic-preservation", "host-dom-events"],
+        "fitnessRefs": ["invariant-one-visual-owner", "invariant-ui-port-boundary", "invariant-build-inputs-mapped"],
+        "transition": {
+          "targetBoundaryState": "conforming",
+          "exitCriteria": "At full header visual promotion, replace or explicitly profile inherited important declarations, remove any remaining raw host-selector dependence in this presentation owner, and retain current route/theme/viewport geometry, stacking, and native-hit evidence for the original-node intended delta."
+        }
+      },
+      {
+        "id": "mobile-header-drawer-host-adapter",
+        "status": "candidate",
+        "classification": "adapter-contract",
+        "layer": "target-adapter",
+        "boundaryState": "mixed",
+        "responsibility": "Candidate change: owns a closed frozen native selector binding consumed by the pure presenter style factory, with exact original native ancestry/classes/IDs and unchanged CSS injection phase. Removes superseded descendant/context role writes and their provenance ledger; named native CSS supplies synchronous ancestry/class/ID applicability and host attributes remain untouched. Legacy root/open projections retain their control lifetime. The before-paint callback remains only for copied native-root/relation cleanup, including post-exit relation markers. Ordinary geometry delivery preserves centralized legacy admission; the existing fallback cleans ID changes without ID-only geometry schedules. No new observer or DOM mutation interception; retains original nodes and early raw style phases. Consumes the presenter-owned frozen numeric max-width input at the three existing width calculation sites, preserving rounding/clamping and measure/apply order. Owns recommendation height measurement after existing horizontal placement and applies only its final clamped top, without a transient preferred-top write that feeds body mutations; final geometry and both owned-body phases are preserved while that repeated scheduling delta is explicitly removed. Issue-top now measures native height after horizontal placement and applies only the final viewport-clamped top; selected short-height idempotent-refresh feedback is removed while final native geometry and both owned-body measure/apply phases are preserved. Owns list-only gallery-door discovery, mounting/application of the presenter's immutable owned-shell, label/ARIA and owned-body descriptions, viewport-clamped measurements and the existing measure/apply phases, event lifecycle, one shared mutation subscription or fallback observer, reversible original issue/recommendation and rank/tip popup-only markers, copied-marker cleanup and the single presenter stylesheet at the legacy order. Native state/geometry/positioning values and synchronous guarded/cancelled toggle execution remain here; the presenter describes typed surface/open and surface/close values applied in the same stack without general UiPort dispatch or a new state owner; already-correct mounts retain their node/focus guard. It does not define the owned shell template/labels/body presentation values or clone/portal host controls. Supplies pure hoisted immutable named full native selector inputs for its early palette and applicable reset/concealment builders, independent of DOM connection and presenter/adapter object initialization.",
+        "sourceRefs": ["src/targets/mobile/header-drawer-host-adapter.js"],
+        "contractRefs": ["header-native-recommendation-stack", "host-dom-events", "initialization-lifecycle", "ui-ownership", "semantic-preservation"],
+        "fitnessRefs": ["invariant-host-node-preservation", "invariant-initialization-recovery", "invariant-ui-port-boundary", "invariant-build-inputs-mapped"],
+        "transition": {
+          "targetBoundaryState": "conforming",
+          "exitCriteria": "At full header visual-owner migration, bind a current exact-artifact control/candidate semantic and live-site receipt covering original issue and recommendation controls, rank/tip popup-only closure, host replacement, rollback, pointer/keyboard/native close, identity/order, and containment across route/theme/viewport states."
+        }
+      },
+      {
+        "id": "mobile-write-font-presenter",
+        "status": "candidate",
+        "classification": "presentation-source",
+        "layer": "presentation-ui",
+        "boundaryState": "conforming",
+        "responsibility": "Owns only the DCUF mobile font-option root, semantic option markup, checked visual state, and a typed select-font intent while leaving every host option node in its original parent and order and performing no storage, network, global DOM discovery, native command, scheduling, or host lifecycle work.",
+        "sourceRefs": ["src/targets/mobile/write-font-presenter.js"],
+        "contractRefs": ["ui-ownership", "semantic-preservation", "host-dom-events"],
+        "fitnessRefs": ["invariant-one-visual-owner", "invariant-host-node-preservation", "invariant-ui-port-boundary", "invariant-build-inputs-mapped"]
+      },
+      {
+        "id": "modernization-assurance",
+        "status": "candidate",
+        "classification": "verification",
+        "layer": "verification",
+        "boundaryState": "verification",
+        "responsibility": "Validates mobile surface ownership, intended visual deltas, closed semantic observations, deterministic t-way state coverage, continuity truth, assurance claims, receipts, and defeaters.",
+        "sourceRefs": [
+          "docs/work/MOBILE_UI_MODERNIZATION.md",
+          "architecture/ui-surfaces.json",
+          "verification/intended-deltas.json",
+          "verification/semantic-observation-schema.json",
+          "verification/state-model.json",
+          "verification/assurance-case.json",
+          "verification/continuity-contract.json",
+          "verification/skill-routing-cases.json",
+          ".agents/skills/dcuf-long-work-continuity/SKILL.md",
+          ".agents/skills/dcuf-long-work-continuity/references/retrieval-contract.md",
+          "docs/work/CURRENT_STATE.md",
+          "docs/work/NEXT_TASK.md",
+          "tools/verify-modernization-assurance.mjs",
+          "tools/inspect-live-architecture.mjs",
+          "tools/test-live-architecture.mjs",
+          "tools/write-modernization-receipt.mjs",
+          "tools/inspect-continuity.mjs"
+        ],
+        "contractRefs": ["proof-integrity", "semantic-preservation", "three-layer-assurance", "ui-ownership"],
+        "fitnessRefs": ["invariant-modernization-assurance", "invariant-proof-binding", "invariant-ui-port-boundary"]
+      },
+      {
+        "id": "build-target-manifest",
+        "status": "candidate",
+        "classification": "build-tool",
+        "layer": "composition-build",
+        "boundaryState": "conforming",
+        "responsibility": "Declares the explicit ordered mobile and PC build inputs used by source, testbed, and release assembly.",
+        "sourceRefs": ["build/targets.json", "package.json"],
+        "contractRefs": ["artifact-lineage", "target-isolation", "semantic-preservation"],
+        "fitnessRefs": ["invariant-build-inputs-mapped", "invariant-pc-host-style-isolation", "invariant-proof-binding"]
+      },
+      {
+        "id": "testbed-surface-capture",
+        "status": "candidate",
+        "classification": "verification",
+        "layer": "verification",
+        "boundaryState": "verification",
+        "responsibility": "Captures deterministic settings and UI surface observations from the guarded testbed runtime.",
+        "sourceRefs": ["testbed/capture-settings-surfaces.mjs"],
+        "contractRefs": ["proof-integrity", "semantic-preservation", "artifact-lineage"],
+        "fitnessRefs": ["invariant-proof-binding", "invariant-runtime-guard"]
+      },
+      {
+        "id": "testbed-list-differential",
+        "status": "candidate",
+        "classification": "verification",
+        "layer": "verification",
+        "boundaryState": "verification",
+        "responsibility": "Runs isolated control and candidate browsers for list host topology, native form and event meaning, row semantics, storage and network traces, dynamic replacement, containment, and settled resource comparison while retaining exact UI differences as raw evidence.",
+        "sourceRefs": ["testbed/run-list-differential.mjs"],
+        "contractRefs": ["proof-integrity", "semantic-preservation", "artifact-lineage", "host-dom-events"],
+        "fitnessRefs": ["invariant-proof-binding", "invariant-runtime-guard", "invariant-host-node-preservation", "invariant-hot-path-stability"]
+      },
+      {
+        "id": "testbed-article-differential",
+        "status": "candidate",
+        "classification": "verification",
+        "layer": "verification",
+        "boundaryState": "verification",
+        "responsibility": "Runs isolated control and candidate browsers for article and recommendation host topology, native click and focus meaning, popup lifecycle, dynamic host replacement, storage and network traces, geometry containment, and settled adapter resources while retaining raw visual observations.",
+        "sourceRefs": ["testbed/run-article-differential.mjs"],
+        "contractRefs": ["proof-integrity", "semantic-preservation", "artifact-lineage", "host-dom-events"],
+        "fitnessRefs": ["invariant-proof-binding", "invariant-runtime-guard", "invariant-host-node-preservation", "invariant-hot-path-stability"]
+      },
+      {
+        "id": "testbed-comment-differential",
+        "status": "candidate",
+        "classification": "verification",
+        "layer": "verification",
+        "boundaryState": "verification",
+        "responsibility": "Runs isolated control and candidate browsers for normal, reply, detached-reply, image-comment, composer, popup, close/reopen, dynamic replacement, storage and network meaning while retaining raw presentation observations and checking candidate ownership, cleanup, serializability, containment, and bounded resources.",
+        "sourceRefs": ["testbed/run-comment-differential.mjs"],
+        "contractRefs": ["proof-integrity", "semantic-preservation", "artifact-lineage", "host-dom-events"],
+        "fitnessRefs": ["invariant-proof-binding", "invariant-runtime-guard", "invariant-host-node-preservation", "invariant-hot-path-stability"]
+      },
+      {
+        "id": "testbed-native-form-differential",
+        "status": "candidate",
+        "classification": "verification",
+        "layer": "verification",
+        "boundaryState": "verification",
+        "responsibility": "Runs isolated exact-control and candidate browsers for modify-editor, modify/delete password, and authenticated delete confirmation form, field, action, focus, submit, popup, host-call, storage, network, topology, disposal, containment, and zero-resource semantics while retaining raw markup, geometry, styles, and adapter observations.",
+        "sourceRefs": ["testbed/run-native-form-differential.mjs"],
+        "contractRefs": ["proof-integrity", "semantic-preservation", "artifact-lineage", "host-dom-events"],
+        "fitnessRefs": ["invariant-proof-binding", "invariant-runtime-guard", "invariant-host-node-preservation", "invariant-hot-path-stability"]
+      },
+      {
+        "id": "testbed-header-differentials",
+        "status": "candidate",
+        "classification": "verification",
+        "layer": "verification",
+        "boundaryState": "verification",
+        "responsibility": "Runs exact immediate-control and candidate browsers separately for header shell, gallery page head, GNB, recent visits, and gallery drawer, preserving native topology, events, focus, hit-testing, computed style, responsive geometry, replacement, and artifact-bound zero-delta observations; checks pure frozen owned-shell descriptors against the immediate control template and selected wrong-value/omission/duplicate faults. Records guarded cascade-debt, recent-title and GNB phase/recovery contracts without promoting a mixed owner.",
+        "sourceRefs": ["testbed/run-header-shell-differential.mjs", "testbed/run-gallery-page-head-differential.mjs", "testbed/run-header-gnb-differential.mjs", "testbed/run-header-recent-visit-differential.mjs", "testbed/run-header-drawer-differential.mjs", "testbed/run-header-drawer-owned-shell-differential.mjs", "testbed/header-drawer-body-contract.mjs", "testbed/header-drawer-native-contract.mjs", "testbed/run-header-drawer-native-lifecycle.mjs", "testbed/run-header-drawer-native-first-frame.mjs", "testbed/run-header-drawer-native-delivery.mjs", "testbed/run-header-drawer-selector-binding.mjs", "testbed/run-header-cascade-audit.mjs", "testbed/run-header-final-boundary.mjs", "testbed/run-header-issue-top-contract.mjs", "testbed/run-header-layout-redesign.mjs"],
+        "contractRefs": ["proof-integrity", "semantic-preservation", "artifact-lineage", "host-dom-events"],
+        "fitnessRefs": ["invariant-proof-binding", "invariant-runtime-guard", "invariant-host-node-preservation", "invariant-hot-path-stability"]
+      },
+      {
+        "id": "popup-geometry-host-adapter",
+        "status": "candidate",
+        "classification": "adapter-contract",
+        "layer": "target-adapter",
+        "boundaryState": "conforming",
+        "responsibility": "Owns popup pinch geometry, touch listeners, semantic resize marker, idempotent connection, and disposal for both mobile and shared management surfaces.",
+        "sourceRefs": ["src/targets/shared/popup-geometry-host-adapter.js"],
+        "contractRefs": ["host-dom-events", "initialization-lifecycle", "ui-ownership"],
+        "fitnessRefs": ["invariant-host-node-preservation", "invariant-initialization-recovery", "invariant-ui-port-boundary", "invariant-build-inputs-mapped"]
+      },
+      {
+        "id": "shared-filter-runtime",
+        "status": "candidate",
+        "classification": "mixed-runtime-source",
+        "layer": "application-runtime",
+        "boundaryState": "mixed",
+        "responsibility": "The candidate source owns shared filtering state, GM and network effects, caches, queues, immutable settings snapshots, and typed intent handlers; host DOM and lifecycle are routed through explicit adapters while the accepted mixed boundary remains until current transition evidence is receipted.",
+        "sourceRefs": ["src/targets/shared/filter-runtime.js"],
+        "contractRefs": ["filter-semantics", "storage-compatibility", "semantic-preservation", "target-isolation", "ui-ownership"],
+        "fitnessRefs": ["invariant-shared-target-semantics", "invariant-storage-compatibility", "invariant-ui-port-boundary", "invariant-hot-path-stability", "invariant-build-inputs-mapped"],
+        "transition": {
+          "targetBoundaryState": "conforming",
+          "exitCriteria": "Current mobile and PC artifacts pass filter, storage, mutation, visibility, lifecycle, and zero-semantic-difference gates with host DOM access routed only through explicit adapters."
+        }
+      },
+      {
+        "id": "filter-host-adapter",
+        "status": "candidate",
+        "classification": "adapter-contract",
+        "layer": "target-adapter",
+        "boundaryState": "mixed",
+        "responsibility": "Owns filter host descriptors, DOM visibility, mutation collection, observer wiring, refilter roots, visibility recovery, debug host inspection, and initialization lifecycle while delegating product state and effects to the application runtime.",
+        "sourceRefs": ["src/targets/shared/filter-host-adapter.js"],
+        "contractRefs": ["filter-semantics", "host-dom-events", "initialization-lifecycle", "ui-ownership", "semantic-preservation"],
+        "fitnessRefs": ["invariant-host-node-preservation", "invariant-initialization-recovery", "invariant-ui-port-boundary", "invariant-hot-path-stability", "invariant-build-inputs-mapped"],
+        "transition": {
+          "targetBoundaryState": "conforming",
+          "exitCriteria": "Current exact mobile and PC transition receipt proves no semantic regression, no application effects in the adapter, idempotent observer and listener ownership, and bounded disposal."
+        }
+      },
+      {
+        "id": "filter-settings-host-adapter",
+        "status": "candidate",
+        "classification": "adapter-contract",
+        "layer": "target-adapter",
+        "boundaryState": "mixed",
+        "responsibility": "Owns the legacy settings, gallery-headtext, shortcut DOM and host-event surface while consuming frozen application snapshots and typed storage/filter effects.",
+        "sourceRefs": ["src/targets/shared/filter-settings-host-adapter.js"],
+        "contractRefs": ["host-dom-events", "initialization-lifecycle", "ui-ownership", "semantic-preservation"],
+        "fitnessRefs": ["invariant-host-node-preservation", "invariant-one-visual-owner", "invariant-ui-port-boundary", "invariant-build-inputs-mapped"],
+        "transition": {
+          "targetBoundaryState": "conforming",
+          "exitCriteria": "Modern settings presenter owns only DCUF markup and semantic-role CSS while this adapter retains mounting, global input, popup geometry, and native lifecycle with complete disposal."
+        }
+      },
+      {
+        "id": "shared-settings-presenter",
+        "status": "candidate",
+        "classification": "presentation-source",
+        "layer": "presentation-ui",
+        "boundaryState": "conforming",
+        "responsibility": "Pure shared settings, palette, management, backup, shortcut, and floating-control markup and semantic-role CSS; it consumes serializable values only and owns no host DOM, storage, network, observer, timer, or lifecycle effect.",
+        "sourceRefs": ["src/targets/shared/settings-presenter.js"],
+        "contractRefs": ["ui-ownership", "semantic-preservation", "target-isolation", "b1-content-glass-trial"],
+        "fitnessRefs": ["invariant-one-visual-owner", "invariant-pc-host-style-isolation", "invariant-ui-port-boundary", "invariant-build-inputs-mapped"]
+      },
+      {
+        "id": "shared-filter-ui-style",
+        "status": "candidate",
+        "classification": "presentation-source",
+        "layer": "presentation-ui",
+        "boundaryState": "conforming",
+        "responsibility": "Provides compatibility aliases from the shared settings presenter to the existing mobile lazy-style and explicit PC mount rails; it contains no selector or visual decision of its own.",
+        "sourceRefs": ["src/targets/shared/filter-ui-style.js"],
+        "contractRefs": ["target-isolation", "ui-ownership", "semantic-preservation"],
+        "fitnessRefs": ["invariant-one-visual-owner", "invariant-pc-host-style-isolation", "invariant-ui-port-boundary", "invariant-build-inputs-mapped"]
+      },
+      {
+        "id": "pc-filter-ui-style-mount",
+        "status": "candidate",
+        "classification": "adapter-contract",
+        "layer": "target-adapter",
+        "boundaryState": "conforming",
+        "responsibility": "Mounts the explicit shared management UI style in the PC target and contains no mobile host selector or product decision.",
+        "sourceRefs": ["src/targets/pc/filter-ui-style-mount.js"],
+        "contractRefs": ["target-isolation", "ui-ownership"],
+        "fitnessRefs": ["invariant-pc-host-style-isolation", "invariant-one-visual-owner", "invariant-build-inputs-mapped"]
+      },
+      {
+        "id": "architecture-governance",
+        "status": "accepted",
+        "classification": "governance",
+        "layer": "verification",
+        "boundaryState": "verification",
+        "responsibility": "Validates accepted and candidate architecture, impact/evidence binding, adversarial proof checks, UI boundaries, skills, workflows, and vendored source pins. Separates runtime and verification impact, selected adversarial groups, exact-input diagnostic resume, prerequisite failure handling and scoped checkpoint CI; no product acceptance from governance alone.",
+        "sourceRefs": [
+          "architecture/**",
+          "verification/gates.json",
+          "verification/skill-routing-cases.json",
+          "tools/architecture-state.mjs",
+          "tools/architecture-registry.mjs",
+          "tools/resolve-impact.mjs",
+          "tools/evidence-binding.mjs",
+          "tools/run-gates.mjs",
+          "tools/audit-proof-system.mjs",
+          "tools/run-semantic-differential.mjs",
+          "tools/verify-ui-boundaries.mjs",
+          "tools/verify-skills.mjs",
+          "tools/verify-workflows.mjs",
+          ".github/workflows/development-ci.yml",
+          ".github/workflows/promotion-windows.yml",
+          ".agents/skills/**",
+          "vendor/agent-method-sectors/**",
+          "tools/impact-routing.mjs",
+          "tools/gate-execution.mjs",
+          "tools/proof-audit-progress.mjs",
+          "tools/test-verification-efficiency.mjs",
+          "tools/verify-repo.mjs",
+          "tools/test-mobile-source-contracts.mjs",
+          "tools/workflow-sequence.mjs",
+          "tools/continuity-state.mjs",
+          "tools/checkpoint-core.mjs",
+          "tools/checkpoint.mjs",
+          "tools/test-governance.mjs",
+          "tools/verify-governance.mjs",
+          "tools/git-tree-state.mjs",
+          "tools/verify-checkpoint-ci.mjs",
+          "tools/test-checkpoint-artifacts.mjs",
+          "verification/checkpoint-policy.json"
+        ],
+        "contractRefs": [
+          "proof-integrity",
+          "artifact-lineage",
+          "ui-ownership"
+        ],
+        "fitnessRefs": [
+          "invariant-registry-integrity",
+          "invariant-proof-binding"
+        ]
+      },
+      {
+        "id": "shared-theme-primitives",
+        "status": "candidate",
+        "classification": "presentation-source",
+        "layer": "presentation-ui",
+        "boundaryState": "mixed",
+        "responsibility": "Hoisted pure frozen fourteen-preset data and exact inherited base CSS; no DOM,GM,network or state ownership. Inherited dynamic palette-root/body selectors retain mixed presentation debt.",
+        "sourceRefs": [
+          "src/shared/theme-primitives.js"
+        ],
+        "contractRefs": [
+          "ui-ownership",
+          "target-isolation",
+          "semantic-preservation",
+          "b1-login-only-presentation"
+        ],
+        "fitnessRefs": [
+          "invariant-build-inputs-mapped",
+          "invariant-one-visual-owner",
+          "invariant-host-node-preservation"
+        ],
+        "transition": {
+          "targetBoundaryState": "conforming",
+          "exitCriteria": "Replace inherited dynamic html palette root and body selector strings with a declared generated semantic descriptor while exact fourteen preset CSS and Mobile PC behavior comparisons remain unchanged."
+        }
+      },
+      {
+        "id": "mobile-theme-material-values",
+        "status": "candidate",
+        "classification": "presentation-source",
+        "layer": "presentation-ui",
+        "boundaryState": "mixed",
+        "responsibility": "Hoisted pure existing Mobile B1 material role CSS; consumed by gallery and isolated login without executing gallery initialization. Existing dynamic palette root/body selectors remain debt.",
+        "sourceRefs": [
+          "src/targets/mobile/theme-material-values.js"
+        ],
+        "contractRefs": [
+          "ui-ownership",
+          "target-isolation",
+          "semantic-preservation",
+          "b1-login-only-presentation"
+        ],
+        "fitnessRefs": [
+          "invariant-build-inputs-mapped",
+          "invariant-one-visual-owner",
+          "invariant-host-node-preservation"
+        ],
+        "transition": {
+          "targetBoundaryState": "conforming",
+          "exitCriteria": "Replace inherited dynamic html palette root and body selector strings with a declared generated semantic descriptor while exact fourteen preset CSS and Mobile PC behavior comparisons remain unchanged."
+        }
+      },
+      {
+        "id": "mobile-login-presenter",
+        "status": "candidate",
+        "classification": "presentation-source",
+        "layer": "presentation-ui",
+        "boundaryState": "conforming",
+        "responsibility": "Pure original-node login layout/material descriptor consumes immutable adapter-owned selector bindings and pure theme values; no host APIs or authentication state.",
+        "sourceRefs": [
+          "src/targets/mobile/login-presenter.js"
+        ],
+        "contractRefs": [
+          "ui-ownership",
+          "target-isolation",
+          "semantic-preservation",
+          "b1-login-only-presentation"
+        ],
+        "fitnessRefs": [
+          "invariant-build-inputs-mapped",
+          "invariant-one-visual-owner",
+          "invariant-host-node-preservation"
+        ]
+      },
+      {
+        "id": "mobile-login-host-adapter",
+        "status": "candidate",
+        "classification": "adapter-contract",
+        "layer": "target-adapter",
+        "boundaryState": "conforming",
+        "responsibility": "Validates exact sign login route and public native form anatomy; owns once-only DOM readiness,existing palette read,theme input,original-root styling,duplicate guard and reversible cleanup. Never reads credentials/cookies/hidden values or intercepts authentication.",
+        "sourceRefs": [
+          "src/targets/mobile/login-host-adapter.js"
+        ],
+        "contractRefs": [
+          "ui-ownership",
+          "target-isolation",
+          "semantic-preservation",
+          "b1-login-only-presentation"
+        ],
+        "fitnessRefs": [
+          "invariant-build-inputs-mapped",
+          "invariant-one-visual-owner",
+          "invariant-host-node-preservation"
+        ]
+      },
+      {
+        "id": "login-entry-verification",
+        "status": "candidate",
+        "classification": "verification",
+        "layer": "verification",
+        "boundaryState": "verification",
+        "responsibility": "Guarded isolated native-shaped login route,readiness,theme,geometry,original-form and zero gallery-startup witnesses; no actual authentication.",
+        "sourceRefs": [
+          "testbed/test-login-metadata.mjs",
+          "testbed/ui-b1-login-contract.mjs",
+          "testbed/run-login-entry.mjs",
+          "testbed/fixtures/login-native.html",
+          "testbed/fixtures/login-native.css",
+          "testbed/fixtures/login-wordmark.svg",
+          "testbed/fixtures/login-security-sprite.png",
+          "testbed/run-login-extension.mjs",
+          "testbed/test-login-theme-parity.mjs",
+          "testbed/fixtures/login-native.mjs"
+        ],
+        "contractRefs": [
+          "b1-login-only-presentation",
+          "metadata-scope",
+          "semantic-preservation"
+        ],
+        "fitnessRefs": [
+          "invariant-build-inputs-mapped",
+          "invariant-host-node-preservation"
+        ]
+      },
+      {
+        "id": "runtime-bootstrap",
+        "status": "candidate",
+        "classification": "runtime-source",
+        "layer": "application-runtime",
+        "boundaryState": "conforming",
+        "responsibility": "Document-start scope detection, duplicate guard, boot visibility lock, and shared startup envelope.",
+        "sourceRefs": [
+          "src/runtime/bootstrap.js"
+        ],
+        "contractRefs": [
+          "metadata-scope",
+          "initialization-lifecycle",
+          "artifact-lineage",
+          "b1-login-only-presentation"
+        ],
+        "fitnessRefs": [
+          "invariant-initialization-recovery",
+          "invariant-build-inputs-mapped"
+        ]
+      },
+      {
+        "id": "mobile-build",
+        "status": "candidate",
+        "classification": "build-tool",
+        "layer": "composition-build",
+        "boundaryState": "conforming",
+        "responsibility": "Deterministically assembles the mobile userscript from manifest-ordered inputs.",
+        "sourceRefs": [
+          "tools/build-userscript.mjs"
+        ],
+        "contractRefs": [
+          "artifact-lineage",
+          "metadata-scope",
+          "b1-login-only-presentation"
+        ],
+        "fitnessRefs": [
+          "invariant-exact-mobile-baseline",
+          "invariant-build-inputs-mapped"
+        ]
+      },
+      {
+        "id": "pc-build",
+        "status": "candidate",
+        "classification": "build-tool",
+        "layer": "composition-build",
+        "boundaryState": "mixed",
+        "responsibility": "Assembles PC userscript; currently extracts FilterModule/CSS and transforms the mobile theme source.",
+        "sourceRefs": [
+          "tools/build-pc-filter-userscript.mjs"
+        ],
+        "contractRefs": [
+          "artifact-lineage",
+          "metadata-scope",
+          "target-isolation",
+          "b1-login-only-presentation"
+        ],
+        "fitnessRefs": [
+          "invariant-pc-host-style-isolation",
+          "invariant-build-inputs-mapped"
+        ],
+        "transition": {
+          "targetBoundaryState": "conforming",
+          "exitCriteria": "PC assembly uses manifest-declared shared modules and adapters only, performs no marker slicing or source transformation, and excludes all mobile host CSS."
+        }
+      },
+      {
+        "id": "mobile-convenience-presenter",
+        "status": "candidate",
+        "classification": "presentation-source",
+        "layer": "presentation-ui",
+        "boundaryState": "conforming",
+        "responsibility": "Pure Mobile preview/draft CSS descriptor; owns shell/control/close paint and responsive presentation only,no DOM,storage,fetch,observer,timer,state or geometry effects.",
+        "sourceRefs": [
+          "src/targets/mobile/convenience-presenter.js"
+        ],
+        "contractRefs": [
+          "ui-ownership",
+          "target-isolation",
+          "semantic-preservation",
+          "b1-convenience-finish"
+        ],
+        "fitnessRefs": [
+          "invariant-build-inputs-mapped",
+          "invariant-one-visual-owner",
+          "invariant-host-node-preservation"
+        ]
+      },
+      {
+        "id": "mobile-native-author-presenter",
+        "status": "candidate",
+        "classification": "presentation-source",
+        "layer": "presentation-ui",
+        "boundaryState": "conforming",
+        "responsibility": "Pure CSS descriptor for observed original author menu,memo-add and color-picker chrome/fields/controls; consumes immutable adapter bindings and current B1 values,never owns native state,DOM,network,storage,observers or geometry effects.",
+        "sourceRefs": [
+          "src/targets/mobile/native-author-presenter.js"
+        ],
+        "contractRefs": [
+          "ui-ownership",
+          "target-isolation",
+          "host-dom-events",
+          "b1-native-author-finish"
+        ],
+        "fitnessRefs": [
+          "invariant-build-inputs-mapped",
+          "invariant-one-visual-owner",
+          "invariant-host-node-preservation"
+        ]
+      }
+    ],
+    "upsertRelations": [
+      {
+        "id": "rel-header-context-to-mobile-header-gnb-host-adapter",
+        "from": "mobile-header-shell-host-adapter",
+        "to": "mobile-header-gnb-host-adapter",
+        "kind": "consumed-by"
+      },
+      {
+        "id": "rel-header-context-to-mobile-gallery-page-head-host-adapter",
+        "from": "mobile-header-shell-host-adapter",
+        "to": "mobile-gallery-page-head-host-adapter",
+        "kind": "consumed-by"
+      },
+      {
+        "id": "rel-header-context-to-mobile-header-recent-visit-host-adapter",
+        "from": "mobile-header-shell-host-adapter",
+        "to": "mobile-header-recent-visit-host-adapter",
+        "kind": "consumed-by"
+      },
+      {"id":"rel-mobile-article-readiness-consumed-by-preparation","from":"mobile-article-presenter","to":"mobile-post-main-fixes","kind":"consumed-by"},
+      {"id":"rel-mobile-comment-readiness-consumed-by-preparation","from":"mobile-comment-presenter","to":"mobile-post-main-fixes","kind":"consumed-by"},
+      {
+        "id": "rel-mobile-list-presenter-adapter",
+        "from": "mobile-list-presenter",
+        "to": "mobile-list-host-adapter",
+        "kind": "rendered-through"
+      },
+      {
+        "id": "rel-mobile-list-adapter-legacy-runtime",
+        "from": "mobile-list-host-adapter",
+        "to": "mobile-ui-module",
+        "kind": "partial-boundary-extraction"
+      },
+      {
+        "id": "rel-mobile-article-adapter-legacy-runtime",
+        "from": "mobile-article-host-adapter",
+        "to": "mobile-ui-module",
+        "kind": "semantic-host-boundary"
+      },
+      {
+        "id": "rel-mobile-article-presenter-adapter",
+        "from": "mobile-article-presenter",
+        "to": "mobile-article-host-adapter",
+        "kind": "rendered-through"
+      },
+      {
+        "id": "rel-mobile-comment-adapter-legacy-runtime",
+        "from": "mobile-comment-host-adapter",
+        "to": "mobile-ui-module",
+        "kind": "semantic-host-boundary"
+      },
+      {
+        "id": "rel-mobile-comment-presenter-adapter",
+        "from": "mobile-comment-presenter",
+        "to": "mobile-comment-host-adapter",
+        "kind": "rendered-through"
+      },
+      {
+        "id": "rel-mobile-native-form-presenter-adapter",
+        "from": "mobile-native-form-presenter",
+        "to": "mobile-native-form-host-adapter",
+        "kind": "rendered-through"
+      },
+      {
+        "id": "rel-mobile-native-form-adapter-legacy-runtime",
+        "from": "mobile-native-form-host-adapter",
+        "to": "mobile-ui-module",
+        "kind": "partial-boundary-extraction"
+      },
+      {
+        "id": "rel-mobile-write-editor-adapter-legacy-runtime",
+        "from": "mobile-write-editor-host-adapter",
+        "to": "mobile-ui-module",
+        "kind": "partial-boundary-extraction"
+      },
+      {
+        "id": "rel-mobile-write-draft-adapter-convenience-runtime",
+        "from": "mobile-convenience-module",
+        "to": "mobile-write-draft-host-adapter",
+        "kind": "snapshot-and-intent-port"
+      },
+      {
+        "id": "rel-mobile-write-ad-adapter-legacy-runtime",
+        "from": "mobile-write-ad-host-adapter",
+        "to": "mobile-ui-module",
+        "kind": "partial-boundary-extraction"
+      },
+      {
+        "id": "rel-mobile-header-shell-presenter-adapter",
+        "from": "mobile-header-shell-presenter",
+        "to": "mobile-header-shell-host-adapter",
+        "kind": "rendered-through"
+      },
+      {
+        "id": "rel-mobile-header-shell-adapter-legacy-runtime",
+        "from": "mobile-header-shell-host-adapter",
+        "to": "mobile-ui-module",
+        "kind": "partial-boundary-extraction"
+      },
+      {
+        "id": "rel-mobile-gallery-page-head-presenter-adapter",
+        "from": "mobile-gallery-page-head-presenter",
+        "to": "mobile-gallery-page-head-host-adapter",
+        "kind": "rendered-through"
+      },
+      {
+        "id": "rel-mobile-gallery-page-head-adapter-legacy-runtime",
+        "from": "mobile-gallery-page-head-host-adapter",
+        "to": "mobile-ui-module",
+        "kind": "partial-boundary-extraction"
+      },
+      {
+        "id": "rel-mobile-header-gnb-presenter-adapter",
+        "from": "mobile-header-gnb-presenter",
+        "to": "mobile-header-gnb-host-adapter",
+        "kind": "rendered-through"
+      },
+      {
+        "id": "rel-mobile-header-gnb-adapter-legacy-runtime",
+        "from": "mobile-header-gnb-host-adapter",
+        "to": "mobile-ui-module",
+        "kind": "partial-boundary-extraction"
+      },
+      {
+        "id": "rel-mobile-header-recent-visit-presenter-adapter",
+        "from": "mobile-header-recent-visit-presenter",
+        "to": "mobile-header-recent-visit-host-adapter",
+        "kind": "rendered-through"
+      },
+      {
+        "id": "rel-mobile-header-recent-visit-adapter-legacy-runtime",
+        "from": "mobile-header-recent-visit-host-adapter",
+        "to": "mobile-ui-module",
+        "kind": "partial-boundary-extraction"
+      },
+      {
+        "id": "rel-mobile-header-drawer-presenter-adapter",
+        "from": "mobile-header-drawer-presenter",
+        "to": "mobile-header-drawer-host-adapter",
+        "kind": "rendered-through"
+      },
+      {
+        "id": "rel-mobile-header-drawer-adapter-legacy-runtime",
+        "from": "mobile-header-drawer-host-adapter",
+        "to": "mobile-post-main-fixes",
+        "kind": "partial-boundary-extraction"
+      },
+      {
+        "id": "rel-mobile-write-font-presenter-adapter",
+        "from": "mobile-write-font-presenter",
+        "to": "mobile-write-editor-host-adapter",
+        "kind": "rendered-through"
+      },
+      {
+        "id": "rel-modernization-assurance-governance",
+        "from": "architecture-governance",
+        "to": "modernization-assurance",
+        "kind": "routes-and-falsifies"
+      },
+      {
+        "id": "rel-modernization-assurance-ui",
+        "from": "modernization-assurance",
+        "to": "mobile-ui-module",
+        "kind": "constrains-transition"
+      },
+      {
+        "id": "rel-popup-geometry-theme",
+        "from": "popup-geometry-host-adapter",
+        "to": "mobile-theme-module",
+        "kind": "owns-pinch-geometry"
+      },
+      {
+        "id": "rel-ui-contracts-popup-geometry",
+        "from": "shared-ui-contracts",
+        "to": "popup-geometry-host-adapter",
+        "kind": "implemented-by"
+      },
+      {
+        "id": "rel-filter-core-shared-runtime",
+        "from": "shared-filter-core",
+        "to": "shared-filter-runtime",
+        "kind": "consumed-by"
+      },
+      {
+        "id": "rel-shared-filter-runtime-mobile-style",
+        "from": "shared-filter-runtime",
+        "to": "mobile-filter-module",
+        "kind": "uses-target-presentation"
+      },
+      {
+        "id": "rel-shared-filter-runtime-pc-build",
+        "from": "shared-filter-runtime",
+        "to": "pc-build",
+        "kind": "explicit-build-input"
+      },
+      {
+        "id": "rel-storage-shared-filter-runtime",
+        "from": "shared-storage-core",
+        "to": "shared-filter-runtime",
+        "kind": "consumed-by"
+      },
+      {
+        "id": "rel-shared-filter-runtime-host-adapter",
+        "from": "shared-filter-runtime",
+        "to": "filter-host-adapter",
+        "kind": "snapshot-and-native-port"
+      },
+      {
+        "id": "rel-filter-settings-runtime-adapter",
+        "from": "shared-filter-runtime",
+        "to": "filter-settings-host-adapter",
+        "kind": "snapshot-and-intent-port"
+      },
+      {
+        "id": "rel-personal-block-runtime-adapter",
+        "from": "mobile-personal-block-module",
+        "to": "personal-block-host-adapter",
+        "kind": "snapshot-and-intent-port"
+      },
+      {
+        "id": "rel-convenience-runtime-adapter",
+        "from": "mobile-convenience-module",
+        "to": "mobile-convenience-host-adapter",
+        "kind": "snapshot-and-intent-port"
+      },
+      {
+        "id": "rel-mobile-theme-style-presenter",
+        "from": "mobile-theme-host-style",
+        "to": "mobile-theme-module",
+        "kind": "target-style-input"
+      },
+      {
+        "id": "rel-header-shell-palette-composition",
+        "from": "mobile-header-shell-presenter",
+        "to": "mobile-theme-host-style",
+        "kind": "explicit-style-input"
+      },
+      {
+        "id": "rel-header-shell-reset-composition",
+        "from": "mobile-header-shell-presenter",
+        "to": "mobile-filter-module",
+        "kind": "explicit-style-input"
+      },
+      {
+        "id": "rel-header-gnb-reset-composition",
+        "from": "mobile-header-gnb-presenter",
+        "to": "mobile-filter-module",
+        "kind": "explicit-style-input"
+      },
+      {
+        "id": "rel-gallery-page-head-palette-composition",
+        "from": "mobile-gallery-page-head-presenter",
+        "to": "mobile-theme-host-style",
+        "kind": "explicit-style-input"
+      },
+      {
+        "id": "rel-header-gnb-palette-composition",
+        "from": "mobile-header-gnb-presenter",
+        "to": "mobile-theme-host-style",
+        "kind": "explicit-style-input"
+      },
+      {
+        "id": "rel-header-recent-visit-palette-composition",
+        "from": "mobile-header-recent-visit-presenter",
+        "to": "mobile-theme-host-style",
+        "kind": "explicit-style-input"
+      },
+      {
+        "id": "rel-header-drawer-palette-composition",
+        "from": "mobile-header-drawer-presenter",
+        "to": "mobile-theme-host-style",
+        "kind": "explicit-style-input"
+      },
+      {
+        "id": "rel-header-drawer-visibility-composition",
+        "from": "mobile-header-drawer-presenter",
+        "to": "mobile-filter-module",
+        "kind": "explicit-style-input"
+      },
+      {
+        "id": "rel-pc-theme-style-presenter",
+        "from": "pc-theme-host-style",
+        "to": "mobile-theme-module",
+        "kind": "target-style-input"
+      },
+      {
+        "id": "rel-shared-filter-ui-mobile",
+        "from": "shared-filter-ui-style",
+        "to": "mobile-filter-module",
+        "kind": "explicit-style-input"
+      },
+      {
+        "id": "rel-shared-settings-presenter-filter-settings",
+        "from": "shared-settings-presenter",
+        "to": "filter-settings-host-adapter",
+        "kind": "rendered-through"
+      },
+      {
+        "id": "rel-shared-settings-presenter-personal-block",
+        "from": "shared-settings-presenter",
+        "to": "personal-block-host-adapter",
+        "kind": "rendered-through"
+      },
+      {
+        "id": "rel-shared-settings-presenter-convenience",
+        "from": "shared-settings-presenter",
+        "to": "mobile-convenience-host-adapter",
+        "kind": "rendered-through"
+      },
+      {
+        "id": "rel-shared-settings-presenter-theme",
+        "from": "shared-settings-presenter",
+        "to": "mobile-theme-module",
+        "kind": "rendered-through"
+      },
+      {
+        "id": "rel-shared-settings-presenter-style-alias",
+        "from": "shared-settings-presenter",
+        "to": "shared-filter-ui-style",
+        "kind": "exported-by"
+      },
+      {
+        "id": "rel-shared-filter-ui-pc-mount",
+        "from": "shared-filter-ui-style",
+        "to": "pc-filter-ui-style-mount",
+        "kind": "mounted-by"
+      },
+      {
+        "id": "rel-pc-filter-ui-mount-build",
+        "from": "pc-filter-ui-style-mount",
+        "to": "pc-build",
+        "kind": "explicit-build-input"
+      },
+      {
+        "id": "rel-header-shell-palette-composition-native-selectors",
+        "from": "mobile-header-shell-host-adapter",
+        "to": "mobile-theme-host-style",
+        "kind": "explicit-style-input"
+      },
+      {
+        "id": "rel-header-shell-reset-composition-native-selectors",
+        "from": "mobile-header-shell-host-adapter",
+        "to": "mobile-filter-module",
+        "kind": "explicit-style-input"
+      },
+      {
+        "id": "rel-header-gnb-reset-composition-native-selectors",
+        "from": "mobile-header-gnb-host-adapter",
+        "to": "mobile-filter-module",
+        "kind": "explicit-style-input"
+      },
+      {
+        "id": "rel-gallery-page-head-palette-composition-native-selectors",
+        "from": "mobile-gallery-page-head-host-adapter",
+        "to": "mobile-theme-host-style",
+        "kind": "explicit-style-input"
+      },
+      {
+        "id": "rel-header-gnb-palette-composition-native-selectors",
+        "from": "mobile-header-gnb-host-adapter",
+        "to": "mobile-theme-host-style",
+        "kind": "explicit-style-input"
+      },
+      {
+        "id": "rel-header-recent-visit-palette-composition-native-selectors",
+        "from": "mobile-header-recent-visit-host-adapter",
+        "to": "mobile-theme-host-style",
+        "kind": "explicit-style-input"
+      },
+      {
+        "id": "rel-header-drawer-palette-composition-native-selectors",
+        "from": "mobile-header-drawer-host-adapter",
+        "to": "mobile-theme-host-style",
+        "kind": "explicit-style-input"
+      },
+      {
+        "id": "rel-header-drawer-visibility-composition-native-selectors",
+        "from": "mobile-header-drawer-host-adapter",
+        "to": "mobile-filter-module",
+        "kind": "explicit-style-input"
+      },
+      {
+        "id": "rel-mobile-header-shell-late-native-input",
+        "from": "mobile-header-shell-host-adapter",
+        "to": "mobile-header-shell-presenter",
+        "kind": "explicit-style-input"
+      },
+      {
+        "id": "rel-mobile-gallery-page-head-late-native-input",
+        "from": "mobile-gallery-page-head-host-adapter",
+        "to": "mobile-gallery-page-head-presenter",
+        "kind": "explicit-style-input"
+      },
+      {
+        "id": "rel-mobile-header-gnb-late-native-input",
+        "from": "mobile-header-gnb-host-adapter",
+        "to": "mobile-header-gnb-presenter",
+        "kind": "explicit-style-input"
+      },
+      {
+        "id": "rel-mobile-header-recent-visit-late-native-input",
+        "from": "mobile-header-recent-visit-host-adapter",
+        "to": "mobile-header-recent-visit-presenter",
+        "kind": "explicit-style-input"
+      },
+      {
+        "id": "rel-runtime-bootstrap-mobile-login-host-adapter",
+        "from": "runtime-bootstrap",
+        "to": "mobile-login-host-adapter",
+        "kind": "uses-target-presentation"
+      },
+      {
+        "id": "rel-mobile-login-host-adapter-mobile-login-presenter",
+        "from": "mobile-login-host-adapter",
+        "to": "mobile-login-presenter",
+        "kind": "explicit-style-input"
+      },
+      {
+        "id": "rel-mobile-login-presenter-shared-theme-primitives",
+        "from": "mobile-login-presenter",
+        "to": "shared-theme-primitives",
+        "kind": "explicit-style-input"
+      },
+      {
+        "id": "rel-mobile-login-presenter-mobile-theme-material-values",
+        "from": "mobile-login-presenter",
+        "to": "mobile-theme-material-values",
+        "kind": "explicit-style-input"
+      },
+      {
+        "id": "rel-mobile-theme-module-shared-theme-primitives",
+        "from": "mobile-theme-module",
+        "to": "shared-theme-primitives",
+        "kind": "explicit-style-input"
+      },
+      {
+        "id": "rel-mobile-theme-host-style-mobile-theme-material-values",
+        "from": "mobile-theme-host-style",
+        "to": "mobile-theme-material-values",
+        "kind": "explicit-style-input"
+      },
+      {
+        "id": "rel-mobile-build-mobile-login-host-adapter",
+        "from": "mobile-build",
+        "to": "mobile-login-host-adapter",
+        "kind": "explicit-build-input"
+      },
+      {
+        "id": "rel-mobile-build-mobile-login-presenter",
+        "from": "mobile-build",
+        "to": "mobile-login-presenter",
+        "kind": "explicit-build-input"
+      },
+      {
+        "id": "rel-mobile-build-shared-theme-primitives",
+        "from": "mobile-build",
+        "to": "shared-theme-primitives",
+        "kind": "explicit-build-input"
+      },
+      {
+        "id": "rel-mobile-build-mobile-theme-material-values",
+        "from": "mobile-build",
+        "to": "mobile-theme-material-values",
+        "kind": "explicit-build-input"
+      },
+      {
+        "id": "rel-pc-build-shared-theme-primitives",
+        "from": "pc-build",
+        "to": "shared-theme-primitives",
+        "kind": "explicit-build-input"
+      },
+      {
+        "id": "rel-convenience-presentation-mobile-convenience-host-adapter",
+        "from": "mobile-convenience-presenter",
+        "to": "mobile-convenience-host-adapter",
+        "kind": "rendered-through"
+      },
+      {
+        "id": "rel-convenience-presentation-mobile-write-draft-host-adapter",
+        "from": "mobile-convenience-presenter",
+        "to": "mobile-write-draft-host-adapter",
+        "kind": "rendered-through"
+      },
+      {
+        "id": "rel-native-author-presentation-post-main",
+        "from": "mobile-native-author-presenter",
+        "to": "mobile-post-main-fixes",
+        "kind": "rendered-through"
+      }
+    ],
+    "removeRelations": ["rel-filter-mobile-filter", "rel-filter-pc-build", "rel-storage-mobile-filter", "rel-theme-pc-build"],
+    "upsertInvariants": [
+      {
+        "id": "invariant-modernization-assurance",
+        "state": "enforced",
+        "summary": "Machine contracts fail closed on undeclared drift, missing applicability, stale or nonexistent evidence, weakened coverage, unsupported continuity claims, and unresolved READY defeaters."
+      }
+    ]
+  }
+}

@@ -1,0 +1,215 @@
+{
+  "schemaVersion": 1,
+  "kind": "b1-reference-first-verdict-backstop",
+  "status": "BINDING_VALIDATED_PRODUCT_VISUAL_NEEDS_WORK",
+  "sourceBaseHead": "69efb60321931ec40ca4e8b0636b80417cd5b3a9",
+  "artifact": {
+    "mobileSha256": "96B933A1A47849885D83D42290B54E3AE33181846DF244606A9063F9E4083BFD",
+    "pcSha256": "5FA25756C43864AA8C90C1347AE6A03652D901862F83ABEAEDDEBF6382CFA740",
+    "productionChanged": false,
+    "appearanceApproved": false
+  },
+  "selectedMethod": "D-50, reference-first image judgement in existing Playwright comparator",
+  "rootCause": "The existing prose already required reference comparison, but the follow-up credited added effects and functional checks without recording remaining visible proportion/material/icon gaps. Missing machine-readable judgement and unresolved findings could disappear from the comparison output.",
+  "checks": {
+    "transfer": "Observed missing-status assertion fail before implementation, then full existing transfer test passed: pixel engine/decoder/baselines preserved; no assessment→NOT_REVIEWED; unresolved→NEEDS_WORK; unknown→UNVERIFIED; stale/partial reviews invalid; selected reference reviewed.",
+    "actualKnownCases": {
+      "status": "NEEDS_WORK",
+      "reviewer": "Codex primary agent, reference-first vision review",
+      "basis": "Compare selected reference and current appearance before crediting implementation effects or functional passes. Proportion, light distribution and icon weight are the observed open gaps for this component.",
+      "limitations": "Known examples and same reviewer who implemented the prior change; no autonomous detection-rate, beauty or efficiency guarantee. Tool validates attachment/closure, not truth of perception. User preference remains open.",
+      "cases": [
+        {
+          "id": "reference-light",
+          "referenceSha256": "888fbe8a1a51eef32ea5af8db5ba7cefdcc8527255ef315aadb24376d493ddc2",
+          "candidateSha256": "888fbe8a1a51eef32ea5af8db5ba7cefdcc8527255ef315aadb24376d493ddc2",
+          "status": "REVIEWED",
+          "summary": "Selected reference positive control, identical pixels; no implementation approval follows.",
+          "findings": []
+        },
+        {
+          "id": "before-light",
+          "referenceSha256": "888fbe8a1a51eef32ea5af8db5ba7cefdcc8527255ef315aadb24376d493ddc2",
+          "candidateSha256": "26165d31fcc31cb07f963cff30563ced9a6b61a9f7141f585d5004405f3ce919",
+          "status": "NEEDS_WORK",
+          "summary": "Both the complete toolbar and equal-scale button were viewed in light; AF6C98F0 is visibly short of the chosen reference.",
+          "findings": [
+            {
+              "disposition": "FIX",
+              "expected": "Wide, low visual body around88×36 with comfortable side space",
+              "actual": "Native body around81×40 appears narrower/taller in both themes",
+              "action": "Refine painted proportion/side padding in the existing list owner while retaining the40px hit target"
+            },
+            {
+              "disposition": "FIX",
+              "expected": "A solid white pencil with weight coherent with the label",
+              "actual": "Fine outlined pencil reads much lighter than the bold label",
+              "action": "Refine the existing decorative icon weight without changing the control/event"
+            },
+            {
+              "disposition": "FIX",
+              "expected": "Cool luminous teal with a broad smooth light transition and soft contact shadow",
+              "actual": "Flat fill and nearly absent surface light/contact depth",
+              "action": "Rebalance fill/light distribution/rim/shadow as one material; do not equate more effects with fidelity"
+            },
+            {
+              "disposition": "INTENTIONAL",
+              "expected": "Prototype gallery/content/50-item count",
+              "actual": "Native different categories/content/30-item count and40px functional hit area",
+              "action": "Retain native content and hit target; this does not waive feasible proportion/material/icon differences"
+            }
+          ]
+        },
+        {
+          "id": "after-light",
+          "referenceSha256": "888fbe8a1a51eef32ea5af8db5ba7cefdcc8527255ef315aadb24376d493ddc2",
+          "candidateSha256": "49e95cc9b3726fb8b4ce03ac33a0323bd67742ea0d3e12ac8f5636661c8d2b2e",
+          "status": "NEEDS_WORK",
+          "summary": "Both the complete toolbar and equal-scale button were viewed in light; 96B933A1 remains visibly short of the chosen reference.",
+          "findings": [
+            {
+              "disposition": "FIX",
+              "expected": "Wide, low visual body around88×36 with comfortable side space",
+              "actual": "Native body around81×40 appears narrower/taller in both themes",
+              "action": "Refine painted proportion/side padding in the existing list owner while retaining the40px hit target"
+            },
+            {
+              "disposition": "FIX",
+              "expected": "A solid white pencil with weight coherent with the label",
+              "actual": "Fine outlined pencil reads much lighter than the bold label",
+              "action": "Refine the existing decorative icon weight without changing the control/event"
+            },
+            {
+              "disposition": "FIX",
+              "expected": "Cool luminous teal with a broad smooth light transition and soft contact shadow",
+              "actual": "Dark lower body, concentrated bright top rim and heavier shadow read as gel/plastic rather than the selected restrained finish",
+              "action": "Rebalance fill/light distribution/rim/shadow as one material; do not equate more effects with fidelity"
+            },
+            {
+              "disposition": "INTENTIONAL",
+              "expected": "Prototype gallery/content/50-item count",
+              "actual": "Native different categories/content/30-item count and40px functional hit area",
+              "action": "Retain native content and hit target; this does not waive feasible proportion/material/icon differences"
+            }
+          ]
+        },
+        {
+          "id": "reference-dark",
+          "referenceSha256": "591d30a153a6d84e6024aa77160b8adefbe44e93e4d0e81dac4d40b0a2d4fab2",
+          "candidateSha256": "591d30a153a6d84e6024aa77160b8adefbe44e93e4d0e81dac4d40b0a2d4fab2",
+          "status": "REVIEWED",
+          "summary": "Selected reference positive control, identical pixels; no implementation approval follows.",
+          "findings": []
+        },
+        {
+          "id": "before-dark",
+          "referenceSha256": "591d30a153a6d84e6024aa77160b8adefbe44e93e4d0e81dac4d40b0a2d4fab2",
+          "candidateSha256": "07410ccf6d21737d24d241e7fc24aa9f6392aa95f71fb24ce1eff43a1347c4c3",
+          "status": "NEEDS_WORK",
+          "summary": "Both the complete toolbar and equal-scale button were viewed in dark; AF6C98F0 is visibly short of the chosen reference.",
+          "findings": [
+            {
+              "disposition": "FIX",
+              "expected": "Wide, low visual body around88×36 with comfortable side space",
+              "actual": "Native body around81×40 appears narrower/taller in both themes",
+              "action": "Refine painted proportion/side padding in the existing list owner while retaining the40px hit target"
+            },
+            {
+              "disposition": "FIX",
+              "expected": "A solid white pencil with weight coherent with the label",
+              "actual": "Fine outlined pencil reads much lighter than the bold label",
+              "action": "Refine the existing decorative icon weight without changing the control/event"
+            },
+            {
+              "disposition": "FIX",
+              "expected": "Cool luminous teal with a broad smooth light transition and soft contact shadow",
+              "actual": "Flat fill and nearly absent surface light/contact depth",
+              "action": "Rebalance fill/light distribution/rim/shadow as one material; do not equate more effects with fidelity"
+            },
+            {
+              "disposition": "INTENTIONAL",
+              "expected": "Prototype gallery/content/50-item count",
+              "actual": "Native different categories/content/30-item count and40px functional hit area",
+              "action": "Retain native content and hit target; this does not waive feasible proportion/material/icon differences"
+            }
+          ]
+        },
+        {
+          "id": "after-dark",
+          "referenceSha256": "591d30a153a6d84e6024aa77160b8adefbe44e93e4d0e81dac4d40b0a2d4fab2",
+          "candidateSha256": "7b98cb94e3a951767292f17a58f9e58d69df7dedbb36bf0e40cea7a3efd735ee",
+          "status": "NEEDS_WORK",
+          "summary": "Both the complete toolbar and equal-scale button were viewed in dark; 96B933A1 remains visibly short of the chosen reference.",
+          "findings": [
+            {
+              "disposition": "FIX",
+              "expected": "Wide, low visual body around88×36 with comfortable side space",
+              "actual": "Native body around81×40 appears narrower/taller in both themes",
+              "action": "Refine painted proportion/side padding in the existing list owner while retaining the40px hit target"
+            },
+            {
+              "disposition": "FIX",
+              "expected": "A solid white pencil with weight coherent with the label",
+              "actual": "Fine outlined pencil reads much lighter than the bold label",
+              "action": "Refine the existing decorative icon weight without changing the control/event"
+            },
+            {
+              "disposition": "FIX",
+              "expected": "Cool luminous teal with a broad smooth light transition and soft contact shadow",
+              "actual": "Green-dark body and conspicuous outline remain unlike the cooler smoother selected finish",
+              "action": "Rebalance fill/light distribution/rim/shadow as one material; do not equate more effects with fidelity"
+            },
+            {
+              "disposition": "INTENTIONAL",
+              "expected": "Prototype gallery/content/50-item count",
+              "actual": "Native different categories/content/30-item count and40px functional hit area",
+              "action": "Retain native content and hit target; this does not waive feasible proportion/material/icon differences"
+            }
+          ]
+        }
+      ]
+    },
+    "pixelResult": "DIFFERENCES_REQUIRE_REVIEW",
+    "productApproved": false,
+    "impactRouting": {
+      "profiles": [
+        "policy",
+        "proof-core",
+        "acceptance"
+      ],
+      "reason": "Conservative fallback for the two unmapped standalone visual-tool/test files",
+      "executed": "Affected tool transfer, actual image review and exact-tree repository checkpoint validation",
+      "productAcceptance": "NOT_RUN; product runtime/fixtures/harness unchanged. No acceptance PASS claimed."
+    },
+    "storageCleanup": {
+      "deletedTargets": 260,
+      "deletedBytes": 5840802413,
+      "projectBeforeBytes": 4856402090,
+      "projectAfterBytes": 3296569597,
+      "preserved": "Current/rollback Codex runtime, tested browser, signed extension/latest extraction, source/Git/settings/history, controls and verification evidence",
+      "postCleanup": "Node/Python execution and existing visual-transfer check pass; Mobile/PC artifact SHA unchanged",
+      "localInventory": "artifacts/workspace-cleanup-2026-10-23/cleanup-result.json"
+    }
+  },
+  "limits": [
+    "Same implementing agent knew these examples; retrospective trial, not blind proactive-detection or efficiency proof",
+    "Tool enforces binding/closure, not truth/completeness of perception",
+    "Product runtime unchanged; no new144, actual extension, device, authentication, motion or whole-UI approval"
+  ],
+  "primarySources": [
+    "https://www.chromatic.com/docs/review/",
+    "https://handbook.gitlab.com/handbook/upstream-studios/product-design/workflow/mr-reviews/"
+  ],
+  "evidence": {
+    "tools/visual-review.mjs": "C246970A547278767E453B065C71A5E5DE27988768D42F049005744EE1B78A5A",
+    "testbed/test-visual-review.mjs": "CF62EE264FC9D28A8FABE45D1E639C0AB58E6227567EE3D1705E0E8C893D10A3",
+    "artifacts/b1-reference-review-2026-10-23/manifest.json": "FE45A3AF945318F3469D02305CF08401445C169EAE8D6BD1E83BB46F961B0D83",
+    "artifacts/b1-detail-2026-10-23/button/reference-light-toolbar.png": "AA92602E977F6298F20686BEF0DD4D15E99FE83D04D77202FB3D18FEAEA65FA1",
+    "artifacts/b1-detail-2026-10-23/button/before-light-toolbar.png": "EADE9B9173069299AAD7F0B0A178D8E6F28543C3A92C3355E0B66F7DDCB8B9BE",
+    "artifacts/b1-detail-2026-10-23/button/after-light-toolbar.png": "E7673E5896DBC63DE690DA3150567ED6B2DD440BFCC70A40AC8DD40F002053F8",
+    "artifacts/b1-detail-2026-10-23/button/reference-dark-toolbar.png": "9B6A7901461216F4FB82068878EBE180DF9A829A72267DDCB362F1DAB9BFD43D",
+    "artifacts/b1-detail-2026-10-23/button/before-dark-toolbar.png": "3878BC4E2107203EC18CE43C036F968CDC54E246D505611BAB5EC59634330662",
+    "artifacts/b1-detail-2026-10-23/button/after-dark-toolbar.png": "F7931FE1AA33FB71E9CDBCD84DAEA2B47D14A6B38BE9DD65470EF2BE021DE445",
+    "artifacts/b1-reference-review-2026-10-23/result-final/review.json": "E9E1A9870F93740B522B44BF7F9BDCFA680C73C394AE37E9EBB300F6A2A7B330"
+  }
+}

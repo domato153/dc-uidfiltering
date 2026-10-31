@@ -1,0 +1,15 @@
+/* Independent conditional proposal on the preserved2E99 B1 shell, not a build input. */
+[data-dcuf-surface] .dcuf-status { color:#a52b40; }
+[data-dcuf-surface="personal-manual"] .dcuf-manual-status[data-state="info"] { color:var(--dcuf-theme-fg); }
+[data-dcuf-surface="personal-manual"] .dcuf-manual-status[data-state="success"] { color:#12694e; }
+[data-dcuf-surface="personal-manual"] .dcuf-manual-status[data-state="error"] { color:#a52b40; }
+[data-dcuf-surface] .dcuf-button--danger { color:#a52b40; }
+[data-dcuf-surface="personal-management"] .dcuf-blocked-empty { color:var(--dcuf-theme-fg); }
+[data-dcuf-surface="personal-management"] .dcuf-blocked-item.item-to-delete { opacity:1; }
+[data-dcuf-surface="personal-management"] .dcuf-blocked-item.item-to-delete .dcuf-item-name { text-decoration:line-through; }
+.dc-filter-dark-mode [data-dcuf-surface] .dcuf-status,
+.dc-filter-dark-mode [data-dcuf-surface] .dcuf-button--danger { color:#ff9ba9; }
+.dc-filter-dark-mode [data-dcuf-surface="personal-manual"] .dcuf-manual-status[data-state="error"] { color:#ff9ba9; }
+.dc-filter-dark-mode [data-dcuf-surface="personal-manual"] .dcuf-manual-status[data-state="info"] { color:var(--dcuf-theme-fg); }
+.dc-filter-dark-mode [data-dcuf-surface="personal-manual"] .dcuf-manual-status[data-state="success"] { color:#7cdbb4; }
+[data-dcuf-surface="personal-manual"] .dcuf-manual-form:has([data-manual-block-action="add"]:disabled) .dcuf-manual-status { visibility:hidden; }

@@ -1,0 +1,199 @@
+{
+  "schemaVersion": 1,
+  "kind": "B1_NATIVE_AUTHOR_PREFLIGHT",
+  "status": "ANATOMY_ACQUIRED_REPAIR_REQUIRED",
+  "sourceBaseHead": "06ddc183d6043b4980808061a3170c6c7b8fcfd9",
+  "candidateFingerprint": "d998010056fb12912dfaa388257c32a12ceca5bb3a94d977031ba4ecad6dc4e1",
+  "artifact": {
+    "mobileSha256": "06CA05EC44A1F8B46966425780CAF6249CAE041518623C80AAEEACAC2869BE4A",
+    "pcSha256": "8915F36E5B8887DC58EF9F932E39CCA28CCE1AC1020FD96460CCD10C08913581",
+    "mobileVersion": "3.5.5",
+    "pcVersion": "1.9.9",
+    "unchanged": true,
+    "officialRelease": false
+  },
+  "scope": {
+    "sourceEdits": false,
+    "rootCaptures": 16,
+    "freshBrowserContexts": 4,
+    "nativeGuestAndPublicGet": true,
+    "memberStatistics": "LOCAL_SYNTHETIC_0_0_NATIVE_JS_REPLAY",
+    "authorPostTransmitted": false,
+    "networkWritesTransmitted": false,
+    "productSuite": "NOT_RUN_NO_RUNTIME_CHANGE",
+    "build": "NOT_RUN_NO_RUNTIME_CHANGE",
+    "wholeUiAcceptance": "UNKNOWN",
+    "actualExtension": "NOT_RUN",
+    "actualCommentPermission": "UNKNOWN",
+    "proposal": "PENDING_NEXT_SLICE"
+  },
+  "environment": {
+    "layout": [
+      980,
+      2306
+    ],
+    "screen": [
+      412,
+      1006
+    ],
+    "scale": 1,
+    "dpr": 1,
+    "hasTouch": true,
+    "role": "adopted-phone-layout proxy;causal experiment desktop pointer"
+  },
+  "findings": [
+    "actual native root differs from old ID assumptions",
+    "142px menu ends1078 in980 viewport and list clip",
+    "inline-end alone hits1/4;row-layer probe hits4/4",
+    "fixed memo marker1 but transformed metadata anchors x581;transform-removal probe centers x250,9/9 hits",
+    "opaque white/grey native interiors remain outside B1 scope"
+  ],
+  "causalProbe": {
+    "status": "PARTIAL_CAUSAL_EVIDENCE",
+    "retainedObservations": 5,
+    "finalColorClick": "FAILED_NEXT_ROW_TITLE_INTERCEPTED_POINTER",
+    "productFixed": false,
+    "centerHitSamplesAreNotPhysicalPathPass": true
+  },
+  "limitations": [
+    "member backend/account statistics unqualified",
+    "current clipped memo/picker anatomy uses programmatic original click",
+    "actual comments/permissions not acquired;C-13 static only",
+    "empty history only;no save/block/submit",
+    "no new design proposal or aesthetic approval",
+    "C-07 N/A;four external uploads remain deferred"
+  ],
+  "localEvidence": [
+    {
+      "path": "artifacts/b1-native-author-2026-10-29/discover.mjs",
+      "sha256": "2A703D81AF824FA5D408E493F93DBC81917E839657652AD333B24B7124E26783",
+      "localOnly": true
+    },
+    {
+      "path": "artifacts/b1-native-author-2026-10-29/discovery.json",
+      "sha256": "ADA2319CFA34D163523699C8B152C3B3346D5428164FC74ED9B41BD32E3E4F0C",
+      "localOnly": true
+    },
+    {
+      "path": "artifacts/b1-native-author-2026-10-29/capture-anatomy.mjs",
+      "sha256": "E1F3B7C7713AA17DEE0D9F0770EA303A55D83AA7D8EC7763CA769D53E9048F6B",
+      "localOnly": true
+    },
+    {
+      "path": "artifacts/b1-native-author-2026-10-29/anatomy.json",
+      "sha256": "86FA18AFE9C2C30FCBA623BBE1D12578EE0E35EC7EBFF2C7A9B217838D1AD0C1",
+      "localOnly": true
+    },
+    {
+      "path": "artifacts/b1-native-author-2026-10-29/causal-probe.mjs",
+      "sha256": "D91353F996DC17786DB14EA13A088B6A0418487F12A0248F687493A1EC3BADBC",
+      "localOnly": true
+    },
+    {
+      "path": "artifacts/b1-native-author-2026-10-29/causal-probe.json",
+      "sha256": "AFA0B98CEE47DA451DD9CA4138E71CFFB5F9B79169B0ACC95E4E8351ECC8222A",
+      "localOnly": true
+    },
+    {
+      "path": "artifacts/b1-native-author-2026-10-29/native-article-guest.png",
+      "sha256": "064A657BE2E6592F2D03F46B07DB6BF4AEE48E7D0181C04B1589E83D54FF67CF",
+      "localOnly": true
+    },
+    {
+      "path": "artifacts/b1-native-author-2026-10-29/native-article-member.png",
+      "sha256": "1A25BCB6B0B6D145BE983D992B245DAC022134183F05D964C67512C97D31901C",
+      "localOnly": true
+    },
+    {
+      "path": "artifacts/b1-native-author-2026-10-29/native-article-memo.png",
+      "sha256": "22304DC232ED791CB941263F937B32DBEDB39624BBA6DCD6F599C7F6DF4A9CF9",
+      "localOnly": true
+    },
+    {
+      "path": "artifacts/b1-native-author-2026-10-29/native-article-memo-color.png",
+      "sha256": "BF548354FB00874E0C6B3BF62A7C2032AFF29B365366732D5748A7D13DEE31F1",
+      "localOnly": true
+    },
+    {
+      "path": "artifacts/b1-native-author-2026-10-29/native-list-guest.png",
+      "sha256": "EA5865EDC6C6C56FCCC16C8BECE8982A42FAFC7E8D4581FF4D72276CABAF1C4B",
+      "localOnly": true
+    },
+    {
+      "path": "artifacts/b1-native-author-2026-10-29/native-list-member.png",
+      "sha256": "9C05C9ED287651D61E94EACE4D4777C11BFF9DA00778C23D06D0F6441D76E397",
+      "localOnly": true
+    },
+    {
+      "path": "artifacts/b1-native-author-2026-10-29/native-list-memo.png",
+      "sha256": "D16F2E15F4B9602E482FA83591EED7AD553BF5FD1AB1311EE0433688646CFBA0",
+      "localOnly": true
+    },
+    {
+      "path": "artifacts/b1-native-author-2026-10-29/native-list-memo-color.png",
+      "sha256": "E7AEBBB305A9AA1DD28E845696A0634EAC15E742B2C073817345534ECA783A4A",
+      "localOnly": true
+    },
+    {
+      "path": "artifacts/b1-native-author-2026-10-29/current-article-guest.png",
+      "sha256": "0DAD0E0BD69478F145BCF3CE382438062F8237087B77FCA592176246B26D0D96",
+      "localOnly": true
+    },
+    {
+      "path": "artifacts/b1-native-author-2026-10-29/current-article-member.png",
+      "sha256": "EAA024A6CF8CAD787236FFFAFC3A9DECB181276C84C79C9F181E27C2D797FCDB",
+      "localOnly": true
+    },
+    {
+      "path": "artifacts/b1-native-author-2026-10-29/current-article-memo.png",
+      "sha256": "600E5EC578CC315B14EA027D3832DAB2E7AFA50111100D0D528D9128ACCD936A",
+      "localOnly": true
+    },
+    {
+      "path": "artifacts/b1-native-author-2026-10-29/current-article-memo-color.png",
+      "sha256": "5C0093ACA7470A24D260160A1553978F404E4A5E2E6A68312C277DBFEFEC65BA",
+      "localOnly": true
+    },
+    {
+      "path": "artifacts/b1-native-author-2026-10-29/current-list-guest.png",
+      "sha256": "9D04FA5C10F010F5AC16D39EF8427C22A42DB9D8ACAF804CC3BC128104F59556",
+      "localOnly": true
+    },
+    {
+      "path": "artifacts/b1-native-author-2026-10-29/current-list-member.png",
+      "sha256": "E7B9C7D3EFC40300ADBFEE1E8970DA29DB80C69210831E66D05D585E4F8C2C64",
+      "localOnly": true
+    },
+    {
+      "path": "artifacts/b1-native-author-2026-10-29/current-list-memo.png",
+      "sha256": "7F9B1E06B6FFB323B599C213E7F52E8E254232667D60D3144D63C1148E46697D",
+      "localOnly": true
+    },
+    {
+      "path": "artifacts/b1-native-author-2026-10-29/current-list-memo-color.png",
+      "sha256": "853B4FD76E49EB1B87914B4200A632A8CEB8975AAEE7DEDF8C739EB3770DA434",
+      "localOnly": true
+    },
+    {
+      "path": "artifacts/b1-native-author-2026-10-29/causal-memo-before.png",
+      "sha256": "08AE2B5ED5937582F4BC5430AADCDD216C19C4B3EE7EF2D9345D5E09ED96F98B",
+      "localOnly": true
+    },
+    {
+      "path": "artifacts/b1-native-author-2026-10-29/causal-memo-after.png",
+      "sha256": "D97973252EA58E54E9267561A243CE96E5A8DC47F7CC4643D471E3E431486BF3",
+      "localOnly": true
+    },
+    {
+      "path": "artifacts/b1-native-author-2026-10-29/causal-menu-in-bounds.png",
+      "sha256": "8E0C73D16B9F48090AF218FA7CFA4B1A13980C05EE810A807D088F15EA7CA728",
+      "localOnly": true
+    }
+  ],
+  "impact": {
+    "changedRuntime": false,
+    "selectedProductTests": [],
+    "omittedProductTests": "No source/runtime change;native acquisition and partial causal observations only. Exact-tree checkpoint validator remains separate.",
+    "policyRoute": "artifacts/b1-native-author-2026-10-29/impact.json"
+  }
+}

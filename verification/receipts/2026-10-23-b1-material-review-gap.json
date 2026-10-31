@@ -1,0 +1,187 @@
+{
+  "schemaVersion": 1,
+  "kind": "b1-material-and-visual-review-gap",
+  "status": "REVIEW_BACKSTOP_VALIDATED_PRODUCT_VISUAL_NEEDS_WORK",
+  "sourceBaseHead": "31905e1a0fb6aa0cb39d436d97cc25e7a9e70d05",
+  "artifact": {
+    "mobileSha256": "90EEEBFF27DC7C1B585A56D74F7AE4B27E34609806C38254AC54460DBA8F444F",
+    "pcSha256": "5FA25756C43864AA8C90C1347AE6A03652D901862F83ABEAEDDEBF6382CFA740",
+    "controlMobileSha256": "079ED46D3C21BB4D4DF3A008A83260C532A70215D8F2F7DE3D474A89AD981EF0",
+    "versionChanged": false
+  },
+  "scope": {
+    "surfaces": [
+      "H-01",
+      "H-02",
+      "H-03",
+      "L-01",
+      "L-02",
+      "L-05",
+      "L-06",
+      "L-07",
+      "L-08",
+      "L-09"
+    ],
+    "environment": "980x2306 layout proxy;390 stress, not exact phone scale/device",
+    "productionChanges": "CSS-only in five current owners; one exact adapter guard fixes absent utility-cluster startup. No production change after user requested review-system repair.",
+    "sharedPc": "UNCHANGED",
+    "behaviorDelta": "Absent utility cluster must not abort native article initialization",
+    "appearanceApproval": false
+  },
+  "checks": {
+    "mobile": {
+      "passed": 144,
+      "failed": 0
+    },
+    "hostCompatibility": {
+      "passed": 11,
+      "failed": 0
+    },
+    "b1": {
+      "functionalStatus": "PASS",
+      "contexts": 8,
+      "paletteThemeBindings": 28,
+      "visualStatus": "NEEDS_WORK",
+      "sameRowFailures": 6,
+      "offsetCssPixels": -13.296875,
+      "narrowSameRow": "NOT_APPLICABLE"
+    },
+    "transfer": {
+      "selectedReferenceThemes": 2,
+      "shiftedNegativesRejected": 2,
+      "scope": "LABEL_ALIGNMENT_ONLY; NOT_AESTHETIC_OR_MATERIAL_ORACLE"
+    },
+    "headerLayout": {
+      "contexts": 8,
+      "status": "PASS"
+    },
+    "scroll": {
+      "contexts": 5,
+      "status": "PASS"
+    },
+    "pureHeaderBoundary": {
+      "builders": 4,
+      "slots": 46,
+      "status": "PASS"
+    },
+    "uiBoundaries": {
+      "files": 38,
+      "status": "PASS"
+    },
+    "immediateSemantic": {
+      "observations": 16,
+      "settledRecords": 4,
+      "status": "PASS_WITHIN_IMMEDIATE_SCOPE"
+    },
+    "publicChrome": {
+      "themes": 2,
+      "http": 200,
+      "visibleBrokenImages": 0,
+      "overflow": 0,
+      "scope": "ANONYMOUS_GET_HEAD_GM_SHIM_NOT_NEW_EXTENSION"
+    },
+    "pixelReports": {
+      "design": "DIFFERENCES_REQUIRE_REVIEW",
+      "sameFixture": "DIFFERENCES_REQUIRE_REVIEW",
+      "productApproved": false
+    }
+  },
+  "review": {
+    "misses": [
+      "Objective checks omitted adjacent text alignment",
+      "330px crop excluded complete toolbar groups",
+      "Material-only scope/prior layout PASS biased manual judgement",
+      "Blur/token presence does not establish perceived glass"
+    ],
+    "hardened": [
+      "Existing B1 gate separates functional/visual outcomes and rejects current defect",
+      "Full-width component capture",
+      "Chosen reference and shifted-negative transfer in existing header-focused/acceptance routes",
+      "Coherent component and material-context review in existing routed guide"
+    ],
+    "open": [
+      "Toolbar vertical alignment, grouping/density, control balance",
+      "Header glass glaze/rim/translucency/shadow relative to selected reference"
+    ],
+    "limits": "Backstop covers a concrete failure, not all aesthetics. User material finding stays unresolved; no universal beauty guarantee, new skill or recurring review experiment."
+  },
+  "impeccable": {
+    "version": "4.7.0",
+    "upstreamCommit": "5b8c8e56bf3b0d22635f97f41d3777cb5acb9ad5",
+    "contextInvocations": 1,
+    "detectorInvocations": 2,
+    "detectorReason": "Interim scan followed by final scan after additional native-popup/initialization correction; no unchanged scan repetition",
+    "finalDetectorExit": 2,
+    "warning": "Existing dynamic img attribute warning remains unconfirmed; no ignore rule or clean-scan claim",
+    "efficiency": "NOT_MEASURED"
+  },
+  "qualification": {
+    "rawMixedUpperRelease": "NOT_QUALIFIED",
+    "impactProfiles": "Fresh routes retained; scoped commands executed, not full proof-runtime/acceptance admission",
+    "historicalPublishedListenerFailure": "UNWAIVED",
+    "nativeBaseline": "Selected preview is design reference, not a native regression golden",
+    "nextTask": "b1-toolbar-and-header-detail"
+  },
+  "sourceInputs": {
+    "src/targets/mobile/header-shell-presenter.js": "d4c70f584dac65e32262cea9ec95930b615a4655fe2c39023dfb9f33fe3dc79e",
+    "src/targets/mobile/header-recent-visit-presenter.js": "2c98354cd847b46b230401a6a9eb99237c53a1534155a56e5c0a6639c1098498",
+    "src/targets/mobile/list-presenter.js": "fe9b191e0a5b2d9deada02610f1cee16f91e56de649b0bf4f18470d47f0be59e",
+    "src/targets/mobile/theme-host-style.js": "c2795120ce50414eeff50a4a05cdad4c7bce840c0da47079d28dcc0eb9285ec2",
+    "src/targets/mobile/filter-module.js": "32120f71c92c97e849e3e1be66862c02cd7fb1b0ed40159f8eb9ac6217104b95",
+    "src/targets/mobile/header-shell-host-adapter.js": "548872d03cc52fa0f37b73d651947cdb8634776e5c2b3ed208e0cca2a2e616fc",
+    "testbed/run-tests.mjs": "2b2b9902fc52f5e5cb2538f319add24a4a841af664933fad4f050bc12b1d8ff0",
+    "testbed/run-b1-product.mjs": "7f6100c9e3c3e8e6af004ee57e8eb18a26cdab69f6f2aa7c26ddea5b818b0dc9",
+    "testbed/run-b1-visual-capture.mjs": "6921a8b3ae50056b718312266eab6ea787d7f002e4b142251e990541189878e5",
+    "testbed/harness/toolbar-visual-contract.mjs": "46079a78c74d473772b9ab02d7448d9d686bd6aa1ad93c6015d51619d195f76f",
+    "testbed/test-toolbar-visual-contract.mjs": "e6dae65dba2f23e05eaf14d9736f68353c24c3d7dd3a6f0072cd7c8f1d38201e",
+    "testbed/fixtures/b1-native-list.mjs": "ec7d5e62bf058e2a9b40492e547603c3308b49bd3588233059c11e1b6ffc84a8",
+    "verification/gates.json": "60c3629dbee29a27a8fe6d16c0c09e68bd3d97f418947c4b3178e132819811d1",
+    "verification/b1-header-visual-delta.json": "0d1bdb2c6cb02f8ced8fbf1b5d08da38f80d3442bf1c431acbf7bd174701e1cf",
+    "docs/work/B1_MATERIAL_FIDELITY.md": "7a4b05aae5d0fad8e117402bdbcbdf0a0d5dcc00b4eda9bed23e00022909d430",
+    "docs/work/B1_VISUAL_REVIEW_GAP.md": "64a2a08d8572c7aad9095bf86a08b37ea19ac98a1c5566e9e949d32565a053cb",
+    "docs/work/B1_IMPECCABLE_POLISH.md": "15ea17bfd85153de2b2b7118f93fdb0fdac2886179f6dd6de16d0bf5f3c545c4",
+    "docs/work/UI_DESIGN_DETAIL_REVIEW.md": "e1336fabc7c13128b2a80f5d469df145ab492cc61b4adc4918673fa7cf84d4c9",
+    "docs/work/UI_VISUAL_REVIEW.md": "abc489e4aba23dc261d6e431b390af0da441ef3493432c932d744bf6fdb61a1c",
+    "docs/work/INDEX.md": "305bb0d199c78a6935cc8fa440316f614784d8b145925805667c7f6b9ef0b653",
+    "docs/ui-surface-contracts.md": "8ec056cc73822559bbb90aef3bc113e6b42cb2ffc7b236d9d38703c2b23ada21",
+    "docs/work/DECISION_RATIONALE.md": "951a67c968ec3e396f4c91c68418db8d7145e76a3ff431fc4ff456284887822c",
+    "docs/agent-maintenance-notes.md": "9304f458c6d47c9dbdd46cc979dbb21b7e7388faa759ff3437f7a312d8dbaba5"
+  },
+  "evidence": {
+    "artifacts/b1-material-2026-10-23/full-final-90EE.json": "772bece80faa41090d7319279c2d0bf2910a2ba89c8de6da6d1e4c6d426fce0d",
+    "artifacts/b1-material-2026-10-23/full-material-first-142-144.json": "df3c27eaaef212592d38fb8ef9275994399e1feeeea5bd323c1738e32f68eddb",
+    "artifacts/b1-material-2026-10-23/host-final.json": "f4c2c66bd0b0134a796a7a09de771ad6d6873c9ad1fa6ee99d81c58f8dbb843a",
+    "artifacts/b1-material-2026-10-23/visual-gap-report.json": "9cb211ab6d452fc349e36cac1513d0dfb206dc96f4b588380f1a88f727690423",
+    "artifacts/b1-material-2026-10-23/visual-gap-transfer.json": "e2e267e0b66cd12b245210ee6d17f83ab64e483f4898d79e13371b2f8cc782c7",
+    "artifacts/b1-material-2026-10-23/immediate-semantic-final.json": "294bf0215cb9954830d4cfcf4d18ade663cbda44794c0e6b49a9dfc36d6882b7",
+    "artifacts/b1-material-2026-10-23/control-side.json": "60f89c5e02cb3bd7e628fe7caefe486f5aa38833e7f0bdf59b6b1d1136381522",
+    "artifacts/b1-material-2026-10-23/candidate-final-side.json": "9b13ed43c98c1e82a5ff66c15974a23afc5cc0720d7c93be1bf65c265ad3dfcc",
+    "artifacts/b1-material-2026-10-23/recommend-readiness.json": "a558fa7840cf3f07953327e06d2a003844cf32de7ef9666caed00e3850e82045",
+    "artifacts/b1-material-2026-10-23/public-final-v2/probe.json": "4163401e7322bdb0e6441e7f671fea5ef7965cdb1d623e9e254d559b1bf5c29c",
+    "artifacts/b1-material-2026-10-23/impeccable-detect-final.json": "d827dc4391bf551c950dd9e230b96882e75be340564b2d7ffe58220a98a33484",
+    "artifacts/b1-material-2026-10-23/paired-final/pairs.json": "914356d09c4b29388cb241a0e8e1ed2b21cbb8b2b19d3da7bb9628da7fa7ab80",
+    "artifacts/b1-material-2026-10-23/paired-report-final/review.json": "d2240e4d23d9c7faa666e08e26cee9765fdba76870827bba69910e21f3907a9a",
+    "artifacts/b1-material-2026-10-23/design-pairs-final.json": "98869c9d2650495951977b6e28d4bc24a8a70dab17f4bebdd10f58926bd9941c",
+    "artifacts/b1-material-2026-10-23/design-report-final/review.json": "272071bc7335d98e26aa0794f4ff46fb947df1a52b9aa821fa1052684655dce1",
+    "artifacts/b1-material-2026-10-23/details-light.png": "851ae3aa174d01cd26035da0912f26d3580fb7b2a2a84523dc6ca0e9bb34a697",
+    "artifacts/b1-material-2026-10-23/details-dark.png": "1bec7fd8dae859e6f6aee79e1227a10a712057470cbd45a5354c127ff563943b",
+    "artifacts/b1-material-2026-10-23/material-samples-final.json": "fb3e0336bd6ef693474ae38fc69fc08c6281cd46b5770fa86499ec12ddd9e7c8",
+    "testbed/artifacts/header-layout-redesign/report.json": "631d7f41057e6c89d2e0092552d9f4352e09d9442e01f45f098881abc1f07376",
+    "testbed/artifacts/concept01-scroll-2026-10-22/report.json": "2a531a23435fe3beb4423fdf829a62fc0f3a2dd76e870dea31859dd320e45d96",
+    "testbed/artifacts/b1-product/980-900-light-native-toolbar.png": "fd8cec750b9acf2c927ba965cf56a91f871a14da130f8664bda44dca9a03f871",
+    "testbed/artifacts/b1-product/980-900-dark-native-toolbar.png": "757ae19bb60b549169dd72778f6c8b8af5da05540d68da4298c315a065a7066a",
+    "testbed/artifacts/b1-product/980-2306-light-native-toolbar.png": "fd8cec750b9acf2c927ba965cf56a91f871a14da130f8664bda44dca9a03f871",
+    "testbed/artifacts/b1-product/1280-900-light-native-toolbar.png": "a651b328e5d4d3443afbb797533110341247a1f2ed74f90a87b84708cfae2ff8",
+    "testbed/artifacts/b1-product/390-900-light-native-toolbar.png": "3dc04e02a7d6aa3c141ce3af4ff5bce4377ed4cf653a0deeb393145dbabd49d0",
+    "testbed/artifacts/b1-product/390-900-dark-native-toolbar.png": "78e2f45ff0a8c40c48d1d2eb4b7cd584730bab15dfe02c468aebe89c73d5afe8",
+    "testbed/artifacts/b1-product/980-900-light-nested-toolbar.png": "ae814c52f5e97de7c5551694aaba0c4ed08f2c41029b8328e8e0d13bd3f3b3c9",
+    "testbed/artifacts/b1-product/980-900-dark-nested-toolbar.png": "192fb56870ad3249624062bf83c0b912fcab4b5f4f80498df8d228f4f9c927fe",
+    "artifacts/b1-material-2026-10-23/public-final-v2/light.png": "3b0f104b269050bb8d71f0e74b542833f8b96a9fae6514563e10fd6c3f0427f2",
+    "artifacts/b1-material-2026-10-23/public-final-v2/light-recent.png": "b5f9aa408b8eee423ef03afdb63d838f4d56481301dc11dbf6ce0eaffb17f728",
+    "testbed/artifacts/toolbar-visual-contract/reference-light-toolbar.png": "d07aa1a9710c201ba2b1f95d10a15bf4d64b14574ef5c3819ab6d29e6a140a88",
+    "artifacts/b1-material-2026-10-23/public-final-v2/dark.png": "5c7cd2e6ee86859a2925685686fcfc6f9f18fb67fdb7e831288b3512c16cca8b",
+    "artifacts/b1-material-2026-10-23/public-final-v2/dark-recent.png": "e695eca4f7d194dde461a7543cd29122f194832d9a56571d2c68c83d7a4184dd",
+    "testbed/artifacts/toolbar-visual-contract/reference-dark-toolbar.png": "44355acad6a43a0c0f6ae5160a709a3f291f1dc129b25d80ca642590a663f79c"
+  },
+  "recordedAt": "2026-10-23T01:26:41.428Z"
+}
