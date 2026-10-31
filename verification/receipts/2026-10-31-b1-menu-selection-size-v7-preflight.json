@@ -1,0 +1,171 @@
+{
+  "schemaVersion": 1,
+  "kind": "B1_MENU_SELECTION_SIZE_V7_PREFLIGHT_AND_BUTTON_GUIDANCE",
+  "status": "READ_ONLY_PREFLIGHT_COMPLETE_IMPLEMENTATION_PENDING",
+  "sourceBaseHead": "8d3eee361a20150af82157988f553888cb971f94",
+  "candidateFingerprint": "01191e254b87d77a4dc92d1806417ed6ea440458877494b08c4e6aef4245a896",
+  "artifacts": {
+    "mobileSha256": "8FE3D7A0A22E3CAB889C744FC3DC51643B7EF88DAA3AFEE3E8A838FD838D8236",
+    "pcSha256": "07D84B82D1F1330A74F02E6A80C5A2856889B52DB755915724C3DE3084D64EE9",
+    "unchanged": true,
+    "officialRelease": false
+  },
+  "inputs": [
+    {
+      "path": "docs/work/B1_CONTROL_MATERIAL.md",
+      "sha256": "0d9a45fe855f1efb47a7a58ad4f67887ea0caa59cc2bfa5a3bc4b028a3f1d559"
+    },
+    {
+      "path": "docs/work/B1_MENU_SELECTION_SIZE_V7_PREFLIGHT.md",
+      "sha256": "ad74b959573cf1ae1c1241d6999426a9c4af7093ccf98a8a7cd48727b39fe418"
+    },
+    {
+      "path": "docs/work/INDEX.md",
+      "sha256": "b7748576bc7581291bb57ade158df209768337f9d4559cd34c2f27c0fbf155b7"
+    },
+    {
+      "path": "docs/work/NEXT_TASK.md",
+      "sha256": "089108f345bb97687a3c6297627db2603c445664ecb5adf33902cb0ed5445a53"
+    },
+    {
+      "path": "src/targets/shared/settings-presenter.js",
+      "sha256": "601f81167bbc24f3946fbe7226a7d1115b34b7b7acbf5c62e3c2566c74c8e605"
+    },
+    {
+      "path": "src/targets/shared/personal-block-host-adapter.js",
+      "sha256": "7f2e5d3b830f45728b4e52e2d5059d66dac8922bade3dc89bbad1423de74c36c"
+    },
+    {
+      "path": "src/targets/shared/popup-geometry-host-adapter.js",
+      "sha256": "7ffc936b838df4cd34a2ff3c5c7b0c21a259848b8cc9161d766c57d98f8a6073"
+    },
+    {
+      "path": "src/targets/mobile/theme-material-values.js",
+      "sha256": "c0a1b63e027017d68cc2bb36984c9c5c004956ddbdc27698a48fce06f01743bb"
+    },
+    {
+      "path": "src/targets/mobile/theme-host-style.js",
+      "sha256": "934fb2daccac53fcf76840ef80f0706b216db6395f68362ba12a9933f140dd94"
+    },
+    {
+      "path": "testbed/ui-b1-owned-input-contract.mjs",
+      "sha256": "fcb5407adc5125f24f4a77262982a1b7f7838fe858fc40429178b5cd605d4be2"
+    },
+    {
+      "path": "testbed/harness/runner-utils.mjs",
+      "sha256": "fd7d7d24c1984e635eed3bc2c83f21a9e274f1f34d5416010a1595fbe3d5a5ab"
+    },
+    {
+      "path": "testbed/harness/userscript-loader.mjs",
+      "sha256": "a9da81c03e53b6d25b949fc6993e532830e179e8bad2c73b6d3f6d5a3a92abc0"
+    },
+    {
+      "path": "testbed/harness/ui-review-preparation.mjs",
+      "sha256": "2efc5ea49dea0f84ead88c0b043a7d1ffb88a2ba17d128c33cc587b5971e56a2"
+    },
+    {
+      "path": "build/targets.json",
+      "sha256": "b1b1afd0df7dd159ac845a3de2b50d0e748e87e5178c2ede01c19cab16d46f3c"
+    }
+  ],
+  "curatedCurrentAnatomy": [
+    {
+      "path": "docs/design/b1-menu-drawer-current-light-2026-10-31.png",
+      "sha256": "27cb3c29906f77aa5a6ed89a2746e05a382a164a7c68f81b4fedab09b562f56c"
+    },
+    {
+      "path": "docs/design/b1-menu-drawer-current-dark-2026-10-31.png",
+      "sha256": "c8dd58e5ec16a9b21e961f08e6382057e96f80f3bff53451ce13e6558c0c6ecd"
+    },
+    {
+      "path": "docs/design/b1-selection-prompt-current-light-2026-10-31.png",
+      "sha256": "058ce4d8d1489a413e0f293ada95480f691ee28b0c98b0ef6213e2f7eeab5a18"
+    },
+    {
+      "path": "docs/design/b1-selection-prompt-current-dark-2026-10-31.png",
+      "sha256": "07efa40963310704be04f0813577155556c72ff7ca6618e8336fc54e594325f1"
+    },
+    {
+      "path": "docs/design/b1-selection-choice-current-light-2026-10-31.png",
+      "sha256": "ef74216336f1bde272925787243600a783a91ecb3ae5d058e21838f0ae46813a"
+    },
+    {
+      "path": "docs/design/b1-selection-choice-current-dark-2026-10-31.png",
+      "sha256": "4277b132f2aa0b17fb7c84d78ba4fbbeddb1ed3a08d200f83cd91aca5ff4ddec"
+    },
+    {
+      "path": "docs/design/b1-fab-size-current-light-2026-10-31.png",
+      "sha256": "e8efcfe189c24deedf856e79b2fe1a176e773e69c7d585a8929567e22c2c8bd0"
+    },
+    {
+      "path": "docs/design/b1-fab-size-current-dark-2026-10-31.png",
+      "sha256": "8bc7b8dba5b9664d528405276cbff5262cad9392a6f81c1a3f7599e1d3b11140"
+    }
+  ],
+  "evidence": [
+    {
+      "path": "artifacts/b1-menu-selection-size-v7-preflight-2026-10-31/inspection.json",
+      "sha256": "b22015403d2a3c45705c56e6ad079a6982c74218a1481a3830d31d0f3ac818d5"
+    },
+    {
+      "path": "artifacts/b1-menu-selection-size-v7-preflight-2026-10-31/current/capture-metadata.json",
+      "sha256": "689c4b65bed9cc98f14bf3f63d7aaf41b62a9679503aa04adf7d6d498fdebe74"
+    }
+  ],
+  "scope": {
+    "ids": [
+      "P-01",
+      "P-02",
+      "P-03",
+      "P-04",
+      "P-13"
+    ],
+    "mode": "Operate",
+    "productChanges": false,
+    "ownerChanges": false,
+    "newFramework": false
+  },
+  "adoptedSizing": {
+    "default": "Label/icon plus appropriate padding;contextual height/spacing and real input targets",
+    "exceptions": "Intentional menu rows,aligned tabs,role-specific major actions and user-scaled FAB",
+    "compact36px": "Example,not universal dimension",
+    "routing": "Existing v7-visual-consistency decision and current rule card;no new gate"
+  },
+  "observations": {
+    "browser": "Chrome156.0.8078.76",
+    "contexts": 5,
+    "states": 45,
+    "visibleControlCenters": 140,
+    "rootBoundsAndHorizontalOverflow": "PASS45",
+    "positiveControlHits": "PASS140_SAMPLED",
+    "drawerActions": 4,
+    "drawerClose": "Original Escape/outside",
+    "authorVariants": {
+      "member": 2,
+      "blockedMember": 2,
+      "guest": 2,
+      "nicknameOnly": 1
+    },
+    "sizePreview": "60/160 follow original ratio;cancel restores100",
+    "blocksAndSavedScale": "UNCHANGED5_CONTEXTS",
+    "materialFindings": "Drawer already transmitting and compatible;prompt opaque/no blur;choice/save still legacy dense primary;size actions stretch equally",
+    "sourceOwner": "Existing shared settings presenter;personal-block adapter retains behavior;old theme-host selectors are retired"
+  },
+  "validation": {
+    "reconciliation": "ACCEPTED",
+    "productBuild": "NOT_RUN_UNCHANGED",
+    "fullProductPcSuites": "NOT_RUN_READ_ONLY_PREFLIGHT",
+    "implementation": "PENDING",
+    "wholeUiCertified": false,
+    "selectedRuleCardChars": 3872
+  },
+  "limits": [
+    "Synthetic article scaffold,not a live whole-article visual claim",
+    "No block/unblock/save,real-user state,account,clipboard or uploads",
+    "No drag/save/lifecycle completion or actual extension/device proof",
+    "List/ordinary-image transfer and PC rendering are implementation checks,not new passes",
+    "980×2306 layout-only;390 stress;native range box16px recorded without minimum-target certification"
+  ],
+  "nextAction": "b1-menu-selection-size-v7-implementation",
+  "hashMode": "Canonical LF for text;raw image/runtime bytes"
+}
