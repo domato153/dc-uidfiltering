@@ -1,6 +1,6 @@
 # Menu,selection and size v7 preflight
 
-2026-10-31. Source base8d3eee36;guarded Mobile8FE3D7A0. **READ_ONLY_PREFLIGHT_COMPLETE / IMPLEMENTATION_PENDING**. Mode:Operate. P-01–P-04/P-13 only. Product,fixtures,harness,stored settings and build artifacts are unchanged by this unit. Button sizing guidance is adopted more generally in B1_CONTROL_MATERIAL.md#v7-adopted-rules.
+2026-10-31. Source base8d3eee36;guarded Mobile8FE3D7A0. **READ_ONLY_PREFLIGHT_COMPLETE (historical8FE3D7A0 anatomy)**. Follow-up implementation is recorded in [B1_MENU_SELECTION_SIZE_V7_IMPLEMENTATION.md](B1_MENU_SELECTION_SIZE_V7_IMPLEMENTATION.md). Mode:Operate. P-01–P-04/P-13 only. Product,fixtures,harness,stored settings and build artifacts are unchanged by this unit. Button sizing guidance is adopted more generally in B1_CONTROL_MATERIAL.md#v7-adopted-rules.
 
 ## Current anatomy and smallest adaptation
 
@@ -38,7 +38,9 @@ Drawer has4 original actions and closes by Escape/outside click. The4 author var
 
 No block/unblock/save,real user data,account,clipboard,upload or actual extension/device job. No drag/save/lifecycle completion is claimed from preview/cancel. Main list,live host,ordinary/image author transfer and PC current rendering remain for the affected implementation checks,not unqualified passes. Source body-level ownership supports reuse across list/view;that is an implementation inference,not a new live result.980×2306 is layout dimensions only,not the measured phone's full screen/DPR/input/visual scale profile.
 
-## Next bounded implementation
+## Follow-up plan (executed in the implementation record)
+
+Implementation plan2026-10-31:execute inline from this approved continuation. Freeze Mobile/PC controls;add a failing focused menu/selection/size material/geometry contract and a scoped palette test. Change only existing child selectors in settings-presenter.js and optional Mobile values in theme-material-values.js. Retain the original templates/adapters/FAB settings. Rebuild affected targets at existing versions;compare frozen/current Mobile semantics and exact affected PC appearance in fresh contexts. Inspect same-state whole/detail captures,then checkpoint the bounded result and route the next family. Reuse the existing original quick-block/FAB tests and image-comment fixture where relevant;no unrelated full suite.
 
 Implement menu/selection/size as one coherent family through the existing CSS/value owners. Reuse the compatible drawer;prioritize prompt transmission,choice/readable grouping,paired compact block/save and plain auxiliaries. Preserve all capabilities and original scale/drag/clamp contracts;generate a new composition only if an actual structural change becomes necessary.
 

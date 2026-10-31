@@ -1,5 +1,11 @@
 # Agent Maintenance Notes
 
+## V7 menu selection sizing and transmitting quiet ink —2026-10-31
+
+Reuse optional Mobile aliases inside the existing settings presenter;do not repurpose original FAB scale or full-row menu geometry to apply ordinary label sizing. The selection prompt had opaque legacy paint while author/size panels already had compatible glass. Alias the existing chrome roles rather than add a new global correction. Quiet text over transmitting chrome needs actual contextual contrast:dark-rose accent cancel measured2.798;normal body ink fixes it without dropping the palette-linked icon/focus/primary. Current18 label samples reach6.3408 minimum. Keep original unblock/danger roles separate.
+
+Original selection-to-author transition removes its leaving prompt after120ms while appending a choice with the same ID. A strict locator can briefly see2 elements. Wait for the original single-active boundary after the actual author click;do not change production behavior or replace it with arbitrary sleep. Frozen/current fresh-context comparison recorded unchanged semantic state and exact affected PC appearance. B1_MENU_SELECTION_SIZE_V7_IMPLEMENTATION.md owns evidence and limits.
+
 ## B1 editor menu boundaries — 2026-10-26
 
 - Native media toolbar buttons open separate `/upload/image`, `/upload/movie`, `/upload/youtube`, `/upload/media` documents. The image page requires its original opener; a directly opened URL can legitimately show an invalid-path alert. Do not forge parent fields, add metadata scope, or call this a global live/Tampermonkey failure. The user accepted deferral; in-document menus remain independent work.
