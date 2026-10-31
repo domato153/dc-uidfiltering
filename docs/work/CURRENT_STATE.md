@@ -2,22 +2,22 @@
 
 ## Current execution
 
-- Active plan: B1_MANAGEMENT_CHILDREN_V7_PREFLIGHT.md closes manual-add/backup anatomy;NEXT applies the existing v7 family to these two consumers together. B1_CONTROL_MATERIAL.md#v7-adopted-rules remains the visual rule card.
+- Active plan: B1_MANAGEMENT_CHILDREN_V7_IMPLEMENTATION.md closes the scoped manual/backup v7 implementation,including the user-requested compact backup buttons. NEXT is menu/selection/size read-only preflight. B1_CONTROL_MATERIAL.md#v7-adopted-rules remains visual entry.
 - Workspace path: `.` (private prompt supplies exact worktree). Preserve debug.log unread/unstaged.
-- Active stage: `header-navigation` formal admission remains open. Read-only child preflight complete;child v7 implementation is pending. No registry promotion,whole-UI certification or deferred guidebook work.
-- Accepted visual preference: Actual memo light/detail,current bright tinted dark primary with paired dark ink,quiet transmitting glass chrome and stable reading fields. Plain auxiliary controls and role-specific grouping adapt to each surface.
-- Source state: Source checkpoint base HEAD `383208e1a30d3df7175222885ccaa8864eddba71` on `codex/ui-port-boundary`. Product source,fixtures,harness,build inputs and Mobile/PC artifacts are unchanged. Fresh Git/checkpoint receipt owns final documentation publication disposition.
-- Local-only state: `LOCAL_ONLY_EVIDENCE`;artifacts/b1-management-children-v7-preflight-2026-10-31 contains fresh guarded synthetic captures/25-state observations and focused short-scroll replay. Four curated current light/dark child images are tracked as anatomy,not selected new material or regression goldens.
-- Candidate fingerprint: `d9f0dd41478c815c50f477663bfa19ed330dd3b1584a4616d36fec2a38684842`
-- Last current audit: PASS for bounded read-only observations:5 contexts/25 states within root bounds without horizontal overflow;both children block parent and preserve search/tab/unsaved deletion plus disposable storage. Short-screen4/4 scrolled primary samples are reachable. Legacy child primary/tab treatment and backup0px action gap are confirmed implementation work,not repaired in this unit.
-- Current stage receipt: `verification/receipts/2026-10-31-b1-management-children-v7-preflight.json` SHA-256 `1ACDEF61127A38C8E7DBF42F3EF93866A933F3CD381D341D886A675D0A27323A`. Prior7E824AD3 product/dark material and383208e1 guidance receipts retain their original scopes;this is not new full-product acceptance.
-- Accepted baseline: Main v7 memo/list/article-comments/writer/management scopes remain. Child shell already uses glass roles;manual/backup primaries still use older dense fill/white ink. Reuse equivalent actual memo/current-dark detail;no materially new composition needs image generation here.
-- Current artifact: Mobile3.5.5 7E824AD336F6B6173487FB24052D2586184F4F5D169C01BC036D1FDBA9092E7D root/dist/guard;PC1.9.9 FEACBA669839690F398A1540EF925C71C078BD646C6C6435DD0EC639585539A3 root/dist. Byte-unchanged;no rebuild/version/official publication.
-- Blockers: None for the scoped child implementation. Initial sandbox loopback EACCES was resolved by the allowed local-only run;do not revive it as a Chrome/TM capability failure.
-- Pending live checks: Actual extension/device/account/OS clipboard-export-file and whole-UI gaps retain prior status.980×2306 capture is layout-only,390 is stress. No actual add/save/import/export/clipboard/account work ran. Preserve original child scroll/close paths and original UI/function owners in NEXT. Image comments have no replies.
+- Active stage: `header-navigation` formal admission remains open. Manual/backup implementation is complete only within this receipt's scope;other owned/native/account/device families remain separate. No registry promotion or deferred full guidebook work.
+- Accepted visual preference: Actual memo detail,current bright tinted dark primary with paired dark ink,quiet transmitting chrome and stable reading fields. Plain auxiliaries fit their task. Backup's two primary faces are36px and label-sized rather than large form controls;manual submit remains44px.
+- Source state: Source checkpoint base HEAD `6a4219bb58d90a356ee9a8bd2319c7df62f1b072` on `codex/ui-port-boundary`. Only existing shared child CSS and optional Mobile values changed in production. Templates/adapters/UiPort/storage/backup/geometry remain unchanged. Fresh Git/checkpoint receipt owns final publication/CI disposition.
+- Local-only state: `LOCAL_ONLY_EVIDENCE`;artifacts/b1-management-children-v7-2026-10-31 binds frozen controls,current guarded8FE3D7A0,focused/differential/feedback reports and4 reviewed image pairs. Curated actual child light/dark PNGs are tracked. Viewer loads one selected image at a time.
+- Candidate fingerprint: `921c3db811903a676af28e84c81c45bfbbc3c21a0db11972ec6a8836c965ae93`
+- Last current audit: PASS scoped child contracts:6 geometry/native contexts,actual3-palette preview/save/cancel in2themes and18 label samples minimum6.4114:1.64 frozen-control/candidate event/state pairs match;22 PC appearance samples match.8 feedback samples and synthetic JSON/file merges pass. Visual differences are intended/reviewed,not pixel matches or whole-UI approval.
+- Current stage receipt: `verification/receipts/2026-10-31-b1-management-children-v7-implementation.json` SHA-256 `2EDB4FA660C7AE77558A448E0138AB89DF2A80548989F5E4D4D284AF856A743F`. Old7E824AD3 product/preflight receipts retain their historical scopes;current Mobile/PC identities are below.
+- Accepted baseline: Memo/list/article-comments/writer/management and now manual/backup have scoped v7 results. Common v7 formulas are unchanged;child consumers now alias them. PC bytes change for shared CSS packaging but its affected current/control appearance and semantics match. Other legacy menus/settings/selection remain pending.
+- Current artifact: Mobile3.5.5 8FE3D7A0A22E3CAB889C744FC3DC51643B7EF88DAA3AFEE3E8A838FD838D8236 root/dist/guard;PC1.9.9 07D84B82D1F1330A74F02E6A80C5A2856889B52DB755915724C3DE3084D64EE9 root/dist/PC guard. Both rebuilt at existing versions;no official publication. Exact raw bytes are distinct from canonical Git text digests.
+- Blockers: None for this bounded implementation or NEXT. Resolver's conservative acceptance fallback prompted causal inspection,not an unrelated full product rerun. Formal broad acceptance remains UNKNOWN.
+- Pending live checks: Actual extension/device/account,OS clipboard/export/dialog and whole-UI gaps remain separate. Only disposable synthetic writes/in-memory files were used.980×2306 is layout-only,390 is stress. Next menu/selection/size preflight is read-only. Image comments have no replies.
 
 ```dcuf-current-artifacts
-{"schemaVersion":1,"mobile":{"sha256":"7E824AD336F6B6173487FB24052D2586184F4F5D169C01BC036D1FDBA9092E7D"},"pc":{"sha256":"FEACBA669839690F398A1540EF925C71C078BD646C6C6435DD0EC639585539A3"}}
+{"schemaVersion":1,"mobile":{"sha256":"8FE3D7A0A22E3CAB889C744FC3DC51643B7EF88DAA3AFEE3E8A838FD838D8236"},"pc":{"sha256":"07D84B82D1F1330A74F02E6A80C5A2856889B52DB755915724C3DE3084D64EE9"}}
 ```
 
 ## Draft-complete checkpoint — 2026-10-21

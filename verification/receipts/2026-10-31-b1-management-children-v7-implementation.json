@@ -1,0 +1,224 @@
+{
+  "schemaVersion": 1,
+  "kind": "B1_MANAGEMENT_CHILDREN_V7_IMPLEMENTATION",
+  "status": "IMPLEMENTED_SCOPED_VALIDATION_PASSED",
+  "sourceBaseHead": "6a4219bb58d90a356ee9a8bd2319c7df62f1b072",
+  "candidateFingerprint": "921c3db811903a676af28e84c81c45bfbbc3c21a0db11972ec6a8836c965ae93",
+  "artifacts": {
+    "mobileVersion": "3.5.5",
+    "mobileSha256": "8FE3D7A0A22E3CAB889C744FC3DC51643B7EF88DAA3AFEE3E8A838FD838D8236",
+    "mobileRootDistGuardMatch": true,
+    "pcVersion": "1.9.9",
+    "pcSha256": "07D84B82D1F1330A74F02E6A80C5A2856889B52DB755915724C3DE3084D64EE9",
+    "pcRootDistGuardMatch": true,
+    "pcBytesChangedSharedCss": true,
+    "officialRelease": false
+  },
+  "inputs": [
+    {
+      "path": "docs/work/B1_MANAGEMENT_CHILDREN_V7_IMPLEMENTATION.md",
+      "sha256": "8edd619d6097d09eadc9188ea64bedc38d6e8d985f5358c33cbc1f6b7b57a749"
+    },
+    {
+      "path": "docs/work/B1_MANAGEMENT_CHILDREN_V7_PREFLIGHT.md",
+      "sha256": "b19d36f7fcbf070ded380009dfa89d65a0d10a29e0a7dd79a9711955df49511f"
+    },
+    {
+      "path": "docs/work/B1_CONTROL_MATERIAL.md",
+      "sha256": "9b0462a0c4fca44ecd451409cec1254f24a364fa488c01e807482cd0c87f3a48"
+    },
+    {
+      "path": "docs/work/INDEX.md",
+      "sha256": "2457d91aa6a2895667aa6ade5bbb1f26f331c82ac65d6df1aeb270f2ba1cf73a"
+    },
+    {
+      "path": "docs/work/NEXT_TASK.md",
+      "sha256": "d89a07359760aa92f8288a7a0172cf6d0b1f7cdccb684697edcf18abc9da05f7"
+    },
+    {
+      "path": "docs/ui-surface-contracts.md",
+      "sha256": "6a423dab7bc9b00a835c761daeb1ddfb647857e68c8c784809b538e4d30e8b3b"
+    },
+    {
+      "path": "docs/agent-maintenance-notes.md",
+      "sha256": "8e2f3d6ff81f6f03d07290bda17edb1555fc5075cbfc7cfe929dabc1b94337ac"
+    },
+    {
+      "path": "src/targets/shared/settings-presenter.js",
+      "sha256": "601f81167bbc24f3946fbe7226a7d1115b34b7b7acbf5c62e3c2566c74c8e605"
+    },
+    {
+      "path": "src/targets/mobile/theme-material-values.js",
+      "sha256": "c0a1b63e027017d68cc2bb36984c9c5c004956ddbdc27698a48fce06f01743bb"
+    },
+    {
+      "path": "src/targets/shared/personal-block-host-adapter.js",
+      "sha256": "7f2e5d3b830f45728b4e52e2d5059d66dac8922bade3dc89bbad1423de74c36c"
+    },
+    {
+      "path": "src/targets/shared/popup-geometry-host-adapter.js",
+      "sha256": "7ffc936b838df4cd34a2ff3c5c7b0c21a259848b8cc9161d766c57d98f8a6073"
+    },
+    {
+      "path": "testbed/ui-owned-management-children-v7-contract.mjs",
+      "sha256": "17dea51b7557fe1d958a5e41c427c0e7625a90510e8f616412b0052bd5dd0d8a"
+    },
+    {
+      "path": "testbed/ui-owned-management-v7-contract.mjs",
+      "sha256": "2e0808497ba62a1331aa4af86fc29999cd8bea8d3f3a27614cdca7aa2c89b09c"
+    },
+    {
+      "path": "testbed/run-tests.mjs",
+      "sha256": "f72c34ed53e8b44f205726d7f9f1696524ea5a49595fb46c4c990b305134841b"
+    },
+    {
+      "path": "testbed/fixtures/b1-native-list.mjs",
+      "sha256": "2aee6d3534b3b158f888d0224e79cc48009078a0eec1ee73873a10798a9b056a"
+    },
+    {
+      "path": "testbed/harness/runner-utils.mjs",
+      "sha256": "fd7d7d24c1984e635eed3bc2c83f21a9e274f1f34d5416010a1595fbe3d5a5ab"
+    },
+    {
+      "path": "testbed/harness/userscript-loader.mjs",
+      "sha256": "a9da81c03e53b6d25b949fc6993e532830e179e8bad2c73b6d3f6d5a3a92abc0"
+    },
+    {
+      "path": "testbed/ui-control-material-contract.mjs",
+      "sha256": "9648c8389e45f4980c5d550e9197994441e2b97b0a0d5f4f33e7e02e56c2c93d"
+    },
+    {
+      "path": "build/targets.json",
+      "sha256": "b1b1afd0df7dd159ac845a3de2b50d0e748e87e5178c2ede01c19cab16d46f3c"
+    }
+  ],
+  "curatedActual": [
+    {
+      "path": "docs/design/b1-management-child-manual-v7-light-2026-10-31.png",
+      "sha256": "8d116854c169cf41d2bda3b260ad2680b2a365db948af1414870bb4fa49848c8"
+    },
+    {
+      "path": "docs/design/b1-management-child-manual-v7-dark-2026-10-31.png",
+      "sha256": "58b4685f0e50b04fe36dea326d2a2f7ea2193bc63c927a4a6e760e5008cf62eb"
+    },
+    {
+      "path": "docs/design/b1-management-child-backup-v7-light-2026-10-31.png",
+      "sha256": "9601638a6fc1728901ff7b8c398d89c924ab46f231c6d0ba4ee70dcb9ec8e630"
+    },
+    {
+      "path": "docs/design/b1-management-child-backup-v7-dark-2026-10-31.png",
+      "sha256": "7e3fbccd85c3a44fecc3c7765f32435908e516997f9fc96df5f23498f8d86fc1"
+    }
+  ],
+  "evidence": [
+    {
+      "path": "artifacts/b1-management-children-v7-2026-10-31/red.json",
+      "sha256": "92acf885f082c76dddc47e8d2d1850015f638402a45f146deeed7c4cfa2233ad"
+    },
+    {
+      "path": "artifacts/b1-management-children-v7-2026-10-31/compact-red.json",
+      "sha256": "2c6047ace896b0a21a194c683206515fff44fe20e052903c4ebe2d3c98872fdd"
+    },
+    {
+      "path": "artifacts/b1-management-children-v7-2026-10-31/focused-final.json",
+      "sha256": "f5cf0e2ace3735f6b2a3b9f24481b5f4c4b9e2b0acd3552107337e942ef40d56"
+    },
+    {
+      "path": "artifacts/b1-management-children-v7-2026-10-31/palette-final.json",
+      "sha256": "cf0a36db4c6033be21e8b3c28b176cd1cb1ca4874a7af03b75c5820cf80091a9"
+    },
+    {
+      "path": "artifacts/b1-management-children-v7-2026-10-31/differential.json",
+      "sha256": "6f00591a95fb7a9fb49b379676abb35c993fcdea5c60dc22cc707f9e34fe4670"
+    },
+    {
+      "path": "artifacts/b1-management-children-v7-2026-10-31/feedback.json",
+      "sha256": "c294dab8e32ad8ccd3e0f0951e52804ae6223f76045b076cdf8f37f3774afa7b"
+    },
+    {
+      "path": "artifacts/b1-management-children-v7-2026-10-31/visual-manifest.json",
+      "sha256": "68f1062e657cf3cbfe2d919250c60217deacc077fa4d1b558fe9bd24c92b1db2"
+    },
+    {
+      "path": "artifacts/b1-management-children-v7-2026-10-31/visual-review-bound/review.json",
+      "sha256": "422931da8398f24920f92ab81aac49a43879b5c14df36878f1857ea9266f10b6"
+    },
+    {
+      "path": "artifacts/b1-management-children-v7-2026-10-31/viewer-check.json",
+      "sha256": "53dcf1f37d5fa2bbf7924b223d7896588e386f2aa3407af0390675a69635890f"
+    },
+    {
+      "path": "artifacts/b1-management-children-v7-2026-10-31/impact.json",
+      "sha256": "8011382ff9f4d21c3a8d9443449bcd1c2c5ffc176893a80b0526bafaadb20f10"
+    }
+  ],
+  "delta": {
+    "scope": [
+      "P-05",
+      "P-06",
+      "P-11",
+      "P-12"
+    ],
+    "material": "Existing v7 bg/ink/rim/shadow aliases;common v7 formulas unchanged",
+    "backupSize": "36px,label width+6px12px padding,no long minimum;manual target remains44px",
+    "spacing": "12px input/import gap",
+    "ownersChanged": false,
+    "templatesAdaptersStorageGeometryUnchanged": true,
+    "newStylePhase": false,
+    "newImportant": false,
+    "newDependency": false,
+    "pcSelectedHoverFallback": "Selected/inactive retain distinct original fallback paint"
+  },
+  "validation": {
+    "browser": "Chrome156.0.8078.76",
+    "focusedContracts": 2,
+    "geometryContexts": 6,
+    "palette": "blue/mono/rose actual preview/save/cancel in2themes/2children;active tab text/underline checked",
+    "labelContrast": {
+      "samples": 18,
+      "min": 6.411401198258359,
+      "threshold": 4.5
+    },
+    "differential": {
+      "freshContexts": 8,
+      "eventStatePairs": 64,
+      "pcExactAppearancePairs": 22,
+      "differences": 0,
+      "syntheticJsonAndFileMerge": true,
+      "invalidFormatRejection": true
+    },
+    "feedback": {
+      "visibleSamples": 8,
+      "themes": 2,
+      "syntheticFailureRetry": true,
+      "delayedDisabled": true
+    },
+    "visual": {
+      "cases": 4,
+      "status": "DIFFERENCES_REQUIRE_REVIEW",
+      "referenceFidelity": "REVIEWED",
+      "productApproved": false,
+      "judgement": "Intentional legacy-to-v7 material/grouping changes;not a pixel pass or user approval"
+    },
+    "viewer": {
+      "decoded": 8,
+      "zoom": true
+    },
+    "staticReview": "Independent read-only source review:no actionable finding;browser checks remain separate",
+    "architecture": "Existing owners and effective map retained;live links check passed",
+    "buildArtifacts": "Both rebuilt at existing versions;release verification passed"
+  },
+  "impact": {
+    "resolver": "Conservative acceptance/proof-runtime fallback for shared presenter/harness and unmapped new test",
+    "actual": "Two child CSS consumers and optional Mobile aliases only;UI/function/geometry files unchanged",
+    "omissions": "No unrelated full product/PC/filter/network/writer/128-UI suites;formal acceptance remains UNKNOWN"
+  },
+  "limits": [
+    "Synthetic source injection,not actual extension/device/account or live-site writes",
+    "980×2306 sample is layout dimensions only;390 is stress",
+    "OS clipboard/export/native file dialogs not exercised;in-memory file imports only",
+    "Other legacy menu/settings/selection families remain pending"
+  ],
+  "nextAction": "b1-menu-selection-size-v7-preflight",
+  "hashMode": "Canonical LF for tracked text;raw image/runtime bytes"
+}

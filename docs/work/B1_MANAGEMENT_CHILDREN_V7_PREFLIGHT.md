@@ -1,6 +1,6 @@
 # Management children: v7 preflight
 
-2026-10-31. Source base383208e1;guarded Mobile7E824AD3. **READ_ONLY_PREFLIGHT_COMPLETE / IMPLEMENTATION_PENDING**. Mode:Operate. P-05/P-06/P-11/P-12 only. Product,fixtures,harness,stored settings,PC and release artifacts are unchanged.
+2026-10-31. Source base383208e1;guarded Mobile7E824AD3. **READ_ONLY_PREFLIGHT_COMPLETE / IMPLEMENTATION_PENDING at this preflight**. Subsequent implementation is recorded in [B1_MANAGEMENT_CHILDREN_V7_IMPLEMENTATION.md](B1_MANAGEMENT_CHILDREN_V7_IMPLEMENTATION.md);its current artifact/receipt supersede this preflight's pending state. Mode:Operate. P-05/P-06/P-11/P-12 only. Product,fixtures,harness,stored settings,PC and release artifacts were unchanged by this preflight.
 
 ## Current anatomy and findings
 
@@ -34,6 +34,15 @@ The initial short-screen snapshot has3 offscreen action centers:UID close/submit
 This is read-only preparation,not visual acceptance or new functionality certification. No real add/save/import/export/clipboard/file picker/account/device/extension job,full product suite,PC suite or rebuild ran. The980×2306 sample reproduces layout dimensions only;it does not reproduce the measured screen/DPR/input/visual scale. Real-device/account/native OS and existing full-UI gaps remain separate.
 
 ## Next bounded implementation and relevant checks
+
+Implementation plan2026-10-31:execute inline through the existing owners;the user's continuation authorizes the described equivalent-family adaptation. No new composition choice is pending.
+
+User refinement during implementation:the two backup primaries look too large. Keep this compact utility form's painted actions near36px high and sized from label+padding,without a long fixed minimum. Retain at least36px positive targets,the original file chooser and visible import-input gap. This size adapts the backup role;manual form and unrelated v7 controls need no automatic size change.
+
+- [x] Freeze current Mobile/PC controls;add failing child material/tab/action-gap contracts in testbed/ui-owned-management-children-v7-contract.mjs and register focused tests in testbed/run-tests.mjs.
+- [x] Modify only child-scoped declarations in src/targets/shared/settings-presenter.js and optional values in src/targets/mobile/theme-material-values.js. Keep templates/adapters/UiPort/geometry/backup behavior unchanged;retain original PC fallback values.
+- [x] Rebuild affected artifacts at existing versions;run focused child contracts,representative real palette preview/save/cancel/contrast,synthetic manual/backup behavior and separate-context Mobile semantics/PC appearance comparison. Inspect before/after whole/detail and short/narrow captures.
+- Checkpoint handoff:record final evidence and one next family,review exact diff,then use only the authorized development branch. No full unrelated product matrix. Exact publication/CI disposition remains in the checkpoint record,not this checklist.
 
 Implement these two child consumers together,then rebuild affected targets at existing versions. Reuse existing personal-input/conditional/management fixtures and exact source guard. Inspect actual diff before choosing tests:
 

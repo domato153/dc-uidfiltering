@@ -152,6 +152,34 @@ function __dcufBuildB1MaterialCss(ROOT_ATTRIBUTE) {
             --dcuf-management-primary-rim: var(--dcuf-v7-primary-rim);
             --dcuf-management-primary-shadow: var(--dcuf-v7-primary-shadow);
             --dcuf-management-resize-clearance: 44px;
+            /* Equivalent management children consume the same v7 roles.
+               Shared presenter fallbacks remain the PC appearance. */
+            --dcuf-child-primary-bg: var(--dcuf-v7-primary-bg);
+            --dcuf-child-primary-ink: var(--dcuf-v7-primary-ink);
+            --dcuf-child-primary-rim: var(--dcuf-v7-primary-rim);
+            --dcuf-child-primary-shadow: var(--dcuf-v7-primary-shadow);
+            --dcuf-child-primary-width: 118px;
+            --dcuf-child-backup-primary-width: auto;
+            --dcuf-child-backup-primary-height: 36px;
+            --dcuf-child-backup-primary-padding: 6px 12px;
+            --dcuf-child-control-radius: 10px;
+            --dcuf-child-control-weight: 650;
+            --dcuf-child-quiet-bg: transparent;
+            --dcuf-child-quiet-rim: transparent;
+            --dcuf-child-quiet-shadow: none;
+            --dcuf-child-quiet-radius: 0;
+            --dcuf-child-action-hover: var(--dcuf-v7-primary-bg);
+            --dcuf-child-actions-flex: 0 0 auto;
+            --dcuf-child-actions-justify: flex-end;
+            --dcuf-child-tabs-padding: 0;
+            --dcuf-child-tabs-border: 0;
+            --dcuf-child-tab-height: 44px;
+            --dcuf-child-tab-selected-shadow: inset 0 -2px 0 var(--dcuf-theme-accent);
+            --dcuf-child-section-padding: 4px 0 16px;
+            --dcuf-child-export-margin: 8px 0 0;
+            --dcuf-child-import-margin: 12px 0 0 auto;
+            --dcuf-child-import-display: block;
+            --dcuf-child-import-width: auto;
         }
 `;
 }
