@@ -202,6 +202,27 @@ function __dcufBuildB1MaterialCss(ROOT_ATTRIBUTE) {
             --dcuf-selection-row-radius: 0;
             --dcuf-selection-row-bg: transparent;
             --dcuf-selection-row-divider: inset 0 -1px 0 var(--dcuf-b1-line);
+            --dcuf-filter-reading: var(--dcuf-v7-reading);
+            --dcuf-filter-utility-width: auto;
+            --dcuf-filter-utility-display: inline-flex;
+            --dcuf-filter-segment-border: 0;
+            --dcuf-filter-segment-bg: color-mix(in srgb,var(--dcuf-theme-surface-input) 72%,var(--dcuf-theme-accent-soft));
+            --dcuf-filter-segment-radius: 10px;
+            --dcuf-filter-segment-item-bg: transparent;
+            --dcuf-filter-segment-shadow: none;
+            --dcuf-filter-segment-ink: var(--dcuf-theme-fg);
+            --dcuf-filter-segment-selected: color-mix(in srgb,var(--dcuf-theme-accent-soft) 75%,var(--dcuf-v7-reading));
+            --dcuf-filter-choice-padding: 8px;
+            --dcuf-filter-choice-min: 140px;
+            --dcuf-filter-choice-border: 0;
+            --dcuf-filter-choice-bg: transparent;
+            --dcuf-filter-choice-selected: var(--dcuf-filter-segment-selected);
+            --dcuf-filter-headtext-height: auto;
+            --dcuf-filter-manual-margin: 12px 0 0;
+            --dcuf-filter-clear-margin: 8px 0 16px;
+            --dcuf-filter-heading-margin: 16px 0 10px;
+            --dcuf-filter-rule-gap: 0;
+            --dcuf-filter-rule-padding: 8px;
         }
 `;
 }

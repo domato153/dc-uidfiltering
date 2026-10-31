@@ -2,22 +2,22 @@
 
 ## Current execution
 
-- Active plan: B1_MENU_SELECTION_SIZE_V7_IMPLEMENTATION.md closes scoped menu/selection/size v7. NEXT inspects filter settings/headtext/shortcut children before their adaptation.
+- Active plan: B1_FILTER_SETTINGS_V7_IMPLEMENTATION.md closes scoped filter/headtext/shortcut v7. NEXT inspects palette/convenience settings(S-09–S-12) before adapting their existing owners.
 - Workspace path: `.` (private prompt supplies exact worktree). Preserve debug.log unread/unstaged.
-- Active stage: `header-navigation` formal admission remains open. Menu/selection/size unit complete within recorded scope;other legacy settings/native children are not all v7. No registry promotion or deferred full guidebook.
-- Accepted visual preference: Actual memo light/current bright-dark details;transmitting chrome,stable reading area,plain auxiliaries and label-sized utility actions.36px is this compact family sample,not universal. Full-row menus/tabs and user-scaled FAB preserve their roles.
-- Source state: Source checkpoint base HEAD `1a9391cf6c077c6a841b41781ebe29fc4bf1a73b` on `codex/ui-port-boundary`. Candidate changes only shared settings CSS and optional Mobile values;original templates/adapters/UiPort/storage/geometry remain. Fresh checkpoint receipt owns publication/CI status.
-- Local-only state: `LOCAL_ONLY_EVIDENCE`;artifacts/b1-menu-selection-size-v7-2026-10-31 retains guarded final tests,differential and eight before/current pairs. Six curated current images and tracked result receipt retain scoped progress. Viewer loads one selected image.
-- Candidate fingerprint: `5a84e6289375aaa39055043eeb69db914a097ed9aea5736d1ad8fcf7d1fc1708`
-- Last current audit: PASS scoped final3 new+2 existing tests;6 geometry contexts,18 palette label samples min6.3408,original block/image-author/scale actions and8-context frozen/current comparison. Mobile/PC semantics and38 affected PC appearance observations match. Eight visual pairs reviewed with6 intentional changes,not beauty/user approval.
-- Current stage receipt: `verification/receipts/2026-10-31-b1-menu-selection-size-v7-implementation.json` SHA-256 `5D83CE784AF3A69C48A195278753F4AA7B43F6C56E815604F426B1B9DF670951`. Earlier8FE/07D preflight and other-family receipts remain historical/direct-scope evidence,not full qualification of current bytes.
-- Accepted baseline: Adopted memo/current bright-dark material reused by menu/selection/size. Drawer geometry remains;prompt gains glass,choices one reading group,save/block compact paired primary and cancel/reset plain. Trial dark-rose auxiliary contrast fixed with neutral body ink.
-- Current artifact: Mobile3.5.5 1AB7A9DD3B35ABF61634770F3EC7F96C98736096A88C262CDEEEFC7788F61027 root/dist/guard;PC1.9.9 28096A3FE4F3C48967E4246BBD808AA47095A28A76129267190BC5ED2480D7C0 root/dist/PC guard. Both rebuilt at existing versions;no version bump or official release.
-- Blockers: None for next read-only preflight. No owner/capability conflict;independent static review found no actionable issue.
-- Pending live checks: No new actual extension/device/account or live block/save claim. Synthetic surrounding article/toolbar is scaffolding.980×2306 is layout-only,390 stress. No image replies. Broad formal acceptance and other legacy-family migration remain separate.
+- Active stage: `header-navigation` formal admission remains open. S-01–S-08 implementation complete within recorded scope;other older settings/native children are not all v7. No registry promotion or deferred full guidebook.
+- Accepted visual preference: Actual memo/current bright-dark details;transmitting chrome,stable reading,plain label-sized utilities. Suitable option groups use one borderless softly rounded face and selected-only tint. This is a role-adapted direction,not a universal shape/radius/size mandate;focus/semantics remain.
+- Source state: Source checkpoint base HEAD `bbeaf5ca3c41359cb8af387291a3b9f33fc398ec` on `codex/ui-port-boundary`. Two CSS/value source files changed;original templates/adapters/UiPort/storage/key/geometry owners remain. Fresh checkpoint receipt owns publication/CI status.
+- Local-only state: `LOCAL_ONLY_EVIDENCE`;artifacts/b1-filter-settings-v7-2026-10-31 retains guarded focused tests,differential and ten before/current pairs. Ten current images and eight original preflight captures are tracked. Viewer loads one chosen image.
+- Candidate fingerprint: `d291fe11c376c9dcbce66e2ca6f5892a3314e34733ec478768dd88ece53c98d7`
+- Last current audit: PASS final2 focused registrations;7 geometry contexts,24 actual palette label samples min6.4114,original settings/headtext/shortcut actions in8-context frozen/current comparison.64 semantic pairs and32 affected PC appearance pairs match. Ten visual comparisons REVIEWED,not beauty/user approval.
+- Current stage receipt: `verification/receipts/2026-10-31-b1-filter-settings-v7-implementation.json` SHA-256 `D6FB03C0819FA7FD0C078237671626040F4833EAD0CD64C6AA165A68265D3B12`. Original1AB preflight remains anatomy history;other-family receipts retain their own direct scope rather than globally certifying current bytes.
+- Accepted baseline: Actual v7 detail now reaches filter/headtext/shortcut. One borderless proxy group,stable paper,paired primaries,quiet utilities and content-sized headtext. Short-label wrap was caught by image review,measured and repaired;long labels still wrap/scroll.
+- Current artifact: Mobile3.5.5 9BC0E122C519853CB9BAF2CC23B84B5E892EB7937E29EE47196331B08A037BBC root/dist/guard;PC1.9.9 B9DA2C375660A080FEFC9EA019E681115FABCAC1C554674CC47B81997F3D5837 root/dist/PC guard. Both rebuilt at existing versions;no official release/version bump.
+- Blockers: None for next preflight. No owner/capability conflict;independent static review found no substantive issue. Shared CSS bytes change on PC with observed fallback appearance retained.
+- Pending live checks: No new actual extension/device/account or real user-state claim.980×2306 is layout-only,390 stress. Original Escape empty-preview/nonclose retained;image comments have no replies. Broad formal admission,remaining older families and eventual guidebook discussion stay separate.
 
 ```dcuf-current-artifacts
-{"schemaVersion":1,"mobile":{"sha256":"1AB7A9DD3B35ABF61634770F3EC7F96C98736096A88C262CDEEEFC7788F61027"},"pc":{"sha256":"28096A3FE4F3C48967E4246BBD808AA47095A28A76129267190BC5ED2480D7C0"}}
+{"schemaVersion":1,"mobile":{"sha256":"9BC0E122C519853CB9BAF2CC23B84B5E892EB7937E29EE47196331B08A037BBC"},"pc":{"sha256":"B9DA2C375660A080FEFC9EA019E681115FABCAC1C554674CC47B81997F3D5837"}}
 ```
 
 ## Draft-complete checkpoint — 2026-10-21

@@ -1,5 +1,9 @@
 # Agent Maintenance Notes
 
+## Filter settings preflight:real switch targets and shortcut keys —2026-10-31
+
+The original .dcuf-switch-input is1px,transparent and pointer-none;the label/track is the positive hit target. Click that original associated label and assert the original input state,without force-click or a product CSS patch. Shortcut Escape stays in the key listener but shared formatShortcutKeys excludes nonmodifier keys longer than one character:preview is empty and the modal remains open. Preserve cancel/overlay close and parent pointer restoration;do not infer Escape-close from a generic modal convention. Immediate switch/headtext writes are synthetic-only in a preflight. B1_FILTER_SETTINGS_V7_PREFLIGHT.md retains original anatomy;B1_FILTER_SETTINGS_V7_IMPLEMENTATION.md owns the scoped result. Grid padding can reduce short-label text space even when roots/hits pass:434px group and134.66px columns left89.66px text. Mobile140px minimum yields two205.5px columns and one-line92.5px text;long labels still wrap. Proxy data attributes are strings but original persisted values are numeric0/1/2;compare the actual numeric contract.
+
 ## V7 menu selection sizing and transmitting quiet ink —2026-10-31
 
 Reuse optional Mobile aliases inside the existing settings presenter;do not repurpose original FAB scale or full-row menu geometry to apply ordinary label sizing. The selection prompt had opaque legacy paint while author/size panels already had compatible glass. Alias the existing chrome roles rather than add a new global correction. Quiet text over transmitting chrome needs actual contextual contrast:dark-rose accent cancel measured2.798;normal body ink fixes it without dropping the palette-linked icon/focus/primary. Current18 label samples reach6.3408 minimum. Keep original unblock/danger roles separate.

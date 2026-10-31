@@ -167,14 +167,14 @@ V-02–V-08의 두 root는 B1_PREVIEW_DRAFT_FINISH.md에서 마감했다. B1_INT
 
 | ID | UI | 여는 방법·조건 | 펼쳐볼 상태 | 근거 | 검토 상태 |
 | --- | --- | --- | --- | --- | --- |
-| S-01 | 글·댓글 필터 설정 전체 패널 | FAB/확장 메뉴/단축키 | 기본/전체 필터 끄기/개념글 제외, 내부 스크롤·저장·닫기·재열기 | SETTINGS | 소유 패널/재질 범위 → B1_GLASS_TRANSMISSION.md; 모든 자식 완료 아님 |
-| S-02 | 글+댓글 합 기준값 | 설정 기준값 영역 | 빈/0/양수·경계값·긴 숫자, 활성/비활성 | SETTINGS | 소유 패널/재질 범위 → B1_GLASS_TRANSMISSION.md; 모든 자식 완료 아님 |
-| S-03 | 유동·통신사·우회 IP 제어 | 설정 네트워크 영역 | 스위치 각각, 우회 모드3개와 안내·선택 상태 | SETTINGS | 소유 패널/재질 범위 → B1_GLASS_TRANSMISSION.md; 모든 자식 완료 아님 |
-| S-04 | 글/댓글 비율 제어 | 비율 필터 켜기 | 꺼짐/켜짐, 최소/최대 비율·건너뛰기 기준·안내, 유효/빈 값 | SETTINGS | 소유 패널/재질 범위 → B1_GLASS_TRANSMISSION.md; 모든 자식 완료 아님 |
-| S-05 | 펌 차단·추가 설정 연결 | 설정 하단 | 펌 스위치·말머리 관리 진입, 긴 설명·비활성 상태 | SETTINGS | 소유 패널/재질 범위 → B1_GLASS_TRANSMISSION.md; 모든 자식 완료 아님 |
-| S-06 | 단축키 변경 모달 | 설정 하단 변경 | 입력 대기/조합 키·미리보기/유효하지 않은 입력, 변경·취소·Escape | SETTINGS | 명명된 단축키/말머리 입력 자식 → B1_OWNED_INPUT_CHILDREN.md; 미관·키 변형 전수 판정 아님 |
-| S-07 | 갤러리별 말머리 관리 | 필터 설정 → 말머리 관리 | 현재 갤러리 키, 발견한 항목·선택·전체 해제, 항목 없음 | SETTINGS | 명명된 단축키/말머리 입력 자식 → B1_OWNED_INPUT_CHILDREN.md; 미관·키 변형 전수 판정 아님 |
-| S-08 | 말머리 직접 추가·다른 갤러리 규칙 | 같은 관리창 하단 | 입력/추가·긴 말머리·저장된 다른 갤러리/삭제, 갤러리 판별 실패로 비활성 | SETTINGS | 명명된 단축키/말머리 입력 자식 → B1_OWNED_INPUT_CHILDREN.md; 미관·키 변형 전수 판정 아님 |
+| S-01 | 글·댓글 필터 설정 전체 패널 | FAB/확장 메뉴/단축키 | 기본/전체 필터 끄기/개념글 제외, 내부 스크롤·저장·닫기·재열기 | SETTINGS | v7 scoped implementation → B1_FILTER_SETTINGS_V7_IMPLEMENTATION.md;original actions/disabled/long/empty/unidentified states retained. All-key/account/device qualification remains separate |
+| S-02 | 글+댓글 합 기준값 | 설정 기준값 영역 | 빈/0/양수·경계값·긴 숫자, 활성/비활성 | SETTINGS | v7 scoped implementation → B1_FILTER_SETTINGS_V7_IMPLEMENTATION.md;original actions/disabled/long/empty/unidentified states retained. All-key/account/device qualification remains separate |
+| S-03 | 유동·통신사·우회 IP 제어 | 설정 네트워크 영역 | 스위치 각각, 우회 모드3개와 안내·선택 상태 | SETTINGS | v7 scoped implementation → B1_FILTER_SETTINGS_V7_IMPLEMENTATION.md;original actions/disabled/long/empty/unidentified states retained. All-key/account/device qualification remains separate |
+| S-04 | 글/댓글 비율 제어 | 비율 필터 켜기 | 꺼짐/켜짐, 최소/최대 비율·건너뛰기 기준·안내, 유효/빈 값 | SETTINGS | v7 scoped implementation → B1_FILTER_SETTINGS_V7_IMPLEMENTATION.md;original actions/disabled/long/empty/unidentified states retained. All-key/account/device qualification remains separate |
+| S-05 | 펌 차단·추가 설정 연결 | 설정 하단 | 펌 스위치·말머리 관리 진입, 긴 설명·비활성 상태 | SETTINGS | v7 scoped implementation → B1_FILTER_SETTINGS_V7_IMPLEMENTATION.md;original actions/disabled/long/empty/unidentified states retained. All-key/account/device qualification remains separate |
+| S-06 | 단축키 변경 모달 | 설정 하단 변경 | 입력 대기/조합 키·미리보기/유효하지 않은 입력, 변경·취소·Escape | SETTINGS | v7 scoped implementation → B1_FILTER_SETTINGS_V7_IMPLEMENTATION.md;original actions/disabled/long/empty/unidentified states retained. All-key/account/device qualification remains separate |
+| S-07 | 갤러리별 말머리 관리 | 필터 설정 → 말머리 관리 | 현재 갤러리 키, 발견한 항목·선택·전체 해제, 항목 없음 | SETTINGS | v7 scoped implementation → B1_FILTER_SETTINGS_V7_IMPLEMENTATION.md;original actions/disabled/long/empty/unidentified states retained. All-key/account/device qualification remains separate |
+| S-08 | 말머리 직접 추가·다른 갤러리 규칙 | 같은 관리창 하단 | 입력/추가·긴 말머리·저장된 다른 갤러리/삭제, 갤러리 판별 실패로 비활성 | SETTINGS | v7 scoped implementation → B1_FILTER_SETTINGS_V7_IMPLEMENTATION.md;original actions/disabled/long/empty/unidentified states retained. All-key/account/device qualification remains separate |
 | S-09 | 색상 프리셋 선택창 | 확장 메뉴 UI 색상 설정 |14개 옵션 각각·현재 체크, 전체 UI 미리보기, 기본값/취소/저장 | THEME | 14색/미리보기 및 패널 범위 → B1_GLASS_TRANSMISSION.md + B1_CONTROL_MATERIAL.md |
 | S-10 | 색상 저장 중/실패 | 색상 저장의 제어된 지연/거부 | 버튼 비활성·오류 안내·재시도·포커스 복귀, 늦은 초기 읽기 후 복원 | THEME | 저장 중/실패/재시도 범위 → B1_OWNED_CONDITIONAL_FINISH.md; 모든 플랫폼 실패 별도 |
 | S-11 | 모바일 편의기능 설정 | 확장 메뉴 | 마지막 글 표시·초안 저장/복구·글 미리보기 스위치 각각, 독립된 마스터 의미 | TOOLS | 편의 설정 root는 B1 적용 → B1_GLASS_TRANSMISSION.md; 미리보기/초안은 별도 V-02–08 수정 필요 |
