@@ -2,22 +2,22 @@
 
 ## Current execution
 
-- Active plan: B1_OWNED_MANAGEMENT_V7_IMPLEMENTATION.md owns completed scoped management implementation. NEXT inspects manual-add/backup children under the new parent;old proposal-review wait is superseded by the user's implementation request.
+- Active plan: B1_DARK_CONTROL_REFINEMENT.md owns the completed bright-dark control and memo-row repair. NEXT returns to management manual-add/backup child preflight;old dark gloss/flat/dim trials do not revive.
 - Workspace path: `.` (private prompt supplies exact worktree). Preserve debug.log unread/unstaged.
-- Active stage: `header-navigation` formal admission remains open;this management unit is not registry promotion or whole-UI certification. C-07 N/A.
-- Accepted visual preference: Actual memo fine detail;generated images guide grouping/geometry. Glass chrome and stable reading/editing paper remain separate;small auxiliaries plain at rest.
-- Source state: Source checkpoint base HEAD `6c677e1339472a5bfb7aa39f96cbb0d41220429e` on `codex/ui-port-boundary`. Management-only optional Mobile values in shared presenter,existing adapter default geometry and targeted tests changed. PC rebuilt with preserved fallbacks. Authorized exact-path checkpoint follows this validated unit;fresh Git/checkpoint receipt owns final publication disposition.
-- Local-only state: `LOCAL_ONLY_EVIDENCE`;artifacts/b1-owned-v7-implementation-2026-10-31/ holds guarded reports,frozen controls,A/B comparison and visual report. Curated actual light/dark PNGs are tracked. One browser at a time;no credentials/real save/account actions.
-- Candidate fingerprint: `fac71877e60d30090acb9aeb5e92979384f16cee919d8d29662ff8f2ab850265`
-- Last current audit: PASS for scoped implementation validation:6 Mobile/1 PC registered tests,5 composition contexts,14-palette×2-theme preview/save/cancel,36 semantic comparisons and18 exact PC appearance comparisons.150-row/minimum-resize positive-hit probe passed. Two visual diagnostic pairs REVIEWED;no automatic beauty/baseline/whole-UI approval.
-- Current stage receipt: `verification/receipts/2026-10-31-b1-owned-management-v7-implementation.json` SHA-256 `2AACE3947376F1F3FF0915CD5ECF93AE13C919BFF3352C715E8143EDDF7ACE02` binds B65001B9/FEAC candidate and exact input/evidence hashes. Prior preflight receipt is historical;its product-unchanged/proposal-pending status no longer describes current source.
-- Accepted baseline: Actual memo039A,list-header79DD,article/comments6434/native2D2A and writer331336FE retained within their original scopes. User authorized management composition with actual memo material;current implementation aesthetic adoption remains for user review.
-- Current artifact: Mobile3.5.5 B65001B97EBC8AE6D7B4C3DCD956B4BC8E35B3901D2A8CE951883F2A4DA4FEEA root/dist/guard;PC1.9.9 FEACBA669839690F398A1540EF925C71C078BD646C6C6435DD0EC639585539A3 root/dist. No version/official release change.
-- Blockers: None for this scoped implementation. Manual-add/backup/menu/settings visuals are separate remaining slices;formal/account/device gaps remain distinct.
-- Pending live checks: Current candidate actual extension/device,authenticated paths and all-popup certification remain outside this unit.980×2306 is adopted-layout proxy;390 is stress. NEXT is read-only child preflight,not full-suite recapture. Image comments have no replies.
+- Active stage: `header-navigation` formal admission remains open;this scoped visual refinement is not registry promotion or whole-UI certification. C-07 N/A.
+- Accepted visual preference: User2026-10-31 prefers brighter glass-like dark buttons to the dim treatment. Keep actual memo light/composition detail;new dark primary pairs a pale tinted face with dark ink. Rows use one selection surface;auxiliary actions remain plain at rest. Current images are evidence,not automatically approved goldens.
+- Source state: Source checkpoint base HEAD `5d69c6df6b64af71677e0cafda88a2d06c754019` on `codex/ui-port-boundary`. Three existing Mobile material/presenter owners and focused tests changed. Two necessary exact candidate fragments updated;historical controls unchanged. PC inputs/bytes unchanged. Fresh Git/checkpoint receipt owns final publication disposition.
+- Local-only state: `LOCAL_ONLY_EVIDENCE`;artifacts/b1-dark-refinement-2026-10-31/ holds frozenB650 control,classified trials,final reports and18 visual pairs. Curated memo light/dark and button comparison are tracked. One browser job at a time;no credentials or real-write actions.
+- Candidate fingerprint: `ea839ed2134a02a72d14e213988074d8cf244405c71a74abf8c7250f248cdcb1`
+- Last current audit: PASS for scoped7E824AD3 implementation:7 affected registered tests,14-palette×2-theme controls/contrast,12 identical native-control/value snapshots,all6 light-primary paints unchanged and5 non-memo whole-light PNGs byte-identical.18 visual pairs REVIEWED;no automated aesthetic/whole-UI approval.
+- Current stage receipt: `verification/receipts/2026-10-31-b1-dark-control-refinement.json` SHA-256 `04622EEAAB80A2390749C47E3A1222C3DBF291DCDD3C60756DF68BBB264D569F` binds exact source/artifact/evidence. B650 management receipt remains historical for its original scope;F4/3077 trials are not accepted material.
+- Accepted baseline: Adopted actual memo composition/light finish,list79DD,article/comments6434/native2D2A,writer331 and managementB650 retain their prior scopes. Current bright-dark paired-ink/row refinement7E824AD3 follows the user's updated direction;the old BB393279 dark finish is superseded,not a pending task.
+- Current artifact: Mobile3.5.5 7E824AD336F6B6173487FB24052D2586184F4F5D169C01BC036D1FDBA9092E7D root/dist/guard;PC1.9.9 FEACBA669839690F398A1540EF925C71C078BD646C6C6435DD0EC639585539A3 root/dist unchanged. No version/official release change.
+- Blockers: None for the scoped refinement. Remaining manual-add/backup/menu/settings visual migration and formal/account/device gaps stay separate.
+- Pending live checks: Current candidate actual extension/device/account and full-popup qualification remain outside this unit.980×2306 is adopted-layout proxy;390 is stress. NEXT is read-only child preflight,not a full-suite recapture. Image comments have no replies.
 
 ```dcuf-current-artifacts
-{"schemaVersion":1,"mobile":{"sha256":"B65001B97EBC8AE6D7B4C3DCD956B4BC8E35B3901D2A8CE951883F2A4DA4FEEA"},"pc":{"sha256":"FEACBA669839690F398A1540EF925C71C078BD646C6C6435DD0EC639585539A3"}}
+{"schemaVersion":1,"mobile":{"sha256":"7E824AD336F6B6173487FB24052D2586184F4F5D169C01BC036D1FDBA9092E7D"},"pc":{"sha256":"FEACBA669839690F398A1540EF925C71C078BD646C6C6435DD0EC639585539A3"}}
 ```
 
 ## Draft-complete checkpoint — 2026-10-21

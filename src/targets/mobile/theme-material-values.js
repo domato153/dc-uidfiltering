@@ -22,8 +22,11 @@ function __dcufBuildB1MaterialCss(ROOT_ATTRIBUTE) {
             --dcuf-b1-line: color-mix(in srgb, var(--dcuf-theme-border) 55%, var(--dcuf-b1-paper));
             --dcuf-b1-shadow: 0 12px 32px #2e5a5f12, 0 1px 3px #3651560b;
             --dcuf-control-highlight: #ffffff38;
+            --dcuf-control-glaze: linear-gradient(180deg, #ffffff20, #ffffff06 14%, #ffffff00 28%, #0000000c);
             --dcuf-control-depth: #244d5514;
             --dcuf-control-opacity: 82%;
+            --dcuf-v7-primary-glaze: linear-gradient(180deg, var(--dcuf-control-highlight), transparent 68%);
+            --dcuf-v7-primary-shadow: inset 0 1px 0 var(--dcuf-b1-rim), 0 3px 7px #152e3412;
         }
         html[${ROOT_ATTRIBUTE}].dc-filter-dark-mode,
         html[${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode {
@@ -38,9 +41,15 @@ function __dcufBuildB1MaterialCss(ROOT_ATTRIBUTE) {
             --dcuf-b1-rim: color-mix(in srgb, var(--dcuf-theme-fg) 9%, transparent);
             --dcuf-b1-line: color-mix(in srgb, var(--dcuf-theme-fg) 5%, var(--dcuf-b1-paper));
             --dcuf-b1-shadow: 0 14px 34px #0003, 0 1px 2px #0003;
-            --dcuf-control-highlight: #ffffff24;
-            --dcuf-control-depth: #00000038;
+            --dcuf-control-highlight: #ffffff08;
+            --dcuf-control-glaze: linear-gradient(180deg, var(--dcuf-control-highlight), transparent 40%);
+            --dcuf-control-depth: #00000024;
             --dcuf-control-opacity: 88%;
+            --dcuf-v7-dark-primary-fill: color-mix(in srgb, color-mix(in srgb, #d7e2e2 76%, var(--dcuf-theme-accent)) 92%, transparent);
+            --dcuf-v7-dark-primary-ink: color-mix(in srgb, #1b3033 86%, var(--dcuf-theme-accent-strong));
+            --dcuf-v7-primary-glaze: linear-gradient(180deg, #ffffff2e, transparent 68%);
+            --dcuf-v7-primary-rim-accent: 28%;
+            --dcuf-v7-primary-shadow: inset 0 1px 0 #ffffff61, inset 0 -1px 0 #102d321a, 0 3px 7px #00000026;
         }
         html[${ROOT_ATTRIBUTE}],
         html[${ROOT_ATTRIBUTE}].dc-filter-dark-mode,
@@ -77,7 +86,6 @@ function __dcufBuildB1MaterialCss(ROOT_ATTRIBUTE) {
                positioning and state. No filtered native-popup ancestors. */
             /* Keep the specular edge above the label; dense primary tint
                preserves small white-label contrast in lighter palettes. */
-            --dcuf-control-glaze: linear-gradient(180deg, #ffffff20, #ffffff06 14%, #ffffff00 28%, #0000000c);
             --dcuf-control-primary-fill: var(--dcuf-theme-accent-strong);
             --dcuf-control-secondary-fill: color-mix(in srgb, var(--dcuf-b1-paper) var(--dcuf-control-opacity), transparent);
             --dcuf-control-selected-fill: color-mix(in srgb, var(--dcuf-theme-accent-soft) 90%, transparent);
@@ -94,11 +102,10 @@ function __dcufBuildB1MaterialCss(ROOT_ATTRIBUTE) {
            state changes must resolve composed palette values at that scope. */
         html[${ROOT_ATTRIBUTE}], html[${ROOT_ATTRIBUTE}] body {
             --dcuf-v7-reading: color-mix(in srgb, var(--dcuf-theme-fg) 7%, var(--dcuf-b1-paper));
-            --dcuf-v7-primary-fill: color-mix(in srgb, var(--dcuf-b1-paper) 76%, var(--dcuf-theme-accent));
-            --dcuf-v7-primary-ink: color-mix(in srgb, var(--dcuf-theme-fg) 86%, var(--dcuf-theme-accent-strong));
-            --dcuf-v7-primary-bg: linear-gradient(180deg, var(--dcuf-control-highlight), transparent 68%), var(--dcuf-v7-primary-fill);
-            --dcuf-v7-primary-rim: color-mix(in srgb, var(--dcuf-theme-accent) 48%, var(--dcuf-b1-rim));
-            --dcuf-v7-primary-shadow: inset 0 1px 0 var(--dcuf-b1-rim), 0 3px 7px #152e3412;
+            --dcuf-v7-primary-fill: var(--dcuf-v7-dark-primary-fill,color-mix(in srgb, var(--dcuf-b1-paper) 76%, var(--dcuf-theme-accent)));
+            --dcuf-v7-primary-ink: var(--dcuf-v7-dark-primary-ink,color-mix(in srgb, var(--dcuf-theme-fg) 86%, var(--dcuf-theme-accent-strong)));
+            --dcuf-v7-primary-bg: var(--dcuf-v7-primary-glaze), var(--dcuf-v7-primary-fill);
+            --dcuf-v7-primary-rim: color-mix(in srgb, var(--dcuf-theme-accent) var(--dcuf-v7-primary-rim-accent,48%), var(--dcuf-b1-rim));
             /* Optional management values; shared consumers keep PC fallbacks. */
             --dcuf-management-default-width: 720;
             --dcuf-management-default-height: 560;

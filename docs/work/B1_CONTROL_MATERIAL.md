@@ -1,5 +1,7 @@
 # B1 common control material implementation
 
+Current dark refinement2026-10-31:B1_DARK_CONTROL_REFINEMENT.md owns the brighter paired-ink dark primary and memo row/auxiliary repair. Actual light treatment remains unchanged;old dark gloss and rejected flat/dim trials are not the current reference. Existing owners consume shared roles;no global button repaint or state/geometry owner change.
+
 Current detail authority2026-10-30: the adopted actual memo workbench039A/current-preserved v7 implementation,not generated buttons. UI_REFERENCE_GUARD.md owns the role hierarchy. Reuse its real shared material/ink/rim/shadow/type/icon/control-state finish;page/popup shape,density,elevation and background are adapted to use. Generated article/composer images clarify composition/geometry only and cannot flatten/degrade the adopted finish. Earlier rollout sections below retain their own historical/current-unmigrated scope.
 
 User direction2026-10-26: proceed with writer v3's restrained glass direction, improve list controls too, and use the same material language for **all button families**. Shapes/sizes/layout remain per surface except the selected writer's compact footer. V3 is the selected material direction, not permission to invent raster controls or copy imperfect text. Original/native/published UI remains the functional/coverage control.

@@ -48,6 +48,7 @@ import { runArticleV7Contract, runArticleV7PaletteContract, runArticleV7Contrast
 import { runArticleAttachmentContract, runRecommendationSeparatorContract } from './ui-article-attachment-contract.mjs';
 import {runWriterV7Contract,runWriterV7PaletteContract} from './ui-b1-write-v7-contract.mjs';
 import {runManagementV7Contract,runManagementV7PaletteContract} from './ui-owned-management-v7-contract.mjs';
+import {runDarkMaterialFamilyContract,runMemoRowSurfaceContract} from './ui-b1-dark-material-contract.mjs';
 
 const args = new Set(process.argv.slice(2));
 const selectedGroup = process.argv.includes('--group') ? process.argv[process.argv.indexOf('--group') + 1] : null;
@@ -101,6 +102,8 @@ mobileTest('live native controls: palette category sprites comment and action ow
 mobileTest('B1 content: native picker isolation glass and original input', 'functional', runB1ContentContract);
 mobileTest('B1 glass: ordinary neutral backing through actual scrim', 'functional', runOwnedGlassContract);
 mobileTest('B1 management v7: composition and original unsaved controls', 'functional', runManagementV7Contract);
+mobileTest('B1 dark refinement: shared material consumers', 'functional', runDarkMaterialFamilyContract);
+mobileTest('B1 dark refinement: memo rows and quiet auxiliaries', 'functional', runMemoRowSurfaceContract);
 mobileTest('B1 management v7: palette preview save and cancel', 'functional', runManagementV7PaletteContract);
 mobileTest('B1 owned panels: readable conditional feedback and nested state', 'functional', runOwnedConditionalContract);
 mobileTest('B1 owned inputs: shortcut headtext author backup and size children', 'functional', runOwnedInputContract);

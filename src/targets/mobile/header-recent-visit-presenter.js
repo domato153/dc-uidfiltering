@@ -13,7 +13,7 @@
         ${selectors.title},
         ${selectors.open},
         ${selectors.activeLink} {
-            color: var(--dcuf-theme-accent-ink) !important;
+            color: var(--dcuf-recent-control-ink,var(--dcuf-theme-accent-ink)) !important;
         }
 `;
     }
@@ -55,7 +55,7 @@
         ${selectors.item} { white-space: nowrap; flex-shrink: 0; }
         ${selectors.list} a { color: var(--dcuf-theme-fg-muted); text-decoration: none; }
         ${selectors.menuControls} { display: none !important; align-items: center; justify-content: center; flex: 0 0 auto; position: static !important; inset: auto !important; transform: none; margin: 0 !important; padding: 0 4px; overflow: visible; }
-        ${selectors.trigger} { display: inline-flex !important; gap: 7px; width: 116px; min-height: 38px; border: 1px solid var(--dcuf-b1-rim, var(--dcuf-theme-border)); border-radius: 10px; background: var(--dcuf-v7-primary-bg); box-shadow: var(--dcuf-v7-primary-shadow); color: var(--dcuf-v7-primary-ink); font: 600 12px/1.3 system-ui, sans-serif; }
+        ${selectors.trigger} { --dcuf-recent-control-ink: var(--dcuf-v7-dark-primary-ink,var(--dcuf-theme-accent-ink)); display: inline-flex !important; gap: 7px; width: 116px; min-height: 38px; border: 1px solid var(--dcuf-b1-rim, var(--dcuf-theme-border)); border-radius: 10px; background: var(--dcuf-v7-primary-bg); box-shadow: var(--dcuf-v7-primary-shadow); color: var(--dcuf-v7-primary-ink); font: 600 12px/1.3 system-ui, sans-serif; }
         ${selectors.trigger}::before { content: "◷ 최근 방문"; }
         ${selectors.trigger}::after { content: ""; display: block; flex: 0 0 12px; width: 12px; height: 12px; background: currentColor; mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='m4 6 4 4 4-4' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat; }
         ${selectors.triggerDecoration} { display: none; }

@@ -40,6 +40,7 @@ for (const [id,from,to] of [
     ['header-shell-presenter','data-dcuf-header-shell-role="search-layer"','data-dcuf-header-shell-role="unregistered-search-layer"'],
     ['gallery-page-head-presenter','data-dcuf-gallery-page-head-role="settings-layer"','data-dcuf-gallery-page-head-role="unregistered-settings-layer"'],
     ['header-drawer-presenter','top: 50% !important;','top: 51% !important;'],
+    ['header-recent-visit-presenter','--dcuf-recent-control-ink:','--dcuf-unapproved-recent-ink:'],
 ]) {
     assert.ok(currentSources[id].includes(from));
     assert.throws(()=>restoreConcept01HeaderVisualDelta(currentSources[id].replace(from,to)), 'Unregistered P2 delta must fail normalization');

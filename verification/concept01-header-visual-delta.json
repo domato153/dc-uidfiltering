@@ -86,7 +86,7 @@
           "control": "    // Hoisted to preserve the existing early palette injection phase.\n"
         },
         {
-          "candidate": "        ${selectors.activeLink} {\n            color: var(--dcuf-theme-accent-ink) !important;\n        }\n",
+          "candidate": "        ${selectors.activeLink} {\n            color: var(--dcuf-recent-control-ink,var(--dcuf-theme-accent-ink)) !important;\n        }\n",
           "control": "        ${selectors.activeLink} {\n            color: var(--dcuf-theme-accent) !important;\n        }\n"
         },
         {
