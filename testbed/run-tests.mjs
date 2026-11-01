@@ -51,6 +51,7 @@ import {runManagementV7Contract,runManagementV7PaletteContract} from './ui-owned
 import {runManagementChildrenV7Contract,runManagementChildrenV7PaletteContract} from './ui-owned-management-children-v7-contract.mjs';
 import {runMenuSelectionV7Contract,runMenuV7PaletteContract,runMenuV7OriginalActionsContract} from './ui-owned-menu-selection-v7-contract.mjs';
 import {runFilterV7Contract,runFilterV7PaletteContract} from './ui-filter-settings-v7-contract.mjs';
+import {runPaletteConvenienceV7Contract,runPaletteV7ColorContract} from './ui-palette-convenience-v7-contract.mjs';
 import {runDarkMaterialFamilyContract,runMemoRowSurfaceContract} from './ui-b1-dark-material-contract.mjs';
 
 const args = new Set(process.argv.slice(2));
@@ -112,6 +113,8 @@ mobileTest('B1 menu v7: palette preview save and cancel', 'functional', runMenuV
 mobileTest('B1 menu v7: original block image-author and scale actions', 'functional', runMenuV7OriginalActionsContract);
 mobileTest('B1 filter v7: grouped options material and geometry', 'functional', runFilterV7Contract);
 mobileTest('B1 filter v7: palette preview save and cancel', 'functional', runFilterV7PaletteContract);
+mobileTest('B1 palette convenience v7: material groups clearance and lazy styles', 'functional', runPaletteConvenienceV7Contract);
+mobileTest('B1 palette convenience v7: fourteen palettes and readable roles', 'functional', runPaletteV7ColorContract);
 mobileTest('B1 dark refinement: shared material consumers', 'functional', runDarkMaterialFamilyContract);
 mobileTest('B1 dark refinement: memo rows and quiet auxiliaries', 'functional', runMemoRowSurfaceContract);
 mobileTest('B1 management v7: palette preview save and cancel', 'functional', runManagementV7PaletteContract);

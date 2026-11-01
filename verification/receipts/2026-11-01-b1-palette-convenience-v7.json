@@ -1,0 +1,290 @@
+{
+  "schemaVersion": 1,
+  "kind": "B1_PALETTE_CONVENIENCE_V7",
+  "status": "IMPLEMENTED_SCOPED_VALIDATION_PASSED",
+  "sourceBaseHead": "92cd8a27c7e6f9397b47932aecd36460cda062a2",
+  "candidateFingerprint": "020cc22e88e5a2668c805a291421f47c28f85820d3b2e9f036113f4c8ee49568",
+  "artifacts": {
+    "mobileVersion": "3.5.5",
+    "mobileSha256": "43FEF086A3757227819A8D562E271E2AC2603525304DD7FFD83C6D848496FBCE",
+    "mobileRootDistGuardMatch": true,
+    "pcVersion": "1.9.9",
+    "pcSha256": "E4706617DE96D3E0719144724FDAE1B62D7511674D6564DCBD82F2C702802E14",
+    "pcRootDistGuardMatch": true,
+    "pcBytesChangedSharedCss": true,
+    "officialRelease": false
+  },
+  "inputs": [
+    {
+      "path": "docs/work/B1_PALETTE_CONVENIENCE_V7.md",
+      "sha256": "36dbe0a218b6973e406fab669cf09d18e4945092e86315ab5af03239745fe07a"
+    },
+    {
+      "path": "docs/work/B1_CONTROL_MATERIAL.md",
+      "sha256": "8e346ab341483f0e2e7c6d2bed2459c67293d8909a1b739f738216981e336cbe"
+    },
+    {
+      "path": "docs/work/UI_REVIEW_CHECKLIST.md",
+      "sha256": "754dab598237ccaa0bcee4c23c9dd2d43ef6ddb2f7b2a986e8101b8cef803833"
+    },
+    {
+      "path": "docs/work/INDEX.md",
+      "sha256": "bf9b9ec4fb631adeedf1a58b40d5f1f1114bb41e83787f6fc8832e8f5b4caaaf"
+    },
+    {
+      "path": "docs/work/NEXT_TASK.md",
+      "sha256": "385aa50468f8b88326011779e780533fa1a8bb467d264b424cfca5962922b0ee"
+    },
+    {
+      "path": "docs/ui-surface-contracts.md",
+      "sha256": "c35e9ade7b8fae8c3c26e8439b25f27d78f4ceb3ec2f90abb45bb04a60455cb4"
+    },
+    {
+      "path": "docs/agent-maintenance-notes.md",
+      "sha256": "615cbbd7396f53356d9b350f4c1a63b0ed23f58a4f86b2c0a7d79c6e7b7e68ed"
+    },
+    {
+      "path": "src/targets/shared/settings-presenter.js",
+      "sha256": "7267ceb44357af768420dc1a3181fdb5fed824193972869ff2504f71c8d722a5"
+    },
+    {
+      "path": "src/targets/mobile/theme-material-values.js",
+      "sha256": "da6cc37a3f71f5ff696aa57fddf6c52e254aa01ce2dfb0b856c0979a6aac189c"
+    },
+    {
+      "path": "src/targets/shared/theme-presenter.js",
+      "sha256": "54b2a7ea75e58cf556835581b4e422d100e9e2fb360b2d54ac5d8e6e3186dc08"
+    },
+    {
+      "path": "src/targets/mobile/convenience-host-adapter.js",
+      "sha256": "a1a303842090bdf4fce73ea55c7bd5eb91749a40400305df01aff8779cfb76d8"
+    },
+    {
+      "path": "src/targets/shared/popup-geometry-host-adapter.js",
+      "sha256": "7ffc936b838df4cd34a2ff3c5c7b0c21a259848b8cc9161d766c57d98f8a6073"
+    },
+    {
+      "path": "testbed/ui-palette-convenience-v7-contract.mjs",
+      "sha256": "9a85295323724d701d46f480dc62061283060644ad40fb1bb34099bbb36e52fd"
+    },
+    {
+      "path": "testbed/ui-control-material-contract.mjs",
+      "sha256": "9648c8389e45f4980c5d550e9197994441e2b97b0a0d5f4f33e7e02e56c2c93d"
+    },
+    {
+      "path": "testbed/run-tests.mjs",
+      "sha256": "7b6ececb4b3fe81a2bebb95f1d18a96a7d3539eebce3cdeb4ba42bf81ce0c877"
+    },
+    {
+      "path": "testbed/fixtures/b1-native-list.mjs",
+      "sha256": "2aee6d3534b3b158f888d0224e79cc48009078a0eec1ee73873a10798a9b056a"
+    },
+    {
+      "path": "testbed/harness/runner-utils.mjs",
+      "sha256": "fd7d7d24c1984e635eed3bc2c83f21a9e274f1f34d5416010a1595fbe3d5a5ab"
+    },
+    {
+      "path": "testbed/harness/userscript-loader.mjs",
+      "sha256": "a9da81c03e53b6d25b949fc6993e532830e179e8bad2c73b6d3f6d5a3a92abc0"
+    },
+    {
+      "path": "build/targets.json",
+      "sha256": "b1b1afd0df7dd159ac845a3de2b50d0e748e87e5178c2ede01c19cab16d46f3c"
+    }
+  ],
+  "curatedActual": [
+    {
+      "path": "docs/design/b1-palette-v7-palette-top-light-2026-10-31.png",
+      "sha256": "2ca1bb3067bde46b4502df3db192f2eeb7c59ae11d02ac7266aedce4baf509c4"
+    },
+    {
+      "path": "docs/design/b1-palette-v7-palette-top-dark-2026-10-31.png",
+      "sha256": "0f92951e2b75c31d3af592e26439fa9475380f71b135c12de25817ad55a840d5"
+    },
+    {
+      "path": "docs/design/b1-palette-v7-palette-bottom-light-2026-10-31.png",
+      "sha256": "2ca1bb3067bde46b4502df3db192f2eeb7c59ae11d02ac7266aedce4baf509c4"
+    },
+    {
+      "path": "docs/design/b1-palette-v7-palette-bottom-dark-2026-10-31.png",
+      "sha256": "0f92951e2b75c31d3af592e26439fa9475380f71b135c12de25817ad55a840d5"
+    },
+    {
+      "path": "docs/design/b1-palette-v7-palette-error-light-2026-10-31.png",
+      "sha256": "b0dd33cb7b91de7f51408144a71b9eacf1f48c20939a3bba673a63b4e2f2b9ea"
+    },
+    {
+      "path": "docs/design/b1-palette-v7-palette-error-dark-2026-10-31.png",
+      "sha256": "afd38c52e54cb526f8bb025937300be40b0a27b69d0f46cff96c14cfdb5ef1ac"
+    },
+    {
+      "path": "docs/design/b1-palette-v7-palette-saving-light-2026-10-31.png",
+      "sha256": "49fa573f235cd350081c015fa9651364a501d6fdf43506ec217de196d47bb964"
+    },
+    {
+      "path": "docs/design/b1-palette-v7-palette-saving-dark-2026-10-31.png",
+      "sha256": "372f8d338fef5b442120d3d3c1b26a5748fd634dce76ace1c2b7c0a8eb51739b"
+    },
+    {
+      "path": "docs/design/b1-palette-v7-convenience-light-2026-10-31.png",
+      "sha256": "c991c693c47ebf514332326eeab84dc18394df126ad26ac29900acbbf8712eed"
+    },
+    {
+      "path": "docs/design/b1-palette-v7-convenience-dark-2026-10-31.png",
+      "sha256": "6bda7393ddbf3b028b624310f25bd3db01412b0f0b4210c3fb4baf20cd65c718"
+    },
+    {
+      "path": "docs/design/b1-palette-v7-error-dark-detail-2026-10-31.png",
+      "sha256": "c0abfe2e24da970f746671a5547c24d1cfffbbd73d44ff367d6e42fe983a2dcf"
+    }
+  ],
+  "evidence": [
+    {
+      "path": "artifacts/b1-palette-convenience-v7-2026-10-31/red.json",
+      "sha256": "095d8250f14900fbcf624363f1ccf15a83ded43cbadeb268201598d2c8bf0aff"
+    },
+    {
+      "path": "artifacts/b1-palette-convenience-v7-2026-10-31/focused-first.json",
+      "sha256": "62c74598294100152272ba912d0284a8fbd4a59c879643a737f853c48643dd72"
+    },
+    {
+      "path": "artifacts/b1-palette-convenience-v7-2026-10-31/focused-final.json",
+      "sha256": "a39a8aa3198e91434e93beae2e7ece3a8570aeaed93b0f1217849f6f85402d9c"
+    },
+    {
+      "path": "artifacts/b1-palette-convenience-v7-2026-10-31/differential.json",
+      "sha256": "41ee750ef2515f6645ce48495d287bb48a8901a97c2ba88d90e8648d1d4986de"
+    },
+    {
+      "path": "artifacts/b1-palette-convenience-v7-2026-10-31/differential-observations.json",
+      "sha256": "343eefcba98b3acee74dbc251f6b86816a042a3517a50ad0c16bf499d178d07f"
+    },
+    {
+      "path": "artifacts/b1-palette-convenience-v7-2026-10-31/differential.mjs",
+      "sha256": "82d62b3e28046450d80e2c969f9dfe61da860b44ade67bcec23685eb4ed1b13d"
+    },
+    {
+      "path": "artifacts/b1-palette-convenience-v7-2026-10-31/primary-extraction.json",
+      "sha256": "c377e4071428394831f33be12cceb810ac94e94ea76d2ed126fcc4748f3b7933"
+    },
+    {
+      "path": "artifacts/b1-palette-convenience-v7-2026-10-31/finish-check.json",
+      "sha256": "a1e0b1f40dbd304dbb14bc09576da99145f042e4fb168aa7dbb036ca93e8ff38"
+    },
+    {
+      "path": "artifacts/b1-palette-convenience-v7-2026-10-31/check-finish.mjs",
+      "sha256": "4731e0770a375890e93ce93065db3978d05b833eb2e5a3d98b05991336e27c45"
+    },
+    {
+      "path": "artifacts/b1-palette-convenience-v7-2026-10-31/visual-manifest.json",
+      "sha256": "1bd4a5184bb354bb0debf516e27a4e23d8e7c4eb749f7b7b1e373e6f477a024e"
+    },
+    {
+      "path": "artifacts/b1-palette-convenience-v7-2026-10-31/visual-review-bound/review.json",
+      "sha256": "6b3bc66c01205625b9186c8f6fb466173c98f765c8881ce45058a98a2eeaa7d8"
+    },
+    {
+      "path": "artifacts/b1-palette-convenience-v7-2026-10-31/impact-final.json",
+      "sha256": "9bb5138098b0f09ef092e4a8675b36121c83cc8b1d7677ce18a9d166b3c0d55b"
+    },
+    {
+      "path": "artifacts/b1-palette-convenience-v7-preflight-2026-10-31/inspection.json",
+      "sha256": "9f231702ad6452969ecd6c13d134f2dc85fbe4779a449f287d8f93b15d4c1d9c"
+    }
+  ],
+  "delta": {
+    "scope": [
+      "S-09",
+      "S-10",
+      "S-11",
+      "S-12"
+    ],
+    "productionFiles": 2,
+    "ownersChanged": false,
+    "commonV7FormulasChanged": false,
+    "templatesAdaptersStorageGeometryUnchanged": true,
+    "newImportant": false,
+    "newStylePhase": false,
+    "newDependency": false,
+    "primaryDeclarationExtraction": {
+      "declarationSha256": "b4a72f3e02309e01bf0d1a50177c63264f564731b4da49bafa45c0a27fa59369",
+      "unchangedDeclaration": true,
+      "existingSelectorsUnchanged": true
+    },
+    "grouping": "One stable reading group;transparent inactive options;one selected tinted face. Authored swatches preserved.",
+    "resize": "Original palette actions reserve44px handle clearance;convenience modern header stays non-draggable."
+  },
+  "validation": {
+    "browser": "156.0.8078.76",
+    "focusedRegistrations": 2,
+    "geometryContexts": 5,
+    "labelContrast": {
+      "sampleSets": 68,
+      "threshold": 4.5,
+      "coverage": "14 palettes x2 themes selected/save;blue/mono/rose convenience save/help"
+    },
+    "lazyMount": "Same compact action/quiet paint/material/hit/clearance checks before and after shared stylesheet mounts",
+    "differential": {
+      "freshContexts": 8,
+      "mobileStatePairs": 50,
+      "pcStatePairs": 40,
+      "totalStatePairs": 90,
+      "pcPaletteAppearancePairs": 40,
+      "differences": 0,
+      "pcConvenience": "N/A Mobile-only"
+    },
+    "dragResize": {
+      "themes": 2,
+      "from": "540x680 at220/110",
+      "move": "270/130",
+      "resize": "565x700",
+      "positiveHitsAndClearance": true
+    },
+    "visual": {
+      "cases": 10,
+      "status": "DIFFERENCES_REQUIRE_REVIEW",
+      "referenceFidelity": "REVIEWED",
+      "productApproved": false,
+      "inspection": "Whole and readable detail;intended pale material/quiet controls/group/clearance differences. No pixel golden update."
+    },
+    "viewer": {
+      "decoded": 22,
+      "zoom": true,
+      "oneImageAtATime": true
+    },
+    "independentReview": "Missing post-lazy-mount geometry recheck identified;final tests strengthened and both registrations rerun on settled SUT. No subsequent source changes.",
+    "architecture": "Effective links checked;accepted map/owners unchanged",
+    "buildArtifacts": "Both current-version builds and release verification passed;root/dist/guard identity confirmed"
+  },
+  "contraryEvidence": [
+    {
+      "classification": "Product geometry",
+      "finding": "Original save corner overlaps resize handle although center hits pass",
+      "resolution": "Reserve44px in the actual palette-actions owner;assert disjoint bounds and original hit targets"
+    },
+    {
+      "classification": "Product lazy cascade",
+      "finding": "0D19 trial actions stretch151.3px when generic BASE flex wins later",
+      "resolution": "Private contextual value with unchanged generic default;recheck after lazy shared mount"
+    },
+    {
+      "classification": "Test coverage",
+      "finding": "Initial post-mount assertion covered only primary paint",
+      "resolution": "Independent review prompted compact/quiet/clearance/hit rechecks;settled focused-final passed"
+    }
+  ],
+  "impact": {
+    "resolver": "Conservative acceptance/proof-runtime fallback for shared CSS/harness/new registration",
+    "actual": "Two CSS/value consumers;original declaration reused and generic flex default retained. PC fallback comparison scoped to palette.",
+    "omissions": "Unrelated full filter/network/writer/full-PC/128-child suites;formal broad acceptance UNKNOWN"
+  },
+  "limits": [
+    "Synthetic guarded source injection;not actual extension/device/account/live-write qualification",
+    "980x2306 layout-only;390 layout stress",
+    "Controlled failures and native confirmation use synthetic data;real platform errors and OS UI remain separate",
+    "Native header/article/editor/settings popup interiors are not all v7-complete",
+    "No lifecycle/performance/all-key/all-device claim"
+  ],
+  "nextAction": "b1-native-header-popups-v7-preflight",
+  "hashMode": "Canonical LF for tracked text;raw image/runtime bytes"
+}

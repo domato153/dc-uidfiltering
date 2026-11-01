@@ -223,6 +223,19 @@ function __dcufBuildB1MaterialCss(ROOT_ATTRIBUTE) {
             --dcuf-filter-heading-margin: 16px 0 10px;
             --dcuf-filter-rule-gap: 0;
             --dcuf-filter-rule-padding: 8px;
+            --dcuf-palette-reading: var(--dcuf-v7-reading);
+            --dcuf-palette-options-padding: 8px;
+            --dcuf-palette-options-radius: 10px;
+            --dcuf-palette-option-height: 56px;
+            --dcuf-palette-option-border: 0;
+            --dcuf-palette-option-bg: transparent;
+            --dcuf-palette-option-selected-bg: var(--dcuf-v7-primary-fill);
+            --dcuf-palette-option-selected-ink: var(--dcuf-v7-primary-ink);
+            --dcuf-palette-option-selected-shadow: none;
+            --dcuf-palette-name-weight: 650;
+            --dcuf-palette-resize-clearance: 44px;
+            --dcuf-palette-default-spacer: auto;
+            --dcuf-convenience-header-cursor: default;
         }
 `;
 }
