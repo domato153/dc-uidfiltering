@@ -2,19 +2,19 @@
 
 ## Current execution
 
-- Active plan: B1_PALETTE_CONVENIENCE_V7.md closes scoped palette/convenience settings v7. NEXT inspects older native header/recent/gallery/search popup detail before adaptation.
+- Active plan: B1_NATIVE_HEADER_POPUPS_V7_PREFLIGHT.md closes native header popup preflight. NEXT implements the named existing-owner v7 detail and compact door clearance repair.
 - Workspace path: `.` (private prompt supplies exact worktree). Preserve debug.log unread/unstaged.
-- Active stage: `header-navigation` formal admission remains open. S-09–S-12 scoped implementation joins earlier S-01–S-08 results;native popup interiors are not all v7. No registry promotion or deferred full guidebook.
-- Accepted visual preference: Actual memo/current bright-dark details;transmitting chrome,stable reading,plain label-sized utilities. Related options may share one borderless soft group and selected-only tint;adapt by role with focus/semantics retained.
-- Source state: Source checkpoint base HEAD `92cd8a27c7e6f9397b47932aecd36460cda062a2` on `codex/ui-port-boundary`. Two CSS/value source files changed;original templates/adapters/UiPort/storage/key/geometry owners remain. Fresh checkpoint receipt owns publication/CI status.
-- Local-only state: `LOCAL_ONLY_EVIDENCE`;artifacts/b1-palette-convenience-v7-2026-10-31 retains focused tests,differential and ten before/current pairs. Eleven curated current/detail images are tracked. Viewer loads one selected image;test browsers closed.
-- Candidate fingerprint: `020cc22e88e5a2668c805a291421f47c28f85820d3b2e9f036113f4c8ee49568`
-- Last current audit: PASS final2 focused registrations;5 geometry contexts,68 rendered label sample sets meeting4.5,14 original palette choices and original action/state witnesses.90 semantic pairs and40 affected PC palette appearance pairs match. Ten image comparisons REVIEWED,not beauty/user approval.
-- Current stage receipt: `verification/receipts/2026-11-01-b1-palette-convenience-v7.json` SHA-256 `E1EE5352F092F22A34E23F191A0A6C64677674870F72D0EE1DDCC9179C271A0C`. Preflight9BC remains original anatomy;other family receipts retain direct scopes rather than globally certifying current bytes.
-- Accepted baseline: Actual v7 detail now reaches palette/convenience. Pale paired-ink save,quiet label-sized utilities,one selected option face and original palette drag/resize retained. Handle overlap and late generic CSS stretching are repaired and checked after lazy mounting.
-- Current artifact: Mobile3.5.5 43FEF086A3757227819A8D562E271E2AC2603525304DD7FFD83C6D848496FBCE root/dist/guard;PC1.9.9 E4706617DE96D3E0719144724FDAE1B62D7511674D6564DCBD82F2C702802E14 root/dist/PC guard. Both rebuilt at existing versions;no official release/version bump.
-- Blockers: None for next preflight. No owner/capability conflict. Independent review's post-mount geometry coverage gap is closed. PC palette fallback appearance retained;convenience is Mobile-only.
-- Pending live checks: No new actual extension/device/account or real user-state claim.980×2306 is layout-only,390 stress. Error/saving are injected test states;convenience has no drag/resize and image comments have no replies. Broad formal admission,older native families and eventual guidebook discussion stay separate.
+- Active stage: `header-navigation` formal admission remains open. H-01/H-03/H-05–H-09 preflight complete;their v7 implementation is pending. Prior script-owned settings retain scoped completed results. No registry promotion/full guidebook.
+- Accepted visual preference: Actual memo/current bright-dark details;transmitting outer glass,stable reading,quiet label-sized auxiliaries and one selected cue. Keep already-fitting native detail;avoid arbitrary replacement or global material retuning.
+- Source state: Source checkpoint base HEAD `f9e34bb76a95ffc8f0785f5e40ee93f78cb27d5a` on `codex/ui-port-boundary`. Production sources,fixtures,harness and runtime unchanged;this unit adds current evidence/reuse plan only. Fresh checkpoint receipt owns publication/CI status.
+- Local-only state: `LOCAL_ONLY_EVIDENCE`;artifacts/b1-native-header-v7-preflight-2026-11-01 retains41 main captures,4 targeted captures and one public recent observation. Nine curated synthetic current captures are tracked. Viewer loads one image;test browsers closed.
+- Candidate fingerprint: `f5b2951d87377a0f386865c3827616d37061ddfab594c2258fd431e19691d77e`
+- Last current audit: UNKNOWN native v7 implementation;preflight complete:7 main/2 targeted synthetic contexts preserve recorded connected parents/callbacks with no runtime errors. Public recent shape observed read-only.390 stress door CTA right edge is partly covered by FAB;implementation pending. Suggestion30/close are reachable after max scroll.
+- Current stage receipt: `verification/receipts/2026-11-01-b1-native-header-v7-preflight.json` SHA-256 `0BC22B2E92FE04F385363D5620C2FD03C8565667DE61A293A886EF5AB1E44A3A`. Prior palette/convenience receipt keeps its unchanged43FE/E470 implementation scope;preflight does not certify completed native v7 styling.
+- Accepted baseline: Palette/convenience v7 remains implemented. Native outer glass/search/help mostly reusable;recent selection,rank summary and pagers need bounded adaptation. Retain door separate decoration and native five-column paging/popup-only behavior.
+- Current artifact: Mobile3.5.5 43FEF086A3757227819A8D562E271E2AC2603525304DD7FFD83C6D848496FBCE root/dist/guard;PC1.9.9 E4706617DE96D3E0719144724FDAE1B62D7511674D6564DCBD82F2C702802E14 root/dist/PC guard. Unchanged;no rebuild/version/release required for this preflight.
+- Blockers: No execution blocker. One confirmed compact door/FAB partial obstruction is scheduled for next implementation;center-only tests did not expose it. Other native families remain separate.
+- Pending live checks: One source-injected public recent root is observed,not actual extension/device/account or all variants.980×2306 is layout-only,390 stress. Native settings/article/editor/password-card/account/upload work and broad admission remain separate;image comments have no replies.
 
 ```dcuf-current-artifacts
 {"schemaVersion":1,"mobile":{"sha256":"43FEF086A3757227819A8D562E271E2AC2603525304DD7FFD83C6D848496FBCE"},"pc":{"sha256":"E4706617DE96D3E0719144724FDAE1B62D7511674D6564DCBD82F2C702802E14"}}
