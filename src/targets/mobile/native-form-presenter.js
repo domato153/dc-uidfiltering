@@ -739,9 +739,9 @@
             padding: 6px;
             border: 1px solid var(--dcuf-b1-rim);
             border-radius: 12px;
-            background: var(--dcuf-b1-sheen), color-mix(in srgb, var(--dcuf-b1-paper) 72%, transparent);
+            background: var(--dcuf-b1-sheen), var(--dcuf-b1-floating);
             box-shadow: var(--dcuf-b1-shadow), inset 0 1px 0 var(--dcuf-b1-rim);
-            backdrop-filter: var(--dcuf-b1-structural-filter,blur(18px) saturate(1.1));
+            backdrop-filter: var(--dcuf-b1-floating-filter,blur(8px) saturate(1.08));
             color: var(--dcuf-theme-fg);
             font: 500 14px/1.4 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
             scrollbar-width: thin;
@@ -764,10 +764,10 @@
         }
         [data-dcuf-native-form-layer-kind~="dropdown"]:is([data-dcuf-native-form-layer-anchor="fontname"], [data-dcuf-native-form-layer-anchor="fontsize"], [data-dcuf-native-form-layer-anchor="line-height"]) :is([data-dcuf-font-value], [data-value]):is(:hover, :focus-visible, .checked, [aria-checked="true"]) {
             outline: none;
-            border-color: var(--dcuf-control-rim);
-            background: var(--dcuf-control-selected-bg);
-            color: var(--dcuf-theme-accent-ink);
-            box-shadow: var(--dcuf-control-quiet-shadow);
+            border-color: transparent;
+            background: var(--dcuf-v7-primary-fill);
+            color: var(--dcuf-v7-primary-ink);
+            box-shadow: none;
         }
         [data-dcuf-native-form-layer-kind~="dropdown"]:is([data-dcuf-native-form-layer-anchor="fontname"], [data-dcuf-native-form-layer-anchor="fontsize"], [data-dcuf-native-form-layer-anchor="line-height"]) :is([data-dcuf-font-value], [data-value]):focus-visible {
             outline: 2px solid var(--dcuf-theme-accent);
@@ -796,11 +796,15 @@
             min-width: 40px;
             min-height: 36px;
             padding: 6px 9px;
-            border: 1px solid var(--dcuf-control-rim);
+            border: 0;
             border-radius: 7px;
-            background: var(--dcuf-control-secondary-bg);
-            box-shadow: var(--dcuf-control-quiet-shadow);
+            background: transparent;
+            box-shadow: none;
             color: var(--dcuf-theme-fg);
+        }
+        [data-dcuf-native-form-layer-kind~="dropdown"][data-dcuf-native-form-layer-anchor="paragraph"] button:is(:hover,:focus-visible,.checked,[aria-pressed="true"]) {
+            background: var(--dcuf-v7-primary-fill);
+            color: var(--dcuf-v7-primary-ink);
         }
         [data-dcuf-native-form-layer-kind~="dropdown"][data-dcuf-native-form-layer-anchor="table"] > span {
             display: block;

@@ -2,22 +2,22 @@
 
 ## Current execution
 
-- Active plan: B1_NATIVE_HEADER_POPUPS_V7_PREFLIGHT.md closes native header popup preflight. NEXT implements the named existing-owner v7 detail and compact door clearance repair.
+- Active plan: B1_POPUP_BATCH_V7.md closes combined scopes1/2/3. NEXT reconciles remaining v7 UI gaps before another implementation batch;no per-element checkpoint restart.
 - Workspace path: `.` (private prompt supplies exact worktree). Preserve debug.log unread/unstaged.
-- Active stage: `header-navigation` formal admission remains open. H-01/H-03/H-05–H-09 preflight complete;their v7 implementation is pending. Prior script-owned settings retain scoped completed results. No registry promotion/full guidebook.
-- Accepted visual preference: Actual memo/current bright-dark details;transmitting outer glass,stable reading,quiet label-sized auxiliaries and one selected cue. Keep already-fitting native detail;avoid arbitrary replacement or global material retuning.
-- Source state: Source checkpoint base HEAD `f9e34bb76a95ffc8f0785f5e40ee93f78cb27d5a` on `codex/ui-port-boundary`. Production sources,fixtures,harness and runtime unchanged;this unit adds current evidence/reuse plan only. Fresh checkpoint receipt owns publication/CI status.
-- Local-only state: `LOCAL_ONLY_EVIDENCE`;artifacts/b1-native-header-v7-preflight-2026-11-01 retains41 main captures,4 targeted captures and one public recent observation. Nine curated synthetic current captures are tracked. Viewer loads one image;test browsers closed.
-- Candidate fingerprint: `f5b2951d87377a0f386865c3827616d37061ddfab594c2258fd431e19691d77e`
-- Last current audit: UNKNOWN native v7 implementation;preflight complete:7 main/2 targeted synthetic contexts preserve recorded connected parents/callbacks with no runtime errors. Public recent shape observed read-only.390 stress door CTA right edge is partly covered by FAB;implementation pending. Suggestion30/close are reachable after max scroll.
-- Current stage receipt: `verification/receipts/2026-11-01-b1-native-header-v7-preflight.json` SHA-256 `0BC22B2E92FE04F385363D5620C2FD03C8565667DE61A293A886EF5AB1E44A3A`. Prior palette/convenience receipt keeps its unchanged43FE/E470 implementation scope;preflight does not certify completed native v7 styling.
-- Accepted baseline: Palette/convenience v7 remains implemented. Native outer glass/search/help mostly reusable;recent selection,rank summary and pagers need bounded adaptation. Retain door separate decoration and native five-column paging/popup-only behavior.
-- Current artifact: Mobile3.5.5 43FEF086A3757227819A8D562E271E2AC2603525304DD7FFD83C6D848496FBCE root/dist/guard;PC1.9.9 E4706617DE96D3E0719144724FDAE1B62D7511674D6564DCBD82F2C702802E14 root/dist/PC guard. Unchanged;no rebuild/version/release required for this preflight.
-- Blockers: No execution blocker. One confirmed compact door/FAB partial obstruction is scheduled for next implementation;center-only tests did not expose it. Other native families remain separate.
-- Pending live checks: One source-injected public recent root is observed,not actual extension/device/account or all variants.980×2306 is layout-only,390 stress. Native settings/article/editor/password-card/account/upload work and broad admission remain separate;image comments have no replies.
+- Active stage: `header-navigation` formal admission remains open. Named header/article-picker/six-editor-menu v7 implementation complete;whole UI/account/device qualification remains separate.
+- Accepted visual preference: Actual memo/current bright-dark details;transmitting outer glass,stable reading,quiet label-sized auxiliaries and one selected cue. Preserve native capabilities and authored colors.
+- Source state: Source checkpoint base HEAD `382c3c981051d36c633d45bcf2a78b96772ee43f` on `codex/ui-port-boundary`. Five Mobile presenters only;common formulas/adapters/templates/PC unchanged. Final checkpoint receipt owns publication/CI identity.
+- Local-only state: `LOCAL_ONLY_EVIDENCE`;artifacts/b1-popup-batch-v7-2026-11-01 holds frozen control,drivers/results and paired images. Six curated synthetic current images tracked. Viewer loads one image;test browsers closed.
+- Candidate fingerprint: `1a574469c76b71ebea302e10375e3ae2ca73b555fedc75acf411d89229e4134c`
+- Last current audit: PASS scoped0E1A75FD:7 affected contracts,42 matching semantic pairs,24 palette samples/8 cancel restorations and17 reviewed image pairs. Bottom-anchor390×420 action edges clear;980×2306 header layout-only pass. Not whole-UI admission.
+- Current stage receipt: `verification/receipts/2026-11-01-b1-popup-batch-v7.json` SHA-256 `AF7209F461A588DD7410D20A2996BF581A5DD80E6F9640EAEB0184E911F9C802`. Prior header preflight becomes anatomy history;prior palette/convenience receipt retains its named scope.
+- Accepted baseline: Named three-family v7 implementation and compact door repair are complete. Current material/rules remain;native gallery/author settings and password/login cards are not blanket-certified migrated v7 by this unit.
+- Current artifact: Mobile3.5.5 0E1A75FD460E27F803D8AEE92946ACEF819F6983D7DFAB9296965D258E6D722E root/dist/guard;PC1.9.9 E4706617DE96D3E0719144724FDAE1B62D7511674D6564DCBD82F2C702802E14 unchanged root/dist/PC guard. No release/version bump.
+- Blockers: No execution blocker. Retain frozen/current narrow underlying toggle pointer-center limitation;new contracts close through original keyboard controls,existing affected pointer contracts pass.
+- Pending live checks: Actual extension/device/account/live POST and unobserved native children UNKNOWN.980×2306 layout-only,390 stress. Four external uploads user-deferred;image replies N/A. Whole UI review and later guidebook discussion remain.
 
 ```dcuf-current-artifacts
-{"schemaVersion":1,"mobile":{"sha256":"43FEF086A3757227819A8D562E271E2AC2603525304DD7FFD83C6D848496FBCE"},"pc":{"sha256":"E4706617DE96D3E0719144724FDAE1B62D7511674D6564DCBD82F2C702802E14"}}
+{"schemaVersion":1,"mobile":{"sha256":"0E1A75FD460E27F803D8AEE92946ACEF819F6983D7DFAB9296965D258E6D722E"},"pc":{"sha256":"E4706617DE96D3E0719144724FDAE1B62D7511674D6564DCBD82F2C702802E14"}}
 ```
 
 ## Draft-complete checkpoint — 2026-10-21

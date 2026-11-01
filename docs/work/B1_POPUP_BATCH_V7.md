@@ -1,0 +1,34 @@
+# V7 popup batch: header, article and editor
+
+2026-11-01. **IMPLEMENTED / SCOPED_VALIDATION_PASSED**. User requested scopes1/2/3 as one implementation/checkpoint unit before integrated UI review. Source base382c3c981051d36c633d45bcf2a78b96772ee43f;frozen Mobile43FEF086 → candidate0E1A75FD,PC E4706617 unchanged. No version/release change. Receipt:verification/receipts/2026-11-01-b1-popup-batch-v7.json. CURRENT/NEXT and checkpoint receipt own publication status.
+
+## Result and boundary
+
+Actual adopted memo/current bright-dark detail and B1_CONTROL_MATERIAL.md govern. Existing composition already fits;this adapts material/detail rather than generating an arbitrary replacement image. Transmitting outer glass and stable reading areas remain. Quiet auxiliaries retain hit areas/feedback;primary actions consume paired v7 bg/ink/rim/shadow and fit their labels. Authored swatches/media remain authored.
+
+1. Header H-01/H-03/H-05–09:reuse fitting search/help;remove the recent tab's competing fill,compact rank summary into a quiet reading group and make rank/related pagers plain. Compact door reserves116px below and bounds its top to retain120px panel space in tested short cases. Separate glass plane,native five-column paging and popup-only state remain.
+2. Article A-08–12/C-11:share/realbest/report/guest-scrap/PUM and existing guide/suggestion children use quiet utilities and pale paired primaries. Textcon/DCCon reuse the detail with original previews/swatches/fields/hidden state. Native85px width survived a reduced minimum;max-content clamping and actual label/padding geometry prevent oversized short actions.
+3. Editor W-05–10:font/size/color/paragraph/line-height/table menus consume common floating glass. Selection has one pale paired face without an extra rim/shadow;paragraph choices are quiet at rest. Font previews,original options,horizontal color scrolling and table content/feedback remain.
+
+Only five incumbent Mobile presenters changed:header-recent-visit,header-drawer,article,comment,native-form. No common formula,adapter/template/UiPort/storage/network/filter/observer/metadata/PC/ownership change;no new global override,priority or portal. Root/dist/guard Mobile match. Frozen/native references remain functional controls,not current aesthetic authority.
+
+## Evidence and contrary findings
+
+- Settled0E1A75FD:three new focused contracts plus existing gallery-search/article-actions/content/editor contracts **7/7 pass**. Contexts include980×900 light/dark,980×420 light,390×520 and390×420 dark. Original node/parent/callback/field,containment,hit and editor contracts remain. Only obsolete visual expectations changed in three incumbent tests.
+- Frozen/current **42 semantic state pairs match** in separate fresh contexts. Recorded popup text/control attributes/input state/native fixture calls and original identity match;not a full storage/lifecycle/performance proof.
+- Actual palette UI preview/save/cancel:blue/mono/rose across four affected families and both themes;**24 rendered samples**,minimum label contrast**5.3446**,**8 cancel restorations**,no errors. Common14-color formulas unchanged;no unrelated14-color/full-product/PC rerun.
+- **17 readable before/current image pairs** directly inspected,covering each named kind and selected editor states(one theme per named pair). Native Playwright report:DIFFERENCES_REQUIRE_REVIEW;referenceFidelity=REVIEWED;productApproved=false. Nine intentional pixel differences,eight under existing tolerance;neither result approves beauty. Six curated current synthetic images tracked under docs/design/b1-popup-batch-v7-*. Viewer loads one selected image at a time.
+- Supplemental header980×2306 light/dark layout-only checks pass,not exact phone scaling/screen emulation. Bottom-anchor390×420/native-top400px gives top184,height120 and clear10/50/90% action hits. Main browser156.0.8078.76;supplemental managed Chromium149.0.7827.55. Retain PHONE_VIEWPORT_PROFILE.md gaps;390 is stress.
+- Read-only source/test reviewer found a conditional selection assertion that could skip and then a compact top/height feedback edge. Both repaired. Final narrow review found no remaining concrete defect;reviewer did not run a browser. Impeccable mechanical detector returned[] on five settled source files;not a formal aesthetic audit.
+- Programmatic fixture opening positioned a size option under the sticky header while its toolbar was offscreen. Driver now brings the original toolbar into view;no product stacking/portal workaround. Native selected classes are seeded only where the fixture lacks Summernote;generated font selection uses its actual intent.
+- Frozen43FE and earlier candidate both have covered underlying door/DCCon toggle pointer centers in one narrow fixture. New contracts close via original keyboard buttons without force clicks/new handlers;scoped keyboard evidence does not certify every pointer/outside-dismissal variant. Existing affected native-pointer contracts pass on final candidate. Retain contrary evidence.
+- Final checkpoint static checks exposed a strict Source state wording mismatch and a stale recent-tab candidate literal in verification/b1-header-visual-delta.json. Corrected the wording and that one candidate literal only;historical control/reference digest and all purity/owner/phase mutations remain. Focused ownership/assurance checks are rerun;runtime/fixtures/product evidence unchanged.
+- Initial visual manifest rejected underscore case IDs before decoding all pairs. Corrected IDs and reran into a new directory;no image/tolerance/product change. Failed/intermediate results remain local history.
+
+Local evidence/recovery:artifacts/b1-popup-batch-v7-2026-11-01 contains final-checks.json,differential.json,palette.json,edge-phone.json,comparison-before/after,visual-reviewed/review.json and drivers/frozen control. Ignored evidence regenerates from base/current and named fixtures. Preserve debug.log unread. One browser job at a time;test browsers closed. User viewer:http://127.0.0.1:10067/popup-batch-v7/index.html?implementation=0E1A75FD;HTTP/image decoding checked in IAB.
+
+## Limits and following work
+
+This closes the named batch,not all UI or formal header admission. Native gallery settings/author children and password/login cards have earlier B1 anatomy/implementation but are not certified as migrated v7 here. Reconcile those and remaining native branches in the next integrated review;record gaps before choosing another implementation batch. No routine unchanged full suites/128-ID recapture.
+
+Actual extension/device/account,real report/vote/post/settings saves,CAPTCHA completion and unobserved native children remain UNKNOWN. Four separate upload documents stay DEFERRED_USER_ACCEPTED;no metadata/opener expansion. Image comments have no replies(N/A). Guidebook consolidation remains discussion after whole UI work ends.

@@ -1,5 +1,13 @@
 # Agent Maintenance Notes
 
+## Native popup v7:intrinsic width,explicit selection and compact top —2026-11-01
+
+Reducing min-width does not remove a surviving host width:short native action still measured85px. Consume v7 paired roles in the incumbent owner and clamp ordinary primaries with max-inline-size:max-content. Assert actual label Range+padding/borders and positive hits. Full-row/tab/FAB roles remain exceptions.
+
+A conditional checked.count() guard can skip all selection evidence. Exercise real generated font intent and require one checked option;for native size/line-height/paragraph fixtures without Summernote,seed the original selected class after the trusted value callback and label it presentation-only. Preserve callbacks/authored swatches. Bring the original toolbar into view before opening its dropdown;offscreen programmatic opening is not equivalent to a user opener and does not justify a product portal/z-index patch.
+
+Bound compact popup top and max-height together so FAB clearance does not collapse its scrollport near the bottom. Tested390×420/native-top400px gives top184,height120 and clear action edges. Keep the door root unfiltered and decoration separate for native fixed descendants. Original/current narrow toggle pointer-center coverage remains a limitation;do not hide it with force clicks. B1_POPUP_BATCH_V7.md owns exact coverage.
+
 ## Filter settings preflight:real switch targets and shortcut keys —2026-10-31
 
 The original .dcuf-switch-input is1px,transparent and pointer-none;the label/track is the positive hit target. Click that original associated label and assert the original input state,without force-click or a product CSS patch. Shortcut Escape stays in the key listener but shared formatShortcutKeys excludes nonmodifier keys longer than one character:preview is empty and the modal remains open. Preserve cancel/overlay close and parent pointer restoration;do not infer Escape-close from a generic modal convention. Immediate switch/headtext writes are synthetic-only in a preflight. B1_FILTER_SETTINGS_V7_PREFLIGHT.md retains original anatomy;B1_FILTER_SETTINGS_V7_IMPLEMENTATION.md owns the scoped result. Grid padding can reduce short-label text space even when roots/hits pass:434px group and134.66px columns left89.66px text. Mobile140px minimum yields two205.5px columns and one-line92.5px text;long labels still wrap. Proxy data attributes are strings but original persisted values are numeric0/1/2;compare the actual numeric contract.

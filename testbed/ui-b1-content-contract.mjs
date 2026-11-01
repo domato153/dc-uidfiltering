@@ -56,7 +56,7 @@ export async function runB1ContentContract({browser,server}) {
                     assert.ok(composition.field.x>=value.x+16&&composition.field.right<=value.right-16,'Native field retains the panel inset');
                     assert.notEqual(value.fieldRole,'native-comment-textarea','Picker input is separate from the main composer');
                     assert.ok(value.fieldHeight<112,'Picker must not inherit112px composer minimum');
-                    assert.ok(value.controlWidth>=88&&value.controlHeight>=40,'Primary action has a distinct full-size face');
+                    assert.ok(value.controlWidth>=44&&value.controlHeight>=36,'Approved compact primary retains a distinct label-sized target');
                     assert.ok(value.controlRight>=value.right-28,'Primary action aligns to the content trailing edge');
                     assert.notEqual(value.primaryTexture,'none','Primary action carries the selected B1 surface detail');
                     assert.equal(value.swatch,'rgb(210, 240, 230)');assert.equal(value.preview,'rgb(210, 240, 230)');

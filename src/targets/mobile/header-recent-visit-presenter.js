@@ -69,7 +69,7 @@
         ${selectors.popupTabs} > li { flex: 1; float: none; width: auto; margin: 0; border: 0; border-radius: 8px; background: transparent; }
         ${selectors.popupTabs} button { width: 100%; min-height: 40px; padding: 8px 10px; border: 0; border-radius: 8px; background: transparent; color: var(--dcuf-theme-fg-muted); font: 600 12px/1.3 system-ui, sans-serif; cursor: pointer; }
         ${selectors.popupTabs}::after, ${selectors.popupTabs} button::before { content: none; display: none; }
-        ${selectors.popupCurrent} { border: 0; background: color-mix(in srgb, var(--dcuf-theme-accent-soft) 65%, transparent); }
+        ${selectors.popupCurrent} { border: 0; background: transparent; }
         ${selectors.popupCurrent} button { color: var(--dcuf-theme-accent-ink); box-shadow: inset 0 -2px 0 var(--dcuf-theme-accent-ink); }
         ${selectors.popupList} { min-height: 0; height: auto; width: 100%; padding: 0; margin: 0; box-sizing: border-box; }
         ${selectors.popupRow} { display: flex; align-items: center; width: 100%; min-height: 44px; margin: 0; padding: 2px 6px; gap: 8px; border-radius: 8px; box-sizing: border-box; }

@@ -1,0 +1,719 @@
+{
+  "schemaVersion": 1,
+  "kind": "B1_POPUP_BATCH_V7_IMPLEMENTATION",
+  "status": "IMPLEMENTED_SCOPED_VALIDATION_PASSED",
+  "sourceBaseHead": "382c3c981051d36c633d45bcf2a78b96772ee43f",
+  "candidateFingerprint": "1a574469c76b71ebea302e10375e3ae2ca73b555fedc75acf411d89229e4134c",
+  "artifacts": {
+    "mobileVersion": "3.5.5",
+    "mobileSha256": "0E1A75FD460E27F803D8AEE92946ACEF819F6983D7DFAB9296965D258E6D722E",
+    "controlMobileSha256": "43FEF086A3757227819A8D562E271E2AC2603525304DD7FFD83C6D848496FBCE",
+    "pcVersion": "1.9.9",
+    "pcSha256": "E4706617DE96D3E0719144724FDAE1B62D7511674D6564DCBD82F2C702802E14",
+    "rootDistGuardsMatch": true,
+    "pcUnchanged": true,
+    "officialRelease": false
+  },
+  "inputs": [
+    {
+      "path": "src/targets/mobile/header-recent-visit-presenter.js",
+      "sha256": "bb5fcabe24e7f83821a7bb116f313891a4e98ba35a9c722ce27c71ac5d81f2ff"
+    },
+    {
+      "path": "src/targets/mobile/header-drawer-presenter.js",
+      "sha256": "d41e9a6a55fb3d3372e1d3cc41743d803580064264b538d4b294a2f72fdf9ef6"
+    },
+    {
+      "path": "src/targets/mobile/article-presenter.js",
+      "sha256": "cee0d170f5b81267f678c4cb55295c831a67eef7585e2cbb78058d9219c247d0"
+    },
+    {
+      "path": "src/targets/mobile/comment-presenter.js",
+      "sha256": "bcad9eceb9a857cb76e10afbdc0fcf796c9c630d46acb8919d66140f29688442"
+    },
+    {
+      "path": "src/targets/mobile/native-form-presenter.js",
+      "sha256": "f578418bfb8058c46c6bd345848a9d4f05d17f2f9cc144133028b9803914fac7"
+    },
+    {
+      "path": "src/targets/mobile/theme-material-values.js",
+      "sha256": "da6cc37a3f71f5ff696aa57fddf6c52e254aa01ce2dfb0b856c0979a6aac189c"
+    },
+    {
+      "path": "src/targets/mobile/header-drawer-host-adapter.js",
+      "sha256": "9dd5da944c6459f3b8a4276a51ceece0a46c8e89223f6fa03af74aac5fbb1a17"
+    },
+    {
+      "path": "src/targets/mobile/article-host-adapter.js",
+      "sha256": "f245a65a600054f0f80a44d58c98145f9c1d0e7dab15d0c6f56fb95032167112"
+    },
+    {
+      "path": "src/targets/mobile/comment-host-adapter.js",
+      "sha256": "d503103a319f8d68d851a045631ae30c676810bcb85aee7a82c1b08ba6864740"
+    },
+    {
+      "path": "src/targets/mobile/native-form-host-adapter.js",
+      "sha256": "92bff52b22b42d7e2efe9fac32198579b0017c08c501de859ea7e46409d3677a"
+    },
+    {
+      "path": "testbed/run-tests.mjs",
+      "sha256": "8ad3f7f3f4724123c222b241e5e1497a0a1137d848c2821b0f56b5001d11b269"
+    },
+    {
+      "path": "testbed/ui-popup-batch-v7-contract.mjs",
+      "sha256": "2e9aa30aa9aadbb60aae66f03a0585aead9ba55bd1d0191c178f79ece02dbd52"
+    },
+    {
+      "path": "testbed/ui-b1-gallery-search-contract.mjs",
+      "sha256": "15030a9833d9e3118931e1cbf6b12642bb9d1b2387b1a1885903c9e3b57e1521"
+    },
+    {
+      "path": "testbed/ui-b1-article-actions-contract.mjs",
+      "sha256": "8f98255e7690db4151a72b2843f3aaab5006a6e32f8ce3991e74470cc5369f09"
+    },
+    {
+      "path": "testbed/ui-b1-content-contract.mjs",
+      "sha256": "44c26b02c45374facf5bcbaec7bbfb327ed0678a542b9fe3294aef5471aee6c0"
+    },
+    {
+      "path": "testbed/ui-b1-editor-menu-contract.mjs",
+      "sha256": "2938122afe9ae207f588a6fc1c20100b6ad95d468b31f7ffb855672c8c8d3de4"
+    },
+    {
+      "path": "testbed/fixtures/b1-native-list.mjs",
+      "sha256": "2aee6d3534b3b158f888d0224e79cc48009078a0eec1ee73873a10798a9b056a"
+    },
+    {
+      "path": "testbed/fixtures/b1-gallery-search.mjs",
+      "sha256": "e888e66c10915bc26df9e35ceef0f572eb3db4ce916824ac6b8ad196a506c1ff"
+    },
+    {
+      "path": "testbed/fixtures/b1-gallery-search-mount.mjs",
+      "sha256": "5fd488f70c037a35ecff329040b1957fe53e64642f97be63a7d9fd8baf5a0f32"
+    },
+    {
+      "path": "testbed/fixtures/b1-article-actions.mjs",
+      "sha256": "504589feb18f3edd876680311d42cd95192b69430f56ca9ae0041e41547ae5a8"
+    },
+    {
+      "path": "testbed/fixtures/b1-content.mjs",
+      "sha256": "719303975366fabf8a3cc6a76c91b39471db1032793e6f8d7475feafa41a2d05"
+    },
+    {
+      "path": "testbed/fixtures/b1-form-header.mjs",
+      "sha256": "ba4f312790ce7dcb4052226077d794ee9cfc9f71c1ca498187e5383fb897fb84"
+    },
+    {
+      "path": "testbed/harness/runner-utils.mjs",
+      "sha256": "fd7d7d24c1984e635eed3bc2c83f21a9e274f1f34d5416010a1595fbe3d5a5ab"
+    },
+    {
+      "path": "testbed/harness/userscript-loader.mjs",
+      "sha256": "a9da81c03e53b6d25b949fc6993e532830e179e8bad2c73b6d3f6d5a3a92abc0"
+    },
+    {
+      "path": "docs/work/B1_POPUP_BATCH_V7.md",
+      "sha256": "fea0f133e87276ee8103d7676c1500e87dbf2ced651c1197e9b3423fd79725d9"
+    },
+    {
+      "path": "docs/work/B1_CONTROL_MATERIAL.md",
+      "sha256": "a2dd026ad49d92683829906498d00ad3beba3733ed59f32f8a347ea45981e87c"
+    },
+    {
+      "path": "docs/work/NEXT_TASK.md",
+      "sha256": "3cbcf4610adfd9de4bb60f930c46c2de54ef55173f88d167baf947deab273095"
+    },
+    {
+      "path": "docs/work/INDEX.md",
+      "sha256": "ed8d39708c0b60779fbd55d0394559e6ca25d518a93ad5f4fb1a6d65d25cee69"
+    },
+    {
+      "path": "docs/work/UI_REVIEW_CHECKLIST.md",
+      "sha256": "5c536fb3e8696733ccf6d2ba5282d7fd07420d5df03962f385fc2198a650dc83"
+    },
+    {
+      "path": "docs/ui-surface-contracts.md",
+      "sha256": "cb32f7490e25b3440472c54ca556bef26761350893fa3efb83a7dfe38a39d64f"
+    },
+    {
+      "path": "docs/agent-maintenance-notes.md",
+      "sha256": "8f28a29ee86dda9a536fd833cc427fba0907c69b5e0b2a2fe689e9edbdd7d1f4"
+    },
+    {
+      "path": "build/targets.json",
+      "sha256": "b1b1afd0df7dd159ac845a3de2b50d0e748e87e5178c2ede01c19cab16d46f3c"
+    },
+    {
+      "path": "verification/b1-header-visual-delta.json",
+      "sha256": "f70f3150d4b71f9a7cd0f9c877b76927c8237e0d30ff8c5ce98d420b871f4d86"
+    }
+  ],
+  "evidence": [
+    {
+      "path": "artifacts/b1-popup-batch-v7-2026-11-01/final-checks.mjs",
+      "sha256": "981521e3852a6bc88dda95596158f713995ef0f653c6303eff656de649fdf9b8"
+    },
+    {
+      "path": "artifacts/b1-popup-batch-v7-2026-11-01/final-checks.json",
+      "sha256": "f0811375d56149a0b5ba70e79fb43518f07b32d414e472edb1dcb50e20edfd50"
+    },
+    {
+      "path": "artifacts/b1-popup-batch-v7-2026-11-01/differential.mjs",
+      "sha256": "72240442f1245e1fe13b59958b29248f28a2f436fcb391f46ff51fd99e043529"
+    },
+    {
+      "path": "artifacts/b1-popup-batch-v7-2026-11-01/differential.json",
+      "sha256": "7b991daaa0c3dfb2aaf22bb53b9a40982648c92c68ff151e07552be448bd74b6"
+    },
+    {
+      "path": "artifacts/b1-popup-batch-v7-2026-11-01/semantic-before.jsonl",
+      "sha256": "e0f1d8a4ba963cdd40ccea6a201d521a5d74e93d3a79e48cc8a386aac1b6227b"
+    },
+    {
+      "path": "artifacts/b1-popup-batch-v7-2026-11-01/semantic-after.jsonl",
+      "sha256": "e0f1d8a4ba963cdd40ccea6a201d521a5d74e93d3a79e48cc8a386aac1b6227b"
+    },
+    {
+      "path": "artifacts/b1-popup-batch-v7-2026-11-01/palette.mjs",
+      "sha256": "a675004a531270796bd056b61b18074a2fe390bcb7568cff326ebbb7652f649f"
+    },
+    {
+      "path": "artifacts/b1-popup-batch-v7-2026-11-01/palette.json",
+      "sha256": "90cbd4d982ac6d4f3d546908c11e08b7ffbe6b01b2323d83e3a09458e4a0d567"
+    },
+    {
+      "path": "artifacts/b1-popup-batch-v7-2026-11-01/edge-phone.mjs",
+      "sha256": "23da4d387764c411eca9dff645ed8a4a3a044bd3199a4242ee3b951bf4a32275"
+    },
+    {
+      "path": "artifacts/b1-popup-batch-v7-2026-11-01/edge-phone.json",
+      "sha256": "d76b883e1875cdbf86a427e73e27b0611a6b7adfc1e56dae3e4599d216380383"
+    },
+    {
+      "path": "artifacts/b1-popup-batch-v7-2026-11-01/close-probe.json",
+      "sha256": "ec9a6a9eca4b2d5082659073b345a92a469de5ab6107cc87b9852adea8fd3eb9"
+    },
+    {
+      "path": "artifacts/b1-popup-batch-v7-2026-11-01/red.json",
+      "sha256": "ae8de0bf66230adf39b72b70a957e80bce4a65201df779d292e444ba0e86ea34"
+    },
+    {
+      "path": "artifacts/b1-popup-batch-v7-2026-11-01/focused-first.json",
+      "sha256": "ff317a053587d8522e4b7de529acbe3a9096db49b54434e1be2d72fb8b52fc39"
+    },
+    {
+      "path": "artifacts/b1-popup-batch-v7-2026-11-01/focused-third.json",
+      "sha256": "c7e0580de75ee77bf02f82fe34700cdf34e3a1dbc494243cc481490af9054a1b"
+    },
+    {
+      "path": "artifacts/b1-popup-batch-v7-2026-11-01/visual-manifest.json",
+      "sha256": "97821f0543b7d45d2341c98e26032a2f356d9110b496d13bd6bb3ed546e5bd33"
+    },
+    {
+      "path": "artifacts/b1-popup-batch-v7-2026-11-01/visual-reviewed/review.json",
+      "sha256": "7cb36377215d7a75d92fdc68c9ba65cf34ecf7119436e77433198d2689542e85"
+    },
+    {
+      "path": "artifacts/b1-popup-batch-v7-2026-11-01/visual-reviewed/fidelity.md",
+      "sha256": "1391864febaed1a629a926f5456378c37a07cc7eddeb5713e4990abb3007fb93"
+    }
+  ],
+  "curatedActual": [
+    {
+      "path": "docs/design/b1-popup-batch-v7-door-light-2026-11-01.png",
+      "sha256": "2d82549ba4fd2fd7aec72f1827c22cb300eb337f98f6f9f5a177289744408498"
+    },
+    {
+      "path": "docs/design/b1-popup-batch-v7-recent-dark-2026-11-01.png",
+      "sha256": "fcbd15b77b7f7ebc35dec99675d7df17e48462c0b368f574a5b602f9e4ceefd1"
+    },
+    {
+      "path": "docs/design/b1-popup-batch-v7-action-realbest-dark-2026-11-01.png",
+      "sha256": "4ec7cdca78ffbbbf1d6bbc1627929d39f33dbc0d476789e2b18167f48316d9e2"
+    },
+    {
+      "path": "docs/design/b1-popup-batch-v7-action-pum-light-2026-11-01.png",
+      "sha256": "c0e8ffd38002587066a0afb1331b47e11a024fa84f7a9bc22b00a652c1690a0a"
+    },
+    {
+      "path": "docs/design/b1-popup-batch-v7-picker-div_txtcon-dark-2026-11-01.png",
+      "sha256": "bb0d97df01fdd77c9b6547a8e58b12410c92fd263d6b5e9f2aba1fae4ba792a7"
+    },
+    {
+      "path": "docs/design/b1-popup-batch-v7-editor-paragraph-selected-dark-2026-11-01.png",
+      "sha256": "04143a393a9cdcbd0e6692ca20be69814cfef4779c7b461d234e812c961b8490"
+    }
+  ],
+  "scope": [
+    "H-01 search/help reuse and affected gallery regression",
+    "H-03 recent",
+    "H-05/H-06 compact door",
+    "H-07/H-08 rank/help",
+    "H-09 related",
+    "A-08..12 named action popups and existing children",
+    "C-11 textcon/DCCon",
+    "W-05..10 six in-document menus"
+  ],
+  "production": {
+    "sources": [
+      "src/targets/mobile/header-recent-visit-presenter.js",
+      "src/targets/mobile/header-drawer-presenter.js",
+      "src/targets/mobile/article-presenter.js",
+      "src/targets/mobile/comment-presenter.js",
+      "src/targets/mobile/native-form-presenter.js"
+    ],
+    "delta": "Existing Mobile presentation rules only;compact door top/height clearance and intrinsic primary sizing are intentional geometry changes",
+    "unchanged": [
+      "Common material/palette formulas",
+      "Adapters/templates/UiPort/native identity/events/hidden data",
+      "Storage/network/filter/observers",
+      "Metadata/build topology/PC",
+      "Native authored swatches/media/table previews"
+    ]
+  },
+  "checks": {
+    "browser": "156.0.8078.76",
+    "focused": [
+      {
+        "name": "header-v7",
+        "status": "passed"
+      },
+      {
+        "name": "actions-v7",
+        "status": "passed"
+      },
+      {
+        "name": "editor-v7",
+        "status": "passed"
+      },
+      {
+        "name": "gallery",
+        "status": "passed",
+        "observations": 36
+      },
+      {
+        "name": "actions",
+        "status": "passed",
+        "observations": 20
+      },
+      {
+        "name": "content",
+        "status": "passed",
+        "observations": 8
+      },
+      {
+        "name": "editor",
+        "status": "passed"
+      }
+    ],
+    "contexts": [
+      "980x900 light/dark",
+      "980x420 light",
+      "390x520 dark stress",
+      "390x420 dark stress"
+    ],
+    "semantic": {
+      "pairs": 42,
+      "differences": 0,
+      "basis": "Separate fresh frozen/current contexts;recorded controls/input state/identity/callbacks/native fixture calls. Geometry/paint intentionally omitted.",
+      "fullLifecycleStoragePerformance": false
+    },
+    "palette": {
+      "colors": [
+        "blue",
+        "mono",
+        "rose"
+      ],
+      "themes": [
+        "light",
+        "dark"
+      ],
+      "families": [
+        "header",
+        "actions",
+        "pickers",
+        "editor"
+      ],
+      "renderedSamples": 24,
+      "minLabelContrast": 5.344663521248225,
+      "cancelRestorations": 8,
+      "errors": 0,
+      "unchangedCommon14ColorFormulas": true
+    },
+    "supplement": {
+      "engine": "Chromium149.0.7827.55",
+      "header980x2306LightDark": "PASS_LAYOUT_ONLY",
+      "scaleScreenClientHeightEngineGapsRemain": true,
+      "bottomAnchor": {
+        "top": 184,
+        "height": 120,
+        "clientHeight": 118,
+        "maxHeight": "120px",
+        "actionHits": [
+          true,
+          true,
+          true
+        ]
+      }
+    },
+    "visual": {
+      "pairs": 17,
+      "status": "DIFFERENCES_REQUIRE_REVIEW",
+      "referenceFidelity": "REVIEWED",
+      "pixelWithinExistingTolerance": 8,
+      "intentionalPixelDifferences": 9,
+      "productApproved": false,
+      "assessments": [
+        {
+          "id": "door-light",
+          "referenceSha256": "33d62827493e8f8cdac177c3c8a6d6f4b3003826696c4831fba077eb31f1a12e",
+          "candidateSha256": "2d82549ba4fd2fd7aec72f1827c22cb300eb337f98f6f9f5a177289744408498",
+          "status": "REVIEWED",
+          "summary": "Rank summary becomes a compact quiet reading group;the original description,manager facts and native rank action retain space.",
+          "findings": [
+            {
+              "disposition": "INTENTIONAL",
+              "expected": "Current restrained v7 role adaptation with original fields/content and native hierarchy",
+              "actual": "Rank summary becomes a compact quiet reading group;the original description,manager facts and native rank action retain space.",
+              "action": "Retain these local material differences;do not repaint authored media/swatches or treat pixel differences as regressions"
+            }
+          ]
+        },
+        {
+          "id": "recent-dark",
+          "referenceSha256": "619921e7aee8b76392b16e23b81d1476963298fed54311876c05177f5c31c492",
+          "candidateSha256": "fcbd15b77b7f7ebc35dec99675d7df17e48462c0b368f574a5b602f9e4ceefd1",
+          "status": "REVIEWED",
+          "summary": "One underline remains;the competing selected tab fill is removed. Original row/remove/footer remain.",
+          "findings": [
+            {
+              "disposition": "INTENTIONAL",
+              "expected": "Current restrained v7 role adaptation with original fields/content and native hierarchy",
+              "actual": "One underline remains;the competing selected tab fill is removed. Original row/remove/footer remain.",
+              "action": "Retain these local material differences;do not repaint authored media/swatches or treat pixel differences as regressions"
+            }
+          ]
+        },
+        {
+          "id": "rank-dark",
+          "referenceSha256": "e8d7eaaac36c447cb955619dcbc58f84635abdc8c0ae02521490f59179174441",
+          "candidateSha256": "2ae9b9b8647d8a7afc559513a28173a0172d50782bcc7b8a2dfc8c3dc5a2a19c",
+          "status": "REVIEWED",
+          "summary": "Five native columns and transmitting shell remain;the two pagers become quiet local actions.",
+          "findings": [
+            {
+              "disposition": "INTENTIONAL",
+              "expected": "Current restrained v7 role adaptation with original fields/content and native hierarchy",
+              "actual": "Five native columns and transmitting shell remain;the two pagers become quiet local actions.",
+              "action": "Retain these local material differences;do not repaint authored media/swatches or treat pixel differences as regressions"
+            }
+          ]
+        },
+        {
+          "id": "related-light",
+          "referenceSha256": "172ef206347e3a7759180fd0cf0ac0a1e0a9de9471c0708db90a8c4db3cc7f09",
+          "candidateSha256": "cc65f90d204b57661f8051739d3108bbd2c53145c5c4106924d358a2e19c18c8",
+          "status": "REVIEWED",
+          "summary": "Two original relation groups,counts and pager locations remain;individual pager boxes disappear.",
+          "findings": [
+            {
+              "disposition": "INTENTIONAL",
+              "expected": "Current restrained v7 role adaptation with original fields/content and native hierarchy",
+              "actual": "Two original relation groups,counts and pager locations remain;individual pager boxes disappear.",
+              "action": "Retain these local material differences;do not repaint authored media/swatches or treat pixel differences as regressions"
+            }
+          ]
+        },
+        {
+          "id": "action-realbest-dark",
+          "referenceSha256": "8f1915fcd38fd0a90751754dbb6c6461cad7eea0afe7918cf20191179f091b95",
+          "candidateSha256": "4ec7cdca78ffbbbf1d6bbc1627929d39f33dbc0d476789e2b18167f48316d9e2",
+          "status": "REVIEWED",
+          "summary": "Confirm now uses the pale paired-ink material and fits its short label;cancel and close are quiet.",
+          "findings": [
+            {
+              "disposition": "INTENTIONAL",
+              "expected": "Current restrained v7 role adaptation with original fields/content and native hierarchy",
+              "actual": "Confirm now uses the pale paired-ink material and fits its short label;cancel and close are quiet.",
+              "action": "Retain these local material differences;do not repaint authored media/swatches or treat pixel differences as regressions"
+            }
+          ]
+        },
+        {
+          "id": "action-pum-light",
+          "referenceSha256": "a85ba0cc51783146edc3ebdbcaa68f18a9769427dd7fe81973e3ff498a0db546",
+          "candidateSha256": "c0e8ffd38002587066a0afb1331b47e11a024fa84f7a9bc22b00a652c1690a0a",
+          "status": "REVIEWED",
+          "summary": "Original fields,preview,media,guide and footer hierarchy remain;register is compact pale glass and history/cancel/close are plain.",
+          "findings": [
+            {
+              "disposition": "INTENTIONAL",
+              "expected": "Current restrained v7 role adaptation with original fields/content and native hierarchy",
+              "actual": "Original fields,preview,media,guide and footer hierarchy remain;register is compact pale glass and history/cancel/close are plain.",
+              "action": "Retain these local material differences;do not repaint authored media/swatches or treat pixel differences as regressions"
+            }
+          ]
+        },
+        {
+          "id": "action-report-light",
+          "referenceSha256": "18172ef6d58e90742025f0bfce067206a3596735dbc6794a538970bf473bfd47",
+          "candidateSha256": "5dfadc633362f5d32f69e5e9aa91b9b71670f1937f942b43fae2d3d688f654cd",
+          "status": "REVIEWED",
+          "summary": "Three original semantic report icons and labels remain;the competing shaded choice faces and close glaze are removed.",
+          "findings": [
+            {
+              "disposition": "INTENTIONAL",
+              "expected": "Current restrained v7 role adaptation with original fields/content and native hierarchy",
+              "actual": "Three original semantic report icons and labels remain;the competing shaded choice faces and close glaze are removed.",
+              "action": "Retain these local material differences;do not repaint authored media/swatches or treat pixel differences as regressions"
+            }
+          ]
+        },
+        {
+          "id": "action-scrap-light",
+          "referenceSha256": "c4bcfa0d498693988053d39f374da2ac25c2f46a7eec2837f6a2dce89294798e",
+          "candidateSha256": "925e68eca65123fa293ca5359873439721a74336590f6c7bbeee1415c068700c",
+          "status": "REVIEWED",
+          "summary": "Original saved feedback remains;close becomes compact pale primary and the lower view action is quiet.",
+          "findings": [
+            {
+              "disposition": "INTENTIONAL",
+              "expected": "Current restrained v7 role adaptation with original fields/content and native hierarchy",
+              "actual": "Original saved feedback remains;close becomes compact pale primary and the lower view action is quiet.",
+              "action": "Retain these local material differences;do not repaint authored media/swatches or treat pixel differences as regressions"
+            }
+          ]
+        },
+        {
+          "id": "action-share-dark",
+          "referenceSha256": "a35a7fc68ec07baf810b5690d45defdd75c73c85bcfc4dc5becb29daf5bb5456",
+          "candidateSha256": "bb580f502e9a279a6443bd263dc94d6673a93b17cca6c70395b5fec79cd670bc",
+          "status": "REVIEWED",
+          "summary": "Original social choices and URL field/copy capability remain;individual social and close glaze is removed. The native URL/copy outline still separates that input/action group.",
+          "findings": [
+            {
+              "disposition": "INTENTIONAL",
+              "expected": "Current restrained v7 role adaptation with original fields/content and native hierarchy",
+              "actual": "Original social choices and URL field/copy capability remain;individual social and close glaze is removed. The native URL/copy outline still separates that input/action group.",
+              "action": "Retain these local material differences;do not repaint authored media/swatches or treat pixel differences as regressions"
+            }
+          ]
+        },
+        {
+          "id": "picker-div-txtcon-dark",
+          "referenceSha256": "e7ccdd252ed8cfd3b7fbf8363b23ebdc0a4f8c8526e57dfb03d1f96a431bee33",
+          "candidateSha256": "bb0d97df01fdd77c9b6547a8e58b12410c92fd263d6b5e9f2aba1fae4ba792a7",
+          "status": "REVIEWED",
+          "summary": "Original swatch circles,selected color,preview and input remain;register uses the restrained pale paired face and short natural width.",
+          "findings": [
+            {
+              "disposition": "INTENTIONAL",
+              "expected": "Current restrained v7 role adaptation with original fields/content and native hierarchy",
+              "actual": "Original swatch circles,selected color,preview and input remain;register uses the restrained pale paired face and short natural width.",
+              "action": "Retain these local material differences;do not repaint authored media/swatches or treat pixel differences as regressions"
+            }
+          ]
+        },
+        {
+          "id": "picker-div-con-light",
+          "referenceSha256": "e2ae33efc3e0260bb947b0ec2b2afba55e29b09ce01fbaf8bb9d954742c4a8a6",
+          "candidateSha256": "38d12b167c81c1678c3c42913ae8d5c2c6d4384d26f9fc4c79df243189f87146",
+          "status": "REVIEWED",
+          "summary": "Original media cells,checkbox,section separators and navigation remain;popular/manage/previous/recent/next lose their individual boxes.",
+          "findings": [
+            {
+              "disposition": "INTENTIONAL",
+              "expected": "Current restrained v7 role adaptation with original fields/content and native hierarchy",
+              "actual": "Original media cells,checkbox,section separators and navigation remain;popular/manage/previous/recent/next lose their individual boxes.",
+              "action": "Retain these local material differences;do not repaint authored media/swatches or treat pixel differences as regressions"
+            }
+          ]
+        },
+        {
+          "id": "editor-fontname-selected-light",
+          "referenceSha256": "4bd24f9e3f34fd64369a15093f3f12390565b8d197aaff89448847617685cf25",
+          "candidateSha256": "29a27001f7e415091a8462c6db34ccb4863a8b4f2c47d499778ae50eadc3621d",
+          "status": "REVIEWED",
+          "summary": "One selected flat pale face replaces a separate glossy selection recipe;native font previews and original toolbar remain.",
+          "findings": [
+            {
+              "disposition": "INTENTIONAL",
+              "expected": "Current restrained v7 role adaptation with original fields/content and native hierarchy",
+              "actual": "One selected flat pale face replaces a separate glossy selection recipe;native font previews and original toolbar remain.",
+              "action": "Retain these local material differences;do not repaint authored media/swatches or treat pixel differences as regressions"
+            }
+          ]
+        },
+        {
+          "id": "editor-fontsize-selected-dark",
+          "referenceSha256": "c4f36dea2b114590e55666718f44765a81ad68ae28d5840c6fba02c7e78c907d",
+          "candidateSha256": "1dacfc898bf46ee8ee619270b90bbfc287391c012ee12dcfe33f71c6be99e745",
+          "status": "REVIEWED",
+          "summary": "One pale selected option has dark paired ink without rim/shadow;other choices remain quiet and readable.",
+          "findings": [
+            {
+              "disposition": "INTENTIONAL",
+              "expected": "Current restrained v7 role adaptation with original fields/content and native hierarchy",
+              "actual": "One pale selected option has dark paired ink without rim/shadow;other choices remain quiet and readable.",
+              "action": "Retain these local material differences;do not repaint authored media/swatches or treat pixel differences as regressions"
+            }
+          ]
+        },
+        {
+          "id": "editor-paragraph-selected-dark",
+          "referenceSha256": "d689b4435835150df58fe48462dac9ec93a65373e4774ffc859eab18dbe29a52",
+          "candidateSha256": "04143a393a9cdcbd0e6692ca20be69814cfef4779c7b461d234e812c961b8490",
+          "status": "REVIEWED",
+          "summary": "Four individual outlined buttons become plain choices with one pale selected face in the same menu.",
+          "findings": [
+            {
+              "disposition": "INTENTIONAL",
+              "expected": "Current restrained v7 role adaptation with original fields/content and native hierarchy",
+              "actual": "Four individual outlined buttons become plain choices with one pale selected face in the same menu.",
+              "action": "Retain these local material differences;do not repaint authored media/swatches or treat pixel differences as regressions"
+            }
+          ]
+        },
+        {
+          "id": "editor-lineheight-selected-light",
+          "referenceSha256": "b4c7ddea444972d8a0a5c9ca706249c27eb7fbcdaf5080ff5dd4518a921468f7",
+          "candidateSha256": "6af1bdf06c6eb444b6dde0c045477e18c870b27817a3970308565ebe8e8f4bbc",
+          "status": "REVIEWED",
+          "summary": "Selected spacing gets one paired face without shadow;the original values and vertical choice rhythm remain.",
+          "findings": [
+            {
+              "disposition": "INTENTIONAL",
+              "expected": "Current restrained v7 role adaptation with original fields/content and native hierarchy",
+              "actual": "Selected spacing gets one paired face without shadow;the original values and vertical choice rhythm remain.",
+              "action": "Retain these local material differences;do not repaint authored media/swatches or treat pixel differences as regressions"
+            }
+          ]
+        },
+        {
+          "id": "editor-color-light",
+          "referenceSha256": "6668128eb13bf4ed60be8bbeab2545f103099fbc772804d0626c437543161b6a",
+          "candidateSha256": "43e4024392a003122a5a2651dfcd62f4adbff180eb060f2102285eeed2ae14ef",
+          "status": "REVIEWED",
+          "summary": "Authored color grids and two-column structure remain;only the floating shell consumes the common glass role. No hue normalization.",
+          "findings": [
+            {
+              "disposition": "INTENTIONAL",
+              "expected": "Current restrained v7 role adaptation with original fields/content and native hierarchy",
+              "actual": "Authored color grids and two-column structure remain;only the floating shell consumes the common glass role. No hue normalization.",
+              "action": "Retain these local material differences;do not repaint authored media/swatches or treat pixel differences as regressions"
+            }
+          ]
+        },
+        {
+          "id": "editor-table-dark",
+          "referenceSha256": "5ae5fd45b1781e9671c94c55fe305e6e2223ad1aa291e352f87cf94ffb9676a8",
+          "candidateSha256": "e499106c038a284a692fda2bfbf5bd3e0f8c1798f16dd7b95cd72758008da43a",
+          "status": "REVIEWED",
+          "summary": "Native table cells and size feedback remain;only the floating shell follows the common material. White cell previews are authored native content.",
+          "findings": [
+            {
+              "disposition": "INTENTIONAL",
+              "expected": "Current restrained v7 role adaptation with original fields/content and native hierarchy",
+              "actual": "Native table cells and size feedback remain;only the floating shell follows the common material. White cell previews are authored native content.",
+              "action": "Retain these local material differences;do not repaint authored media/swatches or treat pixel differences as regressions"
+            }
+          ]
+        }
+      ],
+      "viewer": {
+        "url": "http://127.0.0.1:10067/popup-batch-v7/index.html?implementation=0E1A75FD",
+        "checkedInUserIab": true,
+        "decodedWidth": 980,
+        "decodedHeight": 900,
+        "oneImageAtATime": true
+      }
+    }
+  },
+  "review": {
+    "method": "Read-only independent source/test reviewer,then narrow fresh follow-up;no independent browser run or formal aesthetic critique",
+    "findingsFixed": [
+      "Skipped conditional selected-state assertion",
+      "Surviving host fixed primary width",
+      "Compact top/max-height feedback at low anchors"
+    ],
+    "final": "No remaining concrete defect found",
+    "impeccableDetector": "Five final production sources;[] mechanical findings;not beauty approval"
+  },
+  "impact": {
+    "declaredPaths": [
+      "docs/agent-maintenance-notes.md",
+      "docs/design/b1-popup-batch-v7-action-pum-light-2026-11-01.png",
+      "docs/design/b1-popup-batch-v7-action-realbest-dark-2026-11-01.png",
+      "docs/design/b1-popup-batch-v7-door-light-2026-11-01.png",
+      "docs/design/b1-popup-batch-v7-editor-paragraph-selected-dark-2026-11-01.png",
+      "docs/design/b1-popup-batch-v7-picker-div_txtcon-dark-2026-11-01.png",
+      "docs/design/b1-popup-batch-v7-recent-dark-2026-11-01.png",
+      "docs/ui-surface-contracts.md",
+      "docs/work/B1_CONTROL_MATERIAL.md",
+      "docs/work/B1_POPUP_BATCH_V7.md",
+      "docs/work/CURRENT_STATE.md",
+      "docs/work/INDEX.md",
+      "docs/work/NEXT_TASK.md",
+      "docs/work/UI_REVIEW_CHECKLIST.md",
+      "src/targets/mobile/article-presenter.js",
+      "src/targets/mobile/comment-presenter.js",
+      "src/targets/mobile/header-drawer-presenter.js",
+      "src/targets/mobile/header-recent-visit-presenter.js",
+      "src/targets/mobile/native-form-presenter.js",
+      "testbed/run-tests.mjs",
+      "testbed/ui-b1-article-actions-contract.mjs",
+      "testbed/ui-b1-content-contract.mjs",
+      "testbed/ui-b1-editor-menu-contract.mjs",
+      "testbed/ui-popup-batch-v7-contract.mjs"
+    ],
+    "automaticProfiles": [
+      "policy",
+      "proof-core",
+      "proof-runtime",
+      "acceptance"
+    ],
+    "fallback": "Unmapped newer UI contracts select broad acceptance. Actual dependency inspection selected7 affected browser contracts plus separate semantic/palette/short-layout witnesses;not executing unrelated full suite.",
+    "omitted": [
+      "Unchanged PC/shared filter/writer state/boot/bfcache/storage product suites",
+      "Full128-child/UI/account/device/extension acceptance",
+      "Actual live POST/account actions",
+      "Four user-deferred uploads"
+    ]
+  },
+  "contrary": [
+    {
+      "kind": "PRODUCT_FIXED",
+      "detail": "Native fixed width survived lower min;actual label-width contract now catches it"
+    },
+    {
+      "kind": "ORACLE_FIXED",
+      "detail": "Selection contract could skip;now exercises generated font intent or explicit presentation-only native state"
+    },
+    {
+      "kind": "FIXTURE_FIXED",
+      "detail": "Offscreen programmatic editor opener now uses a visible original toolbar anchor"
+    },
+    {
+      "kind": "PRODUCT_FIXED",
+      "detail": "Compact door top/height bounded to preserve120px tested panel and116px lower clearance"
+    },
+    {
+      "kind": "RETAINED_LIMIT",
+      "detail": "Frozen/current narrow underlying door/DCCon toggle pointer center covered;new close witness uses original keyboard,not force-click"
+    },
+    {
+      "kind": "MANIFEST_FIXED",
+      "detail": "Underscore case IDs rejected;new output report with valid IDs,unchanged images/tolerances"
+    }
+  ],
+  "limits": [
+    "Scoped Mobile implementation,not all UI/formal header admission",
+    "Native gallery/author settings and password/login cards need remaining-v7 reconciliation",
+    "Synthetic fixtures are not actual extension/device/account/live-submit proof",
+    "Native Summernote selected states explicitly seeded where fixture has no editor implementation",
+    "980x2306 layout-only;390 is stress;original phone scale/client-height/engine gaps retained",
+    "Source/test passes and image comparison do not grant aesthetic approval or new pixel baselines",
+    "Image replies N/A;external uploads DEFERRED_USER_ACCEPTED;guidebook discussion after whole UI ends"
+  ],
+  "hashMode": "Canonical LF text;raw image/runtime bytes"
+}

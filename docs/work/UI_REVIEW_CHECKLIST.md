@@ -46,6 +46,8 @@
 
 V-02–V-08의 두 root는 B1_PREVIEW_DRAFT_FINISH.md에서 마감했다. B1_INTEGRATED_UI_GAPS.md의 F87E 진단은 원인/미확인 자식의 역사적 근거이며 NEXT_TASK.md가 현재 하나의 실행 단위를 고른다. 과거 UI-01 복구는 완료된 역사적 범위다.
 
+현재 결합 구현2026-11-01:B1_POPUP_BATCH_V7.md가 H-01/H-03/H-05–09,A-08–12/C-11,W-05–10의 명명된 native 팝업/선택기/6개 메뉴를 v7로 이식했다. 아래 예전 B1 근거는 원래 기능/해부도 및 미확인 자식의 이력이다. 이 새 근거는 계정/실전 전송/조건부 native 자식 전체를 완료하지 않는다. NEXT 통합 검토에서 H-10/작성자 설정,수정삭제/로그인 카드의 v7 잔여를 구별한다.
+
 ## 조사 범위와 체크 의미
 
 - `build/targets.json`에 포함된 모바일·PC 합집합54개 JS 소스에서 UI 생성·HTML 주입·메뉴 등록·브라우저 대화상자 호출132곳을 조사했다. 중복 템플릿, DOM 처리용 임시 노드, 한 UI의 여러 자식 생성은 별도 제품 화면으로 세지 않았다. 빌드에 없는 `legacy-app.js`를 현재 UI로 세지 않는다.
@@ -67,15 +69,15 @@ V-02–V-08의 두 root는 B1_PREVIEW_DRAFT_FINISH.md에서 마감했다. B1_INT
 
 | ID | UI | 여는 방법·조건 | 펼쳐볼 상태 | 근거 | 검토 상태 |
 | --- | --- | --- | --- | --- | --- |
-| H-01 | 사이트 헤더·통합 검색·로그인·야간 전환 | 목록/본문/수정 등 해당 페이지 | 로그인/비로그인, 긴 검색어, 포커스, 원래 전환 동작 | HEADER | 헤더/검색 범위 → B1_GALLERY_SEARCH_POPUPS.md; sign 구현 → B1_LOGIN_ENTRY_IMPLEMENTATION.md; 실제 인증/조건부 오류 별도 ;v7 preflight → B1_NATIVE_HEADER_POPUPS_V7_PREFLIGHT.md,implementation pending |
+| H-01 | 사이트 헤더·통합 검색·로그인·야간 전환 | 목록/본문/수정 등 해당 페이지 | 로그인/비로그인, 긴 검색어, 포커스, 원래 전환 동작 | HEADER | 헤더/검색 범위 → B1_GALLERY_SEARCH_POPUPS.md; sign 구현 → B1_LOGIN_ENTRY_IMPLEMENTATION.md; 실제 인증/조건부 오류 별도 ;v7 scoped 구현/검사 → B1_POPUP_BATCH_V7.md(원본 preflight는 이력) |
 | H-02 | GNB 탐색 링크 | 원래 메뉴 탐색 | 선택/비선택, 작은 폭, 줄바꿈·가로 범위 | HEADER | 범위 근거 → B1_LIST_COHESION.md; 나머지 계정/페이지 조합 미확인 |
-| H-03 | 최근 방문 목록·이전/다음·전체 | 최근 방문 화살표와 전체 버튼 | 짧음/긴 목록, 양 끝, 선택, 전체 버튼의 실제 열린 화면 | HEADER | 최근 메뉴/탭 범위 → B1_POPUP_POLISH.md + B1_LIST_COHESION.md; 모든 계정/데이터 변형은 별도 ;v7 preflight → B1_NATIVE_HEADER_POPUPS_V7_PREFLIGHT.md,implementation pending |
+| H-03 | 최근 방문 목록·이전/다음·전체 | 최근 방문 화살표와 전체 버튼 | 짧음/긴 목록, 양 끝, 선택, 전체 버튼의 실제 열린 화면 | HEADER | 최근 메뉴/탭 범위 → B1_POPUP_POLISH.md + B1_LIST_COHESION.md; 모든 계정/데이터 변형은 별도 ;v7 scoped 구현/검사 → B1_POPUP_BATCH_V7.md(원본 preflight는 이력) |
 | H-04 | 갤러리 제목·종류 배지·갤러리 검색 | 메이저/마이너/미니 진입 | 긴 제목, 배지, 검색 폼, 페이지 종류별 헤더 | HEADER | 범위 근거 → B1_LIST_COHESION.md; 나머지 계정/페이지 조합 미확인 |
-| H-05 | 갤러리 대문 열기/닫기 | 원래 대문 토글 | 닫힘/열림/재열기, 짧은 화면, 대문 없는 경로 | HEADER | 대문/순위/팁/연관 범위 → B1_GALLERY_SEARCH_POPUPS.md; 대표 root 밖 자식은 별도 ;v7 preflight → B1_NATIVE_HEADER_POPUPS_V7_PREFLIGHT.md,implementation pending |
-| H-06 | 마이너 소개·대문 내부 | 마이너 대문 열기 | 내용 길이, 스크롤, 원래 내부 링크 | HEADER | 대문/순위/팁/연관 범위 → B1_GALLERY_SEARCH_POPUPS.md; 대표 root 밖 자식은 별도 ;v7 preflight → B1_NATIVE_HEADER_POPUPS_V7_PREFLIGHT.md,implementation pending |
-| H-07 | 흥한갤 전체 순위 팝업 | 대문 → 전체 순위 | 열림/닫힘/긴 목록/재열기, 대문 닫힌 popup-only | HEADER | 대문/순위/팁/연관 범위 → B1_GALLERY_SEARCH_POPUPS.md; 대표 root 밖 자식은 별도 ;v7 preflight → B1_NATIVE_HEADER_POPUPS_V7_PREFLIGHT.md,implementation pending |
-| H-08 | 순위 도움말/팁 팝업 | 순위 관련 원래 도움말 버튼 | 팁과 닫기, 화면 끝, 다른 대문 레이어 위 | HEADER | 대문/순위/팁/연관 범위 → B1_GALLERY_SEARCH_POPUPS.md; 대표 root 밖 자식은 별도 ;v7 preflight → B1_NATIVE_HEADER_POPUPS_V7_PREFLIGHT.md,implementation pending |
-| H-09 | 연관 갤러리 팝업 | 제목 옆 연관 버튼 | 내용/스크롤/닫기, 목록의 개수 선택기와 겹침 | HEADER | 대문/순위/팁/연관 범위 → B1_GALLERY_SEARCH_POPUPS.md; 대표 root 밖 자식은 별도 ;v7 preflight → B1_NATIVE_HEADER_POPUPS_V7_PREFLIGHT.md,implementation pending |
+| H-05 | 갤러리 대문 열기/닫기 | 원래 대문 토글 | 닫힘/열림/재열기, 짧은 화면, 대문 없는 경로 | HEADER | 대문/순위/팁/연관 범위 → B1_GALLERY_SEARCH_POPUPS.md; 대표 root 밖 자식은 별도 ;v7 scoped 구현/검사 → B1_POPUP_BATCH_V7.md(원본 preflight는 이력) |
+| H-06 | 마이너 소개·대문 내부 | 마이너 대문 열기 | 내용 길이, 스크롤, 원래 내부 링크 | HEADER | 대문/순위/팁/연관 범위 → B1_GALLERY_SEARCH_POPUPS.md; 대표 root 밖 자식은 별도 ;v7 scoped 구현/검사 → B1_POPUP_BATCH_V7.md(원본 preflight는 이력) |
+| H-07 | 흥한갤 전체 순위 팝업 | 대문 → 전체 순위 | 열림/닫힘/긴 목록/재열기, 대문 닫힌 popup-only | HEADER | 대문/순위/팁/연관 범위 → B1_GALLERY_SEARCH_POPUPS.md; 대표 root 밖 자식은 별도 ;v7 scoped 구현/검사 → B1_POPUP_BATCH_V7.md(원본 preflight는 이력) |
+| H-08 | 순위 도움말/팁 팝업 | 순위 관련 원래 도움말 버튼 | 팁과 닫기, 화면 끝, 다른 대문 레이어 위 | HEADER | 대문/순위/팁/연관 범위 → B1_GALLERY_SEARCH_POPUPS.md; 대표 root 밖 자식은 별도 ;v7 scoped 구현/검사 → B1_POPUP_BATCH_V7.md(원본 preflight는 이력) |
+| H-09 | 연관 갤러리 팝업 | 제목 옆 연관 버튼 | 내용/스크롤/닫기, 목록의 개수 선택기와 겹침 | HEADER | 대문/순위/팁/연관 범위 → B1_GALLERY_SEARCH_POPUPS.md; 대표 root 밖 자식은 별도 ;v7 scoped 구현/검사 → B1_POPUP_BATCH_V7.md(원본 preflight는 이력) |
 | H-10 | 갤러리 이용안내·설정·기타 원래 메뉴 | 원래 제목 영역의 해당 버튼 | 각각의 실제 창·메뉴, 로그인 전제, 취소/닫기 | HEADER | 안내/설정 root 범위 → B1_GALLERY_SEARCH_POPUPS.md; 익명 설정6종/명명된 탭·색상·백업·안내·자짤 empty → B1_NATIVE_SETTINGS_CHILDREN.md;계정·실제 데이터/저장/업로드는 미확인 |
 | H-11 | 메이저 추천 갤러리 캐러셀 | 메이저 대문의 원래 이전/다음 | 첫/중간/끝 페이지, 짧은 폭, 원래 링크 | HEADER | 범위 근거 → B1_LIST_COHESION.md; 나머지 계정/페이지 조합 미확인 |
 

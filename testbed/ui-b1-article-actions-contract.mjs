@@ -30,11 +30,11 @@ export async function runB1ArticleActionsContract({browser,server}) {
      assert.equal(await popup.locator('.sns_share_btn').count(),3);assert.equal(await popup.locator('#exid').getAttribute('readonly'),'');
      const f=await popup.locator('#exid').boundingBox();assert.ok(f.width>80&&f.x>=m.left&&f.x+f.width<=m.right);
      const copy=await popup.locator('.urlcopy_box > label').boundingBox();assert.ok(copy.x>=f.x+f.width+6&&copy.x+copy.width<=m.right-16,'Readonly URL and copy action are adjacent independent controls');
-     const face=await popup.evaluate(n=>{const s=getComputedStyle(n),label=n.querySelector('.description'),copy=n.querySelector('.urlcopy_box > label'),probe=document.createElement('span');probe.style.background='var(--dcuf-control-secondary-fill)';n.append(probe);const paper=getComputedStyle(probe).backgroundColor;probe.remove();return{label:getComputedStyle(label).color===s.color,copy:getComputedStyle(copy).color===s.color,face:getComputedStyle(copy).backgroundColor===paper}});
+     const face=await popup.evaluate(n=>{const s=getComputedStyle(n),label=n.querySelector('.description'),copy=n.querySelector('.urlcopy_box > label');return{label:getComputedStyle(label).color===s.color,copy:getComputedStyle(copy).color===s.color,face:getComputedStyle(copy).backgroundColor==='rgba(0, 0, 0, 0)'}});
      assert.deepEqual(face,{label:true,copy:true,face:true},'Nested native share labels and copy face must consume the current theme');
     }
     if(kind==='realbest'){
-     const primary=popup.locator('#user_dcbest_lyr_btn_ok'),box=await primary.boundingBox();assert.ok(box.width>=88&&box.height>=40);
+     const primary=popup.locator('#user_dcbest_lyr_btn_ok'),box=await primary.boundingBox();assert.ok(box.width>=44&&box.height>=36,'Approved compact primary retains a positive label-sized target');
      await primary.click();assert.ok(await e.page.evaluate(()=>window.__actionFixture.calls.includes('user_dcbest_lyr_btn_ok')),'Synthetic fixture proves dispatch identity; never a native vote');
     }
     if(kind==='pum'){

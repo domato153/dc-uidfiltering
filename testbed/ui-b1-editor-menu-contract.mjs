@@ -67,8 +67,9 @@ export async function runB1EditorMenuContract({ browser, server }) {
                             bounded: r.width > 0 && r.height > 0 && r.left >= -1 && r.top >= -1 && r.right <= innerWidth + 1 && r.bottom <= innerHeight + 1,
                             fixedChildren: [...n.querySelectorAll('*')].filter(x => getComputedStyle(x).position === 'fixed').length };
                     });
-                    assert.match(material.blur, /blur\(12px\)/, `${anchor}: missing shared structural glass`);
-                    assert.match(material.background, /0\.72\)/, `${anchor}: real backing transmission`);
+                    assert.match(material.blur, /blur\(8px\)/, `${anchor}: missing shared floating glass`);
+                    const floating=await menu.evaluate(n=>{const probe=document.createElement('span');probe.style.background='var(--dcuf-b1-floating)';n.append(probe);const color=getComputedStyle(probe).backgroundColor;probe.remove();return color});
+                    assert.equal(material.background,floating,`${anchor}: shared floating backing rather than a separate local alpha`);
                     assert.equal(material.radius, 12);
                     assert.equal(material.bounded, true, `${anchor}/${width}/${dark}: viewport containment ${JSON.stringify(material)}`);
                     assert.equal(material.fixedChildren, 0, 'do not filter a menu containing fixed child windows');
