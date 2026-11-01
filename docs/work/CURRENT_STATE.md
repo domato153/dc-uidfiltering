@@ -2,22 +2,22 @@
 
 ## Current execution
 
-- Active plan: B1_NATIVE_RESIDUAL_V7.md closes the remaining three native groups/four presenters as one batch. Top-search history/suggestions were already fitting and are rechecked unchanged. NEXT qualifies actual public DCCon loading.
+- Active plan: B1_DCCON_LIVE_FINISH.md closes actual public DCCon reads and the resulting title/strip/grid/pager/selected-state repairs. NEXT is the remaining account/conditional UI preflight.
 - Workspace path: `.` (private prompt supplies exact worktree). Preserve debug.log unread/unstaged.
-- Active stage: `header-navigation` formal admission remains open. Named list/article/comments/write/owned/native v7 implementation scopes remain;live/conditional gaps prevent whole-UI acceptance.
-- Accepted visual preference: Actual memo/current bright-dark paired pale primary,transmitting chrome,stable reading,quiet label-sized auxiliaries and one selected cue. Native destructive/authored/full-width login roles retained.
-- Source state: Source checkpoint base HEAD `0df60fd8c950b005d9990933cec6c2f34496d070` on `codex/ui-port-boundary`. Four Mobile presentation owners only;common formulas/adapters/templates/PC unchanged. Necessary current native-form ledger/verifier alignment included. Checkpoint receipt owns publication/CI identity.
-- Local-only state: `LOCAL_ONLY_EVIDENCE`;artifacts/b1-native-residual-v7-2026-11-01 holds frozen control,drivers/results and image pairs. Four curated current synthetic images tracked. Test browsers closed;viewer one selected image.
-- Candidate fingerprint: `592eb5b6064651e7a9bed3efca9b12f8a6ff7455d1e94d23d57dbbea1ae1e2d1`
-- Last current audit: PASS scoped0A5583B6:3 new+5 affected contracts,2 native action checks,24 identical semantic pairs,24 palette samples/6 cancel restorations(min contrast6.339),12 reviewed pairs and8 final search states. Not whole-UI admission.
-- Current stage receipt: `verification/receipts/2026-11-01-b1-native-residual-v7.json` SHA-256 `17A1B2A097F2A2DB5EF9354E9C5AD248A6A104101E100F3E9789BCD3FCAC1E0A`. B1_V7_INTEGRATED_REVIEW.md remains anatomy history;the prior popup0E receipt retains its named scope.
-- Accepted baseline: Generic native settings/individual memo+picker/password+delete+leave/login primary are now migrated to current v7. Existing memo workspace,author menu,login chrome and top search are retained reuse controls.
-- Current artifact: Mobile3.5.5 0A5583B6B8FAB3F52E8E3D4CC8F34E1CD836B79657676DA4D9053F5B63D27402 root/dist/guard;PC1.9.9 E4706617DE96D3E0719144724FDAE1B62D7511674D6564DCBD82F2C702802E14 root/dist unchanged. No version/release change.
-- Blockers: No implementation blocker. Exact scoped reviewer findings repaired. Native head/tail last field remains reachable after scroll;fixture .blind fidelity corrected locally. Actual DCCon live loading remains UNKNOWN.
-- Pending live checks: Actual DCCon packs/images/recent/hot/settings;C-13/account/CAPTCHA/media/error/data variants,actual extension/device/live POST remain unqualified.980×2306 is layout proxy,390 stress. Image replies N/A;four uploads user-deferred;guidebook discussion after whole UI finish.
+- Active stage: `header-navigation` formal admission remains open. Named v7 implementation scopes remain;account/conditional/device gaps prevent whole-UI acceptance.
+- Accepted visual preference: Actual memo/current paired pale dark primary,transmitting chrome,stable reading,quiet label-sized auxiliaries and one selected cue. Original media/native semantics retained.
+- Source state: Source checkpoint base HEAD `308cef3dae25dd0e7b5d25067949fad9fc23dfe1` on `codex/ui-port-boundary`. One Mobile comment presenter only;adapters/common material formulas/PC/metadata unchanged. Existing architecture overlay remains;no registry promotion. Checkpoint receipt owns publication/CI identity.
+- Local-only state: `LOCAL_ONLY_EVIDENCE`;artifacts/b1-dccon-live-finish-2026-11-02 holds exact frozen control,drivers/results/live captures and image pairs. Two curated current synthetic light/dark images tracked. Test browsers/profile/vendor closed/removed;lightweight viewer keeps one selected image.
+- Candidate fingerprint: `a6429ffcd96cd07b231d55b4c734baff7287548d38c0fd566d9ecf172ccf0a42`
+- Last current audit: PASS scoped5B08CACF:4-context live-shaped+8-observation existing content contract,4 identical semantic pairs,12 selected-role palette samples/2 cancels(min contrast6.393),4 directly reviewed image pairs. Actual window-mode Chrome/TM public media/pack/paging/popular/recent entry/login gate/close-reopen observed. Not whole-UI admission.
+- Current stage receipt: `verification/receipts/2026-11-02-b1-dccon-live-finish.json` SHA-256 `E386CA8D8F69883B47017E186D5F7FCB4FE0A8FBDD0651FAB6913C6785A20B9F`. Earlier native0A and popup0E receipts retain their named scope;synthetic placeholders never certify real media.
+- Accepted baseline: Named native v7 batch and actual public comment DCCon loading/layout are closed. Existing list/article/comments/write/owned/native detail is retained under its scoped receipts. Authenticated children remain separate.
+- Current artifact: Mobile3.5.5 5B08CACF8054B0822716887FD09D1BC400F814FC3296279A96451F11FA81A411 root/dist/guard;PC1.9.9 E4706617DE96D3E0719144724FDAE1B62D7511674D6564DCBD82F2C702802E14 root/dist unchanged. No version/release change.
+- Blockers: No implementation blocker in this unit. Headless200/listless catalog is mode-specific;window-mode native/candidate public reads work. Settings login-required confirmation observed/dismissed. Earlier headless sign200/empty body never reached a form/authentication and is not a current global login verdict.
+- Pending live checks: Account/C-13/private-history/management/detail/buy/editor/error/data variants and actual device remain UNKNOWN;selection/submission not exercised.980×2306 layout proxy,390 stress. Image replies N/A;four uploads user-deferred;guidebook discussion after whole UI finish.
 
 ```dcuf-current-artifacts
-{"schemaVersion":1,"mobile":{"sha256":"0A5583B6B8FAB3F52E8E3D4CC8F34E1CD836B79657676DA4D9053F5B63D27402"},"pc":{"sha256":"E4706617DE96D3E0719144724FDAE1B62D7511674D6564DCBD82F2C702802E14"}}
+{"schemaVersion":1,"mobile":{"sha256":"5B08CACF8054B0822716887FD09D1BC400F814FC3296279A96451F11FA81A411"},"pc":{"sha256":"E4706617DE96D3E0719144724FDAE1B62D7511674D6564DCBD82F2C702802E14"}}
 ```
 
 ## Draft-complete checkpoint — 2026-10-21

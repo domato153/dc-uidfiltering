@@ -46,9 +46,9 @@
 
 V-02–V-08의 두 root는 B1_PREVIEW_DRAFT_FINISH.md에서 마감했다. B1_INTEGRATED_UI_GAPS.md의 F87E 진단은 원인/미확인 자식의 역사적 근거이며 NEXT_TASK.md가 현재 하나의 실행 단위를 고른다. 과거 UI-01 복구는 완료된 역사적 범위다.
 
-현재 결합 구현2026-11-01:B1_POPUP_BATCH_V7.md가 H-01/H-03/H-05–09,A-08–12/C-11,W-05–10의 명명된 native 팝업/선택기/6개 메뉴를 v7로 이식했다. 아래 예전 B1 근거는 원래 기능/해부도 및 미확인 자식의 이력이다. 이 새 근거는 계정/실전 전송/조건부 native 자식 전체를 완료하지 않는다. NEXT 통합 검토에서 H-10/작성자 설정,수정삭제/로그인 카드의 v7 잔여를 구별한다.
+현재 결합 구현:B1_POPUP_BATCH_V7.md가 H-01/H-03/H-05–09,A-08–12/C-11,W-05–10의 명명된 native 팝업/선택기/6개 메뉴를 v7로 이식했다. B1_NATIVE_RESIDUAL_V7.md는 H-10/작성자 설정,수정삭제/로그인 재질 잔여를 마감했고,B1_DCCON_LIVE_FINISH.md는 실제 공개 팩/이미지 읽기와 드러난 선택기 정렬을 마감했다. 아래 예전 B1 근거는 해부도/미확인 자식의 이력이다. 계정/실전 전송/조건부 native 자식 전체 완료는 아니다. NEXT가 한정된 다음 검토를 고른다.
 
-현재 통합 분류2026-11-01:B1_V7_INTEGRATED_REVIEW.md가128행과 현재 build의60JS 명단/선택한28 native 상태를 대조했다. 구버전 재질이 남은 갤러리/작성자 설정,폼 확인창,로그인은 B1_NATIVE_RESIDUAL_V7.md에서 한 묶음으로 진행한다. 과거54소스/132호출 조사는 당시의 이력이다. 이 검토가128행 전체의 실사이트/기능/미관 PASS를 뜻하지 않는다.
+통합 분류 이력2026-11-01:B1_V7_INTEGRATED_REVIEW.md가128행과 당시 build의60JS 명단/선택한28 native 상태를 대조했다. 구버전 재질 잔여는 B1_NATIVE_RESIDUAL_V7.md에서 구현했다. 과거54소스/132호출 조사는 당시의 이력이다. 이 검토가128행 전체의 실사이트/기능/미관 PASS를 뜻하지 않는다.
 
 ## 조사 범위와 체크 의미
 
@@ -129,7 +129,7 @@ V-02–V-08의 두 root는 B1_PREVIEW_DRAFT_FINISH.md에서 마감했다. B1_INT
 | C-08 | 일반 댓글 입력창 | 기본 입력창 포커스 | 회원/비회원 이름·비밀번호 등 원래 필드, 빈/긴 입력, 포커스·오류 상태 | COMMENTS | 입력/대댓글 composer·지우기 액션 범위 → B1_CONTENT_TRIAL.md + B1_IMAGE_COMMENTS.md; 모든 권한/오류 자식 별도 |
 | C-09 | 답글 입력창 | 특정 댓글의 답글 선택 | 대상 표시, 작은 composer, 취소/다른 대상/재열기, 원래 필드 | COMMENTS | 입력/대댓글 composer·지우기 액션 범위 → B1_CONTENT_TRIAL.md + B1_IMAGE_COMMENTS.md; 모든 권한/오류 자식 별도 |
 | C-10 | 이미지댓글 입력창 | 해당 이미지댓글 열기 | 이름·원래 숨김 값·입력/등록, 일반/답글 창과 독립된 대상 | COMMENTS | 원본 fold→full/composer 관찰·합성 parity/작은 액션 마감 → B1_IMAGE_COMMENTS.md; 실제 전송/기기 별도 |
-| C-11 | 댓글 디시콘 선택·첨부 관련 원래 도구 | 실제 댓글 입력 도구가 있는 경로 | 도구별 열린 창/선택/닫기/미리보기·제거가 실제 제공되면 각각 | COMMENTS, HOSTFIX | 글자콘/DCCon 합성 v7 UI → B1_POPUP_BATCH_V7.md;비교 화면8개 미디어는 합성. 실제 /dccon/lists·팩 이미지 로딩/탭/최근사용/계정 자식 UNKNOWN → B1_V7_INTEGRATED_REVIEW.md |
+| C-11 | 댓글 디시콘 선택·첨부 관련 원래 도구 | 실제 댓글 입력 도구가 있는 경로 | 도구별 열린 창/선택/닫기/미리보기·제거가 실제 제공되면 각각 | COMMENTS, HOSTFIX | B1_DCCON_LIVE_FINISH.md:실제 Chrome/TM 공개 팩·이미지/팩 전환/페이지/인기/최근 진입·닫기·재열기 및 로그인 필요 gate 관찰,정렬 보완. 최근 개인기록 populated/로그인 후 관리·상세/구매/선택첨부·등록 자식 UNKNOWN. 합성 미디어와 실사이트 증거 구분 |
 | C-12 | 댓글 작성자 메뉴·메모 | 일반/대댓글/이미지댓글 작성자 클릭 | `user_data_lyr`·사용자 메뉴·추가 메뉴, 화면 가장자리, 차단 선택과 충돌 | COMMENTS, HOSTFIX | 공통 B1 표시/일반·이미지댓글 dark fixture 범위 → B1_NATIVE_AUTHOR_FINISH.md; 실제 댓글·권한/대댓글 전 상태는 미확인 |
 | C-13 | 댓글 수정·삭제·비밀번호 팝업 | 원래 댓글 수정/삭제 버튼 | 본인/비회원 권한, 비밀번호 입력·닫기·재열기, 배경 위 양의 히트 영역 | COMMENTS, HOSTFIX | 작은 삭제/clear 마감 → B1_IMAGE_COMMENTS.md; 비밀번호 정적 구조만 확보 → B1_NATIVE_AUTHOR_PREFLIGHT.md,실제 권한/입력 미확인 |
 | C-14 | 정렬·새로고침·더보기/페이징 | 해당 원래 댓글 제어 | 실제 제공되는 제어별 창/선택/로딩/새 댓글·카운트, 적용 여부 기록 | COMMENTS | 기존 정렬/새로고침/카운트 기능 경계 보존; 모든 native 로딩·더보기 분기 외형 미확인 |
