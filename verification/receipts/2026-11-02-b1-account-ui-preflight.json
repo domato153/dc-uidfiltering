@@ -1,0 +1,430 @@
+{
+  "schemaVersion": 1,
+  "kind": "B1_ACCOUNT_CONDITIONAL_UI_PREFLIGHT",
+  "status": "REVIEW_COMPLETE_WITH_PRODUCT_FINDINGS",
+  "sourceBaseHead": "26875ae8b276e067eaa859be1b442cbb1d30b69e",
+  "candidateFingerprint": "8d93f98d61ecc44a67b64426fc185246d4f1241a38412bc812e6d738cfc47ac6",
+  "artifacts": {
+    "mobileVersion": "3.5.5",
+    "mobileSha256": "5B08CACF8054B0822716887FD09D1BC400F814FC3296279A96451F11FA81A411",
+    "pcVersion": "1.9.9",
+    "pcSha256": "E4706617DE96D3E0719144724FDAE1B62D7511674D6564DCBD82F2C702802E14",
+    "unchanged": true,
+    "rootDistGuardMatch": true,
+    "officialRelease": false
+  },
+  "inputs": [
+    {
+      "path": "src/targets/mobile/comment-presenter.js",
+      "sha256": "aba078b7e6ca9cc65c5b0895dd4f7264b7ced7eb5d02da612f5004bfee1d8087"
+    },
+    {
+      "path": "src/targets/mobile/comment-host-adapter.js",
+      "sha256": "d503103a319f8d68d851a045631ae30c676810bcb85aee7a82c1b08ba6864740"
+    },
+    {
+      "path": "src/targets/mobile/login-presenter.js",
+      "sha256": "e8e0e960cf437c8f04388c3fdd5f25d30fce034b679bc887c8844a29d4539e79"
+    },
+    {
+      "path": "src/targets/mobile/login-host-adapter.js",
+      "sha256": "0bcf5d4d21e718465ec158f135fc9ac6cd24101a2796b4241621ed8f099c5f39"
+    },
+    {
+      "path": "src/targets/mobile/theme-material-values.js",
+      "sha256": "da6cc37a3f71f5ff696aa57fddf6c52e254aa01ce2dfb0b856c0979a6aac189c"
+    },
+    {
+      "path": "testbed/fixtures/b1-content.mjs",
+      "sha256": "9e052f6338216a2c29d7e7637bb05d942ba62e45ea85f12f1e5e63e8994412c7"
+    },
+    {
+      "path": "testbed/ui-dccon-live-shape-contract.mjs",
+      "sha256": "4dfdc4dd942f65ce4957b691c46b3090608b4ed358d676b5133cc58049fadae2"
+    },
+    {
+      "path": "testbed/ui-popup-batch-v7-contract.mjs",
+      "sha256": "2e9aa30aa9aadbb60aae66f03a0585aead9ba55bd1d0191c178f79ece02dbd52"
+    },
+    {
+      "path": "testbed/harness/live-site-browser.mjs",
+      "sha256": "864d895ebb90bfb45347b1ff08f227872f7a3839bab5bbd52385f25a060d1f80"
+    },
+    {
+      "path": "verification/live-site-canary.json",
+      "sha256": "f2d15b81de4c99879d336e7bc64ec26e4edcbc1119d838d0c7c55966cf3533dd"
+    },
+    {
+      "path": "docs/work/B1_ACCOUNT_UI_PREFLIGHT.md",
+      "sha256": "4142d8b0c87f82b74ac560ae27f9bc7675eb8b1ebb1569d86899864faf1c3bb1"
+    },
+    {
+      "path": "docs/ui-surface-contracts.md",
+      "sha256": "9f230b1861c747b7911b2f54763201866ef3cdb77834e3b9e27f2a20f6c6027c"
+    }
+  ],
+  "localEvidence": [
+    {
+      "path": "artifacts/b1-account-ui-preflight-2026-11-02/report-install-harness-first.json",
+      "sha256": "8cfd36696cbcbbcce9864dffc63e772ea4a477568b90dc81c107d7dad8fdd373"
+    },
+    {
+      "path": "artifacts/b1-account-ui-preflight-2026-11-02/report-login-locator.json",
+      "sha256": "d77378fa5000505acbc0bb74038d168ea37e149aaba622f8e79d084b1175e9d7"
+    },
+    {
+      "path": "artifacts/b1-account-ui-preflight-2026-11-02/report-auth-first-outcome.json",
+      "sha256": "df9873c77bd0cc880f4c97bd26adf426b7248224e78e302ea47e007f1bfd7e22"
+    },
+    {
+      "path": "artifacts/b1-account-ui-preflight-2026-11-02/report-campaign-observed.json",
+      "sha256": "6d320249cb9fb3307a79af0863c3c8a579b28b3843e8512d0fa87889b1e2f4bb"
+    },
+    {
+      "path": "artifacts/b1-account-ui-preflight-2026-11-02/report-account-first.json",
+      "sha256": "8f2461badb435e3a60b0eca9f008c46d2116570c3b4805a0ba01b94204c8fcc8"
+    },
+    {
+      "path": "artifacts/b1-account-ui-preflight-2026-11-02/report-native-capture-first.json",
+      "sha256": "fa1ca88f5b99890611410a886da48b55d325b02155a4a5c856fd8c1f9c9a9404"
+    },
+    {
+      "path": "artifacts/b1-account-ui-preflight-2026-11-02/report.json",
+      "sha256": "29e920dbf78de13b435f9fcba77730f1cd036fbd59baf2132f72a1ceae85a6cb"
+    },
+    {
+      "path": "artifacts/b1-account-ui-preflight-2026-11-02/candidate-first-base.json",
+      "sha256": "db6431241db79b66a6d933593c489ea9244a26f387f79a77b28c8880c6cf356b"
+    },
+    {
+      "path": "artifacts/b1-account-ui-preflight-2026-11-02/native-account-anatomy.json",
+      "sha256": "c3c2cd2289468408f76bd08e9d6de5517ec82e14e37aaf82312a029f9dbaa302"
+    },
+    {
+      "path": "artifacts/b1-account-ui-preflight-2026-11-02/native-account-base.json",
+      "sha256": "3ecc48ef7ba4de46ccec82e442cf35ac47ce6229a6bd623c63e7669390edfc88"
+    },
+    {
+      "path": "artifacts/b1-account-ui-preflight-2026-11-02/native-account-settings.json",
+      "sha256": "07a9d0cb3d285f12ee6d4fbb99f2c298aeb8368dd21e25f0ad6f9dadba6ccba1"
+    },
+    {
+      "path": "artifacts/b1-account-ui-preflight-2026-11-02/reproduction.json",
+      "sha256": "312d5f669760d38d3de1844f1e7d0f770921b0971fe967cd9fc64f2490156f9f"
+    },
+    {
+      "path": "artifacts/b1-account-ui-preflight-2026-11-02/public-c13/report.json",
+      "sha256": "380328bf26a652c4f63ce999c16562a3a0b52e20a95c45202c88cabfc7275f85"
+    },
+    {
+      "path": "artifacts/b1-account-ui-preflight-2026-11-02/public-c13-open/report.json",
+      "sha256": "12cfad655f6537578a009208b01b608f29ac3079d77a10d4980b08e59f5500ec"
+    },
+    {
+      "path": "artifacts/b1-account-ui-preflight-2026-11-02/inspect-account.mjs",
+      "sha256": "4e125e7a980297b8d4cf118fe0f5dddf0c9e66f023e92870efa7e26b7df0d7ea"
+    },
+    {
+      "path": "artifacts/b1-account-ui-preflight-2026-11-02/native-and-candidate.mjs",
+      "sha256": "06036dd1ac0ce6c1fcd2d992a466ab7f1b23bc1c8496a07985ca1f9e23c3ec42"
+    },
+    {
+      "path": "artifacts/b1-account-ui-preflight-2026-11-02/install.mjs",
+      "sha256": "c20fcbfccf771b8d31c5d0536be22dee9c22a0303d5c8613bb7e9f657a6547a3"
+    },
+    {
+      "path": "artifacts/b1-account-ui-preflight-2026-11-02/reproduce.mjs",
+      "sha256": "64fe01b14c9cac6df557dd5de23e46f0de2e585e1199879b67b70135288ca882"
+    },
+    {
+      "path": "artifacts/b1-account-ui-preflight-2026-11-02/public-c13.mjs",
+      "sha256": "be02969e0c28d55236acd93c6ba97d4e85e9c0bb99b10370b708ce92a87009c6"
+    },
+    {
+      "path": "artifacts/b1-account-ui-preflight-2026-11-02/public-c13-open.mjs",
+      "sha256": "1eea50e7c33970e3af217ba06c9a214fddc14345d5a529ef8a9752eac55b69d3"
+    }
+  ],
+  "images": [
+    {
+      "path": "artifacts/b1-account-ui-preflight-2026-11-02/candidate-first-base.png",
+      "sha256": "ec94357f0bc07bfa84bb1623d04594c0c52a0eaaf0520a9e87b55f54d1fd3f2d"
+    },
+    {
+      "path": "artifacts/b1-account-ui-preflight-2026-11-02/native-account-base.png",
+      "sha256": "aab60e7dec56221b963d8a8da4b8b4103c6ec32f6f10315a048b455e76c561dd"
+    },
+    {
+      "path": "artifacts/b1-account-ui-preflight-2026-11-02/native-account-settings.png",
+      "sha256": "77913e2e42a174f25762e2b81aaed12628f280fcc85fcb26c7ed0046a60635dc"
+    },
+    {
+      "path": "artifacts/b1-account-ui-preflight-2026-11-02/repro-980-light.png",
+      "sha256": "96b750d8cae82b84783f1deff31d1312ef03b5fad2fefd69f8bae0204e63a402"
+    },
+    {
+      "path": "artifacts/b1-account-ui-preflight-2026-11-02/repro-390-dark.png",
+      "sha256": "8b9b4aa16500aa8e5e897ddf4a08780ab8093b7c71be8021dff6bfb948efd0e3"
+    },
+    {
+      "path": "artifacts/b1-account-ui-preflight-2026-11-02/public-c13-open/guest-password.png",
+      "sha256": "5aa72551dca27535fc82419e6632c87b3ade5949fb762a19da7a58346ec28d0b"
+    }
+  ],
+  "actualRoute": {
+    "browserVersion": "156.0.8078.76",
+    "executableSha256": "66885D764FA17C7A7C53E1F94148E46959C5EC21FA5BC3AC22143EB2A1F7731A",
+    "extension": {
+      "version": "5.5.0",
+      "sha256": "BCAEC082C439E11C4DF683F43D07E9AC3D4439251D72B91C5B452F977DAC15D5"
+    },
+    "headed": true,
+    "install": "Original Utilities/Import from URL/Install;exact guarded5B08CACF",
+    "sourceInjection": false,
+    "gmShim": false,
+    "credentialsPersistedInEvidence": false,
+    "credentialValuesInTrackedFiles": false,
+    "authorization": "User2026-10-29 disposable-account login/read-only UI;B1_NATIVE_AUTHOR_FINISH.md",
+    "authenticationRequestsAcrossNamedRuns": 5,
+    "campaign": {
+      "observed": true,
+      "nativeNotice": "90-day password change campaign",
+      "used": "Ordinary 다음에 변경 direct original-URL navigation only",
+      "notUsed": [
+        "Password change",
+        "30-day defer callback",
+        "CAPTCHA",
+        "Terms or account-setting changes"
+      ]
+    },
+    "accountSuccessObserved": true,
+    "scope": "Actual account base plus original management read/cancel;not all account functionality"
+  },
+  "observations": {
+    "candidateAccount": {
+      "status": "NEEDS_WORK",
+      "report": "artifacts/b1-account-ui-preflight-2026-11-02/report-account-first.json",
+      "toolbarControls": [
+        {
+          "class": "btn_dccon_hot",
+          "hit": false,
+          "box": {
+            "x": 452.671875,
+            "y": 130,
+            "width": 93.578125,
+            "height": 40
+          }
+        },
+        {
+          "class": "btn_dccon_setting",
+          "hit": false,
+          "box": {
+            "x": 554.25,
+            "y": 132,
+            "width": 93.578125,
+            "height": 36
+          }
+        }
+      ],
+      "favoriteTextExposed": true
+    },
+    "nativeManagement": {
+      "status": "OBSERVED_READ_CANCEL",
+      "report": "artifacts/b1-account-ui-preflight-2026-11-02/report.json",
+      "fiveColumns": true,
+      "originalPackageCheckboxAndDragRetained": true,
+      "selectionOrderSaveExercised": false
+    },
+    "guestPassword": {
+      "status": "OBSERVED_WITH_MATERIAL_GAP",
+      "selection": {
+        "index": 0,
+        "notOwn": true,
+        "guest": true,
+        "passwordPopupAllowed": true,
+        "managerAbsent": true
+      },
+      "controls": [
+        {
+          "tag": "INPUT",
+          "class": "cmt_delpw",
+          "type": "password",
+          "text": "[field]",
+          "box": {
+            "x": 620,
+            "y": 427.046875,
+            "width": 139,
+            "height": 31
+          },
+          "hit": true,
+          "background": "rgb(255, 255, 255)",
+          "color": "rgb(0, 0, 0)"
+        },
+        {
+          "tag": "BUTTON",
+          "class": "btn_ok",
+          "type": "button",
+          "text": "확인",
+          "box": {
+            "x": 759,
+            "y": 427.046875,
+            "width": 49,
+            "height": 31
+          },
+          "hit": true,
+          "background": "rgb(59, 72, 144)",
+          "color": "rgb(255, 255, 255)"
+        },
+        {
+          "tag": "BUTTON",
+          "class": "btn_cmtpw_close",
+          "type": "button",
+          "text": "닫기",
+          "box": {
+            "x": 808,
+            "y": 427.046875,
+            "width": 30,
+            "height": 31
+          },
+          "hit": true,
+          "background": "rgb(41, 54, 124)",
+          "color": "rgb(153, 153, 153)"
+        }
+      ],
+      "root": {
+        "class": "cmt_delpw_box",
+        "role": "native-comment-popup",
+        "box": {
+          "x": 619,
+          "y": 426.046875,
+          "width": 218,
+          "height": 31
+        },
+        "background": "color(srgb 1 1 1 / 0.64)",
+        "blur": "blur(8px) saturate(1.08)",
+        "overflow": 2
+      },
+      "closed": true,
+      "reopened": true,
+      "reclosed": true,
+      "passwordInputOrConfirm": false,
+      "actualDeleted": false,
+      "permissionBoundary": "Own/keyed/admin branches can delete directly;only checked anonymous guest view branch was clicked"
+    },
+    "minimalReproduction": {
+      "status": "REPRODUCED_PRODUCT_GAPS",
+      "contexts": [
+        {
+          "width": 980,
+          "height": 900
+        },
+        {
+          "width": 390,
+          "height": 560,
+          "dark": true
+        }
+      ],
+      "toolbarSettingsHitFailsBoth": true,
+      "nativeFavoriteControlHidden": true,
+      "ownedFavoriteComputed": "flex",
+      "noProductionFix": true
+    },
+    "viewer": {
+      "url": "http://127.0.0.1:10067/account-preflight/index.html",
+      "checkedInUserIab": true,
+      "defaultDecoded": [
+        481,
+        868
+      ],
+      "oneImageAtATime": true,
+      "labels": "Original versus unfinished current;not before/after fix"
+    }
+  },
+  "findings": [
+    {
+      "id": "account-toolbar-reservation",
+      "status": "NEEDS_WORK",
+      "cause": "Native41px height with extra account controls;new nested flex group wraps outside the reserved row and overlaps following pack strip",
+      "owner": "src/targets/mobile/comment-presenter.js"
+    },
+    {
+      "id": "favorite-native-visibility",
+      "status": "NEEDS_WORK",
+      "cause": "Generic popup-action display/font/background/size overrides hidden24px native btn_starmark sprite/hover/on/won role",
+      "owner": "src/targets/mobile/comment-presenter.js"
+    },
+    {
+      "id": "guest-password-material",
+      "status": "NEEDS_WORK",
+      "cause": "Non-picker password root receives floating material but inner original field/confirm/X retain legacy blue/white31px controls;root horizontal overflow2px",
+      "owner": "src/targets/mobile/comment-presenter.js"
+    },
+    {
+      "id": "account-management-internals",
+      "status": "ACQUIRED_NOT_IMPLEMENTED",
+      "cause": "Original table/read/cancel acquired;candidate access is blocked by toolbar,so no current all-child material approval follows",
+      "owner": "src/targets/mobile/comment-presenter.js"
+    }
+  ],
+  "nextBatch": "Existing account toolbar/native favorite visibility + acquired management/cancel/safe children + compact guest password;non-sensitive fixture/positive regression first;adopt actual memo/current v7 roles.",
+  "unchanged": [
+    "Production source/fixtures/harness/build/metadata/versions/PC",
+    "Original account settings,package selections/order/favorites,content and deletion data",
+    "Architecture accepted registry/overlay/owners",
+    "Prior anonymous public DCCon receipt retains its exact scope"
+  ],
+  "checks": {
+    "productSuites": "NOT_RUN_NO_PRODUCT_CHANGE",
+    "build": "NOT_RUN_ARTIFACT_BYTES_UNCHANGED",
+    "actualBrowsers": "Owned Chrome/profile/vendor cleanup positively reported in named runs",
+    "syntheticBrowser": "Both minimal contexts completed;finally closed browser/server",
+    "ram": "One browser at a time;4GiB free floor",
+    "architecture": "9 surface links passed;registry unchanged",
+    "governance": "Typed next action accepted",
+    "visual": "Original management,actual broken account picker and compact guest password directly inspected;no aesthetic acceptance or new golden",
+    "impact": "Read-only preflight/documentation only;no unrelated product/PC/storage/filter/boot/bfcache suite"
+  },
+  "contrary": [
+    {
+      "kind": "HARNESS",
+      "detail": "Missing local install helper sha256 import and hidden text-role login locator failed before credential submission;repaired ignored drivers only"
+    },
+    {
+      "kind": "EXPECTED_NATIVE_FLOW",
+      "detail": "Password campaign after member_check is not incorrect-credentials or global login unavailability;navigation-only native next-time entry reaches authenticated page"
+    },
+    {
+      "kind": "CAPTURE_HARNESS",
+      "detail": "One campaign full-page screenshot timed out after auth;reused existing anatomy instead of treating capture as failed sign-in"
+    },
+    {
+      "kind": "INCOMPLETE_COMPARISON",
+      "detail": "Latest native/current sequence captured native management/read/cancel,then candidate initial trigger timed out. No all-child comparison PASS;separate earlier candidate account state confirms toolbar positive-hit failure"
+    },
+    {
+      "kind": "FIXTURE_SPECIFICITY",
+      "detail": "Incumbent .doublecon_wrap .right>.fr float is stronger than observed generic .fr;minimal final reproduction models original strength"
+    },
+    {
+      "kind": "ORACLE",
+      "detail": "Probe changed closed-popup readiness to attached and accounts for absolute-position blockification of inline-flex to flex;no product predicate weakened"
+    },
+    {
+      "kind": "REPORT_LABEL",
+      "detail": "Public C13 local helper inherits old generic public-picker report labels/console text;receipt interprets only recorded guest password view operations,not a DCCon/full-canary or no-button-click claim"
+    },
+    {
+      "kind": "ENVIRONMENT",
+      "detail": "Sandbox localhost probe cannot establish viewer unavailability;existing10067 listener remained active. IAB confirms page/image loading;no listener killed/replaced"
+    }
+  ],
+  "limits": [
+    "Review/diagnosis complete;identified product defects remain unfixed",
+    "Current management/internal folder library shapes are not all-child approved",
+    "Anonymous ordinary guest password only;own/member/admin/image-comment permissions and submission not exercised",
+    "Actual live UI wide light;390 dark reproduction is synthetic stress,not phone qualification",
+    "Private history/detail/buy/editor/error/CAPTCHA/device outcomes UNKNOWN",
+    "Image replies N/A;four uploads user-deferred;guidebook discussion after whole UI finish"
+  ],
+  "hashMode": "Canonical LF text;raw image/runtime bytes"
+}
