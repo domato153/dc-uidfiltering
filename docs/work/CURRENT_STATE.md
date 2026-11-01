@@ -2,19 +2,19 @@
 
 ## Current execution
 
-- Active plan: B1_POPUP_BATCH_V7.md closes combined scopes1/2/3. NEXT reconciles remaining v7 UI gaps before another implementation batch;no per-element checkpoint restart.
+- Active plan: B1_V7_INTEGRATED_REVIEW.md closes inventory reconciliation;UI_NEEDS_WORK. NEXT implements B1_NATIVE_RESIDUAL_V7.md as one three-group/four-presenter batch.
 - Workspace path: `.` (private prompt supplies exact worktree). Preserve debug.log unread/unstaged.
-- Active stage: `header-navigation` formal admission remains open. Named header/article-picker/six-editor-menu v7 implementation complete;whole UI/account/device qualification remains separate.
-- Accepted visual preference: Actual memo/current bright-dark details;transmitting outer glass,stable reading,quiet label-sized auxiliaries and one selected cue. Preserve native capabilities and authored colors.
-- Source state: Source checkpoint base HEAD `382c3c981051d36c633d45bcf2a78b96772ee43f` on `codex/ui-port-boundary`. Five Mobile presenters only;common formulas/adapters/templates/PC unchanged. Final checkpoint receipt owns publication/CI identity.
-- Local-only state: `LOCAL_ONLY_EVIDENCE`;artifacts/b1-popup-batch-v7-2026-11-01 holds frozen control,drivers/results and paired images. Six curated synthetic current images tracked. Viewer loads one image;test browsers closed.
-- Candidate fingerprint: `1a574469c76b71ebea302e10375e3ae2ca73b555fedc75acf411d89229e4134c`
-- Last current audit: PASS scoped0E1A75FD:7 affected contracts,42 matching semantic pairs,24 palette samples/8 cancel restorations and17 reviewed image pairs. Bottom-anchor390×420 action edges clear;980×2306 header layout-only pass. Not whole-UI admission.
-- Current stage receipt: `verification/receipts/2026-11-01-b1-popup-batch-v7.json` SHA-256 `AF7209F461A588DD7410D20A2996BF581A5DD80E6F9640EAEB0184E911F9C802`. Prior header preflight becomes anatomy history;prior palette/convenience receipt retains its named scope.
-- Accepted baseline: Named three-family v7 implementation and compact door repair are complete. Current material/rules remain;native gallery/author settings and password/login cards are not blanket-certified migrated v7 by this unit.
-- Current artifact: Mobile3.5.5 0E1A75FD460E27F803D8AEE92946ACEF819F6983D7DFAB9296965D258E6D722E root/dist/guard;PC1.9.9 E4706617DE96D3E0719144724FDAE1B62D7511674D6564DCBD82F2C702802E14 unchanged root/dist/PC guard. No release/version bump.
-- Blockers: No execution blocker. Retain frozen/current narrow underlying toggle pointer-center limitation;new contracts close through original keyboard controls,existing affected pointer contracts pass.
-- Pending live checks: Actual extension/device/account/live POST and unobserved native children UNKNOWN.980×2306 layout-only,390 stress. Four external uploads user-deferred;image replies N/A. Whole UI review and later guidebook discussion remain.
+- Active stage: `header-navigation` formal admission remains open. Named previous popup/list/article/comments/write/owned v7 scopes remain;native residual detail and live/conditional gaps prevent whole-UI completion.
+- Accepted visual preference: Actual memo/current bright-dark paired primary,transmitting chrome,stable reading,quiet label-sized auxiliaries and one selected cue. Preserve per-surface/destructive/authored roles.
+- Source state: Source checkpoint base HEAD `9c56030edb025de736b7b349837d71f95f98b9db` on `codex/ui-port-boundary`. This unit changes review/routing/curated evidence only;product/harness/runtime unchanged. Checkpoint receipt owns publication/CI identity.
+- Local-only state: `LOCAL_ONLY_EVIDENCE`;artifacts/b1-v7-integrated-review-2026-11-01 holds28 current native captures and two targeted probes. Four curated gap images tracked. Browser jobs closed;viewer selected-image only.
+- Candidate fingerprint: `8a1dee335bb2d31619db1f7b0dba0a17ea5c4495a3869565ab6bfbb69ebf779c`
+- Last current audit: PASS scoped inventory review,not implementation:128-ID dispositions/60JS build-input list,28 selected captures,15 direct readable inspections,20 old-material primary samples. UI_NEEDS_WORK in three native groups;DCCon actual media UNKNOWN.
+- Current stage receipt: `verification/receipts/2026-11-01-b1-v7-integrated-review.json` SHA-256 `3E70B61A6334C6BA24D315068468E89B59FB4245BBBD46DE499E781B6FF0D341`. Previous implementation receipt2026-11-01-b1-popup-batch-v7 remains exact0E scoped evidence,not all-child approval.
+- Accepted baseline: Mobile0E popup batch complete. Native settings/author actions,password/delete/leave and login still use older detail. Adopted memo/menu/empty trusted shell/login chrome remain fitting reuse controls.
+- Current artifact: Mobile3.5.5 0E1A75FD460E27F803D8AEE92946ACEF819F6983D7DFAB9296965D258E6D722E root/dist/guard;PC1.9.9 E4706617DE96D3E0719144724FDAE1B62D7511674D6564DCBD82F2C702802E14 root/dist unchanged. No source rebuild/version/release change.
+- Blockers: No implementation blocker. Head/tail last input is reachable after scrolling. Leave-close wrapped label has a fixture .blind CSS gap;do not declare a live product defect from it. Existing narrow toggle-center limitation remains scoped.
+- Pending live checks: Actual DCCon packs/images/recent/hot/settings UNKNOWN;synthetic8 cells do not prove loading. C-13/account/CAPTCHA/media/error/data variants,actual extension/device/live POST remain unqualified.980×2306 is layout proxy,390 stress. Image replies N/A;four uploads user-deferred;guidebook discussion after whole UI finish.
 
 ```dcuf-current-artifacts
 {"schemaVersion":1,"mobile":{"sha256":"0E1A75FD460E27F803D8AEE92946ACEF819F6983D7DFAB9296965D258E6D722E"},"pc":{"sha256":"E4706617DE96D3E0719144724FDAE1B62D7511674D6564DCBD82F2C702802E14"}}

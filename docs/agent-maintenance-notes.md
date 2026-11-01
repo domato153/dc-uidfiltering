@@ -1,5 +1,13 @@
 # Agent Maintenance Notes
 
+## Integrated v7 gap triage —2026-11-01
+
+Source token grep is a locator,not a rendered defect verdict:existing convenience fallbacks and the specialized adopted settings-memo workspace must not be repainted because generic old token names remain. Render suspect consumers and compare full primary bg/ink/rim/shadow. Current gallery settings,author memo/picker,password/leave and login retain older native action roles;four presenters can cover the remaining batch without a new framework.
+
+The head/tail last textarea selector can land in a hidden other-gallery tab. Select a visible original control,scroll its existing owner and check positive edge hits before declaring a trapped field. Current10/50/90% hits pass after scrolling. The write fixture omits common .blind CSS,so its leave-close label wraps;this is a fixture-fidelity/robustness issue,not proof of equal live breakage. Keep native accessible names and model actual host hiding before a product fix.
+
+C-11 media cells are synthetic. The older /dccon/lists request was blocked by the read-only harness;do not turn synthetic decode/selection into actual pack-loading evidence or classify the method itself as a product/permission failure. B1_V7_INTEGRATED_REVIEW.md keeps live/conditional gaps distinct from source-confirmed v7 migration work.
+
 ## Native popup v7:intrinsic width,explicit selection and compact top —2026-11-01
 
 Reducing min-width does not remove a surviving host width:short native action still measured85px. Consume v7 paired roles in the incumbent owner and clamp ordinary primaries with max-inline-size:max-content. Assert actual label Range+padding/borders and positive hits. Full-row/tab/FAB roles remain exceptions.

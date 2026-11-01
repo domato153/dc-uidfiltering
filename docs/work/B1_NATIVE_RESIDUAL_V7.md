@@ -1,0 +1,22 @@
+# Remaining native v7 detail — one bounded batch
+
+**READY_FOR_IMPLEMENTATION**,source base9c56030/Mobile0E1A75FD,not implemented yet. B1_V7_INTEGRATED_REVIEW.md owns current observations and ambiguity classification. User main plan continues after the completed combined popup batch. Mode:Operate/Read. No new aesthetic decision is needed for this equivalent material transfer.
+
+## Scope and reference
+
+- Existing owners only:gallery-page-head presenter(settings children),native-author presenter(individual memo/picker),native-form presenter(password/delete/leave),login presenter. Fresh-check actual owner/cascade before code;do not move DOM/geometry/behavior owners or create a universal popup framework.
+- Actual adopted memo plus current bright-dark reference and B1_CONTROL_MATERIAL.md govern fine detail. Retain fitting outer glass/native grouping and readable fields;apply paired v7 primary roles,quiet auxiliaries and one selected cue through incumbent rules. Preserve all14 palette IDs/keys and authored wheel/media/swatches.
+- Adopted memo management workspace,author link menu,empty trusted-site shell,login chrome and previous popup/editor v7 work are reuse controls,not redesign targets. New materially different composition needs a native/current-derived proposal;equivalent role/detail reuse does not need another generated image.
+- Ordinary actions fit label/icon+padding. Login's single full-width submit may remain;menu/selected/tab/FAB geometry follows its role. Destructive delete semantics and warning text stay distinct;do not blindly color every button identically.
+- W-18 fixture's missing common .blind CSS is a fidelity gap;model the actual hidden accessible label first. Header/X refinement must preserve the native close/name/hit target without a global .blind correction. Head/tail last input is reachable after scroll;do not patch a nonexistent trap.
+
+## Execute and validate together
+
+1. Freeze immediate0E control and original fields/callback/hidden/selected states. Update ui-surface-contracts before broad UI edits. Add narrow failing positive role/selection/quiet/label-size/heading-close contracts for the changed consumers. No fixture request is a real account/content action.
+2. Edit only existing presentation rules,removing/narrowing competing old paint rather than layering a global correction/priority. Retain native tabs,palette/backup/notice/library nodes,fields/forms,scroll/hidden pages,callbacks,GM/network/observer behavior. Preserve native destructive/disabled/focus state.
+3. Build Mobile at3.5.5 and its explicit source guard;PC unchanged unless actual shared source changes. Run new contracts plus affected native-settings/author/password/login/leave tests,not a routine whole product/editor/PC suite. Update only obsolete visual expectations/exact registered current CSS fragments;historical controls,mutations,semantics and accessibility/positive geometry remain. Inventory count/hash changes require exact necessity,not blanket refresh.
+4. Render changed whole/details in light/dark,980 layout and causally relevant short/narrow stress. Inspect primary bg/ink/rim/shadow,quiet/selected/focus states,real hits and label sizes. Compare frozen/current semantic witnesses in separate contexts. Use representative palette consumers where formulas are unchanged;login palettes are existing GM-read context,not fabricated on-page settings UI.
+5. Use existing visual comparator for changed material claims and readable review against adopted actual detail. Preserve native differences;no new pixel golden/automatic beauty claim. One browser job at a time,4GiB floor,selected image viewer. Close owned test browser.
+6. One final scoped review,exact artifact/diff/receipt/current-next and one authorized development checkpoint/CI for the batch. Stop/replan only for a concrete ownership/function problem or material user choice.
+
+Following this batch:reconcile the remaining live/conditional gaps before any whole-UI claim,including real DCCon image/packs loading(C-11). Existing relation-read approval does not itself cover another endpoint;decide from the then-current explicit request and actual request purpose,not from HTTP method alone. No account credentials/live write/upload/CAPTCHA action in this implementation. Four external uploads stay user-deferred;image replies N/A;browser/OS UI outside web CSS. Guidebook discussion remains after whole UI work ends.
