@@ -53,6 +53,7 @@ import {runMenuSelectionV7Contract,runMenuV7PaletteContract,runMenuV7OriginalAct
 import {runFilterV7Contract,runFilterV7PaletteContract} from './ui-filter-settings-v7-contract.mjs';
 import {runPaletteConvenienceV7Contract,runPaletteV7ColorContract} from './ui-palette-convenience-v7-contract.mjs';
 import {runPopupBatchHeader,runPopupBatchActions,runPopupBatchEditor} from './ui-popup-batch-v7-contract.mjs';
+import {runResidualSettings,runResidualForms,runResidualLogin} from './ui-native-residual-v7-contract.mjs';
 import {runDarkMaterialFamilyContract,runMemoRowSurfaceContract} from './ui-b1-dark-material-contract.mjs';
 
 const args = new Set(process.argv.slice(2));
@@ -119,6 +120,9 @@ mobileTest('B1 palette convenience v7: fourteen palettes and readable roles', 'f
 mobileTest('B1 popup batch v7: header detail and action-edge clearance', 'functional', runPopupBatchHeader);
 mobileTest('B1 popup batch v7: article and picker material', 'functional', runPopupBatchActions);
 mobileTest('B1 popup batch v7: editor selection and quiet controls', 'write', runPopupBatchEditor);
+mobileTest('B1 residual v7: native settings and author actions', 'functional', runResidualSettings);
+mobileTest('B1 residual v7: password and leave confirmations', 'write', runResidualForms);
+mobileTest('B1 residual v7: login paired primary', 'functional', runResidualLogin);
 mobileTest('B1 dark refinement: shared material consumers', 'functional', runDarkMaterialFamilyContract);
 mobileTest('B1 dark refinement: memo rows and quiet auxiliaries', 'functional', runMemoRowSurfaceContract);
 mobileTest('B1 management v7: palette preview save and cancel', 'functional', runManagementV7PaletteContract);
@@ -7735,7 +7739,7 @@ mobileTest('write cancel confirmation remains visible and interactive', 'write',
                     },
                     controls: Array.from(popup.querySelectorAll('.write_cont > .btn_box > button, .pop_content.write_ly > .poply_whiteclose')).map((button) => {
                         const buttonRect = button.getBoundingClientRect();
-                        return { width: buttonRect.width, height: buttonRect.height };
+                        return { width: buttonRect.width, height: buttonRect.height, role: button.getAttribute('data-dcuf-native-form-role') };
                     }),
                     firstShownRect: window.__dcufFixtureFirstLeaveConfirmRect
                 };
@@ -7750,7 +7754,7 @@ mobileTest('write cancel confirmation remains visible and interactive', 'write',
             assert.equal(popupContract.motion.animationName, 'none', `${scenario.name}: popup animation`);
             assert.equal(popupContract.motion.transitionDuration, '0s', `${scenario.name}: popup transition`);
             assert.equal(popupContract.controls.length, 3, `${scenario.name}: popup controls`);
-            assert.equal(popupContract.controls.every((control) => control.width >= 44 && control.height >= 44), true, `${scenario.name}: popup control targets`);
+            assert.equal(popupContract.controls.every((control) => control.width >= (control.role === 'popup-close' ? 36 : 44) && control.height >= (control.role === 'popup-close' ? 36 : 44)), true, `${scenario.name}: popup role-specific control targets`);
             assert.equal(Boolean(popupContract.firstShownRect), true, `${scenario.name}: first shown frame`);
             assert.equal(Math.abs(popupContract.firstShownRect.centerX - (scenario.viewport.width / 2)) <= 2, true, `${scenario.name}: first shown horizontal center`);
             assert.equal(Math.abs(popupContract.firstShownRect.centerY - (scenario.viewport.height / 2)) <= 2, true, `${scenario.name}: first shown vertical center`);

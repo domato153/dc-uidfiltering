@@ -358,8 +358,8 @@
           "sourceRef": "src/targets/mobile/native-form-presenter.js",
           "styleKey": "modify-delete",
           "requiredSelectorPrefix": "[data-dcuf-native-form-",
-          "declarationCount": 187,
-          "declarationLedgerSha256": "d35bcf2452c60b72d08d6753ce942e0632d01e6bcb3c7ee9ec78d63f2062284f",
+          "declarationCount": 188,
+          "declarationLedgerSha256": "5f0058c0f3e55b1bae7cd28d51b21643e805b904a0e0c4f64d6504df34a7b9c5",
           "hostCollision": "Existing native-form geometry/visibility precedence retained. Password form owns its horizontal card gutters while its section permits the shared page-head width; splitting grouped password/delete-confirm rules adds four exact priority declarations without changing authenticated delete-confirm branch values. Original password fields/actions remain native. This exact transitional profile is not whole-surface modernization. B1 common control material retains existing native/inline precedence for original actions, state and readable inputs. Current exact ledger covers compact footer, active/danger roles and AI controls. Decorative exterior ancestry is expressed with a semantic form prefix and :where, without broadening this required prefix or adding a filtered popup ancestor.",
           "testRefs": [
             "testbed/run-tests.mjs",
@@ -371,8 +371,8 @@
           "sourceRef": "src/targets/mobile/native-form-presenter.js",
           "styleKey": "write",
           "requiredSelectorPrefix": "[data-dcuf-native-form-",
-          "declarationCount": 767,
-          "declarationLedgerSha256": "a926aa7f5ca08ce74666292bae5b4f0aef13d7ca54771cbacd98c59466615549",
+          "declarationCount": 758,
+          "declarationLedgerSha256": "db75a2cadea8cb709c6f256338e2186cb24128e425f6c39bec6cd552f55b2b3d",
           "hostCollision": "B1 write/editor frame and paper fields reuse existing native/inline precedence. The original credential wrapper border is removed so its owned input is the sole face; editor wrapper decoration is removed so its frame is the sole edge. Preserve popup containment without a backdrop-filter ancestor. Named priorities retain native geometry/visibility; exact ledger remains transitional debt, not an expansion allowlist. B1 common control material retains existing native/inline precedence for original actions, state and readable inputs. Current exact ledger covers compact footer, active/danger roles and AI controls. Decorative exterior ancestry is expressed with a semantic form prefix and :where, without broadening this required prefix or adding a filtered popup ancestor.",
           "testRefs": [
             "testbed/run-tests.mjs",

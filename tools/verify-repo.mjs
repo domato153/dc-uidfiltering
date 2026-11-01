@@ -245,7 +245,9 @@ async function verifyMobileSourceContracts() {
         check(themeHostStyle.includes(selector), `mobile source: palette selector is missing: ${selector}`);
     }
     const nativeWritePrimary = '[data-dcuf-native-form-role="form"][data-dcuf-native-form-state="write-editor"] [data-dcuf-native-form-role="outer-action-primary"][data-dcuf-native-form-state="write-editor"]';
-    check(nativeFormPresenter.includes(nativeWritePrimary) && nativeFormPresenter.includes('var(--dcuf-control-primary-bg)'),
+    const nativeWritePrimaryOffset = nativeFormPresenter.lastIndexOf(`${nativeWritePrimary} {`);
+    const nativeWritePrimaryRule = nativeWritePrimaryOffset < 0 ? '' : nativeFormPresenter.slice(nativeWritePrimaryOffset).split('}')[0];
+    check(nativeWritePrimaryRule.includes('background: var(--dcuf-v7-primary-bg)') && nativeWritePrimaryRule.includes('color: var(--dcuf-v7-primary-ink)'),
         'mobile source: native-form primary material consumer is missing');
     check(!themeHostStyle.includes(nativeWritePrimary),
         'mobile source: competing legacy theme write-primary paint returned');

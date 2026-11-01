@@ -1,6 +1,8 @@
 # Remaining native v7 detail — one bounded batch
 
-**READY_FOR_IMPLEMENTATION**,source base9c56030/Mobile0E1A75FD,not implemented yet. B1_V7_INTEGRATED_REVIEW.md owns current observations and ambiguity classification. User main plan continues after the completed combined popup batch. Mode:Operate/Read. No new aesthetic decision is needed for this equivalent material transfer.
+**IMPLEMENTED_SCOPED_VALIDATION_PASSED**,source checkpoint base0df60fd/control0E1A75FD → Mobile0A5583B6. B1_V7_INTEGRATED_REVIEW.md owns original observations and ambiguity classification. User2026-11-01 explicitly authorized the whole remaining batch,including checking top-search history before fixing any missing detail. Mode:Operate/Read. Equivalent material transfer through four existing presenters;no ownership or native behavior move.
+
+Top-search follow-up:current0E history/suggestions already use floating glass and quiet links/remove/clear/close controls. Eight synthetic states across980×900 light/dark,980×2306 light and390×520 dark pass material/containment/close checks;light/dark history renders directly inspected. Keep source unchanged unless affected final checks reveal a concrete defect. This is current source-runtime evidence,not all live search histories/account data qualification.
 
 ## Scope and reference
 
@@ -20,3 +22,15 @@
 6. One final scoped review,exact artifact/diff/receipt/current-next and one authorized development checkpoint/CI for the batch. Stop/replan only for a concrete ownership/function problem or material user choice.
 
 Following this batch:reconcile the remaining live/conditional gaps before any whole-UI claim,including real DCCon image/packs loading(C-11). Existing relation-read approval does not itself cover another endpoint;decide from the then-current explicit request and actual request purpose,not from HTTP method alone. No account credentials/live write/upload/CAPTCHA action in this implementation. Four external uploads stay user-deferred;image replies N/A;browser/OS UI outside web CSS. Guidebook discussion remains after whole UI work ends.
+
+## Result and retained boundaries
+
+- Final0A5583B6:generic settings selected groups and primary/utility roles,individual author memo/picker,password/delete/leave confirmations and login primary now reuse current v7. Main memo workspace/menu/login chrome retain existing composition. Login submit intentionally stays full width. Native delete warning/labels,hidden fields,handlers,parents and authored wheel/media remain.
+- Top-search source already fitted. Final-runtime repeat:8 history/suggestion states pass;light/dark history directly inspected. No extra header override was introduced.
+- Chrome156:3 new residual contracts plus5 existing affected contracts pass(settings30,author9,login48,search36 observations;password8 contexts). Original authenticated-delete synthetic callback test and writer cancel/reopen contract also pass. No actual authentication/deletion/save/upload occurred.
+- Separate frozen/current contexts:24 semantic pairs identical. Actual palette UI preview/save/cancel in settings/author/forms plus login's original read-only palette path:24 rendered samples across blue/mono/rose and both themes,6 cancel restorations,min label contrast6.339:1. Common14-color formulas unchanged.12 readable before/after image pairs inspected;comparator reports intentional differences,reference fidelity REVIEWED,not product/aesthetic approval.
+- Review fixes:comma-list pseudo suffix had tinted the first author branch at rest;both author branches now retain primary material on actual hover and keyboard focus. Leave X strokes share a center. Form cancel/close feedback is local. Reviewer found no remaining consequential source defect after repairs;no reviewer browser claim.
+- Fixture .blind fidelity is narrowly scoped to the leave fixture. Palette interaction intentionally removes the author menu ancestor in that fixture;palette witness reopens through original controls instead of changing product DOM/lifecycle.
+- Necessary exact ledger refresh only:modify-delete187→188(+one scoped auxiliary feedback declaration);write767→758(net removal of redundant compact/dark repaint plus local feedback). Selector prefix/owner/test constraints unchanged. No historical oracle digest rewrite. Release verifier previously looked for a retired primary token anywhere in the file;it now checks the actual writer-primary rule's paired bg AND ink,with10 mutation controls passing.
+- Impeccable mechanical scan:one retained warning on the existing square memo-tab underline;it is the adopted selected-tab cue,not a rounded-card accent. No detector suppressions added. This is not an automated aesthetic approval.
+- Evidence:verification/receipts/2026-11-01-b1-native-residual-v7.json;local drivers/results/pairs in artifacts/b1-native-residual-v7-2026-11-01. Viewer:local10067/native-residual-v7. Four curated current images in docs/design/b1-native-residual-v7-*. Native account/device/extension/live DCCon pack qualification remains separate.

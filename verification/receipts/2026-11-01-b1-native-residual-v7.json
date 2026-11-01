@@ -1,0 +1,633 @@
+{
+  "schemaVersion": 1,
+  "kind": "B1_NATIVE_RESIDUAL_V7_IMPLEMENTATION",
+  "status": "IMPLEMENTED_SCOPED_VALIDATION_PASSED",
+  "sourceBaseHead": "0df60fd8c950b005d9990933cec6c2f34496d070",
+  "candidateFingerprint": "592eb5b6064651e7a9bed3efca9b12f8a6ff7455d1e94d23d57dbbea1ae1e2d1",
+  "artifacts": {
+    "mobileVersion": "3.5.5",
+    "mobileSha256": "0A5583B6B8FAB3F52E8E3D4CC8F34E1CD836B79657676DA4D9053F5B63D27402",
+    "controlMobileSha256": "0E1A75FD460E27F803D8AEE92946ACEF819F6983D7DFAB9296965D258E6D722E",
+    "pcVersion": "1.9.9",
+    "pcSha256": "E4706617DE96D3E0719144724FDAE1B62D7511674D6564DCBD82F2C702802E14",
+    "rootDistGuardMatch": true,
+    "pcUnchanged": true,
+    "officialRelease": false
+  },
+  "inputs": [
+    {
+      "path": "src/targets/mobile/gallery-page-head-presenter.js",
+      "sha256": "442bf7e665e4cd877176c354b4e97a9baf531d382b2ad7811d23f8af5752030b"
+    },
+    {
+      "path": "src/targets/mobile/native-author-presenter.js",
+      "sha256": "ceba7599f90386cc1f61d382e8452c0afa1476e7896e039b58bfdccb48e00134"
+    },
+    {
+      "path": "src/targets/mobile/native-form-presenter.js",
+      "sha256": "28cff8f29cf5ced5d1fb2d2c583b871ea58cd9d68e62a511b3fe08088a857f11"
+    },
+    {
+      "path": "src/targets/mobile/login-presenter.js",
+      "sha256": "e8e0e960cf437c8f04388c3fdd5f25d30fce034b679bc887c8844a29d4539e79"
+    },
+    {
+      "path": "src/targets/mobile/theme-material-values.js",
+      "sha256": "da6cc37a3f71f5ff696aa57fddf6c52e254aa01ce2dfb0b856c0979a6aac189c"
+    },
+    {
+      "path": "architecture/ui-surfaces.json",
+      "sha256": "b9d2fec77059dcb908f70b3313cb9be68c7f66c07c2899acfbf0e056f055ac54"
+    },
+    {
+      "path": "tools/verify-repo.mjs",
+      "sha256": "00d149a0984a35b9ea94f08b2401eed012d53850c24a43db39b12b3fc6b47b8c"
+    },
+    {
+      "path": "tools/test-mobile-source-contracts.mjs",
+      "sha256": "993fb22b74d24ee094fbfd81236b0e021af18857b3a72d2e10e6dad232a6d58c"
+    },
+    {
+      "path": "testbed/ui-native-residual-v7-contract.mjs",
+      "sha256": "e276c268039910303b4dbfce0c451f65822f287d8993d2340c3753da1175060b"
+    },
+    {
+      "path": "testbed/ui-b1-native-settings-contract.mjs",
+      "sha256": "4c96ca024ee74227c33039a94ba26ab81bdbd4aeb60186c0d580bd764393dfa3"
+    },
+    {
+      "path": "testbed/ui-b1-native-author-contract.mjs",
+      "sha256": "ab239861a7945ff20583c0cd801823e460e1e89cc6244e7b8a09a256d5f05be0"
+    },
+    {
+      "path": "testbed/ui-b1-password-contract.mjs",
+      "sha256": "19a0c850af54d62a1fc2ee6e4b975136e201db66450653dbc67371dd1b98bc7b"
+    },
+    {
+      "path": "testbed/ui-b1-login-contract.mjs",
+      "sha256": "19caab57e3d5648dbb1704d0413645417600046a12bf1aef5052be1b25b4249a"
+    },
+    {
+      "path": "testbed/ui-b1-gallery-search-contract.mjs",
+      "sha256": "15030a9833d9e3118931e1cbf6b12642bb9d1b2387b1a1885903c9e3b57e1521"
+    },
+    {
+      "path": "testbed/ui-popup-batch-v7-contract.mjs",
+      "sha256": "2e9aa30aa9aadbb60aae66f03a0585aead9ba55bd1d0191c178f79ece02dbd52"
+    },
+    {
+      "path": "testbed/run-tests.mjs",
+      "sha256": "ff0714de4e901edc729e4730221c20cf6e2a3fc77b15722b184a0feae34fae34"
+    },
+    {
+      "path": "testbed/run-host-compatibility.mjs",
+      "sha256": "257ecedcc4f30e4e6a66bfaab58ed96abc4aca90d7835e91cb6ed38c2b6d5a7b"
+    },
+    {
+      "path": "testbed/public/fixture.css",
+      "sha256": "a1c711ecd7c2924dc8928b9b021ea76dcc4882c3ecfdb7c01282fa5d9b7b7f70"
+    },
+    {
+      "path": "testbed/fixtures/b1-native-settings.mjs",
+      "sha256": "01f8f7aa6a2100b565a987aa926c7fcd44f30c1c3a9e7dfc27affde578e0fce5"
+    },
+    {
+      "path": "testbed/fixtures/b1-native-author.mjs",
+      "sha256": "2123f6100f889641dccc7245af7f345fb5363acbc309f9091add7a8b6b85daab"
+    },
+    {
+      "path": "testbed/fixtures/b1-password.mjs",
+      "sha256": "0939926f45c37745acacaf83c93e8f0044a0b6223781eaa34ba559ca9620780c"
+    },
+    {
+      "path": "testbed/fixtures/login-native.mjs",
+      "sha256": "ca3429532ce917060491e86bd0a65acb703ae742b8ccd07303159f00b97e143b"
+    },
+    {
+      "path": "docs/work/B1_NATIVE_RESIDUAL_V7.md",
+      "sha256": "00716680bddc2ebcc137a9cc186fdced2e8bd632f97c0631353cca9d7131d6ba"
+    },
+    {
+      "path": "docs/work/B1_CONTROL_MATERIAL.md",
+      "sha256": "a2dd026ad49d92683829906498d00ad3beba3733ed59f32f8a347ea45981e87c"
+    },
+    {
+      "path": "docs/ui-surface-contracts.md",
+      "sha256": "e97be60774d66afe43935de2d5adaa1a8180f6f74b82ae1e6068cb71c91e346e"
+    }
+  ],
+  "evidence": [
+    {
+      "path": "artifacts/b1-native-residual-v7-2026-11-01/red.json",
+      "sha256": "fa0586c7db7c672bbd7ba88afa59cbc1425e91ec9d435a5fbd5a1d4b31c75f12"
+    },
+    {
+      "path": "artifacts/b1-native-residual-v7-2026-11-01/focused-first.json",
+      "sha256": "8955be929df7e6d75564d15dfd8a0ef0b585f9157e351496d06af06db0e478a1"
+    },
+    {
+      "path": "artifacts/b1-native-residual-v7-2026-11-01/focused-second.json",
+      "sha256": "7e8f7989cbbae4c2a133209c85c4854e167374b08b2196441a086f94f01ee8f4"
+    },
+    {
+      "path": "artifacts/b1-native-residual-v7-2026-11-01/focused-final.json",
+      "sha256": "aefc5e8589708c20ccc614fd5bbbd31a8e15d0900d279365a23619d37253ee3c"
+    },
+    {
+      "path": "artifacts/b1-native-residual-v7-2026-11-01/affected.json",
+      "sha256": "8a04cb1a57990e87648e5e7803d4f5836e37377b4cc82a1896d7f4cb1a737551"
+    },
+    {
+      "path": "artifacts/b1-native-residual-v7-2026-11-01/differential.json",
+      "sha256": "2ff8e007a675f57c913ba4f55a8eb254496f8f41aae402034af81cd006b6af88"
+    },
+    {
+      "path": "artifacts/b1-native-residual-v7-2026-11-01/palette-first.json",
+      "sha256": "1118e7a921a5c1b4d3ef4bab42ad72402475cbf9ec1133351042e11ecfce2b9b"
+    },
+    {
+      "path": "artifacts/b1-native-residual-v7-2026-11-01/palette.json",
+      "sha256": "d42c90755d60235165fa0808297228bdb78fae7c4ac5c2dda764336253e20635"
+    },
+    {
+      "path": "artifacts/b1-native-residual-v7-2026-11-01/search-check.json",
+      "sha256": "0760fb73bf6aa30bda28d8ec0f96ab9afc89ce3c92ab8d7f6b7bc771e0537df6"
+    },
+    {
+      "path": "artifacts/b1-native-residual-v7-2026-11-01/search-final.json",
+      "sha256": "df9c34bb3f3d1700c757bcce51ce4d4a0cf58c3e0f913a699bc5d4ce189df2a3"
+    },
+    {
+      "path": "artifacts/b1-native-residual-v7-2026-11-01/selected-host.json",
+      "sha256": "2ba58320e8a2781f7576907dad7f078d0971cab8fd272faa1d0d2f0b420219c0"
+    },
+    {
+      "path": "artifacts/b1-native-residual-v7-2026-11-01/leave-contract.json",
+      "sha256": "cbd693d228d3fe8d394665f995ae5cf06ea700044ac262670f27a95d804d23da"
+    },
+    {
+      "path": "artifacts/b1-native-residual-v7-2026-11-01/visual-manifest.json",
+      "sha256": "75a6d7c19e9b3acad9177f74db69408d1e5eb6d67cfaf3e8aca1ddce9030e19a"
+    },
+    {
+      "path": "artifacts/b1-native-residual-v7-2026-11-01/visual-reviewed/review.json",
+      "sha256": "c94ff383d318a31a980d5d5228567f632f8547a9658b6bf64984f0ae4911fcbf"
+    },
+    {
+      "path": "artifacts/b1-native-residual-v7-2026-11-01/impact-final.json",
+      "sha256": "3442508a1c54b872cca1deb6a5518e8653879e76a87ec0407dfb4ad58f463fe3"
+    },
+    {
+      "path": "artifacts/b1-native-residual-v7-2026-11-01/impeccable.json",
+      "sha256": "eacaff14045fb8a389bee1e87d74bd01c7f9a596a958b11f065024f67c7e847e"
+    },
+    {
+      "path": "artifacts/b1-native-residual-v7-2026-11-01/release-verification.txt",
+      "sha256": "ac6fccd11cb6c8f8cd8e8744d150f75654d4c249b41e80c1fd4b62d2e3bd8668"
+    }
+  ],
+  "curatedActual": [
+    {
+      "path": "docs/design/b1-native-residual-v7-settings-block-dark-2026-11-01.png",
+      "sha256": "4d407772d0234fb66154b97811908e6215eb5b0d73395436e96bdbf3591b424e"
+    },
+    {
+      "path": "docs/design/b1-native-residual-v7-author-memo-light-2026-11-01.png",
+      "sha256": "3433f1976957c7c83f2deccc9d3afb47cc7bc1f6739a15997d2dc3aa9e331e88"
+    },
+    {
+      "path": "docs/design/b1-native-residual-v7-form-leave-light-2026-11-01.png",
+      "sha256": "e3d2977d5f6c1fa91d5aa091eb4881f334a19c9e81a6aca663c99edd7e805fa7"
+    },
+    {
+      "path": "docs/design/b1-native-residual-v7-login-dark-2026-11-01.png",
+      "sha256": "6e04aced34876cb4b5afed6044491996cce7c3a411a2740d7f013d63704e03a4"
+    }
+  ],
+  "production": {
+    "sources": [
+      "src/targets/mobile/gallery-page-head-presenter.js",
+      "src/targets/mobile/native-author-presenter.js",
+      "src/targets/mobile/native-form-presenter.js",
+      "src/targets/mobile/login-presenter.js"
+    ],
+    "delta": "Equivalent material/selected/quiet/label-size transfer in existing Mobile presentation owners;leave header/X and delete-confirm glass refined",
+    "unchanged": [
+      "Original DOM/parents/forms/events/hidden fields",
+      "Storage/network/GM keys/filter/observers/UiPort",
+      "Shared palette/material formulas/PC/metadata/build topology",
+      "Authored wheel/range/media and destructive warnings",
+      "Top-search header source,adopted memo workspace/menu/login chrome"
+    ]
+  },
+  "checks": {
+    "browser": "156.0.8078.76",
+    "focused": [
+      {
+        "name": "settings",
+        "status": "passed"
+      },
+      {
+        "name": "forms",
+        "status": "passed"
+      },
+      {
+        "name": "login",
+        "status": "passed"
+      }
+    ],
+    "affected": [
+      {
+        "name": "native-settings",
+        "status": "passed",
+        "observations": 30
+      },
+      {
+        "name": "native-author",
+        "status": "passed",
+        "observations": 9
+      },
+      {
+        "name": "password",
+        "status": "passed"
+      },
+      {
+        "name": "login-entry",
+        "status": "passed",
+        "observations": 48
+      },
+      {
+        "name": "gallery-search",
+        "status": "passed",
+        "observations": 36
+      }
+    ],
+    "nativeActionChecks": [
+      {
+        "name": "authenticated-delete synthetic original submit and multi-point hit",
+        "status": "passed"
+      },
+      {
+        "name": "writer-cancel original close/reopen/multi-point hit",
+        "status": "passed",
+        "report": "artifacts/b1-native-residual-v7-2026-11-01/leave-contract.json"
+      }
+    ],
+    "contexts": [
+      "980x900 light/dark",
+      "980x2306 light layout-only",
+      "390x560 dark stress",
+      "incumbent author1440 and native leave named contexts"
+    ],
+    "topSearch": {
+      "sourceChanged": false,
+      "finalStates": 8,
+      "historyAndSuggestions": true,
+      "positiveCloseAndOriginalInput": true,
+      "lightDarkHistoryDirectlyInspected": true
+    },
+    "semantic": {
+      "pairs": 24,
+      "differences": 0,
+      "basis": "Same fixture/harness,distinct fresh frozen/current browser contexts;native controls/identity/callback/input/selected data;paint/geometry deliberately excluded.",
+      "fullLifecycleStoragePerformance": false
+    },
+    "palette": {
+      "colors": [
+        "blue",
+        "mono",
+        "rose"
+      ],
+      "themes": [
+        "light",
+        "dark"
+      ],
+      "families": [
+        "settings",
+        "author",
+        "form",
+        "login"
+      ],
+      "renderedSamples": 24,
+      "cancelRestorations": 6,
+      "minLabelContrast": 6.339451007364226,
+      "loginMethod": "Original read-only GM palette context;no fabricated on-page palette menu",
+      "formula14ColorsUnchanged": true
+    },
+    "visual": {
+      "pairs": 12,
+      "referenceFidelity": "REVIEWED",
+      "pixelStatus": "DIFFERENCES_REQUIRE_REVIEW",
+      "pixelDifferences": 12,
+      "productApproved": false,
+      "assessment": [
+        {
+          "id": "settings-memo-light",
+          "referenceSha256": "4bca1d5203b6d007b6311906c1e699020f3e4b523bdcad31a32e85b5b96a323a",
+          "candidateSha256": "c7a895756cadb80738716e97407ec3c3e1f5ed19945c5c96316c5348ebdcdfe2",
+          "status": "REVIEWED",
+          "summary": "Adopted memo workspace/primary retained;auxiliary backup link now plain.",
+          "findings": [
+            {
+              "disposition": "INTENTIONAL",
+              "expected": "Declared equivalent v7 material/auxiliary/group/label sizing with original capabilities",
+              "actual": "Adopted memo workspace/primary retained;auxiliary backup link now plain.",
+              "action": "Retain local change;native authored/media/swatch colors and purposeful full-width login role remain"
+            }
+          ]
+        },
+        {
+          "id": "settings-block-dark",
+          "referenceSha256": "5b86e67feb4c1cb00a3af738e5e3177317ae48d06f03ed0eba555f07de0e56da",
+          "candidateSha256": "4d407772d0234fb66154b97811908e6215eb5b0d73395436e96bdbf3591b424e",
+          "status": "REVIEWED",
+          "summary": "Paired pale primary and selected face;quiet close;original field grouping retained.",
+          "findings": [
+            {
+              "disposition": "INTENTIONAL",
+              "expected": "Declared equivalent v7 material/auxiliary/group/label sizing with original capabilities",
+              "actual": "Paired pale primary and selected face;quiet close;original field grouping retained.",
+              "action": "Retain local change;native authored/media/swatch colors and purposeful full-width login role remain"
+            }
+          ]
+        },
+        {
+          "id": "settings-headtail-light",
+          "referenceSha256": "525d8847ace6504d0a3c92b2ef28b9c7edbdc0223dde228d05ab51bb47f044bd",
+          "candidateSha256": "93008d5131cea2854444a1a238f6f5891bb8b86151c535de24505a2a7b502a19",
+          "status": "REVIEWED",
+          "summary": "Flat selected group and paired save;native fields/wheel retained;last field reachable by existing scroll.",
+          "findings": [
+            {
+              "disposition": "INTENTIONAL",
+              "expected": "Declared equivalent v7 material/auxiliary/group/label sizing with original capabilities",
+              "actual": "Flat selected group and paired save;native fields/wheel retained;last field reachable by existing scroll.",
+              "action": "Retain local change;native authored/media/swatch colors and purposeful full-width login role remain"
+            }
+          ]
+        },
+        {
+          "id": "settings-spoiler-dark",
+          "referenceSha256": "050fc6f630c5c56c5af4c943a887d29ddac5646dec5b92937eb456a6a6f64e66",
+          "candidateSha256": "75f3b2808cf3e0b035551dc3a9a554e3d5f961b0b3d34a7328c20e7017db45fe",
+          "status": "REVIEWED",
+          "summary": "Pale paired save and plain close;native switches unchanged.",
+          "findings": [
+            {
+              "disposition": "INTENTIONAL",
+              "expected": "Declared equivalent v7 material/auxiliary/group/label sizing with original capabilities",
+              "actual": "Pale paired save and plain close;native switches unchanged.",
+              "action": "Retain local change;native authored/media/swatch colors and purposeful full-width login role remain"
+            }
+          ]
+        },
+        {
+          "id": "settings-auto-dark",
+          "referenceSha256": "af234ef736a414bb8c31813423f67e73dba0aa594ef5bc1a2a6b99b64cb8db3d",
+          "candidateSha256": "a2e4538c302889dadc8959dff4eb1c17eda410dc4f14971b272f751c77e2c5c9",
+          "status": "REVIEWED",
+          "summary": "Quiet image-library/head actions,pale upload-entry action;native image/checkbox retained.",
+          "findings": [
+            {
+              "disposition": "INTENTIONAL",
+              "expected": "Declared equivalent v7 material/auxiliary/group/label sizing with original capabilities",
+              "actual": "Quiet image-library/head actions,pale upload-entry action;native image/checkbox retained.",
+              "action": "Retain local change;native authored/media/swatch colors and purposeful full-width login role remain"
+            }
+          ]
+        },
+        {
+          "id": "author-memo-dark",
+          "referenceSha256": "d64f57c0e9567331b523fd9f160f2d0d88164a8b29e764c74756d3acc94586fb",
+          "candidateSha256": "f711c8f73d9c69072832039f30684e7f7326b0f23a839bbed6c9cefdde9d06ac",
+          "status": "REVIEWED",
+          "summary": "Compact paired register,quiet close/help and original bulk arrow.",
+          "findings": [
+            {
+              "disposition": "INTENTIONAL",
+              "expected": "Declared equivalent v7 material/auxiliary/group/label sizing with original capabilities",
+              "actual": "Compact paired register,quiet close/help and original bulk arrow.",
+              "action": "Retain local change;native authored/media/swatch colors and purposeful full-width login role remain"
+            }
+          ]
+        },
+        {
+          "id": "author-picker-light",
+          "referenceSha256": "186a6ac75ca40351d67d7f4ecbd21ff1ad59cec0dfe912e8b599ae6b2c8479ee",
+          "candidateSha256": "c0b1b1868adb548e4b23480368df6333735f98f2870b8281aa8acb1cc5a8ffe6",
+          "status": "REVIEWED",
+          "summary": "Compact paired confirm/plain cancel;original wheel/range retained.",
+          "findings": [
+            {
+              "disposition": "INTENTIONAL",
+              "expected": "Declared equivalent v7 material/auxiliary/group/label sizing with original capabilities",
+              "actual": "Compact paired confirm/plain cancel;original wheel/range retained.",
+              "action": "Retain local change;native authored/media/swatch colors and purposeful full-width login role remain"
+            }
+          ]
+        },
+        {
+          "id": "form-modify-light",
+          "referenceSha256": "853c26a62d1085df9b370ba0096b1a421c9cb50b1a49e6663f8b123d20945961",
+          "candidateSha256": "6846de343e3a102690fd3ee23be39a82e686de33f6d5447e47dc359538ea2ad4",
+          "status": "REVIEWED",
+          "summary": "Native password form retained;label-sized trailing actions and paired confirm.",
+          "findings": [
+            {
+              "disposition": "INTENTIONAL",
+              "expected": "Declared equivalent v7 material/auxiliary/group/label sizing with original capabilities",
+              "actual": "Native password form retained;label-sized trailing actions and paired confirm.",
+              "action": "Retain local change;native authored/media/swatch colors and purposeful full-width login role remain"
+            }
+          ]
+        },
+        {
+          "id": "form-delete-dark",
+          "referenceSha256": "bb6604adb3fcddba66cc9083b69d08e5ed84d5a1db05e194924f88ba872b50dc",
+          "candidateSha256": "cd96c070b29e4c715aff126d5e17ca224e9c428c912518a9fafd9a6511b1cf77",
+          "status": "REVIEWED",
+          "summary": "Native password deletion warning/form retained;quiet cancel and paired confirm.",
+          "findings": [
+            {
+              "disposition": "INTENTIONAL",
+              "expected": "Declared equivalent v7 material/auxiliary/group/label sizing with original capabilities",
+              "actual": "Native password deletion warning/form retained;quiet cancel and paired confirm.",
+              "action": "Retain local change;native authored/media/swatch colors and purposeful full-width login role remain"
+            }
+          ]
+        },
+        {
+          "id": "form-confirm-dark",
+          "referenceSha256": "5fb500f52d45736817a4399dd9f609806289312f9786dcb1164327d0af62d31b",
+          "candidateSha256": "f5e032758cdb98eb1ff5d1392d2a7223cada78c068efe763cf07ab4a8a516c7a",
+          "status": "REVIEWED",
+          "summary": "Deletion warning retained;existing floating material and compact trailing actions.",
+          "findings": [
+            {
+              "disposition": "INTENTIONAL",
+              "expected": "Declared equivalent v7 material/auxiliary/group/label sizing with original capabilities",
+              "actual": "Deletion warning retained;existing floating material and compact trailing actions.",
+              "action": "Retain local change;native authored/media/swatch colors and purposeful full-width login role remain"
+            }
+          ]
+        },
+        {
+          "id": "form-leave-light",
+          "referenceSha256": "0161eb9b26a9057f1f879aee26bf7fe023e0d43aac3f2c2338df464948635168",
+          "candidateSha256": "e3d2977d5f6c1fa91d5aa091eb4881f334a19c9e81a6aca663c99edd7e805fa7",
+          "status": "REVIEWED",
+          "summary": "Glass heading without colored banner,centered36px X,quiet cancel and paired confirm.",
+          "findings": [
+            {
+              "disposition": "INTENTIONAL",
+              "expected": "Declared equivalent v7 material/auxiliary/group/label sizing with original capabilities",
+              "actual": "Glass heading without colored banner,centered36px X,quiet cancel and paired confirm.",
+              "action": "Retain local change;native authored/media/swatch colors and purposeful full-width login role remain"
+            }
+          ]
+        },
+        {
+          "id": "login-dark",
+          "referenceSha256": "8e0e1cda9b14ff1b8dc0f06cd37145513a5bcf44dc7904dfc782c7d2d97b0ebc",
+          "candidateSha256": "6e04aced34876cb4b5afed6044491996cce7c3a411a2740d7f013d63704e03a4",
+          "status": "REVIEWED",
+          "summary": "Existing login chrome/fields and full-width role retained;paired pale submit.",
+          "findings": [
+            {
+              "disposition": "INTENTIONAL",
+              "expected": "Declared equivalent v7 material/auxiliary/group/label sizing with original capabilities",
+              "actual": "Existing login chrome/fields and full-width role retained;paired pale submit.",
+              "action": "Retain local change;native authored/media/swatch colors and purposeful full-width login role remain"
+            }
+          ]
+        }
+      ],
+      "viewer": {
+        "url": "http://127.0.0.1:10067/native-residual-v7/index.html?implementation=0A5583B6",
+        "checkedInUserIab": true,
+        "searchImageDecoded": [
+          980,
+          900
+        ],
+        "oneImageAtATime": true
+      }
+    },
+    "static": {
+      "release": "passed",
+      "uiBoundaries": "43 sources passed",
+      "architectureLinks": "9 surfaces passed;accepted graph unchanged",
+      "mobileVerifierMutationControls": 10,
+      "impeccable": {
+        "warnings": 1,
+        "disposition": "Retain existing square memo selected-tab underline;not rounded-card accent;no suppressions or aesthetic pass"
+      }
+    }
+  },
+  "registrationNecessity": {
+    "onlyCurrentProfiles": [
+      "native-form modify-delete",
+      "native-form write"
+    ],
+    "modifyDelete": {
+      "before": 187,
+      "after": 188,
+      "reason": "One locally scoped auxiliary hover/focus declaration retained at existing host precedence"
+    },
+    "write": {
+      "before": 767,
+      "after": 758,
+      "reason": "Remove redundant compact/dark repaint and add local auxiliary feedback;exact registered values changed"
+    },
+    "ownerPrefixTestsUnchanged": true,
+    "historicalOracleRewritten": false,
+    "verifier": "Retired token-anywhere check replaced by actual writer-primary bg AND ink rule check,negative mutations retained/extended"
+  },
+  "review": {
+    "method": "Independent read-only source/test review,then fresh scoped follow-up;no reviewer browser run",
+    "fixed": [
+      "Comma-list pseudo suffix applied only to last branch",
+      "Primary focus-visible lost paired paint",
+      "Leave X ::after omitted centering translation",
+      "Native form auxiliary feedback missing",
+      "Locator.press test refocused target before each key"
+    ],
+    "final": "No remaining consequential defect found"
+  },
+  "impact": {
+    "changedFiles": [
+      "architecture/ui-surfaces.json",
+      "docs/agent-maintenance-notes.md",
+      "docs/design/b1-native-residual-v7-author-memo-light-2026-11-01.png",
+      "docs/design/b1-native-residual-v7-form-leave-light-2026-11-01.png",
+      "docs/design/b1-native-residual-v7-login-dark-2026-11-01.png",
+      "docs/design/b1-native-residual-v7-settings-block-dark-2026-11-01.png",
+      "docs/ui-surface-contracts.md",
+      "docs/work/B1_NATIVE_RESIDUAL_V7.md",
+      "docs/work/CURRENT_STATE.md",
+      "docs/work/INDEX.md",
+      "docs/work/NEXT_TASK.md",
+      "src/targets/mobile/gallery-page-head-presenter.js",
+      "src/targets/mobile/login-presenter.js",
+      "src/targets/mobile/native-author-presenter.js",
+      "src/targets/mobile/native-form-presenter.js",
+      "testbed/public/fixture.css",
+      "testbed/run-tests.mjs",
+      "testbed/ui-b1-password-contract.mjs",
+      "testbed/ui-native-residual-v7-contract.mjs",
+      "tools/test-mobile-source-contracts.mjs",
+      "tools/verify-repo.mjs"
+    ],
+    "automaticProfiles": [
+      "policy",
+      "proof-core",
+      "proof-runtime",
+      "acceptance"
+    ],
+    "manualSelection": "Actual four presenter consumers;3 new+5 incumbent contracts,2 native action contracts,search8,24-state differential,palette and12 readable image pairs",
+    "omitted": [
+      "Unchanged PC/shared filter/storage/boot/bfcache product suites",
+      "Full128-child/account/device/extension acceptance",
+      "Full editor menu/write product suites outside leave dialog",
+      "Live account/save/post/delete/vote/report/upload/CAPTCHA actions"
+    ]
+  },
+  "contrary": [
+    {
+      "kind": "PRODUCT_FIXED",
+      "detail": "First candidate tinted author first selector at rest;rest/hover/focus now exercised on both bindings"
+    },
+    {
+      "kind": "PRODUCT_FIXED",
+      "detail": "Review caught X second-stroke center and absent local auxiliary feedback"
+    },
+    {
+      "kind": "ORACLE_FIXED",
+      "detail": "Keyboard-cycle test now uses page.keyboard and asserts actual :focus-visible"
+    },
+    {
+      "kind": "FIXTURE_FIXED",
+      "detail": "Leave fixture models original .blind accessible-label CSS;both controls use same corrected fidelity"
+    },
+    {
+      "kind": "HARNESS_FIXED",
+      "detail": "Native author fixture removes menu ancestor on outside palette click;witness now reopens original controls after palette interaction"
+    },
+    {
+      "kind": "WORKFLOW_FIXED",
+      "detail": "First leave runner selected release root and source guard rejected it before execution;explicit final guarded path passed"
+    },
+    {
+      "kind": "VERIFIER_FIXED",
+      "detail": "Legacy material token survived only in old leave rules;actual writer rule had already adopted v7. Updated exact-consumer predicate with paired-role negative controls"
+    }
+  ],
+  "limits": [
+    "Scoped Mobile source implementation,not complete128-child/formal header admission",
+    "Actual DCCon packs/images/recent/hot/settings UNKNOWN;synthetic8 cells do not prove real media",
+    "No actual extension/device/account/authentication/live submission qualification",
+    "980x2306 layout-only;phone scale/client-height/engine gaps retained;390 stress",
+    "Image replies N/A;four external uploads user-deferred",
+    "Guidebook discussion remains after whole UI work ends"
+  ],
+  "hashMode": "Canonical LF text;raw image/runtime bytes"
+}

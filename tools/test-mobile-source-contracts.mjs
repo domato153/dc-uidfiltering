@@ -54,6 +54,12 @@ const themePath=path.join(rootDir,'src','targets','mobile','theme-host-style.js'
 const nativeSource=await readFile(nativePath,'utf8'),themeSource=await readFile(themePath,'utf8');
 assert.deepEqual(await observe(coordinator,{[nativePath]:nativeSource.replaceAll(writeSelector,'missing-native-primary')}),['mobile source: native-form primary material consumer is missing']);
 console.log('PASS missing actual write owner is rejected');
+const pairedRuleStart=nativeSource.lastIndexOf(`${writeSelector} {`),pairedRuleEnd=nativeSource.indexOf('}',pairedRuleStart),pairedRule=nativeSource.slice(pairedRuleStart,pairedRuleEnd);
+for(const token of ['background: var(--dcuf-v7-primary-bg)','color: var(--dcuf-v7-primary-ink)']){
+ const mutated=nativeSource.slice(0,pairedRuleStart)+pairedRule.replace(token,'missing-paired-role')+nativeSource.slice(pairedRuleEnd);
+ assert.deepEqual(await observe(coordinator,{[nativePath]:mutated}),['mobile source: native-form primary material consumer is missing']);
+ console.log('PASS missing paired writer role is rejected: '+token);
+}
 assert.deepEqual(await observe(coordinator,{[themePath]:themeSource+'\n'+writeSelector}),['mobile source: competing legacy theme write-primary paint returned']);
 console.log('PASS competing legacy write paint is rejected');
-console.log(`Mobile source-contract controls: ${cases.length+2} passed.`);
+console.log(`Mobile source-contract controls: ${cases.length+4} passed.`);

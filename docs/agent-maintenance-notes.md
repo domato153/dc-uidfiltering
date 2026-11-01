@@ -2,7 +2,7 @@
 
 ## Integrated v7 gap triage —2026-11-01
 
-Source token grep is a locator,not a rendered defect verdict:existing convenience fallbacks and the specialized adopted settings-memo workspace must not be repainted because generic old token names remain. Render suspect consumers and compare full primary bg/ink/rim/shadow. Current gallery settings,author memo/picker,password/leave and login retain older native action roles;four presenters can cover the remaining batch without a new framework.
+Source token grep is a locator,not a rendered defect verdict:existing convenience fallbacks and the specialized adopted settings-memo workspace must not be repainted because generic old token names remain. Render suspect consumers and compare full primary bg/ink/rim/shadow. At the0E review,gallery settings,author memo/picker,password/leave and login retained older native action roles;the four-presenter0A5583B6 batch now closes those material consumers without a new framework(B1_NATIVE_RESIDUAL_V7.md).
 
 The head/tail last textarea selector can land in a hidden other-gallery tab. Select a visible original control,scroll its existing owner and check positive edge hits before declaring a trapped field. Current10/50/90% hits pass after scrolling. The write fixture omits common .blind CSS,so its leave-close label wraps;this is a fixture-fidelity/robustness issue,not proof of equal live breakage. Keep native accessible names and model actual host hiding before a product fix.
 
@@ -646,3 +646,8 @@ BASE_CSS occurs in separately lazy-mounted palette/FAB/shared payloads. Its gene
 ### Native door partial occlusion and clipped suggestions —2026-11-01
 
 The compact door hero reserves only32px of viewport height while rank/related leaves reserve menu clearance. At390×520 its full-rank button center passes but the right90% point hits the152×76 menu FAB;intersection1231.875px². Root containment/center-only evidence cannot establish full action reachability. B1_NATIVE_HEADER_POPUPS_V7_PREFLIGHT.md schedules the same-owner repair;it is not fixed by that preflight. Conversely,a suggestion behind its scrollport/footer is expected off-scroll content:maximum scrolling reaches suggestion30 and close in narrow/short probes. Preserve this contrary witness and do not rewrite working list/scroll logic. Actual public recent root matches the acquired recent/bookmark shape;other variants remain scoped unknowns.
+# Native v7 residual transfer — 2026-11-01
+
+- A pseudo suffix on a comma-separated selector string applies only to its last branch. Native-author bindings are trusted flat lists;map hover/focus onto each branch and retain paired primary paint above auxiliary feedback. Test both memo and picker at rest/hover/actual keyboard focus. Playwright Locator.press refocuses its locator;use page.keyboard for a focus cycle and assert :focus-visible before judging its paint.
+- New translated X strokes need the translation on the later ::after override too. Check both pseudo centers,not only the outer close hit box. Keep the native accessible label;missing fixture .blind CSS is fidelity work,not a product global reset.
+- Opening the palette can close a native author menu ancestor in the fixture. Reopen through its native trigger for the next palette observation;do not invent a portal or suppress original outside-click behavior to keep a witness alive.
