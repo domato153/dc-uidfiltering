@@ -2,22 +2,22 @@
 
 ## Current execution
 
-- Active plan: B1_ACCOUNT_UI_PREFLIGHT.md completes account/conditional acquisition and identifies one next account picker/password repair batch. Investigation complete;identified UI defects remain unfixed.
+- Active plan: B1_ACCOUNT_PICKER_IMPLEMENTATION.md closes acquired account toolbar/icon/management and ordinary guest-password finish. NEXT is grouped remaining conditional-UI triage.
 - Workspace path: `.` (private prompt supplies exact worktree). Preserve debug.log unread/unstaged.
-- Active stage: `header-navigation` formal admission remains open. Named v7 scopes remain;account-specific findings and other conditional/device gaps prevent whole-UI acceptance.
-- Accepted visual preference: Actual memo/current paired pale dark primary,transmitting chrome,stable reading,quiet label-sized auxiliaries and one selected cue. Original media/native visibility and permission semantics retained.
-- Source state: Source checkpoint base HEAD `26875ae8b276e067eaa859be1b442cbb1d30b69e` on `codex/ui-port-boundary`. No production/fixture/harness/build/metadata/PC changes in this read-only preflight. Existing overlay/registry unchanged. Exact checkpoint receipt owns publication/CI identity.
-- Local-only state: `LOCAL_ONLY_EVIDENCE`;artifacts/b1-account-ui-preflight-2026-11-02 contains raw account anatomy/media/handlers,drivers and two synthetic reproductions. No account data/credentials/raw images tracked. Owned test Chrome/profiles/vendor closed/removed;viewer one selected image.
-- Candidate fingerprint: `8d93f98d61ecc44a67b64426fc185246d4f1241a38412bc812e6d738cfc47ac6`
-- Last current audit: UNKNOWN for whole-UI acceptance;scoped preflight complete / UI_NEEDS_WORK. Actual sign-in and original management read/cancel observed;current account toolbar positive hits fail and favorite text leaks. Two source5B reproductions confirm causes. Actual anonymous guest password open/close/reopen/reclose/hits succeed,but legacy blue/white controls and2px overflow remain. No product fix claimed.
-- Current stage receipt: `verification/receipts/2026-11-02-b1-account-ui-preflight.json` SHA-256 `BB17E249E79BD1DEE86E768ED7EF603F3B954EF6F39AED0C71F5A522A2A31CBF`. Prior5B public DCCon receipt retains its exact anonymous scope;this account diagnosis does not relabel it as all-account acceptance.
-- Accepted baseline: Named prior v7 implementations/public picker scope retained. Actual login availability is confirmed;native90-day campaign ordinary next-time entry is navigation-only. Original account management and safe ordinary guest-password anatomy now acquired for the next batch.
-- Current artifact: Mobile3.5.5 5B08CACF8054B0822716887FD09D1BC400F814FC3296279A96451F11FA81A411 root/dist/guard;PC1.9.9 E4706617DE96D3E0719144724FDAE1B62D7511674D6564DCBD82F2C702802E14 root/dist unchanged. No build/version/release change.
-- Blockers: Concrete UI defects,not a login capability blocker:account toolbar keeps native41px while extra controls wrap;generic action display/font exposes native hidden star icon. Guest password inner controls retain legacy paint/2px overflow. No password/account-setting/save/delete action authorized or performed.
-- Pending live checks: After repair,recheck actual account management/cancel and safe guest-password view branch. Own/member/admin/image-comment permissions,private history/detail/buy/editor/error/CAPTCHA/device variants remain UNKNOWN.980x2306 layout proxy,390 stress. Image replies N/A;four uploads deferred;guidebook discussion after whole UI finish.
+- Active stage: `header-navigation` formal admission remains open. Named v7 scopes retained;conditional/account/device gaps prevent whole-UI acceptance.
+- Accepted visual preference: Actual memo/current paired pale dark primary,transmitting chrome,stable reading,quiet label-sized auxiliaries and one selected cue. Native media/visibility/permissions retained.
+- Source state: Source checkpoint base HEAD `5cae755d17c08af92f3b54e581edbe031e824400` on `codex/ui-port-boundary`. Mobile existing comment adapter/presenter only;common formulas/PC/metadata/version unchanged. Architecture overlay remains;no registry promotion. Exact checkpoint receipt owns publication/CI identity.
+- Local-only state: `LOCAL_ONLY_EVIDENCE`;artifacts/b1-account-picker-finish-2026-11-02 holds control,selected tests/semantics/palette/images and safe actual-extension reports. Private library/anatomy/credentials/raw account images remain ignored. Two curated synthetic management images tracked. Test browsers/profile/vendor closed/removed;viewer one selected image.
+- Candidate fingerprint: `c4751334d7956e5523fc82290dcf2722c1bcf285a0b1d86af0bc4bb92ee1b0b8`
+- Last current audit: PASS scoped654FF895:5 account contexts+4 anonymous picker+8 existing content observations,5 semantic pairs/zero differences,12 palette samples/2 cancels(min6.316),7 readable image pairs. Final actual Chrome/TM account DOM/hits/use-notuse/scroll/cancel/reopen/check preservation and guest password focus/open-close-reopen observed. Final actual account screenshot timed out;pixel evidence UNKNOWN there. No whole-UI approval.
+- Current stage receipt: `verification/receipts/2026-11-02-b1-account-picker-finish.json` SHA-256 `E2C65913E035B340CE5771309806CB7BE8B8B535FBD4741E905C6E7D4608248A`. Historical5B diagnosis and public media receipt retain their own scopes.
+- Accepted baseline: Prior named v7 scopes plus this acquired account/guest finish. Original nodes/parents/events/hidden states/checkboxes and callback sequence preserved;native icon paint no longer receives text-button display/font. Quiet controls check border/radius and both X centers too.
+- Current artifact: Mobile3.5.5 654FF89553A0B777FA5351726AE83BDCF49AF8D14AC7A102FEBAFAEC4F4A05D7 root/dist/guard;PC1.9.9 E4706617DE96D3E0719144724FDAE1B62D7511674D6564DCBD82F2C702802E14 root/dist unchanged. Rebuilt at current version;no release/promotion.
+- Blockers: No observed defect remains in this acquired batch. Remaining conditional UI and exact device coverage are unqualified;capture timeouts are harness limits,not authentication/product failures.
+- Pending live checks: Safe unopened folder/help/private recent/detail and other account/form/permission/error variants need scoped disposition,not an automatic full suite. Own/keyed/admin deletes may execute immediately;do not probe. Final account pixels UNKNOWN.980x2306 layout proxy,390 stress. Image replies N/A;four uploads deferred;guidebook discussion after whole UI finish.
 
 ```dcuf-current-artifacts
-{"schemaVersion":1,"mobile":{"sha256":"5B08CACF8054B0822716887FD09D1BC400F814FC3296279A96451F11FA81A411"},"pc":{"sha256":"E4706617DE96D3E0719144724FDAE1B62D7511674D6564DCBD82F2C702802E14"}}
+{"schemaVersion":1,"mobile":{"sha256":"654FF89553A0B777FA5351726AE83BDCF49AF8D14AC7A102FEBAFAEC4F4A05D7"},"pc":{"sha256":"E4706617DE96D3E0719144724FDAE1B62D7511674D6564DCBD82F2C702802E14"}}
 ```
 
 ## Draft-complete checkpoint — 2026-10-21

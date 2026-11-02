@@ -1,6 +1,6 @@
 # Account and conditional UI preflight —2026-11-02
 
-**PREFLIGHT_COMPLETE / UI_NEEDS_WORK**. Source checkpoint26875ae8b276e067eaa859be1b442cbb1d30b69e;Mobile5B08CACF/PC E470 unchanged. Operate/Read. This acquires original account UI and diagnoses the next bounded repair;no production/fixture/build/metadata or account-setting change.
+**HISTORICAL PREFLIGHT / findings implemented in B1_ACCOUNT_PICKER_IMPLEMENTATION.md.** Original diagnosis below remains its frozen5B scope. Source checkpoint26875ae8b276e067eaa859be1b442cbb1d30b69e;Mobile5B08CACF/PC E470 unchanged. Operate/Read. This acquires original account UI and diagnoses the next bounded repair;no production/fixture/build/metadata or account-setting change.
 
 ## Actual scope
 

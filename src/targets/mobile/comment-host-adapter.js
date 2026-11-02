@@ -199,9 +199,15 @@
             root.querySelectorAll('#user_data_lyr, .user_data, .user_data_add, .pop_wrap.type2, .pop_wrap.type3, .cmt_delpw_box, [id$="_delpw_box"]').forEach((popup) => {
                 mark(root, popup, { role: 'native-comment-popup', state: popup.hidden || popup.style.display === 'none' ? 'closed' : 'open' });
                 const picker = popup.id === 'div_con' || popup.id === 'div_txtcon';
-                markCommentContext(root, popup, picker ? 'comment-picker' : 'comment-popup');
+                const password = popup.matches('#cmt_delpw_box.cmt_delpw_box');
+                markCommentContext(root, popup, picker ? 'comment-picker' : password ? 'comment-password' : 'comment-popup');
                 popup.querySelectorAll(':scope > .pop_content').forEach(panel => markCommentContext(root, panel, 'popup-panel'));
                 popup.querySelectorAll('.tit, .pop_tit, .pop_dccon_tit').forEach(title => markCommentContext(root, title, 'popup-title'));
+                if (password) {
+                    popup.querySelectorAll('input.cmt_delpw[type="password"]').forEach(field => markCommentContext(root, field, 'popup-password-field'));
+                    popup.querySelectorAll('.btn_ok').forEach(button => markCommentContext(root, button, 'popup-primary-action'));
+                    popup.querySelectorAll('.btn_cmtpw_close').forEach(button => markCommentContext(root, button, 'popup-password-close'));
+                }
                 if (!picker) return;
                 const parts = (selector, role) => popup.querySelectorAll(selector).forEach(element => {
                     if (element.closest('.pop_wrap') === popup) markCommentContext(root, element, role);
@@ -241,7 +247,10 @@
                 }));
                 popup.querySelectorAll('button').forEach(button => {
                     if (button.matches('.btn_color, .img_dccon')) return;
-                    markCommentContext(root, button, button.matches('.btn_blue') ? 'popup-primary-action' : 'popup-action');
+                    // Native hidden/sprite actions must not inherit a text
+                    // button's display,font,background or minimum size.
+                    const icon = button.matches('.btn_starmark,.btn_bkmark,button.sp_img,.btn_close,.btn_bkm_close,.poply_whiteclose,.poply_bgblueclose');
+                    markCommentContext(root, button, icon ? 'popup-icon-action' : button.matches('.btn_blue') ? 'popup-primary-action' : 'popup-action');
                 });
             });
         };

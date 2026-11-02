@@ -74,7 +74,7 @@ export function mountB1ContentFixture() {
       .dccon_list li:first-child{padding:0;margin-top:5px}
       .dccon_list_paging .icon_prev::before{content:'‹'}.dccon_list_paging .icon_next::before{content:'›'}
       .tabbox_btn.angled .btn_tab{border:1px solid #d31900;border-radius:0}.red .btn_tab.on{background:#ee3c24;color:#fff}.hot_inner .dw_hotcon .loc .btn_tab{width:135px;height:28px;line-height:26px}
-      .doublecon_wrap .right>.fr{float:right}
+      .fr{float:right}
       .dcconlayer.edit .btn_dccon_hot,.edit .btn_dccon_setting{width:40px;height:40px;float:left}
       .doublecon_wrap .sp_img{display:inline-block;width:33px;height:28px;background:#999}
     `;document.head.prepend(dcconHost);
