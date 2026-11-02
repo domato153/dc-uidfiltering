@@ -2,19 +2,19 @@
 
 ## Current execution
 
-- Active plan: B1_CONDITIONAL_UI_TRIAGE.md completes remaining-child disposition. Three contextual role/material gaps need the next grouped reference/finish;populated recent reuse is retained.
+- Active plan: B1_CONDITIONAL_CHILDREN_REFERENCE.md delivers one grouped detail/bigcon/image-password design draft. Review it,then one same-owner implementation batch;no runtime repair in this unit.
 - Workspace path: `.` (private prompt supplies exact worktree). Preserve debug.log unread/unstaged.
-- Active stage: `header-navigation` formal admission remains open. This read-only triage does not approve whole UI or promote architecture.
+- Active stage: `header-navigation` formal admission remains open. This design-reference unit does not approve whole UI or promote architecture.
 - Accepted visual preference: Actual memo/current pale paired dark primary,transmitting outer chrome,stable reading and quiet label-sized auxiliaries. Generated proposals guide composition;memo/current rules govern fine detail.
-- Source state: Source checkpoint base HEAD `1b36ca27f1a88c417671730528797c20d7a65ffe` on `codex/ui-port-boundary`. Production/fixture/harness/build/metadata/PC/architecture unchanged. Publication/CI belongs to the exact working checkpoint receipt.
-- Local-only state: `LOCAL_ONLY_EVIDENCE`;artifacts/b1-conditional-ui-triage-2026-11-02 holds actual native/current handlers/media/captures,official script bytes and diagnostic replay. Raw account data/credentials stay ignored. All owned test Chrome/profile/vendor closed/removed;viewer one selected image.
-- Candidate fingerprint: `a7959ba17296b33c68f2b06ec379115ef98cb88f2626c711a258c3fc262b5b0b`
-- Last current audit: READY scoped preflight / UI_NEEDS_WORK. Actual safe bigcon info,detail read/close and populated recent native/current observed;10 readable images reviewed,including later user-issued enabled bigcon. Bigcon grey-X text leaks,detail interiors retain native blue,and exact image-password constructor replay misses field/primary/close roles in2themes. Recent36px targets/overflow0 fit. No runtime fix in this unit.
-- Current stage receipt: `verification/receipts/2026-11-02-b1-conditional-ui-triage.json` SHA-256 `440B7ADA8C1204319747FBBDE41CC5F33CF6AE047AC50134F3C6762FF6F6EBEA`. Prior654FF895 account/ordinary guest finish retains its own valid scope.
+- Source state: Source checkpoint base HEAD `0414d43c756bc8da5e23fb6a11917ade80061adc` on `codex/ui-port-boundary`. Product/fixture/harness/build/metadata/PC/architecture unchanged. Publication/CI belongs to the exact working checkpoint receipt.
+- Local-only state: `LOCAL_ONLY_EVIDENCE`;artifacts/b1-conditional-children-reference-2026-11-02 holds proposal/delivery diagnostics;prior raw native/account acquisition stays ignored. One IAB comparison tab,one selected image;local server10067. No new live account actions.
+- Candidate fingerprint: `370e4728a2b1217bcf9950d12dc1ad172085e19a00c84fb34e77c119039c81ac`
+- Last current audit: READY reference draft / DRAFT_PENDING_USER_REVIEW. Generated1536×1024 board inspected and decoded in user IAB;original/current routes decode. One refinement fixes generated legacy-blue links and large use action. Known runtime X/detail/image-password gaps remain;no product acceptance.
+- Current stage receipt: `verification/receipts/2026-11-02-b1-conditional-children-reference.json` SHA-256 `2662794A605B05243B2B962213F7BDE70E9DA9DBA5A980437F2D55409D03BDB9`. Prior654FF895 account/ordinary guest finish and triage retain only their own scopes.
 - Accepted baseline: Prior named v7 scope retained. New gaps concern conditional children excluded from the last acquired batch;not a regression claim or a reason to repeat unchanged whole suites. Original native handlers distinguish harmless views from immediate mutation.
 - Current artifact: Mobile3.5.5 654FF89553A0B777FA5351726AE83BDCF49AF8D14AC7A102FEBAFAEC4F4A05D7 root/dist/guard;PC1.9.9 E4706617DE96D3E0719144724FDAE1B62D7511674D6564DCBD82F2C702802E14 root/dist unchanged. No build/version/release change.
-- Blockers: Concrete role/material gaps in three children. Live image guest entry had no safe current controls;constructor replay diagnoses paint only. Folder/issuance-action/purchase/permission/server/device states remain separate,not invented dialogs.
-- Pending live checks: Finish acquired bigcon/detail and replayed image password after grouped reference. Remaining folder/use-buy/editor/own-admin/delete/error/CAPTCHA/device scope needs explicit limits;do not mutate to manufacture it.980x2306 layout proxy,390stress. Image replies N/A;four uploads deferred;guidebook discussion after whole UI ends.
+- Blockers: No delivery blocker. User composition review pending before grouped implementation. Known runtime role/material gaps remain;image-password live permission/focus/submit stays UNKNOWN.
+- Pending live checks: After draft adoption,finish acquired bigcon/detail and exact image-password shape in one batch. Check affected C-11/C-13/ancestor and theme consumers only. Folder/use-buy/editor/own-admin/delete/error/CAPTCHA/device scope stays limited;do not mutate to manufacture states.980x2306 layout proxy,390stress. Image replies N/A;four uploads deferred;guidebook after whole UI ends.
 
 ```dcuf-current-artifacts
 {"schemaVersion":1,"mobile":{"sha256":"654FF89553A0B777FA5351726AE83BDCF49AF8D14AC7A102FEBAFAEC4F4A05D7"},"pc":{"sha256":"E4706617DE96D3E0719144724FDAE1B62D7511674D6564DCBD82F2C702802E14"}}

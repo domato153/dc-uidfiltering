@@ -1,0 +1,143 @@
+{
+  "schemaVersion": 1,
+  "kind": "B1_CONDITIONAL_CHILDREN_REFERENCE",
+  "status": "DRAFT_READY_PENDING_USER_REVIEW",
+  "sourceBaseHead": "0414d43c756bc8da5e23fb6a11917ade80061adc",
+  "candidateFingerprint": "370e4728a2b1217bcf9950d12dc1ad172085e19a00c84fb34e77c119039c81ac",
+  "artifacts": {
+    "mobileVersion": "3.5.5",
+    "mobileSha256": "654FF89553A0B777FA5351726AE83BDCF49AF8D14AC7A102FEBAFAEC4F4A05D7",
+    "pcVersion": "1.9.9",
+    "pcSha256": "E4706617DE96D3E0719144724FDAE1B62D7511674D6564DCBD82F2C702802E14",
+    "unchanged": true,
+    "rootDistGuardMatch": true,
+    "officialRelease": false
+  },
+  "inputs": [
+    {
+      "path": "docs/work/B1_CONDITIONAL_CHILDREN_REFERENCE.md",
+      "sha256": "da4c6f7fddf8a1c97b2e66a706f54f799f23c08a45f84d5a016922a9b8805aa8"
+    },
+    {
+      "path": "docs/design/b1-conditional-children-proposal-2026-11-02.png",
+      "sha256": "de2a2c316d4359f6db82e18e5fd6518834130a040d6a149079845b7200f596e0"
+    },
+    {
+      "path": "docs/design/b1-conditional-children-proposal-2026-11-02.json",
+      "sha256": "1c35c044690a487f83ff2a694b1d016ebe9b5c0c7028be6b5298820c06adfb09"
+    },
+    {
+      "path": "src/targets/mobile/comment-host-adapter.js",
+      "sha256": "b79969008152a7eb87e2859c3ac5c5580798fcb57c7a570548ce4a8f4004f603"
+    },
+    {
+      "path": "src/targets/mobile/comment-presenter.js",
+      "sha256": "bd864538b76b49f8b9cf7674a4e4319dc2dc0deba38faa9d78ca0c87a0cdf0d8"
+    },
+    {
+      "path": "src/targets/mobile/theme-material-values.js",
+      "sha256": "da6cc37a3f71f5ff696aa57fddf6c52e254aa01ce2dfb0b856c0979a6aac189c"
+    },
+    {
+      "path": "docs/work/B1_CONTROL_MATERIAL.md",
+      "sha256": "a2dd026ad49d92683829906498d00ad3beba3733ed59f32f8a347ea45981e87c"
+    },
+    {
+      "path": "docs/work/UI_REFERENCE_GUARD.md",
+      "sha256": "e23fc60e018cd7c835130fb7f1eeaf1c8f5d255cb07e0134efb76497c4ff982a"
+    },
+    {
+      "path": "docs/design/b1-memo-workbench-light-2026-10-29.png",
+      "sha256": "f40c243d8789e412d1d59cba5d0661a6711821baf3c042082308015136eb0fa5"
+    },
+    {
+      "path": "docs/design/b1-dark-control-comparison-2026-10-31.png",
+      "sha256": "161216ffb715aac2eaabd17e78ba7f7b3708ba7afdd373fb8b4782fd95245217"
+    },
+    {
+      "path": "docs/design/b1-dark-refinement-memo-dark-2026-10-31.png",
+      "sha256": "e0f89cb6bbfd8a44ac1f8154f4258cb36bc9f17a9e76fb263882d7ec4c7de793"
+    }
+  ],
+  "priorTriage": {
+    "path": "verification/receipts/2026-11-02-b1-conditional-ui-triage.json",
+    "sha256": "440b7ada8c1204319747fbbde41cc5f33cf6ae047ac50134f3c6762ff6f6ebea",
+    "scopeRetained": "Acquired native/current safe detail and disabled/enabled info,populated recent;image-password constructor diagnostic only."
+  },
+  "proposal": {
+    "path": "docs/design/b1-conditional-children-proposal-2026-11-02.png",
+    "sha256": "de2a2c316d4359f6db82e18e5fd6518834130a040d6a149079845b7200f596e0",
+    "dimensions": [
+      1536,
+      1024
+    ],
+    "tool": "built-in image_gen",
+    "promptPath": "docs/design/b1-conditional-children-proposal-2026-11-02.json",
+    "iterations": 2,
+    "productImplemented": false,
+    "productApproved": false,
+    "userAdopted": false
+  },
+  "visual": {
+    "status": "PROPOSAL_INSPECTED_NOT_PRODUCT_APPROVAL",
+    "materialAuthority": "Actual adopted memo/current v7 rules",
+    "observations": [
+      "Final metadata links use restrained theme-like ink;first native-blue draft superseded",
+      "Use action reduced;primary remains pale with paired dark ink",
+      "Single quiet X marks and password control clearance",
+      "Stable media/paper plane distinguished from transmitting outer chrome"
+    ],
+    "limits": [
+      "Generated backing/blur is illustrative,not measured product transmission",
+      "Generated media/copy/glyphs do not replace original native content",
+      "Dark detail/disabled info/light password use equivalent existing families;not all states drawn",
+      "No product pixel regression golden or contrast/hit/responsive/palette/device acceptance"
+    ],
+    "viewer": {
+      "url": "http://127.0.0.1:10067/conditional-reference/index.html",
+      "userIabDecoded": [
+        1536,
+        1024
+      ],
+      "oneImageAtATime": true,
+      "decodedCurrent": [
+        "detail715x579",
+        "enabled312x178",
+        "disabled424x193",
+        "image-password-light218x32",
+        "image-password-dark218x32",
+        "memo1176x704"
+      ],
+      "decodedNative": [
+        "detail715x580",
+        "enabled360x138",
+        "disabled360x152"
+      ]
+    }
+  },
+  "checks": {
+    "sourceRuntimeUnchanged": true,
+    "productSuite": "NOT_RUN_NO_PRODUCT_CHANGE",
+    "build": "NOT_RUN_UNCHANGED_RUNTIME",
+    "pixelMatcher": "NOT_RUN_STATIC_DESIGN_PROPOSAL_DIFFERENT_FROM_NATIVE_GEOMETRY",
+    "semanticAndPalette": "NOT_RUN_NO_IMPLEMENTATION",
+    "delivery": "Final generated board and native/current routes decode in user IAB"
+  },
+  "contrary": [
+    {
+      "kind": "GENERATED_DRAFT",
+      "detail": "Initial links stayed legacy blue and use action was too large;one targeted edit corrected the proposal."
+    },
+    {
+      "kind": "DELIVERY_ENVIRONMENT",
+      "detail": "Sandbox-bound localhost timed out;owned sandbox server stopped,original server relaunched outside network sandbox and IAB loading verified."
+    }
+  ],
+  "next": "b1-v7-conditional-children-review",
+  "limits": [
+    "User aesthetic adoption pending;three runtime gaps remain unimplemented",
+    "No new live account actions;permission/device/folder/use-buy/issuance gaps unchanged",
+    "Formal header admission and architecture promotion remain open"
+  ],
+  "hashMode": "Canonical LF text;raw runtime/image bytes"
+}
