@@ -1,0 +1,569 @@
+{
+  "schemaVersion": 1,
+  "kind": "b1-v7-final-scope-review",
+  "status": "SCOPE_RECONCILED_WHOLE_UI_NOT_CERTIFIED",
+  "date": "2026-11-03",
+  "sourceBaseHead": "b10a83f52ee20c1dd562efba08a6a1ca543d291c",
+  "candidateFingerprint": "bb73ea51b4d9559b06c9582064a790746c004e9e03e0d7a6ceef174638217b7e",
+  "artifacts": {
+    "mobileVersion": "3.5.5",
+    "mobileSha256": "79A4C12FC640ED6984539521A992E5D0F32AC884716BA58842C706EF62FCC7C8",
+    "pcVersion": "1.9.9",
+    "pcSha256": "E4706617DE96D3E0719144724FDAE1B62D7511674D6564DCBD82F2C702802E14",
+    "rootDistGuardMatch": true,
+    "pcRootDistMatch": true,
+    "runtimeChanged": false,
+    "officialRelease": false
+  },
+  "scope": {
+    "checklistCount": 128,
+    "familyCount": 11,
+    "familyCounts": {
+      "G": 4,
+      "H": 11,
+      "L": 10,
+      "A": 12,
+      "C": 18,
+      "W": 24,
+      "S": 12,
+      "P": 14,
+      "V": 8,
+      "N": 7,
+      "X": 8
+    },
+    "reviewedReceiptCount": 15,
+    "resultIsPassCount": false,
+    "productionChanged": false,
+    "registryOrOwnershipChanged": false
+  },
+  "inputs": [
+    {
+      "path": "docs/work/B1_V7_FINAL_SCOPE_REVIEW.md",
+      "sha256": "e1bcab774d642c24cdf6e2f46ae6d5295a0c5df67cdf7c802d634e81842c1ca2"
+    },
+    {
+      "path": "docs/work/UI_REVIEW_CHECKLIST.md",
+      "sha256": "d88799fe6c8ea2257f48e34953aab9e259fb9941d14ba086c3b3af8c181a66da"
+    },
+    {
+      "path": "docs/work/INDEX.md",
+      "sha256": "100d2c05eab21a9c6de241ad46ee59176281c6ac56e8477802fbfbca3bfb6a15"
+    },
+    {
+      "path": "docs/work/B1_V7_INTEGRATED_REVIEW.md",
+      "sha256": "1e503aff2b5d24746d1ef9194ade61d8829bccf9e3fb4e95de06619059c3e7f8"
+    },
+    {
+      "path": "src/targets/mobile/comment-host-adapter.js",
+      "sha256": "a577e5ace5ec511d0734b0ec0649cd159e360bb5766c260bde1b4f44764346f0"
+    },
+    {
+      "path": "src/targets/mobile/comment-presenter.js",
+      "sha256": "1be49677d3a1366b2da93e6639b30d45c6212ece31e69bbdec01f26ee762a994"
+    },
+    {
+      "path": "src/targets/mobile/native-form-host-adapter.js",
+      "sha256": "92bff52b22b42d7e2efe9fac32198579b0017c08c501de859ea7e46409d3677a"
+    }
+  ],
+  "reviewedReceipts": [
+    {
+      "path": "verification/receipts/2026-10-29-b1-list-v7-implementation.json",
+      "sha256": "3e37d41865f86638cfb5428cf892cc8fbc5ead89c63b6c0b117c142e1b8f6c2d",
+      "status": "READY_SCOPED_IMPLEMENTATION_USER_AESTHETICS_PENDING",
+      "sourceInputs": [],
+      "hasSourceInputInventory": false
+    },
+    {
+      "path": "verification/receipts/2026-10-30-b1-article-comments-v7-closeout.json",
+      "sha256": "88e920ce8570ba38f6e33909479479e8d4a1e4eba5d06ac595096bb0040c6368",
+      "status": "READY_SCOPED_IMPLEMENTATION_REVIEW",
+      "sourceInputs": [],
+      "hasSourceInputInventory": false
+    },
+    {
+      "path": "verification/receipts/2026-10-30-b1-article-native-finish.json",
+      "sha256": "bcf4b8ccc59630db1e2d3bf549f65b1b371a617cf077cf3d207e0f80fd183ce2",
+      "status": "SCOPED_REPAIRS_VALIDATED",
+      "sourceInputs": [
+        {
+          "path": "src/targets/mobile/article-presenter.js",
+          "recordedSha256": "CA7D4E6684F5053A6E3B1594547084336A4149E8B0432BE7102464C5933D7548",
+          "currentSha256": "cee0d170f5b81267f678c4cb55295c831a67eef7585e2cbb78058d9219c247d0",
+          "matches": false
+        }
+      ],
+      "hasSourceInputInventory": true
+    },
+    {
+      "path": "verification/receipts/2026-10-30-b1-write-v7-implementation.json",
+      "sha256": "e2bf3f4b1d5b1a3faaeae193aa57f3a244902b8d85aaa968e03bdb9e1c421f18",
+      "status": "IMPLEMENTED_SCOPED_VALIDATION_PASSED",
+      "sourceInputs": [
+        {
+          "path": "src/targets/mobile/native-form-presenter.js",
+          "recordedSha256": "f018d979704fd7d12f03c6114303afb7e0f05d2995c1c636f94813028a089364",
+          "currentSha256": "28cff8f29cf5ced5d1fb2d2c583b871ea58cd9d68e62a511b3fe08088a857f11",
+          "matches": false
+        },
+        {
+          "path": "src/targets/mobile/native-form-host-adapter.js",
+          "recordedSha256": "92bff52b22b42d7e2efe9fac32198579b0017c08c501de859ea7e46409d3677a",
+          "currentSha256": "92bff52b22b42d7e2efe9fac32198579b0017c08c501de859ea7e46409d3677a",
+          "matches": true
+        },
+        {
+          "path": "src/targets/mobile/theme-material-values.js",
+          "recordedSha256": "430a075b53585a72cbbdb9dc6abc06af4f373201bbf162e724e7372754586491",
+          "currentSha256": "da6cc37a3f71f5ff696aa57fddf6c52e254aa01ce2dfb0b856c0979a6aac189c",
+          "matches": false
+        }
+      ],
+      "hasSourceInputInventory": true
+    },
+    {
+      "path": "verification/receipts/2026-10-31-b1-dark-control-refinement.json",
+      "sha256": "04622eeaab80a2390749c47e3a1222c3dbf291dcdd3c60756df68bbb264d569f",
+      "status": "IMPLEMENTED_SCOPED_VALIDATION_PASSED",
+      "sourceInputs": [
+        {
+          "path": "src/targets/mobile/theme-material-values.js",
+          "recordedSha256": "c4f8b253d9376c25cbaa09eaf54cfdaa6623c3489214cfc22039cf8999f1ff08",
+          "currentSha256": "da6cc37a3f71f5ff696aa57fddf6c52e254aa01ce2dfb0b856c0979a6aac189c",
+          "matches": false
+        },
+        {
+          "path": "src/targets/mobile/gallery-page-head-presenter.js",
+          "recordedSha256": "244e43128157e2c86ecc2236c7c9263e6b59a3b6b3eaa1d1360048448db37575",
+          "currentSha256": "442bf7e665e4cd877176c354b4e97a9baf531d382b2ad7811d23f8af5752030b",
+          "matches": false
+        },
+        {
+          "path": "src/targets/mobile/header-recent-visit-presenter.js",
+          "recordedSha256": "490607013a4771bce3919c3460c1fe49aed6ea32bc2cb80316d4c285a75bfdf8",
+          "currentSha256": "bb5fcabe24e7f83821a7bb116f313891a4e98ba35a9c722ce27c71ac5d81f2ff",
+          "matches": false
+        }
+      ],
+      "hasSourceInputInventory": true
+    },
+    {
+      "path": "verification/receipts/2026-10-31-b1-owned-management-v7-implementation.json",
+      "sha256": "2aace3947376f1f3ff0915cd5ecf93ae13c919bff3352c715e8143eddf7ace02",
+      "status": "IMPLEMENTED_SCOPED_VALIDATION_PASSED",
+      "sourceInputs": [
+        {
+          "path": "src/targets/shared/settings-presenter.js",
+          "recordedSha256": "8eb73c75df0150d084652058e55fc51f27666e4982bb6be42fde39a3c51a6744",
+          "currentSha256": "7267ceb44357af768420dc1a3181fdb5fed824193972869ff2504f71c8d722a5",
+          "matches": false
+        },
+        {
+          "path": "src/targets/shared/personal-block-host-adapter.js",
+          "recordedSha256": "7f2e5d3b830f45728b4e52e2d5059d66dac8922bade3dc89bbad1423de74c36c",
+          "currentSha256": "7f2e5d3b830f45728b4e52e2d5059d66dac8922bade3dc89bbad1423de74c36c",
+          "matches": true
+        },
+        {
+          "path": "src/targets/shared/popup-geometry-host-adapter.js",
+          "recordedSha256": "7ffc936b838df4cd34a2ff3c5c7b0c21a259848b8cc9161d766c57d98f8a6073",
+          "currentSha256": "7ffc936b838df4cd34a2ff3c5c7b0c21a259848b8cc9161d766c57d98f8a6073",
+          "matches": true
+        },
+        {
+          "path": "src/targets/mobile/theme-material-values.js",
+          "recordedSha256": "f4d24cf2211ef9a31dd22010dcff2c4d42e71e7159d58f98e191e05ccc8d7f41",
+          "currentSha256": "da6cc37a3f71f5ff696aa57fddf6c52e254aa01ce2dfb0b856c0979a6aac189c",
+          "matches": false
+        },
+        {
+          "path": "src/targets/mobile/theme-host-style.js",
+          "recordedSha256": "934fb2daccac53fcf76840ef80f0706b216db6395f68362ba12a9933f140dd94",
+          "currentSha256": "934fb2daccac53fcf76840ef80f0706b216db6395f68362ba12a9933f140dd94",
+          "matches": true
+        }
+      ],
+      "hasSourceInputInventory": true
+    },
+    {
+      "path": "verification/receipts/2026-10-31-b1-management-children-v7-implementation.json",
+      "sha256": "2edb4fa660c7ae77558a448e0138ab89df2a80548989f5e4d4d284af856a743f",
+      "status": "IMPLEMENTED_SCOPED_VALIDATION_PASSED",
+      "sourceInputs": [
+        {
+          "path": "src/targets/shared/settings-presenter.js",
+          "recordedSha256": "601f81167bbc24f3946fbe7226a7d1115b34b7b7acbf5c62e3c2566c74c8e605",
+          "currentSha256": "7267ceb44357af768420dc1a3181fdb5fed824193972869ff2504f71c8d722a5",
+          "matches": false
+        },
+        {
+          "path": "src/targets/mobile/theme-material-values.js",
+          "recordedSha256": "c0a1b63e027017d68cc2bb36984c9c5c004956ddbdc27698a48fce06f01743bb",
+          "currentSha256": "da6cc37a3f71f5ff696aa57fddf6c52e254aa01ce2dfb0b856c0979a6aac189c",
+          "matches": false
+        },
+        {
+          "path": "src/targets/shared/personal-block-host-adapter.js",
+          "recordedSha256": "7f2e5d3b830f45728b4e52e2d5059d66dac8922bade3dc89bbad1423de74c36c",
+          "currentSha256": "7f2e5d3b830f45728b4e52e2d5059d66dac8922bade3dc89bbad1423de74c36c",
+          "matches": true
+        },
+        {
+          "path": "src/targets/shared/popup-geometry-host-adapter.js",
+          "recordedSha256": "7ffc936b838df4cd34a2ff3c5c7b0c21a259848b8cc9161d766c57d98f8a6073",
+          "currentSha256": "7ffc936b838df4cd34a2ff3c5c7b0c21a259848b8cc9161d766c57d98f8a6073",
+          "matches": true
+        }
+      ],
+      "hasSourceInputInventory": true
+    },
+    {
+      "path": "verification/receipts/2026-10-31-b1-menu-selection-size-v7-implementation.json",
+      "sha256": "5d83ce784af3a69c48a195278753f4aa7b43f6c56e815604f426b1b9df670951",
+      "status": "IMPLEMENTED_SCOPED_VALIDATION_PASSED",
+      "sourceInputs": [
+        {
+          "path": "src/targets/shared/settings-presenter.js",
+          "recordedSha256": "ef1cb2cfce72c8c5438619b2f5e35cfb9eada1d7a2efd4b820ecdf43347661ae",
+          "currentSha256": "7267ceb44357af768420dc1a3181fdb5fed824193972869ff2504f71c8d722a5",
+          "matches": false
+        },
+        {
+          "path": "src/targets/mobile/theme-material-values.js",
+          "recordedSha256": "db11d22b200cf2f588870e15d5d3d4347be60a3a0601cdb099b61d0652cdd3c6",
+          "currentSha256": "da6cc37a3f71f5ff696aa57fddf6c52e254aa01ce2dfb0b856c0979a6aac189c",
+          "matches": false
+        },
+        {
+          "path": "src/targets/shared/personal-block-host-adapter.js",
+          "recordedSha256": "7f2e5d3b830f45728b4e52e2d5059d66dac8922bade3dc89bbad1423de74c36c",
+          "currentSha256": "7f2e5d3b830f45728b4e52e2d5059d66dac8922bade3dc89bbad1423de74c36c",
+          "matches": true
+        },
+        {
+          "path": "src/targets/shared/popup-geometry-host-adapter.js",
+          "recordedSha256": "7ffc936b838df4cd34a2ff3c5c7b0c21a259848b8cc9161d766c57d98f8a6073",
+          "currentSha256": "7ffc936b838df4cd34a2ff3c5c7b0c21a259848b8cc9161d766c57d98f8a6073",
+          "matches": true
+        }
+      ],
+      "hasSourceInputInventory": true
+    },
+    {
+      "path": "verification/receipts/2026-10-31-b1-filter-settings-v7-implementation.json",
+      "sha256": "d6fb03c0819fa7fd0c078237671626040f4833ead0cd64c6aa165a68265d3b12",
+      "status": "IMPLEMENTED_SCOPED_VALIDATION_PASSED",
+      "sourceInputs": [
+        {
+          "path": "src/targets/shared/settings-presenter.js",
+          "recordedSha256": "642ef6130298de54e6f4f350eb068d1a1949b5983dac2711ce93884c23e05d9f",
+          "currentSha256": "7267ceb44357af768420dc1a3181fdb5fed824193972869ff2504f71c8d722a5",
+          "matches": false
+        },
+        {
+          "path": "src/targets/mobile/theme-material-values.js",
+          "recordedSha256": "cfbbc06fc869dd14212149461f2e1520a43b22bb154beed98a43b612dea7566d",
+          "currentSha256": "da6cc37a3f71f5ff696aa57fddf6c52e254aa01ce2dfb0b856c0979a6aac189c",
+          "matches": false
+        },
+        {
+          "path": "src/targets/shared/filter-settings-host-adapter.js",
+          "recordedSha256": "e46d129ee41b04dcf0c0d7ddeec6af57f3859196e092f5f123d6a84f6dbbf00c",
+          "currentSha256": "e46d129ee41b04dcf0c0d7ddeec6af57f3859196e092f5f123d6a84f6dbbf00c",
+          "matches": true
+        },
+        {
+          "path": "src/shared/storage-core.js",
+          "recordedSha256": "1af1c12df554adfbf597cfa12c2bc8b756dac8d6a94d524eb0a7d5070b64c943",
+          "currentSha256": "1af1c12df554adfbf597cfa12c2bc8b756dac8d6a94d524eb0a7d5070b64c943",
+          "matches": true
+        },
+        {
+          "path": "src/shared/ip-data.js",
+          "recordedSha256": "52bf1191f76824712d8fdc0d111114de60dbd5f7cb564155027edf3285a802a6",
+          "currentSha256": "52bf1191f76824712d8fdc0d111114de60dbd5f7cb564155027edf3285a802a6",
+          "matches": true
+        },
+        {
+          "path": "src/targets/shared/popup-geometry-host-adapter.js",
+          "recordedSha256": "7ffc936b838df4cd34a2ff3c5c7b0c21a259848b8cc9161d766c57d98f8a6073",
+          "currentSha256": "7ffc936b838df4cd34a2ff3c5c7b0c21a259848b8cc9161d766c57d98f8a6073",
+          "matches": true
+        }
+      ],
+      "hasSourceInputInventory": true
+    },
+    {
+      "path": "verification/receipts/2026-11-01-b1-palette-convenience-v7.json",
+      "sha256": "e1ee5352f092f22a34e23f191a0a6c64677674870f72d0ee1ddcc9179c271a0c",
+      "status": "IMPLEMENTED_SCOPED_VALIDATION_PASSED",
+      "sourceInputs": [
+        {
+          "path": "src/targets/shared/settings-presenter.js",
+          "recordedSha256": "7267ceb44357af768420dc1a3181fdb5fed824193972869ff2504f71c8d722a5",
+          "currentSha256": "7267ceb44357af768420dc1a3181fdb5fed824193972869ff2504f71c8d722a5",
+          "matches": true
+        },
+        {
+          "path": "src/targets/mobile/theme-material-values.js",
+          "recordedSha256": "da6cc37a3f71f5ff696aa57fddf6c52e254aa01ce2dfb0b856c0979a6aac189c",
+          "currentSha256": "da6cc37a3f71f5ff696aa57fddf6c52e254aa01ce2dfb0b856c0979a6aac189c",
+          "matches": true
+        },
+        {
+          "path": "src/targets/shared/theme-presenter.js",
+          "recordedSha256": "54b2a7ea75e58cf556835581b4e422d100e9e2fb360b2d54ac5d8e6e3186dc08",
+          "currentSha256": "54b2a7ea75e58cf556835581b4e422d100e9e2fb360b2d54ac5d8e6e3186dc08",
+          "matches": true
+        },
+        {
+          "path": "src/targets/mobile/convenience-host-adapter.js",
+          "recordedSha256": "a1a303842090bdf4fce73ea55c7bd5eb91749a40400305df01aff8779cfb76d8",
+          "currentSha256": "a1a303842090bdf4fce73ea55c7bd5eb91749a40400305df01aff8779cfb76d8",
+          "matches": true
+        },
+        {
+          "path": "src/targets/shared/popup-geometry-host-adapter.js",
+          "recordedSha256": "7ffc936b838df4cd34a2ff3c5c7b0c21a259848b8cc9161d766c57d98f8a6073",
+          "currentSha256": "7ffc936b838df4cd34a2ff3c5c7b0c21a259848b8cc9161d766c57d98f8a6073",
+          "matches": true
+        }
+      ],
+      "hasSourceInputInventory": true
+    },
+    {
+      "path": "verification/receipts/2026-11-01-b1-popup-batch-v7.json",
+      "sha256": "af7209f461a588dd7410d20a2996bf581a5dd80e6f9640eaeb0184e911f9c802",
+      "status": "IMPLEMENTED_SCOPED_VALIDATION_PASSED",
+      "sourceInputs": [
+        {
+          "path": "src/targets/mobile/header-recent-visit-presenter.js",
+          "recordedSha256": "bb5fcabe24e7f83821a7bb116f313891a4e98ba35a9c722ce27c71ac5d81f2ff",
+          "currentSha256": "bb5fcabe24e7f83821a7bb116f313891a4e98ba35a9c722ce27c71ac5d81f2ff",
+          "matches": true
+        },
+        {
+          "path": "src/targets/mobile/header-drawer-presenter.js",
+          "recordedSha256": "d41e9a6a55fb3d3372e1d3cc41743d803580064264b538d4b294a2f72fdf9ef6",
+          "currentSha256": "d41e9a6a55fb3d3372e1d3cc41743d803580064264b538d4b294a2f72fdf9ef6",
+          "matches": true
+        },
+        {
+          "path": "src/targets/mobile/article-presenter.js",
+          "recordedSha256": "cee0d170f5b81267f678c4cb55295c831a67eef7585e2cbb78058d9219c247d0",
+          "currentSha256": "cee0d170f5b81267f678c4cb55295c831a67eef7585e2cbb78058d9219c247d0",
+          "matches": true
+        },
+        {
+          "path": "src/targets/mobile/comment-presenter.js",
+          "recordedSha256": "bcad9eceb9a857cb76e10afbdc0fcf796c9c630d46acb8919d66140f29688442",
+          "currentSha256": "1be49677d3a1366b2da93e6639b30d45c6212ece31e69bbdec01f26ee762a994",
+          "matches": false
+        },
+        {
+          "path": "src/targets/mobile/native-form-presenter.js",
+          "recordedSha256": "f578418bfb8058c46c6bd345848a9d4f05d17f2f9cc144133028b9803914fac7",
+          "currentSha256": "28cff8f29cf5ced5d1fb2d2c583b871ea58cd9d68e62a511b3fe08088a857f11",
+          "matches": false
+        },
+        {
+          "path": "src/targets/mobile/theme-material-values.js",
+          "recordedSha256": "da6cc37a3f71f5ff696aa57fddf6c52e254aa01ce2dfb0b856c0979a6aac189c",
+          "currentSha256": "da6cc37a3f71f5ff696aa57fddf6c52e254aa01ce2dfb0b856c0979a6aac189c",
+          "matches": true
+        },
+        {
+          "path": "src/targets/mobile/header-drawer-host-adapter.js",
+          "recordedSha256": "9dd5da944c6459f3b8a4276a51ceece0a46c8e89223f6fa03af74aac5fbb1a17",
+          "currentSha256": "9dd5da944c6459f3b8a4276a51ceece0a46c8e89223f6fa03af74aac5fbb1a17",
+          "matches": true
+        },
+        {
+          "path": "src/targets/mobile/article-host-adapter.js",
+          "recordedSha256": "f245a65a600054f0f80a44d58c98145f9c1d0e7dab15d0c6f56fb95032167112",
+          "currentSha256": "f245a65a600054f0f80a44d58c98145f9c1d0e7dab15d0c6f56fb95032167112",
+          "matches": true
+        },
+        {
+          "path": "src/targets/mobile/comment-host-adapter.js",
+          "recordedSha256": "d503103a319f8d68d851a045631ae30c676810bcb85aee7a82c1b08ba6864740",
+          "currentSha256": "a577e5ace5ec511d0734b0ec0649cd159e360bb5766c260bde1b4f44764346f0",
+          "matches": false
+        },
+        {
+          "path": "src/targets/mobile/native-form-host-adapter.js",
+          "recordedSha256": "92bff52b22b42d7e2efe9fac32198579b0017c08c501de859ea7e46409d3677a",
+          "currentSha256": "92bff52b22b42d7e2efe9fac32198579b0017c08c501de859ea7e46409d3677a",
+          "matches": true
+        }
+      ],
+      "hasSourceInputInventory": true
+    },
+    {
+      "path": "verification/receipts/2026-11-01-b1-native-residual-v7.json",
+      "sha256": "17a1b2a097f2a2db5ef9354e9c5ad248a6a104101e100f3e9789bcd3fcac1e0a",
+      "status": "IMPLEMENTED_SCOPED_VALIDATION_PASSED",
+      "sourceInputs": [
+        {
+          "path": "src/targets/mobile/gallery-page-head-presenter.js",
+          "recordedSha256": "442bf7e665e4cd877176c354b4e97a9baf531d382b2ad7811d23f8af5752030b",
+          "currentSha256": "442bf7e665e4cd877176c354b4e97a9baf531d382b2ad7811d23f8af5752030b",
+          "matches": true
+        },
+        {
+          "path": "src/targets/mobile/native-author-presenter.js",
+          "recordedSha256": "ceba7599f90386cc1f61d382e8452c0afa1476e7896e039b58bfdccb48e00134",
+          "currentSha256": "ceba7599f90386cc1f61d382e8452c0afa1476e7896e039b58bfdccb48e00134",
+          "matches": true
+        },
+        {
+          "path": "src/targets/mobile/native-form-presenter.js",
+          "recordedSha256": "28cff8f29cf5ced5d1fb2d2c583b871ea58cd9d68e62a511b3fe08088a857f11",
+          "currentSha256": "28cff8f29cf5ced5d1fb2d2c583b871ea58cd9d68e62a511b3fe08088a857f11",
+          "matches": true
+        },
+        {
+          "path": "src/targets/mobile/login-presenter.js",
+          "recordedSha256": "e8e0e960cf437c8f04388c3fdd5f25d30fce034b679bc887c8844a29d4539e79",
+          "currentSha256": "e8e0e960cf437c8f04388c3fdd5f25d30fce034b679bc887c8844a29d4539e79",
+          "matches": true
+        },
+        {
+          "path": "src/targets/mobile/theme-material-values.js",
+          "recordedSha256": "da6cc37a3f71f5ff696aa57fddf6c52e254aa01ce2dfb0b856c0979a6aac189c",
+          "currentSha256": "da6cc37a3f71f5ff696aa57fddf6c52e254aa01ce2dfb0b856c0979a6aac189c",
+          "matches": true
+        }
+      ],
+      "hasSourceInputInventory": true
+    },
+    {
+      "path": "verification/receipts/2026-11-02-b1-dccon-live-finish.json",
+      "sha256": "e386ca8d8f69883b47017e186d5f7fcb4fe0a8fbdd0651fab6913c6785a20b9f",
+      "status": "IMPLEMENTED_SCOPED_VALIDATION_PASSED",
+      "sourceInputs": [
+        {
+          "path": "src/targets/mobile/comment-presenter.js",
+          "recordedSha256": "aba078b7e6ca9cc65c5b0895dd4f7264b7ced7eb5d02da612f5004bfee1d8087",
+          "currentSha256": "1be49677d3a1366b2da93e6639b30d45c6212ece31e69bbdec01f26ee762a994",
+          "matches": false
+        },
+        {
+          "path": "src/targets/mobile/theme-material-values.js",
+          "recordedSha256": "da6cc37a3f71f5ff696aa57fddf6c52e254aa01ce2dfb0b856c0979a6aac189c",
+          "currentSha256": "da6cc37a3f71f5ff696aa57fddf6c52e254aa01ce2dfb0b856c0979a6aac189c",
+          "matches": true
+        },
+        {
+          "path": "src/targets/mobile/comment-host-adapter.js",
+          "recordedSha256": "d503103a319f8d68d851a045631ae30c676810bcb85aee7a82c1b08ba6864740",
+          "currentSha256": "a577e5ace5ec511d0734b0ec0649cd159e360bb5766c260bde1b4f44764346f0",
+          "matches": false
+        }
+      ],
+      "hasSourceInputInventory": true
+    },
+    {
+      "path": "verification/receipts/2026-11-02-b1-account-picker-finish.json",
+      "sha256": "e2c65913e035b340ce5771309806cb7be8b8b535fbd4741e905c6e7d4608248a",
+      "status": "IMPLEMENTED_SCOPED_VALIDATION_PASSED",
+      "sourceInputs": [
+        {
+          "path": "src/targets/mobile/comment-host-adapter.js",
+          "recordedSha256": "b79969008152a7eb87e2859c3ac5c5580798fcb57c7a570548ce4a8f4004f603",
+          "currentSha256": "a577e5ace5ec511d0734b0ec0649cd159e360bb5766c260bde1b4f44764346f0",
+          "matches": false
+        },
+        {
+          "path": "src/targets/mobile/comment-presenter.js",
+          "recordedSha256": "bd864538b76b49f8b9cf7674a4e4319dc2dc0deba38faa9d78ca0c87a0cdf0d8",
+          "currentSha256": "1be49677d3a1366b2da93e6639b30d45c6212ece31e69bbdec01f26ee762a994",
+          "matches": false
+        },
+        {
+          "path": "src/targets/mobile/theme-material-values.js",
+          "recordedSha256": "da6cc37a3f71f5ff696aa57fddf6c52e254aa01ce2dfb0b856c0979a6aac189c",
+          "currentSha256": "da6cc37a3f71f5ff696aa57fddf6c52e254aa01ce2dfb0b856c0979a6aac189c",
+          "matches": true
+        }
+      ],
+      "hasSourceInputInventory": true
+    },
+    {
+      "path": "verification/receipts/2026-11-02-b1-conditional-children-finish.json",
+      "sha256": "d6b1e766275492b0bf0fe0f6611021ce0371cbcc980c1c4751c8ba2e89cd101f",
+      "status": "SCOPED_LOCAL_VERIFIED_FINAL_LIVE_UI_UNKNOWN",
+      "sourceInputs": [
+        {
+          "path": "src/targets/mobile/comment-host-adapter.js",
+          "recordedSha256": "a577e5ace5ec511d0734b0ec0649cd159e360bb5766c260bde1b4f44764346f0",
+          "currentSha256": "a577e5ace5ec511d0734b0ec0649cd159e360bb5766c260bde1b4f44764346f0",
+          "matches": true
+        },
+        {
+          "path": "src/targets/mobile/comment-presenter.js",
+          "recordedSha256": "1be49677d3a1366b2da93e6639b30d45c6212ece31e69bbdec01f26ee762a994",
+          "currentSha256": "1be49677d3a1366b2da93e6639b30d45c6212ece31e69bbdec01f26ee762a994",
+          "matches": true
+        },
+        {
+          "path": "src/targets/mobile/theme-material-values.js",
+          "recordedSha256": "da6cc37a3f71f5ff696aa57fddf6c52e254aa01ce2dfb0b856c0979a6aac189c",
+          "currentSha256": "da6cc37a3f71f5ff696aa57fddf6c52e254aa01ce2dfb0b856c0979a6aac189c",
+          "matches": true
+        }
+      ],
+      "hasSourceInputInventory": true
+    }
+  ],
+  "evidence": [
+    {
+      "path": "artifacts/b1-v7-final-scope-review-2026-11-02/reconciliation.json",
+      "sha256": "3d3f69f6b28d475526360762af75bab590ecc378126231f683abb30914a95f7a"
+    }
+  ],
+  "findings": [
+    "Historical native settings/individual-memo/forms/login residual tasks were completed by their successor receipt;current routing no longer revives them.",
+    "Current popup/header/article,settings/palette/convenience,form/author/login and latest comment inputs have matching named successor bindings;old differing inputs/legacy missing inventories retain only original scope.",
+    "Favorite add/select bgbox shells lack contextual popup-root marker in acquired closed native anatomy/current root selector;generic child roles do not establish open material. This is partial coverage,not an observed all-folder visual defect.",
+    "Six editor dropdowns do not qualify additional modal/popover/writer-DCCon interiors. Native form projection excludes those descendants intentionally.",
+    "Current whole-page development-build review and user aesthetic acceptance remain separate from comment crops/generated images/scoped test totals."
+  ],
+  "validation": {
+    "inventoryAndSourceHashReconciliation": "PASS",
+    "duplicateChecklistIds": 0,
+    "productBrowserTests": "NOT_RUN_DOCUMENT_ONLY",
+    "newLiveExecution": "NOT_RUN",
+    "build": "NOT_REQUESTED_FOR_DOCUMENT_AUDIT",
+    "checkpointValidation": "OWNED_BY_EXACT_TREE_CHECKPOINT_RECEIPT"
+  },
+  "retainedUnknowns": [
+    "final79A4 actual conditional-popup opening",
+    "real image-comment guest permission/focus/submit",
+    "folder open/populated children",
+    "extra in-document editor children",
+    "purchase/gift/account-editor/CAPTCHA/server results",
+    "exact physical device scale/input/engine",
+    "formal header admission"
+  ],
+  "outsideOrDeferred": {
+    "imageReplies": "N/A_NONEXISTENT",
+    "browserOS": "OUTSIDE_PAGE_CSS",
+    "separateUploads": [
+      "image",
+      "movie",
+      "youtube",
+      "media"
+    ],
+    "separateUploadStatus": "DEFERRED_USER_ACCEPTED",
+    "guidebook": "DISCUSS_AFTER_ACTUAL_UI_CLOSURE"
+  },
+  "next": "b1-v7-residual-child-qualification",
+  "limits": [
+    "No whole-current-runtime product PASS,all128 visual approval or beauty guarantee.",
+    "No historical receipt/golden/count/hash/architecture promotion refresh.",
+    "No new policy/tooling or external design research needed for repository-owned facts.",
+    "Only guidance/exact-tree checkpoint checks apply to this documentation delta;no unrelated product suite."
+  ],
+  "hashMode": "canonical-LF for tracked text/evidence;raw SHA-256 for runtime/image bytes"
+}

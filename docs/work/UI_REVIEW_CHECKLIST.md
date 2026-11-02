@@ -1,6 +1,6 @@
 # 전체 UI 디자인 검토 체크목록
 
-작성일: 2026-10-18. 범위 재조정: 2026-10-28. 상태: **128개 ID 유지 / 가족별 근거 연결 / 확인된 두 root 마감·미확인 자식 분리**. 현재 판단은 B1_PREVIEW_DRAFT_FINISH.md와 CURRENT_STATE.md를 따른다. B1_INTEGRATED_UI_GAPS.md는 F87E 진단 범위를 보존한다.
+작성일: 2026-10-18. 최신 범위 대조: 2026-11-03. 상태: **128개 ID / 11가족 유지 · 주요 v7 구현과 조건부 미확인 분리**. 현재 가족별 판단과 남은 범위는 B1_V7_FINAL_SCOPE_REVIEW.md → CURRENT_STATE.md/NEXT_TASK.md를 따른다. B1_INTEGRATED_UI_GAPS.md와 B1_V7_INTEGRATED_REVIEW.md는 각 과거 runtime의 진단 이력이며 뒤에 완료된 항목을 되살리지 않는다.
 
 사용자 요구: 대표 화면 네 장으로 끝내지 않고, 코드에 있는 화면·메뉴·팝업·입력창·상태를 전부 펼쳐 볼 수 있게 한다. 이 문서는 향후 UI 변경의 공통 목록이며 `UI_REPLACEABILITY_VALIDATION.md`의 Concept01 실구현 검토에도 사용한다. 기능 의미와 최종 증거 상태는 `FINAL_FEATURE_STATE_INVENTORY.md`, 구조·동작 계약은 `docs/ui-surface-contracts.md`, 과거15개 복구는 `UI_ALL_REPAIRS.md`와 후속 `UI_LIVE_REGRESSION_REPAIR.md`의 해당 runtime 범위로 보존한다. 이를 현재 고장 목록으로 되살리지 않는다. 별도 구현 대기열이나 새 테스트 체계를 만들지 않는다.
 
@@ -31,7 +31,7 @@
 
 자잘한 보조 메뉴·탭·필터·아이콘을 기본 상태부터 각각 상자/타원으로 감싸지 않는다. 텍스트·아이콘 중심으로 두고 호버·키보드 포커스·누름·선택 같은 상호작용 상태에서 필요한 강조 면/타원이 나타나게 한다. 선택의 지속 표시에는 밑줄·글자색·굵기도 사용할 수 있다. 클릭 의미와 충분한 투명 hit 영역,터치에서의 누름/선택 피드백을 유지한다. 주 행동·입력칸·실제 팝업 외곽 등 구분이 필요한 역할까지 무조건 무테로 만들지는 않는다. 각 화면 마감 시 기본/상호작용 상태를 함께 보고 테마 색 연동을 확인한다.
 
-버튼 재질 공통 기준: `B1_CONTROL_MATERIAL.md#v7-adopted-rules`의 현재 채택 규칙을 먼저 읽는다. 라이트의 옅은 테마색 유리와 다크의 밝은 색유리+짙은 글자를 유지하고,면/ink/rim/shadow를 함께 소비한다. 메모·관리창·목록/최근 방문·본문/일반 및 이미지댓글·작성창의 주요 v7 버튼은 연결되었다. 일부 이전 메뉴·설정·팝업의 미이식 버튼은 기존 역할을 유지하다 해당 범위에서 바꾼다. 공통 광택만 줄인 것을 밝은 v7 primary 이식 완료로 세지 않는다. 과거 v3/C885가 새 시안의 자동 정본으로 되살아나면 안 된다. 모양/크기/파괴적 동작/선택/비활성/포커스는 화면별 의미를 보존하고, 색상 견본·본문색·네이티브 인증창을 임의로 재도색하지 않는다. 변경한 버튼군과 인접/open 상태만 확인하며 이 지시가128개 전체 재검사를 뜻하지 않는다.
+버튼 재질 공통 기준: `B1_CONTROL_MATERIAL.md#v7-adopted-rules`의 현재 채택 규칙을 먼저 읽는다. 라이트의 옅은 테마색 유리와 다크의 밝은 색유리+짙은 글자를 유지하고,면/ink/rim/shadow를 함께 소비한다. 메모·관리창·목록/최근 방문·본문/일반 및 이미지댓글·작성창의 주요 v7 버튼은 연결되었다. 명명된 메뉴·설정·팝업의 후속 v7 이식은 B1_V7_FINAL_SCOPE_REVIEW.md로 찾는다. 미확인 조건부 자식까지 완료한 것으로 확대하지 않는다. 공통 광택만 줄인 것을 밝은 v7 primary 이식 완료로 세지 않는다. 과거 v3/C885가 새 시안의 자동 정본으로 되살아나면 안 된다. 모양/크기/파괴적 동작/선택/비활성/포커스는 화면별 의미를 보존하고, 색상 견본·본문색·네이티브 인증창을 임의로 재도색하지 않는다. 변경한 버튼군과 인접/open 상태만 확인하며 이 지시가128개 전체 재검사를 뜻하지 않는다.
 
 디자인 디테일은 `UI_VISUAL_REVIEW.md` → `UI_DESIGN_DETAIL_REVIEW.md`의 시안 기준·부위별 차이·수정·재비교 절차로 판단한다. 이 목록은 볼 상태를 고르는 용도이며, 항목을 펼쳤거나 기능 검사가 통과했다는 이유로 미적 완성도를 승인하지 않는다. 매번 전체 항목을 다시 검사하는 절차는 추가하지 않는다.
 
@@ -71,67 +71,67 @@ V-02–V-08의 두 root는 B1_PREVIEW_DRAFT_FINISH.md에서 마감했다. B1_INT
 
 | ID | UI | 여는 방법·조건 | 펼쳐볼 상태 | 근거 | 검토 상태 |
 | --- | --- | --- | --- | --- | --- |
-| H-01 | 사이트 헤더·통합 검색·로그인·야간 전환 | 목록/본문/수정 등 해당 페이지 | 로그인/비로그인, 긴 검색어, 포커스, 원래 전환 동작 | HEADER | 헤더/검색 범위 → B1_GALLERY_SEARCH_POPUPS.md; sign 구현 → B1_LOGIN_ENTRY_IMPLEMENTATION.md; 실제 인증/조건부 오류 별도 ;v7 scoped 구현/검사 → B1_POPUP_BATCH_V7.md(원본 preflight는 이력) |
-| H-02 | GNB 탐색 링크 | 원래 메뉴 탐색 | 선택/비선택, 작은 폭, 줄바꿈·가로 범위 | HEADER | 범위 근거 → B1_LIST_COHESION.md; 나머지 계정/페이지 조합 미확인 |
-| H-03 | 최근 방문 목록·이전/다음·전체 | 최근 방문 화살표와 전체 버튼 | 짧음/긴 목록, 양 끝, 선택, 전체 버튼의 실제 열린 화면 | HEADER | 최근 메뉴/탭 범위 → B1_POPUP_POLISH.md + B1_LIST_COHESION.md; 모든 계정/데이터 변형은 별도 ;v7 scoped 구현/검사 → B1_POPUP_BATCH_V7.md(원본 preflight는 이력) |
-| H-04 | 갤러리 제목·종류 배지·갤러리 검색 | 메이저/마이너/미니 진입 | 긴 제목, 배지, 검색 폼, 페이지 종류별 헤더 | HEADER | 범위 근거 → B1_LIST_COHESION.md; 나머지 계정/페이지 조합 미확인 |
-| H-05 | 갤러리 대문 열기/닫기 | 원래 대문 토글 | 닫힘/열림/재열기, 짧은 화면, 대문 없는 경로 | HEADER | 대문/순위/팁/연관 범위 → B1_GALLERY_SEARCH_POPUPS.md; 대표 root 밖 자식은 별도 ;v7 scoped 구현/검사 → B1_POPUP_BATCH_V7.md(원본 preflight는 이력) |
-| H-06 | 마이너 소개·대문 내부 | 마이너 대문 열기 | 내용 길이, 스크롤, 원래 내부 링크 | HEADER | 대문/순위/팁/연관 범위 → B1_GALLERY_SEARCH_POPUPS.md; 대표 root 밖 자식은 별도 ;v7 scoped 구현/검사 → B1_POPUP_BATCH_V7.md(원본 preflight는 이력) |
-| H-07 | 흥한갤 전체 순위 팝업 | 대문 → 전체 순위 | 열림/닫힘/긴 목록/재열기, 대문 닫힌 popup-only | HEADER | 대문/순위/팁/연관 범위 → B1_GALLERY_SEARCH_POPUPS.md; 대표 root 밖 자식은 별도 ;v7 scoped 구현/검사 → B1_POPUP_BATCH_V7.md(원본 preflight는 이력) |
-| H-08 | 순위 도움말/팁 팝업 | 순위 관련 원래 도움말 버튼 | 팁과 닫기, 화면 끝, 다른 대문 레이어 위 | HEADER | 대문/순위/팁/연관 범위 → B1_GALLERY_SEARCH_POPUPS.md; 대표 root 밖 자식은 별도 ;v7 scoped 구현/검사 → B1_POPUP_BATCH_V7.md(원본 preflight는 이력) |
-| H-09 | 연관 갤러리 팝업 | 제목 옆 연관 버튼 | 내용/스크롤/닫기, 목록의 개수 선택기와 겹침 | HEADER | 대문/순위/팁/연관 범위 → B1_GALLERY_SEARCH_POPUPS.md; 대표 root 밖 자식은 별도 ;v7 scoped 구현/검사 → B1_POPUP_BATCH_V7.md(원본 preflight는 이력) |
-| H-10 | 갤러리 이용안내·설정·기타 원래 메뉴 | 원래 제목 영역의 해당 버튼 | 각각의 실제 창·메뉴, 로그인 전제, 취소/닫기 | HEADER | 안내/설정 root 범위 → B1_GALLERY_SEARCH_POPUPS.md; 익명 설정6종/명명된 탭·색상·백업·안내·자짤 empty → B1_NATIVE_SETTINGS_CHILDREN.md;계정·실제 데이터/저장/업로드는 미확인 |
-| H-11 | 메이저 추천 갤러리 캐러셀 | 메이저 대문의 원래 이전/다음 | 첫/중간/끝 페이지, 짧은 폭, 원래 링크 | HEADER | 범위 근거 → B1_LIST_COHESION.md; 나머지 계정/페이지 조합 미확인 |
+| H-01 | 사이트 헤더·통합 검색·로그인·야간 전환 | 목록/본문/수정 등 해당 페이지 | 로그인/비로그인, 긴 검색어, 포커스, 원래 전환 동작 | HEADER | 목록/공통 헤더 v7 → B1_LIST_V7_MATERIAL.md;검색 기록8상태·sign primary → B1_NATIVE_RESIDUAL_V7.md. 실제 인증은 B1_ACCOUNT_UI_PREFLIGHT.md,조건부 인증 오류/전체 페이지 조합은 별도 |
+| H-02 | GNB 탐색 링크 | 원래 메뉴 탐색 | 선택/비선택, 작은 폭, 줄바꿈·가로 범위 | HEADER | 목록/공통 헤더 v7 → B1_LIST_V7_MATERIAL.md + B1_DARK_CONTROL_REFINEMENT.md;나머지 계정/데이터/페이지 조합 미확인 |
+| H-03 | 최근 방문 목록·이전/다음·전체 | 최근 방문 화살표와 전체 버튼 | 짧음/긴 목록, 양 끝, 선택, 전체 버튼의 실제 열린 화면 | HEADER | 현재 v7 팝업/짧은 창·페이저 → B1_POPUP_BATCH_V7.md;검색/안내 재사용 → B1_NATIVE_RESIDUAL_V7.md. 원본 preflight는 이력;전 계정/데이터/기기 판정 아님 |
+| H-04 | 갤러리 제목·종류 배지·갤러리 검색 | 메이저/마이너/미니 진입 | 긴 제목, 배지, 검색 폼, 페이지 종류별 헤더 | HEADER | 목록/공통 헤더 v7 → B1_LIST_V7_MATERIAL.md + B1_DARK_CONTROL_REFINEMENT.md;나머지 계정/데이터/페이지 조합 미확인 |
+| H-05 | 갤러리 대문 열기/닫기 | 원래 대문 토글 | 닫힘/열림/재열기, 짧은 화면, 대문 없는 경로 | HEADER | 현재 v7 팝업/짧은 창·페이저 → B1_POPUP_BATCH_V7.md;검색/안내 재사용 → B1_NATIVE_RESIDUAL_V7.md. 원본 preflight는 이력;전 계정/데이터/기기 판정 아님 |
+| H-06 | 마이너 소개·대문 내부 | 마이너 대문 열기 | 내용 길이, 스크롤, 원래 내부 링크 | HEADER | 현재 v7 팝업/짧은 창·페이저 → B1_POPUP_BATCH_V7.md;검색/안내 재사용 → B1_NATIVE_RESIDUAL_V7.md. 원본 preflight는 이력;전 계정/데이터/기기 판정 아님 |
+| H-07 | 흥한갤 전체 순위 팝업 | 대문 → 전체 순위 | 열림/닫힘/긴 목록/재열기, 대문 닫힌 popup-only | HEADER | 현재 v7 팝업/짧은 창·페이저 → B1_POPUP_BATCH_V7.md;검색/안내 재사용 → B1_NATIVE_RESIDUAL_V7.md. 원본 preflight는 이력;전 계정/데이터/기기 판정 아님 |
+| H-08 | 순위 도움말/팁 팝업 | 순위 관련 원래 도움말 버튼 | 팁과 닫기, 화면 끝, 다른 대문 레이어 위 | HEADER | 현재 v7 팝업/짧은 창·페이저 → B1_POPUP_BATCH_V7.md;검색/안내 재사용 → B1_NATIVE_RESIDUAL_V7.md. 원본 preflight는 이력;전 계정/데이터/기기 판정 아님 |
+| H-09 | 연관 갤러리 팝업 | 제목 옆 연관 버튼 | 내용/스크롤/닫기, 목록의 개수 선택기와 겹침 | HEADER | 현재 v7 팝업/짧은 창·페이저 → B1_POPUP_BATCH_V7.md;검색/안내 재사용 → B1_NATIVE_RESIDUAL_V7.md. 원본 preflight는 이력;전 계정/데이터/기기 판정 아님 |
+| H-10 | 갤러리 이용안내·설정·기타 원래 메뉴 | 원래 제목 영역의 해당 버튼 | 각각의 실제 창·메뉴, 로그인 전제, 취소/닫기 | HEADER | 설정·명명된 내부/선택/주행동 v7 → B1_NATIVE_RESIDUAL_V7.md;원본6종 익명 구조 → B1_NATIVE_SETTINGS_CHILDREN.md. 실제 계정·데이터/저장/업로드 결과 미확인 |
+| H-11 | 메이저 추천 갤러리 캐러셀 | 메이저 대문의 원래 이전/다음 | 첫/중간/끝 페이지, 짧은 폭, 원래 링크 | HEADER | 목록/공통 헤더 v7 → B1_LIST_V7_MATERIAL.md + B1_DARK_CONTROL_REFINEMENT.md;나머지 계정/데이터/페이지 조합 미확인 |
 
 ## 글목록·검색·페이지 이동
 
 | ID | UI | 여는 방법·조건 | 펼쳐볼 상태 | 근거 | 검토 상태 |
 | --- | --- | --- | --- | --- | --- |
-| L-01 | 게시물 행/카드 | 목록과 본문 하단 목록 | 일반/공지/설문/개념/말머리/댓글 수/이미지·영상 표시, 긴 제목 | LIST | 범위 근거 → B1_LIST_COHESION.md + B1_CONTROL_MATERIAL.md; 명명된 상태 한정 |
-| L-02 | 작성자·고닉 배지·닉네임/IP | 게시물 작성자 영역 | 짧은/긴 이름, 고정닉/유동, 아이콘·배지 보존 | LIST, PERSONAL | 범위 근거 → B1_LIST_COHESION.md + B1_CONTROL_MATERIAL.md; 명명된 상태 한정 |
-| L-03 | 작성자 원래 메뉴·메모 팝업 | 작성자 이름 클릭 | 메모/사용자 메뉴의 실제 분기, 닫기/재열기, 차단 선택 모드와 구분 | LIST, HOSTFIX | B1 메뉴·메모·색상창 마감 → B1_NATIVE_AUTHOR_FINISH.md; 9상태/실사이트 목록·본문 경로 범위,계정/저장 별도 |
+| L-01 | 게시물 행/카드 | 목록과 본문 하단 목록 | 일반/공지/설문/개념/말머리/댓글 수/이미지·영상 표시, 긴 제목 | LIST | 목록/공통 헤더 최신 재질·선택·페이징/검색 → B1_LIST_V7_MATERIAL.md + B1_DARK_CONTROL_REFINEMENT.md. 이전 복구/기능 근거는 명명된 상태만 유지;전 데이터/페이지 조합 판정 아님 |
+| L-02 | 작성자·고닉 배지·닉네임/IP | 게시물 작성자 영역 | 짧은/긴 이름, 고정닉/유동, 아이콘·배지 보존 | LIST, PERSONAL | 목록/공통 헤더 최신 재질·선택·페이징/검색 → B1_LIST_V7_MATERIAL.md + B1_DARK_CONTROL_REFINEMENT.md. 이전 복구/기능 근거는 명명된 상태만 유지;전 데이터/페이지 조합 판정 아님 |
+| L-03 | 작성자 원래 메뉴·메모 팝업 | 작성자 이름 클릭 | 메모/사용자 메뉴의 실제 분기, 닫기/재열기, 차단 선택 모드와 구분 | LIST, HOSTFIX | 개별 작성자 메뉴/메모/색상 v7 → B1_NATIVE_RESIDUAL_V7.md;원본·명명된 진입 → B1_NATIVE_AUTHOR_FINISH.md. 실제 모든 댓글/계정/권한/저장 자식은 미확인 |
 | L-04 | 말머리 툴팁 | 말머리에 제목이 있는 행에 포인터 | 짧은/긴 설명, 화면 네 모서리, 사라짐 | LIST | 툴팁 경합 복구 → UI_LIVE_REGRESSION_REPAIR.md; 모든 화면 끝 변형 판정 아님 |
-| L-05 | 전체/개념/공지·말머리 탭 | 목록 상단 | 선택·비선택, 많은/긴 항목, 작은 폭, 생략 상태·화살표 서랍 열기/닫기·항목 선택·폭 변경 후 복구, 원래 필터 동작. 긴 목록 실사이트 표본은 아래 참조 | LIST | 범위 근거 → B1_LIST_COHESION.md + B1_CONTROL_MATERIAL.md; 명명된 상태 한정 |
-| L-06 | 페이지당 개수 선택 | 원래 개수 SELECT 열기 | 각 옵션, 현재 값, 네이티브 선택 UI·키보드 | LIST | 범위 근거 → B1_LIST_COHESION.md + B1_CONTROL_MATERIAL.md; 명명된 상태 한정 |
-| L-07 | 페이지네이션 | 하단 페이지 이동 | 첫/마지막/현재/긴 페이지 범위, 양 끝 접근 | LIST | 범위 근거 → B1_LIST_COHESION.md + B1_CONTROL_MATERIAL.md; 명명된 상태 한정 |
-| L-08 | 목록 검색 | 검색 종류 선택 → 입력/검색 | 종류 목록, 빈/긴 검색어, Enter/버튼, 실제 보조 검색 레이어 | LIST | 범위 근거 → B1_LIST_COHESION.md + B1_CONTROL_MATERIAL.md; 명명된 상태 한정 |
-| L-09 | 상·하단 글쓰기·목록·이동 액션 | 목록 상단·목록/본문 하단 | 원래 버튼 조합, 단일행/줄바꿈, 검색과 간격 | LIST, ARTICLE | 범위 근거 → B1_LIST_COHESION.md + B1_CONTROL_MATERIAL.md; 명명된 상태 한정 |
+| L-05 | 전체/개념/공지·말머리 탭 | 목록 상단 | 선택·비선택, 많은/긴 항목, 작은 폭, 생략 상태·화살표 서랍 열기/닫기·항목 선택·폭 변경 후 복구, 원래 필터 동작. 긴 목록 실사이트 표본은 아래 참조 | LIST | 목록/공통 헤더 최신 재질·선택·페이징/검색 → B1_LIST_V7_MATERIAL.md + B1_DARK_CONTROL_REFINEMENT.md. 이전 복구/기능 근거는 명명된 상태만 유지;전 데이터/페이지 조합 판정 아님 |
+| L-06 | 페이지당 개수 선택 | 원래 개수 SELECT 열기 | 각 옵션, 현재 값, 네이티브 선택 UI·키보드 | LIST | 목록/공통 헤더 최신 재질·선택·페이징/검색 → B1_LIST_V7_MATERIAL.md + B1_DARK_CONTROL_REFINEMENT.md. 이전 복구/기능 근거는 명명된 상태만 유지;전 데이터/페이지 조합 판정 아님 |
+| L-07 | 페이지네이션 | 하단 페이지 이동 | 첫/마지막/현재/긴 페이지 범위, 양 끝 접근 | LIST | 목록/공통 헤더 최신 재질·선택·페이징/검색 → B1_LIST_V7_MATERIAL.md + B1_DARK_CONTROL_REFINEMENT.md. 이전 복구/기능 근거는 명명된 상태만 유지;전 데이터/페이지 조합 판정 아님 |
+| L-08 | 목록 검색 | 검색 종류 선택 → 입력/검색 | 종류 목록, 빈/긴 검색어, Enter/버튼, 실제 보조 검색 레이어 | LIST | 목록/공통 헤더 최신 재질·선택·페이징/검색 → B1_LIST_V7_MATERIAL.md + B1_DARK_CONTROL_REFINEMENT.md. 이전 복구/기능 근거는 명명된 상태만 유지;전 데이터/페이지 조합 판정 아님 |
+| L-09 | 상·하단 글쓰기·목록·이동 액션 | 목록 상단·목록/본문 하단 | 원래 버튼 조합, 단일행/줄바꿈, 검색과 간격 | LIST, ARTICLE | 목록/공통 헤더 최신 재질·선택·페이징/검색 → B1_LIST_V7_MATERIAL.md + B1_DARK_CONTROL_REFINEMENT.md. 이전 복구/기능 근거는 명명된 상태만 유지;전 데이터/페이지 조합 판정 아님 |
 | L-10 | 빈 목록·차단·지연 갱신 | 빈/전체 차단/행 추가 fixture | 빈 결과, 숨김, 다시 나타남, 본문 하단 임베디드 목록 | LIST | 기존 필터/동적 갱신 기능 근거 보존; 모든 빈/실패/차단 조합의 B1 외형 미확인 |
 
 ## 글 내용·미디어·글 액션
 
 | ID | UI | 여는 방법·조건 | 펼쳐볼 상태 | 근거 | 검토 상태 |
 | --- | --- | --- | --- | --- | --- |
-| A-01 | 제목·말머리·작성자·날짜·조회/추천/댓글 | 본문 진입 | 긴 제목/작성자, 작은 폭, 버튼 인접 관계 | ARTICLE | 본문/액션 범위 → B1_CONTENT_TRIAL.md + B1_ARTICLE_ACTION_POPUPS.md; 전 자식 완료 아님 |
-| A-02 | 본문 작성자 원래 팝업 | 본문 작성자 클릭 | 사용자 정보/메모 등 실제 메뉴, 화면 끝·다른 레이어와 겹침 | ARTICLE, HOSTFIX | B1 공통 표시+본문 회원 메뉴 원본-JS 재생(통계 합성) 히트 → B1_NATIVE_AUTHOR_FINISH.md; 실계정/전 자식 판정 아님 |
-| A-03 | 본문 텍스트·링크·서식 | 짧은/긴 리치 콘텐츠 fixture | 줄바꿈/긴 URL/인용/표, 기본·작성자 지정 서식, 다크 가독성 | ARTICLE | 본문/액션 범위 → B1_CONTENT_TRIAL.md + B1_ARTICLE_ACTION_POPUPS.md; 전 자식 완료 아님 |
-| A-04 | 이미지·GIF·동영상 등 본문 미디어 | 실제 크기 미디어가 있는 본문 | 작은/큰/늦게 로드/실패, 원래 색상, 화면 넘침 | ARTICLE, HOSTFIX | 본문 미디어 paper/원색 범위 → B1_CONTENT_TRIAL.md; 모든 형식·지연·실패 외형 미확인 |
+| A-01 | 제목·말머리·작성자·날짜·조회/추천/댓글 | 본문 진입 | 긴 제목/작성자, 작은 폭, 버튼 인접 관계 | ARTICLE | 본문/댓글 v7 → B1_ARTICLE_COMMENTS_V7_IMPLEMENTATION.md;후속 파일/액션 마감 → B1_ARTICLE_ATTACHMENTS.md. 공통 헤더/하단 목록은 목록 owner 재사용;댓글 crop만으로 전체 페이지 승인 안 함 |
+| A-02 | 본문 작성자 원래 팝업 | 본문 작성자 클릭 | 사용자 정보/메모 등 실제 메뉴, 화면 끝·다른 레이어와 겹침 | ARTICLE, HOSTFIX | 개별 작성자 메뉴/메모/색상 v7 → B1_NATIVE_RESIDUAL_V7.md;원본·명명된 진입 → B1_NATIVE_AUTHOR_FINISH.md. 실제 모든 댓글/계정/권한/저장 자식은 미확인 |
+| A-03 | 본문 텍스트·링크·서식 | 짧은/긴 리치 콘텐츠 fixture | 줄바꿈/긴 URL/인용/표, 기본·작성자 지정 서식, 다크 가독성 | ARTICLE | 본문/댓글 v7 → B1_ARTICLE_COMMENTS_V7_IMPLEMENTATION.md;후속 파일/액션 마감 → B1_ARTICLE_ATTACHMENTS.md. 공통 헤더/하단 목록은 목록 owner 재사용;댓글 crop만으로 전체 페이지 승인 안 함 |
+| A-04 | 이미지·GIF·동영상 등 본문 미디어 | 실제 크기 미디어가 있는 본문 | 작은/큰/늦게 로드/실패, 원래 색상, 화면 넘침 | ARTICLE, HOSTFIX | 본문 media/paper → B1_ARTICLE_COMMENTS_V7_IMPLEMENTATION.md + B1_DARK_CONTROL_REFINEMENT.md;저작자 원색 보존. 모든 형식/지연/실패 외형 미확인 |
 | A-05 | 이미지 원래 뷰어·확대·이미지댓글 진입 | 본문 이미지의 원래 동작 | 실제 뷰어·이전/다음·닫기·이미지별 댓글 연결; 존재 여부 실사이트 확인 | ARTICLE, COMMENTS, HOSTFIX | 이미지댓글 진입/full → B1_IMAGE_COMMENTS.md; 원본 이미지 뷰어 자식은 미확인 |
-| A-06 | 첨부 파일·이미지 하단 정보 | 첨부가 있는 본문 | 파일 목록, 긴 파일명, 다운로드 링크, 펼침 상태가 있으면 각각 | ARTICLE | 첨부 외곽 역할 적용 → B1_CONTENT_TRIAL.md; 실제 파일/펼침 변형 미확인 |
-| A-07 | 추천/비추천·숫자·관련 버튼 | 본문 추천 영역 | 기본/상태 전환, 아이콘·네이티브 스프라이트 충돌, 좁은 폭 | ARTICLE | 추천 카드 여백/세로 정렬·폭148 마감 → B1_PREVIEW_DRAFT_FINISH.md; 원본 버튼/숫자·계정별 추천 결과는 보존/별도 |
-| A-08 | 추천 CAPTCHA·관련 원래 팝업 | 제어된 fixture로 표시 | 이미지/입력/닫기/포커스, 실제 투표 없이 원래 동작 경계 | ARTICLE | CAPTCHA 관련 코드/fixture 경계 보존; 모든 native 조건부 외형 미확인 |
-| A-09 | 펌/PUM 레이어 | 원래 펌 버튼/레이어 | `write_pum_layer` 열기·닫기·재열기, 화면 끝·짧은 창 | ARTICLE | PUM root/모델 범위 → B1_ARTICLE_ACTION_POPUPS.md; 원본 이력·말머리·결과 미확인 |
-| A-10 | 스크랩 UI·결과/로그인 전제 창 | 원래 스크랩 버튼 | 라벨/아이콘, 해당 원래 메뉴·결과·로그인 요구 상태 | ARTICLE, HOSTFIX | guest 로그인 안내 범위 → B1_ARTICLE_ACTION_POPUPS.md; 계정 폴더/결과 iframe 미확인 |
-| A-11 | 공유 메뉴 | 원래 공유 버튼 | 실제 공유 옵션과 보조 창 각각, 닫기, OS 공유 UI가 있으면 별도 구분 | ARTICLE, HOSTFIX | 공유 옵션 root 범위 → B1_ARTICLE_ACTION_POPUPS.md; 보조/OS 창 별도 |
-| A-12 | 신고 메뉴·글 수정/삭제 진입 | 원래 신고/수정/삭제 버튼 | 각각의 실제 메뉴·계정 전제; 수정/삭제 화면은 W-19~22 연결 | ARTICLE, FORMS | 신고 root/수정삭제 진입 범위 → B1_ARTICLE_ACTION_POPUPS.md + B1_PASSWORD_PAGES.md; 권한/전송 결과 별도 |
+| A-06 | 첨부 파일·이미지 하단 정보 | 첨부가 있는 본문 | 파일 목록, 긴 파일명, 다운로드 링크, 펼침 상태가 있으면 각각 | ARTICLE | 실제 첨부 파일명 겹침·자연 줄바꿈 마감 → B1_ARTICLE_ATTACHMENTS.md;원본 링크/구조·긴 파일명/글자크기 독립성 범위. 실제 다운로드/전 결과는 미실행 |
+| A-07 | 추천/비추천·숫자·관련 버튼 | 본문 추천 영역 | 기본/상태 전환, 아이콘·네이티브 스프라이트 충돌, 좁은 폭 | ARTICLE | 추천 카드 기본 여백 → B1_PREVIEW_DRAFT_FINISH.md;native separator/색상 경합 → B1_ARTICLE_ATTACHMENTS.md;현재 액션 재질 → B1_POPUP_BATCH_V7.md. 실제 추천 결과/권한 별도 |
+| A-08 | 추천 CAPTCHA·관련 원래 팝업 | 제어된 fixture로 표시 | 이미지/입력/닫기/포커스, 실제 투표 없이 원래 동작 경계 | ARTICLE | 명명된 CAPTCHA/안내 root v7 → B1_POPUP_BATCH_V7.md;원본 조건·필드/포커스 경계 보존. 실제 투표/인증/서버 오류 전 상태 미확인 |
+| A-09 | 펌/PUM 레이어 | 원래 펌 버튼/레이어 | `write_pum_layer` 열기·닫기·재열기, 화면 끝·짧은 창 | ARTICLE | PUM/명명된 안내·제안 root v7 → B1_POPUP_BATCH_V7.md;원본 이력·말머리·결과 미확인 |
+| A-10 | 스크랩 UI·결과/로그인 전제 창 | 원래 스크랩 버튼 | 라벨/아이콘, 해당 원래 메뉴·결과·로그인 요구 상태 | ARTICLE, HOSTFIX | guest 스크랩/로그인 안내 v7 → B1_POPUP_BATCH_V7.md;계정 폴더/결과 iframe 미확인 |
+| A-11 | 공유 메뉴 | 원래 공유 버튼 | 실제 공유 옵션과 보조 창 각각, 닫기, OS 공유 UI가 있으면 별도 구분 | ARTICLE, HOSTFIX | 공유 옵션 root v7 → B1_POPUP_BATCH_V7.md;보조/외부/OS 창은 별도 |
+| A-12 | 신고 메뉴·글 수정/삭제 진입 | 원래 신고/수정/삭제 버튼 | 각각의 실제 메뉴·계정 전제; 수정/삭제 화면은 W-19~22 연결 | ARTICLE, FORMS | 신고 root v7 → B1_POPUP_BATCH_V7.md;수정삭제 폼 → B1_NATIVE_RESIDUAL_V7.md. 실제 권한/신고·수정·삭제 전송 결과 별도 |
 
 ## 댓글·대댓글·이미지댓글
 
 | ID | UI | 여는 방법·조건 | 펼쳐볼 상태 | 근거 | 검토 상태 |
 | --- | --- | --- | --- | --- | --- |
-| C-01 | 일반 텍스트 댓글 | 본문의 일반 댓글 | 짧음/여러 줄/긴 URL·한국어/시간·IP·자기 작성자 표시, 작은 삭제 액션 | COMMENTS | 일반 댓글 paper/작은 삭제 마감 → B1_CONTENT_TRIAL.md + B1_IMAGE_COMMENTS.md; 미관 전 상태 승인 아님 |
-| C-02 | 대댓글 묶음 | 원댓글 답글 열기 | 부모·자식 구분, 들여쓰기, 여러 대댓글, 열기/닫기/재열기 | COMMENTS | 일반/형제 대댓글 구조·들여쓰기 복구 → UI_LIVE_REGRESSION_REPAIR.md + B1_CONTENT_TRIAL.md |
-| C-03 | 분리된 대댓글 | 호스트가 원댓글 다음 형제로 만드는 reply fixture | 원래 부모·형제 순서, 부모와 시각적 연결, 마지막 빈 부모 | COMMENTS | 일반/형제 대댓글 구조·들여쓰기 복구 → UI_LIVE_REGRESSION_REPAIR.md + B1_CONTENT_TRIAL.md |
-| C-04 | 디시콘/이미지를 포함한 댓글 | 미디어가 있는 일반 댓글 | 텍스트+미디어, 디시콘 크기·종류, GIF가 있는 경우 재생·색상 | COMMENTS | 미디어/대댓글 역할 범위 → B1_CONTENT_TRIAL.md; 종류별 원본 재생·실패 외형 미확인 |
-| C-05 | 미디어를 포함한 대댓글 | 답글 내부 미디어 fixture | 들여쓰기 안에서 실제 크기/넘침, 원래 작성자·액션 가시성 | COMMENTS | 미디어/대댓글 역할 범위 → B1_CONTENT_TRIAL.md; 종류별 원본 재생·실패 외형 미확인 |
-| C-06 | 이미지마다 붙는 별도 댓글 영역 | 본문 이미지댓글 열기 | 이미지별 `img_comment_box` 구분, 접힘/펼침, 서로 다른 이미지의 댓글·카운트 | COMMENTS, HOSTFIX | 원본 fold→full/composer 관찰·합성 parity/작은 액션 마감 → B1_IMAGE_COMMENTS.md; 실제 전송/기기 별도 |
+| C-01 | 일반 텍스트 댓글 | 본문의 일반 댓글 | 짧음/여러 줄/긴 URL·한국어/시간·IP·자기 작성자 표시, 작은 삭제 액션 | COMMENTS | 일반/형제 대댓글 v7 → B1_ARTICLE_COMMENTS_V7_IMPLEMENTATION.md + B1_DARK_CONTROL_REFINEMENT.md;기존 들여쓰기 복구 유지. 미관 전 조합 승인 아님 |
+| C-02 | 대댓글 묶음 | 원댓글 답글 열기 | 부모·자식 구분, 들여쓰기, 여러 대댓글, 열기/닫기/재열기 | COMMENTS | 일반/형제 대댓글 v7 → B1_ARTICLE_COMMENTS_V7_IMPLEMENTATION.md + B1_DARK_CONTROL_REFINEMENT.md;기존 들여쓰기 복구 유지. 미관 전 조합 승인 아님 |
+| C-03 | 분리된 대댓글 | 호스트가 원댓글 다음 형제로 만드는 reply fixture | 원래 부모·형제 순서, 부모와 시각적 연결, 마지막 빈 부모 | COMMENTS | 일반/형제 대댓글 v7 → B1_ARTICLE_COMMENTS_V7_IMPLEMENTATION.md + B1_DARK_CONTROL_REFINEMENT.md;기존 들여쓰기 복구 유지. 미관 전 조합 승인 아님 |
+| C-04 | 디시콘/이미지를 포함한 댓글 | 미디어가 있는 일반 댓글 | 텍스트+미디어, 디시콘 크기·종류, GIF가 있는 경우 재생·색상 | COMMENTS | 미디어/대댓글 역할 v7 → B1_ARTICLE_COMMENTS_V7_IMPLEMENTATION.md;원색/크기 보존. 종류별 원본 재생/지연/실패 전 상태 미확인 |
+| C-05 | 미디어를 포함한 대댓글 | 답글 내부 미디어 fixture | 들여쓰기 안에서 실제 크기/넘침, 원래 작성자·액션 가시성 | COMMENTS | 미디어/대댓글 역할 v7 → B1_ARTICLE_COMMENTS_V7_IMPLEMENTATION.md;원색/크기 보존. 종류별 원본 재생/지연/실패 전 상태 미확인 |
+| C-06 | 이미지마다 붙는 별도 댓글 영역 | 본문 이미지댓글 열기 | 이미지별 `img_comment_box` 구분, 접힘/펼침, 서로 다른 이미지의 댓글·카운트 | COMMENTS, HOSTFIX | 이미지 fold→full 원본 → B1_IMAGE_COMMENTS.md;현재 composer/읽기면 v7 → B1_ARTICLE_COMMENTS_V7_IMPLEMENTATION.md + B1_DARK_CONTROL_REFINEMENT.md. 실제 전송/전 권한·기기 별도 |
 | C-07 | 이미지댓글 내부 대댓글 (존재하지 않음) | 해당 없음 | 일반 대댓글을 이미지댓글에 잘못 확장한 항목; 새 답글 UI를 만들지 않음 | 사용자 정정2026-10-28 + B1_IMAGE_COMMENTS.md의 원본 구조 | N/A · 이미지댓글에는 대댓글 없음; 오인 재발 방지용 ID 유지 |
-| C-08 | 일반 댓글 입력창 | 기본 입력창 포커스 | 회원/비회원 이름·비밀번호 등 원래 필드, 빈/긴 입력, 포커스·오류 상태 | COMMENTS | 입력/대댓글 composer·지우기 액션 범위 → B1_CONTENT_TRIAL.md + B1_IMAGE_COMMENTS.md; 모든 권한/오류 자식 별도 |
-| C-09 | 답글 입력창 | 특정 댓글의 답글 선택 | 대상 표시, 작은 composer, 취소/다른 대상/재열기, 원래 필드 | COMMENTS | 입력/대댓글 composer·지우기 액션 범위 → B1_CONTENT_TRIAL.md + B1_IMAGE_COMMENTS.md; 모든 권한/오류 자식 별도 |
-| C-10 | 이미지댓글 입력창 | 해당 이미지댓글 열기 | 이름·원래 숨김 값·입력/등록, 일반/답글 창과 독립된 대상 | COMMENTS | 원본 fold→full/composer 관찰·합성 parity/작은 액션 마감 → B1_IMAGE_COMMENTS.md; 실제 전송/기기 별도 |
-| C-11 | 댓글 디시콘 선택·첨부 관련 원래 도구 | 실제 댓글 입력 도구가 있는 경로 | 도구별 열린 창/선택/닫기/미리보기·제거가 실제 제공되면 각각 | COMMENTS, HOSTFIX | B1_DCCON_LIVE_FINISH.md:공개 팩/이미지/전환/페이지/인기/최근 진입/닫기 scoped 관찰. B1_ACCOUNT_PICKER_IMPLEMENTATION.md:654FF895 계정 도구줄/즐겨찾기 숨김 경합·관리 내부 v7 마감;실로그인 관리 조회/사용미사용/스크롤/닫기·재열기·체크 보존 확인. B1_CONDITIONAL_UI_TRIAGE.md:내용 있는 최근사용 재사용 및 사용자 발급 후 대왕콘 활성 안내 원본/개발본 조회 확인;B1_CONDITIONAL_CHILDREN_IMPLEMENTATION.md:79A4C12F 대왕콘 X·상세 내부 scoped 로컬 마감;최종 실사이트 재진입은 응답 지연 UNKNOWN. 폴더·구매/첨부등록 전 상태 완료 아님 |
-| C-12 | 댓글 작성자 메뉴·메모 | 일반/대댓글/이미지댓글 작성자 클릭 | `user_data_lyr`·사용자 메뉴·추가 메뉴, 화면 가장자리, 차단 선택과 충돌 | COMMENTS, HOSTFIX | 공통 B1 표시/일반·이미지댓글 dark fixture 범위 → B1_NATIVE_AUTHOR_FINISH.md; 실제 댓글·권한/대댓글 전 상태는 미확인 |
-| C-13 | 댓글 수정·삭제·비밀번호 팝업 | 원래 댓글 수정/삭제 버튼 | 본인/비회원 권한, 비밀번호 입력·닫기·재열기, 배경 위 양의 히트 영역 | COMMENTS, HOSTFIX | B1_ACCOUNT_UI_PREFLIGHT.md:실제 익명 일반 guest의 안전한 비밀번호 분기를 원본 콜백/권한 조건 확인 후 열기·닫기·재열기/양의 히트 관찰,입력·확인·전송 없음. B1_ACCOUNT_PICKER_IMPLEMENTATION.md:654FF895 필드/짝 primary/중앙 X/넘침 마감,안전한 실제 guest 열기·닫기·재열기 확인;B1_CONDITIONAL_UI_TRIAGE.md:이미지댓글 비밀번호 역할 누락은79A4C12F의 동일 일반 비밀번호 가족으로 scoped 로컬 마감(B1_CONDITIONAL_CHILDREN_IMPLEMENTATION.md);실제 이미지 권한 진입은 여전히 UNKNOWN;실제 이미지 권한 진입/본인·관리자·회원 전 상태 별도 |
+| C-08 | 일반 댓글 입력창 | 기본 입력창 포커스 | 회원/비회원 이름·비밀번호 등 원래 필드, 빈/긴 입력, 포커스·오류 상태 | COMMENTS | 일반/답글 composer v7·입력/도구/제출 간격 → B1_ARTICLE_COMMENTS_V7_IMPLEMENTATION.md + B1_DARK_CONTROL_REFINEMENT.md;원래 필드/동작 유지. 전 권한/오류 미확인 |
+| C-09 | 답글 입력창 | 특정 댓글의 답글 선택 | 대상 표시, 작은 composer, 취소/다른 대상/재열기, 원래 필드 | COMMENTS | 일반/답글 composer v7·입력/도구/제출 간격 → B1_ARTICLE_COMMENTS_V7_IMPLEMENTATION.md + B1_DARK_CONTROL_REFINEMENT.md;원래 필드/동작 유지. 전 권한/오류 미확인 |
+| C-10 | 이미지댓글 입력창 | 해당 이미지댓글 열기 | 이름·원래 숨김 값·입력/등록, 일반/답글 창과 독립된 대상 | COMMENTS | 이미지 fold→full 원본 → B1_IMAGE_COMMENTS.md;현재 composer/읽기면 v7 → B1_ARTICLE_COMMENTS_V7_IMPLEMENTATION.md + B1_DARK_CONTROL_REFINEMENT.md. 실제 전송/전 권한·기기 별도 |
+| C-11 | 댓글 디시콘 선택·첨부 관련 원래 도구 | 실제 댓글 입력 도구가 있는 경로 | 도구별 열린 창/선택/닫기/미리보기·제거가 실제 제공되면 각각 | COMMENTS, HOSTFIX | B1_DCCON_LIVE_FINISH.md:공개 팩/이미지/전환/페이지/인기/최근 진입/닫기 scoped 관찰. B1_ACCOUNT_PICKER_IMPLEMENTATION.md:654FF895 계정 도구줄/즐겨찾기 숨김 경합·관리 내부 v7 마감;실로그인 관리 조회/사용미사용/스크롤/닫기·재열기·체크 보존 확인. B1_CONDITIONAL_UI_TRIAGE.md:내용 있는 최근사용 재사용 및 사용자 발급 후 대왕콘 활성 안내 원본/개발본 조회 확인;B1_CONDITIONAL_CHILDREN_IMPLEMENTATION.md:79A4C12F 대왕콘 X·상세 내부 scoped 로컬 마감;최종 실사이트 재진입은 응답 지연 UNKNOWN. 폴더 add/select bgbox 루트의 부분 인식·열림 근거 누락은 B1_V7_FINAL_SCOPE_REVIEW.md;구매/첨부등록 전 상태 완료 아님 |
+| C-12 | 댓글 작성자 메뉴·메모 | 일반/대댓글/이미지댓글 작성자 클릭 | `user_data_lyr`·사용자 메뉴·추가 메뉴, 화면 가장자리, 차단 선택과 충돌 | COMMENTS, HOSTFIX | 개별 작성자 메뉴/메모/색상 v7 → B1_NATIVE_RESIDUAL_V7.md;원본·명명된 진입 → B1_NATIVE_AUTHOR_FINISH.md. 실제 모든 댓글/계정/권한/저장 자식은 미확인 |
+| C-13 | 댓글 수정·삭제·비밀번호 팝업 | 원래 댓글 수정/삭제 버튼 | 본인/비회원 권한, 비밀번호 입력·닫기·재열기, 배경 위 양의 히트 영역 | COMMENTS, HOSTFIX | B1_ACCOUNT_UI_PREFLIGHT.md:실제 익명 일반 guest의 안전한 비밀번호 분기를 원본 콜백/권한 조건 확인 후 열기·닫기·재열기/양의 히트 관찰,입력·확인·전송 없음. B1_ACCOUNT_PICKER_IMPLEMENTATION.md:654FF895 필드/짝 primary/중앙 X/넘침 마감,안전한 실제 guest 열기·닫기·재열기 확인;B1_CONDITIONAL_UI_TRIAGE.md:이미지댓글 비밀번호 역할 누락은79A4C12F의 동일 일반 비밀번호 가족으로 scoped 로컬 마감(B1_CONDITIONAL_CHILDREN_IMPLEMENTATION.md);실제 이미지 권한 진입/본인·관리자·회원 전 상태는 여전히 UNKNOWN |
 | C-14 | 정렬·새로고침·더보기/페이징 | 해당 원래 댓글 제어 | 실제 제공되는 제어별 창/선택/로딩/새 댓글·카운트, 적용 여부 기록 | COMMENTS | 기존 정렬/새로고침/카운트 기능 경계 보존; 모든 native 로딩·더보기 분기 외형 미확인 |
 | C-15 | 차단 댓글과 남은 대댓글 | 개인 차단·필터 fixture | 원댓글만 차단/대댓글만 차단/혼합, 숨겨진 부모 때문에 답글을 잃지 않음 | COMMENTS, PERSONAL | 기존 필터/재연결 기능 및 명명된 UI 범위 보존; 모든 상태 조합의 B1 미관 판정 아님 |
 | C-16 | 빈/전체 차단/로딩·실패 댓글 | 빈 데이터·부분 실패 fixture | 안내·입력 가능 상태·재시도, 원래 실패 UI의 실제 형태 | COMMENTS | 빈/차단/실패의 모든 native 안내 외형 미확인; 대표 정상 댓글로 대체 안 함 |
@@ -142,30 +142,30 @@ V-02–V-08의 두 root는 B1_PREVIEW_DRAFT_FINISH.md에서 마감했다. B1_INT
 
 | ID | UI | 여는 방법·조건 | 펼쳐볼 상태 | 근거 | 검토 상태 |
 | --- | --- | --- | --- | --- | --- |
-| W-01 | 제목·이름·비밀번호·CAPTCHA 입력 행 | 회원/비회원 글작성 | 실제 필드 조합, 검증 상태·포커스, 긴 입력·작은 폭 | FORMS | 작성 shell/공통 헤더 범위 → B1_WRITE_EDITOR_SHELL.md + B1_FORM_HEADER_REUSE.md; native 내부/권한 자식 별도 |
-| W-02 | 말머리 선택·가로 끌기·설명 | 글작성 말머리 영역 | 많은 옵션/선택/설명·팁, 가로 이동, 원래 버튼 | FORMS, EDITOR | 작성 shell/공통 헤더 범위 → B1_WRITE_EDITOR_SHELL.md + B1_FORM_HEADER_REUSE.md; native 내부/권한 자식 별도 |
-| W-03 | 본문 편집/HTML 원문 | 원래 HTML 모드 전환 | visual/source, 기존 내용·커서, 크기·스크롤·상태바 | FORMS, EDITOR | 작성 shell/공통 헤더 범위 → B1_WRITE_EDITOR_SHELL.md + B1_FORM_HEADER_REUSE.md; native 내부/권한 자식 별도 |
-| W-04 | 기본/미디어/보조 편집 툴바 | 각각의 실제 툴바 | 줄바꿈/가로 끌기, 활성·비활성·선택·아이콘/툴팁, 포커스 | FORMS, EDITOR | 작성 shell/공통 헤더 범위 → B1_WRITE_EDITOR_SHELL.md + B1_FORM_HEADER_REUSE.md; native 내부/권한 자식 별도 |
-| W-05 | 글꼴 메뉴 | 글꼴 드롭다운 열기 | 현재 선택·체크,18개 DCUF 옵션·원래 옵션 보존, 길이·스크롤 | EDITOR | 합성18개/원본 보존·재질 → B1_EDITOR_MENUS.md; 실제 Summernote 편집 자식 별도 |
-| W-06 | 글자 크기 메뉴 | 글자 크기 드롭다운 | 각 실제 옵션·현재 값·선택 후 닫기 | EDITOR | 합성 원본 옵션·재질 → B1_EDITOR_MENUS.md; 실제 Summernote 선택/편집 자식 별도 |
-| W-07 | 글자/배경 색상 메뉴 | 원래 색상 버튼 | 각각의 색상 격자·현재색·열림 위치·서브메뉴 | EDITOR | 합성2격자/원래 가로 스크롤 → B1_EDITOR_MENUS.md; native 색상 하위창 미확인 |
-| W-08 | 문단·정렬·목록 메뉴 | 문단 관련 버튼 | 각 실제 하위 제어·선택 상태, 열린 메뉴와 입력 영역 | EDITOR | 합성4정렬·재질 → B1_EDITOR_MENUS.md; native 목록 하위 제어 미확인 |
-| W-09 | 줄 간격 메뉴 | 줄 간격 버튼 | 실제 옵션·선택/닫기·화면 하단 위치 | EDITOR | 합성 원본 옵션·재질 → B1_EDITOR_MENUS.md; 실제 Summernote 선택/편집 자식 별도 |
-| W-10 | 표 선택 메뉴 | 표 삽입 버튼 | 행/열 선택 격자·선택 피드백·넘침 | EDITOR | 합성 표 외곽/원본 클릭 → B1_EDITOR_MENUS.md; 실제 native 선택 피드백 미확인 |
-| W-11 | 기타 툴바 원래 팝업·popover·modal | 실제 툴바 각각의 버튼 | 링크/이미지 등 **실제로 노출되는 각 종류를 별도 자식 항목으로 확정**; 범용 selector 하나로 완료 금지 | EDITOR, FORMS | 기타 in-document 링크/modal/popover 자식 원본 미확인; 외부 업로드4문서는 DEFERRED_USER_ACCEPTED → B1_EDITOR_MENUS.md |
-| W-12 | 디시콘 선택창 | 원래 디시콘 버튼 | 툴바 내부/외부 `div_con`, 실제 탭·항목·닫기, 원래 선택 이벤트 | EDITOR | 외부 DCCon 역할은 존재; 실제 선택기 내부 원본 미확인 → B1_INTEGRATED_UI_GAPS.md |
-| W-13 | 파일 첨부·업로드 목록 | 첨부 파일 선택 | 기본/여러 파일·긴 파일명/미리보기/항목별 원래 제어·실패·진행 상태가 있으면 각각 | FORMS | 첨부/AI 외곽 역할 → B1_WRITE_EDITOR_SHELL.md; 실제 내부/진행/결과/오류 미확인; 업로드/생성 미실행 |
-| W-14 | AI 간편 작성 레이어 | 원래 AI 도구 열기 | 프롬프트·이미지 입력·실행/닫기, 각 필드·실제 결과/오류가 있으면 별도 | FORMS | 첨부/AI 외곽 역할 → B1_WRITE_EDITOR_SHELL.md; 실제 내부/진행/결과/오류 미확인; 업로드/생성 미실행 |
-| W-15 | 글작성 옵션/PUMX | 작성 옵션 펼치기 | 꺼짐/켜짐·선택된 값·설명·줄바꿈 | FORMS | 작성 shell/공통 헤더 범위 → B1_WRITE_EDITOR_SHELL.md + B1_FORM_HEADER_REUSE.md; native 내부/권한 자식 별도 |
+| W-01 | 제목·이름·비밀번호·CAPTCHA 입력 행 | 회원/비회원 글작성 | 실제 필드 조합, 검증 상태·포커스, 긴 입력·작은 폭 | FORMS | 작성 shell/닉네임 추천 clear·use·help/기존 툴바·옵션 v7 → B1_WRITE_V7_IMPLEMENTATION.md;현재 버튼/폼 → B1_DARK_CONTROL_REFINEMENT.md + B1_NATIVE_RESIDUAL_V7.md. 실제 Summernote/권한/내부 추가 자식·정확한 기기 별도 |
+| W-02 | 말머리 선택·가로 끌기·설명 | 글작성 말머리 영역 | 많은 옵션/선택/설명·팁, 가로 이동, 원래 버튼 | FORMS, EDITOR | 작성 shell/닉네임 추천 clear·use·help/기존 툴바·옵션 v7 → B1_WRITE_V7_IMPLEMENTATION.md;현재 버튼/폼 → B1_DARK_CONTROL_REFINEMENT.md + B1_NATIVE_RESIDUAL_V7.md. 실제 Summernote/권한/내부 추가 자식·정확한 기기 별도 |
+| W-03 | 본문 편집/HTML 원문 | 원래 HTML 모드 전환 | visual/source, 기존 내용·커서, 크기·스크롤·상태바 | FORMS, EDITOR | 작성 shell/닉네임 추천 clear·use·help/기존 툴바·옵션 v7 → B1_WRITE_V7_IMPLEMENTATION.md;현재 버튼/폼 → B1_DARK_CONTROL_REFINEMENT.md + B1_NATIVE_RESIDUAL_V7.md. 실제 Summernote/권한/내부 추가 자식·정확한 기기 별도 |
+| W-04 | 기본/미디어/보조 편집 툴바 | 각각의 실제 툴바 | 줄바꿈/가로 끌기, 활성·비활성·선택·아이콘/툴팁, 포커스 | FORMS, EDITOR | 작성 shell/닉네임 추천 clear·use·help/기존 툴바·옵션 v7 → B1_WRITE_V7_IMPLEMENTATION.md;현재 버튼/폼 → B1_DARK_CONTROL_REFINEMENT.md + B1_NATIVE_RESIDUAL_V7.md. 실제 Summernote/권한/내부 추가 자식·정확한 기기 별도 |
+| W-05 | 글꼴 메뉴 | 글꼴 드롭다운 열기 | 현재 선택·체크,18개 DCUF 옵션·원래 옵션 보존, 길이·스크롤 | EDITOR | 6종 in-document 메뉴 v7 → B1_POPUP_BATCH_V7.md;원본 구조/합성 근거 → B1_EDITOR_MENUS.md. native 색상 하위창/목록/실제 Summernote 콜백·표 선택 피드백은 미확인 |
+| W-06 | 글자 크기 메뉴 | 글자 크기 드롭다운 | 각 실제 옵션·현재 값·선택 후 닫기 | EDITOR | 6종 in-document 메뉴 v7 → B1_POPUP_BATCH_V7.md;원본 구조/합성 근거 → B1_EDITOR_MENUS.md. native 색상 하위창/목록/실제 Summernote 콜백·표 선택 피드백은 미확인 |
+| W-07 | 글자/배경 색상 메뉴 | 원래 색상 버튼 | 각각의 색상 격자·현재색·열림 위치·서브메뉴 | EDITOR | 6종 in-document 메뉴 v7 → B1_POPUP_BATCH_V7.md;원본 구조/합성 근거 → B1_EDITOR_MENUS.md. native 색상 하위창/목록/실제 Summernote 콜백·표 선택 피드백은 미확인 |
+| W-08 | 문단·정렬·목록 메뉴 | 문단 관련 버튼 | 각 실제 하위 제어·선택 상태, 열린 메뉴와 입력 영역 | EDITOR | 6종 in-document 메뉴 v7 → B1_POPUP_BATCH_V7.md;원본 구조/합성 근거 → B1_EDITOR_MENUS.md. native 색상 하위창/목록/실제 Summernote 콜백·표 선택 피드백은 미확인 |
+| W-09 | 줄 간격 메뉴 | 줄 간격 버튼 | 실제 옵션·선택/닫기·화면 하단 위치 | EDITOR | 6종 in-document 메뉴 v7 → B1_POPUP_BATCH_V7.md;원본 구조/합성 근거 → B1_EDITOR_MENUS.md. native 색상 하위창/목록/실제 Summernote 콜백·표 선택 피드백은 미확인 |
+| W-10 | 표 선택 메뉴 | 표 삽입 버튼 | 행/열 선택 격자·선택 피드백·넘침 | EDITOR | 6종 in-document 메뉴 v7 → B1_POPUP_BATCH_V7.md;원본 구조/합성 근거 → B1_EDITOR_MENUS.md. native 색상 하위창/목록/실제 Summernote 콜백·표 선택 피드백은 미확인 |
+| W-11 | 기타 툴바 원래 팝업·popover·modal | 실제 툴바 각각의 버튼 | 링크/이미지 등 **실제로 노출되는 각 종류를 별도 자식 항목으로 확정**; 범용 selector 하나로 완료 금지 | EDITOR, FORMS | 6종 dropdown 밖 in-document 링크/modal/popover 원본·열림 범위는 미확인 → B1_V7_FINAL_SCOPE_REVIEW.md. 외부4문서만 DEFERRED_USER_ACCEPTED → B1_EDITOR_MENUS.md |
+| W-12 | 디시콘 선택창 | 원래 디시콘 버튼 | 툴바 내부/외부 `div_con`, 실제 탭·항목·닫기, 원래 선택 이벤트 | EDITOR | 댓글 DCCon v7/실팩 로딩 근거를 작성창으로 확대하지 않음. writer-context 선택기 내부/실제 편집 콜백은 UNKNOWN → B1_V7_FINAL_SCOPE_REVIEW.md |
+| W-13 | 파일 첨부·업로드 목록 | 첨부 파일 선택 | 기본/여러 파일·긴 파일명/미리보기/항목별 원래 제어·실패·진행 상태가 있으면 각각 | FORMS | 작성 shell의 첨부/AI 외곽 역할 → B1_WRITE_V7_IMPLEMENTATION.md;실제 내부/진행/결과/오류 미확인. 실제 업로드/생성 미실행;별도4 업로드 문서 deferral과 구별 |
+| W-14 | AI 간편 작성 레이어 | 원래 AI 도구 열기 | 프롬프트·이미지 입력·실행/닫기, 각 필드·실제 결과/오류가 있으면 별도 | FORMS | 작성 shell의 첨부/AI 외곽 역할 → B1_WRITE_V7_IMPLEMENTATION.md;실제 내부/진행/결과/오류 미확인. 실제 업로드/생성 미실행;별도4 업로드 문서 deferral과 구별 |
+| W-15 | 글작성 옵션/PUMX | 작성 옵션 펼치기 | 꺼짐/켜짐·선택된 값·설명·줄바꿈 | FORMS | 작성 shell/닉네임 추천 clear·use·help/기존 툴바·옵션 v7 → B1_WRITE_V7_IMPLEMENTATION.md;현재 버튼/폼 → B1_DARK_CONTROL_REFINEMENT.md + B1_NATIVE_RESIDUAL_V7.md. 실제 Summernote/권한/내부 추가 자식·정확한 기기 별도 |
 | W-16 | 성인/추가 원래 옵션 | 해당 옵션이 있는 작성 경로 | 노출/선택·비활성, 실제 존재하지 않는 경우 근거 있는 N/A | FORMS | 추가 옵션 실제 경로/권한 자식 미확인; 부재 추정으로 N/A 처리 안 함 |
-| W-17 | 하단 작성 액션 행 | 작성/수정 화면 하단 | 취소/등록 등 원래 조합, 로딩·비활성·짧은 화면, 고정/인접 영역 | FORMS | 작성 shell/공통 헤더 범위 → B1_WRITE_EDITOR_SHELL.md + B1_FORM_HEADER_REUSE.md; native 내부/권한 자식 별도 |
-| W-18 | 페이지 이탈 확인창 | 작성 중 원래 이탈 동작 | `leave_confirm_box` 열기/유지/취소/닫기/재열기, 키보드·스크롤 | FORMS | 이탈 확인 root/제어 범위 → B1_WRITE_EDITOR_SHELL.md; 모든 native 이탈/오류 분기 완료 아님 |
-| W-19 | 글 수정 편집 화면 | 실제 수정 편집 경로 | 기존 제목/말머리/본문·첨부·편집기, 작성과 다른 상태 | FORMS, EDITOR | 작성 shell/공통 헤더 범위 → B1_WRITE_EDITOR_SHELL.md + B1_FORM_HEADER_REUSE.md; native 내부/권한 자식 별도 |
-| W-20 | 비회원 수정 비밀번호 | 비회원 수정 진입 | `.no_memberwrap` 폼·비밀번호·확인/취소·오류 상태 | FORMS | 비회원 비밀번호 페이지/헤더 → B1_PASSWORD_PAGES.md + B1_FORM_HEADER_REUSE.md; 실제 인증/오류 별도 |
-| W-21 | 비회원 삭제 비밀번호 | 비회원 삭제 진입 | 원래 폼·필드·확인/취소·Enter, 실제 삭제 없이 fixture | FORMS | 비회원 비밀번호 페이지/헤더 → B1_PASSWORD_PAGES.md + B1_FORM_HEADER_REUSE.md; 실제 인증/오류 별도 |
-| W-22 | 회원 삭제 확인 | 회원 삭제 진입 | `.pop_wrap.type5`/확인·취소·닫기·재열기, 원래 한 번의 동작 경계 | FORMS | 삭제 확인의 모델/root 범위 → B1_PASSWORD_PAGES.md; 실제 회원/삭제 전송 미실행 |
-| W-23 | 글작성 원래 숨김 크롬·광고 정리 후 화면 | 작성/수정·지연 광고 fixture | 의도한 원래 제어는 남고 빈 공간·가려진 입력이 없음을 확인 | FORMS, HOSTFIX | 작성 shell/공통 헤더 범위 → B1_WRITE_EDITOR_SHELL.md + B1_FORM_HEADER_REUSE.md; native 내부/권한 자식 별도 |
-| W-24 | 데스크톱 사이트 모드·편집 레이어 위치 | 모바일의 실제 viewport 조건 및 제어된 stress | 확대/스크롤/툴바 끌기 뒤 열린 모든 메뉴, 화면 끝·짧은 화면 | EDITOR | 작성 shell/공통 헤더 범위 → B1_WRITE_EDITOR_SHELL.md + B1_FORM_HEADER_REUSE.md; native 내부/권한 자식 별도 |
+| W-17 | 하단 작성 액션 행 | 작성/수정 화면 하단 | 취소/등록 등 원래 조합, 로딩·비활성·짧은 화면, 고정/인접 영역 | FORMS | 작성 shell/닉네임 추천 clear·use·help/기존 툴바·옵션 v7 → B1_WRITE_V7_IMPLEMENTATION.md;현재 버튼/폼 → B1_DARK_CONTROL_REFINEMENT.md + B1_NATIVE_RESIDUAL_V7.md. 실제 Summernote/권한/내부 추가 자식·정확한 기기 별도 |
+| W-18 | 페이지 이탈 확인창 | 작성 중 원래 이탈 동작 | `leave_confirm_box` 열기/유지/취소/닫기/재열기, 키보드·스크롤 | FORMS | 명명된 이탈/수정삭제 비밀번호·삭제 확인 v7 → B1_NATIVE_RESIDUAL_V7.md;공통 헤더 → B1_FORM_HEADER_REUSE.md. 실제 회원/권한/인증 오류·삭제/저장 전송 미실행 |
+| W-19 | 글 수정 편집 화면 | 실제 수정 편집 경로 | 기존 제목/말머리/본문·첨부·편집기, 작성과 다른 상태 | FORMS, EDITOR | 작성 shell/닉네임 추천 clear·use·help/기존 툴바·옵션 v7 → B1_WRITE_V7_IMPLEMENTATION.md;현재 버튼/폼 → B1_DARK_CONTROL_REFINEMENT.md + B1_NATIVE_RESIDUAL_V7.md. 실제 Summernote/권한/내부 추가 자식·정확한 기기 별도 |
+| W-20 | 비회원 수정 비밀번호 | 비회원 수정 진입 | `.no_memberwrap` 폼·비밀번호·확인/취소·오류 상태 | FORMS | 명명된 이탈/수정삭제 비밀번호·삭제 확인 v7 → B1_NATIVE_RESIDUAL_V7.md;공통 헤더 → B1_FORM_HEADER_REUSE.md. 실제 회원/권한/인증 오류·삭제/저장 전송 미실행 |
+| W-21 | 비회원 삭제 비밀번호 | 비회원 삭제 진입 | 원래 폼·필드·확인/취소·Enter, 실제 삭제 없이 fixture | FORMS | 명명된 이탈/수정삭제 비밀번호·삭제 확인 v7 → B1_NATIVE_RESIDUAL_V7.md;공통 헤더 → B1_FORM_HEADER_REUSE.md. 실제 회원/권한/인증 오류·삭제/저장 전송 미실행 |
+| W-22 | 회원 삭제 확인 | 회원 삭제 진입 | `.pop_wrap.type5`/확인·취소·닫기·재열기, 원래 한 번의 동작 경계 | FORMS | 명명된 이탈/수정삭제 비밀번호·삭제 확인 v7 → B1_NATIVE_RESIDUAL_V7.md;공통 헤더 → B1_FORM_HEADER_REUSE.md. 실제 회원/권한/인증 오류·삭제/저장 전송 미실행 |
+| W-23 | 글작성 원래 숨김 크롬·광고 정리 후 화면 | 작성/수정·지연 광고 fixture | 의도한 원래 제어는 남고 빈 공간·가려진 입력이 없음을 확인 | FORMS, HOSTFIX | 작성 shell/닉네임 추천 clear·use·help/기존 툴바·옵션 v7 → B1_WRITE_V7_IMPLEMENTATION.md;현재 버튼/폼 → B1_DARK_CONTROL_REFINEMENT.md + B1_NATIVE_RESIDUAL_V7.md. 실제 Summernote/권한/내부 추가 자식·정확한 기기 별도 |
+| W-24 | 데스크톱 사이트 모드·편집 레이어 위치 | 모바일의 실제 viewport 조건 및 제어된 stress | 확대/스크롤/툴바 끌기 뒤 열린 모든 메뉴, 화면 끝·짧은 화면 | EDITOR | 작성 shell/닉네임 추천 clear·use·help/기존 툴바·옵션 v7 → B1_WRITE_V7_IMPLEMENTATION.md;현재 버튼/폼 → B1_DARK_CONTROL_REFINEMENT.md + B1_NATIVE_RESIDUAL_V7.md. 실제 Summernote/권한/내부 추가 자식·정확한 기기 별도 |
 
 ## 필터·말머리·단축키·색상 설정
 
@@ -188,26 +188,26 @@ V-02–V-08의 두 root는 B1_PREVIEW_DRAFT_FINISH.md에서 마감했다. B1_INT
 
 | ID | UI | 여는 방법·조건 | 펼쳐볼 상태 | 근거 | 검토 상태 |
 | --- | --- | --- | --- | --- | --- |
-| P-01 | 플로팅 메뉴 버튼 | 목록/본문 | 기본/이동·크기 변경/화면 끝·원위치, 원래 입력을 가리지 않음 | PERSONAL | 소유 패널/중첩 재질 범위 → B1_GLASS_TRANSMISSION.md; 모든 자식 완료 아님 |
-| P-02 | 플로팅 메뉴 펼침 | 메뉴 버튼 클릭 | 빠른 차단·직접 차단·필터 설정·유저 관리4개 항목, 외부/Escape 닫기 | PERSONAL | 소유 패널/중첩 재질 범위 → B1_GLASS_TRANSMISSION.md; 모든 자식 완료 아님 |
-| P-03 | 작성자 선택 모드 안내 | 메뉴 → 화면에서 차단 | 선택 대상 강조·안내·선택 취소, 목록/본문/일반·이미지댓글 각각 | PERSONAL | 소유 패널/중첩 재질 범위 → B1_GLASS_TRANSMISSION.md; 모든 자식 완료 아님 |
-| P-04 | 작성자 차단/해제 선택창 | 선택 모드에서 작성자 클릭 | 닉네임·UID·IP 유무별 항목, 이미 차단된 값의 해제, 긴 이름·취소 | PERSONAL | 작성자 값별 선택/취소 범위 → B1_OWNED_INPUT_CHILDREN.md; native 작성자 메뉴 L-03과 구별 |
-| P-05 | 직접 차단 패널 | 메뉴 → 직접 차단 | UID/닉네임/IP3개 탭, UID의 추가 표시 이름 필드·각 설명 | PERSONAL | 소유 패널/중첩 재질 범위 → B1_GLASS_TRANSMISSION.md; 모든 자식 완료 아님 |
-| P-06 | 직접 차단 상태 안내 | 빈 값/중복/지연/실패를 fixture에서 재현 | 입력 요구·중복·추가 중·성공·개인 차단 OFF 안내·저장 실패 | PERSONAL | 명명된 안내/빈 결과/선택/중첩/닫기 범위 → B1_OWNED_CONDITIONAL_FINISH.md; 전 조합 완료 아님 |
-| P-07 | 차단 유저 관리 패널 | 메뉴/확장 메뉴 | UID/닉네임/IP3개 탭, 수·각 행·긴 이름·빈 목록 | PERSONAL | 명명된 안내/빈 결과/선택/중첩/닫기 범위 → B1_OWNED_CONDITIONAL_FINISH.md; 전 조합 완료 아님 |
-| P-08 | 관리 검색·검색 결과 없음 | 관리 검색 입력 | 각 탭 필터·빈/긴 검색어·일치 없음·검색 해제 | PERSONAL | 명명된 안내/빈 결과/선택/중첩/닫기 범위 → B1_OWNED_CONDITIONAL_FINISH.md; 전 조합 완료 아님 |
-| P-09 | 관리 행 선택·삭제 예정 | 관리 항목/전체 선택 | 개별 선택·해제·현재 탭 전체·모든 탭 전체·저장 전 표시 | PERSONAL | 명명된 안내/빈 결과/선택/중첩/닫기 범위 → B1_OWNED_CONDITIONAL_FINISH.md; 전 조합 완료 아님 |
-| P-10 | 개인 차단 켜기/끄기 | 관리 상단 스위치 | 켜짐/꺼짐·목록 유지·보이는 상태 피드백 | PERSONAL | 소유 패널/중첩 재질 범위 → B1_GLASS_TRANSMISSION.md; 모든 자식 완료 아님 |
-| P-11 | 관리창 위 직접 추가·백업 중첩 | 관리 → 직접 추가/백업 | 각각의 자식 창·배경 전체 차단·닫은 뒤 부모 검색/탭/선택 상태 | PERSONAL, GEOMETRY | 명명된 안내/빈 결과/선택/중첩/닫기 범위 → B1_OWNED_CONDITIONAL_FINISH.md; 전 조합 완료 아님 |
-| P-12 | 백업 내보내기/가져오기 | 관리 → 백업 | JSON 입력·큰 합성 목록·파일/클립보드/직접 입력·병합 결과 | PERSONAL | 합성 text/file 병합·형식 거부 → B1_OWNED_INPUT_CHILDREN.md; OS clipboard/export/file-read 실패 별도 |
-| P-13 | 메뉴 버튼 크기 조절 | 확장 메뉴 → 크기 | 최솟값/중간/최댓값·실시간 미리보기·기본값/취소/저장 | PERSONAL | 크기60/160 미리보기/취소 범위 → B1_OWNED_INPUT_CHILDREN.md; 전 기기 제스처 별도 |
-| P-14 | 개인 차단 창 닫기/재열기 | 각 창의 해당 원래 닫기 경로 | 헤더/버튼/배경/Escape 지원별·중첩·내부 스크롤·드래그; 미지원 동작을 만들어내지 않음 | PERSONAL, GEOMETRY | 명명된 안내/빈 결과/선택/중첩/닫기 범위 → B1_OWNED_CONDITIONAL_FINISH.md; 전 조합 완료 아님 |
+| P-01 | 플로팅 메뉴 버튼 | 목록/본문 | 기본/이동·크기 변경/화면 끝·원위치, 원래 입력을 가리지 않음 | PERSONAL | 메뉴/FAB·작성자 선택/크기 v7 → B1_MENU_SELECTION_SIZE_V7_IMPLEMENTATION.md;값별 원본 기능 근거 → B1_OWNED_INPUT_CHILDREN.md. 전체 기기 제스처/권한 조합 별도 |
+| P-02 | 플로팅 메뉴 펼침 | 메뉴 버튼 클릭 | 빠른 차단·직접 차단·필터 설정·유저 관리4개 항목, 외부/Escape 닫기 | PERSONAL | 메뉴/FAB·작성자 선택/크기 v7 → B1_MENU_SELECTION_SIZE_V7_IMPLEMENTATION.md;값별 원본 기능 근거 → B1_OWNED_INPUT_CHILDREN.md. 전체 기기 제스처/권한 조합 별도 |
+| P-03 | 작성자 선택 모드 안내 | 메뉴 → 화면에서 차단 | 선택 대상 강조·안내·선택 취소, 목록/본문/일반·이미지댓글 각각 | PERSONAL | 메뉴/FAB·작성자 선택/크기 v7 → B1_MENU_SELECTION_SIZE_V7_IMPLEMENTATION.md;값별 원본 기능 근거 → B1_OWNED_INPUT_CHILDREN.md. 전체 기기 제스처/권한 조합 별도 |
+| P-04 | 작성자 차단/해제 선택창 | 선택 모드에서 작성자 클릭 | 닉네임·UID·IP 유무별 항목, 이미 차단된 값의 해제, 긴 이름·취소 | PERSONAL | 메뉴/FAB·작성자 선택/크기 v7 → B1_MENU_SELECTION_SIZE_V7_IMPLEMENTATION.md;값별 원본 기능 근거 → B1_OWNED_INPUT_CHILDREN.md. 전체 기기 제스처/권한 조합 별도 |
+| P-05 | 직접 차단 패널 | 메뉴 → 직접 차단 | UID/닉네임/IP3개 탭, UID의 추가 표시 이름 필드·각 설명 | PERSONAL | 직접 차단/피드백·백업 v7 → B1_MANAGEMENT_CHILDREN_V7_IMPLEMENTATION.md;합성 입력/merge 근거 → B1_OWNED_INPUT_CHILDREN.md. 실제 OS clipboard/export/file-read 실패 별도 |
+| P-06 | 직접 차단 상태 안내 | 빈 값/중복/지연/실패를 fixture에서 재현 | 입력 요구·중복·추가 중·성공·개인 차단 OFF 안내·저장 실패 | PERSONAL | 직접 차단/피드백·백업 v7 → B1_MANAGEMENT_CHILDREN_V7_IMPLEMENTATION.md;합성 입력/merge 근거 → B1_OWNED_INPUT_CHILDREN.md. 실제 OS clipboard/export/file-read 실패 별도 |
+| P-07 | 차단 유저 관리 패널 | 메뉴/확장 메뉴 | UID/닉네임/IP3개 탭, 수·각 행·긴 이름·빈 목록 | PERSONAL | 관리/선택·중첩/닫기 v7 → B1_OWNED_MANAGEMENT_V7_IMPLEMENTATION.md + B1_MANAGEMENT_CHILDREN_V7_IMPLEMENTATION.md;조건별 기능 이력 → B1_OWNED_CONDITIONAL_FINISH.md. 전 조합 미관 완료 아님 |
+| P-08 | 관리 검색·검색 결과 없음 | 관리 검색 입력 | 각 탭 필터·빈/긴 검색어·일치 없음·검색 해제 | PERSONAL | 관리/선택·중첩/닫기 v7 → B1_OWNED_MANAGEMENT_V7_IMPLEMENTATION.md + B1_MANAGEMENT_CHILDREN_V7_IMPLEMENTATION.md;조건별 기능 이력 → B1_OWNED_CONDITIONAL_FINISH.md. 전 조합 미관 완료 아님 |
+| P-09 | 관리 행 선택·삭제 예정 | 관리 항목/전체 선택 | 개별 선택·해제·현재 탭 전체·모든 탭 전체·저장 전 표시 | PERSONAL | 관리/선택·중첩/닫기 v7 → B1_OWNED_MANAGEMENT_V7_IMPLEMENTATION.md + B1_MANAGEMENT_CHILDREN_V7_IMPLEMENTATION.md;조건별 기능 이력 → B1_OWNED_CONDITIONAL_FINISH.md. 전 조합 미관 완료 아님 |
+| P-10 | 개인 차단 켜기/끄기 | 관리 상단 스위치 | 켜짐/꺼짐·목록 유지·보이는 상태 피드백 | PERSONAL | 관리/선택·중첩/닫기 v7 → B1_OWNED_MANAGEMENT_V7_IMPLEMENTATION.md + B1_MANAGEMENT_CHILDREN_V7_IMPLEMENTATION.md;조건별 기능 이력 → B1_OWNED_CONDITIONAL_FINISH.md. 전 조합 미관 완료 아님 |
+| P-11 | 관리창 위 직접 추가·백업 중첩 | 관리 → 직접 추가/백업 | 각각의 자식 창·배경 전체 차단·닫은 뒤 부모 검색/탭/선택 상태 | PERSONAL, GEOMETRY | 관리/선택·중첩/닫기 v7 → B1_OWNED_MANAGEMENT_V7_IMPLEMENTATION.md + B1_MANAGEMENT_CHILDREN_V7_IMPLEMENTATION.md;조건별 기능 이력 → B1_OWNED_CONDITIONAL_FINISH.md. 전 조합 미관 완료 아님 |
+| P-12 | 백업 내보내기/가져오기 | 관리 → 백업 | JSON 입력·큰 합성 목록·파일/클립보드/직접 입력·병합 결과 | PERSONAL | 직접 차단/피드백·백업 v7 → B1_MANAGEMENT_CHILDREN_V7_IMPLEMENTATION.md;합성 입력/merge 근거 → B1_OWNED_INPUT_CHILDREN.md. 실제 OS clipboard/export/file-read 실패 별도 |
+| P-13 | 메뉴 버튼 크기 조절 | 확장 메뉴 → 크기 | 최솟값/중간/최댓값·실시간 미리보기·기본값/취소/저장 | PERSONAL | 메뉴/FAB·작성자 선택/크기 v7 → B1_MENU_SELECTION_SIZE_V7_IMPLEMENTATION.md;값별 원본 기능 근거 → B1_OWNED_INPUT_CHILDREN.md. 전체 기기 제스처/권한 조합 별도 |
+| P-14 | 개인 차단 창 닫기/재열기 | 각 창의 해당 원래 닫기 경로 | 헤더/버튼/배경/Escape 지원별·중첩·내부 스크롤·드래그; 미지원 동작을 만들어내지 않음 | PERSONAL, GEOMETRY | 관리/선택·중첩/닫기 v7 → B1_OWNED_MANAGEMENT_V7_IMPLEMENTATION.md + B1_MANAGEMENT_CHILDREN_V7_IMPLEMENTATION.md;조건별 기능 이력 → B1_OWNED_CONDITIONAL_FINISH.md. 전 조합 미관 완료 아님 |
 
 ## 미리보기·읽은 글 표시·초안 알림
 
 | ID | UI | 여는 방법·조건 | 펼쳐볼 상태 | 근거 | 검토 상태 |
 | --- | --- | --- | --- | --- | --- |
-| V-01 | 마지막으로 열어본 글 표시 | 글 열기 → 목록 복귀 | 표시/옵션OFF/대상 없음, 목록 교체 후 같은 글·스크롤 복귀 | TOOLS | 읽은 글 표시/옵션 기존 기능·목록 범위 → UI_LIVE_REGRESSION_REPAIR.md + B1_LIST_COHESION.md |
+| V-01 | 마지막으로 열어본 글 표시 | 글 열기 → 목록 복귀 | 표시/옵션OFF/대상 없음, 목록 교체 후 같은 글·스크롤 복귀 | TOOLS | 목록/공통 헤더 최신 재질·선택·페이징/검색 → B1_LIST_V7_MATERIAL.md + B1_DARK_CONTROL_REFINEMENT.md. 이전 복구/기능 근거는 명명된 상태만 유지;전 데이터/페이지 조합 판정 아님 |
 | V-02 | 글 미리보기 패널·헤더 | 미리보기 ON → hover/터치 길게 누르기 | 포인터/터치·원문 열기·닫기·화면 끝·배경 스크롤 | TOOLS | 미리보기 B1 chrome/링크/닫기 마감 → B1_PREVIEW_DRAFT_FINISH.md; light/dark·anchor/sheet·좁은 proxy 범위 |
 | V-03 | 미리보기 로딩/내용/빈 상태 | 제어된 fetch/캐시 | 로딩→성공/본문 없음·긴 내용·캐시 적중·다른 글로 전환 | TOOLS | 공통 preview root B1 적용·기존 정제/캐시/전환 동작 유지 → B1_PREVIEW_DRAFT_FINISH.md; 모든 로딩/빈 자식 외형 완료 아님 |
 | V-04 | 미리보기 이미지·대체 링크 | 미디어가 있는 미리보기 | 실제 크기/지연/실패 이미지·원문 링크, 원문에서 보도록 대체된 미디어 | TOOLS | decoded640×240 미디어/paper 확인 → B1_PREVIEW_DRAFT_FINISH.md; 모든 형식·지연/실패 시각 변형 별도 |
@@ -234,14 +234,14 @@ V-02–V-08의 두 root는 B1_PREVIEW_DRAFT_FINISH.md에서 마감했다. B1_INT
 
 | ID | 확인 축 | 필수 확인 내용 | 검토 상태 |
 | --- | --- | --- | --- |
-| X-01 | 테마·색상 | 라이트/다크·14개 팔레트 적용, 선택/비선택·성공/오류·비활성 구분·미디어 원래 색상 | 가족별 receipt의 선택 상태만 근거 재사용; 전체 UI 통합 축은 UNKNOWN → B1_INTEGRATED_UI_GAPS.md |
+| X-01 | 테마·색상 | 라이트/다크·14개 팔레트 적용, 선택/비선택·성공/오류·비활성 구분·미디어 원래 색상 | B1_V7_FINAL_SCOPE_REVIEW.md와 각 가족 receipt의 명명된 상태만 재사용. 모든 교차 조합의 통합 PASS가 아니며 변화 없는 영역의 반복 검사를 요구하지 않음 |
 | X-02 | 화면 폭·높이·확대 | 기본 `PHONE_VIEWPORT_PROFILE.md`: screen412×1006/layout980×2306/scale0.420684/DPR2.625. 390/412 layout stress·짧은/긴 창은 별도 표기; 실제 readback과 proxy 차이 기록 | 980×2306 phone-layout proxy/선택 stress 범위; 실제 scale/DPR/device 차이 유지 → PHONE_VIEWPORT_PROFILE.md |
-| X-03 | 입력·접근 | 포인터/터치/키보드, 보이는 포커스·원래 라벨·양의 히트 영역·탭 순서·닫은 뒤 복귀 | 가족별 receipt의 선택 상태만 근거 재사용; 전체 UI 통합 축은 UNKNOWN → B1_INTEGRATED_UI_GAPS.md |
-| X-04 | 계정·갤러리·페이지 | 메이저/마이너/미니, 회원/비회원·본인/타인, 목록/본문/작성/수정/삭제의 실제 적용 여부 | 원래 gallery/form/login 명명 경로 범위; 실제 계정/본인/권한 조합 UNKNOWN |
-| X-05 | 레이어 맥락 | 각 창의 뒤 배경·가리는 형제, 원래 가능한 중첩, backdrop 전체 범위, 닫기·내부 스크롤·외부 클릭 | 가족별 receipt의 선택 상태만 근거 재사용; 전체 UI 통합 축은 UNKNOWN → B1_INTEGRATED_UI_GAPS.md |
-| X-06 | 콘텐츠·데이터 | 빈/하나/많음·긴 한국어/URL/이름·실제 크기 이미지·로딩/오류·비활성·새 결과 | 가족별 receipt의 선택 상태만 근거 재사용; 전체 UI 통합 축은 UNKNOWN → B1_INTEGRATED_UI_GAPS.md |
-| X-07 | 재연결·복원 | 열기/닫기/재열기·동적 교체·취소/원래 UI 복원, 중복 버튼·이벤트·스크롤 잠금 없음 | 가족별 receipt의 선택 상태만 근거 재사용; 전체 UI 통합 축은 UNKNOWN → B1_INTEGRATED_UI_GAPS.md |
-| X-08 | 공유 PC UI | 공유 필터/관리/팔레트 UI와 설정 의미 검증, 모바일 호스트 CSS의 PC 유출 금지 | 공유 presenter/PC fallback 범위 유지; login pure-theme exact parity → B1_LOGIN_ENTRY_IMPLEMENTATION.md; 이번 PC 재검사 없음 |
+| X-03 | 입력·접근 | 포인터/터치/키보드, 보이는 포커스·원래 라벨·양의 히트 영역·탭 순서·닫은 뒤 복귀 | B1_V7_FINAL_SCOPE_REVIEW.md와 각 가족 receipt의 명명된 상태만 재사용. 모든 교차 조합의 통합 PASS가 아니며 변화 없는 영역의 반복 검사를 요구하지 않음 |
+| X-04 | 계정·갤러리·페이지 | 메이저/마이너/미니, 회원/비회원·본인/타인, 목록/본문/작성/수정/삭제의 실제 적용 여부 | 원래 갤러리/폼/sign 및 실제 로그인·일반 guest 비밀번호의 명명 경로 → B1_ACCOUNT_UI_PREFLIGHT.md/B1_ACCOUNT_PICKER_IMPLEMENTATION.md. 전체 본인/타인/관리자·이미지 권한 조합 UNKNOWN |
+| X-05 | 레이어 맥락 | 각 창의 뒤 배경·가리는 형제, 원래 가능한 중첩, backdrop 전체 범위, 닫기·내부 스크롤·외부 클릭 | B1_V7_FINAL_SCOPE_REVIEW.md와 각 가족 receipt의 명명된 상태만 재사용. 모든 교차 조합의 통합 PASS가 아니며 변화 없는 영역의 반복 검사를 요구하지 않음 |
+| X-06 | 콘텐츠·데이터 | 빈/하나/많음·긴 한국어/URL/이름·실제 크기 이미지·로딩/오류·비활성·새 결과 | B1_V7_FINAL_SCOPE_REVIEW.md와 각 가족 receipt의 명명된 상태만 재사용. 모든 교차 조합의 통합 PASS가 아니며 변화 없는 영역의 반복 검사를 요구하지 않음 |
+| X-07 | 재연결·복원 | 열기/닫기/재열기·동적 교체·취소/원래 UI 복원, 중복 버튼·이벤트·스크롤 잠금 없음 | B1_V7_FINAL_SCOPE_REVIEW.md와 각 가족 receipt의 명명된 상태만 재사용. 모든 교차 조합의 통합 PASS가 아니며 변화 없는 영역의 반복 검사를 요구하지 않음 |
+| X-08 | 공유 PC UI | 공유 필터/관리/팔레트 UI와 설정 의미 검증, 모바일 호스트 CSS의 PC 유출 금지 | 공유 PC 유지·변경 scope → B1_PALETTE_CONVENIENCE_V7.md;Mobile 전용 후속 호스트 UI는 PC 변경 없음. 이번 문서 감사의 PC 제품 재실행/새 PASS 없음 |
 
 ## 디자인 검토에서 전부 꺼내 보는 방법
 

@@ -1,5 +1,7 @@
 # V7 integrated gap review —2026-11-01
 
+> Historical0E1A review. The four residual material groups below were subsequently implemented in B1_NATIVE_RESIDUAL_V7.md;public DCCon/account/conditional scopes also progressed. Current disposition is B1_V7_FINAL_SCOPE_REVIEW.md → CURRENT_STATE.md/NEXT_TASK.md. Preserve the original findings as history,not a new task queue.
+
 **REVIEW_COMPLETE / UI_NEEDS_WORK**,not whole-UI approval. Source checkpoint9c56030edb025de736b7b349837d71f95f98b9db;Mobile0E1A75FD/PC E4706617 unchanged. Mode:Operate/Read. This completes NEXT's inventory reconciliation and chooses one remaining implementation batch:B1_NATIVE_RESIDUAL_V7.md. No production/fixture/harness/build/metadata change or actual account/site submission.
 
 ## Disposition
