@@ -1,5 +1,11 @@
 # Agent Maintenance Notes
 
+## Conditional popup roles/cascade —2026-11-02
+
+B1_CONDITIONAL_CHILDREN_IMPLEMENTATION.md:exact image-password ID and nested grey close were missing contextual roles;detail projection stopped before its interior. Repair in the existing comment adapter/presenter,not a global theme layer. Inspect every inherited role:comment-media margin/radius can clip native pack art;native metadata/header specificity can defeat local roles. Use current semantic/foreground values with rendered contrast on transmitting backing.
+
+Model actual popup.css defaults before classification:the base fixture460px/bottom100% scaffold caused a false collapsed frame/width. Native info stays auto-sized;hidden alternatives are never forced visible. Anonymous bigcon account data is optional and must not gate independent public detail inspection. Current response/campaign timeouts do not revoke the proven installed Chrome/Tampermonkey route;retain prior success and mark only final live popup entry UNKNOWN.
+
 ## Integrated v7 gap triage —2026-11-01
 
 Source token grep is a locator,not a rendered defect verdict:existing convenience fallbacks and the specialized adopted settings-memo workspace must not be repainted because generic old token names remain. Render suspect consumers and compare full primary bg/ink/rim/shadow. At the0E review,gallery settings,author memo/picker,password/leave and login retained older native action roles;the four-presenter0A5583B6 batch now closes those material consumers without a new framework(B1_NATIVE_RESIDUAL_V7.md).

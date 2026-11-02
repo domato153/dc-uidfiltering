@@ -2,22 +2,22 @@
 
 ## Current execution
 
-- Active plan: B1_CONDITIONAL_CHILDREN_REFERENCE.md delivers one grouped detail/bigcon/image-password design draft. Review it,then one same-owner implementation batch;no runtime repair in this unit.
+- Active plan: B1_CONDITIONAL_CHILDREN_IMPLEMENTATION.md closes scoped detail/bigcon/image-password v7 on79A4. NEXT owns final coverage/scope reconciliation;unavailable live states remain explicit.
 - Workspace path: `.` (private prompt supplies exact worktree). Preserve debug.log unread/unstaged.
-- Active stage: `header-navigation` formal admission remains open. This design-reference unit does not approve whole UI or promote architecture.
+- Active stage: `header-navigation` formal admission remains open. Scoped local UI implementation is not whole-UI/native permission/device or architecture promotion.
 - Accepted visual preference: Actual memo/current pale paired dark primary,transmitting outer chrome,stable reading and quiet label-sized auxiliaries. Generated proposals guide composition;memo/current rules govern fine detail.
-- Source state: Source checkpoint base HEAD `0414d43c756bc8da5e23fb6a11917ade80061adc` on `codex/ui-port-boundary`. Product/fixture/harness/build/metadata/PC/architecture unchanged. Publication/CI belongs to the exact working checkpoint receipt.
-- Local-only state: `LOCAL_ONLY_EVIDENCE`;artifacts/b1-conditional-children-reference-2026-11-02 holds proposal/delivery diagnostics;prior raw native/account acquisition stays ignored. One IAB comparison tab,one selected image;local server10067. No new live account actions.
-- Candidate fingerprint: `370e4728a2b1217bcf9950d12dc1ad172085e19a00c84fb34e77c119039c81ac`
-- Last current audit: READY reference draft / DRAFT_PENDING_USER_REVIEW. Generated1536×1024 board inspected and decoded in user IAB;original/current routes decode. One refinement fixes generated legacy-blue links and large use action. Known runtime X/detail/image-password gaps remain;no product acceptance.
-- Current stage receipt: `verification/receipts/2026-11-02-b1-conditional-children-reference.json` SHA-256 `2662794A605B05243B2B962213F7BDE70E9DA9DBA5A980437F2D55409D03BDB9`. Prior654FF895 account/ordinary guest finish and triage retain only their own scopes.
-- Accepted baseline: Prior named v7 scope retained. New gaps concern conditional children excluded from the last acquired batch;not a regression claim or a reason to repeat unchanged whole suites. Original native handlers distinguish harmless views from immediate mutation.
-- Current artifact: Mobile3.5.5 654FF89553A0B777FA5351726AE83BDCF49AF8D14AC7A102FEBAFAEC4F4A05D7 root/dist/guard;PC1.9.9 E4706617DE96D3E0719144724FDAE1B62D7511674D6564DCBD82F2C702802E14 root/dist unchanged. No build/version/release change.
-- Blockers: No delivery blocker. User composition review pending before grouped implementation. Known runtime role/material gaps remain;image-password live permission/focus/submit stays UNKNOWN.
-- Pending live checks: After draft adoption,finish acquired bigcon/detail and exact image-password shape in one batch. Check affected C-11/C-13/ancestor and theme consumers only. Folder/use-buy/editor/own-admin/delete/error/CAPTCHA/device scope stays limited;do not mutate to manufacture states.980x2306 layout proxy,390stress. Image replies N/A;four uploads deferred;guidebook after whole UI ends.
+- Source state: Source checkpoint base HEAD `6e6834c0d84efcbadff790db9bc583caf2ee24b5` on `codex/ui-port-boundary`. Existing Mobile comment adapter/presenter only;no new ownership,shared factory,PC,metadata/storage or version change. Exact publication/CI is in checkpoint receipt.
+- Local-only state: `LOCAL_ONLY_EVIDENCE`;artifacts/b1-conditional-children-finish-2026-11-02 binds synthetic source/semantic/palette/visual and failed intermediate live attempts. No credentials/raw account data in Git. All owned test Chrome/profiles/vendor copies closed/removed;one selected-image IAB viewer/server10067.
+- Candidate fingerprint: `6481c09c7421322ed7ec23aeea8550435371d0681ec713509758d2d219f32d84`
+- Last current audit: READY scoped local implementation / FINAL_LIVE_UI_UNKNOWN.79A4:5 conditional contexts,adjacent2+2,5 semantic pairs0diff;12 primary/6 link-date/4 status contrast samples and2 cancels.6 image pairs REVIEWED with intentional pixels;8 current roots decode in user IAB. No all-state beauty/product acceptance.
+- Current stage receipt: `verification/receipts/2026-11-02-b1-conditional-children-finish.json` SHA-256 `D6B1E766275492B0BF0FE0F6611021CE0371CBCC980C1C4751C8BA2E89CD101F`. Prior account/live receipts retain only their exact named scopes.
+- Accepted baseline: User-adopted v7 memo/current dark primary and generated conditional grouping retained. Confirmed three child role/material gaps are implemented locally;native callbacks/nodes/parents/media/hidden states preserved.
+- Current artifact: Mobile3.5.5 79A4C12FC640ED6984539521A992E5D0F32AC884716BA58842C706EF62FCC7C8 root/dist/guard;PC1.9.9 E4706617DE96D3E0719144724FDAE1B62D7511674D6564DCBD82F2C702802E14 root/dist unchanged. No version/release promotion.
+- Blockers: No known remaining code defect in this bounded batch. Final live popup entry unverified after campaign/picker response timeouts. Image-password real permissions/focus/submit and account/data/device variants remain UNKNOWN.
+- Pending live checks: Final scope review first;reuse unchanged completed-family receipts. Retry safe actual popup entry only for new readiness/evidence;do not manufacture folder/purchase/delete/issuance/CAPTCHA/account states.980x2306 layout proxy,390stress;image replies N/A,four uploads deferred,guidebook after whole UI closure.
 
 ```dcuf-current-artifacts
-{"schemaVersion":1,"mobile":{"sha256":"654FF89553A0B777FA5351726AE83BDCF49AF8D14AC7A102FEBAFAEC4F4A05D7"},"pc":{"sha256":"E4706617DE96D3E0719144724FDAE1B62D7511674D6564DCBD82F2C702802E14"}}
+{"schemaVersion":1,"mobile":{"sha256":"79A4C12FC640ED6984539521A992E5D0F32AC884716BA58842C706EF62FCC7C8"},"pc":{"sha256":"E4706617DE96D3E0719144724FDAE1B62D7511674D6564DCBD82F2C702802E14"}}
 ```
 
 ## Draft-complete checkpoint — 2026-10-21

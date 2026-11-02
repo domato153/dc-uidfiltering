@@ -288,6 +288,12 @@
           "property": "margin",
           "hostCollision": "Public6778319 popup.css centers the textcon submit with .txt_dccon_box .latest_section_box + .btn_blue { margin:18px auto 0!important }. Reset only picker primary-action margin so the approved trailing action uses the content grid; original nodes/events/display lifecycle remain native.",
           "testRef": "B1 content: native picker isolation glass and original input"
+        },
+        {
+          "selector": "[data-dcuf-role=\"native-comment-popup\"][data-dcuf-comment-role=\"comment-detail\"]",
+          "property": "margin",
+          "hostCollision": "Public6778319 popup.css uses .cmt_txtbox #package_detail {margin:-8px 0 0 167px} and a reply variant with166px. Reset only the projected detail margin to prevent the legacy comment gutter from defeating its bounded media layout;native inline offset,nodes,events and nested hidden states remain unchanged. No global priority or selector-ID escalation.",
+          "testRef": "B1 conditional children: detail bigcon and image password"
         }
       ],
       "cascadeExceptionProfiles": [],

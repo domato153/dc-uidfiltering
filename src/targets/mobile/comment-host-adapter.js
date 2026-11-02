@@ -199,19 +199,41 @@
             root.querySelectorAll('#user_data_lyr, .user_data, .user_data_add, .pop_wrap.type2, .pop_wrap.type3, .cmt_delpw_box, [id$="_delpw_box"]').forEach((popup) => {
                 mark(root, popup, { role: 'native-comment-popup', state: popup.hidden || popup.style.display === 'none' ? 'closed' : 'open' });
                 const picker = popup.id === 'div_con' || popup.id === 'div_txtcon';
-                const password = popup.matches('#cmt_delpw_box.cmt_delpw_box');
-                markCommentContext(root, popup, picker ? 'comment-picker' : password ? 'comment-password' : 'comment-popup');
+                const password = popup.matches('#cmt_delpw_box.cmt_delpw_box, #img_cmt_delpw_box.cmt_delpw_box');
+                const detail = popup.id === 'package_detail' && popup.querySelector(':scope > .dccon_popinfo');
+                const info = popup.id === 'daewangcon_layer' && popup.querySelector(':scope > .ly_daewang');
+                markCommentContext(root, popup, picker ? 'comment-picker' : password ? 'comment-password' : detail ? 'comment-detail' : info ? 'comment-info' : 'comment-popup');
                 popup.querySelectorAll(':scope > .pop_content').forEach(panel => markCommentContext(root, panel, 'popup-panel'));
                 popup.querySelectorAll('.tit, .pop_tit, .pop_dccon_tit').forEach(title => markCommentContext(root, title, 'popup-title'));
+                const parts = (selector, role) => popup.querySelectorAll(selector).forEach(element => {
+                    if (element.closest('.pop_wrap') === popup) markCommentContext(root, element, role);
+                });
+                if (detail) {
+                    parts(':scope > .pop_content > .pop_head', 'popup-detail-heading');
+                    parts('.pop_head > h3', 'popup-title');
+                    parts('.info_viewbox', 'popup-detail-summary');
+                    parts('.info_viewimg', 'popup-detail-thumbnail');
+                    parts('.info_viewtxt', 'popup-detail-info');
+                    parts('.viewtxt_top', 'popup-detail-actions');
+                    parts('.con_title', 'popup-detail-title');
+                    parts('.viewtxt_cont', 'popup-detail-body');
+                    parts('.inner_info', 'popup-detail-meta');
+                    parts('.seller_name a', 'popup-detail-link');
+                    parts('.btn_blue', 'popup-primary-action');
+                    parts('.btn_grey', 'popup-action');
+                    parts('.dccon_list_box.popinfo', 'popup-detail-media');
+                    parts('.dccon_list', 'popup-media-list');
+                    parts('.dccon_list > li', 'popup-media-item');
+                    parts('.img_dccon', 'popup-media-button');
+                    parts(':scope > .package_close', 'popup-context-close');
+                }
+                if (info) parts(':scope > .poply_greyclose', 'popup-context-close');
                 if (password) {
                     popup.querySelectorAll('input.cmt_delpw[type="password"]').forEach(field => markCommentContext(root, field, 'popup-password-field'));
                     popup.querySelectorAll('.btn_ok').forEach(button => markCommentContext(root, button, 'popup-primary-action'));
                     popup.querySelectorAll('.btn_cmtpw_close').forEach(button => markCommentContext(root, button, 'popup-password-close'));
                 }
                 if (!picker) return;
-                const parts = (selector, role) => popup.querySelectorAll(selector).forEach(element => {
-                    if (element.closest('.pop_wrap') === popup) markCommentContext(root, element, role);
-                });
                 parts('.txt_dccon_box', 'popup-content-stack');
                 parts('.txt_dccon_box > .head', 'popup-heading');
                 parts('.head > .tiptxt', 'popup-help');
@@ -249,7 +271,7 @@
                     if (button.matches('.btn_color, .img_dccon')) return;
                     // Native hidden/sprite actions must not inherit a text
                     // button's display,font,background or minimum size.
-                    const icon = button.matches('.btn_starmark,.btn_bkmark,button.sp_img,.btn_close,.btn_bkm_close,.poply_whiteclose,.poply_bgblueclose');
+                    const icon = button.matches('.btn_starmark,.btn_bkmark,button.sp_img,.btn_close,.btn_bkm_close,.poply_whiteclose,.poply_bgblueclose,.poply_greyclose');
                     markCommentContext(root, button, icon ? 'popup-icon-action' : button.matches('.btn_blue') ? 'popup-primary-action' : 'popup-action');
                 });
             });

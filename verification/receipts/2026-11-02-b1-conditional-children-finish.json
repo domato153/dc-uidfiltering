@@ -1,0 +1,208 @@
+{
+  "schemaVersion": 1,
+  "kind": "B1_CONDITIONAL_CHILDREN_FINISH",
+  "status": "SCOPED_LOCAL_VERIFIED_FINAL_LIVE_UI_UNKNOWN",
+  "sourceBaseHead": "6e6834c0d84efcbadff790db9bc583caf2ee24b5",
+  "candidateFingerprint": "6481c09c7421322ed7ec23aeea8550435371d0681ec713509758d2d219f32d84",
+  "artifacts": {
+    "mobileVersion": "3.5.5",
+    "mobileSha256": "79A4C12FC640ED6984539521A992E5D0F32AC884716BA58842C706EF62FCC7C8",
+    "pcVersion": "1.9.9",
+    "pcSha256": "E4706617DE96D3E0719144724FDAE1B62D7511674D6564DCBD82F2C702802E14",
+    "rootDistGuardMatch": true,
+    "officialRelease": false
+  },
+  "scope": {
+    "ids": [
+      "C-11 detail and enabled/disabled info",
+      "C-13 exact image-password role;ordinary adjacent retained"
+    ],
+    "owners": [
+      "mobile-comment-host-adapter",
+      "mobile-comment-presenter"
+    ],
+    "acceptedRegistryChanged": false,
+    "ownerTopologyChanged": false,
+    "candidateCascadeContractUpdated": true,
+    "storageMetadataNetworkOwnerChanged": false
+  },
+  "inputs": [
+    {
+      "path": "docs/work/B1_CONDITIONAL_CHILDREN_IMPLEMENTATION.md",
+      "sha256": "b2a2a1602adefa4df580a3b99f8543c774afc0223e878b0e280766cab815d998"
+    },
+    {
+      "path": "docs/ui-surface-contracts.md",
+      "sha256": "bf480297cdf4a413c6970e86bbc7e5e8c43a028295e8e9bbcdc6c5773ae6723c"
+    },
+    {
+      "path": "architecture/ui-surfaces.json",
+      "sha256": "6fddd78f4e17d4053702a0d4c1a931dd937a9e2f5c11f0a69f5daadb36e36448"
+    },
+    {
+      "path": "architecture/candidates/mobile-ui-modernization-assurance.json",
+      "sha256": "62befbbf0cb1878bce1566bbae614d1f26bfb0caf93d253a3b7220e0eabf563d"
+    },
+    {
+      "path": "src/targets/mobile/comment-host-adapter.js",
+      "sha256": "a577e5ace5ec511d0734b0ec0649cd159e360bb5766c260bde1b4f44764346f0"
+    },
+    {
+      "path": "src/targets/mobile/comment-presenter.js",
+      "sha256": "1be49677d3a1366b2da93e6639b30d45c6212ece31e69bbdec01f26ee762a994"
+    },
+    {
+      "path": "testbed/fixtures/b1-conditional-children.mjs",
+      "sha256": "6a8513f7d5351236d9fc1e115a8acdabf5e9941e34745bb881815d8466393529"
+    },
+    {
+      "path": "testbed/ui-conditional-children-contract.mjs",
+      "sha256": "891d207ce224fa255bc2b28e7c0b7eebc31c4b5941433567b91a2e9954095705"
+    },
+    {
+      "path": "testbed/run-tests.mjs",
+      "sha256": "ea3f01169f73cbfce6fbd32ab0c14c3e695b549af9c216548e572742eacd4bc2"
+    },
+    {
+      "path": "src/targets/mobile/theme-material-values.js",
+      "sha256": "da6cc37a3f71f5ff696aa57fddf6c52e254aa01ce2dfb0b856c0979a6aac189c"
+    },
+    {
+      "path": "docs/work/UI_REVIEW_CHECKLIST.md",
+      "sha256": "b25e9f856cfd34faeaff11b194afa029190f9692a6c672a8aa5522283eff221e"
+    }
+  ],
+  "evidence": [
+    {
+      "path": "artifacts/b1-conditional-children-finish-2026-11-02/offline.json",
+      "sha256": "5e26c1dc3b9d517740fc639d5f66b21a00ca2f0fdd38165bb28d54eceea7983c"
+    },
+    {
+      "path": "artifacts/b1-conditional-children-finish-2026-11-02/red.json",
+      "sha256": "d025468c9226d279ac2248544d360fbe38cccb897cb3bdb7710e7c5d88721872"
+    },
+    {
+      "path": "artifacts/b1-conditional-children-finish-2026-11-02/palette.json",
+      "sha256": "8513e73a67b9e1046dbfd728c25208402b2568d36e2b9198335be760b44916e5"
+    },
+    {
+      "path": "artifacts/b1-conditional-children-finish-2026-11-02/candidate.jsonl",
+      "sha256": "74c7b043ad5c7d3b187bdb5d2c22ed096e5ed8fbac3ecc16e4161215ebee6ade"
+    },
+    {
+      "path": "artifacts/b1-conditional-children-finish-2026-11-02/control.jsonl",
+      "sha256": "c57fd6e07737275424cc9272aa26ba41ff75bec427fd8fcb1598f485e7ed683c"
+    },
+    {
+      "path": "artifacts/b1-conditional-children-finish-2026-11-02/visual-manifest.json",
+      "sha256": "4398b42b5c34dfe9d8ad127aa20c8af83307154dc771a4d43d90bcfeb5fc0305"
+    },
+    {
+      "path": "artifacts/b1-conditional-children-finish-2026-11-02/visual-settled/review.json",
+      "sha256": "e40e561d254e77b96f60f09d9e740d72217780f964a2ac05dc8091ebcd0414dd"
+    },
+    {
+      "path": "artifacts/b1-conditional-children-finish-2026-11-02/live/report.json",
+      "sha256": "6d49c05f26a963e3eae5ed7a1148085db8c239831c1427a25c1d930855075989"
+    },
+    {
+      "path": "artifacts/b1-conditional-children-finish-2026-11-02/live-public/report.json",
+      "sha256": "ba4f0d5119dcb494e84566d59d2e6843c264e90984dc56d9a5d7d4f8d7c849f2"
+    },
+    {
+      "path": "artifacts/b1-conditional-children-finish-2026-11-02/live-public-detail/report.json",
+      "sha256": "150f09c9179a039f1a2b892905cf8d9fb621fd92b7baa0b0ebff94ce151de0a1"
+    }
+  ],
+  "red": {
+    "controlSha256": "654FF89553A0B777FA5351726AE83BDCF49AF8D14AC7A102FEBAFAEC4F4A05D7",
+    "contexts": 2,
+    "expectedRoleMaterialGeometryFailures": true
+  },
+  "tests": {
+    "conditionalContexts": 5,
+    "adjacentAccountOrdinaryContexts": 2,
+    "adjacentAnonymousPickerContexts": 2,
+    "semanticPairs": 5,
+    "semanticDifferences": 0,
+    "fullProduct": "NOT_RUN_USER_IMPACT_SELECTED",
+    "pcAndBfcache": "NOT_RUN_UNCHANGED_UNRELATED",
+    "formalAcceptance": "UNKNOWN"
+  },
+  "palette": {
+    "primarySamples": 12,
+    "linkMetadataSamples": 6,
+    "semanticStatusSamples": 4,
+    "cancelRestorations": 2,
+    "minima": {
+      "primary": 6.483882302007075,
+      "link": 4.773631158954611,
+      "metadata": 9.0248925848318,
+      "semanticStatus": 5.125254748487284
+    },
+    "sharedFactoryUnchanged": true,
+    "all14": "NOT_RUN_LOCAL_CONSUMERS_ONLY"
+  },
+  "visual": {
+    "status": "DIFFERENCES_REQUIRE_REVIEW",
+    "referenceFidelity": "REVIEWED",
+    "pairs": 6,
+    "productApproved": false,
+    "detailAuthority": "Actual adopted memo/current v7 rules",
+    "compositionReference": "docs/design/b1-conditional-children-proposal-2026-11-02.png",
+    "content": "Native-shaped deterministic synthetic media/input;not live DCCon-loading evidence",
+    "viewer": {
+      "url": "http://127.0.0.1:10067/conditional-finish/index.html",
+      "http": 200,
+      "iabDefaultDecoded": [
+        360,
+        152
+      ],
+      "allCurrentRootsDecoded": 8,
+      "oneImageAtATime": true
+    }
+  },
+  "independentReview": {
+    "scope": "Three identified margin/radius and metadata/semantic contrast findings",
+    "initialRuntime": "DABD15F532350E2E57F4F355DD454F9CC3A6B1844DE6634E640C004241CE2CCD",
+    "verdictRuntime": "72DB2F860CF3CB95FF1EE8D19A58C71F0B90E36680310EB9B278AB5C185D89EF",
+    "resolved": 3,
+    "remainingListedFindings": 0,
+    "laterDelta": "Final79A4 native-header cascade and fixture scaffold fidelity,self-reviewed with final selected tests/images;do not relabel72DB verdict as whole79A4 review."
+  },
+  "live": {
+    "finalRuntimeEntry": "UNKNOWN_NOT_REACQUIRED",
+    "intermediateAuthenticated": "DABD campaign navigation timeout;1 allowed sign-in;no setting action",
+    "intermediatePublic": "Actual72DB official TM install and native reads;optional account data absent;final public picker opening timed out",
+    "mutationActions": 0,
+    "allOwnedBrowsersAndProfilesCleaned": true,
+    "capability": "Prior successful actual-extension route retained;no global unavailable/broken-extension claim"
+  },
+  "contrary": [
+    "Initial hidden-trigger visible wait fixed as harness readiness",
+    "Synthetic detail moved from wrong author/action row to reading body",
+    "Native auto defaults/relative content/header specificity replace inaccurate460px/bottom100% scaffold;false collapsed frame superseded",
+    "Real generic inner height/border,comment-media margin/radius and weak metadata/header cascade repaired in existing owner",
+    "New body-only muted token failed contrast;current foreground/muted mix passes actual glyph probes",
+    "Native semantic error on glass needed foreground mix;current4 states pass4.5",
+    "Last media reachable through ordinary page/media scrolling with unchanged FAB;no hiding/portal"
+  ],
+  "impact": {
+    "method": "Fresh Git route plus exact consumer inspection",
+    "routeFallback": "Fixture/aggregate registration selects broad acceptance;only new contract registration and two comment sources change. User-directed affected tests executed;formal gaps stay UNKNOWN.",
+    "omissions": [
+      "Unchanged full UI/128 capture",
+      "PC/filter/storage/boot/bfcache",
+      "Account/data mutation to open unavailable children"
+    ]
+  },
+  "next": "b1-v7-final-scope-review",
+  "limits": [
+    "Final actual popup/read-close72DB attempt unavailable;no final79A4 actual screenshot",
+    "Image-password constructor replay is not real guest permission/focus/submit evidence",
+    "Folder/use-buy/editor/own-admin/CAPTCHA/server/device remain separate",
+    "Image replies N/A;four uploads deferred;guidebook discussion after whole UI ends",
+    "Formal header admission/architecture promotion not closed"
+  ],
+  "hashMode": "Canonical LF text;raw runtime/image bytes"
+}

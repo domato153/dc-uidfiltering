@@ -2,6 +2,8 @@
 
 **DRAFT_PENDING_USER_REVIEW / NOT_IMPLEMENTED**. Follows B1_CONDITIONAL_UI_TRIAGE.md on source checkpoint0414d43c756bc8da5e23fb6a11917ade80061adc. Mobile654FF895/PC E4706617 stay unchanged. This unit creates a grouped design reference,not a runtime repair or whole-UI approval.
 
+User2026-11-02 adopted this direction with 진행해. The paragraph above retains the proposal event's state;current implementation/result is B1_CONDITIONAL_CHILDREN_IMPLEMENTATION.md. Generated grouping remains subordinate to actual memo detail and native capabilities.
+
 ## Reference and authority
 
 - Composition proposal:[three-window board](../design/b1-conditional-children-proposal-2026-11-02.png). Built-in image generation plus one targeted information-row refinement. Exact prompts,reference hashes and final image identity are in docs/design/b1-conditional-children-proposal-2026-11-02.json.
