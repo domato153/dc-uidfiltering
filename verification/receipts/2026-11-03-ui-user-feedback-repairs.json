@@ -1,0 +1,224 @@
+{
+  "schemaVersion": 1,
+  "kind": "ui-user-feedback-repairs",
+  "status": "SCOPED_LOCAL_VERIFIED_USER_EXTENSION_DEVICE_UNKNOWN",
+  "sourceBaseHead": "491f888a254201369dd71992a7e74599c5894a1a",
+  "candidateFingerprint": "b1eb73c7384114f840991cadc5fb70c6997a0d02b7c776aafabbbc8f7c627139",
+  "artifacts": {
+    "mobileVersion": "3.5.5",
+    "mobileSha256": "4C2EE229951FFFDD5626B2ED772DD28F01D7ECC9D76F60F75E676AF3519786AC",
+    "pcVersion": "1.9.9",
+    "pcSha256": "0D5F7D071F7A29ABA932F1ED52039D04647A10B3B5BAF98E62392305E50EDA4D",
+    "rootDistGuardMatch": true,
+    "officialRelease": false
+  },
+  "scope": [
+    "shortcut capture/formatter/launcher",
+    "category overflow adjacency",
+    "native sprite badge sizing",
+    "full-width page gutters/native sibling actions",
+    "reply textarea containment",
+    "compact centered white glass menu",
+    "pale borderless preview action"
+  ],
+  "inputs": [
+    {
+      "path": "architecture/candidates/mobile-ui-modernization-assurance.json",
+      "sha256": "ef25274bb0fe0ac4005a2d41efb13eb6e4cf571906f1875d19a329f2117697b8"
+    },
+    {
+      "path": "docs/agent-maintenance-notes.md",
+      "sha256": "ddd6c6916f70a562142f59b2b820349aeeea9074de3efea7900b3613a81290b9"
+    },
+    {
+      "path": "docs/ui-surface-contracts.md",
+      "sha256": "6b6c2be1382ef1339a394b108d0c34f0a6bd220ebcde3cf939ebd3a2874a4dcc"
+    },
+    {
+      "path": "docs/work/B1_CONTROL_MATERIAL.md",
+      "sha256": "c66647f028e01e06f8d64291418ea74344efc4553ded3904887387081f252e55"
+    },
+    {
+      "path": "docs/work/INDEX.md",
+      "sha256": "bc29f53b5d1246af6086a07337f18cc58afb8ae515c8c4224b4f9e0a03c9fd82"
+    },
+    {
+      "path": "docs/work/UI_REVIEW_CHECKLIST.md",
+      "sha256": "1200ee9bb58db6ea9d4b15542354cddd7072015b6b8c29e41cd0e97a8441aa1f"
+    },
+    {
+      "path": "docs/work/UI_USER_FEEDBACK_REPAIRS.md",
+      "sha256": "e09bd587ee141e429c0be686a48082214161833ba2e0675ee074ab41d15f8c39"
+    },
+    {
+      "path": "src/shared/storage-core.js",
+      "sha256": "d67ae406716298e8088f33245244f54222ee9fec138fde092671f61000788535"
+    },
+    {
+      "path": "src/targets/mobile/article-presenter.js",
+      "sha256": "93a5f3a630e1f0c12b38d29d4b20acbdfd5c8adaa08f089c8cb433204ba9b1e5"
+    },
+    {
+      "path": "src/targets/mobile/comment-presenter.js",
+      "sha256": "0f5f5484a1aef6551c034e642994b1b8ef8df4f9dd753ffdb7683418f6f26999"
+    },
+    {
+      "path": "src/targets/mobile/convenience-presenter.js",
+      "sha256": "7e9abbc10c6803ab962d87f6c700336443351a885dbee84bd62f91618de81650"
+    },
+    {
+      "path": "src/targets/mobile/filter-module.js",
+      "sha256": "c345e6df807f81e35026dd2c73a4fcf656e0761ecd81a11720f17b451c1c8d15"
+    },
+    {
+      "path": "src/targets/mobile/gallery-page-head-presenter.js",
+      "sha256": "bcd8cd96a67fc9cd29f79992d1198690493dda62fd9e53423599184e023fed76"
+    },
+    {
+      "path": "src/targets/mobile/header-shell-presenter.js",
+      "sha256": "f406368dfd30194d60d996da9da8e657a54b40c1bbb63cdb96282ae4379e10df"
+    },
+    {
+      "path": "src/targets/mobile/list-presenter.js",
+      "sha256": "5059a2c1411c1193b25f29bb32a13032f113694310e83930c7f56adee494af2a"
+    },
+    {
+      "path": "src/targets/mobile/native-form-presenter.js",
+      "sha256": "64b68149af1438e67085deffadac3a64ae7a7bfa35f22707b400cc30d649003c"
+    },
+    {
+      "path": "src/targets/mobile/post-main-fixes.js",
+      "sha256": "522df05714d06e661ec59dbb72517987039917d58ab591215833e0eae536d883"
+    },
+    {
+      "path": "src/targets/mobile/theme-material-values.js",
+      "sha256": "b138be7f93bffd655aabf0e9554820d325a4fb8b653c1ff8ce3bcd9c8847fb0d"
+    },
+    {
+      "path": "src/targets/mobile/ui-module.js",
+      "sha256": "3f242a3b6e2a79a01cd47d948504e19048ac180ed91a2746421793ce32e69c3e"
+    },
+    {
+      "path": "src/targets/pc/filter-entry.js",
+      "sha256": "d85ad0a72934e9e35339be233e0abf3a6b163594fd53608bd6616473ff7b310c"
+    },
+    {
+      "path": "src/targets/shared/filter-settings-host-adapter.js",
+      "sha256": "45b9fce6f4f2c94df898f7adc0b500dcca82c66b90b47395f9de9793e0e1ba6a"
+    },
+    {
+      "path": "src/targets/shared/personal-block-host-adapter.js",
+      "sha256": "606fb2ec992c9995d426afaf7e319e01f92b16591f38b39e2cf0af4a1b689252"
+    },
+    {
+      "path": "src/targets/shared/settings-presenter.js",
+      "sha256": "bc2e908ecbc8e13f758a762a6aab2b7391b0aa02185b1233562691c253e6cccc"
+    },
+    {
+      "path": "testbed/run-tests.mjs",
+      "sha256": "5c80b0fe6c576dedba8e00992100439133ee92fda4727d39797f0f630f85e179"
+    },
+    {
+      "path": "testbed/ui-b1-article-v7-contract.mjs",
+      "sha256": "83f8c96268bc38a81ba25412d5783e08ec48febf1af20838f7d9135292a35dc5"
+    },
+    {
+      "path": "testbed/ui-b1-convenience-contract.mjs",
+      "sha256": "7bc5f860f193072ef1b60f5c6f81a7d622a732c41be2f50d0a78d8e2e1fd5ee7"
+    },
+    {
+      "path": "testbed/ui-user-feedback-contract.mjs",
+      "sha256": "c94c5911c30812da39e059d739871ee750a02307f2c4ddbc16dfcdffd48a910c"
+    },
+    {
+      "path": "tools/build-pc-filter-userscript.mjs",
+      "sha256": "9abe7a1db64f92c323da71ffb65aa66c91b34966d27c7158a195e4d0ec38c6fa"
+    },
+    {
+      "path": "tools/build-userscript.mjs",
+      "sha256": "81bf6c6b91289b7e7e1ce87b6df86e2f80b342344cf24a1bd8f9b534faf039fd"
+    },
+    {
+      "path": "verification/b1-header-visual-delta.json",
+      "sha256": "adb451073ee87dc919fecb10e708417b55d931901bf4fbdd120b8ccb6593d080"
+    }
+  ],
+  "evidence": [
+    {
+      "path": "artifacts/ui-user-feedback-2026-11-03/final-checks.json",
+      "sha256": "a4dba1efdb4960ac0b70dcf6c2555419718b028fa97adec03e5bacb49600a5b3"
+    },
+    {
+      "path": "artifacts/ui-user-feedback-2026-11-03/candidate-mobile.json",
+      "sha256": "058857098438e71754d58ca97c05f7ebb06e69f4f6a4de20ba73e8d3d8f8e67d"
+    },
+    {
+      "path": "artifacts/ui-user-feedback-2026-11-03/candidate-pc.json",
+      "sha256": "34df1b4fb059f4b9535f09a13cb3e8056e756739a4eade185d5706c252c3bd4e"
+    },
+    {
+      "path": "artifacts/ui-user-feedback-2026-11-03/palette-final.json",
+      "sha256": "24c98cb92d37c36a39f4b820e97b0118969d68ead7af70a513de03e649937167"
+    },
+    {
+      "path": "artifacts/ui-user-feedback-2026-11-03/fab-align.json",
+      "sha256": "fd13602576053614c1d728b308f2c440975d097d8cf6c9980c920f17c7d10d4d"
+    },
+    {
+      "path": "artifacts/ui-user-feedback-2026-11-03/semantic.json",
+      "sha256": "b16a79663700bdd9297317af2bdca2fc227fd829e21644cbc27c83944089899b"
+    },
+    {
+      "path": "artifacts/ui-user-feedback-2026-11-03/live.json",
+      "sha256": "7d7a813b3c538c9a0740fbb68681fd77f26e489f5acd7e5249f5a6b43e450c2e"
+    },
+    {
+      "path": "artifacts/ui-user-feedback-2026-11-03/adjacent.json",
+      "sha256": "ff56b7fb52117f87000388a20eb53e3113034313e9fee68ccd64773100862969"
+    },
+    {
+      "path": "artifacts/ui-user-feedback-2026-11-03/impeccable.json",
+      "sha256": "b8198103597f8280d825031836e880b6a4218812397ecb5c56934d77592d889a"
+    },
+    {
+      "path": "artifacts/ui-user-feedback-2026-11-03/preview-candidate.json",
+      "sha256": "610a7dc3a26a4c14337c0802762c6bf43955cbdd6c9c266d12eed6d842054c2a"
+    },
+    {
+      "path": "artifacts/ui-user-feedback-2026-11-03/visual-review-final/review.json",
+      "sha256": "6a5957f46bdde0d33e7605aa8edeb07e944ff1d7da1e323268b691187fb72b03"
+    }
+  ],
+  "validation": {
+    "mobileShortcuts": 7,
+    "pcShortcuts": 7,
+    "pageContexts": 12,
+    "badgeSamples": 16,
+    "previewContexts": 3,
+    "semanticPairs": 12,
+    "semanticDifferences": 0,
+    "fabPresetThemeSamples": 28,
+    "previewLinkPresetThemeSamples": 6,
+    "fabScaleThemeSamples": 6,
+    "publicReadOnlyPages": 4,
+    "unaffectedProductFullSuite": "NOT_RUN_IMPACT_SELECTION",
+    "formalAdmission": "UNKNOWN",
+    "headerVisualBindings": {
+      "candidateFragmentsChanged": 2,
+      "historicalControlsPreserved": true,
+      "ownershipTest": "PASS"
+    }
+  },
+  "limits": [
+    "Exact user physical key stream and final installed-extension/device use remain UNKNOWN.",
+    "Public checks use source injection with GET/HEAD only. No posting/deletion/settings/account mutation.",
+    "Pixel differences are intentional design comparison,not a regression pass or beauty/user approval.",
+    "Adjacent15/native-toolbar72 checks retain their22CEAD runtime scope;final affected FAB/preview/grouped checks are separately bound."
+  ],
+  "contraryEvidence": [
+    "Fast ordinary three-key capture already worked on frozen control;named/IME-shaped/held/re-record paths failed. OS interception was not inferred.",
+    "Old badge fixtures omitted current padded native sprite CSS;old action fixtures favored inside-article topology and980captures missed desktop caps.",
+    "Full-page bridge wrapping must not be capped to resize only the visible header.",
+    "Impeccable static dynamic-image warning is qualified by runtime decode,not treated as a product failure."
+  ]
+}

@@ -431,11 +431,21 @@ function __dcufBuildB1MaterialCss(ROOT_ATTRIBUTE) {
         /* Mobile B1 material roles from the selected preview. Shared palette
            IDs/accent values and the PC theme remain unchanged. */
         html[${ROOT_ATTRIBUTE}] {
+            /* Page planes follow the existing full-width header. */
+            --dcuf-page-gutter: 10px;
             --dcuf-b1-canvas: #f1f5f5;
             --dcuf-b1-paper: var(--dcuf-theme-surface);
             --dcuf-b1-glass: color-mix(in srgb, color-mix(in srgb, var(--dcuf-b1-paper) 80%, var(--dcuf-theme-accent-soft)) 58%, transparent);
             --dcuf-b1-floating: color-mix(in srgb, var(--dcuf-b1-paper) 64%, transparent);
-            --dcuf-menu-button-background: var(--dcuf-control-secondary-bg);
+            --dcuf-menu-button-background: linear-gradient(135deg,#ffffff14,transparent 62%), color-mix(in srgb,color-mix(in srgb,var(--dcuf-theme-accent-strong) 60%,#1b2b30) 82%,transparent);
+            --dcuf-menu-button-ink: #fff;
+            --dcuf-menu-button-width-ratio: .66;
+            --dcuf-menu-button-height-ratio: .63;
+            --dcuf-menu-button-padding-ratio: .57;
+            --dcuf-menu-button-font-ratio: .69;
+            --dcuf-menu-button-weight: 650;
+            /* Lowercase Segoe UI ink sits below its line box's midpoint. */
+            --dcuf-menu-button-padding-block: 0 .32em;
             --dcuf-menu-background: var(--dcuf-b1-sheen), var(--dcuf-b1-floating);
             --dcuf-menu-shadow: var(--dcuf-b1-shadow), inset 0 1px 0 var(--dcuf-b1-rim);
             --dcuf-menu-backdrop: var(--dcuf-b1-floating-filter);
@@ -454,6 +464,9 @@ function __dcufBuildB1MaterialCss(ROOT_ATTRIBUTE) {
             --dcuf-control-opacity: 82%;
             --dcuf-v7-primary-glaze: linear-gradient(180deg, var(--dcuf-control-highlight), transparent 68%);
             --dcuf-v7-primary-shadow: inset 0 1px 0 var(--dcuf-b1-rim), 0 3px 7px #152e3412;
+        }
+        @media (max-width: 899px) {
+            html[${ROOT_ATTRIBUTE}] { --dcuf-page-gutter: 8px; }
         }
         html[${ROOT_ATTRIBUTE}].dc-filter-dark-mode,
         html[${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode {
@@ -901,8 +914,8 @@ function __dcufCreateConveniencePresentation() {
             backdrop-filter:var(--dcuf-b1-floating-filter,none);overflow:hidden;overscroll-behavior:contain;color-scheme:light dark;
         }
         .dcuf-preview-panel .dcuf-preview-head {
-            flex:none;display:flex;align-items:center;gap:9px;padding:10px 11px 10px 13px;
-            border-bottom:1px solid var(--dcuf-b1-line,var(--dcuf-theme-border,#e4e7ec));background:transparent;
+            flex:none;display:flex;align-items:center;gap:12px;padding:14px 13px 13px 17px;
+            border:0;background:linear-gradient(120deg,color-mix(in srgb,var(--dcuf-theme-accent-soft,#e5f2f1) 18%,transparent),transparent 72%);
         }
         .dcuf-preview-panel .dcuf-preview-head strong {
             flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
@@ -910,15 +923,17 @@ function __dcufCreateConveniencePresentation() {
         }
         .dcuf-preview-panel .dcuf-preview-head a {
             flex:none;display:inline-flex;align-items:center;justify-content:center;min-height:34px;box-sizing:border-box;
-            padding:6px 12px;border:1px solid var(--dcuf-control-rim,var(--dcuf-theme-border,#cbd5e1));border-radius:8px;
-            background:var(--dcuf-control-secondary-bg,var(--dcuf-theme-surface-input,#fff));color:var(--dcuf-theme-fg,#1f2937);
-            box-shadow:var(--dcuf-control-quiet-shadow,none);text-decoration:none;font-size:12.5px;font-weight:700;line-height:1.35;
+            gap:7px;padding:7px 12px;border:0;border-radius:999px;
+            background:var(--dcuf-v7-primary-bg,var(--dcuf-theme-accent-soft,#e5f2f1));color:var(--dcuf-v7-primary-ink,var(--dcuf-theme-accent-ink,#155e63));
+            box-shadow:none;text-decoration:none;font-size:12.5px;font-weight:650;line-height:1.35;
         }
-        .dcuf-preview-panel .dcuf-preview-head a:hover {border-color:var(--dcuf-theme-accent,#315fdb);}
+        .dcuf-preview-panel .dcuf-preview-head a::after {content:"";width:12px;height:12px;background:currentColor;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M4 12 12 4M5 4h7v7' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/contain no-repeat;}
+        .dcuf-preview-panel .dcuf-preview-head a:hover {filter:brightness(.96);}
+        .dcuf-preview-panel .dcuf-preview-head a:focus-visible {outline:2px solid var(--dcuf-theme-accent,#315fdb);outline-offset:3px;}
         .dcuf-preview-panel .dcuf-preview-body {
-            flex:1 1 auto;min-height:0;box-sizing:border-box;padding:14px;overflow:auto;overscroll-behavior:contain;
+            flex:1 1 auto;min-height:0;box-sizing:border-box;margin:0 8px 8px;padding:14px;overflow:auto;overscroll-behavior:contain;border-radius:9px;
             font-size:var(--dcuf-article-body-font-size,26px);line-height:var(--dcuf-article-body-line-height,1.9);overflow-wrap:anywhere;
-            background:var(--dcuf-b1-paper,var(--dcuf-theme-surface-input,#fff));
+            background:color-mix(in srgb,var(--dcuf-b1-paper,var(--dcuf-theme-surface-input,#fff)) 88%,transparent);
         }
         .dcuf-preview-panel .dcuf-preview-body img {display:block;max-width:100%;height:auto;margin:10px auto;border-radius:6px;}
         .dcuf-preview-panel .dcuf-preview-body img:not([src]) {
@@ -1296,6 +1311,27 @@ function isSuspiciousLegacyManagedIpList(rawIpValue, marker = ETC_CONSTANTS.MOBI
     return parseIpPrefixList(rawIpValue, marker).length >= threshold;
 }
 
+function normalizeShortcutEventKey(event) {
+    const key = String(event?.key || '');
+    if (key === 'OS') return 'Meta';
+    if (key === 'Esc') return 'Escape';
+    if (key === ' ' || key === 'Spacebar') return 'Space';
+    if (key.length === 1 && key !== '+') return key;
+    if (/^(?:Control|Meta|Alt|Shift|CapsLock|Tab|Enter|Escape|Backspace|Delete|Insert|Home|End|PageUp|PageDown|Arrow(?:Up|Down|Left|Right)|F(?:[1-9]|1\d|2[0-4])|Space|Add|Subtract|Multiply|Divide)$/.test(key)) return key;
+    const code = String(event?.code || '');
+    if (/^Key[A-Z]$/.test(code)) return code.slice(3);
+    if (/^(?:Digit|Numpad)\d$/.test(code)) return code.slice(-1);
+    return ({ Equal: '=', Minus: '-', Comma: ',', Period: '.', Slash: '/', Backslash: '\\', Semicolon: ';', Quote: "'", Backquote: '`', BracketLeft: '[', BracketRight: ']', NumpadAdd: 'Add', NumpadSubtract: 'Subtract', NumpadMultiply: 'Multiply', NumpadDivide: 'Divide' })[code] || '';
+}
+
+function matchesShortcutEvent(event, shortcut) {
+    if (!shortcut?.key || Boolean(event.ctrlKey) !== shortcut.ctrlKey || Boolean(event.metaKey) !== shortcut.metaKey
+        || Boolean(event.altKey) !== shortcut.altKey || Boolean(event.shiftKey) !== shortcut.shiftKey) return false;
+    // Preserve existing logical-key strings;fall back only for named/IME/code keys.
+    return String(event.key || '').toUpperCase() === shortcut.key
+        || normalizeShortcutEventKey(event).toUpperCase() === shortcut.key;
+}
+
 function formatShortcutKeys(keySet) {
     if (!keySet || keySet.size === 0) return '';
 
@@ -1307,7 +1343,7 @@ function formatShortcutKeys(keySet) {
         .sort((a, b) => priority.indexOf(a) - priority.indexOf(b));
 
     const others = keys
-        .filter((key) => !priority.includes(key) && key.length === 1)
+        .filter((key) => !priority.includes(key) && Boolean(normalizeShortcutEventKey({ key })))
         .sort();
 
     return [...modifiers, ...others].map((key) => key === 'Control' ? 'Ctrl' : key).join('+');
@@ -1408,6 +1444,8 @@ function normalizeStoredFilterSettings(rawValues = {}) {
         extractIpPrefix,
         normalizeBlockConfigIp,
         isSuspiciousLegacyManagedIpList,
+        normalizeShortcutEventKey,
+        matchesShortcutEvent,
         formatShortcutKeys,
         parseShortcutString,
         createDefaultFilterSettings,
@@ -2316,8 +2354,8 @@ const __dcufSettingsPresenter = (() => {
         </form>`;
 
     const renderShortcutModal = (ids) => `
-        <span class="dcuf-panel-kicker">KEYBOARD</span><h4 class="dcuf-panel-title">새로운 단축키 입력</h4><p class="dcuf-settings-help">최대 3개의 키 조합을 누르세요.</p>
-        <output id="${escapeHtml(ids.NEW_SHORTCUT_PREVIEW)}" class="dcuf-shortcut-preview">입력 대기 중...</output>
+        <span class="dcuf-panel-kicker">KEYBOARD</span><h4 class="dcuf-panel-title">새로운 단축키 입력</h4><p class="dcuf-settings-help">문자·숫자·기능키와 보조키를 함께 누르세요. 최대 3개까지 지원합니다.</p>
+        <output id="${escapeHtml(ids.NEW_SHORTCUT_PREVIEW)}" class="dcuf-shortcut-preview" aria-live="polite">입력 대기 중...</output>
         <div class="dcuf-inline-actions"><button type="button" id="${escapeHtml(ids.SAVE_SHORTCUT_BTN)}" class="dcuf-button dcuf-button--primary">변경</button><button type="button" id="${escapeHtml(ids.CANCEL_SHORTCUT_BTN)}" class="dcuf-button dcuf-button--secondary">취소</button></div>`;
 
     const renderHeadtextManager = ({ currentKey, discovered, current, others }) => `
@@ -2389,8 +2427,8 @@ const __dcufSettingsPresenter = (() => {
     `;
 
     const PERSONAL_MENU_CSS = `
-        [data-dcuf-surface="personal-menu"] { position:fixed;z-index:2147483640;width:max-content;height:var(--dcuf-fab-height,76px);overflow:visible; }
-        [data-dcuf-surface="personal-menu"] .dcuf-fab-button { appearance:none;box-sizing:border-box;min-width:var(--dcuf-fab-width,152px);height:var(--dcuf-fab-height,76px);padding:0 var(--dcuf-fab-padding-x,28px);border:1px solid var(--dcuf-b1-rim,var(--dcuf-theme-border-strong,#cbd2db));border-radius:999px;background:var(--dcuf-menu-button-background,linear-gradient(180deg,var(--dcuf-theme-card-top,#fff),var(--dcuf-theme-surface-raised,#f7f8fa)));color:var(--dcuf-theme-accent-ink,#315fdb);box-shadow:var(--dcuf-menu-shadow,0 10px 24px var(--dcuf-theme-accent-shadow,rgba(49,95,219,.2)));backdrop-filter:var(--dcuf-menu-backdrop,none);font-family:inherit;font-size:var(--dcuf-fab-font-size,32px);font-weight:800;line-height:1;cursor:pointer;touch-action:none; }
+        [data-dcuf-surface="personal-menu"] { position:fixed;z-index:2147483640;width:max-content;height:calc(var(--dcuf-fab-height,76px) * var(--dcuf-menu-button-height-ratio,1));overflow:visible; }
+        [data-dcuf-surface="personal-menu"] .dcuf-fab-button { display:inline-flex;align-items:center;justify-content:center;appearance:none;box-sizing:border-box;min-width:calc(var(--dcuf-fab-width,152px) * var(--dcuf-menu-button-width-ratio,1));height:calc(var(--dcuf-fab-height,76px) * var(--dcuf-menu-button-height-ratio,1));padding:0 calc(var(--dcuf-fab-padding-x,28px) * var(--dcuf-menu-button-padding-ratio,1));padding-block:var(--dcuf-menu-button-padding-block,0);border:1px solid var(--dcuf-b1-rim,var(--dcuf-theme-border-strong,#cbd2db));border-radius:999px;background:var(--dcuf-menu-button-background,linear-gradient(180deg,var(--dcuf-theme-card-top,#fff),var(--dcuf-theme-surface-raised,#f7f8fa)));color:var(--dcuf-menu-button-ink,var(--dcuf-theme-accent-ink,#315fdb));box-shadow:var(--dcuf-menu-shadow,0 10px 24px var(--dcuf-theme-accent-shadow,rgba(49,95,219,.2)));backdrop-filter:var(--dcuf-menu-backdrop,none);font-family:inherit;font-size:calc(var(--dcuf-fab-font-size,32px) * var(--dcuf-menu-button-font-ratio,1));font-weight:var(--dcuf-menu-button-weight,800);line-height:1;cursor:pointer;touch-action:none; }
         [data-dcuf-surface="personal-menu"] .dcuf-menu-drawer { position:absolute;z-index:2147483641;display:grid;gap:5px;width:260px;padding:7px;border:1px solid var(--dcuf-b1-rim,var(--dcuf-theme-border-strong,#cbd2db));border-radius:16px;background:var(--dcuf-menu-background,var(--dcuf-theme-card-top,#fff));box-shadow:var(--dcuf-menu-shadow,var(--dcuf-theme-panel-shadow,0 18px 42px #0003));backdrop-filter:var(--dcuf-menu-backdrop,none); }
         [data-dcuf-surface="personal-menu"] .dcuf-menu-drawer[hidden] { display:none; }
         [data-dcuf-surface="personal-menu"] .dcuf-menu-item { display:grid;grid-template-columns:38px minmax(0,1fr);align-items:center;gap:10px;min-height:56px;padding:7px 9px;border:1px solid transparent;border-radius:12px;background:transparent;color:var(--dcuf-theme-fg,#27313f);text-align:left;cursor:pointer; }
@@ -2590,8 +2628,8 @@ const __dcufSettingsPresenter = (() => {
                 border: 1px solid var(--dcuf-list-border);
                 border-radius: 12px;
                 background: var(--dcuf-list-surface);
-                width: calc(100% - 40px);
-                max-width: 1120px;
+                width: calc(100% - 2 * var(--dcuf-page-gutter,10px));
+                max-width: none;
                 margin: 10px auto;
                 padding: 0 12px;
                 box-sizing: border-box;
@@ -2761,8 +2799,8 @@ const __dcufSettingsPresenter = (() => {
             [data-dcuf-surface="list-toolbar"] {
                 display: grid;
                 grid-template-columns: auto minmax(0, 1fr) auto;
-                width: calc(100% - 40px);
-                max-width: 1120px;
+                width: calc(100% - 2 * var(--dcuf-page-gutter,10px));
+                max-width: none;
                 height: auto;
                 box-sizing: border-box;
                 flex-wrap: wrap;
@@ -2777,8 +2815,8 @@ const __dcufSettingsPresenter = (() => {
             [data-dcuf-scroll-space="1"][data-dcuf-scroll-active] {
                 display: block;
                 height: var(--dcuf-scroll-size);
-                width: calc(100% - 40px);
-                max-width: 1120px;
+                width: calc(100% - 2 * var(--dcuf-page-gutter,10px));
+                max-width: none;
                 margin: 10px auto;
                 box-sizing: border-box;
             }
@@ -2864,7 +2902,7 @@ const __dcufSettingsPresenter = (() => {
                 scrollbar-width: thin;
                 scroll-snap-type: x proximity;
                 min-width: 0;
-                flex: 1 1 auto;
+                flex: 0 1 auto;
             }
             [data-dcuf-surface="list-toolbar"] [data-dcuf-role="toolbar-categories"] [data-dcuf-role="category-list"] > li { display: flex; align-items: center; min-width: 0; max-width: 200px; height: 40px; padding: 0; scroll-snap-align: start; }
             [data-dcuf-surface="list-toolbar"] [data-dcuf-role="toolbar-categories"] [data-dcuf-role="category-list"] > li > a { display: block; box-sizing: border-box; height: 40px; max-width: 100%; padding: 0 10px; border-radius: 6px; font-size: 11px; line-height: 40px; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -2962,13 +3000,13 @@ const __dcufSettingsPresenter = (() => {
                 list-style: none;
             }
             @media (max-width: 759px) {
-                [data-dcuf-scroll-space="1"][data-dcuf-scroll-active] { width: calc(100% - 24px); }
-                [data-dcuf-surface="list-toolbar"] { width: calc(100% - 24px); grid-template-columns: minmax(0, 1fr) auto; padding: 8px; gap: 8px; }
+                [data-dcuf-scroll-space="1"][data-dcuf-scroll-active] { width: calc(100% - 2 * var(--dcuf-page-gutter,10px)); }
+                [data-dcuf-surface="list-toolbar"] { width: calc(100% - 2 * var(--dcuf-page-gutter,10px)); grid-template-columns: minmax(0, 1fr) auto; padding: 8px; gap: 8px; }
                 [data-dcuf-surface="list-toolbar"] [data-dcuf-role="toolbar-actions"] { grid-area: 1 / 2; }
                 [data-dcuf-surface="list-toolbar"] [data-dcuf-role="toolbar-categories"] { grid-area: 2 / 1 / 3 / -1; border-left: 0; border-top: 1px solid var(--dcuf-theme-border); padding: 6px 0 0; }
                 [data-dcuf-surface="list-toolbar"] [data-dcuf-role="tablist"] { gap: 2px; }
                 [data-dcuf-surface="list-toolbar"] [data-dcuf-role="tablist"] button[data-dcuf-role="action"] { width: auto; padding: 0 8px; font-size: 12px; }
-                [data-dcuf-surface="list-container"] { width: calc(100% - 24px); padding: 0 4px; }
+                [data-dcuf-surface="list-container"] { width: calc(100% - 2 * var(--dcuf-page-gutter,10px)); padding: 0 4px; }
             }
             @media (max-width: 359px) {
                 [data-dcuf-surface="list-toolbar"] { grid-template-columns: minmax(0, 1fr); }
@@ -3112,8 +3150,8 @@ const __dcufSettingsPresenter = (() => {
             [data-dcuf-surface="list-pagination"][data-dcuf-role="pages"],
             [data-dcuf-surface="list-search"] {
                 display: block;
-                width: calc(100% - 40px);
-                max-width: 1120px;
+                width: calc(100% - 2 * var(--dcuf-page-gutter,10px));
+                max-width: none;
                 box-sizing: border-box;
                 margin: 12px auto;
                 padding: 4px 0;
@@ -3166,7 +3204,7 @@ const __dcufSettingsPresenter = (() => {
             [data-dcuf-surface="list-pagination"] [data-dcuf-role="page-direction"][data-dcuf-state="prev"]::before { content: "‹"; }
             [data-dcuf-surface="list-pagination"] [data-dcuf-role="page-direction"][data-dcuf-state="next"]::before { content: "›"; }
             [data-dcuf-surface="list-pagination"] [data-dcuf-role="page-direction"][data-dcuf-state="end"]::before { content: "»"; }
-            [data-dcuf-surface="list-actions"] { width: calc(100% - 40px); max-width: 1120px; flex-wrap: wrap; box-sizing: border-box; }
+            [data-dcuf-surface="list-actions"] { width: calc(100% - 2 * var(--dcuf-page-gutter,10px)); max-width: none; flex-wrap: wrap; box-sizing: border-box; }
             [data-dcuf-surface="list-actions"]::after { content: none; display: none; }
             [data-dcuf-surface="list-actions"] [data-dcuf-role="action-start"],
             [data-dcuf-surface="list-actions"] [data-dcuf-role="action-end"] { float: none; flex-wrap: wrap; }
@@ -3302,7 +3340,7 @@ const __dcufSettingsPresenter = (() => {
             @media (max-width: 759px) {
                 [data-dcuf-surface="list-actions"],
                 [data-dcuf-surface="list-pagination"][data-dcuf-role="navigation"],
-                [data-dcuf-surface="list-search"] { width: calc(100% - 24px); }
+                [data-dcuf-surface="list-search"] { width: calc(100% - 2 * var(--dcuf-page-gutter,10px)); }
             }
             @media (prefers-reduced-motion: no-preference) {
                 [data-dcuf-surface="list-container"] > [data-dcuf-surface="list-item"]:nth-child(-n + 8):not(:has(.dcuf-native-author-open)) {
@@ -4067,8 +4105,8 @@ const __dcufSettingsPresenter = (() => {
                 --dcuf-view-fg: var(--dcuf-theme-fg, #22324c);
                 --dcuf-view-fg-sub: var(--dcuf-theme-fg-muted, #5f6f86);
                 --dcuf-view-accent: var(--dcuf-theme-accent, #3f6de0);
-                inline-size: calc(100% - 40px);
-                max-inline-size: 1120px;
+                inline-size: calc(100% - 2 * var(--dcuf-page-gutter,10px));
+                max-inline-size: none;
                 min-inline-size: 0;
                 float: none;
                 position: relative;
@@ -4310,6 +4348,8 @@ const __dcufSettingsPresenter = (() => {
                 overflow-wrap: anywhere;
             }
             [data-dcuf-role="article-native-actions"] {
+                inline-size: calc(100% - 2 * var(--dcuf-page-gutter,10px));
+                margin-inline: auto;
                 position: relative;
                 z-index: 1;
                 display: flex;
@@ -4323,6 +4363,7 @@ const __dcufSettingsPresenter = (() => {
                 box-sizing: border-box;
             }
             [data-dcuf-role="article-native-actions"]::after { content: none; display: none; }
+            [data-dcuf-role="article"] [data-dcuf-role="article-native-actions"] { inline-size: 100%; }
             [data-dcuf-role="article-native-actions"] [data-dcuf-role="article-action-start"],
             [data-dcuf-role="article-native-actions"] [data-dcuf-role="article-action-end"] {
                 position: static;
@@ -4751,7 +4792,7 @@ const __dcufSettingsPresenter = (() => {
             @media screen and (max-width: 640px) {
                 [data-dcuf-article-popup] { --dcuf-article-popup-center: calc(50% - 48px); --dcuf-article-popup-clearance: 128px; }
                 [data-dcuf-surface="article-recommendation"][data-dcuf-role="article"] {
-                    inline-size: calc(100% - 24px);
+                    inline-size: calc(100% - 2 * var(--dcuf-page-gutter,10px));
                     padding: 8px 8px 0 !important;
                 }
                 [data-dcuf-role="article-header"] {
@@ -5381,8 +5422,8 @@ const __dcufSettingsPresenter = (() => {
                 --dcuf-comment-accent-strong: var(--dcuf-theme-accent-strong, #315bc1);
                 --dcuf-comment-shadow: 0 2px 8px color-mix(in srgb, var(--dcuf-comment-fg) 4%, transparent);
                 position: relative;
-                inline-size: calc(100% - 40px);
-                max-inline-size: 1120px;
+                inline-size: calc(100% - 2 * var(--dcuf-page-gutter,10px));
+                max-inline-size: none;
                 margin: 14px auto;
                 padding: 12px;
                 border: 1px solid var(--dcuf-comment-border);
@@ -5758,6 +5799,7 @@ const __dcufSettingsPresenter = (() => {
                 grid-column: 2;
                 display: flex;
                 min-inline-size: 0;
+                max-inline-size: 100%;
                 flex-direction: column;
                 gap: 12px;
                 padding: 10px;
@@ -5773,6 +5815,7 @@ const __dcufSettingsPresenter = (() => {
                 float: none;
                 min-inline-size: 0;
                 inline-size: 100%;
+                max-inline-size: 100%;
                 box-sizing: border-box;
             }
             [data-dcuf-role="comment-input-hint"] { color: var(--dcuf-comment-muted); }
@@ -5784,6 +5827,7 @@ const __dcufSettingsPresenter = (() => {
             [data-dcuf-surface="comments-replies"][data-dcuf-role="comments-root"] [data-dcuf-role="native-comment-textarea"] {
                 inline-size: 100%;
                 min-inline-size: 0;
+                max-inline-size: 100%;
                 border: 1px solid var(--dcuf-comment-border);
                 border-radius: 8px;
                 background: var(--dcuf-comment-input);
@@ -6197,7 +6241,7 @@ const __dcufSettingsPresenter = (() => {
                     --dcuf-picker-center: calc(50% - 48px);
                     --dcuf-picker-clearance: 128px;
                 }
-                [data-dcuf-surface="comments-replies"][data-dcuf-role="comments-root"] { inline-size: calc(100% - 24px); margin: 10px auto; padding: 8px; }
+                [data-dcuf-surface="comments-replies"][data-dcuf-role="comments-root"] { inline-size: calc(100% - 2 * var(--dcuf-page-gutter,10px)); margin: 10px auto; padding: 8px; }
                 [data-dcuf-role="comment-item"] {
                     margin-inline: 0;
                     padding: 13px 4px;
@@ -7023,7 +7067,7 @@ const __dcufSettingsPresenter = (() => {
             min-width: 0 !important;
         }
         [data-dcuf-native-form-role="page-container"][data-dcuf-native-form-state="write-editor"] {
-            padding: 0 20px 24px !important;
+            padding: 0 var(--dcuf-page-gutter,10px) 24px !important;
             background: transparent !important;
             overflow: visible !important;
         }
@@ -7050,7 +7094,7 @@ const __dcufSettingsPresenter = (() => {
         [data-dcuf-native-form-role="form"][data-dcuf-native-form-state="write-editor"] {
             box-sizing: border-box !important;
             display: block !important;
-            width: min(100%, 1120px) !important;
+            width: 100% !important;
             max-width: 100% !important;
             min-width: 0 !important;
             margin: 0 auto !important;
@@ -8525,7 +8569,7 @@ const __dcufSettingsPresenter = (() => {
         }
         @media screen and (max-width: 480px) {
             [data-dcuf-native-form-role="page-container"][data-dcuf-native-form-state="write-editor"] {
-                padding: 6px !important;
+                padding: 6px var(--dcuf-page-gutter,8px) !important;
             }
             [data-dcuf-native-form-role="form"][data-dcuf-native-form-state="write-editor"] {
                 padding: 10px !important;
@@ -8538,7 +8582,7 @@ const __dcufSettingsPresenter = (() => {
         }
         @media screen and (min-width: 900px) {
             [data-dcuf-native-form-role="page-container"][data-dcuf-native-form-state="write-editor"] {
-                padding: 16px 24px !important;
+                padding: 16px var(--dcuf-page-gutter,10px) !important;
             }
             [data-dcuf-native-form-role="form"][data-dcuf-native-form-state="write-editor"] {
                 padding: 18px !important;
@@ -11112,7 +11156,7 @@ const __dcufSettingsPresenter = (() => {
             background: var(--dcuf-b1-backdrop);
         }
         ${selectors.layout} > * { grid-column: 1 / -1; min-width: 0; }
-        ${selectors.layout}::before { content: ""; grid-area: 1 / 1 / 2 / -1; align-self: stretch; margin: 12px 10px; border: 1px solid var(--dcuf-b1-rim); border-radius: 15px; background: var(--dcuf-b1-sheen), var(--dcuf-b1-glass); box-shadow: var(--dcuf-b1-shadow), inset 0 1px 0 var(--dcuf-b1-rim), inset 0 -1px 0 color-mix(in srgb, var(--dcuf-theme-fg) 4%, transparent); backdrop-filter: var(--dcuf-b1-structural-filter,blur(22px) saturate(1.2)); z-index: -1; }
+        ${selectors.layout}::before { content: ""; grid-area: 1 / 1 / 2 / -1; align-self: stretch; margin: 12px var(--dcuf-page-gutter,10px); border: 1px solid var(--dcuf-b1-rim); border-radius: 15px; background: var(--dcuf-b1-sheen), var(--dcuf-b1-glass); box-shadow: var(--dcuf-b1-shadow), inset 0 1px 0 var(--dcuf-b1-rim), inset 0 -1px 0 color-mix(in srgb, var(--dcuf-theme-fg) 4%, transparent); backdrop-filter: var(--dcuf-b1-structural-filter,blur(22px) saturate(1.2)); z-index: -1; }
         ${selectors.root} { display: contents; min-width: 0 !important; width: 100% !important; height: auto !important; background: transparent; border: 0; }
         ${selectors.root}[data-dcuf-header-layout="self"] { display: grid; z-index: 1005; background: var(--dcuf-b1-backdrop); }
         ${selectors.head} {
@@ -11183,7 +11227,7 @@ const __dcufSettingsPresenter = (() => {
         ${selectors.nativeTip}::before, ${selectors.nativeTip}::after, ${selectors.nativeTip} > div::before, ${selectors.nativeTip} > div::after { display: none; }
         @media (max-width: 899px) {
             ${selectors.layout} { grid-template-columns: minmax(0, 1fr) 124px; grid-template-rows: 60px 48px auto; gap: 0 12px; }
-            ${selectors.layout}::before { grid-area: 1 / 1 / 4 / -1; margin: 8px; }
+            ${selectors.layout}::before { grid-area: 1 / 1 / 4 / -1; margin: 8px var(--dcuf-page-gutter,8px); }
             ${selectors.logo} { grid-area: 1 / 1; margin: 0 0 0 22px; }
             ${selectors.links} { grid-area: 1 / 2; margin: 0 16px 0 0; }
             ${selectors.searchWrap} { grid-area: 2 / 1; width: calc(100% - 22px); margin: 0 0 8px 22px; }
@@ -11611,8 +11655,8 @@ const __dcufSettingsPresenter = (() => {
             padding: 16px 4px !important;
             margin: 0 auto 4px;
             box-sizing: border-box;
-            width: calc(100% - 40px);
-            max-width: 1120px;
+            width: calc(100% - 2 * var(--dcuf-page-gutter,10px));
+            max-width: none;
             height: auto;
             min-height: 0;
             border: 0;
@@ -11671,7 +11715,7 @@ const __dcufSettingsPresenter = (() => {
             [data-dcuf-gallery-page-head-role="guide-layer"] { --dcuf-gallery-guide-center: calc(50% - 48px); --dcuf-gallery-guide-clearance: 96px; }
         }
         @media (max-width: 759px) {
-            ${selectors.root} { grid-template-columns: minmax(0, 1fr); width: calc(100% - 24px); padding: 14px 4px !important; }
+            ${selectors.root} { grid-template-columns: minmax(0, 1fr); width: calc(100% - 2 * var(--dcuf-page-gutter,10px)); padding: 14px 4px !important; }
             ${selectors.right} { justify-content: flex-start; }
             ${selectors.left} > h2 { font-size: 22px; }
         }
@@ -16031,7 +16075,7 @@ const ThemeModule = (() => {
 
         /* --- 글 보기/댓글 UI --- */
         /* DCUF_VIEW_SURFACE_START */
-        .gall_content, .gall_tit_box, .gall_writer_info, .view_bottom, .gall_comment:not([data-dcuf-role="article-comment-count"]) {
+        .gall_content, .gall_tit_box, .gall_writer_info, .view_bottom:where(:not(:has([data-dcuf-surface="list-host"]))), .gall_comment:not([data-dcuf-role="article-comment-count"]) {
             background: #fff !important;
             padding: 15px !important;
             border-bottom: 1px solid #ddd;
@@ -17723,7 +17767,7 @@ const ThemeModule = (() => {
 
 
             let pressedKeys = new Set();
-            let combinationTimeout = null;
+            let validCombination = false;
             const previewEl = document.getElementById(this.CONSTANTS.UI_IDS.NEW_SHORTCUT_PREVIEW);
 
 
@@ -17741,20 +17785,13 @@ const ThemeModule = (() => {
                 e.stopPropagation();
 
 
-                // 타이머가 있다면, 아직 조합이 진행 중이라는 의미이므로 초기화
-                clearTimeout(combinationTimeout);
-
-
-                if (pressedKeys.size < 3) {
-                    pressedKeys.add(e.key);
-                    updatePreview();
-                }
-
-
-                // 키 입력이 0.5초간 없으면 현재 조합을 확정하고 Set을 비움
-                combinationTimeout = setTimeout(() => {
-                    pressedKeys.clear();
-                }, 500);
+                const key = DCUF_SHARED_STORAGE.normalizeShortcutEventKey(e);
+                const modifiers = [['Control', e.ctrlKey], ['Meta', e.metaKey], ['Alt', e.altKey], ['Shift', e.shiftKey]];
+                pressedKeys = new Set(modifiers.filter(([, held]) => held).map(([name]) => name));
+                const modifierOnly = ['Control', 'Meta', 'Alt', 'Shift'].includes(key);
+                if (key) pressedKeys.add(key);
+                validCombination = Boolean(key) && !modifierOnly && pressedKeys.size <= 3;
+                updatePreview();
             };
 
 
@@ -17782,12 +17819,12 @@ const ThemeModule = (() => {
 
             document.getElementById(this.CONSTANTS.UI_IDS.SAVE_SHORTCUT_BTN).onclick = async () => {
                 const newShortcut = previewEl.textContent;
-                if (newShortcut && newShortcut !== '입력 대기 중...') {
+                if (validCombination && newShortcut && newShortcut !== '입력 대기 중...') {
                     await this.commitShortcutSetting(newShortcut);
                     document.getElementById(this.CONSTANTS.UI_IDS.SHORTCUT_DISPLAY).textContent = newShortcut;
                     cleanup();
                 } else {
-                    alert('유효한 단축키를 입력해주세요.');
+                    alert('유효한 단축키를 입력해주세요. 문자·숫자·기능키를 포함해 최대 3개의 키를 함께 눌러주세요.');
                 }
             };
 
@@ -19473,7 +19510,7 @@ const ThemeModule = (() => {
             fab.id = 'dc-personal-block-fab';
             fab.className = 'dcuf-fab-button';
             fab.type = 'button';
-            fab.textContent = '메뉴';
+            fab.textContent = 'menu';
             fab.setAttribute('aria-expanded', 'false');
             fab.setAttribute('aria-controls', 'dc-personal-block-drawer');
             fab.setAttribute('aria-label', 'DC 유저 필터 메뉴');
@@ -24009,14 +24046,11 @@ init() {
             if (!activeShortcutObject || !activeShortcutObject.key) return;
 
 
-            const isMatch = e.key.toUpperCase() === activeShortcutObject.key &&
-                e.ctrlKey === activeShortcutObject.ctrlKey &&
-                e.shiftKey === activeShortcutObject.shiftKey &&
-                e.altKey === activeShortcutObject.altKey &&
-                e.metaKey === activeShortcutObject.metaKey;
+            const isMatch = DCUF_SHARED_STORAGE.matchesShortcutEvent(e, activeShortcutObject);
 
 
             if (isMatch) {
+                if (document.getElementById(FilterModule.CONSTANTS.UI_IDS.SHORTCUT_MODAL)) return;
                 e.preventDefault();
                 const settingsPanel = document.getElementById(FilterModule.CONSTANTS.UI_IDS.SETTINGS_PANEL);
                 if (settingsPanel) {
@@ -25761,8 +25795,10 @@ ${selectors.contents} { max-height:calc(100dvh - 128px); }
             margin-left: 1px !important;
             vertical-align: middle !important;
         }
-        div[id^="comment_wrap_"] .comment_box .writer_nikcon img,
-        div[id^="comment_wrap_"] .comment_box img.gallercon {
+        /* Current native member art uses a zero-content padded sprite box.
+           Only ordinary image badges use the inherited typography size. */
+        div[id^="comment_wrap_"] .comment_box .writer_nikcon img:not(:where([src*="nik.gif"],[src*="/bestcon"])),
+        div[id^="comment_wrap_"] .comment_box img.gallercon:not(:where([src*="nik.gif"],[src*="/bestcon"])) {
             width: auto !important;
             height: 13px !important;
             max-width: none !important;
@@ -27547,6 +27583,14 @@ ${selectors.contents} { max-height:calc(100dvh - 128px); }
             return;
         }
         if (element.matches('.writer_nikcon img, img.gallercon')) {
+            if (element.matches('[src*="nik.gif"], [src*="/bestcon"]')) {
+                // Release only our former normalization if a delayed image
+                // source becomes a native sprite; retain host inline values.
+                for (const [property, value] of [['width', 'auto'], ['height', '13px'], ['max-width', 'none']]) {
+                    if (element.style.getPropertyValue(property) === value && element.style.getPropertyPriority(property) === 'important') removeStyleIfPresent(element, property);
+                }
+                return;
+            }
             setImportantIfChanged(element, 'width', 'auto');
             setImportantIfChanged(element, 'height', '13px');
             setImportantIfChanged(element, 'max-width', 'none');

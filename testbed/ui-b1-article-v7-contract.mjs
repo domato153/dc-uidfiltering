@@ -8,7 +8,8 @@ const main='[data-dcuf-role="comment-composer"][data-dcuf-state="main"]';
 const hit=loc=>loc.evaluate(n=>{const r=n.getBoundingClientRect(),t=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2);return r.width>0&&r.height>0&&(n===t||n.contains(t))});
 export async function mountArticleV7State(browser,server,state){
  const e=await createTestPage(browser,server.baseUrl,{viewport:{width:state.width,height:state.height},storage:{[storageKeys.threshold]:0,[storageKeys.palette]:'teal'}});
- await e.goto('/board/view?id=test&no=1001&comments=4');await e.page.evaluate(mountB1ContentFixture);await e.page.evaluate(mountB1ImageCommentsFixture,{imageWidth:700});
+ if(state.header)await e.page.route(u=>u.origin===server.baseUrl&&u.pathname==='/board/view',async route=>{const response=await route.fetch();let html=await response.text();html=html.replace(/(<body\b[^>]*>)/,'$1<div class="dcwrap width1160">').replace('</body>','</div></body>');await route.fulfill({response,body:html})});
+ await e.goto('/board/view?id=test&no=1001&comments=4'+(state.header?'&header=1':''));await e.page.evaluate(mountB1ContentFixture);await e.page.evaluate(mountB1ImageCommentsFixture,{imageWidth:700});
  await e.page.evaluate(()=>{const bar=document.createElement('div');bar.className='view_bottom_btnbox fixture-v7-native-actions';bar.innerHTML='<div class="fl"><button type="button" class="btn_grey">전체글</button><button type="button" class="btn_grey">개념글</button></div><div class="fr"><button type="button" class="btn_grey cancle">삭제</button><button type="button" class="btn_blue write">글쓰기</button></div>';window.__v7ActionCalls=0;for(const n of bar.querySelectorAll('button'))n.onclick=()=>window.__v7ActionCalls++;window.__v7ActionOriginals=[...bar.querySelectorAll('button')].map(node=>({node,parent:node.parentNode,handler:node.onclick}));document.querySelector('[data-dcuf-role="article"]').append(bar)});
  await e.page.locator('.fixture-v7-native-actions [data-dcuf-role="native-article-action"]').first().waitFor({state:'visible'});
  if(state.dark)await e.page.evaluate(()=>window.__dcufFixture.toggleDark(true));
@@ -20,7 +21,7 @@ export async function runArticleV7Contract({browser,server,onCapture}){
  for(const state of[{width:1440,height:1000},{width:980,height:900},{width:980,height:900,dark:true},{width:980,height:2306},{width:390,height:700,dark:true}]){
   const {e,area}=await mountArticleV7State(browser,server,state);
   try{
-   assert.ok((await e.page.locator('[data-dcuf-role="article"]').boundingBox()).width<=1121,'Article uses the coherent content gutter rather than filling the viewport');
+   const pageWidth=await e.page.locator('[data-dcuf-role="article"]').evaluate(n=>{const a=n.getBoundingClientRect(),p=n.parentElement.getBoundingClientRect(),g=parseFloat(getComputedStyle(n).getPropertyValue('--dcuf-page-gutter'));return Math.abs(a.width-(p.width-2*g))});assert.ok(pageWidth<=1,'Article follows full-width page gutters: '+pageWidth);
    const alignment=await e.page.locator('[data-dcuf-role="article"]').evaluate(n=>{const a=n.getBoundingClientRect(),p=n.parentElement.getBoundingClientRect();return Math.abs(a.left+a.width/2-p.left-p.width/2)});
    assert.ok(alignment<=1,'Native article is centered within its original parent,not only width-limited: '+alignment);
    const row=e.page.locator('#focus_cmt [data-dcuf-role="comment-item"]').filter({visible:true}).first();assert.equal(await row.evaluate(n=>getComputedStyle(n).boxShadow),'none','Ordinary rows use one continuous reading surface rather than repeated raised cards');

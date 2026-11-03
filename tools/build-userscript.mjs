@@ -106,6 +106,8 @@ async function buildSharedRuntimePrelude() {
         '        extractIpPrefix,',
         '        normalizeBlockConfigIp,',
         '        isSuspiciousLegacyManagedIpList,',
+        '        normalizeShortcutEventKey,',
+        '        matchesShortcutEvent,',
         '        formatShortcutKeys,',
         '        parseShortcutString,',
         '        createDefaultFilterSettings,',

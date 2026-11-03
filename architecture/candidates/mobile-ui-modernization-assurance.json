@@ -101,7 +101,8 @@
           "testbed/ui-residual-children-contract.mjs",
           "testbed/ui-live-control-contract.mjs",
           "testbed/ui-b1-gallery-search-contract.mjs",
-          "testbed/ui-b1-password-contract.mjs", "testbed/ui-b1-form-header-contract.mjs", "testbed/ui-b1-write-shell-contract.mjs"
+          "testbed/ui-b1-password-contract.mjs", "testbed/ui-b1-form-header-contract.mjs", "testbed/ui-b1-write-shell-contract.mjs",
+          "testbed/ui-user-feedback-contract.mjs"
         ],
         "contractRefs": ["proof-integrity","initialization-lifecycle","artifact-lineage","ui-review-preparation"],
         "fitnessRefs": [
@@ -863,7 +864,7 @@
         "classification": "presentation-source",
         "layer": "presentation-ui",
         "boundaryState": "mixed",
-        "responsibility": "Hoisted pure existing Mobile B1 material role CSS; consumed by gallery and isolated login without executing gallery initialization. Existing dynamic palette root/body selectors remain debt.",
+        "responsibility": "Hoisted pure existing Mobile B1 material role CSS and shared full-width page gutter values; existing page presenters own their layout and isolated login consumes material without executing gallery initialization. Existing dynamic palette root/body selectors remain debt.",
         "sourceRefs": [
           "src/targets/mobile/theme-material-values.js"
         ],

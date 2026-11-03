@@ -4,6 +4,14 @@
 
 사용자 채택 방향2026-10-31. 다음 UI 작업에서는 이 절과 현재 작업의 실제 화면/owner만 먼저 읽는다. 아래 예전 B1/C885 이력이나 새 이미지의 결함이 이 규칙을 덮어쓰지 않는다. 전체 UI 종료 후 논의할 종합 가이드북과 달리,이 절은 지금 재사용할 짧은 채택 규칙이다.
 
+### Latest user refinements —2026-11-03
+
+Page layout preserves the existing full-width header and expands list/article/comments/writer/page-level action bars to its shared gutters(10px desktop,8px below900px). A centered1120px page cap is superseded. Inner editing fields,authored media and floating dialogs keep role-specific sizes.
+
+The floating menu action is a role-specific exception to pale primary ink:lowercase `menu`,white text,transmitting theme-tinted glass,compact label-relative padding and optical vertical centering. Keep current saved scale and drag;material/size ratios resolve at its existing presenter. This does not repaint every primary button.
+
+Hover preview retains a transmitting frame/header and stable inset reading plane. Its original-page link uses a pale theme-bound pill with no outlined edge or raised shadow;keep original href/close/media/scroll behavior. Do not revive the old outlined neutral preview button.
+
 ### 원하는 전체 느낌
 
 - 차분하고 정돈된 작업용 UI. 은은한 유리 외곽,선명한 글자,안정적인 읽기/편집 면을 함께 쓴다. 유리 질감을 흰 안개,강한 그라디언트,두꺼운 광택/그림자,모든 요소의 카드화로 표현하지 않는다.

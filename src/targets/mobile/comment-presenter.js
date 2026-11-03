@@ -14,8 +14,8 @@
                 --dcuf-comment-accent-strong: var(--dcuf-theme-accent-strong, #315bc1);
                 --dcuf-comment-shadow: 0 2px 8px color-mix(in srgb, var(--dcuf-comment-fg) 4%, transparent);
                 position: relative;
-                inline-size: calc(100% - 40px);
-                max-inline-size: 1120px;
+                inline-size: calc(100% - 2 * var(--dcuf-page-gutter,10px));
+                max-inline-size: none;
                 margin: 14px auto;
                 padding: 12px;
                 border: 1px solid var(--dcuf-comment-border);
@@ -391,6 +391,7 @@
                 grid-column: 2;
                 display: flex;
                 min-inline-size: 0;
+                max-inline-size: 100%;
                 flex-direction: column;
                 gap: 12px;
                 padding: 10px;
@@ -406,6 +407,7 @@
                 float: none;
                 min-inline-size: 0;
                 inline-size: 100%;
+                max-inline-size: 100%;
                 box-sizing: border-box;
             }
             [data-dcuf-role="comment-input-hint"] { color: var(--dcuf-comment-muted); }
@@ -417,6 +419,7 @@
             [data-dcuf-surface="comments-replies"][data-dcuf-role="comments-root"] [data-dcuf-role="native-comment-textarea"] {
                 inline-size: 100%;
                 min-inline-size: 0;
+                max-inline-size: 100%;
                 border: 1px solid var(--dcuf-comment-border);
                 border-radius: 8px;
                 background: var(--dcuf-comment-input);
@@ -830,7 +833,7 @@
                     --dcuf-picker-center: calc(50% - 48px);
                     --dcuf-picker-clearance: 128px;
                 }
-                [data-dcuf-surface="comments-replies"][data-dcuf-role="comments-root"] { inline-size: calc(100% - 24px); margin: 10px auto; padding: 8px; }
+                [data-dcuf-surface="comments-replies"][data-dcuf-role="comments-root"] { inline-size: calc(100% - 2 * var(--dcuf-page-gutter,10px)); margin: 10px auto; padding: 8px; }
                 [data-dcuf-role="comment-item"] {
                     margin-inline: 0;
                     padding: 13px 4px;

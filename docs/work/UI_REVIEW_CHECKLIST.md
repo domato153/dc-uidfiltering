@@ -1,5 +1,9 @@
 # 전체 UI 디자인 검토 체크목록
 
+## Latest feedback regression route —2026-11-03
+
+UI_USER_FEEDBACK_REPAIRS.md and testbed/ui-user-feedback-contract.mjs cover shortcut names/IME-shaped input/held modifiers,category-arrow adjacency,native member sprites,wide page edges,outside-article actions,reply input containment,FAB typography/scale and borderless preview action. Select the affected family/state only;no new inventory ID or routine full128 check. Existing v7 material/accent/reference gates still apply.
+
 작성일: 2026-10-18. 최신 범위 대조: 2026-11-03. 상태: **128개 ID / 11가족 유지 · 주요 v7 구현과 조건부 미확인 분리**. 현재 가족별 판단과 남은 범위는 B1_RESIDUAL_FINISH_AND_REVIEW.md → CURRENT_STATE.md/NEXT_TASK.md를 따른다. B1_V7_FINAL_SCOPE_REVIEW.md는 앞선 범위 대조 이력이다. B1_INTEGRATED_UI_GAPS.md와 B1_V7_INTEGRATED_REVIEW.md는 각 과거 runtime의 진단 이력이며 뒤에 완료된 항목을 되살리지 않는다.
 
 사용자 요구: 대표 화면 네 장으로 끝내지 않고, 코드에 있는 화면·메뉴·팝업·입력창·상태를 전부 펼쳐 볼 수 있게 한다. 이 문서는 향후 UI 변경의 공통 목록이며 `UI_REPLACEABILITY_VALIDATION.md`의 Concept01 실구현 검토에도 사용한다. 기능 의미와 최종 증거 상태는 `FINAL_FEATURE_STATE_INVENTORY.md`, 구조·동작 계약은 `docs/ui-surface-contracts.md`, 과거15개 복구는 `UI_ALL_REPAIRS.md`와 후속 `UI_LIVE_REGRESSION_REPAIR.md`의 해당 runtime 범위로 보존한다. 이를 현재 고장 목록으로 되살리지 않는다. 별도 구현 대기열이나 새 테스트 체계를 만들지 않는다.

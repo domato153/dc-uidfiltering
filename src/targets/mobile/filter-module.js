@@ -398,7 +398,7 @@
         
         /* --- 글 보기/댓글 UI --- */
         /* DCUF_VIEW_SURFACE_START */
-        .gall_content, .gall_tit_box, .gall_writer_info, .view_bottom, .gall_comment:not([data-dcuf-role="article-comment-count"]) {
+        .gall_content, .gall_tit_box, .gall_writer_info, .view_bottom:where(:not(:has([data-dcuf-surface="list-host"]))), .gall_comment:not([data-dcuf-role="article-comment-count"]) {
             background: #fff !important;
             padding: 15px !important;
             border-bottom: 1px solid #ddd;

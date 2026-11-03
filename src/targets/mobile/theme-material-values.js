@@ -4,11 +4,21 @@ function __dcufBuildB1MaterialCss(ROOT_ATTRIBUTE) {
         /* Mobile B1 material roles from the selected preview. Shared palette
            IDs/accent values and the PC theme remain unchanged. */
         html[${ROOT_ATTRIBUTE}] {
+            /* Page planes follow the existing full-width header. */
+            --dcuf-page-gutter: 10px;
             --dcuf-b1-canvas: #f1f5f5;
             --dcuf-b1-paper: var(--dcuf-theme-surface);
             --dcuf-b1-glass: color-mix(in srgb, color-mix(in srgb, var(--dcuf-b1-paper) 80%, var(--dcuf-theme-accent-soft)) 58%, transparent);
             --dcuf-b1-floating: color-mix(in srgb, var(--dcuf-b1-paper) 64%, transparent);
-            --dcuf-menu-button-background: var(--dcuf-control-secondary-bg);
+            --dcuf-menu-button-background: linear-gradient(135deg,#ffffff14,transparent 62%), color-mix(in srgb,color-mix(in srgb,var(--dcuf-theme-accent-strong) 60%,#1b2b30) 82%,transparent);
+            --dcuf-menu-button-ink: #fff;
+            --dcuf-menu-button-width-ratio: .66;
+            --dcuf-menu-button-height-ratio: .63;
+            --dcuf-menu-button-padding-ratio: .57;
+            --dcuf-menu-button-font-ratio: .69;
+            --dcuf-menu-button-weight: 650;
+            /* Lowercase Segoe UI ink sits below its line box's midpoint. */
+            --dcuf-menu-button-padding-block: 0 .32em;
             --dcuf-menu-background: var(--dcuf-b1-sheen), var(--dcuf-b1-floating);
             --dcuf-menu-shadow: var(--dcuf-b1-shadow), inset 0 1px 0 var(--dcuf-b1-rim);
             --dcuf-menu-backdrop: var(--dcuf-b1-floating-filter);
@@ -27,6 +37,9 @@ function __dcufBuildB1MaterialCss(ROOT_ATTRIBUTE) {
             --dcuf-control-opacity: 82%;
             --dcuf-v7-primary-glaze: linear-gradient(180deg, var(--dcuf-control-highlight), transparent 68%);
             --dcuf-v7-primary-shadow: inset 0 1px 0 var(--dcuf-b1-rim), 0 3px 7px #152e3412;
+        }
+        @media (max-width: 899px) {
+            html[${ROOT_ATTRIBUTE}] { --dcuf-page-gutter: 8px; }
         }
         html[${ROOT_ATTRIBUTE}].dc-filter-dark-mode,
         html[${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode {

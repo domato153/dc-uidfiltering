@@ -111,6 +111,27 @@ export function isSuspiciousLegacyManagedIpList(rawIpValue, marker = ETC_CONSTAN
     return parseIpPrefixList(rawIpValue, marker).length >= threshold;
 }
 
+export function normalizeShortcutEventKey(event) {
+    const key = String(event?.key || '');
+    if (key === 'OS') return 'Meta';
+    if (key === 'Esc') return 'Escape';
+    if (key === ' ' || key === 'Spacebar') return 'Space';
+    if (key.length === 1 && key !== '+') return key;
+    if (/^(?:Control|Meta|Alt|Shift|CapsLock|Tab|Enter|Escape|Backspace|Delete|Insert|Home|End|PageUp|PageDown|Arrow(?:Up|Down|Left|Right)|F(?:[1-9]|1\d|2[0-4])|Space|Add|Subtract|Multiply|Divide)$/.test(key)) return key;
+    const code = String(event?.code || '');
+    if (/^Key[A-Z]$/.test(code)) return code.slice(3);
+    if (/^(?:Digit|Numpad)\d$/.test(code)) return code.slice(-1);
+    return ({ Equal: '=', Minus: '-', Comma: ',', Period: '.', Slash: '/', Backslash: '\\', Semicolon: ';', Quote: "'", Backquote: '`', BracketLeft: '[', BracketRight: ']', NumpadAdd: 'Add', NumpadSubtract: 'Subtract', NumpadMultiply: 'Multiply', NumpadDivide: 'Divide' })[code] || '';
+}
+
+export function matchesShortcutEvent(event, shortcut) {
+    if (!shortcut?.key || Boolean(event.ctrlKey) !== shortcut.ctrlKey || Boolean(event.metaKey) !== shortcut.metaKey
+        || Boolean(event.altKey) !== shortcut.altKey || Boolean(event.shiftKey) !== shortcut.shiftKey) return false;
+    // Preserve existing logical-key strings;fall back only for named/IME/code keys.
+    return String(event.key || '').toUpperCase() === shortcut.key
+        || normalizeShortcutEventKey(event).toUpperCase() === shortcut.key;
+}
+
 export function formatShortcutKeys(keySet) {
     if (!keySet || keySet.size === 0) return '';
 
@@ -122,7 +143,7 @@ export function formatShortcutKeys(keySet) {
         .sort((a, b) => priority.indexOf(a) - priority.indexOf(b));
 
     const others = keys
-        .filter((key) => !priority.includes(key) && key.length === 1)
+        .filter((key) => !priority.includes(key) && Boolean(normalizeShortcutEventKey({ key })))
         .sort();
 
     return [...modifiers, ...others].map((key) => key === 'Control' ? 'Ctrl' : key).join('+');

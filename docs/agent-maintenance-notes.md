@@ -1,5 +1,15 @@
 # Agent Maintenance Notes
 
+## User feedback: page width,shortcut and native sprites —2026-11-03
+
+Current result:docs/work/UI_USER_FEEDBACK_REPAIRS.md. The centered1120px cap is superseded by the user's full-width-header direction;shared10px desktop/8px narrow gutters belong to existing page presenters. The header layout bridge may contain the whole page:never cap it to resize only its visible pane. Retire the legacy view_bottom padding when a projected list owns that region;qualify native action bars outside the article as well as inside. Test wide desktop,not only980.
+
+No hard two-key limit was reproduced for fast ordinary keys. Formatter omission of named keys/IME Process,500ms capture clearing and stuck main-key sets were reproduced. Snapshot current modifier flags,normalize names/code fallbacks,and match the same stored string on Mobile/PC;wait for close before replaying a launcher. Synthetic IME replay is not the user's exact physical-key stream.
+
+New native member art is a zero-content,padded sprite box. Do not force auto/13px onto it. Keep original art/nodes and ordinary-image fallback;release only former exact inline normalization values on existing normalization hooks. Current fixtures must include native sprite padding and positive bounds. No new observer is needed.
+
+A custom property defined on html cannot resolve scale variables stored only on the descendant FAB:pass scalar ratios and calculate at the consumer. Preserve saved scale/drag and PC fallbacks. Lowercase menu uses an optical inset because its actual glyph ink sits below the line midpoint;inspect the rendered word,not only flex alignment. Impeccable's dynamic img-template warning is not a missing-asset fact:validate rendered src/decode. Do not convert these causes into routine full-product/all128 reruns.
+
 ## Residual folder/editor proof gap —2026-11-03
 
 B1_RESIDUAL_FINISH_AND_REVIEW.md:closed roots or optional positive-size checks can certify blank/1px panels. Require native open ancestry,nonempty decoded media,original controls,hidden second page,footer and trusted closes. Include native inline coordinates/bottom,grid minimums,explicit child ink/sprites and radio transparent-input geometry. CSS parent paint cannot override those contracts. A new media grid must span its original paging footer;scroll the media UL only,not ancestors containing upward native popups.

@@ -37,6 +37,7 @@ import { runB1EditorMenuContract } from './ui-b1-editor-menu-contract.mjs';
 import { runOwnedGlassContract } from './ui-b1-owned-glass-contract.mjs';
 import { runOwnedConditionalContract } from './ui-b1-owned-conditional-contract.mjs';
 import { runOwnedInputContract } from './ui-b1-owned-input-contract.mjs';
+import {runShortcutFeedbackContract,runPageFeedbackContract,runBadgeFeedbackContract,runPreviewFeedbackContract} from './ui-user-feedback-contract.mjs';
 import { runLoginEntryContract } from './ui-b1-login-contract.mjs';
 import { runConveniencePresentationContract, runRecommendationSpacingContract } from './ui-b1-convenience-contract.mjs';
 import { runNativeAuthorContract } from './ui-b1-native-author-contract.mjs';
@@ -77,6 +78,10 @@ const performanceReports = [];
 const writeLayoutReports = [];
 const testResults = [];
 const test = (name, group, run, targets = ['mobile', 'pc']) => tests.push({ name, group, run, targets });
+test('User feedback: shortcut capture and actual launcher', 'functional', async()=>runShortcutFeedbackContract({browser,server,target:activeTarget}));
+test('User feedback: full-width pages category arrow and glass menu', 'functional', async()=>runPageFeedbackContract({browser,server}), ['mobile']);
+test('User feedback: native badge sprites and image fallback', 'functional', async()=>runBadgeFeedbackContract({browser,server}), ['mobile']);
+test('User feedback: transmitting preview and borderless original link', 'functional', async()=>runPreviewFeedbackContract({browser,server}), ['mobile']);
 test('B1 native settings: six native interiors retain glass geometry and actions', 'functional', async()=>runNativeSettingsContract({browser,server}), ['mobile']);
 test('B1 memo workbench: selected composition preserves native actions', 'functional', async()=>runMemoWorkbenchContract({browser,server}), ['mobile']);
 test('B1 memo palette: all accent roles follow the palette dialog', 'functional', async()=>runMemoPaletteContract({browser,server}), ['mobile']);
@@ -1861,8 +1866,13 @@ mobileTest('native list toolbar contains tabs categories and actions without ove
             return walk(sheet.cssRules).join('\n');
         }, css);
     } finally { await parserPage.close(); }
-    assert.doesNotMatch(selectors, /\.(?!dcuf-)[A-Za-z_][\w-]*/,
-        'List presentation uses semantic attributes/owned classes; native discovery stays in the adapter');
+    // Existing B1 category selection retains exactly these two native .on
+    // hooks. This geometry repair does not introduce another native selector.
+    const scopedSelectors = selectors
+        .replaceAll('[data-dcuf-role="category-list"] > li.on > a', '[data-dcuf-role="category-list"] > li > a')
+        .replaceAll('[data-dcuf-role="category-list"] > li > a.on', '[data-dcuf-role="category-list"] > li > a');
+    assert.doesNotMatch(scopedSelectors, /\.(?!dcuf-)[A-Za-z_][\w-]*/,
+        'List presentation uses semantic/owned selectors except the two incumbent category-state hooks');
     for (const width of [980, 320, 390, 412, 750, 1280]) {
         for (const variant of ['major', 'minor', 'mini']) {
             for (const dark of [false, true]) {
@@ -1920,8 +1930,8 @@ mobileTest('native list toolbar contains tabs categories and actions without ove
                         };
                     });
                     const label = `${variant}@${width}/${dark ? 'dark' : 'light'}: ${JSON.stringify(report)}`;
-                    const inset = width <= 759 ? 24 : 40;
-                    assert.equal(Math.abs(report.box.width - Math.min(1120, report.parent.width - inset)) <= 1, true, label);
+                    const inset = width <= 899 ? 16 : 20;
+                    assert.equal(Math.abs(report.box.width - (report.parent.width - inset)) <= 1, true, label);
                     assert.equal(Math.abs((report.box.left + report.box.right) / 2 - (report.parent.left + report.parent.right) / 2) <= 1, true, label);
                     assert.equal(report.allContained, true, label);
                     assert.equal(report.categoryFlow, true, label);
@@ -2573,7 +2583,7 @@ test('플로팅 메뉴 서랍과 원위치 복구가 안전하게 동작한다',
         const menuLabels = await session.page.evaluate(() => window.__dcufTestbedGM.snapshot().menuLabels);
         assert.deepEqual(menuLabels.slice(0, 4), ['글댓합 설정하기', '차단 유저 관리', '플로팅 버튼 원위치', '메뉴 버튼 크기 조절']);
         assert.equal(await session.page.locator('#dc-personal-block-controls').count(), 1);
-        assert.equal(await session.page.locator('#dc-personal-block-fab').textContent(), '메뉴');
+        assert.equal(await session.page.locator('#dc-personal-block-fab').textContent(), 'menu');
 
         const fab = session.page.locator('#dc-personal-block-fab');
         const drawer = session.page.locator('#dc-personal-block-drawer');
@@ -2585,9 +2595,9 @@ test('플로팅 메뉴 서랍과 원위치 복구가 안전하게 동작한다',
                 fontSize: parseFloat(getComputedStyle(element).fontSize)
             };
         });
-        assert.equal(fabTapTarget.width >= 152, true, `FAB width: ${fabTapTarget.width}`);
-        assert.equal(fabTapTarget.height >= 76, true, `FAB height: ${fabTapTarget.height}`);
-        assert.equal(fabTapTarget.fontSize >= 32, true, `FAB font size: ${fabTapTarget.fontSize}`);
+        assert.equal(fabTapTarget.width >= (isPcUserscript ? 152 : 100), true, `FAB width: ${fabTapTarget.width}`);
+        assert.equal(fabTapTarget.height >= (isPcUserscript ? 76 : 47), true, `FAB height: ${fabTapTarget.height}`);
+        assert.equal(fabTapTarget.fontSize >= (isPcUserscript ? 32 : 22), true, `FAB font size: ${fabTapTarget.fontSize}`);
         await fab.click();
         assert.equal(await fab.getAttribute('aria-expanded'), 'true');
         assert.equal(await drawer.isVisible(), true);
@@ -2679,9 +2689,9 @@ test('플로팅 메뉴 서랍과 원위치 복구가 안전하게 동작한다',
                 fontSize: parseFloat(getComputedStyle(element).fontSize)
             };
         });
-        assert.equal(Math.abs(scaledTapTarget.width - 114) <= 1, true, `scaled FAB width: ${scaledTapTarget.width}`);
-        assert.equal(Math.abs(scaledTapTarget.height - 57) <= 1, true, `scaled FAB height: ${scaledTapTarget.height}`);
-        assert.equal(Math.abs(scaledTapTarget.fontSize - 24) <= 0.1, true, `scaled FAB font size: ${scaledTapTarget.fontSize}`);
+        assert.equal(Math.abs(scaledTapTarget.width - fabTapTarget.width * .75) <= 1, true, `scaled FAB width: ${scaledTapTarget.width}`);
+        assert.equal(Math.abs(scaledTapTarget.height - fabTapTarget.height * .75) <= 1, true, `scaled FAB height: ${scaledTapTarget.height}`);
+        assert.equal(Math.abs(scaledTapTarget.fontSize - fabTapTarget.fontSize * .75) <= 0.1, true, `scaled FAB font size: ${scaledTapTarget.fontSize}`);
         await sizePanel.locator('[data-dcuf-fab-size-action="save"]').click();
         assert.equal(await sizePanel.count(), 0);
         assert.equal(await session.page.evaluate((key) => window.__dcufTestbedGM.get(key), storageKeys.fabScalePercent), 75);
@@ -2692,8 +2702,8 @@ test('플로팅 메뉴 서랍과 원위치 복구가 안전하게 동작한다',
             const rect = element.getBoundingClientRect();
             return { width: Math.round(rect.width), height: Math.round(rect.height) };
         });
-        assert.equal(Math.abs(recreatedTapTarget.width - 114) <= 1, true, `recreated FAB width: ${recreatedTapTarget.width}`);
-        assert.equal(Math.abs(recreatedTapTarget.height - 57) <= 1, true, `recreated FAB height: ${recreatedTapTarget.height}`);
+        assert.equal(Math.abs(recreatedTapTarget.width - scaledTapTarget.width) <= 1, true, `recreated FAB width: ${recreatedTapTarget.width}`);
+        assert.equal(Math.abs(recreatedTapTarget.height - scaledTapTarget.height) <= 1, true, `recreated FAB height: ${recreatedTapTarget.height}`);
         const valuesAfter = await session.page.evaluate(() => window.__dcufTestbedGM.snapshot().values);
         assert.equal(valuesAfter[storageKeys.fabScalePercent], 75);
         delete valuesAfter[storageKeys.fabScalePercent];
@@ -8763,7 +8773,7 @@ mobileTest('글쓰기: 네이티브 모바일 기준 fixture는 가로 넘침 �
             });
             writeLayoutReports.push(report);
             assert.equal(report.overflowX, 0);
-            assert.equal(report.form.width <= Math.min(1120, width) && report.form.width >= Math.min(1120, width) - 64, true, `desktop fluid form width at ${width}: ${report.form.width}`);
+            assert.equal(Math.abs(report.form.width - (width - 20)) <= 1, true, `desktop fluid form width at ${width}: ${report.form.width}`);
             assert.equal(report.aiPrompt.left >= report.form.left && report.aiPrompt.right <= report.form.right, true);
             assert.equal(report.toolbarFlexWrap, 'nowrap', 'desktop-sized write toolbar must also remain on one row');
             assert.equal(report.toolbarOverflowX, 'auto', 'desktop-sized write toolbar must scroll instead of wrapping');

@@ -2,22 +2,22 @@
 
 ## Current execution
 
-- Active plan: B1_RESIDUAL_FINISH_AND_REVIEW.md steps1/2 are locally finished;NEXT owns user appearance review and bounded remaining live qualification.
+- Active plan: docs/work/UI_USER_FEEDBACK_REPAIRS.md is implemented and locally verified;NEXT owns the distinct review build and actual-use feedback. Previous residual finish retains its exact491f888 scope.
 - Workspace path: `.` (private prompt supplies exact worktree). Preserve debug.log unread/unstaged.
 - Active stage: `header-navigation` formal admission remains open. Scoped local UI implementation is not whole-UI/native permission/device or architecture promotion.
 - Accepted visual preference: Actual memo/current pale paired dark primary,transmitting outer chrome,stable reading and quiet label-sized auxiliaries. Generated proposals guide composition;memo/current rules govern fine detail.
-- Source state: Source checkpoint base HEAD `0ad26b503d73446c731b1c9fef1d0695c2cfefea` on `codex/ui-port-boundary`. Validated residual implementation in the existing four owners;no new owner,metadata/storage/PC/version/release. The resulting checkpoint is resolved from fresh Git.
-- Local-only state: `LOCAL_ONLY_EVIDENCE`;artifacts/b1-residual-finish-2026-11-03 holds exact frozen/current results and readable images. Viewer uses one selected image;raw native acquisition/credentials/user data remain excluded.
-- Candidate fingerprint: `33dba6d1be892a020a32e96b25275704cff8fd4a5f6855b5054d5907cd1a47fc`
-- Last current audit: UNKNOWN for formal header admission and user/live/device approval;SCOPED_LOCAL_VERIFIED:10 residual contexts/10 semantic pairs0diff,16 adjacent,4 family-theme palette contexts,8 reviewed visual pairs and GET/HEAD public list/article/writer. ProductApproved=false;user preference,actual conditional callbacks and physical device stay UNKNOWN.
-- Current stage receipt: `verification/receipts/2026-11-03-b1-residual-finish-and-review.json` SHA-256 `FB45D21F4271A944FF0A8043F8A07DF8F7936B2BE48C022727FD75546D8659F0`. Earlier receipts keep their exact historical scopes.
+- Source state: Source checkpoint base HEAD `491f888a254201369dd71992a7e74599c5894a1a` on `codex/ui-port-boundary`;bounded UI_USER_FEEDBACK_REPAIRS.md is complete locally. Preserve unrelated debug.log.
+- Local-only state: `LOCAL_ONLY_EVIDENCE`;artifacts/ui-user-feedback-2026-11-03 holds frozen06F68A/E470 controls and bounded native/event/geometry diagnostics.
+- Candidate fingerprint: `b1eb73c7384114f840991cadc5fb70c6997a0d02b7c776aafabbbc8f7c627139`
+- Last current audit: UNKNOWN: formal admission,final installed-extension/device and user visual acceptance remain open. Current bounded local checks pass in the named receipt.
+- Current stage receipt: `verification/receipts/2026-11-03-ui-user-feedback-repairs.json` SHA-256 `D7DDCA6BBB1523AE16C07D5AC86CB20A0C579B2D6457EB26E13EF805720A97C1`. Earlier receipts retain their own runtime scopes.
 - Accepted baseline: Actual adopted memo/current bright-dark v7 rules retained. Grouped folder/editor child finish and full-page review are now recorded locally;unobserved native permission/server/plugin/device branches remain distinct.
-- Current artifact: Mobile3.5.5 guard/root/dist 06F68AFBC106D8DF27CC0F8702E502255D4DCF6BBA4418F418F863F6E42F3B11;PC1.9.9 E4706617DE96D3E0719144724FDAE1B62D7511674D6564DCBD82F2C702802E14 unchanged. No official publication or version promotion.
-- Blockers: No remaining blocker in this scoped local implementation/review. User appearance approval and unmanufactured actual conditional/device/server outcomes are not claimed.
-- Pending live checks: Review current residual-review viewer and any concrete user feedback;then proportionate real-use/physical-device/conditional qualification through the retained known Chrome/Tampermonkey route. No repeated full128/product test or unsafe state manufacture.
+- Current artifact: Mobile3.5.5 4C2EE229951FFFDD5626B2ED772DD28F01D7ECC9D76F60F75E676AF3519786AC guard/root/dist;PC1.9.9 0D5F7D071F7A29ABA932F1ED52039D04647A10B3B5BAF98E62392305E50EDA4D root/dist. No version bump or official publication.
+- Blockers: No local implementation blocker. Exact user physical third-key event stream remains unobserved;do not blame OS interception.
+- Pending live checks: User review of the distinct current script and any concrete residual issue. No routine full-product recheck or replay of completed UI families.
 
 ```dcuf-current-artifacts
-{"schemaVersion":1,"mobile":{"sha256":"06F68AFBC106D8DF27CC0F8702E502255D4DCF6BBA4418F418F863F6E42F3B11"},"pc":{"sha256":"E4706617DE96D3E0719144724FDAE1B62D7511674D6564DCBD82F2C702802E14"}}
+{"schemaVersion":1,"mobile":{"sha256":"4C2EE229951FFFDD5626B2ED772DD28F01D7ECC9D76F60F75E676AF3519786AC"},"pc":{"sha256":"0D5F7D071F7A29ABA932F1ED52039D04647A10B3B5BAF98E62392305E50EDA4D"}}
 ```
 
 ## Draft-complete checkpoint — 2026-10-21

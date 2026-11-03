@@ -328,7 +328,7 @@
             min-width: 0 !important;
         }
         [data-dcuf-native-form-role="page-container"][data-dcuf-native-form-state="write-editor"] {
-            padding: 0 20px 24px !important;
+            padding: 0 var(--dcuf-page-gutter,10px) 24px !important;
             background: transparent !important;
             overflow: visible !important;
         }
@@ -355,7 +355,7 @@
         [data-dcuf-native-form-role="form"][data-dcuf-native-form-state="write-editor"] {
             box-sizing: border-box !important;
             display: block !important;
-            width: min(100%, 1120px) !important;
+            width: 100% !important;
             max-width: 100% !important;
             min-width: 0 !important;
             margin: 0 auto !important;
@@ -1830,7 +1830,7 @@
         }
         @media screen and (max-width: 480px) {
             [data-dcuf-native-form-role="page-container"][data-dcuf-native-form-state="write-editor"] {
-                padding: 6px !important;
+                padding: 6px var(--dcuf-page-gutter,8px) !important;
             }
             [data-dcuf-native-form-role="form"][data-dcuf-native-form-state="write-editor"] {
                 padding: 10px !important;
@@ -1843,7 +1843,7 @@
         }
         @media screen and (min-width: 900px) {
             [data-dcuf-native-form-role="page-container"][data-dcuf-native-form-state="write-editor"] {
-                padding: 16px 24px !important;
+                padding: 16px var(--dcuf-page-gutter,10px) !important;
             }
             [data-dcuf-native-form-role="form"][data-dcuf-native-form-state="write-editor"] {
                 padding: 18px !important;

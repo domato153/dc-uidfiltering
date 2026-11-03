@@ -174,8 +174,8 @@ const __dcufSettingsPresenter = (() => {
         </form>`;
 
     const renderShortcutModal = (ids) => `
-        <span class="dcuf-panel-kicker">KEYBOARD</span><h4 class="dcuf-panel-title">새로운 단축키 입력</h4><p class="dcuf-settings-help">최대 3개의 키 조합을 누르세요.</p>
-        <output id="${escapeHtml(ids.NEW_SHORTCUT_PREVIEW)}" class="dcuf-shortcut-preview">입력 대기 중...</output>
+        <span class="dcuf-panel-kicker">KEYBOARD</span><h4 class="dcuf-panel-title">새로운 단축키 입력</h4><p class="dcuf-settings-help">문자·숫자·기능키와 보조키를 함께 누르세요. 최대 3개까지 지원합니다.</p>
+        <output id="${escapeHtml(ids.NEW_SHORTCUT_PREVIEW)}" class="dcuf-shortcut-preview" aria-live="polite">입력 대기 중...</output>
         <div class="dcuf-inline-actions"><button type="button" id="${escapeHtml(ids.SAVE_SHORTCUT_BTN)}" class="dcuf-button dcuf-button--primary">변경</button><button type="button" id="${escapeHtml(ids.CANCEL_SHORTCUT_BTN)}" class="dcuf-button dcuf-button--secondary">취소</button></div>`;
 
     const renderHeadtextManager = ({ currentKey, discovered, current, others }) => `
@@ -247,8 +247,8 @@ const __dcufSettingsPresenter = (() => {
     `;
 
     const PERSONAL_MENU_CSS = `
-        [data-dcuf-surface="personal-menu"] { position:fixed;z-index:2147483640;width:max-content;height:var(--dcuf-fab-height,76px);overflow:visible; }
-        [data-dcuf-surface="personal-menu"] .dcuf-fab-button { appearance:none;box-sizing:border-box;min-width:var(--dcuf-fab-width,152px);height:var(--dcuf-fab-height,76px);padding:0 var(--dcuf-fab-padding-x,28px);border:1px solid var(--dcuf-b1-rim,var(--dcuf-theme-border-strong,#cbd2db));border-radius:999px;background:var(--dcuf-menu-button-background,linear-gradient(180deg,var(--dcuf-theme-card-top,#fff),var(--dcuf-theme-surface-raised,#f7f8fa)));color:var(--dcuf-theme-accent-ink,#315fdb);box-shadow:var(--dcuf-menu-shadow,0 10px 24px var(--dcuf-theme-accent-shadow,rgba(49,95,219,.2)));backdrop-filter:var(--dcuf-menu-backdrop,none);font-family:inherit;font-size:var(--dcuf-fab-font-size,32px);font-weight:800;line-height:1;cursor:pointer;touch-action:none; }
+        [data-dcuf-surface="personal-menu"] { position:fixed;z-index:2147483640;width:max-content;height:calc(var(--dcuf-fab-height,76px) * var(--dcuf-menu-button-height-ratio,1));overflow:visible; }
+        [data-dcuf-surface="personal-menu"] .dcuf-fab-button { display:inline-flex;align-items:center;justify-content:center;appearance:none;box-sizing:border-box;min-width:calc(var(--dcuf-fab-width,152px) * var(--dcuf-menu-button-width-ratio,1));height:calc(var(--dcuf-fab-height,76px) * var(--dcuf-menu-button-height-ratio,1));padding:0 calc(var(--dcuf-fab-padding-x,28px) * var(--dcuf-menu-button-padding-ratio,1));padding-block:var(--dcuf-menu-button-padding-block,0);border:1px solid var(--dcuf-b1-rim,var(--dcuf-theme-border-strong,#cbd2db));border-radius:999px;background:var(--dcuf-menu-button-background,linear-gradient(180deg,var(--dcuf-theme-card-top,#fff),var(--dcuf-theme-surface-raised,#f7f8fa)));color:var(--dcuf-menu-button-ink,var(--dcuf-theme-accent-ink,#315fdb));box-shadow:var(--dcuf-menu-shadow,0 10px 24px var(--dcuf-theme-accent-shadow,rgba(49,95,219,.2)));backdrop-filter:var(--dcuf-menu-backdrop,none);font-family:inherit;font-size:calc(var(--dcuf-fab-font-size,32px) * var(--dcuf-menu-button-font-ratio,1));font-weight:var(--dcuf-menu-button-weight,800);line-height:1;cursor:pointer;touch-action:none; }
         [data-dcuf-surface="personal-menu"] .dcuf-menu-drawer { position:absolute;z-index:2147483641;display:grid;gap:5px;width:260px;padding:7px;border:1px solid var(--dcuf-b1-rim,var(--dcuf-theme-border-strong,#cbd2db));border-radius:16px;background:var(--dcuf-menu-background,var(--dcuf-theme-card-top,#fff));box-shadow:var(--dcuf-menu-shadow,var(--dcuf-theme-panel-shadow,0 18px 42px #0003));backdrop-filter:var(--dcuf-menu-backdrop,none); }
         [data-dcuf-surface="personal-menu"] .dcuf-menu-drawer[hidden] { display:none; }
         [data-dcuf-surface="personal-menu"] .dcuf-menu-item { display:grid;grid-template-columns:38px minmax(0,1fr);align-items:center;gap:10px;min-height:56px;padding:7px 9px;border:1px solid transparent;border-radius:12px;background:transparent;color:var(--dcuf-theme-fg,#27313f);text-align:left;cursor:pointer; }

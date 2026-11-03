@@ -1485,8 +1485,10 @@
             margin-left: 1px !important;
             vertical-align: middle !important;
         }
-        div[id^="comment_wrap_"] .comment_box .writer_nikcon img,
-        div[id^="comment_wrap_"] .comment_box img.gallercon {
+        /* Current native member art uses a zero-content padded sprite box.
+           Only ordinary image badges use the inherited typography size. */
+        div[id^="comment_wrap_"] .comment_box .writer_nikcon img:not(:where([src*="nik.gif"],[src*="/bestcon"])),
+        div[id^="comment_wrap_"] .comment_box img.gallercon:not(:where([src*="nik.gif"],[src*="/bestcon"])) {
             width: auto !important;
             height: 13px !important;
             max-width: none !important;
@@ -3271,6 +3273,14 @@
             return;
         }
         if (element.matches('.writer_nikcon img, img.gallercon')) {
+            if (element.matches('[src*="nik.gif"], [src*="/bestcon"]')) {
+                // Release only our former normalization if a delayed image
+                // source becomes a native sprite; retain host inline values.
+                for (const [property, value] of [['width', 'auto'], ['height', '13px'], ['max-width', 'none']]) {
+                    if (element.style.getPropertyValue(property) === value && element.style.getPropertyPriority(property) === 'important') removeStyleIfPresent(element, property);
+                }
+                return;
+            }
             setImportantIfChanged(element, 'width', 'auto');
             setImportantIfChanged(element, 'height', '13px');
             setImportantIfChanged(element, 'max-width', 'none');

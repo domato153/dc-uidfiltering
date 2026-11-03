@@ -13,7 +13,7 @@ export async function createConvenienceState(browser, server, {
     if (kind === 'draft') storage[storageKeys.drafts] = { version: 1, galleries: { 'mgallery:test': [{
         id: 'b1-draft', subject: '합성 저장 초안', bodyHtml: '<p>합성 초안 본문입니다.</p>', headtext: '질문', savedAt: Date.now(), pendingSubmit: false,
     }] } };
-    const e = await createTestPage(browser, server.baseUrl, { storage, viewport, screen: { width: 412, height: 1006 }, hasTouch: true, isMobile: false, deviceScaleFactor: 1 });
+    const e = await createTestPage(browser, server.baseUrl, { storage, viewport, screen: { width: 412, height: 1006 }, hasTouch: sheet, isMobile: false, deviceScaleFactor: 1 });
     if (kind === 'preview') {
         await e.page.route('**/b1-preview-media.svg', r => r.fulfill({ contentType: 'image/svg+xml', body: '<svg xmlns="http://www.w3.org/2000/svg" width="640" height="240"><rect width="640" height="240" fill="#d9e6e2"/><path d="M0 160L160 70L340 190L500 60L640 150" fill="none" stroke="#6d9791" stroke-width="12"/><text x="32" y="40" font-size="22" fill="#30494a">Synthetic media · 640 × 240</text></svg>' }));
         await e.page.route(u => u.origin === server.baseUrl && u.pathname === '/board/view', r => r.fulfill({ contentType: 'text/html', body: '<div class="writing_view_box"><div class="write_div"><p>합성 미리보기 본문입니다. 읽는 내용은 선명하게 유지되어야 합니다.</p><img src="/b1-preview-media.svg" width="640" height="240"><p>첨부와 본문은 원래 읽기 영역의 선명함을 유지합니다.</p></div></div>' }));

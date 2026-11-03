@@ -440,7 +440,7 @@
 
 
             let pressedKeys = new Set();
-            let combinationTimeout = null;
+            let validCombination = false;
             const previewEl = document.getElementById(this.CONSTANTS.UI_IDS.NEW_SHORTCUT_PREVIEW);
 
 
@@ -458,20 +458,13 @@
                 e.stopPropagation();
 
 
-                // 타이머가 있다면, 아직 조합이 진행 중이라는 의미이므로 초기화
-                clearTimeout(combinationTimeout);
-
-
-                if (pressedKeys.size < 3) {
-                    pressedKeys.add(e.key);
-                    updatePreview();
-                }
-
-
-                // 키 입력이 0.5초간 없으면 현재 조합을 확정하고 Set을 비움
-                combinationTimeout = setTimeout(() => {
-                    pressedKeys.clear();
-                }, 500);
+                const key = DCUF_SHARED_STORAGE.normalizeShortcutEventKey(e);
+                const modifiers = [['Control', e.ctrlKey], ['Meta', e.metaKey], ['Alt', e.altKey], ['Shift', e.shiftKey]];
+                pressedKeys = new Set(modifiers.filter(([, held]) => held).map(([name]) => name));
+                const modifierOnly = ['Control', 'Meta', 'Alt', 'Shift'].includes(key);
+                if (key) pressedKeys.add(key);
+                validCombination = Boolean(key) && !modifierOnly && pressedKeys.size <= 3;
+                updatePreview();
             };
 
 
@@ -499,12 +492,12 @@
 
             document.getElementById(this.CONSTANTS.UI_IDS.SAVE_SHORTCUT_BTN).onclick = async () => {
                 const newShortcut = previewEl.textContent;
-                if (newShortcut && newShortcut !== '입력 대기 중...') {
+                if (validCombination && newShortcut && newShortcut !== '입력 대기 중...') {
                     await this.commitShortcutSetting(newShortcut);
                     document.getElementById(this.CONSTANTS.UI_IDS.SHORTCUT_DISPLAY).textContent = newShortcut;
                     cleanup();
                 } else {
-                    alert('유효한 단축키를 입력해주세요.');
+                    alert('유효한 단축키를 입력해주세요. 문자·숫자·기능키를 포함해 최대 3개의 키를 함께 눌러주세요.');
                 }
             };
 

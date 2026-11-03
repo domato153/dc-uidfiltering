@@ -119,7 +119,7 @@
             background: var(--dcuf-b1-backdrop);
         }
         ${selectors.layout} > * { grid-column: 1 / -1; min-width: 0; }
-        ${selectors.layout}::before { content: ""; grid-area: 1 / 1 / 2 / -1; align-self: stretch; margin: 12px 10px; border: 1px solid var(--dcuf-b1-rim); border-radius: 15px; background: var(--dcuf-b1-sheen), var(--dcuf-b1-glass); box-shadow: var(--dcuf-b1-shadow), inset 0 1px 0 var(--dcuf-b1-rim), inset 0 -1px 0 color-mix(in srgb, var(--dcuf-theme-fg) 4%, transparent); backdrop-filter: var(--dcuf-b1-structural-filter,blur(22px) saturate(1.2)); z-index: -1; }
+        ${selectors.layout}::before { content: ""; grid-area: 1 / 1 / 2 / -1; align-self: stretch; margin: 12px var(--dcuf-page-gutter,10px); border: 1px solid var(--dcuf-b1-rim); border-radius: 15px; background: var(--dcuf-b1-sheen), var(--dcuf-b1-glass); box-shadow: var(--dcuf-b1-shadow), inset 0 1px 0 var(--dcuf-b1-rim), inset 0 -1px 0 color-mix(in srgb, var(--dcuf-theme-fg) 4%, transparent); backdrop-filter: var(--dcuf-b1-structural-filter,blur(22px) saturate(1.2)); z-index: -1; }
         ${selectors.root} { display: contents; min-width: 0 !important; width: 100% !important; height: auto !important; background: transparent; border: 0; }
         ${selectors.root}[data-dcuf-header-layout="self"] { display: grid; z-index: 1005; background: var(--dcuf-b1-backdrop); }
         ${selectors.head} {
@@ -190,7 +190,7 @@
         ${selectors.nativeTip}::before, ${selectors.nativeTip}::after, ${selectors.nativeTip} > div::before, ${selectors.nativeTip} > div::after { display: none; }
         @media (max-width: 899px) {
             ${selectors.layout} { grid-template-columns: minmax(0, 1fr) 124px; grid-template-rows: 60px 48px auto; gap: 0 12px; }
-            ${selectors.layout}::before { grid-area: 1 / 1 / 4 / -1; margin: 8px; }
+            ${selectors.layout}::before { grid-area: 1 / 1 / 4 / -1; margin: 8px var(--dcuf-page-gutter,8px); }
             ${selectors.logo} { grid-area: 1 / 1; margin: 0 0 0 22px; }
             ${selectors.links} { grid-area: 1 / 2; margin: 0 16px 0 0; }
             ${selectors.searchWrap} { grid-area: 2 / 1; width: calc(100% - 22px); margin: 0 0 8px 22px; }

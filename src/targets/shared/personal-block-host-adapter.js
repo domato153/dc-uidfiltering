@@ -378,7 +378,7 @@
             fab.id = 'dc-personal-block-fab';
             fab.className = 'dcuf-fab-button';
             fab.type = 'button';
-            fab.textContent = '메뉴';
+            fab.textContent = 'menu';
             fab.setAttribute('aria-expanded', 'false');
             fab.setAttribute('aria-controls', 'dc-personal-block-drawer');
             fab.setAttribute('aria-label', 'DC 유저 필터 메뉴');
