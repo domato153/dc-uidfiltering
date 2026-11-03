@@ -1,5 +1,11 @@
 # Agent Maintenance Notes
 
+## Residual folder/editor proof gap —2026-11-03
+
+B1_RESIDUAL_FINISH_AND_REVIEW.md:closed roots or optional positive-size checks can certify blank/1px panels. Require native open ancestry,nonempty decoded media,original controls,hidden second page,footer and trusted closes. Include native inline coordinates/bottom,grid minimums,explicit child ink/sprites and radio transparent-input geometry. CSS parent paint cannot override those contracts. A new media grid must span its original paging footer;scroll the media UL only,not ancestors containing upward native popups.
+
+Inspect readable current pixels as well as hits:it found naming/count overlap,vertical pack controls,white recent tile and search z4000 above native modal1050. Same-owner fixes and positive regressions preserve native nodes/parents/callbacks. Frozen deficient control may need diagnostic callback replay;never allow that shortcut in candidate hit tests. Missing viewer server is an environment failure:verify PNG200/decode and interactive before/after controls before delivery. Do not turn these causes into a routine full-product or all128 rerun.
+
 ## Conditional popup roles/cascade —2026-11-02
 
 B1_CONDITIONAL_CHILDREN_IMPLEMENTATION.md:exact image-password ID and nested grey close were missing contextual roles;detail projection stopped before its interior. Repair in the existing comment adapter/presenter,not a global theme layer. Inspect every inherited role:comment-media margin/radius can clip native pack art;native metadata/header specificity can defeat local roles. Use current semantic/foreground values with rendered contrast on transmitting backing.

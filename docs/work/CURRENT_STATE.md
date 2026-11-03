@@ -2,22 +2,22 @@
 
 ## Current execution
 
-- Active plan: B1_V7_FINAL_SCOPE_REVIEW.md reconciles current128-ID scope and15 receipts. NEXT owns one grouped safe folder/extra-editor child qualification;main named v7 implementations stay closed.
+- Active plan: B1_RESIDUAL_FINISH_AND_REVIEW.md steps1/2 are locally finished;NEXT owns user appearance review and bounded remaining live qualification.
 - Workspace path: `.` (private prompt supplies exact worktree). Preserve debug.log unread/unstaged.
 - Active stage: `header-navigation` formal admission remains open. Scoped local UI implementation is not whole-UI/native permission/device or architecture promotion.
 - Accepted visual preference: Actual memo/current pale paired dark primary,transmitting outer chrome,stable reading and quiet label-sized auxiliaries. Generated proposals guide composition;memo/current rules govern fine detail.
-- Source state: Source checkpoint base HEAD `b10a83f52ee20c1dd562efba08a6a1ca543d291c` on `codex/ui-port-boundary`. This unit changes guidance/receipt only;Mobile/PC runtime,source,fixtures,harness,registry,storage/metadata and versions unchanged. Exact publication/CI is in checkpoint receipt.
-- Local-only state: `LOCAL_ONLY_EVIDENCE`;artifacts/b1-v7-final-scope-review-2026-11-02 holds the inventory/source-hash reconciliation. Private native/account acquisition remains ignored;no raw HTML/account values/credentials in Git. No new browser launched for the audit.
-- Candidate fingerprint: `bb73ea51b4d9559b06c9582064a790746c004e9e03e0d7a6ceef174638217b7e`
-- Last current audit: READY scoped scope-reconciliation / WHOLE_UI_NOT_CERTIFIED.128 distinctIDs/11families,15 scoped receipts and recorded source hashes reconciled. Stale current routes replaced;no new product/browser PASS or all-state aesthetic approval.
-- Current stage receipt: `verification/receipts/2026-11-03-b1-v7-final-scope-review.json` SHA-256 `53F7C05DCEAC4D5EB698A56DDEAE064C00DDD4FC2344CF53E16EA8E2EBB69A4F`. Prior implementation/live receipts retain exact original scope;no old receipt was rewritten.
-- Accepted baseline: User-adopted actual memo/current bright-dark v7 rules retained. Main named pages/panels/popups have implementations;folder-shell partial recognition and extra editor-child open-state qualification remain separate.
-- Current artifact: Mobile3.5.5 79A4C12FC640ED6984539521A992E5D0F32AC884716BA58842C706EF62FCC7C8 root/dist/guard;PC1.9.9 E4706617DE96D3E0719144724FDAE1B62D7511674D6564DCBD82F2C702802E14 root/dist unchanged. No version/release promotion.
-- Blockers: Whole-UI closure is not certified:favorite add/select bgbox shells have no contextual root in acquired closed anatomy,current selector still omits them;open-state rendering not yet qualified. Extra in-document editor children are outside six-dropdown evidence. No new visible defect is asserted from markers alone.
-- Pending live checks: NEXT groups safe folder/editor child qualification first,then representative current full-page development-build review. Final79A4 conditional entry,real image permissions,account/result/server/device states stay UNKNOWN. No mutation to manufacture coverage;four uploads deferred,image replies N/A,guidebook after actual UI closure.
+- Source state: Source checkpoint base HEAD `0ad26b503d73446c731b1c9fef1d0695c2cfefea` on `codex/ui-port-boundary`. Validated residual implementation in the existing four owners;no new owner,metadata/storage/PC/version/release. The resulting checkpoint is resolved from fresh Git.
+- Local-only state: `LOCAL_ONLY_EVIDENCE`;artifacts/b1-residual-finish-2026-11-03 holds exact frozen/current results and readable images. Viewer uses one selected image;raw native acquisition/credentials/user data remain excluded.
+- Candidate fingerprint: `33dba6d1be892a020a32e96b25275704cff8fd4a5f6855b5054d5907cd1a47fc`
+- Last current audit: UNKNOWN for formal header admission and user/live/device approval;SCOPED_LOCAL_VERIFIED:10 residual contexts/10 semantic pairs0diff,16 adjacent,4 family-theme palette contexts,8 reviewed visual pairs and GET/HEAD public list/article/writer. ProductApproved=false;user preference,actual conditional callbacks and physical device stay UNKNOWN.
+- Current stage receipt: `verification/receipts/2026-11-03-b1-residual-finish-and-review.json` SHA-256 `FB45D21F4271A944FF0A8043F8A07DF8F7936B2BE48C022727FD75546D8659F0`. Earlier receipts keep their exact historical scopes.
+- Accepted baseline: Actual adopted memo/current bright-dark v7 rules retained. Grouped folder/editor child finish and full-page review are now recorded locally;unobserved native permission/server/plugin/device branches remain distinct.
+- Current artifact: Mobile3.5.5 guard/root/dist 06F68AFBC106D8DF27CC0F8702E502255D4DCF6BBA4418F418F863F6E42F3B11;PC1.9.9 E4706617DE96D3E0719144724FDAE1B62D7511674D6564DCBD82F2C702802E14 unchanged. No official publication or version promotion.
+- Blockers: No remaining blocker in this scoped local implementation/review. User appearance approval and unmanufactured actual conditional/device/server outcomes are not claimed.
+- Pending live checks: Review current residual-review viewer and any concrete user feedback;then proportionate real-use/physical-device/conditional qualification through the retained known Chrome/Tampermonkey route. No repeated full128/product test or unsafe state manufacture.
 
 ```dcuf-current-artifacts
-{"schemaVersion":1,"mobile":{"sha256":"79A4C12FC640ED6984539521A992E5D0F32AC884716BA58842C706EF62FCC7C8"},"pc":{"sha256":"E4706617DE96D3E0719144724FDAE1B62D7511674D6564DCBD82F2C702802E14"}}
+{"schemaVersion":1,"mobile":{"sha256":"06F68AFBC106D8DF27CC0F8702E502255D4DCF6BBA4418F418F863F6E42F3B11"},"pc":{"sha256":"E4706617DE96D3E0719144724FDAE1B62D7511674D6564DCBD82F2C702802E14"}}
 ```
 
 ## Draft-complete checkpoint — 2026-10-21

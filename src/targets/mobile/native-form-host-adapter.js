@@ -566,6 +566,12 @@
                     });
                 });
                 writeHiddenChrome.forEach((element) => markNativeContext(element, 'hidden-chrome', nativeContextState));
+                // Summernote owns visibility,focus,positioning and callbacks.
+                // Project only its existing form-local dialog/popover roots;
+                // ordinary writer-field discovery deliberately excludes them.
+                form.querySelectorAll('.note-editor > .note-modal, .note-editor > .note-popover').forEach((element) => {
+                    markNativeContext(element, element.matches('.note-modal') ? 'editor-dialog' : 'editor-popover', nativeContextState);
+                });
                 writeSafePresentationElements.forEach((element) => {
                     markNativePresentationProperty(element, 'data-dcuf-native-form-box-sizing', 'border-box');
                 });

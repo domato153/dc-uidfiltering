@@ -196,17 +196,19 @@
         };
 
         const markPopups = (root) => {
-            root.querySelectorAll('#user_data_lyr, .user_data, .user_data_add, .pop_wrap.type2, .pop_wrap.type3, .cmt_delpw_box, [id$="_delpw_box"]').forEach((popup) => {
+            root.querySelectorAll('#user_data_lyr, .user_data, .user_data_add, .pop_wrap.type2, .pop_wrap.type3, #favoriteFolderAddLayer.bgbox.bkmk_area, #favoriteFolderSelectLayer.bgbox.bkmk_area, .cmt_delpw_box, [id$="_delpw_box"]').forEach((popup) => {
                 mark(root, popup, { role: 'native-comment-popup', state: popup.hidden || popup.style.display === 'none' ? 'closed' : 'open' });
                 const picker = popup.id === 'div_con' || popup.id === 'div_txtcon';
                 const password = popup.matches('#cmt_delpw_box.cmt_delpw_box, #img_cmt_delpw_box.cmt_delpw_box');
                 const detail = popup.id === 'package_detail' && popup.querySelector(':scope > .dccon_popinfo');
                 const info = popup.id === 'daewangcon_layer' && popup.querySelector(':scope > .ly_daewang');
-                markCommentContext(root, popup, picker ? 'comment-picker' : password ? 'comment-password' : detail ? 'comment-detail' : info ? 'comment-info' : 'comment-popup');
+                const folder = popup.matches('#favoriteFolderLayer, #favoriteFolderAddLayer.bgbox.bkmk_area, #favoriteFolderSelectLayer.bgbox.bkmk_area, #folderEditLayer, #dccfv_picker_lay')
+                    || Boolean(popup.querySelector(':scope > .ly_folder_add, :scope > .bkmark_infobox'));
+                markCommentContext(root, popup, picker ? 'comment-picker' : password ? 'comment-password' : detail ? 'comment-detail' : info ? 'comment-info' : folder ? 'comment-folder' : 'comment-popup');
                 popup.querySelectorAll(':scope > .pop_content').forEach(panel => markCommentContext(root, panel, 'popup-panel'));
                 popup.querySelectorAll('.tit, .pop_tit, .pop_dccon_tit').forEach(title => markCommentContext(root, title, 'popup-title'));
                 const parts = (selector, role) => popup.querySelectorAll(selector).forEach(element => {
-                    if (element.closest('.pop_wrap') === popup) markCommentContext(root, element, role);
+                    if (element.closest('.pop_wrap, #favoriteFolderAddLayer.bgbox.bkmk_area, #favoriteFolderSelectLayer.bgbox.bkmk_area') === popup) markCommentContext(root, element, role);
                 });
                 if (detail) {
                     parts(':scope > .pop_content > .pop_head', 'popup-detail-heading');
@@ -228,6 +230,12 @@
                     parts(':scope > .package_close', 'popup-context-close');
                 }
                 if (info) parts(':scope > .poply_greyclose', 'popup-context-close');
+                if (folder) {
+                    parts('.pop_head > h3', 'popup-title');
+                    parts('.btn_blue, .btn_apply', 'popup-primary-action');
+                    parts('.btn_cancle', 'popup-action');
+                    parts('.poply_whiteclose, .poply_bgblueclose, .btn_bkm_close', 'popup-context-close');
+                }
                 if (password) {
                     popup.querySelectorAll('input.cmt_delpw[type="password"]').forEach(field => markCommentContext(root, field, 'popup-password-field'));
                     popup.querySelectorAll('.btn_ok').forEach(button => markCommentContext(root, button, 'popup-primary-action'));
@@ -298,6 +306,7 @@
             });
             markAll(root, '.comment_count, .comment_top', 'comment-header');
             markAll(root, '.comment_count .num_box, .comment_top .num_box', 'comment-count');
+            markAll(root, '.comment_sort', 'comment-sort');
             markAll(root, '.comment_count .font_red, .comment_top .font_red', 'comment-count-accent');
             markAll(root, '.comment_count > .fr, .comment_top > .fr', 'comment-header-actions');
             markAll(root, '.comment_count button, .comment_count a, .comment_top button, .comment_top a', 'native-comment-header-action');

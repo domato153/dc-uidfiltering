@@ -294,6 +294,24 @@
           "property": "margin",
           "hostCollision": "Public6778319 popup.css uses .cmt_txtbox #package_detail {margin:-8px 0 0 167px} and a reply variant with166px. Reset only the projected detail margin to prevent the legacy comment gutter from defeating its bounded media layout;native inline offset,nodes,events and nested hidden states remain unchanged. No global priority or selector-ID escalation.",
           "testRef": "B1 conditional children: detail bigcon and image password"
+        },
+        {
+          "selector": "[data-dcuf-role=\"native-comment-popup\"][data-dcuf-comment-role=\"comment-folder\"]",
+          "property": "left",
+          "hostCollision": "Acquired native folder shells write inline left:auto or50%;the existing picker-relative centered child surface must override only this native coordinate while preserving its node,parent,display and callbacks.",
+          "testRef": "B1 residual children: native folders and writer dialogs"
+        },
+        {
+          "selector": "[data-dcuf-role=\"native-comment-popup\"][data-dcuf-comment-role=\"comment-folder\"]",
+          "property": "top",
+          "hostCollision": "Native list/add/edit/color shells retain inline top17/20/25/72px. Center only the acquired folder child family in its existing containing popup;no global popup or event owner override.",
+          "testRef": "B1 residual children: native folders and writer dialogs"
+        },
+        {
+          "selector": "[data-dcuf-role=\"native-comment-popup\"][data-dcuf-comment-role=\"comment-folder\"]",
+          "property": "margin",
+          "hostCollision": "Native inline margin-left93px and-162px counteract the centered folder child;reset only this projected family's margin to keep complete fields/actions inside the parent popup and viewport.",
+          "testRef": "B1 residual children: native folders and writer dialogs"
         }
       ],
       "cascadeExceptionProfiles": [],

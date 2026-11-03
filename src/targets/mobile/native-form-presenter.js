@@ -740,6 +740,122 @@
             overscroll-behavior: contain !important;
             -webkit-overflow-scrolling: touch !important;
         }
+        /* Summernote owns these original form-local roots and their visibility.
+           Only the content plane receives blur;native fixed/modal geometry stays native. */
+        [data-dcuf-native-form-role="editor-dialog"][data-dcuf-native-form-state="write-editor"] { z-index: 5000; }
+        [data-dcuf-native-form-role="editor-dialog"][data-dcuf-native-form-state="write-editor"] .note-modal-content {
+            position: relative; display: flex; flex-direction: column;
+            inline-size: min(600px, calc(100vw - 32px)); min-inline-size: 0; max-block-size: calc(100dvh - 32px);
+            margin: 16px auto; box-sizing: border-box; overflow: hidden;
+            border: 1px solid var(--dcuf-b1-rim); border-radius: 16px;
+            background: var(--dcuf-b1-sheen), var(--dcuf-b1-floating); color: var(--dcuf-theme-fg);
+            backdrop-filter: var(--dcuf-b1-floating-filter); box-shadow: var(--dcuf-b1-shadow);
+            font: 500 14px/1.5 system-ui, sans-serif;
+        }
+        [data-dcuf-native-form-role="editor-dialog"] .note-modal-header {
+            flex: none; padding: 16px 52px 14px 18px; border-bottom: 1px solid var(--dcuf-b1-line);
+            background: transparent; color: inherit;
+        }
+        [data-dcuf-native-form-role="editor-dialog"] .note-modal-header .note-modal-title { color: var(--dcuf-theme-fg); font: 650 17px/1.5 system-ui, sans-serif; }
+        [data-dcuf-native-form-role="editor-dialog"] .note-modal-body { min-block-size: 0; overflow: auto; padding: 18px; color: inherit; }
+        [data-dcuf-native-form-role="editor-dialog"] .note-modal-footer { flex: none; height: auto; padding: 12px 18px 16px; border: 0; text-align: end; }
+        [data-dcuf-native-form-role="editor-dialog"] .note-modal-body .note-form-label { color: var(--dcuf-theme-fg); font: 550 13px/1.5 system-ui, sans-serif; }
+        [data-dcuf-native-form-role="editor-dialog"] .note-form-control {
+            box-sizing: border-box; max-inline-size: 100%; min-block-size: 36px; padding: 8px 10px;
+            border: 1px solid var(--dcuf-theme-border); border-radius: 8px;
+            background: var(--dcuf-v7-reading); color: var(--dcuf-theme-fg); caret-color: var(--dcuf-theme-accent);
+            font: 500 14px/1.5 system-ui, sans-serif;
+        }
+        [data-dcuf-native-form-role="editor-dialog"][data-dcuf-native-form-state="write-editor"] .note-modal-footer .note-btn-primary {
+            inline-size: auto; min-block-size: 36px; padding: 8px 14px;
+            border: 1px solid var(--dcuf-v7-primary-rim); border-radius: 8px;
+            background: var(--dcuf-v7-primary-bg); color: var(--dcuf-v7-primary-ink); box-shadow: var(--dcuf-v7-primary-shadow);
+            font: 650 13px/1.4 system-ui, sans-serif; text-shadow: none;
+        }
+        [data-dcuf-native-form-role="editor-dialog"] .note-modal-header .close {
+            position: absolute; inset: 10px 10px auto auto; width: 32px; height: 32px; padding: 0;
+            border: 0; border-radius: 7px; background: transparent; color: var(--dcuf-theme-fg); opacity: 1;
+        }
+        [data-dcuf-native-form-role="editor-dialog"] .note-modal-header .close > i { display: none; }
+        [data-dcuf-native-form-role="editor-dialog"] .note-modal-header .close::before,
+        [data-dcuf-native-form-role="editor-dialog"] .note-modal-header .close::after { content: ''; position: absolute; left: 50%; top: 50%; width: 13px; height: 1.5px; border-radius: 1px; background: currentColor; transform: translate(-50%, -50%) rotate(45deg); }
+        [data-dcuf-native-form-role="editor-dialog"] .note-modal-header .close::after { transform: translate(-50%, -50%) rotate(-45deg); }
+        [data-dcuf-native-form-role="editor-popover"][data-dcuf-native-form-state="write-editor"] {
+            max-inline-size: calc(100vw - 32px); box-sizing: border-box; border: 1px solid var(--dcuf-b1-rim); border-radius: 12px;
+            background: var(--dcuf-b1-sheen), var(--dcuf-b1-floating); color: var(--dcuf-theme-fg);
+            backdrop-filter: var(--dcuf-b1-floating-filter); box-shadow: var(--dcuf-b1-shadow);
+        }
+        [data-dcuf-native-form-role="editor-popover"] .popover-content { display: flex; flex-wrap: wrap; gap: 4px; padding: 6px; }
+        [data-dcuf-native-form-role="editor-popover"] .note-btn-group { display: flex; flex-wrap: wrap; }
+        [data-dcuf-native-form-role="editor-popover"] .popover-content > span > a { color: var(--dcuf-theme-fg); overflow-wrap: anywhere; }
+        [data-dcuf-native-form-role="editor-popover"] .note-btn {
+            min-inline-size: 32px; min-block-size: 32px; margin: 0; padding: 6px 8px;
+            border: 0; border-radius: 6px; background: transparent; color: inherit; box-shadow: none;
+        }
+        [data-dcuf-native-form-role="editor-popover"] .note-btn:is(:hover, :focus-visible, .active),
+        [data-dcuf-native-form-role="editor-dialog"] .close:is(:hover, :focus-visible) { background: var(--dcuf-v7-primary-fill); color: var(--dcuf-v7-primary-ink); }
+        [data-dcuf-native-form-role="editor-dialog"] :is(input, button):focus-visible,
+        [data-dcuf-native-form-role="editor-popover"] button:focus-visible { outline: 2px solid var(--dcuf-theme-accent); outline-offset: 2px; }
+        /* Writer DCCon is a BODY sibling projected by the existing layer owner.
+           Keep native content/visibility/media and apply this form's palette only. */
+        [data-dcuf-native-form-layer-kind="external-dccon"][data-dcuf-native-form-layer-state="positioned"] {
+            inline-size: min(640px, var(--dcuf-editor-layer-max-width, calc(100vw - 24px))); max-inline-size: calc(100vw - 24px);
+            background: transparent; border: 0; border-radius: 14px; overflow: visible;
+        }
+        [data-dcuf-native-form-layer-kind="external-dccon"]::before {
+            content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none; border-radius: inherit;
+            border: 1px solid var(--dcuf-b1-rim); background: var(--dcuf-b1-sheen), var(--dcuf-b1-floating);
+            backdrop-filter: var(--dcuf-b1-floating-filter); box-shadow: var(--dcuf-b1-shadow);
+        }
+        [data-dcuf-native-form-layer-kind="external-dccon"] > .pop_content.dcconlayer {
+            inline-size: auto; max-inline-size: 100%; box-sizing: border-box;
+            border: 0; border-radius: 14px; overflow: visible; background: transparent; color: var(--dcuf-theme-fg);
+        }
+        [data-dcuf-native-form-layer-kind="external-dccon"] .pop_content > .blind {
+            position: static; inset: auto; width: auto; height: auto; margin: 0; padding: 14px 16px;
+            overflow: visible; visibility: visible; font-size: 16px; line-height: 1.5;
+        }
+        [data-dcuf-native-form-layer-kind="external-dccon"] .pop_content > .blind > h3 { color: inherit; font: 650 16px/1.5 system-ui, sans-serif; }
+        [data-dcuf-native-form-layer-kind="external-dccon"] :is(.doublecon_wrap, .dccon_tab_btnbox, .dccon_list_wrap .inner) { background: transparent; border-color: var(--dcuf-theme-border); color: inherit; }
+        [data-dcuf-native-form-layer-kind="external-dccon"] .dccon_list_wrap { inline-size: auto; max-inline-size: 100%; overflow: visible; }
+        [data-dcuf-native-form-layer-kind="external-dccon"] .dccon_tab_btnbox { display: grid; grid-template-columns: 32px minmax(0, 1fr) 32px; align-items: center; gap: 6px; float: none; inline-size: auto; margin: 8px 12px; }
+        [data-dcuf-native-form-layer-kind="external-dccon"] .dccon_tab_btnbox::after { display: none; }
+        [data-dcuf-native-form-layer-kind="external-dccon"] .dccon_tab_btnbox .tab_btnlist { display: flex; gap: 4px; inline-size: auto; min-inline-size: 0; height: auto; padding: 0; margin: 0; overflow-x: auto; background: transparent; }
+        [data-dcuf-native-form-layer-kind="external-dccon"] .dccon_tab_btnbox .tab_btnlist > li { float: none; flex: none; inline-size: 44px; block-size: 44px; background: transparent; }
+        [data-dcuf-native-form-layer-kind="external-dccon"] .dccon_tab_btnbox .tab_btnlist > li.recent_li { background: transparent; }
+        [data-dcuf-native-form-layer-kind="external-dccon"] .dccon_tab_btnbox .tab_btnlist button.dccon_btn { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; padding: 4px; box-sizing: border-box; background: transparent; color: var(--dcuf-theme-fg); border: 0; }
+        [data-dcuf-native-form-layer-kind="external-dccon"] .tab_btnlist button > img { width: 36px; height: 36px; object-fit: contain; }
+        [data-dcuf-native-form-layer-kind="external-dccon"] .tab_btnlist button { background: transparent; border: 0; border-radius: 7px; }
+        [data-dcuf-native-form-layer-kind="external-dccon"] .dccon_tab_btnbox .tab_btnlist > .on > button { background: var(--dcuf-v7-primary-fill); color: var(--dcuf-v7-primary-ink); }
+        [data-dcuf-native-form-layer-kind="external-dccon"] .tab_btnlist .on .frame { display: none; }
+        [data-dcuf-native-form-layer-kind="external-dccon"] :is(.btn_dccon_prev, .btn_dccon_next, .dccon_btn.recent) { position: relative; background: transparent; color: var(--dcuf-theme-fg); }
+        [data-dcuf-native-form-layer-kind="external-dccon"] :is(.btn_dccon_prev, .btn_dccon_next, .dccon_btn.recent) > .sp_img { display: none; }
+        [data-dcuf-native-form-layer-kind="external-dccon"] :is(.btn_dccon_prev, .btn_dccon_next)::after { content: ''; position: absolute; left: 50%; top: 50%; width: 7px; height: 7px; border-top: 1.5px solid currentColor; border-right: 1.5px solid currentColor; transform: translate(-25%, -50%) rotate(-135deg); }
+        [data-dcuf-native-form-layer-kind="external-dccon"] .btn_dccon_next::after { transform: translate(-75%, -50%) rotate(45deg); }
+        [data-dcuf-native-form-layer-kind="external-dccon"] .dccon_btn.recent::after { content: ''; display: block; width: 20px; height: 20px; margin: auto; background: currentColor; mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M3 8a7 7 0 1 1 .5 6M3 3v5h5M10 5v5l3 2' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat; }
+        [data-dcuf-native-form-layer-kind="external-dccon"] .right :is(.btn_dccon_hot, .btn_dccon_setting) {
+            display: inline-flex; align-items: center; justify-content: center; gap: 4px; width: auto; min-height: 36px; padding: 6px 10px;
+            border: 0; border-radius: 6px; background: transparent; color: var(--dcuf-theme-fg); font: 550 13px/1.4 system-ui, sans-serif;
+        }
+        [data-dcuf-native-form-layer-kind="external-dccon"] .right button > .blind { position: static; width: auto; height: auto; margin: 0; overflow: visible; visibility: visible; font: inherit; }
+        [data-dcuf-native-form-layer-kind="external-dccon"] .right button > .sp_img { display: none; }
+        [data-dcuf-native-form-layer-kind="external-dccon"] .dccon_list { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); inline-size: auto; padding: 10px; gap: 8px; }
+        [data-dcuf-native-form-layer-kind="external-dccon"] .dccon_list_box.dcconlist { block-size: auto; }
+        [data-dcuf-native-form-layer-kind="external-dccon"] .dccon_list_box > .dccon_list { max-block-size: max(120px, calc(var(--dcuf-editor-layer-max-height, 100dvh) - 190px)); overflow-y: auto; overflow-x: hidden; scrollbar-width: thin; }
+        [data-dcuf-native-form-layer-kind="external-dccon"] .dccon_list > .list_li { float: none; inline-size: auto; margin: 0; min-inline-size: 0; }
+        [data-dcuf-native-form-layer-kind="external-dccon"] .dccon_list > .dccon_list_btm { grid-column: 1 / -1; inline-size: auto; min-inline-size: 0; }
+        [data-dcuf-native-form-layer-kind="external-dccon"] .dccon_list > .dccon_list_btm > .btn_box.dccon_list_paging { display: flex; align-items: center; justify-content: center; gap: 10px; inline-size: auto; max-inline-size: 100%; margin: 0; padding: 8px 0; }
+        [data-dcuf-native-form-layer-kind="external-dccon"] .dccon_list_paging button { position: relative; flex: none; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 6px; background: transparent; color: var(--dcuf-theme-fg); }
+        [data-dcuf-native-form-layer-kind="external-dccon"] .dccon_list_paging .sp_img { display: none; }
+        [data-dcuf-native-form-layer-kind="external-dccon"] .dccon_list_paging button::after { content: ''; position: absolute; left: 50%; top: 50%; width: 7px; height: 7px; border-top: 1.5px solid currentColor; border-right: 1.5px solid currentColor; transform: translate(-25%, -50%) rotate(-135deg); }
+        [data-dcuf-native-form-layer-kind="external-dccon"] .dccon_list_paging .btn_next::after { transform: translate(-75%, -50%) rotate(45deg); }
+        [data-dcuf-native-form-layer-kind="external-dccon"] .img_dccon { max-inline-size: 100%; }
+        [data-dcuf-native-form-layer-kind="external-dccon"] .img_dccon img { max-inline-size: 100%; object-fit: contain; }
+        [data-dcuf-native-form-layer-kind="external-dccon"] :is(.btn_blue, .btn_apply) {
+            width: auto; min-height: 36px; padding: 7px 14px; border: 1px solid var(--dcuf-v7-primary-rim); border-radius: 8px;
+            background: var(--dcuf-v7-primary-bg); color: var(--dcuf-v7-primary-ink); box-shadow: var(--dcuf-v7-primary-shadow); text-shadow: none;
+        }
+        [data-dcuf-native-form-layer-kind="external-dccon"] :is(.txtbtn, .btn_grey) { background: transparent; color: var(--dcuf-theme-fg); border-color: transparent; text-shadow: none; }
         /* B1 in-document menus: native nodes and existing layer positioning remain owners. */
         [data-dcuf-native-form-layer-kind~="dropdown"][data-dcuf-native-form-layer-anchor] {
             box-sizing: border-box;

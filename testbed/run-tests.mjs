@@ -57,6 +57,7 @@ import {runResidualSettings,runResidualForms,runResidualLogin} from './ui-native
 import {runDcconLiveShape} from './ui-dccon-live-shape-contract.mjs';
 import {runAccountPickerContract} from './ui-account-picker-contract.mjs';
 import {runConditionalChildren} from './ui-conditional-children-contract.mjs';
+import {runResidualChildren} from './ui-residual-children-contract.mjs';
 import {runDarkMaterialFamilyContract,runMemoRowSurfaceContract} from './ui-b1-dark-material-contract.mjs';
 
 const args = new Set(process.argv.slice(2));
@@ -127,6 +128,7 @@ mobileTest('B1 residual v7: native settings and author actions', 'functional', r
 mobileTest('B1 DCCon live shape: title pack strip media and original controls', 'functional', runDcconLiveShape);
 mobileTest('B1 account picker: toolbar native favorites management and guest password', 'functional', runAccountPickerContract);
 mobileTest('B1 conditional children: detail bigcon and image password', 'functional', runConditionalChildren);
+mobileTest('B1 residual children: native folders and writer dialogs', 'functional', runResidualChildren);
 mobileTest('B1 residual v7: password and leave confirmations', 'write', runResidualForms);
 mobileTest('B1 residual v7: login paired primary', 'functional', runResidualLogin);
 mobileTest('B1 dark refinement: shared material consumers', 'functional', runDarkMaterialFamilyContract);

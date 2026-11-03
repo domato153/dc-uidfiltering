@@ -1,0 +1,182 @@
+{
+  "schemaVersion": 1,
+  "kind": "B1_RESIDUAL_CHILDREN_AND_WHOLE_REVIEW",
+  "status": "SCOPED_LOCAL_VERIFIED_USER_LIVE_DEVICE_UNKNOWN",
+  "sourceBaseHead": "0ad26b503d73446c731b1c9fef1d0695c2cfefea",
+  "candidateFingerprint": "33dba6d1be892a020a32e96b25275704cff8fd4a5f6855b5054d5907cd1a47fc",
+  "artifacts": {
+    "mobileVersion": "3.5.5",
+    "mobileSha256": "06F68AFBC106D8DF27CC0F8702E502255D4DCF6BBA4418F418F863F6E42F3B11",
+    "pcVersion": "1.9.9",
+    "pcSha256": "e4706617de96d3e0719144724fdae1b62d7511674d6564dcbd82f2c702802e14",
+    "rootDistGuardMatch": true,
+    "officialRelease": false
+  },
+  "scope": {
+    "owners": [
+      "mobile-comment-host-adapter",
+      "mobile-comment-presenter",
+      "mobile-native-form-host-adapter",
+      "mobile-native-form-presenter"
+    ],
+    "acceptedRegistryChanged": false,
+    "ownerTopologyChanged": false,
+    "storageMetadataNetworkOwnerChanged": false,
+    "exactCascadeExceptions": [
+      "folder:left",
+      "folder:top",
+      "folder:margin"
+    ]
+  },
+  "inputs": [
+    {
+      "path": "docs/work/B1_RESIDUAL_FINISH_AND_REVIEW.md",
+      "sha256": "d037c494c048bf25ca088bc0f0eaf5351ee261281e0303d5de395a8606086793"
+    },
+    {
+      "path": "docs/ui-surface-contracts.md",
+      "sha256": "7f0beb83cf8696fce298238400f09223ae38ef2c7cc5fcb682e2aec2a5fdc532"
+    },
+    {
+      "path": "docs/work/UI_REVIEW_CHECKLIST.md",
+      "sha256": "2bc4e2628f57c9f7c4fb50350bd803e2a82cf3e45f4f8e0527433e7b750d7be6"
+    },
+    {
+      "path": "docs/work/INDEX.md",
+      "sha256": "aed631a030de66f724ce8a6961cc4e3bf89152282b80a60a7443b6ae0f4cb1fb"
+    },
+    {
+      "path": "docs/agent-maintenance-notes.md",
+      "sha256": "7b5f26a3b4c1780f02e2aa371a1c5ec81f4ac9f6e591e45904f5e6b3adc18318"
+    },
+    {
+      "path": "architecture/ui-surfaces.json",
+      "sha256": "9fdbb45830e98718e3e04f478d196a9788cae3bfff88d52820391caffb65d5b8"
+    },
+    {
+      "path": "architecture/candidates/mobile-ui-modernization-assurance.json",
+      "sha256": "49639148c886966d054a7e243e6be9c2ad3c82fd4869b48ac2f7600a85b8ef74"
+    },
+    {
+      "path": "src/targets/mobile/comment-host-adapter.js",
+      "sha256": "d6f1766b06b3a08c8b9229ce1ae42c83ddd0cb1fa2cdb23196dff6b06f507465"
+    },
+    {
+      "path": "src/targets/mobile/comment-presenter.js",
+      "sha256": "46ca080fe66b13089395309eb9c067d86467c72372fba03a96d87e831104f967"
+    },
+    {
+      "path": "src/targets/mobile/native-form-host-adapter.js",
+      "sha256": "f448e96ea6f04eee27f1fe4c231c85e5778cc337b1f9ca2e27f29ac5d78e017c"
+    },
+    {
+      "path": "src/targets/mobile/native-form-presenter.js",
+      "sha256": "f7483551a24c9c0e310cb3ee832223bbe58729b7ed78071c596f5f6e11293d3f"
+    },
+    {
+      "path": "testbed/fixtures/b1-residual-children.mjs",
+      "sha256": "367084c6bc7fca8644227660241c5a35990a76749210e2a8f1f9a8a756e246c8"
+    },
+    {
+      "path": "testbed/fixtures/b1-residual-native-data.mjs",
+      "sha256": "5fdf48e5663f04157f665f8743218a1b8581e91f17105e0961e50361aa0c1aeb"
+    },
+    {
+      "path": "testbed/fixtures/SUMMERNOTE-LICENSE.txt",
+      "sha256": "d81e27c910e393d3cf8dd2cbcffb1fa1189896b722a186510dde27dd4a0335dd"
+    },
+    {
+      "path": "testbed/ui-residual-children-contract.mjs",
+      "sha256": "34a584a7877ade750d369d5b29ce53d5faa10ef63324189edba32b8b7151c444"
+    },
+    {
+      "path": "testbed/run-tests.mjs",
+      "sha256": "ca957fdf5ace1078c57c49a8eb286dd350e05e9bb05ce451c16db619881a29a3"
+    }
+  ],
+  "evidence": [
+    {
+      "path": "artifacts/b1-residual-finish-2026-11-03/offline.json",
+      "sha256": "9db13e7782d088c0fb6f03c56e41e00c3e343d47549c6ecc3743d1c7246dd012"
+    },
+    {
+      "path": "artifacts/b1-residual-finish-2026-11-03/red.json",
+      "sha256": "4d7bb14f96edc71f87344779ffd4f78a08f3a42d6aab63ef3bec6faa3c73d375"
+    },
+    {
+      "path": "artifacts/b1-residual-finish-2026-11-03/palette.json",
+      "sha256": "345c8f2c8f642756bf3dcb5910193e9f1d2083c2f62ef394e77978be802cba31"
+    },
+    {
+      "path": "artifacts/b1-residual-finish-2026-11-03/adjacent.json",
+      "sha256": "f0aba292ea8653fd20d982ceb1ee0bf417048168ffb5e77cac0aaedb93e9f10e"
+    },
+    {
+      "path": "artifacts/b1-residual-finish-2026-11-03/whole/whole.json",
+      "sha256": "77f84e3e560da98a4cf86e1c7792b8d3f55ce47ad619adb2402acdc2ff558319"
+    },
+    {
+      "path": "artifacts/b1-residual-finish-2026-11-03/whole/writer-live.json",
+      "sha256": "3d0d63d299fdbb1e8ca5b68411e2f2a2a59d9983c98e54665e798da54d1b7ade"
+    },
+    {
+      "path": "artifacts/b1-residual-finish-2026-11-03/viewer-check.json",
+      "sha256": "27fea68112c38716fe63a6445717e4b9cb178a431b88e54edfa170157e6e3348"
+    },
+    {
+      "path": "artifacts/b1-residual-finish-2026-11-03/visual-manifest.json",
+      "sha256": "79d1c0b30fcaa02743f9cdb5110bdfc5548e980d10312fb51d74a9e7b8123999"
+    },
+    {
+      "path": "artifacts/b1-residual-finish-2026-11-03/visual-final-v2/review.json",
+      "sha256": "9620be2c6db5f3b0278dd91fee528cd932e70765328f8d4c0ccf71dccb99ab06"
+    },
+    {
+      "path": "artifacts/b1-residual-finish-2026-11-03/fixture-provenance.json",
+      "sha256": "950759a9bbf5ed1452e1a41499e05a1c5a23e3ec3325e7a1ad14568ac5b4f152"
+    },
+    {
+      "path": "artifacts/b1-residual-finish-2026-11-03/native-open.json",
+      "sha256": "28708941823f62df0ca07300b2926199ca864752216f2859a26473007656e12e"
+    }
+  ],
+  "validation": {
+    "residualContexts": 10,
+    "semanticPairs": 10,
+    "semanticDifferences": 0,
+    "frozenDiagnosticFailedContexts": 4,
+    "adjacentContexts": 16,
+    "paletteFamilyThemeContexts": 4,
+    "palettes": [
+      "blue",
+      "mono",
+      "rose"
+    ],
+    "previewSaveCancel": true,
+    "folderLabelMinimumContrast": 6.5387353702346465,
+    "visualPairs": 8,
+    "referenceFidelity": "REVIEWED",
+    "productApproved": false,
+    "viewerPngUrls": 116,
+    "publicGetHeadPages": [
+      "list",
+      "article",
+      "writer"
+    ],
+    "physicalDevice": false,
+    "actualExtension": false
+  },
+  "limits": [
+    "Synthetic native callbacks/media/folder/color shell do not prove account permission,actual insertion/submission/upload/save or full color-plugin contents.",
+    "Current GET/HEAD public comments cannot certify POST-loaded private/live branches;native header uses acquired HTML/CSS and local replay.",
+    "Native original writer read opened30 items;it is not current candidate/extension proof.",
+    "Four external uploads deferred;image replies N/A;OS/browser UI outside CSS.",
+    "No full128/product/PC/boot/filter/storage/bfcache suite;formal header admission,promotion and guidebook discussion separate."
+  ],
+  "contraryEvidence": [
+    "Earlier1px/empty-media/optional-control fixture/oracle passes rejected.",
+    "Control-only unreachable close/page callbacks may replay diagnostically;candidate requires trusted hits.",
+    "Initial visual manifest region mismatch was invalid input;v2 matches active selection.",
+    "Stopped preview server caused connection refusal;restarted one server and checked all image URLs."
+  ]
+}

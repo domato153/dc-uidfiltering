@@ -5449,7 +5449,7 @@ const __dcufSettingsPresenter = (() => {
                 gap: 8px;
                 margin-inline-start: auto;
             }
-            [data-dcuf-role="native-comment-header-action"] {
+            [data-dcuf-role="comments-root"] [data-dcuf-role="comment-header"] [data-dcuf-role="native-comment-header-action"] {
                 display: inline-flex;
                 align-items: center;
                 justify-content: center;
@@ -5463,7 +5463,13 @@ const __dcufSettingsPresenter = (() => {
                 background: transparent;
                 box-shadow: none;
             }
-            [data-dcuf-role="native-comment-header-action"]:is(:hover,:focus-visible) { background: var(--dcuf-control-selected-bg); color: var(--dcuf-theme-accent-ink); }
+            [data-dcuf-role="comments-root"] [data-dcuf-role="native-comment-header-action"] > span { color: inherit; }
+            [data-dcuf-role="comments-root"] [data-dcuf-role="comment-header"] [data-dcuf-role="native-comment-header-action"]::before { display: none; }
+            [data-dcuf-role="comment-sort"] .radiobox.imgcheck label { color: var(--dcuf-comment-muted); }
+            [data-dcuf-role="comment-sort"] .radiobox.imgcheck input:checked ~ label { color: var(--dcuf-comment-fg); }
+            [data-dcuf-role="comment-sort"] .radiobox.imgcheck input + .checkmark { background: none; border: 0; }
+            [data-dcuf-role="comment-sort"] .radiobox.imgcheck input:checked + .checkmark::after { content: ''; position: absolute; left: 3px; top: 1px; width: 4px; height: 8px; border-right: 2px solid var(--dcuf-comment-accent); border-bottom: 2px solid var(--dcuf-comment-accent); transform: rotate(45deg); }
+            [data-dcuf-role="comments-root"] [data-dcuf-role="comment-header"] [data-dcuf-role="native-comment-header-action"]:is(:hover,:focus-visible) { background: var(--dcuf-control-selected-bg); color: var(--dcuf-theme-accent-ink); }
             [data-dcuf-role="comment-box"] {
                 position: relative;
                 overflow: visible;
@@ -5920,7 +5926,10 @@ const __dcufSettingsPresenter = (() => {
                 overscroll-behavior: contain;
                 scrollbar-color: var(--dcuf-comment-border-strong) transparent;
             }
-            [data-dcuf-role="native-comment-popup"][data-dcuf-comment-role="comment-picker"] [data-dcuf-comment-role="popup-panel"] {
+            /* These four native shells use inline show/hide. CSS-hover helper
+               roots are excluded:their projected state alone is not visibility. */
+            [data-dcuf-comment-role="comment-picker"]:has(:is([id="favoriteFolderLayer"], [id="favoriteFolderAddLayer"], [id="favoriteFolderSelectLayer"], [id="folderEditLayer"])[data-dcuf-state="open"]) { overflow: visible; }
+            [data-dcuf-role="native-comment-popup"][data-dcuf-comment-role="comment-picker"] > [data-dcuf-comment-role="popup-panel"] {
                 inline-size: 100%;
                 min-inline-size: 0;
                 max-inline-size: 100%;
@@ -6092,6 +6101,7 @@ const __dcufSettingsPresenter = (() => {
                 margin: 0 !important;
             }
             [data-dcuf-role="native-comment-popup"][data-dcuf-comment-role="comment-picker"] [data-dcuf-comment-role="popup-primary-action"],
+            [data-dcuf-role="native-comment-popup"][data-dcuf-comment-role="comment-folder"] [data-dcuf-comment-role="popup-primary-action"],
             [data-dcuf-role="native-comment-popup"][data-dcuf-comment-role="comment-detail"] [data-dcuf-comment-role="popup-primary-action"],
             [data-dcuf-role="native-comment-popup"][data-dcuf-comment-role="comment-password"] [data-dcuf-comment-role="popup-primary-action"] {
                 display: inline-flex; justify-self: end; inline-size: auto; block-size: auto; min-inline-size: 44px; max-inline-size: max-content; border-radius: 8px;
@@ -6103,6 +6113,66 @@ const __dcufSettingsPresenter = (() => {
             [data-dcuf-comment-role="popup-detail-actions"] > [data-dcuf-comment-role="popup-primary-action"],
             [data-dcuf-comment-role="popup-detail-actions"] > [data-dcuf-comment-role="popup-action"] { flex: none; float: none; inline-size: auto; min-block-size: 36px; block-size: 36px; margin: 0; padding: 0 14px; box-sizing: border-box; line-height: 1.4; }
             [data-dcuf-comment-role="comment-password"] [data-dcuf-comment-role="popup-primary-action"] { flex: none; float: none; min-block-size: 32px; block-size: 32px; padding: 0 10px; margin: 0; box-sizing: border-box; line-height: 1.4; }
+            [data-dcuf-role="native-comment-popup"][data-dcuf-comment-role="comment-folder"] {
+                /* Native folder overlays are not the doublecon preview scrim. */
+                position: fixed; left: 50% !important; top: 50% !important; margin: 0 !important;
+                transform: translate(-50%, -50%); inline-size: min(400px, calc(100vw - 32px));
+                font: 500 13px/1.5 system-ui, sans-serif;
+            }
+            [data-dcuf-comment-role="popup-toolbar"] > [data-dcuf-role="native-comment-popup"][data-dcuf-comment-role="comment-folder"].bkmk_area {
+                inline-size: min(440px, calc(100vw - 24px)); block-size: auto; min-block-size: 132px;
+                bottom: auto;
+                padding: 14px; font: 500 13px/1.5 system-ui, sans-serif; text-align: start;
+                background: var(--dcuf-b1-sheen), var(--dcuf-b1-floating); color: var(--dcuf-comment-fg);
+            }
+            [data-dcuf-role="native-comment-popup"][data-dcuf-comment-role="comment-folder"] .pop_head {
+                background: transparent; color: var(--dcuf-comment-fg); border-color: var(--dcuf-comment-border);
+            }
+            [data-dcuf-role="native-comment-popup"][data-dcuf-comment-role="comment-folder"] .pop_head > h3 { color: inherit; font: 650 16px/1.5 system-ui, sans-serif; }
+            [data-dcuf-comment-role="comment-folder"] .bg_grey,
+            [data-dcuf-comment-role="comment-folder"] .bkmark_editlist { background: transparent; color: var(--dcuf-comment-fg); }
+            [data-dcuf-role="native-comment-popup"][data-dcuf-comment-role="comment-folder"] :is(.fdname, .stxt, .txt_box, .tip_txtbox, .font_grey, h4) { color: var(--dcuf-comment-fg); text-shadow: none; }
+            [data-dcuf-role="native-comment-popup"][data-dcuf-comment-role="comment-folder"] :is(.txt_box, .tip_txtbox) p:not(.font_red) { color: var(--dcuf-comment-fg); }
+            [data-dcuf-comment-role="comment-folder"] .tbox { color: var(--dcuf-comment-fg); text-shadow: none; padding: 0 24px 10px 0; }
+            [data-dcuf-role="native-comment-popup"][data-dcuf-comment-role="comment-folder"] .naming { display: flex; align-items: center; gap: 8px; inline-size: min(240px, 100%); max-inline-size: 100%; block-size: auto; margin: 0; border: 0; background: transparent; box-shadow: none; }
+            [data-dcuf-role="native-comment-popup"][data-dcuf-comment-role="comment-folder"] .naming > input { flex: 1; inline-size: 0; max-inline-size: 100%; min-inline-size: 0; block-size: 36px; box-sizing: border-box; }
+            [data-dcuf-role="native-comment-popup"][data-dcuf-comment-role="comment-folder"] .naming .num { flex: none; line-height: 1.4; color: var(--dcuf-comment-fg); }
+            [data-dcuf-comment-role="comment-folder"] .ly_folder_add .inr { align-items: stretch; padding-inline: 12px; }
+            [data-dcuf-comment-role="comment-folder"] .ly_folder_add .box { gap: 8px; }
+            [data-dcuf-comment-role="comment-folder"] .ly_folder_add .box h4 { flex: none; white-space: nowrap; margin: 0; }
+            [data-dcuf-comment-role="comment-folder"] .ly_folder_add .box .naming { flex: 1; inline-size: auto; min-inline-size: 0; }
+            [data-dcuf-role="native-comment-popup"][data-dcuf-comment-role="comment-folder"] .tbox { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
+            [data-dcuf-comment-role="comment-folder"] .tbox > .inr { position: relative; display: flex; align-items: center; gap: 6px; }
+            [data-dcuf-role="native-comment-popup"][data-dcuf-comment-role="comment-folder"] .btn_cancle { min-block-size: 36px; padding: 0 12px; border: 0; border-radius: 6px; background: transparent; color: var(--dcuf-comment-fg); box-shadow: none; text-shadow: none; }
+            [data-dcuf-comment-role="comment-folder"] .btn_box { display: flex; justify-content: flex-end; gap: 8px; padding: 12px; }
+            [data-dcuf-comment-role="comment-folder"] [data-dcuf-comment-role="popup-primary-action"] { inline-size: auto; min-inline-size: 0; block-size: 36px; padding: 0 14px; }
+            [data-dcuf-role="native-comment-popup"][data-dcuf-comment-role="comment-folder"] > .pop_content {
+                inline-size: auto; max-inline-size: 100%; box-sizing: border-box; background: transparent; color: inherit;
+            }
+            [data-dcuf-role="native-comment-popup"][data-dcuf-comment-role="comment-folder"] .bkmk_folder { display: grid; grid-template-columns: minmax(0, 1fr); min-inline-size: 0; gap: 10px; }
+            [data-dcuf-comment-role="comment-folder"] .bkmrk_listcont .wr { min-inline-size: 0; flex: 1; }
+            [data-dcuf-role="native-comment-popup"][data-dcuf-comment-role="comment-folder"].bkmk_area .btn_area { position: static; display: flex; justify-content: flex-end; }
+            [data-dcuf-comment-role="comment-folder"] .bkmark_editlist { max-block-size: min(240px, calc(100dvh - 220px)); overflow-y: auto; }
+            [data-dcuf-role="native-comment-popup"][data-dcuf-comment-role="comment-folder"] .rcont button.sp_img {
+                position: relative; display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; min-width: 0; padding: 6px;
+                border: 0; border-radius: 6px; background: transparent; color: var(--dcuf-comment-fg); font-size: 0; text-indent: 0; box-sizing: border-box;
+            }
+            [data-dcuf-comment-role="comment-folder"] .rcont button.sp_img::after { content: ''; display: block; width: 14px; height: 14px; background: currentColor; mask: var(--dcuf-folder-icon) center / contain no-repeat; pointer-events: none; }
+            [data-dcuf-comment-role="comment-folder"] .btn_fdedit { --dcuf-folder-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M3 11l1 2 2-1 7-7-3-3zM9 3l3 3' fill='none' stroke='black' stroke-width='1.5' stroke-linejoin='round'/%3E%3C/svg%3E"); }
+            [data-dcuf-comment-role="comment-folder"] .btn_change { --dcuf-folder-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M5 5l3-3 3 3M8 2v12M5 11l3 3 3-3' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); }
+            [data-dcuf-comment-role="comment-folder"] .btn_del { --dcuf-folder-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M3 4h10M6 4V2h4v2M4 4l1 10h6l1-10M7 7v4M9 7v4' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); }
+            [data-dcuf-comment-role="comment-folder"] .btn_foldadd { position: relative; min-inline-size: 28px; block-size: 28px; padding: 0; border: 0; background: transparent; color: var(--dcuf-comment-fg); }
+            [data-dcuf-comment-role="comment-folder"] .btn_foldadd > .sp_img { width: 0; height: 0; overflow: hidden; font-size: 0; background: none; }
+            [data-dcuf-comment-role="comment-folder"] .btn_foldadd::before,
+            [data-dcuf-comment-role="comment-folder"] .btn_foldadd::after { content: ''; position: absolute; left: 50%; top: 50%; width: 13px; height: 1.5px; background: currentColor; transform: translate(-50%, -50%); }
+            [data-dcuf-comment-role="comment-folder"] .btn_foldadd::after { transform: translate(-50%, -50%) rotate(90deg); }
+            [data-dcuf-role="native-comment-popup"][data-dcuf-comment-role="comment-folder"] .btn_qmark { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; padding: 0; border: 0; background: transparent; color: var(--dcuf-comment-fg); font-size: 0; }
+            [data-dcuf-comment-role="comment-folder"] .btn_qmark::after { content: ''; display: block; width: 16px; height: 16px; background: currentColor; mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='8' r='6.3' fill='none' stroke='black' stroke-width='1.3'/%3E%3Cpath d='M6 6a2 2 0 1 1 3 1.7c-1 .5-1 1-1 1.8M8 11.5v.2' fill='none' stroke='black' stroke-width='1.3' stroke-linecap='round'/%3E%3C/svg%3E") center / contain no-repeat; }
+            [data-dcuf-role="native-comment-popup"][data-dcuf-comment-role="comment-folder"] button.sel_color { width: 28px; height: 22px; min-height: 22px; padding: 0; border: 0; border-radius: 5px; }
+            [data-dcuf-comment-role="comment-folder"] .nav_btn { position: relative; width: 28px; height: 28px; padding: 0; border: 0; background: transparent; color: var(--dcuf-comment-fg); }
+            [data-dcuf-comment-role="comment-folder"] .nav_btn .sp_img { width: 0; height: 0; overflow: hidden; font-size: 0; background: none; }
+            [data-dcuf-comment-role="comment-folder"] .nav_btn::after { content: ''; position: absolute; left: 50%; top: 50%; width: 7px; height: 7px; border-top: 1.5px solid currentColor; border-right: 1.5px solid currentColor; transform: translate(-25%, -50%) rotate(-135deg); }
+            [data-dcuf-comment-role="comment-folder"] .nav_btn.next::after { transform: translate(-75%, -50%) rotate(45deg); }
             [data-dcuf-comment-role="comment-password"] [data-dcuf-comment-role="popup-password-close"] { position: relative; flex: none; float: none; inline-size: 32px; block-size: 32px; padding: 0; border: 0; border-radius: 6px; background: transparent; color: var(--dcuf-comment-fg); font-size: 0; cursor: pointer; }
             [data-dcuf-comment-role="comment-password"] [data-dcuf-comment-role="popup-password-close"]::before, [data-dcuf-comment-role="comment-password"] [data-dcuf-comment-role="popup-password-close"]::after { content: ''; position: absolute; left: 50%; top: 50%; inline-size: 12px; block-size: 1.5px; border-radius: 1px; background: currentColor; transform: translate(-50%, -50%) rotate(45deg); }
             [data-dcuf-comment-role="comment-password"] [data-dcuf-comment-role="popup-password-close"]::after { transform: translate(-50%, -50%) rotate(-45deg); }
@@ -6370,17 +6440,19 @@ const __dcufSettingsPresenter = (() => {
         };
 
         const markPopups = (root) => {
-            root.querySelectorAll('#user_data_lyr, .user_data, .user_data_add, .pop_wrap.type2, .pop_wrap.type3, .cmt_delpw_box, [id$="_delpw_box"]').forEach((popup) => {
+            root.querySelectorAll('#user_data_lyr, .user_data, .user_data_add, .pop_wrap.type2, .pop_wrap.type3, #favoriteFolderAddLayer.bgbox.bkmk_area, #favoriteFolderSelectLayer.bgbox.bkmk_area, .cmt_delpw_box, [id$="_delpw_box"]').forEach((popup) => {
                 mark(root, popup, { role: 'native-comment-popup', state: popup.hidden || popup.style.display === 'none' ? 'closed' : 'open' });
                 const picker = popup.id === 'div_con' || popup.id === 'div_txtcon';
                 const password = popup.matches('#cmt_delpw_box.cmt_delpw_box, #img_cmt_delpw_box.cmt_delpw_box');
                 const detail = popup.id === 'package_detail' && popup.querySelector(':scope > .dccon_popinfo');
                 const info = popup.id === 'daewangcon_layer' && popup.querySelector(':scope > .ly_daewang');
-                markCommentContext(root, popup, picker ? 'comment-picker' : password ? 'comment-password' : detail ? 'comment-detail' : info ? 'comment-info' : 'comment-popup');
+                const folder = popup.matches('#favoriteFolderLayer, #favoriteFolderAddLayer.bgbox.bkmk_area, #favoriteFolderSelectLayer.bgbox.bkmk_area, #folderEditLayer, #dccfv_picker_lay')
+                    || Boolean(popup.querySelector(':scope > .ly_folder_add, :scope > .bkmark_infobox'));
+                markCommentContext(root, popup, picker ? 'comment-picker' : password ? 'comment-password' : detail ? 'comment-detail' : info ? 'comment-info' : folder ? 'comment-folder' : 'comment-popup');
                 popup.querySelectorAll(':scope > .pop_content').forEach(panel => markCommentContext(root, panel, 'popup-panel'));
                 popup.querySelectorAll('.tit, .pop_tit, .pop_dccon_tit').forEach(title => markCommentContext(root, title, 'popup-title'));
                 const parts = (selector, role) => popup.querySelectorAll(selector).forEach(element => {
-                    if (element.closest('.pop_wrap') === popup) markCommentContext(root, element, role);
+                    if (element.closest('.pop_wrap, #favoriteFolderAddLayer.bgbox.bkmk_area, #favoriteFolderSelectLayer.bgbox.bkmk_area') === popup) markCommentContext(root, element, role);
                 });
                 if (detail) {
                     parts(':scope > .pop_content > .pop_head', 'popup-detail-heading');
@@ -6402,6 +6474,12 @@ const __dcufSettingsPresenter = (() => {
                     parts(':scope > .package_close', 'popup-context-close');
                 }
                 if (info) parts(':scope > .poply_greyclose', 'popup-context-close');
+                if (folder) {
+                    parts('.pop_head > h3', 'popup-title');
+                    parts('.btn_blue, .btn_apply', 'popup-primary-action');
+                    parts('.btn_cancle', 'popup-action');
+                    parts('.poply_whiteclose, .poply_bgblueclose, .btn_bkm_close', 'popup-context-close');
+                }
                 if (password) {
                     popup.querySelectorAll('input.cmt_delpw[type="password"]').forEach(field => markCommentContext(root, field, 'popup-password-field'));
                     popup.querySelectorAll('.btn_ok').forEach(button => markCommentContext(root, button, 'popup-primary-action'));
@@ -6472,6 +6550,7 @@ const __dcufSettingsPresenter = (() => {
             });
             markAll(root, '.comment_count, .comment_top', 'comment-header');
             markAll(root, '.comment_count .num_box, .comment_top .num_box', 'comment-count');
+            markAll(root, '.comment_sort', 'comment-sort');
             markAll(root, '.comment_count .font_red, .comment_top .font_red', 'comment-count-accent');
             markAll(root, '.comment_count > .fr, .comment_top > .fr', 'comment-header-actions');
             markAll(root, '.comment_count button, .comment_count a, .comment_top button, .comment_top a', 'native-comment-header-action');
@@ -7356,6 +7435,122 @@ const __dcufSettingsPresenter = (() => {
             overscroll-behavior: contain !important;
             -webkit-overflow-scrolling: touch !important;
         }
+        /* Summernote owns these original form-local roots and their visibility.
+           Only the content plane receives blur;native fixed/modal geometry stays native. */
+        [data-dcuf-native-form-role="editor-dialog"][data-dcuf-native-form-state="write-editor"] { z-index: 5000; }
+        [data-dcuf-native-form-role="editor-dialog"][data-dcuf-native-form-state="write-editor"] .note-modal-content {
+            position: relative; display: flex; flex-direction: column;
+            inline-size: min(600px, calc(100vw - 32px)); min-inline-size: 0; max-block-size: calc(100dvh - 32px);
+            margin: 16px auto; box-sizing: border-box; overflow: hidden;
+            border: 1px solid var(--dcuf-b1-rim); border-radius: 16px;
+            background: var(--dcuf-b1-sheen), var(--dcuf-b1-floating); color: var(--dcuf-theme-fg);
+            backdrop-filter: var(--dcuf-b1-floating-filter); box-shadow: var(--dcuf-b1-shadow);
+            font: 500 14px/1.5 system-ui, sans-serif;
+        }
+        [data-dcuf-native-form-role="editor-dialog"] .note-modal-header {
+            flex: none; padding: 16px 52px 14px 18px; border-bottom: 1px solid var(--dcuf-b1-line);
+            background: transparent; color: inherit;
+        }
+        [data-dcuf-native-form-role="editor-dialog"] .note-modal-header .note-modal-title { color: var(--dcuf-theme-fg); font: 650 17px/1.5 system-ui, sans-serif; }
+        [data-dcuf-native-form-role="editor-dialog"] .note-modal-body { min-block-size: 0; overflow: auto; padding: 18px; color: inherit; }
+        [data-dcuf-native-form-role="editor-dialog"] .note-modal-footer { flex: none; height: auto; padding: 12px 18px 16px; border: 0; text-align: end; }
+        [data-dcuf-native-form-role="editor-dialog"] .note-modal-body .note-form-label { color: var(--dcuf-theme-fg); font: 550 13px/1.5 system-ui, sans-serif; }
+        [data-dcuf-native-form-role="editor-dialog"] .note-form-control {
+            box-sizing: border-box; max-inline-size: 100%; min-block-size: 36px; padding: 8px 10px;
+            border: 1px solid var(--dcuf-theme-border); border-radius: 8px;
+            background: var(--dcuf-v7-reading); color: var(--dcuf-theme-fg); caret-color: var(--dcuf-theme-accent);
+            font: 500 14px/1.5 system-ui, sans-serif;
+        }
+        [data-dcuf-native-form-role="editor-dialog"][data-dcuf-native-form-state="write-editor"] .note-modal-footer .note-btn-primary {
+            inline-size: auto; min-block-size: 36px; padding: 8px 14px;
+            border: 1px solid var(--dcuf-v7-primary-rim); border-radius: 8px;
+            background: var(--dcuf-v7-primary-bg); color: var(--dcuf-v7-primary-ink); box-shadow: var(--dcuf-v7-primary-shadow);
+            font: 650 13px/1.4 system-ui, sans-serif; text-shadow: none;
+        }
+        [data-dcuf-native-form-role="editor-dialog"] .note-modal-header .close {
+            position: absolute; inset: 10px 10px auto auto; width: 32px; height: 32px; padding: 0;
+            border: 0; border-radius: 7px; background: transparent; color: var(--dcuf-theme-fg); opacity: 1;
+        }
+        [data-dcuf-native-form-role="editor-dialog"] .note-modal-header .close > i { display: none; }
+        [data-dcuf-native-form-role="editor-dialog"] .note-modal-header .close::before,
+        [data-dcuf-native-form-role="editor-dialog"] .note-modal-header .close::after { content: ''; position: absolute; left: 50%; top: 50%; width: 13px; height: 1.5px; border-radius: 1px; background: currentColor; transform: translate(-50%, -50%) rotate(45deg); }
+        [data-dcuf-native-form-role="editor-dialog"] .note-modal-header .close::after { transform: translate(-50%, -50%) rotate(-45deg); }
+        [data-dcuf-native-form-role="editor-popover"][data-dcuf-native-form-state="write-editor"] {
+            max-inline-size: calc(100vw - 32px); box-sizing: border-box; border: 1px solid var(--dcuf-b1-rim); border-radius: 12px;
+            background: var(--dcuf-b1-sheen), var(--dcuf-b1-floating); color: var(--dcuf-theme-fg);
+            backdrop-filter: var(--dcuf-b1-floating-filter); box-shadow: var(--dcuf-b1-shadow);
+        }
+        [data-dcuf-native-form-role="editor-popover"] .popover-content { display: flex; flex-wrap: wrap; gap: 4px; padding: 6px; }
+        [data-dcuf-native-form-role="editor-popover"] .note-btn-group { display: flex; flex-wrap: wrap; }
+        [data-dcuf-native-form-role="editor-popover"] .popover-content > span > a { color: var(--dcuf-theme-fg); overflow-wrap: anywhere; }
+        [data-dcuf-native-form-role="editor-popover"] .note-btn {
+            min-inline-size: 32px; min-block-size: 32px; margin: 0; padding: 6px 8px;
+            border: 0; border-radius: 6px; background: transparent; color: inherit; box-shadow: none;
+        }
+        [data-dcuf-native-form-role="editor-popover"] .note-btn:is(:hover, :focus-visible, .active),
+        [data-dcuf-native-form-role="editor-dialog"] .close:is(:hover, :focus-visible) { background: var(--dcuf-v7-primary-fill); color: var(--dcuf-v7-primary-ink); }
+        [data-dcuf-native-form-role="editor-dialog"] :is(input, button):focus-visible,
+        [data-dcuf-native-form-role="editor-popover"] button:focus-visible { outline: 2px solid var(--dcuf-theme-accent); outline-offset: 2px; }
+        /* Writer DCCon is a BODY sibling projected by the existing layer owner.
+           Keep native content/visibility/media and apply this form's palette only. */
+        [data-dcuf-native-form-layer-kind="external-dccon"][data-dcuf-native-form-layer-state="positioned"] {
+            inline-size: min(640px, var(--dcuf-editor-layer-max-width, calc(100vw - 24px))); max-inline-size: calc(100vw - 24px);
+            background: transparent; border: 0; border-radius: 14px; overflow: visible;
+        }
+        [data-dcuf-native-form-layer-kind="external-dccon"]::before {
+            content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none; border-radius: inherit;
+            border: 1px solid var(--dcuf-b1-rim); background: var(--dcuf-b1-sheen), var(--dcuf-b1-floating);
+            backdrop-filter: var(--dcuf-b1-floating-filter); box-shadow: var(--dcuf-b1-shadow);
+        }
+        [data-dcuf-native-form-layer-kind="external-dccon"] > .pop_content.dcconlayer {
+            inline-size: auto; max-inline-size: 100%; box-sizing: border-box;
+            border: 0; border-radius: 14px; overflow: visible; background: transparent; color: var(--dcuf-theme-fg);
+        }
+        [data-dcuf-native-form-layer-kind="external-dccon"] .pop_content > .blind {
+            position: static; inset: auto; width: auto; height: auto; margin: 0; padding: 14px 16px;
+            overflow: visible; visibility: visible; font-size: 16px; line-height: 1.5;
+        }
+        [data-dcuf-native-form-layer-kind="external-dccon"] .pop_content > .blind > h3 { color: inherit; font: 650 16px/1.5 system-ui, sans-serif; }
+        [data-dcuf-native-form-layer-kind="external-dccon"] :is(.doublecon_wrap, .dccon_tab_btnbox, .dccon_list_wrap .inner) { background: transparent; border-color: var(--dcuf-theme-border); color: inherit; }
+        [data-dcuf-native-form-layer-kind="external-dccon"] .dccon_list_wrap { inline-size: auto; max-inline-size: 100%; overflow: visible; }
+        [data-dcuf-native-form-layer-kind="external-dccon"] .dccon_tab_btnbox { display: grid; grid-template-columns: 32px minmax(0, 1fr) 32px; align-items: center; gap: 6px; float: none; inline-size: auto; margin: 8px 12px; }
+        [data-dcuf-native-form-layer-kind="external-dccon"] .dccon_tab_btnbox::after { display: none; }
+        [data-dcuf-native-form-layer-kind="external-dccon"] .dccon_tab_btnbox .tab_btnlist { display: flex; gap: 4px; inline-size: auto; min-inline-size: 0; height: auto; padding: 0; margin: 0; overflow-x: auto; background: transparent; }
+        [data-dcuf-native-form-layer-kind="external-dccon"] .dccon_tab_btnbox .tab_btnlist > li { float: none; flex: none; inline-size: 44px; block-size: 44px; background: transparent; }
+        [data-dcuf-native-form-layer-kind="external-dccon"] .dccon_tab_btnbox .tab_btnlist > li.recent_li { background: transparent; }
+        [data-dcuf-native-form-layer-kind="external-dccon"] .dccon_tab_btnbox .tab_btnlist button.dccon_btn { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; padding: 4px; box-sizing: border-box; background: transparent; color: var(--dcuf-theme-fg); border: 0; }
+        [data-dcuf-native-form-layer-kind="external-dccon"] .tab_btnlist button > img { width: 36px; height: 36px; object-fit: contain; }
+        [data-dcuf-native-form-layer-kind="external-dccon"] .tab_btnlist button { background: transparent; border: 0; border-radius: 7px; }
+        [data-dcuf-native-form-layer-kind="external-dccon"] .dccon_tab_btnbox .tab_btnlist > .on > button { background: var(--dcuf-v7-primary-fill); color: var(--dcuf-v7-primary-ink); }
+        [data-dcuf-native-form-layer-kind="external-dccon"] .tab_btnlist .on .frame { display: none; }
+        [data-dcuf-native-form-layer-kind="external-dccon"] :is(.btn_dccon_prev, .btn_dccon_next, .dccon_btn.recent) { position: relative; background: transparent; color: var(--dcuf-theme-fg); }
+        [data-dcuf-native-form-layer-kind="external-dccon"] :is(.btn_dccon_prev, .btn_dccon_next, .dccon_btn.recent) > .sp_img { display: none; }
+        [data-dcuf-native-form-layer-kind="external-dccon"] :is(.btn_dccon_prev, .btn_dccon_next)::after { content: ''; position: absolute; left: 50%; top: 50%; width: 7px; height: 7px; border-top: 1.5px solid currentColor; border-right: 1.5px solid currentColor; transform: translate(-25%, -50%) rotate(-135deg); }
+        [data-dcuf-native-form-layer-kind="external-dccon"] .btn_dccon_next::after { transform: translate(-75%, -50%) rotate(45deg); }
+        [data-dcuf-native-form-layer-kind="external-dccon"] .dccon_btn.recent::after { content: ''; display: block; width: 20px; height: 20px; margin: auto; background: currentColor; mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M3 8a7 7 0 1 1 .5 6M3 3v5h5M10 5v5l3 2' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat; }
+        [data-dcuf-native-form-layer-kind="external-dccon"] .right :is(.btn_dccon_hot, .btn_dccon_setting) {
+            display: inline-flex; align-items: center; justify-content: center; gap: 4px; width: auto; min-height: 36px; padding: 6px 10px;
+            border: 0; border-radius: 6px; background: transparent; color: var(--dcuf-theme-fg); font: 550 13px/1.4 system-ui, sans-serif;
+        }
+        [data-dcuf-native-form-layer-kind="external-dccon"] .right button > .blind { position: static; width: auto; height: auto; margin: 0; overflow: visible; visibility: visible; font: inherit; }
+        [data-dcuf-native-form-layer-kind="external-dccon"] .right button > .sp_img { display: none; }
+        [data-dcuf-native-form-layer-kind="external-dccon"] .dccon_list { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); inline-size: auto; padding: 10px; gap: 8px; }
+        [data-dcuf-native-form-layer-kind="external-dccon"] .dccon_list_box.dcconlist { block-size: auto; }
+        [data-dcuf-native-form-layer-kind="external-dccon"] .dccon_list_box > .dccon_list { max-block-size: max(120px, calc(var(--dcuf-editor-layer-max-height, 100dvh) - 190px)); overflow-y: auto; overflow-x: hidden; scrollbar-width: thin; }
+        [data-dcuf-native-form-layer-kind="external-dccon"] .dccon_list > .list_li { float: none; inline-size: auto; margin: 0; min-inline-size: 0; }
+        [data-dcuf-native-form-layer-kind="external-dccon"] .dccon_list > .dccon_list_btm { grid-column: 1 / -1; inline-size: auto; min-inline-size: 0; }
+        [data-dcuf-native-form-layer-kind="external-dccon"] .dccon_list > .dccon_list_btm > .btn_box.dccon_list_paging { display: flex; align-items: center; justify-content: center; gap: 10px; inline-size: auto; max-inline-size: 100%; margin: 0; padding: 8px 0; }
+        [data-dcuf-native-form-layer-kind="external-dccon"] .dccon_list_paging button { position: relative; flex: none; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 6px; background: transparent; color: var(--dcuf-theme-fg); }
+        [data-dcuf-native-form-layer-kind="external-dccon"] .dccon_list_paging .sp_img { display: none; }
+        [data-dcuf-native-form-layer-kind="external-dccon"] .dccon_list_paging button::after { content: ''; position: absolute; left: 50%; top: 50%; width: 7px; height: 7px; border-top: 1.5px solid currentColor; border-right: 1.5px solid currentColor; transform: translate(-25%, -50%) rotate(-135deg); }
+        [data-dcuf-native-form-layer-kind="external-dccon"] .dccon_list_paging .btn_next::after { transform: translate(-75%, -50%) rotate(45deg); }
+        [data-dcuf-native-form-layer-kind="external-dccon"] .img_dccon { max-inline-size: 100%; }
+        [data-dcuf-native-form-layer-kind="external-dccon"] .img_dccon img { max-inline-size: 100%; object-fit: contain; }
+        [data-dcuf-native-form-layer-kind="external-dccon"] :is(.btn_blue, .btn_apply) {
+            width: auto; min-height: 36px; padding: 7px 14px; border: 1px solid var(--dcuf-v7-primary-rim); border-radius: 8px;
+            background: var(--dcuf-v7-primary-bg); color: var(--dcuf-v7-primary-ink); box-shadow: var(--dcuf-v7-primary-shadow); text-shadow: none;
+        }
+        [data-dcuf-native-form-layer-kind="external-dccon"] :is(.txtbtn, .btn_grey) { background: transparent; color: var(--dcuf-theme-fg); border-color: transparent; text-shadow: none; }
         /* B1 in-document menus: native nodes and existing layer positioning remain owners. */
         [data-dcuf-native-form-layer-kind~="dropdown"][data-dcuf-native-form-layer-anchor] {
             box-sizing: border-box;
@@ -8939,6 +9134,12 @@ const __dcufSettingsPresenter = (() => {
                     });
                 });
                 writeHiddenChrome.forEach((element) => markNativeContext(element, 'hidden-chrome', nativeContextState));
+                // Summernote owns visibility,focus,positioning and callbacks.
+                // Project only its existing form-local dialog/popover roots;
+                // ordinary writer-field discovery deliberately excludes them.
+                form.querySelectorAll('.note-editor > .note-modal, .note-editor > .note-popover').forEach((element) => {
+                    markNativeContext(element, element.matches('.note-modal') ? 'editor-dialog' : 'editor-popover', nativeContextState);
+                });
                 writeSafePresentationElements.forEach((element) => {
                     markNativePresentationProperty(element, 'data-dcuf-native-form-box-sizing', 'border-box');
                 });
