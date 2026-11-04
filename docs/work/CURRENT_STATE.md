@@ -5,19 +5,19 @@
 - Active plan: Grouped repairs implemented as a review candidate. New single-frame header is list-page-top only;existing floating inline toolbar and non-list upper chrome retained. ARTICLE_COMMENT_POPUP_REPAIRS.md and NEXT own review.
 - Workspace path: `.` (private prompt supplies exact worktree). Preserve debug.log unread/unstaged.
 - Active stage: `header-navigation` formal admission remains open. Scoped local UI implementation is not whole-UI/native permission/device or architecture promotion.
-- Accepted visual preference: User accepted the current list-header appearance except vertical placement of the second row. Current refinement centers it between the divider and lower controls. Actual memo/current bright-dark detail remains.
-- Source state: Source checkpoint base HEAD `a3090b4eab39bcb00cab2118e17ee21abe6bde80` on `codex/ui-port-boundary`;list-only second-row centering is locally verified. Previous grouped repair checkpoint has successful CI. Preserve unrelated debug.log.
+- Accepted visual preference: User retained the current list-header design and requested first-row centering in the same manner as the second row. Current first-row refinement changes no adjacent row geometry. Actual memo/current bright-dark detail remains.
+- Source state: Source checkpoint base HEAD `6c13b07f8b91329b4583646857eea987beb1f090` on `codex/ui-port-boundary`;list-only first-row centering is locally verified. Previous checkpoint has successful CI. Preserve unrelated debug.log.
 - Local-only state: `LOCAL_ONLY_EVIDENCE`;artifacts/article-followup-2026-11-03 holds control/current diagnostics and screenshots;comparison viewer under artifacts/b1-detail-2026-10-23/article-followup.
-- Candidate fingerprint: `4e86ba496065f84ef6af6c8c7e675c7e01e40dd3e482c949c6d3375d13e6814b`
+- Candidate fingerprint: `d5c5b3701762873daea10438682fdfbe6e028db7007fa25420e86f661716b3e6`
 - Last current audit: UNKNOWN: formal upper admission and user aesthetics remain open. Scoped13 selected browser checks plus6 preview unit checks,header/frame/route reruns and public captures are recorded in the result receipt.
-- Current stage receipt: `verification/receipts/2026-11-04-header-row-center.json` SHA-256 `23B415E4F4A3C13A52091B7196774A788E9E425E3F5CCDFDF90DC51EF53CCB9B`;the prior grouped receipt retains its5EBF scope.
+- Current stage receipt: `verification/receipts/2026-11-04-header-top-center.json` SHA-256 `E3BB08CCC29493E02705E9A966B6A26A6E43B7C65809412EE859608B74E3DD66`;prior receipts retain their scopes.
 - Accepted baseline: Actual adopted memo/current bright-dark v7 rules retained. Grouped folder/editor child finish and full-page review are now recorded locally;unobserved native permission/server/plugin/device branches remain distinct.
-- Current artifact: Mobile3.5.5 CC3E01F5F0B45001E55C1645EB949E868423FB451BD0970E31F69E502E6E2BA0 guard/root/dist;PC1.9.9 0D5F7D071F7A29ABA932F1ED52039D04647A10B3B5BAF98E62392305E50EDA4D unchanged. No version bump or publication.
+- Current artifact: Mobile3.5.5 B0ECB45D60477E30DABC389D3C34A8F5E3197E09879FD2ECDB87812DDC1AC918 guard/root/dist;PC1.9.9 0D5F7D071F7A29ABA932F1ED52039D04647A10B3B5BAF98E62392305E50EDA4D unchanged. No version bump or publication.
 - Blockers: No product/authorization hold in the bounded scope. User aesthetic review and exact-path working checkpoint remain separate.
 - Pending live checks: Public source-injected Chrome WebP957x477 decode/native1280x720 play and pause-on-close observed;final installed-extension use,real submission and exact phone remain separate.
 
 ```dcuf-current-artifacts
-{"schemaVersion":1,"mobile":{"sha256":"CC3E01F5F0B45001E55C1645EB949E868423FB451BD0970E31F69E502E6E2BA0"},"pc":{"sha256":"0D5F7D071F7A29ABA932F1ED52039D04647A10B3B5BAF98E62392305E50EDA4D"}}
+{"schemaVersion":1,"mobile":{"sha256":"B0ECB45D60477E30DABC389D3C34A8F5E3197E09879FD2ECDB87812DDC1AC918"},"pc":{"sha256":"0D5F7D071F7A29ABA932F1ED52039D04647A10B3B5BAF98E62392305E50EDA4D"}}
 ```
 
 ## Pending real-use feedback —2026-11-03

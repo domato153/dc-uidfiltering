@@ -86,6 +86,8 @@
         ${selectors.arrow} { min-width: 22px; min-height: 24px; }
         ${selectors.darkTitle} { color: #e0e0e0 !important; }
         @media (max-width: 899px) { ${selectors.menuRoot} { grid-area: 2 / 2; margin-top: 0; margin-bottom: 8px; } }
+        :where([data-dcuf-list-header]) ${selectors.menuRoot} { margin-block-start: 8px; }
+        @media (max-width: 899px) { :where([data-dcuf-list-header]) ${selectors.menuRoot} { margin-block: 0; } }
 `
         });
     }
