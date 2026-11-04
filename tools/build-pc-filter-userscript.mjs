@@ -93,10 +93,12 @@ async function buildSharedRuntimePrelude() {
     const themeHostPortSource = await readPart(inputForRole('theme-host-port'));
     const popupGeometryHostAdapterSource = await readPart(inputForRole('popup-geometry-host-adapter'));
     const themePrimitives = await readPart(inputForRole('shared-theme-primitives'));
+    const themeMaterial = await readPart(inputForRole('shared-theme-material-values'));
 
     return [
         '    // PC filter port shared prelude',
         themePrimitives.trimEnd(),
+        themeMaterial.trimEnd(),
         schemaSource.trimEnd(),
         '',
         '    const DCUF_SHARED_SCHEMA = Object.freeze({ FILTER_CONSTANTS, STORAGE_KEYS, SELECTORS, API_PATHS, CUSTOM_ATTRS, UI_IDS, ETC_CONSTANTS });',

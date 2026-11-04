@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 const index=process.argv.indexOf('--control-directory');assert.ok(index>=0,'bind an explicit preserved control source directory');const dir=process.argv[index+1];
 const read=async p=>(await fs.readFile(p,'utf8')).replaceAll('\r\n','\n');
 const currentTheme=await read('src/targets/shared/theme-presenter.js'),currentHost=await read('src/targets/mobile/theme-host-style.js');
-const primitive=await read('src/shared/theme-primitives.js'),material=await read('src/targets/mobile/theme-material-values.js');
+const primitive=await read('src/shared/theme-primitives.js'),material=await read('src/targets/shared/theme-material-values.js');
 const oldTheme=await read(dir+'/control-theme-presenter.js'),oldHost=await read(dir+'/control-theme-host-style.js');
 const targetCss=(source,prelude='')=>{
  const context={};for(const m of source.matchAll(/(__dcuf(?:Build|Describe)\w+)\(/g))if(!['__dcufBuildB1MaterialCss','__dcufBuildTargetThemeCss'].includes(m[1]))context[m[1]]=()=>m[1].startsWith('__dcufDescribe')?{}:`HEADER_SLOT_${m[1]}`;

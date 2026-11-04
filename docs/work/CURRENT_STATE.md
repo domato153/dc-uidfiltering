@@ -2,22 +2,22 @@
 
 ## Current execution
 
-- Active plan: Four separate stages in ARTICLE_COMMENT_POPUP_REPAIRS.md. Stage1 only:Mobile toolbar finishing and header/canvas resume repair. PC port,site/docs proposal and approved official promotion are later separate units.
+- Active plan: Four separate stages in ARTICLE_COMMENT_POPUP_REPAIRS.md. Stage1 appearance adopted by user;stage2 PC common-code port implemented. Site/docs/screenshot proposal and approved official promotion remain separate stages3/4.
 - Workspace path: `.` (private prompt supplies exact worktree). Preserve debug.log unread/unstaged.
-- Active stage: `header-navigation` formal admission remains open. Scoped local UI implementation is not whole-UI/native permission/device or architecture promotion.
-- Accepted visual preference: Existing soft continuous face;increase tint in LIGHT only. DARK retains earlier face. White-center/bright-bottom-band trial NOT ADOPTED. Actual memo/current bright-dark controls remain detail authority.
-- Source state: Source checkpoint base HEAD `0e1edb1158ea2c3c3005872e98438c169fa4cdd9` on `codex/ui-port-boundary`;stage1 locally verified pending exact-path checkpoint. No version bump or publication.
-- Local-only state: `LOCAL_ONLY_EVIDENCE`;artifacts/toolbar-glass-2026-11-04 holds frozen controls,selected logs,normal/backing images and comparison. Viewer at artifacts/b1-detail-2026-10-23/toolbar-glass.
-- Candidate fingerprint: `dedddeaf5b54051e6be44b5b8b2da59ac987314b427a7e5cdf375b82be637c76`
-- Last current audit: UNKNOWN:formal admission and user actual-use remain open. Scoped header4,resume2 and4 adjacent checks pass;negative pre-recovery control reproduces all-zero owners/styles. Light inactive-label contrast remains below4.5;no accessibility certification.
-- Current stage receipt: `verification/receipts/2026-11-04-toolbar-glass-header-resume.json` SHA-256 `565D09E4C9BB1E182A2854594D6F35E3C5363861BC68018D5FD43EC4CD631EE3`;prior receipts retain historical scopes.
-- Accepted baseline: Adopted memo/v7 and list-only shared plate retained. Late DCMOD important-padding protection retained. Current ready-hook restoration also restores the whole-page canvas via existing layout ownership.
-- Current artifact: Mobile3.5.5 2C14F66FB22C8155EC266F9E1C91BC4A9AB1A31AC230A6B559106880C880B62B guard/root/dist;PC1.9.9 0D5F7D071F7A29ABA932F1ED52039D04647A10B3B5BAF98E62392305E50EDA4D unchanged.
-- Blockers: No bounded implementation hold. Current source-injected checks do not establish actual installed-extension or exact OS/device behavior. Stage1 review remains before separate PC stage.
-- Pending live checks: User environment:final tint preference and background-tab return stability with complete external extensions. Known actual-Chrome/Tampermonkey route remains supported;earlier options-page failure is local environment history,not a global blocker.
+- Active stage: `pc-filter-port` bounded review. Formal Mobile header admission remains UNKNOWN;this does not certify whole UI/native permissions/device.
+- Accepted visual preference: Mobile soft toolbar face with stronger LIGHT tint,DARK earlier face. Actual memo/current v7 material is reused for PC owned UI;no independent PC design. White-center/bright-bottom-band remains rejected.
+- Source state: Source checkpoint base HEAD `a4f6f17fbabb9e667dd5f675251093db06079eeb` on `codex/ui-port-boundary`;stage2 bounded port locally verified. Exact checkpoint disposition is read fresh from Git/tools,not inferred from tests.
+- Local-only state: `LOCAL_ONLY_EVIDENCE`;artifacts/pc-v7-port-2026-11-04 holds frozen controls,raw comparisons,selected logs and fixture/public captures. Viewer at artifacts/b1-detail-2026-10-23/pc-v7-port.
+- Candidate fingerprint: `5ff353332218a60dd70e638256532f2ab4e7b98c4eea6c431f6ede7a7b158259`
+- Last current audit: UNKNOWN:formal upper admission/actual extension remain open. PC source-linked material/palette/delete checks pass;2 raw native/filter/storage pairs agree and quick-block outcome comparison passes. Mobile bytes are identical.
+- Current stage receipt: `verification/receipts/2026-11-04-pc-v7-material-port.json` SHA-256 `DD4359C3FDE2FB50EB3AD8B8C15F67F71C972A4A49482C33E28E26D7FEC076F3`;prior receipts retain their scoped identities.
+- Accepted baseline: Shared existing filter/management/settings code and unchanged adopted material factory. PC receives material connection only;native PC pages remain native. Material component remains mixed;no accepted-registry promotion.
+- Current artifact: Mobile3.5.5 2C14F66FB22C8155EC266F9E1C91BC4A9AB1A31AC230A6B559106880C880B62B guard/root/dist unchanged;PC1.9.9 CE1B9DB0164B55C34B9CFE9AD82862ABCE4F2836B00801B99A7052BB4A136B91 guard copy/root/dist. No version bump or publication.
+- Blockers: No bounded port implementation hold. Source-injected public images and local tests do not establish actual-extension or user aesthetic approval. Do not import Mobile site styling or create another PC UI.
+- Pending live checks: Separate PC review install with other DCUF scripts disabled;actual extension/user preference unqualified. Prior Mobile exact OS-tab/background-return qualification remains open. Known installed-Chrome/Tampermonkey route remains supported.
 
 ```dcuf-current-artifacts
-{"schemaVersion":1,"mobile":{"sha256":"2C14F66FB22C8155EC266F9E1C91BC4A9AB1A31AC230A6B559106880C880B62B"},"pc":{"sha256":"0D5F7D071F7A29ABA932F1ED52039D04647A10B3B5BAF98E62392305E50EDA4D"}}
+{"schemaVersion":1,"mobile":{"sha256":"2C14F66FB22C8155EC266F9E1C91BC4A9AB1A31AC230A6B559106880C880B62B"},"pc":{"sha256":"CE1B9DB0164B55C34B9CFE9AD82862ABCE4F2836B00801B99A7052BB4A136B91"}}
 ```
 
 ## Pending real-use feedback —2026-11-03

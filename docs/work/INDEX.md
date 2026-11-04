@@ -10,6 +10,8 @@ Use this file in the exact active nested worktree supplied by the private prompt
 
 ## Retrieve only for the question
 
+PC shared-code port/stage2/desktop filter UI: [PC_FILTER_V7_PORT.md](PC_FILTER_V7_PORT.md) and docs/pc-filter-port-rail.md. Mobile factory reused byte-for-byte,not a second PC UI implementation;native PC pages remain native. CURRENT/NEXT own result/review and separate site proposal/publication stages.
+
 Current user feedback repairs2026-11-03:[UI_USER_FEEDBACK_REPAIRS.md](UI_USER_FEEDBACK_REPAIRS.md) owns the grouped shortcut/category-arrow/native-badge/full-width-page/reply-input/FAB/preview repairs. Current source/runtime,scoped checks and next actual-use review remain in CURRENT/NEXT. Earlier1120px layout direction is superseded;the header stays full width.
 
 Previous result2026-11-03:[B1_RESIDUAL_FINISH_AND_REVIEW.md](B1_RESIDUAL_FINISH_AND_REVIEW.md) closes the grouped folder/editor child implementation and current whole-page review on06F68A. Existing owners/native behavior retained;10 residual contexts,10 semantic pairs0diff,impact-selected adjacent/palette evidence and8 reviewed image pairs. Real public list/article/writer are source-injected GET/HEAD checks,not actual-extension/device/permission proof. [B1_V7_FINAL_SCOPE_REVIEW.md](B1_V7_FINAL_SCOPE_REVIEW.md) remains the historical128-ID/11-family reconciliation. NEXT now owns user appearance review and bounded real-use qualification;do not revive its completed child TODOs.

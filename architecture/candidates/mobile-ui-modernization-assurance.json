@@ -16,6 +16,7 @@
       }
     ],
     "upsertContracts": [
+      {"id":"pc-shared-material-port","summary":"Stage2 ports the existing Mobile pure B1/v7 value factory unchanged into both target builds. PC target hook composes the exact factory instead of empty CSS. Existing shared presenters/runtime remain sole owners;no PC-specific design,Mobile host selectors,native-page paint,storage,filter,network or lifecycle delta. Mobile artifact must remain byte-identical. Historical mobile-theme-material-values component ID is stable while its source location becomes shared."},
       {
         "id": "b1-write-editor-shell",
         "summary": "Authorized B1 write/modify-editor outer presentation through existing native-form presenter and four shared header owners. Canonical write-editor state admits write/modify header mutation contexts without hasListSurface, new observer or filter/network startup. Existing write/modify subscriptions reconcile header owners on form loss/replacement. Preserve original native DIV/table fields, form actions/method/hidden shape, editor selection/authored colors, draft and desktop-site-mobile scale. Native-form projects the existing name-input role onto the original gallery-nickname input too. Remove the unused dcuf-write-leave-confirm compatibility class write: no source CSS consumes it, and restoring/readding it on each refresh caused mutation feedback. Semantic popup roles remain. Outer glass/paper/spacing is the visual delta; individual native tool/popup interiors remain separate."
@@ -244,9 +245,9 @@
         "classification": "presentation-source",
         "layer": "presentation-ui",
         "boundaryState": "conforming",
-        "responsibility": "Defines the explicit empty PC host palette style capability so mobile host CSS cannot enter PC assembly.",
+        "responsibility": "Composes only the shared existing material-value factory for DCUF-owned PC UI;Mobile host CSS remains excluded.",
         "sourceRefs": ["src/targets/pc/theme-host-style.js"],
-        "contractRefs": ["target-isolation", "ui-ownership"],
+        "contractRefs": ["target-isolation", "ui-ownership", "pc-shared-material-port"],
         "fitnessRefs": ["invariant-pc-host-style-isolation", "invariant-build-inputs-mapped"]
       },
       {
@@ -869,15 +870,16 @@
         "classification": "presentation-source",
         "layer": "presentation-ui",
         "boundaryState": "mixed",
-        "responsibility": "Hoisted pure existing Mobile B1 material role CSS and shared full-width page gutter values; existing page presenters own their layout and isolated login consumes material without executing gallery initialization. Existing dynamic palette root/body selectors remain debt.",
+        "responsibility": "Shared unchanged pure B1/v7 material factory consumed by Mobile page/login and PC-owned filter/management controls. Stable historical component ID;existing dynamic palette root/body selectors remain debt. No host paint or initialization.",
         "sourceRefs": [
-          "src/targets/mobile/theme-material-values.js"
+          "src/targets/shared/theme-material-values.js"
         ],
         "contractRefs": [
           "ui-ownership",
           "target-isolation",
           "semantic-preservation",
-          "b1-login-only-presentation"
+          "b1-login-only-presentation",
+          "pc-shared-material-port"
         ],
         "fitnessRefs": [
           "invariant-build-inputs-mapped",
@@ -1074,6 +1076,8 @@
       }
     ],
     "upsertRelations": [
+      {"id":"rel-pc-build-shared-material-values","from":"pc-build","to":"mobile-theme-material-values","kind":"explicit-build-input"},
+      {"id":"rel-pc-theme-shared-material-values","from":"pc-theme-host-style","to":"mobile-theme-material-values","kind":"explicit-style-input"},
       {"id":"rel-mobile-list-header-frame-measurement","from":"mobile-list-host-adapter","to":"mobile-header-shell-presenter","kind":"explicit-style-input"},
       {
         "id": "rel-header-context-to-mobile-header-gnb-host-adapter",

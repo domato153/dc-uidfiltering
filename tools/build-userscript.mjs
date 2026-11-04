@@ -77,7 +77,7 @@ async function buildSharedRuntimePrelude() {
     const themeHostPortSource = await readPart(inputForRole('theme-host-port'));
     const popupGeometryHostAdapterSource = await readPart(inputForRole('popup-geometry-host-adapter'));
     const themePrimitives = await readPart(inputForRole('shared-theme-primitives'));
-    const loginPresentation = await Promise.all(['mobile-theme-material-values', 'mobile-login-presenter', 'mobile-login-host-adapter'].map(role => readPart(inputForRole(role))));
+    const loginPresentation = await Promise.all(['shared-theme-material-values', 'mobile-login-presenter', 'mobile-login-host-adapter'].map(role => readPart(inputForRole(role))));
     const conveniencePresentation = await readPart(inputForRole('mobile-convenience-presenter'));
 
     return [

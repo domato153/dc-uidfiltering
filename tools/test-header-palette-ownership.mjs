@@ -58,7 +58,7 @@ for (const id of ['header-shell-presenter','header-recent-visit-presenter','gall
     assert.throws(()=>restoreConcept01HeaderVisualDelta(currentSources[id].replace(from,'var(--dcuf-unapproved-filter,')), 'Unregistered glass role must fail exact normalization');
 }
 const hostSource = await readFile(path.join(root, 'src/targets/mobile/theme-host-style.js'), 'utf8');
-const materialSource = await readFile(path.join(root, 'src/targets/mobile/theme-material-values.js'), 'utf8');
+const materialSource = await readFile(path.join(root, 'src/targets/shared/theme-material-values.js'), 'utf8');
 const adapterSources = Object.fromEntries(await Promise.all(owners.map(async ([id]) => [id,
     await readFile(path.join(root, 'src/targets/mobile', id.replace('-presenter', '-host-adapter') + '.js'), 'utf8'),
 ])));

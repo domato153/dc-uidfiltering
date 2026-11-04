@@ -63,6 +63,7 @@ import {runAccountPickerContract} from './ui-account-picker-contract.mjs';
 import {runConditionalChildren} from './ui-conditional-children-contract.mjs';
 import {runResidualChildren} from './ui-residual-children-contract.mjs';
 import {runDarkMaterialFamilyContract,runMemoRowSurfaceContract} from './ui-b1-dark-material-contract.mjs';
+import {runPcMaterialPortContract} from './ui-pc-material-port-contract.mjs';
 
 const args = new Set(process.argv.slice(2));
 const selectedGroup = process.argv.includes('--group') ? process.argv[process.argv.indexOf('--group') + 1] : null;
@@ -108,6 +109,7 @@ const mobileTest = (name, group, run) => test(name, group, run, ['mobile']);
 // workstream closes; the production feature itself has been removed.
 const obsoleteMobileTest = () => {};
 const pcTest = (name, group, run) => test(name, group, run, ['pc']);
+pcTest('PC v7 port: reuse adopted material without native host styling', 'functional', runPcMaterialPortContract);
 const statsStorage = {
     [storageKeys.threshold]: 10,
     [storageKeys.ratioEnabled]: false,
@@ -13108,7 +13110,7 @@ pcTest('PC palette port themes only DCUF-owned controls and dialogs', 'functiona
         await session.page.evaluate(() => window.__dcufTestbedGM.invokeMenu('글댓합 설정하기'));
         await session.page.locator('#dcinside-filter-setting').waitFor({ state: 'attached' });
         const blueSave = await session.page.locator('#dcinside-threshold-save').evaluate((element) => getComputedStyle(element).backgroundColor);
-        assert.equal(blueSave, 'rgb(36, 91, 218)');
+        assert.equal(blueSave, await resolveControlFill(session.page, '#dcinside-threshold-save', '--dcuf-v7-primary-fill'));
         await session.page.locator('#dcinside-filter-setting #dcinside-exclude-recommended-checkbox').evaluate((input) => {
             input.checked = true;
         });
@@ -13175,7 +13177,7 @@ pcTest('PC palette port themes only DCUF-owned controls and dialogs', 'functiona
         await session.page.evaluate(() => window.__dcufTestbedGM.invokeMenu('글댓합 설정하기'));
         await session.page.locator('#dcinside-filter-setting').waitFor({ state: 'attached' });
         const orangeSave = await session.page.locator('#dcinside-threshold-save').evaluate((element) => getComputedStyle(element).backgroundColor);
-        assert.equal(orangeSave, 'rgb(154, 52, 18)');
+        assert.equal(orangeSave, await resolveControlFill(session.page, '#dcinside-threshold-save', '--dcuf-v7-primary-fill'));
         await session.page.locator('#dcinside-filter-setting').evaluate((element) => element.remove());
 
         const fab = session.page.locator('#dc-personal-block-fab');
@@ -13221,7 +13223,7 @@ pcTest('PC palette port themes only DCUF-owned controls and dialogs', 'functiona
             background: getComputedStyle(element).backgroundColor,
             color: getComputedStyle(element).color
         }));
-        assert.equal(activeTab.background, 'rgb(255, 240, 231)', JSON.stringify(activeTab));
+        assert.equal(activeTab.background, 'rgba(0, 0, 0, 0)', JSON.stringify(activeTab));
         assert.notEqual(activeTab.color, 'rgb(0, 123, 255)', JSON.stringify(activeTab));
         const managementAccent = await session.page.locator('#dc-block-management-panel').evaluate((element) => ({
             kicker: getComputedStyle(element.querySelector('.panel-kicker')).color,
@@ -13231,7 +13233,7 @@ pcTest('PC palette port themes only DCUF-owned controls and dialogs', 'functiona
             switchKnob: getComputedStyle(element.querySelector('#personal-block-toggle + .switch-slider'), '::before').backgroundColor
         }));
         assert.equal(managementAccent.kicker, 'rgb(154, 52, 18)', JSON.stringify(managementAccent));
-        assert.equal(managementAccent.addBackground, 'rgb(255, 240, 231)', JSON.stringify(managementAccent));
+        assert.equal(managementAccent.addBackground, 'rgba(0, 0, 0, 0)', JSON.stringify(managementAccent));
         assert.notEqual(managementAccent.switchBackground, 'rgb(204, 204, 204)', JSON.stringify(managementAccent));
         assert.equal(managementAccent.switchImage, 'none', JSON.stringify(managementAccent));
         assert.equal(managementAccent.switchBackground, 'rgb(154, 52, 18)', JSON.stringify(managementAccent));
@@ -13243,9 +13245,9 @@ pcTest('PC palette port themes only DCUF-owned controls and dialogs', 'functiona
             importBackground: getComputedStyle(element.querySelector('.import-btn')).backgroundColor
         }));
         assert.deepEqual(backupContract, {
-            downloadBackground: 'rgb(255, 240, 231)',
-            copyBackground: 'rgb(154, 52, 18)',
-            importBackground: 'rgb(154, 52, 18)'
+            downloadBackground: 'rgba(0, 0, 0, 0)',
+            copyBackground: await resolveControlFill(session.page, '#dc-backup-popup .export-btn', '--dcuf-v7-primary-fill'),
+            importBackground: await resolveControlFill(session.page, '#dc-backup-popup .import-btn', '--dcuf-v7-primary-fill')
         });
         assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
     } finally { await session.close(); }

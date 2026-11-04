@@ -575,7 +575,7 @@
         "src/targets/mobile/login-presenter.js",
         "src/targets/mobile/login-host-adapter.js",
         "src/shared/theme-primitives.js",
-        "src/targets/mobile/theme-material-values.js"
+        "src/targets/shared/theme-material-values.js"
       ],
       "adapter": "mobile-login-host-adapter",
       "presenter": "mobile-login-presenter",
