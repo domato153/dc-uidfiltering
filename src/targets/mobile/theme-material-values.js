@@ -10,8 +10,8 @@ function __dcufBuildB1MaterialCss(ROOT_ATTRIBUTE) {
             --dcuf-b1-paper: var(--dcuf-theme-surface);
             --dcuf-b1-glass: color-mix(in srgb, color-mix(in srgb, var(--dcuf-b1-paper) 80%, var(--dcuf-theme-accent-soft)) 58%, transparent);
             --dcuf-b1-floating: color-mix(in srgb, var(--dcuf-b1-paper) 64%, transparent);
-            --dcuf-menu-button-background: linear-gradient(135deg,#ffffff14,transparent 62%), color-mix(in srgb,color-mix(in srgb,var(--dcuf-theme-accent-strong) 60%,#1b2b30) 82%,transparent);
-            --dcuf-menu-button-ink: #fff;
+            --dcuf-menu-button-background: var(--dcuf-v7-primary-bg);
+            --dcuf-menu-button-ink: var(--dcuf-v7-primary-ink);
             --dcuf-menu-button-width-ratio: .66;
             --dcuf-menu-button-height-ratio: .63;
             --dcuf-menu-button-padding-ratio: .57;
@@ -118,6 +118,8 @@ function __dcufBuildB1MaterialCss(ROOT_ATTRIBUTE) {
             --dcuf-v7-primary-fill: var(--dcuf-v7-dark-primary-fill,color-mix(in srgb, var(--dcuf-b1-paper) 76%, var(--dcuf-theme-accent)));
             --dcuf-v7-primary-ink: var(--dcuf-v7-dark-primary-ink,color-mix(in srgb, var(--dcuf-theme-fg) 86%, var(--dcuf-theme-accent-strong)));
             --dcuf-v7-primary-bg: var(--dcuf-v7-primary-glaze), var(--dcuf-v7-primary-fill);
+            --dcuf-menu-button-background: var(--dcuf-v7-primary-bg);
+            --dcuf-menu-button-ink: var(--dcuf-v7-primary-ink);
             --dcuf-v7-primary-rim: color-mix(in srgb, var(--dcuf-theme-accent) var(--dcuf-v7-primary-rim-accent,48%), var(--dcuf-b1-rim));
             /* Optional management values; shared consumers keep PC fallbacks. */
             --dcuf-management-default-width: 720;

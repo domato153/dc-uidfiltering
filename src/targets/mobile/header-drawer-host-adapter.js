@@ -78,6 +78,7 @@
         const syncParts = () => {
             const desired = new Map();
             const parts = (root, selector, role) => root?.querySelectorAll(selector).forEach((element) => desired.set(element, role));
+            parts(document, '.issue_wrap > .issuebox.gallery_box', 'carrier');
             const door = findOutsideDrawer('.issue_contentbox');
             parts(door, '.minor_intro_box', 'intro'); parts(door, '.img_contbox', 'hero');
             parts(door, '.mintro_imgbox', 'image'); parts(door, '.mintro_txtbox', 'description');

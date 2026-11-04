@@ -10,6 +10,7 @@
                 --dcuf-view-fg: var(--dcuf-theme-fg, #22324c);
                 --dcuf-view-fg-sub: var(--dcuf-theme-fg-muted, #5f6f86);
                 --dcuf-view-accent: var(--dcuf-theme-accent, #3f6de0);
+                --dcuf-article-inset: 20px;
                 inline-size: calc(100% - 2 * var(--dcuf-page-gutter,10px));
                 max-inline-size: none;
                 min-inline-size: 0;
@@ -34,13 +35,15 @@
                 --dcuf-view-accent: var(--dcuf-theme-accent, #8cb4ff);
             }
             [data-dcuf-role="article-header-shell"] {
-                margin-block-end: 12px;
+                margin: 0;
             }
-            [data-dcuf-role="article-header"] {
-                padding: 18px 18px 14px;
+            [data-dcuf-role="article-header-shell"] > [data-dcuf-role="article-header"] {
+                margin: calc(-1 * var(--dcuf-article-inset)) calc(-1 * var(--dcuf-article-inset)) 0;
+                padding: 20px calc(var(--dcuf-article-inset) + 16px) 18px;
                 border: 0;
-                border-radius: 16px;
-                background-color: var(--dcuf-b1-paper, var(--dcuf-view-surface));
+                border-block-end: 1px solid var(--dcuf-b1-line, var(--dcuf-view-border));
+                border-radius: 15px 15px 0 0;
+                background-color: color-mix(in srgb, var(--dcuf-theme-accent-soft) 18%, var(--dcuf-b1-paper, var(--dcuf-view-surface)));
                 background-image: none;
                 box-shadow: none;
                 box-sizing: border-box;
@@ -49,8 +52,11 @@
                 background-image: none;
                 box-shadow: none;
             }
-            [data-dcuf-role="article-title-row"] {
+            [data-dcuf-role="article-header"] [data-dcuf-role="article-title-row"] {
                 margin: 0;
+                padding: 0;
+                height: auto;
+                overflow-wrap: anywhere;
                 line-height: 1.45;
             }
             [data-dcuf-role="article-headtext"] {
@@ -77,11 +83,16 @@
             [data-dcuf-role="article-title-device"] {
                 margin-inline-start: 6px;
             }
-            [data-dcuf-role="article-meta"] {
+            [data-dcuf-role="article-header"] [data-dcuf-role="article-meta"] {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                flex-wrap: wrap;
+                gap: 8px 20px;
                 block-size: auto;
-                margin-block-start: 14px;
-                padding-block-start: 11px;
-                border-block-start: 1px solid var(--dcuf-b1-line, var(--dcuf-view-border));
+                margin-block-start: 10px;
+                padding: 0;
+                border: 0;
                 background: transparent;
                 color: var(--dcuf-view-fg-sub);
                 overflow: visible;
@@ -95,9 +106,10 @@
                 min-inline-size: 0;
                 background: transparent;
             }
-            [data-dcuf-role="article-author-group"] { float: inline-start; }
+            [data-dcuf-role="article-author-group"] { float: none; }
             [data-dcuf-role="article-stat-group"] {
-                float: inline-end;
+                float: none;
+                margin-inline-start: auto;
                 justify-content: flex-end;
                 flex-wrap: nowrap;
                 gap: 12px;
@@ -167,7 +179,7 @@
             [data-dcuf-role="article-content"] {
                 inline-size: 100%;
                 max-inline-size: 100%;
-                margin-inline: auto;
+                margin-inline: 0;
                 border: 0;
                 border-radius: 0;
                 background: transparent;
@@ -697,12 +709,12 @@
             @media screen and (max-width: 640px) {
                 [data-dcuf-article-popup] { --dcuf-article-popup-center: calc(50% - 48px); --dcuf-article-popup-clearance: 128px; }
                 [data-dcuf-surface="article-recommendation"][data-dcuf-role="article"] {
+                    --dcuf-article-inset: 8px;
                     inline-size: calc(100% - 2 * var(--dcuf-page-gutter,10px));
                     padding: 8px 8px 0 !important;
                 }
-                [data-dcuf-role="article-header"] {
-                    padding: 15px 14px 12px;
-                    border-radius: 12px;
+                [data-dcuf-role="article-header-shell"] > [data-dcuf-role="article-header"] {
+                    padding: 16px 22px 14px;
                 }
                 [data-dcuf-role="article-title"] { font-size: 20px; }
                 [data-dcuf-role="article-body"] { padding-inline: 14px; }

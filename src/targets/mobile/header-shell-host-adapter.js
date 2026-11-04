@@ -76,6 +76,19 @@
         let mutationUnsubscribe = null;
         let styleOwner = null;
         let utilitySerial = 0;
+        let listPageProjection = null;
+        const syncListPageProjection = () => {
+            const body = document.body;
+            if (body && states.size && /\/board\/lists\/?$/.test(location.pathname)) {
+                if (!listPageProjection) listPageProjection = {node: body, original: body.getAttribute('data-dcuf-list-header')};
+                body.setAttribute('data-dcuf-list-header', '1');
+            } else if (listPageProjection) {
+                const {node, original} = listPageProjection;
+                if (original === null) node.removeAttribute('data-dcuf-list-header');
+                else node.setAttribute('data-dcuf-list-header', original);
+                listPageProjection = null;
+            }
+        };
 
         const restoreUtility = (state) => {
             const utility = state.utility;
@@ -167,6 +180,11 @@
                 else element.setAttribute(name, value);
             }));
             state.layoutBaselines.clear();
+            if (state.listLayout) {
+                if (state.listLayout.original === null) state.listLayout.node.removeAttribute('data-dcuf-list-header');
+                else state.listLayout.node.setAttribute('data-dcuf-list-header', state.listLayout.original);
+                state.listLayout = null;
+            }
             state.baselines.forEach((original, element) => {
                 if (original === null) element.removeAttribute(ROLE_ATTRIBUTE);
                 else element.setAttribute(ROLE_ATTRIBUTE, original);
@@ -179,6 +197,15 @@
             // The real host has sibling chrome; older fixtures nest it in HEADER.
             // Project layout onto existing parents only. Never move native nodes.
             const layout = state.root.parentElement?.matches('.dcwrap') ? state.root.parentElement : state.root;
+            if (state.listLayout && state.listLayout.node !== layout) {
+                if (state.listLayout.original === null) state.listLayout.node.removeAttribute('data-dcuf-list-header');
+                else state.listLayout.node.setAttribute('data-dcuf-list-header', state.listLayout.original);
+                state.listLayout = null;
+            }
+            if (/\/board\/lists\/?$/.test(location.pathname)) {
+                if (!state.listLayout) state.listLayout = {node: layout, original: layout.getAttribute('data-dcuf-list-header') === '1' ? null : layout.getAttribute('data-dcuf-list-header')};
+                layout.setAttribute('data-dcuf-list-header', '1');
+            }
             const desiredLayout = new Map([[layout, ['data-dcuf-header-layout', layout === state.root ? 'self' : 'parent']]]);
             const bridge = layout.querySelector(':scope > .visit_bookmark');
             if (bridge?.querySelector('.newvisit_history')) desiredLayout.set(bridge, ['data-dcuf-header-bridge', '1']);
@@ -270,6 +297,7 @@
         const refresh = (root = document) => {
             Array.from(states.keys()).filter((candidate) => !candidate.isConnected).forEach(disconnectRoot);
             collectRoots(root).forEach(connectRoot);
+            syncListPageProjection();
             return snapshot();
         };
 
@@ -305,6 +333,7 @@
 
         const dispose = () => {
             Array.from(states.keys()).reverse().forEach(disconnectRoot);
+            syncListPageProjection();
             styleOwner?.remove();
             styleOwner = null;
             mutationUnsubscribe?.();

@@ -73,7 +73,18 @@
         ${selectors.list} > li > a[data-dcuf-header-gnb-role="current-link"],
         ${selectors.list} > li > a:is(:hover, :focus-visible) { background: transparent; border-color: var(--dcuf-theme-accent-ink); color: var(--dcuf-theme-accent-ink); }
         ${selectors.darkList} > li > a[data-dcuf-header-gnb-role="current-link"] { color: var(--dcuf-theme-accent-ink); }
-        @media (max-width: 899px) { ${selectors.root} { grid-area: 3 / 1 / 4 / -1; padding: 0 22px 12px; } ${selectors.list} { gap: 0 16px; padding: 0 22px 12px; box-sizing: border-box; } }
+        ${selectors.root} [data-dcuf-explore-toggle] { anchor-name: --dcuf-explore; display: inline-flex; align-items: center; gap: 8px; min-height: 36px; padding: 0 10px; border: 0; border-radius: 7px; background: transparent; color: var(--dcuf-theme-fg); font: 600 12px/1.4 system-ui,sans-serif; cursor: pointer; }
+        ${selectors.root} [data-dcuf-explore-toggle]::after { content: ''; border-inline: 3px solid transparent; border-top: 4px solid currentColor; }
+        ${selectors.root} [data-dcuf-explore-toggle]:is(:hover,:focus-visible,[aria-expanded="true"]) { background: var(--dcuf-control-selected-bg); color: var(--dcuf-theme-accent-ink); }
+        ${selectors.list}[popover]:not(:popover-open) { display: none; }
+        ${selectors.list}[popover]:popover-open { position: fixed; position-anchor: --dcuf-explore; inset: 64px auto auto 152px; top: calc(anchor(bottom) + 6px); left: clamp(12px,anchor(left),calc(100vw - 232px)); display: grid; grid-template-columns: 1fr 1fr; width: min(240px,calc(100vw - 24px)); max-height: calc(100dvh - 100px); overflow: auto; padding: 8px; margin: 0; gap: 2px; border: 1px solid var(--dcuf-b1-rim); border-radius: 12px; background: var(--dcuf-b1-sheen),var(--dcuf-b1-floating); backdrop-filter: var(--dcuf-b1-floating-filter); box-shadow: var(--dcuf-b1-shadow); box-sizing: border-box; }
+        ${selectors.list}[popover] > li > a { display: flex; min-height: 36px; padding: 0 10px; border: 0; border-radius: 6px; font-size: 12px; }
+        @media (max-width: 899px) {
+            ${selectors.root} { grid-area: 3 / 1 / 4 / -1; padding: 0 22px 12px; }
+            ${selectors.list} { gap: 0 16px; padding: 0 22px 12px; box-sizing: border-box; }
+            :where([data-dcuf-list-header]) ${selectors.root} { grid-area: 1 / 2; padding: 0; }
+            :where([data-dcuf-list-header]) ${selectors.list}[popover] { gap: 2px; padding: 8px; }
+        }
 
 `
         });

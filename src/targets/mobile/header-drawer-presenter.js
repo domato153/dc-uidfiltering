@@ -104,6 +104,9 @@
                 position: relative;
                 overflow: visible;
             }
+            /* Native empty gallery-box retains15px bottom margin after its
+               contents are concealed;that margin collapses between our rows. */
+            :where([data-dcuf-list-header])[data-dcuf-header-drawer-scope="1"] [data-dcuf-header-drawer-part="carrier"] { margin: 0; }
             [data-dcuf-header-drawer-scope="1"] [data-dcuf-header-drawer="1"] {
                 position: relative;
                 z-index: 3;
@@ -306,9 +309,10 @@
             }
             [data-dcuf-header-drawer-scope="1"] ${selectors.relationPopup}:not([data-dcuf-header-relation-static="1"]) {
                 position: fixed;
-                left: 50% !important;
-                top: var(--dcuf-header-popup-center,calc(50% - 48px)) !important;
-                transform: translate(-50%,-50%);
+                position-anchor: --dcuf-gallery-more;
+                left: clamp(12px,calc(anchor(right,calc(100vw - 12px)) - 640px),calc(100vw - min(640px,calc(100vw - 32px)) - 12px)) !important;
+                top: clamp(12px,calc(anchor(bottom,110px) + 8px),calc(100dvh - 220px)) !important;
+                transform: none;
                 width: min(640px,calc(100vw - 32px));
                 max-width: calc(100vw - 32px);
                 max-height: calc(100dvh - var(--dcuf-header-popup-clearance,128px));

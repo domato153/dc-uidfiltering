@@ -265,6 +265,7 @@
       ],
       "intendedDelta": "b1-comments-reading-and-native-picker-glass-v1",
       "cascadeExceptions": [
+        {"selector":"[data-dcuf-surface=\"comments-replies\"][data-dcuf-role=\"comments-root\"] [data-dcuf-role=\"native-comment-textarea\"]","property":"inline-size","hostCollision":"Native small reply CSS and inline width retain927px after containment repair. This visual width must fill the current editor column;preserve the original textarea/value/events. One logical-size priority overrides both physical native widths without changing behavior.","testRef":"Article followup: native reply geometry title metadata and sticker density"},
         {
           "selector": "[data-dcuf-comment-role=\"image-nickname-input\"]",
           "property": "display",

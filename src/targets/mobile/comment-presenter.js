@@ -128,7 +128,6 @@
                 margin: 0;
                 padding: 14px 8px;
                 border: 0;
-                border-block-end: 1px solid var(--dcuf-comment-border);
                 border-radius: 0;
                 background-color: var(--dcuf-comment-surface);
                 background-image: none;
@@ -137,6 +136,15 @@
                 overflow: visible;
             }
             [data-dcuf-role="comment-list"] > [data-dcuf-role="comment-item"]:first-child { margin-block-start: 0; }
+            [data-dcuf-role="comment-list"] > [data-dcuf-role="comment-item"]:last-child { border-block-end: 0; }
+            /* The next parent starts the separator,even when native reply
+               shells are intervening sibling LIs. No rule above comment text. */
+            [data-dcuf-role="comment-list"] > [data-dcuf-role="comment-item"] ~ [data-dcuf-role="comment-item"] { border-block-start: 1px solid var(--dcuf-comment-border); }
+            [data-dcuf-role="comments-root"] [data-dcuf-role="comment-footer"] { display: flex; align-items: center; gap: 12px; min-block-size: 40px; margin-block-start: 0; padding: 8px 14px; border-block-start: 1px solid var(--dcuf-comment-border); box-sizing: border-box; }
+            [data-dcuf-role="comment-footer"] [data-dcuf-role="comment-footer-pages"] { position: static; flex: 1; margin: 0; padding: 0; text-align: center; font-size: 12px; line-height: 1.5; }
+            [data-dcuf-role="comment-footer"] [data-dcuf-role="comment-footer-actions"] { position: static; display: inline-flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 10px; margin: 0; padding: 0; font-size: 12px; }
+            [data-dcuf-role="comment-footer-actions"] > :is(a,button) { display: inline-flex; align-items: center; min-block-size: 28px; padding: 0; border: 0; background: transparent; color: var(--dcuf-comment-muted); font: inherit; cursor: pointer; }
+            [data-dcuf-role="comment-footer-actions"] > :is(a,button):is(:hover,:focus-visible) { color: var(--dcuf-theme-accent-ink); }
             [data-dcuf-role="comment-item"].dcuf-comment-shell-blocked > :not([data-dcuf-role="reply-shell"]) {
                 display: none;
             }
@@ -171,17 +179,23 @@
                 margin: 0;
             }
             [data-dcuf-role="comments-root"] [data-dcuf-role="comment-content-stack"] [data-dcuf-role="comment-body"],
+            [data-dcuf-role="comments-root"] [data-dcuf-role="comment-content-stack"] [data-dcuf-role="reply-body"],
             [data-dcuf-role="comments-root"] [data-dcuf-role="comment-content-stack"] [data-dcuf-role="comment-text"] {
+                float: none;
                 inline-size: 100%;
                 max-inline-size: 100%;
                 box-sizing: border-box;
             }
             [data-dcuf-role="reply-info"] > [data-dcuf-role="reply-body"] { flex: 1 1 100%; }
             @media (min-width: 760px) {
-                [data-dcuf-role="comment-info"], [data-dcuf-role="comment-content-stack"] { display: grid; grid-template-columns: 128px minmax(0, 1fr); align-items: start; gap: 7px 16px; }
-                [data-dcuf-role="comment-info"] > [data-dcuf-role="comment-content-stack"] { grid-column: 1 / -1; }
+                [data-dcuf-role="comment-info"], [data-dcuf-role="reply-info"] { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; gap: 7px 16px; }
+                [data-dcuf-role="comment-content-stack"] { display: grid; grid-template-columns: 128px minmax(0, 1fr); align-items: start; gap: 7px 16px; }
+                [data-dcuf-role="comment-info"] > [data-dcuf-role="comment-author-group"] { grid-column: 1; }
+                [data-dcuf-role="comment-info"]:not(:has(> [data-dcuf-role="comment-content-stack"])) { grid-template-columns: 128px minmax(0, 1fr) auto; }
+                [data-dcuf-role="reply-info"]:not(:has(> [data-dcuf-role="comment-content-stack"])) { grid-template-columns: 128px minmax(0, 1fr) auto; }
                 [data-dcuf-role="comment-info"] > [data-dcuf-role="comment-author-group"], [data-dcuf-role="comment-content-stack"] > [data-dcuf-role="comment-author-group"] { grid-column: 1; grid-row: 1 / 3; }
-                [data-dcuf-role="comment-info"] > :is([data-dcuf-role="comment-body"], [data-dcuf-role="comment-meta"]), [data-dcuf-role="comment-content-stack"] > :is([data-dcuf-role="comment-body"], [data-dcuf-role="comment-meta"]) { grid-column: 2; }
+                [data-dcuf-role="comment-info"] > [data-dcuf-role="comment-body"], [data-dcuf-role="comment-content-stack"] > :is([data-dcuf-role="comment-body"], [data-dcuf-role="comment-meta"]) { grid-column: 2; }
+                [data-dcuf-role="comment-info"] > [data-dcuf-role="comment-meta"], [data-dcuf-role="reply-info"] > [data-dcuf-role="comment-meta"] { grid-column: -2; grid-row: 1; }
             }
             [data-dcuf-role="comment-author-group"] {
                 position: relative;
@@ -434,6 +448,9 @@
             }
             [data-dcuf-surface="comments-replies"][data-dcuf-role="comments-root"] [data-dcuf-role="native-comment-textarea"] {
                 display: block;
+                /* Native small-composer CSS and inline width both retain927px.
+                   The editor owns this visual width,not the host's old viewport. */
+                inline-size: 100% !important;
                 min-block-size: 112px;
                 padding: 12px 14px;
                 border: 1px solid var(--dcuf-comment-border);

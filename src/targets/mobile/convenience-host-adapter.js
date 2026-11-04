@@ -1,5 +1,22 @@
     const __dcufConvenienceHostAdapter = (() => {
         const presentation = __dcufCreateConveniencePresentation();
+        const previewSource = (doc) => [
+            '#dgn_content_de', '.writing_view_box .write_div', '.gallview_contents .write_div',
+            '.view_content_wrap .write_div', '.gallview_contents', '.writing_view_box',
+        ].map((selector) => doc.querySelector(selector)).find((node) => node instanceof Element);
+        const previewResource = (candidates, sourceUrl, image = false) => {
+            for (const candidate of candidates.filter(Boolean)) {
+                try {
+                    const url = new URL(candidate, sourceUrl);
+                    if (url.username || url.password) continue;
+                    if (!['http:', 'https:'].includes(url.protocol)
+                        && !(image && url.protocol === 'data:' && /^data:image\//i.test(url.href))) continue;
+                    if (image && /(?:kcap_none|fix_nik|(?:gallview_)?loading(?:_ori)?)(?:\.[a-z]+)?(?:$|[?#])/i.test(url.href)) continue;
+                    return url.href;
+                } catch { /* try the next lazy or media source */ }
+            }
+            return null;
+        };
         const markOwnedSurface = (element, surface, role = 'panel', state = 'open') => {
             element.setAttribute('data-dcuf-surface', surface);
             element.setAttribute('data-dcuf-role', role);
@@ -521,45 +538,121 @@
                 if (event.key === 'Escape' && this._previewPanel) this.closePreview();
             }, true);
         },
+        async resolvePreviewMovies(html, sourceUrl, { signal } = {}) {
+            const doc = new DOMParser().parseFromString(String(html || ''), 'text/html');
+            const source = previewSource(doc);
+            if (!source) return html;
+            const controller = new AbortController();
+            const onAbort = () => controller.abort(signal.reason);
+            signal?.addEventListener('abort', onAbort, { once: true });
+            const deadline = window.setTimeout(() => controller.abort(), 4000);
+            try {
+                for (const frame of source.querySelectorAll('iframe')) {
+                    signal?.throwIfAborted();
+                    try {
+                        const movieUrl = new URL(frame.getAttribute('src'), sourceUrl);
+                        if (movieUrl.origin !== new URL(sourceUrl).origin || movieUrl.pathname !== '/board/movie/movie_view'
+                            || !/^\d+$/.test(movieUrl.searchParams.get('no') || '')) continue;
+                        // Only this native read endpoint is acquired. Never run the player
+                        // page: its scripts apply the site's own autoplay settings. One
+                        // shared deadline bounds all sequential frame reads for this preview.
+                        controller.signal.throwIfAborted();
+                        movieUrl.search = new URLSearchParams({ no: movieUrl.searchParams.get('no') }).toString();
+                        const movieHtml = await this.fetchPreviewHtml(movieUrl.href, { signal: controller.signal, referrer: sourceUrl });
+                        signal?.throwIfAborted();
+                        const movieDoc = new DOMParser().parseFromString(movieHtml, 'text/html');
+                        const video = movieDoc.querySelector('video');
+                        if (!video) throw new Error('Native movie has no video source');
+                        [video, ...video.querySelectorAll('source')].forEach((node) => {
+                            ['src', 'data-src', 'data-original', 'poster'].forEach((name) => {
+                                const value = node.getAttribute(name);
+                                if (value) node.setAttribute(name, new URL(value, movieUrl).href);
+                            });
+                        });
+                        frame.replaceWith(doc.importNode(video, true));
+                    } catch (error) {
+                        if (signal?.aborted) throw signal.reason;
+                        const link = doc.createElement('a');
+                        link.href = sourceUrl; link.textContent = '미디어는 원문에서 보기';
+                        frame.replaceWith(link);
+                    }
+                }
+            } finally {
+                window.clearTimeout(deadline);
+                signal?.removeEventListener('abort', onAbort);
+            }
+            return doc.documentElement.outerHTML;
+        },
         sanitizePreviewDocument(html, sourceUrl) {
             const doc = new DOMParser().parseFromString(String(html || ''), 'text/html');
-            const source = doc.querySelector('#dgn_content_de, .writing_view_box .write_div, .gallview_contents .write_div, .view_content_wrap .write_div, .gallview_contents, .writing_view_box');
+            const source = previewSource(doc);
             if (!(source instanceof Element)) throw new Error('본문 영역을 찾지 못했습니다.');
             const clone = source.cloneNode(true);
-            clone.querySelectorAll('.captcha,#kcaptcha,[class*="captcha"],.kap_codeimg,.btn_recommend_box,.btn_recommend,.recommend_box,#recommend_box,#recomAjax,.gall_writer,.gallview_head,.view_bottom_btnbox,.view_bottom,.gallview_bottom,.recom_bottom_box,.vote_box,.appending_file,.write_ban,.write_div_bottom,.view_comment,.comment_wrap,.cmt_write_box').forEach((node) => node.remove());
+            clone.querySelectorAll('#tip_video,.tip_box2.tip_video,.captcha,#kcaptcha,[class*="captcha"],.kap_codeimg,.btn_recommend_box,.btn_recommend,.recommend_box,#recommend_box,#recomAjax,.gall_writer,.gallview_head,.view_bottom_btnbox,.view_bottom,.gallview_bottom,.recom_bottom_box,.vote_box,.appending_file,.write_ban,.write_div_bottom,.view_comment,.comment_wrap,.cmt_write_box').forEach((node) => node.remove());
             const auxiliaryLabel = /^(?:추천\s*검색|원본\s*첨부파일(?:\s*\d+)?)$/;
             Array.from(clone.querySelectorAll('*')).reverse().forEach((node) => {
                 const text = String(node.textContent || '').replace(/\s+/g, ' ').trim();
                 if (auxiliaryLabel.test(text)) node.remove();
             });
-            clone.querySelectorAll('script,style,form,iframe,object,embed,input,textarea,select,button,noscript,svg,math,foreignObject,canvas,source,track').forEach((node) => node.remove());
-            clone.querySelectorAll('video,audio').forEach((node) => {
-                const link = doc.createElement('a'); link.href = sourceUrl; link.textContent = '미디어는 원문에서 보기'; node.replaceWith(link);
-            });
             clone.querySelectorAll('picture').forEach((picture) => {
                 const image = picture.querySelector('img');
-                if (image) picture.replaceWith(image); else picture.remove();
+                if (!image) { picture.remove(); return; }
+                const source = picture.querySelector('source[srcset],source[data-srcset]');
+                const srcset = source?.getAttribute('data-srcset') || source?.getAttribute('srcset') || image.getAttribute('data-srcset') || image.getAttribute('srcset');
+                const candidate = srcset?.trim().split(/\s+/)[0].replace(/,$/, '');
+                if (candidate) image.setAttribute('data-src', candidate);
+                picture.replaceWith(image);
             });
-            const allowedTags = new Set(['A', 'B', 'BLOCKQUOTE', 'BR', 'CODE', 'DEL', 'DIV', 'EM', 'FIGCAPTION', 'FIGURE', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'HR', 'I', 'IMG', 'LI', 'OL', 'P', 'PRE', 'S', 'SMALL', 'SPAN', 'STRONG', 'SUB', 'SUP', 'TABLE', 'TBODY', 'TD', 'TFOOT', 'TH', 'THEAD', 'TR', 'U', 'UL']);
+            const mediaAttributes = new Map();
+            clone.querySelectorAll('video,audio').forEach((node) => {
+                // Chrome receives native GIF/WebP as a looping MP4 surrogate.
+                // data-src is its original IMAGE fallback,not video.src. Restore
+                // the original animation instead of overriding the MP4 source.
+                if (node.matches('video[loop][data-src][data-fileno]') && node.querySelector('source[onerror*="change_gif"]')) {
+                    const original = previewResource([node.getAttribute('data-src')], sourceUrl, true);
+                    if (original) { const image=doc.createElement('img');image.setAttribute('data-original',original);node.replaceWith(image);return; }
+                }
+                const media = doc.createElement(node.tagName.toLowerCase());
+                let src = previewResource([node.getAttribute('src')], sourceUrl);
+                node.querySelectorAll('source').forEach((source) => {
+                    const src = previewResource([source.getAttribute('src'), source.getAttribute('data-src')], sourceUrl);
+                    if (!src) return;
+                    const clean = doc.createElement('source'); clean.src = src;
+                    const type = source.getAttribute('type');
+                    if (/^(?:video|audio)\/[\w.+-]+$/i.test(type || '')) clean.type = type;
+                    media.appendChild(clean);
+                    mediaAttributes.set(clean, true);
+                });
+                if (!src && !media.childElementCount) src=previewResource([node.getAttribute('data-original'),node.getAttribute('data-src')],sourceUrl);
+                if (src) media.src=src;
+                if (!src && !media.childElementCount) {
+                    const link = doc.createElement('a'); link.href = sourceUrl; link.textContent = '미디어는 원문에서 보기'; node.replaceWith(link);
+                    return;
+                }
+                media.controls = true; media.defaultMuted = true; media.setAttribute('muted', '');
+                media.preload = 'metadata';
+                if (media.tagName === 'VIDEO') {
+                    media.setAttribute('playsinline', '');
+                    const poster = previewResource([node.getAttribute('poster')], sourceUrl, true);
+                    if (poster) media.poster = poster;
+                }
+                mediaAttributes.set(media, true);
+                node.replaceWith(media);
+            });
+            clone.querySelectorAll('script,style,form,iframe,object,embed,input,textarea,select,button,noscript,svg,math,foreignObject,canvas,track').forEach((node) => node.remove());
+            clone.querySelectorAll('source').forEach((node) => { if (!mediaAttributes.has(node)) node.remove(); });
+            const allowedTags = new Set(['A', 'AUDIO', 'B', 'BLOCKQUOTE', 'BR', 'CODE', 'DEL', 'DIV', 'EM', 'FIGCAPTION', 'FIGURE', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'HR', 'I', 'IMG', 'LI', 'OL', 'P', 'PRE', 'S', 'SMALL', 'SOURCE', 'SPAN', 'STRONG', 'SUB', 'SUP', 'TABLE', 'TBODY', 'TD', 'TFOOT', 'TH', 'THEAD', 'TR', 'U', 'UL', 'VIDEO']);
             Array.from(clone.querySelectorAll('*')).reverse().forEach((node) => {
                 if (!allowedTags.has(node.tagName)) node.replaceWith(...node.childNodes);
             });
             clone.querySelectorAll('img').forEach((image) => {
-                const candidates = [image.getAttribute('data-original'), image.getAttribute('data-src'), image.getAttribute('src')].filter(Boolean);
-                let resolved = null;
-                for (const candidate of candidates) {
-                    try {
-                        const next = new URL(candidate, sourceUrl);
-                        if (!['http:', 'https:', 'data:', 'blob:'].includes(next.protocol)) continue;
-                        if (/(?:kcap_none|fix_nik|loading)(?:\.[a-z]+)?(?:$|[?#])/i.test(next.href)) continue;
-                        resolved = next; break;
-                    } catch { /* try the next lazy-image source */ }
-                }
+                const candidates = [image.getAttribute('data-original'), image.getAttribute('data-src'), image.getAttribute('data-srcset')?.trim().split(/\s+/)[0].replace(/,$/, ''), image.getAttribute('srcset')?.trim().split(/\s+/)[0].replace(/,$/, ''), image.getAttribute('src')];
+                const resolved = previewResource(candidates, sourceUrl, true);
                 if (!resolved) { image.remove(); return; }
                 Array.from(image.attributes).forEach((attr) => image.removeAttribute(attr.name));
-                image.dataset.dcufPreviewSrc = resolved.href;
+                image.dataset.dcufPreviewSrc = resolved;
                 image.alt = '미리보기 이미지';
-                image.loading = 'lazy'; image.decoding = 'async';
+                image.loading = 'lazy'; image.decoding = 'async'; image.referrerPolicy = 'origin';
             });
             clone.querySelectorAll('a').forEach((anchor) => {
                 const href = anchor.getAttribute('href');
@@ -572,6 +665,7 @@
                 } catch { /* leave as plain text */ }
             });
             clone.querySelectorAll(':not(img):not(a)').forEach((node) => {
+                if (mediaAttributes.has(node)) return;
                 Array.from(node.attributes).forEach((attr) => node.removeAttribute(attr.name));
             });
             return clone.innerHTML;
@@ -587,6 +681,7 @@
             while (this._previewCache.size > this.PREVIEW_MAX) this._previewCache.delete(this._previewCache.keys().next().value);
         },
         clearPreviewImageRuntime() {
+            this._previewPanel?.querySelectorAll('video,audio').forEach((media) => media.pause());
             this._previewImageObserver?.disconnect(); this._previewImageObserver = null;
             if (this._previewDeferredTimer) window.clearTimeout(this._previewDeferredTimer);
             this._previewDeferredTimer = 0;
@@ -646,6 +741,7 @@
         renderPreviewBody(body, html, sourceUrl) {
             if (!(body instanceof HTMLElement)) return;
             body.innerHTML = html || '<div class="dcuf-preview-status">표시할 본문이 없습니다.</div>';
+            body.querySelectorAll('video,audio').forEach((media) => { media.muted = true; });
             this.preparePreviewImages(body, sourceUrl);
             this.positionPreviewPanel();
         },
@@ -689,7 +785,9 @@
             this._previewRequest?.abort();
             const controller = new AbortController(); this._previewRequest = controller;
             try {
-                const sanitized = this.sanitizePreviewDocument(await this.fetchPreviewHtml(sourceUrl.href, { signal: controller.signal }), sourceUrl.href);
+                const html = await this.fetchPreviewHtml(sourceUrl.href, { signal: controller.signal });
+                const withMovies = await this.resolvePreviewMovies(html, sourceUrl.href, { signal: controller.signal });
+                const sanitized = this.sanitizePreviewDocument(withMovies, sourceUrl.href);
                 this.setCachedPreview(sourceUrl.href, sanitized);
                 if (this._previewPanel?.contains(body)) this.renderPreviewBody(body, sanitized, sourceUrl.href);
             } catch (error) {

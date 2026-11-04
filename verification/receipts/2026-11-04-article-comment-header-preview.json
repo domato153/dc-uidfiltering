@@ -1,0 +1,391 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-11-04",
+  "scope": "Bounded grouped article/comment/popup/media repairs and LIST PAGE TOP ONLY header composition;not whole-UI approval",
+  "baseCommit": "48adde460533ce29cfa14fc9a7ae2602f5510157",
+  "status": "IMPLEMENTED_REVIEW_CANDIDATE",
+  "artifacts": {
+    "mobile": {
+      "version": "3.5.5",
+      "sha256": "5ebf265bd0a737771e33546baf299808d68631fdeb4312cf4042fb4eebdb1aa7"
+    },
+    "pc": {
+      "version": "1.9.9",
+      "sha256": "0d5f7d071f7a29aba932f1ed52039d04647a10b3b5baf98e62392305e50eda4d",
+      "disposition": "UNCHANGED"
+    }
+  },
+  "inputs": [
+    {
+      "path": "architecture/candidates/mobile-ui-modernization-assurance.json",
+      "sha256": "71248393f40e7c65bbe31e45534405ac2c9744dd810ca7113b02cfb73afccd7a"
+    },
+    {
+      "path": "architecture/ui-surfaces.json",
+      "sha256": "e0a66a02548fb43b13c577495350fd3239b07bb97e9f5b739d69108dd870bcbb"
+    },
+    {
+      "path": "src/targets/mobile/article-presenter.js",
+      "sha256": "44121e62d8d93042d3aca8e1e422fd2aa323b85d2a03a4f753336b7a50fa1e74"
+    },
+    {
+      "path": "src/targets/mobile/comment-host-adapter.js",
+      "sha256": "20ecde95f7b9c04289d8a54e717783a3c9388daf0e8b9b4019b94ef32304f213"
+    },
+    {
+      "path": "src/targets/mobile/comment-presenter.js",
+      "sha256": "b5424086609436b2d21a0233d367bcee4b531a2e1e77e20cc2a55f6ea31eb029"
+    },
+    {
+      "path": "src/targets/mobile/convenience-host-adapter.js",
+      "sha256": "c8112852e409eaa70ac0fac42482167650d1e69f1bab3a7b2a10c518a2d58bb4"
+    },
+    {
+      "path": "src/targets/mobile/convenience-module.js",
+      "sha256": "62b0f5a869ec1f6507c14644de1edd4307bc714d827a07e832a1b8e79f604332"
+    },
+    {
+      "path": "src/targets/mobile/convenience-presenter.js",
+      "sha256": "614c407467c14c751b3835da9bc3489c9bf74b12f1336f9b39e936f9845d160b"
+    },
+    {
+      "path": "src/targets/mobile/gallery-page-head-host-adapter.js",
+      "sha256": "25c6f10a9dfb3875253686ecb1711e2ec2b951687a5fafa10ab571e3eb8512df"
+    },
+    {
+      "path": "src/targets/mobile/gallery-page-head-presenter.js",
+      "sha256": "18125cf903d20a4e0f564b59ce896055125cc90f6999f1c1d6be3ad92ba1acb7"
+    },
+    {
+      "path": "src/targets/mobile/header-drawer-host-adapter.js",
+      "sha256": "89b160b83607978f527f84922b972150f0c2106431d508fd5e578d35e97fd8d5"
+    },
+    {
+      "path": "src/targets/mobile/header-drawer-presenter.js",
+      "sha256": "5bec988ac39750766c34faba33f3cd8500e357583d0704dfcd280d42906b6f25"
+    },
+    {
+      "path": "src/targets/mobile/header-gnb-host-adapter.js",
+      "sha256": "e44cc4a5dc57c64a4292ea990a5da69ad764b067b6e08b4babfaee1dbe19185d"
+    },
+    {
+      "path": "src/targets/mobile/header-gnb-presenter.js",
+      "sha256": "28ee1488298f25f9e007e3da7b8d38cda1db14a08ed3104a742d83d41c03c2ef"
+    },
+    {
+      "path": "src/targets/mobile/header-shell-host-adapter.js",
+      "sha256": "1011759ecf26952c31cf3a0ef756efef9697bd9e551f88115bd9e68b0f39bd5f"
+    },
+    {
+      "path": "src/targets/mobile/header-shell-presenter.js",
+      "sha256": "15bf6e2cb0914530ee6730843234c0f6bb664ee9678f696e7f218d76ba3c97c3"
+    },
+    {
+      "path": "src/targets/mobile/list-host-adapter.js",
+      "sha256": "7823ea3e7db45490789c408d4bc7e2e4d0554b9f1ebba9270ab9c6245f0b36ec"
+    },
+    {
+      "path": "src/targets/mobile/list-presenter.js",
+      "sha256": "218d4e92396e773c12f19ae60bd7edbc3ff856eadea66e735229fd0e8a77dffb"
+    },
+    {
+      "path": "src/targets/mobile/post-main-fixes.js",
+      "sha256": "a691299cfccaa7d896654d5a4c9de2fd0ea469bebe2fda0c3bf8e07922b3348d"
+    },
+    {
+      "path": "src/targets/mobile/theme-material-values.js",
+      "sha256": "7ce848c5bf3230d184f6d84e74ef6cff5befd29ff9a6873cb6f1f04f4dfcd941"
+    },
+    {
+      "path": "testbed/preview-acquisition-unit.mjs",
+      "sha256": "02ffaeb3b58e46663e07c31b3373386bb3e8fd38680d1aae34aed5aa97108df6"
+    },
+    {
+      "path": "testbed/preview-settings-unit.mjs",
+      "sha256": "81126e1d492fc3bd98dd211fd9f3e9e01b7214f9592b568627fbcb713682bd3b"
+    },
+    {
+      "path": "testbed/run-tests.mjs",
+      "sha256": "494e2fd04fc10a6d9c0c1340fb894264c678b93f7cc8d3c80f22a37f600142d7"
+    },
+    {
+      "path": "testbed/ui-article-followup-contract.mjs",
+      "sha256": "f1e89750deef8109bf9098a6fe8dbeaa5f7363b80218484191d54326338b2a98"
+    },
+    {
+      "path": "testbed/ui-b1-form-header-contract.mjs",
+      "sha256": "f383106f326296934263a57e6e177ffe1bb192d882388e468b4bc74343658f93"
+    },
+    {
+      "path": "testbed/ui-category-picker-contract.mjs",
+      "sha256": "203a86362b2afcf9059dac602dde7e11ee42c2438a7cb439fb55b0d3713a8d64"
+    },
+    {
+      "path": "testbed/ui-preview-media-contract.mjs",
+      "sha256": "2ddc8a77aba74ae612ead4b10a927872e4c69f64492791b2ab1f96cf019f743d"
+    },
+    {
+      "path": "testbed/ui-user-feedback-contract.mjs",
+      "sha256": "b4d44b2ed5598933f3798346eb34715f1959599446cc95bc272e1fc4ebfef769"
+    }
+  ],
+  "tests": [
+    {
+      "name": "Header followup: exploration utilities anchored categories and scroll reuse",
+      "status": "PASS_CURRENT",
+      "runtimeSha256": "5EBF265BD0A737771E33546BAF299808D68631FDEB4312CF4042FB4EEBDB1AA7",
+      "ms": 3784,
+      "logSha256": "807b2d446b6b2894641518ea414582ab63569314937f9117d076338b7636e163"
+    },
+    {
+      "name": "Header category: compact native picker preserves every destination and scroll owner",
+      "status": "PASS_CURRENT",
+      "runtimeSha256": "5EBF265BD0A737771E33546BAF299808D68631FDEB4312CF4042FB4EEBDB1AA7",
+      "ms": 9140,
+      "logSha256": "614060c136b00eef1c4b4c9a1e156b9d25c668f64f77648595d951e1616d00ad"
+    },
+    {
+      "name": "User feedback: full-width pages category arrow and glass menu",
+      "status": "PASS_CURRENT",
+      "runtimeSha256": "5EBF265BD0A737771E33546BAF299808D68631FDEB4312CF4042FB4EEBDB1AA7",
+      "ms": 12363,
+      "logSha256": "e414dc84abe3e75292da04c4e325f24b6e9027117eb13ff5236f4204ec76e6ec"
+    },
+    {
+      "name": "B1 form header: reuse list chrome without list runtime",
+      "status": "PASS_CURRENT",
+      "runtimeSha256": "5EBF265BD0A737771E33546BAF299808D68631FDEB4312CF4042FB4EEBDB1AA7",
+      "ms": 6947,
+      "logSha256": "f3a2318a74603ef1d33a9718fa5ec410adf453fe227234b8245a9fa6bc80bb63"
+    },
+    {
+      "name": "Article followup: native reply geometry title metadata and sticker density",
+      "status": "PASS_UNCHANGED_DEPENDENCIES",
+      "runtimeSha256": "FD4ADB974821EF9D78B496CB18162072A8F79D63309A94D0D4AB784F51ACDBBB",
+      "ms": 2885,
+      "logSha256": "f9911575bc9742a2326a5b67bd4cc71824eded76d37b96909649ecc081fc9c2a"
+    },
+    {
+      "name": "Author followup: first-frame material and actual containing-block placement",
+      "status": "PASS_UNCHANGED_DEPENDENCIES",
+      "runtimeSha256": "FD4ADB974821EF9D78B496CB18162072A8F79D63309A94D0D4AB784F51ACDBBB",
+      "ms": 2336,
+      "logSha256": "f9911575bc9742a2326a5b67bd4cc71824eded76d37b96909649ecc081fc9c2a"
+    },
+    {
+      "name": "FAB followup: common paired material and fourteen palettes in both themes",
+      "status": "PASS_UNCHANGED_DEPENDENCIES",
+      "runtimeSha256": "FD4ADB974821EF9D78B496CB18162072A8F79D63309A94D0D4AB784F51ACDBBB",
+      "ms": 18532,
+      "logSha256": "f9911575bc9742a2326a5b67bd4cc71824eded76d37b96909649ecc081fc9c2a"
+    },
+    {
+      "name": "Preview media: native body lazy images and safe direct controls",
+      "status": "PASS_UNCHANGED_DEPENDENCIES",
+      "runtimeSha256": "FD4ADB974821EF9D78B496CB18162072A8F79D63309A94D0D4AB784F51ACDBBB",
+      "ms": 734,
+      "logSha256": "f28e043e7db7ad6e84d172caa7c57e844f44d375f50ff8ad7ed8574ec3b887dd"
+    },
+    {
+      "name": "Preview media: native movie acquisition and read-only fallback",
+      "status": "PASS_UNCHANGED_DEPENDENCIES",
+      "runtimeSha256": "FD4ADB974821EF9D78B496CB18162072A8F79D63309A94D0D4AB784F51ACDBBB",
+      "ms": 790,
+      "logSha256": "f28e043e7db7ad6e84d172caa7c57e844f44d375f50ff8ad7ed8574ec3b887dd"
+    },
+    {
+      "name": "글 미리보기는 터치 이동을 취소하고 길게 누른 경우만 클릭을 막으며 정제·캐시한다",
+      "status": "PASS_UNCHANGED_DEPENDENCIES",
+      "runtimeSha256": "FD4ADB974821EF9D78B496CB18162072A8F79D63309A94D0D4AB784F51ACDBBB",
+      "ms": 1968,
+      "logSha256": "57d3d83208669e3d2b6544ae44a550e014f7485f0de39fb23e0fd41a069730f1"
+    },
+    {
+      "name": "B1 article v7: memo finish and contained native composers",
+      "status": "PASS_UNCHANGED_DEPENDENCIES",
+      "runtimeSha256": "FD4ADB974821EF9D78B496CB18162072A8F79D63309A94D0D4AB784F51ACDBBB",
+      "ms": 7602,
+      "logSha256": "da19b002f6a3db805b980e01c9562233b77117b8836e31e98cd6e623ac0b54d8"
+    },
+    {
+      "name": "B1 native author: original menu memo palette and nested pointer paths",
+      "status": "PASS_UNCHANGED_DEPENDENCIES",
+      "runtimeSha256": "FD4ADB974821EF9D78B496CB18162072A8F79D63309A94D0D4AB784F51ACDBBB",
+      "ms": 10377,
+      "logSha256": "058b2d185a131cd9f4d8aba94d25f583e554ce89f8c7ceccdf8db22cdd79e786"
+    },
+    {
+      "name": "플로팅 메뉴 서랍과 원위치 복구가 안전하게 동작한다",
+      "status": "PASS_UNCHANGED_DEPENDENCIES",
+      "runtimeSha256": "FD4ADB974821EF9D78B496CB18162072A8F79D63309A94D0D4AB784F51ACDBBB",
+      "ms": 1346,
+      "logSha256": "68b83197b57baacb8a65087bf5e717d9f5d35dc89c6181c603595df4099c6971"
+    }
+  ],
+  "unitChecks": {
+    "command": "node --test testbed/preview-settings-unit.mjs testbed/preview-acquisition-unit.mjs",
+    "passed": 6,
+    "scope": "unchanged preview defaults/acquisition code"
+  },
+  "publicPreview": {
+    "scope": "actual Chrome public GET/HEAD source injection;media inputs unchanged after header-only finish",
+    "responses": [
+      {
+        "type": "application/octet-stream",
+        "status": 200,
+        "kind": "image"
+      },
+      {
+        "type": "application/octet-stream",
+        "status": 200,
+        "kind": "image"
+      },
+      {
+        "type": "application/octet-stream",
+        "status": 200,
+        "kind": "image"
+      },
+      {
+        "type": "application/octet-stream",
+        "status": 200,
+        "kind": "image"
+      },
+      {
+        "type": "application/octet-stream",
+        "status": 200,
+        "kind": "image"
+      },
+      {
+        "type": "text/html; charset=UTF-8",
+        "status": 200,
+        "kind": "player"
+      },
+      {
+        "type": "application/octet-stream",
+        "status": 200,
+        "kind": "image"
+      }
+    ],
+    "defaultEnabled": true,
+    "hiddenTip": 0,
+    "imageCount": 1,
+    "videoCount": 1,
+    "images": [
+      {
+        "decoded": true,
+        "width": 957,
+        "height": 477,
+        "policy": "origin"
+      }
+    ],
+    "video": {
+      "ready": 4,
+      "width": 1280,
+      "height": 720,
+      "playing": true,
+      "time": 0.155798,
+      "muted": true,
+      "controls": true,
+      "autoplay": false
+    },
+    "closed": true,
+    "pausedAfterClose": true,
+    "status": "PASS"
+  },
+  "images": [
+    {
+      "mode": "current",
+      "kind": "list",
+      "width": 1630,
+      "dark": false,
+      "file": "current-live-list-1630-light.png",
+      "runtimeSha256": "5ebf265bd0a737771e33546baf299808d68631fdeb4312cf4042fb4eebdb1aa7",
+      "http": 200,
+      "geometry": {
+        "overflow": 0
+      }
+    },
+    {
+      "mode": "current",
+      "kind": "article",
+      "width": 1630,
+      "dark": false,
+      "file": "current-live-article-1630-light.png",
+      "runtimeSha256": "5ebf265bd0a737771e33546baf299808d68631fdeb4312cf4042fb4eebdb1aa7",
+      "http": 200,
+      "geometry": {
+        "overflow": 0,
+        "articleTitle": {
+          "x": 11,
+          "y": 170.1875,
+          "width": 1608,
+          "height": 111.4375,
+          "top": 170.1875,
+          "right": 1619,
+          "bottom": 281.625,
+          "left": 11
+        },
+        "body": {
+          "x": 47,
+          "y": 297.625,
+          "width": 900,
+          "height": 7283.59375,
+          "top": 297.625,
+          "right": 947,
+          "bottom": 7581.21875,
+          "left": 47
+        }
+      }
+    },
+    {
+      "mode": "current",
+      "kind": "write",
+      "width": 1630,
+      "dark": false,
+      "file": "current-live-write-1630-light.png",
+      "runtimeSha256": "5ebf265bd0a737771e33546baf299808d68631fdeb4312cf4042fb4eebdb1aa7",
+      "http": 200,
+      "geometry": {
+        "overflow": 0
+      }
+    },
+    {
+      "mode": "current",
+      "kind": "list",
+      "width": 980,
+      "dark": true,
+      "file": "current-live-list-980-dark.png",
+      "runtimeSha256": "5ebf265bd0a737771e33546baf299808d68631fdeb4312cf4042fb4eebdb1aa7",
+      "http": 200,
+      "geometry": {
+        "overflow": 0
+      }
+    }
+  ],
+  "reference": {
+    "path": "docs/design/b1-shared-header-composition-2026-11-04.png",
+    "sha256": "af31f5e9a3e00231ef6252681bfe4e8d3e563cc74e7b4a0443db88da2d7721d0",
+    "status": "DRAFT_COMPOSITION_ONLY",
+    "detailAuthority": "Actual adopted memo/current bright paired dark controls"
+  },
+  "omitted": [
+    "Unaffected filter/storage/PC product suite",
+    "bfcache/lifecycle campaign",
+    "Full128-child re-audit",
+    "Real submit/delete/vote/upload/account mutations",
+    "Final-runtime installed Tampermonkey campaign and exact physical phone"
+  ],
+  "review": {
+    "nativeFirstFrame": true,
+    "headerFrameSingleOwner": true,
+    "existingScrollOwner": true,
+    "userAestheticApproval": false
+  },
+  "localEvidence": "artifacts/article-followup-2026-11-03",
+  "controlArtifact": {
+    "path": "artifacts/article-followup-2026-11-03/control-mobile.user.js",
+    "sha256": "4c2ee229951fffdd5626b2ed772dd28f01d7ecc9d76f60f75e676af3519786ac",
+    "disposition": "Frozen previous development runtime;not the official published original"
+  },
+  "viewerVerified": "All16 selected images decode,before/current toggle and separate-install download HTTP200;one image mounted at a time."
+}

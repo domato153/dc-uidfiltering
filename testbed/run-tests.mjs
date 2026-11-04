@@ -38,6 +38,9 @@ import { runOwnedGlassContract } from './ui-b1-owned-glass-contract.mjs';
 import { runOwnedConditionalContract } from './ui-b1-owned-conditional-contract.mjs';
 import { runOwnedInputContract } from './ui-b1-owned-input-contract.mjs';
 import {runShortcutFeedbackContract,runPageFeedbackContract,runBadgeFeedbackContract,runPreviewFeedbackContract} from './ui-user-feedback-contract.mjs';
+import {runArticleFollowupContract,runHeaderFollowupContract,runAuthorPlacementFollowup,runFabMaterialFollowup} from './ui-article-followup-contract.mjs';
+import {runPreviewSanitizerContract,runPreviewNativeMovieContract} from './ui-preview-media-contract.mjs';
+import {runCategoryPickerContract} from './ui-category-picker-contract.mjs';
 import { runLoginEntryContract } from './ui-b1-login-contract.mjs';
 import { runConveniencePresentationContract, runRecommendationSpacingContract } from './ui-b1-convenience-contract.mjs';
 import { runNativeAuthorContract } from './ui-b1-native-author-contract.mjs';
@@ -80,6 +83,13 @@ const testResults = [];
 const test = (name, group, run, targets = ['mobile', 'pc']) => tests.push({ name, group, run, targets });
 test('User feedback: shortcut capture and actual launcher', 'functional', async()=>runShortcutFeedbackContract({browser,server,target:activeTarget}));
 test('User feedback: full-width pages category arrow and glass menu', 'functional', async()=>runPageFeedbackContract({browser,server}), ['mobile']);
+test('Article followup: native reply geometry title metadata and sticker density', 'functional', async()=>runArticleFollowupContract({browser,server}), ['mobile']);
+test('Header followup: exploration utilities anchored categories and scroll reuse', 'functional', async()=>runHeaderFollowupContract({browser,server}), ['mobile']);
+test('Author followup: first-frame material and actual containing-block placement', 'functional', async()=>runAuthorPlacementFollowup({browser,server}), ['mobile']);
+test('FAB followup: common paired material and fourteen palettes in both themes', 'functional', async()=>runFabMaterialFollowup({browser,server}), ['mobile']);
+test('Preview media: native body lazy images and safe direct controls', 'functional', async()=>runPreviewSanitizerContract({browser,server}), ['mobile']);
+test('Preview media: native movie acquisition and read-only fallback', 'functional', async()=>runPreviewNativeMovieContract({browser,server}), ['mobile']);
+test('Header category: compact native picker preserves every destination and scroll owner', 'functional', async()=>runCategoryPickerContract({browser,server}), ['mobile']);
 test('User feedback: native badge sprites and image fallback', 'functional', async()=>runBadgeFeedbackContract({browser,server}), ['mobile']);
 test('User feedback: transmitting preview and borderless original link', 'functional', async()=>runPreviewFeedbackContract({browser,server}), ['mobile']);
 test('B1 native settings: six native interiors retain glass geometry and actions', 'functional', async()=>runNativeSettingsContract({browser,server}), ['mobile']);
@@ -5791,7 +5801,9 @@ mobileTest('글 미리보기는 터치 이동을 취소하고 길게 누른 경�
         await session.page.waitForFunction(() => document.querySelector('#dcuf-post-preview .dcuf-preview-body')?.textContent.includes('정제 본문'));
         const preview = await session.page.evaluate(() => ({
             text: document.querySelector('#dcuf-post-preview .dcuf-preview-body').textContent,
-            forbidden: document.querySelectorAll('#dcuf-post-preview script,#dcuf-post-preview form,#dcuf-post-preview iframe,#dcuf-post-preview video').length,
+            forbidden: document.querySelectorAll('#dcuf-post-preview script,#dcuf-post-preview form,#dcuf-post-preview iframe').length,
+            safeMedia: Array.from(document.querySelectorAll('#dcuf-post-preview video')).every(n=>n.controls&&n.defaultMuted&&n.muted&&!n.autoplay),
+            videoCount: document.querySelectorAll('#dcuf-post-preview video').length,
             loading: document.querySelector('#dcuf-post-preview img')?.loading,
             imageSources: Array.from(document.querySelectorAll('#dcuf-post-preview img')).map((image) => image.src),
             unsafeLinks: Array.from(document.querySelectorAll('#dcuf-post-preview a')).filter((anchor) => /^javascript:/i.test(anchor.getAttribute('href') || '')).length,
@@ -5829,7 +5841,8 @@ mobileTest('글 미리보기는 터치 이동을 취소하고 길게 누른 경�
         });
         assert.equal(preview.forbidden, 0);
         assert.equal(preview.loading, 'lazy');
-        assert.equal(preview.text.includes('미디어는 원문에서 보기'), true);
+        assert.equal(preview.videoCount, 1);
+        assert.equal(preview.safeMedia, true, '동영상은 자동 재생 없이 음소거된 네이티브 컨트롤로 표시해야 한다');
         assert.equal(preview.imageSources.some((src) => /kcap_none|fix_nik/i.test(src)), false, 'host captcha and nickname icons must not be previewed');
         assert.equal(preview.unsafeLinks, 0, 'javascript links must not survive preview sanitization');
         assert.equal(preview.recommendationBoxes, 0, 'recommendation controls must not be cloned into the preview');

@@ -102,7 +102,12 @@
           "testbed/ui-live-control-contract.mjs",
           "testbed/ui-b1-gallery-search-contract.mjs",
           "testbed/ui-b1-password-contract.mjs", "testbed/ui-b1-form-header-contract.mjs", "testbed/ui-b1-write-shell-contract.mjs",
-          "testbed/ui-user-feedback-contract.mjs"
+          "testbed/ui-user-feedback-contract.mjs",
+        "testbed/ui-article-followup-contract.mjs",
+        "testbed/ui-category-picker-contract.mjs",
+        "testbed/ui-preview-media-contract.mjs",
+        "testbed/preview-settings-unit.mjs",
+        "testbed/preview-acquisition-unit.mjs"
         ],
         "contractRefs": ["proof-integrity","initialization-lifecycle","artifact-lineage","ui-review-preparation"],
         "fitnessRefs": [
@@ -322,7 +327,7 @@
         "classification": "adapter-contract",
         "layer": "target-adapter",
         "boundaryState": "conforming",
-        "responsibility": "Reads DCInside list rows into deep-frozen serializable snapshots and mounts presenter-owned projections without cloning, moving, replacing, reordering, wrapping, or portaling a host node. Owns list-only direction-aware toolbar measurement/state, cumulative travel, focus/popup/pointer hold and bounded scroll/resize/listener cleanup; presentation consumes projected state and owns all visual rules.",
+        "responsibility": "Reads DCInside list rows into deep-frozen serializable snapshots and mounts presenter-owned projections without cloning, moving, replacing, reordering, wrapping, or portaling a host node. Supplies a bounded header-frame height from the existing toolbar measurement;the header presenter alone paints the spanning frame. Owns a reversible page-top-only native category popover and unique invoker/anchor; the floating toolbar reuses original inline categories with symmetric focus handoff. Owns list-only direction-aware toolbar measurement/state, cumulative travel, focus/popup/pointer hold and bounded scroll/resize/listener cleanup; presentation consumes projected state and owns all visual rules.",
         "sourceRefs": ["src/targets/mobile/list-host-adapter.js"],
         "contractRefs": ["host-dom-events", "ui-ownership", "semantic-preservation", "live-native-control-composition"],
         "fitnessRefs": ["invariant-host-node-preservation", "invariant-one-visual-owner", "invariant-ui-port-boundary", "invariant-build-inputs-mapped"]
@@ -487,7 +492,7 @@
         "classification": "adapter-contract",
         "layer": "target-adapter",
         "boundaryState": "conforming",
-        "responsibility": "Projects reversible roles onto each site-owned list/view gallery heading and its direct left/right children, including a child matching both classes; mounts one presenter stylesheet at the former core phase; reuses the shared mutation bus for descendant and whole-heading replacement and disposes roles, style, and subscription without changing native forms, issue actions, popup, or handlers. Supplies pure hoisted immutable named full native selector inputs for its early palette and applicable reset/concealment builders, independent of DOM connection and presenter/adapter object initialization. Supplies immutable named full late selector inputs, preserving native tags, typea/body/dark conditions, role relations, specificity and the original style mount phase. H-10 native settings: reversible parts for six anonymous native compositions and nested palette/backup/notice; reuse the existing subscriber including the external block root. No event/storage/upload owner.",
+        "responsibility": "Owns a list-page-only reversible secondary-action disclosure without moving native buttons or their parents;preserves original callbacks and reuses the existing mutation subscription. Projects reversible roles onto each site-owned list/view gallery heading and its direct left/right children, including a child matching both classes; mounts one presenter stylesheet at the former core phase; reuses the shared mutation bus for descendant and whole-heading replacement and disposes roles, style, and subscription without changing native forms, issue actions, popup, or handlers. Supplies pure hoisted immutable named full native selector inputs for its early palette and applicable reset/concealment builders, independent of DOM connection and presenter/adapter object initialization. Supplies immutable named full late selector inputs, preserving native tags, typea/body/dark conditions, role relations, specificity and the original style mount phase. H-10 native settings: reversible parts for six anonymous native compositions and nested palette/backup/notice; reuse the existing subscriber including the external block root. No event/storage/upload owner.",
         "sourceRefs": ["src/targets/mobile/gallery-page-head-host-adapter.js"],
         "contractRefs": ["host-dom-events","initialization-lifecycle","ui-ownership","semantic-preservation","header-context-reuse-cleanup", "b1-write-editor-shell"],
         "fitnessRefs": ["invariant-host-node-preservation", "invariant-initialization-recovery", "invariant-ui-port-boundary", "invariant-build-inputs-mapped"]
@@ -513,7 +518,7 @@
         "classification": "adapter-contract",
         "layer": "target-adapter",
         "boundaryState": "conforming",
-        "responsibility": "Projects reversible roles onto site-owned GNB root, nav, and list; mounts one presenter stylesheet at the former core phase; reuses the shared list/view mutation bus for replacement and disposes roles, style, and subscription without changing host nodes or events. Supplies pure hoisted immutable named full native selector inputs for its early palette and applicable reset/concealment builders, independent of DOM connection and presenter/adapter object initialization. Supplies immutable named full late selector inputs, preserving native tags, typea/body/dark conditions, role relations, specificity and the original style mount phase. Projects the native top-level selected link through a reversible current-link role; class changes reuse the existing mutation records and subscription. Supplies the full native dark-list predicate as a fourth immutable late selector input; the presenter does not construct host/theme context.",
+        "responsibility": "Projects reversible roles onto site-owned GNB root, nav, and list;owns one list-page-only reversible native-popover exploration invoker with copied-root recovery and native destinations retained; mounts one presenter stylesheet at the former core phase; reuses the shared list/view mutation bus for replacement and disposes roles, style, and subscription without changing host nodes or events. Supplies pure hoisted immutable named full native selector inputs for its early palette and applicable reset/concealment builders, independent of DOM connection and presenter/adapter object initialization. Supplies immutable named full late selector inputs, preserving native tags, typea/body/dark conditions, role relations, specificity and the original style mount phase. Projects the native top-level selected link through a reversible current-link role; class changes reuse the existing mutation records and subscription. Supplies the full native dark-list predicate as a fourth immutable late selector input; the presenter does not construct host/theme context.",
         "sourceRefs": ["src/targets/mobile/header-gnb-host-adapter.js"],
         "contractRefs": ["host-dom-events","initialization-lifecycle","ui-ownership","semantic-preservation","header-context-reuse-cleanup", "b1-write-editor-shell"],
         "fitnessRefs": ["invariant-host-node-preservation", "invariant-initialization-recovery", "invariant-ui-port-boundary", "invariant-build-inputs-mapped"]
@@ -1069,6 +1074,7 @@
       }
     ],
     "upsertRelations": [
+      {"id":"rel-mobile-list-header-frame-measurement","from":"mobile-list-host-adapter","to":"mobile-header-shell-presenter","kind":"explicit-style-input"},
       {
         "id": "rel-header-context-to-mobile-header-gnb-host-adapter",
         "from": "mobile-header-shell-host-adapter",

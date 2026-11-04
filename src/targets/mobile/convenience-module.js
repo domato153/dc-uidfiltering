@@ -11,7 +11,7 @@
         DEFAULTS: Object.freeze({
             recentHighlight: true,
             draftRecovery: true,
-            postPreview: false
+            postPreview: true
         }),
         DRAFT_TTL: 72 * 60 * 60 * 1000,
         DRAFT_MAX_BYTES: 512 * 1024,
@@ -83,8 +83,11 @@
             this._draftStoreCache = emptyStore;
             return emptyStore;
         },
-        async fetchPreviewHtml(url, { signal } = {}) {
-            const response = await fetch(url, { credentials: 'same-origin', signal, headers: { Accept: 'text/html' } });
+        async fetchPreviewHtml(url, { signal, referrer } = {}) {
+            const response = await fetch(url, {
+                credentials: 'same-origin', signal, headers: { Accept: 'text/html' },
+                ...(referrer ? { referrer, referrerPolicy: 'same-origin' } : {}),
+            });
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
             return response.text();
         },
@@ -117,6 +120,7 @@
         bindPreview(listContainer) { return __dcufConvenienceHostAdapter.invokeNative('bindPreview', this, listContainer); },
         ensurePreviewClickGuard() { return __dcufConvenienceHostAdapter.invokeNative('ensurePreviewClickGuard', this); },
         sanitizePreviewDocument(html, sourceUrl) { return __dcufConvenienceHostAdapter.invokeNative('sanitizePreviewDocument', this, html, sourceUrl); },
+        resolvePreviewMovies(html, sourceUrl, options) { return __dcufConvenienceHostAdapter.invokeNative('resolvePreviewMovies', this, html, sourceUrl, options); },
         getCachedPreview(url) { return __dcufConvenienceHostAdapter.invokeNative('getCachedPreview', this, url); },
         setCachedPreview(url, html) { return __dcufConvenienceHostAdapter.invokeNative('setCachedPreview', this, url, html); },
         clearPreviewImageRuntime() { return __dcufConvenienceHostAdapter.invokeNative('clearPreviewImageRuntime', this); },

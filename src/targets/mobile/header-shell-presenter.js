@@ -196,6 +196,24 @@
             ${selectors.searchWrap} { grid-area: 2 / 1; width: calc(100% - 22px); margin: 0 0 8px 22px; }
             ${selectors.layout} > ${selectors.bridge} { grid-area: 2 / 2; }
         }
+
+        /* The compact plate is a list-page variant; other route chrome keeps
+           its existing composition. The adapter marks the original parent. */
+        ${selectors.layout}[data-dcuf-list-header] { grid-template-columns: 142px 80px minmax(180px,1fr) 116px 156px; grid-template-rows: 64px; }
+        ${selectors.layout}[data-dcuf-list-header]::before { align-self: start; box-sizing: border-box; height: var(--dcuf-list-header-height,56px); margin: 8px var(--dcuf-page-gutter,10px) 0; border: 1px solid var(--dcuf-b1-rim); border-radius: 15px; background: linear-gradient(var(--dcuf-b1-line),var(--dcuf-b1-line)) 14px var(--dcuf-list-header-divider,55px)/calc(100% - 28px) 1px no-repeat,var(--dcuf-b1-glass); box-shadow: 0 8px 18px -16px color-mix(in srgb,var(--dcuf-theme-fg) 22%,transparent),inset 0 1px 0 var(--dcuf-b1-rim); backdrop-filter: none; }
+        :where([data-dcuf-list-header]) ${selectors.root} ${selectors.logo} > a + a { display: none; }
+        :where([data-dcuf-list-header]) ${selectors.searchWrap} { justify-self: end; max-width: 360px; }
+        :where([data-dcuf-list-header]) ${selectors.topSearch} { height: 36px; }
+        :where([data-dcuf-list-header]) ${selectors.links} { flex-wrap: nowrap; }
+        :where([data-dcuf-list-header]) ${selectors.links} > ul[popover]:popover-open { top: 64px; }
+        :where([data-dcuf-list-header]) ${selectors.links} a { min-height: 32px; padding-inline: 4px; font-size: 12px; }
+        @media (max-width: 899px) {
+            ${selectors.layout}[data-dcuf-list-header] { --dcuf-list-header-divider: 93px; grid-template-columns: 130px minmax(0,1fr) 136px; grid-template-rows: 54px 48px; }
+            ${selectors.layout}[data-dcuf-list-header]::before { grid-area: 1 / 1 / 3 / -1; margin: 8px var(--dcuf-page-gutter,8px) 0; }
+            :where([data-dcuf-list-header]) ${selectors.links} { grid-area: 1 / 3; }
+            :where([data-dcuf-list-header]) ${selectors.searchWrap} { grid-area: 2 / 1 / 3 / 3; justify-self: start; max-width: none; }
+            ${selectors.layout}[data-dcuf-list-header] > ${selectors.bridge} { grid-area: 2 / 3; }
+        }
         ${selectors.darkRoot} ${selectors.logo} > a:first-child { filter: brightness(0) invert(1); }
 `
         });

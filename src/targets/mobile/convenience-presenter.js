@@ -32,6 +32,8 @@ function __dcufCreateConveniencePresentation() {
             background:color-mix(in srgb,var(--dcuf-b1-paper,var(--dcuf-theme-surface-input,#fff)) 88%,transparent);
         }
         .dcuf-preview-panel .dcuf-preview-body img {display:block;max-width:100%;height:auto;margin:10px auto;border-radius:6px;}
+        .dcuf-preview-panel .dcuf-preview-body video {display:block;width:100%;max-width:100%;height:auto;margin:10px auto;border-radius:6px;}
+        .dcuf-preview-panel .dcuf-preview-body audio {display:block;width:100%;max-width:100%;margin:10px auto;}
         .dcuf-preview-panel .dcuf-preview-body img:not([src]) {
             width:min(100%,360px);min-height:76px;
             background:linear-gradient(100deg,var(--dcuf-theme-surface-muted,#edf0f4) 20%,var(--dcuf-theme-card-top,#f8fafc) 40%,var(--dcuf-theme-surface-muted,#edf0f4) 60%);

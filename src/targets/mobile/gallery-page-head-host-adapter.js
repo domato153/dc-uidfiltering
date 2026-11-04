@@ -37,6 +37,47 @@
         const STYLE_ID = 'dcuf-gallery-page-head-style';
         const SUBSCRIBER_KEY = 'gallery-page-head-style';
         const states = new Map();
+        const restoreMore = (state) => {
+            const menu=state.more;if(!menu)return;
+            menu.right.removeEventListener('click',menu.onClick);
+            document.removeEventListener('click',menu.onOutside,true);
+            document.removeEventListener('keydown',menu.onKey);
+            menu.right.removeAttribute('data-dcuf-gallery-more-open');
+            menu.right.style.removeProperty('--dcuf-gallery-more-count');
+            menu.actions.forEach(node=>node.removeAttribute('data-dcuf-gallery-more-index'));
+            menu.button.remove();state.more=null;
+        };
+        const syncMore = (state) => {
+            if (!/\/board\/lists\/?$/.test(location.pathname)) { restoreMore(state); return; }
+            const right=state.root.querySelector(':scope > .fr');
+            if(state.more&&(state.more.right!==right||state.more.button.parentNode!==right))restoreMore(state);
+            if(!right)return;
+            let menu=state.more;
+            if(!menu){
+                right.querySelectorAll(':scope > [data-dcuf-gallery-more-toggle]').forEach(n=>n.remove());
+                right.removeAttribute('data-dcuf-gallery-more-open');
+                const button=document.createElement('button');button.type='button';button.textContent='더보기';
+                button.setAttribute('data-dcuf-gallery-more-toggle','1');button.setAttribute('aria-expanded','false');
+                const setOpen=open=>{right.toggleAttribute('data-dcuf-gallery-more-open',open);button.setAttribute('aria-expanded',String(open));};
+                const onClick=event=>{
+                    if(event.target.closest('[data-dcuf-gallery-more-toggle]')===button){setOpen(button.getAttribute('aria-expanded')!=='true');if(button.getAttribute('aria-expanded')==='true')menu.actions[0]?.focus();}
+                    else if(event.target.closest('[data-dcuf-gallery-more-index]'))queueMicrotask(()=>{
+                        const restoreFocus=menu.actions.includes(document.activeElement);
+                        setOpen(false);if(restoreFocus)button.focus();
+                    });
+                };
+                const onOutside=event=>{if(!right.contains(event.target))setOpen(false);};
+                const onKey=event=>{if(event.key==='Escape'&&button.getAttribute('aria-expanded')==='true'){setOpen(false);button.focus();event.preventDefault();}};
+                right.addEventListener('click',onClick);document.addEventListener('click',onOutside,true);document.addEventListener('keydown',onKey);
+                right.append(button);menu=state.more={right,button,actions:[],onClick,onOutside,onKey};
+            }
+            // Native action nodes and parents stay intact;only the disclosure
+            // layout is projected. Native sibling/parent callbacks still work.
+            menu.actions=[...right.querySelectorAll(':scope > .relate,:scope > .adr_copy,:scope > .gall_useinfo,:scope > .gall_info')];
+            menu.actions.forEach((node,index)=>node.setAttribute('data-dcuf-gallery-more-index',String(index)));
+            right.style.setProperty('--dcuf-gallery-more-count',String(menu.actions.length));
+            menu.button.hidden=menu.actions.length===0;
+        };
         let activeCoordinator = null;
         let mutationUnsubscribe = null;
         let styleOwner = null;
@@ -66,6 +107,7 @@
         };
 
         const restoreRoles = (state) => {
+            restoreMore(state);
             state.baselines.forEach((original, element) => {
                 if (original === null) element.removeAttribute(ROLE_ATTRIBUTE);
                 else element.setAttribute(ROLE_ATTRIBUTE, original);
@@ -170,6 +212,7 @@
                 states.set(root, state);
             }
             syncRoles(state);
+            syncMore(state);
         };
 
         const collectRoots = (root) => {

@@ -4,6 +4,9 @@
     const previousState = __dcufPostMainRoot.__dcufPostMainFixesState;
     if (previousState === 'initializing' || previousState === 'ready') return;
     __dcufPostMainRoot.__dcufPostMainFixesState = 'initializing';
+    // Same target-adapter phase:author material must settle before the native
+    // comment menu's containing-block geometry is measured for its first paint.
+    let __dcufProjectCommentPopupGeometry = null;
     try {
 
 ; (() => {
@@ -660,7 +663,7 @@
             padding: 0 16px !important;
             border-radius: 12px !important;
         }
-        .bottom_paging_box,
+        [data-dcuf-surface="list-pagination"],
         .view_bottom,
         #bottom_listwrap {
             margin-top: 18px !important;
@@ -2799,20 +2802,6 @@
             visibility: hidden !important;
             pointer-events: none !important;
         }
-        body.dc-filter-dark-mode #dc-personal-block-fab {
-            background: linear-gradient(180deg, #202a36 0%, #1a2330 100%) !important;
-            color: #d9e3f2 !important;
-            border-color: #445468 !important;
-            box-shadow: 0 8px 18px rgba(0, 0, 0, 0.28) !important;
-        }
-        body.dc-filter-dark-mode #dc-personal-block-fab:hover {
-            background: linear-gradient(180deg, #24303d 0%, #1d2734 100%) !important;
-            border-color: #53657d !important;
-            box-shadow: 0 10px 22px rgba(0, 0, 0, 0.34) !important;
-        }
-        body.dc-filter-dark-mode #dc-personal-block-fab:active {
-            box-shadow: 0 5px 12px rgba(0, 0, 0, 0.26) !important;
-        }
         body.dc-filter-dark-mode .cmt_nickbox,
         body.dc-filter-dark-mode .author {
             background: transparent !important;
@@ -4870,6 +4859,9 @@
     const elevatePopupLayer = (popup) => {
         if (!(popup instanceof HTMLElement)) return;
         if (!isViewportLayerPopup(popup)) return;
+        // Only the visible native menu is a geometry owner. Positioning its
+        // wrapper as well adds the same offset twice after a host rerender.
+        if (popup.matches('#user_data_lyr, .user_data, .user_data_add') && popup.querySelector(':scope > ul.user_data_list')) return;
 
         const anchor = findPopupInfoOwner(popup);
         if (!(anchor instanceof HTMLElement)) return;
@@ -4906,7 +4898,9 @@
             const overlapsAnchorHorizontally = targetLeft < anchorRect.right && (targetLeft + popupWidth) > anchorRect.left;
             if (overlapsAnchorVertically && overlapsAnchorHorizontally) {
                 const belowTop = anchorRect.bottom + verticalGap;
-                targetTop = clamp(belowTop, minTop, maxTop);
+                targetTop = belowTop + popupHeight <= viewportHeight - edgePadding
+                    ? belowTop
+                    : clamp(anchorRect.top - popupHeight - verticalGap, minTop, maxTop);
             }
         } else {
             const hasStoredOffset = popup.hasAttribute(LAYER_DX) && popup.hasAttribute(LAYER_DY);
@@ -4940,11 +4934,12 @@
         saveStyleIfNeeded(popup, ORIG_MARGIN, 'margin');
 
         if (isCommentUserPopup(popup) && popupLi instanceof HTMLElement) {
-            const liRect = popupLi.getBoundingClientRect();
-            const localLeft = Math.max(0, Math.round(targetLeft - liRect.left));
-            const localTop = Math.max(0, Math.round(targetTop - liRect.top));
-
             setImportantStyleIfChanged(popup, 'position', 'absolute');
+            // The containing block may be the nickname,not the comment LI.
+            const containing = popup.offsetParent;
+            const origin = containing?.getBoundingClientRect() || {left:0,top:0};
+            const localLeft = Math.round(targetLeft - origin.left + (containing?.scrollLeft || 0) - (containing?.clientLeft || 0));
+            const localTop = Math.round(targetTop - origin.top + (containing?.scrollTop || 0) - (containing?.clientTop || 0));
             setImportantStyleIfChanged(popup, 'left', `${localLeft}px`);
             setImportantStyleIfChanged(popup, 'top', `${localTop}px`);
             setImportantStyleIfChanged(popup, 'right', 'auto');
@@ -5144,6 +5139,9 @@
             && Array.from(owners).every((li) => isPopupOwnerElevationIntact(li));
 
         if (canReuseState) {
+            // Material/font/layout can change without changing owner identity.
+            // Reuse elevation,not stale coordinates or the pre-style UL size.
+            visiblePopups.forEach((popup) => elevatePopupLayer(popup));
             return;
         }
 
@@ -5229,6 +5227,9 @@
         document.addEventListener('click', (event) => {
             if (!isRelevantPopupEventTarget(event.target)) return;
             scheduleApply({ elements: [event.target].filter(Boolean) });
+            // Native click handlers insert the menu in this same task. Project
+            // geometry before the browser paints; retain the existing bus for
+            // asynchronous native responses and later mutations.
         }, true);
         document.addEventListener('mouseup', (event) => {
             if (!isRelevantPopupEventTarget(event.target)) return;
@@ -5249,6 +5250,7 @@
             scheduleApply({ elements: activeCandidates });
         }, true);
         window.__dcufUserPopupLayerBound = true;
+        __dcufProjectCommentPopupGeometry = elements => applyPopupFixForCandidates(elements, {forceFullPass:false});
     };
 
     scheduleApply({ forceFullPass: true });
@@ -5272,7 +5274,7 @@
     const CENTER_ATTR = 'data-dcuf-list-memo-centered';
     const AUTHOR_MENU_SELECTOR = '.user_data.add > .user_data_list, .gall_writer #user_data_lyr > .user_data_list, .user_data_add > .user_data_list';
     const POPUP_SELECTOR = '#user_memo_config.pop_wrap.type3, #um_picker_lay.pop_wrap.type3, ' + AUTHOR_MENU_SELECTOR;
-    const MEMO_CONTEXT_SELECTOR = [POPUP_SELECTOR, '.custom-mobile-list', '.custom-post-item', '.view_content_wrap'].join(', ');
+    const MEMO_CONTEXT_SELECTOR = [POPUP_SELECTOR, '.custom-mobile-list', '.custom-post-item', '.view_content_wrap', '.cmt_nickbox', '.gall_writer'].join(', ');
     const MEMO_EVENT_TARGET_SELECTOR = [MEMO_CONTEXT_SELECTOR, '#user_data_lyr', '.user_data', '.pop_wrap.type2', '.pop_wrap.type3'].join(', ');
     const MEMO_FORCE_FULLPASS_EVENT_SELECTOR = '#user_data_lyr, .user_data, .pop_wrap.type2, .pop_wrap.type3';
     const pendingMemoPopupCandidates = new Set();
@@ -5641,6 +5643,16 @@
             scheduleApply(forceFullPass
                 ? { forceFullPass: true }
                 : { elements: [event.target].filter(Boolean) });
+            const owner = event.target.closest('.gall_writer, .cmt_nickbox, .cmt_info, .reply_info') || event.target;
+            // A capture-listener microtask can run before the target's native
+            // handler. Reuse this owner's bounded open RAF,after insertion but
+            // before paint;then project geometry from the final material size.
+            if (memoPopupOpenFollowupRafId) cancelAnimationFrame(memoPopupOpenFollowupRafId);
+            memoPopupOpenFollowupRafId = requestAnimationFrame(() => {
+                memoPopupOpenFollowupRafId = 0;
+                syncMemoPopups([owner], {forceFullPass});
+                __dcufProjectCommentPopupGeometry?.([owner]);
+            });
         }, true);
         document.addEventListener('mouseup', (event) => {
             if (!isRelevantMemoEventTarget(event.target)) return;

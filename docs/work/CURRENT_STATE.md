@@ -2,23 +2,37 @@
 
 ## Current execution
 
-- Active plan: docs/work/UI_USER_FEEDBACK_REPAIRS.md is implemented and locally verified;NEXT owns the distinct review build and actual-use feedback. Previous residual finish retains its exact491f888 scope.
+- Active plan: Grouped repairs implemented as a review candidate. New single-frame header is list-page-top only;existing floating inline toolbar and non-list upper chrome retained. ARTICLE_COMMENT_POPUP_REPAIRS.md and NEXT own review.
 - Workspace path: `.` (private prompt supplies exact worktree). Preserve debug.log unread/unstaged.
 - Active stage: `header-navigation` formal admission remains open. Scoped local UI implementation is not whole-UI/native permission/device or architecture promotion.
 - Accepted visual preference: Actual memo/current pale paired dark primary,transmitting outer chrome,stable reading and quiet label-sized auxiliaries. Generated proposals guide composition;memo/current rules govern fine detail.
-- Source state: Source checkpoint base HEAD `491f888a254201369dd71992a7e74599c5894a1a` on `codex/ui-port-boundary`;bounded UI_USER_FEEDBACK_REPAIRS.md is complete locally. Preserve unrelated debug.log.
-- Local-only state: `LOCAL_ONLY_EVIDENCE`;artifacts/ui-user-feedback-2026-11-03 holds frozen06F68A/E470 controls and bounded native/event/geometry diagnostics.
-- Candidate fingerprint: `b1eb73c7384114f840991cadc5fb70c6997a0d02b7c776aafabbbc8f7c627139`
-- Last current audit: UNKNOWN: formal admission,final installed-extension/device and user visual acceptance remain open. Current bounded local checks pass in the named receipt.
-- Current stage receipt: `verification/receipts/2026-11-03-ui-user-feedback-repairs.json` SHA-256 `D7DDCA6BBB1523AE16C07D5AC86CB20A0C579B2D6457EB26E13EF805720A97C1`. Earlier receipts retain their own runtime scopes.
+- Source state: Source checkpoint base HEAD `48adde460533ce29cfa14fc9a7ae2602f5510157` on `codex/ui-port-boundary`;current grouped result is locally verified and awaiting exact-path checkpoint/user aesthetic disposition. Preserve unrelated debug.log.
+- Local-only state: `LOCAL_ONLY_EVIDENCE`;artifacts/article-followup-2026-11-03 holds control/current diagnostics and screenshots;comparison viewer under artifacts/b1-detail-2026-10-23/article-followup.
+- Candidate fingerprint: `00fb2ce3c83e580fe599b32628264ee91d8d46eef4b6d247dc7cedfea2781fa9`
+- Last current audit: UNKNOWN: formal upper admission and user aesthetics remain open. Scoped13 selected browser checks plus6 preview unit checks,header/frame/route reruns and public captures are recorded in the result receipt.
+- Current stage receipt: `verification/receipts/2026-11-04-article-comment-header-preview.json` SHA-256 `5F4774241A11F60D00A4422FB386FD5D03896179158FEFF2CDE5CD67443FA268`. Previous receipts retain their runtime scopes.
 - Accepted baseline: Actual adopted memo/current bright-dark v7 rules retained. Grouped folder/editor child finish and full-page review are now recorded locally;unobserved native permission/server/plugin/device branches remain distinct.
-- Current artifact: Mobile3.5.5 4C2EE229951FFFDD5626B2ED772DD28F01D7ECC9D76F60F75E676AF3519786AC guard/root/dist;PC1.9.9 0D5F7D071F7A29ABA932F1ED52039D04647A10B3B5BAF98E62392305E50EDA4D root/dist. No version bump or official publication.
-- Blockers: No local implementation blocker. Exact user physical third-key event stream remains unobserved;do not blame OS interception.
-- Pending live checks: User review of the distinct current script and any concrete residual issue. No routine full-product recheck or replay of completed UI families.
+- Current artifact: Mobile3.5.5 5EBF265BD0A737771E33546BAF299808D68631FDEB4312CF4042FB4EEBDB1AA7 guard/root/dist;PC1.9.9 0D5F7D071F7A29ABA932F1ED52039D04647A10B3B5BAF98E62392305E50EDA4D root/dist unchanged. No version bump or official publication.
+- Blockers: No product/authorization hold in the bounded scope. User aesthetic review and exact-path working checkpoint remain separate.
+- Pending live checks: Public source-injected Chrome WebP957x477 decode/native1280x720 play and pause-on-close observed;final installed-extension use,real submission and exact phone remain separate.
 
 ```dcuf-current-artifacts
-{"schemaVersion":1,"mobile":{"sha256":"4C2EE229951FFFDD5626B2ED772DD28F01D7ECC9D76F60F75E676AF3519786AC"},"pc":{"sha256":"0D5F7D071F7A29ABA932F1ED52039D04647A10B3B5BAF98E62392305E50EDA4D"}}
+{"schemaVersion":1,"mobile":{"sha256":"5EBF265BD0A737771E33546BAF299808D68631FDEB4312CF4042FB4EEBDB1AA7"},"pc":{"sha256":"0D5F7D071F7A29ABA932F1ED52039D04647A10B3B5BAF98E62392305E50EDA4D"}}
 ```
+
+## Pending real-use feedback —2026-11-03
+
+Historical diagnosis below initiated this batch. The user subsequently authorized implementation of every item plus compact shared headers and reply-thread boundaries;ARTICLE_COMMENT_POPUP_REPAIRS.md owns current status. The old hold and unchanged-runtime statements are superseded.
+
+- ADOPTED/implemented,pending final review:compact two-row article header on one very pale theme-tinted surface. Group title/headtext,then author/date and existing scrap/stats. Put the single separator below the complete metadata row;share the body's left baseline and remove stacked native/new top spacing. Long titles wrap;do not freeze a height or add factual content/actions.
+- REPAIRED in current candidate,scoped checks:reply nickname moves right. Native reply_info > addbox is not projected as the content stack;its floated800px body displaces the inline author. Native-shaped replay placed body atx91 and author atx913.
+- REPAIRED in current candidate,scoped checks:reply textarea stays927px inside a1343px input box because native small-form CSS remains. Previous checks proved containment only,not filling available width. Treat host visual fixed width as replaceable presentation,not an immutable behavior contract.
+- ADOPTED/implemented:FAB should use the same pale common-button material as the other current controls. The previous dark-tint/white-ink exception is superseded for the next design;the current candidate uses common pale primary material.
+- REPAIRED in current candidate,scoped checks:original900px article content starts at its container's left;development auto inline margins center it318px inward. Restore container positioning while preserving the author's explicit text/image alignment.
+- REPAIRED in current candidate,scoped checks:comment last-row border plus native paging top border produce two lines;new row/date stacking,padding and footer spacing overexpand short/image-text comments. Keep one purposeful separator and content-sized height;do not shrink authored sticker art to mask spacing.
+- REPAIRED in current candidate,scoped checks:category overflow popup is detached from its moved arrow;related-gallery popup is detached from its trigger. Qualify original popup containing block/anchor,scroll and wide-page changes together.
+- REPAIRED in current candidate,scoped checks:comment nickname menu first exposes/flashes the native window and then appears far from its clicked author. Trace native opening coordinates and first-paint/owner timing;do not silently hide it or add a new portal/observer before diagnosis.
+
 
 ## Draft-complete checkpoint — 2026-10-21
 

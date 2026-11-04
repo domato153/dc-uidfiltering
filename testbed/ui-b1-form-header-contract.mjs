@@ -26,7 +26,9 @@ export async function runB1FormHeaderContract({browser,server}) {
    if(process.env.DCUF_FORM_HEADER_CAPTURE){await mkdir(process.env.DCUF_FORM_HEADER_CAPTURE,{recursive:true});await e.page.screenshot({path:`${process.env.DCUF_FORM_HEADER_CAPTURE}/${kind}-${width}-${height}-${dark?'dark':'light'}-initial.png`});}
    assert.ok(contract.header.width>200&&contract.header.x>=0&&contract.header.right<=width+1&&contract.head.bottom<=contract.card.y+1,JSON.stringify(contract));
    assert.ok(contract.card.width>250&&contract.card.right<=width&&contract.overflow<=1);
-   assert.ok(Math.abs(contract.head.x-(width>=760?20:12))<1&&Math.abs(contract.head.width-(width>=760?width-40:width-24))<1,'Gallery title/tools use the same outer margins as the list; the password card must not constrain the header');
+   const gutter=await e.page.evaluate(()=>parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--dcuf-page-gutter')));
+   assert.ok(Math.abs(contract.head.x-gutter)<1&&Math.abs(contract.head.width-(width-2*gutter))<1,'Gallery title/tools share the current full-width page gutter: '+JSON.stringify({head:contract.head,gutter}));
+   assert.equal(await e.page.locator('[data-dcuf-list-header],[data-dcuf-explore-toggle],[data-dcuf-gallery-more-toggle]').count(),0,'Password routes retain their existing upper header structure');
    const utilities=await e.page.locator('.page_head > .fr [data-dcuf-gallery-page-head-role="utility-control"]').evaluateAll(ns=>ns.filter(n=>n.getBoundingClientRect().width).map(n=>{const s=getComputedStyle(n),r=n.getBoundingClientRect();return{height:r.height,background:s.backgroundColor,hit:n.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2))}}));
    assert.ok(utilities.length>=3&&utilities.every(n=>n.height>=28&&n.background==='rgba(0, 0, 0, 0)'&&n.hit),'Native utility controls have a readable quiet hit area without residual white patches');
    contract.settled=await settle(e.page);

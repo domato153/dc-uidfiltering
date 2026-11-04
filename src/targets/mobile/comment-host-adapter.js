@@ -142,7 +142,7 @@
             });
             markAll(root, '.reply_list > li', 'reply-item', (item) => itemState(item, 'reply'));
             markAll(root, '.cmt_info', 'comment-info');
-            markAll(root, '.cmt_info > .addbox', 'comment-content-stack');
+            markAll(root, '.cmt_info > .addbox, .reply_info > .addbox', 'comment-content-stack');
             markAll(root, '.reply_info', 'reply-info');
             markAll(root, '.cmt_nickbox', 'comment-author-group');
             root.querySelectorAll('.gall_writer, .nickname').forEach((author) => markCommentContext(
@@ -312,6 +312,9 @@
             markAll(root, '.comment_count button, .comment_count a, .comment_top button, .comment_top a', 'native-comment-header-action');
             markAll(root, '.comment_box', 'comment-box', (box) => box.classList.contains('img_comment_box') ? 'image' : 'standard');
             markAll(root, '.cmt_list', 'comment-list');
+            markAll(root, '.bottom_paging_box', 'comment-footer');
+            markAll(root, '.bottom_paging_box .cmt_inner', 'comment-footer-actions');
+            markAll(root, '.bottom_paging_box .cmt_paging', 'comment-footer-pages');
             markCommentItems(root);
             markComposers(root);
             markPopups(root);

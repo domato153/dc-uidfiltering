@@ -437,8 +437,8 @@ function __dcufBuildB1MaterialCss(ROOT_ATTRIBUTE) {
             --dcuf-b1-paper: var(--dcuf-theme-surface);
             --dcuf-b1-glass: color-mix(in srgb, color-mix(in srgb, var(--dcuf-b1-paper) 80%, var(--dcuf-theme-accent-soft)) 58%, transparent);
             --dcuf-b1-floating: color-mix(in srgb, var(--dcuf-b1-paper) 64%, transparent);
-            --dcuf-menu-button-background: linear-gradient(135deg,#ffffff14,transparent 62%), color-mix(in srgb,color-mix(in srgb,var(--dcuf-theme-accent-strong) 60%,#1b2b30) 82%,transparent);
-            --dcuf-menu-button-ink: #fff;
+            --dcuf-menu-button-background: var(--dcuf-v7-primary-bg);
+            --dcuf-menu-button-ink: var(--dcuf-v7-primary-ink);
             --dcuf-menu-button-width-ratio: .66;
             --dcuf-menu-button-height-ratio: .63;
             --dcuf-menu-button-padding-ratio: .57;
@@ -545,6 +545,8 @@ function __dcufBuildB1MaterialCss(ROOT_ATTRIBUTE) {
             --dcuf-v7-primary-fill: var(--dcuf-v7-dark-primary-fill,color-mix(in srgb, var(--dcuf-b1-paper) 76%, var(--dcuf-theme-accent)));
             --dcuf-v7-primary-ink: var(--dcuf-v7-dark-primary-ink,color-mix(in srgb, var(--dcuf-theme-fg) 86%, var(--dcuf-theme-accent-strong)));
             --dcuf-v7-primary-bg: var(--dcuf-v7-primary-glaze), var(--dcuf-v7-primary-fill);
+            --dcuf-menu-button-background: var(--dcuf-v7-primary-bg);
+            --dcuf-menu-button-ink: var(--dcuf-v7-primary-ink);
             --dcuf-v7-primary-rim: color-mix(in srgb, var(--dcuf-theme-accent) var(--dcuf-v7-primary-rim-accent,48%), var(--dcuf-b1-rim));
             /* Optional management values; shared consumers keep PC fallbacks. */
             --dcuf-management-default-width: 720;
@@ -936,6 +938,8 @@ function __dcufCreateConveniencePresentation() {
             background:color-mix(in srgb,var(--dcuf-b1-paper,var(--dcuf-theme-surface-input,#fff)) 88%,transparent);
         }
         .dcuf-preview-panel .dcuf-preview-body img {display:block;max-width:100%;height:auto;margin:10px auto;border-radius:6px;}
+        .dcuf-preview-panel .dcuf-preview-body video {display:block;width:100%;max-width:100%;height:auto;margin:10px auto;border-radius:6px;}
+        .dcuf-preview-panel .dcuf-preview-body audio {display:block;width:100%;max-width:100%;margin:10px auto;}
         .dcuf-preview-panel .dcuf-preview-body img:not([src]) {
             width:min(100%,360px);min-height:76px;
             background:linear-gradient(100deg,var(--dcuf-theme-surface-muted,#edf0f4) 20%,var(--dcuf-theme-card-top,#f8fafc) 40%,var(--dcuf-theme-surface-muted,#edf0f4) 60%);
@@ -2805,6 +2809,14 @@ const __dcufSettingsPresenter = (() => {
                 box-sizing: border-box;
                 flex-wrap: wrap;
             }
+            [data-dcuf-surface="list-toolbar"][data-dcuf-scroll] {
+                margin-block: 0 12px;
+                border-block-start: 0;
+                border-radius: 0 0 15px 15px;
+                box-shadow: 0 8px 12px -12px color-mix(in srgb,var(--dcuf-theme-fg) 18%,transparent);
+                backdrop-filter: none;
+            }
+            [data-dcuf-surface="list-toolbar"]:is([data-dcuf-scroll="top"],[data-dcuf-scroll="measuring"]) { padding: 6px 12px; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
             /* Once the adapter is ready, grid replaces the host's float clearfix. */
             [data-dcuf-surface="list-toolbar"][data-dcuf-state="ready"]::after { content: none; display: none; }
             [data-dcuf-surface="list-toolbar"][data-dcuf-scroll]:not([data-dcuf-scroll="measuring"]) {
@@ -2827,12 +2839,20 @@ const __dcufSettingsPresenter = (() => {
                 left: var(--dcuf-scroll-left);
                 width: var(--dcuf-scroll-width);
                 margin: 0;
+                border: 1px solid var(--dcuf-b1-rim);
+                border-radius: 0 0 12px 12px;
+                background: var(--dcuf-b1-sheen),var(--dcuf-b1-floating);
+                box-shadow: var(--dcuf-b1-shadow);
+                backdrop-filter: var(--dcuf-b1-structural-filter,blur(20px) saturate(1.1));
             }
             [data-dcuf-surface="list-toolbar"][data-dcuf-scroll="hidden"] {
                 transform: translateY(calc(-100% - 12px));
                 visibility: hidden;
                 pointer-events: none;
             }
+            /* An actively opened native picker sits above passive header
+               promotions(1008),but below native dialogs/top-layer menus. */
+            [data-dcuf-surface="list-toolbar"][data-dcuf-popup-open] { z-index: 1010; }
             @media (min-width: 1250px) {
                 /* Row display remains the filter owner's visibility output. */
                 [data-dcuf-surface="list-item"] { padding-right: 478px; min-height: 54px; }
@@ -2884,7 +2904,7 @@ const __dcufSettingsPresenter = (() => {
                 gap: 7px;
                 height: auto;
                 min-width: 0;
-                width: 100%;
+                width: fit-content;
                 max-width: 100%;
             }
             [data-dcuf-surface="list-toolbar"] [data-dcuf-role="toolbar-categories"] [data-dcuf-role="category-list"] {
@@ -2927,6 +2947,56 @@ const __dcufSettingsPresenter = (() => {
                 border-block-start: 5px solid currentColor;
             }
             [data-dcuf-surface="list-toolbar"] [data-dcuf-role="category-toggle-icon"] { display: none; }
+            [data-dcuf-surface="list-toolbar"] [data-dcuf-role="category-invoker"] {
+                display: inline-flex; align-items: center; gap: 9px;
+                min-width: 0; max-width: 100%; min-height: 40px;
+                padding: 0 10px; border: 0; border-radius: 6px;
+                background: transparent; color: var(--dcuf-theme-fg-muted);
+                font: 500 13px/1.4 system-ui,sans-serif; cursor: pointer;
+            }
+            [data-dcuf-surface="list-toolbar"] [data-dcuf-role="category-invoker"]::after {
+                content: ''; flex: none; border-inline: 3px solid transparent;
+                border-top: 4px solid currentColor;
+            }
+            [data-dcuf-surface="list-toolbar"] [data-dcuf-role="category-invoker"][hidden] { display: none; }
+            [data-dcuf-surface="list-toolbar"] [data-dcuf-role="category-invoker"]:is(:hover,:focus-visible,[aria-expanded="true"]) {
+                background: var(--dcuf-control-selected-bg); color: var(--dcuf-theme-accent-ink);
+            }
+            [data-dcuf-surface="list-toolbar"] [data-dcuf-role="category-shell"][popover]:not(:popover-open) { display: none; }
+            [data-dcuf-surface="list-toolbar"] [data-dcuf-role="category-shell"][popover]:popover-open {
+                position: fixed; position-anchor: var(--dcuf-category-anchor);
+                inset: 180px auto auto 12px;
+                top: clamp(8px,calc(anchor(bottom) + 6px),calc(100dvh - min(420px,50dvh) - 12px));
+                left: clamp(12px,anchor(left),calc(100vw - min(340px,100vw - 24px) - 12px));
+                display: flex; flex-direction: column; align-items: stretch; gap: 4px;
+                width: min(340px,calc(100vw - 24px)); max-width: calc(100vw - 24px);
+                max-height: min(420px,50dvh);
+                margin: 0; padding: 8px; box-sizing: border-box; overflow: auto;
+                overscroll-behavior: contain; scrollbar-width: thin;
+                border: 1px solid var(--dcuf-b1-rim); border-radius: 12px;
+                background: var(--dcuf-b1-sheen),var(--dcuf-b1-floating);
+                color: var(--dcuf-theme-fg); backdrop-filter: var(--dcuf-b1-floating-filter);
+                box-shadow: var(--dcuf-b1-shadow);
+            }
+            [data-dcuf-surface="list-toolbar"] [data-dcuf-role="category-shell"][popover] [data-dcuf-role="category-list"] {
+                display: grid; grid-auto-flow: row; grid-auto-columns: auto;
+                height: auto; width: 100%; flex: none; overflow: visible;
+            }
+            [data-dcuf-surface="list-toolbar"] [data-dcuf-role="category-shell"][popover] [data-dcuf-role="category-list"] > li {
+                display: block; max-width: none; width: 100%; height: auto;
+            }
+            [data-dcuf-surface="list-toolbar"] [data-dcuf-role="category-shell"][popover] [data-dcuf-role="category-toggle"] {
+                justify-content: flex-start; gap: 9px; width: 100%; min-height: 38px;
+                height: auto; padding: 8px 10px; border: 0; border-radius: 6px;
+                color: var(--dcuf-theme-fg-muted); font: 500 12px/1.5 system-ui,sans-serif;
+            }
+            [data-dcuf-surface="list-toolbar"] [data-dcuf-role="category-shell"][popover] [data-dcuf-role="category-toggle"]::after { content: '더 많은 말머리'; }
+            [data-dcuf-surface="list-toolbar"] [data-dcuf-role="category-shell"][popover] [data-dcuf-role="category-popup"] {
+                position: static; width: 100%; min-width: 0; max-width: none;
+                max-height: none; margin: 0; padding: 0; overflow: visible;
+                border: 0; border-radius: 0; background: transparent;
+                box-shadow: none; backdrop-filter: none;
+            }
             [data-dcuf-surface="list-toolbar"] [data-dcuf-role="category-popup"] {
                 position: absolute;
                 z-index: 3;
@@ -3027,6 +3097,10 @@ const __dcufSettingsPresenter = (() => {
                 background: var(--dcuf-control-secondary-bg);
                 box-shadow: var(--dcuf-control-shadow);
             }
+            [data-dcuf-surface="list-toolbar"][data-dcuf-scroll="top"] [data-dcuf-role="page-size"] {
+                border-color: var(--dcuf-b1-line); font-size: 12px;
+                background: transparent; box-shadow: none;
+            }
             [data-dcuf-surface="list-toolbar"] [data-dcuf-role="action"],
             [data-dcuf-surface="list-toolbar"] [data-dcuf-role="tablist"] button[data-dcuf-role="action"],
             [data-dcuf-surface="list-toolbar"] [data-dcuf-role="primary-action"],
@@ -3096,9 +3170,20 @@ const __dcufSettingsPresenter = (() => {
                 border-radius: 6px;
             }
             [data-dcuf-surface="list-toolbar"] [data-dcuf-role="action"]:focus-visible,
+            [data-dcuf-surface="list-toolbar"] [data-dcuf-role="category-invoker"]:focus-visible,
             [data-dcuf-surface="list-actions"] [data-dcuf-role="action"]:focus-visible {
                 outline: 2px solid var(--dcuf-theme-accent);
                 outline-offset: 2px;
+            }
+            [data-dcuf-surface="list-toolbar"] [data-dcuf-role="category-shell"][popover] [data-dcuf-role="category-list"] > li > a {
+                display: block; width: 100%; height: auto; min-height: 38px;
+                padding: 9px 10px; border: 0; border-radius: 6px;
+                color: var(--dcuf-theme-fg); font: 500 13px/1.5 system-ui,sans-serif;
+                text-align: start; white-space: normal; overflow-wrap: anywhere;
+            }
+            [data-dcuf-surface="list-toolbar"] [data-dcuf-role="category-shell"][popover] [data-dcuf-role="category-list"] > li.on > a,
+            [data-dcuf-surface="list-toolbar"] [data-dcuf-role="category-shell"][popover] [data-dcuf-role="category-list"] > li > a:is(.on,:hover,:focus-visible) {
+                background: var(--dcuf-control-selected-bg); color: var(--dcuf-theme-accent-ink);
             }
             [data-dcuf-surface="list-toolbar"] [data-dcuf-role="primary-action"],
             [data-dcuf-surface="list-toolbar"] [data-dcuf-role="primary-group"] [data-dcuf-role="primary-action"],
@@ -3428,10 +3513,15 @@ const __dcufSettingsPresenter = (() => {
             'data-dcuf-search-layer-bound',
             'data-dcuf-force-refresh-bound',
             'data-dcuf-scroll',
+            'data-dcuf-popup-open',
             'aria-current',
         ]);
         const controlTransactions = new WeakMap();
         const paginationListeners = new WeakMap();
+        const categoryPickers = new WeakMap();
+        const CATEGORY_BASELINE_ATTR = 'data-dcuf-category-baseline';
+        const CATEGORY_INVOKER_ATTR = 'data-dcuf-category-invoker';
+        let categorySerial = 0;
         const searchDrawerRoots = new Set();
         const searchRootsByOwner = new WeakMap();
         const ownerBySearchRoot = new WeakMap();
@@ -3463,11 +3553,21 @@ const __dcufSettingsPresenter = (() => {
             state.travel = 0;
             state.mode = state.lastY <= state.origin + state.height ? 'top' : 'shown';
             state.toolbar.setAttribute('data-dcuf-scroll', state.mode);
+            syncCategoryPickerMode(state.owner, state.mode !== 'top');
+            const layout = document.querySelector('[data-dcuf-header-layout]');
+            if (layout && state.toolbar === document.querySelector('[data-dcuf-surface="list-toolbar"]')) {
+                if (!state.plateGeometry) state.plateGeometry = {node: layout, value: layout.style.getPropertyValue('--dcuf-list-header-height'), priority: layout.style.getPropertyPriority('--dcuf-list-header-height')};
+                const height = Math.max(0, state.origin + state.height - layout.getBoundingClientRect().top - scrollPosition() - 8);
+                layout.style.setProperty('--dcuf-list-header-height', `${height}px`);
+            }
         };
         const updatePopupHold = (state) => {
-            state.popupOpen = Array.from(state.toolbar.querySelectorAll('[data-dcuf-role="category-popup"], [data-dcuf-role="page-size-popup"]'))
-                .some(popup => !(popup.matches('[data-dcuf-role="page-size-popup"]') && popup.parentElement?.querySelector('select'))
-                    && popup.getClientRects().length > 0 && getComputedStyle(popup).visibility !== 'hidden');
+            state.popupOpen = Array.from(state.toolbar.querySelectorAll('[data-dcuf-role="category-shell"][popover], [data-dcuf-role="category-popup"], [data-dcuf-role="page-size-popup"]'))
+                .some(popup => popup.matches('[data-dcuf-role="category-shell"]')
+                    ? typeof popup.showPopover === 'function' && popup.matches(':popover-open')
+                    : !(popup.matches('[data-dcuf-role="page-size-popup"]') && popup.parentElement?.querySelector('select'))
+                        && popup.getClientRects().length > 0 && getComputedStyle(popup).visibility !== 'hidden');
+            state.toolbar.toggleAttribute('data-dcuf-popup-open', state.popupOpen);
         };
         const syncScrollToolbars = () => {
             scrollFrameId = 0;
@@ -3501,6 +3601,7 @@ const __dcufSettingsPresenter = (() => {
                 // Commit both flow changes before measuring: a layout read with
                 // spacer AND toolbar in flow would trigger scroll anchoring.
                 if (state.toolbar.getAttribute('data-dcuf-scroll') !== state.mode) state.toolbar.setAttribute('data-dcuf-scroll', state.mode);
+                if (!state.popupOpen) syncCategoryPickerMode(state.owner, floating);
                 if (floating) {
                     const rect = state.spacer.getBoundingClientRect();
                     const left = `${rect.left}px`, width = `${rect.width}px`;
@@ -3532,6 +3633,12 @@ const __dcufSettingsPresenter = (() => {
         };
         const SCROLL_INTERACTIONS = ['keydown', 'focusin', 'focusout', 'click', 'pointerdown', 'pointerup', 'pointercancel'];
         const restoreScrollGeometry = (state) => {
+            if (state.plateGeometry) {
+                const {node, value, priority} = state.plateGeometry;
+                if (value) node.style.setProperty('--dcuf-list-header-height', value, priority);
+                else node.style.removeProperty('--dcuf-list-header-height');
+                state.plateGeometry = null;
+            }
             state.geometry.forEach(({ name, value, priority }) => {
                 if (value) state.toolbar.style.setProperty(name, value, priority);
                 else state.toolbar.style.removeProperty(name);
@@ -3542,7 +3649,7 @@ const __dcufSettingsPresenter = (() => {
             if (!/\/board\/lists\/?$/.test(location.pathname)) return;
             const previous = scrollToolbars.get(owner);
             if (previous?.toolbar === toolbar) { updatePopupHold(previous); scheduleScrollToolbars(); return; }
-            if (previous) { restoreScrollGeometry(previous); previous.toolbar.removeAttribute('data-dcuf-scroll'); previous.spacer.remove(); }
+            if (previous) { restoreScrollGeometry(previous); previous.toolbar.removeAttribute('data-dcuf-scroll'); previous.toolbar.removeAttribute('data-dcuf-popup-open'); previous.spacer.remove(); }
             const spacer = document.createElement('div');
             spacer.setAttribute('data-dcuf-scroll-space', '1');
             spacer.setAttribute('aria-hidden', 'true');
@@ -3565,6 +3672,7 @@ const __dcufSettingsPresenter = (() => {
             if (state) restoreScrollGeometry(state);
             state?.spacer.remove();
             state?.toolbar.removeAttribute('data-dcuf-scroll');
+            state?.toolbar.removeAttribute('data-dcuf-popup-open');
             scrollToolbars.delete(owner);
             if (scrollToolbars.size || !scrollEventsBound) return;
             window.removeEventListener('scroll', scheduleScrollToolbars);
@@ -3703,6 +3811,140 @@ const __dcufSettingsPresenter = (() => {
             if (!remember(root, element)) return;
             properties.forEach((property) => element.style.removeProperty(property));
             if (!element.getAttribute('style')?.trim()) element.removeAttribute('style');
+        };
+        const restoreCategoryBaseline = (shell, baseline) => {
+            if (baseline.id === null) shell.removeAttribute('id');
+            else shell.setAttribute('id', baseline.id);
+            if (baseline.popover === null) shell.removeAttribute('popover');
+            else shell.setAttribute('popover', baseline.popover);
+            if (baseline.anchor) shell.style.setProperty('--dcuf-category-anchor', baseline.anchor, baseline.anchorPriority);
+            else shell.style.removeProperty('--dcuf-category-anchor');
+            if (!baseline.hadStyle && !shell.style.length) shell.removeAttribute('style');
+            shell.removeAttribute(CATEGORY_BASELINE_ATTR);
+        };
+        const recoverCopiedCategoryBaseline = (shell) => {
+            const serialized = shell.getAttribute(CATEGORY_BASELINE_ATTR);
+            if (serialized === null) return;
+            let baseline;
+            try { baseline = JSON.parse(serialized); } catch (_) { return; }
+            if (!baseline || ![baseline.id, baseline.popover].every(value => value === null || typeof value === 'string')
+                || typeof baseline.anchor !== 'string' || typeof baseline.anchorPriority !== 'string'
+                || typeof baseline.hadStyle !== 'boolean') return;
+            restoreCategoryBaseline(shell, baseline);
+        };
+        const disconnectCategoryPicker = (owner) => {
+            const state = categoryPickers.get(owner);
+            if (!state) return;
+            categoryPickers.delete(owner);
+            if (state.dismissTimer) window.clearTimeout(state.dismissTimer);
+            state.shell.removeEventListener('toggle', state.onToggle);
+            state.shell.removeEventListener('click', state.onClick);
+            if (state.shell.matches(':popover-open')) state.shell.hidePopover();
+            restoreCategoryBaseline(state.shell, state.baseline);
+            state.button.remove();
+        };
+        const prepareCategoryPicker = (owner, categories, shell) => {
+            let state = categoryPickers.get(owner);
+            if (state && (state.shell !== shell || state.categories !== categories || state.button.parentElement !== categories)) {
+                disconnectCategoryPicker(owner);
+                state = null;
+            }
+            if (!(categories instanceof HTMLElement) || !(shell instanceof HTMLElement)) return;
+            // Native rerenders can copy injected attributes/buttons without the
+            // live state. Recover the native baseline before remember() runs.
+            categories.querySelectorAll(`:scope > [${CATEGORY_INVOKER_ATTR}]`).forEach(button => {
+                if (button !== state?.button) button.remove();
+            });
+            if (!state) recoverCopiedCategoryBaseline(shell);
+        };
+        const syncCategoryCaption = (state) => {
+            const selected = Array.from(state.shell.querySelectorAll(':scope > ul > li > a, :scope > .subject_morelist > ul > li > a'))
+                .find(link => link.matches('.on, [aria-selected="true"], [aria-current]:not([aria-current="false"])')
+                    || link.parentElement?.matches('.on, [aria-selected="true"]'));
+            const caption = selected?.textContent?.trim() || '말머리 전체';
+            if (state.button.textContent !== caption) state.button.textContent = caption;
+            state.button.setAttribute('aria-label', `말머리 선택: ${caption}`);
+            state.button.setAttribute('data-dcuf-role', 'category-invoker');
+        };
+        const connectCategoryPicker = (owner, categories, shell) => {
+            if (!(categories instanceof HTMLElement) || !(shell instanceof HTMLElement)) return;
+            if (!/\/board\/lists\/?$/.test(location.pathname)) return;
+            const previous = categoryPickers.get(owner);
+            if (previous) { syncCategoryCaption(previous); return; }
+            if (typeof shell.showPopover !== 'function' || typeof shell.hidePopover !== 'function'
+                || shell.hasAttribute('popover') || !(shell.querySelector(':scope > ul') instanceof HTMLElement)) return;
+            const baseline = {
+                id: shell.getAttribute('id'),
+                popover: shell.getAttribute('popover'),
+                anchor: shell.style.getPropertyValue('--dcuf-category-anchor'),
+                anchorPriority: shell.style.getPropertyPriority('--dcuf-category-anchor'),
+                hadStyle: shell.hasAttribute('style'),
+            };
+            let serial;
+            do { serial = ++categorySerial; } while (document.getElementById(`dcuf-category-${serial}`));
+            if (!shell.id || document.getElementById(shell.id) !== shell) shell.id = `dcuf-category-${serial}`;
+            const anchor = `--dcuf-category-${serial}`;
+            shell.setAttribute(CATEGORY_BASELINE_ATTR, JSON.stringify(baseline));
+            shell.setAttribute('popover', 'auto');
+            shell.style.setProperty('--dcuf-category-anchor', anchor);
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.setAttribute(CATEGORY_INVOKER_ATTR, '1');
+            button.setAttribute('popovertarget', shell.id);
+            button.setAttribute('aria-expanded', 'false');
+            button.style.setProperty('anchor-name', anchor);
+            const state = {categories, shell, button, baseline, dismissTimer: 0};
+            state.onToggle = () => {
+                button.setAttribute('aria-expanded', String(shell.matches(':popover-open')));
+                syncCategoryCaption(state);
+                scrollPopupPending = true;
+                scheduleScrollToolbars();
+            };
+            state.onClick = (event) => {
+                const action = event.target instanceof Element ? event.target.closest('a') : null;
+                if (!(action instanceof HTMLAnchorElement)
+                    || !Array.from(shell.querySelectorAll(':scope > ul > li > a, :scope > .subject_morelist > ul > li > a')).includes(action)) return;
+                // Native/delegated callbacks keep their event and default action.
+                // Dismiss only after the whole click dispatch has completed.
+                if (state.dismissTimer) window.clearTimeout(state.dismissTimer);
+                state.dismissTimer = window.setTimeout(() => {
+                    state.dismissTimer = 0;
+                    if (categoryPickers.get(owner) !== state) return;
+                    syncCategoryCaption(state);
+                    if (!shell.isConnected || !shell.matches(':popover-open')) return;
+                    const returnFocus = action === document.activeElement || action.contains(document.activeElement);
+                    shell.hidePopover();
+                    if (returnFocus && button.isConnected && (document.activeElement === action
+                        || document.activeElement === document.body || document.activeElement === button)) button.focus({preventScroll: true});
+                }, 0);
+            };
+            shell.addEventListener('toggle', state.onToggle);
+            shell.addEventListener('click', state.onClick);
+            categories.insertBefore(button, shell);
+            categoryPickers.set(owner, state);
+            syncCategoryCaption(state);
+        };
+        const syncCategoryPickerMode = (owner, floating) => {
+            const state = categoryPickers.get(owner);
+            if (!state || state.inline === floating) return;
+            state.inline = floating;
+            const returnFocus = !floating && state.shell.contains(document.activeElement);
+            // Reuse the original toolbar as it reappears on up-scroll. Only
+            // the page-top composition condenses categories into a disclosure.
+            if (floating) {
+                const overflow = state.shell.querySelector('[data-dcuf-role="category-popup"]');
+                // A closed top-layer picker may retain its native expanded
+                // overflow. Collapse through the original control before the
+                // inline strip returns, so no submenu appears without a click.
+                if (overflow && getComputedStyle(overflow).display !== 'none') state.shell.querySelector('[data-dcuf-role="category-toggle"]')?.click();
+                state.shell.removeAttribute('popover');
+            }
+            else state.shell.setAttribute('popover', 'auto');
+            state.button.hidden = floating;
+            if (returnFocus) state.button.focus({preventScroll: true});
+            if (floating && document.activeElement === state.button) {
+                (state.shell.querySelector('a.on,li.on > a') || state.shell.querySelector('a'))?.focus({preventScroll: true});
+            }
         };
         const setSearchDrawerDiagnostics = () => {
             const diagnostics = window.__dcufDiagnostics;
@@ -3917,6 +4159,7 @@ const __dcufSettingsPresenter = (() => {
                 const categories = toolbar.querySelector(':scope > .center_box');
                 const categoryShell = categories?.querySelector(':scope > .inner');
                 const categoryList = categoryShell?.querySelector(':scope > ul');
+                prepareCategoryPicker(listWrap, categories, categoryShell);
                 const rightBox = toolbar.querySelector(':scope > .right_box');
                 const outputArray = toolbar.querySelector('.output_array');
                 const pageSizeShell = toolbar.querySelector('.select_box.array_num');
@@ -3947,6 +4190,7 @@ const __dcufSettingsPresenter = (() => {
                     mark(listWrap, item, { role: 'category-popup-item' });
                     item.querySelectorAll(':scope > a').forEach((action) => mark(listWrap, action, { role: 'category-option' }));
                 });
+                connectCategoryPicker(listWrap, categories, categoryShell);
                 connectScrollToolbar(listWrap, toolbar);
             }
 
@@ -4021,6 +4265,7 @@ const __dcufSettingsPresenter = (() => {
         };
         const disconnectControls = (listWrap) => {
             if (!(listWrap instanceof HTMLElement)) return;
+            disconnectCategoryPicker(listWrap);
             disconnectScrollToolbar(listWrap);
             disconnectSearchDrawers(listWrap);
             disconnectPaginationNavigation(listWrap);
@@ -4105,6 +4350,7 @@ const __dcufSettingsPresenter = (() => {
                 --dcuf-view-fg: var(--dcuf-theme-fg, #22324c);
                 --dcuf-view-fg-sub: var(--dcuf-theme-fg-muted, #5f6f86);
                 --dcuf-view-accent: var(--dcuf-theme-accent, #3f6de0);
+                --dcuf-article-inset: 20px;
                 inline-size: calc(100% - 2 * var(--dcuf-page-gutter,10px));
                 max-inline-size: none;
                 min-inline-size: 0;
@@ -4129,13 +4375,15 @@ const __dcufSettingsPresenter = (() => {
                 --dcuf-view-accent: var(--dcuf-theme-accent, #8cb4ff);
             }
             [data-dcuf-role="article-header-shell"] {
-                margin-block-end: 12px;
+                margin: 0;
             }
-            [data-dcuf-role="article-header"] {
-                padding: 18px 18px 14px;
+            [data-dcuf-role="article-header-shell"] > [data-dcuf-role="article-header"] {
+                margin: calc(-1 * var(--dcuf-article-inset)) calc(-1 * var(--dcuf-article-inset)) 0;
+                padding: 20px calc(var(--dcuf-article-inset) + 16px) 18px;
                 border: 0;
-                border-radius: 16px;
-                background-color: var(--dcuf-b1-paper, var(--dcuf-view-surface));
+                border-block-end: 1px solid var(--dcuf-b1-line, var(--dcuf-view-border));
+                border-radius: 15px 15px 0 0;
+                background-color: color-mix(in srgb, var(--dcuf-theme-accent-soft) 18%, var(--dcuf-b1-paper, var(--dcuf-view-surface)));
                 background-image: none;
                 box-shadow: none;
                 box-sizing: border-box;
@@ -4144,8 +4392,11 @@ const __dcufSettingsPresenter = (() => {
                 background-image: none;
                 box-shadow: none;
             }
-            [data-dcuf-role="article-title-row"] {
+            [data-dcuf-role="article-header"] [data-dcuf-role="article-title-row"] {
                 margin: 0;
+                padding: 0;
+                height: auto;
+                overflow-wrap: anywhere;
                 line-height: 1.45;
             }
             [data-dcuf-role="article-headtext"] {
@@ -4172,11 +4423,16 @@ const __dcufSettingsPresenter = (() => {
             [data-dcuf-role="article-title-device"] {
                 margin-inline-start: 6px;
             }
-            [data-dcuf-role="article-meta"] {
+            [data-dcuf-role="article-header"] [data-dcuf-role="article-meta"] {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                flex-wrap: wrap;
+                gap: 8px 20px;
                 block-size: auto;
-                margin-block-start: 14px;
-                padding-block-start: 11px;
-                border-block-start: 1px solid var(--dcuf-b1-line, var(--dcuf-view-border));
+                margin-block-start: 10px;
+                padding: 0;
+                border: 0;
                 background: transparent;
                 color: var(--dcuf-view-fg-sub);
                 overflow: visible;
@@ -4190,9 +4446,10 @@ const __dcufSettingsPresenter = (() => {
                 min-inline-size: 0;
                 background: transparent;
             }
-            [data-dcuf-role="article-author-group"] { float: inline-start; }
+            [data-dcuf-role="article-author-group"] { float: none; }
             [data-dcuf-role="article-stat-group"] {
-                float: inline-end;
+                float: none;
+                margin-inline-start: auto;
                 justify-content: flex-end;
                 flex-wrap: nowrap;
                 gap: 12px;
@@ -4262,7 +4519,7 @@ const __dcufSettingsPresenter = (() => {
             [data-dcuf-role="article-content"] {
                 inline-size: 100%;
                 max-inline-size: 100%;
-                margin-inline: auto;
+                margin-inline: 0;
                 border: 0;
                 border-radius: 0;
                 background: transparent;
@@ -4792,12 +5049,12 @@ const __dcufSettingsPresenter = (() => {
             @media screen and (max-width: 640px) {
                 [data-dcuf-article-popup] { --dcuf-article-popup-center: calc(50% - 48px); --dcuf-article-popup-clearance: 128px; }
                 [data-dcuf-surface="article-recommendation"][data-dcuf-role="article"] {
+                    --dcuf-article-inset: 8px;
                     inline-size: calc(100% - 2 * var(--dcuf-page-gutter,10px));
                     padding: 8px 8px 0 !important;
                 }
-                [data-dcuf-role="article-header"] {
-                    padding: 15px 14px 12px;
-                    border-radius: 12px;
+                [data-dcuf-role="article-header-shell"] > [data-dcuf-role="article-header"] {
+                    padding: 16px 22px 14px;
                 }
                 [data-dcuf-role="article-title"] { font-size: 20px; }
                 [data-dcuf-role="article-body"] { padding-inline: 14px; }
@@ -5536,7 +5793,6 @@ const __dcufSettingsPresenter = (() => {
                 margin: 0;
                 padding: 14px 8px;
                 border: 0;
-                border-block-end: 1px solid var(--dcuf-comment-border);
                 border-radius: 0;
                 background-color: var(--dcuf-comment-surface);
                 background-image: none;
@@ -5545,6 +5801,15 @@ const __dcufSettingsPresenter = (() => {
                 overflow: visible;
             }
             [data-dcuf-role="comment-list"] > [data-dcuf-role="comment-item"]:first-child { margin-block-start: 0; }
+            [data-dcuf-role="comment-list"] > [data-dcuf-role="comment-item"]:last-child { border-block-end: 0; }
+            /* The next parent starts the separator,even when native reply
+               shells are intervening sibling LIs. No rule above comment text. */
+            [data-dcuf-role="comment-list"] > [data-dcuf-role="comment-item"] ~ [data-dcuf-role="comment-item"] { border-block-start: 1px solid var(--dcuf-comment-border); }
+            [data-dcuf-role="comments-root"] [data-dcuf-role="comment-footer"] { display: flex; align-items: center; gap: 12px; min-block-size: 40px; margin-block-start: 0; padding: 8px 14px; border-block-start: 1px solid var(--dcuf-comment-border); box-sizing: border-box; }
+            [data-dcuf-role="comment-footer"] [data-dcuf-role="comment-footer-pages"] { position: static; flex: 1; margin: 0; padding: 0; text-align: center; font-size: 12px; line-height: 1.5; }
+            [data-dcuf-role="comment-footer"] [data-dcuf-role="comment-footer-actions"] { position: static; display: inline-flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 10px; margin: 0; padding: 0; font-size: 12px; }
+            [data-dcuf-role="comment-footer-actions"] > :is(a,button) { display: inline-flex; align-items: center; min-block-size: 28px; padding: 0; border: 0; background: transparent; color: var(--dcuf-comment-muted); font: inherit; cursor: pointer; }
+            [data-dcuf-role="comment-footer-actions"] > :is(a,button):is(:hover,:focus-visible) { color: var(--dcuf-theme-accent-ink); }
             [data-dcuf-role="comment-item"].dcuf-comment-shell-blocked > :not([data-dcuf-role="reply-shell"]) {
                 display: none;
             }
@@ -5579,17 +5844,23 @@ const __dcufSettingsPresenter = (() => {
                 margin: 0;
             }
             [data-dcuf-role="comments-root"] [data-dcuf-role="comment-content-stack"] [data-dcuf-role="comment-body"],
+            [data-dcuf-role="comments-root"] [data-dcuf-role="comment-content-stack"] [data-dcuf-role="reply-body"],
             [data-dcuf-role="comments-root"] [data-dcuf-role="comment-content-stack"] [data-dcuf-role="comment-text"] {
+                float: none;
                 inline-size: 100%;
                 max-inline-size: 100%;
                 box-sizing: border-box;
             }
             [data-dcuf-role="reply-info"] > [data-dcuf-role="reply-body"] { flex: 1 1 100%; }
             @media (min-width: 760px) {
-                [data-dcuf-role="comment-info"], [data-dcuf-role="comment-content-stack"] { display: grid; grid-template-columns: 128px minmax(0, 1fr); align-items: start; gap: 7px 16px; }
-                [data-dcuf-role="comment-info"] > [data-dcuf-role="comment-content-stack"] { grid-column: 1 / -1; }
+                [data-dcuf-role="comment-info"], [data-dcuf-role="reply-info"] { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; gap: 7px 16px; }
+                [data-dcuf-role="comment-content-stack"] { display: grid; grid-template-columns: 128px minmax(0, 1fr); align-items: start; gap: 7px 16px; }
+                [data-dcuf-role="comment-info"] > [data-dcuf-role="comment-author-group"] { grid-column: 1; }
+                [data-dcuf-role="comment-info"]:not(:has(> [data-dcuf-role="comment-content-stack"])) { grid-template-columns: 128px minmax(0, 1fr) auto; }
+                [data-dcuf-role="reply-info"]:not(:has(> [data-dcuf-role="comment-content-stack"])) { grid-template-columns: 128px minmax(0, 1fr) auto; }
                 [data-dcuf-role="comment-info"] > [data-dcuf-role="comment-author-group"], [data-dcuf-role="comment-content-stack"] > [data-dcuf-role="comment-author-group"] { grid-column: 1; grid-row: 1 / 3; }
-                [data-dcuf-role="comment-info"] > :is([data-dcuf-role="comment-body"], [data-dcuf-role="comment-meta"]), [data-dcuf-role="comment-content-stack"] > :is([data-dcuf-role="comment-body"], [data-dcuf-role="comment-meta"]) { grid-column: 2; }
+                [data-dcuf-role="comment-info"] > [data-dcuf-role="comment-body"], [data-dcuf-role="comment-content-stack"] > :is([data-dcuf-role="comment-body"], [data-dcuf-role="comment-meta"]) { grid-column: 2; }
+                [data-dcuf-role="comment-info"] > [data-dcuf-role="comment-meta"], [data-dcuf-role="reply-info"] > [data-dcuf-role="comment-meta"] { grid-column: -2; grid-row: 1; }
             }
             [data-dcuf-role="comment-author-group"] {
                 position: relative;
@@ -5842,6 +6113,9 @@ const __dcufSettingsPresenter = (() => {
             }
             [data-dcuf-surface="comments-replies"][data-dcuf-role="comments-root"] [data-dcuf-role="native-comment-textarea"] {
                 display: block;
+                /* Native small-composer CSS and inline width both retain927px.
+                   The editor owns this visual width,not the host's old viewport. */
+                inline-size: 100% !important;
                 min-block-size: 112px;
                 padding: 12px 14px;
                 border: 1px solid var(--dcuf-comment-border);
@@ -6430,7 +6704,7 @@ const __dcufSettingsPresenter = (() => {
             });
             markAll(root, '.reply_list > li', 'reply-item', (item) => itemState(item, 'reply'));
             markAll(root, '.cmt_info', 'comment-info');
-            markAll(root, '.cmt_info > .addbox', 'comment-content-stack');
+            markAll(root, '.cmt_info > .addbox, .reply_info > .addbox', 'comment-content-stack');
             markAll(root, '.reply_info', 'reply-info');
             markAll(root, '.cmt_nickbox', 'comment-author-group');
             root.querySelectorAll('.gall_writer, .nickname').forEach((author) => markCommentContext(
@@ -6600,6 +6874,9 @@ const __dcufSettingsPresenter = (() => {
             markAll(root, '.comment_count button, .comment_count a, .comment_top button, .comment_top a', 'native-comment-header-action');
             markAll(root, '.comment_box', 'comment-box', (box) => box.classList.contains('img_comment_box') ? 'image' : 'standard');
             markAll(root, '.cmt_list', 'comment-list');
+            markAll(root, '.bottom_paging_box', 'comment-footer');
+            markAll(root, '.bottom_paging_box .cmt_inner', 'comment-footer-actions');
+            markAll(root, '.bottom_paging_box .cmt_paging', 'comment-footer-pages');
             markCommentItems(root);
             markComposers(root);
             markPopups(root);
@@ -11233,6 +11510,24 @@ const __dcufSettingsPresenter = (() => {
             ${selectors.searchWrap} { grid-area: 2 / 1; width: calc(100% - 22px); margin: 0 0 8px 22px; }
             ${selectors.layout} > ${selectors.bridge} { grid-area: 2 / 2; }
         }
+
+        /* The compact plate is a list-page variant; other route chrome keeps
+           its existing composition. The adapter marks the original parent. */
+        ${selectors.layout}[data-dcuf-list-header] { grid-template-columns: 142px 80px minmax(180px,1fr) 116px 156px; grid-template-rows: 64px; }
+        ${selectors.layout}[data-dcuf-list-header]::before { align-self: start; box-sizing: border-box; height: var(--dcuf-list-header-height,56px); margin: 8px var(--dcuf-page-gutter,10px) 0; border: 1px solid var(--dcuf-b1-rim); border-radius: 15px; background: linear-gradient(var(--dcuf-b1-line),var(--dcuf-b1-line)) 14px var(--dcuf-list-header-divider,55px)/calc(100% - 28px) 1px no-repeat,var(--dcuf-b1-glass); box-shadow: 0 8px 18px -16px color-mix(in srgb,var(--dcuf-theme-fg) 22%,transparent),inset 0 1px 0 var(--dcuf-b1-rim); backdrop-filter: none; }
+        :where([data-dcuf-list-header]) ${selectors.root} ${selectors.logo} > a + a { display: none; }
+        :where([data-dcuf-list-header]) ${selectors.searchWrap} { justify-self: end; max-width: 360px; }
+        :where([data-dcuf-list-header]) ${selectors.topSearch} { height: 36px; }
+        :where([data-dcuf-list-header]) ${selectors.links} { flex-wrap: nowrap; }
+        :where([data-dcuf-list-header]) ${selectors.links} > ul[popover]:popover-open { top: 64px; }
+        :where([data-dcuf-list-header]) ${selectors.links} a { min-height: 32px; padding-inline: 4px; font-size: 12px; }
+        @media (max-width: 899px) {
+            ${selectors.layout}[data-dcuf-list-header] { --dcuf-list-header-divider: 93px; grid-template-columns: 130px minmax(0,1fr) 136px; grid-template-rows: 54px 48px; }
+            ${selectors.layout}[data-dcuf-list-header]::before { grid-area: 1 / 1 / 3 / -1; margin: 8px var(--dcuf-page-gutter,8px) 0; }
+            :where([data-dcuf-list-header]) ${selectors.links} { grid-area: 1 / 3; }
+            :where([data-dcuf-list-header]) ${selectors.searchWrap} { grid-area: 2 / 1 / 3 / 3; justify-self: start; max-width: none; }
+            ${selectors.layout}[data-dcuf-list-header] > ${selectors.bridge} { grid-area: 2 / 3; }
+        }
         ${selectors.darkRoot} ${selectors.logo} > a:first-child { filter: brightness(0) invert(1); }
 `
         });
@@ -11321,6 +11616,19 @@ const __dcufSettingsPresenter = (() => {
         let mutationUnsubscribe = null;
         let styleOwner = null;
         let utilitySerial = 0;
+        let listPageProjection = null;
+        const syncListPageProjection = () => {
+            const body = document.body;
+            if (body && states.size && /\/board\/lists\/?$/.test(location.pathname)) {
+                if (!listPageProjection) listPageProjection = {node: body, original: body.getAttribute('data-dcuf-list-header')};
+                body.setAttribute('data-dcuf-list-header', '1');
+            } else if (listPageProjection) {
+                const {node, original} = listPageProjection;
+                if (original === null) node.removeAttribute('data-dcuf-list-header');
+                else node.setAttribute('data-dcuf-list-header', original);
+                listPageProjection = null;
+            }
+        };
 
         const restoreUtility = (state) => {
             const utility = state.utility;
@@ -11412,6 +11720,11 @@ const __dcufSettingsPresenter = (() => {
                 else element.setAttribute(name, value);
             }));
             state.layoutBaselines.clear();
+            if (state.listLayout) {
+                if (state.listLayout.original === null) state.listLayout.node.removeAttribute('data-dcuf-list-header');
+                else state.listLayout.node.setAttribute('data-dcuf-list-header', state.listLayout.original);
+                state.listLayout = null;
+            }
             state.baselines.forEach((original, element) => {
                 if (original === null) element.removeAttribute(ROLE_ATTRIBUTE);
                 else element.setAttribute(ROLE_ATTRIBUTE, original);
@@ -11424,6 +11737,15 @@ const __dcufSettingsPresenter = (() => {
             // The real host has sibling chrome; older fixtures nest it in HEADER.
             // Project layout onto existing parents only. Never move native nodes.
             const layout = state.root.parentElement?.matches('.dcwrap') ? state.root.parentElement : state.root;
+            if (state.listLayout && state.listLayout.node !== layout) {
+                if (state.listLayout.original === null) state.listLayout.node.removeAttribute('data-dcuf-list-header');
+                else state.listLayout.node.setAttribute('data-dcuf-list-header', state.listLayout.original);
+                state.listLayout = null;
+            }
+            if (/\/board\/lists\/?$/.test(location.pathname)) {
+                if (!state.listLayout) state.listLayout = {node: layout, original: layout.getAttribute('data-dcuf-list-header') === '1' ? null : layout.getAttribute('data-dcuf-list-header')};
+                layout.setAttribute('data-dcuf-list-header', '1');
+            }
             const desiredLayout = new Map([[layout, ['data-dcuf-header-layout', layout === state.root ? 'self' : 'parent']]]);
             const bridge = layout.querySelector(':scope > .visit_bookmark');
             if (bridge?.querySelector('.newvisit_history')) desiredLayout.set(bridge, ['data-dcuf-header-bridge', '1']);
@@ -11515,6 +11837,7 @@ const __dcufSettingsPresenter = (() => {
         const refresh = (root = document) => {
             Array.from(states.keys()).filter((candidate) => !candidate.isConnected).forEach(disconnectRoot);
             collectRoots(root).forEach(connectRoot);
+            syncListPageProjection();
             return snapshot();
         };
 
@@ -11550,6 +11873,7 @@ const __dcufSettingsPresenter = (() => {
 
         const dispose = () => {
             Array.from(states.keys()).reverse().forEach(disconnectRoot);
+            syncListPageProjection();
             styleOwner?.remove();
             styleOwner = null;
             mutationUnsubscribe?.();
@@ -11652,7 +11976,7 @@ const __dcufSettingsPresenter = (() => {
             grid-template-columns: minmax(0, 1fr) auto;
             align-items: stretch;
             gap: 8px;
-            padding: 16px 4px !important;
+            padding: var(--dcuf-gallery-head-padding,16px 4px) !important;
             margin: 0 auto 4px;
             box-sizing: border-box;
             width: calc(100% - 2 * var(--dcuf-page-gutter,10px));
@@ -11684,6 +12008,16 @@ const __dcufSettingsPresenter = (() => {
             color: var(--dcuf-theme-fg-muted);
         }
         ${selectors.clearfix} { content: none; display: none; }
+        ${selectors.right} > [data-dcuf-gallery-more-toggle] { anchor-name: --dcuf-gallery-more; min-height: 32px; padding: 0 9px; border: 0; border-radius: 6px; background: transparent; color: var(--dcuf-theme-fg-muted); font: 500 12px/1.4 system-ui,sans-serif; cursor: pointer; }
+        ${selectors.right} > [data-dcuf-gallery-more-toggle]:is(:hover,:focus-visible,[aria-expanded="true"]) { background: var(--dcuf-control-selected-bg); color: var(--dcuf-theme-accent-ink); }
+        :where([data-dcuf-list-header]) ${selectors.right} { position: relative; }
+        ${selectors.right}:not([data-dcuf-gallery-more-open]) > [data-dcuf-gallery-more-index] { display: none; }
+        ${selectors.right}[data-dcuf-gallery-more-open] { z-index: 1060; }
+        ${selectors.right}[data-dcuf-gallery-more-open]::after { content: ''; position: absolute; top: calc(100% + 6px); right: 0; width: 210px; height: calc(var(--dcuf-gallery-more-count) * 36px + 12px); box-sizing: border-box; border: 1px solid var(--dcuf-b1-rim); border-radius: 12px; background: var(--dcuf-b1-sheen),var(--dcuf-b1-floating); backdrop-filter: var(--dcuf-b1-floating-filter); box-shadow: var(--dcuf-b1-shadow); }
+        ${selectors.right}[data-dcuf-gallery-more-open] > [data-dcuf-gallery-more-index] { position: absolute; z-index: 1; top: calc(100% + 12px + var(--dcuf-gallery-more-row) * 36px); right: 6px; float: none; display: flex; align-items: center; justify-content: flex-start; gap: 6px; width: 198px; height: 36px; margin: 0; padding: 8px 10px; border: 0; border-radius: 6px; background: transparent; color: var(--dcuf-theme-fg); font: 500 12px/1.4 system-ui,sans-serif; text-align: start; cursor: pointer; }
+        [data-dcuf-gallery-more-index="0"] { --dcuf-gallery-more-row: 0; } [data-dcuf-gallery-more-index="1"] { --dcuf-gallery-more-row: 1; } [data-dcuf-gallery-more-index="2"] { --dcuf-gallery-more-row: 2; } [data-dcuf-gallery-more-index="3"] { --dcuf-gallery-more-row: 3; }
+        ${selectors.right}[data-dcuf-gallery-more-open] > [data-dcuf-gallery-more-index]::before { display: none; }
+
         ${selectors.right} [data-dcuf-gallery-page-head-role="utility-control"] { display: inline-flex; align-items: center; justify-content: center; gap: 5px; min-width: 28px; min-height: 28px; height: auto; padding: 0 4px; border: 0; border-radius: 6px; background: transparent; box-shadow: none; color: var(--dcuf-theme-fg-muted); font: 500 12px/1.4 system-ui,sans-serif; cursor: pointer; }
         ${selectors.right} [data-dcuf-gallery-page-head-role="utility-control"]:is(:hover,:focus-visible,:active) { background: var(--dcuf-control-selected-bg); color: var(--dcuf-theme-accent-ink); }
         ${selectors.right} [data-dcuf-gallery-page-head-role="utility-icon"] { position: static; inset: auto; display: block; flex: 0 0 10px; width: 10px; height: 10px; margin: 0; background: currentColor; mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='m4 6 4 4 4-4' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat; }
@@ -11715,7 +12049,7 @@ const __dcufSettingsPresenter = (() => {
             [data-dcuf-gallery-page-head-role="guide-layer"] { --dcuf-gallery-guide-center: calc(50% - 48px); --dcuf-gallery-guide-clearance: 96px; }
         }
         @media (max-width: 759px) {
-            ${selectors.root} { grid-template-columns: minmax(0, 1fr); width: calc(100% - 2 * var(--dcuf-page-gutter,10px)); padding: 14px 4px !important; }
+            ${selectors.root} { grid-template-columns: minmax(0, 1fr); width: calc(100% - 2 * var(--dcuf-page-gutter,10px)); padding: var(--dcuf-gallery-head-padding,14px 4px) !important; }
             ${selectors.right} { justify-content: flex-start; }
             ${selectors.left} > h2 { font-size: 22px; }
         }
@@ -11724,6 +12058,11 @@ const __dcufSettingsPresenter = (() => {
             [data-dcuf-gallery-page-head-role="settings-anchor"] { position: static; }
             ${selectors.root} [data-dcuf-gallery-page-head-role="settings-layer"] { max-height: min(360px,40dvh); overflow: auto; }
         }
+
+        :where([data-dcuf-list-header]) ${selectors.root} { align-items: center; --dcuf-gallery-head-padding: 13px 14px; margin: 0 auto; border: 0; background: transparent; }
+        :where([data-dcuf-list-header]) ${selectors.left} { align-items: center; gap: 10px; }
+        :where([data-dcuf-list-header]) ${selectors.left} > h2 { font: 730 24px/1.3 system-ui,sans-serif; letter-spacing: -.6px; }
+        @media (max-width: 759px) { :where([data-dcuf-list-header]) ${selectors.root} { --dcuf-gallery-head-padding: 12px 14px; } }
 
 ${__dcufBuildGallerySettingsStyle(__dcufDescribeGallerySettingsStyleSelectors())}
 ${__dcufBuildMemoWorkbenchStyle(__dcufDescribeGallerySettingsStyleSelectors())}
@@ -11927,6 +12266,47 @@ ${selectors.shellTag}[data-dcuf-gallery-page-head-role^="settings-popup-"] :is(b
         const STYLE_ID = 'dcuf-gallery-page-head-style';
         const SUBSCRIBER_KEY = 'gallery-page-head-style';
         const states = new Map();
+        const restoreMore = (state) => {
+            const menu=state.more;if(!menu)return;
+            menu.right.removeEventListener('click',menu.onClick);
+            document.removeEventListener('click',menu.onOutside,true);
+            document.removeEventListener('keydown',menu.onKey);
+            menu.right.removeAttribute('data-dcuf-gallery-more-open');
+            menu.right.style.removeProperty('--dcuf-gallery-more-count');
+            menu.actions.forEach(node=>node.removeAttribute('data-dcuf-gallery-more-index'));
+            menu.button.remove();state.more=null;
+        };
+        const syncMore = (state) => {
+            if (!/\/board\/lists\/?$/.test(location.pathname)) { restoreMore(state); return; }
+            const right=state.root.querySelector(':scope > .fr');
+            if(state.more&&(state.more.right!==right||state.more.button.parentNode!==right))restoreMore(state);
+            if(!right)return;
+            let menu=state.more;
+            if(!menu){
+                right.querySelectorAll(':scope > [data-dcuf-gallery-more-toggle]').forEach(n=>n.remove());
+                right.removeAttribute('data-dcuf-gallery-more-open');
+                const button=document.createElement('button');button.type='button';button.textContent='더보기';
+                button.setAttribute('data-dcuf-gallery-more-toggle','1');button.setAttribute('aria-expanded','false');
+                const setOpen=open=>{right.toggleAttribute('data-dcuf-gallery-more-open',open);button.setAttribute('aria-expanded',String(open));};
+                const onClick=event=>{
+                    if(event.target.closest('[data-dcuf-gallery-more-toggle]')===button){setOpen(button.getAttribute('aria-expanded')!=='true');if(button.getAttribute('aria-expanded')==='true')menu.actions[0]?.focus();}
+                    else if(event.target.closest('[data-dcuf-gallery-more-index]'))queueMicrotask(()=>{
+                        const restoreFocus=menu.actions.includes(document.activeElement);
+                        setOpen(false);if(restoreFocus)button.focus();
+                    });
+                };
+                const onOutside=event=>{if(!right.contains(event.target))setOpen(false);};
+                const onKey=event=>{if(event.key==='Escape'&&button.getAttribute('aria-expanded')==='true'){setOpen(false);button.focus();event.preventDefault();}};
+                right.addEventListener('click',onClick);document.addEventListener('click',onOutside,true);document.addEventListener('keydown',onKey);
+                right.append(button);menu=state.more={right,button,actions:[],onClick,onOutside,onKey};
+            }
+            // Native action nodes and parents stay intact;only the disclosure
+            // layout is projected. Native sibling/parent callbacks still work.
+            menu.actions=[...right.querySelectorAll(':scope > .relate,:scope > .adr_copy,:scope > .gall_useinfo,:scope > .gall_info')];
+            menu.actions.forEach((node,index)=>node.setAttribute('data-dcuf-gallery-more-index',String(index)));
+            right.style.setProperty('--dcuf-gallery-more-count',String(menu.actions.length));
+            menu.button.hidden=menu.actions.length===0;
+        };
         let activeCoordinator = null;
         let mutationUnsubscribe = null;
         let styleOwner = null;
@@ -11956,6 +12336,7 @@ ${selectors.shellTag}[data-dcuf-gallery-page-head-role^="settings-popup-"] :is(b
         };
 
         const restoreRoles = (state) => {
+            restoreMore(state);
             state.baselines.forEach((original, element) => {
                 if (original === null) element.removeAttribute(ROLE_ATTRIBUTE);
                 else element.setAttribute(ROLE_ATTRIBUTE, original);
@@ -12060,6 +12441,7 @@ ${selectors.shellTag}[data-dcuf-gallery-page-head-role^="settings-popup-"] :is(b
                 states.set(root, state);
             }
             syncRoles(state);
+            syncMore(state);
         };
 
         const collectRoots = (root) => {
@@ -12207,7 +12589,18 @@ ${selectors.shellTag}[data-dcuf-gallery-page-head-role^="settings-popup-"] :is(b
         ${selectors.list} > li > a[data-dcuf-header-gnb-role="current-link"],
         ${selectors.list} > li > a:is(:hover, :focus-visible) { background: transparent; border-color: var(--dcuf-theme-accent-ink); color: var(--dcuf-theme-accent-ink); }
         ${selectors.darkList} > li > a[data-dcuf-header-gnb-role="current-link"] { color: var(--dcuf-theme-accent-ink); }
-        @media (max-width: 899px) { ${selectors.root} { grid-area: 3 / 1 / 4 / -1; padding: 0 22px 12px; } ${selectors.list} { gap: 0 16px; padding: 0 22px 12px; box-sizing: border-box; } }
+        ${selectors.root} [data-dcuf-explore-toggle] { anchor-name: --dcuf-explore; display: inline-flex; align-items: center; gap: 8px; min-height: 36px; padding: 0 10px; border: 0; border-radius: 7px; background: transparent; color: var(--dcuf-theme-fg); font: 600 12px/1.4 system-ui,sans-serif; cursor: pointer; }
+        ${selectors.root} [data-dcuf-explore-toggle]::after { content: ''; border-inline: 3px solid transparent; border-top: 4px solid currentColor; }
+        ${selectors.root} [data-dcuf-explore-toggle]:is(:hover,:focus-visible,[aria-expanded="true"]) { background: var(--dcuf-control-selected-bg); color: var(--dcuf-theme-accent-ink); }
+        ${selectors.list}[popover]:not(:popover-open) { display: none; }
+        ${selectors.list}[popover]:popover-open { position: fixed; position-anchor: --dcuf-explore; inset: 64px auto auto 152px; top: calc(anchor(bottom) + 6px); left: clamp(12px,anchor(left),calc(100vw - 232px)); display: grid; grid-template-columns: 1fr 1fr; width: min(240px,calc(100vw - 24px)); max-height: calc(100dvh - 100px); overflow: auto; padding: 8px; margin: 0; gap: 2px; border: 1px solid var(--dcuf-b1-rim); border-radius: 12px; background: var(--dcuf-b1-sheen),var(--dcuf-b1-floating); backdrop-filter: var(--dcuf-b1-floating-filter); box-shadow: var(--dcuf-b1-shadow); box-sizing: border-box; }
+        ${selectors.list}[popover] > li > a { display: flex; min-height: 36px; padding: 0 10px; border: 0; border-radius: 6px; font-size: 12px; }
+        @media (max-width: 899px) {
+            ${selectors.root} { grid-area: 3 / 1 / 4 / -1; padding: 0 22px 12px; }
+            ${selectors.list} { gap: 0 16px; padding: 0 22px 12px; box-sizing: border-box; }
+            :where([data-dcuf-list-header]) ${selectors.root} { grid-area: 1 / 2; padding: 0; }
+            :where([data-dcuf-list-header]) ${selectors.list}[popover] { gap: 2px; padding: 8px; }
+        }
 
 `
         });
@@ -12249,6 +12642,7 @@ ${selectors.shellTag}[data-dcuf-gallery-page-head-role^="settings-popup-"] :is(b
         const STYLE_ID = 'dcuf-header-gnb-style';
         const SUBSCRIBER_KEY = 'header-gnb-style';
         const states = new Map();
+        let menuSerial = 0;
         let activeCoordinator = null;
         let mutationUnsubscribe = null;
         let styleOwner = null;
@@ -12278,6 +12672,16 @@ ${selectors.shellTag}[data-dcuf-gallery-page-head-role^="settings-popup-"] :is(b
         };
 
         const restoreRoles = (state) => {
+            if (state.explore) {
+                const {list, button, id, onToggle} = state.explore;
+                if (list.matches(':popover-open')) list.hidePopover();
+                list.removeEventListener('toggle', onToggle);
+                list.removeAttribute('popover');
+                list.removeAttribute('data-dcuf-explore-baseline');
+                if (id === null) list.removeAttribute('id'); else list.id = id;
+                button.remove();
+                state.explore = null;
+            }
             state.baselines.forEach((original, element) => {
                 if (original === null) element.removeAttribute(ROLE_ATTRIBUTE);
                 else element.setAttribute(ROLE_ATTRIBUTE, original);
@@ -12286,6 +12690,17 @@ ${selectors.shellTag}[data-dcuf-gallery-page-head-role^="settings-popup-"] :is(b
         };
 
         const syncRoles = (state) => {
+            const nextList = state.root.querySelector('.gnb_list');
+            if (state.explore && (state.explore.list !== nextList || state.explore.button.parentNode !== nextList?.parentNode)) restoreRoles(state);
+            if (!state.explore) {
+                state.root.querySelectorAll('[data-dcuf-explore-toggle]').forEach(button=>button.remove());
+                state.root.querySelectorAll('.gnb_list[data-dcuf-explore-baseline]').forEach(list=>{
+                    const id=list.getAttribute('data-dcuf-explore-baseline');
+                    list.removeAttribute('popover');
+                    if(id)list.id=id;else list.removeAttribute('id');
+                    list.removeAttribute('data-dcuf-explore-baseline');
+                });
+            }
             const desired = new Map([[state.root, 'root']]);
             state.root.querySelectorAll('nav.gnb').forEach((nav) => desired.set(nav, 'nav'));
             state.root.querySelectorAll('.gnb_list').forEach((list) => desired.set(list, 'list'));
@@ -12309,6 +12724,22 @@ ${selectors.shellTag}[data-dcuf-gallery-page-head-role^="settings-popup-"] :is(b
                 }
                 element.setAttribute(ROLE_ATTRIBUTE, role);
             });
+            const list = state.root.querySelector('.gnb_list');
+            if (list && !state.explore && /\/board\/lists\/?$/.test(location.pathname) && typeof list.showPopover === 'function' && !list.hasAttribute('popover')) {
+                const id = list.getAttribute('id');
+                list.setAttribute('data-dcuf-explore-baseline',id || '');
+                if (!id) list.id = `dcuf-explore-${++menuSerial}`;
+                list.setAttribute('popover', 'auto');
+                const button = document.createElement('button');
+                button.type = 'button'; button.textContent = '탐색';
+                button.setAttribute('data-dcuf-explore-toggle', '1');
+                button.setAttribute('popovertarget', list.id);
+                button.setAttribute('aria-expanded', 'false');
+                const onToggle = () => button.setAttribute('aria-expanded', String(list.matches(':popover-open')));
+                list.addEventListener('toggle', onToggle);
+                list.parentElement.insertBefore(button, list);
+                state.explore = {list, button, id, onToggle};
+            }
         };
 
         const disconnectRoot = (root) => {
@@ -13021,6 +13452,9 @@ ${selectors.shellTag}[data-dcuf-gallery-page-head-role^="settings-popup-"] :is(b
                 position: relative;
                 overflow: visible;
             }
+            /* Native empty gallery-box retains15px bottom margin after its
+               contents are concealed;that margin collapses between our rows. */
+            :where([data-dcuf-list-header])[data-dcuf-header-drawer-scope="1"] [data-dcuf-header-drawer-part="carrier"] { margin: 0; }
             [data-dcuf-header-drawer-scope="1"] [data-dcuf-header-drawer="1"] {
                 position: relative;
                 z-index: 3;
@@ -13223,9 +13657,10 @@ ${selectors.shellTag}[data-dcuf-gallery-page-head-role^="settings-popup-"] :is(b
             }
             [data-dcuf-header-drawer-scope="1"] ${selectors.relationPopup}:not([data-dcuf-header-relation-static="1"]) {
                 position: fixed;
-                left: 50% !important;
-                top: var(--dcuf-header-popup-center,calc(50% - 48px)) !important;
-                transform: translate(-50%,-50%);
+                position-anchor: --dcuf-gallery-more;
+                left: clamp(12px,calc(anchor(right,calc(100vw - 12px)) - 640px),calc(100vw - min(640px,calc(100vw - 32px)) - 12px)) !important;
+                top: clamp(12px,calc(anchor(bottom,110px) + 8px),calc(100dvh - 220px)) !important;
+                transform: none;
                 width: min(640px,calc(100vw - 32px));
                 max-width: calc(100vw - 32px);
                 max-height: calc(100dvh - var(--dcuf-header-popup-clearance,128px));
@@ -13433,6 +13868,7 @@ ${selectors.shellTag}[data-dcuf-gallery-page-head-role^="settings-popup-"] :is(b
         const syncParts = () => {
             const desired = new Map();
             const parts = (root, selector, role) => root?.querySelectorAll(selector).forEach((element) => desired.set(element, role));
+            parts(document, '.issue_wrap > .issuebox.gallery_box', 'carrier');
             const door = findOutsideDrawer('.issue_contentbox');
             parts(door, '.minor_intro_box', 'intro'); parts(door, '.img_contbox', 'hero');
             parts(door, '.mintro_imgbox', 'image'); parts(door, '.mintro_txtbox', 'description');
@@ -17864,7 +18300,7 @@ const ThemeModule = (() => {
         DEFAULTS: Object.freeze({
             recentHighlight: true,
             draftRecovery: true,
-            postPreview: false
+            postPreview: true
         }),
         DRAFT_TTL: 72 * 60 * 60 * 1000,
         DRAFT_MAX_BYTES: 512 * 1024,
@@ -17936,8 +18372,11 @@ const ThemeModule = (() => {
             this._draftStoreCache = emptyStore;
             return emptyStore;
         },
-        async fetchPreviewHtml(url, { signal } = {}) {
-            const response = await fetch(url, { credentials: 'same-origin', signal, headers: { Accept: 'text/html' } });
+        async fetchPreviewHtml(url, { signal, referrer } = {}) {
+            const response = await fetch(url, {
+                credentials: 'same-origin', signal, headers: { Accept: 'text/html' },
+                ...(referrer ? { referrer, referrerPolicy: 'same-origin' } : {}),
+            });
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
             return response.text();
         },
@@ -17970,6 +18409,7 @@ const ThemeModule = (() => {
         bindPreview(listContainer) { return __dcufConvenienceHostAdapter.invokeNative('bindPreview', this, listContainer); },
         ensurePreviewClickGuard() { return __dcufConvenienceHostAdapter.invokeNative('ensurePreviewClickGuard', this); },
         sanitizePreviewDocument(html, sourceUrl) { return __dcufConvenienceHostAdapter.invokeNative('sanitizePreviewDocument', this, html, sourceUrl); },
+        resolvePreviewMovies(html, sourceUrl, options) { return __dcufConvenienceHostAdapter.invokeNative('resolvePreviewMovies', this, html, sourceUrl, options); },
         getCachedPreview(url) { return __dcufConvenienceHostAdapter.invokeNative('getCachedPreview', this, url); },
         setCachedPreview(url, html) { return __dcufConvenienceHostAdapter.invokeNative('setCachedPreview', this, url, html); },
         clearPreviewImageRuntime() { return __dcufConvenienceHostAdapter.invokeNative('clearPreviewImageRuntime', this); },
@@ -18224,6 +18664,23 @@ const ThemeModule = (() => {
     };
     const __dcufConvenienceHostAdapter = (() => {
         const presentation = __dcufCreateConveniencePresentation();
+        const previewSource = (doc) => [
+            '#dgn_content_de', '.writing_view_box .write_div', '.gallview_contents .write_div',
+            '.view_content_wrap .write_div', '.gallview_contents', '.writing_view_box',
+        ].map((selector) => doc.querySelector(selector)).find((node) => node instanceof Element);
+        const previewResource = (candidates, sourceUrl, image = false) => {
+            for (const candidate of candidates.filter(Boolean)) {
+                try {
+                    const url = new URL(candidate, sourceUrl);
+                    if (url.username || url.password) continue;
+                    if (!['http:', 'https:'].includes(url.protocol)
+                        && !(image && url.protocol === 'data:' && /^data:image\//i.test(url.href))) continue;
+                    if (image && /(?:kcap_none|fix_nik|(?:gallview_)?loading(?:_ori)?)(?:\.[a-z]+)?(?:$|[?#])/i.test(url.href)) continue;
+                    return url.href;
+                } catch { /* try the next lazy or media source */ }
+            }
+            return null;
+        };
         const markOwnedSurface = (element, surface, role = 'panel', state = 'open') => {
             element.setAttribute('data-dcuf-surface', surface);
             element.setAttribute('data-dcuf-role', role);
@@ -18745,45 +19202,121 @@ const ThemeModule = (() => {
                 if (event.key === 'Escape' && this._previewPanel) this.closePreview();
             }, true);
         },
+        async resolvePreviewMovies(html, sourceUrl, { signal } = {}) {
+            const doc = new DOMParser().parseFromString(String(html || ''), 'text/html');
+            const source = previewSource(doc);
+            if (!source) return html;
+            const controller = new AbortController();
+            const onAbort = () => controller.abort(signal.reason);
+            signal?.addEventListener('abort', onAbort, { once: true });
+            const deadline = window.setTimeout(() => controller.abort(), 4000);
+            try {
+                for (const frame of source.querySelectorAll('iframe')) {
+                    signal?.throwIfAborted();
+                    try {
+                        const movieUrl = new URL(frame.getAttribute('src'), sourceUrl);
+                        if (movieUrl.origin !== new URL(sourceUrl).origin || movieUrl.pathname !== '/board/movie/movie_view'
+                            || !/^\d+$/.test(movieUrl.searchParams.get('no') || '')) continue;
+                        // Only this native read endpoint is acquired. Never run the player
+                        // page: its scripts apply the site's own autoplay settings. One
+                        // shared deadline bounds all sequential frame reads for this preview.
+                        controller.signal.throwIfAborted();
+                        movieUrl.search = new URLSearchParams({ no: movieUrl.searchParams.get('no') }).toString();
+                        const movieHtml = await this.fetchPreviewHtml(movieUrl.href, { signal: controller.signal, referrer: sourceUrl });
+                        signal?.throwIfAborted();
+                        const movieDoc = new DOMParser().parseFromString(movieHtml, 'text/html');
+                        const video = movieDoc.querySelector('video');
+                        if (!video) throw new Error('Native movie has no video source');
+                        [video, ...video.querySelectorAll('source')].forEach((node) => {
+                            ['src', 'data-src', 'data-original', 'poster'].forEach((name) => {
+                                const value = node.getAttribute(name);
+                                if (value) node.setAttribute(name, new URL(value, movieUrl).href);
+                            });
+                        });
+                        frame.replaceWith(doc.importNode(video, true));
+                    } catch (error) {
+                        if (signal?.aborted) throw signal.reason;
+                        const link = doc.createElement('a');
+                        link.href = sourceUrl; link.textContent = '미디어는 원문에서 보기';
+                        frame.replaceWith(link);
+                    }
+                }
+            } finally {
+                window.clearTimeout(deadline);
+                signal?.removeEventListener('abort', onAbort);
+            }
+            return doc.documentElement.outerHTML;
+        },
         sanitizePreviewDocument(html, sourceUrl) {
             const doc = new DOMParser().parseFromString(String(html || ''), 'text/html');
-            const source = doc.querySelector('#dgn_content_de, .writing_view_box .write_div, .gallview_contents .write_div, .view_content_wrap .write_div, .gallview_contents, .writing_view_box');
+            const source = previewSource(doc);
             if (!(source instanceof Element)) throw new Error('본문 영역을 찾지 못했습니다.');
             const clone = source.cloneNode(true);
-            clone.querySelectorAll('.captcha,#kcaptcha,[class*="captcha"],.kap_codeimg,.btn_recommend_box,.btn_recommend,.recommend_box,#recommend_box,#recomAjax,.gall_writer,.gallview_head,.view_bottom_btnbox,.view_bottom,.gallview_bottom,.recom_bottom_box,.vote_box,.appending_file,.write_ban,.write_div_bottom,.view_comment,.comment_wrap,.cmt_write_box').forEach((node) => node.remove());
+            clone.querySelectorAll('#tip_video,.tip_box2.tip_video,.captcha,#kcaptcha,[class*="captcha"],.kap_codeimg,.btn_recommend_box,.btn_recommend,.recommend_box,#recommend_box,#recomAjax,.gall_writer,.gallview_head,.view_bottom_btnbox,.view_bottom,.gallview_bottom,.recom_bottom_box,.vote_box,.appending_file,.write_ban,.write_div_bottom,.view_comment,.comment_wrap,.cmt_write_box').forEach((node) => node.remove());
             const auxiliaryLabel = /^(?:추천\s*검색|원본\s*첨부파일(?:\s*\d+)?)$/;
             Array.from(clone.querySelectorAll('*')).reverse().forEach((node) => {
                 const text = String(node.textContent || '').replace(/\s+/g, ' ').trim();
                 if (auxiliaryLabel.test(text)) node.remove();
             });
-            clone.querySelectorAll('script,style,form,iframe,object,embed,input,textarea,select,button,noscript,svg,math,foreignObject,canvas,source,track').forEach((node) => node.remove());
-            clone.querySelectorAll('video,audio').forEach((node) => {
-                const link = doc.createElement('a'); link.href = sourceUrl; link.textContent = '미디어는 원문에서 보기'; node.replaceWith(link);
-            });
             clone.querySelectorAll('picture').forEach((picture) => {
                 const image = picture.querySelector('img');
-                if (image) picture.replaceWith(image); else picture.remove();
+                if (!image) { picture.remove(); return; }
+                const source = picture.querySelector('source[srcset],source[data-srcset]');
+                const srcset = source?.getAttribute('data-srcset') || source?.getAttribute('srcset') || image.getAttribute('data-srcset') || image.getAttribute('srcset');
+                const candidate = srcset?.trim().split(/\s+/)[0].replace(/,$/, '');
+                if (candidate) image.setAttribute('data-src', candidate);
+                picture.replaceWith(image);
             });
-            const allowedTags = new Set(['A', 'B', 'BLOCKQUOTE', 'BR', 'CODE', 'DEL', 'DIV', 'EM', 'FIGCAPTION', 'FIGURE', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'HR', 'I', 'IMG', 'LI', 'OL', 'P', 'PRE', 'S', 'SMALL', 'SPAN', 'STRONG', 'SUB', 'SUP', 'TABLE', 'TBODY', 'TD', 'TFOOT', 'TH', 'THEAD', 'TR', 'U', 'UL']);
+            const mediaAttributes = new Map();
+            clone.querySelectorAll('video,audio').forEach((node) => {
+                // Chrome receives native GIF/WebP as a looping MP4 surrogate.
+                // data-src is its original IMAGE fallback,not video.src. Restore
+                // the original animation instead of overriding the MP4 source.
+                if (node.matches('video[loop][data-src][data-fileno]') && node.querySelector('source[onerror*="change_gif"]')) {
+                    const original = previewResource([node.getAttribute('data-src')], sourceUrl, true);
+                    if (original) { const image=doc.createElement('img');image.setAttribute('data-original',original);node.replaceWith(image);return; }
+                }
+                const media = doc.createElement(node.tagName.toLowerCase());
+                let src = previewResource([node.getAttribute('src')], sourceUrl);
+                node.querySelectorAll('source').forEach((source) => {
+                    const src = previewResource([source.getAttribute('src'), source.getAttribute('data-src')], sourceUrl);
+                    if (!src) return;
+                    const clean = doc.createElement('source'); clean.src = src;
+                    const type = source.getAttribute('type');
+                    if (/^(?:video|audio)\/[\w.+-]+$/i.test(type || '')) clean.type = type;
+                    media.appendChild(clean);
+                    mediaAttributes.set(clean, true);
+                });
+                if (!src && !media.childElementCount) src=previewResource([node.getAttribute('data-original'),node.getAttribute('data-src')],sourceUrl);
+                if (src) media.src=src;
+                if (!src && !media.childElementCount) {
+                    const link = doc.createElement('a'); link.href = sourceUrl; link.textContent = '미디어는 원문에서 보기'; node.replaceWith(link);
+                    return;
+                }
+                media.controls = true; media.defaultMuted = true; media.setAttribute('muted', '');
+                media.preload = 'metadata';
+                if (media.tagName === 'VIDEO') {
+                    media.setAttribute('playsinline', '');
+                    const poster = previewResource([node.getAttribute('poster')], sourceUrl, true);
+                    if (poster) media.poster = poster;
+                }
+                mediaAttributes.set(media, true);
+                node.replaceWith(media);
+            });
+            clone.querySelectorAll('script,style,form,iframe,object,embed,input,textarea,select,button,noscript,svg,math,foreignObject,canvas,track').forEach((node) => node.remove());
+            clone.querySelectorAll('source').forEach((node) => { if (!mediaAttributes.has(node)) node.remove(); });
+            const allowedTags = new Set(['A', 'AUDIO', 'B', 'BLOCKQUOTE', 'BR', 'CODE', 'DEL', 'DIV', 'EM', 'FIGCAPTION', 'FIGURE', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'HR', 'I', 'IMG', 'LI', 'OL', 'P', 'PRE', 'S', 'SMALL', 'SOURCE', 'SPAN', 'STRONG', 'SUB', 'SUP', 'TABLE', 'TBODY', 'TD', 'TFOOT', 'TH', 'THEAD', 'TR', 'U', 'UL', 'VIDEO']);
             Array.from(clone.querySelectorAll('*')).reverse().forEach((node) => {
                 if (!allowedTags.has(node.tagName)) node.replaceWith(...node.childNodes);
             });
             clone.querySelectorAll('img').forEach((image) => {
-                const candidates = [image.getAttribute('data-original'), image.getAttribute('data-src'), image.getAttribute('src')].filter(Boolean);
-                let resolved = null;
-                for (const candidate of candidates) {
-                    try {
-                        const next = new URL(candidate, sourceUrl);
-                        if (!['http:', 'https:', 'data:', 'blob:'].includes(next.protocol)) continue;
-                        if (/(?:kcap_none|fix_nik|loading)(?:\.[a-z]+)?(?:$|[?#])/i.test(next.href)) continue;
-                        resolved = next; break;
-                    } catch { /* try the next lazy-image source */ }
-                }
+                const candidates = [image.getAttribute('data-original'), image.getAttribute('data-src'), image.getAttribute('data-srcset')?.trim().split(/\s+/)[0].replace(/,$/, ''), image.getAttribute('srcset')?.trim().split(/\s+/)[0].replace(/,$/, ''), image.getAttribute('src')];
+                const resolved = previewResource(candidates, sourceUrl, true);
                 if (!resolved) { image.remove(); return; }
                 Array.from(image.attributes).forEach((attr) => image.removeAttribute(attr.name));
-                image.dataset.dcufPreviewSrc = resolved.href;
+                image.dataset.dcufPreviewSrc = resolved;
                 image.alt = '미리보기 이미지';
-                image.loading = 'lazy'; image.decoding = 'async';
+                image.loading = 'lazy'; image.decoding = 'async'; image.referrerPolicy = 'origin';
             });
             clone.querySelectorAll('a').forEach((anchor) => {
                 const href = anchor.getAttribute('href');
@@ -18796,6 +19329,7 @@ const ThemeModule = (() => {
                 } catch { /* leave as plain text */ }
             });
             clone.querySelectorAll(':not(img):not(a)').forEach((node) => {
+                if (mediaAttributes.has(node)) return;
                 Array.from(node.attributes).forEach((attr) => node.removeAttribute(attr.name));
             });
             return clone.innerHTML;
@@ -18811,6 +19345,7 @@ const ThemeModule = (() => {
             while (this._previewCache.size > this.PREVIEW_MAX) this._previewCache.delete(this._previewCache.keys().next().value);
         },
         clearPreviewImageRuntime() {
+            this._previewPanel?.querySelectorAll('video,audio').forEach((media) => media.pause());
             this._previewImageObserver?.disconnect(); this._previewImageObserver = null;
             if (this._previewDeferredTimer) window.clearTimeout(this._previewDeferredTimer);
             this._previewDeferredTimer = 0;
@@ -18870,6 +19405,7 @@ const ThemeModule = (() => {
         renderPreviewBody(body, html, sourceUrl) {
             if (!(body instanceof HTMLElement)) return;
             body.innerHTML = html || '<div class="dcuf-preview-status">표시할 본문이 없습니다.</div>';
+            body.querySelectorAll('video,audio').forEach((media) => { media.muted = true; });
             this.preparePreviewImages(body, sourceUrl);
             this.positionPreviewPanel();
         },
@@ -18913,7 +19449,9 @@ const ThemeModule = (() => {
             this._previewRequest?.abort();
             const controller = new AbortController(); this._previewRequest = controller;
             try {
-                const sanitized = this.sanitizePreviewDocument(await this.fetchPreviewHtml(sourceUrl.href, { signal: controller.signal }), sourceUrl.href);
+                const html = await this.fetchPreviewHtml(sourceUrl.href, { signal: controller.signal });
+                const withMovies = await this.resolvePreviewMovies(html, sourceUrl.href, { signal: controller.signal });
+                const sanitized = this.sanitizePreviewDocument(withMovies, sourceUrl.href);
                 this.setCachedPreview(sourceUrl.href, sanitized);
                 if (this._previewPanel?.contains(body)) this.renderPreviewBody(body, sanitized, sourceUrl.href);
             } catch (error) {
@@ -24314,6 +24852,9 @@ ${selectors.contents} { max-height:calc(100dvh - 128px); }
     const previousState = __dcufPostMainRoot.__dcufPostMainFixesState;
     if (previousState === 'initializing' || previousState === 'ready') return;
     __dcufPostMainRoot.__dcufPostMainFixesState = 'initializing';
+    // Same target-adapter phase:author material must settle before the native
+    // comment menu's containing-block geometry is measured for its first paint.
+    let __dcufProjectCommentPopupGeometry = null;
     try {
 
 ; (() => {
@@ -24970,7 +25511,7 @@ ${selectors.contents} { max-height:calc(100dvh - 128px); }
             padding: 0 16px !important;
             border-radius: 12px !important;
         }
-        .bottom_paging_box,
+        [data-dcuf-surface="list-pagination"],
         .view_bottom,
         #bottom_listwrap {
             margin-top: 18px !important;
@@ -27109,20 +27650,6 @@ ${selectors.contents} { max-height:calc(100dvh - 128px); }
             visibility: hidden !important;
             pointer-events: none !important;
         }
-        body.dc-filter-dark-mode #dc-personal-block-fab {
-            background: linear-gradient(180deg, #202a36 0%, #1a2330 100%) !important;
-            color: #d9e3f2 !important;
-            border-color: #445468 !important;
-            box-shadow: 0 8px 18px rgba(0, 0, 0, 0.28) !important;
-        }
-        body.dc-filter-dark-mode #dc-personal-block-fab:hover {
-            background: linear-gradient(180deg, #24303d 0%, #1d2734 100%) !important;
-            border-color: #53657d !important;
-            box-shadow: 0 10px 22px rgba(0, 0, 0, 0.34) !important;
-        }
-        body.dc-filter-dark-mode #dc-personal-block-fab:active {
-            box-shadow: 0 5px 12px rgba(0, 0, 0, 0.26) !important;
-        }
         body.dc-filter-dark-mode .cmt_nickbox,
         body.dc-filter-dark-mode .author {
             background: transparent !important;
@@ -29180,6 +29707,9 @@ ${selectors.contents} { max-height:calc(100dvh - 128px); }
     const elevatePopupLayer = (popup) => {
         if (!(popup instanceof HTMLElement)) return;
         if (!isViewportLayerPopup(popup)) return;
+        // Only the visible native menu is a geometry owner. Positioning its
+        // wrapper as well adds the same offset twice after a host rerender.
+        if (popup.matches('#user_data_lyr, .user_data, .user_data_add') && popup.querySelector(':scope > ul.user_data_list')) return;
 
         const anchor = findPopupInfoOwner(popup);
         if (!(anchor instanceof HTMLElement)) return;
@@ -29216,7 +29746,9 @@ ${selectors.contents} { max-height:calc(100dvh - 128px); }
             const overlapsAnchorHorizontally = targetLeft < anchorRect.right && (targetLeft + popupWidth) > anchorRect.left;
             if (overlapsAnchorVertically && overlapsAnchorHorizontally) {
                 const belowTop = anchorRect.bottom + verticalGap;
-                targetTop = clamp(belowTop, minTop, maxTop);
+                targetTop = belowTop + popupHeight <= viewportHeight - edgePadding
+                    ? belowTop
+                    : clamp(anchorRect.top - popupHeight - verticalGap, minTop, maxTop);
             }
         } else {
             const hasStoredOffset = popup.hasAttribute(LAYER_DX) && popup.hasAttribute(LAYER_DY);
@@ -29250,11 +29782,12 @@ ${selectors.contents} { max-height:calc(100dvh - 128px); }
         saveStyleIfNeeded(popup, ORIG_MARGIN, 'margin');
 
         if (isCommentUserPopup(popup) && popupLi instanceof HTMLElement) {
-            const liRect = popupLi.getBoundingClientRect();
-            const localLeft = Math.max(0, Math.round(targetLeft - liRect.left));
-            const localTop = Math.max(0, Math.round(targetTop - liRect.top));
-
             setImportantStyleIfChanged(popup, 'position', 'absolute');
+            // The containing block may be the nickname,not the comment LI.
+            const containing = popup.offsetParent;
+            const origin = containing?.getBoundingClientRect() || {left:0,top:0};
+            const localLeft = Math.round(targetLeft - origin.left + (containing?.scrollLeft || 0) - (containing?.clientLeft || 0));
+            const localTop = Math.round(targetTop - origin.top + (containing?.scrollTop || 0) - (containing?.clientTop || 0));
             setImportantStyleIfChanged(popup, 'left', `${localLeft}px`);
             setImportantStyleIfChanged(popup, 'top', `${localTop}px`);
             setImportantStyleIfChanged(popup, 'right', 'auto');
@@ -29454,6 +29987,9 @@ ${selectors.contents} { max-height:calc(100dvh - 128px); }
             && Array.from(owners).every((li) => isPopupOwnerElevationIntact(li));
 
         if (canReuseState) {
+            // Material/font/layout can change without changing owner identity.
+            // Reuse elevation,not stale coordinates or the pre-style UL size.
+            visiblePopups.forEach((popup) => elevatePopupLayer(popup));
             return;
         }
 
@@ -29539,6 +30075,9 @@ ${selectors.contents} { max-height:calc(100dvh - 128px); }
         document.addEventListener('click', (event) => {
             if (!isRelevantPopupEventTarget(event.target)) return;
             scheduleApply({ elements: [event.target].filter(Boolean) });
+            // Native click handlers insert the menu in this same task. Project
+            // geometry before the browser paints; retain the existing bus for
+            // asynchronous native responses and later mutations.
         }, true);
         document.addEventListener('mouseup', (event) => {
             if (!isRelevantPopupEventTarget(event.target)) return;
@@ -29559,6 +30098,7 @@ ${selectors.contents} { max-height:calc(100dvh - 128px); }
             scheduleApply({ elements: activeCandidates });
         }, true);
         window.__dcufUserPopupLayerBound = true;
+        __dcufProjectCommentPopupGeometry = elements => applyPopupFixForCandidates(elements, {forceFullPass:false});
     };
 
     scheduleApply({ forceFullPass: true });
@@ -29582,7 +30122,7 @@ ${selectors.contents} { max-height:calc(100dvh - 128px); }
     const CENTER_ATTR = 'data-dcuf-list-memo-centered';
     const AUTHOR_MENU_SELECTOR = '.user_data.add > .user_data_list, .gall_writer #user_data_lyr > .user_data_list, .user_data_add > .user_data_list';
     const POPUP_SELECTOR = '#user_memo_config.pop_wrap.type3, #um_picker_lay.pop_wrap.type3, ' + AUTHOR_MENU_SELECTOR;
-    const MEMO_CONTEXT_SELECTOR = [POPUP_SELECTOR, '.custom-mobile-list', '.custom-post-item', '.view_content_wrap'].join(', ');
+    const MEMO_CONTEXT_SELECTOR = [POPUP_SELECTOR, '.custom-mobile-list', '.custom-post-item', '.view_content_wrap', '.cmt_nickbox', '.gall_writer'].join(', ');
     const MEMO_EVENT_TARGET_SELECTOR = [MEMO_CONTEXT_SELECTOR, '#user_data_lyr', '.user_data', '.pop_wrap.type2', '.pop_wrap.type3'].join(', ');
     const MEMO_FORCE_FULLPASS_EVENT_SELECTOR = '#user_data_lyr, .user_data, .pop_wrap.type2, .pop_wrap.type3';
     const pendingMemoPopupCandidates = new Set();
@@ -29951,6 +30491,16 @@ ${selectors.contents} { max-height:calc(100dvh - 128px); }
             scheduleApply(forceFullPass
                 ? { forceFullPass: true }
                 : { elements: [event.target].filter(Boolean) });
+            const owner = event.target.closest('.gall_writer, .cmt_nickbox, .cmt_info, .reply_info') || event.target;
+            // A capture-listener microtask can run before the target's native
+            // handler. Reuse this owner's bounded open RAF,after insertion but
+            // before paint;then project geometry from the final material size.
+            if (memoPopupOpenFollowupRafId) cancelAnimationFrame(memoPopupOpenFollowupRafId);
+            memoPopupOpenFollowupRafId = requestAnimationFrame(() => {
+                memoPopupOpenFollowupRafId = 0;
+                syncMemoPopups([owner], {forceFullPass});
+                __dcufProjectCommentPopupGeometry?.([owner]);
+            });
         }, true);
         document.addEventListener('mouseup', (event) => {
             if (!isRelevantMemoEventTarget(event.target)) return;
