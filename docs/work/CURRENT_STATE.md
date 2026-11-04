@@ -2,24 +2,24 @@
 
 ## Current execution
 
-- Active plan: Four separate stages in ARTICLE_COMMENT_POPUP_REPAIRS.md. Stage1 toolbar adopted;stage2 PC reuse accepted by user. Stage3 site/index/README proposal is ready for review;stage4 official promotion remains separately approved.
+- Active plan: Stage1/2/3 adopted. User2026-11-05 explicitly authorizes stage4 official Mobile/main/site/README and Releases. Versioned files are prepared;trusted publication route and OAuth authority are missing.
 - Workspace path: `.` (private prompt supplies exact worktree). Preserve debug.log unread/unstaged.
-- Active stage: `site-v7-proposal`;one next action `site-v7-proposal-review`.
+- Active stage: `stable-promotion`;next action `trusted-stable-publication-route`. User explicitly authorizes official files and Releases;additional workflow OAuth authority is missing.
 - Accepted visual preference: actual adopted memo/current v7 detail,soft glass and pale paired-ink buttons. Latest user restores inline global services/native categories;added exploration/category disclosures are superseded. Keep unified list plate,late-padding protection and original scroll/resume. Final list GNB correction fits wrapped links and bypasses only the verified important zero-margin conflict;article/write upper headers stay unchanged. Writer now has two independent media/HTML and font/link scroll rows.
-- Source state: Source checkpoint base HEAD `4dbe897cdd3d2c1c5641cd86cfa3dfa512f6333b` on `codex/ui-port-boundary`. Read fresh Git/checkpoint receipt for actual commit/push/CI disposition.
-- Candidate fingerprint: `33c8dcdda2c7ca934da6c5c2e638a09ae69d20f5c036fce2eda38e82e0061406`
-- Current stage receipt: `verification/receipts/2026-11-05-writer-two-scroll-rows.json` SHA-256 `6f7fa0b53b28a1040e1d67220168ad4355e6c1b39760a122cf193ef6769d48f2`.
-- Current artifact: Mobile3.5.5 6f95c1444073a871ca73e5eeb98f7cf691a36685194eab76bd0900b2394bc943 guard/root/dist;PC1.9.9 ce1b9db0164b55c34b9cfe9ad82862abce4f2836b00801b99a7052bb4a136b91 root/dist unchanged. No bump/publication.
+- Source state: Source checkpoint base HEAD `c883e65ed10eb00be283155994d580d08a9581c1` on `codex/ui-port-boundary`. Read fresh checkpoint/draft disposition.
+- Candidate fingerprint: `5865ffcf154509e7adaf56e58a4678db3da49390976b4c153e9b7321bfba7f14`
+- Current stage receipt: `verification/receipts/2026-11-05-stable-356-pc200-preparation.json` SHA-256 `699d650f595932a9c762b80611fa404c59a0f00fe42b2e41a80c651d0d9a272b`.
+- Current artifact: Mobile3.5.6 9EEDA68520CD5A39C734E2F7D269E045D838437BA651D382669DA41CD891EF34 guard/root/dist;PC2.0.0 F6B52CF2E323EA58489003B8D7ECE35724CBE6D15B6C69A90A23F57CD300DCBD root/dist. Versioned preparation only;canonical publication pending.
 - Current scoped checks:writer5-context independent mouse/trusted-touch/native-input/popup/dispose/clone checks pass;existing6-kind editor-menu contract and2 fresh-context behavior pairs pass. Actual writer/font menu observed and writer screenshot replaced. Prior site layout/other images retain exact bindings. One unrelated legacy password style oracle fails identically on control and candidate;not a pass.
-- Reviewable proposal: `design-prototypes/site-v7`;local/site-v7 on10067. Mobile now uses full980x2306 portrait images;Mobile and PC core filter settings are visible,management separate. Actual popup detail and README draft updated. Root index/style/README and official refs remain untouched.
+- Reviewable proposal: Adopted prototype now copied into local root index/style/README/assets with3.5.6/2.0.0 labels and latest writer image. Official refs remain unchanged;prepared files are not publication.
 - Local-only state: `LOCAL_ONLY_EVIDENCE`,artifacts/site-v7-2026-11-04 and artifacts/site-v7-visual-2026-11-05. Captures are unmodified anonymous public site content with source injection,not fixtures,generated examples or installed-extension/device proof.
 - Accepted baseline: Adopted actual memo/current v7;latest user restores inline services/categories. Prior PC common-code port is accepted;site composition is a proposal,not approval.
 - Last current audit: UNKNOWN:formal upper admission,actual installed-PC use and exact Mobile OS/tab discard remain separate. No broad whole-UI/performance/accessibility certification. Prior PC receipt retains its exact artifact.
-- Blockers: No bounded implementation blocker;site proposal/user review and promotion approval pending. Do not infer official release from this checkpoint.
-- Pending live checks: Actual installed-PC use and exact Mobile OS/discard remain unqualified;known installed-Chrome/Tampermonkey route is supported. Site appearance and stage4 approval pending.
+- Blockers: Official main release workflow and mobile-release environment absent;OAuth lacks workflow scope. Existing Mobile-only old-branch tooling cannot publish combined PC/site. Trusted-route installation and exact-artifact canary/approval required;never fake PASS.
+- Pending live checks: Final-artifact installed-extension canary/trusted workflow approval and post-publication canonical/download verification remain pending. Source-injected actual images are not that qualification.
 
 ```dcuf-current-artifacts
-{"schemaVersion":1,"mobile":{"sha256":"6F95C1444073A871CA73E5EEB98F7CF691A36685194EAB76BD0900B2394BC943"},"pc":{"sha256":"CE1B9DB0164B55C34B9CFE9AD82862ABCE4F2836B00801B99A7052BB4A136B91"}}
+{"schemaVersion":1,"mobile":{"sha256":"9EEDA68520CD5A39C734E2F7D269E045D838437BA651D382669DA41CD891EF34"},"pc":{"sha256":"F6B52CF2E323EA58489003B8D7ECE35724CBE6D15B6C69A90A23F57CD300DCBD"}}
 ```
 
 ## Pending real-use feedback —2026-11-03

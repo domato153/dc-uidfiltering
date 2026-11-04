@@ -737,3 +737,8 @@ A wide Mobile screenshot plus max-height clipping removed the open bottom menu f
 ## Independent writer strips —2026-11-05
 
 Latest writer direction:two independent horizontal strips(media through HTML,fonts through links),not the discarded single combined strip. Existing native controls/handlers stay;only direct group containers are reversibly projected by the existing native-form owner. Original group order/parents restore on dispose;drag/native touch and popup positioning reuse the existing write-editor owner. Do not reapply native-break wrap/order exceptions. Real desktop-site-mobile writer scales local48px rows to about114px in a980px PNG;use rect/offset scale rather than mistaking that for wrapped geometry. Row-local menus prefer available space below and scroll internally;the failed high-z trial was discarded. Keep the legacy password grid/dense-color oracle failure separate;it reproduces on80EC control.
+
+
+## Stable version numbering —2026-11-05
+
+User requires one decimal digit per version component,including carry1.9.9→2.0.0. Mobile3.5.5→3.5.6 and PC1.9.9→2.0.0 are the authorized current promotion. Read actual official refs before selecting a version;update only build/targets.json and rebuild generated files. Release authority does not create missing GitHub workflow OAuth permissions or justify a fabricated canary PASS.

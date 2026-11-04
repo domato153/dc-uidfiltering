@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         DCInside PC User Filter
 // @namespace    http://tampermonkey.net/
-// @version      1.9.9
+// @version      2.0.0
 // @description  DCInside PC filter port based on the latest mobile filter runtime and shared filter core
 // @author       domato153
 // @match        https://gall.dcinside.com/board/*
@@ -6371,7 +6371,7 @@ init() {
             this._initState = 'initializing';
             this._initPromise = (async () => {
                 this.installDebugApi();
-                this.debugLog('init', 'FilterModule init start', { version: '1.9.9' });
+                this.debugLog('init', 'FilterModule init start', { version: '2.0.0' });
                 const snapshot = await this.loadBootSnapshot();
                 await this.cleanupLegacyManagedBlockConfig(snapshot);
                 await this.reloadSettings(snapshot);
@@ -6508,7 +6508,7 @@ init() {
 
         __dcufRoot.__dcufPcFilterPortState = 'initializing';
         __dcufRoot.__dcufPcFilterPortPromise = (async () => {
-            console.log('[DCUF PC] Initializing filter port v1.9.9...');
+            console.log('[DCUF PC] Initializing filter port v2.0.0...');
 
             observeDarkMode();
             bindSettingsShortcut();

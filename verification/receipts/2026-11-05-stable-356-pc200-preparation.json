@@ -1,0 +1,56 @@
+{
+  "schemaVersion": 1,
+  "status": "PREPARED_NOT_PUBLISHED",
+  "sourceBase": "c883e65ed10eb00be283155994d580d08a9581c1",
+  "versions": {
+    "mobile": "3.5.6",
+    "pc": "2.0.0"
+  },
+  "versionPolicy": "Exactly one decimal digit per segment;carry1.9.9→2.0.0",
+  "artifacts": [
+    {
+      "name": "Dc_UserFilter_Mobile_v3.5.6.user.js",
+      "sha256": "9EEDA68520CD5A39C734E2F7D269E045D838437BA651D382669DA41CD891EF34",
+      "bytes": 1841511
+    },
+    {
+      "name": "dcinside_user_filter_v2.0.0.user.js",
+      "sha256": "F6B52CF2E323EA58489003B8D7ECE35724CBE6D15B6C69A90A23F57CD300DCBD",
+      "bytes": 442337
+    }
+  ],
+  "expectedOfficialHeads": {
+    "main": "b9061ff1500a7308ac90105dffef4cf8e65a2fb0",
+    "Mobile": "097e999b042726e71d4a77cc49cbc7ee4a9a2193"
+  },
+  "officialPayloads": {
+    "Mobile": [
+      "Dc_UserFilter_Mobile.user.js",
+      "Dc_UserFilter_Mobile_v3.5.6.user.js",
+      "README.md",
+      "assets"
+    ],
+    "main": [
+      "dcinside_user_filter.user.js",
+      "dcinside_user_filter_v2.0.0.user.js",
+      "index.html",
+      "style.css",
+      "README.md",
+      "assets"
+    ]
+  },
+  "blockers": [
+    "Trusted main release workflow absent",
+    "mobile-release approval environment absent",
+    "GitHub CLI OAuth token lacks workflow scope;cannot install release workflow without new authorization",
+    "Existing Mobile-only tooling targets historical development branch and does not publish PC/site bundle"
+  ],
+  "knownUnqualified": "Exact-artifact installed-extension canary and trusted workflow approval not newly completed;never supply a fabricated PASS.",
+  "checks": {
+    "releaseArtifacts": "PASS",
+    "mobile": "Final3.5.6 writer5 contexts pass",
+    "pc": "Final2.0.0 material/native-isolation contract passes",
+    "delta": "Only metadata/log/build version labels differ from accepted runtimes"
+  },
+  "publication": "NOT_PUBLISHED;official refs unchanged;trusted route/OAuth/environment/canary pending"
+}

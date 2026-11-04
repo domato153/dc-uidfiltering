@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "targets": {
     "mobile": {
-      "version": "3.5.5",
+      "version": "3.5.6",
       "outputPattern": "Dc_UserFilter_Mobile_v{version}.user.js",
       "inputs": [
         { "path": "src/meta/userscript-header.txt", "role": "header" },
@@ -64,7 +64,7 @@
       ]
     },
     "pc": {
-      "version": "1.9.9",
+      "version": "2.0.0",
       "outputPattern": "dcinside_user_filter_v{version}.user.js",
       "inputs": [
         { "path": "src/meta/pc-filter-userscript-header.txt", "role": "header" },
